@@ -6,7 +6,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/util"
 
-	"github.com/grafana/grafana-azure-sdk-go/azsettings"
+	"github.com/grafana/grafana-azure-sdk-go/v2/azsettings"
 
 	"github.com/grafana/grafana/pkg/plugins/config"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
@@ -29,7 +29,10 @@ func ProvidePluginManagementConfig(cfg *setting.Cfg, settingProvider setting.Pro
 		allowedUnsigned,
 		cfg.PluginsCDNURLTemplate,
 		cfg.AppURL,
-		features,
+		config.Features{
+			ExternalCorePluginsEnabled: features.IsEnabledGlobally(featuremgmt.FlagExternalCorePlugins),
+			SkipHostEnvVarsEnabled:     features.IsEnabledGlobally(featuremgmt.FlagPluginsSkipHostEnvVars),
+		},
 		cfg.AngularSupportEnabled,
 		cfg.GrafanaComURL,
 		cfg.DisablePlugins,
@@ -72,6 +75,9 @@ type PluginInstanceCfg struct {
 	SQLDatasourceMaxOpenConnsDefault    int
 	SQLDatasourceMaxIdleConnsDefault    int
 	SQLDatasourceMaxConnLifetimeDefault int
+
+	SigV4AuthEnabled    bool
+	SigV4VerboseLogging bool
 }
 
 // ProvidePluginInstanceConfig returns a new PluginInstanceCfg.
@@ -117,6 +123,8 @@ func ProvidePluginInstanceConfig(cfg *setting.Cfg, settingProvider setting.Provi
 		SQLDatasourceMaxIdleConnsDefault:    cfg.SqlDatasourceMaxIdleConnsDefault,
 		SQLDatasourceMaxConnLifetimeDefault: cfg.SqlDatasourceMaxConnLifetimeDefault,
 		ResponseLimit:                       cfg.ResponseLimit,
+		SigV4AuthEnabled:                    cfg.SigV4AuthEnabled,
+		SigV4VerboseLogging:                 cfg.SigV4VerboseLogging,
 	}, nil
 }
 
