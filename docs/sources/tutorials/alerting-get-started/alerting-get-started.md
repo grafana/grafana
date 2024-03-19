@@ -132,7 +132,7 @@ Linking an alert to a panel will add an annotation to the panel when the status 
 
 #### Trigger an alert
 We have now configured an alert rule and a contact point. Now let’s see if we can trigger our Alert by generating some traffic on our sample application.
-Browse to localhost:8081.
+Browse to [localhost:8081](http://localhost:8081/).
 Add a new title and URL, repeatedly click the vote button, or refresh the page to generate a traffic spike.
 Once the query sum(rate(tns_request_duration_seconds_count[5m])) by(route) returns a value greater than 0.2 Grafana will trigger our alert. Browse to the Request Bin we created earlier and find the sent Grafana alert notification with details and metadata.
 
