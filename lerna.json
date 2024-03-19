@@ -2,20 +2,5 @@
   "$schema": "node_modules/lerna/schemas/lerna-schema.json",
   "npmClient": "yarn",
   "version": "11.0.0-pre",
-  "packages": [
-    "packages/grafana-data/",
-    "packages/grafana-eslint-rules/",
-    "packages/grafana-o11y-ds-frontend/",
-    "packages/grafana-runtime/",
-    "packages/grafana-ui/",
-    "packages/grafana-e2e/",
-    "packages/grafana-flamegraph/",
-    "packages/grafana-plugin-configs/",
-    "packages/grafana-schema/",
-    "packages/grafana-e2e-selectors/",
-    "packages/grafana-prometheus/",
-    "packages/grafana-sql/**",
-    "plugins-bundled/internal/*",
-    "public/app/plugins/*/*"
-  ]
+  "packages": ["packages/!(grafana-icons)/**"]
 }
