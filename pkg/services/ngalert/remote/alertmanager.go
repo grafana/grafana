@@ -210,7 +210,6 @@ func (am *Alertmanager) CompareAndSendConfiguration(ctx context.Context, config 
 		ctx,
 		string(rawDecrypted),
 		config.ConfigurationHash,
-		config.ID,
 		config.CreatedAt,
 		config.Default,
 	); err != nil {
