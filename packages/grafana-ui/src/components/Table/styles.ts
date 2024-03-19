@@ -59,6 +59,7 @@ export function useTableStyles(theme: GrafanaTheme2, cellHeightOption: TableCell
         background: rowStyled ? 'inherit' : background ?? undefined,
         zIndex: 1,
         '.cellActions': {
+          color: '#FFF',
           visibility: 'visible',
           opacity: 1,
           width: 'auto',
