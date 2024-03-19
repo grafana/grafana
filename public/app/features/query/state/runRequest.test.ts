@@ -409,10 +409,12 @@ describe('callQueryMethod', () => {
     targets,
     filterQuery,
     getDefaultQuery,
+    queryFunction,
   }: {
     targets: TestQuery[];
     getDefaultQuery?: (app: CoreApp) => Partial<TestQuery>;
     filterQuery?: typeof ds.filterQuery;
+    queryFunction?: typeof ds.query;
   }) => {
     request = {
       range: {
@@ -440,7 +442,7 @@ describe('callQueryMethod', () => {
       defaultQuerySpy = jest.spyOn(ds, 'getDefaultQuery');
     }
     querySpy = jest.spyOn(ds, 'query');
-    callQueryMethod(ds, request);
+    callQueryMethod(ds, request, queryFunction);
   };
 
   beforeEach(() => {
@@ -469,6 +471,60 @@ describe('callQueryMethod', () => {
     expect(querySpy).toHaveBeenCalledWith(
       expect.objectContaining({
         targets: [
+          { q: 'SUM(foo2)', refId: 'B' },
+          { q: 'SUM(foo3)', refId: 'C' },
+        ],
+      })
+    );
+  });
+
+  it('Should not call query function in case targets are empty', async () => {
+    setup({
+      targets: [
+        {
+          refId: 'A',
+          q: 'SUM(foo)',
+        },
+        {
+          refId: 'B',
+          q: 'SUM(foo2)',
+        },
+        {
+          refId: 'C',
+          q: 'SUM(foo3)',
+        },
+      ],
+      filterQuery: (_: DataQuery) => false,
+    });
+    expect(filterQuerySpy).toHaveBeenCalledTimes(3);
+    expect(querySpy).not.toHaveBeenCalled();
+  });
+
+  it('Should not call filterQuery in case a custom query method is provided', async () => {
+    const queryFunctionMock = jest.fn().mockResolvedValue({ data: [] });
+    setup({
+      targets: [
+        {
+          refId: 'A',
+          q: 'SUM(foo)',
+        },
+        {
+          refId: 'B',
+          q: 'SUM(foo2)',
+        },
+        {
+          refId: 'C',
+          q: 'SUM(foo3)',
+        },
+      ],
+      queryFunction: queryFunctionMock,
+      filterQuery: (query: DataQuery) => query.refId !== 'A',
+    });
+    expect(filterQuerySpy).not.toHaveBeenCalled();
+    expect(queryFunctionMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        targets: [
+          { q: 'SUM(foo)', refId: 'A' },
           { q: 'SUM(foo2)', refId: 'B' },
           { q: 'SUM(foo3)', refId: 'C' },
         ],
