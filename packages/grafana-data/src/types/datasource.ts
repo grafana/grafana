@@ -260,9 +260,8 @@ abstract class DataSourceApi<
   abstract testDatasource(): Promise<TestDataSourceResponse>;
 
   /**
-   * Optionally, you can implement this method to conditionally prevent certain queries from being executed.
+   * Optionally, you can implement this method to prevent certain queries from being executed.
    * Return false to prevent the query from being executed.
-   *
    */
   filterQuery?(query: TQuery): boolean {
     return true;

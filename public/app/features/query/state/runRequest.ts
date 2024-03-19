@@ -191,7 +191,7 @@ export function callQueryMethod(
   request: DataQueryRequest,
   queryFunction?: typeof datasource.query
 ) {
-  // // If the datasource has defined a default query, make sure it's applied
+  // If the datasource has defined a default query, make sure it's applied
   request.targets = request.targets.map((t) =>
     queryIsEmpty(t)
       ? {
