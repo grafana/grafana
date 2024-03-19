@@ -8,8 +8,8 @@ import { Text } from '../../Text/Text';
 import { GrotNotFound } from './GrotNotFound/GrotNotFound';
 
 interface Props {
-  showImage?: boolean;
   message?: string;
+  showImage?: boolean;
 }
 
 export const EmptySearchState = ({

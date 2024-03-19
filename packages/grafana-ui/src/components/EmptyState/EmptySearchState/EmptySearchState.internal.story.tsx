@@ -19,7 +19,7 @@ const meta: Meta<typeof EmptySearchState> = {
   },
 };
 
-export const Basic: StoryFn = (args) => {
+export const Basic: StoryFn<typeof EmptySearchState> = (args) => {
   return <EmptySearchState {...args}>{args.children}</EmptySearchState>;
 };
 
