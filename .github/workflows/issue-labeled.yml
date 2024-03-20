@@ -53,7 +53,7 @@ jobs:
           echo "TEAM=${TEAM}" >> $GITHUB_ENV
 
       - name: "Prepare payload"
-        uses: frabert/replace-string-action@v2.0
+        uses: frabert/replace-string-action@v2.5
         id: preparePayload
         with:
           # replace double quotes with single quotes to avoid breaking the JSON payload sent to Slack
@@ -64,7 +64,7 @@ jobs:
 
       - name: Get Token
         id: get_workflow_token
-        uses: peter-murray/workflow-application-token-action@v2
+        uses: peter-murray/workflow-application-token-action@v3
         with:
           application_id: ${{ secrets.APP_GRAFANA_TEAM_CHECKER_ID }}
           application_private_key: ${{ secrets.APP_GRAFANA_TEAM_CHECKER_KEY }}

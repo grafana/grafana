@@ -614,7 +614,7 @@ func TestIntegrationRulerAccess(t *testing.T) {
 			desc:            "viewer request should fail",
 			client:          newAlertingApiClient(grafanaListedAddr, "viewer", "viewer"),
 			expStatus:       http.StatusForbidden,
-			expectedMessage: `You'll need additional permissions to perform this action. Permissions needed: any of alert.rules:write, alert.rules:create, alert.rules:delete`,
+			expectedMessage: `You'll need additional permissions to perform this action. Permissions needed: all of alert.rules:read, folders:read, any of alert.rules:write, alert.rules:create, alert.rules:delete`,
 		},
 		{
 			desc:            "editor request should succeed",

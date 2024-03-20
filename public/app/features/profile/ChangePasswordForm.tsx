@@ -1,7 +1,7 @@
-import { css } from '@emotion/css';
 import React, { useState } from 'react';
 
-import { Button, Field, Form, HorizontalGroup, LinkButton } from '@grafana/ui';
+import { Button, Field, HorizontalGroup, LinkButton } from '@grafana/ui';
+import { Form } from 'app/core/components/Form/Form';
 import {
   ValidationLabels,
   strongPasswordValidations,
@@ -24,7 +24,6 @@ export interface Props {
 export const ChangePasswordForm = ({ user, onChangePassword, isSaving }: Props) => {
   const [displayValidationLabels, setDisplayValidationLabels] = useState(false);
   const [pristine, setPristine] = useState(true);
-  const [newPassword, setNewPassword] = useState('');
 
   const { disableLoginForm } = config;
   const authSource = user.authLabels?.length && user.authLabels[0];
@@ -47,96 +46,89 @@ export const ChangePasswordForm = ({ user, onChangePassword, isSaving }: Props) 
   }
 
   return (
-    <div
-      className={css`
-        max-width: 400px;
-      `}
-    >
-      <Form onSubmit={onChangePassword}>
-        {({ register, errors, getValues }) => {
-          return (
-            <>
-              <Field
-                label={t('profile.change-password.old-password-label', 'Old password')}
-                invalid={!!errors.oldPassword}
-                error={errors?.oldPassword?.message}
-              >
-                <PasswordField
-                  id="current-password"
-                  autoComplete="current-password"
-                  {...register('oldPassword', {
-                    required: t('profile.change-password.old-password-required', 'Old password is required'),
-                  })}
-                />
-              </Field>
+    <Form onSubmit={onChangePassword} maxWidth={400}>
+      {({ register, errors, getValues, watch }) => {
+        const newPassword = watch('newPassword');
+        return (
+          <>
+            <Field
+              label={t('profile.change-password.old-password-label', 'Old password')}
+              invalid={!!errors.oldPassword}
+              error={errors?.oldPassword?.message}
+            >
+              <PasswordField
+                id="current-password"
+                autoComplete="current-password"
+                {...register('oldPassword', {
+                  required: t('profile.change-password.old-password-required', 'Old password is required'),
+                })}
+              />
+            </Field>
 
-              <Field
-                label={t('profile.change-password.new-password-label', 'New password')}
-                invalid={!!errors.newPassword}
-                error={errors?.newPassword?.message}
-              >
-                <PasswordField
-                  id="new-password"
-                  autoComplete="new-password"
-                  onFocus={() => setDisplayValidationLabels(true)}
-                  value={newPassword}
-                  {...register('newPassword', {
-                    onBlur: () => setPristine(false),
-                    onChange: (e) => setNewPassword(e.target.value),
-                    required: t('profile.change-password.new-password-required', 'New password is required'),
-                    validate: {
-                      strongPasswordValidationRegister,
-                      confirm: (v) =>
-                        v === getValues().confirmNew ||
-                        t('profile.change-password.passwords-must-match', 'Passwords must match'),
-                      old: (v) =>
-                        v !== getValues().oldPassword ||
-                        t(
-                          'profile.change-password.new-password-same-as-old',
-                          "New password can't be the same as the old one."
-                        ),
-                    },
-                  })}
-                />
-              </Field>
-              {displayValidationLabels && (
-                <ValidationLabels
-                  pristine={pristine}
-                  password={newPassword}
-                  strongPasswordValidations={strongPasswordValidations}
-                />
-              )}
-              <Field
-                label={t('profile.change-password.confirm-password-label', 'Confirm password')}
-                invalid={!!errors.confirmNew}
-                error={errors?.confirmNew?.message}
-              >
-                <PasswordField
-                  id="confirm-new-password"
-                  autoComplete="new-password"
-                  {...register('confirmNew', {
-                    required: t(
-                      'profile.change-password.confirm-password-required',
-                      'New password confirmation is required'
-                    ),
-                    validate: (v) =>
-                      v === getValues().newPassword ||
+            <Field
+              label={t('profile.change-password.new-password-label', 'New password')}
+              invalid={!!errors.newPassword}
+              error={errors?.newPassword?.message}
+            >
+              <PasswordField
+                id="new-password"
+                autoComplete="new-password"
+                onFocus={() => setDisplayValidationLabels(true)}
+                {...register('newPassword', {
+                  onBlur: () => setPristine(false),
+                  required: t('profile.change-password.new-password-required', 'New password is required'),
+                  validate: {
+                    strongPasswordValidationRegister,
+                    confirm: (v) =>
+                      v === getValues().confirmNew ||
                       t('profile.change-password.passwords-must-match', 'Passwords must match'),
-                  })}
-                />
-              </Field>
-              <HorizontalGroup>
-                <Button variant="primary" disabled={isSaving} type="submit">
-                  <Trans i18nKey="profile.change-password.change-password-button">Change Password</Trans>
-                </Button>
-                <LinkButton variant="secondary" href={`${config.appSubUrl}/profile`} fill="outline">
-                  <Trans i18nKey="profile.change-password.cancel-button">Cancel</Trans>
-                </LinkButton>
-              </HorizontalGroup>
-            </>
-          );
-        }}
-      </Form>
-    </div>
+                    old: (v) =>
+                      v !== getValues().oldPassword ||
+                      t(
+                        'profile.change-password.new-password-same-as-old',
+                        "New password can't be the same as the old one."
+                      ),
+                  },
+                })}
+              />
+            </Field>
+            {displayValidationLabels && (
+              <ValidationLabels
+                pristine={pristine}
+                password={newPassword}
+                strongPasswordValidations={strongPasswordValidations}
+              />
+            )}
+            <Field
+              label={t('profile.change-password.confirm-password-label', 'Confirm password')}
+              invalid={!!errors.confirmNew}
+              error={errors?.confirmNew?.message}
+            >
+              <PasswordField
+                id="confirm-new-password"
+                autoComplete="new-password"
+                {...register('confirmNew', {
+                  required: t(
+                    'profile.change-password.confirm-password-required',
+                    'New password confirmation is required'
+                  ),
+                  validate: (v) =>
+                    v === getValues().newPassword ||
+                    t('profile.change-password.passwords-must-match', 'Passwords must match'),
+                })}
+              />
+            </Field>
+            <HorizontalGroup>
+              <Button variant="primary" disabled={isSaving} type="submit">
+                <Trans i18nKey="profile.change-password.change-password-button">Change Password</Trans>
+              </Button>
+              <LinkButton variant="secondary" href={`${config.appSubUrl}/profile`} fill="outline">
+                <Trans i18nKey="profile.change-password.cancel-button">Cancel</Trans>
+              </LinkButton>
+            </HorizontalGroup>
+          </>
+        );
+      }}
+    </Form>
   );
 };

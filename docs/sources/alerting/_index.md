@@ -1,8 +1,8 @@
 ---
 aliases:
-  - about-alerting/
-  - ./unified-alerting/alerting/
-  - ./alerting/unified-alerting/
+  - about-alerting/ # /docs/grafana/<GRAFANA_VERSION>/about-alerting
+  - ./unified-alerting/alerting/ # /docs/grafana/<GRAFANA_VERSION>/unified-alerting/alerting/
+  - ./alerting/unified-alerting/ # /docs/grafana/<GRAFANA_VERSION>/alerting/unified-alerting/
 canonical: https://grafana.com/docs/grafana/latest/alerting/
 description: Learn about the key benefits and features of Grafana Alerting
 labels:
@@ -16,7 +16,7 @@ weight: 114
 hero:
   title: Grafana Alerting
   level: 1
-  image: /media/docs/grafana-cloud/alerting-and-irm/grafana-icon-alerting.svg
+  image: /media/docs/alerting/alerting-bell-icon.png
   width: 100
   height: 100
   description: Grafana Alerting allows you to learn about problems in your systems moments after they occur.

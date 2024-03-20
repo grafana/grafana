@@ -16,6 +16,7 @@ import {
   useTheme2,
   VizLayout,
   VizTooltipContainer,
+  EventBusPlugin,
 } from '@grafana/ui';
 import { TimeRange2, TooltipHoverMode } from '@grafana/ui/src/components/uPlot/plugins/TooltipPlugin2';
 import { ColorScale } from 'app/core/components/ColorScale/ColorScale';
@@ -53,6 +54,12 @@ export const HeatmapPanel = ({
   // TODO: we should just re-init when this changes, and have this be a static setting
   const syncTooltip = useCallback(
     () => sync?.() === DashboardCursorSync.Tooltip,
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    []
+  );
+
+  const syncAny = useCallback(
+    () => sync?.() !== DashboardCursorSync.Off,
     // eslint-disable-next-line react-hooks/exhaustive-deps
     []
   );
@@ -140,7 +147,6 @@ export const HeatmapPanel = ({
     return prepConfig({
       dataRef,
       theme,
-      eventBus,
       onhover: !showNewVizTooltips ? onhover : null,
       onclick: !showNewVizTooltips && options.tooltip.mode !== TooltipDisplayMode.None ? onclick : null,
       isToolTipOpen,
@@ -207,6 +213,7 @@ export const HeatmapPanel = ({
       <VizLayout width={width} height={height} legend={renderLegend()}>
         {(vizWidth: number, vizHeight: number) => (
           <UPlotChart config={builder} data={facets as any} width={vizWidth} height={vizHeight}>
+            <EventBusPlugin config={builder} sync={syncAny} eventBus={eventBus} frame={info.series ?? info.heatmap} />
             {!showNewVizTooltips && <ZoomPlugin config={builder} onZoom={onChangeTimeRange} />}
             {showNewVizTooltips && (
               <>

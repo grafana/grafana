@@ -3,7 +3,7 @@ import path, { dirname } from 'path';
 
 import { PluginOptions } from '@grafana/plugin-e2e';
 
-const testDirRoot = 'e2e/plugin-e2e/plugin-e2e-api-tests/';
+const testDirRoot = 'e2e/plugin-e2e/';
 
 export default defineConfig<PluginOptions>({
   fullyParallel: true,
@@ -14,7 +14,7 @@ export default defineConfig<PluginOptions>({
   reporter: 'html',
   use: {
     baseURL: `http://${process.env.HOST || 'localhost'}:${process.env.PORT || 3000}`,
-    trace: 'on-first-retry',
+    trace: 'retain-on-failure',
     httpCredentials: {
       username: 'admin',
       password: 'admin',
@@ -44,7 +44,7 @@ export default defineConfig<PluginOptions>({
     // Run all tests in parallel using user with admin role
     {
       name: 'admin',
-      testDir: path.join(testDirRoot, '/as-admin-user'),
+      testDir: path.join(testDirRoot, '/plugin-e2e-api-tests/as-admin-user'),
       use: {
         ...devices['Desktop Chrome'],
         storageState: 'playwright/.auth/admin.json',
@@ -54,12 +54,21 @@ export default defineConfig<PluginOptions>({
     // Run all tests in parallel using user with viewer role
     {
       name: 'viewer',
-      testDir: path.join(testDirRoot, '/as-viewer-user'),
+      testDir: path.join(testDirRoot, '/plugin-e2e-api-tests/as-viewer-user'),
       use: {
         ...devices['Desktop Chrome'],
         storageState: 'playwright/.auth/viewer.json',
       },
       dependencies: ['createUserAndAuthenticate'],
+    },
+    {
+      name: 'mysql',
+      testDir: path.join(testDirRoot, '/mysql'),
+      use: {
+        ...devices['Desktop Chrome'],
+        storageState: 'playwright/.auth/admin.json',
+      },
+      dependencies: ['authenticate'],
     },
   ],
 });
