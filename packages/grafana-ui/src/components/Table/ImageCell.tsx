@@ -8,7 +8,6 @@ import { DataLinksContextMenu } from '../DataLinks/DataLinksContextMenu';
 
 import { TableCellProps } from './types';
 
-
 const DATALINKS_HEIGHT_OFFSET = 10;
 
 export const ImageCell = (props: TableCellProps) => {
