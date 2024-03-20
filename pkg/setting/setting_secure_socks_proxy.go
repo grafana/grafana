@@ -5,8 +5,6 @@ import (
 	"errors"
 	"os"
 
-	sdkproxy "github.com/grafana/grafana-plugin-sdk-go/backend/proxy"
-
 	"gopkg.in/ini.v1"
 )
 
@@ -96,15 +94,4 @@ func readSecureSocksDSProxySettings(iniFile *ini.File) (SecureSocksDSProxySettin
 	s.RootCACerts = rootCAs
 
 	return s, nil
-}
-
-func (s *SecureSocksDSProxySettings) SDK() (*sdkproxy.ClientCfg, error) {
-	return &sdkproxy.ClientCfg{
-		ClientCert:    s.ClientCert,
-		ClientKey:     s.ClientKey,
-		RootCACerts:   s.RootCACerts,
-		ProxyAddress:  s.ProxyAddress,
-		ServerName:    s.ServerName,
-		AllowInsecure: s.AllowInsecure,
-	}, nil
 }
