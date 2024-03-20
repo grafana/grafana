@@ -7,6 +7,7 @@ description: Learn about the state and health of alert rules to understand sever
 keywords:
   - grafana
   - alerting
+  - keep last state
   - guide
   - state
 labels:
@@ -50,15 +51,20 @@ An alert instance can be in either of the following states:
 | **NoData**   | No data has been received for the configured time window.                                     |
 | **Error**    | The error that occurred when attempting to evaluate an alert rule.                            |
 
+## Keep last state
+
+An alert rule can be configured to keep the last state when a `NoData` and/or `Error` state is encountered. This will both prevent alerts from firing, and from resolving and re-firing. Just like normal evaluation, the alert rule will transition from `Pending` to `Firing` after the pending period has elapsed.
+
 ## Alert rule health
 
 An alert rule can have one the following health statuses:
 
-| State      | Description                                                                        |
-| ---------- | ---------------------------------------------------------------------------------- |
-| **Ok**     | No error when evaluating an alert rule.                                            |
-| **Error**  | An error occurred when evaluating an alert rule.                                   |
-| **NoData** | The absence of data in at least one time series returned during a rule evaluation. |
+| State                  | Description                                                                                              |
+| ---------------------- | -------------------------------------------------------------------------------------------------------- |
+| **Ok**                 | No error when evaluating an alerting rule.                                                               |
+| **Error**              | An error occurred when evaluating an alerting rule.                                                      |
+| **NoData**             | The absence of data in at least one time series returned during a rule evaluation.                       |
+| **{status}, KeepLast** | The rule would have received another status but was configured to keep the last state of the alert rule. |
 
 ## Special alerts for `NoData` and `Error`
 
