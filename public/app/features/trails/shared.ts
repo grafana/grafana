@@ -6,6 +6,7 @@ export type ActionViewType = 'overview' | 'breakdown' | 'logs' | 'related';
 export interface ActionViewDefinition {
   displayName: string;
   value: ActionViewType;
+  description?: string;
   getScene: () => SceneObject;
 }
 
