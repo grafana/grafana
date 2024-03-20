@@ -9,7 +9,7 @@ Ensure you have the following applications installed.
 - [Docker Compose](https://docs.docker.com/get-docker/) (included in Docker for Desktop for macOS and Windows)
 - [Git](https://git-scm.com/)
 
-## Set up the sample application
+## Set up a sample application
 
 In order to provide a more hands-on experience, you will use a real-world web application to generate real data. The app will expose metrics, which will be stored in Prometheus, a popular time series database (TSDB). And finally, in Grafana Alerting, you will build an alert rule based on the data generated. 
 
