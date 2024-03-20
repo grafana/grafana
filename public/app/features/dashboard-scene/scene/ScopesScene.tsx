@@ -36,12 +36,11 @@ export class ScopesScene extends SceneObjectBase<ScopesSceneState> {
         }
       });
 
-      const dashboardEditModeSubscription = this.parent?.subscribeToState((newState, prevState) => {
-        const newIsEditing = 'isEditing' in newState ? !!newState.isEditing : false;
-        const prevIsEditing = 'isEditing' in prevState ? !!prevState.isEditing : false;
+      const dashboardEditModeSubscription = this.parent?.subscribeToState((newState) => {
+        const isEditing = 'isEditing' in newState ? !!newState.isEditing : false;
 
-        if (newIsEditing !== prevIsEditing) {
-          if (newIsEditing) {
+        if (isEditing !== this.state.isViewing) {
+          if (isEditing) {
             this.enterViewMode();
           } else {
             this.exitViewMode();
@@ -112,7 +111,7 @@ const getStyles = (theme: GrafanaTheme2) => {
       display: 'flex',
       flex: '0 1 auto',
       flexDirection: 'row',
-      padding: theme.spacing(2, 0, 2, 2),
+      padding: theme.spacing(2, 2, 2, 2),
     }),
     filtersContainerExpanded: css({
       borderBottom: `1px solid ${theme.colors.border.weak}`,

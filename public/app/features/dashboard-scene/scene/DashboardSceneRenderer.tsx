@@ -44,7 +44,13 @@ export function DashboardSceneRenderer({ model }: SceneComponentProps<DashboardS
     <Page navModel={navModel} pageNav={pageNav} layout={PageLayoutType.Custom}>
       {editPanel && <editPanel.Component model={editPanel} />}
       {!editPanel && (
-        <div className={cx(styles.pageContainer, isScopesExpanded && styles.pageContainerExpanded)}>
+        <div
+          className={cx(
+            styles.pageContainer,
+            scopes && styles.pageContainerScopes,
+            scopes && isScopesExpanded && styles.pageContainerExpanded
+          )}
+        >
           {scopes && <scopes.Component model={scopes} />}
           <NavToolbarActions dashboard={model} />
           {controls && <controls.Component model={controls} />}
@@ -63,17 +69,22 @@ function getStyles(theme: GrafanaTheme2) {
     pageContainer: css({
       display: 'grid',
       gridTemplateAreas: `
-        "scopes controls"
-        "panels panels"`,
-      gridTemplateColumns: `${theme.spacing(40)} 1fr`,
+        "controls"
+        "panels"`,
+      gridTemplateColumns: `1fr`,
       gridTemplateRows: 'auto 1fr',
       height: '100%',
+    }),
+    pageContainerScopes: css({
+      gridTemplateAreas: `
+        "scopes controls"
+        "panels panels"`,
+      gridTemplateColumns: `${theme.spacing(32)} 1fr`,
     }),
     pageContainerExpanded: css({
       gridTemplateAreas: `
         "scopes controls"
         "scopes panels"`,
-      gridTemplateColumns: `${theme.spacing(32)} 1fr`,
     }),
     scrollbarContainer: css({
       gridArea: 'panels',

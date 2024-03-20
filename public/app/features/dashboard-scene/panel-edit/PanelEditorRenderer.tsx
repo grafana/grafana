@@ -82,9 +82,11 @@ function VizAndDataPane({ model }: SceneComponentProps<PanelEditor>) {
   }
 
   return (
-    <div className={styles.pageContainer}>
+    <div className={cx(styles.pageContainer, scopes && styles.pageContainerScopes)}>
       {scopes && <scopes.Component model={scopes} />}
-      <div className={styles.controlsWrapper}>{controls && <controls.Component model={controls} />}</div>
+      <div className={cx(styles.controlsWrapper, scopes && styles.controlsWrapperScopes)}>
+        {controls && <controls.Component model={controls} />}
+      </div>
       <div {...containerProps}>
         <div {...primaryProps}>
           <vizManager.Component model={vizManager} />
@@ -136,11 +138,17 @@ function getStyles(theme: GrafanaTheme2) {
       alignItems: 'start',
       display: 'grid',
       gridTemplateAreas: `
-        "scopes controls"
-        "panels panels"`,
-      gridTemplateColumns: `${theme.spacing(40)} 1fr`,
+        "controls"
+        "panels"`,
+      gridTemplateColumns: '1fr',
       gridTemplateRows: 'auto 1fr',
       height: '100%',
+    }),
+    pageContainerScopes: css({
+      gridTemplateAreas: `
+        "scopes controls"
+        "panels panels"`,
+      gridTemplateColumns: `${theme.spacing(32)} 1fr`,
     }),
     container: css({
       gridArea: 'panels',
@@ -191,6 +199,9 @@ function getStyles(theme: GrafanaTheme2) {
       flexGrow: 0,
       paddingLeft: theme.spacing(2),
       gridArea: 'controls',
+    }),
+    controlsWrapperScopes: css({
+      paddingLeft: theme.spacing(0),
     }),
     openDataPaneButton: css({
       width: theme.spacing(8),
