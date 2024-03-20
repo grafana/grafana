@@ -29,7 +29,7 @@
     "empty-state": {
       "button-title": "Add annotation query",
       "info-box-content": "<0>Annotations provide a way to integrate event data into your graphs. They are visualized as vertical lines and icons on all graph panels. When you hover over an annotation icon you can get event text & tags for the event. You can add annotation events directly from grafana by holding CTRL or CMD + click on graph (or drag region). These will be stored in Grafana's annotation database.</0>",
-      "info-box-content-2": "Checkout the <1>Annotations documentation</1> for more information.",
+      "info-box-content-2": "Checkout the <2>Annotations documentation</2> for more information.",
       "info-box-title": "What are annotation queries?",
       "title": "There are no custom annotation queries added yet"
     }
@@ -78,7 +78,7 @@
     },
     "empty-state": {
       "button-title": "Create Dashboard",
-      "pro-tip": "Add/move dashboards to your folder at <1>Browse dashboards</1>",
+      "pro-tip": "Add/move dashboards to your folder at <2>Browse dashboards</2>",
       "title": "You haven't created any dashboards yet.",
       "title-folder": "This folder doesn't have any dashboards yet"
     },
@@ -369,7 +369,7 @@
   "dashboard-links": {
     "empty-state": {
       "button-title": "Add dashboard link",
-      "info-box-content": "Dashboard Links allow you to place links to other dashboards and web sites directly below the dashboard header. <1>Learn more</1>",
+      "info-box-content": "Dashboard Links allow you to place links to other dashboards and web sites directly below the dashboard header. <2>Learn more</2>",
       "info-box-title": "What are dashboard links?",
       "title": "There are no dashboard links added yet"
     }
@@ -427,7 +427,7 @@
   "data-source-list": {
     "empty-state": {
       "button-title": "Add data source",
-      "pro-tip": "You can also define data sources through configuration files. <1>Learn more</1>",
+      "pro-tip": "You can also define data sources through configuration files. <2>Learn more</2>",
       "title": "No data sources defined"
     }
   },
@@ -685,7 +685,7 @@
     },
     "empty-state": {
       "message": "You haven't created any library panels yet",
-      "more-info": "Create a library panel from any existing dashboard panel through the panel context menu. <1>Learn more</1>"
+      "more-info": "Create a library panel from any existing dashboard panel through the panel context menu. <2>Learn more</2>"
     }
   },
   "library-panels": {
@@ -1351,7 +1351,7 @@
     },
     "empty-state": {
       "message": "You haven't created any public dashboards yet",
-      "more-info": "Create a public dashboard from any existing dashboard through the <1>Share</1> modal. <3>Learn more</3>"
+      "more-info": "Create a public dashboard from any existing dashboard through the <1>Share</1> modal. <4>Learn more</4>"
     },
     "toggle": {
       "pause-sharing-toggle-text": "Pause sharing"
@@ -1601,7 +1601,7 @@
   "teams": {
     "empty-state": {
       "button-title": "New team",
-      "pro-tip": "Assign folder and dashboard permissions to teams instead of users to ease administration. <1>Learn more</1>",
+      "pro-tip": "Assign folder and dashboard permissions to teams instead of users to ease administration. <2>Learn more</2>",
       "title": "You haven't created any teams yet"
     }
   },
@@ -1724,12 +1724,12 @@
     "empty-state": {
       "button-title": "Add variable",
       "info-box-content": "Variables enable more interactive and dynamic dashboards. Instead of hard-coding things like server or sensor names in your metric queries you can use variables in their place. Variables are shown as list boxes at the top of the dashboard. These drop-down lists make it easy to change the data being displayed in your dashboard.",
-      "info-box-content-2": "Check out the <1>Templates and variables documentation</1> for more information.",
+      "info-box-content-2": "Check out the <2>Templates and variables documentation</2> for more information.",
       "info-box-title": "What do variables do?",
       "title": "There are no variables added yet"
     }
   },
   "You can create a snapshot of any dashboard through the <1>Share</1> modal": {
-    " <3>Learn more</3>": "You can create a snapshot of any dashboard through the <1>Share</1> modal. <3>Learn more</3>"
+    " <4>Learn more</4>": "You can create a snapshot of any dashboard through the <1>Share</1> modal. <4>Learn more</4>"
   }
 }

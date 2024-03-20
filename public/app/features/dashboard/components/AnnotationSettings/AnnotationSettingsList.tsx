@@ -125,7 +125,7 @@ export const AnnotationSettingsList = ({ dashboard, onNew, onEdit }: Props) => {
             </Trans>
             <Trans i18nKey="annotations.empty-state.info-box-content-2">
               Checkout the{' '}
-              <TextLink external href="">
+              <TextLink external href="http://docs.grafana.org/reference/annotations/">
                 Annotations documentation
               </TextLink>{' '}
               for more information.
