@@ -15,7 +15,9 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
+	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	folder2 "github.com/grafana/grafana/pkg/services/folder"
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
@@ -413,7 +415,9 @@ func TestExportRules(t *testing.T) {
 		t.Run(tc.title, func(t *testing.T) {
 			rc := createRequestContextWithPerms(orgID, map[int64]map[string][]string{
 				orgID: {
-					datasources.ActionQuery: []string{datasources.ScopeProvider.GetResourceScopeUID(accessQuery.DatasourceUID)},
+					dashboards.ActionFoldersRead:         []string{dashboards.ScopeFoldersProvider.GetResourceScopeUID(f1.UID), dashboards.ScopeFoldersProvider.GetResourceScopeUID(f2.UID)},
+					accesscontrol.ActionAlertingRuleRead: []string{dashboards.ScopeFoldersProvider.GetResourceScopeUID(f1.UID), dashboards.ScopeFoldersProvider.GetResourceScopeUID(f2.UID)},
+					datasources.ActionQuery:              []string{datasources.ScopeProvider.GetResourceScopeUID(accessQuery.DatasourceUID)},
 				},
 			}, nil)
 			rc.Req.Form = tc.params
