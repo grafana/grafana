@@ -20,7 +20,7 @@ import {
   GroupByVariable,
   QueryVariable,
   SceneDataLayerControls,
-  SceneDataLayers,
+  SceneDataLayerSet,
   SceneDataTransformer,
   SceneGridItem,
   SceneGridLayout,
@@ -1223,10 +1223,10 @@ describe('transformSaveModelToScene', () => {
     it('Should build correct scene model', () => {
       const scene = transformSaveModelToScene({ dashboard: dashboard_to_load1 as any, meta: {} });
 
-      expect(scene.state.$data).toBeInstanceOf(SceneDataLayers);
+      expect(scene.state.$data).toBeInstanceOf(SceneDataLayerSet);
       expect(scene.state.controls!.state.variableControls[1]).toBeInstanceOf(SceneDataLayerControls);
 
-      const dataLayers = scene.state.$data as SceneDataLayers;
+      const dataLayers = scene.state.$data as SceneDataLayerSet;
       expect(dataLayers.state.layers).toHaveLength(4);
       expect(dataLayers.state.layers[0].state.name).toBe('Annotations & Alerts');
       expect(dataLayers.state.layers[0].state.isEnabled).toBe(true);
@@ -1251,10 +1251,10 @@ describe('transformSaveModelToScene', () => {
       config.unifiedAlertingEnabled = true;
       const scene = transformSaveModelToScene({ dashboard: dashboard_to_load1 as any, meta: {} });
 
-      expect(scene.state.$data).toBeInstanceOf(SceneDataLayers);
+      expect(scene.state.$data).toBeInstanceOf(SceneDataLayerSet);
       expect(scene.state.controls!.state.variableControls[1]).toBeInstanceOf(SceneDataLayerControls);
 
-      const dataLayers = scene.state.$data as SceneDataLayers;
+      const dataLayers = scene.state.$data as SceneDataLayerSet;
       expect(dataLayers.state.layers).toHaveLength(5);
       expect(dataLayers.state.layers[4].state.name).toBe('Alert States');
     });
@@ -1265,10 +1265,10 @@ describe('transformSaveModelToScene', () => {
       dashboard.panels![0].alert = {};
       const scene = transformSaveModelToScene({ dashboard: dashboard_to_load1 as any, meta: {} });
 
-      expect(scene.state.$data).toBeInstanceOf(SceneDataLayers);
+      expect(scene.state.$data).toBeInstanceOf(SceneDataLayerSet);
       expect(scene.state.controls!.state.variableControls[1]).toBeInstanceOf(SceneDataLayerControls);
 
-      const dataLayers = scene.state.$data as SceneDataLayers;
+      const dataLayers = scene.state.$data as SceneDataLayerSet;
       expect(dataLayers.state.layers).toHaveLength(5);
       expect(dataLayers.state.layers[4].state.name).toBe('Alert States');
     });
