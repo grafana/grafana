@@ -12,7 +12,7 @@ import {
   SceneVariableSet,
   QueryVariable,
 } from '@grafana/scenes';
-import { ToolbarButton, Box, Stack, Icon, TabsBar, Tab, useStyles2, LinkButton } from '@grafana/ui';
+import { ToolbarButton, Box, Stack, Icon, TabsBar, Tab, useStyles2, LinkButton, Tooltip } from '@grafana/ui';
 
 import { getExploreUrl } from '../../core/utils/explore';
 
@@ -109,7 +109,12 @@ export class MetricScene extends SceneObjectBase<MetricSceneState> {
 const actionViewsDefinitions: ActionViewDefinition[] = [
   { displayName: 'Overview', value: 'overview', getScene: buildMetricOverviewScene },
   { displayName: 'Breakdown', value: 'breakdown', getScene: buildBreakdownActionScene },
-  { displayName: 'Related metrics', value: 'related', getScene: buildRelatedMetricsScene },
+  {
+    displayName: 'Related metrics',
+    value: 'related',
+    getScene: buildRelatedMetricsScene,
+    description: 'Relevant metrics based on current label filters',
+  },
 ];
 
 export interface MetricActionBarState extends SceneObjectState {}
@@ -179,7 +184,7 @@ export class MetricActionBar extends SceneObjectBase<MetricActionBarState> {
 
         <TabsBar>
           {actionViewsDefinitions.map((tab, index) => {
-            return (
+            const tabRender = (
               <Tab
                 key={index}
                 label={tab.displayName}
@@ -187,6 +192,15 @@ export class MetricActionBar extends SceneObjectBase<MetricActionBarState> {
                 onChangeTab={() => metricScene.setActionView(tab.value)}
               />
             );
+
+            if (tab.description) {
+              return (
+                <Tooltip key={index} content={tab.description} placement="bottom-start" theme="info">
+                  {tabRender}
+                </Tooltip>
+              );
+            }
+            return tabRender;
           })}
         </TabsBar>
       </Box>
