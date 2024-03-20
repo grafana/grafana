@@ -87,6 +87,8 @@ describe('removeRedundantEdges', () => {
     edges['0-4'] = { from: allSortedNodes[0], to: allSortedNodes[4], weight: 1, residual: true };
     edges['1-4'] = { from: allSortedNodes[1], to: allSortedNodes[4], weight: 1, residual: true };
 
+    allSortedNodes[4].parents.push(edges['0-4'], edges['1-4']);
+
     const newEdges = removeRedundantEdges(allSortedNodes, keptNodes, edges, 0);
     expect(edgesToString(newEdges)).toEqual(['0-2', '1-4', '2-4']);
   });

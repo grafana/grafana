@@ -49,11 +49,6 @@ export function createResidualEdges(originalTree: LevelItem, nodes: GraphNodes, 
   return newEdges;
 }
 
-/**
- * Edge is redundant if there are other edges with the same from - to nodes. This can happen if we delete nodes and then
- * create residual edges which represent the same path.
- * @param edge
- */
 function isRedundantEdge(edge: GraphEdge) {
   const seen: Record<string, boolean> = {};
   const queue = [edge.to];
@@ -69,7 +64,8 @@ function isRedundantEdge(edge: GraphEdge) {
       }
 
       if (parentEdge.from === edge.from) {
-        // we found edge that has the same from - to nodes as the edge we are testing.
+        // we found edge that has the same from the edge we are testing which means there is some other path between
+        // the from and to node of the edge we are testing.
         return true;
       }
       seen[parentEdge.from.label] = true;

@@ -76,7 +76,7 @@ function trimNodesByEntropy(nodes: GraphNodes, maxNodes: number) {
   });
 
   const keptNodes: GraphNodes = {};
-  nodesList.slice(maxNodes).forEach((node) => {
+  nodesList.slice(0, maxNodes).forEach((node) => {
     keptNodes[node.label] = node;
   });
   return { keptNodes, sortedNodes: nodesList };
