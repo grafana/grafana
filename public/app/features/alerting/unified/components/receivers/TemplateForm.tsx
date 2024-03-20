@@ -441,7 +441,7 @@ export function TemplatePreview({
 }
 
 const getStyles = (theme: GrafanaTheme2) => {
-  const smallContainerQuery = `@container form (width < ${theme.breakpoints.values.md}px)`;
+  const narrowScreenQuery = theme.breakpoints.down('md');
 
   return {
     form: css({
@@ -462,11 +462,11 @@ const getStyles = (theme: GrafanaTheme2) => {
       '& > *': {
         borderRadius: theme.shape.radius.default,
         border: `1px solid ${theme.colors.border.strong}`,
-        [smallContainerQuery]: {
+        [narrowScreenQuery]: {
           minHeight: theme.spacing(40),
         },
       },
-      [smallContainerQuery]: {
+      [narrowScreenQuery]: {
         flexDirection: 'column',
         gap: theme.spacing(2),
         height: 'auto',
@@ -492,7 +492,7 @@ const getStyles = (theme: GrafanaTheme2) => {
     payloadCollapseButton: css({
       backgroundColor: theme.colors.info.transparent,
       margin: 0,
-      [smallContainerQuery]: {
+      [narrowScreenQuery]: {
         display: 'none',
       },
     }),
