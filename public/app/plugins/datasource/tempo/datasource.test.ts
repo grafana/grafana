@@ -31,7 +31,6 @@ import { TempoVariableQueryType } from './VariableQueryEditor';
 import { createFetchResponse } from './_importedDependencies/test/helpers/createFetchResponse';
 import { TraceqlSearchScope } from './dataquery.gen';
 import {
-  DEFAULT_LIMIT,
   TempoDatasource,
   buildExpr,
   buildLinkExpr,
@@ -83,11 +82,6 @@ describe('Tempo data source', () => {
         refId: 'x',
         queryType: 'traceql',
         query: '$interpolationVarWithPipe',
-        spanName: '$interpolationVar',
-        serviceName: '$interpolationVar',
-        search: '$interpolationVar',
-        minDuration: '$interpolationVar',
-        maxDuration: '$interpolationVar',
         serviceMapQuery,
         filters: [
           {
@@ -135,11 +129,6 @@ describe('Tempo data source', () => {
       const ds = new TempoDatasource(defaultSettings, templateSrv);
       const queries = ds.interpolateVariablesInQueries([getQuery()], {});
       expect(queries[0].query).toBe(textWithPipe);
-      expect(queries[0].serviceName).toBe(text);
-      expect(queries[0].spanName).toBe(text);
-      expect(queries[0].search).toBe(text);
-      expect(queries[0].minDuration).toBe(text);
-      expect(queries[0].maxDuration).toBe(text);
       expect(queries[0].serviceMapQuery).toBe(text);
       expect(queries[0].filters[0].value).toBe(textWithPipe);
       expect(queries[0].filters[1].value).toBe(text);
@@ -153,11 +142,6 @@ describe('Tempo data source', () => {
         interpolationVar: { text: scopedText, value: scopedText },
       });
       expect(resp.query).toBe(textWithPipe);
-      expect(resp.serviceName).toBe(scopedText);
-      expect(resp.spanName).toBe(scopedText);
-      expect(resp.search).toBe(scopedText);
-      expect(resp.minDuration).toBe(scopedText);
-      expect(resp.maxDuration).toBe(scopedText);
       expect(resp.filters[0].value).toBe(textWithPipe);
       expect(resp.filters[1].value).toBe(scopedText);
       expect(resp.filters[1].tag).toBe(scopedText);
@@ -283,31 +267,6 @@ describe('Tempo data source', () => {
     expect(edgesFrame.meta?.preferredVisualisationType).toBe('nodeGraph');
   });
 
-  it('should build search query correctly', () => {
-    const duration = '10ms';
-    const templateSrv = { replace: jest.fn().mockReturnValue(duration) } as unknown as TemplateSrv;
-    const ds = new TempoDatasource(defaultSettings, templateSrv);
-    const tempoQuery: TempoQuery = {
-      queryType: 'nativeSearch',
-      refId: 'A',
-      query: '',
-      serviceName: 'frontend',
-      spanName: '/config',
-      search: 'root.http.status_code=500',
-      minDuration: '$interpolationVar',
-      maxDuration: '$interpolationVar',
-      limit: 10,
-      filters: [],
-    };
-    const builtQuery = ds.buildSearchQuery(tempoQuery);
-    expect(builtQuery).toStrictEqual({
-      tags: 'root.http.status_code=500 service.name="frontend" name="/config"',
-      minDuration: duration,
-      maxDuration: duration,
-      limit: 10,
-    });
-  });
-
   it('should format metrics summary query correctly', () => {
     const ds = new TempoDatasource(defaultSettings, {} as TemplateSrv);
     const queryGroupBy = [
@@ -318,61 +277,6 @@ describe('Tempo data source', () => {
     ];
     const groupBy = ds.formatGroupBy(queryGroupBy);
     expect(groupBy).toEqual('.component, span.name, resource.service.name, kind');
-  });
-
-  it('should include a default limit', () => {
-    const ds = new TempoDatasource(defaultSettings);
-    const tempoQuery: TempoQuery = {
-      queryType: 'nativeSearch',
-      refId: 'A',
-      query: '',
-      search: '',
-      filters: [],
-    };
-    const builtQuery = ds.buildSearchQuery(tempoQuery);
-    expect(builtQuery).toStrictEqual({
-      tags: '',
-      limit: DEFAULT_LIMIT,
-    });
-  });
-
-  it('should include time range if provided', () => {
-    const ds = new TempoDatasource(defaultSettings);
-    const tempoQuery: TempoQuery = {
-      queryType: 'nativeSearch',
-      refId: 'A',
-      query: '',
-      search: '',
-      filters: [],
-    };
-    const timeRange = { startTime: 0, endTime: 1000 };
-    const builtQuery = ds.buildSearchQuery(tempoQuery, timeRange);
-    expect(builtQuery).toStrictEqual({
-      tags: '',
-      limit: DEFAULT_LIMIT,
-      start: timeRange.startTime,
-      end: timeRange.endTime,
-    });
-  });
-
-  it('formats native search query history correctly', () => {
-    const ds = new TempoDatasource(defaultSettings);
-    const tempoQuery: TempoQuery = {
-      filters: [],
-      queryType: 'nativeSearch',
-      refId: 'A',
-      query: '',
-      serviceName: 'frontend',
-      spanName: '/config',
-      search: 'root.http.status_code=500',
-      minDuration: '1ms',
-      maxDuration: '100s',
-      limit: 10,
-    };
-    const result = ds.getQueryDisplayText(tempoQuery);
-    expect(result).toBe(
-      'Service Name: frontend, Span Name: /config, Search: root.http.status_code=500, Min Duration: 1ms, Max Duration: 100s, Limit: 10'
-    );
   });
 
   describe('test the testDatasource function', () => {

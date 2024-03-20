@@ -19,6 +19,10 @@ type OutlierCommand struct {
 
 var _ Command = OutlierCommand{}
 
+func (c OutlierCommand) Type() string {
+	return "outlier"
+}
+
 func (c OutlierCommand) DatasourceUID() string {
 	return c.config.DatasourceUID
 }

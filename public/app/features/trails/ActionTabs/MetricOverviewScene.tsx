@@ -3,7 +3,6 @@ import React from 'react';
 import {
   QueryVariable,
   SceneComponentProps,
-  SceneFlexItem,
   sceneGraph,
   SceneObjectBase,
   SceneObjectState,
@@ -17,7 +16,7 @@ import { getDatasourceSrv } from '../../plugins/datasource_srv';
 import { ALL_VARIABLE_VALUE } from '../../variables/constants';
 import { StatusWrapper } from '../StatusWrapper';
 import { TRAILS_ROUTE, VAR_DATASOURCE_EXPR, VAR_GROUP_BY } from '../shared';
-import { getMetricSceneFor } from '../utils';
+import { getMetricSceneFor, getTrailFor } from '../utils';
 
 import { getLabelOptions } from './utils';
 
@@ -107,20 +106,26 @@ export class MetricOverviewScene extends SceneObjectBase<MetricOverviewSceneStat
             <Stack direction="column" gap={0.5}>
               <Text weight={'medium'}>Labels</Text>
               {labelOptions.length === 0 && 'Unable to fetch labels.'}
-              {labelOptions.map((l) => (
-                <TextLink
-                  key={l.label}
-                  href={sceneGraph.interpolate(
-                    model,
-                    `${TRAILS_ROUTE}$\{__url.params:exclude:actionView,var-groupby}&actionView=breakdown&var-groupby=${encodeURIComponent(
-                      l.value!
-                    )}`
-                  )}
-                  title="View breakdown"
-                >
-                  {l.label!}
-                </TextLink>
-              ))}
+              {labelOptions.map((l) =>
+                getTrailFor(model).state.embedded ? (
+                  // Do not render as TextLink when in embedded mode, as any direct URL
+                  // manipulation will take the browser out out of the current page.
+                  <div key={l.label}>{l.label}</div>
+                ) : (
+                  <TextLink
+                    key={l.label}
+                    href={sceneGraph.interpolate(
+                      model,
+                      `${TRAILS_ROUTE}$\{__url.params:exclude:actionView,var-groupby}&actionView=breakdown&var-groupby=${encodeURIComponent(
+                        l.value!
+                      )}`
+                    )}
+                    title="View breakdown"
+                  >
+                    {l.label!}
+                  </TextLink>
+                )
+              )}
             </Stack>
           </>
         </Stack>
@@ -130,7 +135,5 @@ export class MetricOverviewScene extends SceneObjectBase<MetricOverviewSceneStat
 }
 
 export function buildMetricOverviewScene() {
-  return new SceneFlexItem({
-    body: new MetricOverviewScene({}),
-  });
+  return new MetricOverviewScene({});
 }
