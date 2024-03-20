@@ -388,7 +388,7 @@ playwright.config.ts @grafana/plugins-platform-frontend
 /public/app/features/admin/ @grafana/identity-access-team
 
 # Temp owners until Enterprise team takes over
-/public/app/features/admin/migrate-to-cloud @grafana/grafana-frontend-platform
+/public/app/features/migrate-to-cloud @grafana/grafana-frontend-platform
 
 /public/app/features/auth-config/ @grafana/identity-access-team
 /public/app/features/annotations/ @grafana/dashboards-squad

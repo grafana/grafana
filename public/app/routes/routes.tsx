@@ -366,7 +366,7 @@ export function getAppRoutes(): RouteDescriptor[] {
       path: '/admin/migrate-to-cloud',
       roles: () => ['Admin'],
       component: SafeDynamicImport(
-        () => import(/* webpackChunkName: "MigrateToCloud" */ 'app/features/admin/migrate-to-cloud/MigrateToCloud')
+        () => import(/* webpackChunkName: "MigrateToCloud" */ 'app/features/migrate-to-cloud/MigrateToCloud')
       ),
     },
     // LOGIN / SIGNUP

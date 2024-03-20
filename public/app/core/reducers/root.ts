@@ -2,7 +2,6 @@ import { ReducersMapObject } from '@reduxjs/toolkit';
 import { AnyAction, combineReducers } from 'redux';
 
 import sharedReducers from 'app/core/reducers';
-import { migrateToCloudAPI } from 'app/features/admin/migrate-to-cloud/api';
 import ldapReducers from 'app/features/admin/state/reducers';
 import alertingReducers from 'app/features/alerting/state/reducers';
 import apiKeysReducers from 'app/features/api-keys/state/reducers';
@@ -17,6 +16,7 @@ import exploreReducers from 'app/features/explore/state/main';
 import foldersReducers from 'app/features/folders/state/reducers';
 import invitesReducers from 'app/features/invites/state/reducers';
 import importDashboardReducers from 'app/features/manage-dashboards/state/reducers';
+import { migrateToCloudAPI } from 'app/features/migrate-to-cloud/api';
 import organizationReducers from 'app/features/org/state/reducers';
 import panelsReducers from 'app/features/panel/state/reducers';
 import { reducer as pluginsReducer } from 'app/features/plugins/admin/state/reducer';
