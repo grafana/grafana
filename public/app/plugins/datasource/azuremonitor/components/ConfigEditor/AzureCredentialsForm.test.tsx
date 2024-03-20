@@ -7,6 +7,7 @@ const setup = (propsFunc?: (props: Props) => Props) => {
   let props: Props = {
     managedIdentityEnabled: false,
     workloadIdentityEnabled: false,
+    userIdentityEnabled: false,
     credentials: {
       authType: 'clientsecret',
       azureCloud: 'azuremonitor',
@@ -14,7 +15,7 @@ const setup = (propsFunc?: (props: Props) => Props) => {
       clientId: '34509fad-c0r9-45df-9e25-f1ee34af6900',
       clientSecret: undefined,
     },
-    azureCloudOptions: [
+    legacyAzureCloudOptions: [
       { value: 'azuremonitor', label: 'Azure' },
       { value: 'govazuremonitor', label: 'Azure US Government' },
       { value: 'chinaazuremonitor', label: 'Azure China' },
