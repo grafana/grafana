@@ -83,14 +83,16 @@ export class DashboardScenePageStateManager extends StateManagerBase<DashboardSc
         }
         default:
           rsp = await dashboardLoaderSrv.loadDashboard('db', '', uid);
+
           if (route === DashboardRoutes.Embedded) {
             rsp.meta.isEmbedded = true;
           }
       }
 
-      if (rsp.meta.url && route !== DashboardRoutes.Embedded) {
+      if (rsp.meta.url && route === DashboardRoutes.Normal) {
         const dashboardUrl = locationUtil.stripBaseFromUrl(rsp.meta.url);
         const currentPath = locationService.getLocation().pathname;
+
         if (dashboardUrl !== currentPath) {
           // Spread current location to persist search params used for navigation
           locationService.replace({

@@ -1,4 +1,4 @@
-import { from, map, Unsubscribable, Observable } from 'rxjs';
+import { from, map, Unsubscribable } from 'rxjs';
 
 import { AlertState, AlertStateInfo, DataTopic, LoadingState, toDataFrame } from '@grafana/data';
 import { config, getBackendSrv } from '@grafana/runtime';
@@ -68,71 +68,58 @@ export class AlertStatesDataLayer
       return;
     }
 
-    let alerStatesExecution: Observable<AlertStateInfo[]> | undefined;
+    const alerStatesExecution = from(
+      getBackendSrv().get(
+        '/api/prometheus/grafana/api/v1/rules',
+        {
+          dashboard_uid: uid!,
+        },
+        `dashboard-query-runner-unified-alert-states-${id}`
+      )
+    ).pipe(
+      map((result: PromRulesResponse) => {
+        if (result.status === 'success') {
+          this.hasAlertRules = false;
+          const panelIdToAlertState: Record<number, AlertStateInfo> = {};
 
-    if (this.isUsingLegacyAlerting()) {
-      alerStatesExecution = from(
-        getBackendSrv().get(
-          '/api/alerts/states-for-dashboard',
-          {
-            dashboardId: id,
-          },
-          `dashboard-query-runner-alert-states-${id}`
-        )
-      ).pipe(map((alertStates) => alertStates));
-    } else {
-      alerStatesExecution = from(
-        getBackendSrv().get(
-          '/api/prometheus/grafana/api/v1/rules',
-          {
-            dashboard_uid: uid!,
-          },
-          `dashboard-query-runner-unified-alert-states-${id}`
-        )
-      ).pipe(
-        map((result: PromRulesResponse) => {
-          if (result.status === 'success') {
-            this.hasAlertRules = false;
-            const panelIdToAlertState: Record<number, AlertStateInfo> = {};
+          result.data.groups.forEach((group) =>
+            group.rules.forEach((rule) => {
+              if (isAlertingRule(rule) && rule.annotations && rule.annotations[Annotation.panelID]) {
+                this.hasAlertRules = true;
+                const panelId = Number(rule.annotations[Annotation.panelID]);
+                const state = promAlertStateToAlertState(rule.state);
 
-            result.data.groups.forEach((group) =>
-              group.rules.forEach((rule) => {
-                if (isAlertingRule(rule) && rule.annotations && rule.annotations[Annotation.panelID]) {
-                  this.hasAlertRules = true;
-                  const panelId = Number(rule.annotations[Annotation.panelID]);
-                  const state = promAlertStateToAlertState(rule.state);
-
-                  // there can be multiple alerts per panel, so we make sure we get the most severe state:
-                  // alerting > pending > ok
-                  if (!panelIdToAlertState[panelId]) {
-                    panelIdToAlertState[panelId] = {
-                      state,
-                      id: Object.keys(panelIdToAlertState).length,
-                      panelId,
-                      dashboardId: id!,
-                    };
-                  } else if (
-                    state === AlertState.Alerting &&
-                    panelIdToAlertState[panelId].state !== AlertState.Alerting
-                  ) {
-                    panelIdToAlertState[panelId].state = AlertState.Alerting;
-                  } else if (
-                    state === AlertState.Pending &&
-                    panelIdToAlertState[panelId].state !== AlertState.Alerting &&
-                    panelIdToAlertState[panelId].state !== AlertState.Pending
-                  ) {
-                    panelIdToAlertState[panelId].state = AlertState.Pending;
-                  }
+                // there can be multiple alerts per panel, so we make sure we get the most severe state:
+                // alerting > pending > ok
+                if (!panelIdToAlertState[panelId]) {
+                  panelIdToAlertState[panelId] = {
+                    state,
+                    id: Object.keys(panelIdToAlertState).length,
+                    panelId,
+                    dashboardId: id!,
+                  };
+                } else if (
+                  state === AlertState.Alerting &&
+                  panelIdToAlertState[panelId].state !== AlertState.Alerting
+                ) {
+                  panelIdToAlertState[panelId].state = AlertState.Alerting;
+                } else if (
+                  state === AlertState.Pending &&
+                  panelIdToAlertState[panelId].state !== AlertState.Alerting &&
+                  panelIdToAlertState[panelId].state !== AlertState.Pending
+                ) {
+                  panelIdToAlertState[panelId].state = AlertState.Pending;
                 }
-              })
-            );
-            return Object.values(panelIdToAlertState);
-          }
+              }
+            })
+          );
+          return Object.values(panelIdToAlertState);
+        }
 
-          throw new Error(`Unexpected alert rules response.`);
-        })
-      );
-    }
+        throw new Error(`Unexpected alert rules response.`);
+      })
+    );
+
     this.querySub = alerStatesExecution.subscribe({
       next: (stateUpdate) => {
         this.publishResults(
@@ -165,50 +152,34 @@ export class AlertStatesDataLayer
 
   private canWork(timeRange: SceneTimeRangeLike): boolean {
     const dashboard = getDashboardSceneFor(this);
-    const { uid, id } = dashboard.state;
+    const { uid } = dashboard.state;
 
-    if (this.isUsingLegacyAlerting()) {
-      if (!id) {
-        return false;
-      }
-
-      if (timeRange.state.value.raw.to !== 'now') {
-        return false;
-      }
-
-      return true;
-    } else {
-      if (!uid) {
-        return false;
-      }
-
-      // Cannot fetch rules while on a public dashboard since it's unauthenticated
-      if (config.publicDashboardAccessToken) {
-        return false;
-      }
-
-      if (timeRange.state.value.raw.to !== 'now') {
-        return false;
-      }
-
-      if (this.hasAlertRules === false) {
-        return false;
-      }
-
-      const hasRuleReadPermission =
-        contextSrv.hasPermission(AccessControlAction.AlertingRuleRead) &&
-        contextSrv.hasPermission(AccessControlAction.AlertingRuleExternalRead);
-
-      if (!hasRuleReadPermission) {
-        return false;
-      }
-
-      return true;
+    if (!uid) {
+      return false;
     }
-  }
 
-  private isUsingLegacyAlerting(): boolean {
-    return !config.unifiedAlertingEnabled;
+    // Cannot fetch rules while on a public dashboard since it's unauthenticated
+    if (config.publicDashboardAccessToken) {
+      return false;
+    }
+
+    if (timeRange.state.value.raw.to !== 'now') {
+      return false;
+    }
+
+    if (this.hasAlertRules === false) {
+      return false;
+    }
+
+    const hasRuleReadPermission =
+      contextSrv.hasPermission(AccessControlAction.AlertingRuleRead) &&
+      contextSrv.hasPermission(AccessControlAction.AlertingRuleExternalRead);
+
+    if (!hasRuleReadPermission) {
+      return false;
+    }
+
+    return true;
   }
 
   private handleError = (err: unknown) => {

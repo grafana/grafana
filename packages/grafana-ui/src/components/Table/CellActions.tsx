@@ -48,7 +48,7 @@ export function CellActions({ field, cell, previewMode, showFilters, onCellFilte
 
   return (
     <>
-      <div className={`cellActions ${isRightAligned ? 'cellActionsLeft' : ''}`}>
+      <div className={`cellActions${isRightAligned ? ' cellActionsLeft' : ''}`}>
         <HorizontalGroup spacing="xs">
           {inspectEnabled && (
             <IconButton

@@ -16,8 +16,6 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/tsdb/sqleng"
-
-	_ "github.com/lib/pq"
 )
 
 var updateGoldenFiles = false
@@ -98,7 +96,8 @@ func TestIntegrationPostgresSnapshots(t *testing.T) {
 		format string
 	}{
 		{format: "time_series", name: "simple"},
-		{format: "time_series", name: "no_rows"},
+		{format: "time_series", name: "no_rows_long"},
+		{format: "time_series", name: "no_rows_wide"},
 		{format: "time_series", name: "7x_compat_metric_label"},
 		{format: "time_series", name: "convert_to_float64"},
 		{format: "time_series", name: "convert_to_float64_not"},
