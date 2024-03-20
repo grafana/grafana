@@ -573,7 +573,7 @@ func TestIntegrationGetSoftDeletedDashboard(t *testing.T) {
 
 		// Get the soft deleted dashboard should be empty
 		dash, err := dashboardStore.GetDashboard(context.Background(), &dashboards.GetDashboardQuery{UID: savedDash.UID, OrgID: savedDash.OrgID})
-		assert.Error(t, err)
+		assert.Error(t, dashboards.ErrDashboardNotFound)
 		assert.Nil(t, dash)
 
 		// Get the soft deleted dashboard
