@@ -369,7 +369,6 @@
       "title-label": "Titel"
     },
     "json-editor": {
-      "apply-button": "Änderungen anwenden",
       "save-button": "Änderungen speichern",
       "subtitle": "Das JSON-Modell unten ist die Datenstruktur, die das Dashboard definiert. Dazu gehören Dashboard-Einstellungen, Fenster-Einstellungen, Layout, Abfragen und so weiter.",
       "title": "JSON-Modell"
