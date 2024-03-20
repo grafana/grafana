@@ -23,12 +23,12 @@ When you hover your cursor over a visualization, Grafana can display tooltips th
 
 You can configure tooltips for the following visualizations:
 
-|                                  |                                  |
-| -------------------------------- | -------------------------------- |
-| [Bar chart][bar chart]           |  | [State timeline][state timeline]
-| [Candlestick][candlestick]               | [Status history][status history]      |
-| [Heatmap][heatmap]         | [Time series][time series]                    |
-| [Pie chart][pie chart]  | [Trend][trend] |
+|                            |                                  |
+| -------------------------- | -------------------------------- |
+| [Bar chart][bar chart]     | [State timeline][state timeline] |
+| [Candlestick][candlestick] | [Status history][status history] |
+| [Heatmap][heatmap]         | [Time series][time series]       |
+| [Pie chart][pie chart]     | [Trend][trend]                   |
 
 <!--Also xy chart -->
 
