@@ -38,6 +38,7 @@ import (
 
 // Valid Grafana Alertmanager configurations.
 const testGrafanaConfig = `{"template_files":{},"alertmanager_config":{"route":{"receiver":"grafana-default-email","group_by":["grafana_folder","alertname"]},"templates":null,"receivers":[{"name":"grafana-default-email","grafana_managed_receiver_configs":[{"uid":"","name":"some other name","type":"email","disableResolveMessage":false,"settings":{"addresses":"\u003cexample@email.com\u003e"},"secureSettings":null}]}]}}`
+const testGrafanaConfig2 = `{"template_files":{},"alertmanager_config":{"route":{"receiver":"test-email-receiver","group_by":["grafana_folder","alertname"]},"templates":null,"receivers":[{"name":"test-email-receiver","grafana_managed_receiver_configs":[{"uid":"","name":"test","type":"email","disableResolveMessage":false,"settings":{"addresses":"\u003cexample@email.com\u003e"},"secureSettings":null}]}]}}`
 const testGrafanaConfigWithSecret = `{"template_files":{},"alertmanager_config":{"route":{"receiver":"grafana-default-email","group_by":["grafana_folder","alertname"]},"templates":null,"receivers":[{"name":"grafana-default-email","grafana_managed_receiver_configs":[{"uid":"dde6ntuob69dtf","name":"WH","type":"webhook","disableResolveMessage":false,"settings":{"url":"http://localhost:8080","username":"test"},"secureSettings":{"password":"test"}}]}]}}`
 
 func TestMain(m *testing.M) {
@@ -262,7 +263,7 @@ func TestCompareAndSendConfiguration(t *testing.T) {
 	}
 }
 
-func TestIntegrationRemoteAlertmanagerApplyConfigOnlyUploadsOnce(t *testing.T) {
+func TestIntegrationRemoteAlertmanagerConfiguration(t *testing.T) {
 	if testing.Short() {
 		t.Skip("skipping integration test")
 	}
@@ -282,13 +283,13 @@ func TestIntegrationRemoteAlertmanagerApplyConfigOnlyUploadsOnce(t *testing.T) {
 		BasicAuthPassword: password,
 	}
 
-	fakeConfigHash := fmt.Sprintf("%x", md5.Sum([]byte(testGrafanaConfig)))
-	fakeConfigCreatedAt := time.Date(2020, 6, 5, 12, 6, 0, 0, time.UTC).Unix()
-	fakeConfig := &ngmodels.AlertConfiguration{
+	testConfigHash := fmt.Sprintf("%x", md5.Sum([]byte(testGrafanaConfig)))
+	testConfigCreatedAt := time.Date(2020, 6, 5, 12, 6, 0, 0, time.UTC).Unix()
+	testConfig := &ngmodels.AlertConfiguration{
 		AlertmanagerConfiguration: testGrafanaConfig,
-		ConfigurationHash:         fakeConfigHash,
+		ConfigurationHash:         testConfigHash,
 		ConfigurationVersion:      "v2",
-		CreatedAt:                 fakeConfigCreatedAt,
+		CreatedAt:                 testConfigCreatedAt,
 		Default:                   true,
 		OrgID:                     1,
 	}
@@ -331,7 +332,7 @@ func TestIntegrationRemoteAlertmanagerApplyConfigOnlyUploadsOnce(t *testing.T) {
 	// Using `ApplyConfig` as a heuristic of a function that gets called when the Alertmanager starts
 	// We call it as if the Alertmanager were starting.
 	{
-		require.NoError(t, am.ApplyConfig(ctx, fakeConfig))
+		require.NoError(t, am.ApplyConfig(ctx, testConfig))
 
 		// First, we need to verify that the readiness check passes.
 		require.True(t, am.Ready())
@@ -340,8 +341,8 @@ func TestIntegrationRemoteAlertmanagerApplyConfigOnlyUploadsOnce(t *testing.T) {
 		config, err := am.mimirClient.GetGrafanaAlertmanagerConfig(ctx)
 		require.NoError(t, err)
 		require.Equal(t, testGrafanaConfig, config.GrafanaAlertmanagerConfig)
-		require.Equal(t, fakeConfigHash, config.Hash)
-		require.Equal(t, fakeConfigCreatedAt, config.CreatedAt)
+		require.Equal(t, testConfigHash, config.Hash)
+		require.Equal(t, testConfigCreatedAt, config.CreatedAt)
 		require.Equal(t, true, config.Default)
 
 		state, err := am.mimirClient.GetGrafanaAlertmanagerState(ctx)
@@ -353,8 +354,8 @@ func TestIntegrationRemoteAlertmanagerApplyConfigOnlyUploadsOnce(t *testing.T) {
 	{
 		require.NoError(t, store.Set(ctx, cfg.OrgID, "alertmanager", "silences", base64.StdEncoding.EncodeToString([]byte("abc123"))))
 		require.NoError(t, store.Set(ctx, cfg.OrgID, "alertmanager", "notifications", base64.StdEncoding.EncodeToString([]byte("abc123"))))
-		fakeConfig.ID = 30000000000000000
-		require.NoError(t, am.ApplyConfig(ctx, fakeConfig))
+		testConfig.CreatedAt = time.Now().Unix()
+		require.NoError(t, am.ApplyConfig(ctx, testConfig))
 
 		// The remote Alertmanager continues to be ready.
 		require.True(t, am.Ready())
@@ -363,14 +364,29 @@ func TestIntegrationRemoteAlertmanagerApplyConfigOnlyUploadsOnce(t *testing.T) {
 		config, err := am.mimirClient.GetGrafanaAlertmanagerConfig(ctx)
 		require.NoError(t, err)
 		require.Equal(t, testGrafanaConfig, config.GrafanaAlertmanagerConfig)
-		require.Equal(t, fakeConfigHash, config.Hash)
-		require.Equal(t, fakeConfigCreatedAt, config.CreatedAt)
-		require.Equal(t, true, config.Default)
+		require.Equal(t, testConfigHash, config.Hash)
+		require.Equal(t, testConfigCreatedAt, config.CreatedAt)
+		require.True(t, config.Default)
 
 		// Check that the state is the same as before.
 		state, err := am.mimirClient.GetGrafanaAlertmanagerState(ctx)
 		require.NoError(t, err)
 		require.Equal(t, encodedFullState, state.State)
+	}
+
+	// `SaveAndApplyConfig` is called whenever a user manually changes the Alertmanager configuration.
+	// Calling this method should send the configuration to the remote Alertmanager.
+	{
+		postableCfg, err := notifier.Load([]byte(testGrafanaConfig2))
+		require.NoError(t, err)
+		require.NoError(t, am.SaveAndApplyConfig(ctx, postableCfg))
+
+		// Check that the configuration was uploaded to the remote Alertmanager.
+		config, err := am.mimirClient.GetGrafanaAlertmanagerConfig(ctx)
+		require.NoError(t, err)
+		require.Equal(t, testGrafanaConfig2, config.GrafanaAlertmanagerConfig)
+		require.Equal(t, fmt.Sprintf("%x", md5.Sum([]byte(testGrafanaConfig2))), config.Hash)
+		require.False(t, config.Default)
 	}
 
 	// TODO: Now, shutdown the Alertmanager and we expect the latest configuration to be uploaded.

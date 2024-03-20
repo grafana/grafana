@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"net/http"
 	"net/url"
+	"time"
 
 	"github.com/go-openapi/strfmt"
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -269,8 +270,20 @@ func (am *Alertmanager) CompareAndSendState(ctx context.Context) error {
 	return nil
 }
 
+// SaveAndApplyConfig should forward the configuration to the remote Alertmanager.
 func (am *Alertmanager) SaveAndApplyConfig(ctx context.Context, cfg *apimodels.PostableUserConfig) error {
-	return nil
+	rawConfig, err := json.Marshal(cfg)
+	if err != nil {
+		return err
+	}
+
+	return am.mimirClient.CreateGrafanaAlertmanagerConfig(
+		ctx,
+		string(rawConfig),
+		fmt.Sprintf("%x", md5.Sum(rawConfig)),
+		time.Now().Unix(),
+		false,
+	)
 }
 
 // This method is called when the org is found in the database but no configuration is found for that org,
