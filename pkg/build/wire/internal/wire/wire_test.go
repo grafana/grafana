@@ -22,6 +22,7 @@ import (
 	"go/build"
 	"go/types"
 	"io/ioutil"
+	"log"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -464,6 +465,19 @@ type testCase struct {
 //					expected output from the final compiled program,
 //					missing if wire_errs.txt is present
 func loadTestCase(root string, wireGoSrc []byte) (*testCase, error) {
+	// debug drone
+	log.Println("root:", root)
+	err := filepath.Walk(root, func(path string, info os.FileInfo, err error) error {
+		if err != nil {
+			return err
+		}
+		fmt.Println("walk", path, info.Size())
+		return nil
+	})
+	if err != nil {
+		log.Println("walk error:", err)
+	}
+
 	name := filepath.Base(root)
 	pkg, err := ioutil.ReadFile(filepath.Join(root, "pkg"))
 	if err != nil {
