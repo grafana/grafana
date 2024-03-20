@@ -45,6 +45,24 @@ The alert rule state is determined by the “worst case” state of the alert in
 
 The alert rule health is determined by the status of the evaluation of the alert rule, which can be Ok, Error, and NoData.
 
+**Alert instances (aka multi-dimensional alerts)**
+
+Each alert rule can create multiple alert instances, also known as multi-dimensional alerts. This is exceptionally powerful as it allows us to observe multiple series in a single expression.
+
+```promql
+sum by(cpu) (
+  rate(node_cpu_seconds_total{mode!="idle"}[1m])
+)
+```
+
+A rule using this PromQL expression creates as many alert instances as the amount of CPUs we are observing after the first evaluation, enabling a single rule to report the status of each CPU.
+
+{{< figure src="/static/img/docs/alerting/unified/multi-dimensional-alert.png" caption="A multi-dimensional Grafana managed alert rule" >}}
+
+The alert rule is frequently evaluated and can update the state of the alert instances. Only firing and resolved alert instances are sent to the [Alertmanager][alert-manager] which handles the notification.
+
+{{!--< figure src="/media/docs/alerting/how-alerting-works-alertmanager.png" max-width="750px">}}
+
 ### Labels and states
 
 Alert rules are uniquely identified by sets of key/value pairs called labels. Each key is a label name and each value is a label value. For example, one alert might have the labels `foo=bar` and another alert rule might have the labels `foo=baz`. An alert rule can have many labels such as `foo=bar,bar=baz`, but it cannot have the same label twice such as `foo=bar,foo=baz`. Two alert rules cannot have the same labels either, and if two alert rules have the same labels such as `foo=bar,bar=baz` and `foo=bar,bar=baz` then one of the alerts will be discarded. Firing alerts are resolved when the condition in the alert rule is no longer met, or the alert rule is deleted.
