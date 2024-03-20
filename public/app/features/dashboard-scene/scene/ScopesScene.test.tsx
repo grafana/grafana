@@ -1,3 +1,5 @@
+import { waitFor } from '@testing-library/react';
+
 import { config } from '@grafana/runtime';
 import {
   behaviors,
@@ -15,55 +17,116 @@ import { ScopesDashboardsScene } from './ScopesDashboardsScene';
 import { ScopesFiltersScene } from './ScopesFiltersScene';
 import { ScopesScene } from './ScopesScene';
 
+const dashboardsMocks = {
+  dashboard1: {
+    uid: 'dashboard1',
+    title: 'Dashboard 1',
+    url: '/d/dashboard1',
+  },
+  dashboard2: {
+    uid: 'dashboard2',
+    title: 'Dashboard 2',
+    url: '/d/dashboard2',
+  },
+  dashboard3: {
+    uid: 'dashboard3',
+    title: 'Dashboard 3',
+    url: '/d/dashboard3',
+  },
+};
+
+const scopesMocks = {
+  scope1: {
+    uid: 'scope1',
+    title: 'Scope 1',
+    type: 'Type 1',
+    description: 'Description 1',
+    category: 'Category 1',
+    filters: [
+      { key: 'a-key', operator: '=', value: 'a-value' },
+      { key: 'b-key', operator: '!=', value: 'b-value' },
+    ],
+    dashboards: [dashboardsMocks.dashboard1, dashboardsMocks.dashboard2, dashboardsMocks.dashboard3],
+  },
+  scope2: {
+    uid: 'scope2',
+    title: 'Scope 2',
+    type: 'Type 2',
+    description: 'Description 2',
+    category: 'Category 2',
+    filters: [{ key: 'c-key', operator: '!=', value: 'c-value' }],
+    dashboards: [dashboardsMocks.dashboard3],
+  },
+  scope3: {
+    uid: 'scope3',
+    title: 'Scope 3',
+    type: 'Type 1',
+    description: 'Description 3',
+    category: 'Category 1',
+    filters: [{ key: 'd-key', operator: '=', value: 'd-value' }],
+    dashboards: [dashboardsMocks.dashboard1, dashboardsMocks.dashboard2],
+  },
+};
+
 jest.mock('@grafana/runtime', () => ({
   __esModule: true,
   ...jest.requireActual('@grafana/runtime'),
   getBackendSrv: () => ({
     get: jest.fn().mockImplementation((url: string) => {
       if (url === '/apis/scope.grafana.app/v0alpha1/scopes') {
-        return { items: Object.values(mocks) };
+        return {
+          items: Object.values(scopesMocks).map((scope) => ({
+            metadata: { uid: scope.uid },
+            spec: {
+              title: scope.title,
+              type: scope.type,
+              description: scope.description,
+              category: scope.category,
+              filters: scope.filters,
+            },
+          })),
+        };
+      }
+
+      if (url === '/apis/scope.grafana.app/v0alpha1/scopedashboards') {
+        return {
+          items: Object.values(scopesMocks).map((scope) => ({
+            spec: {
+              dashboardUids: scope.dashboards.map((dashboard) => dashboard.uid),
+              scopeUid: scope.uid,
+            },
+          })),
+        };
+      }
+
+      if (url.startsWith('/api/dashboards/uid/')) {
+        const uid = url.split('/').pop();
+
+        if (!uid) {
+          return {};
+        }
+
+        const dashboard = Object.values(dashboardsMocks).find((dashboard) => dashboard.uid === uid);
+
+        if (!dashboard) {
+          return {};
+        }
+
+        return {
+          dashboard: {
+            title: dashboard.title,
+            uid,
+          },
+          meta: {
+            url: dashboard.url,
+          },
+        };
       }
 
       return {};
     }),
   }),
 }));
-
-const mocks = {
-  scope1: {
-    metadata: { uid: 'scope-1' },
-    spec: {
-      title: 'Scope 1',
-      type: 'Type 1',
-      description: 'Description 1',
-      category: 'Category 1',
-      filters: [
-        { key: 'a-key', operator: '=', value: 'a-value' },
-        { key: 'b-key', operator: '!=', value: 'b-value' },
-      ],
-    },
-  },
-  scope2: {
-    metadata: { uid: 'scope-2' },
-    spec: {
-      title: 'Scope 2',
-      type: 'Type 2',
-      description: 'Description 2',
-      category: 'Category 2',
-      filters: [{ key: 'c-key', operator: '!=', value: 'c-value' }],
-    },
-  },
-  scope3: {
-    metadata: { uid: 'scope-3' },
-    spec: {
-      title: 'Scope 3',
-      type: 'Type 1',
-      description: 'Description 3',
-      category: 'Category 1',
-      filters: [{ key: 'd-key', operator: '=', value: 'd-value' }],
-    },
-  },
-};
 
 describe('ScopesScene', () => {
   describe('Feature flag off', () => {
@@ -116,20 +179,29 @@ describe('ScopesScene', () => {
     });
 
     it('Fetches dashboards list', () => {
-      filtersScene.setScope(mocks.scope1.metadata.uid);
+      filtersScene.setScope(scopesMocks.scope1.uid);
 
-      expect(fetchDashboardsSpy).toHaveBeenCalled();
+      waitFor(() => {
+        expect(fetchDashboardsSpy).toHaveBeenCalled();
+        expect(dashboardsScene.state.dashboards).toEqual(scopesMocks.scope1.dashboards);
+      });
+
+      filtersScene.setScope(scopesMocks.scope2.uid);
+
+      waitFor(() => {
+        expect(fetchDashboardsSpy).toHaveBeenCalled();
+        expect(dashboardsScene.state.dashboards).toEqual(scopesMocks.scope2.dashboards);
+      });
     });
 
     it('Enriches data requests', () => {
-      filtersScene.setScope(mocks.scope1.metadata.uid);
+      const { dashboards: _dashboards, ...scope1 } = scopesMocks.scope1;
+
+      filtersScene.setScope(scope1.uid);
 
       const queryRunner = sceneGraph.findObject(dashboardScene, (o) => o.state.key === 'data-query-runner')!;
 
-      expect(dashboardScene.enrichDataRequest(queryRunner).scope).toEqual({
-        ...mocks.scope1.metadata,
-        ...mocks.scope1.spec,
-      });
+      expect(dashboardScene.enrichDataRequest(queryRunner).scope).toEqual(scope1);
     });
 
     it('Toggles expanded state', async () => {
