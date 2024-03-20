@@ -12,14 +12,19 @@ aggregation path altogether and just run this example apiserver as a standalone 
 ### Usage
 
 ```shell
-go run ./pkg/cmd/grafana apiserver example.grafana.app \
+go run ./pkg/cmd/grafana apiserver \
+  --runtime-config=example.grafana.app/v0alpha1=true \
+  --grafana-apiserver-dev-mode \
+  --verbosity 10 \
   --secure-port 7443
 ```
 
 ### Verify that all works
 
+In dev mode, the standalone server's loopback kubeconfig is written to `./data/grafana-apiserver/apiserver.kubeconfig`.
+
 ```shell
-export KUBECONFIG=./example-apiserver/kubeconfig
+export KUBECONFIG=./data/grafana-apiserver/apiserver.kubeconfig
 
 kubectl api-resources
 NAME      SHORTNAMES   APIVERSION                     NAMESPACED   KIND

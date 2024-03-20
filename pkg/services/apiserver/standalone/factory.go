@@ -118,8 +118,8 @@ var (
 )
 
 // Get implements PluginDatasourceProvider.
-func (p *pluginDatasourceImpl) Get(ctx context.Context, pluginID string, uid string) (*v0alpha1.DataSourceConnection, error) {
-	all, err := p.List(ctx, pluginID)
+func (p *pluginDatasourceImpl) Get(ctx context.Context, uid string) (*v0alpha1.DataSourceConnection, error) {
+	all, err := p.List(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -132,7 +132,7 @@ func (p *pluginDatasourceImpl) Get(ctx context.Context, pluginID string, uid str
 }
 
 // List implements PluginConfigProvider.
-func (p *pluginDatasourceImpl) List(ctx context.Context, pluginID string) (*v0alpha1.DataSourceConnectionList, error) {
+func (p *pluginDatasourceImpl) List(ctx context.Context) (*v0alpha1.DataSourceConnectionList, error) {
 	info, err := request.NamespaceInfoFrom(ctx, true)
 	if err != nil {
 		return nil, err
@@ -154,7 +154,7 @@ func (p *pluginDatasourceImpl) List(ctx context.Context, pluginID string) (*v0al
 }
 
 // PluginContextForDataSource implements PluginConfigProvider.
-func (*pluginDatasourceImpl) GetInstanceSettings(ctx context.Context, pluginID, uid string) (*backend.DataSourceInstanceSettings, error) {
+func (*pluginDatasourceImpl) GetInstanceSettings(ctx context.Context, uid string) (*backend.DataSourceInstanceSettings, error) {
 	return &backend.DataSourceInstanceSettings{}, nil
 }
 

@@ -25,6 +25,7 @@ export interface AzureSettings {
   managedIdentityEnabled: boolean;
   workloadIdentityEnabled: boolean;
   userIdentityEnabled: boolean;
+  userIdentityFallbackCredentialsEnabled: boolean;
 }
 
 export interface AzureCloudInfo {
@@ -129,6 +130,7 @@ export class GrafanaBootConfig implements GrafanaConfig {
     managedIdentityEnabled: false,
     workloadIdentityEnabled: false,
     userIdentityEnabled: false,
+    userIdentityFallbackCredentialsEnabled: false,
   };
   caching = {
     enabled: false,
@@ -175,6 +177,12 @@ export class GrafanaBootConfig implements GrafanaConfig {
   rootFolderUID: string | undefined;
   localFileSystemAvailable: boolean | undefined;
   cloudMigrationIsTarget: boolean | undefined;
+
+  /**
+   * Language used in Grafana's UI. This is after the user's preference (or deteceted locale) is resolved to one of
+   * Grafana's supported language.
+   */
+  language: string | undefined;
 
   constructor(options: GrafanaBootConfig) {
     this.bootData = options.bootData;
