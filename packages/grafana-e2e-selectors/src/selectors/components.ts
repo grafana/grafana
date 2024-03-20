@@ -560,4 +560,17 @@ export const Components = {
     backButton: 'data-testid back',
     dismissButton: 'data-testid dismiss',
   },
+  SQLQueryEditor: {
+    selectColumn: 'data-testid select-column',
+    selectAggregation: 'data-testid select-aggregation',
+    selectAlias: 'data-testid select-alias',
+    filterConjunction: 'data-testid filter-conjunction',
+    filterField: 'data-testid filter-field',
+    filterOperator: 'data-testid filter-operator',
+    headerTableSelector: 'data-testid header-table-selector',
+    headerFilterSwitch: 'data-testid header-filter-switch',
+    headerGroupSwitch: 'data-testid header-group-switch',
+    headerOrderSwitch: 'data-testid header-order-switch',
+    headerPreviewSwitch: 'data-testid header-preview-switch',
+  },
 };
