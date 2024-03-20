@@ -104,7 +104,6 @@ You should see the number of requests made to the server that had a response cod
 
 At this point, our alert should be working (it should be either in [Firing or Normal state](https://grafana.com/docs/grafana/latest/alerting/manage-notifications/view-state-health/#alert-rule-state)). If it returns an error, follow the instructions in the error message. If it returns “No data,” reselect the metrics from the Metrics browser; make sure the Input of each expression is correct (expression B: Input A and expression C: Input B). If you still get stuck, you are very welcome to post questions in our [Grafana Community forum](https://community.grafana.com/).
 
-Let’s fill in some other important details.
 
 ## Set evaluation behavior
 
