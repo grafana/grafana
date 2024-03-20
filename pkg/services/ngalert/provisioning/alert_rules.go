@@ -663,8 +663,8 @@ func (service *AlertRuleService) ensureRuleNamespace(ctx context.Context, user i
 		return fmt.Errorf("%w: folderUID must be set", models.ErrAlertRuleFailedValidation)
 	}
 
-	if user == nil {
-		// user is nil when this is called during file provisioning,
+	if service.folderService == nil {
+		// folder service is nil when this is called during file provisioning,
 		// which already creates the folder if it does not exist
 		return nil
 	}
