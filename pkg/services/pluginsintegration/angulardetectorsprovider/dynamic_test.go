@@ -26,7 +26,7 @@ func TestDynamicAngularDetectorsProvider(t *testing.T) {
 	srv := gcom.newHTTPTestServer()
 	t.Cleanup(srv.Close)
 
-	svc := provideDynamic(t, srv.URL)
+	svc := provideDynamic(t, provideDynamicOpts{cfg: &config.PluginManagementCfg{GrafanaComURL: srv.URL}})
 	mockGCOMDetectors, err := svc.patternsToDetectors(mockGCOMPatterns)
 	require.NoError(t, err)
 
@@ -59,7 +59,7 @@ func TestDynamicAngularDetectorsProvider(t *testing.T) {
 
 	t.Run("ProvideDetectors", func(t *testing.T) {
 		t.Run("returns empty result by default", func(t *testing.T) {
-			svc := provideDynamic(t, srv.URL)
+			svc := provideDynamic(t, provideDynamicOpts{cfg: &config.PluginManagementCfg{GrafanaComURL: srv.URL}})
 			r := svc.ProvideDetectors(context.Background())
 			require.Empty(t, r)
 		})
@@ -70,7 +70,8 @@ func TestDynamicAngularDetectorsProvider(t *testing.T) {
 			err := mockStore.Set(context.Background(), mockGCOMPatterns)
 			require.NoError(t, err)
 
-			svc := provideDynamic(t, srv.URL, provideDynamicOpts{
+			svc := provideDynamic(t, provideDynamicOpts{
+				cfg:   &config.PluginManagementCfg{GrafanaComURL: srv.URL},
 				store: mockStore,
 			})
 
@@ -119,7 +120,7 @@ func TestDynamicAngularDetectorsProvider(t *testing.T) {
 			}}
 			errSrv := errScenario.newHTTPTestServer()
 			t.Cleanup(errSrv.Close)
-			svc := provideDynamic(t, errSrv.URL)
+			svc := provideDynamic(t, provideDynamicOpts{cfg: &config.PluginManagementCfg{GrafanaComURL: errSrv.URL}})
 			_, err := svc.fetch(context.Background(), "")
 			require.Error(t, err)
 		})
@@ -156,7 +157,7 @@ func TestDynamicAngularDetectorsProvider(t *testing.T) {
 					})
 					srv := gcom.newHTTPTestServer()
 					t.Cleanup(srv.Close)
-					svc := provideDynamic(t, srv.URL)
+					svc := provideDynamic(t, provideDynamicOpts{cfg: &config.PluginManagementCfg{GrafanaComURL: srv.URL}})
 
 					_, err := svc.fetch(context.Background(), tc.clientEtag)
 					if tc.expError != nil {
@@ -178,7 +179,7 @@ func TestDynamicAngularDetectorsProvider(t *testing.T) {
 
 	t.Run("updateDetectors", func(t *testing.T) {
 		t.Run("successful", func(t *testing.T) {
-			svc := provideDynamic(t, srv.URL)
+			svc := provideDynamic(t, provideDynamicOpts{cfg: &config.PluginManagementCfg{GrafanaComURL: srv.URL}})
 
 			// Check that store is initially empty
 			dbV, ok, err := svc.store.Get(context.Background())
@@ -218,7 +219,7 @@ func TestDynamicAngularDetectorsProvider(t *testing.T) {
 			srv := scenario.newHTTPTestServer()
 			t.Cleanup(srv.Close)
 
-			svc := provideDynamic(t, srv.URL)
+			svc := provideDynamic(t, provideDynamicOpts{cfg: &config.PluginManagementCfg{GrafanaComURL: srv.URL}})
 
 			// Set initial cached detectors
 			svc.mux.Lock()
@@ -255,7 +256,7 @@ func TestDynamicAngularDetectorsProvider(t *testing.T) {
 			t.Cleanup(srv.Close)
 
 			t.Run("etag is saved in underlying store", func(t *testing.T) {
-				svc := provideDynamic(t, srv.URL)
+				svc := provideDynamic(t, provideDynamicOpts{cfg: &config.PluginManagementCfg{GrafanaComURL: srv.URL}})
 
 				err := svc.updateDetectors(context.Background(), "old")
 				require.NoError(t, err)
@@ -271,7 +272,7 @@ func TestDynamicAngularDetectorsProvider(t *testing.T) {
 			})
 
 			t.Run("same etag does not modify underlying store", func(t *testing.T) {
-				svc := provideDynamic(t, srv.URL)
+				svc := provideDynamic(t, provideDynamicOpts{cfg: &config.PluginManagementCfg{GrafanaComURL: srv.URL}})
 				require.NoError(t, svc.updateDetectors(context.Background(), serverEtag))
 				_, ok, err := svc.store.Get(context.Background())
 				require.NoError(t, err)
@@ -279,7 +280,7 @@ func TestDynamicAngularDetectorsProvider(t *testing.T) {
 			})
 
 			t.Run("different etag modified underlying store", func(t *testing.T) {
-				svc := provideDynamic(t, srv.URL)
+				svc := provideDynamic(t, provideDynamicOpts{cfg: &config.PluginManagementCfg{GrafanaComURL: srv.URL}})
 				require.NoError(t, svc.updateDetectors(context.Background(), "old"))
 				_, ok, err := svc.store.Get(context.Background())
 				require.NoError(t, err)
@@ -290,7 +291,7 @@ func TestDynamicAngularDetectorsProvider(t *testing.T) {
 
 	t.Run("setDetectorsFromCache", func(t *testing.T) {
 		t.Run("empty store doesn't return an error", func(t *testing.T) {
-			svc := provideDynamic(t, srv.URL)
+			svc := provideDynamic(t, provideDynamicOpts{cfg: &config.PluginManagementCfg{GrafanaComURL: srv.URL}})
 
 			err := svc.setDetectorsFromCache(context.Background())
 			require.NoError(t, err)
@@ -303,7 +304,8 @@ func TestDynamicAngularDetectorsProvider(t *testing.T) {
 			err := store.Set(context.Background(), mockGCOMPatterns)
 			require.NoError(t, err)
 
-			svc := provideDynamic(t, srv.URL, provideDynamicOpts{
+			svc := provideDynamic(t, provideDynamicOpts{
+				cfg:   &config.PluginManagementCfg{GrafanaComURL: srv.URL},
 				store: store,
 			})
 
@@ -316,14 +318,12 @@ func TestDynamicAngularDetectorsProvider(t *testing.T) {
 
 func TestDynamicAngularDetectorsProviderCloudVsOnPrem(t *testing.T) {
 	t.Run("should use cloud interval if stack_id is set", func(t *testing.T) {
-		svc := provideDynamic(t, "", provideDynamicOpts{cfg: &config.PluginManagementCfg{
-			StackID: "1234",
-		}})
+		svc := provideDynamic(t, provideDynamicOpts{cfg: &config.PluginManagementCfg{StackID: "1234"}})
 		require.Equal(t, backgroundJobIntervalCloud, svc.backgroundJobInterval)
 	})
 
 	t.Run("should use on-prem interval if stack_id is not set", func(t *testing.T) {
-		svc := provideDynamic(t, "")
+		svc := provideDynamic(t, provideDynamicOpts{cfg: &config.PluginManagementCfg{StackID: ""}})
 		require.Equal(t, backgroundJobIntervalOnPrem, svc.backgroundJobInterval)
 	})
 }
@@ -342,13 +342,13 @@ func TestDynamicAngularDetectorsProviderBackgroundService(t *testing.T) {
 		})
 
 		t.Run("is disabled if feature flag is not present", func(t *testing.T) {
-			svc := provideDynamic(t, srv.URL)
+			svc := provideDynamic(t, provideDynamicOpts{cfg: &config.PluginManagementCfg{GrafanaComURL: srv.URL}})
 			svc.features = featuremgmt.WithFeatures()
 			require.True(t, svc.IsDisabled(), "background service should be disabled")
 		})
 
 		t.Run("is enabled if feature flag is present", func(t *testing.T) {
-			svc := provideDynamic(t, srv.URL)
+			svc := provideDynamic(t, provideDynamicOpts{cfg: &config.PluginManagementCfg{GrafanaComURL: srv.URL}})
 			svc.features = featuremgmt.WithFeatures(featuremgmt.FlagPluginsDynamicAngularDetectionPatterns)
 			require.False(t, svc.IsDisabled(), "background service should be enabled")
 		})
@@ -359,7 +359,7 @@ func TestDynamicAngularDetectorsProviderBackgroundService(t *testing.T) {
 				gcomCallback <- struct{}{}
 			})
 			srv := gcom.newHTTPTestServer()
-			svc := provideDynamic(t, srv.URL)
+			svc := provideDynamic(t, provideDynamicOpts{cfg: &config.PluginManagementCfg{GrafanaComURL: srv.URL}})
 			mockStore := &mockLastUpdatePatternsStore{
 				Service: svc.store,
 				// Expire cache
@@ -414,7 +414,7 @@ func TestDynamicAngularDetectorsProviderBackgroundService(t *testing.T) {
 			})
 			srv := gcom.newHTTPTestServer()
 			t.Cleanup(srv.Close)
-			svc := provideDynamic(t, srv.URL)
+			svc := provideDynamic(t, provideDynamicOpts{cfg: &config.PluginManagementCfg{GrafanaComURL: srv.URL}})
 
 			bg := newBackgroundServiceScenario(svc)
 			t.Cleanup(bg.close)
@@ -441,7 +441,7 @@ func TestRandomSkew(t *testing.T) {
 	gcom := newDefaultGCOMScenario()
 	srv := gcom.newHTTPTestServer()
 	t.Cleanup(srv.Close)
-	svc := provideDynamic(t, srv.URL)
+	svc := provideDynamic(t, provideDynamicOpts{cfg: &config.PluginManagementCfg{GrafanaComURL: srv.URL}})
 	const ttl = time.Hour * 1
 	const skew = ttl / 4
 	var different bool
@@ -580,22 +580,12 @@ type provideDynamicOpts struct {
 	cfg   *config.PluginManagementCfg
 }
 
-func provideDynamic(t *testing.T, gcomURL string, opts ...provideDynamicOpts) *Dynamic {
-	if len(opts) == 0 {
-		opts = []provideDynamicOpts{{}}
-	}
-	opt := opts[0]
+func provideDynamic(t *testing.T, opt provideDynamicOpts) *Dynamic {
 	if opt.store == nil {
 		opt.store = angularpatternsstore.ProvideService(kvstore.NewFakeKVStore())
 	}
-	var cfg *config.PluginManagementCfg
-	if opt.cfg != nil {
-		cfg = opt.cfg
-	} else {
-		cfg = &config.PluginManagementCfg{GrafanaComURL: gcomURL}
-	}
 	d, err := ProvideDynamic(
-		cfg,
+		opt.cfg,
 		opt.store,
 		featuremgmt.WithFeatures(featuremgmt.FlagPluginsDynamicAngularDetectionPatterns),
 	)
