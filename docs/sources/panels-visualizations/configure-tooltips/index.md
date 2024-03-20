@@ -17,7 +17,7 @@ weight: 75
 
 # Configure tooltips
 
-When you hover your cursor over a visualization, Grafana can display tooltips that contain more information about a data point like the exact time of a result. You can customize tooltips to to control how many series they include and the order of those values. You can also copy the content from tooltips to use elsewhere. Learn more about configuring tooltips in [Tooltip options](#tooltip-options).
+When you hover your cursor over a visualization, Grafana can display tooltips that contain more information about a data point, like the exact time of a result. You can customize tooltips to control how many series they include and the order of those values. You can also copy the content from tooltips to use elsewhere. Learn more about configuring tooltips in [Tooltip options](#tooltip-options).
 
 ## Supported visualizations
 
@@ -25,10 +25,10 @@ You can configure tooltips for the following visualizations:
 
 |                                  |                                  |
 | -------------------------------- | -------------------------------- |
-| [Bar chart][bar chart]           | [Status history][status history] |
-| [Heatmap][heatmap]               | [Time series][time series]       |
-| [Pie chart][pie chart]           | [Trend][trend]                   |
-| [State timeline][state timeline] |
+| [Bar chart][bar chart]           |  | [State timeline][state timeline]
+| [Candlestick][candlestick]               | [Status history][status history]      |
+| [Heatmap][heatmap]         | [Time series][time series]                    |
+| [Pie chart][pie chart]  | [Trend][trend] |
 
 <!--Also xy chart -->
 
@@ -71,6 +71,10 @@ Set the hover proximity (in pixels) to control how close the cursor must be to a
 ### Show histogram (Y axis)
 
 For the heatmap visualization only, when you set the **Tooltip mode** to **Single**, the **Show histogram (Y axis)** option is displayed. This option controls whether or not the tooltip includes a histogram representing the y-axis.
+
+### Show color scale
+
+For the heatmap visualization only, when you set the **Tooltip mode** to **Single**, the **Show color scale** option is displayed. This option controls whether or not the tooltip includes the color scale that's also represented in the legend.
 
 {{% docs/reference %}}
 [bar chart]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/panels-visualizations/visualizations/bar-chart"
