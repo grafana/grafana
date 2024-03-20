@@ -41,6 +41,9 @@ func ProvideDefaultPluginConfigs(
 	dsCache datasources.CacheService,
 	contextProvider *plugincontext.Provider) PluginDatasourceProvider {
 	return &defaultPluginDatasourceProvider{
+		plugin: plugins.JSONData{
+			ID: datasources.DS_TESTDATA,
+		},
 		dsService:       dsService,
 		dsCache:         dsCache,
 		contextProvider: contextProvider,
