@@ -87,6 +87,18 @@ type Identity struct {
 	IDToken string
 }
 
+func (i *Identity) GetID() string {
+	return i.ID
+}
+
+func (i *Identity) GetNamespacedID() (namespace string, identifier string) {
+	split := strings.Split(i.GetID(), ":")
+	if len(split) != 2 {
+		return "", ""
+	}
+	return split[0], split[1]
+}
+
 func (i *Identity) GetAuthenticatedBy() string {
 	return i.AuthenticatedBy
 }
@@ -120,16 +132,6 @@ func (i *Identity) GetIsGrafanaAdmin() bool {
 
 func (i *Identity) GetLogin() string {
 	return i.Login
-}
-
-func (i *Identity) GetNamespacedID() (namespace string, identifier string) {
-	split := strings.Split(i.ID, ":")
-
-	if len(split) != 2 {
-		return "", ""
-	}
-
-	return split[0], split[1]
 }
 
 // GetOrgID implements identity.Requester.

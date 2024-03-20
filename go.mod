@@ -10,15 +10,6 @@ replace github.com/docker/docker => github.com/moby/moby v23.0.4+incompatible
 // contains openapi encoder fixes. remove ASAP
 replace cuelang.org/go => github.com/grafana/cue v0.0.0-20230926092038-971951014e3f // @grafana/grafana-as-code
 
-// TODO: following otel replaces to pin the libraries so k8s.io/apiserver doesn't downgrade us inadvertantly
-// will need bumps as we upgrade otel in Grafana
-replace (
-	go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp => go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp v0.49.0 // @grafana/backend-platform
-	go.opentelemetry.io/otel => go.opentelemetry.io/otel v1.24.0 // @grafana/backend-platform
-	go.opentelemetry.io/otel/metric => go.opentelemetry.io/otel/metric v1.24.0 // @grafana/backend-platform
-	go.opentelemetry.io/otel/trace => go.opentelemetry.io/otel/trace v1.24.0 // @grafana/backend-platform
-)
-
 // Override Prometheus version because Prometheus v2.X is tagged as v0.X for Go modules purposes and Go assumes
 // that v1.Y is higher than v0.X, so when we resolve dependencies if any dependency imports v1.Y we'd
 // import that instead of v0.X even though v0.X is newer.
@@ -61,9 +52,9 @@ require (
 	github.com/gorilla/websocket v1.5.0 // @grafana/grafana-app-platform-squad
 	github.com/grafana/alerting v0.0.0-20240306130925-bc622368256d // @grafana/alerting-squad-backend
 	github.com/grafana/cuetsy v0.1.11 // @grafana/grafana-as-code
-	github.com/grafana/grafana-aws-sdk v0.24.0 // @grafana/aws-datasources
-	github.com/grafana/grafana-azure-sdk-go v1.12.0 // @grafana/partner-datasources
-	github.com/grafana/grafana-plugin-sdk-go v0.215.0 // @grafana/plugins-platform-backend
+	github.com/grafana/grafana-aws-sdk v0.25.0 // @grafana/aws-datasources
+	github.com/grafana/grafana-azure-sdk-go/v2 v2.0.1 // @grafana/partner-datasources
+	github.com/grafana/grafana-plugin-sdk-go v0.216.0 // @grafana/plugins-platform-backend
 	github.com/grpc-ecosystem/go-grpc-middleware v1.4.0 // @grafana/backend-platform
 	github.com/hashicorp/go-hclog v1.6.2 // @grafana/plugins-platform-backend
 	github.com/hashicorp/go-plugin v1.6.0 // @grafana/plugins-platform-backend
@@ -79,7 +70,7 @@ require (
 	github.com/magefile/mage v1.15.0 // @grafana/grafana-release-guild
 	github.com/mattn/go-isatty v0.0.19 // @grafana/backend-platform
 	github.com/mattn/go-sqlite3 v1.14.19 // @grafana/backend-platform
-	github.com/matttproud/golang_protobuf_extensions v1.0.4 // @grafana/alerting-squad-backend
+	github.com/matttproud/golang_protobuf_extensions v1.0.4 // indirect; @grafana/alerting-squad-backend
 	github.com/mwitkow/go-conntrack v0.0.0-20190716064945-2f068394615f // @grafana/grafana-operator-experience-squad
 	github.com/opentracing/opentracing-go v1.2.0 // indirect
 	github.com/patrickmn/go-cache v2.1.0+incompatible // @grafana/alerting-squad-backend
@@ -93,7 +84,7 @@ require (
 	github.com/robfig/cron/v3 v3.0.1 // @grafana/backend-platform
 	github.com/russellhaering/goxmldsig v1.4.0 // @grafana/backend-platform
 	github.com/scottlepp/go-duck v0.0.15 // @grafana/grafana-app-platform-squad
-	github.com/stretchr/testify v1.8.4 // @grafana/backend-platform
+	github.com/stretchr/testify v1.9.0 // @grafana/backend-platform
 	github.com/teris-io/shortid v0.0.0-20171029131806-771a37caa5cf // @grafana/backend-platform
 	github.com/ua-parser/uap-go v0.0.0-20211112212520-00c877edfe0f // @grafana/backend-platform
 	github.com/uber/jaeger-client-go v2.30.0+incompatible // indirect
@@ -106,17 +97,17 @@ require (
 	go.opentelemetry.io/otel/exporters/jaeger v1.10.0 // @grafana/backend-platform
 	go.opentelemetry.io/otel/sdk v1.24.0 // @grafana/backend-platform
 	go.opentelemetry.io/otel/trace v1.24.0 // @grafana/backend-platform
-	golang.org/x/crypto v0.19.0 // @grafana/backend-platform
+	golang.org/x/crypto v0.21.0 // @grafana/backend-platform
 	golang.org/x/exp v0.0.0-20231206192017-f3f8817b8deb // @grafana/alerting-squad-backend
-	golang.org/x/net v0.21.0 // @grafana/oss-big-tent @grafana/partner-datasources
+	golang.org/x/net v0.22.0 // @grafana/oss-big-tent @grafana/partner-datasources
 	golang.org/x/oauth2 v0.16.0 // @grafana/grafana-authnz-team
 	golang.org/x/sync v0.6.0 // @grafana/alerting-squad-backend
 	golang.org/x/time v0.5.0 // @grafana/backend-platform
-	golang.org/x/tools v0.17.0 // @grafana/grafana-as-code
+	golang.org/x/tools v0.17.0 // indirect; @grafana/grafana-as-code
 	gonum.org/v1/gonum v0.12.0 // @grafana/observability-metrics
 	google.golang.org/api v0.155.0 // @grafana/backend-platform
 	google.golang.org/grpc v1.62.1 // @grafana/plugins-platform-backend
-	google.golang.org/protobuf v1.32.0 // @grafana/plugins-platform-backend
+	google.golang.org/protobuf v1.33.0 // @grafana/plugins-platform-backend
 	gopkg.in/alexcesaro/quotedprintable.v3 v3.0.0-20150716171945-2caba252f4dc // indirect
 	gopkg.in/ini.v1 v1.67.0 // @grafana/alerting-squad-backend
 	gopkg.in/mail.v2 v2.3.1 // @grafana/backend-platform
@@ -128,7 +119,7 @@ require (
 )
 
 require (
-	github.com/Azure/azure-sdk-for-go/sdk/internal v1.5.1 // indirect
+	github.com/Azure/azure-sdk-for-go/sdk/internal v1.5.2 // indirect
 	github.com/Azure/go-autorest v14.2.0+incompatible // indirect
 	github.com/Azure/go-autorest/autorest/date v0.3.0 // indirect
 	github.com/Azure/go-autorest/autorest/to v0.4.0 // indirect
@@ -206,7 +197,7 @@ require (
 	github.com/sergi/go-diff v1.3.1 // indirect
 	github.com/shurcooL/httpfs v0.0.0-20230704072500-f1e31cf0ba5c // indirect
 	github.com/shurcooL/vfsgen v0.0.0-20200824052919-0d455de96546 // indirect
-	github.com/stretchr/objx v0.5.0 // indirect
+	github.com/stretchr/objx v0.5.2 // indirect
 	github.com/uber/jaeger-lib v2.4.1+incompatible // indirect
 	github.com/valyala/bytebufferpool v1.0.0 // indirect
 	github.com/yudai/golcs v0.0.0-20170316035057-ecda9a501e82 // indirect
@@ -214,7 +205,7 @@ require (
 	go.opencensus.io v0.24.0 // indirect
 	go.uber.org/atomic v1.11.0 // @grafana/alerting-squad-backend
 	go.uber.org/goleak v1.3.0 // indirect
-	golang.org/x/sys v0.17.0 // indirect
+	golang.org/x/sys v0.18.0 // indirect
 	golang.org/x/text v0.14.0 // @grafana/backend-platform
 	golang.org/x/xerrors v0.0.0-20231012003039-104605ab7028 // indirect
 	google.golang.org/appengine v1.6.8 // indirect
@@ -350,7 +341,7 @@ require (
 	github.com/mitchellh/copystructure v1.2.0 // indirect
 	github.com/mitchellh/mapstructure v1.5.0 //@grafana/grafana-authnz-team
 	github.com/mitchellh/reflectwalk v1.0.2 // indirect
-	github.com/mohae/deepcopy v0.0.0-20170929034955-c48cc78d4826 // indirect
+	github.com/mohae/deepcopy v0.0.0-20170929034955-c48cc78d4826 // @grafana/alerting-squad-backend
 	github.com/munnerz/goautoneg v0.0.0-20191010083416-a7dc8b61c822 // indirect
 	github.com/opencontainers/go-digest v1.0.0 // indirect
 	github.com/opencontainers/image-spec v1.0.3-0.20220512140940-7b36cea86235 // indirect
@@ -381,7 +372,7 @@ require (
 	go.starlark.net v0.0.0-20230525235612-a134d8f9ddca // indirect
 	go.uber.org/multierr v1.11.0 // indirect
 	go.uber.org/zap v1.26.0 // indirect
-	golang.org/x/term v0.17.0 // indirect
+	golang.org/x/term v0.18.0 // indirect
 	google.golang.org/genproto/googleapis/api v0.0.0-20240123012728-ef4313101c80 // indirect
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20240123012728-ef4313101c80 // indirect
 	gopkg.in/fsnotify/fsnotify.v1 v1.4.7 // indirect
@@ -408,7 +399,7 @@ require (
 	cloud.google.com/go/compute v1.23.3 // indirect
 	cloud.google.com/go/iam v1.1.5 // indirect
 	filippo.io/age v1.1.1 // @grafana/grafana-authnz-team
-	github.com/Azure/azure-sdk-for-go/sdk/azcore v1.9.1 // indirect
+	github.com/Azure/azure-sdk-for-go/sdk/azcore v1.10.0 // indirect
 	github.com/Azure/azure-sdk-for-go/sdk/keyvault/internal v0.7.0 // indirect
 	github.com/AzureAD/microsoft-authentication-library-for-go v1.2.1 // indirect
 	github.com/Masterminds/sprig/v3 v3.2.2 // @grafana/backend-platform
@@ -450,7 +441,7 @@ require (
 require (
 	github.com/antlr/antlr4/runtime/Go/antlr/v4 v4.0.0-20230305170008-8188dc5388df // indirect
 	github.com/go-errors/errors v1.4.2 // indirect
-	github.com/golang-jwt/jwt/v5 v5.2.0 // indirect
+	github.com/golang-jwt/jwt/v5 v5.2.1 // indirect
 	github.com/google/gnostic-models v0.6.8 // indirect
 	github.com/grafana/grafana-openapi-client-go v0.0.0-20231213163343-bd475d63fb79 // @grafana/backend-platform
 	github.com/moby/spdystream v0.2.0 // indirect
@@ -466,7 +457,7 @@ require github.com/fullstorydev/grpchan v1.1.1 // @grafana/backend-platform
 // This needs to be here for other projects that import grafana/grafana
 // For local development grafana/grafana will always use the local files
 // Check go.work file for details
-require github.com/grafana/grafana/pkg/promlib v0.0.1 // @grafana/observability-metrics
+require github.com/grafana/grafana/pkg/promlib v0.0.2 // @grafana/observability-metrics
 
 require (
 	github.com/JohnCGriffin/overflow v0.0.0-20211019200055-46fa312c352c // indirect
@@ -493,10 +484,15 @@ require (
 	github.com/xwb1989/sqlparser v0.0.0-20180606152119-120387863bf2 // @grafana/grafana-app-platform-squad
 )
 
+require github.com/jackc/pgx/v5 v5.5.5 // @grafana/oss-big-tent
+
 require (
 	github.com/bahlo/generic-list-go v0.2.0 // indirect
 	github.com/buger/jsonparser v1.1.1 // indirect
 	github.com/invopop/jsonschema v0.12.0 // indirect
+	github.com/jackc/pgpassfile v1.0.0 // indirect
+	github.com/jackc/pgservicefile v0.0.0-20221227161230-091c0ba34f0a // indirect
+	github.com/jackc/puddle/v2 v2.2.1 // indirect
 	github.com/wk8/go-ordered-map/v2 v2.1.8 // indirect
 )
 

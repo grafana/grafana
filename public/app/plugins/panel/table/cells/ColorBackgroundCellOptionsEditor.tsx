@@ -2,7 +2,7 @@ import React from 'react';
 
 import { SelectableValue } from '@grafana/data';
 import { TableCellBackgroundDisplayMode, TableColoredBackgroundCellOptions } from '@grafana/schema';
-import { Field, RadioButtonGroup } from '@grafana/ui';
+import { Field, RadioButtonGroup, Switch } from '@grafana/ui';
 
 import { TableCellEditorProps } from '../TableCellOptionEditor';
 
@@ -21,13 +21,27 @@ export const ColorBackgroundCellOptionsEditor = ({
     onChange(cellOptions);
   };
 
+  // Handle row coloring changes
+  const onColorRowChange = () => {
+    cellOptions.applyToRow = !cellOptions.applyToRow;
+    onChange(cellOptions);
+  };
+
   return (
-    <Field label="Background display mode">
-      <RadioButtonGroup
-        value={cellOptions?.mode ?? TableCellBackgroundDisplayMode.Gradient}
-        onChange={onCellOptionsChange}
-        options={colorBackgroundOpts}
-      />
-    </Field>
+    <>
+      <Field label="Background display mode">
+        <RadioButtonGroup
+          value={cellOptions?.mode ?? TableCellBackgroundDisplayMode.Gradient}
+          onChange={onCellOptionsChange}
+          options={colorBackgroundOpts}
+        />
+      </Field>
+      <Field
+        label="Apply to entire row"
+        description="If selected the entire row will be colored as this cell would be."
+      >
+        <Switch value={cellOptions.applyToRow} onChange={onColorRowChange} />
+      </Field>
+    </>
   );
 };

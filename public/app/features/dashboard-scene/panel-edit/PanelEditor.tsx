@@ -20,6 +20,7 @@ export interface PanelEditorState extends SceneObjectState {
   dataPane?: PanelDataPane;
   vizManager: VizPanelManager;
   showLibraryPanelSaveModal?: boolean;
+  showLibraryPanelUnlinkModal?: boolean;
 }
 
 export class PanelEditor extends SceneObjectBase<PanelEditorState> {
@@ -212,8 +213,21 @@ export class PanelEditor extends SceneObjectBase<PanelEditorState> {
     locationService.partial({ editPanel: null });
   };
 
-  public onDismissLibraryPanelModal = () => {
+  public onDismissLibraryPanelSaveModal = () => {
     this.setState({ showLibraryPanelSaveModal: false });
+  };
+
+  public onUnlinkLibraryPanel = () => {
+    this.setState({ showLibraryPanelUnlinkModal: true });
+  };
+
+  public onDismissUnlinkLibraryPanelModal = () => {
+    this.setState({ showLibraryPanelUnlinkModal: false });
+  };
+
+  public onConfirmUnlinkLibraryPanel = () => {
+    this.state.vizManager.unlinkLibraryPanel();
+    this.setState({ showLibraryPanelUnlinkModal: false });
   };
 }
 

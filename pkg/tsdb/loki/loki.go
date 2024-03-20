@@ -20,7 +20,7 @@ import (
 	"go.opentelemetry.io/otel/codes"
 	"go.opentelemetry.io/otel/trace"
 
-	"github.com/grafana/grafana/pkg/infra/httpclient"
+	"github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
 
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
@@ -41,7 +41,7 @@ var (
 	_ backend.CallResourceHandler = (*Service)(nil)
 )
 
-func ProvideService(httpClientProvider httpclient.Provider, features featuremgmt.FeatureToggles, tracer tracing.Tracer) *Service {
+func ProvideService(httpClientProvider *httpclient.Provider, features featuremgmt.FeatureToggles, tracer tracing.Tracer) *Service {
 	return &Service{
 		im:       datasource.NewInstanceManager(newInstanceSettings(httpClientProvider)),
 		features: features,
@@ -87,7 +87,7 @@ func parseQueryModel(raw json.RawMessage) (*QueryJSONModel, error) {
 	return model, err
 }
 
-func newInstanceSettings(httpClientProvider httpclient.Provider) datasource.InstanceFactoryFunc {
+func newInstanceSettings(httpClientProvider *httpclient.Provider) datasource.InstanceFactoryFunc {
 	return func(ctx context.Context, settings backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
 		opts, err := settings.HTTPClientOptions(ctx)
 		if err != nil {
@@ -239,6 +239,11 @@ func executeQuery(ctx context.Context, query *lokiQuery, req *backend.QueryDataR
 	defer span.End()
 
 	queryRes, err := runQuery(ctx, api, query, responseOpts, plog)
+	if queryRes == nil {
+		// we always want to return a backend.DataResponse object, even if we received just an error
+		queryRes = &backend.DataResponse{}
+	}
+
 	if err != nil {
 		span.RecordError(err)
 		span.SetStatus(codes.Error, err.Error())

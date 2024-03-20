@@ -165,7 +165,13 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
     window.__grafanaSceneContext = this;
 
     if (this.state.isEditing) {
+      this._initialUrlState = locationService.getLocation();
       this._changeTracker.startTrackingChanges();
+    }
+
+    if (this.state.meta.isNew) {
+      this.onEnterEditMode();
+      this.setState({ isDirty: true });
     }
 
     if (!this.state.meta.isEmbedded && this.state.uid) {
@@ -246,14 +252,14 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
     }
   }
 
-  public exitEditMode({ skipConfirm, restoreIntialState }: { skipConfirm: boolean; restoreIntialState?: boolean }) {
+  public exitEditMode({ skipConfirm, restoreInitialState }: { skipConfirm: boolean; restoreInitialState?: boolean }) {
     if (!this.canDiscard()) {
       console.error('Trying to discard back to a state that does not exist, initialState undefined');
       return;
     }
 
     if (!this.state.isDirty || skipConfirm) {
-      this.exitEditModeConfirmed(restoreIntialState || this.state.isDirty);
+      this.exitEditModeConfirmed(restoreInitialState || this.state.isDirty);
       return;
     }
 
@@ -268,7 +274,7 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
     );
   }
 
-  private exitEditModeConfirmed(restoreIntialState = true) {
+  private exitEditModeConfirmed(restoreInitialState = true) {
     // No need to listen to changes anymore
     this._changeTracker.stopTrackingChanges();
     // Stop url sync before updating url
@@ -287,7 +293,7 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
       })
     );
 
-    if (restoreIntialState) {
+    if (restoreInitialState) {
       //  Restore initial state and disable editing
       this.setState({ ...this._initialState, isEditing: false });
     } else {
@@ -302,6 +308,14 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
 
   public canDiscard() {
     return this._initialState !== undefined;
+  }
+
+  public pauseTrackingChanges() {
+    this._changeTracker.stopTrackingChanges();
+  }
+
+  public resumeTrackingChanges() {
+    this._changeTracker.startTrackingChanges();
   }
 
   public onRestore = async (version: DecoratedRevisionModel): Promise<boolean> => {
@@ -319,8 +333,8 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
     const newState = sceneUtils.cloneSceneObjectState(dashScene.state);
     newState.version = versionRsp.version;
 
-    this._initialState = newState;
-    this.exitEditMode({ skipConfirm: false, restoreIntialState: true });
+    this.setState(newState);
+    this.exitEditMode({ skipConfirm: true, restoreInitialState: false });
 
     return true;
   };
