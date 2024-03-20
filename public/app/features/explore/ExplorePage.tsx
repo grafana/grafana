@@ -1,5 +1,5 @@
 import { css, cx } from '@emotion/css';
-import React, { useEffect, useState } from 'react';
+import React, { useEffect } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { config } from '@grafana/runtime';
@@ -41,7 +41,6 @@ export default function ExplorePage(props: GrafanaRouteComponentProps<{}, Explor
   const navModel = useNavModel('explore');
   const dispatch = useDispatch();
   const { updateSplitSize, widthCalc } = useSplitSizeUpdater(MIN_PANE_WIDTH);
-  const [drawerHeight, setDrawerHeight] = useState<number | undefined>(undefined);
 
   const panes = useSelector(selectPanesEntries);
   const hasSplit = useSelector(isSplit);

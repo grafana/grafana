@@ -57,7 +57,7 @@ const dsStore: Record<string, DataSourceApi> = {
   alertmanager: new MockDatasourceApi('Alertmanager', 3, 'alertmanager', 'alertmanager'),
   loki: new MockDatasourceApi('Loki', 2, 'loki', 'loki'),
   prometheus: new MockDatasourceApi<MockQuery>('Prometheus', 1, 'prometheus', 'prometheus', {
-    getQueryDisplayText: (query: MockQuery) => query.queryText || 'Unknwon query',
+    getQueryDisplayText: (query: MockQuery) => query.queryText || 'Unknown query',
   }),
   mixed: new MixedDatasource({
     id: 4,
@@ -260,6 +260,7 @@ describe('RichHistoryCard', () => {
             { query: 'query1', refId: 'A', queryText: 'query1', datasource: { uid: 'prometheus', type: 'prometheus' } },
           ],
         },
+        datasourceInstances: [dsStore.prometheus],
       });
       const copyQueriesButton = await screen.findByRole('button', { name: 'Copy query to clipboard' });
       expect(copyQueriesButton).toBeInTheDocument();
@@ -282,6 +283,7 @@ describe('RichHistoryCard', () => {
             { query: 'query2', refId: 'B', datasource: { uid: 'loki' } },
           ],
         },
+        datasourceInstances: [dsStore.loki, dsStore.prometheus, dsStore.mixed],
       });
       const copyQueriesButton = await screen.findByRole('button', { name: 'Copy query to clipboard' });
       expect(copyQueriesButton).toBeInTheDocument();
@@ -389,6 +391,7 @@ describe('RichHistoryCard', () => {
           comment: '',
           queries,
         },
+        datasourceInstances: [dsStore.loki, dsStore.prometheus, dsStore.mixed],
       });
 
       const runQueryButton = await screen.findByRole('button', { name: /run query/i });

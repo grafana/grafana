@@ -183,7 +183,10 @@ export function RichHistoryCard(props: Props) {
 
     const queriesText = queryHistoryItem.queries
       .map((query) => {
-        const queryDS = datasourceInstances?.find((di) => di.uid === queryHistoryItem.datasourceUid);
+        let queryDS = datasourceInstances?.find((di) => di.uid === queryHistoryItem.datasourceUid);
+        if (queryDS?.meta.mixed) {
+          queryDS = datasourceInstances?.find((di) => di.uid === query.datasource?.uid);
+        }
         return createQueryText(query, queryDS);
       })
       .join('\n');
@@ -355,11 +358,12 @@ export function RichHistoryCard(props: Props) {
   };
 
   const runButton = () => {
+    const disabled = cardRootDatasource?.uid === undefined;
     if (!isPaneSplit) {
       const exploreId = exploreActiveDS.exploreToDS[0].exploreId;
       const buttonText = runQueryText(exploreId, props.queryHistoryItem.datasourceUid);
       return (
-        <ToolbarButton aria-label={buttonText.fallbackText} onClick={() => onRunQuery(exploreId)}>
+        <ToolbarButton aria-label={buttonText.fallbackText} onClick={() => onRunQuery(exploreId)} disabled={disabled}>
           {buttonText.translation}
         </ToolbarButton>
       );
@@ -380,6 +384,7 @@ export function RichHistoryCard(props: Props) {
                   onRunQuery(pane[0]);
                 }}
                 label={`${paneLabel}: ${buttonText.translation}`}
+                disabled={disabled}
               />
             );
           })}
@@ -425,7 +430,7 @@ export function RichHistoryCard(props: Props) {
           )}
           {activeUpdateComment && updateComment}
         </div>
-        {!activeUpdateComment && cardRootDatasource?.uid && <div className={styles.runButton}>{runButton()}</div>}
+        {!activeUpdateComment && <div className={styles.runButton}>{runButton()}</div>}
       </div>
     </div>
   );
