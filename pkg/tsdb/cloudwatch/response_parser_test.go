@@ -205,7 +205,6 @@ func Test_buildDataFrames_parse_label_to_name_and_labels(t *testing.T) {
 		assert.Equal(t, "lb2", frame2.Name)
 		assert.Equal(t, "lb2", frame2.Fields[1].Labels["LoadBalancer"])
 		assert.Equal(t, "tg", frame2.Fields[1].Labels["TargetGroup"])
-
 	})
 
 	t.Run("using multiple wildcard filters", func(t *testing.T) {
@@ -272,7 +271,6 @@ func Test_buildDataFrames_parse_label_to_name_and_labels(t *testing.T) {
 		assert.Equal(t, "balancer 2", frames[1].Fields[1].Labels["LoadBalancer"])
 		assert.Equal(t, "inst2", frames[1].Fields[1].Labels["InstanceType"])
 		assert.Equal(t, "tg", frames[1].Fields[1].Labels["TargetGroup"])
-
 	})
 
 	t.Run("when no values are returned and a multi-valued template variable is used", func(t *testing.T) {
