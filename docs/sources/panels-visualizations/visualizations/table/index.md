@@ -98,7 +98,7 @@ If thresholds are set, then the field background is displayed in the appropriate
 
 {{< figure src="/static/img/docs/tables/color-background.png" max-width="500px" caption="Color background" class="docs-image--no-shadow" >}}
 
-Toggle the **Apply to entire row** switch, to apply the background color configured for the cell to the whole row.
+Toggle the **Apply to entire row** switch, to apply the background color that's configured for the cell to the whole row.
 
 {{< figure src="/static/img/docs/tables/colored-rows.png" max-width="500px" alt="Colored row background" class="docs-image--no-shadow" >}}
 
