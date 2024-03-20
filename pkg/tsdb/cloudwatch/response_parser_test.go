@@ -1,7 +1,6 @@
 package cloudwatch
 
 import (
-	"context"
 	"encoding/json"
 	"os"
 	"path/filepath"
@@ -138,383 +137,17 @@ func TestCloudWatchResponseParser(t *testing.T) {
 	})
 }
 
-func Test_buildDataFrames_uses_response_label_as_frame_name(t *testing.T) {
+func Test_buildDataFrames_parse_label_to_name_and_labels(t *testing.T) {
 	startTime := time.Now()
 	endTime := startTime.Add(2 * time.Hour)
-	t.Run("using exact match", func(t *testing.T) {
-		timestamp := time.Unix(0, 0)
-		response := &models.QueryRowResponse{
-			Metrics: []*cloudwatch.MetricDataResult{
-				{
-					Id:    aws.String("id1"),
-					Label: aws.String("lb1"),
-					Timestamps: []*time.Time{
-						aws.Time(timestamp),
-						aws.Time(timestamp.Add(time.Minute)),
-						aws.Time(timestamp.Add(3 * time.Minute)),
-					},
-					Values: []*float64{
-						aws.Float64(10),
-						aws.Float64(20),
-						aws.Float64(30),
-					},
-					StatusCode: aws.String("Complete"),
-				},
-				{
-					Id:    aws.String("id2"),
-					Label: aws.String("lb2"),
-					Timestamps: []*time.Time{
-						aws.Time(timestamp),
-						aws.Time(timestamp.Add(time.Minute)),
-						aws.Time(timestamp.Add(3 * time.Minute)),
-					},
-					Values: []*float64{
-						aws.Float64(10),
-						aws.Float64(20),
-						aws.Float64(30),
-					},
-					StatusCode: aws.String("Complete"),
-				},
-			},
-		}
 
-		query := &models.CloudWatchQuery{
-			RefId:      "refId1",
-			Region:     "us-east-1",
-			Namespace:  "AWS/ApplicationELB",
-			MetricName: "TargetResponseTime",
-			Dimensions: map[string][]string{
-				"LoadBalancer": {"lb1", "lb2"},
-				"TargetGroup":  {"tg"},
-			},
-			Statistic:        "Average",
-			Period:           60,
-			MetricQueryType:  models.MetricQueryTypeSearch,
-			MetricEditorMode: models.MetricEditorModeBuilder,
-		}
-		frames, err := buildDataFrames(context.Background(), startTime, endTime, *response, query)
-		require.NoError(t, err)
-
-		frame1 := frames[0]
-		assert.Equal(t, "lb1", frame1.Name)
-		assert.Equal(t, "lb1", frame1.Fields[1].Labels["LoadBalancer"])
-
-		frame2 := frames[1]
-		assert.Equal(t, "lb2", frame2.Name)
-		assert.Equal(t, "lb2", frame2.Fields[1].Labels["LoadBalancer"])
-	})
-
-	t.Run("using wildcard", func(t *testing.T) {
-		timestamp := time.Unix(0, 0)
-		response := &models.QueryRowResponse{
-			Metrics: []*cloudwatch.MetricDataResult{
-				{
-					Id:    aws.String("lb3"),
-					Label: aws.String("some label lb3"),
-					Timestamps: []*time.Time{
-						aws.Time(timestamp),
-						aws.Time(timestamp.Add(time.Minute)),
-						aws.Time(timestamp.Add(3 * time.Minute)),
-					},
-					Values: []*float64{
-						aws.Float64(10),
-						aws.Float64(20),
-						aws.Float64(30),
-					},
-					StatusCode: aws.String("Complete"),
-				},
-				{
-					Id:    aws.String("lb4"),
-					Label: aws.String("some label lb4"),
-					Timestamps: []*time.Time{
-						aws.Time(timestamp),
-						aws.Time(timestamp.Add(time.Minute)),
-						aws.Time(timestamp.Add(3 * time.Minute)),
-					},
-					Values: []*float64{
-						aws.Float64(10),
-						aws.Float64(20),
-						aws.Float64(30),
-					},
-					StatusCode: aws.String("Complete"),
-				},
-			},
-		}
-
-		query := &models.CloudWatchQuery{
-			RefId:      "refId1",
-			Region:     "us-east-1",
-			Namespace:  "AWS/ApplicationELB",
-			MetricName: "TargetResponseTime",
-			Dimensions: map[string][]string{
-				"LoadBalancer": {"*"},
-				"TargetGroup":  {"tg"},
-			},
-			Statistic:        "Average",
-			Period:           60,
-			MetricQueryType:  models.MetricQueryTypeSearch,
-			MetricEditorMode: models.MetricEditorModeBuilder,
-		}
-		frames, err := buildDataFrames(context.Background(), startTime, endTime, *response, query)
-		require.NoError(t, err)
-
-		assert.Equal(t, "some label lb3", frames[0].Name)
-		assert.Equal(t, "some label lb4", frames[1].Name)
-	})
-
-	t.Run("when no values are returned and a multi-valued template variable is used", func(t *testing.T) {
-		timestamp := time.Unix(0, 0)
-		response := &models.QueryRowResponse{
-			Metrics: []*cloudwatch.MetricDataResult{
-				{
-					Id:    aws.String("lb3"),
-					Label: aws.String("some label"),
-					Timestamps: []*time.Time{
-						aws.Time(timestamp),
-						aws.Time(timestamp.Add(time.Minute)),
-						aws.Time(timestamp.Add(3 * time.Minute)),
-					},
-					Values:     []*float64{},
-					StatusCode: aws.String("Complete"),
-				},
-			},
-		}
-		query := &models.CloudWatchQuery{
-			RefId:      "refId1",
-			Region:     "us-east-1",
-			Namespace:  "AWS/ApplicationELB",
-			MetricName: "TargetResponseTime",
-			Dimensions: map[string][]string{
-				"LoadBalancer": {"lb1", "lb2"},
-			},
-			Statistic:        "Average",
-			Period:           60,
-			MetricQueryType:  models.MetricQueryTypeSearch,
-			MetricEditorMode: models.MetricEditorModeBuilder,
-		}
-		frames, err := buildDataFrames(context.Background(), startTime, endTime, *response, query)
-		require.NoError(t, err)
-
-		assert.Len(t, frames, 2)
-		assert.Equal(t, "some label", frames[0].Name)
-		assert.Equal(t, "some label", frames[1].Name)
-	})
-
-	t.Run("when no values are returned and a multi-valued template variable and two single-valued dimensions are used", func(t *testing.T) {
-		timestamp := time.Unix(0, 0)
-		response := &models.QueryRowResponse{
-			Metrics: []*cloudwatch.MetricDataResult{
-				{
-					Id:    aws.String("lb3"),
-					Label: aws.String("some label"),
-					Timestamps: []*time.Time{
-						aws.Time(timestamp),
-						aws.Time(timestamp.Add(time.Minute)),
-						aws.Time(timestamp.Add(3 * time.Minute)),
-					},
-					Values:     []*float64{},
-					StatusCode: aws.String("Complete"),
-				},
-			},
-		}
-
-		query := &models.CloudWatchQuery{
-			RefId:      "refId1",
-			Region:     "us-east-1",
-			Namespace:  "AWS/ApplicationELB",
-			MetricName: "TargetResponseTime",
-			Dimensions: map[string][]string{
-				"LoadBalancer": {"lb1", "lb2"},
-				"InstanceType": {"micro"},
-				"Resource":     {"res"},
-			},
-			Statistic:        "Average",
-			Period:           60,
-			MetricQueryType:  models.MetricQueryTypeSearch,
-			MetricEditorMode: models.MetricEditorModeBuilder,
-		}
-		frames, err := buildDataFrames(context.Background(), startTime, endTime, *response, query)
-		require.NoError(t, err)
-
-		assert.Len(t, frames, 2)
-		assert.Equal(t, "some label", frames[0].Name)
-		assert.Equal(t, "some label", frames[1].Name)
-	})
-
-	t.Run("when using SQL queries", func(t *testing.T) {
-		timestamp := time.Unix(0, 0)
-		response := &models.QueryRowResponse{
-			Metrics: []*cloudwatch.MetricDataResult{
-				{
-					Id:    aws.String("lb3"),
-					Label: aws.String("some label"),
-					Timestamps: []*time.Time{
-						aws.Time(timestamp),
-					},
-					Values:     []*float64{aws.Float64(23)},
-					StatusCode: aws.String("Complete"),
-				},
-			},
-		}
-
-		query := &models.CloudWatchQuery{
-			RefId:      "refId1",
-			Region:     "us-east-1",
-			Namespace:  "AWS/ApplicationELB",
-			MetricName: "TargetResponseTime",
-			Dimensions: map[string][]string{
-				"LoadBalancer": {"lb1"},
-				"InstanceType": {"micro"},
-				"Resource":     {"res"},
-			},
-			Statistic:        "Average",
-			Period:           60,
-			MetricQueryType:  models.MetricQueryTypeQuery,
-			MetricEditorMode: models.MetricEditorModeRaw,
-		}
-		frames, err := buildDataFrames(context.Background(), startTime, endTime, *response, query)
-		require.NoError(t, err)
-
-		assert.Equal(t, "some label", frames[0].Name)
-	})
-
-	t.Run("when non-static label set on query", func(t *testing.T) {
-		timestamp := time.Unix(0, 0)
-		response := &models.QueryRowResponse{
-			Metrics: []*cloudwatch.MetricDataResult{
-				{
-					Id:    aws.String("lb3"),
-					Label: aws.String("some label"),
-					Timestamps: []*time.Time{
-						aws.Time(timestamp),
-					},
-					Values:     []*float64{aws.Float64(23)},
-					StatusCode: aws.String("Complete"),
-				},
-			},
-		}
-
-		query := &models.CloudWatchQuery{
-			RefId:      "refId1",
-			Region:     "us-east-1",
-			Namespace:  "AWS/ApplicationELB",
-			MetricName: "TargetResponseTime",
-			Dimensions: map[string][]string{
-				"LoadBalancer": {"lb1"},
-				"InstanceType": {"micro"},
-				"Resource":     {"res"},
-			},
-			Statistic:        "Average",
-			Period:           60,
-			MetricQueryType:  models.MetricQueryTypeQuery,
-			MetricEditorMode: models.MetricEditorModeBuilder,
-			Label:            "set ${AVG} label",
-		}
-		frames, err := buildDataFrames(context.Background(), startTime, endTime, *response, query)
-		require.NoError(t, err)
-
-		assert.Equal(t, "some label", frames[0].Name)
-	})
-
-	t.Run("unless static label set on query", func(t *testing.T) {
-		timestamp := time.Unix(0, 0)
-		response := &models.QueryRowResponse{
-			Metrics: []*cloudwatch.MetricDataResult{
-				{
-					Id:    aws.String("lb3"),
-					Label: aws.String("some label"),
-					Timestamps: []*time.Time{
-						aws.Time(timestamp),
-					},
-					Values:     []*float64{aws.Float64(23)},
-					StatusCode: aws.String("Complete"),
-				},
-			},
-		}
-
-		query := &models.CloudWatchQuery{
-			RefId:      "refId1",
-			Region:     "us-east-1",
-			Namespace:  "AWS/ApplicationELB",
-			MetricName: "TargetResponseTime",
-			Dimensions: map[string][]string{
-				"LoadBalancer": {"lb1"},
-				"InstanceType": {"micro"},
-				"Resource":     {"res"},
-			},
-			Statistic:        "Average",
-			Period:           60,
-			MetricQueryType:  models.MetricQueryTypeQuery,
-			MetricEditorMode: models.MetricEditorModeBuilder,
-			Label:            "actual",
-		}
-		frames, err := buildDataFrames(context.Background(), startTime, endTime, *response, query)
-		require.NoError(t, err)
-
-		assert.Equal(t, "actual", frames[0].Name)
-	})
-
-	t.Run("Parse cloudwatch response", func(t *testing.T) {
-		timestamp := time.Unix(0, 0)
-		response := &models.QueryRowResponse{
-			Metrics: []*cloudwatch.MetricDataResult{
-				{
-					Id:    aws.String("id1"),
-					Label: aws.String("some label"),
-					Timestamps: []*time.Time{
-						aws.Time(timestamp),
-						aws.Time(timestamp.Add(time.Minute)),
-						aws.Time(timestamp.Add(3 * time.Minute)),
-					},
-					Values: []*float64{
-						aws.Float64(10),
-						aws.Float64(20),
-						aws.Float64(30),
-					},
-					StatusCode: aws.String("Complete"),
-				},
-			},
-		}
-
-		query := &models.CloudWatchQuery{
-			RefId:      "refId1",
-			Region:     "us-east-1",
-			Namespace:  "AWS/ApplicationELB",
-			MetricName: "TargetResponseTime",
-			Dimensions: map[string][]string{
-				"LoadBalancer": {"lb"},
-				"TargetGroup":  {"tg"},
-			},
-			Statistic:        "Average",
-			Period:           60,
-			MetricQueryType:  models.MetricQueryTypeSearch,
-			MetricEditorMode: models.MetricEditorModeBuilder,
-		}
-		frames, err := buildDataFrames(context.Background(), startTime, endTime, *response, query)
-		require.NoError(t, err)
-
-		frame := frames[0]
-		assert.Equal(t, "some label", frame.Name)
-		assert.Equal(t, "Time", frame.Fields[0].Name)
-		assert.Equal(t, "lb", frame.Fields[1].Labels["LoadBalancer"])
-		assert.Equal(t, 10.0, *frame.Fields[1].At(0).(*float64))
-		assert.Equal(t, 20.0, *frame.Fields[1].At(1).(*float64))
-		assert.Equal(t, 30.0, *frame.Fields[1].At(2).(*float64))
-		assert.Equal(t, "Value", frame.Fields[1].Name)
-		assert.Equal(t, "", frame.Fields[1].Config.DisplayName)
-	})
-}
-
-func Test_buildDataFrames_parse_label_for_dimension_values(t *testing.T) {
-	startTime := time.Now()
-	endTime := startTime.Add(2 * time.Hour)
 	t.Run("using multi filter", func(t *testing.T) {
 		timestamp := time.Unix(0, 0)
 		response := &models.QueryRowResponse{
 			Metrics: []*cloudwatch.MetricDataResult{
 				{
 					Id:    aws.String("id1"),
-					Label: aws.String("lb1 |&| lb1"),
+					Label: aws.String("lb1|&|lb1"),
 					Timestamps: []*time.Time{
 						aws.Time(timestamp),
 						aws.Time(timestamp.Add(time.Minute)),
@@ -529,7 +162,7 @@ func Test_buildDataFrames_parse_label_for_dimension_values(t *testing.T) {
 				},
 				{
 					Id:    aws.String("id2"),
-					Label: aws.String("lb2 |&| lb2"),
+					Label: aws.String("lb2|&|lb2"),
 					Timestamps: []*time.Time{
 						aws.Time(timestamp),
 						aws.Time(timestamp.Add(time.Minute)),
@@ -581,7 +214,7 @@ func Test_buildDataFrames_parse_label_for_dimension_values(t *testing.T) {
 			Metrics: []*cloudwatch.MetricDataResult{
 				{
 					Id:    aws.String("lb3"),
-					Label: aws.String("some label lb3 |&| inst1 |&| balancer 1"),
+					Label: aws.String("some label lb3|&|inst1|&|balancer 1"),
 					Timestamps: []*time.Time{
 						aws.Time(timestamp),
 						aws.Time(timestamp.Add(time.Minute)),
@@ -596,7 +229,7 @@ func Test_buildDataFrames_parse_label_for_dimension_values(t *testing.T) {
 				},
 				{
 					Id:    aws.String("lb4"),
-					Label: aws.String("some label lb4 |&| inst2 |&| balancer 2"),
+					Label: aws.String("some label lb4|&|inst2|&|balancer 2"),
 					Timestamps: []*time.Time{
 						aws.Time(timestamp),
 						aws.Time(timestamp.Add(time.Minute)),
@@ -642,6 +275,94 @@ func Test_buildDataFrames_parse_label_for_dimension_values(t *testing.T) {
 
 	})
 
+	t.Run("when no values are returned and a multi-valued template variable is used", func(t *testing.T) {
+		timestamp := time.Unix(0, 0)
+		response := &models.QueryRowResponse{
+			Metrics: []*cloudwatch.MetricDataResult{
+				{
+					Id:    aws.String("lb3"),
+					Label: aws.String("some label|&|--"),
+					Timestamps: []*time.Time{
+						aws.Time(timestamp),
+						aws.Time(timestamp.Add(time.Minute)),
+						aws.Time(timestamp.Add(3 * time.Minute)),
+					},
+					Values:     []*float64{},
+					StatusCode: aws.String("Complete"),
+				},
+			},
+		}
+		query := &models.CloudWatchQuery{
+			RefId:      "refId1",
+			Region:     "us-east-1",
+			Namespace:  "AWS/ApplicationELB",
+			MetricName: "TargetResponseTime",
+			Dimensions: map[string][]string{
+				"LoadBalancer": {"lb1", "lb2"},
+			},
+			Statistic:        "Average",
+			Period:           60,
+			MetricQueryType:  models.MetricQueryTypeSearch,
+			MetricEditorMode: models.MetricEditorModeBuilder,
+		}
+		frames, err := buildDataFrames(contextWithFeaturesEnabled(features.FlagCloudWatchNewLabelParsing), startTime, endTime, *response, query)
+		require.NoError(t, err)
+
+		assert.Len(t, frames, 2)
+		assert.Equal(t, "some label", frames[0].Name)
+		assert.Equal(t, "lb1", frames[0].Fields[1].Labels["LoadBalancer"])
+		assert.Equal(t, "some label", frames[1].Name)
+		assert.Equal(t, "lb2", frames[1].Fields[1].Labels["LoadBalancer"])
+	})
+
+	t.Run("when no values are returned and a multi-valued template variable and two single-valued dimensions are used", func(t *testing.T) {
+		timestamp := time.Unix(0, 0)
+		response := &models.QueryRowResponse{
+			Metrics: []*cloudwatch.MetricDataResult{
+				{
+					Id:    aws.String("lb3"),
+					Label: aws.String("some label|&|--"),
+					Timestamps: []*time.Time{
+						aws.Time(timestamp),
+						aws.Time(timestamp.Add(time.Minute)),
+						aws.Time(timestamp.Add(3 * time.Minute)),
+					},
+					Values:     []*float64{},
+					StatusCode: aws.String("Complete"),
+				},
+			},
+		}
+
+		query := &models.CloudWatchQuery{
+			RefId:      "refId1",
+			Region:     "us-east-1",
+			Namespace:  "AWS/ApplicationELB",
+			MetricName: "TargetResponseTime",
+			Dimensions: map[string][]string{
+				"LoadBalancer": {"lb1", "lb2"},
+				"InstanceType": {"micro"},
+				"Resource":     {"res"},
+			},
+			Statistic:        "Average",
+			Period:           60,
+			MetricQueryType:  models.MetricQueryTypeSearch,
+			MetricEditorMode: models.MetricEditorModeBuilder,
+		}
+		frames, err := buildDataFrames(contextWithFeaturesEnabled(features.FlagCloudWatchNewLabelParsing), startTime, endTime, *response, query)
+		require.NoError(t, err)
+
+		assert.Len(t, frames, 2)
+		assert.Equal(t, "some label", frames[0].Name)
+		assert.Equal(t, "lb1", frames[0].Fields[1].Labels["LoadBalancer"])
+		assert.Equal(t, "micro", frames[0].Fields[1].Labels["InstanceType"])
+		assert.Equal(t, "res", frames[0].Fields[1].Labels["Resource"])
+
+		assert.Equal(t, "some label", frames[1].Name)
+		assert.Equal(t, "lb2", frames[1].Fields[1].Labels["LoadBalancer"])
+		assert.Equal(t, "micro", frames[1].Fields[1].Labels["InstanceType"])
+		assert.Equal(t, "res", frames[1].Fields[1].Labels["Resource"])
+	})
+
 	t.Run("when not using multi-value dimension filters", func(t *testing.T) {
 		timestamp := time.Unix(0, 0)
 		response := &models.QueryRowResponse{
@@ -680,5 +401,137 @@ func Test_buildDataFrames_parse_label_for_dimension_values(t *testing.T) {
 		assert.Equal(t, "lb1", frames[0].Fields[1].Labels["LoadBalancer"])
 		assert.Equal(t, "micro", frames[0].Fields[1].Labels["InstanceType"])
 		assert.Equal(t, "res", frames[0].Fields[1].Labels["Resource"])
+	})
+
+	t.Run("when non-static label set on query", func(t *testing.T) {
+		timestamp := time.Unix(0, 0)
+		response := &models.QueryRowResponse{
+			Metrics: []*cloudwatch.MetricDataResult{
+				{
+					Id:    aws.String("lb3"),
+					Label: aws.String("some label|&|res"),
+					Timestamps: []*time.Time{
+						aws.Time(timestamp),
+					},
+					Values:     []*float64{aws.Float64(23)},
+					StatusCode: aws.String("Complete"),
+				},
+			},
+		}
+
+		query := &models.CloudWatchQuery{
+			RefId:      "refId1",
+			Region:     "us-east-1",
+			Namespace:  "AWS/ApplicationELB",
+			MetricName: "TargetResponseTime",
+			Dimensions: map[string][]string{
+				"LoadBalancer": {"lb1"},
+				"InstanceType": {"micro"},
+				"Resource":     {"*"},
+			},
+			Statistic:        "Average",
+			Period:           60,
+			MetricQueryType:  models.MetricQueryTypeQuery,
+			MetricEditorMode: models.MetricEditorModeBuilder,
+			Label:            "set ${AVG} label",
+		}
+		frames, err := buildDataFrames(contextWithFeaturesEnabled(features.FlagCloudWatchNewLabelParsing), startTime, endTime, *response, query)
+		require.NoError(t, err)
+
+		assert.Equal(t, "some label", frames[0].Name)
+		assert.Equal(t, "lb1", frames[0].Fields[1].Labels["LoadBalancer"])
+		assert.Equal(t, "micro", frames[0].Fields[1].Labels["InstanceType"])
+		assert.Equal(t, "res", frames[0].Fields[1].Labels["Resource"])
+	})
+
+	t.Run("when static label set on query", func(t *testing.T) {
+		timestamp := time.Unix(0, 0)
+		response := &models.QueryRowResponse{
+			Metrics: []*cloudwatch.MetricDataResult{
+				{
+					Id:    aws.String("lb3"),
+					Label: aws.String("some label|&|res"),
+					Timestamps: []*time.Time{
+						aws.Time(timestamp),
+					},
+					Values:     []*float64{aws.Float64(23)},
+					StatusCode: aws.String("Complete"),
+				},
+			},
+		}
+
+		query := &models.CloudWatchQuery{
+			RefId:      "refId1",
+			Region:     "us-east-1",
+			Namespace:  "AWS/ApplicationELB",
+			MetricName: "TargetResponseTime",
+			Dimensions: map[string][]string{
+				"LoadBalancer": {"lb1"},
+				"InstanceType": {"micro"},
+				"Resource":     {"*"},
+			},
+			Statistic:        "Average",
+			Period:           60,
+			MetricQueryType:  models.MetricQueryTypeQuery,
+			MetricEditorMode: models.MetricEditorModeBuilder,
+			Label:            "actual",
+		}
+		frames, err := buildDataFrames(contextWithFeaturesEnabled(features.FlagCloudWatchNewLabelParsing), startTime, endTime, *response, query)
+		require.NoError(t, err)
+
+		assert.Equal(t, "actual", frames[0].Name)
+		assert.Equal(t, "lb1", frames[0].Fields[1].Labels["LoadBalancer"])
+		assert.Equal(t, "micro", frames[0].Fields[1].Labels["InstanceType"])
+		assert.Equal(t, "res", frames[0].Fields[1].Labels["Resource"])
+	})
+
+	t.Run("Parse cloudwatch response", func(t *testing.T) {
+		timestamp := time.Unix(0, 0)
+		response := &models.QueryRowResponse{
+			Metrics: []*cloudwatch.MetricDataResult{
+				{
+					Id:    aws.String("id1"),
+					Label: aws.String("some label"),
+					Timestamps: []*time.Time{
+						aws.Time(timestamp),
+						aws.Time(timestamp.Add(time.Minute)),
+						aws.Time(timestamp.Add(3 * time.Minute)),
+					},
+					Values: []*float64{
+						aws.Float64(10),
+						aws.Float64(20),
+						aws.Float64(30),
+					},
+					StatusCode: aws.String("Complete"),
+				},
+			},
+		}
+
+		query := &models.CloudWatchQuery{
+			RefId:      "refId1",
+			Region:     "us-east-1",
+			Namespace:  "AWS/ApplicationELB",
+			MetricName: "TargetResponseTime",
+			Dimensions: map[string][]string{
+				"LoadBalancer": {"lb"},
+				"TargetGroup":  {"tg"},
+			},
+			Statistic:        "Average",
+			Period:           60,
+			MetricQueryType:  models.MetricQueryTypeSearch,
+			MetricEditorMode: models.MetricEditorModeBuilder,
+		}
+		frames, err := buildDataFrames(contextWithFeaturesEnabled(features.FlagCloudWatchNewLabelParsing), startTime, endTime, *response, query)
+		require.NoError(t, err)
+
+		frame := frames[0]
+		assert.Equal(t, "some label", frame.Name)
+		assert.Equal(t, "Time", frame.Fields[0].Name)
+		assert.Equal(t, "lb", frame.Fields[1].Labels["LoadBalancer"])
+		assert.Equal(t, 10.0, *frame.Fields[1].At(0).(*float64))
+		assert.Equal(t, 20.0, *frame.Fields[1].At(1).(*float64))
+		assert.Equal(t, 30.0, *frame.Fields[1].At(2).(*float64))
+		assert.Equal(t, "Value", frame.Fields[1].Name)
+		assert.Equal(t, "", frame.Fields[1].Config.DisplayName)
 	})
 }

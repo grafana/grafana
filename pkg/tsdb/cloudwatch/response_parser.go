@@ -100,7 +100,6 @@ func parseLabels(cloudwatchLabel string, query *models.CloudWatchQuery) (string,
 	labelsIndex := 1
 
 	labels := data.Labels{}
-
 	for _, dim := range dims {
 		values := query.Dimensions[dim]
 		if isSingleValue(values) {
@@ -154,6 +153,9 @@ func buildDataFrames(ctx context.Context, startTime time.Time, endTime time.Time
 		// In case a multi-valued dimension is used and the cloudwatch query yields no values, create one empty time
 		// series for each dimension value. Use that dimension value to expand the alias field
 		if len(metric.Values) == 0 && query.IsMultiValuedDimensionExpression() {
+			if features.IsEnabled(ctx, features.FlagCloudWatchNewLabelParsing) {
+				label, _, _ = strings.Cut(label, keySeparator)
+			}
 			series := 0
 			multiValuedDimension := ""
 			for key, values := range query.Dimensions {

@@ -14,7 +14,7 @@ import (
 	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/models"
 )
 
-const keySeparator = " |&| "
+const keySeparator = "|&|"
 
 func (e *cloudWatchExecutor) buildMetricDataQuery(ctx context.Context, query *models.CloudWatchQuery) (*cloudwatch.MetricDataQuery, error) {
 	mdq := &cloudwatch.MetricDataQuery{
