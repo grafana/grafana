@@ -131,7 +131,7 @@ export class DataTrailHistory extends SceneObjectBase<DataTrailsHistoryState> {
     return (
       <Stack direction="column">
         <div>{step.type}</div>
-        {step.type === 'metric' && <div>{step.trailState.metric || '<deselected>'}</div>}
+        {step.type === 'metric' && <div>{step.trailState.metric || 'Select new metric'}</div>}
       </Stack>
     );
   }
