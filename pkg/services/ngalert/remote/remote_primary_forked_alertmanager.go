@@ -2,10 +2,8 @@ package remote
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"sync"
-	"time"
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
@@ -64,32 +62,11 @@ func (fam *RemotePrimaryForkedAlertmanager) ApplyConfig(ctx context.Context, con
 
 // TODO: save the new configuration hash in memory.
 func (fam *RemotePrimaryForkedAlertmanager) SaveAndApplyConfig(ctx context.Context, config *apimodels.PostableUserConfig) error {
-	rawConfig, err := json.Marshal(config)
-	if err != nil {
-		return fmt.Errorf("failed to serialize to the Alertmanager configuration: %w", err)
-	}
-
-	cmd := &models.SaveAlertmanagerConfigurationCmd{
-		AlertmanagerConfiguration: string(rawConfig),
-		Default:                   false,
-		ConfigurationVersion:      fmt.Sprintf("v%d", models.AlertConfigurationVersion),
-		OrgID:                     fam.orgID,
-		LastApplied:               time.Now().UTC().Unix(),
-	}
-
-	// TODO: what if we fail in the remote Alertmanager but not here?
-	dbCfg, err := fam.store.SaveAlertmanagerConfiguration(ctx, cmd)
-	if err != nil {
+	if err := fam.internal.SaveAndApplyConfig(ctx, config); err != nil {
 		return err
 	}
 
-	// Note: the id is always 1 when there's only one org.
-	dbCfg.ID = 1
-	if err := fam.remote.SendConfiguration(ctx, dbCfg); err != nil {
-		return fmt.Errorf("failed to send config to the remote Alertmanager: %w", err)
-	}
-	fam.currentConfig = dbCfg.ConfigurationHash
-	return nil
+	return fam.remote.SaveAndApplyConfig(ctx, config)
 }
 
 // TODO: save the new configuration hash in memory.
