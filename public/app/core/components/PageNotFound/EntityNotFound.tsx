@@ -2,9 +2,8 @@ import { css } from '@emotion/css';
 import React from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { useStyles2 } from '@grafana/ui';
-
-import { GrotNotFound } from '../GrotNotFound/GrotNotFound';
+import { TextLink, useStyles2 } from '@grafana/ui';
+import { EmptySearchState } from '@grafana/ui/src/components/EmptyState/EmptySearchState/EmptySearchState';
 
 export interface Props {
   /**
@@ -18,20 +17,13 @@ export function EntityNotFound({ entity = 'Page' }: Props) {
 
   return (
     <div className={styles.container}>
-      <h1>{entity} not found</h1>
-      <div className={styles.subtitle}>
+      <EmptySearchState message={`${entity} not found`}>
         We&apos;re looking but can&apos;t seem to find this {entity.toLowerCase()}. Try returning{' '}
-        <a href="/" className="external-link">
-          home
-        </a>{' '}
-        or seeking help on the{' '}
-        <a href="https://community.grafana.com" target="_blank" rel="noreferrer" className="external-link">
+        <TextLink href="/">home</TextLink> or seeking help on the{' '}
+        <TextLink href="https://community.grafana.com" external>
           community site.
-        </a>
-      </div>
-      <div className={styles.grot}>
-        <GrotNotFound show404={entity === 'Page'} />
-      </div>
+        </TextLink>
+      </EmptySearchState>
     </div>
   );
 }

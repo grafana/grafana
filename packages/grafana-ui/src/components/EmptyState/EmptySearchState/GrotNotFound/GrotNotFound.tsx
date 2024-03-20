@@ -7,8 +7,8 @@ import { GrafanaTheme2 } from '@grafana/data';
 import { useStyles2, useTheme2 } from '../../../../themes';
 import { useMousePosition } from '../../../../utils';
 
-import dark404 from './grot-404-dark.svg';
-import light404 from './grot-404-light.svg';
+import notFoundDark from './grot-not-found-dark.svg';
+import notFoundLight from './grot-not-found-light.svg';
 
 const MIN_ARM_ROTATION = -20;
 const MAX_ARM_ROTATION = 5;
@@ -18,19 +18,18 @@ const MAX_ARM_TRANSLATION = 5;
 export interface Props {
   width?: SVGProps<SVGElement>['width'];
   height?: SVGProps<SVGElement>['height'];
-  show404?: boolean;
 }
 
-export const GrotNotFound = ({ width = 'auto', height, show404 = false }: Props) => {
+export const GrotNotFound = ({ width = 'auto', height }: Props) => {
   const theme = useTheme2();
   const { x, y } = useMousePosition();
-  const styles = useStyles2(getStyles, x, y, show404);
-  return <SVG src={theme.isDark ? dark404 : light404} className={styles.svg} height={height} width={width} />;
+  const styles = useStyles2(getStyles, x, y);
+  return <SVG src={theme.isDark ? notFoundDark : notFoundLight} className={styles.svg} height={height} width={width} />;
 };
 
 GrotNotFound.displayName = 'GrotNotFound';
 
-const getStyles = (theme: GrafanaTheme2, xPos: number | null, yPos: number | null, show404: boolean) => {
+const getStyles = (theme: GrafanaTheme2, xPos: number | null, yPos: number | null) => {
   const { innerWidth, innerHeight } = window;
   const heightRatio = yPos && yPos / innerHeight;
   const widthRatio = xPos && xPos / innerWidth;
@@ -40,13 +39,10 @@ const getStyles = (theme: GrafanaTheme2, xPos: number | null, yPos: number | nul
 
   return {
     svg: css({
-      '#grot-404-arm, #grot-404-magnifier': {
+      '#grot-not-found-arm, #grot-not-found-magnifier': {
         transform: `rotate(${rotation}deg) translateX(${translation}%)`,
         transformOrigin: 'center',
         transition: 'transform 50ms linear',
-      },
-      '#grot-404-text': {
-        display: show404 ? 'block' : 'none',
       },
     }),
   };
