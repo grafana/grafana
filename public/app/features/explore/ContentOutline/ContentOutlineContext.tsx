@@ -15,6 +15,7 @@ export interface ContentOutlineContextProps {
   outlineItems: ContentOutlineItemContextProps[];
   register: RegisterFunction;
   unregister: (id: string) => void;
+  updateOutlineItems: (newItems: ContentOutlineItemContextProps[]) => void;
 }
 
 interface ParentlessItems {
@@ -105,14 +106,18 @@ export function ContentOutlineContextProvider({ children }: { children: ReactNod
     );
   }, []);
 
+  const updateOutlineItems = useCallback((newItems: ContentOutlineItemContextProps[]) => {
+    setOutlineItems(newItems);
+  }, []);
+
   return (
-    <ContentOutlineContext.Provider value={{ outlineItems, register, unregister }}>
+    <ContentOutlineContext.Provider value={{ outlineItems, register, unregister, updateOutlineItems }}>
       {children}
     </ContentOutlineContext.Provider>
   );
 }
 
-function sortElementsByDocumentPosition(a: ContentOutlineItemContextProps, b: ContentOutlineItemContextProps) {
+export function sortElementsByDocumentPosition(a: ContentOutlineItemContextProps, b: ContentOutlineItemContextProps) {
   if (a.ref && b.ref) {
     const diff = a.ref.compareDocumentPosition(b.ref);
     if (diff === Node.DOCUMENT_POSITION_PRECEDING) {

@@ -612,9 +612,7 @@ export class Explore extends React.PureComponent<Props, ExploreState> {
                     <ContentOutlineItem panelId="Queries" title="Queries" icon="arrow" mergeSingleChild={true}>
                       <PanelContainer className={styles.queryContainer}>
                         {correlationsBox}
-
                         <QueryRows exploreId={exploreId} />
-
                         <SecondaryActions
                           // do not allow people to add queries with potentially different datasources in correlations editor mode
                           addQueryRowButtonDisabled={
