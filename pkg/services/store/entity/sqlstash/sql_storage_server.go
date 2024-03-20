@@ -980,8 +980,11 @@ func (s *sqlEntityServer) History(ctx context.Context, r *entity.EntityHistoryRe
 		args = append(args, key.Namespace)
 		whereclause += " AND " + s.dialect.Quote("namespace") + "=?"
 	}
-	args = append(args, key.Name)
-	whereclause += " AND " + s.dialect.Quote("name") + "=?)"
+	if key.Name != "" {
+		args = append(args, key.Name)
+		whereclause += " AND " + s.dialect.Quote("name") + "=?"
+	}
+	whereclause += ")"
 
 	entityQuery.addWhere(whereclause, args...)
 
@@ -1044,8 +1047,9 @@ type ContinueRequest interface {
 }
 
 type ContinueToken struct {
-	Sort        []string `json:"s"`
-	StartOffset int64    `json:"o"`
+	Sort            []string `json:"s"`
+	StartOffset     int64    `json:"o"`
+	ResourceVersion int64    `json:"v"`
 }
 
 func (c *ContinueToken) String() string {
@@ -1143,48 +1147,12 @@ func (s *sqlEntityServer) List(ctx context.Context, r *entity.EntityListRequest)
 		entityQuery.addWhere("action", entity.Entity_DELETED)
 	}
 
-	// TODO fix this
-	// entityQuery.addWhere("namespace", user.OrgID)
-
-	if len(r.Group) > 0 {
-		entityQuery.addWhereIn("group", r.Group)
+	rsp := &entity.EntityListResponse{
+		ResourceVersion: s.snowflake.Generate().Int64(),
 	}
 
-	if len(r.Resource) > 0 {
-		entityQuery.addWhereIn("resource", r.Resource)
-	}
-
-	if len(r.Key) > 0 {
-		where := []string{}
-		args := []any{}
-		for _, k := range r.Key {
-			key, err := entity.ParseKey(k)
-			if err != nil {
-				return nil, err
-			}
-
-			args = append(args, key.Group, key.Resource)
-			whereclause := "(" + s.dialect.Quote("group") + "=? AND " + s.dialect.Quote("resource") + "=?"
-			if key.Namespace != "" {
-				args = append(args, key.Namespace)
-				whereclause += " AND " + s.dialect.Quote("namespace") + "=?"
-			}
-			if key.Name != "" {
-				args = append(args, key.Name)
-				whereclause += " AND " + s.dialect.Quote("name") + "=?"
-			}
-			whereclause += ")"
-
-			where = append(where, whereclause)
-		}
-
-		entityQuery.addWhere("("+strings.Join(where, " OR ")+")", args...)
-	}
-
-	// Folder guid
-	if r.Folder != "" {
-		entityQuery.addWhere("folder", r.Folder)
-	}
+	rvSubQuery := ""
+	rvSubQueryArgs := []any{}
 
 	// if we have a page token, use that to specify the first record
 	continueToken, err := GetContinueToken(r)
@@ -1193,11 +1161,91 @@ func (s *sqlEntityServer) List(ctx context.Context, r *entity.EntityListRequest)
 	}
 	if continueToken != nil {
 		entityQuery.offset = continueToken.StartOffset
+		if continueToken.ResourceVersion > 0 {
+			rsp.ResourceVersion = continueToken.ResourceVersion
+
+			if r.Deleted {
+				// if we're continuing, we need to list only revisions that are older than the given resource version
+				entityQuery.addWhere("resource_version < ?", continueToken.ResourceVersion)
+			} else {
+				entityQuery.from = "entity_history"
+				entityQuery.addWhere("t.action != ?", entity.Entity_DELETED)
+				rvSubQuery = "SELECT rvt.guid, max(rvt.resource_version) as max_rv FROM entity_history AS rvt WHERE rvt.resource_version <= ?"
+				rvSubQueryArgs = append(rvSubQueryArgs, continueToken.ResourceVersion)
+			}
+		}
+	}
+
+	// TODO fix this
+	// entityQuery.addWhere("namespace", user.OrgID)
+
+	if len(r.Group) > 0 {
+		entityQuery.addWhereIn("group", r.Group)
+		if rvSubQuery != "" {
+			rvSubQuery += " AND rvt." + s.dialect.Quote("group") + " = ?"
+			rvSubQueryArgs = append(rvSubQueryArgs, r.Group)
+		}
+	}
+
+	if len(r.Resource) > 0 {
+		entityQuery.addWhereIn("resource", r.Resource)
+		if rvSubQuery != "" {
+			rvSubQuery += " AND rvt." + s.dialect.Quote("resource") + " = ?"
+			rvSubQueryArgs = append(rvSubQueryArgs, r.Resource)
+		}
+	}
+
+	if len(r.Key) > 0 {
+		where := []string{}
+		rvWhere := []string{}
+		args := []any{}
+		for _, k := range r.Key {
+			key, err := entity.ParseKey(k)
+			if err != nil {
+				return nil, err
+			}
+
+			args = append(args, key.Group, key.Resource)
+			whereclause := "(t." + s.dialect.Quote("group") + "=? AND t." + s.dialect.Quote("resource") + "=?"
+			rvWhereclause := "(rvt." + s.dialect.Quote("group") + "=? AND rvt." + s.dialect.Quote("resource") + "=?"
+			if key.Namespace != "" {
+				args = append(args, key.Namespace)
+				whereclause += " AND t." + s.dialect.Quote("namespace") + "=?"
+				rvWhereclause += " AND rvt." + s.dialect.Quote("namespace") + "=?"
+			}
+			if key.Name != "" {
+				args = append(args, key.Name)
+				whereclause += " AND t." + s.dialect.Quote("name") + "=?"
+				rvWhereclause += " AND rvt." + s.dialect.Quote("name") + "=?"
+			}
+			whereclause += ")"
+			rvWhereclause += ")"
+
+			where = append(where, whereclause)
+			rvWhere = append(rvWhere, rvWhereclause)
+		}
+
+		entityQuery.addWhere("("+strings.Join(where, " OR ")+")", args...)
+		if rvSubQuery != "" {
+			rvSubQuery += " AND (" + strings.Join(rvWhere, " OR ") + ")"
+			rvSubQueryArgs = append(rvSubQueryArgs, args...)
+		}
+	}
+
+	if rvSubQuery != "" {
+		rvSubQuery += " GROUP BY rvt.guid"
+
+		entityQuery.addJoin("INNER JOIN ("+rvSubQuery+") rv ON rv.guid = t.guid AND rv.max_rv = t.resource_version", rvSubQueryArgs...)
+	}
+
+	// Folder guid
+	if r.Folder != "" {
+		entityQuery.addWhere("folder", r.Folder)
 	}
 
 	if len(r.Labels) > 0 {
 		// if we are looking for deleted entities, we need to use the labels column
-		if r.Deleted {
+		if entityQuery.from == "entity_history" {
 			for labelKey, labelValue := range r.Labels {
 				entityQuery.addWhereJsonContainsKV("labels", labelKey, labelValue)
 			}
@@ -1238,9 +1286,6 @@ func (s *sqlEntityServer) List(ctx context.Context, r *entity.EntityListRequest)
 		return nil, err
 	}
 	defer func() { _ = rows.Close() }()
-	rsp := &entity.EntityListResponse{
-		ResourceVersion: s.snowflake.Generate().Int64(),
-	}
 	for rows.Next() {
 		result, err := rowToEntity(rows, r)
 		if err != nil {
@@ -1250,8 +1295,9 @@ func (s *sqlEntityServer) List(ctx context.Context, r *entity.EntityListRequest)
 		// found more than requested
 		if int64(len(rsp.Results)) >= entityQuery.limit {
 			continueToken := &ContinueToken{
-				Sort:        r.Sort,
-				StartOffset: entityQuery.offset + entityQuery.limit,
+				Sort:            r.Sort,
+				StartOffset:     entityQuery.offset + entityQuery.limit,
+				ResourceVersion: rsp.ResourceVersion,
 			}
 			rsp.NextPageToken = continueToken.String()
 			break

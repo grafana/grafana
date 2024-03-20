@@ -21,10 +21,16 @@ func (d Direction) String() string {
 	return "ASC"
 }
 
+type joinQuery struct {
+	query string
+	args  []any
+}
+
 type selectQuery struct {
 	dialect  migrator.Dialect
-	fields   []string // SELECT xyz
-	from     string   // FROM object
+	fields   []string    // SELECT xyz
+	from     string      // FROM object
+	joins    []joinQuery // JOIN object
 	offset   int64
 	limit    int64
 	oneExtra bool
@@ -36,6 +42,14 @@ type selectQuery struct {
 	direction []Direction
 }
 
+func (q *selectQuery) addField(f string) {
+	q.fields = append(q.fields, f)
+}
+
+func (q *selectQuery) addJoin(j string, args ...any) {
+	q.joins = append(q.joins, joinQuery{query: j, args: args})
+}
+
 func (q *selectQuery) addWhere(f string, val ...any) {
 	q.args = append(q.args, val...)
 	// if the field contains a question mark, we assume it's a raw where clause
@@ -43,20 +57,20 @@ func (q *selectQuery) addWhere(f string, val ...any) {
 		q.where = append(q.where, f)
 		// otherwise we assume it's a field name
 	} else {
-		q.where = append(q.where, q.dialect.Quote(f)+"=?")
+		q.where = append(q.where, "t."+q.dialect.Quote(f)+"=?")
 	}
 }
 
 func (q *selectQuery) addWhereInSubquery(f string, subquery string, subqueryArgs []any) {
 	q.args = append(q.args, subqueryArgs...)
-	q.where = append(q.where, q.dialect.Quote(f)+" IN ("+subquery+")")
+	q.where = append(q.where, "t."+q.dialect.Quote(f)+" IN ("+subquery+")")
 }
 
 func (q *selectQuery) addWhereIn(f string, vals []string) {
 	count := len(vals)
 	if count > 1 {
 		sb := strings.Builder{}
-		sb.WriteString(q.dialect.Quote(f))
+		sb.WriteString("t." + q.dialect.Quote(f))
 		sb.WriteString(" IN (")
 		for i := 0; i < count; i++ {
 			if i > 0 {
@@ -88,7 +102,7 @@ func escapeJSONStringSQLLike(s string) string {
 func (q *selectQuery) addWhereJsonContainsKV(field string, key string, value string) {
 	escapedKey := escapeJSONStringSQLLike(key)
 	escapedValue := escapeJSONStringSQLLike(value)
-	q.where = append(q.where, q.dialect.Quote(field)+" LIKE ? ESCAPE ?")
+	q.where = append(q.where, "t."+q.dialect.Quote(field)+" LIKE ? ESCAPE ?")
 	q.args = append(q.args, "{%"+escapedKey+":"+escapedValue+"%}", sqlLikeEscape)
 }
 
@@ -98,16 +112,22 @@ func (q *selectQuery) addOrderBy(field string, direction Direction) {
 }
 
 func (q *selectQuery) toQuery() (string, []any) {
-	args := q.args
+	args := []any{}
 	sb := strings.Builder{}
 	sb.WriteString("SELECT ")
 	quotedFields := make([]string, len(q.fields))
 	for i, f := range q.fields {
-		quotedFields[i] = q.dialect.Quote(f)
+		quotedFields[i] = "t." + q.dialect.Quote(f)
 	}
 	sb.WriteString(strings.Join(quotedFields, ","))
 	sb.WriteString(" FROM ")
 	sb.WriteString(q.from)
+	sb.WriteString(" AS t")
+
+	for _, j := range q.joins {
+		sb.WriteString(" " + j.query)
+		args = append(args, j.args...)
+	}
 
 	// Templated where string
 	where := len(q.where)
@@ -119,6 +139,7 @@ func (q *selectQuery) toQuery() (string, []any) {
 			}
 			sb.WriteString(q.where[i])
 		}
+		args = append(args, q.args...)
 	}
 
 	if len(q.orderBy) > 0 && len(q.direction) == len(q.orderBy) {
@@ -127,7 +148,7 @@ func (q *selectQuery) toQuery() (string, []any) {
 			if i > 0 {
 				sb.WriteString(",")
 			}
-			sb.WriteString(q.dialect.Quote(f))
+			sb.WriteString("t." + q.dialect.Quote(f))
 			sb.WriteString(" ")
 			sb.WriteString(q.direction[i].String())
 		}
