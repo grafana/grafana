@@ -117,7 +117,7 @@ export const QueryEditorRowHeader = <TQuery extends DataQuery>(props: Props<TQue
         )}
         {renderDataSource(props, styles)}
         {renderExtras && <div className={styles.itemWrapper}>{renderExtras()}</div>}
-        {disabled && <em className={styles.contextInfo}>Disabled</em>}
+        {disabled && <em className={styles.contextInfo}>Hidden</em>}
       </div>
 
       {collapsedText && <div className={styles.collapsedText}>{collapsedText}</div>}
