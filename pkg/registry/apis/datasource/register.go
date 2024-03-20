@@ -175,7 +175,6 @@ func (b *DataSourceAPIBuilder) GetAPIGroupInfo(
 
 	conn := b.connectionResourceInfo
 	storage[conn.StoragePath()] = &connectionAccess{
-		pluginID:     b.pluginJSON.ID,
 		datasources:  b.datasources,
 		resourceInfo: conn,
 		tableConverter: utils.NewTableConverter(
@@ -220,7 +219,7 @@ func (b *DataSourceAPIBuilder) GetAPIGroupInfo(
 }
 
 func (b *DataSourceAPIBuilder) getPluginContext(ctx context.Context, uid string) (backend.PluginContext, error) {
-	instance, err := b.datasources.GetInstanceSettings(ctx, b.pluginJSON.ID, uid)
+	instance, err := b.datasources.GetInstanceSettings(ctx, uid)
 	if err != nil {
 		return backend.PluginContext{}, err
 	}

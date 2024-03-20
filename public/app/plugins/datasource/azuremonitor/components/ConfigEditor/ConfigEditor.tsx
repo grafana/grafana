@@ -5,15 +5,15 @@ import { ConfigSection, DataSourceDescription } from '@grafana/experimental';
 import { getBackendSrv, getTemplateSrv, isFetchError, TemplateSrv, config } from '@grafana/runtime';
 import { Alert, Divider, SecureSocksProxySettings } from '@grafana/ui';
 
-import ResponseParser from '../azure_monitor/response_parser';
+import ResponseParser from '../../azure_monitor/response_parser';
 import {
   AzureAPIResponse,
   AzureDataSourceJsonData,
   AzureDataSourceSecureJsonData,
   AzureDataSourceSettings,
   Subscription,
-} from '../types';
-import { routeNames } from '../utils/common';
+} from '../../types';
+import { routeNames } from '../../utils/common';
 
 import { MonitorConfig } from './MonitorConfig';
 

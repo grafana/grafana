@@ -3,16 +3,23 @@ import React, { useMemo, useState } from 'react';
 import { SelectableValue } from '@grafana/data';
 import { config } from '@grafana/runtime';
 
-import { getCredentials, updateCredentials } from '../credentials';
-import { AzureDataSourceSettings, AzureCredentials } from '../types';
+import { getCredentials, updateCredentials } from '../../credentials';
+import { AzureDataSourceSettings, AzureCredentials } from '../../types';
 
 import { AzureCredentialsForm } from './AzureCredentialsForm';
 import { DefaultSubscription } from './DefaultSubscription';
 
-const azureClouds: SelectableValue[] = [
+const legacyAzureClouds: SelectableValue[] = [
   { value: 'azuremonitor', label: 'Azure' },
   { value: 'govazuremonitor', label: 'Azure US Government' },
   { value: 'chinaazuremonitor', label: 'Azure China' },
+];
+
+// This will be pulled from the azure-sdk in future
+const azureClouds: SelectableValue[] = [
+  { value: 'AzureCloud', label: 'Azure' },
+  { value: 'AzureUSGovernment', label: 'Azure US Government' },
+  { value: 'AzureChinaCloud', label: 'Azure China' },
 ];
 
 export interface Props {
@@ -46,8 +53,10 @@ export const MonitorConfig = (props: Props) => {
       <AzureCredentialsForm
         managedIdentityEnabled={config.azure.managedIdentityEnabled}
         workloadIdentityEnabled={config.azure.workloadIdentityEnabled}
+        userIdentityEnabled={config.azure.userIdentityEnabled}
         credentials={credentials}
         azureCloudOptions={azureClouds}
+        legacyAzureCloudOptions={legacyAzureClouds}
         onCredentialsChange={onCredentialsChange}
         disabled={props.options.readOnly}
       >
