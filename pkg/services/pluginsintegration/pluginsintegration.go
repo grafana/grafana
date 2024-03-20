@@ -1,7 +1,7 @@
 package pluginsintegration
 
 import (
-	"github.com/grafana/grafana/pkg/build/wire"
+	"github.com/google/wire"
 
 	"github.com/prometheus/client_golang/prometheus"
 
