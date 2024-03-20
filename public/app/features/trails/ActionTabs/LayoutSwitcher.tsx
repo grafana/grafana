@@ -1,11 +1,13 @@
 import React from 'react';
 
 import { SelectableValue } from '@grafana/data';
-import { SceneComponentProps, SceneObject, SceneObjectBase, SceneObjectState } from '@grafana/scenes';
+import { locationService } from '@grafana/runtime';
+import { SceneComponentProps, sceneGraph, SceneObject, SceneObjectBase, SceneObjectState } from '@grafana/scenes';
 import { Field, RadioButtonGroup } from '@grafana/ui';
 
+import { MetricScene } from '../MetricScene';
+
 export interface LayoutSwitcherState extends SceneObjectState {
-  active: LayoutType;
   layouts: SceneObject[];
   options: Array<SelectableValue<LayoutType>>;
 }
@@ -14,23 +16,25 @@ export type LayoutType = 'single' | 'grid' | 'rows';
 
 export class LayoutSwitcher extends SceneObjectBase<LayoutSwitcherState> {
   public Selector({ model }: { model: LayoutSwitcher }) {
-    const { active, options } = model.useState();
+    const { options } = model.useState();
+    const { layout } = sceneGraph.getAncestor(model, MetricScene).useState();
 
     return (
       <Field label="View">
-        <RadioButtonGroup options={options} value={active} onChange={model.onLayoutChange} />
+        <RadioButtonGroup options={options} value={layout} onChange={model.onLayoutChange} />
       </Field>
     );
   }
 
   public onLayoutChange = (active: LayoutType) => {
-    this.setState({ active });
+    locationService.partial({ layout: active });
   };
 
   public static Component = ({ model }: SceneComponentProps<LayoutSwitcher>) => {
-    const { layouts, options, active } = model.useState();
+    const { layouts, options } = model.useState();
+    const { layout: activeLayout } = sceneGraph.getAncestor(model, MetricScene).useState();
 
-    const index = options.findIndex((o) => o.value === active);
+    const index = options.findIndex((o) => o.value === activeLayout);
     if (index === -1) {
       return null;
     }

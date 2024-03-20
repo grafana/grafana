@@ -230,7 +230,6 @@ export function buildAllLayout(options: Array<SelectableValue<string>>, queryDef
       { value: 'grid', label: 'Grid' },
       { value: 'rows', label: 'Rows' },
     ],
-    active: 'grid',
     layouts: [
       new SceneCSSGridLayout({
         templateColumns: GRID_TEMPLATE_COLUMNS,
@@ -261,7 +260,6 @@ function buildNormalLayout(queryDef: AutoQueryDef) {
       { value: 'grid', label: 'Grid' },
       { value: 'rows', label: 'Rows' },
     ],
-    active: 'grid',
     layouts: [
       new SceneFlexLayout({
         direction: 'column',
