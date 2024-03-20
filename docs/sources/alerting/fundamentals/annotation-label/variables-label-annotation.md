@@ -1,6 +1,6 @@
 ---
 canonical: https://grafana.com/docs/grafana/latest/alerting/fundamentals/annotation-label/variables-label-annotation/
-description: Learn about templating of labels and annotations
+description: Learn about how to template labels and annotations
 keywords:
   - grafana
   - alerting
@@ -225,7 +225,7 @@ The `$value` variable is a string containing the labels and values of all instan
 To print the `$value` variable in the summary you would write something like this:
 
 ```
-CPU usage for {{ index $labels "instance" }} has exceeded 80% for the last 5 minutes: {{ $value }})
+CPU usage for {{ index $labels "instance" }} has exceeded 80% for the last 5 minutes: {{ $value }}
 ```
 
 And would look something like this:
@@ -245,7 +245,7 @@ The `$values` variable is a table containing the labels and floating point value
 To print the value of the instant query with Ref ID A:
 
 ```
-CPU usage for {{ index $labels "instance" }} has exceeded 80% for the last 5 minutes: {{ index $values "A" }})
+CPU usage for {{ index $labels "instance" }} has exceeded 80% for the last 5 minutes: {{ index $values "A" }}
 ```
 
 For example, given an alert with the labels `instance=server1` and an instant query with the value `81.2345`, this would print:
@@ -257,7 +257,7 @@ CPU usage for instance1 has exceeded 80% for the last 5 minutes: 81.2345
 If the query in Ref ID A is a range query rather than an instant query then add a reduce expression with Ref ID B and replace `(index $values "A")` with `(index $values "B")`:
 
 ```
-CPU usage for {{ index $labels "instance" }} has exceeded 80% for the last 5 minutes: {{ index $values "B" }})
+CPU usage for {{ index $labels "instance" }} has exceeded 80% for the last 5 minutes: {{ index $values "B" }}
 ```
 
 ## Functions
@@ -445,6 +445,6 @@ example.com:8080
 ```
 
 {{% docs/reference %}}
-[explore]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/explore"
-[explore]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/explore"
+[explore]: "/docs/grafana/ -> /docs/grafana/<GRAFANA_VERSION>/explore"
+[explore]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA_VERSION>/explore"
 {{% /docs/reference %}}

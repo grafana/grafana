@@ -15,6 +15,7 @@ const plugin: CatalogPlugin = {
   id: 'test-plugin',
   info: {
     logos: { small: '', large: '' },
+    keywords: ['test', 'plugin'],
   },
   name: 'Testing Plugin',
   orgName: 'Test',

@@ -1,6 +1,6 @@
 ---
 canonical: https://grafana.com/docs/grafana/latest/alerting/set-up/configure-alert-state-history/
-description: Configure Alert State History
+description: Configure alert state history to explore the behavior of your alert rules
 keywords:
   - grafana
   - alerting
@@ -9,7 +9,7 @@ keywords:
   - alert state history
 labels:
   products:
-    - cloud
+    - oss
 title: Configure Alert State History
 weight: 600
 ---

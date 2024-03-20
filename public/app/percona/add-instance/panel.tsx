@@ -79,8 +79,8 @@ const AddInstancePanel = () => {
       showSelection
         ? Messages.selectionStep.next
         : selectedInstance.type === InstanceTypesExtra.rds || selectedInstance.type === InstanceTypesExtra.azure
-        ? Messages.configurationStep.discover
-        : Messages.configurationStep.next,
+          ? Messages.configurationStep.discover
+          : Messages.configurationStep.next,
     [showSelection, selectedInstance]
   );
 

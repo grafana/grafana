@@ -197,6 +197,14 @@ export interface AlertQuery {
   model: AlertDataQuery;
 }
 
+export interface GrafanaNotificationSettings {
+  receiver: string;
+  group_by?: string[];
+  group_wait?: string;
+  group_interval?: string;
+  repeat_interval?: string;
+  mute_time_intervals?: string[];
+}
 export interface PostableGrafanaRuleDefinition {
   uid?: string;
   title: string;
@@ -205,12 +213,12 @@ export interface PostableGrafanaRuleDefinition {
   exec_err_state: GrafanaAlertStateDecision;
   data: AlertQuery[];
   is_paused?: boolean;
+  notification_settings?: GrafanaNotificationSettings;
 }
 export interface GrafanaRuleDefinition extends PostableGrafanaRuleDefinition {
   id?: string;
   uid: string;
   namespace_uid: string;
-  namespace_id: number;
   provenance?: string;
 }
 

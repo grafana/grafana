@@ -1,11 +1,10 @@
 import { css } from '@emotion/css';
-import React, { useState } from 'react';
+import React from 'react';
 
 import { GrafanaTheme2, NavModelItem } from '@grafana/data';
 import { Components } from '@grafana/e2e-selectors';
-import { Icon, IconButton, ToolbarButton, useStyles2, useTheme2 } from '@grafana/ui';
+import { Icon, IconButton, ToolbarButton, useStyles2 } from '@grafana/ui';
 import { useGrafana } from 'app/core/context/GrafanaContext';
-import { useMediaQueryChange } from 'app/core/hooks/useMediaQueryChange';
 import { t } from 'app/core/internationalization';
 import { HOME_NAV_ID } from 'app/core/reducers/navModel';
 import { useSelector } from 'app/types';
@@ -40,21 +39,8 @@ export function NavToolbar({
   const { chrome } = useGrafana();
   const state = chrome.useState();
   const homeNav = useSelector((state) => state.navIndex)[HOME_NAV_ID];
-  const theme = useTheme2();
   const styles = useStyles2(getStyles);
   const breadcrumbs = buildBreadcrumbs(sectionNav, pageNav, homeNav);
-
-  const dockMenuBreakpoint = theme.breakpoints.values.xl;
-  const [isTooSmallForDockedMenu, setIsTooSmallForDockedMenu] = useState(
-    !window.matchMedia(`(min-width: ${dockMenuBreakpoint}px)`).matches
-  );
-
-  useMediaQueryChange({
-    breakpoint: dockMenuBreakpoint,
-    onChange: (e) => {
-      setIsTooSmallForDockedMenu(!e.matches);
-    },
-  });
 
   return (
     <div data-testid={Components.NavToolbar.container} className={styles.pageToolbar}>
@@ -63,9 +49,9 @@ export function NavToolbar({
           id={TOGGLE_BUTTON_ID}
           name="bars"
           tooltip={
-            state.megaMenu === 'closed' || (state.megaMenu === 'docked' && isTooSmallForDockedMenu)
-              ? t('navigation.toolbar.open-menu', 'Open menu')
-              : t('navigation.toolbar.close-menu', 'Close menu')
+            state.megaMenuOpen
+              ? t('navigation.toolbar.close-menu', 'Close menu')
+              : t('navigation.toolbar.open-menu', 'Open menu')
           }
           tooltipPlacement="bottom"
           size="xl"
@@ -76,7 +62,6 @@ export function NavToolbar({
       <Breadcrumbs breadcrumbs={breadcrumbs} className={styles.breadcrumbsWrapper} />
       <div className={styles.actions}>
         {actions}
-        {actions && <NavToolbarSeparator />}
         {searchBarHidden && (
           <ToolbarButton
             onClick={onToggleKioskMode}
@@ -85,6 +70,7 @@ export function NavToolbar({
             icon="monitor"
           />
         )}
+        {actions && <NavToolbarSeparator />}
         <ToolbarButton
           onClick={onToggleSearchBar}
           narrow
@@ -111,6 +97,7 @@ const getStyles = (theme: GrafanaTheme2) => {
       display: 'flex',
       padding: theme.spacing(0, 1, 0, 2),
       alignItems: 'center',
+      borderBottom: `1px solid ${theme.colors.border.weak}`,
     }),
     menuButton: css({
       display: 'flex',
@@ -125,7 +112,7 @@ const getStyles = (theme: GrafanaTheme2) => {
       justifyContent: 'flex-end',
       paddingLeft: theme.spacing(1),
       flexGrow: 1,
-      gap: theme.spacing(0.5),
+      gap: theme.spacing(1),
       minWidth: 0,
 
       '.body-drawer-open &': {

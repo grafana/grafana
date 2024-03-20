@@ -14,7 +14,7 @@ import {
 import { convertFieldType } from '@grafana/data/src/transformations/transformers/convertFieldType';
 import { applyNullInsertThreshold } from '@grafana/data/src/transformations/transformers/nulls/nullInsertThreshold';
 import { nullToValue } from '@grafana/data/src/transformations/transformers/nulls/nullToValue';
-import { GraphFieldConfig, LineInterpolation } from '@grafana/schema';
+import { GraphFieldConfig, LineInterpolation, TooltipDisplayMode, VizTooltipOptions } from '@grafana/schema';
 import { buildScaleKey } from '@grafana/ui/src/components/uPlot/internal';
 
 type ScaleKey = string;
@@ -310,3 +310,7 @@ export function regenerateLinksSupplier(
 
   return alignedDataFrame;
 }
+
+export const isTooltipScrollable = (tooltipOptions: VizTooltipOptions) => {
+  return tooltipOptions.mode === TooltipDisplayMode.Multi && tooltipOptions.maxHeight != null;
+};

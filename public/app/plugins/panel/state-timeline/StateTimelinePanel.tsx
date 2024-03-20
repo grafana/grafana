@@ -2,16 +2,19 @@ import React, { useCallback, useMemo, useRef, useState } from 'react';
 
 import { CartesianCoords2D, DashboardCursorSync, DataFrame, FieldType, PanelProps } from '@grafana/data';
 import { getLastStreamingDataFramePacket } from '@grafana/data/src/dataframe/StreamingDataFrame';
+import { config } from '@grafana/runtime';
 import {
   Portal,
   TooltipDisplayMode,
+  TooltipPlugin2,
   UPlotConfigBuilder,
   usePanelContext,
   useTheme2,
   VizTooltipContainer,
   ZoomPlugin,
 } from '@grafana/ui';
-import { HoverEvent, addTooltipSupport } from '@grafana/ui/src/components/uPlot/config/addTooltipSupport';
+import { addTooltipSupport, HoverEvent } from '@grafana/ui/src/components/uPlot/config/addTooltipSupport';
+import { TimeRange2, TooltipHoverMode } from '@grafana/ui/src/components/uPlot/plugins/TooltipPlugin2';
 import { CloseButton } from 'app/core/components/CloseButton/CloseButton';
 import { TimelineChart } from 'app/core/components/TimelineChart/TimelineChart';
 import {
@@ -22,10 +25,12 @@ import {
 
 import { AnnotationEditorPlugin } from '../timeseries/plugins/AnnotationEditorPlugin';
 import { AnnotationsPlugin } from '../timeseries/plugins/AnnotationsPlugin';
+import { AnnotationsPlugin2 } from '../timeseries/plugins/AnnotationsPlugin2';
 import { OutsideRangePlugin } from '../timeseries/plugins/OutsideRangePlugin';
 import { getTimezones } from '../timeseries/utils';
 
 import { StateTimelineTooltip } from './StateTimelineTooltip';
+import { StateTimelineTooltip2 } from './StateTimelineTooltip2';
 import { Options } from './panelcfg.gen';
 
 const TOOLTIP_OFFSET = 10;
@@ -56,6 +61,8 @@ export const StateTimelinePanel = ({
   const [focusedPointIdx, setFocusedPointIdx] = useState<number | null>(null);
   const [isActive, setIsActive] = useState<boolean>(false);
   const [shouldDisplayCloseButton, setShouldDisplayCloseButton] = useState<boolean>(false);
+  // temp range set for adding new annotation set by TooltipPlugin2, consumed by AnnotationPlugin2
+  const [newAnnotationRange, setNewAnnotationRange] = useState<TimeRange2 | null>(null);
   const { sync, canAddAnnotations } = usePanelContext();
 
   const onCloseToolTip = () => {
@@ -102,10 +109,7 @@ export const StateTimelinePanel = ({
        * Render nothing in this case to prevent error.
        * See https://github.com/grafana/support-escalations/issues/932
        */
-      if (
-        (!alignedData.meta?.transformations?.length && alignedData.fields.length - 1 !== valueFieldsCount) ||
-        !alignedData.fields[seriesIdx]
-      ) {
+      if (alignedData.fields.length - 1 !== valueFieldsCount || !alignedData.fields[seriesIdx]) {
         return null;
       }
 
@@ -159,6 +163,8 @@ export const StateTimelinePanel = ({
     }
   }
   const enableAnnotationCreation = Boolean(canAddAnnotations && canAddAnnotations());
+  const showNewVizTooltips =
+    config.featureToggles.newVizTooltips && (sync == null || sync() !== DashboardCursorSync.Tooltip);
 
   return (
     <TimelineChart
@@ -173,10 +179,10 @@ export const StateTimelinePanel = ({
       {...options}
       mode={TimelineMode.Changes}
     >
-      {(config, alignedFrame) => {
-        if (oldConfig.current !== config) {
+      {(builder, alignedFrame) => {
+        if (oldConfig.current !== builder && !showNewVizTooltips) {
           oldConfig.current = addTooltipSupport({
-            config,
+            config: builder,
             onUPlotClick,
             setFocusedSeriesIdx,
             setFocusedPointIdx,
@@ -191,55 +197,112 @@ export const StateTimelinePanel = ({
 
         return (
           <>
-            <ZoomPlugin config={config} onZoom={onChangeTimeRange} />
+            {showNewVizTooltips ? (
+              <>
+                {options.tooltip.mode !== TooltipDisplayMode.None && (
+                  <TooltipPlugin2
+                    config={builder}
+                    hoverMode={TooltipHoverMode.xOne}
+                    queryZoom={onChangeTimeRange}
+                    render={(u, dataIdxs, seriesIdx, isPinned, dismiss, timeRange2, viaSync) => {
+                      if (viaSync) {
+                        return null;
+                      }
 
-            <OutsideRangePlugin config={config} onChangeTimeRange={onChangeTimeRange} />
+                      if (enableAnnotationCreation && timeRange2 != null) {
+                        setNewAnnotationRange(timeRange2);
+                        dismiss();
+                        return;
+                      }
 
-            {data.annotations && (
-              <AnnotationsPlugin annotations={data.annotations} config={config} timeZone={timeZone} />
-            )}
+                      const annotate = () => {
+                        let xVal = u.posToVal(u.cursor.left!, 'x');
 
-            {enableAnnotationCreation ? (
-              <AnnotationEditorPlugin data={alignedFrame} timeZone={timeZone} config={config}>
-                {({ startAnnotating }) => {
-                  if (options.tooltip.mode === TooltipDisplayMode.None) {
-                    return null;
-                  }
+                        setNewAnnotationRange({ from: xVal, to: xVal });
+                        dismiss();
+                      };
 
-                  if (focusedPointIdx === null || (!isActive && sync && sync() === DashboardCursorSync.Crosshair)) {
-                    return null;
-                  }
-
-                  return (
-                    <Portal>
-                      {hover && coords && focusedSeriesIdx && (
-                        <VizTooltipContainer
-                          position={{ x: coords.viewport.x, y: coords.viewport.y }}
-                          offset={{ x: TOOLTIP_OFFSET, y: TOOLTIP_OFFSET }}
-                          allowPointerEvents={isToolTipOpen.current}
-                        >
-                          {renderCustomTooltip(alignedFrame, focusedSeriesIdx, focusedPointIdx, () => {
-                            startAnnotating({ coords: { plotCanvas: coords.canvas, viewport: coords.viewport } });
-                            onCloseToolTip();
-                          })}
-                        </VizTooltipContainer>
-                      )}
-                    </Portal>
-                  );
-                }}
-              </AnnotationEditorPlugin>
-            ) : (
-              <Portal>
-                {options.tooltip.mode !== TooltipDisplayMode.None && hover && coords && (
-                  <VizTooltipContainer
-                    position={{ x: coords.viewport.x, y: coords.viewport.y }}
-                    offset={{ x: TOOLTIP_OFFSET, y: TOOLTIP_OFFSET }}
-                    allowPointerEvents={isToolTipOpen.current}
-                  >
-                    {renderCustomTooltip(alignedFrame, focusedSeriesIdx, focusedPointIdx)}
-                  </VizTooltipContainer>
+                      return (
+                        <StateTimelineTooltip2
+                          frames={frames ?? []}
+                          seriesFrame={alignedFrame}
+                          dataIdxs={dataIdxs}
+                          seriesIdx={seriesIdx}
+                          mode={options.tooltip.mode}
+                          sortOrder={options.tooltip.sort}
+                          isPinned={isPinned}
+                          timeRange={timeRange}
+                          annotate={enableAnnotationCreation ? annotate : undefined}
+                          withDuration={true}
+                        />
+                      );
+                    }}
+                    maxWidth={options.tooltip.maxWidth}
+                    maxHeight={options.tooltip.maxHeight}
+                  />
                 )}
-              </Portal>
+                {/* Renders annotations */}
+                <AnnotationsPlugin2
+                  annotations={data.annotations ?? []}
+                  config={builder}
+                  timeZone={timeZone}
+                  newRange={newAnnotationRange}
+                  setNewRange={setNewAnnotationRange}
+                  canvasRegionRendering={false}
+                />
+              </>
+            ) : (
+              <>
+                <ZoomPlugin config={builder} onZoom={onChangeTimeRange} />
+                <OutsideRangePlugin config={builder} onChangeTimeRange={onChangeTimeRange} />
+                {/* Renders annotation markers*/}
+                {data.annotations && (
+                  <AnnotationsPlugin annotations={data.annotations} config={builder} timeZone={timeZone} />
+                )}
+
+                {enableAnnotationCreation ? (
+                  <AnnotationEditorPlugin data={alignedFrame} timeZone={timeZone} config={builder}>
+                    {({ startAnnotating }) => {
+                      if (options.tooltip.mode === TooltipDisplayMode.None) {
+                        return null;
+                      }
+
+                      if (focusedPointIdx === null || (!isActive && sync && sync() === DashboardCursorSync.Crosshair)) {
+                        return null;
+                      }
+
+                      return (
+                        <Portal>
+                          {hover && coords && focusedSeriesIdx && (
+                            <VizTooltipContainer
+                              position={{ x: coords.viewport.x, y: coords.viewport.y }}
+                              offset={{ x: TOOLTIP_OFFSET, y: TOOLTIP_OFFSET }}
+                              allowPointerEvents={isToolTipOpen.current}
+                            >
+                              {renderCustomTooltip(alignedFrame, focusedSeriesIdx, focusedPointIdx, () => {
+                                startAnnotating({ coords: { plotCanvas: coords.canvas, viewport: coords.viewport } });
+                                onCloseToolTip();
+                              })}
+                            </VizTooltipContainer>
+                          )}
+                        </Portal>
+                      );
+                    }}
+                  </AnnotationEditorPlugin>
+                ) : (
+                  <Portal>
+                    {options.tooltip.mode !== TooltipDisplayMode.None && hover && coords && (
+                      <VizTooltipContainer
+                        position={{ x: coords.viewport.x, y: coords.viewport.y }}
+                        offset={{ x: TOOLTIP_OFFSET, y: TOOLTIP_OFFSET }}
+                        allowPointerEvents={isToolTipOpen.current}
+                      >
+                        {renderCustomTooltip(alignedFrame, focusedSeriesIdx, focusedPointIdx)}
+                      </VizTooltipContainer>
+                    )}
+                  </Portal>
+                )}
+              </>
             )}
           </>
         );

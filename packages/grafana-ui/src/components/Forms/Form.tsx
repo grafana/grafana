@@ -1,6 +1,6 @@
 import { css } from '@emotion/css';
 import React, { HTMLProps, useEffect } from 'react';
-import { useForm, Mode, DeepPartial, UnpackNestedValue, SubmitHandler, FieldValues } from 'react-hook-form';
+import { useForm, Mode, DefaultValues, SubmitHandler, FieldValues } from 'react-hook-form';
 
 import { FormAPI } from '../../types';
 
@@ -8,13 +8,16 @@ interface FormProps<T extends FieldValues> extends Omit<HTMLProps<HTMLFormElemen
   validateOn?: Mode;
   validateOnMount?: boolean;
   validateFieldsOnMount?: string | string[];
-  defaultValues?: UnpackNestedValue<DeepPartial<T>>;
+  defaultValues?: DefaultValues<T>;
   onSubmit: SubmitHandler<T>;
   children: (api: FormAPI<T>) => React.ReactNode;
   /** Sets max-width for container. Use it instead of setting individual widths on inputs.*/
   maxWidth?: number | 'none';
 }
 
+/**
+ * @deprecated use the `useForm` hook from react-hook-form instead
+ */
 export function Form<T extends FieldValues>({
   defaultValues,
   onSubmit,

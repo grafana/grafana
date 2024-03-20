@@ -5,11 +5,11 @@ import React from 'react';
 import { GrafanaTheme2 } from '@grafana/data';
 import { Badge, CallToActionCard, Card, Icon, LinkButton, Tooltip, useStyles2 } from '@grafana/ui';
 
-import { ExternalDataSourceAM } from '../../hooks/useExternalAmSelector';
+import { ExternalAlertmanagerDataSourceWithStatus } from '../../hooks/useExternalAmSelector';
 import { makeDataSourceLink } from '../../utils/misc';
 
 export interface ExternalAlertManagerDataSourcesProps {
-  alertmanagers: ExternalDataSourceAM[];
+  alertmanagers: ExternalAlertmanagerDataSourceWithStatus[];
   inactive: boolean;
 }
 
@@ -39,7 +39,7 @@ export function ExternalAlertmanagerDataSources({ alertmanagers, inactive }: Ext
       {alertmanagers.length > 0 && (
         <div className={styles.externalDs}>
           {alertmanagers.map((am) => (
-            <ExternalAMdataSourceCard key={am.dataSource.uid} alertmanager={am} inactive={inactive} />
+            <ExternalAMdataSourceCard key={am.dataSourceSettings.uid} alertmanager={am} inactive={inactive} />
           ))}
         </div>
       )}
@@ -48,20 +48,20 @@ export function ExternalAlertmanagerDataSources({ alertmanagers, inactive }: Ext
 }
 
 interface ExternalAMdataSourceCardProps {
-  alertmanager: ExternalDataSourceAM;
+  alertmanager: ExternalAlertmanagerDataSourceWithStatus;
   inactive: boolean;
 }
 
 export function ExternalAMdataSourceCard({ alertmanager, inactive }: ExternalAMdataSourceCardProps) {
   const styles = useStyles2(getStyles);
 
-  const { dataSource, status, statusInconclusive, url } = alertmanager;
+  const { dataSourceSettings, status } = alertmanager;
 
   return (
     <Card>
       <Card.Heading className={styles.externalHeading}>
-        {dataSource.name}{' '}
-        {statusInconclusive && (
+        {dataSourceSettings.name}{' '}
+        {status === 'inconclusive' && (
           <Tooltip content="Multiple Alertmanagers have the same URL configured. The state might be inconclusive.">
             <Icon name="exclamation-triangle" size="md" className={styles.externalWarningIcon} />
           </Tooltip>
@@ -90,9 +90,9 @@ export function ExternalAMdataSourceCard({ alertmanager, inactive }: ExternalAMd
           />
         )}
       </Card.Tags>
-      <Card.Meta>{url}</Card.Meta>
+      <Card.Meta>{dataSourceSettings.url}</Card.Meta>
       <Card.Actions>
-        <LinkButton href={makeDataSourceLink(dataSource)} size="sm" variant="secondary">
+        <LinkButton href={makeDataSourceLink(dataSourceSettings.uid)} size="sm" variant="secondary">
           Go to datasource
         </LinkButton>
       </Card.Actions>

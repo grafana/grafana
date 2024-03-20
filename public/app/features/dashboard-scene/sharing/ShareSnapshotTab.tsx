@@ -15,8 +15,6 @@ import { DashboardInteractions } from '../utils/interactions';
 
 import { SceneShareTabState } from './types';
 
-const SNAPSHOTS_API_ENDPOINT = '/api/snapshots';
-
 const getExpireOptions = () => {
   const DEFAULT_EXPIRE_OPTION: SelectableValue<number> = {
     label: t('share-modal.snapshot.expire-never', `Never`),
@@ -121,8 +119,7 @@ export class ShareSnapshotTab extends SceneObjectBase<ShareSnapshotTabState> {
     };
 
     try {
-      const results: { deleteUrl: string; url: string } = await getBackendSrv().post(SNAPSHOTS_API_ENDPOINT, cmdData);
-      return results;
+      return await getDashboardSnapshotSrv().create(cmdData);
     } finally {
       if (external) {
         DashboardInteractions.publishSnapshotClicked({ expires: cmdData.expires });

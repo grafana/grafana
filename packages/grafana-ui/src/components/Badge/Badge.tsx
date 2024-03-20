@@ -7,6 +7,7 @@ import { GrafanaTheme2 } from '@grafana/data';
 
 import { useStyles2 } from '../../themes/ThemeContext';
 import { IconName } from '../../types';
+import { SkeletonComponent, attachSkeleton } from '../../utils/skeleton';
 import { Icon } from '../Icon/Icon';
 import { Tooltip } from '../Tooltip/Tooltip';
 
@@ -38,19 +39,13 @@ const BadgeComponent = React.memo<BadgeProps>(({ icon, color, text, tooltip, cla
 });
 BadgeComponent.displayName = 'Badge';
 
-const BadgeSkeleton = () => {
+const BadgeSkeleton: SkeletonComponent = ({ rootProps }) => {
   const styles = useStyles2(getSkeletonStyles);
 
-  return <Skeleton width={60} height={22} containerClassName={styles.container} />;
+  return <Skeleton width={60} height={22} containerClassName={styles.container} {...rootProps} />;
 };
 
-interface BadgeWithSkeleton extends React.NamedExoticComponent<BadgeProps> {
-  Skeleton: typeof BadgeSkeleton;
-}
-
-export const Badge: BadgeWithSkeleton = Object.assign(BadgeComponent, { Skeleton: BadgeSkeleton });
-
-Badge.Skeleton = BadgeSkeleton;
+export const Badge = attachSkeleton(BadgeComponent, BadgeSkeleton);
 
 const getSkeletonStyles = () => ({
   container: css({

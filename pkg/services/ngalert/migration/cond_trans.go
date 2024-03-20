@@ -22,11 +22,53 @@ import (
 // It is defined in pkg/expr/service.go as "DatasourceType"
 const expressionDatasourceUID = "__expr__"
 
+// dashAlertSettings is a type for the JSON that is in the settings field of
+// the alert table.
+type dashAlertSettings struct {
+	NoDataState         string               `json:"noDataState"`
+	ExecutionErrorState string               `json:"executionErrorState"`
+	Conditions          []dashAlertCondition `json:"conditions"`
+	AlertRuleTags       any                  `json:"alertRuleTags"`
+	Notifications       []notificationKey    `json:"notifications"`
+}
+
+// notificationKey is the object that represents the Notifications array in legacymodels.Alert.Settings.
+// At least one of ID or UID should always be present, otherwise the legacy channel was invalid.
+type notificationKey struct {
+	UID string `json:"uid,omitempty"`
+	ID  int64  `json:"id,omitempty"`
+}
+
+// dashAlertingConditionJSON is like classic.ClassicConditionJSON except that it
+// includes the model property with the query.
+type dashAlertCondition struct {
+	Evaluator evaluator `json:"evaluator"`
+
+	Operator struct {
+		Type string `json:"type"`
+	} `json:"operator"`
+
+	Query struct {
+		Params       []string `json:"params"`
+		DatasourceID int64    `json:"datasourceId"`
+		Model        json.RawMessage
+	} `json:"query"`
+
+	Reducer struct {
+		// Params []any `json:"params"` (Unused)
+		Type string `json:"type"`
+	}
+}
+
+type evaluator struct {
+	Params []float64 `json:"params"`
+	Type   string    `json:"type"` // e.g. "gt"
+}
+
 //nolint:gocyclo
-func transConditions(ctx context.Context, l log.Logger, alert *migrationStore.DashAlert, store migrationStore.Store) (*condition, error) {
+func transConditions(ctx context.Context, l log.Logger, set dashAlertSettings, orgID int64, store migrationStore.ReadStore) (*condition, error) {
 	// TODO: needs a significant refactor to reduce complexity.
-	usr := getMigrationUser(alert.OrgID)
-	set := alert.ParsedSettings
+	usr := getMigrationUser(orgID)
 
 	refIDtoCondIdx := make(map[string][]int) // a map of original refIds to their corresponding condition index
 	for i, cond := range set.Conditions {
@@ -202,10 +244,10 @@ func transConditions(ctx context.Context, l log.Logger, alert *migrationStore.Da
 	}
 
 	// build the new classic condition pointing our new equivalent queries
-	conditions := make([]classicConditionJSON, len(set.Conditions))
+	conditions := make([]classicCondition, len(set.Conditions))
 	for i, cond := range set.Conditions {
-		newCond := classicConditionJSON{}
-		newCond.Evaluator = migrationStore.ConditionEvalJSON{
+		newCond := classicCondition{}
+		newCond.Evaluator = evaluator{
 			Type:   cond.Evaluator.Type,
 			Params: cond.Evaluator.Params,
 		}
@@ -221,12 +263,12 @@ func transConditions(ctx context.Context, l log.Logger, alert *migrationStore.Da
 		return nil, err
 	}
 	newCond.Condition = ccRefID // set the alert condition to point to the classic condition
-	newCond.OrgID = alert.OrgID
+	newCond.OrgID = orgID
 
 	exprModel := struct {
-		Type       string                 `json:"type"`
-		RefID      string                 `json:"refId"`
-		Conditions []classicConditionJSON `json:"conditions"`
+		Type       string             `json:"type"`
+		RefID      string             `json:"refId"`
+		Conditions []classicCondition `json:"conditions"`
 	}{
 		"classic_conditions",
 		ccRefID,
@@ -282,7 +324,7 @@ func getNewRefID(refIDs map[string][]int) (string, error) {
 		}
 		return sR, nil
 	}
-	return "", fmt.Errorf("failed to generate unique RefID")
+	return "", errors.New("failed to generate unique RefID")
 }
 
 // getRelativeDuration turns the alerting durations for dashboard conditions
@@ -333,8 +375,8 @@ func getTo(to string) (time.Duration, error) {
 	return -d, nil
 }
 
-type classicConditionJSON struct {
-	Evaluator migrationStore.ConditionEvalJSON `json:"evaluator"`
+type classicCondition struct {
+	Evaluator evaluator `json:"evaluator"`
 
 	Operator struct {
 		Type string `json:"type"`

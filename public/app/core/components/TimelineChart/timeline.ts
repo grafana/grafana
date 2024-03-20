@@ -2,7 +2,7 @@ import uPlot, { Series } from 'uplot';
 
 import { GrafanaTheme2, TimeRange } from '@grafana/data';
 import { alpha } from '@grafana/data/src/themes/colorManipulator';
-import { VisibilityMode, TimelineValueAlignment } from '@grafana/schema';
+import { TimelineValueAlignment, VisibilityMode } from '@grafana/schema';
 import { FIXED_UNIT } from '@grafana/ui';
 import { distribute, SPACE_BETWEEN } from 'app/plugins/panel/barchart/distribute';
 import { pointWithin, Quadtree, Rect } from 'app/plugins/panel/barchart/quadtree';
@@ -55,6 +55,7 @@ export interface TimelineCoreOptions {
   getFieldConfig: (seriesIdx: number) => StateTimeLineFieldConfig | StatusHistoryFieldConfig;
   onHover: (seriesIdx: number, valueIdx: number, rect: Rect) => void;
   onLeave: () => void;
+  hoverMulti: boolean;
 }
 
 /**
@@ -79,6 +80,7 @@ export function getConfig(opts: TimelineCoreOptions) {
     getFieldConfig,
     onHover,
     onLeave,
+    hoverMulti,
   } = opts;
 
   let qt: Quadtree;
@@ -133,10 +135,8 @@ export function getConfig(opts: TimelineCoreOptions) {
     value: number | null,
     discrete: boolean
   ) {
-    // do not render super small boxes
-    if (boxWidth < 1) {
-      return;
-    }
+    // clamp width to allow small boxes to be rendered
+    boxWidth = Math.max(1, boxWidth);
 
     const valueColor = getValueColor(seriesIdx + 1, value);
     const fieldConfig = getFieldConfig(seriesIdx);
@@ -407,8 +407,6 @@ export function getConfig(opts: TimelineCoreOptions) {
     }
   }
 
-  const hoverMulti = mode === TimelineMode.Changes;
-
   const cursor: uPlot.Cursor = {
     x: mode === TimelineMode.Changes,
     y: false,
@@ -440,6 +438,10 @@ export function getConfig(opts: TimelineCoreOptions) {
       }
 
       return hovered[seriesIdx]?.didx;
+    },
+    focus: {
+      prox: 1e3,
+      dist: (u, seriesIdx) => (hoveredAtCursor?.sidx === seriesIdx ? 0 : Infinity),
     },
     points: {
       fill: 'rgba(255,255,255,0.2)',

@@ -98,6 +98,18 @@ describe('addLabelToQuery()', () => {
       '{foo="bar"} | logfmt | forcedLabel=`value`'
     );
   });
+
+  it('should add label as labelFilter to multiple places if label is StructuredMetadata', () => {
+    expect(
+      addLabelToQuery(
+        'rate({foo="bar"} [$__auto]) / rate({foo="bar"} [$__auto])',
+        'forcedLabel',
+        '=',
+        'value',
+        LabelType.StructuredMetadata
+      )
+    ).toEqual('rate({foo="bar"} | forcedLabel=`value` [$__auto]) / rate({foo="bar"} | forcedLabel=`value` [$__auto])');
+  });
 });
 
 describe('addParserToQuery', () => {

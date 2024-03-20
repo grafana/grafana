@@ -49,7 +49,7 @@ export class MockDataSourceApi extends DataSourceApi {
     this.meta = meta || ({} as DataSourcePluginMeta);
   }
 
-  query(request: DataQueryRequest): Promise<DataQueryResponse> {
+  query(request: DataQueryRequest): Promise<DataQueryResponse> | Observable<DataQueryResponse> {
     if (this.error) {
       return Promise.reject(this.error);
     }

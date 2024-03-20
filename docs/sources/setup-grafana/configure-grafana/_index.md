@@ -369,7 +369,7 @@ The maximum number of connections in the idle connection pool.
 
 ### max_open_conn
 
-The maximum number of open connections to the database.
+The maximum number of open connections to the database. For MYSQL, configure this setting on both Grafana and the database. For more information, refer to [`sysvar_max_connections`](https://dev.mysql.com/doc/refman/8.0/en/server-system-variables.html#sysvar_max_connections).
 
 ### conn_max_lifetime
 
@@ -1221,6 +1221,12 @@ Override the AAD application client secret.
 
 By default is the same as used in AAD authentication or can be set to another application (for OBO flow).
 
+### forward_settings_to_plugins
+
+Set plugins that will receive Azure settings via plugin context.
+
+By default, this will include all Grafana Labs owned Azure plugins or those that use Azure settings (Azure Monitor, Azure Data Explorer, Prometheus, MSSQL).
+
 ## [auth.jwt]
 
 Refer to [JWT authentication]({{< relref "../configure-security/configure-authentication/jwt" >}}) for more information.
@@ -1274,6 +1280,17 @@ Name to be used as client identity for EHLO in SMTP dialog, default is `<instanc
 ### startTLS_policy
 
 Either "OpportunisticStartTLS", "MandatoryStartTLS", "NoStartTLS". Default is `empty`.
+
+### enable_tracing
+
+Enable trace propagation in e-mail headers, using the `traceparent`, `tracestate` and (optionally) `baggage` fields. Default is `false`. To enable, you must first configure tracing in one of the `tracing.oentelemetry.*` sections.
+
+<hr>
+
+## [smtp.static_headers]
+
+Enter key-value pairs on their own lines to be included as headers on outgoing emails. All keys must be in canonical mail header format.
+Examples: `Foo=bar`, `Foo-Header=bar`.
 
 <hr>
 
@@ -2525,3 +2542,11 @@ Move an app plugin (referenced by its id), including all its pages, to a specifi
 
 Move an individual app plugin page (referenced by its `path` field) to a specific navigation section.
 Format: `<pageUrl> = <sectionId> <sortWeight>`
+
+## [public_dashboards]
+
+This section configures the [public dashboards]({{< relref "../../dashboards/dashboard-public" >}}) feature.
+
+### enabled
+
+Set this to `false` to disable the public dashboards feature. This prevents users from creating new public dashboards and disables existing ones.

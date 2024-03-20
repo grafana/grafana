@@ -25,12 +25,13 @@ import (
 	. "github.com/grafana/grafana/pkg/services/publicdashboards"
 	"github.com/grafana/grafana/pkg/services/publicdashboards/database"
 	. "github.com/grafana/grafana/pkg/services/publicdashboards/models"
+	"github.com/grafana/grafana/pkg/services/publicdashboards/service/intervalv2"
 	"github.com/grafana/grafana/pkg/services/publicdashboards/validation"
 	"github.com/grafana/grafana/pkg/services/quota/quotatest"
 	"github.com/grafana/grafana/pkg/services/tag/tagimpl"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
-	"github.com/grafana/grafana/pkg/tsdb/intervalv2"
+	"github.com/grafana/grafana/pkg/tests/testsuite"
 	"github.com/grafana/grafana/pkg/util"
 	"github.com/grafana/grafana/pkg/util/errutil"
 )
@@ -39,6 +40,10 @@ var timeSettings = &TimeSettings{From: "now-12h", To: "now"}
 var defaultPubdashTimeSettings = &TimeSettings{}
 var dashboardData = simplejson.NewFromAny(map[string]any{"time": map[string]any{"from": "now-8h", "to": "now"}})
 var SignedInUser = &user.SignedInUser{UserID: 1234, Login: "user@login.com"}
+
+func TestMain(m *testing.M) {
+	testsuite.Run(m)
+}
 
 func TestLogPrefix(t *testing.T) {
 	assert.Equal(t, LogPrefix, "publicdashboards.service")
@@ -1790,8 +1795,7 @@ func TestDeleteByDashboard(t *testing.T) {
 		dashboard := &dashboards.Dashboard{UID: "1", OrgID: 1, IsFolder: true}
 		pubdash1 := &PublicDashboard{Uid: "2", OrgId: 1, DashboardUid: dashboard.UID}
 		pubdash2 := &PublicDashboard{Uid: "3", OrgId: 1, DashboardUid: dashboard.UID}
-		store.On("FindByDashboardFolder", mock.Anything, mock.Anything).Return([]*PublicDashboard{pubdash1, pubdash2}, nil)
-		store.On("Delete", mock.Anything, mock.Anything, mock.Anything).Return(int64(1), nil)
+		store.On("FindByFolder", mock.Anything, mock.Anything, mock.Anything).Return([]*PublicDashboard{pubdash1, pubdash2}, nil)
 		store.On("Delete", mock.Anything, mock.Anything, mock.Anything).Return(int64(1), nil)
 
 		err := pd.DeleteByDashboard(context.Background(), dashboard)

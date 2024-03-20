@@ -6,14 +6,14 @@ import (
 	"github.com/prometheus/common/model"
 )
 
-// swagger:route GET /api/v1/provisioning/alert-rules provisioning stable RouteGetAlertRules
+// swagger:route GET /v1/provisioning/alert-rules provisioning stable RouteGetAlertRules
 //
 // Get all the alert rules.
 //
 //     Responses:
 //       200: ProvisionedAlertRules
 
-// swagger:route GET /api/v1/provisioning/alert-rules/export provisioning stable RouteGetAlertRulesExport
+// swagger:route GET /v1/provisioning/alert-rules/export provisioning stable RouteGetAlertRulesExport
 //
 // Export all alert rules in provisioning file format.
 //
@@ -21,7 +21,7 @@ import (
 //       200: AlertingFileExport
 //       404: description: Not found.
 
-// swagger:route GET /api/v1/provisioning/alert-rules/{UID} provisioning stable RouteGetAlertRule
+// swagger:route GET /v1/provisioning/alert-rules/{UID} provisioning stable RouteGetAlertRule
 //
 // Get a specific alert rule by UID.
 //
@@ -29,7 +29,7 @@ import (
 //       200: ProvisionedAlertRule
 //       404: description: Not found.
 
-// swagger:route GET /api/v1/provisioning/alert-rules/{UID}/export provisioning stable RouteGetAlertRuleExport
+// swagger:route GET /v1/provisioning/alert-rules/{UID}/export provisioning stable RouteGetAlertRuleExport
 //
 // Export an alert rule in provisioning file format.
 //
@@ -42,7 +42,7 @@ import (
 //       200: AlertingFileExport
 //       404: description: Not found.
 
-// swagger:route POST /api/v1/provisioning/alert-rules provisioning stable RoutePostAlertRule
+// swagger:route POST /v1/provisioning/alert-rules provisioning stable RoutePostAlertRule
 //
 // Create a new alert rule.
 //
@@ -53,7 +53,7 @@ import (
 //       201: ProvisionedAlertRule
 //       400: ValidationError
 
-// swagger:route PUT /api/v1/provisioning/alert-rules/{UID} provisioning stable RoutePutAlertRule
+// swagger:route PUT /v1/provisioning/alert-rules/{UID} provisioning stable RoutePutAlertRule
 //
 // Update an existing alert rule.
 //
@@ -64,7 +64,7 @@ import (
 //       200: ProvisionedAlertRule
 //       400: ValidationError
 
-// swagger:route DELETE /api/v1/provisioning/alert-rules/{UID} provisioning stable RouteDeleteAlertRule
+// swagger:route DELETE /v1/provisioning/alert-rules/{UID} provisioning stable RouteDeleteAlertRule
 //
 // Delete a specific alert rule by UID.
 //
@@ -103,7 +103,7 @@ type AlertRulePayload struct {
 	Body ProvisionedAlertRule
 }
 
-// swagger:parameters RoutePostAlertRule RoutePutAlertRule
+// swagger:parameters RoutePostAlertRule RoutePutAlertRule RouteDeleteAlertRule RoutePutAlertRuleGroup
 type AlertRuleHeaders struct {
 	// in:header
 	XDisableProvenance string `json:"X-Disable-Provenance"`
@@ -156,9 +156,11 @@ type ProvisionedAlertRule struct {
 	Provenance Provenance `json:"provenance,omitempty"`
 	// example: false
 	IsPaused bool `json:"isPaused"`
+	// example: {"receiver":"email","group_by":["alertname","grafana_folder","cluster"],"group_wait":"30s","group_interval":"1m","repeat_interval":"4d","mute_time_intervals":["Weekends","Holidays"]}
+	NotificationSettings *AlertRuleNotificationSettings `json:"notification_settings"`
 }
 
-// swagger:route GET /api/v1/provisioning/folder/{FolderUID}/rule-groups/{Group} provisioning stable RouteGetAlertRuleGroup
+// swagger:route GET /v1/provisioning/folder/{FolderUID}/rule-groups/{Group} provisioning stable RouteGetAlertRuleGroup
 //
 // Get a rule group.
 //
@@ -166,7 +168,7 @@ type ProvisionedAlertRule struct {
 //       200: AlertRuleGroup
 //       404: description: Not found.
 
-// swagger:route GET /api/v1/provisioning/folder/{FolderUID}/rule-groups/{Group}/export provisioning stable RouteGetAlertRuleGroupExport
+// swagger:route GET /v1/provisioning/folder/{FolderUID}/rule-groups/{Group}/export provisioning stable RouteGetAlertRuleGroupExport
 //
 // Export an alert rule group in provisioning file format.
 //
@@ -179,7 +181,7 @@ type ProvisionedAlertRule struct {
 //       200: AlertingFileExport
 //       404: description: Not found.
 
-// swagger:route PUT /api/v1/provisioning/folder/{FolderUID}/rule-groups/{Group} provisioning stable RoutePutAlertRuleGroup
+// swagger:route PUT /v1/provisioning/folder/{FolderUID}/rule-groups/{Group} provisioning stable RoutePutAlertRuleGroup
 //
 // Update the interval of a rule group.
 //
@@ -246,10 +248,11 @@ type AlertRuleExport struct {
 	// ForString is used to:
 	// - Only export the for field for HCL if it is non-zero.
 	// - Format the Prometheus model.Duration type properly for HCL.
-	ForString   *string            `json:"-" yaml:"-" hcl:"for"`
-	Annotations *map[string]string `json:"annotations,omitempty" yaml:"annotations,omitempty" hcl:"annotations"`
-	Labels      *map[string]string `json:"labels,omitempty" yaml:"labels,omitempty" hcl:"labels"`
-	IsPaused    bool               `json:"isPaused" yaml:"isPaused" hcl:"is_paused"`
+	ForString            *string                              `json:"-" yaml:"-" hcl:"for"`
+	Annotations          *map[string]string                   `json:"annotations,omitempty" yaml:"annotations,omitempty" hcl:"annotations"`
+	Labels               *map[string]string                   `json:"labels,omitempty" yaml:"labels,omitempty" hcl:"labels"`
+	IsPaused             bool                                 `json:"isPaused" yaml:"isPaused" hcl:"is_paused"`
+	NotificationSettings *AlertRuleNotificationSettingsExport `json:"notification_settings,omitempty" yaml:"notification_settings,omitempty" hcl:"notification_settings,block"`
 }
 
 // AlertQueryExport is the provisioned export of models.AlertQuery.
@@ -265,4 +268,15 @@ type AlertQueryExport struct {
 type RelativeTimeRangeExport struct {
 	FromSeconds int64 `json:"from" yaml:"from" hcl:"from"`
 	ToSeconds   int64 `json:"to" yaml:"to" hcl:"to"`
+}
+
+// AlertRuleNotificationSettingsExport is the provisioned export of models.NotificationSettings.
+type AlertRuleNotificationSettingsExport struct {
+	Receiver string `yaml:"receiver,omitempty" json:"receiver,omitempty" hcl:"receiver"`
+
+	GroupBy           []string `yaml:"group_by,omitempty" json:"group_by,omitempty" hcl:"group_by"`
+	GroupWait         *string  `yaml:"group_wait,omitempty" json:"group_wait,omitempty" hcl:"group_wait,optional"`
+	GroupInterval     *string  `yaml:"group_interval,omitempty" json:"group_interval,omitempty" hcl:"group_interval,optional"`
+	RepeatInterval    *string  `yaml:"repeat_interval,omitempty" json:"repeat_interval,omitempty" hcl:"repeat_interval,optional"`
+	MuteTimeIntervals []string `yaml:"mute_time_intervals,omitempty" json:"mute_time_intervals,omitempty" hcl:"mute_time_intervals"`
 }

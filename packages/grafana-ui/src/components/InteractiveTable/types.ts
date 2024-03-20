@@ -1,4 +1,4 @@
-import { ReactNode } from 'react';
+import { ReactElement, ReactNode } from 'react';
 import { CellProps, DefaultSortTypes, IdType, SortByFn } from 'react-table';
 
 export interface Column<TableData extends object> {
@@ -12,8 +12,9 @@ export interface Column<TableData extends object> {
   cell?: (props: CellProps<TableData>) => ReactNode;
   /**
    * Header name. if `undefined` the header will be empty. Useful for action columns.
+   * @PERCONA - allow jsx element
    */
-  header?: string;
+  header?: string | (() => ReactElement);
   /**
    * Column sort type. If `undefined` the column will not be sortable.
    * */

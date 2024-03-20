@@ -24,7 +24,7 @@ export function useTableStyles(theme: GrafanaTheme2, cellHeightOption: TableCell
       // Cell height need to account for row border
       height: `${rowHeight - 1}px`,
 
-      display: asCellText ? 'block' : 'flex',
+      display: 'flex',
 
       ...(asCellText
         ? {
@@ -179,6 +179,7 @@ export function useTableStyles(theme: GrafanaTheme2, cellHeightOption: TableCell
       whiteSpace: 'nowrap',
       color: theme.colors.text.link,
       fontWeight: theme.typography.fontWeightMedium,
+      paddingRight: theme.spacing(1.5),
       '&:hover': {
         textDecoration: 'underline',
         color: theme.colors.text.link,

@@ -14,10 +14,12 @@ import {
   Pipe,
   ScalarFilter,
   SelectArgs,
+  SelectOperation,
   SpansetFilter,
   SpansetPipeline,
   SpansetPipelineExpression,
   Static,
+  String as StringNode,
   TraceQL,
 } from '@grafana/lezer-traceql';
 
@@ -86,7 +88,7 @@ type Path = Array<[Direction, NodeType[]]>;
 
 type Resolver = {
   path: NodeType[];
-  fun: (node: SyntaxNode, text: string, pos: number, originalPos: number) => SituationType | null;
+  fun: (node: SyntaxNode, text: string, pos: number, originalPos: number) => SituationType | void;
 };
 
 function getErrorNode(tree: Tree, cursorPos: number): SyntaxNode | null {
@@ -178,7 +180,7 @@ export function getSituation(text: string, offset: number): Situation | null {
     ids.push(cur.type.id);
   }
 
-  let situationType: SituationType | null = null;
+  let situationType: SituationType | void = undefined;
   for (let resolver of RESOLVERS) {
     if (isPathMatch(resolver.path, ids)) {
       situationType = resolver.fun(currentNode, text, shiftedOffset, offset);
@@ -213,20 +215,20 @@ const RESOLVERS: Resolver[] = [
     fun: resolveAttributeForFunction,
   },
   {
+    path: [ERROR_NODE_ID, GroupOperation],
+    fun: resolveAttributeForFunction,
+  },
+  {
+    path: [ERROR_NODE_ID, SelectOperation],
+    fun: resolveAttributeForFunction,
+  },
+  {
     path: [ERROR_NODE_ID, SpansetPipelineExpression],
     fun: resolveSpansetPipeline,
   },
   {
     path: [ERROR_NODE_ID, ScalarFilter, SpansetPipeline],
     fun: resolveArithmeticOperator,
-  },
-  {
-    path: [ERROR_NODE_ID, TraceQL],
-    fun: () => {
-      return {
-        type: 'UNKNOWN',
-      };
-    },
   },
   // Curson on valid node cases (the whole query could contain errors nevertheless)
   {
@@ -244,6 +246,10 @@ const RESOLVERS: Resolver[] = [
   {
     path: [TraceQL],
     fun: resolveNewSpansetExpression,
+  },
+  {
+    path: [StringNode, Static],
+    fun: resolveExpression,
   },
 ];
 
@@ -353,8 +359,25 @@ function resolveExpression(node: SyntaxNode, text: string, _: number, originalPo
     return situation;
   }
 
+  if (
+    walk(node, [
+      ['parent', [Static]],
+      ['parent', [FieldExpression]],
+      ['prevSibling', [FieldOp]],
+    ])
+  ) {
+    let attributeField = node.parent?.parent?.prevSibling?.prevSibling;
+    if (attributeField) {
+      return {
+        type: 'SPANSET_IN_VALUE',
+        tagName: getNodeText(attributeField, text),
+        betweenQuotes: true,
+      };
+    }
+  }
+
   if (node.prevSibling?.type.id === FieldOp) {
-    let attributeField = node.prevSibling.prevSibling;
+    let attributeField = node.prevSibling?.prevSibling;
     if (attributeField) {
       return {
         type: 'SPANSET_IN_VALUE',
@@ -375,16 +398,12 @@ function resolveExpression(node: SyntaxNode, text: string, _: number, originalPo
   };
 }
 
-function resolveArithmeticOperator(node: SyntaxNode, _0: string, _1: number): SituationType {
-  if (node.prevSibling?.type.id === ComparisonOp) {
+function resolveArithmeticOperator(node: SyntaxNode, _0: string, _1: number): SituationType | void {
+  if (node.prevSibling?.type.id !== ComparisonOp) {
     return {
-      type: 'UNKNOWN',
+      type: 'SPANSET_COMPARISON_OPERATORS',
     };
   }
-
-  return {
-    type: 'SPANSET_COMPARISON_OPERATORS',
-  };
 }
 
 function resolveNewSpansetExpression(node: SyntaxNode, text: string, offset: number): SituationType {
@@ -410,16 +429,13 @@ function resolveNewSpansetExpression(node: SyntaxNode, text: string, offset: num
   };
 }
 
-function resolveAttributeForFunction(node: SyntaxNode, _0: string, _1: number): SituationType {
+function resolveAttributeForFunction(node: SyntaxNode, _0: string, _1: number): SituationType | void {
   const parent = node?.parent;
-  if (!!parent && [IntrinsicField, Aggregate, GroupOperation, SelectArgs].includes(parent.type.id)) {
+  if (!!parent && [IntrinsicField, Aggregate, GroupOperation, SelectOperation, SelectArgs].includes(parent.type.id)) {
     return {
       type: 'ATTRIBUTE_FOR_FUNCTION',
     };
   }
-  return {
-    type: 'UNKNOWN',
-  };
 }
 
 function resolveSpansetPipeline(node: SyntaxNode, _1: string, _2: number): SituationType {

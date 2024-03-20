@@ -14,7 +14,7 @@ type Installer interface {
 	// Add adds a new plugin.
 	Add(ctx context.Context, pluginID, version string, opts CompatOpts) error
 	// Remove removes an existing plugin.
-	Remove(ctx context.Context, pluginID string) error
+	Remove(ctx context.Context, pluginID, version string) error
 }
 
 type PluginSource interface {
@@ -25,7 +25,7 @@ type PluginSource interface {
 
 type FileStore interface {
 	// File retrieves a plugin file.
-	File(ctx context.Context, pluginID, filename string) (*File, error)
+	File(ctx context.Context, pluginID, pluginVersion, filename string) (*File, error)
 }
 
 type File struct {
@@ -99,11 +99,6 @@ type BackendFactoryProvider interface {
 	BackendFactory(ctx context.Context, p *Plugin) backendplugin.PluginFactoryFunc
 }
 
-type RendererManager interface {
-	// Renderer returns a renderer plugin.
-	Renderer(ctx context.Context) *Plugin
-}
-
 type SecretsPluginManager interface {
 	// SecretsManager returns a secretsmanager plugin
 	SecretsManager(ctx context.Context) *Plugin
@@ -152,11 +147,6 @@ type ClientMiddlewareFunc func(next Client) Client
 // CreateClientMiddleware implements the ClientMiddleware interface.
 func (fn ClientMiddlewareFunc) CreateClientMiddleware(next Client) Client {
 	return fn(next)
-}
-
-type FeatureToggles interface {
-	IsEnabledGlobally(flag string) bool
-	GetEnabled(ctx context.Context) map[string]bool
 }
 
 type SignatureCalculator interface {

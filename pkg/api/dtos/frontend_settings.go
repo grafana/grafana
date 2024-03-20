@@ -6,18 +6,31 @@ import (
 )
 
 type FrontendSettingsAuthDTO struct {
-	OAuthSkipOrgRoleUpdateSync  bool `json:"OAuthSkipOrgRoleUpdateSync"`
-	SAMLSkipOrgRoleSync         bool `json:"SAMLSkipOrgRoleSync"`
-	LDAPSkipOrgRoleSync         bool `json:"LDAPSkipOrgRoleSync"`
-	GoogleSkipOrgRoleSync       bool `json:"GoogleSkipOrgRoleSync"`
+	AuthProxyEnableLoginToken bool `json:"AuthProxyEnableLoginToken"`
+	// Deprecated: this is no longer used and will be removed in Grafana 11
+	OAuthSkipOrgRoleUpdateSync bool `json:"OAuthSkipOrgRoleUpdateSync"`
+	// Deprecated: this is no longer used and will be removed in Grafana 11
+	SAMLSkipOrgRoleSync bool `json:"SAMLSkipOrgRoleSync"`
+	// Deprecated: this is no longer used and will be removed in Grafana 11
+	LDAPSkipOrgRoleSync bool `json:"LDAPSkipOrgRoleSync"`
+	// Deprecated: this is no longer used and will be removed in Grafana 11
+	GoogleSkipOrgRoleSync bool `json:"GoogleSkipOrgRoleSync"`
+	// Deprecated: this is no longer used and will be removed in Grafana 11
 	GenericOAuthSkipOrgRoleSync bool `json:"GenericOAuthSkipOrgRoleSync"`
-	JWTAuthSkipOrgRoleSync      bool `json:"JWTAuthSkipOrgRoleSync"`
-	GrafanaComSkipOrgRoleSync   bool `json:"GrafanaComSkipOrgRoleSync"`
-	AzureADSkipOrgRoleSync      bool `json:"AzureADSkipOrgRoleSync"`
-	GithubSkipOrgRoleSync       bool `json:"GithubSkipOrgRoleSync"`
-	GitLabSkipOrgRoleSync       bool `json:"GitLabSkipOrgRoleSync"`
-	OktaSkipOrgRoleSync         bool `json:"OktaSkipOrgRoleSync"`
-	AuthProxyEnableLoginToken   bool `json:"AuthProxyEnableLoginToken"`
+	// Deprecated: this is no longer used and will be removed in Grafana 11
+	JWTAuthSkipOrgRoleSync bool `json:"JWTAuthSkipOrgRoleSync"`
+	// Deprecated: this is no longer used and will be removed in Grafana 11
+	GrafanaComSkipOrgRoleSync bool `json:"GrafanaComSkipOrgRoleSync"`
+	// Deprecated: this is no longer used and will be removed in Grafana 11
+	AzureADSkipOrgRoleSync bool `json:"AzureADSkipOrgRoleSync"`
+	// Deprecated: this is no longer used and will be removed in Grafana 11
+	GithubSkipOrgRoleSync bool `json:"GithubSkipOrgRoleSync"`
+	// Deprecated: this is no longer used and will be removed in Grafana 11
+	GitLabSkipOrgRoleSync bool `json:"GitLabSkipOrgRoleSync"`
+	// Deprecated: this is no longer used and will be removed in Grafana 11
+	OktaSkipOrgRoleSync bool `json:"OktaSkipOrgRoleSync"`
+
+	DisableLogin bool `json:"disableLogin"`
 }
 
 type FrontendSettingsBuildInfoDTO struct {
@@ -192,6 +205,7 @@ type FrontendSettingsDTO struct {
 
 	FeatureToggles                   map[string]bool                `json:"featureToggles"`
 	AnonymousEnabled                 bool                           `json:"anonymousEnabled"`
+	AnonymousDeviceLimit             int64                          `json:"anonymousDeviceLimit"`
 	RendererAvailable                bool                           `json:"rendererAvailable"`
 	RendererVersion                  string                         `json:"rendererVersion"`
 	SecretsManagerPluginEnabled      bool                           `json:"secretsManagerPluginEnabled"`
@@ -221,11 +235,13 @@ type FrontendSettingsDTO struct {
 	SamlName                string                             `json:"samlName"`
 	TokenExpirationDayLimit int                                `json:"tokenExpirationDayLimit"`
 	SharedWithMeFolderUID   string                             `json:"sharedWithMeFolderUID"`
+	RootFolderUID           string                             `json:"rootFolderUID"`
 
 	GeomapDefaultBaseLayerConfig *map[string]any `json:"geomapDefaultBaseLayerConfig,omitempty"`
 	GeomapDisableCustomBaseLayer bool            `json:"geomapDisableCustomBaseLayer"`
 
 	PublicDashboardAccessToken string `json:"publicDashboardAccessToken"`
+	PublicDashboardsEnabled    bool   `json:"publicDashboardsEnabled"`
 
 	DateFormats setting.DateFormats `json:"dateFormats,omitempty"`
 

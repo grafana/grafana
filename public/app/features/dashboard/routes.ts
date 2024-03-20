@@ -4,32 +4,33 @@ import { RouteDescriptor } from '../../core/navigation/types';
 import { DashboardRoutes } from '../../types';
 
 export const getPublicDashboardRoutes = (): RouteDescriptor[] => {
-  if (config.featureToggles.publicDashboards) {
-    return [
-      {
-        path: '/dashboard/public',
-        pageClass: 'page-dashboard',
-        routeName: DashboardRoutes.Public,
-        component: SafeDynamicImport(
-          () =>
-            import(
-              /* webpackChunkName: "ListPublicDashboardPage" */ '../../features/manage-dashboards/PublicDashboardListPage'
-            )
-        ),
-      },
-      {
-        path: '/public-dashboards/:accessToken',
-        pageClass: 'page-dashboard',
-        routeName: DashboardRoutes.Public,
-        chromeless: true,
-        component: SafeDynamicImport(
-          () =>
-            import(
-              /* webpackChunkName: "PublicDashboardPage" */ '../../features/dashboard/containers/PublicDashboardPage'
-            )
-        ),
-      },
-    ];
+  if (!config.publicDashboardsEnabled || !config.featureToggles.publicDashboards) {
+    return [];
   }
-  return [];
+
+  return [
+    {
+      path: '/dashboard/public',
+      pageClass: 'page-dashboard',
+      routeName: DashboardRoutes.Public,
+      component: SafeDynamicImport(
+        () =>
+          import(
+            /* webpackChunkName: "ListPublicDashboardPage" */ '../../features/manage-dashboards/PublicDashboardListPage'
+          )
+      ),
+    },
+    {
+      path: '/public-dashboards/:accessToken',
+      pageClass: 'page-dashboard',
+      routeName: DashboardRoutes.Public,
+      chromeless: true,
+      component: SafeDynamicImport(
+        () =>
+          import(
+            /* webpackChunkName: "PublicDashboardPage" */ '../../features/dashboard/containers/PublicDashboardPage'
+          )
+      ),
+    },
+  ];
 };

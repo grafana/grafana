@@ -5,6 +5,7 @@ import { GrafanaTheme2 } from '@grafana/data';
 
 import { useStyles2, useTheme2 } from '../../themes';
 import { IconName } from '../../types/icon';
+import { SkeletonComponent, attachSkeleton } from '../../utils/skeleton';
 
 import { OnTagClick, Tag } from './Tag';
 
@@ -59,23 +60,17 @@ const TagListComponent = memo(
 );
 TagListComponent.displayName = 'TagList';
 
-const TagListSkeleton = () => {
+const TagListSkeleton: SkeletonComponent = ({ rootProps }) => {
   const styles = useStyles2(getSkeletonStyles);
   return (
-    <div className={styles.container}>
+    <div className={styles.container} {...rootProps}>
       <Tag.Skeleton />
       <Tag.Skeleton />
     </div>
   );
 };
 
-interface TagListWithSkeleton extends React.ForwardRefExoticComponent<Props & React.RefAttributes<HTMLUListElement>> {
-  Skeleton: typeof TagListSkeleton;
-}
-
-export const TagList: TagListWithSkeleton = Object.assign(TagListComponent, {
-  Skeleton: TagListSkeleton,
-});
+export const TagList = attachSkeleton(TagListComponent, TagListSkeleton);
 
 const getSkeletonStyles = (theme: GrafanaTheme2) => ({
   container: css({

@@ -12,6 +12,7 @@ labels:
     - oss
 menuTitle: Create a dashboard
 title: Create a dashboard
+description: Create and edit a dashboard
 weight: 1
 ---
 
@@ -93,6 +94,20 @@ Dashboards and panels allow you to show your data in visual form. Each panel nee
    ![Add drop-down](/media/docs/grafana/dashboards/screenshot-add-dropdown-10.0.png)
 
    When you add additional panels to the dashboard, you're taken straight to the **Edit panel** view.
+
+## Copy an existing dashboard
+
+To copy an existing dashboard, follow these steps:
+
+1. Click **Dashboards** in the primary menu.
+1. Open the dashboard to be copied.
+1. Click **Settings** (gear icon) in the top right of the dashboard.
+1. Click **Save as** in the top-right corner of the dashboard.
+1. (Optional) Specify the name, folder, description, and whether or not to copy the original dashboard tags for the copied dashboard.
+
+   By default, the copied dashboard has the same name as the original dashboard with the word "Copy" appended and is located in the same folder.
+
+1. Click **Save**.
 
 ## Configure repeating rows
 

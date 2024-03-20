@@ -42,12 +42,14 @@ import (
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/licensing"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/loader"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pipeline"
-	"github.com/grafana/grafana/pkg/services/pluginsintegration/plugincontext"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginerrs"
+	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginexternal"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginsettings"
 	pluginSettings "github.com/grafana/grafana/pkg/services/pluginsintegration/pluginsettings/service"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginstore"
+	"github.com/grafana/grafana/pkg/services/pluginsintegration/renderer"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/serviceregistration"
+	"github.com/grafana/grafana/pkg/services/rendering"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -56,7 +58,6 @@ var WireSet = wire.NewSet(
 	config.ProvideConfig,
 	pluginstore.ProvideService,
 	wire.Bind(new(pluginstore.Store), new(*pluginstore.Service)),
-	wire.Bind(new(plugins.RendererManager), new(*pluginstore.Service)),
 	wire.Bind(new(plugins.SecretsPluginManager), new(*pluginstore.Service)),
 	wire.Bind(new(plugins.StaticRouteResolver), new(*pluginstore.Service)),
 	process.ProvideService,
@@ -93,7 +94,6 @@ var WireSet = wire.NewSet(
 	wire.Bind(new(registry.Service), new(*registry.InMemory)),
 	repo.ProvideService,
 	wire.Bind(new(repo.Service), new(*repo.Manager)),
-	plugincontext.ProvideService,
 	licensing.ProvideLicensing,
 	wire.Bind(new(plugins.Licensing), new(*licensing.Service)),
 	wire.Bind(new(sources.Registry), new(*sources.Service)),
@@ -111,6 +111,9 @@ var WireSet = wire.NewSet(
 	dynamic.ProvideService,
 	serviceregistration.ProvideService,
 	wire.Bind(new(auth.ExternalServiceRegistry), new(*serviceregistration.Service)),
+	renderer.ProvideService,
+	wire.Bind(new(rendering.PluginManager), new(*renderer.Manager)),
+	pluginexternal.ProvideService,
 )
 
 // WireExtensionSet provides a wire.ProviderSet of plugin providers that can be
@@ -169,12 +172,8 @@ func CreateMiddlewares(cfg *setting.Cfg, oAuthTokenService oauthtoken.OAuthToken
 		clientmiddleware.NewOAuthTokenMiddleware(oAuthTokenService),
 		clientmiddleware.NewCookiesMiddleware(skipCookiesNames),
 		clientmiddleware.NewResourceResponseMiddleware(),
+		clientmiddleware.NewCachingMiddlewareWithFeatureManager(cachingService, features),
 	)
-
-	// Placing the new service implementation behind a feature flag until it is known to be stable
-	if features.IsEnabledGlobally(featuremgmt.FlagUseCachingService) {
-		middlewares = append(middlewares, clientmiddleware.NewCachingMiddlewareWithFeatureManager(cachingService, features))
-	}
 
 	if features.IsEnabledGlobally(featuremgmt.FlagIdForwarding) {
 		middlewares = append(middlewares, clientmiddleware.NewForwardIDMiddleware())
@@ -182,6 +181,10 @@ func CreateMiddlewares(cfg *setting.Cfg, oAuthTokenService oauthtoken.OAuthToken
 
 	if cfg.SendUserHeader {
 		middlewares = append(middlewares, clientmiddleware.NewUserHeaderMiddleware())
+	}
+
+	if cfg.IPRangeACEnabled {
+		middlewares = append(middlewares, clientmiddleware.NewHostedGrafanaACHeaderMiddleware(cfg))
 	}
 
 	middlewares = append(middlewares, clientmiddleware.NewHTTPClientMiddleware())

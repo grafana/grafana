@@ -1,33 +1,45 @@
 import { css } from '@emotion/css';
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
+import { TemporaryAlert } from '@grafana/o11y-ds-frontend';
 import { reportInteraction } from '@grafana/runtime';
 import { CodeEditor, Monaco, monacoTypes, useTheme2 } from '@grafana/ui';
 
-import { createErrorNotification } from '../../../../core/copy/appNotification';
-import { notifyApp } from '../../../../core/reducers/appNotification';
-import { dispatch } from '../../../../store/store';
 import { TempoDatasource } from '../datasource';
+import { TempoQuery } from '../types';
 
 import { CompletionProvider, CompletionType } from './autocomplete';
-import { getErrorNodes, setErrorMarkers } from './errorHighlighting';
+import { getErrorNodes, setMarkers } from './highlighting';
 import { languageDefinition } from './traceql';
 
 interface Props {
   placeholder: string;
-  value: string;
-  onChange: (val: string) => void;
+  query: TempoQuery;
+  onChange: (val: TempoQuery) => void;
   onRunQuery: () => void;
   datasource: TempoDatasource;
   readOnly?: boolean;
 }
 
 export function TraceQLEditor(props: Props) {
-  const { onChange, onRunQuery, placeholder } = props;
-  const setupAutocompleteFn = useAutocomplete(props.datasource);
+  const [alertText, setAlertText] = useState('');
+
+  const { query, onChange, onRunQuery, placeholder } = props;
+  const setupAutocompleteFn = useAutocomplete(props.datasource, setAlertText);
   const theme = useTheme2();
   const styles = getStyles(theme, placeholder);
+
+  // The Monaco Editor uses the first version of props.onChange in handleOnMount i.e. always has the initial
+  // value of query because underlying Monaco editor is passed `query` below in the onEditorChange callback.
+  // handleOnMount is called only once when the editor is mounted and does not get updates to query.
+  // So we need useRef to get the latest version of query in the onEditorChange callback.
+  const queryRef = useRef(query);
+  queryRef.current = query;
+  const onEditorChange = (value: string) => {
+    onChange({ ...queryRef.current, query: value });
+  };
+
   // work around the problem that `onEditorDidMount` is called once
   // and wouldn't get new version of onRunQuery
   const onRunQueryRef = useRef(onRunQuery);
@@ -36,73 +48,76 @@ export function TraceQLEditor(props: Props) {
   const errorTimeoutId = useRef<number>();
 
   return (
-    <CodeEditor
-      value={props.value}
-      language={langId}
-      onBlur={onChange}
-      onChange={onChange}
-      containerStyles={styles.queryField}
-      readOnly={props.readOnly}
-      monacoOptions={{
-        folding: false,
-        fontSize: 14,
-        lineNumbers: 'off',
-        overviewRulerLanes: 0,
-        renderLineHighlight: 'none',
-        scrollbar: {
-          vertical: 'hidden',
-          verticalScrollbarSize: 8, // used as "padding-right"
-          horizontal: 'hidden',
-          horizontalScrollbarSize: 0,
-        },
-        scrollBeyondLastLine: false,
-        wordWrap: 'on',
-      }}
-      onBeforeEditorMount={ensureTraceQL}
-      onEditorDidMount={(editor, monaco) => {
-        if (!props.readOnly) {
-          setupAutocompleteFn(editor, monaco, setupRegisterInteractionCommand(editor));
-          setupActions(editor, monaco, () => onRunQueryRef.current());
-          setupPlaceholder(editor, monaco, styles);
-        }
-        setupAutoSize(editor);
+    <>
+      <CodeEditor
+        value={query.query || ''}
+        language={langId}
+        onBlur={onEditorChange}
+        onChange={onEditorChange}
+        containerStyles={styles.queryField}
+        readOnly={props.readOnly}
+        monacoOptions={{
+          folding: false,
+          fontSize: 14,
+          lineNumbers: 'off',
+          overviewRulerLanes: 0,
+          renderLineHighlight: 'none',
+          scrollbar: {
+            vertical: 'hidden',
+            verticalScrollbarSize: 8, // used as "padding-right"
+            horizontal: 'hidden',
+            horizontalScrollbarSize: 0,
+          },
+          scrollBeyondLastLine: false,
+          wordWrap: 'on',
+        }}
+        onBeforeEditorMount={ensureTraceQL}
+        onEditorDidMount={(editor, monaco) => {
+          if (!props.readOnly) {
+            setupAutocompleteFn(editor, monaco, setupRegisterInteractionCommand(editor));
+            setupActions(editor, monaco, () => onRunQueryRef.current());
+            setupPlaceholder(editor, monaco, styles);
+          }
+          setupAutoSize(editor);
 
-        // Parse query that might already exist (e.g., after a page refresh)
-        const model = editor.getModel();
-        if (model) {
-          const errorNodes = getErrorNodes(model.getValue());
-          setErrorMarkers(monaco, model, errorNodes);
-        }
-
-        // Register callback for query changes
-        editor.onDidChangeModelContent((changeEvent) => {
+          // Parse query that might already exist (e.g., after a page refresh)
           const model = editor.getModel();
-
-          if (!model) {
-            return;
+          if (model) {
+            const errorNodes = getErrorNodes(model.getValue());
+            setMarkers(monaco, model, errorNodes);
           }
 
-          // Remove previous callback if existing, to prevent squiggles from been shown while the user is still typing
-          window.clearTimeout(errorTimeoutId.current);
+          // Register callback for query changes
+          editor.onDidChangeModelContent((changeEvent) => {
+            const model = editor.getModel();
 
-          const errorNodes = getErrorNodes(model.getValue());
-          const cursorPosition = changeEvent.changes[0].rangeOffset;
+            if (!model) {
+              return;
+            }
 
-          // Immediately updates the squiggles, in case the user fixed an error,
-          // excluding the error around the cursor position
-          setErrorMarkers(
-            monaco,
-            model,
-            errorNodes.filter((errorNode) => !(errorNode.from <= cursorPosition && cursorPosition <= errorNode.to))
-          );
+            // Remove previous callback if existing, to prevent squiggles from been shown while the user is still typing
+            window.clearTimeout(errorTimeoutId.current);
 
-          // Later on, show all errors
-          errorTimeoutId.current = window.setTimeout(() => {
-            setErrorMarkers(monaco, model, errorNodes);
-          }, 500);
-        });
-      }}
-    />
+            const errorNodes = getErrorNodes(model.getValue());
+            const cursorPosition = changeEvent.changes[0].rangeOffset;
+
+            // Immediately updates the squiggles, in case the user fixed an error,
+            // excluding the error around the cursor position
+            setMarkers(
+              monaco,
+              model,
+              errorNodes.filter((errorNode) => !(errorNode.from <= cursorPosition && cursorPosition <= errorNode.to))
+            );
+
+            // Later on, show all errors
+            errorTimeoutId.current = window.setTimeout(() => {
+              setMarkers(monaco, model, errorNodes);
+            }, 500);
+          });
+        }}
+      />
+      {alertText && <TemporaryAlert severity={'error'} text={alertText} />}
+    </>
   );
 }
 
@@ -175,9 +190,10 @@ function setupAutoSize(editor: monacoTypes.editor.IStandaloneCodeEditor) {
 
 /**
  * Hook that returns function that will set up monaco autocomplete for the label selector
- * @param datasource
+ * @param datasource the Tempo datasource instance
+ * @param setAlertText setter for alert's text
  */
-function useAutocomplete(datasource: TempoDatasource) {
+function useAutocomplete(datasource: TempoDatasource, setAlertText: (text: string) => void) {
   // We need the provider ref so we can pass it the label/values data later. This is because we run the call for the
   // values here but there is additional setup needed for the provider later on. We could run the getSeries() in the
   // returned function but that is run after the monaco is mounted so would delay the request a bit when it does not
@@ -192,12 +208,13 @@ function useAutocomplete(datasource: TempoDatasource) {
         await datasource.languageProvider.start();
       } catch (error) {
         if (error instanceof Error) {
-          dispatch(notifyApp(createErrorNotification('Error', error)));
+          console.error(error);
+          setAlertText(error.message);
         }
       }
     };
     fetchTags();
-  }, [datasource]);
+  }, [datasource, setAlertText]);
 
   const autocompleteDisposeFun = useRef<(() => void) | null>(null);
   useEffect(() => {
@@ -243,17 +260,17 @@ interface EditorStyles {
 
 const getStyles = (theme: GrafanaTheme2, placeholder: string): EditorStyles => {
   return {
-    queryField: css`
-      border-radius: ${theme.shape.radius.default};
-      border: 1px solid ${theme.components.input.borderColor};
-      flex: 1;
-    `,
-    placeholder: css`
-      ::after {
-        content: '${placeholder}';
-        font-family: ${theme.typography.fontFamilyMonospace};
-        opacity: 0.3;
-      }
-    `,
+    queryField: css({
+      borderRadius: theme.shape.radius.default,
+      border: `1px solid ${theme.components.input.borderColor}`,
+      flex: 1,
+    }),
+    placeholder: css({
+      '::after': {
+        content: `'${placeholder}'`,
+        fontFamily: theme.typography.fontFamilyMonospace,
+        opacity: 0.3,
+      },
+    }),
   };
 };

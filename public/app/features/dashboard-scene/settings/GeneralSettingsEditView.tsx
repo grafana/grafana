@@ -1,14 +1,7 @@
 import React, { ChangeEvent } from 'react';
 
 import { PageLayoutType } from '@grafana/data';
-import {
-  behaviors,
-  SceneComponentProps,
-  SceneObjectBase,
-  SceneObjectRef,
-  SceneTimePicker,
-  sceneGraph,
-} from '@grafana/scenes';
+import { behaviors, SceneComponentProps, SceneObjectBase, sceneGraph } from '@grafana/scenes';
 import { TimeZone } from '@grafana/schema';
 import {
   Box,
@@ -27,16 +20,14 @@ import { t, Trans } from 'app/core/internationalization';
 import { TimePickerSettings } from 'app/features/dashboard/components/DashboardSettings/TimePickerSettings';
 import { DeleteDashboardButton } from 'app/features/dashboard/components/DeleteDashboard/DeleteDashboardButton';
 
-import { DashboardControls } from '../scene/DashboardControls';
 import { DashboardScene } from '../scene/DashboardScene';
 import { NavToolbarActions } from '../scene/NavToolbarActions';
 import { dashboardSceneGraph } from '../utils/dashboardSceneGraph';
+import { getDashboardSceneFor } from '../utils/utils';
 
 import { DashboardEditView, DashboardEditViewState, useDashboardEditPageNav } from './utils';
 
-export interface GeneralSettingsEditViewState extends DashboardEditViewState {
-  dashboardRef: SceneObjectRef<DashboardScene>;
-}
+export interface GeneralSettingsEditViewState extends DashboardEditViewState {}
 
 const EDITABLE_OPTIONS = [
   { label: 'Editable', value: true },
@@ -54,7 +45,7 @@ export class GeneralSettingsEditView
   implements DashboardEditView
 {
   private get _dashboard(): DashboardScene {
-    return this.state.dashboardRef.resolve();
+    return getDashboardSceneFor(this);
   }
 
   public getUrlKey(): string {
@@ -83,6 +74,10 @@ export class GeneralSettingsEditView
     return;
   }
 
+  public getDashboardControls() {
+    return dashboardSceneGraph.getDashboardControls(this._dashboard);
+  }
+
   public onTitleChange = (value: string) => {
     this._dashboard.setState({ title: value });
   };
@@ -95,7 +90,7 @@ export class GeneralSettingsEditView
     this._dashboard.setState({ tags: value });
   };
 
-  public onFolderChange = (newUID: string, newTitle: string) => {
+  public onFolderChange = (newUID: string | undefined, newTitle: string | undefined) => {
     const newMeta = {
       ...this._dashboard.state.meta,
       folderUid: newUID || this._dashboard.state.meta.folderUid,
@@ -130,20 +125,17 @@ export class GeneralSettingsEditView
   };
 
   public onNowDelayChange = (value: string) => {
-    // TODO: Figure out how to store nowDelay in Dashboard Scene
+    const timeRange = this.getTimeRange();
+
+    timeRange?.setState({
+      UNSAFE_nowDelay: value,
+    });
   };
 
   public onHideTimePickerChange = (value: boolean) => {
-    if (this._dashboard.state.controls instanceof DashboardControls) {
-      for (const control of this._dashboard.state.controls.state.timeControls) {
-        if (control instanceof SceneTimePicker) {
-          control.setState({
-            // TODO: Control visibility from DashboardControls
-            // hidden: value,
-          });
-        }
-      }
-    }
+    this.getDashboardControls()?.setState({
+      hideTimeControls: value,
+    });
   };
 
   public onLiveNowChange = (value: boolean) => {
@@ -156,10 +148,11 @@ export class GeneralSettingsEditView
 
   static Component = ({ model }: SceneComponentProps<GeneralSettingsEditView>) => {
     const { navModel, pageNav } = useDashboardEditPageNav(model.getDashboard(), model.getUrlKey());
-    const { title, description, tags, meta, editable, overlay } = model.getDashboard().useState();
+    const { title, description, tags, meta, editable } = model.getDashboard().useState();
     const { sync: graphTooltip } = model.getCursorSync()?.useState() || {};
-    const { timeZone, weekStart } = model.getTimeRange().useState();
+    const { timeZone, weekStart, UNSAFE_nowDelay: nowDelay } = model.getTimeRange().useState();
     const { intervals } = model.getRefreshPicker()?.useState() || {};
+    const { hideTimeControls } = model.getDashboardControls()?.useState() || {};
 
     return (
       <Page navModel={navModel} pageNav={pageNav} layout={PageLayoutType.Standard}>
@@ -240,10 +233,8 @@ export class GeneralSettingsEditView
             onHideTimePickerChange={model.onHideTimePickerChange}
             onLiveNowChange={model.onLiveNowChange}
             refreshIntervals={intervals}
-            // TODO: Control visibility of time picker
-            // timePickerHidden={timepicker?.state?.hidden}
-            // TODO: Implement this in dashboard scene
-            // nowDelay={timepicker.nowDelay || ''}
+            timePickerHidden={hideTimeControls}
+            nowDelay={nowDelay || ''}
             // TODO: Implement this in dashboard scene
             // liveNow={liveNow}
             liveNow={false}
@@ -269,7 +260,6 @@ export class GeneralSettingsEditView
 
           <Box marginTop={3}>{meta.canDelete && <DeleteDashboardButton />}</Box>
         </div>
-        {overlay && <overlay.Component model={overlay} />}
       </Page>
     );
   };

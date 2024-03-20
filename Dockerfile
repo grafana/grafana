@@ -1,9 +1,9 @@
 # syntax=docker/dockerfile:1
 
-ARG BASE_IMAGE=alpine:3.18.3
+ARG BASE_IMAGE=alpine:3.18.5
 ARG JS_IMAGE=node:20-alpine3.18
 ARG JS_PLATFORM=linux/amd64
-ARG GO_IMAGE=golang:1.21.3-alpine3.18
+ARG GO_IMAGE=golang:1.21.8-alpine3.18
 
 ARG GO_SRC=go-builder
 ARG JS_SRC=js-builder
@@ -22,7 +22,7 @@ COPY public public
 
 RUN yarn install --immutable
 
-COPY tsconfig.json .eslintrc .editorconfig .browserslistrc .prettierrc.js babel.config.json ./
+COPY tsconfig.json .eslintrc .editorconfig .browserslistrc .prettierrc.js ./
 COPY public public
 COPY scripts scripts
 COPY emails emails

@@ -8,6 +8,7 @@ labels:
     - oss
 title: Dashboards
 weight: 70
+description: Create and manage dashboards
 ---
 
 # Dashboards

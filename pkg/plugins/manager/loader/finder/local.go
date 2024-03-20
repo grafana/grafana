@@ -7,7 +7,6 @@ import (
 	"io"
 	"os"
 	"path/filepath"
-	"runtime"
 	"strings"
 
 	"github.com/grafana/grafana/pkg/infra/fs"
@@ -27,10 +26,10 @@ var (
 type Local struct {
 	log        log.Logger
 	production bool
-	features   plugins.FeatureToggles
+	features   featuremgmt.FeatureToggles
 }
 
-func NewLocalFinder(devMode bool, features plugins.FeatureToggles) *Local {
+func NewLocalFinder(devMode bool, features featuremgmt.FeatureToggles) *Local {
 	return &Local{
 		production: !devMode,
 		log:        log.New("local.finder"),
@@ -111,28 +110,34 @@ func (l *Local) Find(ctx context.Context, src plugins.PluginSource) ([]*plugins.
 		}
 	}
 
-	result := make([]*plugins.FoundBundle, 0, len(foundPlugins))
-	for dir := range foundPlugins {
-		ancestors := strings.Split(dir, string(filepath.Separator))
-		ancestors = ancestors[0 : len(ancestors)-1]
+	// Track child plugins and add them to their parent.
+	childPlugins := make(map[string]struct{})
+	for dir, p := range res {
+		// Check if this plugin is the parent of another plugin.
+		for dir2, p2 := range res {
+			if dir == dir2 {
+				continue
+			}
 
-		pluginPath := ""
-		if runtime.GOOS != "windows" && filepath.IsAbs(dir) {
-			pluginPath = "/"
-		}
-		add := true
-		for _, ancestor := range ancestors {
-			pluginPath = filepath.Join(pluginPath, ancestor)
-			if _, ok := foundPlugins[pluginPath]; ok {
-				if fp, exists := res[pluginPath]; exists {
-					fp.Children = append(fp.Children, &res[dir].Primary)
-					add = false
-					break
-				}
+			relPath, err := filepath.Rel(dir, dir2)
+			if err != nil {
+				l.log.Error("Cannot calculate relative path. Skipping", "pluginId", p2.Primary.JSONData.ID, "err", err)
+				continue
+			}
+			if !strings.Contains(relPath, "..") {
+				child := p2.Primary
+				l.log.Debug("Adding child", "parent", p.Primary.JSONData.ID, "child", child.JSONData.ID, "relPath", relPath)
+				p.Children = append(p.Children, &child)
+				childPlugins[dir2] = struct{}{}
 			}
 		}
-		if add {
-			result = append(result, res[dir])
+	}
+
+	// Remove child plugins from the result (they are already tracked via their parent).
+	result := make([]*plugins.FoundBundle, 0, len(res))
+	for k := range res {
+		if _, ok := childPlugins[k]; !ok {
+			result = append(result, res[k])
 		}
 	}
 

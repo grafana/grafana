@@ -10,13 +10,13 @@ import (
 	"strings"
 
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/infra/metrics"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/auth/identity"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/dashboards/dashboardaccess"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/folder"
-	migmodels "github.com/grafana/grafana/pkg/services/ngalert/migration/models"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/user"
 )
@@ -57,45 +57,54 @@ func getMigrationUser(orgID int64) identity.Requester {
 	return accesscontrol.BackgroundUser("ngalert_migration", orgID, org.RoleAdmin, migratorPermissions)
 }
 
-func (om *OrgMigration) migratedFolder(ctx context.Context, log log.Logger, dashID int64) (*migmodels.DashboardUpgradeInfo, error) {
-	dash, err := om.migrationStore.GetDashboard(ctx, om.orgID, dashID)
-	if err != nil {
-		return nil, err
-	}
-	l := log.New("dashboardTitle", dash.Title, "dashboardUid", dash.UID)
+type migrationFolder struct {
+	uid     string
+	created bool
+	warning string
+}
 
-	dashFolder, err := om.getFolder(ctx, dash)
+func (sync *sync) migratedFolder(ctx context.Context, l log.Logger, dashboardUID string, folderID int64) (*migrationFolder, error) {
+	dashFolder, err := sync.getFolder(ctx, folderID)
 	if err != nil {
+		metrics.MFolderIDsServiceCount.WithLabelValues(metrics.NGAlerts).Inc()
 		// nolint:staticcheck
-		l.Warn("Failed to find folder for dashboard", "missing_folder_id", dash.FolderID, "error", err)
+		l.Warn("Failed to find folder for dashboard", "missingFolderId", folderID, "error", err)
 	}
 	if dashFolder != nil {
 		l = l.New("folderUid", dashFolder.UID, "folderName", dashFolder.Title)
 	}
 
-	migratedFolder, err := om.getOrCreateMigratedFolder(ctx, l, dash, dashFolder)
+	migratedFolder, err := sync.getOrCreateMigratedFolder(ctx, l, dashboardUID, dashFolder)
 	if err != nil {
 		return nil, err
 	}
 
-	return &migmodels.DashboardUpgradeInfo{
-		DashboardUID:  dash.UID,
-		DashboardName: dash.Title,
-		NewFolderUID:  migratedFolder.UID,
-		NewFolderName: migratedFolder.Title,
-	}, nil
+	du := migrationFolder{
+		uid:     migratedFolder.UID,
+		created: migratedFolder.CreatedBy == newFolder,
+	}
+	if dashFolder == nil && migratedFolder.Title == generalAlertingFolderTitle {
+		du.warning = "dashboard alerts moved to general alerting folder during upgrade: original folder not found"
+	} else if folderID <= 0 && strings.HasPrefix(migratedFolder.Title, generalAlertingFolderTitle) {
+		du.warning = "dashboard alerts moved to general alerting folder during upgrade: general folder not supported"
+	} else if migratedFolder.ID != folderID { // nolint:staticcheck
+		metrics.MFolderIDsServiceCount.WithLabelValues(metrics.NGAlerts).Inc()
+		du.warning = "dashboard alerts moved to new folder during upgrade: folder permission changes were needed"
+	}
+
+	return &du, nil
 }
 
 // getOrCreateMigratedFolder returns the folder that alerts in a given dashboard should migrate to.
 // If the dashboard has no custom permissions, this should be the same folder as dash.FolderID.
 // If the dashboard has custom permissions that affect access, this should be a new folder with migrated permissions relating to both the dashboard and parent folder.
 // Any dashboard that has greater read/write permissions for an orgRole/team/user compared to its folder will necessitate creating a new folder with the same permissions as the dashboard.
-func (om *OrgMigration) getOrCreateMigratedFolder(ctx context.Context, l log.Logger, dash *dashboards.Dashboard, parentFolder *folder.Folder) (*folder.Folder, error) {
+func (sync *sync) getOrCreateMigratedFolder(ctx context.Context, l log.Logger, dashboardUID string, parentFolder *folder.Folder) (*folder.Folder, error) {
 	// If parentFolder does not exist then the dashboard is an orphan. We migrate the alert to the general alerting folder.
 	// The general alerting folder is only accessible to admins.
 	if parentFolder == nil {
-		l.Warn("Migrating alert to the general alerting folder: original folder not found")
-		f, err := om.getOrCreateGeneralAlertingFolder(ctx, om.orgID)
+		l.Info("Migrating alert to the general alerting folder")
+		f, err := sync.getOrCreateGeneralAlertingFolder(ctx, sync.orgID)
 		if err != nil {
 			return nil, fmt.Errorf("general alerting folder: %w", err)
 		}
@@ -104,18 +113,20 @@ func (om *OrgMigration) getOrCreateMigratedFolder(ctx context.Context, l log.Log
 
 	// Check if the dashboard has custom permissions. If it does, we need to create a new folder for it.
 	// This folder will be cached for re-use for each dashboard in the folder with the same permissions.
+	metrics.MFolderIDsServiceCount.WithLabelValues(metrics.NGAlerts).Inc()
 	// nolint:staticcheck
-	permissionsToFolder, ok := om.permissionsMap[parentFolder.ID]
+	permissionsToFolder, ok := sync.permissionsMap[parentFolder.ID]
 	if !ok {
 		permissionsToFolder = make(map[permissionHash]*folder.Folder)
+		metrics.MFolderIDsServiceCount.WithLabelValues(metrics.NGAlerts).Inc()
 		// nolint:staticcheck
-		om.permissionsMap[dash.FolderID] = permissionsToFolder
+		sync.permissionsMap[parentFolder.ID] = permissionsToFolder
 
-		folderPerms, err := om.getFolderPermissions(ctx, parentFolder)
+		folderPerms, err := sync.getFolderPermissions(ctx, parentFolder)
 		if err != nil {
 			return nil, fmt.Errorf("folder permissions: %w", err)
 		}
-		newFolderPerms, _ := om.convertResourcePerms(folderPerms)
+		newFolderPerms, _ := sync.convertResourcePerms(folderPerms)
 
 		// We assign the folder to the cache so that any dashboards with identical equivalent permissions will use the parent folder instead of creating a new one.
 		folderPermsHash, err := createHash(newFolderPerms)
@@ -126,11 +137,11 @@ func (om *OrgMigration) getOrCreateMigratedFolder(ctx context.Context, l log.Log
 	}
 
 	// Now we compute the hash of the dashboard permissions and check if we have a folder for it. If not, we create a new one.
-	perms, err := om.getDashboardPermissions(ctx, dash)
+	perms, err := sync.getDashboardPermissions(ctx, dashboardUID)
 	if err != nil {
 		return nil, fmt.Errorf("dashboard permissions: %w", err)
 	}
-	newPerms, unusedPerms := om.convertResourcePerms(perms)
+	newPerms, unusedPerms := sync.convertResourcePerms(perms)
 	hash, err := createHash(newPerms)
 	if err != nil {
 		return nil, fmt.Errorf("hash of dashboard permissions: %w", err)
@@ -140,7 +151,7 @@ func (om *OrgMigration) getOrCreateMigratedFolder(ctx context.Context, l log.Log
 	if !ok {
 		folderName := generateAlertFolderName(parentFolder, hash)
 		l.Info("Dashboard has custom permissions, create a new folder for alerts.", "newFolder", folderName)
-		f, err := om.createFolder(ctx, om.orgID, folderName, newPerms)
+		f, err := sync.createFolder(ctx, sync.orgID, folderName, newPerms)
 		if err != nil {
 			return nil, err
 		}
@@ -205,12 +216,12 @@ func isBasic(roleName string) bool {
 //
 // For now, we choose the simpler approach of handling managed and basic roles. Fixed and custom roles will not
 // be taken into account, but we will log a warning if they had the potential to override the folder permissions.
-func (om *OrgMigration) convertResourcePerms(rperms []accesscontrol.ResourcePermission) ([]accesscontrol.SetResourcePermissionCommand, []accesscontrol.ResourcePermission) {
+func (sync *sync) convertResourcePerms(rperms []accesscontrol.ResourcePermission) ([]accesscontrol.SetResourcePermissionCommand, []accesscontrol.ResourcePermission) {
 	keep := make(map[accesscontrol.SetResourcePermissionCommand]dashboardaccess.PermissionType)
 	unusedPerms := make([]accesscontrol.ResourcePermission, 0)
 	for _, p := range rperms {
 		if p.IsManaged || p.IsInherited || isBasic(p.RoleName) {
-			if permission := om.migrationStore.MapActions(p); permission != "" {
+			if permission := sync.migrationStore.MapActions(p); permission != "" {
 				sp := accesscontrol.SetResourcePermissionCommand{
 					UserID:      p.UserId,
 					TeamID:      p.TeamId,
@@ -309,21 +320,21 @@ func createHash(setResourcePermissionCommands []accesscontrol.SetResourcePermiss
 }
 
 // getFolderPermissions Get permissions for folder.
-func (om *OrgMigration) getFolderPermissions(ctx context.Context, f *folder.Folder) ([]accesscontrol.ResourcePermission, error) {
-	if p, ok := om.folderPermissionCache[f.UID]; ok {
+func (sync *sync) getFolderPermissions(ctx context.Context, f *folder.Folder) ([]accesscontrol.ResourcePermission, error) {
+	if p, ok := sync.folderPermissionCache[f.UID]; ok {
 		return p, nil
 	}
-	p, err := om.migrationStore.GetFolderPermissions(ctx, getMigrationUser(f.OrgID), f.UID)
+	p, err := sync.migrationStore.GetFolderPermissions(ctx, getMigrationUser(f.OrgID), f.UID)
 	if err != nil {
 		return nil, err
 	}
-	om.folderPermissionCache[f.UID] = p
+	sync.folderPermissionCache[f.UID] = p
 	return p, nil
 }
 
 // getDashboardPermissions Get permissions for dashboard.
-func (om *OrgMigration) getDashboardPermissions(ctx context.Context, d *dashboards.Dashboard) ([]accesscontrol.ResourcePermission, error) {
-	p, err := om.migrationStore.GetDashboardPermissions(ctx, getMigrationUser(om.orgID), d.UID)
+func (sync *sync) getDashboardPermissions(ctx context.Context, uid string) ([]accesscontrol.ResourcePermission, error) {
+	p, err := sync.migrationStore.GetDashboardPermissions(ctx, getMigrationUser(sync.orgID), uid)
 	if err != nil {
 		return nil, err
 	}
@@ -331,63 +342,61 @@ func (om *OrgMigration) getDashboardPermissions(ctx context.Context, d *dashboar
 }
 
 // getFolder returns the parent folder for the given dashboard. If the dashboard is in the general folder, it returns the general alerting folder.
-func (om *OrgMigration) getFolder(ctx context.Context, dash *dashboards.Dashboard) (*folder.Folder, error) {
-	// nolint:staticcheck
-	if f, ok := om.folderCache[dash.FolderID]; ok {
+func (sync *sync) getFolder(ctx context.Context, folderId int64) (*folder.Folder, error) {
+	if f, ok := sync.folderCache[folderId]; ok {
 		return f, nil
 	}
 
-	// nolint:staticcheck
-	if dash.FolderID <= 0 {
+	if folderId <= 0 {
 		// Don't use general folder since it has no uid, instead we use a new "General Alerting" folder.
-		migratedFolder, err := om.getOrCreateGeneralAlertingFolder(ctx, om.orgID)
+		migratedFolder, err := sync.getOrCreateGeneralAlertingFolder(ctx, sync.orgID)
 		if err != nil {
 			return nil, fmt.Errorf("get or create general folder: %w", err)
 		}
-		return migratedFolder, err
+		return migratedFolder, nil
 	}
 
-	// nolint:staticcheck
-	f, err := om.migrationStore.GetFolder(ctx, &folder.GetFolderQuery{ID: &dash.FolderID, OrgID: om.orgID, SignedInUser: getMigrationUser(om.orgID)})
+	f, err := sync.migrationStore.GetFolder(ctx, &folder.GetFolderQuery{ID: &folderId, OrgID: sync.orgID, SignedInUser: getMigrationUser(sync.orgID)})
 	if err != nil {
 		if errors.Is(err, dashboards.ErrFolderNotFound) {
-			// nolint:staticcheck
-			return nil, fmt.Errorf("folder with id %v not found", dash.FolderID)
+			return nil, fmt.Errorf("folder with id %v not found", folderId)
 		}
-		// nolint:staticcheck
-		return nil, fmt.Errorf("get folder %d: %w", dash.FolderID, err)
+		return nil, fmt.Errorf("get folder %d: %w", folderId, err)
 	}
-	// nolint:staticcheck
-	om.folderCache[dash.FolderID] = f
+	sync.folderCache[folderId] = f
 	return f, nil
 }
 
 // getOrCreateGeneralAlertingFolder returns the general alerting folder under the specific organisation
 // If the general alerting folder does not exist it creates it.
-func (om *OrgMigration) getOrCreateGeneralAlertingFolder(ctx context.Context, orgID int64) (*folder.Folder, error) {
-	if om.generalAlertingFolder != nil {
-		return om.generalAlertingFolder, nil
+func (sync *sync) getOrCreateGeneralAlertingFolder(ctx context.Context, orgID int64) (*folder.Folder, error) {
+	if sync.generalAlertingFolder != nil {
+		return sync.generalAlertingFolder, nil
 	}
-	f, err := om.migrationStore.GetFolder(ctx, &folder.GetFolderQuery{OrgID: orgID, Title: &generalAlertingFolderTitle, SignedInUser: getMigrationUser(orgID)})
+	f, err := sync.migrationStore.GetFolder(ctx, &folder.GetFolderQuery{OrgID: orgID, Title: &generalAlertingFolderTitle, SignedInUser: getMigrationUser(orgID)})
 	if err != nil {
 		if errors.Is(err, dashboards.ErrFolderNotFound) {
 			// create general alerting folder without permissions to mimic the general folder.
-			f, err := om.createFolder(ctx, orgID, generalAlertingFolderTitle, nil)
+			f, err := sync.createFolder(ctx, orgID, generalAlertingFolderTitle, nil)
 			if err != nil {
 				return nil, fmt.Errorf("create general alerting folder: %w", err)
 			}
-			om.generalAlertingFolder = f
+			sync.generalAlertingFolder = f
 			return f, err
 		}
 		return nil, fmt.Errorf("get folder '%s': %w", generalAlertingFolderTitle, err)
 	}
-	om.generalAlertingFolder = f
+	sync.generalAlertingFolder = f
 	return f, nil
 }
 
+// newFolder is used to as the value of createdBy when the folder has been created by this migration. It is not persisted
+// to the database. -8 is chosen as it's the same value that was used in the original version of migration.
+const newFolder = -8
+
 // createFolder creates a new folder with given permissions.
-func (om *OrgMigration) createFolder(ctx context.Context, orgID int64, title string, newPerms []accesscontrol.SetResourcePermissionCommand) (*folder.Folder, error) {
-	f, err := om.migrationStore.CreateFolder(ctx, &folder.CreateFolderCommand{
+func (sync *sync) createFolder(ctx context.Context, orgID int64, title string, newPerms []accesscontrol.SetResourcePermissionCommand) (*folder.Folder, error) {
+	f, err := sync.migrationStore.CreateFolder(ctx, &folder.CreateFolderCommand{
 		OrgID:        orgID,
 		Title:        title,
 		SignedInUser: getMigrationUser(orgID).(*user.SignedInUser),
@@ -399,8 +408,8 @@ func (om *OrgMigration) createFolder(ctx context.Context, orgID int64, title str
 			// but the only folders we should be creating here are ones with permission
 			// hash suffix or general alerting. Neither of which is likely to spuriously
 			// conflict with an existing folder.
-			om.log.Warn("Folder already exists, using existing folder", "title", title)
-			f, err := om.migrationStore.GetFolder(ctx, &folder.GetFolderQuery{OrgID: orgID, Title: &title, SignedInUser: getMigrationUser(orgID)})
+			sync.log.FromContext(ctx).Warn("Folder already exists, using existing folder", "title", title)
+			f, err := sync.migrationStore.GetFolder(ctx, &folder.GetFolderQuery{OrgID: orgID, Title: &title, SignedInUser: getMigrationUser(orgID)})
 			if err != nil {
 				return nil, err
 			}
@@ -410,13 +419,13 @@ func (om *OrgMigration) createFolder(ctx context.Context, orgID int64, title str
 	}
 
 	if len(newPerms) > 0 {
-		_, err = om.migrationStore.SetFolderPermissions(ctx, orgID, f.UID, newPerms...)
+		_, err = sync.migrationStore.SetFolderPermissions(ctx, orgID, f.UID, newPerms...)
 		if err != nil {
 			return nil, fmt.Errorf("set permissions: %w", err)
 		}
 	}
 
-	om.state.CreatedFolders = append(om.state.CreatedFolders, f.UID)
+	f.CreatedBy = newFolder // We don't persist this, it's just to let callers know this is a newly created folder.
 
 	return f, nil
 }

@@ -145,6 +145,7 @@ export const getCategories = (): ValueFormatCategory[] => [
       { name: 'Malaysian Ringgit (RM)', id: 'currencyMYR', fn: currency('RM') },
       { name: 'CFP franc (XPF)', id: 'currencyXPF', fn: currency('XPF') },
       { name: 'Bulgarian Lev (BGN)', id: 'currencyBGN', fn: currency('BGN') },
+      { name: 'Guaraní (₲)', id: 'currencyPYG', fn: currency('₲') },
     ],
   },
   {

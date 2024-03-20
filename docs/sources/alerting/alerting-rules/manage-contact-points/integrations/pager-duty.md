@@ -1,6 +1,6 @@
 ---
 canonical: https://grafana.com/docs/grafana/latest/alerting/alerting-rules/manage-contact-points/integrations/pager-duty/
-description: Configure PagerDuty
+description: Configure the PagerDuty integration for Alerting
 keywords:
   - grafana
   - alerting

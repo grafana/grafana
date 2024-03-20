@@ -29,8 +29,6 @@ import (
 const (
 	viewIndex            = "index"
 	loginErrorCookieName = "login_error"
-	// #nosec G101 - this is not a hardcoded secret
-	postLogoutRedirectParam = "post_logout_redirect_uri"
 )
 
 var setIndexViewData = (*HTTPServer).setIndexViewData
@@ -91,11 +89,9 @@ func (hs *HTTPServer) CookieOptionsFromCfg() cookies.CookieOptions {
 }
 
 func (hs *HTTPServer) LoginView(c *contextmodel.ReqContext) {
-	if hs.Features.IsEnabled(c.Req.Context(), featuremgmt.FlagClientTokenRotation) {
-		if errors.Is(c.LookupTokenErr, authn.ErrTokenNeedsRotation) {
-			c.Redirect(hs.Cfg.AppSubURL + "/")
-			return
-		}
+	if errors.Is(c.LookupTokenErr, authn.ErrTokenNeedsRotation) {
+		c.Redirect(hs.Cfg.AppSubURL + "/")
+		return
 	}
 
 	viewData, err := setIndexViewData(hs, c)
@@ -243,68 +239,31 @@ func (hs *HTTPServer) loginUserWithUser(user *user.User, c *contextmodel.ReqCont
 }
 
 func (hs *HTTPServer) Logout(c *contextmodel.ReqContext) {
-	userID, errID := identity.UserIdentifier(c.SignedInUser.GetNamespacedID())
-	if errID != nil {
-		hs.log.Error("failed to retrieve user ID", "error", errID)
-	}
-
-	oauthProviderSignoutRedirectUrl := ""
-	getAuthQuery := loginservice.GetAuthInfoQuery{UserId: userID}
-	authInfo, err := hs.authInfoService.GetAuthInfo(c.Req.Context(), &getAuthQuery)
-	if err == nil {
-		// If SAML is enabled and this is a SAML user use saml logout
-		if hs.samlSingleLogoutEnabled() {
-			if authInfo.AuthModule == loginservice.SAMLAuthModule {
-				c.Redirect(hs.Cfg.AppSubURL + "/logout/saml")
-				return
-			}
-		}
-		oauthProvider := hs.SocialService.GetOAuthInfoProvider(strings.TrimPrefix(authInfo.AuthModule, "oauth_"))
-		oauthProviderSignoutRedirectUrl = oauthProvider.SignoutRedirectUrl
-	}
-
-	hs.log.Debug("Logout Redirect url", "auth.SignoutRedirectUrl:", hs.Cfg.SignoutRedirectUrl)
-	hs.log.Debug("Logout Redirect url", "oauth provider redirect url:", oauthProviderSignoutRedirectUrl)
-
-	signOutRedirectUrl := getSignOutRedirectUrl(hs.Cfg.SignoutRedirectUrl, oauthProviderSignoutRedirectUrl)
-
-	hs.log.Debug("Logout Redirect url", "signOurRedirectUrl:", signOutRedirectUrl)
-	idTokenHint := ""
-	oidcLogout := isPostLogoutRedirectConfigured(signOutRedirectUrl)
-
-	// Invalidate the OAuth tokens in case the User logged in with OAuth or the last external AuthEntry is an OAuth one
-	if entry, exists, _ := hs.oauthTokenService.HasOAuthEntry(c.Req.Context(), c.SignedInUser); exists {
-		token := hs.oauthTokenService.GetCurrentOAuthToken(c.Req.Context(), c.SignedInUser)
-		if oidcLogout {
-			if token.Valid() {
-				idTokenHint = token.Extra("id_token").(string)
-			} else {
-				hs.log.Warn("Token is not valid")
-			}
+	// FIXME: restructure saml client to implement authn.LogoutClient
+	if hs.samlSingleLogoutEnabled() {
+		id, err := identity.UserIdentifier(c.SignedInUser.GetNamespacedID())
+		if err != nil {
+			hs.log.Error("failed to retrieve user ID", "error", err)
 		}
 
-		if err := hs.oauthTokenService.InvalidateOAuthTokens(c.Req.Context(), entry); err != nil {
-			hs.log.Warn("failed to invalidate oauth tokens for user", "userId", userID, "error", err)
+		authInfo, _ := hs.authInfoService.GetAuthInfo(c.Req.Context(), &loginservice.GetAuthInfoQuery{UserId: id})
+		if authInfo != nil && authInfo.AuthModule == loginservice.SAMLAuthModule {
+			c.Redirect(hs.Cfg.AppSubURL + "/logout/saml")
+			return
 		}
 	}
 
-	err = hs.AuthTokenService.RevokeToken(c.Req.Context(), c.UserToken, false)
-	if err != nil && !errors.Is(err, auth.ErrUserTokenNotFound) {
-		hs.log.Error("failed to revoke auth token", "error", err)
-	}
-
+	redirect, err := hs.authnService.Logout(c.Req.Context(), c.SignedInUser, c.UserToken)
 	authn.DeleteSessionCookie(c.Resp, hs.Cfg)
 
-	rdUrl := signOutRedirectUrl
-	if rdUrl != "" {
-		if oidcLogout {
-			rdUrl = getPostRedirectUrl(signOutRedirectUrl, idTokenHint)
-		}
-		c.Redirect(rdUrl)
-	} else {
-		hs.log.Info("Successful Logout", "User", c.SignedInUser.GetEmail())
+	if err != nil {
+		hs.log.Error("Failed perform proper logout", "error", err)
 		c.Redirect(hs.Cfg.AppSubURL + "/login")
 	}
+
+	_, id := c.SignedInUser.GetNamespacedID()
+	hs.log.Info("Successful Logout", "userID", id)
+	c.Redirect(redirect.URL)
 }
 
 func (hs *HTTPServer) tryGetEncryptedCookie(ctx *contextmodel.ReqContext, cookieName string) (string, bool) {
@@ -417,48 +376,4 @@ func getFirstPublicErrorMessage(err *errutil.Error) string {
 	}
 
 	return errPublic.Message
-}
-
-func isPostLogoutRedirectConfigured(redirectUrl string) bool {
-	if redirectUrl == "" {
-		return false
-	}
-
-	u, err := url.Parse(redirectUrl)
-	if err != nil {
-		return false
-	}
-
-	q := u.Query()
-	_, ok := q[postLogoutRedirectParam]
-	return ok
-}
-
-func getPostRedirectUrl(rdUrl string, tokenHint string) string {
-	if tokenHint == "" {
-		return rdUrl
-	}
-	if rdUrl == "" {
-		return rdUrl
-	}
-
-	u, err := url.Parse(rdUrl)
-	if err != nil {
-		return rdUrl
-	}
-
-	q := u.Query()
-	q.Set("id_token_hint", tokenHint)
-	u.RawQuery = q.Encode()
-
-	return u.String()
-}
-
-func getSignOutRedirectUrl(gRdUrl string, oauthProviderUrl string) string {
-	if oauthProviderUrl != "" {
-		return oauthProviderUrl
-	} else if gRdUrl != "" {
-		return gRdUrl
-	}
-	return ""
 }

@@ -15,6 +15,8 @@ import (
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/db/dbtest"
+	"github.com/grafana/grafana/pkg/login/social"
+	"github.com/grafana/grafana/pkg/login/social/socialtest"
 	"github.com/grafana/grafana/pkg/models/roletype"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/actest"
@@ -223,14 +225,7 @@ func TestOrgUsersAPIEndpoint_updateOrgRole(t *testing.T) {
 			expectedCode:    http.StatusForbidden,
 		},
 		{
-			desc:            "should not be able to change basicRole with a different provider",
-			SkipOrgRoleSync: false,
-			AuthEnabled:     true,
-			AuthModule:      login.GenericOAuthModule,
-			expectedCode:    http.StatusForbidden,
-		},
-		{
-			desc:            "should not be able to change basicRole for a user synced through GCom",
+			desc:            "should not be able to change basicRole for a user synced through an OAuth provider",
 			SkipOrgRoleSync: false,
 			AuthEnabled:     true,
 			AuthModule:      login.GrafanaComAuthModule,
@@ -263,23 +258,17 @@ func TestOrgUsersAPIEndpoint_updateOrgRole(t *testing.T) {
 				if tt.AuthModule == login.LDAPAuthModule {
 					hs.Cfg.LDAPAuthEnabled = tt.AuthEnabled
 					hs.Cfg.LDAPSkipOrgRoleSync = tt.SkipOrgRoleSync
-				} else if tt.AuthModule == login.GenericOAuthModule {
-					hs.Cfg.GenericOAuthAuthEnabled = tt.AuthEnabled
-					hs.Cfg.GenericOAuthSkipOrgRoleSync = tt.SkipOrgRoleSync
-				} else if tt.AuthModule == login.GrafanaComAuthModule {
-					hs.Cfg.GrafanaNetAuthEnabled = tt.AuthEnabled
-					hs.Cfg.GrafanaComSkipOrgRoleSync = tt.SkipOrgRoleSync
-				} else if tt.AuthModule == "" {
-					// authmodule empty means basic auth
-				} else {
-					t.Errorf("invalid auth module for test: %s", tt.AuthModule)
 				}
+				// AuthModule empty means basic auth
 
 				hs.authInfoService = &authinfotest.FakeService{
 					ExpectedUserAuth: &login.UserAuth{AuthModule: tt.AuthModule},
 				}
 				hs.userService = &usertest.FakeUserService{ExpectedSignedInUser: userWithPermissions}
 				hs.orgService = &orgtest.FakeOrgService{}
+				hs.SocialService = &socialtest.FakeSocialService{
+					ExpectedAuthInfoProvider: &social.OAuthInfo{Enabled: tt.AuthEnabled, SkipOrgRoleSync: tt.SkipOrgRoleSync},
+				}
 				hs.accesscontrolService = &actest.FakeService{
 					ExpectedPermissions: permissions,
 				}

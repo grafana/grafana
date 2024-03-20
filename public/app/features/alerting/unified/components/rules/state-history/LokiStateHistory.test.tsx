@@ -1,9 +1,9 @@
+import 'whatwg-fetch';
 import { render, waitFor } from '@testing-library/react';
-import { rest } from 'msw';
+import { http, HttpResponse } from 'msw';
 import { setupServer } from 'msw/node';
 import React from 'react';
 import { byRole, byText } from 'testing-library-selector';
-import 'whatwg-fetch';
 
 import { DataFrameJSON } from '@grafana/data';
 import { setBackendSrv } from '@grafana/runtime';
@@ -20,53 +20,51 @@ beforeAll(() => {
   server.listen({ onUnhandledRequest: 'error' });
 
   server.use(
-    rest.get('/api/v1/rules/history', (req, res, ctx) =>
-      res(
-        ctx.json<DataFrameJSON>({
-          data: {
-            values: [
-              [1681739580000, 1681739580000, 1681739580000],
-              [
-                {
-                  previous: 'Normal',
-                  current: 'Pending',
-                  values: {
-                    B: 0.010344684900897919,
-                    C: 1,
-                  },
-                  labels: {
-                    handler: '/api/prometheus/grafana/api/v1/rules',
-                  },
+    http.get('/api/v1/rules/history', () =>
+      HttpResponse.json<DataFrameJSON>({
+        data: {
+          values: [
+            [1681739580000, 1681739580000, 1681739580000],
+            [
+              {
+                previous: 'Normal',
+                current: 'Pending',
+                values: {
+                  B: 0.010344684900897919,
+                  C: 1,
                 },
-                {
-                  previous: 'Normal',
-                  current: 'Pending',
-                  values: {
-                    B: 0.010344684900897919,
-                    C: 1,
-                  },
-                  dashboardUID: '',
-                  panelID: 0,
-                  labels: {
-                    handler: '/api/live/ws',
-                  },
+                labels: {
+                  handler: '/api/prometheus/grafana/api/v1/rules',
                 },
-                {
-                  previous: 'Normal',
-                  current: 'Pending',
-                  values: {
-                    B: 0.010344684900897919,
-                    C: 1,
-                  },
-                  labels: {
-                    handler: '/api/folders/:uid/',
-                  },
+              },
+              {
+                previous: 'Normal',
+                current: 'Pending',
+                values: {
+                  B: 0.010344684900897919,
+                  C: 1,
                 },
-              ],
+                dashboardUID: '',
+                panelID: 0,
+                labels: {
+                  handler: '/api/live/ws',
+                },
+              },
+              {
+                previous: 'Normal',
+                current: 'Pending',
+                values: {
+                  B: 0.010344684900897919,
+                  C: 1,
+                },
+                labels: {
+                  handler: '/api/folders/:uid/',
+                },
+              },
             ],
-          },
-        })
-      )
+          ],
+        },
+      })
     )
   );
 });
@@ -100,8 +98,8 @@ describe('LokiStateHistory', () => {
 
   it('should render no entries message when no records are returned', async () => {
     server.use(
-      rest.get('/api/v1/rules/history', (req, res, ctx) =>
-        res(ctx.json<DataFrameJSON>({ data: { values: [] }, schema: { fields: [] } }))
+      http.get('/api/v1/rules/history', () =>
+        HttpResponse.json<DataFrameJSON>({ data: { values: [] }, schema: { fields: [] } })
       )
     );
 

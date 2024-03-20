@@ -12,9 +12,9 @@ import (
 	"time"
 
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/services/ngalert/client"
 	"github.com/grafana/grafana/pkg/services/ngalert/metrics"
 	"github.com/grafana/grafana/pkg/setting"
-	"github.com/weaveworks/common/http/client"
 )
 
 const defaultPageSize = 1000

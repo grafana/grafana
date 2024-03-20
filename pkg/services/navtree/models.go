@@ -17,10 +17,12 @@ const (
 	WeightExplore
 	WeightAlerting
 	WeightAlertsAndIncidents
+	WeightTestingAndSynthetics
 	WeightMonitoring
 	WeightInfrastructure
 	WeightApplication
 	WeightFrontend
+	WeightAsserts
 	WeightDataConnections
 	WeightApps
 	WeightPlugin
@@ -30,21 +32,22 @@ const (
 )
 
 const (
-	NavIDRoot               = "root"
-	NavIDDashboards         = "dashboards/browse"
-	NavIDExplore            = "explore"
-	NavIDCfg                = "cfg" // NavIDCfg is the id for org configuration navigation node
-	NavIDAlertsAndIncidents = "alerts-and-incidents"
-	NavIDAlerting           = "alerting"
-	NavIDAlertingLegacy     = "alerting-legacy"
-	NavIDMonitoring         = "monitoring"
-	NavIDInfrastructure     = "infrastructure"
-	NavIDFrontend           = "frontend"
-	NavIDReporting          = "reports"
-	NavIDApps               = "apps"
-	NavIDCfgGeneral         = "cfg/general"
-	NavIDCfgPlugins         = "cfg/plugins"
-	NavIDCfgAccess          = "cfg/access"
+	NavIDRoot                 = "root"
+	NavIDDashboards           = "dashboards/browse"
+	NavIDExplore              = "explore"
+	NavIDCfg                  = "cfg" // NavIDCfg is the id for org configuration navigation node
+	NavIDAlertsAndIncidents   = "alerts-and-incidents"
+	NavIDTestingAndSynthetics = "testing-and-synthetics"
+	NavIDAlerting             = "alerting"
+	NavIDAlertingLegacy       = "alerting-legacy"
+	NavIDMonitoring           = "monitoring"
+	NavIDInfrastructure       = "infrastructure"
+	NavIDFrontend             = "frontend"
+	NavIDReporting            = "reports"
+	NavIDApps                 = "apps"
+	NavIDCfgGeneral           = "cfg/general"
+	NavIDCfgPlugins           = "cfg/plugins"
+	NavIDCfgAccess            = "cfg/access"
 )
 
 type NavLink struct {
@@ -65,6 +68,7 @@ type NavLink struct {
 	EmptyMessageId string     `json:"emptyMessageId,omitempty"`
 	PluginID       string     `json:"pluginId,omitempty"` // (Optional) The ID of the plugin that registered nav link (e.g. as a standalone plugin page)
 	IsCreateAction bool       `json:"isCreateAction,omitempty"`
+	Keywords       []string   `json:"keywords,omitempty"`
 }
 
 func (node *NavLink) Sort() {

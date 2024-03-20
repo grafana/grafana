@@ -101,18 +101,21 @@ export const CorrelationTransformationAddModal = ({
         isExpressionValid = !formFieldsVis.expressionDetails.show;
       }
       setIsExpValid(isExpressionValid);
-      const transformationVars = getTransformationVars(
-        {
-          type: formValues.type,
-          expression: isExpressionValid ? expression : '',
-          mapValue: formValues.mapValue,
-        },
-        fieldList[formValues.field!] || '',
-        formValues.field!
-      );
+      let transKeys = [];
+      if (formValues.type) {
+        const transformationVars = getTransformationVars(
+          {
+            type: formValues.type,
+            expression: isExpressionValid ? expression : '',
+            mapValue: formValues.mapValue,
+          },
+          fieldList[formValues.field!] || '',
+          formValues.field!
+        );
 
-      const transKeys = Object.keys(transformationVars);
-      setTransformationVars(transKeys.length > 0 ? { ...transformationVars } : {});
+        transKeys = Object.keys(transformationVars);
+        setTransformationVars(transKeys.length > 0 ? { ...transformationVars } : {});
+      }
 
       if (transKeys.length === 0 || !isExpressionValid) {
         setValidToSave(false);

@@ -8,7 +8,7 @@ aliases:
   - ../manage-notifications/manage-contact-points/ # /docs/grafana/<GRAFANA_VERSION>/alerting/manage-notifications/manage-contact-points/
   - create-contact-point/ # /docs/grafana/<GRAFANA_VERSION>/alerting/alerting-rules/create-contact-point/
 canonical: https://grafana.com/docs/grafana/latest/alerting/alerting-rules/manage-contact-points/
-description: How to manage your contact points
+description: Configure contact points to define how your contacts are notified when an alert rule fires
 keywords:
   - grafana
   - alerting

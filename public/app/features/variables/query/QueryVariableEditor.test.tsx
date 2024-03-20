@@ -3,6 +3,7 @@ import userEvent from '@testing-library/user-event';
 import React from 'react';
 
 import { DataSourceApi, VariableSupportType } from '@grafana/data';
+import { selectors } from '@grafana/e2e-selectors';
 import { mockDataSource } from 'app/features/alerting/unified/mocks';
 import { DataSourceType } from 'app/features/alerting/unified/utils/datasource';
 
@@ -31,7 +32,7 @@ const setupTestContext = (options: Partial<Props>) => {
     onPropChange: jest.fn(),
   };
 
-  const props: Props & Record<string, any> = { ...defaults, ...options };
+  const props: Props & Record<string, unknown> = { ...defaults, ...options };
   const { rerender } = render(<QueryVariableEditorUnConnected {...props} />);
 
   return { rerender, props };
@@ -144,7 +145,7 @@ describe('QueryVariableEditor', () => {
 });
 
 const getQueryField = () =>
-  screen.getByRole('textbox', { name: /variable editor form default variable query editor textarea/i });
+  screen.getByTestId(selectors.pages.Dashboard.Settings.Variables.Edit.QueryVariable.queryOptionsQueryInput);
 
 const getRegExField = () => screen.getByLabelText(/Regex/);
 

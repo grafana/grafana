@@ -14,6 +14,7 @@ import {
   Tooltip,
   useStyles2,
   withTheme2,
+  Stack,
 } from '@grafana/ui';
 import { UserRolePicker } from 'app/core/components/RolePicker/UserRolePicker';
 import { fetchRoleOptions, updateUserRoles } from 'app/core/components/RolePicker/api';
@@ -56,32 +57,28 @@ export class UserOrgs extends PureComponent<Props, State> {
   render() {
     const { user, orgs, isExternalUser, onOrgRoleChange, onOrgRemove, onOrgAdd } = this.props;
     const { showAddOrgModal } = this.state;
-    const addToOrgContainerClass = css`
-      margin-top: 0.8rem;
-    `;
 
     const canAddToOrg = contextSrv.hasPermission(AccessControlAction.OrgUsersAdd) && !isExternalUser;
     return (
-      <>
+      <div>
         <h3 className="page-heading">Organizations</h3>
-        <div className="gf-form-group">
-          <div className="gf-form">
-            <table className="filter-table form-inline">
-              <tbody>
-                {orgs.map((org, index) => (
-                  <OrgRow
-                    key={`${org.orgId}-${index}`}
-                    isExternalUser={isExternalUser}
-                    user={user}
-                    org={org}
-                    onOrgRoleChange={onOrgRoleChange}
-                    onOrgRemove={onOrgRemove}
-                  />
-                ))}
-              </tbody>
-            </table>
-          </div>
-          <div className={addToOrgContainerClass}>
+        <Stack gap={1.5} direction="column">
+          <table className="filter-table form-inline">
+            <tbody>
+              {orgs.map((org, index) => (
+                <OrgRow
+                  key={`${org.orgId}-${index}`}
+                  isExternalUser={isExternalUser}
+                  user={user}
+                  org={org}
+                  onOrgRoleChange={onOrgRoleChange}
+                  onOrgRemove={onOrgRemove}
+                />
+              ))}
+            </tbody>
+          </table>
+
+          <div>
             {canAddToOrg && (
               <Button variant="secondary" onClick={this.showOrgAddModal} ref={this.addToOrgButtonRef}>
                 Add user to organization
@@ -95,8 +92,8 @@ export class UserOrgs extends PureComponent<Props, State> {
             onOrgAdd={onOrgAdd}
             onDismiss={this.dismissOrgAddModal}
           />
-        </div>
-      </>
+        </Stack>
+      </div>
     );
   }
 }

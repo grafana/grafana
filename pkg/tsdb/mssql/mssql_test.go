@@ -5,7 +5,7 @@ import (
 	"database/sql"
 	"fmt"
 	"math/rand"
-	"strings"
+	"os"
 	"testing"
 	"time"
 
@@ -15,8 +15,6 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/infra/db"
-	"github.com/grafana/grafana/pkg/services/sqlstore/sqlutil"
-	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tsdb/sqleng"
 )
 
@@ -39,29 +37,20 @@ func TestMSSQL(t *testing.T) {
 		t.Skip()
 	}
 
-	x := initMSSQLTestDB(t)
-	origDB := sqleng.NewDB
-	t.Cleanup(func() {
-		sqleng.NewDB = origDB
-	})
-
-	sqleng.NewDB = func(d, c string) (*sql.DB, error) {
-		return x, nil
-	}
-
 	queryResultTransformer := mssqlQueryResultTransformer{}
 	dsInfo := sqleng.DataSourceInfo{}
 	config := sqleng.DataPluginConfiguration{
-		DriverName:        "mssql",
-		ConnectionString:  "",
 		DSInfo:            dsInfo,
 		MetricColumnTypes: []string{"VARCHAR", "CHAR", "NVARCHAR", "NCHAR"},
 		RowLimit:          1000000,
 	}
-	endpoint, err := sqleng.NewQueryDataHandler(setting.NewCfg(), config, &queryResultTransformer, newMssqlMacroEngine(), logger)
-	require.NoError(t, err)
 
-	db := x
+	logger := backend.NewLoggerWith("logger", "mssql.test")
+
+	db := initMSSQLTestDB(t, config.DSInfo.JsonData)
+
+	endpoint, err := sqleng.NewQueryDataHandler("", db, config, &queryResultTransformer, newMssqlMacroEngine(), logger)
+	require.NoError(t, err)
 
 	fromStart := time.Date(2018, 3, 15, 13, 0, 0, 0, time.UTC).In(time.Local)
 
@@ -328,7 +317,8 @@ func TestMSSQL(t *testing.T) {
 							JSON: []byte(`{
 								"rawSql": "SELECT $__timeGroup(time, $__interval) AS time, avg(value) as value FROM metric GROUP BY $__timeGroup(time, $__interval) ORDER BY 1",
 								"format": "time_series"}`),
-							RefID: "A",
+							RefID:    "A",
+							Interval: time.Second * 60,
 							TimeRange: backend.TimeRange{
 								From: fromStart,
 								To:   fromStart.Add(30 * time.Minute),
@@ -808,13 +798,11 @@ func TestMSSQL(t *testing.T) {
 				queryResultTransformer := mssqlQueryResultTransformer{}
 				dsInfo := sqleng.DataSourceInfo{}
 				config := sqleng.DataPluginConfiguration{
-					DriverName:        "mssql",
-					ConnectionString:  "",
 					DSInfo:            dsInfo,
 					MetricColumnTypes: []string{"VARCHAR", "CHAR", "NVARCHAR", "NCHAR"},
 					RowLimit:          1000000,
 				}
-				endpoint, err := sqleng.NewQueryDataHandler(setting.NewCfg(), config, &queryResultTransformer, newMssqlMacroEngine(), logger)
+				endpoint, err := sqleng.NewQueryDataHandler("", db, config, &queryResultTransformer, newMssqlMacroEngine(), logger)
 				require.NoError(t, err)
 				query := &backend.QueryDataRequest{
 					Queries: []backend.DataQuery{
@@ -1213,14 +1201,12 @@ func TestMSSQL(t *testing.T) {
 			queryResultTransformer := mssqlQueryResultTransformer{}
 			dsInfo := sqleng.DataSourceInfo{}
 			config := sqleng.DataPluginConfiguration{
-				DriverName:        "mssql",
-				ConnectionString:  "",
 				DSInfo:            dsInfo,
 				MetricColumnTypes: []string{"VARCHAR", "CHAR", "NVARCHAR", "NCHAR"},
 				RowLimit:          1,
 			}
 
-			handler, err := sqleng.NewQueryDataHandler(setting.NewCfg(), config, &queryResultTransformer, newMssqlMacroEngine(), logger)
+			handler, err := sqleng.NewQueryDataHandler("", db, config, &queryResultTransformer, newMssqlMacroEngine(), logger)
 			require.NoError(t, err)
 
 			t.Run("When doing a table query that returns 2 rows should limit the result to 1 row", func(t *testing.T) {
@@ -1325,21 +1311,23 @@ func TestMSSQL(t *testing.T) {
 func TestTransformQueryError(t *testing.T) {
 	transformer := &mssqlQueryResultTransformer{}
 
-	randomErr := fmt.Errorf("random error")
+	logger := backend.NewLoggerWith("logger", "mssql.test")
 
-	tests := []struct {
-		err         error
-		expectedErr error
-	}{
-		{err: fmt.Errorf("Unable to open tcp connection with host 'localhost:5000': dial tcp: connection refused"), expectedErr: sqleng.ErrConnectionFailed},
-		{err: fmt.Errorf("unable to open tcp connection with host 'localhost:5000': dial tcp: connection refused"), expectedErr: sqleng.ErrConnectionFailed},
-		{err: randomErr, expectedErr: randomErr},
-	}
+	t.Run("Should not return a connection error", func(t *testing.T) {
+		err := fmt.Errorf("Unable to open tcp connection with host 'localhost:5000': dial tcp: connection refused")
+		resultErr := transformer.TransformQueryError(logger, err)
+		errorText := resultErr.Error()
+		assert.NotEqual(t, err, resultErr)
+		assert.NotContains(t, errorText, "Unable to open tcp connection with host")
+		assert.Contains(t, errorText, "failed to connect to server")
+	})
 
-	for _, tc := range tests {
-		resultErr := transformer.TransformQueryError(logger, tc.err)
-		assert.ErrorIs(t, resultErr, tc.expectedErr)
-	}
+	t.Run("Should return a non-connection error unmodified", func(t *testing.T) {
+		err := fmt.Errorf("normal error")
+		resultErr := transformer.TransformQueryError(logger, err)
+		assert.Equal(t, err, resultErr)
+		assert.ErrorIs(t, err, resultErr)
+	})
 }
 
 func TestGenerateConnectionString(t *testing.T) {
@@ -1470,24 +1458,38 @@ func TestGenerateConnectionString(t *testing.T) {
 			expConnStr: "server=localhost;database=database;user id=user;password=;",
 		},
 	}
+
+	logger := backend.NewLoggerWith("logger", "mssql.test")
+
 	for _, tc := range testCases {
 		t.Run(tc.desc, func(t *testing.T) {
-			connStr, err := generateConnectionString(tc.dataSource, nil, nil)
+			connStr, err := generateConnectionString(tc.dataSource, nil, nil, logger)
 			require.NoError(t, err)
 			assert.Equal(t, tc.expConnStr, connStr)
 		})
 	}
 }
 
-func initMSSQLTestDB(t *testing.T) *sql.DB {
+func initMSSQLTestDB(t *testing.T, jsonData sqleng.JsonData) *sql.DB {
 	t.Helper()
 
-	testDB := sqlutil.MSSQLTestDB()
-	x, err := sql.Open(testDB.DriverName, strings.Replace(testDB.ConnStr, "localhost",
-		serverIP, 1))
+	host := os.Getenv("MSSQL_HOST")
+	if host == "" {
+		host = serverIP
+	}
+	port := os.Getenv("MSSQL_PORT")
+	if port == "" {
+		port = "1433"
+	}
+
+	db, err := sql.Open("mssql", fmt.Sprintf("server=%s;port=%s;database=grafanatest;user id=grafana;password=Password!", host, port))
 	require.NoError(t, err)
 
-	return x
+	db.SetMaxOpenConns(jsonData.MaxOpenConns)
+	db.SetMaxIdleConns(jsonData.MaxIdleConns)
+	db.SetConnMaxLifetime(time.Duration(jsonData.ConnMaxLifetime) * time.Second)
+
+	return db
 }
 
 func genTimeRangeByInterval(from time.Time, duration time.Duration, interval time.Duration) []time.Time {

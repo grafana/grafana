@@ -17,13 +17,17 @@ import {
   CoreApp,
   SplitOpenOptions,
   DataLinkPostProcessor,
+  ExploreUrlState,
+  urlUtil,
 } from '@grafana/data';
 import { getTemplateSrv, reportInteraction, VariableInterpolation } from '@grafana/runtime';
 import { DataQuery } from '@grafana/schema';
 import { contextSrv } from 'app/core/services/context_srv';
 import { getTransformationVars } from 'app/features/correlations/transformations';
+import { ExploreItemState } from 'app/types/explore';
 
 import { getLinkSrv } from '../../panel/panellinks/link_srv';
+import { getUrlStateFromPaneState } from '../hooks/useStateSync';
 
 type DataLinkFilter = (link: DataLink, scopedVars: ScopedVars) => boolean;
 
@@ -295,8 +299,8 @@ const builtInVariables = [
  * @param query
  * @param scopedVars
  */
-export function getVariableUsageInfo<T extends DataLink>(
-  query: T,
+export function getVariableUsageInfo(
+  query: object,
   scopedVars: ScopedVars
 ): { variables: VariableInterpolation[]; allVariablesDefined: boolean } {
   let variables: VariableInterpolation[] = [];
@@ -328,3 +332,26 @@ function getStringsFromObject(obj: Object): string {
   }
   return acc;
 }
+
+type StateEntry = [string, ExploreItemState];
+const isStateEntry = (entry: [string, ExploreItemState | undefined]): entry is StateEntry => {
+  return entry[1] !== undefined;
+};
+
+export const constructAbsoluteUrl = (panes: Record<string, ExploreItemState | undefined>) => {
+  const urlStates = Object.entries(panes)
+    .filter(isStateEntry)
+    .map(([exploreId, pane]) => {
+      const urlState = getUrlStateFromPaneState(pane);
+      urlState.range = {
+        to: pane.range.to.valueOf().toString(),
+        from: pane.range.from.valueOf().toString(),
+      };
+      const panes: [string, ExploreUrlState] = [exploreId, urlState];
+      return panes;
+    })
+    .reduce((acc, [exploreId, urlState]) => {
+      return { ...acc, [exploreId]: urlState };
+    }, {});
+  return urlUtil.renderUrl('/explore', { schemaVersion: 1, panes: JSON.stringify(urlStates) });
+};

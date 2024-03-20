@@ -182,7 +182,8 @@ export function InteractiveTable<TableData extends object>({
 
   const tableHooks: Array<PluginHook<TableData>> = [useSortBy, useExpanded];
 
-  const paginationEnabled = pageSize > 0;
+  const multiplePages = data.length > pageSize;
+  const paginationEnabled = pageSize > 0 && multiplePages;
 
   if (paginationEnabled) {
     tableHooks.push(usePagination);

@@ -11,8 +11,10 @@ import {
   LogsSortOrder,
   CoreApp,
   DataFrame,
+  LogRowContextOptions,
 } from '@grafana/data';
 import { config } from '@grafana/runtime';
+import { DataQuery } from '@grafana/schema';
 import { withTheme2, Themeable2 } from '@grafana/ui';
 
 import { PopoverMenu } from '../../explore/Logs/PopoverMenu';
@@ -50,6 +52,11 @@ export interface Props extends Themeable2 {
   onUnpinLine?: (row: LogRowModel) => void;
   onLogRowHover?: (row?: LogRowModel) => void;
   onOpenContext?: (row: LogRowModel, onClose: () => void) => void;
+  getRowContextQuery?: (
+    row: LogRowModel,
+    options?: LogRowContextOptions,
+    cacheFilters?: boolean
+  ) => Promise<DataQuery | null>;
   onPermalinkClick?: (row: LogRowModel) => Promise<void>;
   permalinkedRowId?: string;
   scrollIntoView?: (element: HTMLElement) => void;

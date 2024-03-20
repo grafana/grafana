@@ -26,8 +26,11 @@ export function hasAlertState(alert: Alert, state: PromAlertingRuleState | Grafa
   return mapStateWithReasonToBaseState(alert.state) === state;
 }
 
+// Prometheus API uses "err" but grafana API uses "error" *sigh*
+export type RuleHealth = 'nodata' | 'error' | 'err' | string;
+
 interface RuleBase {
-  health: string;
+  health: RuleHealth;
   name: string;
   query: string;
   lastEvaluation?: string;
@@ -128,6 +131,7 @@ export interface CombinedRuleNamespace {
   rulesSource: RulesSource;
   name: string;
   groups: CombinedRuleGroup[];
+  uid?: string; //available only in grafana rules
 }
 
 export interface RuleWithLocation<T = RulerRuleDTO> {
@@ -135,6 +139,7 @@ export interface RuleWithLocation<T = RulerRuleDTO> {
   namespace: string;
   group: RulerRuleGroupDTO;
   rule: T;
+  namespace_uid?: string;
 }
 
 export interface CombinedRuleWithLocation extends CombinedRule {

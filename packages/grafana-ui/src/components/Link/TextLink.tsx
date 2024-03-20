@@ -46,19 +46,25 @@ export const TextLink = forwardRef<HTMLAnchorElement, TextLinkProps>(
     { href, color = 'link', external = false, inline = true, variant = 'body', weight, icon, children, ...rest },
     ref
   ) => {
-    const validUrl = locationUtil.stripBaseFromUrl(textUtil.sanitizeUrl(href ?? ''));
+    const validUrl = textUtil.sanitizeUrl(href ?? '');
 
     const theme = useTheme2();
     const styles = getLinkStyles(theme, inline, variant, weight, color);
     const externalIcon = icon || 'external-link-alt';
 
-    return external ? (
-      <a href={validUrl} ref={ref} {...rest} target="_blank" rel="noreferrer" className={styles}>
-        {children}
-        <Icon size={svgSizes[variant] || 'md'} name={externalIcon} />
-      </a>
-    ) : (
-      <Link ref={ref} href={validUrl} {...rest} className={styles}>
+    if (external) {
+      return (
+        <a href={validUrl} ref={ref} {...rest} target="_blank" rel="noreferrer" className={styles}>
+          {children}
+          <Icon size={svgSizes[variant] || 'md'} name={externalIcon} />
+        </a>
+      );
+    }
+
+    const strippedUrl = locationUtil.stripBaseFromUrl(validUrl);
+
+    return (
+      <Link ref={ref} href={strippedUrl} {...rest} className={styles}>
         {children}
         {icon && <Icon name={icon} size={svgSizes[variant] || 'md'} />}
       </Link>

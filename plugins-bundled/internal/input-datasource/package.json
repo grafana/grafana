@@ -1,6 +1,6 @@
 {
   "name": "@grafana-plugins/input-datasource",
-  "version": "10.2.3",
+  "version": "10.4.0-pre",
   "description": "Input Datasource",
   "private": true,
   "repository": {
@@ -24,12 +24,12 @@
     "jest-environment-jsdom": "29.3.1",
     "swc-loader": "0.2.3",
     "ts-jest": "29.0.5",
-    "ts-node": "10.9.1",
+    "ts-node": "10.9.2",
     "webpack": "5.76.0"
   },
   "dependencies": {
-    "@grafana/data": "10.2.3",
-    "@grafana/ui": "10.2.3",
+    "@grafana/data": "10.4.0-pre",
+    "@grafana/ui": "10.4.0-pre",
     "react": "18.2.0",
     "tslib": "2.5.0"
   }

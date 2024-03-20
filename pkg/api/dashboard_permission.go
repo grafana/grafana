@@ -8,6 +8,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/api/response"
+	"github.com/grafana/grafana/pkg/infra/metrics"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/auth/identity"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
@@ -69,10 +70,10 @@ func (hs *HTTPServer) GetDashboardPermissionList(c *contextmodel.ReqContext) res
 			continue
 		}
 
-		perm.UserAvatarURL = dtos.GetGravatarUrl(perm.UserEmail)
+		perm.UserAvatarURL = dtos.GetGravatarUrl(hs.Cfg, perm.UserEmail)
 
 		if perm.TeamID > 0 {
-			perm.TeamAvatarURL = dtos.GetGravatarUrlWithDefault(perm.TeamEmail, perm.Team)
+			perm.TeamAvatarURL = dtos.GetGravatarUrlWithDefault(hs.Cfg, perm.TeamEmail, perm.Team)
 		}
 		if perm.Slug != "" {
 			perm.URL = dashboards.GetDashboardFolderURL(perm.IsFolder, perm.UID, perm.Slug)
@@ -193,6 +194,7 @@ func (hs *HTTPServer) getDashboardACL(ctx context.Context, user identity.Request
 
 		permission := dashboardPermissionMap[hs.dashboardPermissionsService.MapActions(p)]
 
+		metrics.MFolderIDsAPICount.WithLabelValues(metrics.GetDashboardACL).Inc()
 		acl = append(acl, &dashboards.DashboardACLInfoDTO{
 			OrgID:          dashboard.OrgID,
 			DashboardID:    dashboard.ID,

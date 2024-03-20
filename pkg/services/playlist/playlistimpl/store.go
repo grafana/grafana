@@ -13,4 +13,7 @@ type store interface {
 	GetItems(context.Context, *playlist.GetPlaylistItemsByUidQuery) ([]playlist.PlaylistItem, error)
 	List(context.Context, *playlist.GetPlaylistsQuery) (playlist.Playlists, error)
 	Update(context.Context, *playlist.UpdatePlaylistCommand) (*playlist.PlaylistDTO, error)
+
+	// This is optimized for the kubernetes list command that returns full bodies in the list
+	ListAll(ctx context.Context, orgId int64) ([]playlist.PlaylistDTO, error)
 }

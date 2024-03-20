@@ -3,7 +3,7 @@ aliases:
   - ../high-availability/
   - ../unified-alerting/high-availability/
 canonical: https://grafana.com/docs/grafana/latest/alerting/fundamentals/high-availability/
-description: High availability
+description: Learn about high availability in Grafana Alerting
 keywords:
   - grafana
   - alerting
@@ -38,6 +38,6 @@ It is important to make sure that gossiping is configured and tested. You can fi
 [Configure alerting high availability][configure-high-availability]
 
 {{% docs/reference %}}
-[configure-high-availability]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/alerting/set-up/configure-high-availability"
+[configure-high-availability]: "/docs/grafana/ -> /docs/grafana/<GRAFANA_VERSION>/alerting/set-up/configure-high-availability"
 [configure-high-availability]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/alerting-and-irm/alerting/set-up/configure-high-availability"
 {{% /docs/reference %}}

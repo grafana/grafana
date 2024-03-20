@@ -120,3 +120,17 @@ func FingerprintsFromFrame(frame *data.Frame) (Fingerprints, error) {
 	}
 	return result, nil
 }
+
+// FingerprintsToFrame converts Fingerprints to data.Frame.
+func FingerprintsToFrame(fingerprints Fingerprints) *data.Frame {
+	fp := make([]uint64, 0, len(fingerprints))
+	for fingerprint := range fingerprints {
+		fp = append(fp, uint64(fingerprint))
+	}
+	frame := data.NewFrame("", data.NewField("fingerprints", nil, fp))
+	frame.SetMeta(&data.FrameMeta{
+		Type:        "fingerprints",
+		TypeVersion: data.FrameTypeVersion{1, 0},
+	})
+	return frame
+}

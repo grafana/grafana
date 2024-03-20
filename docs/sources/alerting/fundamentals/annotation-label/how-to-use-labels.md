@@ -1,6 +1,6 @@
 ---
 canonical: https://grafana.com/docs/grafana/latest/alerting/fundamentals/annotation-label/how-to-use-labels/
-description: Learn about labels and label matchers in alerting
+description: Learn how to use labels to link alert rules to notification policies and silences
 keywords:
   - grafana
   - alerting
@@ -55,9 +55,9 @@ Grafana reserved labels can be used in the same way as manually configured label
 | grafana_folder | Title of the folder containing the alert. |
 
 {{% docs/reference %}}
-[alerting-rules]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/alerting/alerting-rules"
+[alerting-rules]: "/docs/grafana/ -> /docs/grafana/<GRAFANA_VERSION>/alerting/alerting-rules"
 [alerting-rules]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/alerting-and-irm/alerting/alerting-rules"
 
-[unified-alerting-reserved-labels]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/setup-grafana/configure-grafana#unified_alertingreserved_labels"
-[unified-alerting-reserved-labels]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/setup-grafana/configure-grafana#unified_alertingreserved_labels"
+[unified-alerting-reserved-labels]: "/docs/grafana/ -> /docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-grafana#unified_alertingreserved_labels"
+[unified-alerting-reserved-labels]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-grafana#unified_alertingreserved_labels"
 {{% /docs/reference %}}

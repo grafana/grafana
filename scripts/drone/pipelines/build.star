@@ -70,7 +70,7 @@ def build_e2e(trigger, ver_mode):
             [
                 build_frontend_package_step(),
                 enterprise_downstream_step(ver_mode = ver_mode),
-                rgm_artifacts_step(artifacts = ["targz:grafana:linux/amd64", "targz:grafana:linux/arm64"], file = "packages.txt"),
+                rgm_artifacts_step(artifacts = ["targz:grafana:linux/amd64", "targz:grafana:linux/arm64", "targz:grafana:linux/arm/v7"], file = "packages.txt"),
             ],
         )
     else:
@@ -81,6 +81,7 @@ def build_e2e(trigger, ver_mode):
                 artifacts = [
                     "targz:grafana:linux/amd64",
                     "targz:grafana:linux/arm64",
+                    "targz:grafana:linux/arm/v7",
                 ],
                 depends_on = ["update-package-json-version"],
                 file = "packages.txt",

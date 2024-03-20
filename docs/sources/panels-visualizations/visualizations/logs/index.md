@@ -15,6 +15,7 @@ labels:
     - cloud
     - enterprise
     - oss
+description: Configure options for Grafana's logs visualization
 title: Logs
 weight: 100
 ---

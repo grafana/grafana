@@ -8,6 +8,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/bwmarrin/snowflake"
 	"github.com/google/uuid"
 )
 
@@ -42,24 +43,39 @@ func IsShortUIDTooLong(uid string) bool {
 	return len(uid) > MaxUIDLength
 }
 
+var node *snowflake.Node
+
 // GenerateShortUID will generate a UUID that can also be a k8s name
 // it is guaranteed to have a character as the first letter
 // This UID will be a valid k8s name
 func GenerateShortUID() string {
 	mtx.Lock()
 	defer mtx.Unlock()
-	uid, err := uuid.NewRandom()
-	if err != nil {
-		// This should never happen... but this seems better than a panic
-		for i := range uid {
-			uid[i] = byte(uidrand.Intn(255))
+
+	if node == nil {
+		// ignoring the error happens when input outside 0-1023
+		node, _ = snowflake.NewNode(rand.Int63n(1024))
+	}
+
+	// Use UUIDs if snowflake failed (should be never)
+	if node == nil {
+		uid, err := uuid.NewRandom()
+		if err != nil {
+			// This should never happen... but this seems better than a panic
+			for i := range uid {
+				uid[i] = byte(uidrand.Intn(255))
+			}
 		}
+		uuid := uid.String()
+		if rune(uuid[0]) < rune('a') {
+			uuid = string(hexLetters[uidrand.Intn(len(hexLetters))]) + uuid[1:]
+		}
+		return uuid
 	}
-	uuid := uid.String()
-	if rune(uuid[0]) < rune('a') {
-		return string(hexLetters[uidrand.Intn(len(hexLetters))]) + uuid[1:]
-	}
-	return uuid
+
+	return string(hexLetters[uidrand.Intn(len(hexLetters))]) + // start with a letter
+		node.Generate().Base36() +
+		string(hexLetters[uidrand.Intn(len(hexLetters))]) // a bit more entropy
 }
 
 // ValidateUID checks the format and length of the string and returns error if it does not pass the condition

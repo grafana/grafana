@@ -14,12 +14,12 @@ import { TimezoneSelect } from './timezones';
 
 export const MuteTimingTimeInterval = () => {
   const styles = useStyles2(getStyles);
-  const { formState, register, setValue } = useFormContext();
+  const { formState, register, setValue } = useFormContext<MuteTimingFields>();
   const {
     fields: timeIntervals,
     append: addTimeInterval,
     remove: removeTimeInterval,
-  } = useFieldArray<MuteTimingFields>({
+  } = useFieldArray({
     name: 'time_intervals',
   });
 
@@ -43,7 +43,11 @@ export const MuteTimingTimeInterval = () => {
             return (
               <div key={timeInterval.id} className={styles.timeIntervalSection}>
                 <MuteTimingTimeRange intervalIndex={timeIntervalIndex} />
-                <Field label="Location" invalid={Boolean(errors.location)} error={errors.location?.message}>
+                <Field
+                  label="Location"
+                  invalid={Boolean(errors.time_intervals?.[timeIntervalIndex]?.location)}
+                  error={errors.time_intervals?.[timeIntervalIndex]?.location?.message}
+                >
                   <TimezoneSelect
                     prefix={<Icon name="map-marker" />}
                     width={50}
