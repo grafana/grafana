@@ -50,7 +50,12 @@ func (srv AlertmanagerSrv) RouteGetAMStatus(c *contextmodel.ReqContext) response
 		return errResp
 	}
 
-	return response.JSON(http.StatusOK, am.GetStatus())
+	status := am.GetStatus()
+	if !c.SignedInUser.HasRole(org.RoleAdmin) {
+		notifier.RemoveAutogenConfigIfExists(status.Config.Route)
+	}
+
+	return response.JSON(http.StatusOK, status)
 }
 
 func (srv AlertmanagerSrv) RouteCreateSilence(c *contextmodel.ReqContext, postableSilence apimodels.PostableSilence) response.Response {
