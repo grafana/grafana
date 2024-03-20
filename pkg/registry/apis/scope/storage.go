@@ -100,33 +100,6 @@ func newScopeDashboardStorage(scheme *runtime.Scheme, optsGetter generic.RESTOpt
 	return &storage{Store: store}, nil
 }
 
-/*
-func GetAttrs(obj runtime.Object) (labels.Set, fields.Set, error) {
-	accessor, err := meta.Accessor(obj)
-	if err != nil {
-		return nil, nil, err
-	}
-
-	sp, _ := obj.(*scope.Scope)
-
-	fieldsSet := fields.Set{
-		"metadata.name": accessor.GetName(),
-		"spec.type":     sp.Spec.Type,
-	}
-
-	// switch obj := obj.(type) {
-	// case *scope.Scope:
-	// 	fieldsSet["spec.type"] = obj.Spec.Type
-	// case *scope.ScopeDashboard:
-
-	// default:
-	// 	return nil, nil, fmt.Errorf("unsupported object type: %T", obj)
-	// }
-
-	return labels.Set(accessor.GetLabels()), fieldsSet, nil
-}
-*/
-
 func GetAttrs(obj runtime.Object) (labels.Set, fields.Set, error) {
 	s, ok := obj.(*scope.Scope)
 	if !ok {
