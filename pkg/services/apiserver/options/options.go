@@ -10,6 +10,11 @@ import (
 	genericoptions "k8s.io/apiserver/pkg/server/options"
 )
 
+type OptionsProvider interface {
+	AddFlags(fs *pflag.FlagSet)
+	ValidateOptions() []error
+}
+
 const defaultEtcdPathPrefix = "/registry/grafana.app"
 
 type Options struct {
@@ -17,6 +22,7 @@ type Options struct {
 	AggregatorOptions  *AggregatorServerOptions
 	StorageOptions     *StorageOptions
 	ExtraOptions       *ExtraOptions
+	APIOptions         []OptionsProvider
 }
 
 func NewOptions(codec runtime.Codec) *Options {
@@ -36,6 +42,10 @@ func (o *Options) AddFlags(fs *pflag.FlagSet) {
 	o.AggregatorOptions.AddFlags(fs)
 	o.StorageOptions.AddFlags(fs)
 	o.ExtraOptions.AddFlags(fs)
+
+	for _, api := range o.APIOptions {
+		api.AddFlags(fs)
+	}
 }
 
 func (o *Options) Validate() []error {
@@ -69,6 +79,11 @@ func (o *Options) Validate() []error {
 		}
 	}
 
+	for _, api := range o.APIOptions {
+		if errs := api.ValidateOptions(); len(errs) != 0 {
+			return errs
+		}
+	}
 	return nil
 }
 
@@ -100,7 +115,6 @@ func (o *Options) ApplyTo(serverConfig *genericapiserver.RecommendedConfig) erro
 		}
 		serverConfig.SecureServing = nil
 	}
-
 	return nil
 }
 

@@ -4,12 +4,10 @@ import React, { useState, useEffect, useMemo } from 'react';
 import useAsync from 'react-use/lib/useAsync';
 
 import { SelectableValue } from '@grafana/data';
+import { TemporaryAlert } from '@grafana/o11y-ds-frontend';
 import { FetchError, getTemplateSrv, isFetchError } from '@grafana/runtime';
 import { Select, HorizontalGroup, useStyles2 } from '@grafana/ui';
 
-import { notifyApp } from '../_importedDependencies/actions/appNotification';
-import { createErrorNotification } from '../_importedDependencies/core/appNotification';
-import { dispatch } from '../_importedDependencies/store';
 import { TraceqlFilter, TraceqlSearchScope } from '../dataquery.gen';
 import { TempoDatasource } from '../datasource';
 import { operators as allOperators, stringOperators, numberOperators, keywordOperators } from '../traceql/traceql';
@@ -26,13 +24,16 @@ interface Props {
   filter: TraceqlFilter;
   datasource: TempoDatasource;
   updateFilter: (f: TraceqlFilter) => void;
-  setError: (error: FetchError) => void;
+  deleteFilter?: (f: TraceqlFilter) => void;
+  setError: (error: FetchError | null) => void;
   isTagsLoading?: boolean;
   tags: string[];
   hideScope?: boolean;
   hideTag?: boolean;
   hideValue?: boolean;
   query: string;
+  isMulti?: boolean;
+  allowCustomValue?: boolean;
 }
 const SearchField = ({
   filter,
@@ -45,8 +46,11 @@ const SearchField = ({
   hideTag,
   hideValue,
   query,
+  isMulti = true,
+  allowCustomValue = true,
 }: Props) => {
   const styles = useStyles2(getStyles);
+  const [alertText, setAlertText] = useState<string>();
   const scopedTag = useMemo(() => filterScopedTag(filter), [filter]);
   // We automatically change the operator to the regex op when users select 2 or more values
   // However, they expect this to be automatically rolled back to the previous operator once
@@ -56,13 +60,16 @@ const SearchField = ({
 
   const updateOptions = async () => {
     try {
-      return filter.tag ? await datasource.languageProvider.getOptionsV2(scopedTag, query) : [];
+      const result = filter.tag ? await datasource.languageProvider.getOptionsV2(scopedTag, query) : [];
+      setAlertText(undefined);
+      setError(null);
+      return result;
     } catch (error) {
       // Display message if Tempo is connected but search 404's
       if (isFetchError(error) && error?.status === 404) {
         setError(error);
       } else if (error instanceof Error) {
-        dispatch(notifyApp(createErrorNotification('Error', error)));
+        setAlertText(`Error: ${error.message}`);
       }
     }
     return [];
@@ -131,78 +138,85 @@ const SearchField = ({
   };
 
   return (
-    <HorizontalGroup spacing={'none'} width={'auto'}>
-      {!hideScope && (
+    <>
+      <HorizontalGroup spacing={'none'} width={'auto'}>
+        {!hideScope && (
+          <Select
+            className={styles.dropdown}
+            inputId={`${filter.id}-scope`}
+            options={withTemplateVariableOptions(scopeOptions)}
+            value={filter.scope}
+            onChange={(v) => {
+              updateFilter({ ...filter, scope: v?.value });
+            }}
+            placeholder="Select scope"
+            aria-label={`select ${filter.id} scope`}
+          />
+        )}
+        {!hideTag && (
+          <Select
+            className={styles.dropdown}
+            inputId={`${filter.id}-tag`}
+            isLoading={isTagsLoading}
+            // Add the current tag to the list if it doesn't exist in the tags prop, otherwise the field will be empty even though the state has a value
+            options={withTemplateVariableOptions(
+              (filter.tag !== undefined ? uniq([filter.tag, ...tags]) : tags).map((t) => ({
+                label: t,
+                value: t,
+              }))
+            )}
+            value={filter.tag}
+            onChange={(v) => {
+              updateFilter({ ...filter, tag: v?.value, value: [] });
+            }}
+            placeholder="Select tag"
+            isClearable
+            aria-label={`select ${filter.id} tag`}
+            allowCustomValue={true}
+          />
+        )}
         <Select
           className={styles.dropdown}
-          inputId={`${filter.id}-scope`}
-          options={withTemplateVariableOptions(scopeOptions)}
-          value={filter.scope}
+          inputId={`${filter.id}-operator`}
+          options={withTemplateVariableOptions(operatorList.map(operatorSelectableValue))}
+          value={filter.operator}
           onChange={(v) => {
-            updateFilter({ ...filter, scope: v?.value });
+            updateFilter({ ...filter, operator: v?.value });
           }}
-          placeholder="Select scope"
-          aria-label={`select ${filter.id} scope`}
-        />
-      )}
-      {!hideTag && (
-        <Select
-          className={styles.dropdown}
-          inputId={`${filter.id}-tag`}
-          isLoading={isTagsLoading}
-          // Add the current tag to the list if it doesn't exist in the tags prop, otherwise the field will be empty even though the state has a value
-          options={withTemplateVariableOptions(
-            (filter.tag !== undefined ? uniq([filter.tag, ...tags]) : tags).map((t) => ({
-              label: t,
-              value: t,
-            }))
-          )}
-          value={filter.tag}
-          onChange={(v) => {
-            updateFilter({ ...filter, tag: v?.value });
-          }}
-          placeholder="Select tag"
-          isClearable
-          aria-label={`select ${filter.id} tag`}
-          allowCustomValue={true}
-        />
-      )}
-      <Select
-        className={styles.dropdown}
-        inputId={`${filter.id}-operator`}
-        options={withTemplateVariableOptions(operatorList.map(operatorSelectableValue))}
-        value={filter.operator}
-        onChange={(v) => {
-          updateFilter({ ...filter, operator: v?.value });
-        }}
-        isClearable={false}
-        aria-label={`select ${filter.id} operator`}
-        allowCustomValue={true}
-        width={8}
-      />
-      {!hideValue && (
-        <Select
-          className={styles.dropdown}
-          inputId={`${filter.id}-value`}
-          isLoading={isLoadingValues}
-          options={withTemplateVariableOptions(options)}
-          value={filter.value}
-          onChange={(val) => {
-            if (Array.isArray(val)) {
-              updateFilter({ ...filter, value: val.map((v) => v.value), valueType: val[0]?.type || uniqueOptionType });
-            } else {
-              updateFilter({ ...filter, value: val?.value, valueType: val?.type || uniqueOptionType });
-            }
-          }}
-          placeholder="Select value"
           isClearable={false}
-          aria-label={`select ${filter.id} value`}
+          aria-label={`select ${filter.id} operator`}
           allowCustomValue={true}
-          isMulti
-          allowCreateWhileLoading
+          width={8}
         />
-      )}
-    </HorizontalGroup>
+        {!hideValue && (
+          <Select
+            className={styles.dropdown}
+            inputId={`${filter.id}-value`}
+            isLoading={isLoadingValues}
+            options={withTemplateVariableOptions(options)}
+            value={filter.value}
+            onChange={(val) => {
+              if (Array.isArray(val)) {
+                updateFilter({
+                  ...filter,
+                  value: val.map((v) => v.value),
+                  valueType: val[0]?.type || uniqueOptionType,
+                });
+              } else {
+                updateFilter({ ...filter, value: val?.value, valueType: val?.type || uniqueOptionType });
+              }
+            }}
+            placeholder="Select value"
+            isClearable={true}
+            aria-label={`select ${filter.id} value`}
+            allowCustomValue={allowCustomValue}
+            isMulti={isMulti}
+            allowCreateWhileLoading
+          />
+        )}
+      </HorizontalGroup>
+      {alertText && <TemporaryAlert severity="error" text={alertText} />}
+    </>
   );
 };
 

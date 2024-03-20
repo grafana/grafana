@@ -2,11 +2,11 @@ import React from 'react';
 
 import { Input, InlineFieldRow, InlineField, Select } from '@grafana/ui';
 
-import { NodesQuery, TestData } from '../dataquery.gen';
+import { NodesQuery, TestDataDataQuery } from '../dataquery.gen';
 
 export interface Props {
   onChange: (value: NodesQuery) => void;
-  query: TestData;
+  query: TestDataDataQuery;
 }
 export function NodeGraphEditor({ query, onChange }: Props) {
   const type = query.nodes?.type || 'random';
@@ -54,4 +54,10 @@ export function NodeGraphEditor({ query, onChange }: Props) {
   );
 }
 
-const options: Array<NodesQuery['type']> = ['random', 'response_small', 'response_medium', 'random edges'];
+const options: Array<NodesQuery['type']> = [
+  'random',
+  'response_small',
+  'response_medium',
+  'random edges',
+  'feature_showcase',
+];

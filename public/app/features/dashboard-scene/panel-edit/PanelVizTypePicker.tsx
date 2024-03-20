@@ -16,12 +16,12 @@ import { VizPanelManager } from './VizPanelManager';
 
 export interface Props {
   data?: PanelData;
-  panelManager: VizPanelManager;
+  vizManager: VizPanelManager;
   onChange: () => void;
 }
 
-export function PanelVizTypePicker({ panelManager, data, onChange }: Props) {
-  const { panel } = panelManager.useState();
+export function PanelVizTypePicker({ vizManager, data, onChange }: Props) {
+  const { panel } = vizManager.useState();
   const styles = useStyles2(getStyles);
   const [searchQuery, setSearchQuery] = useState('');
 
@@ -43,7 +43,7 @@ export function PanelVizTypePicker({ panelManager, data, onChange }: Props) {
   ];
 
   const onVizTypeChange = (options: VizTypeChangeDetails) => {
-    panelManager.changePluginType(options.pluginId);
+    vizManager.changePluginType(options.pluginId);
     onChange();
   };
 
@@ -84,9 +84,9 @@ const getStyles = (theme: GrafanaTheme2) => ({
     display: 'flex',
     flexDirection: 'column',
     flexGrow: 1,
-    padding: theme.spacing(1),
+    padding: theme.spacing(2, 1),
     height: '100%',
-    gap: theme.spacing(1),
+    gap: theme.spacing(2),
     border: `1px solid ${theme.colors.border.weak}`,
     borderRight: 'none',
     borderBottom: 'none',

@@ -1,60 +1,127 @@
-import { css } from '@emotion/css';
+import { css, cx } from '@emotion/css';
 import React from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { SceneComponentProps } from '@grafana/scenes';
-import { Splitter, useStyles2 } from '@grafana/ui';
+import { Button, ToolbarButton, useStyles2 } from '@grafana/ui';
 
 import { NavToolbarActions } from '../scene/NavToolbarActions';
-import { getDashboardSceneFor } from '../utils/utils';
+import { UnlinkModal } from '../scene/UnlinkModal';
+import { getDashboardSceneFor, getLibraryPanel } from '../utils/utils';
 
 import { PanelEditor } from './PanelEditor';
-import { VisualizationButton } from './PanelOptionsPane';
+import { SaveLibraryVizPanelModal } from './SaveLibraryVizPanelModal';
+import { useSnappingSplitter } from './splitter/useSnappingSplitter';
 
 export function PanelEditorRenderer({ model }: SceneComponentProps<PanelEditor>) {
   const dashboard = getDashboardSceneFor(model);
-  const { optionsPane, vizManager, dataPane } = model.useState();
-  const { controls } = dashboard.useState();
+  const { optionsPane } = model.useState();
   const styles = useStyles2(getStyles);
+
+  const { containerProps, primaryProps, secondaryProps, splitterProps, splitterState, onToggleCollapse } =
+    useSnappingSplitter({
+      direction: 'row',
+      dragPosition: 'end',
+      initialSize: 0.75,
+      paneOptions: {
+        collapseBelowPixels: 250,
+        snapOpenToPixels: 400,
+      },
+    });
 
   return (
     <>
       <NavToolbarActions dashboard={dashboard} />
-      <div className={styles.canvasContent}>
-        {controls && (
-          <div className={styles.controls}>
-            {controls.map((control) => (
-              <control.Component key={control.state.key} model={control} />
-            ))}
-            {!optionsPane && (
-              <VisualizationButton
-                pluginId={vizManager.state.panel.state.pluginId}
-                onOpen={() => model.toggleOptionsPane(true)}
-                isOpen={false}
-                onTogglePane={() => model.toggleOptionsPane()}
-              />
-            )}
-          </div>
-        )}
-        <div className={styles.body}>
-          <Splitter
-            direction="row"
-            dragPosition="end"
-            initialSize={0.75}
-            primaryPaneStyles={{ paddingBottom: !dataPane ? 16 : 0 }}
-          >
-            <Splitter
-              direction="column"
-              primaryPaneStyles={{ minHeight: 0, paddingRight: !optionsPane ? 16 : 0 }}
-              secondaryPaneStyles={{ minHeight: 0, overflow: 'hidden' }}
-              dragPosition="start"
-            >
-              <vizManager.Component model={vizManager} />
-              {dataPane && <dataPane.Component model={dataPane} />}
-            </Splitter>
-            {optionsPane && <optionsPane.Component model={optionsPane} />}
-          </Splitter>
+      <div {...containerProps}>
+        <div {...primaryProps} className={cx(primaryProps.className, styles.body)}>
+          <VizAndDataPane model={model} />
         </div>
+        <div {...splitterProps} />
+        <div {...secondaryProps} className={cx(secondaryProps.className, styles.optionsPane)}>
+          {splitterState.collapsed && (
+            <div className={styles.expandOptionsWrapper}>
+              <ToolbarButton
+                tooltip={'Open options pane'}
+                icon={'arrow-to-right'}
+                onClick={onToggleCollapse}
+                variant="canvas"
+                className={styles.rotate180}
+                aria-label={'Open options pane'}
+              />
+            </div>
+          )}
+          {!splitterState.collapsed && <optionsPane.Component model={optionsPane} />}
+        </div>
+      </div>
+    </>
+  );
+}
+
+function VizAndDataPane({ model }: SceneComponentProps<PanelEditor>) {
+  const dashboard = getDashboardSceneFor(model);
+  const { vizManager, dataPane, showLibraryPanelSaveModal, showLibraryPanelUnlinkModal } = model.useState();
+  const { sourcePanel } = vizManager.useState();
+  const libraryPanel = getLibraryPanel(sourcePanel.resolve());
+  const { controls } = dashboard.useState();
+  const styles = useStyles2(getStyles);
+
+  const { containerProps, primaryProps, secondaryProps, splitterProps, splitterState, onToggleCollapse } =
+    useSnappingSplitter({
+      direction: 'column',
+      dragPosition: 'start',
+      initialSize: 0.5,
+      paneOptions: {
+        collapseBelowPixels: 150,
+      },
+    });
+
+  if (!dataPane) {
+    primaryProps.style.flexGrow = 1;
+  }
+
+  return (
+    <>
+      <div className={styles.controlsWrapper}>{controls && <controls.Component model={controls} />}</div>
+      <div {...containerProps}>
+        <div {...primaryProps}>
+          <vizManager.Component model={vizManager} />
+        </div>
+        {showLibraryPanelSaveModal && libraryPanel && (
+          <SaveLibraryVizPanelModal
+            libraryPanel={libraryPanel}
+            onDismiss={model.onDismissLibraryPanelSaveModal}
+            onConfirm={model.onConfirmSaveLibraryPanel}
+            onDiscard={model.onDiscard}
+          ></SaveLibraryVizPanelModal>
+        )}
+        {showLibraryPanelUnlinkModal && libraryPanel && (
+          <UnlinkModal
+            onDismiss={model.onDismissUnlinkLibraryPanelModal}
+            onConfirm={model.onConfirmUnlinkLibraryPanel}
+            isOpen
+          />
+        )}
+        {dataPane && (
+          <>
+            <div {...splitterProps} />
+            <div {...secondaryProps}>
+              {splitterState.collapsed && (
+                <div className={styles.expandDataPane}>
+                  <Button
+                    tooltip={'Open query pane'}
+                    icon={'arrow-to-right'}
+                    onClick={onToggleCollapse}
+                    variant="secondary"
+                    size="sm"
+                    className={styles.openDataPaneButton}
+                    aria-label={'Open query pane'}
+                  />
+                </div>
+              )}
+              {!splitterState.collapsed && <dataPane.Component model={dataPane} />}
+            </div>
+          </>
+        )}
       </div>
     </>
   );
@@ -75,16 +142,44 @@ function getStyles(theme: GrafanaTheme2) {
       label: 'body',
       flexGrow: 1,
       display: 'flex',
-      position: 'relative',
+      flexDirection: 'column',
       minHeight: 0,
-      gap: '8px',
     }),
-    controls: css({
+    optionsPane: css({
+      flexDirection: 'column',
+      borderLeft: `1px solid ${theme.colors.border.weak}`,
+      background: theme.colors.background.primary,
+    }),
+    expandOptionsWrapper: css({
       display: 'flex',
-      flexWrap: 'wrap',
-      alignItems: 'center',
-      gap: theme.spacing(1),
-      padding: theme.spacing(2),
+      flexDirection: 'column',
+      padding: theme.spacing(2, 1),
+    }),
+    expandDataPane: css({
+      display: 'flex',
+      flexDirection: 'row',
+      padding: theme.spacing(1),
+      borderTop: `1px solid ${theme.colors.border.weak}`,
+      borderRight: `1px solid ${theme.colors.border.weak}`,
+      background: theme.colors.background.primary,
+      flexGrow: 1,
+      justifyContent: 'space-around',
+    }),
+    rotate180: css({
+      rotate: '180deg',
+    }),
+    controlsWrapper: css({
+      display: 'flex',
+      flexDirection: 'column',
+      flexGrow: 0,
+      paddingLeft: theme.spacing(2),
+    }),
+    openDataPaneButton: css({
+      width: theme.spacing(8),
+      justifyContent: 'center',
+      svg: {
+        rotate: '-90deg',
+      },
     }),
   };
 }

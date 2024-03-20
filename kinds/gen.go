@@ -38,16 +38,9 @@ func main() {
 
 	// All the jennies that comprise the core kinds generator pipeline
 	coreKindsGen.Append(
-		&codegen.ResourceGoTypesJenny{},
-		&codegen.SubresourceGoTypesJenny{},
-		codegen.CoreKindJenny(cuectx.GoCoreKindParentPath, nil),
-		codegen.BaseCoreRegistryJenny(filepath.Join("pkg", "registry", "corekind"), cuectx.GoCoreKindParentPath),
-		codegen.LatestMajorsOrXJenny(
-			cuectx.TSCoreKindParentPath,
-			true, // forcing group so that we ignore the top level resource (for now)
-			codegen.TSResourceJenny{}),
+		&codegen.GoSpecJenny{},
+		codegen.LatestMajorsOrXJenny(cuectx.TSCoreKindParentPath),
 		codegen.TSVeneerIndexJenny(filepath.Join("packages", "grafana-schema", "src")),
-		codegen.DocsJenny(filepath.Join("docs", "sources", "developers", "kinds", "core")),
 	)
 
 	header := codegen.SlashHeaderMapper("kinds/gen.go")
@@ -93,6 +86,16 @@ func main() {
 	commfsys := elsedie(genCommon(filepath.Join(groot, "pkg", "kindsys")))("common schemas failed")
 	commfsys = elsedie(commfsys.Map(header))("failed gen header on common fsys")
 	if err = jfs.Merge(commfsys); err != nil {
+		die(err)
+	}
+
+	// Merging k8 resources
+	rawResources, err := genRawResources(kinddirs)
+	if err != nil {
+		die(err)
+	}
+
+	if err = jfs.Merge(rawResources); err != nil {
 		die(err)
 	}
 
@@ -181,4 +184,54 @@ func elsedie[T any](t T, err error) func(msg string) T {
 func die(err error) {
 	fmt.Fprint(os.Stderr, err, "\n")
 	os.Exit(1)
+}
+
+// Resource generation without using Thema
+func genRawResources(dirs []os.DirEntry) (*codejen.FS, error) {
+	jenny := codejen.JennyListWithNamer[[]codegen.CueSchema](func(_ []codegen.CueSchema) string {
+		return "RawResources"
+	})
+
+	jenny.Append(
+		&codegen.K8ResourcesJenny{},
+		&codegen.CoreRegistryJenny{},
+	)
+
+	header := codegen.SlashHeaderMapper("kinds/gen.go")
+	jenny.AddPostprocessors(header)
+
+	return jenny.GenerateFS(loadCueFiles(dirs))
+}
+
+func loadCueFiles(dirs []os.DirEntry) []codegen.CueSchema {
+	ctx := cuectx.GrafanaCUEContext()
+	values := make([]codegen.CueSchema, 0)
+	for _, dir := range dirs {
+		if !dir.IsDir() {
+			continue
+		}
+
+		entries, err := os.ReadDir(dir.Name())
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "error opening %s directory: %s", dir, err)
+			os.Exit(1)
+		}
+
+		// It's assuming that we only have one file in each folder
+		entry := filepath.Join(dir.Name(), entries[0].Name())
+		cueFile, err := os.ReadFile(entry)
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "unable to open %s/%s file: %s", dir, entries[0].Name(), err)
+			os.Exit(1)
+		}
+
+		sch := codegen.CueSchema{
+			FilePath: "./" + filepath.Join(cuectx.CoreDefParentPath, entry),
+			CueFile:  ctx.CompileBytes(cueFile),
+		}
+
+		values = append(values, sch)
+	}
+
+	return values
 }

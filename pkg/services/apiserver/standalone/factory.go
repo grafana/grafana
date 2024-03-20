@@ -5,20 +5,22 @@ import (
 	"fmt"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
-	"github.com/spf13/pflag"
+	"github.com/prometheus/client_golang/prometheus"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 
 	"github.com/grafana/grafana/pkg/apis/datasource/v0alpha1"
+	"github.com/grafana/grafana/pkg/apiserver/builder"
+	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/registry/apis/datasource"
 	"github.com/grafana/grafana/pkg/registry/apis/example"
 	"github.com/grafana/grafana/pkg/registry/apis/featuretoggle"
 	"github.com/grafana/grafana/pkg/registry/apis/query"
-	"github.com/grafana/grafana/pkg/registry/apis/query/runner"
+	"github.com/grafana/grafana/pkg/registry/apis/query/client"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/actest"
-	"github.com/grafana/grafana/pkg/services/apiserver/builder"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
+	"github.com/grafana/grafana/pkg/services/apiserver/options"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/setting"
 	testdatasource "github.com/grafana/grafana/pkg/tsdb/grafana-testdata-datasource"
@@ -26,7 +28,7 @@ import (
 
 type APIServerFactory interface {
 	// Called before the groups are loaded so any custom command can be registered
-	InitFlags(flags *pflag.FlagSet)
+	GetOptions() options.OptionsProvider
 
 	// Given the flags, what can we produce
 	GetEnabled(runtime []RuntimeConfig) ([]schema.GroupVersion, error)
@@ -42,7 +44,9 @@ func GetDummyAPIFactory() APIServerFactory {
 
 type DummyAPIFactory struct{}
 
-func (p *DummyAPIFactory) InitFlags(flags *pflag.FlagSet) {}
+func (p *DummyAPIFactory) GetOptions() options.OptionsProvider {
+	return nil
+}
 
 func (p *DummyAPIFactory) GetEnabled(runtime []RuntimeConfig) ([]schema.GroupVersion, error) {
 	gv := []schema.GroupVersion{}
@@ -71,9 +75,14 @@ func (p *DummyAPIFactory) MakeAPIServer(gv schema.GroupVersion) (builder.APIGrou
 	case "query.grafana.app":
 		return query.NewQueryAPIBuilder(
 			featuremgmt.WithFeatures(),
-			runner.NewDummyTestRunner(),
-			runner.NewDummyRegistry(),
-		), nil
+			&query.CommonDataSourceClientSupplier{
+				Client: client.NewTestDataClient(),
+			},
+			client.NewTestDataRegistry(),
+			nil,                               // legacy lookup
+			prometheus.NewRegistry(),          // ???
+			tracing.InitializeTracerForTest(), // ???
+		)
 
 	case "featuretoggle.grafana.app":
 		return featuretoggle.NewFeatureFlagAPIBuilder(

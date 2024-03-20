@@ -9,6 +9,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"net/url"
+	"slices"
 	"testing"
 	"time"
 
@@ -17,9 +18,12 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/infra/log"
+	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/acimpl"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
+	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/datasources"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/ngalert/accesscontrol"
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
@@ -30,6 +34,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
+	"github.com/grafana/grafana/pkg/util/cmputil"
 	"github.com/grafana/grafana/pkg/web"
 )
 
@@ -234,7 +239,8 @@ func TestRouteGetNamespaceRulesConfig(t *testing.T) {
 		err := svc.provenanceStore.SetProvenance(context.Background(), rule, orgID, models.ProvenanceAPI)
 		require.NoError(t, err)
 
-		req := createRequestContext(orgID, nil)
+		perms := createPermissionsForRules(expectedRules, orgID)
+		req := createRequestContextWithPerms(orgID, perms, nil)
 		response := svc.RouteGetNamespaceRulesConfig(req, folder.UID)
 
 		require.Equal(t, http.StatusAccepted, response.Status())
@@ -268,7 +274,8 @@ func TestRouteGetNamespaceRulesConfig(t *testing.T) {
 		expectedRules := models.GenerateAlertRules(rand.Intn(5)+5, models.AlertRuleGen(withGroupKey(groupKey), models.WithUniqueGroupIndex()))
 		ruleStore.PutRule(context.Background(), expectedRules...)
 
-		req := createRequestContext(orgID, nil)
+		perms := createPermissionsForRules(expectedRules, orgID)
+		req := createRequestContextWithPerms(orgID, perms, nil)
 		response := createService(ruleStore).RouteGetNamespaceRulesConfig(req, folder.UID)
 
 		require.Equal(t, http.StatusAccepted, response.Status())
@@ -351,7 +358,8 @@ func TestRouteGetRulesConfig(t *testing.T) {
 		expectedRules := models.GenerateAlertRules(rand.Intn(5)+5, models.AlertRuleGen(withGroupKey(groupKey), models.WithUniqueGroupIndex()))
 		ruleStore.PutRule(context.Background(), expectedRules...)
 
-		req := createRequestContext(orgID, nil)
+		perms := createPermissionsForRules(expectedRules, orgID)
+		req := createRequestContextWithPerms(orgID, perms, nil)
 		response := createService(ruleStore).RouteGetRulesConfig(req)
 
 		require.Equal(t, http.StatusOK, response.Status())
@@ -434,7 +442,9 @@ func TestRouteGetRulesGroupConfig(t *testing.T) {
 		expectedRules := models.GenerateAlertRules(rand.Intn(5)+5, models.AlertRuleGen(withGroupKey(groupKey), models.WithUniqueGroupIndex()))
 		ruleStore.PutRule(context.Background(), expectedRules...)
 
-		req := createRequestContext(orgID, nil)
+		perms := createPermissionsForRules(expectedRules, orgID)
+		req := createRequestContextWithPerms(orgID, perms, nil)
+
 		response := createService(ruleStore).RouteGetRulesGroupConfig(req, folder.UID, groupKey.RuleGroup)
 
 		require.Equal(t, http.StatusAccepted, response.Status())
@@ -537,7 +547,24 @@ func TestValidateQueries(t *testing.T) {
 				New: models.AlertRuleGen(func(rule *models.AlertRule) {
 					rule.Condition = "Update_New"
 				})(),
-				Diff: nil,
+				Diff: cmputil.DiffReport{
+					cmputil.Diff{
+						Path: "SomeField",
+					},
+				},
+			},
+			{
+				Existing: models.AlertRuleGen(func(rule *models.AlertRule) {
+					rule.Condition = "Update_Index_Existing"
+				})(),
+				New: models.AlertRuleGen(func(rule *models.AlertRule) {
+					rule.Condition = "Update_Index_New"
+				})(),
+				Diff: cmputil.DiffReport{
+					cmputil.Diff{
+						Path: "RuleGroupIndex",
+					},
+				},
 			},
 		},
 		Delete: []*models.AlertRule{
@@ -547,12 +574,13 @@ func TestValidateQueries(t *testing.T) {
 		},
 	}
 
-	t.Run("should validate New and Updated only", func(t *testing.T) {
+	t.Run("should not validate deleted rules or updated rules with ignored fields", func(t *testing.T) {
 		validator := &recordingConditionValidator{}
 		err := validateQueries(context.Background(), &delta, validator, nil)
 		require.NoError(t, err)
+		noValidate := []string{"Deleted", "Update_Index_New"}
 		for _, condition := range validator.recorded {
-			if condition.Condition == "New" || condition.Condition == "Update_New" {
+			if !slices.Contains(noValidate, condition.Condition) {
 				continue
 			}
 			assert.Failf(t, "validated unexpected condition", "condition '%s' was validated but should not", condition.Condition)
@@ -603,8 +631,22 @@ func createService(store *fakes.RuleStore) *RulerSrv {
 		cfg: &setting.UnifiedAlertingSettings{
 			BaseInterval: 10 * time.Second,
 		},
-		authz: accesscontrol.NewRuleService(acimpl.ProvideAccessControl(setting.NewCfg())),
+		authz:          accesscontrol.NewRuleService(acimpl.ProvideAccessControl(setting.NewCfg())),
+		amConfigStore:  &fakeAMRefresher{},
+		amRefresher:    &fakeAMRefresher{},
+		featureManager: &featuremgmt.FeatureManager{},
 	}
+}
+
+type fakeAMRefresher struct {
+}
+
+func (f *fakeAMRefresher) ApplyConfig(ctx context.Context, orgId int64, dbConfig *models.AlertConfiguration) error {
+	return nil
+}
+
+func (f *fakeAMRefresher) GetLatestAlertmanagerConfiguration(ctx context.Context, orgID int64) (*models.AlertConfiguration, error) {
+	return nil, nil
 }
 
 func createRequestContext(orgID int64, params map[string]string) *contextmodel.ReqContext {
@@ -637,8 +679,15 @@ func createRequestContextWithPerms(orgID int64, permissions map[int64]map[string
 }
 
 func createPermissionsForRules(rules []*models.AlertRule, orgID int64) map[int64]map[string][]string {
+	ns := map[string]any{}
 	permissions := map[string][]string{}
 	for _, rule := range rules {
+		if _, ok := ns[rule.NamespaceUID]; !ok {
+			scope := dashboards.ScopeFoldersProvider.GetResourceScopeUID(rule.NamespaceUID)
+			permissions[dashboards.ActionFoldersRead] = append(permissions[dashboards.ActionFoldersRead], scope)
+			permissions[ac.ActionAlertingRuleRead] = append(permissions[ac.ActionAlertingRuleRead], scope)
+			ns[rule.NamespaceUID] = struct{}{}
+		}
 		for _, query := range rule.Data {
 			permissions[datasources.ActionQuery] = append(permissions[datasources.ActionQuery], datasources.ScopeProvider.GetResourceScopeUID(query.DatasourceUID))
 		}

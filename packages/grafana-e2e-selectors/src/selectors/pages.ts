@@ -57,6 +57,11 @@ export const Pages = {
       navV2: 'data-testid Dashboard navigation',
       publicDashboardTag: 'data-testid public dashboard tag',
       shareButton: 'data-testid share-button',
+      playlistControls: {
+        prev: 'data-testid playlist previous dashboard button',
+        stop: 'data-testid playlist stop dashboard button',
+        next: 'data-testid playlist next dashboard button',
+      },
     },
     SubMenu: {
       submenu: 'Dashboard submenu',
@@ -182,9 +187,15 @@ export const Pages = {
             stepCountIntervalSelect: 'data-testid interval variable step count input',
             minIntervalInput: 'data-testid interval variable mininum interval input',
           },
+          GroupByVariable: {
+            dataSourceSelect: Components.DataSourcePicker.inputV2,
+            infoText: 'data-testid group by variable info text',
+            modeToggle: 'data-testid group by variable mode toggle',
+          },
           AdHocFiltersVariable: {
             datasourceSelect: Components.DataSourcePicker.inputV2,
             infoText: 'data-testid ad-hoc filters variable info text',
+            modeToggle: 'data-testid ad-hoc filters variable mode toggle',
           },
         },
       },

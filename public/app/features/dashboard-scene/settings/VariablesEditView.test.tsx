@@ -17,6 +17,8 @@ import {
   SceneGridLayout,
   VizPanel,
   AdHocFiltersVariable,
+  SceneVariableState,
+  SceneTimeRange,
 } from '@grafana/scenes';
 import { mockDataSource } from 'app/features/alerting/unified/mocks';
 import { LegacyVariableQueryEditor } from 'app/features/variables/editor/LegacyVariableQueryEditor';
@@ -144,9 +146,14 @@ describe('VariablesEditView', () => {
 
     it('should delete a variable', () => {
       const variableIdentifier = 'customVar';
+
+      variableView.onEdit(variableIdentifier);
+      expect(variableView.state.editIndex).toBe(0);
+
       variableView.onDelete(variableIdentifier);
       expect(variableView.getVariables()).toHaveLength(2);
       expect(variableView.getVariables()[0].state.name).toBe('customVar2');
+      expect(variableView.state.editIndex).toBeUndefined();
     });
 
     it('should change order of variables', () => {
@@ -203,6 +210,49 @@ describe('VariablesEditView', () => {
 
     afterEach(() => {
       jest.clearAllMocks();
+    });
+  });
+
+  describe('Variables name validation', () => {
+    let variableView: VariablesEditView;
+    let variable1: SceneVariableState;
+    let variable2: SceneVariableState;
+
+    beforeAll(async () => {
+      const result = await buildTestScene();
+      variableView = result.variableView;
+
+      const variables = variableView.getVariables();
+      variable1 = variables[0].state;
+      variable2 = variables[1].state;
+    });
+
+    it('should not return error on same name and key', () => {
+      expect(variableView.onValidateVariableName(variable1.name, variable1.key)[0]).toBe(false);
+    });
+
+    it('should not return error if name is unique', () => {
+      expect(variableView.onValidateVariableName('unique_variable_name', variable1.key)[0]).toBe(false);
+    });
+
+    it('should return error if global variable name is used', () => {
+      expect(variableView.onValidateVariableName('__', variable1.key)[0]).toBe(true);
+    });
+
+    it('should not return error if global variable name is used not at the beginning ', () => {
+      expect(variableView.onValidateVariableName('test__', variable1.key)[0]).toBe(false);
+    });
+
+    it('should return error if name is empty', () => {
+      expect(variableView.onValidateVariableName('', variable1.key)[0]).toBe(true);
+    });
+
+    it('should return error if non word characters are used', () => {
+      expect(variableView.onValidateVariableName('-', variable1.key)[0]).toBe(true);
+    });
+
+    it('should return error if variable name is taken', () => {
+      expect(variableView.onValidateVariableName(variable2.name, variable1.key)[0]).toBe(true);
     });
   });
 
@@ -264,6 +314,7 @@ async function buildTestScene() {
     meta: {
       canEdit: true,
     },
+    $timeRange: new SceneTimeRange({}),
     $variables: new SceneVariableSet({
       variables: [
         new CustomVariable({

@@ -9,10 +9,6 @@ import (
 )
 
 var (
-	// ConfigurableOAuthProviders is a list of OAuth providers that can be configured from the API
-	// TODO: make it configurable
-	ConfigurableOAuthProviders = []string{"github", "gitlab", "google", "generic_oauth", "azuread", "okta"}
-
 	AllOAuthProviders = []string{social.GitHubProviderName, social.GitlabProviderName, social.GoogleProviderName, social.GenericOAuthProviderName, social.GrafanaComProviderName, social.AzureADProviderName, social.OktaProviderName}
 )
 
@@ -66,3 +62,5 @@ type Store interface {
 	Upsert(ctx context.Context, settings *models.SSOSettings) error
 	Delete(ctx context.Context, provider string) error
 }
+
+type ValidateFunc[T any] func(input *T, requester identity.Requester) error

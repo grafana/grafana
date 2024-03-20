@@ -2,8 +2,8 @@
 
 import { DataSourcePlugin } from '@grafana/data';
 
-import PromCheatSheet from './components/PromCheatSheet';
-import PromQueryEditorByApp from './components/PromQueryEditorByApp';
+import { PromCheatSheet } from './components/PromCheatSheet';
+import { PromQueryEditorByApp } from './components/PromQueryEditorByApp';
 import { ConfigEditor } from './configuration/ConfigEditor';
 import { PrometheusDatasource } from './datasource';
 

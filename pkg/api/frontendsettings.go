@@ -94,6 +94,8 @@ func (hs *HTTPServer) GetFrontendSettings(c *contextmodel.ReqContext) {
 }
 
 // getFrontendSettings returns a json object with all the settings needed for front end initialisation.
+//
+//nolint:gocyclo
 func (hs *HTTPServer) getFrontendSettings(c *contextmodel.ReqContext) (*dtos.FrontendSettingsDTO, error) {
 	availablePlugins, err := hs.availablePlugins(c.Req.Context(), c.SignedInUser.GetOrgID())
 	if err != nil {
@@ -150,17 +152,22 @@ func (hs *HTTPServer) getFrontendSettings(c *contextmodel.ReqContext) (*dtos.Fro
 	hideVersion := hs.Cfg.AnonymousHideVersion && !c.IsSignedIn
 	version := setting.BuildVersion
 	commit := setting.BuildCommit
+	commitShort := getShortCommitHash(setting.BuildCommit, 10)
 	buildstamp := setting.BuildStamp
+	versionString := fmt.Sprintf(`%s v%s (%s)`, setting.ApplicationName, version, commitShort)
 
 	if hideVersion {
 		version = ""
+		versionString = setting.ApplicationName
 		commit = ""
+		commitShort = ""
 		buildstamp = 0
 	}
 
 	hasAccess := accesscontrol.HasAccess(hs.AccessControl, c)
 	secretsManagerPluginEnabled := kvstore.EvaluateRemoteSecretsPlugin(c.Req.Context(), hs.secretsPluginManager, hs.Cfg) == nil
 	trustedTypesDefaultPolicyEnabled := (hs.Cfg.CSPEnabled && strings.Contains(hs.Cfg.CSPTemplate, "require-trusted-types-for")) || (hs.Cfg.CSPReportOnlyEnabled && strings.Contains(hs.Cfg.CSPReportOnlyTemplate, "require-trusted-types-for"))
+	isCloudMigrationTarget := hs.Features.IsEnabled(c.Req.Context(), featuremgmt.FlagOnPremToCloudMigrations) && hs.Cfg.CloudMigrationIsTarget
 
 	frontendSettings := &dtos.FrontendSettingsDTO{
 		DefaultDatasource:                   defaultDS,
@@ -171,13 +178,10 @@ func (hs *HTTPServer) getFrontendSettings(c *contextmodel.ReqContext) (*dtos.Fro
 		AppUrl:                              hs.Cfg.AppURL,
 		AppSubUrl:                           hs.Cfg.AppSubURL,
 		AllowOrgCreate:                      (hs.Cfg.AllowUserOrgCreate && c.IsSignedIn) || c.IsGrafanaAdmin,
-		AuthProxyEnabled:                    hs.Cfg.AuthProxyEnabled,
+		AuthProxyEnabled:                    hs.Cfg.AuthProxy.Enabled,
 		LdapEnabled:                         hs.Cfg.LDAPAuthEnabled,
 		JwtHeaderName:                       hs.Cfg.JWTAuth.HeaderName,
 		JwtUrlLogin:                         hs.Cfg.JWTAuth.URLLogin,
-		AlertingErrorOrTimeout:              hs.Cfg.AlertingErrorOrTimeout,
-		AlertingNoDataOrNullValues:          hs.Cfg.AlertingNoDataOrNullValues,
-		AlertingMinInterval:                 hs.Cfg.AlertingMinInterval,
 		LiveEnabled:                         hs.Cfg.LiveMaxConnections != 0,
 		AutoAssignOrg:                       hs.Cfg.AutoAssignOrg,
 		VerifyEmailEnabled:                  hs.Cfg.VerifyEmailEnabled,
@@ -218,12 +222,17 @@ func (hs *HTTPServer) getFrontendSettings(c *contextmodel.ReqContext) (*dtos.Fro
 		DisableFrontendSandboxForPlugins:    hs.Cfg.DisableFrontendSandboxForPlugins,
 		PublicDashboardAccessToken:          c.PublicDashboardAccessToken,
 		PublicDashboardsEnabled:             hs.Cfg.PublicDashboardsEnabled,
+		CloudMigrationIsTarget:              isCloudMigrationTarget,
 		SharedWithMeFolderUID:               folder.SharedWithMeFolderUID,
+		RootFolderUID:                       accesscontrol.GeneralFolderUID,
+		LocalFileSystemAvailable:            hs.Cfg.LocalFileSystemAvailable,
 
 		BuildInfo: dtos.FrontendSettingsBuildInfoDTO{
 			HideVersion:   hideVersion,
 			Version:       version,
+			VersionString: versionString,
 			Commit:        commit,
+			CommitShort:   commitShort,
 			Buildstamp:    buildstamp,
 			Edition:       hs.License.Edition(),
 			LatestVersion: hs.grafanaUpdateChecker.LatestVersion(),
@@ -244,6 +253,9 @@ func (hs *HTTPServer) getFrontendSettings(c *contextmodel.ReqContext) (*dtos.Fro
 		AnonymousDeviceLimit:             hs.Cfg.AnonymousDeviceLimit,
 		RendererAvailable:                hs.RenderService.IsAvailable(c.Req.Context()),
 		RendererVersion:                  hs.RenderService.Version(),
+		RendererDefaultImageWidth:        hs.Cfg.RendererDefaultImageWidth,
+		RendererDefaultImageHeight:       hs.Cfg.RendererDefaultImageHeight,
+		RendererDefaultImageScale:        hs.Cfg.RendererDefaultImageScale,
 		SecretsManagerPluginEnabled:      secretsManagerPluginEnabled,
 		Http2Enabled:                     hs.Cfg.Protocol == setting.HTTP2Scheme,
 		GrafanaJavascriptAgent:           hs.Cfg.GrafanaJavascriptAgent,
@@ -257,10 +269,11 @@ func (hs *HTTPServer) getFrontendSettings(c *contextmodel.ReqContext) (*dtos.Fro
 		SupportBundlesEnabled:            isSupportBundlesEnabled(hs),
 
 		Azure: dtos.FrontendSettingsAzureDTO{
-			Cloud:                   hs.Cfg.Azure.Cloud,
-			ManagedIdentityEnabled:  hs.Cfg.Azure.ManagedIdentityEnabled,
-			WorkloadIdentityEnabled: hs.Cfg.Azure.WorkloadIdentityEnabled,
-			UserIdentityEnabled:     hs.Cfg.Azure.UserIdentityEnabled,
+			Cloud:                                  hs.Cfg.Azure.Cloud,
+			ManagedIdentityEnabled:                 hs.Cfg.Azure.ManagedIdentityEnabled,
+			WorkloadIdentityEnabled:                hs.Cfg.Azure.WorkloadIdentityEnabled,
+			UserIdentityEnabled:                    hs.Cfg.Azure.UserIdentityEnabled,
+			UserIdentityFallbackCredentialsEnabled: hs.Cfg.Azure.UserIdentityFallbackCredentialsEnabled,
 		},
 
 		Caching: dtos.FrontendSettingsCachingDTO{
@@ -303,10 +316,6 @@ func (hs *HTTPServer) getFrontendSettings(c *contextmodel.ReqContext) (*dtos.Fro
 		frontendSettings.UnifiedAlertingEnabled = *hs.Cfg.UnifiedAlerting.Enabled
 	}
 
-	if hs.Cfg.AlertingEnabled != nil {
-		frontendSettings.AlertingEnabled = *(hs.Cfg.AlertingEnabled)
-	}
-
 	// It returns false if the provider is not enabled or the skip org role sync is false.
 	parseSkipOrgRoleSyncEnabled := func(info *social.OAuthInfo) bool {
 		if info == nil {
@@ -317,19 +326,20 @@ func (hs *HTTPServer) getFrontendSettings(c *contextmodel.ReqContext) (*dtos.Fro
 
 	oauthProviders := hs.SocialService.GetOAuthInfoProviders()
 	frontendSettings.Auth = dtos.FrontendSettingsAuthDTO{
-		AuthProxyEnableLoginToken:   hs.Cfg.AuthProxyEnableLoginToken,
-		OAuthSkipOrgRoleUpdateSync:  hs.Cfg.OAuthSkipOrgRoleUpdateSync,
-		SAMLSkipOrgRoleSync:         hs.Cfg.SAMLSkipOrgRoleSync,
-		LDAPSkipOrgRoleSync:         hs.Cfg.LDAPSkipOrgRoleSync,
-		JWTAuthSkipOrgRoleSync:      hs.Cfg.JWTAuth.SkipOrgRoleSync,
-		GoogleSkipOrgRoleSync:       parseSkipOrgRoleSyncEnabled(oauthProviders[social.GoogleProviderName]),
-		GrafanaComSkipOrgRoleSync:   parseSkipOrgRoleSyncEnabled(oauthProviders[social.GrafanaComProviderName]),
-		GenericOAuthSkipOrgRoleSync: parseSkipOrgRoleSyncEnabled(oauthProviders[social.GenericOAuthProviderName]),
-		AzureADSkipOrgRoleSync:      parseSkipOrgRoleSyncEnabled(oauthProviders[social.AzureADProviderName]),
-		GithubSkipOrgRoleSync:       parseSkipOrgRoleSyncEnabled(oauthProviders[social.GitHubProviderName]),
-		GitLabSkipOrgRoleSync:       parseSkipOrgRoleSyncEnabled(oauthProviders[social.GitlabProviderName]),
-		OktaSkipOrgRoleSync:         parseSkipOrgRoleSyncEnabled(oauthProviders[social.OktaProviderName]),
-		DisableLogin:                hs.Cfg.DisableLogin,
+		AuthProxyEnableLoginToken:     hs.Cfg.AuthProxy.EnableLoginToken,
+		OAuthSkipOrgRoleUpdateSync:    hs.Cfg.OAuthSkipOrgRoleUpdateSync,
+		SAMLSkipOrgRoleSync:           hs.Cfg.SAMLSkipOrgRoleSync,
+		LDAPSkipOrgRoleSync:           hs.Cfg.LDAPSkipOrgRoleSync,
+		JWTAuthSkipOrgRoleSync:        hs.Cfg.JWTAuth.SkipOrgRoleSync,
+		GoogleSkipOrgRoleSync:         parseSkipOrgRoleSyncEnabled(oauthProviders[social.GoogleProviderName]),
+		GrafanaComSkipOrgRoleSync:     parseSkipOrgRoleSyncEnabled(oauthProviders[social.GrafanaComProviderName]),
+		GenericOAuthSkipOrgRoleSync:   parseSkipOrgRoleSyncEnabled(oauthProviders[social.GenericOAuthProviderName]),
+		AzureADSkipOrgRoleSync:        parseSkipOrgRoleSyncEnabled(oauthProviders[social.AzureADProviderName]),
+		GithubSkipOrgRoleSync:         parseSkipOrgRoleSyncEnabled(oauthProviders[social.GitHubProviderName]),
+		GitLabSkipOrgRoleSync:         parseSkipOrgRoleSyncEnabled(oauthProviders[social.GitlabProviderName]),
+		OktaSkipOrgRoleSync:           parseSkipOrgRoleSyncEnabled(oauthProviders[social.OktaProviderName]),
+		DisableLogin:                  hs.Cfg.DisableLogin,
+		BasicAuthStrongPasswordPolicy: hs.Cfg.BasicAuthStrongPasswordPolicy,
 	}
 
 	if hs.pluginsCDNService != nil && hs.pluginsCDNService.IsEnabled() {
@@ -351,11 +361,24 @@ func (hs *HTTPServer) getFrontendSettings(c *contextmodel.ReqContext) (*dtos.Fro
 	// Set the kubernetes namespace
 	frontendSettings.Namespace = hs.namespacer(c.SignedInUser.OrgID)
 
+	// experimental scope features
+	if hs.Features.IsEnabled(c.Req.Context(), featuremgmt.FlagScopeFilters) {
+		frontendSettings.ListScopesEndpoint = hs.Cfg.ScopesListScopesURL
+		frontendSettings.ListDashboardScopesEndpoint = hs.Cfg.ScopesListDashboardsURL
+	}
+
 	return frontendSettings, nil
 }
 
 func isSupportBundlesEnabled(hs *HTTPServer) bool {
 	return hs.Cfg.SectionWithEnvOverrides("support_bundles").Key("enabled").MustBool(true)
+}
+
+func getShortCommitHash(commitHash string, maxLength int) string {
+	if len(commitHash) > maxLength {
+		return commitHash[:maxLength]
+	}
+	return commitHash
 }
 
 func (hs *HTTPServer) getFSDataSources(c *contextmodel.ReqContext, availablePlugins AvailablePlugins) (map[string]plugins.DataSourceDTO, error) {

@@ -17,7 +17,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert/backtesting"
 	"github.com/grafana/grafana/pkg/services/ngalert/eval"
 	"github.com/grafana/grafana/pkg/services/ngalert/metrics"
-	"github.com/grafana/grafana/pkg/services/ngalert/migration"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier"
 	"github.com/grafana/grafana/pkg/services/ngalert/provisioning"
@@ -57,7 +56,7 @@ type API struct {
 	TransactionManager   provisioning.TransactionManager
 	ProvenanceStore      provisioning.ProvisioningStore
 	RuleStore            RuleStore
-	AlertingStore        AlertingStore
+	AlertingStore        store.AlertingStore
 	AdminConfigStore     store.AdminConfigurationStore
 	DataProxy            *datasourceproxy.DataSourceProxyService
 	MultiOrgAlertmanager *notifier.MultiOrgAlertmanager
@@ -75,7 +74,6 @@ type API struct {
 	Historian            Historian
 	Tracer               tracing.Tracer
 	AppUrl               *url.URL
-	UpgradeService       migration.UpgradeService
 
 	// Hooks can be used to replace API handlers for specific paths.
 	Hooks *Hooks
@@ -115,6 +113,9 @@ func (api *API) RegisterAPIEndpoints(m *metrics.API) {
 			log:                logger,
 			cfg:                &api.Cfg.UnifiedAlerting,
 			authz:              ruleAuthzService,
+			amConfigStore:      api.AlertingStore,
+			amRefresher:        api.MultiOrgAlertmanager,
+			featureManager:     api.FeatureManager,
 		},
 	), m)
 	api.RegisterTestingApiEndpoints(NewTestingApi(
@@ -159,13 +160,4 @@ func (api *API) RegisterAPIEndpoints(m *metrics.API) {
 		receiverService:   api.ReceiverService,
 		muteTimingService: api.MuteTimings,
 	}), m)
-
-	// Inject upgrade endpoints if legacy alerting is enabled and the feature flag is enabled.
-	if !api.Cfg.UnifiedAlerting.IsEnabled() && api.FeatureManager.IsEnabledGlobally(featuremgmt.FlagAlertingPreviewUpgrade) {
-		api.RegisterUpgradeApiEndpoints(NewUpgradeApi(NewUpgradeSrc(
-			logger,
-			api.UpgradeService,
-			api.Cfg,
-		)), m)
-	}
 }

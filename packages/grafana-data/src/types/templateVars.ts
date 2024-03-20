@@ -64,13 +64,15 @@ export interface AdHocVariableModel extends BaseVariableModel {
    * Filters that are always applied to the lookup of keys. Not shown in the AdhocFilterBuilder UI.
    */
   baseFilters?: AdHocVariableFilter[];
+  /**
+   * Static keys that override any dynamic keys from the datasource.
+   */
+  defaultKeys?: MetricFindValue[];
 }
 
-export interface GroupByVariableModel extends BaseVariableModel {
+export interface GroupByVariableModel extends VariableWithOptions {
   type: 'groupby';
   datasource: DataSourceRef | null;
-  groupByKeys: string[];
-  defaultOptions?: MetricFindValue[];
   multi: true;
 }
 

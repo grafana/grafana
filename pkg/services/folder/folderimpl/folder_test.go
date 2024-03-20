@@ -2,6 +2,7 @@ package folderimpl
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"math/rand"
@@ -9,6 +10,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/google/go-cmp/cmp"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
@@ -23,9 +25,8 @@ import (
 	"github.com/grafana/grafana/pkg/services/accesscontrol/acimpl"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/actest"
 	acmock "github.com/grafana/grafana/pkg/services/accesscontrol/mock"
-	"github.com/grafana/grafana/pkg/services/alerting"
-	alertmodels "github.com/grafana/grafana/pkg/services/alerting/models"
 	"github.com/grafana/grafana/pkg/services/dashboards"
+	"github.com/grafana/grafana/pkg/services/dashboards/dashboardaccess"
 	"github.com/grafana/grafana/pkg/services/dashboards/database"
 	dashboardservice "github.com/grafana/grafana/pkg/services/dashboards/service"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
@@ -40,6 +41,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/quota/quotatest"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/store/entity"
+	"github.com/grafana/grafana/pkg/services/supportbundles/supportbundlestest"
 	"github.com/grafana/grafana/pkg/services/tag/tagimpl"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
@@ -57,7 +59,7 @@ func TestIntegrationProvideFolderService(t *testing.T) {
 		cfg := setting.NewCfg()
 		ac := acmock.New()
 		db := sqlstore.InitTestDB(t)
-		ProvideService(ac, bus.ProvideBus(tracing.InitializeTracerForTest()), cfg, nil, nil, db, &featuremgmt.FeatureManager{}, nil)
+		ProvideService(ac, bus.ProvideBus(tracing.InitializeTracerForTest()), cfg, nil, nil, db, &featuremgmt.FeatureManager{}, supportbundlestest.NewFakeBundleService(), nil)
 
 		require.Len(t, ac.Calls.RegisterAttributeScopeResolver, 3)
 	})
@@ -299,6 +301,17 @@ func TestIntegrationFolderService(t *testing.T) {
 				require.NoError(t, err)
 			})
 
+			t.Run("When get folder by uid and uid is general should return the root folder object", func(t *testing.T) {
+				uid := accesscontrol.GeneralFolderUID
+				query := &folder.GetFolderQuery{
+					UID:          &uid,
+					SignedInUser: usr,
+				}
+				actual, err := service.Get(context.Background(), query)
+				require.Equal(t, folder.RootFolder, actual)
+				require.NoError(t, err)
+			})
+
 			t.Run("When get folder by title should return folder", func(t *testing.T) {
 				expected := folder.NewFolder("TEST-"+util.GenerateShortUID(), "")
 
@@ -410,7 +423,7 @@ func TestIntegrationNestedFolderService(t *testing.T) {
 				CanEditValue: true,
 			})
 
-			dashSrv, err := dashboardservice.ProvideDashboardServiceImpl(cfg, dashStore, folderStore, nil, featuresFlagOn, folderPermissions, dashboardPermissions, ac, serviceWithFlagOn, nil)
+			dashSrv, err := dashboardservice.ProvideDashboardServiceImpl(cfg, dashStore, folderStore, featuresFlagOn, folderPermissions, dashboardPermissions, ac, serviceWithFlagOn, nil)
 			require.NoError(t, err)
 
 			alertStore, err := ngstore.ProvideDBStore(cfg, featuresFlagOn, db, serviceWithFlagOn, dashSrv, ac)
@@ -489,7 +502,7 @@ func TestIntegrationNestedFolderService(t *testing.T) {
 				CanEditValue: true,
 			})
 
-			dashSrv, err := dashboardservice.ProvideDashboardServiceImpl(cfg, dashStore, folderStore, nil, featuresFlagOff,
+			dashSrv, err := dashboardservice.ProvideDashboardServiceImpl(cfg, dashStore, folderStore, featuresFlagOff,
 				folderPermissions, dashboardPermissions, ac, serviceWithFlagOff, nil)
 			require.NoError(t, err)
 
@@ -633,7 +646,7 @@ func TestIntegrationNestedFolderService(t *testing.T) {
 				tc.service.dashboardStore = dashStore
 				tc.service.store = nestedFolderStore
 
-				dashSrv, err := dashboardservice.ProvideDashboardServiceImpl(cfg, dashStore, folderStore, nil, tc.featuresFlag, folderPermissions, dashboardPermissions, ac, tc.service, nil)
+				dashSrv, err := dashboardservice.ProvideDashboardServiceImpl(cfg, dashStore, folderStore, tc.featuresFlag, folderPermissions, dashboardPermissions, ac, tc.service, nil)
 				require.NoError(t, err)
 				alertStore, err := ngstore.ProvideDBStore(cfg, tc.featuresFlag, db, tc.service, dashSrv, ac)
 				require.NoError(t, err)
@@ -1288,7 +1301,7 @@ func TestIntegrationNestedFolderSharedWithMe(t *testing.T) {
 
 	dashboardPermissions := acmock.NewMockedPermissionsService()
 	dashboardService, err := dashboardservice.ProvideDashboardServiceImpl(
-		cfg, dashStore, folderStore, &dummyDashAlertExtractor{},
+		cfg, dashStore, folderStore,
 		featuresFlagOn,
 		acmock.NewMockedPermissionsService(),
 		dashboardPermissions,
@@ -1787,6 +1800,311 @@ func TestFolderServiceGetFolders(t *testing.T) {
 	})
 }
 
+// TODO replace it with an API test under /pkg/tests/api/folders
+// whenever the golang client with get updated to allow filtering child folders by permission
+func TestGetChildrenFilterByPermission(t *testing.T) {
+	db := sqlstore.InitTestDB(t)
+
+	signedInAdminUser := user.SignedInUser{UserID: 1, OrgID: orgID, Permissions: map[int64]map[string][]string{
+		orgID: {
+			dashboards.ActionFoldersCreate: {},
+			dashboards.ActionFoldersWrite:  {dashboards.ScopeFoldersAll},
+			dashboards.ActionFoldersRead:   {dashboards.ScopeFoldersAll},
+		},
+	}}
+
+	quotaService := quotatest.New(false, nil)
+	folderStore := ProvideDashboardFolderStore(db)
+
+	cfg := setting.NewCfg()
+
+	featuresFlagOff := featuremgmt.WithFeatures()
+	dashStore, err := database.ProvideDashboardStore(db, db.Cfg, featuresFlagOff, tagimpl.ProvideService(db), quotaService)
+	require.NoError(t, err)
+	nestedFolderStore := ProvideStore(db, db.Cfg)
+
+	b := bus.ProvideBus(tracing.InitializeTracerForTest())
+	ac := acimpl.ProvideAccessControl(cfg)
+
+	features := featuremgmt.WithFeatures(featuremgmt.FlagNestedFolders)
+
+	folderSvcOn := &Service{
+		cfg:                  cfg,
+		log:                  log.New("test-folder-service"),
+		dashboardStore:       dashStore,
+		dashboardFolderStore: folderStore,
+		store:                nestedFolderStore,
+		features:             features,
+		bus:                  b,
+		db:                   db,
+		accessControl:        ac,
+		registry:             make(map[string]folder.RegistryService),
+		metrics:              newFoldersMetrics(nil),
+	}
+
+	origGuardian := guardian.New
+	fakeGuardian := &guardian.FakeDashboardGuardian{
+		CanSaveValue: true,
+		CanEditUIDs:  []string{},
+		CanViewUIDs:  []string{},
+	}
+	guardian.MockDashboardGuardian(fakeGuardian)
+	t.Cleanup(func() {
+		guardian.New = origGuardian
+	})
+
+	viewer := user.SignedInUser{UserID: 1, OrgID: orgID, Permissions: map[int64]map[string][]string{
+		orgID: {
+			dashboards.ActionFoldersRead:  {},
+			dashboards.ActionFoldersWrite: {},
+		},
+	}}
+
+	// no view permission
+	// 	|_ subfolder under no view permission with view permission
+	// 	|_ subfolder under no view permission with view permissionn and with edit permission
+	// with edit permission
+	//	|_ subfolder under with edit permission
+	// no edit permission
+	// 	|_ subfolder under no edit permission
+	// 	|_ subfolder under no edit permission with edit permission
+	noViewPermission, err := folderSvcOn.Create(context.Background(), &folder.CreateFolderCommand{
+		OrgID:        orgID,
+		ParentUID:    "",
+		Title:        "no view permission",
+		SignedInUser: &signedInAdminUser,
+	})
+	require.NoError(t, err)
+
+	f, err := folderSvcOn.Create(context.Background(), &folder.CreateFolderCommand{
+		OrgID:        orgID,
+		ParentUID:    noViewPermission.UID,
+		Title:        "subfolder under no view permission with view permission",
+		SignedInUser: &signedInAdminUser,
+	})
+	viewer.Permissions[orgID][dashboards.ActionFoldersRead] = append(viewer.Permissions[orgID][dashboards.ActionFoldersRead], dashboards.ScopeFoldersProvider.GetResourceScopeUID(f.UID))
+	fakeGuardian.CanViewUIDs = append(fakeGuardian.CanViewUIDs, f.UID)
+
+	require.NoError(t, err)
+	f, err = folderSvcOn.Create(context.Background(), &folder.CreateFolderCommand{
+		OrgID:        orgID,
+		ParentUID:    noViewPermission.UID,
+		Title:        "subfolder under no view permission with view permission and with edit permission",
+		SignedInUser: &signedInAdminUser,
+	})
+	require.NoError(t, err)
+	viewer.Permissions[orgID][dashboards.ActionFoldersRead] = append(viewer.Permissions[orgID][dashboards.ActionFoldersRead], dashboards.ScopeFoldersProvider.GetResourceScopeUID(f.UID))
+	fakeGuardian.CanViewUIDs = append(fakeGuardian.CanViewUIDs, f.UID)
+	viewer.Permissions[orgID][dashboards.ActionFoldersWrite] = append(viewer.Permissions[orgID][dashboards.ActionFoldersWrite], dashboards.ScopeFoldersProvider.GetResourceScopeUID(f.UID))
+	fakeGuardian.CanEditUIDs = append(fakeGuardian.CanEditUIDs, f.UID)
+
+	withEditPermission, err := folderSvcOn.Create(context.Background(), &folder.CreateFolderCommand{
+		OrgID:        orgID,
+		ParentUID:    "",
+		Title:        "with edit permission",
+		SignedInUser: &signedInAdminUser,
+	})
+	require.NoError(t, err)
+	viewer.Permissions[orgID][dashboards.ActionFoldersRead] = append(viewer.Permissions[orgID][dashboards.ActionFoldersRead], dashboards.ScopeFoldersProvider.GetResourceScopeUID(withEditPermission.UID))
+	fakeGuardian.CanViewUIDs = append(fakeGuardian.CanViewUIDs, withEditPermission.UID)
+	viewer.Permissions[orgID][dashboards.ActionFoldersWrite] = append(viewer.Permissions[orgID][dashboards.ActionFoldersWrite], dashboards.ScopeFoldersProvider.GetResourceScopeUID(withEditPermission.UID))
+	fakeGuardian.CanEditUIDs = append(fakeGuardian.CanEditUIDs, withEditPermission.UID)
+
+	_, err = folderSvcOn.Create(context.Background(), &folder.CreateFolderCommand{
+		OrgID:        orgID,
+		ParentUID:    withEditPermission.UID,
+		Title:        "subfolder under with edit permission",
+		SignedInUser: &signedInAdminUser,
+	})
+	require.NoError(t, err)
+
+	noEditPermission, err := folderSvcOn.Create(context.Background(), &folder.CreateFolderCommand{
+		OrgID:        orgID,
+		ParentUID:    "",
+		Title:        "no edit permission",
+		SignedInUser: &signedInAdminUser,
+	})
+	require.NoError(t, err)
+	viewer.Permissions[orgID][dashboards.ActionFoldersRead] = append(viewer.Permissions[orgID][dashboards.ActionFoldersRead], dashboards.ScopeFoldersProvider.GetResourceScopeUID(noEditPermission.UID))
+	fakeGuardian.CanViewUIDs = append(fakeGuardian.CanViewUIDs, noEditPermission.UID)
+
+	_, err = folderSvcOn.Create(context.Background(), &folder.CreateFolderCommand{
+		OrgID:        orgID,
+		ParentUID:    noEditPermission.UID,
+		Title:        "subfolder under no edit permission",
+		SignedInUser: &signedInAdminUser,
+	})
+	require.NoError(t, err)
+
+	f, err = folderSvcOn.Create(context.Background(), &folder.CreateFolderCommand{
+		OrgID:        orgID,
+		ParentUID:    noEditPermission.UID,
+		Title:        "subfolder under no edit permission with edit permission",
+		SignedInUser: &signedInAdminUser,
+	})
+	require.NoError(t, err)
+	viewer.Permissions[orgID][dashboards.ActionFoldersWrite] = append(viewer.Permissions[orgID][dashboards.ActionFoldersWrite], dashboards.ScopeFoldersProvider.GetResourceScopeUID(f.UID))
+	fakeGuardian.CanEditUIDs = append(fakeGuardian.CanEditUIDs, f.UID)
+
+	testCases := []struct {
+		name            string
+		q               folder.GetChildrenQuery
+		expectedErr     error
+		expectedFolders []string
+	}{
+		{
+			name: "should return root folders with view permission",
+			q: folder.GetChildrenQuery{
+				OrgID:        orgID,
+				SignedInUser: &viewer,
+			},
+			expectedFolders: []string{
+				"Shared with me",
+				"no edit permission",
+				"with edit permission"},
+		},
+		{
+			name: "should return subfolders with view permission",
+			q: folder.GetChildrenQuery{
+				OrgID:        orgID,
+				SignedInUser: &viewer,
+				UID:          noEditPermission.UID,
+			},
+			expectedFolders: []string{
+				"subfolder under no edit permission",
+				"subfolder under no edit permission with edit permission"},
+		},
+		{
+			name: "should return shared with me folders with view permission",
+			q: folder.GetChildrenQuery{
+				OrgID:        orgID,
+				SignedInUser: &viewer,
+				UID:          folder.SharedWithMeFolderUID,
+			},
+			expectedFolders: []string{
+				"subfolder under no view permission with view permission",
+				"subfolder under no view permission with view permission and with edit permission"},
+		},
+		{
+			name: "should return root folders with edit permission",
+			q: folder.GetChildrenQuery{
+				OrgID:        orgID,
+				SignedInUser: &viewer,
+				Permission:   dashboardaccess.PERMISSION_EDIT,
+			},
+			expectedFolders: []string{
+				"Shared with me",
+				"with edit permission"},
+		},
+		{
+			name: "should fail returning subfolders with edit permission when parent folder has no edit permission",
+			q: folder.GetChildrenQuery{
+				OrgID:        orgID,
+				SignedInUser: &viewer,
+				Permission:   dashboardaccess.PERMISSION_EDIT,
+				UID:          noEditPermission.UID,
+			},
+			expectedErr: dashboards.ErrFolderAccessDenied,
+		},
+		{
+			name: "should return shared with me folders with edit permission",
+			q: folder.GetChildrenQuery{
+				OrgID:        orgID,
+				SignedInUser: &viewer,
+				Permission:   dashboardaccess.PERMISSION_EDIT,
+				UID:          folder.SharedWithMeFolderUID,
+			},
+			expectedFolders: []string{
+				"subfolder under no edit permission with edit permission",
+				"subfolder under no view permission with view permission and with edit permission",
+			},
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			folders, err := folderSvcOn.GetChildren(context.Background(), &tc.q)
+			if tc.expectedErr != nil {
+				require.Error(t, err)
+				require.Equal(t, tc.expectedErr, err)
+			} else {
+				require.NoError(t, err)
+				actual := make([]string, 0, len(folders))
+				for _, f := range folders {
+					actual = append(actual, f.Title)
+				}
+				if cmp.Diff(tc.expectedFolders, actual) != "" {
+					t.Fatalf("unexpected folders: %s", cmp.Diff(tc.expectedFolders, actual))
+				}
+			}
+		})
+	}
+}
+
+func TestSupportBundle(t *testing.T) {
+	f := func(uid, parent string) *folder.Folder { return &folder.Folder{UID: uid, ParentUID: parent} }
+	for _, tc := range []struct {
+		Folders          []*folder.Folder
+		ExpectedTotal    int
+		ExpectedDepths   map[int]int
+		ExpectedChildren map[int]int
+	}{
+		// Empty folder list
+		{
+			Folders:          []*folder.Folder{},
+			ExpectedTotal:    0,
+			ExpectedDepths:   map[int]int{},
+			ExpectedChildren: map[int]int{},
+		},
+		// Single folder
+		{
+			Folders:          []*folder.Folder{f("a", "")},
+			ExpectedTotal:    1,
+			ExpectedDepths:   map[int]int{1: 1},
+			ExpectedChildren: map[int]int{0: 1},
+		},
+		// Flat folders
+		{
+			Folders:          []*folder.Folder{f("a", ""), f("b", ""), f("c", "")},
+			ExpectedTotal:    3,
+			ExpectedDepths:   map[int]int{1: 3},
+			ExpectedChildren: map[int]int{0: 3},
+		},
+		// Nested folders
+		{
+			Folders:          []*folder.Folder{f("a", ""), f("ab", "a"), f("ac", "a"), f("x", ""), f("xy", "x"), f("xyz", "xy")},
+			ExpectedTotal:    6,
+			ExpectedDepths:   map[int]int{1: 2, 2: 3, 3: 1},
+			ExpectedChildren: map[int]int{0: 3, 1: 2, 2: 1},
+		},
+	} {
+		svc := &Service{}
+		supportItem, err := svc.supportItemFromFolders(tc.Folders)
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		stats := struct {
+			Total    int         `json:"total"`
+			Depths   map[int]int `json:"depths"`
+			Children map[int]int `json:"children"`
+		}{}
+		if err := json.Unmarshal(supportItem.FileBytes, &stats); err != nil {
+			t.Fatal(err)
+		}
+
+		if stats.Total != tc.ExpectedTotal {
+			t.Error("Total mismatch", stats, tc)
+		}
+		if fmt.Sprint(stats.Depths) != fmt.Sprint(tc.ExpectedDepths) {
+			t.Error("Depths mismatch", stats, tc.ExpectedDepths)
+		}
+		if fmt.Sprint(stats.Children) != fmt.Sprint(tc.ExpectedChildren) {
+			t.Error("Depths mismatch", stats, tc.ExpectedChildren)
+		}
+	}
+}
+
 func CreateSubtreeInStore(t *testing.T, store store, service *Service, depth int, prefix string, cmd folder.CreateFolderCommand) []*folder.Folder {
 	t.Helper()
 
@@ -1847,15 +2165,4 @@ func createRule(t *testing.T, store *ngstore.DBstore, folderUID, title string) *
 	require.NoError(t, err)
 
 	return &rule
-}
-
-type dummyDashAlertExtractor struct {
-}
-
-func (d *dummyDashAlertExtractor) GetAlerts(ctx context.Context, dashAlertInfo alerting.DashAlertInfo) ([]*alertmodels.Alert, error) {
-	return nil, nil
-}
-
-func (d *dummyDashAlertExtractor) ValidateAlerts(ctx context.Context, dashAlertInfo alerting.DashAlertInfo) error {
-	return nil
 }
