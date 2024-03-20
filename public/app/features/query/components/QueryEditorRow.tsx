@@ -473,6 +473,7 @@ export class QueryEditorRow<TQuery extends DataQuery> extends PureComponent<Prop
         />
         {!hideHideQueryButton ? (
           <QueryOperationToggleAction
+            dataTestId={selectors.components.QueryEditorRow.actionButton('Hide response')}
             title={
               query.hide
                 ? t('query-operation.header.show-response', 'Show response')

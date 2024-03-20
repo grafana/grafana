@@ -71,7 +71,7 @@ describe('Panel edit tests - queries', () => {
     });
 
     // Show response for row with refId A
-    e2e.components.QueryEditorRow.actionButton('Show response').eq(1).should('be.visible').click();
+    e2e.components.QueryEditorRow.actionButton('Hide response').eq(1).should('be.visible').click();
 
     expectInspectorResultAndClose((keys) => {
       const length = keys.length;
