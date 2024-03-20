@@ -79,7 +79,7 @@ export const splitOpen = createAsyncThunk(
       }
     });
 
-    const splitRange = options?.range?.raw || options?.range || originState?.range.raw || DEFAULT_RANGE;
+    const splitRange = options?.range?.raw || originState?.range.raw || DEFAULT_RANGE;
 
     let newPaneId = generateExploreId();
     // in case we have a duplicate id, generate a new one
