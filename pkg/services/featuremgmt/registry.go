@@ -234,23 +234,6 @@ var (
 			AllowSelfServe: true,
 		},
 		{
-			Name:           "redshiftAsyncQueryDataSupport",
-			Description:    "Enable async query data support for Redshift",
-			Stage:          FeatureStageGeneralAvailability,
-			Expression:     "true", // enabled by default
-			Owner:          awsDatasourcesSquad,
-			AllowSelfServe: false,
-		},
-		{
-			Name:           "athenaAsyncQueryDataSupport",
-			Description:    "Enable async query data support for Athena",
-			Stage:          FeatureStageGeneralAvailability,
-			Expression:     "true", // enabled by default
-			FrontendOnly:   true,
-			Owner:          awsDatasourcesSquad,
-			AllowSelfServe: false,
-		},
-		{
 			Name:        "showDashboardValidationWarnings",
 			Description: "Show warnings when dashboards do not validate against the schema",
 			Stage:       FeatureStageExperimental,
@@ -859,9 +842,10 @@ var (
 		{
 			Name:            "managedPluginsInstall",
 			Description:     "Install managed plugins directly from plugins catalog",
-			Stage:           FeatureStagePublicPreview,
+			Stage:           FeatureStageGeneralAvailability,
 			RequiresDevMode: false,
 			Owner:           grafanaPluginsPlatformSquad,
+			Expression:      "true", // enabled by default
 		},
 		{
 			Name:         "prometheusPromQAIL",
