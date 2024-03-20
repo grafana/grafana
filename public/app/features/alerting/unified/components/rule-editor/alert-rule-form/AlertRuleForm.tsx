@@ -202,7 +202,6 @@ export const AlertRuleForm = ({ existing, prefill }: Props) => {
         size="sm"
         onClick={handleSubmit((values) => submit(values, true), onInvalid)}
         disabled={submitState.loading}
-        data-testid={selectors.components.AlertRuleCreation.save}
       >
         {submitState.loading && <Spinner className={styles.buttonSpinner} inline={true} />}
         Save rule and exit

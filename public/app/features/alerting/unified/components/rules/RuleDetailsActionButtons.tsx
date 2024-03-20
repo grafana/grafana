@@ -3,7 +3,6 @@ import { uniqueId } from 'lodash';
 import React, { Fragment, useState } from 'react';
 
 import { GrafanaTheme2, textUtil } from '@grafana/data';
-import { selectors } from '@grafana/e2e-selectors';
 import { config, useReturnToPrevious } from '@grafana/runtime';
 import { Button, ConfirmModal, Dropdown, HorizontalGroup, Icon, LinkButton, Menu, useStyles2 } from '@grafana/ui';
 import { useDispatch } from 'app/types';
@@ -121,7 +120,6 @@ export const RuleDetailsActionButtons = ({ rule, rulesSource }: Props) => {
           variant="primary"
           icon="apps"
           target={isReturnToPreviousEnabled ? undefined : '_blank'}
-          data-testid={selectors.components.AlertRules.toDashboard}
           href={`d/${encodeURIComponent(dashboardUID)}`}
           onClick={() => {
             setReturnToPrevious(rule.name);

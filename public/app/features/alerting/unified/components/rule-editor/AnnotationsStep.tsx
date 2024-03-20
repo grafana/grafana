@@ -5,7 +5,6 @@ import { useFieldArray, useFormContext } from 'react-hook-form';
 import { useToggle } from 'react-use';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { selectors } from '@grafana/e2e-selectors';
 import { Button, Field, Input, Text, TextArea, useStyles2, Stack } from '@grafana/ui';
 
 import { DashboardModel } from '../../../../dashboard/state';
@@ -185,13 +184,7 @@ const AnnotationsStep = () => {
               Add custom annotation
             </Button>
             {!selectedDashboard && (
-              <Button
-                type="button"
-                variant="secondary"
-                icon="dashboard"
-                onClick={() => setShowPanelSelector(true)}
-                data-testid={selectors.components.AlertRuleCreation.linkDashboardPanel}
-              >
+              <Button type="button" variant="secondary" icon="dashboard" onClick={() => setShowPanelSelector(true)}>
                 Link dashboard and panel
               </Button>
             )}

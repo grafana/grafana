@@ -297,13 +297,6 @@ export const Components = {
     groupToggle: 'data-testid group-collapse-toggle',
     toggle: 'data-testid collapse-toggle',
     expandedContent: 'data-testid expanded-content',
-    toDashboard: 'data-testid go to dashboard',
-  },
-  AlertRuleCreation: {
-    save: 'data-testid save rule exit',
-    newFolder: 'data-testid create folder',
-    newGroup: 'data-testid create evaluation group',
-    linkDashboardPanel: 'data-testid link dashboard and panel',
   },
   Alert: {
     /**
@@ -410,9 +403,6 @@ export const Components = {
   ReadonlyFolderPicker: {
     container: 'data-testid Readonly folder picker select container',
   },
-  FolderView: {
-    folderActionsButton: 'data-testid folder actions button',
-  },
   DataSourcePicker: {
     container: 'data-testid Data source picker select container',
     /**
@@ -516,9 +506,6 @@ export const Components = {
   },
   DashboardRow: {
     title: (title: string) => `data-testid dashboard-row-title-${title}`,
-  },
-  DashboardPicker: {
-    confirm: 'data-testid confirm button',
   },
   UserProfile: {
     profileSaveButton: 'data-testid-user-profile-save',
