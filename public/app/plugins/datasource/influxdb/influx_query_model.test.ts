@@ -604,4 +604,129 @@ describe('InfluxQuery', () => {
       });
     });
   });
+
+  describe('test query generated with templateVariable and non-regex operator', () => {
+    it('should not wrap with infuxdb regex wrapper for = operator', () => {
+      const query = new InfluxQueryModel(
+        {
+          refId: 'A',
+          measurement: 'cpu',
+          policy: 'autogen',
+          groupBy: [],
+          tags: [{ key: 'value', value: '/^$tempVar$/', operator: '=' }],
+        },
+        templateSrv,
+        {}
+      );
+      const queryText = query.render();
+      expect(queryText).toBe('SELECT mean("value") FROM "autogen"."cpu" WHERE ("value" = \'$tempVar\') AND $timeFilter');
+    });
+    it('should not wrap with infuxdb regex wrapper for != operator', () => {
+      const query = new InfluxQueryModel(
+        {
+          refId: 'A',
+          measurement: 'cpu',
+          policy: 'autogen',
+          groupBy: [],
+          tags: [{ key: 'value', value: '/^$tempVar$/', operator: '!=' }],
+        },
+        templateSrv,
+        {}
+      );
+      const queryText = query.render();
+      expect(queryText).toBe('SELECT mean("value") FROM "autogen"."cpu" WHERE ("value" != \'$tempVar\') AND $timeFilter');
+    });
+    it('should not wrap with infuxdb regex wrapper for "Is" operator', () => {
+      const query = new InfluxQueryModel(
+        {
+          refId: 'A',
+          measurement: 'cpu',
+          policy: 'autogen',
+          groupBy: [],
+          tags: [{ key: 'value', value: '/^$tempVar$/', operator: 'Is' }],
+        },
+        templateSrv,
+        {}
+      );
+      const queryText = query.render();
+      expect(queryText).toBe('SELECT mean("value") FROM "autogen"."cpu" WHERE ("value" = \'$tempVar\') AND $timeFilter');
+    });
+    it('should not wrap with infuxdb regex wrapper for "Is Not" operator', () => {
+      const query = new InfluxQueryModel(
+        {
+          refId: 'A',
+          measurement: 'cpu',
+          policy: 'autogen',
+          groupBy: [],
+          tags: [{ key: 'value', value: '/^$tempVar$/', operator: 'Is Not' }],
+        },
+        templateSrv,
+        {}
+      );
+      const queryText = query.render();
+      expect(queryText).toBe('SELECT mean("value") FROM "autogen"."cpu" WHERE ("value" != \'$tempVar\') AND $timeFilter');
+    });
+    it('should not wrap with infuxdb regex wrapper for > operator', () => {
+      const query = new InfluxQueryModel(
+        {
+          refId: 'A',
+          measurement: 'cpu',
+          policy: 'autogen',
+          groupBy: [],
+          tags: [{ key: 'value', value: '/^$tempVar$/', operator: '>' }],
+        },
+        templateSrv,
+        {}
+      );
+      const queryText = query.render();
+      expect(queryText).toBe('SELECT mean("value") FROM "autogen"."cpu" WHERE ("value" > $tempVar) AND $timeFilter');
+    });
+    it('should not wrap with infuxdb regex wrapper for < operator', () => {
+      const query = new InfluxQueryModel(
+        {
+          refId: 'A',
+          measurement: 'cpu',
+          policy: 'autogen',
+          groupBy: [],
+          tags: [{ key: 'value', value: '/^$tempVar$/', operator: '<' }],
+        },
+        templateSrv,
+        {}
+      );
+      const queryText = query.render();
+      expect(queryText).toBe('SELECT mean("value") FROM "autogen"."cpu" WHERE ("value" < $tempVar) AND $timeFilter');
+    });
+  });
+  describe('test query generated with templateVariable and regex operator', () => {
+    it('should wrap with infuxdb regex wrapper for =~ operator', () => {
+      const query = new InfluxQueryModel(
+        {
+          refId: 'A',
+          measurement: 'cpu',
+          policy: 'autogen',
+          groupBy: [],
+          tags: [{ key: 'value', value: '/^$tempVar$/', operator: '=~' }],
+        },
+        templateSrv,
+        {}
+      );
+      const queryText = query.render();
+      expect(queryText).toBe('SELECT mean("value") FROM "autogen"."cpu" WHERE ("value" =~ /^$tempVar$/) AND $timeFilter');
+    });
+    it('should wrap with infuxdb regex wrapper for !~ operator', () => {
+      const query = new InfluxQueryModel(
+        {
+          refId: 'A',
+          measurement: 'cpu',
+          policy: 'autogen',
+          groupBy: [],
+          tags: [{ key: 'value', value: '/^$tempVar$/', operator: '!~' }],
+        },
+        templateSrv,
+        {}
+      );
+      const queryText = query.render();
+      expect(queryText).toBe('SELECT mean("value") FROM "autogen"."cpu" WHERE ("value" !~ /^$tempVar$/) AND $timeFilter');
+    });
+  });
 });

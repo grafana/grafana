@@ -210,13 +210,13 @@ export default class InfluxQueryModel {
       if (interpolate) {
         value = this.templateSrv.replace(value, this.scopedVars);
       }
-
+      value=this.removeRegexWrapper(value)
       if (operator.startsWith('Is')) {
         let r = this.isOperatorTypeHandler(operator, value, tag.key);
         operator = r.operator;
         value = r.value;
       } else if ((!operator.startsWith('>') && !operator.startsWith('<')) || operator === '<>') {
-        value = "'" + this.removeRegexWrapper(value.replace(/\\/g, '\\\\').replace(/\'/g, "\\'")) + "'";
+        value = "'" + value.replace(/\\/g, '\\\\').replace(/\'/g, "\\'") + "'";
       }
     } else if (interpolate) {
       value = this.templateSrv.replace(value, this.scopedVars, 'regex');
