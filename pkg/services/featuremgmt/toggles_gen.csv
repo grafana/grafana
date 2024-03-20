@@ -29,8 +29,6 @@ returnToPrevious,preview,@grafana/grafana-frontend-platform,false,false,true
 grpcServer,preview,@grafana/grafana-app-platform-squad,false,false,false
 unifiedStorage,experimental,@grafana/grafana-app-platform-squad,true,true,false
 cloudWatchCrossAccountQuerying,GA,@grafana/aws-datasources,false,false,false
-redshiftAsyncQueryDataSupport,GA,@grafana/aws-datasources,false,false,false
-athenaAsyncQueryDataSupport,GA,@grafana/aws-datasources,false,false,true
 showDashboardValidationWarnings,experimental,@grafana/dashboards-squad,false,false,false
 mysqlAnsiQuotes,experimental,@grafana/backend-platform,false,false,false
 accessControlOnCall,preview,@grafana/identity-access-team,false,false,false
