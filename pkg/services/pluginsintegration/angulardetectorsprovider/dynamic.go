@@ -72,7 +72,7 @@ func ProvideDynamic(cfg *config.PluginManagementCfg, store angularpatternsstore.
 		// Do not attempt to restore if the background service is disabled (no feature flag)
 		return d, nil
 	}
-	d.log.Debug("Using dynamic angular detection patterns interval", "interval", d.backgroundJobInterval)
+	d.log.Info("Using dynamic angular detection patterns interval", "interval", d.backgroundJobInterval)
 
 	// Perform the initial restore from db
 	st := time.Now()
