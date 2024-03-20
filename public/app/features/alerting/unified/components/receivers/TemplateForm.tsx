@@ -4,7 +4,7 @@ import { Location } from 'history';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { FormProvider, useForm, useFormContext, Validate } from 'react-hook-form';
 import { useLocation } from 'react-router-dom';
-import { useMeasure, useToggle } from 'react-use';
+import { useToggle } from 'react-use';
 import AutoSizer from 'react-virtualized-auto-sizer';
 
 import { GrafanaTheme2 } from '@grafana/data';
@@ -12,7 +12,6 @@ import { isFetchError } from '@grafana/runtime';
 import {
   Alert,
   Button,
-  Field,
   FieldSet,
   Input,
   LinkButton,
@@ -178,7 +177,7 @@ export const TemplateForm = ({ existing, alertManagerSourceName, config, provena
     <>
       <FormProvider {...formApi}>
         <AppChromeUpdate actions={actionButtons} />
-        <form onSubmit={handleSubmit(submit)} ref={formRef}>
+        <form onSubmit={handleSubmit(submit)} ref={formRef} className={styles.form}>
           <h4>{existing && !isduplicating ? 'Edit notification template' : 'Create notification template'}</h4>
           {error && (
             <Alert severity="error" title="Error saving template">
@@ -441,62 +440,81 @@ export function TemplatePreview({
   );
 }
 
-const getStyles = (theme: GrafanaTheme2) => ({
-  label: css({
-    margin: 0,
-  }),
-  nameField: css({
-    marginBottom: theme.spacing(3),
-  }),
-  contentContainer: css({
-    display: 'flex',
-    flexDirection: 'row',
-    gap: theme.spacing(1),
-    height: theme.spacing(82),
-    maxHeight: theme.spacing(82),
-    '& > *': {
-      borderRadius: theme.shape.radius.default,
-      border: `1px solid ${theme.colors.border.strong}`,
-    },
-  }),
-  contentField: css({
-    display: 'flex',
-    flexDirection: 'column',
-    flex: 3,
-    marginBottom: 0,
-  }),
-  templatePreview: css({
-    flex: 2,
-  }),
-  templatePayload: css({
-    flex: 2,
-  }),
-  editorContainer: css({
-    width: 'fit-content',
-    border: 'none',
-  }),
-  payloadCollapseButton: css({
-    backgroundColor: theme.colors.info.transparent,
-    margin: 0,
-  }),
-  snippets: css`
-    margin-top: ${theme.spacing(2)};
-    font-size: ${theme.typography.bodySmall.fontSize};
-  `,
-  code: css`
-    color: ${theme.colors.text.secondary};
-    font-weight: ${theme.typography.fontWeightBold};
-  `,
-  preview: {
-    container: css({
+const getStyles = (theme: GrafanaTheme2) => {
+  const smallContainerQuery = `@container form (width < ${theme.breakpoints.values.md}px)`;
+
+  return {
+    form: css({
+      container: 'form / inline-size',
+    }),
+    label: css({
+      margin: 0,
+    }),
+    nameField: css({
+      marginBottom: theme.spacing(3),
+    }),
+    contentContainer: css({
+      display: 'flex',
+      flexDirection: 'row',
+      gap: theme.spacing(1),
+      height: theme.spacing(82),
+      maxHeight: theme.spacing(82),
+      '& > *': {
+        borderRadius: theme.shape.radius.default,
+        border: `1px solid ${theme.colors.border.strong}`,
+        [smallContainerQuery]: {
+          minHeight: theme.spacing(40),
+        },
+      },
+      [smallContainerQuery]: {
+        flexDirection: 'column',
+        gap: theme.spacing(2),
+        height: 'auto',
+        maxHeight: 'unset',
+      },
+    }),
+    contentField: css({
       display: 'flex',
       flexDirection: 'column',
-      maxHeight: '100%',
+      flex: 3,
+      marginBottom: 0,
     }),
-    result: css({
-      backgroundColor: theme.colors.background.primary,
-      margin: 0,
+    templatePreview: css({
+      flex: 2,
+    }),
+    templatePayload: css({
+      flex: 2,
+    }),
+    editorContainer: css({
+      width: 'fit-content',
       border: 'none',
     }),
-  },
-});
+    payloadCollapseButton: css({
+      backgroundColor: theme.colors.info.transparent,
+      margin: 0,
+      [smallContainerQuery]: {
+        display: 'none',
+      },
+    }),
+    snippets: css`
+      margin-top: ${theme.spacing(2)};
+      font-size: ${theme.typography.bodySmall.fontSize};
+    `,
+    code: css`
+      color: ${theme.colors.text.secondary};
+      font-weight: ${theme.typography.fontWeightBold};
+    `,
+    preview: {
+      container: css({
+        display: 'flex',
+        flexDirection: 'column',
+        maxHeight: '100%',
+      }),
+      result: css({
+        backgroundColor: theme.colors.background.primary,
+        margin: 0,
+        border: 'none',
+      }),
+    },
+  };
+};

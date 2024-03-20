@@ -184,6 +184,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
   }),
   editorWrapper: css({
     flex: 1,
+    minHeight: theme.spacing(50),
   }),
   editorContainer: css({
     width: 'fit-content',
