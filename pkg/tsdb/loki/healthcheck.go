@@ -8,7 +8,8 @@ import (
 	"time"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
-	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana-plugin-sdk-go/backend/log"
+
 	"github.com/grafana/grafana/pkg/tsdb/loki/kinds/dataquery"
 	"github.com/grafana/grafana/pkg/util"
 )
@@ -19,7 +20,7 @@ const (
 
 func (s *Service) CheckHealth(ctx context.Context, req *backend.CheckHealthRequest) (*backend.CheckHealthResult,
 	error) {
-	logger := s.logger.New("endpoint", "CheckHealth")
+	logger := s.logger.With("endpoint", "CheckHealth")
 	ds, err := s.im.Get(ctx, req.PluginContext)
 	// check that the datasource exists
 	if err != nil {
@@ -35,7 +36,7 @@ func (s *Service) CheckHealth(ctx context.Context, req *backend.CheckHealthReque
 	return hc, nil
 }
 
-func healthcheck(ctx context.Context, req *backend.CheckHealthRequest, s *Service, logger *log.ConcreteLogger) *backend.CheckHealthResult {
+func healthcheck(ctx context.Context, req *backend.CheckHealthRequest, s *Service, logger log.Logger) *backend.CheckHealthResult {
 	step := "1s"
 	qt := "instant"
 	qm := dataquery.LokiDataQuery{
@@ -89,7 +90,7 @@ func healthcheck(ctx context.Context, req *backend.CheckHealthRequest, s *Servic
 	return getHealthCheckMessage(nil, logger)
 }
 
-func getHealthCheckMessage(err error, logger *log.ConcreteLogger) *backend.CheckHealthResult {
+func getHealthCheckMessage(err error, logger log.Logger) *backend.CheckHealthResult {
 	if err == nil {
 		return &backend.CheckHealthResult{
 			Status:  backend.HealthStatusOk,
