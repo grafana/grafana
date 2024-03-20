@@ -57,7 +57,7 @@ export interface Props<TQuery extends DataQuery> {
   onChange: (query: TQuery) => void;
   onRunQuery: () => void;
   visualization?: ReactNode;
-  hideDisableQuery?: boolean;
+  hideHideQueryButton?: boolean;
   app?: CoreApp;
   history?: Array<HistoryItem<TQuery>>;
   eventBus?: EventBusExtended;
@@ -440,7 +440,7 @@ export class QueryEditorRow<TQuery extends DataQuery> extends PureComponent<Prop
   };
 
   renderActions = (props: QueryOperationRowRenderProps) => {
-    const { query, hideDisableQuery = false } = this.props;
+    const { query, hideHideQueryButton: hideHideQueryButton = false } = this.props;
     const { hasTextEditMode, datasource, showingHelp } = this.state;
     const isDisabled = !!query.hide;
 
@@ -471,9 +471,9 @@ export class QueryEditorRow<TQuery extends DataQuery> extends PureComponent<Prop
           icon="copy"
           onClick={this.onCopyQuery}
         />
-        {!hideDisableQuery ? (
+        {!hideHideQueryButton ? (
           <QueryOperationToggleAction
-            title={t('query-operation.header.disable-query', 'Hide query')}
+            title={t('query-operation.header.disable-query', 'Hide response')}
             icon={isDisabled ? 'eye-slash' : 'eye'}
             active={isDisabled}
             onClick={this.onDisableQuery}
@@ -510,12 +510,12 @@ export class QueryEditorRow<TQuery extends DataQuery> extends PureComponent<Prop
   render() {
     const { query, index, visualization, collapsable } = this.props;
     const { datasource, showingHelp, data } = this.state;
-    const isDisabled = query.hide;
+    const isHidden = query.hide;
     const error =
       data?.error && data.error.refId === query.refId ? data.error : data?.errors?.find((e) => e.refId === query.refId);
     const rowClasses = classNames('query-editor-row', {
-      'query-editor-row--disabled': isDisabled,
-      'gf-form-disabled': isDisabled,
+      'query-editor-row--disabled': isHidden,
+      'gf-form-disabled': isHidden,
     });
 
     if (!datasource) {
