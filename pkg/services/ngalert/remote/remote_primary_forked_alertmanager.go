@@ -16,6 +16,7 @@ type RemotePrimaryForkedAlertmanager struct {
 	internal notifier.Alertmanager
 	remote   remoteAlertmanager
 
+	// TODO: mutex?
 	currentConfigHash string
 }
 
@@ -30,13 +31,16 @@ func NewRemotePrimaryForkedAlertmanager(log log.Logger, internal notifier.Alertm
 // ApplyConfig will send the configuration to the remote Alertmanager on startup and on change.
 // It then delegates the call to the internal Alertmanager.
 func (fam *RemotePrimaryForkedAlertmanager) ApplyConfig(ctx context.Context, config *models.AlertConfiguration) error {
+	if err := fam.internal.ApplyConfig(ctx, config); err != nil {
+		return fmt.Errorf("failed to call ApplyConfig on the internal Alertmanager: %w", err)
+	}
+
 	if !fam.remote.Ready() {
 		// On startup, ApplyConfig will perform a readiness check and sync the Alertmanagers.
 		if err := fam.remote.ApplyConfig(ctx, config); err != nil {
 			return fmt.Errorf("failed to call ApplyConfig on the remote Alertmanager: %w", err)
 		}
 		fam.currentConfigHash = config.ConfigurationHash
-		return fam.internal.ApplyConfig(ctx, config)
 	}
 
 	// If the remote Alertmanager was ready and the configuration changed, send it.
@@ -49,8 +53,7 @@ func (fam *RemotePrimaryForkedAlertmanager) ApplyConfig(ctx context.Context, con
 	} else {
 		fam.log.Debug("Configuration has not changed, skipping sending it to the remote Alertmanager")
 	}
-
-	return fam.internal.ApplyConfig(ctx, config)
+	return nil
 }
 
 // TODO: save the new configuration hash in memory.
