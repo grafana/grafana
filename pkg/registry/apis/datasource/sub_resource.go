@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"net/url"
 	"strings"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
@@ -66,12 +67,21 @@ func (r *subResourceREST) Connect(ctx context.Context, name string, opts runtime
 			return
 		}
 
-		path := req.URL.Path[idx+len("/resource"):]
+		clonedReq := req.Clone(req.Context())
+		rawURL := req.URL.Path[idx+len("/resource"):]
+
+		clonedReq.URL = &url.URL{
+			Path:     rawURL,
+			RawQuery: clonedReq.URL.RawQuery,
+		}
+
 		err = r.builder.client.CallResource(ctx, &backend.CallResourceRequest{
 			PluginContext: pluginCtx,
-			Path:          path,
+			Path:          clonedReq.URL.Path,
 			Method:        req.Method,
+			URL:           req.URL.String(),
 			Body:          body,
+			Headers:       req.Header,
 		}, httpresponsesender.New(w))
 
 		if err != nil {

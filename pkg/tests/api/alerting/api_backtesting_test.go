@@ -125,7 +125,7 @@ func TestBacktesting(t *testing.T) {
 
 		t.Run("fail if can't query data sources", func(t *testing.T) {
 			status, body := testUserApiCli.SubmitRuleForBacktesting(t, queryRequest)
-			require.Contains(t, body, "user is not authorized to access rule group")
+			require.Contains(t, body, "user is not authorized to access one or many data sources")
 			require.Equalf(t, http.StatusForbidden, status, "Response: %s", body)
 		})
 	})

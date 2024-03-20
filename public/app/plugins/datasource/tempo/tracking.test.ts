@@ -19,23 +19,6 @@ jest.mock('@grafana/runtime', () => {
               tempo: [
                 {
                   datasource: { type: 'tempo', uid: 'abc' },
-                  queryType: 'nativeSearch',
-                  refId: 'A',
-                },
-                {
-                  datasource: { type: 'tempo', uid: 'abc' },
-                  queryType: 'nativeSearch',
-                  spanName: 'HTTP',
-                  refId: 'A',
-                },
-                {
-                  datasource: { type: 'tempo', uid: 'abc' },
-                  queryType: 'nativeSearch',
-                  spanName: '$var',
-                  refId: 'A',
-                },
-                {
-                  datasource: { type: 'tempo', uid: 'abc' },
                   queryType: 'serviceMap',
                   serviceMapQuery: '{}',
                   refId: 'A',
@@ -86,10 +69,8 @@ describe('on dashboard loaded', () => {
       traceql_query_count: 2,
       service_map_query_count: 2,
       upload_query_count: 1,
-      native_search_query_count: 3,
       traceql_queries_with_template_variables_count: 1,
       service_map_queries_with_template_variables_count: 1,
-      native_search_queries_with_template_variables_count: 1,
     });
   });
 });
