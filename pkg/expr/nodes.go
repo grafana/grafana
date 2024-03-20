@@ -187,6 +187,13 @@ type DSNode struct {
 	request    Request
 }
 
+func (dn *DSNode) String() string {
+	if dn.datasource == nil {
+		return "unknown"
+	}
+	return dn.datasource.Type
+}
+
 // NodeType returns the data pipeline node type.
 func (dn *DSNode) NodeType() NodeType {
 	return TypeDatasourceNode

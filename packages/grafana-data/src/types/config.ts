@@ -126,6 +126,7 @@ export interface CurrentUserDTO {
   language: string;
   permissions?: Record<string, boolean>;
   analytics: AnalyticsSettings;
+  authenticatedBy: string;
 
   /** @deprecated Use theme instead */
   lightTheme: boolean;
@@ -230,6 +231,12 @@ export interface GrafanaConfig {
 
   // The namespace to use for kubernetes apiserver requests
   namespace: string;
+
+  /**
+   * Language used in Grafana's UI. This is after the user's preference (or deteceted locale) is resolved to one of
+   * Grafana's supported language.
+   */
+  language: string | undefined;
 }
 
 export interface SqlConnectionLimits {
