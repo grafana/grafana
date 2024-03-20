@@ -87,7 +87,6 @@ export interface FeatureToggles {
   frontendSandboxMonitorOnly?: boolean;
   sqlDatasourceDatabaseSelection?: boolean;
   lokiFormatQuery?: boolean;
-  cloudWatchLogsMonacoEditor?: boolean;
   recordedQueriesMulti?: boolean;
   pluginsDynamicAngularDetectionPatterns?: boolean;
   vizAndWidgetSplit?: boolean;
@@ -119,7 +118,6 @@ export interface FeatureToggles {
   externalCorePlugins?: boolean;
   pluginsAPIMetrics?: boolean;
   idForwarding?: boolean;
-  cloudWatchWildCardDimensionValues?: boolean;
   externalServiceAccounts?: boolean;
   panelMonitoring?: boolean;
   enableNativeHTTPHistogram?: boolean;
@@ -152,7 +150,6 @@ export interface FeatureToggles {
   canvasPanelPanZoom?: boolean;
   logsInfiniteScrolling?: boolean;
   flameGraphItemCollapsing?: boolean;
-  alertingDetailsViewV2?: boolean;
   datatrails?: boolean;
   alertingSimplifiedRouting?: boolean;
   logRowsPopoverMenu?: boolean;
@@ -161,7 +158,6 @@ export interface FeatureToggles {
   regressionTransformation?: boolean;
   lokiQueryHints?: boolean;
   kubernetesFeatureToggles?: boolean;
-  alertingPreviewUpgrade?: boolean;
   enablePluginsTracingByDefault?: boolean;
   cloudRBACRoles?: boolean;
   alertingQueryOptimization?: boolean;
@@ -178,7 +174,7 @@ export interface FeatureToggles {
   expressionParser?: boolean;
   groupByVariable?: boolean;
   betterPageScrolling?: boolean;
-  alertingUpgradeDryrunOnStart?: boolean;
   scopeFilters?: boolean;
   emailVerificationEnforcement?: boolean;
+  ssoSettingsSAML?: boolean;
 }
