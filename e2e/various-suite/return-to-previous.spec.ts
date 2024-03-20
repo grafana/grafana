@@ -11,8 +11,9 @@ describe('ReturnToPrevious button', () => {
     e2e.components.AlertRules.groupToggle().first().click();
     e2e.components.AlertRules.toggle().click();
     cy.get('a[title="View"]').click();
+    cy.wait(1000);
     cy.url().as('alertRuleUrl');
-    e2e.components.AlertRules.toDashboard().click();
+    cy.get('a').contains('View panel').click();
   });
 
   it('should appear when changing context and go back to alert rule when clicking "Back"', () => {
@@ -65,7 +66,7 @@ describe('ReturnToPrevious button', () => {
     e2e.components.AlertRules.groupToggle().last().click();
     cy.get('a[title="View"]').click();
     cy.url().as('alertRule2Url');
-    e2e.components.AlertRules.toDashboard().click();
+    cy.get('a').contains('View panel').click();
 
     // make sure the dashboard finished loading
     cy.get('button[aria-label*="BarChart - Label Rotation & Skipping"]').should('be.visible');
