@@ -157,11 +157,6 @@ func newInstanceSettings(httpClientProvider httpclient.Provider) datasource.Inst
 			includeFrozen = false
 		}
 
-		xpack, ok := jsonData["xpack"].(bool)
-		if !ok {
-			xpack = false
-		}
-
 		configuredFields := es.ConfiguredFields{
 			TimeField:       timeField,
 			LogLevelField:   logLevelField,
@@ -177,7 +172,6 @@ func newInstanceSettings(httpClientProvider httpclient.Provider) datasource.Inst
 			ConfiguredFields:           configuredFields,
 			Interval:                   interval,
 			IncludeFrozen:              includeFrozen,
-			XPack:                      xpack,
 		}
 		return model, nil
 	}
