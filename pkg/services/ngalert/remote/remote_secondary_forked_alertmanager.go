@@ -21,6 +21,7 @@ type remoteAlertmanager interface {
 	notifier.Alertmanager
 	CompareAndSendConfiguration(context.Context, *models.AlertConfiguration) error
 	CompareAndSendState(context.Context) error
+	DecryptAndSendConfiguration(ctx context.Context, config *models.AlertConfiguration) error
 }
 
 type RemoteSecondaryForkedAlertmanager struct {

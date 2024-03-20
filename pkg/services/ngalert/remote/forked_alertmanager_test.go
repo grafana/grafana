@@ -626,7 +626,7 @@ func genTestAlertmanagersWithSyncInterval(t *testing.T, mode int, syncInterval t
 		require.NoError(t, err)
 		return internal, remote, forked
 	}
-	return internal, remote, NewRemotePrimaryForkedAlertmanager(internal, remote)
+	return internal, remote, NewRemotePrimaryForkedAlertmanager(log.NewNopLogger(), internal, remote)
 }
 
 // errConfigStore returns an error when a method is called.
