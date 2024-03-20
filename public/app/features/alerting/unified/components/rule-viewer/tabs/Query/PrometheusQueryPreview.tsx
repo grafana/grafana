@@ -8,7 +8,11 @@ interface Props {
 }
 
 const PrometheusQueryPreview = ({ query }: Props) => {
-  return <RawQuery query={query} language={{ grammar: promqlGrammar, name: 'promql' }} />;
+  return (
+    <pre>
+      <RawQuery query={query} language={{ grammar: promqlGrammar, name: 'promql' }} />
+    </pre>
+  );
 };
 
 export default PrometheusQueryPreview;
