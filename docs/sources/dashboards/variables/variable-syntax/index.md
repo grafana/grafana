@@ -193,3 +193,43 @@ servers = ["test1", "test2"]
 String to interpolate: '${servers:queryparam}'
 Interpolation result: "var-servers=test1&var-servers=test2"
 ```
+
+## Indexing and selecting values from a variable
+
+When creating variables it's essential to select the **'ALL'** option to ensure they are processed correctly. 
+Omitting this selection can lead to unexpected behavior when referencing the variable within your template.
+
+<img width="430" alt="image" src="https://github.com/grafana/grafana/assets/5138110/d9d944e6-8802-4d1c-ac95-6ad0ee724747">
+
+Here's a breakdown of what happens with and without the 'ALL' option:
+
+* **With 'ALL' Option Selected:**
+    * The entire string value of the variable is accessible when referencing it in your template.
+    * Using `${variable_name.index:raw}` syntax will return the complete value at that index.
+
+* **Without 'ALL' Option Selected:**
+    * Only individual characters within the string value are accessible.
+    * Using `${variable_name.index:raw}` syntax will return the character at that specific position within the string.
+
+**Example:**
+
+Consider a variable named `myvariable` with the following values:
+
+```
+ABC
+DEF
+GHI
+JKL
+```
+
+* **With 'ALL' Option Selected:**
+    * `${myvariable.0:raw}` will return "ABC" (the entire first value).
+    * `${myvariable.1:raw}` will return "DEF" (the entire second value).
+    * `${myvariable.3:raw}` will return "JKL" (the entire fourth value).
+
+* **Without 'ALL' Option Selected:**
+    * `${myvariable.0:raw}` will return "A" (the first character).
+    * `${myvariable.1:raw}` will return "B" (the second character).
+    * `${myvariable.3:raw}` will return an error (index out of bounds).
+
+**Selecting the 'ALL' option** guarantees that your variables function as intended within grafana, allowing you to reference and manipulate the entire string value effectively.
