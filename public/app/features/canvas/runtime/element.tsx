@@ -20,7 +20,7 @@ import { Scene } from './scene';
 
 let counter = 0;
 
-const svgElements = ['parallelogram', 'triangle', 'cloud', 'ellipse'];
+const SVGElements = new Set<string>(['parallelogram', 'triangle', 'cloud', 'ellipse']);
 
 export class ElementState implements LayerElement {
   // UID necessary for moveable to work (for now)
@@ -194,7 +194,9 @@ export class ElementState implements LayerElement {
       }
 
       const elementType = this.options.type;
-      if (!svgElements.includes(elementType)) {
+      // SVG elements have their own styles
+      // TODO: This is a hack, we should have a better way to handle this
+      if (!SVGElements.has(elementType)) {
         for (const key in this.dataStyle) {
           this.div.style[key as any] = (this.dataStyle as any)[key];
         }
