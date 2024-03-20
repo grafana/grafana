@@ -147,8 +147,6 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
   private _changeTracker: DashboardSceneChangeTracker;
 
   public constructor(state: Partial<DashboardSceneState>) {
-    console.log(state);
-
     super({
       title: 'Dashboard',
       meta: {},
