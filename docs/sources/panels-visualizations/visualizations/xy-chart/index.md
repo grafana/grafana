@@ -98,7 +98,9 @@ Set the width of the lines, from 1 to 10 pixels.
 
 <!--what is the scenario where you need to choose a data set?-->
 
-Select your data set. This option is only available when you set **Series mapping** to **Manual** mode.
+Select your data set. You have more than one dataset or table, so you can select series (dataframe)
+
+This option is only available when you set **Series mapping** to **Manual** mode.
 
 #### Add series
 
