@@ -680,7 +680,7 @@ func (s *Service) getCustomHeaders(jsonData *simplejson.Json, decryptedValues ma
 		}
 
 		if val, ok := decryptedValues[headerValueSuffix]; ok {
-			headers.Add(key, val)
+			headers.Set(key, val)
 		}
 	}
 
