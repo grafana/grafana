@@ -134,7 +134,6 @@ class UnThemedLogRows extends PureComponent<Props, State> {
     });
     document.addEventListener('click', this.handleDeselection);
     document.addEventListener('contextmenu', this.handleDeselection);
-    document.addEventListener('selectionchange', this.handleDeselection);
     return true;
   };
 
@@ -147,17 +146,11 @@ class UnThemedLogRows extends PureComponent<Props, State> {
     if (document.getSelection()?.toString()) {
       return;
     }
-    // Give time to the browser to process click events originating from the menu before closing it.
-    // Otherwise selectionchange fires before other click listeners, potentially skipping user actions.
-    setTimeout(() => {
-      this.closePopoverMenu();
-    }, 100);
   };
 
   closePopoverMenu = () => {
     document.removeEventListener('click', this.handleDeselection);
     document.removeEventListener('contextmenu', this.handleDeselection);
-    document.removeEventListener('selectionchange', this.handleDeselection);
     this.setState({
       selection: '',
       popoverMenuCoordinates: { x: 0, y: 0 },
