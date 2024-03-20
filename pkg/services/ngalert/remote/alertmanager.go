@@ -197,13 +197,13 @@ func (am *Alertmanager) CompareAndSendConfiguration(ctx context.Context, config 
 }
 
 // DecryptAndSendConfiguration decrypts secure fields and sends a configuration to the remote Alertmanager.
-func (m *Alertmanager) DecryptAndSendConfiguration(ctx context.Context, config *models.AlertConfiguration) error {
-	rawDecrypted, err := m.decryptConfiguration(ctx, config.AlertmanagerConfiguration)
+func (am *Alertmanager) DecryptAndSendConfiguration(ctx context.Context, config *models.AlertConfiguration) error {
+	rawDecrypted, err := am.decryptConfiguration(ctx, config.AlertmanagerConfiguration)
 	if err != nil {
 		return err
 	}
 
-	return m.sendConfiguration(ctx, string(rawDecrypted), config.ConfigurationHash, config.CreatedAt, config.Default)
+	return am.sendConfiguration(ctx, string(rawDecrypted), config.ConfigurationHash, config.CreatedAt, config.Default)
 }
 
 // decryptConfiguration decrypts secure fields in a configuration, returning it as a slice of bytes.
