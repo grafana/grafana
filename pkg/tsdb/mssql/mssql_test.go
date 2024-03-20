@@ -3,6 +3,7 @@ package mssql
 import (
 	"context"
 	"database/sql"
+	"encoding/json"
 	"fmt"
 	"math/rand"
 	"os"
@@ -15,6 +16,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/infra/db"
+	"github.com/grafana/grafana/pkg/tsdb/mssql/kerberos"
 	"github.com/grafana/grafana/pkg/tsdb/sqleng"
 )
 
@@ -1331,11 +1333,94 @@ func TestTransformQueryError(t *testing.T) {
 }
 
 func TestGenerateConnectionString(t *testing.T) {
+	kerberosLookup := []kerberos.KerberosLookup{
+		{
+			Address:                 "example.host",
+			DBName:                  "testDB",
+			User:                    "testUser",
+			CredentialCacheFilename: "/tmp/cache",
+		},
+	}
+	tmpFile := genTempCacheFile(t, kerberosLookup)
+	defer func() {
+		err := os.Remove(tmpFile)
+		if err != nil {
+			t.Log(err)
+		}
+	}()
+
 	testCases := []struct {
-		desc       string
-		dataSource sqleng.DataSourceInfo
-		expConnStr string
+		desc        string
+		kerberosCfg kerberos.KerberosAuth
+		dataSource  sqleng.DataSourceInfo
+		expConnStr  string
 	}{
+		{
+			desc: "Use Kerberos Credential Cache",
+			kerberosCfg: kerberos.KerberosAuth{
+				CredentialCache: "/tmp/krb5cc_1000",
+				ConfigFilePath:  "/etc/krb5.conf",
+			},
+			dataSource: sqleng.DataSourceInfo{
+				URL:      "localhost",
+				Database: "database",
+				JsonData: sqleng.JsonData{
+					AuthenticationType: "Windows AD: Credential cache",
+				},
+			},
+			expConnStr: "authenticator=krb5;krb5-configfile=/etc/krb5.conf;server=localhost;database=database;krb5-credcachefile=/tmp/krb5cc_1000;",
+		},
+		{
+			desc: "Use Kerberos Credential Cache File path",
+			kerberosCfg: kerberos.KerberosAuth{
+				CredentialCacheLookupFile: tmpFile,
+				ConfigFilePath:            "/etc/krb5.conf",
+			},
+			dataSource: sqleng.DataSourceInfo{
+				URL:      "example.host",
+				Database: "testDB",
+				User:     "testUser",
+				JsonData: sqleng.JsonData{
+					AuthenticationType: "Windows AD: Credential cache file",
+				},
+			},
+			expConnStr: "authenticator=krb5;krb5-configfile=/etc/krb5.conf;server=example.host;database=testDB;krb5-credcachefile=/tmp/cache;",
+		},
+		{
+			desc: "Use Kerberos Keytab",
+			kerberosCfg: kerberos.KerberosAuth{
+				KeytabFilePath: "/foo/bar.keytab",
+				ConfigFilePath: "/etc/krb5.conf",
+			},
+			dataSource: sqleng.DataSourceInfo{
+				URL:      "localhost",
+				Database: "database",
+				User:     "foo@test.lab",
+				JsonData: sqleng.JsonData{
+					AuthenticationType: "Windows AD: Keytab",
+				},
+			},
+			expConnStr: "authenticator=krb5;krb5-configfile=/etc/krb5.conf;server=localhost;database=database;user id=foo@test.lab;krb5-keytabfile=/foo/bar.keytab;",
+		},
+		{
+			desc: "Use Kerberos Username and Password",
+			kerberosCfg: kerberos.KerberosAuth{
+				ConfigFilePath: "/etc/krb5.conf",
+			},
+			dataSource: sqleng.DataSourceInfo{
+				URL:      "localhost",
+				Database: "database",
+				User:     "foo@test.lab",
+				DecryptedSecureJSONData: map[string]string{
+					"password": "foo",
+				},
+				JsonData: sqleng.JsonData{
+					AuthenticationType: "Windows AD: Username + password",
+				},
+			},
+			expConnStr: "authenticator=krb5;krb5-configfile=/etc/krb5.conf;server=localhost;database=database;user id=foo@test.lab;password=foo;",
+		},
+
 		{
 			desc: "From URL w/ port",
 			dataSource: sqleng.DataSourceInfo{
@@ -1463,7 +1548,7 @@ func TestGenerateConnectionString(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.desc, func(t *testing.T) {
-			connStr, err := generateConnectionString(tc.dataSource, nil, nil, logger)
+			connStr, err := generateConnectionString(tc.dataSource, nil, nil, tc.kerberosCfg, logger)
 			require.NoError(t, err)
 			assert.Equal(t, tc.expConnStr, connStr)
 		})
@@ -1503,4 +1588,22 @@ func genTimeRangeByInterval(from time.Time, duration time.Duration, interval tim
 	}
 
 	return timeRange
+}
+
+func genTempCacheFile(t *testing.T, lookups []kerberos.KerberosLookup) string {
+	content, err := json.Marshal(lookups)
+	if err != nil {
+		t.Fatalf("Unable to marshall json for temp lookup: %v", err)
+	}
+
+	tmpFile, err := os.CreateTemp("", "lookup*.json")
+	if err != nil {
+		t.Fatalf("Unable to create temporary file for temp lookup: %v", err)
+	}
+
+	if _, err := tmpFile.Write(content); err != nil {
+		t.Fatalf("Unable to write to temporary file for temp lookup: %v", err)
+	}
+
+	return tmpFile.Name()
 }
