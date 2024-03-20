@@ -103,7 +103,7 @@ export const LibraryPanelsView = ({
           <LibraryPanelCard.Skeleton showSecondaryActions={showSecondaryActions} />
         </>
       ) : libraryPanels.length < 1 ? (
-        <EmptySearchState message="No library panels found." />
+        <EmptySearchState message={t('library-panel.empty-search.message', 'No library panels found')} />
       ) : (
         libraryPanels?.map((item, i) => (
           <LibraryPanelCard

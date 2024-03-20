@@ -41,7 +41,7 @@ export const PlaylistPage = () => {
   return (
     <Page
       actions={
-        contextSrv.isEditor ? (
+        contextSrv.isEditor && playlists.length > 0 ? (
           <LinkButton href="/playlists/new">
             <Trans i18nKey="playlist-page.create-button.title">New playlist</Trans>
           </LinkButton>

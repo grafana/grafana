@@ -197,9 +197,11 @@ export const TeamList = ({
     <Page
       navId="teams"
       actions={
-        <LinkButton href={canCreate ? 'org/teams/new' : '#'} disabled={!canCreate}>
-          New Team
-        </LinkButton>
+        !noTeams ? (
+          <LinkButton href={canCreate ? 'org/teams/new' : '#'} disabled={!canCreate}>
+            New Team
+          </LinkButton>
+        ) : undefined
       }
     >
       <Page.Contents>

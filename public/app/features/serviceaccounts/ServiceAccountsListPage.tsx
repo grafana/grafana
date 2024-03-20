@@ -205,22 +205,6 @@ export const ServiceAccountsListPageUnconnected = ({
       }
     >
       <Page.Contents>
-        <div className="page-action-bar">
-          <InlineField grow>
-            <FilterInput
-              placeholder="Search service account by name"
-              value={query}
-              onChange={onQueryChange}
-              width={50}
-            />
-          </InlineField>
-          <RadioButtonGroup
-            options={availableFilters}
-            onChange={onStateFilterChange}
-            value={serviceAccountStateFilter}
-            className={styles.filter}
-          />
-        </div>
         {!isLoading && (
           <>
             {noServiceAccountsCreated && (
@@ -244,6 +228,22 @@ export const ServiceAccountsListPageUnconnected = ({
 
         {(isLoading || serviceAccounts.length !== 0) && (
           <>
+            <div className="page-action-bar">
+              <InlineField grow>
+                <FilterInput
+                  placeholder="Search service account by name"
+                  value={query}
+                  onChange={onQueryChange}
+                  width={50}
+                />
+              </InlineField>
+              <RadioButtonGroup
+                options={availableFilters}
+                onChange={onStateFilterChange}
+                value={serviceAccountStateFilter}
+                className={styles.filter}
+              />
+            </div>
             <div className={cx(styles.table, 'admin-list-table')}>
               <table className="filter-table filter-table--hover">
                 <thead>
