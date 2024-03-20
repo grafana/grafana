@@ -69,6 +69,7 @@ func (r *subQueryREST) Connect(ctx context.Context, name string, opts runtime.Ob
 		}
 		if dsRef != nil && dsRef.UID != name {
 			responder.Error(fmt.Errorf("expected query body datasource and request to match"))
+			return
 		}
 
 		ctx = backend.WithGrafanaConfig(ctx, pluginCtx.GrafanaConfig)
