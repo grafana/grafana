@@ -8,6 +8,7 @@ description: View the state and health of alert rules
 keywords:
   - grafana
   - alert rules
+  - keep last state
   - guide
   - state
   - health
@@ -58,15 +59,20 @@ An alert instance can be in either of the following states:
 | **NoData**   | No data has been received for the configured time window.                                     |
 | **Error**    | The error that occurred when attempting to evaluate an alerting rule.                         |
 
+## Keep last state
+
+An alert rule can be configured to keep the last state when a `NoData` and/or `Error` state is encountered. This will both prevent alerts from firing, and from resolving and re-firing. Just like normal evaluation, the alert rule will transition from `Pending` to `Firing` after the pending period has elapsed.
+
 ## Alert rule health
 
 An alert rule can have one the following health statuses:
 
-| State      | Description                                                                        |
-| ---------- | ---------------------------------------------------------------------------------- |
-| **Ok**     | No error when evaluating an alerting rule.                                         |
-| **Error**  | An error occurred when evaluating an alerting rule.                                |
-| **NoData** | The absence of data in at least one time series returned during a rule evaluation. |
+| State                  | Description                                                                                              |
+| ---------------------- | -------------------------------------------------------------------------------------------------------- |
+| **Ok**                 | No error when evaluating an alerting rule.                                                               |
+| **Error**              | An error occurred when evaluating an alerting rule.                                                      |
+| **NoData**             | The absence of data in at least one time series returned during a rule evaluation.                       |
+| **{status}, KeepLast** | The rule would have received another status but was configured to keep the last state of the alert rule. |
 
 ## Special alerts for `NoData` and `Error`
 
@@ -78,7 +84,7 @@ When evaluation of an alerting rule produces state `NoData` or `Error`, Grafana 
 | **datasource_uid** | The UID of the data source that caused the state.                      |
 
 {{% admonition type="note" %}}
-You will need to set the No Data and Error Handling to `No Data` or `Error` in the alert rule as per this doc: https://grafana.com/docs/grafana/latest/alerting/alerting-rules/create-grafana-managed-rule/#configure-no-data-and-error-handling in order to generate the additional labels.
+You will need to set the No Data and Error Handling to `No Data` or `Error` in the alert rule as per this doc: <https://grafana.com/docs/grafana/latest/alerting/alerting-rules/create-grafana-managed-rule/#configure-no-data-and-error-handling> in order to generate the additional labels.
 {{% /admonition %}}
 
 You can handle these alerts the same way as regular alerts by adding a silence, route to a contact point, and so on.
