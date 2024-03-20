@@ -117,10 +117,6 @@ To do this, you need to make sure that your alert rule is in the right evaluatio
 
 ## Configure labels and notifications
 
-{{< admonition type="note" >}}
-This section is for all Cloud instances and OSS instances with the alertingSimplifiedRouting feature toggle enabled.
-{{< /admonition >}}
-
 In the **Labels** section, you can optionally choose whether to add labels to organize your alert rules, make searching easier, as well as set which notification policy should handle your firing alert instance.
 
 In the **Configure notifications** section, you can choose to select a contact point directly from the alert rule form or choose to use notification policy routing as well as set up mute timings and groupings.
@@ -161,10 +157,6 @@ Complete the following steps to set up labels and notifications.
    6. Click **See details** to view alert routing details and an email preview.
 
 ## Configure notifications
-
-{{< admonition type="note" >}}
-This section is for OSS instances without the alertingSimplifiedRouting feature toggle enabled.
-{{< /admonition >}}
 
 1. Add labels to your alert rules to set which notification policy should handle your firing alert instances.
 
