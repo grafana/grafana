@@ -3,6 +3,7 @@ package remote
 import (
 	"context"
 	"fmt"
+	"sync"
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
@@ -12,11 +13,11 @@ import (
 
 type RemotePrimaryForkedAlertmanager struct {
 	log log.Logger
+	mtx sync.Mutex
 
 	internal notifier.Alertmanager
 	remote   remoteAlertmanager
 
-	// TODO: mutex?
 	currentConfigHash string
 }
 
@@ -29,18 +30,21 @@ func NewRemotePrimaryForkedAlertmanager(log log.Logger, internal notifier.Alertm
 }
 
 // ApplyConfig will send the configuration to the remote Alertmanager on startup and on change.
-// It then delegates the call to the internal Alertmanager.
+// The call is always first delegated to the internal Alertmanager.
 func (fam *RemotePrimaryForkedAlertmanager) ApplyConfig(ctx context.Context, config *models.AlertConfiguration) error {
 	if err := fam.internal.ApplyConfig(ctx, config); err != nil {
 		return fmt.Errorf("failed to call ApplyConfig on the internal Alertmanager: %w", err)
 	}
 
+	fam.mtx.Lock()
+	defer fam.mtx.Unlock()
 	if !fam.remote.Ready() {
 		// On startup, ApplyConfig will perform a readiness check and sync the Alertmanagers.
 		if err := fam.remote.ApplyConfig(ctx, config); err != nil {
 			return fmt.Errorf("failed to call ApplyConfig on the remote Alertmanager: %w", err)
 		}
 		fam.currentConfigHash = config.ConfigurationHash
+		return nil
 	}
 
 	// If the remote Alertmanager was ready and the configuration changed, send it.
