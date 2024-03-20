@@ -8,6 +8,9 @@ import { DataLinksContextMenu } from '../DataLinks/DataLinksContextMenu';
 
 import { TableCellProps } from './types';
 
+
+const DATALINKS_HEIGHT_OFFSET = 10;
+
 export const ImageCell = (props: TableCellProps) => {
   const { field, cell, tableStyles, row, cellProps } = props;
 
@@ -21,7 +24,7 @@ export const ImageCell = (props: TableCellProps) => {
       {!hasLinks && <img src={displayValue.text} className={tableStyles.imageCell} alt="" />}
       {hasLinks && (
         <DataLinksContextMenu
-          style={{ height: tableStyles.cellHeight - 2, width: 'auto' }}
+          style={{ height: tableStyles.cellHeight - DATALINKS_HEIGHT_OFFSET, width: 'auto' }}
           links={() => getCellLinks(field, row) || []}
         >
           {(api) => {
