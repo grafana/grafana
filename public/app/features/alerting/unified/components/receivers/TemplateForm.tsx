@@ -250,18 +250,18 @@ export const TemplateForm = ({ existing, alertManagerSourceName, config, provena
                   >
                     Payload
                   </IconButton>
+                  {payloadOpened && (
+                    <div className={styles.templatePayload}>
+                      <PayloadEditor
+                        payload={payload}
+                        setPayload={setPayload}
+                        defaultPayload={DEFAULT_PAYLOAD}
+                        setPayloadFormatError={setPayloadFormatError}
+                        payloadFormatError={payloadFormatError}
+                      />
+                    </div>
+                  )}
                 </>
-              )}
-              {payloadOpened && (
-                <div className={styles.templatePayload}>
-                  <PayloadEditor
-                    payload={payload}
-                    setPayload={setPayload}
-                    defaultPayload={DEFAULT_PAYLOAD}
-                    setPayloadFormatError={setPayloadFormatError}
-                    payloadFormatError={payloadFormatError}
-                  />
-                </div>
               )}
             </div>
           </FieldSet>
