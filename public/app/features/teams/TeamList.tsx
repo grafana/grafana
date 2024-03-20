@@ -16,13 +16,16 @@ import {
   LinkButton,
   Pagination,
   Stack,
+  TextLink,
   Tooltip,
   useStyles2,
 } from '@grafana/ui';
 import { EmptySearchState } from '@grafana/ui/src/components/EmptyState/EmptySearchState/EmptySearchState';
-import EmptyListCTA from 'app/core/components/EmptyListCTA/EmptyListCTA';
+import { EmptyState } from '@grafana/ui/src/components/EmptyState/EmptyState';
 import { Page } from 'app/core/components/Page/Page';
+import { ProTip } from 'app/core/components/ProTip/ProTip';
 import { fetchRoleOptions } from 'app/core/components/RolePicker/api';
+import { Trans, t } from 'app/core/internationalization';
 import { contextSrv } from 'app/core/services/context_srv';
 import { AccessControlAction, Role, StoreState, Team } from 'app/types';
 
@@ -202,17 +205,24 @@ export const TeamList = ({
     >
       <Page.Contents>
         {noTeams ? (
-          <EmptyListCTA
-            title="You haven't created any teams yet."
-            buttonIcon="users-alt"
-            buttonLink="org/teams/new"
-            buttonTitle=" New team"
-            buttonDisabled={!contextSrv.hasPermission(AccessControlAction.ActionTeamsCreate)}
-            proTip="Assign folder and dashboard permissions to teams instead of users to ease administration."
-            proTipLink=""
-            proTipLinkTitle=""
-            proTipTarget="_blank"
-          />
+          <EmptyState
+            buttonHref="org/teams/new"
+            buttonLabel={
+              contextSrv.hasPermission(AccessControlAction.ActionTeamsCreate)
+                ? t('teams.empty-state.button-title', 'New team')
+                : undefined
+            }
+            message={t('teams.empty-state.title', "You haven't created any teams yet")}
+          >
+            <ProTip>
+              <Trans i18nKey="teams.empty-state.pro-tip">
+                Assign folder and dashboard permissions to teams instead of users to ease administration.{' '}
+                <TextLink external href="https://grafana.com/docs/grafana/latest/administration/team-management">
+                  Learn more
+                </TextLink>
+              </Trans>
+            </ProTip>
+          </EmptyState>
         ) : (
           <>
             <div className="page-action-bar">

@@ -1,11 +1,12 @@
 import React, { useMemo, useState } from 'react';
 import { useAsync } from 'react-use';
 
-import { ConfirmModal, LinkButton } from '@grafana/ui';
+import { ConfirmModal, LinkButton, TextLink } from '@grafana/ui';
 import { EmptySearchState } from '@grafana/ui/src/components/EmptyState/EmptySearchState/EmptySearchState';
-import EmptyListCTA from 'app/core/components/EmptyListCTA/EmptyListCTA';
+import { EmptyState } from '@grafana/ui/src/components/EmptyState/EmptyState';
 import { Page } from 'app/core/components/Page/Page';
 import PageActionBar from 'app/core/components/PageActionBar/PageActionBar';
+import { ProTip } from 'app/core/components/ProTip/ProTip';
 import { Trans, t } from 'app/core/internationalization';
 import { contextSrv } from 'app/core/services/context_srv';
 
@@ -36,20 +37,6 @@ export const PlaylistPage = () => {
     });
   };
 
-  const emptyListBanner = (
-    <EmptyListCTA
-      title={t('playlist-page.empty.title', 'There are no playlists created yet')}
-      buttonIcon="plus"
-      buttonLink="playlists/new"
-      buttonTitle={t('playlist-page.empty.button', 'Create Playlist')}
-      buttonDisabled={!contextSrv.isEditor}
-      proTip={t('playlist-page.empty.pro-tip', 'You can use playlists to cycle dashboards on TVs without user control')}
-      proTipLink="http://docs.grafana.org/reference/playlist/"
-      proTipLinkTitle={t('playlist-page.empty.pro-tip-link-title', 'Learn more')}
-      proTipTarget="_blank"
-    />
-  );
-
   const showSearch = allPlaylists.loading || playlists.length > 0 || searchQuery.length > 0;
 
   return (
@@ -79,7 +66,22 @@ export const PlaylistPage = () => {
                 setPlaylistToDelete={setPlaylistToDelete}
               />
             )}
-            {!showSearch && emptyListBanner}
+            {!showSearch && (
+              <EmptyState
+                buttonHref="playlists/new"
+                buttonLabel={contextSrv.isEditor ? t('playlist-page.empty.button', 'Create Playlist') : undefined}
+                message={t('playlist-page.empty.title', 'There are no playlists created yet')}
+              >
+                <ProTip>
+                  <Trans i18nKey="playlist-page.empty.pro-tip">
+                    You can use playlists to cycle dashboards on TVs without user control.{' '}
+                    <TextLink external href="https://docs.grafana.org/reference/playlist/">
+                      Learn more
+                    </TextLink>
+                  </Trans>
+                </ProTip>
+              </EmptyState>
+            )}
             {playlistToDelete && (
               <ConfirmModal
                 title={playlistToDelete.name}

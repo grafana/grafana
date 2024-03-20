@@ -3,8 +3,10 @@ import React, { useMemo, useReducer } from 'react';
 import { useDebounce } from 'react-use';
 
 import { GrafanaTheme2, LoadingState } from '@grafana/data';
-import { Pagination, Stack, useStyles2 } from '@grafana/ui';
+import { Pagination, Stack, TextLink, useStyles2 } from '@grafana/ui';
 import { EmptySearchState } from '@grafana/ui/src/components/EmptyState/EmptySearchState/EmptySearchState';
+import { EmptyState } from '@grafana/ui/src/components/EmptyState/EmptyState';
+import { Trans, t } from 'app/core/internationalization';
 
 import { LibraryElementDTO } from '../../types';
 import { LibraryPanelCard } from '../LibraryPanelCard/LibraryPanelCard';
@@ -74,6 +76,23 @@ export const LibraryPanelsView = ({
       })
     );
   const onPageChange = (page: number) => asyncDispatch(changePage({ page }));
+  const hasFilter = searchString || panelFilter?.length || folderFilter?.length;
+
+  if (!hasFilter && loadingState === LoadingState.Done) {
+    return (
+      <EmptyState message={t('library-panel.empty-state.message', "You haven't created any library panels yet")}>
+        <Trans i18nKey="library-panel.empty-state.more-info">
+          Create a library panel from any existing dashboard panel through the panel context menu.{' '}
+          <TextLink
+            external
+            href="https://grafana.com/docs/grafana/latest/dashboards/build-dashboards/manage-library-panels/#create-a-library-panel"
+          >
+            Learn more
+          </TextLink>
+        </Trans>
+      </EmptyState>
+    );
+  }
 
   return (
     <Stack direction="column" wrap="nowrap">

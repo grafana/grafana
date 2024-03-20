@@ -4,8 +4,9 @@ import React, { useState } from 'react';
 import { arrayUtils, AnnotationQuery } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { getDataSourceSrv } from '@grafana/runtime';
-import { Button, DeleteButton, IconButton, useStyles2, VerticalGroup } from '@grafana/ui';
-import EmptyListCTA from 'app/core/components/EmptyListCTA/EmptyListCTA';
+import { Alert, Button, DeleteButton, IconButton, TextLink, useStyles2, VerticalGroup } from '@grafana/ui';
+import { EmptyState } from '@grafana/ui/src/components/EmptyState/EmptyState';
+import { Trans, t } from 'app/core/internationalization';
 
 import { DashboardModel } from '../../state/DashboardModel';
 import { ListNewButton } from '../DashboardSettings/ListNewButton';
@@ -108,25 +109,29 @@ export const AnnotationSettingsList = ({ dashboard, onNew, onEdit }: Props) => {
         </div>
       )}
       {showEmptyListCTA && (
-        <EmptyListCTA
-          onClick={onNew}
-          title="There are no custom annotation queries added yet"
-          buttonIcon="comment-alt"
-          buttonTitle="Add annotation query"
-          infoBoxTitle="What are annotation queries?"
-          infoBox={{
-            __html: `<p>Annotations provide a way to integrate event data into your graphs. They are visualized as vertical lines
-          and icons on all graph panels. When you hover over an annotation icon you can get event text &amp; tags for
-          the event. You can add annotation events directly from grafana by holding CTRL or CMD + click on graph (or
-          drag region). These will be stored in Grafana's annotation database.
-        </p>
-        Checkout the
-        <a class='external-link' target='_blank' href='http://docs.grafana.org/reference/annotations/'
-          >Annotations documentation</a
+        <EmptyState
+          message={t('annotations.empty-state.title', 'There are no custom annotation queries added yet')}
+          buttonLabel={t('annotations.empty-state.button-title', 'Add annotation query')}
+          onButtonClick={onNew}
         >
-        for more information.`,
-          }}
-        />
+          <Alert severity="info" title={t('annotations.empty-state.info-box-title', 'What are annotation queries?')}>
+            <Trans i18nKey="annotations.empty-state.info-box-content">
+              <p>
+                Annotations provide a way to integrate event data into your graphs. They are visualized as vertical
+                lines and icons on all graph panels. When you hover over an annotation icon you can get event text &amp;
+                tags for the event. You can add annotation events directly from grafana by holding CTRL or CMD + click
+                on graph (or drag region). These will be stored in Grafana&apos;s annotation database.
+              </p>
+            </Trans>
+            <Trans i18nKey="annotations.empty-state.info-box-content-2">
+              Checkout the{' '}
+              <TextLink external href="">
+                Annotations documentation
+              </TextLink>{' '}
+              for more information.
+            </Trans>
+          </Alert>
+        </EmptyState>
       )}
       {!showEmptyListCTA && (
         <ListNewButton

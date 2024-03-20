@@ -4,10 +4,12 @@ import { useLocation } from 'react-router-dom';
 
 import { DataSourceSettings, GrafanaTheme2 } from '@grafana/data';
 import { config } from '@grafana/runtime';
-import { useStyles2 } from '@grafana/ui';
+import { TextLink, useStyles2 } from '@grafana/ui';
 import { EmptySearchState } from '@grafana/ui/src/components/EmptyState/EmptySearchState/EmptySearchState';
-import EmptyListCTA from 'app/core/components/EmptyListCTA/EmptyListCTA';
+import { EmptyState } from '@grafana/ui/src/components/EmptyState/EmptyState';
+import { ProTip } from 'app/core/components/ProTip/ProTip';
 import { contextSrv } from 'app/core/core';
+import { Trans, t } from 'app/core/internationalization';
 import { StoreState, AccessControlAction, useSelector } from 'app/types';
 
 import { getDataSources, getDataSourcesCount, useDataSourcesRoutes, useLoadDataSources } from '../state';
@@ -67,17 +69,23 @@ export function DataSourcesListView({
 
   if (!isLoading && dataSourcesCount === 0) {
     return (
-      <EmptyListCTA
-        buttonDisabled={!hasCreateRights}
-        title="No data sources defined"
-        buttonIcon="database"
-        buttonLink={dataSourcesRoutes.New}
-        buttonTitle="Add data source"
-        proTip="You can also define data sources through configuration files."
-        proTipLink="http://docs.grafana.org/administration/provisioning/?utm_source=grafana_ds_list#data-sources"
-        proTipLinkTitle="Learn more"
-        proTipTarget="_blank"
-      />
+      <EmptyState
+        buttonHref={dataSourcesRoutes.New}
+        buttonLabel={hasCreateRights ? t('data-source-list.empty-state.button-title', 'Add data source') : undefined}
+        message={t('data-source-list.empty-state.title', 'No data sources defined')}
+      >
+        <ProTip>
+          <Trans i18nKey="data-source-list.empty-state.pro-tip">
+            You can also define data sources through configuration files.{' '}
+            <TextLink
+              external
+              href="http://docs.grafana.org/administration/provisioning/?utm_source=grafana_ds_list#data-sources"
+            >
+              Learn more
+            </TextLink>
+          </Trans>
+        </ProTip>
+      </EmptyState>
     );
   }
 

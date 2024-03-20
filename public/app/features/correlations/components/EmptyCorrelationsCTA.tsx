@@ -1,7 +1,9 @@
 import React from 'react';
 
 import { Card } from '@grafana/ui';
-import EmptyListCTA from 'app/core/components/EmptyListCTA/EmptyListCTA';
+import { EmptyState } from '@grafana/ui/src/components/EmptyState/EmptyState';
+import { ProTip } from 'app/core/components/ProTip/ProTip';
+import { Trans, t } from 'app/core/internationalization';
 
 interface Props {
   onClick?: () => void;
@@ -11,13 +13,17 @@ export const EmptyCorrelationsCTA = ({ onClick, canWriteCorrelations }: Props) =
   // TODO: if there are no datasources show a different message
 
   return canWriteCorrelations ? (
-    <EmptyListCTA
-      title="You haven't defined any correlation yet."
-      buttonIcon="gf-glue"
-      onClick={onClick}
-      buttonTitle="Add correlation"
-      proTip="you can also define correlations via datasource provisioning"
-    />
+    <EmptyState
+      buttonLabel={t('correlations.empty-state.button-title', 'Add correlation')}
+      onButtonClick={onClick}
+      message={t('correlations.empty-state.title', "You haven't defined any correlations yet")}
+    >
+      <ProTip>
+        <Trans i18nKey="correlations.empty-state.pro-tip">
+          You can also define correlations via datasource provisioning
+        </Trans>
+      </ProTip>
+    </EmptyState>
   ) : (
     <Card>
       <Card.Heading>There are no correlations configured yet.</Card.Heading>
