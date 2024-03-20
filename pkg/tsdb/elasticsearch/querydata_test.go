@@ -57,7 +57,6 @@ func newFlowTestDsInfo(body []byte, statusCode int, requestCallback func(req *ht
 		HTTPClient:                 &client,
 		MaxConcurrentShardRequests: 42,
 		IncludeFrozen:              false,
-		XPack:                      true,
 	}
 }
 

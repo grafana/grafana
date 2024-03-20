@@ -58,7 +58,6 @@ func TestClient_ExecuteMultisearch(t *testing.T) {
 			Interval:                   "Daily",
 			MaxConcurrentShardRequests: 6,
 			IncludeFrozen:              true,
-			XPack:                      true,
 		}
 
 		from := time.Date(2018, 5, 15, 17, 50, 0, 0, time.UTC)
@@ -148,7 +147,6 @@ func TestClient_ExecuteMultisearch(t *testing.T) {
 			Interval:                   "Daily",
 			MaxConcurrentShardRequests: 6,
 			IncludeFrozen:              true,
-			XPack:                      true,
 		}
 
 		from := time.Date(2018, 5, 15, 17, 50, 0, 0, time.UTC)
@@ -253,7 +251,6 @@ func TestClient_Index(t *testing.T) {
 				Interval:                   test.patternInDatasource,
 				MaxConcurrentShardRequests: 6,
 				IncludeFrozen:              true,
-				XPack:                      true,
 			}
 
 			from := time.Date(2018, 5, 10, 17, 50, 0, 0, time.UTC)
