@@ -21,3 +21,9 @@ weight: 1200
 {{< docs/shared lookup="upgrade/upgrade-common-tasks.md" source="grafana" version="<GRAFANA VERSION>" >}}
 
 ## Technical notes
+
+### PostgreSQL data source plugin update
+
+<!-- Gabor Farkas -->
+
+If you use the PostgreSQL data source plugin and store certificates using the `Certificate content` method, we previously created temporary files in the Grafana [data](/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-grafana/#data) folder. Grafana 11 doesn't use temporary files for this functionality anymore. However, existing temporary files won't be deleted; we recommend deleting them manually. To find them, look for the `tls` subfolder in the `data` folder. It contains subfolders that are named based on plugin ids, and these subfolders contain files named `client.*` or `root.*`. These aren't used anymore, and can be deleted.
