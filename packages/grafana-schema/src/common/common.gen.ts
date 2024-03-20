@@ -43,7 +43,7 @@ export interface DataQuery {
    */
   datasource?: unknown;
   /**
-   * If hide is set to true, Grafana will filter out the response(s) associated with this query before returning it to the panel. 
+   * If hide is set to true, Grafana will filter out the response(s) associated with this query before returning it to the panel.
    */
   hide?: boolean;
   /**

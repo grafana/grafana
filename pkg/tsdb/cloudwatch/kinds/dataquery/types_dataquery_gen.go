@@ -137,9 +137,7 @@ type CloudWatchAnnotationQuery struct {
 	// A name/value pair that is part of the identity of a metric. For example, you can get statistics for a specific EC2 instance by specifying the InstanceId dimension when you search for metrics.
 	Dimensions *Dimensions `json:"dimensions,omitempty"`
 
-	// Hide true if query is disabled (ie should not be returned to the dashboard)
-	// Note this does not always imply that the query should not be executed since
-	// the results from a hidden query may be used as the input to other queries (SSE etc)
+	// If hide is set to true, Grafana will filter out the response(s) associated with this query before returning it to the panel.
 	Hide *bool `json:"hide,omitempty"`
 
 	// Only show metrics that exactly match all defined dimension names.
@@ -196,9 +194,7 @@ type CloudWatchLogsQuery struct {
 	// The CloudWatch Logs Insights query to execute
 	Expression *string `json:"expression,omitempty"`
 
-	// Hide true if query is disabled (ie should not be returned to the dashboard)
-	// Note this does not always imply that the query should not be executed since
-	// the results from a hidden query may be used as the input to other queries (SSE etc)
+	// If hide is set to true, Grafana will filter out the response(s) associated with this query before returning it to the panel.
 	Hide *bool  `json:"hide,omitempty"`
 	Id   string `json:"id"`
 
@@ -252,9 +248,7 @@ type CloudWatchMetricsQuery struct {
 	// Math expression query
 	Expression *string `json:"expression,omitempty"`
 
-	// Hide true if query is disabled (ie should not be returned to the dashboard)
-	// Note this does not always imply that the query should not be executed since
-	// the results from a hidden query may be used as the input to other queries (SSE etc)
+	// If hide is set to true, Grafana will filter out the response(s) associated with this query before returning it to the panel.
 	Hide *bool `json:"hide,omitempty"`
 
 	// ID can be used to reference other queries in math expressions. The ID can include numbers, letters, and underscore, and must start with a lowercase letter.
@@ -314,9 +308,7 @@ type DataQuery struct {
 	// TODO this shouldn't be unknown but DataSourceRef | null
 	Datasource *any `json:"datasource,omitempty"`
 
-	// Hide true if query is disabled (ie should not be returned to the dashboard)
-	// Note this does not always imply that the query should not be executed since
-	// the results from a hidden query may be used as the input to other queries (SSE etc)
+	// If hide is set to true, Grafana will filter out the response(s) associated with this query before returning it to the panel.
 	Hide *bool `json:"hide,omitempty"`
 
 	// Specify the query flavor
