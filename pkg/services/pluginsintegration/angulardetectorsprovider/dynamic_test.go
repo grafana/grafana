@@ -314,6 +314,20 @@ func TestDynamicAngularDetectorsProvider(t *testing.T) {
 	})
 }
 
+func TestDynamicAngularDetectorsProviderCloudVsOnPrem(t *testing.T) {
+	t.Run("should use cloud interval if stack_id is set", func(t *testing.T) {
+		svc := provideDynamic(t, "", provideDynamicOpts{cfg: &config.PluginManagementCfg{
+			StackID: "1234",
+		}})
+		require.Equal(t, backgroundJobIntervalCloud, svc.backgroundJobInterval)
+	})
+
+	t.Run("should use on-prem interval if stack_id is not set", func(t *testing.T) {
+		svc := provideDynamic(t, "")
+		require.Equal(t, backgroundJobIntervalOnPrem, svc.backgroundJobInterval)
+	})
+}
+
 func TestDynamicAngularDetectorsProviderBackgroundService(t *testing.T) {
 	mockGCOMPatterns := newMockGCOMPatterns()
 	gcom := newDefaultGCOMScenario()
@@ -321,10 +335,10 @@ func TestDynamicAngularDetectorsProviderBackgroundService(t *testing.T) {
 	t.Cleanup(srv.Close)
 
 	t.Run("background service", func(t *testing.T) {
-		oldBackgroundJobInterval := backgroundJobInterval
-		backgroundJobInterval = time.Millisecond * 500
+		oldBackgroundJobInterval := backgroundJobIntervalOnPrem
+		backgroundJobIntervalOnPrem = time.Millisecond * 500
 		t.Cleanup(func() {
-			backgroundJobInterval = oldBackgroundJobInterval
+			backgroundJobIntervalOnPrem = oldBackgroundJobInterval
 		})
 
 		t.Run("is disabled if feature flag is not present", func(t *testing.T) {
@@ -563,6 +577,7 @@ func newError500GCOMScenario() *gcomScenario {
 
 type provideDynamicOpts struct {
 	store angularpatternsstore.Service
+	cfg   *config.PluginManagementCfg
 }
 
 func provideDynamic(t *testing.T, gcomURL string, opts ...provideDynamicOpts) *Dynamic {
@@ -573,8 +588,14 @@ func provideDynamic(t *testing.T, gcomURL string, opts ...provideDynamicOpts) *D
 	if opt.store == nil {
 		opt.store = angularpatternsstore.ProvideService(kvstore.NewFakeKVStore())
 	}
+	var cfg *config.PluginManagementCfg
+	if opt.cfg != nil {
+		cfg = opt.cfg
+	} else {
+		cfg = &config.PluginManagementCfg{GrafanaComURL: gcomURL}
+	}
 	d, err := ProvideDynamic(
-		&config.PluginManagementCfg{GrafanaComURL: gcomURL},
+		cfg,
 		opt.store,
 		featuremgmt.WithFeatures(featuremgmt.FlagPluginsDynamicAngularDetectionPatterns),
 	)

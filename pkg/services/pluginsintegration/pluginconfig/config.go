@@ -38,6 +38,7 @@ func ProvidePluginManagementConfig(cfg *setting.Cfg, settingProvider setting.Pro
 		cfg.DisablePlugins,
 		cfg.HideAngularDeprecation,
 		cfg.ForwardHostEnvVars,
+		cfg.StackID,
 	), nil
 }
 

@@ -26,6 +26,13 @@ type PluginManagementCfg struct {
 
 	AngularSupportEnabled  bool
 	HideAngularDeprecation []string
+
+	StackID string
+}
+
+// IsCloud returns true if Grafana is running in Grafana Cloud.
+func (c *PluginManagementCfg) IsCloud() bool {
+	return c.StackID != ""
 }
 
 // Features contains the feature toggles used for the plugin management system.
@@ -38,6 +45,7 @@ type Features struct {
 func NewPluginManagementCfg(devMode bool, pluginsPath string, pluginSettings setting.PluginSettings, pluginsAllowUnsigned []string,
 	pluginsCDNURLTemplate string, appURL string, features Features, angularSupportEnabled bool,
 	grafanaComURL string, disablePlugins []string, hideAngularDeprecation []string, forwardHostEnvVars []string,
+	stackID string,
 ) *PluginManagementCfg {
 	return &PluginManagementCfg{
 		PluginsPath:            pluginsPath,
@@ -52,5 +60,6 @@ func NewPluginManagementCfg(devMode bool, pluginsPath string, pluginSettings set
 		AngularSupportEnabled:  angularSupportEnabled,
 		HideAngularDeprecation: hideAngularDeprecation,
 		ForwardHostEnvVars:     forwardHostEnvVars,
+		StackID:                stackID,
 	}
 }

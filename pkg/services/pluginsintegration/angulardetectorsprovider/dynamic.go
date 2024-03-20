@@ -21,9 +21,12 @@ import (
 
 var errNotModified = errors.New("not modified")
 
-// backgroundJobInterval is the interval that passes between background job runs.
-// It can be overwritten in tests.
-var backgroundJobInterval = time.Hour * 24
+// Intervals that passes between background job runs.
+// Can be overwritten in tests.
+var (
+	backgroundJobIntervalOnPrem = time.Hour * 24
+	backgroundJobIntervalCloud  = time.Hour * 1
+)
 
 // Dynamic is an angulardetector.DetectorsProvider that calls GCOM to get Angular detection patterns,
 // converts them to detectors and caches them for all future calls.
@@ -45,20 +48,31 @@ type Dynamic struct {
 
 	// mux is the mutex used to read/write the cached detectors in a concurrency-safe way.
 	mux sync.RWMutex
+
+	// backgroundJobInterval is the interval that passes between background job runs.
+	backgroundJobInterval time.Duration
 }
 
 func ProvideDynamic(cfg *config.PluginManagementCfg, store angularpatternsstore.Service, features featuremgmt.FeatureToggles) (*Dynamic, error) {
+	// Use a shorter interval for cloud and a longer one for on-prem.
+	backgroundJobInterval := backgroundJobIntervalOnPrem
+	if cfg.IsCloud() {
+		backgroundJobInterval = backgroundJobIntervalCloud
+	}
+
 	d := &Dynamic{
-		log:        log.New("plugin.angulardetectorsprovider.dynamic"),
-		features:   features,
-		store:      store,
-		httpClient: makeHttpClient(),
-		baseURL:    cfg.GrafanaComURL,
+		log:                   log.New("plugin.angulardetectorsprovider.dynamic"),
+		features:              features,
+		store:                 store,
+		httpClient:            makeHttpClient(),
+		baseURL:               cfg.GrafanaComURL,
+		backgroundJobInterval: backgroundJobInterval,
 	}
 	if d.IsDisabled() {
 		// Do not attempt to restore if the background service is disabled (no feature flag)
 		return d, nil
 	}
+	d.log.Debug("Using dynamic angular detection patterns interval", "interval", d.backgroundJobInterval)
 
 	// Perform the initial restore from db
 	st := time.Now()
@@ -224,7 +238,7 @@ func (d *Dynamic) IsDisabled() bool {
 }
 
 // randomSkew returns a random time.Duration between 0 and maxSkew.
-// This can be added to backgroundJobInterval to skew it by a random amount.
+// This can be added to d.backgroundJobInterval to skew it by a random amount.
 func (d *Dynamic) randomSkew(maxSkew time.Duration) time.Duration {
 	return time.Duration(rand.Float64() * float64(maxSkew))
 }
@@ -242,15 +256,15 @@ func (d *Dynamic) Run(ctx context.Context) error {
 	// Offset the background job interval a bit to skew GCOM calls from all instances,
 	// so GCOM is not overwhelmed with lots of requests all at the same time.
 	// Important when lots of HG instances restart at the same time.
-	skew := d.randomSkew(backgroundJobInterval / 4)
-	backgroundJobInterval += skew
+	skew := d.randomSkew(d.backgroundJobInterval / 4)
+	d.backgroundJobInterval += skew
 	d.log.Debug(
 		"Applied background job skew",
-		"skew", backgroundJobInterval, "interval", backgroundJobInterval,
+		"skew", d.backgroundJobInterval, "interval", d.backgroundJobInterval,
 	)
 
-	nextRunUntil := time.Until(lastUpdate.Add(backgroundJobInterval))
-	ticker := time.NewTicker(backgroundJobInterval)
+	nextRunUntil := time.Until(lastUpdate.Add(d.backgroundJobInterval))
+	ticker := time.NewTicker(d.backgroundJobInterval)
 	defer ticker.Stop()
 
 	var tick <-chan time.Time
@@ -286,7 +300,7 @@ func (d *Dynamic) Run(ctx context.Context) error {
 			d.log.Info("Patterns update finished", "duration", time.Since(st))
 
 			// Restore default ticker if we run with a shorter interval the first time
-			ticker.Reset(backgroundJobInterval)
+			ticker.Reset(d.backgroundJobInterval)
 			tick = ticker.C
 		case <-ctx.Done():
 			return ctx.Err()
