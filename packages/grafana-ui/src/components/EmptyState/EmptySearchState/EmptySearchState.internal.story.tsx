@@ -11,6 +11,9 @@ const meta: Meta<typeof EmptySearchState> = {
     docs: {
       page: mdx,
     },
+    controls: {
+      exclude: ['image'],
+    },
   },
   argTypes: {
     children: {

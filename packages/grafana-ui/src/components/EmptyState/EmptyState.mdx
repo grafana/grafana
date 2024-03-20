@@ -1,18 +1,62 @@
 import { ArgTypes } from '@storybook/blocks';
 import { EmptyState } from './EmptyState';
 
-# EmptySearchResult
+# EmptyState
 
-DOCS TODO
+## When to use
 
-### Usage
+When a user has not yet created any items that would be displayed in a list or table.
+
+## When not to use
+
+If there are no items as a result of applying a search query or filter. Use the `EmptySearchState` component instead.
+
+## Usage
+
+### Basic
+
+Most use cases will involve showing an empty state with a message and a CTA button.
 
 ```jsx
 import { EmptyState } from '@grafana/ui';
 
-<EmptySearchState>Could not find anything matching your query</EmptyState>;
+// Empty state with LinkButton
+<EmptyState message="You haven't created any playlists yet" buttonLabel="Create playlist" buttonHref="/playlist/new" />;
+
+// Empty state with Button
+const createPlaylist = () => {
+  // playlist creation logic
+};
+<EmptyState
+  message="You haven't created any playlists yet"
+  buttonLabel="Create playlist"
+  onButtonClick={createPlaylist}
+/>;
 ```
 
-### Props
+### When there's no call to action
+
+In this case you might want to provide some additional information. Linking to the docs might also be appropriate.
+
+```jsx
+import { EmptyState, TextLink } from '@grafana/ui';
+
+<EmptyState message="You haven't created any library panels yet">
+  Create a library panel from any existing dashboard panel through the panel context menu.{' '}
+  <TextLink external href="<docsLink>">
+    Learn more
+  </TextLink>
+</EmptyState>;
+```
+
+### Providing a custom image
+
+```jsx
+import { EmptyState } from '@grafana/ui';
+
+<EmptyState image={<img src="<pathToImage>" />} message="You haven't created any playlists yet" />;
+```
+
+## Props
 
 <ArgTypes of={EmptyState} />

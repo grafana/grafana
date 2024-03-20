@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { ReactNode } from 'react';
 
 import { Button, LinkButton } from '../Button';
 import { Box } from '../Layout/Box/Box';
@@ -10,6 +10,7 @@ import { GrotNotFound } from './EmptySearchState/GrotNotFound/GrotNotFound';
 interface BaseProps {
   buttonLabel?: string;
   buttonHref?: string;
+  image?: ReactNode;
   message: string;
   onButtonClick?: () => void;
   showImage?: boolean;
@@ -31,6 +32,7 @@ export const EmptyState = ({
   buttonHref,
   buttonLabel,
   children,
+  image = <GrotNotFound width={300} />,
   message,
   onButtonClick,
   showImage = true,
@@ -38,19 +40,17 @@ export const EmptyState = ({
   const ButtonElement = buttonHref ? LinkButton : Button;
 
   return (
-    <Box paddingY={4}>
-      <Stack gap={4} direction="column" alignItems="center">
-        {showImage && <GrotNotFound width={300} />}
-        <Stack direction="column" alignItems="center">
-          <Text variant="h4">{message}</Text>
-          {children && <Text color="secondary">{children}</Text>}
-        </Stack>
-        {buttonLabel && (
-          <ButtonElement href={buttonHref} size="lg" onClick={onButtonClick}>
-            {buttonLabel}
-          </ButtonElement>
-        )}
+    <Box alignItems="center" direction="column" display="flex" gap={4} paddingY={4}>
+      {showImage && image}
+      <Stack direction="column" alignItems="center">
+        <Text variant="h4">{message}</Text>
+        {children && <Text color="secondary">{children}</Text>}
       </Stack>
+      {buttonLabel && (
+        <ButtonElement href={buttonHref} size="lg" onClick={onButtonClick}>
+          {buttonLabel}
+        </ButtonElement>
+      )}
     </Box>
   );
 };

@@ -11,6 +11,9 @@ const meta: Meta<typeof EmptyState> = {
     docs: {
       page: mdx,
     },
+    controls: {
+      exclude: ['image'],
+    },
   },
   argTypes: {
     children: {
