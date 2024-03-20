@@ -69,8 +69,10 @@ export function applyVariableChanges(saveModel: Dashboard, originalSaveModel: Da
       if (typed.type === 'adhoc') {
         typed.filters = (original as AdHocVariableModel).filters;
       } else {
-        variable.current = original.current;
-        variable.options = original.options;
+        if (typed.type !== 'groupby') {
+          variable.current = original.current;
+          variable.options = original.options;
+        }
       }
     }
   }
