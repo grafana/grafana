@@ -3,6 +3,8 @@
 // Then run tests in:
 //  pkg/services/featuremgmt/toggles_gen_test.go
 // twice to generate and validate the feature flag files
+//
+// Alternatively, use `make gen-feature-toggles`
 
 package featuremgmt
 

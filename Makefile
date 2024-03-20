@@ -106,6 +106,11 @@ gen-cue: ## Do all CUE/Thema code generation
 	go generate ./kinds/gen.go
 	go generate ./public/app/plugins/gen.go
 
+gen-feature-toggles:
+	@echo "generate feature toggles"
+	go test -v ./pkg/services/featuremgmt/... > /dev/null 2>&1
+	go test -v ./pkg/services/featuremgmt/...
+
 gen-go: $(WIRE)
 	@echo "generate go files"
 	$(WIRE) gen -tags $(WIRE_TAGS) ./pkg/server
