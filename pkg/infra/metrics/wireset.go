@@ -1,7 +1,7 @@
 package metrics
 
 import (
-	"github.com/grafana/grafana/pkg/build/wire"
+	"github.com/google/wire"
 )
 
 var WireSet = wire.NewSet(

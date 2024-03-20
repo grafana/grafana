@@ -5,7 +5,7 @@
 package server
 
 import (
-	"github.com/grafana/grafana/pkg/build/wire"
+	"github.com/google/wire"
 
 	"github.com/grafana/grafana/pkg/infra/metrics"
 	"github.com/grafana/grafana/pkg/plugins"
