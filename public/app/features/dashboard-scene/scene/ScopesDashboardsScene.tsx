@@ -36,36 +36,14 @@ export class ScopesDashboardsScene extends SceneObjectBase<ScopesDashboardsScene
 
     this.setState({ isLoading: true });
 
-    try {
-      const response = await getBackendSrv().get<{
-        items: Array<{ spec: { dashboardUids: null | string[]; scopeUid: string } }>;
-      }>(this._url, { scope });
+    const dashboardUids = await this.fetchDashboardsUids(scope);
+    const dashboards = await this.fetchDashboardsDetails(dashboardUids);
 
-      const dashboardUids =
-        response.items.find((item) => !!item.spec.dashboardUids && item.spec.scopeUid === scope)?.spec.dashboardUids ??
-        [];
-      const dashboardsRaw = await Promise.all(
-        dashboardUids.map((dashboardUid) => getBackendSrv().get(`/api/dashboards/uid/${dashboardUid}`))
-      );
-      const dashboards = dashboardsRaw.map((dashboard) => ({
-        uid: dashboard.dashboard.uid,
-        title: dashboard.dashboard.title,
-        url: dashboard.meta.url,
-      }));
-
-      this.setState({
-        dashboards,
-        filteredDashboards: this.filterDashboards(dashboards, this.state.searchQuery),
-        isLoading: false,
-      });
-    } catch (error) {
-      getAppEvents().publish({
-        type: AppEvents.alertError.name,
-        payload: ['Failed to fetch suggested dashboards'],
-      });
-    } finally {
-      this.setState({ isLoading: false });
-    }
+    this.setState({
+      dashboards,
+      filteredDashboards: this.filterDashboards(dashboards, this.state.searchQuery),
+      isLoading: false,
+    });
   }
 
   public changeSearchQuery(searchQuery: string) {
@@ -75,6 +53,52 @@ export class ScopesDashboardsScene extends SceneObjectBase<ScopesDashboardsScene
         : this.state.dashboards,
       searchQuery: searchQuery ?? '',
     });
+  }
+
+  private async fetchDashboardsUids(scope: string): Promise<string[]> {
+    try {
+      const response = await getBackendSrv().get<{
+        items: Array<{ spec: { dashboardUids: null | string[]; scopeUid: string } }>;
+      }>(this._url, { scope });
+
+      return (
+        response.items.find((item) => !!item.spec.dashboardUids && item.spec.scopeUid === scope)?.spec.dashboardUids ??
+        []
+      );
+    } catch (err) {
+      return [];
+    }
+  }
+
+  private async fetchDashboardsDetails(dashboardUids: string[]): Promise<ScopeDashboard[]> {
+    try {
+      const dashboards = await Promise.all(
+        dashboardUids.map((dashboardUid) => this.fetchDashboardDetails(dashboardUid))
+      );
+
+      return dashboards.filter((dashboard): dashboard is ScopeDashboard => !!dashboard);
+    } catch (err) {
+      getAppEvents().publish({
+        type: AppEvents.alertError.name,
+        payload: ['Failed to fetch suggested dashboards'],
+      });
+
+      return [];
+    }
+  }
+
+  private async fetchDashboardDetails(dashboardUid: string): Promise<ScopeDashboard | undefined> {
+    try {
+      const dashboard = await getBackendSrv().get(`/api/dashboards/uid/${dashboardUid}`);
+
+      return {
+        uid: dashboard.dashboard.uid,
+        title: dashboard.dashboard.title,
+        url: dashboard.meta.url,
+      };
+    } catch (err) {
+      return undefined;
+    }
   }
 
   private filterDashboards(dashboards: ScopeDashboard[], searchQuery: string) {
