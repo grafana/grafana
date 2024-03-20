@@ -1,4 +1,3 @@
-import { LoadingState, TypedVariableModel } from '@grafana/data';
 import { config } from '@grafana/runtime';
 import { AdHocFiltersVariable, GroupByVariable, MultiValueVariable, sceneGraph } from '@grafana/scenes';
 import { VariableModel } from '@grafana/schema';
