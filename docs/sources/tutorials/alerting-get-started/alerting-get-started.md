@@ -90,7 +90,7 @@ In Grafana, toggle the menu at the top left side of the screen, and **navigate t
 
 In this section we define the conditions that trigger alerts. 
 
-1. **Choose the data source** from the drop-down menu. **Select Prometheus**.
+1. Select the ** Prometheus** data source from the drop-down menu. 
 
     {{< admonition type="note" >}}
     To visualize this data in Grafana, we need time-series metrics that we can collect and store. We can do that with [Prometheus](https://grafana.com/docs/grafana/latest/getting-started/get-started-grafana-prometheus/), which is pulling metrics from our sample app.
