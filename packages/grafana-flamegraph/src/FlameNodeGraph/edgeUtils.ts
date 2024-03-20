@@ -49,8 +49,11 @@ export function createResidualEdges(originalTree: LevelItem, nodes: GraphNodes, 
   return newEdges;
 }
 
-// Not really sure here seems like redundant edges means that if have other means of getting from A - B like A - C - B
-// then A - B is redundant?
+/**
+ * Edge is redundant if there are other edges with the same from - to nodes. This can happen if we delete nodes and then
+ * create residual edges which represent the same path.
+ * @param edge
+ */
 function isRedundantEdge(edge: GraphEdge) {
   const seen: Record<string, boolean> = {};
   const queue = [edge.to];
@@ -58,14 +61,19 @@ function isRedundantEdge(edge: GraphEdge) {
   while (queue.length > 0) {
     const node = queue.shift()!;
 
+    // loop over all edges that go into this node
     for (const parentEdge of node.parents) {
-      if (!(edge === parentEdge || seen[parentEdge.from.label])) {
-        if (parentEdge.from === edge.from) {
-          return true;
-        }
-        seen[parentEdge.from.label] = true;
-        queue.push(parentEdge.from);
+      if (edge === parentEdge || seen[parentEdge.from.label]) {
+        // skip if we are looking at the same edge, or we have already seen this parent node
+        continue;
       }
+
+      if (parentEdge.from === edge.from) {
+        // we found edge that has the same from - to nodes as the edge we are testing.
+        return true;
+      }
+      seen[parentEdge.from.label] = true;
+      queue.push(parentEdge.from);
     }
   }
   return false;
