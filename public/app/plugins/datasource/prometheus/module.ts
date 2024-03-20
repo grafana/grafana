@@ -19,9 +19,9 @@ const PromQueryEditorByAppUsed = usePackage ? PromQueryEditorByApp : PromQueryEd
 const ConfigEditorUsed = usePackage ? ConfigEditor : ConfigEditorPackage;
 const PromCheatSheetUsed = usePackage ? PromCheatSheet : PromCheatSheetPackage;
 
-// @ts-ignore
+// @ts-ignore These type errors will be removed when we fully migrate to the @grafana/prometheus package
 export const plugin = new DataSourcePlugin(PrometheusDataSourceUsed)
-  // @ts-ignore
+  // @ts-ignore These type errors will be removed when we fully migrate to the @grafana/prometheus package
   .setQueryEditor(PromQueryEditorByAppUsed)
   .setConfigEditor(ConfigEditorUsed)
   .setQueryEditorHelp(PromCheatSheetUsed);
