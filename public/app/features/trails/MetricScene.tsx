@@ -153,7 +153,7 @@ export class MetricActionBar extends SceneObjectBase<MetricActionBarState> {
           <Stack gap={1}>
             <ToolbarButton
               variant={'canvas'}
-              tooltip="Deselect current metric so a new metric can be chosen"
+              tooltip="Remove existing metric and choose a new metric"
               onClick={() => trail.publishEvent(new MetricSelectedEvent(undefined))}
             >
               Select new metric
