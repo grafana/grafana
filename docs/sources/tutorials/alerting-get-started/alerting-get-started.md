@@ -13,7 +13,7 @@ Ensure you have the following applications installed.
 
 The sample application generates real data and exposes metrics,  which are stored in Prometheus. In Grafana Alerting, you can then build an alert rule based on the data generated. 
 
-You will need to download the files to your local machine.
+Download the files to your local machine.
 
 
 1. Clone the [tutorial environment repository](www.github.com/grafana/tutorial-environment).
