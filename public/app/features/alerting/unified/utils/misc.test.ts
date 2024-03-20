@@ -110,7 +110,9 @@ describe('createExploreLink', () => {
 
 describe('create links', () => {
   it('should create silence link', () => {
-    expect(makeLabelBasedSilenceLink('grafana', { foo: 'bar' })).toBe('');
+    expect(makeLabelBasedSilenceLink('grafana', { foo: 'bar', bar: 'baz' })).toBe(
+      '/alerting/silence/new?alertmanager=grafana&matcher=foo%3Dbar&matcher=bar%3Dbaz'
+    );
   });
 
   it('should create data source link', () => {
