@@ -218,10 +218,8 @@ func (s *Service) GetByID(ctx context.Context, query *user.GetUserByIDQuery) (*u
 	if err != nil {
 		return nil, err
 	}
-	if s.cfg.CaseInsensitiveLogin {
-		if err := s.store.CaseInsensitiveLoginConflict(ctx, user.Login, user.Email); err != nil {
-			return nil, err
-		}
+	if err := s.store.CaseInsensitiveLoginConflict(ctx, user.Login, user.Email); err != nil {
+		return nil, err
 	}
 	return user, nil
 }
@@ -235,10 +233,8 @@ func (s *Service) GetByEmail(ctx context.Context, query *user.GetUserByEmailQuer
 }
 
 func (s *Service) Update(ctx context.Context, cmd *user.UpdateUserCommand) error {
-	if s.cfg.CaseInsensitiveLogin {
-		cmd.Login = strings.ToLower(cmd.Login)
-		cmd.Email = strings.ToLower(cmd.Email)
-	}
+	cmd.Login = strings.ToLower(cmd.Login)
+	cmd.Email = strings.ToLower(cmd.Email)
 
 	return s.store.Update(ctx, cmd)
 }
