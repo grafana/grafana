@@ -133,11 +133,7 @@ func GetAttrs(obj runtime.Object) (labels.Set, fields.Set, error) {
 		return nil, nil, fmt.Errorf("not a scope")
 	}
 
-	selectableFields := generic.MergeFieldsSets(generic.ObjectMetaFieldsSet(&s.ObjectMeta, false), fields.Set{
-		"spec.type": s.Spec.Type,
-	})
-
-	return labels.Set(s.Labels), selectableFields, nil
+	return labels.Set(s.Labels), SelectableFields(s), nil
 }
 
 // Matcher returns a generic.SelectionPredicate that matches on label and field selectors.
@@ -147,4 +143,10 @@ func Matcher(label labels.Selector, field fields.Selector) apistore.SelectionPre
 		Field:    field,
 		GetAttrs: GetAttrs,
 	}
+}
+
+func SelectableFields(obj *scope.Scope) fields.Set {
+	return generic.MergeFieldsSets(generic.ObjectMetaFieldsSet(&obj.ObjectMeta, false), fields.Set{
+		"spec.type": obj.Spec.Type,
+	})
 }

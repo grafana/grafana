@@ -1,6 +1,8 @@
 package scope
 
 import (
+	"fmt"
+
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -45,6 +47,22 @@ func (b *ScopeAPIBuilder) GetGroupVersion() schema.GroupVersion {
 func (b *ScopeAPIBuilder) InstallSchema(scheme *runtime.Scheme) error {
 	gv := scope.SchemeGroupVersion
 	err := scope.AddToScheme(scheme)
+	if err != nil {
+		return err
+	}
+
+	err = scheme.AddFieldLabelConversionFunc(
+		scope.ScopeResourceInfo.GroupVersionKind(),
+		func(label, value string) (string, string, error) {
+			fieldSet := SelectableFields(&scope.Scope{})
+			for key := range fieldSet {
+				if label == key {
+					return label, value, nil
+				}
+			}
+			return "", "", fmt.Errorf("field label not supported for %s: %s", scope.ScopeResourceInfo.GroupVersionKind(), label)
+		},
+	)
 	if err != nil {
 		return err
 	}
