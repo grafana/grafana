@@ -4,7 +4,7 @@ import React, { useState } from 'react';
 import { arrayUtils, AnnotationQuery } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { getDataSourceSrv } from '@grafana/runtime';
-import { Alert, Button, DeleteButton, IconButton, TextLink, useStyles2, VerticalGroup } from '@grafana/ui';
+import { Alert, Button, DeleteButton, IconButton, Stack, TextLink, useStyles2, VerticalGroup } from '@grafana/ui';
 import { EmptyState } from '@grafana/ui/src/components/EmptyState/EmptyState';
 import { Trans, t } from 'app/core/internationalization';
 
@@ -109,11 +109,12 @@ export const AnnotationSettingsList = ({ dashboard, onNew, onEdit }: Props) => {
         </div>
       )}
       {showEmptyListCTA && (
-        <EmptyState
-          message={t('annotations.empty-state.title', 'There are no custom annotation queries added yet')}
-          buttonLabel={t('annotations.empty-state.button-title', 'Add annotation query')}
-          onButtonClick={onNew}
-        >
+        <Stack direction="column">
+          <EmptyState
+            message={t('annotations.empty-state.title', 'There are no custom annotation queries added yet')}
+            buttonLabel={t('annotations.empty-state.button-title', 'Add annotation query')}
+            onButtonClick={onNew}
+          />
           <Alert severity="info" title={t('annotations.empty-state.info-box-title', 'What are annotation queries?')}>
             <Trans i18nKey="annotations.empty-state.info-box-content">
               <p>
@@ -131,7 +132,7 @@ export const AnnotationSettingsList = ({ dashboard, onNew, onEdit }: Props) => {
               for more information.
             </Trans>
           </Alert>
-        </EmptyState>
+        </Stack>
       )}
       {!showEmptyListCTA && (
         <ListNewButton

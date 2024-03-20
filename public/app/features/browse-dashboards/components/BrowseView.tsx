@@ -2,7 +2,6 @@ import React, { useCallback } from 'react';
 
 import { CallToActionCard, TextLink } from '@grafana/ui';
 import { EmptyState } from '@grafana/ui/src/components/EmptyState/EmptyState';
-import { ProTip } from 'app/core/components/ProTip/ProTip';
 import { Trans, t } from 'app/core/internationalization';
 import { DashboardViewItem } from 'app/features/search/types';
 import { useDispatch } from 'app/types';
@@ -125,18 +124,16 @@ export function BrowseView({ folderUID, width, height, canSelect }: BrowseViewPr
             message={
               folderUID
                 ? t('browse-dashboards.empty-state.title-folder', "This folder doesn't have any dashboards yet")
-                : t('browse-dashboards.empty-state.title', "You haven't created any dashboards yet.")
+                : t('browse-dashboards.empty-state.title', "You haven't created any dashboards yet")
             }
           >
             {folderUID && (
-              <ProTip>
-                <Trans i18nKey="browse-dashboards.empty-state.pro-tip">
-                  Add/move dashboards to your folder at{' '}
-                  <TextLink external={false} href="/dashboards">
-                    Browse dashboards
-                  </TextLink>
-                </Trans>
-              </ProTip>
+              <Trans i18nKey="browse-dashboards.empty-state.pro-tip">
+                Add/move dashboards to your folder at{' '}
+                <TextLink external={false} href="/dashboards">
+                  Browse dashboards
+                </TextLink>
+              </Trans>
             )}
           </EmptyState>
         ) : (

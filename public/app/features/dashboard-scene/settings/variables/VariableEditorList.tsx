@@ -99,11 +99,12 @@ export function VariableEditorList({
 
 function EmptyVariablesList({ onAdd }: { onAdd: () => void }): ReactElement {
   return (
-    <EmptyState
-      buttonLabel={t('variables.empty-state.button-title', 'Add variable')}
-      message={t('variables.empty-state.title', 'There are no variables added yet')}
-      onButtonClick={onAdd}
-    >
+    <Stack direction="column">
+      <EmptyState
+        buttonLabel={t('variables.empty-state.button-title', 'Add variable')}
+        message={t('variables.empty-state.title', 'There are no variables added yet')}
+        onButtonClick={onAdd}
+      />
       <Alert severity="info" title={t('variables.empty-state.info-box-title', 'What do variables do?')}>
         <p>
           <Trans i18nKey="variables.empty-state.info-box-content">
@@ -121,7 +122,7 @@ function EmptyVariablesList({ onAdd }: { onAdd: () => void }): ReactElement {
           for more information.
         </Trans>
       </Alert>
-    </EmptyState>
+    </Stack>
   );
 }
 

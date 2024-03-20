@@ -46,7 +46,7 @@ export const SnapshotListTable = () => {
   if (!isFetching && snapshots.length === 0) {
     return (
       <EmptyState message={t('snapshot.empty-state.message', "You haven't created any snapshots yet")}>
-        <Trans>
+        <Trans i18nKey="snapshot.empty-state.more-info">
           You can create a snapshot of any dashboard through the <b>Share</b> modal.{' '}
           <TextLink
             external

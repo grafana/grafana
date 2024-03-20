@@ -6,7 +6,6 @@ import { EmptySearchState } from '@grafana/ui/src/components/EmptyState/EmptySea
 import { EmptyState } from '@grafana/ui/src/components/EmptyState/EmptyState';
 import { Page } from 'app/core/components/Page/Page';
 import PageActionBar from 'app/core/components/PageActionBar/PageActionBar';
-import { ProTip } from 'app/core/components/ProTip/ProTip';
 import { Trans, t } from 'app/core/internationalization';
 import { contextSrv } from 'app/core/services/context_srv';
 
@@ -72,14 +71,12 @@ export const PlaylistPage = () => {
                 buttonLabel={contextSrv.isEditor ? t('playlist-page.empty.button', 'Create Playlist') : undefined}
                 message={t('playlist-page.empty.title', 'There are no playlists created yet')}
               >
-                <ProTip>
-                  <Trans i18nKey="playlist-page.empty.pro-tip">
-                    You can use playlists to cycle dashboards on TVs without user control.{' '}
-                    <TextLink external href="https://docs.grafana.org/reference/playlist/">
-                      Learn more
-                    </TextLink>
-                  </Trans>
-                </ProTip>
+                <Trans i18nKey="playlist-page.empty.pro-tip">
+                  You can use playlists to cycle dashboards on TVs without user control.{' '}
+                  <TextLink external href="https://docs.grafana.org/reference/playlist/">
+                    Learn more
+                  </TextLink>
+                </Trans>
               </EmptyState>
             )}
             {playlistToDelete && (

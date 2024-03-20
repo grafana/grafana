@@ -79,7 +79,7 @@
     "empty-state": {
       "button-title": "Cřęäŧę Đäşĥþőäřđ",
       "pro-tip": "Åđđ/mővę đäşĥþőäřđş ŧő yőūř ƒőľđęř äŧ <2>ßřőŵşę đäşĥþőäřđş</2>",
-      "title": "Ÿőū ĥävęŉ'ŧ čřęäŧęđ äŉy đäşĥþőäřđş yęŧ.",
+      "title": "Ÿőū ĥävęŉ'ŧ čřęäŧęđ äŉy đäşĥþőäřđş yęŧ",
       "title-folder": "Ŧĥįş ƒőľđęř đőęşŉ'ŧ ĥävę äŉy đäşĥþőäřđş yęŧ"
     },
     "folder-actions-button": {
@@ -109,7 +109,7 @@
     },
     "no-results": {
       "clear": "Cľęäř şęäřčĥ äŉđ ƒįľŧęřş",
-      "text": "Ńő řęşūľŧş ƒőūŉđ ƒőř yőūř qūęřy."
+      "text": "Ńő řęşūľŧş ƒőūŉđ ƒőř yőūř qūęřy"
     }
   },
   "clipboard-button": {
@@ -1242,12 +1242,9 @@
     },
     "empty": {
       "button": "Cřęäŧę Pľäyľįşŧ",
-      "pro-tip": "Ÿőū čäŉ ūşę pľäyľįşŧş ŧő čyčľę đäşĥþőäřđş őŉ ŦVş ŵįŧĥőūŧ ūşęř čőŉŧřőľ. <1>Ŀęäřŉ mőřę</1>",
+      "pro-tip": "Ÿőū čäŉ ūşę pľäyľįşŧş ŧő čyčľę đäşĥþőäřđş őŉ ŦVş ŵįŧĥőūŧ ūşęř čőŉŧřőľ. <2>Ŀęäřŉ mőřę</2>",
       "title": "Ŧĥęřę äřę ŉő pľäyľįşŧş čřęäŧęđ yęŧ"
     }
-  },
-  "pro-tip": {
-    "title": "PřőŦįp: <1></1>"
   },
   "profile": {
     "change-password": {
@@ -1419,7 +1416,6 @@
       "turned-off": "Åūŧő řęƒřęşĥ őƒƒ"
     }
   },
-  "Remember, you can provide specific permissions for API access to other applications": "Ŗęmęmþęř, yőū čäŉ přővįđę şpęčįƒįč pęřmįşşįőŉş ƒőř ÅPĨ äččęşş ŧő őŧĥęř äppľįčäŧįőŉş.",
   "return-to-previous": {
     "button": {
       "label": "ßäčĸ ŧő {{title}}"
@@ -1458,6 +1454,7 @@
   "service-accounts": {
     "empty-state": {
       "button-title": "Åđđ şęřvįčę äččőūŉŧ",
+      "more-info": "Ŗęmęmþęř, yőū čäŉ přővįđę şpęčįƒįč pęřmįşşįőŉş ƒőř ÅPĨ äččęşş ŧő őŧĥęř äppľįčäŧįőŉş",
       "title": "Ÿőū ĥävęŉ'ŧ čřęäŧęđ äŉy şęřvįčę äččőūŉŧş yęŧ"
     }
   },
@@ -1586,7 +1583,8 @@
   },
   "snapshot": {
     "empty-state": {
-      "message": "Ÿőū ĥävęŉ'ŧ čřęäŧęđ äŉy şŉäpşĥőŧş yęŧ"
+      "message": "Ÿőū ĥävęŉ'ŧ čřęäŧęđ äŉy şŉäpşĥőŧş yęŧ",
+      "more-info": "Ÿőū čäŉ čřęäŧę ä şŉäpşĥőŧ őƒ äŉy đäşĥþőäřđ ŧĥřőūģĥ ŧĥę <1>Ŝĥäřę</1> mőđäľ. <4>Ŀęäřŉ mőřę</4>"
     },
     "external-badge": "Ēχŧęřŉäľ",
     "name-column-header": "Ńämę",
@@ -1728,8 +1726,5 @@
       "info-box-title": "Ŵĥäŧ đő väřįäþľęş đő?",
       "title": "Ŧĥęřę äřę ŉő väřįäþľęş äđđęđ yęŧ"
     }
-  },
-  "You can create a snapshot of any dashboard through the <1>Share</1> modal": {
-    " <4>Learn more</4>": "Ÿőū čäŉ čřęäŧę ä şŉäpşĥőŧ őƒ äŉy đäşĥþőäřđ ŧĥřőūģĥ ŧĥę <1>Ŝĥäřę</1> mőđäľ. <4>Ŀęäřŉ mőřę</4>"
   }
 }

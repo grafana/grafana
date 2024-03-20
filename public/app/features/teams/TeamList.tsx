@@ -23,7 +23,6 @@ import {
 import { EmptySearchState } from '@grafana/ui/src/components/EmptyState/EmptySearchState/EmptySearchState';
 import { EmptyState } from '@grafana/ui/src/components/EmptyState/EmptyState';
 import { Page } from 'app/core/components/Page/Page';
-import { ProTip } from 'app/core/components/ProTip/ProTip';
 import { fetchRoleOptions } from 'app/core/components/RolePicker/api';
 import { Trans, t } from 'app/core/internationalization';
 import { contextSrv } from 'app/core/services/context_srv';
@@ -214,14 +213,12 @@ export const TeamList = ({
             }
             message={t('teams.empty-state.title', "You haven't created any teams yet")}
           >
-            <ProTip>
-              <Trans i18nKey="teams.empty-state.pro-tip">
-                Assign folder and dashboard permissions to teams instead of users to ease administration.{' '}
-                <TextLink external href="https://grafana.com/docs/grafana/latest/administration/team-management">
-                  Learn more
-                </TextLink>
-              </Trans>
-            </ProTip>
+            <Trans i18nKey="teams.empty-state.pro-tip">
+              Assign folder and dashboard permissions to teams instead of users to ease administration.{' '}
+              <TextLink external href="https://grafana.com/docs/grafana/latest/administration/team-management">
+                Learn more
+              </TextLink>
+            </Trans>
           </EmptyState>
         ) : (
           <>

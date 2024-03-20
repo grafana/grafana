@@ -39,15 +39,17 @@ export const EmptyState = ({
 
   return (
     <Box paddingY={4}>
-      <Stack gap={2} direction="column" alignItems="center">
+      <Stack gap={4} direction="column" alignItems="center">
         {showImage && <GrotNotFound width={300} />}
-        <Text variant="h5">{message}</Text>
+        <Stack direction="column" alignItems="center">
+          <Text variant="h4">{message}</Text>
+          {children && <Text color="secondary">{children}</Text>}
+        </Stack>
         {buttonLabel && (
-          <ButtonElement href={buttonHref} icon="plus" size="lg" onClick={onButtonClick}>
+          <ButtonElement href={buttonHref} size="lg" onClick={onButtonClick}>
             {buttonLabel}
           </ButtonElement>
         )}
-        {children && <Text color="secondary">{children}</Text>}
       </Stack>
     </Box>
   );

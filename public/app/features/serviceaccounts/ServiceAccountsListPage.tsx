@@ -17,7 +17,6 @@ import {
 import { EmptySearchState } from '@grafana/ui/src/components/EmptyState/EmptySearchState/EmptySearchState';
 import { EmptyState } from '@grafana/ui/src/components/EmptyState/EmptyState';
 import { Page } from 'app/core/components/Page/Page';
-import { ProTip } from 'app/core/components/ProTip/ProTip';
 import config from 'app/core/config';
 import { contextSrv } from 'app/core/core';
 import { Trans, t } from 'app/core/internationalization';
@@ -234,9 +233,9 @@ export const ServiceAccountsListPageUnconnected = ({
                 }
                 message={t('service-accounts.empty-state.title', "You haven't created any service accounts yet")}
               >
-                <ProTip>
-                  <Trans>Remember, you can provide specific permissions for API access to other applications.</Trans>
-                </ProTip>
+                <Trans i18nKey="service-accounts.empty-state.more-info">
+                  Remember, you can provide specific permissions for API access to other applications
+                </Trans>
               </EmptyState>
             )}
             {serviceAccounts.length === 0 && !noServiceAccountsCreated && <EmptySearchState />}

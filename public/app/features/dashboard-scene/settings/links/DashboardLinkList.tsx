@@ -10,6 +10,7 @@ import {
   HorizontalGroup,
   Icon,
   IconButton,
+  Stack,
   TagList,
   TextLink,
   useStyles2,
@@ -39,11 +40,12 @@ export function DashboardLinkList({
 
   if (isEmptyList) {
     return (
-      <EmptyState
-        buttonLabel={t('dashboard-links.empty-state.button-title', 'Add dashboard link')}
-        message={t('dashboard-links.empty-state.title', 'There are no dashboard links added yet')}
-        onButtonClick={onNew}
-      >
+      <Stack direction="column">
+        <EmptyState
+          buttonLabel={t('dashboard-links.empty-state.button-title', 'Add dashboard link')}
+          message={t('dashboard-links.empty-state.title', 'There are no dashboard links added yet')}
+          onButtonClick={onNew}
+        />
         <Alert severity="info" title={t('dashboard-links.empty-state.info-box-title', 'What are dashboard links?')}>
           <Trans i18nKey="dashboard-links.empty-state.info-box-content">
             Dashboard Links allow you to place links to other dashboards and web sites directly below the dashboard
@@ -56,7 +58,7 @@ export function DashboardLinkList({
             </TextLink>
           </Trans>
         </Alert>
-      </EmptyState>
+      </Stack>
     );
   }
 

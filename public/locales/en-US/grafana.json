@@ -79,7 +79,7 @@
     "empty-state": {
       "button-title": "Create Dashboard",
       "pro-tip": "Add/move dashboards to your folder at <2>Browse dashboards</2>",
-      "title": "You haven't created any dashboards yet.",
+      "title": "You haven't created any dashboards yet",
       "title-folder": "This folder doesn't have any dashboards yet"
     },
     "folder-actions-button": {
@@ -109,7 +109,7 @@
     },
     "no-results": {
       "clear": "Clear search and filters",
-      "text": "No results found for your query."
+      "text": "No results found for your query"
     }
   },
   "clipboard-button": {
@@ -1242,12 +1242,9 @@
     },
     "empty": {
       "button": "Create Playlist",
-      "pro-tip": "You can use playlists to cycle dashboards on TVs without user control. <1>Learn more</1>",
+      "pro-tip": "You can use playlists to cycle dashboards on TVs without user control. <2>Learn more</2>",
       "title": "There are no playlists created yet"
     }
-  },
-  "pro-tip": {
-    "title": "ProTip: <1></1>"
   },
   "profile": {
     "change-password": {
@@ -1419,7 +1416,6 @@
       "turned-off": "Auto refresh off"
     }
   },
-  "Remember, you can provide specific permissions for API access to other applications": "Remember, you can provide specific permissions for API access to other applications.",
   "return-to-previous": {
     "button": {
       "label": "Back to {{title}}"
@@ -1458,6 +1454,7 @@
   "service-accounts": {
     "empty-state": {
       "button-title": "Add service account",
+      "more-info": "Remember, you can provide specific permissions for API access to other applications",
       "title": "You haven't created any service accounts yet"
     }
   },
@@ -1586,7 +1583,8 @@
   },
   "snapshot": {
     "empty-state": {
-      "message": "You haven't created any snapshots yet"
+      "message": "You haven't created any snapshots yet",
+      "more-info": "You can create a snapshot of any dashboard through the <1>Share</1> modal. <4>Learn more</4>"
     },
     "external-badge": "External",
     "name-column-header": "Name",
@@ -1728,8 +1726,5 @@
       "info-box-title": "What do variables do?",
       "title": "There are no variables added yet"
     }
-  },
-  "You can create a snapshot of any dashboard through the <1>Share</1> modal": {
-    " <4>Learn more</4>": "You can create a snapshot of any dashboard through the <1>Share</1> modal. <4>Learn more</4>"
   }
 }
