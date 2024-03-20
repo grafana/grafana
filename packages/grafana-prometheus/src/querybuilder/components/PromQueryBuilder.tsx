@@ -27,7 +27,7 @@ import { PromQail } from './promQail/PromQail';
 import { QueryAssistantButton } from './promQail/QueryAssistantButton';
 import { isLLMPluginEnabled } from './promQail/state/helpers';
 
-export interface Props {
+export interface PromQueryBuilderProps {
   query: PromVisualQuery;
   datasource: PrometheusDatasource;
   onChange: (update: PromVisualQuery) => void;
@@ -36,15 +36,12 @@ export interface Props {
   showExplain: boolean;
 }
 
-// initial commit for hackathon-2023-08-promqail
-// AI/ML + Prometheus
-const prometheusPromQAIL = config.featureToggles.prometheusPromQAIL;
-
-export const PromQueryBuilder = React.memo<Props>((props) => {
+export const PromQueryBuilder = React.memo<PromQueryBuilderProps>((props) => {
   const { datasource, query, onChange, onRunQuery, data, showExplain } = props;
   const [highlightedOp, setHighlightedOp] = useState<QueryBuilderOperation | undefined>();
   const [showDrawer, setShowDrawer] = useState<boolean>(false);
   const [llmAppEnabled, updateLlmAppEnabled] = useState<boolean>(false);
+  const { prometheusPromQAIL } = config.featureToggles; // AI/ML + Prometheus
 
   const lang = { grammar: promqlGrammar, name: 'promql' };
 
@@ -55,8 +52,11 @@ export const PromQueryBuilder = React.memo<Props>((props) => {
       const check = await isLLMPluginEnabled();
       updateLlmAppEnabled(check);
     }
-    checkLlms();
-  }, []);
+
+    if (prometheusPromQAIL) {
+      checkLlms();
+    }
+  }, [prometheusPromQAIL]);
 
   return (
     <>

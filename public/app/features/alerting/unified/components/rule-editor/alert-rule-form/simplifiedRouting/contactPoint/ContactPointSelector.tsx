@@ -30,6 +30,8 @@ export interface ContactPointSelectorProps {
   refetchReceivers: () => Promise<unknown>;
 }
 
+const MAX_CONTACT_POINTS_RENDERED = 500;
+
 export function ContactPointSelector({
   alertManager,
   options,
@@ -42,9 +44,10 @@ export function ContactPointSelector({
   const contactPointInForm = watch(`contactPoints.${alertManager}.selectedContactPoint`);
 
   const selectedContactPointWithMetadata = options.find((option) => option.value.name === contactPointInForm)?.value;
-  const selectedContactPointSelectableValue = selectedContactPointWithMetadata
-    ? { value: selectedContactPointWithMetadata, label: selectedContactPointWithMetadata.name }
-    : undefined;
+  const selectedContactPointSelectableValue: SelectableValue<ContactPointWithMetadata> =
+    selectedContactPointWithMetadata
+      ? { value: selectedContactPointWithMetadata, label: selectedContactPointWithMetadata.name }
+      : { value: undefined, label: '' };
 
   const LOADING_SPINNER_DURATION = 1000;
 
@@ -75,13 +78,13 @@ export function ContactPointSelector({
   return (
     <Stack direction="column">
       <Stack direction="row" alignItems="center">
-        <Field label="Contact point">
+        <Field label="Contact point" data-testid="contact-point-picker">
           <InputControl
             render={({ field: { onChange, ref, ...field }, fieldState: { error } }) => (
               <>
                 <div className={styles.contactPointsSelector}>
-                  <Select
-                    {...field}
+                  <Select<ContactPointWithMetadata>
+                    virtualized={options.length > MAX_CONTACT_POINTS_RENDERED}
                     aria-label="Contact point"
                     defaultValue={selectedContactPointSelectableValue}
                     onChange={(value: SelectableValue<ContactPointWithMetadata>, _: ActionMeta) => {

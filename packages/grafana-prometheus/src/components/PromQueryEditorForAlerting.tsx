@@ -1,6 +1,6 @@
 import React from 'react';
 
-import PromQueryField from './PromQueryField';
+import { PromQueryField } from './PromQueryField';
 import { PromQueryEditorProps } from './types';
 
 export function PromQueryEditorForAlerting(props: PromQueryEditorProps) {
@@ -15,11 +15,11 @@ export function PromQueryEditorForAlerting(props: PromQueryEditorProps) {
       history={[]}
       range={range}
       data={data}
-      data-testid={testIds.editor}
+      data-testid={alertingTestIds.editor}
     />
   );
 }
 
-export const testIds = {
+export const alertingTestIds = {
   editor: 'prom-editor-cloud-alerting',
 };

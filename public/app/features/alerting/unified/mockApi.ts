@@ -1,7 +1,7 @@
-import { uniqueId } from 'lodash';
-import { rest } from 'msw';
-import { setupServer, SetupServer } from 'msw/node';
 import 'whatwg-fetch';
+import { uniqueId } from 'lodash';
+import { http, HttpResponse } from 'msw';
+import { setupServer, SetupServer } from 'msw/node';
 
 import { DataSourceInstanceSettings, PluginMeta } from '@grafana/data';
 import { setBackendSrv } from '@grafana/runtime';
@@ -120,7 +120,9 @@ class GrafanaReceiverConfigBuilder {
   }
 
   addSetting(key: string, value: string): GrafanaReceiverConfigBuilder {
-    this.grafanaReceiverConfig.settings[key] = value;
+    if (this.grafanaReceiverConfig.settings) {
+      this.grafanaReceiverConfig.settings[key] = value;
+    }
     return this;
   }
 
@@ -190,85 +192,74 @@ export function mockApi(server: SetupServer) {
       configure(builder);
 
       server.use(
-        rest.get(`api/alertmanager/${amName}/config/api/v1/alerts`, (req, res, ctx) =>
-          res(
-            ctx.status(200),
-            ctx.json<AlertManagerCortexConfig>({
-              alertmanager_config: builder.build(),
-              template_files: {},
-            })
-          )
+        http.get(`api/alertmanager/${amName}/config/api/v1/alerts`, () =>
+          HttpResponse.json<AlertManagerCortexConfig>({
+            alertmanager_config: builder.build(),
+            template_files: {},
+          })
         )
       );
     },
 
     eval: (response: AlertingQueryResponse) => {
       server.use(
-        rest.post('/api/v1/eval', (_, res, ctx) => {
-          return res(ctx.status(200), ctx.json(response));
+        http.post('/api/v1/eval', () => {
+          return HttpResponse.json(response);
         })
       );
     },
     grafanaNotifiers: (response: NotifierDTO[]) => {
-      server.use(
-        rest.get(`api/alert-notifiers`, (req, res, ctx) => res(ctx.status(200), ctx.json<NotifierDTO[]>(response)))
-      );
+      server.use(http.get(`api/alert-notifiers`, () => HttpResponse.json(response)));
     },
 
     plugins: {
       getPluginSettings: (response: PluginMeta) => {
-        server.use(
-          rest.get(`api/plugins/${response.id}/settings`, (req, res, ctx) =>
-            res(ctx.status(200), ctx.json<PluginMeta>(response))
-          )
-        );
+        server.use(http.get(`api/plugins/${response.id}/settings`, () => HttpResponse.json(response)));
       },
     },
 
     oncall: {
       getOnCallIntegrations: (response: OnCallIntegrationDTO[]) => {
         server.use(
-          rest.get(`api/plugin-proxy/grafana-oncall-app/api/internal/v1/alert_receive_channels`, (_, res, ctx) =>
-            res(ctx.status(200), ctx.json<OnCallIntegrationDTO[]>(response))
+          http.get(`api/plugin-proxy/grafana-oncall-app/api/internal/v1/alert_receive_channels`, () =>
+            HttpResponse.json<OnCallIntegrationDTO[]>(response)
           )
         );
       },
       features: (response: string[]) => {
         server.use(
-          rest.get(`api/plugin-proxy/grafana-oncall-app/api/internal/v1/features`, (_, res, ctx) =>
-            res(ctx.status(200), ctx.json<string[]>(response))
-          )
+          http.get(`api/plugin-proxy/grafana-oncall-app/api/internal/v1/features`, () => HttpResponse.json(response))
         );
       },
       validateIntegrationName: (invalidNames: string[]) => {
         server.use(
-          rest.get(
+          http.get(
             `api/plugin-proxy/grafana-oncall-app/api/internal/v1/alert_receive_channels/validate_name`,
-            (req, res, ctx) => {
-              const isValid = !invalidNames.includes(req.url.searchParams.get('verbal_name') ?? '');
-              return res(ctx.status(isValid ? 200 : 409), ctx.json<boolean>(isValid));
+            ({ request }) => {
+              const url = new URL(request.url);
+              const isValid = !invalidNames.includes(url.searchParams.get('verbal_name') ?? '');
+              return HttpResponse.json(isValid, {
+                status: isValid ? 200 : 409,
+              });
             }
           )
         );
       },
       createIntegraion: () => {
         server.use(
-          rest.post<CreateIntegrationDTO>(
+          http.post<{}, CreateIntegrationDTO>(
             `api/plugin-proxy/grafana-oncall-app/api/internal/v1/alert_receive_channels`,
-            async (req, res, ctx) => {
-              const body = await req.json<CreateIntegrationDTO>();
+            async ({ request }) => {
+              const body = await request.json();
               const integrationId = uniqueId('oncall-integration-');
 
-              return res(
-                ctx.status(200),
-                ctx.json<NewOnCallIntegrationDTO>({
-                  id: integrationId,
-                  integration: body.integration,
-                  integration_url: `https://oncall-endpoint.example.com/${integrationId}`,
-                  verbal_name: body.verbal_name,
-                  connected_escalations_chains_count: 0,
-                })
-              );
+              return HttpResponse.json<NewOnCallIntegrationDTO>({
+                id: integrationId,
+                integration: body.integration,
+                integration_url: `https://oncall-endpoint.example.com/${integrationId}`,
+                verbal_name: body.verbal_name,
+                connected_escalations_chains_count: 0,
+              });
             }
           )
         );
@@ -281,21 +272,15 @@ export function mockAlertRuleApi(server: SetupServer) {
   return {
     prometheusRuleNamespaces: (dsName: string, response: PromRulesResponse) => {
       server.use(
-        rest.get(`api/prometheus/${dsName}/api/v1/rules`, (req, res, ctx) =>
-          res(ctx.status(200), ctx.json<PromRulesResponse>(response))
-        )
+        http.get(`api/prometheus/${dsName}/api/v1/rules`, () => HttpResponse.json<PromRulesResponse>(response))
       );
     },
     rulerRules: (dsName: string, response: RulerRulesConfigDTO) => {
-      server.use(
-        rest.get(`/api/ruler/${dsName}/api/v1/rules`, (req, res, ctx) => res(ctx.status(200), ctx.json(response)))
-      );
+      server.use(http.get(`/api/ruler/${dsName}/api/v1/rules`, () => HttpResponse.json(response)));
     },
     rulerRuleGroup: (dsName: string, namespace: string, group: string, response: RulerRuleGroupDTO) => {
       server.use(
-        rest.get(`/api/ruler/${dsName}/api/v1/rules/${namespace}/${group}`, (req, res, ctx) =>
-          res(ctx.status(200), ctx.json(response))
-        )
+        http.get(`/api/ruler/${dsName}/api/v1/rules/${namespace}/${group}`, () => HttpResponse.json(response))
       );
     },
   };
@@ -312,9 +297,7 @@ export function mockFeatureDiscoveryApi(server: SetupServer) {
      * @param response Use `buildInfoResponse` to get a pre-defined response for Prometheus and Mimir
      */
     discoverDsFeatures: (dsSettings: DataSourceInstanceSettings, response: PromBuildInfoResponse) => {
-      server.use(
-        rest.get(`${dsSettings.url}/api/v1/status/buildinfo`, (_, res, ctx) => res(ctx.status(200), ctx.json(response)))
-      );
+      server.use(http.get(`${dsSettings.url}/api/v1/status/buildinfo`, () => HttpResponse.json(response)));
     },
   };
 }
@@ -323,16 +306,20 @@ export function mockProvisioningApi(server: SetupServer) {
   return {
     exportRuleGroup: (folderUid: string, groupName: string, response: Record<string, string>) => {
       server.use(
-        rest.get(`/api/v1/provisioning/folder/${folderUid}/rule-groups/${groupName}/export`, (req, res, ctx) =>
-          res(ctx.status(200), ctx.text(response[req.url.searchParams.get('format') ?? 'yaml']))
-        )
+        http.get(`/api/v1/provisioning/folder/${folderUid}/rule-groups/${groupName}/export`, ({ request }) => {
+          const url = new URL(request.url);
+          const format = url.searchParams.get('format') ?? 'yaml';
+          return HttpResponse.text(response[format]);
+        })
       );
     },
     exportReceiver: (response: Record<string, string>) => {
       server.use(
-        rest.get(`/api/v1/provisioning/contact-points/export/`, (req, res, ctx) =>
-          res(ctx.status(200), ctx.text(response[req.url.searchParams.get('format') ?? 'yaml']))
-        )
+        http.get(`/api/v1/provisioning/contact-points/export/`, ({ request }) => {
+          const url = new URL(request.url);
+          const format = url.searchParams.get('format') ?? 'yaml';
+          return HttpResponse.text(response[format]);
+        })
       );
     },
   };
@@ -344,43 +331,51 @@ export function mockExportApi(server: SetupServer) {
     // exportRule requires ruleUid parameter and doesn't allow folderUid and group parameters
     exportRule: (ruleUid: string, response: Record<string, string>) => {
       server.use(
-        rest.get('/api/ruler/grafana/api/v1/export/rules', (req, res, ctx) => {
-          if (req.url.searchParams.get('ruleUid') === ruleUid) {
-            return res(ctx.status(200), ctx.text(response[req.url.searchParams.get('format') ?? 'yaml']));
+        http.get('/api/ruler/grafana/api/v1/export/rules', ({ request }) => {
+          const url = new URL(request.url);
+          if (url.searchParams.get('ruleUid') === ruleUid) {
+            const format = url.searchParams.get('format') ?? 'yaml';
+            return HttpResponse.text(response[format]);
           }
 
-          return res(ctx.status(500));
+          return HttpResponse.text('', { status: 500 });
         })
       );
     },
     // exportRulesGroup requires folderUid and group parameters and doesn't allow ruleUid parameter
     exportRulesGroup: (folderUid: string, group: string, response: Record<string, string>) => {
       server.use(
-        rest.get('/api/ruler/grafana/api/v1/export/rules', (req, res, ctx) => {
-          if (req.url.searchParams.get('folderUid') === folderUid && req.url.searchParams.get('group') === group) {
-            return res(ctx.status(200), ctx.text(response[req.url.searchParams.get('format') ?? 'yaml']));
+        http.get('/api/ruler/grafana/api/v1/export/rules', ({ request }) => {
+          const url = new URL(request.url);
+          if (url.searchParams.get('folderUid') === folderUid && url.searchParams.get('group') === group) {
+            const format = url.searchParams.get('format') ?? 'yaml';
+            return HttpResponse.text(response[format]);
           }
 
-          return res(ctx.status(500));
+          return HttpResponse.text('', { status: 500 });
         })
       );
     },
     // exportRulesFolder requires folderUid parameter
     exportRulesFolder: (folderUid: string, response: Record<string, string>) => {
       server.use(
-        rest.get('/api/ruler/grafana/api/v1/export/rules', (req, res, ctx) => {
-          if (req.url.searchParams.get('folderUid') === folderUid) {
-            return res(ctx.status(200), ctx.text(response[req.url.searchParams.get('format') ?? 'yaml']));
+        http.get('/api/ruler/grafana/api/v1/export/rules', ({ request }) => {
+          const url = new URL(request.url);
+          if (url.searchParams.get('folderUid') === folderUid) {
+            const format = url.searchParams.get('format') ?? 'yaml';
+            return HttpResponse.text(response[format]);
           }
 
-          return res(ctx.status(500));
+          return HttpResponse.text('', { status: 500 });
         })
       );
     },
     modifiedExport: (namespaceUID: string, response: Record<string, string>) => {
       server.use(
-        rest.post(`/api/ruler/grafana/api/v1/rules/${namespaceUID}/export`, (req, res, ctx) => {
-          return res(ctx.status(200), ctx.text(response[req.url.searchParams.get('format') ?? 'yaml']));
+        http.post(`/api/ruler/grafana/api/v1/rules/${namespaceUID}/export`, ({ request }) => {
+          const url = new URL(request.url);
+          const format = url.searchParams.get('format') ?? 'yaml';
+          return HttpResponse.text(response[format]);
         })
       );
     },
@@ -390,7 +385,7 @@ export function mockExportApi(server: SetupServer) {
 export function mockFolderApi(server: SetupServer) {
   return {
     folder: (folderUid: string, response: FolderDTO) => {
-      server.use(rest.get(`/api/folders/${folderUid}`, (_, res, ctx) => res(ctx.status(200), ctx.json(response))));
+      server.use(http.get(`/api/folders/${folderUid}`, () => HttpResponse.json(response)));
     },
   };
 }
@@ -398,7 +393,7 @@ export function mockFolderApi(server: SetupServer) {
 export function mockSearchApi(server: SetupServer) {
   return {
     search: (results: DashboardSearchItem[]) => {
-      server.use(rest.get(`/api/search`, (_, res, ctx) => res(ctx.status(200), ctx.json(results))));
+      server.use(http.get(`/api/search`, () => HttpResponse.json(results)));
     },
   };
 }
@@ -406,14 +401,10 @@ export function mockSearchApi(server: SetupServer) {
 export function mockDashboardApi(server: SetupServer) {
   return {
     search: (results: DashboardSearchItem[]) => {
-      server.use(rest.get(`/api/search`, (_, res, ctx) => res(ctx.status(200), ctx.json(results))));
+      server.use(http.get(`/api/search`, () => HttpResponse.json(results)));
     },
     dashboard: (response: DashboardDTO) => {
-      server.use(
-        rest.get(`/api/dashboards/uid/${response.dashboard.uid}`, (_, res, ctx) =>
-          res(ctx.status(200), ctx.json(response))
-        )
-      );
+      server.use(http.get(`/api/dashboards/uid/${response.dashboard.uid}`, () => HttpResponse.json(response)));
     },
   };
 }

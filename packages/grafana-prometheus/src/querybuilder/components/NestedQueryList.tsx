@@ -7,7 +7,7 @@ import { PromVisualQuery, PromVisualQueryBinary } from '../types';
 
 import { NestedQuery } from './NestedQuery';
 
-export interface Props {
+export interface NestedQueryListProps {
   query: PromVisualQuery;
   datasource: PrometheusDatasource;
   onChange: (query: PromVisualQuery) => void;
@@ -15,7 +15,7 @@ export interface Props {
   showExplain: boolean;
 }
 
-export function NestedQueryList(props: Props) {
+export function NestedQueryList(props: NestedQueryListProps) {
   const { query, datasource, onChange, onRunQuery, showExplain } = props;
   const nestedQueries = query.binaryQueries ?? [];
 

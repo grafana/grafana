@@ -20,7 +20,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/secrets/kvstore"
 	sa "github.com/grafana/grafana/pkg/services/serviceaccounts"
 	"github.com/grafana/grafana/pkg/services/serviceaccounts/tests"
-	"github.com/grafana/grafana/pkg/services/user/usertest"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -44,7 +43,7 @@ func setupTestEnv(t *testing.T) *TestEnv {
 	}
 	logger := log.New("extsvcaccounts.test")
 	env.S = &ExtSvcAccountsService{
-		acSvc:    acimpl.ProvideOSSService(cfg, env.AcStore, localcache.New(0, 0), usertest.NewUserServiceFake(), fmgt),
+		acSvc:    acimpl.ProvideOSSService(cfg, env.AcStore, localcache.New(0, 0), fmgt),
 		features: fmgt,
 		logger:   logger,
 		metrics:  newMetrics(nil, env.SaSvc, logger),
@@ -449,13 +448,13 @@ func TestExtSvcAccountsService_GetExternalServiceNames(t *testing.T) {
 	sa1 := sa.ServiceAccountDTO{
 		Id:    1,
 		Name:  sa.ExtSvcPrefix + "sa-svc-1",
-		Login: sa.ServiceAccountPrefix + sa.ExtSvcPrefix + "sa-svc-1",
+		Login: sa.ExtSvcLoginPrefix + "sa-svc-1",
 		OrgId: extsvcauth.TmpOrgID,
 	}
 	sa2 := sa.ServiceAccountDTO{
 		Id:    2,
 		Name:  sa.ExtSvcPrefix + "sa-svc-2",
-		Login: sa.ServiceAccountPrefix + sa.ExtSvcPrefix + "sa-svc-2",
+		Login: sa.ExtSvcLoginPrefix + "sa-svc-2",
 		OrgId: extsvcauth.TmpOrgID,
 	}
 	tests := []struct {

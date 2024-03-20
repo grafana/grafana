@@ -31,7 +31,12 @@ import (
 	secretskvs "github.com/grafana/grafana/pkg/services/secrets/kvstore"
 	secretsmng "github.com/grafana/grafana/pkg/services/secrets/manager"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/tests/testsuite"
 )
+
+func TestMain(m *testing.M) {
+	testsuite.Run(m)
+}
 
 type dataSourceMockRetriever struct {
 	res []*datasources.DataSource
@@ -828,7 +833,7 @@ func TestService_GetHttpTransport(t *testing.T) {
 		require.NoError(t, err)
 
 		headers := dsService.getCustomHeaders(sjson, map[string]string{"httpHeaderValue1": "Bearer xf5yhfkpsnmgo"})
-		require.Equal(t, "Bearer xf5yhfkpsnmgo", headers["Authorization"])
+		require.Equal(t, "Bearer xf5yhfkpsnmgo", headers.Get("Authorization"))
 
 		// 1. Start HTTP test server which checks the request headers
 		backend := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -897,7 +902,7 @@ func TestService_GetHttpTransport(t *testing.T) {
 		require.NoError(t, err)
 
 		headers := dsService.getCustomHeaders(sjson, map[string]string{"httpHeaderValue1": "example.com"})
-		require.Equal(t, "example.com", headers["Host"])
+		require.Equal(t, "example.com", headers.Get("Host"))
 
 		// 1. Start HTTP test server which checks the request headers
 		backend := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -1187,7 +1192,7 @@ func TestDataSource_CustomHeaders(t *testing.T) {
 		name             string
 		jsonData         *simplejson.Json
 		secureJsonData   map[string][]byte
-		expectedHeaders  map[string]string
+		expectedHeaders  http.Header
 		expectedErrorMsg string
 	}{
 		{
@@ -1198,8 +1203,8 @@ func TestDataSource_CustomHeaders(t *testing.T) {
 			secureJsonData: map[string][]byte{
 				"httpHeaderValue1": encryptedValue,
 			},
-			expectedHeaders: map[string]string{
-				"X-Test-Header1": testValue,
+			expectedHeaders: http.Header{
+				"X-Test-Header1": []string{testValue},
 			},
 		},
 		{
@@ -1208,7 +1213,7 @@ func TestDataSource_CustomHeaders(t *testing.T) {
 				"httpHeaderName1": "X-Test-Header1",
 			}),
 			secureJsonData:  map[string][]byte{},
-			expectedHeaders: map[string]string{},
+			expectedHeaders: http.Header{},
 		},
 		{
 			name: "non customer header value",
@@ -1216,7 +1221,21 @@ func TestDataSource_CustomHeaders(t *testing.T) {
 				"someotherheader": "X-Test-Header1",
 			}),
 			secureJsonData:  map[string][]byte{},
-			expectedHeaders: map[string]string{},
+			expectedHeaders: http.Header{},
+		},
+		{
+			name: "add multiple header value",
+			jsonData: simplejson.NewFromAny(map[string]any{
+				"httpHeaderName1": "X-Test-Header1",
+				"httpHeaderName2": "X-Test-Header1",
+			}),
+			secureJsonData: map[string][]byte{
+				"httpHeaderValue1": encryptedValue,
+				"httpHeaderValue2": encryptedValue,
+			},
+			expectedHeaders: http.Header{
+				"X-Test-Header1": []string{testValue, testValue},
+			},
 		},
 	}
 

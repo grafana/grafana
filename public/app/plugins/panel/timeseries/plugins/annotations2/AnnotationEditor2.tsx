@@ -1,26 +1,18 @@
 import { css } from '@emotion/css';
-import React, { useContext, useEffect } from 'react';
-import { useAsyncFn } from 'react-use';
+import React, { useRef } from 'react';
+import { Controller } from 'react-hook-form';
+import { useAsyncFn, useClickAway } from 'react-use';
 
-import { AnnotationEventUIModel, GrafanaTheme2 } from '@grafana/data';
-import {
-  Button,
-  Field,
-  Form,
-  HorizontalGroup,
-  InputControl,
-  LayoutItemContext,
-  TextArea,
-  usePanelContext,
-  useStyles2,
-} from '@grafana/ui';
+import { AnnotationEventUIModel, GrafanaTheme2, dateTimeFormat, systemDateFormats } from '@grafana/data';
+import { Button, Field, Stack, TextArea, usePanelContext, useStyles2 } from '@grafana/ui';
+import { Form } from 'app/core/components/Form/Form';
 import { TagFilter } from 'app/core/components/TagFilter/TagFilter';
 import { getAnnotationTags } from 'app/features/annotations/api';
 
 interface Props {
   annoVals: Record<string, any[]>;
   annoIdx: number;
-  timeFormatter: (v: number) => string;
+  timeZone: string;
   dismiss: () => void;
 }
 
@@ -29,24 +21,31 @@ interface AnnotationEditFormDTO {
   tags: string[];
 }
 
-export const AnnotationEditor2 = ({ annoVals, annoIdx, dismiss, timeFormatter, ...otherProps }: Props) => {
+export const AnnotationEditor2 = ({ annoVals, annoIdx, dismiss, timeZone, ...otherProps }: Props) => {
   const styles = useStyles2(getStyles);
-  const panelContext = usePanelContext();
+  const { onAnnotationCreate, onAnnotationUpdate } = usePanelContext();
 
-  const layoutCtx = useContext(LayoutItemContext);
-  useEffect(() => layoutCtx.boostZIndex(), [layoutCtx]);
+  const clickAwayRef = useRef(null);
+
+  useClickAway(clickAwayRef, dismiss);
 
   const [createAnnotationState, createAnnotation] = useAsyncFn(async (event: AnnotationEventUIModel) => {
-    const result = await panelContext.onAnnotationCreate!(event);
+    const result = await onAnnotationCreate!(event);
     dismiss();
     return result;
   });
 
   const [updateAnnotationState, updateAnnotation] = useAsyncFn(async (event: AnnotationEventUIModel) => {
-    const result = await panelContext.onAnnotationUpdate!(event);
+    const result = await onAnnotationUpdate!(event);
     dismiss();
     return result;
   });
+
+  const timeFormatter = (value: number) =>
+    dateTimeFormat(value, {
+      format: systemDateFormats.fullDate,
+      timeZone,
+    });
 
   const isUpdatingAnnotation = annoVals.id?.[annoIdx] != null;
   const isRegionAnnotation = annoVals.isRegion?.[annoIdx];
@@ -68,12 +67,12 @@ export const AnnotationEditor2 = ({ annoVals, annoIdx, dismiss, timeFormatter, .
 
   // Annotation editor
   return (
-    <div className={styles.editor} {...otherProps}>
+    <div ref={clickAwayRef} className={styles.editor} {...otherProps}>
       <div className={styles.header}>
-        <HorizontalGroup justify={'space-between'} align={'center'}>
+        <Stack justifyContent={'space-between'} alignItems={'center'}>
           <div>{isUpdatingAnnotation ? 'Edit annotation' : 'Add annotation'}</div>
           <div>{time}</div>
-        </HorizontalGroup>
+        </Stack>
       </div>
       <Form<AnnotationEditFormDTO>
         onSubmit={onSubmit}
@@ -92,7 +91,7 @@ export const AnnotationEditor2 = ({ annoVals, annoIdx, dismiss, timeFormatter, .
                   />
                 </Field>
                 <Field label={'Tags'}>
-                  <InputControl
+                  <Controller
                     control={control}
                     name="tags"
                     render={({ field: { ref, onChange, ...field } }) => {
@@ -110,14 +109,14 @@ export const AnnotationEditor2 = ({ annoVals, annoIdx, dismiss, timeFormatter, .
                 </Field>
               </div>
               <div className={styles.footer}>
-                <HorizontalGroup justify={'flex-end'}>
+                <Stack justifyContent={'flex-end'}>
                   <Button size={'sm'} variant="secondary" onClick={dismiss} fill="outline">
                     Cancel
                   </Button>
                   <Button size={'sm'} type={'submit'} disabled={stateIndicator?.loading}>
                     {stateIndicator?.loading ? 'Saving' : 'Save'}
                   </Button>
-                </HorizontalGroup>
+                </Stack>
               </div>
             </>
           );

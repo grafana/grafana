@@ -13,7 +13,7 @@ import {
   TimeRange,
   hasTimeField,
 } from '@grafana/data';
-import { TableCellHeight } from '@grafana/schema';
+import { TableCellDisplayMode, TableCellHeight } from '@grafana/schema';
 
 import { useTheme2 } from '../../themes';
 import CustomScrollbar from '../CustomScrollbar/CustomScrollbar';
@@ -22,8 +22,8 @@ import { usePanelContext } from '../PanelChrome';
 import { ExpandedRow, getExpandedRowHeight } from './ExpandedRow';
 import { TableCell } from './TableCell';
 import { TableStyles } from './styles';
-import { TableFilterActionCallback } from './types';
-import { calculateAroundPointThreshold, isPointTimeValAroundTableTimeVal } from './utils';
+import { CellColors, TableFieldOptions, TableFilterActionCallback } from './types';
+import { calculateAroundPointThreshold, getCellColors, isPointTimeValAroundTableTimeVal } from './utils';
 
 interface RowsListProps {
   data: DataFrame;
@@ -44,6 +44,7 @@ interface RowsListProps {
   onCellFilterAdded?: TableFilterActionCallback;
   timeRange?: TimeRange;
   footerPaginationEnabled: boolean;
+  initialRowIndex?: number;
 }
 
 export const RowsList = (props: RowsListProps) => {
@@ -66,9 +67,10 @@ export const RowsList = (props: RowsListProps) => {
     listHeight,
     listRef,
     enableSharedCrosshair = false,
+    initialRowIndex = undefined,
   } = props;
 
-  const [rowHighlightIndex, setRowHighlightIndex] = useState<number | undefined>(undefined);
+  const [rowHighlightIndex, setRowHighlightIndex] = useState<number | undefined>(initialRowIndex);
 
   const theme = useTheme2();
   const panelContext = usePanelContext();
@@ -199,22 +201,50 @@ export const RowsList = (props: RowsListProps) => {
     [tableState.pageIndex, tableState.pageSize]
   );
 
+  let rowBg: Function | undefined = undefined;
+  for (const field of data.fields) {
+    // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+    const fieldOptions = field.config.custom as TableFieldOptions;
+
+    if (
+      fieldOptions !== undefined &&
+      fieldOptions.cellOptions !== undefined &&
+      fieldOptions.cellOptions.type === TableCellDisplayMode.ColorBackground &&
+      fieldOptions.cellOptions.applyToRow
+    ) {
+      rowBg = (rowIndex: number): CellColors => {
+        const display = field.display!(field.values.get(rowIndex));
+        const colors = getCellColors(tableStyles, fieldOptions.cellOptions, display);
+        return colors;
+      };
+    }
+  }
+
   const RenderRow = useCallback(
     ({ index, style, rowHighlightIndex }: { index: number; style: CSSProperties; rowHighlightIndex?: number }) => {
       const indexForPagination = rowIndexForPagination(index);
       const row = rows[indexForPagination];
-
+      let additionalProps: React.HTMLAttributes<HTMLDivElement> = {};
       prepareRow(row);
 
       const expandedRowStyle = tableState.expanded[row.id] ? css({ '&:hover': { background: 'inherit' } }) : {};
 
       if (rowHighlightIndex !== undefined && row.index === rowHighlightIndex) {
         style = { ...style, backgroundColor: theme.components.table.rowHoverBackground };
+        additionalProps = {
+          'aria-selected': 'true',
+        };
+      }
+
+      if (rowBg) {
+        const { bgColor, textColor } = rowBg(row.index);
+        style.background = bgColor;
+        style.color = textColor;
       }
 
       return (
         <div
-          {...row.getRowProps({ style })}
+          {...row.getRowProps({ style, ...additionalProps })}
           className={cx(tableStyles.row, expandedRowStyle)}
           onMouseEnter={() => onRowHover(index, data)}
           onMouseLeave={onRowLeave}
@@ -239,6 +269,7 @@ export const RowsList = (props: RowsListProps) => {
               columnCount={row.cells.length}
               timeRange={timeRange}
               frame={data}
+              rowStyled={rowBg !== undefined}
             />
           ))}
         </div>
@@ -259,6 +290,7 @@ export const RowsList = (props: RowsListProps) => {
       theme.components.table.rowHoverBackground,
       timeRange,
       width,
+      rowBg,
     ]
   );
 

@@ -17,7 +17,7 @@ interface Props {
 export default function AlertRulesDrawerContent({ dashboardUid }: Props) {
   const dispatch = useDispatch();
 
-  const { loading } = useAsync(async () => {
+  const { loading: loadingAlertRules } = useAsync(async () => {
     await dispatch(fetchPromAndRulerRulesAction({ rulesSourceName: GRAFANA_RULES_SOURCE_NAME }));
   }, [dispatch]);
 
@@ -26,6 +26,8 @@ export default function AlertRulesDrawerContent({ dashboardUid }: Props) {
     .flatMap((ns) => ns.groups)
     .flatMap((g) => g.rules)
     .filter((rule) => rule.annotations[Annotation.dashboardUID] === dashboardUid);
+
+  const loading = loadingAlertRules;
 
   return (
     <>

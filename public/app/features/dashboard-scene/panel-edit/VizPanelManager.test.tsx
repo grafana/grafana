@@ -2,15 +2,18 @@ import { map, of } from 'rxjs';
 
 import { DataQueryRequest, DataSourceApi, DataSourceInstanceSettings, LoadingState, PanelData } from '@grafana/data';
 import { locationService } from '@grafana/runtime';
-import { SceneDataTransformer, SceneQueryRunner, VizPanel } from '@grafana/scenes';
+import { SceneGridItem, SceneQueryRunner, VizPanel } from '@grafana/scenes';
 import { DataQuery, DataSourceJsonData, DataSourceRef } from '@grafana/schema';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 import { InspectTab } from 'app/features/inspector/types';
+import * as libAPI from 'app/features/library-panels/state/api';
 import { SHARED_DASHBOARD_QUERY } from 'app/plugins/datasource/dashboard';
 import { DASHBOARD_DATASOURCE_PLUGIN_ID } from 'app/plugins/datasource/dashboard/types';
 
+import { LibraryVizPanel } from '../scene/LibraryVizPanel';
 import { PanelTimeRange, PanelTimeRangeState } from '../scene/PanelTimeRange';
 import { transformSaveModelToScene } from '../serialization/transformSaveModelToScene';
+import { vizPanelToPanel } from '../serialization/transformSceneToSaveModel';
 import { DashboardModelCompatibilityWrapper } from '../utils/DashboardModelCompatibilityWrapper';
 import { findVizPanelByKey } from '../utils/utils';
 
@@ -140,7 +143,7 @@ jest.mock('@grafana/runtime', () => ({
 }));
 
 describe('VizPanelManager', () => {
-  describe('changePluginType', () => {
+  describe('When changing plugin', () => {
     it('Should successfully change from one viz type to another', () => {
       const { vizPanelManager } = setupTest('panel-1');
       expect(vizPanelManager.state.panel.state.pluginId).toBe('timeseries');
@@ -169,7 +172,7 @@ describe('VizPanelManager', () => {
         },
       });
 
-      const vizPanelManager = new VizPanelManager(vizPanel);
+      const vizPanelManager = VizPanelManager.createFor(vizPanel);
 
       expect(vizPanelManager.state.panel.state.fieldConfig.defaults.custom).toBe('Custom');
       expect(vizPanelManager.state.panel.state.fieldConfig.overrides).toBe(overrides);
@@ -193,7 +196,7 @@ describe('VizPanelManager', () => {
         fieldConfig: { defaults: { custom: 'Custom' }, overrides: [] },
       });
 
-      const vizPanelManager = new VizPanelManager(vizPanel);
+      const vizPanelManager = VizPanelManager.createFor(vizPanel);
 
       vizPanelManager.changePluginType('timeseries');
       //@ts-ignore
@@ -205,6 +208,81 @@ describe('VizPanelManager', () => {
       //@ts-ignore
       expect(vizPanelManager.state.panel.state.options['customOption']).toBe('A');
       expect(vizPanelManager.state.panel.state.fieldConfig.defaults.custom).toBe('Custom');
+    });
+  });
+
+  describe('library panels', () => {
+    it('saves library panels on commit', () => {
+      const panel = new VizPanel({
+        key: 'panel-1',
+        pluginId: 'text',
+      });
+
+      const libraryPanelModel = {
+        title: 'title',
+        uid: 'uid',
+        name: 'libraryPanelName',
+        model: vizPanelToPanel(panel),
+        type: 'panel',
+        version: 1,
+      };
+
+      const libraryPanel = new LibraryVizPanel({
+        isLoaded: true,
+        title: libraryPanelModel.title,
+        uid: libraryPanelModel.uid,
+        name: libraryPanelModel.name,
+        panelKey: panel.state.key!,
+        panel: panel,
+        _loadedPanel: libraryPanelModel,
+      });
+
+      new SceneGridItem({ body: libraryPanel });
+
+      const panelManager = VizPanelManager.createFor(panel);
+
+      const apiCall = jest
+        .spyOn(libAPI, 'updateLibraryVizPanel')
+        .mockResolvedValue({ type: 'panel', ...libAPI.libraryVizPanelToSaveModel(libraryPanel) });
+
+      panelManager.state.panel.setState({ title: 'new title' });
+      panelManager.commitChanges();
+
+      expect(apiCall.mock.calls[0][0].state.panel?.state.title).toBe('new title');
+    });
+
+    it('unlinks library panel', () => {
+      const panel = new VizPanel({
+        key: 'panel-1',
+        pluginId: 'text',
+      });
+
+      const libraryPanelModel = {
+        title: 'title',
+        uid: 'uid',
+        name: 'libraryPanelName',
+        model: vizPanelToPanel(panel),
+        type: 'panel',
+        version: 1,
+      };
+
+      const libraryPanel = new LibraryVizPanel({
+        isLoaded: true,
+        title: libraryPanelModel.title,
+        uid: libraryPanelModel.uid,
+        name: libraryPanelModel.name,
+        panelKey: panel.state.key!,
+        panel: panel,
+        _loadedPanel: libraryPanelModel,
+      });
+
+      const gridItem = new SceneGridItem({ body: libraryPanel });
+
+      const panelManager = VizPanelManager.createFor(panel);
+      panelManager.unlinkLibraryPanel();
+
+      const sourcePanel = panelManager.state.sourcePanel.resolve();
+      expect(sourcePanel.parent?.state.key).toBe(gridItem.state.key);
     });
   });
 
@@ -408,6 +486,30 @@ describe('VizPanelManager', () => {
           expect(dataObj.state.minInterval).toBe('1s');
         });
       });
+
+      describe('query caching', () => {
+        it('updates cacheTimeout and queryCachingTTL', async () => {
+          const { vizPanelManager } = setupTest('panel-1');
+          vizPanelManager.activate();
+          await Promise.resolve();
+
+          const dataObj = vizPanelManager.queryRunner;
+
+          vizPanelManager.changeQueryOptions({
+            cacheTimeout: '60',
+            queryCachingTTL: 200000,
+            dataSource: {
+              name: 'grafana-testdata',
+              type: 'grafana-testdata-datasource',
+              default: true,
+            },
+            queries: [],
+          });
+
+          expect(dataObj.state.cacheTimeout).toBe('60');
+          expect(dataObj.state.queryCachingTTL).toBe(200000);
+        });
+      });
     });
 
     describe('query inspection', () => {
@@ -506,11 +608,9 @@ describe('VizPanelManager', () => {
   describe('change transformations', () => {
     it('should update and reprocess transformations', () => {
       const { scene, panel } = setupTest('panel-3');
-      scene.setState({
-        editPanel: buildPanelEditScene(panel),
-      });
+      scene.setState({ editPanel: buildPanelEditScene(panel) });
 
-      const vizPanelManager = scene.state.editPanel!.state.panelRef.resolve();
+      const vizPanelManager = scene.state.editPanel!.state.vizManager;
       vizPanelManager.activate();
       vizPanelManager.state.panel.state.$data?.activate();
 
@@ -560,11 +660,9 @@ describe('VizPanelManager', () => {
     describe('dashboard queries', () => {
       it('should update queries', () => {
         const { scene, panel } = setupTest('panel-3');
-        scene.setState({
-          editPanel: buildPanelEditScene(panel),
-        });
+        scene.setState({ editPanel: buildPanelEditScene(panel) });
 
-        const vizPanelManager = scene.state.editPanel!.state.panelRef.resolve();
+        const vizPanelManager = scene.state.editPanel!.state.vizManager;
         vizPanelManager.activate();
         vizPanelManager.state.panel.state.$data?.activate();
 
@@ -578,7 +676,7 @@ describe('VizPanelManager', () => {
             panelId: panelWithTransformations.id,
           },
         ]);
-        expect(vizPanelManager.panelData).toBeInstanceOf(SceneDataTransformer);
+
         expect(vizPanelManager.queryRunner.state.queries[0].panelId).toEqual(panelWithTransformations.id);
 
         // Changing dashboard query to a panel with queries only
@@ -592,7 +690,6 @@ describe('VizPanelManager', () => {
           },
         ]);
 
-        expect(vizPanelManager.panelData).toBeInstanceOf(SceneDataTransformer);
         expect(vizPanelManager.queryRunner.state.queries[0].panelId).toBe(panelWithQueriesOnly.id);
       });
     });
@@ -600,11 +697,10 @@ describe('VizPanelManager', () => {
 });
 
 const setupTest = (panelId: string) => {
-  const scene = transformSaveModelToScene({ dashboard: testDashboard as any, meta: {} });
+  const scene = transformSaveModelToScene({ dashboard: testDashboard, meta: {} });
   const panel = findVizPanelByKey(scene, panelId)!;
 
-  const vizPanelManager = new VizPanelManager(panel.clone());
-
+  const vizPanelManager = VizPanelManager.createFor(panel);
   // The following happens on DahsboardScene activation. For the needs of this test this activation aint needed hence we hand-call it
   // @ts-expect-error
   getDashboardSrv().setCurrent(new DashboardModelCompatibilityWrapper(scene));

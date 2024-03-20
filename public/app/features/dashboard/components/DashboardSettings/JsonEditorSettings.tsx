@@ -2,7 +2,6 @@ import { css } from '@emotion/css';
 import React, { useState } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { config } from '@grafana/runtime';
 import { Button, CodeEditor, useStyles2 } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
 import { Trans } from 'app/core/internationalization';
@@ -13,8 +12,9 @@ import { getDashboardSrv } from '../../services/DashboardSrv';
 import { SettingsPageProps } from './types';
 
 export function JsonEditorSettings({ dashboard, sectionNav }: SettingsPageProps) {
-  const [dashboardJson, setDashboardJson] = useState<string>(JSON.stringify(dashboard.getSaveModelClone(), null, 2));
-  const pageNav = config.featureToggles.dockedMegaMenu ? sectionNav.node.parentItem : undefined;
+  const dashboardSaveModel = dashboard.getSaveModelClone();
+  const [dashboardJson, setDashboardJson] = useState<string>(JSON.stringify(dashboardSaveModel, null, 2));
+  const pageNav = sectionNav.node.parentItem;
 
   const onClick = async () => {
     await getDashboardSrv().saveJSONDashboard(dashboardJson);

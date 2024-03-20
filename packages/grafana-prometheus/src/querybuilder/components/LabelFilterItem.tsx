@@ -9,7 +9,7 @@ import { AsyncSelect, Select } from '@grafana/ui';
 import { truncateResult } from '../../language_utils';
 import { QueryBuilderLabelFilter } from '../shared/types';
 
-export interface Props {
+export interface LabelFilterItemProps {
   defaultOp: string;
   item: Partial<QueryBuilderLabelFilter>;
   onChange: (value: QueryBuilderLabelFilter) => void;
@@ -33,7 +33,7 @@ export function LabelFilterItem({
   invalidValue,
   getLabelValuesAutofillSuggestions,
   debounceDuration,
-}: Props) {
+}: LabelFilterItemProps) {
   const [state, setState] = useState<{
     labelNames?: SelectableValue[];
     labelValues?: SelectableValue[];
@@ -189,8 +189,6 @@ export function LabelFilterItem({
 const operators = [
   { label: '=', value: '=', isMultiValue: false },
   { label: '!=', value: '!=', isMultiValue: false },
-  { label: '<', value: '<', isMultiValue: false },
-  { label: '>', value: '>', isMultiValue: false },
   { label: '=~', value: '=~', isMultiValue: true },
   { label: '!~', value: '!~', isMultiValue: true },
 ];

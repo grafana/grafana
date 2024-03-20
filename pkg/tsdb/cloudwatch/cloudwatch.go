@@ -6,7 +6,6 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
-	"sync"
 	"time"
 
 	"github.com/aws/aws-sdk-go/aws"
@@ -21,9 +20,9 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend/datasource"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/instancemgmt"
+	"github.com/grafana/grafana-plugin-sdk-go/backend/log"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/proxy"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/resource/httpadapter"
-	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/clients"
 	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/kinds/dataquery"
 	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/models"
@@ -48,6 +47,7 @@ type DataQueryJson struct {
 type DataSource struct {
 	Settings      models.CloudWatchSettings
 	HTTPClient    *http.Client
+	sessions      SessionCache
 	tagValueCache *cache.Cache
 	ProxyOpts     *proxy.Options
 }
@@ -61,12 +61,15 @@ const (
 	timeSeriesQuery = "timeSeriesQuery"
 )
 
-var logger = log.New("tsdb.cloudwatch")
-
 func ProvideService(httpClientProvider *httpclient.Provider) *CloudWatchService {
+	logger := backend.NewLoggerWith("logger", "tsdb.cloudwatch")
 	logger.Debug("Initializing")
 
-	executor := newExecutor(datasource.NewInstanceManager(NewInstanceSettings(httpClientProvider)), awsds.NewSessionCache())
+	executor := newExecutor(
+		datasource.NewInstanceManager(NewInstanceSettings(httpClientProvider)),
+		logger,
+	)
+
 	return &CloudWatchService{
 		Executor: executor,
 	}
@@ -80,10 +83,10 @@ type SessionCache interface {
 	GetSession(c awsds.SessionConfig) (*session.Session, error)
 }
 
-func newExecutor(im instancemgmt.InstanceManager, sessions SessionCache) *cloudWatchExecutor {
+func newExecutor(im instancemgmt.InstanceManager, logger log.Logger) *cloudWatchExecutor {
 	e := &cloudWatchExecutor{
-		im:       im,
-		sessions: sessions,
+		im:     im,
+		logger: logger,
 	}
 
 	e.resourceHandler = httpadapter.New(e.newResourceMux())
@@ -111,19 +114,34 @@ func NewInstanceSettings(httpClientProvider *httpclient.Provider) datasource.Ins
 			Settings:      instanceSettings,
 			HTTPClient:    httpClient,
 			tagValueCache: cache.New(tagValueCacheExpiration, tagValueCacheExpiration*5),
+			sessions:      awsds.NewSessionCache(),
 			// this is used to build a custom dialer when secure socks proxy is enabled
 			ProxyOpts: opts.ProxyOptions,
 		}, nil
 	}
 }
 
-// cloudWatchExecutor executes CloudWatch requests.
+// cloudWatchExecutor executes CloudWatch requests
 type cloudWatchExecutor struct {
-	im          instancemgmt.InstanceManager
-	sessions    SessionCache
-	regionCache sync.Map
+	im     instancemgmt.InstanceManager
+	logger log.Logger
 
 	resourceHandler backend.CallResourceHandler
+}
+
+// instrumentContext adds plugin key-values to the context; later, logger.FromContext(ctx) will provide a logger
+// that adds these values to its output.
+// TODO: move this into the sdk (see https://github.com/grafana/grafana/issues/82033)
+func instrumentContext(ctx context.Context, endpoint string, pCtx backend.PluginContext) context.Context {
+	p := []any{"endpoint", endpoint, "pluginId", pCtx.PluginID}
+	if pCtx.DataSourceInstanceSettings != nil {
+		p = append(p, "dsName", pCtx.DataSourceInstanceSettings.Name)
+		p = append(p, "dsUID", pCtx.DataSourceInstanceSettings.UID)
+	}
+	if pCtx.User != nil {
+		p = append(p, "uname", pCtx.User.Login)
+	}
+	return log.WithContextualAttributes(ctx, p)
 }
 
 func (e *cloudWatchExecutor) getRequestContext(ctx context.Context, pluginCtx backend.PluginContext, region string) (models.RequestContext, error) {
@@ -141,7 +159,7 @@ func (e *cloudWatchExecutor) getRequestContext(ctx context.Context, pluginCtx ba
 		return models.RequestContext{}, err
 	}
 
-	sess, err := e.newSession(ctx, pluginCtx, r)
+	sess, err := instance.newSession(r)
 	if err != nil {
 		return models.RequestContext{}, err
 	}
@@ -152,16 +170,34 @@ func (e *cloudWatchExecutor) getRequestContext(ctx context.Context, pluginCtx ba
 		LogsAPIProvider:       NewLogsAPI(sess),
 		EC2APIProvider:        ec2Client,
 		Settings:              instance.Settings,
-		Logger:                logger,
+		Logger:                e.logger.FromContext(ctx),
+	}, nil
+}
+
+// getRequestContextOnlySettings is useful for resource endpoints that are called before auth has been configured such as external-id that need access to settings but nothing else
+func (e *cloudWatchExecutor) getRequestContextOnlySettings(ctx context.Context, pluginCtx backend.PluginContext, _ string) (models.RequestContext, error) {
+	instance, err := e.getInstance(ctx, pluginCtx)
+	if err != nil {
+		return models.RequestContext{}, err
+	}
+
+	return models.RequestContext{
+		OAMAPIProvider:        nil,
+		MetricsClientProvider: nil,
+		LogsAPIProvider:       nil,
+		EC2APIProvider:        nil,
+		Settings:              instance.Settings,
+		Logger:                e.logger.FromContext(ctx),
 	}, nil
 }
 
 func (e *cloudWatchExecutor) CallResource(ctx context.Context, req *backend.CallResourceRequest, sender backend.CallResourceResponseSender) error {
+	ctx = instrumentContext(ctx, "callResource", req.PluginContext)
 	return e.resourceHandler.CallResource(ctx, req, sender)
 }
 
 func (e *cloudWatchExecutor) QueryData(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
-	logger := logger.FromContext(ctx)
+	ctx = instrumentContext(ctx, "queryData", req.PluginContext)
 	q := req.Queries[0]
 	var model DataQueryJson
 	err := json.Unmarshal(q.JSON, &model)
@@ -185,17 +221,18 @@ func (e *cloudWatchExecutor) QueryData(ctx context.Context, req *backend.QueryDa
 	case annotationQuery:
 		result, err = e.executeAnnotationQuery(ctx, req.PluginContext, model, q)
 	case logAction:
-		result, err = e.executeLogActions(ctx, logger, req)
+		result, err = e.executeLogActions(ctx, req)
 	case timeSeriesQuery:
 		fallthrough
 	default:
-		result, err = e.executeTimeSeriesQuery(ctx, logger, req)
+		result, err = e.executeTimeSeriesQuery(ctx, req)
 	}
 
 	return result, err
 }
 
 func (e *cloudWatchExecutor) CheckHealth(ctx context.Context, req *backend.CheckHealthRequest) (*backend.CheckHealthResult, error) {
+	ctx = instrumentContext(ctx, "checkHealth", req.PluginContext)
 	status := backend.HealthStatusOk
 	metricsTest := "Successfully queried the CloudWatch metrics API."
 	logsTest := "Successfully queried the CloudWatch logs API."
@@ -226,12 +263,12 @@ func (e *cloudWatchExecutor) checkHealthMetrics(ctx context.Context, pluginCtx b
 		MetricName: &metric,
 	}
 
-	session, err := e.newSession(ctx, pluginCtx, defaultRegion)
+	instance, err := e.getInstance(ctx, pluginCtx)
 	if err != nil {
 		return err
 	}
 
-	instance, err := e.getInstance(ctx, pluginCtx)
+	session, err := instance.newSession(defaultRegion)
 	if err != nil {
 		return err
 	}
@@ -242,7 +279,7 @@ func (e *cloudWatchExecutor) checkHealthMetrics(ctx context.Context, pluginCtx b
 }
 
 func (e *cloudWatchExecutor) checkHealthLogs(ctx context.Context, pluginCtx backend.PluginContext) error {
-	session, err := e.newSession(ctx, pluginCtx, defaultRegion)
+	session, err := e.newSessionFromContext(ctx, pluginCtx, defaultRegion)
 	if err != nil {
 		return err
 	}
@@ -251,42 +288,36 @@ func (e *cloudWatchExecutor) checkHealthLogs(ctx context.Context, pluginCtx back
 	return err
 }
 
-func (e *cloudWatchExecutor) newSession(ctx context.Context, pluginCtx backend.PluginContext, region string) (*session.Session, error) {
-	instance, err := e.getInstance(ctx, pluginCtx)
-	if err != nil {
-		return nil, err
-	}
-
+func (ds *DataSource) newSession(region string) (*session.Session, error) {
 	if region == defaultRegion {
-		if len(instance.Settings.Region) == 0 {
+		if len(ds.Settings.Region) == 0 {
 			return nil, models.ErrMissingRegion
 		}
-		region = instance.Settings.Region
+		region = ds.Settings.Region
 	}
-
-	sess, err := e.sessions.GetSession(awsds.SessionConfig{
+	sess, err := ds.sessions.GetSession(awsds.SessionConfig{
 		// https://github.com/grafana/grafana/issues/46365
 		// HTTPClient: instance.HTTPClient,
 		Settings: awsds.AWSDatasourceSettings{
-			Profile:       instance.Settings.Profile,
+			Profile:       ds.Settings.Profile,
 			Region:        region,
-			AuthType:      instance.Settings.AuthType,
-			AssumeRoleARN: instance.Settings.AssumeRoleARN,
-			ExternalID:    instance.Settings.ExternalID,
-			Endpoint:      instance.Settings.Endpoint,
-			DefaultRegion: instance.Settings.Region,
-			AccessKey:     instance.Settings.AccessKey,
-			SecretKey:     instance.Settings.SecretKey,
+			AuthType:      ds.Settings.AuthType,
+			AssumeRoleARN: ds.Settings.AssumeRoleARN,
+			ExternalID:    ds.Settings.ExternalID,
+			Endpoint:      ds.Settings.Endpoint,
+			DefaultRegion: ds.Settings.Region,
+			AccessKey:     ds.Settings.AccessKey,
+			SecretKey:     ds.Settings.SecretKey,
 		},
 		UserAgentName: aws.String("Cloudwatch"),
-		AuthSettings:  &instance.Settings.GrafanaSettings,
+		AuthSettings:  &ds.Settings.GrafanaSettings,
 	})
 	if err != nil {
 		return nil, err
 	}
 
 	// work around until https://github.com/grafana/grafana/issues/39089 is implemented
-	if instance.Settings.GrafanaSettings.SecureSocksDSProxyEnabled && instance.Settings.SecureSocksProxyEnabled {
+	if ds.Settings.GrafanaSettings.SecureSocksDSProxyEnabled && ds.Settings.SecureSocksProxyEnabled {
 		// only update the transport to try to avoid the issue mentioned here https://github.com/grafana/grafana/issues/46365
 		// also, 'sess' is cached and reused, so the first time it might have the transport not set, the following uses it will
 		if sess.Config.HTTPClient.Transport == nil {
@@ -299,12 +330,21 @@ func (e *cloudWatchExecutor) newSession(ctx context.Context, pluginCtx backend.P
 			}
 			sess.Config.HTTPClient.Transport = defTransport.Clone()
 		}
-		err = proxy.New(instance.ProxyOpts).ConfigureSecureSocksHTTPProxy(sess.Config.HTTPClient.Transport.(*http.Transport))
+		err = proxy.New(ds.ProxyOpts).ConfigureSecureSocksHTTPProxy(sess.Config.HTTPClient.Transport.(*http.Transport))
 		if err != nil {
 			return nil, fmt.Errorf("error configuring Secure Socks proxy for Transport: %w", err)
 		}
 	}
 	return sess, nil
+}
+
+func (e *cloudWatchExecutor) newSessionFromContext(ctx context.Context, pluginCtx backend.PluginContext, region string) (*session.Session, error) {
+	instance, err := e.getInstance(ctx, pluginCtx)
+	if err != nil {
+		return nil, err
+	}
+
+	return instance.newSession(region)
 }
 
 func (e *cloudWatchExecutor) getInstance(ctx context.Context, pluginCtx backend.PluginContext) (*DataSource, error) {
@@ -318,7 +358,7 @@ func (e *cloudWatchExecutor) getInstance(ctx context.Context, pluginCtx backend.
 }
 
 func (e *cloudWatchExecutor) getCWClient(ctx context.Context, pluginCtx backend.PluginContext, region string) (cloudwatchiface.CloudWatchAPI, error) {
-	sess, err := e.newSession(ctx, pluginCtx, region)
+	sess, err := e.newSessionFromContext(ctx, pluginCtx, region)
 	if err != nil {
 		return nil, err
 	}
@@ -326,7 +366,7 @@ func (e *cloudWatchExecutor) getCWClient(ctx context.Context, pluginCtx backend.
 }
 
 func (e *cloudWatchExecutor) getCWLogsClient(ctx context.Context, pluginCtx backend.PluginContext, region string) (cloudwatchlogsiface.CloudWatchLogsAPI, error) {
-	sess, err := e.newSession(ctx, pluginCtx, region)
+	sess, err := e.newSessionFromContext(ctx, pluginCtx, region)
 	if err != nil {
 		return nil, err
 	}
@@ -337,7 +377,7 @@ func (e *cloudWatchExecutor) getCWLogsClient(ctx context.Context, pluginCtx back
 }
 
 func (e *cloudWatchExecutor) getEC2Client(ctx context.Context, pluginCtx backend.PluginContext, region string) (models.EC2APIProvider, error) {
-	sess, err := e.newSession(ctx, pluginCtx, region)
+	sess, err := e.newSessionFromContext(ctx, pluginCtx, region)
 	if err != nil {
 		return nil, err
 	}
@@ -347,7 +387,7 @@ func (e *cloudWatchExecutor) getEC2Client(ctx context.Context, pluginCtx backend
 
 func (e *cloudWatchExecutor) getRGTAClient(ctx context.Context, pluginCtx backend.PluginContext, region string) (resourcegroupstaggingapiiface.ResourceGroupsTaggingAPIAPI,
 	error) {
-	sess, err := e.newSession(ctx, pluginCtx, region)
+	sess, err := e.newSessionFromContext(ctx, pluginCtx, region)
 	if err != nil {
 		return nil, err
 	}

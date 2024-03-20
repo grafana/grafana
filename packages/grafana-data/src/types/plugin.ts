@@ -121,6 +121,10 @@ export interface PluginInclude {
   // "Admin", "Editor" or "Viewer". If set then the include will only show up in the navigation if the user has the required roles.
   role?: string;
 
+  // if action is set then the include will only show up in the navigation if the user has the required permission.
+  // The action will take precedence over the role.
+  action?: string;
+
   // Adds the "page" or "dashboard" type includes to the navigation if set to `true`.
   addToNav?: boolean;
 

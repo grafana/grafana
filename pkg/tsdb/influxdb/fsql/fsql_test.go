@@ -6,10 +6,10 @@ import (
 	"encoding/json"
 	"testing"
 
-	"github.com/apache/arrow/go/v13/arrow/flight"
-	"github.com/apache/arrow/go/v13/arrow/flight/flightsql"
-	"github.com/apache/arrow/go/v13/arrow/flight/flightsql/example"
-	"github.com/apache/arrow/go/v13/arrow/memory"
+	"github.com/apache/arrow/go/v15/arrow/flight"
+	"github.com/apache/arrow/go/v15/arrow/flight/flightsql"
+	"github.com/apache/arrow/go/v15/arrow/flight/flightsql/example"
+	"github.com/apache/arrow/go/v15/arrow/memory"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
@@ -57,13 +57,13 @@ func (suite *FSQLTestSuite) TestIntegration_QueryData() {
 		resp, err := Query(
 			context.Background(),
 			&models.DatasourceInfo{
-				HTTPClient: nil,
-				Token:      "secret",
-				URL:        "http://localhost:12345",
-				DbName:     "influxdb",
-				Version:    "test",
-				HTTPMode:   "proxy",
-				SecureGrpc: false,
+				HTTPClient:   nil,
+				Token:        "secret",
+				URL:          "http://localhost:12345",
+				DbName:       "influxdb",
+				Version:      "test",
+				HTTPMode:     "proxy",
+				InsecureGrpc: true,
 			},
 			backend.QueryDataRequest{
 				Queries: []backend.DataQuery{

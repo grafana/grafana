@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/ngalert/metrics"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier"
@@ -48,6 +49,7 @@ func TestMultiorgAlertmanager_RemoteSecondaryMode(t *testing.T) {
 	})
 
 	// Create the factory function for the MOA using the forked Alertmanager in remote secondary mode.
+	secretsService := secretsManager.SetupTestService(t, fakes.NewFakeSecretsStore())
 	override := notifier.WithAlertmanagerOverride(func(factoryFn notifier.OrgAlertmanagerFactory) notifier.OrgAlertmanagerFactory {
 		return func(ctx context.Context, orgID int64) (notifier.Alertmanager, error) {
 			// Create internal Alertmanager.
@@ -64,7 +66,7 @@ func TestMultiorgAlertmanager_RemoteSecondaryMode(t *testing.T) {
 			// We won't be handling files on disk, we can pass an empty string as workingDirPath.
 			stateStore := notifier.NewFileStore(orgID, kvStore, "")
 			m := metrics.NewRemoteAlertmanagerMetrics(prometheus.NewRegistry())
-			remoteAM, err := remote.NewAlertmanager(externalAMCfg, stateStore, m)
+			remoteAM, err := remote.NewAlertmanager(externalAMCfg, stateStore, secretsService.Decrypt, m)
 			require.NoError(t, err)
 
 			// Use both Alertmanager implementations in the forked Alertmanager.
@@ -86,7 +88,6 @@ func TestMultiorgAlertmanager_RemoteSecondaryMode(t *testing.T) {
 			DefaultConfiguration:           setting.GetAlertmanagerDefaultConfiguration(),
 		}, // do not poll in tests.
 	}
-	secretsService := secretsManager.SetupTestService(t, fakes.NewFakeSecretsStore())
 	moa, err := notifier.NewMultiOrgAlertmanager(
 		cfg,
 		configStore,
@@ -98,6 +99,7 @@ func TestMultiorgAlertmanager_RemoteSecondaryMode(t *testing.T) {
 		nil,
 		nopLogger,
 		secretsService,
+		&featuremgmt.FeatureManager{},
 		override,
 	)
 	require.NoError(t, err)

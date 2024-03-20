@@ -24,7 +24,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/authn"
 	"github.com/grafana/grafana/pkg/services/authn/authnimpl/sync"
 	"github.com/grafana/grafana/pkg/services/authn/clients"
-	"github.com/grafana/grafana/pkg/services/extsvcauth/oauthserver"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/ldap/service"
 	"github.com/grafana/grafana/pkg/services/login"
@@ -72,7 +71,8 @@ func ProvideService(
 	features *featuremgmt.FeatureManager, oauthTokenService oauthtoken.OAuthTokenService,
 	socialService social.Service, cache *remotecache.RemoteCache,
 	ldapService service.LDAP, registerer prometheus.Registerer,
-	signingKeysService signingkeys.Service, oauthServer oauthserver.OAuth2Server,
+	signingKeysService signingkeys.Service,
+	settingsProviderService setting.Provider,
 ) *Service {
 	s := &Service{
 		log:             log.New("authn.service"),
@@ -89,11 +89,11 @@ func ProvideService(
 
 	usageStats.RegisterMetricsFunc(s.getUsageStats)
 
-	s.RegisterClient(clients.ProvideRender(userService, renderService))
-	s.RegisterClient(clients.ProvideAPIKey(apikeyService, userService))
+	s.RegisterClient(clients.ProvideRender(renderService))
+	s.RegisterClient(clients.ProvideAPIKey(apikeyService))
 
 	if cfg.LoginCookieName != "" {
-		s.RegisterClient(clients.ProvideSession(cfg, sessionService, features))
+		s.RegisterClient(clients.ProvideSession(cfg, sessionService))
 	}
 
 	var proxyClients []authn.ProxyClient
@@ -122,8 +122,8 @@ func ProvideService(
 		}
 	}
 
-	if s.cfg.AuthProxyEnabled && len(proxyClients) > 0 {
-		proxy, err := clients.ProvideProxy(cfg, cache, userService, proxyClients...)
+	if s.cfg.AuthProxy.Enabled && len(proxyClients) > 0 {
+		proxy, err := clients.ProvideProxy(cfg, cache, proxyClients...)
 		if err != nil {
 			s.log.Error("Failed to configure auth proxy", "err", err)
 		} else {
@@ -131,22 +131,23 @@ func ProvideService(
 		}
 	}
 
-	if s.cfg.JWTAuthEnabled {
+	if s.cfg.JWTAuth.Enabled {
 		s.RegisterClient(clients.ProvideJWT(jwtService, cfg))
 	}
 
-	if s.cfg.ExtendedJWTAuthEnabled && features.IsEnabledGlobally(featuremgmt.FlagExternalServiceAuth) {
-		s.RegisterClient(clients.ProvideExtendedJWT(userService, cfg, signingKeysService, oauthServer))
-	}
+	// FIXME (gamab): Commenting that out for now as we want to re-use the client for external service auth
+	// if s.cfg.ExtendedJWTAuthEnabled && features.IsEnabledGlobally(featuremgmt.FlagExternalServiceAuth) {
+	// 	s.RegisterClient(clients.ProvideExtendedJWT(userService, cfg, signingKeysService, oauthServer))
+	// }
 
 	for name := range socialService.GetOAuthProviders() {
 		clientName := authn.ClientWithPrefix(name)
-		s.RegisterClient(clients.ProvideOAuth(clientName, cfg, oauthTokenService, socialService))
+		s.RegisterClient(clients.ProvideOAuth(clientName, cfg, oauthTokenService, socialService, settingsProviderService))
 	}
 
 	// FIXME (jguer): move to User package
 	userSyncService := sync.ProvideUserSync(userService, userProtectionService, authInfoService, quotaService)
-	orgUserSyncService := sync.ProvideOrgSync(userService, orgService, accessControlService)
+	orgUserSyncService := sync.ProvideOrgSync(userService, orgService, accessControlService, cfg)
 	s.RegisterPostAuthHook(userSyncService.SyncUserHook, 10)
 	s.RegisterPostAuthHook(userSyncService.EnableUserHook, 20)
 	s.RegisterPostAuthHook(orgUserSyncService.SyncOrgRolesHook, 30)
@@ -160,6 +161,8 @@ func ProvideService(
 	}
 
 	s.RegisterPostAuthHook(rbacSync.SyncPermissionsHook, 120)
+
+	s.RegisterPostAuthHook(orgUserSyncService.SetDefaultOrgHook, 130)
 
 	return s
 }
@@ -386,6 +389,20 @@ Default:
 	}
 
 	return redirect, nil
+}
+
+func (s *Service) ResolveIdentity(ctx context.Context, orgID int64, namespaceID string) (*authn.Identity, error) {
+	r := &authn.Request{}
+	r.OrgID = orgID
+	// hack to not update last seen
+	r.SetMeta(authn.MetaKeyIsLogin, "true")
+
+	identity, err := s.authenticate(ctx, clients.ProvideIdentity(namespaceID), r)
+	if err != nil {
+		return nil, err
+	}
+
+	return identity, nil
 }
 
 func (s *Service) RegisterClient(c authn.Client) {

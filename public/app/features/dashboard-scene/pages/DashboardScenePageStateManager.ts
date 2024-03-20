@@ -80,14 +80,16 @@ export class DashboardScenePageStateManager extends StateManagerBase<DashboardSc
           break;
         default:
           rsp = await dashboardLoaderSrv.loadDashboard('db', '', uid);
+
           if (route === DashboardRoutes.Embedded) {
             rsp.meta.isEmbedded = true;
           }
       }
 
-      if (rsp.meta.url && route !== DashboardRoutes.Embedded) {
+      if (rsp.meta.url && route === DashboardRoutes.Normal) {
         const dashboardUrl = locationUtil.stripBaseFromUrl(rsp.meta.url);
         const currentPath = locationService.getLocation().pathname;
+
         if (dashboardUrl !== currentPath) {
           // Spread current location to persist search params used for navigation
           locationService.replace({
@@ -114,6 +116,27 @@ export class DashboardScenePageStateManager extends StateManagerBase<DashboardSc
     }
 
     return rsp;
+  }
+
+  public async loadSnapshot(slug: string) {
+    try {
+      const dashboard = await this.loadSnapshotScene(slug);
+
+      this.setState({ dashboard: dashboard, isLoading: false });
+    } catch (err) {
+      this.setState({ isLoading: false, loadError: String(err) });
+    }
+  }
+
+  private async loadSnapshotScene(slug: string): Promise<DashboardScene> {
+    const rsp = await dashboardLoaderSrv.loadDashboard('snapshot', slug, '');
+
+    if (rsp?.dashboard) {
+      const scene = transformSaveModelToScene(rsp);
+      return scene;
+    }
+
+    throw new Error('Snapshot not found');
   }
 
   public async loadDashboard(options: LoadDashboardOptions) {
@@ -181,7 +204,13 @@ export class DashboardScenePageStateManager extends StateManagerBase<DashboardSc
 
   public clearState() {
     getDashboardSrv().setCurrent(undefined);
-    this.setState({ dashboard: undefined, loadError: undefined, isLoading: false, panelEditor: undefined });
+
+    this.setState({
+      dashboard: undefined,
+      loadError: undefined,
+      isLoading: false,
+      panelEditor: undefined,
+    });
   }
 
   public setDashboardCache(cacheKey: string, dashboard: DashboardDTO) {

@@ -5,7 +5,7 @@ import React, { ComponentProps } from 'react';
 import { selectOptionInTest } from '../../gcopypaste/test/helpers/selectOptionInTest';
 import { getLabelSelects } from '../testUtils';
 
-import { LabelFilters, MISSING_LABEL_FILTER_ERROR_MESSAGE, Props } from './LabelFilters';
+import { LabelFilters, MISSING_LABEL_FILTER_ERROR_MESSAGE, LabelFiltersProps } from './LabelFilters';
 
 describe('LabelFilters', () => {
   it('renders empty input without labels', async () => {
@@ -131,7 +131,7 @@ describe('LabelFilters', () => {
 });
 
 function setup(propOverrides?: Partial<ComponentProps<typeof LabelFilters>>) {
-  const defaultProps: Props = {
+  const defaultProps: LabelFiltersProps = {
     onChange: jest.fn(),
     getLabelValuesAutofillSuggestions: async (query: string, labelName?: string) => [
       { label: 'bar', value: 'bar' },
