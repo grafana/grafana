@@ -93,7 +93,7 @@ In this section we define the conditions that trigger alerts.
 1. Select the ** Prometheus** data source from the drop-down menu. 
 
     {{< admonition type="note" >}}
-    To visualize this data in Grafana, we need time-series metrics that we can collect and store. We can do that with [Prometheus](https://grafana.com/docs/grafana/latest/getting-started/get-started-grafana-prometheus/), which is pulling metrics from our sample app.
+    To visualize this data in Grafana, we need time-series metrics that we can collect and store. We can do that with [Prometheus](https://grafana.com/docs/grafana/latest/getting-started/get-started-grafana-prometheus/), which pulls metrics from our sample app.
     {{< /admonition >}}
 
 1. In the Query editor, **switch to Code mode**.
