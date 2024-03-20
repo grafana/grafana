@@ -77,8 +77,7 @@ Dashboards and panels allow you to show your data in visual form. Each panel nee
 
    Alternatively, click **Apply** if you want to see your changes applied to the dashboard first. Then click the save icon in the dashboard header.
 
-1. Enter a summary of your dashboard changes or have Grafana create one using [generative AI features][].
-1. Enter a title for your dashboard or have Grafana create one using [generative AI features][]
+1. Enter a title and description of your dashboard changes or have Grafana create them using [generative AI features][].
 1. Select a folder, if applicable.
 1. Click **Save**.
 1. To add more panels to the dashboard, click **Add** in the dashboard header and select **Visualization** in the drop-down.
