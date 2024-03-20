@@ -16,8 +16,6 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/tsdb/sqleng"
-
-	_ "github.com/lib/pq"
 )
 
 var updateGoldenFiles = false

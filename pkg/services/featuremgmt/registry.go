@@ -860,9 +860,10 @@ var (
 		{
 			Name:            "managedPluginsInstall",
 			Description:     "Install managed plugins directly from plugins catalog",
-			Stage:           FeatureStagePublicPreview,
+			Stage:           FeatureStageGeneralAvailability,
 			RequiresDevMode: false,
 			Owner:           grafanaPluginsPlatformSquad,
+			Expression:      "true", // enabled by default
 		},
 		{
 			Name:         "prometheusPromQAIL",
