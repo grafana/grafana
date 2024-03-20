@@ -613,7 +613,7 @@ playwright.config.ts @grafana/plugins-platform-frontend
 /pkg/services/cloudmigration/ @grafana/grafana-operator-experience-squad
 
 # Feature toggles
-/pkg/services/featuremgmt/ @grafana/hosted-grafana-team
+/pkg/services/featuremgmt/ @grafana/grafana-backend-services-squad 
 
 
 # Kind definitions
