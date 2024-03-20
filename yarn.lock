@@ -5200,8 +5200,8 @@ __metadata:
   linkType: hard
 
 "@msagl/core@npm:^1.1.16, @msagl/core@npm:^1.1.17":
-  version: 1.1.17
-  resolution: "@msagl/core@npm:1.1.17"
+  version: 1.1.18
+  resolution: "@msagl/core@npm:1.1.18"
   dependencies:
     "@esfx/collections": "npm:^1.0.0"
     "@esfx/collections-sortedmap": "npm:^1.0.0"
@@ -5209,7 +5209,7 @@ __metadata:
     reliable-random: "npm:^0.0.1"
     stack-typescript: "npm:^1.0.4"
     typescript-string-operations: "npm:^1.4.1"
-  checksum: 10/6a0c83911d0802cf4372a9d976017117d9ecbec8e8bda8850fb58dec76558c0453290a51ad1c55b451ae70deeb3a57b1623bcbf7d054b3bfdacb9ea2a8190d5a
+  checksum: 10/90dddc3f311eb2f61631d03907c70e8f948d424b5da9617b2c5b59bbb6c997804a171bb9af148226315659bb717b8cd770bef22b28983f68e1803d32a93c58d1
   languageName: node
   linkType: hard
 
