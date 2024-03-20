@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import React, { useState } from 'react';
+import React from 'react';
 import { v4 as uuidv4 } from 'uuid';
 
 import { GrafanaTheme2 } from '@grafana/data';
@@ -23,7 +23,7 @@ const Triangle = (props: CanvasElementProps<CanvasElementConfig, CanvasElementDa
   const styles = getStyles(config.theme2, data);
 
   // uuid needed to avoid id conflicts when multiple elements are rendered
-  const [uniqueId] = useState(() => uuidv4());
+  const uniqueId = uuidv4();
 
   return (
     <div className={styles.container}>
