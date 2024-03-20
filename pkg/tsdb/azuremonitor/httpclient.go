@@ -38,6 +38,7 @@ func newHTTPClient(ctx context.Context, route types.AzRoute, model types.Datasou
 		}
 
 		authOpts := azhttpclient.NewAuthOptions(azureSettings)
+		authOpts.AllowUserIdentity()
 		authOpts.Scopes(route.Scopes)
 		azhttpclient.AddAzureAuthentication(&clientOpts, authOpts, model.Credentials)
 	}
