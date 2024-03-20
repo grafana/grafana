@@ -318,12 +318,16 @@ func (ss *SQLStore) buildConnectionString() (string, error) {
 
 		args := []any{ss.dbCfg.User, addr.Host, addr.Port, ss.dbCfg.Name, ss.dbCfg.SslMode, ss.dbCfg.ClientCertPath,
 			ss.dbCfg.ClientKeyPath, ss.dbCfg.CaCertPath}
+
 		for i, arg := range args {
 			if arg == "" {
 				args[i] = "''"
 			}
 		}
 		cnnstr = fmt.Sprintf("user=%s host=%s port=%s dbname=%s sslmode=%s sslcert=%s sslkey=%s sslrootcert=%s", args...)
+		if ss.dbCfg.SSLSNI != "" {
+			cnnstr += fmt.Sprintf(" sslsni=%s", ss.dbCfg.SSLSNI)
+		}
 		if ss.dbCfg.Pwd != "" {
 			cnnstr += fmt.Sprintf(" password=%s", ss.dbCfg.Pwd)
 		}
@@ -498,6 +502,7 @@ func (ss *SQLStore) readConfig() error {
 	ss.dbCfg.ConnMaxLifetime = sec.Key("conn_max_lifetime").MustInt(14400)
 
 	ss.dbCfg.SslMode = sec.Key("ssl_mode").String()
+	ss.dbCfg.SSLSNI = sec.Key("ssl_sni").String()
 	ss.dbCfg.CaCertPath = sec.Key("ca_cert_path").String()
 	ss.dbCfg.ClientKeyPath = sec.Key("client_key_path").String()
 	ss.dbCfg.ClientCertPath = sec.Key("client_cert_path").String()
@@ -780,6 +785,7 @@ type DatabaseConfig struct {
 	Pwd                         string
 	Path                        string
 	SslMode                     string
+	SSLSNI                      string
 	CaCertPath                  string
 	ClientKeyPath               string
 	ClientCertPath              string
