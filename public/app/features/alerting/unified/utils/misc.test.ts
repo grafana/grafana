@@ -1,4 +1,16 @@
-import { sortAlerts, wrapWithQuotes, escapeQuotes, createExploreLink } from 'app/features/alerting/unified/utils/misc';
+import {
+  sortAlerts,
+  wrapWithQuotes,
+  escapeQuotes,
+  createExploreLink,
+  makeLabelBasedSilenceLink,
+  makeDataSourceLink,
+  makeFolderLink,
+  makeFolderAlertsLink,
+  makeFolderSettingsLink,
+  makeDashboardLink,
+  makePanelLink,
+} from 'app/features/alerting/unified/utils/misc';
 import { SortOrder } from 'app/plugins/panel/alertlist/types';
 import { Alert } from 'app/types/unified-alerting';
 import { GrafanaAlertState } from 'app/types/unified-alerting-dto';
@@ -93,5 +105,34 @@ describe('createExploreLink', () => {
     expect(url).toBe(
       '/explore?left=%7B%22datasource%22%3A%22uid%22%2C%22queries%22%3A%5B%7B%22refId%22%3A%22A%22%2C%22datasource%22%3A%7B%22uid%22%3A%22uid%22%2C%22type%22%3A%22type%22%7D%2C%22expr%22%3A%22cpu_utilization+%3E+0.5%22%7D%5D%2C%22range%22%3A%7B%22from%22%3A%22now-1h%22%2C%22to%22%3A%22now%22%7D%7D'
     );
+  });
+});
+
+describe('create links', () => {
+  it('should create silence link', () => {
+    expect(makeLabelBasedSilenceLink('grafana', { foo: 'bar' })).toBe('');
+  });
+
+  it('should create data source link', () => {
+    expect(makeDataSourceLink('my-data-source')).toBe('/datasources/edit/my-data-source');
+  });
+
+  it('should make folder link', () => {
+    expect(makeFolderLink('abc123')).toBe('/dashboards/f/abc123');
+  });
+
+  it('should make folder alerts link', () => {
+    expect(makeFolderAlertsLink('abc123', 'my-title')).toBe('/dashboards/f/abc123/my-title/alerting');
+  });
+
+  it('should make folder settings link', () => {
+    expect(makeFolderSettingsLink('abc123')).toBe('/dashboards/f/abc123/settings');
+  });
+
+  it('should make dashboard link', () => {
+    expect(makeDashboardLink('abc123 def456')).toBe('/d/abc123%20def456');
+  });
+  it('should make panel link', () => {
+    expect(makePanelLink('dashboard uid', '1')).toBe('/d/dashboard%20uid?viewPanel=1');
   });
 });
