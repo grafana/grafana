@@ -22,7 +22,7 @@ import {
   toLegacyResponseData,
 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { AngularComponent, getAngularLoader, getDataSourceSrv } from '@grafana/runtime';
+import { AngularComponent, getAngularLoader, getDataSourceSrv, reportInteraction } from '@grafana/runtime';
 import { Badge, ErrorBoundaryAlert } from '@grafana/ui';
 import { OperationRowHelp } from 'app/core/components/QueryOperationRow/OperationRowHelp';
 import {
@@ -341,7 +341,7 @@ export class QueryEditorRow<TQuery extends DataQuery> extends PureComponent<Prop
     }
   };
 
-  onDisableQuery = () => {
+  onHideQuery = () => {
     const { query, onChange, onRunQuery, onQueryToggled } = this.props;
     onChange({ ...query, hide: !query.hide });
     onRunQuery();
@@ -349,6 +349,10 @@ export class QueryEditorRow<TQuery extends DataQuery> extends PureComponent<Prop
     if (onQueryToggled) {
       onQueryToggled(query.hide);
     }
+
+    reportInteraction('query_editor_row_hide_query_clicked', {
+      hide: !query.hide,
+    });
   };
 
   onToggleHelp = () => {
@@ -442,7 +446,7 @@ export class QueryEditorRow<TQuery extends DataQuery> extends PureComponent<Prop
   renderActions = (props: QueryOperationRowRenderProps) => {
     const { query, hideHideQueryButton: hideHideQueryButton = false } = this.props;
     const { hasTextEditMode, datasource, showingHelp } = this.state;
-    const isDisabled = !!query.hide;
+    const isHidden = !!query.hide;
 
     const hasEditorHelp = datasource?.components?.QueryEditorHelp;
 
@@ -479,9 +483,9 @@ export class QueryEditorRow<TQuery extends DataQuery> extends PureComponent<Prop
                 ? t('query-operation.header.show-response', 'Show response')
                 : t('query-operation.header.hide-response', 'Hide response')
             }
-            icon={isDisabled ? 'eye-slash' : 'eye'}
-            active={isDisabled}
-            onClick={this.onDisableQuery}
+            icon={isHidden ? 'eye-slash' : 'eye'}
+            active={isHidden}
+            onClick={this.onHideQuery}
           />
         ) : null}
         <QueryOperationAction
