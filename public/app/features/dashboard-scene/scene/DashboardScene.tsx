@@ -147,6 +147,8 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
   private _changeTracker: DashboardSceneChangeTracker;
 
   public constructor(state: Partial<DashboardSceneState>) {
+    console.log(state);
+
     super({
       title: 'Dashboard',
       meta: {},
@@ -154,7 +156,7 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
       body: state.body ?? new SceneFlexLayout({ children: [] }),
       links: state.links ?? [],
       hasCopiedPanel: store.exists(LS_PANEL_COPY_KEY),
-      scopes: config.featureToggles.scopeFilters ? new ScopesScene() : undefined,
+      scopes: state.uid && config.featureToggles.scopeFilters ? new ScopesScene() : undefined,
       ...state,
     });
 
