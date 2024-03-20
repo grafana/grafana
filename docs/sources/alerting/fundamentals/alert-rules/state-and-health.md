@@ -28,11 +28,13 @@ There are three key components: [alert rule state](#alert-rule-state), [alert in
 
 An alert rule can be in either of the following states:
 
-| State       | Description                                                                                    |
-| ----------- | ---------------------------------------------------------------------------------------------- |
-| **Normal**  | None of the time series returned by the evaluation engine is in a `Pending` or `Firing` state. |
-| **Pending** | At least one time series returned by the evaluation engine is `Pending`.                       |
-| **Firing**  | At least one time series returned by the evaluation engine is `Firing`.                        |
+| State       | Description                                                                                        |
+| ----------- | -------------------------------------------------------------------------------------------------- |
+| **Normal**  | None of the alert instances returned by the evaluation engine is in a `Pending` or `Firing` state. |
+| **Pending** | At least one alert instances returned by the evaluation engine is `Pending`.                       |
+| **Firing**  | At least one alert instances returned by the evaluation engine is `Firing`.                        |
+
+The alert rule state is determined by the “worst case” state of the alert instances produced. For example, if one alert instance is firing, the alert rule state will also be firing.
 
 {{% admonition type="note" %}}
 Alerts will transition first to `pending` and then `firing`, thus it will take at least two evaluation cycles before an alert is fired.

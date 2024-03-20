@@ -26,7 +26,7 @@ The following diagram gives you an overview of Grafana Alerting and introduces y
 
 - Grafana alerting periodically queries data sources and evaluates the condition defined in the alert rule
 - If the condition is breached, an alert instance fires
-- Firing instances are routed to notification policies based on matching labels
+- Firing and resolved alert instances are routed to notification policies based on matching labels
 - Notifications are sent out to the contact points specified in the notification policy
 
 ## Fundamentals
@@ -37,15 +37,11 @@ The following concepts are key to your understanding of how Grafana Alerting wor
 
 An alert rule consists of one or more queries and expressions that select the data you want to measure. It also contains a condition, which is the threshold that an alert rule must meet or exceed in order to fire.
 
-Add annotations to your alert rule to provide additional information about the alert rule and add labels to uniquely identify your alert rule and configure alert routing. Labels link alert rules to notification policies, so you can easily manage which policy should handle which alerts and who gets notified.
+Add labels to uniquely identify your alert rule and configure alert routing. Labels link alert rules to notification policies, so you can easily manage which policy should handle which alerts and who gets notified.
 
 Once alert rules are created, they go through various states and transitions. An alert rule can produce multiple alert instances - one alert instance for each time series.
 
-The alert rule state is determined by the “worst case” state of the alert instances produced and the states can be Normal, Pending, or Firing. For example, if one alert instance is firing, the alert rule state will also be firing.
-
-The alert rule health is determined by the status of the evaluation of the alert rule, which can be Ok, Error, and NoData.
-
-**Alert instances (aka multi-dimensional alerts)**
+### Alert instances
 
 Each alert rule can create multiple alert instances, also known as multi-dimensional alerts. This is exceptionally powerful as it allows us to observe multiple series in a single expression.
 
@@ -57,21 +53,9 @@ sum by(cpu) (
 
 A rule using this PromQL expression creates as many alert instances as the amount of CPUs we are observing after the first evaluation, enabling a single rule to report the status of each CPU.
 
-{{< figure src="/static/img/docs/alerting/unified/multi-dimensional-alert.png" caption="A multi-dimensional Grafana managed alert rule" >}}
+{{< figure src="/static/img/docs/alerting/unified/multi-dimensional-alert.png" caption="Multiple alert instances from a single alert rule" >}}
 
-The alert rule is frequently evaluated and can update the state of the alert instances. Only firing and resolved alert instances are sent to the [Alertmanager][alert-manager] which handles the notification.
-
-{{!--< figure src="/media/docs/alerting/how-alerting-works-alertmanager.png" max-width="750px">}}
-
-### Labels and states
-
-Alert rules are uniquely identified by sets of key/value pairs called labels. Each key is a label name and each value is a label value. For example, one alert might have the labels `foo=bar` and another alert rule might have the labels `foo=baz`. An alert rule can have many labels such as `foo=bar,bar=baz`, but it cannot have the same label twice such as `foo=bar,foo=baz`. Two alert rules cannot have the same labels either, and if two alert rules have the same labels such as `foo=bar,bar=baz` and `foo=bar,bar=baz` then one of the alerts will be discarded. Firing alerts are resolved when the condition in the alert rule is no longer met, or the alert rule is deleted.
-
-In Grafana-managed alert rules, alert rules can be in Normal, Pending, Alerting, No Data or Error states. In datasource-managed alert rules, such as Mimir and Loki, alert rules can be in Normal, Pending and Alerting, but not NoData or Error.
-
-### Alert instances
-
-For Grafana-managed alert rules, multiple alert instances can be created as a result of one alert rule (also known as a multi-dimensional alerting) and they can be in Normal, Pending, Alerting, No Data, Error states. For Mimir or Loki-managed alert rules, alert instances are only created when the threshold condition defined in an alert rule is breached.
+The alert rule is frequently evaluated and can update the state of the alert instances accordingly. Only alert instances that are in a firing or resolved state are routed to notification policies to be handled.
 
 ### Contact points
 
@@ -83,42 +67,17 @@ The notifications that are sent from contact points can be customized using noti
 
 Notification policies group alerts and then route them to contact points. They determine when notifications are sent, and how often notifications should be repeated.
 
-Alerts are matched to notification policies using label matchers. These are human-readable expressions that assert if the alert's labels exactly match, do not exactly match, contain, or do not contain some expected text. For example, the matcher `foo=bar` matches alerts with the label `foo=bar` while the matcher `foo=~[a-zA-Z]+` matches alerts with any label called foo with a value that matches the regular expression `[a-zA-Z]+`.
+Alert instances are matched to notification policies using label matchers. This provides a flexible way to organize and route alerts to different receivers.
 
-By default, an alert can only match one notification policy. However, with the `continue` feature alerts can be made to match any number of notification policies at the same time. For more information on notification policies, see [fundamentals of Notification Policies][notification-policies].
+Each policy consists of a set of label matchers (0 or more) that specify which labels they are or aren’t interested in handling. Notification policies are defined as a tree structure where the root of the notification policy tree is called the Default notification policy, and each policy can have child policies.
+
+{{< figure src="/media/docs/alerting/notification-routing.png" max-width="750px" caption="Notification policy routing" >}}
+
+For more information on notification policies, see [fundamentals of Notification Policies][notification-policies].
 
 ### Silences and mute timings
 
 Silences and mute timings allow you to pause notifications for specific alerts or even entire notification policies. Use a silence to pause notifications on an ad-hoc basis, such as during a maintenance window; and use mute timings to pause notifications at regular intervals, such as evenings and weekends.
-
-## Provisioning
-
-You can create your alerting resources (alert rules, notification policies, and so on) in the Grafana UI; configmaps, files and configuration management systems using file-based provisioning; and in Terraform using API-based provisioning.
-
-## Key features and benefits
-
-**One page for all alerts**
-
-A single Grafana Alerting page consolidates both Grafana-managed alerts and alerts that reside in your Prometheus-compatible data source in one single place.
-
-**Multi-dimensional alerts**
-
-Alert rules can create multiple individual alert instances per alert rule, known as multi-dimensional alerts, giving you the power and flexibility to gain visibility into your entire system with just a single alert rule. You do this by adding labels to your query to specify which component is being monitored and generate multiple alert instances for a single alert rule. For example, if you want to monitor each server in a cluster, a multi-dimensional alert will alert on each CPU, whereas a standard alert will alert on the overall server.
-
-**Route alerts**
-
-Route each alert instance to a specific contact point based on labels you define. Notification policies are the set of rules for where, when, and how the alerts are routed to contact points.
-
-**Silence alerts**
-
-Silences stop notifications from getting created and last for only a specified window of time.
-Silences allow you to stop receiving persistent notifications from one or more alert rules. You can also partially pause an alert based on certain criteria. Silences have their own dedicated section for better organization and visibility, so that you can scan your paused alert rules without cluttering the main alerting view.
-
-**Mute timings**
-
-A mute timing is a recurring interval of time when no new notifications for a policy are generated or sent. Use them to prevent alerts from firing a specific and reoccurring period, for example, a regular maintenance period.
-
-Similar to silences, mute timings do not prevent alert rules from being evaluated, nor do they stop alert instances from being shown in the user interface. They only prevent notifications from being created.
 
 ## Design your Alerting system
 
