@@ -515,15 +515,6 @@ var (
 			Owner:        grafanaObservabilityLogsSquad,
 		},
 		{
-			Name:           "cloudWatchLogsMonacoEditor",
-			Description:    "Enables the Monaco editor for CloudWatch Logs queries",
-			Stage:          FeatureStageGeneralAvailability,
-			FrontendOnly:   true,
-			Expression:     "true", // enabled by default
-			Owner:          awsDatasourcesSquad,
-			AllowSelfServe: true,
-		},
-		{
 			Name:           "recordedQueriesMulti",
 			Description:    "Enables writing multiple items from a single query within Recorded Queries",
 			Stage:          FeatureStageGeneralAvailability,
@@ -757,14 +748,6 @@ var (
 			Owner:       identityAccessTeam,
 		},
 		{
-			Name:           "cloudWatchWildCardDimensionValues",
-			Description:    "Fetches dimension values from CloudWatch to correctly label wildcard dimensions",
-			Stage:          FeatureStageGeneralAvailability,
-			Expression:     "true", // enabled by default
-			Owner:          awsDatasourcesSquad,
-			AllowSelfServe: true,
-		},
-		{
 			Name:              "externalServiceAccounts",
 			Description:       "Automatic service account and token setup for plugins",
 			HideFromAdminPage: true,
@@ -876,9 +859,10 @@ var (
 		{
 			Name:            "managedPluginsInstall",
 			Description:     "Install managed plugins directly from plugins catalog",
-			Stage:           FeatureStagePublicPreview,
+			Stage:           FeatureStageGeneralAvailability,
 			RequiresDevMode: false,
 			Owner:           grafanaPluginsPlatformSquad,
+			Expression:      "true", // enabled by default
 		},
 		{
 			Name:         "prometheusPromQAIL",

@@ -464,63 +464,6 @@ export function transformTrace(
   };
 }
 
-export function createTableFrameFromSearch(data: TraceSearchMetadata[], instanceSettings: DataSourceInstanceSettings) {
-  const frame = new MutableDataFrame({
-    name: 'Traces',
-    refId: 'traces',
-    fields: [
-      {
-        name: 'traceID',
-        type: FieldType.string,
-        values: [],
-        config: {
-          unit: 'string',
-          displayNameFromDS: 'Trace ID',
-          links: [
-            {
-              title: 'Trace: ${__value.raw}',
-              url: '',
-              internal: {
-                datasourceUid: instanceSettings.uid,
-                datasourceName: instanceSettings.name,
-                query: {
-                  query: '${__value.raw}',
-                  queryType: 'traceql',
-                },
-              },
-            },
-          ],
-        },
-      },
-      { name: 'traceService', type: FieldType.string, config: { displayNameFromDS: 'Trace service' }, values: [] },
-      { name: 'traceName', type: FieldType.string, config: { displayNameFromDS: 'Trace name' }, values: [] },
-      { name: 'startTime', type: FieldType.time, config: { displayNameFromDS: 'Start time' }, values: [] },
-      {
-        name: 'traceDuration',
-        type: FieldType.number,
-        config: { displayNameFromDS: 'Duration', unit: 'ms' },
-        values: [],
-      },
-    ],
-    meta: {
-      preferredVisualisationType: 'table',
-    },
-  });
-  if (!data?.length) {
-    return frame;
-  }
-  // Show the most recent traces
-  const traceData = data
-    .sort((a, b) => parseInt(b?.startTimeUnixNano!, 10) / 1000000 - parseInt(a?.startTimeUnixNano!, 10) / 1000000)
-    .map(transformToTraceData);
-
-  for (const trace of traceData) {
-    frame.add(trace);
-  }
-
-  return frame;
-}
-
 function transformToTraceData(data: TraceSearchMetadata) {
   return {
     traceID: data.traceID,
