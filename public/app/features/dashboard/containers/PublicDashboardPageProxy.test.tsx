@@ -49,20 +49,13 @@ function setup(props: Partial<PublicDashboardPageProxyProps>) {
 
 describe('PublicDashboardPageProxy', () => {
   beforeEach(() => {
-    config.featureToggles.dashboardSceneForViewers = false;
+    config.featureToggles.publicDashboardsScene = false;
   });
 
   describe('when scene feature enabled', () => {
-    it('should render PublicDashboardScenePage if dashboardSceneForViewers is enabled', async () => {
-      config.featureToggles.dashboardSceneForViewers = true;
+    it('should render PublicDashboardScenePage if publicDashboardsScene is enabled', async () => {
+      config.featureToggles.publicDashboardsScene = true;
       setup({});
-
-      await waitFor(() => {
-        expect(screen.queryByTestId(PublicDashboardScene.page)).toBeInTheDocument();
-      });
-    });
-    it('should render PublicDashboardScenePage if scene query param is set', async () => {
-      setup({ queryParams: { scenes: true } });
 
       await waitFor(() => {
         expect(screen.queryByTestId(PublicDashboardScene.page)).toBeInTheDocument();
@@ -71,14 +64,7 @@ describe('PublicDashboardPageProxy', () => {
   });
 
   describe('when scene feature disabled', () => {
-    it('should render PublicDashboardPage if dashboardSceneForViewers is disabled', async () => {
-      setup({});
-
-      await waitFor(() => {
-        expect(screen.queryByTestId(PublicDashboard.page)).toBeInTheDocument();
-      });
-    });
-    it('should render PublicDashboardPage if scene query param is not set', async () => {
+    it('should render PublicDashboardPage if publicDashboardsScene is disabled', async () => {
       setup({});
 
       await waitFor(() => {
