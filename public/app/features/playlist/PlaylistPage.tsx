@@ -68,7 +68,7 @@ export const PlaylistPage = () => {
             {!showSearch && (
               <EmptyState
                 buttonHref="playlists/new"
-                buttonLabel={contextSrv.isEditor ? t('playlist-page.empty.button', 'Create Playlist') : undefined}
+                buttonLabel={contextSrv.isEditor ? t('playlist-page.empty.button', 'Create playlist') : undefined}
                 message={t('playlist-page.empty.title', 'There are no playlists created yet')}
               >
                 <Trans i18nKey="playlist-page.empty.pro-tip">

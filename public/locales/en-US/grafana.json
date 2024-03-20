@@ -77,7 +77,7 @@
       "tags-column": "Tags"
     },
     "empty-state": {
-      "button-title": "Create Dashboard",
+      "button-title": "Create dashboard",
       "pro-tip": "Add/move dashboards to your folder at <2>Browse dashboards</2>",
       "title": "You haven't created any dashboards yet",
       "title-folder": "This folder doesn't have any dashboards yet"
@@ -683,6 +683,9 @@
     "add-widget": {
       "title": "Add panel from panel library"
     },
+    "empty-search": {
+      "message": "No library panels found"
+    },
     "empty-state": {
       "message": "You haven't created any library panels yet",
       "more-info": "Create a library panel from any existing dashboard panel through the panel context menu. <2>Learn more</2>"
@@ -1241,7 +1244,7 @@
       "confirm-text": "Delete"
     },
     "empty": {
-      "button": "Create Playlist",
+      "button": "Create playlist",
       "pro-tip": "You can use playlists to cycle dashboards on TVs without user control. <2>Learn more</2>",
       "title": "There are no playlists created yet"
     }

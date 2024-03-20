@@ -120,7 +120,7 @@ export function BrowseView({ folderUID, width, height, canSelect }: BrowseViewPr
         {canSelect ? (
           <EmptyState
             buttonHref={folderUID ? `dashboard/new?folderUid=${folderUID}` : 'dashboard/new'}
-            buttonLabel={t('browse-dashboards.empty-state.button-title', 'Create Dashboard')}
+            buttonLabel={t('browse-dashboards.empty-state.button-title', 'Create dashboard')}
             message={
               folderUID
                 ? t('browse-dashboards.empty-state.title-folder', "This folder doesn't have any dashboards yet")
