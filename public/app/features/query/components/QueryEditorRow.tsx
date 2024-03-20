@@ -473,7 +473,11 @@ export class QueryEditorRow<TQuery extends DataQuery> extends PureComponent<Prop
         />
         {!hideHideQueryButton ? (
           <QueryOperationToggleAction
-            title={t('query-operation.header.disable-query', 'Hide response')}
+            title={
+              query.hide
+                ? t('query-operation.header.show-response', 'Show response')
+                : t('query-operation.header.hide-response', 'Hide response')
+            }
             icon={isDisabled ? 'eye-slash' : 'eye'}
             active={isDisabled}
             onClick={this.onDisableQuery}
@@ -497,7 +501,7 @@ export class QueryEditorRow<TQuery extends DataQuery> extends PureComponent<Prop
         queries={queries}
         onChangeDataSource={onChangeDataSource}
         dataSource={dataSource}
-        disabled={query.hide}
+        hidden={query.hide}
         onClick={(e) => this.onToggleEditMode(e, props)}
         onChange={onChange}
         collapsedText={!props.isOpen ? this.renderCollapsedText() : null}

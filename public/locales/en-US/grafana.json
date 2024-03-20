@@ -1344,11 +1344,12 @@
     "header": {
       "collapse-row": "Collapse query row",
       "datasource-help": "Show data source help",
-      "disable-query": "Hide query",
       "drag-and-drop": "Drag and drop to reorder",
       "duplicate-query": "Duplicate query",
       "expand-row": "Expand query row",
+      "hide-response": "Hide response",
       "remove-query": "Remove query",
+      "show-response": "Show response",
       "toggle-edit-mode": "Toggle text edit mode"
     },
     "query-editor-not-exported": "Data source plugin does not export any Query Editor component"
