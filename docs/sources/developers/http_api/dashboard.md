@@ -270,7 +270,7 @@ See note in the [introduction]({{< ref "#dashboard-api" >}}) for an explanation.
 **Example Request**:
 
 ```http
-DELETE /api/dashboards/uid/trash/cIBgcSjkk HTTP/1.1
+DELETE /api/dashboards/uid/cIBgcSjkk/trash HTTP/1.1
 Accept: application/json
 Content-Type: application/json
 Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
@@ -313,7 +313,7 @@ See note in the [introduction]({{< ref "#dashboard-api" >}}) for an explanation.
 **Example Request**:
 
 ```http
-PATCH /api/dashboards/uid/trash/cIBgcSjkk HTTP/1.1
+PATCH /api/dashboards/uid/cIBgcSjkk/trash HTTP/1.1
 Accept: application/json
 Content-Type: application/json
 Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
