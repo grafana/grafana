@@ -11,7 +11,6 @@ describe('ReturnToPrevious button', () => {
     e2e.components.AlertRules.groupToggle().first().click();
     e2e.components.AlertRules.toggle().click();
     cy.get('a[title="View"]').click();
-    cy.wait(1000);
     cy.url().as('alertRuleUrl');
     cy.get('a').contains('View panel').click();
   });
