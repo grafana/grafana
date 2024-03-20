@@ -4,7 +4,7 @@ In this guide, we'll walk you through the process of setting up your first alert
 
 # Before you begin
 
-Before you can get your alert up and running in just a few minutes, you need the following software:
+Ensure you have the following applications installed.
 
 - [Docker Compose](https://docs.docker.com/get-docker/) (included in Docker for Desktop for macOS and Windows)
 - [Git](https://git-scm.com/)
