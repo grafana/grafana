@@ -4,21 +4,21 @@ import { v4 as uuidv4 } from 'uuid';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { config } from 'app/core/config';
-import { DimensionContext } from 'app/features/dimensions/context';
+import { DimensionContext } from 'app/features/dimensions';
 import { ColorDimensionEditor } from 'app/features/dimensions/editors/ColorDimensionEditor';
 import { TextDimensionEditor } from 'app/features/dimensions/editors/TextDimensionEditor';
 import { getDataLinks } from 'app/plugins/panel/canvas/utils';
 
 import {
   CanvasElementItem,
-  CanvasElementOptions,
   CanvasElementProps,
+  CanvasElementOptions,
   defaultBgColor,
   defaultTextColor,
 } from '../element';
 import { Align, CanvasElementConfig, CanvasElementData, VAlign } from '../types';
 
-const Ellipse = (props: CanvasElementProps<CanvasElementConfig, CanvasElementData>) => {
+const Triangle = (props: CanvasElementProps<CanvasElementConfig, CanvasElementData>) => {
   const { data } = props;
   const styles = getStyles(config.theme2, data);
 
@@ -38,17 +38,14 @@ const Ellipse = (props: CanvasElementProps<CanvasElementConfig, CanvasElementDat
           <pattern id={`image-${uniqueId}`} patternUnits="userSpaceOnUse" width="200" height="200">
             <image xlinkHref={data?.backgroundImage} x="-50" y="-50" width="300" height="300"></image>
           </pattern>
-          <clipPath id={`ellipseClip-${uniqueId}`}>
-            <ellipse cx="50%" cy="50%" rx="50%" ry="50%" />
+          <clipPath id={`triangleClip-${uniqueId}`}>
+            <polygon points="100,0 200,200 0,200" />
           </clipPath>
         </defs>
         {/* Apply background image within the clipping area */}
-        <rect x="0" y="0" width="100%" height="100%" clipPath={`url(#ellipseClip-${uniqueId})`} />
-        <ellipse
-          cx="50%"
-          cy="50%"
-          rx="50%"
-          ry="50%"
+        <rect x="0" y="0" width="100%" height="100%" clipPath={`url(#triangleClip-${uniqueId})`} />
+        <polygon
+          points="100,0 200,200 0,200"
           className={styles.element}
           style={{ fill: data?.backgroundImage ? `url(#image-${uniqueId})` : data?.backgroundColor }}
         />
@@ -59,16 +56,16 @@ const Ellipse = (props: CanvasElementProps<CanvasElementConfig, CanvasElementDat
   );
 };
 
-export const ellipseItem: CanvasElementItem<CanvasElementConfig, CanvasElementData> = {
-  id: 'ellipse',
-  name: 'Ellipse',
-  description: 'Ellipse',
+export const triangleItem: CanvasElementItem = {
+  id: 'triangle',
+  name: 'Triangle',
+  description: 'Triangle',
 
-  display: Ellipse,
+  display: Triangle,
 
   defaultSize: {
     width: 160,
-    height: 160,
+    height: 138,
   },
 
   getNewOptions: (options) => ({
@@ -93,6 +90,7 @@ export const ellipseItem: CanvasElementItem<CanvasElementConfig, CanvasElementDa
     },
   }),
 
+  // Called when data changes
   prepareData: (dimensionContext: DimensionContext, elementOptions: CanvasElementOptions<CanvasElementConfig>) => {
     const textConfig = elementOptions.config;
 
@@ -120,7 +118,7 @@ export const ellipseItem: CanvasElementItem<CanvasElementConfig, CanvasElementDa
   },
 
   registerOptionsUI: (builder) => {
-    const category = ['Ellipse'];
+    const category = ['Triangle'];
     builder
       .addCustomEditor({
         category,
