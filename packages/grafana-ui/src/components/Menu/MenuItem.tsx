@@ -34,9 +34,6 @@ export interface MenuItemProps<T = unknown> {
   url?: string;
   /** Handler for the click behaviour */
   onClick?: (event: React.MouseEvent<HTMLElement>, payload?: T) => void;
-  /** Handler for the hover behaviour */
-  onMouseEnterEvt?: (event?: React.MouseEvent) => void;
-  onMouseLeaveEvt?: (event?: React.MouseEvent) => void;
   /** Custom MenuItem styles*/
   className?: string;
   /** Active */
@@ -68,8 +65,6 @@ export const MenuItem = React.memo(
       ariaChecked,
       target,
       onClick,
-      onMouseEnterEvt,
-      onMouseLeaveEvt,
       className,
       active,
       disabled,
@@ -84,37 +79,22 @@ export const MenuItem = React.memo(
     const styles = useStyles2(getStyles);
     const [isActive, setIsActive] = useState(active);
     const [isSubMenuOpen, setIsSubMenuOpen] = useState(false);
-    const [openedWithArrow, setOpenedWithArrow] = useState(false);
-    const onMouseEnter = useCallback(
-      (evt: React.MouseEvent) => {
-        if (disabled) {
-          return;
-        }
+    const onMouseEnter = useCallback(() => {
+      if (disabled) {
+        return;
+      }
 
-        if (onMouseEnterEvt) {
-          onMouseEnterEvt(evt);
-        }
+      setIsSubMenuOpen(true);
+      setIsActive(true);
+    }, [disabled]);
+    const onMouseLeave = useCallback(() => {
+      if (disabled) {
+        return;
+      }
 
-        setIsSubMenuOpen(true);
-        setIsActive(true);
-      },
-      [disabled, onMouseEnterEvt]
-    );
-    const onMouseLeave = useCallback(
-      (evt: React.MouseEvent) => {
-        if (disabled) {
-          return;
-        }
-
-        if (onMouseLeaveEvt) {
-          onMouseLeaveEvt(evt);
-        }
-
-        setIsSubMenuOpen(false);
-        setIsActive(false);
-      },
-      [disabled, onMouseLeaveEvt]
-    );
+      setIsSubMenuOpen(false);
+      setIsActive(false);
+    }, [disabled]);
 
     const hasSubMenu = childItems && childItems.length > 0;
     const ItemElement = hasSubMenu ? 'div' : url === undefined ? 'button' : 'a';
@@ -147,7 +127,6 @@ export const MenuItem = React.memo(
           event.stopPropagation();
           if (hasSubMenu) {
             setIsSubMenuOpen(true);
-            setOpenedWithArrow(true);
             setIsActive(true);
           }
           break;
@@ -197,8 +176,6 @@ export const MenuItem = React.memo(
               <SubMenu
                 items={childItems}
                 isOpen={isSubMenuOpen}
-                openedWithArrow={openedWithArrow}
-                setOpenedWithArrow={setOpenedWithArrow}
                 close={closeSubMenu}
                 customStyle={customSubMenuContainerStyles}
               />
@@ -238,7 +215,7 @@ const getStyles = (theme: GrafanaTheme2) => {
       width: '100%',
       position: 'relative',
 
-      '&:hover, &:focus, &:focus-visible': {
+      '&:hover, &:focus-visible': {
         background: theme.colors.action.hover,
         color: theme.colors.text.primary,
         textDecoration: 'none',

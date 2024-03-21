@@ -149,7 +149,7 @@ func parseQuery(queryContext *backend.QueryDataRequest) ([]*lokiQuery, error) {
 			return nil, err
 		}
 
-		expr := interpolateVariables(model.Expr, interval, timeRange, queryType, step)
+		expr := interpolateVariables(depointerizer(model.Expr), interval, timeRange, queryType, step)
 
 		direction, err := parseDirection(model.Direction)
 		if err != nil {
@@ -186,4 +186,13 @@ func parseQuery(queryContext *backend.QueryDataRequest) ([]*lokiQuery, error) {
 	}
 
 	return qs, nil
+}
+
+func depointerizer[T any](v *T) T {
+	var emptyValue T
+	if v != nil {
+		emptyValue = *v
+	}
+
+	return emptyValue
 }

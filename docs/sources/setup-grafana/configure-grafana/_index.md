@@ -1202,6 +1202,12 @@ Specifies whether user identity authentication (on behalf of currently signed-in
 
 Disabled by default, needs to be explicitly enabled.
 
+### user_identity_fallback_credentials_enabled
+
+Specifies whether user identity authentication fallback credentials should be enabled in data sources. Enabling this allows data source creators to provide fallback credentials for backend-initiated requests, such as alerting, recorded queries, and so on.
+
+It is by default and needs to be explicitly disabled. It will not have any effect if user identity authentication is disabled.
+
 ### user_identity_token_url
 
 Override token URL for Azure Active Directory.
