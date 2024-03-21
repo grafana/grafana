@@ -53,7 +53,6 @@ export function transformSceneToSaveModel(scene: DashboardScene, isSnapshot = fa
   const body = state.body;
 
   let panels: Panel[] = [];
-  let graphTooltip = defaultDashboard.graphTooltip;
   let variables: VariableModel[] = [];
 
   if (body instanceof SceneGridLayout) {
@@ -90,14 +89,6 @@ export function transformSceneToSaveModel(scene: DashboardScene, isSnapshot = fa
 
   const controlsState = state.controls?.state;
 
-  if (state.$behaviors) {
-    for (const behavior of state.$behaviors!) {
-      if (behavior instanceof behaviors.CursorSync) {
-        graphTooltip = behavior.state.sync;
-      }
-    }
-  }
-
   const timePickerWithoutDefaults = removeDefaults<TimePickerConfig>(
     {
       refresh_intervals: controlsState?.refreshPicker.state.intervals,
@@ -106,6 +97,13 @@ export function transformSceneToSaveModel(scene: DashboardScene, isSnapshot = fa
     },
     defaultTimePickerConfig
   );
+
+  const graphTooltip =
+    state.$behaviors?.find((b): b is behaviors.CursorSync => b instanceof behaviors.CursorSync)?.state.sync ??
+    defaultDashboard.graphTooltip;
+  const liveNow =
+    state.$behaviors?.find((b): b is behaviors.LiveNowTimer => b instanceof behaviors.LiveNowTimer)?.isEnabled ||
+    undefined;
 
   const dashboard: Dashboard = {
     ...defaultDashboard,
@@ -133,6 +131,7 @@ export function transformSceneToSaveModel(scene: DashboardScene, isSnapshot = fa
     tags: state.tags,
     links: state.links,
     graphTooltip,
+    liveNow,
     schemaVersion: DASHBOARD_SCHEMA_VERSION,
   };
 

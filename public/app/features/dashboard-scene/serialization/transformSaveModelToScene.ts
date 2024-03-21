@@ -305,6 +305,7 @@ export function createDashboardSceneFromDashboardModel(oldModel: DashboardModel)
       registerDashboardSceneTracking(oldModel),
       registerPanelInteractionsReporter,
       trackIfIsEmpty,
+      new behaviors.LiveNowTimer(oldModel.liveNow),
     ],
     $data:
       layers.length > 0
