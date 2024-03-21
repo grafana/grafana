@@ -250,7 +250,7 @@
     "@grafana/o11y-ds-frontend": "workspace:*",
     "@grafana/prometheus": "workspace:*",
     "@grafana/runtime": "workspace:*",
-    "@grafana/scenes": "4.0.0--canary.640.8344205533.0",
+    "@grafana/scenes": "4.0.1",
     "@grafana/schema": "workspace:*",
     "@grafana/sql": "workspace:*",
     "@grafana/ui": "workspace:*",
