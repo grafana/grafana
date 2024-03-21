@@ -175,6 +175,16 @@ export const ConnectionSVG = ({
         pathString += `L${x2} ${y2}`;
       }
 
+      const markerStart =
+        arrowDirection === ConnectionDirection.Reverse || arrowDirection === ConnectionDirection.Both
+          ? `url(#${CONNECTION_HEAD_ID_START})`
+          : undefined;
+
+      const markerEnd =
+        arrowDirection === ConnectionDirection.Forward || arrowDirection === ConnectionDirection.Both
+          ? `url(#${CONNECTION_HEAD_ID_END})`
+          : undefined;
+
       return (
         <svg className={styles.connection} key={idx}>
           <g onClick={() => selectConnection(v)}>
@@ -220,16 +230,8 @@ export const ConnectionSVG = ({
                   strokeWidth={strokeWidth}
                   strokeDasharray={lineStyle}
                   fill={'none'}
-                  markerEnd={
-                    arrowDirection === ConnectionDirection.Forward || arrowDirection === ConnectionDirection.Both
-                      ? `url(#${CONNECTION_HEAD_ID_END})`
-                      : undefined
-                  }
-                  markerStart={
-                    arrowDirection === ConnectionDirection.Reverse || arrowDirection === ConnectionDirection.Both
-                      ? `url(#${CONNECTION_HEAD_ID_START})`
-                      : undefined
-                  }
+                  markerEnd={markerEnd}
+                  markerStart={markerStart}
                 />
                 {isSelected && (
                   <g>
@@ -290,16 +292,8 @@ export const ConnectionSVG = ({
                   stroke={strokeColor}
                   pointerEvents="auto"
                   strokeWidth={strokeWidth}
-                  markerEnd={
-                    arrowDirection === ConnectionDirection.Forward || arrowDirection === ConnectionDirection.Both
-                      ? `url(#${CONNECTION_HEAD_ID_END})`
-                      : undefined
-                  }
-                  markerStart={
-                    arrowDirection === ConnectionDirection.Reverse || arrowDirection === ConnectionDirection.Both
-                      ? `url(#${CONNECTION_HEAD_ID_START})`
-                      : undefined
-                  }
+                  markerEnd={markerEnd}
+                  markerStart={markerStart}
                   strokeDasharray={lineStyle}
                   x1={x1}
                   y1={y1}
