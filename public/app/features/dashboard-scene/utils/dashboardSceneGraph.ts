@@ -2,7 +2,7 @@ import {
   VizPanel,
   SceneGridItem,
   SceneGridRow,
-  SceneDataLayers,
+  SceneDataLayerSet,
   sceneGraph,
   SceneGridLayout,
   behaviors,
@@ -57,11 +57,11 @@ function getVizPanels(scene: DashboardScene): VizPanel[] {
   return panels;
 }
 
-function getDataLayers(scene: DashboardScene): SceneDataLayers {
+function getDataLayers(scene: DashboardScene): SceneDataLayerSet {
   const data = sceneGraph.getData(scene);
 
-  if (!(data instanceof SceneDataLayers)) {
-    throw new Error('SceneDataLayers not found');
+  if (!(data instanceof SceneDataLayerSet)) {
+    throw new Error('SceneDataLayerSet not found');
   }
 
   return data;

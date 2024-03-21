@@ -1,6 +1,6 @@
 import React from 'react';
 
-import { AnnotationQuery, DataTopic, NavModel, NavModelItem, PageLayoutType, getDataSourceRef } from '@grafana/data';
+import { AnnotationQuery, NavModel, NavModelItem, PageLayoutType, getDataSourceRef } from '@grafana/data';
 import { getDataSourceSrv } from '@grafana/runtime';
 import { SceneComponentProps, SceneObjectBase, VizPanel, dataLayers } from '@grafana/scenes';
 import { Page } from 'app/core/components/Page/Page';
@@ -52,7 +52,7 @@ export class AnnotationsEditView extends SceneObjectBase<AnnotationsEditViewStat
   public getAnnotationsLength(): number {
     return dashboardSceneGraph
       .getDataLayers(this._dashboard)
-      .state.layers.filter((layer) => layer.topic === DataTopic.Annotations).length;
+      .state.layers.filter((layer) => layer instanceof DashboardAnnotationsDataLayer).length;
   }
 
   public getDashboard(): DashboardScene {

@@ -535,7 +535,7 @@ playwright.config.ts @grafana/plugins-platform-frontend
 /scripts/generate-icon-bundle.js @grafana/plugins-platform-frontend @grafana/grafana-frontend-platform
 /scripts/levitate-parse-json-report.js @grafana/plugins-platform-frontend
 
-/scripts/docs/generate-transformations* @grafana/dataviz-squad
+/scripts/**/generate-transformations* @grafana/dataviz-squad
 /scripts/webpack/ @grafana/frontend-ops
 /scripts/generate-a11y-report.sh @grafana/grafana-frontend-platform
 .pa11yci.conf.js @grafana/grafana-frontend-platform
@@ -614,7 +614,7 @@ playwright.config.ts @grafana/plugins-platform-frontend
 /pkg/services/cloudmigration/ @grafana/grafana-operator-experience-squad
 
 # Feature toggles
-/pkg/services/featuremgmt/ @grafana/grafana-backend-services-squad 
+/pkg/services/featuremgmt/ @grafana/grafana-backend-services-squad
 
 
 # Kind definitions
@@ -624,10 +624,10 @@ playwright.config.ts @grafana/plugins-platform-frontend
 # Kind system and code generation
 embed.go @grafana/grafana-as-code
 /pkg/kinds/ @grafana/grafana-as-code
-/pkg/cuectx/ @grafana/grafana-as-code
 /pkg/registry/ @grafana/grafana-as-code
 /pkg/registry/apis/ @grafana/grafana-app-platform-squad
 /pkg/codegen/ @grafana/grafana-as-code
+/pkg/codegen/generators @grafana/grafana-as-code
 /pkg/kinds/*/*_gen.go @grafana/grafana-as-code
 /pkg/registry/schemas/ @grafana/grafana-as-code
 /public/app/plugins/*gen.go @grafana/grafana-as-code

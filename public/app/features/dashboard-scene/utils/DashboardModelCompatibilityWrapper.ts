@@ -4,7 +4,7 @@ import { AnnotationQuery, DashboardCursorSync, dateTimeFormat, DateTimeInput, Ev
 import { TimeRangeUpdatedEvent } from '@grafana/runtime';
 import {
   behaviors,
-  SceneDataLayers,
+  SceneDataLayerSet,
   sceneGraph,
   SceneGridItem,
   SceneGridLayout,
@@ -113,7 +113,7 @@ export class DashboardModelCompatibilityWrapper {
   public get annotations(): { list: AnnotationQuery[] } {
     const annotations: { list: AnnotationQuery[] } = { list: [] };
 
-    if (this._scene.state.$data instanceof SceneDataLayers) {
+    if (this._scene.state.$data instanceof SceneDataLayerSet) {
       annotations.list = dataLayersToAnnotations(this._scene.state.$data.state.layers);
     }
 
