@@ -27,7 +27,7 @@ Canvases combine the power of Grafana with the flexibility of custom elements. C
 
 ## Elements
 
-Elements are the basic building blocks of a canvas and they help you visualize data with different shapes and options. You can rotate and move elements around the canvas and when you do, snapping and alignment guides help you create more precise layouts.
+Elements are the basic building blocks of a canvas and they help you visualize data with different shapes and options. You can rotate and move elements around the canvas. When you move elements, snapping and alignment guides help you create more precise layouts.
 
 {{% admonition type="note" %}}
 Element snapping and alignment only works when the canvas is not zoomed in.
