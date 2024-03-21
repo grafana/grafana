@@ -18,6 +18,7 @@ import {
   SceneVariable,
   SceneVariableSet,
   VariableDependencyConfig,
+  VizPanel,
 } from '@grafana/scenes';
 import { VariableHide } from '@grafana/schema';
 import { Input, InlineSwitch, Field, Alert, Icon, useStyles2 } from '@grafana/ui';
@@ -225,6 +226,8 @@ export class MetricSelectScene extends SceneObjectBase<MetricSelectSceneState> {
 
     const children: SceneFlexItem[] = [];
 
+    const trail = getTrailFor(this);
+
     const metricsList = this.sortedPreviewMetrics();
 
     // Get the current filters to determine the count of them
@@ -241,6 +244,15 @@ export class MetricSelectScene extends SceneObjectBase<MetricSelectSceneState> {
           continue;
         }
         const panel = getPreviewPanelFor(metric.name, index, currentFilterCount);
+
+        const vizPanel = panel.state.body;
+        if (vizPanel instanceof VizPanel) {
+          trail.getMetricMetadata(metric.name).then((metadata) => {
+            const description = getMetricDescription(metadata);
+            vizPanel.setState({ description });
+          });
+        }
+
         metric.itemRef = panel.getRef();
         metric.isPanel = true;
         children.push(panel);
