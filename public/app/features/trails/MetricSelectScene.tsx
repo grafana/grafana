@@ -18,7 +18,6 @@ import {
   SceneVariable,
   SceneVariableSet,
   VariableDependencyConfig,
-  VizPanel,
 } from '@grafana/scenes';
 import { VariableHide } from '@grafana/schema';
 import { Input, InlineSwitch, Field, Alert, Icon, useStyles2 } from '@grafana/ui';
