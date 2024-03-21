@@ -440,7 +440,7 @@ export class Scene {
       origin: false,
       className: this.styles.selected,
     })
-      .on('rotateStart', (event) => {
+      .on('rotateStart', () => {
         this.disableCustomables();
       })
       .on('rotate', (event) => {
@@ -448,11 +448,12 @@ export class Scene {
 
         if (targetedElement) {
           targetedElement.applyRotate(event);
-          this.moved.next(Date.now()); // TODO only on end
         }
       })
-      .on('rotateEnd', (event) => {
+      .on('rotateEnd', () => {
         this.enableCustomables();
+        // Update the editor with the new rotation
+        this.moved.next(Date.now());
       })
       .on('click', (event) => {
         const targetedElement = this.findElementByTarget(event.target);

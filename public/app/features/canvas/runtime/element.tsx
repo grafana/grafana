@@ -205,7 +205,6 @@ export class ElementState implements LayerElement {
     }
   }
 
-  // this is the function that is messing up the placement as rotation is not being taken into account
   setPlacementFromConstraint(elementContainer?: DOMRect, parentContainer?: DOMRect, transformScale = 1) {
     const { constraint } = this.options;
     const { vertical, horizontal } = constraint ?? {};
@@ -222,7 +221,7 @@ export class ElementState implements LayerElement {
     }
 
     // For elements with rotation, a delta needs to be applied to account for bounding box rotation
-    // TODO: Fix behavior for top/bottom, left/right, center, and scale constraints
+    // TODO: Fix behavior for top+bottom, left+right, center, and scale constraints
     let rotationTopOffset = 0;
     let rotationLeftOffset = 0;
     if (this.options.placement?.rotation && this.options.placement?.width && this.options.placement?.height) {

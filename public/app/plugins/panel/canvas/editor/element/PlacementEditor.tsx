@@ -126,10 +126,15 @@ export function PlacementEditor({ item }: Props) {
             if (v == null) {
               return null;
             }
+
+            // Need to set explicit min/max for rotation as logic only can handle 0-360
+            const min = p === 'rotation' ? 0 : undefined;
+            const max = p === 'rotation' ? 360 : undefined;
+
             return (
               <InlineFieldRow key={p}>
                 <InlineField label={p} labelWidth={8} grow={true}>
-                  <NumberInput value={v} onChange={(v) => onPositionChange(v, p)} />
+                  <NumberInput min={min} max={max} value={v} onChange={(v) => onPositionChange(v, p)} />
                 </InlineField>
               </InlineFieldRow>
             );
