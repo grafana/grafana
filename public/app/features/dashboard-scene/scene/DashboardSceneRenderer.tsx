@@ -3,7 +3,7 @@ import React from 'react';
 import { useLocation } from 'react-router-dom';
 
 import { GrafanaTheme2, PageLayoutType } from '@grafana/data';
-import { SceneComponentProps } from '@grafana/scenes';
+import { SceneComponentProps, SceneObject } from '@grafana/scenes';
 import { CustomScrollbar, useStyles2 } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
 import { getNavModel } from 'app/core/selectors/navModel';
@@ -13,14 +13,23 @@ import { useSelector } from 'app/types';
 import { DashboardScene } from './DashboardScene';
 import { NavToolbarActions } from './NavToolbarActions';
 
+function childCount(sceneObject: SceneObject) {
+  if ('children' in sceneObject.state && Array.isArray(sceneObject.state.children)) {
+    return sceneObject.state.children.length;
+  }
+
+  return 0;
+}
+
 export function DashboardSceneRenderer({ model }: SceneComponentProps<DashboardScene>) {
-  const { controls, overlay, editview, editPanel, isEmpty } = model.useState();
+  const { controls, overlay, editview, editPanel } = model.useState();
   const styles = useStyles2(getStyles);
   const location = useLocation();
   const navIndex = useSelector((state) => state.navIndex);
   const pageNav = model.getPageNav(location, navIndex);
   const bodyToRender = model.getBodyToRender();
   const navModel = getNavModel(navIndex, 'dashboards/browse');
+  const isEmpty = childCount(model.state.body) === 0;
 
   if (editview) {
     return (
@@ -30,8 +39,6 @@ export function DashboardSceneRenderer({ model }: SceneComponentProps<DashboardS
       </>
     );
   }
-
-  const emptyState = <DashboardEmpty dashboard={model} canCreate={!!model.state.meta.canEdit} />;
 
   const withPanels = (
     <div className={cx(styles.body)}>
@@ -47,7 +54,7 @@ export function DashboardSceneRenderer({ model }: SceneComponentProps<DashboardS
           <div className={styles.canvasContent}>
             <NavToolbarActions dashboard={model} />
             {controls && <controls.Component model={controls} />}
-            {isEmpty ? emptyState : withPanels}
+            {isEmpty ? <DashboardEmpty dashboard={model} canCreate={!!model.state.meta.canEdit} /> : withPanels}
           </div>
         </CustomScrollbar>
       )}
