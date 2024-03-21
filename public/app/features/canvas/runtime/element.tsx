@@ -226,26 +226,26 @@ export class ElementState implements LayerElement {
     let rotationLeftOffset = 0;
     if (this.options.placement?.rotation && this.options.placement?.width && this.options.placement?.height) {
       const rotationDegrees = this.options.placement.rotation;
-      const rotationRadius = (Math.PI / 180) * rotationDegrees;
-      let radiusOffset = rotationRadius;
+      const rotationRadians = (Math.PI / 180) * rotationDegrees;
+      let rotationOffset = rotationRadians;
 
       switch (true) {
         case rotationDegrees >= 0 && rotationDegrees < 90:
           // no-op
           break;
         case rotationDegrees >= 90 && rotationDegrees < 180:
-          radiusOffset = Math.PI - rotationRadius;
+          rotationOffset = Math.PI - rotationRadians;
           break;
         case rotationDegrees >= 180 && rotationDegrees < 270:
-          radiusOffset = Math.PI + rotationRadius;
+          rotationOffset = Math.PI + rotationRadians;
           break;
         case rotationDegrees >= 270:
-          radiusOffset = -rotationRadius;
+          rotationOffset = -rotationRadians;
           break;
       }
 
       const calculateDelta = (dimension1: number, dimension2: number) =>
-        (dimension1 / 2) * Math.sin(radiusOffset) + (dimension2 / 2) * (Math.cos(radiusOffset) - 1);
+        (dimension1 / 2) * Math.sin(rotationOffset) + (dimension2 / 2) * (Math.cos(rotationOffset) - 1);
 
       rotationTopOffset = calculateDelta(this.options.placement.width, this.options.placement.height);
       rotationLeftOffset = calculateDelta(this.options.placement.height, this.options.placement.width);
@@ -489,10 +489,21 @@ export class ElementState implements LayerElement {
     const placement = this.options.placement!;
 
     const style = event.target.style;
-    const deltaX = event.delta[0] / transformScale;
-    const deltaY = event.delta[1] / transformScale;
-    const dirLR = event.direction[0];
-    const dirTB = event.direction[1];
+    let deltaX = event.delta[0] / transformScale;
+    let deltaY = event.delta[1] / transformScale;
+    let dirLR = event.direction[0];
+    let dirTB = event.direction[1];
+
+    // Handle case when element is rotated
+    if (placement.rotation) {
+      const rotation = placement.rotation ?? 0;
+      const rotationInRadians = (rotation * Math.PI) / 180;
+      const originalDirLR = dirLR;
+      const originalDirTB = dirTB;
+
+      dirLR = Math.sign(originalDirLR * Math.cos(rotationInRadians) - originalDirTB * Math.sin(rotationInRadians));
+      dirTB = Math.sign(originalDirLR * Math.sin(rotationInRadians) + originalDirTB * Math.cos(rotationInRadians));
+    }
 
     if (dirLR === 1) {
       placement.width = event.width;
