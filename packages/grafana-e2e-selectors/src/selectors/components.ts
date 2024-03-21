@@ -293,6 +293,11 @@ export const Components = {
   AlertTab: {
     content: 'data-testid Alert editor tab content',
   },
+  AlertRules: {
+    groupToggle: 'data-testid group-collapse-toggle',
+    toggle: 'data-testid collapse-toggle',
+    expandedContent: 'data-testid expanded-content',
+  },
   Alert: {
     /**
      * @deprecated use alertV2 from Grafana 8.3 instead
@@ -536,6 +541,11 @@ export const Components = {
   },
   Tooltip: {
     container: 'data-testid tooltip',
+  },
+  ReturnToPrevious: {
+    buttonGroup: 'data-testid dismissable button group',
+    backButton: 'data-testid back',
+    dismissButton: 'data-testid dismiss',
   },
   SQLQueryEditor: {
     selectColumn: 'data-testid select-column',
