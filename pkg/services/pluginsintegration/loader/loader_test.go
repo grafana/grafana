@@ -11,6 +11,7 @@ import (
 	"github.com/google/go-cmp/cmp/cmpopts"
 	"github.com/stretchr/testify/require"
 
+	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/auth"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin"
@@ -1474,7 +1475,7 @@ func newLoader(t *testing.T, cfg *config.PluginManagementCfg, reg registry.Servi
 		finder.NewLocalFinder(false), reg),
 		pipeline.ProvideBootstrapStage(cfg, signature.DefaultCalculator(cfg), assets),
 		pipeline.ProvideValidationStage(cfg, signature.NewValidator(signature.NewUnsignedAuthorizer(cfg)), angularInspector, sigErrTracker),
-		pipeline.ProvideInitializationStage(cfg, reg, backendFactory, proc, &fakes.FakeAuthService{}, fakes.NewFakeRoleRegistry(), fakes.NewFakePluginEnvProvider()),
+		pipeline.ProvideInitializationStage(cfg, reg, backendFactory, proc, &fakes.FakeAuthService{}, fakes.NewFakeRoleRegistry(), fakes.NewFakePluginEnvProvider(), tracing.InitializeTracerForTest()),
 		terminate)
 }
 
@@ -1506,7 +1507,7 @@ func newLoaderWithOpts(t *testing.T, cfg *config.PluginManagementCfg, opts loade
 		finder.NewLocalFinder(false), reg),
 		pipeline.ProvideBootstrapStage(cfg, signature.DefaultCalculator(cfg), assets),
 		pipeline.ProvideValidationStage(cfg, signature.NewValidator(signature.NewUnsignedAuthorizer(cfg)), angularInspector, sigErrTracker),
-		pipeline.ProvideInitializationStage(cfg, reg, backendFactoryProvider, proc, authServiceRegistry, fakes.NewFakeRoleRegistry(), fakes.NewFakePluginEnvProvider()),
+		pipeline.ProvideInitializationStage(cfg, reg, backendFactoryProvider, proc, authServiceRegistry, fakes.NewFakeRoleRegistry(), fakes.NewFakePluginEnvProvider(), tracing.InitializeTracerForTest()),
 		terminate)
 }
 
