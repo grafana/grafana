@@ -50,7 +50,7 @@ export class ElementState implements LayerElement {
       vertical: VerticalConstraint.Top,
       horizontal: HorizontalConstraint.Left,
     };
-    options.placement = options.placement ?? { width: 100, height: 100, top: 0, left: 0 };
+    options.placement = options.placement ?? { width: 100, height: 100, top: 0, left: 0, rotation: 0 };
     options.background = options.background ?? { color: { fixed: 'transparent' } };
     options.border = options.border ?? { color: { fixed: 'dark-green' } };
     const scene = this.getScene();
