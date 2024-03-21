@@ -17,7 +17,7 @@ weight: 75
 
 # Configure tooltips
 
-{{< docs/public-preview product="The new tooltip experience" featureFlag="newVizTooltips" >}}
+{{< docs/public-preview product="The new tooltip experience" featureFlag="`newVizTooltips`" >}}
 
 When you hover your cursor over a visualization, Grafana can display tooltips that contain more information about a data point, like the exact time of a result. You can customize tooltips to control how many series they include and the order of those values. You can also copy the content from tooltips to use elsewhere. Learn more about configuring tooltips in [Tooltip options](#tooltip-options).
 
