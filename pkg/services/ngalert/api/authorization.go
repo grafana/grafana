@@ -235,13 +235,12 @@ func (api *API) authorize(method, path string) web.Handler {
 		)
 	case http.MethodGet + "/api/v1/provisioning/alert-rules/{UID}",
 		http.MethodGet + "/api/v1/provisioning/alert-rules/{UID}/export":
-		scope := dashboards.ScopeFoldersProvider.GetResourceScopeUID(ac.Parameter(":UID"))
 		eval = ac.EvalAny(
 			ac.EvalPermission(ac.ActionAlertingProvisioningRead),
 			ac.EvalPermission(ac.ActionAlertingProvisioningReadSecrets),
 			ac.EvalAll(
-				ac.EvalPermission(ac.ActionAlertingRuleRead, scope),
-				ac.EvalPermission(dashboards.ActionFoldersRead, scope),
+				ac.EvalPermission(ac.ActionAlertingRuleRead),
+				ac.EvalPermission(dashboards.ActionFoldersRead),
 			),
 		)
 
