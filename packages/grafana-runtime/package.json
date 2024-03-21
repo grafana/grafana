@@ -45,8 +45,6 @@
     "history": "4.10.1",
     "lodash": "4.17.21",
     "rxjs": "7.8.1",
-    "systemjs": "6.14.3",
-    "systemjs-cjs-extra": "0.2.0",
     "tslib": "2.6.2"
   },
   "devDependencies": {
@@ -54,7 +52,7 @@
     "@rollup/plugin-node-resolve": "15.2.3",
     "@rollup/plugin-terser": "0.4.4",
     "@testing-library/dom": "9.3.4",
-    "@testing-library/react": "14.2.1",
+    "@testing-library/react": "14.2.2",
     "@testing-library/user-event": "14.5.2",
     "@types/angular": "1.8.9",
     "@types/history": "4.7.11",
