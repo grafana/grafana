@@ -20,13 +20,32 @@ type CloudMigration struct {
 	Updated   time.Time `json:"updated"`
 }
 
+type MigratedResourceResult struct {
+	Status  string `json:"status"`
+	Message string `json:"message"`
+}
+
+type MigrationResult struct {
+	Status  string `json:"status"`
+	Message string `json:"message"`
+}
+
+type MigratedResource struct {
+	Type   string                 `json:"type"`
+	ID     string                 `json:"id"`
+	RefID  string                 `json:"refID"`
+	Name   string                 `json:"name"`
+	Result MigratedResourceResult `json:"result"`
+}
+
 type CloudMigrationRun struct {
-	ID                int64     `json:"id" xorm:"pk autoincr 'id'"`
-	CloudMigrationUID string    `json:"uid" xorm:"cloud_migration_uid"`
-	Result            string    `json:"result"`
-	Created           time.Time `json:"created"`
-	Updated           time.Time `json:"updated"`
-	Finished          time.Time `json:"finished"`
+	ID                int64              `json:"id" xorm:"pk autoincr 'id'"`
+	CloudMigrationUID string             `json:"uid" xorm:"cloud_migration_uid"`
+	Resources         []MigratedResource `json:"items"`
+	Result            MigrationResult    `json:"result"`
+	Created           time.Time          `json:"created"`
+	Updated           time.Time          `json:"updated"`
+	Finished          time.Time          `json:"finished"`
 }
 
 type CloudMigrationRequest struct {
