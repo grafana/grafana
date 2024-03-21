@@ -4,7 +4,7 @@ go 1.21
 
 require (
 	github.com/mattn/go-sqlite3 v1.14.19
-	github.com/stretchr/testify v1.8.4
+	github.com/stretchr/testify v1.9.0
 	xorm.io/builder v0.3.6
 	xorm.io/core v0.7.3
 )
