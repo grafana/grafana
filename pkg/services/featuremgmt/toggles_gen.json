@@ -942,12 +942,15 @@
     {
       "metadata": {
         "name": "dashgpt",
-        "resourceVersion": "1709648236447",
-        "creationTimestamp": "2024-03-05T14:17:16Z"
+        "resourceVersion": "1711038841830",
+        "creationTimestamp": "2024-03-05T14:17:16Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2024-03-21 16:34:01.830925 +0000 UTC"
+        }
       },
       "spec": {
         "description": "Enable AI powered features in dashboards",
-        "stage": "preview",
+        "stage": "GA",
         "codeowner": "@grafana/dashboards-squad",
         "frontend": true
       }
