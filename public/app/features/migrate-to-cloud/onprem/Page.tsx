@@ -38,7 +38,7 @@ export const Page = () => {
         )}
 
         {status.stackURL && (
-          <Box borderColor="weak" borderStyle="solid" padding={2}>
+          <Box borderColor="weak" borderStyle="solid" padding={2} display="flex" gap={4} alignItems="center">
             <Stack gap={4} alignItems="center">
               <MigrationInfo
                 title={t('migrate-to-cloud.summary.target-stack-title', 'Uploading to')}
@@ -51,17 +51,15 @@ export const Page = () => {
                   </>
                 }
               />
-
-              <div style={{ flex: '1 1 auto' }} />
-
-              <Button
-                disabled={isBusy}
-                onClick={() => startMigration()}
-                icon={startMigrationIsLoading ? 'spinner' : undefined}
-              >
-                <Trans i18nKey="migrate-to-cloud.summary.start-migration">Upload everything</Trans>
-              </Button>
             </Stack>
+
+            <Button
+              disabled={isBusy}
+              onClick={() => startMigration()}
+              icon={startMigrationIsLoading ? 'spinner' : undefined}
+            >
+              <Trans i18nKey="migrate-to-cloud.summary.start-migration">Upload everything</Trans>
+            </Button>
           </Box>
         )}
 
