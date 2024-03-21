@@ -444,7 +444,6 @@ export class Scene {
         this.disableCustomables();
       })
       .on('rotate', (event) => {
-        console.log('rotate', event);
         const targetedElement = this.findElementByTarget(event.target);
 
         if (targetedElement) {

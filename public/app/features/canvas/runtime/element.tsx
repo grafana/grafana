@@ -221,21 +221,56 @@ export class ElementState implements LayerElement {
         : parseFloat(getComputedStyle(this.div?.parentElement!).borderWidth);
     }
 
+    // For elements with rotation, a delta needs to be applied to account for bounding box rotation
+    // TODO: Fix behavior for top/bottom, left/right, center, and scale constraints
+    let rotationTopOffset = 0;
+    let rotationLeftOffset = 0;
+    if (this.options.placement?.rotation && this.options.placement?.width && this.options.placement?.height) {
+      const rotationDegrees = this.options.placement.rotation;
+      const rotationRadius = (Math.PI / 180) * rotationDegrees;
+      let radiusOffset = rotationRadius;
+
+      switch (true) {
+        case rotationDegrees >= 0 && rotationDegrees < 90:
+          // no-op
+          break;
+        case rotationDegrees >= 90 && rotationDegrees < 180:
+          radiusOffset = Math.PI - rotationRadius;
+          break;
+        case rotationDegrees >= 180 && rotationDegrees < 270:
+          radiusOffset = Math.PI + rotationRadius;
+          break;
+        case rotationDegrees >= 270:
+          radiusOffset = -rotationRadius;
+          break;
+      }
+
+      const calculateDelta = (dimension1: number, dimension2: number) =>
+        (dimension1 / 2) * Math.sin(radiusOffset) + (dimension2 / 2) * (Math.cos(radiusOffset) - 1);
+
+      rotationTopOffset = calculateDelta(this.options.placement.width, this.options.placement.height);
+      rotationLeftOffset = calculateDelta(this.options.placement.height, this.options.placement.width);
+    }
+
     const relativeTop =
       elementContainer && parentContainer
-        ? Math.round(elementContainer.top - parentContainer.top - parentBorderWidth) / transformScale
+        ? Math.round(elementContainer.top - parentContainer.top - parentBorderWidth + rotationTopOffset) /
+          transformScale
         : 0;
     const relativeBottom =
       elementContainer && parentContainer
-        ? Math.round(parentContainer.bottom - parentBorderWidth - elementContainer.bottom) / transformScale
+        ? Math.round(parentContainer.bottom - parentBorderWidth - elementContainer.bottom + rotationTopOffset) /
+          transformScale
         : 0;
     const relativeLeft =
       elementContainer && parentContainer
-        ? Math.round(elementContainer.left - parentContainer.left - parentBorderWidth) / transformScale
+        ? Math.round(elementContainer.left - parentContainer.left - parentBorderWidth + rotationLeftOffset) /
+          transformScale
         : 0;
     const relativeRight =
       elementContainer && parentContainer
-        ? Math.round(parentContainer.right - parentBorderWidth - elementContainer.right) / transformScale
+        ? Math.round(parentContainer.right - parentBorderWidth - elementContainer.right + rotationLeftOffset) /
+          transformScale
         : 0;
 
     const placement: Placement = {};
@@ -297,6 +332,8 @@ export class ElementState implements LayerElement {
 
     if (this.options.placement?.rotation) {
       placement.rotation = this.options.placement.rotation;
+      placement.width = this.options.placement.width;
+      placement.height = this.options.placement.height;
     }
 
     this.options.placement = placement;
@@ -438,19 +475,17 @@ export class ElementState implements LayerElement {
     event.target.style.transform = event.transform;
   };
 
-  // TODO: Figure out how to make customables follow element (i.e. settings icon / constraints for a cleaner look)
   applyRotate = (event: OnRotate) => {
-    const rotationDegree = event.rotation;
+    const absoluteRotationDegree = event.absoluteRotation;
 
     const placement = this.options.placement!;
-    placement.rotation = rotationDegree;
+    // Ensure rotation is between 0 and 360
+    placement.rotation = absoluteRotationDegree - Math.floor(absoluteRotationDegree / 360) * 360;
     event.target.style.transform = event.transform;
   };
 
   // kinda like:
   // https://github.com/grafana/grafana-edge-app/blob/main/src/panels/draw/WrapItem.tsx#L44
-
-  // TODO: take into account rotation?
   applyResize = (event: OnResize, transformScale = 1) => {
     const placement = this.options.placement!;
 
