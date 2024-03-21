@@ -52,6 +52,9 @@ func (d *PyroscopeDatasource) query(ctx context.Context, pCtx backend.PluginCont
 		return response
 	}
 
+	profileTypeId := depointerizer(qm.ProfileTypeId)
+	labelSelector := depointerizer(qm.LabelSelector)
+
 	responseMutex := sync.Mutex{}
 	g, gCtx := errgroup.WithContext(ctx)
 	if query.QueryType == queryTypeMetrics || query.QueryType == queryTypeBoth {
@@ -75,8 +78,8 @@ func (d *PyroscopeDatasource) query(ctx context.Context, pCtx backend.PluginCont
 			logger.Debug("Sending SelectSeriesRequest", "queryModel", qm, "function", logEntrypoint())
 			seriesResp, err := d.client.GetSeries(
 				gCtx,
-				qm.ProfileTypeId,
-				qm.LabelSelector,
+				profileTypeId,
+				labelSelector,
 				query.TimeRange.From.UnixMilli(),
 				query.TimeRange.To.UnixMilli(),
 				qm.GroupBy,
@@ -101,7 +104,7 @@ func (d *PyroscopeDatasource) query(ctx context.Context, pCtx backend.PluginCont
 			var profileResp *ProfileResponse
 			if len(qm.SpanSelector) > 0 {
 				logger.Debug("Calling GetSpanProfile", "queryModel", qm, "function", logEntrypoint())
-				prof, err := d.client.GetSpanProfile(gCtx, qm.ProfileTypeId, qm.LabelSelector, qm.SpanSelector, query.TimeRange.From.UnixMilli(), query.TimeRange.To.UnixMilli(), qm.MaxNodes)
+				prof, err := d.client.GetSpanProfile(gCtx, profileTypeId, labelSelector, qm.SpanSelector, query.TimeRange.From.UnixMilli(), query.TimeRange.To.UnixMilli(), qm.MaxNodes)
 				if err != nil {
 					span.RecordError(err)
 					span.SetStatus(codes.Error, err.Error())
@@ -111,7 +114,7 @@ func (d *PyroscopeDatasource) query(ctx context.Context, pCtx backend.PluginCont
 				profileResp = prof
 			} else {
 				logger.Debug("Calling GetProfile", "queryModel", qm, "function", logEntrypoint())
-				prof, err := d.client.GetProfile(gCtx, qm.ProfileTypeId, qm.LabelSelector, query.TimeRange.From.UnixMilli(), query.TimeRange.To.UnixMilli(), qm.MaxNodes)
+				prof, err := d.client.GetProfile(gCtx, profileTypeId, labelSelector, query.TimeRange.From.UnixMilli(), query.TimeRange.To.UnixMilli(), qm.MaxNodes)
 				if err != nil {
 					span.RecordError(err)
 					span.SetStatus(codes.Error, err.Error())
@@ -449,4 +452,13 @@ func seriesToDataFrames(resp *SeriesResponse) []*data.Frame {
 		frames = append(frames, frame)
 	}
 	return frames
+}
+
+func depointerizer[T any](v *T) T {
+	var emptyValue T
+	if v != nil {
+		emptyValue = *v
+	}
+
+	return emptyValue
 }
