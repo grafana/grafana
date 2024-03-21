@@ -37,6 +37,7 @@ export function getConnectionEditor(opts: CanvasConnectionEditorOptions): Nested
       optionBuilder.addColor(builder, ctx);
       optionBuilder.addSize(builder, ctx);
       optionBuilder.addRadius(builder, ctx);
+      optionBuilder.addDirection(builder, ctx);
       optionBuilder.addLineStyle(builder, ctx);
     },
   };
