@@ -18,8 +18,10 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert/sender"
 	amalert "github.com/prometheus/alertmanager/api/v2/client/alert"
 	amalertgroup "github.com/prometheus/alertmanager/api/v2/client/alertgroup"
+	amgeneral "github.com/prometheus/alertmanager/api/v2/client/general"
 	amreceiver "github.com/prometheus/alertmanager/api/v2/client/receiver"
 	amsilence "github.com/prometheus/alertmanager/api/v2/client/silence"
+	"gopkg.in/yaml.v3"
 )
 
 type stateStore interface {
@@ -362,17 +364,24 @@ func (am *Alertmanager) PutAlerts(ctx context.Context, alerts apimodels.Postable
 
 // GetStatus retrieves the remote Alertmanager configuration.
 func (am *Alertmanager) GetStatus(ctx context.Context) (apimodels.GettableStatus, error) {
-	c, err := am.mimirClient.GetGrafanaAlertmanagerConfig(ctx)
+	defer func() {
+		if r := recover(); r != nil {
+			am.log.Error("Panic while getting status", "err", r)
+		}
+	}()
+
+	params := amgeneral.NewGetStatusParamsWithContext(ctx)
+	res, err := am.amClient.General.GetStatus(params)
 	if err != nil {
 		return apimodels.GettableStatus{}, err
 	}
 
-	postableCfg, err := notifier.Load([]byte(c.GrafanaAlertmanagerConfig))
-	if err != nil {
+	var cfg apimodels.PostableApiAlertingConfig
+	if err := yaml.Unmarshal([]byte(*res.Payload.Config.Original), &cfg); err != nil {
 		return apimodels.GettableStatus{}, err
 	}
 
-	return *apimodels.NewGettableStatus(&postableCfg.AlertmanagerConfig), nil
+	return *apimodels.NewGettableStatus(&cfg), nil
 }
 
 func (am *Alertmanager) GetReceivers(ctx context.Context) ([]apimodels.Receiver, error) {
