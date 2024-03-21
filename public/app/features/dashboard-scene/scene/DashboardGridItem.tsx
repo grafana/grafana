@@ -55,6 +55,19 @@ export class DashboardGridItem extends SceneObjectBase<DashboardGridItemState> i
       this._subs.add(this.subscribeToState((newState, prevState) => this._handleGridResize(newState, prevState)));
       this._performRepeat();
     }
+
+    if (this.state.body instanceof LibraryVizPanel) {
+      this.state.body.subscribeToState((newState) => {
+        if (newState._loadedPanel?.model.repeat) {
+          this.setState({
+            variableName: newState._loadedPanel.model.repeat,
+            repeatDirection: newState._loadedPanel.model.repeatDirection,
+            maxPerRow: newState._loadedPanel.model.maxPerRow,
+          });
+          this._performRepeat();
+        }
+      });
+    }
   }
 
   private _onVariableUpdateCompleted(): void {
