@@ -43,11 +43,6 @@ type DataQuery struct {
 
 // ParcaDataQuery defines model for ParcaDataQuery.
 type ParcaDataQuery struct {
-	// DataQuery These are the common properties available to all queries in all datasources.
-	// Specific implementations will *extend* this interface, adding the required
-	// properties for the given context.
-	DataQuery
-
 	// For mixed data sources the selected datasource is on the query level.
 	// For non mixed scenarios this is undefined.
 	// TODO find a better way to do this ^ that's friendly to schema
@@ -60,10 +55,10 @@ type ParcaDataQuery struct {
 	Hide *bool `json:"hide,omitempty"`
 
 	// Specifies the query label selectors.
-	LabelSelector string `json:"labelSelector"`
+	LabelSelector *string `json:"labelSelector,omitempty"`
 
 	// Specifies the type of profile to query.
-	ProfileTypeId string `json:"profileTypeId"`
+	ProfileTypeId *string `json:"profileTypeId,omitempty"`
 
 	// Specify the query flavor
 	// TODO make this required and give it a default
@@ -72,7 +67,7 @@ type ParcaDataQuery struct {
 	// A unique identifier for the query within the list of targets.
 	// In server side expressions, the refId is used as a variable name to identify results.
 	// By default, the UI will assign A->Z; however setting meaningful names may be useful.
-	RefId string `json:"refId"`
+	RefId *string `json:"refId,omitempty"`
 }
 
 // ParcaQueryType defines model for ParcaQueryType.

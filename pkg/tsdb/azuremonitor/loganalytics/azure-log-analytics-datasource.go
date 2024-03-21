@@ -410,9 +410,7 @@ func addTraceDataLinksToFields(query *AzureLogAnalyticsQuery, azurePortalBaseUrl
 
 	logsQueryType := string(dataquery.AzureQueryTypeAzureLogAnalytics)
 	logsJSONModel := dataquery.AzureMonitorQuery{
-		DataQuery: dataquery.DataQuery{
-			QueryType: &logsQueryType,
-		},
+		QueryType: &logsQueryType,
 		AzureLogAnalytics: &dataquery.AzureLogsQuery{
 			Query:     &query.TraceLogsExploreQuery,
 			Resources: []string{queryJSONModel.AzureTraces.Resources[0]},

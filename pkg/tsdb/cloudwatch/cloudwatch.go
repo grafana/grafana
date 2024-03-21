@@ -210,8 +210,12 @@ func (e *cloudWatchExecutor) QueryData(ctx context.Context, req *backend.QueryDa
 	// Public dashboard queries execute like alert queries, i.e. they execute on the backend, therefore, we need to handle them synchronously.
 	// Since `model.Type` is set during execution on the frontend by the query runner and isn't saved with the query, we are checking here is
 	// missing the `model.Type` property and if it is a log query in order to determine if it is a public dashboard query.
-	fromPublicDashboard := (model.Type == "" && model.QueryMode == logsQueryMode)
-	isSyncLogQuery := ((fromAlert || fromExpression) && model.QueryMode == logsQueryMode) || fromPublicDashboard
+	queryMode := ""
+	if model.QueryMode != nil {
+		queryMode = string(*model.QueryMode)
+	}
+	fromPublicDashboard := model.Type == "" && queryMode == logsQueryMode
+	isSyncLogQuery := ((fromAlert || fromExpression) && queryMode == logsQueryMode) || fromPublicDashboard
 	if isSyncLogQuery {
 		return executeSyncLogQuery(ctx, e, req)
 	}
