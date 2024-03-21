@@ -9,6 +9,7 @@ import { AppChromeUpdate } from 'app/core/components/AppChrome/AppChromeUpdate';
 import { NavToolbarSeparator } from 'app/core/components/AppChrome/NavToolbar/NavToolbarSeparator';
 import { contextSrv } from 'app/core/core';
 import { Trans, t } from 'app/core/internationalization';
+import { DashNavModalContextProvider, DashNavModalRoot } from 'app/features/dashboard/components/DashNav/DashNav';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 import { playlistSrv } from 'app/features/playlist/PlaylistSrv';
 
@@ -27,9 +28,12 @@ interface Props {
 
 export const NavToolbarActions = React.memo<Props>(({ dashboard }) => {
   const actions = (
-    <ToolbarButtonRow alignment="right">
-      <ToolbarActions dashboard={dashboard} />
-    </ToolbarButtonRow>
+    <DashNavModalContextProvider>
+      <ToolbarButtonRow alignment="right">
+        <ToolbarActions dashboard={dashboard} />
+      </ToolbarButtonRow>
+      <DashNavModalRoot />
+    </DashNavModalContextProvider>
   );
 
   return <AppChromeUpdate actions={actions} />;
