@@ -14,11 +14,11 @@ labels:
     - cloud
     - enterprise
     - oss
-title: Templating labels and annotations
+title: Template labels and annotations
 weight: 500
 ---
 
-# Templating labels and annotations
+# Template labels and annotations
 
 You can use templates to include data from queries and expressions in labels and annotations. For example, you might want to set the severity label for an alert based on the value of the query, or use the instance label from the query in a summary annotation so you know which server is experiencing high CPU usage.
 
