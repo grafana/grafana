@@ -57,7 +57,12 @@ func ProvideService(
 	cfg *setting.Cfg,
 	features featuremgmt.FeatureToggles,
 ) (*service, error) {
-	tracing, err := tracing.ProvideService(cfg)
+	tracingCfg, err := tracing.ProvideTracingConfig(cfg)
+	if err != nil {
+		return nil, err
+	}
+
+	tracing, err := tracing.ProvideService(tracingCfg)
 	if err != nil {
 		return nil, err
 	}

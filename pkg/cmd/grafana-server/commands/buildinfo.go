@@ -16,7 +16,7 @@ func getBuildstamp(opts ServerOptions) int64 {
 	return buildstampInt64
 }
 
-func setBuildInfo(opts ServerOptions) {
+func SetBuildInfo(opts ServerOptions) {
 	setting.BuildVersion = opts.Version
 	setting.BuildCommit = opts.Commit
 	setting.EnterpriseBuildCommit = opts.EnterpriseCommit

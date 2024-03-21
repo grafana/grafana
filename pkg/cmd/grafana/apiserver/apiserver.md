@@ -1,6 +1,6 @@
 # grafana apiserver (standalone)
 
-The example-apiserver closely resembles the 
+The example-apiserver closely resembles the
 [sample-apiserver](https://github.com/kubernetes/sample-apiserver/tree/master) project in code and thus
 allows the same
 [CLI flags](https://kubernetes.io/docs/reference/command-line-tools-reference/kube-apiserver/) as kube-apiserver.
@@ -32,3 +32,25 @@ dummy                  example.grafana.app/v0alpha1   true         DummyResource
 runtime                example.grafana.app/v0alpha1   false        RuntimeInfo
 ```
 
+### Observability
+
+Logs, metrics and traces are supported. See `--grafana.log.*`, `--grafana.metrics.*` and `--grafana.tracing.*` flags for details.
+
+```shell
+go run ./pkg/cmd/grafana apiserver \
+  --runtime-config=example.grafana.app/v0alpha1=true \
+  --help
+```
+
+For example, to enable debug logs, metrics and traces (using [self-instrumentation](../../../../devenv/docker/blocks/self-instrumentation/readme.md)) use the following:
+
+```shell
+go run ./pkg/cmd/grafana apiserver \
+  --runtime-config=example.grafana.app/v0alpha1=true \
+  --secure-port=7443 \
+  --grafana.log.level=debug \
+  --verbosity=10 \
+  --grafana.metrics.enable \
+  --grafana.tracing.jaeger.address=http://localhost:14268/api/traces \
+  --grafana.tracing.sampler-param=1
+```
