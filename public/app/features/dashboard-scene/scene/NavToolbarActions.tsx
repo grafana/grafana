@@ -15,7 +15,7 @@ import { playlistSrv } from 'app/features/playlist/PlaylistSrv';
 import { PanelEditor } from '../panel-edit/PanelEditor';
 import { ShareModal } from '../sharing/ShareModal';
 import { DashboardInteractions } from '../utils/interactions';
-import { dynamicDashNavActions } from '../utils/registerDynamicDashNavAction';
+import { DynamicDashNavButtonModel, dynamicDashNavActions } from '../utils/registerDynamicDashNavAction';
 
 import { DashboardScene } from './DashboardScene';
 import { GoToSnapshotOriginButton } from './GoToSnapshotOriginButton';
@@ -63,6 +63,11 @@ export function ToolbarActions({ dashboard }: Props) {
   // Means we are not in settings view, fullscreen panel or edit panel
   const isShowingDashboard = !editview && !isViewingPanel && !isEditingPanel;
   const isEditingAndShowingDashboard = isEditing && isShowingDashboard;
+
+  if (!isEditingPanel) {
+    // This adds the precence indicators in enterprise
+    addDynamicActions(toolbarActions, dynamicDashNavActions.left, 'left-actions');
+  }
 
   toolbarActions.push({
     group: 'icon-actions',
@@ -221,19 +226,9 @@ export function ToolbarActions({ dashboard }: Props) {
     ),
   });
 
-  const dynamicActions = dynamicDashNavActions.left.concat(dynamicDashNavActions.right);
-  if (dynamicActions.length > 0 && !isEditingPanel) {
-    for (const action of dynamicActions) {
-      const props = { dashboard: getDashboardSrv().getCurrent()! };
-      if (action.show(props)) {
-        const Component = action.component;
-        toolbarActions.push({
-          group: 'icon-actions',
-          condition: true,
-          render: () => <Component {...props} />,
-        });
-      }
-    }
+  if (!isEditingPanel) {
+    // This adds the alert rules button and the dashboard insights button
+    addDynamicActions(toolbarActions, dynamicDashNavActions.right, 'icon-actions');
   }
 
   toolbarActions.push({
@@ -520,6 +515,26 @@ export function ToolbarActions({ dashboard }: Props) {
   }
 
   return actionElements;
+}
+
+function addDynamicActions(
+  toolbarActions: ToolbarAction[],
+  registeredActions: DynamicDashNavButtonModel[],
+  group: string
+) {
+  if (registeredActions.length > 0) {
+    for (const action of registeredActions) {
+      const props = { dashboard: getDashboardSrv().getCurrent()! };
+      if (action.show(props)) {
+        const Component = action.component;
+        toolbarActions.push({
+          group: group,
+          condition: true,
+          render: () => <Component {...props} />,
+        });
+      }
+    }
+  }
 }
 
 function useEditingLibraryPanel(panelEditor?: PanelEditor) {
