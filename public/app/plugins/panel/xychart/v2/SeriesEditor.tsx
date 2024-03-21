@@ -19,8 +19,6 @@ import { LayerName } from 'app/core/components/Layers/LayerName';
 import { Options, SeriesMapping } from '../panelcfg.gen';
 import { XYSeriesConfig } from '../types2';
 
-// import { prepSeries } from './utils';
-
 export const SeriesEditor = ({
   value: seriesCfg,
   onChange,
@@ -103,12 +101,11 @@ export const SeriesEditor = ({
                     name={series.name?.fixed ?? `Series ${index + 1}`}
                     onChange={(v) => {
                       series.name = {
-                        fixed: v,
+                        fixed: v === '' || v === `Series ${index + 1}` ? undefined : v,
                       };
                       onChange([...seriesCfg]);
                     }}
                   />
-
                   <IconButton
                     name="trash-alt"
                     title={'remove'}

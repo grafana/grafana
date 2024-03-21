@@ -12,6 +12,8 @@ export const xyChartMigrationHandler = (panel: PanelModel): Options => {
     const { dims, seriesMapping, series: oldSeries, ...cleanedOpts } = panel.options;
     const { exclude = [], frame: frameShared, x: xShared }: XYDimensionConfig = dims ?? {};
 
+    const custDefaults = panel.fieldConfig.defaults.custom;
+
     let oldSeries2 = oldSeries;
 
     if (seriesMapping === SeriesMapping.Auto) {
@@ -80,8 +82,6 @@ export const xyChartMigrationHandler = (panel: PanelModel): Options => {
           };
         }
 
-        let custDefaults = panel.fieldConfig.defaults.custom;
-
         if (colorField == null && colorFixed && custDefaults.pointColor?.fixed !== colorFixed) {
           // NOTE: intentionally not using custom.pointColor.fixed
           let hasOverride = panel.fieldConfig.overrides.some(
@@ -113,7 +113,7 @@ export const xyChartMigrationHandler = (panel: PanelModel): Options => {
             (o) =>
               o.matcher.id === yMatcherConfig.id &&
               o.matcher.options === yMatcherConfig.options &&
-              o.properties.some((p) => p.id === 'custom.pointSize.fixed')
+              o.properties.some((p) => p.id === 'custom.pointSize')
           );
 
           if (!hasOverride) {
@@ -121,7 +121,7 @@ export const xyChartMigrationHandler = (panel: PanelModel): Options => {
               matcher: yMatcherConfig,
               properties: [
                 {
-                  id: 'custom.pointSize.fixed',
+                  id: 'custom.pointSize',
                   value: sizeFixed,
                 },
               ],
@@ -136,7 +136,7 @@ export const xyChartMigrationHandler = (panel: PanelModel): Options => {
               (o) =>
                 o.matcher.id === yMatcherConfig.id &&
                 o.matcher.options === yMatcherConfig.options &&
-                o.properties.some((p) => p.id === 'custom.pointSize.min')
+                o.properties.some((p) => p.id === 'custom.pointSizeMin')
             );
 
             if (!hasOverride) {
@@ -147,7 +147,7 @@ export const xyChartMigrationHandler = (panel: PanelModel): Options => {
                 },
                 properties: [
                   {
-                    id: 'custom.pointSize.min',
+                    id: 'custom.pointSizeMin',
                     value: sizeMin,
                   },
                 ],
@@ -160,7 +160,7 @@ export const xyChartMigrationHandler = (panel: PanelModel): Options => {
               (o) =>
                 o.matcher.id === yMatcherConfig.id &&
                 o.matcher.options === yMatcherConfig.options &&
-                o.properties.some((p) => p.id === 'custom.pointSize.max')
+                o.properties.some((p) => p.id === 'custom.pointSizeMax')
             );
 
             if (!hasOverride) {
@@ -171,7 +171,7 @@ export const xyChartMigrationHandler = (panel: PanelModel): Options => {
                 },
                 properties: [
                   {
-                    id: 'custom.pointSize.max',
+                    id: 'custom.pointSizeMax',
                     value: sizeMax,
                   },
                 ],
@@ -224,6 +224,8 @@ export const xyChartMigrationHandler = (panel: PanelModel): Options => {
       mapping: seriesMapping === SeriesMapping.Auto ? SeriesMapping.Auto : SeriesMapping.Manual,
       series: newSeries,
     };
+
+    custDefaults.pointSize = custDefaults.pointSize.fixed;
 
     // panel.fieldConfig = {
     //   defaults,

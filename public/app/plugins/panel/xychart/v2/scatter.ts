@@ -8,6 +8,7 @@ import { FacetedData, FacetSeries } from '@grafana/ui/src/components/uPlot/types
 
 import { pointWithin, Quadtree, Rect } from '../../barchart/quadtree';
 import { XYSeries } from '../types2';
+import { getCommonPrefixSuffix } from './utils';
 
 interface DrawBubblesOpts {
   each: (u: uPlot, seriesIdx: number, dataIdx: number, lft: number, top: number, wid: number, hgt: number) => void;
@@ -289,14 +290,21 @@ export const prepConfig = (xySeries: XYSeries[], theme: GrafanaTheme2) => {
 
   // why does this fall back to '' instead of null or undef?
   let xAxisLabel = customConfig.axisLabel;
-  // // If a shared common label exists across multiple frames, strip from axis label
-  // const fieldDisplayName = getFieldDisplayName(xField, xySeries[0].frame(frames), frames);
-  // if (xField.labels) {
-  //   const singleLabelName = getSingleLabelName(frames);
-  //   if (singleLabelName) {
-  //     xAxisLabel = fieldDisplayName.replace(xField.labels[singleLabelName], '');
-  //   }
-  // }
+
+  if (xAxisLabel == null || xAxisLabel === '') {
+    let dispNames = xySeries.map((s) => s.x.field.state?.displayName ?? '');
+
+    let xAxisAutoLabel =
+      xySeries.length === 1
+        ? xField.state?.displayName ?? xField.name
+        : new Set(dispNames).size === 1
+          ? dispNames[0]
+          : getCommonPrefixSuffix(dispNames);
+
+    if (xAxisAutoLabel !== '') {
+      xAxisLabel = xAxisAutoLabel;
+    }
+  }
 
   builder.addAxis({
     scaleKey: 'x',
@@ -305,7 +313,6 @@ export const prepConfig = (xySeries: XYSeries[], theme: GrafanaTheme2) => {
     grid: { show: customConfig?.axisGridShow },
     border: { show: customConfig?.axisBorderShow },
     theme,
-    // label: xAxisLabel == null || xAxisLabel === '' ? fieldDisplayName : xAxisLabel,
     label: xAxisLabel,
     formatValue: (v, decimals) => formattedValueToString(xField.display!(v, decimals)),
   });
@@ -339,15 +346,22 @@ export const prepConfig = (xySeries: XYSeries[], theme: GrafanaTheme2) => {
     });
 
     // why does this fall back to '' instead of null or undef?
-    let yAxisLabel = customConfig?.axisLabel;
-    // // If a shared common label exists across multiple frames, strip from axis label
-    // const fieldDisplayName = getFieldDisplayName(field, scatterSeries[si].frame(frames), frames);
-    // if (field.labels) {
-    //   const singleLabelName = getSingleLabelName(frames);
-    //   if (singleLabelName) {
-    //     yAxisLabel = fieldDisplayName.replace(field.labels[singleLabelName], '');
-    //   }
-    // }
+    let yAxisLabel = customConfig.axisLabel;
+
+    if (yAxisLabel == null || yAxisLabel === '') {
+      let dispNames = xySeries.map((s) => s.y.field.state?.displayName ?? '');
+
+      let yAxisAutoLabel =
+        xySeries.length === 1
+          ? field.state?.displayName ?? field.name
+          : new Set(dispNames).size === 1
+            ? dispNames[0]
+            : getCommonPrefixSuffix(dispNames);
+
+      if (yAxisAutoLabel !== '') {
+        yAxisLabel = yAxisAutoLabel;
+      }
+    }
 
     builder.addAxis({
       scaleKey,
@@ -358,7 +372,7 @@ export const prepConfig = (xySeries: XYSeries[], theme: GrafanaTheme2) => {
       border: { show: customConfig?.axisBorderShow },
       size: customConfig?.axisWidth,
       // label: yAxisLabel == null || yAxisLabel === '' ? fieldDisplayName : yAxisLabel,
-      label: yAxisLabel ?? '',
+      label: yAxisLabel,
       formatValue: (v, decimals) => formattedValueToString(field.display!(v, decimals)),
     });
 
@@ -427,11 +441,11 @@ export function prepData(xySeries: XYSeries[]): FacetedData {
       let diams: number[];
 
       if (s.size.field != null) {
-        let { min, max } = s.size.field.config.custom.pointSize;
+        let { min, max } = s.size;
 
         // todo: this scaling should be in renderer from raw values (not by passing css pixel diams via data)
-        let minPx = min ** 2;
-        let maxPx = max ** 2;
+        let minPx = min! ** 2;
+        let maxPx = max! ** 2;
         // use quadratic size scaling in byValue modes
         let pxRange = maxPx - minPx;
 

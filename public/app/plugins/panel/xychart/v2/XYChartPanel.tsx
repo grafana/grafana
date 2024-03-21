@@ -56,7 +56,7 @@ export const XYChartPanel2 = (props: Props2) => {
   const renderLegend = () => {
     const items: VizLegendItem[] = [];
 
-    series.forEach((s) => {
+    series.forEach((s, idx) => {
       let yField = s.y.field;
       let config = yField.config;
       let custom = config.custom;
@@ -66,7 +66,8 @@ export const XYChartPanel2 = (props: Props2) => {
           yAxis: 1, // TODO: pull from y field
           label: s.name.value,
           color: alpha(s.color.fixed!, 1),
-          getItemKey: () => s.name.value,
+          getItemKey: () => `${idx}-${s.name.value}`,
+          fieldName: yField.state?.displayName ?? yField.name,
           disabled: yField.state?.hideFrom?.viz ?? false,
         });
       }

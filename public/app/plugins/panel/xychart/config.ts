@@ -91,9 +91,9 @@ export function getScatterFieldConfig(cfg: FieldConfig): SetFieldConfigOptionsAr
         //   SymbolEditor // ResourceDimensionEditor
         // )
         .addSliderInput({
-          path: 'pointSize.fixed',
+          path: 'pointSize',
           name: 'Point size',
-          defaultValue: cfg.pointSize?.fixed ?? DEFAULT_POINT_SIZE,
+          defaultValue: cfg.pointSize ?? DEFAULT_POINT_SIZE,
           settings: {
             min: 1,
             max: 100,
@@ -102,12 +102,12 @@ export function getScatterFieldConfig(cfg: FieldConfig): SetFieldConfigOptionsAr
           showIf: (c) => c.show !== ScatterShow.Lines,
         })
         .addNumberInput({
-          path: 'pointSize.min',
+          path: 'pointSizeMin',
           name: 'Min point size',
           showIf: (c) => c.show !== ScatterShow.Lines,
         })
         .addNumberInput({
-          path: 'pointSize.max',
+          path: 'pointSizeMax',
           name: 'Max point size',
           showIf: (c) => c.show !== ScatterShow.Lines,
         })

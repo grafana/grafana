@@ -10,7 +10,9 @@ import {
   FieldColorModeId,
   cacheFieldDisplayNames,
   FieldMatcherID,
+  FieldConfigSource,
 } from '@grafana/data';
+import { decoupleHideFromState } from '@grafana/data/src/field/fieldState';
 import { config } from '@grafana/runtime';
 import { VisibilityMode } from '@grafana/schema';
 
@@ -34,8 +36,14 @@ function getFrameMatcher2(config: MatcherConfig) {
   return () => false;
 }
 
-export function prepSeries(mapping: SeriesMapping, mappedSeries: XYSeriesConfig[], frames: DataFrame[]) {
+export function prepSeries(
+  mapping: SeriesMapping,
+  mappedSeries: XYSeriesConfig[],
+  frames: DataFrame[],
+  fieldConfig: FieldConfigSource<any>
+) {
   cacheFieldDisplayNames(frames);
+  decoupleHideFromState(frames, fieldConfig);
 
   let series: XYSeries[] = [];
 
@@ -45,7 +53,13 @@ export function prepSeries(mapping: SeriesMapping, mappedSeries: XYSeriesConfig[
 
   const { palette, getColorByName } = config.theme2.visualization;
 
-  mappedSeries.forEach((seriesCfg) => {
+  mappedSeries.forEach((seriesCfg, seriesIdx) => {
+    if (mapping === SeriesMapping.Manual) {
+      if (seriesCfg.frame?.matcher == null || seriesCfg.x?.matcher == null || seriesCfg.y?.matcher == null) {
+        return;
+      }
+    }
+
     let xMatcher = getFieldMatcher(
       seriesCfg.x?.matcher ?? {
         id: FieldMatcherID.byType,
@@ -69,6 +83,9 @@ export function prepSeries(mapping: SeriesMapping, mappedSeries: XYSeriesConfig[
       if (frameMatcher != null && !frameMatcher(frame, frameIdx)) {
         return;
       }
+
+      // shared across each series in this frame
+      let restFields: Field[] = [];
 
       let frameSeries: XYSeries[] = [];
 
@@ -95,7 +112,7 @@ export function prepSeries(mapping: SeriesMapping, mappedSeries: XYSeriesConfig[
             return;
           }
 
-          // in manual mode only add single series for this frame
+          // in manual mode only add single series for this config
           if (mapping === SeriesMapping.Manual && frameSeries.length > 0) {
             return;
           }
@@ -103,7 +120,7 @@ export function prepSeries(mapping: SeriesMapping, mappedSeries: XYSeriesConfig[
           // if we match non-excluded y, create series
           if (yMatcher(field, frame, frames) && !field.config.custom?.hideFrom?.viz) {
             let y = field;
-            let name = getFieldDisplayName(y, frame, frames); // `Series ${seriesIdx + 1}`
+            let name = seriesCfg.name?.fixed ?? getFieldDisplayName(y, frame, frames);
 
             let ser: XYSeries = {
               // these typically come from y field
@@ -125,6 +142,7 @@ export function prepSeries(mapping: SeriesMapping, mappedSeries: XYSeriesConfig[
               },
               color: {},
               size: {},
+              _rest: restFields,
             };
 
             if (color != null) {
@@ -145,6 +163,18 @@ export function prepSeries(mapping: SeriesMapping, mappedSeries: XYSeriesConfig[
         if (frameSeries.length === 0) {
           // TODO: could not create series, skip & show error?
         }
+
+        // populate rest fields
+        frame.fields.forEach((field) => {
+          let isUsedField = frameSeries.some(
+            ({ x, y, color, size }) =>
+              x.field === field || y.field === field || color.field === field || size.field === field
+          );
+
+          if (!isUsedField) {
+            restFields.push(field);
+          }
+        });
 
         series.push(...frameSeries);
       } else {
@@ -179,12 +209,11 @@ export function prepSeries(mapping: SeriesMapping, mappedSeries: XYSeriesConfig[
 
       if (s.size.field == null) {
         // derive fixed size from y field config
-        s.size.fixed = s.y.field.config.custom.pointSize.fixed ?? 5;
+        s.size.fixed = s.y.field.config.custom.pointSize ?? 5;
         // ser.size.mode =
       }
     });
 
-    // TODO: conditionally
     autoNameSeries(series);
 
     // TODO: re-assign y display names?
@@ -202,6 +231,41 @@ export function prepSeries(mapping: SeriesMapping, mappedSeries: XYSeriesConfig[
 function autoNameSeries(series: XYSeries[]) {
   let names = series.map((s) => s.name.value.split(/\s+/g));
 
+  const { prefix, suffix } = findCommonPrefixSuffixLengths(names);
+
+  if (prefix < Infinity || suffix < Infinity) {
+    series.forEach((s, i) => {
+      s.name.value = names[i].slice(prefix, names[i].length - suffix).join(' ');
+    });
+  }
+}
+
+export function getCommonPrefixSuffix(strs: string[]) {
+  let names = strs.map((s) => s.split(/\s+/g));
+
+  let { prefix, suffix } = findCommonPrefixSuffixLengths(names);
+
+  let n = names[0];
+
+  if (n.length === 1 && prefix === 1 && suffix === 1) {
+    return '';
+  }
+
+  let parts = [];
+
+  if (prefix > 0) {
+    parts.push(...n.slice(0, prefix));
+  }
+
+  if (suffix > 0) {
+    parts.push(...n.slice(-suffix));
+  }
+
+  return parts.join(' ');
+}
+
+// lengths are in number of tokens (segments) in a phrase
+function findCommonPrefixSuffixLengths(names: string[][]) {
   let commonPrefixLen = Infinity;
   let commonSuffixLen = Infinity;
 
@@ -248,14 +312,8 @@ function autoNameSeries(series: XYSeries[]) {
     }
   }
 
-  if (commonPrefixLen < Infinity || commonSuffixLen < Infinity) {
-    series.forEach((s, i) => {
-      s.name.value = names[i]
-        .slice(
-          commonPrefixLen < Infinity ? commonPrefixLen : 0,
-          commonSuffixLen < Infinity ? names[i].length - commonSuffixLen : undefined
-        )
-        .join(' ');
-    });
-  }
+  return {
+    prefix: commonPrefixLen,
+    suffix: commonSuffixLen,
+  };
 }
