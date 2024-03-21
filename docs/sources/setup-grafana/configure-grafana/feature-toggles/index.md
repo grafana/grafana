@@ -94,6 +94,7 @@ Some features are enabled by default. You can disable these feature by setting t
 | `alertingSimplifiedRouting`            | Enables users to easily configure alert notifications by specifying a contact point directly when editing or creating an alert rule                                                          |
 | `regressionTransformation`             | Enables regression analysis transformation                                                                                                                                                   |
 | `groupToNestedTableTransformation`     | Enables the group to nested table transformation                                                                                                                                             |
+| `newPDFRendering`                      | New implementation for the dashboard-to-PDF rendering                                                                                                                                        |
 
 ## Experimental feature toggles
 
@@ -169,7 +170,6 @@ Experimental features might be changed or removed without prior notice.
 | `promQLScope`                               | In-development feature that will allow injection of labels into prometheus queries.                                                                                                                                                                                               |
 | `sqlExpressions`                            | Enables using SQL and DuckDB functions as Expressions.                                                                                                                                                                                                                            |
 | `nodeGraphDotLayout`                        | Changed the layout algorithm for the node graph                                                                                                                                                                                                                                   |
-| `newPDFRendering`                           | New implementation for the dashboard to PDF rendering                                                                                                                                                                                                                             |
 | `kubernetesAggregator`                      | Enable grafana aggregator                                                                                                                                                                                                                                                         |
 | `expressionParser`                          | Enable new expression parser                                                                                                                                                                                                                                                      |
 

@@ -1104,8 +1104,8 @@ var (
 		},
 		{
 			Name:        "newPDFRendering",
-			Description: "New implementation for the dashboard to PDF rendering",
-			Stage:       FeatureStageExperimental,
+			Description: "New implementation for the dashboard-to-PDF rendering",
+			Stage:       FeatureStagePublicPreview,
 			Owner:       grafanaSharingSquad,
 		},
 		{
