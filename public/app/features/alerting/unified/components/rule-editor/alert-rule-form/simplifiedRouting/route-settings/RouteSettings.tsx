@@ -1,19 +1,9 @@
 import { css } from '@emotion/css';
 import React, { useEffect, useState } from 'react';
-import { useFormContext } from 'react-hook-form';
+import { useFormContext, Controller } from 'react-hook-form';
 
 import { GrafanaTheme2, SelectableValue } from '@grafana/data';
-import {
-  Field,
-  FieldValidationMessage,
-  InlineField,
-  InputControl,
-  MultiSelect,
-  Stack,
-  Switch,
-  Text,
-  useStyles2,
-} from '@grafana/ui';
+import { Field, FieldValidationMessage, InlineField, MultiSelect, Stack, Switch, Text, useStyles2 } from '@grafana/ui';
 import { MultiValueRemove, MultiValueRemoveProps } from '@grafana/ui/src/components/Select/MultiValue';
 import { RuleFormValues } from 'app/features/alerting/unified/types/rule-form';
 import {
@@ -82,7 +72,7 @@ export const RoutingSettings = ({ alertManager }: RoutingSettingsProps) => {
           invalid={!!errors.contactPoints?.[alertManager]?.groupBy}
           className={styles.optionalContent}
         >
-          <InputControl
+          <Controller
             rules={{
               validate: (value: string[]) => {
                 if (!value || value.length === 0) {
