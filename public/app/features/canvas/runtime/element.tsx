@@ -287,6 +287,10 @@ export class ElementState implements LayerElement {
         break;
     }
 
+    if (this.options.placement?.rotation) {
+      placement.rotation = this.options.placement.rotation;
+    }
+
     this.options.placement = placement;
 
     this.applyLayoutStylesToDiv();
