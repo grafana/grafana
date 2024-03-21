@@ -152,7 +152,7 @@ Once the query `sum(rate(tns_request_duration_seconds_count[5m])) by(route)` ret
 
 ## Receive your first alert notification
 
-Once the alert rule condition is met, you should receive an alert to your email.
+Once the alert rule condition is met, you should receive an alert notification to your email.
 
 The alert comes with additional information besides the annotation summary we wrote, such as links to perform actions like [silencing](https://grafana.com/docs/grafana/latest/alerting/manage-notifications/create-silence/) your alert or visiting the panel to which the alert is linked.
 
