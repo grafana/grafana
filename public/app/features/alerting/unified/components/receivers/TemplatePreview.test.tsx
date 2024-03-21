@@ -12,7 +12,8 @@ import 'whatwg-fetch';
 import { TemplatePreviewResponse } from '../../api/templateApi';
 import { mockPreviewTemplateResponse, mockPreviewTemplateResponseRejected } from '../../mocks/templatesApi';
 
-import { defaults, PREVIEW_NOT_AVAILABLE, TemplateFormValues, TemplatePreview } from './TemplateForm';
+import { defaults, PREVIEW_NOT_AVAILABLE, TemplateFormValues } from './TemplateForm';
+import { TemplatePreview } from './TemplatePreview';
 
 const getProviderWraper = () => {
   return function Wrapper({ children }: React.PropsWithChildren<{}>) {

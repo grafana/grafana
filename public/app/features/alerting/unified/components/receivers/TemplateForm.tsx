@@ -1,8 +1,8 @@
 import { css } from '@emotion/css';
 import { subDays } from 'date-fns';
 import { Location } from 'history';
-import React, { useCallback, useEffect, useRef, useState } from 'react';
-import { FormProvider, useForm, useFormContext, Validate } from 'react-hook-form';
+import React, { useRef, useState } from 'react';
+import { FormProvider, useForm, Validate } from 'react-hook-form';
 import { useLocation } from 'react-router-dom';
 import { useToggle } from 'react-use';
 import AutoSizer from 'react-virtualized-auto-sizer';
@@ -17,7 +17,6 @@ import {
   LinkButton,
   useStyles2,
   Stack,
-  LoadingPlaceholder,
   IconButton,
   Drawer,
   InlineField,
@@ -28,13 +27,6 @@ import { AlertManagerCortexConfig } from 'app/plugins/datasource/alertmanager/ty
 import { useDispatch } from 'app/types';
 
 import { AppChromeUpdate } from '../../../../../core/components/AppChrome/AppChromeUpdate';
-import {
-  AlertField,
-  TemplatePreviewErrors,
-  TemplatePreviewResponse,
-  TemplatePreviewResult,
-  usePreviewTemplateMutation,
-} from '../../api/templateApi';
 import { useUnifiedAlertingSelector } from '../../hooks/useUnifiedAlertingSelector';
 import { updateAlertManagerConfigAction } from '../../state/actions';
 import { GRAFANA_RULES_SOURCE_NAME } from '../../utils/datasource';
@@ -47,6 +39,7 @@ import { EditorColumnHeader } from '../contact-points/templates/EditorColumnHead
 import { PayloadEditor } from './PayloadEditor';
 import { TemplateDataDocs } from './TemplateDataDocs';
 import { TemplateEditor } from './TemplateEditor';
+import { TemplatePreview } from './TemplatePreview';
 import { snippets } from './editor/templateDataSuggestions';
 
 export interface TemplateFormValues {
@@ -247,9 +240,7 @@ export const TemplateForm = ({ existing, alertManagerSourceName, config, provena
                     aria-label='Toggle "Payload" section'
                     onClick={togglePayloadOpened}
                     className={styles.payloadCollapseButton}
-                  >
-                    Payload
-                  </IconButton>
+                  />
                   {payloadOpened && (
                     <div className={styles.templatePayload}>
                       <PayloadEditor
@@ -320,127 +311,7 @@ function TemplatingCheatSheet() {
   );
 }
 
-function getResultsToRender(results: TemplatePreviewResult[]) {
-  const filteredResults = results.filter((result) => result.text.trim().length > 0);
-
-  const moreThanOne = filteredResults.length > 1;
-
-  const preview = (result: TemplatePreviewResult) => {
-    const previewForLabel = `Preview for ${result.name}:`;
-    const separatorStart = '='.repeat(previewForLabel.length).concat('>');
-    const separatorEnd = '<'.concat('='.repeat(previewForLabel.length));
-    if (moreThanOne) {
-      return `${previewForLabel}\n${separatorStart}${result.text}${separatorEnd}\n`;
-    } else {
-      return `${separatorStart}${result.text}${separatorEnd}\n`;
-    }
-  };
-
-  return filteredResults
-    .map((result: TemplatePreviewResult) => {
-      return preview(result);
-    })
-    .join(`\n`);
-}
-
-function getErrorsToRender(results: TemplatePreviewErrors[]) {
-  return results
-    .map((result: TemplatePreviewErrors) => {
-      if (result.name) {
-        return `ERROR in ${result.name}:\n`.concat(`${result.kind}\n${result.message}\n`);
-      } else {
-        return `ERROR:\n${result.kind}\n${result.message}\n`;
-      }
-    })
-    .join(`\n`);
-}
-
-export const PREVIEW_NOT_AVAILABLE = 'Preview request failed. Check if the payload data has the correct structure.';
-
-function getPreviewTorender(
-  isPreviewError: boolean,
-  payloadFormatError: string | null,
-  data: TemplatePreviewResponse | undefined
-) {
-  // ERRORS IN JSON OR IN REQUEST (endpoint not available, for example)
-  const previewErrorRequest = isPreviewError ? PREVIEW_NOT_AVAILABLE : undefined;
-  const somethingWasWrong: boolean = isPreviewError || Boolean(payloadFormatError);
-  const errorToRender = payloadFormatError || previewErrorRequest;
-
-  //PREVIEW : RESULTS AND ERRORS
-  const previewResponseResults = data?.results;
-  const previewResponseErrors = data?.errors;
-
-  const previewResultsToRender = previewResponseResults ? getResultsToRender(previewResponseResults) : '';
-  const previewErrorsToRender = previewResponseErrors ? getErrorsToRender(previewResponseErrors) : '';
-
-  if (somethingWasWrong) {
-    return errorToRender;
-  } else {
-    return `${previewResultsToRender}\n${previewErrorsToRender}`;
-  }
-}
-
-export function TemplatePreview({
-  payload,
-  templateName,
-  payloadFormatError,
-  setPayloadFormatError,
-}: {
-  payload: string;
-  templateName: string;
-  payloadFormatError: string | null;
-  setPayloadFormatError: (value: React.SetStateAction<string | null>) => void;
-}) {
-  const styles = useStyles2(getStyles);
-
-  const { watch } = useFormContext<TemplateFormValues>();
-
-  const templateContent = watch('content');
-
-  const [trigger, { data, isError: isPreviewError, isLoading }] = usePreviewTemplateMutation();
-
-  const previewToRender = getPreviewTorender(isPreviewError, payloadFormatError, data);
-
-  const onPreview = useCallback(() => {
-    try {
-      const alertList: AlertField[] = JSON.parse(payload);
-      JSON.stringify([...alertList]); // check if it's iterable, in order to be able to add more data
-      trigger({ template: templateContent, alerts: alertList, name: templateName });
-      setPayloadFormatError(null);
-    } catch (e) {
-      setPayloadFormatError(e instanceof Error ? e.message : 'Invalid JSON.');
-    }
-  }, [templateContent, templateName, payload, setPayloadFormatError, trigger]);
-
-  useEffect(() => onPreview(), [onPreview]);
-
-  return (
-    <div className={styles.preview.container}>
-      <EditorColumnHeader
-        label="Template preview"
-        actions={
-          <Button
-            icon="sync"
-            aria-label="Refresh preview"
-            onClick={onPreview}
-            size="sm"
-            variant="secondary"
-            fill="outline"
-          >
-            Refresh
-          </Button>
-        }
-      />
-      {isLoading && <LoadingPlaceholder text="Loading preview..." />}
-      <pre className={styles.preview.result} data-testid="payloadJSON">
-        {previewToRender}
-      </pre>
-    </div>
-  );
-}
-
-const getStyles = (theme: GrafanaTheme2) => {
+export const getStyles = (theme: GrafanaTheme2) => {
   const narrowScreenQuery = theme.breakpoints.down('md');
 
   return {
@@ -504,17 +375,5 @@ const getStyles = (theme: GrafanaTheme2) => {
       color: ${theme.colors.text.secondary};
       font-weight: ${theme.typography.fontWeightBold};
     `,
-    preview: {
-      container: css({
-        display: 'flex',
-        flexDirection: 'column',
-        maxHeight: '100%',
-      }),
-      result: css({
-        backgroundColor: theme.colors.background.primary,
-        margin: 0,
-        border: 'none',
-      }),
-    },
   };
 };
