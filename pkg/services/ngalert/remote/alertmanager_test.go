@@ -348,13 +348,17 @@ func TestIntegrationRemoteAlertmanagerApplyConfigOnlyUploadsOnce(t *testing.T) {
 		require.NoError(t, err)
 		require.Equal(t, encodedFullState, state.State)
 
-		// Retrieving the configuration using GetStatus should give us the same config.
+		// Using GetStatus should give us the same configuration.
 		status, err := am.GetStatus(ctx)
 		require.NoError(t, err)
-
-		rawCfg, err := json.Marshal(status.Config)
+		postableCfg, err := notifier.Load([]byte(testGrafanaConfig))
 		require.NoError(t, err)
-		require.JSONEq(t, testGrafanaConfig, string(rawCfg))
+
+		want, err := json.Marshal(postableCfg.AlertmanagerConfig)
+		require.NoError(t, err)
+		got, err := json.Marshal(status.Config)
+		require.NoError(t, err)
+		require.JSONEq(t, string(want), string(got))
 	}
 
 	// Calling `ApplyConfig` again with a changed configuration and state yields no effect.
