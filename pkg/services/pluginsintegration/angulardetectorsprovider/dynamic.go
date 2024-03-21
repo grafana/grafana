@@ -12,7 +12,6 @@ import (
 	"sync"
 	"time"
 
-	"github.com/grafana/grafana/pkg/plugins/config"
 	"github.com/grafana/grafana/pkg/plugins/log"
 	"github.com/grafana/grafana/pkg/plugins/manager/loader/angular/angulardetector"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
@@ -54,7 +53,7 @@ type Dynamic struct {
 	backgroundJobInterval time.Duration
 }
 
-func ProvideDynamic(pCfg *config.PluginManagementCfg, cfg *setting.Cfg, store angularpatternsstore.Service, features featuremgmt.FeatureToggles) (*Dynamic, error) {
+func ProvideDynamic(cfg *setting.Cfg, store angularpatternsstore.Service, features featuremgmt.FeatureToggles) (*Dynamic, error) {
 	backgroundJobInterval := backgroundJobIntervalOnPrem
 	if cfg.StackID != "" {
 		// Use a shorter interval for cloud.
@@ -67,14 +66,14 @@ func ProvideDynamic(pCfg *config.PluginManagementCfg, cfg *setting.Cfg, store an
 		features:              features,
 		store:                 store,
 		httpClient:            makeHttpClient(),
-		baseURL:               pCfg.GrafanaComURL,
+		baseURL:               cfg.GrafanaComURL,
 		backgroundJobInterval: backgroundJobInterval,
 	}
 	if d.IsDisabled() {
 		// Do not attempt to restore if the background service is disabled (no feature flag)
 		return d, nil
 	}
-	d.log.Debug("Using dynamic angular detection patterns interval", "interval", d.backgroundJobInterval)
+	d.log.Debug("Providing dynamic angular detection patterns", "baseURL", d.baseURL, "interval", d.backgroundJobInterval)
 
 	// Perform the initial restore from db
 	st := time.Now()

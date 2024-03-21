@@ -14,7 +14,6 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/infra/kvstore"
-	"github.com/grafana/grafana/pkg/plugins/config"
 	"github.com/grafana/grafana/pkg/plugins/manager/loader/angular/angulardetector"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/angularpatternsstore"
@@ -594,8 +593,8 @@ func provideDynamic(t *testing.T, gcomURL string, opts ...provideDynamicOpts) *D
 	if opt.cfg == nil {
 		opt.cfg = setting.NewCfg()
 	}
+	opt.cfg.GrafanaComURL = gcomURL
 	d, err := ProvideDynamic(
-		&config.PluginManagementCfg{GrafanaComURL: gcomURL},
 		opt.cfg,
 		opt.store,
 		featuremgmt.WithFeatures(featuremgmt.FlagPluginsDynamicAngularDetectionPatterns),
