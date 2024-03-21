@@ -50,6 +50,7 @@ export interface CanvasConnection {
   color?: ColorDimensionConfig;
   size?: ScaleDimensionConfig;
   vertices?: ConnectionCoordinates[];
+  radius?: ScaleDimensionConfig;
   // See https://github.com/anseki/leader-line#options for more examples of more properties
 }
 

@@ -8,6 +8,7 @@ interface OptionSuppliers {
   addBorder: PanelOptionsSupplier<CanvasElementOptions>;
   addColor: PanelOptionsSupplier<CanvasConnection>;
   addSize: PanelOptionsSupplier<CanvasConnection>;
+  addRadius: PanelOptionsSupplier<CanvasConnection>;
 }
 
 const getCategoryName = (str: string, type: string | undefined) => {
@@ -82,6 +83,17 @@ export const optionBuilder: OptionSuppliers = {
         },
       });
     }
+
+    builder.addSliderInput({
+      category,
+      path: 'border.radius',
+      name: 'Radius',
+      defaultValue: 0,
+      settings: {
+        min: 0,
+        max: 60,
+      },
+    });
   },
 
   addColor: (builder, context) => {
@@ -117,6 +129,27 @@ export const optionBuilder: OptionSuppliers = {
         fixed: 2,
         min: 1,
         max: 10,
+      },
+    });
+  },
+
+  addRadius: (builder, context) => {
+    const category = ['Radius'];
+    builder.addCustomEditor({
+      category,
+      id: 'radius',
+      path: 'radius',
+      name: 'Radius',
+      editor: ScaleDimensionEditor,
+      settings: {
+        min: 0,
+        max: 200,
+      },
+      defaultValue: {
+        // Configured values
+        fixed: 0,
+        min: 0,
+        max: 100,
       },
     });
   },

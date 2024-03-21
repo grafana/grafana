@@ -10,6 +10,7 @@ import { ConnectionCoordinates } from '../../panelcfg.gen';
 import { ConnectionState } from '../../types';
 import {
   calculateAbsoluteCoords,
+  calculateAngle,
   calculateCoordinates,
   calculateMidpoint,
   getConnectionStyles,
@@ -132,9 +133,10 @@ export const ConnectionSVG = ({
       }
 
       const { x1, y1, x2, y2 } = calculateCoordinates(sourceRect, parentRect, info, target, transformScale);
+      const magnitude = Math.sqrt((x2 - x1) * (x2 - x1) + (y2 - y1) * (y2 - y1));
       const midpoint = calculateMidpoint(x1, y1, x2, y2);
 
-      const { strokeColor, strokeWidth } = getConnectionStyles(info, scene, defaultArrowSize);
+      const { strokeColor, strokeWidth, strokeRadius } = getConnectionStyles(info, scene, defaultArrowSize);
 
       const isSelected = selectedConnection === v && scene.panel.context.instanceState.selectedConnection;
 
@@ -143,6 +145,8 @@ export const ConnectionSVG = ({
 
       const CONNECTION_HEAD_ID = `connectionHead-${headId + Math.random()}`;
 
+      const radius = strokeRadius;
+      const radiusNormalized = radius / magnitude;
       // Create vertex path and populate array of add vertex controls
       const addVertices: ConnectionCoordinates[] = [];
       let pathString = `M${x1} ${y1} `;
@@ -150,18 +154,77 @@ export const ConnectionSVG = ({
         vertices.map((vertex, index) => {
           const x = vertex.x;
           const y = vertex.y;
-          pathString += `L${x * (x2 - x1) + x1} ${y * (y2 - y1) + y1} `;
+          let x0 = x;
+          let y0 = y;
+
+          let xb = x;
+          let yb = y;
+          let l = 0;
+          let vx2 = 0;
+          let vy2 = 0;
+          let angle1 = 0;
+          let angle2 = 0;
+
+          if (index < vertices.length - 1) {
+            vx2 = vertices[index + 1].x;
+            vy2 = vertices[index + 1].y;
+            if (index === 0) {
+              angle1 = (calculateAngle(0, 0, x, y) / 180) * Math.PI; //radians
+              angle2 = (calculateAngle(x, y, vx2, vy2) / 180) * Math.PI; //radians
+            } else {
+              const previousVertex = vertices[index - 1];
+              angle1 = (calculateAngle(previousVertex.x, previousVertex.y, x, y) / 180) * Math.PI; //radians
+              angle2 = (calculateAngle(x, y, vx2, vy2) / 180) * Math.PI; //radians
+            }
+          } else {
+            let previousVertex = { x: 0, y: 0 };
+            if (index > 0) {
+              previousVertex = vertices[index - 1];
+            }
+            angle1 = (calculateAngle(previousVertex.x, previousVertex.y, x, y) / 180) * Math.PI; //radians
+            angle2 = (calculateAngle(x, y, 1, 1) / 180) * Math.PI; //radians
+          }
+          const theta = angle2 - angle1; //radians
+          const ccw = theta < 0;
+          l = radiusNormalized * Math.tan(theta / 2);
+          if (ccw) {
+            l *= -1;
+          }
+
           if (index === 0) {
             // For first vertex
             addVertices.push(calculateMidpoint(0, 0, x, y));
+
+            const l01 = Math.sqrt(x * x + y * y);
+            const L1 = l01 - l;
+            x0 = L1 * Math.cos(angle1);
+            y0 = L1 * Math.sin(angle1);
+            xb = (l * Math.cos(angle2) + x) * (x2 - x1) + x1;
+            yb = (l * Math.sin(angle2) + y) * (y2 - y1) + y1;
           } else {
             // For all other vertices
             const previousVertex = vertices[index - 1];
             addVertices.push(calculateMidpoint(previousVertex.x, previousVertex.y, x, y));
+
+            //TODO add sqrt approx
+            const l01 = Math.sqrt(
+              (x - previousVertex.x) * (x - previousVertex.x) + (y - previousVertex.y) * (y - previousVertex.y)
+            );
+            const L1 = l01 - l;
+
+            x0 = L1 * Math.cos(angle1) + previousVertex.x;
+            y0 = L1 * Math.sin(angle1) + previousVertex.y;
+            xb = (l * Math.cos(angle2) + x) * (x2 - x1) + x1;
+            yb = (l * Math.sin(angle2) + y) * (y2 - y1) + y1;
           }
           if (index === vertices.length - 1) {
             // For last vertex
             addVertices.push(calculateMidpoint(1, 1, x, y));
+          }
+          pathString += `L${x0 * (x2 - x1) + x1} ${y0 * (y2 - y1) + y1} `;
+
+          if (l !== 0) {
+            pathString += `A ${radius} ${radius} 0 0 ${ccw ? '0' : '1'} ${xb} ${yb} `;
           }
         });
         pathString += `L${x2} ${y2}`;

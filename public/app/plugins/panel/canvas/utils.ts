@@ -363,6 +363,10 @@ export const calculateAbsoluteCoords = (
   return { x: valueX * (x2 - x1) + x1, y: valueY * (y2 - y1) + y1 };
 };
 
+export const calculateAngle = (x1: number, y1: number, x2: number, y2: number) => {
+  return (Math.atan2(y2 - y1, x2 - x1) * 180) / Math.PI;
+};
+
 // @TODO revisit, currently returning last row index for field
 export const getRowIndex = (fieldName: string | undefined, scene: Scene) => {
   if (fieldName) {
@@ -379,7 +383,8 @@ export const getConnectionStyles = (info: CanvasConnection, scene: Scene, defaul
   const lastRowIndex = getRowIndex(info.size?.field, scene);
   const strokeColor = info.color ? scene.context.getColor(info.color).value() : defaultArrowColor;
   const strokeWidth = info.size ? scene.context.getScale(info.size).get(lastRowIndex) : defaultArrowSize;
-  return { strokeColor, strokeWidth };
+  const strokeRadius = info.radius ? scene.context.getScale(info.radius).get(lastRowIndex) : 0;
+  return { strokeColor, strokeWidth, strokeRadius };
 };
 
 export const getParentBoundingClientRect = (scene: Scene) => {
