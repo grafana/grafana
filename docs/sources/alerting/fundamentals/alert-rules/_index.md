@@ -23,10 +23,10 @@ weight: 100
 
 An alert rule is a set of evaluation criteria for when an alert rule should fire. An alert rule consists of:
 
-- queries and expressions that select the data set to evaluate.
-- conditions (the threshold) that the query must meet or exceed to trigger the alert instance.
-- an interval that specifies the frequency of [alert rule evaluation][alert-rule-evaluation] and a duration indicating how long the condition must be met to trigger the alert instance.
-- other options like the behavior in the absence of data, notification messages, and more.
+- Queries and expressions that select the data set to evaluate.
+- A condition (the threshold) that the query must meet or exceed to trigger the alert instance.
+- An interval that specifies the frequency of [alert rule evaluation][alert-rule-evaluation] and a duration indicating how long the condition must be met to trigger the alert instance.
+- Other customizable options, for example, setting what should happen in the absence of data, notification messages, and more.
 
 Grafana supports two different alert rule types: Grafana-managed alert rules and Data source-managed alert rules.
 
