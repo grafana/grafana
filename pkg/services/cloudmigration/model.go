@@ -30,7 +30,7 @@ type CloudMigrationRun struct {
 }
 
 type CloudMigrationRequest struct {
-	Stack string `json:"stack"`
+	AuthToken string `json:"authToken"`
 }
 
 type CloudMigrationResponse struct {

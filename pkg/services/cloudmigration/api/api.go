@@ -1,10 +1,6 @@
 package api
 
 import (
-	"net/http"
-	"strconv"
-	"strings"
-
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -12,6 +8,8 @@ import (
 	"github.com/grafana/grafana/pkg/services/cloudmigration"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/web"
+	"net/http"
+	"strconv"
 )
 
 type CloudMigrationAPI struct {
@@ -36,16 +34,14 @@ func RegisterApi(
 // RegisterAPIEndpoints Registers Endpoints on Grafana Router
 func (cma *CloudMigrationAPI) registerEndpoints() {
 	cma.routeRegister.Group("/api/cloudmigration", func(cloudMigrationRoute routing.RouteRegister) {
-		// authentication
-		cloudMigrationRoute.Get("/authentication", routing.Wrap(cma.Authenticate))
-		cloudMigrationRoute.Post("/token", routing.Wrap(cma.CreateToken))
 		// migration
 		cloudMigrationRoute.Get("/migration", routing.Wrap(cma.GetMigrationList))
-		cloudMigrationRoute.Get("/migration/:id", routing.Wrap(cma.GetMigration))
 		cloudMigrationRoute.Post("/migration", routing.Wrap(cma.CreateMigration))
-		cloudMigrationRoute.Post("/migration/:id/run", routing.Wrap(cma.UpdateMigration))
-		cloudMigrationRoute.Post("/migration/:uid/run", routing.Wrap(cma.RunMigration))
-		cloudMigrationRoute.Get("/migration/:uid/status", routing.Wrap(cma.GetMigrationStatus))
+		cloudMigrationRoute.Get("/migration/:id", routing.Wrap(cma.GetMigration))
+		cloudMigrationRoute.Delete("migration/:id", routing.Wrap(cma.DeleteMigration))
+		cloudMigrationRoute.Post("/migration/:id/run", routing.Wrap(cma.RunMigration))
+		cloudMigrationRoute.Get("/migration/:id/run", routing.Wrap(cma.GetMigrationRunList))
+		cloudMigrationRoute.Get("/migration/:id/run/:runID", routing.Wrap(cma.GetMigrationRun))
 	}, middleware.ReqGrafanaAdmin)
 }
 
@@ -55,21 +51,6 @@ func (cma *CloudMigrationAPI) CreateToken(c *contextmodel.ReqContext) response.R
 		return response.Error(http.StatusInternalServerError, "token creation error", err)
 	}
 	return response.Success("Token created")
-}
-
-func (cma *CloudMigrationAPI) Authenticate(c *contextmodel.ReqContext) response.Response {
-	jwtToken := c.Req.Header.Get("Authorization")
-	token := strings.TrimPrefix(jwtToken, "Bearer ")
-	// token validation
-	err := cma.cloudMigrationsService.ValidateToken(c.Req.Context(), token)
-	if err != nil {
-		return response.Error(http.StatusBadRequest, "token validation error", err)
-	}
-	err = cma.cloudMigrationsService.SaveEncryptedToken(c.Req.Context(), token)
-	if err != nil {
-		return response.Error(http.StatusInternalServerError, "token save error", err)
-	}
-	return response.Success("Token saved")
 }
 
 func (cma *CloudMigrationAPI) GetMigrationList(c *contextmodel.ReqContext) response.Response {
@@ -104,34 +85,34 @@ func (cma *CloudMigrationAPI) CreateMigration(c *contextmodel.ReqContext) respon
 	return response.JSON(http.StatusOK, cloudMigration)
 }
 
-func (cma *CloudMigrationAPI) UpdateMigration(c *contextmodel.ReqContext) response.Response {
-	cmd := cloudmigration.CloudMigrationRequest{}
-	if err := web.Bind(c.Req, &cmd); err != nil {
-		return response.Error(http.StatusBadRequest, "bad request data", err)
-	}
-	id, err := strconv.ParseInt(web.Params(c.Req)[":id"], 10, 64)
-	if err != nil {
-		return response.Error(http.StatusBadRequest, "id is invalid", err)
-	}
-	cloudMigrationRun, err := cma.cloudMigrationsService.UpdateMigration(c.Req.Context(), id, cmd)
-	if err != nil {
-		return response.Error(http.StatusInternalServerError, "migration run error", err)
-	}
-	return response.JSON(http.StatusOK, cloudMigrationRun)
-}
-
 func (cma *CloudMigrationAPI) RunMigration(c *contextmodel.ReqContext) response.Response {
-	cloudMigratonRun, err := cma.cloudMigrationsService.RunMigration(c.Req.Context(), web.Params(c.Req)[":uid"])
+	cloudMigratonRun, err := cma.cloudMigrationsService.RunMigration(c.Req.Context(), web.Params(c.Req)[":id"])
 	if err != nil {
 		return response.Error(http.StatusInternalServerError, "migration run error", err)
 	}
 	return response.JSON(http.StatusOK, cloudMigratonRun)
 }
 
-func (cma *CloudMigrationAPI) GetMigrationStatus(c *contextmodel.ReqContext) response.Response {
-	migrationStatus, err := cma.cloudMigrationsService.GetMigrationStatus(c.Req.Context(), web.Params(c.Req)[":uid"])
+func (cma *CloudMigrationAPI) GetMigrationRun(c *contextmodel.ReqContext) response.Response {
+	migrationStatus, err := cma.cloudMigrationsService.GetMigrationStatus(c.Req.Context(), web.Params(c.Req)[":id"], web.Params(c.Req)[":runID"])
 	if err != nil {
 		return response.Error(http.StatusInternalServerError, "migration status error", err)
 	}
 	return response.JSON(http.StatusOK, migrationStatus)
+}
+
+func (cma *CloudMigrationAPI) GetMigrationRunList(c *contextmodel.ReqContext) response.Response {
+	migrationStatus, err := cma.cloudMigrationsService.GetMigrationStatusList(c.Req.Context(), web.Params(c.Req)[":id"])
+	if err != nil {
+		return response.Error(http.StatusInternalServerError, "migration status error", err)
+	}
+	return response.JSON(http.StatusOK, migrationStatus)
+}
+
+func (cma *CloudMigrationAPI) DeleteMigration(c *contextmodel.ReqContext) response.Response {
+	err := cma.cloudMigrationsService.DeleteMigration(c.Req.Context(), web.Params(c.Req)[":id"])
+	if err != nil {
+		return response.Error(http.StatusInternalServerError, "migration delete error", err)
+	}
+	return response.Empty(http.StatusOK)
 }

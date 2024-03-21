@@ -102,9 +102,19 @@ func (s *Service) RunMigration(ctx context.Context, uid string) (*cloudmigration
 	return nil, nil
 }
 
-func (s *Service) GetMigrationStatus(ctx context.Context, uid string) (*cloudmigration.CloudMigrationRun, error) {
+func (s *Service) GetMigrationStatus(ctx context.Context, id string, runID string) (*cloudmigration.CloudMigrationRun, error) {
 	// TODO: Implement method
 	return nil, nil
+}
+
+func (s *Service) GetMigrationStatusList(ctx context.Context, id string) ([]cloudmigration.CloudMigrationRun, error) {
+	// TODO: Implement method
+	return nil, nil
+}
+
+func (s *Service) DeleteMigration(ctx context.Context, id string) error {
+	// TODO: Implement method
+	return nil
 }
 
 // func (s *Service) MigrateDatasources(ctx context.Context, request *cloudmigration.MigrateDatasourcesRequest) (*cloudmigration.MigrateDatasourcesResponse, error) {

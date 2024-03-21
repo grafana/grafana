@@ -14,5 +14,7 @@ type Service interface {
 	CreateMigration(context.Context, CloudMigrationRequest) (*CloudMigrationResponse, error)
 	UpdateMigration(context.Context, int64, CloudMigrationRequest) (*CloudMigrationResponse, error)
 	RunMigration(context.Context, string) (*CloudMigrationRun, error)
-	GetMigrationStatus(context.Context, string) (*CloudMigrationRun, error)
+	GetMigrationStatus(context.Context, string, string) (*CloudMigrationRun, error)
+	GetMigrationStatusList(context.Context, string) ([]CloudMigrationRun, error)
+	DeleteMigration(context.Context, string) error
 }

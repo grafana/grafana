@@ -47,6 +47,14 @@ func (s *NoopServiceImpl) RunMigration(ctx context.Context, uid string) (*cloudm
 	return nil, cloudmigration.ErrFeatureDisabledError
 }
 
-func (s *NoopServiceImpl) GetMigrationStatus(ctx context.Context, uid string) (*cloudmigration.CloudMigrationRun, error) {
+func (s *NoopServiceImpl) GetMigrationStatus(ctx context.Context, id string, runID string) (*cloudmigration.CloudMigrationRun, error) {
 	return nil, cloudmigration.ErrFeatureDisabledError
+}
+
+func (s *NoopServiceImpl) GetMigrationStatusList(ctx context.Context, id string) ([]cloudmigration.CloudMigrationRun, error) {
+	return nil, cloudmigration.ErrFeatureDisabledError
+}
+
+func (s *NoopServiceImpl) DeleteMigration(ctx context.Context, id string) error {
+	return cloudmigration.ErrFeatureDisabledError
 }
