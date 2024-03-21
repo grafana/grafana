@@ -6,6 +6,7 @@ on:
     branches: [main]
     paths:
       - '**/go.work'
+      - '**/go.work.sum'
       - '**/go.mod'
       - '**/go.sum'
 
