@@ -18,6 +18,7 @@ import {
   VizPanel,
   AdHocFiltersVariable,
   SceneVariableState,
+  SceneTimeRange,
 } from '@grafana/scenes';
 import { mockDataSource } from 'app/features/alerting/unified/mocks';
 import { LegacyVariableQueryEditor } from 'app/features/variables/editor/LegacyVariableQueryEditor';
@@ -145,9 +146,14 @@ describe('VariablesEditView', () => {
 
     it('should delete a variable', () => {
       const variableIdentifier = 'customVar';
+
+      variableView.onEdit(variableIdentifier);
+      expect(variableView.state.editIndex).toBe(0);
+
       variableView.onDelete(variableIdentifier);
       expect(variableView.getVariables()).toHaveLength(2);
       expect(variableView.getVariables()[0].state.name).toBe('customVar2');
+      expect(variableView.state.editIndex).toBeUndefined();
     });
 
     it('should change order of variables', () => {
@@ -308,6 +314,7 @@ async function buildTestScene() {
     meta: {
       canEdit: true,
     },
+    $timeRange: new SceneTimeRange({}),
     $variables: new SceneVariableSet({
       variables: [
         new CustomVariable({

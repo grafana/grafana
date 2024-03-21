@@ -15,7 +15,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/auth/identity"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/login"
-	"github.com/grafana/grafana/pkg/services/notifications"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/team"
 	tempuser "github.com/grafana/grafana/pkg/services/temp_user"
@@ -66,9 +65,9 @@ func (hs *HTTPServer) getUserUserProfile(c *contextmodel.ReqContext, userID int6
 	userProfile, err := hs.userService.GetProfile(c.Req.Context(), &query)
 	if err != nil {
 		if errors.Is(err, user.ErrUserNotFound) {
-			return response.Error(404, user.ErrUserNotFound.Error(), nil)
+			return response.Error(http.StatusNotFound, user.ErrUserNotFound.Error(), nil)
 		}
-		return response.Error(500, "Failed to get user", err)
+		return response.Error(http.StatusInternalServerError, "Failed to get user", err)
 	}
 
 	getAuthQuery := login.GetAuthInfoQuery{UserId: userID}
@@ -83,7 +82,7 @@ func (hs *HTTPServer) getUserUserProfile(c *contextmodel.ReqContext, userID int6
 		userProfile.IsGrafanaAdminExternallySynced = login.IsGrafanaAdminExternallySynced(hs.Cfg, oauthInfo, authInfo.AuthModule)
 	}
 
-	userProfile.AccessControl = hs.getAccessControlMetadata(c, c.SignedInUser.GetOrgID(), "global.users:id:", strconv.FormatInt(userID, 10))
+	userProfile.AccessControl = hs.getAccessControlMetadata(c, "global.users:id:", strconv.FormatInt(userID, 10))
 	userProfile.AvatarURL = dtos.GetGravatarUrl(hs.Cfg, userProfile.Email)
 
 	return response.JSON(http.StatusOK, userProfile)
@@ -104,9 +103,9 @@ func (hs *HTTPServer) GetUserByLoginOrEmail(c *contextmodel.ReqContext) response
 	usr, err := hs.userService.GetByLogin(c.Req.Context(), &query)
 	if err != nil {
 		if errors.Is(err, user.ErrUserNotFound) {
-			return response.Error(404, user.ErrUserNotFound.Error(), nil)
+			return response.Error(http.StatusNotFound, user.ErrUserNotFound.Error(), nil)
 		}
-		return response.Error(500, "Failed to get user", err)
+		return response.Error(http.StatusInternalServerError, "Failed to get user", err)
 	}
 	result := user.UserProfileDTO{
 		ID:             usr.ID,
@@ -147,11 +146,11 @@ func (hs *HTTPServer) UpdateSignedInUser(c *contextmodel.ReqContext) response.Re
 		return errResponse
 	}
 
-	if hs.Cfg.AuthProxyEnabled {
-		if hs.Cfg.AuthProxyHeaderProperty == "email" && cmd.Email != c.SignedInUser.GetEmail() {
+	if hs.Cfg.AuthProxy.Enabled {
+		if hs.Cfg.AuthProxy.HeaderProperty == "email" && cmd.Email != c.SignedInUser.GetEmail() {
 			return response.Error(http.StatusBadRequest, "Not allowed to change email when auth proxy is using email property", nil)
 		}
-		if hs.Cfg.AuthProxyHeaderProperty == "username" && cmd.Login != c.SignedInUser.GetLogin() {
+		if hs.Cfg.AuthProxy.HeaderProperty == "username" && cmd.Login != c.SignedInUser.GetLogin() {
 			return response.Error(http.StatusBadRequest, "Not allowed to change username when auth proxy is using username property", nil)
 		}
 	}
@@ -203,13 +202,13 @@ func (hs *HTTPServer) UpdateUserActiveOrg(c *contextmodel.ReqContext) response.R
 	}
 
 	if !hs.validateUsingOrg(c.Req.Context(), userID, orgID) {
-		return response.Error(401, "Not a valid organization", nil)
+		return response.Error(http.StatusUnauthorized, "Not a valid organization", nil)
 	}
 
 	cmd := user.SetUsingOrgCommand{UserID: userID, OrgID: orgID}
 
 	if err := hs.userService.SetUsingOrg(c.Req.Context(), &cmd); err != nil {
-		return response.Error(500, "Failed to change active organization", err)
+		return response.Error(http.StatusInternalServerError, "Failed to change active organization", err)
 	}
 
 	return response.Success("Active organization changed")
@@ -245,25 +244,22 @@ func (hs *HTTPServer) handleUpdateUser(ctx context.Context, cmd user.UpdateUserC
 		usr, err := hs.userService.GetByID(ctx, &query)
 		if err != nil {
 			if errors.Is(err, user.ErrUserNotFound) {
-				return response.Error(http.StatusNotFound, user.ErrUserNotFound.Error(), nil)
+				return response.Error(http.StatusNotFound, user.ErrUserNotFound.Error(), err)
 			}
 			return response.Error(http.StatusInternalServerError, "Failed to get user", err)
 		}
 
 		if len(cmd.Email) != 0 && usr.Email != cmd.Email {
-			// Email is being updated
-			newEmail, err := ValidateAndNormalizeEmail(cmd.Email)
+			normalized, err := ValidateAndNormalizeEmail(cmd.Email)
 			if err != nil {
 				return response.Error(http.StatusBadRequest, "Invalid email address", err)
 			}
-
-			return hs.verifyEmailUpdate(ctx, newEmail, user.EmailUpdateAction, usr)
+			return hs.verifyEmailUpdate(ctx, normalized, user.EmailUpdateAction, usr)
 		}
 		if len(cmd.Login) != 0 && usr.Login != cmd.Login {
-			// Username is being updated. If it's an email, go through the email verification flow
-			newEmailLogin, err := ValidateAndNormalizeEmail(cmd.Login)
-			if err == nil && newEmailLogin != usr.Email {
-				return hs.verifyEmailUpdate(ctx, newEmailLogin, user.LoginUpdateAction, usr)
+			normalized, err := ValidateAndNormalizeEmail(cmd.Login)
+			if err == nil && usr.Email != normalized {
+				return hs.verifyEmailUpdate(ctx, cmd.Login, user.LoginUpdateAction, usr)
 			}
 		}
 	}
@@ -279,55 +275,12 @@ func (hs *HTTPServer) handleUpdateUser(ctx context.Context, cmd user.UpdateUserC
 }
 
 func (hs *HTTPServer) verifyEmailUpdate(ctx context.Context, email string, field user.UpdateEmailActionType, usr *user.User) response.Response {
-	// Verify that email is not already being used
-	query := user.GetUserByLoginQuery{LoginOrEmail: email}
-	existingUsr, err := hs.userService.GetByLogin(ctx, &query)
-	if err != nil && !errors.Is(err, user.ErrUserNotFound) {
-		return response.Error(http.StatusInternalServerError, "Failed to validate if email is already in use", err)
-	}
-	if existingUsr != nil {
-		return response.Error(http.StatusConflict, "Email is already being used", nil)
-	}
-
-	// Invalidate any pending verifications for this user
-	expireCmd := tempuser.ExpirePreviousVerificationsCommand{InvitedByUserID: usr.ID}
-	err = hs.tempUserService.ExpirePreviousVerifications(ctx, &expireCmd)
-	if err != nil {
-		return response.Error(http.StatusInternalServerError, "Could not invalidate pending email verifications", err)
-	}
-
-	code, err := util.GetRandomString(20)
-	if err != nil {
-		return response.Error(http.StatusInternalServerError, "Failed to generate random string", err)
-	}
-
-	tempCmd := tempuser.CreateTempUserCommand{
-		OrgID:  -1,
+	if err := hs.userVerifier.VerifyEmail(ctx, user.VerifyEmailCommand{
+		User:   *usr,
 		Email:  email,
-		Code:   code,
-		Status: tempuser.TmpUserEmailUpdateStarted,
-		// used to fetch the User in the second step of the verification flow
-		InvitedByUserID: usr.ID,
-		// used to determine if the user was updating their email or username in the second step of the verification flow
-		Name: string(field),
-	}
-
-	tempUser, err := hs.tempUserService.CreateTempUser(ctx, &tempCmd)
-	if err != nil {
-		return response.Error(http.StatusInternalServerError, "Failed to create email change", err)
-	}
-
-	emailCmd := notifications.SendVerifyEmailCommand{Email: tempUser.Email, Code: tempUser.Code, User: usr}
-	err = hs.NotificationService.SendVerificationEmail(ctx, &emailCmd)
-	if err != nil {
-		return response.Error(http.StatusInternalServerError, "Failed to send verification email", err)
-	}
-
-	// Record email as sent
-	emailSentCmd := tempuser.UpdateTempUserWithEmailSentCommand{Code: tempUser.Code}
-	err = hs.tempUserService.UpdateTempUserWithEmailSent(ctx, &emailSentCmd)
-	if err != nil {
-		return response.Error(http.StatusInternalServerError, "Failed to record verification email", err)
+		Action: field,
+	}); err != nil {
+		return response.ErrOrFallback(http.StatusInternalServerError, "Failed to generate email verification", err)
 	}
 
 	return response.Success("Email sent for verification")
@@ -721,7 +674,7 @@ func (hs *HTTPServer) ClearHelpFlags(c *contextmodel.ReqContext) response.Respon
 	}
 
 	if err := hs.userService.SetUserHelpFlag(c.Req.Context(), &cmd); err != nil {
-		return response.Error(500, "Failed to update help flag", err)
+		return response.Error(http.StatusInternalServerError, "Failed to update help flag", err)
 	}
 
 	return response.JSON(http.StatusOK, &util.DynMap{"message": "Help flag set", "helpFlags1": cmd.HelpFlags1})

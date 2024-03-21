@@ -41,13 +41,20 @@ Alternatively, you can also watch our Grafana for Beginners series where we disc
 - [Docker](https://docs.docker.com/install/)
 - [Docker Compose](https://docs.docker.com/compose/) (included in Docker for Desktop for macOS and Windows)
 - [Git](https://git-scm.com/)
-  {{% /class %}}
+
+### KillerCoda sandbox environment (Alternative)
+
+If you would prefer to follow along with this tutorial without needing to set up a local environment, you can use the [KillerCoda sandbox environment](https://killercoda.com/grafana-labs/course/full-stack/tutorial-enviroment).
+
+{{% /class %}}
 
 ## Set up the sample application
 
 This tutorial uses a sample application to demonstrate some of the features in Grafana. To complete the exercises in this tutorial, you need to download the files to your local machine.
 
-In this step, you'll set up the sample application, as well as supporting services, such as [Prometheus](https://prometheus.io/) and [Loki](/oss/loki/).
+In this step, you'll set up the sample application, as well as supporting services, such as [Loki](/oss/loki/).
+
+> **Note:** [Prometheus](https://prometheus.io/), a popular time series database (TSDB), has already been configured as a data source as part of this tutorial.
 
 1. Clone the [github.com/grafana/tutorial-environment](https://github.com/grafana/tutorial-environment) repository.
 
@@ -103,47 +110,13 @@ To add a link:
 
 To vote for a link, click the triangle icon next to the name of the link.
 
-## Log in to Grafana
-
-Grafana is an open-source platform for monitoring and observability that lets you visualize and explore the state of your systems.
-
-1. Open a new tab.
-1. Browse to [localhost:3000](http://localhost:3000).
-1. In **email or username**, enter **admin**.
-1. In **password**, enter **admin**.
-1. Click **Log In**.
-
-   The first time you log in, you're asked to change your password:
-
-1. In **New password**, enter your new password.
-1. In **Confirm new password**, enter the same password.
-1. Click **Save**.
-
-The first thing you see is the Home dashboard, which helps you get started.
-
-In the top left corner, you can see the menu icon. Clicking it will open the _sidebar_, the main menu for navigating Grafana.
-
-## Add a metrics data source
-
-The sample application exposes metrics which are stored in [Prometheus](https://prometheus.io/), a popular time series database (TSDB).
-
-To be able to visualize the metrics from Prometheus, you first need to add it as a data source in Grafana.
-
-1. In the sidebar, click **Connections** and then **Data sources**.
-1. Click **Add data source**.
-1. In the list of data sources, click **Prometheus**.
-1. In the URL box, enter **http\://prometheus:9090**.
-1. Scroll to the bottom of the page and click **Save & test**.
-
-You should see the message "Successfully queried the Prometheus API." This means Prometheus is now available as a data source in Grafana.
-
 ## Explore your metrics
 
 Grafana Explore is a workflow for troubleshooting and data exploration. In this step, you'll be using Explore to create ad-hoc queries to understand the metrics exposed by the sample application.
 
 > Ad-hoc queries are queries that are made interactively, with the purpose of exploring data. An ad-hoc query is commonly followed by another, more specific query.
 
-1. Click the menu icon and, in the sidebar, click **Explore**. A dropdown menu for the list of available data sources is on the upper-left side. The Prometheus data source that you added will already be selected. If not, choose Prometheus.
+1. Click the menu icon and, in the sidebar, click **Explore**. A dropdown menu for the list of available data sources is on the upper-left side. The Prometheus data source will already be selected. If not, choose Prometheus.
 1. Confirm that you're in code mode by checking the **Builder/Code** toggle at the top right corner of the query panel.
 1. In the query editor, where it says _Enter a PromQL query…_, enter `tns_request_duration_seconds_count` and then press Shift + Enter.
    A graph appears.
@@ -313,7 +286,7 @@ The most basic alert consists of two parts:
    - Email
    - [Webhooks](#create-a-contact-point-for-grafana-managed-alerts)
    - [Telegram](https://grafana.com/blog/2023/12/28/how-to-integrate-grafana-alerting-and-telegram/)
-   - Slack
+   - [Slack](https://grafana.com/docs/grafana/latest/alerting/alerting-rules/manage-contact-points/integrations/configure-slack/)
    - PagerDuty
 
 1. An _Alert rule_ - An Alert rule defines one or more _conditions_ that Grafana regularly evaluates. When these evaluations meet the rule's criteria, the alert is triggered.
@@ -360,12 +333,12 @@ Now that Grafana knows how to notify us, it's time to set up an alert rule:
    ```
 
 1. Press **Preview**. You should see some data returned.
-1. Keep expressions “B” and "C" as they are. These expressions (Reduce and Threshold, respectively) come by default when creating a new rule. Expression "B", selects the last value of our query “A”, while the Threshold expression "C" will check if the last value from expression "B" is above a specific value. In addition, the Threshold expression is the alert condition by default. Enter `0.2` as threshold value. [You can read more about queries and conditions here](https://grafana.com/docs/grafana/latest/alerting/fundamentals/alert-rules/queries-conditions/#expression-queries).
+1. Keep expressions “B” and "C" as they are. These expressions (Reduce and Threshold, respectively) come by default when creating a new rule. Expression "B", selects the last value of our query “A”, while the Threshold expression "C" will check if the last value from expression "B" is above a specific value. In addition, the Threshold expression is the alert condition by default. Enter `0.2` as threshold value. [You can read more about queries and conditions here](/docs/grafana/<GRAFANA_VERSION>/alerting/fundamentals/alert-rules/queries-conditions/#expression-queries).
 1. In **Section 3**, in Folder, create a new folder, by clicking `New folder` and typing a name for the folder. This folder will contain our alerts. For example: `fundamentals`. Then, click `create`.
 1. In the Evaluation group, repeat the above step to create a new one. We will name it `fundamentals` too.
 1. Choose an Evaluation interval (how often the alert will be evaluated). For example, every `10s` (10 seconds).
 1. Set the pending period. This is the time that a condition has to be met until the alert enters in Firing state and a notification is sent. Enter `0s`. For the purposes of this tutorial, the evaluation interval is intentionally short. This makes it easier to test. This setting makes Grafana wait until an alert has fired for a given time before Grafana sends the notification.
-1. In **Section 4**, you can optionally add some sample text to your summary message. [Read more about message templating here](/docs/grafana/latest/alerting/unified-alerting/message-templating/).
+1. In **Section 4**, you can optionally add some sample text to your summary message. [Read more about message templating here](/docs/grafana/<GRAFANA_VERSION>/alerting/unified-alerting/message-templating/).
 1. Click **Save rule and exit** at the top of the page.
 1. In Grafana's sidebar, navigate to **Notification policies**.
 1. Under **Default policy**, select **...** &rsaquo; **Edit** and change the **Default contact point** from **grafana-default-email** to **RequestBin**.
@@ -386,7 +359,11 @@ Once the query `sum(rate(tns_request_duration_seconds_count[5m])) by(route)` ret
 
 ### Display Grafana Alerts to your dashboard
 
-In most cases, it's also valuable to display Grafana Alerts as annotations to your dashboard. Let's see how we can configure this.
+In most cases, it's also valuable to display Grafana Alerts as annotations to your dashboard. Check out the video tutorial below to learn how to display alerting to your dashboard.
+
+{{< youtube id="ClLp-iSoaSY" >}}
+
+Let's see how we can configure this.
 
 1. In Grafana's sidebar, hover over the **Alerting** (bell) icon and then click **Alert rules**.
 1. Expand the `fundamentals > fundamentals` folder to view our created alert rule.
@@ -408,13 +385,17 @@ In this tutorial you learned about fundamental features of Grafana. To do so, we
 docker-compose down -v
 ```
 
+### KillerCoda sandbox environment (completed tutorial)
+
+Do you want to see the finished result? Check out our [completed KillerCoda sandbox environment](https://killercoda.com/grafana-labs/course/full-stack/tutorial-enviroment-completed) containing the entire demo with dashboards, checks, and data sources configured.
+
 ### Learn more
 
 Check out the links below to continue your learning journey with Grafana's LGTM stack.
 
-- [Prometheus](/docs/grafana/latest/features/datasources/prometheus/)
-- [Loki](/docs/grafana/latest/features/datasources/loki/)
-- [Explore](/docs/grafana/latest/features/explore/)
-- [Alerting Overview](/docs/grafana/latest/alerting/)
-- [Alert rules](/docs/grafana/latest/alerting/create-alerts/)
-- [Contact Points](/docs/grafana/latest/alerting/notifications/)
+- [Prometheus](/docs/grafana/<GRAFANA_VERSION>/features/datasources/prometheus/)
+- [Loki](/docs/grafana/<GRAFANA_VERSION>/features/datasources/loki/)
+- [Explore](/docs/grafana/<GRAFANA_VERSION>/features/explore/)
+- [Alerting Overview](/docs/grafana/<GRAFANA_VERSION>/alerting/)
+- [Alert rules](/docs/grafana/<GRAFANA_VERSION>/alerting/create-alerts/)
+- [Contact Points](/docs/grafana/<GRAFANA_VERSION>/alerting/notifications/)

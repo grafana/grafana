@@ -5,7 +5,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 
-	common "github.com/grafana/grafana/pkg/apis/common/v0alpha1"
+	common "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
 )
 
 const (
@@ -18,6 +18,12 @@ var ScopeResourceInfo = common.NewResourceInfo(GROUP, VERSION,
 	"scopes", "scope", "Scope",
 	func() runtime.Object { return &Scope{} },
 	func() runtime.Object { return &ScopeList{} },
+)
+
+var ScopeDashboardResourceInfo = common.NewResourceInfo(GROUP, VERSION,
+	"scopedashboards", "scopedashboard", "ScopeDashboard",
+	func() runtime.Object { return &ScopeDashboard{} },
+	func() runtime.Object { return &ScopeDashboardList{} },
 )
 
 var (
@@ -39,6 +45,8 @@ func addKnownTypes(scheme *runtime.Scheme) error {
 	scheme.AddKnownTypes(SchemeGroupVersion,
 		&Scope{},
 		&ScopeList{},
+		&ScopeDashboard{},
+		&ScopeDashboardList{},
 	)
 	metav1.AddToGroupVersion(scheme, SchemeGroupVersion)
 	return nil

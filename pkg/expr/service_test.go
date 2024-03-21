@@ -15,11 +15,10 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/plugins"
-	"github.com/grafana/grafana/pkg/plugins/config"
-	"github.com/grafana/grafana/pkg/plugins/manager/fakes"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	datafakes "github.com/grafana/grafana/pkg/services/datasources/fakes"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginconfig"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/plugincontext"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginstore"
 	"github.com/grafana/grafana/pkg/services/user"
@@ -42,15 +41,20 @@ func TestService(t *testing.T) {
 		PluginList: []pluginstore.Plugin{
 			{JSONData: plugins.JSONData{ID: "test"}},
 		},
-	}, &datafakes.FakeCacheService{}, &datafakes.FakeDataSourceService{}, nil, fakes.NewFakeLicensingService(), &config.Cfg{})
+	}, &datafakes.FakeCacheService{}, &datafakes.FakeDataSourceService{}, nil, pluginconfig.NewFakePluginRequestConfigProvider())
 
+	features := featuremgmt.WithFeatures()
 	s := Service{
 		cfg:          setting.NewCfg(),
 		dataService:  me,
 		pCtxProvider: pCtxProvider,
-		features:     &featuremgmt.FeatureManager{},
+		features:     features,
 		tracer:       tracing.InitializeTracerForTest(),
 		metrics:      newMetrics(nil),
+		converter: &ResultConverter{
+			Features: features,
+			Tracer:   tracing.InitializeTracerForTest(),
+		},
 	}
 
 	queries := []Query{
@@ -128,7 +132,7 @@ func TestDSQueryError(t *testing.T) {
 		PluginList: []pluginstore.Plugin{
 			{JSONData: plugins.JSONData{ID: "test"}},
 		},
-	}, &datafakes.FakeCacheService{}, &datafakes.FakeDataSourceService{}, nil, nil, &config.Cfg{})
+	}, &datafakes.FakeCacheService{}, &datafakes.FakeDataSourceService{}, nil, pluginconfig.NewFakePluginRequestConfigProvider())
 
 	s := Service{
 		cfg:          setting.NewCfg(),

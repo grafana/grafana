@@ -1,7 +1,6 @@
 package setting
 
 import (
-	"errors"
 	"fmt"
 	"strconv"
 	"strings"
@@ -46,7 +45,7 @@ const (
 `
 	evaluatorDefaultEvaluationTimeout       = 30 * time.Second
 	schedulerDefaultAdminConfigPollInterval = time.Minute
-	schedulereDefaultExecuteAlerts          = true
+	schedulerDefaultExecuteAlerts           = true
 	schedulerDefaultMaxAttempts             = 1
 	schedulerDefaultLegacyMinInterval       = 1
 	screenshotsDefaultCapture               = false
@@ -61,6 +60,7 @@ const (
 	// DefaultRuleEvaluationInterval indicates a default interval of for how long a rule should be evaluated to change state from Pending to Alerting
 	DefaultRuleEvaluationInterval = SchedulerBaseInterval * 6 // == 60 seconds
 	stateHistoryDefaultEnabled    = true
+	lokiDefaultMaxQueryLength     = 721 * time.Hour // 30d1h, matches the default value in Loki
 )
 
 type UnifiedAlertingSettings struct {
@@ -97,7 +97,6 @@ type UnifiedAlertingSettings struct {
 	ReservedLabels                UnifiedAlertingReservedLabelSettings
 	StateHistory                  UnifiedAlertingStateHistorySettings
 	RemoteAlertmanager            RemoteAlertmanagerSettings
-	Upgrade                       UnifiedAlertingUpgradeSettings
 	// MaxStateSaveConcurrency controls the number of goroutines (per rule) that can save alert state in parallel.
 	MaxStateSaveConcurrency   int
 	StatePeriodicSaveInterval time.Duration
@@ -136,14 +135,10 @@ type UnifiedAlertingStateHistorySettings struct {
 	// if one of them is set.
 	LokiBasicAuthPassword string
 	LokiBasicAuthUsername string
+	LokiMaxQueryLength    time.Duration
 	MultiPrimary          string
 	MultiSecondaries      []string
 	ExternalLabels        map[string]string
-}
-
-type UnifiedAlertingUpgradeSettings struct {
-	// CleanUpgrade controls whether the upgrade process should clean up UA data when upgrading from legacy alerting.
-	CleanUpgrade bool
 }
 
 // IsEnabled returns true if UnifiedAlertingSettings.Enabled is either nil or true.
@@ -166,49 +161,13 @@ func (cfg *Cfg) readUnifiedAlertingEnabledSetting(section *ini.Section) (*bool, 
 	// At present an invalid value is considered the same as no value. This means that a
 	// spelling mistake in the string "false" could enable unified alerting rather
 	// than disable it. This issue can be found here
-	hasEnabled := section.Key("enabled").Value() != ""
-	if !hasEnabled {
-		// TODO: Remove in Grafana v10
-		if cfg.IsFeatureToggleEnabled("ngalert") {
-			cfg.Logger.Warn("ngalert feature flag is deprecated: use unified alerting enabled setting instead")
-			// feature flag overrides the legacy alerting setting
-			legacyAlerting := false
-			cfg.AlertingEnabled = &legacyAlerting
-			unifiedAlerting := true
-			return &unifiedAlerting, nil
-		}
-
-		// if legacy alerting has not been configured then enable unified alerting
-		if cfg.AlertingEnabled == nil {
-			unifiedAlerting := true
-			return &unifiedAlerting, nil
-		}
-
-		// enable unified alerting and disable legacy alerting
-		legacyAlerting := false
-		cfg.AlertingEnabled = &legacyAlerting
-		unifiedAlerting := true
-		return &unifiedAlerting, nil
+	if section.Key("enabled").Value() == "" {
+		return util.Pointer(true), nil
 	}
-
 	unifiedAlerting, err := section.Key("enabled").Bool()
 	if err != nil {
-		// the value for unified alerting is invalid so disable all alerting
-		legacyAlerting := false
-		cfg.AlertingEnabled = &legacyAlerting
 		return nil, fmt.Errorf("invalid value %s, should be either true or false", section.Key("enabled"))
 	}
-
-	// If both legacy and unified alerting are enabled then return an error
-	if cfg.AlertingEnabled != nil && *(cfg.AlertingEnabled) && unifiedAlerting {
-		return nil, errors.New("legacy and unified alerting cannot both be enabled at the same time, please disable one of them and restart Grafana")
-	}
-
-	if cfg.AlertingEnabled == nil {
-		legacyAlerting := !unifiedAlerting
-		cfg.AlertingEnabled = &legacyAlerting
-	}
-
 	return &unifiedAlerting, nil
 }
 
@@ -277,9 +236,9 @@ func (cfg *Cfg) ReadUnifiedAlertingSettings(iniFile *ini.File) error {
 
 	alerting := iniFile.Section("alerting")
 
-	uaExecuteAlerts := ua.Key("execute_alerts").MustBool(schedulereDefaultExecuteAlerts)
+	uaExecuteAlerts := ua.Key("execute_alerts").MustBool(schedulerDefaultExecuteAlerts)
 	if uaExecuteAlerts { // unified option equals the default (true)
-		legacyExecuteAlerts := alerting.Key("execute_alerts").MustBool(schedulereDefaultExecuteAlerts)
+		legacyExecuteAlerts := alerting.Key("execute_alerts").MustBool(schedulerDefaultExecuteAlerts)
 		if !legacyExecuteAlerts {
 			cfg.Logger.Warn("falling back to legacy setting of 'execute_alerts'; please use the configuration option in the `unified_alerting` section if Grafana 8 alerts are enabled.")
 		}
@@ -405,6 +364,7 @@ func (cfg *Cfg) ReadUnifiedAlertingSettings(iniFile *ini.File) error {
 		LokiTenantID:          stateHistory.Key("loki_tenant_id").MustString(""),
 		LokiBasicAuthUsername: stateHistory.Key("loki_basic_auth_username").MustString(""),
 		LokiBasicAuthPassword: stateHistory.Key("loki_basic_auth_password").MustString(""),
+		LokiMaxQueryLength:    stateHistory.Key("loki_max_query_length").MustDuration(lokiDefaultMaxQueryLength),
 		MultiPrimary:          stateHistory.Key("primary").MustString(""),
 		MultiSecondaries:      splitTrim(stateHistory.Key("secondaries").MustString(""), ","),
 		ExternalLabels:        stateHistoryLabels.KeysHash(),
@@ -417,12 +377,6 @@ func (cfg *Cfg) ReadUnifiedAlertingSettings(iniFile *ini.File) error {
 	if err != nil {
 		return err
 	}
-
-	upgrade := iniFile.Section("unified_alerting.upgrade")
-	uaCfgUpgrade := UnifiedAlertingUpgradeSettings{
-		CleanUpgrade: upgrade.Key("clean_upgrade").MustBool(false),
-	}
-	uaCfg.Upgrade = uaCfgUpgrade
 
 	cfg.UnifiedAlerting = uaCfg
 	return nil

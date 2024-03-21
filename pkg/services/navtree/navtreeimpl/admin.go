@@ -7,6 +7,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/correlations"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/navtree"
+	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginaccesscontrol"
 	"github.com/grafana/grafana/pkg/services/serviceaccounts"
 )
@@ -135,11 +136,11 @@ func (s *ServiceImpl) getAdminNode(c *contextmodel.ReqContext) (*navtree.NavLink
 		configNodes = append(configNodes, storage)
 	}
 
-	if s.features.IsEnabled(ctx, featuremgmt.FlagOnPremToCloudMigrations) && c.SignedInUser.IsGrafanaAdmin {
+	if s.features.IsEnabled(ctx, featuremgmt.FlagOnPremToCloudMigrations) && c.SignedInUser.HasRole(org.RoleAdmin) {
 		migrateToCloud := &navtree.NavLink{
 			Text:     "Migrate to Grafana Cloud",
 			Id:       "migrate-to-cloud",
-			SubTitle: "Copy data sources, dashboards, and alerts from this installation to a cloud stack",
+			SubTitle: "Copy configuration from your self-managed installation to a cloud stack",
 			Url:      s.cfg.AppSubURL + "/admin/migrate-to-cloud",
 		}
 		configNodes = append(configNodes, migrateToCloud)

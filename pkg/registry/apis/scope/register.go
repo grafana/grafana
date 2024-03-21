@@ -12,7 +12,7 @@ import (
 	"k8s.io/kube-openapi/pkg/common"
 
 	scope "github.com/grafana/grafana/pkg/apis/scope/v0alpha1"
-	"github.com/grafana/grafana/pkg/services/apiserver/builder"
+	"github.com/grafana/grafana/pkg/apiserver/builder"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 )
 
@@ -68,13 +68,23 @@ func (b *ScopeAPIBuilder) GetAPIGroupInfo(
 ) (*genericapiserver.APIGroupInfo, error) {
 	apiGroupInfo := genericapiserver.NewDefaultAPIGroupInfo(scope.GROUP, scheme, metav1.ParameterCodec, codecs)
 
-	resourceInfo := scope.ScopeResourceInfo
+	scopeResourceInfo := scope.ScopeResourceInfo
+	scopeDashboardResourceInfo := scope.ScopeDashboardResourceInfo
+
 	storage := map[string]rest.Storage{}
-	scopeStorage, err := newStorage(scheme, optsGetter)
+
+	scopeStorage, err := newScopeStorage(scheme, optsGetter)
 	if err != nil {
 		return nil, err
 	}
-	storage[resourceInfo.StoragePath()] = scopeStorage
+	storage[scopeResourceInfo.StoragePath()] = scopeStorage
+
+	scopeDashboardStorage, err := newScopeDashboardStorage(scheme, optsGetter)
+	if err != nil {
+		return nil, err
+	}
+	storage[scopeDashboardResourceInfo.StoragePath()] = scopeDashboardStorage
+
 	apiGroupInfo.VersionedResourcesStorageMap[scope.VERSION] = storage
 	return &apiGroupInfo, nil
 }

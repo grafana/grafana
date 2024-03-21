@@ -29,7 +29,7 @@ import { MetricScene } from './MetricScene';
 import { MetricSelectScene } from './MetricSelectScene';
 import { MetricsHeader } from './MetricsHeader';
 import { getTrailStore } from './TrailStore/TrailStore';
-import { LOGS_METRIC, MetricSelectedEvent, trailDS, VAR_DATASOURCE, VAR_FILTERS } from './shared';
+import { MetricSelectedEvent, trailDS, VAR_DATASOURCE, VAR_FILTERS } from './shared';
 import { getUrlForTrail } from './utils';
 
 export interface DataTrailState extends SceneObjectState {
@@ -86,6 +86,8 @@ export class DataTrail extends SceneObjectBase<DataTrailState> {
       const newStepWasAppended = newNumberOfSteps > oldNumberOfSteps;
 
       if (newStepWasAppended) {
+        // In order for the `useBookmarkState` to re-evaluate after a new step was made:
+        this.forceRender();
         // Do nothing because the state is already up to date -- it created a new step!
         return;
       }
@@ -170,7 +172,7 @@ export class DataTrail extends SceneObjectBase<DataTrailState> {
   }
 
   static Component = ({ model }: SceneComponentProps<DataTrail>) => {
-    const { controls, topScene, history } = model.useState();
+    const { controls, topScene, history, settings } = model.useState();
     const styles = useStyles2(getStyles);
     const showHeaderForFirstTimeUsers = getTrailStore().recent.length < 2;
 
@@ -183,6 +185,7 @@ export class DataTrail extends SceneObjectBase<DataTrailState> {
             {controls.map((control) => (
               <control.Component key={control.state.key} model={control} />
             ))}
+            <settings.Component model={settings} />
           </div>
         )}
         <div className={styles.body}>{topScene && <topScene.Component model={topScene} />}</div>
@@ -191,7 +194,7 @@ export class DataTrail extends SceneObjectBase<DataTrailState> {
   };
 }
 
-function getTopSceneFor(metric?: string) {
+export function getTopSceneFor(metric?: string) {
   if (metric) {
     return new MetricScene({ metric: metric });
   } else {
@@ -205,11 +208,13 @@ function getVariableSet(initialDS?: string, metric?: string, initialFilters?: Ad
       new DataSourceVariable({
         name: VAR_DATASOURCE,
         label: 'Data source',
+        description: 'Only prometheus data sources are supported',
         value: initialDS,
-        pluginId: metric === LOGS_METRIC ? 'loki' : 'prometheus',
+        pluginId: 'prometheus',
       }),
       new AdHocFiltersVariable({
         name: VAR_FILTERS,
+        addFilterButtonText: 'Add label',
         datasource: trailDS,
         hide: VariableHide.hideLabel,
         layout: 'vertical',
@@ -233,13 +238,17 @@ function getStyles(theme: GrafanaTheme2) {
       flexGrow: 1,
       display: 'flex',
       flexDirection: 'column',
-      gap: theme.spacing(1),
     }),
     controls: css({
       display: 'flex',
       gap: theme.spacing(1),
+      padding: theme.spacing(1, 0),
       alignItems: 'flex-end',
       flexWrap: 'wrap',
+      position: 'sticky',
+      background: theme.isDark ? theme.colors.background.canvas : theme.colors.background.primary,
+      zIndex: theme.zIndex.navbarFixed,
+      top: 0,
     }),
   };
 }

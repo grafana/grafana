@@ -11,7 +11,6 @@ import (
 	"github.com/grafana/grafana/pkg/plugins/config"
 	"github.com/grafana/grafana/pkg/plugins/log"
 	"github.com/grafana/grafana/pkg/plugins/manager/loader/assetpath"
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
 )
 
 // DefaultConstructor implements the default ConstructFunc used for the Construct step of the Bootstrap stage.
@@ -29,7 +28,7 @@ func DefaultConstructFunc(signatureCalculator plugins.SignatureCalculator, asset
 }
 
 // DefaultDecorateFuncs are the default DecorateFuncs used for the Decorate step of the Bootstrap stage.
-func DefaultDecorateFuncs(cfg *config.Cfg) []DecorateFunc {
+func DefaultDecorateFuncs(cfg *config.PluginManagementCfg) []DecorateFunc {
 	return []DecorateFunc{
 		AppDefaultNavURLDecorateFunc,
 		TemplateDecorateFunc,
@@ -161,10 +160,9 @@ func configureAppChildPlugin(parent *plugins.Plugin, child *plugins.Plugin) {
 // SkipHostEnvVarsDecorateFunc returns a DecorateFunc that configures the SkipHostEnvVars field of the plugin.
 // It will be set to true if the FlagPluginsSkipHostEnvVars feature flag is set, and the plugin is not present in the
 // ForwardHostEnvVars plugin ids list.
-func SkipHostEnvVarsDecorateFunc(cfg *config.Cfg) DecorateFunc {
+func SkipHostEnvVarsDecorateFunc(cfg *config.PluginManagementCfg) DecorateFunc {
 	return func(_ context.Context, p *plugins.Plugin) (*plugins.Plugin, error) {
-		p.SkipHostEnvVars = cfg.Features.IsEnabledGlobally(featuremgmt.FlagPluginsSkipHostEnvVars) &&
-			!slices.Contains(cfg.ForwardHostEnvVars, p.ID)
+		p.SkipHostEnvVars = cfg.Features.SkipHostEnvVarsEnabled && !slices.Contains(cfg.ForwardHostEnvVars, p.ID)
 		return p, nil
 	}
 }

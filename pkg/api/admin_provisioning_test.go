@@ -72,26 +72,6 @@ func TestAPI_AdminProvisioningReload_AccessControl(t *testing.T) {
 			url:          "/api/admin/provisioning/dashboards/reload",
 		},
 		{
-			desc:         "should work for notifications with specific scope",
-			expectedCode: http.StatusOK,
-			expectedBody: `{"message":"Notifications config reloaded"}`,
-			permissions: []accesscontrol.Permission{
-				{
-					Action: ActionProvisioningReload,
-					Scope:  ScopeProvisionersNotifications,
-				},
-			},
-			url: "/api/admin/provisioning/notifications/reload",
-			checkCall: func(mock provisioning.ProvisioningServiceMock) {
-				assert.Len(t, mock.Calls.ProvisionNotifications, 1)
-			},
-		},
-		{
-			desc:         "should fail for notifications with no permission",
-			expectedCode: http.StatusForbidden,
-			url:          "/api/admin/provisioning/notifications/reload",
-		},
-		{
 			desc:         "should work for datasources with specific scope",
 			expectedCode: http.StatusOK,
 			expectedBody: `{"message":"Datasources config reloaded"}`,

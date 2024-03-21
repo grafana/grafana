@@ -297,7 +297,7 @@ export class ElementState implements LayerElement {
 
   updateData(ctx: DimensionContext) {
     if (this.item.prepareData) {
-      this.data = this.item.prepareData(ctx, this.options.config);
+      this.data = this.item.prepareData(ctx, this.options);
       this.revId++; // rerender
     }
 
@@ -497,6 +497,7 @@ export class ElementState implements LayerElement {
   };
 
   onElementClick = (event: React.MouseEvent) => {
+    this.handleTooltip(event);
     this.onTooltipCallback();
   };
 
