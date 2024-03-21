@@ -78,14 +78,14 @@ function PreviewResultViewer({ previews }: { previews: TemplatePreviewResult[] }
   const styles = useStyles2(getStyles);
 
   return (
-    <div className={styles.viewer.container}>
+    <ul className={styles.viewer.container}>
       {previews.map((preview) => (
-        <div className={styles.viewer.box} key={preview.name}>
+        <li className={styles.viewer.box} key={preview.name}>
           <header className={styles.viewer.header}>{preview.name}</header>
           <pre className={styles.viewer.pre}>{preview.text ?? '<Empty>'}</pre>
-        </div>
+        </li>
       ))}
-    </div>
+    </ul>
   );
 }
 
@@ -93,15 +93,15 @@ function PreviewErrorViewer({ errors }: { errors: TemplatePreviewErrors[] }) {
   const styles = useStyles2(getStyles);
 
   return (
-    <div className={styles.viewer.container}>
+    <ul className={styles.viewer.container}>
       {errors.map((error) => (
-        <div key={uniqueId('errors-list')} className={styles.viewer.box}>
+        <li key={uniqueId('errors-list')} className={styles.viewer.box}>
           {error.name && <header className={cx(styles.viewer.header, styles.viewer.errorHeader)}>{error.name}</header>}
           <div>{error.kind}</div>
           <p>{error.message}</p>
-        </div>
+        </li>
       ))}
-    </div>
+    </ul>
   );
 }
 
@@ -162,7 +162,7 @@ export function getPreviewTorender(
           {errorToRender}
         </Alert>
       )}
-      {previewResponseErrors && <PreviewErrorViewer errors={previewResponseErrors} />}
+      {previewResponseErrors && <PreviewErrorViewer errors={previewResponseErrors} data-testId="payloadJSON" />}
       {previewResponseResults && <PreviewResultViewer previews={previewResponseResults} data-testid="payloadJSON" />}
     </>
   );

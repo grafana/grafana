@@ -1,8 +1,9 @@
-import { render, screen, waitFor } from '@testing-library/react';
+import { render, waitFor } from '@testing-library/react';
 import { setupServer } from 'msw/node';
 import { default as React } from 'react';
 import { FormProvider, useForm } from 'react-hook-form';
 import { Provider } from 'react-redux';
+import { byRole } from 'testing-library-selector';
 
 import { setBackendSrv } from '@grafana/runtime';
 import { backendSrv } from 'app/core/services/backend_srv';
@@ -12,8 +13,8 @@ import 'whatwg-fetch';
 import { TemplatePreviewResponse } from '../../api/templateApi';
 import { mockPreviewTemplateResponse, mockPreviewTemplateResponseRejected } from '../../mocks/templatesApi';
 
-import { defaults, PREVIEW_NOT_AVAILABLE, TemplateFormValues } from './TemplateForm';
-import { TemplatePreview } from './TemplatePreview';
+import { defaults, TemplateFormValues } from './TemplateForm';
+import { TemplatePreview, PREVIEW_NOT_AVAILABLE } from './TemplatePreview';
 
 const getProviderWraper = () => {
   return function Wrapper({ children }: React.PropsWithChildren<{}>) {
@@ -42,6 +43,11 @@ afterAll(() => {
   server.close();
 });
 
+const ui = {
+  errorAlert: byRole('alert', { name: /error/i }),
+  resultItems: byRole('listitem'),
+};
+
 describe('TemplatePreview component', () => {
   it('Should render error if payload has wrong format', async () => {
     render(
@@ -54,7 +60,7 @@ describe('TemplatePreview component', () => {
       { wrapper: getProviderWraper() }
     );
     await waitFor(() => {
-      expect(screen.getByTestId('payloadJSON')).toHaveTextContent('Unexpected token b in JSON at position 0');
+      expect(ui.errorAlert.get()).toHaveTextContent('Unexpected token b in JSON at position 0');
     });
   });
 
@@ -88,7 +94,7 @@ describe('TemplatePreview component', () => {
     );
 
     await waitFor(() => {
-      expect(screen.getByTestId('payloadJSON')).toHaveTextContent('Unexpected token b in JSON at position 0');
+      expect(ui.errorAlert.get()).toHaveTextContent('Unexpected token b in JSON at position 0');
     });
   });
 
@@ -105,7 +111,7 @@ describe('TemplatePreview component', () => {
     );
 
     await waitFor(() => {
-      expect(screen.getByTestId('payloadJSON')).toHaveTextContent(PREVIEW_NOT_AVAILABLE);
+      expect(ui.errorAlert.get()).toHaveTextContent(PREVIEW_NOT_AVAILABLE);
     });
   });
 
@@ -128,11 +134,13 @@ describe('TemplatePreview component', () => {
     );
 
     await waitFor(() => {
-      expect(screen.getByTestId('payloadJSON')).toHaveTextContent(
-        'Preview for template1: ======================>This is the template result bla bla bla<====================== Preview for template2: ======================>This is the template2 result bla bla bla<======================'
-      );
+      const previews = ui.resultItems.getAll();
+      expect(previews).toHaveLength(2);
+      expect(previews[0]).toHaveTextContent('This is the template result bla bla bla');
+      expect(previews[1]).toHaveTextContent('This is the template2 result bla bla bla');
     });
   });
+
   it('Should render preview response with some errors,  if payload has correct format ', async () => {
     const response: TemplatePreviewResponse = {
       results: [{ name: 'template1', text: 'This is the template result bla bla bla' }],
@@ -142,6 +150,7 @@ describe('TemplatePreview component', () => {
       ],
     };
     mockPreviewTemplateResponse(server, response);
+
     render(
       <TemplatePreview
         payload={'[{"a":"b"}]'}
@@ -151,10 +160,13 @@ describe('TemplatePreview component', () => {
       />,
       { wrapper: getProviderWraper() }
     );
+
     await waitFor(() => {
-      expect(screen.getByTestId('payloadJSON')).toHaveTextContent(
-        '======================>This is the template result bla bla bla<====================== ERROR in template2: kind_of_error Unexpected "{" in operand ERROR in template3: kind_of_error Unexpected "{" in operand'
-      );
+      const previews = ui.resultItems.getAll();
+      expect(previews).toHaveLength(3);
+      expect(previews[0]).toHaveTextContent('Unexpected "{" in operand');
+      expect(previews[1]).toHaveTextContent('Unexpected "{" in operand');
+      expect(previews[2]).toHaveTextContent('This is the template result bla bla bla');
     });
   });
 });
