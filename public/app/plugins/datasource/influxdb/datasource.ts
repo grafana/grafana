@@ -44,7 +44,7 @@ import InfluxQueryModel from './influx_query_model';
 import InfluxSeries from './influx_series';
 import { buildMetadataQuery } from './influxql_query_builder';
 import { prepareAnnotation } from './migrations';
-import { buildRawQuery } from './queryUtils';
+import { buildRawQuery, removeRegexWrapper } from './queryUtils';
 import ResponseParser from './response_parser';
 import { DEFAULT_POLICY, InfluxOptions, InfluxQuery, InfluxQueryTag, InfluxVersion } from './types';
 
@@ -254,6 +254,11 @@ export default class InfluxDatasource extends DataSourceWithBackend<InfluxQuery,
 
     if (query.tags) {
       expandedQuery.tags = query.tags.map((tag) => {
+        // Remove the regex wrapper if the operator is not a regex operator
+        if (tag.operator !== '=~' && tag.operator !== '!~') {
+          tag.value = removeRegexWrapper(tag.value);
+        }
+
         return {
           ...tag,
           key: this.templateSrv.replace(tag.key, scopedVars),
