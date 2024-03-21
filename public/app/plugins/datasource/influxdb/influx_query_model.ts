@@ -141,6 +141,17 @@ export default class InfluxQueryModel {
     this.updatePersistedParts();
   }
 
+  private removeRegexWrapper(str: string) {
+    const regex = /\/\^(.*?)\$\//; // match any string that starts with "/^" and ends with "$/", capturing the characters in between
+    const match = str.match(regex);
+
+    if (match && match.length > 1) {
+      return match[1];
+    } else {
+      return str;
+    }
+  }
+
   private isOperatorTypeHandler(operator: string, value: string, fieldName: string) {
     let textValue;
     if (operator === 'Is Not') {
@@ -151,7 +162,7 @@ export default class InfluxQueryModel {
 
     // Tags should always quote
     if (fieldName.endsWith('::tag')) {
-      textValue = "'" + value.replace(/\\/g, '\\\\').replace(/\'/g, "\\'") + "'";
+      textValue = "'" + this.removeRegexWrapper(value.replace(/\\/g, '\\\\').replace(/\'/g, "\\'")) + "'";
       return {
         operator: operator,
         value: textValue,
@@ -169,7 +180,7 @@ export default class InfluxQueryModel {
       textValue = lowerValue;
     } else {
       // String or unrecognised: quote
-      textValue = "'" + value.replace(/\\/g, '\\\\').replace(/\'/g, "\\'") + "'";
+      textValue = "'" + this.removeRegexWrapper(value.replace(/\\/g, '\\\\').replace(/\'/g, "\\'")) + "'";
     }
     return {
       operator: operator,
@@ -199,7 +210,7 @@ export default class InfluxQueryModel {
       if (interpolate) {
         value = this.templateSrv.replace(value, this.scopedVars);
       }
-
+      value = this.removeRegexWrapper(value);
       if (operator.startsWith('Is')) {
         let r = this.isOperatorTypeHandler(operator, value, tag.key);
         operator = r.operator;
