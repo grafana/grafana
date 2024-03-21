@@ -22,6 +22,6 @@ func TestCreateTransportOptions(t *testing.T) {
 		opts, err := CreateTransportOptions(context.Background(), settings, backend.NewLoggerWith("logger", "test"))
 		require.NoError(t, err)
 		require.Equal(t, http.Header{"Foo": []string{"bar"}}, opts.Header)
-		require.Equal(t, 2, len(opts.Middlewares))
+		require.Equal(t, 1, len(opts.Middlewares))
 	})
 }
