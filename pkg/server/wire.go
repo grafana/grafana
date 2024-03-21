@@ -15,7 +15,6 @@ import (
 	"github.com/grafana/grafana/pkg/api/avatar"
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/bus"
-	"github.com/grafana/grafana/pkg/cuectx"
 	"github.com/grafana/grafana/pkg/expr"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/httpclient"
@@ -248,6 +247,7 @@ var wireBasicSet = wire.NewSet(
 	notifications.ProvideService,
 	notifications.ProvideSmtpService,
 	tracing.ProvideService,
+	tracing.ProvideTracingConfig,
 	wire.Bind(new(tracing.Tracer), new(*tracing.TracingService)),
 	testdatasource.ProvideService,
 	ldapapi.ProvideService,
@@ -306,8 +306,6 @@ var wireBasicSet = wire.NewSet(
 	secretsStore.ProvideService,
 	avatar.ProvideAvatarCacheServer,
 	statscollector.ProvideService,
-	cuectx.GrafanaCUEContext,
-	cuectx.GrafanaThemaRuntime,
 	csrf.ProvideCSRFFilter,
 	wire.Bind(new(csrf.Service), new(*csrf.CSRF)),
 	ossaccesscontrol.ProvideTeamPermissions,
