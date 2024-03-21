@@ -3,7 +3,8 @@ import React, { useCallback, useEffect, useState } from 'react';
 import { RegisterOptions, useFormContext, Controller } from 'react-hook-form';
 
 import { GrafanaTheme2, SelectableValue } from '@grafana/data';
-import { Field, Icon, IconButton, Input, Label, Stack, Switch, Text, Tooltip, useStyles2 } from '@grafana/ui';
+import { secondsToHms } from '@grafana/data/src/datetime/rangeutil';
+import { Button, Field, Icon, IconButton, Input, Label, Stack, Switch, Text, Tooltip, useStyles2 } from '@grafana/ui';
 
 import { CombinedRuleGroup, CombinedRuleNamespace } from '../../../../../types/unified-alerting';
 import { LogMessages, logInfo } from '../../Analytics';
@@ -163,9 +164,32 @@ function ForInput({ evaluateEvery }: { evaluateEvery: string }) {
   const {
     register,
     formState: { errors },
+    setValue,
+    watch,
   } = useFormContext<RuleFormValues>();
 
   const evaluateForId = 'eval-for-input';
+  const groupEvaluationInterval = watch('evaluateEvery');
+  const groupEvaluationIntervalMillis = parsePrometheusDuration(groupEvaluationInterval);
+
+  // we generate the quick selection based on the group's evaluation interval
+  const PENDING_PERIOD_QUICK_OPTIONS: number[] = [
+    0,
+    groupEvaluationIntervalMillis * 1,
+    groupEvaluationIntervalMillis * 2,
+    groupEvaluationIntervalMillis * 3,
+    groupEvaluationIntervalMillis * 4,
+    groupEvaluationIntervalMillis * 5,
+  ];
+
+  const setPendingPeriod = (time: number) => {
+    setValue('evaluateFor', `${time}`);
+  };
+
+  const isQuickSelectionActive = (time: number, unit: string) => {
+    const currentPendingPeriod = watch('evaluateFor');
+    return `${time}${unit}` === currentPendingPeriod;
+  };
 
   return (
     <Stack direction="row" justify-content="flex-start" align-items="flex-start">
@@ -183,7 +207,21 @@ function ForInput({ evaluateEvery }: { evaluateEvery: string }) {
         invalid={!!errors.evaluateFor?.message}
         validationMessageHorizontalOverflow={true}
       >
-        <Input id={evaluateForId} width={8} {...register('evaluateFor', forValidationOptions(evaluateEvery))} />
+        <Stack direction="row" alignItems="flex-end">
+          <Input id={evaluateForId} width={8} {...register('evaluateFor', forValidationOptions(evaluateEvery))} />
+          {PENDING_PERIOD_QUICK_OPTIONS.map((time) => (
+            <Button
+              key={time}
+              variant={'secondary'}
+              size="sm"
+              onClick={() => {
+                setPendingPeriod(time);
+              }}
+            >
+              {secondsToHms(time / 1000)}
+            </Button>
+          ))}
+        </Stack>
       </Field>
     </Stack>
   );
