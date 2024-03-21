@@ -127,7 +127,7 @@ func (p *EnvVarsProvider) secureSocksProxyEnvVars() []string {
 			// nolint:staticcheck
 			envVar(proxy.PluginSecureSocksProxyClientKeyFilePathEnvVarName, p.cfg.ProxySettings.ClientKeyFilePath),
 			// nolint:staticcheck
-			envVar(proxy.PluginSecureSocksProxyRootCACertFilePathsEnvVarName, strings.Join(p.cfg.ProxySettings.RootCACertsFilePaths, " ")),
+			envVar(proxy.PluginSecureSocksProxyRootCACertFilePathsEnvVarName, strings.Join(p.cfg.ProxySettings.RootCAFilePaths, " ")),
 			// nolint:staticcheck
 			envVar(proxy.PluginSecureSocksProxyAddressEnvVarName, p.cfg.ProxySettings.ProxyAddress),
 			// nolint:staticcheck

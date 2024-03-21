@@ -534,7 +534,7 @@ func (s *Service) httpClientOptions(ctx context.Context, ds *datasources.DataSou
 			ClientCfg: &sdkproxy.ClientCfg{
 				ClientCert:    s.cfg.SecureSocksDSProxy.ClientCert,
 				ClientKey:     s.cfg.SecureSocksDSProxy.ClientKey,
-				RootCACerts:   s.cfg.SecureSocksDSProxy.RootCACerts,
+				RootCAs:       s.cfg.SecureSocksDSProxy.RootCAs,
 				ProxyAddress:  s.cfg.SecureSocksDSProxy.ProxyAddress,
 				ServerName:    s.cfg.SecureSocksDSProxy.ServerName,
 				AllowInsecure: s.cfg.SecureSocksDSProxy.AllowInsecure,

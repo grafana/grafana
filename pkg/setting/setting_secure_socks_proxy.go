@@ -9,23 +9,23 @@ import (
 )
 
 type SecureSocksDSProxySettings struct {
-	Enabled              bool
-	ShowUI               bool
-	AllowInsecure        bool
-	ClientCert           string
-	ClientCertFilePath   string
-	ClientKey            string
-	ClientKeyFilePath    string
-	RootCACerts          []string
-	RootCACertsFilePaths []string
-	ProxyAddress         string
-	ServerName           string
+	Enabled            bool
+	ShowUI             bool
+	AllowInsecure      bool
+	ClientCert         string
+	ClientCertFilePath string
+	ClientKey          string
+	ClientKeyFilePath  string
+	RootCAs            []string
+	RootCAFilePaths    []string
+	ProxyAddress       string
+	ServerName         string
 }
 
 func readSecureSocksDSProxySettings(iniFile *ini.File) (SecureSocksDSProxySettings, error) {
 	s := SecureSocksDSProxySettings{
-		RootCACerts:          []string{},
-		RootCACertsFilePaths: []string{},
+		RootCAs:         []string{},
+		RootCAFilePaths: []string{},
 	}
 	secureSocksProxySection := iniFile.Section("secure_socks_datasource_proxy")
 	s.Enabled = secureSocksProxySection.Key("enabled").MustBool(false)
@@ -35,7 +35,7 @@ func readSecureSocksDSProxySettings(iniFile *ini.File) (SecureSocksDSProxySettin
 	s.AllowInsecure = secureSocksProxySection.Key("allow_insecure").MustBool(false)
 	s.ClientCertFilePath = secureSocksProxySection.Key("client_cert").MustString("")
 	s.ClientKeyFilePath = secureSocksProxySection.Key("client_key").MustString("")
-	s.RootCACertsFilePaths = secureSocksProxySection.Key("root_ca_cert").Strings(" ")
+	s.RootCAFilePaths = secureSocksProxySection.Key("root_ca_cert").Strings(" ")
 
 	if !s.Enabled {
 		return s, nil
@@ -48,7 +48,7 @@ func readSecureSocksDSProxySettings(iniFile *ini.File) (SecureSocksDSProxySettin
 	// If the proxy is going to use TLS.
 	if !s.AllowInsecure {
 		// all fields must be specified to use the proxy
-		if len(s.RootCACertsFilePaths) == 0 {
+		if len(s.RootCAFilePaths) == 0 {
 			return s, errors.New("one or more rootCA required")
 		} else if s.ClientCertFilePath == "" || s.ClientKeyFilePath == "" {
 			return s, errors.New("client key pair required")
@@ -76,7 +76,7 @@ func readSecureSocksDSProxySettings(iniFile *ini.File) (SecureSocksDSProxySettin
 	}
 
 	var rootCAs []string
-	for _, rootCAFile := range s.RootCACertsFilePaths {
+	for _, rootCAFile := range s.RootCAFilePaths {
 		// nolint:gosec
 		// The gosec G304 warning can be ignored because `rootCAFile` comes from config ini, and we check below if
 		// it's the right file type.
@@ -91,7 +91,7 @@ func readSecureSocksDSProxySettings(iniFile *ini.File) (SecureSocksDSProxySettin
 		}
 		rootCAs = append(rootCAs, string(pemBytes))
 	}
-	s.RootCACerts = rootCAs
+	s.RootCAs = rootCAs
 
 	return s, nil
 }
