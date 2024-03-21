@@ -319,11 +319,11 @@ func TestIntegrationRemoteAlertmanagerApplyConfigOnlyUploadsOnce(t *testing.T) {
 
 	// We should have no configuration or state at first.
 	{
-		_, err := am.mimirClient.GetGrafanaAlertmanagerConfig(ctx)
+		_, err := am.GetStatus(ctx)
 		require.Error(t, err)
 		require.Equal(t, "Error response from the Mimir API: alertmanager storage object not found", err.Error())
 
-		_, err = am.mimirClient.GetGrafanaAlertmanagerState(ctx)
+		_, err = am.GetStatus(ctx)
 		require.Error(t, err)
 		require.Equal(t, "Error response from the Mimir API: alertmanager storage object not found", err.Error())
 	}
@@ -347,13 +347,21 @@ func TestIntegrationRemoteAlertmanagerApplyConfigOnlyUploadsOnce(t *testing.T) {
 		state, err := am.mimirClient.GetGrafanaAlertmanagerState(ctx)
 		require.NoError(t, err)
 		require.Equal(t, encodedFullState, state.State)
+
+		// Retrieving the configuration using GetStatus should give us the same config.
+		status, err := am.GetStatus(ctx)
+		require.NoError(t, err)
+
+		rawCfg, err := json.Marshal(status.Config)
+		require.NoError(t, err)
+		require.JSONEq(t, testGrafanaConfig, string(rawCfg))
 	}
 
 	// Calling `ApplyConfig` again with a changed configuration and state yields no effect.
 	{
 		require.NoError(t, store.Set(ctx, cfg.OrgID, "alertmanager", "silences", base64.StdEncoding.EncodeToString([]byte("abc123"))))
 		require.NoError(t, store.Set(ctx, cfg.OrgID, "alertmanager", "notifications", base64.StdEncoding.EncodeToString([]byte("abc123"))))
-		fakeConfig.ID = 30000000000000000
+		fakeConfig.AlertmanagerConfiguration = testGrafanaConfigWithSecret
 		require.NoError(t, am.ApplyConfig(ctx, fakeConfig))
 
 		// The remote Alertmanager continues to be ready.
