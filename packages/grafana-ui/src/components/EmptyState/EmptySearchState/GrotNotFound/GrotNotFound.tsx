@@ -1,11 +1,10 @@
 import { css } from '@emotion/css';
-import React, { SVGProps } from 'react';
+import React, { SVGProps, useEffect, useRef } from 'react';
 import SVG from 'react-inlinesvg';
 
 import { GrafanaTheme2 } from '@grafana/data';
 
 import { useStyles2, useTheme2 } from '../../../../themes';
-import { useMousePosition } from '../../../../utils';
 
 import notFoundDark from './grot-not-found-dark.svg';
 import notFoundLight from './grot-not-found-light.svg';
@@ -22,27 +21,52 @@ export interface Props {
 
 export const GrotNotFound = ({ width = 'auto', height }: Props) => {
   const theme = useTheme2();
-  const { x, y } = useMousePosition();
-  const styles = useStyles2(getStyles, x, y);
-  return <SVG src={theme.isDark ? notFoundDark : notFoundLight} className={styles.svg} height={height} width={width} />;
+  const svgRef = useRef<SVGElement>(null);
+
+  useEffect(() => {
+    const handleMouseMove = (event: MouseEvent) => {
+      const grotArm = svgRef.current?.querySelector('#grot-not-found-arm');
+      const grotMagnifier = svgRef.current?.querySelector('#grot-not-found-magnifier');
+
+      const { clientX, clientY } = event;
+      const { innerWidth, innerHeight } = window;
+      const heightRatio = clientY / innerHeight;
+      const widthRatio = clientX / innerWidth;
+      const rotation = getIntermediateValue(heightRatio, MIN_ARM_ROTATION, MAX_ARM_ROTATION);
+      const translation = getIntermediateValue(widthRatio, MIN_ARM_TRANSLATION, MAX_ARM_TRANSLATION);
+
+      window.requestAnimationFrame(() => {
+        grotArm?.setAttribute('style', `transform: rotate(${rotation}deg) translateX(${translation}%)`);
+        grotMagnifier?.setAttribute('style', `transform: rotate(${rotation}deg) translateX(${translation}%)`);
+      });
+    };
+
+    window.addEventListener('mousemove', handleMouseMove);
+
+    return () => {
+      window.removeEventListener('mousemove', handleMouseMove);
+    };
+  }, []);
+
+  const styles = useStyles2(getStyles);
+  return (
+    <SVG
+      innerRef={svgRef}
+      src={theme.isDark ? notFoundDark : notFoundLight}
+      className={styles.svg}
+      height={height}
+      width={width}
+    />
+  );
 };
 
 GrotNotFound.displayName = 'GrotNotFound';
 
-const getStyles = (theme: GrafanaTheme2, xPos: number | null, yPos: number | null) => {
-  const { innerWidth, innerHeight } = window;
-  const heightRatio = yPos && yPos / innerHeight;
-  const widthRatio = xPos && xPos / innerWidth;
-  const rotation = heightRatio !== null ? getIntermediateValue(heightRatio, MIN_ARM_ROTATION, MAX_ARM_ROTATION) : 0;
-  const translation =
-    widthRatio !== null ? getIntermediateValue(widthRatio, MIN_ARM_TRANSLATION, MAX_ARM_TRANSLATION) : 0;
-
+const getStyles = (theme: GrafanaTheme2) => {
   return {
     svg: css({
       '#grot-not-found-arm, #grot-not-found-magnifier': {
-        transform: `rotate(${rotation}deg) translateX(${translation}%)`,
         transformOrigin: 'center',
-        transition: 'transform 50ms linear',
       },
     }),
   };
