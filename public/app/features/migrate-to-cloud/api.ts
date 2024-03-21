@@ -187,6 +187,12 @@ export const migrateToCloudAPI = createApi({
       },
     }),
 
+    startMigration: builder.mutation<void, void>({
+      queryFn: async () => {
+        return dataWithMockDelay(undefined);
+      },
+    }),
+
     listResources: builder.query<MigrationResourceDTO[], void>({
       providesTags: ['resource'],
       queryFn: async () => {
@@ -204,4 +210,5 @@ export const {
   useDeleteMigrationTokenMutation,
   useHasMigrationTokenQuery,
   useListResourcesQuery,
+  useStartMigrationMutation,
 } = migrateToCloudAPI;
