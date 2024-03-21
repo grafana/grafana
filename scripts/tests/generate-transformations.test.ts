@@ -1,4 +1,4 @@
-import { getMarkdownContent, getJavaScriptContent } from './generate-transformations.ts';
+import { getMarkdownContent, getJavaScriptContent } from '../docs/generate-transformations.ts';
 
 describe('makefile script tests', () => {
   // If these tests fail, refer to `./docs/README.md` "Content guidelines" for more information
@@ -22,8 +22,8 @@ export function contentDoesMatch(jsContent: string, mdContent: string): Boolean 
   return normalizeContent(jsContent) === normalizeContent(mdContent);
 }
 
-/* 
-  Normalize content by removing all whitespace (spaces, tabs, newlines, carriage returns, 
+/*
+  Normalize content by removing all whitespace (spaces, tabs, newlines, carriage returns,
   form feeds, and vertical tabs) and special characters.
 
   NOTE: There are numerous unpredictable formatting oddities when transforming JavaScript to Markdown;
@@ -51,7 +51,7 @@ export function contentDoesMatch(jsContent: string, mdContent: string): Boolean 
   | 4   | 6   | 8   |
   | 5   | 7   | 9   |
 
-  This is one of many arbitrary formatting anomalies that we can ignore by normalizing the 
+  This is one of many arbitrary formatting anomalies that we can ignore by normalizing the
   content before comparing the JavaScript template literals and the final Markdown.
 */
 function normalizeContent(content: string): string {
