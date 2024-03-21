@@ -156,26 +156,6 @@ Complete the following steps to set up labels and notifications.
 
    6. Click **See details** to view alert routing details and an email preview.
 
-## Configure notifications
-
-1. Add labels to your alert rules to set which notification policy should handle your firing alert instances.
-
-   All alert rules and instances, irrespective of their labels, match the default notification policy. If there are no nested policies, or no nested policies match the labels in the alert rule or alert instance, then the default notification policy is the matching policy.
-
-   Add labels if you want to change the way your notifications are routed.
-
-   Add custom labels by selecting existing key-value pairs from the drop down, or add new labels by entering the new key or value.
-
-2. Preview your alert instance routing set up.
-
-   Based on the labels added, alert instances are routed to the following notification policies displayed.
-
-3. Expand each notification policy below to view more details.
-
-4. Click **See details** to view alert routing details and an email preview.
-
-5. Click **Save rule**.
-
 ## Add annotations
 
 Add [annotations][annotation-label]. to provide more context on the alert in your alert notification message.
