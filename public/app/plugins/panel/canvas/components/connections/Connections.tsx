@@ -369,13 +369,14 @@ export class Connections {
 
     if (deleteVertex) {
       // Display temporary vertex removal
-      this.scene.selecto!.rootContainer!.style.cursor = 'not-allowed';
       this.connectionVertexPath?.setAttribute('d', `M${vx1} ${vy1} L${vx2} ${vy2}`);
       this.connectionSVGVertex!.style.display = 'block';
+      this.connectionVertex.style.display = 'none';
     } else {
       // Display temporary vertex during drag
       this.connectionVertexPath?.setAttribute('d', `M${vx1} ${vy1} L${xSnap} ${ySnap} L${vx2} ${vy2}`);
       this.connectionSVGVertex!.style.display = 'block';
+      this.connectionVertex.style.display = 'block';
     }
 
     // Handle mouseup
@@ -505,6 +506,7 @@ export class Connections {
 
     this.connectionVertexPath?.setAttribute('d', `M${vx1} ${vy1} L${xSnap} ${ySnap} L${vx2} ${vy2}`);
     this.connectionSVGVertex!.style.display = 'block';
+    this.connectionVertex.style.display = 'block';
 
     // Handle mouseup
     if (!event.buttons) {
