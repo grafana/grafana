@@ -67,7 +67,7 @@ frontendSandboxMonitorOnly,experimental,@grafana/plugins-platform-backend,false,
 sqlDatasourceDatabaseSelection,preview,@grafana/dataviz-squad,false,false,true
 lokiFormatQuery,experimental,@grafana/observability-logs,false,false,true
 recordedQueriesMulti,GA,@grafana/observability-metrics,false,false,false
-pluginsDynamicAngularDetectionPatterns,experimental,@grafana/plugins-platform-backend,false,false,false
+pluginsDynamicAngularDetectionPatterns,GA,@grafana/plugins-platform-backend,false,false,false
 vizAndWidgetSplit,experimental,@grafana/dashboards-squad,false,false,true
 prometheusIncrementalQueryInstrumentation,experimental,@grafana/observability-metrics,false,false,true
 logsExploreTableVisualisation,GA,@grafana/observability-logs,false,false,true
@@ -86,7 +86,7 @@ configurableSchedulerTick,experimental,@grafana/alerting-squad,false,true,false
 influxdbSqlSupport,GA,@grafana/observability-metrics,false,true,false
 alertingNoDataErrorExecution,GA,@grafana/alerting-squad,false,true,false
 angularDeprecationUI,GA,@grafana/plugins-platform-backend,false,false,true
-dashgpt,preview,@grafana/dashboards-squad,false,false,true
+dashgpt,GA,@grafana/dashboards-squad,false,false,true
 aiGeneratedDashboardChanges,experimental,@grafana/dashboards-squad,false,false,true
 reportingRetries,preview,@grafana/sharing-squad,false,true,false
 sseGroupByDatasource,experimental,@grafana/observability-metrics,false,false,false

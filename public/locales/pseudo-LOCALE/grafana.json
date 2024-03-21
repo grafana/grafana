@@ -789,8 +789,11 @@
       "datasource": "Đäŧä şőūřčę",
       "unknown": "Ůŉĸŉőŵŉ"
     },
-    "resources": {
-      "disconnect": "Đįşčőŉŉęčŧ"
+    "summary": {
+      "disconnect": "Đįşčőŉŉęčŧ",
+      "error-starting-migration": "Ŧĥęřę ŵäş äŉ ęřřőř şŧäřŧįŉģ čľőūđ mįģřäŧįőŉ",
+      "start-migration": "Ůpľőäđ ęvęřyŧĥįŉģ",
+      "target-stack-title": "Ůpľőäđįŉģ ŧő"
     },
     "token-status": {
       "active": "Ŧőĸęŉ čřęäŧęđ äŉđ äčŧįvę",
