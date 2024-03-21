@@ -23,7 +23,7 @@ type store interface {
 	GetByID(context.Context, int64) (*user.User, error)
 	GetNotServiceAccount(context.Context, int64) (*user.User, error)
 	Delete(context.Context, int64) error
-	LoginConflict(ctx context.Context, login, email string, caseInsensitive bool) error
+	LoginConflict(ctx context.Context, login, email string) error
 	CaseInsensitiveLoginConflict(context.Context, string, string) error
 	GetByLogin(context.Context, *user.GetUserByLoginQuery) (*user.User, error)
 	GetByEmail(context.Context, *user.GetUserByEmailQuery) (*user.User, error)
@@ -319,10 +319,8 @@ func (ss *sqlStore) Update(ctx context.Context, cmd *user.UpdateUserCommand) err
 			return err
 		}
 
-		if ss.cfg.CaseInsensitiveLogin {
-			if err := ss.userCaseInsensitiveLoginConflict(ctx, sess, user.Login, user.Email); err != nil {
-				return err
-			}
+		if err := ss.userCaseInsensitiveLoginConflict(ctx, sess, user.Login, user.Email); err != nil {
+			return err
 		}
 
 		sess.PublishAfterCommit(&events.UserUpdated{
