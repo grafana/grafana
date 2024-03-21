@@ -97,9 +97,10 @@ export class ElementState implements LayerElement {
       // Minimum element size is 10x10
       minWidth: '10px',
       minHeight: '10px',
+      rotate: `${placement.rotation ?? 0}deg`,
     };
 
-    const translate = ['0px', '0px', '0deg'];
+    const translate = ['0px', '0px'];
 
     switch (vertical) {
       case VerticalConstraint.Top:
@@ -183,8 +184,7 @@ export class ElementState implements LayerElement {
         break;
     }
 
-    // TODO: Figure out how to persist element angle / avoid resize
-    style.transform = `translate(${translate[0]}, ${translate[1]}) rotate(${placement.rotation ?? 0}deg)`;
+    style.transform = `translate(${translate[0]}, ${translate[1]})`;
     this.options.placement = placement;
     this.sizeStyle = style;
     if (this.div) {
@@ -198,6 +198,7 @@ export class ElementState implements LayerElement {
     }
   }
 
+  // this is the function that is messing up the placement as rotation is not being taken into account
   setPlacementFromConstraint(elementContainer?: DOMRect, parentContainer?: DOMRect, transformScale = 1) {
     const { constraint } = this.options;
     const { vertical, horizontal } = constraint ?? {};
@@ -431,7 +432,6 @@ export class ElementState implements LayerElement {
   };
 
   // TODO: Figure out how to make customables follow element (i.e. settings icon / constraints for a cleaner look)
-  // Maybe just hide them while rotating?
   applyRotate = (event: OnRotate) => {
     const rotationDegree = event.rotation;
 
@@ -442,6 +442,8 @@ export class ElementState implements LayerElement {
 
   // kinda like:
   // https://github.com/grafana/grafana-edge-app/blob/main/src/panels/draw/WrapItem.tsx#L44
+
+  // TODO: take into account rotation?
   applyResize = (event: OnResize, transformScale = 1) => {
     const placement = this.options.placement!;
 
