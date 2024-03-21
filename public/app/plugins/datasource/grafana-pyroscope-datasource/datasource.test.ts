@@ -6,7 +6,7 @@ import {
   PluginType,
   DataSourceJsonData,
 } from '@grafana/data';
-import { setPluginExtensionGetter, getBackendSrv, setBackendSrv, getTemplateSrv } from '@grafana/runtime';
+import { setPluginExtensionsHook, getBackendSrv, setBackendSrv, getTemplateSrv } from '@grafana/runtime';
 
 import { defaultPyroscopeQueryType } from './dataquery.gen';
 import { normalizeQuery, PyroscopeDataSource } from './datasource';
@@ -50,7 +50,7 @@ describe('Pyroscope data source', () => {
   let ds: PyroscopeDataSource;
   beforeEach(() => {
     mockFetchPyroscopeDatasourceSettings();
-    setPluginExtensionGetter(() => ({ extensions: [] })); // No extensions
+    setPluginExtensionsHook(() => ({ extensions: [] })); // No extensions
     ds = new PyroscopeDataSource(defaultSettings);
   });
 

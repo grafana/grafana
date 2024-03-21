@@ -3,7 +3,7 @@ import React from 'react';
 import { act } from 'react-dom/test-utils';
 
 import { PluginType, rangeUtil, PluginExtensionLink, PluginExtensionTypes } from '@grafana/data';
-import { getPluginLinkExtensions } from '@grafana/runtime';
+import { usePluginLinkExtensions } from '@grafana/runtime';
 
 import { PyroscopeDataSource } from '../datasource';
 import { mockFetchPyroscopeDatasourceSettings } from '../datasource.test';
@@ -15,8 +15,7 @@ const EXTENSION_POINT_ID = 'plugins/grafana-pyroscope-datasource/query-links';
 
 jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
-  setPluginExtensionGetter: jest.fn(),
-  getPluginLinkExtensions: jest.fn(),
+  usePluginLinkExtensions: jest.fn(),
   getTemplateSrv: () => {
     return {
       replace: (query: string): string => {
@@ -26,7 +25,7 @@ jest.mock('@grafana/runtime', () => ({
   },
 }));
 
-const getPluginLinkExtensionsMock = jest.mocked(getPluginLinkExtensions);
+const usePluginLinkExtensionsMock = jest.mocked(usePluginLinkExtensions);
 
 const defaultPyroscopeDataSourceSettings = {
   uid: 'default-pyroscope',
@@ -60,12 +59,12 @@ describe('PyroscopeQueryLinkExtensions', () => {
     resetPyroscopeQueryLinkExtensionsFetches();
     mockFetchPyroscopeDatasourceSettings(defaultPyroscopeDataSourceSettings);
 
-    getPluginLinkExtensionsMock.mockRestore();
-    getPluginLinkExtensionsMock.mockReturnValue({ extensions: [] }); // Unless stated otherwise, no extensions
+    usePluginLinkExtensionsMock.mockRestore();
+    usePluginLinkExtensionsMock.mockReturnValue({ extensions: [] }); // Unless stated otherwise, no extensions
   });
 
   it('should render if extension present', async () => {
-    getPluginLinkExtensionsMock.mockReturnValue({ extensions: [createExtension()] }); // Default extension
+    usePluginLinkExtensionsMock.mockReturnValue({ extensions: [createExtension()] }); // Default extension
 
     await act(setup);
     expect(await screen.findAllByText(EXPECTED_BUTTON_LABEL)).toBeDefined();
