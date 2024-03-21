@@ -7,6 +7,7 @@ import (
 	genericapiserver "k8s.io/apiserver/pkg/server"
 	"k8s.io/component-base/cli"
 
+	"github.com/grafana/grafana/pkg/cmd/grafana-server/commands"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/server"
 	"github.com/grafana/grafana/pkg/services/apiserver/standalone"
@@ -64,26 +65,22 @@ func newCommandStartExampleAPIServer(o *APIServerOptions, stopCh <-chan struct{}
 			if err := o.RunAPIServer(config, stopCh); err != nil {
 				return err
 			}
+
 			return nil
 		},
 	}
 
 	cmd.Flags().StringVar(&runtimeConfig, "runtime-config", "", "A set of key=value pairs that enable or disable built-in APIs.")
 
-	if factoryOptions := o.factory.GetOptions(); factoryOptions != nil {
-		factoryOptions.AddFlags(cmd.Flags())
-	}
-
-	o.ExtraOptions.AddFlags(cmd.Flags())
-
-	// Register standard k8s flags with the command line
-	o.RecommendedOptions.AddFlags(cmd.Flags())
+	o.AddFlags(cmd.Flags())
 
 	return cmd
 }
 
-func RunCLI() int {
+func RunCLI(opts commands.ServerOptions) int {
 	stopCh := genericapiserver.SetupSignalHandler()
+
+	commands.SetBuildInfo(opts)
 
 	options := newAPIServerOptions(os.Stdout, os.Stderr)
 	cmd := newCommandStartExampleAPIServer(options, stopCh)
