@@ -506,7 +506,8 @@
       "metadata": {
         "name": "redshiftAsyncQueryDataSupport",
         "resourceVersion": "1709648236447",
-        "creationTimestamp": "2024-03-05T14:17:16Z"
+        "creationTimestamp": "2024-03-05T14:17:16Z",
+        "deletionTimestamp": "2024-03-18T12:15:18Z"
       },
       "spec": {
         "description": "Enable async query data support for Redshift",
@@ -1055,7 +1056,8 @@
       "metadata": {
         "name": "athenaAsyncQueryDataSupport",
         "resourceVersion": "1709648236447",
-        "creationTimestamp": "2024-03-05T14:17:16Z"
+        "creationTimestamp": "2024-03-05T14:17:16Z",
+        "deletionTimestamp": "2024-03-18T12:15:18Z"
       },
       "spec": {
         "description": "Enable async query data support for Athena",
@@ -1911,12 +1913,15 @@
     {
       "metadata": {
         "name": "managedPluginsInstall",
-        "resourceVersion": "1709648236447",
-        "creationTimestamp": "2024-03-05T14:17:16Z"
+        "resourceVersion": "1710846414600",
+        "creationTimestamp": "2024-03-05T14:17:16Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2024-03-19 11:06:54.600063936 +0000 UTC"
+        }
       },
       "spec": {
         "description": "Install managed plugins directly from plugins catalog",
-        "stage": "preview",
+        "stage": "GA",
         "codeowner": "@grafana/plugins-platform-backend"
       }
     },
