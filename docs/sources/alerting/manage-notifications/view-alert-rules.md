@@ -22,7 +22,7 @@ weight: 410
 
 # View alert rules
 
-The Alert rules list view page lists all existing alert rules. By default, alert rules are grouped by alert rule type: Grafana-managed (Grafana) or data source-managed (Mimir/Cortex/Loki). The Grafana section also contains alert rules for Prometheus-compatible data sources.  You can view alert rules for Prometheus compatible data sources, but you cannot edit them.
+The Alert rules list view page lists all existing alert rules. By default, alert rules are grouped by alert rule type: Grafana-managed (Grafana) or data source-managed (Mimir/Cortex/Loki). The Grafana section also contains alert rules for Prometheus-compatible data sources. You can view alert rules for Prometheus compatible data sources, but you cannot edit them.
 
 When managing large volumes of alerts, you can use extended alert rule search capabilities to filter on folders, evaluation groups, and rules. Additionally, you can filter alert rules by their properties like labels, state, type, and health.
 
@@ -30,7 +30,7 @@ From the Alert rule list page, you can also duplicate alert rules to help you re
 
 ## View alert rules
 
-To view your alert rules:
+To view your alert rules, complete the following steps.
 
 1. Click **Alerts & IRM** -> **Alert rules**.
 1. In **View as**, toggle between Grouped, List, or State views.
@@ -47,11 +47,11 @@ State view shows alert rules grouped by state. Use this view to get an overview 
 
 ## View alert rule details
 
-To view alert rule details:
+To view alert rule details, complete the following steps.
 
 1. Click **Alerts & IRM** -> **Alert rules**.
 1. Click to expand an alert rule.
-1. In **Actions**, click **View** (the eye icon)
+1. In **Actions**, click **View** (the eye icon).
 
    The namespace and group are shown in the breadcrumb navigation. They are interactive and can be used to filter rules by namespace or group.
 
@@ -74,5 +74,3 @@ To view alert rule details:
    **Details**
 
    Debug or audit using the alert rule metadata and view the alert rule annotations.
-
-
