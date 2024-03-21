@@ -103,7 +103,7 @@ var config = {
       rootElement: '.main-view',
       // the unified alerting promotion alert's content contrast is too low
       // see https://github.com/grafana/grafana/pull/41829
-      threshold: 6,
+      threshold: 7,
     },
     {
       url: '${HOST}/datasources',
