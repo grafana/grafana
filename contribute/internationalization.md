@@ -70,7 +70,7 @@ While the `t` function can technically be used outside of React functions (e.g, 
    1. Grafana OSS Crowdin project
    2. "dot dot dot" menu in top right
    3. Target languages, and add the language
-   4. If Crowdin's locale code is different from our IETF language tag, add a custom mapping in Project Settings -> Language mapping
+   4. If Crowdin's locale code is different from our IETF language tag (such as Chinese Simplified), add a custom mapping in Project Settings -> Language mapping
 2. Sync the new (empty) language to the repo
    1. In Grafana's Github Actions, go to [Crowdin Download Action](https://github.com/grafana/grafana/actions/workflows/i18n-crowdin-download.yml)
    2. Select 'Run workflow', from main
