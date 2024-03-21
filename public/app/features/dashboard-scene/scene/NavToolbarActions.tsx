@@ -26,12 +26,7 @@ interface Props {
 }
 
 export const NavToolbarActions = React.memo<Props>(({ dashboard }) => {
-  const actions = (
-    <ToolbarButtonRow alignment="right">
-      <ToolbarActions dashboard={dashboard} />
-    </ToolbarButtonRow>
-  );
-
+  const actions = <ToolbarActions dashboard={dashboard} />;
   return <AppChromeUpdate actions={actions} />;
 });
 
@@ -518,7 +513,7 @@ export function ToolbarActions({ dashboard }: Props) {
     lastGroup = action.group;
   }
 
-  return actionElements;
+  return <ToolbarButtonRow alignment="right">{actionElements}</ToolbarButtonRow>;
 }
 
 function useEditingLibraryPanel(panelEditor?: PanelEditor) {

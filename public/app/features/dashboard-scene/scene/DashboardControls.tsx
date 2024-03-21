@@ -77,7 +77,7 @@ function getStyles(theme: GrafanaTheme2) {
       position: 'sticky',
       top: 0,
       background: theme.colors.background.canvas,
-      zIndex: theme.zIndex.navbarFixed,
+      zIndex: 1,
       width: '100%',
       marginLeft: 'auto',
       [theme.breakpoints.down('sm')]: {
