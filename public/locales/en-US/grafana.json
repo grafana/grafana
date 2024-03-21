@@ -369,7 +369,6 @@
       "title-label": "Title"
     },
     "json-editor": {
-      "apply-button": "Apply changes",
       "save-button": "Save changes",
       "subtitle": "The JSON model below is the data structure that defines the dashboard. This includes dashboard settings, panel settings, layout, queries, and so on.",
       "title": "JSON Model"
@@ -1344,11 +1343,12 @@
     "header": {
       "collapse-row": "Collapse query row",
       "datasource-help": "Show data source help",
-      "disable-query": "Disable query",
       "drag-and-drop": "Drag and drop to reorder",
       "duplicate-query": "Duplicate query",
       "expand-row": "Expand query row",
+      "hide-response": "Hide response",
       "remove-query": "Remove query",
+      "show-response": "Show response",
       "toggle-edit-mode": "Toggle text edit mode"
     },
     "query-editor-not-exported": "Data source plugin does not export any Query Editor component"

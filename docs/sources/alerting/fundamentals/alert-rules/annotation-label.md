@@ -39,6 +39,8 @@ Labels are a fundamental component of alerting:
 - Contact points can access labels to send notification messages that contain specific alert information.
 - The Alertmanager uses labels to match alerts for silences and alert groups in notification policies.
 
+Note that two alert rules cannot have the same labels. If two alert rules have the same labels such as `foo=bar,bar=baz` and `foo=bar,bar=baz` then one of the alerts will be discarded.
+
 ### How label matching works
 
 Use labels and label matchers to link alert rules to notification policies and silences. This allows for a flexible way to manage your alert instances, specify which policy should handle them, and which alerts to silence.

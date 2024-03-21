@@ -54,4 +54,10 @@ export function NodeGraphEditor({ query, onChange }: Props) {
   );
 }
 
-const options: Array<NodesQuery['type']> = ['random', 'response_small', 'response_medium', 'random edges'];
+const options: Array<NodesQuery['type']> = [
+  'random',
+  'response_small',
+  'response_medium',
+  'random edges',
+  'feature_showcase',
+];

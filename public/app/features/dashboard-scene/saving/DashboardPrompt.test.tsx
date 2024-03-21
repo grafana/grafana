@@ -1,7 +1,8 @@
-import { SceneGridItem, SceneGridLayout, SceneQueryRunner, SceneTimeRange, VizPanel, behaviors } from '@grafana/scenes';
+import { SceneGridLayout, SceneQueryRunner, SceneTimeRange, VizPanel, behaviors } from '@grafana/scenes';
 import { ContextSrv, setContextSrv } from 'app/core/services/context_srv';
 
 import { DashboardControls } from '../scene/DashboardControls';
+import { DashboardGridItem } from '../scene/DashboardGridItem';
 import { DashboardScene, DashboardSceneState } from '../scene/DashboardScene';
 import { transformSceneToSaveModel } from '../serialization/transformSceneToSaveModel';
 
@@ -137,7 +138,7 @@ function buildTestScene(overrides?: Partial<DashboardSceneState>) {
     $behaviors: [new behaviors.CursorSync({})],
     body: new SceneGridLayout({
       children: [
-        new SceneGridItem({
+        new DashboardGridItem({
           key: 'griditem-1',
           x: 0,
           body: new VizPanel({

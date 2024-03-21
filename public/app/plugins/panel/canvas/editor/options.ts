@@ -3,12 +3,17 @@ import { CanvasConnection, CanvasElementOptions, ConnectionDirection } from 'app
 import { ColorDimensionEditor, ResourceDimensionEditor, ScaleDimensionEditor } from 'app/features/dimensions/editors';
 import { BackgroundSizeEditor } from 'app/features/dimensions/editors/BackgroundSizeEditor';
 
+import { LineStyle } from '../types';
+
+import { LineStyleEditor } from './LineStyleEditor';
+
 interface OptionSuppliers {
   addBackground: PanelOptionsSupplier<CanvasElementOptions>;
   addBorder: PanelOptionsSupplier<CanvasElementOptions>;
   addColor: PanelOptionsSupplier<CanvasConnection>;
   addSize: PanelOptionsSupplier<CanvasConnection>;
   addDirection: PanelOptionsSupplier<CanvasConnection>;
+  addLineStyle: PanelOptionsSupplier<CanvasConnection>;
 }
 
 const getCategoryName = (str: string, type: string | undefined) => {
@@ -137,6 +142,17 @@ export const optionBuilder: OptionSuppliers = {
         ],
       },
       defaultValue: ConnectionDirection.Forward,
+
+  addLineStyle: (builder, context) => {
+    const category = ['Line style'];
+    builder.addCustomEditor({
+      category,
+      id: 'lineStyle',
+      path: 'lineStyle',
+      name: 'Line style',
+      editor: LineStyleEditor,
+      settings: {},
+      defaultValue: { value: LineStyle.Solid, label: 'Solid' },
     });
   },
 };

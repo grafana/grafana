@@ -17,7 +17,7 @@ import {
   getParentBoundingClientRect,
 } from '../../utils';
 
-import { CONNECTION_VERTEX_ADD_ID, CONNECTION_VERTEX_ID } from './ConnectionAnchors';
+import { CONNECTION_VERTEX_ADD_ID, CONNECTION_VERTEX_ID } from './Connections';
 
 type Props = {
   setSVGRef: (anchorElement: SVGSVGElement) => void;
@@ -136,7 +136,7 @@ export const ConnectionSVG = ({
       const { x1, y1, x2, y2 } = calculateCoordinates(sourceRect, parentRect, info, target, transformScale);
       const midpoint = calculateMidpoint(x1, y1, x2, y2);
 
-      const { strokeColor, strokeWidth, arrowDirection } = getConnectionStyles(
+      const { strokeColor, strokeWidth, arrowDirection, lineStyle } = getConnectionStyles(
         info,
         scene,
         defaultArrowSize,
@@ -219,6 +219,7 @@ export const ConnectionSVG = ({
                   d={pathString}
                   stroke={strokeColor}
                   strokeWidth={strokeWidth}
+                  strokeDasharray={lineStyle}
                   fill={'none'}
                   markerEnd={
                     arrowDirection === ConnectionDirection.Forward || arrowDirection === ConnectionDirection.Both
@@ -300,6 +301,7 @@ export const ConnectionSVG = ({
                       ? `url(#${CONNECTION_HEAD_ID_START})`
                       : undefined
                   }
+                  strokeDasharray={lineStyle}
                   x1={x1}
                   y1={y1}
                   x2={x2}

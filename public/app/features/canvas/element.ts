@@ -56,6 +56,7 @@ export interface CanvasConnection {
   path: ConnectionPath;
   color?: ColorDimensionConfig;
   size?: ScaleDimensionConfig;
+  lineStyle?: string;
   vertices?: ConnectionCoordinates[];
   direction?: ConnectionDirection;
   // See https://github.com/anseki/leader-line#options for more examples of more properties

@@ -5,11 +5,11 @@ import (
 
 	"github.com/spf13/cobra"
 	genericapiserver "k8s.io/apiserver/pkg/server"
-	"k8s.io/apiserver/pkg/server/options"
 	"k8s.io/component-base/cli"
 
+	"github.com/grafana/grafana/pkg/cmd/grafana-server/commands"
+	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/server"
-	grafanaapiserver "github.com/grafana/grafana/pkg/services/apiserver"
 	"github.com/grafana/grafana/pkg/services/apiserver/standalone"
 )
 
@@ -30,6 +30,14 @@ func newCommandStartExampleAPIServer(o *APIServerOptions, stopCh <-chan struct{}
 			devAcknowledgementNotice,
 		Example: "grafana apiserver --runtime-config=example.grafana.app/v0alpha1=true",
 		RunE: func(c *cobra.Command, args []string) error {
+			if err := log.SetupConsoleLogger("debug"); err != nil {
+				return nil
+			}
+
+			if err := o.Validate(); err != nil {
+				return err
+			}
+
 			runtime, err := standalone.ReadRuntimeConfig(runtimeConfig)
 			if err != nil {
 				return err
@@ -57,28 +65,22 @@ func newCommandStartExampleAPIServer(o *APIServerOptions, stopCh <-chan struct{}
 			if err := o.RunAPIServer(config, stopCh); err != nil {
 				return err
 			}
+
 			return nil
 		},
 	}
 
 	cmd.Flags().StringVar(&runtimeConfig, "runtime-config", "", "A set of key=value pairs that enable or disable built-in APIs.")
 
-	if factoryOptions := o.factory.GetOptions(); factoryOptions != nil {
-		factoryOptions.AddFlags(cmd.Flags())
-	}
-
-	// Register standard k8s flags with the command line
-	o.RecommendedOptions = options.NewRecommendedOptions(
-		defaultEtcdPathPrefix,
-		grafanaapiserver.Codecs.LegacyCodec(), // the codec is passed to etcd and not used
-	)
-	o.RecommendedOptions.AddFlags(cmd.Flags())
+	o.AddFlags(cmd.Flags())
 
 	return cmd
 }
 
-func RunCLI() int {
+func RunCLI(opts commands.ServerOptions) int {
 	stopCh := genericapiserver.SetupSignalHandler()
+
+	commands.SetBuildInfo(opts)
 
 	options := newAPIServerOptions(os.Stdout, os.Stderr)
 	cmd := newCommandStartExampleAPIServer(options, stopCh)
