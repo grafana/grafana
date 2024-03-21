@@ -15,7 +15,7 @@ import { playlistSrv } from 'app/features/playlist/PlaylistSrv';
 import { PanelEditor } from '../panel-edit/PanelEditor';
 import { ShareModal } from '../sharing/ShareModal';
 import { DashboardInteractions } from '../utils/interactions';
-import { dynamicDashNavActions } from '../utils/registerDynamicDashNavAction';
+import { dynamicDashNavActions, dynamicDashNavActions } from '../utils/registerDynamicDashNavAction';
 
 import { DashboardScene } from './DashboardScene';
 import { GoToSnapshotOriginButton } from './GoToSnapshotOriginButton';
@@ -221,8 +221,9 @@ export function ToolbarActions({ dashboard }: Props) {
     ),
   });
 
-  if (dynamicDashNavActions.left.length > 0 && !isEditingPanel) {
-    dynamicDashNavActions.left.map((action, index) => {
+  const dynamicActions = dynamicDashNavActions.left.concat(dynamicDashNavActions.right);
+  if (dynamicActions.length > 0 && !isEditingPanel) {
+    for (const action of dynamicActions) {
       const props = { dashboard: getDashboardSrv().getCurrent()! };
       if (action.show(props)) {
         const Component = action.component;
@@ -232,7 +233,7 @@ export function ToolbarActions({ dashboard }: Props) {
           render: () => <Component {...props} />,
         });
       }
-    });
+    }
   }
 
   toolbarActions.push({
