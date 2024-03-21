@@ -122,30 +122,33 @@ export class AlertStatesDataLayer
 
     this.querySub = alerStatesExecution.subscribe({
       next: (stateUpdate) => {
-        this.publishResults(
-          {
-            state: LoadingState.Done,
-            series: [toDataFrame(stateUpdate)],
-            timeRange: timeRange.state.value,
-          },
-          DataTopic.AlertStates
-        );
+        const frame = toDataFrame(stateUpdate);
+        this.publishResults({
+          state: LoadingState.Done,
+          series: [
+            {
+              ...frame,
+              meta: {
+                ...frame.meta,
+                dataTopic: DataTopic.AlertStates,
+              },
+            },
+          ],
+          timeRange: timeRange.state.value,
+        });
       },
       error: (err) => {
         this.handleError(err);
-        this.publishResults(
-          {
-            state: LoadingState.Error,
-            series: [],
-            errors: [
-              {
-                message: getMessageFromError(err),
-              },
-            ],
-            timeRange: timeRange.state.value,
-          },
-          DataTopic.AlertStates
-        );
+        this.publishResults({
+          state: LoadingState.Error,
+          series: [],
+          errors: [
+            {
+              message: getMessageFromError(err),
+            },
+          ],
+          timeRange: timeRange.state.value,
+        });
       },
     });
   }

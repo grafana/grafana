@@ -95,6 +95,17 @@ const instance2SettingsMock = {
   },
 };
 
+// Mocking the build in Grafana data source to avoid annotations data layer errors.
+const grafanaDs = {
+  id: 1,
+  uid: '-- Grafana --',
+  name: 'grafana',
+  type: 'grafana',
+  meta: {
+    id: 'grafana',
+  },
+};
+
 // Mock the store module
 jest.mock('app/core/store', () => ({
   exists: jest.fn(),
@@ -112,6 +123,11 @@ jest.mock('@grafana/runtime', () => ({
   },
   getDataSourceSrv: () => ({
     get: async (ref: DataSourceRef) => {
+      // Mocking the build in Grafana data source to avoid annotations data layer errors.
+      if (ref.uid === '-- Grafana --') {
+        return grafanaDs;
+      }
+
       if (ref.uid === 'gdev-testdata') {
         return ds1Mock;
       }
@@ -707,6 +723,7 @@ describe('VizPanelManager', () => {
 
 const setupTest = (panelId: string) => {
   const scene = transformSaveModelToScene({ dashboard: testDashboard, meta: {} });
+
   const panel = findVizPanelByKey(scene, panelId)!;
 
   const vizPanelManager = VizPanelManager.createFor(panel);

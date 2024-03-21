@@ -20,7 +20,7 @@ import {
   behaviors,
   VizPanelState,
   SceneGridItemLike,
-  SceneDataLayers,
+  SceneDataLayerSet,
   SceneDataLayerProvider,
   SceneDataLayerControls,
   TextBoxVariable,
@@ -309,7 +309,7 @@ export function createDashboardSceneFromDashboardModel(oldModel: DashboardModel)
     ],
     $data:
       layers.length > 0
-        ? new SceneDataLayers({
+        ? new SceneDataLayerSet({
             layers,
           })
         : undefined,

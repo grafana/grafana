@@ -1,5 +1,5 @@
 import {
-  SceneDataLayers,
+  SceneDataLayerSet,
   SceneGridLayout,
   SceneGridRow,
   SceneQueryRunner,
@@ -75,7 +75,7 @@ describe('dashboardSceneGraph', () => {
     it('should return the scene data layers', () => {
       const dataLayers = dashboardSceneGraph.getDataLayers(scene);
 
-      expect(dataLayers).toBeInstanceOf(SceneDataLayers);
+      expect(dataLayers).toBeInstanceOf(SceneDataLayerSet);
       expect(dataLayers?.state.layers.length).toBe(2);
     });
 
@@ -84,7 +84,7 @@ describe('dashboardSceneGraph', () => {
         $data: undefined,
       });
 
-      expect(() => dashboardSceneGraph.getDataLayers(scene)).toThrow('SceneDataLayers not found');
+      expect(() => dashboardSceneGraph.getDataLayers(scene)).toThrow('SceneDataLayerSet not found');
     });
   });
 
@@ -241,7 +241,7 @@ function buildTestScene(overrides?: Partial<DashboardSceneState>) {
         sync: DashboardCursorSync.Crosshair,
       }),
     ],
-    $data: new SceneDataLayers({
+    $data: new SceneDataLayerSet({
       layers: [
         new DashboardAnnotationsDataLayer({
           key: `annotation`,

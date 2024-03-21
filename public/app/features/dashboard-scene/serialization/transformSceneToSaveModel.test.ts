@@ -16,7 +16,7 @@ import {
 } from '@grafana/data';
 import { getPanelPlugin } from '@grafana/data/test/__mocks__/pluginMocks';
 import { getPluginLinkExtensions, setPluginImportUtils } from '@grafana/runtime';
-import { MultiValueVariable, SceneDataLayers, SceneGridLayout, SceneGridRow, VizPanel } from '@grafana/scenes';
+import { MultiValueVariable, SceneDataLayerSet, SceneGridLayout, SceneGridRow, VizPanel } from '@grafana/scenes';
 import { Dashboard, LoadingState, Panel, RowPanel, VariableRefresh } from '@grafana/schema';
 import { PanelModel } from 'app/features/dashboard/state';
 import { getTimeRange } from 'app/features/dashboard/utils/timeRange';
@@ -405,7 +405,7 @@ describe('transformSceneToSaveModel', () => {
     it('should transform annotations to save model after state changes', () => {
       const scene = transformSaveModelToScene({ dashboard: dashboard_to_load1 as any, meta: {} });
 
-      const layers = (scene.state.$data as SceneDataLayers)?.state.layers;
+      const layers = (scene.state.$data as SceneDataLayerSet)?.state.layers;
       const enabledLayer = layers[1];
       const hiddenLayer = layers[3];
 
