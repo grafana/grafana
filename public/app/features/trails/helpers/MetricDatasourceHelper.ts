@@ -64,7 +64,11 @@ export function getMetricDescription(metadata?: PromMetricsMetadataItem) {
 
   const { type, help, unit } = metadata;
 
-  const lines = [type && `**Type:** *${type}*`, help && `*${help}*`, unit && `**Unit:** ${unit}`];
+  const lines = [
+    help, //
+    type && `**Type:** *${type}*`,
+    unit && `**Unit:** ${unit}`,
+  ];
 
   return lines.join('\n\n');
 }

@@ -3,9 +3,8 @@ import React from 'react';
 import { SceneObjectState, SceneObjectBase, SceneComponentProps, VizPanel, SceneQueryRunner } from '@grafana/scenes';
 import { RadioButtonGroup } from '@grafana/ui';
 
-import { getMetricDescription } from '../helpers/MetricDatasourceHelper';
 import { trailDS } from '../shared';
-import { getMetricSceneFor, getTrailFor } from '../utils';
+import { getMetricSceneFor } from '../utils';
 
 import { AutoQueryDef } from './types';
 
@@ -51,7 +50,7 @@ export class AutoVizPanel extends SceneObjectBase<AutoVizPanelState> {
   };
 
   private getVizPanelFor(def: AutoQueryDef) {
-    const panel = def
+    return def
       .vizBuilder()
       .setData(
         new SceneQueryRunner({
@@ -62,13 +61,6 @@ export class AutoVizPanel extends SceneObjectBase<AutoVizPanelState> {
       )
       .setHeaderActions(this.getQuerySelector(def))
       .build();
-
-    const trail = getTrailFor(this);
-    trail.getCurrentMetricMetadata().then((metadata) => {
-      panel.setState({ description: getMetricDescription(metadata) });
-    });
-
-    return panel;
   }
 
   public static Component = ({ model }: SceneComponentProps<AutoVizPanel>) => {
