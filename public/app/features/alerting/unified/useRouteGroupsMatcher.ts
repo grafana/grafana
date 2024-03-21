@@ -51,8 +51,6 @@ export function useRouteGroupsMatcher() {
   useEffect(() => {
     const { disposeWorker } = loadWorker();
     return disposeWorker;
-
-    return () => null;
   }, []);
 
   const getRouteGroupsMap = useCallback(
