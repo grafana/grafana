@@ -6,7 +6,7 @@ import { SortOrder } from 'app/core/utils/richHistory';
 
 import { RichHistory, RichHistoryProps, Tabs } from './RichHistory';
 
-jest.mock('../state/selectors', () => ({ getExploreDatasources: jest.fn() }));
+jest.mock('../state/selectors', () => ({ selectExploreDSMaps: jest.fn().mockReturnValue({ dsToExplore: [] }) }));
 
 jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),

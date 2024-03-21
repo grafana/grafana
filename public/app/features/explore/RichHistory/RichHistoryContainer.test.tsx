@@ -1,12 +1,11 @@
 import { render } from '@testing-library/react';
 import React from 'react';
+import { TestProvider } from 'test/helpers/TestProvider';
 
 import { SortOrder } from 'app/core/utils/richHistory';
 
 import { Tabs } from './RichHistory';
 import { RichHistoryContainer, Props } from './RichHistoryContainer';
-
-jest.mock('../state/selectors', () => ({ getExploreDatasources: jest.fn() }));
 
 jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
@@ -17,6 +16,8 @@ jest.mock('@grafana/runtime', () => ({
   },
   reportInteraction: jest.fn(),
 }));
+
+jest.mock('../state/selectors', () => ({ selectExploreDSMaps: jest.fn().mockReturnValue({ dsToExplore: [] }) }));
 
 const setup = (propOverrides?: Partial<Props>) => {
   const props: Props = {
@@ -49,7 +50,7 @@ const setup = (propOverrides?: Partial<Props>) => {
 
   Object.assign(props, propOverrides);
 
-  return render(<RichHistoryContainer {...props} />);
+  return render(<RichHistoryContainer {...props} />, { wrapper: TestProvider });
 };
 
 describe('RichHistoryContainer', () => {
