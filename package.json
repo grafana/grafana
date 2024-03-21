@@ -3,7 +3,7 @@
   "license": "AGPL-3.0-only",
   "private": true,
   "name": "grafana",
-  "version": "10.4.1",
+  "version": "10.4.2",
   "repository": "github:grafana/grafana",
   "scripts": {
     "prebuild": "yarn plugin:build",
