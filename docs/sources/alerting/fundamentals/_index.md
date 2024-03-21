@@ -63,7 +63,7 @@ A rule using the PromQL expression above creates as many alert instances as the 
 
 Alert instances are matched to notification policies using label matchers. This provides a flexible way to organize and route alerts to different receivers.
 
-Each policy consists of a set of label matchers (0 or more) that specify which alert instances (identified by their labels) they are or aren’t interested in handling. Notification policies are defined as a tree structure where the root of the notification policy tree is called the Default notification policy, and each policy can have child policies.
+Each policy consists of a set of label matchers (0 or more) that specify which alert instances (identified by their labels) they handle. Notification policies are defined as a tree structure where the root of the notification policy tree is called the **Default notification policy**. Each policy can have child policies.
 
 {{< figure src="/media/docs/alerting/notification-routing.png" max-width="750px" caption="Notification policy routing" >}}
 
