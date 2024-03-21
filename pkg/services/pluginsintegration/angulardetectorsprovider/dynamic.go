@@ -17,6 +17,7 @@ import (
 	"github.com/grafana/grafana/pkg/plugins/manager/loader/angular/angulardetector"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/angularpatternsstore"
+	"github.com/grafana/grafana/pkg/setting"
 )
 
 var errNotModified = errors.New("not modified")
@@ -53,10 +54,11 @@ type Dynamic struct {
 	backgroundJobInterval time.Duration
 }
 
-func ProvideDynamic(cfg *config.PluginManagementCfg, store angularpatternsstore.Service, features featuremgmt.FeatureToggles) (*Dynamic, error) {
-	// Use a shorter interval for cloud and a longer one for on-prem.
+func ProvideDynamic(pCfg *config.PluginManagementCfg, cfg *setting.Cfg, store angularpatternsstore.Service, features featuremgmt.FeatureToggles) (*Dynamic, error) {
 	backgroundJobInterval := backgroundJobIntervalOnPrem
-	if cfg.IsCloud() {
+	if cfg.StackID != "" {
+		// Use a shorter interval for cloud.
+		// (in cloud, cfg.StackID is always set).
 		backgroundJobInterval = backgroundJobIntervalCloud
 	}
 
@@ -65,7 +67,7 @@ func ProvideDynamic(cfg *config.PluginManagementCfg, store angularpatternsstore.
 		features:              features,
 		store:                 store,
 		httpClient:            makeHttpClient(),
-		baseURL:               cfg.GrafanaComURL,
+		baseURL:               pCfg.GrafanaComURL,
 		backgroundJobInterval: backgroundJobInterval,
 	}
 	if d.IsDisabled() {

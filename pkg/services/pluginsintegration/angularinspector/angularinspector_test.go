@@ -13,6 +13,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/angulardetectorsprovider"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/angularpatternsstore"
+	"github.com/grafana/grafana/pkg/setting"
 )
 
 func TestProvideService(t *testing.T) {
@@ -20,6 +21,7 @@ func TestProvideService(t *testing.T) {
 		features := featuremgmt.WithFeatures()
 		dynamic, err := angulardetectorsprovider.ProvideDynamic(
 			&config.PluginManagementCfg{},
+			setting.NewCfg(),
 			angularpatternsstore.ProvideService(kvstore.NewFakeKVStore()),
 			features,
 		)
@@ -38,6 +40,7 @@ func TestProvideService(t *testing.T) {
 		)
 		dynamic, err := angulardetectorsprovider.ProvideDynamic(
 			&config.PluginManagementCfg{},
+			setting.NewCfg(),
 			angularpatternsstore.ProvideService(kvstore.NewFakeKVStore()),
 			features,
 		)
