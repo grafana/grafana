@@ -33,7 +33,7 @@ jobs:
     - name: Check for go workspace changes 
       run: |
         if ! git diff --exit-code go.work.sum; then
-          echo "There are changes in the go workspace"
+          echo "Changes detected in go.work.sum. Please run `make build-go` and commit the changes to go.work.sum."
           exit 1
         fi
       
