@@ -6,12 +6,7 @@ import { AngularMigrationNotice } from './AngularMigrationNotice';
 
 jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
-  reportInteraction: jest.fn(),
 }));
-
-function localStorageKey(dsUid: string) {
-  return `grafana.angularDeprecation.dashboardMigrationNotice.isDismissed.${dsUid}`;
-}
 
 describe('AngularMigrationNotice', () => {
   const noticeText =
@@ -24,7 +19,6 @@ describe('AngularMigrationNotice', () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
-    window.localStorage.clear();
   });
 
   it('should render', () => {
@@ -40,22 +34,7 @@ describe('AngularMigrationNotice', () => {
     expect(screen.queryByText(noticeText)).not.toBeInTheDocument();
   });
 
-  it('should persist dismissed status in localstorage', async () => {
-    render(<AngularMigrationNotice dashboardUid={dsUid} />);
-    expect(window.localStorage.getItem(localStorageKey(dsUid))).toBeNull();
-    const closeButton = screen.getByRole('button', { name: /Close alert/i });
-    expect(closeButton).toBeInTheDocument();
-    await userEvent.click(closeButton);
-    expect(window.localStorage.getItem(localStorageKey(dsUid))).toBe('true');
-  });
-
-  it('should not re-render alert if already dismissed', () => {
-    window.localStorage.setItem(localStorageKey(dsUid), 'true');
-    render(<AngularMigrationNotice dashboardUid={dsUid} />);
-    expect(screen.queryByText(noticeText)).not.toBeInTheDocument();
-  });
-
-  describe('revert migration button', () => {
+  describe('Migration alert buttons', () => {
     it('should display the "Revert migration" button', () => {
       render(<AngularMigrationNotice dashboardUid={dsUid} />);
       const revertMigrationButton = screen.getByRole('button', { name: /Revert migration/i });
@@ -67,15 +46,5 @@ describe('AngularMigrationNotice', () => {
       const reportIssueButton = screen.getByRole('button', { name: /Report issue/i });
       expect(reportIssueButton).toBeInTheDocument();
     });
-
-    // it('should not display auto migrate button if showAutoMigrateLink is false', () => {
-    //   render(<AngularDeprecationNotice dashboardUid={dsUid} showAutoMigrateLink={false} />);
-    //   expect(screen.queryByText(autoMigrateText)).not.toBeInTheDocument();
-    // });
-    //
-    // it('should not display auto migrate link if showAutoMigrateLink is not provided', () => {
-    //   render(<AngularDeprecationNotice dashboardUid={dsUid} />);
-    //   expect(screen.queryByText(autoMigrateText)).not.toBeInTheDocument();
-    // });
   });
 });
