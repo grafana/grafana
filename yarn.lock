@@ -4086,8 +4086,6 @@ __metadata:
     rollup-plugin-node-externals: "npm:^5.0.0"
     rollup-plugin-sourcemaps: "npm:0.6.3"
     rxjs: "npm:7.8.1"
-    systemjs: "npm:6.14.3"
-    systemjs-cjs-extra: "npm:0.2.0"
     tslib: "npm:2.6.2"
     typescript: "npm:5.3.3"
   peerDependencies:
@@ -18828,6 +18826,8 @@ __metadata:
     stylelint: "npm:16.2.1"
     stylelint-config-sass-guidelines: "npm:11.0.0"
     symbol-observable: "npm:4.0.0"
+    systemjs: "npm:6.14.3"
+    systemjs-cjs-extra: "npm:0.2.0"
     terser-webpack-plugin: "npm:5.3.10"
     testing-library-selector: "npm:0.3.1"
     tether-drop: "https://github.com/torkelo/drop"
