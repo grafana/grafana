@@ -1,7 +1,6 @@
 import React from 'react';
 
 import { SelectableValue } from '@grafana/data';
-import { locationService } from '@grafana/runtime';
 import { SceneComponentProps, sceneGraph, SceneObject, SceneObjectBase, SceneObjectState } from '@grafana/scenes';
 import { Field, RadioButtonGroup } from '@grafana/ui';
 
@@ -15,9 +14,13 @@ export interface LayoutSwitcherState extends SceneObjectState {
 export type LayoutType = 'single' | 'grid' | 'rows';
 
 export class LayoutSwitcher extends SceneObjectBase<LayoutSwitcherState> {
+  private getMetricScene() {
+    return sceneGraph.getAncestor(this, MetricScene);
+  }
+
   public Selector({ model }: { model: LayoutSwitcher }) {
     const { options } = model.useState();
-    const { layout } = sceneGraph.getAncestor(model, MetricScene).useState();
+    const { layout } = model.getMetricScene().useState();
 
     return (
       <Field label="View">
@@ -27,12 +30,12 @@ export class LayoutSwitcher extends SceneObjectBase<LayoutSwitcherState> {
   }
 
   public onLayoutChange = (active: LayoutType) => {
-    locationService.partial({ layout: active });
+    this.getMetricScene().setState({ layout: active });
   };
 
   public static Component = ({ model }: SceneComponentProps<LayoutSwitcher>) => {
     const { layouts, options } = model.useState();
-    const { layout: activeLayout } = sceneGraph.getAncestor(model, MetricScene).useState();
+    const { layout: activeLayout } = model.getMetricScene().useState();
 
     const index = options.findIndex((o) => o.value === activeLayout);
     if (index === -1) {
