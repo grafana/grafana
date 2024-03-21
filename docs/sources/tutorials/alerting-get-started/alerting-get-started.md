@@ -128,10 +128,11 @@ Add labels in order to ease searching or route notifications to a policy.
 
 Select who should receive a notification when an alert rule fires.
 
-1. Click **View or create contact points**. A new tab will open in your browser. 
-1. **Edit** the email Contact point 
+1. Click **View or create contact points**. 
+A new tab will open in your browser. 
+1. **Edit** the email Contact point. 
 1. **Enter an email address** in the Addresses field.
-1. **Click Save** contact point
+1. **Click Save** contact point.
 1. Switch back to the other tab to **continue creating the Alert rule**.
 
 
