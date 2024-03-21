@@ -98,10 +98,9 @@ const (
 
 // AppInsightsGroupByQuery defines model for AppInsightsGroupByQuery.
 type AppInsightsGroupByQuery struct {
-	BaseGrafanaTemplateVariableQuery
-	Kind       AppInsightsGroupByQueryKind `json:"kind"`
-	MetricName string                      `json:"metricName"`
-	RawQuery   *string                     `json:"rawQuery,omitempty"`
+	Kind       *AppInsightsGroupByQueryKind `json:"kind,omitempty"`
+	MetricName *string                      `json:"metricName,omitempty"`
+	RawQuery   *string                      `json:"rawQuery,omitempty"`
 }
 
 // AppInsightsGroupByQueryKind defines model for AppInsightsGroupByQuery.Kind.
@@ -109,9 +108,8 @@ type AppInsightsGroupByQueryKind string
 
 // AppInsightsMetricNameQuery defines model for AppInsightsMetricNameQuery.
 type AppInsightsMetricNameQuery struct {
-	BaseGrafanaTemplateVariableQuery
-	Kind     AppInsightsMetricNameQueryKind `json:"kind"`
-	RawQuery *string                        `json:"rawQuery,omitempty"`
+	Kind     *AppInsightsMetricNameQueryKind `json:"kind,omitempty"`
+	RawQuery *string                         `json:"rawQuery,omitempty"`
 }
 
 // AppInsightsMetricNameQueryKind defines model for AppInsightsMetricNameQuery.Kind.
@@ -221,20 +219,35 @@ type AzureMonitorDataQuery = map[string]any
 
 // AzureMonitorQuery defines model for AzureMonitorQuery.
 type AzureMonitorQuery struct {
-	// DataQuery These are the common properties available to all queries in all datasources.
-	// Specific implementations will *extend* this interface, adding the required
-	// properties for the given context.
-	DataQuery
-
 	// Azure Monitor Logs sub-query properties
 	AzureLogAnalytics  *AzureLogsQuery          `json:"azureLogAnalytics,omitempty"`
 	AzureMonitor       *AzureMetricQuery        `json:"azureMonitor,omitempty"`
 	AzureResourceGraph *AzureResourceGraphQuery `json:"azureResourceGraph,omitempty"`
 
 	// Application Insights Traces sub-query properties
-	AzureTraces               *AzureTracesQuery `json:"azureTraces,omitempty"`
-	GrafanaTemplateVariableFn *any              `json:"grafanaTemplateVariableFn,omitempty"`
-	Namespace                 *string           `json:"namespace,omitempty"`
+	AzureTraces *AzureTracesQuery `json:"azureTraces,omitempty"`
+
+	// For mixed data sources the selected datasource is on the query level.
+	// For non mixed scenarios this is undefined.
+	// TODO find a better way to do this ^ that's friendly to schema
+	// TODO this shouldn't be unknown but DataSourceRef | null
+	Datasource                *any `json:"datasource,omitempty"`
+	GrafanaTemplateVariableFn *any `json:"grafanaTemplateVariableFn,omitempty"`
+
+	// Hide true if query is disabled (ie should not be returned to the dashboard)
+	// Note this does not always imply that the query should not be executed since
+	// the results from a hidden query may be used as the input to other queries (SSE etc)
+	Hide      *bool   `json:"hide,omitempty"`
+	Namespace *string `json:"namespace,omitempty"`
+
+	// Specify the query flavor
+	// TODO make this required and give it a default
+	QueryType *string `json:"queryType,omitempty"`
+
+	// A unique identifier for the query within the list of targets.
+	// In server side expressions, the refId is used as a variable name to identify results.
+	// By default, the UI will assign A->Z; however setting meaningful names may be useful.
+	RefId *string `json:"refId,omitempty"`
 
 	// Azure Monitor query type.
 	// queryType: #AzureQueryType
@@ -334,15 +347,14 @@ type DataQuery struct {
 // GrafanaTemplateVariableQueryType defines model for GrafanaTemplateVariableQueryType.
 type GrafanaTemplateVariableQueryType string
 
-// MetricDefinitionsQuery defines model for MetricDefinitionsQuery.
+// @deprecated Use MetricNamespaceQuery instead
 type MetricDefinitionsQuery struct {
-	BaseGrafanaTemplateVariableQuery
-	Kind            MetricDefinitionsQueryKind `json:"kind"`
-	MetricNamespace *string                    `json:"metricNamespace,omitempty"`
-	RawQuery        *string                    `json:"rawQuery,omitempty"`
-	ResourceGroup   string                     `json:"resourceGroup"`
-	ResourceName    *string                    `json:"resourceName,omitempty"`
-	Subscription    string                     `json:"subscription"`
+	Kind            *MetricDefinitionsQueryKind `json:"kind,omitempty"`
+	MetricNamespace *string                     `json:"metricNamespace,omitempty"`
+	RawQuery        *string                     `json:"rawQuery,omitempty"`
+	ResourceGroup   *string                     `json:"resourceGroup,omitempty"`
+	ResourceName    *string                     `json:"resourceName,omitempty"`
+	Subscription    *string                     `json:"subscription,omitempty"`
 }
 
 // MetricDefinitionsQueryKind defines model for MetricDefinitionsQuery.Kind.
@@ -350,13 +362,12 @@ type MetricDefinitionsQueryKind string
 
 // MetricNamesQuery defines model for MetricNamesQuery.
 type MetricNamesQuery struct {
-	BaseGrafanaTemplateVariableQuery
-	Kind            MetricNamesQueryKind `json:"kind"`
-	MetricNamespace string               `json:"metricNamespace"`
-	RawQuery        *string              `json:"rawQuery,omitempty"`
-	ResourceGroup   string               `json:"resourceGroup"`
-	ResourceName    string               `json:"resourceName"`
-	Subscription    string               `json:"subscription"`
+	Kind            *MetricNamesQueryKind `json:"kind,omitempty"`
+	MetricNamespace *string               `json:"metricNamespace,omitempty"`
+	RawQuery        *string               `json:"rawQuery,omitempty"`
+	ResourceGroup   *string               `json:"resourceGroup,omitempty"`
+	ResourceName    *string               `json:"resourceName,omitempty"`
+	Subscription    *string               `json:"subscription,omitempty"`
 }
 
 // MetricNamesQueryKind defines model for MetricNamesQuery.Kind.
@@ -364,13 +375,12 @@ type MetricNamesQueryKind string
 
 // MetricNamespaceQuery defines model for MetricNamespaceQuery.
 type MetricNamespaceQuery struct {
-	BaseGrafanaTemplateVariableQuery
-	Kind            MetricNamespaceQueryKind `json:"kind"`
-	MetricNamespace *string                  `json:"metricNamespace,omitempty"`
-	RawQuery        *string                  `json:"rawQuery,omitempty"`
-	ResourceGroup   string                   `json:"resourceGroup"`
-	ResourceName    *string                  `json:"resourceName,omitempty"`
-	Subscription    string                   `json:"subscription"`
+	Kind            *MetricNamespaceQueryKind `json:"kind,omitempty"`
+	MetricNamespace *string                   `json:"metricNamespace,omitempty"`
+	RawQuery        *string                   `json:"rawQuery,omitempty"`
+	ResourceGroup   *string                   `json:"resourceGroup,omitempty"`
+	ResourceName    *string                   `json:"resourceName,omitempty"`
+	Subscription    *string                   `json:"subscription,omitempty"`
 }
 
 // MetricNamespaceQueryKind defines model for MetricNamespaceQuery.Kind.
@@ -378,10 +388,9 @@ type MetricNamespaceQueryKind string
 
 // ResourceGroupsQuery defines model for ResourceGroupsQuery.
 type ResourceGroupsQuery struct {
-	BaseGrafanaTemplateVariableQuery
-	Kind         ResourceGroupsQueryKind `json:"kind"`
-	RawQuery     *string                 `json:"rawQuery,omitempty"`
-	Subscription string                  `json:"subscription"`
+	Kind         *ResourceGroupsQueryKind `json:"kind,omitempty"`
+	RawQuery     *string                  `json:"rawQuery,omitempty"`
+	Subscription *string                  `json:"subscription,omitempty"`
 }
 
 // ResourceGroupsQueryKind defines model for ResourceGroupsQuery.Kind.
@@ -389,12 +398,11 @@ type ResourceGroupsQueryKind string
 
 // ResourceNamesQuery defines model for ResourceNamesQuery.
 type ResourceNamesQuery struct {
-	BaseGrafanaTemplateVariableQuery
-	Kind            ResourceNamesQueryKind `json:"kind"`
-	MetricNamespace string                 `json:"metricNamespace"`
-	RawQuery        *string                `json:"rawQuery,omitempty"`
-	ResourceGroup   string                 `json:"resourceGroup"`
-	Subscription    string                 `json:"subscription"`
+	Kind            *ResourceNamesQueryKind `json:"kind,omitempty"`
+	MetricNamespace *string                 `json:"metricNamespace,omitempty"`
+	RawQuery        *string                 `json:"rawQuery,omitempty"`
+	ResourceGroup   *string                 `json:"resourceGroup,omitempty"`
+	Subscription    *string                 `json:"subscription,omitempty"`
 }
 
 // ResourceNamesQueryKind defines model for ResourceNamesQuery.Kind.
@@ -405,9 +413,8 @@ type ResultFormat string
 
 // SubscriptionsQuery defines model for SubscriptionsQuery.
 type SubscriptionsQuery struct {
-	BaseGrafanaTemplateVariableQuery
-	Kind     SubscriptionsQueryKind `json:"kind"`
-	RawQuery *string                `json:"rawQuery,omitempty"`
+	Kind     *SubscriptionsQueryKind `json:"kind,omitempty"`
+	RawQuery *string                 `json:"rawQuery,omitempty"`
 }
 
 // SubscriptionsQueryKind defines model for SubscriptionsQuery.Kind.
@@ -415,9 +422,8 @@ type SubscriptionsQueryKind string
 
 // UnknownQuery defines model for UnknownQuery.
 type UnknownQuery struct {
-	BaseGrafanaTemplateVariableQuery
-	Kind     UnknownQueryKind `json:"kind"`
-	RawQuery *string          `json:"rawQuery,omitempty"`
+	Kind     *UnknownQueryKind `json:"kind,omitempty"`
+	RawQuery *string           `json:"rawQuery,omitempty"`
 }
 
 // UnknownQueryKind defines model for UnknownQuery.Kind.
@@ -425,10 +431,9 @@ type UnknownQueryKind string
 
 // WorkspacesQuery defines model for WorkspacesQuery.
 type WorkspacesQuery struct {
-	BaseGrafanaTemplateVariableQuery
-	Kind         WorkspacesQueryKind `json:"kind"`
-	RawQuery     *string             `json:"rawQuery,omitempty"`
-	Subscription string              `json:"subscription"`
+	Kind         *WorkspacesQueryKind `json:"kind,omitempty"`
+	RawQuery     *string              `json:"rawQuery,omitempty"`
+	Subscription *string              `json:"subscription,omitempty"`
 }
 
 // WorkspacesQueryKind defines model for WorkspacesQuery.Kind.

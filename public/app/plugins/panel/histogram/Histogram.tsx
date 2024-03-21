@@ -24,6 +24,7 @@ import {
   measureText,
   UPLOT_AXIS_FONT_SIZE,
 } from '@grafana/ui';
+import { getStackingGroups, preparePlotData2 } from '@grafana/ui/src/components/uPlot/utils';
 
 import { defaultFieldConfig, FieldConfig, Options } from './panelcfg.gen';
 
@@ -207,6 +208,9 @@ const prepConfig = (frame: DataFrame, theme: GrafanaTheme2) => {
     },
   });
 
+  let stackingGroups = getStackingGroups(xMinOnlyFrame(frame));
+  builder.setStackingGroups(stackingGroups);
+
   let pathBuilder = uPlot.paths.bars!({ align: 1, size: [1, Infinity] });
 
   let seriesIndex = 0;
@@ -252,31 +256,32 @@ const prepConfig = (frame: DataFrame, theme: GrafanaTheme2) => {
   return builder;
 };
 
-const preparePlotData = (frame: DataFrame) => {
-  let data = [];
+// since we're reusing timeseries prep for stacking, we need to make a tmp frame where fields match the uplot data
+// by removing the x bucket max field to make sure stacking group series idxs match up
+const xMinOnlyFrame = (frame: DataFrame) => ({
+  ...frame,
+  fields: frame.fields.filter((f) => f.name !== histogramFrameBucketMaxFieldName),
+});
 
-  for (const field of frame.fields) {
-    if (field.name !== histogramFrameBucketMaxFieldName) {
-      data.push(field.values);
-    }
-  }
-
+const preparePlotData = (builder: UPlotConfigBuilder, xMinOnlyFrame: DataFrame) => {
   // uPlot's bars pathBuilder will draw rects even if 0 (to distinguish them from nulls)
   // but for histograms we want to omit them, so remap 0s -> nulls
-  for (let i = 1; i < data.length; i++) {
-    let counts = data[i];
+  for (let i = 1; i < xMinOnlyFrame.fields.length; i++) {
+    let counts = xMinOnlyFrame.fields[i].values;
+
     for (let j = 0; j < counts.length; j++) {
       if (counts[j] === 0) {
-        counts[j] = null;
+        counts[j] = null; // mutates!
       }
     }
   }
 
-  return data as AlignedData;
+  return preparePlotData2(xMinOnlyFrame, builder.getStackingGroups());
 };
 
 interface State {
   alignedData: AlignedData;
+  alignedFrame: DataFrame;
   config?: UPlotConfigBuilder;
 }
 
@@ -286,23 +291,17 @@ export class Histogram extends React.Component<HistogramProps, State> {
     this.state = this.prepState(props);
   }
 
-  prepState(props: HistogramProps, withConfig = true) {
-    let state: State = {
-      alignedData: [],
-    };
-
+  prepState(props: HistogramProps, withConfig = true): State {
     const { alignedFrame } = props;
-    if (alignedFrame) {
-      state = {
-        alignedData: preparePlotData(alignedFrame),
-      };
 
-      if (withConfig) {
-        state.config = prepConfig(alignedFrame, this.props.theme);
-      }
-    }
+    const config = withConfig ? prepConfig(alignedFrame, this.props.theme) : this.state.config!;
+    const alignedData = preparePlotData(config, xMinOnlyFrame(alignedFrame));
 
-    return state;
+    return {
+      alignedFrame,
+      alignedData,
+      config,
+    };
   }
 
   renderLegend(config: UPlotConfigBuilder) {
@@ -321,23 +320,18 @@ export class Histogram extends React.Component<HistogramProps, State> {
     const { structureRev, alignedFrame, bucketSize, bucketCount } = this.props;
 
     if (alignedFrame !== prevProps.alignedFrame) {
-      let newState = this.prepState(this.props, false);
+      const shouldReconfig =
+        this.state.config == null ||
+        bucketCount !== prevProps.bucketCount ||
+        bucketSize !== prevProps.bucketSize ||
+        this.props.options !== prevProps.options ||
+        this.state.config === undefined ||
+        structureRev !== prevProps.structureRev ||
+        !structureRev;
 
-      if (newState) {
-        const shouldReconfig =
-          bucketCount !== prevProps.bucketCount ||
-          bucketSize !== prevProps.bucketSize ||
-          this.props.options !== prevProps.options ||
-          this.state.config === undefined ||
-          structureRev !== prevProps.structureRev ||
-          !structureRev;
+      const newState = this.prepState(this.props, shouldReconfig);
 
-        if (shouldReconfig) {
-          newState.config = prepConfig(alignedFrame, this.props.theme);
-        }
-      }
-
-      newState && this.setState(newState);
+      this.setState(newState);
     }
   }
 

@@ -14,7 +14,7 @@ import { DataQuery } from './query';
 import { RawTimeRange, TimeRange } from './time';
 import { CustomVariableSupport, DataSourceVariableSupport, StandardVariableSupport } from './variables';
 
-import { AdHocVariableFilter, DataSourceRef, WithAccessControlMetadata } from '.';
+import { AdHocVariableFilter, DataSourceRef, Scope, WithAccessControlMetadata } from '.';
 
 export interface DataSourcePluginOptionsEditorProps<
   JSONData extends DataSourceJsonData = DataSourceJsonData,
@@ -559,6 +559,8 @@ export interface DataQueryRequest<TQuery extends DataQuery = DataQuery> {
 
   // Used to correlate multiple related requests
   queryGroupId?: string;
+
+  scope?: Scope | undefined;
 }
 
 export interface DataQueryTimings {
