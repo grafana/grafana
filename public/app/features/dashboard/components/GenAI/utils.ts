@@ -124,10 +124,14 @@ export function getDashboardPanelPrompt(dashboard: DashboardModel): string {
 }
 
 export function getFilteredPanelString(panel: Panel): string {
-  const keysToKeep: Array<keyof Panel> = ['datasource', 'title', 'description', 'targets', 'type', 'datasource'];
+  const keysToKeep: Array<keyof Panel> = ['datasource', 'title', 'description', 'targets', 'type'];
 
   const filteredPanel: Partial<Panel> = {
     ...pick(panel, keysToKeep),
+    options: pick(panel.options, [
+      // For text panels, the content help to generate the panel metadata
+      'content',
+    ]),
   };
 
   return JSON.stringify(filteredPanel, null, 2);
