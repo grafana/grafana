@@ -38,12 +38,12 @@ const Ellipse = (props: CanvasElementProps<CanvasElementConfig, CanvasElementDat
           <pattern id={`image-${uniqueId}`} patternUnits="userSpaceOnUse" width="200" height="200">
             <image xlinkHref={data?.backgroundImage} x="-50" y="-50" width="300" height="300"></image>
           </pattern>
-          <clipPath id={`triangleClip-${uniqueId}`}>
+          <clipPath id={`ellipseClip-${uniqueId}`}>
             <ellipse cx="50%" cy="50%" rx="50%" ry="50%" />
           </clipPath>
         </defs>
         {/* Apply background image within the clipping area */}
-        <rect x="0" y="0" width="100%" height="100%" clipPath={`url(#triangleClip-${uniqueId})`} />
+        <rect x="0" y="0" width="100%" height="100%" clipPath={`url(#ellipseClip-${uniqueId})`} />
         <ellipse
           cx="50%"
           cy="50%"

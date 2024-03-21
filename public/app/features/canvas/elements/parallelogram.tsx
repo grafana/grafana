@@ -38,12 +38,12 @@ const Parallelogram = (props: CanvasElementProps<CanvasElementConfig, CanvasElem
           <pattern id={`image-${uniqueId}`} patternUnits="userSpaceOnUse" width="250" height="150">
             <image xlinkHref={data?.backgroundImage} x="-50" y="-50" width="350" height="200"></image>
           </pattern>
-          <clipPath id={`triangleClip-${uniqueId}`}>
+          <clipPath id={`parallelogramClip-${uniqueId}`}>
             <polygon points="0,150 50,0 250,0 200,150" />
           </clipPath>
         </defs>
         {/* Apply background image within the clipping area */}
-        <rect x="0" y="0" width="100%" height="100%" clipPath={`url(#triangleClip-${uniqueId})`} />
+        <rect x="0" y="0" width="100%" height="100%" clipPath={`url(#parallelogramClip-${uniqueId})`} />
         <polygon
           points="0,150 50,0 250,0 200,150"
           className={styles.element}
