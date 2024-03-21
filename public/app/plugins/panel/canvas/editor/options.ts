@@ -1,3 +1,5 @@
+import { capitalize } from 'lodash';
+
 import { PanelOptionsSupplier } from '@grafana/data/src/panel/PanelPlugin';
 import { CanvasConnection, CanvasElementOptions, ConnectionDirection } from 'app/features/canvas';
 import { ColorDimensionEditor, ResourceDimensionEditor, ScaleDimensionEditor } from 'app/features/dimensions/editors';
@@ -128,17 +130,17 @@ export const optionBuilder: OptionSuppliers = {
   },
 
   addDirection: (builder, context) => {
-    const category = ['Direction'];
+    const category = ['Arrow Direction'];
     builder.addRadio({
       category,
       path: 'direction',
       name: 'Direction',
       settings: {
         options: [
-          { value: undefined, label: ConnectionDirection.Forward },
-          { value: ConnectionDirection.Reverse, label: ConnectionDirection.Reverse },
-          { value: ConnectionDirection.Both, label: ConnectionDirection.Both },
-          { value: ConnectionDirection.None, label: ConnectionDirection.None },
+          { value: undefined, label: capitalize(ConnectionDirection.Forward) },
+          { value: ConnectionDirection.Reverse, label: capitalize(ConnectionDirection.Reverse) },
+          { value: ConnectionDirection.Both, label: capitalize(ConnectionDirection.Both) },
+          { value: ConnectionDirection.None, label: capitalize(ConnectionDirection.None) },
         ],
       },
       defaultValue: ConnectionDirection.Forward,
