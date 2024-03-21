@@ -1,9 +1,10 @@
-import { config, SystemJS } from '@grafana/runtime';
+import { config } from '@grafana/runtime';
 
 import { transformPluginSourceForCDN } from '../cdn/utils';
 
 import { resolveWithCache } from './cache';
 import { LOAD_PLUGIN_CSS_REGEX, JS_CONTENT_TYPE_REGEX, SHARED_DEPENDENCY_PREFIX } from './constants';
+import { SystemJS } from './systemjs';
 import { SystemJSWithLoaderHooks } from './types';
 import { isHostedOnCDN } from './utils';
 
