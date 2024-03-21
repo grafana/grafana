@@ -93,7 +93,8 @@ By default, if you move a connector so that it's almost a right angle or a strai
 
 <!--what do we want to call these? vertices seems too technical, does midpoint controls work?-->
 
-<!--add gif here to show this-->
+{{< video-embed src="/media/docs/grafana/panels-visualizations/gif-canvas-connector-vertex-control-v11.0.mp4>" alt="Changing a connector from a straight line to a right angle" >}}
+
 
 ### Style connectors
 
