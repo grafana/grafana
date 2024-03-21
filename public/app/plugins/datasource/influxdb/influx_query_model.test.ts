@@ -619,7 +619,9 @@ describe('InfluxQuery', () => {
         {}
       );
       const queryText = query.render();
-      expect(queryText).toBe('SELECT mean("value") FROM "autogen"."cpu" WHERE ("value" = \'$tempVar\') AND $timeFilter');
+      expect(queryText).toBe(
+        'SELECT mean("value") FROM "autogen"."cpu" WHERE ("value" = \'$tempVar\') AND $timeFilter'
+      );
     });
     it('should not wrap with infuxdb regex wrapper for != operator', () => {
       const query = new InfluxQueryModel(
@@ -634,7 +636,9 @@ describe('InfluxQuery', () => {
         {}
       );
       const queryText = query.render();
-      expect(queryText).toBe('SELECT mean("value") FROM "autogen"."cpu" WHERE ("value" != \'$tempVar\') AND $timeFilter');
+      expect(queryText).toBe(
+        'SELECT mean("value") FROM "autogen"."cpu" WHERE ("value" != \'$tempVar\') AND $timeFilter'
+      );
     });
     it('should not wrap with infuxdb regex wrapper for "Is" operator', () => {
       const query = new InfluxQueryModel(
@@ -649,7 +653,9 @@ describe('InfluxQuery', () => {
         {}
       );
       const queryText = query.render();
-      expect(queryText).toBe('SELECT mean("value") FROM "autogen"."cpu" WHERE ("value" = \'$tempVar\') AND $timeFilter');
+      expect(queryText).toBe(
+        'SELECT mean("value") FROM "autogen"."cpu" WHERE ("value" = \'$tempVar\') AND $timeFilter'
+      );
     });
     it('should not wrap with infuxdb regex wrapper for "Is Not" operator', () => {
       const query = new InfluxQueryModel(
@@ -664,7 +670,9 @@ describe('InfluxQuery', () => {
         {}
       );
       const queryText = query.render();
-      expect(queryText).toBe('SELECT mean("value") FROM "autogen"."cpu" WHERE ("value" != \'$tempVar\') AND $timeFilter');
+      expect(queryText).toBe(
+        'SELECT mean("value") FROM "autogen"."cpu" WHERE ("value" != \'$tempVar\') AND $timeFilter'
+      );
     });
     it('should not wrap with infuxdb regex wrapper for > operator', () => {
       const query = new InfluxQueryModel(
@@ -711,7 +719,9 @@ describe('InfluxQuery', () => {
         {}
       );
       const queryText = query.render();
-      expect(queryText).toBe('SELECT mean("value") FROM "autogen"."cpu" WHERE ("value" =~ /^$tempVar$/) AND $timeFilter');
+      expect(queryText).toBe(
+        'SELECT mean("value") FROM "autogen"."cpu" WHERE ("value" =~ /^$tempVar$/) AND $timeFilter'
+      );
     });
     it('should wrap with infuxdb regex wrapper for !~ operator', () => {
       const query = new InfluxQueryModel(
@@ -726,7 +736,9 @@ describe('InfluxQuery', () => {
         {}
       );
       const queryText = query.render();
-      expect(queryText).toBe('SELECT mean("value") FROM "autogen"."cpu" WHERE ("value" !~ /^$tempVar$/) AND $timeFilter');
+      expect(queryText).toBe(
+        'SELECT mean("value") FROM "autogen"."cpu" WHERE ("value" !~ /^$tempVar$/) AND $timeFilter'
+      );
     });
   });
 });

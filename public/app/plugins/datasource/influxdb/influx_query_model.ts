@@ -140,12 +140,12 @@ export default class InfluxQueryModel {
     partModel.def.addStrategy(selectParts, partModel, this);
     this.updatePersistedParts();
   }
-  
+
   private removeRegexWrapper(str: string) {
     const regex = /\/\^(.*?)\$\//;
     const match = str.match(regex);
-  
-    if (match && match.length > 1){
+
+    if (match && match.length > 1) {
       return match[1];
     } else {
       return str;
@@ -210,7 +210,7 @@ export default class InfluxQueryModel {
       if (interpolate) {
         value = this.templateSrv.replace(value, this.scopedVars);
       }
-      value=this.removeRegexWrapper(value)
+      value = this.removeRegexWrapper(value);
       if (operator.startsWith('Is')) {
         let r = this.isOperatorTypeHandler(operator, value, tag.key);
         operator = r.operator;
