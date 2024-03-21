@@ -13,9 +13,7 @@ import { ResourcesTable } from './ResourcesTable';
 
 export const Page = () => {
   const { data: status, isFetching } = useGetStatusQuery();
-  const { data: resources } = useListResourcesQuery(status?.enabled ? undefined : skipToken, {
-    pollingInterval: 5 * 1000,
-  });
+  const { data: resources } = useListResourcesQuery(status?.enabled ? undefined : skipToken);
   const [startMigration, { isLoading: startMigrationIsLoading, isError: startMigrationIsError }] =
     useStartMigrationMutation();
   const [isDisconnecting, setIsDisconnecting] = useState(false);
