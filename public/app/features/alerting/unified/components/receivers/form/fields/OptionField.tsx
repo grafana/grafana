@@ -1,10 +1,10 @@
 import { css } from '@emotion/css';
 import { isEmpty } from 'lodash';
 import React, { FC, useEffect } from 'react';
-import { useFormContext, FieldError, DeepMap } from 'react-hook-form';
+import { useFormContext, FieldError, DeepMap, Controller } from 'react-hook-form';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { Checkbox, Field, Input, InputControl, RadioButtonList, Select, TextArea, useStyles2 } from '@grafana/ui';
+import { Checkbox, Field, Input, RadioButtonList, Select, TextArea, useStyles2 } from '@grafana/ui';
 import { NotificationChannelOption } from 'app/types';
 
 import { KeyValueMapInput } from './KeyValueMapInput';
@@ -134,7 +134,7 @@ const OptionInput: FC<Props & { id: string; pathIndex?: string }> = ({
 
     case 'select':
       return (
-        <InputControl
+        <Controller
           render={({ field: { onChange, ref, ...field } }) => (
             <Select
               disabled={readOnly}
@@ -158,7 +158,7 @@ const OptionInput: FC<Props & { id: string; pathIndex?: string }> = ({
       return (
         <>
           <legend className={styles.legend}>{option.label}</legend>
-          <InputControl
+          <Controller
             render={({ field: { ref, ...field } }) => (
               <RadioButtonList disabled={readOnly} options={option.selectOptions ?? []} {...field} />
             )}
@@ -192,7 +192,7 @@ const OptionInput: FC<Props & { id: string; pathIndex?: string }> = ({
       );
     case 'string_array':
       return (
-        <InputControl
+        <Controller
           render={({ field: { value, onChange } }) => (
             <StringArrayInput readOnly={readOnly} value={value} onChange={onChange} />
           )}
@@ -202,7 +202,7 @@ const OptionInput: FC<Props & { id: string; pathIndex?: string }> = ({
       );
     case 'key_value_map':
       return (
-        <InputControl
+        <Controller
           render={({ field: { value, onChange } }) => (
             <KeyValueMapInput readOnly={readOnly} value={value} onChange={onChange} />
           )}
