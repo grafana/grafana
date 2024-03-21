@@ -1,4 +1,4 @@
-import { css } from '@emotion/css';
+import { css, cx } from '@emotion/css';
 import React, { useEffect, useState } from 'react';
 
 import { GrafanaTheme2, urlUtil } from '@grafana/data';
@@ -64,9 +64,15 @@ function EmbeddedDashboardRenderer({ model, initialState, onStateChange }: Rende
   }
 
   return (
-    <div className={styles.canvas}>
+    <div
+      className={cx(styles.canvas, controls && !scopes && styles.canvasWithControls, scopes && styles.canvasWithScopes)}
+    >
       {scopes && <scopes.Component model={scopes} />}
-      {controls && <controls.Component model={controls} />}
+      {controls && (
+        <div className={cx(styles.controlsWrapper, scopes && styles.controlsWrapperWithScopes)}>
+          <controls.Component model={controls} />
+        </div>
+      )}
       <div className={styles.body}>
         <body.Component model={body} />
       </div>
@@ -103,12 +109,24 @@ function getStyles(theme: GrafanaTheme2) {
       label: 'canvas-content',
       display: 'grid',
       gridTemplateAreas: `
-        "scopes controls"
-        "panels panels"`,
-      gridTemplateColumns: `${theme.spacing(40)} 1fr`,
-      gridTemplateRows: 'auto 1fr',
+        "panels"`,
+      gridTemplateColumns: `1fr`,
+      gridTemplateRows: '1fr',
       flexBasis: '100%',
       flexGrow: 1,
+    }),
+    canvasWithControls: css({
+      gridTemplateAreas: `
+        "controls"
+        "panels"`,
+      gridTemplateRows: 'auto 1fr',
+    }),
+    canvasWithScopes: css({
+      gridTemplateAreas: `
+        "scopes controls"
+        "panels panels"`,
+      gridTemplateColumns: `${theme.spacing(32)} 1fr`,
+      gridTemplateRows: 'auto 1fr',
     }),
     body: css({
       label: 'body',
@@ -118,14 +136,15 @@ function getStyles(theme: GrafanaTheme2) {
       gridArea: 'panels',
       marginBottom: theme.spacing(2),
     }),
-    controls: css({
+    controlsWrapper: css({
       display: 'flex',
-      flexWrap: 'wrap',
-      alignItems: 'center',
-      gap: theme.spacing(1),
-      top: 0,
-      zIndex: theme.zIndex.navbarFixed,
-      padding: theme.spacing(0, 0, 2, 0),
+      flexDirection: 'column',
+      flexGrow: 0,
+      gridArea: 'controls',
+      padding: theme.spacing(2, 0, 2, 2),
+    }),
+    controlsWrapperWithScopes: css({
+      padding: theme.spacing(2, 0),
     }),
   };
 }

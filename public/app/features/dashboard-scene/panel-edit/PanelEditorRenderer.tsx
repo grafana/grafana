@@ -82,11 +82,19 @@ function VizAndDataPane({ model }: SceneComponentProps<PanelEditor>) {
   }
 
   return (
-    <div className={cx(styles.pageContainer, scopes && styles.pageContainerScopes)}>
+    <div
+      className={cx(
+        styles.pageContainer,
+        controls && !scopes && styles.pageContainerWithControls,
+        scopes && styles.pageContainerWithScopes
+      )}
+    >
       {scopes && <scopes.Component model={scopes} />}
-      <div className={cx(styles.controlsWrapper, scopes && styles.controlsWrapperScopes)}>
-        {controls && <controls.Component model={controls} />}
-      </div>
+      {controls && (
+        <div className={cx(styles.controlsWrapper, scopes && styles.controlsWrapperWithScopes)}>
+          <controls.Component model={controls} />
+        </div>
+      )}
       <div {...containerProps}>
         <div {...primaryProps}>
           <vizManager.Component model={vizManager} />
@@ -135,20 +143,25 @@ function VizAndDataPane({ model }: SceneComponentProps<PanelEditor>) {
 function getStyles(theme: GrafanaTheme2) {
   return {
     pageContainer: css({
-      alignItems: 'start',
       display: 'grid',
+      gridTemplateAreas: `
+        "panels"`,
+      gridTemplateColumns: `1fr`,
+      gridTemplateRows: '1fr',
+      height: '100%',
+    }),
+    pageContainerWithControls: css({
       gridTemplateAreas: `
         "controls"
         "panels"`,
-      gridTemplateColumns: '1fr',
       gridTemplateRows: 'auto 1fr',
-      height: '100%',
     }),
-    pageContainerScopes: css({
+    pageContainerWithScopes: css({
       gridTemplateAreas: `
         "scopes controls"
         "panels panels"`,
       gridTemplateColumns: `${theme.spacing(32)} 1fr`,
+      gridTemplateRows: 'auto 1fr',
     }),
     container: css({
       gridArea: 'panels',
@@ -197,11 +210,11 @@ function getStyles(theme: GrafanaTheme2) {
       display: 'flex',
       flexDirection: 'column',
       flexGrow: 0,
-      paddingLeft: theme.spacing(2),
       gridArea: 'controls',
+      padding: theme.spacing(2, 0, 2, 2),
     }),
-    controlsWrapperScopes: css({
-      paddingLeft: theme.spacing(0),
+    controlsWrapperWithScopes: css({
+      padding: theme.spacing(2, 0),
     }),
     openDataPaneButton: css({
       width: theme.spacing(8),

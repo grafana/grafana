@@ -47,13 +47,20 @@ export function DashboardSceneRenderer({ model }: SceneComponentProps<DashboardS
         <div
           className={cx(
             styles.pageContainer,
-            scopes && styles.pageContainerScopes,
-            scopes && isScopesExpanded && styles.pageContainerExpanded
+            controls && !scopes && styles.pageContainerWithControls,
+            scopes && styles.pageContainerWithScopes,
+            scopes && isScopesExpanded && styles.pageContainerWithScopesExpanded
           )}
         >
           {scopes && <scopes.Component model={scopes} />}
           <NavToolbarActions dashboard={model} />
-          {controls && <controls.Component model={controls} />}
+          {controls && (
+            <div
+              className={cx(styles.controlsWrapper, scopes && !isScopesExpanded && styles.controlsWrapperWithScopes)}
+            >
+              <controls.Component model={controls} />
+            </div>
+          )}
           <CustomScrollbar autoHeightMin={'100%'} className={styles.scrollbarContainer}>
             <div className={styles.canvasContent}>{isEmpty ? emptyState : withPanels}</div>
           </CustomScrollbar>
@@ -69,25 +76,41 @@ function getStyles(theme: GrafanaTheme2) {
     pageContainer: css({
       display: 'grid',
       gridTemplateAreas: `
-        "controls"
         "panels"`,
       gridTemplateColumns: `1fr`,
-      gridTemplateRows: 'auto 1fr',
+      gridTemplateRows: '1fr',
       height: '100%',
     }),
-    pageContainerScopes: css({
+    pageContainerWithControls: css({
+      gridTemplateAreas: `
+        "controls"
+        "panels"`,
+      gridTemplateRows: 'auto 1fr',
+    }),
+    pageContainerWithScopes: css({
       gridTemplateAreas: `
         "scopes controls"
         "panels panels"`,
       gridTemplateColumns: `${theme.spacing(32)} 1fr`,
+      gridTemplateRows: 'auto 1fr',
     }),
-    pageContainerExpanded: css({
+    pageContainerWithScopesExpanded: css({
       gridTemplateAreas: `
         "scopes controls"
         "scopes panels"`,
     }),
     scrollbarContainer: css({
       gridArea: 'panels',
+    }),
+    controlsWrapper: css({
+      display: 'flex',
+      flexDirection: 'column',
+      flexGrow: 0,
+      gridArea: 'controls',
+      padding: theme.spacing(2),
+    }),
+    controlsWrapperWithScopes: css({
+      padding: theme.spacing(2, 2, 2, 0),
     }),
     canvasContent: css({
       label: 'canvas-content',
