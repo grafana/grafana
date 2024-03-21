@@ -27,6 +27,26 @@ Canvases combine the power of Grafana with the flexibility of custom elements. C
 
 ## Elements
 
+Elements are the basic building blocks of a canvas and they help you visualize data with different shapes and options. When you select an element that you've added to a canvas, the panel editor pane displays a **Selected element** section where you can access editing options for the element. The editing options are dependent on the element type.
+
+You can move elements around the canvas. When you're moving elements, snapping and alignment guides help you create more precise layouts.
+
+{{% admonition type="note" %}}
+Currently, element snapping and alignment only works when the canvas is not zoomed in.
+{{% /admonition %}}
+
+<!-- TODO: Add gif showcasing feature (when creating what's new entry for 10.4) -->
+
+### Basic shapes
+
+Basic shape elements can display text (both fixed and field data) and its background color can be changed based on data thresholds. You can add background colors and images to basic shapes. You can add the following basic shapes to a canvas:
+
+- Cloud
+- Ellipse
+- Parallelogram
+- Rectangle
+- Triangle
+
 ### Metric value
 
 The metric value element lets you easily select the data you want to display on a canvas. This element has a unique “edit” mode that can be triggered either through the context menu “Edit” option or by double clicking. When in edit mode you can select which field data that you want to display.
@@ -38,28 +58,6 @@ The metric value element lets you easily select the data you want to display on 
 The text element lets you easily add text to the canvas. The element also supports an editing mode, triggered via either double clicking or the edit menu option in the context menu.
 
 {{< video-embed src="/static/img/docs/canvas-panel/canvas-text-9-2-0.mp4" max-width="750px" caption="Text element demo" >}}
-
-<!--If all of these shapes (excluding icon) have the same functionality, can we just group them under a "Basic shapes" sub-heading?-->
-
-### Cloud
-
-The cloud element lets you add a basic cloud to the canvas. A cloud element can display text (both fixed and field data) and its background color can be changed based on data thresholds.
-
-### Ellipse
-
-The ellipse element lets you add a basic ellipse to the canvas. An ellipse element can display text (both fixed and field data) and its background color can be changed based on data thresholds.
-
-### Parallelogram
-
-The parallelogram element lets you add a basic ellipse to the canvas. A parallelogram element can display text (both fixed and field data) and its background color can be changed based on data thresholds.
-
-### Rectangle
-
-The rectangle element lets you add a basic rectangle to the canvas. A rectangle element can display text (both fixed and field data) and its background color can be changed based on data thresholds.
-
-### Triangle
-
-The triangle element lets you add a basic rectangle to the canvas. A triangle element can display text (both fixed and field data) and its background color can be changed based on data thresholds.
 
 ### Icon
 
@@ -89,11 +87,17 @@ To remove a connection, simply click on the connection directly and then press t
 
 {{< video-embed src="/media/docs/grafana/canvas-connections-9-4-0.mp4" max-width="750px" caption="Canvas connections demo" >}}
 
-You can adjust connectors to fit the canvas you're working in and when you move connected elements, the connector resizes to fit the space. To adjust a connector, click it to display the midpoint controls and move those as needed. To make a connector a straight line again, move the element or connector until the midpoint controls disappear.
+### Adjust connectors
+
+You can adjust connectors by adding angles to them to fit the canvas you're working in. When you move connected elements, the connector resizes to fit the space. To adjust a connector, click it to display the midpoint controls and move those as needed. To make a connector a straight line again, move the element or connector until the midpoint controls disappear.
+
+By default, if you move a connector so that it's almost a right angle or a straight line, the connector snaps into that angle or into a straight line. To disable this behavior, press and hold the Ctrl key while adjusting the connector.
 
 <!--what do we want to call these vertices/midpoint controls?-->
 
 <!--video here? -->
+
+### Style connectors
 
 You can set the size, color, direction, and style of connections based on fixed or field values. To do so, enter into panel edit mode, select the connection, and modify the connection's properties in the panel editor.
 
