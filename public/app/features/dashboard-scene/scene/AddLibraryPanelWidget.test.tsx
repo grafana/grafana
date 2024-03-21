@@ -1,10 +1,11 @@
-import { SceneGridItem, SceneGridLayout, SceneGridRow, SceneTimeRange } from '@grafana/scenes';
+import { SceneGridLayout, SceneGridRow, SceneTimeRange } from '@grafana/scenes';
 import { LibraryPanel } from '@grafana/schema/dist/esm/index.gen';
 
 import { DashboardScene } from '../scene/DashboardScene';
 import { activateFullSceneTree } from '../utils/test-utils';
 
 import { AddLibraryPanelWidget } from './AddLibraryPanelWidget';
+import { DashboardGridItem } from './DashboardGridItem';
 import { LibraryVizPanel } from './LibraryVizPanel';
 
 describe('AddLibraryPanelWidget', () => {
@@ -39,7 +40,7 @@ describe('AddLibraryPanelWidget', () => {
     body.setState({
       children: [
         ...body.state.children,
-        new SceneGridItem({
+        new DashboardGridItem({
           key: 'griditem-2',
           x: 0,
           y: 0,
@@ -53,7 +54,7 @@ describe('AddLibraryPanelWidget', () => {
 
     anotherLibPanelWidget.onCancelAddPanel(mockEvent);
 
-    const gridItem = body.state.children[0] as SceneGridItem;
+    const gridItem = body.state.children[0] as DashboardGridItem;
 
     expect(body.state.children.length).toBe(1);
     expect(gridItem.state.body!.state.key).toBe(addLibPanelWidget.state.key);
@@ -67,7 +68,7 @@ describe('AddLibraryPanelWidget', () => {
           new SceneGridRow({
             key: 'panel-2',
             children: [
-              new SceneGridItem({
+              new DashboardGridItem({
                 key: 'griditem-2',
                 x: 0,
                 y: 0,
@@ -103,7 +104,7 @@ describe('AddLibraryPanelWidget', () => {
     };
 
     const body = dashboard.state.body as SceneGridLayout;
-    const gridItem = body.state.children[0] as SceneGridItem;
+    const gridItem = body.state.children[0] as DashboardGridItem;
 
     expect(gridItem.state.body!).toBeInstanceOf(AddLibraryPanelWidget);
 
@@ -121,7 +122,7 @@ describe('AddLibraryPanelWidget', () => {
     body.setState({
       children: [
         ...body.state.children,
-        new SceneGridItem({
+        new DashboardGridItem({
           key: 'griditem-2',
           x: 0,
           y: 0,
@@ -145,8 +146,8 @@ describe('AddLibraryPanelWidget', () => {
 
     anotherLibPanelWidget.onAddLibraryPanel(panelInfo);
 
-    const gridItemOne = body.state.children[0] as SceneGridItem;
-    const gridItemTwo = body.state.children[1] as SceneGridItem;
+    const gridItemOne = body.state.children[0] as DashboardGridItem;
+    const gridItemTwo = body.state.children[1] as DashboardGridItem;
 
     expect(body.state.children.length).toBe(2);
     expect(gridItemOne.state.body!).toBeInstanceOf(AddLibraryPanelWidget);
@@ -161,7 +162,7 @@ describe('AddLibraryPanelWidget', () => {
           new SceneGridRow({
             key: 'panel-2',
             children: [
-              new SceneGridItem({
+              new DashboardGridItem({
                 key: 'griditem-2',
                 x: 0,
                 y: 0,
@@ -190,7 +191,7 @@ describe('AddLibraryPanelWidget', () => {
     anotherLibPanelWidget.onAddLibraryPanel(panelInfo);
 
     const gridRow = body.state.children[0] as SceneGridRow;
-    const gridItem = gridRow.state.children[0] as SceneGridItem;
+    const gridItem = gridRow.state.children[0] as DashboardGridItem;
 
     expect(body.state.children.length).toBe(1);
     expect(gridItem.state.body!).toBeInstanceOf(LibraryVizPanel);
@@ -230,7 +231,7 @@ async function buildTestScene() {
     },
     body: new SceneGridLayout({
       children: [
-        new SceneGridItem({
+        new DashboardGridItem({
           key: 'griditem-1',
           x: 0,
           y: 0,

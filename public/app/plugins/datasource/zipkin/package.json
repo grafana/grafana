@@ -19,10 +19,10 @@
   "devDependencies": {
     "@grafana/plugin-configs": "workspace:*",
     "@testing-library/jest-dom": "6.4.2",
-    "@testing-library/react": "14.2.1",
+    "@testing-library/react": "14.2.2",
     "@types/jest": "29.5.12",
     "@types/lodash": "4.17.0",
-    "@types/react": "18.2.66",
+    "@types/react": "18.2.67",
     "ts-node": "10.9.2",
     "webpack": "5.90.3"
   },

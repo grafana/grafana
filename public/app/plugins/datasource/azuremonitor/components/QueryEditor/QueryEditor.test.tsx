@@ -1,6 +1,8 @@
 import { render, screen, waitFor } from '@testing-library/react';
 import React from 'react';
 
+import { CoreApp } from '@grafana/data';
+import { config } from '@grafana/runtime';
 import * as ui from '@grafana/ui';
 
 import createMockDatasource from '../../__mocks__/datasource';
@@ -18,6 +20,11 @@ jest.mock('@grafana/ui', () => ({
   CodeEditor: function CodeEditor({ value }: { value: string }) {
     return <pre>{value}</pre>;
   },
+}));
+
+jest.mock('@grafana/runtime', () => ({
+  ___esModule: true,
+  ...jest.requireActual('@grafana/runtime'),
 }));
 
 describe('Azure Monitor QueryEditor', () => {
@@ -119,6 +126,78 @@ describe('Azure Monitor QueryEditor', () => {
 
     await waitFor(() =>
       expect(screen.getByTestId('data-testid azure-monitor-experimental-header')).toBeInTheDocument()
+    );
+  });
+
+  it('renders the Metrics query editor when the data source is configured for user auth and the user is authenticated with Azure', async () => {
+    jest.mocked(config).bootData.user.authenticatedBy = 'oauth_azuread';
+    const mockDatasource = createMockDatasource({ currentUserAuth: true });
+    const mockQuery = {
+      ...createMockQuery(),
+      queryType: AzureQueryType.AzureMonitor,
+    };
+
+    render(<QueryEditor query={mockQuery} datasource={mockDatasource} onChange={() => {}} onRunQuery={() => {}} />);
+    await waitFor(() =>
+      expect(
+        screen.getByTestId(selectors.components.queryEditor.metricsQueryEditor.container.input)
+      ).toBeInTheDocument()
+    );
+  });
+
+  it('renders the user auth alert when the data source is configured for user auth and the user is not authenticated with Azure', async () => {
+    jest.mocked(config).bootData.user.authenticatedBy = 'not_azuread';
+    const mockDatasource = createMockDatasource({ currentUserAuth: true });
+    const mockQuery = {
+      ...createMockQuery(),
+      queryType: AzureQueryType.AzureMonitor,
+    };
+
+    render(<QueryEditor query={mockQuery} datasource={mockDatasource} onChange={() => {}} onRunQuery={() => {}} />);
+    await waitFor(() => expect(screen.getByTestId(selectors.components.queryEditor.userAuthAlert)).toBeInTheDocument());
+  });
+
+  it('renders the user auth fallback alert when the data source is configured for user auth and fallback credentials are disabled', async () => {
+    jest.mocked(config).azure.userIdentityFallbackCredentialsEnabled = false;
+    const mockDatasource = createMockDatasource({ currentUserAuth: true });
+    const mockQuery = {
+      ...createMockQuery(),
+      queryType: AzureQueryType.AzureMonitor,
+    };
+
+    render(
+      <QueryEditor
+        app={CoreApp.UnifiedAlerting}
+        query={mockQuery}
+        datasource={mockDatasource}
+        onChange={() => {}}
+        onRunQuery={() => {}}
+      />
+    );
+    await waitFor(() =>
+      expect(screen.getByTestId(selectors.components.queryEditor.userAuthFallbackAlert)).toBeInTheDocument()
+    );
+  });
+
+  it('renders the user auth fallback alert when the data source is configured for user auth and fallback credentials are enabled but the data source has none', async () => {
+    jest.mocked(config).azure.userIdentityFallbackCredentialsEnabled = true;
+    const mockDatasource = createMockDatasource({ currentUserAuth: true });
+    const mockQuery = {
+      ...createMockQuery(),
+      queryType: AzureQueryType.AzureMonitor,
+    };
+
+    render(
+      <QueryEditor
+        app={CoreApp.UnifiedAlerting}
+        query={mockQuery}
+        datasource={mockDatasource}
+        onChange={() => {}}
+        onRunQuery={() => {}}
+      />
+    );
+    await waitFor(() =>
+      expect(screen.getByTestId(selectors.components.queryEditor.userAuthFallbackAlert)).toBeInTheDocument()
     );
   });
 });
