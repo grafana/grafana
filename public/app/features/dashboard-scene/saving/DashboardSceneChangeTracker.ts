@@ -2,7 +2,6 @@ import { Unsubscribable } from 'rxjs';
 
 import {
   SceneDataLayerSet,
-  SceneGridItem,
   SceneGridLayout,
   SceneObjectStateChangedEvent,
   SceneRefreshPicker,
@@ -14,6 +13,7 @@ import { createWorker } from 'app/features/dashboard-scene/saving/createDetectCh
 
 import { DashboardAnnotationsDataLayer } from '../scene/DashboardAnnotationsDataLayer';
 import { DashboardControls } from '../scene/DashboardControls';
+import { DashboardGridItem } from '../scene/DashboardGridItem';
 import { DashboardScene, PERSISTED_PROPS } from '../scene/DashboardScene';
 import { transformSceneToSaveModel } from '../serialization/transformSceneToSaveModel';
 import { isSceneVariableInstance } from '../settings/variables/utils';
@@ -41,7 +41,7 @@ export class DashboardSceneChangeTracker {
     if (payload.changedObject instanceof SceneDataLayerSet) {
       this.detectChanges();
     }
-    if (payload.changedObject instanceof SceneGridItem) {
+    if (payload.changedObject instanceof DashboardGridItem) {
       this.detectChanges();
     }
     if (payload.changedObject instanceof SceneGridLayout) {

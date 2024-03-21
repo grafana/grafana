@@ -1,6 +1,5 @@
 import {
   SceneDataLayerSet,
-  SceneGridItem,
   SceneGridLayout,
   SceneGridRow,
   SceneQueryRunner,
@@ -13,10 +12,10 @@ import { DashboardCursorSync } from '@grafana/schema';
 import { AlertStatesDataLayer } from '../scene/AlertStatesDataLayer';
 import { DashboardAnnotationsDataLayer } from '../scene/DashboardAnnotationsDataLayer';
 import { DashboardControls } from '../scene/DashboardControls';
+import { DashboardGridItem } from '../scene/DashboardGridItem';
 import { DashboardScene, DashboardSceneState } from '../scene/DashboardScene';
 import { LibraryVizPanel } from '../scene/LibraryVizPanel';
 import { VizPanelLinks, VizPanelLinksMenu } from '../scene/PanelLinks';
-import { PanelRepeaterGridItem } from '../scene/PanelRepeaterGridItem';
 
 import { dashboardSceneGraph, getNextPanelId } from './dashboardSceneGraph';
 import { findVizPanelByKey } from './utils';
@@ -94,21 +93,21 @@ describe('dashboardSceneGraph', () => {
       const scene = buildTestScene({
         body: new SceneGridLayout({
           children: [
-            new SceneGridItem({
+            new DashboardGridItem({
               body: new VizPanel({
                 title: 'Panel A',
                 key: 'panel-1',
                 pluginId: 'table',
               }),
             }),
-            new SceneGridItem({
+            new DashboardGridItem({
               body: new VizPanel({
                 title: 'Panel B',
                 key: 'panel-2',
                 pluginId: 'table',
               }),
             }),
-            new SceneGridItem({
+            new DashboardGridItem({
               body: new VizPanel({
                 title: 'Panel C',
                 key: 'panel-3',
@@ -128,7 +127,7 @@ describe('dashboardSceneGraph', () => {
       const scene = buildTestScene({
         body: new SceneGridLayout({
           children: [
-            new SceneGridItem({
+            new DashboardGridItem({
               key: 'griditem-1',
               x: 0,
               body: new VizPanel({
@@ -137,7 +136,7 @@ describe('dashboardSceneGraph', () => {
                 pluginId: 'table',
               }),
             }),
-            new SceneGridItem({
+            new DashboardGridItem({
               body: new LibraryVizPanel({
                 uid: 'uid',
                 name: 'LibPanel',
@@ -145,15 +144,15 @@ describe('dashboardSceneGraph', () => {
                 panelKey: 'panel-2',
               }),
             }),
-            new SceneGridItem({
+            new DashboardGridItem({
               body: new VizPanel({
                 title: 'Panel C',
                 key: 'panel-2-clone-1',
                 pluginId: 'table',
               }),
             }),
-            new PanelRepeaterGridItem({
-              source: new VizPanel({
+            new DashboardGridItem({
+              body: new VizPanel({
                 title: 'Panel C',
                 key: 'panel-4',
                 pluginId: 'table',
@@ -167,14 +166,14 @@ describe('dashboardSceneGraph', () => {
               key: 'key',
               title: 'row',
               children: [
-                new SceneGridItem({
+                new DashboardGridItem({
                   body: new VizPanel({
                     title: 'Panel E',
                     key: 'panel-2-clone-2',
                     pluginId: 'table',
                   }),
                 }),
-                new SceneGridItem({
+                new DashboardGridItem({
                   body: new LibraryVizPanel({
                     uid: 'uid',
                     name: 'LibPanel',
@@ -264,7 +263,7 @@ function buildTestScene(overrides?: Partial<DashboardSceneState>) {
     }),
     body: new SceneGridLayout({
       children: [
-        new SceneGridItem({
+        new DashboardGridItem({
           key: 'griditem-1',
           x: 0,
           body: new VizPanel({
@@ -274,14 +273,14 @@ function buildTestScene(overrides?: Partial<DashboardSceneState>) {
             $data: new SceneQueryRunner({ key: 'data-query-runner', queries: [{ refId: 'A' }] }),
           }),
         }),
-        new SceneGridItem({
+        new DashboardGridItem({
           body: new VizPanel({
             title: 'Panel B',
             key: 'panel-2',
             pluginId: 'table',
           }),
         }),
-        new SceneGridItem({
+        new DashboardGridItem({
           body: new VizPanel({
             title: 'Panel C',
             key: 'panel-2-clone-1',
@@ -289,7 +288,7 @@ function buildTestScene(overrides?: Partial<DashboardSceneState>) {
             $data: new SceneQueryRunner({ key: 'data-query-runner2', queries: [{ refId: 'A' }] }),
           }),
         }),
-        new SceneGridItem({
+        new DashboardGridItem({
           body: new VizPanel({
             title: 'Panel D',
             key: 'panel-with-links',
@@ -302,14 +301,14 @@ function buildTestScene(overrides?: Partial<DashboardSceneState>) {
           key: 'key',
           title: 'row',
           children: [
-            new SceneGridItem({
+            new DashboardGridItem({
               body: new VizPanel({
                 title: 'Panel E',
                 key: 'panel-2-clone-2',
                 pluginId: 'table',
               }),
             }),
-            new SceneGridItem({
+            new DashboardGridItem({
               body: new VizPanel({
                 title: 'Panel F',
                 key: 'panel-2-clone-2',
