@@ -257,58 +257,6 @@ func (s *sqlEntityServer) read(ctx context.Context, tx session.SessionQuerier, r
 	return rowToEntity(rows, r)
 }
 
-func (s *sqlEntityServer) BatchRead(ctx context.Context, b *entity.BatchReadEntityRequest) (*entity.BatchReadEntityResponse, error) {
-	if len(b.Batch) < 1 {
-		return nil, fmt.Errorf("missing querires")
-	}
-
-	first := b.Batch[0]
-	args := []any{}
-	constraints := []string{}
-
-	for _, r := range b.Batch {
-		if r.WithBody != first.WithBody || r.WithStatus != first.WithStatus {
-			return nil, fmt.Errorf("requests must want the same things")
-		}
-
-		if r.Key == "" {
-			return nil, fmt.Errorf("missing key")
-		}
-
-		constraints = append(constraints, s.dialect.Quote("key")+"=?")
-		args = append(args, r.Key)
-
-		if r.ResourceVersion != 0 {
-			return nil, fmt.Errorf("version not supported for batch read (yet?)")
-		}
-	}
-
-	req := b.Batch[0]
-	query, err := s.getReadSelect(req)
-	if err != nil {
-		return nil, err
-	}
-
-	query += " FROM entity" +
-		" WHERE (" + strings.Join(constraints, " OR ") + ")"
-	rows, err := s.sess.Query(ctx, query, args...)
-	if err != nil {
-		return nil, err
-	}
-	defer func() { _ = rows.Close() }()
-
-	// TODO? make sure the results are in order?
-	rsp := &entity.BatchReadEntityResponse{}
-	for rows.Next() {
-		r, err := rowToEntity(rows, req)
-		if err != nil {
-			return nil, err
-		}
-		rsp.Results = append(rsp.Results, r)
-	}
-	return rsp, nil
-}
-
 //nolint:gocyclo
 func (s *sqlEntityServer) Create(ctx context.Context, r *entity.CreateEntityRequest) (*entity.CreateEntityResponse, error) {
 	if err := s.Init(); err != nil {
@@ -962,17 +910,15 @@ func (s *sqlEntityServer) History(ctx context.Context, r *entity.EntityHistoryRe
 		limit = r.Limit
 	}
 
-	fields := s.getReadFields(r)
-
 	entityQuery := selectQuery{
 		dialect:  s.dialect,
-		fields:   fields,
 		from:     "entity_history", // the table
-		args:     []any{},
 		limit:    r.Limit,
-		offset:   0,
 		oneExtra: true, // request one more than the limit (and show next token if it exists)
 	}
+
+	fields := s.getReadFields(r)
+	entityQuery.AddFields(fields...)
 
 	args := []any{key.Group, key.Resource}
 	whereclause := "(" + s.dialect.Quote("group") + "=? AND " + s.dialect.Quote("resource") + "=?"
@@ -986,7 +932,7 @@ func (s *sqlEntityServer) History(ctx context.Context, r *entity.EntityHistoryRe
 	}
 	whereclause += ")"
 
-	entityQuery.addWhere(whereclause, args...)
+	entityQuery.AddWhere(whereclause, args...)
 
 	// if we have a page token, use that to specify the first record
 	continueToken, err := GetContinueToken(r)
@@ -1002,11 +948,11 @@ func (s *sqlEntityServer) History(ctx context.Context, r *entity.EntityHistoryRe
 		if err != nil {
 			return nil, err
 		}
-		entityQuery.addOrderBy(sortBy.Field, sortBy.Direction)
+		entityQuery.AddOrderBy(sortBy.Field, sortBy.Direction)
 	}
-	entityQuery.addOrderBy("resource_version", Ascending)
+	entityQuery.AddOrderBy("resource_version", Ascending)
 
-	query, args := entityQuery.toQuery()
+	query, args := entityQuery.ToQuery()
 
 	s.log.Debug("history", "query", query, "args", args)
 
@@ -1050,6 +996,7 @@ type ContinueToken struct {
 	Sort            []string `json:"s"`
 	StartOffset     int64    `json:"o"`
 	ResourceVersion int64    `json:"v"`
+	RecordCnt       int64    `json:"c"`
 }
 
 func (c *ContinueToken) String() string {
@@ -1131,28 +1078,36 @@ func (s *sqlEntityServer) List(ctx context.Context, r *entity.EntityListRequest)
 
 	fields := s.getReadFields(r)
 
-	entityQuery := selectQuery{
-		dialect:  s.dialect,
-		fields:   fields,
-		from:     "entity", // the table
-		args:     []any{},
-		limit:    r.Limit,
-		offset:   0,
-		oneExtra: true, // request one more than the limit (and show next token if it exists)
-	}
+	// main query we will use to retrieve entities
+	entityQuery := NewSelectQuery(s.dialect, "entity")
+	entityQuery.AddFields(fields...)
+	entityQuery.SetLimit(r.Limit)
+	entityQuery.SetOneExtra()
+
+	// query to retrieve the max resource version and entity count
+	rvMaxQuery := NewSelectQuery(s.dialect, "entity")
+	rvMaxQuery.AddRawFields("max(resource_version) as rv", "count(guid) as cnt")
+
+	// subquery to get latest resource version for each entity
+	// when we need to query from entity_history
+	rvSubQuery := NewSelectQuery(s.dialect, "entity_history")
+	rvSubQuery.AddFields("guid")
+	rvSubQuery.AddRawFields("max(resource_version) as max_rv")
 
 	// if we are looking for deleted entities, we list "deleted" entries from the entity_history table
 	if r.Deleted {
 		entityQuery.from = "entity_history"
-		entityQuery.addWhere("action", entity.Entity_DELETED)
+		entityQuery.AddWhere("action", entity.Entity_DELETED)
+
+		rvMaxQuery.from = "entity_history"
+		rvMaxQuery.AddWhere("action", entity.Entity_DELETED)
 	}
 
+	// initialize the result
+	// we use a snowflake as a fallback resource version
 	rsp := &entity.EntityListResponse{
 		ResourceVersion: s.snowflake.Generate().Int64(),
 	}
-
-	rvSubQuery := ""
-	rvSubQueryArgs := []any{}
 
 	// if we have a page token, use that to specify the first record
 	continueToken, err := GetContinueToken(r)
@@ -1166,12 +1121,10 @@ func (s *sqlEntityServer) List(ctx context.Context, r *entity.EntityListRequest)
 
 			if r.Deleted {
 				// if we're continuing, we need to list only revisions that are older than the given resource version
-				entityQuery.addWhere("resource_version < ?", continueToken.ResourceVersion)
+				entityQuery.AddWhere("resource_version <= ?", continueToken.ResourceVersion)
 			} else {
-				entityQuery.from = "entity_history"
-				entityQuery.addWhere("t.action != ?", entity.Entity_DELETED)
-				rvSubQuery = "SELECT rvt.guid, max(rvt.resource_version) as max_rv FROM entity_history AS rvt WHERE rvt.resource_version <= ?"
-				rvSubQueryArgs = append(rvSubQueryArgs, continueToken.ResourceVersion)
+				// cap versions considered by the per resource max version subquery
+				rvSubQuery.AddWhere("resource_version <= ?", continueToken.ResourceVersion)
 			}
 		}
 	}
@@ -1180,24 +1133,19 @@ func (s *sqlEntityServer) List(ctx context.Context, r *entity.EntityListRequest)
 	// entityQuery.addWhere("namespace", user.OrgID)
 
 	if len(r.Group) > 0 {
-		entityQuery.addWhereIn("group", r.Group)
-		if rvSubQuery != "" {
-			rvSubQuery += " AND rvt." + s.dialect.Quote("group") + " = ?"
-			rvSubQueryArgs = append(rvSubQueryArgs, r.Group)
-		}
+		entityQuery.AddWhereIn("group", ToAnyList(r.Group))
+		rvMaxQuery.AddWhereIn("group", ToAnyList(r.Group))
+		rvSubQuery.AddWhereIn("group", ToAnyList(r.Group))
 	}
 
 	if len(r.Resource) > 0 {
-		entityQuery.addWhereIn("resource", r.Resource)
-		if rvSubQuery != "" {
-			rvSubQuery += " AND rvt." + s.dialect.Quote("resource") + " = ?"
-			rvSubQueryArgs = append(rvSubQueryArgs, r.Resource)
-		}
+		entityQuery.AddWhereIn("resource", ToAnyList(r.Resource))
+		rvMaxQuery.AddWhereIn("resource", ToAnyList(r.Resource))
+		rvSubQuery.AddWhereIn("resource", ToAnyList(r.Resource))
 	}
 
 	if len(r.Key) > 0 {
 		where := []string{}
-		rvWhere := []string{}
 		args := []any{}
 		for _, k := range r.Key {
 			key, err := entity.ParseKey(k)
@@ -1207,47 +1155,62 @@ func (s *sqlEntityServer) List(ctx context.Context, r *entity.EntityListRequest)
 
 			args = append(args, key.Group, key.Resource)
 			whereclause := "(t." + s.dialect.Quote("group") + "=? AND t." + s.dialect.Quote("resource") + "=?"
-			rvWhereclause := "(rvt." + s.dialect.Quote("group") + "=? AND rvt." + s.dialect.Quote("resource") + "=?"
 			if key.Namespace != "" {
 				args = append(args, key.Namespace)
 				whereclause += " AND t." + s.dialect.Quote("namespace") + "=?"
-				rvWhereclause += " AND rvt." + s.dialect.Quote("namespace") + "=?"
 			}
 			if key.Name != "" {
 				args = append(args, key.Name)
 				whereclause += " AND t." + s.dialect.Quote("name") + "=?"
-				rvWhereclause += " AND rvt." + s.dialect.Quote("name") + "=?"
 			}
 			whereclause += ")"
-			rvWhereclause += ")"
 
 			where = append(where, whereclause)
-			rvWhere = append(rvWhere, rvWhereclause)
 		}
 
-		entityQuery.addWhere("("+strings.Join(where, " OR ")+")", args...)
-		if rvSubQuery != "" {
-			rvSubQuery += " AND (" + strings.Join(rvWhere, " OR ") + ")"
-			rvSubQueryArgs = append(rvSubQueryArgs, args...)
+		entityQuery.AddWhere("("+strings.Join(where, " OR ")+")", args...)
+		rvMaxQuery.AddWhere("("+strings.Join(where, " OR ")+")", args...)
+		rvSubQuery.AddWhere("("+strings.Join(where, " OR ")+")", args...)
+	}
+
+	// get the maximum resource version and count of entities
+	type RVMaxRow struct {
+		Rv  int64 `db:"rv"`
+		Cnt int64 `db:"cnt"`
+	}
+	rvMaxRow := &RVMaxRow{}
+	query, args := rvMaxQuery.ToQuery()
+
+	err = s.sess.Get(ctx, rvMaxRow, query, args...)
+	if err != nil {
+		if !errors.Is(err, sql.ErrNoRows) {
+			return nil, err
 		}
 	}
 
-	if rvSubQuery != "" {
-		rvSubQuery += " GROUP BY rvt.guid"
+	s.log.Debug("getting max rv", "maxRv", rvMaxRow.Rv, "cnt", rvMaxRow.Cnt, "query", query, "args", args)
 
-		entityQuery.addJoin("INNER JOIN ("+rvSubQuery+") rv ON rv.guid = t.guid AND rv.max_rv = t.resource_version", rvSubQueryArgs...)
+	if continueToken != nil && ((continueToken.ResourceVersion > 0 && continueToken.ResourceVersion != rvMaxRow.Rv) || (continueToken.RecordCnt > 0 && continueToken.RecordCnt != rvMaxRow.Cnt)) {
+		entityQuery.From("entity_history")
+		entityQuery.AddWhere("t.action != ?", entity.Entity_DELETED)
+
+		rvSubQuery.AddGroupBy("guid")
+		query, args = rvSubQuery.ToQuery()
+		entityQuery.AddJoin("INNER JOIN ("+query+") rv ON rv.guid = t.guid AND rv.max_rv = t.resource_version", args...)
+	} else if rvMaxRow.Rv > 0 {
+		rsp.ResourceVersion = rvMaxRow.Rv
 	}
 
 	// Folder guid
 	if r.Folder != "" {
-		entityQuery.addWhere("folder", r.Folder)
+		entityQuery.AddWhere("folder", r.Folder)
 	}
 
 	if len(r.Labels) > 0 {
 		// if we are looking for deleted entities, we need to use the labels column
 		if entityQuery.from == "entity_history" {
 			for labelKey, labelValue := range r.Labels {
-				entityQuery.addWhereJsonContainsKV("labels", labelKey, labelValue)
+				entityQuery.AddWhereJsonContainsKV("labels", labelKey, labelValue)
 			}
 			// for active entities, we can use the entity_labels table
 		} else {
@@ -1264,7 +1227,7 @@ func (s *sqlEntityServer) List(ctx context.Context, r *entity.EntityListRequest)
 				" HAVING COUNT(label) = ?"
 			args = append(args, len(r.Labels))
 
-			entityQuery.addWhereInSubquery("guid", query, args)
+			entityQuery.AddWhereInSubquery("guid", query, args)
 		}
 	}
 
@@ -1273,11 +1236,11 @@ func (s *sqlEntityServer) List(ctx context.Context, r *entity.EntityListRequest)
 		if err != nil {
 			return nil, err
 		}
-		entityQuery.addOrderBy(sortBy.Field, sortBy.Direction)
+		entityQuery.AddOrderBy(sortBy.Field, sortBy.Direction)
 	}
-	entityQuery.addOrderBy("guid", Ascending)
+	entityQuery.AddOrderBy("guid", Ascending)
 
-	query, args := entityQuery.toQuery()
+	query, args = entityQuery.ToQuery()
 
 	s.log.Debug("listing", "query", query, "args", args)
 
@@ -1298,6 +1261,7 @@ func (s *sqlEntityServer) List(ctx context.Context, r *entity.EntityListRequest)
 				Sort:            r.Sort,
 				StartOffset:     entityQuery.offset + entityQuery.limit,
 				ResourceVersion: rsp.ResourceVersion,
+				RecordCnt:       rvMaxRow.Cnt,
 			}
 			rsp.NextPageToken = continueToken.String()
 			break
@@ -1344,18 +1308,18 @@ func (s *sqlEntityServer) watchInit(r *entity.EntityWatchRequest, w entity.Entit
 
 	entityQuery := selectQuery{
 		dialect:  s.dialect,
-		fields:   fields,
 		from:     "entity", // the table
-		args:     []any{},
-		limit:    100,  // r.Limit,
-		oneExtra: true, // request one more than the limit (and show next token if it exists)
+		limit:    100,      // r.Limit,
+		oneExtra: true,     // request one more than the limit (and show next token if it exists)
 	}
+
+	entityQuery.AddFields(fields...)
 
 	// if we got an initial resource version, start from that location in the history
 	fromZero := true
 	if r.Since > 0 {
 		entityQuery.from = "entity_history"
-		entityQuery.addWhere("resource_version > ?", r.Since)
+		entityQuery.AddWhere("resource_version > ?", r.Since)
 		fromZero = false
 	}
 
@@ -1363,7 +1327,7 @@ func (s *sqlEntityServer) watchInit(r *entity.EntityWatchRequest, w entity.Entit
 	// entityQuery.addWhere("namespace", user.OrgID)
 
 	if len(r.Resource) > 0 {
-		entityQuery.addWhereIn("resource", r.Resource)
+		entityQuery.AddWhereIn("resource", ToAnyList(r.Resource))
 	}
 
 	if len(r.Key) > 0 {
@@ -1390,18 +1354,18 @@ func (s *sqlEntityServer) watchInit(r *entity.EntityWatchRequest, w entity.Entit
 			where = append(where, whereclause)
 		}
 
-		entityQuery.addWhere("("+strings.Join(where, " OR ")+")", args...)
+		entityQuery.AddWhere("("+strings.Join(where, " OR ")+")", args...)
 	}
 
 	// Folder guid
 	if r.Folder != "" {
-		entityQuery.addWhere("folder", r.Folder)
+		entityQuery.AddWhere("folder", r.Folder)
 	}
 
 	if len(r.Labels) > 0 {
 		if r.Since > 0 {
 			for labelKey, labelValue := range r.Labels {
-				entityQuery.addWhereJsonContainsKV("labels", labelKey, labelValue)
+				entityQuery.AddWhereJsonContainsKV("labels", labelKey, labelValue)
 			}
 		} else {
 			var args []any
@@ -1417,17 +1381,17 @@ func (s *sqlEntityServer) watchInit(r *entity.EntityWatchRequest, w entity.Entit
 				" HAVING COUNT(label) = ?"
 			args = append(args, len(r.Labels))
 
-			entityQuery.addWhereInSubquery("guid", query, args)
+			entityQuery.AddWhereInSubquery("guid", query, args)
 		}
 	}
 
-	entityQuery.addOrderBy("resource_version", Ascending)
+	entityQuery.AddOrderBy("resource_version", Ascending)
 
 	var err error
 
 	for hasmore := true; hasmore; {
 		err = func() error {
-			query, args := entityQuery.toQuery()
+			query, args := entityQuery.ToQuery()
 
 			s.log.Debug("watch init", "query", query, "args", args)
 
@@ -1507,18 +1471,17 @@ func (s *sqlEntityServer) poll(since int64, out chan *entity.Entity) (int64, err
 		err := func() error {
 			entityQuery := selectQuery{
 				dialect: s.dialect,
-				fields:  fields,
 				from:    "entity_history", // the table
-				args:    []any{},
-				limit:   100, // r.Limit,
+				limit:   100,              // r.Limit,
 				// offset:   0,
 				oneExtra: true, // request one more than the limit (and show next token if it exists)
 				orderBy:  []string{"resource_version"},
 			}
 
-			entityQuery.addWhere("resource_version > ?", since)
+			entityQuery.AddFields(fields...)
+			entityQuery.AddWhere("resource_version > ?", since)
 
-			query, args := entityQuery.toQuery()
+			query, args := entityQuery.ToQuery()
 
 			rows, err := s.sess.Query(s.ctx, query, args...)
 			if err != nil {
