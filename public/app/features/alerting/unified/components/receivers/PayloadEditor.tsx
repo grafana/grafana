@@ -106,7 +106,9 @@ export function PayloadEditor({
                 value={payload}
                 readOnly={false}
                 onBlur={setPayload}
-                monacoOptions={{ wordWrap: 'on' }}
+                monacoOptions={{
+                  scrollBeyondLastLine: false,
+                }}
               />
             )}
           </AutoSizer>
