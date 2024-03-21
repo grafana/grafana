@@ -8,6 +8,7 @@ import { t } from 'app/core/internationalization';
 import { isPublicDashboardsEnabled } from 'app/features/dashboard/components/ShareModal/SharePublicDashboard/SharePublicDashboardUtils';
 
 import { DashboardScene } from '../scene/DashboardScene';
+import { LibraryVizPanel } from '../scene/LibraryVizPanel';
 import { DashboardInteractions } from '../utils/interactions';
 import { getDashboardSceneFor } from '../utils/utils';
 
@@ -56,9 +57,12 @@ export class ShareModal extends SceneObjectBase<ShareModalState> implements Moda
 
     if (panelRef) {
       tabs.push(new SharePanelEmbedTab({ panelRef, dashboardRef }));
-
-      if (panelRef.resolve() instanceof VizPanel) {
-        tabs.push(new ShareLibraryPanelTab({ panelRef, dashboardRef, modalRef: this.getRef() }));
+      const panel = panelRef.resolve();
+      const isLibraryPanel = panel.parent instanceof LibraryVizPanel;
+      if (panel instanceof VizPanel) {
+        if (!isLibraryPanel) {
+          tabs.push(new ShareLibraryPanelTab({ panelRef, dashboardRef, modalRef: this.getRef() }));
+        }
       }
     }
 
