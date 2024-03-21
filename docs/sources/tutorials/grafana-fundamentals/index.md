@@ -286,7 +286,7 @@ The most basic alert consists of two parts:
    - Email
    - [Webhooks](#create-a-contact-point-for-grafana-managed-alerts)
    - [Telegram](https://grafana.com/blog/2023/12/28/how-to-integrate-grafana-alerting-and-telegram/)
-   - [Slack](/docs/grafana/<GRAFANA_VERSION>/alerting/alerting-rules/manage-contact-points/integrations/configure-slack/)
+   - [Slack](https://grafana.com/docs/grafana/latest/alerting/alerting-rules/manage-contact-points/integrations/configure-slack/)
    - PagerDuty
 
 1. An _Alert rule_ - An Alert rule defines one or more _conditions_ that Grafana regularly evaluates. When these evaluations meet the rule's criteria, the alert is triggered.
