@@ -1,12 +1,11 @@
 import { PanelPlugin } from '@grafana/data';
 import { commonOptionsBuilder } from '@grafana/ui';
 
-import { ManualEditor } from './ManualEditor';
 import { getScatterFieldConfig } from './config';
 import { xyChartMigrationHandler } from './migrations';
 import { FieldConfig, defaultFieldConfig } from './panelcfg.gen';
 import { Options } from './types2';
-import { AutoEditor } from './v2/AutoEditor';
+import { SeriesEditor } from './v2/SeriesEditor';
 import { XYChartPanel2 } from './v2/XYChartPanel';
 
 export const plugin = new PanelPlugin<Options, FieldConfig>(XYChartPanel2)
@@ -20,8 +19,8 @@ export const plugin = new PanelPlugin<Options, FieldConfig>(XYChartPanel2)
         defaultValue: 'auto',
         settings: {
           options: [
-            { value: 'auto', label: 'Auto', description: 'Automatically plot values across multiple tables' },
-            { value: 'manual', label: 'Manual', description: 'Plot values explicitly from any result' },
+            { value: 'auto', label: 'Auto' },
+            { value: 'manual', label: 'Manual' },
           ],
         },
       })
@@ -29,17 +28,8 @@ export const plugin = new PanelPlugin<Options, FieldConfig>(XYChartPanel2)
         id: 'series',
         path: 'series',
         name: '',
-        editor: AutoEditor,
+        editor: SeriesEditor,
         defaultValue: [{}],
-        showIf: (cfg) => cfg.mapping === 'auto',
-      })
-      .addCustomEditor({
-        id: 'series',
-        path: 'series',
-        name: '',
-        defaultValue: [],
-        editor: ManualEditor,
-        showIf: (cfg) => cfg.mapping === 'manual',
       });
 
     commonOptionsBuilder.addTooltipOptions(builder, true);

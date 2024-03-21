@@ -249,13 +249,6 @@ export const prepConfig = (xySeries: XYSeries[], theme: GrafanaTheme2) => {
     //u.over.style.overflow = 'hidden';
   });
 
-  let rect: DOMRect;
-
-  // rect of .u-over (grid area)
-  builder.addHook('syncRect', (u, r) => {
-    rect = r;
-  });
-
   builder.addHook('drawClear', (u) => {
     qt = qt || new Quadtree(0, 0, u.bbox.width, u.bbox.height);
 
@@ -385,7 +378,7 @@ export const prepConfig = (xySeries: XYSeries[], theme: GrafanaTheme2) => {
       scaleKey: '', // facets' scales used (above)
       lineColor: alpha('' + lineColor, 1),
       fillColor: alpha(pointColor ?? '#ffff', 0.5),
-      show: !customConfig.hideFrom?.viz,
+      show: !field.state?.hideFrom?.viz,
     });
   });
 

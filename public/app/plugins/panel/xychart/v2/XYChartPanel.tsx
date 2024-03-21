@@ -30,16 +30,16 @@ export const XYChartPanel2 = (props: Props2) => {
 
   // regenerate series schema when mappings or data changes
   let series = useMemo(
-    () => prepSeries(mapping, mappedSeries, props.data.series),
+    () => prepSeries(mapping, mappedSeries, props.data.series, props.fieldConfig),
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [mapping, mappedSeries, props.data.series]
+    [mapping, mappedSeries, props.data.series, props.fieldConfig]
   );
 
   // if series changed due to mappings or data structure, re-init config & renderers
   let { builder, prepData } = useMemo(
     () => prepConfig(series, config.theme2),
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [mapping, mappedSeries, props.data.structureRev]
+    [mapping, mappedSeries, props.data.structureRev, props.fieldConfig]
   );
 
   // generate data struct for uPlot mode: 2
@@ -67,6 +67,7 @@ export const XYChartPanel2 = (props: Props2) => {
           label: s.name.value,
           color: alpha(s.color.fixed!, 1),
           getItemKey: () => s.name.value,
+          disabled: yField.state?.hideFrom?.viz ?? false,
         });
       }
     });

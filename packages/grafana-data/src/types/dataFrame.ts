@@ -1,3 +1,5 @@
+import { HideSeriesConfig } from '@grafana/schema';
+
 import { ScopedVars } from './ScopedVars';
 import { QueryResultBase, Labels, NullValueMode } from './data';
 import { DataLink, LinkModel } from './dataLink';
@@ -231,6 +233,15 @@ export interface FieldState {
    * It's up to each visualization to calculate and set this.
    */
   alignmentFactors?: DisplayValueAlignmentFactors;
+
+  /**
+   * This is the current ad-hoc state of whether this series is hidden in viz, tooltip, and legend.
+   *
+   * Currently this will match field.config.custom.hideFrom because fieldOverrides applies the special __system
+   * override to the actual config during toggle via legend. The goal is to move to using field.state for this
+   * and allow field.config.custom.hideFrom to reflect the save model permanent overrides
+   */
+  hideFrom?: HideSeriesConfig;
 }
 
 /** @public */

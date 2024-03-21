@@ -6,7 +6,7 @@ import { SeriesMapping } from './panelcfg.gen';
 // panel save model
 export interface XYSeriesConfig {
   name?: {
-    value?: string; // (if explicitly defined in manual mode)
+    fixed?: string; // (if explicitly defined in manual mode)
 
   /*
     replace?: {
@@ -34,7 +34,7 @@ export interface XYSeriesConfig {
     matcher: common.MatcherConfig;
   };
   y?: {
-    matcher?: common.MatcherConfig; // required?
+    matcher: common.MatcherConfig;
   };
   color?: {
     matcher: common.MatcherConfig;
@@ -53,6 +53,7 @@ export interface XYSeries {
   lineStyle: common.LineStyle;
 
   name: {
+    // extracted from fieldConfig + overrides of y field
     value: string;
   };
   x: {
@@ -76,6 +77,8 @@ export interface XYSeries {
     // fixed value extracted from fieldConfig + overrides of y field
     fixed?: number;
   };
+  // remaining unmapped fields in this frame (for showing remaining fields in tooltip)
+  _rest: Field[];
 }
 
 export interface Options extends common.OptionsWithLegend, common.OptionsWithTooltip {
