@@ -2,12 +2,22 @@
 
 In this guide, we'll walk you through the process of setting up your first alert in just a few minutes. You'll witness your alert in action with real-time data, as well as receiving alert notifications.
 
+In this tutorial you will:
+
+- Set up an Alert
+- Receive an alert notification to your email
+
 # Before you begin
 
 Ensure you have the following applications installed.
 
 - [Docker Compose](https://docs.docker.com/get-docker/) (included in Docker for Desktop for macOS and Windows)
 - [Git](https://git-scm.com/)
+
+
+Alternatively, you can follow along with this tutorial without needing to set up a local environment, you can use the [KillerCoda sandbox environment](https://killercoda.com/grafana-labs/course/full-stack/tutorial-enviroment).
+
+{{% /class %}}
 
 ## Set up a sample application
 
@@ -90,24 +100,34 @@ In Grafana, toggle the menu at the top left side of the screen, and **navigate t
 
 In this section we define the conditions that trigger alerts. 
 
-1. Select the ** Prometheus** data source from the drop-down menu. 
+1. Select the **Prometheus** data source from the drop-down menu. 
 
     {{< admonition type="note" >}}
     To visualize this data in Grafana, we need time-series metrics that we can collect and store. We can do that with [Prometheus](https://grafana.com/docs/grafana/latest/getting-started/get-started-grafana-prometheus/), which pulls metrics from our sample app.
     {{< /admonition >}}
 
-1. In the Query editor, **switch to Code mode**.
-1. Paste the query tns_request_duration_seconds_count{status_code="200",method="GET"}
-You should see the number of requests made to the server that had a response code 200.
-1. Keep expressions “B” and “C” as they are. These expressions (Reduce and Threshold, respectively) come by default when creating a new rule. Expression “B”, selects the last value of our query “A”, while the Threshold expression “C” will check if the last value from expression “B” is above a specific value. In addition, the Threshold expression is the alert condition by default. Enter 0.2 as threshold value. You can read more about queries and conditions [here](https://grafana.com/docs/grafana/latest/alerting/fundamentals/alert-rules/queries-conditions/#expression-queries).
+1. In the Query editor, switch to **Code** mode by clicking the button at the right.
+1. Enter the query 
+    ```
+    sum(rate(tns_request_duration_seconds_count[1m])) by(method)
+    ```
+   This [PromQL](https://prometheus.io/docs/prometheus/latest/querying/basics/) query calculates the sum of the per-second average rates of increase of the `tns_request_duration_seconds_count` metric over the last 1 minute, grouped by the HTTP method used in the requests. This can be useful for analyzing the request duration trends for different HTTP methods.
+
+
+1. Keep expressions “B” and “C” as they are. These expressions (**Reduce** and **Threshold**, respectively) come by default when creating a new rule.
+The Reduce expression “B”, selects the last value of our query “A”, while the Threshold expression “C” will check if the last value from expression “B” is above a specific value. In addition, the Threshold expression is the alert condition by default. Enter `0.2` as threshold value. You can read more about queries and conditions [here](https://grafana.com/docs/grafana/latest/alerting/fundamentals/alert-rules/queries-conditions/#expression-queries).
+
 1. Click Preview to run the queries.
 
-At this point, our alert should be working (it should be either in [Firing or Normal state](https://grafana.com/docs/grafana/latest/alerting/manage-notifications/view-state-health/#alert-rule-state)). If it returns an error, follow the instructions in the error message. If it returns “No data,” reselect the metrics from the Metrics browser; make sure the Input of each expression is correct (expression B: Input A and expression C: Input B). If you still get stuck, you are very welcome to post questions in our [Grafana Community forum](https://community.grafana.com/).
+You should see the request duration for different HTTP methods.
 
+{{<admonition type="note">}}
+If it returns “No data,” or an error, you are welcome to post questions in our [Grafana Community forum](https://community.grafana.com/).
+{{</admonition>}}
 
 ## Set evaluation behavior
 
-Define how often the rule is checked.
+An evaluation group defines an evaluation interval - how often a rule is checked. Alert rules within the same evaluation group are evaluated sequentially
 
 1. In **Folder**, click **+ New folder** and enter a name. For example: grafana-news. This folder will contain our alerts. 
 1. In the **Evaluation group**, repeat the above step to create a new evaluation group. We will name it 1m-evaluation. 
@@ -118,7 +138,7 @@ This is the time that a condition has to be met until the alert enters into **Fi
 
 ## Configure labels and notifications
 
-Add labels in order to ease searching or route notifications to a policy.
+Add labels to ease searching or route notifications to a policy.
 
 ### Labels
 
@@ -133,12 +153,12 @@ A new tab will open in your browser.
 1. **Edit** the email Contact point. 
 1. **Enter an email address** in the Addresses field.
 1. **Click Save** contact point.
-1. Switch back to the other tab to **continue creating the Alert rule**.
+1. Switch back to the previous tab to **continue creating the Alert rule**.
 
 
 ## Add Annotations
 
-In this section, we can Link a dashboard and panel to our Alert. For that, click **Link Dashboard and panel** button.
+To provide more context on the alert, you can link a dashboard and panel to our Alert. For that, click **Link Dashboard and panel** button.
 
 Linking an alert rule to a panel adds an annotation to the panel when the status of your alert rulechanges. If you don’t have a panel already, and since this is optional, you can skip this step for now and link it after you have finished configuring the alert rule.
 
@@ -148,7 +168,7 @@ We have now configured an alert rule and a contact point. Now let’s see if we 
 1. Add a new title and URL.
 1. Repeatedly click the vote button or refresh the page to generate a traffic spike.
 
-Once the query `sum(rate(tns_request_duration_seconds_count[5m])) by(route)` returns a value greater than 0.2 Grafana will trigger our alert. Browse to the Request Bin we created earlier and find the sent Grafana alert notification with details and metadata.
+Once the query `sum(rate(tns_request_duration_seconds_count[1m])) by(method)` returns a value greater than `0.2`, Grafana will trigger our alert. Browse to the Request Bin we created earlier and find the sent Grafana alert notification with details and metadata.
 
 ## Receive your first alert notification
 
@@ -157,4 +177,11 @@ Once the alert rule condition is met, you should receive an alert notification t
 The alert comes with additional information besides the annotation summary we wrote, such as links to perform actions like [silencing](https://grafana.com/docs/grafana/latest/alerting/manage-notifications/create-silence/) your alert or visiting the panel to which the alert is linked.
 
 
-# Next steps
+# Learn more
+
+Check out the links below to continue your learning journey with Grafana's LGTM stack.
+
+- [Prometheus](/docs/grafana/<GRAFANA_VERSION>/features/datasources/prometheus/)
+- [Alerting Overview](/docs/grafana/<GRAFANA_VERSION>/alerting/)
+- [Alert rules](/docs/grafana/<GRAFANA_VERSION>/alerting/create-alerts/)
+- [Contact Points](/docs/grafana/<GRAFANA_VERSION>/alerting/notifications/)
