@@ -59,7 +59,8 @@
       "metadata": {
         "name": "alertingPreviewUpgrade",
         "resourceVersion": "1709648236447",
-        "creationTimestamp": "2024-03-05T14:17:16Z"
+        "creationTimestamp": "2024-03-05T14:17:16Z",
+        "deletionTimestamp": "2024-03-11T16:22:16Z"
       },
       "spec": {
         "description": "Show Unified Alerting preview and upgrade page in legacy alerting",
@@ -440,12 +441,15 @@
     {
       "metadata": {
         "name": "pluginsDynamicAngularDetectionPatterns",
-        "resourceVersion": "1709648236447",
-        "creationTimestamp": "2024-03-05T14:17:16Z"
+        "resourceVersion": "1710847676897",
+        "creationTimestamp": "2024-03-05T14:17:16Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2024-03-19 11:27:56.897962695 +0000 UTC"
+        }
       },
       "spec": {
         "description": "Enables fetching Angular detection patterns for plugins from GCOM and fallback to hardcoded ones",
-        "stage": "experimental",
+        "stage": "GA",
         "codeowner": "@grafana/plugins-platform-backend"
       }
     },
@@ -505,7 +509,8 @@
       "metadata": {
         "name": "redshiftAsyncQueryDataSupport",
         "resourceVersion": "1709648236447",
-        "creationTimestamp": "2024-03-05T14:17:16Z"
+        "creationTimestamp": "2024-03-05T14:17:16Z",
+        "deletionTimestamp": "2024-03-18T12:15:18Z"
       },
       "spec": {
         "description": "Enable async query data support for Redshift",
@@ -646,7 +651,8 @@
       "metadata": {
         "name": "alertingUpgradeDryrunOnStart",
         "resourceVersion": "1709648236447",
-        "creationTimestamp": "2024-03-05T14:17:16Z"
+        "creationTimestamp": "2024-03-05T14:17:16Z",
+        "deletionTimestamp": "2024-03-11T16:22:16Z"
       },
       "spec": {
         "description": "When activated in legacy alerting mode, this initiates a dry-run of the Unified Alerting upgrade during each startup. It logs any issues detected without implementing any actual changes.",
@@ -999,7 +1005,8 @@
       "metadata": {
         "name": "alertingDetailsViewV2",
         "resourceVersion": "1709648236447",
-        "creationTimestamp": "2024-03-05T14:17:16Z"
+        "creationTimestamp": "2024-03-05T14:17:16Z",
+        "deletionTimestamp": "2024-03-12T12:33:03Z"
       },
       "spec": {
         "description": "Enables the preview of the new alert details view",
@@ -1052,7 +1059,8 @@
       "metadata": {
         "name": "athenaAsyncQueryDataSupport",
         "resourceVersion": "1709648236447",
-        "creationTimestamp": "2024-03-05T14:17:16Z"
+        "creationTimestamp": "2024-03-05T14:17:16Z",
+        "deletionTimestamp": "2024-03-18T12:15:18Z"
       },
       "spec": {
         "description": "Enable async query data support for Athena",
@@ -1500,7 +1508,8 @@
       "metadata": {
         "name": "cloudWatchWildCardDimensionValues",
         "resourceVersion": "1709648236447",
-        "creationTimestamp": "2024-03-05T14:17:16Z"
+        "creationTimestamp": "2024-03-05T14:17:16Z",
+        "deletionTimestamp": "2024-03-12T20:13:32Z"
       },
       "spec": {
         "description": "Fetches dimension values from CloudWatch to correctly label wildcard dimensions",
@@ -1551,7 +1560,8 @@
       "metadata": {
         "name": "cloudWatchLogsMonacoEditor",
         "resourceVersion": "1709648236447",
-        "creationTimestamp": "2024-03-05T14:17:16Z"
+        "creationTimestamp": "2024-03-05T14:17:16Z",
+        "deletionTimestamp": "2024-03-13T18:21:47Z"
       },
       "spec": {
         "description": "Enables the Monaco editor for CloudWatch Logs queries",
@@ -1906,12 +1916,15 @@
     {
       "metadata": {
         "name": "managedPluginsInstall",
-        "resourceVersion": "1709648236447",
-        "creationTimestamp": "2024-03-05T14:17:16Z"
+        "resourceVersion": "1710846414600",
+        "creationTimestamp": "2024-03-05T14:17:16Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2024-03-19 11:06:54.600063936 +0000 UTC"
+        }
       },
       "spec": {
         "description": "Install managed plugins directly from plugins catalog",
-        "stage": "preview",
+        "stage": "GA",
         "codeowner": "@grafana/plugins-platform-backend"
       }
     },
@@ -2113,6 +2126,23 @@
       },
       "spec": {
         "description": "Force email verification for users, even when authenticating through sso.",
+        "stage": "experimental",
+        "codeowner": "@grafana/identity-access-team",
+        "hideFromAdminPage": true,
+        "hideFromDocs": true
+      }
+    },
+    {
+      "metadata": {
+        "name": "ssoSettingsSAML",
+        "resourceVersion": "1710411764296",
+        "creationTimestamp": "2024-03-14T09:41:17Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2024-03-14 10:22:44.296694 +0000 UTC"
+        }
+      },
+      "spec": {
+        "description": "Use the new SSO Settings API to configure the SAML connector",
         "stage": "experimental",
         "codeowner": "@grafana/identity-access-team",
         "hideFromAdminPage": true,

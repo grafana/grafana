@@ -2,7 +2,7 @@ import { map, of } from 'rxjs';
 
 import { DataQueryRequest, DataSourceApi, DataSourceInstanceSettings, LoadingState, PanelData } from '@grafana/data';
 import { locationService } from '@grafana/runtime';
-import { SceneGridItem, SceneQueryRunner, VizPanel } from '@grafana/scenes';
+import { SceneQueryRunner, VizPanel } from '@grafana/scenes';
 import { DataQuery, DataSourceJsonData, DataSourceRef } from '@grafana/schema';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 import { InspectTab } from 'app/features/inspector/types';
@@ -10,6 +10,7 @@ import * as libAPI from 'app/features/library-panels/state/api';
 import { SHARED_DASHBOARD_QUERY } from 'app/plugins/datasource/dashboard';
 import { DASHBOARD_DATASOURCE_PLUGIN_ID } from 'app/plugins/datasource/dashboard/types';
 
+import { DashboardGridItem } from '../scene/DashboardGridItem';
 import { LibraryVizPanel } from '../scene/LibraryVizPanel';
 import { PanelTimeRange, PanelTimeRangeState } from '../scene/PanelTimeRange';
 import { transformSaveModelToScene } from '../serialization/transformSaveModelToScene';
@@ -172,6 +173,10 @@ describe('VizPanelManager', () => {
         },
       });
 
+      new DashboardGridItem({
+        body: vizPanel,
+      });
+
       const vizPanelManager = VizPanelManager.createFor(vizPanel);
 
       expect(vizPanelManager.state.panel.state.fieldConfig.defaults.custom).toBe('Custom');
@@ -194,6 +199,10 @@ describe('VizPanelManager', () => {
           customOption: 'A',
         },
         fieldConfig: { defaults: { custom: 'Custom' }, overrides: [] },
+      });
+
+      new DashboardGridItem({
+        body: vizPanel,
       });
 
       const vizPanelManager = VizPanelManager.createFor(vizPanel);
@@ -237,7 +246,7 @@ describe('VizPanelManager', () => {
         _loadedPanel: libraryPanelModel,
       });
 
-      new SceneGridItem({ body: libraryPanel });
+      new DashboardGridItem({ body: libraryPanel });
 
       const panelManager = VizPanelManager.createFor(panel);
 
@@ -249,6 +258,40 @@ describe('VizPanelManager', () => {
       panelManager.commitChanges();
 
       expect(apiCall.mock.calls[0][0].state.panel?.state.title).toBe('new title');
+    });
+
+    it('unlinks library panel', () => {
+      const panel = new VizPanel({
+        key: 'panel-1',
+        pluginId: 'text',
+      });
+
+      const libraryPanelModel = {
+        title: 'title',
+        uid: 'uid',
+        name: 'libraryPanelName',
+        model: vizPanelToPanel(panel),
+        type: 'panel',
+        version: 1,
+      };
+
+      const libraryPanel = new LibraryVizPanel({
+        isLoaded: true,
+        title: libraryPanelModel.title,
+        uid: libraryPanelModel.uid,
+        name: libraryPanelModel.name,
+        panelKey: panel.state.key!,
+        panel: panel,
+        _loadedPanel: libraryPanelModel,
+      });
+
+      const gridItem = new DashboardGridItem({ body: libraryPanel });
+
+      const panelManager = VizPanelManager.createFor(panel);
+      panelManager.unlinkLibraryPanel();
+
+      const sourcePanel = panelManager.state.sourcePanel.resolve();
+      expect(sourcePanel.parent?.state.key).toBe(gridItem.state.key);
     });
   });
 

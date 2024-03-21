@@ -7,19 +7,19 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/infra/kvstore"
-	"github.com/grafana/grafana/pkg/plugins/config"
 	"github.com/grafana/grafana/pkg/plugins/manager/loader/angular/angulardetector"
 	"github.com/grafana/grafana/pkg/plugins/manager/loader/angular/angularinspector"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/angulardetectorsprovider"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/angularpatternsstore"
+	"github.com/grafana/grafana/pkg/setting"
 )
 
 func TestProvideService(t *testing.T) {
 	t.Run("uses hardcoded inspector if feature flag is not present", func(t *testing.T) {
 		features := featuremgmt.WithFeatures()
 		dynamic, err := angulardetectorsprovider.ProvideDynamic(
-			&config.PluginManagementCfg{},
+			setting.NewCfg(),
 			angularpatternsstore.ProvideService(kvstore.NewFakeKVStore()),
 			features,
 		)
@@ -37,7 +37,7 @@ func TestProvideService(t *testing.T) {
 			featuremgmt.FlagPluginsDynamicAngularDetectionPatterns,
 		)
 		dynamic, err := angulardetectorsprovider.ProvideDynamic(
-			&config.PluginManagementCfg{},
+			setting.NewCfg(),
 			angularpatternsstore.ProvideService(kvstore.NewFakeKVStore()),
 			features,
 		)
