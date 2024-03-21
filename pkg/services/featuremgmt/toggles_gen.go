@@ -127,14 +127,6 @@ const (
 	// Enables cross-account querying in CloudWatch datasources
 	FlagCloudWatchCrossAccountQuerying = "cloudWatchCrossAccountQuerying"
 
-	// FlagRedshiftAsyncQueryDataSupport
-	// Enable async query data support for Redshift
-	FlagRedshiftAsyncQueryDataSupport = "redshiftAsyncQueryDataSupport"
-
-	// FlagAthenaAsyncQueryDataSupport
-	// Enable async query data support for Athena
-	FlagAthenaAsyncQueryDataSupport = "athenaAsyncQueryDataSupport"
-
 	// FlagShowDashboardValidationWarnings
 	// Show warnings when dashboards do not validate against the schema
 	FlagShowDashboardValidationWarnings = "showDashboardValidationWarnings"
@@ -282,10 +274,6 @@ const (
 	// FlagLokiFormatQuery
 	// Enables the ability to format Loki queries
 	FlagLokiFormatQuery = "lokiFormatQuery"
-
-	// FlagCloudWatchLogsMonacoEditor
-	// Enables the Monaco editor for CloudWatch Logs queries
-	FlagCloudWatchLogsMonacoEditor = "cloudWatchLogsMonacoEditor"
 
 	// FlagRecordedQueriesMulti
 	// Enables writing multiple items from a single query within Recorded Queries

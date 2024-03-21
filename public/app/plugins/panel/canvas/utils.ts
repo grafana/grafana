@@ -17,7 +17,7 @@ import { FrameState } from 'app/features/canvas/runtime/frame';
 import { Scene, SelectionParams } from 'app/features/canvas/runtime/scene';
 import { DimensionContext } from 'app/features/dimensions';
 
-import { AnchorPoint, ConnectionState } from './types';
+import { AnchorPoint, ConnectionState, LineStyle, StrokeDasharray } from './types';
 
 export function doSelect(scene: Scene, element: ElementState | FrameState) {
   try {
@@ -290,6 +290,7 @@ export function getConnections(sceneByName: Map<string, ElementState>) {
             source: v,
             target,
             info: c,
+            vertices: c.vertices ?? undefined,
           });
         }
       });
@@ -347,6 +348,25 @@ export const calculateCoordinates = (
   return { x1, y1, x2, y2 };
 };
 
+export const calculateMidpoint = (x1: number, y1: number, x2: number, y2: number) => {
+  return { x: (x1 + x2) / 2, y: (y1 + y2) / 2 };
+};
+
+export const calculateAbsoluteCoords = (
+  x1: number,
+  y1: number,
+  x2: number,
+  y2: number,
+  valueX: number,
+  valueY: number
+) => {
+  return { x: valueX * (x2 - x1) + x1, y: valueY * (y2 - y1) + y1 };
+};
+
+export const calculateAngle = (x1: number, y1: number, x2: number, y2: number) => {
+  return (Math.atan2(y2 - y1, x2 - x1) * 180) / Math.PI;
+};
+
 // @TODO revisit, currently returning last row index for field
 export const getRowIndex = (fieldName: string | undefined, scene: Scene) => {
   if (fieldName) {
@@ -363,7 +383,8 @@ export const getConnectionStyles = (info: CanvasConnection, scene: Scene, defaul
   const lastRowIndex = getRowIndex(info.size?.field, scene);
   const strokeColor = info.color ? scene.context.getColor(info.color).value() : defaultArrowColor;
   const strokeWidth = info.size ? scene.context.getScale(info.size).get(lastRowIndex) : defaultArrowSize;
-  return { strokeColor, strokeWidth };
+  const lineStyle = info.lineStyle === LineStyle.Dashed ? StrokeDasharray.Dashed : StrokeDasharray.Solid;
+  return { strokeColor, strokeWidth, lineStyle };
 };
 
 export const getParentBoundingClientRect = (scene: Scene) => {

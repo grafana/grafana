@@ -1,7 +1,7 @@
 import * as H from 'history';
 
 import { AppEvents, CoreApp, DataQueryRequest, NavIndex, NavModelItem, locationUtil } from '@grafana/data';
-import { locationService } from '@grafana/runtime';
+import { config, locationService } from '@grafana/runtime';
 import {
   getUrlSyncManager,
   SceneFlexLayout,
@@ -31,7 +31,6 @@ import { ShowConfirmModalEvent } from 'app/types/events';
 import { PanelEditor } from '../panel-edit/PanelEditor';
 import { DashboardSceneChangeTracker } from '../saving/DashboardSceneChangeTracker';
 import { SaveDashboardDrawer } from '../saving/SaveDashboardDrawer';
-import { DashboardSceneRenderer } from '../scene/DashboardSceneRenderer';
 import {
   buildGridItemForLibPanel,
   buildGridItemForPanel,
@@ -60,8 +59,10 @@ import {
 import { AddLibraryPanelWidget } from './AddLibraryPanelWidget';
 import { DashboardControls } from './DashboardControls';
 import { DashboardGridItem } from './DashboardGridItem';
+import { DashboardSceneRenderer } from './DashboardSceneRenderer';
 import { DashboardSceneUrlSync } from './DashboardSceneUrlSync';
 import { LibraryVizPanel } from './LibraryVizPanel';
+import { ScopesScene } from './ScopesScene';
 import { ViewPanelScene } from './ViewPanelScene';
 import { setupKeyboardShortcuts } from './keyboardShortcuts';
 
@@ -110,6 +111,8 @@ export interface DashboardSceneState extends SceneObjectState {
   hasCopiedPanel?: boolean;
   /** The dashboard doesn't have panels */
   isEmpty?: boolean;
+  /** Scene object that handles the scopes selector */
+  scopes?: ScopesScene;
 }
 
 export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
@@ -150,6 +153,7 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
       body: state.body ?? new SceneFlexLayout({ children: [] }),
       links: state.links ?? [],
       hasCopiedPanel: store.exists(LS_PANEL_COPY_KEY),
+      scopes: state.uid && config.featureToggles.scopeFilters ? new ScopesScene() : undefined,
       ...state,
     });
 
@@ -787,6 +791,7 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
       dashboardUID: this.state.uid,
       panelId,
       panelPluginId: panel?.state.pluginId,
+      scope: this.state.scopes?.state.filters.getSelectedScope(),
     };
   }
 
