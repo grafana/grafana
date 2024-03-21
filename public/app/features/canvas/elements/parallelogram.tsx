@@ -4,21 +4,21 @@ import { v4 as uuidv4 } from 'uuid';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { config } from 'app/core/config';
-import { DimensionContext } from 'app/features/dimensions/context';
+import { DimensionContext } from 'app/features/dimensions';
 import { ColorDimensionEditor } from 'app/features/dimensions/editors/ColorDimensionEditor';
 import { TextDimensionEditor } from 'app/features/dimensions/editors/TextDimensionEditor';
 import { getDataLinks } from 'app/plugins/panel/canvas/utils';
 
 import {
   CanvasElementItem,
-  CanvasElementOptions,
   CanvasElementProps,
+  CanvasElementOptions,
   defaultBgColor,
   defaultTextColor,
 } from '../element';
 import { Align, CanvasElementConfig, CanvasElementData, VAlign } from '../types';
 
-const Ellipse = (props: CanvasElementProps<CanvasElementConfig, CanvasElementData>) => {
+const Parallelogram = (props: CanvasElementProps<CanvasElementConfig, CanvasElementData>) => {
   const { data } = props;
   const styles = getStyles(config.theme2, data);
 
@@ -29,46 +29,42 @@ const Ellipse = (props: CanvasElementProps<CanvasElementConfig, CanvasElementDat
     <div className={styles.container}>
       <svg
         xmlns="http://www.w3.org/2000/svg"
-        viewBox="0 0 200 200"
+        viewBox="0 0 250 150"
         width="100%"
         height="100%"
         preserveAspectRatio="none"
       >
         <defs>
-          <pattern id={`image-${uniqueId}`} patternUnits="userSpaceOnUse" width="200" height="200">
-            <image xlinkHref={data?.backgroundImage} x="-50" y="-50" width="300" height="300"></image>
+          <pattern id={`image-${uniqueId}`} patternUnits="userSpaceOnUse" width="250" height="150">
+            <image xlinkHref={data?.backgroundImage} x="-50" y="-50" width="350" height="200"></image>
           </pattern>
-          <clipPath id={`ellipseClip-${uniqueId}`}>
-            <ellipse cx="50%" cy="50%" rx="50%" ry="50%" />
+          <clipPath id={`parallelogramClip-${uniqueId}`}>
+            <polygon points="0,150 50,0 250,0 200,150" />
           </clipPath>
         </defs>
         {/* Apply background image within the clipping area */}
-        <rect x="0" y="0" width="100%" height="100%" clipPath={`url(#ellipseClip-${uniqueId})`} />
-        <ellipse
-          cx="50%"
-          cy="50%"
-          rx="50%"
-          ry="50%"
+        <rect x="0" y="0" width="100%" height="100%" clipPath={`url(#parallelogramClip-${uniqueId})`} />
+        <polygon
+          points="0,150 50,0 250,0 200,150"
           className={styles.element}
           style={{ fill: data?.backgroundImage ? `url(#image-${uniqueId})` : data?.backgroundColor }}
         />
       </svg>
-
       <span className={styles.text}>{data?.text}</span>
     </div>
   );
 };
 
-export const ellipseItem: CanvasElementItem<CanvasElementConfig, CanvasElementData> = {
-  id: 'ellipse',
-  name: 'Ellipse',
-  description: 'Ellipse',
+export const parallelogramItem: CanvasElementItem = {
+  id: 'parallelogram',
+  name: 'Parallelogram',
+  description: 'Parallelogram',
 
-  display: Ellipse,
+  display: Parallelogram,
 
   defaultSize: {
-    width: 160,
-    height: 160,
+    width: 250,
+    height: 150,
   },
 
   getNewOptions: (options) => ({
@@ -86,13 +82,14 @@ export const ellipseItem: CanvasElementItem<CanvasElementConfig, CanvasElementDa
       },
     },
     placement: {
-      width: options?.placement?.width ?? 160,
-      height: options?.placement?.height ?? 138,
+      width: options?.placement?.width ?? 250,
+      height: options?.placement?.height ?? 150,
       top: options?.placement?.top,
       left: options?.placement?.left,
     },
   }),
 
+  // Called when data changes
   prepareData: (dimensionContext: DimensionContext, elementOptions: CanvasElementOptions<CanvasElementConfig>) => {
     const textConfig = elementOptions.config;
 
@@ -120,7 +117,7 @@ export const ellipseItem: CanvasElementItem<CanvasElementConfig, CanvasElementDa
   },
 
   registerOptionsUI: (builder) => {
-    const category = ['Ellipse'];
+    const category = ['Parallelogram'];
     builder
       .addCustomEditor({
         category,
