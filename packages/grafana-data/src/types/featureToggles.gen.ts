@@ -175,4 +175,5 @@ export interface FeatureToggles {
   scopeFilters?: boolean;
   emailVerificationEnforcement?: boolean;
   ssoSettingsSAML?: boolean;
+  cloudWatchNewLabelParsing?: boolean;
 }

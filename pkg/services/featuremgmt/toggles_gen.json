@@ -2145,6 +2145,18 @@
         "hideFromAdminPage": true,
         "hideFromDocs": true
       }
+    },
+    {
+      "metadata": {
+        "name": "cloudWatchNewLabelParsing",
+        "resourceVersion": "1710877843693",
+        "creationTimestamp": "2024-03-19T19:50:43Z"
+      },
+      "spec": {
+        "description": "Updates CloudWatch label parsing to be more accurate",
+        "stage": "GA",
+        "codeowner": "@grafana/aws-datasources"
+      }
     }
   ]
 }
