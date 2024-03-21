@@ -143,9 +143,17 @@ describe('transformSaveModelToScene', () => {
 
       const scene = createDashboardSceneFromDashboardModel(oldModel);
 
-      expect(scene.state.$behaviors).toHaveLength(6);
-      expect(scene.state.$behaviors![0]).toBeInstanceOf(behaviors.CursorSync);
-      expect((scene.state.$behaviors![0] as behaviors.CursorSync).state.sync).toEqual(DashboardCursorSync.Crosshair);
+      const cursorSync = scene.state.$behaviors?.find((b) => b instanceof behaviors.CursorSync);
+      expect(cursorSync).toBeInstanceOf(behaviors.CursorSync);
+      expect((cursorSync as behaviors.CursorSync).state.sync).toEqual(DashboardCursorSync.Crosshair);
+    });
+
+    it('should apply live now timer behavior', () => {
+      const oldModel = new DashboardModel(defaultDashboard);
+      const scene = createDashboardSceneFromDashboardModel(oldModel);
+
+      const liveNowTimer = scene.state.$behaviors?.find((b) => b instanceof behaviors.LiveNowTimer);
+      expect(liveNowTimer).toBeInstanceOf(behaviors.LiveNowTimer);
     });
 
     it('should initialize the Dashboard Scene with empty template variables', () => {
