@@ -279,7 +279,7 @@ export const RulesGroup = React.memo(({ group, namespace, expandAll, viewMode }:
           namespace={namespace}
           group={group}
           onClose={() => closeEditModal()}
-          folderUrl={folder?.canEdit ? makeFolderSettingsLink(folder) : undefined}
+          folderUrl={folder?.canEdit ? makeFolderSettingsLink(folder.uid) : undefined}
           folderUid={folderUID}
         />
       )}
