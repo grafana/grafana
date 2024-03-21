@@ -27,19 +27,17 @@ Canvases combine the power of Grafana with the flexibility of custom elements. C
 
 ## Elements
 
-Elements are the basic building blocks of a canvas and they help you visualize data with different shapes and options. When you select an element that you've added to a canvas, the panel editor pane displays a **Selected element** section where you can access editing options for the element. The editing options are dependent on the element type.
-
-You can move elements around the canvas. When you're moving elements, snapping and alignment guides help you create more precise layouts.
+Elements are the basic building blocks of a canvas and they help you visualize data with different shapes and options. You can move elements around the canvas and when you do, snapping and alignment guides help you create more precise layouts.
 
 {{% admonition type="note" %}}
-Currently, element snapping and alignment only works when the canvas is not zoomed in.
+Element snapping and alignment only works when the canvas is not zoomed in.
 {{% /admonition %}}
 
-<!-- TODO: Add gif showcasing feature (when creating what's new entry for 10.4) -->
+When you select an element that you've added to a canvas, you can access editing options for it that are dependent on the element type. The following sections describe the different elements available.
 
 ### Basic shapes
 
-Basic shape elements can display text (both fixed and field data) and its background color can be changed based on data thresholds. You can add background colors and images to basic shapes. You can add the following basic shapes to a canvas:
+A basic shape element can display text (both fixed and field data) and its background color can be changed based on data thresholds. You can add the following basic shapes to a canvas:
 
 - Cloud
 - Ellipse
@@ -89,13 +87,13 @@ To remove a connection, simply click on the connection directly and then press t
 
 ### Adjust connectors
 
-You can adjust connectors by adding angles to them to fit the canvas you're working in. When you move connected elements, the connector resizes to fit the space. To adjust a connector, click it to display the midpoint controls and move those as needed. To make a connector a straight line again, move the element or connector until the midpoint controls disappear.
+You can adjust connectors, adding angles to them, to fit the canvas you're working in. When you move connected elements, the connector resizes to fit the space. To adjust a connector, click it to display the midpoint controls and move those as needed. To make a connector a straight line again, move the element or connector until the midpoint controls disappear.
 
 By default, if you move a connector so that it's almost a right angle or a straight line, the connector snaps into that angle or into a straight line. To disable this behavior, press and hold the Ctrl key while adjusting the connector.
 
-<!--what do we want to call these vertices/midpoint controls?-->
+<!--what do we want to call these? vertices seems too technical, does midpoint controls work?-->
 
-<!--video here? -->
+<!--add gif here to show this-->
 
 ### Style connectors
 
@@ -134,16 +132,6 @@ The context menu is triggered by a right click action over the panel / over a gi
 When right clicking an element, you are able to edit, delete, duplicate, and modify the element's layer positioning.
 
 {{< figure src="/static/img/docs/canvas-panel/canvas-context-menu-9-2-0.png" max-width="750px" caption="Canvas element context menu" >}}
-
-### Element snapping and alignment
-
-When you're moving elements around the canvas, snapping and alignment guides help you create more precise layouts.
-
-{{% admonition type="note" %}}
-Currently, element snapping and alignment only works when the canvas is not zoomed in.
-{{% /admonition %}}
-
-<!-- TODO: Add gif showcasing feature (when creating what's new entry for 10.4) -->
 
 ## Canvas options
 
