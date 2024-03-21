@@ -15,13 +15,12 @@ import {
   ConstantVariable,
   IntervalVariable,
   SceneRefreshPicker,
-  SceneGridItem,
   SceneObject,
   VizPanelMenu,
   behaviors,
   VizPanelState,
   SceneGridItemLike,
-  SceneDataLayers,
+  SceneDataLayerSet,
   SceneDataLayerProvider,
   SceneDataLayerControls,
   TextBoxVariable,
@@ -38,13 +37,13 @@ import { AddLibraryPanelWidget } from '../scene/AddLibraryPanelWidget';
 import { AlertStatesDataLayer } from '../scene/AlertStatesDataLayer';
 import { DashboardAnnotationsDataLayer } from '../scene/DashboardAnnotationsDataLayer';
 import { DashboardControls } from '../scene/DashboardControls';
+import { DashboardGridItem, RepeatDirection } from '../scene/DashboardGridItem';
 import { registerDashboardMacro } from '../scene/DashboardMacro';
 import { DashboardScene } from '../scene/DashboardScene';
 import { LibraryVizPanel } from '../scene/LibraryVizPanel';
 import { VizPanelLinks, VizPanelLinksMenu } from '../scene/PanelLinks';
 import { panelLinksBehavior, panelMenuBehavior } from '../scene/PanelMenuBehavior';
 import { PanelNotices } from '../scene/PanelNotices';
-import { PanelRepeaterGridItem } from '../scene/PanelRepeaterGridItem';
 import { PanelTimeRange } from '../scene/PanelTimeRange';
 import { RowRepeaterBehavior } from '../scene/RowRepeaterBehavior';
 import { RowActions } from '../scene/row-actions/RowActions';
@@ -306,10 +305,11 @@ export function createDashboardSceneFromDashboardModel(oldModel: DashboardModel)
       registerDashboardSceneTracking(oldModel),
       registerPanelInteractionsReporter,
       trackIfIsEmpty,
+      new behaviors.LiveNowTimer(oldModel.liveNow),
     ],
     $data:
       layers.length > 0
-        ? new SceneDataLayers({
+        ? new SceneDataLayerSet({
             layers,
           })
         : undefined,
@@ -447,7 +447,7 @@ export function buildGridItemForLibraryPanelWidget(panel: PanelModel) {
     key: getVizPanelKeyForPanelId(panel.id),
   });
 
-  return new SceneGridItem({
+  return new DashboardGridItem({
     body,
     y: panel.gridPos.y,
     x: panel.gridPos.x,
@@ -468,16 +468,26 @@ export function buildGridItemForLibPanel(panel: PanelModel) {
     panelKey: getVizPanelKeyForPanelId(panel.id),
   });
 
-  return new SceneGridItem({
-    body,
+  return new DashboardGridItem({
+    key: `grid-item-${panel.id}`,
     y: panel.gridPos.y,
     x: panel.gridPos.x,
     width: panel.gridPos.w,
     height: panel.gridPos.h,
+    itemHeight: panel.gridPos.h,
+    body,
   });
 }
 
-export function buildGridItemForPanel(panel: PanelModel): SceneGridItemLike {
+export function buildGridItemForPanel(panel: PanelModel): DashboardGridItem {
+  const repeatDirection: RepeatDirection = panel.repeatDirection === 'h' ? 'h' : 'v';
+  const repeatOptions = panel.repeat
+    ? {
+        variableName: panel.repeat,
+        repeatDirection,
+      }
+    : {};
+
   const titleItems: SceneObject[] = [];
 
   titleItems.push(
@@ -521,33 +531,18 @@ export function buildGridItemForPanel(panel: PanelModel): SceneGridItemLike {
     });
   }
 
-  if (panel.repeat) {
-    const repeatDirection = panel.repeatDirection === 'h' ? 'h' : 'v';
-
-    return new PanelRepeaterGridItem({
-      key: `grid-item-${panel.id}`,
-      x: panel.gridPos.x,
-      y: panel.gridPos.y,
-      width: repeatDirection === 'h' ? 24 : panel.gridPos.w,
-      height: panel.gridPos.h,
-      itemHeight: panel.gridPos.h,
-      source: new VizPanel(vizPanelState),
-      variableName: panel.repeat,
-      repeatedPanels: [],
-      repeatDirection: repeatDirection,
-      maxPerRow: panel.maxPerRow,
-    });
-  }
-
   const body = new VizPanel(vizPanelState);
 
-  return new SceneGridItem({
+  return new DashboardGridItem({
     key: `grid-item-${panel.id}`,
     x: panel.gridPos.x,
     y: panel.gridPos.y,
-    width: panel.gridPos.w,
+    width: repeatDirection === 'h' ? 24 : panel.gridPos.w,
     height: panel.gridPos.h,
+    itemHeight: panel.gridPos.h,
     body,
+    maxPerRow: panel.maxPerRow,
+    ...repeatOptions,
   });
 }
 
