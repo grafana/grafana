@@ -22,7 +22,7 @@ import {
   toLegacyResponseData,
 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { AngularComponent, getAngularLoader, getDataSourceSrv } from '@grafana/runtime';
+import { AngularComponent, getAngularLoader, getDataSourceSrv, reportInteraction } from '@grafana/runtime';
 import { Badge, ErrorBoundaryAlert } from '@grafana/ui';
 import { OperationRowHelp } from 'app/core/components/QueryOperationRow/OperationRowHelp';
 import {
@@ -57,7 +57,7 @@ export interface Props<TQuery extends DataQuery> {
   onChange: (query: TQuery) => void;
   onRunQuery: () => void;
   visualization?: ReactNode;
-  hideDisableQuery?: boolean;
+  hideHideQueryButton?: boolean;
   app?: CoreApp;
   history?: Array<HistoryItem<TQuery>>;
   eventBus?: EventBusExtended;
@@ -341,7 +341,7 @@ export class QueryEditorRow<TQuery extends DataQuery> extends PureComponent<Prop
     }
   };
 
-  onDisableQuery = () => {
+  onHideQuery = () => {
     const { query, onChange, onRunQuery, onQueryToggled } = this.props;
     onChange({ ...query, hide: !query.hide });
     onRunQuery();
@@ -349,6 +349,10 @@ export class QueryEditorRow<TQuery extends DataQuery> extends PureComponent<Prop
     if (onQueryToggled) {
       onQueryToggled(query.hide);
     }
+
+    reportInteraction('query_editor_row_hide_query_clicked', {
+      hide: !query.hide,
+    });
   };
 
   onToggleHelp = () => {
@@ -440,9 +444,9 @@ export class QueryEditorRow<TQuery extends DataQuery> extends PureComponent<Prop
   };
 
   renderActions = (props: QueryOperationRowRenderProps) => {
-    const { query, hideDisableQuery = false } = this.props;
+    const { query, hideHideQueryButton: hideHideQueryButton = false } = this.props;
     const { hasTextEditMode, datasource, showingHelp } = this.state;
-    const isDisabled = !!query.hide;
+    const isHidden = !!query.hide;
 
     const hasEditorHelp = datasource?.components?.QueryEditorHelp;
 
@@ -471,12 +475,17 @@ export class QueryEditorRow<TQuery extends DataQuery> extends PureComponent<Prop
           icon="copy"
           onClick={this.onCopyQuery}
         />
-        {!hideDisableQuery ? (
+        {!hideHideQueryButton ? (
           <QueryOperationToggleAction
-            title={t('query-operation.header.disable-query', 'Disable query')}
-            icon={isDisabled ? 'eye-slash' : 'eye'}
-            active={isDisabled}
-            onClick={this.onDisableQuery}
+            dataTestId={selectors.components.QueryEditorRow.actionButton('Hide response')}
+            title={
+              query.hide
+                ? t('query-operation.header.show-response', 'Show response')
+                : t('query-operation.header.hide-response', 'Hide response')
+            }
+            icon={isHidden ? 'eye-slash' : 'eye'}
+            active={isHidden}
+            onClick={this.onHideQuery}
           />
         ) : null}
         <QueryOperationAction
@@ -497,7 +506,7 @@ export class QueryEditorRow<TQuery extends DataQuery> extends PureComponent<Prop
         queries={queries}
         onChangeDataSource={onChangeDataSource}
         dataSource={dataSource}
-        disabled={query.hide}
+        hidden={query.hide}
         onClick={(e) => this.onToggleEditMode(e, props)}
         onChange={onChange}
         collapsedText={!props.isOpen ? this.renderCollapsedText() : null}
@@ -510,12 +519,12 @@ export class QueryEditorRow<TQuery extends DataQuery> extends PureComponent<Prop
   render() {
     const { query, index, visualization, collapsable } = this.props;
     const { datasource, showingHelp, data } = this.state;
-    const isDisabled = query.hide;
+    const isHidden = query.hide;
     const error =
       data?.error && data.error.refId === query.refId ? data.error : data?.errors?.find((e) => e.refId === query.refId);
     const rowClasses = classNames('query-editor-row', {
-      'query-editor-row--disabled': isDisabled,
-      'gf-form-disabled': isDisabled,
+      'query-editor-row--disabled': isHidden,
+      'gf-form-disabled': isHidden,
     });
 
     if (!datasource) {

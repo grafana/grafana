@@ -161,7 +161,7 @@ export const QueryWrapper = ({
           queries={editorQueries}
           renderHeaderExtras={() => <HeaderExtras query={query} index={index} error={error} />}
           app={CoreApp.UnifiedAlerting}
-          hideDisableQuery={true}
+          hideHideQueryButton={true}
         />
       </div>
       {showVizualisation && (

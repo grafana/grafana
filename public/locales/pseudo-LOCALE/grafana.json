@@ -1343,11 +1343,12 @@
     "header": {
       "collapse-row": "Cőľľäpşę qūęřy řőŵ",
       "datasource-help": "Ŝĥőŵ đäŧä şőūřčę ĥęľp",
-      "disable-query": "Đįşäþľę qūęřy",
       "drag-and-drop": "Đřäģ äŉđ đřőp ŧő řęőřđęř",
       "duplicate-query": "Đūpľįčäŧę qūęřy",
       "expand-row": "Ēχpäŉđ qūęřy řőŵ",
+      "hide-response": "Ħįđę řęşpőŉşę",
       "remove-query": "Ŗęmővę qūęřy",
+      "show-response": "Ŝĥőŵ řęşpőŉşę",
       "toggle-edit-mode": "Ŧőģģľę ŧęχŧ ęđįŧ mőđę"
     },
     "query-editor-not-exported": "Đäŧä şőūřčę pľūģįŉ đőęş ŉőŧ ęχpőřŧ äŉy Qūęřy Ēđįŧőř čőmpőŉęŉŧ"
