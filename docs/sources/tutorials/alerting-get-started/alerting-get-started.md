@@ -92,7 +92,7 @@ In Grafana, toggle the menu at the top left side of the screen, and **navigate t
 
 ## Enter alert rule name
 
-1. Make it short and descriptive as this will appear in your alert notification. For instance, server-requests-duration
+1. Make it short and descriptive as this will appear in your alert notification. For instance, *server-requests-duration*
 
 ## Define query and alert condition
 
@@ -127,12 +127,12 @@ If it returns “No data,” or an error, you are welcome to post questions in o
 
 An evaluation group defines an evaluation interval - how often a rule is checked. Alert rules within the same evaluation group are evaluated sequentially
 
-1. In **Folder**, click **+ New folder** and enter a name. For example: grafana-news. This folder will contain our alerts. 
-1. In the **Evaluation group**, repeat the above step to create a new evaluation group. We will name it 1m-evaluation. 
+1. In **Folder**, click **+ New folder** and enter a name. For example: *grafana-news*. This folder will contain our alerts. 
+1. In the **Evaluation group**, repeat the above step to create a new evaluation group. We will name it *1m-evaluation*. 
 1. Choose an **Evaluation interval** (how often the alert will be evaluated). 
-For example, every 1m (1 minute).
+For example, every `1m` (1 minute).
 1. Set the **pending period** (the “for” period). 
-This is the time that a condition has to be met until the alert enters into **Firing** state and a notification is sent. For example, 0s so the alert rule fires the moment the condition is met.
+This is the time that a condition has to be met until the alert enters into **Firing** state and a notification is sent. For example, `0s` (zero seconds) so the alert rule fires the moment the condition is met.
 
 ## Configure labels and notifications
 
@@ -166,7 +166,7 @@ We have now configured an alert rule and a contact point. Now let’s see if we 
 1. Add a new title and URL.
 1. Repeatedly click the vote button or refresh the page to generate a traffic spike.
 
-Once the query `sum(rate(tns_request_duration_seconds_count[1m])) by(method)` returns a value greater than `0.2`, Grafana will trigger our alert. Browse to the Request Bin we created earlier and find the sent Grafana alert notification with details and metadata.
+Once the query `sum(rate(tns_request_duration_seconds_count[1m])) by(method)` returns a value greater than `0.2`, Grafana will trigger our alert. Browse to your email inbox, and find the alert notification.
 
 ## Receive your first alert notification
 
