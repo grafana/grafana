@@ -17,7 +17,7 @@ import { FrameState } from 'app/features/canvas/runtime/frame';
 import { Scene, SelectionParams } from 'app/features/canvas/runtime/scene';
 import { DimensionContext } from 'app/features/dimensions';
 
-import { AnchorPoint, ConnectionState } from './types';
+import { AnchorPoint, ConnectionState, LineStyle, StrokeDasharray } from './types';
 
 export function doSelect(scene: Scene, element: ElementState | FrameState) {
   try {
@@ -384,7 +384,8 @@ export const getConnectionStyles = (info: CanvasConnection, scene: Scene, defaul
   const strokeColor = info.color ? scene.context.getColor(info.color).value() : defaultArrowColor;
   const strokeWidth = info.size ? scene.context.getScale(info.size).get(lastRowIndex) : defaultArrowSize;
   const strokeRadius = info.radius ? scene.context.getScale(info.radius).get(lastRowIndex) : 0;
-  return { strokeColor, strokeWidth, strokeRadius };
+  const lineStyle = info.lineStyle === LineStyle.Dashed ? StrokeDasharray.Dashed : StrokeDasharray.Solid;
+  return { strokeColor, strokeWidth, strokeRadius, lineStyle };
 };
 
 export const getParentBoundingClientRect = (scene: Scene) => {
