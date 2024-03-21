@@ -142,6 +142,8 @@ export const optionBuilder: OptionSuppliers = {
         ],
       },
       defaultValue: ConnectionDirection.Forward,
+    });
+  },
 
   addLineStyle: (builder, context) => {
     const category = ['Line style'];
