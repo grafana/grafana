@@ -1,9 +1,10 @@
-import { SystemJS, config } from '@grafana/runtime';
+import { config } from '@grafana/runtime';
 
 import { sandboxPluginDependencies } from '../sandbox/plugin_dependencies';
 
 import { SHARED_DEPENDENCY_PREFIX } from './constants';
 import { trackPackageUsage } from './packageMetrics';
+import { SystemJS } from './systemjs';
 
 export function buildImportMap(importMap: Record<string, System.Module>) {
   return Object.keys(importMap).reduce<Record<string, string>>((acc, key) => {

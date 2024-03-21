@@ -1,13 +1,14 @@
 // mock fetch for SystemJS
 import 'whatwg-fetch';
 
-import { SystemJS, config } from '@grafana/runtime';
+import { config } from '@grafana/runtime';
 
 jest.mock('./cache', () => ({
   resolveWithCache: (url: string) => `${url}?_cache=1234`,
 }));
 
 import { server } from './pluginLoader.mock';
+import { SystemJS } from './systemjs';
 import { decorateSystemJSFetch, decorateSystemJSResolve } from './systemjsHooks';
 import { SystemJSWithLoaderHooks } from './types';
 
