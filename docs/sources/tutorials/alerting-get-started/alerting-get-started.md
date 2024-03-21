@@ -126,7 +126,7 @@ Add labels in order to ease searching or route notifications to a policy.
 
 ### Notifications
 
-Here you can select who should receive a notification when an alert rule fires.
+Select who should receive a notification when an alert rule fires.
 
 1. Click **View or create contact points**. A new tab will open in your browser. 
 1. **Edit** the email Contact point 
