@@ -1,4 +1,4 @@
-API rule violation: list_type_missing,github.com/grafana/grafana/pkg/apis/scope/v0alpha1,ScopeDashboardSpec,DashboardUIDs
+API rule violation: list_type_missing,github.com/grafana/grafana/pkg/apis/scope/v0alpha1,ScopeDashboardBindingSpec,DashboardUIDs
 API rule violation: list_type_missing,github.com/grafana/grafana/pkg/apis/scope/v0alpha1,ScopeSpec,Filters
-API rule violation: names_match,github.com/grafana/grafana/pkg/apis/scope/v0alpha1,ScopeDashboardSpec,DashboardUIDs
-API rule violation: names_match,github.com/grafana/grafana/pkg/apis/scope/v0alpha1,ScopeDashboardSpec,ScopeUID
+API rule violation: names_match,github.com/grafana/grafana/pkg/apis/scope/v0alpha1,ScopeDashboardBindingSpec,DashboardUIDs
+API rule violation: names_match,github.com/grafana/grafana/pkg/apis/scope/v0alpha1,ScopeDashboardBindingSpec,ScopeUID
