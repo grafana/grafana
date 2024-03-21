@@ -18827,7 +18827,7 @@ __metadata:
     stylelint-config-sass-guidelines: "npm:11.0.0"
     symbol-observable: "npm:4.0.0"
     systemjs: "npm:6.14.3"
-    systemjs-cjs-extra: "npm:0.2.0"
+    systemjs-cjs-extra: "npm:0.2.1"
     terser-webpack-plugin: "npm:5.3.10"
     testing-library-selector: "npm:0.3.1"
     tether-drop: "https://github.com/torkelo/drop"
@@ -29630,10 +29630,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"systemjs-cjs-extra@npm:0.2.0":
-  version: 0.2.0
-  resolution: "systemjs-cjs-extra@npm:0.2.0"
-  checksum: 10/678d5534e98fab758bf9e01cf1106730b0ce6ced0afda23c5421311dff147cef3e95e6d68cfe94662255cd437da44587d1a6be38ee56e4ff6bc4da0d9e1ad47d
+"systemjs-cjs-extra@npm:0.2.1":
+  version: 0.2.1
+  resolution: "systemjs-cjs-extra@npm:0.2.1"
+  checksum: 10/b620af840b1f01f3facc0f9c6895d086fd207f1a55619183b5d4e787596963edc56250acbb3b597df02fbfac38fa8cc1b537d2dbb204ba7f56a2659f56d7a02f
   languageName: node
   linkType: hard
 
