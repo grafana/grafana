@@ -3,7 +3,7 @@ import userEvent from '@testing-library/user-event';
 import React from 'react';
 
 import { CoreApp, PluginType } from '@grafana/data';
-import { setPluginExtensionGetter } from '@grafana/runtime';
+import { setPluginExtensionsHook } from '@grafana/runtime';
 
 import { PyroscopeDataSource } from '../datasource';
 import { mockFetchPyroscopeDatasourceSettings } from '../datasource.test';
@@ -13,7 +13,7 @@ import { Props, QueryEditor } from './QueryEditor';
 
 describe('QueryEditor', () => {
   beforeEach(() => {
-    setPluginExtensionGetter(() => ({ extensions: [] })); // No extensions
+    setPluginExtensionsHook(() => ({ extensions: [] })); // No extensions
     mockFetchPyroscopeDatasourceSettings();
   });
 
