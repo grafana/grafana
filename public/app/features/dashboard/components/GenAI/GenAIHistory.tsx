@@ -139,7 +139,7 @@ export const GenAIHistory = ({
         placeholder="Tell AI what to do next..."
         suffix={
           <Button
-            icon="corner-down-right-alt"
+            icon="enter"
             variant="secondary"
             fill="text"
             aria-label="Send custom feedback"
