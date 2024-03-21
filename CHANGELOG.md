@@ -1,3 +1,30 @@
+<!-- 10.4.1 START -->
+
+# 10.4.1 (2024-03-20)
+
+### Features and enhancements
+
+- **Alerting:** Add "Keep Last State" backend functionality. [#84406](https://github.com/grafana/grafana/issues/84406), [@rwwiv](https://github.com/rwwiv)
+- **Postgres:** Allow disabling SNI on SSL-enabled connections. [#84249](https://github.com/grafana/grafana/issues/84249), [@papagian](https://github.com/papagian)
+- **DataQuery:** Track panel plugin id not type. [#83164](https://github.com/grafana/grafana/issues/83164), [@torkelo](https://github.com/torkelo)
+
+### Bug fixes
+
+- **Elasticsearch:** Fix legend for alerting, expressions and previously frontend queries. [#84685](https://github.com/grafana/grafana/issues/84685), [@ivanahuckova](https://github.com/ivanahuckova)
+- **Alerting:** Fix optional fields requiring validation rule. [#84595](https://github.com/grafana/grafana/issues/84595), [@gillesdemey](https://github.com/gillesdemey)
+- **ExtSvcAccounts:** FIX prevent service account deletion. [#84511](https://github.com/grafana/grafana/issues/84511), [@gamab](https://github.com/gamab)
+- **Loki:** Fix null pointer exception in case request returned an error. [#84401](https://github.com/grafana/grafana/issues/84401), [@svennergr](https://github.com/svennergr)
+- **Dashboard:** Fix issue where out-of-view shared query panels caused blank dependent panels. [#84197](https://github.com/grafana/grafana/issues/84197), [@kaydelaney](https://github.com/kaydelaney)
+- **Auth:** Only call rotate token if we have a session expiry cookie. [#84181](https://github.com/grafana/grafana/issues/84181), [@kalleep](https://github.com/kalleep)
+- **Serviceaccounts:** Add ability to add samename SA for different orgs. [#83953](https://github.com/grafana/grafana/issues/83953), [@eleijonmarck](https://github.com/eleijonmarck)
+- **GenAI:** Update the component only when the response is fully generated. [#83895](https://github.com/grafana/grafana/issues/83895), [@ivanortegaalba](https://github.com/ivanortegaalba)
+- **Tempo:** Better fallbacks for metrics query. [#83688](https://github.com/grafana/grafana/issues/83688), [@adrapereira](https://github.com/adrapereira)
+- **Tempo:** Add template variable interpolation for filters. [#83667](https://github.com/grafana/grafana/issues/83667), [@joey-grafana](https://github.com/joey-grafana)
+- **Alerting:** Fix saving evaluation group. [#83234](https://github.com/grafana/grafana/issues/83234), [@soniaAguilarPeiron](https://github.com/soniaAguilarPeiron)
+- **QueryVariableEditor:** Select a variable ds does not work. [#83181](https://github.com/grafana/grafana/issues/83181), [@ivanortegaalba](https://github.com/ivanortegaalba)
+- **Logs Panel:** Add option extra UI functionality for log context. [#83129](https://github.com/grafana/grafana/issues/83129), [@svennergr](https://github.com/svennergr)
+
+<!-- 10.4.1 END -->
 <!-- 10.4.0 START -->
 
 # 10.4.0 (2024-03-06)
@@ -214,6 +241,22 @@ Any consumers of the specific API should be appropriately adapted. Issue [#74600
 - **Grafana/UI:** Add new Splitter component . [#82357](https://github.com/grafana/grafana/issues/82357), [@torkelo](https://github.com/torkelo)
 
 <!-- 10.4.0 END -->
+<!-- 10.3.5 START -->
+
+# 10.3.5 (2024-03-20)
+
+### Features and enhancements
+
+- **Postgres:** Allow disabling SNI on SSL-enabled connections. [#84259](https://github.com/grafana/grafana/issues/84259), [@papagian](https://github.com/papagian)
+
+### Bug fixes
+
+- **Snapshots:** Require delete within same org (backport). [#84707](https://github.com/grafana/grafana/issues/84707), [@ryantxu](https://github.com/ryantxu)
+- **Elasticsearch:** Fix legend for alerting, expressions and previously frontend queries. [#84684](https://github.com/grafana/grafana/issues/84684), [@ivanahuckova](https://github.com/ivanahuckova)
+- **Dashboard:** Fix issue where out-of-view shared query panels caused blank dependent panels. [#84196](https://github.com/grafana/grafana/issues/84196), [@kaydelaney](https://github.com/kaydelaney)
+- **Alerting:** Fix preview getting the correct queries from the form. [#81481](https://github.com/grafana/grafana/issues/81481), [@soniaAguilarPeiron](https://github.com/soniaAguilarPeiron)
+
+<!-- 10.3.5 END -->
 <!-- 10.3.4 START -->
 
 # 10.3.4 (2024-03-06)

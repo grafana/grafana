@@ -441,12 +441,15 @@
     {
       "metadata": {
         "name": "pluginsDynamicAngularDetectionPatterns",
-        "resourceVersion": "1709648236447",
-        "creationTimestamp": "2024-03-05T14:17:16Z"
+        "resourceVersion": "1710847676897",
+        "creationTimestamp": "2024-03-05T14:17:16Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2024-03-19 11:27:56.897962695 +0000 UTC"
+        }
       },
       "spec": {
         "description": "Enables fetching Angular detection patterns for plugins from GCOM and fallback to hardcoded ones",
-        "stage": "experimental",
+        "stage": "GA",
         "codeowner": "@grafana/plugins-platform-backend"
       }
     },
@@ -506,7 +509,8 @@
       "metadata": {
         "name": "redshiftAsyncQueryDataSupport",
         "resourceVersion": "1709648236447",
-        "creationTimestamp": "2024-03-05T14:17:16Z"
+        "creationTimestamp": "2024-03-05T14:17:16Z",
+        "deletionTimestamp": "2024-03-18T12:15:18Z"
       },
       "spec": {
         "description": "Enable async query data support for Redshift",
@@ -941,12 +945,15 @@
     {
       "metadata": {
         "name": "dashgpt",
-        "resourceVersion": "1709648236447",
-        "creationTimestamp": "2024-03-05T14:17:16Z"
+        "resourceVersion": "1711038841830",
+        "creationTimestamp": "2024-03-05T14:17:16Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2024-03-21 16:34:01.830925 +0000 UTC"
+        }
       },
       "spec": {
         "description": "Enable AI powered features in dashboards",
-        "stage": "preview",
+        "stage": "GA",
         "codeowner": "@grafana/dashboards-squad",
         "frontend": true
       }
@@ -1058,7 +1065,8 @@
       "metadata": {
         "name": "athenaAsyncQueryDataSupport",
         "resourceVersion": "1709648236447",
-        "creationTimestamp": "2024-03-05T14:17:16Z"
+        "creationTimestamp": "2024-03-05T14:17:16Z",
+        "deletionTimestamp": "2024-03-18T12:15:18Z"
       },
       "spec": {
         "description": "Enable async query data support for Athena",
