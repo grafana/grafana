@@ -111,8 +111,10 @@ Define how often the rule is checked.
 
 1. In **Folder**, click **+ New folder** and enter a name. For example: grafana-news. This folder will contain our alerts. 
 1. In the **Evaluation group**, repeat the above step to create a new evaluation group. We will name it 1m-evaluation. 
-1. Choose an **Evaluation interval** (how often the alert will be evaluated). For example, every 1m (1 minute).
-1. Set the **pending period** (aka, the “for” period). This is the time that a condition has to be met until the alert enters into a Firing state and a notification is sent. For example, 0s so the alert rule fires the moment the condition is met.
+1. Choose an **Evaluation interval** (how often the alert will be evaluated). 
+For example, every 1m (1 minute).
+1. Set the **pending period** (the “for” period). 
+This is the time that a condition has to be met until the alert enters into **Firing** state and a notification is sent. For example, 0s so the alert rule fires the moment the condition is met.
 
 ## Configure labels and notifications
 
