@@ -361,7 +361,6 @@ export class PrometheusDatasource
       ...target,
       exemplar: this.shouldRunExemplarQuery(target, request),
       requestId: request.panelId + target.refId,
-      scope: request.scope,
       // We need to pass utcOffsetSec to backend to calculate aligned range
       utcOffsetSec: request.range.to.utcOffset() * 60,
     };
