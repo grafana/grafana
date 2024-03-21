@@ -41,8 +41,10 @@ func (s *Service) HasExternalService(ctx context.Context, pluginID string) (bool
 
 // RegisterExternalService is a simplified wrapper around SaveExternalService for the plugin use case.
 func (s *Service) RegisterExternalService(ctx context.Context, pluginID string, pType pfs.Type, svc *pfs.IAM) (*auth.ExternalService, error) {
+	ctxLogger := s.log.FromContext(ctx)
+
 	if !s.featureEnabled {
-		s.log.Warn("Skipping External Service Registration. The feature is behind a feature toggle and needs to be enabled.")
+		ctxLogger.Warn("Skipping External Service Registration. The feature is behind a feature toggle and needs to be enabled.")
 		return nil, nil
 	}
 

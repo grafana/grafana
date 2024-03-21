@@ -3,6 +3,7 @@ package pipeline
 import (
 	"context"
 
+	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/auth"
 	"github.com/grafana/grafana/pkg/plugins/config"
@@ -61,10 +62,10 @@ func ProvideValidationStage(cfg *config.PluginManagementCfg, sv signature.Valida
 
 func ProvideInitializationStage(cfg *config.PluginManagementCfg, pr registry.Service, bp plugins.BackendFactoryProvider,
 	pm process.Manager, externalServiceRegistry auth.ExternalServiceRegistry,
-	roleRegistry plugins.RoleRegistry, pluginEnvProvider envvars.Provider) *initialization.Initialize {
+	roleRegistry plugins.RoleRegistry, pluginEnvProvider envvars.Provider, tracer tracing.Tracer) *initialization.Initialize {
 	return initialization.New(cfg, initialization.Opts{
 		InitializeFuncs: []initialization.InitializeFunc{
-			ExternalServiceRegistrationStep(cfg, externalServiceRegistry),
+			ExternalServiceRegistrationStep(cfg, externalServiceRegistry, tracer),
 			initialization.BackendClientInitStep(pluginEnvProvider, bp),
 			initialization.PluginRegistrationStep(pr),
 			initialization.BackendProcessStartStep(pm),
