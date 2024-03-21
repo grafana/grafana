@@ -27,16 +27,6 @@ Canvases combine the power of Grafana with the flexibility of custom elements. C
 
 ## Elements
 
-Elements are the basic building blocks of a canvas and they help you visualize data with different shapes and options. When you select an element that you've added to a canvas, the panel editor pane displays a **Selected element** section where you can access editing options for the element. The editing options are dependent on the element type.
-
-You can move elements around the canvas including rotating them. When you're moving elements, snapping and alignment guides help you create more precise layouts.
-
-{{% admonition type="note" %}}
-Currently, element snapping and alignment only works when the canvas is not zoomed in.
-{{% /admonition %}}
-
-<!-- TODO: Add gif showcasing feature (when creating what's new entry for 10.4) -->
-
 ### Metric value
 
 The metric value element lets you easily select the data you want to display on a canvas. This element has a unique “edit” mode that can be triggered either through the context menu “Edit” option or by double clicking. When in edit mode you can select which field data that you want to display.
@@ -116,6 +106,16 @@ The context menu is triggered by a right click action over the panel / over a gi
 When right clicking an element, you are able to edit, delete, duplicate, and modify the element's layer positioning.
 
 {{< figure src="/static/img/docs/canvas-panel/canvas-context-menu-9-2-0.png" max-width="750px" caption="Canvas element context menu" >}}
+
+### Element snapping and alignment
+
+When you're moving elements around the canvas, snapping and alignment guides help you create more precise layouts.
+
+{{% admonition type="note" %}}
+Currently, element snapping and alignment only works when the canvas is not zoomed in.
+{{% /admonition %}}
+
+<!-- TODO: Add gif showcasing feature (when creating what's new entry for 10.4) -->
 
 ## Canvas options
 
