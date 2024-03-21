@@ -423,7 +423,10 @@ export class Scene {
     this.moveable = new Moveable(this.div!, {
       draggable: allowChanges && !this.editModeEnabled.getValue(),
       resizable: allowChanges,
+
+      // Setup rotatable
       rotatable: allowChanges,
+      throttleRotate: 5,
 
       // Setup snappable
       snappable: allowChanges,
