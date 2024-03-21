@@ -3,6 +3,7 @@ import * as H from 'history';
 import { NavIndex } from '@grafana/data';
 import { config, locationService } from '@grafana/runtime';
 import { SceneGridItem, SceneGridLayout, SceneObjectBase, SceneObjectState, VizPanel } from '@grafana/scenes';
+import { updateLibraryVizPanel } from 'app/features/library-panels/state/api';
 
 import { LibraryVizPanel } from '../scene/LibraryVizPanel';
 import { PanelRepeaterGridItem } from '../scene/PanelRepeaterGridItem';
@@ -208,9 +209,37 @@ export class PanelEditor extends SceneObjectBase<PanelEditorState> {
     this.setState({ showLibraryPanelSaveModal: true });
   };
 
-  public onConfirmSaveLibraryPanel = () => {
-    this.state.vizManager.commitChanges();
-    locationService.partial({ editPanel: null });
+  public onConfirmSaveLibraryPanel = async () => {
+    const sourcePanel = this.state.vizManager.state.sourcePanel.resolve();
+    if (!(sourcePanel.parent instanceof LibraryVizPanel)) {
+      throw new Error('Panel is not a library panel');
+    }
+
+    const gridItem = sourcePanel.parent.parent;
+    if (!(gridItem instanceof SceneGridItem)) {
+      throw new Error('Library panel is not child of SceneGridItem');
+    }
+
+    const newPanel = this.state.vizManager.state.panel.clone({
+      $data: this.state.vizManager.state.$data?.clone(),
+    });
+
+    const newLibPanel = sourcePanel.parent.clone({
+      panel: newPanel,
+    });
+
+    try {
+      const resp = await updateLibraryVizPanel(newLibPanel);
+      newLibPanel.setPanelFromLibPanel(resp);
+      gridItem.setState({ body: newLibPanel });
+      this.setState({ showLibraryPanelSaveModal: false, vizManager: VizPanelManager.createFor(newPanel) });
+    } catch (e) {
+      if (e instanceof Object && 'status' in e) {
+        // Network error. Toast will appear.
+      } else {
+        throw e;
+      }
+    }
   };
 
   public onDismissLibraryPanelSaveModal = () => {
