@@ -38,7 +38,15 @@ export const Page = () => {
         )}
 
         {status.stackURL && (
-          <Box borderColor="weak" borderStyle="solid" padding={2} display="flex" gap={4} alignItems="center">
+          <Box
+            borderColor="weak"
+            borderStyle="solid"
+            padding={2}
+            display="flex"
+            gap={4}
+            alignItems="center"
+            justifyContent="space-between"
+          >
             <Stack gap={4} alignItems="center">
               <MigrationInfo
                 title={t('migrate-to-cloud.summary.target-stack-title', 'Uploading to')}
