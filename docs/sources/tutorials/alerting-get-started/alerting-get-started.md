@@ -17,8 +17,6 @@ Ensure you have the following applications installed.
 
 Alternatively, you can follow along with this tutorial without needing to set up a local environment, you can use the [KillerCoda sandbox environment](https://killercoda.com/grafana-labs/course/full-stack/tutorial-enviroment).
 
-{{% /class %}}
-
 ## Set up a sample application
 
 The sample application generates real data and exposes metrics,  which are stored in Prometheus. In Grafana Alerting, you can then build an alert rule based on the data generated. 
