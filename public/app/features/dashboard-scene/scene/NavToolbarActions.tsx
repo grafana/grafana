@@ -15,7 +15,7 @@ import { playlistSrv } from 'app/features/playlist/PlaylistSrv';
 import { PanelEditor } from '../panel-edit/PanelEditor';
 import { ShareModal } from '../sharing/ShareModal';
 import { DashboardInteractions } from '../utils/interactions';
-import { dynamicDashNavActions, dynamicDashNavActions } from '../utils/registerDynamicDashNavAction';
+import { dynamicDashNavActions } from '../utils/registerDynamicDashNavAction';
 
 import { DashboardScene } from './DashboardScene';
 import { GoToSnapshotOriginButton } from './GoToSnapshotOriginButton';
