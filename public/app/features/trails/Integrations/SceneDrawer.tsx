@@ -1,7 +1,9 @@
+import { css } from '@emotion/css';
 import React from 'react';
 
+import { GrafanaTheme2 } from '@grafana/data';
 import { SceneComponentProps, SceneObjectBase, SceneObject, SceneObjectState } from '@grafana/scenes';
-import { Drawer } from '@grafana/ui';
+import { Drawer, useStyles2 } from '@grafana/ui';
 import appEvents from 'app/core/app_events';
 import { ShowModalReactEvent } from 'app/types/events';
 
@@ -13,9 +15,11 @@ export type SceneDrawerProps = {
 
 export function SceneDrawer(props: SceneDrawerProps) {
   const { scene, title, onDismiss } = props;
+  const styles = useStyles2(getStyles);
+
   return (
     <Drawer title={title} onClose={onDismiss} size="lg">
-      <div style={{ display: 'flex', height: '100%' }}>
+      <div className={styles.drawerInnerWrapper}>
         <scene.Component model={scene} />
       </div>
     </Drawer>
@@ -43,4 +47,18 @@ export function launchSceneDrawerInGlobalModal(props: Omit<SceneDrawerProps, 'on
   };
 
   appEvents.publish(new ShowModalReactEvent(payload));
+}
+
+function getStyles(theme: GrafanaTheme2) {
+  return {
+    drawerInnerWrapper: css({
+      display: 'flex',
+      padding: theme.spacing(2),
+      background: theme.isDark ? theme.colors.background.canvas : theme.colors.background.primary,
+      position: 'absolute',
+      left: 0,
+      right: 0,
+      top: 0,
+    }),
+  };
 }
