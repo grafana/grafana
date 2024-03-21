@@ -178,7 +178,10 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
       dashboardWatcher.watch(this.state.uid);
     }
 
-    const clearKeyBindings = setupKeyboardShortcuts(this);
+    let clearKeyBindings = () => {};
+    if (!config.publicDashboardAccessToken) {
+      clearKeyBindings = setupKeyboardShortcuts(this);
+    }
     const oldDashboardWrapper = new DashboardModelCompatibilityWrapper(this);
 
     // @ts-expect-error
@@ -196,10 +199,7 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
   }
 
   public startUrlSync() {
-    if (
-      !this.state.meta.isEmbedded &&
-      !(config.publicDashboardAccessToken && this.state.controls?.state.hideTimeControls)
-    ) {
+    if (!this.state.meta.isEmbedded) {
       getUrlSyncManager().initSync(this);
     }
   }
