@@ -47,19 +47,17 @@ export const Page = () => {
             alignItems="center"
             justifyContent="space-between"
           >
-            <Stack gap={4} alignItems="center">
-              <MigrationInfo
-                title={t('migrate-to-cloud.summary.target-stack-title', 'Uploading to')}
-                value={
-                  <>
-                    {status.stackURL}{' '}
-                    <Button onClick={() => setIsDisconnecting(true)} disabled={isBusy} variant="secondary" size="sm">
-                      <Trans i18nKey="migrate-to-cloud.summary.disconnect">Disconnect</Trans>
-                    </Button>
-                  </>
-                }
-              />
-            </Stack>
+            <MigrationInfo
+              title={t('migrate-to-cloud.summary.target-stack-title', 'Uploading to')}
+              value={
+                <>
+                  {status.stackURL}{' '}
+                  <Button onClick={() => setIsDisconnecting(true)} disabled={isBusy} variant="secondary" size="sm">
+                    <Trans i18nKey="migrate-to-cloud.summary.disconnect">Disconnect</Trans>
+                  </Button>
+                </>
+              }
+            />
 
             <Button
               disabled={isBusy}
