@@ -59,11 +59,11 @@ func (im *InternalMetricsService) Run(ctx context.Context) error {
 	return ctx.Err()
 }
 
-func ProvideRegisterer(cfg *setting.Cfg) prometheus.Registerer {
+func ProvideRegisterer() prometheus.Registerer {
 	return legacyregistry.Registerer()
 }
 
-func ProvideGatherer(cfg *setting.Cfg) prometheus.Gatherer {
+func ProvideGatherer() prometheus.Gatherer {
 	k8sGatherer := newAddPrefixWrapper(legacyregistry.DefaultGatherer)
 	return newMultiRegistry(k8sGatherer, prometheus.DefaultGatherer)
 }
