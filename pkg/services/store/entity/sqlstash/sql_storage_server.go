@@ -1103,32 +1103,6 @@ func (s *sqlEntityServer) List(ctx context.Context, r *entity.EntityListRequest)
 		rvMaxQuery.AddWhere("action", entity.Entity_DELETED)
 	}
 
-	// initialize the result
-	// we use a snowflake as a fallback resource version
-	rsp := &entity.EntityListResponse{
-		ResourceVersion: s.snowflake.Generate().Int64(),
-	}
-
-	// if we have a page token, use that to specify the first record
-	continueToken, err := GetContinueToken(r)
-	if err != nil {
-		return nil, err
-	}
-	if continueToken != nil {
-		entityQuery.offset = continueToken.StartOffset
-		if continueToken.ResourceVersion > 0 {
-			rsp.ResourceVersion = continueToken.ResourceVersion
-
-			if r.Deleted {
-				// if we're continuing, we need to list only revisions that are older than the given resource version
-				entityQuery.AddWhere("resource_version <= ?", continueToken.ResourceVersion)
-			} else {
-				// cap versions considered by the per resource max version subquery
-				rvSubQuery.AddWhere("resource_version <= ?", continueToken.ResourceVersion)
-			}
-		}
-	}
-
 	// TODO fix this
 	// entityQuery.addWhere("namespace", user.OrgID)
 
@@ -1190,15 +1164,48 @@ func (s *sqlEntityServer) List(ctx context.Context, r *entity.EntityListRequest)
 
 	s.log.Debug("getting max rv", "maxRv", rvMaxRow.Rv, "cnt", rvMaxRow.Cnt, "query", query, "args", args)
 
-	if continueToken != nil && ((continueToken.ResourceVersion > 0 && continueToken.ResourceVersion != rvMaxRow.Rv) || (continueToken.RecordCnt > 0 && continueToken.RecordCnt != rvMaxRow.Cnt)) {
-		entityQuery.From("entity_history")
-		entityQuery.AddWhere("t.action != ?", entity.Entity_DELETED)
+	// if we have a page token, use that to specify the first record
+	continueToken, err := GetContinueToken(r)
+	if err != nil {
+		return nil, err
+	}
+	if continueToken != nil {
+		entityQuery.offset = continueToken.StartOffset
+		if continueToken.ResourceVersion > 0 {
+			if r.Deleted {
+				// if we're continuing, we need to list only revisions that are older than the given resource version
+				entityQuery.AddWhere("resource_version <= ?", continueToken.ResourceVersion)
+			} else {
+				// cap versions considered by the per resource max version subquery
+				rvSubQuery.AddWhere("resource_version <= ?", continueToken.ResourceVersion)
+			}
+		}
 
-		rvSubQuery.AddGroupBy("guid")
-		query, args = rvSubQuery.ToQuery()
-		entityQuery.AddJoin("INNER JOIN ("+query+") rv ON rv.guid = t.guid AND rv.max_rv = t.resource_version", args...)
-	} else if rvMaxRow.Rv > 0 {
-		rsp.ResourceVersion = rvMaxRow.Rv
+		if (continueToken.ResourceVersion > 0 && continueToken.ResourceVersion != rvMaxRow.Rv) || (continueToken.RecordCnt > 0 && continueToken.RecordCnt != rvMaxRow.Cnt) {
+			entityQuery.From("entity_history")
+			entityQuery.AddWhere("t.action != ?", entity.Entity_DELETED)
+
+			rvSubQuery.AddGroupBy("guid")
+			query, args = rvSubQuery.ToQuery()
+			entityQuery.AddJoin("INNER JOIN ("+query+") rv ON rv.guid = t.guid AND rv.max_rv = t.resource_version", args...)
+		}
+	} else {
+		continueToken = &ContinueToken{
+			Sort:            r.Sort,
+			StartOffset:     0,
+			ResourceVersion: rvMaxRow.Rv,
+			RecordCnt:       rvMaxRow.Cnt,
+		}
+
+		if continueToken.ResourceVersion == 0 {
+			// we use a snowflake as a fallback resource version
+			continueToken.ResourceVersion = s.snowflake.Generate().Int64()
+		}
+	}
+
+	// initialize the result
+	rsp := &entity.EntityListResponse{
+		ResourceVersion: continueToken.ResourceVersion,
 	}
 
 	// Folder guid
@@ -1257,12 +1264,7 @@ func (s *sqlEntityServer) List(ctx context.Context, r *entity.EntityListRequest)
 
 		// found more than requested
 		if int64(len(rsp.Results)) >= entityQuery.limit {
-			continueToken := &ContinueToken{
-				Sort:            r.Sort,
-				StartOffset:     entityQuery.offset + entityQuery.limit,
-				ResourceVersion: rsp.ResourceVersion,
-				RecordCnt:       rvMaxRow.Cnt,
-			}
+			continueToken.StartOffset = entityQuery.offset + entityQuery.limit
 			rsp.NextPageToken = continueToken.String()
 			break
 		}
