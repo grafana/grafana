@@ -84,7 +84,7 @@ Grafana Alerting is built on the Prometheus model of designing alerting systems.
 Prometheus-based alerting systems have two main components:
 
 - An alert generator that evaluates alert rules and sends firing and resolved alerts to the alert receiver.
-- an alert receiver (also known as Alertmanager) that receives the alerts and is responsible for handling them and sending their notifications.
+- An alert receiver (also known as Alertmanager) that receives the alerts and is responsible for handling them and sending their notifications.
 
 Grafana doesn’t use Prometheus as its default alert generator because Grafana Alerting needs to work with many other data sources in addition to Prometheus.
 
