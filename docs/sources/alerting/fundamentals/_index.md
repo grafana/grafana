@@ -88,7 +88,7 @@ Prometheus-based alerting systems have two main components:
 
 Grafana doesn’t use Prometheus as its default alert generator because Grafana Alerting needs to work with many other data sources in addition to Prometheus.
 
-However, Grafana can also use Prometheus as alert generator and external alertmanagers. For more information about how to use distinct alerting systems, refer to the [Grafana alert rule types][alert-rules].
+However, Grafana can also use Prometheus as an alert generator as well as external Alertmanagers. For more information about how to use distinct alerting systems, refer to the [Grafana alert rule types][alert-rules].
 
 ## Design your Alerting system
 
