@@ -397,7 +397,9 @@ export class UnthemedDashboardPage extends PureComponent<Props, State> {
           {config.featureToggles.angularDeprecationUI && dashboard.hasAngularPlugins() && dashboard.uid !== null && (
             <AngularDeprecationNotice
               dashboardUid={dashboard.uid}
-              showAutoMigrateLink={dashboard.panels.some((x) => explicitlyControlledMigrationPanels.includes(x.type))}
+              showAutoMigrateLink={dashboard.panels.some((panel) =>
+                explicitlyControlledMigrationPanels.includes(panel.type)
+              )}
             />
           )}
           {showDashboardMigrationNotice && <AngularMigrationNotice dashboardUid={dashboard.uid} />}

@@ -1,17 +1,10 @@
 import { css } from '@emotion/css';
-import React from 'react';
+import React, { useState } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { Alert, Button, useStyles2 } from '@grafana/ui';
-import { LocalStorageValueProvider } from 'app/core/components/LocalStorageValueProvider';
 
 import { migrationFeatureFlags } from './utils';
-
-const LOCAL_STORAGE_KEY_PREFIX = 'grafana.angularDeprecation.dashboardMigrationNotice.isDismissed';
-
-function localStorageKey(dashboardUid: string): string {
-  return LOCAL_STORAGE_KEY_PREFIX + '.' + dashboardUid;
-}
 
 interface Props {
   dashboardUid: string;
@@ -42,33 +35,28 @@ const reportIssue = () => {
 export function AngularMigrationNotice({ dashboardUid }: Props) {
   const styles = useStyles2(getStyles);
 
-  return (
-    <LocalStorageValueProvider<boolean> storageKey={localStorageKey(dashboardUid)} defaultValue={false}>
-      {(isDismissed, onDismiss) => {
-        if (isDismissed) {
-          return null;
-        }
-        return (
-          <div>
-            <Alert
-              severity="info"
-              title="This dashboard was migrated from Angular. Please make sure everything is behaving as expected and save and refresh this dashboard to persist the migration."
-              onRemove={() => onDismiss(true)}
-            >
-              <div className="markdown-html">
-                <Button fill="outline" size="sm" className={styles.linkButton} onClick={reportIssue}>
-                  Report issue
-                </Button>
-                <Button fill="outline" size="sm" className={styles.linkButton} onClick={revertAutoMigrateUrlFlag}>
-                  Revert migration
-                </Button>
-              </div>
-            </Alert>
-          </div>
-        );
-      }}
-    </LocalStorageValueProvider>
-  );
+  const [showAlert, setShowAlert] = useState(true);
+
+  if (showAlert) {
+    return (
+      <Alert
+        severity="info"
+        title="This dashboard was migrated from Angular. Please make sure everything is behaving as expected and save and refresh this dashboard to persist the migration."
+        onRemove={() => setShowAlert(false)}
+      >
+        <div className="markdown-html">
+          <Button fill="outline" size="sm" className={styles.linkButton} onClick={reportIssue}>
+            Report issue
+          </Button>
+          <Button fill="outline" size="sm" className={styles.linkButton} onClick={revertAutoMigrateUrlFlag}>
+            Revert migration
+          </Button>
+        </div>
+      </Alert>
+    );
+  }
+
+  return null;
 }
 
 const getStyles = (theme: GrafanaTheme2) => ({
