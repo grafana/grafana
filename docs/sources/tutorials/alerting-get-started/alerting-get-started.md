@@ -118,7 +118,7 @@ This is the time that a condition has to be met until the alert enters into **Fi
 
 ## Configure labels and notifications
 
-In order to ease searching or route notifications to a policy, you should add a label.
+Add labels in order to ease searching or route notifications to a policy.
 
 ### Labels
 
