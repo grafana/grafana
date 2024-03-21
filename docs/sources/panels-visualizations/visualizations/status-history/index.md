@@ -21,11 +21,13 @@ weight: 100
 
 A status history visualization displays data in a way that shows periodic states over time. In a status history, each field or series is rendered as a horizontal row, with multiple boxes showing the different status, providing you with a centralized view for the status of a component or service in a glance.
 
-Unlike [state timelines](/docs/grafana/<GRAFANA_VERSION>/panels-visualizations/visualizations/state-timeline/), status history don't merge consecutive values.
-
 For example, if you're monitoring the health status of different services, you can use a status history to visualize the different statuses, such as “OK,” “WARN,” or “BAD,” over time. Each status is represented by a different color.
 
 {{< figure src="/static/img/docs/status-history-panel/status-history-example-v8-0.png" max-width="1025px" alt="A status history panel showing the health status of different services" >}}
+
+{{% admonition type="note" %}}
+A status history is quite similar to a [state timeline panel](/docs/grafana/<GRAFANA_VERSION>/panels-visualizations/visualizations/state-timeline/), but with different [panel options](#status-history-options). Unlike state timelines, status history don't merge consecutive values.
+{{% /admonition %}}
 
 The status history visualization is useful when you need to monitor and analyze changes in the statuses of various entities over time. You can use one when you need to:
 
@@ -35,7 +37,9 @@ The status history visualization is useful when you need to monitor and analyze 
 
 ## Configure a status history
 
-<!-- video TBA here -->
+Once you have [created a dashboard](/docs/grafana/<GRAFANA_VERSION>/dashboards/build-dashboards/create-dashboard/), the following state timeline video can also be used as a reference to show you how to configure a status history:
+
+{{< youtube id="a9wZHM0mdxo" >}}
 
 ## Supported data formats
 
