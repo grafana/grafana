@@ -204,7 +204,7 @@ export class MetricSelectScene extends SceneObjectBase<MetricSelectSceneState> {
     this.previewCache = metricsMap;
   }
 
-  private buildLayout() {
+  private async buildLayout() {
     // Temp hack when going back to select metric scene and variable updates
     if (this.ignoreNextUpdate) {
       this.ignoreNextUpdate = false;
@@ -238,21 +238,15 @@ export class MetricSelectScene extends SceneObjectBase<MetricSelectSceneState> {
 
     for (let index = 0; index < metricsList.length; index++) {
       const metric = metricsList[index];
+      const metadata = await trail.getMetricMetadata(metric.name);
+      const description = getMetricDescription(metadata);
 
       if (this.state.showPreviews) {
         if (metric.itemRef && metric.isPanel) {
           children.push(metric.itemRef.resolve());
           continue;
         }
-        const panel = getPreviewPanelFor(metric.name, index, currentFilterCount);
-
-        const vizPanel = panel.state.body;
-        if (vizPanel instanceof VizPanel) {
-          trail.getMetricMetadata(metric.name).then((metadata) => {
-            const description = getMetricDescription(metadata);
-            vizPanel.setState({ description });
-          });
-        }
+        const panel = getPreviewPanelFor(metric.name, index, currentFilterCount, description);
 
         metric.itemRef = panel.getRef();
         metric.isPanel = true;
@@ -262,7 +256,7 @@ export class MetricSelectScene extends SceneObjectBase<MetricSelectSceneState> {
           $variables: new SceneVariableSet({
             variables: getVariablesWithMetricConstant(metric.name),
           }),
-          body: getCardPanelFor(metric.name),
+          body: getCardPanelFor(metric.name, description),
         });
         metric.itemRef = panel.getRef();
         metric.isPanel = false;
@@ -370,9 +364,10 @@ function getMetricNamesVariableSet() {
   });
 }
 
-function getCardPanelFor(metric: string) {
+function getCardPanelFor(metric: string, description?: string) {
   return PanelBuilders.text()
     .setTitle(metric)
+    .setDescription(description)
     .setHeaderActions(new SelectMetricAction({ metric, title: 'Select' }))
     .setOption('content', '')
     .build();
