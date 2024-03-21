@@ -172,6 +172,7 @@
 /devenv/bulk-dashboards/ @grafana/dashboards-squad
 /devenv/bulk-folders/ @grafana/grafana-frontend-platform
 /devenv/create_docker_compose.sh @grafana/backend-platform
+/devenv/alert_rules.yaml @grafana/alerting-backend-product
 /devenv/dashboards.yaml @grafana/dashboards-squad
 /devenv/datasources.yaml @grafana/backend-platform
 /devenv/datasources_docker.yaml @grafana/backend-platform
@@ -388,7 +389,7 @@ playwright.config.ts @grafana/plugins-platform-frontend
 /public/app/features/admin/ @grafana/identity-access-team
 
 # Temp owners until Enterprise team takes over
-/public/app/features/admin/migrate-to-cloud @grafana/grafana-frontend-platform
+/public/app/features/migrate-to-cloud @grafana/grafana-frontend-platform
 
 /public/app/features/auth-config/ @grafana/identity-access-team
 /public/app/features/annotations/ @grafana/dashboards-squad
@@ -610,8 +611,11 @@ playwright.config.ts @grafana/plugins-platform-frontend
 
 # Grafana Operator Experience Team
 /pkg/services/caching/ @grafana/grafana-operator-experience-squad
-/pkg/services/featuremgmt/ @grafana/grafana-operator-experience-squad
 /pkg/services/cloudmigration/ @grafana/grafana-operator-experience-squad
+
+# Feature toggles
+/pkg/services/featuremgmt/ @grafana/grafana-backend-services-squad 
+
 
 # Kind definitions
 /kinds/dashboard @grafana/dashboards-squad
