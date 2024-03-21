@@ -5,7 +5,7 @@ import { Provider } from 'react-redux';
 import { byRole, byText } from 'testing-library-selector';
 
 import { FieldConfigSource, getDefaultTimeRange, LoadingState, PanelProps, PluginExtensionTypes } from '@grafana/data';
-import { getPluginLinkExtensions, TimeRangeUpdatedEvent } from '@grafana/runtime';
+import { TimeRangeUpdatedEvent, usePluginLinkExtensions } from '@grafana/runtime';
 import { setupMswServer } from 'app/features/alerting/unified/mockApi';
 import { mockPromRulesApiResponse } from 'app/features/alerting/unified/mocks/alertRuleApi';
 import { mockRulerRulesApiResponse } from 'app/features/alerting/unified/mocks/rulerApi';
@@ -57,12 +57,12 @@ const grafanaRuleMock = {
 
 jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
-  getPluginLinkExtensions: jest.fn(),
+  usePluginLinkExtensions: jest.fn(),
 }));
 jest.mock('app/features/alerting/unified/api/alertmanager');
 
 const mocks = {
-  getPluginLinkExtensionsMock: jest.mocked(getPluginLinkExtensions),
+  usePluginLinkExtensionsMock: jest.mocked(usePluginLinkExtensions),
 };
 
 const fakeResponse: PromRulesResponse = {
@@ -85,7 +85,7 @@ beforeEach(() => {
   mockRulerRulesApiResponse(server, 'grafana', {
     'folder-one': [{ name: 'group1', interval: '20s', rules: [originRule] }],
   });
-  mocks.getPluginLinkExtensionsMock.mockReturnValue({
+  mocks.usePluginLinkExtensionsMock.mockReturnValue({
     extensions: [
       {
         pluginId: 'grafana-ml-app',
