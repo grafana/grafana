@@ -1,10 +1,10 @@
-import React, { useMemo, useState } from 'react';
+import React, { useState } from 'react';
 import { connect, ConnectedProps } from 'react-redux';
 import { useMount } from 'react-use';
 
 import { PluginExtensionComponent, PluginExtensionPoints } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { getPluginComponentExtensions } from '@grafana/runtime';
+import { usePluginComponentExtensions } from '@grafana/runtime';
 import { Tab, TabsBar, TabContent, VerticalGroup, Stack } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
 import SharedPreferences from 'app/core/components/SharedPreferences/SharedPreferences';
@@ -76,30 +76,21 @@ export function UserProfileEditPage({
 
   useMount(() => initUserProfilePage());
 
-  const extensionComponents = useMemo(() => {
-    const { extensions } = getPluginComponentExtensions({
-      extensionPointId: PluginExtensionPoints.UserProfileTab,
-    });
+  const { extensions } = usePluginComponentExtensions({ extensionPointId: PluginExtensionPoints.UserProfileTab });
 
-    return extensions;
-  }, []);
-
-  const groupedExtensionComponents = extensionComponents.reduce<Record<string, PluginExtensionComponent[]>>(
-    (acc, extension) => {
-      const { title } = extension;
-      if (acc[title]) {
-        acc[title].push(extension);
-      } else {
-        acc[title] = [extension];
-      }
-      return acc;
-    },
-    {}
-  );
+  const groupedExtensionComponents = extensions.reduce<Record<string, PluginExtensionComponent[]>>((acc, extension) => {
+    const { title } = extension;
+    if (acc[title]) {
+      acc[title].push(extension);
+    } else {
+      acc[title] = [extension];
+    }
+    return acc;
+  }, {});
 
   const convertExtensionComponentTitleToTabId = (title: string) => title.toLowerCase();
 
-  const showTabs = extensionComponents.length > 0;
+  const showTabs = extensions.length > 0;
   const tabs: TabInfo[] = [
     {
       id: GENERAL_SETTINGS_TAB,
