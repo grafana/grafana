@@ -51,6 +51,6 @@ const getStyles = (theme: GrafanaTheme2) => ({
   quickSuggestionsWrapper: css({
     display: 'flex',
     flexDirection: 'row',
-    gap: 4,
+    gap: 8,
   }),
 });
