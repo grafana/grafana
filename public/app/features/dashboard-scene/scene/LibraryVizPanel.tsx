@@ -81,6 +81,7 @@ export class LibraryVizPanel extends SceneObjectBase<LibraryVizPanelState> {
     const gridItem = this.parent;
 
     if (libPanelModel.repeat && gridItem instanceof DashboardGridItem && gridItem.parent instanceof SceneGridLayout) {
+      this._parent = undefined;
       const repeater = new DashboardGridItem({
         key: gridItem.state.key,
         x: gridItem.state.x,
