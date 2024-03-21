@@ -142,7 +142,7 @@ export default class InfluxQueryModel {
   }
 
   private removeRegexWrapper(str: string) {
-    const regex = /\/\^(.*?)\$\//;
+    const regex = /\/\^(.*?)\$\//; // match any string that starts with "/^" and ends with "$/", capturing the characters in between
     const match = str.match(regex);
 
     if (match && match.length > 1) {
