@@ -21,6 +21,7 @@ import {
   Drawer,
   InlineField,
   FieldValidationMessage,
+  Box,
 } from '@grafana/ui';
 import { useCleanup } from 'app/core/hooks/useCleanup';
 import { AlertManagerCortexConfig } from 'app/plugins/datasource/alertmanager/types';
@@ -178,7 +179,7 @@ export const TemplateForm = ({ existing, alertManagerSourceName, config, provena
             </Alert>
           )}
           {provenance && <ProvisioningAlert resource={ProvisionedResource.Template} />}
-          <FieldSet disabled={Boolean(provenance)}>
+          <FieldSet disabled={Boolean(provenance)} className={styles.fieldset}>
             <InlineField
               label="Template name"
               error={errors?.name?.message}
@@ -212,17 +213,19 @@ export const TemplateForm = ({ existing, alertManagerSourceName, config, provena
                     </Button>
                   }
                 />
-                <AutoSizer disableHeight>
-                  {({ width }) => (
-                    <TemplateEditor
-                      value={getValues('content')}
-                      onBlur={(value) => setValue('content', value)}
-                      containerStyles={styles.editorContainer}
-                      width={width - 2}
-                      height={598}
-                    />
-                  )}
-                </AutoSizer>
+                <Box flex={1}>
+                  <AutoSizer>
+                    {({ width, height }) => (
+                      <TemplateEditor
+                        value={getValues('content')}
+                        onBlur={(value) => setValue('content', value)}
+                        containerStyles={styles.editorContainer}
+                        width={width - 2}
+                        height={height}
+                      />
+                    )}
+                  </AutoSizer>
+                </Box>
                 {errors.content?.message && <FieldValidationMessage>{errors?.content?.message}</FieldValidationMessage>}
               </div>
               {isGrafanaAlertManager && (
@@ -316,7 +319,16 @@ export const getStyles = (theme: GrafanaTheme2) => {
 
   return {
     form: css({
-      container: 'form / inline-size',
+      label: 'template-form',
+      height: '100%',
+      display: 'flex',
+      flexDirection: 'column',
+    }),
+    fieldset: css({
+      label: 'template-fieldset',
+      flex: 1,
+      display: 'flex',
+      flexDirection: 'column',
     }),
     label: css({
       margin: 0,
@@ -325,11 +337,10 @@ export const getStyles = (theme: GrafanaTheme2) => {
       marginBottom: theme.spacing(3),
     }),
     contentContainer: css({
+      flex: 1,
       display: 'flex',
       flexDirection: 'row',
       gap: theme.spacing(1),
-      height: theme.spacing(82),
-      maxHeight: theme.spacing(82),
       '& > *': {
         borderRadius: theme.shape.radius.default,
         border: `1px solid ${theme.colors.border.strong}`,
