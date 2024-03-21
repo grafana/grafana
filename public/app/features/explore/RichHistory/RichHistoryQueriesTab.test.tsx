@@ -34,11 +34,7 @@ const setup = (propOverrides?: Partial<RichHistoryQueriesTabProps>) => {
 
   Object.assign(props, propOverrides);
 
-  return render(
-    <TestProvider>
-      <RichHistoryQueriesTab {...props} />
-    </TestProvider>
-  );
+  return render(<RichHistoryQueriesTab {...props} />, { wrapper: TestProvider });
 };
 
 describe('RichHistoryQueriesTab', () => {
@@ -49,16 +45,16 @@ describe('RichHistoryQueriesTab', () => {
       },
     } as unknown as DataSourceSrv);
   });
-
-  it('should render', () => {
+  it('should render', async () => {
     setup();
-    expect(screen.queryByText('Filter history')).toBeInTheDocument();
+    const filterHistory = await screen.findByText('Filter history');
+    expect(filterHistory).toBeInTheDocument();
   });
 
-  it('should not regex escape filter input', () => {
+  it('should not regex escape filter input', async () => {
     const updateFiltersSpy = jest.fn();
     setup({ updateFilters: updateFiltersSpy });
-    const input = screen.getByPlaceholderText(/search queries/i);
+    const input = await screen.findByPlaceholderText(/search queries/i);
     fireEvent.change(input, { target: { value: '|=' } });
 
     expect(updateFiltersSpy).toHaveBeenCalledWith(expect.objectContaining({ search: '|=' }));
