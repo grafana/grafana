@@ -27,6 +27,7 @@ import { getPreviewPanelFor } from './AutomaticMetricQueries/previewPanel';
 import { MetricScene } from './MetricScene';
 import { SelectMetricAction } from './SelectMetricAction';
 import { StatusWrapper } from './StatusWrapper';
+import { getMetricDescription } from './helpers/MetricDatasourceHelper';
 import { sortRelatedMetrics } from './relatedMetrics';
 import { getVariablesWithMetricConstant, trailDS, VAR_DATASOURCE, VAR_FILTERS_EXPR, VAR_METRIC_NAMES } from './shared';
 import { getFilters, getTrailFor } from './utils';
