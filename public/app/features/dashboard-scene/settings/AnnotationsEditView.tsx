@@ -68,7 +68,6 @@ export class AnnotationsEditView extends SceneObjectBase<AnnotationsEditViewStat
     };
 
     const newAnnotation = new DashboardAnnotationsDataLayer({
-      key: `annotations-${newAnnotationQuery.name}`,
       query: newAnnotationQuery,
       name: newAnnotationQuery.name,
       isEnabled: Boolean(newAnnotationQuery.enable),
@@ -126,7 +125,6 @@ export class AnnotationsEditView extends SceneObjectBase<AnnotationsEditViewStat
     const layer = this.getDataLayer(editIndex);
 
     layer.setState({
-      key: `annotations-${annotation.name}`,
       name: annotation.name,
       isEnabled: Boolean(annotation.enable),
       isHidden: Boolean(annotation.hide),
