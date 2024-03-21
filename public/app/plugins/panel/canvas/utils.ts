@@ -391,7 +391,7 @@ export const getConnectionStyles = (
   const strokeWidth = info.size ? scene.context.getScale(info.size).get(lastRowIndex) : defaultArrowSize;
   const arrowDirection = info.direction ? info.direction : defaultArrowDirection;
   const lineStyle = info.lineStyle === LineStyle.Dashed ? StrokeDasharray.Dashed : StrokeDasharray.Solid;
-  return { strokeColor, strokeWidth, arrowDirection, lineStyle }; 
+  return { strokeColor, strokeWidth, arrowDirection, lineStyle };
 };
 
 export const getParentBoundingClientRect = (scene: Scene) => {
