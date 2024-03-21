@@ -221,8 +221,8 @@ export function ToolbarActions({ dashboard }: Props) {
     ),
   });
 
-  if (dynamicDashNavActions.left.length > 0 && !isEditingPanel) {
-    dynamicDashNavActions.left.map((action, index) => {
+  if (dynamicDashNavActions.right.length > 0 && !isEditingPanel) {
+    dynamicDashNavActions.right.map((action, index) => {
       const props = { dashboard: getDashboardSrv().getCurrent()! };
       if (action.show(props)) {
         const Component = action.component;

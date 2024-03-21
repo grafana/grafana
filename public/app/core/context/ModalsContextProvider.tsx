@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 
 import { textUtil } from '@grafana/data';
+import { locationService } from '@grafana/runtime';
 import { ConfirmModal, ConfirmModalProps, ModalsContext } from '@grafana/ui';
 import { ModalsContextState } from '@grafana/ui/src/components/Modal/ModalsContext';
 import { ShowConfirmModalEvent, ShowModalReactEvent } from 'app/types/events';
@@ -11,6 +12,10 @@ export interface Props {
   children: React.ReactNode;
 }
 
+/**
+ * Implements the ModalsContext state logic (not used that much, only needed in edge cases)
+ * Also implements the handling of the events ShowModalReactEvent and ShowConfirmModalEvent.
+ */
 export function ModalsContextProvider(props: Props) {
   const [state, setState] = useState<ModalsContextState>({
     component: null,
@@ -35,11 +40,18 @@ export function ModalsContextProvider(props: Props) {
         },
       });
     });
-  });
 
-  useEffect(() => {
     appEvents.subscribe(ShowConfirmModalEvent, (e) => {
       showConfirmModal(e, state, setState);
+    });
+
+    // In case there is a link in the modal/drawer we need to hide it when location changes
+    let prevPath = '';
+    locationService.getHistory().listen((location) => {
+      if (location.pathname !== prevPath) {
+        state.hideModal();
+      }
+      prevPath = location.pathname;
     });
   });
 
