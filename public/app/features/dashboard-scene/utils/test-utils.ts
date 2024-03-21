@@ -2,7 +2,6 @@ import {
   DeepPartial,
   EmbeddedScene,
   SceneDeactivationHandler,
-  SceneGridItem,
   SceneGridLayout,
   SceneGridRow,
   SceneObject,
@@ -15,9 +14,9 @@ import { DashboardLoaderSrv, setDashboardLoaderSrv } from 'app/features/dashboar
 import { ALL_VARIABLE_TEXT, ALL_VARIABLE_VALUE } from 'app/features/variables/constants';
 import { DashboardDTO } from 'app/types';
 
+import { DashboardGridItem, RepeatDirection } from '../scene/DashboardGridItem';
 import { LibraryVizPanel } from '../scene/LibraryVizPanel';
 import { VizPanelLinks, VizPanelLinksMenu } from '../scene/PanelLinks';
-import { PanelRepeaterGridItem, RepeatDirection } from '../scene/PanelRepeaterGridItem';
 import { RowRepeaterBehavior } from '../scene/RowRepeaterBehavior';
 
 export function setupLoadDashboardMock(rsp: DeepPartial<DashboardDTO>, spy?: jest.Mock) {
@@ -103,13 +102,13 @@ interface SceneOptions {
 export function buildPanelRepeaterScene(options: SceneOptions, source?: VizPanel | LibraryVizPanel) {
   const defaults = { usePanelRepeater: true, ...options };
 
-  const repeater = new PanelRepeaterGridItem({
+  const withRepeat = new DashboardGridItem({
     variableName: 'server',
     repeatedPanels: [],
     repeatDirection: options.repeatDirection,
     maxPerRow: options.maxPerRow,
     itemHeight: options.itemHeight,
-    source:
+    body:
       source ??
       new VizPanel({
         title: 'Panel $server',
@@ -119,7 +118,7 @@ export function buildPanelRepeaterScene(options: SceneOptions, source?: VizPanel
     y: options.y || 0,
   });
 
-  const gridItem = new SceneGridItem({
+  const withoutRepeat = new DashboardGridItem({
     x: 0,
     y: 0,
     width: 10,
@@ -131,7 +130,7 @@ export function buildPanelRepeaterScene(options: SceneOptions, source?: VizPanel
     }),
   });
 
-  const rowChildren = defaults.usePanelRepeater ? repeater : gridItem;
+  const rowChildren = defaults.usePanelRepeater ? withRepeat : withoutRepeat;
 
   const row = new SceneGridRow({
     $behaviors: defaults.useRowRepeater
@@ -189,5 +188,5 @@ export function buildPanelRepeaterScene(options: SceneOptions, source?: VizPanel
     }),
   });
 
-  return { scene, repeater, row, variable: panelRepeatVariable };
+  return { scene, repeater: withRepeat, row, variable: panelRepeatVariable };
 }

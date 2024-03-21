@@ -4,12 +4,10 @@ import React from 'react';
 import { GrafanaTheme2 } from '@grafana/data';
 import {
   SceneComponentProps,
-  SceneGridItem,
   SceneGridLayout,
   SceneGridRow,
   SceneObjectBase,
   SceneObjectState,
-  SceneQueryRunner,
   VizPanel,
 } from '@grafana/scenes';
 import { Icon, TextLink, useStyles2 } from '@grafana/ui';
@@ -17,7 +15,8 @@ import appEvents from 'app/core/app_events';
 import { SHARED_DASHBOARD_QUERY } from 'app/plugins/datasource/dashboard';
 import { ShowConfirmModalEvent } from 'app/types/events';
 
-import { getDashboardSceneFor } from '../../utils/utils';
+import { getDashboardSceneFor, getQueryRunnerFor } from '../../utils/utils';
+import { DashboardGridItem } from '../DashboardGridItem';
 import { DashboardScene } from '../DashboardScene';
 import { RowRepeaterBehavior } from '../RowRepeaterBehavior';
 
@@ -122,12 +121,14 @@ export class RowActions extends SceneObjectBase<RowActionsState> {
     const gridItems = row.state.children;
 
     const isAnyPanelUsingDashboardDS = gridItems.some((gridItem) => {
-      if (!(gridItem instanceof SceneGridItem)) {
+      if (!(gridItem instanceof DashboardGridItem)) {
         return false;
       }
 
-      if (gridItem.state.body instanceof VizPanel && gridItem.state.body.state.$data instanceof SceneQueryRunner) {
-        return gridItem.state.body.state.$data?.state.datasource?.uid === SHARED_DASHBOARD_QUERY;
+      const vizPanel = gridItem.state.body;
+      if (vizPanel instanceof VizPanel) {
+        const runner = getQueryRunnerFor(vizPanel);
+        return runner?.state.datasource?.uid === SHARED_DASHBOARD_QUERY;
       }
 
       return false;

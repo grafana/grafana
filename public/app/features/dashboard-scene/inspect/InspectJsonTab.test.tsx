@@ -10,17 +10,11 @@ import {
 } from '@grafana/data';
 import { getPanelPlugin } from '@grafana/data/test/__mocks__/pluginMocks';
 import { setPluginImportUtils, setRunRequest } from '@grafana/runtime';
-import {
-  SceneCanvasText,
-  SceneDataTransformer,
-  SceneGridItem,
-  SceneGridLayout,
-  SceneQueryRunner,
-  VizPanel,
-} from '@grafana/scenes';
+import { SceneCanvasText, SceneDataTransformer, SceneGridLayout, SceneQueryRunner, VizPanel } from '@grafana/scenes';
 import * as libpanels from 'app/features/library-panels/state/api';
 import { getStandardTransformers } from 'app/features/transformers/standardTransformers';
 
+import { DashboardGridItem } from '../scene/DashboardGridItem';
 import { DashboardScene } from '../scene/DashboardScene';
 import { LibraryVizPanel } from '../scene/LibraryVizPanel';
 import { VizPanelLinks, VizPanelLinksMenu } from '../scene/PanelLinks';
@@ -146,7 +140,7 @@ describe('InspectJsonTab', () => {
 
     const panel2 = findVizPanelByKey(scene, panel.state.key)!;
     expect(panel2.state.title).toBe('New title');
-    expect((panel2.parent as SceneGridItem).state.width!).toBe(3);
+    expect((panel2.parent as DashboardGridItem).state.width!).toBe(3);
 
     expect(tab.state.onClose).toHaveBeenCalled();
   });
@@ -185,7 +179,7 @@ async function buildTestScene() {
     },
     body: new SceneGridLayout({
       children: [
-        new SceneGridItem({
+        new DashboardGridItem({
           key: 'griditem-1',
           x: 0,
           y: 0,
@@ -232,7 +226,7 @@ async function buildTestSceneWithLibraryPanel() {
     },
     body: new SceneGridLayout({
       children: [
-        new SceneGridItem({
+        new DashboardGridItem({
           key: 'griditem-1',
           x: 0,
           y: 0,

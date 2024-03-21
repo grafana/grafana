@@ -1,9 +1,9 @@
 import {
   EmbeddedScene,
   SceneCanvasText,
-  SceneGridItem,
   SceneGridLayout,
   SceneGridRow,
+  SceneGridItem,
   SceneTimeRange,
   SceneVariableSet,
   TestVariable,
@@ -12,7 +12,7 @@ import { ALL_VARIABLE_TEXT, ALL_VARIABLE_VALUE } from 'app/features/variables/co
 
 import { activateFullSceneTree } from '../utils/test-utils';
 
-import { RepeatDirection } from './PanelRepeaterGridItem';
+import { RepeatDirection } from './DashboardGridItem';
 import { RowRepeaterBehavior } from './RowRepeaterBehavior';
 
 describe('RowRepeaterBehavior', () => {
