@@ -56,7 +56,7 @@ This procedure uses dashboard variables and templates to allow you to enter trac
 1. Select **Add visualization** from a new dashboard or select **Add Panel** on an existing dashboard.
 1. Search for and select the appropriate tracing data source.
 1. In the top-right of the panel editor, select the **Visualizations** tab, search for, and select **Traces**.
-1. Under the **Panel options**, enter a **Title** for your trace panel. For more information on the panel editor, refer to the [Configure panel options documentation][].
+1. Under the **Panel options**, enter a **Title** for your trace panel or have Grafana create one using [generative AI features][]. For more information on the panel editor, refer to the [Configure panel options documentation][].
 1. In the query editor, select the **TraceQL** query type tab.
 1. Enter `${traceId}` in the TraceQL query field to create a dashboard variable. This variable is used as the template query.
 
@@ -80,7 +80,7 @@ It’s more useful to instead be able to use TraceQL queries to search for speci
 1. Select the same trace data source you used in the previous section.
 1. In the top-right of the panel editor, select the **Visualizations** tab, search for, and select **Table**.
 1. In the query editor, select the **TraceQL** tab.
-1. Under the **Panel options**, enter a **Title** for your trace panel.
+1. Under the **Panel options**, enter a **Title** for your trace panel or have Grafana create one using [generative AI features][].
 1. Add an appropriate TraceQL query to search for traces that you would like to visualize in the dashboard. This example uses a simple, static query. You can write the TraceQL query as a template query to take advantage of other dashboard variables, if they exist. This lets you create dynamic queries based on these variables.
 
    {{< figure src="/static/img/docs/panels/traces/screenshot-traces-dynamic-query.png" caption="Create a dynamic query" >}}
@@ -134,4 +134,7 @@ You should now see a list of matching traces in the table visualization. While s
 
 [Tempo data source]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/datasources/tempo"
 [Tempo data source]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/connect-externally-hosted/data-sources/tempo"
+
+[generative AI features]: "/docs/grafana/ -> /docs/grafana/<GRAFANA_VERSION>/dashboards/manage-dashboards#set-up-generative-ai-features-for-dashboards"
+[generative AI features]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/visualizations/dashboards/manage-dashboards#set-up-generative-ai-features-for-dashboards"
 {{% /docs/reference %}}
