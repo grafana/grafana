@@ -148,7 +148,6 @@ export const ConnectionSVG = ({
       const connectionCursorStyle = scene.isEditingEnabled ? 'grab' : '';
       const selectedStyles = { stroke: '#44aaff', strokeOpacity: 0.6, strokeWidth: strokeWidth + 5 };
 
-      //const CONNECTION_HEAD_ID = `connectionHead-${headId + Math.random()}`;
       const CONNECTION_HEAD_ID_START = `connectionHeadStart-${headId + Math.random()}`;
       const CONNECTION_HEAD_ID_END = `connectionHeadEnd-${headId + Math.random()}`;
 
