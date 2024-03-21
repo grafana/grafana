@@ -105,7 +105,7 @@ export const XYChartPanel2 = (props: Props2) => {
                   <XYChartTooltip
                     data={props.data.series}
                     dataIdxs={dataIdxs}
-                    series={series}
+                    xySeries={series}
                     dismiss={dismiss}
                     isPinned={isPinned}
                     seriesIdx={seriesIdx!}

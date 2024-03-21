@@ -8,6 +8,7 @@ import { FacetedData, FacetSeries } from '@grafana/ui/src/components/uPlot/types
 
 import { pointWithin, Quadtree, Rect } from '../../barchart/quadtree';
 import { XYSeries } from '../types2';
+
 import { getCommonPrefixSuffix } from './utils';
 
 interface DrawBubblesOpts {
@@ -247,7 +248,7 @@ export const prepConfig = (xySeries: XYSeries[], theme: GrafanaTheme2) => {
   // clip hover points/bubbles to plotting area
   builder.addHook('init', (u, r) => {
     // TODO: re-enable once we global portal again
-    //u.over.style.overflow = 'hidden';
+    u.over.style.overflow = 'hidden';
   });
 
   builder.addHook('drawClear', (u) => {
