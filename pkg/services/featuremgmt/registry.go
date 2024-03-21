@@ -3,6 +3,8 @@
 // Then run tests in:
 //  pkg/services/featuremgmt/toggles_gen_test.go
 // twice to generate and validate the feature flag files
+//
+// Alternatively, use `make gen-feature-toggles`
 
 package featuremgmt
 
@@ -232,23 +234,6 @@ var (
 			Expression:     "true", // enabled by default
 			Owner:          awsDatasourcesSquad,
 			AllowSelfServe: true,
-		},
-		{
-			Name:           "redshiftAsyncQueryDataSupport",
-			Description:    "Enable async query data support for Redshift",
-			Stage:          FeatureStageGeneralAvailability,
-			Expression:     "true", // enabled by default
-			Owner:          awsDatasourcesSquad,
-			AllowSelfServe: false,
-		},
-		{
-			Name:           "athenaAsyncQueryDataSupport",
-			Description:    "Enable async query data support for Athena",
-			Stage:          FeatureStageGeneralAvailability,
-			Expression:     "true", // enabled by default
-			FrontendOnly:   true,
-			Owner:          awsDatasourcesSquad,
-			AllowSelfServe: false,
 		},
 		{
 			Name:        "showDashboardValidationWarnings",
@@ -525,9 +510,10 @@ var (
 		{
 			Name:         "pluginsDynamicAngularDetectionPatterns",
 			Description:  "Enables fetching Angular detection patterns for plugins from GCOM and fallback to hardcoded ones",
-			Stage:        FeatureStageExperimental,
+			Stage:        FeatureStageGeneralAvailability,
 			FrontendOnly: false,
 			Owner:        grafanaPluginsPlatformSquad,
+			Expression:   "true", // enabled by default
 		},
 		{
 			Name:         "vizAndWidgetSplit",
@@ -671,9 +657,10 @@ var (
 		{
 			Name:         "dashgpt",
 			Description:  "Enable AI powered features in dashboards",
-			Stage:        FeatureStagePublicPreview,
+			Stage:        FeatureStageGeneralAvailability,
 			FrontendOnly: true,
 			Owner:        grafanaDashboardsSquad,
+			Expression:   "true", // enabled by default
 		},
 		{
 			Name:         "aiGeneratedDashboardChanges",

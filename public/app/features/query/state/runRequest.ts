@@ -150,6 +150,12 @@ export function runRequest(
         throw new Error(`Expected response data to be array, got ${typeof packet.data}.`);
       }
 
+      // filter out responses for hidden queries
+      const hiddenQueries = request.targets.filter((q) => q.hide);
+      for (const query of hiddenQueries) {
+        packet.data = packet.data.filter((d) => d.refId !== query.refId);
+      }
+
       request.endTime = Date.now();
 
       state = processResponsePacket(packet, state);
@@ -194,6 +200,15 @@ export function callQueryMethod(
         }
       : t
   );
+
+  // do not filter queries in case a custom query function is provided (for example in variable queries)
+  if (!queryFunction) {
+    request.targets = request.targets.filter((t) => datasource.filterQuery?.(t) ?? true);
+  }
+
+  if (request.targets.length === 0) {
+    return of<DataQueryResponse>({ data: [] });
+  }
 
   // If its a public datasource, just return the result. Expressions will be handled on the backend.
   if (config.publicDashboardAccessToken) {
