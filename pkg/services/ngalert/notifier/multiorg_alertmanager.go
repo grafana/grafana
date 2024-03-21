@@ -37,7 +37,7 @@ type Alertmanager interface {
 	ApplyConfig(context.Context, *models.AlertConfiguration) error
 	SaveAndApplyConfig(ctx context.Context, config *apimodels.PostableUserConfig) error
 	SaveAndApplyDefaultConfig(ctx context.Context) error
-	GetStatus() apimodels.GettableStatus
+	GetStatus(context.Context) (apimodels.GettableStatus, error)
 
 	// Silences
 	CreateSilence(context.Context, *apimodels.PostableSilence) (string, error)

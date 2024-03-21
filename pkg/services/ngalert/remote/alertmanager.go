@@ -360,8 +360,19 @@ func (am *Alertmanager) PutAlerts(ctx context.Context, alerts apimodels.Postable
 	return nil
 }
 
-func (am *Alertmanager) GetStatus() apimodels.GettableStatus {
-	return apimodels.GettableStatus{}
+// GetStatus retrieves the remote Alertmanager configuration.
+func (am *Alertmanager) GetStatus(ctx context.Context) (apimodels.GettableStatus, error) {
+	c, err := am.mimirClient.GetGrafanaAlertmanagerConfig(ctx)
+	if err != nil {
+		return apimodels.GettableStatus{}, err
+	}
+
+	postableCfg, err := notifier.Load([]byte(c.GrafanaAlertmanagerConfig))
+	if err != nil {
+		return apimodels.GettableStatus{}, err
+	}
+
+	return *apimodels.NewGettableStatus(&postableCfg.AlertmanagerConfig), nil
 }
 
 func (am *Alertmanager) GetReceivers(ctx context.Context) ([]apimodels.Receiver, error) {

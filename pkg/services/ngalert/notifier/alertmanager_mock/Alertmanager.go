@@ -426,18 +426,28 @@ func (_c *AlertmanagerMock_GetSilence_Call) RunAndReturn(run func(context.Contex
 	return _c
 }
 
-// GetStatus provides a mock function with given fields:
-func (_m *AlertmanagerMock) GetStatus() definitions.GettableStatus {
-	ret := _m.Called()
+// GetStatus provides a mock function with given fields: _a0
+func (_m *AlertmanagerMock) GetStatus(_a0 context.Context) (definitions.GettableStatus, error) {
+	ret := _m.Called(_a0)
 
 	var r0 definitions.GettableStatus
-	if rf, ok := ret.Get(0).(func() definitions.GettableStatus); ok {
-		r0 = rf()
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context) (definitions.GettableStatus, error)); ok {
+		return rf(_a0)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context) definitions.GettableStatus); ok {
+		r0 = rf(_a0)
 	} else {
 		r0 = ret.Get(0).(definitions.GettableStatus)
 	}
 
-	return r0
+	if rf, ok := ret.Get(1).(func(context.Context) error); ok {
+		r1 = rf(_a0)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
 }
 
 // AlertmanagerMock_GetStatus_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GetStatus'
@@ -446,23 +456,24 @@ type AlertmanagerMock_GetStatus_Call struct {
 }
 
 // GetStatus is a helper method to define mock.On call
-func (_e *AlertmanagerMock_Expecter) GetStatus() *AlertmanagerMock_GetStatus_Call {
-	return &AlertmanagerMock_GetStatus_Call{Call: _e.mock.On("GetStatus")}
+//   - _a0 context.Context
+func (_e *AlertmanagerMock_Expecter) GetStatus(_a0 interface{}) *AlertmanagerMock_GetStatus_Call {
+	return &AlertmanagerMock_GetStatus_Call{Call: _e.mock.On("GetStatus", _a0)}
 }
 
-func (_c *AlertmanagerMock_GetStatus_Call) Run(run func()) *AlertmanagerMock_GetStatus_Call {
+func (_c *AlertmanagerMock_GetStatus_Call) Run(run func(_a0 context.Context)) *AlertmanagerMock_GetStatus_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run()
+		run(args[0].(context.Context))
 	})
 	return _c
 }
 
-func (_c *AlertmanagerMock_GetStatus_Call) Return(_a0 definitions.GettableStatus) *AlertmanagerMock_GetStatus_Call {
-	_c.Call.Return(_a0)
+func (_c *AlertmanagerMock_GetStatus_Call) Return(_a0 definitions.GettableStatus, _a1 error) *AlertmanagerMock_GetStatus_Call {
+	_c.Call.Return(_a0, _a1)
 	return _c
 }
 
-func (_c *AlertmanagerMock_GetStatus_Call) RunAndReturn(run func() definitions.GettableStatus) *AlertmanagerMock_GetStatus_Call {
+func (_c *AlertmanagerMock_GetStatus_Call) RunAndReturn(run func(context.Context) (definitions.GettableStatus, error)) *AlertmanagerMock_GetStatus_Call {
 	_c.Call.Return(run)
 	return _c
 }

@@ -123,8 +123,10 @@ func TestForkedAlertmanager_ModeRemoteSecondary(t *testing.T) {
 		// We care about the status of the internal Alertmanager.
 		internal, _, forked := genTestAlertmanagers(tt, modeRemoteSecondary)
 		status := apimodels.GettableStatus{}
-		internal.EXPECT().GetStatus().Return(status).Once()
-		require.Equal(tt, status, forked.GetStatus())
+		internal.EXPECT().GetStatus(ctx).Return(status, nil).Once()
+		got, err := forked.GetStatus(ctx)
+		require.NoError(tt, err)
+		require.Equal(tt, status, got)
 	})
 
 	t.Run("CreateSilence", func(tt *testing.T) {
@@ -376,11 +378,23 @@ func TestForkedAlertmanager_ModeRemotePrimary(t *testing.T) {
 	expErr := errors.New("test error")
 
 	t.Run("GetStatus", func(tt *testing.T) {
-		// We care about the status of the remote Alertmanager.
-		_, remote, forked := genTestAlertmanagers(tt, modeRemotePrimary)
-		status := apimodels.GettableStatus{}
-		remote.EXPECT().GetStatus().Return(status).Once()
-		require.Equal(tt, status, forked.GetStatus())
+		{
+			// We care about the status of the remote Alertmanager.
+			_, remote, forked := genTestAlertmanagers(tt, modeRemotePrimary)
+			status := apimodels.GettableStatus{}
+			remote.EXPECT().GetStatus(ctx).Return(status, nil).Once()
+			got, err := forked.GetStatus(ctx)
+			require.NoError(tt, err)
+			require.Equal(tt, status, got)
+		}
+
+		{
+			// If there's an error in the remote Alertmanager, it should be returned.
+			_, remote, forked := genTestAlertmanagers(tt, modeRemotePrimary)
+			remote.EXPECT().GetStatus(ctx).Return(apimodels.GettableStatus{}, expErr).Once()
+			_, err := forked.GetStatus(ctx)
+			require.ErrorIs(tt, expErr, err)
+		}
 	})
 
 	t.Run("CreateSilence", func(tt *testing.T) {
