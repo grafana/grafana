@@ -392,7 +392,7 @@ export class Connections {
       const vertexIndex = this.selectedVertexIndex;
 
       if (connectionIndex !== undefined && vertexIndex !== undefined) {
-        const currentSource = this.scene.connections.state[connectionIndex].source;
+        const currentSource = this.selection.value!.source;
         if (currentSource.options.connections) {
           const currentConnections = [...currentSource.options.connections];
           if (currentConnections[connectionIndex].vertices) {
@@ -521,7 +521,7 @@ export class Connections {
       const vertexIndex = this.selectedVertexIndex;
 
       if (connectionIndex !== undefined && vertexIndex !== undefined) {
-        const currentSource = this.scene.connections.state[connectionIndex].source;
+        const currentSource = this.selection.value!.source;
         if (currentSource.options.connections) {
           const currentConnections = [...currentSource.options.connections];
           const newVertex = { x: (x - x1) / (x2 - x1), y: (y - y1) / (y2 - y1) };
