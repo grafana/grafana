@@ -63,7 +63,7 @@ const xychartPanel = async () => {
   } else {
     return await import(/* webpackChunkName: "xychart" */ 'app/plugins/panel/xychart/module');
   }
-}
+};
 const heatmapPanel = async () =>
   await import(/* webpackChunkName: "heatmapPanel" */ 'app/plugins/panel/heatmap/module');
 const tableOldPanel = async () =>
