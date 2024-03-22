@@ -43,7 +43,7 @@ type DataSourceAPIBuilder struct {
 	connectionResourceInfo common.ResourceInfo
 
 	pluginJSON      plugins.JSONData
-	client          backend.ServeOpts // will only ever be called with the same pluginid!
+	handlers        backend.ServeOpts // will only ever be called with the same pluginid!
 	datasources     PluginDatasourceProvider
 	contextProvider PluginContextWrapper
 	accessControl   accesscontrol.AccessControl
@@ -98,17 +98,9 @@ func RegisterAPIService(
 	return builder, nil // only used for wire
 }
 
-// PluginClient is a subset of the plugins.Client interface with only the
-// functions supported (yet) by the datasource API
-type PluginClient interface {
-	backend.QueryDataHandler
-	backend.CheckHealthHandler
-	backend.CallResourceHandler
-}
-
 func NewDataSourceAPIBuilder(
 	plugin plugins.JSONData,
-	client backend.ServeOpts,
+	handlers backend.ServeOpts,
 	datasources PluginDatasourceProvider,
 	contextProvider PluginContextWrapper,
 	accessControl accesscontrol.AccessControl) (*DataSourceAPIBuilder, error) {
@@ -117,10 +109,17 @@ func NewDataSourceAPIBuilder(
 		return nil, err
 	}
 
+	if handlers.QueryDataHandler == nil {
+		return nil, fmt.Errorf("missing query handler")
+	}
+	if handlers.CheckHealthHandler == nil {
+		return nil, fmt.Errorf("missing health check handler")
+	}
+
 	return &DataSourceAPIBuilder{
 		connectionResourceInfo: ri,
 		pluginJSON:             plugin,
-		client:                 client,
+		handlers:               handlers,
 		datasources:            datasources,
 		contextProvider:        contextProvider,
 		accessControl:          accessControl,
@@ -209,8 +208,9 @@ func (b *DataSourceAPIBuilder) GetAPIGroupInfo(
 	storage[conn.StoragePath("query")] = &subQueryREST{builder: b}
 	storage[conn.StoragePath("health")] = &subHealthREST{builder: b}
 
-	// TODO! only setup this endpoint if it is implemented
-	storage[conn.StoragePath("resource")] = &subResourceREST{builder: b}
+	if b.handlers.CallResourceHandler != nil {
+		storage[conn.StoragePath("resource")] = &subResourceREST{builder: b}
+	}
 
 	// Frontend proxy
 	if len(b.pluginJSON.Routes) > 0 {
