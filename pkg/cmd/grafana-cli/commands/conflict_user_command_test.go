@@ -578,8 +578,9 @@ func TestRunValidateConflictUserFile(t *testing.T) {
 					OrgID: testOrgID,
 				}
 				rawSQL := fmt.Sprintf(
-					"INSERT INTO %s (email, login, org_id, version, is_admin, created, updated) VALUES (?,?,?,0,0,\"2024-03-18T15:25:32\",\"2024-03-18T15:25:32\")",
+					"INSERT INTO %s (email, login, org_id, version, is_admin, created, updated) VALUES (?,?,?,0,%s,\"2024-03-18T15:25:32\",\"2024-03-18T15:25:32\")",
 					sqlStore.Quote("user"),
+					sqlStore.Dialect.BooleanStr(false),
 				)
 				result, err := sess.Exec(rawSQL, dupUserLogincmd.Email, dupUserLogincmd.Login, dupUserLogincmd.OrgID)
 				if err != nil {
@@ -657,8 +658,9 @@ func TestIntegrationMergeUser(t *testing.T) {
 
 				// call user store instead of user service so as not to prevent conflicting users
 				rawSQL := fmt.Sprintf(
-					"INSERT INTO %s (email, login, org_id, version, is_admin, created, updated) VALUES (?,?,?,0,0,?,?)",
+					"INSERT INTO %s (email, login, org_id, version, is_admin, created, updated) VALUES (?,?,?,0,%s,?,?)",
 					sqlStore.Quote("user"),
+					sqlStore.Dialect.BooleanStr(false),
 				)
 				result, err := sess.Exec(rawSQL, cmd.Email, cmd.Login, cmd.OrgID, cmd.Created, cmd.Updated)
 				if err != nil {
@@ -688,8 +690,9 @@ func TestIntegrationMergeUser(t *testing.T) {
 				}
 				// call user store instead of user service so as not to prevent conflicting users
 				rawSQL := fmt.Sprintf(
-					"INSERT INTO %s (email, login, org_id, version, is_admin, created, updated) VALUES (?,?,?,0,0,?,?)",
+					"INSERT INTO %s (email, login, org_id, version, is_admin, created, updated) VALUES (?,?,?,0,%s,?,?)",
 					sqlStore.Quote("user"),
+					sqlStore.Dialect.BooleanStr(false),
 				)
 				result, err := sess.Exec(rawSQL, cmd.Email, cmd.Login, cmd.OrgID, cmd.Created, cmd.Updated)
 				if err != nil {
