@@ -4126,9 +4126,9 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@grafana/scenes@npm:3.13.3":
-  version: 3.13.3
-  resolution: "@grafana/scenes@npm:3.13.3"
+"@grafana/scenes@npm:4.0.1":
+  version: 4.0.1
+  resolution: "@grafana/scenes@npm:4.0.1"
   dependencies:
     "@grafana/e2e-selectors": "npm:10.3.3"
     react-grid-layout: "npm:1.3.4"
@@ -4142,7 +4142,7 @@ __metadata:
     "@grafana/ui": ^10.0.3
     react: ^18.0.0
     react-dom: ^18.0.0
-  checksum: 10/5b7f2e2714dcdbc3ad58352ec0cc7f513f7a240dc11a3e309733a662760a598e9333ec377f2899b6b668e018c2e885e8a044af7d42d1be4487d692cda3b9359a
+  checksum: 10/e12737e1a73155ef48bc507b20a2e47d1d7784730c625d799ea74b8719f0bfa2babc193ecdbcb85727ac81dbba0bfad27d4090696b34a7ed1a97caa9813540de
   languageName: node
   linkType: hard
 
@@ -4341,6 +4341,7 @@ __metadata:
     rollup-plugin-dts: "npm:^5.0.0"
     rollup-plugin-esbuild: "npm:5.0.0"
     rollup-plugin-node-externals: "npm:^5.0.0"
+    rollup-plugin-svg-import: "npm:1.6.0"
     rxjs: "npm:7.8.1"
     sass-loader: "npm:14.1.1"
     slate: "npm:0.47.9"
@@ -5240,7 +5241,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@msagl/core@npm:^1.1.16, @msagl/core@npm:^1.1.18":
+"@msagl/core@npm:^1.1.16":
   version: 1.1.18
   resolution: "@msagl/core@npm:1.1.18"
   dependencies:
@@ -5254,25 +5255,39 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@msagl/drawing@npm:^1.1.18":
-  version: 1.1.18
-  resolution: "@msagl/drawing@npm:1.1.18"
+"@msagl/core@npm:^1.1.17":
+  version: 1.1.17
+  resolution: "@msagl/core@npm:1.1.17"
   dependencies:
-    "@msagl/core": "npm:^1.1.18"
-  checksum: 10/4cba6bd172dc39e09da9487c87b9caf511fb12eff433715ba3efeac95650315c5a5fb8cc6dfffd6f76de304a8cab0ecb839fc933268f0a0a004ee130594e4773
+    "@esfx/collections": "npm:^1.0.0"
+    "@esfx/collections-sortedmap": "npm:^1.0.0"
+    queue-typescript: "npm:^1.0.1"
+    reliable-random: "npm:^0.0.1"
+    stack-typescript: "npm:^1.0.4"
+    typescript-string-operations: "npm:^1.4.1"
+  checksum: 10/6a0c83911d0802cf4372a9d976017117d9ecbec8e8bda8850fb58dec76558c0453290a51ad1c55b451ae70deeb3a57b1623bcbf7d054b3bfdacb9ea2a8190d5a
+  languageName: node
+  linkType: hard
+
+"@msagl/drawing@npm:^1.1.17":
+  version: 1.1.17
+  resolution: "@msagl/drawing@npm:1.1.17"
+  dependencies:
+    "@msagl/core": "npm:^1.1.17"
+  checksum: 10/7a3f38cf2cafeda292cbd7c3f78d55f39f11a5923c3675ecd5a51d362660461fca50b42e5c9aa58431ad34f650fff0443be99670947c6fcd6f07701057a08c52
   languageName: node
   linkType: hard
 
 "@msagl/parser@npm:^1.1.16":
-  version: 1.1.18
-  resolution: "@msagl/parser@npm:1.1.18"
+  version: 1.1.17
+  resolution: "@msagl/parser@npm:1.1.17"
   dependencies:
-    "@msagl/core": "npm:^1.1.18"
-    "@msagl/drawing": "npm:^1.1.18"
+    "@msagl/core": "npm:^1.1.17"
+    "@msagl/drawing": "npm:^1.1.17"
     "@types/parse-color": "npm:^1.0.1"
     dotparser: "npm:^1.1.1"
     parse-color: "npm:^1.0.0"
-  checksum: 10/f2b2d01d08e82341251cc8907a19881b2b203480342a49d14432922d68edf03a26bf3b4959d6673f45347afce7655f7cb95ace2218e06617cde5f4ed5a669f80
+  checksum: 10/eae9c0a02410177b9c8f73edcad3c9e4610a31a972b3c58a870fe1db7c75b857304a87b82e8b7f9d6afedf91be73969856626ebb0f3fdae0d47c4e62da805ca1
   languageName: node
   linkType: hard
 
@@ -7123,6 +7138,16 @@ __metadata:
   peerDependencies:
     rollup: ^1.20.0||^2.0.0
   checksum: 10/3b69f02893eea42455fb97b81f612ac6bfadf94ac73bebd481ea13e90a693eef52c163210a095b12e574a25603af5e55f86a020889019167f331aa8dd3ff30e0
+  languageName: node
+  linkType: hard
+
+"@rollup/pluginutils@npm:^4.1.1":
+  version: 4.2.1
+  resolution: "@rollup/pluginutils@npm:4.2.1"
+  dependencies:
+    estree-walker: "npm:^2.0.1"
+    picomatch: "npm:^2.2.2"
+  checksum: 10/503a6f0a449e11a2873ac66cfdfb9a3a0b77ffa84c5cad631f5e4bc1063c850710e8d5cd5dab52477c0d66cda2ec719865726dbe753318cd640bab3fff7ca476
   languageName: node
   linkType: hard
 
@@ -16964,7 +16989,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"estree-walker@npm:^2.0.2":
+"estree-walker@npm:^2.0.1, estree-walker@npm:^2.0.2":
   version: 2.0.2
   resolution: "estree-walker@npm:2.0.2"
   checksum: 10/b02109c5d46bc2ed47de4990eef770f7457b1159a229f0999a09224d2b85ffeed2d7679cffcff90aeb4448e94b0168feb5265b209cdec29aad50a3d6e93d21e2
@@ -18540,7 +18565,7 @@ __metadata:
     "@grafana/prometheus": "workspace:*"
     "@grafana/runtime": "workspace:*"
     "@grafana/saga-icons": "workspace:*"
-    "@grafana/scenes": "npm:3.13.3"
+    "@grafana/scenes": "npm:4.0.1"
     "@grafana/schema": "workspace:*"
     "@grafana/sql": "workspace:*"
     "@grafana/tsconfig": "npm:^1.3.0-rc1"
@@ -27863,6 +27888,17 @@ __metadata:
   languageName: node
   linkType: hard
 
+"rollup-plugin-svg-import@npm:1.6.0":
+  version: 1.6.0
+  resolution: "rollup-plugin-svg-import@npm:1.6.0"
+  dependencies:
+    "@rollup/pluginutils": "npm:^4.1.1"
+  peerDependencies:
+    rollup: ">=1.29.0 <3.0.0"
+  checksum: 10/453862c39d2301563d9d07f6647c295377ff66cf3174d2a0612389fda4bfd9fa72718d90279feb782d3525f1d6f9710e1dc78641cd9d4044360a0179f88054b0
+  languageName: node
+  linkType: hard
+
 "rollup@npm:2.79.1":
   version: 2.79.1
   resolution: "rollup@npm:2.79.1"
@@ -31337,8 +31373,8 @@ __metadata:
   linkType: hard
 
 "webpack-dev-middleware@npm:^6.1.1":
-  version: 6.1.1
-  resolution: "webpack-dev-middleware@npm:6.1.1"
+  version: 6.1.2
+  resolution: "webpack-dev-middleware@npm:6.1.2"
   dependencies:
     colorette: "npm:^2.0.10"
     memfs: "npm:^3.4.12"
@@ -31350,7 +31386,7 @@ __metadata:
   peerDependenciesMeta:
     webpack:
       optional: true
-  checksum: 10/b0637584f18b02174fd7fc2e6278efb8e2fb5308abe4ffe73658e59ff53a62c05686f161b06bd5c41d42611aa395b8c8f087d7ff8cf2304232c097a694a5b94e
+  checksum: 10/043d9b7b6b2ec433515da138d6527573828f79e164722410038ba96a5d65be0e28241161a90168471c13231e5e8a84c0f7cd215433828bc64087b0bdab8aa553
   languageName: node
   linkType: hard
 

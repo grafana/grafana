@@ -10,6 +10,7 @@ import {
   canvasElementRegistry,
   CanvasElementOptions,
   CanvasConnection,
+  ConnectionDirection,
 } from 'app/features/canvas';
 import { notFoundItem } from 'app/features/canvas/elements/notFound';
 import { ElementState } from 'app/features/canvas/runtime/element';
@@ -147,11 +148,11 @@ export function getDataLinks(
 
     // Text config
     const isTextTiedToFieldData =
-      elementConfig.text?.field &&
-      visibleFields.some((field) => getFieldDisplayName(field, frame) === elementConfig.text?.field);
+      elementConfig?.text?.field &&
+      visibleFields.some((field) => getFieldDisplayName(field, frame) === elementConfig?.text?.field);
     const isTextColorTiedToFieldData =
-      elementConfig.color?.field &&
-      visibleFields.some((field) => getFieldDisplayName(field, frame) === elementConfig.color?.field);
+      elementConfig?.color?.field &&
+      visibleFields.some((field) => getFieldDisplayName(field, frame) === elementConfig?.color?.field);
 
     // General element config
     const isElementBackgroundColorTiedToFieldData =
@@ -166,36 +167,38 @@ export function getDataLinks(
 
     // Icon config
     const isIconSVGTiedToFieldData =
-      elementConfig.path?.field &&
-      visibleFields.some((field) => getFieldDisplayName(field, frame) === elementConfig.path?.field);
+      elementConfig?.path?.field &&
+      visibleFields.some((field) => getFieldDisplayName(field, frame) === elementConfig?.path?.field);
     const isIconColorTiedToFieldData =
-      elementConfig.fill?.field &&
-      visibleFields.some((field) => getFieldDisplayName(field, frame) === elementConfig.fill?.field);
+      elementConfig?.fill?.field &&
+      visibleFields.some((field) => getFieldDisplayName(field, frame) === elementConfig?.fill?.field);
 
     // Wind turbine config (maybe remove / not support this?)
     const isWindTurbineRPMTiedToFieldData =
-      elementConfig.rpm?.field &&
-      visibleFields.some((field) => getFieldDisplayName(field, frame) === elementConfig.rpm?.field);
+      elementConfig?.rpm?.field &&
+      visibleFields.some((field) => getFieldDisplayName(field, frame) === elementConfig?.rpm?.field);
 
     // Server config
     const isServerBlinkRateTiedToFieldData =
-      elementConfig.blinkRate?.field &&
-      visibleFields.some((field) => getFieldDisplayName(field, frame) === elementConfig.blinkRate?.field);
+      elementConfig?.blinkRate?.field &&
+      visibleFields.some((field) => getFieldDisplayName(field, frame) === elementConfig?.blinkRate?.field);
     const isServerStatusColorTiedToFieldData =
-      elementConfig.statusColor?.field &&
-      visibleFields.some((field) => getFieldDisplayName(field, frame) === elementConfig.statusColor?.field);
+      elementConfig?.statusColor?.field &&
+      visibleFields.some((field) => getFieldDisplayName(field, frame) === elementConfig?.statusColor?.field);
     const isServerBulbColorTiedToFieldData =
-      elementConfig.bulbColor?.field &&
-      visibleFields.some((field) => getFieldDisplayName(field, frame) === elementConfig.bulbColor?.field);
+      elementConfig?.bulbColor?.field &&
+      visibleFields.some((field) => getFieldDisplayName(field, frame) === elementConfig?.bulbColor?.field);
 
     if (isTextTiedToFieldData) {
-      const field = visibleFields.filter((field) => getFieldDisplayName(field, frame) === elementConfig.text?.field)[0];
+      const field = visibleFields.filter(
+        (field) => getFieldDisplayName(field, frame) === elementConfig?.text?.field
+      )[0];
       addDataLinkForField(field, data, linkLookup, links);
     }
 
     if (isTextColorTiedToFieldData) {
       const field = visibleFields.filter(
-        (field) => getFieldDisplayName(field, frame) === elementConfig.color?.field
+        (field) => getFieldDisplayName(field, frame) === elementConfig?.color?.field
       )[0];
       addDataLinkForField(field, data, linkLookup, links);
     }
@@ -222,37 +225,41 @@ export function getDataLinks(
     }
 
     if (isIconSVGTiedToFieldData) {
-      const field = visibleFields.filter((field) => getFieldDisplayName(field, frame) === elementConfig.path?.field)[0];
+      const field = visibleFields.filter(
+        (field) => getFieldDisplayName(field, frame) === elementConfig?.path?.field
+      )[0];
       addDataLinkForField(field, data, linkLookup, links);
     }
 
     if (isIconColorTiedToFieldData) {
-      const field = visibleFields.filter((field) => getFieldDisplayName(field, frame) === elementConfig.fill?.field)[0];
+      const field = visibleFields.filter(
+        (field) => getFieldDisplayName(field, frame) === elementConfig?.fill?.field
+      )[0];
       addDataLinkForField(field, data, linkLookup, links);
     }
 
     if (isWindTurbineRPMTiedToFieldData) {
-      const field = visibleFields.filter((field) => getFieldDisplayName(field, frame) === elementConfig.rpm?.field)[0];
+      const field = visibleFields.filter((field) => getFieldDisplayName(field, frame) === elementConfig?.rpm?.field)[0];
       addDataLinkForField(field, data, linkLookup, links);
     }
 
     if (isServerBlinkRateTiedToFieldData) {
       const field = visibleFields.filter(
-        (field) => getFieldDisplayName(field, frame) === elementConfig.blinkRate?.field
+        (field) => getFieldDisplayName(field, frame) === elementConfig?.blinkRate?.field
       )[0];
       addDataLinkForField(field, data, linkLookup, links);
     }
 
     if (isServerStatusColorTiedToFieldData) {
       const field = visibleFields.filter(
-        (field) => getFieldDisplayName(field, frame) === elementConfig.statusColor?.field
+        (field) => getFieldDisplayName(field, frame) === elementConfig?.statusColor?.field
       )[0];
       addDataLinkForField(field, data, linkLookup, links);
     }
 
     if (isServerBulbColorTiedToFieldData) {
       const field = visibleFields.filter(
-        (field) => getFieldDisplayName(field, frame) === elementConfig.bulbColor?.field
+        (field) => getFieldDisplayName(field, frame) === elementConfig?.bulbColor?.field
       )[0];
       addDataLinkForField(field, data, linkLookup, links);
     }
@@ -378,13 +385,19 @@ export const getRowIndex = (fieldName: string | undefined, scene: Scene) => {
   return 0;
 };
 
-export const getConnectionStyles = (info: CanvasConnection, scene: Scene, defaultArrowSize: number) => {
+export const getConnectionStyles = (
+  info: CanvasConnection,
+  scene: Scene,
+  defaultArrowSize: number,
+  defaultArrowDirection: ConnectionDirection
+) => {
   const defaultArrowColor = config.theme2.colors.text.primary;
   const lastRowIndex = getRowIndex(info.size?.field, scene);
   const strokeColor = info.color ? scene.context.getColor(info.color).value() : defaultArrowColor;
   const strokeWidth = info.size ? scene.context.getScale(info.size).get(lastRowIndex) : defaultArrowSize;
+  const arrowDirection = info.direction ? info.direction : defaultArrowDirection;
   const lineStyle = info.lineStyle === LineStyle.Dashed ? StrokeDasharray.Dashed : StrokeDasharray.Solid;
-  return { strokeColor, strokeWidth, lineStyle };
+  return { strokeColor, strokeWidth, arrowDirection, lineStyle };
 };
 
 export const getParentBoundingClientRect = (scene: Scene) => {

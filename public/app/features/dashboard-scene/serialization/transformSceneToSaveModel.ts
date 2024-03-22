@@ -3,7 +3,6 @@ import { isEqual } from 'lodash';
 import { isEmptyObject, ScopedVars, TimeRange } from '@grafana/data';
 import {
   behaviors,
-  SceneDataLayers,
   SceneGridItemLike,
   SceneGridLayout,
   SceneGridRow,
@@ -11,6 +10,7 @@ import {
   SceneDataTransformer,
   SceneVariableSet,
   LocalValueVariable,
+  SceneDataLayerSet,
 } from '@grafana/scenes';
 import {
   AnnotationQuery,
@@ -77,7 +77,7 @@ export function transformSceneToSaveModel(scene: DashboardScene, isSnapshot = fa
   }
 
   let annotations: AnnotationQuery[] = [];
-  if (data instanceof SceneDataLayers) {
+  if (data instanceof SceneDataLayerSet) {
     const layers = data.state.layers;
 
     annotations = dataLayersToAnnotations(layers);
@@ -214,6 +214,7 @@ export function vizPanelToPanel(
     id: getPanelIdForVizPanel(vizPanel),
     type: vizPanel.state.pluginId,
     title: vizPanel.state.title,
+    description: vizPanel.state.description ?? undefined,
     gridPos,
     options: vizPanel.state.options,
     fieldConfig: (vizPanel.state.fieldConfig as FieldConfigSource) ?? { defaults: {}, overrides: [] },
