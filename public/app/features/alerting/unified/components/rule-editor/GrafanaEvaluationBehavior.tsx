@@ -3,7 +3,6 @@ import React, { useCallback, useEffect, useState } from 'react';
 import { RegisterOptions, useFormContext, Controller } from 'react-hook-form';
 
 import { GrafanaTheme2, SelectableValue } from '@grafana/data';
-import { secondsToHms } from '@grafana/data/src/datetime/rangeutil';
 import { Button, Field, Icon, IconButton, Input, Label, Stack, Switch, Text, Tooltip, useStyles2 } from '@grafana/ui';
 
 import { CombinedRuleGroup, CombinedRuleNamespace } from '../../../../../types/unified-alerting';
@@ -12,7 +11,7 @@ import { useCombinedRuleNamespaces } from '../../hooks/useCombinedRuleNamespaces
 import { useUnifiedAlertingSelector } from '../../hooks/useUnifiedAlertingSelector';
 import { RuleFormValues } from '../../types/rule-form';
 import { GRAFANA_RULES_SOURCE_NAME } from '../../utils/datasource';
-import { parsePrometheusDuration } from '../../utils/time';
+import { formatPrometheusDuration, parsePrometheusDuration, safeParsePrometheusDuration } from '../../utils/time';
 import { CollapseToggle } from '../CollapseToggle';
 import { EditCloudGroupModal } from '../rules/EditRuleGroupModal';
 
@@ -182,13 +181,13 @@ function ForInput({ evaluateEvery }: { evaluateEvery: string }) {
     groupEvaluationIntervalMillis * 5,
   ];
 
-  const setPendingPeriod = (time: number) => {
-    setValue('evaluateFor', `${time}`);
+  const setPendingPeriod = (milliseconds: number) => {
+    setValue('evaluateFor', formatPrometheusDuration(milliseconds));
   };
 
-  const isQuickSelectionActive = (time: number, unit: string) => {
+  const isQuickSelectionActive = (milliseconds: number) => {
     const currentPendingPeriod = watch('evaluateFor');
-    return `${time}${unit}` === currentPendingPeriod;
+    return safeParsePrometheusDuration(currentPendingPeriod) === milliseconds;
   };
 
   return (
@@ -209,16 +208,16 @@ function ForInput({ evaluateEvery }: { evaluateEvery: string }) {
       >
         <Stack direction="row" alignItems="flex-end">
           <Input id={evaluateForId} width={8} {...register('evaluateFor', forValidationOptions(evaluateEvery))} />
-          {PENDING_PERIOD_QUICK_OPTIONS.map((time) => (
+          {PENDING_PERIOD_QUICK_OPTIONS.map((milliseconds) => (
             <Button
-              key={time}
-              variant={'secondary'}
+              key={milliseconds}
+              variant={isQuickSelectionActive(milliseconds) ? 'primary' : 'secondary'}
               size="sm"
               onClick={() => {
-                setPendingPeriod(time);
+                setPendingPeriod(milliseconds);
               }}
             >
-              {secondsToHms(time / 1000)}
+              {milliseconds === 0 ? 'Same as group evaluation interval' : formatPrometheusDuration(milliseconds)}
             </Button>
           ))}
         </Stack>

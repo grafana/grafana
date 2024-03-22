@@ -17,7 +17,7 @@ import { checkEvaluationIntervalGlobalLimit } from '../../utils/config';
 import { getRulesSourceName, GRAFANA_RULES_SOURCE_NAME } from '../../utils/datasource';
 import { initialAsyncRequestState } from '../../utils/redux';
 import { AlertInfo, getAlertInfo, isRecordingRulerRule } from '../../utils/rules';
-import { parsePrometheusDuration, safeParseDurationstr } from '../../utils/time';
+import { parsePrometheusDuration, safeParsePrometheusDuration } from '../../utils/time';
 import { DynamicTable, DynamicTableColumnProps, DynamicTableItemProps } from '../DynamicTable';
 import { EvaluationIntervalLimitExceeded } from '../InvalidIntervalWarning';
 import { decodeGrafanaNamespace, encodeGrafanaNamespace } from '../expressions/util';
@@ -68,7 +68,8 @@ export const RulesForGroupTable = ({ rulesWithoutRecordingRules }: { rulesWithou
       data: getAlertInfo(rule, currentInterval),
     }))
     .sort(
-      (alert1, alert2) => safeParseDurationstr(alert1.data.forDuration) - safeParseDurationstr(alert2.data.forDuration)
+      (alert1, alert2) =>
+        safeParsePrometheusDuration(alert1.data.forDuration) - safeParsePrometheusDuration(alert2.data.forDuration)
     );
 
   const columns: AlertsWithForTableColumnProps[] = useMemo(() => {

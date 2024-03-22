@@ -21,7 +21,7 @@ import { RuleFormValues } from '../../types/rule-form';
 import { GRAFANA_RULES_SOURCE_NAME } from '../../utils/datasource';
 import { MINUTE } from '../../utils/rule-form';
 import { isGrafanaRulerRule } from '../../utils/rules';
-import { parsePrometheusDuration } from '../../utils/time';
+import { formatPrometheusDuration, parsePrometheusDuration, safeParsePrometheusDuration } from '../../utils/time';
 import { ProvisioningBadge } from '../Provisioning';
 import { evaluateEveryValidationOptions } from '../rules/EditRuleGroupModal';
 
@@ -402,12 +402,12 @@ function EvaluationGroupCreationModal({
   const { register, handleSubmit, formState, setValue, getValues, watch: watchGroupFormValues } = formAPI;
 
   const setPendingPeriod = (time: number) => {
-    setValue('evaluateEvery', secondsToHms(time / 1000));
+    setValue('evaluateEvery', secondsToHms(time / 1000), { shouldValidate: true });
   };
 
   const isQuickSelectionActive = (time: number) => {
     const evaluationInterval = watchGroupFormValues('evaluateEvery');
-    return evaluationInterval ? parsePrometheusDuration(evaluationInterval) === time : false;
+    return evaluationInterval ? safeParsePrometheusDuration(evaluationInterval) === time : false;
   };
 
   return (
@@ -438,7 +438,7 @@ function EvaluationGroupCreationModal({
 
           <Field
             error={formState.errors.evaluateEvery?.message}
-            invalid={!!formState.errors.evaluateEvery}
+            invalid={Boolean(formState.errors.evaluateEvery)}
             label={
               <Label
                 htmlFor={evaluateEveryId}
@@ -465,7 +465,7 @@ function EvaluationGroupCreationModal({
                       setPendingPeriod(time);
                     }}
                   >
-                    {secondsToHms(time / 1000)}
+                    {formatPrometheusDuration(time)}
                   </Button>
                 ))}
               </Stack>
