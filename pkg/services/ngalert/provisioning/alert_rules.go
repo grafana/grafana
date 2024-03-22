@@ -677,6 +677,9 @@ func (service *AlertRuleService) DeleteAlertRule(ctx context.Context, user ident
 		}
 	}
 
+	// The single delete is idempotent, and doesn't error when deleting a group that already doesn't exist.
+	// This is different from deleting groups. We delete the rules directly rather than persisting a delta here to keep the semantics the same.
+	// TODO: Either persist a delta here as a breaking change, or deprecate this endpoint in favor of the group endpoint.
 	return service.xact.InTransaction(ctx, func(ctx context.Context) error {
 		return service.deleteRules(ctx, user.GetOrgID(), rule)
 	})
