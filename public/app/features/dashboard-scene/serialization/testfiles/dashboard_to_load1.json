@@ -115,6 +115,7 @@
         }
       ],
       "title": "Simple time series graph ",
+      "description": "This is a simple time series graph",
       "type": "timeseries"
     },
     {
