@@ -282,6 +282,9 @@ export const Pages = {
       table: 'Explore Table',
       scrollView: 'data-testid explorer scroll view',
     },
+    QueryHistory: {
+      container: 'data-testid QueryHistory',
+    },
   },
   SoloPanel: {
     url: (page: string) => `/d-solo/${page}`,

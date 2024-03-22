@@ -2,6 +2,7 @@ import { debounce } from 'lodash';
 import React, { useState, useEffect } from 'react';
 
 import { DataSourceApi, SelectableValue } from '@grafana/data';
+import { selectors } from '@grafana/e2e-selectors';
 import { TabbedContainer, TabConfig } from '@grafana/ui';
 import { t } from 'app/core/internationalization';
 import { SortOrder, RichHistorySearchFilters, RichHistorySettings } from 'app/core/utils/richHistory';
@@ -149,6 +150,7 @@ export function RichHistory(props: RichHistoryProps) {
       onClose={onClose}
       defaultTab={firstTab}
       closeIconTooltip={t('explore.rich-history.close-tooltip', 'Close query history')}
+      testId={selectors.pages.Explore.QueryHistory.container}
     />
   );
 }
