@@ -41,5 +41,3 @@ export const plugin = new PanelPlugin<Options, FieldConfig>(XYChartPanel)
     commonOptionsBuilder.addTooltipOptions(builder, true);
     commonOptionsBuilder.addLegendOptions(builder);
   });
-
-// export { plugin } from './v2/module';

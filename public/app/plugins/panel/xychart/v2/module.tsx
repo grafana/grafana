@@ -7,8 +7,6 @@ import { getScatterFieldConfig } from './config';
 import { xyChartMigrationHandler } from './migrations';
 import { FieldConfig, defaultFieldConfig, Options } from './panelcfg.gen';
 
-// const useOld = Boolean(config.featureToggles.autoMigrateXYChartPanel);
-
 export const plugin = new PanelPlugin<Options, FieldConfig>(XYChartPanel2)
   // .setPanelChangeHandler(xyChartChangeHandler)
   .setMigrationHandler(xyChartMigrationHandler)
