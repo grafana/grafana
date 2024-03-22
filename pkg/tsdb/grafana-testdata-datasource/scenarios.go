@@ -231,10 +231,7 @@ func GetJSONModel(j json.RawMessage) (kinds.TestDataQuery, error) {
 		Spread:      1,
 	}
 	if len(j) > 0 {
-		err := json.Unmarshal(j, &model)
-		if err != nil {
-			return model, err
-		}
+		_ = json.Unmarshal(j, &model)
 	}
 	return model, nil
 }
