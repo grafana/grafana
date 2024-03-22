@@ -14152,16 +14152,23 @@
     },
     "FrameData": {
       "description": "The data contained within the frame schema",
-      "type": "array",
+      "type": "object",
       "title": "FrameData are the columns for the Frame data structure",
       "properties": {
         "values": {
           "type": "array",
           "items": {
-            "type": "array",
-            "items": {}
+            "$ref": "#/definitions/FrameColumn"
           }
         }
+      }
+    },
+    "FrameColumn": {
+      "description": "A single column of data in the data frame",
+      "type": "array",
+        "items": {
+          "type": "integer",
+          "format": "int64"
       }
     },
     "FrameSchema": {
