@@ -182,8 +182,20 @@ func (am *Alertmanager) checkReadiness(ctx context.Context) error {
 // CompareAndSendConfiguration checks whether a given configuration is being used by the remote Alertmanager.
 // If not, it sends the configuration to the remote Alertmanager.
 func (am *Alertmanager) CompareAndSendConfiguration(ctx context.Context, config *models.AlertConfiguration) error {
+	c, err := notifier.Load([]byte(config.AlertmanagerConfiguration))
+	if err != nil {
+		return err
+	}
+
 	// Decrypt the configuration before comparing.
-	rawDecrypted, err := am.decryptConfiguration(ctx, config.AlertmanagerConfiguration)
+	fn := func(payload []byte) ([]byte, error) {
+		return am.decrypt(ctx, payload)
+	}
+	decrypted, err := c.Decrypt(fn)
+	if err != nil {
+		return err
+	}
+	rawDecrypted, err := json.Marshal(decrypted)
 	if err != nil {
 		return err
 	}
@@ -193,45 +205,13 @@ func (am *Alertmanager) CompareAndSendConfiguration(ctx context.Context, config 
 		return nil
 	}
 
-	return am.sendConfiguration(ctx, string(rawDecrypted), config.ConfigurationHash, config.CreatedAt, config.Default)
-}
-
-// DecryptAndSendConfiguration decrypts secure fields and sends a configuration to the remote Alertmanager.
-func (am *Alertmanager) DecryptAndSendConfiguration(ctx context.Context, config *models.AlertConfiguration) error {
-	rawDecrypted, err := am.decryptConfiguration(ctx, config.AlertmanagerConfiguration)
-	if err != nil {
-		return err
-	}
-
-	return am.sendConfiguration(ctx, string(rawDecrypted), config.ConfigurationHash, config.CreatedAt, config.Default)
-}
-
-// decryptConfiguration decrypts secure fields in a configuration, returning it as a slice of bytes.
-func (am *Alertmanager) decryptConfiguration(ctx context.Context, cfg string) ([]byte, error) {
-	c, err := notifier.Load([]byte(cfg))
-	if err != nil {
-		return nil, err
-	}
-
-	fn := func(payload []byte) ([]byte, error) {
-		return am.decrypt(ctx, payload)
-	}
-	decrypted, err := c.Decrypt(fn)
-	if err != nil {
-		return nil, err
-	}
-
-	return json.Marshal(decrypted)
-}
-
-func (am *Alertmanager) sendConfiguration(ctx context.Context, cfg, hash string, createdAt int64, isDefault bool) error {
 	am.metrics.ConfigSyncsTotal.Inc()
 	if err := am.mimirClient.CreateGrafanaAlertmanagerConfig(
 		ctx,
-		cfg,
-		hash,
-		createdAt,
-		isDefault,
+		string(rawDecrypted),
+		config.ConfigurationHash,
+		config.CreatedAt,
+		config.Default,
 	); err != nil {
 		am.metrics.ConfigSyncErrorsTotal.Inc()
 		return err
