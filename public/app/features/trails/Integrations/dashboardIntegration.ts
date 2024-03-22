@@ -12,13 +12,24 @@ import { MetricScene } from '../MetricScene';
 import { DataTrailEmbedded, DataTrailEmbeddedState } from './DataTrailEmbedded';
 import { SceneDrawerAsScene, launchSceneDrawerInGlobalModal } from './SceneDrawer';
 import { QueryMetric, getQueryMetrics } from './getQueryMetrics';
-import { createAdHocFilters, getQueryMetricLabel, getQueryRunner, getTimeRangeFromDashboard } from './utils';
+import {
+  createAdHocFilters,
+  getPanelType,
+  getQueryMetricLabel,
+  getQueryRunner,
+  getTimeRangeFromDashboard,
+} from './utils';
 
 export function addDataTrailPanelAction(
   dashboard: DashboardScene | DashboardModel,
   panel: VizPanel | PanelModel,
   items: PanelMenuItem[]
 ) {
+  const panelType = getPanelType(panel);
+  if (panelType !== 'timeseries') {
+    return;
+  }
+
   const queryRunner = getQueryRunner(panel);
   if (!queryRunner) {
     return;
