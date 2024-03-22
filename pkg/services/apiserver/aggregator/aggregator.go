@@ -175,7 +175,6 @@ func CreateAggregatorServer(config *Config, delegateAPIServer genericapiserver.D
 	sharedInformerFactory := config.Informers
 	remoteServicesConfig := config.RemoteServicesConfig
 	externalNamesInformer := sharedInformerFactory.Service().V0alpha1().ExternalNames()
-
 	completedConfig := aggregatorConfig.Complete()
 
 	aggregatorServer, err := completedConfig.NewWithDelegate(delegateAPIServer)
@@ -215,7 +214,6 @@ func CreateAggregatorServer(config *Config, delegateAPIServer genericapiserver.D
 			controllers.WaitForCacheSync("grafana-apiserver-remote-autoregistration", ctx.StopCh, externalNamesInformer.Informer().HasSynced)
 			namespacedClient := remoteServicesConfig.serviceClientSet.ServiceV0alpha1().ExternalNames(remoteServicesConfig.ExternalNamesNamespace)
 			for _, externalName := range externalNames {
-
 				_, err := namespacedClient.Apply(context.Background(), externalName, metav1.ApplyOptions{
 					FieldManager: "grafana-aggregator",
 					Force:        true,

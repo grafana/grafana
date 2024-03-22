@@ -125,6 +125,12 @@ func (s *Storage) getNewResourceVersion() uint64 {
 	return s.currentRV
 }
 
+func (s *Storage) getCurrentResourceVersionProtected() uint64 {
+	s.rvMutex.RLock()
+	defer s.rvMutex.RUnlock()
+	return s.currentRV
+}
+
 func (s *Storage) getCurrentResourceVersion() uint64 {
 	return s.currentRV
 }
@@ -283,6 +289,7 @@ func (s *Storage) Watch(ctx context.Context, key string, opts storage.ListOption
 	p := opts.Predicate
 	listObj := s.newListFunc()
 
+	// Parses to 0 for opts.ResourceVersion == 0
 	requestedRV, err := s.versioner.ParseResourceVersion(opts.ResourceVersion)
 	if err != nil {
 		return nil, apierrors.NewBadRequest(fmt.Sprintf("invalid resource version: %v", err))
@@ -297,7 +304,7 @@ func (s *Storage) Watch(ctx context.Context, key string, opts storage.ListOption
 	if parsedkey.namespace != "" {
 		namespace = &parsedkey.namespace
 	}
-	jw := s.watchSet.newWatch(ctx, requestedRV, p, s.versioner, namespace)
+	jw := s.watchSet.newWatch(ctx, requestedRV, p, s.versioner, s.getCurrentResourceVersionProtected, namespace)
 
 	if (opts.SendInitialEvents == nil && requestedRV == 0) || (opts.SendInitialEvents != nil && *opts.SendInitialEvents) {
 		if err := s.GetList(ctx, key, opts, listObj); err != nil {

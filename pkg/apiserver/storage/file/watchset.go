@@ -41,6 +41,8 @@ type watchNode struct {
 	watchNamespace *string
 	predicate      storage.SelectionPredicate
 	versioner      storage.Versioner
+	// This function may be used when requested RV="" (it locks a mutex). We use it for RV=0 just the same
+	getCurrentResourceVersionProtected func() uint64
 }
 
 // Keeps track of which watches need to be notified
@@ -64,7 +66,7 @@ func NewWatchSet() *WatchSet {
 
 // Creates a new watch with a unique id, but
 // does not start sending events to it until start() is called.
-func (s *WatchSet) newWatch(ctx context.Context, requestedRV uint64, p storage.SelectionPredicate, versioner storage.Versioner, namespace *string) *watchNode {
+func (s *WatchSet) newWatch(ctx context.Context, requestedRV uint64, p storage.SelectionPredicate, versioner storage.Versioner, getCurrentResourceVersionProtected func() uint64, namespace *string) *watchNode {
 	s.counter.Add(1)
 
 	node := &watchNode{
@@ -80,6 +82,8 @@ func (s *WatchSet) newWatch(ctx context.Context, requestedRV uint64, p storage.S
 		predicate:      p,
 		watchNamespace: namespace,
 		versioner:      versioner,
+
+		getCurrentResourceVersionProtected: getCurrentResourceVersionProtected,
 	}
 
 	return node
@@ -106,10 +110,13 @@ func (s *WatchSet) notifyWatchers(ev watch.Event, oldObject runtime.Object) {
 		updateEv.oldObject = oldObject
 	}
 
-	// Events are buffered before startup is complete
+	// Events are always buffered.
 	// this is because of an inadvertent delay which is built into the watch process
-	// While a watch begins and gets subscribed fully, another client (internal or external) could
-	// change system state and this may be after the informers have successfully listed state
+	// Watch() from storage returns Watch.Interface - which caller
+	// is at the liberty of calling whenever. The only way to guarantee
+	// that we can interpret the passed RV correctly is to play it against missed events
+	// (notice the loop below over s.nodes isn't exactly going to work on a new node
+	// unless they have called start and successfully finished it)
 	s.bufferedMutex.Lock()
 	s.buffered = append(s.buffered, updateEv)
 	s.bufferedMutex.Unlock()
@@ -261,6 +268,9 @@ func (w *watchNode) Start(initEvents ...watch.Event) {
 
 	go func() {
 		maxRV := w.requestedRV
+		if maxRV == 0 {
+			maxRV = w.getCurrentResourceVersionProtected()
+		}
 		for _, ev := range initEvents {
 			if err := w.processEvent(eventWrapper{ev: ev}, true); err != nil {
 				klog.Errorf("Could not process event: %v", err)
