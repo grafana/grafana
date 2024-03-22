@@ -363,7 +363,7 @@ Sets the maximum amount of time a connection may be reused. The default is 14400
 
 ### migration_locking
 
-Sets to `false` to disable database locking during the migrations. Default is true.
+Set to `false` to disable database locking during the migrations. Default is true.
 
 ### locking_attempt_timeout_sec
 
