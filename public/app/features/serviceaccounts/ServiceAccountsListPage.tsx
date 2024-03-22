@@ -14,8 +14,8 @@ import {
   Pagination,
   Stack,
 } from '@grafana/ui';
-import { EmptySearchState } from '@grafana/ui/src/components/EmptyState/EmptySearchState/EmptySearchState';
 import { EmptyState } from '@grafana/ui/src/components/EmptyState/EmptyState';
+import { EmptyStateCTAButton } from '@grafana/ui/src/components/EmptyState/EmptyStateCTAButton';
 import { Page } from 'app/core/components/Page/Page';
 import config from 'app/core/config';
 import { contextSrv } from 'app/core/core';
@@ -209,11 +209,13 @@ export const ServiceAccountsListPageUnconnected = ({
           <>
             {noServiceAccountsCreated && (
               <EmptyState
-                buttonHref="org/serviceaccounts/create"
-                buttonLabel={
-                  contextSrv.hasPermission(AccessControlAction.ServiceAccountsCreate)
-                    ? t('service-accounts.empty-state.button-title', 'Add service account')
-                    : undefined
+                button={
+                  contextSrv.hasPermission(AccessControlAction.ServiceAccountsCreate) ? (
+                    <EmptyStateCTAButton
+                      buttonHref="org/serviceaccounts/create"
+                      buttonLabel={t('service-accounts.empty-state.button-title', 'Add service account')}
+                    />
+                  ) : undefined
                 }
                 message={t('service-accounts.empty-state.title', "You haven't created any service accounts yet")}
               >
@@ -222,7 +224,7 @@ export const ServiceAccountsListPageUnconnected = ({
                 </Trans>
               </EmptyState>
             )}
-            {serviceAccounts.length === 0 && !noServiceAccountsCreated && <EmptySearchState />}
+            {serviceAccounts.length === 0 && !noServiceAccountsCreated && <EmptyState variant="search" />}
           </>
         )}
 

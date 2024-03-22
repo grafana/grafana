@@ -3,7 +3,7 @@ import React, { useMemo, useState } from 'react';
 
 import { GrafanaTheme2, PluginType } from '@grafana/data';
 import { useStyles2, LoadingPlaceholder } from '@grafana/ui';
-import { EmptySearchState } from '@grafana/ui/src/components/EmptyState/EmptySearchState/EmptySearchState';
+import { EmptyState } from '@grafana/ui/src/components/EmptyState/EmptyState';
 import { contextSrv } from 'app/core/core';
 import { useQueryParams } from 'app/core/hooks/useQueryParams';
 import { t } from 'app/core/internationalization';
@@ -97,7 +97,7 @@ export function AddNewConnection() {
       ) : (
         <CardGrid items={cardGridItems} onClickItem={onClickCardGridItem} />
       )}
-      {showNoResults && <EmptySearchState message="No results matching your query were found." />}
+      {showNoResults && <EmptyState variant="search" message="No results matching your query were found." />}
     </>
   );
 }

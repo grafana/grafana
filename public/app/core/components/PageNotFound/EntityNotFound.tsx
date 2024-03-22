@@ -3,7 +3,7 @@ import React from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { TextLink, useStyles2 } from '@grafana/ui';
-import { EmptySearchState } from '@grafana/ui/src/components/EmptyState/EmptySearchState/EmptySearchState';
+import { EmptyState } from '@grafana/ui/src/components/EmptyState/EmptyState';
 
 export interface Props {
   /**
@@ -17,13 +17,13 @@ export function EntityNotFound({ entity = 'Page' }: Props) {
 
   return (
     <div className={styles.container}>
-      <EmptySearchState message={`${entity} not found`}>
+      <EmptyState message={`${entity} not found`} variant="search">
         We&apos;re looking but can&apos;t seem to find this {entity.toLowerCase()}. Try returning{' '}
         <TextLink href="/">home</TextLink> or seeking help on the{' '}
         <TextLink href="https://community.grafana.com" external>
           community site.
         </TextLink>
-      </EmptySearchState>
+      </EmptyState>
     </div>
   );
 }

@@ -5,7 +5,7 @@ import { connect, ConnectedProps } from 'react-redux';
 import { GrafanaTheme2 } from '@grafana/data';
 import { selectors as e2eSelectors } from '@grafana/e2e-selectors/src';
 import { LinkButton, RadioButtonGroup, useStyles2, FilterInput } from '@grafana/ui';
-import { EmptySearchState } from '@grafana/ui/src/components/EmptyState/EmptySearchState/EmptySearchState';
+import { EmptyState } from '@grafana/ui/src/components/EmptyState/EmptyState';
 import { Page } from 'app/core/components/Page/Page';
 import { contextSrv } from 'app/core/core';
 
@@ -100,7 +100,7 @@ const UserListAdminPageUnConnected = ({
         </div>
       </div>
       {!isLoading && users.length === 0 ? (
-        <EmptySearchState />
+        <EmptyState variant="search" />
       ) : (
         <UsersTable
           users={users}

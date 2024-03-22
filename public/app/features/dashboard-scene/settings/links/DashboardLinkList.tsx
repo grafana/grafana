@@ -16,6 +16,7 @@ import {
   useStyles2,
 } from '@grafana/ui';
 import { EmptyState } from '@grafana/ui/src/components/EmptyState/EmptyState';
+import { EmptyStateCTAButton } from '@grafana/ui/src/components/EmptyState/EmptyStateCTAButton';
 import { Trans, t } from 'app/core/internationalization';
 
 interface DashboardLinkListProps {
@@ -42,9 +43,13 @@ export function DashboardLinkList({
     return (
       <Stack direction="column">
         <EmptyState
-          buttonLabel={t('dashboard-links.empty-state.button-title', 'Add dashboard link')}
+          button={
+            <EmptyStateCTAButton
+              buttonLabel={t('dashboard-links.empty-state.button-title', 'Add dashboard link')}
+              onButtonClick={onNew}
+            />
+          }
           message={t('dashboard-links.empty-state.title', 'There are no dashboard links added yet')}
-          onButtonClick={onNew}
         />
         <Alert severity="info" title={t('dashboard-links.empty-state.info-box-title', 'What are dashboard links?')}>
           <Trans i18nKey="dashboard-links.empty-state.info-box-content">

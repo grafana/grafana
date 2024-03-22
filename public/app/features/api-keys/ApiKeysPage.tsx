@@ -3,7 +3,7 @@ import { connect, ConnectedProps } from 'react-redux';
 
 // Utils
 import { InlineField, InlineSwitch, Modal, Button } from '@grafana/ui';
-import { EmptySearchState } from '@grafana/ui/src/components/EmptyState/EmptySearchState/EmptySearchState';
+import { EmptyState } from '@grafana/ui/src/components/EmptyState/EmptyState';
 import { Page } from 'app/core/components/Page/Page';
 import { contextSrv } from 'app/core/core';
 import { getTimeZone } from 'app/features/profile/state/selectors';
@@ -138,7 +138,7 @@ export class ApiKeysPageUnconnected extends PureComponent<Props, State> {
                 onDelete={this.onDeleteApiKey}
               />
             ) : (
-              <EmptySearchState />
+              <EmptyState variant="search" />
             )}
           </>
         </Page.Contents>

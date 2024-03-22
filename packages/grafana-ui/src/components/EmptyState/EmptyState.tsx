@@ -1,44 +1,45 @@
 import React, { ReactNode } from 'react';
 
-import { Button, LinkButton } from '../Button';
+import { t } from '../../utils/i18n';
 import { Box } from '../Layout/Box/Box';
 import { Stack } from '../Layout/Stack/Stack';
 import { Text } from '../Text/Text';
 
-import { GrotNotFound } from './EmptySearchState/GrotNotFound/GrotNotFound';
+import { GrotNotFound } from './GrotNotFound/GrotNotFound';
 
 interface BaseProps {
-  buttonLabel?: string;
-  buttonHref?: string;
+  /**
+   * Provide a CTA button to render below the message, e.g. **EmptyStateCTAButton**
+   */
+  button?: ReactNode;
+  /**
+   * Override the default image for the variant
+   */
   image?: ReactNode;
-  message: string;
-  onButtonClick?: () => void;
+  message?: string;
   showImage?: boolean;
+  variant?: 'search' | 'default';
 }
 
-interface PropsWithCTALink extends BaseProps {
-  buttonLabel: string;
-  buttonHref: string;
+interface DefaultVariantProps extends BaseProps {
+  message: string;
+  variant?: 'default';
 }
 
-interface PropsWithCTAButton extends BaseProps {
-  buttonLabel: string;
-  onButtonClick: () => void;
+interface SearchVariantProps extends BaseProps {
+  variant: 'search';
 }
 
-type Props = BaseProps | PropsWithCTALink | PropsWithCTAButton;
+type Props = DefaultVariantProps | SearchVariantProps;
 
 export const EmptyState = ({
-  buttonHref,
-  buttonLabel,
+  button,
   children,
   image = <GrotNotFound width={300} />,
-  message,
-  onButtonClick,
+  message = t('grafana-ui.empty-state.search-message', 'No results found'),
   showImage = true,
+  variant = 'default',
 }: React.PropsWithChildren<Props>) => {
-  const ButtonElement = buttonHref ? LinkButton : Button;
-
   return (
     <Box alignItems="center" direction="column" display="flex" gap={4} paddingY={4}>
       {showImage && image}
@@ -46,11 +47,7 @@ export const EmptyState = ({
         <Text variant="h4">{message}</Text>
         {children && <Text color="secondary">{children}</Text>}
       </Stack>
-      {buttonLabel && (
-        <ButtonElement href={buttonHref} size="lg" onClick={onButtonClick}>
-          {buttonLabel}
-        </ButtonElement>
-      )}
+      {button}
     </Box>
   );
 };

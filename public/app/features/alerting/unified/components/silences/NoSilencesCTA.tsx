@@ -1,6 +1,7 @@
 import React from 'react';
 
 import { EmptyState } from '@grafana/ui/src/components/EmptyState/EmptyState';
+import { EmptyStateCTAButton } from '@grafana/ui/src/components/EmptyState/EmptyStateCTAButton';
 import { t } from 'app/core/internationalization';
 import { contextSrv } from 'app/core/services/context_srv';
 
@@ -16,11 +17,13 @@ export const NoSilencesSplash = ({ alertManagerSourceName }: Props) => {
 
   return (
     <EmptyState
-      buttonHref={makeAMLink('alerting/silence/new', alertManagerSourceName)}
-      buttonLabel={
-        contextSrv.hasPermission(permissions.create)
-          ? t('silences.empty-state.button-title', 'Create silence')
-          : undefined
+      button={
+        contextSrv.hasPermission(permissions.create) ? (
+          <EmptyStateCTAButton
+            buttonHref={makeAMLink('alerting/silence/new', alertManagerSourceName)}
+            buttonLabel={t('silences.empty-state.button-title', 'Create silence')}
+          />
+        ) : undefined
       }
       message={t('silences.empty-state.title', "You haven't created any silences yet")}
     />

@@ -3,7 +3,7 @@ import { useLocation } from 'react-router-dom';
 
 import { config } from '@grafana/runtime';
 import { Grid } from '@grafana/ui';
-import { EmptySearchState } from '@grafana/ui/src/components/EmptyState/EmptySearchState/EmptySearchState';
+import { EmptyState } from '@grafana/ui/src/components/EmptyState/EmptyState';
 
 import { CatalogPlugin, PluginListDisplayMode } from '../types';
 
@@ -21,7 +21,7 @@ export const PluginList = ({ plugins, displayMode, isLoading }: Props) => {
   const pathName = config.appSubUrl + (pathname.endsWith('/') ? pathname.slice(0, -1) : pathname);
 
   if (!isLoading && plugins.length === 0) {
-    return <EmptySearchState />;
+    return <EmptyState variant="search" />;
   }
 
   return (

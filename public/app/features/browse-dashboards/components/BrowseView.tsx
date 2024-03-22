@@ -2,6 +2,7 @@ import React, { useCallback } from 'react';
 
 import { CallToActionCard, TextLink } from '@grafana/ui';
 import { EmptyState } from '@grafana/ui/src/components/EmptyState/EmptyState';
+import { EmptyStateCTAButton } from '@grafana/ui/src/components/EmptyState/EmptyStateCTAButton';
 import { Trans, t } from 'app/core/internationalization';
 import { DashboardViewItem } from 'app/features/search/types';
 import { useDispatch } from 'app/types';
@@ -119,8 +120,12 @@ export function BrowseView({ folderUID, width, height, canSelect }: BrowseViewPr
       <div style={{ width }}>
         {canSelect ? (
           <EmptyState
-            buttonHref={folderUID ? `dashboard/new?folderUid=${folderUID}` : 'dashboard/new'}
-            buttonLabel={t('browse-dashboards.empty-state.button-title', 'Create dashboard')}
+            button={
+              <EmptyStateCTAButton
+                buttonHref={folderUID ? `dashboard/new?folderUid=${folderUID}` : 'dashboard/new'}
+                buttonLabel={t('browse-dashboards.empty-state.button-title', 'Create dashboard')}
+              />
+            }
             message={
               folderUID
                 ? t('browse-dashboards.empty-state.title-folder', "This folder doesn't have any dashboards yet")

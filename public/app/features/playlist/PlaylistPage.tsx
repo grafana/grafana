@@ -2,8 +2,8 @@ import React, { useMemo, useState } from 'react';
 import { useAsync } from 'react-use';
 
 import { ConfirmModal, LinkButton, TextLink } from '@grafana/ui';
-import { EmptySearchState } from '@grafana/ui/src/components/EmptyState/EmptySearchState/EmptySearchState';
 import { EmptyState } from '@grafana/ui/src/components/EmptyState/EmptyState';
+import { EmptyStateCTAButton } from '@grafana/ui/src/components/EmptyState/EmptyStateCTAButton';
 import { Page } from 'app/core/components/Page/Page';
 import PageActionBar from 'app/core/components/PageActionBar/PageActionBar';
 import { Trans, t } from 'app/core/internationalization';
@@ -57,7 +57,7 @@ export const PlaylistPage = () => {
         ) : (
           <>
             {!hasPlaylists && searchQuery ? (
-              <EmptySearchState message="No playlist found!" />
+              <EmptyState variant="search" message="No playlist found!" />
             ) : (
               <PlaylistPageList
                 playlists={playlists}
@@ -67,8 +67,14 @@ export const PlaylistPage = () => {
             )}
             {!showSearch && (
               <EmptyState
-                buttonHref="playlists/new"
-                buttonLabel={contextSrv.isEditor ? t('playlist-page.empty.button', 'Create playlist') : undefined}
+                button={
+                  contextSrv.isEditor ? (
+                    <EmptyStateCTAButton
+                      buttonHref="playlists/new"
+                      buttonLabel={t('playlist-page.empty.button', 'Create playlist')}
+                    />
+                  ) : undefined
+                }
                 message={t('playlist-page.empty.title', 'There are no playlists created yet')}
               >
                 <Trans i18nKey="playlist-page.empty.pro-tip">

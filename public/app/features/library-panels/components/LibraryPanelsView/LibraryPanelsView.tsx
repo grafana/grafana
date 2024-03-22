@@ -4,7 +4,6 @@ import { useDebounce } from 'react-use';
 
 import { GrafanaTheme2, LoadingState } from '@grafana/data';
 import { Pagination, Stack, TextLink, useStyles2 } from '@grafana/ui';
-import { EmptySearchState } from '@grafana/ui/src/components/EmptyState/EmptySearchState/EmptySearchState';
 import { EmptyState } from '@grafana/ui/src/components/EmptyState/EmptyState';
 import { Trans, t } from 'app/core/internationalization';
 
@@ -103,7 +102,7 @@ export const LibraryPanelsView = ({
           <LibraryPanelCard.Skeleton showSecondaryActions={showSecondaryActions} />
         </>
       ) : libraryPanels.length < 1 ? (
-        <EmptySearchState message={t('library-panel.empty-search.message', 'No library panels found')} />
+        <EmptyState variant="search" message={t('library-panel.empty-search.message', 'No library panels found')} />
       ) : (
         libraryPanels?.map((item, i) => (
           <LibraryPanelCard

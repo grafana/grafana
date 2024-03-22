@@ -5,8 +5,8 @@ import { useLocation } from 'react-router-dom';
 import { DataSourceSettings, GrafanaTheme2 } from '@grafana/data';
 import { config } from '@grafana/runtime';
 import { TextLink, useStyles2 } from '@grafana/ui';
-import { EmptySearchState } from '@grafana/ui/src/components/EmptyState/EmptySearchState/EmptySearchState';
 import { EmptyState } from '@grafana/ui/src/components/EmptyState/EmptyState';
+import { EmptyStateCTAButton } from '@grafana/ui/src/components/EmptyState/EmptyStateCTAButton';
 import { contextSrv } from 'app/core/core';
 import { Trans, t } from 'app/core/internationalization';
 import { StoreState, AccessControlAction, useSelector } from 'app/types';
@@ -69,8 +69,14 @@ export function DataSourcesListView({
   if (!isLoading && dataSourcesCount === 0) {
     return (
       <EmptyState
-        buttonHref={dataSourcesRoutes.New}
-        buttonLabel={hasCreateRights ? t('data-source-list.empty-state.button-title', 'Add data source') : undefined}
+        button={
+          hasCreateRights ? (
+            <EmptyStateCTAButton
+              buttonHref={dataSourcesRoutes.New}
+              buttonLabel={t('data-source-list.empty-state.button-title', 'Add data source')}
+            />
+          ) : undefined
+        }
         message={t('data-source-list.empty-state.title', 'No data sources defined')}
       >
         <Trans i18nKey="data-source-list.empty-state.pro-tip">
@@ -111,7 +117,7 @@ export function DataSourcesListView({
 
       {/* List */}
       {dataSources.length === 0 && !isLoading ? (
-        <EmptySearchState />
+        <EmptyState variant="search" />
       ) : (
         <ul className={styles.list}>{getDataSourcesList()}</ul>
       )}

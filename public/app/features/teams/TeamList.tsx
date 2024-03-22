@@ -20,8 +20,8 @@ import {
   Tooltip,
   useStyles2,
 } from '@grafana/ui';
-import { EmptySearchState } from '@grafana/ui/src/components/EmptyState/EmptySearchState/EmptySearchState';
 import { EmptyState } from '@grafana/ui/src/components/EmptyState/EmptyState';
+import { EmptyStateCTAButton } from '@grafana/ui/src/components/EmptyState/EmptyStateCTAButton';
 import { Page } from 'app/core/components/Page/Page';
 import { fetchRoleOptions } from 'app/core/components/RolePicker/api';
 import { Trans, t } from 'app/core/internationalization';
@@ -207,11 +207,13 @@ export const TeamList = ({
       <Page.Contents>
         {noTeams ? (
           <EmptyState
-            buttonHref="org/teams/new"
-            buttonLabel={
-              contextSrv.hasPermission(AccessControlAction.ActionTeamsCreate)
-                ? t('teams.empty-state.button-title', 'New team')
-                : undefined
+            button={
+              contextSrv.hasPermission(AccessControlAction.ActionTeamsCreate) ? (
+                <EmptyStateCTAButton
+                  buttonHref="org/teams/new"
+                  buttonLabel={t('teams.empty-state.button-title', 'New team')}
+                />
+              ) : undefined
             }
             message={t('teams.empty-state.title', "You haven't created any teams yet")}
           >
@@ -230,7 +232,7 @@ export const TeamList = ({
               </InlineField>
             </div>
             {hasFetched && teams.length === 0 ? (
-              <EmptySearchState />
+              <EmptyState variant="search" />
             ) : (
               <Stack direction={'column'} gap={2}>
                 <InteractiveTable

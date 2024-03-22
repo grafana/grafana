@@ -2,10 +2,11 @@ import React from 'react';
 
 import { Card } from '@grafana/ui';
 import { EmptyState } from '@grafana/ui/src/components/EmptyState/EmptyState';
+import { EmptyStateCTAButton } from '@grafana/ui/src/components/EmptyState/EmptyStateCTAButton';
 import { Trans, t } from 'app/core/internationalization';
 
 interface Props {
-  onClick?: () => void;
+  onClick: () => void;
   canWriteCorrelations: boolean;
 }
 export const EmptyCorrelationsCTA = ({ onClick, canWriteCorrelations }: Props) => {
@@ -13,8 +14,12 @@ export const EmptyCorrelationsCTA = ({ onClick, canWriteCorrelations }: Props) =
 
   return canWriteCorrelations ? (
     <EmptyState
-      buttonLabel={t('correlations.empty-state.button-title', 'Add correlation')}
-      onButtonClick={onClick}
+      button={
+        <EmptyStateCTAButton
+          buttonLabel={t('correlations.empty-state.button-title', 'Add correlation')}
+          onButtonClick={onClick}
+        />
+      }
       message={t('correlations.empty-state.title', "You haven't defined any correlations yet")}
     >
       <Trans i18nKey="correlations.empty-state.pro-tip">
