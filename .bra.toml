@@ -2,7 +2,6 @@
 init_cmds = [
   ["GO_BUILD_DEV=1", "make", "build-go"],
   ["make", "gen-jsonnet"],
-  ["rm", "-rf", "data/grafana-apiserver/service.grafana.app/externalnames", " data/grafana-apiserver/apiregistration.k8s.io"],
   ["./bin/grafana", "server", "-packaging=dev", "cfg:app_mode=development"]
 ]
 watch_all = true
@@ -19,6 +18,5 @@ build_delay = 1500
 cmds = [
   ["GO_BUILD_DEV=1", "make", "build-go"],
   ["make", "gen-jsonnet"],
-  ["rm", "-rf", "data/grafana-apiserver/service.grafana.app/externalnames", "data/grafana-apiserver/apiregistration.k8s.io"],
   ["./bin/grafana", "server", "-packaging=dev", "cfg:app_mode=development"]
 ]
