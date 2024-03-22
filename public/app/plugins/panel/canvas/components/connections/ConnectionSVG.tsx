@@ -169,107 +169,116 @@ export const ConnectionSVG = ({
           const Y = y * yDist + y1;
 
           // Coordinates for first arc control point
-          let xa = x;
-          let ya = y;
+          let xa = X;
+          let ya = Y;
 
           // Coordinates for second arc control point
-          let xb = x;
-          let yb = y;
+          let xb = X;
+          let yb = Y;
 
           let lHalfArc = 0;
           let angle1 = 0;
           let angle2 = 0;
 
-          if (index < vertices.length - 1) {
-            const Xn = vertices[index + 1].x * xDist + x1;
-            const Yn = vertices[index + 1].y * yDist + y1;
-            if (index === 0) {
-              angle1 = calculateAngle(x1, y1, X, Y);
-              angle2 = calculateAngle(X, Y, Xn, Yn);
+          // Only calculate arcs if there is a radius
+          if (radius) {
+            if (index < vertices.length - 1) {
+              const Xn = vertices[index + 1].x * xDist + x1;
+              const Yn = vertices[index + 1].y * yDist + y1;
+              if (index === 0) {
+                angle1 = calculateAngle(x1, y1, X, Y);
+                angle2 = calculateAngle(X, Y, Xn, Yn);
+              } else {
+                const previousVertex = vertices[index - 1];
+                const Xp = previousVertex.x * xDist + x1;
+                const Yp = previousVertex.y * yDist + y1;
+                angle1 = calculateAngle(Xp, Yp, X, Y);
+                angle2 = calculateAngle(X, Y, Xn, Yn);
+              }
             } else {
-              const previousVertex = vertices[index - 1];
+              let previousVertex = { x: 0, y: 0 };
+              if (index > 0) {
+                previousVertex = vertices[index - 1];
+              }
               const Xp = previousVertex.x * xDist + x1;
               const Yp = previousVertex.y * yDist + y1;
               angle1 = calculateAngle(Xp, Yp, X, Y);
-              angle2 = calculateAngle(X, Y, Xn, Yn);
+              angle2 = calculateAngle(X, Y, x2, y2);
             }
-          } else {
-            let previousVertex = { x: 0, y: 0 };
-            if (index > 0) {
-              previousVertex = vertices[index - 1];
+            const theta = angle2 - angle1; //radians
+            const ccw = theta < 0;
+            lHalfArc = radius * Math.tan(theta / 2);
+            if (ccw) {
+              lHalfArc *= -1;
             }
-            const Xp = previousVertex.x * xDist + x1;
-            const Yp = previousVertex.y * yDist + y1;
-            angle1 = calculateAngle(Xp, Yp, X, Y);
-            angle2 = calculateAngle(X, Y, x2, y2);
-          }
-          const theta = angle2 - angle1; //radians
-          const ccw = theta < 0;
-          lHalfArc = radius * Math.tan(theta / 2);
-          if (ccw) {
-            lHalfArc *= -1;
           }
 
           if (index === 0) {
             // For first vertex
             addVertices.push(calculateMidpoint(0, 0, x, y));
 
-            const lSegment = calculateDistance(X, Y, x1, y1);
-            if (Math.abs(lHalfArc) > 0.5 * Math.abs(lSegment)) {
-              // Limit curve control points to mid segment
-              lHalfArc = 0.5 * lSegment;
-            }
-            const lDelta = lSegment - lHalfArc;
-            xa = lDelta * Math.cos(angle1) + x1;
-            ya = lDelta * Math.sin(angle1) + y1;
-            xb = lHalfArc * Math.cos(angle2) + X;
-            yb = lHalfArc * Math.sin(angle2) + Y;
+            // Only calculate arcs if there is a radius
+            if (radius) {
+              const lSegment = calculateDistance(X, Y, x1, y1);
+              if (Math.abs(lHalfArc) > 0.5 * Math.abs(lSegment)) {
+                // Limit curve control points to mid segment
+                lHalfArc = 0.5 * lSegment;
+              }
+              const lDelta = lSegment - lHalfArc;
+              xa = lDelta * Math.cos(angle1) + x1;
+              ya = lDelta * Math.sin(angle1) + y1;
+              xb = lHalfArc * Math.cos(angle2) + X;
+              yb = lHalfArc * Math.sin(angle2) + Y;
 
-            // Check if arc control points are inside of segment, otherwise swap sign
-            if ((xa > X && xa > x1) || (xa < X && xa < x1)) {
-              xa = (lDelta + 2 * lHalfArc) * Math.cos(angle1) + x1;
-              ya = (lDelta + 2 * lHalfArc) * Math.sin(angle1) + y1;
-              xb = -lHalfArc * Math.cos(angle2) + X;
-              yb = -lHalfArc * Math.sin(angle2) + Y;
+              // Check if arc control points are inside of segment, otherwise swap sign
+              if ((xa > X && xa > x1) || (xa < X && xa < x1)) {
+                xa = (lDelta + 2 * lHalfArc) * Math.cos(angle1) + x1;
+                ya = (lDelta + 2 * lHalfArc) * Math.sin(angle1) + y1;
+                xb = -lHalfArc * Math.cos(angle2) + X;
+                yb = -lHalfArc * Math.sin(angle2) + Y;
+              }
             }
           } else {
             // For all other vertices
             const previousVertex = vertices[index - 1];
             addVertices.push(calculateMidpoint(previousVertex.x, previousVertex.y, x, y));
 
-            // Convert previous vertex relative coorindates to scene coordinates
-            const Xp = previousVertex.x * xDist + x1;
-            const Yp = previousVertex.y * yDist + y1;
+            // Only calculate arcs if there is a radius
+            if (radius) {
+              // Convert previous vertex relative coorindates to scene coordinates
+              const Xp = previousVertex.x * xDist + x1;
+              const Yp = previousVertex.y * yDist + y1;
 
-            const lSegment = calculateDistance(X, Y, Xp, Yp);
-            if (Math.abs(lHalfArc) > 0.5 * Math.abs(lSegment)) {
-              // Limit curve control points to mid segment
-              lHalfArc = 0.5 * lSegment;
-            }
-            let Xn = x2;
-            let Yn = y2;
-            if (index < vertices.length - 1) {
-              const nextVertex = vertices[index + 1];
-              Xn = nextVertex.x * xDist + x1;
-              Yn = nextVertex.y * yDist + y1;
-            }
-            const lSegmentNext = calculateDistance(X, Y, Xn, Yn);
-            if (Math.abs(lHalfArc) > 0.5 * Math.abs(lSegmentNext)) {
-              lHalfArc = 0.5 * lSegmentNext;
-            }
-            const lDelta = lSegment - lHalfArc;
+              const lSegment = calculateDistance(X, Y, Xp, Yp);
+              if (Math.abs(lHalfArc) > 0.5 * Math.abs(lSegment)) {
+                // Limit curve control points to mid segment
+                lHalfArc = 0.5 * lSegment;
+              }
+              let Xn = x2;
+              let Yn = y2;
+              if (index < vertices.length - 1) {
+                const nextVertex = vertices[index + 1];
+                Xn = nextVertex.x * xDist + x1;
+                Yn = nextVertex.y * yDist + y1;
+              }
+              const lSegmentNext = calculateDistance(X, Y, Xn, Yn);
+              if (Math.abs(lHalfArc) > 0.5 * Math.abs(lSegmentNext)) {
+                lHalfArc = 0.5 * lSegmentNext;
+              }
+              const lDelta = lSegment - lHalfArc;
 
-            xa = lDelta * Math.cos(angle1) + Xp;
-            ya = lDelta * Math.sin(angle1) + Yp;
-            xb = lHalfArc * Math.cos(angle2) + X;
-            yb = lHalfArc * Math.sin(angle2) + Y;
+              xa = lDelta * Math.cos(angle1) + Xp;
+              ya = lDelta * Math.sin(angle1) + Yp;
+              xb = lHalfArc * Math.cos(angle2) + X;
+              yb = lHalfArc * Math.sin(angle2) + Y;
 
-            // Check if arc control points are inside of segment, otherwise swap sign
-            if ((xa > X && xa > Xp) || (xa < X && xa < Xp)) {
-              xa = (lDelta + 2 * lHalfArc) * Math.cos(angle1) + Xp;
-              ya = (lDelta + 2 * lHalfArc) * Math.sin(angle1) + Yp;
-              xb = -lHalfArc * Math.cos(angle2) + X;
-              yb = -lHalfArc * Math.sin(angle2) + Y;
+              // Check if arc control points are inside of segment, otherwise swap sign
+              if ((xa > X && xa > Xp) || (xa < X && xa < Xp)) {
+                xa = (lDelta + 2 * lHalfArc) * Math.cos(angle1) + Xp;
+                ya = (lDelta + 2 * lHalfArc) * Math.sin(angle1) + Yp;
+                xb = -lHalfArc * Math.cos(angle2) + X;
+                yb = -lHalfArc * Math.sin(angle2) + Y;
+              }
             }
           }
           if (index === vertices.length - 1) {
