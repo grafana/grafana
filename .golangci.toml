@@ -2,7 +2,7 @@
 timeout = "10m"
 
 [linters-settings.goconst]
-min-len = 5
+min-length = 5
 min-occurrences = 5
 
 [linters-settings.exhaustive]
