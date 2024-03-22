@@ -357,11 +357,12 @@ func (service *AlertRuleService) UpdateRuleGroup(ctx context.Context, user ident
 		}
 
 		// check if user has write access to all rules and can bypass the regular checks.
+		can, err := service.authz.CanWriteAllRules(ctx, user)
+		if err != nil {
+			return err
+		}
 		// If it cannot, check that the user is authorized to perform all the changes caused by this request
-		if can, err := service.authz.CanWriteAllRules(ctx, user); !can || err != nil {
-			if err != nil {
-				return err
-			}
+		if !can {
 			groupKey := models.AlertRuleGroupKey{
 				OrgID:        user.GetOrgID(),
 				NamespaceUID: namespaceUID,
@@ -406,10 +407,12 @@ func (service *AlertRuleService) ReplaceRuleGroup(ctx context.Context, user iden
 	}
 
 	// check if the current user has permissions to all rules and can bypass the regular authorization validation.
-	if can, err := service.authz.CanWriteAllRules(ctx, user); !can || err != nil {
-		if err != nil {
-			return err
-		}
+	can, err := service.authz.CanWriteAllRules(ctx, user)
+	if err != nil {
+		return err
+	}
+
+	if !can {
 		if err := service.authz.AuthorizeRuleGroupWrite(ctx, user, delta); err != nil {
 			return err
 		}
@@ -442,10 +445,11 @@ func (service *AlertRuleService) DeleteRuleGroup(ctx context.Context, user ident
 	}
 
 	// check if the current user has permissions to all rules and can bypass the regular authorization validation.
-	if can, err := service.authz.CanWriteAllRules(ctx, user); !can || err != nil {
-		if err != nil {
-			return err
-		}
+	can, err := service.authz.CanWriteAllRules(ctx, user)
+	if err != nil {
+		return err
+	}
+	if !can {
 		if err := service.authz.AuthorizeRuleGroupWrite(ctx, user, delta); err != nil {
 			return err
 		}
@@ -659,10 +663,11 @@ func (service *AlertRuleService) DeleteAlertRule(ctx context.Context, user ident
 		return fmt.Errorf("cannot delete with provided provenance '%s', needs '%s'", provenance, storedProvenance)
 	}
 
-	if can, err := service.authz.CanWriteAllRules(ctx, user); !can || err != nil {
-		if err != nil {
-			return err
-		}
+	can, err := service.authz.CanWriteAllRules(ctx, user)
+	if err != nil {
+		return err
+	}
+	if !can {
 		delta, err := store.CalculateRuleDelete(ctx, service.ruleStore, rule.GetKey())
 		if err != nil {
 			return err
@@ -756,10 +761,12 @@ func (service *AlertRuleService) GetAlertGroupsWithFolderTitle(ctx context.Conte
 	}
 	groups := models.GroupByAlertRuleGroupKey(ruleList)
 
-	if can, err := service.authz.CanReadAllRules(ctx, user); !can || err != nil {
-		if err != nil {
-			return nil, err
-		}
+	can, err := service.authz.CanReadAllRules(ctx, user)
+	if err != nil {
+		return nil, err
+	}
+	if !can {
+		// if user cannot read all rules, check read access to each group and remove groups that the user does not have access to
 		for key, group := range groups {
 			if err := service.authz.AuthorizeRuleGroupRead(ctx, user, group); err != nil {
 				if errors.Is(err, accesscontrol.ErrAuthorizationBase) {
