@@ -2177,6 +2177,19 @@
         "codeowner": "@grafana/sharing-squad",
         "frontend": true
       }
+    },
+    {
+      "metadata": {
+        "name": "influxdbReturnInfluxResponse",
+        "resourceVersion": "1711122258504",
+        "creationTimestamp": "2024-03-22T15:44:18Z"
+      },
+      "spec": {
+        "description": "Enable InfluxDB to return raw influxdb query response in data frame",
+        "stage": "experimental",
+        "codeowner": "@grafana/observability-metrics",
+        "requiresRestart": true
+      }
     }
   ]
 }
