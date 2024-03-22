@@ -22,6 +22,7 @@ export interface Props {
 export const GrotNotFound = ({ width = 'auto', height }: Props) => {
   const theme = useTheme2();
   const svgRef = useRef<SVGElement>(null);
+  const styles = useStyles2(getStyles);
 
   useEffect(() => {
     const handleMouseMove = (event: MouseEvent) => {
@@ -48,7 +49,6 @@ export const GrotNotFound = ({ width = 'auto', height }: Props) => {
     };
   }, []);
 
-  const styles = useStyles2(getStyles);
   return (
     <SVG
       innerRef={svgRef}

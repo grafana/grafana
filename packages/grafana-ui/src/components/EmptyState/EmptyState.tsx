@@ -17,7 +17,13 @@ interface Props {
    * Override the default image for the variant
    */
   image?: ReactNode;
+  /**
+   * Message to display to the user
+   */
   message?: string;
+  /**
+   * Empty state variant. Possible values are 'search'.
+   */
   variant: 'search';
 }
 
