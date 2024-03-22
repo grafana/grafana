@@ -1,7 +1,7 @@
-import { act, render, screen, waitFor } from '@testing-library/react';
+import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import React from 'react';
-import { openMenu, select } from 'react-select-event';
+import { openMenu } from 'react-select-event';
 
 import { getDefaultTimeRange } from '@grafana/data';
 
