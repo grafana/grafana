@@ -43,7 +43,7 @@ type DataSourceAPIBuilder struct {
 	connectionResourceInfo common.ResourceInfo
 
 	pluginJSON      plugins.JSONData
-	client          PluginClient // will only ever be called with the same pluginid!
+	client          backend.ServeOpts // will only ever be called with the same pluginid!
 	datasources     PluginDatasourceProvider
 	contextProvider PluginContextWrapper
 	accessControl   accesscontrol.AccessControl
@@ -64,6 +64,13 @@ func RegisterAPIService(
 		return nil, nil // skip registration unless opting into experimental apis
 	}
 
+	opts := backend.ServeOpts{
+		CheckHealthHandler:  pluginClient,
+		CallResourceHandler: pluginClient,
+		QueryDataHandler:    pluginClient,
+		StreamHandler:       pluginClient,
+	}
+
 	var err error
 	var builder *DataSourceAPIBuilder
 	all := pluginStore.Plugins(context.Background(), plugins.TypeDataSource)
@@ -78,7 +85,7 @@ func RegisterAPIService(
 		}
 
 		builder, err = NewDataSourceAPIBuilder(ds.JSONData,
-			pluginClient,
+			opts,
 			datasources,
 			contextProvider,
 			accessControl,
@@ -101,7 +108,7 @@ type PluginClient interface {
 
 func NewDataSourceAPIBuilder(
 	plugin plugins.JSONData,
-	client PluginClient,
+	client backend.ServeOpts,
 	datasources PluginDatasourceProvider,
 	contextProvider PluginContextWrapper,
 	accessControl accesscontrol.AccessControl) (*DataSourceAPIBuilder, error) {

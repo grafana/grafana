@@ -24,6 +24,14 @@ func ProvideService(httpClientProvider *sdkhttpclient.Provider) *Service {
 	}
 }
 
+func (s *Service) ServerOpts() backend.ServeOpts {
+	return backend.ServeOpts{
+		CheckHealthHandler:  s,
+		QueryDataHandler:    s,
+		CallResourceHandler: s,
+	}
+}
+
 func (s *Service) QueryData(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
 	return s.lib.QueryData(ctx, req)
 }

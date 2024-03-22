@@ -94,9 +94,10 @@ func (p *DummyAPIFactory) MakeAPIServer(gv schema.GroupVersion) (builder.APIGrou
 	case "testdata.datasource.grafana.app":
 		return datasource.NewDataSourceAPIBuilder(
 			plugins.JSONData{
-				ID: "grafana-testdata-datasource",
+				ID:       "grafana-testdata-datasource",
+				AliasIDs: []string{"testdata"},
 			},
-			testdatasource.ProvideService(), // the client
+			testdatasource.ProvideService().ServerOpts(), // the client
 			&pluginDatasourceImpl{
 				startup: v1.Now(),
 			},

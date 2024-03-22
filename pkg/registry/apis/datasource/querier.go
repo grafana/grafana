@@ -4,7 +4,6 @@ import (
 	"context"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	common "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
 	"github.com/grafana/grafana/pkg/apis/datasource/v0alpha1"
@@ -132,10 +131,10 @@ func (q *DefaultQuerier) Datasources(ctx context.Context) (*v0alpha1.DataSourceC
 	if err != nil {
 		return nil, err
 	}
-	return asConnectionList(q.connectionResourceInfo.TypeMeta(), ds, info.Value)
+	return asConnectionList(ds, info.Value)
 }
 
-func asConnectionList(typeMeta metav1.TypeMeta, dss []*datasources.DataSource, ns string) (*v0alpha1.DataSourceConnectionList, error) {
+func asConnectionList(dss []*datasources.DataSource, ns string) (*v0alpha1.DataSourceConnectionList, error) {
 	result := &v0alpha1.DataSourceConnectionList{
 		Items: []v0alpha1.DataSourceConnection{},
 	}

@@ -75,7 +75,7 @@ func (r *subResourceREST) Connect(ctx context.Context, name string, opts runtime
 			RawQuery: clonedReq.URL.RawQuery,
 		}
 
-		err = r.builder.client.CallResource(ctx, &backend.CallResourceRequest{
+		err = r.builder.client.CallResourceHandler.CallResource(ctx, &backend.CallResourceRequest{
 			PluginContext: pluginCtx,
 			Path:          clonedReq.URL.Path,
 			Method:        req.Method,
