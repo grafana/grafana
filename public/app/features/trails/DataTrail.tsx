@@ -18,7 +18,9 @@ import {
   SceneRefreshPicker,
   SceneTimePicker,
   SceneTimeRange,
+  SceneVariable,
   SceneVariableSet,
+  VariableDependencyConfig,
   VariableValueSelectors,
 } from '@grafana/scenes';
 import { useStyles2 } from '@grafana/ui';
@@ -29,6 +31,7 @@ import { MetricScene } from './MetricScene';
 import { MetricSelectScene } from './MetricSelectScene';
 import { MetricsHeader } from './MetricsHeader';
 import { getTrailStore } from './TrailStore/TrailStore';
+import { MetricDatasourceHelper } from './helpers/MetricDatasourceHelper';
 import { MetricSelectedEvent, trailDS, VAR_DATASOURCE, VAR_FILTERS } from './shared';
 import { getUrlForTrail } from './utils';
 
@@ -109,6 +112,26 @@ export class DataTrail extends SceneObjectBase<DataTrailState> {
         getTrailStore().setRecentTrail(this);
       }
     };
+  }
+
+  protected _variableDependency = new VariableDependencyConfig(this, {
+    variableNames: [VAR_DATASOURCE],
+    onReferencedVariableValueChanged: async (variable: SceneVariable) => {
+      const { name } = variable.state;
+      if (name === VAR_DATASOURCE) {
+        this.datasourceHelper.reset();
+      }
+    },
+  });
+
+  private datasourceHelper = new MetricDatasourceHelper(this);
+
+  public getMetricMetadata(metric?: string) {
+    return this.datasourceHelper.getMetricMetadata(metric);
+  }
+
+  public getCurrentMetricMetadata() {
+    return this.getMetricMetadata(this.state.metric);
   }
 
   private goBackToStep(step: DataTrailHistoryStep) {

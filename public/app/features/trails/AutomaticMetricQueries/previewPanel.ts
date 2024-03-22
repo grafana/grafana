@@ -8,12 +8,13 @@ import { getColorByIndex } from '../utils';
 
 import { getAutoQueriesForMetric } from './AutoQueryEngine';
 
-export function getPreviewPanelFor(metric: string, index: number, currentFilterCount: number) {
+export function getPreviewPanelFor(metric: string, index: number, currentFilterCount: number, description?: string) {
   const autoQuery = getAutoQueriesForMetric(metric);
 
   const vizPanel = autoQuery.preview
     .vizBuilder()
     .setColor({ mode: 'fixed', fixedColor: getColorByIndex(index) })
+    .setDescription(description)
     .setHeaderActions(new SelectMetricAction({ metric, title: 'Select' }))
     .build();
 
