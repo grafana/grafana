@@ -650,8 +650,8 @@ func TestDashboardAPIEndpoint(t *testing.T) {
 
 		loggedInUserScenarioWithRole(t, "When calling GET on", "GET", "/api/dashboards/uid/dash", "/api/dashboards/uid/:uid", org.RoleEditor, func(sc *scenarioContext) {
 			fakeProvisioningService := provisioning.NewProvisioningServiceMock(context.Background())
-			fakeProvisioningService.GetDashboardProvisionerResolvedPathFunc = func(name string) string {
-				return "/tmp/grafana/dashboards"
+			fakeProvisioningService.GetDashboardProvisionerResolvedPathFunc = func(ctx context.Context, name string) (string, error) {
+				return "/tmp/grafana/dashboards", nil
 			}
 
 			dash := getDashboardShouldReturn200WithConfig(t, sc, fakeProvisioningService, dashboardStore, dashboardService, nil)
@@ -661,12 +661,12 @@ func TestDashboardAPIEndpoint(t *testing.T) {
 
 		loggedInUserScenarioWithRole(t, "When allowUiUpdates is true and calling GET on", "GET", "/api/dashboards/uid/dash", "/api/dashboards/uid/:uid", org.RoleEditor, func(sc *scenarioContext) {
 			fakeProvisioningService := provisioning.NewProvisioningServiceMock(context.Background())
-			fakeProvisioningService.GetDashboardProvisionerResolvedPathFunc = func(name string) string {
-				return "/tmp/grafana/dashboards"
+			fakeProvisioningService.GetDashboardProvisionerResolvedPathFunc = func(ctx context.Context, name string) (string, error) {
+				return "/tmp/grafana/dashboards", nil
 			}
 
-			fakeProvisioningService.GetAllowUIUpdatesFromConfigFunc = func(name string) bool {
-				return true
+			fakeProvisioningService.GetAllowUIUpdatesFromConfigFunc = func(ctx context.Context, name string) (bool, error) {
+				return true, nil
 			}
 
 			hs := &HTTPServer{

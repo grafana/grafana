@@ -83,8 +83,8 @@ type ProvisioningService interface {
 	ProvisionPlugins(ctx context.Context) error
 	ProvisionDashboards(ctx context.Context) error
 	ProvisionAlerting(ctx context.Context) error
-	GetDashboardProvisionerResolvedPath(name string) string
-	GetAllowUIUpdatesFromConfig(name string) bool
+	GetDashboardProvisionerResolvedPath(ctx context.Context, name string) (string, error)
+	GetAllowUIUpdatesFromConfig(ctx context.Context, name string) (bool, error)
 }
 
 // Add a public constructor for overriding service to be able to instantiate OSS as fallback
@@ -214,8 +214,7 @@ func (ps *ProvisioningServiceImpl) ProvisionPlugins(ctx context.Context) error {
 }
 
 func (ps *ProvisioningServiceImpl) ProvisionDashboards(ctx context.Context) error {
-	dashboardPath := filepath.Join(ps.Cfg.ProvisioningPath, "dashboards")
-	dashProvisioner, err := ps.newDashboardProvisioner(ctx, dashboardPath, ps.dashboardProvisioningService, ps.orgService, ps.dashboardService, ps.folderService)
+	dashProvisioner, err := ps.getDashboardProvisioner(ctx)
 	if err != nil {
 		return fmt.Errorf("%v: %w", "Failed to create provisioner", err)
 	}
@@ -276,12 +275,39 @@ func (ps *ProvisioningServiceImpl) ProvisionAlerting(ctx context.Context) error 
 	return ps.provisionAlerting(ctx, cfg)
 }
 
-func (ps *ProvisioningServiceImpl) GetDashboardProvisionerResolvedPath(name string) string {
-	return ps.dashboardProvisioner.GetProvisionerResolvedPath(name)
+func (ps *ProvisioningServiceImpl) GetDashboardProvisionerResolvedPath(ctx context.Context, name string) (string, error) {
+	if ps.dashboardProvisioner == nil {
+		dashProvisioner, err := ps.getDashboardProvisioner(ctx)
+		if err != nil {
+			return "", fmt.Errorf("%v: %w", "Failed to get provisioner resolved path", err)
+		}
+		ps.dashboardProvisioner = dashProvisioner
+	}
+
+	return ps.dashboardProvisioner.GetProvisionerResolvedPath(name), nil
 }
 
-func (ps *ProvisioningServiceImpl) GetAllowUIUpdatesFromConfig(name string) bool {
-	return ps.dashboardProvisioner.GetAllowUIUpdatesFromConfig(name)
+func (ps *ProvisioningServiceImpl) GetAllowUIUpdatesFromConfig(ctx context.Context, name string) (bool, error) {
+	if ps.dashboardProvisioner == nil {
+		dashProvisioner, err := ps.getDashboardProvisioner(ctx)
+		if err != nil {
+			return false, fmt.Errorf("%v: %w", "Failed to get allow UI updates from config", err)
+		}
+		ps.dashboardProvisioner = dashProvisioner
+	}
+	return ps.dashboardProvisioner.GetAllowUIUpdatesFromConfig(name), nil
+}
+
+func (ps *ProvisioningServiceImpl) getDashboardProvisioner(ctx context.Context) (dashboards.DashboardProvisioner, error) {
+	if ps.dashboardProvisioner != nil {
+		return ps.dashboardProvisioner, nil
+	}
+	dashboardPath := filepath.Join(ps.Cfg.ProvisioningPath, "dashboards")
+	dashProvisioner, err := ps.newDashboardProvisioner(ctx, dashboardPath, ps.dashboardProvisioningService, ps.orgService, ps.dashboardService, ps.folderService)
+	if err != nil {
+		return nil, fmt.Errorf("%v: %w", "Failed to create provisioner", err)
+	}
+	return dashProvisioner, nil
 }
 
 func (ps *ProvisioningServiceImpl) cancelPolling() {
