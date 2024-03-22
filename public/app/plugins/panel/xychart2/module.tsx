@@ -4,11 +4,12 @@ import { commonOptionsBuilder } from '@grafana/ui';
 import { SeriesEditor } from './SeriesEditor';
 import { XYChartPanel2 } from './XYChartPanel';
 import { getScatterFieldConfig } from './config';
-import { xyChartMigrationHandler } from './migrations';
+import { xyChartChangeHandler } from './migrations';
 import { FieldConfig, defaultFieldConfig, Options } from './panelcfg.gen';
 
 export const plugin = new PanelPlugin<Options, FieldConfig>(XYChartPanel2)
-  .setPanelChangeHandler(xyChartMigrationHandler)
+  .setPanelChangeHandler(xyChartChangeHandler)
+  // .setMigrationHandler(xyChartMigrationHandler)
   .useFieldConfig(getScatterFieldConfig(defaultFieldConfig))
   .setPanelOptions((builder) => {
     builder
