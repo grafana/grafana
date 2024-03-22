@@ -72,6 +72,8 @@ type maintenanceOptions struct {
 	maintenanceFunc      func(alertingNotify.State) (int64, error)
 }
 
+var _ alertingNotify.MaintenanceOptions = maintenanceOptions{}
+
 func (m maintenanceOptions) InitialState() string {
 	return m.initialState
 }
