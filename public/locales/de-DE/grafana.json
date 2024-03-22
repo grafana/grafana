@@ -1,5 +1,5 @@
 {
-  "_comment": "Diese Datei ist die zuverlässige Quelle für englische Strings. Bearbeiten Sie diese in der Codebasis, um Pluralformen und andere Ausdrücke für die Benutzeroberfläche zu ändern.",
+  "_comment": "Diese Datei ist die zuverlässige Quelle für englische Strings. Bearbeiten Sie diese im Code, um Pluralformen und andere Ausdrücke für die Benutzeroberfläche zu ändern.",
   "access-control": {
     "add-permission": {
       "role-label": "Rolle",
@@ -369,7 +369,6 @@
       "title-label": "Titel"
     },
     "json-editor": {
-      "apply-button": "Änderungen anwenden",
       "save-button": "Änderungen speichern",
       "subtitle": "Das JSON-Modell unten ist die Datenstruktur, die das Dashboard definiert. Dazu gehören Dashboard-Einstellungen, Fenster-Einstellungen, Layout, Abfragen und so weiter.",
       "title": "JSON-Modell"
@@ -674,138 +673,138 @@
       "title": "Login fehlgeschlagen",
       "unknown": "Unbekannter Fehler aufgetreten"
     },
-    "forgot-password": "",
+    "forgot-password": "Passwort vergessen?",
     "form": {
-      "password-label": "",
-      "password-required": "",
-      "submit-label": "",
-      "submit-loading-label": "",
-      "username-label": "",
-      "username-required": ""
+      "password-label": "Passwort",
+      "password-required": "Passwort ist erforderlich",
+      "submit-label": "Einloggen",
+      "submit-loading-label": "Einloggen...",
+      "username-label": "E-Mail oder Benutzername",
+      "username-required": "E-Mail oder Benutzername ist erforderlich"
     },
     "services": {
-      "sing-in-with-prefix": ""
+      "sing-in-with-prefix": "Mit {{serviceName}} anmelden"
     },
     "signup": {
-      "button-label": "",
-      "new-to-question": ""
+      "button-label": "Registrieren",
+      "new-to-question": "Neu bei Grafana?"
     }
   },
   "migrate-to-cloud": {
     "can-i-move": {
-      "body": "",
-      "link-title": "",
-      "title": ""
+      "body": "Sobald Sie diese Installation mit einem Cloud Stack verbinden, können Sie Datenquellen und Dashboards hochladen.",
+      "link-title": "Erfahren Sie, wie Sie andere Einstellungen migrieren",
+      "title": "Kann ich diese Installation in die Grafana Cloud verschieben?"
     },
     "connect-modal": {
-      "body-cloud-stack": "",
-      "body-get-started": "",
-      "body-paste-stack": "",
-      "body-sign-up": "",
-      "body-token": "",
-      "body-token-field": "",
-      "body-token-field-placeholder": "",
-      "body-token-instructions": "",
-      "body-url-field": "",
-      "body-view-stacks": "",
-      "cancel": "",
-      "connect": "",
-      "connecting": "",
-      "stack-required-error": "",
-      "title": "",
-      "token-required-error": ""
+      "body-cloud-stack": "Sie benötigen außerdem einen Cloud Stack. Wenn Sie sich gerade angemeldet haben, erstellen wir automatisch Ihren ersten Stack. Wenn Sie bereits ein Konto haben, müssen Sie einen Stack auswählen oder erstellen.",
+      "body-get-started": "Um loszulegen, benötigen Sie einen Grafana.com-Account.",
+      "body-paste-stack": "Wenn Sie sich für einen Stack entschieden haben, fügen Sie die URL unten ein.",
+      "body-sign-up": "Für einen Grafana.com-Account registrieren",
+      "body-token": "Ihre selbstverwaltete Grafana-Installation benötigt einen speziellen Zugang, um Inhalte sicher zu migrieren. Sie müssen ein Migrationstoken für den von Ihnen gewählten Cloud-Stack erstellen.",
+      "body-token-field": "Migrationstoken",
+      "body-token-field-placeholder": "Token hier einfügen",
+      "body-token-instructions": "Loggen Sie sich in Ihren Cloud Stack ein und navigieren Sie zu Administration, Allgemein, Zu Grafana Cloud migrieren. Erstellen Sie auf diesem Bildschirm ein Migrationstoken und fügen Sie das Token hier ein.",
+      "body-url-field": "Cloud Stack-URL",
+      "body-view-stacks": "Meine Cloud Stacks anzeigen",
+      "cancel": "Abbrechen",
+      "connect": "Mit diesem Stack verbinden",
+      "connecting": "Verbindung mit diesem Stack läuft...",
+      "stack-required-error": "Stack-URL ist erforderlich",
+      "title": "Mit einem Cloud Stack verbinden",
+      "token-required-error": "Migrationstoken ist erforderlich"
     },
     "cta": {
-      "button": "",
-      "header": ""
+      "button": "Diese Instanz in die Cloud migrieren",
+      "header": "Lassen Sie uns Ihren Grafana Stack verwalten"
     },
     "disconnect-modal": {
-      "body": "",
-      "cancel": "",
-      "disconnect": "",
-      "disconnecting": "",
-      "error": "",
-      "title": ""
+      "body": "Dadurch wird das Migrationstoken von dieser Installation entfernt. Wenn Sie in Zukunft weitere Ressourcen hochladen möchten, müssen Sie ein neues Migrationstoken eingeben.",
+      "cancel": "Abbrechen",
+      "disconnect": "Verbindung trennen",
+      "disconnecting": "Verbindung wird getrennt...",
+      "error": "Es gab einen Fehler beim Trennen der Verbindung",
+      "title": "Vom Cloud Stack trennen"
     },
     "get-started": {
-      "body": "",
-      "configure-pdc-link": "",
-      "link-title": "",
-      "step-1": "",
-      "step-2": "",
-      "step-3": "",
-      "step-4": "",
-      "step-5": "",
-      "title": ""
+      "body": "Der Migrationsprozess muss von Ihrer selbstverwalteten Grafana-Instanz aus gestartet werden.",
+      "configure-pdc-link": "PDC für diesen Stack konfigurieren",
+      "link-title": "Erfahren Sie mehr über Private Data Source Connect",
+      "step-1": "Loggen Sie sich in Ihre selbstverwaltete Instanz ein und navigieren Sie zur Administration, Allgemein, Zu Grafana Cloud migrieren.",
+      "step-2": "Wählen Sie „Diese Instanz in die Cloud migrieren“.",
+      "step-3": "Sie werden nach einem Migrationstoken gefragt. Generieren Sie eines von diesem Bildschirm.",
+      "step-4": "Wählen Sie in Ihrer selbstverwalteten Instanz „Alles hochladen“ aus, um Datenquellen und Dashboards auf diesen Cloud Stack hochzuladen.",
+      "step-5": "Wenn einige Ihrer Datenquellen nicht über das öffentliche Internet funktionieren, müssen Sie Private Data Source Connect in Ihrer selbstverwalteten Umgebung installieren.",
+      "title": "So legen Sie los"
     },
     "is-it-secure": {
-      "body": "",
-      "link-title": "",
-      "title": ""
+      "body": "Grafana Labs verpflichtet sich, die höchsten Standards in Bezug auf Datenschutz und Sicherheit zu wahren. Durch die Einführung branchenüblicher Sicherheitstechnologien und -verfahren schützen wir die Daten unserer Kunden vor unbefugtem Zugriff, Nutzung oder Offenlegung.",
+      "link-title": "Grafana Labs Trust Center",
+      "title": "Ist es sicher?"
     },
     "migrate-to-this-stack": {
-      "body": "",
-      "link-title": "",
-      "title": ""
+      "body": "Einige Konfigurationen von Ihrer selbst verwalteten Grafana-Instanz können automatisch in diesen Cloud Stack kopiert werden.",
+      "link-title": "Gesamte Migrationsanleitung anzeigen",
+      "title": "Konfiguration zu diesem Stack migrieren"
     },
     "migration-token": {
-      "body": "",
-      "delete-button": "",
-      "delete-modal-body": "",
-      "delete-modal-cancel": "",
-      "delete-modal-confirm": "",
-      "delete-modal-deleting": "",
-      "delete-modal-title": "",
-      "generate-button": "",
-      "generate-button-loading": "",
-      "modal-close": "",
-      "modal-copy-and-close": "",
-      "modal-copy-button": "",
-      "modal-field-description": "",
-      "modal-field-label": "",
-      "modal-title": "",
-      "status": "",
-      "title": ""
+      "body": "Ihre selbst verwaltete Grafana-Instanz benötigt ein spezielles Authentifizierungs-Token, um sich sicher mit diesem Cloud Stack zu verbinden.",
+      "delete-button": "Diesen Migrationstoken löschen",
+      "delete-modal-body": "Wenn Sie dieses Token bereits mit einer selbst verwalteten Installation verwendet haben, kann diese Installation keine Inhalte mehr hochladen.",
+      "delete-modal-cancel": "Abbrechen",
+      "delete-modal-confirm": "Löschen",
+      "delete-modal-deleting": "Wird gelöscht...",
+      "delete-modal-title": "Migrationstoken löschen",
+      "generate-button": "Migrationstoken generieren",
+      "generate-button-loading": "Migrationstoken wird generiert...",
+      "modal-close": "Schließen",
+      "modal-copy-and-close": "In Zwischenablage kopieren und schließen",
+      "modal-copy-button": "In die Zwischenablage kopieren",
+      "modal-field-description": "Kopieren Sie den Token jetzt, denn Sie werden ihn später nicht mehr sehen können. Wenn Sie einen Token verlieren, müssen Sie einen neuen Token erstellen.",
+      "modal-field-label": "Token",
+      "modal-title": "Migrationstoken erstellt",
+      "status": "Aktueller Status: <2></2>",
+      "title": "Migrationstoken"
     },
     "pdc": {
-      "body": "",
-      "link-title": "",
-      "title": ""
+      "body": "Wenn Sie Ihre Datenquellen dem Internet aussetzen, kann dies zu Sicherheitsrisiken führen. Private Data Source Connect (PDC) ermöglicht Grafana Cloud den Zugriff auf Ihre bestehenden Datenquellen über einen sicheren Netzwerktunnel.",
+      "link-title": "Mehr über PDC erfahren",
+      "title": "Nicht alle meine Datenquellen sind im öffentlichen Internet"
     },
     "pricing": {
-      "body": "",
-      "link-title": "",
-      "title": ""
+      "body": "Grafana Cloud bietet einen großzügigen kostenlosen Tarif und eine 14-tägige Testphase mit unbegrenzter Nutzung. Nach Ablauf der Testphase wird Ihnen die Nutzung über die Grenzen des kostenlosen Tarifs hinaus in Rechnung gestellt.",
+      "link-title": "Grafana Cloud Preisgestaltung",
+      "title": "Was kostet es?"
     },
     "resource-status": {
-      "error-details-button": "",
-      "failed": "",
-      "migrated": "",
-      "migrating": "",
-      "not-migrated": "",
-      "unknown": ""
+      "error-details-button": "Details",
+      "failed": "Fehler",
+      "migrated": "In die Cloud hochgeladen",
+      "migrating": "Wird hochgeladen...",
+      "not-migrated": "Noch nicht hochgeladen",
+      "unknown": "Unbekannt"
     },
     "resource-type": {
-      "dashboard": "",
-      "datasource": "",
-      "unknown": ""
+      "dashboard": "Dashboard",
+      "datasource": "Datenquelle",
+      "unknown": "Unbekannt"
     },
     "resources": {
-      "disconnect": ""
+      "disconnect": "Verbindung trennen"
     },
     "token-status": {
-      "active": "",
-      "no-active": ""
+      "active": "Token erstellt und aktiv",
+      "no-active": "Kein aktiver Token"
     },
     "what-is-cloud": {
-      "body": "",
-      "link-title": "",
-      "title": ""
+      "body": "Grafana Cloud ist eine vollständig verwaltete, in der Cloud gehostete Observability-Plattform, die ideal für Cloud-native Umgebungen ist. Sie enthält alles, was Sie an Grafana lieben, ohne den Aufwand für Wartung, Upgrades und Betreuung einer Installation.",
+      "link-title": "Erfahren Sie mehr über Cloud-Funktionen",
+      "title": "Was ist Grafana Cloud?"
     },
     "why-host": {
-      "body": "",
-      "link-title": "",
-      "title": ""
+      "body": "Zusätzlich zum Komfort des Managed Hosting bietet Grafana Cloud viele Cloud-exklusive Funktionen wie SLOs, Incident Management, maschinelles Lernen und leistungsstarke Observability-Integrationen.",
+      "link-title": "Weitere Fragen? Sprechen Sie mit einem Experten",
+      "title": "Warum mit Grafana hosten?"
     }
   },
   "nav": {
@@ -994,8 +993,8 @@
       "subtitle": "Ordner-Dashboards und Berechtigungen verwalten"
     },
     "migrate-to-cloud": {
-      "subtitle": "",
-      "title": ""
+      "subtitle": "Kopieren Sie die Konfiguration von Ihrer selbstverwalteten Installation in einen Cloud Stack",
+      "title": "In die Grafana Cloud migrieren"
     },
     "monitoring": {
       "subtitle": "Überwachungs- und Infrastruktur-Apps",
@@ -1223,7 +1222,7 @@
       "old-password-label": "Altes Passwort",
       "old-password-required": "Altes Passwort ist erforderlich",
       "passwords-must-match": "Passwörter müssen übereinstimmen",
-      "strong-password-validation-register": ""
+      "strong-password-validation-register": "Passwort entspricht nicht den strengen Kennwortrichtlinien"
     }
   },
   "public-dashboard": {
@@ -1458,10 +1457,10 @@
       "expire-day": "1 Tag",
       "expire-hour": "1 Stunde",
       "expire-never": "Nie",
-      "expire-week": "",
+      "expire-week": "1 Woche",
       "info-text-1": "Ein Schnappschuss ist eine Möglichkeit, ein interaktives Dashboard sofort öffentlich zu teilen. Beim Erstellen entfernen wir sensible Daten wie Abfragen (Metriken, Vorlagen und Anmerkungen) und Panel-Links, sodass nur die sichtbaren Metrikdaten und die in dein Dashboard eingebetteten Seriennamen angezeigt werden.",
       "info-text-2": "Beachte, dass dein Schnappschuss <1>für jeden sichtbar ist</1>, der den Link hat und auf die URL zugreifen kann. Teile Schnappschüsse daher mit Bedacht.",
-      "local-button": "",
+      "local-button": "Snapshot veröffentlichen",
       "mistake-message": "Hast du einen Fehler gemacht? ",
       "name": "Name des Schnappschusses",
       "timeout": "Timeout (Sekunden)",
@@ -1474,7 +1473,7 @@
       "library-panel": "Bibliotheks-Panel",
       "link": "Link",
       "panel-embed": "Einbetten",
-      "public-dashboard": "",
+      "public-dashboard": "Dashboard veröffentlichen",
       "public-dashboard-title": "Öffentliches Dashboard",
       "snapshot": "Schnappschuss"
     },

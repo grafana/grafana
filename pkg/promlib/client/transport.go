@@ -37,7 +37,6 @@ func middlewares(logger log.Logger, httpMethod string) []sdkhttpclient.Middlewar
 	middlewares := []sdkhttpclient.Middleware{
 		// TODO: probably isn't needed anymore and should by done by http infra code
 		middleware.CustomQueryParameters(logger),
-		sdkhttpclient.CustomHeadersMiddleware(),
 	}
 
 	// Needed to control GET vs POST method of the requests
