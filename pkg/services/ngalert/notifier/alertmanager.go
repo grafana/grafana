@@ -6,7 +6,6 @@ import (
 	"encoding/binary"
 	"encoding/json"
 	"fmt"
-	"path/filepath"
 	"strconv"
 	"time"
 
@@ -17,7 +16,6 @@ import (
 
 	amv2 "github.com/prometheus/alertmanager/api/v2/models"
 
-	"github.com/grafana/grafana/pkg/infra/kvstore"
 	"github.com/grafana/grafana/pkg/infra/log"
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/metrics"
@@ -28,10 +26,6 @@ import (
 )
 
 const (
-	NotificationLogFilename = "notifications"
-	SilencesFilename        = "silences"
-
-	workingDir = "alerting"
 	// maintenanceNotificationAndSilences how often should we flush and garbage collect notifications
 	notificationLogMaintenanceInterval = 15 * time.Minute
 )
@@ -46,6 +40,13 @@ type AlertingStore interface {
 	autogenRuleStore
 }
 
+type stateStore interface {
+	SaveSilences(ctx context.Context, st alertingNotify.State) (int64, error)
+	SaveNotificationLog(ctx context.Context, st alertingNotify.State) (int64, error)
+	GetSilences(ctx context.Context) (string, error)
+	GetNotificationLog(ctx context.Context) (string, error)
+}
+
 type alertmanager struct {
 	Base   *alertingNotify.GrafanaAlertmanager
 	logger log.Logger
@@ -53,7 +54,7 @@ type alertmanager struct {
 	ConfigMetrics       *metrics.AlertmanagerConfigMetrics
 	Settings            *setting.Cfg
 	Store               AlertingStore
-	fileStore           *FileStore
+	stateStore          stateStore
 	NotificationService notifications.Service
 
 	decryptFn alertingNotify.GetDecryptedValueFn
@@ -65,14 +66,16 @@ type alertmanager struct {
 // maintenanceOptions represent the options for components that need maintenance on a frequency within the Alertmanager.
 // It implements the alerting.MaintenanceOptions interface.
 type maintenanceOptions struct {
-	filepath             string
+	initialState         string
 	retention            time.Duration
 	maintenanceFrequency time.Duration
 	maintenanceFunc      func(alertingNotify.State) (int64, error)
 }
 
-func (m maintenanceOptions) Filepath() string {
-	return m.filepath
+var _ alertingNotify.MaintenanceOptions = maintenanceOptions{}
+
+func (m maintenanceOptions) InitialState() string {
+	return m.initialState
 }
 
 func (m maintenanceOptions) Retention() time.Duration {
@@ -87,38 +90,35 @@ func (m maintenanceOptions) MaintenanceFunc(state alertingNotify.State) (int64, 
 	return m.maintenanceFunc(state)
 }
 
-func NewAlertmanager(ctx context.Context, orgID int64, cfg *setting.Cfg, store AlertingStore, kvStore kvstore.KVStore,
+func NewAlertmanager(ctx context.Context, orgID int64, cfg *setting.Cfg, store AlertingStore, stateStore stateStore,
 	peer alertingNotify.ClusterPeer, decryptFn alertingNotify.GetDecryptedValueFn, ns notifications.Service,
 	m *metrics.Alertmanager, withAutogen bool) (*alertmanager, error) {
-	workingPath := filepath.Join(cfg.DataPath, workingDir, strconv.Itoa(int(orgID)))
-	fileStore := NewFileStore(orgID, kvStore, workingPath)
-
-	nflogFilepath, err := fileStore.FilepathFor(ctx, NotificationLogFilename)
+	nflog, err := stateStore.GetNotificationLog(ctx)
 	if err != nil {
 		return nil, err
 	}
-	silencesFilepath, err := fileStore.FilepathFor(ctx, SilencesFilename)
+	silences, err := stateStore.GetSilences(ctx)
 	if err != nil {
 		return nil, err
 	}
 
 	silencesOptions := maintenanceOptions{
-		filepath:             silencesFilepath,
+		initialState:         silences,
 		retention:            retentionNotificationsAndSilences,
 		maintenanceFrequency: silenceMaintenanceInterval,
 		maintenanceFunc: func(state alertingNotify.State) (int64, error) {
 			// Detached context here is to make sure that when the service is shut down the persist operation is executed.
-			return fileStore.Persist(context.Background(), SilencesFilename, state)
+			return stateStore.SaveSilences(context.Background(), state)
 		},
 	}
 
 	nflogOptions := maintenanceOptions{
-		filepath:             nflogFilepath,
+		initialState:         nflog,
 		retention:            retentionNotificationsAndSilences,
 		maintenanceFrequency: notificationLogMaintenanceInterval,
 		maintenanceFunc: func(state alertingNotify.State) (int64, error) {
 			// Detached context here is to make sure that when the service is shut down the persist operation is executed.
-			return fileStore.Persist(context.Background(), NotificationLogFilename, state)
+			return stateStore.SaveNotificationLog(context.Background(), state)
 		},
 	}
 
@@ -144,7 +144,7 @@ func NewAlertmanager(ctx context.Context, orgID int64, cfg *setting.Cfg, store A
 		NotificationService: ns,
 		orgID:               orgID,
 		decryptFn:           decryptFn,
-		fileStore:           fileStore,
+		stateStore:          stateStore,
 		logger:              l,
 
 		// TODO: Preferably, logic around autogen would be outside of the specific alertmanager implementation so that remote alertmanager will get it for free.
@@ -418,10 +418,8 @@ func (am *alertmanager) PutAlerts(_ context.Context, postableAlerts apimodels.Po
 	return am.Base.PutAlerts(alerts)
 }
 
-// CleanUp removes the directory containing the alertmanager files from disk.
-func (am *alertmanager) CleanUp() {
-	am.fileStore.CleanUp()
-}
+// CleanUp no-ops as no files are stored on disk.
+func (am *alertmanager) CleanUp() {}
 
 // AlertValidationError is the error capturing the validation errors
 // faced on the alerts.
