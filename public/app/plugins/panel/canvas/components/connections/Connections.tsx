@@ -389,14 +389,15 @@ export class Connections {
 
       // call onChange here and update appropriate index of connection vertices array
       const connectionIndex = this.selection.value?.index;
+      const sourceConnectionIndex = this.selection.value?.sourceConnectionIndex;
       const vertexIndex = this.selectedVertexIndex;
 
-      if (connectionIndex !== undefined && vertexIndex !== undefined) {
+      if (connectionIndex !== undefined && sourceConnectionIndex !== undefined && vertexIndex !== undefined) {
         const currentSource = this.scene.connections.state[connectionIndex].source;
         if (currentSource.options.connections) {
           const currentConnections = [...currentSource.options.connections];
-          if (currentConnections[connectionIndex].vertices) {
-            const currentVertices = [...currentConnections[connectionIndex].vertices!];
+          if (currentConnections[sourceConnectionIndex].vertices) {
+            const currentVertices = [...currentConnections[sourceConnectionIndex].vertices!];
 
             if (deleteVertex) {
               currentVertices.splice(vertexIndex, 1);
@@ -409,8 +410,8 @@ export class Connections {
               currentVertices[vertexIndex] = currentVertex;
             }
 
-            currentConnections[connectionIndex] = {
-              ...currentConnections[connectionIndex],
+            currentConnections[sourceConnectionIndex] = {
+              ...currentConnections[sourceConnectionIndex],
               vertices: currentVertices,
             };
 
