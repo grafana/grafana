@@ -1,5 +1,4 @@
 import { PanelPlugin } from '@grafana/data';
-import { config } from '@grafana/runtime';
 import { commonOptionsBuilder } from '@grafana/ui';
 
 import { AutoEditor } from './AutoEditor';
@@ -7,18 +6,10 @@ import { ManualEditor } from './ManualEditor';
 import { XYChartPanel } from './XYChartPanel';
 import { getScatterFieldConfig } from './config';
 import { Options, FieldConfig, defaultFieldConfig } from './panelcfg.gen';
-import { initV2 } from './v2/module';
 
-export const plugin = new PanelPlugin<Options, FieldConfig>(XYChartPanel);
-
-// Delay initialization so we can use feature toggles
-function initPlugin() {
-  if (config.featureToggles.autoMigrateXYChartPanel) {
-    initV2(plugin);
-    return;
-  }
-
-  plugin.useFieldConfig(getScatterFieldConfig(defaultFieldConfig)).setPanelOptions((builder) => {
+export const plugin = new PanelPlugin<Options, FieldConfig>(XYChartPanel)
+  .useFieldConfig(getScatterFieldConfig(defaultFieldConfig))
+  .setPanelOptions((builder) => {
     builder
       .addRadio({
         path: 'seriesMapping',
@@ -50,7 +41,5 @@ function initPlugin() {
     commonOptionsBuilder.addTooltipOptions(builder, true);
     commonOptionsBuilder.addLegendOptions(builder);
   });
-}
 
-// This runs after feature toggles are enabled
-initPlugin();
+// export { plugin } from './v2/module';
