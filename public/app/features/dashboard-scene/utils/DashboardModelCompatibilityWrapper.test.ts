@@ -6,7 +6,7 @@ import {
   SceneTimeRange,
   VizPanel,
   SceneDataTransformer,
-  SceneDataLayers,
+  SceneDataLayerSet,
 } from '@grafana/scenes';
 import { DashboardCursorSync } from '@grafana/schema';
 import { SHARED_DASHBOARD_QUERY } from 'app/plugins/datasource/dashboard';
@@ -151,7 +151,7 @@ function setup() {
       weekStart: 'friday',
       timeZone: 'America/New_York',
     }),
-    $data: new SceneDataLayers({
+    $data: new SceneDataLayerSet({
       layers: [
         new DashboardAnnotationsDataLayer({
           key: `annotations-test`,
