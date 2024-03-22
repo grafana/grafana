@@ -75,6 +75,7 @@ export class Scene {
   isEditingEnabled?: boolean;
   shouldShowAdvancedTypes?: boolean;
   shouldPanZoom?: boolean;
+  shouldInfinitePan?: boolean;
   skipNextSelectionBroadcast = false;
   ignoreDataUpdate = false;
   panel: CanvasPanel;
@@ -112,10 +113,11 @@ export class Scene {
     enableEditing: boolean,
     showAdvancedTypes: boolean,
     panZoom: boolean,
+    infinitePan: boolean,
     public onSave: (cfg: CanvasFrameOptions) => void,
     panel: CanvasPanel
   ) {
-    this.root = this.load(cfg, enableEditing, showAdvancedTypes, panZoom);
+    this.root = this.load(cfg, enableEditing, showAdvancedTypes, panZoom, infinitePan);
 
     this.subscription = this.editModeEnabled.subscribe((open) => {
       if (!this.moveable || !this.isEditingEnabled) {
@@ -148,7 +150,13 @@ export class Scene {
     return !this.byName.has(v);
   };
 
-  load(cfg: CanvasFrameOptions, enableEditing: boolean, showAdvancedTypes: boolean, panZoom: boolean) {
+  load(
+    cfg: CanvasFrameOptions,
+    enableEditing: boolean,
+    showAdvancedTypes: boolean,
+    panZoom: boolean,
+    infinitePan: boolean
+  ) {
     this.root = new RootElement(
       cfg ?? {
         type: 'frame',
@@ -161,6 +169,7 @@ export class Scene {
     this.isEditingEnabled = enableEditing;
     this.shouldShowAdvancedTypes = showAdvancedTypes;
     this.shouldPanZoom = panZoom;
+    this.shouldInfinitePan = infinitePan;
 
     setTimeout(() => {
       if (this.div) {
