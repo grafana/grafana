@@ -203,7 +203,7 @@ type ProvisionedAlertRule struct {
 
 // swagger:route PUT /v1/provisioning/folder/{FolderUID}/rule-groups/{Group} provisioning stable RoutePutAlertRuleGroup
 //
-// Update the interval of a rule group.
+// Create or update alert rule group.
 //
 //     Consumes:
 //     - application/json

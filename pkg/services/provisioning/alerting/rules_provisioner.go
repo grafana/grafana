@@ -7,12 +7,13 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/metrics"
+	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/auth/identity"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/folder"
 	alert_models "github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/provisioning"
-	"github.com/grafana/grafana/pkg/services/user"
+	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/util"
 )
 
@@ -132,7 +133,16 @@ func (prov *defaultAlertRuleProvisioner) getOrCreateFolderUID(
 	return cmdResult.UID, nil
 }
 
-// UserID is 0 to use org quota
 var provisionerUser = func(orgID int64) identity.Requester {
-	return &user.SignedInUser{UserID: 0, Login: "alert_provisioner", OrgID: orgID}
+	// this user has 0 ID and therefore, organization wide quota will be applied
+	return accesscontrol.BackgroundUser(
+		"alert_provisioner",
+		orgID,
+		org.RoleAdmin,
+		[]accesscontrol.Permission{
+			{Action: dashboards.ActionFoldersRead, Scope: dashboards.ScopeFoldersAll},
+			{Action: accesscontrol.ActionAlertingProvisioningReadSecrets, Scope: dashboards.ScopeFoldersAll},
+			{Action: accesscontrol.ActionAlertingProvisioningWrite, Scope: dashboards.ScopeFoldersAll},
+		},
+	)
 }
