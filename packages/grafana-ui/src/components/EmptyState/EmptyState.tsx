@@ -17,7 +17,7 @@ interface BaseProps {
    */
   image?: ReactNode;
   message?: string;
-  showImage?: boolean;
+  hideImage?: boolean;
   variant?: 'search' | 'default';
 }
 
@@ -35,14 +35,14 @@ type Props = DefaultVariantProps | SearchVariantProps;
 export const EmptyState = ({
   button,
   children,
+  hideImage = false,
   image = <GrotNotFound width={300} />,
   message = t('grafana-ui.empty-state.search-message', 'No results found'),
-  showImage = true,
   variant = 'default',
 }: React.PropsWithChildren<Props>) => {
   return (
     <Box alignItems="center" direction="column" display="flex" gap={4} paddingY={4}>
-      {showImage && image}
+      {!hideImage && image}
       <Stack direction="column" alignItems="center">
         <Text variant="h4">{message}</Text>
         {children && <Text color="secondary">{children}</Text>}
