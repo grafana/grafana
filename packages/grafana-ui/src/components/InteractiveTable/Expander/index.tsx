@@ -1,8 +1,8 @@
 import { css } from '@emotion/css';
 import React from 'react';
-import { CellProps } from 'react-table';
+import { CellProps, HeaderProps } from 'react-table';
 
-import { IconButton } from '../IconButton/IconButton';
+import { IconButton } from '../../IconButton/IconButton';
 
 const expanderContainerStyles = css({
   display: 'flex',
@@ -23,6 +23,21 @@ export function ExpanderCell<K extends object>({ row, __rowID }: CellProps<K, vo
         // @ts-expect-error same as the line above
         {...row.getToggleRowExpandedProps()}
         size="lg"
+      />
+    </div>
+  );
+}
+
+export function ExpanderHeader<K extends object>({ isAllRowsExpanded, toggleAllRowsExpanded }: HeaderProps<K>) {
+  return (
+    <div className={expanderContainerStyles}>
+      <IconButton
+        aria-label={!isAllRowsExpanded ? 'Expand all rows' : 'Collapse all rows'}
+        name={!isAllRowsExpanded ? 'table-expand-all' : 'table-collapse-all'}
+        onClick={() => toggleAllRowsExpanded()}
+        size={'lg'}
+        tooltip={!isAllRowsExpanded ? 'Expand all rows' : 'Collapse all rows'}
+        variant={'secondary'}
       />
     </div>
   );
