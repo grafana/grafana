@@ -20,7 +20,7 @@ import { XYSeriesConfig, Options } from './panelcfg.gen';
 //   return prevOptions as Options;
 // };
 
-export const xyChartMigrationHandler: PanelMigrationHandler = (panel): Options => {
+export const xyChartMigrationHandler = (panel: PanelModel): Options => {
   const pluginVersion = panel?.pluginVersion ?? '';
 
   if (pluginVersion === '') {

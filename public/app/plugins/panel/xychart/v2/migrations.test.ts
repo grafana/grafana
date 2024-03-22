@@ -1,9 +1,21 @@
-/*
 import { PanelModel } from '@grafana/data';
 
 import { xyChartMigrationHandler } from './migrations';
+import { Options } from './panelcfg.gen';
 
 describe('XYChart migrations', () => {
+  it('keep import', () => {
+    let input = { series: [] } as unknown as Options;
+    const options = xyChartMigrationHandler({
+      pluginVersion: 'x.y.z', // when defined
+      options: input,
+    } as PanelModel);
+
+    // no changes
+    expect(options).toBe(input);
+  });
+
+  /*
   it('should migrate to new format for GA 10.4 release', () => {
     const panel = {
       options: {
@@ -133,5 +145,5 @@ describe('XYChart migrations', () => {
       },
     });
   });
+  */
 });
-*/
