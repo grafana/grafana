@@ -46,12 +46,13 @@ export class ShareModal extends SceneObjectBase<ShareModalState> implements Moda
     const { dashboardRef, panelRef } = this.state;
 
     const tabs: SceneShareTab[] = [new ShareLinkTab({ dashboardRef, panelRef, modalRef: this.getRef() })];
+    const dashboard = getDashboardSceneFor(this);
 
     if (!panelRef) {
       tabs.push(new ShareExportTab({ dashboardRef, modalRef: this.getRef() }));
     }
 
-    if (contextSrv.isSignedIn && config.snapshotEnabled) {
+    if (contextSrv.isSignedIn && config.snapshotEnabled && dashboard.canEditDashboard()) {
       tabs.push(new ShareSnapshotTab({ panelRef, dashboardRef, modalRef: this.getRef() }));
     }
 
