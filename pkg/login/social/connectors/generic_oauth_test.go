@@ -13,9 +13,11 @@ import (
 	"golang.org/x/oauth2"
 
 	"github.com/grafana/grafana/pkg/login/social"
+	"github.com/grafana/grafana/pkg/models/roletype"
 	"github.com/grafana/grafana/pkg/services/auth/identity"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/org"
+	"github.com/grafana/grafana/pkg/services/org/orgtest"
 	"github.com/grafana/grafana/pkg/services/ssosettings"
 	ssoModels "github.com/grafana/grafana/pkg/services/ssosettings/models"
 	"github.com/grafana/grafana/pkg/services/ssosettings/ssosettingstests"
@@ -27,6 +29,7 @@ func TestUserInfoSearchesForEmailAndRole(t *testing.T) {
 	provider := NewGenericOAuthProvider(&social.OAuthInfo{
 		EmailAttributePath: "email",
 	}, &setting.Cfg{},
+		&orgtest.FakeOrgService{ExpectedOrgs: []*org.OrgDTO{{ID: 4, Name: "org_dev"}, {ID: 5, Name: "org_engineering"}}},
 		&ssosettingstests.MockService{},
 		featuremgmt.WithFeatures())
 
@@ -37,8 +40,11 @@ func TestUserInfoSearchesForEmailAndRole(t *testing.T) {
 		ResponseBody            any
 		OAuth2Extra             any
 		RoleAttributePath       string
+		OrgAttributePath        string
+		OrgMapping              []string
 		ExpectedEmail           string
 		ExpectedRole            org.RoleType
+		ExpectedOrgRoles        map[int64]org.RoleType
 		ExpectedError           error
 		ExpectedGrafanaAdmin    *bool
 	}{
@@ -252,10 +258,28 @@ func TestUserInfoSearchesForEmailAndRole(t *testing.T) {
 			ExpectedEmail:     "john.doe@example.com",
 			ExpectedRole:      "",
 		},
+		{
+			Name:                    "Given a valid id_token, a valid advanced JMESPath role path, a valid advanced JMESPath org roles path, a valid API response, prefer ID ken",
+			SkipOrgRoleSync:         false,
+			AllowAssignGrafanaAdmin: false,
+			ResponseBody:            map[string]any{"info": map[string]any{"roles": []string{"engineering", "SRE"}}},
+			OAuth2Extra: map[string]any{
+				// { "email": "john.doe@example.com",
+				//   "info": { "roles": [ "dev", "engineering" ] }}
+				"id_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImpvaG4uZG9lQGV4YW1wbGUuY29tIiwiaW5mbyI6eyJyb2xlcyI6WyJkZXYiLCJlbmdpbmVlcmluZyJdfX0.RmmQfv25eXb4p3wMrJsvXfGQ6EXhGtwRXo6SlCFHRNg"},
+			RoleAttributePath: "'Viewer'",
+			OrgAttributePath:  "info.roles",
+			OrgMapping:        []string{"dev:org_dev:Viewer", "engineering:org_engineering:Editor"},
+			ExpectedEmail:     "john.doe@example.com",
+			ExpectedRole:      "Viewer",
+			ExpectedOrgRoles:  map[int64]roletype.RoleType{4: org.RoleViewer, 5: org.RoleEditor},
+		},
 	}
 
 	for _, test := range tests {
 		provider.info.RoleAttributePath = test.RoleAttributePath
+		provider.info.OrgAttributePath = test.OrgAttributePath
+		provider.info.OrgMapping = test.OrgMapping
 		provider.info.AllowAssignGrafanaAdmin = test.AllowAssignGrafanaAdmin
 		provider.info.SkipOrgRoleSync = test.SkipOrgRoleSync
 
@@ -286,6 +310,7 @@ func TestUserInfoSearchesForEmailAndRole(t *testing.T) {
 			require.Equal(t, test.ExpectedEmail, actualResult.Email)
 			require.Equal(t, test.ExpectedEmail, actualResult.Login)
 			require.Equal(t, test.ExpectedRole, actualResult.Role)
+			require.Equal(t, test.ExpectedOrgRoles, actualResult.OrgRoles)
 			require.Equal(t, test.ExpectedGrafanaAdmin, actualResult.IsGrafanaAdmin)
 		})
 	}
@@ -297,7 +322,7 @@ func TestUserInfoSearchesForLogin(t *testing.T) {
 			Extra: map[string]string{
 				"login_attribute_path": "login",
 			},
-		}, &setting.Cfg{}, &ssosettingstests.MockService{}, featuremgmt.WithFeatures())
+		}, &setting.Cfg{}, nil, &ssosettingstests.MockService{}, featuremgmt.WithFeatures())
 
 		tests := []struct {
 			Name               string
@@ -391,7 +416,7 @@ func TestUserInfoSearchesForName(t *testing.T) {
 			Extra: map[string]string{
 				"name_attribute_path": "name",
 			},
-		}, &setting.Cfg{}, &ssosettingstests.MockService{}, featuremgmt.WithFeatures())
+		}, &setting.Cfg{}, nil, &ssosettingstests.MockService{}, featuremgmt.WithFeatures())
 
 		tests := []struct {
 			Name              string
@@ -532,7 +557,7 @@ func TestUserInfoSearchesForGroup(t *testing.T) {
 				provider := NewGenericOAuthProvider(&social.OAuthInfo{
 					GroupsAttributePath: test.groupsAttributePath,
 					ApiUrl:              ts.URL,
-				}, &setting.Cfg{}, &ssosettingstests.MockService{}, featuremgmt.WithFeatures())
+				}, &setting.Cfg{}, nil, &ssosettingstests.MockService{}, featuremgmt.WithFeatures())
 
 				token := &oauth2.Token{
 					AccessToken:  "",
@@ -552,7 +577,7 @@ func TestUserInfoSearchesForGroup(t *testing.T) {
 func TestPayloadCompression(t *testing.T) {
 	provider := NewGenericOAuthProvider(&social.OAuthInfo{
 		EmailAttributePath: "email",
-	}, &setting.Cfg{}, &ssosettingstests.MockService{}, featuremgmt.WithFeatures())
+	}, &setting.Cfg{}, nil, &ssosettingstests.MockService{}, featuremgmt.WithFeatures())
 
 	tests := []struct {
 		Name          string
@@ -707,7 +732,7 @@ func TestSocialGenericOAuth_InitializeExtraFields(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			s := NewGenericOAuthProvider(tc.settings, &setting.Cfg{}, &ssosettingstests.MockService{}, featuremgmt.WithFeatures())
+			s := NewGenericOAuthProvider(tc.settings, &setting.Cfg{}, nil, &ssosettingstests.MockService{}, featuremgmt.WithFeatures())
 
 			require.Equal(t, tc.want.nameAttributePath, s.nameAttributePath)
 			require.Equal(t, tc.want.loginAttributePath, s.loginAttributePath)
@@ -870,7 +895,7 @@ func TestSocialGenericOAuth_Validate(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			s := NewGenericOAuthProvider(&social.OAuthInfo{}, &setting.Cfg{}, &ssosettingstests.MockService{}, featuremgmt.WithFeatures())
+			s := NewGenericOAuthProvider(&social.OAuthInfo{}, &setting.Cfg{}, nil, &ssosettingstests.MockService{}, featuremgmt.WithFeatures())
 
 			if tc.requester == nil {
 				tc.requester = &user.SignedInUser{IsGrafanaAdmin: false}
@@ -950,7 +975,7 @@ func TestSocialGenericOAuth_Reload(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			s := NewGenericOAuthProvider(tc.info, &setting.Cfg{}, &ssosettingstests.MockService{}, featuremgmt.WithFeatures())
+			s := NewGenericOAuthProvider(tc.info, &setting.Cfg{}, nil, &ssosettingstests.MockService{}, featuremgmt.WithFeatures())
 
 			err := s.Reload(context.Background(), tc.settings)
 			if tc.expectError {
@@ -1048,7 +1073,7 @@ func TestGenericOAuth_Reload_ExtraFields(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			s := NewGenericOAuthProvider(tc.info, setting.NewCfg(), &ssosettingstests.MockService{}, featuremgmt.WithFeatures())
+			s := NewGenericOAuthProvider(tc.info, setting.NewCfg(), nil, &ssosettingstests.MockService{}, featuremgmt.WithFeatures())
 
 			err := s.Reload(context.Background(), tc.settings)
 			require.NoError(t, err)

@@ -16,9 +16,11 @@ import (
 	"golang.org/x/oauth2"
 
 	"github.com/grafana/grafana/pkg/login/social"
+	"github.com/grafana/grafana/pkg/models/roletype"
 	"github.com/grafana/grafana/pkg/services/auth/identity"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/org"
+	"github.com/grafana/grafana/pkg/services/org/orgtest"
 	"github.com/grafana/grafana/pkg/services/ssosettings"
 	ssoModels "github.com/grafana/grafana/pkg/services/ssosettings/models"
 	"github.com/grafana/grafana/pkg/services/ssosettings/ssosettingstests"
@@ -45,7 +47,7 @@ const (
 func TestSocialGitlab_UserInfo(t *testing.T) {
 	var nilPointer *bool
 
-	provider := NewGitLabProvider(&social.OAuthInfo{SkipOrgRoleSync: false}, &setting.Cfg{}, &ssosettingstests.MockService{}, featuremgmt.WithFeatures())
+	provider := NewGitLabProvider(&social.OAuthInfo{SkipOrgRoleSync: false}, &setting.Cfg{}, orgtest.NewOrgServiceFake(), &ssosettingstests.MockService{}, featuremgmt.WithFeatures())
 
 	type conf struct {
 		AllowAssignGrafanaAdmin bool
@@ -61,9 +63,12 @@ func TestSocialGitlab_UserInfo(t *testing.T) {
 		GroupsRespBody       string
 		GroupHeaders         map[string]string
 		RoleAttributePath    string
+		OrgAttributePath     string
+		OrgMapping           []string
 		ExpectedLogin        string
 		ExpectedEmail        string
 		ExpectedRole         org.RoleType
+		ExpectedOrgRoles     map[int64]org.RoleType
 		ExpectedGrafanaAdmin *bool
 		ExpectedError        error
 	}{
@@ -162,6 +167,20 @@ func TestSocialGitlab_UserInfo(t *testing.T) {
 			RoleAttributePath: "",
 			ExpectedError:     errRoleAttributePathNotSet,
 		},
+		{
+			Name:                 "Org Mapping",
+			Cfg:                  conf{},
+			UserRespBody:         editorUserRespBody,
+			GroupsRespBody:       "[" + strings.Join([]string{viewerGroup, editorGroup}, ",") + "]",
+			RoleAttributePath:    "'None'",
+			OrgAttributePath:     "groups",
+			OrgMapping:           []string{"editors:4:Editor", "viewers:5:Viewer"},
+			ExpectedLogin:        "gitlab-editor",
+			ExpectedEmail:        "gitlab-editor@example.org",
+			ExpectedRole:         "None",
+			ExpectedOrgRoles:     map[int64]roletype.RoleType{4: "Editor", 5: "Viewer"},
+			ExpectedGrafanaAdmin: nil,
+		},
 	}
 
 	for _, test := range tests {
@@ -169,6 +188,8 @@ func TestSocialGitlab_UserInfo(t *testing.T) {
 		provider.info.AllowAssignGrafanaAdmin = test.Cfg.AllowAssignGrafanaAdmin
 		provider.cfg.AutoAssignOrgRole = string(test.Cfg.AutoAssignOrgRole)
 		provider.info.RoleAttributeStrict = test.Cfg.RoleAttributeStrict
+		provider.info.OrgAttributePath = test.OrgAttributePath
+		provider.info.OrgMapping = test.OrgMapping
 		provider.info.SkipOrgRoleSync = test.Cfg.SkipOrgRoleSync
 
 		t.Run(test.Name, func(t *testing.T) {
@@ -202,6 +223,7 @@ func TestSocialGitlab_UserInfo(t *testing.T) {
 			require.Equal(t, test.ExpectedEmail, actualResult.Email)
 			require.Equal(t, test.ExpectedLogin, actualResult.Login)
 			require.Equal(t, test.ExpectedRole, actualResult.Role)
+			require.Equal(t, test.ExpectedOrgRoles, actualResult.OrgRoles)
 			require.Equal(t, test.ExpectedGrafanaAdmin, actualResult.IsGrafanaAdmin)
 		})
 	}
@@ -364,7 +386,7 @@ func TestSocialGitlab_extractFromToken(t *testing.T) {
 				&setting.Cfg{
 					AutoAssignOrgRole:          "",
 					OAuthSkipOrgRoleUpdateSync: false,
-				}, &ssosettingstests.MockService{},
+				}, nil, &ssosettingstests.MockService{},
 				featuremgmt.WithFeatures())
 
 			// Test case: successful extraction
@@ -455,7 +477,7 @@ func TestSocialGitlab_GetGroupsNextPage(t *testing.T) {
 	defer mockServer.Close()
 
 	// Create a SocialGitlab instance with the mock server URL
-	s := NewGitLabProvider(&social.OAuthInfo{ApiUrl: mockServer.URL}, &setting.Cfg{}, &ssosettingstests.MockService{}, featuremgmt.WithFeatures())
+	s := NewGitLabProvider(&social.OAuthInfo{ApiUrl: mockServer.URL}, &setting.Cfg{}, nil, &ssosettingstests.MockService{}, featuremgmt.WithFeatures())
 
 	// Call getGroups and verify that it returns all groups
 	expectedGroups := []string{"admins", "editors", "viewers", "serveradmins"}
@@ -577,7 +599,7 @@ func TestSocialGitlab_Validate(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			s := NewGitLabProvider(&social.OAuthInfo{}, &setting.Cfg{}, &ssosettingstests.MockService{}, featuremgmt.WithFeatures())
+			s := NewGitLabProvider(&social.OAuthInfo{}, &setting.Cfg{}, nil, &ssosettingstests.MockService{}, featuremgmt.WithFeatures())
 
 			if tc.requester == nil {
 				tc.requester = &user.SignedInUser{IsGrafanaAdmin: false}
@@ -658,7 +680,7 @@ func TestSocialGitlab_Reload(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			s := NewGitLabProvider(tc.info, &setting.Cfg{}, &ssosettingstests.MockService{}, featuremgmt.WithFeatures())
+			s := NewGitLabProvider(tc.info, &setting.Cfg{}, nil, &ssosettingstests.MockService{}, featuremgmt.WithFeatures())
 
 			err := s.Reload(context.Background(), tc.settings)
 			if tc.expectError {

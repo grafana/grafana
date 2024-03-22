@@ -14,6 +14,7 @@ import (
 	"github.com/grafana/grafana/pkg/models/roletype"
 	"github.com/grafana/grafana/pkg/services/auth/identity"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/ssosettings"
 	ssoModels "github.com/grafana/grafana/pkg/services/ssosettings/models"
 	"github.com/grafana/grafana/pkg/services/ssosettings/validation"
@@ -46,9 +47,9 @@ type OktaClaims struct {
 	Name              string `json:"name"`
 }
 
-func NewOktaProvider(info *social.OAuthInfo, cfg *setting.Cfg, ssoSettings ssosettings.Service, features featuremgmt.FeatureToggles) *SocialOkta {
+func NewOktaProvider(info *social.OAuthInfo, cfg *setting.Cfg, orgService org.Service, ssoSettings ssosettings.Service, features featuremgmt.FeatureToggles) *SocialOkta {
 	provider := &SocialOkta{
-		SocialBase: newSocialBase(social.OktaProviderName, info, features, cfg),
+		SocialBase: newSocialBase(social.OktaProviderName, orgService, info, features, cfg),
 	}
 
 	if info.UseRefreshToken {
@@ -140,6 +141,7 @@ func (s *SocialOkta) UserInfo(ctx context.Context, client *http.Client, token *o
 	}
 
 	var role roletype.RoleType
+	var orgRoles map[int64]roletype.RoleType
 	var isGrafanaAdmin *bool
 	if !s.info.SkipOrgRoleSync {
 		var grafanaAdmin bool
@@ -150,6 +152,11 @@ func (s *SocialOkta) UserInfo(ctx context.Context, client *http.Client, token *o
 
 		if s.info.AllowAssignGrafanaAdmin {
 			isGrafanaAdmin = &grafanaAdmin
+		}
+
+		orgRoles, err = s.extractOrgRoles(ctx, data.rawJSON, groups)
+		if err != nil {
+			return nil, err
 		}
 	}
 	if s.info.AllowAssignGrafanaAdmin && s.info.SkipOrgRoleSync {
@@ -162,6 +169,7 @@ func (s *SocialOkta) UserInfo(ctx context.Context, client *http.Client, token *o
 		Email:          email,
 		Login:          email,
 		Role:           role,
+		OrgRoles:       orgRoles,
 		IsGrafanaAdmin: isGrafanaAdmin,
 		Groups:         groups,
 	}, nil

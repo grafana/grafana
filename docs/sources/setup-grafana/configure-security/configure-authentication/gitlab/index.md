@@ -152,6 +152,8 @@ If no valid role is found, the user is assigned the role specified by [the `auto
 You can disable this default role assignment by setting `role_attribute_strict = true`.
 This setting denies user access if no role or an invalid role is returned.
 
+You can use the `org_attribute_path` and `org_mapping` configuration options to add roles to other orgs. For more information, refer to [Org roles mapping examples]({{< relref "#org-roles-mapping-examples" >}}).
+
 To ease configuration of a proper JMESPath expression, go to [JMESPath](http://jmespath.org/) to test and evaluate expressions with custom payloads.
 
 ### Role mapping examples
@@ -192,6 +194,27 @@ In this example, all users will be assigned `Viewer` role regardless of the user
 ```ini
 role_attribute_path = "'Viewer'"
 skip_org_role_sync = false
+```
+
+#### Org roles mapping examples
+
+This section includes examples of configuration settings used for org to role mapping.
+
+##### Map organization roles
+
+Given a user member of the `my-gitlab-group1` and `my-gitlab-group2` GitLab groups.
+
+In this example, the user has been granted the role of a `Viewer` in the `team1` org, and the role of an `Editor` in the `team2` and `team3` orgs.
+
+If the user was a member of the `admin` GitLab group, they would be granted the Grafana server administrator role.
+
+Config:
+
+```ini
+role_attribute_path = contains(groups[*], 'admin') && 'GrafanaAdmin' || 'None'
+allow_assign_grafana_admin = true
+org_attribute_path = groups
+org_mapping = my-gitlab-group1:team1:Viewer my-gitlab-group2:team2:Editor *:team3:Editor
 ```
 
 ### Example of GitLab configuration in Grafana
@@ -251,6 +274,8 @@ The table below describes all GitLab OAuth configuration options. Like any other
 | `auto_login`                 | No       | Set to `true` to enable users to bypass the login screen and automatically log in. This setting is ignored if you configure multiple auth providers to use auto-login.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            | `false`                              |
 | `role_attribute_path`        | No       | [JMESPath](http://jmespath.org/examples.html) expression to use for Grafana role lookup. Grafana will first evaluate the expression using the GitLab OAuth token. If no role is found, Grafana creates a JSON data with `groups` key that maps to groups obtained from GitLab's `/oauth/userinfo` endpoint, and evaluates the expression using this data. Finally, if a valid role is still not found, the expression is evaluated against the user information retrieved from `api_url/users` endpoint and groups retrieved from `api_url/groups` endpoint. The result of the evaluation should be a valid Grafana role (`Viewer`, `Editor`, `Admin` or `GrafanaAdmin`). For more information on user role mapping, refer to [Configure role mapping]({{< relref "#configure-role-mapping" >}}). |                                      |
 | `role_attribute_strict`      | No       | Set to `true` to deny user login if the Grafana role cannot be extracted using `role_attribute_path`. For more information on user role mapping, refer to [Configure role mapping]({{< relref "#configure-role-mapping" >}}).                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     | `false`                              |
+| `org_attribute_path`         | No       | [JMESPath](http://jmespath.org/examples.html) expression to use for Grafana org to role lookup. Grafana will first evaluate the expression using the GitLab OAuth token. If no value is returned, Grafana creates a JSON data with `groups` key that maps to groups obtained from GitLab's `/oauth/userinfo` endpoint, and evaluates the expression using this data. The result of the evaluation is mapped to org roles based on `org_mapping`. For more information on org to role mapping, refer to [Org roles mapping examples]({{< relref "#org-roles-mapping-examples" >}}).                                                                                                                                                                                                                |                                      |
+| `org_mapping`                | No       | List of comma- or space-separated Value:OrgIdOrName:Role mappings. Value can be `*` meaning "All users". Role is optional and can have the following values: `Viewer`, `Editor` or `Admin`. For more information on org to role mapping, refer to [Org roles mapping examples]({{< relref "#org-roles-mapping-examples" >}}).                                                                                                                                                                                                                                                                                                                                                                                                                                                                     |                                      |
 | `allow_assign_grafana_admin` | No       | Set to `true` to enable automatic sync of the Grafana server administrator role. If this option is set to `true` and the result of evaluating `role_attribute_path` for a user is `GrafanaAdmin`, Grafana grants the user the server administrator privileges and organization administrator role. If this option is set to `false` and the result of evaluating `role_attribute_path` for a user is `GrafanaAdmin`, Grafana grants the user only organization administrator role. For more information on user role mapping, refer to [Configure role mapping]({{< relref "#configure-role-mapping" >}}).                                                                                                                                                                                        | `false`                              |
 | `skip_org_role_sync`         | No       | Set to `true` to stop automatically syncing user roles.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                           | `false`                              |
 | `allowed_domains`            | No       | List of comma or space-separated domains. User must belong to at least one domain to log in.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      |                                      |
