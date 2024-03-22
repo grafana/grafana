@@ -287,27 +287,25 @@ func (w *watchNode) Start(initEvents ...watch.Event) {
 
 		// The if check below helps not send duplicate events when reading from 0
 		// since ADDED events made from initial list above are already sent
-		if w.requestedRV != 0 {
-			w.s.bufferedMutex.RLock()
-			for _, e := range w.s.buffered {
-				eventRV, err := w.getResourceVersionAsInt(e.ev.Object)
-				if err != nil {
-					klog.Errorf("Could not determine RV for deduplication of buffered events: %v", err)
-					continue
-				}
-
-				if maxRV < eventRV {
-					maxRV = eventRV
-				} else {
-					continue
-				}
-
-				if err := w.processEvent(e, false); err != nil {
-					klog.Errorf("Could not process event: %v", err)
-				}
+		w.s.bufferedMutex.RLock()
+		for _, e := range w.s.buffered {
+			eventRV, err := w.getResourceVersionAsInt(e.ev.Object)
+			if err != nil {
+				klog.Errorf("Could not determine RV for deduplication of buffered events: %v", err)
+				continue
 			}
-			w.s.bufferedMutex.RUnlock()
+
+			if maxRV < eventRV {
+				maxRV = eventRV
+			} else {
+				continue
+			}
+
+			if err := w.processEvent(e, false); err != nil {
+				klog.Errorf("Could not process event: %v", err)
+			}
 		}
+		w.s.bufferedMutex.RUnlock()
 
 		for {
 			select {
