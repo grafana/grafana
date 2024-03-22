@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import { subDays } from 'date-fns';
+import { addMinutes, subDays, subHours } from 'date-fns';
 import { Location } from 'history';
 import React, { useRef, useState } from 'react';
 import { FormProvider, useForm, Validate } from 'react-hook-form';
@@ -24,7 +24,7 @@ import {
   Box,
 } from '@grafana/ui';
 import { useCleanup } from 'app/core/hooks/useCleanup';
-import { AlertManagerCortexConfig } from 'app/plugins/datasource/alertmanager/types';
+import { AlertManagerCortexConfig, TestTemplateAlert } from 'app/plugins/datasource/alertmanager/types';
 import { useDispatch } from 'app/types';
 
 import { AppChromeUpdate } from '../../../../../core/components/AppChrome/AppChromeUpdate';
@@ -61,17 +61,38 @@ interface Props {
 }
 export const isDuplicating = (location: Location) => location.pathname.endsWith('/duplicate');
 
-const DEFAULT_PAYLOAD = `[
+const defaultPayload: TestTemplateAlert[] = [
   {
-    "annotations": {
-      "summary": "Instance instance1 has been down for more than 5 minutes"
+    status: 'firing',
+    annotations: {
+      summary: 'Instance instance1 has been down for more than 5 minutes',
     },
-    "labels": {
-      "instance": "instance1"
+    labels: {
+      alertname: 'InstanceDown',
+      instance: 'instance1',
     },
-    "startsAt": "${subDays(new Date(), 1).toISOString()}"
-  }]
-`;
+    startsAt: subDays(new Date(), 1).toISOString(),
+    endsAt: addMinutes(new Date(), 5).toISOString(),
+    fingerprint: 'a5331f0d5a9d81d4',
+    generatorURL: 'http://grafana.com/alerting/grafana/cdeqmlhvflz40f/view',
+  },
+  {
+    status: 'resolved',
+    annotations: {
+      summary: 'CPU usage above 90%',
+    },
+    labels: {
+      alertname: 'CpuUsage',
+      instance: 'instance1',
+    },
+    startsAt: subHours(new Date(), 4).toISOString(),
+    endsAt: new Date().toISOString(),
+    fingerprint: 'b77d941310f9d381',
+    generatorURL: 'http://grafana.com/alerting/grafana/oZSMdGj7z/view',
+  },
+];
+
+const defaultPayloadString = JSON.stringify(defaultPayload, null, 2);
 
 export const TemplateForm = ({ existing, alertManagerSourceName, config, provenance }: Props) => {
   const styles = useStyles2(getStyles);
@@ -88,7 +109,7 @@ export const TemplateForm = ({ existing, alertManagerSourceName, config, provena
   const location = useLocation();
   const isduplicating = isDuplicating(location);
 
-  const [payload, setPayload] = useState(DEFAULT_PAYLOAD);
+  const [payload, setPayload] = useState(defaultPayloadString);
   const [payloadFormatError, setPayloadFormatError] = useState<string | null>(null);
 
   const submit = (values: TemplateFormValues) => {
@@ -248,8 +269,8 @@ export const TemplateForm = ({ existing, alertManagerSourceName, config, provena
                     <div className={styles.templatePayload}>
                       <PayloadEditor
                         payload={payload}
+                        defaultPayload={defaultPayloadString}
                         setPayload={setPayload}
-                        defaultPayload={DEFAULT_PAYLOAD}
                         setPayloadFormatError={setPayloadFormatError}
                         payloadFormatError={payloadFormatError}
                       />
