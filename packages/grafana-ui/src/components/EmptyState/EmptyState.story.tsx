@@ -12,7 +12,7 @@ const meta: Meta<typeof EmptyState> = {
       page: mdx,
     },
     controls: {
-      exclude: ['button', 'image', 'variant'],
+      exclude: ['button', 'image'],
     },
   },
   argTypes: {
