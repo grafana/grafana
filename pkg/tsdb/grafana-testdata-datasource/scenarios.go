@@ -231,6 +231,7 @@ func GetJSONModel(j json.RawMessage) (kinds.TestDataQuery, error) {
 		Spread:      1,
 	}
 	if len(j) > 0 {
+		// csvWave has saved values that are single values, not arrays
 		_ = json.Unmarshal(j, &model)
 	}
 	return model, nil
