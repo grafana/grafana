@@ -241,6 +241,22 @@ Any consumers of the specific API should be appropriately adapted. Issue [#74600
 - **Grafana/UI:** Add new Splitter component . [#82357](https://github.com/grafana/grafana/issues/82357), [@torkelo](https://github.com/torkelo)
 
 <!-- 10.4.0 END -->
+<!-- 10.3.5 START -->
+
+# 10.3.5 (2024-03-20)
+
+### Features and enhancements
+
+- **Postgres:** Allow disabling SNI on SSL-enabled connections. [#84259](https://github.com/grafana/grafana/issues/84259), [@papagian](https://github.com/papagian)
+
+### Bug fixes
+
+- **Snapshots:** Require delete within same org (backport). [#84707](https://github.com/grafana/grafana/issues/84707), [@ryantxu](https://github.com/ryantxu)
+- **Elasticsearch:** Fix legend for alerting, expressions and previously frontend queries. [#84684](https://github.com/grafana/grafana/issues/84684), [@ivanahuckova](https://github.com/ivanahuckova)
+- **Dashboard:** Fix issue where out-of-view shared query panels caused blank dependent panels. [#84196](https://github.com/grafana/grafana/issues/84196), [@kaydelaney](https://github.com/kaydelaney)
+- **Alerting:** Fix preview getting the correct queries from the form. [#81481](https://github.com/grafana/grafana/issues/81481), [@soniaAguilarPeiron](https://github.com/soniaAguilarPeiron)
+
+<!-- 10.3.5 END -->
 <!-- 10.3.4 START -->
 
 # 10.3.4 (2024-03-06)
