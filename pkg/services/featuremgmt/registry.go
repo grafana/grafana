@@ -989,9 +989,10 @@ var (
 		{
 			Name:         "alertingSimplifiedRouting",
 			Description:  "Enables users to easily configure alert notifications by specifying a contact point directly when editing or creating an alert rule",
-			Stage:        FeatureStagePublicPreview,
+			Stage:        FeatureStageGeneralAvailability,
 			FrontendOnly: false,
 			Owner:        grafanaAlertingSquad,
+			Expression:   "true", // enabled by default
 		},
 		{
 			Name:         "logRowsPopoverMenu",

@@ -132,7 +132,7 @@ canvasPanelPanZoom,preview,@grafana/dataviz-squad,false,false,true
 logsInfiniteScrolling,experimental,@grafana/observability-logs,false,false,true
 flameGraphItemCollapsing,experimental,@grafana/observability-traces-and-profiling,false,false,true
 datatrails,experimental,@grafana/dashboards-squad,false,false,true
-alertingSimplifiedRouting,preview,@grafana/alerting-squad,false,false,false
+alertingSimplifiedRouting,GA,@grafana/alerting-squad,false,false,false
 logRowsPopoverMenu,GA,@grafana/observability-logs,false,false,true
 pluginsSkipHostEnvVars,experimental,@grafana/plugins-platform-backend,false,false,false
 tableSharedCrosshair,experimental,@grafana/dataviz-squad,false,false,true
