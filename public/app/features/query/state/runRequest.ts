@@ -201,15 +201,6 @@ export function callQueryMethod(
       : t
   );
 
-  // do not filter queries in case a custom query function is provided (for example in variable queries)
-  if (!queryFunction) {
-    request.targets = request.targets.filter((t) => datasource.filterQuery?.(t) ?? true);
-  }
-
-  if (request.targets.length === 0) {
-    return of<DataQueryResponse>({ data: [] });
-  }
-
   // If its a public datasource, just return the result. Expressions will be handled on the backend.
   if (config.publicDashboardAccessToken) {
     return from(datasource.query(request));
@@ -219,6 +210,15 @@ export function callQueryMethod(
     if (isExpressionReference(target.datasource)) {
       return expressionDatasource.query(request as DataQueryRequest<ExpressionQuery>);
     }
+  }
+
+  // do not filter queries in case a custom query function is provided (for example in variable queries)
+  if (!queryFunction) {
+    request.targets = request.targets.filter((t) => datasource.filterQuery?.(t) ?? true);
+  }
+
+  if (request.targets.length === 0) {
+    return of<DataQueryResponse>({ data: [] });
   }
 
   // Otherwise it is a standard datasource request
