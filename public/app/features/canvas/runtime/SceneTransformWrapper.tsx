@@ -56,7 +56,7 @@ export const SceneTransformWrapper = ({ scene, children: sceneDiv }: SceneTransf
   };
 
   const onPanning = (_: ReactZoomPanPinchRef, event: MouseEvent | TouchEvent) => {
-    if (scene.shouldInfinitePan && event instanceof MouseEvent) {
+    if (event instanceof MouseEvent) {
       // Get deltaX and deltaY from pan event and add it to current canvas dimensions
       let deltaX = event.movementX;
       let deltaY = event.movementY;
@@ -102,7 +102,7 @@ export const SceneTransformWrapper = ({ scene, children: sceneDiv }: SceneTransf
       panning={{ allowLeftClickPan: false }}
       limitToBounds={!scene.shouldInfinitePan}
       minScale={scene.shouldInfinitePan ? 0.1 : undefined}
-      onPanning={onPanning}
+      onPanning={scene.shouldInfinitePan ? onPanning : undefined}
     >
       <TransformComponent>
         {/* The <div> element has child elements that allow for mouse events, so we need to disable the linter rule */}
