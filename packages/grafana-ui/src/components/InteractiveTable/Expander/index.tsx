@@ -32,7 +32,6 @@ export function ExpanderHeader<K extends object>({ isAllRowsExpanded, toggleAllR
   return (
     <div className={expanderContainerStyles}>
       <IconButton
-        data-testid={'expand-all-button'}
         aria-label={!isAllRowsExpanded ? 'Expand all rows' : 'Collapse all rows'}
         name={!isAllRowsExpanded ? 'table-expand-all' : 'table-collapse-all'}
         onClick={() => toggleAllRowsExpanded()}

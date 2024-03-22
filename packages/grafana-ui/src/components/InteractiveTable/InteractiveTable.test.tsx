@@ -113,7 +113,7 @@ describe('InteractiveTable', () => {
         />
       );
 
-      expect(screen.queryByTestId('expand-all-button')).not.toBeInTheDocument();
+      expect(screen.queryByRole('button', { name: 'Expand all rows' })).not.toBeInTheDocument();
     });
     it('does not render expand all when showExpandAll is not provided', async () => {
       const columns: Array<Column<TableData>> = [{ id: 'id', header: 'ID' }];
@@ -127,7 +127,7 @@ describe('InteractiveTable', () => {
         />
       );
 
-      expect(screen.queryByTestId('expand-all-button')).not.toBeInTheDocument();
+      expect(screen.queryByRole('button', { name: 'Expand all rows' })).not.toBeInTheDocument();
     });
     it('renders expand all when showExpandAll is true', async () => {
       const columns: Array<Column<TableData>> = [{ id: 'id', header: 'ID' }];
@@ -142,7 +142,7 @@ describe('InteractiveTable', () => {
         />
       );
 
-      expect(screen.queryByTestId('expand-all-button')).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: 'Expand all rows' })).toBeInTheDocument();
     });
     it('expands all rows when expand all is clicked', async () => {
       const columns: Array<Column<TableData>> = [{ id: 'id', header: 'ID' }];
@@ -165,7 +165,7 @@ describe('InteractiveTable', () => {
       expect(screen.queryByTestId('test-2')).not.toBeInTheDocument();
       expect(screen.queryByTestId('test-3')).not.toBeInTheDocument();
 
-      const expandAllButton = screen.getByTestId('expand-all-button');
+      const expandAllButton = screen.getByRole('button', { name: 'Expand all rows' });
       await user.click(expandAllButton);
 
       expect(screen.queryByTestId('test-1')).toBeInTheDocument();

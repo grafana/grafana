@@ -120,7 +120,8 @@ export type InteractiveTableHeaderTooltip = {
 
 export type FetchDataArgs<Data> = { sortBy: Array<SortingRule<Data>> };
 export type FetchDataFunc<Data> = ({ sortBy }: FetchDataArgs<Data>) => void;
-interface Props<TableData extends object> {
+
+interface BaseProps<TableData extends object> {
   className?: string;
   /**
    * Table's columns definition. Must be memoized.
@@ -157,6 +158,18 @@ interface Props<TableData extends object> {
    */
   fetchData?: FetchDataFunc<TableData>;
 }
+
+interface WithExpandableRow<TableData extends object> extends BaseProps<TableData> {
+  renderExpandedRow: (row: TableData) => ReactNode;
+  showExpandAll?: boolean;
+}
+
+interface WithoutExpandableRow<TableData extends object> extends BaseProps<TableData> {
+  renderExpandedRow?: never;
+  showExpandAll?: never;
+}
+
+type Props<TableData extends object> = WithExpandableRow<TableData> | WithoutExpandableRow<TableData>;
 
 /** @alpha */
 export function InteractiveTable<TableData extends object>({
