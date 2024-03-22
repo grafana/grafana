@@ -858,8 +858,9 @@ conflict: test2
 						}
 						// call user store instead of user service so as not to prevent conflicting users
 						rawSQL := fmt.Sprintf(
-							"INSERT INTO %s (email, login, org_id, version, is_admin, created, updated) VALUES (?,?,?,0,0,?,?)",
+							"INSERT INTO %s (email, login, org_id, version, is_admin, created, updated) VALUES (?,?,?,0,%s,?,?)",
 							sqlStore.Quote("user"),
+							sqlStore.Dialect.BooleanStr(false),
 						)
 						result, err := sess.Exec(rawSQL, cmd.Email, cmd.Login, cmd.OrgID, cmd.Created, cmd.Updated)
 						if err != nil {

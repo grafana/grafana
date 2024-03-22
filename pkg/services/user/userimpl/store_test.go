@@ -260,7 +260,11 @@ func TestIntegrationUserDataAccess(t *testing.T) {
 				Created: time.Now(),
 				Updated: time.Now(),
 			}
-			rawSQL := "INSERT INTO user (email, login, org_id, version, is_admin, created, updated) VALUES (?,?,?,0,0,?,?)"
+			rawSQL := fmt.Sprintf(
+				"INSERT INTO %s (email, login, org_id, version, is_admin, created, updated) VALUES (?,?,?,0,%s,?,?)",
+				ss.Quote("user"),
+				ss.GetDialect().BooleanStr(false),
+			)
 			_, err := sess.Exec(rawSQL, cmd.Email, cmd.Login, cmd.OrgID, cmd.Created, cmd.Updated)
 			if err != nil {
 				return err
@@ -279,7 +283,11 @@ func TestIntegrationUserDataAccess(t *testing.T) {
 				Created: time.Now(),
 				Updated: time.Now(),
 			}
-			rawSQL := "INSERT INTO user (email, login, org_id, version, is_admin, created, updated) VALUES (?,?,?,0,0,?,?)"
+			rawSQL := fmt.Sprintf(
+				"INSERT INTO %s (email, login, org_id, version, is_admin, created, updated) VALUES (?,?,?,0,%s,?,?)",
+				ss.Quote("user"),
+				ss.GetDialect().BooleanStr(false),
+			)
 			_, err := sess.Exec(rawSQL, cmd.Email, cmd.Login, cmd.OrgID, cmd.Created, cmd.Updated)
 			if err != nil {
 				return err
@@ -300,7 +308,11 @@ func TestIntegrationUserDataAccess(t *testing.T) {
 				Created: time.Now(),
 				Updated: time.Now(),
 			}
-			rawSQL := "INSERT INTO user (email, login, org_id, version, is_admin, created, updated) VALUES (?,?,?,0,0,?,?)"
+			rawSQL := fmt.Sprintf(
+				"INSERT INTO %s (email, login, org_id, version, is_admin, created, updated) VALUES (?,?,?,0,%s,?,?)",
+				ss.Quote("user"),
+				ss.GetDialect().BooleanStr(false),
+			)
 			_, err := sess.Exec(rawSQL, cmd.Email, cmd.Login, cmd.OrgID, cmd.Created, cmd.Updated)
 			if err != nil {
 				return err
@@ -321,7 +333,11 @@ func TestIntegrationUserDataAccess(t *testing.T) {
 				Created: time.Now(),
 				Updated: time.Now(),
 			}
-			rawSQL := "INSERT INTO user (email, login, org_id, version, is_admin, created, updated) VALUES (?,?,?,0,0,?,?)"
+			rawSQL := fmt.Sprintf(
+				"INSERT INTO %s (email, login, org_id, version, is_admin, created, updated) VALUES (?,?,?,0,%s,?,?)",
+				ss.Quote("user"),
+				ss.GetDialect().BooleanStr(false),
+			)
 			_, err := sess.Exec(rawSQL, cmd.Email, cmd.Login, cmd.OrgID, cmd.Created, cmd.Updated)
 			if err != nil {
 				return err
