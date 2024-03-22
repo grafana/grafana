@@ -328,8 +328,10 @@ func (w *watchNode) Stop() {
 
 // Unprotected func: ensure mutex on the parent watch set is locked before calling
 func (w *watchNode) stop() {
-	delete(w.s.nodes, w.id)
-	close(w.updateCh)
+	if _, ok := w.s.nodes[w.id]; ok {
+		delete(w.s.nodes, w.id)
+		close(w.updateCh)
+	}
 }
 
 func (w *watchNode) ResultChan() <-chan watch.Event {
