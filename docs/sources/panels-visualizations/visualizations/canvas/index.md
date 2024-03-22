@@ -95,7 +95,6 @@ By default, if you move a connector so that it's almost a right angle or a strai
 
 {{< video-embed src="/media/docs/grafana/panels-visualizations/gif-canvas-connector-vertex-control-v11.0.mp4>" alt="Changing a connector from a straight line to a right angle" >}}
 
-
 ### Style connectors
 
 You can set the size, color, direction, and style of connections based on fixed or field values. To do so, enter into panel edit mode, select the connection, and modify the connection's properties in the panel editor.
