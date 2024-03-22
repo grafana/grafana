@@ -24,6 +24,7 @@ export interface FeatureToggles {
   panelTitleSearch?: boolean;
   publicDashboards?: boolean;
   publicDashboardsEmailSharing?: boolean;
+  publicDashboardsScene?: boolean;
   lokiExperimentalStreaming?: boolean;
   featureHighlights?: boolean;
   migrationLocking?: boolean;
@@ -174,6 +175,5 @@ export interface FeatureToggles {
   groupByVariable?: boolean;
   betterPageScrolling?: boolean;
   scopeFilters?: boolean;
-  emailVerificationEnforcement?: boolean;
   ssoSettingsSAML?: boolean;
 }

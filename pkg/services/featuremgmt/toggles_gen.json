@@ -973,12 +973,15 @@
     {
       "metadata": {
         "name": "enablePluginsTracingByDefault",
-        "resourceVersion": "1709648236447",
-        "creationTimestamp": "2024-03-05T14:17:16Z"
+        "resourceVersion": "1710760980171",
+        "creationTimestamp": "2024-03-05T14:17:16Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2024-03-18 11:23:00.171105276 +0000 UTC"
+        }
       },
       "spec": {
         "description": "Enable plugin tracing for all external plugins",
-        "stage": "experimental",
+        "stage": "GA",
         "codeowner": "@grafana/plugins-platform-backend",
         "requiresRestart": true
       }
@@ -1091,12 +1094,15 @@
     {
       "metadata": {
         "name": "nestedFolders",
-        "resourceVersion": "1709648236447",
-        "creationTimestamp": "2024-03-05T14:17:16Z"
+        "resourceVersion": "1710942166805",
+        "creationTimestamp": "2024-03-05T14:17:16Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2024-03-20 13:42:46.805804 +0000 UTC"
+        }
       },
       "spec": {
         "description": "Enable folder nesting",
-        "stage": "preview",
+        "stage": "GA",
         "codeowner": "@grafana/backend-platform"
       }
     },
@@ -1605,12 +1611,15 @@
     {
       "metadata": {
         "name": "newPDFRendering",
-        "resourceVersion": "1709648236447",
-        "creationTimestamp": "2024-03-05T14:17:16Z"
+        "resourceVersion": "1711016567239",
+        "creationTimestamp": "2024-03-05T14:17:16Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2024-03-21 10:22:47.2392058 +0000 UTC"
+        }
       },
       "spec": {
-        "description": "New implementation for the dashboard to PDF rendering",
-        "stage": "experimental",
+        "description": "New implementation for the dashboard-to-PDF rendering",
+        "stage": "preview",
         "codeowner": "@grafana/sharing-squad"
       }
     },
@@ -2128,7 +2137,8 @@
       "metadata": {
         "name": "emailVerificationEnforcement",
         "resourceVersion": "1710164083965",
-        "creationTimestamp": "2024-03-11T13:34:43Z"
+        "creationTimestamp": "2024-03-11T13:34:43Z",
+        "deletionTimestamp": "2024-03-22T11:25:34Z"
       },
       "spec": {
         "description": "Force email verification for users, even when authenticating through sso.",
@@ -2157,14 +2167,14 @@
     },
     {
       "metadata": {
-        "name": "autoMigrateXYChartPanel",
-        "resourceVersion": "1711058533591",
-        "creationTimestamp": "2024-03-21T22:02:13Z"
+        "name": "publicDashboardsScene",
+        "resourceVersion": "1710951139684",
+        "creationTimestamp": "2024-03-20T16:12:19Z"
       },
       "spec": {
-        "description": "Migrate old XYChart panel to new XYChart2 model",
-        "stage": "preview",
-        "codeowner": "@grafana/dataviz-squad",
+        "description": "Enables public dashboard rendering using scenes",
+        "stage": "experimental",
+        "codeowner": "@grafana/sharing-squad",
         "frontend": true
       }
     }

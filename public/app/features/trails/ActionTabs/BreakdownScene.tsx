@@ -35,6 +35,8 @@ import { ByFrameRepeater } from './ByFrameRepeater';
 import { LayoutSwitcher } from './LayoutSwitcher';
 import { getLabelOptions } from './utils';
 
+const MAX_PANELS_IN_ALL_LABELS_BREAKDOWN = 60;
+
 export interface BreakdownSceneState extends SceneObjectState {
   body?: SceneObject;
   labels: Array<SelectableValue<string>>;
@@ -198,6 +200,10 @@ export function buildAllLayout(options: Array<SelectableValue<string>>, queryDef
       continue;
     }
 
+    if (children.length === MAX_PANELS_IN_ALL_LABELS_BREAKDOWN) {
+      break;
+    }
+
     const expr = queryDef.queries[0].expr.replaceAll(VAR_GROUP_BY_EXP, String(option.value));
     const unit = queryDef.unit;
 
@@ -207,7 +213,7 @@ export function buildAllLayout(options: Array<SelectableValue<string>>, queryDef
           .setTitle(option.label!)
           .setData(
             new SceneQueryRunner({
-              maxDataPoints: 300,
+              maxDataPoints: 250,
               datasource: trailDS,
               queries: [
                 {
@@ -230,18 +236,19 @@ export function buildAllLayout(options: Array<SelectableValue<string>>, queryDef
       { value: 'grid', label: 'Grid' },
       { value: 'rows', label: 'Rows' },
     ],
-    active: 'grid',
     layouts: [
       new SceneCSSGridLayout({
         templateColumns: GRID_TEMPLATE_COLUMNS,
         autoRows: '200px',
         children: children,
+        isLazy: true,
       }),
       new SceneCSSGridLayout({
         templateColumns: '1fr',
         autoRows: '200px',
         // Clone children since a scene object can only have one parent at a time
         children: children.map((c) => c.clone()),
+        isLazy: true,
       }),
     ],
   });
@@ -261,7 +268,6 @@ function buildNormalLayout(queryDef: AutoQueryDef) {
       { value: 'grid', label: 'Grid' },
       { value: 'rows', label: 'Rows' },
     ],
-    active: 'grid',
     layouts: [
       new SceneFlexLayout({
         direction: 'column',
