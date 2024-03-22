@@ -26,14 +26,14 @@ jobs:
       with:
         go-version: '1.21.8'
 
-    - name: Build go files
+    - name: Sync
       run: |
-        make build-go
+        go work sync
 
     - name: Check for go workspace changes 
       run: |
-        if ! git diff --exit-code go.work.sum; then
-          echo "Changes detected in go.work.sum. Please run `make build-go` and commit the changes to go.work.sum."
+        if ! git diff --exit-code; then
+          echo "Changes detected. Please run `go work sync` and commit the changes."
           exit 1
         fi
       
