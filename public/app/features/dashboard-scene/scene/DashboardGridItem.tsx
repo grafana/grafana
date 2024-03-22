@@ -1,5 +1,6 @@
 import { css } from '@emotion/css';
 import React, { useMemo } from 'react';
+import { Unsubscribable } from 'rxjs';
 
 import { config } from '@grafana/runtime';
 import {
@@ -39,6 +40,7 @@ interface DashboardGridItemState extends SceneGridItemStateLike {
 export type RepeatDirection = 'v' | 'h';
 
 export class DashboardGridItem extends SceneObjectBase<DashboardGridItemState> implements SceneGridItemLike {
+  private _libPanelSubscription: Unsubscribable | undefined;
   protected _variableDependency = new VariableDependencyConfig(this, {
     variableNames: this.state.variableName ? [this.state.variableName] : [],
     onVariableUpdateCompleted: this._onVariableUpdateCompleted.bind(this),
@@ -56,18 +58,45 @@ export class DashboardGridItem extends SceneObjectBase<DashboardGridItemState> i
       this._performRepeat();
     }
 
-    if (this.state.body instanceof LibraryVizPanel) {
-      this.state.body.subscribeToState((newState) => {
-        if (newState._loadedPanel?.model.repeat) {
-          this.setState({
-            variableName: newState._loadedPanel.model.repeat,
-            repeatDirection: newState._loadedPanel.model.repeatDirection,
-            maxPerRow: newState._loadedPanel.model.maxPerRow,
-          });
-          this._performRepeat();
+    // Subscriptions that handles body updates, i.e. VizPanel -> LibraryVizPanel, AddLibPanelWidget -> LibraryVizPanel
+    this._subs.add(
+      this.subscribeToState((newState, prevState) => {
+        if (newState.body !== prevState.body) {
+          if (newState.body instanceof LibraryVizPanel) {
+            this.setupLibraryPanelChangeSubscription(newState.body);
+          }
         }
-      });
+      })
+    );
+
+    // Initial setup of the lbrary panel subscription. Lib panels are lazy laded, so only then we can subscribe to the repeat config changes
+    if (this.state.body instanceof LibraryVizPanel) {
+      this.setupLibraryPanelChangeSubscription(this.state.body);
     }
+
+    return () => {
+      this._libPanelSubscription?.unsubscribe();
+      this._libPanelSubscription = undefined;
+    };
+  }
+
+  private setupLibraryPanelChangeSubscription(panel: LibraryVizPanel) {
+    if (this._libPanelSubscription) {
+      this._libPanelSubscription.unsubscribe();
+      this._libPanelSubscription = undefined;
+    }
+
+    this._libPanelSubscription = panel.subscribeToState((newState) => {
+      if (newState._loadedPanel?.model.repeat) {
+        this._variableDependency.setVariableNames([newState._loadedPanel.model.repeat]);
+        this.setState({
+          variableName: newState._loadedPanel.model.repeat,
+          repeatDirection: newState._loadedPanel.model.repeatDirection,
+          maxPerRow: newState._loadedPanel.model.maxPerRow,
+        });
+        this._performRepeat();
+      }
+    });
   }
 
   private _onVariableUpdateCompleted(): void {
