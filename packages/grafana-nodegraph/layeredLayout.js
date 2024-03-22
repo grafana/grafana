@@ -23,7 +23,7 @@ addEventListener('message', async (event) => {
 export function layout(nodes, edges) {
   const { mappedEdges, DOTToIdMap } = createMappings(nodes, edges);
 
-  const dot = edgesToDOT(mappedEdges);
+  const dot = graphToDOT(mappedEdges, DOTToIdMap);
   const graph = parseDot(dot);
   const geomGraph = new GeomGraph(graph);
   for (const e of graph.deepEdges) {
@@ -144,56 +144,40 @@ function createMappings(nodes, edges) {
 
   // Crate the maps both ways
   let index = 0;
+  for (const node of nodes) {
+    idToDOTMap[node.id] = index.toString(10);
+    DOTToIdMap[index.toString(10)] = node.id;
+    index++;
+  }
   for (const edge of edges) {
-    if (!idToDOTMap[edge.source]) {
-      idToDOTMap[edge.source] = index.toString(10);
-      DOTToIdMap[index.toString(10)] = edge.source;
-      index++;
-    }
-
-    if (!idToDOTMap[edge.target]) {
-      idToDOTMap[edge.target] = index.toString(10);
-      DOTToIdMap[index.toString(10)] = edge.target;
-      index++;
-    }
     mappedEdges.push({ source: idToDOTMap[edge.source], target: idToDOTMap[edge.target] });
   }
 
   return {
     mappedEdges,
     DOTToIdMap,
+    idToDOTMap,
   };
 }
 
-function toDOT(edges, graphAttr = '', edgeAttr = '') {
+function graphToDOT(edges, nodeIDsMap) {
   let dot = `
   digraph G {
-    ${graphAttr}
+    rankdir="LR"; TBbalance="min"
   `;
   for (const edge of edges) {
-    dot += edge.source + '->' + edge.target + ' ' + edgeAttr + '\n';
+    dot += edge.source + '->' + edge.target + ' ' + '[ minlen=3 ]\n';
   }
-  dot += nodesDOT(edges);
+  dot += nodesDOT(nodeIDsMap);
   dot += '}';
   return dot;
 }
 
-function edgesToDOT(edges) {
-  return toDOT(edges, 'rankdir="LR"; TBbalance="min"', '[ minlen=3 ]');
-}
-
-function nodesDOT(edges) {
+function nodesDOT(nodeIdsMap) {
   let dot = '';
-  const visitedNodes = new Set();
-  // TODO: height/width for default sizing but nodes can have variable size now
-  const attr = '[fixedsize=true, width=1.2, height=1.7] \n';
-  for (const edge of edges) {
-    if (!visitedNodes.has(edge.source)) {
-      dot += edge.source + attr;
-    }
-    if (!visitedNodes.has(edge.target)) {
-      dot += edge.target + attr;
-    }
+  for (const node of Object.keys(nodeIdsMap)) {
+    // TODO: height/width for default sizing but nodes can have variable size now
+    dot += node + ' [fixedsize=true, width=1.2, height=1.7] \n';
   }
   return dot;
 }

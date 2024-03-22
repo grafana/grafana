@@ -3995,7 +3995,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@grafana/nodegraph@npm:11.0.0-pre, @grafana/nodegraph@workspace:packages/grafana-nodegraph":
+"@grafana/nodegraph@npm:11.0.0-pre, @grafana/nodegraph@workspace:*, @grafana/nodegraph@workspace:packages/grafana-nodegraph":
   version: 0.0.0-use.local
   resolution: "@grafana/nodegraph@workspace:packages/grafana-nodegraph"
   dependencies:
@@ -18494,6 +18494,7 @@ __metadata:
     "@grafana/google-sdk": "npm:0.1.2"
     "@grafana/lezer-logql": "npm:0.2.3"
     "@grafana/monaco-logql": "npm:^0.0.7"
+    "@grafana/nodegraph": "workspace:*"
     "@grafana/o11y-ds-frontend": "workspace:*"
     "@grafana/plugin-e2e": "npm:^0.21.0"
     "@grafana/prometheus": "workspace:*"
