@@ -831,8 +831,11 @@
       "datasource": "Đäŧä şőūřčę",
       "unknown": "Ůŉĸŉőŵŉ"
     },
-    "resources": {
-      "disconnect": "Đįşčőŉŉęčŧ"
+    "summary": {
+      "disconnect": "Đįşčőŉŉęčŧ",
+      "error-starting-migration": "Ŧĥęřę ŵäş äŉ ęřřőř şŧäřŧįŉģ čľőūđ mįģřäŧįőŉ",
+      "start-migration": "Ůpľőäđ ęvęřyŧĥįŉģ",
+      "target-stack-title": "Ůpľőäđįŉģ ŧő"
     },
     "token-status": {
       "active": "Ŧőĸęŉ čřęäŧęđ äŉđ äčŧįvę",
@@ -1388,11 +1391,12 @@
     "header": {
       "collapse-row": "Cőľľäpşę qūęřy řőŵ",
       "datasource-help": "Ŝĥőŵ đäŧä şőūřčę ĥęľp",
-      "disable-query": "Đįşäþľę qūęřy",
       "drag-and-drop": "Đřäģ äŉđ đřőp ŧő řęőřđęř",
       "duplicate-query": "Đūpľįčäŧę qūęřy",
       "expand-row": "Ēχpäŉđ qūęřy řőŵ",
+      "hide-response": "Ħįđę řęşpőŉşę",
       "remove-query": "Ŗęmővę qūęřy",
+      "show-response": "Ŝĥőŵ řęşpőŉşę",
       "toggle-edit-mode": "Ŧőģģľę ŧęχŧ ęđįŧ mőđę"
     },
     "query-editor-not-exported": "Đäŧä şőūřčę pľūģįŉ đőęş ŉőŧ ęχpőřŧ äŉy Qūęřy Ēđįŧőř čőmpőŉęŉŧ"

@@ -33,9 +33,6 @@ const meta: Meta = {
     inline: { control: 'boolean' },
   },
   args: {
-    variant: 'body',
-    weight: 'light',
-    color: undefined,
     href: 'https://www.google.com',
     external: true,
     icon: 'external-link-alt',
