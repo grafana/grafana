@@ -91,9 +91,9 @@ describe('MetricQueryEditor', () => {
     render(<MetricQueryEditor {...defaultProps} onRunQuery={onRunQuery} onChange={onChange} query={query} />);
 
     const groupBy = screen.getByLabelText('Group by');
-    await openMenu(groupBy);
+    openMenu(groupBy);
     const option = 'metadata.system_labels.cloud_account';
-    await act(() => select(groupBy, option, { container: document.body }));
+    await userEvent.click(screen.getByText(option));
 
     expect(onRunQuery).toHaveBeenCalledTimes(1);
     expect(onChange).toHaveBeenCalledTimes(1);
@@ -107,7 +107,7 @@ describe('MetricQueryEditor', () => {
     render(<MetricQueryEditor {...defaultProps} onRunQuery={onRunQuery} onChange={onChange} query={query} />);
 
     const addFilter = screen.getByLabelText('Add');
-    await act(() => userEvent.click(addFilter));
+    await userEvent.click(addFilter);
     expect(onRunQuery).toHaveBeenCalledTimes(0);
     expect(onChange).toHaveBeenCalledTimes(1);
   });
