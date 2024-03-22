@@ -56,7 +56,7 @@ describe('usePluginExtensions()', () => {
     expect(result.current.extensions[1].title).toBe('2');
   });
 
-  it('should dynamicall update the extensions registered for a certain extension point', () => {
+  it('should dynamically update the extensions registered for a certain extension point', () => {
     const extensionPointId = 'plugins/foo/bar';
     const pluginId = 'my-app-plugin';
     const usePluginExtensions = createPluginExtensionsHook(reactiveRegistry);

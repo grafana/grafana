@@ -18,9 +18,9 @@ export class ReactivePluginExtensionsRegistry {
 
     this.resultSubject
       .pipe(
-        scan(resultsToRegistry, {}),
-        // Emit an empty object to start the stream (it is only going to do it once during construction, and then just passes down the values)
-        startWith({}),
+        scan(resultsToRegistry, { id: '', extensions: {} }),
+        // Emit an empty registry to start the stream (it is only going to do it once during construction, and then just passes down the values)
+        startWith({ id: '', extensions: {} }),
         map((registry) => deepFreeze(registry))
       )
       // Emitting the new registry to `this.registrySubject`
@@ -64,12 +64,15 @@ function resultsToRegistry(registry: PluginExtensionRegistry, result: PluginPrel
       pluginId,
     };
 
-    if (!Array.isArray(registry[extensionPointId])) {
-      registry[extensionPointId] = [registryItem];
+    if (!Array.isArray(registry.extensions[extensionPointId])) {
+      registry.extensions[extensionPointId] = [registryItem];
     } else {
-      registry[extensionPointId].push(registryItem);
+      registry.extensions[extensionPointId].push(registryItem);
     }
   }
+
+  // Add a unique ID to the registry (the registry object itself is immutable)
+  registry.id = Math.random().toString(36).substring(7);
 
   return registry;
 }

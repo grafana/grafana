@@ -32,11 +32,11 @@ describe('createRegistry()', () => {
   it('should be possible to register extensions', () => {
     const registry = createPluginExtensionRegistry([{ pluginId, extensionConfigs: [link1, link2] }]);
 
-    expect(Object.getOwnPropertyNames(registry)).toEqual([placement1, placement2]);
+    expect(Object.getOwnPropertyNames(registry.extensions)).toEqual([placement1, placement2]);
 
     // Placement 1
-    expect(registry[placement1]).toHaveLength(1);
-    expect(registry[placement1]).toEqual(
+    expect(registry.extensions[placement1]).toHaveLength(1);
+    expect(registry.extensions[placement1]).toEqual(
       expect.arrayContaining([
         expect.objectContaining({
           pluginId,
@@ -49,8 +49,8 @@ describe('createRegistry()', () => {
     );
 
     // Placement 2
-    expect(registry[placement2]).toHaveLength(1);
-    expect(registry[placement2]).toEqual(
+    expect(registry.extensions[placement2]).toHaveLength(1);
+    expect(registry.extensions[placement2]).toEqual(
       expect.arrayContaining([
         expect.objectContaining({
           pluginId,
@@ -68,11 +68,11 @@ describe('createRegistry()', () => {
       { pluginId, extensionConfigs: [{ ...link1, path: 'invalid-path' }, link2] },
     ]);
 
-    expect(Object.getOwnPropertyNames(registry)).toEqual([placement2]);
+    expect(Object.getOwnPropertyNames(registry.extensions)).toEqual([placement2]);
 
     // Placement 2
-    expect(registry[placement2]).toHaveLength(1);
-    expect(registry[placement2]).toEqual(
+    expect(registry.extensions[placement2]).toHaveLength(1);
+    expect(registry.extensions[placement2]).toEqual(
       expect.arrayContaining([
         expect.objectContaining({
           pluginId,
@@ -90,7 +90,7 @@ describe('createRegistry()', () => {
       { pluginId, extensionConfigs: [link1, link2], error: new Error('Plugin failed to load') },
     ]);
 
-    expect(Object.getOwnPropertyNames(registry)).toEqual([]);
+    expect(Object.getOwnPropertyNames(registry.extensions)).toEqual([]);
   });
 
   it('should not register an extension if it has an invalid configure() function', () => {
@@ -99,11 +99,11 @@ describe('createRegistry()', () => {
       { pluginId, extensionConfigs: [{ ...link1, configure: '...' }, link2] },
     ]);
 
-    expect(Object.getOwnPropertyNames(registry)).toEqual([placement2]);
+    expect(Object.getOwnPropertyNames(registry.extensions)).toEqual([placement2]);
 
     // Placement 2 (checking if it still registers the extension with a valid configuration)
-    expect(registry[placement2]).toHaveLength(1);
-    expect(registry[placement2]).toEqual(
+    expect(registry.extensions[placement2]).toHaveLength(1);
+    expect(registry.extensions[placement2]).toEqual(
       expect.arrayContaining([
         expect.objectContaining({
           pluginId,
@@ -121,11 +121,11 @@ describe('createRegistry()', () => {
       { pluginId, extensionConfigs: [{ ...link1, title: '', description: '' }, link2] },
     ]);
 
-    expect(Object.getOwnPropertyNames(registry)).toEqual([placement2]);
+    expect(Object.getOwnPropertyNames(registry.extensions)).toEqual([placement2]);
 
     // Placement 2 (checking if it still registers the extension with a valid configuration)
-    expect(registry[placement2]).toHaveLength(1);
-    expect(registry[placement2]).toEqual(
+    expect(registry.extensions[placement2]).toHaveLength(1);
+    expect(registry.extensions[placement2]).toEqual(
       expect.arrayContaining([
         expect.objectContaining({
           pluginId,
