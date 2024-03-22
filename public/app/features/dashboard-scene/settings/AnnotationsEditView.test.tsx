@@ -1,7 +1,7 @@
 import { map, of } from 'rxjs';
 
 import { AnnotationQuery, DataQueryRequest, DataSourceApi, LoadingState, PanelData } from '@grafana/data';
-import { SceneDataLayers, SceneGridLayout, SceneTimeRange, dataLayers } from '@grafana/scenes';
+import { SceneDataLayerSet, SceneGridLayout, SceneTimeRange, dataLayers } from '@grafana/scenes';
 
 import { AlertStatesDataLayer } from '../scene/AlertStatesDataLayer';
 import { DashboardAnnotationsDataLayer } from '../scene/DashboardAnnotationsDataLayer';
@@ -66,7 +66,7 @@ describe('AnnotationsEditView', () => {
 
     it('should return 0 if no annotations', () => {
       dashboardScene.setState({
-        $data: new SceneDataLayers({ layers: [] }),
+        $data: new SceneDataLayerSet({ layers: [] }),
       });
 
       expect(annotationsView.getAnnotationsLength()).toBe(0);
@@ -158,7 +158,7 @@ async function buildTestScene() {
     meta: {
       canEdit: true,
     },
-    $data: new SceneDataLayers({
+    $data: new SceneDataLayerSet({
       layers: [
         new DashboardAnnotationsDataLayer({
           key: `annotations-test`,
