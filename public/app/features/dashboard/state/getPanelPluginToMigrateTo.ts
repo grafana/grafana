@@ -47,9 +47,5 @@ export function getPanelPluginToMigrateTo(panel: any, forceMigration?: boolean):
     return 'stat';
   }
 
-  if (panel.type === 'xychart' && config.featureToggles.autoMigrateXYChartPanel) {
-    return 'xychart2';
-  }
-
   return undefined;
 }

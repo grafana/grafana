@@ -1,7 +1,7 @@
 {
   "type": "panel",
-  "name": "XY Chart 2",
-  "id": "xychart2",
+  "name": "XY Chart",
+  "id": "xychart",
   "state": "beta",
 
   "info": {

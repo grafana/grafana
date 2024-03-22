@@ -51,8 +51,7 @@ import * as timeseriesPanel from 'app/plugins/panel/timeseries/module';
 import * as tracesPanel from 'app/plugins/panel/traces/module';
 import * as trendPanel from 'app/plugins/panel/trend/module';
 import * as welcomeBanner from 'app/plugins/panel/welcome/module';
-import * as xyChartPanel from 'app/plugins/panel/xychart/module';
-import * as xyChartPanel2 from 'app/plugins/panel/xychart2/module';
+import * as xyChartPanel from 'app/plugins/panel/xychart/old/module';
 
 // Async loaded panels
 const geomapPanel = async () => await import(/* webpackChunkName: "geomapPanel" */ 'app/plugins/panel/geomap/module');
@@ -91,7 +90,6 @@ const builtInPlugins: Record<string, System.Module | (() => Promise<System.Modul
   'core:plugin/candlestick': candlestickPanel,
   'core:plugin/graph': graphPanel,
   'core:plugin/xychart': xyChartPanel,
-  'core:plugin/xychart2': xyChartPanel2,
   'core:plugin/geomap': geomapPanel,
   'core:plugin/canvas': canvasPanel,
   'core:plugin/dashlist': dashListPanel,

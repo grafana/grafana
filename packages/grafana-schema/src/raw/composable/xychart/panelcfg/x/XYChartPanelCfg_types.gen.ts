@@ -20,58 +20,74 @@ export enum SeriesMapping {
   Manual = 'manual',
 }
 
-export enum ScatterShow {
+export enum XYShowMode {
   Lines = 'lines',
   Points = 'points',
   PointsAndLines = 'points+lines',
 }
 
 /**
- * Configuration for the Table/Auto mode
+ * NOTE: (copied from dashboard_kind.cue, since not exported)
+ * Matcher is a predicate configuration. Based on the config a set of field(s) or values is filtered in order to apply override / transformation.
+ * It comes with in id ( to resolve implementation from registry) and a configuration that’s specific to a particular matcher type.
  */
-export interface XYDimensionConfig {
-  exclude?: Array<string>;
-  frame: number;
-  x?: string;
+export interface MatcherConfig {
+  /**
+   * The matcher id. This is used to find the matcher implementation from registry.
+   */
+  id: string;
+  /**
+   * The matcher options. This is specific to the matcher implementation.
+   */
+  options?: unknown;
 }
 
-export const defaultXYDimensionConfig: Partial<XYDimensionConfig> = {
-  exclude: [],
+export const defaultMatcherConfig: Partial<MatcherConfig> = {
+  id: '',
 };
 
 export interface FieldConfig extends common.HideableFieldConfig, common.AxisConfig {
-  label?: common.VisibilityMode;
-  labelValue?: common.TextDimensionConfig;
-  lineColor?: common.ColorDimensionConfig;
   lineStyle?: common.LineStyle;
+  /**
+   * lineColor?: common.ColorDimensionConfig
+   */
   lineWidth?: number;
-  pointColor?: common.ColorDimensionConfig;
-  pointSize?: common.ScaleDimensionConfig;
-  show?: ScatterShow;
+  pointSize?: {
+    fixed?: number;
+    min?: number;
+    max?: number;
+  };
+  show?: XYShowMode;
 }
 
 export const defaultFieldConfig: Partial<FieldConfig> = {
-  label: common.VisibilityMode.Auto,
-  show: ScatterShow.Points,
+  show: XYShowMode.Points,
 };
 
-export interface ScatterSeriesConfig extends FieldConfig {
-  frame?: number;
-  name?: string;
-  x?: string;
-  y?: string;
+export interface XYSeriesConfig {
+  color?: {
+    matcher: MatcherConfig;
+  };
+  frame?: {
+    matcher: MatcherConfig;
+  };
+  name?: {
+    fixed?: string;
+  };
+  size?: {
+    matcher: MatcherConfig;
+  };
+  x?: {
+    matcher: MatcherConfig;
+  };
+  y?: {
+    matcher: MatcherConfig;
+  };
 }
 
 export interface Options extends common.OptionsWithLegend, common.OptionsWithTooltip {
-  /**
-   * Table Mode (auto)
-   */
-  dims: XYDimensionConfig;
-  /**
-   * Manual Mode
-   */
-  series: Array<ScatterSeriesConfig>;
-  seriesMapping?: SeriesMapping;
+  mapping: SeriesMapping;
+  series: Array<XYSeriesConfig>;
 }
 
 export const defaultOptions: Partial<Options> = {

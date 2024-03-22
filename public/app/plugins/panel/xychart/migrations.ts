@@ -1,31 +1,23 @@
-import {
-  FieldMatcherID,
-  FrameMatcherID,
-  MatcherConfig,
-  PanelMigrationHandler,
-  PanelModel,
-  PanelTypeChangedHandler,
-} from '@grafana/data';
+import { FieldMatcherID, FrameMatcherID, MatcherConfig, PanelMigrationHandler, PanelModel } from '@grafana/data';
 
-import { ScatterSeriesConfig, SeriesMapping, XYDimensionConfig, Options as PrevOptions } from '../xychart/panelcfg.gen';
-
+import { ScatterSeriesConfig, SeriesMapping, XYDimensionConfig, Options as PrevOptions } from './old/panelcfg.gen';
 import { XYSeriesConfig, Options } from './panelcfg.gen';
 
-export const xyChartChangeHandler: PanelTypeChangedHandler = (
-  panel,
-  prevPluginId,
-  prevOptions,
-  prevFieldConfig
-): Options => {
-  if (prevPluginId === 'xychart') {
-    return migrateOptions({
-      options: prevOptions,
-      fieldConfig: prevFieldConfig,
-    } as PanelModel);
-  }
+// export const xyChartChangeHandler: PanelTypeChangedHandler = (
+//   panel,
+//   prevPluginId,
+//   prevOptions,
+//   prevFieldConfig
+// ): Options => {
+//   if (prevPluginId === 'xychart') {
+//     return migrateOptions({
+//       options: prevOptions,
+//       fieldConfig: prevFieldConfig,
+//     } as PanelModel);
+//   }
 
-  return prevOptions as Options;
-};
+//   return prevOptions as Options;
+// };
 
 export const xyChartMigrationHandler: PanelMigrationHandler = (panel): Options => {
   const pluginVersion = panel?.pluginVersion ?? '';
