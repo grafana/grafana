@@ -4341,6 +4341,7 @@ __metadata:
     rollup-plugin-dts: "npm:^5.0.0"
     rollup-plugin-esbuild: "npm:5.0.0"
     rollup-plugin-node-externals: "npm:^5.0.0"
+    rollup-plugin-svg-import: "npm:1.6.0"
     rxjs: "npm:7.8.1"
     sass-loader: "npm:14.1.1"
     slate: "npm:0.47.9"
@@ -7137,6 +7138,16 @@ __metadata:
   peerDependencies:
     rollup: ^1.20.0||^2.0.0
   checksum: 10/3b69f02893eea42455fb97b81f612ac6bfadf94ac73bebd481ea13e90a693eef52c163210a095b12e574a25603af5e55f86a020889019167f331aa8dd3ff30e0
+  languageName: node
+  linkType: hard
+
+"@rollup/pluginutils@npm:^4.1.1":
+  version: 4.2.1
+  resolution: "@rollup/pluginutils@npm:4.2.1"
+  dependencies:
+    estree-walker: "npm:^2.0.1"
+    picomatch: "npm:^2.2.2"
+  checksum: 10/503a6f0a449e11a2873ac66cfdfb9a3a0b77ffa84c5cad631f5e4bc1063c850710e8d5cd5dab52477c0d66cda2ec719865726dbe753318cd640bab3fff7ca476
   languageName: node
   linkType: hard
 
@@ -16978,7 +16989,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"estree-walker@npm:^2.0.2":
+"estree-walker@npm:^2.0.1, estree-walker@npm:^2.0.2":
   version: 2.0.2
   resolution: "estree-walker@npm:2.0.2"
   checksum: 10/b02109c5d46bc2ed47de4990eef770f7457b1159a229f0999a09224d2b85ffeed2d7679cffcff90aeb4448e94b0168feb5265b209cdec29aad50a3d6e93d21e2
@@ -27877,6 +27888,17 @@ __metadata:
   languageName: node
   linkType: hard
 
+"rollup-plugin-svg-import@npm:1.6.0":
+  version: 1.6.0
+  resolution: "rollup-plugin-svg-import@npm:1.6.0"
+  dependencies:
+    "@rollup/pluginutils": "npm:^4.1.1"
+  peerDependencies:
+    rollup: ">=1.29.0 <3.0.0"
+  checksum: 10/453862c39d2301563d9d07f6647c295377ff66cf3174d2a0612389fda4bfd9fa72718d90279feb782d3525f1d6f9710e1dc78641cd9d4044360a0179f88054b0
+  languageName: node
+  linkType: hard
+
 "rollup@npm:2.79.1":
   version: 2.79.1
   resolution: "rollup@npm:2.79.1"
@@ -31351,8 +31373,8 @@ __metadata:
   linkType: hard
 
 "webpack-dev-middleware@npm:^6.1.1":
-  version: 6.1.1
-  resolution: "webpack-dev-middleware@npm:6.1.1"
+  version: 6.1.2
+  resolution: "webpack-dev-middleware@npm:6.1.2"
   dependencies:
     colorette: "npm:^2.0.10"
     memfs: "npm:^3.4.12"
@@ -31364,7 +31386,7 @@ __metadata:
   peerDependenciesMeta:
     webpack:
       optional: true
-  checksum: 10/b0637584f18b02174fd7fc2e6278efb8e2fb5308abe4ffe73658e59ff53a62c05686f161b06bd5c41d42611aa395b8c8f087d7ff8cf2304232c097a694a5b94e
+  checksum: 10/043d9b7b6b2ec433515da138d6527573828f79e164722410038ba96a5d65be0e28241161a90168471c13231e5e8a84c0f7cd215433828bc64087b0bdab8aa553
   languageName: node
   linkType: hard
 

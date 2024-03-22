@@ -1,4 +1,7 @@
+import { pick } from 'lodash';
+
 import { llms } from '@grafana/experimental';
+import { Panel } from '@grafana/schema';
 
 import { DashboardModel, PanelModel } from '../../state';
 
@@ -120,27 +123,16 @@ export function getDashboardPanelPrompt(dashboard: DashboardModel): string {
   return panelPrompt;
 }
 
-export function getFilteredPanelString(panel: PanelModel): string {
-  const panelObj = panel.getSaveModel();
+export function getFilteredPanelString(panel: Panel): string {
+  const keysToKeep: Array<keyof Panel> = ['datasource', 'title', 'description', 'targets', 'type'];
 
-  const keysToKeep = new Set([
-    'id',
-    'datasource',
-    'title',
-    'description',
-    'targets',
-    'thresholds',
-    'type',
-    'xaxis',
-    'yaxes',
-  ]);
+  const filteredPanel: Partial<Panel> = {
+    ...pick(panel, keysToKeep),
+    options: pick(panel.options, [
+      // For text panels, the content property helps generate the panel metadata
+      'content',
+    ]),
+  };
 
-  const panelObjFiltered = Object.keys(panelObj).reduce((obj: { [key: string]: unknown }, key) => {
-    if (keysToKeep.has(key)) {
-      obj[key] = panelObj[key];
-    }
-    return obj;
-  }, {});
-
-  return JSON.stringify(panelObjFiltered, null, 2);
+  return JSON.stringify(filteredPanel, null, 2);
 }

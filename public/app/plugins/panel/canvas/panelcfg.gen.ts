@@ -36,6 +36,7 @@ export interface Placement {
   height?: number;
   left?: number;
   right?: number;
+  rotation?: number;
   top?: number;
   width?: number;
 }
@@ -56,6 +57,7 @@ export interface BackgroundConfig {
 
 export interface LineConfig {
   color?: ui.ColorDimensionConfig;
+  radius?: number;
   width?: number;
 }
 
