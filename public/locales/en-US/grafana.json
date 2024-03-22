@@ -564,6 +564,7 @@
       "close": "Close"
     },
     "empty-state": {
+      "initial-message": "You haven't created anything yet",
       "search-message": "No results found"
     },
     "modal": {
