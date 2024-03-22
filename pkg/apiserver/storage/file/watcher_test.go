@@ -12,7 +12,6 @@ import (
 	"os"
 	"path"
 	"testing"
-	"time"
 
 	"github.com/stretchr/testify/assert"
 	clientv3 "go.etcd.io/etcd/client/v3"
@@ -25,7 +24,6 @@ import (
 	"k8s.io/apiserver/pkg/apis/example"
 	examplev1 "k8s.io/apiserver/pkg/apis/example/v1"
 	"k8s.io/apiserver/pkg/storage"
-	"k8s.io/apiserver/pkg/storage/etcd3/testserver"
 	"k8s.io/apiserver/pkg/storage/storagebackend"
 	"k8s.io/apiserver/pkg/storage/storagebackend/factory"
 	storagetesting "k8s.io/apiserver/pkg/storage/testing"
@@ -53,9 +51,6 @@ type setupOptions struct {
 type setupOption func(*setupOptions, testing.TB)
 
 func withDefaults(options *setupOptions, t testing.TB) {
-	options.client = func(t testing.TB) *clientv3.Client {
-		return testserver.RunEtcd(t, nil)
-	}
 	options.codec = apitesting.TestCodec(codecs, examplev1.SchemeGroupVersion)
 	options.newFunc = newPod
 	options.newListFunc = newPodList
@@ -187,8 +182,6 @@ func TestWatchDeleteEventObjectHaveLatestRV(t *testing.T) {
 } */
 
 /* func TestProgressNotify(t *testing.T) {
-	clusterConfig := testserver.NewTestConfig(t)
-	clusterConfig.ExperimentalWatchProgressNotifyInterval = time.Second
 	ctx, store, destroyFunc, err := testSetup(t)
 	defer destroyFunc()
 	assert.NoError(t, err)
@@ -199,8 +192,6 @@ func TestWatchDeleteEventObjectHaveLatestRV(t *testing.T) {
 // setting allowWatchBookmarks query param against
 // etcd implementation doesn't have any effect.
 func TestWatchDispatchBookmarkEvents(t *testing.T) {
-	clusterConfig := testserver.NewTestConfig(t)
-	clusterConfig.ExperimentalWatchProgressNotifyInterval = time.Second
 	ctx, store, destroyFunc, err := testSetup(t)
 	defer destroyFunc()
 	assert.NoError(t, err)
