@@ -5,9 +5,14 @@ import (
 	"crypto/md5"
 	"errors"
 	"fmt"
+	"math/rand"
 	"testing"
 	"time"
 
+	"github.com/go-openapi/strfmt"
+	amv2 "github.com/prometheus/alertmanager/api/v2/models"
+
+	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/store"
 
@@ -234,4 +239,25 @@ type NoValidation struct {
 
 func (n NoValidation) Validate(_ models.NotificationSettings) error {
 	return nil
+}
+
+func GenSilence(createdBy string) *apimodels.PostableSilence {
+	starts := strfmt.DateTime(time.Now().Add(time.Duration(rand.Int63n(9)+1) * time.Second))
+	ends := strfmt.DateTime(time.Now().Add(time.Duration(rand.Int63n(9)+10) * time.Second))
+	comment := "test comment"
+	isEqual := true
+	name := "test"
+	value := "test"
+	isRegex := false
+	matchers := amv2.Matchers{&amv2.Matcher{IsEqual: &isEqual, Name: &name, Value: &value, IsRegex: &isRegex}}
+
+	return &apimodels.PostableSilence{
+		Silence: amv2.Silence{
+			Comment:   &comment,
+			CreatedBy: &createdBy,
+			Matchers:  matchers,
+			StartsAt:  &starts,
+			EndsAt:    &ends,
+		},
+	}
 }

@@ -3,6 +3,8 @@ package remote
 import (
 	"context"
 
+	alertingNotify "github.com/grafana/alerting/notify"
+
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier"
@@ -79,6 +81,10 @@ func (fam *RemotePrimaryForkedAlertmanager) TestTemplate(ctx context.Context, c 
 func (fam *RemotePrimaryForkedAlertmanager) CleanUp() {
 	// No cleanup to do in the remote Alertmanager.
 	fam.internal.CleanUp()
+}
+
+func (fam *RemotePrimaryForkedAlertmanager) SilenceState(ctx context.Context) (alertingNotify.SilenceState, error) {
+	return fam.remote.SilenceState(ctx)
 }
 
 func (fam *RemotePrimaryForkedAlertmanager) StopAndWait() {

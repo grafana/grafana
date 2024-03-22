@@ -423,6 +423,11 @@ func (am *alertmanager) CleanUp() {
 	am.fileStore.CleanUp()
 }
 
+// SilenceState returns the current internal state of silences.
+func (am *alertmanager) SilenceState(_ context.Context) (alertingNotify.SilenceState, error) {
+	return am.Base.SilenceState()
+}
+
 // AlertValidationError is the error capturing the validation errors
 // faced on the alerts.
 type AlertValidationError struct {

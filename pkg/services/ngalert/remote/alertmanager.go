@@ -7,8 +7,15 @@ import (
 	"fmt"
 	"net/http"
 	"net/url"
+	"strings"
 
 	"github.com/go-openapi/strfmt"
+	alertingNotify "github.com/grafana/alerting/notify"
+	amalert "github.com/prometheus/alertmanager/api/v2/client/alert"
+	amalertgroup "github.com/prometheus/alertmanager/api/v2/client/alertgroup"
+	amreceiver "github.com/prometheus/alertmanager/api/v2/client/receiver"
+	amsilence "github.com/prometheus/alertmanager/api/v2/client/silence"
+
 	"github.com/grafana/grafana/pkg/infra/log"
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/metrics"
@@ -16,10 +23,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier"
 	remoteClient "github.com/grafana/grafana/pkg/services/ngalert/remote/client"
 	"github.com/grafana/grafana/pkg/services/ngalert/sender"
-	amalert "github.com/prometheus/alertmanager/api/v2/client/alert"
-	amalertgroup "github.com/prometheus/alertmanager/api/v2/client/alertgroup"
-	amreceiver "github.com/prometheus/alertmanager/api/v2/client/receiver"
-	amsilence "github.com/prometheus/alertmanager/api/v2/client/silence"
 )
 
 type stateStore interface {
@@ -398,6 +401,17 @@ func (am *Alertmanager) Ready() bool {
 
 // CleanUp does not have an equivalent in a "remote Alertmanager" context, we don't have files on disk, no-op.
 func (am *Alertmanager) CleanUp() {}
+
+// SilenceState returns the Alertmanager's silence state as a SilenceState. Currently, does not retrieve the state
+// remotely and instead uses the value from the state store.
+func (am *Alertmanager) SilenceState(ctx context.Context) (alertingNotify.SilenceState, error) {
+	silences, err := am.state.GetFullState(ctx, notifier.SilencesFilename)
+	if err != nil {
+		return nil, fmt.Errorf("error getting silences: %w", err)
+	}
+
+	return alertingNotify.DecodeState(strings.NewReader(silences))
+}
 
 // shouldSendConfig compares the remote Alertmanager configuration with our local one.
 // It returns true if the configurations are different.
