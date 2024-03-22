@@ -2648,7 +2648,7 @@
           "provisioning",
           "stable"
         ],
-        "summary": "Update the interval of a rule group.",
+        "summary": "Create or update alert rule group.",
         "operationId": "RoutePutAlertRuleGroup",
         "parameters": [
           {
