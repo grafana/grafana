@@ -20,7 +20,7 @@ import {
   GroupByVariable,
   QueryVariable,
   SceneDataLayerControls,
-  SceneDataLayers,
+  SceneDataLayerSet,
   SceneDataTransformer,
   SceneGridLayout,
   SceneGridRow,
@@ -143,9 +143,17 @@ describe('transformSaveModelToScene', () => {
 
       const scene = createDashboardSceneFromDashboardModel(oldModel);
 
-      expect(scene.state.$behaviors).toHaveLength(6);
-      expect(scene.state.$behaviors![0]).toBeInstanceOf(behaviors.CursorSync);
-      expect((scene.state.$behaviors![0] as behaviors.CursorSync).state.sync).toEqual(DashboardCursorSync.Crosshair);
+      const cursorSync = scene.state.$behaviors?.find((b) => b instanceof behaviors.CursorSync);
+      expect(cursorSync).toBeInstanceOf(behaviors.CursorSync);
+      expect((cursorSync as behaviors.CursorSync).state.sync).toEqual(DashboardCursorSync.Crosshair);
+    });
+
+    it('should apply live now timer behavior', () => {
+      const oldModel = new DashboardModel(defaultDashboard);
+      const scene = createDashboardSceneFromDashboardModel(oldModel);
+
+      const liveNowTimer = scene.state.$behaviors?.find((b) => b instanceof behaviors.LiveNowTimer);
+      expect(liveNowTimer).toBeInstanceOf(behaviors.LiveNowTimer);
     });
 
     it('should initialize the Dashboard Scene with empty template variables', () => {
@@ -1222,10 +1230,10 @@ describe('transformSaveModelToScene', () => {
     it('Should build correct scene model', () => {
       const scene = transformSaveModelToScene({ dashboard: dashboard_to_load1 as any, meta: {} });
 
-      expect(scene.state.$data).toBeInstanceOf(SceneDataLayers);
+      expect(scene.state.$data).toBeInstanceOf(SceneDataLayerSet);
       expect(scene.state.controls!.state.variableControls[1]).toBeInstanceOf(SceneDataLayerControls);
 
-      const dataLayers = scene.state.$data as SceneDataLayers;
+      const dataLayers = scene.state.$data as SceneDataLayerSet;
       expect(dataLayers.state.layers).toHaveLength(4);
       expect(dataLayers.state.layers[0].state.name).toBe('Annotations & Alerts');
       expect(dataLayers.state.layers[0].state.isEnabled).toBe(true);
@@ -1250,10 +1258,10 @@ describe('transformSaveModelToScene', () => {
       config.unifiedAlertingEnabled = true;
       const scene = transformSaveModelToScene({ dashboard: dashboard_to_load1 as any, meta: {} });
 
-      expect(scene.state.$data).toBeInstanceOf(SceneDataLayers);
+      expect(scene.state.$data).toBeInstanceOf(SceneDataLayerSet);
       expect(scene.state.controls!.state.variableControls[1]).toBeInstanceOf(SceneDataLayerControls);
 
-      const dataLayers = scene.state.$data as SceneDataLayers;
+      const dataLayers = scene.state.$data as SceneDataLayerSet;
       expect(dataLayers.state.layers).toHaveLength(5);
       expect(dataLayers.state.layers[4].state.name).toBe('Alert States');
     });
@@ -1264,10 +1272,10 @@ describe('transformSaveModelToScene', () => {
       dashboard.panels![0].alert = {};
       const scene = transformSaveModelToScene({ dashboard: dashboard_to_load1 as any, meta: {} });
 
-      expect(scene.state.$data).toBeInstanceOf(SceneDataLayers);
+      expect(scene.state.$data).toBeInstanceOf(SceneDataLayerSet);
       expect(scene.state.controls!.state.variableControls[1]).toBeInstanceOf(SceneDataLayerControls);
 
-      const dataLayers = scene.state.$data as SceneDataLayers;
+      const dataLayers = scene.state.$data as SceneDataLayerSet;
       expect(dataLayers.state.layers).toHaveLength(5);
       expect(dataLayers.state.layers[4].state.name).toBe('Alert States');
     });
