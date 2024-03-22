@@ -2182,10 +2182,24 @@
       "metadata": {
         "name": "influxdbReturnInfluxResponse",
         "resourceVersion": "1711122258504",
-        "creationTimestamp": "2024-03-22T15:44:18Z"
+        "creationTimestamp": "2024-03-22T15:44:18Z",
+        "deletionTimestamp": "2024-03-22T16:16:58Z"
       },
       "spec": {
         "description": "Enable InfluxDB to return raw influxdb query response in data frame",
+        "stage": "experimental",
+        "codeowner": "@grafana/observability-metrics",
+        "requiresRestart": true
+      }
+    },
+    {
+      "metadata": {
+        "name": "influxdbReturnInfluxQLResponse",
+        "resourceVersion": "1711124218832",
+        "creationTimestamp": "2024-03-22T16:16:58Z"
+      },
+      "spec": {
+        "description": "Enable InfluxDB to return raw InfluxQL query response in data frame",
         "stage": "experimental",
         "codeowner": "@grafana/observability-metrics",
         "requiresRestart": true
