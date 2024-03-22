@@ -76,14 +76,14 @@ export class CloudWatchDatasource
     this.defaultLogGroups = instanceSettings.jsonData.defaultLogGroups;
   }
 
-  filterQuery(query: CloudWatchQuery) {
+  isQueryEnabled(query: CloudWatchQuery) {
     return query.hide !== true || (isCloudWatchMetricsQuery(query) && query.id !== '');
   }
 
   query(options: DataQueryRequest<CloudWatchQuery>): Observable<DataQueryResponse> {
     options = cloneDeep(options);
 
-    let queries = options.targets.filter(this.filterQuery);
+    const queries = options.targets.filter(this.isQueryEnabled);
 
     const logQueries: CloudWatchLogsQuery[] = [];
     const metricsQueries: CloudWatchMetricsQuery[] = [];

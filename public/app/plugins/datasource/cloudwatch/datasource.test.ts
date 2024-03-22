@@ -138,7 +138,7 @@ describe('datasource', () => {
 
     test.each(testTable)('should filter out hidden queries unless id is provided', ({ query, valid }) => {
       const { datasource } = setupMockedDataSource();
-      expect(datasource.filterQuery(query)).toEqual(valid);
+      expect(datasource.isQueryEnabled(query)).toEqual(valid);
     });
 
     it('should interpolate variables in the query', async () => {
