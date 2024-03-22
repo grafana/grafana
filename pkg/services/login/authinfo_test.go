@@ -32,14 +32,6 @@ func TestIsExternallySynced(t *testing.T) {
 			provider:  AzureADAuthModule,
 			expected:  false,
 		},
-		// FIXME: remove this test as soon as we remove the deprecated setting for skipping org role sync for all external oauth providers
-		{
-			name:      "AzureAD external user should return that it is not externally synced when oauth org role sync is set",
-			cfg:       &setting.Cfg{OAuthSkipOrgRoleUpdateSync: true},
-			oauthInfo: &social.OAuthInfo{Enabled: true, SkipOrgRoleSync: false},
-			provider:  AzureADAuthModule,
-			expected:  false,
-		},
 		{
 			name:      "AzureAD external user should return that it is not externally synced when the provider is not enabled",
 			cfg:       &setting.Cfg{},

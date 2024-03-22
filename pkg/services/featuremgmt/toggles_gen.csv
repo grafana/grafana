@@ -5,6 +5,7 @@ queryOverLive,experimental,@grafana/grafana-app-platform-squad,false,false,true
 panelTitleSearch,preview,@grafana/grafana-app-platform-squad,false,false,false
 publicDashboards,GA,@grafana/sharing-squad,false,false,false
 publicDashboardsEmailSharing,preview,@grafana/sharing-squad,false,false,false
+publicDashboardsScene,experimental,@grafana/sharing-squad,false,false,true
 lokiExperimentalStreaming,experimental,@grafana/observability-logs,false,false,false
 featureHighlights,GA,@grafana/grafana-as-code,false,false,false
 migrationLocking,preview,@grafana/backend-platform,false,false,false
@@ -32,7 +33,7 @@ cloudWatchCrossAccountQuerying,GA,@grafana/aws-datasources,false,false,false
 showDashboardValidationWarnings,experimental,@grafana/dashboards-squad,false,false,false
 mysqlAnsiQuotes,experimental,@grafana/backend-platform,false,false,false
 accessControlOnCall,preview,@grafana/identity-access-team,false,false,false
-nestedFolders,preview,@grafana/backend-platform,false,false,false
+nestedFolders,GA,@grafana/backend-platform,false,false,false
 nestedFolderPicker,GA,@grafana/grafana-frontend-platform,false,false,true
 alertingBacktesting,experimental,@grafana/alerting-squad,false,false,false
 editPanelCSVDragAndDrop,experimental,@grafana/dataviz-squad,false,false,true
@@ -154,5 +155,4 @@ expressionParser,experimental,@grafana/grafana-app-platform-squad,false,true,fal
 groupByVariable,experimental,@grafana/dashboards-squad,false,false,false
 betterPageScrolling,GA,@grafana/grafana-frontend-platform,false,false,true
 scopeFilters,experimental,@grafana/dashboards-squad,false,false,false
-emailVerificationEnforcement,experimental,@grafana/identity-access-team,false,false,false
 ssoSettingsSAML,experimental,@grafana/identity-access-team,false,false,false

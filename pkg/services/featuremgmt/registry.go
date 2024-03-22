@@ -64,6 +64,13 @@ var (
 			HideFromAdminPage: true,
 		},
 		{
+			Name:         "publicDashboardsScene",
+			Description:  "Enables public dashboard rendering using scenes",
+			Stage:        FeatureStageExperimental,
+			FrontendOnly: true,
+			Owner:        grafanaSharingSquad,
+		},
+		{
 			Name:        "lokiExperimentalStreaming",
 			Description: "Support new streaming approach for loki (prototype, needs special loki build)",
 			Stage:       FeatureStageExperimental,
@@ -257,8 +264,9 @@ var (
 		{
 			Name:        "nestedFolders",
 			Description: "Enable folder nesting",
-			Stage:       FeatureStagePublicPreview,
+			Stage:       FeatureStageGeneralAvailability,
 			Owner:       grafanaBackendPlatformSquad,
+			Expression:  "true", // enabled by default
 		},
 		{
 			Name:           "nestedFolderPicker",
@@ -1153,14 +1161,6 @@ var (
 			Owner:             grafanaDashboardsSquad,
 			RequiresRestart:   false,
 			AllowSelfServe:    false,
-			HideFromDocs:      true,
-			HideFromAdminPage: true,
-		},
-		{
-			Name:              "emailVerificationEnforcement",
-			Description:       "Force email verification for users, even when authenticating through sso.",
-			Stage:             FeatureStageExperimental,
-			Owner:             identityAccessTeam,
 			HideFromDocs:      true,
 			HideFromAdminPage: true,
 		},
