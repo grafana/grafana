@@ -88,7 +88,7 @@ func TestNewAlertmanager(t *testing.T) {
 				BasicAuthPassword: test.password,
 			}
 			m := metrics.NewRemoteAlertmanagerMetrics(prometheus.NewRegistry())
-			am, err := NewAlertmanager(cfg, nil, secretsService.Decrypt, m)
+			am, err := NewAlertmanager(cfg, nil, secretsService.Decrypt, "", m)
 			if test.expErr != "" {
 				require.EqualError(tt, err, test.expErr)
 				return
@@ -150,7 +150,7 @@ func TestApplyConfig(t *testing.T) {
 
 	// An error response from the remote Alertmanager should result in the readiness check failing.
 	m := metrics.NewRemoteAlertmanagerMetrics(prometheus.NewRegistry())
-	am, err := NewAlertmanager(cfg, fstore, secretsService.Decrypt, m)
+	am, err := NewAlertmanager(cfg, fstore, secretsService.Decrypt, "", m)
 	require.NoError(t, err)
 
 	config := &ngmodels.AlertConfiguration{
@@ -206,6 +206,7 @@ func TestCompareAndSendConfiguration(t *testing.T) {
 	am, err := NewAlertmanager(cfg,
 		fstore,
 		decryptFn,
+		"",
 		m,
 	)
 	require.NoError(t, err)
@@ -314,7 +315,7 @@ func TestIntegrationRemoteAlertmanagerApplyConfigOnlyUploadsOnce(t *testing.T) {
 
 	secretsService := secretsManager.SetupTestService(t, fakes.NewFakeSecretsStore())
 	m := metrics.NewRemoteAlertmanagerMetrics(prometheus.NewRegistry())
-	am, err := NewAlertmanager(cfg, fstore, secretsService.Decrypt, m)
+	am, err := NewAlertmanager(cfg, fstore, secretsService.Decrypt, "", m)
 	require.NoError(t, err)
 
 	// We should have no configuration or state at first.
@@ -399,7 +400,7 @@ func TestIntegrationRemoteAlertmanagerSilences(t *testing.T) {
 
 	secretsService := secretsManager.SetupTestService(t, fakes.NewFakeSecretsStore())
 	m := metrics.NewRemoteAlertmanagerMetrics(prometheus.NewRegistry())
-	am, err := NewAlertmanager(cfg, nil, secretsService.Decrypt, m)
+	am, err := NewAlertmanager(cfg, nil, secretsService.Decrypt, "", m)
 	require.NoError(t, err)
 
 	// We should have no silences at first.
@@ -482,7 +483,7 @@ func TestIntegrationRemoteAlertmanagerAlerts(t *testing.T) {
 
 	secretsService := secretsManager.SetupTestService(t, fakes.NewFakeSecretsStore())
 	m := metrics.NewRemoteAlertmanagerMetrics(prometheus.NewRegistry())
-	am, err := NewAlertmanager(cfg, nil, secretsService.Decrypt, m)
+	am, err := NewAlertmanager(cfg, nil, secretsService.Decrypt, "", m)
 	require.NoError(t, err)
 
 	// Wait until the Alertmanager is ready to send alerts.
@@ -550,7 +551,7 @@ func TestIntegrationRemoteAlertmanagerReceivers(t *testing.T) {
 
 	secretsService := secretsManager.SetupTestService(t, fakes.NewFakeSecretsStore())
 	m := metrics.NewRemoteAlertmanagerMetrics(prometheus.NewRegistry())
-	am, err := NewAlertmanager(cfg, nil, secretsService.Decrypt, m)
+	am, err := NewAlertmanager(cfg, nil, secretsService.Decrypt, "", m)
 	require.NoError(t, err)
 
 	// We should start with the default config.
