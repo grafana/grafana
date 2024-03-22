@@ -31,16 +31,17 @@ type stateStore interface {
 type DecryptFn func(ctx context.Context, payload []byte) ([]byte, error)
 
 type Alertmanager struct {
-	decrypt       DecryptFn
-	defaultConfig string
-	log           log.Logger
-	metrics       *metrics.RemoteAlertmanager
-	orgID         int64
-	ready         bool
-	sender        *sender.ExternalAlertmanager
-	state         stateStore
-	tenantID      string
-	url           string
+	decrypt           DecryptFn
+	defaultConfig     string
+	defaultConfigHash string
+	log               log.Logger
+	metrics           *metrics.RemoteAlertmanager
+	orgID             int64
+	ready             bool
+	sender            *sender.ExternalAlertmanager
+	state             stateStore
+	tenantID          string
+	url               string
 
 	amClient    *remoteClient.Alertmanager
 	mimirClient remoteClient.MimirClient
@@ -113,20 +114,33 @@ func NewAlertmanager(cfg AlertmanagerConfig, store stateStore, decryptFn Decrypt
 		return nil, err
 	}
 
+	// Parse the default configuration into a postable config.
+	pCfg, err := notifier.Load([]byte(defaultConfig))
+	if err != nil {
+		return nil, err
+	}
+
+	rawCfg, err := json.Marshal(pCfg)
+	if err != nil {
+		return nil, err
+	}
+
 	// Initialize LastReadinessCheck so it's present even if the check fails.
 	metrics.LastReadinessCheck.Set(0)
 
 	return &Alertmanager{
-		amClient:    amc,
-		decrypt:     decryptFn,
-		log:         logger,
-		metrics:     metrics,
-		mimirClient: mc,
-		orgID:       cfg.OrgID,
-		state:       store,
-		sender:      s,
-		tenantID:    cfg.TenantID,
-		url:         cfg.URL,
+		amClient:          amc,
+		decrypt:           decryptFn,
+		defaultConfig:     string(rawCfg),
+		defaultConfigHash: fmt.Sprintf("%x", md5.Sum([]byte(rawCfg))),
+		log:               logger,
+		metrics:           metrics,
+		mimirClient:       mc,
+		orgID:             cfg.OrgID,
+		state:             store,
+		sender:            s,
+		tenantID:          cfg.TenantID,
+		url:               cfg.URL,
 	}, nil
 }
 
@@ -264,7 +278,7 @@ func (am *Alertmanager) SaveAndApplyDefaultConfig(ctx context.Context) error {
 	return am.sendConfiguration(
 		ctx,
 		string(rawDecrypted),
-		fmt.Sprintf("%x", md5.Sum([]byte(am.defaultConfig))),
+		am.defaultConfigHash,
 		time.Now().Unix(),
 		true,
 	)
