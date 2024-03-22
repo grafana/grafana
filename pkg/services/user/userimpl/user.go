@@ -71,16 +71,11 @@ func ProvideService(
 
 func (s *Service) GetUsageStats(ctx context.Context) map[string]any {
 	stats := map[string]any{}
-	caseInsensitiveLoginVal := 0
 	basicAuthStrongPasswordPolicyVal := 0
-	if s.cfg.CaseInsensitiveLogin {
-		caseInsensitiveLoginVal = 1
-	}
 	if s.cfg.BasicAuthStrongPasswordPolicy {
 		basicAuthStrongPasswordPolicyVal = 1
 	}
 
-	stats["stats.case_insensitive_login.count"] = caseInsensitiveLoginVal
 	stats["stats.password_policy.count"] = basicAuthStrongPasswordPolicyVal
 
 	count, err := s.store.CountUserAccountsWithEmptyRole(ctx)
@@ -132,7 +127,7 @@ func (s *Service) Create(ctx context.Context, cmd *user.CreateUserCommand) (*use
 		cmd.Email = cmd.Login
 	}
 
-	err = s.store.LoginConflict(ctx, cmd.Login, cmd.Email, s.cfg.CaseInsensitiveLogin)
+	err = s.store.LoginConflict(ctx, cmd.Login, cmd.Email)
 	if err != nil {
 		return nil, user.ErrUserAlreadyExists
 	}
@@ -218,10 +213,8 @@ func (s *Service) GetByID(ctx context.Context, query *user.GetUserByIDQuery) (*u
 	if err != nil {
 		return nil, err
 	}
-	if s.cfg.CaseInsensitiveLogin {
-		if err := s.store.CaseInsensitiveLoginConflict(ctx, user.Login, user.Email); err != nil {
-			return nil, err
-		}
+	if err := s.store.CaseInsensitiveLoginConflict(ctx, user.Login, user.Email); err != nil {
+		return nil, err
 	}
 	return user, nil
 }
@@ -235,10 +228,8 @@ func (s *Service) GetByEmail(ctx context.Context, query *user.GetUserByEmailQuer
 }
 
 func (s *Service) Update(ctx context.Context, cmd *user.UpdateUserCommand) error {
-	if s.cfg.CaseInsensitiveLogin {
-		cmd.Login = strings.ToLower(cmd.Login)
-		cmd.Email = strings.ToLower(cmd.Email)
-	}
+	cmd.Login = strings.ToLower(cmd.Login)
+	cmd.Email = strings.ToLower(cmd.Email)
 
 	return s.store.Update(ctx, cmd)
 }
@@ -404,7 +395,7 @@ func readQuotaConfig(cfg *setting.Cfg) (*quota.Map, error) {
 // CreateServiceAccount creates a service account in the user table and adds service account to an organisation in the org_user table
 func (s *Service) CreateServiceAccount(ctx context.Context, cmd *user.CreateUserCommand) (*user.User, error) {
 	cmd.Email = cmd.Login
-	err := s.store.LoginConflict(ctx, cmd.Login, cmd.Email, s.cfg.CaseInsensitiveLogin)
+	err := s.store.LoginConflict(ctx, cmd.Login, cmd.Email)
 	if err != nil {
 		return nil, serviceaccounts.ErrServiceAccountAlreadyExists.Errorf("service account with login %s already exists", cmd.Login)
 	}
