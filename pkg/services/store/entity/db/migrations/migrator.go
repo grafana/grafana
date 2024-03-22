@@ -70,7 +70,6 @@ func MigrateEntityStore(db db.EntityDBInterface, features featuremgmt.FeatureTog
 		}
 	}
 
-	return mg.Start(
-		features.IsEnabledGlobally(featuremgmt.FlagMigrationLocking),
-		0)
+	// since it's a new feature enable migration locking by default
+	return mg.Start(true, 0)
 }

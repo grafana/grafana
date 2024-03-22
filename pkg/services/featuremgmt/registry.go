@@ -84,12 +84,6 @@ var (
 			AllowSelfServe: true,
 		},
 		{
-			Name:        "migrationLocking",
-			Description: "Lock database during migrations",
-			Stage:       FeatureStagePublicPreview,
-			Owner:       grafanaBackendPlatformSquad,
-		},
-		{
 			Name:        "storage",
 			Description: "Configurable storage for dashboards, datasources, and resources",
 			Stage:       FeatureStageExperimental,
