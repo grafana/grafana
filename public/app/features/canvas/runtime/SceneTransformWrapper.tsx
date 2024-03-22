@@ -14,6 +14,15 @@ export const SceneTransformWrapper = ({ scene, children: sceneDiv }: SceneTransf
   const onZoom = (zoomPanPinchRef: ReactZoomPanPinchRef) => {
     const scale = zoomPanPinchRef.state.scale;
     scene.scale = scale;
+
+    if (scene.shouldInfinitePan) {
+      const isScaleZoomedOut = scale < 1;
+
+      if (isScaleZoomedOut) {
+        scene.updateSize(scene.width / scale, scene.height / scale);
+        scene.panel.forceUpdate();
+      }
+    }
   };
 
   const onZoomStop = (zoomPanPinchRef: ReactZoomPanPinchRef) => {
@@ -59,6 +68,7 @@ export const SceneTransformWrapper = ({ scene, children: sceneDiv }: SceneTransf
       }
 
       // TODO: Consider bounding to the scene elements instead of allowing "infinite" panning
+      // TODO: Consider making scene grow in all directions vs just down to the right / bottom
       scene.updateSize(scene.width - deltaX, scene.height - deltaY);
       scene.panel.forceUpdate();
     }
