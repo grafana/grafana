@@ -91,27 +91,28 @@ type Cfg struct {
 	appliedEnvOverrides          []string
 
 	// HTTP Server Settings
-	CertFile         string
-	KeyFile          string
-	HTTPAddr         string
-	HTTPPort         string
-	Env              string
-	AppURL           string
-	AppSubURL        string
-	InstanceName     string
-	ServeFromSubPath bool
-	StaticRootPath   string
-	Protocol         Scheme
-	SocketGid        int
-	SocketMode       int
-	SocketPath       string
-	RouterLogging    bool
-	Domain           string
-	CDNRootURL       *url.URL
-	ReadTimeout      time.Duration
-	EnableGzip       bool
-	EnforceDomain    bool
-	MinTLSVersion    string
+	CertFile          string
+	KeyFile           string
+	CertWatchInterval time.Duration
+	HTTPAddr          string
+	HTTPPort          string
+	Env               string
+	AppURL            string
+	AppSubURL         string
+	InstanceName      string
+	ServeFromSubPath  bool
+	StaticRootPath    string
+	Protocol          Scheme
+	SocketGid         int
+	SocketMode        int
+	SocketPath        string
+	RouterLogging     bool
+	Domain            string
+	CDNRootURL        *url.URL
+	ReadTimeout       time.Duration
+	EnableGzip        bool
+	EnforceDomain     bool
+	MinTLSVersion     string
 
 	// Security settings
 	SecretKey             string
@@ -1837,6 +1838,7 @@ func (cfg *Cfg) readServerSettings(iniFile *ini.File) error {
 	cfg.AppSubURL = AppSubUrl
 	cfg.Protocol = HTTPScheme
 	cfg.ServeFromSubPath = server.Key("serve_from_sub_path").MustBool(false)
+	cfg.CertWatchInterval = server.Key("certs_watch_interval").MustDuration(0)
 
 	protocolStr := valueAsString(server, "protocol", "http")
 
