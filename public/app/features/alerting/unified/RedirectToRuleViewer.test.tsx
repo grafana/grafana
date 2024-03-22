@@ -20,7 +20,10 @@ jest.mock('react-router-dom', () => ({
   Redirect: jest.fn(({}) => `Redirected`),
 }));
 
-jest.mock('react-use');
+jest.mock('react-use', () => ({
+  ...jest.requireActual('react-use'),
+  useLocation: jest.fn(),
+}));
 
 const renderRedirectToRuleViewer = (pathname: string, search?: string) => {
   jest.mocked(useLocation).mockReturnValue({ pathname, trigger: '', search });
