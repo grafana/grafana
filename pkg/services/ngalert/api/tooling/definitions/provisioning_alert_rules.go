@@ -28,17 +28,17 @@ import (
 //       200: AlertingFileExport
 //       404: description: Not found.
 
-// swagger:route GET /v1/provisioning/alert-rules/{UID} provisioning stable RouteGetAlertRule
+// swagger:route GET /v1/provisioning/alert-rules/{UID} provisioning stable deprecated RouteGetAlertRule
 //
-// Get a specific alert rule by UID.
+// DEPRECATED: Get a specific alert rule by UID.
 //
 //     Responses:
 //       200: ProvisionedAlertRule
 //       404: description: Not found.
 
-// swagger:route GET /v1/provisioning/alert-rules/{UID}/export provisioning stable RouteGetAlertRuleExport
+// swagger:route GET /v1/provisioning/alert-rules/{UID}/export provisioning stable deprecated RouteGetAlertRuleExport
 //
-// Export an alert rule in provisioning file format.
+// DEPRECATED: Export an alert rule in provisioning file format.
 //
 //     Produces:
 //     - application/json
@@ -51,9 +51,9 @@ import (
 //       200: AlertingFileExport
 //       404: description: Not found.
 
-// swagger:route POST /v1/provisioning/alert-rules provisioning stable RoutePostAlertRule
+// swagger:route POST /v1/provisioning/alert-rules provisioning stable deprecated RoutePostAlertRule
 //
-// Create a new alert rule.
+// DEPRECATED: Create a new alert rule.
 //
 //     Consumes:
 //     - application/json
@@ -62,9 +62,9 @@ import (
 //       201: ProvisionedAlertRule
 //       400: ValidationError
 
-// swagger:route PUT /v1/provisioning/alert-rules/{UID} provisioning stable RoutePutAlertRule
+// swagger:route PUT /v1/provisioning/alert-rules/{UID} provisioning stable deprecated RoutePutAlertRule
 //
-// Update an existing alert rule.
+// DEPRECATED: Update an existing alert rule.
 //
 //     Consumes:
 //     - application/json
@@ -73,9 +73,9 @@ import (
 //       200: ProvisionedAlertRule
 //       400: ValidationError
 
-// swagger:route DELETE /v1/provisioning/alert-rules/{UID} provisioning stable RouteDeleteAlertRule
+// swagger:route DELETE /v1/provisioning/alert-rules/{UID} provisioning stable deprecated RouteDeleteAlertRule
 //
-// Delete a specific alert rule by UID.
+// DEPRECATED: Delete a specific alert rule by UID.
 //
 //     Responses:
 //       204: description: The alert rule was deleted successfully.

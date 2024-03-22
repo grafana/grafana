@@ -22616,9 +22616,10 @@
             "description": "ValidationError"
           }
         },
-        "summary": "Create a new alert rule.",
+        "summary": "DEPRECATED: Create a new alert rule.",
         "tags": [
-          "provisioning"
+          "provisioning",
+          "deprecated"
         ]
       }
     },
@@ -22744,9 +22745,10 @@
             "description": " The alert rule was deleted successfully."
           }
         },
-        "summary": "Delete a specific alert rule by UID.",
+        "summary": "DEPRECATED: Delete a specific alert rule by UID.",
         "tags": [
-          "provisioning"
+          "provisioning",
+          "deprecated"
         ]
       },
       "get": {
@@ -22777,9 +22779,10 @@
             "description": " Not found."
           }
         },
-        "summary": "Get a specific alert rule by UID.",
+        "summary": "DEPRECATED: Get a specific alert rule by UID.",
         "tags": [
-          "provisioning"
+          "provisioning",
+          "deprecated"
         ]
       },
       "put": {
@@ -22834,9 +22837,10 @@
             "description": "ValidationError"
           }
         },
-        "summary": "Update an existing alert rule.",
+        "summary": "DEPRECATED: Update an existing alert rule.",
         "tags": [
-          "provisioning"
+          "provisioning",
+          "deprecated"
         ]
       }
     },
@@ -22912,9 +22916,10 @@
             "description": " Not found."
           }
         },
-        "summary": "Export an alert rule in provisioning file format.",
+        "summary": "DEPRECATED: Export an alert rule in provisioning file format.",
         "tags": [
-          "provisioning"
+          "provisioning",
+          "deprecated"
         ]
       }
     },
