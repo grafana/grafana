@@ -1,4 +1,4 @@
-import { FieldMatcherID, FrameMatcherID, MatcherConfig, PanelMigrationHandler, PanelModel } from '@grafana/data';
+import { FieldMatcherID, FrameMatcherID, MatcherConfig, PanelModel } from '@grafana/data';
 
 import { ScatterSeriesConfig, SeriesMapping, XYDimensionConfig, Options as PrevOptions } from '../panelcfg.gen';
 
