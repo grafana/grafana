@@ -56,12 +56,14 @@ func (uss *UsageStats) GetUsageReport(ctx context.Context) (usagestats.Report, e
 	}
 
 	report.Metrics = make(map[string]any)
+	metricCount := 0
 	metrics.Range(func(key, value any) bool {
 		report.Metrics[key.(string)] = value
+		metricCount++
 		return true
 	})
 
-	uss.log.FromContext(ctx).Debug("Collected usage stats", "version", report.Version, "os", report.Os, "arch", report.Arch, "edition", report.Edition, "duration", time.Since(start))
+	uss.log.FromContext(ctx).Debug("Collected usage stats", "metricCount", metricCount, "version", report.Version, "os", report.Os, "arch", report.Arch, "edition", report.Edition, "duration", time.Since(start))
 	return report, nil
 }
 
