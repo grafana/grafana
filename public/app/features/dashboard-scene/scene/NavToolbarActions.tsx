@@ -513,6 +513,7 @@ export function ToolbarActions({ dashboard }: Props) {
   return (
     <DashNavModalContextProvider>
       <ToolbarButtonRow alignment="right">{actionElements}</ToolbarButtonRow>
+      <DashNavModalRoot />
     </DashNavModalContextProvider>
   );
 }
