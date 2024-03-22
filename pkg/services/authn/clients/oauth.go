@@ -162,9 +162,6 @@ func (c *OAuth) Authenticate(ctx context.Context, r *authn.Request) (*authn.Iden
 	}
 
 	orgRoles, isGrafanaAdmin, _ := getRoles(c.cfg, func() (org.RoleType, *bool, error) {
-		if c.cfg.OAuthSkipOrgRoleUpdateSync {
-			return "", nil, nil
-		}
 		return userInfo.Role, userInfo.IsGrafanaAdmin, nil
 	})
 
