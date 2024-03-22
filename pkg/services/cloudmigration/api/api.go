@@ -91,7 +91,7 @@ func (cma *CloudMigrationAPI) RunMigration(c *contextmodel.ReqContext) response.
 	if err != nil {
 		return response.Error(http.StatusInternalServerError, "migration run error", err)
 	}
-	return response.JSON(http.StatusOK, cloudMigratonRun)
+	return response.JSON(http.StatusOK, cloudMigrationRun)
 }
 
 func (cma *CloudMigrationAPI) GetMigrationRun(c *contextmodel.ReqContext) response.Response {
