@@ -168,15 +168,15 @@ export const ConnectionSVG = ({
           const X = x * xDist + x1;
           const Y = y * yDist + y1;
 
-          // Coordinates for first arc control point
+          // Initialize coordinates for first arc control point
           let xa = X;
           let ya = Y;
 
-          // Coordinates for second arc control point
+          // Initialize coordinates for second arc control point
           let xb = X;
           let yb = Y;
 
-          // Half arc distance and segment angles
+          // Initialize half arc distance and segment angles
           let lHalfArc = 0;
           let angle1 = 0;
           let angle2 = 0;
