@@ -4417,6 +4417,7 @@
    "type": "object"
   },
   "alertGroup": {
+   "description": "AlertGroup alert group",
    "properties": {
     "alerts": {
      "description": "alerts",
@@ -4601,14 +4602,12 @@
    "type": "object"
   },
   "gettableAlerts": {
-   "description": "GettableAlerts gettable alerts",
    "items": {
     "$ref": "#/definitions/gettableAlert"
    },
    "type": "array"
   },
   "gettableSilence": {
-   "description": "GettableSilence gettable silence",
    "properties": {
     "comment": {
      "description": "comment",
@@ -4664,6 +4663,7 @@
    "type": "array"
   },
   "integration": {
+   "description": "Integration integration",
    "properties": {
     "lastNotifyAttempt": {
      "description": "A timestamp indicating the last attempt to deliver a notification regardless of the outcome.\nFormat: date-time",
@@ -5064,6 +5064,13 @@
       "type": "string"
      }
     ],
+    "produces": [
+     "application/json",
+     "application/yaml",
+     "application/terraform+hcl",
+     "text/yaml",
+     "text/hcl"
+    ],
     "responses": {
      "200": {
       "description": "AlertingFileExport",
@@ -5215,7 +5222,9 @@
     "produces": [
      "application/json",
      "application/yaml",
-     "text/yaml"
+     "application/terraform+hcl",
+     "text/yaml",
+     "text/hcl"
     ],
     "responses": {
      "200": {
@@ -5333,6 +5342,13 @@
       "name": "name",
       "type": "string"
      }
+    ],
+    "produces": [
+     "application/json",
+     "application/yaml",
+     "application/terraform+hcl",
+     "text/yaml",
+     "text/hcl"
     ],
     "responses": {
      "200": {
@@ -5586,7 +5602,9 @@
     "produces": [
      "application/json",
      "application/yaml",
-     "text/yaml"
+     "application/terraform+hcl",
+     "text/yaml",
+     "text/hcl"
     ],
     "responses": {
      "200": {
@@ -5683,6 +5701,13 @@
       "name": "format",
       "type": "string"
      }
+    ],
+    "produces": [
+     "application/json",
+     "application/yaml",
+     "application/terraform+hcl",
+     "text/yaml",
+     "text/hcl"
     ],
     "responses": {
      "200": {
@@ -5836,6 +5861,13 @@
       "type": "string"
      }
     ],
+    "produces": [
+     "application/json",
+     "application/yaml",
+     "application/terraform+hcl",
+     "text/yaml",
+     "text/hcl"
+    ],
     "responses": {
      "200": {
       "description": "AlertingFileExport",
@@ -5933,6 +5965,13 @@
   "/v1/provisioning/policies/export": {
    "get": {
     "operationId": "RouteGetPolicyTreeExport",
+    "produces": [
+     "application/json",
+     "application/yaml",
+     "application/terraform+hcl",
+     "text/yaml",
+     "text/hcl"
+    ],
     "responses": {
      "200": {
       "description": "AlertingFileExport",
