@@ -9,6 +9,7 @@ import {
   CellProps,
   Column,
   DeleteButton,
+  EmptyState,
   FilterInput,
   Icon,
   InlineField,
@@ -219,17 +220,26 @@ export const TeamList = ({
                 <FilterInput placeholder="Search teams" value={query} onChange={changeQuery} />
               </InlineField>
             </div>
-            <Stack direction={'column'} gap={2}>
-              <InteractiveTable
-                columns={columns}
-                data={hasFetched ? teams : skeletonData}
-                getRowId={(team) => String(team.id)}
-                fetchData={changeSort}
-              />
-              <Stack justifyContent="flex-end">
-                <Pagination hideWhenSinglePage currentPage={page} numberOfPages={totalPages} onNavigate={changePage} />
+            {hasFetched && teams.length === 0 ? (
+              <EmptyState variant="search" />
+            ) : (
+              <Stack direction={'column'} gap={2}>
+                <InteractiveTable
+                  columns={columns}
+                  data={hasFetched ? teams : skeletonData}
+                  getRowId={(team) => String(team.id)}
+                  fetchData={changeSort}
+                />
+                <Stack justifyContent="flex-end">
+                  <Pagination
+                    hideWhenSinglePage
+                    currentPage={page}
+                    numberOfPages={totalPages}
+                    onNavigate={changePage}
+                  />
+                </Stack>
               </Stack>
-            </Stack>
+            )}
           </>
         )}
       </Page.Contents>

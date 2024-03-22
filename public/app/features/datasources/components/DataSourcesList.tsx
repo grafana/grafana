@@ -4,7 +4,7 @@ import { useLocation } from 'react-router-dom';
 
 import { DataSourceSettings, GrafanaTheme2 } from '@grafana/data';
 import { config } from '@grafana/runtime';
-import { useStyles2 } from '@grafana/ui';
+import { EmptyState, useStyles2 } from '@grafana/ui';
 import EmptyListCTA from 'app/core/components/EmptyListCTA/EmptyListCTA';
 import { contextSrv } from 'app/core/core';
 import { StoreState, AccessControlAction, useSelector } from 'app/types';
@@ -104,7 +104,11 @@ export function DataSourcesListView({
       <DataSourcesListHeader />
 
       {/* List */}
-      <ul className={styles.list}>{getDataSourcesList()}</ul>
+      {dataSources.length === 0 && !isLoading ? (
+        <EmptyState variant="search" />
+      ) : (
+        <ul className={styles.list}>{getDataSourcesList()}</ul>
+      )}
     </>
   );
 }
