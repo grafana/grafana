@@ -212,7 +212,7 @@ export const getFieldLinksForExplore = (options: {
         if (variableData.allVariablesDefined) {
           // This is to support passing time range without raw range due to a bug in SDK: https://github.com/grafana/grafana-plugin-sdk-go/issues/934
           // In that case we pick range and pass it as raw range.
-          // This is not a part of official API, to be removed in #84806 once the above issue is vex
+          // This is not a part of official API, to be removed in #84806 once the above issue is fixed
           if (link.internal.range?.from && link.internal.range?.to && !link.internal.range.raw) {
             link.internal.range.raw = {
               from: link.internal.range.from,
