@@ -789,8 +789,11 @@
       "datasource": "Đäŧä şőūřčę",
       "unknown": "Ůŉĸŉőŵŉ"
     },
-    "resources": {
-      "disconnect": "Đįşčőŉŉęčŧ"
+    "summary": {
+      "disconnect": "Đįşčőŉŉęčŧ",
+      "error-starting-migration": "Ŧĥęřę ŵäş äŉ ęřřőř şŧäřŧįŉģ čľőūđ mįģřäŧįőŉ",
+      "start-migration": "Ůpľőäđ ęvęřyŧĥįŉģ",
+      "target-stack-title": "Ůpľőäđįŉģ ŧő"
     },
     "token-status": {
       "active": "Ŧőĸęŉ čřęäŧęđ äŉđ äčŧįvę",
@@ -1474,7 +1477,7 @@
       "library-panel": "Ŀįþřäřy päŉęľ",
       "link": "Ŀįŉĸ",
       "panel-embed": "Ēmþęđ",
-      "public-dashboard": "Pūþľįşĥ Đäşĥþőäřđ",
+      "public-dashboard": "Pūþľįč Đäşĥþőäřđ",
       "public-dashboard-title": "Pūþľįč đäşĥþőäřđ",
       "snapshot": "Ŝŉäpşĥőŧ"
     },

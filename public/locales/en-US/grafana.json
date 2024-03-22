@@ -789,8 +789,11 @@
       "datasource": "Data source",
       "unknown": "Unknown"
     },
-    "resources": {
-      "disconnect": "Disconnect"
+    "summary": {
+      "disconnect": "Disconnect",
+      "error-starting-migration": "There was an error starting cloud migration",
+      "start-migration": "Upload everything",
+      "target-stack-title": "Uploading to"
     },
     "token-status": {
       "active": "Token created and active",
@@ -1474,7 +1477,7 @@
       "library-panel": "Library panel",
       "link": "Link",
       "panel-embed": "Embed",
-      "public-dashboard": "Publish Dashboard",
+      "public-dashboard": "Public Dashboard",
       "public-dashboard-title": "Public dashboard",
       "snapshot": "Snapshot"
     },

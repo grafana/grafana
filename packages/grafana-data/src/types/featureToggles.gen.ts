@@ -173,6 +173,5 @@ export interface FeatureToggles {
   groupByVariable?: boolean;
   betterPageScrolling?: boolean;
   scopeFilters?: boolean;
-  emailVerificationEnforcement?: boolean;
   ssoSettingsSAML?: boolean;
 }
