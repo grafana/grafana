@@ -44,13 +44,11 @@ export function FieldConfigMappingHandlerArgumentsEditor({ handlerArguments, han
           disabled
           width={20}
           prefix={
-            <div>
-              <ColorPicker
-                color={handlerArguments.threshold?.color ?? 'red'}
-                onChange={onChangeThreshold}
-                enableNamedColors={true}
-              />
-            </div>
+            <ColorPicker
+              color={handlerArguments.threshold?.color ?? 'red'}
+              onChange={onChangeThreshold}
+              enableNamedColors={true}
+            />
           }
         />
       )}
