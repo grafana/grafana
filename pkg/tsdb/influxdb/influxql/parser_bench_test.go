@@ -43,7 +43,7 @@ func BenchmarkParseJson(b *testing.B) {
 		var result *backend.DataResponse
 		switch testMode {
 		case "buffered":
-			result = buffered.ResponseParse(buf, 200, query)
+			result = buffered.ResponseParse(buf, 200, query, false)
 		case "stream":
 			result = querydata.ResponseParse(buf, 200, query)
 		}

@@ -191,13 +191,7 @@ func execute(ctx context.Context, tracer trace.Tracer, dsInfo *models.Datasource
 		logger.Info("InfluxDB InfluxQL streaming parser enabled: ", "info")
 		resp = querydata.ResponseParse(res.Body, res.StatusCode, query)
 	} else {
-		resp = buffered.ResponseParse(res.Body, res.StatusCode, query)
-	}
-
-	if isInfluxdbReturnInfluxResponseEnabled {
-		resp.Frames[0].Meta.Custom = map[string]any{
-			"influx_response": "test",
-		}
+		resp = buffered.ResponseParse(res.Body, res.StatusCode, query, isInfluxdbReturnInfluxResponseEnabled)
 	}
 
 	return *resp, nil
