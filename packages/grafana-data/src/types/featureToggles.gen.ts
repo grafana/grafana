@@ -24,6 +24,7 @@ export interface FeatureToggles {
   panelTitleSearch?: boolean;
   publicDashboards?: boolean;
   publicDashboardsEmailSharing?: boolean;
+  publicDashboardsScene?: boolean;
   lokiExperimentalStreaming?: boolean;
   featureHighlights?: boolean;
   migrationLocking?: boolean;
@@ -48,8 +49,6 @@ export interface FeatureToggles {
   grpcServer?: boolean;
   unifiedStorage?: boolean;
   cloudWatchCrossAccountQuerying?: boolean;
-  redshiftAsyncQueryDataSupport?: boolean;
-  athenaAsyncQueryDataSupport?: boolean;
   showDashboardValidationWarnings?: boolean;
   mysqlAnsiQuotes?: boolean;
   accessControlOnCall?: boolean;
@@ -175,6 +174,5 @@ export interface FeatureToggles {
   groupByVariable?: boolean;
   betterPageScrolling?: boolean;
   scopeFilters?: boolean;
-  emailVerificationEnforcement?: boolean;
   ssoSettingsSAML?: boolean;
 }

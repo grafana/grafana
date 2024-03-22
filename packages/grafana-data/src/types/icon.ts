@@ -217,6 +217,8 @@ export const availableIconsIndex = {
   sync: true,
   'sync-slash': true,
   table: true,
+  'table-collapse-all': true,
+  'table-expand-all': true,
   'tag-alt': true,
   'telegram-alt': true,
   'text-fields': true,

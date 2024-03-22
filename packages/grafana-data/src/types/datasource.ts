@@ -14,7 +14,7 @@ import { DataQuery } from './query';
 import { RawTimeRange, TimeRange } from './time';
 import { CustomVariableSupport, DataSourceVariableSupport, StandardVariableSupport } from './variables';
 
-import { AdHocVariableFilter, DataSourceRef, WithAccessControlMetadata } from '.';
+import { AdHocVariableFilter, DataSourceRef, Scope, WithAccessControlMetadata } from '.';
 
 export interface DataSourcePluginOptionsEditorProps<
   JSONData extends DataSourceJsonData = DataSourceJsonData,
@@ -190,9 +190,6 @@ type VariableSupport<TQuery extends DataQuery, TOptions extends DataSourceJsonDa
 
 /**
  * The main data source abstraction interface, represents an instance of a data source
- *
- * Although this is a class, datasource implementations do not *yet* need to extend it.
- * As such, we can not yet add functions with default implementations.
  */
 abstract class DataSourceApi<
   TQuery extends DataQuery = DataQuery,
@@ -263,11 +260,12 @@ abstract class DataSourceApi<
   abstract testDatasource(): Promise<TestDataSourceResponse>;
 
   /**
-   * This function is not called automatically unless running within the DataSourceWithBackend
-   *
-   * @deprecated
+   * Optionally, you can implement this method to prevent certain queries from being executed.
+   * Return false to prevent the query from being executed.
    */
-  filterQuery?(query: TQuery): boolean;
+  filterQuery?(query: TQuery): boolean {
+    return true;
+  }
 
   /**
    *  Get hints for query improvements
@@ -561,6 +559,8 @@ export interface DataQueryRequest<TQuery extends DataQuery = DataQuery> {
 
   // Used to correlate multiple related requests
   queryGroupId?: string;
+
+  scope?: Scope | undefined;
 }
 
 export interface DataQueryTimings {

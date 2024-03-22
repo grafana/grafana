@@ -31,6 +31,10 @@ const (
 	// Enables public dashboard sharing to be restricted to only allowed emails
 	FlagPublicDashboardsEmailSharing = "publicDashboardsEmailSharing"
 
+	// FlagPublicDashboardsScene
+	// Enables public dashboard rendering using scenes
+	FlagPublicDashboardsScene = "publicDashboardsScene"
+
 	// FlagLokiExperimentalStreaming
 	// Support new streaming approach for loki (prototype, needs special loki build)
 	FlagLokiExperimentalStreaming = "lokiExperimentalStreaming"
@@ -126,14 +130,6 @@ const (
 	// FlagCloudWatchCrossAccountQuerying
 	// Enables cross-account querying in CloudWatch datasources
 	FlagCloudWatchCrossAccountQuerying = "cloudWatchCrossAccountQuerying"
-
-	// FlagRedshiftAsyncQueryDataSupport
-	// Enable async query data support for Redshift
-	FlagRedshiftAsyncQueryDataSupport = "redshiftAsyncQueryDataSupport"
-
-	// FlagAthenaAsyncQueryDataSupport
-	// Enable async query data support for Athena
-	FlagAthenaAsyncQueryDataSupport = "athenaAsyncQueryDataSupport"
 
 	// FlagShowDashboardValidationWarnings
 	// Show warnings when dashboards do not validate against the schema
@@ -492,7 +488,7 @@ const (
 	FlagAlertmanagerRemoteOnly = "alertmanagerRemoteOnly"
 
 	// FlagAnnotationPermissionUpdate
-	// Separate annotation permissions from dashboard permissions to allow for more granular control.
+	// Change the way annotation permissions work by scoping them to folders and dashboards.
 	FlagAnnotationPermissionUpdate = "annotationPermissionUpdate"
 
 	// FlagExtractFieldsNameDeduplication
@@ -612,7 +608,7 @@ const (
 	FlagGroupToNestedTableTransformation = "groupToNestedTableTransformation"
 
 	// FlagNewPDFRendering
-	// New implementation for the dashboard to PDF rendering
+	// New implementation for the dashboard-to-PDF rendering
 	FlagNewPDFRendering = "newPDFRendering"
 
 	// FlagKubernetesAggregator
@@ -634,10 +630,6 @@ const (
 	// FlagScopeFilters
 	// Enables the use of scope filters in Grafana
 	FlagScopeFilters = "scopeFilters"
-
-	// FlagEmailVerificationEnforcement
-	// Force email verification for users, even when authenticating through sso.
-	FlagEmailVerificationEnforcement = "emailVerificationEnforcement"
 
 	// FlagSsoSettingsSAML
 	// Use the new SSO Settings API to configure the SAML connector

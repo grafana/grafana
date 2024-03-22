@@ -69,9 +69,7 @@ To create your first dashboard using the built-in `-- Grafana --` data source:
 
    Alternatively, click **Apply** if you want to see your changes applied to the dashboard first. Then click the save icon in the dashboard header.
 
-1. Add a descriptive title for the dashboard, and then click **Save**.
-
-   Alternatively, Grafana can generate a dashboard title and summary for you using the OpenAI integration. Learn more in the [Set up generative AI features for dashboards documentation](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/dashboards/manage-dashboards#set-up-generative-ai-features-for-dashboards).
+1. Add a descriptive title for the dashboard, or have Grafana create one using [generative AI features](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/dashboards/manage-dashboards#set-up-generative-ai-features-for-dashboards), and then click **Save**.
 
 Congratulations, you have created your first dashboard and it's displaying results.
 
