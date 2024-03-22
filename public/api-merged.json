@@ -13297,17 +13297,17 @@
       "type": "object",
       "title": "DataResponse contains the results from a DataQuery.",
       "properties": {
-        "Error": {
+        "error": {
           "description": "Error is a property to be set if the corresponding DataQuery has an error.",
           "type": "string"
         },
-        "ErrorSource": {
+        "errorSource": {
           "$ref": "#/definitions/ErrorSource"
         },
-        "Frames": {
+        "frames": {
           "$ref": "#/definitions/Frames"
         },
-        "Status": {
+        "status": {
           "$ref": "#/definitions/Status"
         }
       }
@@ -14142,21 +14142,21 @@
       "type": "object",
       "title": "Frame is a columnar data structure where each column is a Field.",
       "properties": {
-        "Fields": {
+        "fields": {
           "description": "Fields are the columns of a frame.\nAll Fields must be of the same the length when marshalling the Frame for transmission.\nThere should be no `nil` entries in the Fields slice (making them pointers was a mistake).",
           "type": "array",
           "items": {
             "$ref": "#/definitions/Field"
           }
         },
-        "Meta": {
+        "meta": {
           "$ref": "#/definitions/FrameMeta"
         },
-        "Name": {
+        "name": {
           "description": "Name is used in some Grafana visualizations.",
           "type": "string"
         },
-        "RefID": {
+        "refID": {
           "description": "RefID is a property that can be set to match a Frame to its originating query.",
           "type": "string"
         }
