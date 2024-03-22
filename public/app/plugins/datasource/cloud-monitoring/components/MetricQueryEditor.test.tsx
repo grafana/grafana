@@ -1,5 +1,7 @@
-import { render, screen, waitFor } from '@testing-library/react';
+import { act, render, screen, waitFor } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import React from 'react';
+import { openMenu, select } from 'react-select-event';
 
 import { getDefaultTimeRange } from '@grafana/data';
 
@@ -79,5 +81,34 @@ describe('MetricQueryEditor', () => {
 
     render(<MetricQueryEditor {...defaultProps} query={query} />);
     await waitFor(() => expect(screen.getByLabelText('Alias by').closest('input')!.value).toEqual('AliasTest'));
+  });
+
+  it('runs a timeSeriesList query if there are no filters', async () => {
+    const onRunQuery = jest.fn();
+    const onChange = jest.fn();
+    const query = createMockQuery();
+
+    render(<MetricQueryEditor {...defaultProps} onRunQuery={onRunQuery} onChange={onChange} query={query} />);
+
+    const groupBy = screen.getByLabelText('Group by');
+    await openMenu(groupBy);
+    const option = 'metadata.system_labels.cloud_account';
+    await act(() => select(groupBy, option, { container: document.body }));
+
+    expect(onRunQuery).toHaveBeenCalledTimes(1);
+    expect(onChange).toHaveBeenCalledTimes(1);
+  });
+
+  it('does not run a timeSeriesList query when filter is added', async () => {
+    const onRunQuery = jest.fn();
+    const onChange = jest.fn();
+    const query = createMockQuery();
+
+    render(<MetricQueryEditor {...defaultProps} onRunQuery={onRunQuery} onChange={onChange} query={query} />);
+
+    const addFilter = screen.getByLabelText('Add');
+    await act(() => userEvent.click(addFilter));
+    expect(onRunQuery).toHaveBeenCalledTimes(0);
+    expect(onChange).toHaveBeenCalledTimes(1);
   });
 });
