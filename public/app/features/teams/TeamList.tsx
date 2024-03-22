@@ -98,6 +98,11 @@ export const TeamList = ({
             return <Skeleton width={100} />;
           }
 
+          const canReadTeam = contextSrv.hasPermissionInMetadata(AccessControlAction.ActionTeamsRead, original);
+          if (!canReadTeam) {
+            return value;
+          }
+
           return (
             <TextLink color="primary" inline={false} href={`/org/teams/edit/${original.id}`}>
               {value}
