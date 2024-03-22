@@ -72,7 +72,7 @@ files = [
 ]
 
 [linters-settings.depguard.rules.promlib]
-list-mode = "lax"
+list-mode = "lax" # allow unless explicitely denied
 deny = [
   { pkg = "github.com/grafana/grafana/pkg", desc = "promlib is not allowed to import grafana core" }
 ]
