@@ -28,12 +28,11 @@ jobs:
 
     - name: Build
       run: |
-        go mod tidy
-        make build-go
+        go mod tidy && make build-go
 
     - name: Check for go workspace changes 
       run: |
-        if ! git diff --exit-code; then
+        if ! git diff --exit-code --quiet; then
           echo "Changes detected. Please run `go mod tidy && make build-go` and commit the changes."
           exit 1
         fi
