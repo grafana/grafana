@@ -25,7 +25,6 @@ composableKinds: PanelCfg: {
 		schemas: [{
 			version: [0, 0]
 			schema: {
-				// Auto is "table" in the UI
 				SeriesMapping: "auto" | "manual"                   @cuetsy(kind="enum")
 				XYShowMode:    "points" | "lines" | "points+lines" @cuetsy(kind="enum", memberNames="Points|Lines|PointsAndLines")
 
@@ -50,10 +49,11 @@ composableKinds: PanelCfg: {
 						min?:   int32 & >=0
 						max?:   int32 & >=0
 					}
+
 					// pointSymbol?: common.ResourceDimensionConfig
 					// fillOpacity?: number & >=0 & <=1 | *0.5
-
 					// lineColor?: common.ColorDimensionConfig
+
 					lineWidth?: int32 & >=0
 					lineStyle?: common.LineStyle
 				} @cuetsy(kind="interface",TSVeneer="type")

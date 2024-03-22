@@ -10,9 +10,6 @@
 
 import * as common from '@grafana/schema';
 
-/**
- * Auto is "table" in the UI
- */
 export enum SeriesMapping {
   Auto = 'auto',
   Manual = 'manual',
@@ -46,9 +43,6 @@ export const defaultMatcherConfig: Partial<MatcherConfig> = {
 
 export interface FieldConfig extends common.HideableFieldConfig, common.AxisConfig {
   lineStyle?: common.LineStyle;
-  /**
-   * lineColor?: common.ColorDimensionConfig
-   */
   lineWidth?: number;
   pointSize?: {
     fixed?: number;
