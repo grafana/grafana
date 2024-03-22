@@ -31,6 +31,10 @@ const (
 	// Enables public dashboard sharing to be restricted to only allowed emails
 	FlagPublicDashboardsEmailSharing = "publicDashboardsEmailSharing"
 
+	// FlagPublicDashboardsScene
+	// Enables public dashboard rendering using scenes
+	FlagPublicDashboardsScene = "publicDashboardsScene"
+
 	// FlagLokiExperimentalStreaming
 	// Support new streaming approach for loki (prototype, needs special loki build)
 	FlagLokiExperimentalStreaming = "lokiExperimentalStreaming"
@@ -82,6 +86,10 @@ const (
 	// FlagAutoMigrateStatPanel
 	// Migrate old stat panel to supported stat panel - broken out from autoMigrateOldPanels to enable granular tracking
 	FlagAutoMigrateStatPanel = "autoMigrateStatPanel"
+
+	// FlagAutoMigrateXYChartPanel
+	// Migrate old XYChart panel to new XYChart2 model
+	FlagAutoMigrateXYChartPanel = "autoMigrateXYChartPanel"
 
 	// FlagDisableAngular
 	// Dynamic flag to disable angular at runtime. The preferred method is to set `angular_support_enabled` to `false` in the [security] settings, which allows you to change the state at runtime.
@@ -626,10 +634,6 @@ const (
 	// FlagScopeFilters
 	// Enables the use of scope filters in Grafana
 	FlagScopeFilters = "scopeFilters"
-
-	// FlagEmailVerificationEnforcement
-	// Force email verification for users, even when authenticating through sso.
-	FlagEmailVerificationEnforcement = "emailVerificationEnforcement"
 
 	// FlagSsoSettingsSAML
 	// Use the new SSO Settings API to configure the SAML connector

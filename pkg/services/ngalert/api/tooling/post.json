@@ -4600,7 +4600,6 @@
    "type": "object"
   },
   "gettableAlerts": {
-   "description": "GettableAlerts gettable alerts",
    "items": {
     "$ref": "#/definitions/gettableAlert"
    },
@@ -4656,12 +4655,14 @@
    "type": "object"
   },
   "gettableSilences": {
+   "description": "GettableSilences gettable silences",
    "items": {
     "$ref": "#/definitions/gettableSilence"
    },
    "type": "array"
   },
   "integration": {
+   "description": "Integration integration",
    "properties": {
     "lastNotifyAttempt": {
      "description": "A timestamp indicating the last attempt to deliver a notification regardless of the outcome.\nFormat: date-time",
@@ -4842,6 +4843,7 @@
    "type": "object"
   },
   "receiver": {
+   "description": "Receiver receiver",
    "properties": {
     "active": {
      "description": "active",
@@ -6143,10 +6145,6 @@
   },
   "/ruler/grafana/api/v1/export/rules": {
    "get": {
-    "consumes": [
-     "application/json",
-     "application/yaml"
-    ],
     "description": "List rules in provisioning format",
     "operationId": "RouteGetRulesForExport",
     "parameters": [
@@ -6159,7 +6157,12 @@
      },
      {
       "default": "yaml",
-      "description": "Format of the downloaded file, either yaml or json. Accept header can also be used, but the query parameter will take precedence.",
+      "description": "Format of the downloaded file. Supported yaml, json or hcl. Accept header can also be used, but the query parameter will take precedence.",
+      "enum": [
+       "yaml",
+       "json",
+       "hcl"
+      ],
       "in": "query",
       "name": "format",
       "type": "string"
@@ -6185,6 +6188,13 @@
       "name": "ruleUid",
       "type": "string"
      }
+    ],
+    "produces": [
+     "application/json",
+     "application/yaml",
+     "application/terraform+hcl",
+     "text/yaml",
+     "text/hcl"
     ],
     "responses": {
      "200": {
@@ -6356,8 +6366,7 @@
   "/ruler/grafana/api/v1/rules/{Namespace}/export": {
    "post": {
     "consumes": [
-     "application/json",
-     "application/yaml"
+     "application/json"
     ],
     "description": "Converts submitted rule group to provisioning format",
     "operationId": "RoutePostRulesGroupForExport",
@@ -6385,11 +6394,23 @@
      },
      {
       "default": "yaml",
-      "description": "Format of the downloaded file, either yaml or json. Accept header can also be used, but the query parameter will take precedence.",
+      "description": "Format of the downloaded file. Supported yaml, json or hcl. Accept header can also be used, but the query parameter will take precedence.",
+      "enum": [
+       "yaml",
+       "json",
+       "hcl"
+      ],
       "in": "query",
       "name": "format",
       "type": "string"
      }
+    ],
+    "produces": [
+     "application/json",
+     "application/yaml",
+     "application/terraform+hcl",
+     "text/yaml",
+     "text/hcl"
     ],
     "responses": {
      "200": {
@@ -7160,7 +7181,12 @@
      },
      {
       "default": "yaml",
-      "description": "Format of the downloaded file, either yaml or json. Accept header can also be used, but the query parameter will take precedence.",
+      "description": "Format of the downloaded file. Supported yaml, json or hcl. Accept header can also be used, but the query parameter will take precedence.",
+      "enum": [
+       "yaml",
+       "json",
+       "hcl"
+      ],
       "in": "query",
       "name": "format",
       "type": "string"
@@ -7186,6 +7212,13 @@
       "name": "ruleUid",
       "type": "string"
      }
+    ],
+    "produces": [
+     "application/json",
+     "application/yaml",
+     "application/terraform+hcl",
+     "text/yaml",
+     "text/hcl"
     ],
     "responses": {
      "200": {
@@ -7317,7 +7350,12 @@
      },
      {
       "default": "yaml",
-      "description": "Format of the downloaded file, either yaml or json. Accept header can also be used, but the query parameter will take precedence.",
+      "description": "Format of the downloaded file. Supported yaml, json or hcl. Accept header can also be used, but the query parameter will take precedence.",
+      "enum": [
+       "yaml",
+       "json",
+       "hcl"
+      ],
       "in": "query",
       "name": "format",
       "type": "string"
@@ -7333,7 +7371,9 @@
     "produces": [
      "application/json",
      "application/yaml",
-     "text/yaml"
+     "application/terraform+hcl",
+     "text/yaml",
+     "text/hcl"
     ],
     "responses": {
      "200": {
@@ -7428,7 +7468,12 @@
      },
      {
       "default": "yaml",
-      "description": "Format of the downloaded file, either yaml or json. Accept header can also be used, but the query parameter will take precedence.",
+      "description": "Format of the downloaded file. Supported yaml, json or hcl. Accept header can also be used, but the query parameter will take precedence.",
+      "enum": [
+       "yaml",
+       "json",
+       "hcl"
+      ],
       "in": "query",
       "name": "format",
       "type": "string"
@@ -7446,6 +7491,13 @@
       "name": "name",
       "type": "string"
      }
+    ],
+    "produces": [
+     "application/json",
+     "application/yaml",
+     "application/terraform+hcl",
+     "text/yaml",
+     "text/hcl"
     ],
     "responses": {
      "200": {
@@ -7673,7 +7725,12 @@
      },
      {
       "default": "yaml",
-      "description": "Format of the downloaded file, either yaml or json. Accept header can also be used, but the query parameter will take precedence.",
+      "description": "Format of the downloaded file. Supported yaml, json or hcl. Accept header can also be used, but the query parameter will take precedence.",
+      "enum": [
+       "yaml",
+       "json",
+       "hcl"
+      ],
       "in": "query",
       "name": "format",
       "type": "string"
@@ -7694,7 +7751,9 @@
     "produces": [
      "application/json",
      "application/yaml",
-     "text/yaml"
+     "application/terraform+hcl",
+     "text/yaml",
+     "text/hcl"
     ],
     "responses": {
      "200": {
@@ -7781,11 +7840,23 @@
      },
      {
       "default": "yaml",
-      "description": "Format of the downloaded file, either yaml or json. Accept header can also be used, but the query parameter will take precedence.",
+      "description": "Format of the downloaded file. Supported yaml, json or hcl. Accept header can also be used, but the query parameter will take precedence.",
+      "enum": [
+       "yaml",
+       "json",
+       "hcl"
+      ],
       "in": "query",
       "name": "format",
       "type": "string"
      }
+    ],
+    "produces": [
+     "application/json",
+     "application/yaml",
+     "application/terraform+hcl",
+     "text/yaml",
+     "text/hcl"
     ],
     "responses": {
      "200": {
@@ -7921,7 +7992,12 @@
      },
      {
       "default": "yaml",
-      "description": "Format of the downloaded file, either yaml or json. Accept header can also be used, but the query parameter will take precedence.",
+      "description": "Format of the downloaded file. Supported yaml, json or hcl. Accept header can also be used, but the query parameter will take precedence.",
+      "enum": [
+       "yaml",
+       "json",
+       "hcl"
+      ],
       "in": "query",
       "name": "format",
       "type": "string"
@@ -7933,6 +8009,13 @@
       "required": true,
       "type": "string"
      }
+    ],
+    "produces": [
+     "application/json",
+     "application/yaml",
+     "application/terraform+hcl",
+     "text/yaml",
+     "text/hcl"
     ],
     "responses": {
      "200": {
@@ -8031,6 +8114,13 @@
   "/v1/provisioning/policies/export": {
    "get": {
     "operationId": "RouteGetPolicyTreeExport",
+    "produces": [
+     "application/json",
+     "application/yaml",
+     "application/terraform+hcl",
+     "text/yaml",
+     "text/hcl"
+    ],
     "responses": {
      "200": {
       "description": "AlertingFileExport",
