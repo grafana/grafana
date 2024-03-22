@@ -48,8 +48,19 @@ function Editor({
 }: React.PropsWithChildren<Props>) {
   const onChangeTimeSeriesList = useCallback(
     (timeSeriesList: TimeSeriesList) => {
+      let filtersComplete = true;
+      if (timeSeriesList?.filters && timeSeriesList.filters.length > 0) {
+        for (const filter of timeSeriesList.filters) {
+          if (filter === '') {
+            filtersComplete = false;
+            break;
+          }
+        }
+      }
       onQueryChange({ ...query, timeSeriesList });
-      onRunQuery();
+      if (filtersComplete) {
+        onRunQuery();
+      }
     },
     [onQueryChange, onRunQuery, query]
   );
