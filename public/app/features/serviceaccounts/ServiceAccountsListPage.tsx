@@ -14,10 +14,11 @@ import {
   Pagination,
   Stack,
 } from '@grafana/ui';
-import EmptyListCTA from 'app/core/components/EmptyListCTA/EmptyListCTA';
+import { EmptyState } from '@grafana/ui/src/components/EmptyState/EmptyState';
 import { Page } from 'app/core/components/Page/Page';
 import config from 'app/core/config';
 import { contextSrv } from 'app/core/core';
+import { Trans, t } from 'app/core/internationalization';
 import { StoreState, ServiceAccountDTO, AccessControlAction, ServiceAccountStateFilter } from 'app/types';
 
 import { CreateTokenModal, ServiceAccountToken } from './components/CreateTokenModal';
@@ -203,40 +204,49 @@ export const ServiceAccountsListPageUnconnected = ({
       }
     >
       <Page.Contents>
-        <div className="page-action-bar">
-          <InlineField grow>
-            <FilterInput
-              placeholder="Search service account by name"
-              value={query}
-              onChange={onQueryChange}
-              width={50}
-            />
-          </InlineField>
-          <RadioButtonGroup
-            options={availableFilters}
-            onChange={onStateFilterChange}
-            value={serviceAccountStateFilter}
-            className={styles.filter}
-          />
-        </div>
-        {!isLoading && noServiceAccountsCreated && (
+        {!isLoading && (
           <>
-            <EmptyListCTA
-              title="You haven't created any service accounts yet."
-              buttonIcon="key-skeleton-alt"
-              buttonLink="org/serviceaccounts/create"
-              buttonTitle="Add service account"
-              buttonDisabled={!contextSrv.hasPermission(AccessControlAction.ServiceAccountsCreate)}
-              proTip="Remember, you can provide specific permissions for API access to other applications."
-              proTipLink=""
-              proTipLinkTitle=""
-              proTipTarget="_blank"
-            />
+            {noServiceAccountsCreated && (
+              <EmptyState
+                button={
+                  <LinkButton
+                    disabled={!contextSrv.hasPermission(AccessControlAction.ServiceAccountsCreate)}
+                    href="org/serviceaccounts/create"
+                    icon="key-skeleton-alt"
+                    size="lg"
+                  >
+                    <Trans i18nKey="service-accounts.empty-state.button-title">Add service account</Trans>
+                  </LinkButton>
+                }
+                message={t('service-accounts.empty-state.title', "You haven't created any service accounts yet")}
+              >
+                <Trans i18nKey="service-accounts.empty-state.more-info">
+                  Remember, you can provide specific permissions for API access to other applications
+                </Trans>
+              </EmptyState>
+            )}
+            {serviceAccounts.length === 0 && !noServiceAccountsCreated && <EmptyState variant="search" />}
           </>
         )}
 
         {(isLoading || serviceAccounts.length !== 0) && (
           <>
+            <div className="page-action-bar">
+              <InlineField grow>
+                <FilterInput
+                  placeholder="Search service account by name"
+                  value={query}
+                  onChange={onQueryChange}
+                  width={50}
+                />
+              </InlineField>
+              <RadioButtonGroup
+                options={availableFilters}
+                onChange={onStateFilterChange}
+                value={serviceAccountStateFilter}
+                className={styles.filter}
+              />
+            </div>
             <div className={cx(styles.table, 'admin-list-table')}>
               <table className="filter-table filter-table--hover">
                 <thead>

@@ -11,12 +11,14 @@ import {
   Spinner,
   Card,
   useTheme2,
+  TextLink,
   Tooltip,
   Icon,
   Switch,
   Pagination,
   HorizontalGroup,
-} from '@grafana/ui/src';
+} from '@grafana/ui';
+import { EmptyState } from '@grafana/ui/src/components/EmptyState/EmptyState';
 import { Page } from 'app/core/components/Page/Page';
 import { Trans, t } from 'app/core/internationalization';
 import { contextSrv } from 'app/core/services/context_srv';
@@ -141,28 +143,49 @@ export const PublicDashboardListTable = () => {
   const [page, setPage] = useState(1);
 
   const styles = useStyles2(getStyles);
-  const { data: paginatedPublicDashboards, isLoading, isFetching, isError } = useListPublicDashboardsQuery(page);
+  const { data: paginatedPublicDashboards, isLoading, isError } = useListPublicDashboardsQuery(page);
 
   return (
-    <Page navId="dashboards/public" actions={isFetching && <Spinner />}>
+    <Page navId="dashboards/public">
       <Page.Contents isLoading={isLoading}>
         {!isLoading && !isError && !!paginatedPublicDashboards && (
           <div>
-            <ul className={styles.list}>
-              {paginatedPublicDashboards.publicDashboards.map((pd: PublicDashboardListResponse) => (
-                <li key={pd.uid}>
-                  <PublicDashboardCard pd={pd} />
-                </li>
-              ))}
-            </ul>
-            <HorizontalGroup justify="flex-end">
-              <Pagination
-                onNavigate={setPage}
-                currentPage={paginatedPublicDashboards.page}
-                numberOfPages={paginatedPublicDashboards.totalPages}
-                hideWhenSinglePage
-              />
-            </HorizontalGroup>
+            {paginatedPublicDashboards.publicDashboards.length === 0 ? (
+              <EmptyState
+                message={t(
+                  'public-dashboard-list.empty-state.message',
+                  "You haven't created any public dashboards yet"
+                )}
+              >
+                <Trans i18nKey="public-dashboard-list.empty-state.more-info">
+                  Create a public dashboard from any existing dashboard through the <b>Share</b> modal.{' '}
+                  <TextLink
+                    external
+                    href="https://grafana.com/docs/grafana/latest/dashboards/dashboard-public/#make-a-dashboard-public"
+                  >
+                    Learn more
+                  </TextLink>
+                </Trans>
+              </EmptyState>
+            ) : (
+              <>
+                <ul className={styles.list}>
+                  {paginatedPublicDashboards.publicDashboards.map((pd: PublicDashboardListResponse) => (
+                    <li key={pd.uid}>
+                      <PublicDashboardCard pd={pd} />
+                    </li>
+                  ))}
+                </ul>
+                <HorizontalGroup justify="flex-end">
+                  <Pagination
+                    onNavigate={setPage}
+                    currentPage={paginatedPublicDashboards.page}
+                    numberOfPages={paginatedPublicDashboards.totalPages}
+                    hideWhenSinglePage
+                  />
+                </HorizontalGroup>
+              </>
+            )}
           </div>
         )}
       </Page.Contents>

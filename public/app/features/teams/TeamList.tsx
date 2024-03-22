@@ -16,12 +16,14 @@ import {
   LinkButton,
   Pagination,
   Stack,
+  TextLink,
   Tooltip,
   useStyles2,
 } from '@grafana/ui';
-import EmptyListCTA from 'app/core/components/EmptyListCTA/EmptyListCTA';
+import { EmptyState } from '@grafana/ui/src/components/EmptyState/EmptyState';
 import { Page } from 'app/core/components/Page/Page';
 import { fetchRoleOptions } from 'app/core/components/RolePicker/api';
+import { Trans, t } from 'app/core/internationalization';
 import { contextSrv } from 'app/core/services/context_srv';
 import { AccessControlAction, Role, StoreState, Team } from 'app/types';
 
@@ -194,24 +196,35 @@ export const TeamList = ({
     <Page
       navId="teams"
       actions={
-        <LinkButton href={canCreate ? 'org/teams/new' : '#'} disabled={!canCreate}>
-          New Team
-        </LinkButton>
+        !noTeams ? (
+          <LinkButton href={canCreate ? 'org/teams/new' : '#'} disabled={!canCreate}>
+            New Team
+          </LinkButton>
+        ) : undefined
       }
     >
       <Page.Contents>
         {noTeams ? (
-          <EmptyListCTA
-            title="You haven't created any teams yet."
-            buttonIcon="users-alt"
-            buttonLink="org/teams/new"
-            buttonTitle=" New team"
-            buttonDisabled={!contextSrv.hasPermission(AccessControlAction.ActionTeamsCreate)}
-            proTip="Assign folder and dashboard permissions to teams instead of users to ease administration."
-            proTipLink=""
-            proTipLinkTitle=""
-            proTipTarget="_blank"
-          />
+          <EmptyState
+            button={
+              <LinkButton
+                disabled={!contextSrv.hasPermission(AccessControlAction.ActionTeamsCreate)}
+                href="org/teams/new"
+                icon="users-alt"
+                size="lg"
+              >
+                <Trans i18nKey="teams.empty-state.button-title">New team</Trans>
+              </LinkButton>
+            }
+            message={t('teams.empty-state.title', "You haven't created any teams yet")}
+          >
+            <Trans i18nKey="teams.empty-state.pro-tip">
+              Assign folder and dashboard permissions to teams instead of users to ease administration.{' '}
+              <TextLink external href="https://grafana.com/docs/grafana/latest/administration/team-management">
+                Learn more
+              </TextLink>
+            </Trans>
+          </EmptyState>
         ) : (
           <>
             <div className="page-action-bar">
@@ -219,17 +232,26 @@ export const TeamList = ({
                 <FilterInput placeholder="Search teams" value={query} onChange={changeQuery} />
               </InlineField>
             </div>
-            <Stack direction={'column'} gap={2}>
-              <InteractiveTable
-                columns={columns}
-                data={hasFetched ? teams : skeletonData}
-                getRowId={(team) => String(team.id)}
-                fetchData={changeSort}
-              />
-              <Stack justifyContent="flex-end">
-                <Pagination hideWhenSinglePage currentPage={page} numberOfPages={totalPages} onNavigate={changePage} />
+            {hasFetched && teams.length === 0 ? (
+              <EmptyState variant="search" />
+            ) : (
+              <Stack direction={'column'} gap={2}>
+                <InteractiveTable
+                  columns={columns}
+                  data={hasFetched ? teams : skeletonData}
+                  getRowId={(team) => String(team.id)}
+                  fetchData={changeSort}
+                />
+                <Stack justifyContent="flex-end">
+                  <Pagination
+                    hideWhenSinglePage
+                    currentPage={page}
+                    numberOfPages={totalPages}
+                    onNavigate={changePage}
+                  />
+                </Stack>
               </Stack>
-            </Stack>
+            )}
           </>
         )}
       </Page.Contents>

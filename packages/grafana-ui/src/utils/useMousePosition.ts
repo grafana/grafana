@@ -9,7 +9,7 @@ interface MousePosition {
 // For performance reasons, we throttle the mouse position updates
 const DEFAULT_THROTTLE_INTERVAL_MS = 50;
 
-const useMousePosition = (throttleInterval = DEFAULT_THROTTLE_INTERVAL_MS) => {
+export const useMousePosition = (throttleInterval = DEFAULT_THROTTLE_INTERVAL_MS) => {
   const [mousePosition, setMousePosition] = useState<MousePosition>({ x: null, y: null });
 
   useEffect(() => {
@@ -25,5 +25,3 @@ const useMousePosition = (throttleInterval = DEFAULT_THROTTLE_INTERVAL_MS) => {
 
   return mousePosition;
 };
-
-export default useMousePosition;

@@ -1,14 +1,13 @@
 import React, { useMemo, useState } from 'react';
 import { useAsync } from 'react-use';
 
-import { ConfirmModal, LinkButton } from '@grafana/ui';
-import EmptyListCTA from 'app/core/components/EmptyListCTA/EmptyListCTA';
+import { ConfirmModal, LinkButton, TextLink } from '@grafana/ui';
+import { EmptyState } from '@grafana/ui/src/components/EmptyState/EmptyState';
 import { Page } from 'app/core/components/Page/Page';
 import PageActionBar from 'app/core/components/PageActionBar/PageActionBar';
 import { Trans, t } from 'app/core/internationalization';
 import { contextSrv } from 'app/core/services/context_srv';
 
-import { EmptyQueryListBanner } from './EmptyQueryListBanner';
 import { PlaylistPageList } from './PlaylistPageList';
 import { StartModal } from './StartModal';
 import { getPlaylistAPI, searchPlaylists } from './api';
@@ -36,26 +35,12 @@ export const PlaylistPage = () => {
     });
   };
 
-  const emptyListBanner = (
-    <EmptyListCTA
-      title={t('playlist-page.empty.title', 'There are no playlists created yet')}
-      buttonIcon="plus"
-      buttonLink="playlists/new"
-      buttonTitle={t('playlist-page.empty.button', 'Create Playlist')}
-      buttonDisabled={!contextSrv.isEditor}
-      proTip={t('playlist-page.empty.pro-tip', 'You can use playlists to cycle dashboards on TVs without user control')}
-      proTipLink="http://docs.grafana.org/reference/playlist/"
-      proTipLinkTitle={t('playlist-page.empty.pro-tip-link-title', 'Learn more')}
-      proTipTarget="_blank"
-    />
-  );
-
   const showSearch = allPlaylists.loading || playlists.length > 0 || searchQuery.length > 0;
 
   return (
     <Page
       actions={
-        contextSrv.isEditor ? (
+        contextSrv.isEditor && playlists.length > 0 ? (
           <LinkButton href="/playlists/new">
             <Trans i18nKey="playlist-page.create-button.title">New playlist</Trans>
           </LinkButton>
@@ -71,7 +56,7 @@ export const PlaylistPage = () => {
         ) : (
           <>
             {!hasPlaylists && searchQuery ? (
-              <EmptyQueryListBanner />
+              <EmptyState variant="search" message="No playlist found!" />
             ) : (
               <PlaylistPageList
                 playlists={playlists}
@@ -79,7 +64,23 @@ export const PlaylistPage = () => {
                 setPlaylistToDelete={setPlaylistToDelete}
               />
             )}
-            {!showSearch && emptyListBanner}
+            {!showSearch && (
+              <EmptyState
+                button={
+                  <LinkButton disabled={!contextSrv.isEditor} href="playlists/new" icon="plus" size="lg">
+                    <Trans i18nKey="playlist-page.empty.button">Create playlist</Trans>
+                  </LinkButton>
+                }
+                message={t('playlist-page.empty.title', 'There are no playlists created yet')}
+              >
+                <Trans i18nKey="playlist-page.empty.pro-tip">
+                  You can use playlists to cycle dashboards on TVs without user control.{' '}
+                  <TextLink external href="https://docs.grafana.org/reference/playlist/">
+                    Learn more
+                  </TextLink>
+                </Trans>
+              </EmptyState>
+            )}
             {playlistToDelete && (
               <ConfirmModal
                 title={playlistToDelete.name}
