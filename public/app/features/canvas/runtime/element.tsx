@@ -400,6 +400,10 @@ export class ElementState implements LayerElement {
       }
     }
 
+    if (border && border.radius !== undefined) {
+      css.borderRadius = `${border.radius}px`;
+    }
+
     this.dataStyle = css;
     this.applyLayoutStylesToDiv();
   }
