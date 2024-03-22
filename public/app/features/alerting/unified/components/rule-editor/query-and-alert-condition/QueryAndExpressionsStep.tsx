@@ -1,24 +1,12 @@
 import { css } from '@emotion/css';
 import { cloneDeep } from 'lodash';
 import React, { useCallback, useEffect, useMemo, useReducer, useState } from 'react';
-import { useFormContext } from 'react-hook-form';
+import { useFormContext, Controller } from 'react-hook-form';
 
 import { getDefaultRelativeTimeRange, GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { config, getDataSourceSrv } from '@grafana/runtime';
-import {
-  Alert,
-  Button,
-  Dropdown,
-  Field,
-  Icon,
-  InputControl,
-  Menu,
-  MenuItem,
-  Stack,
-  Tooltip,
-  useStyles2,
-} from '@grafana/ui';
+import { Alert, Button, Dropdown, Field, Icon, Menu, MenuItem, Stack, Tooltip, useStyles2 } from '@grafana/ui';
 import { Text } from '@grafana/ui/src/components/Text/Text';
 import { isExpressionQuery } from 'app/features/expressions/guards';
 import { ExpressionDatasourceUID, ExpressionQueryType, expressionTypes } from 'app/features/expressions/types';
@@ -414,7 +402,7 @@ export const QueryAndExpressionsStep = ({ editingExistingRule, onDataChange }: P
       {isCloudAlertRuleType && dataSourceName && (
         <Stack direction="column">
           <Field error={errors.expression?.message} invalid={!!errors.expression?.message}>
-            <InputControl
+            <Controller
               name="expression"
               render={({ field: { ref, ...field } }) => {
                 return (

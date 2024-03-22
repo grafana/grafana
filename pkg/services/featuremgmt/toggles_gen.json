@@ -441,12 +441,15 @@
     {
       "metadata": {
         "name": "pluginsDynamicAngularDetectionPatterns",
-        "resourceVersion": "1709648236447",
-        "creationTimestamp": "2024-03-05T14:17:16Z"
+        "resourceVersion": "1710847676897",
+        "creationTimestamp": "2024-03-05T14:17:16Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2024-03-19 11:27:56.897962695 +0000 UTC"
+        }
       },
       "spec": {
         "description": "Enables fetching Angular detection patterns for plugins from GCOM and fallback to hardcoded ones",
-        "stage": "experimental",
+        "stage": "GA",
         "codeowner": "@grafana/plugins-platform-backend"
       }
     },
@@ -506,7 +509,8 @@
       "metadata": {
         "name": "redshiftAsyncQueryDataSupport",
         "resourceVersion": "1709648236447",
-        "creationTimestamp": "2024-03-05T14:17:16Z"
+        "creationTimestamp": "2024-03-05T14:17:16Z",
+        "deletionTimestamp": "2024-03-18T12:15:18Z"
       },
       "spec": {
         "description": "Enable async query data support for Redshift",
@@ -776,12 +780,15 @@
     {
       "metadata": {
         "name": "annotationPermissionUpdate",
-        "resourceVersion": "1709648236447",
-        "creationTimestamp": "2024-03-05T14:17:16Z"
+        "resourceVersion": "1710885868422",
+        "creationTimestamp": "2024-03-05T14:17:16Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2024-03-19 22:04:28.422555 +0000 UTC"
+        }
       },
       "spec": {
-        "description": "Separate annotation permissions from dashboard permissions to allow for more granular control.",
-        "stage": "experimental",
+        "description": "Change the way annotation permissions work by scoping them to folders and dashboards.",
+        "stage": "GA",
         "codeowner": "@grafana/identity-access-team"
       }
     },
@@ -938,12 +945,15 @@
     {
       "metadata": {
         "name": "dashgpt",
-        "resourceVersion": "1709648236447",
-        "creationTimestamp": "2024-03-05T14:17:16Z"
+        "resourceVersion": "1711038841830",
+        "creationTimestamp": "2024-03-05T14:17:16Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2024-03-21 16:34:01.830925 +0000 UTC"
+        }
       },
       "spec": {
         "description": "Enable AI powered features in dashboards",
-        "stage": "preview",
+        "stage": "GA",
         "codeowner": "@grafana/dashboards-squad",
         "frontend": true
       }
@@ -963,12 +973,15 @@
     {
       "metadata": {
         "name": "enablePluginsTracingByDefault",
-        "resourceVersion": "1709648236447",
-        "creationTimestamp": "2024-03-05T14:17:16Z"
+        "resourceVersion": "1710760980171",
+        "creationTimestamp": "2024-03-05T14:17:16Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2024-03-18 11:23:00.171105276 +0000 UTC"
+        }
       },
       "spec": {
         "description": "Enable plugin tracing for all external plugins",
-        "stage": "experimental",
+        "stage": "GA",
         "codeowner": "@grafana/plugins-platform-backend",
         "requiresRestart": true
       }
@@ -1055,7 +1068,8 @@
       "metadata": {
         "name": "athenaAsyncQueryDataSupport",
         "resourceVersion": "1709648236447",
-        "creationTimestamp": "2024-03-05T14:17:16Z"
+        "creationTimestamp": "2024-03-05T14:17:16Z",
+        "deletionTimestamp": "2024-03-18T12:15:18Z"
       },
       "spec": {
         "description": "Enable async query data support for Athena",
@@ -1594,12 +1608,15 @@
     {
       "metadata": {
         "name": "newPDFRendering",
-        "resourceVersion": "1709648236447",
-        "creationTimestamp": "2024-03-05T14:17:16Z"
+        "resourceVersion": "1711016567239",
+        "creationTimestamp": "2024-03-05T14:17:16Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2024-03-21 10:22:47.2392058 +0000 UTC"
+        }
       },
       "spec": {
-        "description": "New implementation for the dashboard to PDF rendering",
-        "stage": "experimental",
+        "description": "New implementation for the dashboard-to-PDF rendering",
+        "stage": "preview",
         "codeowner": "@grafana/sharing-squad"
       }
     },

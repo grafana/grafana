@@ -1,9 +1,9 @@
 import { configureStore as reduxConfigureStore, createListenerMiddleware } from '@reduxjs/toolkit';
 import { setupListeners } from '@reduxjs/toolkit/query';
 
-import { migrateToCloudAPI } from 'app/features/admin/migrate-to-cloud/api';
 import { browseDashboardsAPI } from 'app/features/browse-dashboards/api/browseDashboardsAPI';
 import { publicDashboardApi } from 'app/features/dashboard/api/publicDashboardApi';
+import { migrateToCloudAPI } from 'app/features/migrate-to-cloud/api';
 import { StoreState } from 'app/types/store';
 
 import { buildInitialState } from '../core/reducers/navModel';
