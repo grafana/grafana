@@ -179,6 +179,11 @@ text = "501"
 linters = ["gosec"]
 text = "404"
 
+# https://stackoverflow.com/a/68247837/767660
+[[issues.exclude-rules]]
+linters = ["gosec"]
+text = "G601"
+
 [[issues.exclude-rules]]
 linters = ["misspell"]
 text = "Unknwon` is a misspelling of `Unknown"
