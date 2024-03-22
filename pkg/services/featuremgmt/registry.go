@@ -160,6 +160,13 @@ var (
 			Owner:        grafanaDatavizSquad,
 		},
 		{
+			Name:         "autoMigrateXYChartPanel",
+			Description:  "Migrate old XYChart panel to new XYChart2 model",
+			Stage:        FeatureStagePublicPreview,
+			FrontendOnly: true,
+			Owner:        grafanaDatavizSquad,
+		},
+		{
 			Name:              "disableAngular",
 			Description:       "Dynamic flag to disable angular at runtime. The preferred method is to set `angular_support_enabled` to `false` in the [security] settings, which allows you to change the state at runtime.",
 			Stage:             FeatureStagePublicPreview,
