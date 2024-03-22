@@ -62,11 +62,64 @@ func (s *AccessControlStore) SearchUsersPermissions(ctx context.Context, orgID i
 	}
 	dbPerms := make([]UserRBACPermission, 0)
 
+	userID := int64(0)
+	var err error
+	if options.NamespacedID != "" {
+		userID, err = options.ComputeUserID()
+		if err != nil {
+			return nil, err
+		}
+	}
+
 	if err := s.sql.WithDbSession(ctx, func(sess *db.Session) error {
 		roleNameFilterJoin := ""
 		if len(options.RolePrefixes) > 0 {
 			roleNameFilterJoin = "INNER JOIN role AS r on up.role_id = r.id"
 		}
+
+		params := []any{}
+
+		direct := `SELECT ur.user_id, ur.org_id, p.action, p.scope, ur.role_id
+		FROM permission AS p
+		INNER JOIN user_role AS ur on ur.role_id = p.role_id`
+		if options.NamespacedID != "" {
+			direct += " WHERE ur.user_id = ?"
+			params = append(params, userID)
+		}
+
+		team := `SELECT tm.user_id, tr.org_id, p.action, p.scope, tr.role_id
+		FROM permission AS p
+		INNER JOIN team_role AS tr ON tr.role_id = p.role_id
+		INNER JOIN team_member AS tm ON tm.team_id = tr.team_id`
+		if options.NamespacedID != "" {
+			team += " WHERE tm.user_id = ?"
+			params = append(params, userID)
+		}
+
+		basic := `SELECT ou.user_id, ou.org_id, p.action, p.scope, br.role_id
+		FROM permission AS p
+		INNER JOIN builtin_role AS br ON br.role_id = p.role_id
+		INNER JOIN org_user AS ou ON ou.role = br.role`
+		if options.NamespacedID != "" {
+			basic += " WHERE ou.user_id = ?"
+			params = append(params, userID)
+		}
+
+		grafana_admin := `SELECT sa.user_id, br.org_id, p.action, p.scope, br.role_id
+		FROM permission AS p
+		INNER JOIN builtin_role AS br ON br.role_id = p.role_id
+		INNER JOIN (
+			SELECT u.id AS user_id
+			FROM ` + s.sql.GetDialect().Quote("user") + ` AS u WHERE u.is_admin
+		) AS sa ON 1 = 1
+		WHERE br.role = ?`
+		params = append(params, accesscontrol.RoleGrafanaAdmin)
+		if options.NamespacedID != "" {
+			grafana_admin += " AND sa.user_id = ?"
+			params = append(params, userID)
+		}
+
+		params = append(params, orgID, accesscontrol.GlobalOrgID)
 
 		// Find permissions
 		q := `
@@ -75,33 +128,16 @@ func (s *AccessControlStore) SearchUsersPermissions(ctx context.Context, orgID i
 			action,
 			scope
 		FROM (
-			SELECT ur.user_id, ur.org_id, p.action, p.scope, ur.role_id
-				FROM permission AS p
-				INNER JOIN user_role AS ur on ur.role_id = p.role_id
+			` + direct + `
 			UNION ALL
-				SELECT tm.user_id, tr.org_id, p.action, p.scope, tr.role_id
-					FROM permission AS p
-					INNER JOIN team_role AS tr ON tr.role_id = p.role_id
-					INNER JOIN team_member AS tm ON tm.team_id = tr.team_id
+			` + team + `
 			UNION ALL
-				SELECT ou.user_id, ou.org_id, p.action, p.scope, br.role_id
-					FROM permission AS p
-					INNER JOIN builtin_role AS br ON br.role_id = p.role_id
-					INNER JOIN org_user AS ou ON ou.role = br.role
+			` + basic + `
 			UNION ALL
-				SELECT sa.user_id, br.org_id, p.action, p.scope, br.role_id
-					FROM permission AS p
-					INNER JOIN builtin_role AS br ON br.role_id = p.role_id
-					INNER JOIN (
-						SELECT u.id AS user_id
-						FROM ` + s.sql.GetDialect().Quote("user") + ` AS u WHERE u.is_admin
-					) AS sa ON 1 = 1
-					WHERE br.role = ?
+			` + grafana_admin + `
 		) AS up ` + roleNameFilterJoin + `
 		WHERE (up.org_id = ? OR up.org_id = ?)
 		`
-
-		params := []any{accesscontrol.RoleGrafanaAdmin, accesscontrol.GlobalOrgID, orgID}
 
 		if options.ActionPrefix != "" {
 			q += ` AND action LIKE ?`
@@ -119,14 +155,14 @@ func (s *AccessControlStore) SearchUsersPermissions(ctx context.Context, orgID i
 				params = append(params, scopes[i])
 			}
 		}
-		if options.NamespacedID != "" {
-			userID, err := options.ComputeUserID()
-			if err != nil {
-				return err
-			}
-			q += ` AND user_id = ?`
-			params = append(params, userID)
-		}
+		// if options.NamespacedID != "" {
+		// 	userID, err := options.ComputeUserID()
+		// 	if err != nil {
+		// 		return err
+		// 	}
+		// 	q += ` AND user_id = ?`
+		// 	params = append(params, userID)
+		// }
 		if len(options.RolePrefixes) > 0 {
 			q += " AND ( " + strings.Repeat("r.name LIKE ? OR ", len(options.RolePrefixes)-1)
 			q += "r.name LIKE ? )"
