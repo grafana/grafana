@@ -181,7 +181,10 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
       dashboardWatcher.watch(this.state.uid);
     }
 
-    const clearKeyBindings = setupKeyboardShortcuts(this);
+    let clearKeyBindings = () => {};
+    if (!config.publicDashboardAccessToken) {
+      clearKeyBindings = setupKeyboardShortcuts(this);
+    }
     const oldDashboardWrapper = new DashboardModelCompatibilityWrapper(this);
 
     // @ts-expect-error

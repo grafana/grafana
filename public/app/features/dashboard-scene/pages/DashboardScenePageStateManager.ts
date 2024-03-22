@@ -1,5 +1,5 @@
 import { locationUtil } from '@grafana/data';
-import { getBackendSrv, isFetchError, locationService } from '@grafana/runtime';
+import { config, getBackendSrv, isFetchError, locationService } from '@grafana/runtime';
 import { updateNavIndex } from 'app/core/actions';
 import { StateManagerBase } from 'app/core/services/StateManagerBase';
 import { backendSrv } from 'app/core/services/backend_srv';
@@ -78,6 +78,9 @@ export class DashboardScenePageStateManager extends StateManagerBase<DashboardSc
           }
 
           break;
+        case DashboardRoutes.Public: {
+          return await dashboardLoaderSrv.loadDashboard('public', '', uid);
+        }
         default:
           rsp = await dashboardLoaderSrv.loadDashboard('db', '', uid);
 
@@ -142,7 +145,9 @@ export class DashboardScenePageStateManager extends StateManagerBase<DashboardSc
   public async loadDashboard(options: LoadDashboardOptions) {
     try {
       const dashboard = await this.loadScene(options);
-      dashboard.startUrlSync();
+      if (!(config.publicDashboardAccessToken && dashboard.state.controls?.state.hideTimeControls)) {
+        dashboard.startUrlSync();
+      }
 
       this.setState({ dashboard: dashboard, isLoading: false });
     } catch (err) {

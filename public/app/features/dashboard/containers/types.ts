@@ -21,3 +21,14 @@ export type DashboardPageRouteSearchParams = {
   scenes?: boolean;
   shareView?: string;
 };
+
+export type PublicDashboardPageRouteParams = {
+  accessToken?: string;
+};
+
+export type PublicDashboardPageRouteSearchParams = {
+  from?: string;
+  to?: string;
+  refresh?: string;
+  scenes?: boolean;
+};
