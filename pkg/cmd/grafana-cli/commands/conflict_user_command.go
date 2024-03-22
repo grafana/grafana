@@ -79,7 +79,12 @@ func initializeConflictResolver(cmd *utils.ContextCommandLine, f Formatter, ctx 
 }
 
 func getSqlStore(cfg *setting.Cfg, features featuremgmt.FeatureToggles) (*sqlstore.SQLStore, error) {
-	tracer, err := tracing.ProvideService(cfg)
+	tracingCfg, err := tracing.ProvideTracingConfig(cfg)
+	if err != nil {
+		return nil, fmt.Errorf("%v: %w", "failed to initialize tracer config", err)
+	}
+
+	tracer, err := tracing.ProvideService(tracingCfg)
 	if err != nil {
 		return nil, fmt.Errorf("%v: %w", "failed to initialize tracer service", err)
 	}

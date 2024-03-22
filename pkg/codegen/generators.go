@@ -7,14 +7,12 @@ import (
 
 	"cuelang.org/go/cue"
 	"github.com/grafana/codejen"
-	"github.com/grafana/kindsys"
-	"github.com/grafana/thema"
 )
 
-type OneToOne codejen.OneToOne[kindsys.Kind]
-type OneToMany codejen.OneToMany[kindsys.Kind]
-type ManyToOne codejen.ManyToOne[kindsys.Kind]
-type ManyToMany codejen.ManyToMany[kindsys.Kind]
+type OneToOne codejen.OneToOne[SchemaForGen]
+type OneToMany codejen.OneToMany[SchemaForGen]
+type ManyToOne codejen.ManyToOne[SchemaForGen]
+type ManyToMany codejen.ManyToMany[SchemaForGen]
 
 // SlashHeaderMapper produces a FileMapper that injects a comment header onto
 // a [codejen.File] indicating the main generator that produced it (via the provided
@@ -47,21 +45,10 @@ func SlashHeaderMapper(maingen string) codejen.FileMapper {
 	}
 }
 
-// SchemaForGen is an intermediate values type for jennies that holds both a thema.Schema,
-// and values relevant to generating the schema that should properly, eventually, be in
-// thema itself.
-//
-// TODO this will be replaced by thema-native constructs
 type SchemaForGen struct {
-	// The PascalCase name of the schematized type.
-	Name string
-	// The schema to be rendered for the type itself.
-	Schema thema.Schema
-	// Whether the schema is grouped. See https://github.com/grafana/thema/issues/62
-	IsGroup bool
-}
-
-type CueSchema struct {
-	CueFile  cue.Value
-	FilePath string
+	Name       string
+	CueFile    cue.Value
+	FilePath   string
+	IsGroup    bool
+	OutputName string // Some TS output files are capitalised and others not.
 }
