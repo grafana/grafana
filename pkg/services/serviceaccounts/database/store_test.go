@@ -30,8 +30,8 @@ func TestMain(m *testing.M) {
 // Service Account should not create an org on its own
 func TestStore_CreateServiceAccountOrgNonExistant(t *testing.T) {
 	_, store := setupTestDatabase(t)
+	serviceAccountName := "new Service Account"
 	t.Run("create service account", func(t *testing.T) {
-		serviceAccountName := "new Service Account"
 		serviceAccountOrgId := int64(1)
 		serviceAccountRole := org.RoleAdmin
 		isDisabled := true
@@ -47,13 +47,12 @@ func TestStore_CreateServiceAccountOrgNonExistant(t *testing.T) {
 }
 
 func TestStore_CreateServiceAccount(t *testing.T) {
-	_, store := setupTestDatabase(t)
-	orgQuery := &org.CreateOrgCommand{Name: orgimpl.MainOrgName}
-	orgResult, err := store.orgService.CreateWithMember(context.Background(), orgQuery)
-	require.NoError(t, err)
-
+	serviceAccountName := "new Service Account"
 	t.Run("create service account", func(t *testing.T) {
-		serviceAccountName := "new Service Account"
+		_, store := setupTestDatabase(t)
+		orgQuery := &org.CreateOrgCommand{Name: orgimpl.MainOrgName}
+		orgResult, err := store.orgService.CreateWithMember(context.Background(), orgQuery)
+		require.NoError(t, err)
 		serviceAccountOrgId := orgResult.ID
 		serviceAccountRole := org.RoleAdmin
 		isDisabled := true
@@ -65,13 +64,11 @@ func TestStore_CreateServiceAccount(t *testing.T) {
 
 		saDTO, err := store.CreateServiceAccount(context.Background(), serviceAccountOrgId, &saForm)
 		require.NoError(t, err)
-		assert.Equal(t, "sa-new-service-account", saDTO.Login)
 		assert.Equal(t, serviceAccountName, saDTO.Name)
 		assert.Equal(t, 0, int(saDTO.Tokens))
 
 		retrieved, err := store.RetrieveServiceAccount(context.Background(), serviceAccountOrgId, saDTO.Id)
 		require.NoError(t, err)
-		assert.Equal(t, "sa-new-service-account", retrieved.Login)
 		assert.Equal(t, serviceAccountName, retrieved.Name)
 		assert.Equal(t, serviceAccountOrgId, retrieved.OrgId)
 		assert.Equal(t, string(serviceAccountRole), retrieved.Role)
@@ -80,6 +77,82 @@ func TestStore_CreateServiceAccount(t *testing.T) {
 		retrievedId, err := store.RetrieveServiceAccountIdByName(context.Background(), serviceAccountOrgId, serviceAccountName)
 		require.NoError(t, err)
 		assert.Equal(t, saDTO.Id, retrievedId)
+	})
+
+	t.Run("create service account twice same org, error", func(t *testing.T) {
+		_, store := setupTestDatabase(t)
+		orgQuery := &org.CreateOrgCommand{Name: orgimpl.MainOrgName}
+		orgResult, err := store.orgService.CreateWithMember(context.Background(), orgQuery)
+		require.NoError(t, err)
+		serviceAccountOrgId := orgResult.ID
+		serviceAccountRole := org.RoleAdmin
+		isDisabled := true
+		saForm := serviceaccounts.CreateServiceAccountForm{
+			Name:       serviceAccountName,
+			Role:       &serviceAccountRole,
+			IsDisabled: &isDisabled,
+		}
+
+		saDTO, err := store.CreateServiceAccount(context.Background(), serviceAccountOrgId, &saForm)
+		require.NoError(t, err)
+		assert.Equal(t, serviceAccountName, saDTO.Name)
+		assert.Equal(t, 0, int(saDTO.Tokens))
+
+		retrieved, err := store.RetrieveServiceAccount(context.Background(), serviceAccountOrgId, saDTO.Id)
+		require.NoError(t, err)
+		assert.Equal(t, serviceAccountName, retrieved.Name)
+		assert.Equal(t, serviceAccountOrgId, retrieved.OrgId)
+		assert.Equal(t, string(serviceAccountRole), retrieved.Role)
+		assert.True(t, retrieved.IsDisabled)
+
+		retrievedId, err := store.RetrieveServiceAccountIdByName(context.Background(), serviceAccountOrgId, serviceAccountName)
+		require.NoError(t, err)
+		assert.Equal(t, saDTO.Id, retrievedId)
+
+		// should not b able to create the same service account twice in the same org
+		_, err = store.CreateServiceAccount(context.Background(), serviceAccountOrgId, &saForm)
+		require.Error(t, err)
+	})
+
+	t.Run("create service account twice different orgs should work", func(t *testing.T) {
+		_, store := setupTestDatabase(t)
+		orgQuery := &org.CreateOrgCommand{Name: orgimpl.MainOrgName}
+		orgResult, err := store.orgService.CreateWithMember(context.Background(), orgQuery)
+		require.NoError(t, err)
+		serviceAccountOrgId := orgResult.ID
+		serviceAccountRole := org.RoleAdmin
+		isDisabled := true
+		saForm := serviceaccounts.CreateServiceAccountForm{
+			Name:       serviceAccountName,
+			Role:       &serviceAccountRole,
+			IsDisabled: &isDisabled,
+		}
+
+		saDTO, err := store.CreateServiceAccount(context.Background(), serviceAccountOrgId, &saForm)
+		require.NoError(t, err)
+		assert.Equal(t, serviceAccountName, saDTO.Name)
+		assert.Equal(t, 0, int(saDTO.Tokens))
+
+		retrieved, err := store.RetrieveServiceAccount(context.Background(), serviceAccountOrgId, saDTO.Id)
+		require.NoError(t, err)
+		assert.Equal(t, serviceAccountName, retrieved.Name)
+		assert.Equal(t, serviceAccountOrgId, retrieved.OrgId)
+		assert.Equal(t, string(serviceAccountRole), retrieved.Role)
+		assert.True(t, retrieved.IsDisabled)
+
+		retrievedId, err := store.RetrieveServiceAccountIdByName(context.Background(), serviceAccountOrgId, serviceAccountName)
+		require.NoError(t, err)
+		assert.Equal(t, saDTO.Id, retrievedId)
+
+		orgQuerySecond := &org.CreateOrgCommand{Name: "Second Org name"}
+		orgResultSecond, err := store.orgService.CreateWithMember(context.Background(), orgQuerySecond)
+		require.NoError(t, err)
+		serviceAccountOrgIdSecond := orgResultSecond.ID
+		// should not b able to create the same service account twice in the same org
+		saDTOSecond, err := store.CreateServiceAccount(context.Background(), serviceAccountOrgIdSecond, &saForm)
+		require.NoError(t, err)
+		assert.Equal(t, serviceAccountName, saDTOSecond.Name)
+		assert.Equal(t, 0, int(saDTOSecond.Tokens))
 	})
 }
 
@@ -100,13 +173,11 @@ func TestStore_CreateServiceAccountRoleNone(t *testing.T) {
 
 	saDTO, err := store.CreateServiceAccount(context.Background(), serviceAccountOrgId, &saForm)
 	require.NoError(t, err)
-	assert.Equal(t, "sa-new-service-account", saDTO.Login)
 	assert.Equal(t, serviceAccountName, saDTO.Name)
 	assert.Equal(t, 0, int(saDTO.Tokens))
 
 	retrieved, err := store.RetrieveServiceAccount(context.Background(), serviceAccountOrgId, saDTO.Id)
 	require.NoError(t, err)
-	assert.Equal(t, "sa-new-service-account", retrieved.Login)
 	assert.Equal(t, serviceAccountName, retrieved.Name)
 	assert.Equal(t, serviceAccountOrgId, retrieved.OrgId)
 	assert.Equal(t, string(serviceAccountRole), retrieved.Role)
@@ -376,14 +447,14 @@ func TestStore_MigrateAllApiKeys(t *testing.T) {
 }
 func TestServiceAccountsStoreImpl_SearchOrgServiceAccounts(t *testing.T) {
 	initUsers := []tests.TestUser{
-		{Name: "satest-1", Role: string(org.RoleViewer), Login: "sa-satest-1", IsServiceAccount: true},
+		{Name: "satest-1", Role: string(org.RoleViewer), Login: "sa-1-satest-1", IsServiceAccount: true},
 		{Name: "usertest-2", Role: string(org.RoleEditor), Login: "usertest-2", IsServiceAccount: false},
-		{Name: "satest-3", Role: string(org.RoleEditor), Login: "sa-satest-3", IsServiceAccount: true},
-		{Name: "satest-4", Role: string(org.RoleAdmin), Login: "sa-satest-4", IsServiceAccount: true},
-		{Name: "extsvc-test-5", Role: string(org.RoleNone), Login: "sa-extsvc-test-5", IsServiceAccount: true},
-		{Name: "extsvc-test-6", Role: string(org.RoleNone), Login: "sa-extsvc-test-6", IsServiceAccount: true},
-		{Name: "extsvc-test-7", Role: string(org.RoleNone), Login: "sa-extsvc-test-7", IsServiceAccount: true},
-		{Name: "extsvc-test-8", Role: string(org.RoleNone), Login: "sa-extsvc-test-8", IsServiceAccount: true},
+		{Name: "satest-3", Role: string(org.RoleEditor), Login: "sa-1-satest-3", IsServiceAccount: true},
+		{Name: "satest-4", Role: string(org.RoleAdmin), Login: "sa-1-satest-4", IsServiceAccount: true},
+		{Name: "extsvc-test-5", Role: string(org.RoleNone), Login: "sa-1-extsvc-test-5", IsServiceAccount: true},
+		{Name: "extsvc-test-6", Role: string(org.RoleNone), Login: "sa-1-extsvc-test-6", IsServiceAccount: true},
+		{Name: "extsvc-test-7", Role: string(org.RoleNone), Login: "sa-1-extsvc-test-7", IsServiceAccount: true},
+		{Name: "extsvc-test-8", Role: string(org.RoleNone), Login: "sa-1-extsvc-test-8", IsServiceAccount: true},
 	}
 
 	db, store := setupTestDatabase(t)
@@ -451,10 +522,10 @@ func TestServiceAccountsStoreImpl_SearchOrgServiceAccounts(t *testing.T) {
 			expectedCount: 4,
 		},
 		{
-			desc: "should return service accounts with sa-satest login",
+			desc: "should return service accounts with sa-1-satest login",
 			query: &serviceaccounts.SearchOrgServiceAccountsQuery{
 				OrgID:        orgID,
-				Query:        "sa-satest",
+				Query:        "sa-1-satest",
 				SignedInUser: userWithPerm,
 				Filter:       serviceaccounts.FilterIncludeAll,
 			},

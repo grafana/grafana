@@ -26,6 +26,7 @@ import { getAutoQueriesForMetric } from '../AutomaticMetricQueries/AutoQueryEngi
 import { AutoQueryDef } from '../AutomaticMetricQueries/types';
 import { BreakdownLabelSelector } from '../BreakdownLabelSelector';
 import { MetricScene } from '../MetricScene';
+import { StatusWrapper } from '../StatusWrapper';
 import { trailDS, VAR_FILTERS, VAR_GROUP_BY, VAR_GROUP_BY_EXP } from '../shared';
 import { getColorByIndex } from '../utils';
 
@@ -34,11 +35,15 @@ import { ByFrameRepeater } from './ByFrameRepeater';
 import { LayoutSwitcher } from './LayoutSwitcher';
 import { getLabelOptions } from './utils';
 
+const MAX_PANELS_IN_ALL_LABELS_BREAKDOWN = 60;
+
 export interface BreakdownSceneState extends SceneObjectState {
   body?: SceneObject;
   labels: Array<SelectableValue<string>>;
   value?: string;
   loading?: boolean;
+  error?: string;
+  blockingMessage?: string;
 }
 
 export class BreakdownScene extends SceneObjectBase<BreakdownSceneState> {
@@ -99,12 +104,17 @@ export class BreakdownScene extends SceneObjectBase<BreakdownSceneState> {
       loading: variable.state.loading,
       value: String(variable.state.value),
       labels: options,
+      error: variable.state.error,
+      blockingMessage: undefined,
     };
 
-    if (!variable.state.loading) {
+    if (!variable.state.loading && variable.state.options.length) {
       stateUpdate.body = variable.hasAllValue()
         ? buildAllLayout(options, this._query!)
         : buildNormalLayout(this._query!);
+    } else if (!variable.state.loading) {
+      stateUpdate.body = undefined;
+      stateUpdate.blockingMessage = 'Unable to retrieve label options for currently selected metric.';
     }
 
     this.setState(stateUpdate);
@@ -117,37 +127,32 @@ export class BreakdownScene extends SceneObjectBase<BreakdownSceneState> {
 
     const variable = this.getVariable();
 
-    if (value === ALL_VARIABLE_VALUE) {
-      this.setState({ body: buildAllLayout(this.state.labels, this._query!) });
-    } else if (variable.hasAllValue()) {
-      this.setState({ body: buildNormalLayout(this._query!) });
-    }
-
     variable.changeValueTo(value);
   };
 
   public static Component = ({ model }: SceneComponentProps<BreakdownScene>) => {
-    const { labels, body, loading, value } = model.useState();
+    const { labels, body, loading, value, blockingMessage } = model.useState();
     const styles = useStyles2(getStyles);
 
     return (
       <div className={styles.container}>
-        {loading && <div>Loading...</div>}
-        <div className={styles.controls}>
-          {!loading && (
-            <div className={styles.controlsLeft}>
-              <Field label="By label">
-                <BreakdownLabelSelector options={labels} value={value} onChange={model.onChange} />
-              </Field>
-            </div>
-          )}
-          {body instanceof LayoutSwitcher && (
-            <div className={styles.controlsRight}>
-              <body.Selector model={body} />
-            </div>
-          )}
-        </div>
-        <div className={styles.content}>{body && <body.Component model={body} />}</div>
+        <StatusWrapper {...{ isLoading: loading, blockingMessage }}>
+          <div className={styles.controls}>
+            {!loading && labels.length && (
+              <div className={styles.controlsLeft}>
+                <Field label="By label">
+                  <BreakdownLabelSelector options={labels} value={value} onChange={model.onChange} />
+                </Field>
+              </div>
+            )}
+            {body instanceof LayoutSwitcher && (
+              <div className={styles.controlsRight}>
+                <body.Selector model={body} />
+              </div>
+            )}
+          </div>
+          <div className={styles.content}>{body && <body.Component model={body} />}</div>
+        </StatusWrapper>
       </div>
     );
   };
@@ -195,6 +200,10 @@ export function buildAllLayout(options: Array<SelectableValue<string>>, queryDef
       continue;
     }
 
+    if (children.length === MAX_PANELS_IN_ALL_LABELS_BREAKDOWN) {
+      break;
+    }
+
     const expr = queryDef.queries[0].expr.replaceAll(VAR_GROUP_BY_EXP, String(option.value));
     const unit = queryDef.unit;
 
@@ -204,7 +213,7 @@ export function buildAllLayout(options: Array<SelectableValue<string>>, queryDef
           .setTitle(option.label!)
           .setData(
             new SceneQueryRunner({
-              maxDataPoints: 300,
+              maxDataPoints: 250,
               datasource: trailDS,
               queries: [
                 {
@@ -227,17 +236,19 @@ export function buildAllLayout(options: Array<SelectableValue<string>>, queryDef
       { value: 'grid', label: 'Grid' },
       { value: 'rows', label: 'Rows' },
     ],
-    active: 'grid',
     layouts: [
       new SceneCSSGridLayout({
         templateColumns: GRID_TEMPLATE_COLUMNS,
         autoRows: '200px',
         children: children,
+        isLazy: true,
       }),
       new SceneCSSGridLayout({
         templateColumns: '1fr',
         autoRows: '200px',
-        children: children,
+        // Clone children since a scene object can only have one parent at a time
+        children: children.map((c) => c.clone()),
+        isLazy: true,
       }),
     ],
   });
@@ -257,7 +268,6 @@ function buildNormalLayout(queryDef: AutoQueryDef) {
       { value: 'grid', label: 'Grid' },
       { value: 'rows', label: 'Rows' },
     ],
-    active: 'grid',
     layouts: [
       new SceneFlexLayout({
         direction: 'column',
@@ -309,24 +319,18 @@ function buildNormalLayout(queryDef: AutoQueryDef) {
 }
 
 function getLabelValue(frame: DataFrame) {
-  const labels = frame.fields[1]?.labels;
-
-  if (!labels) {
-    return 'No labels';
-  }
+  const labels = frame.fields[1]?.labels || {};
 
   const keys = Object.keys(labels);
   if (keys.length === 0) {
-    return 'No labels';
+    return '<unspecified>';
   }
 
   return labels[keys[0]];
 }
 
 export function buildBreakdownActionScene() {
-  return new SceneFlexItem({
-    body: new BreakdownScene({}),
-  });
+  return new BreakdownScene({});
 }
 
 interface SelectLabelActionState extends SceneObjectState {
@@ -339,7 +343,7 @@ export class SelectLabelAction extends SceneObjectBase<SelectLabelActionState> {
 
   public static Component = ({ model }: SceneComponentProps<AddToFiltersGraphAction>) => {
     return (
-      <Button variant="primary" size="sm" fill="text" onClick={model.onClick}>
+      <Button variant="secondary" size="sm" fill="solid" onClick={model.onClick}>
         Select
       </Button>
     );

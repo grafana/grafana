@@ -1,6 +1,6 @@
 ---
 aliases:
-  - ../unified-alerting/alerting-rules/create-grafana-managed-rule/
+  - ../unified-alerting/alerting-rules/create-grafana-managed-rule/ # /docs/grafana/<GRAFANA_VERSION>/alerting/unified-alerting/alerting-rules/create-grafana-managed-rule/
 canonical: https://grafana.com/docs/grafana/latest/alerting/alerting-rules/create-grafana-managed-rule/
 description: Configure Grafana-managed alert rules to create alerts that can act on data from any of our supported data sources
 keywords:
@@ -37,8 +37,6 @@ Grafana managed alert rules can only be edited or deleted by users with Edit per
 
 If you delete an alerting resource created in the UI, you can no longer retrieve it.
 To make a backup of your configuration and to be able to restore deleted alerting resources, create your alerting resources using file provisioning, Terraform, or the Alerting API.
-
-Watch this video to learn more about creating alert rules: {{< vimeo 720001934 >}}
 
 In the following sections, we’ll guide you through the process of creating your Grafana-managed alert rules.
 
@@ -80,10 +78,6 @@ Define a query to get the data you want to measure and a condition that needs to
 
    b. Click **Preview** to verify that the expression is successful.
 
-{{% admonition type="note" %}}
-The recovery threshold feature is currently only available in OSS.
-{{% /admonition %}}
-
 1. To add a recovery threshold, turn the **Custom recovery threshold** toggle on and fill in a value for when your alert rule should stop firing.
 
    You can only add one recovery threshold in a query and it must be the alert condition.
@@ -121,36 +115,10 @@ To do this, you need to make sure that your alert rule is in the right evaluatio
 
    Use the guidelines in [No data and error handling](#configure-no-data-and-error-handling).
 
-## Configure notifications
+## Configure labels and notifications
 
 {{< admonition type="note" >}}
-To try out a simplified version of routing your alerts, enable the alertingSimplifiedRouting feature toggle and refer to the following section Configure notifications (simplified).
-{{< /admonition >}}
-
-1. Add labels to your alert rules to set which notification policy should handle your firing alert instances.
-
-   All alert rules and instances, irrespective of their labels, match the default notification policy. If there are no nested policies, or no nested policies match the labels in the alert rule or alert instance, then the default notification policy is the matching policy.
-
-   Add labels if you want to change the way your notifications are routed.
-
-   Add custom labels by selecting existing key-value pairs from the drop down, or add new labels by entering the new key or value.
-
-1. Preview your alert instance routing set up.
-
-   Based on the labels added, alert instances are routed to the following notification policies displayed.
-
-   Expand each notification policy below to view more details.
-
-1. Click See details to view alert routing details and an email preview.
-
-1. Click **Save rule**.
-
-## Configure notifications (simplified)
-
-{{< admonition type="note" >}}
-To try this out, enable the alertingSimplifiedRouting feature toggle.
-
-This feature is currently not available for Grafana Cloud.
+This section is for all Cloud instances and OSS instances with the alertingSimplifiedRouting feature toggle enabled.
 {{< /admonition >}}
 
 In the **Labels** section, you can optionally choose whether to add labels to organize your alert rules, make searching easier, as well as set which notification policy should handle your firing alert instance.
@@ -173,16 +141,16 @@ Complete the following steps to set up labels and notifications.
 
    2. You can also optionally select a mute timing as well as groupings and timings to define when not to send notifications.
 
-      {{% admonition type="note" %}}
-      An auto-generated notification policy is generated. Only admins can view these auto-generated policies from the **Notification policies** list view. Any changes have to be made in the alert rules form. {{% /admonition %}}
+      {{< admonition type="note" >}}
+      An auto-generated notification policy is generated. Only admins can view these auto-generated policies from the **Notification policies** list view. Any changes have to be made in the alert rules form. {{< /admonition >}}
 
    **Use notification policy**
 
    3. Choose this option to use the notification policy tree to direct your notifications.
 
-      {{% admonition type="note" %}}
+      {{< admonition type="note" >}}
       All alert rules and instances, irrespective of their labels, match the default notification policy. If there are no nested policies, or no nested policies match the labels in the alert rule or alert instance, then the default notification policy is the matching policy.
-      {{% /admonition %}}
+      {{< /admonition >}}
 
    4. Preview your alert instance routing set up.
 
@@ -191,6 +159,30 @@ Complete the following steps to set up labels and notifications.
    5. Expand each notification policy below to view more details.
 
    6. Click **See details** to view alert routing details and an email preview.
+
+## Configure notifications
+
+{{< admonition type="note" >}}
+This section is for OSS instances without the alertingSimplifiedRouting feature toggle enabled.
+{{< /admonition >}}
+
+1. Add labels to your alert rules to set which notification policy should handle your firing alert instances.
+
+   All alert rules and instances, irrespective of their labels, match the default notification policy. If there are no nested policies, or no nested policies match the labels in the alert rule or alert instance, then the default notification policy is the matching policy.
+
+   Add labels if you want to change the way your notifications are routed.
+
+   Add custom labels by selecting existing key-value pairs from the drop down, or add new labels by entering the new key or value.
+
+2. Preview your alert instance routing set up.
+
+   Based on the labels added, alert instances are routed to the following notification policies displayed.
+
+3. Expand each notification policy below to view more details.
+
+4. Click **See details** to view alert routing details and an email preview.
+
+5. Click **Save rule**.
 
 ## Add annotations
 
@@ -231,7 +223,7 @@ For more information, see [expressions documentation][expression-queries].
 
 To generate a separate alert for each series, create a multi-dimensional rule. Use `Math`, `Reduce`, or `Resample` expressions to create a multi-dimensional rule. For example:
 
-- Add a `Reduce` expression for each query to aggregate values in the selected time range into a single value. (Not needed for [rules using numeric data][alerting-on-numeric-data].
+- Add a `Reduce` expression for each query to aggregate values in the selected time range into a single value. (Not needed for [rules using numeric data][alerting-on-numeric-data]).
 - Add a `Math` expression with the condition for the rule. Not needed in case a query or a reduce expression already returns 0 if rule should not fire, or a positive number if it should fire. Some examples: `$B > 70` if it should fire in case value of B query/expression is more than 70. `$B < $C * 100` in case it should fire if value of B is less than value of C multiplied by 100. If queries being compared have multiple series in their results, series from different queries are matched if they have the same labels or one is a subset of the other.
 
 ![Query section multi dimensional](/static/img/docs/alerting/unified/rule-edit-multi-8-0.png 'Query section multi dimensional screenshot')
@@ -280,11 +272,11 @@ This will open the alert rule form, allowing you to configure and create your al
 [add-a-query]: "/docs/grafana/ -> /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/query-transform-data#add-a-query"
 [add-a-query]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/visualizations/panels-visualizations/query-transform-data#add-a-query"
 
-[alerting-on-numeric-data]: "/docs/grafana/ -> /docs/grafana/<GRAFANA_VERSION>/alerting/fundamentals/evaluate-grafana-alerts#alerting-on-numeric-data-1"
-[alerting-on-numeric-data]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/alerting-and-irm/alerting/fundamentals/evaluate-grafana-alerts#alerting-on-numeric-data-1"
+[alerting-on-numeric-data]: "/docs/grafana/ -> /docs/grafana/<GRAFANA_VERSION>/alerting/fundamentals/alert-rules/queries-conditions#alert-on-numeric-data"
+[alerting-on-numeric-data]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/alerting-and-irm/alerting/fundamentals/alert-rules/queries-conditions#alert-on-numeric-data"
 
-[annotation-label]: "/docs/grafana/ -> /docs/grafana/<GRAFANA_VERSION>/alerting/fundamentals/annotation-label"
-[annotation-label]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/alerting-and-irm/alerting/fundamentals/annotation-label"
+[annotation-label]: "/docs/grafana/ -> /docs/grafana/<GRAFANA_VERSION>/alerting/fundamentals/alert-rules/annotation-label"
+[annotation-label]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/alerting-and-irm/alerting/fundamentals/alert-rules/annotation-label"
 
 [expression-queries]: "/docs/grafana/ -> /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/query-transform-data/expression-queries"
 [expression-queries]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/visualizations/panels-visualizations/query-transform-data/expression-queries"

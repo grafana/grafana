@@ -23,6 +23,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/accesscontrol/migrator"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/pluginutils"
 	"github.com/grafana/grafana/pkg/services/auth/identity"
+	"github.com/grafana/grafana/pkg/services/authn"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/folder"
@@ -40,6 +41,8 @@ var SharedWithMeFolderPermission = accesscontrol.Permission{
 	Action: dashboards.ActionFoldersRead,
 	Scope:  dashboards.ScopeFoldersProvider.GetResourceScopeUID(folder.SharedWithMeFolderUID),
 }
+
+var OSSRolesPrefixes = []string{accesscontrol.ManagedRolePrefix, accesscontrol.ExternalServiceRolePrefix}
 
 func ProvideService(cfg *setting.Cfg, db db.DB, routeRegister routing.RouteRegister, cache *localcache.CacheService,
 	accessControl accesscontrol.AccessControl, features featuremgmt.FeatureToggles) (*Service, error) {
@@ -125,7 +128,7 @@ func (s *Service) getUserPermissions(ctx context.Context, user identity.Requeste
 		UserID:       userID,
 		Roles:        accesscontrol.GetOrgRoles(user),
 		TeamIDs:      user.GetTeams(),
-		RolePrefixes: []string{accesscontrol.ManagedRolePrefix, accesscontrol.ExternalServiceRolePrefix},
+		RolePrefixes: OSSRolesPrefixes,
 	})
 	if err != nil {
 		return nil, err
@@ -158,12 +161,58 @@ func (s *Service) getCachedUserPermissions(ctx context.Context, user identity.Re
 	return permissions, nil
 }
 
+func (s *Service) GetUserPermissionsInOrg(ctx context.Context, user identity.Requester, orgID int64) ([]accesscontrol.Permission, error) {
+	permissions := make([]accesscontrol.Permission, 0)
+
+	if s.features.IsEnabled(ctx, featuremgmt.FlagNestedFolders) {
+		permissions = append(permissions, SharedWithMeFolderPermission)
+	}
+
+	namespace, id := user.GetNamespacedID()
+	userID, err := identity.UserIdentifier(namespace, id)
+	if err != nil {
+		return nil, err
+	}
+
+	// Get permissions for user's basic roles from RAM
+	roleList, err := s.store.GetUsersBasicRoles(ctx, []int64{userID}, orgID)
+	if err != nil {
+		return nil, fmt.Errorf("could not fetch basic roles for the user: %w", err)
+	}
+	var roles []string
+	var ok bool
+	if roles, ok = roleList[userID]; !ok {
+		return nil, fmt.Errorf("found no basic roles for user %d in organisation %d", userID, orgID)
+	}
+	for _, builtin := range roles {
+		if basicRole, ok := s.roles[builtin]; ok {
+			permissions = append(permissions, basicRole.Permissions...)
+		}
+	}
+
+	dbPermissions, err := s.store.SearchUsersPermissions(ctx, orgID, accesscontrol.SearchOptions{
+		NamespacedID: authn.NamespacedID(namespace, userID),
+		// Query only basic, managed and plugin roles in OSS
+		RolePrefixes: OSSRolesPrefixes,
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	userPermissions := dbPermissions[userID]
+	return append(permissions, userPermissions...), nil
+}
+
 func (s *Service) ClearUserPermissionCache(user identity.Requester) {
 	s.cache.Delete(permissionCacheKey(user))
 }
 
 func (s *Service) DeleteUserPermissions(ctx context.Context, orgID int64, userID int64) error {
 	return s.store.DeleteUserPermissions(ctx, orgID, userID)
+}
+
+func (s *Service) DeleteTeamPermissions(ctx context.Context, orgID int64, teamID int64) error {
+	return s.store.DeleteTeamPermissions(ctx, orgID, teamID)
 }
 
 // DeclareFixedRoles allow the caller to declare, to the service, fixed roles and their assignments
@@ -233,6 +282,8 @@ func (s *Service) DeclarePluginRoles(ctx context.Context, ID, name string, regs 
 // SearchUsersPermissions returns all users' permissions filtered by action prefixes
 func (s *Service) SearchUsersPermissions(ctx context.Context, usr identity.Requester,
 	options accesscontrol.SearchOptions) (map[int64][]accesscontrol.Permission, error) {
+	// Limit roles to available in OSS
+	options.RolePrefixes = OSSRolesPrefixes
 	if options.NamespacedID != "" {
 		userID, err := options.ComputeUserID()
 		if err != nil {
@@ -427,7 +478,7 @@ func PermissionMatchesSearchOptions(permission accesscontrol.Permission, searchO
 }
 
 func (s *Service) SaveExternalServiceRole(ctx context.Context, cmd accesscontrol.SaveExternalServiceRoleCommand) error {
-	if !(s.features.IsEnabled(ctx, featuremgmt.FlagExternalServiceAuth) || s.features.IsEnabled(ctx, featuremgmt.FlagExternalServiceAccounts)) {
+	if !s.features.IsEnabled(ctx, featuremgmt.FlagExternalServiceAccounts) {
 		s.log.Debug("Registering an external service role is behind a feature flag, enable it to use this feature.")
 		return nil
 	}
@@ -440,7 +491,7 @@ func (s *Service) SaveExternalServiceRole(ctx context.Context, cmd accesscontrol
 }
 
 func (s *Service) DeleteExternalServiceRole(ctx context.Context, externalServiceID string) error {
-	if !(s.features.IsEnabled(ctx, featuremgmt.FlagExternalServiceAuth) || s.features.IsEnabled(ctx, featuremgmt.FlagExternalServiceAccounts)) {
+	if !s.features.IsEnabled(ctx, featuremgmt.FlagExternalServiceAccounts) {
 		s.log.Debug("Deleting an external service role is behind a feature flag, enable it to use this feature.")
 		return nil
 	}

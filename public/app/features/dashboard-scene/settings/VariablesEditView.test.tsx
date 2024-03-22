@@ -13,15 +13,16 @@ import { setPluginImportUtils, setRunRequest } from '@grafana/runtime';
 import {
   SceneVariableSet,
   CustomVariable,
-  SceneGridItem,
   SceneGridLayout,
   VizPanel,
   AdHocFiltersVariable,
   SceneVariableState,
+  SceneTimeRange,
 } from '@grafana/scenes';
 import { mockDataSource } from 'app/features/alerting/unified/mocks';
 import { LegacyVariableQueryEditor } from 'app/features/variables/editor/LegacyVariableQueryEditor';
 
+import { DashboardGridItem } from '../scene/DashboardGridItem';
 import { DashboardScene } from '../scene/DashboardScene';
 import { activateFullSceneTree } from '../utils/test-utils';
 
@@ -145,9 +146,14 @@ describe('VariablesEditView', () => {
 
     it('should delete a variable', () => {
       const variableIdentifier = 'customVar';
+
+      variableView.onEdit(variableIdentifier);
+      expect(variableView.state.editIndex).toBe(0);
+
       variableView.onDelete(variableIdentifier);
       expect(variableView.getVariables()).toHaveLength(2);
       expect(variableView.getVariables()[0].state.name).toBe('customVar2');
+      expect(variableView.state.editIndex).toBeUndefined();
     });
 
     it('should change order of variables', () => {
@@ -283,7 +289,7 @@ describe('VariablesEditView', () => {
       // Uses function to avoid store reference to previous existing variables
       const getSourceVariable = () => variableView.getVariables()[0] as CustomVariable;
       const getDependantPanel = () =>
-        ((dashboard.state.body as SceneGridLayout).state.children[0] as SceneGridItem).state.body as VizPanel;
+        ((dashboard.state.body as SceneGridLayout).state.children[0] as DashboardGridItem).state.body as VizPanel;
 
       expect(getSourceVariable().getValue()).toBe('test');
       // Using description to get the interpolated value
@@ -308,6 +314,7 @@ async function buildTestScene() {
     meta: {
       canEdit: true,
     },
+    $timeRange: new SceneTimeRange({}),
     $variables: new SceneVariableSet({
       variables: [
         new CustomVariable({
@@ -337,7 +344,7 @@ async function buildTestScene() {
     }),
     body: new SceneGridLayout({
       children: [
-        new SceneGridItem({
+        new DashboardGridItem({
           key: 'griditem-1',
           x: 0,
           body: new VizPanel({

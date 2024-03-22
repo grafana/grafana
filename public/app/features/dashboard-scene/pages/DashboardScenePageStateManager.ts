@@ -1,5 +1,5 @@
 import { locationUtil } from '@grafana/data';
-import { getBackendSrv, isFetchError, locationService } from '@grafana/runtime';
+import { config, getBackendSrv, isFetchError, locationService } from '@grafana/runtime';
 import { updateNavIndex } from 'app/core/actions';
 import { StateManagerBase } from 'app/core/services/StateManagerBase';
 import { backendSrv } from 'app/core/services/backend_srv';
@@ -78,16 +78,21 @@ export class DashboardScenePageStateManager extends StateManagerBase<DashboardSc
           }
 
           break;
+        case DashboardRoutes.Public: {
+          return await dashboardLoaderSrv.loadDashboard('public', '', uid);
+        }
         default:
           rsp = await dashboardLoaderSrv.loadDashboard('db', '', uid);
+
           if (route === DashboardRoutes.Embedded) {
             rsp.meta.isEmbedded = true;
           }
       }
 
-      if (rsp.meta.url && route !== DashboardRoutes.Embedded) {
+      if (rsp.meta.url && route === DashboardRoutes.Normal) {
         const dashboardUrl = locationUtil.stripBaseFromUrl(rsp.meta.url);
         const currentPath = locationService.getLocation().pathname;
+
         if (dashboardUrl !== currentPath) {
           // Spread current location to persist search params used for navigation
           locationService.replace({
@@ -140,7 +145,9 @@ export class DashboardScenePageStateManager extends StateManagerBase<DashboardSc
   public async loadDashboard(options: LoadDashboardOptions) {
     try {
       const dashboard = await this.loadScene(options);
-      dashboard.startUrlSync();
+      if (!(config.publicDashboardAccessToken && dashboard.state.controls?.state.hideTimeControls)) {
+        dashboard.startUrlSync();
+      }
 
       this.setState({ dashboard: dashboard, isLoading: false });
     } catch (err) {

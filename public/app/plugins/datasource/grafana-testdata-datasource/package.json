@@ -22,17 +22,17 @@
   "devDependencies": {
     "@grafana/e2e-selectors": "11.0.0-pre",
     "@grafana/plugin-configs": "11.0.0-pre",
-    "@testing-library/react": "14.2.1",
+    "@testing-library/react": "14.2.2",
     "@testing-library/user-event": "14.5.2",
     "@types/d3-random": "^3.0.2",
     "@types/jest": "29.5.12",
-    "@types/lodash": "4.14.202",
-    "@types/node": "20.11.19",
-    "@types/react": "18.2.55",
+    "@types/lodash": "4.17.0",
+    "@types/node": "20.11.30",
+    "@types/react": "18.2.67",
     "@types/testing-library__jest-dom": "5.14.9",
     "@types/uuid": "9.0.8",
     "ts-node": "10.9.2",
-    "webpack": "5.90.2"
+    "webpack": "5.90.3"
   },
   "peerDependencies": {
     "@grafana/runtime": "*"

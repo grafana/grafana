@@ -1,4 +1,4 @@
-import { behaviors, SceneGridLayout, SceneGridItem, SceneTimeRange } from '@grafana/scenes';
+import { behaviors, SceneGridLayout, SceneTimeRange } from '@grafana/scenes';
 import { DashboardCursorSync } from '@grafana/schema';
 
 import { DashboardControls } from '../scene/DashboardControls';
@@ -122,16 +122,7 @@ async function buildTestScene() {
       canEdit: true,
     },
     body: new SceneGridLayout({
-      children: [
-        new SceneGridItem({
-          key: 'griditem-1',
-          x: 0,
-          y: 0,
-          width: 10,
-          height: 12,
-          body: undefined,
-        }),
-      ],
+      children: [],
     }),
     editview: settings,
   });

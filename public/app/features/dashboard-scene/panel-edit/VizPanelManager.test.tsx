@@ -6,11 +6,15 @@ import { SceneQueryRunner, VizPanel } from '@grafana/scenes';
 import { DataQuery, DataSourceJsonData, DataSourceRef } from '@grafana/schema';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 import { InspectTab } from 'app/features/inspector/types';
+import * as libAPI from 'app/features/library-panels/state/api';
 import { SHARED_DASHBOARD_QUERY } from 'app/plugins/datasource/dashboard';
 import { DASHBOARD_DATASOURCE_PLUGIN_ID } from 'app/plugins/datasource/dashboard/types';
 
+import { DashboardGridItem } from '../scene/DashboardGridItem';
+import { LibraryVizPanel } from '../scene/LibraryVizPanel';
 import { PanelTimeRange, PanelTimeRangeState } from '../scene/PanelTimeRange';
 import { transformSaveModelToScene } from '../serialization/transformSaveModelToScene';
+import { vizPanelToPanel } from '../serialization/transformSceneToSaveModel';
 import { DashboardModelCompatibilityWrapper } from '../utils/DashboardModelCompatibilityWrapper';
 import { findVizPanelByKey } from '../utils/utils';
 
@@ -91,6 +95,17 @@ const instance2SettingsMock = {
   },
 };
 
+// Mocking the build in Grafana data source to avoid annotations data layer errors.
+const grafanaDs = {
+  id: 1,
+  uid: '-- Grafana --',
+  name: 'grafana',
+  type: 'grafana',
+  meta: {
+    id: 'grafana',
+  },
+};
+
 // Mock the store module
 jest.mock('app/core/store', () => ({
   exists: jest.fn(),
@@ -108,6 +123,11 @@ jest.mock('@grafana/runtime', () => ({
   },
   getDataSourceSrv: () => ({
     get: async (ref: DataSourceRef) => {
+      // Mocking the build in Grafana data source to avoid annotations data layer errors.
+      if (ref.uid === '-- Grafana --') {
+        return grafanaDs;
+      }
+
       if (ref.uid === 'gdev-testdata') {
         return ds1Mock;
       }
@@ -169,6 +189,10 @@ describe('VizPanelManager', () => {
         },
       });
 
+      new DashboardGridItem({
+        body: vizPanel,
+      });
+
       const vizPanelManager = VizPanelManager.createFor(vizPanel);
 
       expect(vizPanelManager.state.panel.state.fieldConfig.defaults.custom).toBe('Custom');
@@ -193,6 +217,10 @@ describe('VizPanelManager', () => {
         fieldConfig: { defaults: { custom: 'Custom' }, overrides: [] },
       });
 
+      new DashboardGridItem({
+        body: vizPanel,
+      });
+
       const vizPanelManager = VizPanelManager.createFor(vizPanel);
 
       vizPanelManager.changePluginType('timeseries');
@@ -205,6 +233,81 @@ describe('VizPanelManager', () => {
       //@ts-ignore
       expect(vizPanelManager.state.panel.state.options['customOption']).toBe('A');
       expect(vizPanelManager.state.panel.state.fieldConfig.defaults.custom).toBe('Custom');
+    });
+  });
+
+  describe('library panels', () => {
+    it('saves library panels on commit', () => {
+      const panel = new VizPanel({
+        key: 'panel-1',
+        pluginId: 'text',
+      });
+
+      const libraryPanelModel = {
+        title: 'title',
+        uid: 'uid',
+        name: 'libraryPanelName',
+        model: vizPanelToPanel(panel),
+        type: 'panel',
+        version: 1,
+      };
+
+      const libraryPanel = new LibraryVizPanel({
+        isLoaded: true,
+        title: libraryPanelModel.title,
+        uid: libraryPanelModel.uid,
+        name: libraryPanelModel.name,
+        panelKey: panel.state.key!,
+        panel: panel,
+        _loadedPanel: libraryPanelModel,
+      });
+
+      new DashboardGridItem({ body: libraryPanel });
+
+      const panelManager = VizPanelManager.createFor(panel);
+
+      const apiCall = jest
+        .spyOn(libAPI, 'updateLibraryVizPanel')
+        .mockResolvedValue({ type: 'panel', ...libAPI.libraryVizPanelToSaveModel(libraryPanel) });
+
+      panelManager.state.panel.setState({ title: 'new title' });
+      panelManager.commitChanges();
+
+      expect(apiCall.mock.calls[0][0].state.panel?.state.title).toBe('new title');
+    });
+
+    it('unlinks library panel', () => {
+      const panel = new VizPanel({
+        key: 'panel-1',
+        pluginId: 'text',
+      });
+
+      const libraryPanelModel = {
+        title: 'title',
+        uid: 'uid',
+        name: 'libraryPanelName',
+        model: vizPanelToPanel(panel),
+        type: 'panel',
+        version: 1,
+      };
+
+      const libraryPanel = new LibraryVizPanel({
+        isLoaded: true,
+        title: libraryPanelModel.title,
+        uid: libraryPanelModel.uid,
+        name: libraryPanelModel.name,
+        panelKey: panel.state.key!,
+        panel: panel,
+        _loadedPanel: libraryPanelModel,
+      });
+
+      const gridItem = new DashboardGridItem({ body: libraryPanel });
+
+      const panelManager = VizPanelManager.createFor(panel);
+      panelManager.unlinkLibraryPanel();
+
+      const sourcePanel = panelManager.state.sourcePanel.resolve();
+      expect(sourcePanel.parent?.state.key).toBe(gridItem.state.key);
     });
   });
 
@@ -620,6 +723,7 @@ describe('VizPanelManager', () => {
 
 const setupTest = (panelId: string) => {
   const scene = transformSaveModelToScene({ dashboard: testDashboard, meta: {} });
+
   const panel = findVizPanelByKey(scene, panelId)!;
 
   const vizPanelManager = VizPanelManager.createFor(panel);
