@@ -243,6 +243,49 @@ func (_c *RemoteAlertmanagerMock_CreateSilence_Call) RunAndReturn(run func(conte
 	return _c
 }
 
+// DecryptAndSendConfiguration provides a mock function with given fields: ctx, config
+func (_m *RemoteAlertmanagerMock) DecryptAndSendConfiguration(ctx context.Context, config *models.AlertConfiguration) error {
+	ret := _m.Called(ctx, config)
+
+	var r0 error
+	if rf, ok := ret.Get(0).(func(context.Context, *models.AlertConfiguration) error); ok {
+		r0 = rf(ctx, config)
+	} else {
+		r0 = ret.Error(0)
+	}
+
+	return r0
+}
+
+// RemoteAlertmanagerMock_DecryptAndSendConfiguration_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'DecryptAndSendConfiguration'
+type RemoteAlertmanagerMock_DecryptAndSendConfiguration_Call struct {
+	*mock.Call
+}
+
+// DecryptAndSendConfiguration is a helper method to define mock.On call
+//   - ctx context.Context
+//   - config *models.AlertConfiguration
+func (_e *RemoteAlertmanagerMock_Expecter) DecryptAndSendConfiguration(ctx interface{}, config interface{}) *RemoteAlertmanagerMock_DecryptAndSendConfiguration_Call {
+	return &RemoteAlertmanagerMock_DecryptAndSendConfiguration_Call{Call: _e.mock.On("DecryptAndSendConfiguration", ctx, config)}
+}
+
+func (_c *RemoteAlertmanagerMock_DecryptAndSendConfiguration_Call) Run(run func(ctx context.Context, config *models.AlertConfiguration)) *RemoteAlertmanagerMock_DecryptAndSendConfiguration_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(context.Context), args[1].(*models.AlertConfiguration))
+	})
+	return _c
+}
+
+func (_c *RemoteAlertmanagerMock_DecryptAndSendConfiguration_Call) Return(_a0 error) *RemoteAlertmanagerMock_DecryptAndSendConfiguration_Call {
+	_c.Call.Return(_a0)
+	return _c
+}
+
+func (_c *RemoteAlertmanagerMock_DecryptAndSendConfiguration_Call) RunAndReturn(run func(context.Context, *models.AlertConfiguration) error) *RemoteAlertmanagerMock_DecryptAndSendConfiguration_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // DeleteSilence provides a mock function with given fields: _a0, _a1
 func (_m *RemoteAlertmanagerMock) DeleteSilence(_a0 context.Context, _a1 string) error {
 	ret := _m.Called(_a0, _a1)
@@ -772,6 +815,49 @@ func (_c *RemoteAlertmanagerMock_SaveAndApplyDefaultConfig_Call) Return(_a0 erro
 }
 
 func (_c *RemoteAlertmanagerMock_SaveAndApplyDefaultConfig_Call) RunAndReturn(run func(context.Context) error) *RemoteAlertmanagerMock_SaveAndApplyDefaultConfig_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// SendConfiguration provides a mock function with given fields: _a0, _a1
+func (_m *RemoteAlertmanagerMock) SendConfiguration(_a0 context.Context, _a1 *models.AlertConfiguration) error {
+	ret := _m.Called(_a0, _a1)
+
+	var r0 error
+	if rf, ok := ret.Get(0).(func(context.Context, *models.AlertConfiguration) error); ok {
+		r0 = rf(_a0, _a1)
+	} else {
+		r0 = ret.Error(0)
+	}
+
+	return r0
+}
+
+// RemoteAlertmanagerMock_SendConfiguration_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'SendConfiguration'
+type RemoteAlertmanagerMock_SendConfiguration_Call struct {
+	*mock.Call
+}
+
+// SendConfiguration is a helper method to define mock.On call
+//   - _a0 context.Context
+//   - _a1 *models.AlertConfiguration
+func (_e *RemoteAlertmanagerMock_Expecter) SendConfiguration(_a0 interface{}, _a1 interface{}) *RemoteAlertmanagerMock_SendConfiguration_Call {
+	return &RemoteAlertmanagerMock_SendConfiguration_Call{Call: _e.mock.On("SendConfiguration", _a0, _a1)}
+}
+
+func (_c *RemoteAlertmanagerMock_SendConfiguration_Call) Run(run func(_a0 context.Context, _a1 *models.AlertConfiguration)) *RemoteAlertmanagerMock_SendConfiguration_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(context.Context), args[1].(*models.AlertConfiguration))
+	})
+	return _c
+}
+
+func (_c *RemoteAlertmanagerMock_SendConfiguration_Call) Return(_a0 error) *RemoteAlertmanagerMock_SendConfiguration_Call {
+	_c.Call.Return(_a0)
+	return _c
+}
+
+func (_c *RemoteAlertmanagerMock_SendConfiguration_Call) RunAndReturn(run func(context.Context, *models.AlertConfiguration) error) *RemoteAlertmanagerMock_SendConfiguration_Call {
 	_c.Call.Return(run)
 	return _c
 }

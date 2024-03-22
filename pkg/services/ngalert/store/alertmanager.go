@@ -59,7 +59,7 @@ func (st *DBstore) GetAllLatestAlertmanagerConfiguration(ctx context.Context) ([
 }
 
 // SaveAlertmanagerConfiguration creates an alertmanager configuration.
-func (st DBstore) SaveAlertmanagerConfiguration(ctx context.Context, cmd *models.SaveAlertmanagerConfigurationCmd) error {
+func (st DBstore) SaveAlertmanagerConfiguration(ctx context.Context, cmd *models.SaveAlertmanagerConfigurationCmd) (*models.AlertConfiguration, error) {
 	return st.SaveAlertmanagerConfigurationWithCallback(ctx, cmd, func() error { return nil })
 }
 
@@ -67,9 +67,10 @@ type SaveCallback func() error
 
 // SaveAlertmanagerConfigurationWithCallback creates an alertmanager configuration version and then executes a callback.
 // If the callback results in error it rolls back the transaction.
-func (st DBstore) SaveAlertmanagerConfigurationWithCallback(ctx context.Context, cmd *models.SaveAlertmanagerConfigurationCmd, callback SaveCallback) error {
-	return st.SQLStore.WithTransactionalDbSession(ctx, func(sess *db.Session) error {
-		config := models.AlertConfiguration{
+func (st DBstore) SaveAlertmanagerConfigurationWithCallback(ctx context.Context, cmd *models.SaveAlertmanagerConfigurationCmd, callback SaveCallback) (*models.AlertConfiguration, error) {
+	var config models.AlertConfiguration
+	err := st.SQLStore.WithTransactionalDbSession(ctx, func(sess *db.Session) error {
+		config = models.AlertConfiguration{
 			AlertmanagerConfiguration: cmd.AlertmanagerConfiguration,
 			ConfigurationHash:         fmt.Sprintf("%x", md5.Sum([]byte(cmd.AlertmanagerConfiguration))),
 			ConfigurationVersion:      cmd.ConfigurationVersion,
@@ -105,6 +106,11 @@ func (st DBstore) SaveAlertmanagerConfigurationWithCallback(ctx context.Context,
 
 		return nil
 	})
+
+	if err != nil {
+		return nil, err
+	}
+	return &config, nil
 }
 
 // UpdateAlertmanagerConfiguration replaces an alertmanager configuration with optimistic locking. It assumes that an existing revision of the configuration exists in the store, and will return an error otherwise.

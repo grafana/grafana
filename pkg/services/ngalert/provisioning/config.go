@@ -74,5 +74,7 @@ func (a alertmanagerConfigStoreImpl) Save(ctx context.Context, revision *cfgRevi
 		Default:                   false,
 		OrgID:                     orgID,
 	}
+	// TODO: use multi-org Alertmanager to persist configuration.
+	// If we're using an external Alertmanager, the MOA will forward the configuration.
 	return PersistConfig(ctx, a.store, &cmd)
 }

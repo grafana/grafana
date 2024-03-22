@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"net/http"
 	"net/url"
+	"time"
 
 	"github.com/go-openapi/strfmt"
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -182,20 +183,8 @@ func (am *Alertmanager) checkReadiness(ctx context.Context) error {
 // CompareAndSendConfiguration checks whether a given configuration is being used by the remote Alertmanager.
 // If not, it sends the configuration to the remote Alertmanager.
 func (am *Alertmanager) CompareAndSendConfiguration(ctx context.Context, config *models.AlertConfiguration) error {
-	c, err := notifier.Load([]byte(config.AlertmanagerConfiguration))
-	if err != nil {
-		return err
-	}
-
 	// Decrypt the configuration before comparing.
-	fn := func(payload []byte) ([]byte, error) {
-		return am.decrypt(ctx, payload)
-	}
-	decrypted, err := c.Decrypt(fn)
-	if err != nil {
-		return err
-	}
-	rawDecrypted, err := json.Marshal(decrypted)
+	rawDecrypted, err := am.decryptConfiguration(ctx, config.AlertmanagerConfiguration)
 	if err != nil {
 		return err
 	}
@@ -205,19 +194,61 @@ func (am *Alertmanager) CompareAndSendConfiguration(ctx context.Context, config 
 		return nil
 	}
 
+	return am.sendConfiguration(ctx, string(rawDecrypted), config.ConfigurationHash, config.CreatedAt, config.Default)
+}
+
+// DecryptAndSendConfiguration decrypts secure fields and sends a configuration to the remote Alertmanager.
+func (am *Alertmanager) DecryptAndSendConfiguration(ctx context.Context, config *models.AlertConfiguration) error {
+	rawDecrypted, err := am.decryptConfiguration(ctx, config.AlertmanagerConfiguration)
+	if err != nil {
+		return err
+	}
+
+	return am.sendConfiguration(ctx, string(rawDecrypted), config.ConfigurationHash, config.CreatedAt, config.Default)
+}
+
+// decryptConfiguration decrypts secure fields in a configuration, returning it as a slice of bytes.
+func (am *Alertmanager) decryptConfiguration(ctx context.Context, cfg string) ([]byte, error) {
+	c, err := notifier.Load([]byte(cfg))
+	if err != nil {
+		return nil, err
+	}
+
+	fn := func(payload []byte) ([]byte, error) {
+		return am.decrypt(ctx, payload)
+	}
+	decrypted, err := c.Decrypt(fn)
+	if err != nil {
+		return nil, err
+	}
+
+	return json.Marshal(decrypted)
+}
+
+func (am *Alertmanager) sendConfiguration(ctx context.Context, cfg, hash string, createdAt int64, isDefault bool) error {
 	am.metrics.ConfigSyncsTotal.Inc()
 	if err := am.mimirClient.CreateGrafanaAlertmanagerConfig(
 		ctx,
-		string(rawDecrypted),
-		config.ConfigurationHash,
-		config.CreatedAt,
-		config.Default,
+		cfg,
+		hash,
+		createdAt,
+		isDefault,
 	); err != nil {
 		am.metrics.ConfigSyncErrorsTotal.Inc()
 		return err
 	}
 	am.metrics.LastConfigSync.SetToCurrentTime()
 	return nil
+}
+
+func (am *Alertmanager) SendConfiguration(ctx context.Context, config *models.AlertConfiguration) error {
+	return am.mimirClient.CreateGrafanaAlertmanagerConfig(
+		ctx,
+		config.AlertmanagerConfiguration,
+		config.ConfigurationHash,
+		config.CreatedAt,
+		config.Default,
+	)
 }
 
 // CompareAndSendState gets the Alertmanager's internal state and compares it with the remote Alertmanager's one.
@@ -239,11 +270,28 @@ func (am *Alertmanager) CompareAndSendState(ctx context.Context) error {
 	return nil
 }
 
+// SaveAndApplyConfig should forward the configuration to the remote Alertmanager.
 func (am *Alertmanager) SaveAndApplyConfig(ctx context.Context, cfg *apimodels.PostableUserConfig) error {
-	return nil
+	rawConfig, err := json.Marshal(cfg)
+	if err != nil {
+		return err
+	}
+
+	return am.mimirClient.CreateGrafanaAlertmanagerConfig(
+		ctx,
+		string(rawConfig),
+		fmt.Sprintf("%x", md5.Sum(rawConfig)),
+		time.Now().Unix(),
+		false,
+	)
 }
 
+// This method is called when the org is found in the database but no configuration is found for that org,
+// or when a user deletes their Alertmanager configuration.
+// If this method is called just log a warning, the remote Alertmanager will eventually receive a configuration.
+// TODO: could it be better to just send the default Grafana Alertmanager configuration?
 func (am *Alertmanager) SaveAndApplyDefaultConfig(ctx context.Context) error {
+	am.log.Warn("SaveAndApplyDefaultConfig called in the remote alertmanager")
 	return nil
 }
 
@@ -373,17 +421,20 @@ func (am *Alertmanager) GetReceivers(ctx context.Context) ([]apimodels.Receiver,
 
 	var rcvs []apimodels.Receiver
 	for _, rcv := range res.Payload {
+		if rcv.Integrations == nil {
+			rcv.Integrations = []*apimodels.Integration{}
+		}
 		rcvs = append(rcvs, *rcv)
 	}
 	return rcvs, nil
 }
 
 func (am *Alertmanager) TestReceivers(ctx context.Context, c apimodels.TestReceiversConfigBodyParams) (*notifier.TestReceiversResult, error) {
-	return &notifier.TestReceiversResult{}, nil
+	return nil, fmt.Errorf("not implemented")
 }
 
 func (am *Alertmanager) TestTemplate(ctx context.Context, c apimodels.TestTemplatesConfigBodyParams) (*notifier.TestTemplatesResults, error) {
-	return &notifier.TestTemplatesResults{}, nil
+	return nil, fmt.Errorf("not implemented")
 }
 
 // StopAndWait is called when the grafana server is instructed to shut down or an org is deleted.
