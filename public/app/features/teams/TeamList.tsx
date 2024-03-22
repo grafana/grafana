@@ -16,6 +16,7 @@ import {
   LinkButton,
   Pagination,
   Stack,
+  TextLink,
   Tooltip,
   useStyles2,
 } from '@grafana/ui';
@@ -92,11 +93,16 @@ export const TeamList = ({
       {
         id: 'name',
         header: 'Name',
-        cell: ({ cell: { value } }: Cell<'name'>) => {
+        cell: ({ cell: { value }, row: { original } }: Cell<'name'>) => {
           if (!hasFetched) {
             return <Skeleton width={100} />;
           }
-          return value;
+
+          return (
+            <TextLink color="primary" inline={false} href={`/org/teams/edit/${original.id}`}>
+              {value}
+            </TextLink>
+          );
         },
         sortType: 'string',
       },
