@@ -27,15 +27,7 @@ interface Props {
 }
 
 export const NavToolbarActions = React.memo<Props>(({ dashboard }) => {
-  const actions = (
-    <DashNavModalContextProvider>
-      <ToolbarButtonRow alignment="right">
-        <ToolbarActions dashboard={dashboard} />
-      </ToolbarButtonRow>
-      <DashNavModalRoot />
-    </DashNavModalContextProvider>
-  );
-
+  const actions = <ToolbarActions dashboard={dashboard} />;
   return <AppChromeUpdate actions={actions} />;
 });
 
@@ -518,7 +510,12 @@ export function ToolbarActions({ dashboard }: Props) {
     lastGroup = action.group;
   }
 
-  return actionElements;
+  return (
+    <DashNavModalContextProvider>
+      <ToolbarButtonRow alignment="right">{actionElements}</ToolbarButtonRow>
+      <DashNavModalRoot />
+    </DashNavModalContextProvider>
+  );
 }
 
 function addDynamicActions(
