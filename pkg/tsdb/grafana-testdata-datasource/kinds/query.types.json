@@ -8,7 +8,7 @@
     {
       "metadata": {
         "name": "default",
-        "resourceVersion": "1710865412747",
+        "resourceVersion": "1711119846950",
         "creationTimestamp": "2024-03-01T02:53:35Z"
       },
       "spec": {
@@ -94,12 +94,13 @@
                   "type": "integer"
                 },
                 "type": {
-                  "description": "Possible enum values:\n - `\"random\"` \n - `\"random edges\"` \n - `\"response_medium\"` \n - `\"response_small\"` ",
+                  "description": "Possible enum values:\n - `\"random\"` \n - `\"random edges\"` \n - `\"response_medium\"` \n - `\"response_small\"` \n - `\"feature_showcase\"` ",
                   "enum": [
                     "random",
                     "random edges",
                     "response_medium",
-                    "response_small"
+                    "response_small",
+                    "feature_showcase"
                   ],
                   "type": "string",
                   "x-enum-description": {}

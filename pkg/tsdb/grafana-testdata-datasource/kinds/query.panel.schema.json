@@ -119,13 +119,14 @@
                 "type": "integer"
               },
               "type": {
-                "description": "Possible enum values:\n - `\"random\"` \n - `\"random edges\"` \n - `\"response_medium\"` \n - `\"response_small\"` ",
+                "description": "Possible enum values:\n - `\"random\"` \n - `\"random edges\"` \n - `\"response_medium\"` \n - `\"response_small\"` \n - `\"feature_showcase\"` ",
                 "type": "string",
                 "enum": [
                   "random",
                   "random edges",
                   "response_medium",
-                  "response_small"
+                  "response_small",
+                  "feature_showcase"
                 ],
                 "x-enum-description": {}
               }
