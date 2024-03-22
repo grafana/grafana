@@ -17,6 +17,13 @@ import (
 //
 // Export all alert rules in provisioning file format.
 //
+//     Produces:
+//     - application/json
+//     - application/yaml
+//     - application/terraform+hcl
+//     - text/yaml
+//     - text/hcl
+//
 //     Responses:
 //       200: AlertingFileExport
 //       404: description: Not found.
@@ -36,7 +43,9 @@ import (
 //     Produces:
 //     - application/json
 //     - application/yaml
+//     - application/terraform+hcl
 //     - text/yaml
+//     - text/hcl
 //
 //     Responses:
 //       200: AlertingFileExport
@@ -184,7 +193,9 @@ type ProvisionedAlertRule struct {
 //     Produces:
 //     - application/json
 //     - application/yaml
+//     - application/terraform+hcl
 //     - text/yaml
+//     - text/hcl
 //
 //     Responses:
 //       200: AlertingFileExport

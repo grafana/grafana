@@ -15,6 +15,13 @@ import (
 //
 // Export all mute timings in provisioning format.
 //
+//     Produces:
+//     - application/json
+//     - application/yaml
+//     - application/terraform+hcl
+//     - text/yaml
+//     - text/hcl
+//
 //     Responses:
 //       200: AlertingFileExport
 //       403: PermissionDenied
@@ -30,6 +37,13 @@ import (
 // swagger:route GET /v1/provisioning/mute-timings/{name}/export provisioning stable RouteExportMuteTiming
 //
 // Export a mute timing in provisioning format.
+//
+//     Produces:
+//     - application/json
+//     - application/yaml
+//     - application/terraform+hcl
+//     - text/yaml
+//     - text/hcl
 //
 //     Responses:
 //       200: AlertingFileExport

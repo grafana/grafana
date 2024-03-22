@@ -1200,9 +1200,12 @@
     "/ruler/grafana/api/v1/export/rules": {
       "get": {
         "description": "List rules in provisioning format",
-        "consumes": [
+        "produces": [
           "application/json",
-          "application/yaml"
+          "application/yaml",
+          "application/terraform+hcl",
+          "text/yaml",
+          "text/hcl"
         ],
         "tags": [
           "ruler"
@@ -1217,9 +1220,14 @@
             "in": "query"
           },
           {
+            "enum": [
+              "yaml",
+              "json",
+              "hcl"
+            ],
             "type": "string",
             "default": "yaml",
-            "description": "Format of the downloaded file, either yaml or json. Accept header can also be used, but the query parameter will take precedence.",
+            "description": "Format of the downloaded file. Supported yaml, json or hcl. Accept header can also be used, but the query parameter will take precedence.",
             "name": "format",
             "in": "query"
           },
@@ -1413,8 +1421,14 @@
       "post": {
         "description": "Converts submitted rule group to provisioning format",
         "consumes": [
+          "application/json"
+        ],
+        "produces": [
           "application/json",
-          "application/yaml"
+          "application/yaml",
+          "application/terraform+hcl",
+          "text/yaml",
+          "text/hcl"
         ],
         "tags": [
           "ruler"
@@ -1443,9 +1457,14 @@
             "in": "query"
           },
           {
+            "enum": [
+              "yaml",
+              "json",
+              "hcl"
+            ],
             "type": "string",
             "default": "yaml",
-            "description": "Format of the downloaded file, either yaml or json. Accept header can also be used, but the query parameter will take precedence.",
+            "description": "Format of the downloaded file. Supported yaml, json or hcl. Accept header can also be used, but the query parameter will take precedence.",
             "name": "format",
             "in": "query"
           }
@@ -2207,6 +2226,13 @@
     },
     "/v1/provisioning/alert-rules/export": {
       "get": {
+        "produces": [
+          "application/json",
+          "application/yaml",
+          "application/terraform+hcl",
+          "text/yaml",
+          "text/hcl"
+        ],
         "tags": [
           "provisioning",
           "stable"
@@ -2222,9 +2248,14 @@
             "in": "query"
           },
           {
+            "enum": [
+              "yaml",
+              "json",
+              "hcl"
+            ],
             "type": "string",
             "default": "yaml",
-            "description": "Format of the downloaded file, either yaml or json. Accept header can also be used, but the query parameter will take precedence.",
+            "description": "Format of the downloaded file. Supported yaml, json or hcl. Accept header can also be used, but the query parameter will take precedence.",
             "name": "format",
             "in": "query"
           },
@@ -2371,7 +2402,9 @@
         "produces": [
           "application/json",
           "application/yaml",
-          "text/yaml"
+          "application/terraform+hcl",
+          "text/yaml",
+          "text/hcl"
         ],
         "tags": [
           "provisioning",
@@ -2388,9 +2421,14 @@
             "in": "query"
           },
           {
+            "enum": [
+              "yaml",
+              "json",
+              "hcl"
+            ],
             "type": "string",
             "default": "yaml",
-            "description": "Format of the downloaded file, either yaml or json. Accept header can also be used, but the query parameter will take precedence.",
+            "description": "Format of the downloaded file. Supported yaml, json or hcl. Accept header can also be used, but the query parameter will take precedence.",
             "name": "format",
             "in": "query"
           },
@@ -2482,6 +2520,13 @@
     },
     "/v1/provisioning/contact-points/export": {
       "get": {
+        "produces": [
+          "application/json",
+          "application/yaml",
+          "application/terraform+hcl",
+          "text/yaml",
+          "text/hcl"
+        ],
         "tags": [
           "provisioning",
           "stable"
@@ -2497,9 +2542,14 @@
             "in": "query"
           },
           {
+            "enum": [
+              "yaml",
+              "json",
+              "hcl"
+            ],
             "type": "string",
             "default": "yaml",
-            "description": "Format of the downloaded file, either yaml or json. Accept header can also be used, but the query parameter will take precedence.",
+            "description": "Format of the downloaded file. Supported yaml, json or hcl. Accept header can also be used, but the query parameter will take precedence.",
             "name": "format",
             "in": "query"
           },
@@ -2736,7 +2786,9 @@
         "produces": [
           "application/json",
           "application/yaml",
-          "text/yaml"
+          "application/terraform+hcl",
+          "text/yaml",
+          "text/hcl"
         ],
         "tags": [
           "provisioning",
@@ -2753,9 +2805,14 @@
             "in": "query"
           },
           {
+            "enum": [
+              "yaml",
+              "json",
+              "hcl"
+            ],
             "type": "string",
             "default": "yaml",
-            "description": "Format of the downloaded file, either yaml or json. Accept header can also be used, but the query parameter will take precedence.",
+            "description": "Format of the downloaded file. Supported yaml, json or hcl. Accept header can also be used, but the query parameter will take precedence.",
             "name": "format",
             "in": "query"
           },
@@ -2844,6 +2901,13 @@
     },
     "/v1/provisioning/mute-timings/export": {
       "get": {
+        "produces": [
+          "application/json",
+          "application/yaml",
+          "application/terraform+hcl",
+          "text/yaml",
+          "text/hcl"
+        ],
         "tags": [
           "provisioning",
           "stable"
@@ -2859,9 +2923,14 @@
             "in": "query"
           },
           {
+            "enum": [
+              "yaml",
+              "json",
+              "hcl"
+            ],
             "type": "string",
             "default": "yaml",
-            "description": "Format of the downloaded file, either yaml or json. Accept header can also be used, but the query parameter will take precedence.",
+            "description": "Format of the downloaded file. Supported yaml, json or hcl. Accept header can also be used, but the query parameter will take precedence.",
             "name": "format",
             "in": "query"
           }
@@ -2988,6 +3057,13 @@
     },
     "/v1/provisioning/mute-timings/{name}/export": {
       "get": {
+        "produces": [
+          "application/json",
+          "application/yaml",
+          "application/terraform+hcl",
+          "text/yaml",
+          "text/hcl"
+        ],
         "tags": [
           "provisioning",
           "stable"
@@ -3003,9 +3079,14 @@
             "in": "query"
           },
           {
+            "enum": [
+              "yaml",
+              "json",
+              "hcl"
+            ],
             "type": "string",
             "default": "yaml",
-            "description": "Format of the downloaded file, either yaml or json. Accept header can also be used, but the query parameter will take precedence.",
+            "description": "Format of the downloaded file. Supported yaml, json or hcl. Accept header can also be used, but the query parameter will take precedence.",
             "name": "format",
             "in": "query"
           },
@@ -3112,6 +3193,13 @@
     },
     "/v1/provisioning/policies/export": {
       "get": {
+        "produces": [
+          "application/json",
+          "application/yaml",
+          "application/terraform+hcl",
+          "text/yaml",
+          "text/hcl"
+        ],
         "tags": [
           "provisioning",
           "stable"
@@ -7807,6 +7895,7 @@
       }
     },
     "alertGroup": {
+      "description": "AlertGroup alert group",
       "type": "object",
       "required": [
         "alerts",
@@ -7831,7 +7920,6 @@
       "$ref": "#/definitions/alertGroup"
     },
     "alertGroups": {
-      "description": "AlertGroups alert groups",
       "type": "array",
       "items": {
         "$ref": "#/definitions/alertGroup"
@@ -7937,7 +8025,6 @@
       }
     },
     "gettableAlert": {
-      "description": "GettableAlert gettable alert",
       "type": "object",
       "required": [
         "labels",
@@ -7994,7 +8081,6 @@
       "$ref": "#/definitions/gettableAlert"
     },
     "gettableAlerts": {
-      "description": "GettableAlerts gettable alerts",
       "type": "array",
       "items": {
         "$ref": "#/definitions/gettableAlert"
@@ -8002,6 +8088,7 @@
       "$ref": "#/definitions/gettableAlerts"
     },
     "gettableSilence": {
+      "description": "GettableSilence gettable silence",
       "type": "object",
       "required": [
         "comment",
@@ -8051,6 +8138,7 @@
       "$ref": "#/definitions/gettableSilence"
     },
     "gettableSilences": {
+      "description": "GettableSilences gettable silences",
       "type": "array",
       "items": {
         "$ref": "#/definitions/gettableSilence"
