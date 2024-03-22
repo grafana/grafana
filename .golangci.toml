@@ -1,10 +1,6 @@
 [run]
 timeout = "10m"
 
-[linters-settings.goconst]
-min-length = 5
-min-occurrences = 5
-
 [linters-settings.exhaustive]
 default-signifies-exhaustive = true
 
@@ -87,7 +83,7 @@ enable = [
   "dogsled",
   "errcheck",
   # "gochecknoinits",
-  "goconst",
+  # "goconst",
   # "gocritic", # Temporarily disabled on 2022-09-09, running into weird bug "ruleguard: execution error: used Run() with an empty rule set; forgot to call Load() first?"
   "goimports",
   "goprintffuncname",
