@@ -34,7 +34,7 @@ export const defaultOptions: Partial<Options> = {
   bucketOffset: 0,
 };
 
-export interface FieldConfig extends common.AxisConfig, common.HideableFieldConfig {
+export interface FieldConfig extends common.AxisConfig, common.HideableFieldConfig, common.StackableFieldConfig {
   /**
    * Controls the fill opacity of the bars.
    */

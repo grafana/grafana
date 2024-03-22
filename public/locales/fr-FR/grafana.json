@@ -369,7 +369,6 @@
       "title-label": "Titre"
     },
     "json-editor": {
-      "apply-button": "Appliquer les modifications",
       "save-button": "Enregistrer les modifications",
       "subtitle": "Le modèle JSON ci-dessous est la structure de données qui définit le tableau de bord. Il inclut les paramètres du tableau de bord, les paramètres du panneau, la mise en page, les requêtes, etc.",
       "title": "Modèle JSON"
@@ -790,8 +789,11 @@
       "datasource": "Source de données",
       "unknown": "Inconnu"
     },
-    "resources": {
-      "disconnect": "Déconnecter"
+    "summary": {
+      "disconnect": "",
+      "error-starting-migration": "",
+      "start-migration": "",
+      "target-stack-title": ""
     },
     "token-status": {
       "active": "Jeton créé et actif",
@@ -1344,11 +1346,12 @@
     "header": {
       "collapse-row": "Réduire la ligne de requête",
       "datasource-help": "Afficher l'aide de la source de données",
-      "disable-query": "Désactiver la requête",
       "drag-and-drop": "Glisser et déposer pour réorganiser",
       "duplicate-query": "Dupliquer la requête",
       "expand-row": "Développer la ligne de requête",
+      "hide-response": "",
       "remove-query": "Supprimer la requête",
+      "show-response": "",
       "toggle-edit-mode": "Activer/désactiver le mode édition de texte"
     },
     "query-editor-not-exported": "Le plugin source de données n'exporte aucun composant de l'éditeur de requête"
@@ -1474,7 +1477,7 @@
       "library-panel": "Panneau de bibliothèque",
       "link": "Lien",
       "panel-embed": "Intégrer",
-      "public-dashboard": "Publier le tableau de bord",
+      "public-dashboard": "",
       "public-dashboard-title": "Tableau de bord public",
       "snapshot": "Instantané"
     },

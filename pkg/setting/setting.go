@@ -91,27 +91,28 @@ type Cfg struct {
 	appliedEnvOverrides          []string
 
 	// HTTP Server Settings
-	CertFile         string
-	KeyFile          string
-	HTTPAddr         string
-	HTTPPort         string
-	Env              string
-	AppURL           string
-	AppSubURL        string
-	InstanceName     string
-	ServeFromSubPath bool
-	StaticRootPath   string
-	Protocol         Scheme
-	SocketGid        int
-	SocketMode       int
-	SocketPath       string
-	RouterLogging    bool
-	Domain           string
-	CDNRootURL       *url.URL
-	ReadTimeout      time.Duration
-	EnableGzip       bool
-	EnforceDomain    bool
-	MinTLSVersion    string
+	CertFile          string
+	KeyFile           string
+	CertWatchInterval time.Duration
+	HTTPAddr          string
+	HTTPPort          string
+	Env               string
+	AppURL            string
+	AppSubURL         string
+	InstanceName      string
+	ServeFromSubPath  bool
+	StaticRootPath    string
+	Protocol          Scheme
+	SocketGid         int
+	SocketMode        int
+	SocketPath        string
+	RouterLogging     bool
+	Domain            string
+	CDNRootURL        *url.URL
+	ReadTimeout       time.Duration
+	EnableGzip        bool
+	EnforceDomain     bool
+	MinTLSVersion     string
 
 	// Security settings
 	SecretKey             string
@@ -1571,11 +1572,9 @@ func readAuthSettings(iniFile *ini.File, cfg *Cfg) (err error) {
 
 	cfg.OAuthCookieMaxAge = auth.Key("oauth_state_cookie_max_age").MustInt(600)
 	cfg.SignoutRedirectUrl = valueAsString(auth, "signout_redirect_url", "")
+
 	// Deprecated
-	cfg.OAuthSkipOrgRoleUpdateSync = auth.Key("oauth_skip_org_role_update_sync").MustBool(false)
-	if cfg.OAuthSkipOrgRoleUpdateSync {
-		cfg.Logger.Warn("[Deprecated] The oauth_skip_org_role_update_sync configuration setting is deprecated. Please use skip_org_role_sync inside the auth provider section instead.")
-	}
+	cfg.OAuthSkipOrgRoleUpdateSync = false
 
 	cfg.DisableLogin = auth.Key("disable_login").MustBool(false)
 
@@ -1657,7 +1656,9 @@ func readUserSettings(iniFile *ini.File, cfg *Cfg) error {
 			string(roletype.RoleAdmin)})
 	cfg.VerifyEmailEnabled = users.Key("verify_email_enabled").MustBool(false)
 
-	cfg.CaseInsensitiveLogin = users.Key("case_insensitive_login").MustBool(true)
+	// Deprecated
+	// cfg.CaseInsensitiveLogin = users.Key("case_insensitive_login").MustBool(true)
+	cfg.CaseInsensitiveLogin = true
 
 	cfg.LoginHint = valueAsString(users, "login_hint", "")
 	cfg.PasswordHint = valueAsString(users, "password_hint", "")
@@ -1839,6 +1840,7 @@ func (cfg *Cfg) readServerSettings(iniFile *ini.File) error {
 	cfg.AppSubURL = AppSubUrl
 	cfg.Protocol = HTTPScheme
 	cfg.ServeFromSubPath = server.Key("serve_from_sub_path").MustBool(false)
+	cfg.CertWatchInterval = server.Key("certs_watch_interval").MustDuration(0)
 
 	protocolStr := valueAsString(server, "protocol", "http")
 
