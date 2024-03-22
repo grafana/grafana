@@ -65,5 +65,9 @@ const getStyles = (theme: GrafanaTheme2) => ({
     whiteSpace: 'pre-wrap',
     maxHeight: 110,
     overflowY: 'scroll',
+    backgroundColor: theme.colors.background.secondary,
+    border: `1px solid ${theme.colors.border.weak}`,
+    padding: theme.spacing(1),
+    minHeight: 60,
   }),
 });

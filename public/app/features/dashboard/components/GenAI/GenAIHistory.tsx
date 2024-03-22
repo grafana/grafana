@@ -130,9 +130,6 @@ export const GenAIHistory = ({
 
       <div className={styles.actionButtons}>
         <QuickFeedback onSuggestionClick={onGenerateWithFeedback} isGenerating={isStreamGenerating} />
-        <Button icon={!isStreamGenerating ? 'check' : 'fa fa-spinner'} size="sm" onClick={onApply}>
-          {isStreamGenerating ? STOP_GENERATION_TEXT : 'Apply AI text'}
-        </Button>
       </div>
 
       <Input
@@ -153,6 +150,14 @@ export const GenAIHistory = ({
         onChange={onChangeCustomFeedback}
         onKeyDown={onKeyDownCustomFeedbackInput}
       />
+
+      <div className={styles.applySuggestion}>
+        <Stack justifyContent={'flex-end'} direction={'row'}>
+          <Button icon={!isStreamGenerating ? 'check' : 'fa fa-spinner'} onClick={onApply}>
+            {isStreamGenerating ? STOP_GENERATION_TEXT : 'Apply'}
+          </Button>
+        </Stack>
+      </div>
 
       <div className={styles.footer}>
         <Icon name="exclamation-circle" aria-label="exclamation-circle" className={styles.infoColor} />
@@ -180,10 +185,10 @@ const getStyles = (theme: GrafanaTheme2) => ({
     width: 520,
     maxHeight: 350,
     // This is the space the footer height
-    paddingBottom: 35,
+    paddingBottom: 25,
   }),
   applySuggestion: css({
-    marginTop: theme.spacing(1),
+    paddingTop: theme.spacing(2),
   }),
   actions: css({
     display: 'flex',
@@ -213,6 +218,6 @@ const getStyles = (theme: GrafanaTheme2) => ({
     display: 'flex',
     flexDirection: 'row',
     justifyContent: 'space-between',
-    padding: '24px 0',
+    padding: '24px 0 8px 0',
   }),
 });
