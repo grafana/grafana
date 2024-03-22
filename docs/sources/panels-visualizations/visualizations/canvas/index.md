@@ -91,7 +91,6 @@ You can adjust connectors, adding angles to them, to fit the canvas you're worki
 
 By default, if you move a connector so that it's almost a right angle or a straight line, the connector snaps into that angle or into a straight line. To disable this behavior, press and hold the Ctrl key while adjusting the connector.
 
-
 {{< video-embed src="/media/docs/grafana/panels-visualizations/gif-canvas-connector-vertex-control-v11.0.mp4>" alt="Changing a connector from a straight line to a right angle" >}}
 
 ### Style connectors
