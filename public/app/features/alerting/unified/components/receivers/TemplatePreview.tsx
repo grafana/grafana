@@ -2,9 +2,10 @@ import { css, cx } from '@emotion/css';
 import { uniqueId } from 'lodash';
 import React, { useCallback, useEffect } from 'react';
 import { useFormContext } from 'react-hook-form';
+import AutoSizer from 'react-virtualized-auto-sizer';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { Button, useStyles2, LoadingPlaceholder, Alert } from '@grafana/ui';
+import { Button, useStyles2, LoadingPlaceholder, Alert, Box } from '@grafana/ui';
 
 import {
   AlertField,
@@ -22,11 +23,13 @@ export function TemplatePreview({
   templateName,
   payloadFormatError,
   setPayloadFormatError,
+  className,
 }: {
   payload: string;
   templateName: string;
   payloadFormatError: string | null;
   setPayloadFormatError: (value: React.SetStateAction<string | null>) => void;
+  className?: string;
 }) {
   const styles = useStyles2(getStyles);
 
@@ -52,7 +55,7 @@ export function TemplatePreview({
   useEffect(() => onPreview(), [onPreview]);
 
   return (
-    <div className={styles.container}>
+    <div className={cx(styles.container, className)}>
       <EditorColumnHeader
         label="Template preview"
         actions={
@@ -68,8 +71,16 @@ export function TemplatePreview({
           </Button>
         }
       />
-      {isLoading && <LoadingPlaceholder text="Loading preview..." />}
-      {previewToRender}
+      <Box flex={1}>
+        <AutoSizer disableWidth>
+          {({ height }) => (
+            <div className={styles.viewerContainer({ height })}>
+              {isLoading && <LoadingPlaceholder text="Loading preview..." />}
+              {previewToRender}
+            </div>
+          )}
+        </AutoSizer>
+      </Box>
     </div>
   );
 }
@@ -107,9 +118,15 @@ function PreviewErrorViewer({ errors }: { errors: TemplatePreviewErrors[] }) {
 
 const getStyles = (theme: GrafanaTheme2) => ({
   container: css({
+    label: 'template-preview-container',
     display: 'flex',
     flexDirection: 'column',
   }),
+  viewerContainer: ({ height }: { height: number }) =>
+    css({
+      height,
+      overflow: 'auto',
+    }),
   viewer: {
     container: css({
       display: 'flex',

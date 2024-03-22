@@ -251,14 +251,13 @@ export const TemplateForm = ({ existing, alertManagerSourceName, config, provena
               </div>
               {isGrafanaAlertManager && (
                 <>
-                  <div className={styles.templatePreview}>
-                    <TemplatePreview
-                      payload={payload}
-                      templateName={watch('name')}
-                      setPayloadFormatError={setPayloadFormatError}
-                      payloadFormatError={payloadFormatError}
-                    />
-                  </div>
+                  <TemplatePreview
+                    payload={payload}
+                    templateName={watch('name')}
+                    setPayloadFormatError={setPayloadFormatError}
+                    payloadFormatError={payloadFormatError}
+                    className={styles.templatePreview}
+                  />
                   <IconButton
                     name={payloadOpened ? 'angle-double-right' : 'angle-double-left'}
                     aria-label='Toggle "Payload" section'
@@ -384,6 +383,7 @@ export const getStyles = (theme: GrafanaTheme2) => {
     }),
     templatePreview: css({
       flex: 2,
+      display: 'flex',
     }),
     templatePayload: css({
       flex: 2,
