@@ -368,6 +368,16 @@ func GetComposableKinds() ([]ComposableKind, error) {
 		CueFile:  xychartCue,
 	})
 
+	xychart2Cue, err := loadCueFileWithCommon(root, filepath.Join(root, "./public/app/plugins/panel/xychart2/panelcfg.cue"))
+	if err != nil {
+		return nil, err
+	}
+	kinds = append(kinds, ComposableKind{
+		Name:     "xychart2",
+		Filename: "panelcfg.cue",
+		CueFile:  xychart2Cue,
+	})
+
 	return kinds, nil
 }
 

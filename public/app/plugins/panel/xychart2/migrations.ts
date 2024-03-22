@@ -1,10 +1,29 @@
-import { FieldMatcherID, FrameMatcherID, MatcherConfig, PanelModel } from '@grafana/data';
+import { FieldMatcherID, FrameMatcherID, MatcherConfig, PanelModel, PanelTypeChangedHandler } from '@grafana/data';
 
-import { ScatterSeriesConfig, SeriesMapping, XYDimensionConfig } from './panelcfg.gen';
-import { XYSeriesConfig, Options } from './types2';
+import { ScatterSeriesConfig, SeriesMapping, XYDimensionConfig, Options as PrevOptions } from '../xychart/panelcfg.gen';
+
+import { XYSeriesConfig, Options } from './panelcfg.gen';
+
+/**
+ * This is called when the panel changes from another panel
+ */
+export const xyChartChangeHandler: PanelTypeChangedHandler = (panel, prevPluginId, _prevOptions, prevFieldConfig) => {
+  // const pluginVersion = panel?.pluginVersion ?? '';
+
+  const prevOptions = _prevOptions as PrevOptions;
+
+  console.log('xyChartChangedHandler');
+
+  if (prevPluginId === 'xychart') {
+  }
+
+  return {};
+};
 
 export const xyChartMigrationHandler = (panel: PanelModel): Options => {
   const pluginVersion = panel?.pluginVersion ?? '';
+
+  console.log('xyChartMigrationHandler');
 
   // Update to new format for GA 10.4 release
   // Initial plugin version is empty string for first migration
@@ -113,7 +132,7 @@ export const xyChartMigrationHandler = (panel: PanelModel): Options => {
             (o) =>
               o.matcher.id === yMatcherConfig.id &&
               o.matcher.options === yMatcherConfig.options &&
-              o.properties.some((p) => p.id === 'custom.pointSize')
+              o.properties.some((p) => p.id === 'custom.pointSize.fixed')
           );
 
           if (!hasOverride) {
@@ -121,7 +140,7 @@ export const xyChartMigrationHandler = (panel: PanelModel): Options => {
               matcher: yMatcherConfig,
               properties: [
                 {
-                  id: 'custom.pointSize',
+                  id: 'custom.pointSize.fixed',
                   value: sizeFixed,
                 },
               ],
@@ -136,7 +155,7 @@ export const xyChartMigrationHandler = (panel: PanelModel): Options => {
               (o) =>
                 o.matcher.id === yMatcherConfig.id &&
                 o.matcher.options === yMatcherConfig.options &&
-                o.properties.some((p) => p.id === 'custom.pointSizeMin')
+                o.properties.some((p) => p.id === 'custom.pointSize.min')
             );
 
             if (!hasOverride) {
@@ -147,7 +166,7 @@ export const xyChartMigrationHandler = (panel: PanelModel): Options => {
                 },
                 properties: [
                   {
-                    id: 'custom.pointSizeMin',
+                    id: 'custom.pointSize.min',
                     value: sizeMin,
                   },
                 ],
@@ -160,7 +179,7 @@ export const xyChartMigrationHandler = (panel: PanelModel): Options => {
               (o) =>
                 o.matcher.id === yMatcherConfig.id &&
                 o.matcher.options === yMatcherConfig.options &&
-                o.properties.some((p) => p.id === 'custom.pointSizeMax')
+                o.properties.some((p) => p.id === 'custom.pointSize.max')
             );
 
             if (!hasOverride) {
@@ -171,7 +190,7 @@ export const xyChartMigrationHandler = (panel: PanelModel): Options => {
                 },
                 properties: [
                   {
-                    id: 'custom.pointSizeMax',
+                    id: 'custom.pointSize.max',
                     value: sizeMax,
                   },
                 ],

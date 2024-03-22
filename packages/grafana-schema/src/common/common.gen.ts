@@ -675,6 +675,18 @@ export interface VizTooltipOptions {
 export interface Labels {}
 
 /**
+ * Compare two values
+ */
+export enum ComparisonOperation {
+  EQ = 'eq',
+  GT = 'gt',
+  GTE = 'gte',
+  LT = 'lt',
+  LTE = 'lte',
+  NEQ = 'neq',
+}
+
+/**
  * Internally, this is the "type" of cell that's being displayed
  * in the table such as colored text, JSON, gauge, etc.
  * The color-background-solid, gradient-gauge, and lcd-gauge
@@ -900,16 +912,23 @@ export enum LogsDedupStrategy {
 }
 
 /**
- * Compare two values
+ * Matcher is a predicate configuration. Based on the config a set of field(s) or values is filtered in order to apply override / transformation.
+ * It comes with in id ( to resolve implementation from registry) and a configuration that’s specific to a particular matcher type.
  */
-export enum ComparisonOperation {
-  EQ = 'eq',
-  GT = 'gt',
-  GTE = 'gte',
-  LT = 'lt',
-  LTE = 'lte',
-  NEQ = 'neq',
+export interface MatcherConfig {
+  /**
+   * The matcher id. This is used to find the matcher implementation from registry.
+   */
+  id: string;
+  /**
+   * The matcher options. This is specific to the matcher implementation.
+   */
+  options?: unknown;
 }
+
+export const defaultMatcherConfig: Partial<MatcherConfig> = {
+  id: '',
+};
 
 /**
  * Field options for each field within a table (e.g 10, "The String", 64.20, etc.)

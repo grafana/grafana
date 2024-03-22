@@ -44,7 +44,7 @@ export interface FieldConfig extends common.HideableFieldConfig, common.AxisConf
   lineStyle?: common.LineStyle;
   lineWidth?: number;
   pointColor?: common.ColorDimensionConfig;
-  pointSize?: number;
+  pointSize?: common.ScaleDimensionConfig;
   show?: ScatterShow;
 }
 

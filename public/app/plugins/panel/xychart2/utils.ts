@@ -16,8 +16,8 @@ import { decoupleHideFromState } from '@grafana/data/src/field/fieldState';
 import { config } from '@grafana/runtime';
 import { VisibilityMode } from '@grafana/schema';
 
-import { ScatterShow, SeriesMapping } from '../panelcfg.gen';
-import { XYSeries, XYSeriesConfig } from '../types2';
+import { XYShowMode, SeriesMapping, XYSeriesConfig } from './panelcfg.gen';
+import { XYSeries } from './types2';
 
 export function fmt(field: Field, val: number): string {
   if (field.display) {
@@ -128,9 +128,9 @@ export function prepSeries(
                 value: name,
               },
 
-              showPoints: y.config.custom.show === ScatterShow.Lines ? VisibilityMode.Never : VisibilityMode.Always,
+              showPoints: y.config.custom.show === XYShowMode.Lines ? VisibilityMode.Never : VisibilityMode.Always,
 
-              showLine: y.config.custom.show !== ScatterShow.Points,
+              showLine: y.config.custom.show !== XYShowMode.Points,
               lineWidth: y.config.custom.lineWidth ?? 2,
               lineStyle: y.config.custom.lineStyle,
               // lineColor: () => seriesColor,
@@ -151,8 +151,8 @@ export function prepSeries(
 
             if (size != null) {
               ser.size.field = size;
-              ser.size.min = size.config.custom.pointSizeMin ?? 5;
-              ser.size.max = size.config.custom.pointSizeMax ?? 100;
+              ser.size.min = size.config.custom.pointSize?.min ?? 5;
+              ser.size.max = size.config.custom.pointSize?.max ?? 100;
               // ser.size.mode =
             }
 
@@ -194,7 +194,7 @@ export function prepSeries(
     series.forEach((s, i) => {
       if (s.color.field == null) {
         // derive fixed color from y field config
-        let colorCfg = s.y.field.config.color!;
+        let colorCfg = s.y.field.config.custom?.pointColor;
 
         let value = '';
 
@@ -204,12 +204,18 @@ export function prepSeries(
           value = getColorByName(colorCfg.fixedColor!);
         }
 
+        // if (colorCfg.mode === FieldColorModeId.PaletteClassic) {
+        //   value = getColorByName(palette[paletteIdx++ % palette.length]); // todo: do this via state.seriesIdx and re-init displayProcessor
+        // } else if (colorCfg.mode === FieldColorModeId.Fixed) {
+        //   value = getColorByName(colorCfg.fixedColor!);
+        // }
+
         s.color.fixed = value;
       }
 
       if (s.size.field == null) {
         // derive fixed size from y field config
-        s.size.fixed = s.y.field.config.custom.pointSize ?? 5;
+        s.size.fixed = s.y.field.config.custom.pointSize?.fixed ?? 5;
         // ser.size.mode =
       }
     });

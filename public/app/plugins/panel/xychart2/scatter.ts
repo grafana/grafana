@@ -6,9 +6,9 @@ import { AxisPlacement, ScaleDirection, ScaleOrientation, VisibilityMode } from 
 import { UPlotConfigBuilder } from '@grafana/ui';
 import { FacetedData, FacetSeries } from '@grafana/ui/src/components/uPlot/types';
 
-import { pointWithin, Quadtree, Rect } from '../../barchart/quadtree';
-import { XYSeries } from '../types2';
+import { pointWithin, Quadtree, Rect } from '../barchart/quadtree';
 
+import { XYSeries } from './types2';
 import { getCommonPrefixSuffix } from './utils';
 
 interface DrawBubblesOpts {

@@ -12,7 +12,6 @@ import {
   getFieldSeriesColor,
   GrafanaTheme2,
 } from '@grafana/data';
-import { getSingleLabelName } from '@grafana/data/src/field/fieldState';
 import { alpha } from '@grafana/data/src/themes/colorManipulator';
 import { config } from '@grafana/runtime';
 import {
@@ -91,8 +90,7 @@ function getScatterSeries(
   frameIndex: number,
   xIndex: number,
   yIndex: number,
-  dims: Dims,
-  nameOverride?: string
+  dims: Dims
 ): ScatterSeries {
   const frame = frames[frameIndex];
   const y = frame.fields[yIndex];
@@ -161,7 +159,7 @@ function getScatterSeries(
 
   // Series config
   //----------------
-  const name = nameOverride ?? getFieldDisplayName(y, frame, frames);
+  const name = getFieldDisplayName(y, frame, frames);
   return {
     name,
 
@@ -633,14 +631,6 @@ const prepConfig = (
 
   // why does this fall back to '' instead of null or undef?
   let xAxisLabel = customConfig.axisLabel;
-  // If a shared common label exists across multiple frames, strip from axis label
-  const fieldDisplayName = getFieldDisplayName(xField, scatterSeries[0].frame(frames), frames);
-  if (xField.labels) {
-    const singleLabelName = getSingleLabelName(frames);
-    if (singleLabelName) {
-      xAxisLabel = fieldDisplayName.replace(xField.labels[singleLabelName], '');
-    }
-  }
 
   builder.addAxis({
     scaleKey: 'x',
@@ -649,7 +639,10 @@ const prepConfig = (
     grid: { show: customConfig?.axisGridShow },
     border: { show: customConfig?.axisBorderShow },
     theme,
-    label: xAxisLabel == null || xAxisLabel === '' ? fieldDisplayName : xAxisLabel,
+    label:
+      xAxisLabel == null || xAxisLabel === ''
+        ? getFieldDisplayName(xField, scatterSeries[0].frame(frames), frames)
+        : xAxisLabel,
     formatValue: (v, decimals) => formattedValueToString(xField.display!(v, decimals)),
   });
 
@@ -684,14 +677,6 @@ const prepConfig = (
 
     // why does this fall back to '' instead of null or undef?
     let yAxisLabel = customConfig?.axisLabel;
-    // If a shared common label exists across multiple frames, strip from axis label
-    const fieldDisplayName = getFieldDisplayName(field, scatterSeries[si].frame(frames), frames);
-    if (field.labels) {
-      const singleLabelName = getSingleLabelName(frames);
-      if (singleLabelName) {
-        yAxisLabel = fieldDisplayName.replace(field.labels[singleLabelName], '');
-      }
-    }
 
     builder.addAxis({
       scaleKey,
@@ -701,7 +686,10 @@ const prepConfig = (
       grid: { show: customConfig?.axisGridShow },
       border: { show: customConfig?.axisBorderShow },
       size: customConfig?.axisWidth,
-      label: yAxisLabel == null || yAxisLabel === '' ? fieldDisplayName : yAxisLabel,
+      label:
+        yAxisLabel == null || yAxisLabel === ''
+          ? getFieldDisplayName(field, scatterSeries[si].frame(frames), frames)
+          : yAxisLabel,
       formatValue: (v, decimals) => formattedValueToString(field.display!(v, decimals)),
     });
 

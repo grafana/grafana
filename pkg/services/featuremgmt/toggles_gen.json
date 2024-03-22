@@ -2145,6 +2145,19 @@
         "hideFromAdminPage": true,
         "hideFromDocs": true
       }
+    },
+    {
+      "metadata": {
+        "name": "autoMigrateXYChartPanel",
+        "resourceVersion": "1711058533591",
+        "creationTimestamp": "2024-03-21T22:02:13Z"
+      },
+      "spec": {
+        "description": "Migrate old XYChart panel to new XYChart2 model",
+        "stage": "preview",
+        "codeowner": "@grafana/dataviz-squad",
+        "frontend": true
+      }
     }
   ]
 }

@@ -8,9 +8,9 @@ import { VizTooltipFooter } from '@grafana/ui/src/components/VizTooltip/VizToolt
 import { VizTooltipHeader } from '@grafana/ui/src/components/VizTooltip/VizTooltipHeader';
 import { ColorIndicator, VizTooltipItem } from '@grafana/ui/src/components/VizTooltip/types';
 
-import { getDataLinks } from '../../status-history/utils';
-import { getStyles } from '../../timeseries/TimeSeriesTooltip';
-import { XYSeries } from '../types2';
+import { getDataLinks } from '../status-history/utils';
+import { getStyles } from '../timeseries/TimeSeriesTooltip';
+import { XYSeries } from './types2';
 
 import { fmt } from './utils';
 
@@ -35,12 +35,12 @@ export const XYChartTooltip = ({ dataIdxs, seriesIdx, data, xySeries, dismiss, i
   let label = series.name.value;
 
   let seriesColor = series.color.fixed;
-  let colorField = series.color.field;
-  let pointColor: string;
+  // let colorField = series.color.field;
+  // let pointColor: string;
 
-  if (colorField != null) {
-    pointColor = colorField.display?.(colorField.values[rowIndex]).color!;
-  }
+  // if (colorField != null) {
+  //   pointColor = colorField.display?.(colorField.values[rowIndex]).color!;
+  // }
 
   const headerItem: VizTooltipItem = {
     label,
