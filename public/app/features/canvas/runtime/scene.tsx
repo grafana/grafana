@@ -752,6 +752,52 @@ export class Scene {
     }
   };
 
+  // basically we need a helper function to get the bounds of the scene based on the elements
+  // that are in the scene
+  getBounds = () => {
+    let minTop = Infinity;
+    let minLeft = Infinity;
+    let maxRight = 0;
+    let maxBottom = 0;
+
+    const stack = [...this.root.elements];
+    while (stack.length > 0) {
+      const currentElement = stack.shift();
+
+      if (currentElement && currentElement.div) {
+        const elementContainer = currentElement.div.getBoundingClientRect();
+
+        if (minTop > elementContainer.top) {
+          minTop = elementContainer.top;
+        }
+
+        if (minLeft > elementContainer.left) {
+          minLeft = elementContainer.left;
+        }
+
+        if (maxRight < elementContainer.right) {
+          maxRight = elementContainer.right;
+        }
+
+        if (maxBottom < elementContainer.bottom) {
+          maxBottom = elementContainer.bottom;
+        }
+      }
+
+      const nestedElements = currentElement instanceof FrameState ? currentElement.elements : [];
+      for (const nestedElement of nestedElements) {
+        stack.unshift(nestedElement);
+      }
+    }
+
+    return {
+      top: minTop,
+      left: minLeft,
+      width: maxRight - minLeft,
+      height: maxBottom - minTop,
+    };
+  };
+
   render() {
     const isTooltipValid = (this.tooltip?.element?.data?.links?.length ?? 0) > 0;
     const canShowElementTooltip = !this.isEditingEnabled && isTooltipValid;
