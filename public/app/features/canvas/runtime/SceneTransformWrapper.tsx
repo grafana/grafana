@@ -11,16 +11,9 @@ type SceneTransformWrapperProps = {
 };
 
 export const SceneTransformWrapper = ({ scene, children: sceneDiv }: SceneTransformWrapperProps) => {
-  let sceneBounds: { width: number; height: number } | null = null;
   const onZoom = (zoomPanPinchRef: ReactZoomPanPinchRef) => {
     const scale = zoomPanPinchRef.state.scale;
     scene.scale = scale;
-
-    // update the scene size based on the scale
-    // const newSceneWidth = scale < 1 ? scene.width * scale : scene.width / scale;
-    // const newSceneHeight = scale < 1 ? scene.height * scale : scene.height / scale;
-    // scene.updateSize(newSceneWidth, newSceneHeight);
-    // scene.panel.forceUpdate();
   };
 
   const onZoomStop = (zoomPanPinchRef: ReactZoomPanPinchRef) => {
@@ -74,9 +67,6 @@ export const SceneTransformWrapper = ({ scene, children: sceneDiv }: SceneTransf
     <TransformWrapper
       doubleClick={{ mode: 'reset' }}
       ref={scene.transformComponentRef}
-      onZoomStart={() => {
-        // sceneBounds = scene.getBounds();
-      }}
       onZoom={onZoom}
       onZoomStop={onZoomStop}
       onTransformed={onTransformed}
@@ -84,11 +74,6 @@ export const SceneTransformWrapper = ({ scene, children: sceneDiv }: SceneTransf
       minScale={0.1}
       disabled={!config.featureToggles.canvasPanelPanZoom || !scene.shouldPanZoom}
       panning={{ allowLeftClickPan: false }}
-      onPanningStart={() => {
-        // set scene dimensions to the current canvas dimensions based on the elements in the scene
-        // this is needed to prevent the scene from being panned out of bounds
-        sceneBounds = scene.getBounds();
-      }}
       onPanning={(r, e) => {
         const mouseEvent = e as MouseEvent;
         // Get deltaX and deltaY from pan event and add it to current canvas dimensions
@@ -101,43 +86,8 @@ export const SceneTransformWrapper = ({ scene, children: sceneDiv }: SceneTransf
           deltaY = 0;
         }
 
-        // only allow updating of size within the bounds of the scene's elements
-        // basically we need a helper function to get the bounds of the scene based on the elements
-        // that are in the scene
-        if (sceneBounds) {
-          const sceneWidth = sceneBounds.width;
-          const sceneHeight = sceneBounds.height;
-
-          if (scene.width - deltaX < sceneWidth) {
-            deltaX = scene.width - sceneWidth;
-          }
-          if (scene.height - deltaY < sceneHeight) {
-            deltaY = scene.height - sceneHeight;
-          }
-        }
-
         scene.updateSize(scene.width - deltaX, scene.height - deltaY);
         scene.panel.forceUpdate();
-      }}
-      onPanningStop={() => {
-        // set scene size to the current panel dimensions
-        const panelContentElement = scene.div?.parentElement?.parentElement?.parentElement?.parentElement;
-        const sceneTransformWrapper = scene.div?.parentElement?.parentElement?.parentElement;
-        const sceneTransformComponent = scene.div?.parentElement?.parentElement;
-
-        if (panelContentElement && sceneTransformWrapper && sceneTransformComponent) {
-          const panelWidth = panelContentElement.clientWidth;
-          const panelHeight = panelContentElement.clientHeight;
-
-          // apply countering transform to keep the scene centered in the panel content
-          sceneTransformWrapper.setAttribute(
-            'style',
-            `transform: translate(${panelWidth / 2}px, ${panelHeight / 2}px) scale(${scene.scale})`
-          );
-
-          scene.updateSize(panelWidth, panelHeight);
-          scene.panel.forceUpdate();
-        }
       }}
     >
       <TransformComponent>
