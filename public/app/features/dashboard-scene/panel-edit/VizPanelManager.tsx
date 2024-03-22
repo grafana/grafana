@@ -108,15 +108,37 @@ export class VizPanelManager extends SceneObjectBase<VizPanelManagerState> {
 
     let datasourceToLoad = this.queryRunner.state.datasource;
 
-    if (!datasourceToLoad) {
-      return;
-    }
-
     try {
-      // TODO: Handle default/last used datasource selection for new panel
-      // Ref: PanelEditorQueries / componentDidMount
-      const datasource = await getDataSourceSrv().get(datasourceToLoad);
-      const dsSettings = getDataSourceSrv().getInstanceSettings(datasourceToLoad);
+      let datasource: DataSourceApi | undefined;
+      let dsSettings: DataSourceInstanceSettings | undefined;
+
+      if (!datasourceToLoad) {
+        const dashboardScene = getDashboardSceneFor(this);
+        const dashboardUid = dashboardScene.state.uid ?? '';
+        const lastUsedDatasource = getLastUsedDatasourceFromStorage(dashboardUid!);
+
+        // do we have a last used datasource for this dashboard
+        if (lastUsedDatasource?.datasourceUid !== null) {
+          // get datasource from dashbopard uid
+          dsSettings = getDataSourceSrv().getInstanceSettings({ uid: lastUsedDatasource?.datasourceUid });
+          if (dsSettings) {
+            datasource = await getDataSourceSrv().get({
+              uid: lastUsedDatasource?.datasourceUid,
+              type: dsSettings.type,
+            });
+
+            this.queryRunner.setState({
+              datasource: {
+                uid: lastUsedDatasource?.datasourceUid,
+                type: dsSettings.type,
+              },
+            });
+          }
+        }
+      } else {
+        datasource = await getDataSourceSrv().get(datasourceToLoad);
+        dsSettings = getDataSourceSrv().getInstanceSettings(datasourceToLoad);
+      }
 
       if (datasource && dsSettings) {
         this.setState({
