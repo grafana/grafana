@@ -932,7 +932,7 @@ export const initVariablesTransaction =
       const uid = toStateKey(urlUid);
       const state = getState();
       const lastKey = getIfExistsLastKey(state);
-      if (lastKey) {
+      if (lastKey && lastKey !== uid) {
         const transactionState = getVariablesState(lastKey, state).transaction;
         if (transactionState.status === TransactionStatus.Fetching) {
           // previous dashboard is still fetching variables, cancel all requests
