@@ -1,8 +1,8 @@
 import React from 'react';
 
+import { LinkButton } from '@grafana/ui';
 import { EmptyState } from '@grafana/ui/src/components/EmptyState/EmptyState';
-import { EmptyStateCTAButton } from '@grafana/ui/src/components/EmptyState/EmptyStateCTAButton';
-import { t } from 'app/core/internationalization';
+import { Trans, t } from 'app/core/internationalization';
 import { contextSrv } from 'app/core/services/context_srv';
 
 import { getInstancesPermissions } from '../../utils/access-control';
@@ -18,12 +18,14 @@ export const NoSilencesSplash = ({ alertManagerSourceName }: Props) => {
   return (
     <EmptyState
       button={
-        contextSrv.hasPermission(permissions.create) ? (
-          <EmptyStateCTAButton
-            buttonHref={makeAMLink('alerting/silence/new', alertManagerSourceName)}
-            buttonLabel={t('silences.empty-state.button-title', 'Create silence')}
-          />
-        ) : undefined
+        <LinkButton
+          disabled={!contextSrv.hasPermission(permissions.create)}
+          href={makeAMLink('alerting/silence/new', alertManagerSourceName)}
+          icon="bell-slash"
+          size="lg"
+        >
+          <Trans i18nKey="silences.empty-state.button-title">Create silence</Trans>
+        </LinkButton>
       }
       message={t('silences.empty-state.title', "You haven't created any silences yet")}
     />

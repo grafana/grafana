@@ -1,8 +1,7 @@
 import React, { useCallback } from 'react';
 
-import { CallToActionCard, TextLink } from '@grafana/ui';
+import { LinkButton, TextLink } from '@grafana/ui';
 import { EmptyState } from '@grafana/ui/src/components/EmptyState/EmptyState';
-import { EmptyStateCTAButton } from '@grafana/ui/src/components/EmptyState/EmptyStateCTAButton';
 import { Trans, t } from 'app/core/internationalization';
 import { DashboardViewItem } from 'app/features/search/types';
 import { useDispatch } from 'app/types';
@@ -118,32 +117,32 @@ export function BrowseView({ folderUID, width, height, canSelect }: BrowseViewPr
   if (status === 'fulfilled' && flatTree.length === 0) {
     return (
       <div style={{ width }}>
-        {canSelect ? (
-          <EmptyState
-            button={
-              <EmptyStateCTAButton
-                buttonHref={folderUID ? `dashboard/new?folderUid=${folderUID}` : 'dashboard/new'}
-                buttonLabel={t('browse-dashboards.empty-state.button-title', 'Create dashboard')}
-              />
-            }
-            message={
-              folderUID
-                ? t('browse-dashboards.empty-state.title-folder', "This folder doesn't have any dashboards yet")
-                : t('browse-dashboards.empty-state.title', "You haven't created any dashboards yet")
-            }
-          >
-            {folderUID && (
-              <Trans i18nKey="browse-dashboards.empty-state.pro-tip">
-                Add/move dashboards to your folder at{' '}
-                <TextLink external={false} href="/dashboards">
-                  Browse dashboards
-                </TextLink>
-              </Trans>
-            )}
-          </EmptyState>
-        ) : (
-          <CallToActionCard callToActionElement={<span>This folder is empty</span>} />
-        )}
+        <EmptyState
+          button={
+            <LinkButton
+              disabled={!canSelect}
+              href={folderUID ? `dashboard/new?folderUid=${folderUID}` : 'dashboard/new'}
+              icon="plus"
+              size="lg"
+            >
+              <Trans i18nKey="browse-dashboards.empty-state.button-title">Create dashboard</Trans>
+            </LinkButton>
+          }
+          message={
+            folderUID
+              ? t('browse-dashboards.empty-state.title-folder', "This folder doesn't have any dashboards yet")
+              : t('browse-dashboards.empty-state.title', "You haven't created any dashboards yet")
+          }
+        >
+          {folderUID && (
+            <Trans i18nKey="browse-dashboards.empty-state.pro-tip">
+              Add/move dashboards to your folder at{' '}
+              <TextLink external={false} href="/dashboards">
+                Browse dashboards
+              </TextLink>
+            </Trans>
+          )}
+        </EmptyState>
       </div>
     );
   }

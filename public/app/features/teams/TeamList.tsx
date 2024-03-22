@@ -21,7 +21,6 @@ import {
   useStyles2,
 } from '@grafana/ui';
 import { EmptyState } from '@grafana/ui/src/components/EmptyState/EmptyState';
-import { EmptyStateCTAButton } from '@grafana/ui/src/components/EmptyState/EmptyStateCTAButton';
 import { Page } from 'app/core/components/Page/Page';
 import { fetchRoleOptions } from 'app/core/components/RolePicker/api';
 import { Trans, t } from 'app/core/internationalization';
@@ -208,12 +207,14 @@ export const TeamList = ({
         {noTeams ? (
           <EmptyState
             button={
-              contextSrv.hasPermission(AccessControlAction.ActionTeamsCreate) ? (
-                <EmptyStateCTAButton
-                  buttonHref="org/teams/new"
-                  buttonLabel={t('teams.empty-state.button-title', 'New team')}
-                />
-              ) : undefined
+              <LinkButton
+                disabled={!contextSrv.hasPermission(AccessControlAction.ActionTeamsCreate)}
+                href="org/teams/new"
+                icon="users-alt"
+                size="lg"
+              >
+                <Trans i18nKey="teams.empty-state.button-title">New team</Trans>
+              </LinkButton>
             }
             message={t('teams.empty-state.title', "You haven't created any teams yet")}
           >

@@ -3,7 +3,6 @@ import { useAsync } from 'react-use';
 
 import { ConfirmModal, LinkButton, TextLink } from '@grafana/ui';
 import { EmptyState } from '@grafana/ui/src/components/EmptyState/EmptyState';
-import { EmptyStateCTAButton } from '@grafana/ui/src/components/EmptyState/EmptyStateCTAButton';
 import { Page } from 'app/core/components/Page/Page';
 import PageActionBar from 'app/core/components/PageActionBar/PageActionBar';
 import { Trans, t } from 'app/core/internationalization';
@@ -68,12 +67,9 @@ export const PlaylistPage = () => {
             {!showSearch && (
               <EmptyState
                 button={
-                  contextSrv.isEditor ? (
-                    <EmptyStateCTAButton
-                      buttonHref="playlists/new"
-                      buttonLabel={t('playlist-page.empty.button', 'Create playlist')}
-                    />
-                  ) : undefined
+                  <LinkButton disabled={!contextSrv.isEditor} href="playlists/new" icon="plus" size="lg">
+                    <Trans i18nKey="playlist-page.empty.button">Create playlist</Trans>
+                  </LinkButton>
                 }
                 message={t('playlist-page.empty.title', 'There are no playlists created yet')}
               >

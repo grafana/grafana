@@ -7,7 +7,6 @@ import { selectors } from '@grafana/e2e-selectors';
 import { reportInteraction } from '@grafana/runtime';
 import { Button, useStyles2, Stack, Alert, TextLink } from '@grafana/ui';
 import { EmptyState } from '@grafana/ui/src/components/EmptyState/EmptyState';
-import { EmptyStateCTAButton } from '@grafana/ui/src/components/EmptyState/EmptyStateCTAButton';
 import { t, Trans } from 'app/core/internationalization';
 
 import { VariablesDependenciesButton } from '../inspect/VariablesDependenciesButton';
@@ -112,10 +111,9 @@ function EmptyVariablesList({ onAdd }: { onAdd: () => void }): ReactElement {
     <Stack direction="column">
       <EmptyState
         button={
-          <EmptyStateCTAButton
-            buttonLabel={t('variables.empty-state.button-title', 'Add variable')}
-            onButtonClick={onAdd}
-          />
+          <Button icon="calculator-alt" onClick={onAdd} size="lg">
+            <Trans i18nKey="variables.empty-state.button-title">Add variable</Trans>
+          </Button>
         }
         message={t('variables.empty-state.title', 'There are no variables added yet')}
       />

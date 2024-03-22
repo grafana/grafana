@@ -6,7 +6,6 @@ import { selectors } from '@grafana/e2e-selectors';
 import { getDataSourceSrv } from '@grafana/runtime';
 import { Alert, Button, DeleteButton, IconButton, Stack, TextLink, useStyles2, VerticalGroup } from '@grafana/ui';
 import { EmptyState } from '@grafana/ui/src/components/EmptyState/EmptyState';
-import { EmptyStateCTAButton } from '@grafana/ui/src/components/EmptyState/EmptyStateCTAButton';
 import { Trans, t } from 'app/core/internationalization';
 
 import { DashboardModel } from '../../state/DashboardModel';
@@ -113,10 +112,9 @@ export const AnnotationSettingsList = ({ dashboard, onNew, onEdit }: Props) => {
         <Stack direction="column">
           <EmptyState
             button={
-              <EmptyStateCTAButton
-                buttonLabel={t('annotations.empty-state.button-title', 'Add annotation query')}
-                onButtonClick={onNew}
-              />
+              <Button icon="comment-alt" onClick={onNew} size="lg">
+                <Trans i18nKey="annotations.empty-state.button-title">Add annotation query</Trans>
+              </Button>
             }
             message={t('annotations.empty-state.title', 'There are no custom annotation queries added yet')}
           />

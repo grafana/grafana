@@ -4,9 +4,8 @@ import { useLocation } from 'react-router-dom';
 
 import { DataSourceSettings, GrafanaTheme2 } from '@grafana/data';
 import { config } from '@grafana/runtime';
-import { TextLink, useStyles2 } from '@grafana/ui';
+import { LinkButton, TextLink, useStyles2 } from '@grafana/ui';
 import { EmptyState } from '@grafana/ui/src/components/EmptyState/EmptyState';
-import { EmptyStateCTAButton } from '@grafana/ui/src/components/EmptyState/EmptyStateCTAButton';
 import { contextSrv } from 'app/core/core';
 import { Trans, t } from 'app/core/internationalization';
 import { StoreState, AccessControlAction, useSelector } from 'app/types';
@@ -70,12 +69,9 @@ export function DataSourcesListView({
     return (
       <EmptyState
         button={
-          hasCreateRights ? (
-            <EmptyStateCTAButton
-              buttonHref={dataSourcesRoutes.New}
-              buttonLabel={t('data-source-list.empty-state.button-title', 'Add data source')}
-            />
-          ) : undefined
+          <LinkButton disabled={!hasCreateRights} href={dataSourcesRoutes.New} icon="database" size="lg">
+            <Trans i18nKey="data-source-list.empty-state.button-title">Add data source</Trans>
+          </LinkButton>
         }
         message={t('data-source-list.empty-state.title', 'No data sources defined')}
       >

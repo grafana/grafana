@@ -15,7 +15,6 @@ import {
   Stack,
 } from '@grafana/ui';
 import { EmptyState } from '@grafana/ui/src/components/EmptyState/EmptyState';
-import { EmptyStateCTAButton } from '@grafana/ui/src/components/EmptyState/EmptyStateCTAButton';
 import { Page } from 'app/core/components/Page/Page';
 import config from 'app/core/config';
 import { contextSrv } from 'app/core/core';
@@ -210,12 +209,14 @@ export const ServiceAccountsListPageUnconnected = ({
             {noServiceAccountsCreated && (
               <EmptyState
                 button={
-                  contextSrv.hasPermission(AccessControlAction.ServiceAccountsCreate) ? (
-                    <EmptyStateCTAButton
-                      buttonHref="org/serviceaccounts/create"
-                      buttonLabel={t('service-accounts.empty-state.button-title', 'Add service account')}
-                    />
-                  ) : undefined
+                  <LinkButton
+                    disabled={!contextSrv.hasPermission(AccessControlAction.ServiceAccountsCreate)}
+                    href="org/serviceaccounts/create"
+                    icon="key-skeleton-alt"
+                    size="lg"
+                  >
+                    <Trans i18nKey="service-accounts.empty-state.button-title">Add service account</Trans>
+                  </LinkButton>
                 }
                 message={t('service-accounts.empty-state.title', "You haven't created any service accounts yet")}
               >
