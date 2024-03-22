@@ -36,6 +36,9 @@ func Query(ctx context.Context, tracer trace.Tracer, dsInfo *models.DatasourceIn
 	var err error
 
 	// We are testing running of queries in parallel behind feature flag
+	isStreamingParserEnabled := features.IsEnabled(ctx, featuremgmt.FlagInfluxqlStreamingParser)
+	isInfluxdbReturnInfluxResponseEnabled := features.IsEnabled(ctx, featuremgmt.FlagInfluxdbReturnInfluxResponse)
+
 	if features.IsEnabled(ctx, featuremgmt.FlagInfluxdbRunQueriesInParallel) {
 		concurrentQueryCount, err := req.PluginContext.GrafanaConfig.ConcurrentQueryCount()
 		if err != nil {
@@ -68,7 +71,7 @@ func Query(ctx context.Context, tracer trace.Tracer, dsInfo *models.DatasourceIn
 				return err
 			}
 
-			resp, err := execute(ctx, tracer, dsInfo, logger, query, request, features.IsEnabled(ctx, featuremgmt.FlagInfluxqlStreamingParser))
+			resp, err := execute(ctx, tracer, dsInfo, logger, query, request, isStreamingParserEnabled, isInfluxdbReturnInfluxResponseEnabled)
 
 			responseLock.Lock()
 			defer responseLock.Unlock()
@@ -107,7 +110,7 @@ func Query(ctx context.Context, tracer trace.Tracer, dsInfo *models.DatasourceIn
 				return &backend.QueryDataResponse{}, err
 			}
 
-			resp, err := execute(ctx, tracer, dsInfo, logger, query, request, features.IsEnabled(ctx, featuremgmt.FlagInfluxqlStreamingParser))
+			resp, err := execute(ctx, tracer, dsInfo, logger, query, request, isStreamingParserEnabled, isInfluxdbReturnInfluxResponseEnabled)
 
 			if err != nil {
 				response.Responses[query.RefID] = backend.DataResponse{Error: err}
@@ -169,7 +172,7 @@ func createRequest(ctx context.Context, logger log.Logger, dsInfo *models.Dataso
 	return req, nil
 }
 
-func execute(ctx context.Context, tracer trace.Tracer, dsInfo *models.DatasourceInfo, logger log.Logger, query *models.Query, request *http.Request, isStreamingParserEnabled bool) (backend.DataResponse, error) {
+func execute(ctx context.Context, tracer trace.Tracer, dsInfo *models.DatasourceInfo, logger log.Logger, query *models.Query, request *http.Request, isStreamingParserEnabled bool, isInfluxdbReturnInfluxResponseEnabled bool) (backend.DataResponse, error) {
 	res, err := dsInfo.HTTPClient.Do(request)
 	if err != nil {
 		return backend.DataResponse{}, err
@@ -190,6 +193,13 @@ func execute(ctx context.Context, tracer trace.Tracer, dsInfo *models.Datasource
 	} else {
 		resp = buffered.ResponseParse(res.Body, res.StatusCode, query)
 	}
+
+	if isInfluxdbReturnInfluxResponseEnabled {
+		resp.Frames[0].Meta.Custom = map[string]any{
+			"influx_response": "test",
+		}
+	}
+
 	return *resp, nil
 }
 
