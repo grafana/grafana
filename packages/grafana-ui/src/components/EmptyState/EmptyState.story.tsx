@@ -43,7 +43,7 @@ export const Basic: StoryFn<typeof EmptyState> = (args) => {
 };
 
 Basic.args = {
-  button: 'None',
+  button: 'CTA',
   children: 'Use this space to add any additional information',
   variant: 'initial',
 };
