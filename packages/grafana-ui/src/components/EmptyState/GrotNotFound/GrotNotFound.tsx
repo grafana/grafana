@@ -4,7 +4,7 @@ import SVG from 'react-inlinesvg';
 
 import { GrafanaTheme2 } from '@grafana/data';
 
-import { useStyles2, useTheme2 } from '../../../../themes';
+import { useStyles2, useTheme2 } from '../../../themes';
 
 import notFoundDark from './grot-not-found-dark.svg';
 import notFoundLight from './grot-not-found-light.svg';

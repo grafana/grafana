@@ -563,8 +563,8 @@
     "drawer": {
       "close": "Close"
     },
-    "empty-search-state": {
-      "message": "No results found"
+    "empty-state": {
+      "search-message": "No results found"
     },
     "modal": {
       "close-tooltip": "Close"
