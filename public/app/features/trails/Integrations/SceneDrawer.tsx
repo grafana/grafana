@@ -1,7 +1,8 @@
 import { css } from '@emotion/css';
-import React from 'react';
+import React, { useEffect } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
+import { locationService } from '@grafana/runtime';
 import { SceneComponentProps, SceneObjectBase, SceneObject, SceneObjectState } from '@grafana/scenes';
 import { Drawer, useStyles2 } from '@grafana/ui';
 import appEvents from 'app/core/app_events';
@@ -16,6 +17,21 @@ export type SceneDrawerProps = {
 export function SceneDrawer(props: SceneDrawerProps) {
   const { scene, title, onDismiss } = props;
   const styles = useStyles2(getStyles);
+
+  useEffect(() => {
+    // Adding this additional push prevents an embed in scenes dashboards from going back too far
+    locationService.push(locationService.getLocation());
+
+    const unregister = locationService.getHistory().listen((location, action) => {
+      if (action === 'POP') {
+        // Use the 'back' button to dismiss
+        locationService.push(location); // Undo the effects of the back button, and push the location back
+        onDismiss(); // Call the drawer modal's dismiss
+      }
+    });
+
+    return unregister;
+  }, [onDismiss]);
 
   return (
     <Drawer title={title} onClose={onDismiss} size="lg">

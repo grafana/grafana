@@ -13,7 +13,7 @@ import {
 } from '@grafana/scenes';
 import { useStyles2, Tooltip, Stack } from '@grafana/ui';
 
-import { DataTrail, DataTrailState, getTopSceneFor } from './DataTrail';
+import { DataTrail, DataTrailState } from './DataTrail';
 import { VAR_FILTERS } from './shared';
 import { getTrailFor, isSceneTimeRangeState } from './utils';
 
@@ -30,7 +30,6 @@ export interface DataTrailHistoryStep {
 }
 
 export type TrailStepType = 'filters' | 'time' | 'metric' | 'start';
-
 export class DataTrailHistory extends SceneObjectBase<DataTrailsHistoryState> {
   public constructor(state: Partial<DataTrailsHistoryState>) {
     super({ steps: state.steps ?? [], currentStep: state.currentStep ?? 0 });
@@ -46,20 +45,6 @@ export class DataTrailHistory extends SceneObjectBase<DataTrailsHistoryState> {
     if (this.state.steps.length === 0) {
       // We always want to ensure in initial 'start' step
       this.addTrailStep(trail, 'start');
-
-      if (trail.state.metric) {
-        // But if our current trail has a metric, we want to remove it and the topScene,
-        // so that the "start" step always displays a metric select screen.
-
-        // So we remove the metric and update the topscene for the "start" step
-        const { metric, ...startState } = trail.state;
-        startState.topScene = getTopSceneFor(undefined);
-        this.state.steps[0].trailState = startState;
-
-        // But must add a secondary step to represent the selection of the metric
-        // for this restored trail state
-        this.addTrailStep(trail, 'metric');
-      }
     }
 
     trail.subscribeToState((newState, oldState) => {
@@ -120,9 +105,13 @@ export class DataTrailHistory extends SceneObjectBase<DataTrailsHistoryState> {
   }
 
   public goBackToStep(stepIndex: number) {
-    this.stepTransitionInProgress = true;
+    if (stepIndex === this.state.currentStep) {
+      return;
+    }
 
+    this.stepTransitionInProgress = true;
     this.setState({ currentStep: stepIndex });
+    // The URL will update
 
     this.stepTransitionInProgress = false;
   }
@@ -142,10 +131,15 @@ export class DataTrailHistory extends SceneObjectBase<DataTrailsHistoryState> {
 
     const { ancestry, alternatePredecessorStyle } = useMemo(() => {
       const ancestry = new Set<number>();
+
       let cursor = currentStep;
       while (cursor >= 0) {
+        const step = steps[cursor];
+        if (!step) {
+          break;
+        }
         ancestry.add(cursor);
-        cursor = steps[cursor].parentIndex;
+        cursor = step.parentIndex;
       }
 
       const alternatePredecessorStyle = new Map<number, string>();

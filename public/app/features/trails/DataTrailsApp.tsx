@@ -4,14 +4,13 @@ import { Route, Switch } from 'react-router-dom';
 
 import { GrafanaTheme2, PageLayoutType } from '@grafana/data';
 import { locationService } from '@grafana/runtime';
-import { getUrlSyncManager, SceneComponentProps, SceneObjectBase, SceneObjectState } from '@grafana/scenes';
+import { SceneComponentProps, SceneObjectBase, SceneObjectState, getUrlSyncManager } from '@grafana/scenes';
 import { useStyles2 } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
 
 import { DataTrail } from './DataTrail';
 import { DataTrailsHome } from './DataTrailsHome';
 import { MetricsHeader } from './MetricsHeader';
-import { getTrailStore } from './TrailStore/TrailStore';
 import { HOME_ROUTE, TRAILS_ROUTE } from './shared';
 import { getMetricName, getUrlForTrail, newMetricsTrail } from './utils';
 
@@ -75,8 +74,12 @@ function DataTrailView({ trail }: { trail: DataTrail }) {
 
   useEffect(() => {
     if (!isInitialized) {
+      // Set the initial state based on the URL.
       getUrlSyncManager().initSync(trail);
-      getTrailStore().setRecentTrail(trail);
+      // Any further changes to the state should occur directly to the state, not through the URL,
+      // So we want to stop listening after this point.
+      getUrlSyncManager().cleanUp(trail);
+
       setIsInitialized(true);
     }
   }, [trail, isInitialized]);

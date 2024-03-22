@@ -24,10 +24,11 @@ describe('DataTrail', () => {
 
   describe('Given starting trail with url sync and no url state', () => {
     let trail: DataTrail;
+    const preTrailUrl = '/';
 
     beforeEach(() => {
       trail = new DataTrail({});
-      locationService.push('/');
+      locationService.push(preTrailUrl);
       getUrlSyncManager().initSync(trail);
       activateFullSceneTree(trail);
     });
@@ -73,6 +74,15 @@ describe('DataTrail', () => {
       it('Should set history step 1 parentIndex to 0', () => {
         expect(trail.state.history.state.steps[1].parentIndex).toBe(0);
       });
+
+      describe('And browser back button is pressed', () => {
+        locationService.getHistory().goBack();
+
+        it('Should return to original URL', () => {
+          const { pathname } = locationService.getLocation();
+          expect(pathname).toEqual(preTrailUrl);
+        });
+      });
     });
 
     describe('When going back to history step 1', () => {
@@ -110,6 +120,15 @@ describe('DataTrail', () => {
 
         it('Should set history step 3 parent index to 1', () => {
           expect(trail.state.history.state.steps[3].parentIndex).toBe(1);
+        });
+
+        describe('And browser back button is pressed', () => {
+          locationService.getHistory().goBack();
+
+          it('Should return to original URL', () => {
+            const { pathname } = locationService.getLocation();
+            expect(pathname).toEqual(preTrailUrl);
+          });
         });
       });
     });
