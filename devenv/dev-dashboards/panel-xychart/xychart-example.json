@@ -206,7 +206,7 @@
           {
             "name": "Male",
             "pointColor": {
-              "fixed": "#5795f200"
+              "fixed": "#5795f2"
             },
             "pointSize": {
               "fixed": 5,
@@ -219,7 +219,7 @@
           {
             "name": "Female",
             "pointColor": {
-              "fixed": "#ff983000"
+              "fixed": "#ff9830"
             },
             "pointSize": {
               "fixed": 5,

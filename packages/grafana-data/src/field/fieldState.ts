@@ -1,4 +1,12 @@
-import { DataFrame, Field, TIME_SERIES_VALUE_FIELD_NAME, FieldType, TIME_SERIES_TIME_FIELD_NAME } from '../types';
+import { getFieldMatcher } from '../transformations';
+import {
+  DataFrame,
+  Field,
+  TIME_SERIES_VALUE_FIELD_NAME,
+  FieldType,
+  TIME_SERIES_TIME_FIELD_NAME,
+  FieldConfigSource,
+} from '../types';
 import { formatLabels } from '../utils/labels';
 
 /**
@@ -47,6 +55,53 @@ export function cacheFieldDisplayNames(frames: DataFrame[]) {
   frames.forEach((frame) => {
     frame.fields.forEach((field) => {
       getFieldDisplayName(field, frame, frames);
+    });
+  });
+}
+
+/**
+ *
+ * moves each field's config.custom.hideFrom to field.state.hideFrom
+ * and mutates orgiginal field.config.custom.hideFrom to one with explicit overrides only, (without the ad-hoc stateful __system override from legend toggle)
+ */
+export function decoupleHideFromState(frames: DataFrame[], fieldConfig: FieldConfigSource<any>) {
+  frames.forEach((frame) => {
+    frame.fields.forEach((field) => {
+      const hideFrom = {
+        legend: false,
+        tooltip: false,
+        viz: false,
+        ...fieldConfig.defaults.custom?.hideFrom,
+      };
+
+      // with ad hoc __system override applied
+      const hideFromState = field.config.custom?.hideFrom;
+
+      fieldConfig.overrides.forEach((o) => {
+        if ('__systemRef' in o) {
+          return;
+        }
+
+        const m = getFieldMatcher(o.matcher);
+
+        if (m(field, frame, frames)) {
+          for (const p of o.properties) {
+            if (p.id === 'custom.hideFrom') {
+              Object.assign(hideFrom, p.value);
+            }
+          }
+        }
+      });
+
+      field.state = {
+        ...field.state,
+        hideFrom: {
+          ...hideFromState,
+        },
+      };
+
+      // original with perm overrides
+      field.config.custom.hideFrom = hideFrom;
     });
   });
 }
