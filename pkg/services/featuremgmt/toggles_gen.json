@@ -2114,7 +2114,8 @@
       "metadata": {
         "name": "emailVerificationEnforcement",
         "resourceVersion": "1710164083965",
-        "creationTimestamp": "2024-03-11T13:34:43Z"
+        "creationTimestamp": "2024-03-11T13:34:43Z",
+        "deletionTimestamp": "2024-03-22T11:25:34Z"
       },
       "spec": {
         "description": "Force email verification for users, even when authenticating through sso.",
