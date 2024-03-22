@@ -122,13 +122,20 @@ func (p *EnvVarsProvider) awsEnvVars(pluginID string) []string {
 func (p *EnvVarsProvider) secureSocksProxyEnvVars() []string {
 	if p.cfg.ProxySettings.Enabled {
 		return []string{
-			envVar(proxy.PluginSecureSocksProxyClientCert, p.cfg.ProxySettings.ClientCert),
-			envVar(proxy.PluginSecureSocksProxyClientKey, p.cfg.ProxySettings.ClientKey),
-			envVar(proxy.PluginSecureSocksProxyRootCACert, p.cfg.ProxySettings.RootCA),
-			envVar(proxy.PluginSecureSocksProxyProxyAddress, p.cfg.ProxySettings.ProxyAddress),
-			envVar(proxy.PluginSecureSocksProxyServerName, p.cfg.ProxySettings.ServerName),
-			envVar(proxy.PluginSecureSocksProxyEnabled, strconv.FormatBool(p.cfg.ProxySettings.Enabled)),
-			envVar(proxy.PluginSecureSocksProxyAllowInsecure, strconv.FormatBool(p.cfg.ProxySettings.AllowInsecure)),
+			// nolint:staticcheck
+			envVar(proxy.PluginSecureSocksProxyClientCertFilePathEnvVarName, p.cfg.ProxySettings.ClientCertFilePath),
+			// nolint:staticcheck
+			envVar(proxy.PluginSecureSocksProxyClientKeyFilePathEnvVarName, p.cfg.ProxySettings.ClientKeyFilePath),
+			// nolint:staticcheck
+			envVar(proxy.PluginSecureSocksProxyRootCACertFilePathsEnvVarName, strings.Join(p.cfg.ProxySettings.RootCAFilePaths, " ")),
+			// nolint:staticcheck
+			envVar(proxy.PluginSecureSocksProxyAddressEnvVarName, p.cfg.ProxySettings.ProxyAddress),
+			// nolint:staticcheck
+			envVar(proxy.PluginSecureSocksProxyServerNameEnvVarName, p.cfg.ProxySettings.ServerName),
+			// nolint:staticcheck
+			envVar(proxy.PluginSecureSocksProxyEnabledEnvVarName, strconv.FormatBool(p.cfg.ProxySettings.Enabled)),
+			// nolint:staticcheck
+			envVar(proxy.PluginSecureSocksProxyAllowInsecureEnvVarName, strconv.FormatBool(p.cfg.ProxySettings.AllowInsecure)),
 		}
 	}
 	return nil
