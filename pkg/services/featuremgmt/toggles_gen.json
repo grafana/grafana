@@ -1428,7 +1428,8 @@
       "metadata": {
         "name": "migrationLocking",
         "resourceVersion": "1709648236447",
-        "creationTimestamp": "2024-03-05T14:17:16Z"
+        "creationTimestamp": "2024-03-05T14:17:16Z",
+        "deletionTimestamp": "2024-03-22T10:42:09Z"
       },
       "spec": {
         "description": "Lock database during migrations",
