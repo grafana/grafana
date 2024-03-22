@@ -518,25 +518,26 @@ export class Connections {
 
       // call onChange here and insert new vertex at appropriate index of connection vertices array
       const connectionIndex = this.selection.value?.index;
+      const sourceConnectionIndex = this.selection.value?.sourceConnectionIndex;
       const vertexIndex = this.selectedVertexIndex;
 
-      if (connectionIndex !== undefined && vertexIndex !== undefined) {
+      if (connectionIndex !== undefined && sourceConnectionIndex !== undefined && vertexIndex !== undefined) {
         const currentSource = this.scene.connections.state[connectionIndex].source;
         if (currentSource.options.connections) {
           const currentConnections = [...currentSource.options.connections];
           const newVertex = { x: (x - x1) / (x2 - x1), y: (y - y1) / (y2 - y1) };
-          if (currentConnections[connectionIndex].vertices) {
-            const currentVertices = [...currentConnections[connectionIndex].vertices!];
+          if (currentConnections[sourceConnectionIndex].vertices) {
+            const currentVertices = [...currentConnections[sourceConnectionIndex].vertices!];
             currentVertices.splice(vertexIndex, 0, newVertex);
-            currentConnections[connectionIndex] = {
-              ...currentConnections[connectionIndex],
+            currentConnections[sourceConnectionIndex] = {
+              ...currentConnections[sourceConnectionIndex],
               vertices: currentVertices,
             };
           } else {
             // For first vertex creation
             const currentVertices: ConnectionCoordinates[] = [newVertex];
-            currentConnections[connectionIndex] = {
-              ...currentConnections[connectionIndex],
+            currentConnections[sourceConnectionIndex] = {
+              ...currentConnections[sourceConnectionIndex],
               vertices: currentVertices,
             };
           }

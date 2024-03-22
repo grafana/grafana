@@ -38,6 +38,7 @@ export interface CanvasTooltipPayload {
 
 export interface ConnectionState {
   index: number; // array index from the source
+  sourceConnectionIndex: number;
   source: ElementState;
   target: ElementState;
   info: CanvasConnection;

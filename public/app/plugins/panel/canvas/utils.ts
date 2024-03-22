@@ -270,6 +270,7 @@ export function isConnectionTarget(element: ElementState, sceneByName: Map<strin
 }
 
 export function getConnections(sceneByName: Map<string, ElementState>) {
+  let idx = 0;
   const connections: ConnectionState[] = [];
   for (let v of sceneByName.values()) {
     if (v.options.connections) {
@@ -286,7 +287,8 @@ export function getConnections(sceneByName: Map<string, ElementState>) {
         const target = c.targetName ? sceneByName.get(c.targetName) : v.parent;
         if (target) {
           connections.push({
-            index,
+            index: idx + index,
+            sourceConnectionIndex: index,
             source: v,
             target,
             info: c,
@@ -294,6 +296,8 @@ export function getConnections(sceneByName: Map<string, ElementState>) {
           });
         }
       });
+
+      idx++;
     }
   }
 
