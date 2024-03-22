@@ -329,6 +329,7 @@ exports[`transformSceneToSaveModel Given a simple scene with custom settings Sho
         "type": "testdata",
         "uid": "PD8C576611E62080A",
       },
+      "description": "This is a simple time series graph",
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -684,6 +685,7 @@ exports[`transformSceneToSaveModel Given a simple scene with variables Should tr
         "type": "testdata",
         "uid": "PD8C576611E62080A",
       },
+      "description": "This is a simple time series graph",
       "fieldConfig": {
         "defaults": {
           "color": {
