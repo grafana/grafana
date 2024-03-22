@@ -32,7 +32,7 @@ cloudWatchCrossAccountQuerying,GA,@grafana/aws-datasources,false,false,false
 showDashboardValidationWarnings,experimental,@grafana/dashboards-squad,false,false,false
 mysqlAnsiQuotes,experimental,@grafana/backend-platform,false,false,false
 accessControlOnCall,preview,@grafana/identity-access-team,false,false,false
-nestedFolders,preview,@grafana/backend-platform,false,false,false
+nestedFolders,GA,@grafana/backend-platform,false,false,false
 nestedFolderPicker,GA,@grafana/grafana-frontend-platform,false,false,true
 alertingBacktesting,experimental,@grafana/alerting-squad,false,false,false
 editPanelCSVDragAndDrop,experimental,@grafana/dataviz-squad,false,false,true
