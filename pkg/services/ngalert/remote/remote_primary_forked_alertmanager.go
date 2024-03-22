@@ -39,6 +39,13 @@ func (fam *RemotePrimaryForkedAlertmanager) ApplyConfig(ctx context.Context, con
 
 // TODO: save the new configuration hash in memory.
 func (fam *RemotePrimaryForkedAlertmanager) SaveAndApplyConfig(ctx context.Context, config *apimodels.PostableUserConfig) error {
+	if err := fam.remote.SaveAndApplyConfig(ctx, config); err != nil {
+		return err
+	}
+
+	if err := fam.internal.SaveAndApplyConfig(ctx, config); err != nil {
+		fam.log.Error("Error applying config to the internal Alertmanager", "err", err)
+	}
 	return nil
 }
 
