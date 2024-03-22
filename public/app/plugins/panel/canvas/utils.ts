@@ -370,8 +370,14 @@ export const calculateAbsoluteCoords = (
   return { x: valueX * (x2 - x1) + x1, y: valueY * (y2 - y1) + y1 };
 };
 
+// Calculate angle between two points and return angle in radians
 export const calculateAngle = (x1: number, y1: number, x2: number, y2: number) => {
-  return (Math.atan2(y2 - y1, x2 - x1) * 180) / Math.PI;
+  return Math.atan2(y2 - y1, x2 - x1);
+};
+
+export const calculateDistance = (x1: number, y1: number, x2: number, y2: number) => {
+  //TODO add sqrt approx option
+  return Math.sqrt((x2 - x1) ** 2 + (y2 - y1) ** 2);
 };
 
 // @TODO revisit, currently returning last row index for field
@@ -395,9 +401,10 @@ export const getConnectionStyles = (
   const lastRowIndex = getRowIndex(info.size?.field, scene);
   const strokeColor = info.color ? scene.context.getColor(info.color).value() : defaultArrowColor;
   const strokeWidth = info.size ? scene.context.getScale(info.size).get(lastRowIndex) : defaultArrowSize;
+  const strokeRadius = info.radius ? scene.context.getScale(info.radius).get(lastRowIndex) : 0;
   const arrowDirection = info.direction ? info.direction : defaultArrowDirection;
   const lineStyle = info.lineStyle === LineStyle.Dashed ? StrokeDasharray.Dashed : StrokeDasharray.Solid;
-  return { strokeColor, strokeWidth, arrowDirection, lineStyle };
+  return { strokeColor, strokeWidth, strokeRadius, arrowDirection, lineStyle };
 };
 
 export const getParentBoundingClientRect = (scene: Scene) => {

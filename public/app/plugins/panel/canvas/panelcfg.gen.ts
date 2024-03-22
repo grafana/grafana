@@ -56,6 +56,7 @@ export interface BackgroundConfig {
 
 export interface LineConfig {
   color?: ui.ColorDimensionConfig;
+  radius?: number;
   width?: number;
 }
 

@@ -52,8 +52,9 @@ composableKinds: PanelCfg: {
 				} @cuetsy(kind="interface")
 
 				LineConfig: {
-					color?: ui.ColorDimensionConfig
-					width?: float64
+					color?:  ui.ColorDimensionConfig
+					width?:  float64
+					radius?: float64
 				} @cuetsy(kind="interface")
 
 				HttpRequestMethod: "GET" | "POST" | "PUT" @cuetsy(kind="enum", memberNames="GET|POST|PUT")

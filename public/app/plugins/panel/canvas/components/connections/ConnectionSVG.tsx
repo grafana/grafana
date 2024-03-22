@@ -11,7 +11,9 @@ import { ConnectionCoordinates } from '../../panelcfg.gen';
 import { ConnectionState } from '../../types';
 import {
   calculateAbsoluteCoords,
+  calculateAngle,
   calculateCoordinates,
+  calculateDistance,
   calculateMidpoint,
   getConnectionStyles,
   getParentBoundingClientRect,
@@ -135,8 +137,10 @@ export const ConnectionSVG = ({
 
       const { x1, y1, x2, y2 } = calculateCoordinates(sourceRect, parentRect, info, target, transformScale);
       const midpoint = calculateMidpoint(x1, y1, x2, y2);
+      const xDist = x2 - x1;
+      const yDist = y2 - y1;
 
-      const { strokeColor, strokeWidth, arrowDirection, lineStyle } = getConnectionStyles(
+      const { strokeColor, strokeWidth, strokeRadius, arrowDirection, lineStyle } = getConnectionStyles(
         info,
         scene,
         defaultArrowSize,
@@ -151,6 +155,7 @@ export const ConnectionSVG = ({
       const CONNECTION_HEAD_ID_START = `connectionHeadStart-${headId + Math.random()}`;
       const CONNECTION_HEAD_ID_END = `connectionHeadEnd-${headId + Math.random()}`;
 
+      const radius = strokeRadius;
       // Create vertex path and populate array of add vertex controls
       const addVertices: ConnectionCoordinates[] = [];
       let pathString = `M${x1} ${y1} `;
@@ -158,20 +163,171 @@ export const ConnectionSVG = ({
         vertices.map((vertex, index) => {
           const x = vertex.x;
           const y = vertex.y;
-          pathString += `L${x * (x2 - x1) + x1} ${y * (y2 - y1) + y1} `;
+
+          // Convert vertex relative coordinates to scene coordinates
+          const X = x * xDist + x1;
+          const Y = y * yDist + y1;
+
+          // Initialize coordinates for first arc control point
+          let xa = X;
+          let ya = Y;
+
+          // Initialize coordinates for second arc control point
+          let xb = X;
+          let yb = Y;
+
+          // Initialize half arc distance and segment angles
+          let lHalfArc = 0;
+          let angle1 = 0;
+          let angle2 = 0;
+
+          // Only calculate arcs if there is a radius
+          if (radius) {
+            if (index < vertices.length - 1) {
+              const Xn = vertices[index + 1].x * xDist + x1;
+              const Yn = vertices[index + 1].y * yDist + y1;
+              if (index === 0) {
+                // First vertex
+                angle1 = calculateAngle(x1, y1, X, Y);
+                angle2 = calculateAngle(X, Y, Xn, Yn);
+              } else {
+                // All vertices
+                const previousVertex = vertices[index - 1];
+                const Xp = previousVertex.x * xDist + x1;
+                const Yp = previousVertex.y * yDist + y1;
+                angle1 = calculateAngle(Xp, Yp, X, Y);
+                angle2 = calculateAngle(X, Y, Xn, Yn);
+              }
+            } else {
+              // Last vertex
+              let previousVertex = { x: 0, y: 0 };
+              if (index > 0) {
+                // Not also the first vertex
+                previousVertex = vertices[index - 1];
+              }
+              const Xp = previousVertex.x * xDist + x1;
+              const Yp = previousVertex.y * yDist + y1;
+              angle1 = calculateAngle(Xp, Yp, X, Y);
+              angle2 = calculateAngle(X, Y, x2, y2);
+            }
+
+            // Calculate angle between two segments where arc will be placed
+            const theta = angle2 - angle1; //radians
+            // Attempt to determine if arc is counter clockwise (ccw)
+            const ccw = theta < 0;
+            // Half arc is used for arc control points
+            lHalfArc = radius * Math.tan(theta / 2);
+            if (ccw) {
+              lHalfArc *= -1;
+            }
+          }
+
           if (index === 0) {
             // For first vertex
             addVertices.push(calculateMidpoint(0, 0, x, y));
+
+            // Only calculate arcs if there is a radius
+            if (radius) {
+              // Length of segment
+              const lSegment = calculateDistance(X, Y, x1, y1);
+              if (Math.abs(lHalfArc) > 0.5 * Math.abs(lSegment)) {
+                // Limit curve control points to mid segment
+                lHalfArc = 0.5 * lSegment;
+              }
+              // Default next point to last point
+              let Xn = x2;
+              let Yn = y2;
+              if (index < vertices.length - 1) {
+                // Not also the last point
+                const nextVertex = vertices[index + 1];
+                Xn = nextVertex.x * xDist + x1;
+                Yn = nextVertex.y * yDist + y1;
+              }
+
+              // Length of next segment
+              const lSegmentNext = calculateDistance(X, Y, Xn, Yn);
+              if (Math.abs(lHalfArc) > 0.5 * Math.abs(lSegmentNext)) {
+                // Limit curve control points to mid segment
+                lHalfArc = 0.5 * lSegmentNext;
+              }
+              // Calculate arc control points
+              const lDelta = lSegment - lHalfArc;
+              xa = lDelta * Math.cos(angle1) + x1;
+              ya = lDelta * Math.sin(angle1) + y1;
+              xb = lHalfArc * Math.cos(angle2) + X;
+              yb = lHalfArc * Math.sin(angle2) + Y;
+
+              // Check if arc control points are inside of segment, otherwise swap sign
+              if ((xa > X && xa > x1) || (xa < X && xa < x1)) {
+                xa = (lDelta + 2 * lHalfArc) * Math.cos(angle1) + x1;
+                ya = (lDelta + 2 * lHalfArc) * Math.sin(angle1) + y1;
+                xb = -lHalfArc * Math.cos(angle2) + X;
+                yb = -lHalfArc * Math.sin(angle2) + Y;
+              }
+            }
           } else {
             // For all other vertices
             const previousVertex = vertices[index - 1];
             addVertices.push(calculateMidpoint(previousVertex.x, previousVertex.y, x, y));
+
+            // Only calculate arcs if there is a radius
+            if (radius) {
+              // Convert previous vertex relative coorindates to scene coordinates
+              const Xp = previousVertex.x * xDist + x1;
+              const Yp = previousVertex.y * yDist + y1;
+
+              // Length of segment
+              const lSegment = calculateDistance(X, Y, Xp, Yp);
+              if (Math.abs(lHalfArc) > 0.5 * Math.abs(lSegment)) {
+                // Limit curve control points to mid segment
+                lHalfArc = 0.5 * lSegment;
+              }
+              // Default next point to last point
+              let Xn = x2;
+              let Yn = y2;
+              if (index < vertices.length - 1) {
+                // Not also the last point
+                const nextVertex = vertices[index + 1];
+                Xn = nextVertex.x * xDist + x1;
+                Yn = nextVertex.y * yDist + y1;
+              }
+
+              // Length of next segment
+              const lSegmentNext = calculateDistance(X, Y, Xn, Yn);
+              if (Math.abs(lHalfArc) > 0.5 * Math.abs(lSegmentNext)) {
+                // Limit curve control points to mid segment
+                lHalfArc = 0.5 * lSegmentNext;
+              }
+
+              // Calculate arc control points
+              const lDelta = lSegment - lHalfArc;
+              xa = lDelta * Math.cos(angle1) + Xp;
+              ya = lDelta * Math.sin(angle1) + Yp;
+              xb = lHalfArc * Math.cos(angle2) + X;
+              yb = lHalfArc * Math.sin(angle2) + Y;
+
+              // Check if arc control points are inside of segment, otherwise swap sign
+              if ((xa > X && xa > Xp) || (xa < X && xa < Xp)) {
+                xa = (lDelta + 2 * lHalfArc) * Math.cos(angle1) + Xp;
+                ya = (lDelta + 2 * lHalfArc) * Math.sin(angle1) + Yp;
+                xb = -lHalfArc * Math.cos(angle2) + X;
+                yb = -lHalfArc * Math.sin(angle2) + Y;
+              }
+            }
           }
           if (index === vertices.length - 1) {
-            // For last vertex
+            // For last vertex only
             addVertices.push(calculateMidpoint(1, 1, x, y));
           }
+          // Add segment to path
+          pathString += `L${xa} ${ya} `;
+
+          if (lHalfArc !== 0) {
+            // Add arc if applicable
+            pathString += `Q ${X} ${Y} ${xb} ${yb} `;
+          }
         });
+        // Add last segment
         pathString += `L${x2} ${y2}`;
       }
 
