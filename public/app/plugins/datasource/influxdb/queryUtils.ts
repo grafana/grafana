@@ -1,7 +1,7 @@
 import { cloneDeep } from 'lodash';
 
 import InfluxQueryModel from './influx_query_model';
-import { InfluxQuery } from './types';
+import { InfluxQuery } from './types'; // FIXME: these functions are a beginning of a refactoring of influx_query_model.ts
 
 // FIXME: these functions are a beginning of a refactoring of influx_query_model.ts
 // into a simpler approach with full typescript types.
@@ -89,4 +89,15 @@ export function changeGroupByPart(query: InfluxQuery, partIndex: number, newPara
     params: newParams,
   };
   return { ...query, groupBy: newGroupBy };
+}
+
+export function removeRegexWrapper(str: string) {
+  const regex = /\/\^(.*?)\$\//; // match any string that starts with "/^" and ends with "$/", capturing the characters in between
+  const match = str.match(regex);
+
+  if (match && match.length > 1) {
+    return match[1];
+  }
+
+  return str;
 }
