@@ -115,6 +115,8 @@ func TestIntegrationPostgresSnapshots(t *testing.T) {
 		{format: "table", name: "timestamp_convert_integer"},
 		{format: "table", name: "timestamp_convert_real"},
 		{format: "table", name: "timestamp_convert_double"},
+		{format: "table", name: "time_group_compat_case1"},
+		{format: "table", name: "time_group_compat_case2"},
 	}
 
 	for _, test := range tt {
