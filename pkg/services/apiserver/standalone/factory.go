@@ -92,12 +92,13 @@ func (p *DummyAPIFactory) MakeAPIServer(gv schema.GroupVersion) (builder.APIGrou
 		), nil
 
 	case "testdata.datasource.grafana.app":
+		handlers, _ := datasource.GetHandlers(testdatasource.ProvideService())
 		return datasource.NewDataSourceAPIBuilder(
 			plugins.JSONData{
 				ID:       "grafana-testdata-datasource",
 				AliasIDs: []string{"testdata"},
 			},
-			testdatasource.ProvideService().ServerOpts(), // the client
+			handlers, // the client
 			&pluginDatasourceImpl{
 				startup: v1.Now(),
 			},
