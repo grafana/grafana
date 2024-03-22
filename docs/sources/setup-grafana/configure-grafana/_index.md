@@ -938,10 +938,10 @@ Administrators can increase this if they experience OAuth login state mismatch e
 ### oauth_skip_org_role_update_sync
 
 {{% admonition type="note" %}}
-This option is deprecated in favor of OAuth provider specific `skip_org_role_sync` settings. The following sections explain settings for each provider.
+This option is removed from G11 in favor of OAuth provider specific `skip_org_role_sync` settings. The following sections explain settings for each provider.
 {{% /admonition %}}
 
-If you want to change the `oauth_skip_org_role_update_sync` setting to `false`, then for each provider you have set up, use the `skip_org_role_sync` setting to specify whether you want to skip the synchronization.
+If you want to change the `oauth_skip_org_role_update_sync` setting from `true` to `false`, then each provider you have set up, use the `skip_org_role_sync` setting to specify whether you want to skip the synchronization.
 
 {{% admonition type="warning" %}}
 Currently if no organization role mapping is found for a user, Grafana doesn't update the user's organization role.
