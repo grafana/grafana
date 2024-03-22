@@ -13,6 +13,7 @@ import {
   calculateAbsoluteCoords,
   calculateAngle,
   calculateCoordinates,
+  calculateDistance,
   calculateMidpoint,
   getConnectionStyles,
   getParentBoundingClientRect,
@@ -136,6 +137,8 @@ export const ConnectionSVG = ({
 
       const { x1, y1, x2, y2 } = calculateCoordinates(sourceRect, parentRect, info, target, transformScale);
       const midpoint = calculateMidpoint(x1, y1, x2, y2);
+      const xDist = x2 - x1;
+      const yDist = y2 - y1;
 
       const { strokeColor, strokeWidth, strokeRadius, arrowDirection, lineStyle } = getConnectionStyles(
         info,
@@ -161,29 +164,32 @@ export const ConnectionSVG = ({
           const x = vertex.x;
           const y = vertex.y;
 
-          const X = x * (x2 - x1) + x1;
-          const Y = y * (y2 - y1) + y1;
+          // Convert vertex relative coorindates to scene coordinates
+          const X = x * xDist + x1;
+          const Y = y * yDist + y1;
 
+          // Coordinates for first arc control point
           let xa = x;
           let ya = y;
 
+          // Coordinates for second arc control point
           let xb = x;
           let yb = y;
 
-          let l = 0;
+          let lHalfArc = 0;
           let angle1 = 0;
           let angle2 = 0;
 
           if (index < vertices.length - 1) {
-            const Xn = vertices[index + 1].x * (x2 - x1) + x1;
-            const Yn = vertices[index + 1].y * (y2 - y1) + y1;
+            const Xn = vertices[index + 1].x * xDist + x1;
+            const Yn = vertices[index + 1].y * yDist + y1;
             if (index === 0) {
               angle1 = calculateAngle(x1, y1, X, Y);
               angle2 = calculateAngle(X, Y, Xn, Yn);
             } else {
               const previousVertex = vertices[index - 1];
-              const Xp = previousVertex.x * (x2 - x1) + x1;
-              const Yp = previousVertex.y * (y2 - y1) + y1;
+              const Xp = previousVertex.x * xDist + x1;
+              const Yp = previousVertex.y * yDist + y1;
               angle1 = calculateAngle(Xp, Yp, X, Y);
               angle2 = calculateAngle(X, Y, Xn, Yn);
             }
@@ -192,62 +198,61 @@ export const ConnectionSVG = ({
             if (index > 0) {
               previousVertex = vertices[index - 1];
             }
-            const Xp = previousVertex.x * (x2 - x1) + x1;
-            const Yp = previousVertex.y * (y2 - y1) + y1;
+            const Xp = previousVertex.x * xDist + x1;
+            const Yp = previousVertex.y * yDist + y1;
             angle1 = calculateAngle(Xp, Yp, X, Y);
             angle2 = calculateAngle(X, Y, x2, y2);
           }
           const theta = angle2 - angle1; //radians
           const ccw = theta < 0;
-          l = radius * Math.tan(theta / 2);
+          lHalfArc = radius * Math.tan(theta / 2);
           if (ccw) {
-            l *= -1;
+            lHalfArc *= -1;
           }
 
           if (index === 0) {
             // For first vertex
             addVertices.push(calculateMidpoint(0, 0, x, y));
 
-            const l01 = Math.sqrt((X - x1) ** 2 + (Y - y1) ** 2);
-            if (Math.abs(l) > 0.5 * Math.abs(l01)) {
+            const lSegment = calculateDistance(X, Y, x1, y1);
+            if (Math.abs(lHalfArc) > 0.5 * Math.abs(lSegment)) {
               // Limit curve control points to mid segment
-              l = 0.5 * l01;
+              lHalfArc = 0.5 * lSegment;
             }
-            const L1 = l01 - l;
-            xa = L1 * Math.cos(angle1) + x1;
-            ya = L1 * Math.sin(angle1) + y1;
-            xb = l * Math.cos(angle2) + X;
-            yb = l * Math.sin(angle2) + Y;
+            const lDelta = lSegment - lHalfArc;
+            xa = lDelta * Math.cos(angle1) + x1;
+            ya = lDelta * Math.sin(angle1) + y1;
+            xb = lHalfArc * Math.cos(angle2) + X;
+            yb = lHalfArc * Math.sin(angle2) + Y;
           } else {
             // For all other vertices
             const previousVertex = vertices[index - 1];
-            const Xp = previousVertex.x * (x2 - x1) + x1;
-            const Yp = previousVertex.y * (y2 - y1) + y1;
+            const Xp = previousVertex.x * xDist + x1;
+            const Yp = previousVertex.y * yDist + y1;
             addVertices.push(calculateMidpoint(previousVertex.x, previousVertex.y, x, y));
 
-            //TODO add sqrt approx
-            const l01 = Math.sqrt((X - Xp) ** 2 + (Y - Yp) ** 2);
-            if (Math.abs(l) > 0.5 * Math.abs(l01)) {
+            const lSegment = calculateDistance(X, Y, Xp, Yp);
+            if (Math.abs(lHalfArc) > 0.5 * Math.abs(lSegment)) {
               // Limit curve control points to mid segment
-              l = 0.5 * l01;
+              lHalfArc = 0.5 * lSegment;
             }
             let Xn = x2;
             let Yn = y2;
             if (index < vertices.length - 1) {
               const nextVertex = vertices[index + 1];
-              Xn = nextVertex.x * (x2 - x1) + x1;
-              Yn = nextVertex.y * (y2 - y1) + y1;
+              Xn = nextVertex.x * xDist + x1;
+              Yn = nextVertex.y * yDist + y1;
             }
-            const l02 = Math.sqrt((Xn - X) ** 2 + (Yn - Y) ** 2);
-            if (Math.abs(l) > 0.5 * Math.abs(l02)) {
-              l = 0.5 * l02;
+            const lSegmentNext = calculateDistance(X, Y, Xn, Yn);
+            if (Math.abs(lHalfArc) > 0.5 * Math.abs(lSegmentNext)) {
+              lHalfArc = 0.5 * lSegmentNext;
             }
-            const L1 = l01 - l;
+            const lDelta = lSegment - lHalfArc;
 
-            xa = L1 * Math.cos(angle1) + Xp;
-            ya = L1 * Math.sin(angle1) + Yp;
-            xb = l * Math.cos(angle2) + X;
-            yb = l * Math.sin(angle2) + Y;
+            xa = lDelta * Math.cos(angle1) + Xp;
+            ya = lDelta * Math.sin(angle1) + Yp;
+            xb = lHalfArc * Math.cos(angle2) + X;
+            yb = lHalfArc * Math.sin(angle2) + Y;
           }
           if (index === vertices.length - 1) {
             // For last vertex
@@ -255,7 +260,7 @@ export const ConnectionSVG = ({
           }
           pathString += `L${xa} ${ya} `;
 
-          if (l !== 0) {
+          if (lHalfArc !== 0) {
             pathString += `Q ${X} ${Y} ${xb} ${yb} `;
           }
         });
