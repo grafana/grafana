@@ -50,6 +50,31 @@ type DataSourceAPIBuilder struct {
 	queryTypes      *query.QueryTypeDefinitionList
 }
 
+func GetHandlers(svc any) (backend.ServeOpts, error) {
+	found := false
+	opts := backend.ServeOpts{}
+	if queryHandler, ok := svc.(backend.QueryDataHandler); ok {
+		opts.QueryDataHandler = queryHandler
+		found = true
+	}
+	if resourceHandler, ok := svc.(backend.CallResourceHandler); ok {
+		opts.CallResourceHandler = resourceHandler
+		found = true
+	}
+	if streamHandler, ok := svc.(backend.StreamHandler); ok {
+		opts.StreamHandler = streamHandler
+		found = true
+	}
+	if healthHandler, ok := svc.(backend.CheckHealthHandler); ok {
+		opts.CheckHealthHandler = healthHandler
+		found = true
+	}
+	if !found {
+		return opts, fmt.Errorf("no handlers found (%t)", svc)
+	}
+	return opts, nil
+}
+
 func RegisterAPIService(
 	features featuremgmt.FeatureToggles,
 	apiRegistrar builder.APIRegistrar,
@@ -64,14 +89,11 @@ func RegisterAPIService(
 		return nil, nil // skip registration unless opting into experimental apis
 	}
 
-	opts := backend.ServeOpts{
-		CheckHealthHandler:  pluginClient,
-		CallResourceHandler: pluginClient,
-		QueryDataHandler:    pluginClient,
-		StreamHandler:       pluginClient,
+	opts, err := GetHandlers(pluginClient)
+	if err != nil {
+		return nil, err
 	}
 
-	var err error
 	var builder *DataSourceAPIBuilder
 	all := pluginStore.Plugins(context.Background(), plugins.TypeDataSource)
 	ids := []string{
