@@ -37,15 +37,8 @@ func (uss *UsageStats) GetUsageReport(ctx context.Context) (usagestats.Report, e
 		edition = "enterprise"
 	}
 
-	reportMetrics := map[string]any{}
-	metrics.Range(func(key, value any) bool {
-		reportMetrics[key.(string)] = value
-		return true
-	})
-
 	report := usagestats.Report{
 		Version:      version,
-		Metrics:      reportMetrics,
 		Os:           runtime.GOOS,
 		Arch:         runtime.GOARCH,
 		Edition:      edition,
@@ -61,6 +54,12 @@ func (uss *UsageStats) GetUsageReport(ctx context.Context) (usagestats.Report, e
 	} else {
 		metrics.Store("stats.valid_license.count", 0)
 	}
+
+	report.Metrics = make(map[string]any)
+	metrics.Range(func(key, value any) bool {
+		report.Metrics[key.(string)] = value
+		return true
+	})
 
 	uss.log.FromContext(ctx).Debug("Collected usage stats", "version", report.Version, "os", report.Os, "arch", report.Arch, "edition", report.Edition, "duration", time.Since(start))
 	return report, nil

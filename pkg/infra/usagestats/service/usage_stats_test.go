@@ -194,9 +194,9 @@ func TestRegisterMetrics(t *testing.T) {
 	v, ok := metrics.Load(goodMetricName)
 	assert.True(t, ok)
 	assert.Equal(t, 1, v)
-	metricsCount := 0
+	metricsCountBefore := 0
 	metrics.Range(func(_, _ any) bool {
-		metricsCount++
+		metricsCountBefore++
 		return true
 	})
 
@@ -209,12 +209,20 @@ func TestRegisterMetrics(t *testing.T) {
 		uss.gatherMetrics(context.Background(), &metrics)
 
 		extErrorMetric, ok := metrics.Load(badMetricName)
-		assert.True(t, ok)
+		assert.False(t, ok)
 		extMetric, ok := metrics.Load(goodMetricName)
+		assert.True(t, ok)
 
 		require.Nil(t, extErrorMetric, "Invalid metric should not be added")
 		assert.Equal(t, 1, extMetric)
-		assert.Len(t, metrics, metricsCount, "Expected same number of metrics before and after collecting bad metric")
+
+		metricsCountAfter := 0
+		metrics.Range(func(_, _ any) bool {
+			metricsCountAfter++
+			return true
+		})
+
+		assert.Equal(t, metricsCountAfter, metricsCountBefore, "Expected same number of metrics before and after collecting bad metric")
 		errCount, ok := metrics.Load("stats.usagestats.debug.collect.error.count")
 		assert.True(t, ok)
 		assert.EqualValues(t, 1, errCount)
