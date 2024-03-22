@@ -9,18 +9,20 @@ Use an empty state to communicate to the user that there is no data to display, 
 
 ### When to use
 
+Use when nothing has been created yet, and you want to encourage the user to take an action.
+
 ### Initial state with a call to action
 
 ```jsx
-import { EmptyState, TextLink } from '@grafana/ui';
+import { EmptyState, LinkButton, TextLink } from '@grafana/ui';
 
 <EmptyState
   variant="initial"
   message="You haven't created any playlists yet"
   button={
-    <Button icon="plus" onClick={createPlaylist} size="lg">
+    <LinkButton icon="plus" href="playlists/new" size="lg">
       Create playlist
-    </Button>
+    </LinkButton>
   }
 >
   You can use playlists to cycle dashboards on TVs without user control.{' '}
