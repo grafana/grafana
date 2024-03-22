@@ -659,7 +659,7 @@ func TestCreateAlertRule(t *testing.T) {
 
 				require.Len(t, ac.Calls, 2)
 				assert.Equal(t, "CanWriteAllRules", ac.Calls[0].Method)
-				assert.Equal(t, "AuthorizeRuleChanges", ac.Calls[1].Method)
+				assert.Equal(t, "AuthorizeRuleGroupWrite", ac.Calls[1].Method)
 
 				t.Run("it should assign default interval", func(t *testing.T) {
 					require.Equal(t, service.defaultIntervalSeconds, actualRule.IntervalSeconds)
@@ -706,7 +706,7 @@ func TestCreateAlertRule(t *testing.T) {
 
 				require.Len(t, ac.Calls, 2)
 				assert.Equal(t, "CanWriteAllRules", ac.Calls[0].Method)
-				assert.Equal(t, "AuthorizeRuleChanges", ac.Calls[1].Method)
+				assert.Equal(t, "AuthorizeRuleGroupWrite", ac.Calls[1].Method)
 
 				t.Run("it should assign group interval", func(t *testing.T) {
 					require.Equal(t, groupIntervalSeconds, actualRule.IntervalSeconds)
@@ -746,7 +746,7 @@ func TestCreateAlertRule(t *testing.T) {
 
 			require.Len(t, ac.Calls, 2)
 			assert.Equal(t, "CanWriteAllRules", ac.Calls[0].Method)
-			assert.Equal(t, "AuthorizeRuleChanges", ac.Calls[1].Method)
+			assert.Equal(t, "AuthorizeRuleGroupWrite", ac.Calls[1].Method)
 
 			inserts := ruleStore.GetRecordedCommands(func(cmd any) (any, bool) {
 				a, ok := cmd.([]models.AlertRule)
@@ -859,7 +859,7 @@ func TestUpdateAlertRule(t *testing.T) {
 
 			require.Len(t, ac.Calls, 2)
 			assert.Equal(t, "CanWriteAllRules", ac.Calls[0].Method)
-			assert.Equal(t, "AuthorizeRuleChanges", ac.Calls[1].Method)
+			assert.Equal(t, "AuthorizeRuleGroupWrite", ac.Calls[1].Method)
 
 			updates := ruleStore.GetRecordedCommands(func(cmd any) (any, bool) {
 				a, ok := cmd.([]models.UpdateRule)
@@ -883,7 +883,7 @@ func TestUpdateAlertRule(t *testing.T) {
 
 			require.Len(t, ac.Calls, 2)
 			assert.Equal(t, "CanWriteAllRules", ac.Calls[0].Method)
-			assert.Equal(t, "AuthorizeRuleChanges", ac.Calls[1].Method)
+			assert.Equal(t, "AuthorizeRuleGroupWrite", ac.Calls[1].Method)
 
 			updates := ruleStore.GetRecordedCommands(func(cmd any) (any, bool) {
 				a, ok := cmd.([]models.UpdateRule)
@@ -957,7 +957,7 @@ func TestDeleteAlertRule(t *testing.T) {
 
 			require.Len(t, ac.Calls, 2)
 			assert.Equal(t, "CanWriteAllRules", ac.Calls[0].Method)
-			assert.Equal(t, "AuthorizeRuleChanges", ac.Calls[1].Method)
+			assert.Equal(t, "AuthorizeRuleGroupWrite", ac.Calls[1].Method)
 
 			deletes := getDeleteQueries(ruleStore)
 			require.Len(t, deletes, 1)
@@ -978,7 +978,7 @@ func TestDeleteAlertRule(t *testing.T) {
 
 			require.Len(t, ac.Calls, 2)
 			assert.Equal(t, "CanWriteAllRules", ac.Calls[0].Method)
-			assert.Equal(t, "AuthorizeRuleChanges", ac.Calls[1].Method)
+			assert.Equal(t, "AuthorizeRuleGroupWrite", ac.Calls[1].Method)
 
 			deletes := getDeleteQueries(ruleStore)
 			require.Empty(t, deletes)
@@ -1025,7 +1025,7 @@ func TestGetAlertRule(t *testing.T) {
 
 			assert.Len(t, ac.Calls, 2)
 			assert.Equal(t, "CanReadAllRules", ac.Calls[0].Method)
-			assert.Equal(t, "AuthorizeAccessToRuleGroup", ac.Calls[1].Method)
+			assert.Equal(t, "AuthorizeRuleGroupRead", ac.Calls[1].Method)
 
 			ac.Calls = nil
 			ac.AuthorizeAccessToRuleGroupFunc = func(ctx context.Context, user identity.Requester, rules models.RulesGroup) error {
@@ -1166,7 +1166,7 @@ func TestGetRuleGroup(t *testing.T) {
 
 			assert.Len(t, ac.Calls, 2)
 			assert.Equal(t, "CanReadAllRules", ac.Calls[0].Method)
-			assert.Equal(t, "AuthorizeAccessToRuleGroup", ac.Calls[1].Method)
+			assert.Equal(t, "AuthorizeRuleGroupRead", ac.Calls[1].Method)
 
 			ac.AuthorizeAccessToRuleGroupFunc = func(ctx context.Context, user identity.Requester, rules models.RulesGroup) error {
 				return nil
@@ -1183,7 +1183,7 @@ func TestGetRuleGroup(t *testing.T) {
 	})
 
 	t.Run("when user can read all rules", func(t *testing.T) {
-		t.Run("it should skip AuthorizeAccessToRuleGroup", func(t *testing.T) {
+		t.Run("it should skip AuthorizeRuleGroupRead", func(t *testing.T) {
 			service, _, _, ac := initServiceWithData(t)
 
 			ac.CanReadAllRulesFunc = func(ctx context.Context, user identity.Requester) (bool, error) {
@@ -1257,7 +1257,7 @@ func TestGetAlertRules(t *testing.T) {
 	})
 
 	t.Run("when user can read all rules", func(t *testing.T) {
-		t.Run("should skip AuthorizeAccessToRuleGroup and return all rules", func(t *testing.T) {
+		t.Run("should skip AuthorizeRuleGroupRead and return all rules", func(t *testing.T) {
 			service, _, _, ac := initServiceWithData(t)
 			ac.CanReadAllRulesFunc = func(ctx context.Context, user identity.Requester) (bool, error) {
 				return true, nil
@@ -1274,8 +1274,8 @@ func TestGetAlertRules(t *testing.T) {
 	})
 
 	t.Run("when user cannot read all rules", func(t *testing.T) {
-		t.Run("should group rules and check AuthorizeAccessToRuleGroup and return only available rules", func(t *testing.T) {
-			t.Run("should remove group from output if AuthorizeAccessToRuleGroup returns authorization error", func(t *testing.T) {
+		t.Run("should group rules and check AuthorizeRuleGroupRead and return only available rules", func(t *testing.T) {
+			t.Run("should remove group from output if AuthorizeRuleGroupRead returns authorization error", func(t *testing.T) {
 				service, _, _, ac := initServiceWithData(t)
 				ac.CanReadAllRulesFunc = func(ctx context.Context, user identity.Requester) (bool, error) {
 					return false, nil
@@ -1295,15 +1295,15 @@ func TestGetAlertRules(t *testing.T) {
 
 				assert.Len(t, ac.Calls, 3)
 				assert.Equal(t, "CanReadAllRules", ac.Calls[0].Method)
-				assert.Equal(t, "AuthorizeAccessToRuleGroup", ac.Calls[1].Method)
-				assert.Equal(t, "AuthorizeAccessToRuleGroup", ac.Calls[2].Method)
+				assert.Equal(t, "AuthorizeRuleGroupRead", ac.Calls[1].Method)
+				assert.Equal(t, "AuthorizeRuleGroupRead", ac.Calls[2].Method)
 
 				group1 := ac.Calls[1].Args[2].(models.RulesGroup)
 				group2 := ac.Calls[2].Args[2].(models.RulesGroup)
 				require.Len(t, append(group1, group2...), len(allRules))
 			})
 
-			t.Run("should immediately exist if AuthorizeAccessToRuleGroup returns another error", func(t *testing.T) {
+			t.Run("should immediately exist if AuthorizeRuleGroupRead returns another error", func(t *testing.T) {
 				service, _, _, ac := initServiceWithData(t)
 				ac.CanReadAllRulesFunc = func(ctx context.Context, user identity.Requester) (bool, error) {
 					return false, nil
@@ -1399,7 +1399,7 @@ func TestReplaceGroup(t *testing.T) {
 
 			require.Len(t, ac.Calls, 2)
 			assert.Equal(t, "CanWriteAllRules", ac.Calls[0].Method)
-			assert.Equal(t, "AuthorizeRuleChanges", ac.Calls[1].Method)
+			assert.Equal(t, "AuthorizeRuleGroupWrite", ac.Calls[1].Method)
 
 			updates := ruleStore.GetRecordedCommands(func(cmd any) (any, bool) {
 				a, ok := cmd.([]models.UpdateRule)
@@ -1422,7 +1422,7 @@ func TestReplaceGroup(t *testing.T) {
 
 			require.Len(t, ac.Calls, 2)
 			assert.Equal(t, "CanWriteAllRules", ac.Calls[0].Method)
-			assert.Equal(t, "AuthorizeRuleChanges", ac.Calls[1].Method)
+			assert.Equal(t, "AuthorizeRuleGroupWrite", ac.Calls[1].Method)
 
 			updates := ruleStore.GetRecordedCommands(func(cmd any) (any, bool) {
 				a, ok := cmd.([]models.UpdateRule)
@@ -1485,7 +1485,7 @@ func TestDeleteRuleGroup(t *testing.T) {
 
 			require.Len(t, ac.Calls, 2)
 			assert.Equal(t, "CanWriteAllRules", ac.Calls[0].Method)
-			assert.Equal(t, "AuthorizeRuleChanges", ac.Calls[1].Method)
+			assert.Equal(t, "AuthorizeRuleGroupWrite", ac.Calls[1].Method)
 
 			deletes := getDeleteQueries(ruleStore)
 			require.Empty(t, deletes)
@@ -1512,7 +1512,7 @@ func TestDeleteRuleGroup(t *testing.T) {
 
 			require.Len(t, ac.Calls, 2)
 			assert.Equal(t, "CanWriteAllRules", ac.Calls[0].Method)
-			assert.Equal(t, "AuthorizeRuleChanges", ac.Calls[1].Method)
+			assert.Equal(t, "AuthorizeRuleGroupWrite", ac.Calls[1].Method)
 
 			deletes := getDeleteQueries(ruleStore)
 			require.Len(t, deletes, 1)

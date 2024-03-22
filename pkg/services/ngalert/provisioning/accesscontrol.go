@@ -27,14 +27,14 @@ type provisioningRuleAccessControl struct {
 
 var _ ruleAccessControlService = &provisioningRuleAccessControl{}
 
-func (p *provisioningRuleAccessControl) AuthorizeAccessToRuleGroup(ctx context.Context, user identity.Requester, rules models.RulesGroup) error {
+func (p *provisioningRuleAccessControl) AuthorizeRuleGroupRead(ctx context.Context, user identity.Requester, rules models.RulesGroup) error {
 	if can, err := p.CanReadAllRules(ctx, user); can || err != nil {
 		return err
 	}
 	return p.RuleAccessControlService.AuthorizeAccessToRuleGroup(ctx, user, rules)
 }
 
-func (p *provisioningRuleAccessControl) AuthorizeRuleChanges(ctx context.Context, user identity.Requester, change *store.GroupDelta) error {
+func (p *provisioningRuleAccessControl) AuthorizeRuleGroupWrite(ctx context.Context, user identity.Requester, change *store.GroupDelta) error {
 	if can, err := p.CanWriteAllRules(ctx, user); can || err != nil {
 		return err
 	}

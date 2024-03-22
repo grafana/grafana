@@ -177,16 +177,16 @@ func (s *fakeRuleAccessControlService) RecordCall(method string, args ...interfa
 	s.Calls = append(s.Calls, call)
 }
 
-func (s *fakeRuleAccessControlService) AuthorizeAccessToRuleGroup(ctx context.Context, user identity.Requester, rules models.RulesGroup) error {
-	s.RecordCall("AuthorizeAccessToRuleGroup", ctx, user, rules)
+func (s *fakeRuleAccessControlService) AuthorizeRuleGroupRead(ctx context.Context, user identity.Requester, rules models.RulesGroup) error {
+	s.RecordCall("AuthorizeRuleGroupRead", ctx, user, rules)
 	if s.AuthorizeAccessToRuleGroupFunc != nil {
 		return s.AuthorizeAccessToRuleGroupFunc(ctx, user, rules)
 	}
 	return nil
 }
 
-func (s *fakeRuleAccessControlService) AuthorizeRuleChanges(ctx context.Context, user identity.Requester, change *store.GroupDelta) error {
-	s.RecordCall("AuthorizeRuleChanges", ctx, user, change)
+func (s *fakeRuleAccessControlService) AuthorizeRuleGroupWrite(ctx context.Context, user identity.Requester, change *store.GroupDelta) error {
+	s.RecordCall("AuthorizeRuleGroupWrite", ctx, user, change)
 	if s.AuthorizeRuleChangesFunc != nil {
 		return s.AuthorizeRuleChangesFunc(ctx, user, change)
 	}

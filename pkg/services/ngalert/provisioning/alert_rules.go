@@ -19,8 +19,8 @@ import (
 )
 
 type ruleAccessControlService interface {
-	AuthorizeAccessToRuleGroup(ctx context.Context, user identity.Requester, rules models.RulesGroup) error
-	AuthorizeRuleChanges(ctx context.Context, user identity.Requester, change *store.GroupDelta) error
+	AuthorizeRuleGroupRead(ctx context.Context, user identity.Requester, rules models.RulesGroup) error
+	AuthorizeRuleGroupWrite(ctx context.Context, user identity.Requester, change *store.GroupDelta) error
 	// CanReadAllRules returns true if the user has full access to read rules via provisioning API and bypass regular checks
 	CanReadAllRules(ctx context.Context, user identity.Requester) (bool, error)
 	// CanWriteAllRules returns true if the user has full access to write rules via provisioning API and bypass regular checks
@@ -103,7 +103,7 @@ func (service *AlertRuleService) GetAlertRules(ctx context.Context, user identit
 	groups := models.GroupByAlertRuleGroupKey(rules)
 	result := make([]*models.AlertRule, 0, len(rules))
 	for _, group := range groups {
-		if err := service.authz.AuthorizeAccessToRuleGroup(ctx, user, group); err != nil {
+		if err := service.authz.AuthorizeRuleGroupRead(ctx, user, group); err != nil {
 			if errors.Is(err, accesscontrol.ErrAuthorizationBase) {
 				// remove provenances for rules that will not be added to the output
 				for _, rule := range group {
@@ -154,7 +154,7 @@ func (service *AlertRuleService) getAlertRuleAuthorized(ctx context.Context, use
 	if len(group) == 0 {
 		return models.AlertRule{}, models.ErrAlertRuleNotFound
 	}
-	if err := service.authz.AuthorizeAccessToRuleGroup(ctx, user, group); err != nil {
+	if err := service.authz.AuthorizeRuleGroupRead(ctx, user, group); err != nil {
 		return models.AlertRule{}, err
 	}
 	for _, rule := range group {
@@ -233,7 +233,7 @@ func (service *AlertRuleService) CreateAlertRule(ctx context.Context, user ident
 		if err != nil {
 			return models.AlertRule{}, fmt.Errorf("failed to calculate delta: %w", err)
 		}
-		if err := service.authz.AuthorizeRuleChanges(ctx, user, delta); err != nil {
+		if err := service.authz.AuthorizeRuleGroupWrite(ctx, user, delta); err != nil {
 			return models.AlertRule{}, err
 		}
 		existingGroup := delta.AffectedGroups[rule.GetGroupKey()]
@@ -311,7 +311,7 @@ func (service *AlertRuleService) GetRuleGroup(ctx context.Context, user identity
 		return models.AlertRuleGroup{}, err
 	}
 	if !can {
-		if err := service.authz.AuthorizeAccessToRuleGroup(ctx, user, ruleList); err != nil {
+		if err := service.authz.AuthorizeRuleGroupRead(ctx, user, ruleList); err != nil {
 			return models.AlertRuleGroup{}, err
 		}
 	}
@@ -383,7 +383,7 @@ func (service *AlertRuleService) UpdateRuleGroup(ctx context.Context, user ident
 				},
 				Update: ruleDeltas,
 			}
-			if err := service.authz.AuthorizeRuleChanges(ctx, user, delta); err != nil {
+			if err := service.authz.AuthorizeRuleGroupWrite(ctx, user, delta); err != nil {
 				return err
 			}
 		}
@@ -411,7 +411,7 @@ func (service *AlertRuleService) ReplaceRuleGroup(ctx context.Context, user iden
 		if err != nil {
 			return err
 		}
-		if err := service.authz.AuthorizeRuleChanges(ctx, user, delta); err != nil {
+		if err := service.authz.AuthorizeRuleGroupWrite(ctx, user, delta); err != nil {
 			return err
 		}
 	}
@@ -447,7 +447,7 @@ func (service *AlertRuleService) DeleteRuleGroup(ctx context.Context, user ident
 		if err != nil {
 			return err
 		}
-		if err := service.authz.AuthorizeRuleChanges(ctx, user, delta); err != nil {
+		if err := service.authz.AuthorizeRuleGroupWrite(ctx, user, delta); err != nil {
 			return err
 		}
 	}
@@ -591,7 +591,7 @@ func (service *AlertRuleService) UpdateAlertRule(ctx context.Context, user ident
 		if err != nil {
 			return models.AlertRule{}, err
 		}
-		if err = service.authz.AuthorizeRuleChanges(ctx, user, delta); err != nil {
+		if err = service.authz.AuthorizeRuleGroupWrite(ctx, user, delta); err != nil {
 			return models.AlertRule{}, err
 		}
 		for _, d := range delta.Update {
@@ -668,7 +668,7 @@ func (service *AlertRuleService) DeleteAlertRule(ctx context.Context, user ident
 		if err != nil {
 			return err
 		}
-		if err = service.authz.AuthorizeRuleChanges(ctx, user, delta); err != nil {
+		if err = service.authz.AuthorizeRuleGroupWrite(ctx, user, delta); err != nil {
 			return err
 		}
 	}
@@ -762,7 +762,7 @@ func (service *AlertRuleService) GetAlertGroupsWithFolderTitle(ctx context.Conte
 			return nil, err
 		}
 		for key, group := range groups {
-			if err := service.authz.AuthorizeAccessToRuleGroup(ctx, user, group); err != nil {
+			if err := service.authz.AuthorizeRuleGroupRead(ctx, user, group); err != nil {
 				if errors.Is(err, accesscontrol.ErrAuthorizationBase) {
 					delete(groups, key)
 					continue
