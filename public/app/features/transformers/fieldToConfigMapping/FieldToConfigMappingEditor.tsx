@@ -115,11 +115,13 @@ export function FieldToConfigMappingEditor({ frame, mappings, onChange, withRedu
               </td>
             )}
             {hasAdditionalSettings && (
-              <FieldConfigMappingHandlerArgumentsEditor
-                handlerKey={row.handlerKey}
-                handlerArguments={row.handlerArguments}
-                onChange={(args) => onChangeHandlerArguments(row, args)}
-              />
+              <td data-testid={`${row.fieldName}-handler-arg`} className={styles.selectCell}>
+                <FieldConfigMappingHandlerArgumentsEditor
+                  handlerKey={row.handlerKey}
+                  handlerArguments={row.handlerArguments}
+                  onChange={(args) => onChangeHandlerArguments(row, args)}
+                />
+              </td>
             )}
           </tr>
         ))}
