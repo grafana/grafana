@@ -41,7 +41,7 @@ type GetExtensions = ({
   registry: PluginExtensionRegistry;
 }) => { extensions: PluginExtension[] };
 
-let registry: PluginExtensionRegistry = {};
+let registry: PluginExtensionRegistry = { id: '', extensions: {} };
 
 export function createPluginExtensionsGetter(extensionRegistry: ReactivePluginExtensionsRegistry): GetPluginExtensions {
   // Create a subscription to keep an copy of the registry state for use in the non-async
@@ -56,7 +56,7 @@ export function createPluginExtensionsGetter(extensionRegistry: ReactivePluginEx
 // Returns with a list of plugin extensions for the given extension point
 export const getPluginExtensions: GetExtensions = ({ context, extensionPointId, limitPerPlugin, registry }) => {
   const frozenContext = context ? getReadOnlyProxy(context) : {};
-  const registryItems = registry[extensionPointId] ?? [];
+  const registryItems = registry.extensions[extensionPointId] ?? [];
   // We don't return the extensions separated by type, because in that case it would be much harder to define a sort-order for them.
   const extensions: PluginExtension[] = [];
   const extensionsByPlugin: Record<string, number> = {};
