@@ -14219,8 +14219,8 @@
       "description": "A single column of data in the data frame",
       "type": "array",
         "items": {
-          "type": "integer",
-          "format": "int64"
+          "type": "number",
+          "format": "float"
       }
     },
     "FrameSchema": {
