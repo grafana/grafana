@@ -135,7 +135,6 @@ export const ConnectionSVG = ({
       }
 
       const { x1, y1, x2, y2 } = calculateCoordinates(sourceRect, parentRect, info, target, transformScale);
-      const magnitude = Math.sqrt((x2 - x1) * (x2 - x1) + (y2 - y1) * (y2 - y1));
       const midpoint = calculateMidpoint(x1, y1, x2, y2);
 
       const { strokeColor, strokeWidth, strokeRadius, arrowDirection, lineStyle } = getConnectionStyles(
@@ -154,7 +153,6 @@ export const ConnectionSVG = ({
       const CONNECTION_HEAD_ID_END = `connectionHeadEnd-${headId + Math.random()}`;
 
       const radius = strokeRadius;
-      const radiusNormalized = radius / magnitude;
       // Create vertex path and populate array of add vertex controls
       const addVertices: ConnectionCoordinates[] = [];
       let pathString = `M${x1} ${y1} `;
@@ -162,39 +160,46 @@ export const ConnectionSVG = ({
         vertices.map((vertex, index) => {
           const x = vertex.x;
           const y = vertex.y;
-          let x0 = x;
-          let y0 = y;
+
+          const X = x * (x2 - x1) + x1;
+          const Y = y * (y2 - y1) + y1;
+
+          let xa = x;
+          let ya = y;
 
           let xb = x;
           let yb = y;
+
           let l = 0;
-          let vx2 = 0;
-          let vy2 = 0;
           let angle1 = 0;
           let angle2 = 0;
 
           if (index < vertices.length - 1) {
-            vx2 = vertices[index + 1].x;
-            vy2 = vertices[index + 1].y;
+            const Xn = vertices[index + 1].x * (x2 - x1) + x1;
+            const Yn = vertices[index + 1].y * (y2 - y1) + y1;
             if (index === 0) {
-              angle1 = (calculateAngle(0, 0, x, y) / 180) * Math.PI; //radians
-              angle2 = (calculateAngle(x, y, vx2, vy2) / 180) * Math.PI; //radians
+              angle1 = (calculateAngle(x1, y1, X, Y) / 180) * Math.PI; //radians
+              angle2 = (calculateAngle(X, Y, Xn, Yn) / 180) * Math.PI; //radians
             } else {
               const previousVertex = vertices[index - 1];
-              angle1 = (calculateAngle(previousVertex.x, previousVertex.y, x, y) / 180) * Math.PI; //radians
-              angle2 = (calculateAngle(x, y, vx2, vy2) / 180) * Math.PI; //radians
+              const Xp = previousVertex.x * (x2 - x1) + x1;
+              const Yp = previousVertex.y * (y2 - y1) + y1;
+              angle1 = (calculateAngle(Xp, Yp, X, Y) / 180) * Math.PI; //radians
+              angle2 = (calculateAngle(X, Y, Xn, Yn) / 180) * Math.PI; //radians
             }
           } else {
             let previousVertex = { x: 0, y: 0 };
             if (index > 0) {
               previousVertex = vertices[index - 1];
             }
-            angle1 = (calculateAngle(previousVertex.x, previousVertex.y, x, y) / 180) * Math.PI; //radians
-            angle2 = (calculateAngle(x, y, 1, 1) / 180) * Math.PI; //radians
+            const Xp = previousVertex.x * (x2 - x1) + x1;
+            const Yp = previousVertex.y * (y2 - y1) + y1;
+            angle1 = (calculateAngle(Xp, Yp, X, Y) / 180) * Math.PI; //radians
+            angle2 = (calculateAngle(X, Y, x2, y2) / 180) * Math.PI; //radians
           }
           const theta = angle2 - angle1; //radians
           const ccw = theta < 0;
-          l = radiusNormalized * Math.tan(theta / 2);
+          l = radius * Math.tan(theta / 2);
           if (ccw) {
             l *= -1;
           }
@@ -203,36 +208,55 @@ export const ConnectionSVG = ({
             // For first vertex
             addVertices.push(calculateMidpoint(0, 0, x, y));
 
-            const l01 = Math.sqrt(x * x + y * y);
+            const l01 = Math.sqrt((X - x1) ** 2 + (Y - y1) ** 2);
+            if (Math.abs(l) > 0.5 * Math.abs(l01)) {
+              // Limit curve control points to mid segment
+              l = 0.5 * l01;
+            }
             const L1 = l01 - l;
-            x0 = L1 * Math.cos(angle1);
-            y0 = L1 * Math.sin(angle1);
-            xb = (l * Math.cos(angle2) + x) * (x2 - x1) + x1;
-            yb = (l * Math.sin(angle2) + y) * (y2 - y1) + y1;
+            xa = L1 * Math.cos(angle1) + x1;
+            ya = L1 * Math.sin(angle1) + y1;
+            xb = l * Math.cos(angle2) + X;
+            yb = l * Math.sin(angle2) + Y;
           } else {
             // For all other vertices
             const previousVertex = vertices[index - 1];
+            const Xp = previousVertex.x * (x2 - x1) + x1;
+            const Yp = previousVertex.y * (y2 - y1) + y1;
             addVertices.push(calculateMidpoint(previousVertex.x, previousVertex.y, x, y));
 
             //TODO add sqrt approx
-            const l01 = Math.sqrt(
-              (x - previousVertex.x) * (x - previousVertex.x) + (y - previousVertex.y) * (y - previousVertex.y)
-            );
+            const l01 = Math.sqrt((X - Xp) ** 2 + (Y - Yp) ** 2);
+            if (Math.abs(l) > 0.5 * Math.abs(l01)) {
+              // Limit curve control points to mid segment
+              l = 0.5 * l01;
+            }
+            let Xn = x2;
+            let Yn = y2;
+            if (index < vertices.length - 1) {
+              const nextVertex = vertices[index + 1];
+              Xn = nextVertex.x * (x2 - x1) + x1;
+              Yn = nextVertex.y * (y2 - y1) + y1;
+            }
+            const l02 = Math.sqrt((Xn - X) ** 2 + (Yn - Y) ** 2);
+            if (Math.abs(l) > 0.5 * Math.abs(l02)) {
+              l = 0.5 * l02;
+            }
             const L1 = l01 - l;
 
-            x0 = L1 * Math.cos(angle1) + previousVertex.x;
-            y0 = L1 * Math.sin(angle1) + previousVertex.y;
-            xb = (l * Math.cos(angle2) + x) * (x2 - x1) + x1;
-            yb = (l * Math.sin(angle2) + y) * (y2 - y1) + y1;
+            xa = L1 * Math.cos(angle1) + Xp;
+            ya = L1 * Math.sin(angle1) + Yp;
+            xb = l * Math.cos(angle2) + X;
+            yb = l * Math.sin(angle2) + Y;
           }
           if (index === vertices.length - 1) {
             // For last vertex
             addVertices.push(calculateMidpoint(1, 1, x, y));
           }
-          pathString += `L${x0 * (x2 - x1) + x1} ${y0 * (y2 - y1) + y1} `;
+          pathString += `L${xa} ${ya} `;
 
           if (l !== 0) {
-            pathString += `A ${radius} ${radius} 0 0 ${ccw ? '0' : '1'} ${xb} ${yb} `;
+            pathString += `Q ${X} ${Y} ${xb} ${yb} `;
           }
         });
         pathString += `L${x2} ${y2}`;
