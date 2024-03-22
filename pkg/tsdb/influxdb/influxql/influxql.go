@@ -37,7 +37,7 @@ func Query(ctx context.Context, tracer trace.Tracer, dsInfo *models.DatasourceIn
 
 	// We are testing running of queries in parallel behind feature flag
 	isStreamingParserEnabled := features.IsEnabled(ctx, featuremgmt.FlagInfluxqlStreamingParser)
-	isInfluxdbReturnInfluxResponseEnabled := features.IsEnabled(ctx, featuremgmt.FlagInfluxdbReturnInfluxResponse)
+	isInfluxdbReturnInfluxResponseEnabled := features.IsEnabled(ctx, featuremgmt.FlagInfluxdbReturnInfluxQLResponse)
 
 	if features.IsEnabled(ctx, featuremgmt.FlagInfluxdbRunQueriesInParallel) {
 		concurrentQueryCount, err := req.PluginContext.GrafanaConfig.ConcurrentQueryCount()
