@@ -10,7 +10,7 @@ import { commonOptionsBuilder } from '@grafana/ui';
 
 import { LineStyleEditor } from '../timeseries/LineStyleEditor';
 
-import { FieldConfig, XYShowMode } from './panelcfg.gen';
+import { FieldConfig, ScatterShow } from './panelcfg.gen';
 
 export const DEFAULT_POINT_SIZE = 5;
 
@@ -65,9 +65,9 @@ export function getScatterFieldConfig(cfg: FieldConfig): SetFieldConfigOptionsAr
           defaultValue: cfg.show,
           settings: {
             options: [
-              { label: 'Points', value: XYShowMode.Points },
-              { label: 'Lines', value: XYShowMode.Lines },
-              { label: 'Both', value: XYShowMode.PointsAndLines },
+              { label: 'Points', value: ScatterShow.Points },
+              { label: 'Lines', value: ScatterShow.Lines },
+              { label: 'Both', value: ScatterShow.PointsAndLines },
             ],
           },
         })
@@ -99,17 +99,7 @@ export function getScatterFieldConfig(cfg: FieldConfig): SetFieldConfigOptionsAr
             max: 100,
             step: 1,
           },
-          showIf: (c) => c.show !== XYShowMode.Lines,
-        })
-        .addNumberInput({
-          path: 'pointSize.min',
-          name: 'Min point size',
-          showIf: (c) => c.show !== XYShowMode.Lines,
-        })
-        .addNumberInput({
-          path: 'pointSize.max',
-          name: 'Max point size',
-          showIf: (c) => c.show !== XYShowMode.Lines,
+          showIf: (c) => c.show !== ScatterShow.Lines,
         })
         // .addSliderInput({
         //   path: 'fillOpacity',
@@ -126,7 +116,7 @@ export function getScatterFieldConfig(cfg: FieldConfig): SetFieldConfigOptionsAr
           id: 'lineStyle',
           path: 'lineStyle',
           name: 'Line style',
-          showIf: (c) => c.show !== XYShowMode.Points,
+          showIf: (c) => c.show !== ScatterShow.Points,
           editor: LineStyleEditor,
           override: LineStyleEditor,
           process: identityOverrideProcessor,
@@ -141,7 +131,7 @@ export function getScatterFieldConfig(cfg: FieldConfig): SetFieldConfigOptionsAr
             max: 10,
             step: 1,
           },
-          showIf: (c) => c.show !== XYShowMode.Points,
+          showIf: (c) => c.show !== ScatterShow.Points,
         });
 
       commonOptionsBuilder.addAxisConfig(builder, cfg);

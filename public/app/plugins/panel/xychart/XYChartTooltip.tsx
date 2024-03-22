@@ -1,6 +1,6 @@
 import React, { ReactNode } from 'react';
 
-import { DataFrame } from '@grafana/data';
+import { DataFrame, Field, getFieldDisplayName } from '@grafana/data';
 import { alpha } from '@grafana/data/src/themes/colorManipulator';
 import { useStyles2 } from '@grafana/ui';
 import { VizTooltipContent } from '@grafana/ui/src/components/VizTooltip/VizTooltipContent';
@@ -11,7 +11,8 @@ import { ColorIndicator, VizTooltipItem } from '@grafana/ui/src/components/VizTo
 import { getDataLinks } from '../status-history/utils';
 import { getStyles } from '../timeseries/TimeSeriesTooltip';
 
-import { XYSeries } from './types2';
+import { Options } from './panelcfg.gen';
+import { ScatterSeries } from './types';
 import { fmt } from './utils';
 
 export interface Props {
@@ -19,53 +20,68 @@ export interface Props {
   seriesIdx: number | null | undefined;
   isPinned: boolean;
   dismiss: () => void;
-  data: DataFrame[];
-  xySeries: XYSeries[];
+  options: Options;
+  data: DataFrame[]; // source data
+  allSeries: ScatterSeries[];
 }
 
-export const XYChartTooltip = ({ dataIdxs, seriesIdx, data, xySeries, dismiss, isPinned }: Props) => {
+export const XYChartTooltip = ({ dataIdxs, seriesIdx, data, allSeries, dismiss, options, isPinned }: Props) => {
   const styles = useStyles2(getStyles);
 
-  const rowIndex = dataIdxs.find((idx) => idx !== null)!;
+  const rowIndex = dataIdxs.find((idx) => idx !== null);
+  // @todo: remove -1 when uPlot v2 arrive
+  // context: first value in dataIdxs always null and represent X series
+  const hoveredPointIndex = seriesIdx! - 1;
 
-  const series = xySeries[seriesIdx! - 1];
-  const xField = series.x.field;
-  const yField = series.y.field;
+  if (!allSeries || rowIndex == null) {
+    return null;
+  }
 
-  let label = series.name.value;
+  const series = allSeries[hoveredPointIndex];
+  const frame = series.frame(data);
+  const xField = series.x(frame);
+  const yField = series.y(frame);
 
-  let seriesColor = series.color.fixed;
-  // let colorField = series.color.field;
-  // let pointColor: string;
+  let label = series.name;
+  if (options.seriesMapping === 'manual') {
+    label = options.series?.[hoveredPointIndex]?.name ?? `Series ${hoveredPointIndex + 1}`;
+  }
 
-  // if (colorField != null) {
-  //   pointColor = colorField.display?.(colorField.values[rowIndex]).color!;
-  // }
+  let colorThing = series.pointColor(frame);
+
+  if (Array.isArray(colorThing)) {
+    colorThing = colorThing[rowIndex];
+  }
 
   const headerItem: VizTooltipItem = {
     label,
     value: '',
-    color: alpha(seriesColor!, 0.5),
+    // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+    color: alpha(colorThing as string, 0.5),
     colorIndicator: ColorIndicator.marker_md,
   };
 
   const contentItems: VizTooltipItem[] = [
     {
-      label: xField.state?.displayName ?? xField.name,
+      label: getFieldDisplayName(xField, frame),
       value: fmt(xField, xField.values[rowIndex]),
     },
     {
-      label: yField.state?.displayName ?? yField.name,
+      label: getFieldDisplayName(yField, frame),
       value: fmt(yField, yField.values[rowIndex]),
     },
   ];
 
-  series._rest.forEach((field) => {
-    contentItems.push({
-      label: field.state?.displayName ?? field.name,
-      value: fmt(field, field.values[rowIndex]),
+  // add extra fields
+  const extraFields: Field[] = frame.fields.filter((f) => f !== xField && f !== yField);
+  if (extraFields) {
+    extraFields.forEach((field) => {
+      contentItems.push({
+        label: field.name,
+        value: fmt(field, field.values[rowIndex]),
+      });
     });
-  });
+  }
 
   let footer: ReactNode;
 

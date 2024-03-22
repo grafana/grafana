@@ -1,3 +1,4 @@
+/*
 import { PanelModel } from '@grafana/data';
 
 import { xyChartMigrationHandler } from './migrations';
@@ -133,3 +134,4 @@ describe('XYChart migrations', () => {
     });
   });
 });
+*/
