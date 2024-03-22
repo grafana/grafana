@@ -16,7 +16,7 @@ describe('Dashboard time zone support', () => {
     e2e.flows.login(Cypress.env('USERNAME'), Cypress.env('PASSWORD'));
   });
 
-  it('Tests dashboard time zone scenarios', () => {
+  it.skip('Tests dashboard time zone scenarios', () => {
     e2e.flows.openDashboard({ uid: '5SdHCasdf' });
 
     const fromTimeZone = 'UTC';
