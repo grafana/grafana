@@ -7,7 +7,7 @@ WIRE_TAGS = "oss"
 -include local/Makefile
 include .bingo/Variables.mk
 
-.PHONY: all deps-go deps-js deps build-go build-backend build-server build-cli build-js build build-docker-full build-docker-full-ubuntu lint-go golangci-lint test-go test-js gen-ts test run run-frontend clean devenv devenv-down protobuf drone help gen-go gen-cue fix-cue
+.PHONY: all deps-go deps-js deps build-go build-backend build-server build-cli build-js build build-docker-full build-docker-full-ubuntu lint-go golangci-lint test-go test-js gen-ts test run run-frontend clean devenv devenv-down protobuf drone help gen-go gen-cue fix-cue gen-feature-toggles
 
 GO = go
 GO_FILES ?= ./pkg/... ./pkg/apiserver/... ./pkg/apimachinery/... ./pkg/promlib/...
@@ -105,6 +105,17 @@ gen-cue: ## Do all CUE/Thema code generation
 	@echo "generate code from .cue files"
 	go generate ./kinds/gen.go
 	go generate ./public/app/plugins/gen.go
+
+gen-feature-toggles:
+## First go test run fails because it will re-generate the feature toggles.
+## Second go test run will compare the generated files and pass.
+	@echo "generate feature toggles"
+	go test -v ./pkg/services/featuremgmt/... > /dev/null 2>&1; \
+	if [ $$? -eq 0 ]; then \
+		echo "feature toggles already up-to-date"; \
+	else \
+		go test -v ./pkg/services/featuremgmt/...; \
+	fi
 
 gen-go:
 	@echo "generate go files"

@@ -127,14 +127,6 @@ const (
 	// Enables cross-account querying in CloudWatch datasources
 	FlagCloudWatchCrossAccountQuerying = "cloudWatchCrossAccountQuerying"
 
-	// FlagRedshiftAsyncQueryDataSupport
-	// Enable async query data support for Redshift
-	FlagRedshiftAsyncQueryDataSupport = "redshiftAsyncQueryDataSupport"
-
-	// FlagAthenaAsyncQueryDataSupport
-	// Enable async query data support for Athena
-	FlagAthenaAsyncQueryDataSupport = "athenaAsyncQueryDataSupport"
-
 	// FlagShowDashboardValidationWarnings
 	// Show warnings when dashboards do not validate against the schema
 	FlagShowDashboardValidationWarnings = "showDashboardValidationWarnings"
@@ -492,7 +484,7 @@ const (
 	FlagAlertmanagerRemoteOnly = "alertmanagerRemoteOnly"
 
 	// FlagAnnotationPermissionUpdate
-	// Separate annotation permissions from dashboard permissions to allow for more granular control.
+	// Change the way annotation permissions work by scoping them to folders and dashboards.
 	FlagAnnotationPermissionUpdate = "annotationPermissionUpdate"
 
 	// FlagExtractFieldsNameDeduplication

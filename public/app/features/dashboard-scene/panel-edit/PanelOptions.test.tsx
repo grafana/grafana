@@ -1,9 +1,10 @@
 import { act, fireEvent, render } from '@testing-library/react';
 import React from 'react';
 
-import { SceneGridItem, VizPanel } from '@grafana/scenes';
+import { VizPanel } from '@grafana/scenes';
 import { OptionFilter } from 'app/features/dashboard/components/PanelEditor/OptionsPaneOptions';
 
+import { DashboardGridItem } from '../scene/DashboardGridItem';
 import { LibraryVizPanel } from '../scene/LibraryVizPanel';
 import { vizPanelToPanel } from '../serialization/transformSceneToSaveModel';
 
@@ -42,7 +43,7 @@ describe('PanelOptions', () => {
       _loadedPanel: libraryPanelModel,
     });
 
-    new SceneGridItem({ body: libraryPanel });
+    new DashboardGridItem({ body: libraryPanel });
 
     const panelManger = VizPanelManager.createFor(panel);
 
