@@ -14,7 +14,6 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
-	clientv3 "go.etcd.io/etcd/client/v3"
 	"k8s.io/apimachinery/pkg/api/apitesting"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -39,7 +38,6 @@ func init() {
 }
 
 type setupOptions struct {
-	client         func(testing.TB) *clientv3.Client
 	codec          runtime.Codec
 	newFunc        func() runtime.Object
 	newListFunc    func() runtime.Object
@@ -217,40 +215,6 @@ func TestEtcdWatchSemanticInitialEventsExtended(t *testing.T) {
 	defer destroyFunc()
 	assert.NoError(t, err)
 	storagetesting.RunWatchSemanticInitialEventsExtended(ctx, t, store)
-}
-
-func initStoreData(ctx context.Context, store storage.Interface) ([]interface{}, error) {
-	barFirst := &example.Pod{ObjectMeta: metav1.ObjectMeta{Namespace: "first", Name: "bar"}}
-	barSecond := &example.Pod{ObjectMeta: metav1.ObjectMeta{Namespace: "second", Name: "bar"}}
-
-	preset := []struct {
-		key       string
-		obj       *example.Pod
-		storedObj *example.Pod
-	}{
-		{
-			key: fmt.Sprintf("/pods/%s/%s", barFirst.Namespace, barFirst.Name),
-			obj: barFirst,
-		},
-		{
-			key: fmt.Sprintf("/pods/%s/%s", barSecond.Namespace, barSecond.Name),
-			obj: barSecond,
-		},
-	}
-
-	for i, ps := range preset {
-		preset[i].storedObj = &example.Pod{}
-		err := store.Create(ctx, ps.key, ps.obj, preset[i].storedObj, 0)
-		if err != nil {
-			return nil, fmt.Errorf("failed to create object: %w", err)
-		}
-	}
-
-	var created []interface{}
-	for _, item := range preset {
-		created = append(created, item.key)
-	}
-	return created, nil
 }
 
 func newPod() runtime.Object {

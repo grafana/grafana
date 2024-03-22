@@ -311,13 +311,13 @@ func (s *Storage) Watch(ctx context.Context, key string, opts storage.ListOption
 		}
 		v, err := conversion.EnforcePtr(listPtr)
 		if err != nil || v.Kind() != reflect.Slice {
-			return nil, fmt.Errorf("Need pointer to slice: %v", err)
+			return nil, fmt.Errorf("need pointer to slice: %v", err)
 		}
 
 		for i := 0; i < v.Len(); i++ {
 			obj, ok := v.Index(i).Addr().Interface().(runtime.Object)
 			if !ok {
-				return nil, fmt.Errorf("Need item to be a runtime.Object: %v", err)
+				return nil, fmt.Errorf("need item to be a runtime.Object: %v", err)
 			}
 
 			initEvents = append(initEvents, watch.Event{
@@ -330,7 +330,7 @@ func (s *Storage) Watch(ctx context.Context, key string, opts storage.ListOption
 			lastInitEvent := initEvents[len(initEvents)-1]
 			lastItemRV, err := s.versioner.ObjectResourceVersion(lastInitEvent.Object)
 			if err != nil {
-				return nil, fmt.Errorf("Could not get last init event's revision for bookmark: %v", err)
+				return nil, fmt.Errorf("could not get last init event's revision for bookmark: %v", err)
 			}
 
 			s.rvMutex.RLock()
@@ -346,11 +346,14 @@ func (s *Storage) Watch(ctx context.Context, key string, opts storage.ListOption
 				Type:   watch.Bookmark,
 				Object: s.newFunc(),
 			}
-			s.versioner.UpdateObject(bookmarkEvent.Object, bookmarkRV)
+
+			if err := s.versioner.UpdateObject(bookmarkEvent.Object, bookmarkRV); err != nil {
+				return nil, err
+			}
 
 			bookmarkObject, err := meta.Accessor(bookmarkEvent.Object)
 			if err != nil {
-				return nil, fmt.Errorf("Could not get bookmark object's acccesor: %v", err)
+				return nil, fmt.Errorf("could not get bookmark object's acccesor: %v", err)
 			}
 			bookmarkObject.SetAnnotations(map[string]string{"k8s.io/initial-events-end": "true"})
 			initEvents = append(initEvents, bookmarkEvent)
@@ -675,7 +678,7 @@ func (s *Storage) nameFromKey(key string) string {
 	return strings.Replace(key, s.resourcePrefix+"/", "", 1)
 }
 
-// While this is an inefficent way to differentiate the ambiguous keys,
+// While this is an inefficient way to differentiate the ambiguous keys,
 // we only need it for initial namespace calculation in watch
 // This helps us with watcher tests that don't always set up requestcontext correctly
 func (s *Storage) convertToParsedKey(key string, p storage.SelectionPredicate) (*parsedKey, error) {
