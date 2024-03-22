@@ -25,6 +25,9 @@ import (
 	"github.com/grafana/grafana/pkg/services/store/entity/db"
 )
 
+const entityTable = "entity"
+const entityHistoryTable = "entity_history"
+
 // Make sure we implement both store + admin
 var _ entity.EntityStoreServer = &sqlEntityServer{}
 
@@ -203,7 +206,7 @@ func (s *sqlEntityServer) Read(ctx context.Context, r *entity.ReadEntityRequest)
 }
 
 func (s *sqlEntityServer) read(ctx context.Context, tx session.SessionQuerier, r *entity.ReadEntityRequest) (*entity.Entity, error) {
-	table := "entity"
+	table := entityTable
 	where := []string{}
 	args := []any{}
 
@@ -220,7 +223,7 @@ func (s *sqlEntityServer) read(ctx context.Context, tx session.SessionQuerier, r
 	args = append(args, key.Namespace, key.Group, key.Resource, key.Name)
 
 	if r.ResourceVersion != 0 {
-		table = "entity_history"
+		table = entityHistoryTable
 		where = append(where, s.dialect.Quote("resource_version")+">=?")
 		args = append(args, r.ResourceVersion)
 	}
@@ -436,13 +439,13 @@ func (s *sqlEntityServer) Create(ctx context.Context, r *entity.CreateEntityRequ
 		}
 
 		// 1. Add row to the `entity_history` values
-		if err := s.dialect.Insert(ctx, tx, "entity_history", values); err != nil {
+		if err := s.dialect.Insert(ctx, tx, entityHistoryTable, values); err != nil {
 			s.log.Error("error inserting entity history", "msg", err.Error())
 			return err
 		}
 
 		// 2. Add row to the main `entity` table
-		if err := s.dialect.Insert(ctx, tx, "entity", values); err != nil {
+		if err := s.dialect.Insert(ctx, tx, entityTable, values); err != nil {
 			s.log.Error("error inserting entity", "msg", err.Error())
 			return err
 		}
@@ -645,7 +648,7 @@ func (s *sqlEntityServer) Update(ctx context.Context, r *entity.UpdateEntityRequ
 		}
 
 		// 1. Add the `entity_history` values
-		if err := s.dialect.Insert(ctx, tx, "entity_history", values); err != nil {
+		if err := s.dialect.Insert(ctx, tx, entityHistoryTable, values); err != nil {
 			s.log.Error("error inserting entity history", "msg", err.Error())
 			return err
 		}
@@ -665,7 +668,7 @@ func (s *sqlEntityServer) Update(ctx context.Context, r *entity.UpdateEntityRequ
 		err = s.dialect.Update(
 			ctx,
 			tx,
-			"entity",
+			entityTable,
 			values,
 			map[string]any{
 				"guid": current.Guid,
@@ -846,7 +849,7 @@ func (s *sqlEntityServer) doDelete(ctx context.Context, tx *session.SessionTx, e
 	}
 
 	// 1. Add the `entity_history` values
-	if err := s.dialect.Insert(ctx, tx, "entity_history", values); err != nil {
+	if err := s.dialect.Insert(ctx, tx, entityHistoryTable, values); err != nil {
 		s.log.Error("error inserting entity history", "msg", err.Error())
 		return err
 	}
@@ -912,7 +915,7 @@ func (s *sqlEntityServer) History(ctx context.Context, r *entity.EntityHistoryRe
 
 	entityQuery := selectQuery{
 		dialect:  s.dialect,
-		from:     "entity_history", // the table
+		from:     entityHistoryTable, // the table
 		limit:    r.Limit,
 		oneExtra: true, // request one more than the limit (and show next token if it exists)
 	}
@@ -1080,27 +1083,27 @@ func (s *sqlEntityServer) List(ctx context.Context, r *entity.EntityListRequest)
 	fields := s.getReadFields(r)
 
 	// main query we will use to retrieve entities
-	entityQuery := NewSelectQuery(s.dialect, "entity")
+	entityQuery := NewSelectQuery(s.dialect, entityTable)
 	entityQuery.AddFields(fields...)
 	entityQuery.SetLimit(r.Limit)
 	entityQuery.SetOneExtra()
 
 	// query to retrieve the max resource version and entity count
-	rvMaxQuery := NewSelectQuery(s.dialect, "entity")
+	rvMaxQuery := NewSelectQuery(s.dialect, entityTable)
 	rvMaxQuery.AddRawFields("coalesce(max(resource_version),0) as rv", "count(guid) as cnt")
 
 	// subquery to get latest resource version for each entity
 	// when we need to query from entity_history
-	rvSubQuery := NewSelectQuery(s.dialect, "entity_history")
+	rvSubQuery := NewSelectQuery(s.dialect, entityHistoryTable)
 	rvSubQuery.AddFields("guid")
 	rvSubQuery.AddRawFields("max(resource_version) as max_rv")
 
 	// if we are looking for deleted entities, we list "deleted" entries from the entity_history table
 	if r.Deleted {
-		entityQuery.from = "entity_history"
+		entityQuery.from = entityHistoryTable
 		entityQuery.AddWhere("action", entity.Entity_DELETED)
 
-		rvMaxQuery.from = "entity_history"
+		rvMaxQuery.from = entityHistoryTable
 		rvMaxQuery.AddWhere("action", entity.Entity_DELETED)
 	}
 
@@ -1183,7 +1186,7 @@ func (s *sqlEntityServer) List(ctx context.Context, r *entity.EntityListRequest)
 		}
 
 		if (continueToken.ResourceVersion > 0 && continueToken.ResourceVersion != rvMaxRow.Rv) || (continueToken.RecordCnt > 0 && continueToken.RecordCnt != rvMaxRow.Cnt) {
-			entityQuery.From("entity_history")
+			entityQuery.From(entityHistoryTable)
 			entityQuery.AddWhere("t.action != ?", entity.Entity_DELETED)
 
 			rvSubQuery.AddGroupBy("guid")
@@ -1216,7 +1219,7 @@ func (s *sqlEntityServer) List(ctx context.Context, r *entity.EntityListRequest)
 
 	if len(r.Labels) > 0 {
 		// if we are looking for deleted entities, we need to use the labels column
-		if entityQuery.from == "entity_history" {
+		if entityQuery.from == entityHistoryTable {
 			for labelKey, labelValue := range r.Labels {
 				entityQuery.AddWhereJsonContainsKV("labels", labelKey, labelValue)
 			}
@@ -1311,9 +1314,9 @@ func (s *sqlEntityServer) watchInit(r *entity.EntityWatchRequest, w entity.Entit
 
 	entityQuery := selectQuery{
 		dialect:  s.dialect,
-		from:     "entity", // the table
-		limit:    1000,     // r.Limit,
-		oneExtra: true,     // request one more than the limit (and show next token if it exists)
+		from:     entityTable, // the table
+		limit:    1000,        // r.Limit,
+		oneExtra: true,        // request one more than the limit (and show next token if it exists)
 	}
 
 	entityQuery.AddFields(fields...)
@@ -1321,7 +1324,7 @@ func (s *sqlEntityServer) watchInit(r *entity.EntityWatchRequest, w entity.Entit
 	// if we got an initial resource version, start from that location in the history
 	fromZero := true
 	if r.Since > 0 {
-		entityQuery.from = "entity_history"
+		entityQuery.from = entityHistoryTable
 		entityQuery.AddWhere("resource_version > ?", r.Since)
 		fromZero = false
 	}
@@ -1474,8 +1477,8 @@ func (s *sqlEntityServer) poll(since int64, out chan *entity.Entity) (int64, err
 		err := func() error {
 			entityQuery := selectQuery{
 				dialect: s.dialect,
-				from:    "entity_history", // the table
-				limit:   100,              // r.Limit,
+				from:    entityHistoryTable, // the table
+				limit:   100,                // r.Limit,
 				// offset:   0,
 				oneExtra: true, // request one more than the limit (and show next token if it exists)
 				orderBy:  []string{"resource_version"},
