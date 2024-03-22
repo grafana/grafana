@@ -159,8 +159,8 @@ export const optionBuilder: OptionSuppliers = {
         min: 0,
         max: 100,
       },
-      });
-    },
+    });
+  },
 
   addDirection: (builder, context) => {
     const category = ['Arrow Direction'];
