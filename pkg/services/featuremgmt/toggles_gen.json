@@ -2164,6 +2164,19 @@
         "hideFromAdminPage": true,
         "hideFromDocs": true
       }
+    },
+    {
+      "metadata": {
+        "name": "publicDashboardsScene",
+        "resourceVersion": "1710951139684",
+        "creationTimestamp": "2024-03-20T16:12:19Z"
+      },
+      "spec": {
+        "description": "Enables public dashboard rendering using scenes",
+        "stage": "experimental",
+        "codeowner": "@grafana/sharing-squad",
+        "frontend": true
+      }
     }
   ]
 }
