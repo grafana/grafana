@@ -129,7 +129,7 @@ export function getFilteredPanelString(panel: Panel): string {
   const filteredPanel: Partial<Panel> = {
     ...pick(panel, keysToKeep),
     options: pick(panel.options, [
-      // For text panels, the content help to generate the panel metadata
+      // For text panels, the content property helps generate the panel metadata
       'content',
     ]),
   };
