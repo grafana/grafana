@@ -79,7 +79,7 @@ func RegisterAPIService(
 	features featuremgmt.FeatureToggles,
 	apiRegistrar builder.APIRegistrar,
 	pluginClient plugins.Client, // access to everything
-	datasources PluginDatasourceProvider,
+	datasources ScopedPluginDatasourceProvider,
 	contextProvider PluginContextWrapper,
 	pluginStore pluginstore.Store,
 	accessControl accesscontrol.AccessControl,
@@ -98,7 +98,8 @@ func RegisterAPIService(
 	all := pluginStore.Plugins(context.Background(), plugins.TypeDataSource)
 	ids := []string{
 		"grafana-testdata-datasource",
-		//	"prometheus",
+		"prometheus",
+		"graphite",
 	}
 
 	for _, ds := range all {
@@ -108,7 +109,7 @@ func RegisterAPIService(
 
 		builder, err = NewDataSourceAPIBuilder(ds.JSONData,
 			opts,
-			datasources,
+			datasources.GetDatasourceProvider(ds.JSONData),
 			contextProvider,
 			accessControl,
 		)
@@ -133,9 +134,6 @@ func NewDataSourceAPIBuilder(
 
 	if handlers.QueryDataHandler == nil {
 		return nil, fmt.Errorf("missing query handler")
-	}
-	if handlers.CheckHealthHandler == nil {
-		return nil, fmt.Errorf("missing health check handler")
 	}
 
 	return &DataSourceAPIBuilder{
@@ -228,7 +226,10 @@ func (b *DataSourceAPIBuilder) GetAPIGroupInfo(
 		),
 	}
 	storage[conn.StoragePath("query")] = &subQueryREST{builder: b}
-	storage[conn.StoragePath("health")] = &subHealthREST{builder: b}
+
+	if b.handlers.CheckHealthHandler != nil {
+		storage[conn.StoragePath("health")] = &subHealthREST{builder: b}
+	}
 
 	if b.handlers.CallResourceHandler != nil {
 		storage[conn.StoragePath("resource")] = &subResourceREST{builder: b}
