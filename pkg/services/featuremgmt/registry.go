@@ -1030,9 +1030,10 @@ var (
 			Name:            "enablePluginsTracingByDefault",
 			Description:     "Enable plugin tracing for all external plugins",
 			FrontendOnly:    false,
-			Stage:           FeatureStageExperimental,
+			Stage:           FeatureStageGeneralAvailability,
 			Owner:           grafanaPluginsPlatformSquad,
 			RequiresRestart: true,
+			Expression:      "true", // enabled by default
 		},
 		{
 			Name:            "cloudRBACRoles",
@@ -1109,8 +1110,8 @@ var (
 		},
 		{
 			Name:        "newPDFRendering",
-			Description: "New implementation for the dashboard to PDF rendering",
-			Stage:       FeatureStageExperimental,
+			Description: "New implementation for the dashboard-to-PDF rendering",
+			Stage:       FeatureStagePublicPreview,
 			Owner:       grafanaSharingSquad,
 		},
 		{
