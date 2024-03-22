@@ -91,6 +91,10 @@ l1Fields:
 	}
 
 	if len(warnings) > 0 {
+		if len(rsp.Frames) == 0 {
+			rsp.Frames = append(rsp.Frames, data.NewFrame("Warnings"))
+		}
+
 		for _, frame := range rsp.Frames {
 			if frame.Meta == nil {
 				frame.Meta = &data.FrameMeta{}
