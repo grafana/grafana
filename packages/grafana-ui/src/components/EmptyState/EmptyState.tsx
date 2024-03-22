@@ -9,7 +9,7 @@ import { GrotNotFound } from './GrotNotFound/GrotNotFound';
 
 interface Props {
   /**
-   * Provide a CTA button to render below the message
+   * Provide a button to render below the message
    */
   button?: ReactNode;
   hideImage?: boolean;
