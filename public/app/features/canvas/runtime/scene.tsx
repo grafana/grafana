@@ -385,6 +385,22 @@ export class Scene {
     return targetElements;
   };
 
+  disableCustomables = () => {
+    this.moveable!.props = {
+      dimensionViewable: false,
+      constraintViewable: false,
+      settingsViewable: false,
+    };
+  };
+
+  enableCustomables = () => {
+    this.moveable!.props = {
+      dimensionViewable: true,
+      constraintViewable: true,
+      settingsViewable: true,
+    };
+  };
+
   initMoveable = (destroySelecto = false, allowChanges = true) => {
     const targetElements = this.generateTargetElements(this.root.elements);
 
@@ -408,6 +424,10 @@ export class Scene {
       draggable: allowChanges && !this.editModeEnabled.getValue(),
       resizable: allowChanges,
 
+      // Setup rotatable
+      rotatable: allowChanges,
+      throttleRotate: 5,
+
       // Setup snappable
       snappable: allowChanges,
       snapDirections: snapDirections,
@@ -423,6 +443,21 @@ export class Scene {
       origin: false,
       className: this.styles.selected,
     })
+      .on('rotateStart', () => {
+        this.disableCustomables();
+      })
+      .on('rotate', (event) => {
+        const targetedElement = this.findElementByTarget(event.target);
+
+        if (targetedElement) {
+          targetedElement.applyRotate(event);
+        }
+      })
+      .on('rotateEnd', () => {
+        this.enableCustomables();
+        // Update the editor with the new rotation
+        this.moved.next(Date.now());
+      })
       .on('click', (event) => {
         const targetedElement = this.findElementByTarget(event.target);
         let elementSupportsEditing = false;
