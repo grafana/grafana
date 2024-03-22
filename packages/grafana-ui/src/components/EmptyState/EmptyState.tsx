@@ -1,7 +1,6 @@
 import React, { ReactNode } from 'react';
 
 import { t } from '../../utils/i18n';
-import { Button } from '../Button';
 import { Box } from '../Layout/Box/Box';
 import { Stack } from '../Layout/Stack/Stack';
 import { Text } from '../Text/Text';
@@ -25,19 +24,19 @@ interface BaseProps {
   /**
    * Empty state variant. Possible values are 'search'.
    */
-  variant?: 'default' | 'search';
+  variant: 'initial' | 'search';
 }
 
-interface DefaultVariantProps extends BaseProps {
+interface InitialVariantProps extends BaseProps {
   message: string;
-  variant?: 'default';
+  variant: 'initial';
 }
 
 interface SearchVariantProps extends BaseProps {
   variant: 'search';
 }
 
-type Props = DefaultVariantProps | SearchVariantProps;
+type Props = InitialVariantProps | SearchVariantProps;
 
 export const EmptyState = ({
   button,
@@ -45,7 +44,7 @@ export const EmptyState = ({
   image,
   message = t('grafana-ui.empty-state.search-message', 'No results found'),
   hideImage = false,
-  variant = 'default',
+  variant,
 }: React.PropsWithChildren<Props>) => {
   const imageToShow = image ?? getImageForVariant(variant);
 
@@ -66,5 +65,6 @@ function getImageForVariant(variant: Props['variant']) {
     return <GrotNotFound width={300} />;
   }
 
-  return <Button>foo</Button>;
+  // TODO replcae with a different image for initial variant
+  return <GrotNotFound width={300} />;
 }
