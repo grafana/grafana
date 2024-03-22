@@ -75,39 +75,41 @@ func TestQuerySplitting(t *testing.T) {
 				continue
 			}
 
-			fpath := path.Join("testdata", file.Name())
-			// nolint:gosec
-			body, err := os.ReadFile(fpath)
-			require.NoError(t, err)
-			harness := &parserTestObject{}
-			err = json.Unmarshal(body, harness)
-			require.NoError(t, err)
+			t.Run(file.Name(), func(t *testing.T) {
+				fpath := path.Join("testdata", file.Name())
+				// nolint:gosec
+				body, err := os.ReadFile(fpath)
+				require.NoError(t, err)
+				harness := &parserTestObject{}
+				err = json.Unmarshal(body, harness)
+				require.NoError(t, err)
 
-			changed := false
-			parsed, err := parser.parseRequest(ctx, &harness.Request)
-			if err != nil {
-				if !assert.Equal(t, harness.Error, err.Error(), "File %s", file) {
-					changed = true
-				}
-			} else {
-				x, _ := json.Marshal(parsed)
-				y, _ := json.Marshal(harness.Expect)
-				if !assert.JSONEq(t, string(y), string(x), "File %s", file) {
-					changed = true
-				}
-			}
-
-			if changed {
-				harness.Error = ""
-				harness.Expect = parsed
+				changed := false
+				parsed, err := parser.parseRequest(ctx, &harness.Request)
 				if err != nil {
-					harness.Error = err.Error()
+					if !assert.Equal(t, harness.Error, err.Error(), "File %s", file) {
+						changed = true
+					}
+				} else {
+					x, _ := json.Marshal(parsed)
+					y, _ := json.Marshal(harness.Expect)
+					if !assert.JSONEq(t, string(y), string(x), "File %s", file) {
+						changed = true
+					}
 				}
-				jj, err := json.MarshalIndent(harness, "", "  ")
-				require.NoError(t, err)
-				err = os.WriteFile(fpath, jj, 0600)
-				require.NoError(t, err)
-			}
+
+				if changed {
+					harness.Error = ""
+					harness.Expect = parsed
+					if err != nil {
+						harness.Error = err.Error()
+					}
+					jj, err := json.MarshalIndent(harness, "", "  ")
+					require.NoError(t, err)
+					err = os.WriteFile(fpath, jj, 0600)
+					require.NoError(t, err)
+				}
+			})
 		}
 	})
 }

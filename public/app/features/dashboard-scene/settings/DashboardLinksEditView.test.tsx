@@ -2,9 +2,7 @@ import { render as RTLRender } from '@testing-library/react';
 import React from 'react';
 import { TestProvider } from 'test/helpers/TestProvider';
 
-import { getPanelPlugin } from '@grafana/data/test/__mocks__/pluginMocks';
-import { setPluginImportUtils } from '@grafana/runtime';
-import { SceneGridItem, SceneGridLayout, SceneTimeRange, VizPanel, behaviors } from '@grafana/scenes';
+import { SceneGridLayout, SceneTimeRange, behaviors } from '@grafana/scenes';
 import { DashboardCursorSync } from '@grafana/schema';
 
 import { DashboardControls } from '../scene/DashboardControls';
@@ -24,11 +22,6 @@ jest.mock('react-router-dom', () => ({
     key: '5nvxpbdafa',
   }),
 }));
-
-setPluginImportUtils({
-  importPanelPlugin: (id: string) => Promise.resolve(getPanelPlugin({})),
-  getPanelPluginFromCache: (id: string) => undefined,
-});
 
 function render(component: React.ReactNode) {
   return RTLRender(<TestProvider>{component}</TestProvider>);
@@ -231,20 +224,7 @@ async function buildTestScene() {
       canEdit: true,
     },
     body: new SceneGridLayout({
-      children: [
-        new SceneGridItem({
-          key: 'griditem-1',
-          x: 0,
-          y: 0,
-          width: 10,
-          height: 12,
-          body: new VizPanel({
-            title: 'Panel A',
-            key: 'panel-1',
-            pluginId: 'table',
-          }),
-        }),
-      ],
+      children: [],
     }),
     editview: settings,
   });

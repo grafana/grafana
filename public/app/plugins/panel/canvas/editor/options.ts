@@ -1,13 +1,21 @@
+import { capitalize } from 'lodash';
+
 import { PanelOptionsSupplier } from '@grafana/data/src/panel/PanelPlugin';
-import { CanvasConnection, CanvasElementOptions } from 'app/features/canvas';
+import { CanvasConnection, CanvasElementOptions, ConnectionDirection } from 'app/features/canvas';
 import { ColorDimensionEditor, ResourceDimensionEditor, ScaleDimensionEditor } from 'app/features/dimensions/editors';
 import { BackgroundSizeEditor } from 'app/features/dimensions/editors/BackgroundSizeEditor';
+
+import { LineStyle } from '../types';
+
+import { LineStyleEditor } from './LineStyleEditor';
 
 interface OptionSuppliers {
   addBackground: PanelOptionsSupplier<CanvasElementOptions>;
   addBorder: PanelOptionsSupplier<CanvasElementOptions>;
   addColor: PanelOptionsSupplier<CanvasConnection>;
   addSize: PanelOptionsSupplier<CanvasConnection>;
+  addDirection: PanelOptionsSupplier<CanvasConnection>;
+  addLineStyle: PanelOptionsSupplier<CanvasConnection>;
 }
 
 const getCategoryName = (str: string, type: string | undefined) => {
@@ -118,6 +126,37 @@ export const optionBuilder: OptionSuppliers = {
         min: 1,
         max: 10,
       },
+    });
+  },
+
+  addDirection: (builder, context) => {
+    const category = ['Arrow Direction'];
+    builder.addRadio({
+      category,
+      path: 'direction',
+      name: 'Direction',
+      settings: {
+        options: [
+          { value: undefined, label: capitalize(ConnectionDirection.Forward) },
+          { value: ConnectionDirection.Reverse, label: capitalize(ConnectionDirection.Reverse) },
+          { value: ConnectionDirection.Both, label: capitalize(ConnectionDirection.Both) },
+          { value: ConnectionDirection.None, label: capitalize(ConnectionDirection.None) },
+        ],
+      },
+      defaultValue: ConnectionDirection.Forward,
+    });
+  },
+
+  addLineStyle: (builder, context) => {
+    const category = ['Line style'];
+    builder.addCustomEditor({
+      category,
+      id: 'lineStyle',
+      path: 'lineStyle',
+      name: 'Line style',
+      editor: LineStyleEditor,
+      settings: {},
+      defaultValue: { value: LineStyle.Solid, label: 'Solid' },
     });
   },
 };

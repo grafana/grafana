@@ -89,7 +89,7 @@ func TestForkedAlertmanager_ModeRemoteSecondary(t *testing.T) {
 			internal.EXPECT().ApplyConfig(ctx, mock.Anything).Return(expErr).Once()
 			readyCall := remote.EXPECT().Ready().Return(false).Once()
 			remote.EXPECT().ApplyConfig(ctx, mock.Anything).Return(nil).Once().NotBefore(readyCall)
-			require.Error(tt, forked.ApplyConfig(ctx, &models.AlertConfiguration{}), expErr)
+			require.ErrorIs(tt, forked.ApplyConfig(ctx, &models.AlertConfiguration{}), expErr)
 		}
 	})
 
@@ -375,6 +375,28 @@ func TestForkedAlertmanager_ModeRemotePrimary(t *testing.T) {
 	ctx := context.Background()
 	expErr := errors.New("test error")
 
+	t.Run("ApplyConfig", func(tt *testing.T) {
+		{
+			// If the remote Alertmanager is not ready, ApplyConfig should be called on both Alertmanagers,
+			// first on the remote, then on the internal.
+			internal, remote, forked := genTestAlertmanagers(tt, modeRemotePrimary)
+			remoteCall := remote.EXPECT().ApplyConfig(ctx, mock.Anything).Return(nil).Once()
+			internal.EXPECT().ApplyConfig(ctx, mock.Anything).Return(nil).Once().NotBefore(remoteCall)
+			require.NoError(tt, forked.ApplyConfig(ctx, &models.AlertConfiguration{}))
+
+			// An error in the remote Alertmanager should be returned.
+			_, remote, forked = genTestAlertmanagers(tt, modeRemotePrimary)
+			remote.EXPECT().ApplyConfig(ctx, mock.Anything).Return(expErr).Once()
+			require.ErrorIs(tt, forked.ApplyConfig(ctx, &models.AlertConfiguration{}), expErr)
+
+			// An error in the internal Alertmanager should not be returned.
+			internal, remote, forked = genTestAlertmanagers(tt, modeRemotePrimary)
+			remote.EXPECT().ApplyConfig(ctx, mock.Anything).Return(nil).Once()
+			internal.EXPECT().ApplyConfig(ctx, mock.Anything).Return(expErr).Once()
+			require.NoError(tt, forked.ApplyConfig(ctx, &models.AlertConfiguration{}))
+		}
+	})
+
 	t.Run("SaveAndApplyConfig", func(tt *testing.T) {
 		// SaveAndApplyConfig should first be called on the internal Alertmanager
 		// and then on the remote one.
@@ -645,7 +667,7 @@ func genTestAlertmanagersWithSyncInterval(t *testing.T, mode int, syncInterval t
 		require.NoError(t, err)
 		return internal, remote, forked
 	}
-	return internal, remote, NewRemotePrimaryForkedAlertmanager(internal, remote)
+	return internal, remote, NewRemotePrimaryForkedAlertmanager(log.NewNopLogger(), internal, remote)
 }
 
 // errConfigStore returns an error when a method is called.

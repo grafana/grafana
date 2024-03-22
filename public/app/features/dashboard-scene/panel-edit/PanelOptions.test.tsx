@@ -1,11 +1,14 @@
 import { act, fireEvent, render } from '@testing-library/react';
 import React from 'react';
 
-import { SceneGridItem, VizPanel } from '@grafana/scenes';
+import { VizPanel } from '@grafana/scenes';
 import { OptionFilter } from 'app/features/dashboard/components/PanelEditor/OptionsPaneOptions';
 
+import { DashboardGridItem } from '../scene/DashboardGridItem';
+import { DashboardScene } from '../scene/DashboardScene';
 import { LibraryVizPanel } from '../scene/LibraryVizPanel';
 import { vizPanelToPanel } from '../serialization/transformSceneToSaveModel';
+import * as utils from '../utils/utils';
 
 import { PanelOptions } from './PanelOptions';
 import { VizPanelManager } from './VizPanelManager';
@@ -15,6 +18,9 @@ jest.mock('react-router-dom', () => ({
     pathname: '',
   }),
 }));
+
+// Needed when the panel is not part of an DashboardScene
+jest.spyOn(utils, 'getDashboardSceneFor').mockReturnValue(new DashboardScene({}));
 
 describe('PanelOptions', () => {
   it('gets library panel options when the editing a library panel', async () => {
@@ -42,7 +48,7 @@ describe('PanelOptions', () => {
       _loadedPanel: libraryPanelModel,
     });
 
-    new SceneGridItem({ body: libraryPanel });
+    new DashboardGridItem({ body: libraryPanel });
 
     const panelManger = VizPanelManager.createFor(panel);
 

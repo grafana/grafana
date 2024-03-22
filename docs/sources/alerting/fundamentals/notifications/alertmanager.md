@@ -18,7 +18,7 @@ weight: 111
 
 Grafana sends firing and resolved alerts to Alertmanagers. The Alertmanager receives alerts, handles silencing, inhibition, grouping, and routing by sending notifications out via your channel of choice, for example, email or Slack.
 
-Grafana has its own Alertmanager, referred to as "Grafana" in the user interface, but also supports sending alerts to other Alertmanagers too, such as the [Prometheus Alertmanager](https://prometheus.io/docs/alerting/latest/alertmanager/).
+Grafana has its own Alertmanager, referred to as "Grafana" in the user interface, but also supports sending alerts to other Alertmanagers, such as the [Prometheus Alertmanager](https://prometheus.io/docs/alerting/latest/alertmanager/). You can use both internal and external Alertmanagers.
 
 The Grafana Alertmanager uses notification policies and contact points to configure how and where a notification is sent; how often a notification should be sent; and whether alerts should all be sent in the same notification, sent in grouped notifications based on a set of labels, or as separate notifications.
 

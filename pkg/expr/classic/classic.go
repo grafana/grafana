@@ -216,6 +216,10 @@ func (cmd *ConditionsCmd) executeCond(_ context.Context, _ time.Time, cond condi
 	return isCondFiring, isCondNoData, matches, nil
 }
 
+func (cmd *ConditionsCmd) Type() string {
+	return "classic_condition"
+}
+
 func compareWithOperator(b1, b2 bool, operator ConditionOperatorType) bool {
 	if operator == "or" {
 		return b1 || b2
