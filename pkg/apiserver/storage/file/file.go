@@ -26,6 +26,7 @@ import (
 	"k8s.io/apiserver/pkg/storage/storagebackend"
 	"k8s.io/apiserver/pkg/storage/storagebackend/factory"
 	"k8s.io/client-go/tools/cache"
+	"k8s.io/klog/v2"
 )
 
 const MaxUpdateAttempts = 30
@@ -125,12 +126,6 @@ func (s *Storage) getNewResourceVersion() uint64 {
 	return s.currentRV
 }
 
-func (s *Storage) getCurrentResourceVersionProtected() uint64 {
-	s.rvMutex.RLock()
-	defer s.rvMutex.RUnlock()
-	return s.currentRV
-}
-
 func (s *Storage) getCurrentResourceVersion() uint64 {
 	return s.currentRV
 }
@@ -210,6 +205,7 @@ func (s *Storage) Delete(
 	cachedExistingObject runtime.Object,
 ) error {
 	// TODO: is it gonna be contentious
+	// Either way, this should have max attempts logic
 	s.rvMutex.Lock()
 	defer s.rvMutex.Unlock()
 
@@ -304,12 +300,25 @@ func (s *Storage) Watch(ctx context.Context, key string, opts storage.ListOption
 	if parsedkey.namespace != "" {
 		namespace = &parsedkey.namespace
 	}
-	jw := s.watchSet.newWatch(ctx, requestedRV, p, s.versioner, s.getCurrentResourceVersionProtected, namespace)
 
 	if (opts.SendInitialEvents == nil && requestedRV == 0) || (opts.SendInitialEvents != nil && *opts.SendInitialEvents) {
 		if err := s.GetList(ctx, key, opts, listObj); err != nil {
 			return nil, err
 		}
+
+		listAccessor, err := meta.ListAccessor(listObj)
+		if err != nil {
+			klog.Errorf("could not determine new list accessor in watch")
+			return nil, err
+		}
+		// Updated if requesting RV was either "0" or ""
+		maybeUpdatedRV, err := s.versioner.ParseResourceVersion(listAccessor.GetResourceVersion())
+		if err != nil {
+			klog.Errorf("could not determine new list RV in watch")
+			return nil, err
+		}
+
+		jw := s.watchSet.newWatch(ctx, maybeUpdatedRV, p, s.versioner, namespace)
 
 		initEvents := make([]watch.Event, 0)
 		listPtr, err := meta.GetItemsPtr(listObj)
@@ -340,21 +349,12 @@ func (s *Storage) Watch(ctx context.Context, key string, opts storage.ListOption
 				return nil, fmt.Errorf("could not get last init event's revision for bookmark: %v", err)
 			}
 
-			s.rvMutex.RLock()
-			globalRV := s.getCurrentResourceVersion()
-			s.rvMutex.RUnlock()
-
-			bookmarkRV := lastItemRV
-			if lastItemRV < globalRV {
-				bookmarkRV = globalRV
-			}
-
 			bookmarkEvent := watch.Event{
 				Type:   watch.Bookmark,
 				Object: s.newFunc(),
 			}
 
-			if err := s.versioner.UpdateObject(bookmarkEvent.Object, bookmarkRV); err != nil {
+			if err := s.versioner.UpdateObject(bookmarkEvent.Object, lastItemRV); err != nil {
 				return nil, err
 			}
 
@@ -369,6 +369,14 @@ func (s *Storage) Watch(ctx context.Context, key string, opts storage.ListOption
 		jw.Start(initEvents...)
 		return jw, nil
 	}
+
+	maybeUpdatedRV := requestedRV
+	if maybeUpdatedRV == 0 {
+		s.rvMutex.RLock()
+		maybeUpdatedRV = s.getCurrentResourceVersion()
+		s.rvMutex.RUnlock()
+	}
+	jw := s.watchSet.newWatch(ctx, maybeUpdatedRV, p, s.versioner, namespace)
 
 	jw.Start()
 	return jw, nil
@@ -424,37 +432,53 @@ func (s *Storage) Get(ctx context.Context, key string, opts storage.GetOptions, 
 func (s *Storage) GetList(ctx context.Context, key string, opts storage.ListOptions, listObj runtime.Object) error {
 	remainingItems := int64(0)
 
-	s.rvMutex.RLock()
-	currentResourceVersion := s.getCurrentResourceVersion()
-	s.rvMutex.RUnlock()
-
-	var fpath string
-	dirpath := s.dirPath(key)
-	// Since it's a get, check if the dir exists and return early as needed
-	if !exists(dirpath) {
-		// We may have gotten the key targeting an individual item
-		dirpath = filepath.Dir(dirpath)
-		if !exists(dirpath) {
-			// ensure we return empty list in listObj instead of a not found error
-			return nil
-		}
-		fpath = s.filePath(key)
+	resourceVersionInt, err := s.versioner.ParseResourceVersion(opts.ResourceVersion)
+	if err != nil {
+		return err
 	}
 
-	var objs []runtime.Object
-	if fpath != "" {
-		obj, err := readFile(s.codec, fpath, func() runtime.Object {
-			return s.newFunc()
-		})
-		if err == nil {
-			objs = append(objs, obj)
+	// read state protected by mutex
+	objs, err := func() ([]runtime.Object, error) {
+		s.rvMutex.Lock()
+		defer s.rvMutex.Unlock()
+
+		if resourceVersionInt == 0 {
+			resourceVersionInt = s.getNewResourceVersion()
 		}
-	} else {
-		var err error
-		objs, err = readDirRecursive(s.codec, dirpath, s.newFunc)
-		if err != nil {
-			return err
+
+		var fpath string
+		dirpath := s.dirPath(key)
+		// Since it's a get, check if the dir exists and return early as needed
+		if !exists(dirpath) {
+			// We may have gotten the key targeting an individual item
+			dirpath = filepath.Dir(dirpath)
+			if !exists(dirpath) {
+				// ensure we return empty list in listObj instead of a not found error
+				return []runtime.Object{}, nil
+			}
+			fpath = s.filePath(key)
 		}
+
+		var objs []runtime.Object
+		if fpath != "" {
+			obj, err := readFile(s.codec, fpath, func() runtime.Object {
+				return s.newFunc()
+			})
+			if err == nil {
+				objs = append(objs, obj)
+			}
+		} else {
+			var err error
+			objs, err = readDirRecursive(s.codec, dirpath, s.newFunc)
+			if err != nil {
+				return nil, err
+			}
+		}
+		return objs, nil
+	}()
+
+	if err != nil {
+		return err
 	}
 
 	listPtr, err := meta.GetItemsPtr(listObj)
@@ -466,41 +490,22 @@ func (s *Storage) GetList(ctx context.Context, key string, opts storage.ListOpti
 		return err
 	}
 
-	maxRVFromItem := uint64(0)
 	for _, obj := range objs {
 		currentVersion, err := s.versioner.ObjectResourceVersion(obj)
 		if err != nil {
 			return err
 		}
 
-		if opts.SendInitialEvents == nil || (opts.SendInitialEvents != nil && !*opts.SendInitialEvents) {
-			if err = s.validateMinimumResourceVersion(opts.ResourceVersion, currentVersion); err != nil {
-				continue
-			}
-		}
-
 		ok, err := opts.Predicate.Matches(obj)
 		if err == nil && ok {
 			v.Set(reflect.Append(v, reflect.ValueOf(obj).Elem()))
-			if currentVersion > maxRVFromItem {
-				maxRVFromItem = currentVersion
+
+			if err := s.validateMinimumResourceVersion(opts.ResourceVersion, currentVersion); err != nil {
+				// Below log left for debug. It's usually not an error condition
+				// klog.Infof("failed to assert minimum resource version constraint against list version")
+				continue
 			}
 		}
-	}
-
-	resourceVersionInt := uint64(0)
-	if opts.ResourceVersion != "" && opts.ResourceVersion != "0" {
-		var err error
-		resourceVersionInt, err = s.versioner.ParseResourceVersion(opts.ResourceVersion)
-		if err != nil {
-			return err
-		}
-	} else if maxRVFromItem == 0 {
-		// we have an empty list, use current RV we are on.
-		// this will ensure any items added afterwards will use a fresher RV.
-		resourceVersionInt = currentResourceVersion
-	} else {
-		resourceVersionInt = maxRVFromItem + uint64(1)
 	}
 
 	if err := s.versioner.UpdateList(listObj, resourceVersionInt, "", &remainingItems); err != nil {

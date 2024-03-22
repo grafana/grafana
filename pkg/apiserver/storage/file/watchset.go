@@ -19,7 +19,7 @@ import (
 )
 
 const (
-	UpdateChannelSize         = 20
+	UpdateChannelSize         = 25
 	InitialWatchNodesSize     = 20
 	InitialBufferedEventsSize = 25
 )
@@ -41,18 +41,14 @@ type watchNode struct {
 	watchNamespace *string
 	predicate      storage.SelectionPredicate
 	versioner      storage.Versioner
-	// This function may be used when requested RV="" (it locks a mutex). We use it for RV=0 just the same
-	getCurrentResourceVersionProtected func() uint64
 }
 
 // Keeps track of which watches need to be notified
 type WatchSet struct {
 	mu sync.RWMutex
 	// mu protects both nodes and counter
-	nodes   map[uint64]*watchNode
-	counter atomic.Uint64
-	// Buffers events during startup so that the brief window in which the async
-	// part of start method starts doesn't lead to us missing events
+	nodes         map[uint64]*watchNode
+	counter       atomic.Uint64
 	buffered      []eventWrapper
 	bufferedMutex sync.RWMutex
 }
@@ -66,7 +62,7 @@ func NewWatchSet() *WatchSet {
 
 // Creates a new watch with a unique id, but
 // does not start sending events to it until start() is called.
-func (s *WatchSet) newWatch(ctx context.Context, requestedRV uint64, p storage.SelectionPredicate, versioner storage.Versioner, getCurrentResourceVersionProtected func() uint64, namespace *string) *watchNode {
+func (s *WatchSet) newWatch(ctx context.Context, requestedRV uint64, p storage.SelectionPredicate, versioner storage.Versioner, namespace *string) *watchNode {
 	s.counter.Add(1)
 
 	node := &watchNode{
@@ -82,8 +78,6 @@ func (s *WatchSet) newWatch(ctx context.Context, requestedRV uint64, p storage.S
 		predicate:      p,
 		watchNamespace: namespace,
 		versioner:      versioner,
-
-		getCurrentResourceVersionProtected: getCurrentResourceVersionProtected,
 	}
 
 	return node
@@ -99,6 +93,11 @@ func (s *WatchSet) cleanupWatchers() {
 
 // oldObject is only passed in the event of a modification
 // in case a predicate filtered watch is impacted as a result of modification
+// NOTE: this function gives one the misperception that a newly added node will never
+// get a double event, one from buffered and one from the update channel
+// That perception is not true. Even though this function maintains the lock throughout the function body
+// it is not true of the Start function. So basically, the Start function running after this function
+// fully stands the chance of another future notifyWatchers double sending it the event through the two means mentioned
 func (s *WatchSet) notifyWatchers(ev watch.Event, oldObject runtime.Object) {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
@@ -112,11 +111,10 @@ func (s *WatchSet) notifyWatchers(ev watch.Event, oldObject runtime.Object) {
 
 	// Events are always buffered.
 	// this is because of an inadvertent delay which is built into the watch process
-	// Watch() from storage returns Watch.Interface - which caller
-	// is at the liberty of calling whenever. The only way to guarantee
-	// that we can interpret the passed RV correctly is to play it against missed events
+	// Watch() from storage returns Watch.Interface with a async start func.
+	// The only way to guarantee that we can interpret the passed RV correctly is to play it against missed events
 	// (notice the loop below over s.nodes isn't exactly going to work on a new node
-	// unless they have called start and successfully finished it)
+	// unless start is called on it)
 	s.bufferedMutex.Lock()
 	s.buffered = append(s.buffered, updateEv)
 	s.bufferedMutex.Unlock()
@@ -267,26 +265,28 @@ func (w *watchNode) Start(initEvents ...watch.Event) {
 	w.s.mu.Unlock()
 
 	go func() {
-		maxRV := w.requestedRV
-		if maxRV == 0 {
-			maxRV = w.getCurrentResourceVersionProtected()
-		}
+		maxRV := uint64(0)
 		for _, ev := range initEvents {
+			currentRV, err := w.getResourceVersionAsInt(ev.Object)
+			if err != nil {
+				klog.Errorf("Could not determine init event RV for deduplication of buffered events: %v", err)
+				continue
+			}
+
+			if maxRV < currentRV {
+				maxRV = currentRV
+			}
+
 			if err := w.processEvent(eventWrapper{ev: ev}, true); err != nil {
 				klog.Errorf("Could not process event: %v", err)
 			}
-			eventRV, err := w.getResourceVersionAsInt(ev.Object)
-			if err != nil {
-				klog.Errorf("Could not determine RV for deduplication of buffered events: %v", err)
-				continue
-			}
-			if maxRV < eventRV {
-				maxRV = eventRV
-			} // No continue in this case since maxRV calculation this loop is only pertinent below
 		}
 
-		// The if check below helps not send duplicate events when reading from 0
-		// since ADDED events made from initial list above are already sent
+		// If we had no init events, simply rely on the passed RV
+		if maxRV == 0 {
+			maxRV = w.requestedRV
+		}
+
 		w.s.bufferedMutex.RLock()
 		for _, e := range w.s.buffered {
 			eventRV, err := w.getResourceVersionAsInt(e.ev.Object)
@@ -295,10 +295,10 @@ func (w *watchNode) Start(initEvents ...watch.Event) {
 				continue
 			}
 
-			if maxRV < eventRV {
-				maxRV = eventRV
-			} else {
+			if maxRV >= eventRV {
 				continue
+			} else {
+				maxRV = eventRV
 			}
 
 			if err := w.processEvent(e, false); err != nil {
@@ -314,8 +314,18 @@ func (w *watchNode) Start(initEvents ...watch.Event) {
 					close(w.outCh)
 					return
 				}
-				// we haven't needed to do the maxRV calculation for this loop because
-				// it is only consuming currently active changes
+
+				eventRV, err := w.getResourceVersionAsInt(e.ev.Object)
+				if err != nil {
+					klog.Errorf("Could not determine RV for deduplication of channel events: %v", err)
+					continue
+				}
+
+				if maxRV >= eventRV {
+					continue
+				} else {
+					maxRV = eventRV
+				}
 
 				if err := w.processEvent(e, false); err != nil {
 					klog.Errorf("Could not process event: %v", err)
