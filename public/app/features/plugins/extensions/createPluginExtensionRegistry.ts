@@ -5,7 +5,7 @@ import { deepFreeze, logWarning } from './utils';
 import { isPluginExtensionConfigValid } from './validators';
 
 export function createPluginExtensionRegistry(pluginPreloadResults: PluginPreloadResult[]): PluginExtensionRegistry {
-  const registry: PluginExtensionRegistry = {};
+  const registry: PluginExtensionRegistry = { id: '', extensions: {} };
 
   for (const { pluginId, extensionConfigs, error } of pluginPreloadResults) {
     if (error) {
@@ -27,10 +27,10 @@ export function createPluginExtensionRegistry(pluginPreloadResults: PluginPreloa
         pluginId,
       };
 
-      if (!Array.isArray(registry[extensionPointId])) {
-        registry[extensionPointId] = [registryItem];
+      if (!Array.isArray(registry.extensions[extensionPointId])) {
+        registry.extensions[extensionPointId] = [registryItem];
       } else {
-        registry[extensionPointId].push(registryItem);
+        registry.extensions[extensionPointId].push(registryItem);
       }
     }
   }
