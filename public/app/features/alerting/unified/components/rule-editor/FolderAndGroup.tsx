@@ -1,22 +1,10 @@
 import { css } from '@emotion/css';
 import { debounce, take, uniqueId } from 'lodash';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import { FormProvider, useForm, useFormContext } from 'react-hook-form';
+import { FormProvider, useForm, useFormContext, Controller } from 'react-hook-form';
 
 import { AppEvents, GrafanaTheme2, SelectableValue } from '@grafana/data';
-import {
-  AsyncSelect,
-  Box,
-  Button,
-  Field,
-  Input,
-  InputControl,
-  Label,
-  Modal,
-  Stack,
-  Text,
-  useStyles2,
-} from '@grafana/ui';
+import { AsyncSelect, Box, Button, Field, Input, Label, Modal, Stack, Text, useStyles2 } from '@grafana/ui';
 import appEvents from 'app/core/app_events';
 import { contextSrv } from 'app/core/services/context_srv';
 import { createFolder } from 'app/features/manage-dashboards/state/actions';
@@ -160,7 +148,7 @@ export function FolderAndGroup({
             <Stack direction="row" alignItems="center">
               {(!isCreatingFolder && (
                 <>
-                  <InputControl
+                  <Controller
                     render={({ field: { ref, ...field } }) => (
                       <div style={{ width: 420 }}>
                         <RuleFolderPicker
@@ -218,7 +206,7 @@ export function FolderAndGroup({
             error={errors.group?.message}
             invalid={!!errors.group?.message}
           >
-            <InputControl
+            <Controller
               render={({ field: { ref, ...field }, fieldState }) => (
                 <AsyncSelect
                   disabled={!folder || loading}

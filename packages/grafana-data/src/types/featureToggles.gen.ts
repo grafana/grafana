@@ -48,8 +48,6 @@ export interface FeatureToggles {
   grpcServer?: boolean;
   unifiedStorage?: boolean;
   cloudWatchCrossAccountQuerying?: boolean;
-  redshiftAsyncQueryDataSupport?: boolean;
-  athenaAsyncQueryDataSupport?: boolean;
   showDashboardValidationWarnings?: boolean;
   mysqlAnsiQuotes?: boolean;
   accessControlOnCall?: boolean;
@@ -87,7 +85,6 @@ export interface FeatureToggles {
   frontendSandboxMonitorOnly?: boolean;
   sqlDatasourceDatabaseSelection?: boolean;
   lokiFormatQuery?: boolean;
-  cloudWatchLogsMonacoEditor?: boolean;
   recordedQueriesMulti?: boolean;
   pluginsDynamicAngularDetectionPatterns?: boolean;
   vizAndWidgetSplit?: boolean;

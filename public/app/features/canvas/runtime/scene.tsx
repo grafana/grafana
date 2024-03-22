@@ -28,12 +28,12 @@ import {
 } from 'app/features/dimensions/utils';
 import { CanvasContextMenu } from 'app/plugins/panel/canvas/components/CanvasContextMenu';
 import { CanvasTooltip } from 'app/plugins/panel/canvas/components/CanvasTooltip';
+import { CONNECTION_ANCHOR_DIV_ID } from 'app/plugins/panel/canvas/components/connections/ConnectionAnchors';
 import {
-  CONNECTION_ANCHOR_DIV_ID,
+  Connections,
   CONNECTION_VERTEX_ADD_ID,
   CONNECTION_VERTEX_ID,
-} from 'app/plugins/panel/canvas/components/connections/ConnectionAnchors';
-import { Connections } from 'app/plugins/panel/canvas/components/connections/Connections';
+} from 'app/plugins/panel/canvas/components/connections/Connections';
 import { AnchorPoint, CanvasTooltipPayload, LayerActionID } from 'app/plugins/panel/canvas/types';
 import { getParent, getTransformInstance } from 'app/plugins/panel/canvas/utils';
 
