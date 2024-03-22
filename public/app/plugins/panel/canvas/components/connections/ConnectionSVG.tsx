@@ -224,12 +224,22 @@ export const ConnectionSVG = ({
             ya = lDelta * Math.sin(angle1) + y1;
             xb = lHalfArc * Math.cos(angle2) + X;
             yb = lHalfArc * Math.sin(angle2) + Y;
+
+            // Check if arc control points are inside of segment, otherwise swap sign
+            if ((xa > X && xa > x1) || (xa < X && xa < x1)) {
+              xa = (lDelta + 2 * lHalfArc) * Math.cos(angle1) + x1;
+              ya = (lDelta + 2 * lHalfArc) * Math.sin(angle1) + y1;
+              xb = -lHalfArc * Math.cos(angle2) + X;
+              yb = -lHalfArc * Math.sin(angle2) + Y;
+            }
           } else {
             // For all other vertices
             const previousVertex = vertices[index - 1];
+            addVertices.push(calculateMidpoint(previousVertex.x, previousVertex.y, x, y));
+
+            // Convert previous vertex relative coorindates to scene coordinates
             const Xp = previousVertex.x * xDist + x1;
             const Yp = previousVertex.y * yDist + y1;
-            addVertices.push(calculateMidpoint(previousVertex.x, previousVertex.y, x, y));
 
             const lSegment = calculateDistance(X, Y, Xp, Yp);
             if (Math.abs(lHalfArc) > 0.5 * Math.abs(lSegment)) {
@@ -253,6 +263,14 @@ export const ConnectionSVG = ({
             ya = lDelta * Math.sin(angle1) + Yp;
             xb = lHalfArc * Math.cos(angle2) + X;
             yb = lHalfArc * Math.sin(angle2) + Y;
+
+            // Check if arc control points are inside of segment, otherwise swap sign
+            if ((xa > X && xa > Xp) || (xa < X && xa < Xp)) {
+              xa = (lDelta + 2 * lHalfArc) * Math.cos(angle1) + Xp;
+              ya = (lDelta + 2 * lHalfArc) * Math.sin(angle1) + Yp;
+              xb = -lHalfArc * Math.cos(angle2) + X;
+              yb = -lHalfArc * Math.sin(angle2) + Y;
+            }
           }
           if (index === vertices.length - 1) {
             // For last vertex
