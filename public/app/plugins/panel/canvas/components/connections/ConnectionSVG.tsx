@@ -178,14 +178,14 @@ export const ConnectionSVG = ({
             const Xn = vertices[index + 1].x * (x2 - x1) + x1;
             const Yn = vertices[index + 1].y * (y2 - y1) + y1;
             if (index === 0) {
-              angle1 = (calculateAngle(x1, y1, X, Y) / 180) * Math.PI; //radians
-              angle2 = (calculateAngle(X, Y, Xn, Yn) / 180) * Math.PI; //radians
+              angle1 = calculateAngle(x1, y1, X, Y);
+              angle2 = calculateAngle(X, Y, Xn, Yn);
             } else {
               const previousVertex = vertices[index - 1];
               const Xp = previousVertex.x * (x2 - x1) + x1;
               const Yp = previousVertex.y * (y2 - y1) + y1;
-              angle1 = (calculateAngle(Xp, Yp, X, Y) / 180) * Math.PI; //radians
-              angle2 = (calculateAngle(X, Y, Xn, Yn) / 180) * Math.PI; //radians
+              angle1 = calculateAngle(Xp, Yp, X, Y);
+              angle2 = calculateAngle(X, Y, Xn, Yn);
             }
           } else {
             let previousVertex = { x: 0, y: 0 };
@@ -194,8 +194,8 @@ export const ConnectionSVG = ({
             }
             const Xp = previousVertex.x * (x2 - x1) + x1;
             const Yp = previousVertex.y * (y2 - y1) + y1;
-            angle1 = (calculateAngle(Xp, Yp, X, Y) / 180) * Math.PI; //radians
-            angle2 = (calculateAngle(X, Y, x2, y2) / 180) * Math.PI; //radians
+            angle1 = calculateAngle(Xp, Yp, X, Y);
+            angle2 = calculateAngle(X, Y, x2, y2);
           }
           const theta = angle2 - angle1; //radians
           const ccw = theta < 0;
