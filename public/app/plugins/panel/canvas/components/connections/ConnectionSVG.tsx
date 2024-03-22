@@ -164,7 +164,7 @@ export const ConnectionSVG = ({
           const x = vertex.x;
           const y = vertex.y;
 
-          // Convert vertex relative coorindates to scene coordinates
+          // Convert vertex relative coordinates to scene coordinates
           const X = x * xDist + x1;
           const Y = y * yDist + y1;
 
