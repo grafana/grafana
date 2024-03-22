@@ -9,6 +9,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/infra/db"
+	"github.com/grafana/grafana/pkg/infra/localcache"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/actest"
@@ -32,6 +33,7 @@ func setupBenchEnv(b *testing.B, usersCount, resourceCount int) (accesscontrol.S
 		registrations: accesscontrol.RegistrationList{},
 		store:         store,
 		roles:         accesscontrol.BuildBasicRoleDefinitions(),
+		cache:         localcache.New(1*time.Second, 1*time.Second),
 	}
 
 	// Prepare default permissions
@@ -54,6 +56,7 @@ func setupBenchEnv(b *testing.B, usersCount, resourceCount int) (accesscontrol.S
 		for u := start + 1; u < end+1; u++ {
 			users = append(users, user.User{
 				ID:      int64(u),
+				UID:     fmt.Sprintf("user%v", u),
 				Name:    fmt.Sprintf("user%v", u),
 				Login:   fmt.Sprintf("user%v", u),
 				Email:   fmt.Sprintf("user%v@example.org", u),
@@ -234,3 +237,29 @@ func BenchmarkSearchUsersWithPerm_20K_10K(b *testing.B) { benchSearchUsersWithPe
 
 func BenchmarkSearchUsersWithPerm_100K_10(b *testing.B)  { benchSearchUsersWithPerm(b, 100000, 10) }  // ~0.88s/op
 func BenchmarkSearchUsersWithPerm_100K_100(b *testing.B) { benchSearchUsersWithPerm(b, 100000, 100) } // ~0.72s/op
+
+// 1k users
+// 100 folders
+// 1k dashboards
+// 1.6k permissions
+
+// Benchmarking search when we specify Action and Scope
+func benchSearchUserWithAction(b *testing.B, usersCount, resourceCount int) {
+	if testing.Short() {
+		b.Skip("Skipping benchmark in short mode")
+	}
+	acService, siu := setupBenchEnv(b, usersCount, resourceCount)
+	b.ResetTimer()
+
+	for n := 0; n < b.N; n++ {
+		usersPermissions, err := acService.SearchUsersPermissions(context.Background(), siu,
+			accesscontrol.SearchOptions{Action: "resources:action2", NamespacedID: "user:14"})
+		require.NoError(b, err)
+		require.Len(b, usersPermissions, 1)
+		for _, permissions := range usersPermissions {
+			require.Len(b, permissions, resourceCount)
+		}
+	}
+}
+
+func BenchmarkSearchUserWithAction_1K_1k(b *testing.B) { benchSearchUserWithAction(b, 1000, 1000) }
