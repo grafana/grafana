@@ -54,7 +54,7 @@ type alertmanager struct {
 	ConfigMetrics       *metrics.AlertmanagerConfigMetrics
 	Settings            *setting.Cfg
 	Store               AlertingStore
-	fileStore           stateStore
+	stateStore          stateStore
 	NotificationService notifications.Service
 
 	decryptFn alertingNotify.GetDecryptedValueFn
@@ -90,14 +90,14 @@ func (m maintenanceOptions) MaintenanceFunc(state alertingNotify.State) (int64, 
 	return m.maintenanceFunc(state)
 }
 
-func NewAlertmanager(ctx context.Context, orgID int64, cfg *setting.Cfg, store AlertingStore, fileStore stateStore,
+func NewAlertmanager(ctx context.Context, orgID int64, cfg *setting.Cfg, store AlertingStore, stateStore stateStore,
 	peer alertingNotify.ClusterPeer, decryptFn alertingNotify.GetDecryptedValueFn, ns notifications.Service,
 	m *metrics.Alertmanager, withAutogen bool) (*alertmanager, error) {
-	nflog, err := fileStore.GetNotificationLog(ctx)
+	nflog, err := stateStore.GetNotificationLog(ctx)
 	if err != nil {
 		return nil, err
 	}
-	silences, err := fileStore.GetSilences(ctx)
+	silences, err := stateStore.GetSilences(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -108,7 +108,7 @@ func NewAlertmanager(ctx context.Context, orgID int64, cfg *setting.Cfg, store A
 		maintenanceFrequency: silenceMaintenanceInterval,
 		maintenanceFunc: func(state alertingNotify.State) (int64, error) {
 			// Detached context here is to make sure that when the service is shut down the persist operation is executed.
-			return fileStore.SaveSilences(context.Background(), state)
+			return stateStore.SaveSilences(context.Background(), state)
 		},
 	}
 
@@ -118,7 +118,7 @@ func NewAlertmanager(ctx context.Context, orgID int64, cfg *setting.Cfg, store A
 		maintenanceFrequency: notificationLogMaintenanceInterval,
 		maintenanceFunc: func(state alertingNotify.State) (int64, error) {
 			// Detached context here is to make sure that when the service is shut down the persist operation is executed.
-			return fileStore.SaveNotificationLog(context.Background(), state)
+			return stateStore.SaveNotificationLog(context.Background(), state)
 		},
 	}
 
@@ -144,7 +144,7 @@ func NewAlertmanager(ctx context.Context, orgID int64, cfg *setting.Cfg, store A
 		NotificationService: ns,
 		orgID:               orgID,
 		decryptFn:           decryptFn,
-		fileStore:           fileStore,
+		stateStore:          stateStore,
 		logger:              l,
 
 		// TODO: Preferably, logic around autogen would be outside of the specific alertmanager implementation so that remote alertmanager will get it for free.
