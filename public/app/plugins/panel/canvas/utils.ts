@@ -287,7 +287,7 @@ export function getConnections(sceneByName: Map<string, ElementState>) {
         const target = c.targetName ? sceneByName.get(c.targetName) : v.parent;
         if (target) {
           connections.push({
-            index: idx + index,
+            index: idx,
             sourceConnectionIndex: index,
             source: v,
             target,
@@ -295,9 +295,8 @@ export function getConnections(sceneByName: Map<string, ElementState>) {
             vertices: c.vertices ?? undefined,
           });
         }
+        idx++;
       });
-
-      idx++;
     }
   }
 

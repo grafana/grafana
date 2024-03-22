@@ -55,6 +55,7 @@ export class Connections {
   updateState = () => {
     const s = this.selection.value;
     this.state = getConnections(this.scene.byName);
+    console.log('Connections', this.state);
 
     if (s) {
       for (let c of this.state) {
