@@ -10,6 +10,7 @@ import {
   canvasElementRegistry,
   CanvasElementOptions,
   CanvasConnection,
+  ConnectionDirection,
 } from 'app/features/canvas';
 import { notFoundItem } from 'app/features/canvas/elements/notFound';
 import { ElementState } from 'app/features/canvas/runtime/element';
@@ -363,6 +364,10 @@ export const calculateAbsoluteCoords = (
   return { x: valueX * (x2 - x1) + x1, y: valueY * (y2 - y1) + y1 };
 };
 
+export const calculateAngle = (x1: number, y1: number, x2: number, y2: number) => {
+  return (Math.atan2(y2 - y1, x2 - x1) * 180) / Math.PI;
+};
+
 // @TODO revisit, currently returning last row index for field
 export const getRowIndex = (fieldName: string | undefined, scene: Scene) => {
   if (fieldName) {
@@ -374,13 +379,19 @@ export const getRowIndex = (fieldName: string | undefined, scene: Scene) => {
   return 0;
 };
 
-export const getConnectionStyles = (info: CanvasConnection, scene: Scene, defaultArrowSize: number) => {
+export const getConnectionStyles = (
+  info: CanvasConnection,
+  scene: Scene,
+  defaultArrowSize: number,
+  defaultArrowDirection: ConnectionDirection
+) => {
   const defaultArrowColor = config.theme2.colors.text.primary;
   const lastRowIndex = getRowIndex(info.size?.field, scene);
   const strokeColor = info.color ? scene.context.getColor(info.color).value() : defaultArrowColor;
   const strokeWidth = info.size ? scene.context.getScale(info.size).get(lastRowIndex) : defaultArrowSize;
+  const arrowDirection = info.direction ? info.direction : defaultArrowDirection;
   const lineStyle = info.lineStyle === LineStyle.Dashed ? StrokeDasharray.Dashed : StrokeDasharray.Solid;
-  return { strokeColor, strokeWidth, lineStyle };
+  return { strokeColor, strokeWidth, arrowDirection, lineStyle };
 };
 
 export const getParentBoundingClientRect = (scene: Scene) => {

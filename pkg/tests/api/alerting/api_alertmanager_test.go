@@ -2000,25 +2000,37 @@ func TestIntegrationAlertmanagerStatus(t *testing.T) {
 	dir, path := testinfra.CreateGrafDir(t, testinfra.GrafanaOpts{
 		DisableLegacyAlerting: true,
 		EnableUnifiedAlerting: true,
+		DisableAnonymous:      true,
 		AppModeProduction:     true,
 	})
 
-	grafanaListedAddr, _ := testinfra.StartGrafana(t, dir, path)
+	grafanaListedAddr, store := testinfra.StartGrafana(t, dir, path)
 
-	// Get the Alertmanager current status.
-	{
-		alertsURL := fmt.Sprintf("http://%s/api/alertmanager/grafana/api/v2/status", grafanaListedAddr)
-		// nolint:gosec
-		resp, err := http.Get(alertsURL)
-		require.NoError(t, err)
-		t.Cleanup(func() {
-			err := resp.Body.Close()
-			require.NoError(t, err)
-		})
-		b, err := io.ReadAll(resp.Body)
-		require.NoError(t, err)
-		require.Equal(t, 200, resp.StatusCode)
-		require.JSONEq(t, `
+	// Create a users to make authenticated requests
+	createUser(t, store, user.CreateUserCommand{
+		DefaultOrgRole: string(org.RoleViewer),
+		Password:       "viewer",
+		Login:          "viewer",
+	})
+	createUser(t, store, user.CreateUserCommand{
+		DefaultOrgRole: string(org.RoleEditor),
+		Password:       "editor",
+		Login:          "editor",
+	})
+	createUser(t, store, user.CreateUserCommand{
+		DefaultOrgRole: string(org.RoleAdmin),
+		Password:       "admin",
+		Login:          "admin",
+	})
+
+	type testCase struct {
+		desc      string
+		url       string
+		expStatus int
+		expBody   string
+	}
+
+	cfgBody := `
 {
 	"cluster": {
 		"peers": [],
@@ -2054,7 +2066,51 @@ func TestIntegrationAlertmanagerStatus(t *testing.T) {
 		"version": "N/A"
 	}
 }
-`, string(b))
+`
+
+	testCases := []testCase{
+		{
+			desc:      "un-authenticated request should fail",
+			url:       "http://%s/api/alertmanager/grafana/api/v2/status",
+			expStatus: http.StatusUnauthorized,
+			expBody:   `{"extra":null,"message":"Unauthorized","messageId":"auth.unauthorized","statusCode":401,"traceID":""}`,
+		},
+		{
+			desc:      "viewer request should succeed",
+			url:       "http://viewer:viewer@%s/api/alertmanager/grafana/api/v2/status",
+			expStatus: http.StatusOK,
+			expBody:   cfgBody,
+		},
+		{
+			desc:      "editor request should succeed",
+			url:       "http://editor:editor@%s/api/alertmanager/grafana/api/v2/status",
+			expStatus: http.StatusOK,
+			expBody:   cfgBody,
+		},
+		{
+			desc:      "admin request should succeed",
+			url:       "http://admin:admin@%s/api/alertmanager/grafana/api/v2/status",
+			expStatus: http.StatusOK,
+			expBody:   cfgBody,
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.desc, func(t *testing.T) {
+			resp, err := http.Get(fmt.Sprintf(tc.url, grafanaListedAddr))
+			t.Cleanup(func() {
+				require.NoError(t, resp.Body.Close())
+			})
+			require.NoError(t, err)
+			require.Equal(t, tc.expStatus, resp.StatusCode)
+			b, err := io.ReadAll(resp.Body)
+			if tc.expStatus == http.StatusOK {
+				re := regexp.MustCompile(`"uid":"([\w|-]+)"`)
+				b = re.ReplaceAll(b, []byte(`"uid":""`))
+			}
+			require.NoError(t, err)
+			require.JSONEq(t, tc.expBody, string(b))
+		})
 	}
 }
 
