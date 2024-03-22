@@ -583,7 +583,7 @@ export class Explore extends React.PureComponent<Props, ExploreState> {
     }
 
     return (
-      <ContentOutlineContextProvider>
+      <ContentOutlineContextProvider refreshDependencies={this.props.queries}>
         <ExploreToolbar
           exploreId={exploreId}
           onChangeTime={this.onChangeTime}

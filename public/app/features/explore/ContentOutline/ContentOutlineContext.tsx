@@ -1,5 +1,5 @@
 import { uniqueId } from 'lodash';
-import React, { useState, useContext, createContext, ReactNode, useCallback, useRef } from 'react';
+import React, { useState, useContext, createContext, ReactNode, useCallback, useRef, useEffect } from 'react';
 
 import { ContentOutlineItemBaseProps } from './ContentOutlineItem';
 
@@ -18,13 +18,22 @@ export interface ContentOutlineContextProps {
   updateOutlineItems: (newItems: ContentOutlineItemContextProps[]) => void;
 }
 
+interface ContentOutlineContextProviderProps {
+  children: ReactNode;
+  /**
+   * used to resort children of an outline item when the dependencies change
+   * e.g. when the order of query rows changes on drag and drop
+   */
+  refreshDependencies?: any[];
+}
+
 interface ParentlessItems {
   [panelId: string]: ContentOutlineItemContextProps[];
 }
 
 const ContentOutlineContext = createContext<ContentOutlineContextProps | undefined>(undefined);
 
-export function ContentOutlineContextProvider({ children }: { children: ReactNode }) {
+export function ContentOutlineContextProvider({ children, refreshDependencies }: ContentOutlineContextProviderProps) {
   const [outlineItems, setOutlineItems] = useState<ContentOutlineItemContextProps[]>([]);
   const parentlessItemsRef = useRef<ParentlessItems>({});
 
@@ -109,6 +118,16 @@ export function ContentOutlineContextProvider({ children }: { children: ReactNod
   const updateOutlineItems = useCallback((newItems: ContentOutlineItemContextProps[]) => {
     setOutlineItems(newItems);
   }, []);
+
+  useEffect(() => {
+    setOutlineItems((prevItems) => {
+      const newItems = [...prevItems];
+      for (const item of newItems) {
+        item.children?.sort(sortElementsByDocumentPosition);
+      }
+      return newItems;
+    });
+  }, [refreshDependencies]);
 
   return (
     <ContentOutlineContext.Provider value={{ outlineItems, register, unregister, updateOutlineItems }}>

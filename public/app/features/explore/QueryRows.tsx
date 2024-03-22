@@ -50,26 +50,11 @@ export const QueryRows = ({ exploreId }: Props) => {
     dispatch(runQueries({ exploreId }));
   }, [dispatch, exploreId]);
 
-  const sortQueryOutlineItems = useCallback(() => {
-    if (ctx) {
-      const newOutlineItems = [...ctx.outlineItems];
-      const queriesItem = newOutlineItems.find((item) => item.panelId === 'Queries');
-      if (queriesItem && queriesItem.children) {
-        queriesItem.children.sort(sortElementsByDocumentPosition);
-        newOutlineItems[newOutlineItems.findIndex((item) => item.panelId === 'Queries')] = queriesItem;
-      }
-
-      ctx.updateOutlineItems(newOutlineItems);
-    }
-  }, [ctx]);
-
   const onChange = useCallback(
     async (newQueries: DataQuery[]) => {
       await dispatch(changeQueries({ exploreId, queries: newQueries }));
-      // Used to sort the order in Content Outline when changing the order of query rows in the UI through drag and drop
-      sortQueryOutlineItems();
     },
-    [dispatch, exploreId, sortQueryOutlineItems]
+    [dispatch, exploreId]
   );
 
   const onAddQuery = useCallback(
