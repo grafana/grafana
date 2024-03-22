@@ -42,4 +42,4 @@ export const plugin = new PanelPlugin<Options, FieldConfig>(XYChartPanel)
     commonOptionsBuilder.addLegendOptions(builder);
   });
 
-  // export { plugin } from './v2/module';
+// export { plugin } from './v2/module';
