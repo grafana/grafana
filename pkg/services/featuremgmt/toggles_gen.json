@@ -1605,12 +1605,15 @@
     {
       "metadata": {
         "name": "newPDFRendering",
-        "resourceVersion": "1709648236447",
-        "creationTimestamp": "2024-03-05T14:17:16Z"
+        "resourceVersion": "1711016567239",
+        "creationTimestamp": "2024-03-05T14:17:16Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2024-03-21 10:22:47.2392058 +0000 UTC"
+        }
       },
       "spec": {
-        "description": "New implementation for the dashboard to PDF rendering",
-        "stage": "experimental",
+        "description": "New implementation for the dashboard-to-PDF rendering",
+        "stage": "preview",
         "codeowner": "@grafana/sharing-squad"
       }
     },
