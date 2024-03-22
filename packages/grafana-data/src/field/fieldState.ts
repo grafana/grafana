@@ -12,7 +12,7 @@ import { formatLabels } from '../utils/labels';
 /**
  * Get an appropriate display title
  */
-export function getFrameDisplayName(frame: DataFrame, index?: number, singleLabelName?: string) {
+export function getFrameDisplayName(frame: DataFrame, index?: number) {
   if (frame.name) {
     return frame.name;
   }
@@ -34,29 +34,6 @@ export function getFrameDisplayName(frame: DataFrame, index?: number, singleLabe
   // If the frame has a single value field then use the name of that field as the frame name
   if (valueFieldNames.length === 1) {
     return valueFieldNames[0];
-  }
-
-  // If singleLabelName is provided return label and common value
-  if (singleLabelName) {
-    // Check if value is the same for all non-time fields
-    let labelValue = '';
-    let commonLabelValue = true;
-    for (let i = 0; i < frame.fields.length; i++) {
-      const field = frame.fields[i];
-      if (field.type === FieldType.time) {
-        continue;
-      } else if (field.labels) {
-        if (labelValue === '') {
-          labelValue = field.labels[singleLabelName];
-        } else if (field.labels[singleLabelName] !== labelValue) {
-          commonLabelValue = false;
-          break;
-        }
-      }
-    }
-    if (commonLabelValue && labelValue !== '') {
-      return labelValue;
-    }
   }
 
   // list all the
@@ -270,7 +247,7 @@ export function getUniqueFieldName(field: Field, frame?: DataFrame) {
 /**
  * Checks all data frames and return name of label if there is only one label name in all frames
  */
-export function getSingleLabelName(frames: DataFrame[]): string | null {
+function getSingleLabelName(frames: DataFrame[]): string | null {
   let singleName: string | null = null;
 
   for (let i = 0; i < frames.length; i++) {
