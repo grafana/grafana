@@ -22,7 +22,7 @@ interface BaseProps {
    */
   message?: string;
   /**
-   * Empty state variant. Possible values are 'search'.
+   * Which variant to use. Affects the default message and image shown.
    */
   variant: 'initial' | 'search';
 }
@@ -42,17 +42,18 @@ export const EmptyState = ({
   button,
   children,
   image,
-  message = t('grafana-ui.empty-state.search-message', 'No results found'),
+  message,
   hideImage = false,
   variant,
 }: React.PropsWithChildren<Props>) => {
   const imageToShow = image ?? getImageForVariant(variant);
+  const messageToShow = message ?? getMessageForVariant(variant);
 
   return (
     <Box paddingY={4} gap={4} display="flex" direction="column" alignItems="center">
       {!hideImage && imageToShow}
       <Stack direction="column" alignItems="center">
-        <Text variant="h4">{message}</Text>
+        <Text variant="h4">{messageToShow}</Text>
         {children && <Text color="secondary">{children}</Text>}
       </Stack>
       {button}
@@ -60,11 +61,31 @@ export const EmptyState = ({
   );
 };
 
-function getImageForVariant(variant: Props['variant']) {
-  if (variant === 'search') {
-    return <GrotNotFound width={300} />;
+function getMessageForVariant(variant: Props['variant']) {
+  switch (variant) {
+    case 'initial': {
+      return t('grafana-ui.empty-state.initial-message', "You haven't created anything yet");
+    }
+    case 'search': {
+      return t('grafana-ui.empty-state.search-message', 'No results found');
+    }
+    default: {
+      throw new Error(`Unknown variant: ${variant}`);
+    }
   }
+}
 
-  // TODO replcae with a different image for initial variant
-  return <GrotNotFound width={300} />;
+function getImageForVariant(variant: Props['variant']) {
+  switch (variant) {
+    case 'initial': {
+      // TODO replace with a different image for initial variant
+      return <GrotNotFound width={300} />;
+    }
+    case 'search': {
+      return <GrotNotFound width={300} />;
+    }
+    default: {
+      throw new Error(`Unknown variant: ${variant}`);
+    }
+  }
 }
