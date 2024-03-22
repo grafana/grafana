@@ -234,6 +234,22 @@ export const ConnectionSVG = ({
                 // Limit curve control points to mid segment
                 lHalfArc = 0.5 * lSegment;
               }
+              // Default next point to last point
+              let Xn = x2;
+              let Yn = y2;
+              if (index < vertices.length - 1) {
+                // Not also the last point
+                const nextVertex = vertices[index + 1];
+                Xn = nextVertex.x * xDist + x1;
+                Yn = nextVertex.y * yDist + y1;
+              }
+
+              // Length of next segment
+              const lSegmentNext = calculateDistance(X, Y, Xn, Yn);
+              if (Math.abs(lHalfArc) > 0.5 * Math.abs(lSegmentNext)) {
+                // Limit curve control points to mid segment
+                lHalfArc = 0.5 * lSegmentNext;
+              }
               // Calculate arc control points
               const lDelta = lSegment - lHalfArc;
               xa = lDelta * Math.cos(angle1) + x1;
