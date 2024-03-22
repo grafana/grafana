@@ -59,6 +59,9 @@ var (
 					Action: accesscontrol.ActionAlertingRuleExternalWrite,
 					Scope:  datasources.ScopeAll,
 				},
+				{
+					Action: accesscontrol.ActionAlertingProvisioningSetStatus,
+				},
 			}),
 		},
 	}
@@ -139,6 +142,9 @@ var (
 				{
 					Action: accesscontrol.ActionAlertingNotificationsExternalWrite,
 					Scope:  datasources.ScopeAll,
+				},
+				{
+					Action: accesscontrol.ActionAlertingProvisioningSetStatus,
 				},
 			}),
 		},
