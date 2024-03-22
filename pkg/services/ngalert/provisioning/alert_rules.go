@@ -126,7 +126,6 @@ func (service *AlertRuleService) getAlertRuleAuthorized(ctx context.Context, use
 	}
 	// if user has blanket access to all rules, just read a single rule from database
 	if can {
-		// otherwise, just pull the specific rule by UID
 		query := &models.GetAlertRuleByUIDQuery{
 			OrgID: user.GetOrgID(),
 			UID:   ruleUID,
