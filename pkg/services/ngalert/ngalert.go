@@ -544,7 +544,5 @@ func createRemoteAlertmanager(orgID int64, amCfg setting.RemoteAlertmanagerSetti
 		TenantID:          amCfg.TenantID,
 		BasicAuthPassword: amCfg.Password,
 	}
-	// We won't be handling files on disk, we can pass an empty string as workingDirPath.
-	stateStore := notifier.NewFileStore(orgID, kvstore, "")
-	return remote.NewAlertmanager(externalAMCfg, stateStore, decryptFn, m)
+	return remote.NewAlertmanager(externalAMCfg, notifier.NewFileStore(orgID, kvstore), decryptFn, m)
 }
