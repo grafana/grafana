@@ -1,6 +1,8 @@
 import { Meta, StoryFn } from '@storybook/react';
 import React from 'react';
 
+import { Button } from '../Button';
+
 import { EmptyState } from './EmptyState';
 import mdx from './EmptyState.mdx';
 
@@ -12,10 +14,14 @@ const meta: Meta<typeof EmptyState> = {
       page: mdx,
     },
     controls: {
-      exclude: ['button', 'image'],
+      exclude: ['image'],
     },
   },
   argTypes: {
+    button: {
+      control: 'select',
+      options: ['None', 'CTA', 'Clear filters'],
+    },
     children: {
       type: 'string',
     },
@@ -23,11 +29,23 @@ const meta: Meta<typeof EmptyState> = {
 };
 
 export const Basic: StoryFn<typeof EmptyState> = (args) => {
-  return <EmptyState {...args} />;
+  let button;
+  if (args.button === 'CTA') {
+    button = (
+      <Button icon="plus" size="lg">
+        Create dashboard
+      </Button>
+    );
+  } else if (args.button === 'Clear filters') {
+    button = <Button variant="secondary">Clear filters</Button>;
+  }
+  return <EmptyState {...args} button={button} />;
 };
 
 Basic.args = {
+  button: 'None',
   children: 'Use this space to add any additional information',
+  variant: 'default',
 };
 
 export default meta;
