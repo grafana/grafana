@@ -3,7 +3,6 @@ import { addMinutes, subDays, subHours } from 'date-fns';
 import { Location } from 'history';
 import React, { useRef, useState } from 'react';
 import { FormProvider, useForm, Validate } from 'react-hook-form';
-import { useLocation } from 'react-router-dom';
 import { useToggle } from 'react-use';
 import AutoSizer from 'react-virtualized-auto-sizer';
 
@@ -106,9 +105,6 @@ export const TemplateForm = ({ existing, alertManagerSourceName, config, provena
   const [cheatsheetOpened, toggleCheatsheetOpened] = useToggle(false);
   const [payloadOpened, togglePayloadOpened] = useToggle(true);
 
-  const location = useLocation();
-  const isduplicating = isDuplicating(location);
-
   const [payload, setPayload] = useState(defaultPayloadString);
   const [payloadFormatError, setPayloadFormatError] = useState<string | null>(null);
 
@@ -193,7 +189,6 @@ export const TemplateForm = ({ existing, alertManagerSourceName, config, provena
       <FormProvider {...formApi}>
         <AppChromeUpdate actions={actionButtons} />
         <form onSubmit={handleSubmit(submit)} ref={formRef} className={styles.form}>
-          <h4>{existing && !isduplicating ? 'Edit notification template' : 'Create notification template'}</h4>
           {error && (
             <Alert severity="error" title="Error saving template">
               {error.message || (isFetchError(error) && error.data?.message) || String(error)}
