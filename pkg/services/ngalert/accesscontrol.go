@@ -208,7 +208,7 @@ var (
 
 	alertingProvisioningStatus = accesscontrol.RoleRegistration{
 		Role: accesscontrol.RoleDTO{
-			Name:        accesscontrol.FixedRolePrefix + "alerting.provisioning.status:writer",
+			Name:        accesscontrol.FixedRolePrefix + "alerting.provisioning.provenance:writer",
 			DisplayName: "Set provisioning status",
 			Description: "Set provisioning status for alerting resources. Should be used together with other regular roles (Notifications Writer and/or Rules Writer)",
 			Group:       AlertRolesGroup,
