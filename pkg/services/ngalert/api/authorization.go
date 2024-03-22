@@ -311,11 +311,11 @@ func (api *API) authorize(method, path string) web.Handler {
 			ac.EvalAll(
 				ac.EvalPermission(ac.ActionAlertingRuleRead, scope),
 				ac.EvalPermission(dashboards.ActionFoldersRead, scope),
+				ac.EvalPermission(ac.ActionAlertingProvisioningSetStatus),
 				ac.EvalAny( // the exact permissions will be checked after the operations are determined
 					ac.EvalPermission(ac.ActionAlertingRuleUpdate, scope),
 					ac.EvalPermission(ac.ActionAlertingRuleCreate, scope),
 					ac.EvalPermission(ac.ActionAlertingRuleDelete, scope),
-					ac.EvalPermission(ac.ActionAlertingProvisioningSetStatus),
 				),
 			),
 		)
