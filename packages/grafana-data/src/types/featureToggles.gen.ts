@@ -26,7 +26,6 @@ export interface FeatureToggles {
   publicDashboardsEmailSharing?: boolean;
   lokiExperimentalStreaming?: boolean;
   featureHighlights?: boolean;
-  migrationLocking?: boolean;
   storage?: boolean;
   correlations?: boolean;
   exploreContentOutline?: boolean;

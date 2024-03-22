@@ -39,10 +39,6 @@ const (
 	// Highlight Grafana Enterprise features
 	FlagFeatureHighlights = "featureHighlights"
 
-	// FlagMigrationLocking
-	// Lock database during migrations
-	FlagMigrationLocking = "migrationLocking"
-
 	// FlagStorage
 	// Configurable storage for dashboards, datasources, and resources
 	FlagStorage = "storage"

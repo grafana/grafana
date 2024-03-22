@@ -7,7 +7,6 @@ publicDashboards,GA,@grafana/sharing-squad,false,false,false
 publicDashboardsEmailSharing,preview,@grafana/sharing-squad,false,false,false
 lokiExperimentalStreaming,experimental,@grafana/observability-logs,false,false,false
 featureHighlights,GA,@grafana/grafana-as-code,false,false,false
-migrationLocking,preview,@grafana/backend-platform,false,false,false
 storage,experimental,@grafana/grafana-app-platform-squad,false,false,false
 correlations,GA,@grafana/explore-squad,false,false,false
 exploreContentOutline,GA,@grafana/explore-squad,false,false,true
