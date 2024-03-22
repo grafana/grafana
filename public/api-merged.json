@@ -13083,7 +13083,7 @@
       "type": "object",
       "properties": {
         "dashboard": {
-          "$ref": "#/definitions/Json"
+          "$ref": "#/definitions/Dashboard"
         },
         "meta": {
           "$ref": "#/definitions/DashboardMeta"
@@ -13182,11 +13182,63 @@
         }
       }
     },
+    "Dashboard": {
+      "type": "object",
+      "properties": {
+        "editable": {
+          "type": "boolean"
+        },
+        "hideControls": {
+          "type": "boolean"
+        },
+        "id": {
+          "type": "integer"
+        },
+        "links": {
+          "type": "object"
+        },
+        "originalTitle": {
+          "type": "string"
+        },
+        "panels": {
+          "type": "object"
+        },
+        "rows": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/DashboardRow"
+          }
+        }
+      }
+    },
+    "DashboardPanel": {
+      "type": "object"
+    },
     "DashboardRedirect": {
       "type": "object",
       "properties": {
         "redirectUri": {
           "type": "string"
+        }
+      }
+    },
+    "DashboardRow": {
+      "type": "object",
+      "properties": {
+        "collapse": {
+          "type": "boolean"
+        },
+        "editable": {
+          "type": "boolean"
+        },
+        "height": {
+          "type": "string"
+        },
+        "panels": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/DashboardPanel"
+          }
         }
       }
     },
