@@ -14142,6 +14142,32 @@
       "type": "object",
       "title": "Frame is a columnar data structure where each column is a Field.",
       "properties": {
+        "schema": {
+          "$ref": "#/definitions/FrameSchema"
+        },
+        "data": {
+          "$ref": "#/definitions/FrameData"
+        }
+      }
+    },
+    "FrameData": {
+      "description": "The data contained within the frame schema",
+      "type": "array",
+      "title": "FrameData are the columns for the Frame data structure",
+      "properties": {
+        "values": {
+          "type": "array",
+          "items": {
+            "type": "array",
+            "items": {}
+          }
+        }
+      }
+    },
+    "FrameSchema": {
+      "description": "The structure of the frame data",
+      "type": "object",
+      "properties": {
         "fields": {
           "description": "Fields are the columns of a frame.\nAll Fields must be of the same the length when marshalling the Frame for transmission.\nThere should be no `nil` entries in the Fields slice (making them pointers was a mistake).",
           "type": "array",
