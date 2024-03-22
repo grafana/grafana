@@ -10,7 +10,6 @@ import { useDispatch, useSelector } from 'app/types';
 import { getDatasourceSrv } from '../plugins/datasource_srv';
 import { QueryEditorRows } from '../query/components/QueryEditorRows';
 
-import { sortElementsByDocumentPosition, useContentOutlineContext } from './ContentOutline/ContentOutlineContext';
 import { changeQueries, runQueries } from './state/query';
 import { getExploreItemSelector } from './state/selectors';
 
@@ -33,7 +32,6 @@ const makeSelectors = (exploreId: string) => {
 };
 
 export const QueryRows = ({ exploreId }: Props) => {
-  const ctx = useContentOutlineContext();
   const dispatch = useDispatch();
   const { getQueries, getDatasourceInstanceSettings, getQueryResponse, getHistory, getEventBridge } = useMemo(
     () => makeSelectors(exploreId),
@@ -51,8 +49,8 @@ export const QueryRows = ({ exploreId }: Props) => {
   }, [dispatch, exploreId]);
 
   const onChange = useCallback(
-    async (newQueries: DataQuery[]) => {
-      await dispatch(changeQueries({ exploreId, queries: newQueries }));
+    (newQueries: DataQuery[]) => {
+      dispatch(changeQueries({ exploreId, queries: newQueries }));
     },
     [dispatch, exploreId]
   );
