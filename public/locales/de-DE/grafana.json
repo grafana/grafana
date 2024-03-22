@@ -789,8 +789,11 @@
       "datasource": "Datenquelle",
       "unknown": "Unbekannt"
     },
-    "resources": {
-      "disconnect": "Verbindung trennen"
+    "summary": {
+      "disconnect": "",
+      "error-starting-migration": "",
+      "start-migration": "",
+      "target-stack-title": ""
     },
     "token-status": {
       "active": "Token erstellt und aktiv",
@@ -1343,11 +1346,12 @@
     "header": {
       "collapse-row": "Abfragezeile einklappen",
       "datasource-help": "Datenquellen-Hilfe anzeigen",
-      "disable-query": "Abfrage deaktivieren",
       "drag-and-drop": "Ziehen und Ablegen zum Neuordnen",
       "duplicate-query": "Abfrage duplizieren",
       "expand-row": "Suchzeile erweitern",
+      "hide-response": "",
       "remove-query": "Abfrage entfernen",
+      "show-response": "",
       "toggle-edit-mode": "Textbearbeitungsmodus umschalten"
     },
     "query-editor-not-exported": "Datenquellen-Plugin exportiert keine Komponente des Abfrageeditors"
@@ -1473,7 +1477,7 @@
       "library-panel": "Bibliotheks-Panel",
       "link": "Link",
       "panel-embed": "Einbetten",
-      "public-dashboard": "Dashboard veröffentlichen",
+      "public-dashboard": "",
       "public-dashboard-title": "Öffentliches Dashboard",
       "snapshot": "Schnappschuss"
     },
