@@ -144,14 +144,6 @@ interface BaseProps<TableData extends object> {
    */
   pageSize?: number;
   /**
-   * Render function for the expanded row. if not provided, the tables rows will not be expandable.
-   */
-  renderExpandedRow?: (row: TableData) => ReactNode;
-  /**
-   * Whether to show the "Expand all" button. Depends on renderExpandedRow to be provided. Defaults to false.
-   */
-  showExpandAll?: boolean;
-  /**
    * A custom function to fetch data when the table is sorted. If not provided, the table will be sorted client-side.
    * It's important for this function to have a stable identity, e.g. being wrapped into useCallback to prevent unnecessary
    * re-renders of the table.
@@ -160,7 +152,13 @@ interface BaseProps<TableData extends object> {
 }
 
 interface WithExpandableRow<TableData extends object> extends BaseProps<TableData> {
+  /**
+   * Render function for the expanded row. if not provided, the tables rows will not be expandable.
+   */
   renderExpandedRow: (row: TableData) => ReactNode;
+  /**
+   * Whether to show the "Expand all" button. Depends on renderExpandedRow to be provided. Defaults to false.
+   */
   showExpandAll?: boolean;
 }
 
