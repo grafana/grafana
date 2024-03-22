@@ -104,7 +104,7 @@ export const TeamList = ({
           }
 
           return (
-            <TextLink color="primary" inline={false} href={`/org/teams/edit/${original.id}`}>
+            <TextLink color="primary" inline={false} href={`/org/teams/edit/${original.id}`} title="Edit team">
               {value}
             </TextLink>
           );
@@ -179,12 +179,16 @@ export const TeamList = ({
           const canReadTeam = contextSrv.hasPermissionInMetadata(AccessControlAction.ActionTeamsRead, original);
           const canDelete = contextSrv.hasPermissionInMetadata(AccessControlAction.ActionTeamsDelete, original);
           return (
-            <Stack direction="row" justifyContent="flex-end">
+            <Stack direction="row" justifyContent="flex-end" gap={2}>
               {canReadTeam && (
                 <Tooltip content={'Edit team'}>
-                  <a href={`org/teams/edit/${original.id}`} aria-label={`Edit team ${original.name}`}>
-                    <Icon name={'pen'} />
-                  </a>
+                  <LinkButton
+                    href={`org/teams/edit/${original.id}`}
+                    aria-label={`Edit team ${original.name}`}
+                    icon="pen"
+                    size="sm"
+                    variant="secondary"
+                  />
                 </Tooltip>
               )}
               <DeleteButton
