@@ -34,7 +34,7 @@ type APIServerFactory interface {
 	GetEnabled(runtime []RuntimeConfig) ([]schema.GroupVersion, error)
 
 	// Make an API server for a given group+version
-	MakeAPIServer(gv schema.GroupVersion) (builder.APIGroupBuilder, error)
+	MakeAPIServer(tracer tracing.Tracer, gv schema.GroupVersion) (builder.APIGroupBuilder, error)
 }
 
 // Zero dependency provider for testing
@@ -62,7 +62,7 @@ func (p *DummyAPIFactory) GetEnabled(runtime []RuntimeConfig) ([]schema.GroupVer
 	return gv, nil
 }
 
-func (p *DummyAPIFactory) MakeAPIServer(gv schema.GroupVersion) (builder.APIGroupBuilder, error) {
+func (p *DummyAPIFactory) MakeAPIServer(tracer tracing.Tracer, gv schema.GroupVersion) (builder.APIGroupBuilder, error) {
 	if gv.Version != "v0alpha1" {
 		return nil, fmt.Errorf("only alpha supported now")
 	}
@@ -79,9 +79,9 @@ func (p *DummyAPIFactory) MakeAPIServer(gv schema.GroupVersion) (builder.APIGrou
 				Client: client.NewTestDataClient(),
 			},
 			client.NewTestDataRegistry(),
-			nil,                               // legacy lookup
-			prometheus.NewRegistry(),          // ???
-			tracing.InitializeTracerForTest(), // ???
+			nil,                      // legacy lookup
+			prometheus.NewRegistry(), // ???
+			tracer,
 		)
 
 	case "featuretoggle.grafana.app":
