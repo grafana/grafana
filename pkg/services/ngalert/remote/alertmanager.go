@@ -264,7 +264,7 @@ func (am *Alertmanager) SaveAndApplyDefaultConfig(ctx context.Context) error {
 	return am.sendConfiguration(
 		ctx,
 		string(rawDecrypted),
-		fmt.Sprintf("%x", md5.Sum(rawDecrypted)),
+		fmt.Sprintf("%x", md5.Sum([]byte(am.defaultConfig))),
 		time.Now().Unix(),
 		true,
 	)
