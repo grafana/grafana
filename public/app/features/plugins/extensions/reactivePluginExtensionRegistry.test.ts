@@ -16,7 +16,80 @@ describe('createPluginExtensionsRegistry', () => {
     const reactiveRegistry = new ReactivePluginExtensionsRegistry();
     const observable = reactiveRegistry.asObservable();
     const registry = await firstValueFrom(observable);
-    expect(registry).toEqual({});
+    expect(registry).toEqual({
+      id: '',
+      extensions: {},
+    });
+  });
+
+  it('should generate an id for the registry once we register an extension to it', async () => {
+    const pluginId = 'grafana-basic-app';
+    const extensionPointId = 'grafana/dashboard/panel/menu';
+    const reactiveRegistry = new ReactivePluginExtensionsRegistry();
+
+    reactiveRegistry.register({
+      pluginId,
+      extensionConfigs: [
+        {
+          type: PluginExtensionTypes.link,
+          title: 'Link 1',
+          description: 'Link 1 description',
+          path: `/a/${pluginId}/declare-incident`,
+          extensionPointId,
+          configure: jest.fn().mockReturnValue({}),
+        },
+      ],
+    });
+
+    const registry = await reactiveRegistry.getRegistry();
+
+    expect(registry.id).toBeDefined();
+    expect(registry.extensions[extensionPointId]).toHaveLength(1);
+  });
+
+  it('should generate an a new id every time the registry changes', async () => {
+    const pluginId = 'grafana-basic-app';
+    const extensionPointId = 'grafana/dashboard/panel/menu';
+    const reactiveRegistry = new ReactivePluginExtensionsRegistry();
+
+    reactiveRegistry.register({
+      pluginId,
+      extensionConfigs: [
+        {
+          type: PluginExtensionTypes.link,
+          title: 'Link 1',
+          description: 'Link 1 description',
+          path: `/a/${pluginId}/declare-incident`,
+          extensionPointId,
+          configure: jest.fn().mockReturnValue({}),
+        },
+      ],
+    });
+
+    const registry1 = await reactiveRegistry.getRegistry();
+    const id1 = registry1.id;
+
+    expect(id1).toBeDefined();
+
+    reactiveRegistry.register({
+      pluginId,
+      extensionConfigs: [
+        {
+          type: PluginExtensionTypes.link,
+          title: 'Link 2',
+          description: 'Link 2 description',
+          path: `/a/${pluginId}/declare-incident`,
+          extensionPointId,
+          configure: jest.fn().mockReturnValue({}),
+        },
+      ],
+    });
+
+    const registry2 = await reactiveRegistry.getRegistry();
+    const id2 = registry2.id;
+
+    expect(id2).toBeDefined();
+    expect(id2).not.toEqual(id1);
   });
 
   it('should be possible to register extensions in the registry', async () => {
@@ -47,7 +120,7 @@ describe('createPluginExtensionsRegistry', () => {
 
     const registry = await reactiveRegistry.getRegistry();
 
-    expect(registry).toEqual({
+    expect(registry.extensions).toEqual({
       'grafana/dashboard/panel/menu': [
         {
           pluginId: pluginId,
@@ -99,7 +172,7 @@ describe('createPluginExtensionsRegistry', () => {
 
     const registry1 = await reactiveRegistry.getRegistry();
 
-    expect(registry1).toEqual({
+    expect(registry1.extensions).toEqual({
       'grafana/dashboard/panel/menu': [
         {
           pluginId: pluginId1,
@@ -132,7 +205,7 @@ describe('createPluginExtensionsRegistry', () => {
 
     const registry2 = await reactiveRegistry.getRegistry();
 
-    expect(registry2).toEqual({
+    expect(registry2.extensions).toEqual({
       'grafana/dashboard/panel/menu': [
         {
           pluginId: pluginId1,
@@ -182,7 +255,7 @@ describe('createPluginExtensionsRegistry', () => {
 
     const registry1 = await reactiveRegistry.getRegistry();
 
-    expect(registry1).toEqual({
+    expect(registry1.extensions).toEqual({
       'grafana/dashboard/panel/menu': [
         {
           pluginId: pluginId1,
@@ -215,7 +288,7 @@ describe('createPluginExtensionsRegistry', () => {
 
     const registry2 = await reactiveRegistry.getRegistry();
 
-    expect(registry2).toEqual({
+    expect(registry2.extensions).toEqual({
       'grafana/dashboard/panel/menu': [
         {
           pluginId: pluginId1,
@@ -281,7 +354,7 @@ describe('createPluginExtensionsRegistry', () => {
 
     const registry2 = await reactiveRegistry.getRegistry();
 
-    expect(registry2).toEqual({
+    expect(registry2.extensions).toEqual({
       'grafana/dashboard/panel/menu': [
         {
           pluginId: pluginId,
@@ -345,7 +418,7 @@ describe('createPluginExtensionsRegistry', () => {
 
     const registry2 = await reactiveRegistry.getRegistry();
 
-    expect(registry2).toEqual({
+    expect(registry2.extensions).toEqual({
       'grafana/dashboard/panel/menu': [
         {
           pluginId: pluginId,
@@ -419,7 +492,7 @@ describe('createPluginExtensionsRegistry', () => {
 
     const registry = subscribeCallback.mock.calls[2][0];
 
-    expect(registry).toEqual({
+    expect(registry.extensions).toEqual({
       'grafana/dashboard/panel/menu': [
         {
           pluginId: pluginId,
@@ -472,7 +545,7 @@ describe('createPluginExtensionsRegistry', () => {
 
     const registry = subscribeCallback.mock.calls[0][0];
 
-    expect(registry).toEqual({
+    expect(registry.extensions).toEqual({
       'grafana/dashboard/panel/menu': [
         {
           pluginId: pluginId,
@@ -516,7 +589,7 @@ describe('createPluginExtensionsRegistry', () => {
     expect(subscribeCallback).toHaveBeenCalledTimes(1);
 
     const registry = subscribeCallback.mock.calls[0][0];
-    expect(registry).toEqual({});
+    expect(registry.extensions).toEqual({});
   });
 
   it('should not register an extension if it has an invalid configure() function', () => {
@@ -546,7 +619,7 @@ describe('createPluginExtensionsRegistry', () => {
     expect(subscribeCallback).toHaveBeenCalledTimes(1);
 
     const registry = subscribeCallback.mock.calls[0][0];
-    expect(registry).toEqual({});
+    expect(registry.extensions).toEqual({});
   });
 
   it('should not register an extension if it has invalid properties (empty title / description)', () => {
@@ -575,7 +648,7 @@ describe('createPluginExtensionsRegistry', () => {
     expect(subscribeCallback).toHaveBeenCalledTimes(1);
 
     const registry = subscribeCallback.mock.calls[0][0];
-    expect(registry).toEqual({});
+    expect(registry.extensions).toEqual({});
   });
 
   it('should not register link extensions with invalid path configured', () => {
@@ -604,6 +677,6 @@ describe('createPluginExtensionsRegistry', () => {
     expect(subscribeCallback).toHaveBeenCalledTimes(1);
 
     const registry = subscribeCallback.mock.calls[0][0];
-    expect(registry).toEqual({});
+    expect(registry.extensions).toEqual({});
   });
 });
