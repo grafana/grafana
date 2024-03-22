@@ -4,10 +4,9 @@ import SVG from 'react-inlinesvg';
 
 import { GrafanaTheme2 } from '@grafana/data';
 
-import { useStyles2, useTheme2 } from '../../../themes';
+import { useStyles2 } from '../../../themes';
 
-import notFoundDark from './grot-not-found-dark.svg';
-import notFoundLight from './grot-not-found-light.svg';
+import notFoundSvg from './grot-not-found.svg';
 
 const MIN_ARM_ROTATION = -20;
 const MAX_ARM_ROTATION = 5;
@@ -20,7 +19,6 @@ export interface Props {
 }
 
 export const GrotNotFound = ({ width = 'auto', height }: Props) => {
-  const theme = useTheme2();
   const svgRef = useRef<SVGElement>(null);
   const styles = useStyles2(getStyles);
 
@@ -49,15 +47,7 @@ export const GrotNotFound = ({ width = 'auto', height }: Props) => {
     };
   }, []);
 
-  return (
-    <SVG
-      innerRef={svgRef}
-      src={theme.isDark ? notFoundDark : notFoundLight}
-      className={styles.svg}
-      height={height}
-      width={width}
-    />
-  );
+  return <SVG innerRef={svgRef} src={notFoundSvg} className={styles.svg} height={height} width={width} />;
 };
 
 GrotNotFound.displayName = 'GrotNotFound';
