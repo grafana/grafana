@@ -270,7 +270,7 @@ func CalculateRuleDelete(ctx context.Context, ruleReader RuleReader, ruleKey mod
 		}
 	}
 	if toDelete == nil { // should not happen if rule exists.
-		return nil, nil
+		return nil, models.ErrAlertRuleNotFound
 	}
 	groupKey := group[0].GetGroupKey()
 	delta := &GroupDelta{
