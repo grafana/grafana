@@ -454,7 +454,7 @@ func TestCalculateRuleDelete(t *testing.T) {
 
 	t.Run("nil when a rule does not exist", func(t *testing.T) {
 		delta, err := CalculateRuleDelete(context.Background(), fakeStore, rule.GetKey())
-		require.NoError(t, err)
+		require.ErrorIs(t, err, models.ErrAlertRuleNotFound)
 		require.Nil(t, delta)
 	})
 
