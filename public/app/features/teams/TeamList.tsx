@@ -10,7 +10,6 @@ import {
   Column,
   DeleteButton,
   FilterInput,
-  Icon,
   InlineField,
   InteractiveTable,
   LinkButton,
