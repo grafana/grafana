@@ -20,7 +20,7 @@ import {
   behaviors,
   VizPanelState,
   SceneGridItemLike,
-  SceneDataLayers,
+  SceneDataLayerSet,
   SceneDataLayerProvider,
   SceneDataLayerControls,
   TextBoxVariable,
@@ -305,10 +305,11 @@ export function createDashboardSceneFromDashboardModel(oldModel: DashboardModel)
       registerDashboardSceneTracking(oldModel),
       registerPanelInteractionsReporter,
       trackIfIsEmpty,
+      new behaviors.LiveNowTimer(oldModel.liveNow),
     ],
     $data:
       layers.length > 0
-        ? new SceneDataLayers({
+        ? new SceneDataLayerSet({
             layers,
           })
         : undefined,
