@@ -147,7 +147,7 @@ export const SeriesEditor = ({
         </Field>
         <Field label="X field">
           <FieldNamePicker
-            value={series.x?.matcher.options}
+            value={series.x?.matcher.options as string}
             context={context}
             onChange={(fieldName) => {
               if (fieldName == null) {
@@ -181,7 +181,7 @@ export const SeriesEditor = ({
         </Field>
         <Field label="Y field">
           <FieldNamePicker
-            value={series.y?.matcher?.options}
+            value={series.y?.matcher?.options as string}
             context={context}
             onChange={(fieldName) => {
               if (fieldName == null) {
@@ -216,7 +216,7 @@ export const SeriesEditor = ({
         </Field>
         <Field label="Size field">
           <FieldNamePicker
-            value={series.size?.matcher?.options}
+            value={series.size?.matcher?.options as string}
             context={context}
             onChange={(fieldName) => {
               if (fieldName == null) {
@@ -252,7 +252,7 @@ export const SeriesEditor = ({
         </Field>
         <Field label="Color field">
           <FieldNamePicker
-            value={series.color?.matcher?.options}
+            value={series.color?.matcher?.options as string}
             context={context}
             onChange={(fieldName) => {
               if (fieldName == null) {

@@ -10,8 +10,8 @@ import { ColorIndicator, VizTooltipItem } from '@grafana/ui/src/components/VizTo
 
 import { getDataLinks } from '../status-history/utils';
 import { getStyles } from '../timeseries/TimeSeriesTooltip';
-import { XYSeries } from './types2';
 
+import { XYSeries } from './types2';
 import { fmt } from './utils';
 
 export interface Props {
