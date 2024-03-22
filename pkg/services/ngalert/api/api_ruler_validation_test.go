@@ -44,6 +44,7 @@ func config(t *testing.T) *setting.UnifiedAlertingSettings {
 
 func validRule() apimodels.PostableExtendedRuleNode {
 	forDuration := model.Duration(rand.Int63n(1000))
+	uid := util.GenerateShortUID()
 	return apimodels.PostableExtendedRuleNode{
 		ApiRuleNode: &apimodels.ApiRuleNode{
 			For: &forDuration,
@@ -55,7 +56,7 @@ func validRule() apimodels.PostableExtendedRuleNode {
 			},
 		},
 		GrafanaManagedAlert: &apimodels.PostableGrafanaRule{
-			Title:     fmt.Sprintf("TEST-ALERT-%d", rand.Int63()),
+			Title:     fmt.Sprintf("TEST-ALERT-%s", uid),
 			Condition: "A",
 			Data: []apimodels.AlertQuery{
 				{
@@ -69,7 +70,7 @@ func validRule() apimodels.PostableExtendedRuleNode {
 					Model:         nil,
 				},
 			},
-			UID:          util.GenerateShortUID(),
+			UID:          uid,
 			NoDataState:  allNoData[rand.Intn(len(allNoData))],
 			ExecErrState: allExecError[rand.Intn(len(allExecError))],
 		},
