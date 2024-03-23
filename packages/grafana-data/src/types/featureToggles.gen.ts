@@ -175,4 +175,5 @@ export interface FeatureToggles {
   betterPageScrolling?: boolean;
   scopeFilters?: boolean;
   ssoSettingsSAML?: boolean;
+  usePrometheusFrontendPackage?: boolean;
 }
