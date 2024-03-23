@@ -265,6 +265,12 @@ export const Pages = {
       title: 'public-dashboard-title',
       pausedDescription: 'public-dashboard-paused-description',
     },
+    footer: 'public-dashboard-footer',
+  },
+  PublicDashboardScene: {
+    loadingPage: 'public-dashboard-scene-loading-page',
+    page: 'public-dashboard-scene-page',
+    controls: 'public-dashboard-controls',
   },
   RequestViewAccess: {
     form: 'request-view-access-form',

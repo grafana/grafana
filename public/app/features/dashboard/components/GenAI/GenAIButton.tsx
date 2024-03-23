@@ -43,15 +43,7 @@ export const GenAIButton = ({
 }: GenAIButtonProps) => {
   const styles = useStyles2(getStyles);
 
-  const {
-    messages: streamMessages,
-    setMessages,
-    setStopGeneration,
-    reply,
-    value,
-    error,
-    streamStatus,
-  } = useOpenAIStream(model, temperature);
+  const { setMessages, setStopGeneration, reply, value, error, streamStatus } = useOpenAIStream(model, temperature);
 
   const [history, setHistory] = useState<string[]>([]);
   const [showHistory, setShowHistory] = useState(false);
@@ -68,7 +60,7 @@ export const GenAIButton = ({
     } else {
       if (!hasHistory) {
         onClickProp?.(e);
-        setMessages(typeof messages === 'function' ? messages() : messages);
+        setMessages(getMessages());
       } else {
         setShowHistory(true);
       }
@@ -158,6 +150,13 @@ export const GenAIButton = ({
     </Button>
   );
 
+  const getMessages = () => {
+    if (typeof messages === 'function') {
+      return messages();
+    }
+    return messages;
+  };
+
   const renderButtonWithToggletip = () => {
     if (hasHistory) {
       const title = <Text element="p">{toggleTipTitle}</Text>;
@@ -168,7 +167,7 @@ export const GenAIButton = ({
           content={
             <GenAIHistory
               history={history}
-              messages={streamMessages}
+              messages={getMessages()}
               onApplySuggestion={onApplySuggestion}
               updateHistory={pushHistoryEntry}
               eventTrackingSrc={eventTrackingSrc}

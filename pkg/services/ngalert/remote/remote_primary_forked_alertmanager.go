@@ -2,32 +2,47 @@ package remote
 
 import (
 	"context"
+	"fmt"
 
+	"github.com/grafana/grafana/pkg/infra/log"
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier"
 )
 
 type RemotePrimaryForkedAlertmanager struct {
+	log log.Logger
+
 	internal notifier.Alertmanager
-	remote   notifier.Alertmanager
+	remote   remoteAlertmanager
 }
 
-func NewRemotePrimaryForkedAlertmanager(internal, remote notifier.Alertmanager) *RemotePrimaryForkedAlertmanager {
+func NewRemotePrimaryForkedAlertmanager(log log.Logger, internal notifier.Alertmanager, remote remoteAlertmanager) *RemotePrimaryForkedAlertmanager {
 	return &RemotePrimaryForkedAlertmanager{
+		log:      log,
 		internal: internal,
 		remote:   remote,
 	}
 }
 
+// ApplyConfig will send the configuration to the remote Alertmanager on startup.
 func (fam *RemotePrimaryForkedAlertmanager) ApplyConfig(ctx context.Context, config *models.AlertConfiguration) error {
+	if err := fam.remote.ApplyConfig(ctx, config); err != nil {
+		return fmt.Errorf("failed to call ApplyConfig on the remote Alertmanager: %w", err)
+	}
+
+	if err := fam.internal.ApplyConfig(ctx, config); err != nil {
+		fam.log.Error("Error applying config to the internal Alertmanager", "err", err)
+	}
 	return nil
 }
 
+// TODO: save the new configuration hash in memory.
 func (fam *RemotePrimaryForkedAlertmanager) SaveAndApplyConfig(ctx context.Context, config *apimodels.PostableUserConfig) error {
 	return nil
 }
 
+// TODO: save the new configuration hash in memory.
 func (fam *RemotePrimaryForkedAlertmanager) SaveAndApplyDefaultConfig(ctx context.Context) error {
 	return nil
 }

@@ -563,6 +563,9 @@
     "drawer": {
       "close": "Close"
     },
+    "empty-state": {
+      "search-message": "No results found"
+    },
     "modal": {
       "close-tooltip": "Close"
     },
@@ -789,8 +792,11 @@
       "datasource": "Data source",
       "unknown": "Unknown"
     },
-    "resources": {
-      "disconnect": "Disconnect"
+    "summary": {
+      "disconnect": "Disconnect",
+      "error-starting-migration": "There was an error starting cloud migration",
+      "start-migration": "Upload everything",
+      "target-stack-title": "Uploading to"
     },
     "token-status": {
       "active": "Token created and active",
@@ -1343,11 +1349,12 @@
     "header": {
       "collapse-row": "Collapse query row",
       "datasource-help": "Show data source help",
-      "disable-query": "Disable query",
       "drag-and-drop": "Drag and drop to reorder",
       "duplicate-query": "Duplicate query",
       "expand-row": "Expand query row",
+      "hide-response": "Hide response",
       "remove-query": "Remove query",
+      "show-response": "Show response",
       "toggle-edit-mode": "Toggle text edit mode"
     },
     "query-editor-not-exported": "Data source plugin does not export any Query Editor component"
@@ -1473,7 +1480,7 @@
       "library-panel": "Library panel",
       "link": "Link",
       "panel-embed": "Embed",
-      "public-dashboard": "Publish Dashboard",
+      "public-dashboard": "Public Dashboard",
       "public-dashboard-title": "Public dashboard",
       "snapshot": "Snapshot"
     },

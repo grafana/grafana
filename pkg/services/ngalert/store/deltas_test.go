@@ -416,6 +416,174 @@ func TestCalculateAutomaticChanges(t *testing.T) {
 	})
 }
 
+func TestCalculateRuleGroupDelete(t *testing.T) {
+	fakeStore := fakes.NewRuleStore(t)
+	groupKey := models.GenerateGroupKey(1)
+	otherRules := models.GenerateAlertRules(3, models.AlertRuleGen(models.WithOrgID(groupKey.OrgID), models.WithNamespaceUIDNotIn(groupKey.NamespaceUID)))
+	fakeStore.Rules[groupKey.OrgID] = otherRules
+
+	t.Run("NotFound when group does not exist", func(t *testing.T) {
+		delta, err := CalculateRuleGroupDelete(context.Background(), fakeStore, groupKey)
+		require.ErrorIs(t, err, models.ErrAlertRuleGroupNotFound, "expected ErrAlertRuleGroupNotFound but got %s", err)
+		require.Nil(t, delta)
+	})
+
+	t.Run("set AffectedGroups when a rule refers to an existing group", func(t *testing.T) {
+		groupRules := models.GenerateAlertRules(3, models.AlertRuleGen(models.WithGroupKey(groupKey)))
+		fakeStore.Rules[groupKey.OrgID] = append(fakeStore.Rules[groupKey.OrgID], groupRules...)
+
+		delta, err := CalculateRuleGroupDelete(context.Background(), fakeStore, groupKey)
+		require.NoError(t, err)
+
+		assert.Equal(t, groupKey, delta.GroupKey)
+		assert.EqualValues(t, groupRules, delta.Delete)
+
+		assert.Empty(t, delta.Update)
+		assert.Empty(t, delta.New)
+
+		assert.Len(t, delta.AffectedGroups, 1)
+		assert.Equal(t, models.RulesGroup(groupRules), delta.AffectedGroups[delta.GroupKey])
+	})
+}
+
+func TestCalculateRuleDelete(t *testing.T) {
+	fakeStore := fakes.NewRuleStore(t)
+	rule := models.AlertRuleGen()()
+	otherRules := models.GenerateAlertRules(3, models.AlertRuleGen(models.WithOrgID(rule.OrgID), models.WithNamespaceUIDNotIn(rule.NamespaceUID)))
+	fakeStore.Rules[rule.OrgID] = otherRules
+
+	t.Run("nil when a rule does not exist", func(t *testing.T) {
+		delta, err := CalculateRuleDelete(context.Background(), fakeStore, rule.GetKey())
+		require.ErrorIs(t, err, models.ErrAlertRuleNotFound)
+		require.Nil(t, delta)
+	})
+
+	t.Run("set AffectedGroups when a rule refers to an existing group", func(t *testing.T) {
+		groupRules := models.GenerateAlertRules(3, models.AlertRuleGen(models.WithGroupKey(rule.GetGroupKey())))
+		groupRules = append(groupRules, rule)
+		fakeStore.Rules[rule.OrgID] = append(fakeStore.Rules[rule.OrgID], groupRules...)
+
+		delta, err := CalculateRuleDelete(context.Background(), fakeStore, rule.GetKey())
+		require.NoError(t, err)
+
+		assert.Equal(t, rule.GetGroupKey(), delta.GroupKey)
+		assert.Len(t, delta.Delete, 1)
+		assert.Equal(t, rule, delta.Delete[0])
+
+		assert.Empty(t, delta.Update)
+		assert.Empty(t, delta.New)
+
+		assert.Len(t, delta.AffectedGroups, 1)
+		assert.Equal(t, models.RulesGroup(groupRules), delta.AffectedGroups[delta.GroupKey])
+	})
+}
+
+func TestCalculateRuleUpdate(t *testing.T) {
+	fakeStore := fakes.NewRuleStore(t)
+	rule := models.AlertRuleGen()()
+	otherRules := models.GenerateAlertRules(3, models.AlertRuleGen(models.WithOrgID(rule.OrgID), models.WithNamespaceUIDNotIn(rule.NamespaceUID)))
+	groupRules := models.GenerateAlertRules(3, models.AlertRuleGen(models.WithGroupKey(rule.GetGroupKey())))
+	groupRules = append(groupRules, rule)
+	fakeStore.Rules[rule.OrgID] = append(otherRules, groupRules...)
+
+	t.Run("when a rule is not changed", func(t *testing.T) {
+		cp := models.CopyRule(rule)
+		delta, err := CalculateRuleUpdate(context.Background(), fakeStore, &models.AlertRuleWithOptionals{
+			AlertRule: *cp,
+			HasPause:  false,
+		})
+		require.NoError(t, err)
+		require.True(t, delta.IsEmpty())
+	})
+
+	t.Run("when a rule is updated", func(t *testing.T) {
+		cp := models.CopyRule(rule)
+		cp.For = cp.For + 1*time.Minute // cause any diff
+
+		delta, err := CalculateRuleUpdate(context.Background(), fakeStore, &models.AlertRuleWithOptionals{
+			AlertRule: *cp,
+			HasPause:  false,
+		})
+		require.NoError(t, err)
+
+		assert.Equal(t, rule.GetGroupKey(), delta.GroupKey)
+		assert.Empty(t, delta.New)
+		assert.Empty(t, delta.Delete)
+		assert.Len(t, delta.Update, 1)
+		assert.Equal(t, cp, delta.Update[0].New)
+		assert.Equal(t, rule, delta.Update[0].Existing)
+
+		require.Contains(t, delta.AffectedGroups, delta.GroupKey)
+		assert.Equal(t, models.RulesGroup(groupRules), delta.AffectedGroups[delta.GroupKey])
+	})
+
+	t.Run("when a rule is moved between groups", func(t *testing.T) {
+		sourceGroupKey := rule.GetGroupKey()
+		targetGroupKey := models.GenerateGroupKey(rule.OrgID)
+		targetGroup := models.GenerateAlertRules(3, models.AlertRuleGen(models.WithGroupKey(targetGroupKey)))
+		fakeStore.Rules[rule.OrgID] = append(fakeStore.Rules[rule.OrgID], targetGroup...)
+
+		cp := models.CopyRule(rule)
+		cp.NamespaceUID = targetGroupKey.NamespaceUID
+		cp.RuleGroup = targetGroupKey.RuleGroup
+
+		delta, err := CalculateRuleUpdate(context.Background(), fakeStore, &models.AlertRuleWithOptionals{
+			AlertRule: *cp,
+			HasPause:  false,
+		})
+		require.NoError(t, err)
+
+		assert.Equal(t, targetGroupKey, delta.GroupKey)
+		assert.Empty(t, delta.New)
+		assert.Empty(t, delta.Delete)
+		assert.Len(t, delta.Update, 1)
+		assert.Equal(t, cp, delta.Update[0].New)
+		assert.Equal(t, rule, delta.Update[0].Existing)
+
+		require.Contains(t, delta.AffectedGroups, sourceGroupKey)
+		assert.Equal(t, models.RulesGroup(groupRules), delta.AffectedGroups[sourceGroupKey])
+		require.Contains(t, delta.AffectedGroups, targetGroupKey)
+		assert.Equal(t, models.RulesGroup(targetGroup), delta.AffectedGroups[targetGroupKey])
+	})
+}
+
+func TestCalculateRuleCreate(t *testing.T) {
+	t.Run("when a rule refers to a new group", func(t *testing.T) {
+		fakeStore := fakes.NewRuleStore(t)
+		rule := models.AlertRuleGen()()
+
+		delta, err := CalculateRuleCreate(context.Background(), fakeStore, rule)
+		require.NoError(t, err)
+
+		assert.Equal(t, rule.GetGroupKey(), delta.GroupKey)
+		assert.Empty(t, delta.AffectedGroups)
+		assert.Empty(t, delta.Delete)
+		assert.Empty(t, delta.Update)
+		assert.Len(t, delta.New, 1)
+		assert.Equal(t, rule, delta.New[0])
+	})
+
+	t.Run("when a rule refers to an existing group", func(t *testing.T) {
+		fakeStore := fakes.NewRuleStore(t)
+		rule := models.AlertRuleGen()()
+
+		groupRules := models.GenerateAlertRules(3, models.AlertRuleGen(models.WithGroupKey(rule.GetGroupKey())))
+		otherRules := models.GenerateAlertRules(3, models.AlertRuleGen(models.WithOrgID(rule.OrgID), models.WithNamespaceUIDNotIn(rule.NamespaceUID)))
+		fakeStore.Rules[rule.OrgID] = append(groupRules, otherRules...)
+
+		delta, err := CalculateRuleCreate(context.Background(), fakeStore, rule)
+		require.NoError(t, err)
+
+		assert.Equal(t, rule.GetGroupKey(), delta.GroupKey)
+		assert.Len(t, delta.AffectedGroups, 1)
+		assert.Equal(t, models.RulesGroup(groupRules), delta.AffectedGroups[delta.GroupKey])
+		assert.Empty(t, delta.Delete)
+		assert.Empty(t, delta.Update)
+		assert.Len(t, delta.New, 1)
+		assert.Equal(t, rule, delta.New[0])
+	})
+}
+
 // simulateSubmitted resets some fields of the structure that are not populated by API model to model conversion
 func simulateSubmitted(rule *models.AlertRule) {
 	rule.ID = 0
