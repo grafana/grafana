@@ -1,4 +1,3 @@
-import { noop } from 'lodash';
 import React from 'react';
 import AutoSizer from 'react-virtualized-auto-sizer';
 
@@ -11,13 +10,12 @@ import { TimelineMode } from 'app/core/components/TimelineChart/utils';
 interface LogTimelineViewerProps {
   frames: DataFrame[];
   timeRange: TimeRange;
-  onPointerMove?: (seriesIdx: number, pointerIdx: number) => void;
 }
 
 // noop
 const replaceVariables: InterpolateFunction = (v) => v;
 
-export const LogTimelineViewer = React.memo(({ frames, timeRange, onPointerMove = noop }: LogTimelineViewerProps) => {
+export const LogTimelineViewer = React.memo(({ frames, timeRange }: LogTimelineViewerProps) => {
   const theme = useTheme2();
 
   return (
