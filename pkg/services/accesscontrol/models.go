@@ -469,6 +469,8 @@ const (
 	ActionAlertingProvisioningRead        = "alert.provisioning:read"
 	ActionAlertingProvisioningReadSecrets = "alert.provisioning.secrets:read"
 	ActionAlertingProvisioningWrite       = "alert.provisioning:write"
+	// ActionAlertingProvisioningSetStatus Gives access to set provisioning status to alerting resources. Cannot be used alone. Only in conjunction with other permissions.
+	ActionAlertingProvisioningSetStatus = "alert.provisioning.provenance:write"
 
 	// Feature Management actions
 	ActionFeatureManagementRead  = "featuremgmt.read"

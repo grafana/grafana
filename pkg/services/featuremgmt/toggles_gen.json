@@ -1428,7 +1428,8 @@
       "metadata": {
         "name": "migrationLocking",
         "resourceVersion": "1709648236447",
-        "creationTimestamp": "2024-03-05T14:17:16Z"
+        "creationTimestamp": "2024-03-05T14:17:16Z",
+        "deletionTimestamp": "2024-03-22T10:42:09Z"
       },
       "spec": {
         "description": "Lock database during migrations",
@@ -1546,12 +1547,15 @@
     {
       "metadata": {
         "name": "alertingSimplifiedRouting",
-        "resourceVersion": "1709648236447",
-        "creationTimestamp": "2024-03-05T14:17:16Z"
+        "resourceVersion": "1710956489717",
+        "creationTimestamp": "2024-03-05T14:17:16Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2024-03-20 17:41:29.717557527 +0000 UTC"
+        }
       },
       "spec": {
         "description": "Enables users to easily configure alert notifications by specifying a contact point directly when editing or creating an alert rule",
-        "stage": "preview",
+        "stage": "GA",
         "codeowner": "@grafana/alerting-squad"
       }
     },
@@ -2180,16 +2184,15 @@
     },
     {
       "metadata": {
-        "name": "influxdbReturnInfluxResponse",
-        "resourceVersion": "1711122258504",
-        "creationTimestamp": "2024-03-22T15:44:18Z",
-        "deletionTimestamp": "2024-03-22T16:16:58Z"
+        "name": "autoMigrateXYChartPanel",
+        "resourceVersion": "1711119444221",
+        "creationTimestamp": "2024-03-22T14:57:24Z"
       },
       "spec": {
-        "description": "Enable InfluxDB to return raw influxdb query response in data frame",
-        "stage": "experimental",
-        "codeowner": "@grafana/observability-metrics",
-        "requiresRestart": true
+        "description": "Migrate old XYChart panel to new XYChart2 model",
+        "stage": "preview",
+        "codeowner": "@grafana/dataviz-squad",
+        "frontend": true
       }
     },
     {

@@ -67,7 +67,7 @@ func ProvideService(cfg *setting.Cfg,
 	}
 	s.features = features
 
-	if err := s.Migrate(features.IsEnabledGlobally(featuremgmt.FlagMigrationLocking)); err != nil {
+	if err := s.Migrate(s.dbCfg.MigrationLock); err != nil {
 		return nil, err
 	}
 
