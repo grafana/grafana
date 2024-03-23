@@ -17,7 +17,7 @@ import { checkEvaluationIntervalGlobalLimit } from '../../utils/config';
 import { getRulesSourceName, GRAFANA_RULES_SOURCE_NAME } from '../../utils/datasource';
 import { initialAsyncRequestState } from '../../utils/redux';
 import { AlertInfo, getAlertInfo, isRecordingRulerRule } from '../../utils/rules';
-import { parsePrometheusDuration, safeParsePrometheusDuration } from '../../utils/time';
+import { formatPrometheusDuration, parsePrometheusDuration, safeParsePrometheusDuration } from '../../utils/time';
 import { DynamicTable, DynamicTableColumnProps, DynamicTableItemProps } from '../DynamicTable';
 import { EvaluationIntervalLimitExceeded } from '../InvalidIntervalWarning';
 import { decodeGrafanaNamespace, encodeGrafanaNamespace } from '../expressions/util';
@@ -146,7 +146,12 @@ export const evaluateEveryValidationOptions = (rules: RulerRuleDTO[]): RegisterO
       if (rulesInSameGroupHaveInvalidFor(rules, evaluateEvery).length === 0) {
         return true;
       } else {
-        return `Invalid evaluation interval. Evaluation interval should be smaller or equal to 'For' values for existing rules in this group.`;
+        const rulePendingPeriods = rules.map((rule) => {
+          const { forDuration } = getAlertInfo(rule, evaluateEvery);
+          return safeParsePrometheusDuration(forDuration);
+        });
+        const largestPendingPeriod = Math.max(...rulePendingPeriods);
+        return `Evaluation interval should be smaller or equal to "pending period" values for existing rules in this rule group. Choose a value smaller then or equal to "${formatPrometheusDuration(largestPendingPeriod)}".`;
       }
     } catch (error) {
       return error instanceof Error ? error.message : 'Failed to parse duration';

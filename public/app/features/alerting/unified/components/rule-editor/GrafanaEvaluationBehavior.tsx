@@ -217,7 +217,7 @@ function ForInput({ evaluateEvery }: { evaluateEvery: string }) {
                 setPendingPeriod(milliseconds);
               }}
             >
-              {milliseconds === 0 ? 'Same as group evaluation interval' : formatPrometheusDuration(milliseconds)}
+              {milliseconds === 0 ? 'None' : formatPrometheusDuration(milliseconds)}
             </Button>
           ))}
         </Stack>
