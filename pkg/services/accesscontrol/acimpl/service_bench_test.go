@@ -251,11 +251,6 @@ func BenchmarkSearchUsersWithPerm_20K_10K(b *testing.B) { benchSearchUsersWithPe
 func BenchmarkSearchUsersWithPerm_100K_10(b *testing.B)  { benchSearchUsersWithPerm(b, 100000, 10) }  // ~0.88s/op
 func BenchmarkSearchUsersWithPerm_100K_100(b *testing.B) { benchSearchUsersWithPerm(b, 100000, 100) } // ~0.72s/op
 
-// 1k users
-// 100 folders
-// 1k dashboards
-// 1.6k permissions
-
 // Benchmarking search when we specify Action and Scope
 func benchSearchUserWithAction(b *testing.B, usersCount, resourceCount int) {
 	if testing.Short() {
@@ -275,4 +270,4 @@ func benchSearchUserWithAction(b *testing.B, usersCount, resourceCount int) {
 	}
 }
 
-func BenchmarkSearchUserWithAction_1K_1k(b *testing.B) { benchSearchUserWithAction(b, 1000, 1000) }
+func BenchmarkSearchUserWithAction_1K_1k(b *testing.B) { benchSearchUserWithAction(b, 1000, 1000) } // ~0.6s/op (mysql)

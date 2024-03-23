@@ -2,11 +2,45 @@ package database
 
 import (
 	"context"
+	"fmt"
 	"strconv"
 	"strings"
 
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
+)
+
+const (
+	// userPermissionsSQL is a query to select all users permissions directly assigned to them.
+	userPermissionsSQL = `SELECT ur.user_id, p.action, p.scope, ur.role_id
+	FROM permission AS p
+	INNER JOIN user_role AS ur on ur.role_id = p.role_id
+	WHERE (ur.org_id = ? OR ur.org_id = ?)`
+
+	// teamPermissionsSQL is a query to select all users permissions associated to their team membership.
+	teamPermissionsSQL = `SELECT tm.user_id, p.action, p.scope, tr.role_id
+	FROM permission AS p
+	INNER JOIN team_role AS tr ON tr.role_id = p.role_id
+	INNER JOIN team_member AS tm ON tm.team_id = tr.team_id
+	WHERE (tr.org_id = ? OR tr.org_id = ?)`
+
+	// basicRolePermissionsSQL is a query to select all users permissions associated to their basic role (Admin, Editor, Viewer, None).
+	basicRolePermissionsSQL = `SELECT ou.user_id, p.action, p.scope, br.role_id
+	FROM permission AS p
+	INNER JOIN builtin_role AS br ON br.role_id = p.role_id
+	INNER JOIN org_user AS ou ON ou.role = br.role
+	WHERE (ou.org_id = ? OR ou.org_id = ?)`
+
+	// grafanaAdminPermissionsSQL is a query to select all grafana admin users permissions
+	// it has to be formatted with the quoted user table.
+	grafanaAdminPermissionsSQL = `SELECT sa.user_id, p.action, p.scope, br.role_id
+	FROM permission AS p
+	INNER JOIN builtin_role AS br ON br.role_id = p.role_id
+	INNER JOIN (
+		SELECT u.id AS user_id
+	    FROM %s AS u WHERE u.is_admin
+	) AS sa ON 1 = 1
+	WHERE br.role = ? AND (br.org_id = ? OR br.org_id = ?)`
 )
 
 func ProvideService(sql db.DB) *AccessControlStore {
@@ -53,6 +87,35 @@ func (s *AccessControlStore) GetUserPermissions(ctx context.Context, query acces
 	return result, err
 }
 
+func searchSubqueryWithFilters(query string, table string, orgID int64, params []any, options accesscontrol.SearchOptions) (string, []any, error) {
+	params = append(params, orgID, accesscontrol.GlobalOrgID)
+	if options.NamespacedID != "" {
+		query += " AND " + table + ".user_id = ?"
+		userID, err := options.ComputeUserID()
+		if err != nil {
+			return "", nil, err
+		}
+		params = append(params, userID)
+	}
+	if options.ActionPrefix != "" {
+		query += ` AND p.action LIKE ?`
+		params = append(params, options.ActionPrefix+"%")
+	}
+	if options.Action != "" {
+		query += ` AND p.action = ?`
+		params = append(params, options.Action)
+	}
+	if options.Scope != "" {
+		// Search for scope and wildcard that include the scope
+		scopes := append(options.Wildcards(), options.Scope)
+		query += ` AND p.scope IN ( ? ` + strings.Repeat(", ?", len(scopes)-1) + ")"
+		for i := range scopes {
+			params = append(params, scopes[i])
+		}
+	}
+	return query, params, nil
+}
+
 // SearchUsersPermissions returns the list of user permissions in specific organization indexed by UserID
 func (s *AccessControlStore) SearchUsersPermissions(ctx context.Context, orgID int64, options accesscontrol.SearchOptions) (map[int64][]accesscontrol.Permission, error) {
 	type UserRBACPermission struct {
@@ -62,15 +125,6 @@ func (s *AccessControlStore) SearchUsersPermissions(ctx context.Context, orgID i
 	}
 	dbPerms := make([]UserRBACPermission, 0)
 
-	userID := int64(0)
-	var err error
-	if options.NamespacedID != "" {
-		userID, err = options.ComputeUserID()
-		if err != nil {
-			return nil, err
-		}
-	}
-
 	if err := s.sql.WithDbSession(ctx, func(sess *db.Session) error {
 		roleNameFilterJoin := ""
 		if len(options.RolePrefixes) > 0 {
@@ -79,47 +133,27 @@ func (s *AccessControlStore) SearchUsersPermissions(ctx context.Context, orgID i
 
 		params := []any{}
 
-		direct := `SELECT ur.user_id, ur.org_id, p.action, p.scope, ur.role_id
-		FROM permission AS p
-		INNER JOIN user_role AS ur on ur.role_id = p.role_id`
-		if options.NamespacedID != "" {
-			direct += " WHERE ur.user_id = ?"
-			params = append(params, userID)
+		direct, params, err := searchSubqueryWithFilters(userPermissionsSQL, "ur", orgID, params, options)
+		if err != nil {
+			return err
 		}
 
-		team := `SELECT tm.user_id, tr.org_id, p.action, p.scope, tr.role_id
-		FROM permission AS p
-		INNER JOIN team_role AS tr ON tr.role_id = p.role_id
-		INNER JOIN team_member AS tm ON tm.team_id = tr.team_id`
-		if options.NamespacedID != "" {
-			team += " WHERE tm.user_id = ?"
-			params = append(params, userID)
+		team, params, err := searchSubqueryWithFilters(teamPermissionsSQL, "tm", orgID, params, options)
+		if err != nil {
+			return err
 		}
 
-		basic := `SELECT ou.user_id, ou.org_id, p.action, p.scope, br.role_id
-		FROM permission AS p
-		INNER JOIN builtin_role AS br ON br.role_id = p.role_id
-		INNER JOIN org_user AS ou ON ou.role = br.role`
-		if options.NamespacedID != "" {
-			basic += " WHERE ou.user_id = ?"
-			params = append(params, userID)
+		basic, params, err := searchSubqueryWithFilters(basicRolePermissionsSQL, "ou", orgID, params, options)
+		if err != nil {
+			return err
 		}
 
-		grafana_admin := `SELECT sa.user_id, br.org_id, p.action, p.scope, br.role_id
-		FROM permission AS p
-		INNER JOIN builtin_role AS br ON br.role_id = p.role_id
-		INNER JOIN (
-			SELECT u.id AS user_id
-			FROM ` + s.sql.GetDialect().Quote("user") + ` AS u WHERE u.is_admin
-		) AS sa ON 1 = 1
-		WHERE br.role = ?`
 		params = append(params, accesscontrol.RoleGrafanaAdmin)
-		if options.NamespacedID != "" {
-			grafana_admin += " AND sa.user_id = ?"
-			params = append(params, userID)
+		grafanaAdmin := fmt.Sprintf(grafanaAdminPermissionsSQL, s.sql.Quote("user"))
+		grafanaAdmin, params, err = searchSubqueryWithFilters(grafanaAdmin, "sa", orgID, params, options)
+		if err != nil {
+			return err
 		}
-
-		params = append(params, orgID, accesscontrol.GlobalOrgID)
 
 		// Find permissions
 		q := `
@@ -134,37 +168,13 @@ func (s *AccessControlStore) SearchUsersPermissions(ctx context.Context, orgID i
 			UNION ALL
 			` + basic + `
 			UNION ALL
-			` + grafana_admin + `
-		) AS up ` + roleNameFilterJoin + `
-		WHERE (up.org_id = ? OR up.org_id = ?)
-		`
+			` + grafanaAdmin + `
+		) AS up ` + roleNameFilterJoin
 
-		if options.ActionPrefix != "" {
-			q += ` AND action LIKE ?`
-			params = append(params, options.ActionPrefix+"%")
-		}
-		if options.Action != "" {
-			q += ` AND action = ?`
-			params = append(params, options.Action)
-		}
-		if options.Scope != "" {
-			// Search for scope and wildcard that include the scope
-			scopes := append(options.Wildcards(), options.Scope)
-			q += ` AND scope IN ( ? ` + strings.Repeat(", ?", len(scopes)-1) + ")"
-			for i := range scopes {
-				params = append(params, scopes[i])
-			}
-		}
-		// if options.NamespacedID != "" {
-		// 	userID, err := options.ComputeUserID()
-		// 	if err != nil {
-		// 		return err
-		// 	}
-		// 	q += ` AND user_id = ?`
-		// 	params = append(params, userID)
-		// }
+		// Apply role prefix filter after the union won't change performance
+		// Since in OSS all roles should match and in ENT we do not use it
 		if len(options.RolePrefixes) > 0 {
-			q += " AND ( " + strings.Repeat("r.name LIKE ? OR ", len(options.RolePrefixes)-1)
+			q += " WHERE ( " + strings.Repeat("r.name LIKE ? OR ", len(options.RolePrefixes)-1)
 			q += "r.name LIKE ? )"
 			for _, prefix := range options.RolePrefixes {
 				params = append(params, prefix+"%")
