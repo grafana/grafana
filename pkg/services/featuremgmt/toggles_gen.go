@@ -638,4 +638,8 @@ const (
 	// FlagSsoSettingsSAML
 	// Use the new SSO Settings API to configure the SAML connector
 	FlagSsoSettingsSAML = "ssoSettingsSAML"
+
+	// FlagUsePrometheusFrontendPackage
+	// Use the @grafana/prometheus frontend package in core Prometheus.
+	FlagUsePrometheusFrontendPackage = "usePrometheusFrontendPackage"
 )
