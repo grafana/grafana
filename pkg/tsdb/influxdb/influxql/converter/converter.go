@@ -345,11 +345,8 @@ func typeOf(value interface{}) data.FieldType {
 
 func handleTimeSeriesFormatWithTimeColumn(valueFields data.Fields, tags map[string]string, columns []string, measurement string, frameName []byte, query *models.Query) []*data.Frame {
 	frames := make([]*data.Frame, 0, len(columns)-1)
-	for i, v := range columns {
-		if v == "time" {
-			continue
-		}
-		formattedFrameName := string(util.FormatFrameName(measurement, v, tags, *query, frameName[:]))
+	for i := 1; i < len(columns); i++ {
+		formattedFrameName := string(util.FormatFrameName(measurement, columns[i], tags, *query, frameName[:]))
 		valueFields[i].Labels = tags
 		valueFields[i].Config = &data.FieldConfig{DisplayNameFromDS: formattedFrameName}
 
