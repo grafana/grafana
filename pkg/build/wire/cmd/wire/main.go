@@ -31,6 +31,7 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/emicklei/dot"
 	"github.com/google/subcommands"
 	"github.com/grafana/grafana/pkg/build/wire/internal/wire"
 	"github.com/pmezard/go-difflib/difflib"
@@ -45,6 +46,8 @@ func main() {
 	subcommands.Register(&diffCmd{}, "")
 	subcommands.Register(&genCmd{}, "")
 	subcommands.Register(&showCmd{}, "")
+	subcommands.Register(&dotCmd{}, "")
+
 	flag.Parse()
 
 	// Initialize the default logger to log to stderr.
@@ -64,6 +67,7 @@ func main() {
 		"diff":     true,
 		"gen":      true,
 		"show":     true,
+		"dot":      true,
 	}
 	// Default to running the "gen" command.
 	if args := flag.Args(); len(args) == 0 || !allCmds[args[0]] {
@@ -385,6 +389,137 @@ func (cmd *checkCmd) Execute(ctx context.Context, f *flag.FlagSet, args ...inter
 		return subcommands.ExitFailure
 	}
 	return subcommands.ExitSuccess
+}
+
+type dotCmd struct {
+	tags string
+	set  string
+}
+
+func (*dotCmd) Name() string { return "dot" }
+func (*dotCmd) Synopsis() string {
+	return "emit graphviz dot of a provider set's dependency relations"
+}
+func (*dotCmd) Usage() string {
+	return `dot [package] [provider-set]
+
+  Given a package and the name of a top-level variable containing a provider
+  set, dot outputs a graphviz dot-format text file that can be translated into a 
+  dependency graph of all providers.
+`
+}
+func (cmd *dotCmd) SetFlags(f *flag.FlagSet) {
+	f.StringVar(&cmd.tags, "tags", "", "append build tags to the default wirebuild")
+	f.StringVar(&cmd.set, "provider-set", "", "name of provider set var to dump")
+}
+
+func (cmd *dotCmd) Execute(ctx context.Context, f *flag.FlagSet, args ...interface{}) subcommands.ExitStatus {
+	wd, err := os.Getwd()
+	if err != nil {
+		log.Println("failed to get working directory: ", err)
+		return subcommands.ExitFailure
+	}
+	if cmd.set == "" {
+		log.Println("must provide the name of a variable containing a wire Provider set")
+		return subcommands.ExitFailure
+	}
+
+	info, errs := wire.Load(ctx, wd, os.Environ(), cmd.tags, packages(f))
+	if info != nil {
+		keys := make([]wire.ProviderSetID, 0, len(info.Sets))
+		for k := range info.Sets {
+			keys = append(keys, k)
+		}
+		sort.Slice(keys, func(i, j int) bool {
+			if keys[i].ImportPath == keys[j].ImportPath {
+				return keys[i].VarName < keys[j].VarName
+			}
+			return keys[i].ImportPath < keys[j].ImportPath
+		})
+
+		gathered := map[string][]outGroup{}
+		include := []string{}
+		// Figure out which all sets to dump
+		for _, k := range keys {
+			og, imports := gather(info, k)
+			gathered[k.VarName] = og
+
+			if k.VarName == cmd.set {
+				include = []string{k.VarName}
+				for _, imp := range sortSet(imports) {
+					include = append(include, imp[strings.LastIndexAny(imp, ".")+1:])
+				}
+			}
+		}
+
+		g := dot.NewGraph(dot.Directed)
+		g.ID(cmd.set)
+		g.Attr("layout", "twopi")
+		g.Attr("overlap", "false")
+		g.Attr("splines", "spline")
+		isdep := make(map[string]bool)
+		for _, name := range include {
+			outGroups, has := gathered[name]
+			if !has {
+				log.Println("no groups for", name)
+				continue
+			}
+			g.NodeInitializer(func(n dot.Node) {
+				n.Attr("shape", "rect")
+			})
+
+			for i := range outGroups {
+				var tolist []dot.Node
+				outGroups[i].inputs.Iterate(func(k types.Type, _ interface{}) {
+					id := types.TypeString(k, nil)
+					to := g.Node(id)
+					if !blacklist[id] {
+						tolist = append(tolist, to)
+					}
+					isdep[id] = true
+				})
+
+				outGroups[i].outputs.Iterate(func(t types.Type, v interface{}) {
+					id := types.TypeString(t, nil)
+					from := g.Node(id)
+					for _, to := range tolist {
+						g.Edge(from, to)
+					}
+				})
+			}
+		}
+
+		notdep := make(map[string]bool)
+		g.VisitNodes(func(n dot.Node) bool {
+			if !isdep[nid(n)] {
+				notdep[nid(n)] = true
+			}
+			return false
+		})
+		fmt.Println(g)
+	}
+	if len(errs) > 0 {
+		logErrors(errs)
+		log.Println("error loading packages")
+		return subcommands.ExitFailure
+	}
+	return subcommands.ExitSuccess
+}
+
+func nid(n dot.Node) string {
+	return n.AttributesMap.Value("label").(string)
+}
+
+// Merges the rest of the provided graphs onto the first graph. No return value;
+// the first graph is mutated.
+func mergeDotGraphs(b *dot.Graph, gs ...*dot.Graph) {
+	for _, g := range gs {
+		g.VisitNodes(func(n dot.Node) bool {
+			id := n.AttributesMap.Value("label").(string)
+			b.Node(id)
+			return false
+		})
+	}
 }
 
 type outGroup struct {
