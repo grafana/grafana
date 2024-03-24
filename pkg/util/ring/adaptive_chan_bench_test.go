@@ -1,12 +1,12 @@
-package ringq
+package ring
 
 import (
 	"context"
 	"testing"
 )
 
-func BenchmarkDynChanBaseline(b *testing.B) {
-	in, out, _ := DynChan[int](1)
+func BenchmarkAdaptiveChanBaseline(b *testing.B) {
+	in, out, _ := AdaptiveChan[int]()
 	in <- 1
 	<-out
 	b.Cleanup(func() {
@@ -25,8 +25,9 @@ func BenchmarkDynChanBaseline(b *testing.B) {
 	}
 }
 
-func BenchmarkDynChanWithStatsRead(b *testing.B) {
-	in, out, sr := DynChan[int](1)
+func BenchmarkAdaptiveChanWithStatsRead(b *testing.B) {
+	var stats AdaptiveChanStats
+	in, out, sr := AdaptiveChan[int]()
 	in <- 1
 	<-out
 	ctx := context.Background()
@@ -43,12 +44,12 @@ func BenchmarkDynChanWithStatsRead(b *testing.B) {
 		if val != 1 {
 			b.Fatalf("expected 1, got %d", val)
 		}
-		s, err := sr.ReadStats(ctx)
+		err := sr.WriteStats(ctx, &stats)
 		if err != nil {
 			b.Fatalf("unexpected error: %v", err)
 		}
-		if s.Enqueued == 0 {
-			b.Fatalf("unexpected stats: %v", s)
+		if stats.Enqueued == 0 {
+			b.Fatalf("unexpected stats: %v", stats)
 		}
 	}
 }
