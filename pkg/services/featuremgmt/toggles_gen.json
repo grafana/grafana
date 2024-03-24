@@ -265,7 +265,8 @@
       "metadata": {
         "name": "migrationLocking",
         "resourceVersion": "1711130211436",
-        "creationTimestamp": "2024-03-22T17:56:51Z"
+        "creationTimestamp": "2024-03-22T17:56:51Z",
+        "deletionTimestamp": "2024-03-23T00:53:29Z"
       },
       "spec": {
         "description": "Lock database during migrations",
@@ -2044,6 +2045,19 @@
         "description": "Enable Grafana to have a remote Alertmanager instance as the primary Alertmanager.",
         "stage": "experimental",
         "codeowner": "@grafana/alerting-squad"
+      }
+    },
+    {
+      "metadata": {
+        "name": "influxdbReturnInfluxQLResponse",
+        "resourceVersion": "1711124218832",
+        "creationTimestamp": "2024-03-22T16:16:58Z"
+      },
+      "spec": {
+        "description": "Enable InfluxDB to return raw InfluxQL query response in data frame",
+        "stage": "experimental",
+        "codeowner": "@grafana/observability-metrics",
+        "requiresRestart": true
       }
     }
   ]

@@ -14,37 +14,50 @@ import (
 	"github.com/grafana/grafana/pkg/tsdb/influxdb/models"
 )
 
-func ResponseParse(buf io.ReadCloser, statusCode int, query *models.Query) *backend.DataResponse {
-	return parse(buf, statusCode, query)
+func ResponseParse(buf io.ReadCloser, statusCode int, query *models.Query, appendInfluxResponse bool) *backend.DataResponse {
+	return parse(buf, statusCode, query, appendInfluxResponse)
 }
 
 // parse is the same as Parse, but without the io.ReadCloser (we don't need to
 // close the buffer)
-func parse(buf io.Reader, statusCode int, query *models.Query) *backend.DataResponse {
+func parse(buf io.Reader, statusCode int, query *models.Query, appendInfluxResponse bool) *backend.DataResponse {
 	response, jsonErr := parseJSON(buf)
 
 	if statusCode/100 != 2 {
-		return &backend.DataResponse{Error: fmt.Errorf("InfluxDB returned error: %s", response.Error)}
+		return generateDataResponse(nil, fmt.Errorf("InfluxDB returned error: %s", response.Error), response, appendInfluxResponse)
 	}
 
 	if jsonErr != nil {
-		return &backend.DataResponse{Error: jsonErr}
+		return generateDataResponse(nil, jsonErr, response, appendInfluxResponse)
 	}
 
 	if response.Error != "" {
-		return &backend.DataResponse{Error: fmt.Errorf(response.Error)}
+		return generateDataResponse(nil, fmt.Errorf(response.Error), response, appendInfluxResponse)
 	}
 
 	result := response.Results[0]
 	if result.Error != "" {
-		return &backend.DataResponse{Error: fmt.Errorf(result.Error)}
+		return generateDataResponse(nil, fmt.Errorf(result.Error), response, appendInfluxResponse)
 	}
 
 	if query.ResultFormat == "table" {
-		return &backend.DataResponse{Frames: transformRowsForTable(result.Series, *query)}
+		return generateDataResponse(transformRowsForTable(result.Series, *query), nil, response, appendInfluxResponse)
 	}
 
-	return &backend.DataResponse{Frames: transformRowsForTimeSeries(result.Series, *query)}
+	return generateDataResponse(transformRowsForTimeSeries(result.Series, *query), nil, response, appendInfluxResponse)
+}
+
+func generateDataResponse(frames data.Frames, error error, rawResponse models.Response, appendInfluxResponse bool) *backend.DataResponse {
+	if appendInfluxResponse && len(frames) > 0 {
+		frames[0].Meta.Custom = map[string]any{
+			"influx_response": rawResponse,
+		}
+	}
+
+	return &backend.DataResponse{
+		Frames: frames,
+		Error:  error,
+	}
 }
 
 func parseJSON(buf io.Reader) (models.Response, error) {

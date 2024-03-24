@@ -351,6 +351,10 @@ const (
 	// Enable InfluxDB SQL query language support with new querying UI
 	FlagInfluxdbSqlSupport = "influxdbSqlSupport"
 
+	// FlagInfluxdbReturnInfluxQLResponse
+	// Enable InfluxDB to return raw InfluxQL query response in data frame
+	FlagInfluxdbReturnInfluxQLResponse = "influxdbReturnInfluxQLResponse"
+
 	// FlagAlertingNoDataErrorExecution
 	// Changes how Alerting state manager handles execution of NoData/Error
 	FlagAlertingNoDataErrorExecution = "alertingNoDataErrorExecution"

@@ -647,6 +647,14 @@ var (
 			Expression:      "true", // enabled by default
 		},
 		{
+			Name:            "influxdbReturnInfluxQLResponse",
+			Description:     "Enable InfluxDB to return raw InfluxQL query response in data frame",
+			Stage:           FeatureStageExperimental,
+			FrontendOnly:    false,
+			Owner:           grafanaObservabilityMetricsSquad,
+			RequiresRestart: true,
+		},
+		{
 			Name:            "alertingNoDataErrorExecution",
 			Description:     "Changes how Alerting state manager handles execution of NoData/Error",
 			Stage:           FeatureStageGeneralAvailability,
