@@ -2,6 +2,7 @@ package coreplugin
 
 import (
 	"context"
+	"errors"
 	"fmt"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
@@ -188,6 +189,8 @@ func (l *logWrapper) FromContext(ctx context.Context) sdklog.Logger {
 	}
 }
 
+var ErrCorePluginNotFound = errors.New("core plugin not found")
+
 // NewPlugin factory for creating and initializing a single core plugin.
 // Note: cfg only needed for mssql connection pooling defaults.
 func NewPlugin(pluginID string, cfg *setting.Cfg, httpClientProvider *httpclient.Provider, tracer tracing.Tracer, features featuremgmt.FeatureToggles) (*plugins.Plugin, error) {
@@ -233,7 +236,7 @@ func NewPlugin(pluginID string, cfg *setting.Cfg, httpClientProvider *httpclient
 	case Parca:
 		svc = parca.ProvideService(httpClientProvider)
 	default:
-		return nil, fmt.Errorf("core plugin with id %s not supported", pluginID)
+		return nil, ErrCorePluginNotFound
 	}
 
 	p := plugins.Plugin{
