@@ -496,15 +496,15 @@ func (s *Storage) GetList(ctx context.Context, key string, opts storage.ListOpti
 			return err
 		}
 
+		if err := s.validateMinimumResourceVersion(opts.ResourceVersion, currentVersion); err != nil {
+			// Below log left for debug. It's usually not an error condition
+			// klog.Infof("failed to assert minimum resource version constraint against list version")
+			continue
+		}
+
 		ok, err := opts.Predicate.Matches(obj)
 		if err == nil && ok {
 			v.Set(reflect.Append(v, reflect.ValueOf(obj).Elem()))
-
-			if err := s.validateMinimumResourceVersion(opts.ResourceVersion, currentVersion); err != nil {
-				// Below log left for debug. It's usually not an error condition
-				// klog.Infof("failed to assert minimum resource version constraint against list version")
-				continue
-			}
 		}
 	}
 
