@@ -33,14 +33,16 @@ func TestAdaptiveChan(t *testing.T) {
 		cleanupAC(t, send, recv, ctrl)
 
 		sendNonBlock(t, send, ints(10)...)
-		ctrl.WriteStats(ctxFromTest(t), &stats)
+		err := ctrl.WriteStats(ctxFromTest(t), &stats)
+		require.NoError(t, err)
 		removeAllocStats(&stats.RingStats)
 		expectedStats.Len = 10
 		expectedStats.Enqueued = 10
 		require.Equal(t, expectedStats, stats)
 
 		recvNonBlock(t, recv, ints(10)...)
-		ctrl.WriteStats(ctxFromTest(t), &stats)
+		err = ctrl.WriteStats(ctxFromTest(t), &stats)
+		require.NoError(t, err)
 		removeAllocStats(&stats.RingStats)
 		expectedStats.Len = 0
 		expectedStats.Dequeued = 10
@@ -57,27 +59,35 @@ func TestAdaptiveChan(t *testing.T) {
 		expectedStats.Min = 10
 		expectedStats.Max = 20
 
-		ctrl.Min(ctxFromTest(t), expectedStats.Min)
-		ctrl.Max(ctxFromTest(t), expectedStats.Max)
+		err := ctrl.Min(ctxFromTest(t), expectedStats.Min)
+		require.NoError(t, err)
+		err = ctrl.Max(ctxFromTest(t), expectedStats.Max)
+		require.NoError(t, err)
 
 		sendNonBlock(t, send, 1)
-		ctrl.WriteStats(ctxFromTest(t), &stats)
+		err = ctrl.WriteStats(ctxFromTest(t), &stats)
+		require.NoError(t, err)
 		require.Equal(t, expectedStats.Min, stats.Cap, "failed to allocate Min")
 		removeAllocStats(&stats.RingStats)
 		expectedStats.Len = 1
 		expectedStats.Enqueued = 1
 		require.Equal(t, expectedStats, stats)
 
-		ctrl.Grow(ctxFromTest(t), (expectedStats.Max+expectedStats.Min)/2-1)
-		ctrl.WriteStats(ctxFromTest(t), &stats)
+		err = ctrl.Grow(ctxFromTest(t), (expectedStats.Max+expectedStats.Min)/2-1)
+		require.NoError(t, err)
+		err = ctrl.WriteStats(ctxFromTest(t), &stats)
+		require.NoError(t, err)
 		require.Equal(t, (expectedStats.Max+expectedStats.Min)/2, stats.Cap, "failed to Grow")
 
 		ctrl.Shrink(ctxFromTest(t), expectedStats.Min)
-		ctrl.WriteStats(ctxFromTest(t), &stats)
+		err = ctrl.WriteStats(ctxFromTest(t), &stats)
+		require.NoError(t, err)
 		require.Equal(t, expectedStats.Min+1, stats.Cap, "failed to Shrink")
 
-		ctrl.Clear(ctxFromTest(t))
-		ctrl.WriteStats(ctxFromTest(t), &stats)
+		err = ctrl.Clear(ctxFromTest(t))
+		require.NoError(t, err)
+		err = ctrl.WriteStats(ctxFromTest(t), &stats)
+		require.NoError(t, err)
 		require.Equal(t, expectedStats.Min, stats.Cap, "failed to Clear")
 	})
 
