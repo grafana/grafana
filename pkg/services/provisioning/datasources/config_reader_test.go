@@ -181,7 +181,7 @@ func TestDatasourceAsConfig(t *testing.T) {
 		}
 
 		require.Equal(t, len(store.deleted), 0)
-		require.Equal(t, len(store.inserted), 3)
+		require.Equal(t, len(store.inserted), 5)
 		require.Equal(t, len(store.updated), 0)
 
 		if err := dc.applyChanges(context.Background(), afterAutoDeletion); err != nil {
@@ -189,6 +189,19 @@ func TestDatasourceAsConfig(t *testing.T) {
 		}
 
 		require.Equal(t, len(store.deleted), 2)
+
+		remainingDataSourceNames := make([]string, 3)
+
+		for i, ds := range store.items {
+			remainingDataSourceNames[i] = ds.Name
+		}
+
+		require.Contains(t, remainingDataSourceNames, "test_graphite_without_prune")
+		require.Contains(t, remainingDataSourceNames, "test_prometheus_without_prune")
+		require.Contains(t, remainingDataSourceNames, "test_graphite_with_prune")
+
+		require.NotContains(t, remainingDataSourceNames, "testdata_with_prune")
+		require.NotContains(t, remainingDataSourceNames, "test_prometheus_with_prune")
 	})
 
 	t.Run("broken yaml should return error", func(t *testing.T) {
@@ -451,14 +464,14 @@ func (s *spyStore) GetDataSource(ctx context.Context, query *datasources.GetData
 	return nil, datasources.ErrDataSourceNotFound
 }
 
-func (s *spyStore) GetProvisionedDataSources(ctx context.Context, query *datasources.GetProvisionedDataSourcesQuery) ([]*datasources.DataSource, error) {
-	provisionedDataSources := []*datasources.DataSource{}
+func (s *spyStore) GetPrunableProvisionedDataSources(ctx context.Context, query *datasources.GetPrunableProvisionedDataSourcesQuery) ([]*datasources.DataSource, error) {
+	prunableProvisionedDataSources := []*datasources.DataSource{}
 	for _, item := range s.items {
-		if item.ProvisionedFrom != "" {
-			provisionedDataSources = append(provisionedDataSources, item)
+		if item.ProvisionedFrom != "" && item.Prunable {
+			prunableProvisionedDataSources = append(prunableProvisionedDataSources, item)
 		}
 	}
-	return provisionedDataSources, nil
+	return prunableProvisionedDataSources, nil
 }
 
 func (s *spyStore) DeleteDataSource(ctx context.Context, cmd *datasources.DeleteDataSourceCommand) error {
@@ -475,7 +488,7 @@ func (s *spyStore) DeleteDataSource(ctx context.Context, cmd *datasources.Delete
 
 func (s *spyStore) AddDataSource(ctx context.Context, cmd *datasources.AddDataSourceCommand) (*datasources.DataSource, error) {
 	s.inserted = append(s.inserted, cmd)
-	newDataSource := &datasources.DataSource{UID: cmd.UID, Name: cmd.Name, OrgID: cmd.OrgID, ProvisionedFrom: cmd.ProvisionedFrom}
+	newDataSource := &datasources.DataSource{UID: cmd.UID, Name: cmd.Name, OrgID: cmd.OrgID, ProvisionedFrom: cmd.ProvisionedFrom, Prunable: cmd.Prunable}
 	s.items = append(s.items, newDataSource)
 	return newDataSource, nil
 }

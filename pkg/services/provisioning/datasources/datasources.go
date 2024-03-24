@@ -14,7 +14,7 @@ import (
 
 type Store interface {
 	GetDataSource(ctx context.Context, query *datasources.GetDataSourceQuery) (*datasources.DataSource, error)
-	GetProvisionedDataSources(ctx context.Context, query *datasources.GetProvisionedDataSourcesQuery) ([]*datasources.DataSource, error)
+	GetPrunableProvisionedDataSources(ctx context.Context, query *datasources.GetPrunableProvisionedDataSourcesQuery) ([]*datasources.DataSource, error)
 	AddDataSource(ctx context.Context, cmd *datasources.AddDataSourceCommand) (*datasources.DataSource, error)
 	UpdateDataSource(ctx context.Context, cmd *datasources.UpdateDataSourceCommand) (*datasources.DataSource, error)
 	DeleteDataSource(ctx context.Context, cmd *datasources.DeleteDataSourceCommand) error
@@ -154,20 +154,20 @@ func (dc *DatasourceProvisioner) applyChanges(ctx context.Context, configPath st
 		}
 	}
 
-	provisionedDataSources, err := dc.store.GetProvisionedDataSources(ctx, &datasources.GetProvisionedDataSourcesQuery{})
+	prunableProvisionedDataSources, err := dc.store.GetPrunableProvisionedDataSources(ctx, &datasources.GetPrunableProvisionedDataSourcesQuery{})
 	if err != nil {
 		return err
 	}
 
 	staleProvisionedDataSources := []*deleteDatasourceConfig{}
 
-	for _, provisionedDataSource := range provisionedDataSources {
+	for _, prunableProvisionedDataSource := range prunableProvisionedDataSources {
 		key := DataSourceMapKey{
-			OrgId: provisionedDataSource.OrgID,
-			Name:  provisionedDataSource.Name,
+			OrgId: prunableProvisionedDataSource.OrgID,
+			Name:  prunableProvisionedDataSource.Name,
 		}
 		if _, ok := willExistAfterProvisioning[key]; !ok {
-			staleProvisionedDataSources = append(staleProvisionedDataSources, &deleteDatasourceConfig{OrgID: provisionedDataSource.OrgID, Name: provisionedDataSource.Name})
+			staleProvisionedDataSources = append(staleProvisionedDataSources, &deleteDatasourceConfig{OrgID: prunableProvisionedDataSource.OrgID, Name: prunableProvisionedDataSource.Name})
 			willExistAfterProvisioning[key] = false
 		}
 	}

@@ -63,6 +63,7 @@ type DataSource struct {
 	ReadOnly          bool              `json:"readOnly"`
 	UID               string            `json:"uid" xorm:"uid"`
 	ProvisionedFrom   string            `json:"provisionedFrom" xorm:"provisioned_from"`
+	Prunable          bool              `json:"prunable" xorm:"prunable"`
 
 	Created time.Time `json:"created,omitempty"`
 	Updated time.Time `json:"updated,omitempty"`
@@ -163,6 +164,7 @@ type AddDataSourceCommand struct {
 	SecureJsonData  map[string]string `json:"secureJsonData"`
 	UID             string            `json:"uid"`
 	ProvisionedFrom string            `json:"provisionedFrom"`
+	Prunable        bool              `json:"prunable"`
 
 	OrgID                   int64             `json:"-"`
 	UserID                  int64             `json:"-"`
@@ -187,6 +189,8 @@ type UpdateDataSourceCommand struct {
 	SecureJsonData  map[string]string `json:"secureJsonData"`
 	Version         int               `json:"version"`
 	UID             string            `json:"uid"`
+	ProvisionedFrom string            `json:"provisionedFrom"`
+	Prunable        bool              `json:"prunable"`
 
 	OrgID                   int64             `json:"-"`
 	ID                      int64             `json:"-"`
@@ -230,7 +234,7 @@ type GetDataSourcesQuery struct {
 
 type GetAllDataSourcesQuery struct{}
 
-type GetProvisionedDataSourcesQuery struct{}
+type GetPrunableProvisionedDataSourcesQuery struct{}
 
 type GetDataSourcesByTypeQuery struct {
 	OrgID    int64 // optional: filter by org_id

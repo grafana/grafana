@@ -138,4 +138,8 @@ func addDataSourceMigration(mg *Migrator) {
 	mg.AddMigration("Add provisioned_from column", NewAddColumnMigration(tableV2, &Column{
 		Name: "provisioned_from", Type: DB_NVarchar, Length: 40, Nullable: true,
 	}))
+
+	mg.AddMigration("Add prunable column", NewAddColumnMigration(tableV2, &Column{
+		Name: "prunable", Type: DB_Bool, Nullable: false, Default: "0",
+	}))
 }
