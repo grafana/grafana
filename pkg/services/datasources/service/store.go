@@ -128,7 +128,7 @@ func (ss *SqlStore) GetDataSourcesByType(ctx context.Context, query *datasources
 
 // GetPrunableProvisionedDataSources returns all datasources that have a non-empty provisioned_from field and can be pruned
 func (ss *SqlStore) GetPrunableProvisionedDataSources(ctx context.Context, query *datasources.GetPrunableProvisionedDataSourcesQuery) ([]*datasources.DataSource, error) {
-	provisionedQuery := "provisioned_from IS NOT NULL AND provisioned_from <> \"\" AND prunable IS TRUE"
+	provisionedQuery := "provisioned_from IS NOT NULL AND provisioned_from <> \"\" AND is_prunable IS TRUE"
 
 	dataSources := make([]*datasources.DataSource, 0)
 	return dataSources, ss.db.WithDbSession(ctx, func(sess *db.Session) error {
@@ -288,7 +288,7 @@ func (ss *SqlStore) AddDataSource(ctx context.Context, cmd *datasources.AddDataS
 			ReadOnly:        cmd.ReadOnly,
 			UID:             cmd.UID,
 			ProvisionedFrom: cmd.ProvisionedFrom,
-			Prunable:        cmd.Prunable,
+			IsPrunable:      cmd.IsPrunable,
 		}
 
 		if _, err := sess.Insert(ds); err != nil {
