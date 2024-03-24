@@ -442,10 +442,6 @@ func (s *Storage) GetList(ctx context.Context, key string, opts storage.ListOpti
 		s.rvMutex.Lock()
 		defer s.rvMutex.Unlock()
 
-		if resourceVersionInt == 0 {
-			resourceVersionInt = s.getNewResourceVersion()
-		}
-
 		var fpath string
 		dirpath := s.dirPath(key)
 		// Since it's a get, check if the dir exists and return early as needed
@@ -496,16 +492,26 @@ func (s *Storage) GetList(ctx context.Context, key string, opts storage.ListOpti
 			return err
 		}
 
-		if err := s.validateMinimumResourceVersion(opts.ResourceVersion, currentVersion); err != nil {
-			// Below log left for debug. It's usually not an error condition
-			// klog.Infof("failed to assert minimum resource version constraint against list version")
-			continue
+		if opts.SendInitialEvents == nil || (opts.SendInitialEvents != nil && !*opts.SendInitialEvents) {
+			// Apply the minimum resource version validation when we are not being called as part of Watch
+			// SendInitialEvents flow
+			// reason: the resource version of currently returned init items will always be < list RV
+			// they are being generated for, unless of course, the requestedRV == "0"/""
+			if err := s.validateMinimumResourceVersion(opts.ResourceVersion, currentVersion); err != nil {
+				// Below log left for debug. It's usually not an error condition
+				// klog.Infof("failed to assert minimum resource version constraint against list version")
+				continue
+			}
 		}
 
 		ok, err := opts.Predicate.Matches(obj)
 		if err == nil && ok {
 			v.Set(reflect.Append(v, reflect.ValueOf(obj).Elem()))
 		}
+	}
+
+	if resourceVersionInt == 0 {
+		resourceVersionInt = s.getNewResourceVersion()
 	}
 
 	if err := s.versioner.UpdateList(listObj, resourceVersionInt, "", &remainingItems); err != nil {
