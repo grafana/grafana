@@ -79,7 +79,8 @@ func TestAdaptiveChan(t *testing.T) {
 		require.NoError(t, err)
 		require.Equal(t, (expectedStats.Max+expectedStats.Min)/2, stats.Cap, "failed to Grow")
 
-		ctrl.Shrink(ctxFromTest(t), expectedStats.Min)
+		err = ctrl.Shrink(ctxFromTest(t), expectedStats.Min)
+		require.NoError(t, err)
 		err = ctrl.WriteStats(ctxFromTest(t), &stats)
 		require.NoError(t, err)
 		require.Equal(t, expectedStats.Min+1, stats.Cap, "failed to Shrink")

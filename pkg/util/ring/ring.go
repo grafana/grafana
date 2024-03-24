@@ -241,7 +241,6 @@ func clearShouldMigrate(CurCap, Min, Max int) bool {
 func fixAllocSize(CurLen, Min, Max, NewCap int) int {
 	if minIsValid(Min, Max) { // Min is valid
 		NewCap = max(NewCap, CurLen, Min)
-
 	} else {
 		NewCap = max(CurLen, NewCap)
 	}

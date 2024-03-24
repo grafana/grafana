@@ -46,7 +46,7 @@ var (
 //     as a coordination mechanism for producer(s), consumer(s) and
 //     controller(s).
 //
-// This pattern is desinged to maximize decoupling while providing insights and
+// This pattern is designed to maximize decoupling while providing insights and
 // granular control on memory usage. While the controller is not meant to make
 // any direct changes to the queued data, the Clear method provides the
 // opportunity to discard all queued items as an administrative measure. This
