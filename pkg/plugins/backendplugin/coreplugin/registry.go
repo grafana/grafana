@@ -2,15 +2,19 @@ package coreplugin
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	sdklog "github.com/grafana/grafana-plugin-sdk-go/backend/log"
 	sdktracing "github.com/grafana/grafana-plugin-sdk-go/backend/tracing"
 
+	"github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin"
 	"github.com/grafana/grafana/pkg/plugins/log"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tsdb/azuremonitor"
 	cloudmonitoring "github.com/grafana/grafana/pkg/tsdb/cloud-monitoring"
 	"github.com/grafana/grafana/pkg/tsdb/cloudwatch"
@@ -42,6 +46,7 @@ const (
 	Prometheus      = "prometheus"
 	Tempo           = "tempo"
 	TestData        = "grafana-testdata-datasource"
+	TestDataAlias   = "testdata"
 	PostgreSQL      = "grafana-postgresql-datasource"
 	MySQL           = "mysql"
 	MSSQL           = "mssql"
@@ -181,4 +186,69 @@ func (l *logWrapper) FromContext(ctx context.Context) sdklog.Logger {
 	return &logWrapper{
 		logger: l.logger.FromContext(ctx),
 	}
+}
+
+// NewPlugin factory for creating and initializing a single core plugin.
+// Note: cfg only needed for mssql connection pooling defaults.
+func NewPlugin(pluginID string, cfg *setting.Cfg, httpClientProvider *httpclient.Provider, tracer tracing.Tracer, features featuremgmt.FeatureToggles) (*plugins.Plugin, error) {
+	jsonData := plugins.JSONData{
+		ID:       pluginID,
+		AliasIDs: []string{},
+	}
+	var svc any
+
+	switch pluginID {
+	case TestData, TestDataAlias:
+		jsonData.ID = TestData
+		jsonData.AliasIDs = append(jsonData.AliasIDs, TestDataAlias)
+		svc = testdatasource.ProvideService()
+	case CloudWatch:
+		svc = cloudwatch.ProvideService(httpClientProvider)
+	case CloudMonitoring:
+		svc = cloudmonitoring.ProvideService(httpClientProvider)
+	case AzureMonitor:
+		svc = azuremonitor.ProvideService(httpClientProvider)
+	case Elasticsearch:
+		svc = elasticsearch.ProvideService(httpClientProvider, tracer)
+	case Graphite:
+		svc = graphite.ProvideService(httpClientProvider, tracer)
+	case InfluxDB:
+		svc = influxdb.ProvideService(httpClientProvider, features)
+	case Loki:
+		svc = loki.ProvideService(httpClientProvider, features, tracer)
+	case OpenTSDB:
+		svc = opentsdb.ProvideService(httpClientProvider)
+	case Prometheus:
+		svc = prometheus.ProvideService(httpClientProvider)
+	case Tempo:
+		svc = tempo.ProvideService(httpClientProvider)
+	case PostgreSQL:
+		svc = postgres.ProvideService(cfg)
+	case MySQL:
+		svc = mysql.ProvideService()
+	case MSSQL:
+		svc = mssql.ProvideService(cfg)
+	case Pyroscope:
+		svc = pyroscope.ProvideService(httpClientProvider)
+	case Parca:
+		svc = parca.ProvideService(httpClientProvider)
+	default:
+		return nil, fmt.Errorf("core plugin with id %s not supported", pluginID)
+	}
+
+	p := plugins.Plugin{
+		JSONData: jsonData,
+		Class:    plugins.ClassCore,
+	}
+
+	p.SetLogger(log.New(fmt.Sprintf("plugin.%s", p.ID)))
+
+	backendFactory := asBackendPlugin(svc)
+	bp, err := backendFactory(p.ID, p.Logger(), nil)
+	if err != nil {
+		return nil, err
+	}
+	p.RegisterClient(bp)
+
+	return &p, nil
 }
