@@ -33,7 +33,6 @@ The state timeline visualization is useful when you need to monitor and analyze 
 
 ## Configure a state timeline
 
-
 {{< youtube id="a9wZHM0mdxo" >}}
 
 ## Supported data formats
