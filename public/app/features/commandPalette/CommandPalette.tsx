@@ -121,7 +121,7 @@ const RenderResults = ({ isFetchingSearchResults, searchResults }: RenderResults
   const showEmptyState = !isFetchingSearchResults && items.length === 0;
 
   return showEmptyState ? (
-    <EmptyState variant="search" />
+    <EmptyState variant="not-found" />
   ) : (
     <KBarResults
       items={items}

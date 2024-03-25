@@ -136,7 +136,7 @@ export class ApiKeysPageUnconnected extends PureComponent<Props, State> {
               onDelete={this.onDeleteApiKey}
             />
           ) : (
-            <EmptyState variant="search" />
+            <EmptyState variant="not-found" />
           )}
         </Page.Contents>
         {migrationResult && (

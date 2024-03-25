@@ -99,7 +99,7 @@ const UserListAdminPageUnConnected = ({
         </div>
       </div>
       {!isLoading && users.length === 0 ? (
-        <EmptyState variant="search" />
+        <EmptyState variant="not-found" />
       ) : (
         <UsersTable
           users={users}

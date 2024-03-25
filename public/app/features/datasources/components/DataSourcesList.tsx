@@ -105,7 +105,7 @@ export function DataSourcesListView({
 
       {/* List */}
       {dataSources.length === 0 && !isLoading ? (
-        <EmptyState variant="search" />
+        <EmptyState variant="not-found" />
       ) : (
         <ul className={styles.list}>{getDataSourcesList()}</ul>
       )}

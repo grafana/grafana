@@ -235,7 +235,7 @@ export const TeamList = ({
               </InlineField>
             </div>
             {hasFetched && teams.length === 0 ? (
-              <EmptyState variant="search" />
+              <EmptyState variant="not-found" />
             ) : (
               <Stack direction={'column'} gap={2}>
                 <InteractiveTable

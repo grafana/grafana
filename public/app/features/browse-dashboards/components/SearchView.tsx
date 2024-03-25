@@ -96,7 +96,7 @@ export function SearchView({ width, height, canSelect }: SearchViewProps) {
             </Button>
           }
           message={t('browse-dashboards.no-results.text', 'No results found for your query')}
-          variant="search"
+          variant="not-found"
         />
       </div>
     );
