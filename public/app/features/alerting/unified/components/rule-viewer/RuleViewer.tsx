@@ -12,7 +12,13 @@ import { PromAlertingRuleState, PromRuleType } from 'app/types/unified-alerting-
 import { defaultPageNav } from '../../RuleViewer';
 import { Annotation } from '../../utils/constants';
 import { makeDashboardLink, makePanelLink } from '../../utils/misc';
-import { isAlertingRule, isFederatedRuleGroup, isGrafanaRulerRule, isRecordingRule } from '../../utils/rules';
+import {
+  isAlertingRule,
+  isFederatedRuleGroup,
+  isGrafanaRulerRule,
+  isGrafanaRulerRulePaused,
+  isRecordingRule,
+} from '../../utils/rules';
 import { createUrl } from '../../utils/url';
 import { AlertLabels } from '../AlertLabels';
 import { AlertingPageWrapper } from '../AlertingPageWrapper';
@@ -62,9 +68,9 @@ const RuleViewer = () => {
 
   const isFederatedRule = isFederatedRuleGroup(rule.group);
   const isProvisioned = isGrafanaRulerRule(rule.rulerRule) && Boolean(rule.rulerRule.grafana_alert.provenance);
+  const isPaused = isGrafanaRulerRule(rule.rulerRule) && isGrafanaRulerRulePaused(rule.rulerRule);
 
   const summary = annotations[Annotation.summary];
-
   return (
     <AlertingPageWrapper
       pageNav={pageNav}
@@ -73,7 +79,7 @@ const RuleViewer = () => {
       renderTitle={(title) => (
         <Title
           name={title}
-          state={isAlertType ? promRule.state : undefined}
+          state={!isPaused && isAlertType ? promRule.state : undefined}
           health={rule.promRule?.health}
           ruleType={rule.promRule?.type}
         />
@@ -82,6 +88,12 @@ const RuleViewer = () => {
       info={createMetadata(rule)}
       subTitle={
         <Stack direction="column">
+          {isPaused && (
+            <Alert severity="info" title="Alert evaluation currently paused">
+              Notifications for this rule will not fire and no alert instances will be created until the rule is
+              un-paused.
+            </Alert>
+          )}
           {summary}
           {/* alerts and notifications and stuff */}
           {isFederatedRule && <FederatedRuleWarning />}
@@ -110,7 +122,6 @@ const RuleViewer = () => {
           {activeTab === ActiveTab.Details && <Details rule={rule} />}
         </TabContent>
       </Stack>
-
       {deleteModal}
       {duplicateRuleIdentifier && (
         <RedirectToCloneRule
