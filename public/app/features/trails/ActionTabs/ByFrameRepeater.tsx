@@ -81,7 +81,9 @@ export class ByFrameRepeater extends SceneObjectBase<ByFrameRepeaterState> {
     const isLoading = panelData?.state === 'Loading' && children.length === 0;
     const error = panelData?.state === LoadingState.Error ? 'Failed to load data.' : undefined;
     const blockingMessage =
-      !isLoading && children.length === 0 && !error ? 'No data available for current selection...' : undefined;
+      !isLoading && children.length === 0 && !error
+        ? 'There is no data available. Try adjusting your filters or selecting a different label.'
+        : undefined;
 
     return (
       <StatusWrapper {...{ blockingMessage, error, isLoading }}>
