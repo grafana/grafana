@@ -378,7 +378,7 @@ Set to `false` to disable database locking during the migrations. Default is tru
 
 ### locking_attempt_timeout_sec
 
-For "mysql", if the `migrationLocking` feature toggle is set, specify the time (in seconds) to wait before failing to lock the database for the migrations. Default is 0.
+For "mysql" and "postgres" only. Specify the time (in seconds) to wait before failing to lock the database for the migrations. Default is 0.
 
 ### log_queries
 
