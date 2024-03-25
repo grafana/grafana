@@ -27,9 +27,10 @@ interface ShareModalState extends SceneObjectState {
   activeTab: string;
 }
 
-const customDashboardTabs: Array<new (...args: SceneShareTabState[]) => SceneShareTab> = [];
+type customDashboardTabType = new (...args: SceneShareTabState[]) => SceneShareTab;
+const customDashboardTabs: customDashboardTabType[] = [];
 
-export function addDashboardShareTab(tab: new (...args: SceneShareTabState[]) => SceneShareTab) {
+export function addDashboardShareTab(tab: customDashboardTabType) {
   customDashboardTabs.push(tab);
 }
 
