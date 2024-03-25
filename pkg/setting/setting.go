@@ -91,27 +91,28 @@ type Cfg struct {
 	appliedEnvOverrides          []string
 
 	// HTTP Server Settings
-	CertFile         string
-	KeyFile          string
-	HTTPAddr         string
-	HTTPPort         string
-	Env              string
-	AppURL           string
-	AppSubURL        string
-	InstanceName     string
-	ServeFromSubPath bool
-	StaticRootPath   string
-	Protocol         Scheme
-	SocketGid        int
-	SocketMode       int
-	SocketPath       string
-	RouterLogging    bool
-	Domain           string
-	CDNRootURL       *url.URL
-	ReadTimeout      time.Duration
-	EnableGzip       bool
-	EnforceDomain    bool
-	MinTLSVersion    string
+	CertFile          string
+	KeyFile           string
+	CertWatchInterval time.Duration
+	HTTPAddr          string
+	HTTPPort          string
+	Env               string
+	AppURL            string
+	AppSubURL         string
+	InstanceName      string
+	ServeFromSubPath  bool
+	StaticRootPath    string
+	Protocol          Scheme
+	SocketGid         int
+	SocketMode        int
+	SocketPath        string
+	RouterLogging     bool
+	Domain            string
+	CDNRootURL        *url.URL
+	ReadTimeout       time.Duration
+	EnableGzip        bool
+	EnforceDomain     bool
+	MinTLSVersion     string
 
 	// Security settings
 	SecretKey             string
@@ -1493,7 +1494,7 @@ func readSecuritySettings(iniFile *ini.File, cfg *Cfg) error {
 	cfg.StrictTransportSecurityMaxAge = security.Key("strict_transport_security_max_age_seconds").MustInt(86400)
 	cfg.StrictTransportSecurityPreload = security.Key("strict_transport_security_preload").MustBool(false)
 	cfg.StrictTransportSecuritySubDomains = security.Key("strict_transport_security_subdomains").MustBool(false)
-	cfg.AngularSupportEnabled = security.Key("angular_support_enabled").MustBool(true)
+	cfg.AngularSupportEnabled = security.Key("angular_support_enabled").MustBool(false)
 	cfg.CSPEnabled = security.Key("content_security_policy").MustBool(false)
 	cfg.CSPTemplate = security.Key("content_security_policy_template").MustString("")
 	cfg.CSPReportOnlyEnabled = security.Key("content_security_policy_report_only").MustBool(false)
@@ -1655,7 +1656,9 @@ func readUserSettings(iniFile *ini.File, cfg *Cfg) error {
 			string(roletype.RoleAdmin)})
 	cfg.VerifyEmailEnabled = users.Key("verify_email_enabled").MustBool(false)
 
-	cfg.CaseInsensitiveLogin = users.Key("case_insensitive_login").MustBool(true)
+	// Deprecated
+	// cfg.CaseInsensitiveLogin = users.Key("case_insensitive_login").MustBool(true)
+	cfg.CaseInsensitiveLogin = true
 
 	cfg.LoginHint = valueAsString(users, "login_hint", "")
 	cfg.PasswordHint = valueAsString(users, "password_hint", "")
@@ -1837,6 +1840,7 @@ func (cfg *Cfg) readServerSettings(iniFile *ini.File) error {
 	cfg.AppSubURL = AppSubUrl
 	cfg.Protocol = HTTPScheme
 	cfg.ServeFromSubPath = server.Key("serve_from_sub_path").MustBool(false)
+	cfg.CertWatchInterval = server.Key("certs_watch_interval").MustDuration(0)
 
 	protocolStr := valueAsString(server, "protocol", "http")
 

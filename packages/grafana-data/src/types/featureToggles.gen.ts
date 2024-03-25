@@ -27,7 +27,6 @@ export interface FeatureToggles {
   publicDashboardsScene?: boolean;
   lokiExperimentalStreaming?: boolean;
   featureHighlights?: boolean;
-  migrationLocking?: boolean;
   storage?: boolean;
   correlations?: boolean;
   exploreContentOutline?: boolean;
@@ -38,6 +37,7 @@ export interface FeatureToggles {
   autoMigratePiechartPanel?: boolean;
   autoMigrateWorldmapPanel?: boolean;
   autoMigrateStatPanel?: boolean;
+  autoMigrateXYChartPanel?: boolean;
   disableAngular?: boolean;
   canvasPanelNesting?: boolean;
   newVizTooltips?: boolean;
@@ -175,4 +175,5 @@ export interface FeatureToggles {
   betterPageScrolling?: boolean;
   scopeFilters?: boolean;
   ssoSettingsSAML?: boolean;
+  usePrometheusFrontendPackage?: boolean;
 }

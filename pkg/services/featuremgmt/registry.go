@@ -84,12 +84,6 @@ var (
 			AllowSelfServe: true,
 		},
 		{
-			Name:        "migrationLocking",
-			Description: "Lock database during migrations",
-			Stage:       FeatureStagePublicPreview,
-			Owner:       grafanaBackendPlatformSquad,
-		},
-		{
 			Name:        "storage",
 			Description: "Configurable storage for dashboards, datasources, and resources",
 			Stage:       FeatureStageExperimental,
@@ -155,6 +149,13 @@ var (
 		{
 			Name:         "autoMigrateStatPanel",
 			Description:  "Migrate old stat panel to supported stat panel - broken out from autoMigrateOldPanels to enable granular tracking",
+			Stage:        FeatureStagePublicPreview,
+			FrontendOnly: true,
+			Owner:        grafanaDatavizSquad,
+		},
+		{
+			Name:         "autoMigrateXYChartPanel",
+			Description:  "Migrate old XYChart panel to new XYChart2 model",
 			Stage:        FeatureStagePublicPreview,
 			FrontendOnly: true,
 			Owner:        grafanaDatavizSquad,
@@ -982,9 +983,10 @@ var (
 		{
 			Name:         "alertingSimplifiedRouting",
 			Description:  "Enables users to easily configure alert notifications by specifying a contact point directly when editing or creating an alert rule",
-			Stage:        FeatureStagePublicPreview,
+			Stage:        FeatureStageGeneralAvailability,
 			FrontendOnly: false,
 			Owner:        grafanaAlertingSquad,
+			Expression:   "true", // enabled by default
 		},
 		{
 			Name:         "logRowsPopoverMenu",
@@ -1171,6 +1173,13 @@ var (
 			Owner:             identityAccessTeam,
 			HideFromDocs:      true,
 			HideFromAdminPage: true,
+		},
+		{
+			Name:         "usePrometheusFrontendPackage",
+			Description:  "Use the @grafana/prometheus frontend package in core Prometheus.",
+			Stage:        FeatureStageExperimental,
+			FrontendOnly: true,
+			Owner:        grafanaObservabilityMetricsSquad,
 		},
 	}
 )

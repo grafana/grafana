@@ -43,10 +43,6 @@ const (
 	// Highlight Grafana Enterprise features
 	FlagFeatureHighlights = "featureHighlights"
 
-	// FlagMigrationLocking
-	// Lock database during migrations
-	FlagMigrationLocking = "migrationLocking"
-
 	// FlagStorage
 	// Configurable storage for dashboards, datasources, and resources
 	FlagStorage = "storage"
@@ -86,6 +82,10 @@ const (
 	// FlagAutoMigrateStatPanel
 	// Migrate old stat panel to supported stat panel - broken out from autoMigrateOldPanels to enable granular tracking
 	FlagAutoMigrateStatPanel = "autoMigrateStatPanel"
+
+	// FlagAutoMigrateXYChartPanel
+	// Migrate old XYChart panel to new XYChart2 model
+	FlagAutoMigrateXYChartPanel = "autoMigrateXYChartPanel"
 
 	// FlagDisableAngular
 	// Dynamic flag to disable angular at runtime. The preferred method is to set `angular_support_enabled` to `false` in the [security] settings, which allows you to change the state at runtime.
@@ -634,4 +634,8 @@ const (
 	// FlagSsoSettingsSAML
 	// Use the new SSO Settings API to configure the SAML connector
 	FlagSsoSettingsSAML = "ssoSettingsSAML"
+
+	// FlagUsePrometheusFrontendPackage
+	// Use the @grafana/prometheus frontend package in core Prometheus.
+	FlagUsePrometheusFrontendPackage = "usePrometheusFrontendPackage"
 )
