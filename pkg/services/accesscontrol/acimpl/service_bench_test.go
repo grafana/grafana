@@ -139,7 +139,7 @@ func setupBenchEnv(b *testing.B, usersCount, resourceCount int) (accesscontrol.S
 	return acService, &user.SignedInUser{OrgID: 1, Permissions: map[int64]map[string][]string{1: userPermissions}}
 }
 
-func benchSearchUsersPermissions(b *testing.B, usersCount, resourceCount int) {
+func benchSearchUsersWithActionPrefix(b *testing.B, usersCount, resourceCount int) {
 	acService, siu := setupBenchEnv(b, usersCount, resourceCount)
 	b.ResetTimer()
 
@@ -155,52 +155,62 @@ func benchSearchUsersPermissions(b *testing.B, usersCount, resourceCount int) {
 }
 
 // Lots of resources
-func BenchmarkSearchUsersPermissions_10_1K(b *testing.B)  { benchSearchUsersPermissions(b, 10, 1000) }  // ~0.047s/op
-func BenchmarkSearchUsersPermissions_10_10K(b *testing.B) { benchSearchUsersPermissions(b, 10, 10000) } // ~0.5s/op
-func BenchmarkSearchUsersPermissions_10_100K(b *testing.B) {
+func BenchmarkSearchUsersWithActionPrefix_10_1K(b *testing.B) {
+	benchSearchUsersWithActionPrefix(b, 10, 1000)
+} // ~0.047s/op
+func BenchmarkSearchUsersWithActionPrefix_10_10K(b *testing.B) {
+	benchSearchUsersWithActionPrefix(b, 10, 10000)
+} // ~0.5s/op
+func BenchmarkSearchUsersWithActionPrefix_10_100K(b *testing.B) {
 	if testing.Short() {
 		b.Skip("Skipping benchmark in short mode")
 	}
-	benchSearchUsersPermissions(b, 10, 100000)
+	benchSearchUsersWithActionPrefix(b, 10, 100000)
 } // ~4.6s/op
-func BenchmarkSearchUsersPermissions_10_1M(b *testing.B) {
+func BenchmarkSearchUsersWithActionPrefix_10_1M(b *testing.B) {
 	if testing.Short() {
 		b.Skip("Skipping benchmark in short mode")
 	}
-	benchSearchUsersPermissions(b, 10, 1000000)
+	benchSearchUsersWithActionPrefix(b, 10, 1000000)
 } // ~55.36s/op
 
 // Lots of users (most probable case)
-func BenchmarkSearchUsersPermissions_1K_10(b *testing.B)  { benchSearchUsersPermissions(b, 1000, 10) }  // ~0.056s/op
-func BenchmarkSearchUsersPermissions_10K_10(b *testing.B) { benchSearchUsersPermissions(b, 10000, 10) } // ~0.58s/op
-func BenchmarkSearchUsersPermissions_100K_10(b *testing.B) {
+func BenchmarkSearchUsersWithActionPrefix_1K_10(b *testing.B) {
+	benchSearchUsersWithActionPrefix(b, 1000, 10)
+} // ~0.056s/op
+func BenchmarkSearchUsersWithActionPrefix_10K_10(b *testing.B) {
+	benchSearchUsersWithActionPrefix(b, 10000, 10)
+} // ~0.58s/op
+func BenchmarkSearchUsersWithActionPrefix_100K_10(b *testing.B) {
 	if testing.Short() {
 		b.Skip("Skipping benchmark in short mode")
 	}
-	benchSearchUsersPermissions(b, 100000, 10)
+	benchSearchUsersWithActionPrefix(b, 100000, 10)
 } // ~6.21s/op
-func BenchmarkSearchUsersPermissions_1M_10(b *testing.B) {
+func BenchmarkSearchUsersWithActionPrefix_1M_10(b *testing.B) {
 	if testing.Short() {
 		b.Skip("Skipping benchmark in short mode")
 	}
-	benchSearchUsersPermissions(b, 1000000, 10)
+	benchSearchUsersWithActionPrefix(b, 1000000, 10)
 } // ~57s/op
 
 // Lots of both
 
-func BenchmarkSearchUsersPermissions_1K_1K(b *testing.B) { benchSearchUsersPermissions(b, 1000, 1000) }
+func BenchmarkSearchUsersWithActionPrefix_1K_1K(b *testing.B) {
+	benchSearchUsersWithActionPrefix(b, 1000, 1000)
+}
 
-func BenchmarkSearchUsersPermissions_10K_100(b *testing.B) {
+func BenchmarkSearchUsersWithActionPrefix_10K_100(b *testing.B) {
 	if testing.Short() {
 		b.Skip("Skipping benchmark in short mode")
 	}
-	benchSearchUsersPermissions(b, 10000, 100)
+	benchSearchUsersWithActionPrefix(b, 10000, 100)
 } // ~1.45s/op
-func BenchmarkSearchUsersPermissions_10K_1K(b *testing.B) {
+func BenchmarkSearchUsersWithActionPrefix_10K_1K(b *testing.B) {
 	if testing.Short() {
 		b.Skip("Skipping benchmark in short mode")
 	}
-	benchSearchUsersPermissions(b, 10000, 1000)
+	benchSearchUsersWithActionPrefix(b, 10000, 1000)
 } // ~50s/op
 
 // Benchmarking search when we specify Action and Scope
