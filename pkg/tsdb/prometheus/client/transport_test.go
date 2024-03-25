@@ -44,6 +44,6 @@ func TestCreateTransportOptions(t *testing.T) {
 		ctx := backend.WithGrafanaConfig(context.Background(), cfg)
 		opts, err := CreateTransportOptions(ctx, settings, backend.NewLoggerWith("logger", "test"))
 		require.NoError(t, err)
-		require.Equal(t, 3, len(opts.Middlewares))
+		require.Equal(t, 2, len(opts.Middlewares))
 	})
 }
