@@ -68,17 +68,18 @@ type TimeRange struct {
 }
 
 type Query struct {
-	Expr          string
-	Step          time.Duration
-	LegendFormat  string
-	Start         time.Time
-	End           time.Time
-	RefId         string
-	InstantQuery  bool
-	RangeQuery    bool
-	ExemplarQuery bool
-	UtcOffsetSec  int64
-	Scope         Scope
+	Expr            string
+	Step            time.Duration
+	LegendFormat    string
+	LegendUrlFormat string
+	Start           time.Time
+	End             time.Time
+	RefId           string
+	InstantQuery    bool
+	RangeQuery      bool
+	ExemplarQuery   bool
+	UtcOffsetSec    int64
+	Scope           Scope
 }
 
 type Scope struct {
