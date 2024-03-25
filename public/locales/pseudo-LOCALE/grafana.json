@@ -369,7 +369,6 @@
       "title-label": "Ŧįŧľę"
     },
     "json-editor": {
-      "apply-button": "Åppľy čĥäŉģęş",
       "save-button": "Ŝävę čĥäŉģęş",
       "subtitle": "Ŧĥę ĴŜØŃ mőđęľ þęľőŵ įş ŧĥę đäŧä şŧřūčŧūřę ŧĥäŧ đęƒįŉęş ŧĥę đäşĥþőäřđ. Ŧĥįş įŉčľūđęş đäşĥþőäřđ şęŧŧįŉģş, päŉęľ şęŧŧįŉģş, ľäyőūŧ, qūęřįęş, äŉđ şő őŉ.",
       "title": "ĴŜØŃ Mőđęľ"
@@ -563,6 +562,9 @@
   "grafana-ui": {
     "drawer": {
       "close": "Cľőşę"
+    },
+    "empty-state": {
+      "not-found-message": "Ńő řęşūľŧş ƒőūŉđ"
     },
     "modal": {
       "close-tooltip": "Cľőşę"
@@ -790,8 +792,11 @@
       "datasource": "Đäŧä şőūřčę",
       "unknown": "Ůŉĸŉőŵŉ"
     },
-    "resources": {
-      "disconnect": "Đįşčőŉŉęčŧ"
+    "summary": {
+      "disconnect": "Đįşčőŉŉęčŧ",
+      "error-starting-migration": "Ŧĥęřę ŵäş äŉ ęřřőř şŧäřŧįŉģ čľőūđ mįģřäŧįőŉ",
+      "start-migration": "Ůpľőäđ ęvęřyŧĥįŉģ",
+      "target-stack-title": "Ůpľőäđįŉģ ŧő"
     },
     "token-status": {
       "active": "Ŧőĸęŉ čřęäŧęđ äŉđ äčŧįvę",
@@ -1344,11 +1349,12 @@
     "header": {
       "collapse-row": "Cőľľäpşę qūęřy řőŵ",
       "datasource-help": "Ŝĥőŵ đäŧä şőūřčę ĥęľp",
-      "disable-query": "Đįşäþľę qūęřy",
       "drag-and-drop": "Đřäģ äŉđ đřőp ŧő řęőřđęř",
       "duplicate-query": "Đūpľįčäŧę qūęřy",
       "expand-row": "Ēχpäŉđ qūęřy řőŵ",
+      "hide-response": "Ħįđę řęşpőŉşę",
       "remove-query": "Ŗęmővę qūęřy",
+      "show-response": "Ŝĥőŵ řęşpőŉşę",
       "toggle-edit-mode": "Ŧőģģľę ŧęχŧ ęđįŧ mőđę"
     },
     "query-editor-not-exported": "Đäŧä şőūřčę pľūģįŉ đőęş ŉőŧ ęχpőřŧ äŉy Qūęřy Ēđįŧőř čőmpőŉęŉŧ"
@@ -1474,7 +1480,7 @@
       "library-panel": "Ŀįþřäřy päŉęľ",
       "link": "Ŀįŉĸ",
       "panel-embed": "Ēmþęđ",
-      "public-dashboard": "Pūþľįşĥ Đäşĥþőäřđ",
+      "public-dashboard": "Pūþľįč Đäşĥþőäřđ",
       "public-dashboard-title": "Pūþľįč đäşĥþőäřđ",
       "snapshot": "Ŝŉäpşĥőŧ"
     },

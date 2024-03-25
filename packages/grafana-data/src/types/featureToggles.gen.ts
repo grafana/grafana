@@ -24,9 +24,9 @@ export interface FeatureToggles {
   panelTitleSearch?: boolean;
   publicDashboards?: boolean;
   publicDashboardsEmailSharing?: boolean;
+  publicDashboardsScene?: boolean;
   lokiExperimentalStreaming?: boolean;
   featureHighlights?: boolean;
-  migrationLocking?: boolean;
   storage?: boolean;
   correlations?: boolean;
   exploreContentOutline?: boolean;
@@ -37,6 +37,7 @@ export interface FeatureToggles {
   autoMigratePiechartPanel?: boolean;
   autoMigrateWorldmapPanel?: boolean;
   autoMigrateStatPanel?: boolean;
+  autoMigrateXYChartPanel?: boolean;
   disableAngular?: boolean;
   canvasPanelNesting?: boolean;
   newVizTooltips?: boolean;
@@ -48,8 +49,6 @@ export interface FeatureToggles {
   grpcServer?: boolean;
   unifiedStorage?: boolean;
   cloudWatchCrossAccountQuerying?: boolean;
-  redshiftAsyncQueryDataSupport?: boolean;
-  athenaAsyncQueryDataSupport?: boolean;
   showDashboardValidationWarnings?: boolean;
   mysqlAnsiQuotes?: boolean;
   accessControlOnCall?: boolean;
@@ -174,8 +173,8 @@ export interface FeatureToggles {
   expressionParser?: boolean;
   groupByVariable?: boolean;
   betterPageScrolling?: boolean;
-  scopeFilters?: boolean;
-  emailVerificationEnforcement?: boolean;
   authAPIAccessTokenAuth?: boolean;
+  scopeFilters?: boolean;
   ssoSettingsSAML?: boolean;
+  usePrometheusFrontendPackage?: boolean;
 }

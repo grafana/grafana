@@ -2,7 +2,7 @@ import { map, of } from 'rxjs';
 
 import { DataQueryRequest, DataSourceApi, DataSourceInstanceSettings, LoadingState, PanelData } from '@grafana/data';
 import { locationService } from '@grafana/runtime';
-import { SceneGridItem, SceneQueryRunner, VizPanel } from '@grafana/scenes';
+import { SceneQueryRunner, VizPanel } from '@grafana/scenes';
 import { DataQuery, DataSourceJsonData, DataSourceRef } from '@grafana/schema';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 import { InspectTab } from 'app/features/inspector/types';
@@ -10,6 +10,7 @@ import * as libAPI from 'app/features/library-panels/state/api';
 import { SHARED_DASHBOARD_QUERY } from 'app/plugins/datasource/dashboard';
 import { DASHBOARD_DATASOURCE_PLUGIN_ID } from 'app/plugins/datasource/dashboard/types';
 
+import { DashboardGridItem } from '../scene/DashboardGridItem';
 import { LibraryVizPanel } from '../scene/LibraryVizPanel';
 import { PanelTimeRange, PanelTimeRangeState } from '../scene/PanelTimeRange';
 import { transformSaveModelToScene } from '../serialization/transformSaveModelToScene';
@@ -94,6 +95,17 @@ const instance2SettingsMock = {
   },
 };
 
+// Mocking the build in Grafana data source to avoid annotations data layer errors.
+const grafanaDs = {
+  id: 1,
+  uid: '-- Grafana --',
+  name: 'grafana',
+  type: 'grafana',
+  meta: {
+    id: 'grafana',
+  },
+};
+
 // Mock the store module
 jest.mock('app/core/store', () => ({
   exists: jest.fn(),
@@ -111,6 +123,11 @@ jest.mock('@grafana/runtime', () => ({
   },
   getDataSourceSrv: () => ({
     get: async (ref: DataSourceRef) => {
+      // Mocking the build in Grafana data source to avoid annotations data layer errors.
+      if (ref.uid === '-- Grafana --') {
+        return grafanaDs;
+      }
+
       if (ref.uid === 'gdev-testdata') {
         return ds1Mock;
       }
@@ -162,7 +179,14 @@ describe('VizPanelManager', () => {
         title: 'Panel A',
         key: 'panel-1',
         pluginId: 'table',
-        $data: new SceneQueryRunner({ key: 'data-query-runner', queries: [{ refId: 'A' }] }),
+        $data: new SceneQueryRunner({
+          key: 'data-query-runner',
+          datasource: {
+            type: 'grafana-testdata-datasource',
+            uid: 'gdev-testdata',
+          },
+          queries: [{ refId: 'A' }],
+        }),
         options: undefined,
         fieldConfig: {
           defaults: {
@@ -170,6 +194,10 @@ describe('VizPanelManager', () => {
           },
           overrides,
         },
+      });
+
+      new DashboardGridItem({
+        body: vizPanel,
       });
 
       const vizPanelManager = VizPanelManager.createFor(vizPanel);
@@ -189,11 +217,22 @@ describe('VizPanelManager', () => {
         title: 'Panel A',
         key: 'panel-1',
         pluginId: 'table',
-        $data: new SceneQueryRunner({ key: 'data-query-runner', queries: [{ refId: 'A' }] }),
+        $data: new SceneQueryRunner({
+          key: 'data-query-runner',
+          datasource: {
+            type: 'grafana-testdata-datasource',
+            uid: 'gdev-testdata',
+          },
+          queries: [{ refId: 'A' }],
+        }),
         options: {
           customOption: 'A',
         },
         fieldConfig: { defaults: { custom: 'Custom' }, overrides: [] },
+      });
+
+      new DashboardGridItem({
+        body: vizPanel,
       });
 
       const vizPanelManager = VizPanelManager.createFor(vizPanel);
@@ -237,7 +276,7 @@ describe('VizPanelManager', () => {
         _loadedPanel: libraryPanelModel,
       });
 
-      new SceneGridItem({ body: libraryPanel });
+      new DashboardGridItem({ body: libraryPanel });
 
       const panelManager = VizPanelManager.createFor(panel);
 
@@ -276,7 +315,7 @@ describe('VizPanelManager', () => {
         _loadedPanel: libraryPanelModel,
       });
 
-      const gridItem = new SceneGridItem({ body: libraryPanel });
+      const gridItem = new DashboardGridItem({ body: libraryPanel });
 
       const panelManager = VizPanelManager.createFor(panel);
       panelManager.unlinkLibraryPanel();
@@ -694,10 +733,28 @@ describe('VizPanelManager', () => {
       });
     });
   });
+
+  it('should load last used data source if no data source specified for a panel', async () => {
+    store.exists.mockReturnValue(true);
+    store.getObject.mockReturnValue({
+      dashboardUid: 'ffbe00e2-803c-4d49-adb7-41aad336234f',
+      datasourceUid: 'gdev-testdata',
+    });
+    const { scene, panel } = setupTest('panel-5');
+    scene.setState({ editPanel: buildPanelEditScene(panel) });
+
+    const vizPanelManager = scene.state.editPanel!.state.vizManager;
+    vizPanelManager.activate();
+    await Promise.resolve();
+
+    expect(vizPanelManager.state.datasource).toEqual(ds1Mock);
+    expect(vizPanelManager.state.dsSettings).toEqual(instance1SettingsMock);
+  });
 });
 
 const setupTest = (panelId: string) => {
   const scene = transformSaveModelToScene({ dashboard: testDashboard, meta: {} });
+
   const panel = findVizPanelByKey(scene, panelId)!;
 
   const vizPanelManager = VizPanelManager.createFor(panel);

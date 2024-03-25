@@ -224,6 +224,7 @@ datasources:
       version: SQL
       dbName: site
       httpMode: POST
+      insecureGrpc: false
     secureJsonData:
       token: '<api-token>'
 ```
