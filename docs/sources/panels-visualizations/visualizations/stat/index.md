@@ -21,10 +21,6 @@ weight: 100
 
 # Stat
 
-Stats show one large stat value with an optional graph sparkline. You can control the background or value color using thresholds or overrides.
-
-{{< figure src="/static/img/docs/v66/stat_panel_dark3.png" max-width="1025px" caption="Stat visualization" >}}
-
 {{% admonition type="note" %}}
 This visualization replaces the Singlestat visualization, which was deprecated in Grafana 7.0 and removed in Grafana 8.0.
 {{% /admonition %}}
@@ -94,11 +90,7 @@ By default, a stat displays one of the following:
 - Just the value for a single series or field.
 - Both the value and name for multiple series or fields.
 
-You can use the **Text mode** to control how the text is displayed.
-
-Example screenshot:
-
-{{< figure src="/static/img/docs/v71/stat-panel-text-modes.png" max-width="1025px" caption="Stat visualization" >}}
+You can use the [**Text mode**](#text-mode) to control how the text is displayed.
 
 ## Automatic layout adjustment
 
