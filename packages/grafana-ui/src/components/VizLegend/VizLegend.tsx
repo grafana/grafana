@@ -101,6 +101,7 @@ export function VizLegend<T>({
           isSortable={isSortable}
         />
       );
+    // JEV: REFACTOR: Do we even need a "list" component in general? Just disable some table features?
     case LegendDisplayMode.List:
       return (
         <VizLegendList<T>
