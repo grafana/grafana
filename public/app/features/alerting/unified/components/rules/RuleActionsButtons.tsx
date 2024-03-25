@@ -17,18 +17,23 @@ import {
   Stack,
 } from '@grafana/ui';
 import { useAppNotification } from 'app/core/copy/appNotification';
+import { LIMIT_ALERTS } from 'app/features/alerting/unified/RuleList';
+import { alertRuleApi } from 'app/features/alerting/unified/api/alertRuleApi';
+import { useRulesFilter } from 'app/features/alerting/unified/hooks/useFilteredRules';
 import { useDispatch } from 'app/types';
 import { CombinedRule, RuleIdentifier, RulesSource } from 'app/types/unified-alerting';
 
 import { AlertRuleAction, useAlertRuleAbility } from '../../hooks/useAbilities';
-import { deleteRuleAction } from '../../state/actions';
+import { deleteRuleAction, fetchAllPromAndRulerRulesAction } from '../../state/actions';
 import { getRulesSourceName } from '../../utils/datasource';
 import { createShareLink, createViewLink } from '../../utils/misc';
 import * as ruleId from '../../utils/rule-id';
-import { isGrafanaRulerRule } from '../../utils/rules';
+import { isGrafanaRulerRule, isGrafanaRulerRulePaused } from '../../utils/rules';
 import { createUrl } from '../../utils/url';
 
 import { RedirectToCloneRule } from './CloneRule';
+
+const { useUpdateRuleMutation } = alertRuleApi;
 
 export const matchesWidth = (width: number) => window.matchMedia(`(max-width: ${width}px)`).matches;
 
@@ -42,6 +47,7 @@ export const RuleActionsButtons = ({ rule, rulesSource }: Props) => {
   const location = useLocation();
   const notifyApp = useAppNotification();
   const style = useStyles2(getStyles);
+  const [updateRule] = useUpdateRuleMutation();
 
   const [redirectToClone, setRedirectToClone] = useState<
     { identifier: RuleIdentifier; isProvisioned: boolean } | undefined
@@ -49,6 +55,7 @@ export const RuleActionsButtons = ({ rule, rulesSource }: Props) => {
 
   const { namespace, group, rulerRule } = rule;
   const [ruleToDelete, setRuleToDelete] = useState<CombinedRule>();
+  const { hasActiveFilters } = useRulesFilter();
 
   const returnTo = location.pathname + location.search;
   const isViewMode = inViewMode(location.pathname);
@@ -67,6 +74,45 @@ export const RuleActionsButtons = ({ rule, rulesSource }: Props) => {
 
   const buttons: JSX.Element[] = [];
   const moreActions: JSX.Element[] = [];
+
+  /**
+   * Triggers API call to update the current rule to the new `is_paused` state
+   */
+  const setRulePause = async (newIsPaused: boolean) => {
+    if (!isGrafanaRulerRule(rule.rulerRule)) {
+      return;
+    }
+    const ruleUid = rule.rulerRule.grafana_alert.uid;
+
+    // Parse the rules into correct format for API
+    const modifiedRules = group.rules.map((groupRule) => {
+      if (isGrafanaRulerRule(groupRule.rulerRule) && groupRule.rulerRule.grafana_alert.uid === ruleUid) {
+        return {
+          ...groupRule.rulerRule,
+          grafana_alert: {
+            ...groupRule.rulerRule.grafana_alert,
+            is_paused: newIsPaused,
+          },
+        };
+      }
+
+      return groupRule.rulerRule!;
+    });
+
+    const payload = {
+      interval: group.interval!,
+      name: group.name,
+      rules: modifiedRules,
+    };
+
+    await updateRule({ nameSpaceUID: rule.namespace.uid!, payload }).unwrap();
+
+    const limitAlerts = hasActiveFilters ? undefined : LIMIT_ALERTS;
+    // Trigger a re-fetch of the rules table
+    // TODO: Migrate rules table functionality to RTK Query, so we instead rely
+    // on tag invalidation (or optimistic cache updates) for this
+    await dispatch(fetchAllPromAndRulerRulesAction(false, { limitAlerts }));
+  };
 
   const deleteRule = () => {
     if (ruleToDelete && ruleToDelete.rulerRule) {
@@ -122,6 +168,19 @@ export const RuleActionsButtons = ({ rule, rulesSource }: Props) => {
             href={editURL}
           />
         </Tooltip>
+      );
+
+      const isPaused = isGrafanaRulerRule(rule.rulerRule) && isGrafanaRulerRulePaused(rule.rulerRule);
+      const icon = isPaused ? 'play' : 'pause';
+      const title = isPaused ? 'Resume alert evaluation' : 'Pause alert evaluation';
+      moreActions.push(
+        <Menu.Item
+          label={title}
+          icon={icon}
+          onClick={() => {
+            setRulePause(!isPaused);
+          }}
+        />
       );
     }
 
