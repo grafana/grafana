@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import { min, max, isNumber, debounce } from 'lodash';
+import { min, max, isNumber, throttle } from 'lodash';
 import React from 'react';
 
 import { DataFrame, FieldType, GrafanaTheme2, PanelData, SelectableValue } from '@grafana/data';
@@ -123,18 +123,22 @@ export class BreakdownScene extends SceneObjectBase<BreakdownSceneState> {
       return;
     }
 
+    if (this.breakdownPanelMaxValue === newMax && this.breakdownPanelMinValue === newMin) {
+      return;
+    }
+
     this.breakdownPanelMaxValue = newMax;
     this.breakdownPanelMinValue = newMin;
 
     this._triggerAxisChangedEvent();
   }
 
-  private _triggerAxisChangedEvent = debounce(() => {
+  private _triggerAxisChangedEvent = throttle(() => {
     const { breakdownPanelMinValue, breakdownPanelMaxValue } = this;
     if (breakdownPanelMinValue !== undefined && breakdownPanelMaxValue !== undefined) {
       this.publishEvent(new BreakdownAxisChangeEvent({ min: breakdownPanelMinValue, max: breakdownPanelMaxValue }));
     }
-  }, 0);
+  }, 1000);
 
   private clearBreakdownPanelAxisValues() {
     this.breakdownPanelMaxValue = undefined;
