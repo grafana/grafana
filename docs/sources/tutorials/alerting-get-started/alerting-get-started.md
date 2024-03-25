@@ -101,7 +101,7 @@ Next, let's configure a Contact Point in Grafana's Alerting UI to send notificat
 
 We have now created a dummy webhook endpoint and created a new Alerting Contact Point in Grafana. Now we can create an alert rule and link it to this new channel.
 
-## Create an Alert
+## Create an alert
 
 Next, we'll establish an alert within Grafana Alerting to notify us whenever our sample app experiences a specific volume of requests.
 
