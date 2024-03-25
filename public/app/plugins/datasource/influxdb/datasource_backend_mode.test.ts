@@ -218,7 +218,10 @@ describe('InfluxDataSource Backend Mode', () => {
   });
 
   describe('variable interpolation with chained variables with backend mode', () => {
-    const variablesMock = [queryBuilder().withId('var1').withName('var1').withCurrent('var1').build()];
+    const variablesMock = [
+      queryBuilder().withId('var1').withName('var1').withCurrent('var1').build(),
+      queryBuilder().withId('path').withName('path').withCurrent('/etc/hosts').build(),
+    ];
     const mockTemplateService = new TemplateSrv({
       getVariables: () => variablesMock,
       getVariableWithName: (name: string) => variablesMock.filter((v) => v.name === name)[0],
@@ -307,6 +310,22 @@ describe('InfluxDataSource Backend Mode', () => {
       };
       const res = ds.applyVariables(query, {});
       const expected = `/^.*-var1$/`;
+      expect(res.tags?.[0].value).toEqual(expected);
+    });
+
+    it('should remove regex wrappers when operator is not a regex operator', () => {
+      const query: InfluxQuery = {
+        refId: 'A',
+        tags: [
+          {
+            key: 'key',
+            operator: '=',
+            value: '/^$path$/',
+          },
+        ],
+      };
+      const res = ds.applyVariables(query, {});
+      const expected = `/etc/hosts`;
       expect(res.tags?.[0].value).toEqual(expected);
     });
   });

@@ -563,6 +563,9 @@
     "drawer": {
       "close": "Close"
     },
+    "empty-state": {
+      "not-found-message": "No results found"
+    },
     "modal": {
       "close-tooltip": "Close"
     },
@@ -1477,7 +1480,7 @@
       "library-panel": "Library panel",
       "link": "Link",
       "panel-embed": "Embed",
-      "public-dashboard": "Publish Dashboard",
+      "public-dashboard": "Public Dashboard",
       "public-dashboard-title": "Public dashboard",
       "snapshot": "Snapshot"
     },
