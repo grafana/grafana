@@ -1183,7 +1183,7 @@ var (
 		},
 		{
 			Name:              "oauthRequireSubClaim",
-			Description:       "Requre that sub claims is present in oauth tokens.",
+			Description:       "Require that sub claims is present in oauth tokens.",
 			Stage:             FeatureStageExperimental,
 			Owner:             identityAccessTeam,
 			HideFromDocs:      true,

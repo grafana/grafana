@@ -640,6 +640,6 @@ const (
 	FlagUsePrometheusFrontendPackage = "usePrometheusFrontendPackage"
 
 	// FlagOauthRequireSubClaim
-	// Requre that sub claims is present in oauth tokens.
+	// Require that sub claims is present in oauth tokens.
 	FlagOauthRequireSubClaim = "oauthRequireSubClaim"
 )
