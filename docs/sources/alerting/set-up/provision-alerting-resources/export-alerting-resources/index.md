@@ -142,7 +142,7 @@ However, note the standard endpoints return a JSON format that is not compatible
 
 ### Export API endpoints
 
-The **Alerting HTTP API** provides specific endpoints for exporting alerting resources in YAML or JSON formats, facilitating [provisioning via configuration files][alerting_file_provisioning]. Currently, Terraform format is not supported.
+The **Alerting HTTP API** provides specific endpoints for exporting alerting resources in YAML or JSON, facilitating [provisioning via configuration files][alerting_file_provisioning], or Terraform (HCL).
 
 | Resource                 | Method / URI                                                         | Summary                                                                                  |
 | ------------------------ | -------------------------------------------------------------------- | ---------------------------------------------------------------------------------------- |
