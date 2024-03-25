@@ -6,7 +6,7 @@ export function addTooltipOptions<T extends OptionsWithTooltip>(
   singleOnly = false,
   setProximity = false,
   defaultOptions?: Partial<OptionsWithTooltip>,
-  tooltipStats = false
+  showTooltipCalcs = false
 ) {
   const category = ['Tooltip'];
   const modeOptions = singleOnly
@@ -80,7 +80,7 @@ export function addTooltipOptions<T extends OptionsWithTooltip>(
       showIf: (options: T) => false, //options.tooltip?.mode !== TooltipDisplayMode.None,
     });
 
-  if (tooltipStats) {
+  if (showTooltipCalcs) {
     builder.addCustomEditor<StatsPickerConfigSettings, string[]>({
       id: 'tooltip.calcs',
       path: 'tooltip.calcs',
