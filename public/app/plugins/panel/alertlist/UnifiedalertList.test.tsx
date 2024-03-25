@@ -97,6 +97,7 @@ beforeEach(() => {
         onClick: jest.fn(),
       },
     ],
+    isLoading: false,
   });
 });
 

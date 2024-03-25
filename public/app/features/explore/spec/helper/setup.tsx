@@ -86,7 +86,7 @@ export function setupExplore(options?: SetupOptions): {
     request: jest.fn().mockRejectedValue(undefined),
   });
 
-  setPluginExtensionsHook(() => ({ extensions: [] }));
+  setPluginExtensionsHook(() => ({ extensions: [], isLoading: false }));
 
   // Clear this up otherwise it persists data source selection
   // TODO: probably add test for that too

@@ -80,6 +80,7 @@ beforeEach(() => {
         onClick: jest.fn(),
       },
     ],
+    isLoading: false,
   });
   server.resetHandlers();
   mockAlertmanagerChoiceResponse(server, alertmanagerChoiceMockedResponse);

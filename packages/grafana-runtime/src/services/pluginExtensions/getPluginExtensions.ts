@@ -6,6 +6,10 @@ export type GetPluginExtensions<T = PluginExtension> = (
   options: GetPluginExtensionsOptions
 ) => GetPluginExtensionsResult<T>;
 
+export type UsePluginExtensions<T = PluginExtension> = (
+  options: GetPluginExtensionsOptions
+) => UsePluginExtensionsResult<T>;
+
 export type GetPluginExtensionsOptions = {
   extensionPointId: string;
   context?: object | Record<string | symbol, unknown>;
@@ -14,6 +18,11 @@ export type GetPluginExtensionsOptions = {
 
 export type GetPluginExtensionsResult<T = PluginExtension> = {
   extensions: T[];
+};
+
+export type UsePluginExtensionsResult<T = PluginExtension> = {
+  extensions: T[];
+  isLoading: boolean;
 };
 
 let singleton: GetPluginExtensions | undefined;

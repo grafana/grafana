@@ -74,6 +74,7 @@ describe('ToolbarExtensionPoint', () => {
             path: '/a/grafana-ml-ap/forecast',
           },
         ],
+        isLoading: false,
       });
     });
 
@@ -189,6 +190,7 @@ describe('ToolbarExtensionPoint', () => {
             path: '/a/grafana-ml-ap/forecast',
           },
         ],
+        isLoading: false,
       });
     });
 
@@ -213,7 +215,7 @@ describe('ToolbarExtensionPoint', () => {
   describe('without extension points', () => {
     beforeAll(() => {
       contextSrvMock.hasPermission.mockReturnValue(true);
-      usePluginLinkExtensionsMock.mockReturnValue({ extensions: [] });
+      usePluginLinkExtensionsMock.mockReturnValue({ extensions: [], isLoading: false });
     });
 
     it('should render "add to dashboard" action button if one pane is visible', async () => {
@@ -231,7 +233,7 @@ describe('ToolbarExtensionPoint', () => {
   describe('with insufficient permissions', () => {
     beforeAll(() => {
       contextSrvMock.hasPermission.mockReturnValue(false);
-      usePluginLinkExtensionsMock.mockReturnValue({ extensions: [] });
+      usePluginLinkExtensionsMock.mockReturnValue({ extensions: [], isLoading: false });
     });
 
     it('should not render "add to dashboard" action button', async () => {

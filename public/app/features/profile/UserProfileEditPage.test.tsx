@@ -4,7 +4,7 @@ import React from 'react';
 
 import { OrgRole, PluginExtensionComponent, PluginExtensionTypes } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { setPluginExtensionsHook, GetPluginExtensions } from '@grafana/runtime';
+import { setPluginExtensionsHook, UsePluginExtensions } from '@grafana/runtime';
 import * as useQueryParams from 'app/core/hooks/useQueryParams';
 
 import { TestProvider } from '../../../test/helpers/TestProvider';
@@ -170,7 +170,9 @@ async function getTestContext(overrides: Partial<Props & { extensions: PluginExt
     .mockResolvedValue({ timezone: 'UTC', homeDashboardUID: 'home-dashboard', theme: 'dark' });
   const searchSpy = jest.spyOn(backendSrv, 'search').mockResolvedValue([]);
 
-  const getter: GetPluginExtensions<PluginExtensionComponent> = jest.fn().mockReturnValue({ extensions });
+  const getter: UsePluginExtensions<PluginExtensionComponent> = jest
+    .fn()
+    .mockReturnValue({ extensions, isLoading: false });
 
   setPluginExtensionsHook(getter);
 
