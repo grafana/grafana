@@ -11,7 +11,6 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend/gtime"
 	"github.com/prometheus/prometheus/model/labels"
 
-	"github.com/grafana/grafana/pkg/apis/scope/v0alpha1"
 	"github.com/grafana/grafana/pkg/promlib/intervalv2"
 )
 
@@ -63,7 +62,25 @@ type PrometheusQueryProperties struct {
 	LegendFormat string `json:"legendFormat,omitempty"`
 
 	// ???
-	Scope *v0alpha1.ScopeSpec `json:"scope,omitempty"`
+	Scope *ScopeSpec `json:"scope,omitempty"`
+}
+
+// ScopeSpec is a hand copy of the ScopeSpec struct from pkg/apis/scope/v0alpha1/types.go
+// to avoid import (temp fix)
+type ScopeSpec struct {
+	Title       string        `json:"title"`
+	Type        string        `json:"type"`
+	Description string        `json:"description"`
+	Category    string        `json:"category"`
+	Filters     []ScopeFilter `json:"filters"`
+}
+
+// ScopeFilter is a hand copy of the ScopeFilter struct from pkg/apis/scope/v0alpha1/types.go
+// to avoid import (temp fix)
+type ScopeFilter struct {
+	Key      string `json:"key"`
+	Value    string `json:"value"`
+	Operator string `json:"operator"`
 }
 
 // Internal interval and range variables
@@ -136,7 +153,7 @@ type Query struct {
 	RangeQuery    bool
 	ExemplarQuery bool
 	UtcOffsetSec  int64
-	Scope         *v0alpha1.ScopeSpec
+	Scope         *ScopeSpec
 }
 
 type Scope struct {

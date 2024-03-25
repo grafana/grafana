@@ -789,8 +789,11 @@
       "datasource": "Fuente de datos",
       "unknown": "Desconocido"
     },
-    "resources": {
-      "disconnect": "Desconectar"
+    "summary": {
+      "disconnect": "",
+      "error-starting-migration": "",
+      "start-migration": "",
+      "target-stack-title": ""
     },
     "token-status": {
       "active": "Token creado y activo",
@@ -1343,11 +1346,12 @@
     "header": {
       "collapse-row": "Contraer la fila de la consulta",
       "datasource-help": "Mostrar la ayuda de la fuente de datos",
-      "disable-query": "Deshabilitar consulta",
       "drag-and-drop": "Arrastrar y soltar para reordenar",
       "duplicate-query": "Duplicar consulta",
       "expand-row": "Expandir la fila de la consulta",
+      "hide-response": "",
       "remove-query": "Eliminar consulta",
+      "show-response": "",
       "toggle-edit-mode": "Alternar el modo de edición de texto"
     },
     "query-editor-not-exported": "El complemento de la fuente de datos no exporta ningún componente del editor de consultas"
@@ -1473,7 +1477,7 @@
       "library-panel": "Panel de librería",
       "link": "Enlace",
       "panel-embed": "Incrustar",
-      "public-dashboard": "Publicar panel",
+      "public-dashboard": "",
       "public-dashboard-title": "Tablero público",
       "snapshot": "Instantánea"
     },
