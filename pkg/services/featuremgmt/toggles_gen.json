@@ -2046,6 +2046,23 @@
         "stage": "experimental",
         "codeowner": "@grafana/alerting-squad"
       }
+    },
+    {
+      "metadata": {
+        "name": "oauthRequireSubClaim",
+        "resourceVersion": "1711371458317",
+        "creationTimestamp": "2024-03-25T10:50:29Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2024-03-25 12:57:38.317427693 +0000 UTC"
+        }
+      },
+      "spec": {
+        "description": "Require that sub claims is present in oauth tokens.",
+        "stage": "experimental",
+        "codeowner": "@grafana/identity-access-team",
+        "hideFromAdminPage": true,
+        "hideFromDocs": true
+      }
     }
   ]
 }
