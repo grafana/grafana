@@ -156,3 +156,5 @@ groupByVariable,experimental,@grafana/dashboards-squad,false,false,false
 betterPageScrolling,GA,@grafana/grafana-frontend-platform,false,false,true
 scopeFilters,experimental,@grafana/dashboards-squad,false,false,false
 ssoSettingsSAML,experimental,@grafana/identity-access-team,false,false,false
+usePrometheusFrontendPackage,experimental,@grafana/observability-metrics,false,false,true
+oauthRequireSubClaim,experimental,@grafana/identity-access-team,false,false,false

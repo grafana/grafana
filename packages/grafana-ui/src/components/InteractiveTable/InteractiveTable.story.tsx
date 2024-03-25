@@ -1,7 +1,10 @@
 import { Meta, StoryFn, StoryObj } from '@storybook/react';
-import React, { useCallback, useState } from 'react';
+import React, { useCallback, useMemo, useState } from 'react';
 
 import { InteractiveTable, CellProps, LinkButton } from '@grafana/ui';
+
+import { Field } from '../Forms/Field';
+import { Input } from '../Input/Input';
 
 import { FetchDataArgs, InteractiveTableHeaderTooltip } from './InteractiveTable';
 import mdx from './InteractiveTable.mdx';
@@ -125,9 +128,9 @@ const meta: Meta<typeof InteractiveTable<CarData>> = {
   argTypes: {},
 };
 
-type TableStory = StoryObj<typeof InteractiveTable<CarData>>;
+type TableStoryObj = StoryObj<typeof InteractiveTable<CarData>>;
 
-export const Basic: TableStory = {
+export const Basic: TableStoryObj = {
   args: {
     columns: [
       {
@@ -169,7 +172,7 @@ const ExpandedCell = ({ car }: CarData) => {
   return <p>{car}</p>;
 };
 
-export const WithRowExpansion: TableStory = {
+export const WithRowExpansion: TableStoryObj = {
   args: {
     renderExpandedRow: ExpandedCell,
   },
@@ -216,11 +219,33 @@ export const WithCustomCell: StoryObj<typeof InteractiveTable<WithCustomCellData
   },
 };
 
-export const WithPagination: TableStory = {
-  args: {
-    pageSize: 15,
-    data: pageableData,
-  },
+export const WithPagination: StoryFn<typeof InteractiveTable> = (args) => {
+  const [filter, setFilter] = useState('');
+
+  const data = useMemo(() => {
+    if (filter) {
+      return pageableData.filter((d) => d.firstName.toLowerCase().includes(filter.toLowerCase()));
+    }
+    return pageableData;
+  }, [filter]);
+
+  return (
+    <>
+      <Field label={'Filter data'}>
+        <Input
+          placeholder={'Filter by first name'}
+          onChange={(event) => {
+            setFilter(event.currentTarget.value);
+          }}
+        />
+      </Field>
+      <InteractiveTable {...args} data={data} />
+    </>
+  );
+};
+
+WithPagination.args = {
+  pageSize: 15,
 };
 
 const headerTooltips: Record<string, InteractiveTableHeaderTooltip> = {
@@ -238,7 +263,7 @@ const headerTooltips: Record<string, InteractiveTableHeaderTooltip> = {
     iconName: 'plus-square',
   },
 };
-export const WithHeaderTooltips: TableStory = {
+export const WithHeaderTooltips: TableStoryObj = {
   args: {
     headerTooltips,
   },
