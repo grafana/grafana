@@ -835,12 +835,11 @@ var (
 			Owner:           grafanaSearchAndStorageSquad,
 		},
 		{
-			Name:            "managedPluginsInstall",
-			Description:     "Install managed plugins directly from plugins catalog",
-			Stage:           FeatureStageGeneralAvailability,
-			RequiresDevMode: false,
-			Owner:           grafanaPluginsPlatformSquad,
-			Expression:      "true", // enabled by default
+			Name:        "managedPluginsInstall",
+			Description: "Install managed plugins directly from plugins catalog",
+			Stage:       FeatureStageGeneralAvailability,
+			Owner:       grafanaPluginsPlatformSquad,
+			Expression:  "true", // enabled by default
 		},
 		{
 			Name:         "prometheusPromQAIL",
@@ -882,12 +881,11 @@ var (
 			Owner:       grafanaAlertingSquad,
 		},
 		{
-			Name:            "annotationPermissionUpdate",
-			Description:     "Change the way annotation permissions work by scoping them to folders and dashboards.",
-			Stage:           FeatureStageGeneralAvailability,
-			RequiresDevMode: false,
-			Expression:      "true", // enabled by default
-			Owner:           identityAccessTeam,
+			Name:        "annotationPermissionUpdate",
+			Description: "Change the way annotation permissions work by scoping them to folders and dashboards.",
+			Stage:       FeatureStageGeneralAvailability,
+			Expression:  "true", // enabled by default
+			Owner:       identityAccessTeam,
 		},
 		{
 			Name:         "extractFieldsNameDeduplication",

@@ -16,19 +16,17 @@ import (
 	"github.com/grafana/grafana/pkg/services/authn"
 	"github.com/grafana/grafana/pkg/services/contexthandler/ctxkey"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/login"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/web"
 )
 
-func ProvideService(cfg *setting.Cfg, tracer tracing.Tracer, features featuremgmt.FeatureToggles, authnService authn.Service,
+func ProvideService(cfg *setting.Cfg, tracer tracing.Tracer, authnService authn.Service,
 ) *ContextHandler {
 	return &ContextHandler{
 		Cfg:          cfg,
 		tracer:       tracer,
-		features:     features,
 		authnService: authnService,
 	}
 }
@@ -37,7 +35,6 @@ func ProvideService(cfg *setting.Cfg, tracer tracing.Tracer, features featuremgm
 type ContextHandler struct {
 	Cfg          *setting.Cfg
 	tracer       tracing.Tracer
-	features     featuremgmt.FeatureToggles
 	authnService authn.Service
 }
 

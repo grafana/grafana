@@ -4,6 +4,8 @@ import (
 	"context"
 	"testing"
 
+	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/setting"
 	"github.com/stretchr/testify/require"
 )
 
@@ -25,10 +27,8 @@ func TestFeatureManager(t *testing.T) {
 	})
 
 	t.Run("check description and stage configs", func(t *testing.T) {
-		ft := FeatureManager{
-			flags: map[string]*FeatureFlag{},
-		}
-		ft.registerFlags(FeatureFlag{
+		ft := WithManager()
+		ft.prov.(*staticBoolProvider).register(nil, FeatureFlag{
 			Name:        "a",
 			Description: "first",
 		}, FeatureFlag{
@@ -40,20 +40,25 @@ func TestFeatureManager(t *testing.T) {
 		}, FeatureFlag{
 			Name: "a",
 		})
-		flag := ft.flags["a"]
+
+		flag := ft.prov.GetFlag("a")
+
 		require.Equal(t, "second", flag.Description)
 		require.Equal(t, FeatureStagePrivatePreview, flag.Stage)
 	})
 
 	t.Run("check startup false flags", func(t *testing.T) {
-		ft := FeatureManager{
+		prov := &staticBoolProvider{
 			flags: map[string]*FeatureFlag{},
 			startup: map[string]bool{
 				"a": true,
 				"b": false, // but default true
 			},
+			enabled:  map[string]bool{},
+			warnings: map[string]string{},
+			log:      log.New("featuremgmt"),
 		}
-		ft.registerFlags(FeatureFlag{
+		prov.register(nil, FeatureFlag{
 			Name: "a",
 		}, FeatureFlag{
 			Name:       "b",
@@ -61,6 +66,9 @@ func TestFeatureManager(t *testing.T) {
 		}, FeatureFlag{
 			Name: "c",
 		})
+
+		ft := newFeatureManager(setting.FeatureMgmtSettings{}, nil, prov, &testClient{provider: prov})
+
 		require.True(t, ft.IsEnabledGlobally("a"))
 		require.False(t, ft.IsEnabledGlobally("b"))
 		require.False(t, ft.IsEnabledGlobally("c"))

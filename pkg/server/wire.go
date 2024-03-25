@@ -288,6 +288,8 @@ var wireBasicSet = wire.NewSet(
 	serviceaccountsproxy.ProvideServiceAccountsProxy,
 	wire.Bind(new(serviceaccounts.Service), new(*serviceaccountsproxy.ServiceAccountsProxy)),
 	expr.ProvideService,
+	featuremgmt.ProvideFeatureProvider,
+	featuremgmt.ProvideOpenFeatureClient,
 	featuremgmt.ProvideManagerService,
 	featuremgmt.ProvideToggles,
 	dashboardservice.ProvideDashboardServiceImpl,

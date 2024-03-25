@@ -41,13 +41,26 @@ func initConflictCfg(cmd *utils.ContextCommandLine) (*setting.Cfg, featuremgmt.F
 		HomePath: cmd.HomePath(),
 		Args:     append(configOptions, "cfg:log.level=error"), // tailing arguments have precedence over the options string
 	})
-
 	if err != nil {
 		return nil, nil, err
 	}
 
-	features, err := featuremgmt.ProvideManagerService(cfg)
-	return cfg, features, err
+	provider, err := featuremgmt.ProvideFeatureProvider(cfg)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	client, err := featuremgmt.ProvideOpenFeatureClient(provider)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	features, err := featuremgmt.ProvideManagerService(cfg, provider, client)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	return cfg, features, nil
 }
 
 func initializeConflictResolver(cmd *utils.ContextCommandLine, f Formatter, ctx *cli.Context) (*ConflictResolver, error) {

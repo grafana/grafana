@@ -58,10 +58,10 @@ func createTestContext(t *testing.T) (entityStore.EntityStoreClient, factory.Des
 	cfg, err := setting.NewCfgFromArgs(setting.CommandLineArgs{Config: cfgPath, HomePath: grafDir})
 	assert.NoError(t, err)
 
-	featureManager, err := featuremgmt.ProvideManagerService(cfg)
-	assert.NoError(t, err)
-
-	featureToggles := featuremgmt.ProvideToggles(featureManager)
+	featureToggles := featuremgmt.WithFeatures(
+		featuremgmt.FlagGrpcServer,
+		featuremgmt.FlagUnifiedStorage,
+	)
 
 	db := sqlstore.InitTestDBWithMigration(t, nil, sqlstore.InitTestDBOpt{EnsureDefaultOrgAndUser: false})
 	require.NoError(t, err)

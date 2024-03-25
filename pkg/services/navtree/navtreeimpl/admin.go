@@ -11,6 +11,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginaccesscontrol"
 	"github.com/grafana/grafana/pkg/services/serviceaccounts"
+	"github.com/open-feature/go-sdk/openfeature"
 )
 
 func (s *ServiceImpl) getAdminNode(c *contextmodel.ReqContext) (*navtree.NavLink, error) {
@@ -20,6 +21,9 @@ func (s *ServiceImpl) getAdminNode(c *contextmodel.ReqContext) (*navtree.NavLink
 	hasGlobalAccess := ac.HasGlobalAccess(s.accessControl, s.authnService, c)
 	orgsAccessEvaluator := ac.EvalPermission(ac.ActionOrgsRead)
 	authConfigUIAvailable := s.license.FeatureEnabled(social.SAMLProviderName) || s.cfg.LDAPAuthEnabled
+
+	// shared evaluation context for openfeature calls
+	evalContext := openfeature.NewTargetlessEvaluationContext(map[string]interface{}{})
 
 	// FIXME: If plugin admin is disabled or externally managed, server admins still need to access the page, this is why
 	// while we don't have a permissions for listing plugins the legacy check has to stay as a default
@@ -83,8 +87,9 @@ func (s *ServiceImpl) getAdminNode(c *contextmodel.ReqContext) (*navtree.NavLink
 		})
 	}
 
-	if authConfigUIAvailable && hasAccess(ssoutils.EvalAuthenticationSettings(s.cfg)) ||
-		(hasAccess(ssoutils.OauthSettingsEvaluator(s.cfg)) && s.features.IsEnabled(ctx, featuremgmt.FlagSsoSettingsApi)) {
+	if authConfigUIAvailable &&
+		(hasAccess(ssoutils.EvalAuthenticationSettings(s.cfg)) ||
+			(hasAccess(ssoutils.OauthSettingsEvaluator(s.cfg)) && s.features.Boolean(ctx, featuremgmt.FlagSsoSettingsApi, false, evalContext))) {
 		configNodes = append(configNodes, &navtree.NavLink{
 			Text:     "Authentication",
 			Id:       "authentication",
@@ -106,7 +111,7 @@ func (s *ServiceImpl) getAdminNode(c *contextmodel.ReqContext) (*navtree.NavLink
 		})
 	}
 
-	if s.features.IsEnabled(ctx, featuremgmt.FlagFeatureToggleAdminPage) && hasAccess(ac.EvalPermission(ac.ActionFeatureManagementRead)) {
+	if s.features.Boolean(ctx, featuremgmt.FlagFeatureToggleAdminPage, false, evalContext) && hasAccess(ac.EvalPermission(ac.ActionFeatureManagementRead)) {
 		configNodes = append(configNodes, &navtree.NavLink{
 			Text:     "Feature Toggles",
 			SubTitle: "View and edit feature toggles",
@@ -116,7 +121,7 @@ func (s *ServiceImpl) getAdminNode(c *contextmodel.ReqContext) (*navtree.NavLink
 		})
 	}
 
-	if s.features.IsEnabled(ctx, featuremgmt.FlagCorrelations) && hasAccess(correlations.ConfigurationPageAccess) {
+	if s.features.Boolean(ctx, featuremgmt.FlagCorrelations, false, evalContext) && hasAccess(correlations.ConfigurationPageAccess) {
 		configNodes = append(configNodes, &navtree.NavLink{
 			Text:     "Correlations",
 			Icon:     "gf-glue",
@@ -126,7 +131,7 @@ func (s *ServiceImpl) getAdminNode(c *contextmodel.ReqContext) (*navtree.NavLink
 		})
 	}
 
-	if hasAccess(ac.EvalPermission(ac.ActionSettingsRead, ac.ScopeSettingsAll)) && s.features.IsEnabled(ctx, featuremgmt.FlagStorage) {
+	if hasAccess(ac.EvalPermission(ac.ActionSettingsRead, ac.ScopeSettingsAll)) && s.features.Boolean(ctx, featuremgmt.FlagStorage, false, evalContext) {
 		storage := &navtree.NavLink{
 			Text:     "Storage",
 			Id:       "storage",
@@ -137,7 +142,7 @@ func (s *ServiceImpl) getAdminNode(c *contextmodel.ReqContext) (*navtree.NavLink
 		configNodes = append(configNodes, storage)
 	}
 
-	if s.features.IsEnabled(ctx, featuremgmt.FlagOnPremToCloudMigrations) && c.SignedInUser.HasRole(org.RoleAdmin) {
+	if s.features.Boolean(ctx, featuremgmt.FlagOnPremToCloudMigrations, false, evalContext) && c.SignedInUser.HasRole(org.RoleAdmin) {
 		migrateToCloud := &navtree.NavLink{
 			Text:     "Migrate to Grafana Cloud",
 			Id:       "migrate-to-cloud",

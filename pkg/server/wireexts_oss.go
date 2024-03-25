@@ -126,6 +126,8 @@ var wireExtsBaseCLISet = wire.NewSet(
 	NewModuleRunner,
 
 	metrics.WireSet,
+	featuremgmt.ProvideFeatureProvider,
+	featuremgmt.ProvideOpenFeatureClient,
 	featuremgmt.ProvideManagerService,
 	featuremgmt.ProvideToggles,
 	hooks.ProvideService,

@@ -23,6 +23,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/star"
 	"github.com/grafana/grafana/pkg/services/supportbundles/supportbundlesimpl"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/open-feature/go-sdk/openfeature"
 )
 
 type ServiceImpl struct {
@@ -33,7 +34,7 @@ type ServiceImpl struct {
 	pluginStore          pluginstore.Store
 	pluginSettings       pluginsettings.Service
 	starService          star.Service
-	features             featuremgmt.FeatureToggles
+	features             openfeature.IClient
 	dashboardService     dashboards.DashboardService
 	accesscontrolService ac.Service
 	kvStore              kvstore.KVStore
@@ -53,7 +54,7 @@ type NavigationAppConfig struct {
 }
 
 func ProvideService(cfg *setting.Cfg, accessControl ac.AccessControl, pluginStore pluginstore.Store, pluginSettings pluginsettings.Service, starService star.Service,
-	features featuremgmt.FeatureToggles, dashboardService dashboards.DashboardService, accesscontrolService ac.Service, kvStore kvstore.KVStore, apiKeyService apikey.Service,
+	features openfeature.IClient, dashboardService dashboards.DashboardService, accesscontrolService ac.Service, kvStore kvstore.KVStore, apiKeyService apikey.Service,
 	license licensing.Licensing, authnService authn.Service) navtree.Service {
 	service := &ServiceImpl{
 		cfg:                  cfg,
@@ -345,7 +346,8 @@ func (s *ServiceImpl) buildDashboardNavLinks(c *contextmodel.ReqContext) []*navt
 			Icon:     "library-panel",
 		})
 
-		if s.features.IsEnabled(c.Req.Context(), featuremgmt.FlagPublicDashboards) && s.cfg.PublicDashboardsEnabled {
+		if s.features.Boolean(c.Req.Context(), featuremgmt.FlagPublicDashboards, true, openfeature.EvaluationContext{}) &&
+			s.cfg.PublicDashboardsEnabled {
 			dashboardChildNavs = append(dashboardChildNavs, &navtree.NavLink{
 				Text: "Public dashboards",
 				Id:   "dashboards/public",
@@ -470,7 +472,7 @@ func (s *ServiceImpl) buildDataConnectionsNavLink(c *contextmodel.ReqContext) *n
 
 func (s *ServiceImpl) buildExploreNavLinks(c *contextmodel.ReqContext) []*navtree.NavLink {
 	exploreChildNavs := []*navtree.NavLink{}
-	if s.features.IsEnabled(c.Req.Context(), featuremgmt.FlagExploreMetrics) {
+	if s.features.Boolean(c.Req.Context(), featuremgmt.FlagExploreMetrics, false, openfeature.EvaluationContext{}) {
 		exploreChildNavs = append(exploreChildNavs, &navtree.NavLink{
 			Text:     "Metrics",
 			SubTitle: "Queryless exploration of your metrics",

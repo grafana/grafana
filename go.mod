@@ -137,6 +137,7 @@ require (
 	github.com/mohae/deepcopy v0.0.0-20170929034955-c48cc78d4826 // @grafana/alerting-squad-backend
 	github.com/mwitkow/go-conntrack v0.0.0-20190716064945-2f068394615f // @grafana/grafana-operator-experience-squad
 	github.com/olekukonko/tablewriter v0.0.5 // @grafana/grafana-backend-group
+	github.com/open-feature/go-sdk v1.11.0 // @grafana/grafana-backend-services-squad
 	github.com/patrickmn/go-cache v2.1.0+incompatible // @grafana/alerting-squad-backend
 	github.com/prometheus/alertmanager v0.26.0 // @grafana/alerting-squad-backend
 	github.com/prometheus/client_golang v1.19.0 // @grafana/alerting-squad-backend
@@ -175,7 +176,7 @@ require (
 	go.uber.org/goleak v1.3.0 // @grafana/grafana-search-and-storage
 	gocloud.dev v0.25.0 // @grafana/grafana-app-platform-squad
 	golang.org/x/crypto v0.22.0 // @grafana/grafana-backend-group
-	golang.org/x/exp v0.0.0-20231206192017-f3f8817b8deb // @grafana/alerting-squad-backend
+	golang.org/x/exp v0.0.0-20240205201215-2c58cdc269a3 // @grafana/alerting-squad-backend
 	golang.org/x/mod v0.15.0 // @grafana/grafana-backend-group
 	golang.org/x/net v0.24.0 // @grafana/oss-big-tent @grafana/partner-datasources
 	golang.org/x/oauth2 v0.19.0 // @grafana/identity-access-team

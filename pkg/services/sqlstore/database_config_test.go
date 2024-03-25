@@ -127,7 +127,7 @@ func makeDatabaseTestConfig(t *testing.T, tc databaseConfigTest) *setting.Cfg {
 		tc.features = featuremgmt.WithFeatures()
 	}
 	// nolint:staticcheck
-	cfg := setting.NewCfgWithFeatures(tc.features.IsEnabledGlobally)
+	cfg := setting.NewCfg()
 
 	sec, err := cfg.Raw.NewSection("database")
 	require.NoError(t, err)
@@ -213,9 +213,11 @@ func TestBuildConnectionStringPostgres(t *testing.T) {
 		},
 	}
 
+	ft := featuremgmt.WithFeatures()
+
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			err := tc.dbCfg.buildConnectionString(&setting.Cfg{}, nil)
+			err := tc.dbCfg.buildConnectionString(&setting.Cfg{}, ft)
 			assert.NoError(t, err)
 			assert.Equal(t, tc.expectedConnStr, tc.dbCfg.ConnectionString)
 		})

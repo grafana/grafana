@@ -114,7 +114,7 @@ func TestAddAppLinks(t *testing.T) {
 		cfg:            setting.NewCfg(),
 		accessControl:  accesscontrolmock.New().WithPermissions(permissions),
 		pluginSettings: &pluginSettings,
-		features:       featuremgmt.WithFeatures(),
+		features:       featuremgmt.TestClient(),
 		pluginStore: &pluginstore.FakePluginStore{
 			PluginList: []pluginstore.Plugin{testApp1, testApp2, testApp3},
 		},
@@ -361,7 +361,7 @@ func TestReadingNavigationSettings(t *testing.T) {
 	t.Run("Should include defaults", func(t *testing.T) {
 		service := ServiceImpl{
 			cfg:      setting.NewCfg(),
-			features: featuremgmt.WithFeatures(),
+			features: featuremgmt.TestClient(),
 		}
 
 		_, _ = service.cfg.Raw.NewSection("navigation.app_sections")
@@ -373,7 +373,7 @@ func TestReadingNavigationSettings(t *testing.T) {
 	t.Run("Can add additional overrides via ini system", func(t *testing.T) {
 		service := ServiceImpl{
 			cfg:      setting.NewCfg(),
-			features: featuremgmt.WithFeatures(),
+			features: featuremgmt.TestClient(),
 		}
 
 		appSections, _ := service.cfg.Raw.NewSection("navigation.app_sections")
@@ -436,7 +436,7 @@ func TestAddAppLinksAccessControl(t *testing.T) {
 		cfg:            cfg,
 		accessControl:  acimpl.ProvideAccessControl(cfg),
 		pluginSettings: &pluginSettings,
-		features:       featuremgmt.WithFeatures(),
+		features:       featuremgmt.TestClient(),
 		pluginStore: &pluginstore.FakePluginStore{
 			PluginList: []pluginstore.Plugin{testApp1},
 		},
@@ -488,7 +488,7 @@ func TestAddAppLinksAccessControl(t *testing.T) {
 			1: {pluginaccesscontrol.ActionAppAccess: []string{"*"}, catalogReadAction: []string{}},
 		}
 		user.OrgRole = roletype.RoleViewer
-		service.features = featuremgmt.WithFeatures(featuremgmt.FlagAccessControlOnCall)
+		service.features = featuremgmt.TestClient(featuremgmt.FlagAccessControlOnCall)
 
 		err := service.addAppLinks(&treeRoot, reqCtx)
 		require.NoError(t, err)
@@ -505,7 +505,7 @@ func TestAddAppLinksAccessControl(t *testing.T) {
 			1: {pluginaccesscontrol.ActionAppAccess: []string{"*"}},
 		}
 		user.OrgRole = roletype.RoleEditor
-		service.features = featuremgmt.WithFeatures(featuremgmt.FlagAccessControlOnCall)
+		service.features = featuremgmt.TestClient(featuremgmt.FlagAccessControlOnCall)
 
 		err := service.addAppLinks(&treeRoot, reqCtx)
 		require.NoError(t, err)
