@@ -140,7 +140,7 @@ func (s *Service) CreateToken(ctx context.Context) (cloudmigration.CreateAccessT
 			AccessPolicyID: accessPolicy.ID,
 			DisplayName:    cloudMigrationTokenName,
 			Name:           cloudMigrationTokenName,
-			ExpiresAt:      time.Now().Add(7 * 24 * time.Hour),
+			ExpiresAt:      time.Now().Add(s.cfg.CloudMigration.TokenExpiresAfter),
 		})
 	if err != nil {
 		return cloudmigration.CreateAccessTokenResponse{}, fmt.Errorf("creating access token: %w", err)
