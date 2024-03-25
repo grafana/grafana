@@ -15,10 +15,9 @@ func (s *NoopServiceImpl) MigrateDatasources(ctx context.Context, request *cloud
 	return nil, cloudmigration.ErrFeatureDisabledError
 }
 
-func (s *NoopServiceImpl) CreateToken(ctx context.Context) error {
-	return cloudmigration.ErrFeatureDisabledError
+func (s *NoopServiceImpl) CreateToken(ctx context.Context) (cloudmigration.CreateAccessTokenResponse, error) {
+	return cloudmigration.CreateAccessTokenResponse{}, cloudmigration.ErrFeatureDisabledError
 }
-
 func (s *NoopServiceImpl) ValidateToken(ctx context.Context, token string) error {
 	return cloudmigration.ErrFeatureDisabledError
 }
