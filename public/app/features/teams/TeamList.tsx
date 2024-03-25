@@ -10,12 +10,12 @@ import {
   Column,
   DeleteButton,
   FilterInput,
-  Icon,
   InlineField,
   InteractiveTable,
   LinkButton,
   Pagination,
   Stack,
+  TextLink,
   Tooltip,
   useStyles2,
 } from '@grafana/ui';
@@ -92,11 +92,21 @@ export const TeamList = ({
       {
         id: 'name',
         header: 'Name',
-        cell: ({ cell: { value } }: Cell<'name'>) => {
+        cell: ({ cell: { value }, row: { original } }: Cell<'name'>) => {
           if (!hasFetched) {
             return <Skeleton width={100} />;
           }
-          return value;
+
+          const canReadTeam = contextSrv.hasPermissionInMetadata(AccessControlAction.ActionTeamsRead, original);
+          if (!canReadTeam) {
+            return value;
+          }
+
+          return (
+            <TextLink color="primary" inline={false} href={`/org/teams/edit/${original.id}`} title="Edit team">
+              {value}
+            </TextLink>
+          );
         },
         sortType: 'string',
       },
@@ -168,12 +178,16 @@ export const TeamList = ({
           const canReadTeam = contextSrv.hasPermissionInMetadata(AccessControlAction.ActionTeamsRead, original);
           const canDelete = contextSrv.hasPermissionInMetadata(AccessControlAction.ActionTeamsDelete, original);
           return (
-            <Stack direction="row" justifyContent="flex-end">
+            <Stack direction="row" justifyContent="flex-end" gap={2}>
               {canReadTeam && (
                 <Tooltip content={'Edit team'}>
-                  <a href={`org/teams/edit/${original.id}`} aria-label={`Edit team ${original.name}`}>
-                    <Icon name={'pen'} />
-                  </a>
+                  <LinkButton
+                    href={`org/teams/edit/${original.id}`}
+                    aria-label={`Edit team ${original.name}`}
+                    icon="pen"
+                    size="sm"
+                    variant="secondary"
+                  />
                 </Tooltip>
               )}
               <DeleteButton

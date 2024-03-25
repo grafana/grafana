@@ -43,7 +43,6 @@ storage:
       bloom_filter_false_positive: .05 # bloom filter false positive rate.  lower values create larger filters but fewer false positives
       v2_index_downsample_bytes: 1000     # number of bytes per index record
       v2_encoding: zstd                   # block encoding/compression.  options: none, gzip, lz4-64k, lz4-256k, lz4-1M, lz4, snappy, zstd, s2
-      version: vParquet
     wal:
       path: /tmp/tempo/wal             # where to store the the wal locally
       v2_encoding: snappy              # wal encoding/compression.  options: none, gzip, lz4-64k, lz4-256k, lz4-1M, lz4, snappy, zstd, s2

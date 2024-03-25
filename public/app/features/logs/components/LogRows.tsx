@@ -134,7 +134,6 @@ class UnThemedLogRows extends PureComponent<Props, State> {
     });
     document.addEventListener('click', this.handleDeselection);
     document.addEventListener('contextmenu', this.handleDeselection);
-    document.addEventListener('selectionchange', this.handleDeselection);
     return true;
   };
 
@@ -147,13 +146,11 @@ class UnThemedLogRows extends PureComponent<Props, State> {
     if (document.getSelection()?.toString()) {
       return;
     }
-    this.closePopoverMenu();
   };
 
   closePopoverMenu = () => {
     document.removeEventListener('click', this.handleDeselection);
     document.removeEventListener('contextmenu', this.handleDeselection);
-    document.removeEventListener('selectionchange', this.handleDeselection);
     this.setState({
       selection: '',
       popoverMenuCoordinates: { x: 0, y: 0 },
@@ -177,6 +174,7 @@ class UnThemedLogRows extends PureComponent<Props, State> {
   componentWillUnmount() {
     document.removeEventListener('click', this.handleDeselection);
     document.removeEventListener('contextmenu', this.handleDeselection);
+    document.removeEventListener('selectionchange', this.handleDeselection);
     if (this.renderAllTimer) {
       clearTimeout(this.renderAllTimer);
     }

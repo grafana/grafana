@@ -18,7 +18,9 @@ import {
   SceneRefreshPicker,
   SceneTimePicker,
   SceneTimeRange,
+  SceneVariable,
   SceneVariableSet,
+  VariableDependencyConfig,
   VariableValueSelectors,
 } from '@grafana/scenes';
 import { useStyles2 } from '@grafana/ui';
@@ -29,6 +31,7 @@ import { MetricScene } from './MetricScene';
 import { MetricSelectScene } from './MetricSelectScene';
 import { MetricsHeader } from './MetricsHeader';
 import { getTrailStore } from './TrailStore/TrailStore';
+import { MetricDatasourceHelper } from './helpers/MetricDatasourceHelper';
 import { MetricSelectedEvent, trailDS, VAR_DATASOURCE, VAR_FILTERS } from './shared';
 import { getUrlForTrail } from './utils';
 
@@ -111,6 +114,26 @@ export class DataTrail extends SceneObjectBase<DataTrailState> {
     };
   }
 
+  protected _variableDependency = new VariableDependencyConfig(this, {
+    variableNames: [VAR_DATASOURCE],
+    onReferencedVariableValueChanged: async (variable: SceneVariable) => {
+      const { name } = variable.state;
+      if (name === VAR_DATASOURCE) {
+        this.datasourceHelper.reset();
+      }
+    },
+  });
+
+  private datasourceHelper = new MetricDatasourceHelper(this);
+
+  public getMetricMetadata(metric?: string) {
+    return this.datasourceHelper.getMetricMetadata(metric);
+  }
+
+  public getCurrentMetricMetadata() {
+    return this.getMetricMetadata(this.state.metric);
+  }
+
   private goBackToStep(step: DataTrailHistoryStep) {
     if (!this.state.embedded) {
       getUrlSyncManager().cleanUp(this);
@@ -172,7 +195,7 @@ export class DataTrail extends SceneObjectBase<DataTrailState> {
   }
 
   static Component = ({ model }: SceneComponentProps<DataTrail>) => {
-    const { controls, topScene, history } = model.useState();
+    const { controls, topScene, history, settings } = model.useState();
     const styles = useStyles2(getStyles);
     const showHeaderForFirstTimeUsers = getTrailStore().recent.length < 2;
 
@@ -185,6 +208,7 @@ export class DataTrail extends SceneObjectBase<DataTrailState> {
             {controls.map((control) => (
               <control.Component key={control.state.key} model={control} />
             ))}
+            <settings.Component model={settings} />
           </div>
         )}
         <div className={styles.body}>{topScene && <topScene.Component model={topScene} />}</div>
@@ -206,7 +230,8 @@ function getVariableSet(initialDS?: string, metric?: string, initialFilters?: Ad
     variables: [
       new DataSourceVariable({
         name: VAR_DATASOURCE,
-        label: 'Prometheus data source',
+        label: 'Data source',
+        description: 'Only prometheus data sources are supported',
         value: initialDS,
         pluginId: 'prometheus',
       }),
