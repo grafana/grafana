@@ -21,24 +21,74 @@ weight: 100
 
 # Stat
 
-Stats show one large stat value with an optional graph sparkline. You can control the background or value color using thresholds or overrides.
-
-{{< figure src="/static/img/docs/v66/stat_panel_dark3.png" max-width="1025px" caption="Stat visualization" >}}
-
 {{% admonition type="note" %}}
 This visualization replaces the Singlestat visualization, which was deprecated in Grafana 7.0 and removed in Grafana 8.0.
 {{% /admonition %}}
+
+A stat visualization displays your data in single values of interest&mdash;such as the latest or current value of a series&mdash;with an optional graph sparkline. A graph sparkline, which is only available in stat visualizations, is a small time-series graph shown in the background of each value in the visualization.
+
+For example, if you're monitoring the utilization of various services, you can use a stat visualization to show their latest usage:
+
+{{< figure src="/static/img/docs/v66/stat_panel_dark3.png" max-width="1025px" alt="A stat panel showing latest usage of various services" >}}
+
+Use a stat visualization when you need to:
+
+- Monitor key metrics at a glance, such as the latest health of your application, number of high priority bugs in your application, or total number of sales.
+- Display aggregated data, such as the average response time of your services.
+- Highlight values above your normal thresholds to quickly identify if any metrics are outside your expected range.
+
+## Configure a stat visualization
+
+Once you've [created a dashboard](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/dashboards/build-dashboards/create-dashboard/), the following video shows you how to configure a stat visualization:
+
+{{< youtube id="yNRnLyVntUw" start="1048" >}}
+
+Alternatively, refer to this blog post on [how to easily retrieve values from a range in Grafana using a stat visualization](https://grafana.com/blog/2023/10/18/how-to-easily-retrieve-values-from-a-range-in-grafana-using-a-stat-panel/).
+
+## Supported data formats
+
+The stat visualization supports a variety of formats for displaying data. Supported formats include:
+
+- **Single values** - The most common format and can be numerical, strings, or boolean values.
+- **Time-series data** - [Calculation types][] can be applied to your time-series data to display single values over a specified time range.
+
+### Examples
+
+The following tables are examples of the type of data you need for a stat visualization and how it should be formatted.
+
+#### Single numerical values
+
+| Number of high priority bugs |
+| ---------------------------- |
+| 80                           |
+| 52                           |
+| 59                           |
+| 40                           |
+
+The data is visualized as follows, with the last value displayed, along with a sparkline and [percentage change](#show-percent-change):
+
+{{< figure src="/static/img/docs/stat-panel/stat_panel_single.png" max-width="1025px" alt="A stat panel showing the latest number of high priority bugs" >}}
+
+#### Time-series data
+
+| Time                | Cellar | Living room | Porch | Bedroom | Guest room | Kitchen |
+| ------------------- | ------ | ----------- | ----- | ------- | ---------- | ------- |
+| 2024-03-20 06:34:40 | 12.3   | 18.3        | 18.8  | 15.9    | 9.29       | 9.61    |
+| 2024-03-20 06:41:40 | 16.8   | 17.1        | 21.5  | 14.1    | 10.5       | 17.5    |
+| 2024-03-20 06:48:40 | 16.7   | 18.0        | 21.0  | 9.51    | 13.6       | 20.1    |
+| 2024-03-20 06:55:40 | 14.3   | 18.7        | 16.5  | 9.11    | 14.8       | 12.5    |
+| 2024-03-20 07:02:40 | 12.8   | 15.2        | 21.1  | 15.6    | 7.98       | 13.0    |
+
+The data is visualized as follows, with the mean value displayed for each room, along with the room name, sparkline, and unit of measurement:
+
+{{< figure src="/static/img/docs/stat-panel/stat_panel_multiple.png" max-width="1025px" alt="A stat panel showing some statistics for each room in square meters" >}}
 
 By default, a stat displays one of the following:
 
 - Just the value for a single series or field.
 - Both the value and name for multiple series or fields.
 
-You can use the **Text mode** to control how the text is displayed.
-
-Example screenshot:
-
-{{< figure src="/static/img/docs/v71/stat-panel-text-modes.png" max-width="1025px" caption="Stat visualization" >}}
+You can use the [**Text mode**](#text-mode) to control how the text is displayed.
 
 ## Automatic layout adjustment
 
