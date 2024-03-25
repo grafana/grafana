@@ -11,21 +11,21 @@ import (
 )
 
 const (
-	// userAssignsSQL is a query to select all users permissions directly assigned to them.
+	// userAssignsSQL is a query to select all users assignments.
 	userAssignsSQL = `SELECT ur.user_id, ur.org_id, ur.role_id
 	FROM user_role AS ur`
 
-	// teamAssignsSQL is a query to select all users permissions associated to their team membership.
+	// teamAssignsSQL is a query to select all users' team assignments.
 	teamAssignsSQL = `SELECT tm.user_id, tr.org_id, tr.role_id
 	FROM team_role AS tr 
 	INNER JOIN team_member AS tm ON tm.team_id = tr.team_id`
 
-	// basicRoleAssignsSQL is a query to select all users permissions associated to their basic role (Admin, Editor, Viewer, None).
+	// basicRoleAssignsSQL is a query to select all users basic role (Admin, Editor, Viewer, None) assignments.
 	basicRoleAssignsSQL = `SELECT ou.user_id, ou.org_id, br.role_id
 	FROM builtin_role AS br
 	INNER JOIN org_user AS ou ON ou.role = br.role`
 
-	// grafanaAdminAssignsSQL is a query to select all grafana admin users permissions
+	// grafanaAdminAssignsSQL is a query to select all grafana admin users.
 	// it has to be formatted with the quoted user table.
 	grafanaAdminAssignsSQL = `SELECT sa.user_id, br.org_id, br.role_id
 	FROM builtin_role AS br
