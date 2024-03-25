@@ -14,15 +14,13 @@ import (
 	"github.com/grafana/grafana/pkg/api"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/modules"
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
-	storageServer "github.com/grafana/grafana/pkg/services/store/entity/server"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
 // NewModule returns an instance of a ModuleServer, responsible for managing
 // dskit modules (services).
-func NewModule(opts Options, apiOpts api.ServerOptions, features featuremgmt.FeatureToggles, cfg *setting.Cfg) (*ModuleServer, error) {
-	s, err := newModuleServer(opts, apiOpts, features, cfg)
+func NewModule(opts Options, apiOpts api.ServerOptions, cfg *setting.Cfg) (*ModuleServer, error) {
+	s, err := newModuleServer(opts, apiOpts, cfg)
 	if err != nil {
 		return nil, err
 	}
@@ -34,7 +32,7 @@ func NewModule(opts Options, apiOpts api.ServerOptions, features featuremgmt.Fea
 	return s, nil
 }
 
-func newModuleServer(opts Options, apiOpts api.ServerOptions, features featuremgmt.FeatureToggles, cfg *setting.Cfg) (*ModuleServer, error) {
+func newModuleServer(opts Options, apiOpts api.ServerOptions, cfg *setting.Cfg) (*ModuleServer, error) {
 	rootCtx, shutdownFn := context.WithCancel(context.Background())
 
 	s := &ModuleServer{
@@ -44,7 +42,6 @@ func newModuleServer(opts Options, apiOpts api.ServerOptions, features featuremg
 		shutdownFn:       shutdownFn,
 		shutdownFinished: make(chan struct{}),
 		log:              log.New("base-server"),
-		features:         features,
 		cfg:              cfg,
 		pidFile:          opts.PidFile,
 		version:          opts.Version,
@@ -62,7 +59,6 @@ type ModuleServer struct {
 	opts    Options
 	apiOpts api.ServerOptions
 
-	features         featuremgmt.FeatureToggles
 	context          context.Context
 	shutdownFn       context.CancelFunc
 	log              log.Logger
@@ -131,7 +127,7 @@ func (s *ModuleServer) Run() error {
 	//}
 
 	m.RegisterModule(modules.StorageServer, func() (services.Service, error) {
-		return storageServer.ProvideService(s.cfg, s.features)
+		return InitializeStorage(s.cfg)
 	})
 
 	m.RegisterModule(modules.All, nil)

@@ -20,9 +20,9 @@ import (
 )
 
 var (
-	_ Service                    = (*service)(nil)
-	_ registry.BackgroundService = (*service)(nil)
-	_ registry.CanBeDisabled     = (*service)(nil)
+	_ Service                    = (*EntityService)(nil)
+	_ registry.BackgroundService = (*EntityService)(nil)
+	_ registry.CanBeDisabled     = (*EntityService)(nil)
 )
 
 func init() {
@@ -35,7 +35,7 @@ type Service interface {
 	registry.CanBeDisabled
 }
 
-type service struct {
+type EntityService struct {
 	*services.BasicService
 
 	config *config
@@ -56,7 +56,7 @@ type service struct {
 func ProvideService(
 	cfg *setting.Cfg,
 	features featuremgmt.FeatureToggles,
-) (*service, error) {
+) (*EntityService, error) {
 	tracingCfg, err := tracing.ProvideTracingConfig(cfg)
 	if err != nil {
 		return nil, err
@@ -69,7 +69,7 @@ func ProvideService(
 
 	authn := &grpc.Authenticator{}
 
-	s := &service{
+	s := &EntityService{
 		config:        newConfig(cfg),
 		cfg:           cfg,
 		features:      features,
@@ -84,19 +84,19 @@ func ProvideService(
 	return s, nil
 }
 
-func (s *service) IsDisabled() bool {
+func (s *EntityService) IsDisabled() bool {
 	return !s.config.enabled
 }
 
 // Run is an adapter for the BackgroundService interface.
-func (s *service) Run(ctx context.Context) error {
+func (s *EntityService) Run(ctx context.Context) error {
 	if err := s.start(ctx); err != nil {
 		return err
 	}
 	return s.running(ctx)
 }
 
-func (s *service) start(ctx context.Context) error {
+func (s *EntityService) start(ctx context.Context) error {
 	// TODO: use wire
 
 	// TODO: support using grafana db connection?
@@ -130,7 +130,7 @@ func (s *service) start(ctx context.Context) error {
 	return nil
 }
 
-func (s *service) running(ctx context.Context) error {
+func (s *EntityService) running(ctx context.Context) error {
 	// skip waiting for the server in prod mode
 	if !s.config.devMode {
 		<-ctx.Done()
