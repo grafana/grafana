@@ -71,7 +71,7 @@ jobs:
             -GITHUB_TRIGGERING_ACTOR="${{ github.triggering_actor }}" \
             -GCOM_HOST="${{ secrets.EI_GCOM_HOST }}" \
             -GCOM_TOKEN="${{ secrets.EI_GCOM_TOKEN }}" \
-            -HOSTED_GRAFANA_IMAGE_TAG="$GRAFANA_VERSION-ephemeral-oss-${{ github.event.issue.number}}-${{ github.run_number }}-${{ github.run_attempt }}" \
+            -HOSTED_GRAFANA_IMAGE_TAG="$GRAFANA_VERSION" \
             -REGISTRY="${{ secrets.EI_EPHEMERAL_INSTANCES_REGISTRY }}" \
             -GRAFANA_VERSION="$GRAFANA_VERSION" \
             -GCP_SERVICE_ACCOUNT_KEY_BASE64="${{ secrets.EI_GCP_SERVICE_ACCOUNT_KEY_BASE64 }}" \
