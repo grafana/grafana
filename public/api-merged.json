@@ -15790,8 +15790,7 @@
       }
     },
     "NoticeSeverity": {
-      "type": "integer",
-      "format": "int64",
+      "type": "string",
       "title": "NoticeSeverity is a type for the Severity property of a Notice."
     },
     "NotificationPolicyExport": {
