@@ -2,7 +2,6 @@ name: 'Ephemeral instances: PR comment'
 on:
   issue_comment:
     types: [created]
-  push:
 jobs:
   config:
     runs-on: "ubuntu-latest"
@@ -26,10 +25,10 @@ jobs:
 
   handle-pull-request-event:
     needs: config
-    # if: needs.config.outputs.has-secrets &&
-    #     github.event.sender.type == 'User' &&
-    #     github.event.issue.pull_request &&
-    #     startsWith(github.event.comment.body, '/deploy-to-hg')
+    if: needs.config.outputs.has-secrets &&
+        github.event.sender.type == 'User' &&
+        github.event.issue.pull_request &&
+        startsWith(github.event.comment.body, '/deploy-to-hg')
     runs-on:
       labels: ubuntu-latest-8-cores
     continue-on-error: true
