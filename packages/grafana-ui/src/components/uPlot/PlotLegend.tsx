@@ -71,6 +71,7 @@ export const PlotLegend = React.memo(
         }
 
         const label = getFieldDisplayName(field, data[fieldIndex.frameIndex]!, data);
+        const url = field.config?.urlFromDS;
         const scaleColor = getFieldSeriesColor(field, theme);
         const seriesColor = scaleColor.color;
 
@@ -79,6 +80,7 @@ export const PlotLegend = React.memo(
           fieldIndex,
           color: seriesColor,
           label,
+          url,
           yAxis: axisPlacement === AxisPlacement.Left || axisPlacement === AxisPlacement.Bottom ? 1 : 2,
           getDisplayValues: () => {
             if (!calcs?.length) {
