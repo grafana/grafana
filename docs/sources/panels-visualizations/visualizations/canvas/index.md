@@ -93,7 +93,7 @@ If you move a connector so that it's almost a right angle or a straight line, th
 
 <!-- TODO: Fix gif / use updated demo from what's new -->
 
-{{< video-embed src="/media/docs/grafana/panels-visualizations/gif-canvas-connector-vertex-control-v11.0.mp4>" alt="Changing a connector from a straight line to a right angle" >}}
+{{< video-embed src="/media/docs/grafana/panels-visualizations/gif-canvas-connector-vertex-control-v11.0.mp4" alt="Changing a connector from a straight line to a right angle" >}}
 
 ### Style connectors
 
