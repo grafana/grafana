@@ -19,6 +19,11 @@ jest.mock('@grafana/runtime', () => ({
   },
 }));
 
+jest.mock('react-use', () => ({
+  ...jest.requireActual('react-use'),
+  useAsync: () => ({ loading: false, value: [] }),
+}));
+
 const setup = (propOverrides?: Partial<RichHistoryProps>) => {
   const props: RichHistoryProps = {
     height: 100,

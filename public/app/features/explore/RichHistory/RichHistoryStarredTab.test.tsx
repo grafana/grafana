@@ -63,7 +63,7 @@ describe('RichHistoryStarredTab', () => {
       expect(filterText).toBeInTheDocument();
     });
 
-    it.skip('should not render select datasource if activeDatasourcesOnly is true', async () => {
+    it('should not render select datasource if activeDatasourcesOnly is true', async () => {
       const container = setup({
         richHistorySettings: {
           retentionPeriod: 7,

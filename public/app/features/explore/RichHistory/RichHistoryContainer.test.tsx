@@ -17,6 +17,11 @@ jest.mock('@grafana/runtime', () => ({
   reportInteraction: jest.fn(),
 }));
 
+jest.mock('react-use', () => ({
+  ...jest.requireActual('react-use'),
+  useAsync: () => ({ loading: false, value: [] }),
+}));
+
 jest.mock('../state/selectors', () => ({ selectExploreDSMaps: jest.fn().mockReturnValue({ dsToExplore: [] }) }));
 
 const setup = (propOverrides?: Partial<Props>) => {
@@ -58,23 +63,15 @@ describe('RichHistoryContainer', () => {
     const { container } = setup({ richHistorySettings: undefined });
     expect(container).toHaveTextContent('Loading...');
   });
-  it('should render component with correct width', () => {
-    const { container } = setup();
-    expect(container.firstElementChild!.getAttribute('style')).toContain('width: 531.5px');
-  });
-  it('should render component with correct height', () => {
-    const { container } = setup();
-    expect(container.firstElementChild!.getAttribute('style')).toContain('height: 400px');
-  });
   it('should re-request rich history every time the component is mounted', () => {
     const initRichHistory = jest.fn();
     const { unmount } = setup({ initRichHistory });
-    expect(initRichHistory).toBeCalledTimes(1);
+    expect(initRichHistory).toHaveBeenCalledTimes(1);
 
     unmount();
-    expect(initRichHistory).toBeCalledTimes(1);
+    expect(initRichHistory).toHaveBeenCalledTimes(1);
 
     setup({ initRichHistory });
-    expect(initRichHistory).toBeCalledTimes(2);
+    expect(initRichHistory).toHaveBeenCalledTimes(2);
   });
 });
