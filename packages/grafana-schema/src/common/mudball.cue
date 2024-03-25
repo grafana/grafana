@@ -258,6 +258,7 @@ VizTooltipOptions: {
 	sort: SortOrder
 	maxWidth?: number
 	maxHeight?: number
+	calcs?:  [...string]
 } @cuetsy(kind="interface")
 
 Labels: {

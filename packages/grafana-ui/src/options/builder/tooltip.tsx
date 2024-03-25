@@ -1,11 +1,12 @@
-import { PanelOptionsEditorBuilder } from '@grafana/data';
+import { PanelOptionsEditorBuilder, StatsPickerConfigSettings, standardEditorsRegistry } from '@grafana/data';
 import { OptionsWithTooltip, TooltipDisplayMode, SortOrder } from '@grafana/schema';
 
 export function addTooltipOptions<T extends OptionsWithTooltip>(
   builder: PanelOptionsEditorBuilder<T>,
   singleOnly = false,
   setProximity = false,
-  defaultOptions?: Partial<OptionsWithTooltip>
+  defaultOptions?: Partial<OptionsWithTooltip>,
+  tooltipStats = false
 ) {
   const category = ['Tooltip'];
   const modeOptions = singleOnly
@@ -78,4 +79,20 @@ export function addTooltipOptions<T extends OptionsWithTooltip>(
       },
       showIf: (options: T) => false, //options.tooltip?.mode !== TooltipDisplayMode.None,
     });
+
+  if (tooltipStats) {
+    builder.addCustomEditor<StatsPickerConfigSettings, string[]>({
+      id: 'tooltip.calcs',
+      path: 'tooltip.calcs',
+      name: 'Values',
+      category: ['Tooltip'],
+      description: 'Select values or calculations to show in tooltip',
+      editor: standardEditorsRegistry.get('stats-picker').editor,
+      defaultValue: [],
+      settings: {
+        allowMultiple: true,
+      },
+      showIf: (options: T) => options.tooltip?.mode === TooltipDisplayMode.Multi,
+    });
+  }
 }

@@ -1,7 +1,7 @@
 import { css } from '@emotion/css';
 import React, { ReactNode } from 'react';
 
-import { DataFrame, FieldType, getFieldDisplayName } from '@grafana/data';
+import { DataFrame, FieldType, fieldReducers, getFieldDisplayName, reduceField } from '@grafana/data';
 import { SortOrder, TooltipDisplayMode } from '@grafana/schema/dist/esm/common/common.gen';
 import { useStyles2 } from '@grafana/ui';
 import { VizTooltipContent } from '@grafana/ui/src/components/VizTooltip/VizTooltipContent';
@@ -30,6 +30,7 @@ export interface TimeSeriesTooltipProps {
   scrollable?: boolean;
 
   annotate?: () => void;
+  calcs?: string[];
 }
 
 export const TimeSeriesTooltip = ({
@@ -42,6 +43,7 @@ export const TimeSeriesTooltip = ({
   scrollable = false,
   isPinned,
   annotate,
+  calcs,
 }: TimeSeriesTooltipProps) => {
   const styles = useStyles2(getStyles);
 
@@ -73,6 +75,25 @@ export const TimeSeriesTooltip = ({
     label: xField.type === FieldType.time ? '' : getFieldDisplayName(xField, seriesFrame, frames),
     value: xVal,
   };
+
+  if (calcs && calcs.length > 0) {
+    const stats = reduceField({
+      field: {
+        values: contentItems.map((item) => item.numeric),
+        config: {},
+        name: 'stats',
+        type: FieldType.number,
+      },
+      reducers: calcs,
+    });
+
+    for (const reducerID of calcs) {
+      contentItems.push({
+        label: fieldReducers.get(reducerID).name,
+        value: stats[reducerID],
+      });
+    }
+  }
 
   return (
     <div className={styles.wrapper}>
