@@ -9,7 +9,6 @@ import (
 )
 
 func TestPreparingReleaseFromRemote(t *testing.T) {
-
 	cases := []struct {
 		version         string
 		expectedVersion string
