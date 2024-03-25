@@ -187,6 +187,9 @@ func BenchmarkSearchUsersPermissions_1M_10(b *testing.B) {
 } // ~57s/op
 
 // Lots of both
+
+func BenchmarkSearchUsersPermissions_1K_1K(b *testing.B) { benchSearchUsersPermissions(b, 1000, 1000) }
+
 func BenchmarkSearchUsersPermissions_10K_100(b *testing.B) {
 	if testing.Short() {
 		b.Skip("Skipping benchmark in short mode")
