@@ -32,7 +32,7 @@ jobs:
     - name: Check for go mod & workspace changes 
       run: |
         if ! git diff --exit-code --quiet; then
-          echo "Changes detected. Please run `go work sync` and commit the changes."
+          echo "Changes detected. Please run 'go work sync' and commit the changes."
           exit 1
         fi
 
@@ -42,6 +42,6 @@ jobs:
     - name: Check for go workspace changes 
       run: |
         if ! git diff --exit-code --quiet; then
-          echo "Changes detected. Please run `make build-go` and commit the changes."
+          echo "Changes detected. Please run 'make build-go' and commit the changes."
           exit 1
         fi
