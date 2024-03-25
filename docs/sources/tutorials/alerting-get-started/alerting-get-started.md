@@ -72,7 +72,7 @@ The link will appear listed under the Grafana News heading.
 
 ## Log in to Grafana
 
-Besides being an open-source observability tool, Grafana has its own built-in alerting service.   This means that you can receive notifications whenever there is an event of interest in your data, and even see these events graphed in your visualizations.
+Besides being an open-source observability tool, Grafana has its own built-in alerting service.  This means that you can receive notifications whenever there is an event of interest in your data, and even see these events graphed in your visualizations.
 
 In your browser, simply navigate to [localhost:3000](http://localhost:3000). You should get logged in automatically
 
