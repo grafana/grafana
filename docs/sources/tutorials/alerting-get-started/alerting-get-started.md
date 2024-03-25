@@ -107,7 +107,7 @@ We have now created a dummy webhook endpoint and created a new Alerting Contact 
 
 Next, we'll establish an alert within Grafana Alerting to notify us whenever our sample app experiences a specific volume of requests.
 
-In Grafana, **navigate to Alerting** > **Alert rules**. Click on  **+ New alert rule**.
+In Grafana, **navigate to Alerting** > **Alert rules**. Click on  **New alert rule**.
 
 ## Enter alert rule name
 
@@ -171,6 +171,8 @@ Select who should receive a notification when an alert rule fires.
 To provide more context on the alert, you can link a dashboard and panel to our Alert. For that, click **Link Dashboard and panel** button.
 
 Linking an alert rule to a panel adds an annotation to the panel when the status of your alert rulechanges. If you don’t have a panel already, and since this is optional, you can skip this step for now and link it after you have finished configuring the alert rule.
+
+Click **Save rule and exit** at the top right corner.
 
 ## Trigger an alert
 We have now configured an alert rule and a contact point. Now let’s see if we can trigger an alert by generating some traffic on our sample application.
