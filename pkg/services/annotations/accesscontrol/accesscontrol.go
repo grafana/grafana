@@ -1,7 +1,6 @@
 package accesscontrol
 
 import (
-	"bytes"
 	"context"
 
 	"github.com/grafana/grafana/pkg/infra/db"
@@ -88,8 +87,7 @@ func (authz *AuthService) getAnnotationDashboard(ctx context.Context, query *ann
 	var items []annotations.Item
 	params := make([]any, 0)
 	err := authz.db.WithDbSession(ctx, func(sess *db.Session) error {
-		var sql bytes.Buffer
-		sql.WriteString(`
+		sql := `
 			SELECT
 				a.id,
 				a.org_id,
@@ -97,10 +95,10 @@ func (authz *AuthService) getAnnotationDashboard(ctx context.Context, query *ann
 			FROM annotation as a
 			INNER JOIN dashboard as d ON a.dashboard_id = d.id
 			WHERE a.org_id = ? AND a.id = ?
-			`)
+			`
 		params = append(params, orgID, query.AnnotationID)
 
-		return sess.SQL(sql.String(), params...).Find(&items)
+		return sess.SQL(sql, params...).Find(&items)
 	})
 	if err != nil {
 		return nil, err
