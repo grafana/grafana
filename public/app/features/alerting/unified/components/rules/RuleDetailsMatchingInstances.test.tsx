@@ -56,6 +56,7 @@ describe('RuleDetailsMatchingInstances', () => {
           onClick: jest.fn(),
         },
       ],
+      isLoading: false,
     });
   });
 

@@ -216,6 +216,7 @@ describe('RuleList', () => {
           onClick: jest.fn(),
         },
       ],
+      isLoading: false,
     });
   });
 

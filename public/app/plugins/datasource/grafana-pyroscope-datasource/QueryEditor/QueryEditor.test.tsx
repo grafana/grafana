@@ -13,7 +13,7 @@ import { Props, QueryEditor } from './QueryEditor';
 
 describe('QueryEditor', () => {
   beforeEach(() => {
-    setPluginExtensionsHook(() => ({ extensions: [] })); // No extensions
+    setPluginExtensionsHook(() => ({ extensions: [], isLoading: false })); // No extensions
     mockFetchPyroscopeDatasourceSettings();
   });
 

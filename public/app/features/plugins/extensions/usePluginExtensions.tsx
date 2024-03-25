@@ -1,7 +1,7 @@
 import { useObservable } from 'react-use';
 
 import { PluginExtension } from '@grafana/data';
-import { GetPluginExtensionsOptions, GetPluginExtensionsResult } from '@grafana/runtime';
+import { GetPluginExtensionsOptions, UsePluginExtensionsResult } from '@grafana/runtime';
 
 import { getPluginExtensions } from './getPluginExtensions';
 import { ReactivePluginExtensionsRegistry } from './reactivePluginExtensionRegistry';
@@ -10,20 +10,17 @@ export function createPluginExtensionsHook(extensionsRegistry: ReactivePluginExt
   const observableRegistry = extensionsRegistry.asObservable();
   const cache: {
     id: string;
-    extensions: Record<
-      string,
-      { context: GetPluginExtensionsOptions['context']; extensions: GetPluginExtensionsResult<PluginExtension> }
-    >;
+    extensions: Record<string, { context: GetPluginExtensionsOptions['context']; extensions: PluginExtension[] }>;
   } = {
     id: '',
     extensions: {},
   };
 
-  return function usePluginExtensions(options: GetPluginExtensionsOptions): GetPluginExtensionsResult<PluginExtension> {
+  return function usePluginExtensions(options: GetPluginExtensionsOptions): UsePluginExtensionsResult<PluginExtension> {
     const registry = useObservable(observableRegistry);
 
     if (!registry) {
-      return { extensions: [] };
+      return { extensions: [], isLoading: false };
     }
 
     if (registry.id !== cache.id) {
@@ -36,16 +33,22 @@ export function createPluginExtensionsHook(extensionsRegistry: ReactivePluginExt
     // (NOTE: we are only checking referential equality of `context` object, so it is important to not mutate the object passed to this hook.)
     const key = `${options.extensionPointId}-${options.limitPerPlugin}`;
     if (cache.extensions[key] && cache.extensions[key].context === options.context) {
-      return cache.extensions[key].extensions;
+      return {
+        extensions: cache.extensions[key].extensions,
+        isLoading: false,
+      };
     }
 
-    const extensions = getPluginExtensions({ ...options, registry });
+    const { extensions } = getPluginExtensions({ ...options, registry });
 
     cache.extensions[key] = {
       context: options.context,
       extensions,
     };
 
-    return extensions;
+    return {
+      extensions,
+      isLoading: false,
+    };
   };
 }
