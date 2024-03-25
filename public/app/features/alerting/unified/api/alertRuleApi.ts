@@ -81,6 +81,14 @@ export interface ModifyExportPayload {
   source_tenants?: string[] | undefined;
 }
 
+export interface AlertRuleUpdated {
+  message: string;
+  /**
+   * UIDs of rules updated from this request
+   */
+  updated: string[];
+}
+
 export const alertRuleApi = alertingApi.injectEndpoints({
   endpoints: (build) => ({
     preview: build.mutation<
@@ -254,6 +262,14 @@ export const alertRuleApi = alertingApi.injectEndpoints({
         responseType: 'text',
       }),
       keepUnusedDataFor: 0,
+    }),
+
+    updateRule: build.mutation<AlertRuleUpdated, { nameSpaceUID: string; payload: ModifyExportPayload }>({
+      query: ({ payload, nameSpaceUID }) => ({
+        url: `/api/ruler/grafana/api/v1/rules/${nameSpaceUID}/`,
+        data: payload,
+        method: 'POST',
+      }),
     }),
   }),
 });
