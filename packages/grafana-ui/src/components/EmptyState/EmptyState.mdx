@@ -5,7 +5,7 @@ import { EmptyState } from './EmptyState';
 
 Use an empty state to communicate to the user that there is no data to display, or that a search query returned no results.
 
-## variant="search"
+## variant="not-found"
 
 ### When to use
 
@@ -16,7 +16,7 @@ There are sensible defaults for the image and message, so in most cases you can 
 ```jsx
 import { EmptyState } from '@grafana/ui';
 
-<EmptyState variant="search" />;
+<EmptyState variant="not-found" />;
 ```
 
 ### Providing custom overrides
@@ -30,6 +30,7 @@ import { Button, EmptyState } from '@grafana/ui';
   button={<Button variant="secondary" onClick={clearSearchQuery} />}
   image={<AnyReactNode />}
   message="No playlists found"
+  variant="not-found"
 >
   Optionally provide some additional information here. Maybe even a link to{' '}
   <TextLink href="<externalDocsLink>" external>

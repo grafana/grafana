@@ -24,14 +24,14 @@ interface Props {
   /**
    * Empty state variant. Possible values are 'search'.
    */
-  variant: 'search';
+  variant: 'not-found';
 }
 
 export const EmptyState = ({
   button,
   children,
   image = <GrotNotFound width={300} />,
-  message = t('grafana-ui.empty-state.search-message', 'No results found'),
+  message = t('grafana-ui.empty-state.not-found-message', 'No results found'),
   hideImage = false,
 }: React.PropsWithChildren<Props>) => {
   return (

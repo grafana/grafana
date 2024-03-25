@@ -28,6 +28,7 @@ export const Basic: StoryFn<typeof EmptyState> = (args) => {
 
 Basic.args = {
   children: 'Use this space to add any additional information',
+  variant: 'not-found',
 };
 
 export default meta;
