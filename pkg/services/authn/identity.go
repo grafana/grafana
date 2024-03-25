@@ -27,6 +27,7 @@ const (
 	NamespaceServiceAccount = identity.NamespaceServiceAccount
 	NamespaceAnonymous      = identity.NamespaceAnonymous
 	NamespaceRenderService  = identity.NamespaceRenderService
+	NamespaceAccessPolicy   = identity.NamespaceAccessPolicy
 )
 
 const (

@@ -14,6 +14,7 @@ const (
 	NamespaceServiceAccount = "service-account"
 	NamespaceAnonymous      = "anonymous"
 	NamespaceRenderService  = "render"
+	NamespaceAccessPolicy   = "access-policy"
 )
 
 var ErrNotIntIdentifier = errors.New("identifier is not an int64")
