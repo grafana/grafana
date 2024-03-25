@@ -9,6 +9,7 @@ import (
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/gtime"
+	sdkapi "github.com/grafana/grafana-plugin-sdk-go/experimental/apis/data/v0alpha1"
 	"github.com/prometheus/prometheus/model/labels"
 
 	"github.com/grafana/grafana/pkg/promlib/intervalv2"
@@ -119,20 +120,13 @@ var safeResolution = 11000
 
 // QueryModel includes both the common and specific values
 type QueryModel struct {
-	PrometheusQueryProperties `json:",inline"`
-	CommonQueryProperties     `json:",inline"`
+	PrometheusQueryProperties    `json:",inline"`
+	sdkapi.CommonQueryProperties `json:",inline"`
 
 	// The following properties may be part of the request payload, however they are not saved in panel JSON
 	// Timezone offset to align start & end time on backend
 	UtcOffsetSec int64  `json:"utcOffsetSec,omitempty"`
 	Interval     string `json:"interval,omitempty"`
-}
-
-// CommonQueryProperties is properties applied to all queries
-// NOTE: this will soon be replaced with a struct from the SDK
-type CommonQueryProperties struct {
-	RefId      string `json:"refId,omitempty"`
-	IntervalMs int64  `json:"intervalMs,omitempty"`
 }
 
 type TimeRange struct {
@@ -167,7 +161,7 @@ func Parse(query backend.DataQuery, dsScrapeInterval string, intervalCalculator 
 	}
 
 	// Final step value for prometheus
-	calculatedStep, err := calculatePrometheusInterval(model.Interval, dsScrapeInterval, model.IntervalMs, model.IntervalFactor, query, intervalCalculator)
+	calculatedStep, err := calculatePrometheusInterval(model.Interval, dsScrapeInterval, int64(model.IntervalMS), model.IntervalFactor, query, intervalCalculator)
 	if err != nil {
 		return nil, err
 	}
