@@ -564,7 +564,7 @@
       "close": "Close"
     },
     "empty-state": {
-      "initial-message": "There's nothing here yet",
+      "nothing-here-message": "There's nothing here yet",
       "not-found-message": "No results found"
     },
     "modal": {

@@ -24,19 +24,19 @@ interface BaseProps {
   /**
    * Which variant to use. Affects the default message and image shown.
    */
-  variant: 'initial' | 'not-found';
+  variant: 'nothing-here' | 'not-found';
 }
 
-interface InitialVariantProps extends BaseProps {
+interface NothingHereVariantProps extends BaseProps {
   message: string;
-  variant: 'initial';
+  variant: 'nothing-here';
 }
 
-interface SearchVariantProps extends BaseProps {
+interface NotFoundVariantProps extends BaseProps {
   variant: 'not-found';
 }
 
-type Props = InitialVariantProps | SearchVariantProps;
+type Props = NothingHereVariantProps | NotFoundVariantProps;
 
 export const EmptyState = ({
   button,
@@ -63,8 +63,8 @@ export const EmptyState = ({
 
 function getDefaultMessageForVariant(variant: Props['variant']) {
   switch (variant) {
-    case 'initial': {
-      return t('grafana-ui.empty-state.initial-message', "There's nothing here yet");
+    case 'nothing-here': {
+      return t('grafana-ui.empty-state.nothing-here-message', "There's nothing here yet");
     }
     case 'not-found': {
       return t('grafana-ui.empty-state.not-found-message', 'No results found');
@@ -77,7 +77,7 @@ function getDefaultMessageForVariant(variant: Props['variant']) {
 
 function getDefaultImageForVariant(variant: Props['variant']) {
   switch (variant) {
-    case 'initial': {
+    case 'nothing-here': {
       // TODO replace with a different image for initial variant
       return <GrotNotFound width={300} />;
     }

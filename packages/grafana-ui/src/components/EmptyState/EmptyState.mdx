@@ -5,7 +5,7 @@ import { EmptyState } from './EmptyState';
 
 Use an empty state to communicate to the user that there is no data to display, or that a search query returned no results.
 
-## Initial variant
+## `variant="nothing-here"`
 
 ### When to use
 
@@ -17,7 +17,7 @@ Use when nothing has been created yet, and you want to encourage the user to tak
 import { EmptyState, LinkButton, TextLink } from '@grafana/ui';
 
 <EmptyState
-  variant="initial"
+  variant="nothing-here"
   message="You haven't created any playlists yet"
   button={
     <LinkButton icon="plus" href="playlists/new" size="lg">
@@ -37,7 +37,7 @@ import { EmptyState, LinkButton, TextLink } from '@grafana/ui';
 ```jsx
 import { EmptyState, TextLink } from '@grafana/ui';
 
-<EmptyState variant="initial" message="You haven't created any library panels yet">
+<EmptyState variant="nothing-here" message="You haven't created any library panels yet">
   Create a library panel from any existing dashboard panel through the panel context menu.{' '}
   <TextLink external href="<externalDocsLink>">
     Learn more.
@@ -45,11 +45,11 @@ import { EmptyState, TextLink } from '@grafana/ui';
 </EmptyState>;
 ```
 
-## Search variant
+## `variant="not-found"`
 
 ### When to use
 
-Use in place of a list of results when a search query or filter returns no results.
+Use in place of content when a search query or filter returns no results.
 
 There are sensible defaults for the image and message, so in most cases you can use it without any additional props.
 

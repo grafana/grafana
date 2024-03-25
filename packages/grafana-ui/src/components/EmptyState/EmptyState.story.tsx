@@ -45,7 +45,7 @@ export const Basic: StoryFn<typeof EmptyState> = (args) => {
 Basic.args = {
   button: 'CTA',
   children: 'Use this space to add any additional information',
-  variant: 'initial',
+  variant: 'nothing-here',
 };
 
 export default meta;
