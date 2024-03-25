@@ -31,7 +31,7 @@ const usePluginLinkExtensionsMock = jest.mocked(usePluginLinkExtensions);
 describe('getPanelMenu()', () => {
   beforeEach(() => {
     usePluginLinkExtensionsMock.mockRestore();
-    usePluginLinkExtensionsMock.mockReturnValue({ extensions: [] });
+    usePluginLinkExtensionsMock.mockReturnValue({ extensions: [], isLoading: false });
     grantUserPermissions([AccessControlAction.AlertingRuleRead, AccessControlAction.AlertingRuleUpdate]);
     config.unifiedAlertingEnabled = false;
   });
