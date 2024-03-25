@@ -79,12 +79,12 @@ const Details = ({ rule }: DetailsProps) => {
           {hasEvaluationDuration && (
             <>
               Last evaluation
-              {evaluationTimestamp && evaluationDuration && (
+              {evaluationTimestamp && evaluationDuration ? (
                 <span>
                   <Text color="primary">{formatDistanceToNowStrict(new Date(evaluationTimestamp))} ago</Text>, took{' '}
                   <Text color="primary">{evaluationDuration}ms</Text>
                 </span>
-              )}
+              ) : null}
             </>
           )}
         </MetaText>
