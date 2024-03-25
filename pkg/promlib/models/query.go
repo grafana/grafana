@@ -1,6 +1,7 @@
 package models
 
 import (
+	"embed"
 	"encoding/json"
 	"math"
 	"strconv"
@@ -361,4 +362,12 @@ func AlignTimeRange(t time.Time, step time.Duration, offset int64) time.Time {
 	offsetNano := float64(offset * 1e9)
 	stepNano := float64(step.Nanoseconds())
 	return time.Unix(0, int64(math.Floor((float64(t.UnixNano())+offsetNano)/stepNano)*stepNano-offsetNano)).UTC()
+}
+
+//go:embed query.types.json
+var f embed.FS
+
+// QueryTypeDefinitionsJSON returns the query type definitions
+func QueryTypeDefinitionsJSON() (json.RawMessage, error) {
+	return f.ReadFile("query.types.json")
 }
