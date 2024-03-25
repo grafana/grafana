@@ -54,11 +54,12 @@ type QueryModel struct {
 	dataquery.PrometheusDataQuery
 	// The following properties may be part of the request payload, however they are not saved in panel JSON
 	// Timezone offset to align start & end time on backend
-	UtcOffsetSec   int64  `json:"utcOffsetSec,omitempty"`
-	LegendFormat   string `json:"legendFormat,omitempty"`
-	Interval       string `json:"interval,omitempty"`
-	IntervalMs     int64  `json:"intervalMs,omitempty"`
-	IntervalFactor int64  `json:"intervalFactor,omitempty"`
+	UtcOffsetSec    int64  `json:"utcOffsetSec,omitempty"`
+	LegendFormat    string `json:"legendFormat,omitempty"`
+	LegendUrlFormat string `json:"legendUrlFormat,omitempty"`
+	Interval        string `json:"interval,omitempty"`
+	IntervalMs      int64  `json:"intervalMs,omitempty"`
+	IntervalFactor  int64  `json:"intervalFactor,omitempty"`
 }
 
 type TimeRange struct {
@@ -145,16 +146,17 @@ func Parse(query backend.DataQuery, dsScrapeInterval string, intervalCalculator 
 	}
 
 	return &Query{
-		Expr:          expr,
-		Step:          calculatedStep,
-		LegendFormat:  model.LegendFormat,
-		Start:         query.TimeRange.From,
-		End:           query.TimeRange.To,
-		RefId:         query.RefID,
-		InstantQuery:  instantQuery,
-		RangeQuery:    rangeQuery,
-		ExemplarQuery: exemplarQuery,
-		UtcOffsetSec:  model.UtcOffsetSec,
+		Expr:            expr,
+		Step:            calculatedStep,
+		LegendFormat:    model.LegendFormat,
+		LegendUrlFormat: model.LegendUrlFormat,
+		Start:           query.TimeRange.From,
+		End:             query.TimeRange.To,
+		RefId:           query.RefID,
+		InstantQuery:    instantQuery,
+		RangeQuery:      rangeQuery,
+		ExemplarQuery:   exemplarQuery,
+		UtcOffsetSec:    model.UtcOffsetSec,
 	}, nil
 }
 

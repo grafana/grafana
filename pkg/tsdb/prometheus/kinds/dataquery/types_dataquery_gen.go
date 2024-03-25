@@ -86,6 +86,9 @@ type PrometheusDataQuery struct {
 	// Series name override or template. Ex. {{hostname}} will be replaced with label value for hostname
 	LegendFormat *string `json:"legendFormat,omitempty"`
 
+	// Used for the drilldown label url. Ex. {{hostname}} will be replaced with label value for hostname within the url
+	LegendUrlFormat *string `json:"legendUrlFormat,omitempty"`
+
 	// Specify the query flavor
 	// TODO make this required and give it a default
 	QueryType *string `json:"queryType,omitempty"`

@@ -117,10 +117,10 @@ func addMetadataToMultiFrame(q *models.Query, frame *data.Frame, enableDataplane
 
 	customName := getName(q, frame.Fields[1])
 	labelUrl := getUrl(q, frame.Fields[1])
+
 	if customName != "" {
 		frame.Fields[1].Config = &data.FieldConfig{DisplayNameFromDS: customName, UrlFromDS: labelUrl}
 	}
-
 	if enableDataplane {
 		valueField := frame.Fields[1]
 		if n, ok := valueField.Labels["__name__"]; ok {
