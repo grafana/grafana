@@ -67,6 +67,33 @@ files = [
   "**/pkg/tsdb/cloudwatch/**/*",
 ]
 
+[linters-settings.depguard.rules.apiserver]
+list-mode = "lax"
+allow = [
+  "github.com/grafana/grafana/pkg/apimachinery",
+  "github.com/grafana/grafana/pkg/apiserver",
+]
+deny = [
+  { pkg = "github.com/grafana/grafana/pkg", desc = "apiserver is not allowed to import grafana core" }
+]
+files = [
+  "**/pkg/apiserver/*",
+  "**/pkg/apiserver/**/*"
+]
+
+[linters-settings.depguard.rules.apimachinery]
+list-mode = "lax"
+allow = [
+  "github.com/grafana/grafana/pkg/apimachinery",
+]
+deny = [
+  { pkg = "github.com/grafana/grafana/pkg", desc = "apimachinery is not allowed to import grafana core" }
+]
+files = [
+  "**/pkg/apimachinery/*",
+  "**/pkg/apimachinery/**/*"
+]
+
 [linters-settings.depguard.rules.promlib]
 list-mode = "lax" # allow unless explicitely denied
 deny = [
