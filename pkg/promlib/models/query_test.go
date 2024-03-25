@@ -805,10 +805,10 @@ func TestQueryTypeDefinitions(t *testing.T) {
 			GoType: reflect.TypeOf(&models.PrometheusQueryProperties{}),
 			Examples: []sdkapi.QueryExample{
 				{
-					Name: "simple random walk",
+					Name: "simple health check",
 					SaveModel: sdkapi.AsUnstructured(
 						models.PrometheusQueryProperties{
-							Format: models.PromQueryFormatTimeSeries,
+							Expr: "1+1",
 						},
 					),
 				},

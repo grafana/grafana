@@ -7,8 +7,7 @@
         "type": "prometheus",
         "uid": "TheUID"
       },
-      "expr": "",
-      "format": "time_series"
+      "expr": "1+1"
     }
   ]
 }

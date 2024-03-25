@@ -6,8 +6,7 @@
       "refId": "A",
       "maxDataPoints": 1000,
       "intervalMs": 5,
-      "format": "time_series",
-      "expr": ""
+      "expr": "1+1"
     }
   ]
 }

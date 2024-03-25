@@ -8,7 +8,7 @@
     {
       "metadata": {
         "name": "default",
-        "resourceVersion": "1711372744903",
+        "resourceVersion": "1711374012365",
         "creationTimestamp": "2024-03-25T13:19:04Z"
       },
       "spec": {
@@ -118,10 +118,9 @@
         },
         "examples": [
           {
-            "name": "simple random walk",
+            "name": "simple health check",
             "saveModel": {
-              "expr": "",
-              "format": "time_series"
+              "expr": "1+1"
             }
           }
         ]
