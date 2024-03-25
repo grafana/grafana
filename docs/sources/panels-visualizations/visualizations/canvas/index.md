@@ -91,7 +91,7 @@ You can adjust connectors, adding angles to them, to fit the canvas you're worki
 
 If you move a connector so that it's almost a right angle or a straight line, the connector snaps into that angle or into a straight line.
 
-<!-- TODO: Fix gif / use updated demo from whats new -->
+<!-- TODO: Fix gif / use updated demo from what's new -->
 
 {{< video-embed src="/media/docs/grafana/panels-visualizations/gif-canvas-connector-vertex-control-v11.0.mp4>" alt="Changing a connector from a straight line to a right angle" >}}
 
