@@ -15152,7 +15152,7 @@
       }
     },
     "FrameType": {
-      "description": "A FrameType string, when present in a frame's metadata, asserts that the\nframe's structure conforms to the FrameType's specification.\nThis property is currently optional, so FrameType may be FrameTypeUnknown even if the properties of\nthe Frame correspond to a defined FrameType.",
+      "description": "A FrameType string, when present in a frame's metadata, asserts that the\nframe's structure conforms to the FrameType's specification.\nThis property is currently optional, so FrameType may be FrameTypeUnknown even if the properties of\nthe Frame correspond to a defined FrameType.\n+enum",
       "type": "string"
     },
     "FrameTypeVersion": {
@@ -16035,8 +16035,8 @@
       }
     },
     "JSONWebKey": {
+      "description": "JSONWebKey represents a public or private key in JWK format. It can be\nmarshaled into JSON and unmarshaled from JSON.",
       "type": "object",
-      "title": "JSONWebKey represents a public or private key in JWK format.",
       "properties": {
         "Algorithm": {
           "description": "Key algorithm, parsed from `alg` header.",
@@ -16069,7 +16069,7 @@
           "$ref": "#/definitions/URL"
         },
         "Key": {
-          "description": "Cryptographic key, can be a symmetric or asymmetric key."
+          "description": "Key is the Go in-memory representation of this key. It must have one\nof these types:\ned25519.PublicKey\ned25519.PrivateKey\necdsa.PublicKey\necdsa.PrivateKey\nrsa.PublicKey\nrsa.PrivateKey\n[]byte (a symmetric key)\n\nWhen marshaling this JSONWebKey into JSON, the \"kty\" header parameter\nwill be automatically set based on the type of this field."
         },
         "KeyID": {
           "description": "Key identifier, parsed from `kid` header.",
@@ -18312,7 +18312,7 @@
       "type": "object",
       "title": "QueryDataResponse contains the results from a QueryDataRequest.",
       "properties": {
-        "Responses": {
+        "results": {
           "$ref": "#/definitions/Responses"
         }
       }
