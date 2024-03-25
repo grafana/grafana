@@ -15,6 +15,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/annotations"
 	"github.com/grafana/grafana/pkg/services/dashboards"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/licensing"
 	"github.com/grafana/grafana/pkg/services/publicdashboards"
 	. "github.com/grafana/grafana/pkg/services/publicdashboards/models"
@@ -32,6 +33,7 @@ import (
 type PublicDashboardServiceImpl struct {
 	log                log.Logger
 	cfg                *setting.Cfg
+	features           featuremgmt.FeatureToggles
 	store              publicdashboards.Store
 	intervalCalculator intervalv2.Calculator
 	QueryDataService   query.Service
@@ -52,6 +54,7 @@ var _ publicdashboards.Service = (*PublicDashboardServiceImpl)(nil)
 // builds the service, and api, and configures routes
 func ProvideService(
 	cfg *setting.Cfg,
+	features featuremgmt.FeatureToggles,
 	store publicdashboards.Store,
 	qds query.Service,
 	anno annotations.Repository,
@@ -63,6 +66,7 @@ func ProvideService(
 	return &PublicDashboardServiceImpl{
 		log:                log.New(LogPrefix),
 		cfg:                cfg,
+		features:           features,
 		store:              store,
 		intervalCalculator: intervalv2.NewCalculator(),
 		QueryDataService:   qds,

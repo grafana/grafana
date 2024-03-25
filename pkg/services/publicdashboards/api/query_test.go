@@ -334,7 +334,7 @@ func TestIntegrationUnauthenticatedUserCanGetPubdashPanelQueryData(t *testing.T)
 
 	license := licensingtest.NewFakeLicensing()
 	license.On("FeatureEnabled", FeaturePublicDashboardsEmailSharing).Return(false)
-	pds := publicdashboardsService.ProvideService(cfg, store, qds, annotationsService, ac, ws, dashService, license)
+	pds := publicdashboardsService.ProvideService(cfg, featuremgmt.WithFeatures(), store, qds, annotationsService, ac, ws, dashService, license)
 	pubdash, err := pds.Create(context.Background(), &user.SignedInUser{}, savePubDashboardCmd)
 	require.NoError(t, err)
 
