@@ -119,7 +119,7 @@ func (b *QueryAPIBuilder) handleQuerySingleDatasource(ctx context.Context, req d
 		return nil, err
 	}
 
-	_, rsp, err := client.QueryData(ctx, *req.Request)
+	code, rsp, err := client.QueryData(ctx, *req.Request)
 	if err == nil && rsp != nil {
 		for _, q := range req.Request.Queries {
 			if q.ResultAssertions != nil {
@@ -132,6 +132,17 @@ func (b *QueryAPIBuilder) handleQuerySingleDatasource(ctx context.Context, req d
 						rsp.Responses[q.RefID] = result
 					}
 				}
+			}
+		}
+	}
+
+	// Create a response object with the error when missing (happens for client errors like 404)
+	if rsp == nil && err != nil {
+		rsp = &backend.QueryDataResponse{Responses: make(backend.Responses)}
+		for _, q := range req.Request.Queries {
+			rsp.Responses[q.RefID] = backend.DataResponse{
+				Status: backend.Status(code),
+				Error:  err,
 			}
 		}
 	}
@@ -228,6 +239,9 @@ func (b *QueryAPIBuilder) handleExpressions(ctx context.Context, req parsedReque
 	qdr = data
 	if qdr == nil {
 		qdr = &backend.QueryDataResponse{}
+	}
+	if qdr.Responses == nil {
+		qdr.Responses = make(backend.Responses) // avoid NPE for lookup
 	}
 	now := start // <<< this should come from the original query parser
 	vars := make(mathexp.Vars)
