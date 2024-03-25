@@ -1248,6 +1248,36 @@ func TestService_DoReload(t *testing.T) {
 		env.service.doReload(context.Background())
 	})
 
+	t.Run("successfully reload settings when some providers have empty settings", func(t *testing.T) {
+		t.Parallel()
+
+		env := setupTestEnv(t, false, false, nil)
+
+		settingsList := []*models.SSOSettings{
+			{
+				Provider: "azuread",
+				Settings: map[string]any{
+					"enabled":   true,
+					"client_id": "azuread_client_id",
+				},
+			},
+			{
+				Provider: "google",
+				Settings: map[string]any{},
+			},
+		}
+		env.store.ExpectedSSOSettings = settingsList
+
+		reloadable := ssosettingstests.NewMockReloadable(t)
+		reloadable.On("Reload", mock.Anything, *settingsList[0]).Return(nil).Once()
+		env.reloadables["azuread"] = reloadable
+
+		// registers a provider with empty settings
+		env.reloadables["github"] = nil
+
+		env.service.doReload(context.Background())
+	})
+
 	t.Run("failed fetching the SSO settings", func(t *testing.T) {
 		t.Parallel()
 
