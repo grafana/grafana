@@ -33,7 +33,7 @@ const VIEWS = {
 };
 
 // make sure we ask for 1 more so we show the "show x more" button
-const LIMIT_ALERTS = INSTANCES_DISPLAY_LIMIT + 1;
+export const LIMIT_ALERTS = INSTANCES_DISPLAY_LIMIT + 1;
 
 const RuleList = withErrorBoundary(
   () => {
@@ -103,7 +103,6 @@ const RuleList = withErrorBoundary(
 
     const combinedNamespaces: CombinedRuleNamespace[] = useCombinedRuleNamespaces();
     const filteredNamespaces = useFilteredRules(combinedNamespaces, filterState);
-
     return (
       // We don't want to show the Loading... indicator for the whole page.
       // We show separate indicators for Grafana-managed and Cloud rules
