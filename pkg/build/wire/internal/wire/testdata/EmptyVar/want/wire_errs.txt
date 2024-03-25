@@ -1,0 +1,1 @@
+example.com/foo/wire.go:x:y: var example.com/foo.myFakeSet struct{} is not a provider or a provider set

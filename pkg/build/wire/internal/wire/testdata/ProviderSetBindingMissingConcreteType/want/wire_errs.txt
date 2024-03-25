@@ -1,0 +1,1 @@
+example.com/foo/foo.go:x:y: wire.Bind of concrete type "*example.com/foo.foo" to interface "example.com/foo.fooer", but setB does not include a provider for "*example.com/foo.foo"
