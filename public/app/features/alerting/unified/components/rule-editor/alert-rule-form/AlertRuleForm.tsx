@@ -5,12 +5,13 @@ import { Link, useParams } from 'react-router-dom';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { config } from '@grafana/runtime';
-import { Button, ConfirmModal, CustomScrollbar, HorizontalGroup, Spinner, Stack, useStyles2 } from '@grafana/ui';
+import { Alert, Button, ConfirmModal, CustomScrollbar, HorizontalGroup, Spinner, Stack, useStyles2 } from '@grafana/ui';
 import { AppChromeUpdate } from 'app/core/components/AppChrome/AppChromeUpdate';
 import { useAppNotification } from 'app/core/copy/appNotification';
 import { contextSrv } from 'app/core/core';
 import { useCleanup } from 'app/core/hooks/useCleanup';
 import { useQueryParams } from 'app/core/hooks/useQueryParams';
+import { isGrafanaRulerRule, isGrafanaRulerRulePaused } from 'app/features/alerting/unified/utils/rules';
 import { useDispatch } from 'app/types';
 import { RuleWithLocation } from 'app/types/unified-alerting';
 
@@ -230,11 +231,18 @@ export const AlertRuleForm = ({ existing, prefill }: Props) => {
     </HorizontalGroup>
   );
 
+  const isPaused = existing && isGrafanaRulerRule(existing.rule) && isGrafanaRulerRulePaused(existing.rule);
   return (
     <FormProvider {...formAPI}>
       <AppChromeUpdate actions={actionButtons} />
       <form onSubmit={(e) => e.preventDefault()} className={styles.form}>
         <div className={styles.contentOuter}>
+          {isPaused && (
+            <Alert severity="info" title="Alert evaluation currently paused">
+              Notifications for this rule will not fire and no alert instances will be created until the rule is
+              un-paused.
+            </Alert>
+          )}
           <CustomScrollbar autoHeightMin="100%" hideHorizontalTrack={true}>
             <Stack direction="column" gap={3}>
               {/* Step 1 */}
@@ -339,6 +347,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
   contentOuter: css({
     background: theme.colors.background.primary,
     overflow: 'hidden',
+    maxWidth: theme.breakpoints.values.xl,
     flex: 1,
   }),
   flexRow: css({
