@@ -220,7 +220,7 @@ export const ServiceAccountsListPageUnconnected = ({
             className={styles.filter}
           />
         </div>
-        {!isLoading && !noServiceAccountsCreated && serviceAccounts.length === 0 && <EmptyState variant="search" />}
+        {!isLoading && !noServiceAccountsCreated && serviceAccounts.length === 0 && <EmptyState variant="not-found" />}
         {!isLoading && noServiceAccountsCreated && (
           <>
             <EmptyListCTA

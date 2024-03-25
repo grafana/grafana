@@ -70,7 +70,7 @@ export const PlaylistPage = () => {
         ) : (
           <>
             {!hasPlaylists && searchQuery ? (
-              <EmptyState variant="search" message={t('playlists.empty-state.message', 'No playlists found')} />
+              <EmptyState variant="not-found" message={t('playlists.empty-state.message', 'No playlists found')} />
             ) : (
               <PlaylistPageList
                 playlists={playlists}

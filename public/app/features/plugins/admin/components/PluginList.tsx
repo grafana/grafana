@@ -20,7 +20,7 @@ export const PluginList = ({ plugins, displayMode, isLoading }: Props) => {
   const pathName = config.appSubUrl + (pathname.endsWith('/') ? pathname.slice(0, -1) : pathname);
 
   if (!isLoading && plugins.length === 0) {
-    return <EmptyState variant="search" />;
+    return <EmptyState variant="not-found" />;
   }
 
   return (
