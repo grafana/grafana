@@ -117,9 +117,9 @@ gen-feature-toggles:
 		go test -v ./pkg/services/featuremgmt/...; \
 	fi
 
-gen-go: $(WIRE)
+gen-go:
 	@echo "generate go files"
-	$(WIRE) gen -tags $(WIRE_TAGS) ./pkg/server
+	$(GO) run ./pkg/build/wire/cmd/wire/main.go gen -tags $(WIRE_TAGS) ./pkg/server
 
 fix-cue: $(CUE)
 	@echo "formatting cue files"
@@ -174,11 +174,10 @@ run-frontend: deps-js ## Fetch js dependencies and watch frontend for rebuild
 .PHONY: test-go
 test-go: test-go-unit test-go-integration
 
-### TODO: temporarily run only the failing test (fails in PR only)
 .PHONY: test-go-unit
 test-go-unit: ## Run unit tests for backend with flags.
 	@echo "test backend unit tests"
-	go list -f '{{.Dir}}/...' ./pkg/apiserver/storage/file | xargs \
+	go list -f '{{.Dir}}/...' -m | xargs \
 	$(GO) test -short -covermode=atomic -timeout=30m
 
 .PHONY: test-go-integration
