@@ -558,6 +558,9 @@
     "drawer": {
       "close": "关闭"
     },
+    "empty-state": {
+      "not-found-message": ""
+    },
     "modal": {
       "close-tooltip": "关闭"
     },
