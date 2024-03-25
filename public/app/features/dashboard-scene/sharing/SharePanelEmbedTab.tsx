@@ -15,7 +15,6 @@ import { SceneShareTabState } from './types';
 
 export interface SharePanelEmbedTabState extends SceneShareTabState {
   panelRef: SceneObjectRef<VizPanel>;
-  dashboardRef: SceneObjectRef<DashboardScene>;
 }
 
 export class SharePanelEmbedTab extends SceneObjectBase<SharePanelEmbedTabState> {

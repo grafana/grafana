@@ -18,13 +18,20 @@ import { ShareLinkTab } from './ShareLinkTab';
 import { SharePanelEmbedTab } from './SharePanelEmbedTab';
 import { ShareSnapshotTab } from './ShareSnapshotTab';
 import { SharePublicDashboardTab } from './public-dashboards/SharePublicDashboardTab';
-import { ModalSceneObjectLike, SceneShareTab } from './types';
+import { ModalSceneObjectLike, SceneShareTab, SceneShareTabState } from './types';
 
 interface ShareModalState extends SceneObjectState {
   dashboardRef: SceneObjectRef<DashboardScene>;
   panelRef?: SceneObjectRef<VizPanel>;
   tabs?: SceneShareTab[];
   activeTab: string;
+}
+
+type customDashboardTabType = new (...args: SceneShareTabState[]) => SceneShareTab;
+const customDashboardTabs: customDashboardTabType[] = [];
+
+export function addDashboardShareTab(tab: customDashboardTabType) {
+  customDashboardTabs.push(tab);
 }
 
 /**
@@ -65,6 +72,10 @@ export class ShareModal extends SceneObjectBase<ShareModalState> implements Moda
           tabs.push(new ShareLibraryPanelTab({ panelRef, dashboardRef, modalRef: this.getRef() }));
         }
       }
+    }
+
+    if (!panelRef) {
+      tabs.push(...customDashboardTabs.map((Tab) => new Tab({ dashboardRef })));
     }
 
     if (isPublicDashboardsEnabled()) {
