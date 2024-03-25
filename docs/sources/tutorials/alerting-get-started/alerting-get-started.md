@@ -60,7 +60,7 @@ Download the files to your local machine.
 
 ### Grafana News
 
-Grafana News is a straightforward application created to demonstrate the observation of data using the Grafana stack. It achieves this by generating web traffic through activities such as posting links and voting for your preferred ones
+Grafana News is an application created to demonstrate the observation of data using the Grafana stack. It achieves this by generating web traffic through activities such as posting links and voting for your preferred ones.
 
 To add a link:
 
