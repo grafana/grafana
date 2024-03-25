@@ -23,19 +23,15 @@ weight: 100
 
 Text visualizations enable you to directly include text or HTML in your dashboards. This can be used to add contextual information and descriptions or embed complex HTML.
 
-For example, if you want to display important links to your dashboard, you can use a text visualization to add these links in.
+For example, if you want to display important links to your dashboard, you can use a text visualization to add these links:
 
 {{< figure src="/static/img/docs/text-panel/text-panel.png" max-width="1025px" alt="A text panel showing important links" >}}
 
-The text visualization is useful when you need to provide descriptive information about your dashboard. You can use one when you need to:
+Use a text visualization when you need to:
 
-- Add important links or useful annotations that your team might benefit from.
-- Provide instructions or guidance on how to interpret the different panels, configure settings, or take specific actions based on the displayed data.
+- Add important links or useful annotations.
+- Provide instructions or guidance on how to interpret different panels, configure settings, or take specific actions based on the displayed data.
 - Announce any scheduled maintenance or downtime that might impact your dashboards.
-
-## Configure a text panel
-
-Once you have [created a dashboard](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/dashboards/build-dashboards/create-dashboard/), select the Text visualization type and under Text options, select different [modes](#mode) to determine how the text content should appear.
 
 ## Mode
 
