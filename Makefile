@@ -178,7 +178,7 @@ test-go: test-go-unit test-go-integration
 test-go-unit: ## Run unit tests for backend with flags.
 	@echo "test backend unit tests"
 	go list -f '{{.Dir}}/...' -m | xargs \
-	$(GO) test -short -covermode=atomic -timeout=30m 
+	$(GO) test -short -covermode=atomic -timeout=30m
 
 .PHONY: test-go-integration
 test-go-integration: ## Run integration tests for backend with flags.

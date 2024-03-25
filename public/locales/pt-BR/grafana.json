@@ -789,8 +789,11 @@
       "datasource": "Fonte de dados",
       "unknown": "Desconhecido"
     },
-    "resources": {
-      "disconnect": "Desconectar"
+    "summary": {
+      "disconnect": "",
+      "error-starting-migration": "",
+      "start-migration": "",
+      "target-stack-title": ""
     },
     "token-status": {
       "active": "Token criado e ativo",
@@ -1343,11 +1346,12 @@
     "header": {
       "collapse-row": "Recolher linha de consulta",
       "datasource-help": "Mostrar ajuda da fonte de dados",
-      "disable-query": "Desativar consulta",
       "drag-and-drop": "Arraste e solte para reordenar",
       "duplicate-query": "Duplicar consulta",
       "expand-row": "Expandir linha de consulta",
+      "hide-response": "",
       "remove-query": "Remover consulta",
+      "show-response": "",
       "toggle-edit-mode": "Alternar modo de edição de texto"
     },
     "query-editor-not-exported": "O plug-in de origem de dados não exporta nenhum componente de editor de consulta"
@@ -1473,7 +1477,7 @@
       "library-panel": "Painel de biblioteca",
       "link": "Link",
       "panel-embed": "Incorporado",
-      "public-dashboard": "Publicar painel de controle",
+      "public-dashboard": "",
       "public-dashboard-title": "Painel de controle público",
       "snapshot": "Captura"
     },
