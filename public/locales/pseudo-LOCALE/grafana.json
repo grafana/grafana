@@ -564,6 +564,9 @@
     "drawer": {
       "close": "Cľőşę"
     },
+    "empty-state": {
+      "not-found-message": "Ńő řęşūľŧş ƒőūŉđ"
+    },
     "modal": {
       "close-tooltip": "Cľőşę"
     },
@@ -1478,7 +1481,7 @@
       "library-panel": "Ŀįþřäřy päŉęľ",
       "link": "Ŀįŉĸ",
       "panel-embed": "Ēmþęđ",
-      "public-dashboard": "Pūþľįşĥ Đäşĥþőäřđ",
+      "public-dashboard": "Pūþľįč Đäşĥþőäřđ",
       "public-dashboard-title": "Pūþľįč đäşĥþőäřđ",
       "snapshot": "Ŝŉäpşĥőŧ"
     },

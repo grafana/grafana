@@ -20,7 +20,7 @@ import {
   behaviors,
   VizPanelState,
   SceneGridItemLike,
-  SceneDataLayers,
+  SceneDataLayerSet,
   SceneDataLayerProvider,
   SceneDataLayerControls,
   TextBoxVariable,
@@ -305,10 +305,11 @@ export function createDashboardSceneFromDashboardModel(oldModel: DashboardModel)
       registerDashboardSceneTracking(oldModel),
       registerPanelInteractionsReporter,
       trackIfIsEmpty,
+      new behaviors.LiveNowTimer(oldModel.liveNow),
     ],
     $data:
       layers.length > 0
-        ? new SceneDataLayers({
+        ? new SceneDataLayerSet({
             layers,
           })
         : undefined,
@@ -510,14 +511,17 @@ export function buildGridItemForPanel(panel: PanelModel): DashboardGridItem {
     // To be replaced with it's own option persited option instead derived
     hoverHeader: !panel.title && !panel.timeFrom && !panel.timeShift,
     $data: createPanelDataProvider(panel),
-    menu: new VizPanelMenu({
-      $behaviors: [panelMenuBehavior],
-    }),
     titleItems,
 
     extendPanelContext: setDashboardPanelContext,
     _UNSAFE_customMigrationHandler: getAngularPanelMigrationHandler(panel),
   };
+
+  if (!config.publicDashboardAccessToken) {
+    vizPanelState.menu = new VizPanelMenu({
+      $behaviors: [panelMenuBehavior],
+    });
+  }
 
   if (panel.timeFrom || panel.timeShift) {
     vizPanelState.$timeRange = new PanelTimeRange({

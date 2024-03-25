@@ -4126,9 +4126,9 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@grafana/scenes@npm:3.13.3":
-  version: 3.13.3
-  resolution: "@grafana/scenes@npm:3.13.3"
+"@grafana/scenes@npm:4.0.1":
+  version: 4.0.1
+  resolution: "@grafana/scenes@npm:4.0.1"
   dependencies:
     "@grafana/e2e-selectors": "npm:10.3.3"
     react-grid-layout: "npm:1.3.4"
@@ -4142,7 +4142,7 @@ __metadata:
     "@grafana/ui": ^10.0.3
     react: ^18.0.0
     react-dom: ^18.0.0
-  checksum: 10/5b7f2e2714dcdbc3ad58352ec0cc7f513f7a240dc11a3e309733a662760a598e9333ec377f2899b6b668e018c2e885e8a044af7d42d1be4487d692cda3b9359a
+  checksum: 10/e12737e1a73155ef48bc507b20a2e47d1d7784730c625d799ea74b8719f0bfa2babc193ecdbcb85727ac81dbba0bfad27d4090696b34a7ed1a97caa9813540de
   languageName: node
   linkType: hard
 
@@ -4341,6 +4341,7 @@ __metadata:
     rollup-plugin-dts: "npm:^5.0.0"
     rollup-plugin-esbuild: "npm:5.0.0"
     rollup-plugin-node-externals: "npm:^5.0.0"
+    rollup-plugin-svg-import: "npm:1.6.0"
     rxjs: "npm:7.8.1"
     sass-loader: "npm:14.1.1"
     slate: "npm:0.47.9"
@@ -5240,7 +5241,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@msagl/core@npm:^1.1.16, @msagl/core@npm:^1.1.18":
+"@msagl/core@npm:^1.1.16":
   version: 1.1.18
   resolution: "@msagl/core@npm:1.1.18"
   dependencies:
@@ -5254,25 +5255,39 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@msagl/drawing@npm:^1.1.18":
-  version: 1.1.18
-  resolution: "@msagl/drawing@npm:1.1.18"
+"@msagl/core@npm:^1.1.17":
+  version: 1.1.17
+  resolution: "@msagl/core@npm:1.1.17"
   dependencies:
-    "@msagl/core": "npm:^1.1.18"
-  checksum: 10/4cba6bd172dc39e09da9487c87b9caf511fb12eff433715ba3efeac95650315c5a5fb8cc6dfffd6f76de304a8cab0ecb839fc933268f0a0a004ee130594e4773
+    "@esfx/collections": "npm:^1.0.0"
+    "@esfx/collections-sortedmap": "npm:^1.0.0"
+    queue-typescript: "npm:^1.0.1"
+    reliable-random: "npm:^0.0.1"
+    stack-typescript: "npm:^1.0.4"
+    typescript-string-operations: "npm:^1.4.1"
+  checksum: 10/6a0c83911d0802cf4372a9d976017117d9ecbec8e8bda8850fb58dec76558c0453290a51ad1c55b451ae70deeb3a57b1623bcbf7d054b3bfdacb9ea2a8190d5a
+  languageName: node
+  linkType: hard
+
+"@msagl/drawing@npm:^1.1.17":
+  version: 1.1.17
+  resolution: "@msagl/drawing@npm:1.1.17"
+  dependencies:
+    "@msagl/core": "npm:^1.1.17"
+  checksum: 10/7a3f38cf2cafeda292cbd7c3f78d55f39f11a5923c3675ecd5a51d362660461fca50b42e5c9aa58431ad34f650fff0443be99670947c6fcd6f07701057a08c52
   languageName: node
   linkType: hard
 
 "@msagl/parser@npm:^1.1.16":
-  version: 1.1.18
-  resolution: "@msagl/parser@npm:1.1.18"
+  version: 1.1.17
+  resolution: "@msagl/parser@npm:1.1.17"
   dependencies:
-    "@msagl/core": "npm:^1.1.18"
-    "@msagl/drawing": "npm:^1.1.18"
+    "@msagl/core": "npm:^1.1.17"
+    "@msagl/drawing": "npm:^1.1.17"
     "@types/parse-color": "npm:^1.0.1"
     dotparser: "npm:^1.1.1"
     parse-color: "npm:^1.0.0"
-  checksum: 10/f2b2d01d08e82341251cc8907a19881b2b203480342a49d14432922d68edf03a26bf3b4959d6673f45347afce7655f7cb95ace2218e06617cde5f4ed5a669f80
+  checksum: 10/eae9c0a02410177b9c8f73edcad3c9e4610a31a972b3c58a870fe1db7c75b857304a87b82e8b7f9d6afedf91be73969856626ebb0f3fdae0d47c4e62da805ca1
   languageName: node
   linkType: hard
 
@@ -7123,6 +7138,16 @@ __metadata:
   peerDependencies:
     rollup: ^1.20.0||^2.0.0
   checksum: 10/3b69f02893eea42455fb97b81f612ac6bfadf94ac73bebd481ea13e90a693eef52c163210a095b12e574a25603af5e55f86a020889019167f331aa8dd3ff30e0
+  languageName: node
+  linkType: hard
+
+"@rollup/pluginutils@npm:^4.1.1":
+  version: 4.2.1
+  resolution: "@rollup/pluginutils@npm:4.2.1"
+  dependencies:
+    estree-walker: "npm:^2.0.1"
+    picomatch: "npm:^2.2.2"
+  checksum: 10/503a6f0a449e11a2873ac66cfdfb9a3a0b77ffa84c5cad631f5e4bc1063c850710e8d5cd5dab52477c0d66cda2ec719865726dbe753318cd640bab3fff7ca476
   languageName: node
   linkType: hard
 
@@ -11500,6 +11525,15 @@ __metadata:
   languageName: node
   linkType: hard
 
+"ansi-escapes@npm:^6.0.0":
+  version: 6.2.0
+  resolution: "ansi-escapes@npm:6.2.0"
+  dependencies:
+    type-fest: "npm:^3.0.0"
+  checksum: 10/442f91b04650b35bc4815f47c20412d69ddbba5d4bf22f72ec03be352fca2de6819c7e3f4dfd17816ee4e0c6c965fe85e6f1b3f09683996a8d12fd366afd924e
+  languageName: node
+  linkType: hard
+
 "ansi-html-community@npm:0.0.8, ansi-html-community@npm:^0.0.8":
   version: 0.0.8
   resolution: "ansi-html-community@npm:0.0.8"
@@ -13015,6 +13049,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"chalk@npm:^5.2.0":
+  version: 5.3.0
+  resolution: "chalk@npm:5.3.0"
+  checksum: 10/6373caaab21bd64c405bfc4bd9672b145647fc9482657b5ea1d549b3b2765054e9d3d928870cdf764fb4aad67555f5061538ff247b8310f110c5c888d92397ea
+  languageName: node
+  linkType: hard
+
 "chance@npm:^1.0.10":
   version: 1.1.11
   resolution: "chance@npm:1.1.11"
@@ -13026,6 +13067,13 @@ __metadata:
   version: 1.0.2
   resolution: "char-regex@npm:1.0.2"
   checksum: 10/1ec5c2906adb9f84e7f6732a40baef05d7c85401b82ffcbc44b85fbd0f7a2b0c2a96f2eb9cf55cae3235dc12d4023003b88f09bcae8be9ae894f52ed746f4d48
+  languageName: node
+  linkType: hard
+
+"char-regex@npm:^2.0.0":
+  version: 2.0.1
+  resolution: "char-regex@npm:2.0.1"
+  checksum: 10/fadd100b963c160a70192e47e122c654cadf447c2c8f23b0bda4dc9ef1a02c993abbb0f21f50e2e58f90a8453ca019b3c86f001688cb42fb7b54af4e661b1ada
   languageName: node
   linkType: hard
 
@@ -16964,7 +17012,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"estree-walker@npm:^2.0.2":
+"estree-walker@npm:^2.0.1, estree-walker@npm:^2.0.2":
   version: 2.0.2
   resolution: "estree-walker@npm:2.0.2"
   checksum: 10/b02109c5d46bc2ed47de4990eef770f7457b1159a229f0999a09224d2b85ffeed2d7679cffcff90aeb4448e94b0168feb5265b209cdec29aad50a3d6e93d21e2
@@ -17620,12 +17668,12 @@ __metadata:
   linkType: hard
 
 "follow-redirects@npm:^1.0.0, follow-redirects@npm:^1.15.4":
-  version: 1.15.5
-  resolution: "follow-redirects@npm:1.15.5"
+  version: 1.15.6
+  resolution: "follow-redirects@npm:1.15.6"
   peerDependenciesMeta:
     debug:
       optional: true
-  checksum: 10/d467f13c1c6aa734599b8b369cd7a625b20081af358f6204ff515f6f4116eb440de9c4e0c49f10798eeb0df26c95dd05d5e0d9ddc5786ab1a8a8abefe92929b4
+  checksum: 10/70c7612c4cab18e546e36b991bbf8009a1a41cf85354afe04b113d1117569abf760269409cb3eb842d9f7b03d62826687086b081c566ea7b1e6613cf29030bf7
   languageName: node
   linkType: hard
 
@@ -18540,7 +18588,7 @@ __metadata:
     "@grafana/prometheus": "workspace:*"
     "@grafana/runtime": "workspace:*"
     "@grafana/saga-icons": "workspace:*"
-    "@grafana/scenes": "npm:3.13.3"
+    "@grafana/scenes": "npm:4.0.1"
     "@grafana/schema": "workspace:*"
     "@grafana/sql": "workspace:*"
     "@grafana/tsconfig": "npm:^1.3.0-rc1"
@@ -18723,6 +18771,7 @@ __metadata:
     jest-fail-on-console: "npm:3.1.2"
     jest-junit: "npm:16.0.0"
     jest-matcher-utils: "npm:29.7.0"
+    jest-watch-typeahead: "npm:^2.2.2"
     jquery: "npm:3.7.1"
     js-yaml: "npm:^4.1.0"
     json-markup: "npm:^1.1.0"
@@ -19894,9 +19943,9 @@ __metadata:
   linkType: hard
 
 "ip@npm:^2.0.0":
-  version: 2.0.0
-  resolution: "ip@npm:2.0.0"
-  checksum: 10/1270b11e534a466fb4cf4426cbcc3a907c429389f7f4e4e3b288b42823562e88d6a509ceda8141a507de147ca506141f745005c0aa144569d94cf24a54eb52bc
+  version: 2.0.1
+  resolution: "ip@npm:2.0.1"
+  checksum: 10/d6dd154e1bc5e8725adfdd6fb92218635b9cbe6d873d051bd63b178f009777f751a5eea4c67021723a7056325fc3052f8b6599af0a2d56f042c93e684b4a0349
   languageName: node
   linkType: hard
 
@@ -21022,7 +21071,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"jest-regex-util@npm:^29.6.3":
+"jest-regex-util@npm:^29.0.0, jest-regex-util@npm:^29.6.3":
   version: 29.6.3
   resolution: "jest-regex-util@npm:29.6.3"
   checksum: 10/0518beeb9bf1228261695e54f0feaad3606df26a19764bc19541e0fc6e2a3737191904607fb72f3f2ce85d9c16b28df79b7b1ec9443aa08c3ef0e9efda6f8f2a
@@ -21171,7 +21220,24 @@ __metadata:
   languageName: node
   linkType: hard
 
-"jest-watcher@npm:^29.7.0":
+"jest-watch-typeahead@npm:^2.2.2":
+  version: 2.2.2
+  resolution: "jest-watch-typeahead@npm:2.2.2"
+  dependencies:
+    ansi-escapes: "npm:^6.0.0"
+    chalk: "npm:^5.2.0"
+    jest-regex-util: "npm:^29.0.0"
+    jest-watcher: "npm:^29.0.0"
+    slash: "npm:^5.0.0"
+    string-length: "npm:^5.0.1"
+    strip-ansi: "npm:^7.0.1"
+  peerDependencies:
+    jest: ^27.0.0 || ^28.0.0 || ^29.0.0
+  checksum: 10/8685277ce1b96ec775882111ec55ce90a862cc57acb21ce94f8ac44a25f6fb34c7a7ce119e07b2d8ff5353a8d9e4f981cf96fa35532f71ddba6ca8fedc05bd8e
+  languageName: node
+  linkType: hard
+
+"jest-watcher@npm:^29.0.0, jest-watcher@npm:^29.7.0":
   version: 29.7.0
   resolution: "jest-watcher@npm:29.7.0"
   dependencies:
@@ -27863,6 +27929,17 @@ __metadata:
   languageName: node
   linkType: hard
 
+"rollup-plugin-svg-import@npm:1.6.0":
+  version: 1.6.0
+  resolution: "rollup-plugin-svg-import@npm:1.6.0"
+  dependencies:
+    "@rollup/pluginutils": "npm:^4.1.1"
+  peerDependencies:
+    rollup: ">=1.29.0 <3.0.0"
+  checksum: 10/453862c39d2301563d9d07f6647c295377ff66cf3174d2a0612389fda4bfd9fa72718d90279feb782d3525f1d6f9710e1dc78641cd9d4044360a0179f88054b0
+  languageName: node
+  linkType: hard
+
 "rollup@npm:2.79.1":
   version: 2.79.1
   resolution: "rollup@npm:2.79.1"
@@ -28453,7 +28530,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"slash@npm:^5.1.0":
+"slash@npm:^5.0.0, slash@npm:^5.1.0":
   version: 5.1.0
   resolution: "slash@npm:5.1.0"
   checksum: 10/2c41ec6fb1414cd9bba0fa6b1dd00e8be739e3fe85d079c69d4b09ca5f2f86eafd18d9ce611c0c0f686428638a36c272a6ac14799146a8295f259c10cc45cde4
@@ -29209,6 +29286,16 @@ __metadata:
     char-regex: "npm:^1.0.2"
     strip-ansi: "npm:^6.0.0"
   checksum: 10/ce85533ef5113fcb7e522bcf9e62cb33871aa99b3729cec5595f4447f660b0cefd542ca6df4150c97a677d58b0cb727a3fe09ac1de94071d05526c73579bf505
+  languageName: node
+  linkType: hard
+
+"string-length@npm:^5.0.1":
+  version: 5.0.1
+  resolution: "string-length@npm:5.0.1"
+  dependencies:
+    char-regex: "npm:^2.0.0"
+    strip-ansi: "npm:^7.0.1"
+  checksum: 10/71f73b8c8a743e01dcd001bcf1b197db78d5e5e53b12bd898cddaf0961be09f947dfd8c429783db3694b55b05cb5a51de6406c5085ff1aaa10c4771440c8396d
   languageName: node
   linkType: hard
 
@@ -30422,6 +30509,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"type-fest@npm:^3.0.0":
+  version: 3.13.1
+  resolution: "type-fest@npm:3.13.1"
+  checksum: 10/9a8a2359ada34c9b3affcaf3a8f73ee14c52779e89950db337ce66fb74c3399776c697c99f2532e9b16e10e61cfdba3b1c19daffb93b338b742f0acd0117ce12
+  languageName: node
+  linkType: hard
+
 "type-fest@npm:^4.9.0":
   version: 4.10.2
   resolution: "type-fest@npm:4.10.2"
@@ -31337,8 +31431,8 @@ __metadata:
   linkType: hard
 
 "webpack-dev-middleware@npm:^6.1.1":
-  version: 6.1.1
-  resolution: "webpack-dev-middleware@npm:6.1.1"
+  version: 6.1.2
+  resolution: "webpack-dev-middleware@npm:6.1.2"
   dependencies:
     colorette: "npm:^2.0.10"
     memfs: "npm:^3.4.12"
@@ -31350,7 +31444,7 @@ __metadata:
   peerDependenciesMeta:
     webpack:
       optional: true
-  checksum: 10/b0637584f18b02174fd7fc2e6278efb8e2fb5308abe4ffe73658e59ff53a62c05686f161b06bd5c41d42611aa395b8c8f087d7ff8cf2304232c097a694a5b94e
+  checksum: 10/043d9b7b6b2ec433515da138d6527573828f79e164722410038ba96a5d65be0e28241161a90168471c13231e5e8a84c0f7cd215433828bc64087b0bdab8aa553
   languageName: node
   linkType: hard
 
