@@ -562,7 +562,7 @@
       "close": "Close"
     },
     "empty-state": {
-      "search-message": "No results found"
+      "not-found-message": "No results found"
     },
     "modal": {
       "close-tooltip": "Close"
