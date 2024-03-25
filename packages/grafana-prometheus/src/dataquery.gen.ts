@@ -47,6 +47,7 @@ export interface Prometheus extends common.DataQuery {
    * Series name override or template. Ex. {{hostname}} will be replaced with label value for hostname
    */
   legendFormat?: string;
+  legendUrlFormat?: string;
   /**
    * Returns a Range vector, comprised of a set of time series containing a range of data points over time for each time series
    */

@@ -59,7 +59,9 @@ export const VizLegendListItem = <T = unknown,>({
   const onClick = useCallback(
     (event: React.MouseEvent<HTMLButtonElement, MouseEvent>) => {
       if (onLabelClick) {
-        onLabelClick(item, event);
+        if( item.url != null) {
+          window.location.href = item.url;
+        } else { onLabelClick(item, event); }
       }
     },
     [item, onLabelClick]
@@ -81,7 +83,7 @@ export const VizLegendListItem = <T = unknown,>({
         onClick={onClick}
         className={styles.label}
       >
-        {item.label} &quot; {item.url} &quot;
+        {item.label}
       </button>
 
       {item.getDisplayValues && <VizLegendStatsList stats={item.getDisplayValues()} />}

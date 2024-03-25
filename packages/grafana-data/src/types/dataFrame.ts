@@ -47,6 +47,11 @@ export interface FieldConfig<TOptions = any> {
   displayNameFromDS?: string;
 
   /**
+   * This is the URL that the field value links to.  This supports template variables.
+   */
+  urlFromDS?: string;
+
+  /**
    * Human readable field metadata
    */
   description?: string;
