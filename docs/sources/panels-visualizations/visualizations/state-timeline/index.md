@@ -65,7 +65,7 @@ The following tables are examples of the type of data you need for a state timel
 
 The data is converted as follows, with the [null and empty values visualized as gaps](https://grafana.com/docs/grafana/latest/panels-visualizations/visualizations/state-timeline/#connect-null-values) in the state timeline:
 
-{{< figure src="/static/img/docs/state-timeline-panel/state-timeline-with-null-values.png" max-width="1025px" alt="A state timeline panel with null values showing the status of two servers" >}}
+{{< figure src="/static/img/docs/state-timeline-panel/state-timeline-with-null-values.png" max-width="1025px" alt="A state timeline visualization with null values showing the status of two servers" >}}
 
 #### Two time columns without null values
 
@@ -80,7 +80,7 @@ The data is converted as follows, with the [null and empty values visualized as 
 
 The data is converted as follows:
 
-{{< figure src="/static/img/docs/state-timeline-panel/state-timeline-with-two-timestamps.png" max-width="1025px" alt="A state timeline panel with two time columns showing the status of two servers" >}}
+{{< figure src="/static/img/docs/state-timeline-panel/state-timeline-with-two-timestamps.png" max-width="1025px" alt="A state timeline visualization with two time columns showing the status of two servers" >}}
 
 If your query results aren't in a table format like the preceding examples, especially for time-series data, you can apply specific [transformations](https://stackoverflow.com/questions/68887416/grafana-state-timeline-panel-with-values-states-supplied-by-label) to achieve this.
 
