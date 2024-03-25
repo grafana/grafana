@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 
+	"k8s.io/apimachinery/pkg/api/meta"
 	"k8s.io/apimachinery/pkg/apis/meta/internalversion"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -127,6 +128,14 @@ func (s *legacyStorage) Create(ctx context.Context,
 	if err != nil {
 		return nil, err
 	}
+
+	// #TODO see if this could be done in enrichObject
+	accessor, err := meta.Accessor(created)
+	if err != nil {
+		return created, err
+	}
+	accessor.SetResourceVersion("")
+	accessor.SetUID("")
 
 	// add fields from the k8s object for inclusion in entity store
 	return enrichObject(obj, created)

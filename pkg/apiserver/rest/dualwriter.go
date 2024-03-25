@@ -2,6 +2,7 @@ package rest
 
 import (
 	"context"
+	"fmt"
 
 	"k8s.io/apimachinery/pkg/api/meta"
 	metainternalversion "k8s.io/apimachinery/pkg/apis/meta/internalversion"
@@ -65,6 +66,18 @@ type DualWriter struct {
 	legacy LegacyStorage
 }
 
+type DualWriterMode int
+
+const (
+	Mode1 DualWriterMode = iota
+	Mode2
+	Mode3
+	Mode4
+)
+
+// #TODO: make this customisable
+const CurrentMode = Mode2
+
 // NewDualWriter returns a new DualWriter.
 func NewDualWriter(legacy LegacyStorage, storage Storage) *DualWriter {
 	return &DualWriter{
@@ -73,29 +86,28 @@ func NewDualWriter(legacy LegacyStorage, storage Storage) *DualWriter {
 	}
 }
 
-// Create overrides the default behavior of the Storage and writes to both the LegacyStorage and Storage.
+// Create overrides the default behavior of the Storage and writes to LegacyStorage and Storage depending on the dual writer mode.
 func (d *DualWriter) Create(ctx context.Context, obj runtime.Object, createValidation rest.ValidateObjectFunc, options *metav1.CreateOptions) (runtime.Object, error) {
-	if legacy, ok := d.legacy.(rest.Creater); ok {
-		created, err := legacy.Create(ctx, obj, createValidation, options)
-		if err != nil {
-			return nil, err
-		}
-
-		accessor, err := meta.Accessor(created)
-		if err != nil {
-			return created, err
-		}
-		accessor.SetResourceVersion("")
-		accessor.SetUID("")
-
-		rsp, err := d.Storage.Create(ctx, created, createValidation, options)
-		if err != nil {
-			klog.Error("unable to create object in duplicate storage", "error", err)
-		}
-		return rsp, err
+	legacy, ok := d.legacy.(rest.Creater)
+	if !ok {
+		return nil, fmt.Errorf("legacy storage rest.Creater is missing")
 	}
 
-	return d.Storage.Create(ctx, obj, createValidation, options)
+	created, err := legacy.Create(ctx, obj, createValidation, options)
+	if err != nil {
+		return nil, err
+	}
+
+	if CurrentMode < Mode2 {
+		return created, nil
+	}
+
+	rsp, err := d.Storage.Create(ctx, created, createValidation, options)
+	// #TODO customise error handling depending on the mode we are in
+	if err != nil {
+		klog.Error("unable to create object in duplicate storage", "error", err)
+	}
+	return rsp, err
 }
 
 // Update overrides the default behavior of the Storage and writes to both the LegacyStorage and Storage.
