@@ -39,7 +39,7 @@ func (o *AggregatorServerOptions) AddFlags(fs *pflag.FlagSet) {
 		"path to proxy client cert file")
 
 	fs.StringVar(&o.ProxyClientKeyFile, "proxy-client-key-file", o.ProxyClientKeyFile,
-		"path to proxy client cert file")
+		"path to proxy client key file")
 }
 
 func (o *AggregatorServerOptions) Validate() []error {
