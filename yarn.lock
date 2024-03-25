@@ -18344,8 +18344,8 @@ __metadata:
   linkType: hard
 
 "glob-stream@npm:^8.0.0":
-  version: 8.0.0
-  resolution: "glob-stream@npm:8.0.0"
+  version: 8.0.1
+  resolution: "glob-stream@npm:8.0.1"
   dependencies:
     "@gulpjs/to-absolute-glob": "npm:^4.0.0"
     anymatch: "npm:^3.1.3"
@@ -18354,8 +18354,9 @@ __metadata:
     is-glob: "npm:^4.0.3"
     is-negated-glob: "npm:^1.0.0"
     normalize-path: "npm:^3.0.0"
+    now-and-later: "npm:^3.0.0"
     streamx: "npm:^2.12.5"
-  checksum: 10/b1d18b6fd49086ff02e031f03e3debac747047d304b349a6dced3b7944c665344ef63496363f483acc7c6afcd6ebfb11af1652824f2c370d83c0f3905d5c67e0
+  checksum: 10/a2d09b5e67cf90d85bc90b2f93ec2da1415ac0a5a64c52c9d3bfb781ee72a90b23ec3297bc9ed7be446ab3a86b21ff90523047d811c4ceea67e098479ed226fe
   languageName: node
   linkType: hard
 
