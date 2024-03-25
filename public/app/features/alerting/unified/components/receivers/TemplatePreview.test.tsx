@@ -16,6 +16,13 @@ import { mockPreviewTemplateResponse, mockPreviewTemplateResponseRejected } from
 import { defaults, TemplateFormValues } from './TemplateForm';
 import { TemplatePreview, PREVIEW_NOT_AVAILABLE } from './TemplatePreview';
 
+jest.mock(
+  'react-virtualized-auto-sizer',
+  () =>
+    ({ children }: { children: ({ height, width }: { height: number; width: number }) => JSX.Element }) =>
+      children({ height: 500, width: 400 })
+);
+
 const getProviderWraper = () => {
   return function Wrapper({ children }: React.PropsWithChildren<{}>) {
     const store = configureStore();
