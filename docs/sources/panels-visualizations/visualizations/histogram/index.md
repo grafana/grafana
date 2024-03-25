@@ -21,17 +21,31 @@ weight: 100
 
 # Histogram
 
-Histograms calculate the distribution of values and present them as a bar chart. The Y-axis and the height of each bar represent the count of values that fall into each bracket while the X-axis represents the value range.
+Histograms calculate the distribution of values and present them as a bar chart. The Y-axis and the height of each bar represent the count of values that fall into each bracket, while the X-axis represents the value range.
 
-{{< figure src="/static/img/docs/histogram-panel/histogram-example-v8-0.png" max-width="625px" caption="Bar chart example" >}}
+For example, if you want to understand the distribution of people's heights, you can use a histogram visualization to identify patterns or insights in the data distribution.
+
+{{< figure src="/static/img/docs/histogram-panel/histogram-example-v8-0.png" max-width="625px" alt="A histogram visualization showing the distribution of people's heights" >}}
+
+You can use a histogram visualization if you need to:
+
+- Visualize and analyze data distributions over a specific time range to see how frequently certain values occur.
+- Identify any outliers in your data distribution.
+- Provide statistical analysis to help with decision-making 
+
+## Configure a histogram visualization
+
+<!-- video TBA here -->
 
 ## Supported data formats
 
 Histograms support time series and any table results with one or more numerical fields.
 
-## Display options
+### Examples
 
-Use the following options to refine your visualization.
+## Histogram options
+
+Use the following options to refine your histogram visualization.
 
 ### Bucket size
 
