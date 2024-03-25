@@ -11,6 +11,7 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend/gtime"
 	"github.com/prometheus/prometheus/model/labels"
 
+	"github.com/grafana/grafana/pkg/apis/scope/v0alpha1"
 	"github.com/grafana/grafana/pkg/promlib/intervalv2"
 )
 
@@ -153,7 +154,7 @@ type Query struct {
 	RangeQuery    bool
 	ExemplarQuery bool
 	UtcOffsetSec  int64
-	Scope         *ScopeSpec
+	Scope         *v0alpha1.ScopeSpec
 }
 
 type Scope struct {
