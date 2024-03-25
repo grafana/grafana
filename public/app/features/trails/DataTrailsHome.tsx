@@ -54,11 +54,11 @@ export class DataTrailsHome extends SceneObjectBase<DataTrailsHomeState> {
     return (
       <div className={styles.container}>
         <Stack direction={'column'} gap={1} alignItems={'start'}>
-          <MetricsHeader />
           <Button icon="plus" size="md" variant="primary" onClick={model.onNewMetricsTrail}>
             New metric exploration
           </Button>
         </Stack>
+
         <Stack gap={5}>
           <div className={styles.column}>
             <Text variant="h4">Recent metrics</Text>
@@ -105,7 +105,6 @@ function getAppFor(model: SceneObject) {
 function getStyles(theme: GrafanaTheme2) {
   return {
     container: css({
-      padding: theme.spacing(2),
       flexGrow: 1,
       display: 'flex',
       flexDirection: 'column',
