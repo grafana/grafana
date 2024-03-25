@@ -1,36 +1,66 @@
 import { css } from '@emotion/css';
-import React, { useState } from 'react';
+import React, { JSX, useState } from 'react';
+import { connect, ConnectedProps } from 'react-redux';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { getBackendSrv } from '@grafana/runtime';
 import { Button, Drawer, Text, TextLink, Switch, useStyles2 } from '@grafana/ui';
+import { StoreState } from 'app/types';
 
-export interface Props {
+import { loadSettings, saveSettings } from './state/actions';
+
+interface OwnProps {
   onClose: () => void;
 }
 
+export type Props = OwnProps & ConnectedProps<typeof connector>;
+
+const mapStateToProps = (state: StoreState) => {
+  const allowInsecureEmail =
+    state.authConfig.settings?.auth?.oauth_allow_insecure_email_lookup.toLowerCase() === 'true';
+  return {
+    allowInsecureEmail,
+  };
+};
+
+const mapActionsToProps = {
+  loadSettings,
+  saveSettings,
+};
+
+const connector = connect(mapStateToProps, mapActionsToProps);
+
 const SETTINGS_URL = '/api/admin/settings';
 
-export const AuthDrawer = ({ onClose }: Props) => {
-  const [isOauthAllowInsecureEmailLookup, setOauthAllowInsecureEmailLookup] = useState(false);
+export const AuthDrawerUnconnected = ({
+  allowInsecureEmail,
+  loadSettings,
+  onClose,
+  saveSettings,
+}: Props): JSX.Element => {
+  const [isOauthAllowInsecureEmailLookup, setOauthAllowInsecureEmailLookup] = useState(allowInsecureEmail);
 
-  const getSettings = async () => {
-    try {
-      const response = await getBackendSrv().get(SETTINGS_URL);
-      setOauthAllowInsecureEmailLookup(response.auth.oauth_allow_insecure_email_lookup?.toLowerCase?.() === 'true');
-    } catch (error) {}
-  };
-  const updateSettings = async (property: boolean) => {
-    try {
-      const body = {
-        updates: {
-          auth: {
-            oauth_allow_insecure_email_lookup: '' + property,
-          },
+  const oauthAllowInsecureEmailLookupOnChange = async () => {
+    saveSettings({
+      updates: {
+        auth: {
+          oauth_allow_insecure_email_lookup: '' + !isOauthAllowInsecureEmailLookup,
         },
-      };
-      await getBackendSrv().put(SETTINGS_URL, body);
-    } catch (error) {}
+      },
+    })
+      .then(() => {
+        setOauthAllowInsecureEmailLookup(!isOauthAllowInsecureEmailLookup); // TODO maybe remove this
+        console.log(`oauth_allow_insecure_email_lookup: `, allowInsecureEmail);
+        return loadSettings(true);
+      })
+      .then((refreshedSettings) => {
+        console.log(`settings updated`);
+        console.log(refreshedSettings.auth.oauth_allow_insecure_email_lookup);
+      })
+      .catch((error) => {
+        console.error(`error`, error);
+        // TODO add warning for error
+      });
   };
 
   const resetButtonOnClick = async () => {
@@ -41,13 +71,7 @@ export const AuthDrawer = ({ onClose }: Props) => {
         },
       };
       await getBackendSrv().put(SETTINGS_URL, body);
-      getSettings();
     } catch (error) {}
-  };
-
-  const oauthAllowInsecureEmailLookupOnChange = async () => {
-    updateSettings(!isOauthAllowInsecureEmailLookup);
-    setOauthAllowInsecureEmailLookup(!isOauthAllowInsecureEmailLookup);
   };
 
   const subtitle = (
@@ -64,8 +88,6 @@ export const AuthDrawer = ({ onClose }: Props) => {
   );
 
   const styles = useStyles2(getStyles);
-
-  getSettings();
 
   return (
     <Drawer title="Auth Settings" subtitle={subtitle} size="md" onClose={onClose}>
@@ -89,6 +111,8 @@ export const AuthDrawer = ({ onClose }: Props) => {
     </Drawer>
   );
 };
+
+export default connector(AuthDrawerUnconnected);
 
 const getStyles = (theme: GrafanaTheme2) => {
   return {

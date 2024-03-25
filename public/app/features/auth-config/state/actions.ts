@@ -17,15 +17,20 @@ import {
   settingsUpdated,
 } from './reducers';
 
-export function loadSettings(): ThunkResult<Promise<Settings>> {
+export function loadSettings(hideSpinner?: boolean): ThunkResult<Promise<Settings>> {
   return async (dispatch) => {
+    console.log(`loadSettings`);
     if (contextSrv.hasPermission(AccessControlAction.SettingsRead)) {
-      dispatch(loadingBegin());
+      if (!hideSpinner) {
+        dispatch(loadingBegin());
+      }
       dispatch(loadProviders());
       const result = await getBackendSrv().get('/api/admin/settings');
       dispatch(settingsUpdated(result));
       await dispatch(loadProviderStatuses());
-      dispatch(loadingEnd());
+      if (!hideSpinner) {
+        dispatch(loadingEnd());
+      }
       return result;
     }
   };
@@ -60,6 +65,7 @@ export function loadProviderStatuses(): ThunkResult<void> {
 }
 
 export function saveSettings(data: UpdateSettingsQuery): ThunkResult<Promise<boolean>> {
+  console.log(`saveSettings`);
   return async (dispatch) => {
     if (contextSrv.hasPermission(AccessControlAction.SettingsWrite)) {
       try {
