@@ -116,8 +116,9 @@ func addMetadataToMultiFrame(q *models.Query, frame *data.Frame, enableDataplane
 	frame.Fields[0].Config = &data.FieldConfig{Interval: float64(q.Step.Milliseconds())}
 
 	customName := getName(q, frame.Fields[1])
+	labelUrl := getUrl(q, frame.Fields[1])
 	if customName != "" {
-		frame.Fields[1].Config = &data.FieldConfig{DisplayNameFromDS: customName}
+		frame.Fields[1].Config = &data.FieldConfig{DisplayNameFromDS: customName, UrlFromDS: labelUrl}
 	}
 
 	if enableDataplane {
@@ -188,6 +189,27 @@ func getName(q *models.Query, field *data.Field) string {
 	}
 
 	return legend
+}
+
+func getUrl(q *models.Query, field *data.Field) string {
+	labels := field.Labels
+	var legendUrl string
+	if q.LegendUrlFormat != "" {
+		result := legendFormatRegexp.ReplaceAllFunc([]byte(q.LegendUrlFormat), func(in []byte) []byte {
+			labelName := strings.Replace(string(in), "{{", "", 1)
+			labelName = strings.Replace(labelName, "}}", "", 1)
+			labelName = strings.TrimSpace(labelName)
+			if val, exists := labels[labelName]; exists {
+				return []byte(val)
+			}
+			return []byte{}
+		})
+		legendUrl = string(result)
+	}
+	if legendUrl == "" {
+		legendUrl = "/?fallback_or_default_url"
+	}
+	return legendUrl
 }
 
 func isExemplarFrame(frame *data.Frame) bool {
