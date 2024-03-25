@@ -46,8 +46,8 @@ export const EmptyState = ({
   hideImage = false,
   variant,
 }: React.PropsWithChildren<Props>) => {
-  const imageToShow = image ?? getImageForVariant(variant);
-  const messageToShow = message ?? getMessageForVariant(variant);
+  const imageToShow = image ?? getDefaultImageForVariant(variant);
+  const messageToShow = message ?? getDefaultMessageForVariant(variant);
 
   return (
     <Box paddingY={4} gap={4} display="flex" direction="column" alignItems="center">
@@ -61,10 +61,10 @@ export const EmptyState = ({
   );
 };
 
-function getMessageForVariant(variant: Props['variant']) {
+function getDefaultMessageForVariant(variant: Props['variant']) {
   switch (variant) {
     case 'initial': {
-      return t('grafana-ui.empty-state.initial-message', "You haven't created anything yet");
+      return t('grafana-ui.empty-state.initial-message', "There's nothing here yet");
     }
     case 'not-found': {
       return t('grafana-ui.empty-state.not-found-message', 'No results found');
@@ -75,7 +75,7 @@ function getMessageForVariant(variant: Props['variant']) {
   }
 }
 
-function getImageForVariant(variant: Props['variant']) {
+function getDefaultImageForVariant(variant: Props['variant']) {
   switch (variant) {
     case 'initial': {
       // TODO replace with a different image for initial variant
