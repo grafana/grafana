@@ -206,16 +206,17 @@ func Parse(query backend.DataQuery, dsScrapeInterval string, intervalCalculator 
 	}
 
 	return &Query{
-		Expr:          expr,
-		Step:          calculatedStep,
-		LegendFormat:  model.LegendFormat,
-		Start:         query.TimeRange.From,
-		End:           query.TimeRange.To,
-		RefId:         query.RefID,
-		InstantQuery:  model.Instant,
-		RangeQuery:    model.Range,
-		ExemplarQuery: model.Exemplar,
-		UtcOffsetSec:  model.UtcOffsetSec,
+		Expr:            expr,
+		Step:            calculatedStep,
+		LegendFormat:    model.LegendFormat,
+		LegendUrlFormat: model.LegendUrlFormat,
+		Start:           query.TimeRange.From,
+		End:             query.TimeRange.To,
+		RefId:           query.RefID,
+		InstantQuery:    model.Instant,
+		RangeQuery:      model.Range,
+		ExemplarQuery:   model.Exemplar,
+		UtcOffsetSec:    model.UtcOffsetSec,
 	}, nil
 }
 
