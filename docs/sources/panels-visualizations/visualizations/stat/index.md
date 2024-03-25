@@ -25,9 +25,9 @@ weight: 100
 This visualization replaces the Singlestat visualization, which was deprecated in Grafana 7.0 and removed in Grafana 8.0.
 {{% /admonition %}}
 
-A stat visualization displays your data in single values of interest, such as the latest or current value of a series, with an optional graph sparkline. A graph sparkline, which is only available in stat visualizations, is a small time-series graph shown in the background of each value in the visualization.
+A stat visualization displays your data in single values of interest&mdash;such as the latest or current value of a series&mdash;with an optional graph sparkline. A graph sparkline, which is only available in stat visualizations, is a small time-series graph shown in the background of each value in the visualization.
 
-For example, if you're monitoring the utilization of various services, you can use a stat panel to visualize their latest usage:
+For example, if you're monitoring the utilization of various services, you can use a stat visualization to show their latest usage:
 
 {{< figure src="/static/img/docs/v66/stat_panel_dark3.png" max-width="1025px" alt="A stat panel showing latest usage of various services" >}}
 
