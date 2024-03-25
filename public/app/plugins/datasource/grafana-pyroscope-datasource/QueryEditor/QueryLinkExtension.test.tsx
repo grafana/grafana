@@ -60,11 +60,11 @@ describe('PyroscopeQueryLinkExtensions', () => {
     mockFetchPyroscopeDatasourceSettings(defaultPyroscopeDataSourceSettings);
 
     usePluginLinkExtensionsMock.mockRestore();
-    usePluginLinkExtensionsMock.mockReturnValue({ extensions: [] }); // Unless stated otherwise, no extensions
+    usePluginLinkExtensionsMock.mockReturnValue({ extensions: [], isLoading: false }); // Unless stated otherwise, no extensions
   });
 
   it('should render if extension present', async () => {
-    usePluginLinkExtensionsMock.mockReturnValue({ extensions: [createExtension()] }); // Default extension
+    usePluginLinkExtensionsMock.mockReturnValue({ extensions: [createExtension()], isLoading: false }); // Default extension
 
     await act(setup);
     expect(await screen.findAllByText(EXPECTED_BUTTON_LABEL)).toBeDefined();

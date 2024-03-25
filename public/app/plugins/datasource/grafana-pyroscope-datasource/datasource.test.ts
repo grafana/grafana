@@ -50,7 +50,7 @@ describe('Pyroscope data source', () => {
   let ds: PyroscopeDataSource;
   beforeEach(() => {
     mockFetchPyroscopeDatasourceSettings();
-    setPluginExtensionsHook(() => ({ extensions: [] })); // No extensions
+    setPluginExtensionsHook(() => ({ extensions: [], isLoading: false })); // No extensions
     ds = new PyroscopeDataSource(defaultSettings);
   });
 

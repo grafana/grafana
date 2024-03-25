@@ -17,6 +17,8 @@ export {
   type GetPluginExtensions,
   type GetPluginExtensionsOptions,
   type GetPluginExtensionsResult,
+  type UsePluginExtensions,
+  type UsePluginExtensionsResult,
 } from './pluginExtensions/getPluginExtensions';
 export {
   setPluginExtensionsHook,
