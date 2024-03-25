@@ -1,11 +1,11 @@
 # Introduction
 
-In this guide, we'll walk you through the process of setting up your first alert in just a few minutes. You'll witness your alert in action with real-time data, as well as receiving alert notifications.
+In this guide, we'll walk you through the process of setting up your first alert in just a few minutes. You'll witness your alert in action with real-time data, as well as sending alert notifications.
 
 In this tutorial you will:
 
 - Set up an Alert
-- Receive an alert notification to your email
+- Send an alert notification to a public webhook.
 
 # Before you begin
 
@@ -14,41 +14,33 @@ Ensure you have the following applications installed.
 - [Docker Compose](https://docs.docker.com/get-docker/) (included in Docker for Desktop for macOS and Windows)
 - [Git](https://git-scm.com/)
 
-
-Alternatively, you can follow along with this tutorial without needing to set up a local environment, you can use the [KillerCoda sandbox environment](https://killercoda.com/grafana-labs/course/full-stack/tutorial-enviroment).
-
 ## Set up a sample application
 
 The sample application generates real data and exposes metrics,  which are stored in Prometheus. In Grafana Alerting, you can then build an alert rule based on the data generated. 
 
 Download the files to your local machine.
 
-
 1. Clone the [tutorial environment repository](www.github.com/grafana/tutorial-environment).
 
     ```
     git clone https://github.com/grafana/tutorial-environment.git
     ```
-
 1. Change to the directory where you cloned this repository:
 
     ```
     cd tutorial-environment
     ```
-
 1. Make sure Docker is running:
 
     ```
     docker --version
     ```
-
     This command will display the installed Docker version if the installation was successful. 
 1. Start the sample application:
 
     ```
     docker compose up -d
     ```
-
     The first time you run `docker compose up -d`, Docker downloads all the necessary resources for the tutorial. This might take a few minutes, depending on your internet connection.
 
     {{< admonition type="note" >}}
@@ -60,7 +52,6 @@ Download the files to your local machine.
     ```
     docker compose ps
     ```
-
     In the State column, it should say Up for all services.
 
 1. Finally, the Grafana News app should be live on [localhost:8081](http://localhost:8081/).
@@ -73,8 +64,8 @@ Grafana News is a straightforward application created to demonstrate the observa
 
 To add a link:
 
-1. Enter a Title
-1. Enter a URL
+1. Enter a **Title**
+1. Enter a **URL**
 1. Click **Submit** to add the link. The link will appear listed under the Grafana News heading.
 To vote for a link, click the triangle icon next to the name of the link.
 
@@ -84,15 +75,39 @@ Besides being an open-source observability tool, Grafana has its own built-in al
 
 In your browser, simply navigate to [localhost:3000](http://localhost:3000). You should get logged in automatically
 
+## Create a contact point for Grafana Managed Alerts
+
+In this step, we'll set up a new contact point. This contact point will use the _webhooks_ channel. In order to make this work, we also need an endpoint for our webhook channel to receive the alert. We will use [requestbin.com](https://requestbin.com) to quickly set up that test endpoint. This way we can make sure that our alert is actually sending a notification somewhere.
+
+1. Browse to [requestbin.com](https://requestbin.com).
+1. Under the **Create Request Bin** button, click the link to create a **public bin** instead.
+1. From Request Bin, copy the endpoint URL.
+
+Your Request Bin is now waiting for the first request.
+
+Next, let's configure a Contact Point in Grafana's Alerting UI to send notifications to our Request Bin.
+
+1. Return to Grafana. In Grafana's sidebar, hover over the **Alerting** (bell) icon and then click **Contact points**.
+1. Click **+ Add contact point**.
+1. In **Name**, write **RequestBin**.
+1. In **Integration**, choose **Webhook**.
+1. In **URL**, paste the endpoint to your request bin.
+
+1. Click **Test**, and then click **Send test notification** to send a test alert to your request bin.
+1. Navigate back to the Request Bin you created earlier. On the left side, there's now a `POST /` entry. Click it to see what information Grafana sent.
+1. Return to Grafana and click **Save contact point**.
+
+We have now created a dummy webhook endpoint and created a new Alerting Contact Point in Grafana. Now we can create an alert rule and link it to this new channel.
+
 ## Create an Alert
 
 Next, we'll establish an alert within Grafana Alerting to notify us whenever our sample app experiences a specific volume of requests.
 
-In Grafana, toggle the menu at the top left side of the screen, and **navigate to Alerting** > **Alert rules**. Click on  **+ New alert rule**.
+In Grafana, **navigate to Alerting** > **Alert rules**. Click on  **+ New alert rule**.
 
 ## Enter alert rule name
 
-1. Make it short and descriptive as this will appear in your alert notification. For instance, *server-requests-duration*
+1. Make it short and descriptive as this will appear in your alert notification. For instance, **server-requests-duration**
 
 ## Define query and alert condition
 
@@ -110,7 +125,6 @@ In this section we define the conditions that trigger alerts.
     sum(rate(tns_request_duration_seconds_count[1m])) by(method)
     ```
    This [PromQL](https://prometheus.io/docs/prometheus/latest/querying/basics/) query calculates the sum of the per-second average rates of increase of the `tns_request_duration_seconds_count` metric over the last 1 minute, grouped by the HTTP method used in the requests. This can be useful for analyzing the request duration trends for different HTTP methods.
-
 
 1. Keep expressions “B” and “C” as they are. These expressions (**Reduce** and **Threshold**, respectively) come by default when creating a new rule.
 The Reduce expression “B”, selects the last value of our query “A”, while the Threshold expression “C” will check if the last value from expression “B” is above a specific value. In addition, the Threshold expression is the alert condition by default. Enter `0.2` as threshold value. You can read more about queries and conditions [here](https://grafana.com/docs/grafana/latest/alerting/fundamentals/alert-rules/queries-conditions/#expression-queries).
@@ -146,13 +160,7 @@ Add labels to ease searching or route notifications to a policy.
 
 Select who should receive a notification when an alert rule fires.
 
-1. Click **View or create contact points**. 
-A new tab will open in your browser. 
-1. **Edit** the email Contact point. 
-1. **Enter an email address** in the Addresses field.
-1. **Click Save** contact point.
-1. Switch back to the previous tab to **continue creating the Alert rule**.
-
+1. Under **Contact point**, select **RequestBin** from the drop-down menu.
 
 ## Add Annotations
 
@@ -166,14 +174,11 @@ We have now configured an alert rule and a contact point. Now let’s see if we 
 1. Add a new title and URL.
 1. Repeatedly click the vote button or refresh the page to generate a traffic spike.
 
-Once the query `sum(rate(tns_request_duration_seconds_count[1m])) by(method)` returns a value greater than `0.2`, Grafana will trigger our alert. Browse to your email inbox, and find the alert notification.
+Once the query `sum(rate(tns_request_duration_seconds_count[1m])) by(method)` returns a value greater than `0.2`, Grafana will trigger our alert. Browse to the Request Bin we created earlier and find the sent Grafana alert notification with details and metadata.
 
-## Receive your first alert notification
+## Summary
 
-Once the alert rule condition is met, you should receive an alert notification to your email.
-
-The alert comes with additional information besides the annotation summary we wrote, such as links to perform actions like [silencing](https://grafana.com/docs/grafana/latest/alerting/manage-notifications/create-silence/) your alert or visiting the panel to which the alert is linked.
-
+In this tutorial, you have learned how to set up an alert, send alert notifications to a public webhook, and generate some sample data to observe your alert in action. By following these steps, you've gained a foundational understanding of how to leverage Grafana's alerting capabilities to monitor and respond to events of interest in your data. Happy monitoring!
 
 # Learn more
 
