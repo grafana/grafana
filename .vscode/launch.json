@@ -1,7 +1,6 @@
 {
   "version": "0.2.0",
   "configurations": [
-
     {
       "name": "Run Server",
       "type": "go",
@@ -36,8 +35,7 @@
           "--secure-port=6443", 
           "--runtime-config=query.grafana.app/v0alpha1=true",
           "--hg-url=http://localhost:3000",
-          "--hg-key=$HGAPIKEY",
-      ]
+          "--hg-key=$HGAPIKEY"]
     },
     {
       "name": "Attach to Chrome",
