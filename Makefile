@@ -174,11 +174,10 @@ run-frontend: deps-js ## Fetch js dependencies and watch frontend for rebuild
 .PHONY: test-go
 test-go: test-go-unit test-go-integration
 
-### TODO: temporarily run only the failing test (fails in PR only)
 .PHONY: test-go-unit
 test-go-unit: ## Run unit tests for backend with flags.
 	@echo "test backend unit tests"
-	go list -f '{{.Dir}}/...' ./pkg/apiserver/storage/file | xargs \
+	go list -f '{{.Dir}}/...' -m | xargs \
 	$(GO) test -short -covermode=atomic -timeout=30m
 
 .PHONY: test-go-integration
