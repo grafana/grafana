@@ -780,25 +780,28 @@
     },
     "resource-type": {
       "dashboard": "仪表板",
-      "datasource": "",
-      "unknown": ""
+      "datasource": "数据源",
+      "unknown": "未知"
     },
-    "resources": {
-      "disconnect": ""
+    "summary": {
+      "disconnect": "",
+      "error-starting-migration": "",
+      "start-migration": "",
+      "target-stack-title": ""
     },
     "token-status": {
-      "active": "",
-      "no-active": ""
+      "active": "令牌已创建并激活",
+      "no-active": "无激活的令牌"
     },
     "what-is-cloud": {
-      "body": "",
-      "link-title": "",
-      "title": ""
+      "body": "Grafana Cloud 是一个完全托管的云托管观测平台，是云原生环境的理想选择。它拥有您所喜爱的 Grafana 的一切，而无需维护、升级和支持安装。",
+      "link-title": "了解云端功能",
+      "title": "Grafana Cloud 是什么？"
     },
     "why-host": {
-      "body": "",
-      "link-title": "",
-      "title": ""
+      "body": "除了托管的便利性外，Grafana Cloud 还包括许多云专属功能，如 SLO、事件管理、机器学习和强大的观测能力集成。",
+      "link-title": "还有问题？咨询专家",
+      "title": "为什么使用 Grafana 托管？"
     }
   },
   "nav": {
@@ -987,8 +990,8 @@
       "subtitle": "管理文件夹仪表板和权限"
     },
     "migrate-to-cloud": {
-      "subtitle": "",
-      "title": ""
+      "subtitle": "将配置从您自己管理的安装复制到云堆栈",
+      "title": "迁移到Grafana Cloud"
     },
     "monitoring": {
       "subtitle": "监控和基础设施应用",
@@ -1216,7 +1219,7 @@
       "old-password-label": "旧密码",
       "old-password-required": "旧密码是必需项",
       "passwords-must-match": "密码必须一致",
-      "strong-password-validation-register": ""
+      "strong-password-validation-register": "密码不符合强密码政策"
     }
   },
   "public-dashboard": {
@@ -1337,11 +1340,12 @@
     "header": {
       "collapse-row": "折叠查询行",
       "datasource-help": "显示数据源帮助",
-      "disable-query": "禁用查询",
       "drag-and-drop": "拖放以重新排序",
       "duplicate-query": "复制查询",
       "expand-row": "展开查询行",
+      "hide-response": "",
       "remove-query": "删除查询",
+      "show-response": "",
       "toggle-edit-mode": "切换文本编辑模式"
     },
     "query-editor-not-exported": "数据源插件不导出任何查询编辑器组件"
@@ -1451,10 +1455,10 @@
       "expire-day": "1 天",
       "expire-hour": "1 小时",
       "expire-never": "从不",
-      "expire-week": "",
+      "expire-week": "1 周",
       "info-text-1": "可通过快照即时、公开地分享交互式仪表板。创建后，我们会剥离敏感数据，如查询（指标、模板和注释）和面板链接，仅将可见指标数据和系列名称嵌入到仪表板中。",
       "info-text-2": "请注意，知晓该链接并能够访问该网址的<1>任何人都可以</1>查看您的快照。分享需谨慎。",
-      "local-button": "",
+      "local-button": "发布快照",
       "mistake-message": "是不是弄错了什么？",
       "name": "快照名称",
       "timeout": "超时（秒）",
