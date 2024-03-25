@@ -25,31 +25,31 @@ weight: 100
 This visualization replaces the Singlestat visualization, which was deprecated in Grafana 7.0 and removed in Grafana 8.0.
 {{% /admonition %}}
 
-A stat panel visualizes your data in single values, such as the latest or current value that you are only interested in, with an optional graph sparkline. A graph sparkline, which is only available in stat panels, are small time-series graph shown in the background of the panel.
+A stat visualization displays your data in single values of interest, such as the latest or current value of a series, with an optional graph sparkline. A graph sparkline, which is only available in stat visualizations, is a small time-series graph shown in the background of each value in the visualization.
 
-As an example, if you're monitoring the utilization of various services, a stat panel can be used to visualize their latest usage.
+For example, if you're monitoring the utilization of various services, you can use a stat panel to visualize their latest usage:
 
 {{< figure src="/static/img/docs/v66/stat_panel_dark3.png" max-width="1025px" alt="A stat panel showing latest usage of various services" >}}
 
-While other visualization types display data in a time series or range, you might have a use case where you just want to display a single value or simple statistics derived from your data. You can use a stat panel when you need to:
+Use a stat visualization when you need to:
 
-- Monitor key metrics at a glance, such as the latest health of your application, number of high priority bugs in your application, or even total number of sales.
+- Monitor key metrics at a glance, such as the latest health of your application, number of high priority bugs in your application, or total number of sales.
 - Display aggregated data, such as the average response time of your services.
 - Highlight values above your normal thresholds to quickly identify if any metrics are outside your expected range.
 
-## Configure a stat panel
+## Configure a stat visualization
 
-Once you have [created a dashboard](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/dashboards/build-dashboards/create-dashboard/), the following video shows you how to configure a stat panel:
+Once you've [created a dashboard](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/dashboards/build-dashboards/create-dashboard/), the following video shows you how to configure a stat visualization:
 
 {{< youtube id="yNRnLyVntUw" start="1048" >}}
 
-Alternatively, check out this blog post, [How to easily retrieve values from a range in Grafana using a stat panel](https://grafana.com/blog/2023/10/18/how-to-easily-retrieve-values-from-a-range-in-grafana-using-a-stat-panel/).
+Alternatively, refer to this blog post on [how to easily retrieve values from a range in Grafana using a stat visualization](https://grafana.com/blog/2023/10/18/how-to-easily-retrieve-values-from-a-range-in-grafana-using-a-stat-panel/).
 
 ## Supported data formats
 
-The stat panel supports a variety of formats for displaying data. Supported formats include:
+The stat visualization supports a variety of formats for displaying data. Supported formats include:
 
-- **Single values** - This is the most common format and could be numerical, strings, or boolean values.
+- **Single values** - The most common format and can be numerical, strings, or boolean values.
 - **Time-series data** - [Calculation types][] can be applied to your time-series data to display single values over a specified time range.
 
 ### Examples
@@ -65,7 +65,7 @@ The following tables are examples of the type of data you need for a stat visual
 | 59                           |
 | 40                           |
 
-The data is visualized as follows, with the last value displayed, along with the sparkline and [percentage change](#show-percent-change):
+The data is visualized as follows, with the last value displayed, along with a sparkline and [percentage change](#show-percent-change):
 
 {{< figure src="/static/img/docs/stat-panel/stat_panel_single.png" max-width="1025px" alt="A stat panel showing the latest number of high priority bugs" >}}
 
