@@ -66,8 +66,9 @@ To add a link:
 
 1. Enter a **Title**
 1. Enter a **URL**
-1. Click **Submit** to add the link. The link will appear listed under the Grafana News heading.
-To vote for a link, click the triangle icon next to the name of the link.
+1. Click **Submit** to add the link. 
+The link will appear listed under the Grafana News heading.
+1. To vote for a link, click the triangle icon next to the name of the link.
 
 ## Log in to Grafana
 
