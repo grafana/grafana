@@ -42,6 +42,7 @@ import (
 	apiregistrationclientset "k8s.io/kube-aggregator/pkg/client/clientset_generated/clientset"
 	apiregistrationclient "k8s.io/kube-aggregator/pkg/client/clientset_generated/clientset/typed/apiregistration/v1"
 	apiregistrationInformers "k8s.io/kube-aggregator/pkg/client/informers/externalversions/apiregistration/v1"
+	"k8s.io/kube-aggregator/pkg/controllers"
 	"k8s.io/kube-aggregator/pkg/controllers/autoregister"
 
 	"github.com/grafana/grafana/pkg/apiserver/builder"
@@ -173,7 +174,7 @@ func CreateAggregatorServer(config *Config, delegateAPIServer genericapiserver.D
 	aggregatorConfig := config.KubeAggregatorConfig
 	sharedInformerFactory := config.Informers
 	remoteServicesConfig := config.RemoteServicesConfig
-
+	externalNamesInformer := sharedInformerFactory.Service().V0alpha1().ExternalNames()
 	completedConfig := aggregatorConfig.Complete()
 
 	aggregatorServer, err := completedConfig.NewWithDelegate(delegateAPIServer)
@@ -209,7 +210,8 @@ func CreateAggregatorServer(config *Config, delegateAPIServer genericapiserver.D
 	if remoteServicesConfig != nil {
 		addRemoteAPIServicesToRegister(remoteServicesConfig, autoRegistrationController)
 		externalNames := getRemoteExternalNamesToRegister(remoteServicesConfig)
-		err = aggregatorServer.GenericAPIServer.AddPostStartHook("grafana-apiserver-remote-autoregistration", func(_ genericapiserver.PostStartHookContext) error {
+		err = aggregatorServer.GenericAPIServer.AddPostStartHook("grafana-apiserver-remote-autoregistration", func(ctx genericapiserver.PostStartHookContext) error {
+			controllers.WaitForCacheSync("grafana-apiserver-remote-autoregistration", ctx.StopCh, externalNamesInformer.Informer().HasSynced)
 			namespacedClient := remoteServicesConfig.serviceClientSet.ServiceV0alpha1().ExternalNames(remoteServicesConfig.ExternalNamesNamespace)
 			for _, externalName := range externalNames {
 				_, err := namespacedClient.Apply(context.Background(), externalName, metav1.ApplyOptions{
@@ -245,7 +247,7 @@ func CreateAggregatorServer(config *Config, delegateAPIServer genericapiserver.D
 
 	availableController, err := NewAvailableConditionController(
 		aggregatorServer.APIRegistrationInformers.Apiregistration().V1().APIServices(),
-		sharedInformerFactory.Service().V0alpha1().ExternalNames(),
+		externalNamesInformer,
 		apiregistrationClient.ApiregistrationV1(),
 		nil,
 		(func() ([]byte, []byte))(nil),

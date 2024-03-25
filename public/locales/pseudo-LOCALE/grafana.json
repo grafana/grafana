@@ -563,6 +563,9 @@
     "drawer": {
       "close": "Cľőşę"
     },
+    "empty-state": {
+      "not-found-message": "Ńő řęşūľŧş ƒőūŉđ"
+    },
     "modal": {
       "close-tooltip": "Cľőşę"
     },

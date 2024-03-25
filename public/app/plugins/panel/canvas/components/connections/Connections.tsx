@@ -22,7 +22,7 @@ import { ConnectionSVG } from './ConnectionSVG';
 export const CONNECTION_VERTEX_ID = 'vertex';
 export const CONNECTION_VERTEX_ADD_ID = 'vertexAdd';
 const CONNECTION_VERTEX_ORTHO_TOLERANCE = 0.05; // Cartesian ratio against vertical or horizontal tolerance
-const CONNECTION_VERTEX_SNAP_TOLERANCE = 5; // Multi-segment snapping angle in degrees to trigger vertex removal
+const CONNECTION_VERTEX_SNAP_TOLERANCE = (5 / 180) * Math.PI; // Multi-segment snapping angle in radians to trigger vertex removal
 
 export class Connections {
   scene: Scene;
@@ -392,7 +392,7 @@ export class Connections {
       const vertexIndex = this.selectedVertexIndex;
 
       if (connectionIndex !== undefined && vertexIndex !== undefined) {
-        const currentSource = this.scene.connections.state[connectionIndex].source;
+        const currentSource = this.selection.value!.source;
         if (currentSource.options.connections) {
           const currentConnections = [...currentSource.options.connections];
           if (currentConnections[connectionIndex].vertices) {
@@ -521,7 +521,7 @@ export class Connections {
       const vertexIndex = this.selectedVertexIndex;
 
       if (connectionIndex !== undefined && vertexIndex !== undefined) {
-        const currentSource = this.scene.connections.state[connectionIndex].source;
+        const currentSource = this.selection.value!.source;
         if (currentSource.options.connections) {
           const currentConnections = [...currentSource.options.connections];
           const newVertex = { x: (x - x1) / (x2 - x1), y: (y - y1) / (y2 - y1) };
