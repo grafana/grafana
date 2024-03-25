@@ -34,6 +34,7 @@ function getStyles(theme: GrafanaTheme2) {
       fontStyle: 'italic',
       marginTop: theme.spacing(7),
       textAlign: 'center',
+      width: '100%',
     }),
   };
 }
