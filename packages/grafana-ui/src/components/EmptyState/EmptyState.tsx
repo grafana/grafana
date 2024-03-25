@@ -24,7 +24,7 @@ interface BaseProps {
   /**
    * Which variant to use. Affects the default message and image shown.
    */
-  variant: 'initial' | 'search';
+  variant: 'initial' | 'not-found';
 }
 
 interface InitialVariantProps extends BaseProps {
@@ -33,7 +33,7 @@ interface InitialVariantProps extends BaseProps {
 }
 
 interface SearchVariantProps extends BaseProps {
-  variant: 'search';
+  variant: 'not-found';
 }
 
 type Props = InitialVariantProps | SearchVariantProps;
@@ -66,8 +66,8 @@ function getMessageForVariant(variant: Props['variant']) {
     case 'initial': {
       return t('grafana-ui.empty-state.initial-message', "You haven't created anything yet");
     }
-    case 'search': {
-      return t('grafana-ui.empty-state.search-message', 'No results found');
+    case 'not-found': {
+      return t('grafana-ui.empty-state.not-found-message', 'No results found');
     }
     default: {
       throw new Error(`Unknown variant: ${variant}`);
@@ -81,7 +81,7 @@ function getImageForVariant(variant: Props['variant']) {
       // TODO replace with a different image for initial variant
       return <GrotNotFound width={300} />;
     }
-    case 'search': {
+    case 'not-found': {
       return <GrotNotFound width={300} />;
     }
     default: {

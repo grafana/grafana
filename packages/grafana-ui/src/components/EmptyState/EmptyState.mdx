@@ -56,7 +56,7 @@ There are sensible defaults for the image and message, so in most cases you can 
 ```jsx
 import { EmptyState } from '@grafana/ui';
 
-<EmptyState variant="search" />;
+<EmptyState variant="not-found" />;
 ```
 
 ## Advanced usage
@@ -72,10 +72,11 @@ For all variants you can:
 import { Button, EmptyState, TextLink } from '@grafana/ui';
 
 <EmptyState
-  variant="search"
+  variant="not-found"
   button={<Button variant="secondary" onClick={clearSearchQuery} />}
   image={<AnyReactNode />}
   message="No playlists found"
+  variant="not-found"
 >
   Optionally provide some additional information here. Maybe even a link to{' '}
   <TextLink href="<externalDocsLink>" external>

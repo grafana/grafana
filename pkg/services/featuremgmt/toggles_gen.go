@@ -43,10 +43,6 @@ const (
 	// Highlight Grafana Enterprise features
 	FlagFeatureHighlights = "featureHighlights"
 
-	// FlagMigrationLocking
-	// Lock database during migrations
-	FlagMigrationLocking = "migrationLocking"
-
 	// FlagStorage
 	// Configurable storage for dashboards, datasources, and resources
 	FlagStorage = "storage"
@@ -638,4 +634,12 @@ const (
 	// FlagSsoSettingsSAML
 	// Use the new SSO Settings API to configure the SAML connector
 	FlagSsoSettingsSAML = "ssoSettingsSAML"
+
+	// FlagUsePrometheusFrontendPackage
+	// Use the @grafana/prometheus frontend package in core Prometheus.
+	FlagUsePrometheusFrontendPackage = "usePrometheusFrontendPackage"
+
+	// FlagOauthRequireSubClaim
+	// Require that sub claims is present in oauth tokens.
+	FlagOauthRequireSubClaim = "oauthRequireSubClaim"
 )
