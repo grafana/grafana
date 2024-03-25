@@ -25,7 +25,7 @@ Download the files to your local machine.
     ```
     git clone https://github.com/grafana/tutorial-environment.git
     ```
-1. Change to the directory where you cloned this repository:
+1. Change to the directory where you cloned the repository:
 
     ```
     cd tutorial-environment
