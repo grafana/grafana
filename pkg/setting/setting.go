@@ -26,7 +26,7 @@ import (
 	"gopkg.in/ini.v1"
 
 	"github.com/grafana/grafana-aws-sdk/pkg/awsds"
-	"github.com/grafana/grafana-azure-sdk-go/azsettings"
+	"github.com/grafana/grafana-azure-sdk-go/v2/azsettings"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/gtime"
 
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -91,27 +91,28 @@ type Cfg struct {
 	appliedEnvOverrides          []string
 
 	// HTTP Server Settings
-	CertFile         string
-	KeyFile          string
-	HTTPAddr         string
-	HTTPPort         string
-	Env              string
-	AppURL           string
-	AppSubURL        string
-	InstanceName     string
-	ServeFromSubPath bool
-	StaticRootPath   string
-	Protocol         Scheme
-	SocketGid        int
-	SocketMode       int
-	SocketPath       string
-	RouterLogging    bool
-	Domain           string
-	CDNRootURL       *url.URL
-	ReadTimeout      time.Duration
-	EnableGzip       bool
-	EnforceDomain    bool
-	MinTLSVersion    string
+	CertFile          string
+	KeyFile           string
+	CertWatchInterval time.Duration
+	HTTPAddr          string
+	HTTPPort          string
+	Env               string
+	AppURL            string
+	AppSubURL         string
+	InstanceName      string
+	ServeFromSubPath  bool
+	StaticRootPath    string
+	Protocol          Scheme
+	SocketGid         int
+	SocketMode        int
+	SocketPath        string
+	RouterLogging     bool
+	Domain            string
+	CDNRootURL        *url.URL
+	ReadTimeout       time.Duration
+	EnableGzip        bool
+	EnforceDomain     bool
+	MinTLSVersion     string
 
 	// Security settings
 	SecretKey             string
@@ -360,9 +361,6 @@ type Cfg struct {
 
 	LocalFileSystemAvailable bool
 
-	// Deprecated
-	ForceMigration bool
-
 	// Analytics
 	CheckForGrafanaUpdates              bool
 	CheckForPluginUpdates               bool
@@ -503,12 +501,6 @@ type Cfg struct {
 	FeatureManagement FeatureMgmtSettings
 
 	// Alerting
-	AlertingEnabled            *bool
-	ExecuteAlerts              bool
-	AlertingRenderLimit        int
-	AlertingErrorOrTimeout     string
-	AlertingNoDataOrNullValues string
-
 	AlertingEvaluationTimeout   time.Duration
 	AlertingNotificationTimeout time.Duration
 	AlertingMaxAttempts         int
@@ -1068,8 +1060,6 @@ func (cfg *Cfg) parseINIFile(iniFile *ini.File) error {
 	cfg.StackID = valueAsString(iniFile.Section("environment"), "stack_id", "")
 	cfg.Slug = valueAsString(iniFile.Section("environment"), "stack_slug", "")
 	cfg.LocalFileSystemAvailable = iniFile.Section("environment").Key("local_file_system_available").MustBool(true)
-	//nolint:staticcheck
-	cfg.ForceMigration = iniFile.Section("").Key("force_migration").MustBool(false)
 	cfg.InstanceName = valueAsString(iniFile.Section(""), "instance_name", "unknown_instance_name")
 	plugins := valueAsString(iniFile.Section("paths"), "plugins", "")
 	cfg.PluginsPath = makeAbsolute(plugins, cfg.HomePath)
@@ -1504,7 +1494,7 @@ func readSecuritySettings(iniFile *ini.File, cfg *Cfg) error {
 	cfg.StrictTransportSecurityMaxAge = security.Key("strict_transport_security_max_age_seconds").MustInt(86400)
 	cfg.StrictTransportSecurityPreload = security.Key("strict_transport_security_preload").MustBool(false)
 	cfg.StrictTransportSecuritySubDomains = security.Key("strict_transport_security_subdomains").MustBool(false)
-	cfg.AngularSupportEnabled = security.Key("angular_support_enabled").MustBool(true)
+	cfg.AngularSupportEnabled = security.Key("angular_support_enabled").MustBool(false)
 	cfg.CSPEnabled = security.Key("content_security_policy").MustBool(false)
 	cfg.CSPTemplate = security.Key("content_security_policy_template").MustString("")
 	cfg.CSPReportOnlyEnabled = security.Key("content_security_policy_report_only").MustBool(false)
@@ -1582,11 +1572,9 @@ func readAuthSettings(iniFile *ini.File, cfg *Cfg) (err error) {
 
 	cfg.OAuthCookieMaxAge = auth.Key("oauth_state_cookie_max_age").MustInt(600)
 	cfg.SignoutRedirectUrl = valueAsString(auth, "signout_redirect_url", "")
+
 	// Deprecated
-	cfg.OAuthSkipOrgRoleUpdateSync = auth.Key("oauth_skip_org_role_update_sync").MustBool(false)
-	if cfg.OAuthSkipOrgRoleUpdateSync {
-		cfg.Logger.Warn("[Deprecated] The oauth_skip_org_role_update_sync configuration setting is deprecated. Please use skip_org_role_sync inside the auth provider section instead.")
-	}
+	cfg.OAuthSkipOrgRoleUpdateSync = false
 
 	cfg.DisableLogin = auth.Key("disable_login").MustBool(false)
 
@@ -1668,7 +1656,9 @@ func readUserSettings(iniFile *ini.File, cfg *Cfg) error {
 			string(roletype.RoleAdmin)})
 	cfg.VerifyEmailEnabled = users.Key("verify_email_enabled").MustBool(false)
 
-	cfg.CaseInsensitiveLogin = users.Key("case_insensitive_login").MustBool(true)
+	// Deprecated
+	// cfg.CaseInsensitiveLogin = users.Key("case_insensitive_login").MustBool(true)
+	cfg.CaseInsensitiveLogin = true
 
 	cfg.LoginHint = valueAsString(users, "login_hint", "")
 	cfg.PasswordHint = valueAsString(users, "password_hint", "")
@@ -1761,12 +1751,6 @@ func (cfg *Cfg) readAlertingSettings(iniFile *ini.File) error {
 	return nil
 }
 
-// IsLegacyAlertingEnabled returns whether the legacy alerting is enabled or not.
-// It's safe to be used only after readAlertingSettings() and ReadUnifiedAlertingSettings() are executed.
-func (cfg *Cfg) IsLegacyAlertingEnabled() bool {
-	return cfg.AlertingEnabled != nil && *(cfg.AlertingEnabled)
-}
-
 func readGRPCServerSettings(cfg *Cfg, iniFile *ini.File) error {
 	server := iniFile.Section("grpc_server")
 	errPrefix := "grpc_server:"
@@ -1856,6 +1840,7 @@ func (cfg *Cfg) readServerSettings(iniFile *ini.File) error {
 	cfg.AppSubURL = AppSubUrl
 	cfg.Protocol = HTTPScheme
 	cfg.ServeFromSubPath = server.Key("serve_from_sub_path").MustBool(false)
+	cfg.CertWatchInterval = server.Key("certs_watch_interval").MustDuration(0)
 
 	protocolStr := valueAsString(server, "protocol", "http")
 

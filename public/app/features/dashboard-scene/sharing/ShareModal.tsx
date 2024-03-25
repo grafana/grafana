@@ -8,6 +8,7 @@ import { t } from 'app/core/internationalization';
 import { isPublicDashboardsEnabled } from 'app/features/dashboard/components/ShareModal/SharePublicDashboard/SharePublicDashboardUtils';
 
 import { DashboardScene } from '../scene/DashboardScene';
+import { LibraryVizPanel } from '../scene/LibraryVizPanel';
 import { DashboardInteractions } from '../utils/interactions';
 import { getDashboardSceneFor } from '../utils/utils';
 
@@ -45,20 +46,24 @@ export class ShareModal extends SceneObjectBase<ShareModalState> implements Moda
     const { dashboardRef, panelRef } = this.state;
 
     const tabs: SceneShareTab[] = [new ShareLinkTab({ dashboardRef, panelRef, modalRef: this.getRef() })];
+    const dashboard = getDashboardSceneFor(this);
 
     if (!panelRef) {
       tabs.push(new ShareExportTab({ dashboardRef, modalRef: this.getRef() }));
     }
 
-    if (contextSrv.isSignedIn && config.snapshotEnabled) {
+    if (contextSrv.isSignedIn && config.snapshotEnabled && dashboard.canEditDashboard()) {
       tabs.push(new ShareSnapshotTab({ panelRef, dashboardRef, modalRef: this.getRef() }));
     }
 
     if (panelRef) {
       tabs.push(new SharePanelEmbedTab({ panelRef, dashboardRef }));
-
-      if (panelRef.resolve() instanceof VizPanel) {
-        tabs.push(new ShareLibraryPanelTab({ panelRef, dashboardRef, modalRef: this.getRef() }));
+      const panel = panelRef.resolve();
+      const isLibraryPanel = panel.parent instanceof LibraryVizPanel;
+      if (panel instanceof VizPanel) {
+        if (!isLibraryPanel) {
+          tabs.push(new ShareLibraryPanelTab({ panelRef, dashboardRef, modalRef: this.getRef() }));
+        }
       }
     }
 

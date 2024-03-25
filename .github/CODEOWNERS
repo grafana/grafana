@@ -171,8 +171,8 @@
 
 /devenv/bulk-dashboards/ @grafana/dashboards-squad
 /devenv/bulk-folders/ @grafana/grafana-frontend-platform
-/devenv/bulk_alerting_dashboards/ @grafana/alerting-backend-product
 /devenv/create_docker_compose.sh @grafana/backend-platform
+/devenv/alert_rules.yaml @grafana/alerting-backend-product
 /devenv/dashboards.yaml @grafana/dashboards-squad
 /devenv/datasources.yaml @grafana/backend-platform
 /devenv/datasources_docker.yaml @grafana/backend-platform
@@ -283,7 +283,6 @@
 # Alerting
 /pkg/services/ngalert/ @grafana/alerting-backend-product
 /pkg/services/sqlstore/migrations/ualert/ @grafana/alerting-backend-product
-/pkg/services/alerting/ @grafana/alerting-backend-product
 /pkg/tests/api/alerting/ @grafana/alerting-backend-product
 /public/app/features/alerting/ @grafana/alerting-frontend
 
@@ -390,7 +389,7 @@ playwright.config.ts @grafana/plugins-platform-frontend
 /public/app/features/admin/ @grafana/identity-access-team
 
 # Temp owners until Enterprise team takes over
-/public/app/features/admin/migrate-to-cloud @grafana/grafana-frontend-platform
+/public/app/features/migrate-to-cloud @grafana/grafana-frontend-platform
 
 /public/app/features/auth-config/ @grafana/identity-access-team
 /public/app/features/annotations/ @grafana/dashboards-squad
@@ -436,7 +435,6 @@ playwright.config.ts @grafana/plugins-platform-frontend
 /public/app/features/transformers/timeSeriesTable/ @grafana/dataviz-squad @grafana/app-o11y-visualizations
 /public/app/features/users/ @grafana/identity-access-team
 /public/app/features/variables/ @grafana/dashboards-squad
-/public/app/plugins/panel/alertGroups/ @grafana/alerting-frontend
 /public/app/plugins/panel/alertlist/ @grafana/alerting-frontend
 /public/app/plugins/panel/annolist/ @grafana/grafana-frontend-platform
 /public/app/plugins/panel/barchart/ @grafana/dataviz-squad
@@ -537,7 +535,7 @@ playwright.config.ts @grafana/plugins-platform-frontend
 /scripts/generate-icon-bundle.js @grafana/plugins-platform-frontend @grafana/grafana-frontend-platform
 /scripts/levitate-parse-json-report.js @grafana/plugins-platform-frontend
 
-/scripts/docs/generate-transformations* @grafana/dataviz-squad
+/scripts/**/generate-transformations* @grafana/dataviz-squad
 /scripts/webpack/ @grafana/frontend-ops
 /scripts/generate-a11y-report.sh @grafana/grafana-frontend-platform
 .pa11yci.conf.js @grafana/grafana-frontend-platform
@@ -612,11 +610,12 @@ playwright.config.ts @grafana/plugins-platform-frontend
 /pkg/services/supportbundles/ @grafana/identity-access-team
 
 # Grafana Operator Experience Team
-/pkg/infra/httpclient/httpclientprovider/sigv4_middleware.go @grafana/grafana-operator-experience-squad
-/pkg/infra/httpclient/httpclientprovider/sigv4_middleware_test.go @grafana/grafana-operator-experience-squad
 /pkg/services/caching/ @grafana/grafana-operator-experience-squad
-/pkg/services/featuremgmt/ @grafana/grafana-operator-experience-squad
 /pkg/services/cloudmigration/ @grafana/grafana-operator-experience-squad
+
+# Feature toggles
+/pkg/services/featuremgmt/ @grafana/grafana-backend-services-squad
+
 
 # Kind definitions
 /kinds/dashboard @grafana/dashboards-squad
@@ -625,12 +624,12 @@ playwright.config.ts @grafana/plugins-platform-frontend
 # Kind system and code generation
 embed.go @grafana/grafana-as-code
 /pkg/kinds/ @grafana/grafana-as-code
-/pkg/cuectx/ @grafana/grafana-as-code
 /pkg/registry/ @grafana/grafana-as-code
 /pkg/registry/apis/ @grafana/grafana-app-platform-squad
 /pkg/codegen/ @grafana/grafana-as-code
+/pkg/codegen/generators @grafana/grafana-as-code
 /pkg/kinds/*/*_gen.go @grafana/grafana-as-code
-/pkg/registry/corekind/ @grafana/grafana-as-code
+/pkg/registry/schemas/ @grafana/grafana-as-code
 /public/app/plugins/*gen.go @grafana/grafana-as-code
 /cue.mod/ @grafana/grafana-as-code
 
@@ -711,5 +710,4 @@ embed.go @grafana/grafana-as-code
 /conf/provisioning/alerting/ @grafana/alerting-backend-product
 /conf/provisioning/dashboards/ @grafana/dashboards-squad
 /conf/provisioning/datasources/ @grafana/plugins-platform-backend
-/conf/provisioning/notifiers/ @bergquist
 /conf/provisioning/plugins/ @grafana/plugins-platform-backend

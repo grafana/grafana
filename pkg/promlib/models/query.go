@@ -2,7 +2,6 @@ package models
 
 import (
 	"encoding/json"
-	"fmt"
 	"math"
 	"strconv"
 	"strings"
@@ -11,7 +10,6 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/gtime"
 	"github.com/prometheus/prometheus/model/labels"
-	"github.com/prometheus/prometheus/promql/parser"
 
 	"github.com/grafana/grafana/pkg/promlib/intervalv2"
 )
@@ -64,9 +62,25 @@ type PrometheusQueryProperties struct {
 	LegendFormat string `json:"legendFormat,omitempty"`
 
 	// ???
-	Scope *struct {
-		Matchers string `json:"matchers"`
-	} `json:"scope,omitempty"`
+	Scope *ScopeSpec `json:"scope,omitempty"`
+}
+
+// ScopeSpec is a hand copy of the ScopeSpec struct from pkg/apis/scope/v0alpha1/types.go
+// to avoid import (temp fix)
+type ScopeSpec struct {
+	Title       string        `json:"title"`
+	Type        string        `json:"type"`
+	Description string        `json:"description"`
+	Category    string        `json:"category"`
+	Filters     []ScopeFilter `json:"filters"`
+}
+
+// ScopeFilter is a hand copy of the ScopeFilter struct from pkg/apis/scope/v0alpha1/types.go
+// to avoid import (temp fix)
+type ScopeFilter struct {
+	Key      string `json:"key"`
+	Value    string `json:"value"`
+	Operator string `json:"operator"`
 }
 
 // Internal interval and range variables
@@ -139,7 +153,7 @@ type Query struct {
 	RangeQuery    bool
 	ExemplarQuery bool
 	UtcOffsetSec  int64
-	Scope         Scope
+	Scope         *ScopeSpec
 }
 
 type Scope struct {
@@ -168,13 +182,8 @@ func Parse(query backend.DataQuery, dsScrapeInterval string, intervalCalculator 
 		dsScrapeInterval,
 		timeRange,
 	)
-	var matchers []*labels.Matcher
-	if enableScope && model.Scope != nil && model.Scope.Matchers != "" {
-		matchers, err = parser.ParseMetricSelector(model.Scope.Matchers)
-		if err != nil {
-			return nil, fmt.Errorf("failed to parse metric selector %v in scope", model.Scope.Matchers)
-		}
-		expr, err = ApplyQueryScope(expr, matchers)
+	if enableScope && model.Scope != nil && len(model.Scope.Filters) > 0 {
+		expr, err = ApplyQueryScope(expr, *model.Scope)
 		if err != nil {
 			return nil, err
 		}
