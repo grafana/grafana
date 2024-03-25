@@ -1,0 +1,14 @@
+{
+  "type": "table",
+  "targets": [
+    {
+      "refId": "A",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "TheUID"
+      },
+      "expr": "",
+      "format": "time_series"
+    }
+  ]
+}

@@ -1,0 +1,131 @@
+{
+  "kind": "QueryTypeDefinitionList",
+  "apiVersion": "query.grafana.app/v0alpha1",
+  "metadata": {
+    "resourceVersion": "1711372744903"
+  },
+  "items": [
+    {
+      "metadata": {
+        "name": "default",
+        "resourceVersion": "1711372744903",
+        "creationTimestamp": "2024-03-25T13:19:04Z"
+      },
+      "spec": {
+        "schema": {
+          "$schema": "https://json-schema.org/draft-04/schema",
+          "additionalProperties": false,
+          "description": "PrometheusQueryProperties defines the specific properties used for prometheus",
+          "properties": {
+            "editorMode": {
+              "description": "what we should show in the editor\n\n\nPossible enum values:\n - `\"builder\"` \n - `\"code\"` ",
+              "enum": [
+                "builder",
+                "code"
+              ],
+              "type": "string",
+              "x-enum-description": {}
+            },
+            "exemplar": {
+              "description": "Execute an additional query to identify interesting raw samples relevant for the given expr",
+              "type": "boolean"
+            },
+            "expr": {
+              "description": "The actual expression/query that will be evaluated by Prometheus",
+              "type": "string"
+            },
+            "format": {
+              "description": "The response format\n\n\nPossible enum values:\n - `\"time_series\"` \n - `\"table\"` \n - `\"heatmap\"` ",
+              "enum": [
+                "time_series",
+                "table",
+                "heatmap"
+              ],
+              "type": "string",
+              "x-enum-description": {}
+            },
+            "instant": {
+              "description": "Returns only the latest value that Prometheus has scraped for the requested time series",
+              "type": "boolean"
+            },
+            "intervalFactor": {
+              "description": "Used to specify how many times to divide max data points by. We use max data points under query options\nSee https://github.com/grafana/grafana/issues/48081\nDeprecated: use interval",
+              "type": "integer"
+            },
+            "legendFormat": {
+              "description": "Series name override or template. Ex. {{hostname}} will be replaced with label value for hostname",
+              "type": "string"
+            },
+            "range": {
+              "description": "Returns a Range vector, comprised of a set of time series containing a range of data points over time for each time series",
+              "type": "boolean"
+            },
+            "scope": {
+              "additionalProperties": false,
+              "description": "???",
+              "properties": {
+                "category": {
+                  "type": "string"
+                },
+                "description": {
+                  "type": "string"
+                },
+                "filters": {
+                  "items": {
+                    "additionalProperties": false,
+                    "description": "ScopeFilter is a hand copy of the ScopeFilter struct from pkg/apis/scope/v0alpha1/types.go to avoid import (temp fix)",
+                    "properties": {
+                      "key": {
+                        "type": "string"
+                      },
+                      "operator": {
+                        "type": "string"
+                      },
+                      "value": {
+                        "type": "string"
+                      }
+                    },
+                    "required": [
+                      "key",
+                      "value",
+                      "operator"
+                    ],
+                    "type": "object"
+                  },
+                  "type": "array"
+                },
+                "title": {
+                  "type": "string"
+                },
+                "type": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "title",
+                "type",
+                "description",
+                "category",
+                "filters"
+              ],
+              "type": "object"
+            }
+          },
+          "required": [
+            "expr"
+          ],
+          "type": "object"
+        },
+        "examples": [
+          {
+            "name": "simple random walk",
+            "saveModel": {
+              "expr": "",
+              "format": "time_series"
+            }
+          }
+        ]
+      }
+    }
+  ]
+}
