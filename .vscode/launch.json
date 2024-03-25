@@ -32,7 +32,7 @@
       "env": {},
       "cwd": "${workspaceFolder}",
       "args": ["apiserver", 
-          "--secure-port=6443", 
+          "--secure-port=8443", 
           "--runtime-config=query.grafana.app/v0alpha1=true",
           "--hg-url=http://localhost:3000",
           "--hg-key=$HGAPIKEY"]
