@@ -1298,6 +1298,7 @@ AU6WWoaAIEhhbWQfth/Diz3mivl1ARB+YqiWca2mjRPLTPcKJEURDVddQ423el0Q
 llG/Sw5+FquFuChaA6l5KWy7F3bQyA==
 -----END CERTIFICATE-----`
 
+// #nosec G101
 const clientKey string = `-----BEGIN RSA PRIVATE KEY-----
 MIIEpQIBAAKCAQEA4yWJpbI0RQkozfu9YKXlsa5veUyJzJECoZDJj+rEP3IoozYV
 u5xVyZaaDm+9OpBWXmuVD5zsYjw4Pqm2YWXxrbpygSSLtsWvxuSlLIFIRzmnbttn

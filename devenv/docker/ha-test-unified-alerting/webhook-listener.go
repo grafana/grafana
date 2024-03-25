@@ -122,7 +122,6 @@ func main() {
 
 	waitDuration := time.Duration(waitSeconds) * time.Second
 	http.HandleFunc("/", func(writer http.ResponseWriter, request *http.Request) {
-
 		writer.WriteHeader(http.StatusOK)
 		writer.Write([]byte(landingPage))
 	})

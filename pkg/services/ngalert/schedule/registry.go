@@ -217,6 +217,7 @@ func (r ruleWithFolder) Fingerprint() fingerprint {
 			writeBytes(nil)
 			return
 		}
+		// #nosec G103
 		// avoid allocation when converting string to byte slice
 		writeBytes(unsafe.Slice(unsafe.StringData(s), len(s)))
 	}
