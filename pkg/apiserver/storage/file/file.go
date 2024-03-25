@@ -442,10 +442,6 @@ func (s *Storage) GetList(ctx context.Context, key string, opts storage.ListOpti
 		s.rvMutex.Lock()
 		defer s.rvMutex.Unlock()
 
-		if resourceVersionInt == 0 {
-			resourceVersionInt = s.getNewResourceVersion()
-		}
-
 		var fpath string
 		dirpath := s.dirPath(key)
 		// Since it's a get, check if the dir exists and return early as needed
@@ -496,16 +492,26 @@ func (s *Storage) GetList(ctx context.Context, key string, opts storage.ListOpti
 			return err
 		}
 
-		ok, err := opts.Predicate.Matches(obj)
-		if err == nil && ok {
-			v.Set(reflect.Append(v, reflect.ValueOf(obj).Elem()))
-
+		if opts.SendInitialEvents == nil || (opts.SendInitialEvents != nil && !*opts.SendInitialEvents) {
+			// Apply the minimum resource version validation when we are not being called as part of Watch
+			// SendInitialEvents flow
+			// reason: the resource version of currently returned init items will always be < list RV
+			// they are being generated for, unless of course, the requestedRV == "0"/""
 			if err := s.validateMinimumResourceVersion(opts.ResourceVersion, currentVersion); err != nil {
 				// Below log left for debug. It's usually not an error condition
 				// klog.Infof("failed to assert minimum resource version constraint against list version")
 				continue
 			}
 		}
+
+		ok, err := opts.Predicate.Matches(obj)
+		if err == nil && ok {
+			v.Set(reflect.Append(v, reflect.ValueOf(obj).Elem()))
+		}
+	}
+
+	if resourceVersionInt == 0 {
+		resourceVersionInt = s.getNewResourceVersion()
 	}
 
 	if err := s.versioner.UpdateList(listObj, resourceVersionInt, "", &remainingItems); err != nil {
@@ -589,15 +595,9 @@ func (s *Storage) GuaranteedUpdate(
 	}
 
 	if unchanged {
-		u, err := conversion.EnforcePtr(updatedObj)
-		if err != nil {
-			return fmt.Errorf("unable to enforce updated object pointer: %w", err)
+		if err := copyModifiedObjectToDestination(updatedObj, destination); err != nil {
+			return err
 		}
-		d, err := conversion.EnforcePtr(destination)
-		if err != nil {
-			return fmt.Errorf("unable to enforce destination pointer: %w", err)
-		}
-		d.Set(u)
 		return nil
 	}
 
@@ -617,16 +617,9 @@ func (s *Storage) GuaranteedUpdate(
 		return err
 	}
 
-	// TODO: make a helper for this and re-use
-	u, err := conversion.EnforcePtr(updatedObj)
-	if err != nil {
-		return fmt.Errorf("unable to enforce updated object pointer: %w", err)
+	if err := copyModifiedObjectToDestination(updatedObj, destination); err != nil {
+		return err
 	}
-	d, err := conversion.EnforcePtr(destination)
-	if err != nil {
-		return fmt.Errorf("unable to enforce destination pointer: %w", err)
-	}
-	d.Set(u)
 
 	eventType := watch.Modified
 	if created {
@@ -707,8 +700,12 @@ func (s *Storage) convertToParsedKey(key string, p storage.SelectionPredicate) (
 	// /<group>/<resource>/[<name>]
 	// /<group>/<resource>
 	parts := strings.SplitN(key, "/", 5)
-	if len(parts) < 3 && (len(parts) == 2 && parts[1] != "pods") {
+	if len(parts) < 3 && s.gr.Group != "" {
 		return nil, fmt.Errorf("invalid key (expecting at least 2 parts): %s", key)
+	}
+
+	if len(parts) < 2 && s.gr.Group == "" {
+		return nil, fmt.Errorf("invalid key (expecting at least 1 part): %s", key)
 	}
 
 	// beware this empty "" as the first separated part for the rest of the parsing below
@@ -748,4 +745,17 @@ func (s *Storage) convertToParsedKey(key string, p storage.SelectionPredicate) (
 	}
 
 	return k, nil
+}
+
+func copyModifiedObjectToDestination(updatedObj runtime.Object, destination runtime.Object) error {
+	u, err := conversion.EnforcePtr(updatedObj)
+	if err != nil {
+		return fmt.Errorf("unable to enforce updated object pointer: %w", err)
+	}
+	d, err := conversion.EnforcePtr(destination)
+	if err != nil {
+		return fmt.Errorf("unable to enforce destination pointer: %w", err)
+	}
+	d.Set(u)
+	return nil
 }
