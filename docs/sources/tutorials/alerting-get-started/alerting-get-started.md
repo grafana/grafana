@@ -16,43 +16,49 @@ Ensure you have the following applications installed.
 
 ## Set up a sample application
 
-The sample application generates real data and exposes metrics,  which are stored in Prometheus. In Grafana Alerting, you can then build an alert rule based on the data generated. 
+The sample application generates real data and exposes metrics, which are stored in Prometheus. In Grafana Alerting, you can then build an alert rule based on the data generated.
 
 Download the files to your local machine.
 
 1. Clone the [tutorial environment repository](www.github.com/grafana/tutorial-environment).
 
-    ```
-    git clone https://github.com/grafana/tutorial-environment.git
-    ```
+   ```
+   git clone https://github.com/grafana/tutorial-environment.git
+   ```
+
 1. Change to the directory where you cloned the repository:
 
-    ```
-    cd tutorial-environment
-    ```
+   ```
+   cd tutorial-environment
+   ```
+
 1. Make sure Docker is running:
 
-    ```
-    docker --version
-    ```
-    This command will display the installed Docker version if the installation was successful. 
+   ```
+   docker --version
+   ```
+
+   This command will display the installed Docker version if the installation was successful.
+
 1. Start the sample application:
 
-    ```
-    docker compose up -d
-    ```
-    The first time you run `docker compose up -d`, Docker downloads all the necessary resources for the tutorial. This might take a few minutes, depending on your internet connection.
+   ```
+   docker compose up -d
+   ```
 
-    {{< admonition type="note" >}}
-    If you already have Grafana, Loki, or Prometheus running on your system, you might see errors, because the Docker image is trying to use ports that your local installations are already using. . If this is the case, stop the services, then run the command again.
-    {{< /admonition >}}
+   The first time you run `docker compose up -d`, Docker downloads all the necessary resources for the tutorial. This might take a few minutes, depending on your internet connection.
+
+   {{< admonition type="note" >}}
+   If you already have Grafana, Loki, or Prometheus running on your system, you might see errors, because the Docker image is trying to use ports that your local installations are already using. . If this is the case, stop the services, then run the command again.
+   {{< /admonition >}}
 
 1. Ensure all services are up-and-running:
 
-    ```
-    docker compose ps
-    ```
-    In the State column, it should say Up for all services.
+   ```
+   docker compose ps
+   ```
+
+   In the State column, it should say Up for all services.
 
 The Grafana News app should be live on [localhost:8081](http://localhost:8081/).
 
@@ -68,15 +74,15 @@ To add a link:
 
 1. Enter a **Title**
 1. Enter a **URL**
-1. Click **Submit** to add the link. 
-The link will appear listed under the Grafana News heading.
+1. Click **Submit** to add the link.
+   The link will appear listed under the Grafana News heading.
 1. To vote for a link, click the triangle icon next to the name of the link.
 
 ## Log in to Grafana
 
-Besides being an open-source observability tool, Grafana has its own built-in alerting service.  This means that you can receive notifications whenever there is an event of interest in your data, and even see these events graphed in your visualizations.
+Besides being an open-source observability tool, Grafana has its own built-in alerting service. This means that you can receive notifications whenever there is an event of interest in your data, and even see these events graphed in your visualizations.
 
-In your browser, navigate to [localhost:3000](http://localhost:3000). 
+In your browser, navigate to [localhost:3000](http://localhost:3000).
 You should get logged in automatically
 
 ## Create a contact point for Grafana Managed Alerts
@@ -107,7 +113,7 @@ We have now created a dummy webhook endpoint and created a new Alerting Contact 
 
 Next, we'll establish an alert within Grafana Alerting to notify us whenever our sample app experiences a specific volume of requests.
 
-In Grafana, **navigate to Alerting** > **Alert rules**. Click on  **New alert rule**.
+In Grafana, **navigate to Alerting** > **Alert rules**. Click on **New alert rule**.
 
 ## Enter alert rule name
 
@@ -117,21 +123,23 @@ In Grafana, **navigate to Alerting** > **Alert rules**. Click on  **New alert ru
 
 In this section, we define queries, expressions (used to manipulate the data), and the condition that must be met for the alert to be triggered.
 
-1. Select the **Prometheus** data source from the drop-down menu. 
+1. Select the **Prometheus** data source from the drop-down menu.
 
-    {{< admonition type="note" >}}
-    To visualize this data in Grafana, we need time-series metrics that we can collect and store. We can do that with [Prometheus](https://grafana.com/docs/grafana/latest/getting-started/get-started-grafana-prometheus/), which pulls metrics from our sample app.
-    {{< /admonition >}}
+   {{< admonition type="note" >}}
+   To visualize this data in Grafana, we need time-series metrics that we can collect and store. We can do that with [Prometheus](https://grafana.com/docs/grafana/latest/getting-started/get-started-grafana-prometheus/), which pulls metrics from our sample app.
+   {{< /admonition >}}
 
 1. In the Query editor, switch to **Code** mode by clicking the button at the right.
-1. Enter the query 
-    ```
-    sum(rate(tns_request_duration_seconds_count[1m])) by(method)
-    ```
+1. Enter the query
+
+   ```
+   sum(rate(tns_request_duration_seconds_count[1m])) by(method)
+   ```
+
    This [PromQL](https://prometheus.io/docs/prometheus/latest/querying/basics/) query calculates the sum of the per-second average rates of increase of the `tns_request_duration_seconds_count` metric over the last 1 minute, grouped by the HTTP method used in the requests. This can be useful for analyzing the request duration trends for different HTTP methods.
 
 1. Keep expressions “B” and “C” as they are. These expressions (**Reduce** and **Threshold**, respectively) come by default when creating a new rule.
-The Reduce expression “B”, selects the last value of our query “A”, while the Threshold expression “C” will check if the last value from expression “B” is above a specific value. In addition, the Threshold expression is the alert condition by default. Enter `0.2` as threshold value. You can read more about queries and conditions [here](https://grafana.com/docs/grafana/latest/alerting/fundamentals/alert-rules/queries-conditions/#expression-queries).
+   The Reduce expression “B”, selects the last value of our query “A”, while the Threshold expression “C” will check if the last value from expression “B” is above a specific value. In addition, the Threshold expression is the alert condition by default. Enter `0.2` as threshold value. You can read more about queries and conditions [here](https://grafana.com/docs/grafana/latest/alerting/fundamentals/alert-rules/queries-conditions/#expression-queries).
 
 1. Click Preview to run the queries.
 
@@ -145,12 +153,12 @@ If it returns “No data,” or an error, you are welcome to post questions in o
 
 An evaluation group defines an evaluation interval - how often a rule is checked. Alert rules within the same evaluation group are evaluated sequentially
 
-1. In **Folder**, click **+ New folder** and enter a name. For example: *grafana-news*. This folder will contain our alerts. 
-1. In the **Evaluation group**, repeat the above step to create a new evaluation group. We will name it *1m-evaluation*. 
-1. Choose an **Evaluation interval** (how often the alert will be evaluated). 
-For example, every `1m` (1 minute).
-1. Set the **pending period** (the “for” period). 
-This is the time that a condition has to be met until the alert enters into **Firing** state and a notification is sent. For example, `0s` (zero seconds) so the alert rule fires the moment the condition is met.
+1. In **Folder**, click **+ New folder** and enter a name. For example: _grafana-news_. This folder will contain our alerts.
+1. In the **Evaluation group**, repeat the above step to create a new evaluation group. We will name it _1m-evaluation_.
+1. Choose an **Evaluation interval** (how often the alert will be evaluated).
+   For example, every `1m` (1 minute).
+1. Set the **pending period** (the “for” period).
+   This is the time that a condition has to be met until the alert enters into **Firing** state and a notification is sent. For example, `0s` (zero seconds) so the alert rule fires the moment the condition is met.
 
 ## Configure labels and notifications
 
@@ -175,7 +183,9 @@ Linking an alert rule to a panel adds an annotation to the panel when the status
 Click **Save rule and exit** at the top right corner.
 
 ## Trigger an alert
+
 We have now configured an alert rule and a contact point. Now let’s see if we can trigger an alert by generating some traffic on our sample application.
+
 1. Browse to [localhost:8081](http://localhost:8081/).
 1. Add a new title and URL.
 1. Repeatedly click the vote button or refresh the page to generate a traffic spike.
