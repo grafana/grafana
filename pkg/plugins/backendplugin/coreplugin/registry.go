@@ -206,7 +206,7 @@ func NewPlugin(pluginID string, cfg *setting.Cfg, httpClientProvider *httpclient
 		jsonData.AliasIDs = append(jsonData.AliasIDs, TestDataAlias)
 		svc = testdatasource.ProvideService()
 	case CloudWatch:
-		svc = cloudwatch.ProvideService(httpClientProvider)
+		svc = cloudwatch.ProvideService(httpClientProvider).Executor
 	case CloudMonitoring:
 		svc = cloudmonitoring.ProvideService(httpClientProvider)
 	case AzureMonitor:
@@ -247,6 +247,9 @@ func NewPlugin(pluginID string, cfg *setting.Cfg, httpClientProvider *httpclient
 	p.SetLogger(log.New(fmt.Sprintf("plugin.%s", p.ID)))
 
 	backendFactory := asBackendPlugin(svc)
+	if backendFactory == nil {
+		return nil, ErrCorePluginNotFound
+	}
 	bp, err := backendFactory(p.ID, p.Logger(), nil)
 	if err != nil {
 		return nil, err
