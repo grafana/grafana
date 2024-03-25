@@ -141,6 +141,8 @@ interface BaseProps<TableData extends object> {
   headerTooltips?: Record<string, InteractiveTableHeaderTooltip>;
   /**
    * Number of rows per page. A value of zero disables pagination. Defaults to 0.
+   * A React hooks error will be thrown if pageSize goes from greater than 0 to 0 or vice versa. If enabling pagination,
+   * make sure pageSize remains a non-zero value.
    */
   pageSize?: number;
   /**
@@ -196,7 +198,7 @@ export function InteractiveTable<TableData extends object>({
   const tableHooks: Array<PluginHook<TableData>> = [useSortBy, useExpanded];
 
   const multiplePages = data.length > pageSize;
-  const paginationEnabled = pageSize > 0 && multiplePages;
+  const paginationEnabled = pageSize > 0;
 
   if (paginationEnabled) {
     tableHooks.push(usePagination);
@@ -304,7 +306,7 @@ export function InteractiveTable<TableData extends object>({
           })}
         </tbody>
       </table>
-      {paginationEnabled && (
+      {paginationEnabled && multiplePages && (
         <span>
           <Pagination
             currentPage={tableInstance.state.pageIndex + 1}

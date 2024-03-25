@@ -563,6 +563,9 @@
     "drawer": {
       "close": "Schließen"
     },
+    "empty-state": {
+      "not-found-message": ""
+    },
     "modal": {
       "close-tooltip": "Schließen"
     },

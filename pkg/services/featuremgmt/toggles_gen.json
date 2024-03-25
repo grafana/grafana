@@ -265,7 +265,8 @@
       "metadata": {
         "name": "migrationLocking",
         "resourceVersion": "1711130211436",
-        "creationTimestamp": "2024-03-22T17:56:51Z"
+        "creationTimestamp": "2024-03-22T17:56:51Z",
+        "deletionTimestamp": "2024-03-25T05:44:42Z"
       },
       "spec": {
         "description": "Lock database during migrations",
@@ -2044,6 +2045,23 @@
         "description": "Enable Grafana to have a remote Alertmanager instance as the primary Alertmanager.",
         "stage": "experimental",
         "codeowner": "@grafana/alerting-squad"
+      }
+    },
+    {
+      "metadata": {
+        "name": "oauthRequireSubClaim",
+        "resourceVersion": "1711371458317",
+        "creationTimestamp": "2024-03-25T10:50:29Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2024-03-25 12:57:38.317427693 +0000 UTC"
+        }
+      },
+      "spec": {
+        "description": "Require that sub claims is present in oauth tokens.",
+        "stage": "experimental",
+        "codeowner": "@grafana/identity-access-team",
+        "hideFromAdminPage": true,
+        "hideFromDocs": true
       }
     }
   ]
