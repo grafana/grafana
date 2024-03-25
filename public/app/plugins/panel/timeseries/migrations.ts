@@ -11,7 +11,6 @@ import {
   fieldReducers,
   FieldType,
   NullValueMode,
-  PanelModel,
   PanelTypeChangedHandler,
   ReducerID,
   Threshold,
@@ -751,8 +750,8 @@ function addAnnotationsToDashboard(annotations: AnnotationQuery[]) {
   const scene = window.__grafanaSceneContext;
 
   if (scene instanceof DashboardScene) {
-    const data = dashboardSceneGraph.getDataLayers(scene);
-    const layers = [...data.state.layers];
+    const dataLayers = dashboardSceneGraph.getDataLayers(scene);
+    const layers = dataLayers.state.layers;
 
     for (let annotation of annotations) {
       const newAnnotation = new DashboardAnnotationsDataLayer({
@@ -766,7 +765,7 @@ function addAnnotationsToDashboard(annotations: AnnotationQuery[]) {
       newAnnotation.activate();
     }
 
-    data.setState({ layers });
+    dataLayers.setState({ layers });
     return;
   }
 
