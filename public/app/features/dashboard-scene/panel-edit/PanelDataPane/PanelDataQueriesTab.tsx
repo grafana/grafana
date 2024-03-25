@@ -216,7 +216,7 @@ function PanelDataQueriesTabRendered({ model }: SceneComponentProps<PanelDataQue
             icon="plus"
             onClick={model.onAddExpressionClick}
             variant="secondary"
-            data-testid="query-tab-add-expression"
+            data-testid={selectors.components.QueryTab.addExpression}
           >
             <span>Expression&nbsp;</span>
           </Button>

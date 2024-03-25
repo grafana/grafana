@@ -2,6 +2,7 @@ import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import React from 'react';
 
+import { selectors } from '@grafana/e2e-selectors';
 import config from 'app/core/config';
 import { mockDataSource } from 'app/features/alerting/unified/mocks';
 import { DataSourceType } from 'app/features/alerting/unified/utils/datasource';
@@ -48,7 +49,7 @@ describe('QueryGroup', () => {
   it('Should add expression on click', async () => {
     renderScenario({});
 
-    const addExpressionButton = await screen.findByTestId('query-tab-add-expression');
+    const addExpressionButton = await screen.findByTestId('data-testid query-tab-add-expression');
     const queryRowsContainer = await screen.findByTestId('query-editor-rows');
     expect(queryRowsContainer.children.length).toBe(2);
 
@@ -75,7 +76,7 @@ describe('QueryGroup', () => {
   it('New expression should be expanded', async () => {
     renderScenario({});
 
-    const addExpressionButton = await screen.findByTestId('query-tab-add-expression');
+    const addExpressionButton = await screen.findByTestId(selectors.components.QueryTab.addExpression);
     const queryRowsContainer = await screen.findByTestId('query-editor-rows');
     await userEvent.click(addExpressionButton);
 
