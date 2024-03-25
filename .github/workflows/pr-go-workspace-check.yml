@@ -26,14 +26,22 @@ jobs:
       with:
         go-version: '1.21.8'
 
-    - name: Build
+    - name: Workspace Sync
+      run: go work sync
+
+    - name: Check for go mod & workspace changes 
       run: |
-        go mod tidy && make build-go
+        if ! git diff --exit-code --quiet; then
+          echo "Changes detected. Please run `go work sync` and commit the changes."
+          exit 1
+        fi
+
+    - name: Build
+      run: make build-go
 
     - name: Check for go workspace changes 
       run: |
         if ! git diff --exit-code --quiet; then
-          echo "Changes detected. Please run `go mod tidy && make build-go` and commit the changes."
+          echo "Changes detected. Please run `make build-go` and commit the changes."
           exit 1
         fi
-      
