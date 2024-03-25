@@ -38,24 +38,23 @@ export const AuthDrawerUnconnected = ({
   onClose,
   saveSettings,
 }: Props): JSX.Element => {
-  const [isOauthAllowInsecureEmailLookup, setOauthAllowInsecureEmailLookup] = useState(allowInsecureEmail);
+  const [isOauthAllowInsecureEmailLookup, _setOauthAllowInsecureEmailLookup] = useState(allowInsecureEmail);
 
   const oauthAllowInsecureEmailLookupOnChange = async () => {
     saveSettings({
       updates: {
         auth: {
-          oauth_allow_insecure_email_lookup: '' + !isOauthAllowInsecureEmailLookup,
+          oauth_allow_insecure_email_lookup: '' + !allowInsecureEmail,
         },
       },
     })
       .then(() => {
-        setOauthAllowInsecureEmailLookup(!isOauthAllowInsecureEmailLookup); // TODO maybe remove this
+        // setOauthAllowInsecureEmailLookup(!allowInsecureEmail); // TODO maybe remove this
         console.log(`oauth_allow_insecure_email_lookup: `, allowInsecureEmail);
-        return loadSettings(true);
+        return loadSettings(false);
       })
-      .then((refreshedSettings) => {
-        console.log(`settings updated`);
-        console.log(refreshedSettings.auth.oauth_allow_insecure_email_lookup);
+      .then(() => {
+        console.log(`oauth_allow_insecure_email_lookup: `, allowInsecureEmail);
       })
       .catch((error) => {
         console.error(`error`, error);

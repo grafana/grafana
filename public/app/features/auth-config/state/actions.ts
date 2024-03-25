@@ -17,18 +17,18 @@ import {
   settingsUpdated,
 } from './reducers';
 
-export function loadSettings(hideSpinner?: boolean): ThunkResult<Promise<Settings>> {
+export function loadSettings(showSpinner = true): ThunkResult<Promise<Settings>> {
   return async (dispatch) => {
-    console.log(`loadSettings`);
+    console.log(`loadSettings`); // TODO remove
     if (contextSrv.hasPermission(AccessControlAction.SettingsRead)) {
-      if (!hideSpinner) {
+      if (showSpinner) {
         dispatch(loadingBegin());
       }
       dispatch(loadProviders());
       const result = await getBackendSrv().get('/api/admin/settings');
       dispatch(settingsUpdated(result));
       await dispatch(loadProviderStatuses());
-      if (!hideSpinner) {
+      if (showSpinner) {
         dispatch(loadingEnd());
       }
       return result;
