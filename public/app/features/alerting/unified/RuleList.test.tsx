@@ -16,6 +16,7 @@ import {
 } from '@grafana/runtime';
 import { backendSrv } from 'app/core/services/backend_srv';
 import * as ruleActionButtons from 'app/features/alerting/unified/components/rules/RuleActionsButtons';
+import alertingServer from 'app/features/alerting/unified/mock-server';
 import * as actions from 'app/features/alerting/unified/state/actions';
 import { AccessControlAction } from 'app/types';
 import { PromAlertingRuleState, PromApplication } from 'app/types/unified-alerting-dto';
@@ -34,6 +35,8 @@ import {
   mockPromRecordingRule,
   mockPromRuleGroup,
   mockPromRuleNamespace,
+  pausedPromRules,
+  getPotentiallyPausedRulerRules,
   somePromRules,
   someRulerRules,
 } from './mocks';
@@ -113,6 +116,7 @@ const dataSources = {
 
 const ui = {
   ruleGroup: byTestId('rule-group'),
+  pausedRuleGroup: byText(/groupPaused/),
   cloudRulesSourceErrors: byTestId('cloud-rulessource-errors'),
   groupCollapseToggle: byTestId(selectors.components.AlertRules.groupToggle),
   ruleCollapseToggle: byTestId(selectors.components.AlertRules.toggle),
@@ -132,6 +136,16 @@ const ui = {
       name: /Evaluation interval How often is the rule evaluated. Applies to every rule within the group./i,
     }),
     saveButton: byRole('button', { name: /Save/ }),
+  },
+  stateTags: {
+    paused: byText(/^Paused/),
+  },
+  actionButtons: {
+    more: byRole('button', { name: 'More' }),
+  },
+  moreActionItems: {
+    pause: byRole('menuitem', { name: /pause alert evaluation/i }),
+    resume: byRole('menuitem', { name: /resume alert evaluation/i }),
   },
 };
 
@@ -553,6 +567,53 @@ describe('RuleList', () => {
     await userEvent.type(filterInput, 'label:region=US{Enter}');
     await waitFor(() => expect(ui.ruleGroup.queryAll()).toHaveLength(1));
     await waitFor(() => expect(ui.ruleGroup.get()).toHaveTextContent('group-2'));
+  });
+
+  describe('pausing rules', () => {
+    beforeEach(() => {
+      alertingServer.listen({ onUnhandledRequest: 'error' });
+      grantUserPermissions([
+        AccessControlAction.AlertingRuleRead,
+        AccessControlAction.AlertingRuleUpdate,
+        AccessControlAction.AlertingRuleExternalRead,
+        AccessControlAction.AlertingRuleExternalWrite,
+      ]);
+      mocks.getAllDataSourcesMock.mockReturnValue([]);
+      setDataSourceSrv(new MockDataSourceSrv({}));
+      mocks.api.fetchRulerRules.mockImplementation(() => Promise.resolve(getPotentiallyPausedRulerRules(true)));
+      mocks.api.fetchRules.mockImplementation((sourceName) =>
+        Promise.resolve(sourceName === 'grafana' ? pausedPromRules('grafana') : [])
+      );
+    });
+    afterEach(() => {
+      alertingServer.resetHandlers();
+    });
+    afterAll(() => {
+      alertingServer.close();
+    });
+
+    test('resuming paused alert rule', async () => {
+      const user = userEvent.setup();
+
+      renderRuleList();
+
+      // Expand the paused rule group so we can assert the rule state
+      await user.click(await ui.pausedRuleGroup.find());
+
+      expect(await ui.stateTags.paused.find()).toBeInTheDocument();
+
+      console.log(JSON.stringify(getPotentiallyPausedRulerRules(false), null, 4));
+
+      // TODO: Migrate all testing logic to MSW and so we aren't manually tweaking the API response behaviour
+      mocks.api.fetchRulerRules.mockImplementationOnce(() => {
+        return Promise.resolve(getPotentiallyPausedRulerRules(false));
+      });
+
+      await user.click(await ui.actionButtons.more.find());
+      await user.click(await ui.moreActionItems.resume.find());
+
+      await waitFor(() => expect(ui.stateTags.paused.query()).not.toBeInTheDocument());
+    });
   });
 
   describe('edit lotex groups, namespaces', () => {
