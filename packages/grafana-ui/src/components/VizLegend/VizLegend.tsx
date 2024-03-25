@@ -27,6 +27,7 @@ export function VizLegend<T>({
   readonly,
   isSortable,
 }: LegendProps<T>) {
+  // JEV: ADDITION: add other callbacks to panel context? override/config callbacks?
   const { eventBus, onToggleSeriesVisibility, onToggleLegendSort } = usePanelContext();
 
   const onMouseOver = useCallback(
@@ -67,6 +68,7 @@ export function VizLegend<T>({
 
   const onLegendLabelClick = useCallback(
     (item: VizLegendItem, event: React.MouseEvent<HTMLButtonElement, MouseEvent>) => {
+      // JEV: PERK: onLabelClick custom prop
       if (onLabelClick) {
         onLabelClick(item, event);
       }
