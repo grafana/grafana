@@ -56,7 +56,9 @@ Download the files to your local machine.
 
 The Grafana News app should be live on [localhost:8081](http://localhost:8081/).
 
-## Generate some data
+## Generate data
+
+To enhance the hands-on aspect of this tutorial, you can actively participate in the Grafana News application to simulate web traffic and interactions. This enables you to observe data within Grafana and set up alerts accordingly.
 
 ### Grafana News
 
@@ -113,7 +115,7 @@ In Grafana, **navigate to Alerting** > **Alert rules**. Click on  **+ New alert 
 
 ## Define query and alert condition
 
-In this section we define the conditions that trigger alerts. 
+In this section, we define queries, expressions (used to manipulate the data), and the condition that must be met for the alert to be triggered.
 
 1. Select the **Prometheus** data source from the drop-down menu. 
 
