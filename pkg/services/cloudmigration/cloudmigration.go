@@ -5,7 +5,7 @@ import (
 )
 
 type Service interface {
-	CreateToken(context.Context) error
+	CreateToken(context.Context) (CreateAccessTokenResponse, error)
 	ValidateToken(context.Context, string) error
 	SaveEncryptedToken(context.Context, string) error
 	// migration

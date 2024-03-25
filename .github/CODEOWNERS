@@ -612,6 +612,7 @@ playwright.config.ts @grafana/plugins-platform-frontend
 # Grafana Operator Experience Team
 /pkg/services/caching/ @grafana/grafana-operator-experience-squad
 /pkg/services/cloudmigration/ @grafana/grafana-operator-experience-squad
+/pkg/services/gcom/ @grafana/grafana-operator-experience-squad
 
 # Feature toggles
 /pkg/services/featuremgmt/ @grafana/grafana-backend-services-squad
