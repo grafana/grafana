@@ -71,6 +71,19 @@ files = [
   "**/pkg/tsdb/cloudwatch/**/*",
 ]
 
+[linters-settings.depguard.rules.promlib]
+list-mode = "lax" # allow unless explicitely denied
+deny = [
+  { pkg = "github.com/grafana/grafana/pkg", desc = "promlib is not allowed to import grafana core" }
+]
+allow = [
+  "github.com/grafana/grafana/pkg/promlib"
+]
+files = [
+  "**/pkg/promlib/*",
+  "**/pkg/promlib/**/*"
+]
+
 [linters-settings.gocritic]
 enabled-checks = ["ruleguard"]
 [linters-settings.gocritic.settings.ruleguard]
