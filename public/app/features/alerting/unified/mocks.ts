@@ -543,6 +543,7 @@ export const somePromRules = (dataSourceName = 'Prometheus'): RuleNamespace[] =>
     groups: [mockPromRuleGroup({ name: 'group3', rules: [mockPromAlertingRule({ name: 'alert3' })] })],
   },
 ];
+
 export const someRulerRules: RulerRulesConfigDTO = {
   namespace1: [
     mockRulerRuleGroup({ name: 'group1', rules: [mockRulerAlertingRule({ alert: 'alert1' })] }),
@@ -550,6 +551,23 @@ export const someRulerRules: RulerRulesConfigDTO = {
   ],
   namespace2: [mockRulerRuleGroup({ name: 'group3', rules: [mockRulerAlertingRule({ alert: 'alert3' })] })],
 };
+
+export const getPotentiallyPausedRulerRules: (isPaused: boolean) => RulerRulesConfigDTO = (isPaused) => ({
+  namespacePaused: [
+    mockRulerRuleGroup({
+      name: 'groupPaused',
+      rules: [mockGrafanaRulerRule({ title: 'paused alert', is_paused: isPaused })],
+    }),
+  ],
+});
+
+export const pausedPromRules = (dataSourceName = 'Prometheus'): RuleNamespace[] => [
+  {
+    dataSourceName,
+    name: 'namespacePaused',
+    groups: [mockPromRuleGroup({ name: 'groupPaused', rules: [mockPromAlertingRule({ name: 'paused alert' })] })],
+  },
+];
 
 export const mockCombinedRule = (partial?: Partial<CombinedRule>): CombinedRule => ({
   name: 'mockRule',
