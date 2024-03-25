@@ -99,7 +99,7 @@ func makeDataRequest(ctx context.Context, lokiDsUrl string, query lokiQuery, cat
 	}
 
 	if query.SupportingQueryType != SupportingQueryNone {
-		value := getSupportingQueryHeaderValue(req, query.SupportingQueryType)
+		value := getSupportingQueryHeaderValue(query.SupportingQueryType)
 		if value != "" {
 			req.Header.Set("X-Query-Tags", "Source="+value)
 		}
@@ -324,7 +324,7 @@ func (api *LokiAPI) RawQuery(ctx context.Context, resourcePath string) (RawLokiR
 	return rawLokiResponse, nil
 }
 
-func getSupportingQueryHeaderValue(req *http.Request, supportingQueryType SupportingQueryType) string {
+func getSupportingQueryHeaderValue(supportingQueryType SupportingQueryType) string {
 	value := ""
 	switch supportingQueryType {
 	case SupportingQueryLogsVolume:
@@ -335,7 +335,8 @@ func getSupportingQueryHeaderValue(req *http.Request, supportingQueryType Suppor
 		value = "datasample"
 	case SupportingQueryInfiniteScroll:
 		value = "infinitescroll"
-	default: // ignore
+	default:
+		value = string(supportingQueryType)
 	}
 
 	return value
