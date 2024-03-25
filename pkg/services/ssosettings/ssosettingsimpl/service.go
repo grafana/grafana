@@ -55,7 +55,7 @@ func ProvideService(cfg *setting.Cfg, sqlStore db.DB, ac ac.AccessControl,
 		fbStrategies = append(fbStrategies, strategies.NewSAMLStrategy(settingsProvider))
 
 		if cfg.SSOSettingsConfigurableProviders[social.SAMLProviderName] {
-			providersList = ssosettings.AllProviders
+			providersList = append(providersList, social.SAMLProviderName)
 		}
 	}
 
@@ -109,10 +109,6 @@ func (s *Service) GetForProvider(ctx context.Context, provider string) (*models.
 
 func (s *Service) GetForProviderWithRedactedSecrets(ctx context.Context, provider string) (*models.SSOSettings, error) {
 	if !s.isProviderConfigurable(provider) {
-		return nil, ssosettings.ErrNotConfigurable
-	}
-
-	if provider == social.SAMLProviderName {
 		return nil, ssosettings.ErrNotConfigurable
 	}
 

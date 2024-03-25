@@ -794,50 +794,6 @@ func TestService_ListWithRedactedSecrets(t *testing.T) {
 			want:    nil,
 			wantErr: true,
 		},
-		{
-			name: "should include saml provider if the provider is enabled and the licensing feature is enabled",
-			setup: func(env testEnv) {
-				env.store.ExpectedSSOSettings = []*models.SSOSettings{
-					{
-						Provider: "github",
-						Settings: map[string]any{
-							"enabled":       true,
-							"client_secret": base64.RawStdEncoding.EncodeToString([]byte("client_secret")),
-							"client_id":     "client_id",
-						},
-						Source: models.DB,
-					},
-				}
-				env.secrets.On("Decrypt", mock.Anything, []byte("client_secret"), mock.Anything).Return([]byte("decrypted-client-secret"), nil).Once()
-
-				env.fallbackStrategy.ExpectedIsMatch = true
-				env.fallbackStrategy.ExpectedConfigs = map[string]map[string]any{
-					"github": {
-						"enabled":       true,
-						"secret":        "secret",
-						"client_secret": "client_secret",
-						"client_id":     "client_id",
-					},
-				}
-
-				env.service.cfg.SSOSettingsConfigurableProviders = map[string]bool{
-					"github": true,
-				}
-			},
-			want: []*models.SSOSettings{
-				{
-					Provider: "github",
-					Settings: map[string]any{
-						"enabled":       true,
-						"secret":        "*********",
-						"client_secret": "*********",
-						"client_id":     "client_id",
-					},
-					Source: models.DB,
-				},
-			},
-			wantErr: false,
-		},
 	}
 	for _, tc := range testCases {
 		// create a local copy of "tc" to allow concurrent access within tests to the different items of testCases,
