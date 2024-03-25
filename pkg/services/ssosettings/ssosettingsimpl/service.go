@@ -368,7 +368,6 @@ func (s *Service) doReload(ctx context.Context) {
 		settings := getSettingByProvider(provider, settingsList)
 
 		if settings == nil || len(settings.Settings) == 0 {
-			s.metrics.reloadFailures.WithLabelValues(provider).Inc()
 			s.logger.Warn("SSO Settings is empty", "provider", provider)
 			continue
 		}
