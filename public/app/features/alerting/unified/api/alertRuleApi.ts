@@ -180,6 +180,7 @@ export const alertRuleApi = alertingApi.injectEndpoints({
       transformResponse: (response: PromRulesResponse, _, args): RuleNamespace[] => {
         return groupRulesByFileName(response.data.groups, args.ruleSourceName);
       },
+      providesTags: ['AlertRulerRule'],
     }),
 
     rulerRules: build.query<
@@ -190,6 +191,7 @@ export const alertRuleApi = alertingApi.injectEndpoints({
         const { path, params } = rulerUrlBuilder(rulerConfig).rules(filter);
         return { url: path, params };
       },
+      providesTags: ['AlertRulerRule'],
     }),
 
     // TODO This should be probably a separate ruler API file
@@ -201,6 +203,7 @@ export const alertRuleApi = alertingApi.injectEndpoints({
         const { path, params } = rulerUrlBuilder(rulerConfig).namespaceGroup(namespace, group);
         return { url: path, params };
       },
+      providesTags: ['AlertRulerRule'],
     }),
 
     exportRules: build.query<string, ExportRulesParams>({
@@ -270,6 +273,7 @@ export const alertRuleApi = alertingApi.injectEndpoints({
         data: payload,
         method: 'POST',
       }),
+      invalidatesTags: ['AlertRulerRule'],
     }),
   }),
 });
