@@ -20,7 +20,7 @@ const getOptions = () => {
   ];
 
   // 10s for OSS and 1m0s for Grafana Cloud
-  const minEvaluationIntervalMillis = parsePrometheusDuration(config.unifiedAlerting.minInterval);
+  const minEvaluationIntervalMillis = safeParsePrometheusDuration(config.unifiedAlerting.minInterval);
 
   /**
    * 1. make sure we always show at least 8 options to the user
