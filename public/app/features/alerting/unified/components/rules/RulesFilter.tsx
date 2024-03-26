@@ -232,7 +232,7 @@ const RulesFilter = ({ onFilterCleared = () => undefined }: RulesFilerProps) => 
                     <Stack gap={0.5}>
                       <span>Search</span>
                       <HoverCard content={<SearchQueryHelp />}>
-                        <Icon name="info-circle" size="sm" tabIndex={0} />
+                        <Icon name="info-circle" size="sm" tabIndex={0} title="Search help" />
                       </HoverCard>
                     </Stack>
                   </Label>

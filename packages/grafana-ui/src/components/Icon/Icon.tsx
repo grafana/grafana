@@ -14,7 +14,7 @@ export interface IconProps extends Omit<React.SVGProps<SVGElement>, 'onLoad' | '
   size?: IconSize;
   type?: IconType;
   /**
-   * Give your icon a semantic meaning. It will be hidden from screen readers, unless this prop is provided.
+   * Give your icon a semantic meaning. The icon will be hidden from screen readers, unless this prop or an aria-label is provided.
    */
   title?: string;
 }
@@ -63,7 +63,7 @@ export const Icon = React.forwardRef<SVGElement, IconProps>(
 
     return (
       <SVG
-        aria-hidden={!title}
+        aria-hidden={!title && !rest['aria-label']}
         innerRef={ref}
         src={svgPath}
         width={svgWid}
