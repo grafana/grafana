@@ -287,12 +287,19 @@ func (s *Service) awsEnvVars() []string {
 func (s *Service) secureSocksProxyEnvVars() []string {
 	if s.cfg.ProxySettings.Enabled {
 		return []string{
+			// nolint:staticcheck
 			proxy.PluginSecureSocksProxyClientCertFilePathEnvVarName + "=" + s.cfg.ProxySettings.ClientCertFilePath,
+			// nolint:staticcheck
 			proxy.PluginSecureSocksProxyClientKeyFilePathEnvVarName + "=" + s.cfg.ProxySettings.ClientKeyFilePath,
+			// nolint:staticcheck
 			proxy.PluginSecureSocksProxyRootCACertFilePathsEnvVarName + "=" + strings.Join(s.cfg.ProxySettings.RootCAFilePaths, " "),
+			// nolint:staticcheck
 			proxy.PluginSecureSocksProxyAddressEnvVarName + "=" + s.cfg.ProxySettings.ProxyAddress,
+			// nolint:staticcheck
 			proxy.PluginSecureSocksProxyServerNameEnvVarName + "=" + s.cfg.ProxySettings.ServerName,
+			// nolint:staticcheck
 			proxy.PluginSecureSocksProxyEnabledEnvVarName + "=" + strconv.FormatBool(s.cfg.ProxySettings.Enabled),
+			// nolint:staticcheck
 			proxy.PluginSecureSocksProxyAllowInsecureEnvVarName + "=" + strconv.FormatBool(s.cfg.ProxySettings.AllowInsecure),
 		}
 	}
