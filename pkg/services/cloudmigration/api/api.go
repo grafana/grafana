@@ -7,6 +7,7 @@ import (
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/middleware"
 	"github.com/grafana/grafana/pkg/services/cloudmigration"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
@@ -17,16 +18,19 @@ type CloudMigrationAPI struct {
 	cloudMigrationsService cloudmigration.Service
 	routeRegister          routing.RouteRegister
 	log                    log.Logger
+	tracer                 tracing.Tracer
 }
 
 func RegisterApi(
 	rr routing.RouteRegister,
 	cms cloudmigration.Service,
+	tracer tracing.Tracer,
 ) *CloudMigrationAPI {
 	api := &CloudMigrationAPI{
 		log:                    log.New("cloudmigrations.api"),
 		routeRegister:          rr,
 		cloudMigrationsService: cms,
+		tracer:                 tracer,
 	}
 	api.registerEndpoints()
 	return api
@@ -43,15 +47,23 @@ func (cma *CloudMigrationAPI) registerEndpoints() {
 		cloudMigrationRoute.Post("/migration/:id/run", routing.Wrap(cma.RunMigration))
 		cloudMigrationRoute.Get("/migration/:id/run", routing.Wrap(cma.GetMigrationRunList))
 		cloudMigrationRoute.Get("/migration/:id/run/:runID", routing.Wrap(cma.GetMigrationRun))
+		cloudMigrationRoute.Post("/token", routing.Wrap(cma.CreateToken))
 	}, middleware.ReqGrafanaAdmin)
 }
 
 func (cma *CloudMigrationAPI) CreateToken(c *contextmodel.ReqContext) response.Response {
-	err := cma.cloudMigrationsService.CreateToken(c.Req.Context())
+	ctx, span := cma.tracer.Start(c.Req.Context(), "MigrationAPI.CreateAccessToken")
+	defer span.End()
+
+	logger := cma.log.FromContext(ctx)
+
+	resp, err := cma.cloudMigrationsService.CreateToken(ctx)
 	if err != nil {
-		return response.Error(http.StatusInternalServerError, "token creation error", err)
+		logger.Error("creating gcom access token", "err", err.Error())
+		return response.Error(http.StatusInternalServerError, "creating gcom access token", err)
 	}
-	return response.Success("Token created")
+
+	return response.JSON(http.StatusOK, cloudmigration.CreateAccessTokenResponseDTO(resp))
 }
 
 func (cma *CloudMigrationAPI) GetMigrationList(c *contextmodel.ReqContext) response.Response {
