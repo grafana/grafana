@@ -6,6 +6,7 @@ import { NavModelItem, UrlQueryValue } from '@grafana/data';
 import { Alert, LinkButton, Stack, TabContent, Text, TextLink, useStyles2 } from '@grafana/ui';
 import { PageInfoItem } from 'app/core/components/Page/types';
 import { useQueryParams } from 'app/core/hooks/useQueryParams';
+import InfoPausedRule from 'app/features/alerting/unified/components/InfoPausedRule';
 import { CombinedRule, RuleHealth, RuleIdentifier } from 'app/types/unified-alerting';
 import { PromAlertingRuleState, PromRuleType } from 'app/types/unified-alerting-dto';
 
@@ -88,12 +89,7 @@ const RuleViewer = () => {
       info={createMetadata(rule)}
       subTitle={
         <Stack direction="column">
-          {isPaused && (
-            <Alert severity="info" title="Alert evaluation currently paused">
-              Notifications for this rule will not fire and no alert instances will be created until the rule is
-              un-paused.
-            </Alert>
-          )}
+          {isPaused && <InfoPausedRule />}
           {summary}
           {/* alerts and notifications and stuff */}
           {isFederatedRule && <FederatedRuleWarning />}
