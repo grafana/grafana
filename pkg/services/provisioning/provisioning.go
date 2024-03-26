@@ -74,7 +74,23 @@ func ProvideService(
 		orgService:                   orgService,
 		folderService:                folderService,
 	}
+
+	err := s.setDashboardProvisioner()
+	if err != nil {
+		return nil, fmt.Errorf("%v: %w", "Failed to create provisioner", err)
+	}
+
 	return s, nil
+}
+
+func (ps *ProvisioningServiceImpl) setDashboardProvisioner() error {
+	dashboardPath := filepath.Join(ps.Cfg.ProvisioningPath, "dashboards")
+	dashProvisioner, err := ps.newDashboardProvisioner(context.Background(), dashboardPath, ps.dashboardProvisioningService, ps.orgService, ps.dashboardService, ps.folderService)
+	if err != nil {
+		return fmt.Errorf("%v: %w", "Failed to create provisioner", err)
+	}
+	ps.dashboardProvisioner = dashProvisioner
+	return nil
 }
 
 type ProvisioningService interface {
@@ -110,6 +126,7 @@ func newProvisioningServiceImpl(
 		newDashboardProvisioner: newDashboardProvisioner,
 		provisionDatasources:    provisionDatasources,
 		provisionPlugins:        provisionPlugins,
+		Cfg:                     setting.NewCfg(),
 	}
 }
 
@@ -215,25 +232,18 @@ func (ps *ProvisioningServiceImpl) ProvisionPlugins(ctx context.Context) error {
 }
 
 func (ps *ProvisioningServiceImpl) ProvisionDashboards(ctx context.Context) error {
-	dashboardPath := filepath.Join(ps.Cfg.ProvisioningPath, "dashboards")
-	dashProvisioner, err := ps.newDashboardProvisioner(ctx, dashboardPath, ps.dashboardProvisioningService, ps.orgService, ps.dashboardService, ps.folderService)
-	if err != nil {
-		return fmt.Errorf("%v: %w", "Failed to create provisioner", err)
-	}
-
 	ps.mutex.Lock()
 	defer ps.mutex.Unlock()
 
 	ps.cancelPolling()
-	dashProvisioner.CleanUpOrphanedDashboards(ctx)
+	ps.dashboardProvisioner.CleanUpOrphanedDashboards(ctx)
 
-	err = dashProvisioner.Provision(ctx)
+	err := ps.dashboardProvisioner.Provision(ctx)
 	if err != nil {
 		// If we fail to provision with the new provisioner, the mutex will unlock and the polling will restart with the
 		// old provisioner as we did not switch them yet.
 		return fmt.Errorf("%v: %w", "Failed to provision dashboards", err)
 	}
-	ps.dashboardProvisioner = dashProvisioner
 	return nil
 }
 
