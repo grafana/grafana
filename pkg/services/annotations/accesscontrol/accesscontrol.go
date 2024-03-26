@@ -88,9 +88,8 @@ func (authz *AuthService) getAnnotationDashboard(ctx context.Context, query *ann
 			SELECT
 				a.id,
 				a.org_id,
-				d.id as dashboard_id
+				a.dashboard_id
 			FROM annotation as a
-			INNER JOIN dashboard as d ON a.dashboard_id = d.id
 			WHERE a.org_id = ? AND a.id = ?
 			`
 		params = append(params, orgID, query.AnnotationID)
