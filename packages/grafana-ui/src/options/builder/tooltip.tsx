@@ -1,4 +1,4 @@
-import { PanelOptionsEditorBuilder, ReducerID, fieldReducers } from '@grafana/data';
+import { PanelOptionsEditorBuilder } from '@grafana/data';
 import { OptionsWithTooltip, TooltipDisplayMode, SortOrder } from '@grafana/schema';
 
 export function addTooltipOptions<T extends OptionsWithTooltip>(
@@ -79,21 +79,4 @@ export function addTooltipOptions<T extends OptionsWithTooltip>(
       },
       showIf: (options: T) => false, //options.tooltip?.mode !== TooltipDisplayMode.None,
     });
-
-  if (showTooltipCalcs) {
-    builder.addMultiSelect({
-      name: 'Values calculations',
-      path: 'tooltip.calcs',
-      category: ['Tooltip'],
-      description: 'Select calculations to show in tooltip',
-      settings: {
-        options: [
-          { value: ReducerID.sum, label: fieldReducers.get(ReducerID.sum).name },
-          { value: ReducerID.mean, label: fieldReducers.get(ReducerID.mean).name },
-          { value: ReducerID.count, label: fieldReducers.get(ReducerID.count).name },
-        ],
-      },
-      showIf: (options: T) => options.tooltip?.mode === TooltipDisplayMode.Multi,
-    });
-  }
 }
