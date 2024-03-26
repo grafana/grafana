@@ -8,6 +8,7 @@ import (
 	metainternalversion "k8s.io/apimachinery/pkg/apis/meta/internalversion"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apiserver/pkg/registry/rest"
 	"k8s.io/klog/v2"
 )
@@ -111,10 +112,48 @@ func (d *DualWriter) Create(ctx context.Context, obj runtime.Object, createValid
 	return rsp, err
 }
 
-// Update overrides the default behavior of the Storage and writes to both the LegacyStorage and Storage.
+// Update overrides the default behavior of the Storage and writes to both the LegacyStorage and Storage depending on the DualWriter mode.
 func (d *DualWriter) Update(ctx context.Context, name string, objInfo rest.UpdatedObjectInfo, createValidation rest.ValidateObjectFunc, updateValidation rest.ValidateObjectUpdateFunc, forceAllowCreate bool, options *metav1.UpdateOptions) (runtime.Object, bool, error) {
-	if legacy, ok := d.legacy.(rest.Updater); ok {
-		// Get the previous version from k8s storage (the one)
+	// #TODO replace with a rest.CreaterUpdater check?
+	legacy, ok := d.legacy.(rest.Updater)
+	if !ok {
+		return nil, false, fmt.Errorf("legacy storage rest.Updater is missing")
+	}
+
+	// #TODO: Doing it the repetitive way first. Refactor once all the behavior is well defined.
+	if CurrentMode == Mode1 {
+		old, err := d.legacy.Get(ctx, name, &metav1.GetOptions{})
+		if err != nil {
+			return nil, false, err
+		}
+
+		updated, err := objInfo.UpdatedObject(ctx, old)
+		if err != nil {
+			return nil, false, err
+		}
+		accessor, err := meta.Accessor(updated)
+		if err != nil {
+			return nil, false, err
+		}
+
+		accessor.SetUID("")
+		accessor.SetResourceVersion("")
+		// #TODO check how much we need to do before legacy.Update for mode 1
+		return legacy.Update(ctx, name, &updateWrapper{
+			upstream: objInfo,
+			updated:  updated,
+		}, createValidation, updateValidation, forceAllowCreate, options)
+	}
+
+	if CurrentMode == Mode2 {
+		var (
+			old    runtime.Object
+			theRV  string
+			theUID types.UID
+		)
+
+		// #TODO figure out how to set opts.IgnoreNotFound = true here
+		// or how to specifically check for an apierrors.NewNotFound error
 		old, err := d.Get(ctx, name, &metav1.GetOptions{})
 		if err != nil {
 			return nil, false, err
@@ -123,26 +162,38 @@ func (d *DualWriter) Update(ctx context.Context, name string, objInfo rest.Updat
 		if err != nil {
 			return nil, false, err
 		}
-		// Hold on to the RV+UID for the dual write
-		theRV := accessor.GetResourceVersion()
-		theUID := accessor.GetUID()
+		theRV = accessor.GetResourceVersion()
+		theUID = accessor.GetUID()
 
-		// Changes applied within new storage
-		// will fail if RV is out of sync
+		if theRV == "" {
+			old, err := d.legacy.Get(ctx, name, &metav1.GetOptions{})
+			if err != nil {
+				return nil, false, err
+			}
+
+			accessor, err := meta.Accessor(old)
+			if err != nil {
+				return nil, false, err
+			}
+			theRV = accessor.GetResourceVersion()
+			theUID = accessor.GetUID()
+
+		}
+
 		updated, err := objInfo.UpdatedObject(ctx, old)
 		if err != nil {
 			return nil, false, err
 		}
-
 		accessor, err = meta.Accessor(updated)
 		if err != nil {
 			return nil, false, err
 		}
-		accessor.SetUID("")             // clear it
-		accessor.SetResourceVersion("") // remove it so it is not a constraint
+
+		accessor.SetUID("")
+		accessor.SetResourceVersion("")
 		obj, created, err := legacy.Update(ctx, name, &updateWrapper{
 			upstream: objInfo,
-			updated:  updated, // returned as the object that will be updated
+			updated:  updated,
 		}, createValidation, updateValidation, forceAllowCreate, options)
 		if err != nil {
 			return obj, created, err
@@ -152,15 +203,36 @@ func (d *DualWriter) Update(ctx context.Context, name string, objInfo rest.Updat
 		if err != nil {
 			return nil, false, err
 		}
-		accessor.SetResourceVersion(theRV) // the original RV
+		accessor.SetResourceVersion(theRV)
 		accessor.SetUID(theUID)
 		objInfo = &updateWrapper{
 			upstream: objInfo,
-			updated:  obj, // returned as the object that will be updated
+			updated:  obj,
+		}
+
+		if theRV == "" {
+			return d.Storage.Update(ctx, name, objInfo, createValidation, updateValidation, forceAllowCreate, options)
+		} else {
+			// #TODO would it make sense for all updates to be creates by default while we're in mode 2?
+			// The issue is that it messes with the entity history and creates a new entity probably
+			objNew, err := d.Storage.Create(ctx, obj, rest.ValidateAllObjectFunc, &metav1.CreateOptions{})
+			if err != nil {
+				return nil, false, err
+			}
+			// #TODO verify that created should be set to true here
+			return objNew, true, err
 		}
 	}
 
-	return d.Storage.Update(ctx, name, objInfo, createValidation, updateValidation, forceAllowCreate, options)
+	// if CurrentMode == Mode3 {
+
+	// }
+
+	// if CurrentMode == Mode4 {
+
+	// }
+
+	return nil, false, fmt.Errorf("dual writer mode is undefined")
 }
 
 // Delete overrides the default behavior of the Storage and delete from both the LegacyStorage and Storage.
