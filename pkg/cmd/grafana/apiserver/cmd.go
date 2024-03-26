@@ -9,6 +9,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/cmd/grafana-server/commands"
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/server"
 	"github.com/grafana/grafana/pkg/services/apiserver/standalone"
 )
@@ -47,8 +48,14 @@ func newCommandStartExampleAPIServer(o *APIServerOptions, stopCh <-chan struct{}
 				return err
 			}
 
+			// Currently TracingOptions.ApplyTo, which will configure/initialize tracing,
+			// happens after loadAPIGroupBuilders. Hack to workaround this for now to allow
+			// the tracer to be initialized at a later stage, when tracer is available.
+			// TODO: Fix so that TracingOptions.ApplyTo happens before or during loadAPIGroupBuilders.
+			tracer := newLateInitializedTracingService()
+
 			// Load each group from the args
-			if err := o.loadAPIGroupBuilders(apis); err != nil {
+			if err := o.loadAPIGroupBuilders(tracer, apis); err != nil {
 				return err
 			}
 
@@ -60,6 +67,10 @@ func newCommandStartExampleAPIServer(o *APIServerOptions, stopCh <-chan struct{}
 			config, err := o.Config()
 			if err != nil {
 				return err
+			}
+
+			if o.Options.TracingOptions.TracingService != nil {
+				tracer.InitTracer(o.Options.TracingOptions.TracingService)
 			}
 
 			if err := o.RunAPIServer(config, stopCh); err != nil {
@@ -87,3 +98,19 @@ func RunCLI(opts commands.ServerOptions) int {
 
 	return cli.Run(cmd)
 }
+
+type lateInitializedTracingService struct {
+	tracing.Tracer
+}
+
+func newLateInitializedTracingService() *lateInitializedTracingService {
+	return &lateInitializedTracingService{
+		Tracer: tracing.InitializeTracerForTest(),
+	}
+}
+
+func (s *lateInitializedTracingService) InitTracer(tracer tracing.Tracer) {
+	s.Tracer = tracer
+}
+
+var _ tracing.Tracer = &lateInitializedTracingService{}

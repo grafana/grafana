@@ -558,6 +558,9 @@
     "drawer": {
       "close": "关闭"
     },
+    "empty-state": {
+      "not-found-message": ""
+    },
     "modal": {
       "close-tooltip": "关闭"
     },
@@ -783,8 +786,11 @@
       "datasource": "数据源",
       "unknown": "未知"
     },
-    "resources": {
-      "disconnect": "断开连接"
+    "summary": {
+      "disconnect": "",
+      "error-starting-migration": "",
+      "start-migration": "",
+      "target-stack-title": ""
     },
     "token-status": {
       "active": "令牌已创建并激活",
@@ -1337,11 +1343,12 @@
     "header": {
       "collapse-row": "折叠查询行",
       "datasource-help": "显示数据源帮助",
-      "disable-query": "禁用查询",
       "drag-and-drop": "拖放以重新排序",
       "duplicate-query": "复制查询",
       "expand-row": "展开查询行",
+      "hide-response": "",
       "remove-query": "删除查询",
+      "show-response": "",
       "toggle-edit-mode": "切换文本编辑模式"
     },
     "query-editor-not-exported": "数据源插件不导出任何查询编辑器组件"
@@ -1467,7 +1474,7 @@
       "library-panel": "库面板",
       "link": "链接",
       "panel-embed": "嵌入",
-      "public-dashboard": "发布仪表板",
+      "public-dashboard": "",
       "public-dashboard-title": "公共仪表板",
       "snapshot": "快照"
     },

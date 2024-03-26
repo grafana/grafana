@@ -13,18 +13,32 @@ type Scope struct {
 }
 
 type ScopeSpec struct {
-	Title       string        `json:"title"`
-	Type        string        `json:"type"`
-	Description string        `json:"description"`
-	Category    string        `json:"category"`
-	Filters     []ScopeFilter `json:"filters"`
+	Title       string `json:"title"`
+	Type        string `json:"type"`
+	Description string `json:"description"`
+	Category    string `json:"category"`
+
+	// +listType=atomic
+	Filters []ScopeFilter `json:"filters"`
 }
 
 type ScopeFilter struct {
-	Key      string `json:"key"`
-	Value    string `json:"value"`
-	Operator string `json:"operator"`
+	Key      string         `json:"key"`
+	Value    string         `json:"value"`
+	Operator FilterOperator `json:"operator"`
 }
+
+// Type of the filter operator.
+// +enum
+type FilterOperator string
+
+// Defines values for FilterOperator.
+const (
+	FilterOperatorEquals        FilterOperator = "equals"
+	FilterOperatorNotEquals     FilterOperator = "not-equals"
+	FilterOperatorRegexMatch    FilterOperator = "regex-match"
+	FilterOperatorRegexNotMatch FilterOperator = "regex-not-match"
+)
 
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
 type ScopeList struct {
@@ -35,22 +49,22 @@ type ScopeList struct {
 }
 
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
-type ScopeDashboard struct {
+type ScopeDashboardBinding struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`
 
-	Spec ScopeDashboardSpec `json:"spec,omitempty"`
+	Spec ScopeDashboardBindingSpec `json:"spec,omitempty"`
 }
 
-type ScopeDashboardSpec struct {
-	DashboardUIDs []string `json:"dashboardUids"`
-	ScopeUID      string   `json:"scopeUid"`
+type ScopeDashboardBindingSpec struct {
+	Dashboards []string `json:"dashboards"`
+	Scope      string   `json:"scope"`
 }
 
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
-type ScopeDashboardList struct {
+type ScopeDashboardBindingList struct {
 	metav1.TypeMeta `json:",inline"`
 	metav1.ListMeta `json:"metadata,omitempty"`
 
-	Items []ScopeDashboard `json:"items,omitempty"`
+	Items []ScopeDashboardBinding `json:"items,omitempty"`
 }
