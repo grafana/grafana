@@ -751,7 +751,7 @@ function addAnnotationsToDashboard(annotations: AnnotationQuery[]) {
 
   if (scene instanceof DashboardScene) {
     const dataLayers = dashboardSceneGraph.getDataLayers(scene);
-    const layers = dataLayers.state.layers;
+    const layers = [...dataLayers.state.layers];
 
     for (let annotation of annotations) {
       const newAnnotation = new DashboardAnnotationsDataLayer({
@@ -761,8 +761,8 @@ function addAnnotationsToDashboard(annotations: AnnotationQuery[]) {
         isEnabled: annotation.enable,
         isHidden: annotation.hide,
       });
+
       layers.push(newAnnotation);
-      newAnnotation.activate();
     }
 
     dataLayers.setState({ layers });
