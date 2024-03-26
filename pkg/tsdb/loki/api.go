@@ -326,6 +326,11 @@ func (api *LokiAPI) RawQuery(ctx context.Context, resourcePath string) (RawLokiR
 
 func getSupportingQueryHeaderValue(supportingQueryType SupportingQueryType) string {
 	value := ""
+
+	// we need to map the SupportingQueryType to the actual header value. For
+	// legacy reasons we defined each value, such as "logsVolume" maps to the
+	// "logvolhist" header value to Loki. With #85123, even the value set in the
+	// frontend query can be passed as is to Loki.
 	switch supportingQueryType {
 	case SupportingQueryLogsVolume:
 		value = "logvolhist"
