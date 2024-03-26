@@ -124,7 +124,7 @@ You can enable panning and zooming in a canvas. This allows you to both create a
 You can enable infinite panning in a canvas when pan and zoom is enabled. This allows you to pan and zoom the canvas and uncover larger designs.
 
 {{% admonition type="note" %}}
-Infinite panning is an experimental feature that may not work as expected in all scenarios. For example, elements that are not top / left constrained may experience unexpected movement when panning.
+Infinite panning is an experimental feature that may not work as expected in all scenarios. For example, elements that are not top-left constrained may experience unexpected movement when panning.
 {{% /admonition %}}
 
 <!-- TODO: Add gif -->
