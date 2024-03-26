@@ -16,10 +16,13 @@ import (
 	"github.com/grafana/grafana/pkg/tsdb/influxdb/models"
 )
 
-// TEST_MODE=buffered go test -benchmem -run=^$ -memprofile buffered_mem.out -count=10 -bench ^BenchmarkParseJson github.com/grafana/grafana/pkg/tsdb/influxdb/influxql | tee buffered.txt
-// TEST_MODE=stream go test -benchmem -run=^$ -memprofile stream_mem.out -count=10 -bench ^BenchmarkParseJson github.com/grafana/grafana/pkg/tsdb/influxdb/influxql | tee stream.txt
+// TEST_MODE=buffered RES_FORMAT=time_series go test -benchmem -run=^$ -memprofile buffered_mem.out -count=10 -bench ^BenchmarkParseJson github.com/grafana/grafana/pkg/tsdb/influxdb/influxql | tee buffered.txt
+// TEST_MODE=stream RES_FORMAT=time_series go test -benchmem -run=^$ -memprofile stream_mem.out -count=10 -bench ^BenchmarkParseJson github.com/grafana/grafana/pkg/tsdb/influxdb/influxql | tee stream.txt
+// TEST_MODE=buffered RES_FORMAT=table go test -benchmem -run=^$ -memprofile buffered_table_mem.out -cpuprofile buffered_table_cpu.out -count=10 -bench ^BenchmarkParseJson github.com/grafana/grafana/pkg/tsdb/influxdb/influxql | tee buffered_table.txt
+// TEST_MODE=stream RES_FORMAT=table go test -benchmem -run=^$ -memprofile stream_table_mem.out -cpuprofile stream_table_cpu.out -count=10 -bench ^BenchmarkParseJson github.com/grafana/grafana/pkg/tsdb/influxdb/influxql | tee stream_table.txt
 // go tool pprof -http=localhost:9999 memprofile.out
 // benchstat buffered.txt stream.txt
+// benchstat buffered_table.txt stream_table.txt
 func BenchmarkParseJson(b *testing.B) {
 	filePath := "testdata/many_columns.json"
 	bytes, err := os.ReadFile(filePath)
@@ -28,13 +31,15 @@ func BenchmarkParseJson(b *testing.B) {
 	}
 
 	testMode := os.Getenv("TEST_MODE")
+	resFormat := os.Getenv("RES_FORMAT")
 	if testMode == "" {
 		testMode = "stream"
 	}
 
 	query := &models.Query{
-		RawQuery:    "Test raw query",
-		UseRawQuery: true,
+		RawQuery:     "Test raw query",
+		UseRawQuery:  true,
+		ResultFormat: resFormat,
 	}
 	b.ResetTimer()
 

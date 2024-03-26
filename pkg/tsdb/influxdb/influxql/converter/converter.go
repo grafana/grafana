@@ -345,11 +345,9 @@ func typeOf(value interface{}) data.FieldType {
 
 func handleTimeSeriesFormatWithTimeColumn(valueFields data.Fields, tags map[string]string, columns []string, measurement string, frameName []byte, query *models.Query) []*data.Frame {
 	frames := make([]*data.Frame, 0, len(columns)-1)
-	for i, v := range columns {
-		if v == "time" {
-			continue
-		}
-		formattedFrameName := string(util.FormatFrameName(measurement, v, tags, *query, frameName[:]))
+	// don't iterate over first column as it is a time column already
+	for i := 1; i < len(columns); i++ {
+		formattedFrameName := string(util.FormatFrameName(measurement, columns[i], tags, *query, frameName[:]))
 		valueFields[i].Labels = tags
 		valueFields[i].Config = &data.FieldConfig{DisplayNameFromDS: formattedFrameName}
 
@@ -421,26 +419,24 @@ func handleTableFormatValueFields(rsp *backend.DataResponse, valueFields data.Fi
 	// number of fields we currently have in the first frame
 	// we handled first value field and then tags.
 	si := len(tags) + 1
-	for i, v := range valueFields {
-		// first value field is always handled first, before tags.
-		// no need to create another one again here
-		if i == 0 {
-			continue
-		}
-
+	l := len(valueFields)
+	// first value field is always handled first, before tags.
+	// no need to create another one again here
+	for i := 1; i < l; i++ {
 		if len(rsp.Frames[0].Fields) == si {
-			rsp.Frames[0].Fields = append(rsp.Frames[0].Fields, v)
+			rsp.Frames[0].Fields = append(rsp.Frames[0].Fields, valueFields[i])
 		} else {
-			for vi := 0; vi < v.Len(); vi++ {
-				if v.Type() == data.FieldTypeNullableJSON {
+			ll := valueFields[i].Len()
+			for vi := 0; vi < ll; vi++ {
+				if valueFields[i].Type() == data.FieldTypeNullableJSON {
 					// add nil explicitly.
 					// we don't know if it is a float pointer nil or string pointer nil or etc
 					rsp.Frames[0].Fields[si].Append(nil)
 				} else {
-					if v.Type() != rsp.Frames[0].Fields[si].Type() {
-						maybeFixValueFieldType(rsp.Frames[0].Fields, v.Type(), si)
+					if valueFields[i].Type() != rsp.Frames[0].Fields[si].Type() {
+						maybeFixValueFieldType(rsp.Frames[0].Fields, valueFields[i].Type(), si)
 					}
-					rsp.Frames[0].Fields[si].Append(v.At(vi))
+					rsp.Frames[0].Fields[si].Append(valueFields[i].At(vi))
 				}
 			}
 		}
