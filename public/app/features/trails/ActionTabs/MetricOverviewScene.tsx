@@ -1,5 +1,6 @@
 import React from 'react';
 
+import { locationService } from '@grafana/runtime';
 import {
   QueryVariable,
   SceneComponentProps,
@@ -8,7 +9,7 @@ import {
   SceneObjectState,
   VariableDependencyConfig,
 } from '@grafana/scenes';
-import { Button, Stack, Text } from '@grafana/ui';
+import { Button, Stack, Text, TextLink } from '@grafana/ui';
 
 import { PromMetricsMetadataItem } from '../../../plugins/datasource/prometheus/types';
 import { ALL_VARIABLE_VALUE } from '../../variables/constants';
@@ -93,22 +94,24 @@ export class MetricOverviewScene extends SceneObjectBase<MetricOverviewSceneStat
               <Text weight={'medium'}>Labels</Text>
               {labelOptions.length === 0 && 'Unable to fetch labels.'}
               {labelOptions.map((l) => (
-                <Button
-                  size="sm"
-                  variant="secondary"
+                <TextLink
                   icon="tag-alt"
                   key={l.label}
-                  onClick={() => {
+                  href={`#View breakdown for ${l.label}`}
+                  title={`View breakdown for ${l.label}`}
+                  onClick={(event) => {
+                    event.preventDefault();
+                    event.stopPropagation();
                     sceneGraph.getAncestor(model, MetricScene).setActionView('breakdown');
                     const groupByVar = sceneGraph.lookupVariable(VAR_GROUP_BY, model);
                     if (groupByVar instanceof QueryVariable) {
                       groupByVar.setState({ value: l.value });
                     }
+                    return false;
                   }}
-                  title="View breakdown"
                 >
                   {l.label!}
-                </Button>
+                </TextLink>
               ))}
             </Stack>
           </>
