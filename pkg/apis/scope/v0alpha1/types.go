@@ -57,8 +57,8 @@ type ScopeDashboardBinding struct {
 }
 
 type ScopeDashboardBindingSpec struct {
-	DashboardUIDs []string `json:"dashboardUids"`
-	ScopeUID      string   `json:"scopeUid"`
+	Dashboards []string `json:"dashboards"`
+	Scope      string   `json:"scope"`
 }
 
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object

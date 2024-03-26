@@ -159,7 +159,7 @@ func schema_pkg_apis_scope_v0alpha1_ScopeDashboardBindingSpec(ref common.Referen
 			SchemaProps: spec.SchemaProps{
 				Type: []string{"object"},
 				Properties: map[string]spec.Schema{
-					"dashboardUids": {
+					"dashboards": {
 						SchemaProps: spec.SchemaProps{
 							Type: []string{"array"},
 							Items: &spec.SchemaOrArray{
@@ -173,7 +173,7 @@ func schema_pkg_apis_scope_v0alpha1_ScopeDashboardBindingSpec(ref common.Referen
 							},
 						},
 					},
-					"scopeUid": {
+					"scope": {
 						SchemaProps: spec.SchemaProps{
 							Default: "",
 							Type:    []string{"string"},
@@ -181,7 +181,7 @@ func schema_pkg_apis_scope_v0alpha1_ScopeDashboardBindingSpec(ref common.Referen
 						},
 					},
 				},
-				Required: []string{"dashboardUids", "scopeUid"},
+				Required: []string{"dashboards", "scope"},
 			},
 		},
 	}
