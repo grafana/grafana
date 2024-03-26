@@ -4,13 +4,13 @@ import (
 	"context"
 	"fmt"
 	"regexp"
+	"runtime/debug"
 
 	"golang.org/x/sync/errgroup"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/features"
 	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/models"
-	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/utils"
 )
 
 type responseWrapper struct {
@@ -70,7 +70,7 @@ func (e *cloudWatchExecutor) executeTimeSeriesQuery(ctx context.Context, req *ba
 			eg.Go(func() error {
 				defer func() {
 					if err := recover(); err != nil {
-						e.logger.FromContext(ctx).Error("Execute Get Metric Data Query Panic", "error", err, "stack", utils.Stack(1))
+						e.logger.FromContext(ctx).Error("Execute Get Metric Data Query Panic", "error", err, "stack", string(debug.Stack()))
 						if theErr, ok := err.(error); ok {
 							resultChan <- &responseWrapper{
 								DataResponse: &backend.DataResponse{
