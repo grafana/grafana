@@ -2,11 +2,38 @@ package database
 
 import (
 	"context"
+	"fmt"
 	"strconv"
 	"strings"
 
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
+)
+
+const (
+	// userAssignsSQL is a query to select all users assignments.
+	userAssignsSQL = `SELECT ur.user_id, ur.org_id, ur.role_id
+	FROM user_role AS ur`
+
+	// teamAssignsSQL is a query to select all users' team assignments.
+	teamAssignsSQL = `SELECT tm.user_id, tr.org_id, tr.role_id
+	FROM team_role AS tr 
+	INNER JOIN team_member AS tm ON tm.team_id = tr.team_id`
+
+	// basicRoleAssignsSQL is a query to select all users basic role (Admin, Editor, Viewer, None) assignments.
+	basicRoleAssignsSQL = `SELECT ou.user_id, ou.org_id, br.role_id
+	FROM builtin_role AS br
+	INNER JOIN org_user AS ou ON ou.role = br.role`
+
+	// grafanaAdminAssignsSQL is a query to select all grafana admin users.
+	// it has to be formatted with the quoted user table.
+	grafanaAdminAssignsSQL = `SELECT sa.user_id, br.org_id, br.role_id
+	FROM builtin_role AS br
+	INNER JOIN (
+		SELECT u.id AS user_id
+	    FROM %s AS u WHERE u.is_admin
+	) AS sa ON 1 = 1
+	WHERE br.role = ?`
 )
 
 func ProvideService(sql db.DB) *AccessControlStore {
@@ -62,70 +89,83 @@ func (s *AccessControlStore) SearchUsersPermissions(ctx context.Context, orgID i
 	}
 	dbPerms := make([]UserRBACPermission, 0)
 
+	var userID int64
+	if options.NamespacedID != "" {
+		var err error
+		userID, err = options.ComputeUserID()
+		if err != nil {
+			return nil, err
+		}
+	}
+
 	if err := s.sql.WithDbSession(ctx, func(sess *db.Session) error {
 		roleNameFilterJoin := ""
 		if len(options.RolePrefixes) > 0 {
-			roleNameFilterJoin = "INNER JOIN role AS r on up.role_id = r.id"
+			roleNameFilterJoin = "INNER JOIN role AS r ON up.role_id = r.id"
+		}
+
+		params := []any{}
+
+		direct := userAssignsSQL
+		if options.NamespacedID != "" {
+			direct += " WHERE ur.user_id = ?"
+			params = append(params, userID)
+		}
+
+		team := teamAssignsSQL
+		if options.NamespacedID != "" {
+			team += " WHERE tm.user_id = ?"
+			params = append(params, userID)
+		}
+
+		basic := basicRoleAssignsSQL
+		if options.NamespacedID != "" {
+			basic += " WHERE ou.user_id = ?"
+			params = append(params, userID)
+		}
+
+		grafanaAdmin := fmt.Sprintf(grafanaAdminAssignsSQL, s.sql.Quote("user"))
+		params = append(params, accesscontrol.RoleGrafanaAdmin)
+		if options.NamespacedID != "" {
+			grafanaAdmin += " AND sa.user_id = ?"
+			params = append(params, userID)
 		}
 
 		// Find permissions
 		q := `
 		SELECT
 			user_id,
-			action,
-			scope
+			p.action,
+			p.scope
 		FROM (
-			SELECT ur.user_id, ur.org_id, p.action, p.scope, ur.role_id
-				FROM permission AS p
-				INNER JOIN user_role AS ur on ur.role_id = p.role_id
+			` + direct + `
 			UNION ALL
-				SELECT tm.user_id, tr.org_id, p.action, p.scope, tr.role_id
-					FROM permission AS p
-					INNER JOIN team_role AS tr ON tr.role_id = p.role_id
-					INNER JOIN team_member AS tm ON tm.team_id = tr.team_id
+			` + team + `
 			UNION ALL
-				SELECT ou.user_id, ou.org_id, p.action, p.scope, br.role_id
-					FROM permission AS p
-					INNER JOIN builtin_role AS br ON br.role_id = p.role_id
-					INNER JOIN org_user AS ou ON ou.role = br.role
+			` + basic + `
 			UNION ALL
-				SELECT sa.user_id, br.org_id, p.action, p.scope, br.role_id
-					FROM permission AS p
-					INNER JOIN builtin_role AS br ON br.role_id = p.role_id
-					INNER JOIN (
-						SELECT u.id AS user_id
-						FROM ` + s.sql.GetDialect().Quote("user") + ` AS u WHERE u.is_admin
-					) AS sa ON 1 = 1
-					WHERE br.role = ?
+			` + grafanaAdmin + `
 		) AS up ` + roleNameFilterJoin + `
+		INNER JOIN permission AS p ON up.role_id = p.role_id
 		WHERE (up.org_id = ? OR up.org_id = ?)
 		`
-
-		params := []any{accesscontrol.RoleGrafanaAdmin, accesscontrol.GlobalOrgID, orgID}
+		params = append(params, orgID, accesscontrol.GlobalOrgID)
 
 		if options.ActionPrefix != "" {
-			q += ` AND action LIKE ?`
+			q += ` AND p.action LIKE ?`
 			params = append(params, options.ActionPrefix+"%")
 		}
 		if options.Action != "" {
-			q += ` AND action = ?`
+			q += ` AND p.action = ?`
 			params = append(params, options.Action)
 		}
 		if options.Scope != "" {
 			// Search for scope and wildcard that include the scope
 			scopes := append(options.Wildcards(), options.Scope)
-			q += ` AND scope IN ( ? ` + strings.Repeat(", ?", len(scopes)-1) + ")"
+			q += ` AND p.scope IN ( ? ` + strings.Repeat(", ?", len(scopes)-1) + ")"
 			for i := range scopes {
 				params = append(params, scopes[i])
 			}
-		}
-		if options.NamespacedID != "" {
-			userID, err := options.ComputeUserID()
-			if err != nil {
-				return err
-			}
-			q += ` AND user_id = ?`
-			params = append(params, userID)
 		}
 		if len(options.RolePrefixes) > 0 {
 			q += " AND ( " + strings.Repeat("r.name LIKE ? OR ", len(options.RolePrefixes)-1)

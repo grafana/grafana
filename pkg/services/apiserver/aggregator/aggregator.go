@@ -30,6 +30,7 @@ import (
 	utilnet "k8s.io/apimachinery/pkg/util/net"
 	"k8s.io/apimachinery/pkg/util/sets"
 	genericapiserver "k8s.io/apiserver/pkg/server"
+	"k8s.io/apiserver/pkg/server/dynamiccertificates"
 	"k8s.io/apiserver/pkg/server/healthz"
 	"k8s.io/client-go/informers"
 	"k8s.io/client-go/kubernetes/fake"
@@ -245,12 +246,25 @@ func CreateAggregatorServer(config *Config, delegateAPIServer genericapiserver.D
 		return nil, err
 	}
 
+	proxyCurrentCertKeyContentFunc := func() ([]byte, []byte) {
+		return nil, nil
+	}
+	if len(config.KubeAggregatorConfig.ExtraConfig.ProxyClientCertFile) > 0 && len(config.KubeAggregatorConfig.ExtraConfig.ProxyClientKeyFile) > 0 {
+		aggregatorProxyCerts, err := dynamiccertificates.NewDynamicServingContentFromFiles("aggregator-proxy-cert", config.KubeAggregatorConfig.ExtraConfig.ProxyClientCertFile, config.KubeAggregatorConfig.ExtraConfig.ProxyClientKeyFile)
+		if err != nil {
+			return nil, err
+		}
+		proxyCurrentCertKeyContentFunc = func() ([]byte, []byte) {
+			return aggregatorProxyCerts.CurrentCertKeyContent()
+		}
+	}
+
 	availableController, err := NewAvailableConditionController(
 		aggregatorServer.APIRegistrationInformers.Apiregistration().V1().APIServices(),
 		externalNamesInformer,
 		apiregistrationClient.ApiregistrationV1(),
 		nil,
-		(func() ([]byte, []byte))(nil),
+		proxyCurrentCertKeyContentFunc,
 		completedConfig.ExtraConfig.ServiceResolver,
 	)
 	if err != nil {
