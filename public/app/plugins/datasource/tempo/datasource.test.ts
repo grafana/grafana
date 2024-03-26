@@ -72,13 +72,14 @@ describe('Tempo data source', () => {
     const request = jest.spyOn(TempoDatasource.prototype, '_request');
     const templateSrv: TemplateSrv = { replace: (s: string) => s } as unknown as TemplateSrv;
 
+    const range = {
+      from: dateTime(new Date(2022, 8, 13, 16, 0, 0, 0)),
+      to: dateTime(new Date(2022, 8, 13, 16, 15, 0, 0)),
+      raw: { from: '15m', to: 'now' },
+    };
     const traceqlQuery = {
       targets: [{ refId: 'refid1', queryType: 'traceql', query: '{}' }],
-      range: {
-        from: dateTime(new Date(2022, 8, 13, 16, 0, 0, 0)),
-        to: dateTime(new Date(2022, 8, 13, 16, 15, 0, 0)),
-        raw: { from: '15m', to: 'now' },
-      },
+      range,
     };
     const traceqlSearchQuery = {
       targets: [
@@ -96,11 +97,7 @@ describe('Tempo data source', () => {
           ],
         },
       ],
-      range: {
-        from: dateTime(new Date(2022, 8, 13, 16, 0, 0, 0)),
-        to: dateTime(new Date(2022, 8, 13, 16, 15, 0, 0)),
-        raw: { from: '15m', to: 'now' },
-      },
+      range,
     };
 
     it('for traceql queries when streaming is enabled', async () => {
