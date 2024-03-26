@@ -4,43 +4,13 @@ import (
 	"context"
 	"errors"
 	"net/http"
+	"strings"
 
-	jwtmiddleware "github.com/auth0/go-jwt-middleware/v2"
-	"github.com/auth0/go-jwt-middleware/v2/validator"
 	"k8s.io/apiserver/pkg/authentication/authenticator"
+	"k8s.io/apiserver/pkg/authentication/user"
 )
 
 var _ authenticator.Request = &TokenAuthenticator{}
-
-type AuthenticatedUser struct {
-	name   string
-	uid    string
-	groups []string
-}
-
-func newAuthenticatedUser(claims *validator.RegisteredClaims) *AuthenticatedUser {
-	return &AuthenticatedUser{
-		name:   claims.Subject,
-		uid:    "",
-		groups: []string{},
-	}
-}
-
-func (user *AuthenticatedUser) GetName() string {
-	return user.name
-}
-
-func (user *AuthenticatedUser) GetUID() string {
-	return user.uid
-}
-
-func (user *AuthenticatedUser) GetGroups() []string {
-	return user.groups
-}
-
-func (user *AuthenticatedUser) GetExtra() map[string][]string {
-	return make(map[string][]string, 0)
-}
 
 type TokenAuthenticator struct {
 	validator *Validator
@@ -53,9 +23,13 @@ func NewTokenAuthenticator(validator *Validator) *TokenAuthenticator {
 }
 
 func (auth *TokenAuthenticator) AuthenticateRequest(req *http.Request) (*authenticator.Response, bool, error) {
-	token, err := jwtmiddleware.AuthHeaderTokenExtractor(req)
+	token, err := extractBearerToken(req)
 	if err != nil {
 		return nil, false, errors.New("Could not read bearer token from the authorization header")
+	}
+
+	if token == "" {
+		return nil, false, nil
 	}
 
 	result, err := auth.validator.Validate(context.Background(), token)
@@ -63,15 +37,30 @@ func (auth *TokenAuthenticator) AuthenticateRequest(req *http.Request) (*authent
 		return nil, false, err
 	}
 
-	claims, ok := result.(*validator.ValidatedClaims)
-	if !ok {
-		return nil, false, errors.New("Could not assert claims to be validator.ValidatedClaims")
-	}
 	if err != nil {
 		return nil, false, err
 	}
 	return &authenticator.Response{
-		Audiences: claims.RegisteredClaims.Audience,
-		User:      newAuthenticatedUser(&claims.RegisteredClaims),
+		Audiences: authenticator.Audiences(result.Claims.Audience),
+		User: &user.DefaultInfo{
+			Name:   result.Subject,
+			UID:    "",
+			Groups: []string{},
+			Extra:  make(map[string][]string, 0),
+		},
 	}, true, nil
+}
+
+func extractBearerToken(r *http.Request) (string, error) {
+	headerValue := r.Header.Get("Authorization")
+	if headerValue == "" {
+		return "", nil
+	}
+
+	headerValueParts := strings.Fields(headerValue)
+	if len(headerValueParts) != 2 || strings.ToLower(headerValueParts[0]) != "bearer" {
+		return "", errors.New("authorization header format must be of the form: Bearer {token}")
+	}
+
+	return headerValueParts[1], nil
 }

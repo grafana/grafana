@@ -34,7 +34,6 @@ func signedInUserAuthenticator(req *http.Request) (*authenticator.Response, bool
 		userInfo.Groups = append(userInfo.Groups, strconv.FormatInt(v, 10))
 	}
 
-	//
 	if signedInUser.IDToken != "" {
 		userInfo.Extra["id-token"] = []string{signedInUser.IDToken}
 	}

@@ -102,17 +102,14 @@ func (o *APIServerOptions) Config() (*genericapiserver.RecommendedConfig, error)
 		return nil, fmt.Errorf("failed to apply options to server config: %w", err)
 	}
 
-	validator, err := auth.NewValidator()
-	if err != nil {
-		return nil, err
-	}
+	validator := auth.NewValidator(o.Options.AuthnOptions.IDVerifierConfig)
 	serverConfig.Authentication.Authenticator = auth.NewTokenAuthenticator(validator)
 	serverConfig.Authorization.Authorizer = auth.NewTokenAuthorizer()
 	serverConfig.DisabledPostStartHooks = serverConfig.DisabledPostStartHooks.Insert("generic-apiserver-start-informers")
 	serverConfig.DisabledPostStartHooks = serverConfig.DisabledPostStartHooks.Insert("priority-and-fairness-config-consumer")
 
 	// Add OpenAPI specs for each group+version
-	err = builder.SetupConfig(
+	err := builder.SetupConfig(
 		grafanaAPIServer.Scheme,
 		serverConfig,
 		o.builders,
