@@ -6,8 +6,8 @@ module.exports = {
   typescript: true,
   jsxRuntime: 'automatic',
   outDir: './src/icons-gen',
-  template: require('./templates/icon'),
-  indexTemplate: require('./templates/index'),
+  template: require('./templates/icon.cjs'),
+  indexTemplate: require('./templates/index.cjs'),
   memo: true,
   svgoConfig: {
     plugins: [
