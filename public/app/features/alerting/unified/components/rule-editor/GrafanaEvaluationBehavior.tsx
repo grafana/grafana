@@ -169,7 +169,6 @@ function ForInput({ evaluateEvery }: { evaluateEvery: string }) {
   } = useFormContext<RuleFormValues>();
 
   const evaluateForId = 'eval-for-input';
-  const groupEvaluationInterval = watch('evaluateEvery');
   const currentPendingPeriod = watch('evaluateFor');
 
   const setPendingPeriod = (pendingPeriod: string) => {
@@ -196,7 +195,7 @@ function ForInput({ evaluateEvery }: { evaluateEvery: string }) {
           <Input id={evaluateForId} width={8} {...register('evaluateFor', forValidationOptions(evaluateEvery))} />
           <PendingPeriodQuickPick
             selectedPendingPeriod={currentPendingPeriod}
-            groupEvaluationInterval={groupEvaluationInterval}
+            groupEvaluationInterval={evaluateEvery}
             onSelect={setPendingPeriod}
           />
         </Stack>
