@@ -10,6 +10,11 @@ import (
 	"k8s.io/apiserver/pkg/authentication/user"
 )
 
+func NewIDTokenAuthenticator(validator *Validator) authenticator.RequestFunc {
+	idTokenAuthenticator := getIDTokenAuthenticatorFunc(validator)
+	return idTokenAuthenticator
+}
+
 func getIDTokenAuthenticatorFunc(validator *Validator) authenticator.RequestFunc {
 	return func(req *http.Request) (*authenticator.Response, bool, error) {
 		token, err := extractBearerToken(req)
