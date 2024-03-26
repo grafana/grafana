@@ -474,6 +474,8 @@ require github.com/jackc/pgx/v5 v5.5.5 // @grafana/oss-big-tent
 
 require github.com/getkin/kin-openapi v0.120.0 // @grafana/grafana-as-code
 
+require github.com/grafana/authlib v0.0.0-20240319083410-9d4a6e3861e5
+
 require (
 	github.com/bahlo/generic-list-go v0.2.0 // indirect
 	github.com/buger/jsonparser v1.1.1 // indirect
@@ -485,7 +487,6 @@ require (
 	github.com/go-playground/locales v0.14.1 // indirect
 	github.com/go-playground/universal-translator v0.18.1 // indirect
 	github.com/go-playground/validator/v10 v10.14.0 // indirect
-	github.com/grafana/authlib v0.0.0-20240319083410-9d4a6e3861e5 // indirect
 	github.com/hashicorp/go-uuid v1.0.3 // indirect
 	github.com/invopop/jsonschema v0.12.0 // indirect
 	github.com/jackc/pgpassfile v1.0.0 // indirect
