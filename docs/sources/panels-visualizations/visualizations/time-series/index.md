@@ -44,7 +44,7 @@ Time series visualizations are the default and primary way to visualize time ser
 You can migrate from the old Graph visualization to the new time series visualization. To migrate, open the panel and click the **Migrate** button in the side pane.
 {{% /admonition %}}
 
-The following video provides  a visual guide through the creation steps and common customizations of Time Series panels. The best help for beginners creating their first Time Series panels.
+The following video provides a visual guide through the creation steps and common customizations of Time Series panels. The best help for beginners creating their first Time Series panels.
 
 {{< youtube id="RKtW87cPxsw" >}}
 
