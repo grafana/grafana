@@ -196,20 +196,13 @@ func (hs *HTTPServer) GetDashboard(c *contextmodel.ReqContext) response.Response
 	}
 
 	if provisioningData != nil {
-		allowUIUpdate, err := hs.ProvisioningService.GetAllowUIUpdatesFromConfig(c.Req.Context(), provisioningData.Name)
-		if err != nil {
-			return response.Error(http.StatusInternalServerError, "Error while checking if dashboard is provisioned", err)
-		}
+		allowUIUpdate := hs.ProvisioningService.GetAllowUIUpdatesFromConfig(provisioningData.Name)
 		if !allowUIUpdate {
 			meta.Provisioned = true
 		}
 
-		resolvedPath, err := hs.ProvisioningService.GetDashboardProvisionerResolvedPath(c.Req.Context(), provisioningData.Name)
-		if err != nil {
-			return response.Error(http.StatusInternalServerError, "Error while checking if dashboard is provisioned", err)
-		}
 		meta.ProvisionedExternalId, err = filepath.Rel(
-			resolvedPath,
+			hs.ProvisioningService.GetDashboardProvisionerResolvedPath(provisioningData.Name),
 			provisioningData.ExternalID,
 		)
 		if err != nil {
@@ -436,10 +429,7 @@ func (hs *HTTPServer) postDashboard(c *contextmodel.ReqContext, cmd dashboards.S
 
 	allowUiUpdate := true
 	if provisioningData != nil {
-		allowUiUpdate, err = hs.ProvisioningService.GetAllowUIUpdatesFromConfig(ctx, provisioningData.Name)
-		if err != nil {
-			return response.Error(http.StatusInternalServerError, "Error while checking if dashboard is provisioned", err)
-		}
+		allowUiUpdate = hs.ProvisioningService.GetAllowUIUpdatesFromConfig(provisioningData.Name)
 	}
 
 	dashItem := &dashboards.SaveDashboardDTO{

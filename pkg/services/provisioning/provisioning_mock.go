@@ -19,8 +19,8 @@ type ProvisioningServiceMock struct {
 	ProvisionDatasourcesFunc                func(ctx context.Context) error
 	ProvisionPluginsFunc                    func() error
 	ProvisionDashboardsFunc                 func() error
-	GetDashboardProvisionerResolvedPathFunc func(ctx context.Context, name string) (string, error)
-	GetAllowUIUpdatesFromConfigFunc         func(ctx context.Context, name string) (bool, error)
+	GetDashboardProvisionerResolvedPathFunc func(name string) string
+	GetAllowUIUpdatesFromConfigFunc         func(name string) bool
 	RunFunc                                 func(ctx context.Context) error
 }
 
@@ -67,20 +67,20 @@ func (mock *ProvisioningServiceMock) ProvisionAlerting(ctx context.Context) erro
 	return nil
 }
 
-func (mock *ProvisioningServiceMock) GetDashboardProvisionerResolvedPath(ctx context.Context, name string) (string, error) {
+func (mock *ProvisioningServiceMock) GetDashboardProvisionerResolvedPath(name string) string {
 	mock.Calls.GetDashboardProvisionerResolvedPath = append(mock.Calls.GetDashboardProvisionerResolvedPath, name)
 	if mock.GetDashboardProvisionerResolvedPathFunc != nil {
-		return mock.GetDashboardProvisionerResolvedPathFunc(ctx, name)
+		return mock.GetDashboardProvisionerResolvedPathFunc(name)
 	}
-	return "", nil
+	return ""
 }
 
-func (mock *ProvisioningServiceMock) GetAllowUIUpdatesFromConfig(ctx context.Context, name string) (bool, error) {
+func (mock *ProvisioningServiceMock) GetAllowUIUpdatesFromConfig(name string) bool {
 	mock.Calls.GetAllowUIUpdatesFromConfig = append(mock.Calls.GetAllowUIUpdatesFromConfig, name)
 	if mock.GetAllowUIUpdatesFromConfigFunc != nil {
-		return mock.GetAllowUIUpdatesFromConfigFunc(ctx, name)
+		return mock.GetAllowUIUpdatesFromConfigFunc(name)
 	}
-	return false, nil
+	return false
 }
 
 func (mock *ProvisioningServiceMock) Run(ctx context.Context) error {

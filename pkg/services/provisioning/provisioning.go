@@ -73,7 +73,23 @@ func ProvideService(
 		orgService:                   orgService,
 		folderService:                folderService,
 	}
+
+	err := s.setDashboardProvisioner()
+	if err != nil {
+		return nil, fmt.Errorf("%v: %w", "Failed to create provisioner", err)
+	}
+
 	return s, nil
+}
+
+func (ps *ProvisioningServiceImpl) setDashboardProvisioner() error {
+	dashboardPath := filepath.Join(ps.Cfg.ProvisioningPath, "dashboards")
+	dashProvisioner, err := ps.newDashboardProvisioner(context.Background(), dashboardPath, ps.dashboardProvisioningService, ps.orgService, ps.dashboardService, ps.folderService)
+	if err != nil {
+		return fmt.Errorf("%v: %w", "Failed to create provisioner", err)
+	}
+	ps.dashboardProvisioner = dashProvisioner
+	return nil
 }
 
 type ProvisioningService interface {
@@ -83,8 +99,8 @@ type ProvisioningService interface {
 	ProvisionPlugins(ctx context.Context) error
 	ProvisionDashboards(ctx context.Context) error
 	ProvisionAlerting(ctx context.Context) error
-	GetDashboardProvisionerResolvedPath(ctx context.Context, name string) (string, error)
-	GetAllowUIUpdatesFromConfig(ctx context.Context, name string) (bool, error)
+	GetDashboardProvisionerResolvedPath(name string) string
+	GetAllowUIUpdatesFromConfig(name string) bool
 }
 
 // Add a public constructor for overriding service to be able to instantiate OSS as fallback
@@ -109,6 +125,7 @@ func newProvisioningServiceImpl(
 		newDashboardProvisioner: newDashboardProvisioner,
 		provisionDatasources:    provisionDatasources,
 		provisionPlugins:        provisionPlugins,
+		Cfg:                     setting.NewCfg(),
 	}
 }
 
@@ -214,24 +231,18 @@ func (ps *ProvisioningServiceImpl) ProvisionPlugins(ctx context.Context) error {
 }
 
 func (ps *ProvisioningServiceImpl) ProvisionDashboards(ctx context.Context) error {
-	dashProvisioner, err := ps.getDashboardProvisioner(ctx)
-	if err != nil {
-		return fmt.Errorf("%v: %w", "Failed to create provisioner", err)
-	}
-
 	ps.mutex.Lock()
 	defer ps.mutex.Unlock()
 
 	ps.cancelPolling()
-	dashProvisioner.CleanUpOrphanedDashboards(ctx)
+	ps.dashboardProvisioner.CleanUpOrphanedDashboards(ctx)
 
-	err = dashProvisioner.Provision(ctx)
+	err := ps.dashboardProvisioner.Provision(ctx)
 	if err != nil {
 		// If we fail to provision with the new provisioner, the mutex will unlock and the polling will restart with the
 		// old provisioner as we did not switch them yet.
 		return fmt.Errorf("%v: %w", "Failed to provision dashboards", err)
 	}
-	ps.dashboardProvisioner = dashProvisioner
 	return nil
 }
 
@@ -275,39 +286,12 @@ func (ps *ProvisioningServiceImpl) ProvisionAlerting(ctx context.Context) error 
 	return ps.provisionAlerting(ctx, cfg)
 }
 
-func (ps *ProvisioningServiceImpl) GetDashboardProvisionerResolvedPath(ctx context.Context, name string) (string, error) {
-	if ps.dashboardProvisioner == nil {
-		dashProvisioner, err := ps.getDashboardProvisioner(ctx)
-		if err != nil {
-			return "", fmt.Errorf("%v: %w", "Failed to get provisioner resolved path", err)
-		}
-		ps.dashboardProvisioner = dashProvisioner
-	}
-
-	return ps.dashboardProvisioner.GetProvisionerResolvedPath(name), nil
+func (ps *ProvisioningServiceImpl) GetDashboardProvisionerResolvedPath(name string) string {
+	return ps.dashboardProvisioner.GetProvisionerResolvedPath(name)
 }
 
-func (ps *ProvisioningServiceImpl) GetAllowUIUpdatesFromConfig(ctx context.Context, name string) (bool, error) {
-	if ps.dashboardProvisioner == nil {
-		dashProvisioner, err := ps.getDashboardProvisioner(ctx)
-		if err != nil {
-			return false, fmt.Errorf("%v: %w", "Failed to get allow UI updates from config", err)
-		}
-		ps.dashboardProvisioner = dashProvisioner
-	}
-	return ps.dashboardProvisioner.GetAllowUIUpdatesFromConfig(name), nil
-}
-
-func (ps *ProvisioningServiceImpl) getDashboardProvisioner(ctx context.Context) (dashboards.DashboardProvisioner, error) {
-	if ps.dashboardProvisioner != nil {
-		return ps.dashboardProvisioner, nil
-	}
-	dashboardPath := filepath.Join(ps.Cfg.ProvisioningPath, "dashboards")
-	dashProvisioner, err := ps.newDashboardProvisioner(ctx, dashboardPath, ps.dashboardProvisioningService, ps.orgService, ps.dashboardService, ps.folderService)
-	if err != nil {
-		return nil, fmt.Errorf("%v: %w", "Failed to create provisioner", err)
-	}
-	return dashProvisioner, nil
+func (ps *ProvisioningServiceImpl) GetAllowUIUpdatesFromConfig(name string) bool {
+	return ps.dashboardProvisioner.GetAllowUIUpdatesFromConfig(name)
 }
 
 func (ps *ProvisioningServiceImpl) cancelPolling() {

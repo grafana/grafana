@@ -322,10 +322,7 @@ func (a *dashboardSqlAccess) scanRow(ctx context.Context, rows *sql.Rows) (*dash
 		if origin_name.Valid {
 			ts := time.Unix(origin_ts.Int64, 0)
 
-			resolvedPath, err := a.provisioning.GetDashboardProvisionerResolvedPath(ctx, origin_name.String)
-			if err != nil {
-				return nil, err
-			}
+			resolvedPath := a.provisioning.GetDashboardProvisionerResolvedPath(origin_name.String)
 			originPath, err := filepath.Rel(
 				resolvedPath,
 				origin_path.String,
