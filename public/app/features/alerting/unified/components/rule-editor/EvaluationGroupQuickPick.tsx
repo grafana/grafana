@@ -2,7 +2,7 @@ import { last, times } from 'lodash';
 import React from 'react';
 
 import { config } from '@grafana/runtime';
-import { Button } from '@grafana/ui';
+import { Button, Stack } from '@grafana/ui';
 
 import { formatPrometheusDuration, parsePrometheusDuration, safeParsePrometheusDuration } from '../../utils/time';
 
@@ -54,16 +54,20 @@ export function EvaluationGroupQuickPick({ currentInterval, onSelect }: Props) {
     return currentInterval ? safeParsePrometheusDuration(currentInterval) === time : false;
   };
 
-  return QUICK_PICK_OPTIONS.map((time) => (
-    <Button
-      key={time}
-      variant={isQuickSelectionActive(time) ? 'primary' : 'secondary'}
-      size="sm"
-      onClick={() => {
-        onSelect(formatPrometheusDuration(time));
-      }}
-    >
-      {formatPrometheusDuration(time)}
-    </Button>
-  ));
+  return (
+    <Stack direction="row" gap={0.5}>
+      {QUICK_PICK_OPTIONS.map((time) => (
+        <Button
+          key={time}
+          variant={isQuickSelectionActive(time) ? 'primary' : 'secondary'}
+          size="sm"
+          onClick={() => {
+            onSelect(formatPrometheusDuration(time));
+          }}
+        >
+          {formatPrometheusDuration(time)}
+        </Button>
+      ))}
+    </Stack>
+  );
 }

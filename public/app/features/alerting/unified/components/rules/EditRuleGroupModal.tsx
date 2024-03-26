@@ -21,6 +21,7 @@ import { formatPrometheusDuration, parsePrometheusDuration, safeParsePrometheusD
 import { DynamicTable, DynamicTableColumnProps, DynamicTableItemProps } from '../DynamicTable';
 import { EvaluationIntervalLimitExceeded } from '../InvalidIntervalWarning';
 import { decodeGrafanaNamespace, encodeGrafanaNamespace } from '../expressions/util';
+import { EvaluationGroupQuickPick } from '../rule-editor/EvaluationGroupQuickPick';
 import { MIN_TIME_RANGE_STEP_S } from '../rule-editor/GrafanaEvaluationBehavior';
 
 const ITEMS_PER_PAGE = 10;
@@ -233,6 +234,8 @@ export function EditCloudGroupModal(props: ModalProps): React.ReactElement {
     register,
     watch,
     formState: { isDirty, errors },
+    setValue,
+    getValues,
   } = formAPI;
 
   const onInvalid = () => {
@@ -314,11 +317,17 @@ export function EditCloudGroupModal(props: ModalProps): React.ReactElement {
               invalid={!!errors.groupInterval}
               error={errors.groupInterval?.message}
             >
-              <Input
-                id="groupInterval"
-                placeholder="1m"
-                {...register('groupInterval', evaluateEveryValidationOptions(rulesWithoutRecordingRules))}
-              />
+              <Stack direction="column">
+                <Input
+                  id="groupInterval"
+                  placeholder="1m"
+                  {...register('groupInterval', evaluateEveryValidationOptions(rulesWithoutRecordingRules))}
+                />
+                <EvaluationGroupQuickPick
+                  currentInterval={getValues('groupInterval')}
+                  onSelect={(value) => setValue('groupInterval', value, { shouldValidate: true })}
+                />
+              </Stack>
             </Field>
 
             {checkEvaluationIntervalGlobalLimit(watch('groupInterval')).exceedsLimit && (

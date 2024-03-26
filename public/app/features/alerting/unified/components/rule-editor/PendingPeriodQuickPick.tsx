@@ -1,6 +1,6 @@
 import React from 'react';
 
-import { Button } from '@grafana/ui';
+import { Button, Stack } from '@grafana/ui';
 
 import { formatPrometheusDuration, parsePrometheusDuration, safeParsePrometheusDuration } from '../../utils/time';
 
@@ -28,16 +28,20 @@ export function PendingPeriodQuickPick({ selectedPendingPeriod, groupEvaluationI
     return safeParsePrometheusDuration(selectedPendingPeriod) === milliseconds;
   };
 
-  return PENDING_PERIOD_QUICK_OPTIONS.map((milliseconds) => (
-    <Button
-      key={milliseconds}
-      variant={isQuickSelectionActive(milliseconds) ? 'primary' : 'secondary'}
-      size="sm"
-      onClick={() => {
-        onSelect(formatPrometheusDuration(milliseconds));
-      }}
-    >
-      {milliseconds === 0 ? 'None' : formatPrometheusDuration(milliseconds)}
-    </Button>
-  ));
+  return (
+    <Stack direction="row" gap={0.5}>
+      {PENDING_PERIOD_QUICK_OPTIONS.map((milliseconds) => (
+        <Button
+          key={milliseconds}
+          variant={isQuickSelectionActive(milliseconds) ? 'primary' : 'secondary'}
+          size="sm"
+          onClick={() => {
+            onSelect(formatPrometheusDuration(milliseconds));
+          }}
+        >
+          {milliseconds === 0 ? 'None' : formatPrometheusDuration(milliseconds)}
+        </Button>
+      ))}
+    </Stack>
+  );
 }
