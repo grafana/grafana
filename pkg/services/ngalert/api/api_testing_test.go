@@ -160,7 +160,7 @@ func TestRouteTestGrafanaRuleConfig(t *testing.T) {
 				return nil
 			}
 
-			srv := createTestingApiSrv(t, nil, ac, eval_mocks.NewEvaluatorFactory(&eval_mocks.ConditionEvaluatorMock{}), featuremgmt.TestFeatureToggles(), ruleStore)
+			srv := createTestingApiSrv(t, nil, ac, eval_mocks.NewEvaluatorFactory(&eval_mocks.ConditionEvaluatorMock{}), featuremgmt.WithFeatures(), ruleStore)
 
 			rule := validRule()
 
@@ -184,7 +184,7 @@ func TestRouteTestGrafanaRuleConfig(t *testing.T) {
 			f := randFolder()
 			ruleStore := fakes2.NewRuleStore(t)
 			ruleStore.Folders[rc.OrgID] = []*folder.Folder{f}
-			srv := createTestingApiSrv(t, nil, ac, eval_mocks.NewEvaluatorFactory(&eval_mocks.ConditionEvaluatorMock{}), featuremgmt.TestFeatureToggles(), ruleStore)
+			srv := createTestingApiSrv(t, nil, ac, eval_mocks.NewEvaluatorFactory(&eval_mocks.ConditionEvaluatorMock{}), featuremgmt.WithFeatures(), ruleStore)
 
 			rule := validRule()
 			rule.GrafanaManagedAlert.Data = ApiAlertQueriesFromAlertQueries([]models.AlertQuery{data1, data2})
@@ -222,7 +222,7 @@ func TestRouteTestGrafanaRuleConfig(t *testing.T) {
 			ruleStore := fakes2.NewRuleStore(t)
 			ruleStore.Folders[rc.OrgID] = []*folder.Folder{f}
 
-			srv := createTestingApiSrv(t, ds, ac, evalFactory, featuremgmt.TestFeatureToggles(), ruleStore)
+			srv := createTestingApiSrv(t, ds, ac, evalFactory, featuremgmt.WithFeatures(), ruleStore)
 
 			rule := validRule()
 			rule.GrafanaManagedAlert.Data = ApiAlertQueriesFromAlertQueries([]models.AlertQuery{data1, data2})
@@ -299,7 +299,7 @@ func TestRouteEvalQueries(t *testing.T) {
 
 			ruleStore := fakes2.NewRuleStore(t)
 
-			srv := createTestingApiSrv(t, ds, ac, eval_mocks.NewEvaluatorFactory(evaluator), featuremgmt.TestFeatureToggles(), ruleStore)
+			srv := createTestingApiSrv(t, ds, ac, eval_mocks.NewEvaluatorFactory(evaluator), featuremgmt.WithFeatures(), ruleStore)
 
 			response := srv.RouteEvalQueries(rc, definitions.EvalQueriesPayload{
 				Data: ApiAlertQueriesFromAlertQueries([]models.AlertQuery{data1, data2}),

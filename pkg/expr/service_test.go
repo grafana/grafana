@@ -138,7 +138,7 @@ func TestDSQueryError(t *testing.T) {
 		cfg:          setting.NewCfg(),
 		dataService:  me,
 		pCtxProvider: pCtxProvider,
-		features:     featuremgmt.TestFeatureToggles(),
+		features:     featuremgmt.WithFeatures(),
 		tracer:       tracing.InitializeTracerForTest(),
 		metrics:      newMetrics(nil),
 	}
