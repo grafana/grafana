@@ -268,7 +268,7 @@ func schema_pkg_apis_query_v0alpha1_QueryTypeDefinition(ref common.ReferenceCall
 	return common.OpenAPIDefinition{
 		Schema: spec.Schema{
 			SchemaProps: spec.SchemaProps{
-				Description: "Generic query request with shared time across all values",
+				Description: "Defines a query behavior in a datasource.  This is a similar model to a CRD where the payload describes a valid query",
 				Type:        []string{"object"},
 				Properties: map[string]spec.Schema{
 					"kind": {

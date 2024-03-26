@@ -22,8 +22,8 @@ var ScopeResourceInfo = common.NewResourceInfo(GROUP, VERSION,
 
 var ScopeDashboardResourceInfo = common.NewResourceInfo(GROUP, VERSION,
 	"scopedashboards", "scopedashboard", "ScopeDashboard",
-	func() runtime.Object { return &ScopeDashboard{} },
-	func() runtime.Object { return &ScopeDashboardList{} },
+	func() runtime.Object { return &ScopeDashboardBinding{} },
+	func() runtime.Object { return &ScopeDashboardBindingList{} },
 )
 
 var (
@@ -45,8 +45,8 @@ func addKnownTypes(scheme *runtime.Scheme) error {
 	scheme.AddKnownTypes(SchemeGroupVersion,
 		&Scope{},
 		&ScopeList{},
-		&ScopeDashboard{},
-		&ScopeDashboardList{},
+		&ScopeDashboardBinding{},
+		&ScopeDashboardBindingList{},
 	)
 	metav1.AddToGroupVersion(scheme, SchemeGroupVersion)
 	return nil
