@@ -19,6 +19,7 @@ const esModules = [
   'monaco-editor',
   'lodash-es',
   '@msagl',
+  'vscode-languageserver-types',
 ].join('|');
 
 module.exports = {

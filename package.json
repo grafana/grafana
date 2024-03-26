@@ -257,7 +257,7 @@
     "@grafana/schema": "workspace:*",
     "@grafana/sql": "workspace:*",
     "@grafana/ui": "workspace:*",
-    "@kusto/monaco-kusto": "^7.4.0",
+    "@kusto/monaco-kusto": "^10.0.0",
     "@leeoniya/ufuzzy": "1.0.14",
     "@lezer/common": "1.2.1",
     "@lezer/highlight": "1.2.0",
