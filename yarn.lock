@@ -3123,7 +3123,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@floating-ui/react-dom@npm:^2.0.0, @floating-ui/react-dom@npm:^2.0.8":
+"@floating-ui/react-dom@npm:^2.0.0":
   version: 2.0.8
   resolution: "@floating-ui/react-dom@npm:2.0.8"
   dependencies:
@@ -3135,21 +3135,21 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@floating-ui/react@npm:0.26.9":
-  version: 0.26.9
-  resolution: "@floating-ui/react@npm:0.26.9"
+"@floating-ui/react@npm:0.26.10":
+  version: 0.26.10
+  resolution: "@floating-ui/react@npm:0.26.10"
   dependencies:
-    "@floating-ui/react-dom": "npm:^2.0.8"
-    "@floating-ui/utils": "npm:^0.2.1"
-    tabbable: "npm:^6.0.1"
+    "@floating-ui/react-dom": "npm:^2.0.0"
+    "@floating-ui/utils": "npm:^0.2.0"
+    tabbable: "npm:^6.0.0"
   peerDependencies:
     react: ">=16.8.0"
     react-dom: ">=16.8.0"
-  checksum: 10/997f5a471ac6080c5162ad86fbb8e5bc0eca9335c40d8445597a90ba645e5d35ee796c29bdc66d868182afe5901804ecd52b82560332ae123b0c269400421e63
+  checksum: 10/7bbb22d61f180a3ef245da4c57c8773c38994087e1f593b2be7377796d66a0050109a4f3f57f63653662130bcf01c47a7b254d7448383339870bf9208624640d
   languageName: node
   linkType: hard
 
-"@floating-ui/utils@npm:^0.2.1":
+"@floating-ui/utils@npm:^0.2.0, @floating-ui/utils@npm:^0.2.1":
   version: 0.2.1
   resolution: "@floating-ui/utils@npm:0.2.1"
   checksum: 10/33c9ab346e7b05c5a1e6a95bc902aafcfc2c9d513a147e2491468843bd5607531b06d0b9aa56aa491cbf22a6c2495c18ccfc4c0344baec54a689a7bb8e4898d6
@@ -3932,7 +3932,7 @@ __metadata:
   dependencies:
     "@emotion/css": "npm:11.11.2"
     "@emotion/eslint-plugin": "npm:11.11.0"
-    "@floating-ui/react": "npm:0.26.9"
+    "@floating-ui/react": "npm:0.26.10"
     "@grafana/data": "npm:11.1.0-pre"
     "@grafana/e2e": "npm:11.1.0-pre"
     "@grafana/e2e-selectors": "npm:11.1.0-pre"
@@ -4213,7 +4213,7 @@ __metadata:
     "@babel/core": "npm:7.24.3"
     "@emotion/css": "npm:11.11.2"
     "@emotion/react": "npm:11.11.4"
-    "@floating-ui/react": "npm:0.26.9"
+    "@floating-ui/react": "npm:0.26.10"
     "@grafana/data": "npm:11.1.0-pre"
     "@grafana/e2e-selectors": "npm:11.1.0-pre"
     "@grafana/faro-web-sdk": "npm:^1.3.6"
@@ -18528,7 +18528,7 @@ __metadata:
     "@emotion/eslint-plugin": "npm:11.11.0"
     "@emotion/react": "npm:11.11.4"
     "@fingerprintjs/fingerprintjs": "npm:^3.4.2"
-    "@floating-ui/react": "npm:0.26.9"
+    "@floating-ui/react": "npm:0.26.10"
     "@glideapps/glide-data-grid": "npm:^6.0.0"
     "@grafana/aws-sdk": "npm:0.3.2"
     "@grafana/data": "workspace:*"
@@ -29647,7 +29647,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"tabbable@npm:^6.0.1":
+"tabbable@npm:^6.0.0":
   version: 6.2.0
   resolution: "tabbable@npm:6.2.0"
   checksum: 10/980fa73476026e99dcacfc0d6e000d41d42c8e670faf4682496d30c625495e412c4369694f2a15cf1e5252d22de3c396f2b62edbe8d60b5dadc40d09e3f2dde3
