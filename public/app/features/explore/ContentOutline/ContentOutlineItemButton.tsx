@@ -2,7 +2,7 @@ import { cx, css } from '@emotion/css';
 import React, { ButtonHTMLAttributes, useEffect, useRef, useState } from 'react';
 
 import { IconName, isIconName, GrafanaTheme2 } from '@grafana/data';
-import { Icon, useStyles2, Tooltip, IconSize } from '@grafana/ui';
+import { Icon, useStyles2, Tooltip } from '@grafana/ui';
 import { TooltipPlacement } from '@grafana/ui/src/components/Tooltip';
 
 type CommonProps = {

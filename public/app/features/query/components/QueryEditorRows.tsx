@@ -1,4 +1,4 @@
-import React, { PureComponent } from 'react';
+import React, { PureComponent, ReactNode } from 'react';
 import { DragDropContext, DragStart, Droppable, DropResult } from 'react-beautiful-dnd';
 
 import {
@@ -11,7 +11,6 @@ import {
   PanelData,
 } from '@grafana/data';
 import { getDataSourceSrv, reportInteraction } from '@grafana/runtime';
-import { ContentOutlineItem } from 'app/features/explore/ContentOutline/ContentOutlineItem';
 
 import { QueryEditorRow } from './QueryEditorRow';
 
@@ -35,6 +34,7 @@ export interface Props {
   onQueryCopied?: () => void;
   onQueryRemoved?: () => void;
   onQueryToggled?: (queryStatus?: boolean | undefined) => void;
+  queryRowWrapper?: (children: ReactNode, refId: string) => ReactNode;
 }
 
 export class QueryEditorRows extends PureComponent<Props> {
@@ -145,6 +145,7 @@ export class QueryEditorRows extends PureComponent<Props> {
       onQueryCopied,
       onQueryRemoved,
       onQueryToggled,
+      queryRowWrapper,
     } = this.props;
 
     return (
@@ -159,37 +160,30 @@ export class QueryEditorRows extends PureComponent<Props> {
                     ? (settings: DataSourceInstanceSettings) => this.onDataSourceChange(settings, index)
                     : undefined;
 
-                  return (
-                    <ContentOutlineItem
-                      title={query.refId}
-                      icon="arrow"
+                  const queryEditorRow = (
+                    <QueryEditorRow
+                      id={query.refId}
+                      index={index}
                       key={query.refId}
-                      panelId="Queries"
-                      customTopOffset={-10}
-                      level="child"
-                    >
-                      <QueryEditorRow
-                        id={query.refId}
-                        index={index}
-                        key={query.refId}
-                        data={data}
-                        query={query}
-                        dataSource={dataSourceSettings}
-                        onChangeDataSource={onChangeDataSourceSettings}
-                        onChange={(query) => this.onChangeQuery(query, index)}
-                        onRemoveQuery={this.onRemoveQuery}
-                        onAddQuery={onAddQuery}
-                        onRunQuery={onRunQueries}
-                        onQueryCopied={onQueryCopied}
-                        onQueryRemoved={onQueryRemoved}
-                        onQueryToggled={onQueryToggled}
-                        queries={queries}
-                        app={app}
-                        history={history}
-                        eventBus={eventBus}
-                      />
-                    </ContentOutlineItem>
+                      data={data}
+                      query={query}
+                      dataSource={dataSourceSettings}
+                      onChangeDataSource={onChangeDataSourceSettings}
+                      onChange={(query) => this.onChangeQuery(query, index)}
+                      onRemoveQuery={this.onRemoveQuery}
+                      onAddQuery={onAddQuery}
+                      onRunQuery={onRunQueries}
+                      onQueryCopied={onQueryCopied}
+                      onQueryRemoved={onQueryRemoved}
+                      onQueryToggled={onQueryToggled}
+                      queries={queries}
+                      app={app}
+                      history={history}
+                      eventBus={eventBus}
+                    />
                   );
+
+                  return queryRowWrapper ? queryRowWrapper(queryEditorRow, query.refId) : queryEditorRow;
                 })}
                 {provided.placeholder}
               </div>
