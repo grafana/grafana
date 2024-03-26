@@ -94,7 +94,6 @@ export class MetricOverviewScene extends SceneObjectBase<MetricOverviewSceneStat
               {labelOptions.length === 0 && 'Unable to fetch labels.'}
               {labelOptions.map((l) => (
                 <TextLink
-                  icon="tag-alt"
                   key={l.label}
                   href={`#View breakdown for ${l.label}`}
                   title={`View breakdown for ${l.label}`}
