@@ -25,6 +25,20 @@ describe('DashboardSceneUrlSync', () => {
       scene.urlSync?.updateFromUrl({ viewPanel: '2' });
       expect(scene.state.viewPanelScene!.getUrlKey()).toBe('panel-2');
     });
+
+    it('Should set fitPanels when url has autofitpanels', () => {
+      const scene = buildTestScene();
+      scene.urlSync?.updateFromUrl({ autofitpanels: '' });
+      expect((scene.state.body as SceneGridLayout).state.fitPanels).toBe(true);
+    });
+
+    it('Should get the autofitpanels from the scene state', () => {
+      const scene = buildTestScene();
+
+      expect(scene.urlSync?.getUrlState().autofitpanels).toBeUndefined();
+      (scene.state.body as SceneGridLayout).setState({ fitPanels: true });
+      expect(scene.urlSync?.getUrlState().autofitpanels).toBe('true');
+    });
   });
 
   describe('Given a viewPanelKey with clone that is not found', () => {
