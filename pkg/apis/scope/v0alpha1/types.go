@@ -13,11 +13,13 @@ type Scope struct {
 }
 
 type ScopeSpec struct {
-	Title       string        `json:"title"`
-	Type        string        `json:"type"`
-	Description string        `json:"description"`
-	Category    string        `json:"category"`
-	Filters     []ScopeFilter `json:"filters"`
+	Title       string `json:"title"`
+	Type        string `json:"type"`
+	Description string `json:"description"`
+	Category    string `json:"category"`
+
+	// +listType=atomic
+	Filters []ScopeFilter `json:"filters"`
 }
 
 type ScopeFilter struct {

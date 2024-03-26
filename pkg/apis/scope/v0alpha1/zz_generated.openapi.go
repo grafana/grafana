@@ -305,6 +305,11 @@ func schema_pkg_apis_scope_v0alpha1_ScopeSpec(ref common.ReferenceCallback) comm
 						},
 					},
 					"filters": {
+						VendorExtensible: spec.VendorExtensible{
+							Extensions: spec.Extensions{
+								"x-kubernetes-list-type": "atomic",
+							},
+						},
 						SchemaProps: spec.SchemaProps{
 							Type: []string{"array"},
 							Items: &spec.SchemaOrArray{
