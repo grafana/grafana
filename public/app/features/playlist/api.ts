@@ -80,7 +80,7 @@ class K8sAPI implements PlaylistAPI {
   }
 
   async deletePlaylist(uid: string): Promise<void> {
-    await withErrorHandling(() => this.server.delete(uid).then(() => {}));
+    await withErrorHandling(() => this.server.delete(uid).then(() => {}), 'Playlist deleted');
   }
 
   playlistAsK8sResource = (playlist: Playlist): ResourceForCreate<PlaylistSpec> => {
