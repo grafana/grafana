@@ -203,7 +203,7 @@ function ForInput({ evaluateEvery }: { evaluateEvery: string }) {
         }
         className={styles.inlineField}
         error={errors.evaluateFor?.message}
-        invalid={!!errors.evaluateFor?.message}
+        invalid={Boolean(errors.evaluateFor?.message) ? true : undefined}
         validationMessageHorizontalOverflow={true}
       >
         <Stack direction="row" alignItems="flex-end">

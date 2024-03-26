@@ -151,7 +151,7 @@ export const evaluateEveryValidationOptions = (rules: RulerRuleDTO[]): RegisterO
           return safeParsePrometheusDuration(forDuration);
         });
         const largestPendingPeriod = Math.max(...rulePendingPeriods);
-        return `Evaluation interval should be smaller or equal to "pending period" values for existing rules in this rule group. Choose a value smaller then or equal to "${formatPrometheusDuration(largestPendingPeriod)}".`;
+        return `Evaluation interval should be smaller or equal to "pending period" values for existing rules in this rule group. Choose a value smaller than or equal to "${formatPrometheusDuration(largestPendingPeriod)}".`;
       }
     } catch (error) {
       return error instanceof Error ? error.message : 'Failed to parse duration';
@@ -266,7 +266,7 @@ export function EditCloudGroupModal(props: ModalProps): React.ReactElement {
                       {nameSpaceLabel}
                     </Label>
                   }
-                  invalid={!!errors.namespaceName}
+                  invalid={Boolean(errors.namespaceName) ? true : undefined}
                   error={errors.namespaceName?.message}
                 >
                   <Input

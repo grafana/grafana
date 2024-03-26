@@ -425,7 +425,7 @@ function EvaluationGroupCreationModal({
           <Field
             label={<Label htmlFor={'group'}>Evaluation group name</Label>}
             error={formState.errors.group?.message}
-            invalid={!!formState.errors.group}
+            invalid={Boolean(formState.errors.group) ? true : undefined}
           >
             <Input
               className={styles.formInput}
@@ -438,7 +438,7 @@ function EvaluationGroupCreationModal({
 
           <Field
             error={formState.errors.evaluateEvery?.message}
-            invalid={Boolean(formState.errors.evaluateEvery)}
+            invalid={Boolean(formState.errors.evaluateEvery) ? true : undefined}
             label={
               <Label
                 htmlFor={evaluateEveryId}
