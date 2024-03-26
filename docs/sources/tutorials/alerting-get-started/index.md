@@ -41,19 +41,19 @@ Download the files to your local machine.
 
 1. Clone the [tutorial environment repository](www.github.com/grafana/tutorial-environment).
 
-   ```
+   ```promql
    git clone https://github.com/grafana/tutorial-environment.git
    ```
 
 1. Change to the directory where you cloned the repository:
 
-   ```
+   ```promql
    cd tutorial-environment
    ```
 
 1. Make sure Docker is running:
 
-   ```
+   ```promql
    docker --version
    ```
 
@@ -61,7 +61,7 @@ Download the files to your local machine.
 
 1. Start the sample application:
 
-   ```
+   ```promql
    docker compose up -d
    ```
 
@@ -73,7 +73,7 @@ Download the files to your local machine.
 
 1. Ensure all services are up-and-running:
 
-   ```
+   ```promql
    docker compose ps
    ```
 
@@ -98,6 +98,7 @@ To add a link:
 1. To vote for a link, click the triangle icon next to the name of the link.
 
 ## Create a contact point for Grafana Managed Alerts
+
 Besides being an open-source observability tool, Grafana has its own built-in alerting service. This means that you can receive notifications whenever there is an event of interest in your data, and even see these events graphed in your visualizations.
 
 In this step, we'll set up a new contact point. This contact point will use the _webhooks_ channel. In order to make this work, we also need an endpoint for our webhook channel to receive the alert. We will use [requestbin.com](https://requestbin.com) to quickly set up that test endpoint. This way we can make sure that our alert is actually sending a notification somewhere.
@@ -153,7 +154,7 @@ In this section, we define queries, expressions (used to manipulate the data), a
    This [PromQL](https://prometheus.io/docs/prometheus/latest/querying/basics/) query calculates the sum of the per-second average rates of increase of the `tns_request_duration_seconds_count` metric over the last 1 minute, grouped by the HTTP method used in the requests. This can be useful for analyzing the request duration trends for different HTTP methods.
 
 1. Keep expressions “B” and “C” as they are. These expressions (**Reduce** and **Threshold**, respectively) come by default when creating a new rule.
-   
+
    The Reduce expression “B”, selects the last value of our query “A”, while the Threshold expression “C” will check if the last value from expression “B” is above a specific value. In addition, the Threshold expression is the alert condition by default. Enter `0.2` as threshold value. You can read more about queries and conditions [here](https://grafana.com/docs/grafana/latest/alerting/fundamentals/alert-rules/queries-conditions/#expression-queries).
 
 1. Click Preview to run the queries.
@@ -207,7 +208,7 @@ Once the query `sum(rate(tns_request_duration_seconds_count[1m])) by(method)` re
 
 In this tutorial, you have learned how to set up an alert, send alert notifications to a public webhook, and generate some sample data to observe your alert in action. By following these steps, you've gained a foundational understanding of how to leverage Grafana's alerting capabilities to monitor and respond to events of interest in your data. Happy monitoring!
 
-# Learn more
+## Learn more
 
 Check out the links below to continue your learning journey with Grafana's LGTM stack.
 
