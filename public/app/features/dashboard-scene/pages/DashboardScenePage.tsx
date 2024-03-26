@@ -28,6 +28,7 @@ export function DashboardScenePage({ match, route, queryParams, history }: Props
         uid: match.params.uid ?? '',
         route: route.routeName as DashboardRoutes,
         urlFolderUid: queryParams.folderUid,
+        keepDashboardFromExploreInLocalStorage: false,
       });
     }
 
