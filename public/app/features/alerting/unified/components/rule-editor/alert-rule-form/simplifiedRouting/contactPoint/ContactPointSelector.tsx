@@ -1,6 +1,6 @@
 import { css, cx } from '@emotion/css';
 import React, { useCallback, useEffect, useState } from 'react';
-import { useFormContext } from 'react-hook-form';
+import { useFormContext, Controller } from 'react-hook-form';
 
 import { GrafanaTheme2, SelectableValue } from '@grafana/data';
 import {
@@ -8,7 +8,6 @@ import {
   Field,
   FieldValidationMessage,
   IconButton,
-  InputControl,
   Select,
   Stack,
   TextLink,
@@ -78,8 +77,8 @@ export function ContactPointSelector({
   return (
     <Stack direction="column">
       <Stack direction="row" alignItems="center">
-        <Field label="Contact point">
-          <InputControl
+        <Field label="Contact point" data-testid="contact-point-picker">
+          <Controller
             render={({ field: { onChange, ref, ...field }, fieldState: { error } }) => (
               <>
                 <div className={styles.contactPointsSelector}>

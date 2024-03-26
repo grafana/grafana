@@ -1,9 +1,11 @@
 import { getDataSourceRef, IntervalVariableModel } from '@grafana/data';
 import { getDataSourceSrv } from '@grafana/runtime';
 import {
+  CustomVariable,
   MultiValueVariable,
   SceneDataTransformer,
   sceneGraph,
+  SceneGridRow,
   SceneObject,
   SceneQueryRunner,
   VizPanel,
@@ -12,8 +14,15 @@ import {
 import { initialIntervalVariableModelState } from 'app/features/variables/interval/reducer';
 
 import { DashboardScene } from '../scene/DashboardScene';
+import { LibraryVizPanel } from '../scene/LibraryVizPanel';
 import { VizPanelLinks, VizPanelLinksMenu } from '../scene/PanelLinks';
 import { panelMenuBehavior } from '../scene/PanelMenuBehavior';
+import { RowActions } from '../scene/row-actions/RowActions';
+
+import { dashboardSceneGraph } from './dashboardSceneGraph';
+
+export const NEW_PANEL_HEIGHT = 8;
+export const NEW_PANEL_WIDTH = 12;
 
 export function getVizPanelKeyForPanelId(panelId: number) {
   return `panel-${panelId}`;
@@ -23,8 +32,12 @@ export function getPanelIdForVizPanel(panel: SceneObject): number {
   return parseInt(panel.state.key!.replace('panel-', ''), 10);
 }
 
+export function getPanelIdForLibraryVizPanel(panel: LibraryVizPanel): number {
+  return parseInt(panel.state.panelKey!.replace('panel-', ''), 10);
+}
+
 /**
- * This will also  try lookup based on panelId
+ * This will also try lookup based on panelId
  */
 export function findVizPanelByKey(scene: SceneObject, key: string | undefined): VizPanel | null {
   if (!key) {
@@ -82,7 +95,7 @@ export function forceRenderChildren(model: SceneObject, recursive?: boolean) {
   });
 }
 
-export function getMultiVariableValues(variable: MultiValueVariable) {
+export function getMultiVariableValues(variable: MultiValueVariable | CustomVariable) {
   const { value, text, options } = variable.state;
 
   if (variable.hasAllValue()) {
@@ -194,10 +207,12 @@ export function isPanelClone(key: string) {
   return key.includes('clone');
 }
 
-export function onCreateNewPanel(dashboard: DashboardScene): number {
-  const vizPanel = new VizPanel({
+export function getDefaultVizPanel(dashboard: DashboardScene): VizPanel {
+  const panelId = dashboardSceneGraph.getNextPanelId(dashboard);
+
+  return new VizPanel({
     title: 'Panel Title',
-    key: 'panel-1', // the first panel should always be panel-1
+    key: getVizPanelKeyForPanelId(panelId),
     pluginId: 'timeseries',
     titleItems: [new VizPanelLinks({ menu: new VizPanelLinksMenu({}) })],
     menu: new VizPanelMenu({
@@ -211,8 +226,22 @@ export function onCreateNewPanel(dashboard: DashboardScene): number {
       transformations: [],
     }),
   });
-  dashboard.addPanel(vizPanel);
-  const id = getPanelIdForVizPanel(vizPanel);
+}
 
-  return id;
+export function getDefaultRow(dashboard: DashboardScene): SceneGridRow {
+  const id = dashboardSceneGraph.getNextPanelId(dashboard);
+
+  return new SceneGridRow({
+    key: getVizPanelKeyForPanelId(id),
+    title: 'Row title',
+    actions: new RowActions({}),
+    y: 0,
+  });
+}
+
+export function getLibraryPanel(vizPanel: VizPanel): LibraryVizPanel | undefined {
+  if (vizPanel.parent instanceof LibraryVizPanel) {
+    return vizPanel.parent;
+  }
+  return;
 }

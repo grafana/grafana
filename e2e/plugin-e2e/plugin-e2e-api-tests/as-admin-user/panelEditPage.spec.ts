@@ -1,4 +1,4 @@
-import { expect, test } from '@grafana/plugin-e2e';
+import { DashboardPage, expect, test } from '@grafana/plugin-e2e';
 
 import { formatExpectError } from '../errors';
 import { successfulDataQuery } from '../mocks/queries';
@@ -33,8 +33,9 @@ test.describe('query editor query data', () => {
 });
 
 test.describe('query editor with mocked responses', () => {
-  test('and resource `scenarios` is mocked', async ({ panelEditPage, selectors }) => {
-    await panelEditPage.mockResourceResponse('scenarios', scenarios);
+  test('and resource `scenarios` is mocked', async ({ selectors, dashboardPage }) => {
+    await dashboardPage.mockResourceResponse('scenarios', scenarios);
+    const panelEditPage = await dashboardPage.addPanel();
     await panelEditPage.datasource.set('gdev-testdata');
     const queryEditorRow = await panelEditPage.getQueryEditorRow('A');
     await queryEditorRow.getByLabel('Scenario').last().click();

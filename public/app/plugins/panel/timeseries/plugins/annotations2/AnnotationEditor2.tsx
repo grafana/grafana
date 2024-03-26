@@ -1,19 +1,11 @@
 import { css } from '@emotion/css';
-import React, { useContext, useEffect, useRef } from 'react';
+import React, { useRef } from 'react';
+import { Controller } from 'react-hook-form';
 import { useAsyncFn, useClickAway } from 'react-use';
 
 import { AnnotationEventUIModel, GrafanaTheme2, dateTimeFormat, systemDateFormats } from '@grafana/data';
-import {
-  Button,
-  Field,
-  Form,
-  HorizontalGroup,
-  InputControl,
-  LayoutItemContext,
-  TextArea,
-  usePanelContext,
-  useStyles2,
-} from '@grafana/ui';
+import { Button, Field, Stack, TextArea, usePanelContext, useStyles2 } from '@grafana/ui';
+import { Form } from 'app/core/components/Form/Form';
 import { TagFilter } from 'app/core/components/TagFilter/TagFilter';
 import { getAnnotationTags } from 'app/features/annotations/api';
 
@@ -36,9 +28,6 @@ export const AnnotationEditor2 = ({ annoVals, annoIdx, dismiss, timeZone, ...oth
   const clickAwayRef = useRef(null);
 
   useClickAway(clickAwayRef, dismiss);
-
-  const layoutCtx = useContext(LayoutItemContext);
-  useEffect(() => layoutCtx.boostZIndex(), [layoutCtx]);
 
   const [createAnnotationState, createAnnotation] = useAsyncFn(async (event: AnnotationEventUIModel) => {
     const result = await onAnnotationCreate!(event);
@@ -80,10 +69,10 @@ export const AnnotationEditor2 = ({ annoVals, annoIdx, dismiss, timeZone, ...oth
   return (
     <div ref={clickAwayRef} className={styles.editor} {...otherProps}>
       <div className={styles.header}>
-        <HorizontalGroup justify={'space-between'} align={'center'}>
+        <Stack justifyContent={'space-between'} alignItems={'center'}>
           <div>{isUpdatingAnnotation ? 'Edit annotation' : 'Add annotation'}</div>
           <div>{time}</div>
-        </HorizontalGroup>
+        </Stack>
       </div>
       <Form<AnnotationEditFormDTO>
         onSubmit={onSubmit}
@@ -102,7 +91,7 @@ export const AnnotationEditor2 = ({ annoVals, annoIdx, dismiss, timeZone, ...oth
                   />
                 </Field>
                 <Field label={'Tags'}>
-                  <InputControl
+                  <Controller
                     control={control}
                     name="tags"
                     render={({ field: { ref, onChange, ...field } }) => {
@@ -120,14 +109,14 @@ export const AnnotationEditor2 = ({ annoVals, annoIdx, dismiss, timeZone, ...oth
                 </Field>
               </div>
               <div className={styles.footer}>
-                <HorizontalGroup justify={'flex-end'}>
+                <Stack justifyContent={'flex-end'}>
                   <Button size={'sm'} variant="secondary" onClick={dismiss} fill="outline">
                     Cancel
                   </Button>
                   <Button size={'sm'} type={'submit'} disabled={stateIndicator?.loading}>
                     {stateIndicator?.loading ? 'Saving' : 'Save'}
                   </Button>
-                </HorizontalGroup>
+                </Stack>
               </div>
             </>
           );

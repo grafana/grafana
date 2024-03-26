@@ -405,6 +405,53 @@ func TestAlertmanagerAutogenConfig(t *testing.T) {
 			compare(t, validConfigWithoutAutogen, string(response.Body()))
 		})
 	})
+
+	t.Run("route GET status", func(t *testing.T) {
+		t.Run("when admin return autogen routes", func(t *testing.T) {
+			sut, _ := createSutForAutogen(t)
+
+			rc := createRequestCtxInOrg(2)
+			rc.SignedInUser.OrgRole = org.RoleAdmin
+
+			response := sut.RouteGetAMStatus(rc)
+			require.Equal(t, 200, response.Status())
+
+			var status struct {
+				Config apimodels.PostableApiAlertingConfig `json:"config"`
+			}
+			err := json.Unmarshal(response.Body(), &status)
+			require.NoError(t, err)
+			configBody, err := json.Marshal(apimodels.PostableUserConfig{
+				TemplateFiles:      map[string]string{"a": "template"},
+				AlertmanagerConfig: status.Config,
+			})
+			require.NoError(t, err)
+
+			compare(t, validConfigWithAutogen, string(configBody))
+		})
+
+		t.Run("when not admin return no autogen routes", func(t *testing.T) {
+			sut, _ := createSutForAutogen(t)
+
+			rc := createRequestCtxInOrg(2)
+
+			response := sut.RouteGetAMStatus(rc)
+			require.Equal(t, 200, response.Status())
+
+			var status struct {
+				Config apimodels.PostableApiAlertingConfig `json:"config"`
+			}
+			err := json.Unmarshal(response.Body(), &status)
+			require.NoError(t, err)
+			configBody, err := json.Marshal(apimodels.PostableUserConfig{
+				TemplateFiles:      map[string]string{"a": "template"},
+				AlertmanagerConfig: status.Config,
+			})
+			require.NoError(t, err)
+
+			compare(t, validConfigWithoutAutogen, string(configBody))
+		})
+	})
 }
 
 func TestRouteGetAlertingConfigHistory(t *testing.T) {

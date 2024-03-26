@@ -11,7 +11,7 @@ const addDataSource = () => {
       e2e.components.DataSource.Prometheus.configPage.exemplarsAddButton().click();
       e2e.components.DataSource.Prometheus.configPage.internalLinkSwitch().check({ force: true });
       e2e.components.DataSource.Prometheus.configPage.connectionSettings().type('http://prom-url:9090');
-      e2e.components.DataSourcePicker.inputV2().click().should('have.focus');
+      cy.get('[data-testid="data-testid Data source picker select container"]').click();
 
       cy.contains('gdev-tempo').scrollIntoView().should('be.visible').click();
     },
@@ -69,7 +69,7 @@ describe('Exemplars', () => {
 
     cy.get(`[data-testid="time-series-zoom-to-data"]`).click();
 
-    e2e.components.DataSource.Prometheus.exemplarMarker().first().trigger('mouseover');
+    e2e.components.DataSource.Prometheus.exemplarMarker().first().trigger('mousemove');
     cy.contains('Query with gdev-tempo').click();
     e2e.components.TraceViewer.spanBar().should('have.length', 11);
   });

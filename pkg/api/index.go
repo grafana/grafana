@@ -161,6 +161,7 @@ func (hs *HTTPServer) setIndexViewData(c *contextmodel.ReqContext) (*dtos.IndexV
 	hs.HooksService.RunIndexDataHooks(&data, c)
 
 	data.NavTree.ApplyAdminIA()
+	data.NavTree.ApplyHelpVersion(data.Settings.BuildInfo.VersionString) // RunIndexDataHooks can modify the version string
 	data.NavTree.Sort()
 
 	return &data, nil
@@ -255,7 +256,7 @@ func hashUserIdentifier(identifier string, secret string) string {
 func (hs *HTTPServer) Index(c *contextmodel.ReqContext) {
 	data, err := hs.setIndexViewData(c)
 	if err != nil {
-		c.Handle(hs.Cfg, 500, "Failed to get settings", err)
+		c.Handle(hs.Cfg, http.StatusInternalServerError, "Failed to get settings", err)
 		return
 	}
 	c.HTML(http.StatusOK, "index", data)
@@ -263,17 +264,17 @@ func (hs *HTTPServer) Index(c *contextmodel.ReqContext) {
 
 func (hs *HTTPServer) NotFoundHandler(c *contextmodel.ReqContext) {
 	if c.IsApiRequest() {
-		c.JsonApiErr(404, "Not found", nil)
+		c.JsonApiErr(http.StatusNotFound, "Not found", nil)
 		return
 	}
 
 	data, err := hs.setIndexViewData(c)
 	if err != nil {
-		c.Handle(hs.Cfg, 500, "Failed to get settings", err)
+		c.Handle(hs.Cfg, http.StatusInternalServerError, "Failed to get settings", err)
 		return
 	}
 
-	c.HTML(404, "index", data)
+	c.HTML(http.StatusNotFound, "index", data)
 }
 
 func (hs *HTTPServer) getThemeForIndexData(themePrefId string, themeURLParam string) *pref.ThemeDTO {
