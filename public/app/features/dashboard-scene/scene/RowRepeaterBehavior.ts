@@ -180,8 +180,12 @@ function updateLayout(layout: SceneGridLayout, rows: SceneGridRow[], maxYOfRows:
     const diff = maxYOfRows - firstChildAfterY;
 
     for (const child of childrenAfter) {
-      if (child.state.y! < maxYOfRows) {
-        child.setState({ y: child.state.y! + diff });
+      child.setState({ y: child.state.y! + diff });
+
+      if (child instanceof SceneGridRow) {
+        for (const rowChild of child.state.children) {
+          rowChild.setState({ y: rowChild.state.y! + diff });
+        }
       }
     }
   }

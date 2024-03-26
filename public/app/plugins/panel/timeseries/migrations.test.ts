@@ -155,7 +155,7 @@ describe('Graph Migrations', () => {
 
       panel.options = graphPanelChangedHandler(panel, 'graph', old, prevFieldConfig);
 
-      const layers = dashboardSceneGraph.getDataLayers(scene).state.layers;
+      const layers = dashboardSceneGraph.getDataLayers(scene).state.annotationLayers;
       const annotations = dataLayersToAnnotations(layers);
 
       expect(annotations).toHaveLength(2); // built-in + time region

@@ -751,7 +751,7 @@ function addAnnotationsToDashboard(annotations: AnnotationQuery[]) {
 
   if (scene instanceof DashboardScene) {
     const dataLayers = dashboardSceneGraph.getDataLayers(scene);
-    const layers = [...dataLayers.state.layers];
+    const annotationLayers = [...dataLayers.state.annotationLayers];
 
     for (let annotation of annotations) {
       const newAnnotation = new DashboardAnnotationsDataLayer({
@@ -762,10 +762,10 @@ function addAnnotationsToDashboard(annotations: AnnotationQuery[]) {
         isHidden: annotation.hide,
       });
 
-      layers.push(newAnnotation);
+      annotationLayers.push(newAnnotation);
     }
 
-    dataLayers.setState({ layers });
+    dataLayers.setState({ annotationLayers });
     return;
   }
 

@@ -1,19 +1,9 @@
 import { css, cx } from '@emotion/css';
 import React, { FC, useCallback, useEffect, useMemo, useState } from 'react';
-import { useFieldArray, UseFieldArrayAppend, useFormContext } from 'react-hook-form';
+import { useFieldArray, UseFieldArrayAppend, useFormContext, Controller } from 'react-hook-form';
 
 import { GrafanaTheme2, SelectableValue } from '@grafana/data';
-import {
-  Button,
-  Field,
-  InlineLabel,
-  Input,
-  InputControl,
-  LoadingPlaceholder,
-  Stack,
-  Text,
-  useStyles2,
-} from '@grafana/ui';
+import { Button, Field, InlineLabel, Input, LoadingPlaceholder, Stack, Text, useStyles2 } from '@grafana/ui';
 import { useDispatch } from 'app/types';
 
 import { useUnifiedAlertingSelector } from '../../hooks/useUnifiedAlertingSelector';
@@ -156,7 +146,7 @@ const LabelsWithSuggestions: FC<{ dataSourceName: string }> = ({ dataSourceName 
                     error={errors.labels?.[index]?.key?.message}
                     data-testid={`label-key-${index}`}
                   >
-                    <InputControl
+                    <Controller
                       name={`labels.${index}.key`}
                       control={control}
                       rules={{ required: Boolean(labels[index]?.value) ? 'Required.' : false }}
@@ -183,7 +173,7 @@ const LabelsWithSuggestions: FC<{ dataSourceName: string }> = ({ dataSourceName 
                     error={errors.labels?.[index]?.value?.message}
                     data-testid={`label-value-${index}`}
                   >
-                    <InputControl
+                    <Controller
                       control={control}
                       name={`labels.${index}.value`}
                       rules={{ required: Boolean(labels[index]?.value) ? 'Required.' : false }}

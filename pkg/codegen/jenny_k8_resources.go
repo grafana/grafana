@@ -18,25 +18,20 @@ func (jenny *K8ResourcesJenny) JennyName() string {
 	return "K8ResourcesJenny"
 }
 
-func (jenny *K8ResourcesJenny) Generate(cueFiles []cue.Value) (codejen.Files, error) {
+func (jenny *K8ResourcesJenny) Generate(cueFiles ...SchemaForGen) (codejen.Files, error) {
 	files := make(codejen.Files, 0)
 	for _, val := range cueFiles {
-		pkg, err := getPackageName(val)
+		resource, err := jenny.genResource(val.Name, val.CueFile)
 		if err != nil {
 			return nil, err
 		}
 
-		resource, err := jenny.genResource(pkg, val)
+		metadata, err := jenny.genMetadata(val.Name)
 		if err != nil {
 			return nil, err
 		}
 
-		metadata, err := jenny.genMetadata(pkg)
-		if err != nil {
-			return nil, err
-		}
-
-		status, err := jenny.genStatus(pkg)
+		status, err := jenny.genStatus(val.Name)
 		if err != nil {
 			return nil, err
 		}
@@ -98,15 +93,6 @@ func (jenny *K8ResourcesJenny) genStatus(pkg string) (codejen.File, error) {
 	}
 
 	return *codejen.NewFile(fmt.Sprintf("pkg/kinds/%s/%s_status_gen.go", pkg, pkg), buf.Bytes(), jenny), nil
-}
-
-func getPackageName(val cue.Value) (string, error) {
-	name := val.LookupPath(cue.ParsePath("name"))
-	pkg, err := name.String()
-	if err != nil {
-		return "", fmt.Errorf("file doesn't have name field set: %s", err)
-	}
-	return pkg, nil
 }
 
 func getVersion(val cue.Value) (string, error) {

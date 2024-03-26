@@ -5,7 +5,6 @@ import (
 	"errors"
 
 	"github.com/grafana/grafana/pkg/plugins/auth"
-	"github.com/grafana/grafana/pkg/plugins/config"
 	"github.com/grafana/grafana/pkg/plugins/log"
 	"github.com/grafana/grafana/pkg/plugins/pfs"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
@@ -21,9 +20,9 @@ type Service struct {
 	settingsSvc    pluginsettings.Service
 }
 
-func ProvideService(cfg *config.PluginManagementCfg, reg extsvcauth.ExternalServiceRegistry, settingsSvc pluginsettings.Service) *Service {
+func ProvideService(features featuremgmt.FeatureToggles, reg extsvcauth.ExternalServiceRegistry, settingsSvc pluginsettings.Service) *Service {
 	s := &Service{
-		featureEnabled: cfg.Features.IsEnabledGlobally(featuremgmt.FlagExternalServiceAccounts),
+		featureEnabled: features.IsEnabledGlobally(featuremgmt.FlagExternalServiceAccounts),
 		log:            log.New("plugins.external.registration"),
 		reg:            reg,
 		settingsSvc:    settingsSvc,
@@ -42,8 +41,10 @@ func (s *Service) HasExternalService(ctx context.Context, pluginID string) (bool
 
 // RegisterExternalService is a simplified wrapper around SaveExternalService for the plugin use case.
 func (s *Service) RegisterExternalService(ctx context.Context, pluginID string, pType pfs.Type, svc *pfs.IAM) (*auth.ExternalService, error) {
+	ctxLogger := s.log.FromContext(ctx)
+
 	if !s.featureEnabled {
-		s.log.Warn("Skipping External Service Registration. The feature is behind a feature toggle and needs to be enabled.")
+		ctxLogger.Warn("Skipping External Service Registration. The feature is behind a feature toggle and needs to be enabled.")
 		return nil, nil
 	}
 

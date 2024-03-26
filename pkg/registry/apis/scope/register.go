@@ -1,6 +1,8 @@
 package scope
 
 import (
+	"fmt"
+
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -49,6 +51,22 @@ func (b *ScopeAPIBuilder) InstallSchema(scheme *runtime.Scheme) error {
 		return err
 	}
 
+	err = scheme.AddFieldLabelConversionFunc(
+		scope.ScopeResourceInfo.GroupVersionKind(),
+		func(label, value string) (string, string, error) {
+			fieldSet := SelectableFields(&scope.Scope{})
+			for key := range fieldSet {
+				if label == key {
+					return label, value, nil
+				}
+			}
+			return "", "", fmt.Errorf("field label not supported for %s: %s", scope.ScopeResourceInfo.GroupVersionKind(), label)
+		},
+	)
+	if err != nil {
+		return err
+	}
+
 	// Link this version to the internal representation.
 	// This is used for server-side-apply (PATCH), and avoids the error:
 	//   "no kind is registered for the type"
@@ -68,13 +86,23 @@ func (b *ScopeAPIBuilder) GetAPIGroupInfo(
 ) (*genericapiserver.APIGroupInfo, error) {
 	apiGroupInfo := genericapiserver.NewDefaultAPIGroupInfo(scope.GROUP, scheme, metav1.ParameterCodec, codecs)
 
-	resourceInfo := scope.ScopeResourceInfo
+	scopeResourceInfo := scope.ScopeResourceInfo
+	scopeDashboardResourceInfo := scope.ScopeDashboardResourceInfo
+
 	storage := map[string]rest.Storage{}
-	scopeStorage, err := newStorage(scheme, optsGetter)
+
+	scopeStorage, err := newScopeStorage(scheme, optsGetter)
 	if err != nil {
 		return nil, err
 	}
-	storage[resourceInfo.StoragePath()] = scopeStorage
+	storage[scopeResourceInfo.StoragePath()] = scopeStorage
+
+	scopeDashboardStorage, err := newScopeDashboardStorage(scheme, optsGetter)
+	if err != nil {
+		return nil, err
+	}
+	storage[scopeDashboardResourceInfo.StoragePath()] = scopeDashboardStorage
+
 	apiGroupInfo.VersionedResourcesStorageMap[scope.VERSION] = storage
 	return &apiGroupInfo, nil
 }

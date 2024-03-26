@@ -126,10 +126,11 @@ Configure these options if you select the InfluxQL (classic InfluxDB) query lang
 
 Configure these options if you select the SQL query language:
 
-| Name         | Description                                                                                                                                                                                                                   |
-| ------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Database** | Sets the ID of the bucket to query. Copy this from the Buckets page of the InfluxDB UI.                                                                                                                                       |
-| **Token**    | API token used for SQL queries. It can be generated on InfluxDB Cloud dashboard under [Load Data > API Tokens](https://docs.influxdata.com/influxdb/cloud-serverless/get-started/setup/#create-an-all-access-api-token) menu. |
+| Name                    | Description                                                                                                                                                                                                                   |
+| ----------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Database**            | Sets the ID of the bucket to query. Copy this from the Buckets page of the InfluxDB UI.                                                                                                                                       |
+| **Token**               | API token used for SQL queries. It can be generated on InfluxDB Cloud dashboard under [Load Data > API Tokens](https://docs.influxdata.com/influxdb/cloud-serverless/get-started/setup/#create-an-all-access-api-token) menu. |
+| **Insecure Connection** | Disable gRPC TLS security.                                                                                                                                                                                                    |
 
 ### Configure Flux
 
@@ -203,9 +204,8 @@ datasources:
     access: proxy
     url: http://localhost:8086
     jsonData:
-      version: SQL
-      metadata:
-        - database: <bucket-name>
+      dbName: site
+      httpHeaderName1: 'Authorization'
     secureJsonData:
       httpHeaderValue1: 'Token <token>'
 ```
@@ -216,13 +216,15 @@ datasources:
 apiVersion: 1
 
 datasources:
-  - name: InfluxDB_v2_InfluxQL
+  - name: InfluxDB_v3_InfluxQL
     type: influxdb
     access: proxy
     url: http://localhost:8086
     jsonData:
+      version: SQL
       dbName: site
       httpMode: POST
+      insecureGrpc: false
     secureJsonData:
       token: '<api-token>'
 ```

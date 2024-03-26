@@ -49,9 +49,11 @@ const mapDispatchToProps = {
   updateTimeZoneForSession,
 };
 
-const [useDashNavModelContext, DashNavModalContextProvider] = createStateContext<{ component: React.ReactNode }>({
-  component: null,
-});
+export const [useDashNavModelContext, DashNavModalContextProvider] = createStateContext<{ component: React.ReactNode }>(
+  {
+    component: null,
+  }
+);
 
 export function useDashNavModalController() {
   const [_, setContextState] = useDashNavModelContext();
@@ -62,7 +64,7 @@ export function useDashNavModalController() {
   };
 }
 
-function DashNavModalRoot() {
+export function DashNavModalRoot() {
   const [contextState] = useDashNavModelContext();
 
   return <>{contextState.component}</>;
@@ -177,7 +179,7 @@ export const DashNav = React.memo<Props>((props) => {
   };
 
   const isPlaylistRunning = () => {
-    return playlistSrv.isPlaying;
+    return playlistSrv.state.isPlaying;
   };
 
   const renderLeftActions = () => {
