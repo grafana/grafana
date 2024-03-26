@@ -159,7 +159,7 @@ func (s *RequestConfigProvider) PluginRequestConfig(ctx context.Context, plugin 
 	}
 
 	if plugin.ExternalService != nil {
-		m[backend.PluginAppClientSecret] = plugin.ExternalService.ClientSecret
+		m[backend.AppClientSecret] = plugin.ExternalService.ClientSecret
 	}
 
 	return m

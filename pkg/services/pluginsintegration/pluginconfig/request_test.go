@@ -417,6 +417,6 @@ func TestRequestConfigProvider_PluginRequestConfig_appClientSecret(t *testing.T)
 			ExternalService: &auth.ExternalService{
 				ClientSecret: "mysecret",
 			},
-		}), map[string]string{backend.PluginAppClientSecret: "mysecret"})
+		}), map[string]string{backend.AppClientSecret: "mysecret"})
 	})
 }
