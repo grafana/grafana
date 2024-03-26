@@ -15,6 +15,7 @@ import { CustomScrollbar } from '../CustomScrollbar/CustomScrollbar';
 export interface VizLayoutProps {
   width: number;
   height: number;
+  // JEV: OBSERVATION: the this is actually a legend component, not a legend config
   legend?: React.ReactElement<VizLayoutLegendProps> | null;
   children: (width: number, height: number) => React.ReactNode;
 }

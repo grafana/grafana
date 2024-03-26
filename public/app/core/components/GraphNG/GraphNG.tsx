@@ -36,6 +36,8 @@ export interface GraphNGProps extends Themeable2 {
   height: number;
   timeRange: TimeRange;
   timeZone: TimeZone[] | TimeZone;
+  // JEV: OBSERVATION: this is not a legend, but legend configuration
+  // JEV: OBSERVATION: this prop is unused...
   legend: VizLegendOptions;
   fields?: XYFieldMatchers; // default will assume timeseries data
   renderers?: Renderers;
@@ -209,6 +211,7 @@ export class GraphNG extends Component<GraphNGProps, GraphNGState> {
     }
 
     return (
+      // JEV: REFACTOR: build legend before here?
       <VizLayout width={width} height={height} legend={renderLegend(config)}>
         {(vizWidth: number, vizHeight: number) => (
           <UPlotChart

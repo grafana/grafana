@@ -98,6 +98,7 @@ export const TimeSeriesPanel = ({
     );
   }
 
+  // JEV: QUESTION: are these comments necessary?
   // which annotation are we editing?
   // are we adding a new annotation? is annotating?
   // console.log(data.annotations);
@@ -114,6 +115,7 @@ export const TimeSeriesPanel = ({
       timeZone={timezones}
       width={width}
       height={height}
+      // JEV: OBSERVATION: this is not a legend, but a legend configuration
       legend={options.legend}
       options={options}
       replaceVariables={replaceVariables}
