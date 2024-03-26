@@ -11,9 +11,10 @@ import (
 	"github.com/grafana/grafana/pkg/services/temp_user/tempusertest"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/services/user/usertest"
+	"github.com/grafana/grafana/pkg/setting"
 )
 
-func TestVerifier_VerifyEmail(t *testing.T) {
+func TestVerifier_Start(t *testing.T) {
 	ts := &tempusertest.FakeTempUserService{}
 	us := &usertest.FakeUserService{}
 	ns := notifications.MockNotificationService()
@@ -24,10 +25,10 @@ func TestVerifier_VerifyEmail(t *testing.T) {
 		updateCalled bool
 	}
 
-	verifier := ProvideVerifier(us, ts, ns)
+	verifier := ProvideVerifier(setting.NewCfg(), us, ts, ns)
 	t.Run("should error if email already exist for other user", func(t *testing.T) {
 		us.ExpectedUser = &user.User{ID: 1}
-		err := verifier.VerifyEmail(context.Background(), user.VerifyEmailCommand{
+		err := verifier.Start(context.Background(), user.StartVerifyEmailCommand{
 			User:   user.User{ID: 2},
 			Email:  "some@email.com",
 			Action: user.EmailUpdateAction,
@@ -59,7 +60,7 @@ func TestVerifier_VerifyEmail(t *testing.T) {
 			c.updateCalled = true
 			return nil
 		}
-		err := verifier.VerifyEmail(context.Background(), user.VerifyEmailCommand{
+		err := verifier.Start(context.Background(), user.StartVerifyEmailCommand{
 			User:   user.User{ID: 2},
 			Email:  "some@email.com",
 			Action: user.EmailUpdateAction,
@@ -94,7 +95,7 @@ func TestVerifier_VerifyEmail(t *testing.T) {
 			c.updateCalled = true
 			return nil
 		}
-		err := verifier.VerifyEmail(context.Background(), user.VerifyEmailCommand{
+		err := verifier.Start(context.Background(), user.StartVerifyEmailCommand{
 			User:   user.User{ID: 2},
 			Email:  "some@email.com",
 			Action: user.EmailUpdateAction,
