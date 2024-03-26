@@ -174,7 +174,7 @@ export class GraphNG extends Component<GraphNGProps, GraphNGState> {
   }
 
   componentDidUpdate(prevProps: GraphNGProps) {
-    const { frames, structureRev, timeZone, cursorSync = DashboardCursorSync.Off, propsToDiff } = this.props;
+    const { frames, structureRev, timeZone, cursorSync, propsToDiff } = this.props;
 
     const propsChanged = !sameProps(prevProps, this.props, propsToDiff);
 
