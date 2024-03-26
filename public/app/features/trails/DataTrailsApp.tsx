@@ -10,6 +10,7 @@ import { Page } from 'app/core/components/Page/Page';
 
 import { DataTrail } from './DataTrail';
 import { DataTrailsHome } from './DataTrailsHome';
+import { MetricsHeader } from './MetricsHeader';
 import { getTrailStore } from './TrailStore/TrailStore';
 import { HOME_ROUTE, TRAILS_ROUTE } from './shared';
 import { getMetricName, getUrlForTrail, newMetricsTrail } from './utils';
@@ -39,10 +40,13 @@ export class DataTrailsApp extends SceneObjectBase<DataTrailsAppState> {
           exact={true}
           path={HOME_ROUTE}
           render={() => (
-            <Page navId="explore/metrics" layout={PageLayoutType.Custom}>
-              <div className={styles.customPage}>
-                <home.Component model={home} />
-              </div>
+            <Page
+              navId="explore/metrics"
+              layout={PageLayoutType.Standard}
+              renderTitle={() => <MetricsHeader />}
+              subTitle=""
+            >
+              <home.Component model={home} />
             </Page>
           )}
         />
