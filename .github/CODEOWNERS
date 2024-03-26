@@ -46,7 +46,6 @@
 /docs/sources/fundamentals                                                        @chri2547
 /docs/sources/getting-started/                                                    @chri2547
 /docs/sources/introduction/                                                       @chri2547
-/docs/sources/old-alerting/                                                       @brendamuir
 /docs/sources/panels-visualizations/                                              @imatwawana
 /docs/sources/release-notes/                                                      @Eve832 @GrafanaWriter
 /docs/sources/setup-grafana/                                                      @chri2547
@@ -105,6 +104,7 @@
 /pkg/server/ @grafana/backend-platform
 /pkg/apiserver @grafana/grafana-app-platform-squad
 /pkg/apimachinery @grafana/grafana-app-platform-squad
+/pkg/promlib @grafana/observability-metrics
 /pkg/services/annotations/ @grafana/backend-platform
 /pkg/services/apikey/ @grafana/identity-access-team
 /pkg/services/cleanup/ @grafana/backend-platform
@@ -171,8 +171,8 @@
 
 /devenv/bulk-dashboards/ @grafana/dashboards-squad
 /devenv/bulk-folders/ @grafana/grafana-frontend-platform
-/devenv/bulk_alerting_dashboards/ @grafana/alerting-backend-product
 /devenv/create_docker_compose.sh @grafana/backend-platform
+/devenv/alert_rules.yaml @grafana/alerting-backend-product
 /devenv/dashboards.yaml @grafana/dashboards-squad
 /devenv/datasources.yaml @grafana/backend-platform
 /devenv/datasources_docker.yaml @grafana/backend-platform
@@ -283,7 +283,6 @@
 # Alerting
 /pkg/services/ngalert/ @grafana/alerting-backend-product
 /pkg/services/sqlstore/migrations/ualert/ @grafana/alerting-backend-product
-/pkg/services/alerting/ @grafana/alerting-backend-product
 /pkg/tests/api/alerting/ @grafana/alerting-backend-product
 /public/app/features/alerting/ @grafana/alerting-frontend
 
@@ -350,6 +349,8 @@
 # root files, mostly frontend
 /.browserslistrc @grafana/frontend-ops
 /package.json @grafana/frontend-ops
+/nx.json @grafana/frontend-ops
+/project.json @grafana/frontend-ops
 /tsconfig.json @grafana/frontend-ops
 /.editorconfig @grafana/frontend-ops
 /.eslintignore @grafana/frontend-ops
@@ -388,7 +389,7 @@ playwright.config.ts @grafana/plugins-platform-frontend
 /public/app/features/admin/ @grafana/identity-access-team
 
 # Temp owners until Enterprise team takes over
-/public/app/features/admin/migrate-to-cloud @grafana/grafana-frontend-platform
+/public/app/features/migrate-to-cloud @grafana/grafana-frontend-platform
 
 /public/app/features/auth-config/ @grafana/identity-access-team
 /public/app/features/annotations/ @grafana/dashboards-squad
@@ -434,7 +435,6 @@ playwright.config.ts @grafana/plugins-platform-frontend
 /public/app/features/transformers/timeSeriesTable/ @grafana/dataviz-squad @grafana/app-o11y-visualizations
 /public/app/features/users/ @grafana/identity-access-team
 /public/app/features/variables/ @grafana/dashboards-squad
-/public/app/plugins/panel/alertGroups/ @grafana/alerting-frontend
 /public/app/plugins/panel/alertlist/ @grafana/alerting-frontend
 /public/app/plugins/panel/annolist/ @grafana/grafana-frontend-platform
 /public/app/plugins/panel/barchart/ @grafana/dataviz-squad
@@ -535,7 +535,7 @@ playwright.config.ts @grafana/plugins-platform-frontend
 /scripts/generate-icon-bundle.js @grafana/plugins-platform-frontend @grafana/grafana-frontend-platform
 /scripts/levitate-parse-json-report.js @grafana/plugins-platform-frontend
 
-/scripts/docs/generate-transformations* @grafana/dataviz-squad
+/scripts/**/generate-transformations* @grafana/dataviz-squad
 /scripts/webpack/ @grafana/frontend-ops
 /scripts/generate-a11y-report.sh @grafana/grafana-frontend-platform
 .pa11yci.conf.js @grafana/grafana-frontend-platform
@@ -610,11 +610,13 @@ playwright.config.ts @grafana/plugins-platform-frontend
 /pkg/services/supportbundles/ @grafana/identity-access-team
 
 # Grafana Operator Experience Team
-/pkg/infra/httpclient/httpclientprovider/sigv4_middleware.go @grafana/grafana-operator-experience-squad
-/pkg/infra/httpclient/httpclientprovider/sigv4_middleware_test.go @grafana/grafana-operator-experience-squad
 /pkg/services/caching/ @grafana/grafana-operator-experience-squad
-/pkg/services/featuremgmt/ @grafana/grafana-operator-experience-squad
 /pkg/services/cloudmigration/ @grafana/grafana-operator-experience-squad
+/pkg/services/gcom/ @grafana/grafana-operator-experience-squad
+
+# Feature toggles
+/pkg/services/featuremgmt/ @grafana/grafana-backend-services-squad
+
 
 # Kind definitions
 /kinds/dashboard @grafana/dashboards-squad
@@ -623,12 +625,12 @@ playwright.config.ts @grafana/plugins-platform-frontend
 # Kind system and code generation
 embed.go @grafana/grafana-as-code
 /pkg/kinds/ @grafana/grafana-as-code
-/pkg/cuectx/ @grafana/grafana-as-code
 /pkg/registry/ @grafana/grafana-as-code
 /pkg/registry/apis/ @grafana/grafana-app-platform-squad
 /pkg/codegen/ @grafana/grafana-as-code
+/pkg/codegen/generators @grafana/grafana-as-code
 /pkg/kinds/*/*_gen.go @grafana/grafana-as-code
-/pkg/registry/corekind/ @grafana/grafana-as-code
+/pkg/registry/schemas/ @grafana/grafana-as-code
 /public/app/plugins/*gen.go @grafana/grafana-as-code
 /cue.mod/ @grafana/grafana-as-code
 
@@ -684,14 +686,15 @@ embed.go @grafana/grafana-as-code
 /.github/workflows/publish-kinds-release.yml @grafana/platform-cat
 /.github/workflows/verify-kinds.yml @grafana/platform-cat
 /.github/workflows/dashboards-issue-add-label.yml @grafana/dashboards-squad
-/.github/workflows/ephemeral-instances-pr-comment.yml @grafana/grafana-operator-experience-squad
-/.github/workflows/ephemeral-instances-pr-opened-closed.yml @grafana/grafana-operator-experience-squad
+/.github/workflows/ephemeral-instances-pr-comment.yml @grafana/grafana-backend-services-squad
+/.github/workflows/ephemeral-instances-pr-opened-closed.yml @grafana/grafana-backend-services-squad
 /.github/workflows/create-security-patch-from-security-mirror.yml @grafana/grafana-release-guild
 /.github/workflows/core-plugins-build-and-release.yml @grafana/plugins-platform-frontend @grafana/plugins-platform-backend
 /.github/workflows/i18n-crowdin-upload.yml @grafana/grafana-frontend-platform
 /.github/workflows/i18n-crowdin-download.yml @grafana/grafana-frontend-platform
 /.github/workflows/feature-toggle-cleanup.yml @tolzhabayev
 /.github/workflows/scripts/feature-toggle-cleanup/feature-toggle-cleanup.js @tolzhabayev
+/.github/workflows/pr-go-workspace-check.yml @grafana/grafana-app-platform-squad
 
 # Generated files not requiring owner approval
 /packages/grafana-data/src/types/featureToggles.gen.ts @grafanabot
@@ -709,5 +712,4 @@ embed.go @grafana/grafana-as-code
 /conf/provisioning/alerting/ @grafana/alerting-backend-product
 /conf/provisioning/dashboards/ @grafana/dashboards-squad
 /conf/provisioning/datasources/ @grafana/plugins-platform-backend
-/conf/provisioning/notifiers/ @bergquist
 /conf/provisioning/plugins/ @grafana/plugins-platform-backend

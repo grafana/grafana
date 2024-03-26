@@ -2,6 +2,9 @@ import { lastValueFrom } from 'rxjs';
 
 import { defaultDashboard } from '@grafana/schema';
 import { DashboardModel } from 'app/features/dashboard/state';
+import { DashboardGridItem } from 'app/features/dashboard-scene/scene/DashboardGridItem';
+import { LibraryVizPanel } from 'app/features/dashboard-scene/scene/LibraryVizPanel';
+import { vizPanelToPanel } from 'app/features/dashboard-scene/serialization/transformSceneToSaveModel';
 
 import { getBackendSrv } from '../../../core/services/backend_srv';
 import { DashboardSearchItem } from '../../search/types';
@@ -132,4 +135,48 @@ export async function getConnectedDashboards(uid: string): Promise<DashboardSear
   const searchHits = await getBackendSrv().search({ dashboardUIDs: connections.map((c) => c.connectionUid) });
 
   return searchHits;
+}
+
+export function libraryVizPanelToSaveModel(libraryPanel: LibraryVizPanel) {
+  const { panel, uid, name, _loadedPanel } = libraryPanel.state;
+
+  const gridItem = libraryPanel.parent;
+
+  if (!gridItem || !(gridItem instanceof DashboardGridItem)) {
+    throw new Error('LibraryVizPanel must be a child of DashboardGridItem');
+  }
+
+  const saveModel = {
+    uid,
+    folderUID: _loadedPanel?.folderUid,
+    name,
+    version: _loadedPanel?.version || 0,
+    model: vizPanelToPanel(
+      panel!,
+      {
+        x: gridItem.state.x ?? 0,
+        y: gridItem.state.y ?? 0,
+        w: gridItem.state.width ?? 0,
+        h: gridItem.state.height ?? 0,
+      },
+      false,
+      gridItem
+    ),
+    kind: LibraryElementKind.Panel,
+  };
+  return saveModel;
+}
+
+export async function updateLibraryVizPanel(libraryPanel: LibraryVizPanel): Promise<LibraryElementDTO> {
+  const { uid, folderUID, name, model, version, kind } = libraryVizPanelToSaveModel(libraryPanel);
+
+  console.log('updateLibraryVizPanel', model);
+  const { result } = await getBackendSrv().patch(`/api/library-elements/${uid}`, {
+    folderUID,
+    name,
+    model,
+    version,
+    kind,
+  });
+  return result;
 }

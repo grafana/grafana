@@ -3,6 +3,8 @@
 // Then run tests in:
 //  pkg/services/featuremgmt/toggles_gen_test.go
 // twice to generate and validate the feature flag files
+//
+// Alternatively, use `make gen-feature-toggles`
 
 package featuremgmt
 
@@ -62,6 +64,13 @@ var (
 			HideFromAdminPage: true,
 		},
 		{
+			Name:         "publicDashboardsScene",
+			Description:  "Enables public dashboard rendering using scenes",
+			Stage:        FeatureStageExperimental,
+			FrontendOnly: true,
+			Owner:        grafanaSharingSquad,
+		},
+		{
 			Name:        "lokiExperimentalStreaming",
 			Description: "Support new streaming approach for loki (prototype, needs special loki build)",
 			Stage:       FeatureStageExperimental,
@@ -73,12 +82,6 @@ var (
 			Stage:          FeatureStageGeneralAvailability,
 			Owner:          grafanaAsCodeSquad,
 			AllowSelfServe: true,
-		},
-		{
-			Name:        "migrationLocking",
-			Description: "Lock database during migrations",
-			Stage:       FeatureStagePublicPreview,
-			Owner:       grafanaBackendPlatformSquad,
 		},
 		{
 			Name:        "storage",
@@ -146,6 +149,13 @@ var (
 		{
 			Name:         "autoMigrateStatPanel",
 			Description:  "Migrate old stat panel to supported stat panel - broken out from autoMigrateOldPanels to enable granular tracking",
+			Stage:        FeatureStagePublicPreview,
+			FrontendOnly: true,
+			Owner:        grafanaDatavizSquad,
+		},
+		{
+			Name:         "autoMigrateXYChartPanel",
+			Description:  "Migrate old XYChart panel to new XYChart2 model",
 			Stage:        FeatureStagePublicPreview,
 			FrontendOnly: true,
 			Owner:        grafanaDatavizSquad,
@@ -234,23 +244,6 @@ var (
 			AllowSelfServe: true,
 		},
 		{
-			Name:           "redshiftAsyncQueryDataSupport",
-			Description:    "Enable async query data support for Redshift",
-			Stage:          FeatureStageGeneralAvailability,
-			Expression:     "true", // enabled by default
-			Owner:          awsDatasourcesSquad,
-			AllowSelfServe: false,
-		},
-		{
-			Name:           "athenaAsyncQueryDataSupport",
-			Description:    "Enable async query data support for Athena",
-			Stage:          FeatureStageGeneralAvailability,
-			Expression:     "true", // enabled by default
-			FrontendOnly:   true,
-			Owner:          awsDatasourcesSquad,
-			AllowSelfServe: false,
-		},
-		{
 			Name:        "showDashboardValidationWarnings",
 			Description: "Show warnings when dashboards do not validate against the schema",
 			Stage:       FeatureStageExperimental,
@@ -272,8 +265,9 @@ var (
 		{
 			Name:        "nestedFolders",
 			Description: "Enable folder nesting",
-			Stage:       FeatureStagePublicPreview,
+			Stage:       FeatureStageGeneralAvailability,
 			Owner:       grafanaBackendPlatformSquad,
+			Expression:  "true", // enabled by default
 		},
 		{
 			Name:           "nestedFolderPicker",
@@ -515,22 +509,6 @@ var (
 			Owner:        grafanaObservabilityLogsSquad,
 		},
 		{
-			Name:           "cloudWatchLogsMonacoEditor",
-			Description:    "Enables the Monaco editor for CloudWatch Logs queries",
-			Stage:          FeatureStageGeneralAvailability,
-			FrontendOnly:   true,
-			Expression:     "true", // enabled by default
-			Owner:          awsDatasourcesSquad,
-			AllowSelfServe: true,
-		},
-		{
-			Name:         "exploreScrollableLogsContainer",
-			Description:  "Improves the scrolling behavior of logs in Explore",
-			Stage:        FeatureStageExperimental,
-			FrontendOnly: true,
-			Owner:        grafanaObservabilityLogsSquad,
-		},
-		{
 			Name:           "recordedQueriesMulti",
 			Description:    "Enables writing multiple items from a single query within Recorded Queries",
 			Stage:          FeatureStageGeneralAvailability,
@@ -541,9 +519,10 @@ var (
 		{
 			Name:         "pluginsDynamicAngularDetectionPatterns",
 			Description:  "Enables fetching Angular detection patterns for plugins from GCOM and fallback to hardcoded ones",
-			Stage:        FeatureStageExperimental,
+			Stage:        FeatureStageGeneralAvailability,
 			FrontendOnly: false,
 			Owner:        grafanaPluginsPlatformSquad,
+			Expression:   "true", // enabled by default
 		},
 		{
 			Name:         "vizAndWidgetSplit",
@@ -592,7 +571,7 @@ var (
 		{
 			Name:         "traceQLStreaming",
 			Description:  "Enables response streaming of TraceQL queries of the Tempo data source",
-			Stage:        FeatureStageExperimental,
+			Stage:        FeatureStageGeneralAvailability,
 			FrontendOnly: true,
 			Owner:        grafanaObservabilityTracesAndProfilingSquad,
 		},
@@ -687,9 +666,10 @@ var (
 		{
 			Name:         "dashgpt",
 			Description:  "Enable AI powered features in dashboards",
-			Stage:        FeatureStagePublicPreview,
+			Stage:        FeatureStageGeneralAvailability,
 			FrontendOnly: true,
 			Owner:        grafanaDashboardsSquad,
+			Expression:   "true", // enabled by default
 		},
 		{
 			Name:         "aiGeneratedDashboardChanges",
@@ -762,14 +742,6 @@ var (
 			Description: "Generate signed id token for identity that can be forwarded to plugins and external services",
 			Stage:       FeatureStageExperimental,
 			Owner:       identityAccessTeam,
-		},
-		{
-			Name:           "cloudWatchWildCardDimensionValues",
-			Description:    "Fetches dimension values from CloudWatch to correctly label wildcard dimensions",
-			Stage:          FeatureStageGeneralAvailability,
-			Expression:     "true", // enabled by default
-			Owner:          awsDatasourcesSquad,
-			AllowSelfServe: true,
 		},
 		{
 			Name:              "externalServiceAccounts",
@@ -883,9 +855,10 @@ var (
 		{
 			Name:            "managedPluginsInstall",
 			Description:     "Install managed plugins directly from plugins catalog",
-			Stage:           FeatureStagePublicPreview,
+			Stage:           FeatureStageGeneralAvailability,
 			RequiresDevMode: false,
 			Owner:           grafanaPluginsPlatformSquad,
+			Expression:      "true", // enabled by default
 		},
 		{
 			Name:         "prometheusPromQAIL",
@@ -921,9 +894,10 @@ var (
 		},
 		{
 			Name:            "annotationPermissionUpdate",
-			Description:     "Separate annotation permissions from dashboard permissions to allow for more granular control.",
-			Stage:           FeatureStageExperimental,
+			Description:     "Change the way annotation permissions work by scoping them to folders and dashboards.",
+			Stage:           FeatureStageGeneralAvailability,
 			RequiresDevMode: false,
+			Expression:      "true", // enabled by default
 			Owner:           identityAccessTeam,
 		},
 		{
@@ -999,14 +973,6 @@ var (
 			Owner:        grafanaObservabilityTracesAndProfilingSquad,
 		},
 		{
-			Name:         "alertingDetailsViewV2",
-			Description:  "Enables the preview of the new alert details view",
-			Stage:        FeatureStageExperimental,
-			FrontendOnly: true,
-			Owner:        grafanaAlertingSquad,
-			HideFromDocs: true,
-		},
-		{
 			Name:         "datatrails",
 			Description:  "Enables the new core app datatrails",
 			Stage:        FeatureStageExperimental,
@@ -1017,9 +983,10 @@ var (
 		{
 			Name:         "alertingSimplifiedRouting",
 			Description:  "Enables users to easily configure alert notifications by specifying a contact point directly when editing or creating an alert rule",
-			Stage:        FeatureStagePublicPreview,
+			Stage:        FeatureStageGeneralAvailability,
 			FrontendOnly: false,
 			Owner:        grafanaAlertingSquad,
+			Expression:   "true", // enabled by default
 		},
 		{
 			Name:         "logRowsPopoverMenu",
@@ -1070,21 +1037,13 @@ var (
 			HideFromAdminPage: true,
 		},
 		{
-			Name:            "alertingPreviewUpgrade",
-			Description:     "Show Unified Alerting preview and upgrade page in legacy alerting",
-			FrontendOnly:    false,
-			Stage:           FeatureStageGeneralAvailability,
-			Owner:           grafanaAlertingSquad,
-			RequiresRestart: true,
-			Expression:      "true", // enabled by default
-		},
-		{
 			Name:            "enablePluginsTracingByDefault",
 			Description:     "Enable plugin tracing for all external plugins",
 			FrontendOnly:    false,
-			Stage:           FeatureStageExperimental,
+			Stage:           FeatureStageGeneralAvailability,
 			Owner:           grafanaPluginsPlatformSquad,
 			RequiresRestart: true,
+			Expression:      "true", // enabled by default
 		},
 		{
 			Name:            "cloudRBACRoles",
@@ -1161,8 +1120,8 @@ var (
 		},
 		{
 			Name:        "newPDFRendering",
-			Description: "New implementation for the dashboard to PDF rendering",
-			Stage:       FeatureStageExperimental,
+			Description: "New implementation for the dashboard-to-PDF rendering",
+			Stage:       FeatureStagePublicPreview,
 			Owner:       grafanaSharingSquad,
 		},
 		{
@@ -1197,15 +1156,6 @@ var (
 			Expression:   "true", // enabled by default
 		},
 		{
-			Name:            "alertingUpgradeDryrunOnStart",
-			Description:     "When activated in legacy alerting mode, this initiates a dry-run of the Unified Alerting upgrade during each startup. It logs any issues detected without implementing any actual changes.",
-			FrontendOnly:    false,
-			Stage:           FeatureStageGeneralAvailability,
-			Owner:           grafanaAlertingSquad,
-			RequiresRestart: true,
-			Expression:      "true", // enabled by default
-		},
-		{
 			Name:              "scopeFilters",
 			Description:       "Enables the use of scope filters in Grafana",
 			FrontendOnly:      false,
@@ -1213,6 +1163,29 @@ var (
 			Owner:             grafanaDashboardsSquad,
 			RequiresRestart:   false,
 			AllowSelfServe:    false,
+			HideFromDocs:      true,
+			HideFromAdminPage: true,
+		},
+		{
+			Name:              "ssoSettingsSAML",
+			Description:       "Use the new SSO Settings API to configure the SAML connector",
+			Stage:             FeatureStageExperimental,
+			Owner:             identityAccessTeam,
+			HideFromDocs:      true,
+			HideFromAdminPage: true,
+		},
+		{
+			Name:         "usePrometheusFrontendPackage",
+			Description:  "Use the @grafana/prometheus frontend package in core Prometheus.",
+			Stage:        FeatureStageExperimental,
+			FrontendOnly: true,
+			Owner:        grafanaObservabilityMetricsSquad,
+		},
+		{
+			Name:              "oauthRequireSubClaim",
+			Description:       "Require that sub claims is present in oauth tokens.",
+			Stage:             FeatureStageExperimental,
+			Owner:             identityAccessTeam,
 			HideFromDocs:      true,
 			HideFromAdminPage: true,
 		},

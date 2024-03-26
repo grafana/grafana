@@ -97,7 +97,7 @@ async function fetchDashboard(
           }
         }
 
-        if (args.fixUrl && dashDTO.meta.url && !playlistSrv.isPlaying) {
+        if (args.fixUrl && dashDTO.meta.url && !playlistSrv.state.isPlaying) {
           // check if the current url is correct (might be old slug)
           const dashboardUrl = locationUtil.stripBaseFromUrl(dashDTO.meta.url);
           const currentPath = locationService.getLocation().pathname;
@@ -249,7 +249,9 @@ export function initDashboard(args: InitDashboardArgs): ThunkResult<void> {
         dashboard.autoFitPanels(window.innerHeight, queryParams.kiosk);
       }
 
-      args.keybindingSrv.setupDashboardBindings(dashboard);
+      if (!config.publicDashboardAccessToken) {
+        args.keybindingSrv.setupDashboardBindings(dashboard);
+      }
     } catch (err) {
       if (err instanceof Error) {
         dispatch(notifyApp(createErrorNotification('Dashboard init failed', err)));

@@ -148,20 +148,6 @@ Options are `production` and `development`. Default is `production`. _Do not_ ch
 Set the name of the grafana-server instance. Used in logging, internal metrics, and clustering info. Defaults to: `${HOSTNAME}`, which will be replaced with
 environment variable `HOSTNAME`, if that is empty or does not exist Grafana will try to use system calls to get the machine name.
 
-## force_migration
-
-{{% admonition type="note" %}}
-This option is deprecated - [See `clean_upgrade` option]({{< relref "#clean_upgrade" >}}) instead.
-{{% /admonition %}}
-
-When you restart Grafana to rollback from Grafana Alerting to legacy alerting, delete any existing Grafana Alerting data, such as alert rules, contact points, and notification policies. Default is `false`.
-
-If `false` or unset, existing Grafana Alerting data is not changed or deleted when rolling back to legacy alerting.
-
-{{% admonition type="note" %}}
-It should be kept false or unset when not needed, as it may cause unintended data loss if left enabled.
-{{% /admonition %}}
-
 <hr />
 
 ## [paths]
@@ -286,6 +272,17 @@ Path to the certificate file (if `protocol` is set to `https` or `h2`).
 
 Path to the certificate key file (if `protocol` is set to `https` or `h2`).
 
+### certs_watch_interval
+
+Controls whether `cert_key` and `cert_file` are periodically watched for changes.
+Disabled, by default. When enabled, `cert_key` and `cert_file`
+are watched for changes. If there is change, the new certificates are loaded automatically.
+
+{{% admonition type="warning" %}}
+After the new certificates are loaded, connections with old certificates
+will not work. You must reload the connections to the old certs for them to work.
+{{% /admonition %}}
+
 ### socket_gid
 
 GID where the socket should be set when `protocol=socket`.
@@ -375,9 +372,13 @@ The maximum number of open connections to the database. For MYSQL, configure thi
 
 Sets the maximum amount of time a connection may be reused. The default is 14400 (which means 14400 seconds or 4 hours). For MySQL, this setting should be shorter than the [`wait_timeout`](https://dev.mysql.com/doc/refman/5.7/en/server-system-variables.html#sysvar_wait_timeout) variable.
 
+### migration_locking
+
+Set to `false` to disable database locking during the migrations. Default is true.
+
 ### locking_attempt_timeout_sec
 
-For "mysql", if the `migrationLocking` feature toggle is set, specify the time (in seconds) to wait before failing to lock the database for the migrations. Default is 0.
+For "mysql" and "postgres" only. Specify the time (in seconds) to wait before failing to lock the database for the migrations. Default is 0.
 
 ### log_queries
 
@@ -387,6 +388,10 @@ Set to `true` to log the sql calls and execution times.
 
 For Postgres, use use any [valid libpq `sslmode`](https://www.postgresql.org/docs/current/libpq-ssl.html#LIBPQ-SSL-SSLMODE-STATEMENTS), e.g.`disable`, `require`, `verify-full`, etc.
 For MySQL, use either `true`, `false`, or `skip-verify`.
+
+### ssl_sni
+
+For Postgres, set to `0` to disable [Server Name Indication](https://www.postgresql.org/docs/current/libpq-connect.html#LIBPQ-CONNECT-SSLSNI). This is enabled by default on SSL-enabled connections.
 
 ### isolation_level
 
@@ -707,7 +712,6 @@ The core features that depend on angular are:
 
 - Old graph panel
 - Old table panel
-- Legacy alerting edit rule UI
 
 These features each have supported alternatives, and we recommend using them.
 
@@ -835,6 +839,10 @@ The available options are `Viewer` (default), `Admin`, `Editor`, and `None`. For
 
 Require email validation before sign up completes or when updating a user email address. Default is `false`.
 
+### login_default_org_id
+
+Set the default organization for users when they sign in. The default is `-1`.
+
 ### login_hint
 
 Text used as placeholder text on login page for login/username input.
@@ -945,10 +953,10 @@ Administrators can increase this if they experience OAuth login state mismatch e
 ### oauth_skip_org_role_update_sync
 
 {{% admonition type="note" %}}
-This option is deprecated in favor of OAuth provider specific `skip_org_role_sync` settings. The following sections explain settings for each provider.
+This option is removed from G11 in favor of OAuth provider specific `skip_org_role_sync` settings. The following sections explain settings for each provider.
 {{% /admonition %}}
 
-If you want to change the `oauth_skip_org_role_update_sync` setting to `false`, then for each provider you have set up, use the `skip_org_role_sync` setting to specify whether you want to skip the synchronization.
+If you want to change the `oauth_skip_org_role_update_sync` setting from `true` to `false`, then each provider you have set up, use the `skip_org_role_sync` setting to specify whether you want to skip the synchronization.
 
 {{% admonition type="warning" %}}
 Currently if no organization role mapping is found for a user, Grafana doesn't update the user's organization role.
@@ -1208,6 +1216,12 @@ Allows to set a custom path to the projected service account token file.
 Specifies whether user identity authentication (on behalf of currently signed-in user) should be enabled in datasources that support it (requires AAD authentication).
 
 Disabled by default, needs to be explicitly enabled.
+
+### user_identity_fallback_credentials_enabled
+
+Specifies whether user identity authentication fallback credentials should be enabled in data sources. Enabling this allows data source creators to provide fallback credentials for backend-initiated requests, such as alerting, recorded queries, and so on.
+
+It is by default and needs to be explicitly disabled. It will not have any effect if user identity authentication is disabled.
 
 ### user_identity_token_url
 
@@ -1520,9 +1534,9 @@ For more information about the Grafana alerts, refer to [About Grafana Alerting]
 
 ### enabled
 
-Enable or disable Grafana Alerting. If disabled, all your legacy alerting data will be available again. The default value is `true`.
+Enable or disable Grafana Alerting. The default value is `true`.
 
-Alerting Rules migrated from dashboards and panels will include a link back via the `annotations`.
+Alerting rules migrated from dashboards and panels will include a link back via the `annotations`.
 
 ### disabled_orgs
 
@@ -1671,22 +1685,6 @@ Configures for how long alert annotations are stored. Default is 0, which keeps 
 ### max_annotations_to_keep
 
 Configures max number of alert annotations that Grafana stores. Default value is 0, which keeps all alert annotations.
-
-<hr>
-
-## [unified_alerting.upgrade]
-
-For more information about upgrading to Grafana Alerting, refer to [Upgrade Alerting](/docs/grafana/next/alerting/set-up/migrating-alerts/).
-
-### clean_upgrade
-
-When you restart Grafana to upgrade from legacy alerting to Grafana Alerting, delete any existing Grafana Alerting data from a previous upgrade, such as alert rules, contact points, and notification policies. Default is `false`.
-
-If `false` or unset, existing Grafana Alerting data is not changed or deleted when you switch between legacy and Unified Alerting.
-
-{{% admonition type="note" %}}
-It should be kept false when not needed, as it may cause unintended data loss if left enabled.
-{{% /admonition %}}
 
 <hr>
 

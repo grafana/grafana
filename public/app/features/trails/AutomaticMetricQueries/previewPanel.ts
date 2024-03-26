@@ -8,12 +8,13 @@ import { getColorByIndex } from '../utils';
 
 import { getAutoQueriesForMetric } from './AutoQueryEngine';
 
-export function getPreviewPanelFor(metric: string, index: number, currentFilterCount: number) {
+export function getPreviewPanelFor(metric: string, index: number, currentFilterCount: number, description?: string) {
   const autoQuery = getAutoQueriesForMetric(metric);
 
   const vizPanel = autoQuery.preview
     .vizBuilder()
     .setColor({ mode: 'fixed', fixedColor: getColorByIndex(index) })
+    .setDescription(description)
     .setHeaderActions(new SelectMetricAction({ metric, title: 'Select' }))
     .build();
 
@@ -37,7 +38,7 @@ export function getPreviewPanelFor(metric: string, index: number, currentFilterC
 
 function convertPreviewQueriesToIgnoreUsage(query: PromQuery, currentFilterCount: number) {
   // If there are filters, we append to the list. Otherwise, we replace the empty list.
-  const replacement = currentFilterCount > 0 ? "${filters},__ignore_usage__=''" : "__ignore_usage__=''";
+  const replacement = currentFilterCount > 0 ? '${filters},__ignore_usage__=""' : '__ignore_usage__=""';
 
   const expr = query.expr?.replace('${filters}', replacement);
 

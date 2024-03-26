@@ -59,6 +59,14 @@ func (authz *AuthService) Authorize(ctx context.Context, orgID int64, query *ann
 	var visibleDashboards map[string]int64
 	var err error
 	if canAccessDashAnnotations {
+		if query.AnnotationID != 0 {
+			annotationDashboardID, err := authz.getAnnotationDashboard(ctx, query, orgID)
+			if err != nil {
+				return nil, ErrAccessControlInternal.Errorf("failed to fetch annotations: %w", err)
+			}
+			query.DashboardID = annotationDashboardID
+		}
+
 		visibleDashboards, err = authz.dashboardsWithVisibleAnnotations(ctx, query, orgID)
 		if err != nil {
 			return nil, ErrAccessControlInternal.Errorf("failed to fetch dashboards: %w", err)
@@ -70,6 +78,32 @@ func (authz *AuthService) Authorize(ctx context.Context, orgID int64, query *ann
 		CanAccessDashAnnotations: canAccessDashAnnotations,
 		CanAccessOrgAnnotations:  canAccessOrgAnnotations,
 	}, nil
+}
+
+func (authz *AuthService) getAnnotationDashboard(ctx context.Context, query *annotations.ItemQuery, orgID int64) (int64, error) {
+	var items []annotations.Item
+	params := make([]any, 0)
+	err := authz.db.WithDbSession(ctx, func(sess *db.Session) error {
+		sql := `
+			SELECT
+				a.id,
+				a.org_id,
+				a.dashboard_id
+			FROM annotation as a
+			WHERE a.org_id = ? AND a.id = ?
+			`
+		params = append(params, orgID, query.AnnotationID)
+
+		return sess.SQL(sql, params...).Find(&items)
+	})
+	if err != nil {
+		return 0, err
+	}
+	if len(items) == 0 {
+		return 0, ErrAccessControlInternal.Errorf("annotation not found")
+	}
+
+	return items[0].DashboardID, nil
 }
 
 func (authz *AuthService) dashboardsWithVisibleAnnotations(ctx context.Context, query *annotations.ItemQuery, orgID int64) (map[string]int64, error) {

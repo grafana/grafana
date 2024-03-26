@@ -8,7 +8,7 @@ import (
 	"strings"
 
 	"github.com/grafana/grafana-aws-sdk/pkg/awsds"
-	"github.com/grafana/grafana-azure-sdk-go/azsettings"
+	"github.com/grafana/grafana-azure-sdk-go/v2/azsettings"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/proxy"
@@ -75,7 +75,7 @@ func (s *RequestConfigProvider) PluginRequestConfig(ctx context.Context, pluginI
 		m[proxy.PluginSecureSocksProxyEnabled] = "true"
 		m[proxy.PluginSecureSocksProxyClientCert] = s.cfg.ProxySettings.ClientCert
 		m[proxy.PluginSecureSocksProxyClientKey] = s.cfg.ProxySettings.ClientKey
-		m[proxy.PluginSecureSocksProxyRootCACert] = s.cfg.ProxySettings.RootCA
+		m[proxy.PluginSecureSocksProxyRootCAs] = strings.Join(s.cfg.ProxySettings.RootCAs, ",")
 		m[proxy.PluginSecureSocksProxyProxyAddress] = s.cfg.ProxySettings.ProxyAddress
 		m[proxy.PluginSecureSocksProxyServerName] = s.cfg.ProxySettings.ServerName
 		m[proxy.PluginSecureSocksProxyAllowInsecure] = strconv.FormatBool(s.cfg.ProxySettings.AllowInsecure)
@@ -101,6 +101,7 @@ func (s *RequestConfigProvider) PluginRequestConfig(ctx context.Context, pluginI
 
 		if azureSettings.UserIdentityEnabled {
 			m[azsettings.UserIdentityEnabled] = "true"
+			m[azsettings.UserIdentityFallbackCredentialsEnabled] = strconv.FormatBool(azureSettings.UserIdentityFallbackCredentialsEnabled)
 
 			if azureSettings.UserIdentityTokenEndpoint != nil {
 				if azureSettings.UserIdentityTokenEndpoint.TokenUrl != "" {
@@ -146,6 +147,15 @@ func (s *RequestConfigProvider) PluginRequestConfig(ctx context.Context, pluginI
 	m[backend.SQLMaxOpenConnsDefault] = strconv.Itoa(s.cfg.SQLDatasourceMaxOpenConnsDefault)
 	m[backend.SQLMaxIdleConnsDefault] = strconv.Itoa(s.cfg.SQLDatasourceMaxIdleConnsDefault)
 	m[backend.SQLMaxConnLifetimeSecondsDefault] = strconv.Itoa(s.cfg.SQLDatasourceMaxConnLifetimeDefault)
+
+	if s.cfg.ResponseLimit > 0 {
+		m[backend.ResponseLimit] = strconv.FormatInt(s.cfg.ResponseLimit, 10)
+	}
+
+	if s.cfg.SigV4AuthEnabled {
+		m[awsds.SigV4AuthEnabledEnvVarKeyName] = "true"
+		m[awsds.SigV4VerboseLoggingEnvVarKeyName] = strconv.FormatBool(s.cfg.SigV4VerboseLogging)
+	}
 
 	return m
 }

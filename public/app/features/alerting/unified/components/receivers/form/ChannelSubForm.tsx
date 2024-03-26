@@ -1,10 +1,10 @@
 import { css } from '@emotion/css';
 import { sortBy } from 'lodash';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import { useFormContext, FieldErrors, FieldValues } from 'react-hook-form';
+import { useFormContext, FieldErrors, FieldValues, Controller } from 'react-hook-form';
 
 import { GrafanaTheme2, SelectableValue } from '@grafana/data';
-import { Alert, Button, Field, InputControl, Select, useStyles2 } from '@grafana/ui';
+import { Alert, Button, Field, Select, useStyles2 } from '@grafana/ui';
 
 import { useUnifiedAlertingSelector } from '../../../hooks/useUnifiedAlertingSelector';
 import { ChannelValues, CommonSettingsComponentType } from '../../../types/receiver-form';
@@ -134,7 +134,7 @@ export function ChannelSubForm<R extends ChannelValues>({
       <div className={styles.topRow}>
         <div>
           <Field label="Integration" htmlFor={contactPointTypeInputId} data-testid={`${pathPrefix}type`}>
-            <InputControl
+            <Controller
               name={fieldName('type')}
               defaultValue={defaultValues.type}
               render={({ field: { ref, onChange, ...field } }) => (
