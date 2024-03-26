@@ -1,11 +1,12 @@
 import { SerializedError } from '@reduxjs/toolkit';
 import { prettyDOM, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import { setupServer } from 'msw/node';
 import React from 'react';
 import { TestProvider } from 'test/helpers/TestProvider';
 import { byRole, byTestId, byText } from 'testing-library-selector';
 
-import { PluginExtensionTypes } from '@grafana/data';
+import { PluginExtensionTypes, PluginMeta } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import {
   DataSourceSrv,
@@ -16,9 +17,17 @@ import {
 } from '@grafana/runtime';
 import { backendSrv } from 'app/core/services/backend_srv';
 import * as ruleActionButtons from 'app/features/alerting/unified/components/rules/RuleActionsButtons';
-import alertingServer from 'app/features/alerting/unified/mock-server';
+import {
+  mockAlertRuleApi,
+  mockApi,
+  mockFolderApi,
+  mockSearchApi,
+  mockUserApi,
+} from 'app/features/alerting/unified/mockApi';
+import { mockAlertmanagerChoiceResponse } from 'app/features/alerting/unified/mocks/alertmanagerApi';
 import * as actions from 'app/features/alerting/unified/state/actions';
-import { AccessControlAction } from 'app/types';
+import { AlertmanagerChoice } from 'app/plugins/datasource/alertmanager/types';
+import { AccessControlAction, FolderDTO } from 'app/types';
 import { PromAlertingRuleState, PromApplication } from 'app/types/unified-alerting-dto';
 
 import * as analytics from './Analytics';
@@ -39,6 +48,8 @@ import {
   getPotentiallyPausedRulerRules,
   somePromRules,
   someRulerRules,
+  mockFolder,
+  mockUser,
 } from './mocks';
 import * as config from './utils/config';
 import { DataSourceType, GRAFANA_RULES_SOURCE_NAME } from './utils/datasource';
@@ -149,13 +160,40 @@ const ui = {
   },
 };
 
+const server = setupServer();
+
+const configureMockServer = () => {
+  mockSearchApi(server).search([]);
+  mockUserApi(server).user(mockUser());
+  mockFolderApi(server).folder(
+    'NAMESPACE_UID',
+    mockFolder({
+      accessControl: { [AccessControlAction.AlertingRuleUpdate]: true },
+    })
+  );
+  mockApi(server).plugins.getPluginSettings(
+    // We aren't particularly concerned with the plugin response in these tests
+    // at the time of writing, so we can go unknown -> PluginMeta to get the bare minimum
+    { id: 'grafana-incident-app' } as unknown as PluginMeta
+  );
+  mockAlertmanagerChoiceResponse(server, {
+    alertmanagersChoice: AlertmanagerChoice.All,
+    numExternalAlertmanagers: 1,
+  });
+  mockAlertRuleApi(server).updateRule('grafana', {
+    message: 'rule group updated successfully',
+    updated: ['foo', 'bar', 'baz'],
+  });
+};
+
 beforeAll(() => {
   setBackendSrv(backendSrv);
 });
 
 describe('RuleList', () => {
   beforeEach(() => {
-    alertingServer.listen({ onUnhandledRequest: 'error' });
+    server.listen({ onUnhandledRequest: 'error' });
+    configureMockServer();
     grantUserPermissions([
       AccessControlAction.AlertingRuleRead,
       AccessControlAction.AlertingRuleUpdate,
@@ -179,13 +217,13 @@ describe('RuleList', () => {
   });
 
   afterEach(() => {
-    alertingServer.resetHandlers();
+    server.resetHandlers();
     jest.resetAllMocks();
     setDataSourceSrv(undefined as unknown as DataSourceSrv);
   });
 
   afterAll(() => {
-    alertingServer.close();
+    server.close();
   });
 
   it('load & show rule groups from multiple cloud data sources', async () => {
