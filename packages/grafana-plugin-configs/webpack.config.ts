@@ -80,11 +80,6 @@ const config = async (env: Record<string, unknown>): Promise<Configuration> => {
       },
     ],
 
-    infrastructureLogging: {
-      // Prevent excessive whitespace in webpack logs when used with Nx.
-      appendOnly: true,
-    },
-
     mode: env.production ? 'production' : 'development',
 
     module: {
