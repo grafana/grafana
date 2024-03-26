@@ -135,7 +135,8 @@ func (s *legacyStorage) Create(ctx context.Context,
 		return created, err
 	}
 	accessor.SetResourceVersion("")
-	accessor.SetUID("")
+	// #TODO figure out where UID should be reset/not
+	// accessor.SetUID("")
 
 	// add fields from the k8s object for inclusion in entity store
 	return enrichObject(obj, created)

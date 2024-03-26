@@ -75,8 +75,9 @@ const (
 	Mode4
 )
 
-// #TODO: make this customisable
 const CurrentMode = Mode2
+
+// #TODO: make CurrentMode customisable
 
 // NewDualWriter returns a new DualWriter.
 func NewDualWriter(legacy LegacyStorage, storage Storage) *DualWriter {
