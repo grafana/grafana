@@ -3818,13 +3818,6 @@
       },
       "CreateOrUpdateReportConfig": {
         "properties": {
-          "dashboardId": {
-            "format": "int64",
-            "type": "integer"
-          },
-          "dashboardUid": {
-            "type": "string"
-          },
           "dashboards": {
             "items": {
               "$ref": "#/components/schemas/ReportDashboard"
@@ -3867,9 +3860,6 @@
           },
           "state": {
             "$ref": "#/components/schemas/State"
-          },
-          "templateVars": {
-            "type": "object"
           }
         },
         "type": "object"
@@ -8664,16 +8654,6 @@
             "format": "date-time",
             "type": "string"
           },
-          "dashboardId": {
-            "format": "int64",
-            "type": "integer"
-          },
-          "dashboardName": {
-            "type": "string"
-          },
-          "dashboardUid": {
-            "type": "string"
-          },
           "dashboards": {
             "items": {
               "$ref": "#/components/schemas/ReportDashboard"
@@ -8724,9 +8704,6 @@
           },
           "state": {
             "$ref": "#/components/schemas/State"
-          },
-          "templateVars": {
-            "type": "object"
           },
           "uid": {
             "type": "string"
@@ -11549,6 +11526,7 @@
         "type": "object"
       },
       "alertGroups": {
+        "description": "AlertGroups alert groups",
         "items": {
           "$ref": "#/components/schemas/alertGroup"
         },
@@ -11942,6 +11920,7 @@
         "type": "array"
       },
       "postableSilence": {
+        "description": "PostableSilence postable silence",
         "properties": {
           "comment": {
             "description": "comment",
@@ -12007,7 +11986,6 @@
         "type": "object"
       },
       "receiver": {
-        "description": "Receiver receiver",
         "properties": {
           "active": {
             "description": "active",
@@ -20009,85 +19987,6 @@
         ]
       }
     },
-    "/reports/render/pdf/{dashboardID}": {
-      "get": {
-        "deprecated": true,
-        "description": "Please refer to [reports enterprise](#/reports/renderReportPDFs) instead. This will be removed in Grafana 10.",
-        "operationId": "renderReportPDF",
-        "parameters": [
-          {
-            "in": "path",
-            "name": "dashboardID",
-            "required": true,
-            "schema": {
-              "format": "int64",
-              "type": "integer"
-            }
-          },
-          {
-            "in": "query",
-            "name": "title",
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "in": "query",
-            "name": "variables",
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "in": "query",
-            "name": "from",
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "in": "query",
-            "name": "to",
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "in": "query",
-            "name": "orientation",
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "in": "query",
-            "name": "layout",
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "$ref": "#/components/responses/contentResponse"
-          },
-          "400": {
-            "$ref": "#/components/responses/badRequestError"
-          },
-          "401": {
-            "$ref": "#/components/responses/unauthorisedError"
-          },
-          "500": {
-            "$ref": "#/components/responses/internalServerError"
-          }
-        },
-        "summary": "Render report for dashboard.",
-        "tags": [
-          "reports",
-          "enterprise"
-        ]
-      }
-    },
     "/reports/render/pdfs": {
       "get": {
         "description": "Available to all users and with a valid license.",
@@ -22817,11 +22716,16 @@
             }
           },
           {
-            "description": "Format of the downloaded file, either yaml or json. Accept header can also be used, but the query parameter will take precedence.",
+            "description": "Format of the downloaded file. Supported yaml, json or hcl. Accept header can also be used, but the query parameter will take precedence.",
             "in": "query",
             "name": "format",
             "schema": {
               "default": "yaml",
+              "enum": [
+                "yaml",
+                "json",
+                "hcl"
+              ],
               "type": "string"
             }
           },
@@ -22857,6 +22761,26 @@
           "200": {
             "content": {
               "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AlertingFileExport"
+                }
+              },
+              "application/terraform+hcl": {
+                "schema": {
+                  "$ref": "#/components/schemas/AlertingFileExport"
+                }
+              },
+              "application/yaml": {
+                "schema": {
+                  "$ref": "#/components/schemas/AlertingFileExport"
+                }
+              },
+              "text/hcl": {
+                "schema": {
+                  "$ref": "#/components/schemas/AlertingFileExport"
+                }
+              },
+              "text/yaml": {
                 "schema": {
                   "$ref": "#/components/schemas/AlertingFileExport"
                 }
@@ -23010,11 +22934,16 @@
             }
           },
           {
-            "description": "Format of the downloaded file, either yaml or json. Accept header can also be used, but the query parameter will take precedence.",
+            "description": "Format of the downloaded file. Supported yaml, json or hcl. Accept header can also be used, but the query parameter will take precedence.",
             "in": "query",
             "name": "format",
             "schema": {
               "default": "yaml",
+              "enum": [
+                "yaml",
+                "json",
+                "hcl"
+              ],
               "type": "string"
             }
           },
@@ -23036,7 +22965,17 @@
                   "$ref": "#/components/schemas/AlertingFileExport"
                 }
               },
+              "application/terraform+hcl": {
+                "schema": {
+                  "$ref": "#/components/schemas/AlertingFileExport"
+                }
+              },
               "application/yaml": {
+                "schema": {
+                  "$ref": "#/components/schemas/AlertingFileExport"
+                }
+              },
+              "text/hcl": {
                 "schema": {
                   "$ref": "#/components/schemas/AlertingFileExport"
                 }
@@ -23152,11 +23091,16 @@
             }
           },
           {
-            "description": "Format of the downloaded file, either yaml or json. Accept header can also be used, but the query parameter will take precedence.",
+            "description": "Format of the downloaded file. Supported yaml, json or hcl. Accept header can also be used, but the query parameter will take precedence.",
             "in": "query",
             "name": "format",
             "schema": {
               "default": "yaml",
+              "enum": [
+                "yaml",
+                "json",
+                "hcl"
+              ],
               "type": "string"
             }
           },
@@ -23185,6 +23129,26 @@
                 "schema": {
                   "$ref": "#/components/schemas/AlertingFileExport"
                 }
+              },
+              "application/terraform+hcl": {
+                "schema": {
+                  "$ref": "#/components/schemas/AlertingFileExport"
+                }
+              },
+              "application/yaml": {
+                "schema": {
+                  "$ref": "#/components/schemas/AlertingFileExport"
+                }
+              },
+              "text/hcl": {
+                "schema": {
+                  "$ref": "#/components/schemas/AlertingFileExport"
+                }
+              },
+              "text/yaml": {
+                "schema": {
+                  "$ref": "#/components/schemas/AlertingFileExport"
+                }
               }
             },
             "description": "AlertingFileExport"
@@ -23192,6 +23156,26 @@
           "403": {
             "content": {
               "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PermissionDenied"
+                }
+              },
+              "application/terraform+hcl": {
+                "schema": {
+                  "$ref": "#/components/schemas/PermissionDenied"
+                }
+              },
+              "application/yaml": {
+                "schema": {
+                  "$ref": "#/components/schemas/PermissionDenied"
+                }
+              },
+              "text/hcl": {
+                "schema": {
+                  "$ref": "#/components/schemas/PermissionDenied"
+                }
+              },
+              "text/yaml": {
                 "schema": {
                   "$ref": "#/components/schemas/PermissionDenied"
                 }
@@ -23438,7 +23422,7 @@
             "description": "ValidationError"
           }
         },
-        "summary": "Update the interval of a rule group.",
+        "summary": "Create or update alert rule group.",
         "tags": [
           "provisioning"
         ]
@@ -23458,11 +23442,16 @@
             }
           },
           {
-            "description": "Format of the downloaded file, either yaml or json. Accept header can also be used, but the query parameter will take precedence.",
+            "description": "Format of the downloaded file. Supported yaml, json or hcl. Accept header can also be used, but the query parameter will take precedence.",
             "in": "query",
             "name": "format",
             "schema": {
               "default": "yaml",
+              "enum": [
+                "yaml",
+                "json",
+                "hcl"
+              ],
               "type": "string"
             }
           },
@@ -23491,7 +23480,17 @@
                   "$ref": "#/components/schemas/AlertingFileExport"
                 }
               },
+              "application/terraform+hcl": {
+                "schema": {
+                  "$ref": "#/components/schemas/AlertingFileExport"
+                }
+              },
               "application/yaml": {
+                "schema": {
+                  "$ref": "#/components/schemas/AlertingFileExport"
+                }
+              },
+              "text/hcl": {
                 "schema": {
                   "$ref": "#/components/schemas/AlertingFileExport"
                 }
@@ -23597,11 +23596,16 @@
             }
           },
           {
-            "description": "Format of the downloaded file, either yaml or json. Accept header can also be used, but the query parameter will take precedence.",
+            "description": "Format of the downloaded file. Supported yaml, json or hcl. Accept header can also be used, but the query parameter will take precedence.",
             "in": "query",
             "name": "format",
             "schema": {
               "default": "yaml",
+              "enum": [
+                "yaml",
+                "json",
+                "hcl"
+              ],
               "type": "string"
             }
           }
@@ -23613,6 +23617,26 @@
                 "schema": {
                   "$ref": "#/components/schemas/AlertingFileExport"
                 }
+              },
+              "application/terraform+hcl": {
+                "schema": {
+                  "$ref": "#/components/schemas/AlertingFileExport"
+                }
+              },
+              "application/yaml": {
+                "schema": {
+                  "$ref": "#/components/schemas/AlertingFileExport"
+                }
+              },
+              "text/hcl": {
+                "schema": {
+                  "$ref": "#/components/schemas/AlertingFileExport"
+                }
+              },
+              "text/yaml": {
+                "schema": {
+                  "$ref": "#/components/schemas/AlertingFileExport"
+                }
               }
             },
             "description": "AlertingFileExport"
@@ -23620,6 +23644,26 @@
           "403": {
             "content": {
               "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PermissionDenied"
+                }
+              },
+              "application/terraform+hcl": {
+                "schema": {
+                  "$ref": "#/components/schemas/PermissionDenied"
+                }
+              },
+              "application/yaml": {
+                "schema": {
+                  "$ref": "#/components/schemas/PermissionDenied"
+                }
+              },
+              "text/hcl": {
+                "schema": {
+                  "$ref": "#/components/schemas/PermissionDenied"
+                }
+              },
+              "text/yaml": {
                 "schema": {
                   "$ref": "#/components/schemas/PermissionDenied"
                 }
@@ -23773,11 +23817,16 @@
             }
           },
           {
-            "description": "Format of the downloaded file, either yaml or json. Accept header can also be used, but the query parameter will take precedence.",
+            "description": "Format of the downloaded file. Supported yaml, json or hcl. Accept header can also be used, but the query parameter will take precedence.",
             "in": "query",
             "name": "format",
             "schema": {
               "default": "yaml",
+              "enum": [
+                "yaml",
+                "json",
+                "hcl"
+              ],
               "type": "string"
             }
           },
@@ -23798,6 +23847,26 @@
                 "schema": {
                   "$ref": "#/components/schemas/AlertingFileExport"
                 }
+              },
+              "application/terraform+hcl": {
+                "schema": {
+                  "$ref": "#/components/schemas/AlertingFileExport"
+                }
+              },
+              "application/yaml": {
+                "schema": {
+                  "$ref": "#/components/schemas/AlertingFileExport"
+                }
+              },
+              "text/hcl": {
+                "schema": {
+                  "$ref": "#/components/schemas/AlertingFileExport"
+                }
+              },
+              "text/yaml": {
+                "schema": {
+                  "$ref": "#/components/schemas/AlertingFileExport"
+                }
               }
             },
             "description": "AlertingFileExport"
@@ -23805,6 +23874,26 @@
           "403": {
             "content": {
               "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PermissionDenied"
+                }
+              },
+              "application/terraform+hcl": {
+                "schema": {
+                  "$ref": "#/components/schemas/PermissionDenied"
+                }
+              },
+              "application/yaml": {
+                "schema": {
+                  "$ref": "#/components/schemas/PermissionDenied"
+                }
+              },
+              "text/hcl": {
+                "schema": {
+                  "$ref": "#/components/schemas/PermissionDenied"
+                }
+              },
+              "text/yaml": {
                 "schema": {
                   "$ref": "#/components/schemas/PermissionDenied"
                 }
@@ -23918,6 +24007,26 @@
                 "schema": {
                   "$ref": "#/components/schemas/AlertingFileExport"
                 }
+              },
+              "application/terraform+hcl": {
+                "schema": {
+                  "$ref": "#/components/schemas/AlertingFileExport"
+                }
+              },
+              "application/yaml": {
+                "schema": {
+                  "$ref": "#/components/schemas/AlertingFileExport"
+                }
+              },
+              "text/hcl": {
+                "schema": {
+                  "$ref": "#/components/schemas/AlertingFileExport"
+                }
+              },
+              "text/yaml": {
+                "schema": {
+                  "$ref": "#/components/schemas/AlertingFileExport"
+                }
               }
             },
             "description": "AlertingFileExport"
@@ -23925,6 +24034,26 @@
           "404": {
             "content": {
               "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NotFound"
+                }
+              },
+              "application/terraform+hcl": {
+                "schema": {
+                  "$ref": "#/components/schemas/NotFound"
+                }
+              },
+              "application/yaml": {
+                "schema": {
+                  "$ref": "#/components/schemas/NotFound"
+                }
+              },
+              "text/hcl": {
+                "schema": {
+                  "$ref": "#/components/schemas/NotFound"
+                }
+              },
+              "text/yaml": {
                 "schema": {
                   "$ref": "#/components/schemas/NotFound"
                 }

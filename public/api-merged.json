@@ -7276,74 +7276,6 @@
         }
       }
     },
-    "/reports/render/pdf/{dashboardID}": {
-      "get": {
-        "description": "Please refer to [reports enterprise](#/reports/renderReportPDFs) instead. This will be removed in Grafana 10.",
-        "produces": [
-          "application/pdf"
-        ],
-        "tags": [
-          "reports",
-          "enterprise"
-        ],
-        "summary": "Render report for dashboard.",
-        "operationId": "renderReportPDF",
-        "deprecated": true,
-        "parameters": [
-          {
-            "type": "integer",
-            "format": "int64",
-            "name": "dashboardID",
-            "in": "path",
-            "required": true
-          },
-          {
-            "type": "string",
-            "name": "title",
-            "in": "query"
-          },
-          {
-            "type": "string",
-            "name": "variables",
-            "in": "query"
-          },
-          {
-            "type": "string",
-            "name": "from",
-            "in": "query"
-          },
-          {
-            "type": "string",
-            "name": "to",
-            "in": "query"
-          },
-          {
-            "type": "string",
-            "name": "orientation",
-            "in": "query"
-          },
-          {
-            "type": "string",
-            "name": "layout",
-            "in": "query"
-          }
-        ],
-        "responses": {
-          "200": {
-            "$ref": "#/responses/contentResponse"
-          },
-          "400": {
-            "$ref": "#/responses/badRequestError"
-          },
-          "401": {
-            "$ref": "#/responses/unauthorisedError"
-          },
-          "500": {
-            "$ref": "#/responses/internalServerError"
-          }
-        }
-      }
-    },
     "/reports/render/pdfs": {
       "get": {
         "description": "Available to all users and with a valid license.",
@@ -9879,6 +9811,13 @@
     },
     "/v1/provisioning/alert-rules/export": {
       "get": {
+        "produces": [
+          "application/json",
+          "application/yaml",
+          "application/terraform+hcl",
+          "text/yaml",
+          "text/hcl"
+        ],
         "tags": [
           "provisioning"
         ],
@@ -9893,9 +9832,14 @@
             "in": "query"
           },
           {
+            "enum": [
+              "yaml",
+              "json",
+              "hcl"
+            ],
             "type": "string",
             "default": "yaml",
-            "description": "Format of the downloaded file, either yaml or json. Accept header can also be used, but the query parameter will take precedence.",
+            "description": "Format of the downloaded file. Supported yaml, json or hcl. Accept header can also be used, but the query parameter will take precedence.",
             "name": "format",
             "in": "query"
           },
@@ -10039,7 +9983,9 @@
         "produces": [
           "application/json",
           "application/yaml",
-          "text/yaml"
+          "application/terraform+hcl",
+          "text/yaml",
+          "text/hcl"
         ],
         "tags": [
           "provisioning"
@@ -10055,9 +10001,14 @@
             "in": "query"
           },
           {
+            "enum": [
+              "yaml",
+              "json",
+              "hcl"
+            ],
             "type": "string",
             "default": "yaml",
-            "description": "Format of the downloaded file, either yaml or json. Accept header can also be used, but the query parameter will take precedence.",
+            "description": "Format of the downloaded file. Supported yaml, json or hcl. Accept header can also be used, but the query parameter will take precedence.",
             "name": "format",
             "in": "query"
           },
@@ -10147,6 +10098,13 @@
     },
     "/v1/provisioning/contact-points/export": {
       "get": {
+        "produces": [
+          "application/json",
+          "application/yaml",
+          "application/terraform+hcl",
+          "text/yaml",
+          "text/hcl"
+        ],
         "tags": [
           "provisioning"
         ],
@@ -10161,9 +10119,14 @@
             "in": "query"
           },
           {
+            "enum": [
+              "yaml",
+              "json",
+              "hcl"
+            ],
             "type": "string",
             "default": "yaml",
-            "description": "Format of the downloaded file, either yaml or json. Accept header can also be used, but the query parameter will take precedence.",
+            "description": "Format of the downloaded file. Supported yaml, json or hcl. Accept header can also be used, but the query parameter will take precedence.",
             "name": "format",
             "in": "query"
           },
@@ -10308,7 +10271,7 @@
         "tags": [
           "provisioning"
         ],
-        "summary": "Update the interval of a rule group.",
+        "summary": "Create or update alert rule group.",
         "operationId": "RoutePutAlertRuleGroup",
         "parameters": [
           {
@@ -10395,7 +10358,9 @@
         "produces": [
           "application/json",
           "application/yaml",
-          "text/yaml"
+          "application/terraform+hcl",
+          "text/yaml",
+          "text/hcl"
         ],
         "tags": [
           "provisioning"
@@ -10411,9 +10376,14 @@
             "in": "query"
           },
           {
+            "enum": [
+              "yaml",
+              "json",
+              "hcl"
+            ],
             "type": "string",
             "default": "yaml",
-            "description": "Format of the downloaded file, either yaml or json. Accept header can also be used, but the query parameter will take precedence.",
+            "description": "Format of the downloaded file. Supported yaml, json or hcl. Accept header can also be used, but the query parameter will take precedence.",
             "name": "format",
             "in": "query"
           },
@@ -10500,6 +10470,13 @@
     },
     "/v1/provisioning/mute-timings/export": {
       "get": {
+        "produces": [
+          "application/json",
+          "application/yaml",
+          "application/terraform+hcl",
+          "text/yaml",
+          "text/hcl"
+        ],
         "tags": [
           "provisioning"
         ],
@@ -10514,9 +10491,14 @@
             "in": "query"
           },
           {
+            "enum": [
+              "yaml",
+              "json",
+              "hcl"
+            ],
             "type": "string",
             "default": "yaml",
-            "description": "Format of the downloaded file, either yaml or json. Accept header can also be used, but the query parameter will take precedence.",
+            "description": "Format of the downloaded file. Supported yaml, json or hcl. Accept header can also be used, but the query parameter will take precedence.",
             "name": "format",
             "in": "query"
           }
@@ -10640,6 +10622,13 @@
     },
     "/v1/provisioning/mute-timings/{name}/export": {
       "get": {
+        "produces": [
+          "application/json",
+          "application/yaml",
+          "application/terraform+hcl",
+          "text/yaml",
+          "text/hcl"
+        ],
         "tags": [
           "provisioning"
         ],
@@ -10654,9 +10643,14 @@
             "in": "query"
           },
           {
+            "enum": [
+              "yaml",
+              "json",
+              "hcl"
+            ],
             "type": "string",
             "default": "yaml",
-            "description": "Format of the downloaded file, either yaml or json. Accept header can also be used, but the query parameter will take precedence.",
+            "description": "Format of the downloaded file. Supported yaml, json or hcl. Accept header can also be used, but the query parameter will take precedence.",
             "name": "format",
             "in": "query"
           },
@@ -10760,6 +10754,13 @@
     },
     "/v1/provisioning/policies/export": {
       "get": {
+        "produces": [
+          "application/json",
+          "application/yaml",
+          "application/terraform+hcl",
+          "text/yaml",
+          "text/hcl"
+        ],
         "tags": [
           "provisioning"
         ],
@@ -12919,13 +12920,6 @@
     "CreateOrUpdateReportConfig": {
       "type": "object",
       "properties": {
-        "dashboardId": {
-          "type": "integer",
-          "format": "int64"
-        },
-        "dashboardUid": {
-          "type": "string"
-        },
         "dashboards": {
           "type": "array",
           "items": {
@@ -12968,9 +12962,6 @@
         },
         "state": {
           "$ref": "#/definitions/State"
-        },
-        "templateVars": {
-          "type": "object"
         }
       }
     },
@@ -17765,16 +17756,6 @@
           "type": "string",
           "format": "date-time"
         },
-        "dashboardId": {
-          "type": "integer",
-          "format": "int64"
-        },
-        "dashboardName": {
-          "type": "string"
-        },
-        "dashboardUid": {
-          "type": "string"
-        },
         "dashboards": {
           "type": "array",
           "items": {
@@ -17825,9 +17806,6 @@
         },
         "state": {
           "$ref": "#/definitions/State"
-        },
-        "templateVars": {
-          "type": "object"
         },
         "uid": {
           "type": "string"
@@ -20650,6 +20628,7 @@
       }
     },
     "alertGroups": {
+      "description": "AlertGroups alert groups",
       "type": "array",
       "items": {
         "$ref": "#/definitions/alertGroup"
@@ -21043,6 +21022,7 @@
       }
     },
     "postableSilence": {
+      "description": "PostableSilence postable silence",
       "type": "object",
       "required": [
         "comment",
@@ -21108,7 +21088,6 @@
       }
     },
     "receiver": {
-      "description": "Receiver receiver",
       "type": "object",
       "required": [
         "active",

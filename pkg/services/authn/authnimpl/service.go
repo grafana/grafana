@@ -142,7 +142,7 @@ func ProvideService(
 
 	for name := range socialService.GetOAuthProviders() {
 		clientName := authn.ClientWithPrefix(name)
-		s.RegisterClient(clients.ProvideOAuth(clientName, cfg, oauthTokenService, socialService, settingsProviderService))
+		s.RegisterClient(clients.ProvideOAuth(clientName, cfg, oauthTokenService, socialService, settingsProviderService, features))
 	}
 
 	// FIXME (jguer): move to User package
