@@ -62,7 +62,6 @@ export function initAuthConfig() {
 }
 
 async function getConfigHookLDAP(): Promise<AuthProviderStatus> {
-  console.log('getConfigHookLDAP'); // TODO remove
   if (contextSrv.hasPermission(AccessControlAction.SettingsRead)) {
     const result = await getBackendSrv().get('/api/admin/settings');
     const ldapSettings = result!['auth.ldap'] || {};

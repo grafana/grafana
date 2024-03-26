@@ -11,7 +11,7 @@ import { StoreState } from 'app/types';
 import AuthDrawer from './AuthDrawer';
 import ConfigureAuthCTA from './components/ConfigureAuthCTA';
 import { ProviderCard } from './components/ProviderCard';
-import { loadSettings, saveSettings } from './state/actions';
+import { loadSettings } from './state/actions';
 
 import { getRegisteredAuthProviders } from './index';
 
@@ -20,18 +20,16 @@ interface OwnProps {}
 export type Props = OwnProps & ConnectedProps<typeof connector>;
 
 function mapStateToProps(state: StoreState) {
-  const { isLoading, providerStatuses, providers, settings } = state.authConfig;
+  const { isLoading, providerStatuses, providers } = state.authConfig;
   return {
     isLoading,
     providerStatuses,
     providers,
-    settings,
   };
 }
 
 const mapDispatchToProps = {
   loadSettings,
-  saveSettings,
 };
 
 const connector = connect(mapStateToProps, mapDispatchToProps);
@@ -41,8 +39,6 @@ export const AuthConfigPageUnconnected = ({
   isLoading,
   loadSettings,
   providers,
-  saveSettings,
-  settings,
 }: Props): JSX.Element => {
   useEffect(() => {
     loadSettings();

@@ -19,7 +19,6 @@ import {
 
 export function loadSettings(showSpinner = true): ThunkResult<Promise<Settings>> {
   return async (dispatch) => {
-    console.log(`loadSettings`); // TODO remove
     if (contextSrv.hasPermission(AccessControlAction.SettingsRead)) {
       if (showSpinner) {
         dispatch(loadingBegin());
@@ -65,7 +64,6 @@ export function loadProviderStatuses(): ThunkResult<void> {
 }
 
 export function saveSettings(data: UpdateSettingsQuery): ThunkResult<Promise<boolean>> {
-  console.log(`saveSettings`);
   return async (dispatch) => {
     if (contextSrv.hasPermission(AccessControlAction.SettingsWrite)) {
       try {

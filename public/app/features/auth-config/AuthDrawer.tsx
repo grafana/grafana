@@ -1,10 +1,10 @@
 import { css } from '@emotion/css';
-import React, { JSX, useState } from 'react';
+import React, { JSX } from 'react';
 import { connect, ConnectedProps } from 'react-redux';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { getBackendSrv } from '@grafana/runtime';
 import { Button, Drawer, Text, TextLink, Switch, useStyles2 } from '@grafana/ui';
+import { useAppNotification } from 'app/core/copy/appNotification';
 import { StoreState } from 'app/types';
 
 import { loadSettings, saveSettings } from './state/actions';
@@ -30,15 +30,13 @@ const mapActionsToProps = {
 
 const connector = connect(mapStateToProps, mapActionsToProps);
 
-const SETTINGS_URL = '/api/admin/settings';
-
 export const AuthDrawerUnconnected = ({
   allowInsecureEmail,
   loadSettings,
   onClose,
   saveSettings,
 }: Props): JSX.Element => {
-  const [isOauthAllowInsecureEmailLookup, _setOauthAllowInsecureEmailLookup] = useState(allowInsecureEmail);
+  const notifyApp = useAppNotification();
 
   const oauthAllowInsecureEmailLookupOnChange = async () => {
     saveSettings({
@@ -48,29 +46,20 @@ export const AuthDrawerUnconnected = ({
         },
       },
     })
-      .then(() => {
-        // setOauthAllowInsecureEmailLookup(!allowInsecureEmail); // TODO maybe remove this
-        console.log(`oauth_allow_insecure_email_lookup: `, allowInsecureEmail);
-        return loadSettings(false);
-      })
-      .then(() => {
-        console.log(`oauth_allow_insecure_email_lookup: `, allowInsecureEmail);
-      })
-      .catch((error) => {
-        console.error(`error`, error);
-        // TODO add warning for error
-      });
+      .then(() => loadSettings(false))
+      .then(() => notifyApp.success('Settings saved'))
+      .catch(() => notifyApp.error('Failed to save settings'));
   };
 
   const resetButtonOnClick = async () => {
-    try {
-      const body = {
-        removals: {
-          auth: ['oauth_allow_insecure_email_lookup'],
-        },
-      };
-      await getBackendSrv().put(SETTINGS_URL, body);
-    } catch (error) {}
+    saveSettings({
+      removals: {
+        auth: ['oauth_allow_insecure_email_lookup'],
+      },
+    })
+      .then(() => loadSettings(false))
+      .then(() => notifyApp.success('Settings saved'))
+      .catch(() => notifyApp.error('Failed to save settings'));
   };
 
   const subtitle = (
@@ -96,7 +85,7 @@ export const AuthDrawerUnconnected = ({
         <Text variant="body" color="secondary">
           Allow users to use the same email address to log into Grafana with different identity providers.
         </Text>
-        <Switch value={isOauthAllowInsecureEmailLookup} onChange={oauthAllowInsecureEmailLookupOnChange} />
+        <Switch value={allowInsecureEmail} onChange={oauthAllowInsecureEmailLookupOnChange} />
       </div>
       <Button
         size="md"
