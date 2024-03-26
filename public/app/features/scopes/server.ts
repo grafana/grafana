@@ -1,26 +1,32 @@
+import { Scope, ScopeDashboard } from '@grafana/data';
+
 import { ScopedResourceServer } from '../apiserver/server';
 import { ResourceServer } from '../apiserver/types';
 
-// This must match -- manual for now, soon we can add codegen
-// https://github.com/grafana/grafana/blob/main/pkg/apis/scope/v0alpha1/types.go#L15
-interface ScopeSpec {
-  title: string;
-  type: string;
-  description: string;
-  category: string;
-  filters: ScopeFilter[];
+// config.bootData.settings.listDashboardScopesEndpoint || '/apis/scope.grafana.app/v0alpha1/scopedashboards';
+// config.bootData.settings.listScopesEndpoint || '/apis/scope.grafana.app/v0alpha1/scopes';
+
+interface ScopeServers {
+  scopes: ResourceServer<Scope>;
+  dashboards: ResourceServer<ScopeDashboard>;
 }
 
-interface ScopeFilter {
-  key: string;
-  value: string;
-  operator: string;
-}
+let instance: ScopeServers | undefined = undefined;
 
-export function NewScopeServer(): ResourceServer<ScopeSpec> {
-  return new ScopedResourceServer({
-    group: 'scope.grafana.app',
-    version: 'v0alpha1',
-    resource: 'scopes',
-  });
+export function getScopeServers() {
+  if (!instance) {
+    instance = {
+      scopes: new ScopedResourceServer({
+        group: 'scope.grafana.app',
+        version: 'v0alpha1',
+        resource: 'scopes',
+      }),
+      dashboards: new ScopedResourceServer({
+        group: 'scope.grafana.app',
+        version: 'v0alpha1',
+        resource: 'scopedashboards',
+      }),
+    };
+  }
+  return instance;
 }
