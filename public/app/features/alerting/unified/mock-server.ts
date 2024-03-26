@@ -17,6 +17,10 @@ const alertingServer = setupServer(
   http.get('/api/v1/ngalert', () => {
     return HttpResponse.json({ alertmanagersChoice: 'all', numExternalAlertmanagers: 1 });
   }),
+  // TODO: Scaffold out test behaviour/configuration for plugins / incident endpoint
+  http.get('/api/plugins/grafana-incident-app/settings', () => {
+    return new HttpResponse(null, { status: 200 });
+  }),
 
   http.get('/api/folders/:folderUid', () => {
     return HttpResponse.json({
@@ -30,9 +34,6 @@ const alertingServer = setupServer(
     return HttpResponse.json([]);
   }),
   http.post('/api/ruler/grafana/api/v1/rules/:namespaceUID/', async ({ request }) => {
-    console.log('updaint');
-    const body = await request.json();
-    console.log(JSON.stringify(body, null, 2));
     return HttpResponse.json({
       message: 'rule group updated successfully',
       updated: ['foo', 'bar', 'baz'],

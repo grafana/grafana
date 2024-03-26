@@ -155,6 +155,7 @@ beforeAll(() => {
 
 describe('RuleList', () => {
   beforeEach(() => {
+    alertingServer.listen({ onUnhandledRequest: 'error' });
     grantUserPermissions([
       AccessControlAction.AlertingRuleRead,
       AccessControlAction.AlertingRuleUpdate,
@@ -178,8 +179,13 @@ describe('RuleList', () => {
   });
 
   afterEach(() => {
+    alertingServer.resetHandlers();
     jest.resetAllMocks();
     setDataSourceSrv(undefined as unknown as DataSourceSrv);
+  });
+
+  afterAll(() => {
+    alertingServer.close();
   });
 
   it('load & show rule groups from multiple cloud data sources', async () => {
@@ -571,7 +577,6 @@ describe('RuleList', () => {
 
   describe('pausing rules', () => {
     beforeEach(() => {
-      alertingServer.listen({ onUnhandledRequest: 'error' });
       grantUserPermissions([
         AccessControlAction.AlertingRuleRead,
         AccessControlAction.AlertingRuleUpdate,
@@ -585,12 +590,6 @@ describe('RuleList', () => {
         Promise.resolve(sourceName === 'grafana' ? pausedPromRules('grafana') : [])
       );
     });
-    afterEach(() => {
-      alertingServer.resetHandlers();
-    });
-    afterAll(() => {
-      alertingServer.close();
-    });
 
     test('resuming paused alert rule', async () => {
       const user = userEvent.setup();
@@ -601,8 +600,6 @@ describe('RuleList', () => {
       await user.click(await ui.pausedRuleGroup.find());
 
       expect(await ui.stateTags.paused.find()).toBeInTheDocument();
-
-      console.log(JSON.stringify(getPotentiallyPausedRulerRules(false), null, 4));
 
       // TODO: Migrate all testing logic to MSW and so we aren't manually tweaking the API response behaviour
       mocks.api.fetchRulerRules.mockImplementationOnce(() => {
