@@ -26,6 +26,7 @@ export function BasicSettings({ dataSourceName, isDefault, onDefaultChange, onNa
               'preselected in new panels."
               grow
               disabled={disabled}
+              labelWidth={14}
             >
               <Input
                 id="basic-settings-name"
