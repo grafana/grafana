@@ -311,7 +311,7 @@ func (srv *ProvisioningSrv) RouteDeleteMuteTiming(c *contextmodel.ReqContext, na
 func (srv *ProvisioningSrv) RouteGetAlertRules(c *contextmodel.ReqContext) response.Response {
 	rules, provenances, err := srv.alertRules.GetAlertRules(c.Req.Context(), c.SignedInUser)
 	if err != nil {
-		return ErrResp(http.StatusInternalServerError, err, "")
+		return response.ErrOrFallback(http.StatusInternalServerError, "", err)
 	}
 	return response.JSON(http.StatusOK, ProvisionedAlertRuleFromAlertRules(rules, provenances))
 }
@@ -322,7 +322,7 @@ func (srv *ProvisioningSrv) RouteRouteGetAlertRule(c *contextmodel.ReqContext, U
 		if errors.Is(err, alerting_models.ErrAlertRuleNotFound) {
 			return response.Empty(http.StatusNotFound)
 		}
-		return ErrResp(http.StatusInternalServerError, err, "")
+		return response.ErrOrFallback(http.StatusInternalServerError, "failed to get rule by UID", err)
 	}
 	return response.JSON(http.StatusOK, ProvisionedAlertRuleFromAlertRule(rule, provenace))
 }
@@ -348,7 +348,7 @@ func (srv *ProvisioningSrv) RoutePostAlertRule(c *contextmodel.ReqContext, ar de
 		if errors.Is(err, alerting_models.ErrQuotaReached) {
 			return ErrResp(http.StatusForbidden, err, "")
 		}
-		return ErrResp(http.StatusInternalServerError, err, "")
+		return response.ErrOrFallback(http.StatusInternalServerError, "", err)
 	}
 
 	resp := ProvisionedAlertRuleFromAlertRule(createdAlertRule, alerting_models.Provenance(provenance))
@@ -377,7 +377,7 @@ func (srv *ProvisioningSrv) RoutePutAlertRule(c *contextmodel.ReqContext, ar def
 		if errors.Is(err, store.ErrOptimisticLock) {
 			return ErrResp(http.StatusConflict, err, "")
 		}
-		return ErrResp(http.StatusInternalServerError, err, "")
+		return response.ErrOrFallback(http.StatusInternalServerError, "", err)
 	}
 
 	resp := ProvisionedAlertRuleFromAlertRule(updatedAlertRule, alerting_models.Provenance(provenance))
@@ -388,7 +388,7 @@ func (srv *ProvisioningSrv) RouteDeleteAlertRule(c *contextmodel.ReqContext, UID
 	provenance := determineProvenance(c)
 	err := srv.alertRules.DeleteAlertRule(c.Req.Context(), c.SignedInUser, UID, alerting_models.Provenance(provenance))
 	if err != nil {
-		return ErrResp(http.StatusInternalServerError, err, "")
+		return response.ErrOrFallback(http.StatusInternalServerError, "", err)
 	}
 	return response.JSON(http.StatusNoContent, "")
 }
@@ -424,7 +424,7 @@ func (srv *ProvisioningSrv) RouteGetAlertRulesExport(c *contextmodel.ReqContext)
 
 	groupsWithTitle, err := srv.alertRules.GetAlertGroupsWithFolderTitle(c.Req.Context(), c.SignedInUser, folderUIDs)
 	if err != nil {
-		return ErrResp(http.StatusInternalServerError, err, "failed to get alert rules")
+		return response.ErrOrFallback(http.StatusInternalServerError, "failed to get alert rules", err)
 	}
 	if len(groupsWithTitle) == 0 {
 		return response.Empty(http.StatusNotFound)
@@ -432,7 +432,7 @@ func (srv *ProvisioningSrv) RouteGetAlertRulesExport(c *contextmodel.ReqContext)
 
 	e, err := AlertingFileExportFromAlertRuleGroupWithFolderTitle(groupsWithTitle)
 	if err != nil {
-		return ErrResp(http.StatusInternalServerError, err, "failed to create alerting file export")
+		return response.ErrOrFallback(http.StatusInternalServerError, "failed to create alerting file export", err)
 	}
 
 	return exportResponse(c, e)
@@ -447,7 +447,7 @@ func (srv *ProvisioningSrv) RouteGetAlertRuleGroupExport(c *contextmodel.ReqCont
 
 	e, err := AlertingFileExportFromAlertRuleGroupWithFolderTitle([]alerting_models.AlertRuleGroupWithFolderTitle{g})
 	if err != nil {
-		return ErrResp(http.StatusInternalServerError, err, "failed to create alerting file export")
+		return response.ErrOrFallback(http.StatusInternalServerError, "failed to create alerting file export", err)
 	}
 
 	return exportResponse(c, e)
@@ -460,7 +460,7 @@ func (srv *ProvisioningSrv) RouteGetAlertRuleExport(c *contextmodel.ReqContext, 
 		if errors.Is(err, alerting_models.ErrAlertRuleNotFound) {
 			return ErrResp(http.StatusNotFound, err, "")
 		}
-		return ErrResp(http.StatusInternalServerError, err, "")
+		return response.ErrOrFallback(http.StatusInternalServerError, "failed to get alert rules", err)
 	}
 
 	e, err := AlertingFileExportFromAlertRuleGroupWithFolderTitle([]alerting_models.AlertRuleGroupWithFolderTitle{
@@ -492,7 +492,7 @@ func (srv *ProvisioningSrv) RoutePutAlertRuleGroup(c *contextmodel.ReqContext, a
 		if errors.Is(err, store.ErrOptimisticLock) {
 			return ErrResp(http.StatusConflict, err, "")
 		}
-		return ErrResp(http.StatusInternalServerError, err, "")
+		return response.ErrOrFallback(http.StatusInternalServerError, "", err)
 	}
 	return response.JSON(http.StatusOK, ag)
 }

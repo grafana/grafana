@@ -18,11 +18,12 @@ import {
   CustomVariable,
   DataSourceVariable,
   GroupByVariable,
+  IntervalVariable,
   QueryVariable,
   SceneVariableSet,
   TextBoxVariable,
 } from '@grafana/scenes';
-import { DataSourceRef } from '@grafana/schema';
+import { DataSourceRef, VariableRefresh } from '@grafana/schema';
 
 import { sceneVariablesSetToVariables } from './sceneVariablesSetToVariables';
 
@@ -277,7 +278,23 @@ describe('sceneVariablesSetToVariables', () => {
       "label": "test-label",
       "multi": true,
       "name": "test",
-      "options": [],
+      "options": [
+        {
+          "selected": true,
+          "text": "test",
+          "value": "test",
+        },
+        {
+          "selected": false,
+          "text": "test1",
+          "value": "test1",
+        },
+        {
+          "selected": true,
+          "text": "test2",
+          "value": "test2",
+        },
+      ],
       "query": "test,test1,test2",
       "type": "custom",
     }
@@ -340,9 +357,74 @@ describe('sceneVariablesSetToVariables', () => {
       "description": "test-desc",
       "label": "test-label",
       "name": "test",
+      "options": [
+        {
+          "selected": true,
+          "text": "text value",
+          "value": "text value",
+        },
+      ],
       "query": "text value",
       "skipUrlSync": true,
       "type": "textbox",
+    }
+    `);
+  });
+
+  it('should handle IntervalVariable', () => {
+    const variable = new IntervalVariable({
+      intervals: ['1m', '2m', '3m', '1h', '1d'],
+      value: '1m',
+      refresh: VariableRefresh.onDashboardLoad,
+    });
+    const set = new SceneVariableSet({
+      variables: [variable],
+    });
+
+    const result = sceneVariablesSetToVariables(set);
+
+    expect(result[0]).toMatchInlineSnapshot(`
+    {
+      "auto": false,
+      "auto_count": 30,
+      "auto_min": "10s",
+      "current": {
+        "text": "1m",
+        "value": "1m",
+      },
+      "description": undefined,
+      "label": undefined,
+      "name": "",
+      "options": [
+        {
+          "selected": true,
+          "text": "1m",
+          "value": "1m",
+        },
+        {
+          "selected": false,
+          "text": "2m",
+          "value": "2m",
+        },
+        {
+          "selected": false,
+          "text": "3m",
+          "value": "3m",
+        },
+        {
+          "selected": false,
+          "text": "1h",
+          "value": "1h",
+        },
+        {
+          "selected": false,
+          "text": "1d",
+          "value": "1d",
+        },
+      ],
+      "query": "1m,2m,3m,1h,1d",
+      "refresh": 1,
+      "type": "interval",
     }
     `);
   });

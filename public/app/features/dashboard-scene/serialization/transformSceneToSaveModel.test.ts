@@ -16,21 +16,14 @@ import {
 } from '@grafana/data';
 import { getPanelPlugin } from '@grafana/data/test/__mocks__/pluginMocks';
 import { getPluginLinkExtensions, setPluginImportUtils } from '@grafana/runtime';
-import {
-  MultiValueVariable,
-  SceneDataLayers,
-  SceneGridItem,
-  SceneGridItemLike,
-  SceneGridLayout,
-  SceneGridRow,
-  VizPanel,
-} from '@grafana/scenes';
+import { MultiValueVariable, SceneDataLayerSet, SceneGridLayout, SceneGridRow, VizPanel } from '@grafana/scenes';
 import { Dashboard, LoadingState, Panel, RowPanel, VariableRefresh } from '@grafana/schema';
 import { PanelModel } from 'app/features/dashboard/state';
 import { getTimeRange } from 'app/features/dashboard/utils/timeRange';
 import { reduceTransformRegistryItem } from 'app/features/transformers/editors/ReduceTransformerEditor';
 import { SHARED_DASHBOARD_QUERY } from 'app/plugins/datasource/dashboard';
 
+import { DashboardGridItem } from '../scene/DashboardGridItem';
 import { LibraryVizPanel } from '../scene/LibraryVizPanel';
 import { RowRepeaterBehavior } from '../scene/RowRepeaterBehavior';
 import { NEW_LINK } from '../settings/links/utils';
@@ -210,7 +203,9 @@ describe('transformSceneToSaveModel', () => {
   describe('Given a scene with rows', () => {
     it('Should transform back to persisted model', () => {
       const scene = transformSaveModelToScene({ dashboard: repeatingRowsAndPanelsDashboardJson as any, meta: {} });
+
       const saveModel = transformSceneToSaveModel(scene);
+
       const row2: RowPanel = saveModel.panels![2] as RowPanel;
 
       expect(row2.type).toBe('row');
@@ -347,7 +342,7 @@ describe('transformSceneToSaveModel', () => {
         }),
       });
 
-      const panel = new SceneGridItem({
+      const panel = new DashboardGridItem({
         body: libVizPanel,
         y: 0,
         x: 0,
@@ -410,7 +405,7 @@ describe('transformSceneToSaveModel', () => {
     it('should transform annotations to save model after state changes', () => {
       const scene = transformSaveModelToScene({ dashboard: dashboard_to_load1 as any, meta: {} });
 
-      const layers = (scene.state.$data as SceneDataLayers)?.state.layers;
+      const layers = (scene.state.$data as SceneDataLayerSet)?.state.layers;
       const enabledLayer = layers[1];
       const hiddenLayer = layers[3];
 
@@ -987,7 +982,7 @@ describe('transformSceneToSaveModel', () => {
   });
 });
 
-export function buildGridItemFromPanelSchema(panel: Partial<Panel>): SceneGridItemLike {
+export function buildGridItemFromPanelSchema(panel: Partial<Panel>) {
   if (panel.libraryPanel) {
     return buildGridItemForLibPanel(new PanelModel(panel))!;
   } else if (panel.type === 'add-library-panel') {
