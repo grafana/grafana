@@ -314,7 +314,7 @@ export function EditCloudGroupModal(props: ModalProps): React.ReactElement {
                   <Stack gap={0.5}>Evaluation interval</Stack>
                 </Label>
               }
-              invalid={!!errors.groupInterval}
+              invalid={Boolean(errors.groupInterval) ? true : undefined}
               error={errors.groupInterval?.message}
             >
               <Stack direction="column">
