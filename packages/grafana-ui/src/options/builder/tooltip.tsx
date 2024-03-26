@@ -5,8 +5,7 @@ export function addTooltipOptions<T extends OptionsWithTooltip>(
   builder: PanelOptionsEditorBuilder<T>,
   singleOnly = false,
   setProximity = false,
-  defaultOptions?: Partial<OptionsWithTooltip>,
-  showTooltipCalcs = false
+  defaultOptions?: Partial<OptionsWithTooltip>
 ) {
   const category = ['Tooltip'];
   const modeOptions = singleOnly
