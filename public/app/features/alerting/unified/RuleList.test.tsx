@@ -27,7 +27,7 @@ import {
 import { mockAlertmanagerChoiceResponse } from 'app/features/alerting/unified/mocks/alertmanagerApi';
 import * as actions from 'app/features/alerting/unified/state/actions';
 import { AlertmanagerChoice } from 'app/plugins/datasource/alertmanager/types';
-import { AccessControlAction, FolderDTO } from 'app/types';
+import { AccessControlAction } from 'app/types';
 import { PromAlertingRuleState, PromApplication } from 'app/types/unified-alerting-dto';
 
 import * as analytics from './Analytics';
