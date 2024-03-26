@@ -33,7 +33,7 @@ const VIEWS = {
 };
 
 // make sure we ask for 1 more so we show the "show x more" button
-export const LIMIT_ALERTS = INSTANCES_DISPLAY_LIMIT + 1;
+const LIMIT_ALERTS = INSTANCES_DISPLAY_LIMIT + 1;
 
 const RuleList = withErrorBoundary(
   () => {

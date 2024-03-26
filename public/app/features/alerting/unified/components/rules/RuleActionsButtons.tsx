@@ -17,8 +17,8 @@ import {
   Stack,
 } from '@grafana/ui';
 import { useAppNotification } from 'app/core/copy/appNotification';
-import { LIMIT_ALERTS } from 'app/features/alerting/unified/RuleList';
 import { alertRuleApi } from 'app/features/alerting/unified/api/alertRuleApi';
+import { INSTANCES_DISPLAY_LIMIT } from 'app/features/alerting/unified/components/rules/RuleDetails';
 import { useRulesFilter } from 'app/features/alerting/unified/hooks/useFilteredRules';
 import { useDispatch } from 'app/types';
 import { CombinedRule, RuleIdentifier, RulesSource } from 'app/types/unified-alerting';
@@ -107,7 +107,9 @@ export const RuleActionsButtons = ({ rule, rulesSource }: Props) => {
 
     await updateRule({ nameSpaceUID: rule.namespace.uid!, payload }).unwrap();
 
-    const limitAlerts = hasActiveFilters ? undefined : LIMIT_ALERTS;
+    // Uses INSTANCES_DISPLAY_LIMIT + 1 here as exporting LIMIT_ALERTS from RuleList has the side effect
+    // of breaking some unrelated tests in Policy.test.tsx due to mocking approach
+    const limitAlerts = hasActiveFilters ? undefined : INSTANCES_DISPLAY_LIMIT + 1;
     // Trigger a re-fetch of the rules table
     // TODO: Migrate rules table functionality to RTK Query, so we instead rely
     // on tag invalidation (or optimistic cache updates) for this
