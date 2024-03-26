@@ -72,7 +72,7 @@ The Grafana Assume Role also helps facilitate this. Using this role, Grafana's A
 
 If the **Assume Role ARN** field is left empty, Grafana uses the provided credentials from the selected authentication method directly, and permissions to AWS data must be attached directly to those credentials. The **Assume Role ARN** field is optional for all authentication methods except for Grafana Assume Role.
 
-To disable this feature in open-source Grafana or Grafana Enterprise, refer to the [`assume_role_enabled` documentation][configure-grafana-assume-role-enabled].
+To disable this feature in open source Grafana or Grafana Enterprise, refer to the [`assume_role_enabled` documentation][configure-grafana-assume-role-enabled].
 
 ### Use an external ID
 
