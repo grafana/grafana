@@ -1,6 +1,5 @@
 import React from 'react';
 
-import { locationService } from '@grafana/runtime';
 import {
   QueryVariable,
   SceneComponentProps,
@@ -9,7 +8,7 @@ import {
   SceneObjectState,
   VariableDependencyConfig,
 } from '@grafana/scenes';
-import { Button, Stack, Text, TextLink } from '@grafana/ui';
+import { Stack, Text, TextLink } from '@grafana/ui';
 
 import { PromMetricsMetadataItem } from '../../../plugins/datasource/prometheus/types';
 import { ALL_VARIABLE_VALUE } from '../../variables/constants';
