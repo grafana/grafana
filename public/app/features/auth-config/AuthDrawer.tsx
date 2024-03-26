@@ -39,27 +39,33 @@ export const AuthDrawerUnconnected = ({
   const notifyApp = useAppNotification();
 
   const oauthAllowInsecureEmailLookupOnChange = async () => {
-    saveSettings({
-      updates: {
-        auth: {
-          oauth_allow_insecure_email_lookup: '' + !allowInsecureEmail,
+    try {
+      await saveSettings({
+        updates: {
+          auth: {
+            oauth_allow_insecure_email_lookup: '' + !allowInsecureEmail,
+          },
         },
-      },
-    })
-      .then(() => loadSettings(false))
-      .then(() => notifyApp.success('Settings saved'))
-      .catch(() => notifyApp.error('Failed to save settings'));
+      });
+      await loadSettings(false);
+      notifyApp.success('Settings saved');
+    } catch (error) {
+      notifyApp.error('Failed to save settings');
+    }
   };
 
   const resetButtonOnClick = async () => {
-    saveSettings({
-      removals: {
-        auth: ['oauth_allow_insecure_email_lookup'],
-      },
-    })
-      .then(() => loadSettings(false))
-      .then(() => notifyApp.success('Settings saved'))
-      .catch(() => notifyApp.error('Failed to save settings'));
+    try {
+      await saveSettings({
+        removals: {
+          auth: ['oauth_allow_insecure_email_lookup'],
+        },
+      });
+      await loadSettings(false);
+      notifyApp.success('Settings saved');
+    } catch (error) {
+      notifyApp.error('Failed to save settings');
+    }
   };
 
   const subtitle = (
