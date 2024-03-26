@@ -18,6 +18,7 @@ import {
 } from '@grafana/data';
 import {
   BackendDataSourceResponse,
+  config,
   FetchResponse,
   setBackendSrv,
   setDataSourceSrv,
@@ -63,6 +64,77 @@ describe('Tempo data source', () => {
   const consoleErrorMock = jest.fn();
   afterEach(() => (console.error = origError));
   beforeEach(() => (console.error = consoleErrorMock));
+
+  describe('runs correctly', () => {
+    config.featureToggles.traceQLStreaming = true;
+    jest.spyOn(TempoDatasource.prototype, 'isFeatureAvailable').mockImplementation(() => true);
+    const handleStreamingSearch = jest.spyOn(TempoDatasource.prototype, 'handleStreamingSearch');
+    const request = jest.spyOn(TempoDatasource.prototype, '_request');
+    const templateSrv: TemplateSrv = { replace: (s: string) => s } as unknown as TemplateSrv;
+
+    const traceqlQuery = {
+      targets: [{ refId: 'refid1', queryType: 'traceql', query: '{}' }],
+      range: {
+        from: dateTime(new Date(2022, 8, 13, 16, 0, 0, 0)),
+        to: dateTime(new Date(2022, 8, 13, 16, 15, 0, 0)),
+        raw: { from: '15m', to: 'now' },
+      },
+    };
+    const traceqlSearchQuery = {
+      targets: [
+        {
+          refId: 'refid1',
+          queryType: 'traceqlSearch',
+          filters: [
+            {
+              id: 'service-name',
+              operator: '=',
+              scope: TraceqlSearchScope.Resource,
+              tag: 'service.name',
+              valueType: 'string',
+            },
+          ],
+        },
+      ],
+      range: {
+        from: dateTime(new Date(2022, 8, 13, 16, 0, 0, 0)),
+        to: dateTime(new Date(2022, 8, 13, 16, 15, 0, 0)),
+        raw: { from: '15m', to: 'now' },
+      },
+    };
+
+    it('for traceql queries when streaming is enabled', async () => {
+      config.liveEnabled = true;
+      const ds = new TempoDatasource(defaultSettings, templateSrv);
+      await lastValueFrom(ds.query(traceqlQuery as DataQueryRequest<TempoQuery>));
+      expect(handleStreamingSearch).toHaveBeenCalledTimes(1);
+      expect(request).toHaveBeenCalledTimes(0);
+    });
+
+    it('for traceqlSearch queries when streaming is enabled', async () => {
+      config.liveEnabled = true;
+      const ds = new TempoDatasource(defaultSettings, templateSrv);
+      await lastValueFrom(ds.query(traceqlSearchQuery as DataQueryRequest<TempoQuery>));
+      expect(handleStreamingSearch).toHaveBeenCalledTimes(2);
+      expect(request).toHaveBeenCalledTimes(0);
+    });
+
+    it('for traceql queries when streaming is not enabled', async () => {
+      config.liveEnabled = false;
+      const ds = new TempoDatasource(defaultSettings, templateSrv);
+      await lastValueFrom(ds.query(traceqlQuery as DataQueryRequest<TempoQuery>));
+      expect(handleStreamingSearch).toHaveBeenCalledTimes(2);
+      expect(request).toHaveBeenCalledTimes(1);
+    });
+
+    it('for traceqlSearch queries when streaming is not enabled', async () => {
+      config.liveEnabled = false;
+      const ds = new TempoDatasource(defaultSettings, templateSrv);
+      await lastValueFrom(ds.query(traceqlSearchQuery as DataQueryRequest<TempoQuery>));
+      expect(handleStreamingSearch).toHaveBeenCalledTimes(2);
+      expect(request).toHaveBeenCalledTimes(2);
+    });
+  });
 
   it('returns empty response when traceId is empty', async () => {
     const templateSrv: TemplateSrv = { replace: jest.fn() } as unknown as TemplateSrv;
