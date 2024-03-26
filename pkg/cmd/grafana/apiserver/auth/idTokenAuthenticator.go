@@ -1,7 +1,6 @@
 package auth
 
 import (
-	"context"
 	"errors"
 	"net/http"
 	"strings"
@@ -19,21 +18,18 @@ func getIDTokenAuthenticatorFunc(validator *Validator) authenticator.RequestFunc
 	return func(req *http.Request) (*authenticator.Response, bool, error) {
 		token, err := extractBearerToken(req)
 		if err != nil {
-			return nil, false, errors.New("Could not read bearer token from the authorization header")
+			return nil, false, errors.New("could not read bearer token from the authorization header")
 		}
 
 		if token == "" {
 			return nil, false, nil
 		}
 
-		result, err := validator.Validate(context.Background(), token)
+		result, err := validator.Validate(req.Context(), token)
 		if err != nil {
 			return nil, false, err
 		}
 
-		if err != nil {
-			return nil, false, err
-		}
 		return &authenticator.Response{
 			Audiences: authenticator.Audiences(result.Claims.Audience),
 			User: &user.DefaultInfo{
