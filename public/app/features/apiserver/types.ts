@@ -8,6 +8,7 @@
  *
  */
 
+/** The object type and version */
 export interface TypeMeta {
   apiVersion: string;
   kind: string;
@@ -61,12 +62,6 @@ export interface Resource<T = object> extends TypeMeta {
   spec: T;
 }
 
-export interface ResourceWithStatus<T = object, S = object> extends TypeMeta {
-  metadata: ObjectMeta;
-  spec: T;
-  status: S;
-}
-
 export interface ResourceForCreate<T = object> extends Partial<TypeMeta> {
   metadata: Partial<ObjectMeta>;
   spec: T;
@@ -81,4 +76,41 @@ export interface ListMeta {
 export interface ResourceList<T> extends TypeMeta {
   metadata: ListMeta;
   items: Array<Resource<T>>;
+}
+
+export interface ListOptions {
+  // continue the list at a given batch
+  continue?: string;
+
+  // Query by labels
+  // https://kubernetes.io/docs/concepts/overview/working-with-objects/labels/#label-selectors
+  labelSelector?: string;
+
+  // Limit the response count
+  limit?: number;
+}
+
+export interface MetaStatus {
+  // Status of the operation. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#spec-and-status
+  status: 'Success' | 'Failure';
+
+  // A human-readable description of the status of this operation.
+  message: string;
+
+  // Suggested HTTP return code for this status, 0 if not set.
+  code: number;
+
+  // A machine-readable description of why this operation is in the "Failure" status.
+  reason?: string;
+
+  // Extended data associated with the reason
+  details?: object;
+}
+
+export interface ResourceServer<T = object> {
+  create(obj: ResourceForCreate<T>): Promise<void>;
+  get(name: string): Promise<Resource<T>>;
+  list(opts?: ListOptions): Promise<ResourceList<T>>;
+  update(obj: ResourceForCreate<T>): Promise<Resource<T>>;
+  delete(name: string): Promise<MetaStatus>;
 }

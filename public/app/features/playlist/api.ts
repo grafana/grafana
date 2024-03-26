@@ -8,7 +8,8 @@ import { getGrafanaDatasource } from 'app/plugins/datasource/grafana/datasource'
 import { GrafanaQuery, GrafanaQueryType } from 'app/plugins/datasource/grafana/types';
 import { dispatch } from 'app/store/store';
 
-import { Resource, ResourceForCreate, ResourceList } from '../apiserver/resource';
+import { ScopedResourceServer } from '../apiserver/server';
+import { Resource, ResourceForCreate, ResourceServer } from '../apiserver/types';
 import { DashboardQueryResult, getGrafanaSearcher, SearchQuery } from '../search/service';
 
 import { Playlist, PlaylistItem, PlaylistAPI } from './types';
@@ -44,23 +45,25 @@ interface PlaylistSpec {
 }
 
 type K8sPlaylist = Resource<PlaylistSpec>;
-type K8sPlaylistList = ResourceList<PlaylistSpec>;
 
 class K8sAPI implements PlaylistAPI {
-  readonly apiVersion = 'playlist.grafana.app/v0alpha1';
-  readonly url: string;
+  readonly server: ResourceServer<PlaylistSpec>;
 
   constructor() {
-    this.url = `/apis/${this.apiVersion}/namespaces/${config.namespace}/playlists`;
+    this.server = new ScopedResourceServer({
+      group: 'playlist.grafana.app',
+      version: 'v0alpha1',
+      resource: 'playlists',
+    });
   }
 
   async getAllPlaylist(): Promise<Playlist[]> {
-    const result = await getBackendSrv().get<K8sPlaylistList>(this.url);
+    const result = await this.server.list();
     return result.items.map(k8sResourceAsPlaylist);
   }
 
   async getPlaylist(uid: string): Promise<Playlist> {
-    const r = await getBackendSrv().get<K8sPlaylist>(this.url + '/' + uid);
+    const r = await this.server.get(uid);
     const p = k8sResourceAsPlaylist(r);
     await migrateInternalIDs(p);
     return p;
@@ -68,16 +71,16 @@ class K8sAPI implements PlaylistAPI {
 
   async createPlaylist(playlist: Playlist): Promise<void> {
     const body = this.playlistAsK8sResource(playlist);
-    await withErrorHandling(() => getBackendSrv().post(this.url, body));
+    await withErrorHandling(() => this.server.create(body));
   }
 
   async updatePlaylist(playlist: Playlist): Promise<void> {
     const body = this.playlistAsK8sResource(playlist);
-    await withErrorHandling(() => getBackendSrv().put(`${this.url}/${playlist.uid}`, body));
+    await withErrorHandling(() => this.server.update(body).then(() => {}));
   }
 
   async deletePlaylist(uid: string): Promise<void> {
-    await withErrorHandling(() => getBackendSrv().delete(`${this.url}/${uid}`), 'Playlist deleted');
+    await withErrorHandling(() => this.server.delete(uid).then(() => {}));
   }
 
   playlistAsK8sResource = (playlist: Playlist): ResourceForCreate<PlaylistSpec> => {
