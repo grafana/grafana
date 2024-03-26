@@ -159,8 +159,10 @@ func (s *Service) hook(ctx context.Context, identity *authn.Identity, _ *authn.R
 	// FIXME(kalleep): we should probably lazy load this
 	token, err := s.SignIdentity(ctx, identity)
 	if err != nil {
-		namespace, id := identity.GetNamespacedID()
-		s.logger.FromContext(ctx).Error("Failed to sign id token", "err", err, "namespace", namespace, "id", id)
+		if shouldLogErr(err) {
+			namespace, id := identity.GetNamespacedID()
+			s.logger.FromContext(ctx).Error("Failed to sign id token", "err", err, "namespace", namespace, "id", id)
+		}
 		// for now don't return error so we don't break authentication from this hook
 		return nil
 	}
@@ -179,4 +181,8 @@ func getSubject(namespace, identifier string) string {
 
 func prefixCacheKey(key string) string {
 	return fmt.Sprintf("%s-%s", cachePrefix, key)
+}
+
+func shouldLogErr(err error) bool {
+	return !errors.Is(err, context.Canceled)
 }
