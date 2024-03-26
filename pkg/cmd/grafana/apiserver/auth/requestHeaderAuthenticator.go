@@ -31,7 +31,7 @@ func (w WrappedRequestHeaderAuthenticator) AuthenticateRequest(req *http.Request
 		return nil, false, nil
 	}
 
-	_, err = w.validator.Validate(context.Background(), idToken[0])
+	_, err = w.validator.Validate(req.Context(), idToken[0])
 	if err != nil {
 		return nil, false, err
 	}
