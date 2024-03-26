@@ -38,6 +38,7 @@ export class UnthemedTimeSeries extends Component<TimeSeriesProps> {
     });
   };
 
+  // JEV: REFACTOR: create a renderLegend/buildLegend function across all components?
   renderLegend = (config: UPlotConfigBuilder) => {
     const { legend, frames } = this.props;
 
