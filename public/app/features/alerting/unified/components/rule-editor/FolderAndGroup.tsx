@@ -1,11 +1,9 @@
 import { css } from '@emotion/css';
-import { debounce, last, take, times, uniqueId } from 'lodash';
+import { debounce, take, uniqueId } from 'lodash';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { FormProvider, useForm, useFormContext, Controller } from 'react-hook-form';
 
 import { AppEvents, GrafanaTheme2, SelectableValue } from '@grafana/data';
-import { secondsToHms } from '@grafana/data/src/datetime/rangeutil';
-import { config } from '@grafana/runtime';
 import { AsyncSelect, Box, Button, Field, Input, Label, Modal, Stack, Text, useStyles2 } from '@grafana/ui';
 import appEvents from 'app/core/app_events';
 import { contextSrv } from 'app/core/services/context_srv';
@@ -21,10 +19,10 @@ import { RuleFormValues } from '../../types/rule-form';
 import { GRAFANA_RULES_SOURCE_NAME } from '../../utils/datasource';
 import { MINUTE } from '../../utils/rule-form';
 import { isGrafanaRulerRule } from '../../utils/rules';
-import { formatPrometheusDuration, parsePrometheusDuration, safeParsePrometheusDuration } from '../../utils/time';
 import { ProvisioningBadge } from '../Provisioning';
 import { evaluateEveryValidationOptions } from '../rules/EditRuleGroupModal';
 
+import { EvaluationGroupQuickPick } from './EvaluationGroupQuickPick';
 import { containsSlashes, Folder, RuleFolderPicker } from './RuleFolderPicker';
 import { checkForPathSeparator } from './util';
 
@@ -333,40 +331,6 @@ function FolderCreationModal({
   );
 }
 
-const getOptions = () => {
-  const MIN_OPTIONS_TO_SHOW = 8;
-  const DEFAULT_INTERVAL_OPTIONS: number[] = [
-    parsePrometheusDuration('10s'),
-    parsePrometheusDuration('30s'),
-    parsePrometheusDuration('1m'),
-    parsePrometheusDuration('5m'),
-    parsePrometheusDuration('10m'),
-    parsePrometheusDuration('15m'),
-    parsePrometheusDuration('30m'),
-    parsePrometheusDuration('1h'),
-  ];
-
-  // 10s for OSS and 1m0s for Grafana Cloud
-  const minEvaluationIntervalMillis = parsePrometheusDuration(config.unifiedAlerting.minInterval);
-
-  /**
-   * 1. make sure we always show at least 8 options to the user
-   * 2. find the default interval closest to the configured minInterval
-   * 3. if we have fewer than 8 options, we basically double the last interval until we have 8 options
-   */
-  const head = DEFAULT_INTERVAL_OPTIONS.filter((millis) => minEvaluationIntervalMillis <= millis);
-
-  const tail = times(MIN_OPTIONS_TO_SHOW - head.length, (index: number) => {
-    const lastInterval = last(head) ?? minEvaluationIntervalMillis;
-    const multiplier = head.length === 0 ? 1 : 2; // if the head is empty we start with the min interval and multiply it only once :)
-    return lastInterval * multiplier * (index + 1);
-  });
-
-  return [...head, ...tail];
-};
-
-const QUICK_PICK_OPTIONS = getOptions();
-
 function EvaluationGroupCreationModal({
   onClose,
   onCreate,
@@ -400,14 +364,10 @@ function EvaluationGroupCreationModal({
   });
 
   const { register, handleSubmit, formState, setValue, getValues, watch: watchGroupFormValues } = formAPI;
+  const evaluationInterval = watchGroupFormValues('evaluateEvery');
 
-  const setPendingPeriod = (time: number) => {
-    setValue('evaluateEvery', secondsToHms(time / 1000), { shouldValidate: true });
-  };
-
-  const isQuickSelectionActive = (time: number) => {
-    const evaluationInterval = watchGroupFormValues('evaluateEvery');
-    return evaluationInterval ? safeParsePrometheusDuration(evaluationInterval) === time : false;
+  const setPendingPeriod = (interval: string) => {
+    setValue('evaluateEvery', interval, { shouldValidate: true });
   };
 
   return (
@@ -456,18 +416,7 @@ function EvaluationGroupCreationModal({
                 {...register('evaluateEvery', evaluateEveryValidationOptions(groupRules))}
               />
               <Stack direction="row" alignItems="flex-end">
-                {QUICK_PICK_OPTIONS.map((time) => (
-                  <Button
-                    key={time}
-                    variant={isQuickSelectionActive(time) ? 'primary' : 'secondary'}
-                    size="sm"
-                    onClick={() => {
-                      setPendingPeriod(time);
-                    }}
-                  >
-                    {formatPrometheusDuration(time)}
-                  </Button>
-                ))}
+                <EvaluationGroupQuickPick currentInterval={evaluationInterval} onSelect={setPendingPeriod} />
               </Stack>
             </Stack>
           </Field>

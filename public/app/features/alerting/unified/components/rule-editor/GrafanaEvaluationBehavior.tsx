@@ -3,7 +3,7 @@ import React, { useCallback, useEffect, useState } from 'react';
 import { RegisterOptions, useFormContext, Controller } from 'react-hook-form';
 
 import { GrafanaTheme2, SelectableValue } from '@grafana/data';
-import { Button, Field, Icon, IconButton, Input, Label, Stack, Switch, Text, Tooltip, useStyles2 } from '@grafana/ui';
+import { Field, Icon, IconButton, Input, Label, Stack, Switch, Text, Tooltip, useStyles2 } from '@grafana/ui';
 
 import { CombinedRuleGroup, CombinedRuleNamespace } from '../../../../../types/unified-alerting';
 import { LogMessages, logInfo } from '../../Analytics';
@@ -11,13 +11,14 @@ import { useCombinedRuleNamespaces } from '../../hooks/useCombinedRuleNamespaces
 import { useUnifiedAlertingSelector } from '../../hooks/useUnifiedAlertingSelector';
 import { RuleFormValues } from '../../types/rule-form';
 import { GRAFANA_RULES_SOURCE_NAME } from '../../utils/datasource';
-import { formatPrometheusDuration, parsePrometheusDuration, safeParsePrometheusDuration } from '../../utils/time';
+import { parsePrometheusDuration } from '../../utils/time';
 import { CollapseToggle } from '../CollapseToggle';
 import { EditCloudGroupModal } from '../rules/EditRuleGroupModal';
 
 import { FolderAndGroup, useFolderGroupOptions } from './FolderAndGroup';
 import { GrafanaAlertStatePicker } from './GrafanaAlertStatePicker';
 import { NeedHelpInfo } from './NeedHelpInfo';
+import { PendingPeriodQuickPick } from './PendingPeriodQuickPick';
 import { RuleEditorSection } from './RuleEditorSection';
 
 export const MIN_TIME_RANGE_STEP_S = 10; // 10 seconds
@@ -169,25 +170,10 @@ function ForInput({ evaluateEvery }: { evaluateEvery: string }) {
 
   const evaluateForId = 'eval-for-input';
   const groupEvaluationInterval = watch('evaluateEvery');
-  const groupEvaluationIntervalMillis = parsePrometheusDuration(groupEvaluationInterval);
+  const currentPendingPeriod = watch('evaluateFor');
 
-  // we generate the quick selection based on the group's evaluation interval
-  const PENDING_PERIOD_QUICK_OPTIONS: number[] = [
-    0,
-    groupEvaluationIntervalMillis * 1,
-    groupEvaluationIntervalMillis * 2,
-    groupEvaluationIntervalMillis * 3,
-    groupEvaluationIntervalMillis * 4,
-    groupEvaluationIntervalMillis * 5,
-  ];
-
-  const setPendingPeriod = (milliseconds: number) => {
-    setValue('evaluateFor', formatPrometheusDuration(milliseconds));
-  };
-
-  const isQuickSelectionActive = (milliseconds: number) => {
-    const currentPendingPeriod = watch('evaluateFor');
-    return safeParsePrometheusDuration(currentPendingPeriod) === milliseconds;
+  const setPendingPeriod = (pendingPeriod: string) => {
+    setValue('evaluateFor', pendingPeriod);
   };
 
   return (
@@ -208,18 +194,11 @@ function ForInput({ evaluateEvery }: { evaluateEvery: string }) {
       >
         <Stack direction="row" alignItems="flex-end">
           <Input id={evaluateForId} width={8} {...register('evaluateFor', forValidationOptions(evaluateEvery))} />
-          {PENDING_PERIOD_QUICK_OPTIONS.map((milliseconds) => (
-            <Button
-              key={milliseconds}
-              variant={isQuickSelectionActive(milliseconds) ? 'primary' : 'secondary'}
-              size="sm"
-              onClick={() => {
-                setPendingPeriod(milliseconds);
-              }}
-            >
-              {milliseconds === 0 ? 'None' : formatPrometheusDuration(milliseconds)}
-            </Button>
-          ))}
+          <PendingPeriodQuickPick
+            selectedPendingPeriod={currentPendingPeriod}
+            groupEvaluationInterval={groupEvaluationInterval}
+            onSelect={setPendingPeriod}
+          />
         </Stack>
       </Field>
     </Stack>

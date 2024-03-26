@@ -150,7 +150,7 @@ export const evaluateEveryValidationOptions = (rules: RulerRuleDTO[]): RegisterO
           const { forDuration } = getAlertInfo(rule, evaluateEvery);
           return safeParsePrometheusDuration(forDuration);
         });
-        const largestPendingPeriod = Math.max(...rulePendingPeriods);
+        const largestPendingPeriod = Math.min(...rulePendingPeriods);
         return `Evaluation interval should be smaller or equal to "pending period" values for existing rules in this rule group. Choose a value smaller than or equal to "${formatPrometheusDuration(largestPendingPeriod)}".`;
       }
     } catch (error) {
