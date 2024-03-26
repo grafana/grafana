@@ -100,7 +100,7 @@ describe('Tempo data source', () => {
       range,
     };
 
-    it('for traceql queries when streaming is enabled', async () => {
+    it('for traceql queries when live is enabled', async () => {
       config.liveEnabled = true;
       const ds = new TempoDatasource(defaultSettings, templateSrv);
       await lastValueFrom(ds.query(traceqlQuery as DataQueryRequest<TempoQuery>));
@@ -108,7 +108,7 @@ describe('Tempo data source', () => {
       expect(request).toHaveBeenCalledTimes(0);
     });
 
-    it('for traceqlSearch queries when streaming is enabled', async () => {
+    it('for traceqlSearch queries when live is enabled', async () => {
       config.liveEnabled = true;
       const ds = new TempoDatasource(defaultSettings, templateSrv);
       await lastValueFrom(ds.query(traceqlSearchQuery as DataQueryRequest<TempoQuery>));
@@ -116,7 +116,7 @@ describe('Tempo data source', () => {
       expect(request).toHaveBeenCalledTimes(0);
     });
 
-    it('for traceql queries when streaming is not enabled', async () => {
+    it('for traceql queries when live is not enabled', async () => {
       config.liveEnabled = false;
       const ds = new TempoDatasource(defaultSettings, templateSrv);
       await lastValueFrom(ds.query(traceqlQuery as DataQueryRequest<TempoQuery>));
@@ -124,7 +124,7 @@ describe('Tempo data source', () => {
       expect(request).toHaveBeenCalledTimes(1);
     });
 
-    it('for traceqlSearch queries when streaming is not enabled', async () => {
+    it('for traceqlSearch queries when live is not enabled', async () => {
       config.liveEnabled = false;
       const ds = new TempoDatasource(defaultSettings, templateSrv);
       await lastValueFrom(ds.query(traceqlSearchQuery as DataQueryRequest<TempoQuery>));
