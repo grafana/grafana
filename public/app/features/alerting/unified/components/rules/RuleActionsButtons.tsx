@@ -17,7 +17,7 @@ import {
   Stack,
 } from '@grafana/ui';
 import { useAppNotification } from 'app/core/copy/appNotification';
-import MenuItemPauseRule from 'app/features/alerting/unified/MenuItemPauseRule';
+import MenuItemPauseRule from 'app/features/alerting/unified/components/MenuItemPauseRule';
 import { INSTANCES_DISPLAY_LIMIT } from 'app/features/alerting/unified/components/rules/RuleDetails';
 import { useRulesFilter } from 'app/features/alerting/unified/hooks/useFilteredRules';
 import { useDispatch } from 'app/types';

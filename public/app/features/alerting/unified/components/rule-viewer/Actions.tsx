@@ -3,7 +3,7 @@ import React from 'react';
 import { AppEvents } from '@grafana/data';
 import { Dropdown, LinkButton, Menu } from '@grafana/ui';
 import appEvents from 'app/core/app_events';
-import MenuItemPauseRule from 'app/features/alerting/unified/MenuItemPauseRule';
+import MenuItemPauseRule from 'app/features/alerting/unified/components/MenuItemPauseRule';
 import { CombinedRule, RuleIdentifier } from 'app/types/unified-alerting';
 
 import { AlertRuleAction, useAlertRuleAbility } from '../../hooks/useAbilities';
