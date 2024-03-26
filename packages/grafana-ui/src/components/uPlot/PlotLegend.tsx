@@ -50,6 +50,7 @@ export function hasVisibleLegendSeries(config: UPlotConfigBuilder, data: DataFra
   });
 }
 
+// JEV: REFACTOR: possibly use this as a template to create a legendBuilder component?
 export const PlotLegend = React.memo(
   ({ data, config, placement, calcs, displayMode, ...vizLayoutLegendProps }: PlotLegendProps) => {
     const theme = useTheme2();
@@ -143,7 +144,7 @@ export const PlotLegend = React.memo(
       .filter((i): i is VizLegendItem => i !== undefined);
 
     return (
-      // JEV: REFACTOR: are these props necessary?
+      // JEV: REFACTOR: are these props necessary? I believe they're all unused.
       <VizLayout.Legend placement={placement} {...vizLayoutLegendProps}>
         <VizLegend
           placement={placement}
