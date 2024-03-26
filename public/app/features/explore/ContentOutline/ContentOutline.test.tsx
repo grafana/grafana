@@ -89,15 +89,14 @@ describe('<ContentOutline />', () => {
 
     for (const button of itemButtons) {
       await userEvent.click(button);
-
-      //assert scrollIntoView is called
-      expect(scrollerMock.scroll).toHaveBeenCalled();
     }
+
+    expect(scrollerMock.scroll).toHaveBeenCalledTimes(itemButtons.length);
   });
 
   it('doesnt merge a single child item when mergeSingleChild is false', async () => {
     setup();
-    const expandSectonChevron = screen.getAllByRole('button', { name: 'content-outline-item-chevron-collapse' });
+    const expandSectonChevron = screen.getAllByRole('button', { name: 'Content outline item collapse button' });
     await userEvent.click(expandSectonChevron[0]);
 
     const child = screen.getByRole('button', { name: 'Item 1-1' });
@@ -113,7 +112,7 @@ describe('<ContentOutline />', () => {
 
   it('displays multiple children', async () => {
     setup();
-    const expandSectonChevron = screen.getAllByRole('button', { name: 'content-outline-item-chevron-collapse' });
+    const expandSectonChevron = screen.getAllByRole('button', { name: 'Content outline item collapse button' });
     await userEvent.click(expandSectonChevron[1]);
 
     const child1 = screen.getByRole('button', { name: 'Item 2-1' });
@@ -124,7 +123,7 @@ describe('<ContentOutline />', () => {
 
   it('if item has multiple children, it displays multiple children even when mergeSingleChild is true', async () => {
     setup(true);
-    const expandSectonChevron = screen.getAllByRole('button', { name: 'content-outline-item-chevron-collapse' });
+    const expandSectonChevron = screen.getAllByRole('button', { name: 'Content outline item collapse button' });
     // since first item has only one child, we will have only one chevron
     await userEvent.click(expandSectonChevron[0]);
 

@@ -54,9 +54,10 @@ export function ContentOutlineItemButton({
         <button
           className={styles.collapseButton}
           onClick={toggleCollapsed}
-          aria-label="content-outline-item-chevron-collapse"
+          aria-label="Content outline item collapse button"
+          aria-expanded={!collapsed}
         >
-          {renderIcon(collapsed ? 'angle-right' : 'angle-down')}
+          <OutlineIcon icon={collapsed ? 'angle-right' : 'angle-down'} />
         </button>
       )}
       <button
@@ -66,7 +67,7 @@ export function ContentOutlineItemButton({
         aria-label={tooltip}
         {...rest}
       >
-        {renderIcon(icon)}
+        <OutlineIcon icon={icon} />
         {title && (
           <span className={styles.textContainer} ref={textRef}>
             {title}
@@ -88,13 +89,13 @@ export function ContentOutlineItemButton({
   );
 }
 
-function renderIcon(icon: IconName | React.ReactNode, size: IconSize = 'lg') {
+function OutlineIcon({ icon }: { icon: IconName | React.ReactNode }) {
   if (!icon) {
     return null;
   }
 
   if (isIconName(icon)) {
-    return <Icon name={icon} size={size} title={icon} />;
+    return <Icon name={icon} size={'lg'} title={icon} />;
   }
 
   return icon;

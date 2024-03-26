@@ -24,7 +24,7 @@ interface ContentOutlineContextProviderProps {
    * used to resort children of an outline item when the dependencies change
    * e.g. when the order of query rows changes on drag and drop
    */
-  refreshDependencies?: any[];
+  refreshDependencies?: unknown[];
 }
 
 interface ParentlessItems {
