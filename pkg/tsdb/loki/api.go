@@ -22,7 +22,8 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend/log"
-	"github.com/grafana/grafana/pkg/infra/tracing"
+	// "github.com/grafana/grafana/pkg/infra/tracing"
+
 	"github.com/grafana/grafana/pkg/promlib/converter"
 	"github.com/grafana/grafana/pkg/tsdb/loki/instrumentation"
 )
@@ -31,7 +32,7 @@ type LokiAPI struct {
 	client                    *http.Client
 	url                       string
 	log                       log.Logger
-	tracer                    tracing.Tracer
+	tracer                    trace.Tracer
 	requestStructuredMetadata bool
 }
 
@@ -41,7 +42,7 @@ type RawLokiResponse struct {
 	Encoding string
 }
 
-func newLokiAPI(client *http.Client, url string, log log.Logger, tracer tracing.Tracer, requestStructuredMetadata bool) *LokiAPI {
+func newLokiAPI(client *http.Client, url string, log log.Logger, tracer trace.Tracer, requestStructuredMetadata bool) *LokiAPI {
 	return &LokiAPI{client: client, url: url, log: log, tracer: tracer, requestStructuredMetadata: requestStructuredMetadata}
 }
 
@@ -305,7 +306,7 @@ func (api *LokiAPI) RawQuery(ctx context.Context, resourcePath string) (RawLokiR
 	if resp.StatusCode/100 != 2 {
 		lokiResponseErr := lokiResponseError{Message: makeLokiError(body).Error()}
 		api.log.Warn("Non 200 HTTP status received from loki", "error", lokiResponseErr.Message, "statusCode", resp.StatusCode, "resourcePath", resourcePath)
-		traceID := tracing.TraceIDFromContext(ctx, false)
+		traceID := trace.SpanFromContext(ctx).SpanContext().TraceID().String()
 		if traceID != "" {
 			lokiResponseErr.TraceID = traceID
 		}
