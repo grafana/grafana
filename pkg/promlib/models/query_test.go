@@ -7,6 +7,8 @@ import (
 	"time"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
+	sdkapi "github.com/grafana/grafana-plugin-sdk-go/experimental/apis/data/v0alpha1"
+	"github.com/grafana/grafana-plugin-sdk-go/experimental/schemabuilder"
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/promlib/intervalv2"
@@ -781,4 +783,39 @@ func TestAlignTimeRange(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestQueryTypeDefinitions(t *testing.T) {
+	builder, err := schemabuilder.NewSchemaBuilder(
+		schemabuilder.BuilderOptions{
+			PluginID: []string{"prometheus"},
+			ScanCode: []schemabuilder.CodePaths{{
+				BasePackage: "github.com/grafana/grafana/pkg/promlib/models",
+				CodePath:    "./",
+			}},
+			Enums: []reflect.Type{
+				reflect.TypeOf(models.PromQueryFormatTimeSeries), // pick an example value (not the root)
+				reflect.TypeOf(models.QueryEditorModeBuilder),
+			},
+		})
+	require.NoError(t, err)
+	err = builder.AddQueries(
+		schemabuilder.QueryTypeInfo{
+			Name:   "default",
+			GoType: reflect.TypeOf(&models.PrometheusQueryProperties{}),
+			Examples: []sdkapi.QueryExample{
+				{
+					Name: "simple health check",
+					SaveModel: sdkapi.AsUnstructured(
+						models.PrometheusQueryProperties{
+							Expr: "1+1",
+						},
+					),
+				},
+			},
+		},
+	)
+
+	require.NoError(t, err)
+	builder.UpdateQueryDefinition(t, "./")
 }

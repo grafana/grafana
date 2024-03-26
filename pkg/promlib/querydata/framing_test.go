@@ -14,6 +14,7 @@ import (
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/experimental"
+	sdkapi "github.com/grafana/grafana-plugin-sdk-go/experimental/apis/data/v0alpha1"
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/promlib/models"
@@ -113,8 +114,8 @@ func loadStoredQuery(fileName string) (*backend.QueryDataRequest, error) {
 			Expr:         sq.Expr,
 			LegendFormat: sq.LegendFormat,
 		},
-		CommonQueryProperties: models.CommonQueryProperties{
-			IntervalMs: sq.Step * 1000,
+		CommonQueryProperties: sdkapi.CommonQueryProperties{
+			IntervalMS: float64(sq.Step * 1000),
 		},
 		Interval: fmt.Sprintf("%ds", sq.Step),
 	}
