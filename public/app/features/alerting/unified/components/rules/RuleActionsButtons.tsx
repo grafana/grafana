@@ -17,7 +17,7 @@ import {
   Stack,
 } from '@grafana/ui';
 import { useAppNotification } from 'app/core/copy/appNotification';
-import { alertRuleApi } from 'app/features/alerting/unified/api/alertRuleApi';
+import MenuItemPauseRule from 'app/features/alerting/unified/MenuItemPauseRule';
 import { INSTANCES_DISPLAY_LIMIT } from 'app/features/alerting/unified/components/rules/RuleDetails';
 import { useRulesFilter } from 'app/features/alerting/unified/hooks/useFilteredRules';
 import { useDispatch } from 'app/types';
@@ -28,12 +28,10 @@ import { deleteRuleAction, fetchAllPromAndRulerRulesAction } from '../../state/a
 import { getRulesSourceName } from '../../utils/datasource';
 import { createShareLink, createViewLink } from '../../utils/misc';
 import * as ruleId from '../../utils/rule-id';
-import { isGrafanaRulerRule, isGrafanaRulerRulePaused } from '../../utils/rules';
+import { isGrafanaRulerRule } from '../../utils/rules';
 import { createUrl } from '../../utils/url';
 
 import { RedirectToCloneRule } from './CloneRule';
-
-const { useUpdateRuleMutation } = alertRuleApi;
 
 export const matchesWidth = (width: number) => window.matchMedia(`(max-width: ${width}px)`).matches;
 
@@ -47,7 +45,6 @@ export const RuleActionsButtons = ({ rule, rulesSource }: Props) => {
   const location = useLocation();
   const notifyApp = useAppNotification();
   const style = useStyles2(getStyles);
-  const [updateRule] = useUpdateRuleMutation();
 
   const [redirectToClone, setRedirectToClone] = useState<
     { identifier: RuleIdentifier; isProvisioned: boolean } | undefined
@@ -74,47 +71,6 @@ export const RuleActionsButtons = ({ rule, rulesSource }: Props) => {
 
   const buttons: JSX.Element[] = [];
   const moreActions: JSX.Element[] = [];
-
-  /**
-   * Triggers API call to update the current rule to the new `is_paused` state
-   */
-  const setRulePause = async (newIsPaused: boolean) => {
-    if (!isGrafanaRulerRule(rule.rulerRule)) {
-      return;
-    }
-    const ruleUid = rule.rulerRule.grafana_alert.uid;
-
-    // Parse the rules into correct format for API
-    const modifiedRules = group.rules.map((groupRule) => {
-      if (isGrafanaRulerRule(groupRule.rulerRule) && groupRule.rulerRule.grafana_alert.uid === ruleUid) {
-        return {
-          ...groupRule.rulerRule,
-          grafana_alert: {
-            ...groupRule.rulerRule.grafana_alert,
-            is_paused: newIsPaused,
-          },
-        };
-      }
-
-      return groupRule.rulerRule!;
-    });
-
-    const payload = {
-      interval: group.interval!,
-      name: group.name,
-      rules: modifiedRules,
-    };
-
-    await updateRule({ nameSpaceUID: rule.namespace.uid!, payload }).unwrap();
-
-    // Uses INSTANCES_DISPLAY_LIMIT + 1 here as exporting LIMIT_ALERTS from RuleList has the side effect
-    // of breaking some unrelated tests in Policy.test.tsx due to mocking approach
-    const limitAlerts = hasActiveFilters ? undefined : INSTANCES_DISPLAY_LIMIT + 1;
-    // Trigger a re-fetch of the rules table
-    // TODO: Migrate rules table functionality to RTK Query, so we instead rely
-    // on tag invalidation (or optimistic cache updates) for this
-    await dispatch(fetchAllPromAndRulerRulesAction(false, { limitAlerts }));
-  };
 
   const deleteRule = () => {
     if (ruleToDelete && ruleToDelete.rulerRule) {
@@ -172,15 +128,17 @@ export const RuleActionsButtons = ({ rule, rulesSource }: Props) => {
         </Tooltip>
       );
 
-      const isPaused = isGrafanaRulerRule(rule.rulerRule) && isGrafanaRulerRulePaused(rule.rulerRule);
-      const icon = isPaused ? 'play' : 'pause';
-      const title = isPaused ? 'Resume alert evaluation' : 'Pause alert evaluation';
       moreActions.push(
-        <Menu.Item
-          label={title}
-          icon={icon}
-          onClick={() => {
-            setRulePause(!isPaused);
+        <MenuItemPauseRule
+          rule={rule}
+          onPauseChange={async () => {
+            // Uses INSTANCES_DISPLAY_LIMIT + 1 here as exporting LIMIT_ALERTS from RuleList has the side effect
+            // of breaking some unrelated tests in Policy.test.tsx due to mocking approach
+            const limitAlerts = hasActiveFilters ? undefined : INSTANCES_DISPLAY_LIMIT + 1;
+            // Trigger a re-fetch of the rules table
+            // TODO: Migrate rules table functionality to RTK Query, so we instead rely
+            // on tag invalidation (or optimistic cache updates) for this
+            await dispatch(fetchAllPromAndRulerRulesAction(false, { limitAlerts }));
           }}
         />
       );
