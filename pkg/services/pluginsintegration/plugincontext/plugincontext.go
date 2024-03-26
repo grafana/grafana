@@ -82,7 +82,7 @@ func (p *Provider) Get(ctx context.Context, pluginID string, user identity.Reque
 		pCtx.AppInstanceSettings = appSettings
 	}
 
-	settings := p.pluginRequestConfigProvider.PluginRequestConfig(ctx, pluginID)
+	settings := p.pluginRequestConfigProvider.PluginRequestConfig(ctx, plugin)
 	pCtx.GrafanaConfig = backend.NewGrafanaCfg(settings)
 
 	ua, err := useragent.New(p.cfg.BuildVersion, runtime.GOOS, runtime.GOARCH)
@@ -119,7 +119,7 @@ func (p *Provider) GetWithDataSource(ctx context.Context, pluginID string, user 
 	}
 	pCtx.DataSourceInstanceSettings = datasourceSettings
 
-	settings := p.pluginRequestConfigProvider.PluginRequestConfig(ctx, pluginID)
+	settings := p.pluginRequestConfigProvider.PluginRequestConfig(ctx, plugin)
 	pCtx.GrafanaConfig = backend.NewGrafanaCfg(settings)
 
 	ua, err := useragent.New(p.cfg.BuildVersion, runtime.GOOS, runtime.GOARCH)
@@ -167,7 +167,7 @@ func (p *Provider) PluginContextForDataSource(ctx context.Context, datasourceSet
 
 	pCtx.DataSourceInstanceSettings = datasourceSettings
 
-	settings := p.pluginRequestConfigProvider.PluginRequestConfig(ctx, pluginID)
+	settings := p.pluginRequestConfigProvider.PluginRequestConfig(ctx, plugin)
 	pCtx.GrafanaConfig = backend.NewGrafanaCfg(settings)
 
 	ua, err := useragent.New(p.cfg.BuildVersion, runtime.GOOS, runtime.GOARCH)

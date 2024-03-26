@@ -9,6 +9,7 @@ import (
 
 	"github.com/grafana/grafana-aws-sdk/pkg/awsds"
 	"github.com/grafana/grafana-azure-sdk-go/v2/azsettings"
+	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginstore"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/proxy"
@@ -18,7 +19,7 @@ import (
 var _ PluginRequestConfigProvider = (*RequestConfigProvider)(nil)
 
 type PluginRequestConfigProvider interface {
-	PluginRequestConfig(ctx context.Context, pluginID string) map[string]string
+	PluginRequestConfig(ctx context.Context, plugin pluginstore.Plugin) map[string]string
 }
 
 type RequestConfigProvider struct {
@@ -33,7 +34,7 @@ func NewRequestConfigProvider(cfg *PluginInstanceCfg) *RequestConfigProvider {
 
 // PluginRequestConfig returns a map of configuration that should be passed in a plugin request.
 // nolint:gocyclo
-func (s *RequestConfigProvider) PluginRequestConfig(ctx context.Context, pluginID string) map[string]string {
+func (s *RequestConfigProvider) PluginRequestConfig(ctx context.Context, plugin pluginstore.Plugin) map[string]string {
 	m := make(map[string]string)
 
 	if s.cfg.GrafanaAppURL != "" {
@@ -53,7 +54,7 @@ func (s *RequestConfigProvider) PluginRequestConfig(ctx context.Context, pluginI
 		m[featuretoggles.EnabledFeatures] = strings.Join(features, ",")
 	}
 
-	if slices.Contains[[]string, string](s.cfg.AWSForwardSettingsPlugins, pluginID) {
+	if slices.Contains[[]string, string](s.cfg.AWSForwardSettingsPlugins, plugin.ID) {
 		if !s.cfg.AWSAssumeRoleEnabled {
 			m[awsds.AssumeRoleEnabledEnvVarKeyName] = "false"
 		}
@@ -86,7 +87,7 @@ func (s *RequestConfigProvider) PluginRequestConfig(ctx context.Context, pluginI
 		m[azsettings.AzureAuthEnabled] = strconv.FormatBool(s.cfg.AzureAuthEnabled)
 	}
 	azureSettings := s.cfg.Azure
-	if azureSettings != nil && slices.Contains[[]string, string](azureSettings.ForwardSettingsPlugins, pluginID) {
+	if azureSettings != nil && slices.Contains[[]string, string](azureSettings.ForwardSettingsPlugins, plugin.ID) {
 		if azureSettings.Cloud != "" {
 			m[azsettings.AzureCloud] = azureSettings.Cloud
 		}
@@ -155,6 +156,10 @@ func (s *RequestConfigProvider) PluginRequestConfig(ctx context.Context, pluginI
 	if s.cfg.SigV4AuthEnabled {
 		m[awsds.SigV4AuthEnabledEnvVarKeyName] = "true"
 		m[awsds.SigV4VerboseLoggingEnvVarKeyName] = strconv.FormatBool(s.cfg.SigV4VerboseLogging)
+	}
+
+	if plugin.ExternalService != nil {
+		m[backend.PluginAppClientSecret] = plugin.ExternalService.ClientSecret
 	}
 
 	return m
