@@ -36,7 +36,7 @@ func (rt *healthCheckSuccessRoundTripper) RoundTrip(req *http.Request) (*http.Re
 				"resultType": "scalar",
 				"result": [
 					1692969348.331,
-					"2"
+					"3"
 				]
 			}
 		}`)),
