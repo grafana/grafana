@@ -1,3 +1,12 @@
+<!-- 9.5.18 START -->
+
+# 9.5.18 (2024-03-25)
+
+### Bug fixes
+
+- **Snapshots:** Require delete within same org (backport). [#84762](https://github.com/grafana/grafana/issues/84762), [@ryantxu](https://github.com/ryantxu)
+
+<!-- 9.5.18 END -->
 <!-- 9.5.17 START -->
 
 # 9.5.17 (2024-03-05)
