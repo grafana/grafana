@@ -415,7 +415,7 @@ Removes `NamespaceID` from responses of all GET routes underneath the path `/api
 - **Dashboard:** Fix issue where out-of-view shared query panels caused blank dependent panels. [#84195](https://github.com/grafana/grafana/issues/84195), [@kaydelaney](https://github.com/kaydelaney)
 - **Dashboards:** Run shared queries even when source panel is in collapsed row. [#84166](https://github.com/grafana/grafana/issues/84166), [@kaydelaney](https://github.com/kaydelaney)
 - **Prometheus:** Fix calculating rate interval when there is no interval specified. [#84082](https://github.com/grafana/grafana/issues/84082), [@itsmylife](https://github.com/itsmylife)
-- **Prometheus:** Fix $__rate_interval calculation. [#84063](https://github.com/grafana/grafana/issues/84063), [@tolzhabayev](https://github.com/tolzhabayev)
+- **Prometheus:** Fix $\_\_rate_interval calculation. [#84063](https://github.com/grafana/grafana/issues/84063), [@tolzhabayev](https://github.com/tolzhabayev)
 
 <!-- 10.2.6 END -->
 <!-- 10.2.5 START -->
