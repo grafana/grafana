@@ -473,9 +473,7 @@ func (cmd *dotCmd) Execute(ctx context.Context, f *flag.FlagSet, args ...interfa
 				outGroups[i].inputs.Iterate(func(k types.Type, _ interface{}) {
 					id := types.TypeString(k, nil)
 					to := g.Node(id)
-					if !blacklist[id] {
-						tolist = append(tolist, to)
-					}
+					tolist = append(tolist, to)
 					isdep[id] = true
 				})
 
