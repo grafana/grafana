@@ -56,8 +56,6 @@ export interface BarsOptions {
   formatShortValue: (seriesIdx: number, value: unknown) => string;
   timeZone?: TimeZone;
   text?: VizTextDisplayOptions;
-  onHover?: (seriesIdx: number, valueIdx: number) => void;
-  onLeave?: (seriesIdx: number, valueIdx: number) => void;
   hoverMulti?: boolean;
   legend?: VizLegendOptions;
   xSpacing?: number;
