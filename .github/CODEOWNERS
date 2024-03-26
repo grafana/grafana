@@ -612,6 +612,7 @@ playwright.config.ts @grafana/plugins-platform-frontend
 # Grafana Operator Experience Team
 /pkg/services/caching/ @grafana/grafana-operator-experience-squad
 /pkg/services/cloudmigration/ @grafana/grafana-operator-experience-squad
+/pkg/services/gcom/ @grafana/grafana-operator-experience-squad
 
 # Feature toggles
 /pkg/services/featuremgmt/ @grafana/grafana-backend-services-squad
@@ -693,6 +694,7 @@ embed.go @grafana/grafana-as-code
 /.github/workflows/i18n-crowdin-download.yml @grafana/grafana-frontend-platform
 /.github/workflows/feature-toggle-cleanup.yml @tolzhabayev
 /.github/workflows/scripts/feature-toggle-cleanup/feature-toggle-cleanup.js @tolzhabayev
+/.github/workflows/pr-go-workspace-check.yml @grafana/grafana-app-platform-squad
 
 # Generated files not requiring owner approval
 /packages/grafana-data/src/types/featureToggles.gen.ts @grafanabot
