@@ -31,6 +31,10 @@ type PluginDatasourceProvider interface {
 	GetInstanceSettings(ctx context.Context, uid string) (*backend.DataSourceInstanceSettings, error)
 }
 
+type ScopedPluginDatasourceProvider interface {
+	GetDatasourceProvider(pluginJson plugins.JSONData) PluginDatasourceProvider
+}
+
 // PluginContext requires adding system settings (feature flags, etc) to the datasource config
 type PluginContextWrapper interface {
 	PluginContextForDataSource(ctx context.Context, datasourceSettings *backend.DataSourceInstanceSettings) (backend.PluginContext, error)
@@ -39,18 +43,30 @@ type PluginContextWrapper interface {
 func ProvideDefaultPluginConfigs(
 	dsService datasources.DataSourceService,
 	dsCache datasources.CacheService,
-	contextProvider *plugincontext.Provider) PluginDatasourceProvider {
-	return &defaultPluginDatasourceProvider{
-		plugin: plugins.JSONData{
-			ID: datasources.DS_TESTDATA,
-		},
+	contextProvider *plugincontext.Provider) ScopedPluginDatasourceProvider {
+	return &cachingDatasourceProvider{
 		dsService:       dsService,
 		dsCache:         dsCache,
 		contextProvider: contextProvider,
 	}
 }
 
-type defaultPluginDatasourceProvider struct {
+type cachingDatasourceProvider struct {
+	dsService       datasources.DataSourceService
+	dsCache         datasources.CacheService
+	contextProvider *plugincontext.Provider
+}
+
+func (q *cachingDatasourceProvider) GetDatasourceProvider(pluginJson plugins.JSONData) PluginDatasourceProvider {
+	return &scopedDatasourceProvider{
+		plugin:          pluginJson,
+		dsService:       q.dsService,
+		dsCache:         q.dsCache,
+		contextProvider: q.contextProvider,
+	}
+}
+
+type scopedDatasourceProvider struct {
 	plugin          plugins.JSONData
 	dsService       datasources.DataSourceService
 	dsCache         datasources.CacheService
@@ -58,10 +74,11 @@ type defaultPluginDatasourceProvider struct {
 }
 
 var (
-	_ PluginDatasourceProvider = (*defaultPluginDatasourceProvider)(nil)
+	_ PluginDatasourceProvider       = (*scopedDatasourceProvider)(nil)
+	_ ScopedPluginDatasourceProvider = (*cachingDatasourceProvider)(nil)
 )
 
-func (q *defaultPluginDatasourceProvider) Get(ctx context.Context, uid string) (*v0alpha1.DataSourceConnection, error) {
+func (q *scopedDatasourceProvider) Get(ctx context.Context, uid string) (*v0alpha1.DataSourceConnection, error) {
 	info, err := request.NamespaceInfoFrom(ctx, true)
 	if err != nil {
 		return nil, err
@@ -77,7 +94,7 @@ func (q *defaultPluginDatasourceProvider) Get(ctx context.Context, uid string) (
 	return asConnection(ds, info.Value)
 }
 
-func (q *defaultPluginDatasourceProvider) List(ctx context.Context) (*v0alpha1.DataSourceConnectionList, error) {
+func (q *scopedDatasourceProvider) List(ctx context.Context) (*v0alpha1.DataSourceConnectionList, error) {
 	info, err := request.NamespaceInfoFrom(ctx, true)
 	if err != nil {
 		return nil, err
@@ -101,11 +118,9 @@ func (q *defaultPluginDatasourceProvider) List(ctx context.Context) (*v0alpha1.D
 	return result, nil
 }
 
-func (q *defaultPluginDatasourceProvider) GetInstanceSettings(ctx context.Context, uid string) (*backend.DataSourceInstanceSettings, error) {
+func (q *scopedDatasourceProvider) GetInstanceSettings(ctx context.Context, uid string) (*backend.DataSourceInstanceSettings, error) {
 	if q.contextProvider == nil {
-		// NOTE!!! this is only here for the standalone example
-		// if we cleanup imports this can throw an error
-		return nil, nil
+		return nil, fmt.Errorf("missing contextProvider")
 	}
 	return q.contextProvider.GetDataSourceInstanceSettings(ctx, uid)
 }
