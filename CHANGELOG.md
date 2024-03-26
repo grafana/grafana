@@ -1,3 +1,12 @@
+<!-- 10.0.13 START -->
+
+# 10.0.13 (2024-03-25)
+
+### Bug fixes
+
+- **Snapshots:** Require delete within same org (backport). [#84764](https://github.com/grafana/grafana/issues/84764), [@ryantxu](https://github.com/ryantxu)
+
+<!-- 10.0.13 END -->
 <!-- 10.0.12 START -->
 
 # 10.0.12 (2024-03-06)
