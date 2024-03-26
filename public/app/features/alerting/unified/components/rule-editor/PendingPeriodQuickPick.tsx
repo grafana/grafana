@@ -2,7 +2,7 @@ import React from 'react';
 
 import { Button, Stack } from '@grafana/ui';
 
-import { formatPrometheusDuration, parsePrometheusDuration, safeParsePrometheusDuration } from '../../utils/time';
+import { formatPrometheusDuration, safeParsePrometheusDuration } from '../../utils/time';
 
 interface Props {
   selectedPendingPeriod: string;
@@ -12,7 +12,7 @@ interface Props {
 
 export function PendingPeriodQuickPick({ selectedPendingPeriod, groupEvaluationInterval, onSelect }: Props) {
   // @TODO maybe safe parse?
-  const groupEvaluationIntervalMillis = parsePrometheusDuration(groupEvaluationInterval);
+  const groupEvaluationIntervalMillis = safeParsePrometheusDuration(groupEvaluationInterval);
 
   // we generate the quick selection based on the group's evaluation interval
   const PENDING_PERIOD_QUICK_OPTIONS: number[] = [
@@ -29,9 +29,11 @@ export function PendingPeriodQuickPick({ selectedPendingPeriod, groupEvaluationI
   };
 
   return (
-    <Stack direction="row" gap={0.5}>
+    <Stack direction="row" gap={0.5} role="listbox">
       {PENDING_PERIOD_QUICK_OPTIONS.map((milliseconds) => (
         <Button
+          role="option"
+          aria-selected={isQuickSelectionActive(milliseconds)}
           key={milliseconds}
           variant={isQuickSelectionActive(milliseconds) ? 'primary' : 'secondary'}
           size="sm"

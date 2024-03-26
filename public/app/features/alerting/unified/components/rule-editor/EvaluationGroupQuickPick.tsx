@@ -6,7 +6,7 @@ import { Button, Stack } from '@grafana/ui';
 
 import { formatPrometheusDuration, parsePrometheusDuration, safeParsePrometheusDuration } from '../../utils/time';
 
-const getOptions = () => {
+export const getEvaluationGroupOptions = (minInterval = '10s') => {
   const MIN_OPTIONS_TO_SHOW = 8;
   const DEFAULT_INTERVAL_OPTIONS: number[] = [
     parsePrometheusDuration('10s'),
@@ -20,7 +20,7 @@ const getOptions = () => {
   ];
 
   // 10s for OSS and 1m0s for Grafana Cloud
-  const minEvaluationIntervalMillis = safeParsePrometheusDuration(config.unifiedAlerting.minInterval);
+  const minEvaluationIntervalMillis = safeParsePrometheusDuration(minInterval);
 
   /**
    * 1. make sure we always show at least 8 options to the user
@@ -35,10 +35,10 @@ const getOptions = () => {
     return lastInterval * multiplier * (index + 1);
   });
 
-  return [...head, ...tail];
+  return [...head, ...tail].map(formatPrometheusDuration);
 };
 
-const QUICK_PICK_OPTIONS = getOptions();
+const QUICK_PICK_OPTIONS = getEvaluationGroupOptions(config.unifiedAlerting.minInterval);
 
 interface Props {
   currentInterval: string;
@@ -50,22 +50,24 @@ interface Props {
  * ie. [1m, 2m, 5m, 10m, 15m] etc.
  */
 export function EvaluationGroupQuickPick({ currentInterval, onSelect }: Props) {
-  const isQuickSelectionActive = (time: number) => {
-    return currentInterval ? safeParsePrometheusDuration(currentInterval) === time : false;
+  const isQuickSelectionActive = (interval: string) => {
+    return currentInterval ? currentInterval === interval : false;
   };
 
   return (
-    <Stack direction="row" gap={0.5}>
-      {QUICK_PICK_OPTIONS.map((time) => (
+    <Stack direction="row" gap={0.5} role="listbox">
+      {QUICK_PICK_OPTIONS.map((interval) => (
         <Button
-          key={time}
-          variant={isQuickSelectionActive(time) ? 'primary' : 'secondary'}
+          role="option"
+          aria-selected={isQuickSelectionActive(interval)}
+          key={interval}
+          variant={isQuickSelectionActive(interval) ? 'primary' : 'secondary'}
           size="sm"
           onClick={() => {
-            onSelect(formatPrometheusDuration(time));
+            onSelect(interval);
           }}
         >
-          {formatPrometheusDuration(time)}
+          {interval}
         </Button>
       ))}
     </Stack>
