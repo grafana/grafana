@@ -10,47 +10,37 @@ import (
 	"k8s.io/apiserver/pkg/authentication/user"
 )
 
-var _ authenticator.Request = &TokenAuthenticator{}
+func getIDTokenAuthenticatorFunc(validator *Validator) authenticator.RequestFunc {
+	return func(req *http.Request) (*authenticator.Response, bool, error) {
+		token, err := extractBearerToken(req)
+		if err != nil {
+			return nil, false, errors.New("Could not read bearer token from the authorization header")
+		}
 
-type TokenAuthenticator struct {
-	validator *Validator
-}
+		if token == "" {
+			return nil, false, nil
+		}
 
-func NewTokenAuthenticator(validator *Validator) *TokenAuthenticator {
-	return &TokenAuthenticator{
-		validator,
-	}
-}
+		result, err := validator.Validate(context.Background(), token)
+		if err != nil {
+			return nil, false, err
+		}
 
-func (auth *TokenAuthenticator) AuthenticateRequest(req *http.Request) (*authenticator.Response, bool, error) {
-	token, err := extractBearerToken(req)
-	if err != nil {
-		return nil, false, errors.New("Could not read bearer token from the authorization header")
-	}
-
-	if token == "" {
-		return nil, false, nil
-	}
-
-	result, err := auth.validator.Validate(context.Background(), token)
-	if err != nil {
-		return nil, false, err
-	}
-
-	if err != nil {
-		return nil, false, err
-	}
-	return &authenticator.Response{
-		Audiences: authenticator.Audiences(result.Claims.Audience),
-		User: &user.DefaultInfo{
-			Name:   result.Subject,
-			UID:    "",
-			Groups: []string{},
-			Extra: map[string][]string{
-				"id-token": {token},
+		if err != nil {
+			return nil, false, err
+		}
+		return &authenticator.Response{
+			Audiences: authenticator.Audiences(result.Claims.Audience),
+			User: &user.DefaultInfo{
+				Name:   result.Subject,
+				UID:    "",
+				Groups: []string{},
+				Extra: map[string][]string{
+					"id-token": {token},
+				},
 			},
-		},
-	}, true, nil
+		}, true, nil
+	}
 }
 
 func extractBearerToken(r *http.Request) (string, error) {
