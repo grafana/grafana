@@ -32,17 +32,20 @@ All members of a Grafana Team have the same exact permissions. A single Team can
 
 A user can be a `Member` or an `Administrator` for a given Team. `Members` of a Team inherit permissions from the team, but they cannot edit the team itself. Team `Administrators` can add members to a team and update its settings, such as the team name, team member’s team roles, UI preferences, and home dashboard.
 
-Teams can either be `isolated` or `collaborative`. Isolated teams can only see their own artifacts. They cannot see other team’s dashboards, data, alerts, etc. Collaborative teams have access to other team’s artifacts. See [Configuring teams}]() for information on setting up collaborative and isolated teams.
+Teams can either be `isolated` or `collaborative`. Isolated teams can only see their own resources. They cannot see other team’s dashboards, data, alerts, etc. Collaborative teams have access to other team’s resources. See [Configuring teams}]() for information on setting up collaborative and isolated teams.
 
-A Team includes permissions to the following:
+A Team includes permissions to a wide variety of resources including:
 
-- Dashboards
-- Data sources
-- Folders
-- Alerts
-- Reports
+- dashboards
+- data sources
+- folders
+- alerts
+- reports
+- cloud access policies
+- annotations
+- playlists
 
 {{< admonition type="note" >}}
-[Grafana Organizations](https://grafana.com/docs/grafana/latest/administration/organization-management/) do not exist in Grafana Cloud. Grafana Cloud uses the term “organization” to refer to accounts in grafana.com. In Grafana Enterprise and OSS, Teams belong to Grafana Organizations.  
+[Grafana Organizations](https://grafana.com/docs/grafana/latest/administration/organization-management/) do not exist in Grafana Cloud. Grafana Cloud uses the term “organization” to refer to accounts in grafana.com, or GCOM. In Grafana Enterprise and OSS, Teams belong to Grafana Organizations.  
 {{< /admonition >}}
 
