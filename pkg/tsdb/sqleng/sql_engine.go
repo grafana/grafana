@@ -8,12 +8,12 @@ import (
 	"fmt"
 	"net"
 	"regexp"
+	"runtime/debug"
 	"strconv"
 	"strings"
 	"sync"
 	"time"
 
-	"github.com/go-stack/stack"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/grafana/grafana-plugin-sdk-go/data/sqlutil"
@@ -198,12 +198,6 @@ func (e *DataSourceHandler) QueryData(ctx context.Context, req *backend.QueryDat
 	return result, nil
 }
 
-func stackTrace(skip int) string {
-	call := stack.Caller(skip)
-	s := stack.Trace().TrimBelow(call).TrimRuntime()
-	return s.String()
-}
-
 func (e *DataSourceHandler) executeQuery(query backend.DataQuery, wg *sync.WaitGroup, queryContext context.Context,
 	ch chan DBDataResponse, queryJson QueryJson) {
 	defer wg.Done()
@@ -216,7 +210,7 @@ func (e *DataSourceHandler) executeQuery(query backend.DataQuery, wg *sync.WaitG
 
 	defer func() {
 		if r := recover(); r != nil {
-			logger.Error("ExecuteQuery panic", "error", r, "stack", stackTrace(1))
+			logger.Error("ExecuteQuery panic", "error", r, "stack", string(debug.Stack()))
 			if theErr, ok := r.(error); ok {
 				queryResult.dataResponse.Error = theErr
 			} else if theErrString, ok := r.(string); ok {
