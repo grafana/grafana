@@ -84,7 +84,7 @@ export function VizLegend<T>({
     [onToggleSeriesVisibility, onLabelClick, seriesVisibilityChangeBehavior]
   );
 
-  // JEV: REFACTOR: Make into own component?
+  // JEV: REFACTOR: Make into own function?
   switch (displayMode) {
     case LegendDisplayMode.Table:
       return (

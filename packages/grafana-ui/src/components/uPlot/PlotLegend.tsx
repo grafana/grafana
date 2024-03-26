@@ -143,6 +143,7 @@ export const PlotLegend = React.memo(
       .filter((i): i is VizLegendItem => i !== undefined);
 
     return (
+      // JEV: REFACTOR: are these props necessary?
       <VizLayout.Legend placement={placement} {...vizLayoutLegendProps}>
         <VizLegend
           placement={placement}
