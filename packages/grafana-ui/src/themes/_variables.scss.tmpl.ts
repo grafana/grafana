@@ -161,7 +161,6 @@ $form-icon-danger: url("data:image/svg+xml;charset=utf8,%3Csvg xmlns='http://www
 // -------------------------
 // Used for a bird's eye view of components dependent on the z-axis
 // Try to avoid customizing these :)
-$zindex-active-panel: ${theme.zIndex.activePanel};
 $zindex-dropdown: ${theme.zIndex.dropdown};
 $zindex-navbar-fixed: ${theme.zIndex.navbarFixed};
 $zindex-sidemenu: ${theme.zIndex.sidemenu};

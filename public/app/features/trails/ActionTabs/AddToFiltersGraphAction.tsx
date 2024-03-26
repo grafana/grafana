@@ -28,9 +28,9 @@ export class AddToFiltersGraphAction extends SceneObjectBase<AddToFiltersGraphAc
 
     const labelName = Object.keys(labels)[0];
 
-    variable.state.set.setState({
+    variable.setState({
       filters: [
-        ...variable.state.set.state.filters,
+        ...variable.state.filters,
         {
           key: labelName,
           operator: '=',
@@ -42,7 +42,7 @@ export class AddToFiltersGraphAction extends SceneObjectBase<AddToFiltersGraphAc
 
   public static Component = ({ model }: SceneComponentProps<AddToFiltersGraphAction>) => {
     return (
-      <Button variant="primary" size="sm" fill="text" onClick={model.onClick}>
+      <Button variant="secondary" size="sm" fill="solid" onClick={model.onClick}>
         Add to filters
       </Button>
     );

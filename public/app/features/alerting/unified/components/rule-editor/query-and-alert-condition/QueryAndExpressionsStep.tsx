@@ -1,24 +1,12 @@
 import { css } from '@emotion/css';
 import { cloneDeep } from 'lodash';
 import React, { useCallback, useEffect, useMemo, useReducer, useState } from 'react';
-import { useFormContext } from 'react-hook-form';
+import { useFormContext, Controller } from 'react-hook-form';
 
 import { getDefaultRelativeTimeRange, GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { config, getDataSourceSrv } from '@grafana/runtime';
-import {
-  Alert,
-  Button,
-  Dropdown,
-  Field,
-  Icon,
-  InputControl,
-  Menu,
-  MenuItem,
-  Stack,
-  Tooltip,
-  useStyles2,
-} from '@grafana/ui';
+import { Alert, Button, Dropdown, Field, Icon, Menu, MenuItem, Stack, Tooltip, useStyles2 } from '@grafana/ui';
 import { Text } from '@grafana/ui/src/components/Text/Text';
 import { isExpressionQuery } from 'app/features/expressions/guards';
 import { ExpressionDatasourceUID, ExpressionQueryType, expressionTypes } from 'app/features/expressions/types';
@@ -40,6 +28,7 @@ import { errorFromCurrentCondition, errorFromPreviewData, findRenamedDataQueryRe
 
 import { CloudDataSourceSelector } from './CloudDataSourceSelector';
 import { SmartAlertTypeDetector } from './SmartAlertTypeDetector';
+import { DESCRIPTIONS } from './descriptions';
 import {
   addExpressions,
   addNewDataQuery,
@@ -243,6 +232,7 @@ export const QueryAndExpressionsStep = ({ editingExistingRule, onDataChange }: P
         queryType: '',
         relativeTimeRange: getDefaultRelativeTimeRange(),
         expr,
+        instant: true,
         model: {
           refId: 'A',
           hide: false,
@@ -370,23 +360,22 @@ export const QueryAndExpressionsStep = ({ editingExistingRule, onDataChange }: P
     condition,
   ]);
 
+  const { sectionTitle, helpLabel, helpContent, helpLink } = DESCRIPTIONS[type ?? RuleFormType.grafana];
+
   return (
     <RuleEditorSection
       stepNo={2}
-      title={type !== RuleFormType.cloudRecording ? 'Define query and alert condition' : 'Define query'}
+      title={sectionTitle}
       description={
-        <Stack direction="row" gap={0.5} alignItems="baseline">
+        <Stack direction="row" gap={0.5} alignItems="center">
           <Text variant="bodySmall" color="secondary">
-            Define queries and/or expressions and then choose one of them as the alert rule condition. This is the
-            threshold that an alert rule must meet or exceed in order to fire.
+            {helpLabel}
           </Text>
           <NeedHelpInfo
-            contentText={`An alert rule consists of one or more queries and expressions that select the data you want to measure.
-          Define queries and/or expressions and then choose one of them as the alert rule condition. This is the threshold that an alert rule must meet or exceed in order to fire.
-          For more information on queries and expressions, see Query and transform data.`}
-            externalLink={`https://grafana.com/docs/grafana/latest/panels-visualizations/query-transform-data/`}
-            linkText={`Read about query and condition`}
-            title="Define query and alert condition"
+            contentText={helpContent}
+            externalLink={helpLink}
+            linkText={'Read more on our documentation website'}
+            title={helpLabel}
           />
         </Stack>
       }
@@ -413,7 +402,7 @@ export const QueryAndExpressionsStep = ({ editingExistingRule, onDataChange }: P
       {isCloudAlertRuleType && dataSourceName && (
         <Stack direction="column">
           <Field error={errors.expression?.message} invalid={!!errors.expression?.message}>
-            <InputControl
+            <Controller
               name="expression"
               render={({ field: { ref, ...field } }) => {
                 return (

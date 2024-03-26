@@ -10,7 +10,6 @@ import (
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/config"
 	"github.com/grafana/grafana/pkg/plugins/pluginscdn"
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
 )
 
 // Service provides methods for constructing asset paths for plugins.
@@ -18,10 +17,10 @@ import (
 // on the plugins CDN, and it will switch to the correct implementation depending on the plugin and the config.
 type Service struct {
 	cdn *pluginscdn.Service
-	cfg *config.Cfg
+	cfg *config.PluginManagementCfg
 }
 
-func ProvideService(cfg *config.Cfg, cdn *pluginscdn.Service) *Service {
+func ProvideService(cfg *config.PluginManagementCfg, cdn *pluginscdn.Service) *Service {
 	return &Service{cfg: cfg, cdn: cdn}
 }
 
@@ -39,7 +38,7 @@ func NewPluginInfo(pluginJSON plugins.JSONData, class plugins.Class, fs plugins.
 	}
 }
 
-func DefaultService(cfg *config.Cfg) *Service {
+func DefaultService(cfg *config.PluginManagementCfg) *Service {
 	return &Service{cfg: cfg, cdn: pluginscdn.ProvideService(cfg)}
 }
 
@@ -47,20 +46,18 @@ func DefaultService(cfg *config.Cfg) *Service {
 func (s *Service) Base(n PluginInfo) (string, error) {
 	if n.class == plugins.ClassCore {
 		baseDir := getBaseDir(n.dir)
-		return path.Join("/", s.cfg.GrafanaAppSubURL, "/public/app/plugins", string(n.pluginJSON.Type), baseDir), nil
+		return path.Join("public/app/plugins", string(n.pluginJSON.Type), baseDir), nil
 	}
 	if s.cdn.PluginSupported(n.pluginJSON.ID) {
 		return s.cdn.AssetURL(n.pluginJSON.ID, n.pluginJSON.Info.Version, "")
 	}
-	return path.Join("/", s.cfg.GrafanaAppSubURL, "/public/plugins", n.pluginJSON.ID), nil
+	return path.Join("public/plugins", n.pluginJSON.ID), nil
 }
 
 // Module returns the module.js path for the specified plugin.
 func (s *Service) Module(n PluginInfo) (string, error) {
 	if n.class == plugins.ClassCore {
-		if s.cfg.Features != nil &&
-			s.cfg.Features.IsEnabledGlobally(featuremgmt.FlagExternalCorePlugins) &&
-			filepath.Base(n.dir) == "dist" {
+		if filepath.Base(n.dir) == "dist" {
 			// The core plugin has been built externally, use the module from the dist folder
 		} else {
 			baseDir := getBaseDir(n.dir)
@@ -70,7 +67,7 @@ func (s *Service) Module(n PluginInfo) (string, error) {
 	if s.cdn.PluginSupported(n.pluginJSON.ID) {
 		return s.cdn.AssetURL(n.pluginJSON.ID, n.pluginJSON.Info.Version, "module.js")
 	}
-	return path.Join("/", s.cfg.GrafanaAppSubURL, "/public/plugins", n.pluginJSON.ID, "module.js"), nil
+	return path.Join("public/plugins", n.pluginJSON.ID, "module.js"), nil
 }
 
 // RelativeURL returns the relative URL for an arbitrary plugin asset.
@@ -101,7 +98,7 @@ func (s *Service) RelativeURL(n PluginInfo, pathStr string) (string, error) {
 
 // DefaultLogoPath returns the default logo path for the specified plugin type.
 func (s *Service) DefaultLogoPath(pluginType plugins.Type) string {
-	return path.Join("/", s.cfg.GrafanaAppSubURL, fmt.Sprintf("/public/img/icn-%s.svg", string(pluginType)))
+	return path.Join("public/img", fmt.Sprintf("icn-%s.svg", string(pluginType)))
 }
 
 func getBaseDir(pluginDir string) string {

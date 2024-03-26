@@ -14,6 +14,7 @@ import {
   DataSourceApi,
   DataQueryRequest,
   getTimeZone,
+  PluginMetaInfo,
 } from '@grafana/data';
 import {
   BackendDataSourceResponse,
@@ -30,7 +31,6 @@ import { TempoVariableQueryType } from './VariableQueryEditor';
 import { createFetchResponse } from './_importedDependencies/test/helpers/createFetchResponse';
 import { TraceqlSearchScope } from './dataquery.gen';
 import {
-  DEFAULT_LIMIT,
   TempoDatasource,
   buildExpr,
   buildLinkExpr,
@@ -46,7 +46,7 @@ import { createMetadataRequest, createTempoDatasource } from './mocks';
 import { initTemplateSrv } from './test_utils';
 import { TempoJsonData, TempoQuery } from './types';
 
-let mockObservable: () => Observable<any>;
+let mockObservable: () => Observable<unknown>;
 jest.mock('@grafana/runtime', () => {
   return {
     ...jest.requireActual('@grafana/runtime'),
@@ -68,7 +68,9 @@ describe('Tempo data source', () => {
     const templateSrv: TemplateSrv = { replace: jest.fn() } as unknown as TemplateSrv;
     const ds = new TempoDatasource(defaultSettings, templateSrv);
     const response = await lastValueFrom(
-      ds.query({ targets: [{ refId: 'refid1', queryType: 'traceql', query: '' } as Partial<TempoQuery>] } as any),
+      ds.query({
+        targets: [{ refId: 'refid1', queryType: 'traceql', query: '' } as Partial<TempoQuery>],
+      } as DataQueryRequest<TempoQuery>),
       { defaultValue: 'empty' }
     );
     expect(response).toBe('empty');
@@ -79,18 +81,26 @@ describe('Tempo data source', () => {
       return {
         refId: 'x',
         queryType: 'traceql',
-        linkedQuery: {
-          refId: 'linked',
-          expr: '{instance="$interpolationVar"}',
-        },
         query: '$interpolationVarWithPipe',
-        spanName: '$interpolationVar',
-        serviceName: '$interpolationVar',
-        search: '$interpolationVar',
-        minDuration: '$interpolationVar',
-        maxDuration: '$interpolationVar',
         serviceMapQuery,
-        filters: [],
+        filters: [
+          {
+            id: 'service-name',
+            operator: '=',
+            scope: TraceqlSearchScope.Resource,
+            tag: 'service.name',
+            value: '$interpolationVarWithPipe',
+            valueType: 'string',
+          },
+          {
+            id: 'tagId',
+            operator: '=',
+            scope: TraceqlSearchScope.Span,
+            tag: '$interpolationVar',
+            value: '$interpolationVar',
+            valueType: 'string',
+          },
+        ],
       };
     }
     let templateSrv: TemplateSrv;
@@ -107,7 +117,7 @@ describe('Tempo data source', () => {
       templateSrv = initTemplateSrv([{ name: 'templateVariable1' }, { name: 'templateVariable2' }], expectedValues);
     });
 
-    it('when traceId query for dashboard->explore', async () => {
+    it('when moving from dashboard to explore', async () => {
       const expectedValues = {
         interpolationVar: 'interpolationText',
         interpolationText: 'interpolationText',
@@ -118,29 +128,23 @@ describe('Tempo data source', () => {
 
       const ds = new TempoDatasource(defaultSettings, templateSrv);
       const queries = ds.interpolateVariablesInQueries([getQuery()], {});
-      expect(queries[0].linkedQuery?.expr).toBe(`{instance=\"${text}\"}`);
       expect(queries[0].query).toBe(textWithPipe);
-      expect(queries[0].serviceName).toBe(text);
-      expect(queries[0].spanName).toBe(text);
-      expect(queries[0].search).toBe(text);
-      expect(queries[0].minDuration).toBe(text);
-      expect(queries[0].maxDuration).toBe(text);
       expect(queries[0].serviceMapQuery).toBe(text);
+      expect(queries[0].filters[0].value).toBe(textWithPipe);
+      expect(queries[0].filters[1].value).toBe(text);
+      expect(queries[0].filters[1].tag).toBe(text);
     });
 
-    it('when traceId query for template variable', async () => {
+    it('when applying template variables', async () => {
       const scopedText = 'scopedInterpolationText';
       const ds = new TempoDatasource(defaultSettings, templateSrv);
       const resp = ds.applyTemplateVariables(getQuery(), {
         interpolationVar: { text: scopedText, value: scopedText },
       });
-      expect(resp.linkedQuery?.expr).toBe(`{instance=\"${scopedText}\"}`);
       expect(resp.query).toBe(textWithPipe);
-      expect(resp.serviceName).toBe(scopedText);
-      expect(resp.spanName).toBe(scopedText);
-      expect(resp.search).toBe(scopedText);
-      expect(resp.minDuration).toBe(scopedText);
-      expect(resp.maxDuration).toBe(scopedText);
+      expect(resp.filters[0].value).toBe(textWithPipe);
+      expect(resp.filters[1].value).toBe(scopedText);
+      expect(resp.filters[1].tag).toBe(scopedText);
     });
 
     it('when serviceMapQuery is an array', async () => {
@@ -168,9 +172,11 @@ describe('Tempo data source', () => {
         ],
       })
     );
-    const templateSrv: any = { replace: jest.fn() };
+    const templateSrv = { replace: jest.fn() } as unknown as TemplateSrv;
     const ds = new TempoDatasource(defaultSettings, templateSrv);
-    const response = await lastValueFrom(ds.query({ targets: [{ refId: 'refid1', query: '12345' }] } as any));
+    const response = await lastValueFrom(
+      ds.query({ targets: [{ refId: 'refid1', query: '12345' }] } as DataQueryRequest<TempoQuery>)
+    );
 
     expect(
       (response.data[0] as DataFrame).fields.map((f) => ({
@@ -222,7 +228,7 @@ describe('Tempo data source', () => {
     const response = await lastValueFrom(
       ds.query({
         targets: [{ queryType: 'upload', refId: 'A' }],
-      } as any)
+      } as DataQueryRequest<TempoQuery>)
     );
     const field = response.data[0].fields[0];
     expect(field.name).toBe('traceID');
@@ -237,7 +243,7 @@ describe('Tempo data source', () => {
     const response = await lastValueFrom(
       ds.query({
         targets: [{ queryType: 'upload', refId: 'A' }],
-      } as any)
+      } as DataQueryRequest<TempoQuery>)
     );
     expect(response.error?.message).toBeDefined();
     expect(response.data.length).toBe(0);
@@ -249,7 +255,7 @@ describe('Tempo data source', () => {
     const response = await lastValueFrom(
       ds.query({
         targets: [{ queryType: 'upload', refId: 'A' }],
-      } as any)
+      } as DataQueryRequest<TempoQuery>)
     );
     expect(response.data).toHaveLength(2);
     const nodesFrame = response.data[0];
@@ -259,32 +265,6 @@ describe('Tempo data source', () => {
     const edgesFrame = response.data[1];
     expect(edgesFrame.name).toBe('Edges');
     expect(edgesFrame.meta?.preferredVisualisationType).toBe('nodeGraph');
-  });
-
-  it('should build search query correctly', () => {
-    const templateSrv: any = { replace: jest.fn() };
-    const ds = new TempoDatasource(defaultSettings, templateSrv);
-    const duration = '10ms';
-    templateSrv.replace.mockReturnValue(duration);
-    const tempoQuery: TempoQuery = {
-      queryType: 'search',
-      refId: 'A',
-      query: '',
-      serviceName: 'frontend',
-      spanName: '/config',
-      search: 'root.http.status_code=500',
-      minDuration: '$interpolationVar',
-      maxDuration: '$interpolationVar',
-      limit: 10,
-      filters: [],
-    };
-    const builtQuery = ds.buildSearchQuery(tempoQuery);
-    expect(builtQuery).toStrictEqual({
-      tags: 'root.http.status_code=500 service.name="frontend" name="/config"',
-      minDuration: duration,
-      maxDuration: duration,
-      limit: 10,
-    });
   });
 
   it('should format metrics summary query correctly', () => {
@@ -297,110 +277,6 @@ describe('Tempo data source', () => {
     ];
     const groupBy = ds.formatGroupBy(queryGroupBy);
     expect(groupBy).toEqual('.component, span.name, resource.service.name, kind');
-  });
-
-  it('should include a default limit', () => {
-    const ds = new TempoDatasource(defaultSettings);
-    const tempoQuery: TempoQuery = {
-      queryType: 'search',
-      refId: 'A',
-      query: '',
-      search: '',
-      filters: [],
-    };
-    const builtQuery = ds.buildSearchQuery(tempoQuery);
-    expect(builtQuery).toStrictEqual({
-      tags: '',
-      limit: DEFAULT_LIMIT,
-    });
-  });
-
-  it('should include time range if provided', () => {
-    const ds = new TempoDatasource(defaultSettings);
-    const tempoQuery: TempoQuery = {
-      queryType: 'search',
-      refId: 'A',
-      query: '',
-      search: '',
-      filters: [],
-    };
-    const timeRange = { startTime: 0, endTime: 1000 };
-    const builtQuery = ds.buildSearchQuery(tempoQuery, timeRange);
-    expect(builtQuery).toStrictEqual({
-      tags: '',
-      limit: DEFAULT_LIMIT,
-      start: timeRange.startTime,
-      end: timeRange.endTime,
-    });
-  });
-
-  it('formats native search query history correctly', () => {
-    const ds = new TempoDatasource(defaultSettings);
-    const tempoQuery: TempoQuery = {
-      filters: [],
-      queryType: 'nativeSearch',
-      refId: 'A',
-      query: '',
-      serviceName: 'frontend',
-      spanName: '/config',
-      search: 'root.http.status_code=500',
-      minDuration: '1ms',
-      maxDuration: '100s',
-      limit: 10,
-    };
-    const result = ds.getQueryDisplayText(tempoQuery);
-    expect(result).toBe(
-      'Service Name: frontend, Span Name: /config, Search: root.http.status_code=500, Min Duration: 1ms, Max Duration: 100s, Limit: 10'
-    );
-  });
-
-  it('should get loki search datasource', () => {
-    // 1. Get lokiSearch.datasource if present
-    const ds1 = new TempoDatasource({
-      ...defaultSettings,
-      jsonData: {
-        lokiSearch: {
-          datasourceUid: 'loki-1',
-        },
-      },
-    });
-    const lokiDS1 = ds1.getLokiSearchDS();
-    expect(lokiDS1).toBe('loki-1');
-
-    // 2. Get traceToLogs.datasource
-    const ds2 = new TempoDatasource({
-      ...defaultSettings,
-      jsonData: {
-        tracesToLogs: {
-          lokiSearch: true,
-          datasourceUid: 'loki-2',
-        },
-      },
-    });
-    const lokiDS2 = ds2.getLokiSearchDS();
-    expect(lokiDS2).toBe('loki-2');
-
-    // 3. Return undefined if neither is available
-    const ds3 = new TempoDatasource(defaultSettings);
-    const lokiDS3 = ds3.getLokiSearchDS();
-    expect(lokiDS3).toBe(undefined);
-
-    // 4. Return undefined if lokiSearch is undefined, even if traceToLogs is present
-    // since this indicates the user cleared the fallback setting
-    const ds4 = new TempoDatasource({
-      ...defaultSettings,
-      jsonData: {
-        tracesToLogs: {
-          lokiSearch: true,
-          datasourceUid: 'loki-2',
-        },
-        lokiSearch: {
-          datasourceUid: undefined,
-        },
-      },
-    });
-    const lokiDS4 = ds4.getLokiSearchDS();
-    expect(lokiDS4).toBe(undefined);
   });
 
   describe('test the testDatasource function', () => {
@@ -492,7 +368,11 @@ describe('Tempo service graph view', () => {
     });
     setDataSourceSrv(dataSourceSrvWithPrometheus(prometheusMock()));
     const response = await lastValueFrom(
-      ds.query({ targets: [{ queryType: 'serviceMap' }], range: getDefaultTimeRange(), app: CoreApp.Explore } as any)
+      ds.query({
+        targets: [{ queryType: 'serviceMap' }],
+        range: getDefaultTimeRange(),
+        app: CoreApp.Explore,
+      } as DataQueryRequest<TempoQuery>)
     );
 
     expect(response.data).toHaveLength(3);
@@ -923,11 +803,19 @@ describe('Tempo service graph view', () => {
               refId: 'A',
               filters: [
                 {
+                  id: 'service-namespace',
+                  operator: '=',
+                  scope: 'resource',
+                  tag: 'service.namespace',
+                  value: '${__data.fields.targetNamespace}',
+                  valueType: 'string',
+                },
+                {
                   id: 'service-name',
                   operator: '=',
                   scope: 'resource',
                   tag: 'service.name',
-                  value: '${__data.fields.target}',
+                  value: '${__data.fields.targetName}',
                   valueType: 'string',
                 },
               ],
@@ -1002,8 +890,8 @@ describe('Tempo service graph view', () => {
     ]);
   });
 
-  it('should make tempo link correctly', () => {
-    const tempoLink = makeTempoLink('Tempo', '', '"${__data.fields[0]}"', 'gdev-tempo');
+  it('should make tempo link correctly without namespace', () => {
+    const tempoLink = makeTempoLink('Tempo', undefined, '', '"${__data.fields[0]}"', 'gdev-tempo');
     expect(tempoLink).toEqual({
       url: '',
       title: 'Tempo',
@@ -1012,6 +900,40 @@ describe('Tempo service graph view', () => {
           queryType: 'traceqlSearch',
           refId: 'A',
           filters: [
+            {
+              id: 'span-name',
+              operator: '=',
+              scope: 'span',
+              tag: 'name',
+              value: '"${__data.fields[0]}"',
+              valueType: 'string',
+            },
+          ],
+        },
+        datasourceUid: 'gdev-tempo',
+        datasourceName: 'Tempo',
+      },
+    });
+  });
+
+  it('should make tempo link correctly with namespace', () => {
+    const tempoLink = makeTempoLink('Tempo', '"${__data.fields.subtitle}"', '', '"${__data.fields[0]}"', 'gdev-tempo');
+    expect(tempoLink).toEqual({
+      url: '',
+      title: 'Tempo',
+      internal: {
+        query: {
+          queryType: 'traceqlSearch',
+          refId: 'A',
+          filters: [
+            {
+              id: 'service-namespace',
+              operator: '=',
+              scope: 'resource',
+              tag: 'service.namespace',
+              value: '"${__data.fields.subtitle}"',
+              valueType: 'string',
+            },
             {
               id: 'span-name',
               operator: '=',
@@ -1128,6 +1050,59 @@ describe('label values', () => {
   });
 });
 
+describe('should provide functionality for ad-hoc filters', () => {
+  let datasource: TempoDatasource;
+
+  beforeEach(() => {
+    datasource = createTempoDatasource();
+    jest.spyOn(datasource, 'metadataRequest').mockImplementation(
+      createMetadataRequest({
+        data: {
+          scopes: [{ name: 'span', tags: ['label1', 'label2'] }],
+          tagValues: [
+            {
+              type: 'value1',
+              value: 'value1',
+              label: 'value1',
+            },
+            {
+              type: 'value2',
+              value: 'value2',
+              label: 'value2',
+            },
+          ],
+        },
+      })
+    );
+  });
+
+  it('for getTagKeys', async () => {
+    const response = await datasource.getTagKeys();
+    expect(response).toEqual([{ text: 'span.label1' }, { text: 'span.label2' }]);
+  });
+
+  it('for getTagValues', async () => {
+    const now = dateTime('2021-04-20T15:55:00Z');
+    const options = {
+      key: 'span.label1',
+      filters: [],
+      timeRange: {
+        from: now,
+        to: now,
+        raw: {
+          from: 'now-15m',
+          to: 'now',
+        },
+      },
+    };
+    const response = await datasource.getTagValues(options);
+    expect(response).toEqual([
+      { text: { type: 'value1', value: 'value1', label: 'value1' } },
+      { text: { type: 'value2', value: 'value2', label: 'value2' } },
+    ]);
+  });
+});
+
 const prometheusMock = (): DataSourceApi => {
   return {
     query: jest.fn(() =>
@@ -1190,7 +1165,7 @@ export const defaultSettings: DataSourceInstanceSettings<TempoJsonData> = {
     id: 'tempo',
     name: 'tempo',
     type: PluginType.datasource,
-    info: {} as any,
+    info: {} as PluginMetaInfo,
     module: '',
     baseUrl: '',
   },
@@ -1373,7 +1348,7 @@ const serviceGraphLinks = [
             operator: '=',
             scope: 'resource',
             tag: 'service.name',
-            value: '${__data.fields[0]}',
+            value: '${__data.fields.id}',
             valueType: 'string',
           },
         ],

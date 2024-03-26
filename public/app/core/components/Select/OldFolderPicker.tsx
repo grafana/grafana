@@ -340,7 +340,7 @@ export function OldFolderPicker(props: Props) {
         <FolderWarningWhenSearching />
         <AsyncVirtualizedSelect
           inputId={inputId}
-          aria-label={selectors.components.FolderPicker.input}
+          data-testid={selectors.components.FolderPicker.input}
           loadingMessage={t('folder-picker.loading', 'Loading folders...')}
           defaultOptions
           defaultValue={folder}
@@ -383,9 +383,9 @@ export async function getInitialValues({ folderName, folderUid, getFolder }: Arg
 }
 
 const getStyles = (theme: GrafanaTheme2) => ({
-  newFolder: css`
-    color: ${theme.colors.warning.main};
-    font-size: ${theme.typography.bodySmall.fontSize};
-    padding-bottom: ${theme.spacing(1)};
-  `,
+  newFolder: css({
+    color: theme.colors.warning.main,
+    fontSize: theme.typography.bodySmall.fontSize,
+    paddingBottom: theme.spacing(1),
+  }),
 });

@@ -229,8 +229,8 @@ export const getAlertInfo = (alert: RulerRuleDTO, currentEvaluation: string): Al
   if (isAlertingRulerRule(alert)) {
     return {
       alertName: alert.alert,
-      forDuration: alert.for ?? '1m',
-      evaluationsToFire: getNumberEvaluationsToStartAlerting(alert.for ?? '1m', currentEvaluation),
+      forDuration: alert.for ?? '0s',
+      evaluationsToFire: getNumberEvaluationsToStartAlerting(alert.for ?? '0s', currentEvaluation),
     };
   }
   return emptyAlert;

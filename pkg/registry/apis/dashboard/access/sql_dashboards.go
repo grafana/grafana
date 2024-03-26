@@ -14,9 +14,9 @@ import (
 	"github.com/grafana/grafana/pkg/infra/appcontext"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
+	"github.com/grafana/grafana/pkg/services/apiserver/utils"
 	"github.com/grafana/grafana/pkg/services/dashboards"
-	"github.com/grafana/grafana/pkg/services/grafana-apiserver/endpoints/request"
-	"github.com/grafana/grafana/pkg/services/grafana-apiserver/utils"
 	"github.com/grafana/grafana/pkg/services/provisioning"
 	"github.com/grafana/grafana/pkg/services/sqlstore/session"
 )
@@ -322,8 +322,9 @@ func (a *dashboardSqlAccess) scanRow(rows *sql.Rows) (*dashboardRow, error) {
 		if origin_name.Valid {
 			ts := time.Unix(origin_ts.Int64, 0)
 
+			resolvedPath := a.provisioning.GetDashboardProvisionerResolvedPath(origin_name.String)
 			originPath, err := filepath.Rel(
-				a.provisioning.GetDashboardProvisionerResolvedPath(origin_name.String),
+				resolvedPath,
 				origin_path.String,
 			)
 			if err != nil {

@@ -2,6 +2,7 @@ import { DataFrame, DataFrameView, FieldType, getDisplayProcessor, SelectableVal
 import { config } from '@grafana/runtime';
 import { TermCount } from 'app/core/components/TagFilter/TagFilter';
 import { backendSrv } from 'app/core/services/backend_srv';
+import { PermissionLevelString } from 'app/types';
 
 import { DEFAULT_MAX_VALUES, TYPE_KIND_MAP } from '../constants';
 import { DashboardSearchHit, DashboardSearchItemType } from '../types';
@@ -17,17 +18,16 @@ interface APIQuery {
   limit?: number;
   page?: number;
   type?: DashboardSearchItemType;
-  // DashboardIds []int64
   dashboardUID?: string[];
-  folderIds?: number[];
   folderUIDs?: string[];
   sort?: string;
   starred?: boolean;
+  permission?: PermissionLevelString;
 }
 
 // Internal object to hold folderId
 interface LocationInfoEXT extends LocationInfo {
-  folderId?: number;
+  folderUid?: string;
 }
 
 export class SQLSearcher implements GrafanaSearcher {
@@ -36,7 +36,6 @@ export class SQLSearcher implements GrafanaSearcher {
       kind: 'folder',
       name: 'General',
       url: '/dashboards',
-      folderId: 0,
     },
   }; // share location info with everyone
 
@@ -88,6 +87,7 @@ export class SQLSearcher implements GrafanaSearcher {
         limit: limit,
         tag: query.tags,
         sort: query.sort,
+        permission: query.permission,
         page,
       },
       query
@@ -182,14 +182,14 @@ export class SQLSearcher implements GrafanaSearcher {
           kind: 'folder',
           name: hit.folderTitle,
           url: hit.folderUrl!,
-          folderId: hit.folderId,
+          folderUid: hit.folderUid,
         };
       } else if (k === 'folder') {
         this.locationInfo[hit.uid] = {
           kind: k,
           name: hit.title!,
           url: hit.url,
-          folderId: hit.id,
+          folderUid: hit.folderUid,
         };
       }
     }

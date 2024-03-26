@@ -3,7 +3,6 @@ import userEvent from '@testing-library/user-event';
 import React from 'react';
 
 import { LanguageProvider } from '@grafana/data';
-import { FetchError } from '@grafana/runtime';
 
 import { TraceqlFilter, TraceqlSearchScope } from '../dataquery.gen';
 import { TempoDatasource } from '../datasource';
@@ -125,19 +124,19 @@ describe('SearchField', () => {
       jest.advanceTimersByTime(1000);
       const tag22 = await screen.findByText('tag22');
       await user.click(tag22);
-      expect(updateFilter).toHaveBeenCalledWith({ ...filter, tag: 'tag22' });
+      expect(updateFilter).toHaveBeenCalledWith({ ...filter, tag: 'tag22', value: [] });
 
       // Select tag1 as the tag
       await user.click(select);
       jest.advanceTimersByTime(1000);
       const tag1 = await screen.findByText('tag1');
       await user.click(tag1);
-      expect(updateFilter).toHaveBeenCalledWith({ ...filter, tag: 'tag1' });
+      expect(updateFilter).toHaveBeenCalledWith({ ...filter, tag: 'tag1', value: [] });
 
       // Remove the tag
       const tagRemove = await screen.findByLabelText('select-clear-value');
       await user.click(tagRemove);
-      expect(updateFilter).toHaveBeenCalledWith({ ...filter, value: undefined });
+      expect(updateFilter).toHaveBeenCalledWith({ ...filter, value: [] });
     }
   });
 
@@ -290,9 +289,7 @@ const renderSearchField = (
       datasource={datasource}
       updateFilter={updateFilter}
       filter={filter}
-      setError={function (error: FetchError): void {
-        throw error;
-      }}
+      setError={() => {}}
       tags={tags || []}
       hideTag={hideTag}
       query={'{}'}

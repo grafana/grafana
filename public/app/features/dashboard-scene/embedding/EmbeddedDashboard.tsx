@@ -1,10 +1,11 @@
-import { css } from '@emotion/css';
+import { css, cx } from '@emotion/css';
 import React, { useEffect, useState } from 'react';
 
 import { GrafanaTheme2, urlUtil } from '@grafana/data';
 import { EmbeddedDashboardProps } from '@grafana/runtime';
 import { SceneObjectStateChangedEvent, sceneUtils } from '@grafana/scenes';
 import { Spinner, Alert, useStyles2 } from '@grafana/ui';
+import { DashboardRoutes } from 'app/types';
 
 import { getDashboardScenePageStateManager } from '../pages/DashboardScenePageStateManager';
 import { DashboardScene } from '../scene/DashboardScene';
@@ -14,7 +15,7 @@ export function EmbeddedDashboard(props: EmbeddedDashboardProps) {
   const { dashboard, loadError } = stateManager.useState();
 
   useEffect(() => {
-    stateManager.loadDashboard({ uid: props.uid!, isEmbedded: true });
+    stateManager.loadDashboard({ uid: props.uid!, route: DashboardRoutes.Embedded });
     return () => {
       stateManager.clearState();
     };
@@ -41,7 +42,7 @@ interface RendererProps extends EmbeddedDashboardProps {
 
 function EmbeddedDashboardRenderer({ model, initialState, onStateChange }: RendererProps) {
   const [isActive, setIsActive] = useState(false);
-  const { controls, body } = model.useState();
+  const { controls, body, scopes } = model.useState();
   const styles = useStyles2(getStyles);
 
   useEffect(() => {
@@ -63,12 +64,13 @@ function EmbeddedDashboardRenderer({ model, initialState, onStateChange }: Rende
   }
 
   return (
-    <div className={styles.canvas}>
+    <div
+      className={cx(styles.canvas, controls && !scopes && styles.canvasWithControls, scopes && styles.canvasWithScopes)}
+    >
+      {scopes && <scopes.Component model={scopes} />}
       {controls && (
-        <div className={styles.controls}>
-          {controls.map((control) => (
-            <control.Component key={control.state.key} model={control} />
-          ))}
+        <div className={cx(styles.controlsWrapper, scopes && styles.controlsWrapperWithScopes)}>
+          <controls.Component model={controls} />
         </div>
       )}
       <div className={styles.body}>
@@ -105,26 +107,44 @@ function getStyles(theme: GrafanaTheme2) {
   return {
     canvas: css({
       label: 'canvas-content',
-      display: 'flex',
-      flexDirection: 'column',
+      display: 'grid',
+      gridTemplateAreas: `
+        "panels"`,
+      gridTemplateColumns: `1fr`,
+      gridTemplateRows: '1fr',
       flexBasis: '100%',
       flexGrow: 1,
+    }),
+    canvasWithControls: css({
+      gridTemplateAreas: `
+        "controls"
+        "panels"`,
+      gridTemplateRows: 'auto 1fr',
+    }),
+    canvasWithScopes: css({
+      gridTemplateAreas: `
+        "scopes controls"
+        "panels panels"`,
+      gridTemplateColumns: `${theme.spacing(32)} 1fr`,
+      gridTemplateRows: 'auto 1fr',
     }),
     body: css({
       label: 'body',
       flexGrow: 1,
       display: 'flex',
       gap: '8px',
+      gridArea: 'panels',
       marginBottom: theme.spacing(2),
     }),
-    controls: css({
+    controlsWrapper: css({
       display: 'flex',
-      flexWrap: 'wrap',
-      alignItems: 'center',
-      gap: theme.spacing(1),
-      top: 0,
-      zIndex: theme.zIndex.navbarFixed,
-      padding: theme.spacing(0, 0, 2, 0),
+      flexDirection: 'column',
+      flexGrow: 0,
+      gridArea: 'controls',
+      padding: theme.spacing(2, 0, 2, 2),
+    }),
+    controlsWrapperWithScopes: css({
+      padding: theme.spacing(2, 0),
     }),
   };
 }

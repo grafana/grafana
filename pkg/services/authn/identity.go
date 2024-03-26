@@ -31,6 +31,7 @@ const (
 
 const (
 	AnonymousNamespaceID = NamespaceAnonymous + ":0"
+	GlobalOrgID          = int64(0)
 )
 
 var _ identity.Requester = (*Identity)(nil)
@@ -86,6 +87,18 @@ type Identity struct {
 	IDToken string
 }
 
+func (i *Identity) GetID() string {
+	return i.ID
+}
+
+func (i *Identity) GetNamespacedID() (namespace string, identifier string) {
+	split := strings.Split(i.GetID(), ":")
+	if len(split) != 2 {
+		return "", ""
+	}
+	return split[0], split[1]
+}
+
 func (i *Identity) GetAuthenticatedBy() string {
 	return i.AuthenticatedBy
 }
@@ -121,16 +134,6 @@ func (i *Identity) GetLogin() string {
 	return i.Login
 }
 
-func (i *Identity) GetNamespacedID() (namespace string, identifier string) {
-	split := strings.Split(i.ID, ":")
-
-	if len(split) != 2 {
-		return "", ""
-	}
-
-	return split[0], split[1]
-}
-
 // GetOrgID implements identity.Requester.
 func (i *Identity) GetOrgID() int64 {
 	return i.OrgID
@@ -162,6 +165,19 @@ func (i *Identity) GetPermissions() map[string][]string {
 	}
 
 	return i.Permissions[i.GetOrgID()]
+}
+
+// GetGlobalPermissions returns the permissions of the active entity that are available across all organizations
+func (i *Identity) GetGlobalPermissions() map[string][]string {
+	if i.Permissions == nil {
+		return make(map[string][]string)
+	}
+
+	if i.Permissions[GlobalOrgID] == nil {
+		return make(map[string][]string)
+	}
+
+	return i.Permissions[GlobalOrgID]
 }
 
 func (i *Identity) GetTeams() []int64 {

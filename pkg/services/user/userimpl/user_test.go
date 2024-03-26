@@ -50,18 +50,6 @@ func TestUserService(t *testing.T) {
 
 	t.Run("get user by ID", func(t *testing.T) {
 		userService.cfg = setting.NewCfg()
-		userService.cfg.CaseInsensitiveLogin = false
-		userStore.ExpectedUser = &user.User{ID: 1, Email: "email", Login: "login", Name: "name"}
-		u, err := userService.GetByID(context.Background(), &user.GetUserByIDQuery{ID: 1})
-		require.NoError(t, err)
-		require.Equal(t, "login", u.Login)
-		require.Equal(t, "name", u.Name)
-		require.Equal(t, "email", u.Email)
-	})
-
-	t.Run("get user by ID with case insensitive login", func(t *testing.T) {
-		userService.cfg = setting.NewCfg()
-		userService.cfg.CaseInsensitiveLogin = true
 		userStore.ExpectedUser = &user.User{ID: 1, Email: "email", Login: "login", Name: "name"}
 		u, err := userService.GetByID(context.Background(), &user.GetUserByIDQuery{ID: 1})
 		require.NoError(t, err)
@@ -99,7 +87,6 @@ func TestUserService(t *testing.T) {
 	})
 
 	t.Run("GetByID - email conflict", func(t *testing.T) {
-		userService.cfg.CaseInsensitiveLogin = true
 		userStore.ExpectedError = errors.New("email conflict")
 		query := user.GetUserByIDQuery{}
 		_, err := userService.GetByID(context.Background(), &query)
@@ -218,14 +205,14 @@ func TestMetrics(t *testing.T) {
 		userStore.ExpectedCountUserAccountsWithEmptyRoles = int64(1)
 
 		userService.cfg = setting.NewCfg()
-		userService.cfg.CaseInsensitiveLogin = true
+		userService.cfg.BasicAuthStrongPasswordPolicy = true
 
 		stats := userService.GetUsageStats(context.Background())
 		assert.NotEmpty(t, stats)
 
 		assert.Len(t, stats, 2, stats)
-		assert.Equal(t, 1, stats["stats.case_insensitive_login.count"])
 		assert.Equal(t, int64(1), stats["stats.user.role_none.count"])
+		assert.Equal(t, 1, stats["stats.password_policy.count"])
 	})
 }
 
@@ -267,7 +254,7 @@ func (f *FakeUserStore) CaseInsensitiveLoginConflict(context.Context, string, st
 	return f.ExpectedError
 }
 
-func (f *FakeUserStore) LoginConflict(context.Context, string, string, bool) error {
+func (f *FakeUserStore) LoginConflict(context.Context, string, string) error {
 	return f.ExpectedError
 }
 

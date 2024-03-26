@@ -1,5 +1,5 @@
 {
-  "_comment": "Diese Datei ist die Quelle für englische Strings. Bearbeiten Sie diese, um die Pluralformen und andere Ausdrücke für die Benutzeroberfläche zu ändern.",
+  "_comment": "Diese Datei ist die zuverlässige Quelle für englische Strings. Bearbeiten Sie diese im Code, um Pluralformen und andere Ausdrücke für die Benutzeroberfläche zu ändern.",
   "access-control": {
     "add-permission": {
       "role-label": "Rolle",
@@ -26,7 +26,7 @@
     }
   },
   "bouncing-loader": {
-    "label": ""
+    "label": "Wird geladen"
   },
   "browse-dashboards": {
     "action": {
@@ -76,7 +76,7 @@
     "folder-picker": {
       "accessible-label": "Ordner auswählen: {{ label }} aktuell ausgewählt",
       "button-label": "Ordner auswählen",
-      "clear-selection": "",
+      "clear-selection": "Auswahl löschen",
       "empty-message": "Keine Ordner gefunden",
       "error-title": "Fehler beim Laden der Ordner",
       "search-placeholder": "Ordner suchen",
@@ -107,6 +107,9 @@
       "change-theme": "Thema ändern...",
       "dark-theme": "Dunkel",
       "light-theme": "Hell"
+    },
+    "empty-state": {
+      "title": "Keine Ergebnisse gefunden"
     },
     "search-box": {
       "placeholder": "Suche oder springe zu ..."
@@ -234,6 +237,10 @@
       "visualization": "Visualisierung",
       "widget": "Widget"
     },
+    "alert-rules-drawer": {
+      "redirect-link": "Liste in Grafana Alerting",
+      "subtitle": "Benachrichtigungsregeln im Zusammenhang mit diesem Dashboard"
+    },
     "empty": {
       "add-library-panel-body": "Visualisierungen hinzufügen, die mit anderen Dashboards geteilt werden.",
       "add-library-panel-button": "Bibliotheksfenster hinzufügen",
@@ -302,6 +309,7 @@
     },
     "toolbar": {
       "add": "Hinzufügen",
+      "alert-rules": "Warnregeln",
       "mark-favorite": "Als Favorit markieren",
       "open-original": "Original-Dashboard öffnen",
       "playlist-next": "Zum nächsten Dashboard",
@@ -311,7 +319,7 @@
       "save": "Dashboard speichern",
       "settings": "Dashboard-Einstellungen",
       "share": "Dashboard oder Panel teilen",
-      "share-button": "",
+      "share-button": "Teilen",
       "unmark-favorite": "Markierung als Favorit entfernen"
     },
     "validation": {
@@ -361,7 +369,6 @@
       "title-label": "Titel"
     },
     "json-editor": {
-      "apply-button": "",
       "save-button": "Änderungen speichern",
       "subtitle": "Das JSON-Modell unten ist die Datenstruktur, die das Dashboard definiert. Dazu gehören Dashboard-Einstellungen, Fenster-Einstellungen, Layout, Abfragen und so weiter.",
       "title": "JSON-Modell"
@@ -532,13 +539,13 @@
     },
     "toolbar": {
       "aria-label": "Werkzeugleiste durchsuchen",
-      "copy-link": "",
-      "copy-link-abs-time": "",
-      "copy-links-absolute-category": "",
-      "copy-links-normal-category": "",
-      "copy-shortened-link": "Verkürzten Link kopieren",
-      "copy-shortened-link-abs-time": "",
-      "copy-shortened-link-menu": "",
+      "copy-link": "URL kopieren",
+      "copy-link-abs-time": "Absolute URL kopieren",
+      "copy-links-absolute-category": "Zeitsynchronisierte URL-Links (Freigabe mit intaktem Zeitraum)",
+      "copy-links-normal-category": "Normale URL-Links",
+      "copy-shortened-link": "Gekürzte URL kopieren",
+      "copy-shortened-link-abs-time": "Absolut verkürzte URL kopieren",
+      "copy-shortened-link-menu": "Verkürztes Linkmenü öffnen",
       "refresh-picker-cancel": "Abbrechen",
       "refresh-picker-run": "Abfrage ausführen",
       "split-close": "Schließen",
@@ -554,7 +561,10 @@
   },
   "grafana-ui": {
     "drawer": {
-      "close": ""
+      "close": "Schließen"
+    },
+    "empty-state": {
+      "not-found-message": ""
     },
     "modal": {
       "close-tooltip": "Schließen"
@@ -587,7 +597,7 @@
     "shortcuts-description": {
       "change-theme": "Thema ändern",
       "collapse-all-rows": "Alle Zeilen einklappen",
-      "copy-time-range": "",
+      "copy-time-range": "Zeitraum kopieren",
       "dashboard-settings": "Dashboard-Einstellungen",
       "duplicate-panel": "Fenster duplizieren",
       "exit-edit/setting-views": "Ansicht beenden/einstellen",
@@ -601,7 +611,7 @@
       "move-time-range-forward": "Zeitbereich nach vorne verschieben",
       "open-search": "Suche öffnen",
       "open-shared-modal": "Geteilter Fenstermodus öffnen",
-      "paste-time-range": "",
+      "paste-time-range": "Zeitraum einfügen",
       "refresh-all-panels": "Alle Fenster aktualisieren",
       "remove-panel": "Fenster entfernen",
       "save-dashboard": "Dashboard speichern",
@@ -644,15 +654,15 @@
   },
   "library-panels": {
     "modal": {
-      "body_one": "Dieses Fenster wird in {{count}} Dashboard verwendet. Bitte wählen Sie aus, in welchem Dashboard Sie das Fenster sehen möchten:",
-      "body_other": "Dieses Fenster wird in {{count}} Dashboards verwendet. Bitte wählen Sie aus, in welchem Dashboard Sie das Fenster sehen möchten:",
       "button-cancel": "<0>Abbrechen</0>",
       "button-view-panel1": "Fenster in {{label}} anzeigen...",
       "button-view-panel2": "Fenster im Dashboard anzeigen...",
       "panel-not-linked": "Fenster ist nicht mit einem Dashboard verbunden. Fügen Sie das Fenster einem Dashboard hinzu und versuchen Sie es erneut.",
       "select-no-options-message": "Keine Dashboards gefunden",
       "select-placeholder": "Tippen, um nach Dashboard zu suchen",
-      "title": "Fenster im Dashboard anzeigen"
+      "title": "Fenster im Dashboard anzeigen",
+      "body_one": "Dieses Fenster wird in {{count}} Dashboard verwendet. Bitte wählen Sie aus, in welchem Dashboard Sie das Fenster sehen möchten:",
+      "body_other": "Dieses Fenster wird in {{count}} Dashboards verwendet. Bitte wählen Sie aus, in welchem Dashboard Sie das Fenster sehen möchten:"
     },
     "save": {
       "error": "Fehler beim Speichern des Bibliotheks-Panels: „{{errorMsg}}“",
@@ -665,6 +675,142 @@
       "invalid-user-or-password": "Ungültiger Benutzername oder Passwort",
       "title": "Login fehlgeschlagen",
       "unknown": "Unbekannter Fehler aufgetreten"
+    },
+    "forgot-password": "Passwort vergessen?",
+    "form": {
+      "password-label": "Passwort",
+      "password-required": "Passwort ist erforderlich",
+      "submit-label": "Einloggen",
+      "submit-loading-label": "Einloggen...",
+      "username-label": "E-Mail oder Benutzername",
+      "username-required": "E-Mail oder Benutzername ist erforderlich"
+    },
+    "services": {
+      "sing-in-with-prefix": "Mit {{serviceName}} anmelden"
+    },
+    "signup": {
+      "button-label": "Registrieren",
+      "new-to-question": "Neu bei Grafana?"
+    }
+  },
+  "migrate-to-cloud": {
+    "can-i-move": {
+      "body": "Sobald Sie diese Installation mit einem Cloud Stack verbinden, können Sie Datenquellen und Dashboards hochladen.",
+      "link-title": "Erfahren Sie, wie Sie andere Einstellungen migrieren",
+      "title": "Kann ich diese Installation in die Grafana Cloud verschieben?"
+    },
+    "connect-modal": {
+      "body-cloud-stack": "Sie benötigen außerdem einen Cloud Stack. Wenn Sie sich gerade angemeldet haben, erstellen wir automatisch Ihren ersten Stack. Wenn Sie bereits ein Konto haben, müssen Sie einen Stack auswählen oder erstellen.",
+      "body-get-started": "Um loszulegen, benötigen Sie einen Grafana.com-Account.",
+      "body-paste-stack": "Wenn Sie sich für einen Stack entschieden haben, fügen Sie die URL unten ein.",
+      "body-sign-up": "Für einen Grafana.com-Account registrieren",
+      "body-token": "Ihre selbstverwaltete Grafana-Installation benötigt einen speziellen Zugang, um Inhalte sicher zu migrieren. Sie müssen ein Migrationstoken für den von Ihnen gewählten Cloud-Stack erstellen.",
+      "body-token-field": "Migrationstoken",
+      "body-token-field-placeholder": "Token hier einfügen",
+      "body-token-instructions": "Loggen Sie sich in Ihren Cloud Stack ein und navigieren Sie zu Administration, Allgemein, Zu Grafana Cloud migrieren. Erstellen Sie auf diesem Bildschirm ein Migrationstoken und fügen Sie das Token hier ein.",
+      "body-url-field": "Cloud Stack-URL",
+      "body-view-stacks": "Meine Cloud Stacks anzeigen",
+      "cancel": "Abbrechen",
+      "connect": "Mit diesem Stack verbinden",
+      "connecting": "Verbindung mit diesem Stack läuft...",
+      "stack-required-error": "Stack-URL ist erforderlich",
+      "title": "Mit einem Cloud Stack verbinden",
+      "token-required-error": "Migrationstoken ist erforderlich"
+    },
+    "cta": {
+      "button": "Diese Instanz in die Cloud migrieren",
+      "header": "Lassen Sie uns Ihren Grafana Stack verwalten"
+    },
+    "disconnect-modal": {
+      "body": "Dadurch wird das Migrationstoken von dieser Installation entfernt. Wenn Sie in Zukunft weitere Ressourcen hochladen möchten, müssen Sie ein neues Migrationstoken eingeben.",
+      "cancel": "Abbrechen",
+      "disconnect": "Verbindung trennen",
+      "disconnecting": "Verbindung wird getrennt...",
+      "error": "Es gab einen Fehler beim Trennen der Verbindung",
+      "title": "Vom Cloud Stack trennen"
+    },
+    "get-started": {
+      "body": "Der Migrationsprozess muss von Ihrer selbstverwalteten Grafana-Instanz aus gestartet werden.",
+      "configure-pdc-link": "PDC für diesen Stack konfigurieren",
+      "link-title": "Erfahren Sie mehr über Private Data Source Connect",
+      "step-1": "Loggen Sie sich in Ihre selbstverwaltete Instanz ein und navigieren Sie zur Administration, Allgemein, Zu Grafana Cloud migrieren.",
+      "step-2": "Wählen Sie „Diese Instanz in die Cloud migrieren“.",
+      "step-3": "Sie werden nach einem Migrationstoken gefragt. Generieren Sie eines von diesem Bildschirm.",
+      "step-4": "Wählen Sie in Ihrer selbstverwalteten Instanz „Alles hochladen“ aus, um Datenquellen und Dashboards auf diesen Cloud Stack hochzuladen.",
+      "step-5": "Wenn einige Ihrer Datenquellen nicht über das öffentliche Internet funktionieren, müssen Sie Private Data Source Connect in Ihrer selbstverwalteten Umgebung installieren.",
+      "title": "So legen Sie los"
+    },
+    "is-it-secure": {
+      "body": "Grafana Labs verpflichtet sich, die höchsten Standards in Bezug auf Datenschutz und Sicherheit zu wahren. Durch die Einführung branchenüblicher Sicherheitstechnologien und -verfahren schützen wir die Daten unserer Kunden vor unbefugtem Zugriff, Nutzung oder Offenlegung.",
+      "link-title": "Grafana Labs Trust Center",
+      "title": "Ist es sicher?"
+    },
+    "migrate-to-this-stack": {
+      "body": "Einige Konfigurationen von Ihrer selbst verwalteten Grafana-Instanz können automatisch in diesen Cloud Stack kopiert werden.",
+      "link-title": "Gesamte Migrationsanleitung anzeigen",
+      "title": "Konfiguration zu diesem Stack migrieren"
+    },
+    "migration-token": {
+      "body": "Ihre selbst verwaltete Grafana-Instanz benötigt ein spezielles Authentifizierungs-Token, um sich sicher mit diesem Cloud Stack zu verbinden.",
+      "delete-button": "Diesen Migrationstoken löschen",
+      "delete-modal-body": "Wenn Sie dieses Token bereits mit einer selbst verwalteten Installation verwendet haben, kann diese Installation keine Inhalte mehr hochladen.",
+      "delete-modal-cancel": "Abbrechen",
+      "delete-modal-confirm": "Löschen",
+      "delete-modal-deleting": "Wird gelöscht...",
+      "delete-modal-title": "Migrationstoken löschen",
+      "generate-button": "Migrationstoken generieren",
+      "generate-button-loading": "Migrationstoken wird generiert...",
+      "modal-close": "Schließen",
+      "modal-copy-and-close": "In Zwischenablage kopieren und schließen",
+      "modal-copy-button": "In die Zwischenablage kopieren",
+      "modal-field-description": "Kopieren Sie den Token jetzt, denn Sie werden ihn später nicht mehr sehen können. Wenn Sie einen Token verlieren, müssen Sie einen neuen Token erstellen.",
+      "modal-field-label": "Token",
+      "modal-title": "Migrationstoken erstellt",
+      "status": "Aktueller Status: <2></2>",
+      "title": "Migrationstoken"
+    },
+    "pdc": {
+      "body": "Wenn Sie Ihre Datenquellen dem Internet aussetzen, kann dies zu Sicherheitsrisiken führen. Private Data Source Connect (PDC) ermöglicht Grafana Cloud den Zugriff auf Ihre bestehenden Datenquellen über einen sicheren Netzwerktunnel.",
+      "link-title": "Mehr über PDC erfahren",
+      "title": "Nicht alle meine Datenquellen sind im öffentlichen Internet"
+    },
+    "pricing": {
+      "body": "Grafana Cloud bietet einen großzügigen kostenlosen Tarif und eine 14-tägige Testphase mit unbegrenzter Nutzung. Nach Ablauf der Testphase wird Ihnen die Nutzung über die Grenzen des kostenlosen Tarifs hinaus in Rechnung gestellt.",
+      "link-title": "Grafana Cloud Preisgestaltung",
+      "title": "Was kostet es?"
+    },
+    "resource-status": {
+      "error-details-button": "Details",
+      "failed": "Fehler",
+      "migrated": "In die Cloud hochgeladen",
+      "migrating": "Wird hochgeladen...",
+      "not-migrated": "Noch nicht hochgeladen",
+      "unknown": "Unbekannt"
+    },
+    "resource-type": {
+      "dashboard": "Dashboard",
+      "datasource": "Datenquelle",
+      "unknown": "Unbekannt"
+    },
+    "summary": {
+      "disconnect": "",
+      "error-starting-migration": "",
+      "start-migration": "",
+      "target-stack-title": ""
+    },
+    "token-status": {
+      "active": "Token erstellt und aktiv",
+      "no-active": "Kein aktiver Token"
+    },
+    "what-is-cloud": {
+      "body": "Grafana Cloud ist eine vollständig verwaltete, in der Cloud gehostete Observability-Plattform, die ideal für Cloud-native Umgebungen ist. Sie enthält alles, was Sie an Grafana lieben, ohne den Aufwand für Wartung, Upgrades und Betreuung einer Installation.",
+      "link-title": "Erfahren Sie mehr über Cloud-Funktionen",
+      "title": "Was ist Grafana Cloud?"
+    },
+    "why-host": {
+      "body": "Zusätzlich zum Komfort des Managed Hosting bietet Grafana Cloud viele Cloud-exklusive Funktionen wie SLOs, Incident Management, maschinelles Lernen und leistungsstarke Observability-Integrationen.",
+      "link-title": "Weitere Fragen? Sprechen Sie mit einem Experten",
+      "title": "Warum mit Grafana hosten?"
     }
   },
   "nav": {
@@ -676,7 +822,7 @@
       "title": "Server-Administrator"
     },
     "alert-list-legacy": {
-      "title": ""
+      "title": "Warnregeln"
     },
     "alerting": {
       "subtitle": "Informiere dich über Probleme in deinen Systemen kurz nach deren Auftreten",
@@ -715,8 +861,8 @@
       "title": "Stummschalten"
     },
     "alerting-upgrade": {
-      "subtitle": "",
-      "title": ""
+      "subtitle": "Aktualisieren Sie Ihre vorhandenen Legacy-Benachrichtigungen und Benachrichtigungskanäle auf das neue Grafana Alerting",
+      "title": "Alerting-Upgrade"
     },
     "alerts-and-incidents": {
       "subtitle": "Warn- und Vorfallmanagement-Apps",
@@ -735,6 +881,9 @@
     },
     "authentication": {
       "title": "Authentifizierung"
+    },
+    "collector": {
+      "title": "Sammler"
     },
     "config": {
       "title": "Verwaltung"
@@ -796,7 +945,7 @@
       "title": "Entdecken"
     },
     "frontend": {
-      "subtitle": "",
+      "subtitle": "Erhalten Sie echte Einblicke in die Benutzerüberwachung",
       "title": "Frontend"
     },
     "frontend-app": {
@@ -827,14 +976,14 @@
       "title": "Störungen"
     },
     "infrastructure": {
-      "subtitle": "",
-      "title": ""
+      "subtitle": "Verstehen Sie den Zustand Ihrer Infrastruktur",
+      "title": "Infrastruktur"
     },
     "integrations": {
       "title": "Integrationen"
     },
     "k6": {
-      "title": ""
+      "title": "Leistung"
     },
     "kubernetes": {
       "title": "Kubernetes"
@@ -848,6 +997,10 @@
     },
     "manage-folder": {
       "subtitle": "Ordner-Dashboards und Berechtigungen verwalten"
+    },
+    "migrate-to-cloud": {
+      "subtitle": "Kopieren Sie die Konfiguration von Ihrer selbstverwalteten Installation in einen Cloud Stack",
+      "title": "In die Grafana Cloud migrieren"
     },
     "monitoring": {
       "subtitle": "Überwachungs- und Infrastruktur-Apps",
@@ -872,9 +1025,6 @@
       "subtitle": "Verwalte Einstellungen in der gesamten Organisation",
       "title": "Standardeinstellungen"
     },
-    "performance-testing": {
-      "title": "Leistungstests"
-    },
     "playlists": {
       "subtitle": "Gruppen von Dashboards, die in einer bestimmten Reihenfolge angezeigt werden",
       "title": "Playlisten"
@@ -882,6 +1032,10 @@
     "plugins": {
       "subtitle": "Erweitere das Grafana-Erlebnis mit Plug-ins",
       "title": "Plug-ins"
+    },
+    "private-data-source-connections": {
+      "subtitle": "Daten abfragen, die in einem gesicherten Netzwerk vorhanden sind, ohne das Netzwerk für eingehenden Datenverkehr von Grafana Cloud zu öffnen. Erfahren Sie mehr in unseren Dokumenten.",
+      "title": "Private Datenquelle verbinden"
     },
     "profile/notifications": {
       "title": "Benachrichtigungsverlauf"
@@ -956,8 +1110,8 @@
       "title": "Teams"
     },
     "testing-and-synthetics": {
-      "subtitle": "",
-      "title": ""
+      "subtitle": "Optimieren Sie die Leistung mit Erkenntnissen aus k6 und Synthetic Monitoring",
+      "title": "Testen & Synthetics"
     },
     "upgrading": {
       "title": "Statistiken und Lizenz"
@@ -974,8 +1128,8 @@
     "megamenu": {
       "close": "Menü schließen",
       "dock": "Menü andocken",
-      "list-label": "",
-      "undock": ""
+      "list-label": "Navigation",
+      "undock": "Menü abdocken"
     },
     "toolbar": {
       "close-menu": "Menü schließen",
@@ -986,7 +1140,7 @@
   },
   "news": {
     "drawer": {
-      "close": ""
+      "close": "Drawer schließen"
     },
     "title": "Das Neueste aus dem Blog"
   },
@@ -1073,132 +1227,134 @@
       "new-password-same-as-old": "Neues Passwort kann nicht das gleiche sein wie das alte.",
       "old-password-label": "Altes Passwort",
       "old-password-required": "Altes Passwort ist erforderlich",
-      "passwords-must-match": "Passwörter müssen übereinstimmen"
+      "passwords-must-match": "Passwörter müssen übereinstimmen",
+      "strong-password-validation-register": "Passwort entspricht nicht den strengen Kennwortrichtlinien"
     }
   },
   "public-dashboard": {
     "acknowledgment-checkboxes": {
-      "ack-title": "",
-      "data-src-ack-desc": "",
-      "data-src-ack-tooltip": "",
-      "public-ack-desc": "",
-      "public-ack-tooltip": "",
-      "usage-ack-desc": "",
-      "usage-ack-desc-tooltip": ""
+      "ack-title": "Bevor Sie das Dashboard veröffentlichen, bestätigen Sie Folgendes:",
+      "data-src-ack-desc": "Die Veröffentlichung funktioniert derzeit nur mit einer Teilmenge von Datenquellen*",
+      "data-src-ack-tooltip": "Erfahren Sie mehr über öffentliche Datenquellen",
+      "public-ack-desc": "Ihr gesamtes Dashboard wird öffentlich sein*",
+      "public-ack-tooltip": "Erfahren Sie mehr über öffentliche Dashboards",
+      "usage-ack-desc": "Wenn ein Dashboard öffentlich gemacht wird, werden die Abfragen jedes Mal beim Anzeigen ausgeführt, was zur Erhöhung der Kosten führen kann*",
+      "usage-ack-desc-tooltip": "Erfahren Sie mehr zum Abfrage-Caching"
     },
     "config": {
-      "can-view-dashboard-radio-button-label": "",
-      "copy-button": "",
-      "dashboard-url-field-label": "",
-      "email-share-type-option-label": "",
-      "pause-sharing-dashboard-label": "",
-      "public-share-type-option-label": "",
-      "revoke-public-URL-button": "",
-      "revoke-public-URL-button-title": "",
-      "settings-title": ""
+      "can-view-dashboard-radio-button-label": "Kann Dashboard anzeigen",
+      "copy-button": "Kopieren",
+      "dashboard-url-field-label": "Dashboard-URL",
+      "email-share-type-option-label": "Nur bestimmte Personen",
+      "pause-sharing-dashboard-label": "Teilen des Dashboards pausieren",
+      "public-share-type-option-label": "Jeder mit einem Link",
+      "revoke-public-URL-button": "Öffentliche URL widerrufen",
+      "revoke-public-URL-button-title": "Öffentliche URL widerrufen",
+      "settings-title": "Einstellungen"
     },
     "create-page": {
-      "generate-public-url-button": "",
-      "unsupported-features-desc": "",
-      "welcome-title": ""
+      "generate-public-url-button": "Öffentliche URL generieren",
+      "unsupported-features-desc": "Momentan unterstützen wir keine Template-Variablen oder Frontend-Datenquellen",
+      "welcome-title": "Willkommen zu öffentlichen Dashboards!"
     },
     "delete-modal": {
-      "revoke-nonorphaned-body-text": "",
-      "revoke-orphaned-body-text": "",
-      "revoke-title": ""
+      "revoke-nonorphaned-body-text": "Sind Sie sicher, dass Sie diese URL widerrufen möchten? Das Dashboard wird nicht mehr öffentlich sein.",
+      "revoke-orphaned-body-text": "Das verwaiste öffentliche Dashboard wird nicht mehr öffentlich sein.",
+      "revoke-title": "Öffentliche URL widerrufen"
     },
     "email-sharing": {
-      "input-invalid-email-text": "",
-      "input-required-email-text": "",
-      "invite-button": "",
-      "invite-field-desc": "",
-      "invite-field-label": "",
-      "resend-button": "",
-      "resend-button-title": "",
-      "revoke-button": "",
-      "revoke-button-title": ""
+      "input-invalid-email-text": "Ungültige E-Mail",
+      "input-required-email-text": "E-Mail-Adresse ist erforderlich",
+      "invite-button": "Einladen",
+      "invite-field-desc": "Personen per E-Mail einladen",
+      "invite-field-label": "Einladen",
+      "resend-button": "Erneut senden",
+      "resend-button-title": "Erneut senden",
+      "revoke-button": "Widerrufen",
+      "revoke-button-title": "Widerrufen"
     },
     "modal-alerts": {
-      "no-upsert-perm-alert-desc": "",
-      "no-upsert-perm-alert-title": "",
-      "save-dashboard-changes-alert-title": "",
-      "unsupport-data-source-alert-readmore-link": "",
-      "unsupported-data-source-alert-desc": "",
-      "unsupported-data-source-alert-title": "",
-      "unsupported-template-variable-alert-desc": "",
-      "unsupported-template-variable-alert-title": ""
+      "no-upsert-perm-alert-desc": "Kontaktieren Sie Ihren Administrator, um die Berechtigung zu {{mode}} öffentlichen Dashboards zu erhalten",
+      "no-upsert-perm-alert-title": "Sie sind nicht berechtigt, ein öffentliches Dashboard zu {{ mode }}",
+      "save-dashboard-changes-alert-title": "Bitte speichern Sie Ihre Dashboard-Änderungen bevor Sie die öffentliche Konfiguration aktualisieren",
+      "unsupport-data-source-alert-readmore-link": "Erfahren Sie mehr über unterstützte Datenquellen",
+      "unsupported-data-source-alert-desc": "In diesem Dashboard gibt es Datenquellen, die für öffentliche Dashboards nicht unterstützt werden. Panels, die diese Datenquellen nutzen, funktionieren möglicherweise nicht ordnungsgemäß: {{unsupportedDataSources}}.",
+      "unsupported-data-source-alert-title": "Nicht unterstützte Datenquellen",
+      "unsupported-template-variable-alert-desc": "Dieses öffentliche Dashboard funktioniert möglicherweise nicht, da es Template-Variablen verwendet",
+      "unsupported-template-variable-alert-title": "Template-Variablen werden nicht unterstützt"
     },
     "settings-bar-header": {
-      "collapse-settings-tooltip": "",
-      "expand-settings-tooltip": ""
+      "collapse-settings-tooltip": "Einstellungen einklappen",
+      "expand-settings-tooltip": "Einstellungen aufklappen"
     },
     "settings-configuration": {
-      "default-time-range-label": "",
-      "default-time-range-label-desc": "",
-      "show-annotations-label": "",
-      "show-annotations-label-desc": "",
-      "time-range-picker-label": "",
-      "time-range-picker-label-desc": ""
+      "default-time-range-label": "Standardzeitraum",
+      "default-time-range-label-desc": "Das öffentliche Dashboard verwendet die Standard-Zeitraumeinstellungen des Dashboards",
+      "show-annotations-label": "Anmerkungen anzeigen",
+      "show-annotations-label-desc": "Anmerkungen im öffentlichen Dashboard anzeigen",
+      "time-range-picker-label": "Zeitraumauswahl aktiviert",
+      "time-range-picker-label-desc": "Betrachtern erlauben, den Zeitraum zu ändern"
     },
     "settings-summary": {
-      "annotations-hide-text": "",
-      "annotations-show-text": "",
-      "time-range-picker-disabled-text": "",
-      "time-range-picker-enabled-text": "",
-      "time-range-text": ""
+      "annotations-hide-text": "Anmerkungen = ausblenden",
+      "annotations-show-text": "Anmerkungen = anzeigen",
+      "time-range-picker-disabled-text": "Zeitraumauswahl = deaktiviert",
+      "time-range-picker-enabled-text": "Zeitraumauswahl = aktiviert",
+      "time-range-text": "Zeitraum = "
     }
   },
   "public-dashboard-list": {
     "button": {
-      "config-button-tooltip": "",
-      "revoke-button-text": "",
-      "revoke-button-tooltip": "",
-      "view-button-tooltip": ""
+      "config-button-tooltip": "Öffentliches Dashboard konfigurieren",
+      "revoke-button-text": "Öffentliche URL widerrufen",
+      "revoke-button-tooltip": "Öffentliche Dashboard-URL widerrufen",
+      "view-button-tooltip": "Öffentliches Dashboard anzeigen"
     },
     "dashboard-title": {
-      "orphaned-title": "",
-      "orphaned-tooltip": ""
+      "orphaned-title": "<0>Verwaistes öffentliches Dashboard</0>",
+      "orphaned-tooltip": "Das verlinkte Dashboard wurde bereits gelöscht"
     },
     "toggle": {
-      "pause-sharing-toggle-text": ""
+      "pause-sharing-toggle-text": "Teilen pausieren"
     }
   },
   "public-dashboard-users-access-list": {
     "dashboard-modal": {
-      "loading-text": "",
-      "open-dashboard-list-text": "",
-      "public-dashboard-link": "",
-      "public-dashboard-setting": ""
+      "loading-text": "Wird geladen ...",
+      "open-dashboard-list-text": "Dashboard-Liste öffnen",
+      "public-dashboard-link": "Öffentliches Dashboard-URL",
+      "public-dashboard-setting": "Einstellungen des öffentlichen Dashboards"
     },
     "delete-user-modal": {
-      "delete-user-button-text": "",
-      "delete-user-cancel-button": "",
-      "delete-user-revoke-access-button": "",
-      "revoke-access-title": "",
-      "revoke-user-access-modal-desc-line1": "",
-      "revoke-user-access-modal-desc-line2": ""
+      "delete-user-button-text": "Benutzer löschen",
+      "delete-user-cancel-button": "Abbrechen",
+      "delete-user-revoke-access-button": "Zugriff widerrufen",
+      "revoke-access-title": "Zugriff widerrufen",
+      "revoke-user-access-modal-desc-line1": "Sind Sie sicher, dass Sie den Zugriff für {{email}} widerrufen möchten?",
+      "revoke-user-access-modal-desc-line2": "Durch diese Aktion wird {{email}}&apos; sofort der Zugriff auf alle öffentlichen Dashboards entzogen."
     },
     "modal": {
-      "dashboard-modal-title": ""
+      "dashboard-modal-title": "Öffentliche Dashboards"
     },
     "table-header": {
-      "activated-label": "",
-      "activated-tooltip": "",
-      "email-label": "",
-      "last-active-label": "",
-      "origin-label": "",
-      "role-label": ""
+      "activated-label": "Aktiviert",
+      "activated-tooltip": "Frühester Zeitpunkt, zu dem ein Benutzer ein aktiver Benutzer eines Dashboards war",
+      "email-label": "E-Mail-Adresse",
+      "last-active-label": "Zuletzt aktiv",
+      "origin-label": "Ursprung",
+      "role-label": "Rolle"
     }
   },
   "query-operation": {
     "header": {
       "collapse-row": "Abfragezeile einklappen",
       "datasource-help": "Datenquellen-Hilfe anzeigen",
-      "disable-query": "Abfrage deaktivieren",
       "drag-and-drop": "Ziehen und Ablegen zum Neuordnen",
       "duplicate-query": "Abfrage duplizieren",
       "expand-row": "Suchzeile erweitern",
+      "hide-response": "",
       "remove-query": "Abfrage entfernen",
+      "show-response": "",
       "toggle-edit-mode": "Textbearbeitungsmodus umschalten"
     },
     "query-editor-not-exported": "Datenquellen-Plugin exportiert keine Komponente des Abfrageeditors"
@@ -1227,9 +1383,9 @@
   },
   "return-to-previous": {
     "button": {
-      "label": ""
+      "label": "Zurück zu {{title}}"
     },
-    "dismissable-button": ""
+    "dismissable-button": "Schließen"
   },
   "search": {
     "actions": {
@@ -1308,10 +1464,10 @@
       "expire-day": "1 Tag",
       "expire-hour": "1 Stunde",
       "expire-never": "Nie",
-      "expire-week": "7 Tage",
+      "expire-week": "1 Woche",
       "info-text-1": "Ein Schnappschuss ist eine Möglichkeit, ein interaktives Dashboard sofort öffentlich zu teilen. Beim Erstellen entfernen wir sensible Daten wie Abfragen (Metriken, Vorlagen und Anmerkungen) und Panel-Links, sodass nur die sichtbaren Metrikdaten und die in dein Dashboard eingebetteten Seriennamen angezeigt werden.",
       "info-text-2": "Beachte, dass dein Schnappschuss <1>für jeden sichtbar ist</1>, der den Link hat und auf die URL zugreifen kann. Teile Schnappschüsse daher mit Bedacht.",
-      "local-button": "Lokaler Schnappschuss",
+      "local-button": "Snapshot veröffentlichen",
       "mistake-message": "Hast du einen Fehler gemacht? ",
       "name": "Name des Schnappschusses",
       "timeout": "Timeout (Sekunden)",
@@ -1324,8 +1480,8 @@
       "library-panel": "Bibliotheks-Panel",
       "link": "Link",
       "panel-embed": "Einbetten",
-      "public-dashboard": "Öffentliches Dashboard",
-      "public-dashboard-title": "",
+      "public-dashboard": "",
+      "public-dashboard-title": "Öffentliches Dashboard",
       "snapshot": "Schnappschuss"
     },
     "theme-picker": {
@@ -1396,7 +1552,7 @@
     "calendar": {
       "apply-button": "Zeitbereich anwenden",
       "cancel-button": "Abbrechen",
-      "close": "",
+      "close": "Kalender schließen",
       "select-time": "Einen Zeitbereich auswählen"
     },
     "content": {
@@ -1405,11 +1561,11 @@
       "filter-placeholder": "Schnellbereiche suchen"
     },
     "copy-paste": {
-      "copy-success-message": "",
-      "default-error-message": "",
-      "default-error-title": "",
-      "tooltip-copy": "",
-      "tooltip-paste": ""
+      "copy-success-message": "Zeitraum in Zwischenablage kopiert",
+      "default-error-message": "{{error}} ist kein gültiger Zeitraum",
+      "default-error-title": "Ungültiger Zeitraum",
+      "tooltip-copy": "Zeitraum in Zwischenablage kopieren",
+      "tooltip-paste": "Zeitraum einfügen"
     },
     "footer": {
       "change-settings-button": "Zeiteinstellungen ändern",
@@ -1423,7 +1579,7 @@
       "default-error": "Ein vergangenes Datum oder \"heutiges\" eingeben",
       "fiscal-year": "Geschäftsjahr",
       "from-input": "Von",
-      "open-input-calendar": "",
+      "open-input-calendar": "Kalender öffnen",
       "range-error": "„Von“ darf nicht nach „Bis“ sein",
       "to-input": "Bis"
     },
@@ -1448,8 +1604,8 @@
   },
   "transformations": {
     "empty": {
-      "add-transformation-body": "",
-      "add-transformation-header": ""
+      "add-transformation-body": "Mithilfe von Transformationen können Daten auf verschiedene Arten geändert werden, bevor Ihre Visualisierung angezeigt wird.<1></1>Dies beinhaltet die Verknüpfung von Daten, das Umbenennen von Feldern, die Erstellung von Berechnungen, das Formatieren von Daten für die Anzeige und mehr.",
+      "add-transformation-header": "Daten transformieren beginnen"
     }
   },
   "user-orgs": {
@@ -1483,7 +1639,7 @@
   },
   "users-access-list": {
     "tabs": {
-      "public-dashboard-users-tab-title": ""
+      "public-dashboard-users-tab-title": "Nutzer des öffentlichen Dashboards"
     }
   },
   "variable": {

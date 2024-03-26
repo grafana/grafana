@@ -1,10 +1,11 @@
 import { SceneObjectUrlSyncHandler, SceneObjectUrlValues } from '@grafana/scenes';
 
+import { AnnotationsEditView, AnnotationsEditViewState } from './AnnotationsEditView';
 import { DashboardLinksEditView, DashboardLinksEditViewState } from './DashboardLinksEditView';
 import { VariablesEditView, VariablesEditViewState } from './VariablesEditView';
 
-type EditListViewUrlSync = DashboardLinksEditView | VariablesEditView;
-type EditListViewState = DashboardLinksEditViewState | VariablesEditViewState;
+type EditListViewUrlSync = DashboardLinksEditView | VariablesEditView | AnnotationsEditView;
+type EditListViewState = DashboardLinksEditViewState | VariablesEditViewState | AnnotationsEditViewState;
 export class EditListViewSceneUrlSync implements SceneObjectUrlSyncHandler {
   constructor(private _scene: EditListViewUrlSync) {}
 

@@ -13,9 +13,9 @@ import {
 } from '@grafana/scenes';
 import { useStyles2, Tooltip, Stack } from '@grafana/ui';
 
-import { DataTrail, DataTrailState } from './DataTrail';
+import { DataTrail, DataTrailState, getTopSceneFor } from './DataTrail';
 import { VAR_FILTERS } from './shared';
-import { getTrailFor } from './utils';
+import { getTrailFor, isSceneTimeRangeState } from './utils';
 
 export interface DataTrailsHistoryState extends SceneObjectState {
   currentStep: number;
@@ -44,7 +44,22 @@ export class DataTrailHistory extends SceneObjectBase<DataTrailsHistoryState> {
     const trail = getTrailFor(this);
 
     if (this.state.steps.length === 0) {
+      // We always want to ensure in initial 'start' step
       this.addTrailStep(trail, 'start');
+
+      if (trail.state.metric) {
+        // But if our current trail has a metric, we want to remove it and the topScene,
+        // so that the "start" step always displays a metric select screen.
+
+        // So we remove the metric and update the topscene for the "start" step
+        const { metric, ...startState } = trail.state;
+        startState.topScene = getTopSceneFor(undefined);
+        this.state.steps[0].trailState = startState;
+
+        // But must add a secondary step to represent the selection of the metric
+        // for this restored trail state
+        this.addTrailStep(trail, 'metric');
+      }
     }
 
     trail.subscribeToState((newState, oldState) => {
@@ -54,7 +69,7 @@ export class DataTrailHistory extends SceneObjectBase<DataTrailsHistoryState> {
           this.state.steps[0].trailState = sceneUtils.cloneSceneObjectState(oldState, { history: this });
         }
 
-        if (newState.metric) {
+        if (newState.metric || oldState.metric) {
           this.addTrailStep(trail, 'metric');
         }
       }
@@ -68,6 +83,14 @@ export class DataTrailHistory extends SceneObjectBase<DataTrailsHistoryState> {
 
     trail.subscribeToEvent(SceneObjectStateChangedEvent, (evt) => {
       if (evt.payload.changedObject instanceof SceneTimeRange) {
+        const { prevState, newState } = evt.payload;
+
+        if (isSceneTimeRangeState(prevState) && isSceneTimeRangeState(newState)) {
+          if (prevState.from === newState.from && prevState.to === newState.to) {
+            return;
+          }
+        }
+
         this.addTrailStep(trail, 'time');
       }
     });
@@ -108,7 +131,7 @@ export class DataTrailHistory extends SceneObjectBase<DataTrailsHistoryState> {
     return (
       <Stack direction="column">
         <div>{step.type}</div>
-        {step.type === 'metric' && <div>{step.trailState.metric}</div>}
+        {step.type === 'metric' && <div>{step.trailState.metric || 'Select new metric'}</div>}
       </Stack>
     );
   }
@@ -139,30 +162,39 @@ export class DataTrailHistory extends SceneObjectBase<DataTrailsHistoryState> {
 
     return (
       <div className={styles.container}>
-        <div className={styles.heading}>Trail</div>
-        {steps.map((step, index) => (
-          <Tooltip content={() => model.renderStepTooltip(step)} key={index}>
-            <button
-              className={cx(
-                // Base for all steps
-                styles.step,
-                // Specifics per step type
-                styles.stepTypes[step.type],
-                // To highlight selected step
-                model.state.currentStep === index ? styles.stepSelected : '',
-                // To alter the look of steps with distant non-directly preceding parent
-                alternatePredecessorStyle.get(index) ?? '',
-                // To remove direct link for steps that don't have a direct parent
-                index !== step.parentIndex + 1 ? styles.stepOmitsDirectLeftLink : '',
-                // To remove the direct parent link on the start node as well
-                index === 0 ? styles.stepOmitsDirectLeftLink : '',
-                // To darken steps that aren't the current step's ancesters
-                !ancestry.has(index) ? styles.stepIsNotAncestorOfCurrent : ''
-              )}
-              onClick={() => model.goBackToStep(index)}
-            ></button>
-          </Tooltip>
-        ))}
+        <div className={styles.heading}>History</div>
+        {steps.map((step, index) => {
+          let stepType = step.type;
+
+          if (stepType === 'metric' && step.trailState.metric === undefined) {
+            // If we're resetting the metric, we want it to look like a start node
+            stepType = 'start';
+          }
+
+          return (
+            <Tooltip content={() => model.renderStepTooltip(step)} key={index}>
+              <button
+                className={cx(
+                  // Base for all steps
+                  styles.step,
+                  // Specifics per step type
+                  styles.stepTypes[stepType],
+                  // To highlight selected step
+                  model.state.currentStep === index ? styles.stepSelected : '',
+                  // To alter the look of steps with distant non-directly preceding parent
+                  alternatePredecessorStyle.get(index) ?? '',
+                  // To remove direct link for steps that don't have a direct parent
+                  index !== step.parentIndex + 1 ? styles.stepOmitsDirectLeftLink : '',
+                  // To remove the direct parent link on the start node as well
+                  index === 0 ? styles.stepOmitsDirectLeftLink : '',
+                  // To darken steps that aren't the current step's ancesters
+                  !ancestry.has(index) ? styles.stepIsNotAncestorOfCurrent : ''
+                )}
+                onClick={() => model.goBackToStep(index)}
+              ></button>
+            </Tooltip>
+          );
+        })}
       </div>
     );
   };

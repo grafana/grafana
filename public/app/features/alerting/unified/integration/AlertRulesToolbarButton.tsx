@@ -1,9 +1,9 @@
 import React from 'react';
-import { useToggle } from 'react-use';
 
 import { ToolbarButton } from '@grafana/ui';
 
 import { t } from '../../../../core/internationalization';
+import { useDashNavModalController } from '../../../dashboard/components/DashNav/DashNav';
 import { alertRuleApi } from '../api/alertRuleApi';
 import { GRAFANA_RULES_SOURCE_NAME } from '../utils/datasource';
 
@@ -14,7 +14,7 @@ interface AlertRulesToolbarButtonProps {
 }
 
 export default function AlertRulesToolbarButton({ dashboardUid }: AlertRulesToolbarButtonProps) {
-  const [showDrawer, toggleShowDrawer] = useToggle(false);
+  const { showModal, hideModal } = useDashNavModalController();
 
   const { data: namespaces = [] } = alertRuleApi.endpoints.prometheusRuleNamespaces.useQuery({
     ruleSourceName: GRAFANA_RULES_SOURCE_NAME,
@@ -26,14 +26,11 @@ export default function AlertRulesToolbarButton({ dashboardUid }: AlertRulesTool
   }
 
   return (
-    <>
-      <ToolbarButton
-        tooltip={t('dashboard.toolbar.alert-rules', 'Alert rules')}
-        icon="bell"
-        onClick={toggleShowDrawer}
-        key="button-alerting"
-      />
-      {showDrawer && <AlertRulesDrawer dashboardUid={dashboardUid} onClose={toggleShowDrawer} />}
-    </>
+    <ToolbarButton
+      tooltip={t('dashboard.toolbar.alert-rules', 'Alert rules')}
+      icon="bell"
+      onClick={() => showModal(<AlertRulesDrawer dashboardUid={dashboardUid} onClose={hideModal} />)}
+      key="button-alerting"
+    />
   );
 }

@@ -31,7 +31,7 @@ describe('SaveDashboardDrawer', () => {
       setup().openAndRender();
 
       expect(await screen.findByText('Save dashboard')).toBeInTheDocument();
-      expect(screen.queryByText('Save current time range')).not.toBeInTheDocument();
+      expect(screen.queryByLabelText(selectors.pages.SaveDashboardModal.saveTimerange)).not.toBeInTheDocument();
       expect(screen.getByText('No changes to save')).toBeInTheDocument();
       expect(screen.queryByLabelText('Tab Changes')).not.toBeInTheDocument();
     });
@@ -49,7 +49,7 @@ describe('SaveDashboardDrawer', () => {
       openAndRender();
 
       expect(await screen.findByText('Save dashboard')).toBeInTheDocument();
-      expect(screen.queryByText('Save current time range')).toBeInTheDocument();
+      expect(screen.queryByLabelText(selectors.pages.SaveDashboardModal.saveTimerange)).toBeInTheDocument();
     });
 
     it('Should update diff when including time range is', async () => {
@@ -60,7 +60,7 @@ describe('SaveDashboardDrawer', () => {
       openAndRender();
 
       expect(await screen.findByText('Save dashboard')).toBeInTheDocument();
-      expect(screen.queryByText('Save current time range')).toBeInTheDocument();
+      expect(screen.queryByLabelText(selectors.pages.SaveDashboardModal.saveTimerange)).toBeInTheDocument();
       expect(screen.queryByLabelText('Tab Changes')).not.toBeInTheDocument();
 
       await userEvent.click(screen.getByLabelText(selectors.pages.SaveDashboardModal.saveTimerange));
@@ -77,7 +77,7 @@ describe('SaveDashboardDrawer', () => {
 
       await userEvent.click(await screen.findByLabelText('Tab Changes'));
 
-      expect(await screen.findByText('JSON Model')).toBeInTheDocument();
+      expect(await screen.findByText('Full JSON diff')).toBeInTheDocument();
     });
 
     it('Can save', async () => {

@@ -1,3 +1,4 @@
+import debounce from 'debounce-promise';
 import React from 'react';
 import { UseFormSetValue, useForm } from 'react-hook-form';
 
@@ -10,7 +11,7 @@ import { DashboardScene } from '../scene/DashboardScene';
 
 import { SaveDashboardDrawer } from './SaveDashboardDrawer';
 import { DashboardChangeInfo, NameAlreadyExistsError, SaveButton, isNameExistsError } from './shared';
-import { useDashboardSave } from './useSaveDashboard';
+import { useSaveDashboard } from './useSaveDashboard';
 
 interface SaveDashboardAsFormDTO {
   firstName?: string;
@@ -29,7 +30,7 @@ export interface Props {
 export function SaveDashboardAsForm({ dashboard, drawer, changeInfo }: Props) {
   const { changedSaveModel } = changeInfo;
 
-  const { register, handleSubmit, setValue, formState, getValues } = useForm<SaveDashboardAsFormDTO>({
+  const { register, handleSubmit, setValue, formState, getValues, watch, trigger } = useForm<SaveDashboardAsFormDTO>({
     mode: 'onBlur',
     defaultValues: {
       title: changeInfo.isNew ? changedSaveModel.title! : `${changedSaveModel.title} Copy`,
@@ -41,10 +42,11 @@ export function SaveDashboardAsForm({ dashboard, drawer, changeInfo }: Props) {
       copyTags: false,
     },
   });
-  const { errors, isValid, defaultValues } = formState;
-  const formValues = getValues();
 
-  const { state, onSaveDashboard } = useDashboardSave(false);
+  const { errors, isValid, defaultValues } = formState;
+  const formValues = watch();
+
+  const { state, onSaveDashboard } = useSaveDashboard(false);
 
   const onSave = async (overwrite: boolean) => {
     const data = getValues();
@@ -97,6 +99,9 @@ export function SaveDashboardAsForm({ dashboard, drawer, changeInfo }: Props) {
         <Input
           {...register('title', { required: 'Required', validate: validateDashboardName })}
           aria-label="Save dashboard title field"
+          onChange={debounce(async () => {
+            trigger('title');
+          }, 400)}
           autoFocus
         />
       </Field>
@@ -116,7 +121,7 @@ export function SaveDashboardAsForm({ dashboard, drawer, changeInfo }: Props) {
         <FolderPicker
           onChange={(uid: string | undefined, title: string | undefined) => setValue('folder', { uid, title })}
           // Old folder picker fields
-          value={formValues.folder.uid}
+          value={formValues.folder?.uid}
           initialTitle={defaultValues!.folder!.title}
           dashboardId={changedSaveModel.id ?? undefined}
           enableCreateNew

@@ -10,7 +10,6 @@ import (
 
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/go-cmp/cmp/cmpopts"
-	"github.com/grafana/grafana-azure-sdk-go/azsettings"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 
@@ -117,7 +116,7 @@ func TestAzureResourceGraphCreateRequest(t *testing.T) {
 
 func TestAddConfigData(t *testing.T) {
 	field := data.Field{}
-	dataLink := data.DataLink{Title: "View in Azure Portal", TargetBlank: true, URL: "http://ds"}
+	dataLink := data.DataLink{Title: "View query in Azure Portal", TargetBlank: true, URL: "http://ds"}
 	frame := data.Frame{
 		Fields: []*data.Field{&field},
 	}
@@ -133,23 +132,6 @@ func TestAddConfigData(t *testing.T) {
 	}
 	if !cmp.Equal(frameWithLink, expectedFrameWithLink, data.FrameTestCompareOptions()...) {
 		t.Errorf("unexpepcted frame: %v", cmp.Diff(frameWithLink, expectedFrameWithLink, data.FrameTestCompareOptions()...))
-	}
-}
-
-func TestGetAzurePortalUrl(t *testing.T) {
-	clouds := []string{azsettings.AzurePublic, azsettings.AzureChina, azsettings.AzureUSGovernment}
-	expectedAzurePortalUrl := map[string]any{
-		azsettings.AzurePublic:       "https://portal.azure.com",
-		azsettings.AzureChina:        "https://portal.azure.cn",
-		azsettings.AzureUSGovernment: "https://portal.azure.us",
-	}
-
-	for _, cloud := range clouds {
-		azurePortalUrl, err := loganalytics.GetAzurePortalUrl(cloud)
-		if err != nil {
-			t.Errorf("The cloud not supported")
-		}
-		assert.Equal(t, expectedAzurePortalUrl[cloud], azurePortalUrl)
 	}
 }
 

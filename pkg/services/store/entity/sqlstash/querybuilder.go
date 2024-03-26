@@ -1,20 +1,39 @@
 package sqlstash
 
 import (
+	"encoding/json"
 	"strings"
 
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 )
 
+type Direction int
+
+const (
+	Ascending Direction = iota
+	Descending
+)
+
+func (d Direction) String() string {
+	if d == Descending {
+		return "DESC"
+	}
+	return "ASC"
+}
+
 type selectQuery struct {
 	dialect  migrator.Dialect
 	fields   []string // SELECT xyz
 	from     string   // FROM object
+	offset   int64
 	limit    int64
 	oneExtra bool
 
 	where []string
 	args  []any
+
+	orderBy   []string
+	direction []Direction
 }
 
 func (q *selectQuery) addWhere(f string, val ...any) {
@@ -53,6 +72,31 @@ func (q *selectQuery) addWhereIn(f string, vals []string) {
 	}
 }
 
+const sqlLikeEscape = "#"
+
+var sqlLikeEscapeReplacer = strings.NewReplacer(
+	sqlLikeEscape, sqlLikeEscape+sqlLikeEscape,
+	"%", sqlLikeEscape+"%",
+	"_", sqlLikeEscape+"_",
+)
+
+func escapeJSONStringSQLLike(s string) string {
+	b, _ := json.Marshal(s)
+	return sqlLikeEscapeReplacer.Replace(string(b))
+}
+
+func (q *selectQuery) addWhereJsonContainsKV(field string, key string, value string) {
+	escapedKey := escapeJSONStringSQLLike(key)
+	escapedValue := escapeJSONStringSQLLike(value)
+	q.where = append(q.where, q.dialect.Quote(field)+" LIKE ? ESCAPE ?")
+	q.args = append(q.args, "{%"+escapedKey+":"+escapedValue+"%}", sqlLikeEscape)
+}
+
+func (q *selectQuery) addOrderBy(field string, direction Direction) {
+	q.orderBy = append(q.orderBy, field)
+	q.direction = append(q.direction, direction)
+}
+
 func (q *selectQuery) toQuery() (string, []any) {
 	args := q.args
 	sb := strings.Builder{}
@@ -77,17 +121,27 @@ func (q *selectQuery) toQuery() (string, []any) {
 		}
 	}
 
-	if q.limit > 0 || q.oneExtra {
-		limit := q.limit
-		if limit < 1 {
-			limit = 20
-			q.limit = limit
+	if len(q.orderBy) > 0 && len(q.direction) == len(q.orderBy) {
+		sb.WriteString(" ORDER BY ")
+		for i, f := range q.orderBy {
+			if i > 0 {
+				sb.WriteString(",")
+			}
+			sb.WriteString(q.dialect.Quote(f))
+			sb.WriteString(" ")
+			sb.WriteString(q.direction[i].String())
 		}
-		if q.oneExtra {
-			limit = limit + 1
-		}
-		sb.WriteString(" LIMIT ?")
-		args = append(args, limit)
 	}
+
+	limit := q.limit
+	if limit < 1 {
+		limit = 20
+		q.limit = limit
+	}
+	if q.oneExtra {
+		limit = limit + 1
+	}
+	sb.WriteString(q.dialect.LimitOffset(limit, q.offset))
+
 	return sb.String(), args
 }

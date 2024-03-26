@@ -51,7 +51,7 @@ To visualize data from multiple GCP Projects, create one data source per GCP Pro
 You can create a service account and key file that can be used to access multiple projects. Follow steps 1-5 above, then:
 
 1. Note the email address of the service account, it will look a little strange like `foobar-478@main-boardwalk-90210.iam.gserviceaccount.com`.
-1. Navigtate to the other project(s) you want to access.
+1. Navigate to the other project(s) you want to access.
 1. Add the service account email address to the IAM page of each project, and grant it the required roles.
 1. Navigate back to the original project's service account and create a [service account key](https://cloud.google.com/iam/docs/creating-managing-service-account-keys#iam-service-account-keys-create-console). A JSON key file is created and downloaded to your computer
 1. Store the key file in a secure place, because it grants access to your Google data.

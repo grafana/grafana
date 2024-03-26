@@ -1,24 +1,12 @@
 import { css } from '@emotion/css';
 import React, { useCallback, useEffect, useState } from 'react';
-import { RegisterOptions, useFormContext } from 'react-hook-form';
+import { RegisterOptions, useFormContext, Controller } from 'react-hook-form';
 
 import { GrafanaTheme2, SelectableValue } from '@grafana/data';
-import {
-  Field,
-  Icon,
-  IconButton,
-  Input,
-  InputControl,
-  Label,
-  Stack,
-  Switch,
-  Text,
-  Tooltip,
-  useStyles2,
-} from '@grafana/ui';
+import { Field, Icon, IconButton, Input, Label, Stack, Switch, Text, Tooltip, useStyles2 } from '@grafana/ui';
 
 import { CombinedRuleGroup, CombinedRuleNamespace } from '../../../../../types/unified-alerting';
-import { logInfo, LogMessages } from '../../Analytics';
+import { LogMessages, logInfo } from '../../Analytics';
 import { useCombinedRuleNamespaces } from '../../hooks/useCombinedRuleNamespaces';
 import { useUnifiedAlertingSelector } from '../../hooks/useUnifiedAlertingSelector';
 import { RuleFormValues } from '../../types/rule-form';
@@ -57,7 +45,7 @@ const forValidationOptions = (evaluateEvery: string): RegisterOptions => ({
         const millisEvery = parsePrometheusDuration(evaluateEvery);
         return millisFor >= millisEvery
           ? true
-          : 'For duration must be greater than or equal to the evaluation interval.';
+          : 'Pending period must be greater than or equal to the evaluation interval.';
       } catch (err) {
         // if we fail to parse "every", assume validation is successful, or the error messages
         // will overlap in the UI
@@ -137,6 +125,7 @@ function FolderGroupAndEvaluationInterval({
         <EditCloudGroupModal
           namespace={existingNamespace ?? emptyNamespace}
           group={existingGroup ?? emptyGroup}
+          folderUid={folderUid}
           onClose={() => closeEditGroupModal()}
           intervalEditOnly
           hideFolder={true}
@@ -249,7 +238,7 @@ export function GrafanaEvaluationBehavior({
 
         {existing && (
           <Field htmlFor="pause-alert-switch">
-            <InputControl
+            <Controller
               render={() => (
                 <Stack gap={1} direction="row" alignItems="center">
                   <Switch
@@ -280,7 +269,7 @@ export function GrafanaEvaluationBehavior({
       {showErrorHandling && (
         <>
           <Field htmlFor="no-data-state-input" label="Alert state if no data or all values are null">
-            <InputControl
+            <Controller
               render={({ field: { onChange, ref, ...field } }) => (
                 <GrafanaAlertStatePicker
                   {...field}
@@ -295,7 +284,7 @@ export function GrafanaEvaluationBehavior({
             />
           </Field>
           <Field htmlFor="exec-err-state-input" label="Alert state if execution error or timeout">
-            <InputControl
+            <Controller
               render={({ field: { onChange, ref, ...field } }) => (
                 <GrafanaAlertStatePicker
                   {...field}

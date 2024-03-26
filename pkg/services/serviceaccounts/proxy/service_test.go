@@ -8,12 +8,12 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/services/serviceaccounts"
+	sa "github.com/grafana/grafana/pkg/services/serviceaccounts"
 	"github.com/grafana/grafana/pkg/services/serviceaccounts/extsvcaccounts"
 	"github.com/grafana/grafana/pkg/services/serviceaccounts/tests"
 )
 
-var _ serviceaccounts.Service = (*tests.FakeServiceAccountService)(nil)
+var _ sa.Service = (*tests.FakeServiceAccountService)(nil)
 
 func TestProvideServiceAccount_crudServiceAccount(t *testing.T) {
 	testOrgId := int64(1)
@@ -29,19 +29,19 @@ func TestProvideServiceAccount_crudServiceAccount(t *testing.T) {
 	t.Run("should create service account", func(t *testing.T) {
 		testCases := []struct {
 			description   string
-			form          serviceaccounts.CreateServiceAccountForm
+			form          sa.CreateServiceAccountForm
 			expectedError error
 		}{
 			{
 				description: "should create service account and not return error",
-				form: serviceaccounts.CreateServiceAccountForm{
+				form: sa.CreateServiceAccountForm{
 					Name: "my-service-account",
 				},
 				expectedError: nil,
 			},
 			{
 				description: "should not allow to create a service account with extsvc prefix",
-				form: serviceaccounts.CreateServiceAccountForm{
+				form: sa.CreateServiceAccountForm{
 					Name: "extsvc-my-service-account",
 				},
 				expectedError: extsvcaccounts.ErrInvalidName,
@@ -61,20 +61,20 @@ func TestProvideServiceAccount_crudServiceAccount(t *testing.T) {
 		testCases := []struct {
 			description            string
 			expectedError          error
-			expectedServiceAccount *serviceaccounts.ServiceAccountProfileDTO
+			expectedServiceAccount *sa.ServiceAccountProfileDTO
 		}{
 			{
 				description:   "should allow to delete a service account",
 				expectedError: nil,
-				expectedServiceAccount: &serviceaccounts.ServiceAccountProfileDTO{
+				expectedServiceAccount: &sa.ServiceAccountProfileDTO{
 					Login: "my-service-account",
 				},
 			},
 			{
-				description:   "should not allow to delete a service account with sa-extsvc prefix",
+				description:   "should not allow to delete a service account with " + sa.ExtSvcLoginPrefix + " prefix",
 				expectedError: extsvcaccounts.ErrCannotBeDeleted,
-				expectedServiceAccount: &serviceaccounts.ServiceAccountProfileDTO{
-					Login: "sa-extsvc-my-service-account",
+				expectedServiceAccount: &sa.ServiceAccountProfileDTO{
+					Login: sa.ExtSvcLoginPrefix + "my-service-account",
 				},
 			},
 		}
@@ -88,24 +88,24 @@ func TestProvideServiceAccount_crudServiceAccount(t *testing.T) {
 		}
 	})
 
-	t.Run("should delete service account", func(t *testing.T) {
+	t.Run("should delete service account token", func(t *testing.T) {
 		testCases := []struct {
 			description            string
 			expectedError          error
-			expectedServiceAccount *serviceaccounts.ServiceAccountProfileDTO
+			expectedServiceAccount *sa.ServiceAccountProfileDTO
 		}{
 			{
 				description:   "should allow to delete a service account token",
 				expectedError: nil,
-				expectedServiceAccount: &serviceaccounts.ServiceAccountProfileDTO{
+				expectedServiceAccount: &sa.ServiceAccountProfileDTO{
 					Login: "my-service-account",
 				},
 			},
 			{
 				description:   "should not allow to delete a external service account token",
 				expectedError: extsvcaccounts.ErrCannotDeleteToken,
-				expectedServiceAccount: &serviceaccounts.ServiceAccountProfileDTO{
-					Login: "sa-extsvc-my-service-account",
+				expectedServiceAccount: &sa.ServiceAccountProfileDTO{
+					Login: sa.ExtSvcLoginPrefix + "my-service-account",
 				},
 			},
 		}
@@ -122,20 +122,20 @@ func TestProvideServiceAccount_crudServiceAccount(t *testing.T) {
 	t.Run("should retrieve service account with IsExternal field", func(t *testing.T) {
 		testCases := []struct {
 			description            string
-			expectedServiceAccount *serviceaccounts.ServiceAccountProfileDTO
+			expectedServiceAccount *sa.ServiceAccountProfileDTO
 			expectedIsExternal     bool
 		}{
 			{
 				description: "should not mark as external",
-				expectedServiceAccount: &serviceaccounts.ServiceAccountProfileDTO{
+				expectedServiceAccount: &sa.ServiceAccountProfileDTO{
 					Login: "my-service-account",
 				},
 				expectedIsExternal: false,
 			},
 			{
 				description: "should mark as external",
-				expectedServiceAccount: &serviceaccounts.ServiceAccountProfileDTO{
-					Login: "sa-extsvc-my-service-account",
+				expectedServiceAccount: &sa.ServiceAccountProfileDTO{
+					Login: sa.ExtSvcLoginPrefix + "my-service-account",
 				},
 				expectedIsExternal: true,
 			},
@@ -151,17 +151,17 @@ func TestProvideServiceAccount_crudServiceAccount(t *testing.T) {
 		}
 	})
 
-	t.Run("should mark external service accounts correctly", func(t *testing.T) {
-		serviceMock.ExpectedSearchOrgServiceAccountsResult = &serviceaccounts.SearchOrgServiceAccountsResult{
+	t.Run("should flag external service accounts correctly", func(t *testing.T) {
+		serviceMock.ExpectedSearchOrgServiceAccountsResult = &sa.SearchOrgServiceAccountsResult{
 			TotalCount: 2,
-			ServiceAccounts: []*serviceaccounts.ServiceAccountDTO{
+			ServiceAccounts: []*sa.ServiceAccountDTO{
 				{Login: "test"},
-				{Login: serviceaccounts.ServiceAccountPrefix + serviceaccounts.ExtSvcPrefix + "test"},
+				{Login: sa.ExtSvcLoginPrefix + "test"},
 			},
 			Page:    1,
 			PerPage: 2,
 		}
-		res, err := svc.SearchOrgServiceAccounts(context.Background(), &serviceaccounts.SearchOrgServiceAccountsQuery{OrgID: 1})
+		res, err := svc.SearchOrgServiceAccounts(context.Background(), &sa.SearchOrgServiceAccountsQuery{OrgID: 1})
 		require.Len(t, res.ServiceAccounts, 2)
 		require.NoError(t, err)
 		require.False(t, res.ServiceAccounts[0].IsExternal)
@@ -173,47 +173,47 @@ func TestProvideServiceAccount_crudServiceAccount(t *testing.T) {
 		nameWithProtectedPrefix := "extsvc-my-updated-service-account"
 		testCases := []struct {
 			description            string
-			form                   serviceaccounts.UpdateServiceAccountForm
-			expectedServiceAccount *serviceaccounts.ServiceAccountProfileDTO
+			form                   sa.UpdateServiceAccountForm
+			expectedServiceAccount *sa.ServiceAccountProfileDTO
 			expectedError          error
 		}{
 			{
 				description: "should update a non-external service account with a valid name",
-				form: serviceaccounts.UpdateServiceAccountForm{
+				form: sa.UpdateServiceAccountForm{
 					Name: &nameWithoutProtectedPrefix,
 				},
-				expectedServiceAccount: &serviceaccounts.ServiceAccountProfileDTO{
+				expectedServiceAccount: &sa.ServiceAccountProfileDTO{
 					Login: "my-service-account",
 				},
 				expectedError: nil,
 			},
 			{
 				description: "should not allow to update a non-external service account with extsvc prefix",
-				form: serviceaccounts.UpdateServiceAccountForm{
+				form: sa.UpdateServiceAccountForm{
 					Name: &nameWithProtectedPrefix,
 				},
-				expectedServiceAccount: &serviceaccounts.ServiceAccountProfileDTO{
+				expectedServiceAccount: &sa.ServiceAccountProfileDTO{
 					Login: "my-service-account",
 				},
 				expectedError: extsvcaccounts.ErrInvalidName,
 			},
 			{
 				description: "should not allow to update an external service account with a valid name",
-				form: serviceaccounts.UpdateServiceAccountForm{
+				form: sa.UpdateServiceAccountForm{
 					Name: &nameWithoutProtectedPrefix,
 				},
-				expectedServiceAccount: &serviceaccounts.ServiceAccountProfileDTO{
-					Login: "sa-extsvc-my-service-account",
+				expectedServiceAccount: &sa.ServiceAccountProfileDTO{
+					Login: sa.ExtSvcLoginPrefix + "my-service-account",
 				},
 				expectedError: extsvcaccounts.ErrCannotBeUpdated,
 			},
 			{
 				description: "should not allow to update an external service account with a extsvc prefix",
-				form: serviceaccounts.UpdateServiceAccountForm{
+				form: sa.UpdateServiceAccountForm{
 					Name: &nameWithProtectedPrefix,
 				},
-				expectedServiceAccount: &serviceaccounts.ServiceAccountProfileDTO{
-					Login: "sa-extsvc-my-service-account",
+				expectedServiceAccount: &sa.ServiceAccountProfileDTO{
+					Login: sa.ExtSvcLoginPrefix + "my-service-account",
 				},
 				expectedError: extsvcaccounts.ErrInvalidName,
 			},
@@ -232,27 +232,27 @@ func TestProvideServiceAccount_crudServiceAccount(t *testing.T) {
 	t.Run("should add service account tokens", func(t *testing.T) {
 		testCases := []struct {
 			description            string
-			cmd                    serviceaccounts.AddServiceAccountTokenCommand
-			expectedServiceAccount *serviceaccounts.ServiceAccountProfileDTO
+			cmd                    sa.AddServiceAccountTokenCommand
+			expectedServiceAccount *sa.ServiceAccountProfileDTO
 			expectedError          error
 		}{
 			{
 				description: "should allow to create a service account token",
-				cmd: serviceaccounts.AddServiceAccountTokenCommand{
+				cmd: sa.AddServiceAccountTokenCommand{
 					OrgId: testOrgId,
 				},
-				expectedServiceAccount: &serviceaccounts.ServiceAccountProfileDTO{
+				expectedServiceAccount: &sa.ServiceAccountProfileDTO{
 					Login: "my-service-account",
 				},
 				expectedError: nil,
 			},
 			{
 				description: "should not allow to create a service account token",
-				cmd: serviceaccounts.AddServiceAccountTokenCommand{
+				cmd: sa.AddServiceAccountTokenCommand{
 					OrgId: testOrgId,
 				},
-				expectedServiceAccount: &serviceaccounts.ServiceAccountProfileDTO{
-					Login: "sa-extsvc-my-service-account",
+				expectedServiceAccount: &sa.ServiceAccountProfileDTO{
+					Login: sa.ExtSvcLoginPrefix + "my-service-account",
 				},
 				expectedError: extsvcaccounts.ErrCannotCreateToken,
 			},
@@ -271,7 +271,7 @@ func TestProvideServiceAccount_crudServiceAccount(t *testing.T) {
 	t.Run("should identify service account logins for being external or not", func(t *testing.T) {
 		assert.False(t, isExternalServiceAccount("my-service-account"))
 		assert.False(t, isExternalServiceAccount("sa-my-service-account"))
-		assert.False(t, isExternalServiceAccount("extsvc-my-service-account"))
-		assert.True(t, isExternalServiceAccount("sa-extsvc-my-service-account"))
+		assert.False(t, isExternalServiceAccount(sa.ExtSvcPrefix+"my-service-account")) // It's not a external service account login
+		assert.True(t, isExternalServiceAccount(sa.ExtSvcLoginPrefix+"my-service-account"))
 	})
 }

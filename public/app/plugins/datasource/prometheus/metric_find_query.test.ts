@@ -23,7 +23,11 @@ const instanceSettings = {
   uid: 'ABCDEF',
   user: 'test',
   password: 'mupp',
-  jsonData: { httpMethod: 'GET' },
+  jsonData: {
+    httpMethod: 'GET',
+    prometheusVersion: '2.20.0',
+    prometheusType: PromApplication.Prometheus,
+  },
 } as Partial<DataSourceInstanceSettings<PromOptions>> as DataSourceInstanceSettings<PromOptions>;
 
 const raw: TimeRange = {
@@ -58,7 +62,15 @@ describe('PrometheusMetricFindQuery', () => {
     );
   });
 
-  const setupMetricFindQuery = (data: any, datasource?: PrometheusDatasource) => {
+  const setupMetricFindQuery = (
+    data: {
+      query: string;
+      response: {
+        data: unknown;
+      };
+    },
+    datasource?: PrometheusDatasource
+  ) => {
     fetchMock.mockImplementation(() => of({ status: 'success', data: data.response } as unknown as FetchResponse));
     return new PrometheusMetricFindQuery(datasource ?? legacyPrometheusDatasource, data.query);
   };

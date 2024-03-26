@@ -5,9 +5,7 @@ import { isFetchError } from '@grafana/runtime';
 import { Dashboard } from '@grafana/schema';
 import { Alert, Box, Button, Stack } from '@grafana/ui';
 
-import { DashboardScene } from '../scene/DashboardScene';
-import { transformSceneToSaveModel } from '../serialization/transformSceneToSaveModel';
-import { Diffs, jsonDiff } from '../settings/version-history/utils';
+import { Diffs } from '../settings/version-history/utils';
 
 export interface DashboardChangeInfo {
   changedSaveModel: Dashboard;
@@ -15,46 +13,9 @@ export interface DashboardChangeInfo {
   diffs: Diffs;
   diffCount: number;
   hasChanges: boolean;
-  hasTimeChanged: boolean;
-  hasVariableValuesChanged: boolean;
+  hasTimeChanges: boolean;
+  hasVariableValueChanges: boolean;
   isNew?: boolean;
-}
-
-export function getSaveDashboardChange(dashboard: DashboardScene, saveTimeRange?: boolean): DashboardChangeInfo {
-  const initialSaveModel = dashboard.getInitialSaveModel()!;
-  const changedSaveModel = transformSceneToSaveModel(dashboard);
-  const hasTimeChanged = getHasTimeChanged(changedSaveModel, initialSaveModel);
-  const hasVariableValuesChanged = getVariableValueChanges(changedSaveModel, initialSaveModel);
-
-  if (!saveTimeRange) {
-    changedSaveModel.time = initialSaveModel.time;
-  }
-
-  const diff = jsonDiff(initialSaveModel, changedSaveModel);
-
-  let diffCount = 0;
-  for (const d of Object.values(diff)) {
-    diffCount += d.length;
-  }
-
-  return {
-    changedSaveModel,
-    initialSaveModel,
-    diffs: diff,
-    diffCount,
-    hasChanges: diffCount > 0,
-    hasTimeChanged,
-    isNew: changedSaveModel.version === 0,
-    hasVariableValuesChanged,
-  };
-}
-
-function getHasTimeChanged(saveModel: Dashboard, originalSaveModel: Dashboard) {
-  return saveModel.time?.from !== originalSaveModel.time?.from || saveModel.time?.to !== originalSaveModel.time?.to;
-}
-
-function getVariableValueChanges(saveModel: Dashboard, originalSaveModel: Dashboard) {
-  return false;
 }
 
 export function isVersionMismatchError(error?: Error) {

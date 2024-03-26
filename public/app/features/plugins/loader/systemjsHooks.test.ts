@@ -1,25 +1,14 @@
 // mock fetch for SystemJS
 import 'whatwg-fetch';
 
-import { SystemJS, config } from '@grafana/runtime';
+import { config } from '@grafana/runtime';
 
 jest.mock('./cache', () => ({
   resolveWithCache: (url: string) => `${url}?_cache=1234`,
 }));
 
-import {
-  server,
-  mockAmdModule,
-  mockSystemModule,
-  mockAmdModuleNamedNoDeps,
-  mockAmdModuleNamedWithDeps,
-  mockAmdModuleNamedWithDeps2,
-  mockAmdModuleNamedWithDeps3,
-  mockAmdModuleOnlyFunction,
-  mockAmdModuleWithComments,
-  mockModuleWithDefineMethod,
-  mockAmdModuleWithComments2,
-} from './pluginLoader.mock';
+import { server } from './pluginLoader.mock';
+import { SystemJS } from './systemjs';
 import { decorateSystemJSFetch, decorateSystemJSResolve } from './systemjsHooks';
 import { SystemJSWithLoaderHooks } from './types';
 
@@ -28,11 +17,13 @@ describe('SystemJS Loader Hooks', () => {
   const originalFetch = systemJSPrototype.fetch;
   const originalResolve = systemJSPrototype.resolve;
 
-  systemJSPrototype.resolve = (moduleId: string) => moduleId;
-  systemJSPrototype.shouldFetch = () => true;
-
   beforeAll(() => {
     server.listen();
+    systemJSPrototype.resolve = (moduleId: string) => moduleId;
+    systemJSPrototype.shouldFetch = () => true;
+    // because server.listen() patches fetch, we need to reassign this to the systemJSPrototype
+    // this is identical to what happens in the original code: https://github.com/systemjs/systemjs/blob/main/src/features/fetch-load.js#L12
+    systemJSPrototype.fetch = window.fetch;
   });
   afterEach(() => server.resetHandlers());
   afterAll(() => {
@@ -42,122 +33,16 @@ describe('SystemJS Loader Hooks', () => {
   });
 
   describe('decorateSystemJSFetch', () => {
-    it('wraps AMD modules in an AMD iife', async () => {
-      const basicResult = await decorateSystemJSFetch(originalFetch, '/public/plugins/mockAmdModule/module.js', {});
-      const basicSource = await basicResult.text();
-      const basicExpected = `(function(define) {
-  ${mockAmdModule}
-})(window.__grafana_amd_define);`;
-      expect(basicSource).toBe(basicExpected);
-
-      const mockAmdModuleNamedNoDepsResult = await decorateSystemJSFetch(
-        originalFetch,
-        '/public/plugins/mockAmdModuleNamedNoDeps/module.js',
-        {}
-      );
-      const mockAmdModuleNamedNoDepsSource = await mockAmdModuleNamedNoDepsResult.text();
-      const mockAmdModuleNamedNoDepsExpected = `(function(define) {
-  ${mockAmdModuleNamedNoDeps}
-})(window.__grafana_amd_define);`;
-
-      expect(mockAmdModuleNamedNoDepsSource).toBe(mockAmdModuleNamedNoDepsExpected);
-
-      const mockAmdModuleNamedWithDepsResult = await decorateSystemJSFetch(
-        originalFetch,
-        '/public/plugins/mockAmdModuleNamedWithDeps/module.js',
-        {}
-      );
-      const mockAmdModuleNamedWithDepsSource = await mockAmdModuleNamedWithDepsResult.text();
-      const mockAmdModuleNamedWithDepsExpected = `(function(define) {
-  ${mockAmdModuleNamedWithDeps}
-})(window.__grafana_amd_define);`;
-
-      expect(mockAmdModuleNamedWithDepsSource).toBe(mockAmdModuleNamedWithDepsExpected);
-
-      const mockAmdModuleNamedWithDeps2Result = await decorateSystemJSFetch(
-        originalFetch,
-        '/public/plugins/mockAmdModuleNamedWithDeps2/module.js',
-        {}
-      );
-      const mockAmdModuleNamedWithDeps2Source = await mockAmdModuleNamedWithDeps2Result.text();
-      const mockAmdModuleNamedWithDeps2Expected = `(function(define) {
-  ${mockAmdModuleNamedWithDeps2}
-})(window.__grafana_amd_define);`;
-
-      expect(mockAmdModuleNamedWithDeps2Source).toBe(mockAmdModuleNamedWithDeps2Expected);
-
-      const mockAmdModuleNamedWithDeps3Result = await decorateSystemJSFetch(
-        originalFetch,
-        '/public/plugins/mockAmdModuleNamedWithDeps3/module.js',
-        {}
-      );
-      const mockAmdModuleNamedWithDeps3Source = await mockAmdModuleNamedWithDeps3Result.text();
-      const mockAmdModuleNamedWithDeps3Expected = `(function(define) {
-  ${mockAmdModuleNamedWithDeps3}
-})(window.__grafana_amd_define);`;
-
-      expect(mockAmdModuleNamedWithDeps3Source).toBe(mockAmdModuleNamedWithDeps3Expected);
-
-      const mockAmdModuleOnlyFunctionResult = await decorateSystemJSFetch(
-        originalFetch,
-        '/public/plugins/mockAmdModuleOnlyFunction/module.js',
-        {}
-      );
-      const mockAmdModuleOnlyFunctionSource = await mockAmdModuleOnlyFunctionResult.text();
-      const mockAmdModuleOnlyFunctionExpected = `(function(define) {
-  ${mockAmdModuleOnlyFunction}
-})(window.__grafana_amd_define);`;
-
-      expect(mockAmdModuleOnlyFunctionSource).toBe(mockAmdModuleOnlyFunctionExpected);
-
-      const mockAmdModuleWithCommentsResult = await decorateSystemJSFetch(
-        originalFetch,
-        '/public/plugins/mockAmdModuleWithComments/module.js',
-        {}
-      );
-      const mockAmdModuleWithCommentsSource = await mockAmdModuleWithCommentsResult.text();
-      const mockAmdModuleWithCommentsExpected = `(function(define) {
-  ${mockAmdModuleWithComments}
-})(window.__grafana_amd_define);`;
-
-      expect(mockAmdModuleWithCommentsSource).toBe(mockAmdModuleWithCommentsExpected);
-
-      const mockAmdModuleWithComments2Result = await decorateSystemJSFetch(
-        originalFetch,
-        '/public/plugins/mockAmdModuleWithComments2/module.js',
-        {}
-      );
-      const mockAmdModuleWithComments2Source = await mockAmdModuleWithComments2Result.text();
-      const mockAmdModuleWithComments2Expected = `(function(define) {
-  ${mockAmdModuleWithComments2}
-})(window.__grafana_amd_define);`;
-
-      expect(mockAmdModuleWithComments2Source).toBe(mockAmdModuleWithComments2Expected);
-    });
-    it("doesn't wrap system modules in an AMD iife", async () => {
-      const url = '/public/plugins/mockSystemModule/module.js';
-      const result = await decorateSystemJSFetch(originalFetch, url, {});
-      const source = await result.text();
-
-      expect(source).toBe(mockSystemModule);
-    });
-    it("doesn't wrap modules with a define method in an AMD iife", async () => {
-      const url = '/public/plugins/mockModuleWithDefineMethod/module.js';
-      const result = await decorateSystemJSFetch(originalFetch, url, {});
-      const source = await result.text();
-
-      expect(source).toBe(mockModuleWithDefineMethod);
-    });
     it('only transforms plugin source code hosted on cdn with cdn paths', async () => {
       config.pluginsCDNBaseURL = 'http://my-cdn.com/plugins';
       const cdnUrl = 'http://my-cdn.com/plugins/my-plugin/v1.0.0/public/plugins/my-plugin/module.js';
-      const cdnResult = await decorateSystemJSFetch(originalFetch, cdnUrl, {});
+      const cdnResult = await decorateSystemJSFetch(systemJSPrototype.fetch, cdnUrl, {});
       const cdnSource = await cdnResult.text();
 
       expect(cdnSource).toContain('var pluginPath = "http://my-cdn.com/plugins/my-plugin/v1.0.0/public/plugins/";');
 
       const url = '/public/plugins/mockAmdModule/module.js';
-      const result = await decorateSystemJSFetch(originalFetch, url, {});
+      const result = await decorateSystemJSFetch(systemJSPrototype.fetch, url, {});
       const source = await result.text();
       expect(source).toContain('var pluginPath = "/public/plugins/";');
     });

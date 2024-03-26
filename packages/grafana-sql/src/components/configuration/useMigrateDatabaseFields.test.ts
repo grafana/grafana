@@ -16,6 +16,9 @@ jest.mock('@grafana/runtime', () => {
       },
     },
     logDebug: jest.fn(),
+    createMonitoringLogger: jest.fn().mockReturnValue({
+      logDebug: jest.fn(),
+    }),
   };
 });
 

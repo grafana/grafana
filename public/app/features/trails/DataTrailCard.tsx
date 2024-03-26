@@ -1,13 +1,13 @@
 import { css } from '@emotion/css';
 import React from 'react';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { dateTimeFormat, GrafanaTheme2 } from '@grafana/data';
 import { AdHocFiltersVariable, sceneGraph } from '@grafana/scenes';
-import { useStyles2, Stack, Tooltip, Button } from '@grafana/ui';
+import { Card, IconButton, Stack, Tag, useStyles2 } from '@grafana/ui';
 
 import { DataTrail } from './DataTrail';
-import { LOGS_METRIC, VAR_FILTERS } from './shared';
-import { getDataSource, getDataSourceName } from './utils';
+import { VAR_FILTERS } from './shared';
+import { getDataSource, getDataSourceName, getMetricName } from './utils';
 
 export interface Props {
   trail: DataTrail;
@@ -23,91 +23,71 @@ export function DataTrailCard({ trail, onSelect, onDelete }: Props) {
     return null;
   }
 
-  const filters = filtersVariable.state.set.state.filters;
+  const filters = filtersVariable.state.filters;
   const dsValue = getDataSource(trail);
 
+  const onClick = () => onSelect(trail);
+
   return (
-    <button className={styles.container} onClick={() => onSelect(trail)}>
-      <div className={styles.wrapper}>
-        <div className={styles.heading}>{getMetricName(trail.state.metric)}</div>
-        {onDelete && (
-          <Tooltip content={'Remove bookmark'}>
-            <Button size="sm" icon="trash-alt" variant="destructive" fill="text" onClick={onDelete} />
-          </Tooltip>
-        )}
+    <Card onClick={onClick} className={styles.card}>
+      <Card.Heading>{getMetricName(trail.state.metric)}</Card.Heading>
+      <div className={styles.description}>
+        <Stack gap={1.5}>
+          {filters.map((f) => (
+            <Tag key={f.key} name={`${f.key}: ${f.value}`} colorIndex={12} />
+          ))}
+        </Stack>
       </div>
-
-      <Stack gap={1.5}>
-        {dsValue && (
-          <Stack direction="column" gap={0.5}>
-            <div className={styles.label}>Datasource</div>
-            <div className={styles.value}>{getDataSourceName(dsValue)}</div>
-          </Stack>
-        )}
-        {filters.map((filter, index) => (
-          <Stack key={index} direction="column" gap={0.5}>
-            <div className={styles.label}>{filter.key}</div>
-            <div className={styles.value}>{filter.value}</div>
-          </Stack>
-        ))}
-      </Stack>
-    </button>
+      <Card.Actions className={styles.actions}>
+        <Stack gap={1} justifyContent={'space-between'} grow={1}>
+          <div className={styles.secondary}>
+            <b>Datasource:</b> {getDataSourceName(dsValue)}
+          </div>
+          {trail.state.createdAt && (
+            <i className={styles.secondary}>
+              <b>Created:</b> {dateTimeFormat(trail.state.createdAt, { format: 'LL' })}
+            </i>
+          )}
+        </Stack>
+      </Card.Actions>
+      {onDelete && (
+        <Card.SecondaryActions>
+          <IconButton
+            key="delete"
+            name="trash-alt"
+            className={styles.secondary}
+            tooltip="Remove bookmark"
+            onClick={onDelete}
+          />
+        </Card.SecondaryActions>
+      )}
+    </Card>
   );
-}
-
-function getMetricName(metric?: string) {
-  if (!metric) {
-    return 'Select metric';
-  }
-
-  if (metric === LOGS_METRIC) {
-    return 'Logs';
-  }
-
-  return metric;
 }
 
 function getStyles(theme: GrafanaTheme2) {
   return {
-    container: css({
+    tag: css({
+      maxWidth: '260px',
+      overflow: 'hidden',
+      textOverflow: 'ellipsis',
+    }),
+    card: css({
       padding: theme.spacing(1),
-      flexGrow: 1,
-      display: 'flex',
-      flexDirection: 'column',
-      gap: theme.spacing(2),
+    }),
+    secondary: css({
+      color: theme.colors.text.secondary,
+      fontSize: '12px',
+    }),
+    description: css({
       width: '100%',
-      border: `1px solid ${theme.colors.border.weak}`,
-      borderRadius: theme.shape.radius.default,
-      cursor: 'pointer',
-      boxShadow: 'none',
-      background: 'transparent',
-      textAlign: 'left',
-      '&:hover': {
-        background: theme.colors.emphasize(theme.colors.background.primary, 0.03),
-      },
+      gridArea: 'Description',
+      margin: theme.spacing(1, 0, 0),
+      color: theme.colors.text.secondary,
+      lineHeight: theme.typography.body.lineHeight,
     }),
-    label: css({
-      fontWeight: theme.typography.fontWeightMedium,
-      fontSize: theme.typography.bodySmall.fontSize,
-    }),
-    value: css({
-      fontSize: theme.typography.bodySmall.fontSize,
-    }),
-    heading: css({
-      padding: theme.spacing(0),
-      display: 'flex',
-      fontWeight: theme.typography.fontWeightMedium,
-      overflowX: 'hidden',
-    }),
-    body: css({
-      padding: theme.spacing(0),
-    }),
-    wrapper: css({
-      position: 'relative',
-      display: 'flex',
-      gap: theme.spacing.x1,
-      justifyContent: 'space-between',
-      width: '100%',
+    actions: css({
+      marginRight: theme.spacing(1),
     }),
   };
 }

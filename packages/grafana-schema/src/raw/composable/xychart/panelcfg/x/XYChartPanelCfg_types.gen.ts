@@ -4,14 +4,13 @@
 //     public/app/plugins/gen.go
 // Using jennies:
 //     TSTypesJenny
-//     LatestMajorsOrXJenny
-//     PluginEachMajorJenny
+//     PluginTsTypesJenny
 //
 // Run 'make gen-cue' from repository root to regenerate.
 
 import * as common from '@grafana/schema';
 
-export const pluginVersion = "10.4.0-pre";
+export const pluginVersion = "11.1.0-pre";
 
 /**
  * Auto is "table" in the UI
@@ -57,6 +56,7 @@ export const defaultFieldConfig: Partial<FieldConfig> = {
 };
 
 export interface ScatterSeriesConfig extends FieldConfig {
+  frame?: number;
   name?: string;
   x?: string;
   y?: string;
