@@ -113,7 +113,7 @@ func (a *dashboardSqlAccess) GetDashboards(ctx context.Context, query *Dashboard
 		return nil, err
 	}
 	for {
-		row, err := rows.Next(ctx)
+		row, err := rows.Next()
 		if err != nil || row == nil {
 			return list, err
 		}
@@ -169,7 +169,7 @@ func (a *dashboardSqlAccess) GetDashboardSummaries(ctx context.Context, query *D
 		return nil, err
 	}
 	for {
-		row, err := rows.Next(ctx)
+		row, err := rows.Next()
 		if err != nil || row == nil {
 			return list, err
 		}
@@ -235,11 +235,11 @@ func (r *rowsWrapper) Close() error {
 	return r.rows.Close()
 }
 
-func (r *rowsWrapper) Next(ctx context.Context) (*dashboardRow, error) {
+func (r *rowsWrapper) Next() (*dashboardRow, error) {
 	// breaks after first readable value
 	for r.rows.Next() {
 		r.idx++
-		d, err := r.a.scanRow(ctx, r.rows)
+		d, err := r.a.scanRow(r.rows)
 		if d != nil {
 			// Access control checker
 			scopes := []string{dashboards.ScopeDashboardsProvider.GetResourceScopeUID(d.Dash.Name)}
@@ -259,7 +259,7 @@ func (r *rowsWrapper) Next(ctx context.Context) (*dashboardRow, error) {
 	return nil, nil
 }
 
-func (a *dashboardSqlAccess) scanRow(ctx context.Context, rows *sql.Rows) (*dashboardRow, error) {
+func (a *dashboardSqlAccess) scanRow(rows *sql.Rows) (*dashboardRow, error) {
 	dash := &dashboardsV0.Dashboard{
 		TypeMeta:   dashboardsV0.DashboardResourceInfo.TypeMeta(),
 		ObjectMeta: v1.ObjectMeta{Annotations: make(map[string]string)},
