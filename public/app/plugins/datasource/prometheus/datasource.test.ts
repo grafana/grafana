@@ -24,7 +24,7 @@ import {
   prometheusSpecialRegexEscape,
 } from './datasource';
 import PromQlLanguageProvider from './language_provider';
-import { PrometheusCacheLevel, PromOptions, PromQuery, PromQueryRequest } from './types';
+import { PromApplication, PrometheusCacheLevel, PromOptions, PromQuery, PromQueryRequest } from './types';
 
 const fetchMock = jest.fn().mockReturnValue(of(createDefaultPromResponse()));
 
@@ -98,6 +98,13 @@ describe('PrometheusDatasource', () => {
     });
   });
 
+  describe('Type and version', () => {
+    it('Default support labels match endpoint over series when type and version not set', () => {
+      const labelsMatchSupport = ds.hasLabelsMatchAPISupport();
+      expect(labelsMatchSupport).toBe(true);
+    });
+  });
+
   describe('Query', () => {
     it('throws if using direct access', async () => {
       const instanceSettings = {
@@ -108,6 +115,8 @@ describe('PrometheusDatasource', () => {
         access: 'direct',
         jsonData: {
           customQueryParameters: '',
+          prometheusVersion: '2.20.0',
+          prometheusType: PromApplication.Prometheus,
         },
       } as unknown as DataSourceInstanceSettings<PromOptions>;
       const range = { from: time({ seconds: 63 }), to: time({ seconds: 183 }) };

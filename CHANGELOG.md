@@ -1,11 +1,36 @@
+<!-- 10.4.1 START -->
+
+# 10.4.1 (2024-03-20)
+
+### Features and enhancements
+
+- **Alerting:** Add "Keep Last State" backend functionality. [#84406](https://github.com/grafana/grafana/issues/84406), [@rwwiv](https://github.com/rwwiv)
+- **Postgres:** Allow disabling SNI on SSL-enabled connections. [#84249](https://github.com/grafana/grafana/issues/84249), [@papagian](https://github.com/papagian)
+- **DataQuery:** Track panel plugin id not type. [#83164](https://github.com/grafana/grafana/issues/83164), [@torkelo](https://github.com/torkelo)
+
+### Bug fixes
+
+- **Elasticsearch:** Fix legend for alerting, expressions and previously frontend queries. [#84685](https://github.com/grafana/grafana/issues/84685), [@ivanahuckova](https://github.com/ivanahuckova)
+- **Alerting:** Fix optional fields requiring validation rule. [#84595](https://github.com/grafana/grafana/issues/84595), [@gillesdemey](https://github.com/gillesdemey)
+- **ExtSvcAccounts:** FIX prevent service account deletion. [#84511](https://github.com/grafana/grafana/issues/84511), [@gamab](https://github.com/gamab)
+- **Loki:** Fix null pointer exception in case request returned an error. [#84401](https://github.com/grafana/grafana/issues/84401), [@svennergr](https://github.com/svennergr)
+- **Dashboard:** Fix issue where out-of-view shared query panels caused blank dependent panels. [#84197](https://github.com/grafana/grafana/issues/84197), [@kaydelaney](https://github.com/kaydelaney)
+- **Auth:** Only call rotate token if we have a session expiry cookie. [#84181](https://github.com/grafana/grafana/issues/84181), [@kalleep](https://github.com/kalleep)
+- **Serviceaccounts:** Add ability to add samename SA for different orgs. [#83953](https://github.com/grafana/grafana/issues/83953), [@eleijonmarck](https://github.com/eleijonmarck)
+- **GenAI:** Update the component only when the response is fully generated. [#83895](https://github.com/grafana/grafana/issues/83895), [@ivanortegaalba](https://github.com/ivanortegaalba)
+- **Tempo:** Better fallbacks for metrics query. [#83688](https://github.com/grafana/grafana/issues/83688), [@adrapereira](https://github.com/adrapereira)
+- **Tempo:** Add template variable interpolation for filters. [#83667](https://github.com/grafana/grafana/issues/83667), [@joey-grafana](https://github.com/joey-grafana)
+- **Alerting:** Fix saving evaluation group. [#83234](https://github.com/grafana/grafana/issues/83234), [@soniaAguilarPeiron](https://github.com/soniaAguilarPeiron)
+- **QueryVariableEditor:** Select a variable ds does not work. [#83181](https://github.com/grafana/grafana/issues/83181), [@ivanortegaalba](https://github.com/ivanortegaalba)
+- **Logs Panel:** Add option extra UI functionality for log context. [#83129](https://github.com/grafana/grafana/issues/83129), [@svennergr](https://github.com/svennergr)
+
+<!-- 10.4.1 END -->
 <!-- 10.4.0 START -->
 
 # 10.4.0 (2024-03-06)
 
 ### Features and enhancements
 
-- **Chore:** Improve domain validation for Google OAuth - Backport 83229 to v10.4.x. [#83726](https://github.com/grafana/grafana/issues/83726), [@linoman](https://github.com/linoman)
-- **DataQuery:** Track panel plugin id not type. [#83164](https://github.com/grafana/grafana/issues/83164), [@torkelo](https://github.com/torkelo)
 - **AuthToken:** Remove client token rotation feature toggle. [#82886](https://github.com/grafana/grafana/issues/82886), [@kalleep](https://github.com/kalleep)
 - **Plugins:** Enable feature toggle angularDeprecationUI by default. [#82880](https://github.com/grafana/grafana/issues/82880), [@xnyo](https://github.com/xnyo)
 - **Table Component:** Improve text-wrapping behavior of cells. [#82872](https://github.com/grafana/grafana/issues/82872), [@ahuarte47](https://github.com/ahuarte47)
@@ -134,15 +159,6 @@
 
 ### Bug fixes
 
-- **GenAI:** Update the component only when the response is fully generated. [#83895](https://github.com/grafana/grafana/issues/83895), [@ivanortegaalba](https://github.com/ivanortegaalba)
-- **LDAP:** Fix LDAP users authenticated via auth proxy not being able to use LDAP active sync. [#83751](https://github.com/grafana/grafana/issues/83751), [@Jguer](https://github.com/Jguer)
-- **Tempo:** Better fallbacks for metrics query. [#83688](https://github.com/grafana/grafana/issues/83688), [@adrapereira](https://github.com/adrapereira)
-- **Tempo:** Add template variable interpolation for filters. [#83667](https://github.com/grafana/grafana/issues/83667), [@joey-grafana](https://github.com/joey-grafana)
-- **Elasticsearch:** Fix adhoc filters not applied in frontend mode. [#83597](https://github.com/grafana/grafana/issues/83597), [@svennergr](https://github.com/svennergr)
-- **AuthProxy:** Invalidate previous cached item for user when changes are made to any header. [#83287](https://github.com/grafana/grafana/issues/83287), [@klesh](https://github.com/klesh)
-- **Alerting:** Fix saving evaluation group. [#83234](https://github.com/grafana/grafana/issues/83234), [@soniaAguilarPeiron](https://github.com/soniaAguilarPeiron)
-- **QueryVariableEditor:** Select a variable ds does not work. [#83181](https://github.com/grafana/grafana/issues/83181), [@ivanortegaalba](https://github.com/ivanortegaalba)
-- **Logs Panel:** Add option extra UI functionality for log context. [#83129](https://github.com/grafana/grafana/issues/83129), [@svennergr](https://github.com/svennergr)
 - **Auth:** Fix email verification bypass when using basic authentication. [#82914](https://github.com/grafana/grafana/issues/82914), [@volcanonoodle](https://github.com/volcanonoodle)
 - **LibraryPanels/RBAC:** Fix issue where folder scopes weren't being correctly inherited. [#82700](https://github.com/grafana/grafana/issues/82700), [@kaydelaney](https://github.com/kaydelaney)
 - **Table Panel:** Fix display of ad-hoc filter actions. [#82442](https://github.com/grafana/grafana/issues/82442), [@codeincarnate](https://github.com/codeincarnate)
@@ -225,6 +241,22 @@ Any consumers of the specific API should be appropriately adapted. Issue [#74600
 - **Grafana/UI:** Add new Splitter component . [#82357](https://github.com/grafana/grafana/issues/82357), [@torkelo](https://github.com/torkelo)
 
 <!-- 10.4.0 END -->
+<!-- 10.3.5 START -->
+
+# 10.3.5 (2024-03-20)
+
+### Features and enhancements
+
+- **Postgres:** Allow disabling SNI on SSL-enabled connections. [#84259](https://github.com/grafana/grafana/issues/84259), [@papagian](https://github.com/papagian)
+
+### Bug fixes
+
+- **Snapshots:** Require delete within same org (backport). [#84707](https://github.com/grafana/grafana/issues/84707), [@ryantxu](https://github.com/ryantxu)
+- **Elasticsearch:** Fix legend for alerting, expressions and previously frontend queries. [#84684](https://github.com/grafana/grafana/issues/84684), [@ivanahuckova](https://github.com/ivanahuckova)
+- **Dashboard:** Fix issue where out-of-view shared query panels caused blank dependent panels. [#84196](https://github.com/grafana/grafana/issues/84196), [@kaydelaney](https://github.com/kaydelaney)
+- **Alerting:** Fix preview getting the correct queries from the form. [#81481](https://github.com/grafana/grafana/issues/81481), [@soniaAguilarPeiron](https://github.com/soniaAguilarPeiron)
+
+<!-- 10.3.5 END -->
 <!-- 10.3.4 START -->
 
 # 10.3.4 (2024-03-06)
@@ -368,6 +400,24 @@ Users who have InfluxDB datasource configured with SQL querying language must up
 Removes `NamespaceID` from responses of all GET routes underneath the path `/api/ruler/grafana/api/v1/rules` - 3 affected endpoints. All affected routes are not in the publicly documented or `stable` marked portion of the ngalert API. This only breaks clients who are directly using the unstable portion of the API. Such clients should use `NamespaceUID` rather than `NamespaceID` to identify namespaces. Issue [#79359](https://github.com/grafana/grafana/issues/79359)
 
 <!-- 10.3.0 END -->
+<!-- 10.2.6 START -->
+
+# 10.2.6 (2024-03-25)
+
+### Features and enhancements
+
+- **Postgres:** Allow disabling SNI on SSL-enabled connections. [#84258](https://github.com/grafana/grafana/issues/84258), [@papagian](https://github.com/papagian)
+
+### Bug fixes
+
+- **CloudMonitoring:** Only run query if filters are complete. [#85014](https://github.com/grafana/grafana/issues/85014), [@aangelisc](https://github.com/aangelisc)
+- **Snapshots:** Require delete within same org (backport). [#84730](https://github.com/grafana/grafana/issues/84730), [@ryantxu](https://github.com/ryantxu)
+- **Dashboard:** Fix issue where out-of-view shared query panels caused blank dependent panels. [#84195](https://github.com/grafana/grafana/issues/84195), [@kaydelaney](https://github.com/kaydelaney)
+- **Dashboards:** Run shared queries even when source panel is in collapsed row. [#84166](https://github.com/grafana/grafana/issues/84166), [@kaydelaney](https://github.com/kaydelaney)
+- **Prometheus:** Fix calculating rate interval when there is no interval specified. [#84082](https://github.com/grafana/grafana/issues/84082), [@itsmylife](https://github.com/itsmylife)
+- **Prometheus:** Fix $\_\_rate_interval calculation. [#84063](https://github.com/grafana/grafana/issues/84063), [@tolzhabayev](https://github.com/tolzhabayev)
+
+<!-- 10.2.6 END -->
 <!-- 10.2.5 START -->
 
 # 10.2.5 (2024-03-06)
@@ -1062,6 +1112,15 @@ Starting with 10.2, `parentRowIndex` is deprecated. It will be removed in a futu
 - **Drawer:** Make content scroll by default. [#75287](https://github.com/grafana/grafana/issues/75287), [@ashharrison90](https://github.com/ashharrison90)
 
 <!-- 10.2.0 END -->
+<!-- 10.1.9 START -->
+
+# 10.1.9 (2024-03-25)
+
+### Bug fixes
+
+- **Snapshots:** Require delete within same org (backport). [#84765](https://github.com/grafana/grafana/issues/84765), [@ryantxu](https://github.com/ryantxu)
+
+<!-- 10.1.9 END -->
 <!-- 10.1.8 START -->
 
 # 10.1.8 (2024-03-06)
@@ -1581,6 +1640,15 @@ Starting with 10.0, changing the folder UID is deprecated. It will be removed in
 - **Grafana/ui:** Fix margin in RadioButtonGroup option when only icon is present. [#68899](https://github.com/grafana/grafana/issues/68899), [@aocenas](https://github.com/aocenas)
 
 <!-- 10.1.0 END -->
+<!-- 10.0.13 START -->
+
+# 10.0.13 (2024-03-25)
+
+### Bug fixes
+
+- **Snapshots:** Require delete within same org (backport). [#84764](https://github.com/grafana/grafana/issues/84764), [@ryantxu](https://github.com/ryantxu)
+
+<!-- 10.0.13 END -->
 <!-- 10.0.12 START -->
 
 # 10.0.12 (2024-03-06)
@@ -2131,6 +2199,15 @@ The `database` field has been deprecated in the Elasticsearch datasource provisi
 - **InteractiveTable:** Updated design and minor tweak to Correlactions page. [#66443](https://github.com/grafana/grafana/issues/66443), [@torkelo](https://github.com/torkelo)
 
 <!-- 10.0.0-preview END -->
+<!-- 9.5.18 START -->
+
+# 9.5.18 (2024-03-25)
+
+### Bug fixes
+
+- **Snapshots:** Require delete within same org (backport). [#84762](https://github.com/grafana/grafana/issues/84762), [@ryantxu](https://github.com/ryantxu)
+
+<!-- 9.5.18 END -->
 <!-- 9.5.17 START -->
 
 # 9.5.17 (2024-03-05)

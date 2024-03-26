@@ -31,6 +31,10 @@ Tables are very flexible, supporting multiple modes for time series and for tabl
 
 {{< figure src="/static/img/docs/tables/table_visualization.png" max-width="1200px" lightbox="true" caption="Table visualization" >}}
 
+The following video provides a visual walkthrough of the options you can set in a table visualization. If you want to see a configuration in action, check out the video:
+
+{{< youtube id="PCY7O8EJeJY" >}}
+
 ## Annotation and alert support
 
 Annotations and alerts are not currently supported in tables.
@@ -93,6 +97,10 @@ If thresholds are set, then the field text is displayed in the appropriate thres
 If thresholds are set, then the field background is displayed in the appropriate threshold color.
 
 {{< figure src="/static/img/docs/tables/color-background.png" max-width="500px" caption="Color background" class="docs-image--no-shadow" >}}
+
+Toggle the **Apply to entire row** switch, to apply the background color that's configured for the cell to the whole row.
+
+{{< figure src="/static/img/docs/tables/colored-rows.png" max-width="500px" alt="Colored row background" class="docs-image--no-shadow" >}}
 
 ### Gauge
 
@@ -235,7 +243,7 @@ If you want to show the number of rows in the dataset instead of the number of v
 [Time series panel]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/visualizations/panels-visualizations/visualizations/time-series"
 
 [color scheme]: "/docs/grafana/ -> /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/configure-standard-options#color-scheme"
-[color scheme]: "/docs/grafana-cloud -> /docs/grafana-cloud/visualizations/panels-visualizations/configure-standard-options/#color-scheme"
+[color scheme]: "/docs/grafana-cloud -> /docs/grafana-cloud/visualizations/panels-visualizations/configure-standard-options#color-scheme"
 
 [configuration file]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/setup-grafana/configure-grafana#configuration-file-location"
 [configuration file]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/setup-grafana/configure-grafana#configuration-file-location"

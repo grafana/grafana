@@ -3,11 +3,18 @@ package remote
 import (
 	"context"
 	"crypto/md5"
+	"encoding/base64"
+	"encoding/json"
 	"fmt"
 	"net/http"
 	"net/url"
 
 	"github.com/go-openapi/strfmt"
+	amalert "github.com/prometheus/alertmanager/api/v2/client/alert"
+	amalertgroup "github.com/prometheus/alertmanager/api/v2/client/alertgroup"
+	amreceiver "github.com/prometheus/alertmanager/api/v2/client/receiver"
+	amsilence "github.com/prometheus/alertmanager/api/v2/client/silence"
+
 	"github.com/grafana/grafana/pkg/infra/log"
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/metrics"
@@ -15,17 +22,20 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier"
 	remoteClient "github.com/grafana/grafana/pkg/services/ngalert/remote/client"
 	"github.com/grafana/grafana/pkg/services/ngalert/sender"
-	amalert "github.com/prometheus/alertmanager/api/v2/client/alert"
-	amalertgroup "github.com/prometheus/alertmanager/api/v2/client/alertgroup"
-	amreceiver "github.com/prometheus/alertmanager/api/v2/client/receiver"
-	amsilence "github.com/prometheus/alertmanager/api/v2/client/silence"
+
+	alertingClusterPB "github.com/grafana/alerting/cluster/clusterpb"
 )
 
 type stateStore interface {
-	GetFullState(ctx context.Context, keys ...string) (string, error)
+	GetSilences(ctx context.Context) (string, error)
+	GetNotificationLog(ctx context.Context) (string, error)
 }
 
+// DecryptFn is a function that takes in an encrypted value and returns it decrypted.
+type DecryptFn func(ctx context.Context, payload []byte) ([]byte, error)
+
 type Alertmanager struct {
+	decrypt  DecryptFn
 	log      log.Logger
 	metrics  *metrics.RemoteAlertmanager
 	orgID    int64
@@ -61,7 +71,7 @@ func (cfg *AlertmanagerConfig) Validate() error {
 	return nil
 }
 
-func NewAlertmanager(cfg AlertmanagerConfig, store stateStore, metrics *metrics.RemoteAlertmanager) (*Alertmanager, error) {
+func NewAlertmanager(cfg AlertmanagerConfig, store stateStore, decryptFn DecryptFn, metrics *metrics.RemoteAlertmanager) (*Alertmanager, error) {
 	if err := cfg.Validate(); err != nil {
 		return nil, err
 	}
@@ -111,6 +121,7 @@ func NewAlertmanager(cfg AlertmanagerConfig, store stateStore, metrics *metrics.
 
 	return &Alertmanager{
 		amClient:    amc,
+		decrypt:     decryptFn,
 		log:         logger,
 		metrics:     metrics,
 		mimirClient: mc,
@@ -176,28 +187,48 @@ func (am *Alertmanager) checkReadiness(ctx context.Context) error {
 // CompareAndSendConfiguration checks whether a given configuration is being used by the remote Alertmanager.
 // If not, it sends the configuration to the remote Alertmanager.
 func (am *Alertmanager) CompareAndSendConfiguration(ctx context.Context, config *models.AlertConfiguration) error {
-	if am.shouldSendConfig(ctx, config) {
-		am.metrics.ConfigSyncsTotal.Inc()
-		if err := am.mimirClient.CreateGrafanaAlertmanagerConfig(
-			ctx,
-			config.AlertmanagerConfiguration,
-			config.ConfigurationHash,
-			config.ID,
-			config.CreatedAt,
-			config.Default,
-		); err != nil {
-			am.metrics.ConfigSyncErrorsTotal.Inc()
-			return err
-		}
-		am.metrics.LastConfigSync.SetToCurrentTime()
+	c, err := notifier.Load([]byte(config.AlertmanagerConfiguration))
+	if err != nil {
+		return err
 	}
+
+	// Decrypt the configuration before comparing.
+	fn := func(payload []byte) ([]byte, error) {
+		return am.decrypt(ctx, payload)
+	}
+	decrypted, err := c.Decrypt(fn)
+	if err != nil {
+		return err
+	}
+	rawDecrypted, err := json.Marshal(decrypted)
+	if err != nil {
+		return err
+	}
+
+	// Send the configuration only if we need to.
+	if !am.shouldSendConfig(ctx, rawDecrypted) {
+		return nil
+	}
+
+	am.metrics.ConfigSyncsTotal.Inc()
+	if err := am.mimirClient.CreateGrafanaAlertmanagerConfig(
+		ctx,
+		string(rawDecrypted),
+		config.ConfigurationHash,
+		config.CreatedAt,
+		config.Default,
+	); err != nil {
+		am.metrics.ConfigSyncErrorsTotal.Inc()
+		return err
+	}
+	am.metrics.LastConfigSync.SetToCurrentTime()
 	return nil
 }
 
 // CompareAndSendState gets the Alertmanager's internal state and compares it with the remote Alertmanager's one.
 // If the states are different, it updates the remote Alertmanager's state with that of the internal Alertmanager.
 func (am *Alertmanager) CompareAndSendState(ctx context.Context) error {
-	state, err := am.state.GetFullState(ctx, notifier.SilencesFilename, notifier.NotificationLogFilename)
+	state, err := am.getFullState(ctx)
 	if err != nil {
 		return err
 	}
@@ -373,9 +404,36 @@ func (am *Alertmanager) Ready() bool {
 // CleanUp does not have an equivalent in a "remote Alertmanager" context, we don't have files on disk, no-op.
 func (am *Alertmanager) CleanUp() {}
 
+// getFullState returns a base64-encoded protobuf message representing the Alertmanager's internal state.
+func (am *Alertmanager) getFullState(ctx context.Context) (string, error) {
+	var parts []alertingClusterPB.Part
+
+	silences, err := am.state.GetSilences(ctx)
+	if err != nil {
+		return "", fmt.Errorf("error getting silences: %w", err)
+	}
+	parts = append(parts, alertingClusterPB.Part{Key: notifier.SilencesFilename, Data: []byte(silences)})
+
+	notificationLog, err := am.state.GetNotificationLog(ctx)
+	if err != nil {
+		return "", fmt.Errorf("error getting notification log: %w", err)
+	}
+	parts = append(parts, alertingClusterPB.Part{Key: notifier.NotificationLogFilename, Data: []byte(notificationLog)})
+
+	fs := alertingClusterPB.FullState{
+		Parts: parts,
+	}
+	b, err := fs.Marshal()
+	if err != nil {
+		return "", fmt.Errorf("error marshaling full state: %w", err)
+	}
+
+	return base64.StdEncoding.EncodeToString(b), nil
+}
+
 // shouldSendConfig compares the remote Alertmanager configuration with our local one.
 // It returns true if the configurations are different.
-func (am *Alertmanager) shouldSendConfig(ctx context.Context, config *models.AlertConfiguration) bool {
+func (am *Alertmanager) shouldSendConfig(ctx context.Context, rawConfig []byte) bool {
 	rc, err := am.mimirClient.GetGrafanaAlertmanagerConfig(ctx)
 	if err != nil {
 		// Log the error and return true so we try to upload our config anyway.
@@ -383,7 +441,7 @@ func (am *Alertmanager) shouldSendConfig(ctx context.Context, config *models.Ale
 		return true
 	}
 
-	return md5.Sum([]byte(rc.GrafanaAlertmanagerConfig)) != md5.Sum([]byte(config.AlertmanagerConfiguration))
+	return md5.Sum([]byte(rc.GrafanaAlertmanagerConfig)) != md5.Sum(rawConfig)
 }
 
 // shouldSendState compares the remote Alertmanager state with our local one.

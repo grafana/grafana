@@ -142,7 +142,7 @@ func ProvideService(
 
 	for name := range socialService.GetOAuthProviders() {
 		clientName := authn.ClientWithPrefix(name)
-		s.RegisterClient(clients.ProvideOAuth(clientName, cfg, oauthTokenService, socialService, settingsProviderService))
+		s.RegisterClient(clients.ProvideOAuth(clientName, cfg, oauthTokenService, socialService, settingsProviderService, features))
 	}
 
 	// FIXME (jguer): move to User package
@@ -389,6 +389,20 @@ Default:
 	}
 
 	return redirect, nil
+}
+
+func (s *Service) ResolveIdentity(ctx context.Context, orgID int64, namespaceID string) (*authn.Identity, error) {
+	r := &authn.Request{}
+	r.OrgID = orgID
+	// hack to not update last seen
+	r.SetMeta(authn.MetaKeyIsLogin, "true")
+
+	identity, err := s.authenticate(ctx, clients.ProvideIdentity(namespaceID), r)
+	if err != nil {
+		return nil, err
+	}
+
+	return identity, nil
 }
 
 func (s *Service) RegisterClient(c authn.Client) {

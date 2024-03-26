@@ -3,19 +3,20 @@ import React, { useEffect, useState } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { locationService } from '@grafana/runtime';
+import { config, locationService } from '@grafana/runtime';
 import { Button, ButtonGroup, Dropdown, Icon, Menu, ToolbarButton, ToolbarButtonRow, useStyles2 } from '@grafana/ui';
 import { AppChromeUpdate } from 'app/core/components/AppChrome/AppChromeUpdate';
 import { NavToolbarSeparator } from 'app/core/components/AppChrome/NavToolbar/NavToolbarSeparator';
 import { contextSrv } from 'app/core/core';
 import { Trans, t } from 'app/core/internationalization';
+import { DashNavModalContextProvider, DashNavModalRoot } from 'app/features/dashboard/components/DashNav/DashNav';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 import { playlistSrv } from 'app/features/playlist/PlaylistSrv';
 
 import { PanelEditor } from '../panel-edit/PanelEditor';
 import { ShareModal } from '../sharing/ShareModal';
 import { DashboardInteractions } from '../utils/interactions';
-import { dynamicDashNavActions } from '../utils/registerDynamicDashNavAction';
+import { DynamicDashNavButtonModel, dynamicDashNavActions } from '../utils/registerDynamicDashNavAction';
 
 import { DashboardScene } from './DashboardScene';
 import { GoToSnapshotOriginButton } from './GoToSnapshotOriginButton';
@@ -26,12 +27,7 @@ interface Props {
 }
 
 export const NavToolbarActions = React.memo<Props>(({ dashboard }) => {
-  const actions = (
-    <ToolbarButtonRow alignment="right">
-      <ToolbarActions dashboard={dashboard} />
-    </ToolbarButtonRow>
-  );
-
+  const actions = <ToolbarActions dashboard={dashboard} />;
   return <AppChromeUpdate actions={actions} />;
 });
 
@@ -58,14 +54,20 @@ export function ToolbarActions({ dashboard }: Props) {
   const buttonWithExtraMargin = useStyles2(getStyles);
   const isEditingPanel = Boolean(editPanel);
   const isViewingPanel = Boolean(viewPanelScene);
-
   const isEditingLibraryPanel = useEditingLibraryPanel(editPanel);
-
   const hasCopiedPanel = Boolean(copiedPanel);
+  // Means we are not in settings view, fullscreen panel or edit panel
+  const isShowingDashboard = !editview && !isViewingPanel && !isEditingPanel;
+  const isEditingAndShowingDashboard = isEditing && isShowingDashboard;
+
+  if (!isEditingPanel) {
+    // This adds the precence indicators in enterprise
+    addDynamicActions(toolbarActions, dynamicDashNavActions.left, 'left-actions');
+  }
 
   toolbarActions.push({
     group: 'icon-actions',
-    condition: isEditing && !editview && !isViewingPanel && !isEditingPanel,
+    condition: isEditingAndShowingDashboard,
     render: () => (
       <ToolbarButton
         key="add-visualization"
@@ -82,7 +84,7 @@ export function ToolbarActions({ dashboard }: Props) {
 
   toolbarActions.push({
     group: 'icon-actions',
-    condition: isEditing && !editview && !isViewingPanel && !isEditingPanel,
+    condition: isEditingAndShowingDashboard,
     render: () => (
       <ToolbarButton
         key="add-library-panel"
@@ -98,7 +100,7 @@ export function ToolbarActions({ dashboard }: Props) {
 
   toolbarActions.push({
     group: 'icon-actions',
-    condition: isEditing && !editview && !isViewingPanel && !isEditingPanel,
+    condition: isEditingAndShowingDashboard,
     render: () => (
       <ToolbarButton
         key="add-row"
@@ -114,7 +116,7 @@ export function ToolbarActions({ dashboard }: Props) {
 
   toolbarActions.push({
     group: 'icon-actions',
-    condition: isEditing && !editview && !isViewingPanel && !isEditingPanel,
+    condition: isEditingAndShowingDashboard,
     render: () => (
       <ToolbarButton
         key="paste-panel"
@@ -131,7 +133,7 @@ export function ToolbarActions({ dashboard }: Props) {
 
   toolbarActions.push({
     group: 'icon-actions',
-    condition: uid && !editview && Boolean(meta.canStar) && !isEditingPanel && !isEditing,
+    condition: uid && Boolean(meta.canStar) && isShowingDashboard,
     render: () => {
       let desc = meta.isStarred
         ? t('dashboard.toolbar.unmark-favorite', 'Unmark as favorite')
@@ -152,20 +154,18 @@ export function ToolbarActions({ dashboard }: Props) {
     },
   });
 
+  const isDevEnv = config.buildInfo.env === 'development';
+
   toolbarActions.push({
     group: 'icon-actions',
-    condition: uid && !editview && !isEditingPanel,
+    condition: isDevEnv && uid && isShowingDashboard,
     render: () => (
       <ToolbarButton
         key="view-in-old-dashboard-button"
         tooltip={'Switch to old dashboard page'}
         icon="apps"
         onClick={() => {
-          if (meta.isSnapshot) {
-            locationService.partial({ scenes: null });
-          } else {
-            locationService.push(`/d/${uid}`);
-          }
+          locationService.partial({ scenes: false });
         }}
       />
     ),
@@ -181,7 +181,7 @@ export function ToolbarActions({ dashboard }: Props) {
 
   toolbarActions.push({
     group: 'playlist-actions',
-    condition: isPlaying && !editview && !isEditingPanel && !isEditing,
+    condition: isPlaying && isShowingDashboard && !isEditing,
     render: () => (
       <ToolbarButton
         key="play-list-prev"
@@ -195,7 +195,7 @@ export function ToolbarActions({ dashboard }: Props) {
 
   toolbarActions.push({
     group: 'playlist-actions',
-    condition: isPlaying && !editview && !isEditingPanel && !isEditing,
+    condition: isPlaying && isShowingDashboard && !isEditing,
     render: () => (
       <ToolbarButton
         key="play-list-stop"
@@ -209,7 +209,7 @@ export function ToolbarActions({ dashboard }: Props) {
 
   toolbarActions.push({
     group: 'playlist-actions',
-    condition: isPlaying && !editview && !isEditingPanel && !isEditing,
+    condition: isPlaying && isShowingDashboard && !isEditing,
     render: () => (
       <ToolbarButton
         key="play-list-next"
@@ -222,18 +222,9 @@ export function ToolbarActions({ dashboard }: Props) {
     ),
   });
 
-  if (dynamicDashNavActions.left.length > 0 && !isEditingPanel) {
-    dynamicDashNavActions.left.map((action, index) => {
-      const props = { dashboard: getDashboardSrv().getCurrent()! };
-      if (action.show(props)) {
-        const Component = action.component;
-        toolbarActions.push({
-          group: 'icon-actions',
-          condition: true,
-          render: () => <Component {...props} />,
-        });
-      }
-    });
+  if (!isEditingPanel) {
+    // This adds the alert rules button and the dashboard insights button
+    addDynamicActions(toolbarActions, dynamicDashNavActions.right, 'icon-actions');
   }
 
   toolbarActions.push({
@@ -297,7 +288,7 @@ export function ToolbarActions({ dashboard }: Props) {
 
   toolbarActions.push({
     group: 'main-buttons',
-    condition: !isEditing && dashboard.canEditDashboard() && !isViewingPanel && !isEditingPanel && !isPlaying,
+    condition: !isEditing && dashboard.canEditDashboard() && !isViewingPanel && !isPlaying,
     render: () => (
       <Button
         onClick={() => {
@@ -316,7 +307,7 @@ export function ToolbarActions({ dashboard }: Props) {
 
   toolbarActions.push({
     group: 'settings',
-    condition: isEditing && dashboard.canEditDashboard() && !isViewingPanel && !isEditingPanel && !editview,
+    condition: isEditing && dashboard.canEditDashboard() && isShowingDashboard,
     render: () => (
       <Button
         onClick={() => {
@@ -335,7 +326,7 @@ export function ToolbarActions({ dashboard }: Props) {
 
   toolbarActions.push({
     group: 'main-buttons',
-    condition: isEditing && !editview && !meta.isNew && !isViewingPanel && !isEditingPanel,
+    condition: isEditing && !meta.isNew && isShowingDashboard,
     render: () => (
       <Button
         onClick={() => dashboard.exitEditMode({ skipConfirm: false })}
@@ -519,7 +510,32 @@ export function ToolbarActions({ dashboard }: Props) {
     lastGroup = action.group;
   }
 
-  return actionElements;
+  return (
+    <DashNavModalContextProvider>
+      <ToolbarButtonRow alignment="right">{actionElements}</ToolbarButtonRow>
+      <DashNavModalRoot />
+    </DashNavModalContextProvider>
+  );
+}
+
+function addDynamicActions(
+  toolbarActions: ToolbarAction[],
+  registeredActions: DynamicDashNavButtonModel[],
+  group: string
+) {
+  if (registeredActions.length > 0) {
+    for (const action of registeredActions) {
+      const props = { dashboard: getDashboardSrv().getCurrent()! };
+      if (action.show(props)) {
+        const Component = action.component;
+        toolbarActions.push({
+          group: group,
+          condition: true,
+          render: () => <Component {...props} key={toolbarActions.length} />,
+        });
+      }
+    }
+  }
 }
 
 function useEditingLibraryPanel(panelEditor?: PanelEditor) {

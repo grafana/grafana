@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
+	sdkapi "github.com/grafana/grafana-plugin-sdk-go/experimental/apis/data/v0alpha1"
 
 	"github.com/grafana/grafana/pkg/promlib/models"
 )
@@ -16,11 +17,8 @@ const (
 	refID = "__healthcheck__"
 )
 
-var logger = backend.NewLoggerWith("logger", "tsdb.prometheus")
-
 func (s *Service) CheckHealth(ctx context.Context, req *backend.CheckHealthRequest) (*backend.CheckHealthResult,
 	error) {
-	logger := logger.FromContext(ctx)
 	ds, err := s.getInstance(ctx, req.PluginContext)
 
 	// check that the datasource exists
@@ -32,13 +30,15 @@ func (s *Service) CheckHealth(ctx context.Context, req *backend.CheckHealthReque
 		return getHealthCheckMessage("", errors.New("invalid datasource info received"))
 	}
 
+	logger := s.logger.FromContext(ctx)
+
 	hc, err := healthcheck(ctx, req, ds)
 	if err != nil {
 		logger.Warn("Error performing prometheus healthcheck", "err", err.Error())
 		return nil, err
 	}
 
-	heuristics, err := getHeuristics(ctx, ds)
+	heuristics, err := getHeuristics(ctx, ds, logger)
 	if err != nil {
 		logger.Warn("Failed to get prometheus heuristics", "err", err.Error())
 	} else {
@@ -56,8 +56,8 @@ func (s *Service) CheckHealth(ctx context.Context, req *backend.CheckHealthReque
 func healthcheck(ctx context.Context, req *backend.CheckHealthRequest, i *instance) (*backend.CheckHealthResult, error) {
 	qm := models.QueryModel{
 		UtcOffsetSec: 0,
-		CommonQueryProperties: models.CommonQueryProperties{
-			RefId: refID,
+		CommonQueryProperties: sdkapi.CommonQueryProperties{
+			RefID: refID,
 		},
 		PrometheusQueryProperties: models.PrometheusQueryProperties{
 			Expr:    "1+1",

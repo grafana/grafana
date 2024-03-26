@@ -39,6 +39,7 @@ type DatabaseConfig struct {
 	WALEnabled                  bool
 	UrlQueryParams              map[string][]string
 	SkipMigrations              bool
+	MigrationLock               bool
 	MigrationLockAttemptTimeout int
 	LogQueries                  bool
 	// SQLite only
@@ -113,6 +114,7 @@ func (dbCfg *DatabaseConfig) readConfig(cfg *setting.Cfg) error {
 	dbCfg.CacheMode = sec.Key("cache_mode").MustString("private")
 	dbCfg.WALEnabled = sec.Key("wal").MustBool(false)
 	dbCfg.SkipMigrations = sec.Key("skip_migrations").MustBool()
+	dbCfg.MigrationLock = sec.Key("migration_locking").MustBool(true)
 	dbCfg.MigrationLockAttemptTimeout = sec.Key("locking_attempt_timeout_sec").MustInt()
 
 	dbCfg.QueryRetries = sec.Key("query_retries").MustInt()
