@@ -1,4 +1,5 @@
 import React from 'react';
+import { MemoryRouter } from 'react-router-dom';
 
 import {
   QueryVariable,
@@ -92,25 +93,31 @@ export class MetricOverviewScene extends SceneObjectBase<MetricOverviewSceneStat
             <Stack direction="column" gap={0.5}>
               <Text weight={'medium'}>Labels</Text>
               {labelOptions.length === 0 && 'Unable to fetch labels.'}
-              {labelOptions.map((l) => (
-                <TextLink
-                  key={l.label}
-                  href={`#View breakdown for ${l.label}`}
-                  title={`View breakdown for ${l.label}`}
-                  onClick={(event) => {
-                    event.preventDefault();
-                    event.stopPropagation();
-                    sceneGraph.getAncestor(model, MetricScene).setActionView('breakdown');
-                    const groupByVar = sceneGraph.lookupVariable(VAR_GROUP_BY, model);
-                    if (groupByVar instanceof QueryVariable) {
-                      groupByVar.setState({ value: l.value });
-                    }
-                    return false;
-                  }}
-                >
-                  {l.label!}
-                </TextLink>
-              ))}
+              <MemoryRouter>
+                {
+                  // Using a memory router allows us to use TextLinks in embedded mode where there might not be a wrapping Router
+                  // Avoids "Invariant failed: You should not use <Link> outside a <Router>"
+                }
+                {labelOptions.map((l) => (
+                  <TextLink
+                    key={l.label}
+                    href={`#View breakdown for ${l.label}`}
+                    title={`View breakdown for ${l.label}`}
+                    onClick={(event) => {
+                      event.preventDefault();
+                      event.stopPropagation();
+                      sceneGraph.getAncestor(model, MetricScene).setActionView('breakdown');
+                      const groupByVar = sceneGraph.lookupVariable(VAR_GROUP_BY, model);
+                      if (groupByVar instanceof QueryVariable) {
+                        groupByVar.setState({ value: l.value });
+                      }
+                      return false;
+                    }}
+                  >
+                    {l.label!}
+                  </TextLink>
+                ))}
+              </MemoryRouter>
             </Stack>
           </>
         </Stack>
