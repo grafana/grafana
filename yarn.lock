@@ -4866,8 +4866,8 @@ __metadata:
   linkType: hard
 
 "@kusto/monaco-kusto@npm:^10.0.0":
-  version: 10.0.12
-  resolution: "@kusto/monaco-kusto@npm:10.0.12"
+  version: 10.0.18
+  resolution: "@kusto/monaco-kusto@npm:10.0.18"
   dependencies:
     "@kusto/language-service": "npm:0.0.278"
     "@kusto/language-service-next": "npm:11.5.0"
@@ -4875,10 +4875,10 @@ __metadata:
     vscode-languageserver-types: "npm:^3.17.4"
     xregexp: "npm:^5.1.1"
   peerDependencies:
-    monaco-editor: ~0.41.0
+    monaco-editor: ^0.46.0
   bin:
     copyMonacoFilesAMD: copyMonacoFilesAMD.js
-  checksum: 10/0eb906ad1d4e2d86fc03ebbba686e80f932d8da097d40d0a790311f9435a5cf8a4e802532e7d042022d3203a188fba2ffc50e3c7db6e4460152b2817bdb48fb2
+  checksum: 10/f49ddc435a9f5c67897e4f948334fe112a3b4ee1b3abf6e2f68fdbd987855b69bea17963f12a1534528b64c2c50f76556c30fa54aeb9fd4e05f560b0928916be
   languageName: node
   linkType: hard
 
