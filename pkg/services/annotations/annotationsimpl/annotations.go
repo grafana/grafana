@@ -47,7 +47,7 @@ func ProvideService(
 	return &RepositoryImpl{
 		db:       db,
 		features: features,
-		authZ:    accesscontrol.NewAuthService(db, features, read),
+		authZ:    accesscontrol.NewAuthService(db, features),
 		reader:   read,
 		writer:   write,
 	}
