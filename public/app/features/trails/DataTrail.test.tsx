@@ -1,5 +1,4 @@
 import { locationService, setDataSourceSrv } from '@grafana/runtime';
-import { getUrlSyncManager } from '@grafana/scenes';
 
 import { MockDataSourceSrv, mockDataSource } from '../alerting/unified/mocks';
 import { DataSourceType } from '../alerting/unified/utils/datasource';
@@ -22,14 +21,13 @@ describe('DataTrail', () => {
     );
   });
 
-  describe('Given starting trail with url sync and no url state', () => {
+  describe('Given starting non-embedded trail with url sync and no url state', () => {
     let trail: DataTrail;
     const preTrailUrl = '/';
 
     beforeEach(() => {
       trail = new DataTrail({});
       locationService.push(preTrailUrl);
-      getUrlSyncManager().initSync(trail);
       activateFullSceneTree(trail);
     });
 
