@@ -14,7 +14,6 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/annotations"
-	annotation_ac "github.com/grafana/grafana/pkg/services/annotations/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/annotations/testutil"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
@@ -139,7 +138,7 @@ func TestIntegrationAnnotations(t *testing.T) {
 				From:         0,
 				To:           15,
 				SignedInUser: testUser,
-			}, &annotation_ac.AccessResources{
+			}, &annotations.AccessResources{
 				Dashboards: map[string]int64{
 					dashboard.UID: dashboard.ID,
 				},
@@ -183,7 +182,7 @@ func TestIntegrationAnnotations(t *testing.T) {
 
 			require.NoError(t, err)
 			query := &annotations.ItemQuery{OrgID: 100, SignedInUser: testUser}
-			accRes := &annotation_ac.AccessResources{CanAccessOrgAnnotations: true}
+			accRes := &annotations.AccessResources{CanAccessOrgAnnotations: true}
 			inserted, err := store.Get(context.Background(), query, accRes)
 			require.NoError(t, err)
 			assert.Len(t, inserted, count)
@@ -210,7 +209,7 @@ func TestIntegrationAnnotations(t *testing.T) {
 
 			require.NoError(t, err)
 			query := &annotations.ItemQuery{OrgID: 101, SignedInUser: testUser}
-			accRes := &annotation_ac.AccessResources{CanAccessOrgAnnotations: true}
+			accRes := &annotations.AccessResources{CanAccessOrgAnnotations: true}
 			inserted, err := store.Get(context.Background(), query, accRes)
 			require.NoError(t, err)
 			assert.Len(t, inserted, count)
@@ -221,7 +220,7 @@ func TestIntegrationAnnotations(t *testing.T) {
 				OrgID:        1,
 				AnnotationID: annotation2.ID,
 				SignedInUser: testUser,
-			}, &annotation_ac.AccessResources{
+			}, &annotations.AccessResources{
 				Dashboards: map[string]int64{
 					dashboard2.UID: dashboard2.ID,
 				},
@@ -233,7 +232,7 @@ func TestIntegrationAnnotations(t *testing.T) {
 		})
 
 		t.Run("Should not find any when item is outside time range", func(t *testing.T) {
-			accRes := &annotation_ac.AccessResources{
+			accRes := &annotations.AccessResources{
 				Dashboards:               map[string]int64{"foo": 1},
 				CanAccessDashAnnotations: true,
 			}
@@ -249,7 +248,7 @@ func TestIntegrationAnnotations(t *testing.T) {
 		})
 
 		t.Run("Should not find one when tag filter does not match", func(t *testing.T) {
-			accRes := &annotation_ac.AccessResources{
+			accRes := &annotations.AccessResources{
 				Dashboards:               map[string]int64{"foo": 1},
 				CanAccessDashAnnotations: true,
 			}
@@ -266,7 +265,7 @@ func TestIntegrationAnnotations(t *testing.T) {
 		})
 
 		t.Run("Should not find one when type filter does not match", func(t *testing.T) {
-			accRes := &annotation_ac.AccessResources{
+			accRes := &annotations.AccessResources{
 				Dashboards:               map[string]int64{"foo": 1},
 				CanAccessDashAnnotations: true,
 			}
@@ -283,7 +282,7 @@ func TestIntegrationAnnotations(t *testing.T) {
 		})
 
 		t.Run("Should find one when all tag filters does match", func(t *testing.T) {
-			accRes := &annotation_ac.AccessResources{
+			accRes := &annotations.AccessResources{
 				Dashboards:               map[string]int64{"foo": 1},
 				CanAccessDashAnnotations: true,
 			}
@@ -300,7 +299,7 @@ func TestIntegrationAnnotations(t *testing.T) {
 		})
 
 		t.Run("Should find two annotations using partial match", func(t *testing.T) {
-			accRes := &annotation_ac.AccessResources{CanAccessOrgAnnotations: true}
+			accRes := &annotations.AccessResources{CanAccessOrgAnnotations: true}
 			items, err := store.Get(context.Background(), &annotations.ItemQuery{
 				OrgID:        1,
 				From:         1,
@@ -314,7 +313,7 @@ func TestIntegrationAnnotations(t *testing.T) {
 		})
 
 		t.Run("Should find one when all key value tag filters does match", func(t *testing.T) {
-			accRes := &annotation_ac.AccessResources{
+			accRes := &annotations.AccessResources{
 				Dashboards:               map[string]int64{"foo": 1},
 				CanAccessDashAnnotations: true,
 			}
@@ -338,7 +337,7 @@ func TestIntegrationAnnotations(t *testing.T) {
 				To:           15,
 				SignedInUser: testUser,
 			}
-			accRes := &annotation_ac.AccessResources{
+			accRes := &annotations.AccessResources{
 				Dashboards:               map[string]int64{"foo": 1},
 				CanAccessDashAnnotations: true,
 			}
@@ -373,7 +372,7 @@ func TestIntegrationAnnotations(t *testing.T) {
 				To:           15,
 				SignedInUser: testUser,
 			}
-			accRes := &annotation_ac.AccessResources{
+			accRes := &annotations.AccessResources{
 				Dashboards:               map[string]int64{"foo": 1},
 				CanAccessDashAnnotations: true,
 			}
@@ -406,7 +405,7 @@ func TestIntegrationAnnotations(t *testing.T) {
 				To:           15,
 				SignedInUser: testUser,
 			}
-			accRes := &annotation_ac.AccessResources{
+			accRes := &annotations.AccessResources{
 				Dashboards:               map[string]int64{"foo": 1},
 				CanAccessDashAnnotations: true,
 			}
@@ -439,7 +438,7 @@ func TestIntegrationAnnotations(t *testing.T) {
 				To:           15,
 				SignedInUser: testUser,
 			}
-			accRes := &annotation_ac.AccessResources{
+			accRes := &annotations.AccessResources{
 				Dashboards:               map[string]int64{"foo": 1},
 				CanAccessDashAnnotations: true,
 			}
@@ -475,7 +474,7 @@ func TestIntegrationAnnotations(t *testing.T) {
 				To:           15,
 				SignedInUser: testUser,
 			}
-			accRes := &annotation_ac.AccessResources{
+			accRes := &annotations.AccessResources{
 				Dashboards:               map[string]int64{"foo": 1},
 				CanAccessDashAnnotations: true,
 			}
@@ -505,7 +504,7 @@ func TestIntegrationAnnotations(t *testing.T) {
 			err = store.Add(context.Background(), annotation3)
 			require.NoError(t, err)
 
-			accRes := &annotation_ac.AccessResources{
+			accRes := &annotations.AccessResources{
 				Dashboards: map[string]int64{
 					dashboard2.UID: dashboard2.ID,
 				},

@@ -18,8 +18,8 @@ type RepositoryImpl struct {
 	db       db.DB
 	authZ    *accesscontrol.AuthService
 	features featuremgmt.FeatureToggles
-	reader   readStore
-	writer   writeStore
+	reader   annotations.ReadStore
+	writer   annotations.WriteStore
 }
 
 func ProvideService(
@@ -34,7 +34,7 @@ func ProvideService(
 	xormStore := NewXormStore(cfg, log.New("annotations.sql"), db, tagService)
 	write := xormStore
 
-	var read readStore
+	var read annotations.ReadStore
 	historianStore := loki.NewLokiHistorianStore(cfg.UnifiedAlerting.StateHistory, features, db, log.New("annotations.loki"))
 	if historianStore != nil {
 		l.Debug("Using composite read store")
@@ -47,7 +47,7 @@ func ProvideService(
 	return &RepositoryImpl{
 		db:       db,
 		features: features,
-		authZ:    accesscontrol.NewAuthService(db, features),
+		authZ:    accesscontrol.NewAuthService(db, features, read),
 		reader:   read,
 		writer:   write,
 	}

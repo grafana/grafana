@@ -3,6 +3,8 @@ package annotationsimpl
 import (
 	"context"
 
+	"github.com/grafana/grafana/pkg/services/annotations"
+
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/setting"
@@ -10,7 +12,7 @@ import (
 
 // CleanupServiceImpl is responsible for cleaning old annotations.
 type CleanupServiceImpl struct {
-	store store
+	store annotations.Store
 }
 
 func ProvideCleanupService(db db.DB, cfg *setting.Cfg) *CleanupServiceImpl {

@@ -39,7 +39,7 @@ func NewAuthService(db db.DB, features featuremgmt.FeatureToggles) *AuthService 
 }
 
 // Authorize checks if the user has permission to read annotations, then returns a struct containing dashboards and scope types that the user has access to.
-func (authz *AuthService) Authorize(ctx context.Context, orgID int64, query *annotations.ItemQuery) (*AccessResources, error) {
+func (authz *AuthService) Authorize(ctx context.Context, orgID int64, query *annotations.ItemQuery) (*annotations.AccessResources, error) {
 	user := query.SignedInUser
 	if user == nil || user.IsNil() {
 		return nil, ErrReadForbidden.Errorf("missing user")
@@ -73,7 +73,7 @@ func (authz *AuthService) Authorize(ctx context.Context, orgID int64, query *ann
 		}
 	}
 
-	return &AccessResources{
+	return &annotations.AccessResources{
 		Dashboards:               visibleDashboards,
 		CanAccessDashAnnotations: canAccessDashAnnotations,
 		CanAccessOrgAnnotations:  canAccessOrgAnnotations,

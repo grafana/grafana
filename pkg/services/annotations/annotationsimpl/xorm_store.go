@@ -9,7 +9,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/grafana/grafana/pkg/services/annotations/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 
 	"github.com/grafana/grafana/pkg/infra/db"
@@ -245,7 +244,7 @@ func tagSet[T any](fn func(T) int64, list []T) map[int64]struct{} {
 	return set
 }
 
-func (r *xormRepositoryImpl) Get(ctx context.Context, query *annotations.ItemQuery, accessResources *accesscontrol.AccessResources) ([]*annotations.ItemDTO, error) {
+func (r *xormRepositoryImpl) Get(ctx context.Context, query *annotations.ItemQuery, accessResources *annotations.AccessResources) ([]*annotations.ItemDTO, error) {
 	var sql bytes.Buffer
 	params := make([]interface{}, 0)
 	items := make([]*annotations.ItemDTO, 0)
@@ -371,7 +370,7 @@ func (r *xormRepositoryImpl) Get(ctx context.Context, query *annotations.ItemQue
 	return items, err
 }
 
-func (r *xormRepositoryImpl) getAccessControlFilter(user identity.Requester, accessResources *accesscontrol.AccessResources) (string, error) {
+func (r *xormRepositoryImpl) getAccessControlFilter(user identity.Requester, accessResources *annotations.AccessResources) (string, error) {
 	var filters []string
 
 	if accessResources.CanAccessOrgAnnotations {
