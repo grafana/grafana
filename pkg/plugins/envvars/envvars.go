@@ -152,7 +152,7 @@ func (s *Service) GetConfigMap(ctx context.Context, pluginID string, _ *auth.Ext
 		m[proxy.PluginSecureSocksProxyEnabled] = "true"
 		m[proxy.PluginSecureSocksProxyClientCert] = s.cfg.ProxySettings.ClientCert
 		m[proxy.PluginSecureSocksProxyClientKey] = s.cfg.ProxySettings.ClientKey
-		m[proxy.PluginSecureSocksProxyRootCACert] = s.cfg.ProxySettings.RootCA
+		m[proxy.PluginSecureSocksProxyRootCAs] = strings.Join(s.cfg.ProxySettings.RootCAs, " ")
 		m[proxy.PluginSecureSocksProxyProxyAddress] = s.cfg.ProxySettings.ProxyAddress
 		m[proxy.PluginSecureSocksProxyServerName] = s.cfg.ProxySettings.ServerName
 		m[proxy.PluginSecureSocksProxyAllowInsecure] = strconv.FormatBool(s.cfg.ProxySettings.AllowInsecure)
@@ -287,13 +287,20 @@ func (s *Service) awsEnvVars() []string {
 func (s *Service) secureSocksProxyEnvVars() []string {
 	if s.cfg.ProxySettings.Enabled {
 		return []string{
-			proxy.PluginSecureSocksProxyClientCert + "=" + s.cfg.ProxySettings.ClientCert,
-			proxy.PluginSecureSocksProxyClientKey + "=" + s.cfg.ProxySettings.ClientKey,
-			proxy.PluginSecureSocksProxyRootCACert + "=" + s.cfg.ProxySettings.RootCA,
-			proxy.PluginSecureSocksProxyProxyAddress + "=" + s.cfg.ProxySettings.ProxyAddress,
-			proxy.PluginSecureSocksProxyServerName + "=" + s.cfg.ProxySettings.ServerName,
-			proxy.PluginSecureSocksProxyEnabled + "=" + strconv.FormatBool(s.cfg.ProxySettings.Enabled),
-			proxy.PluginSecureSocksProxyAllowInsecure + "=" + strconv.FormatBool(s.cfg.ProxySettings.AllowInsecure),
+			// nolint:staticcheck
+			proxy.PluginSecureSocksProxyClientCertFilePathEnvVarName + "=" + s.cfg.ProxySettings.ClientCertFilePath,
+			// nolint:staticcheck
+			proxy.PluginSecureSocksProxyClientKeyFilePathEnvVarName + "=" + s.cfg.ProxySettings.ClientKeyFilePath,
+			// nolint:staticcheck
+			proxy.PluginSecureSocksProxyRootCACertFilePathsEnvVarName + "=" + strings.Join(s.cfg.ProxySettings.RootCAFilePaths, " "),
+			// nolint:staticcheck
+			proxy.PluginSecureSocksProxyAddressEnvVarName + "=" + s.cfg.ProxySettings.ProxyAddress,
+			// nolint:staticcheck
+			proxy.PluginSecureSocksProxyServerNameEnvVarName + "=" + s.cfg.ProxySettings.ServerName,
+			// nolint:staticcheck
+			proxy.PluginSecureSocksProxyEnabledEnvVarName + "=" + strconv.FormatBool(s.cfg.ProxySettings.Enabled),
+			// nolint:staticcheck
+			proxy.PluginSecureSocksProxyAllowInsecureEnvVarName + "=" + strconv.FormatBool(s.cfg.ProxySettings.AllowInsecure),
 		}
 	}
 	return nil
