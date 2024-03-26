@@ -119,7 +119,11 @@ function useColumns(showSummaryColumn: boolean, showGroupColumn: boolean, showNe
     const isValidLastEvaluation = rule.promRule?.lastEvaluation && isValidDate(rule.promRule.lastEvaluation);
     const isValidIntervalDuration = rule.group.interval && isValidDuration(rule.group.interval);
 
-    if (!isValidLastEvaluation || !isValidIntervalDuration || isGrafanaRulerRulePaused(rule)) {
+    if (
+      !isValidLastEvaluation ||
+      !isValidIntervalDuration ||
+      (isGrafanaRulerRule(rule.rulerRule) && isGrafanaRulerRulePaused(rule.rulerRule))
+    ) {
       return;
     }
 
