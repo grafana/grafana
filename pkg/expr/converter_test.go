@@ -19,7 +19,7 @@ import (
 func TestConvertDataFramesToResults(t *testing.T) {
 	s := &Service{
 		cfg:      setting.NewCfg(),
-		features: &featuremgmt.FeatureManager{},
+		features: featuremgmt.TestFeatureToggles(),
 		tracer:   tracing.InitializeTracerForTest(),
 		metrics:  newMetrics(nil),
 	}

@@ -634,7 +634,7 @@ func createService(store *fakes.RuleStore) *RulerSrv {
 		authz:          accesscontrol.NewRuleService(acimpl.ProvideAccessControl(setting.NewCfg())),
 		amConfigStore:  &fakeAMRefresher{},
 		amRefresher:    &fakeAMRefresher{},
-		featureManager: &featuremgmt.FeatureManager{},
+		featureManager: featuremgmt.TestFeatureToggles(),
 	}
 }
 
