@@ -103,7 +103,7 @@ Besides being an open-source observability tool, Grafana has its own built-in al
 
 In this step, we'll set up a new contact point. This contact point will use the _webhooks_ channel. In order to make this work, we also need an endpoint for our webhook channel to receive the alert. We will use [requestbin.com](https://requestbin.com) to quickly set up that test endpoint. This way we can make sure that our alert is actually sending a notification somewhere.
 
-1. In your browser, navigate to [localhost:3000](http://localhost:3000).
+1. In your browser, navigate to [localhost:3000](http://localhost:3000), where Grafana is running.
    You should get logged in automatically.
 1. In another window, go to [requestbin.com](https://requestbin.com).
 1. Under the **Create Request Bin** button, click the link to create a **public bin** instead.
