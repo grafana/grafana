@@ -20,7 +20,7 @@ import {
 } from '@grafana/data';
 
 import { getRandomLine } from './LogIpsum';
-import { TestDataDataQuery, StreamingQuery } from './dataquery.gen';
+import { TestDataDataQuery, StreamingQuery } from './dataquery';
 
 export const defaultStreamQuery: StreamingQuery = {
   type: 'signal',

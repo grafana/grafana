@@ -20,7 +20,7 @@ import {
 } from '@grafana/data';
 import { DataSourceWithBackend, getBackendSrv, getGrafanaLiveSrv, getTemplateSrv, TemplateSrv } from '@grafana/runtime';
 
-import { Scenario, TestDataDataQuery, TestDataQueryType } from './dataquery.gen';
+import { Scenario, TestDataDataQuery, TestDataQueryType } from './dataquery';
 import { queryMetricTree } from './metricTree';
 import { generateRandomEdges, generateRandomNodes, generateShowcaseData, savedNodesResponse } from './nodeGraphUtils';
 import { runStream } from './runStreams';

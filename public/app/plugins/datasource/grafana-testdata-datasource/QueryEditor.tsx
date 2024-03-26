@@ -17,7 +17,7 @@ import { RawFrameEditor } from './components/RawFrameEditor';
 import { SimulationQueryEditor } from './components/SimulationQueryEditor';
 import { USAQueryEditor, usaQueryModes } from './components/USAQueryEditor';
 import { defaultCSVWaveQuery, defaultPulseQuery, defaultQuery } from './constants';
-import { CSVWave, NodesQuery, TestDataDataQuery, TestDataQueryType, USAQuery } from './dataquery.gen';
+import { CSVWave, NodesQuery, TestDataDataQuery, TestDataQueryType, USAQuery } from './dataquery';
 import { TestDataDataSource } from './datasource';
 import { defaultStreamQuery } from './runStreams';
 
