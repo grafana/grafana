@@ -88,9 +88,10 @@ export class DataTrail extends SceneObjectBase<DataTrailState> {
       const newStepWasAppended = newNumberOfSteps > oldNumberOfSteps;
 
       if (newStepWasAppended) {
+        this.syncTrailToUrl();
         // In order for the `useBookmarkState` to re-evaluate after a new step was made:
         this.forceRender();
-        // Do nothing because the state is already up to date -- it created a new step!
+        // Do nothing else because the step state is already up to date -- it created a new step!
         return;
       }
 
