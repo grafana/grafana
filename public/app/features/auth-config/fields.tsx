@@ -207,6 +207,7 @@ export const sectionFields: Section = {
         'tokenUrl',
         'apiUrl',
         'allowSignUp',
+        'autoLogin',
         'signoutRedirectUrl',
       ],
     },
