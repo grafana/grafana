@@ -46,7 +46,9 @@ func (auth *TokenAuthenticator) AuthenticateRequest(req *http.Request) (*authent
 			Name:   result.Subject,
 			UID:    "",
 			Groups: []string{},
-			Extra:  make(map[string][]string, 0),
+			Extra: map[string][]string{
+				"id-token": {token},
+			},
 		},
 	}, true, nil
 }

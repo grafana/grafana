@@ -102,9 +102,11 @@ func (o *APIServerOptions) Config() (*genericapiserver.RecommendedConfig, error)
 		return nil, fmt.Errorf("failed to apply options to server config: %w", err)
 	}
 
-	validator := auth.NewValidator(o.Options.AuthnOptions.IDVerifierConfig)
-	serverConfig.Authentication.Authenticator = auth.NewTokenAuthenticator(validator)
-	serverConfig.Authorization.Authorizer = auth.NewTokenAuthorizer()
+	if !o.Options.ExtraOptions.DevMode {
+		validator := auth.NewValidator(o.Options.AuthnOptions.IDVerifierConfig)
+		serverConfig.Authentication.Authenticator = auth.NewTokenAuthenticator(validator)
+	}
+
 	serverConfig.DisabledPostStartHooks = serverConfig.DisabledPostStartHooks.Insert("generic-apiserver-start-informers")
 	serverConfig.DisabledPostStartHooks = serverConfig.DisabledPostStartHooks.Insert("priority-and-fairness-config-consumer")
 
