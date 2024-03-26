@@ -287,6 +287,7 @@ func (s *ServiceImpl) readNavigationSettings() {
 		"grafana-aws-app":                  {SectionID: navtree.NavIDInfrastructure, SortWeight: 2},
 		"grafana-app-observability-app":    {SectionID: navtree.NavIDRoot, SortWeight: navtree.WeightApplication, Text: "Application", Icon: "graph-bar"},
 		"grafana-pyroscope-app":            {SectionID: navtree.NavIDExplore, SortWeight: 1, Text: "Profiles"},
+		"grafana-lokiexplore-app":          {SectionID: navtree.NavIDExplore, SortWeight: 2, Text: "Logs"},
 		"grafana-kowalski-app":             {SectionID: navtree.NavIDRoot, SortWeight: navtree.WeightFrontend, Text: "Frontend", Icon: "frontend-observability"},
 		"grafana-synthetic-monitoring-app": {SectionID: navtree.NavIDTestingAndSynthetics, SortWeight: 2, Text: "Synthetics"},
 		"grafana-oncall-app":               {SectionID: navtree.NavIDAlertsAndIncidents, SortWeight: 1, Text: "OnCall"},
