@@ -18757,7 +18757,7 @@ __metadata:
     mousetrap: "npm:1.6.5"
     mousetrap-global-bind: "npm:1.1.0"
     moveable: "npm:0.53.0"
-    msw: "npm:2.2.9"
+    msw: "npm:2.2.11"
     mutationobserver-shim: "npm:0.3.7"
     nanoid: "npm:^5.0.4"
     ngtemplate-loader: "npm:2.1.0"
@@ -23219,9 +23219,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"msw@npm:2.2.9":
-  version: 2.2.9
-  resolution: "msw@npm:2.2.9"
+"msw@npm:2.2.11":
+  version: 2.2.11
+  resolution: "msw@npm:2.2.11"
   dependencies:
     "@bundled-es-modules/cookie": "npm:^2.0.0"
     "@bundled-es-modules/statuses": "npm:^1.0.1"
@@ -23247,7 +23247,7 @@ __metadata:
       optional: true
   bin:
     msw: cli/index.js
-  checksum: 10/96652a7c108aa7dec4eef63fa98608f8da25c74510a761b3999d81342bd2edb97b8843f9e51790da1b78c0f08caff479b4500901927ae12b371fd9bba21ac67a
+  checksum: 10/1b1ac93969594e339f4cea68ca9b91638f20cc01a9d7eaebc84f54481af37822099b4e3f88122f950f8d8be72018b62fcfe0b14aab28f93a916e7ddd90f040cd
   languageName: node
   linkType: hard
 
