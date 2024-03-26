@@ -72,6 +72,7 @@ export const VizLegendTable = <T extends unknown>({
     }
   }
 
+  // JEV: QUESTION: are there examples of custom itemRenderer?
   if (!itemRenderer) {
     /* eslint-disable-next-line react/display-name */
     itemRenderer = (item, index) => (

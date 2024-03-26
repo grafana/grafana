@@ -143,6 +143,7 @@ function getLegend(props: Props, displayValues: FieldDisplay[]) {
     <VizLayout.Legend placement={legendOptions.placement} width={legendOptions.width}>
       <VizLegend
         items={legendItems}
+        // JEV: QUESTION: surface this behavior?
         seriesVisibilityChangeBehavior={SeriesVisibilityChangeBehavior.Hide}
         placement={legendOptions.placement}
         displayMode={legendOptions.displayMode}
