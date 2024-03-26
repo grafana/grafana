@@ -55,7 +55,7 @@ func TestIntegrationAuthorize(t *testing.T) {
 		name              string
 		permissions       map[string][]string
 		featureToggle     string
-		expectedResources *AccessResources
+		expectedResources *annotations.AccessResources
 		expectedErr       error
 	}
 
@@ -66,7 +66,7 @@ func TestIntegrationAuthorize(t *testing.T) {
 				accesscontrol.ActionAnnotationsRead: {accesscontrol.ScopeAnnotationsAll},
 				dashboards.ActionDashboardsRead:     {dashboards.ScopeDashboardsAll},
 			},
-			expectedResources: &AccessResources{
+			expectedResources: &annotations.AccessResources{
 				Dashboards:               map[string]int64{dash1.UID: dash1.ID, dash2.UID: dash2.ID},
 				CanAccessOrgAnnotations:  true,
 				CanAccessDashAnnotations: true,
@@ -79,7 +79,7 @@ func TestIntegrationAuthorize(t *testing.T) {
 				dashboards.ActionDashboardsRead:     {dashboards.ScopeDashboardsAll},
 			},
 			featureToggle: featuremgmt.FlagAnnotationPermissionUpdate,
-			expectedResources: &AccessResources{
+			expectedResources: &annotations.AccessResources{
 				Dashboards:               nil,
 				CanAccessOrgAnnotations:  true,
 				CanAccessDashAnnotations: true,
@@ -91,7 +91,7 @@ func TestIntegrationAuthorize(t *testing.T) {
 				accesscontrol.ActionAnnotationsRead: {accesscontrol.ScopeAnnotationsTypeOrganization, dashboards.ScopeDashboardsAll},
 			},
 			featureToggle: featuremgmt.FlagAnnotationPermissionUpdate,
-			expectedResources: &AccessResources{
+			expectedResources: &annotations.AccessResources{
 				Dashboards:               map[string]int64{dash1.UID: dash1.ID, dash2.UID: dash2.ID},
 				CanAccessOrgAnnotations:  true,
 				CanAccessDashAnnotations: true,
@@ -103,7 +103,7 @@ func TestIntegrationAuthorize(t *testing.T) {
 				accesscontrol.ActionAnnotationsRead: {accesscontrol.ScopeAnnotationsTypeOrganization, dashboards.ScopeFoldersAll},
 			},
 			featureToggle: featuremgmt.FlagAnnotationPermissionUpdate,
-			expectedResources: &AccessResources{
+			expectedResources: &annotations.AccessResources{
 				Dashboards:               map[string]int64{dash1.UID: dash1.ID, dash2.UID: dash2.ID},
 				CanAccessOrgAnnotations:  true,
 				CanAccessDashAnnotations: true,
@@ -115,7 +115,7 @@ func TestIntegrationAuthorize(t *testing.T) {
 				accesscontrol.ActionAnnotationsRead: {accesscontrol.ScopeAnnotationsTypeOrganization},
 				dashboards.ActionDashboardsRead:     {dashboards.ScopeDashboardsAll},
 			},
-			expectedResources: &AccessResources{
+			expectedResources: &annotations.AccessResources{
 				Dashboards:              nil,
 				CanAccessOrgAnnotations: true,
 			},
@@ -126,7 +126,7 @@ func TestIntegrationAuthorize(t *testing.T) {
 				accesscontrol.ActionAnnotationsRead: {accesscontrol.ScopeAnnotationsTypeDashboard},
 				dashboards.ActionDashboardsRead:     {dashboards.ScopeDashboardsAll},
 			},
-			expectedResources: &AccessResources{
+			expectedResources: &annotations.AccessResources{
 				Dashboards:               map[string]int64{dash1.UID: dash1.ID, dash2.UID: dash2.ID},
 				CanAccessDashAnnotations: true,
 			},
@@ -137,7 +137,7 @@ func TestIntegrationAuthorize(t *testing.T) {
 				accesscontrol.ActionAnnotationsRead: {dashboards.ScopeDashboardsAll},
 			},
 			featureToggle: featuremgmt.FlagAnnotationPermissionUpdate,
-			expectedResources: &AccessResources{
+			expectedResources: &annotations.AccessResources{
 				Dashboards:               map[string]int64{dash1.UID: dash1.ID, dash2.UID: dash2.ID},
 				CanAccessOrgAnnotations:  false,
 				CanAccessDashAnnotations: true,
@@ -149,7 +149,7 @@ func TestIntegrationAuthorize(t *testing.T) {
 				accesscontrol.ActionAnnotationsRead: {accesscontrol.ScopeAnnotationsTypeDashboard},
 				dashboards.ActionDashboardsRead:     {fmt.Sprintf("dashboards:uid:%s", dash1.UID)},
 			},
-			expectedResources: &AccessResources{
+			expectedResources: &annotations.AccessResources{
 				Dashboards:               map[string]int64{dash1.UID: dash1.ID},
 				CanAccessDashAnnotations: true,
 			},
@@ -160,7 +160,7 @@ func TestIntegrationAuthorize(t *testing.T) {
 				accesscontrol.ActionAnnotationsRead: {dashboards.ScopeDashboardsProvider.GetResourceScopeUID(dash1.UID)},
 			},
 			featureToggle: featuremgmt.FlagAnnotationPermissionUpdate,
-			expectedResources: &AccessResources{
+			expectedResources: &annotations.AccessResources{
 				Dashboards:               map[string]int64{dash1.UID: dash1.ID},
 				CanAccessOrgAnnotations:  false,
 				CanAccessDashAnnotations: true,
