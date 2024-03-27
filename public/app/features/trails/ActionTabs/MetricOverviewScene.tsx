@@ -97,6 +97,7 @@ export class MetricOverviewScene extends SceneObjectBase<MetricOverviewSceneStat
                 {
                   // Using a memory router allows us to use TextLinks in embedded mode where there might not be a wrapping Router
                   // Avoids "Invariant failed: You should not use <Link> outside a <Router>"
+                  // TODO: Should be removed after https://github.com/grafana/grafana/pull/84916 is merged
                 }
                 {labelOptions.map((l) => (
                   <TextLink

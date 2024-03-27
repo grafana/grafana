@@ -1,8 +1,7 @@
 import { css } from '@emotion/css';
-import React, { useEffect } from 'react';
+import React from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { locationService } from '@grafana/runtime';
 import { SceneComponentProps, SceneObjectBase, SceneObject, SceneObjectState } from '@grafana/scenes';
 import { Drawer, useStyles2 } from '@grafana/ui';
 import appEvents from 'app/core/app_events';
