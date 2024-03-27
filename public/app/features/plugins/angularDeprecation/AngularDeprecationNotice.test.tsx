@@ -12,7 +12,7 @@ jest.mock('@grafana/runtime', () => ({
 }));
 
 function localStorageKey(dsUid: string) {
-  return `grafana.angularDeprecation.dashboardNotice.isDismissed.${dsUid}`;
+  return `grafana.angularDeprecation.dashboardNoticeAndMigration.isDismissed.${dsUid}`;
 }
 
 describe('AngularDeprecationNotice', () => {
@@ -62,5 +62,25 @@ describe('AngularDeprecationNotice', () => {
     expect(closeButton).toBeInTheDocument();
     await userEvent.click(closeButton);
     expect(reportInteraction).toHaveBeenCalledWith('angular_deprecation_notice_dismissed');
+  });
+
+  describe('auto migrate button', () => {
+    const autoMigrateText = 'Try migration';
+
+    it('should display auto migrate button if showAutoMigrateLink is true', () => {
+      render(<AngularDeprecationNotice dashboardUid={dsUid} showAutoMigrateLink={true} />);
+      const autoMigrateButton = screen.getByRole('button', { name: /Try migration/i });
+      expect(autoMigrateButton).toBeInTheDocument();
+    });
+
+    it('should not display auto migrate button if showAutoMigrateLink is false', () => {
+      render(<AngularDeprecationNotice dashboardUid={dsUid} showAutoMigrateLink={false} />);
+      expect(screen.queryByText(autoMigrateText)).not.toBeInTheDocument();
+    });
+
+    it('should not display auto migrate link if showAutoMigrateLink is not provided', () => {
+      render(<AngularDeprecationNotice dashboardUid={dsUid} />);
+      expect(screen.queryByText(autoMigrateText)).not.toBeInTheDocument();
+    });
   });
 });

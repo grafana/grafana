@@ -44,7 +44,7 @@ import { getTimeSrv } from '../services/TimeSrv';
 import { mergePanels, PanelMergeInfo } from '../utils/panelMerge';
 
 import { DashboardMigrator } from './DashboardMigrator';
-import { PanelModel } from './PanelModel';
+import { explicitlyControlledMigrationPanels, PanelModel } from './PanelModel';
 import { TimeModel } from './TimeModel';
 import { deleteScopeVars, isOnTheSameGridRow } from './utils';
 
@@ -1294,8 +1294,10 @@ export class DashboardModel implements TimeModel {
     return this.panels.some((panel) => {
       // Return false for plugins that are angular but have angular.hideDeprecation = false
       // We cannot use panel.plugin.isAngularPlugin() because panel.plugin may not be initialized at this stage.
+      // We also have to check for old core angular plugins (explicitlyControlledMigrationPanels).
       const isAngularPanel =
-        config.panels[panel.type]?.angular?.detected && !config.panels[panel.type]?.angular?.hideDeprecation;
+        (config.panels[panel.type]?.angular?.detected || explicitlyControlledMigrationPanels.includes(panel.type)) &&
+        !config.panels[panel.type]?.angular?.hideDeprecation;
       let isAngularDs = false;
       if (panel.datasource?.uid) {
         isAngularDs = isAngularDatasourcePluginAndNotHidden(panel.datasource?.uid);
