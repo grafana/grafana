@@ -42,7 +42,7 @@ For release highlights and deprecations, refer to our [v11.0-preview What’s ne
 
 You must use relative references when linking to docs within the Grafana repo. Please do not use absolute URLs. For more information about relrefs, refer to [Links and references](/docs/writers-toolkit/writing-guide/references/).-->
 
-<!-- Last copied from Google Doc March 18th -->
+<!-- Last copied from Google Doc March 26th 8:45pm -->
 
 ## Users and Operators
 
@@ -93,6 +93,34 @@ For more details on the code removal, review the following PRs:
 
 [https://grafana.com/docs/grafana/v10.4/alerting/set-up/migrating-alerts/](https://grafana.com/docs/grafana/v10.4/alerting/set-up/migrating-alerts/)
 
+### Deprecated endpoints and fields in Reporting removed
+
+#### Description
+
+In G11, support for deprecated endpoints and fields in Reporting related to old scheduling format, email, and dashboard is fully removed . This will prevent any calls to deprecated endpoints and passing in values to deprecated fields. This feature will only affect Cloud and Enterprise customers who use API to generate reports.
+
+#### Migration/mitigation
+
+Ensure deprecated endpoints are updated to new corresponding endpoints and deprecated fields are removed and replaced with new corresponding fields.
+
+#### Learn more
+
+[Reporting documentation](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developers/http_api/reporting/) lists all supported endpoints and fields
+
+### Change custom branding public dashboard footer behavior
+
+#### Description
+
+In G11, custom branding public dashboard footer behavior is changed to default to grafana logo if no footer logo or footer text is set. There is no option to hide the public dashboard footer anymore. This feature will only affect Cloud Advanced and Enterprise customers.
+
+#### Migration/mitigation
+
+Ensure customers have a public dashboard footer logo or footer text set if they do not want to display the default grafana footer.
+
+#### Learn more
+
+Configure custom branding [documentation](https://grafana.com/docs/grafana/GRAFANA_VERSION>/setup-grafana/configure-grafana/configure-custom-branding/#custom-branding-for-public-dashboards) for public dashboard
+
 ### Subfolders cause very rare issues with folders that have forward slashes in their names
 
 #### Description and migration/mitigation
@@ -119,6 +147,20 @@ Please note that if you use file provisioning, you can upgrade and update the ro
 The direct input datasource plugin has been removed in Grafana 11. It has been in alpha for 4 years and is superseded by [TestData](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/testdata/) that ships with Grafana. This is a small deprecation.
 
 Review this PR for details: [https://github.com/grafana/grafana/pull/83163](https://github.com/grafana/grafana/pull/83163)
+
+### Data sources: Query filtering changes
+
+[Github PR](https://github.com/grafana/grafana/pull/84656)
+
+The **Disable query** button in the query editor row has caused a lot of confusion among data source developers and end-users. Until now, it has been up to data source developers to filter out any hidden queries before or after they’re executed. Starting from Grafana 11, the tooltip of this button is changed from **Disable query** to **Hide response/Show response**. Responses that are associated with hidden queries will be removed by Grafana before they’re passed to the panel.
+
+Users of data source plugins that did not previously remove hidden queries (before or after they were executed) will see a change of behavior as previously, clicking the **Disable query** button had no impact on the query result. Starting from Grafana 11, responses associated with hidden queries will no longer be returned to the panel.
+
+We’re also moving the call to the `datasource.filterQuery` method to the query runner. This means that also frontend-only data sources (or any data source that doesn't extend `DataSourceWithBackend` class) can implement this method. This will streamline data source plugin behavior, ensuring filtering works in the same way for all kinds of data source plugins.
+
+#### Migration/mitigation
+
+If data is missing in panels, make sure the query editor **Hide response** button is not clicked.
 
 ### Chore: Query oauth info from a new instance
 
@@ -172,30 +214,8 @@ The Vector interface that was deprecated in Grafana 10 has been further deprecat
 
 We've removed React 17 as a peer dependency from our packages. Anyone using the new versions of these packages should ensure they've upgraded to React 18 following the upgrade steps: [https://react.dev/blog/2022/03/08/react-18-upgrade-guide](https://react.dev/blog/2022/03/08/react-18-upgrade-guide)
 
-### Deprecated endpoints and fields in Reporting removed
+### Chore: Remove SystemJS from Grafana/Runtime
 
-#### Description
+[Github PR](https://github.com/grafana/grafana/pull/84561)
 
-In G11, support for deprecated endpoints and fields in Reporting related to old scheduling format, email, and dashboard is fully removed . This will prevent any calls to deprecated endpoints and passing in values to deprecated fields. This feature will only affect Cloud and Enterprise customers.
-
-#### Migration/mitigation
-
-Ensure deprecated endpoints are updated to new corresponding endpoints and deprecated fields are removed and replaced with new corresponding fields.
-
-#### Learn more
-
-[Reporting documentation](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developers/http_api/reporting/) lists all supported endpoints and fields
-
-### Change custom branding public dashboard footer behavior
-
-#### Description
-
-In G11, custom branding public dashboard footer behavior is changed to default to grafana logo if no footer logo or footer text is set. There is no option to hide the public dashboard footer anymore. This feature will only affect Advanced and Enterprise customers.
-
-#### Migration/mitigation
-
-Ensure customers have a public dashboard footer logo or footer text set if they do not want to display the default grafana footer.
-
-#### Learn more
-
-Configure custom branding [documentation](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-grafana/configure-custom-branding/#custom-branding-for-public-dashboards) for public dashboard
+SystemJS is no longer exported from @grafana/runtime. Plugin developers should instead rely on importing modules / packages using standard TS import syntax and npm/yarn for package installation.
