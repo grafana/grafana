@@ -40,7 +40,7 @@
     "@floating-ui/react": "0.26.10",
     "@grafana/data": "11.0.0",
     "@grafana/experimental": "1.7.10",
-    "@grafana/faro-web-sdk": "1.4.2",
+    "@grafana/faro-web-sdk": "1.5.0",
     "@grafana/runtime": "11.0.0",
     "@grafana/schema": "11.0.0",
     "@grafana/ui": "11.0.0",
