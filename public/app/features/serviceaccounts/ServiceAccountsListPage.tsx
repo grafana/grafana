@@ -4,7 +4,15 @@ import React, { useEffect, useState } from 'react';
 import { connect, ConnectedProps } from 'react-redux';
 
 import { GrafanaTheme2, OrgRole } from '@grafana/data';
-import { ConfirmModal, FilterInput, LinkButton, RadioButtonGroup, useStyles2, InlineField } from '@grafana/ui';
+import {
+  ConfirmModal,
+  FilterInput,
+  LinkButton,
+  RadioButtonGroup,
+  useStyles2,
+  InlineField,
+  EmptyState,
+} from '@grafana/ui';
 import EmptyListCTA from 'app/core/components/EmptyListCTA/EmptyListCTA';
 import { Page } from 'app/core/components/Page/Page';
 import config from 'app/core/config';
@@ -210,6 +218,7 @@ export const ServiceAccountsListPageUnconnected = ({
             className={styles.filter}
           />
         </div>
+        {!isLoading && !noServiceAccountsCreated && serviceAccounts.length === 0 && <EmptyState variant="not-found" />}
         {!isLoading && noServiceAccountsCreated && (
           <>
             <EmptyListCTA
