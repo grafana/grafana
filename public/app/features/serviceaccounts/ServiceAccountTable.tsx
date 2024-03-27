@@ -1,4 +1,5 @@
 import React, { useMemo } from 'react';
+import Skeleton from 'react-loading-skeleton';
 
 import {
   Avatar,
@@ -35,6 +36,7 @@ interface ServiceAccountTableProps {
   totalPages: number;
   onChangePage: (page: number) => void;
   currentPage: number;
+  isLoading: boolean;
 }
 
 export const ServiceAccountTable = ({
@@ -49,6 +51,7 @@ export const ServiceAccountTable = ({
   totalPages,
   onChangePage,
   currentPage,
+  isLoading,
 }: ServiceAccountTableProps) => {
   const displayRolePicker =
     contextSrv.hasPermission(AccessControlAction.ActionRolesList) &&
@@ -65,7 +68,9 @@ export const ServiceAccountTable = ({
           if (!value) {
             return null;
           }
-          return (
+          return isLoading ? (
+            <Skeleton circle width={24} height={24} />
+          ) : (
             <a aria-label={ariaLabel} href={href}>
               <Avatar src={value} alt={'User avatar'} />
             </a>
@@ -82,7 +87,9 @@ export const ServiceAccountTable = ({
           if (!value) {
             return null;
           }
-          return (
+          return isLoading ? (
+            <Skeleton width={100} />
+          ) : (
             <TextLink href={href} aria-label={ariaLabel} color="primary">
               {value}
             </TextLink>
@@ -99,7 +106,9 @@ export const ServiceAccountTable = ({
           if (!value) {
             return null;
           }
-          return (
+          return isLoading ? (
+            <Skeleton width={100} />
+          ) : (
             <TextLink href={href} aria-label={ariaLabel} color="secondary">
               {original.login}
             </TextLink>
@@ -112,7 +121,9 @@ export const ServiceAccountTable = ({
         header: 'Roles',
         cell: ({ cell: { value }, row: { original } }: Cell<'role'>) => {
           const canUpdateRole = contextSrv.hasPermissionInMetadata(AccessControlAction.ServiceAccountsWrite, original);
-          return contextSrv.licensedAccessControlEnabled() ? (
+          return isLoading ? (
+            <Skeleton width={100} />
+          ) : contextSrv.licensedAccessControlEnabled() ? (
             displayRolePicker && (
               <UserRolePicker
                 userId={original.id}
@@ -142,7 +153,9 @@ export const ServiceAccountTable = ({
         cell: ({ cell: { value }, row: { original } }: Cell<'role'>) => {
           const href = `/org/serviceaccounts/${original.id}`;
           const ariaLabel = `Edit service account's ${name} details`;
-          return (
+          return isLoading ? (
+            <Skeleton width={100} />
+          ) : (
             <Stack alignItems="center">
               <Icon name="key-skeleton-alt"></Icon>
               <TextLink href={href} aria-label={ariaLabel} color="primary">
@@ -157,7 +170,9 @@ export const ServiceAccountTable = ({
         id: 'actions',
         header: '',
         cell: ({ row: { original } }: Cell) => {
-          return !original.isExternal ? (
+          return isLoading ? (
+            <Skeleton width={100} />
+          ) : !original.isExternal ? (
             <Stack alignItems="center" justifyContent="flex-end">
               {contextSrv.hasPermission(AccessControlAction.ServiceAccountsWrite) && !original.tokens && (
                 <Button onClick={() => onAddTokenClick(original)} disabled={original.isDisabled}>
@@ -197,7 +212,7 @@ export const ServiceAccountTable = ({
         },
       },
     ],
-    [displayRolePicker, onAddTokenClick, onDisable, onEnable, onRemoveButtonClick, onRoleChange, roleOptions]
+    [displayRolePicker, isLoading, onAddTokenClick, onDisable, onEnable, onRemoveButtonClick, onRoleChange, roleOptions]
   );
   return (
     <Stack direction={'column'} gap={2}>
