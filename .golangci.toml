@@ -1,10 +1,6 @@
 [run]
 timeout = "10m"
 
-[linters-settings.goconst]
-min-len = 5
-min-occurrences = 5
-
 [linters-settings.exhaustive]
 default-signifies-exhaustive = true
 
@@ -71,6 +67,46 @@ files = [
   "**/pkg/tsdb/cloudwatch/**/*",
 ]
 
+[linters-settings.depguard.rules.apiserver]
+list-mode = "lax"
+allow = [
+  "github.com/grafana/grafana/pkg/apimachinery",
+  "github.com/grafana/grafana/pkg/apiserver",
+]
+deny = [
+  { pkg = "github.com/grafana/grafana/pkg", desc = "apiserver is not allowed to import grafana core" }
+]
+files = [
+  "**/pkg/apiserver/*",
+  "**/pkg/apiserver/**/*"
+]
+
+[linters-settings.depguard.rules.apimachinery]
+list-mode = "lax"
+allow = [
+  "github.com/grafana/grafana/pkg/apimachinery",
+]
+deny = [
+  { pkg = "github.com/grafana/grafana/pkg", desc = "apimachinery is not allowed to import grafana core" }
+]
+files = [
+  "**/pkg/apimachinery/*",
+  "**/pkg/apimachinery/**/*"
+]
+
+[linters-settings.depguard.rules.promlib]
+list-mode = "lax" # allow unless explicitely denied
+deny = [
+  { pkg = "github.com/grafana/grafana/pkg", desc = "promlib is not allowed to import grafana core" }
+]
+allow = [
+  "github.com/grafana/grafana/pkg/promlib"
+]
+files = [
+  "**/pkg/promlib/*",
+  "**/pkg/promlib/**/*"
+]
+
 [linters-settings.gocritic]
 enabled-checks = ["ruleguard"]
 [linters-settings.gocritic.settings.ruleguard]
@@ -87,7 +123,7 @@ enable = [
   "dogsled",
   "errcheck",
   # "gochecknoinits",
-  "goconst",
+  # "goconst",
   # "gocritic", # Temporarily disabled on 2022-09-09, running into weird bug "ruleguard: execution error: used Run() with an empty rule set; forgot to call Load() first?"
   "goimports",
   "goprintffuncname",
@@ -205,3 +241,10 @@ text = "ST1020"
 [[issues.exclude-rules]]
 linters = ["stylecheck"]
 text = "ST1021"
+
+# Remove this when we have go v1.22 in place
+# https://stackoverflow.com/a/68247837/767660
+[[issues.exclude-rules]]
+linters = ["gosec"]
+path = '(.+)_test\.go'
+text = "G601"
