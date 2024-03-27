@@ -1,6 +1,7 @@
 import { capitalize } from 'lodash';
 
 import { AlertState } from '@grafana/data';
+import { config } from '@grafana/runtime';
 import {
   Alert,
   AlertingRule,
@@ -99,6 +100,37 @@ export function getRuleHealth(health: string): RuleHealth | undefined {
     default:
       return undefined;
   }
+}
+
+export interface RuleOriginMeta {
+  pluginId: string;
+}
+
+export function getRuleOriginMetadata(rule: CombinedRule) {
+  // com.grafana.origin=plugin/<plugin-identifier>
+  // Prom and Mimir do not support dots in label names 😔
+  const origin = rule.labels['__grafana_origin'];
+  if (!origin) {
+    return null;
+  }
+
+  const match = origin.match(/^plugin\/(?<pluginId>.+)$/);
+  if (!match?.groups) {
+    return null;
+  }
+
+  const pluginId = match.groups['pluginId'];
+  const pluginInstalled = isPluginInstalled(pluginId);
+
+  if (!pluginInstalled) {
+    return null;
+  }
+
+  return { pluginId };
+}
+
+function isPluginInstalled(pluginId: string) {
+  return Boolean(config.apps[pluginId]);
 }
 
 export function alertStateToReadable(state: PromAlertingRuleState | GrafanaAlertStateWithReason | AlertState): string {

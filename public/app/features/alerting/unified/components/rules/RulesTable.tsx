@@ -17,7 +17,8 @@ import { CombinedRule } from 'app/types/unified-alerting';
 import { DEFAULT_PER_PAGE_PAGINATION } from '../../../../../core/constants';
 import { useHasRuler } from '../../hooks/useHasRuler';
 import { Annotation } from '../../utils/constants';
-import { isGrafanaRulerRule, isGrafanaRulerRulePaused } from '../../utils/rules';
+import { getRuleOriginMetadata, isGrafanaRulerRule, isGrafanaRulerRulePaused } from '../../utils/rules';
+import { PluginOriginBadge } from '../../vertical-integrations/PluginOriginBadge';
 import { DynamicTable, DynamicTableColumnProps, DynamicTableItemProps } from '../DynamicTable';
 import { DynamicTableWithGuidelines } from '../DynamicTableWithGuidelines';
 import { ProvisioningBadge } from '../Provisioning';
@@ -171,13 +172,18 @@ function useColumns(showSummaryColumn: boolean, showGroupColumn: boolean, showNe
         size: showNextEvaluationColumn ? 4 : 5,
       },
       {
-        id: 'provisioned',
+        id: 'metadata',
         label: '',
         // eslint-disable-next-line react/display-name
         renderCell: ({ data: rule }) => {
           const rulerRule = rule.rulerRule;
-          const isGrafanaManagedRule = isGrafanaRulerRule(rulerRule);
 
+          const originMeta = getRuleOriginMetadata(rule);
+          if (originMeta) {
+            return <PluginOriginBadge pluginId={originMeta.pluginId} />;
+          }
+
+          const isGrafanaManagedRule = isGrafanaRulerRule(rulerRule);
           if (!isGrafanaManagedRule) {
             return null;
           }
