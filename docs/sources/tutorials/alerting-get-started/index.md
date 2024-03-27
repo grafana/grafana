@@ -212,7 +212,21 @@ In this tutorial, you have learned how to set up an alert, send alert notificati
 
 Check out the links below to continue your learning journey with Grafana's LGTM stack.
 
-- [Prometheus](/docs/grafana/<GRAFANA_VERSION>/features/datasources/prometheus/)
-- [Alerting Overview](/docs/grafana/<GRAFANA_VERSION>/alerting/)
-- [Alert rules](/docs/grafana/<GRAFANA_VERSION>/alerting/create-alerts/)
-- [Contact Points](/docs/grafana/<GRAFANA_VERSION>/alerting/notifications/)
+- [Prometheus][prometheus]
+- [Alerting Overview][alerting-overview]
+- [Alert rules][alert-rules]
+- [Contact points][contact-points]
+
+{{% docs/reference %}}
+[prometheus]: "/docs/grafana/ -> /docs/grafana/<GRAFANA_VERSION>/features/datasources/prometheus/"
+[prometheus]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/connect-externally-hosted/data-sources/prometheus/"
+
+[alerting-overview]: "/docs/grafana/ -> /docs/grafana/<GRAFANA_VERSION>/alerting/"
+[alerting-overview]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/alerting-and-irm/alerting/"
+
+[alert-rules]: "/docs/grafana/ -> /docs/grafana/<GRAFANA_VERSION>/alerting/create-alerts/"
+[alert-rules]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/alerting-and-irm/alerting/alerting-rules/"
+
+[contact-points]: "/docs/grafana/ -> /docs/grafana/<GRAFANA_VERSION>/alerting/fundamentals/contact-points/"
+[contact-points]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/alerting-and-irm/alerting/fundamentals/notifications/contact-points/"
+{{% /docs/reference %}}
