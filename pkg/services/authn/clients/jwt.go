@@ -2,6 +2,7 @@ package clients
 
 import (
 	"context"
+	"encoding/json"
 	"net/http"
 	"strings"
 
@@ -75,12 +76,23 @@ func (s *JWT) Authenticate(ctx context.Context, r *authn.Request) (*authn.Identi
 			SyncTeams:       s.cfg.JWTAuth.GroupsAttributePath != "",
 		}}
 
+	serializedClaims, _ := json.Marshal(&claims)
+	var data map[string]interface{}
+	_ = json.Unmarshal(serializedClaims, &data)
+
 	if key := s.cfg.JWTAuth.UsernameClaim; key != "" {
 		id.Login, _ = claims[key].(string)
 		id.ClientParams.LookUpParams.Login = &id.Login
+	} else if key := s.cfg.JWTAuth.NameAttributePath; key != "" {
+		id.Login, _ = authJWT.FindSubClaims(s.cfg.JWTAuth.NameAttributePath, data)
+		id.ClientParams.LookUpParams.Login = &id.Login
 	}
+
 	if key := s.cfg.JWTAuth.EmailClaim; key != "" {
 		id.Email, _ = claims[key].(string)
+		id.ClientParams.LookUpParams.Email = &id.Email
+	} else if key := s.cfg.JWTAuth.EmailAttributePath; key != "" {
+		id.Email, _ = authJWT.FindSubClaims(s.cfg.JWTAuth.EmailAttributePath, data)
 		id.ClientParams.LookUpParams.Email = &id.Email
 	}
 
