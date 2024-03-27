@@ -1,3 +1,8 @@
+import UFuzzy from '@leeoniya/ufuzzy';
+
+import type { Monaco } from '@grafana/ui';
+
+import { SUGGESTIONS_LIMIT } from '../../../language_provider';
 import { escapeLabelValueInExactSelector } from '../../../language_utils';
 import { FUNCTIONS } from '../../../promql';
 
@@ -31,10 +36,44 @@ export type DataProvider = {
   getSeriesLabels: (selector: string, otherLabels: Label[]) => Promise<string[]>;
 };
 
-// we order items like: history, functions, metrics
+const metricNamesSearchClient = new UFuzzy({
+  intraMode: 1,
+  intraChars: '[a-z0-9_:]', // characters allowed in metric names, according to the Prometheus data model
+});
 
-async function getAllMetricNamesCompletions(dataProvider: DataProvider): Promise<Completion[]> {
-  const metrics = await dataProvider.getAllMetricNames();
+export function fuzzySearchMetrics(haystack: Metric[], needle: string): Metric[] {
+  const filteredMetrics: Metric[] = [];
+  const metricNames = haystack.map((metric) => metric.name);
+  const [idxs] = metricNamesSearchClient.search(metricNames, needle);
+
+  for (const idx of idxs ?? []) {
+    const metric = haystack.at(idx);
+
+    if (metric && filteredMetrics.length < SUGGESTIONS_LIMIT) {
+      filteredMetrics.push(metric);
+    }
+  }
+
+  return filteredMetrics;
+}
+
+// we order items like: history, functions, metrics
+async function getAllMetricNamesCompletions(
+  dataProvider: DataProvider,
+  textInput: string,
+  enableAutocompleteSuggestionsUpdate: () => void
+): Promise<Completion[]> {
+  let metrics = await dataProvider.getAllMetricNames();
+
+  if (metrics.length > SUGGESTIONS_LIMIT) {
+    if (textInput) {
+      enableAutocompleteSuggestionsUpdate();
+      metrics = fuzzySearchMetrics(metrics, textInput);
+    } else {
+      metrics = metrics.slice(0, SUGGESTIONS_LIMIT);
+    }
+  }
+
   return metrics.map((metric) => ({
     type: 'METRIC_NAME',
     label: metric.name,
@@ -52,8 +91,13 @@ const FUNCTION_COMPLETIONS: Completion[] = FUNCTIONS.map((f) => ({
   documentation: f.documentation,
 }));
 
-async function getAllFunctionsAndMetricNamesCompletions(dataProvider: DataProvider): Promise<Completion[]> {
-  const metricNames = await getAllMetricNamesCompletions(dataProvider);
+async function getAllFunctionsAndMetricNamesCompletions(
+  dataProvider: DataProvider,
+  textInput: string,
+  enableAutocompleteSuggestionsUpdate: () => void
+): Promise<Completion[]> {
+  const metricNames = await getAllMetricNamesCompletions(dataProvider, textInput, enableAutocompleteSuggestionsUpdate);
+
   return [...FUNCTION_COMPLETIONS, ...metricNames];
 }
 
@@ -176,17 +220,31 @@ async function getLabelValuesForMetricCompletions(
   }));
 }
 
-export async function getCompletions(situation: Situation, dataProvider: DataProvider): Promise<Completion[]> {
+/**
+ * @param situation
+ * @param dataProvider
+ * @param textInput The text that's been typed so far within the current {@link Monaco.Range | Range}
+ */
+export async function getCompletions(
+  situation: Situation,
+  dataProvider: DataProvider,
+  textInput: string,
+  enableAutocompleteSuggestionsUpdate: () => void
+): Promise<Completion[]> {
   switch (situation.type) {
     case 'IN_DURATION':
       return DURATION_COMPLETIONS;
     case 'IN_FUNCTION':
-      return getAllFunctionsAndMetricNamesCompletions(dataProvider);
+      return getAllFunctionsAndMetricNamesCompletions(dataProvider, textInput, enableAutocompleteSuggestionsUpdate);
     case 'AT_ROOT': {
-      return getAllFunctionsAndMetricNamesCompletions(dataProvider);
+      return getAllFunctionsAndMetricNamesCompletions(dataProvider, textInput, enableAutocompleteSuggestionsUpdate);
     }
     case 'EMPTY': {
-      const metricNames = await getAllMetricNamesCompletions(dataProvider);
+      const metricNames = await getAllMetricNamesCompletions(
+        dataProvider,
+        textInput,
+        enableAutocompleteSuggestionsUpdate
+      );
       const historyCompletions = await getAllHistoryCompletions(dataProvider);
       return [...historyCompletions, ...FUNCTION_COMPLETIONS, ...metricNames];
     }

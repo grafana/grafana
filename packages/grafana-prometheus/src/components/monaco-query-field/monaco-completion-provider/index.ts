@@ -69,6 +69,7 @@ export function getCompletionProvider(
       column: position.column,
       lineNumber: position.lineNumber,
     };
+    const textInRange = model.getValueInRange(range);
 
     // Check to see if the browser supports window.getSelection()
     if (window.getSelection) {
@@ -81,7 +82,25 @@ export function getCompletionProvider(
 
     const offset = model.getOffsetAt(positionClone);
     const situation = getSituation(model.getValue(), offset);
-    const completionsPromise = situation != null ? getCompletions(situation, dataProvider) : Promise.resolve([]);
+    let updateAutocompleteSuggestionsOnInput = false;
+
+    /**
+     * Enable autocomplete suggestions update on every input change.
+     *
+     * @remarks
+     * If fuzzy search is used in `getCompletions` to trim down results to improve performance,
+     * we need to instruct Monaco to update the completions on every input change, so that the
+     * completions reflect the current input.
+     */
+    function enableAutocompleteSuggestionsUpdate() {
+      updateAutocompleteSuggestionsOnInput = true;
+    }
+
+    const completionsPromise =
+      situation != null
+        ? getCompletions(situation, dataProvider, textInRange, enableAutocompleteSuggestionsUpdate)
+        : Promise.resolve([]);
+
     return completionsPromise.then((items) => {
       // monaco by-default alphabetically orders the items.
       // to stop it, we use a number-as-string sortkey,
@@ -102,7 +121,7 @@ export function getCompletionProvider(
             }
           : undefined,
       }));
-      return { suggestions };
+      return { suggestions, incomplete: updateAutocompleteSuggestionsOnInput };
     });
   };
 
