@@ -121,12 +121,6 @@ Ensure you have a public dashboard footer logo or footer text set if they don't 
 
 #### Description and migration/mitigation
 
-[Provisioning: Provision dashboards into subfolders](https://github.com/grafana/grafana/pull/79793)
-
-[The alerting-related breaking change](https://raintank-corp.slack.com/archives/C045Y3PLNET/p1708629872856659?thread_ts=1707487168.475999&cid=C045Y3PLNET)
-
-<!-- need to find out what to do with above link -->
-
 The upgrade to enable subfolders can cause some issues with alerts in certain cases. If you've previously set up a folder that uses a forward slash in its name, you have an alert rule in that folder, and the notification policy is set to match that folder's name, notifications will be sent to the default receiver instead of the configured receiver.
 
 In these cases, we recommend that you take these steps before the upgrade to enable subfolders:
@@ -139,6 +133,8 @@ Please note that if you use file provisioning, you can upgrade and update the ro
 #### Learn more
 
 [Subfolders announcement](https://grafana.com/docs/grafana-cloud/whats-new/#subfolders)
+
+[Provisioning: Provision dashboards into subfolders PR](https://github.com/grafana/grafana/pull/79793)
 
 ### The Input data source is removed
 
