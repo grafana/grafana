@@ -1,11 +1,17 @@
 import { fireEvent, render, screen } from '@testing-library/react';
 import React from 'react';
+import * as reactUse from 'react-use';
 import { TestProvider } from 'test/helpers/TestProvider';
+import { MockDataSourceApi } from 'test/mocks/datasource_srv';
 
 import { DataSourceSrv, setDataSourceSrv } from '@grafana/runtime';
 import { SortOrder } from 'app/core/utils/richHistoryTypes';
 
 import { RichHistoryQueriesTab, RichHistoryQueriesTabProps } from './RichHistoryQueriesTab';
+
+const asyncSpy = jest
+  .spyOn(reactUse, 'useAsync')
+  .mockReturnValue({ loading: false, value: [new MockDataSourceApi('test-ds')] });
 
 const setup = (propOverrides?: Partial<RichHistoryQueriesTabProps>) => {
   const props: RichHistoryQueriesTabProps = {
@@ -26,7 +32,7 @@ const setup = (propOverrides?: Partial<RichHistoryQueriesTabProps>) => {
     richHistorySettings: {
       retentionPeriod: 30,
       activeDatasourcesOnly: false,
-      lastUsedDatasourceFilters: [],
+      lastUsedDatasourceFilters: ['test-ds'],
       starredTabAsFirstTab: false,
     },
     height: 100,
@@ -39,11 +45,15 @@ const setup = (propOverrides?: Partial<RichHistoryQueriesTabProps>) => {
 
 describe('RichHistoryQueriesTab', () => {
   beforeAll(() => {
+    const testDS = new MockDataSourceApi('test-ds');
     setDataSourceSrv({
       getList() {
-        return [];
+        return [testDS];
       },
     } as unknown as DataSourceSrv);
+  });
+  afterEach(() => {
+    asyncSpy.mockClear();
   });
   it('should render', async () => {
     setup();
@@ -58,5 +68,15 @@ describe('RichHistoryQueriesTab', () => {
     fireEvent.change(input, { target: { value: '|=' } });
 
     expect(updateFiltersSpy).toHaveBeenCalledWith(expect.objectContaining({ search: '|=' }));
+  });
+
+  it('should update the filter and get data once on mount, and update the filter when the it changes', async () => {
+    const updateFiltersSpy = jest.fn();
+    setup({ updateFilters: updateFiltersSpy });
+    expect(updateFiltersSpy).toHaveBeenCalledTimes(1);
+    expect(asyncSpy).toHaveBeenCalledTimes(1);
+    const input = await screen.findByLabelText(/remove/i);
+    fireEvent.click(input);
+    expect(updateFiltersSpy).toHaveBeenCalledTimes(2);
   });
 });
