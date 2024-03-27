@@ -10,7 +10,6 @@ import { Text } from '@grafana/ui/src/components/Text/Text';
 import { DataTrail } from './DataTrail';
 import { DataTrailCard } from './DataTrailCard';
 import { DataTrailsApp } from './DataTrailsApp';
-import { MetricsHeader } from './MetricsHeader';
 import { getTrailStore } from './TrailStore/TrailStore';
 import { getDatasourceForNewTrail, getUrlForTrail, newMetricsTrail } from './utils';
 
@@ -53,12 +52,12 @@ export class DataTrailsHome extends SceneObjectBase<DataTrailsHomeState> {
 
     return (
       <div className={styles.container}>
-        <Stack gap={2} justifyContent={'space-between'} alignItems={'center'}>
-          <MetricsHeader />
+        <Stack direction={'column'} gap={1} alignItems={'start'}>
           <Button icon="plus" size="md" variant="primary" onClick={model.onNewMetricsTrail}>
             New metric exploration
           </Button>
         </Stack>
+
         <Stack gap={5}>
           <div className={styles.column}>
             <Text variant="h4">Recent metrics</Text>
@@ -105,7 +104,6 @@ function getAppFor(model: SceneObject) {
 function getStyles(theme: GrafanaTheme2) {
   return {
     container: css({
-      padding: theme.spacing(2),
       flexGrow: 1,
       display: 'flex',
       flexDirection: 'column',

@@ -124,7 +124,7 @@ export function ConfigPublicDashboardBase({
         <UnsupportedDataSourcesAlert unsupportedDataSources={unsupportedDatasources.join(', ')} />
       )}
 
-      {hasEmailSharingEnabled && <EmailSharingConfiguration />}
+      {hasEmailSharingEnabled && <EmailSharingConfiguration dashboard={dashboard} />}
 
       <Field
         label={t('public-dashboard.config.dashboard-url-field-label', 'Dashboard URL')}

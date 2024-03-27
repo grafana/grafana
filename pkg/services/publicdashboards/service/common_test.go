@@ -47,5 +47,6 @@ func newPublicDashboardServiceImpl(
 		store:              publicDashboardStore,
 		serviceWrapper:     serviceWrapper,
 		license:            license,
+		features:           featuremgmt.WithFeatures(),
 	}, sqlStore
 }

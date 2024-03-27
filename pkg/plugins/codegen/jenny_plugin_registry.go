@@ -8,6 +8,7 @@ import (
 	"strings"
 
 	"github.com/grafana/codejen"
+	"github.com/grafana/grafana/pkg/plugins/pfs"
 )
 
 var registryPath = filepath.Join("pkg", "registry", "schemas")
@@ -27,21 +28,22 @@ func (jenny *PluginRegistryJenny) JennyName() string {
 	return "PluginRegistryJenny"
 }
 
-func (jenny *PluginRegistryJenny) Generate(files []string) (*codejen.File, error) {
-	if len(files) == 0 {
+func (jenny *PluginRegistryJenny) Generate(decls ...*pfs.PluginDecl) (*codejen.File, error) {
+	if len(decls) == 0 {
 		return nil, nil
 	}
-	schemas := make([]Schema, len(files))
-	for i, file := range files {
-		name, err := getSchemaName(file)
+	schemas := make([]Schema, len(decls))
+	for i, decl := range decls {
+		variant := fmt.Sprintf("%s.cue", strings.ToLower(decl.SchemaInterface.Name))
+		name, err := getSchemaName(decl.PluginPath)
 		if err != nil {
 			return nil, fmt.Errorf("unable to find schema name: %s", err)
 		}
 
 		schemas[i] = Schema{
 			Name:     name,
-			Filename: filepath.Base(file),
-			FilePath: file,
+			Filename: variant,
+			FilePath: "./" + filepath.Join("public", "app", "plugins", decl.PluginPath, variant),
 		}
 	}
 
@@ -65,7 +67,7 @@ func getSchemaName(path string) (string, error) {
 	if len(parts) < 2 {
 		return "", fmt.Errorf("path should contain more than 2 elements")
 	}
-	folderName := parts[len(parts)-2]
+	folderName := parts[len(parts)-1]
 	if renamed, ok := renamedPlugins[folderName]; ok {
 		folderName = renamed
 	}

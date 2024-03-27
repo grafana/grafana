@@ -10,12 +10,6 @@ import {
 } from '@msagl/core';
 import { parseDot } from '@msagl/parser';
 
-addEventListener('message', async (event) => {
-  const { nodes, edges, config } = event.data;
-  const [newNodes, newEdges] = layout(nodes, edges, config);
-  postMessage({ nodes: newNodes, edges: newEdges });
-});
-
 /**
  * Use d3 force layout to lay the nodes in a sensible way. This function modifies the nodes adding the x,y positions
  * and also fills in node references in edges instead of node ids.
@@ -142,13 +136,13 @@ function createMappings(nodes, edges) {
   // Key is an iteration index and value is actual ID of the node
   const DOTToIdMap = {};
 
-  // Crate the maps both ways
   let index = 0;
   for (const node of nodes) {
     idToDOTMap[node.id] = index.toString(10);
     DOTToIdMap[index.toString(10)] = node.id;
     index++;
   }
+
   for (const edge of edges) {
     mappedEdges.push({ source: idToDOTMap[edge.source], target: idToDOTMap[edge.target] });
   }
