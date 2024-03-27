@@ -81,7 +81,6 @@ describe('ServiceAccountsListPage tests', () => {
     setup({
       serviceAccounts: [getDefaultServiceAccount()],
     });
-    screen.debug();
     expect(screen.getByText(/Data source scavenger/)).toBeInTheDocument();
     expect(screen.getByText(/sa-data-source-scavenger/)).toBeInTheDocument();
     expect(screen.getByText(/Editor/)).toBeInTheDocument();
