@@ -16,8 +16,8 @@ import (
 )
 
 var (
-	errInvalidCode = errutil.BadRequest("user.code.invalid")
-	errExpiredCode = errutil.BadRequest("user.code.expired")
+	errInvalidCode = errutil.BadRequest("user.code.invalid", errutil.WithPublicMessage("Invalid verification code"))
+	errExpiredCode = errutil.BadRequest("user.code.expired", errutil.WithPublicMessage("Verification code has expired"))
 )
 
 var _ user.Verifier = (*Verifier)(nil)
