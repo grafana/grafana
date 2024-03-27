@@ -11,8 +11,8 @@ import {
 } from './types';
 
 export interface GroupVersionResource {
-  group?: string;
-  version?: string;
+  group: string;
+  version: string;
   resource: string;
 }
 
