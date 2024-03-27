@@ -43,6 +43,10 @@ Time series visualizations are the default and primary way to visualize time ser
 You can migrate from the old Graph visualization to the new time series visualization. To migrate, open the panel and click the **Migrate** button in the side pane.
 {{% /admonition %}}
 
+The following video guides you through the creation steps and common customizations of time series visualizations and is great for beginners:
+
+{{< youtube id="RKtW87cPxsw" >}}
+
 ## Tooltip options
 
 Tooltip options control the information overlay that appears when you hover over data points in the graph.
