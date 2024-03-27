@@ -50,7 +50,7 @@ class K8sAPI implements PlaylistAPI {
   readonly server: ResourceServer<PlaylistSpec>;
 
   constructor() {
-    this.server = new ScopedResourceServer({
+    this.server = new ScopedResourceServer<PlaylistSpec>({
       group: 'playlist.grafana.app',
       version: 'v0alpha1',
       resource: 'playlists',

@@ -16,12 +16,12 @@ let instance: ScopeServers | undefined = undefined;
 export function getScopeServers() {
   if (!instance) {
     instance = {
-      scopes: new ScopedResourceServer({
+      scopes: new ScopedResourceServer<Scope>({
         group: 'scope.grafana.app',
         version: 'v0alpha1',
         resource: 'scopes',
       }),
-      dashboards: new ScopedResourceServer({
+      dashboards: new ScopedResourceServer<ScopeDashboard>({
         group: 'scope.grafana.app',
         version: 'v0alpha1',
         resource: 'scopedashboards',

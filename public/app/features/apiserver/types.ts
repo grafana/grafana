@@ -9,9 +9,9 @@
  */
 
 /** The object type and version */
-export interface TypeMeta {
+export interface TypeMeta<K = string> {
   apiVersion: string;
-  kind: string;
+  kind: K;
 }
 
 export interface ObjectMeta {
@@ -57,12 +57,12 @@ type GrafanaAnnotations = {
   [key: string]: string | undefined;
 };
 
-export interface Resource<T = object> extends TypeMeta {
+export interface Resource<T = object, K = string> extends TypeMeta<K> {
   metadata: ObjectMeta;
   spec: T;
 }
 
-export interface ResourceForCreate<T = object> extends Partial<TypeMeta> {
+export interface ResourceForCreate<T = object, K = string> extends Partial<TypeMeta<K>> {
   metadata: Partial<ObjectMeta>;
   spec: T;
 }
@@ -73,18 +73,37 @@ export interface ListMeta {
   remainingItemCount?: number;
 }
 
-export interface ResourceList<T> extends TypeMeta {
+export interface ResourceList<T, K = string> extends TypeMeta {
   metadata: ListMeta;
-  items: Array<Resource<T>>;
+  items: Array<Resource<T, K>>;
 }
 
-export interface ListOptions {
+export type ListOptionsLabelSelector<T = {}> =
+  | string
+  | Array<
+      | {
+          key: keyof T;
+          operator: '=' | '!=';
+          value: string;
+        }
+      | {
+          key: keyof T;
+          operator: 'in' | 'notin';
+          value: string[];
+        }
+      | {
+          key: keyof T;
+          operator: '' | '!';
+        }
+    >;
+
+export interface ListOptions<T = {}> {
   // continue the list at a given batch
   continue?: string;
 
   // Query by labels
   // https://kubernetes.io/docs/concepts/overview/working-with-objects/labels/#label-selectors
-  labelSelector?: string;
+  labelSelector?: ListOptionsLabelSelector<T>;
 
   // Limit the response count
   limit?: number;
@@ -107,10 +126,10 @@ export interface MetaStatus {
   details?: object;
 }
 
-export interface ResourceServer<T = object> {
-  create(obj: ResourceForCreate<T>): Promise<void>;
-  get(name: string): Promise<Resource<T>>;
-  list(opts?: ListOptions): Promise<ResourceList<T>>;
-  update(obj: ResourceForCreate<T>): Promise<Resource<T>>;
+export interface ResourceServer<T = object, K = string> {
+  create(obj: ResourceForCreate<T, K>): Promise<void>;
+  get(name: string): Promise<Resource<T, K>>;
+  list(opts?: ListOptions<T>): Promise<ResourceList<T, K>>;
+  update(obj: ResourceForCreate<T, K>): Promise<Resource<T, K>>;
   delete(name: string): Promise<MetaStatus>;
 }

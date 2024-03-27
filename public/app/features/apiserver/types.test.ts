@@ -6,7 +6,7 @@ interface MyObjSpec {
 }
 
 describe('simple typescript tests', () => {
-  const val: Resource<MyObjSpec> = {
+  const val: Resource<MyObjSpec, 'MyObject'> = {
     apiVersion: 'xxx',
     kind: 'MyObject',
     metadata: {
