@@ -1,18 +1,9 @@
-import { css } from '@emotion/css';
 import pluralize from 'pluralize';
 import React, { useEffect, useState } from 'react';
 import { connect, ConnectedProps } from 'react-redux';
 
-import { GrafanaTheme2, OrgRole } from '@grafana/data';
-import {
-  ConfirmModal,
-  FilterInput,
-  LinkButton,
-  RadioButtonGroup,
-  useStyles2,
-  InlineField,
-  EmptyState,
-} from '@grafana/ui';
+import { OrgRole } from '@grafana/data';
+import { ConfirmModal, FilterInput, LinkButton, RadioButtonGroup, InlineField, EmptyState, Box } from '@grafana/ui';
 import EmptyListCTA from 'app/core/components/EmptyListCTA/EmptyListCTA';
 import { Page } from 'app/core/components/Page/Page';
 import config from 'app/core/config';
@@ -82,7 +73,6 @@ export const ServiceAccountsListPageUnconnected = ({
   changeStateFilter,
   createServiceAccountToken,
 }: Props): JSX.Element => {
-  const styles = useStyles2(getStyles);
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [isRemoveModalOpen, setIsRemoveModalOpen] = useState(false);
   const [isDisableModalOpen, setIsDisableModalOpen] = useState(false);
@@ -211,12 +201,13 @@ export const ServiceAccountsListPageUnconnected = ({
               width={50}
             />
           </InlineField>
-          <RadioButtonGroup
-            options={availableFilters}
-            onChange={onStateFilterChange}
-            value={serviceAccountStateFilter}
-            className={styles.filter}
-          />
+          <Box marginBottom={1}>
+            <RadioButtonGroup
+              options={availableFilters}
+              onChange={onStateFilterChange}
+              value={serviceAccountStateFilter}
+            />
+          </Box>
         </div>
         {!isLoading && !noServiceAccountsCreated && serviceAccounts.length === 0 && <EmptyState variant="not-found" />}
         {!isLoading && noServiceAccountsCreated && (
@@ -288,21 +279,6 @@ export const ServiceAccountsListPageUnconnected = ({
       </Page.Contents>
     </Page>
   );
-};
-
-export const getStyles = (theme: GrafanaTheme2) => {
-  return {
-    filter: css({
-      margin: `0 ${theme.spacing(1)}`,
-    }),
-    pageHeader: css({
-      display: 'flex',
-      marginBottom: theme.spacing(2),
-    }),
-    filterDelimiter: css({
-      flexGrow: 1,
-    }),
-  };
 };
 
 const ServiceAccountsListPage = connector(ServiceAccountsListPageUnconnected);
