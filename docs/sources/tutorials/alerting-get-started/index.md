@@ -39,7 +39,7 @@ The sample application generates real data and exposes metrics, which are stored
 
 Download the files to your local machine.
 
-1. Clone the [tutorial environment repository](www.github.com/grafana/tutorial-environment).
+1. Clone the [tutorial environment repository](https://github.com/grafana/tutorial-environment).
 
    ```promql
    git clone https://github.com/grafana/tutorial-environment.git
