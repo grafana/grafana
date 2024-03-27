@@ -18480,6 +18480,7 @@ __metadata:
     regenerator-runtime: "npm:0.14.1"
     reselect: "npm:5.1.1"
     rimraf: "npm:6.0.1"
+    rollup-plugin-visualizer: "npm:^5.12.0"
     rudder-sdk-js: "npm:2.48.44"
     rxjs: "npm:7.8.1"
     sass: "npm:1.83.4"
@@ -27354,6 +27355,25 @@ __metadata:
   peerDependencies:
     rollup: ^3.0.0||^4.0.0
   checksum: 10/4489b8cd702eeb82b693cb4b11557cbb24c4bac68f8c5997ad7288a998b9db821c11d4682cd2892dc17ddb19228ee725de274b396b262d5fef4e05066cd07616
+  languageName: node
+  linkType: hard
+
+"rollup-plugin-visualizer@npm:^5.12.0":
+  version: 5.12.0
+  resolution: "rollup-plugin-visualizer@npm:5.12.0"
+  dependencies:
+    open: "npm:^8.4.0"
+    picomatch: "npm:^2.3.1"
+    source-map: "npm:^0.7.4"
+    yargs: "npm:^17.5.1"
+  peerDependencies:
+    rollup: 2.x || 3.x || 4.x
+  peerDependenciesMeta:
+    rollup:
+      optional: true
+  bin:
+    rollup-plugin-visualizer: dist/bin/cli.js
+  checksum: 10/47358feb672291d6edcfd94197577c192a84c24cb644119425dae8241fb6f5a52556efd0c501f38b276c07534642a80c0885ef681babb474e83c7b5a3b475b84
   languageName: node
   linkType: hard
 

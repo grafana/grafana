@@ -3,7 +3,8 @@ import { move, remove } from 'fs-extra';
 import { createRequire } from 'node:module';
 import { resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { defineConfig } from 'vite';
+import { visualizer } from 'rollup-plugin-visualizer';
+import { defineConfig, splitVendorChunkPlugin, type PluginOption } from 'vite';
 
 const require = createRequire(import.meta.url);
 
@@ -25,7 +26,13 @@ export default defineConfig({
     host: '0.0.0.0',
     port: 5173,
   },
-  plugins: [react(), angularHtmlImport(), { ...moveAssets(), apply: 'build' }],
+  plugins: [
+    react(),
+    splitVendorChunkPlugin(),
+    angularHtmlImport(),
+    { ...moveAssets(), apply: 'build' },
+    { ...visualizer(), apply: 'build' } as PluginOption,
+  ],
   optimizeDeps: {
     include: [
       'monaco-editor/esm/vs/editor/editor.worker',
