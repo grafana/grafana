@@ -133,6 +133,10 @@ function isPluginInstalled(pluginId: string) {
   return Boolean(config.apps[pluginId]);
 }
 
+export function isPluginProvidedRule(rule: CombinedRule): boolean {
+  return Boolean(getRuleOriginMetadata(rule));
+}
+
 export function alertStateToReadable(state: PromAlertingRuleState | GrafanaAlertStateWithReason | AlertState): string {
   if (state === PromAlertingRuleState.Inactive) {
     return 'Normal';
