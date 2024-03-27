@@ -8,13 +8,17 @@ import (
 )
 
 // Make sure we implement both store + admin
-var _ entity.EntityStoreServer = &fakeEntityStore{}
+var _ entity.EntityStoreServerWrapper = &fakeEntityStore{}
 
-func ProvideFakeEntityServer() entity.EntityStoreServer {
+func ProvideFakeEntityServer() entity.EntityStoreServerWrapper {
 	return &fakeEntityStore{}
 }
 
 type fakeEntityStore struct{}
+
+func (i fakeEntityStore) Stop(ctx context.Context) error {
+	return fmt.Errorf("unimplemented")
+}
 
 func (i fakeEntityStore) Create(ctx context.Context, r *entity.CreateEntityRequest) (*entity.CreateEntityResponse, error) {
 	return nil, fmt.Errorf("unimplemented")

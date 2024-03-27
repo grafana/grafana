@@ -24,6 +24,7 @@ import (
 	filestorage "github.com/grafana/grafana/pkg/apiserver/storage/file"
 	"github.com/grafana/grafana/pkg/infra/appcontext"
 	"github.com/grafana/grafana/pkg/infra/db"
+	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/middleware"
 	"github.com/grafana/grafana/pkg/modules"
@@ -99,8 +100,9 @@ type service struct {
 	cfg      *setting.Cfg
 	features featuremgmt.FeatureToggles
 
-	stopCh    chan struct{}
-	stoppedCh chan error
+	stopCh      chan struct{}
+	stoppedCh   chan error
+	cleanupFunc func()
 
 	db       db.DB
 	rr       routing.RouteRegister
@@ -188,6 +190,8 @@ func (s *service) RegisterAPI(b builder.APIGroupBuilder) {
 }
 
 func (s *service) start(ctx context.Context) error {
+	logger := log.New("apiserver")
+
 	// Get the list of groups the server will support
 	builders := s.builders
 
@@ -254,6 +258,15 @@ func (s *service) start(ctx context.Context) error {
 		storeServer, err := sqlstash.ProvideSQLEntityServer(eDB)
 		if err != nil {
 			return err
+		}
+		s.cleanupFunc = func() {
+			// FIXME: BackgroundService only has Run method, which is very
+			// limited and does not allow a more granular control in the
+			// shutdown sequence of a service, so we need to use a
+			// context.Background() to allow proper termination
+			if err := storeServer.Stop(context.Background()); err != nil {
+				logger.Error("stop SQL Entity Server", "error", err)
+			}
 		}
 
 		store := entity.NewEntityStoreClientLocal(storeServer)
@@ -420,6 +433,11 @@ func (s *service) DirectlyServeHTTP(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *service) running(ctx context.Context) error {
+	defer func() {
+		if s.cleanupFunc != nil {
+			s.cleanupFunc()
+		}
+	}()
 	select {
 	case err := <-s.stoppedCh:
 		if err != nil {
