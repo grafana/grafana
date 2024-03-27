@@ -8,8 +8,22 @@ export interface ContentOutlineItemBaseProps {
   panelId: string;
   title: string;
   icon: string;
+  /**
+   * Custom offset from the top of the Explore container when scrolling to this item.
+   * Items like query row need some offset so the top of the query row is not hidden behind the header.
+   */
   customTopOffset?: number;
+  /**
+   * The level of indentation for this item.
+   * - `root` is the top level item.
+   * - `child` is an item that is a child of an item with `root` level.
+   */
   level?: INDENT_LEVELS;
+  /**
+   * Merges a single child of this item with this item.
+   * e.g. It doesn't make sense to nest a single query row under a queries container
+   * because user can navigate to the query row by navigating to the queries container.
+   */
   mergeSingleChild?: boolean;
 }
 
