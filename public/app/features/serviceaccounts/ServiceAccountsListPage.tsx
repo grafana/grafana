@@ -13,6 +13,7 @@ import {
   InlineField,
   Pagination,
   Stack,
+  EmptyState,
 } from '@grafana/ui';
 import EmptyListCTA from 'app/core/components/EmptyListCTA/EmptyListCTA';
 import { Page } from 'app/core/components/Page/Page';
@@ -219,6 +220,7 @@ export const ServiceAccountsListPageUnconnected = ({
             className={styles.filter}
           />
         </div>
+        {!isLoading && !noServiceAccountsCreated && serviceAccounts.length === 0 && <EmptyState variant="not-found" />}
         {!isLoading && noServiceAccountsCreated && (
           <>
             <EmptyListCTA

@@ -1,8 +1,8 @@
 import React, { useCallback } from 'react';
 
 import { DataFrameView, toDataFrame } from '@grafana/data';
-import { Button, Card } from '@grafana/ui';
-import { Trans } from 'app/core/internationalization';
+import { Button, EmptyState } from '@grafana/ui';
+import { Trans, t } from 'app/core/internationalization';
 import { useKeyNavigationListener } from 'app/features/search/hooks/useSearchKeyboardSelection';
 import { SearchResultsProps, SearchResultsTable } from 'app/features/search/page/components/SearchResultsTable';
 import { useSearchStateManager } from 'app/features/search/state/SearchStateManager';
@@ -89,16 +89,15 @@ export function SearchView({ width, height, canSelect }: SearchViewProps) {
   if (value.totalRows === 0) {
     return (
       <div style={{ width }}>
-        <Card>
-          <Card.Heading>
-            <Trans i18nKey="browse-dashboards.no-results.text">No results found for your query.</Trans>
-          </Card.Heading>
-          <Card.Actions>
+        <EmptyState
+          button={
             <Button variant="secondary" onClick={stateManager.onClearSearchAndFilters}>
               <Trans i18nKey="browse-dashboards.no-results.clear">Clear search and filters</Trans>
             </Button>
-          </Card.Actions>
-        </Card>
+          }
+          message={t('browse-dashboards.no-results.text', 'No results found for your query')}
+          variant="not-found"
+        />
       </div>
     );
   }
