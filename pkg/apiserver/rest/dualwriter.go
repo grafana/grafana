@@ -200,8 +200,17 @@ func (d *DualWriter) Update(ctx context.Context, name string, objInfo rest.Updat
 	// if CurrentMode == Mode3 {
 	// }
 
-	// if CurrentMode == Mode4 {
-	// }
+	if CurrentMode == Mode4 {
+		old, err := d.Get(ctx, name, &metav1.GetOptions{})
+		if err != nil {
+			return nil, false, err
+		}
+		objInfo = &updateWrapper{
+			upstream: objInfo,
+			updated:  old,
+		}
+		return d.Storage.Update(ctx, name, objInfo, createValidation, updateValidation, forceAllowCreate, options)
+	}
 
 	return nil, false, fmt.Errorf("dual writer mode is undefined")
 }
