@@ -200,6 +200,7 @@ export const BarChartPanel = ({ data, options, fieldConfig, width, height, timeZ
     );
   };
 
+  // JEV: REFACTOR: also uses this method in timeseries
   const renderLegend = (config: UPlotConfigBuilder) => {
     const { legend } = options;
     if (!config || legend.showLegend === false) {
@@ -318,6 +319,8 @@ export const BarChartPanel = ({ data, options, fieldConfig, width, height, timeZ
       prepConfig={prepConfig}
       propsToDiff={propsToDiff}
       preparePlotFrame={(f) => f[0]} // already processed in by the panel above!
+      // JEV: REFACTOR: build legend before here? so as to remove the need for 2 props?
+      // JEV: REFACTOR: build legend at panel level?
       renderLegend={renderLegend}
       legend={options.legend}
       timeZone={timeZone}
