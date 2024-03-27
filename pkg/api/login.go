@@ -127,12 +127,11 @@ func (hs *HTTPServer) LoginView(c *contextmodel.ReqContext) {
 
 	if c.IsSignedIn {
 		// Assign login token to auth proxy users if enable_login_token = true
-		if hs.Cfg.AuthProxyEnabled &&
-			hs.Cfg.AuthProxyEnableLoginToken &&
-			c.SignedInUser.AuthenticatedBy == loginservice.AuthProxyAuthModule {
+		// LDAP users authenticated by auth proxy are also assigned login token but their auth module is LDAP
+		if hs.Cfg.AuthProxyEnabled && hs.Cfg.AuthProxyEnableLoginToken &&
+			(c.SignedInUser.AuthenticatedBy == loginservice.AuthProxyAuthModule || c.SignedInUser.AuthenticatedBy == loginservice.LDAPAuthModule) {
 			user := &user.User{ID: c.SignedInUser.UserID, Email: c.SignedInUser.Email, Login: c.SignedInUser.Login}
-			err := hs.loginUserWithUser(user, c)
-			if err != nil {
+			if err := hs.loginUserWithUser(user, c); err != nil {
 				c.Handle(hs.Cfg, http.StatusInternalServerError, "Failed to sign in user", err)
 				return
 			}
