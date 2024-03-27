@@ -29,7 +29,7 @@ For general documentation on querying data sources in Grafana, see [Query and tr
 
 The CloudWatch data source can query data from both CloudWatch metrics and CloudWatch Logs APIs, each with its own specialized query editor.
 
-- [CloudWatch metrics](#query-cloudwatch-metrics)
+- [CloudWatch Metrics](#query-cloudwatch-metrics)
 - [CloudWatch Logs](#query-cloudwatch-logs)
 
 {{< figure src="/static/img/docs/cloudwatch/cloudwatch-query-editor-api-modes-8.3.0.png" max-width="500px" class="docs-image--right" caption="CloudWatch API modes" >}}
@@ -45,10 +45,10 @@ You can build two types of queries with the CloudWatch query editor:
 
 ### Create a Metric Search query
 
-To create a valid Metric Search query, specify the namespace, metric name, and at least one statistic.
+To create a valid Metric Search query, specify the namespace, metric name, and at least one statistic. Dimensions are optional, but for a dimension to be considerd part of the query it must have both a key and a value.
 
-If you enable `Match Exact`, you must also specify all dimensions of the metric you're querying so that the [metric schema](https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/search-expression-syntax.html) matches exactly.
-If `Match Exact` is disabled, you can specify any number of dimensions on which you'd like to filter.
+If you enable `Match Exact`, you must also specify all dimensions of the metric you're querying so that the [metric schema](https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/search-expression-syntax.html) matches exactly. The query will only return metrics that have the specified dimensions and no others, so dimensions that are on the metric but that you are not filtering on must be added as a wildcard (`*`) filter.
+If `Match Exact` is disabled, you can specify any number of dimensions on which you'd like to filter. The query will return any metrics that match at least the namespace, metric name, and all defined dimensions, whether or not they have additional dimensions.
 The data source returns up to 100 metrics matching your filter criteria.
 
 You can also augment queries by using [template variables]({{< relref "./template-variables" >}}).
