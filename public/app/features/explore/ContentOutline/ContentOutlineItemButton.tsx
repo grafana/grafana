@@ -48,7 +48,7 @@ export function ContentOutlineItemButton({
     if (textRef.current) {
       setIsOverflowing(textRef.current?.scrollWidth > textRef.current?.clientWidth);
     }
-  }, []);
+  }, [title]);
 
   const body = (
     <div className={cx(styles.buttonContainer, indentStyle)}>
@@ -79,6 +79,8 @@ export function ContentOutlineItemButton({
       </button>
     </div>
   );
+
+  console.log('ContentOutlineItemButton', { title, isOverflowing, contentOutlineExpanded });
 
   // if there's a tooltip we want to show it if the text is overflowing
   const showTooltip = tooltip && (!contentOutlineExpanded || isOverflowing);
