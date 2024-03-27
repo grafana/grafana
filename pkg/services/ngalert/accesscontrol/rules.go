@@ -67,8 +67,7 @@ func (r *RuleService) getRulesReadEvaluator(rules ...*models.AlertRule) accessco
 		added[rule.NamespaceUID] = struct{}{}
 		evals = append(evals, getReadFolderAccessEvaluator(rule.NamespaceUID))
 	}
-	dsEvals := r.getRulesQueryEvaluator(rules...)
-	return accesscontrol.EvalAll(append(evals, dsEvals)...)
+	return accesscontrol.EvalAll(evals...)
 }
 
 // getRulesQueryEvaluator constructs accesscontrol.Evaluator that checks all permissions to query data sources used by the provided rules
@@ -113,7 +112,12 @@ func (r *RuleService) AuthorizeDatasourceAccessForRule(ctx context.Context, user
 // Returns false if the requester does not have enough permissions, and error if something went wrong during the permission evaluation.
 func (r *RuleService) HasAccessToRuleGroup(ctx context.Context, user identity.Requester, rules models.RulesGroup) (bool, error) {
 	eval := r.getRulesReadEvaluator(rules...)
-	return r.HasAccess(ctx, user, eval)
+	has, err := r.HasAccess(ctx, user, eval)
+	if !has || err != nil {
+		return has, err
+	}
+	dsEvals := r.getRulesQueryEvaluator(rules...)
+	return r.HasAccess(ctx, user, dsEvals)
 }
 
 // AuthorizeAccessToRuleGroup checks that the identity.Requester has permissions to all rules, which means that it has permissions to:
@@ -123,14 +127,20 @@ func (r *RuleService) HasAccessToRuleGroup(ctx context.Context, user identity.Re
 // Returns error if at least one permissions is missing or if something went wrong during the permission evaluation
 func (r *RuleService) AuthorizeAccessToRuleGroup(ctx context.Context, user identity.Requester, rules models.RulesGroup) error {
 	eval := r.getRulesReadEvaluator(rules...)
-	return r.HasAccessOrError(ctx, user, eval, func() string {
+	actionFn := func() string {
 		var groupName, folderUID string
 		if len(rules) > 0 {
 			groupName = rules[0].RuleGroup
 			folderUID = rules[0].NamespaceUID
 		}
 		return fmt.Sprintf("access rule group '%s' in folder '%s'", groupName, folderUID)
-	})
+	}
+	err := r.HasAccessOrError(ctx, user, eval, actionFn)
+	if err != nil {
+		return err
+	}
+	dsEvals := r.getRulesQueryEvaluator(rules...)
+	return r.HasAccessOrError(ctx, user, dsEvals, actionFn)
 }
 
 // AuthorizeRuleChanges analyzes changes in the rule group, and checks whether the changes are authorized.
