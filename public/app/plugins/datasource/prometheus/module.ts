@@ -14,10 +14,10 @@ import { PrometheusDatasource } from './datasource';
 
 const usePackage = config.featureToggles.usePrometheusFrontendPackage;
 
-const PrometheusDataSourceUsed = usePackage ? PrometheusDatasource : PrometheusDatasourcePackage;
-const PromQueryEditorByAppUsed = usePackage ? PromQueryEditorByApp : PromQueryEditorByAppPackage;
-const ConfigEditorUsed = usePackage ? ConfigEditor : ConfigEditorPackage;
-const PromCheatSheetUsed = usePackage ? PromCheatSheet : PromCheatSheetPackage;
+const PrometheusDataSourceUsed = usePackage ? PrometheusDatasourcePackage : PrometheusDatasource;
+const PromQueryEditorByAppUsed = usePackage ? PromQueryEditorByAppPackage : PromQueryEditorByApp;
+const ConfigEditorUsed = usePackage ? ConfigEditorPackage : ConfigEditor;
+const PromCheatSheetUsed = usePackage ? PromCheatSheetPackage : PromCheatSheet;
 
 // @ts-ignore These type errors will be removed when we fully migrate to the @grafana/prometheus package
 export const plugin = new DataSourcePlugin(PrometheusDataSourceUsed)
