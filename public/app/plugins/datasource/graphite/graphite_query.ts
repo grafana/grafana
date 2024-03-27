@@ -114,6 +114,8 @@ export default class GraphiteQuery {
         // bug fix for parsing multiple functions as params
         handleMultipleSeriesByTagsParams(astNode);
 
+        handleDivideSeriesListsNestedFunctions(astNode);
+
         each(astNode.params, (param) => {
           this.parseTargetRecursive(param, innerFunc);
         });
@@ -365,5 +367,75 @@ function handleMultipleSeriesByTagsParams(astNode: AstNode) {
 
       return p;
     });
+  }
+}
+
+/**
+ * Converts all nested functions as parametors (recursively) to strings
+ */
+function handleDivideSeriesListsNestedFunctions(astNode: AstNode) {
+  // if divideSeriesLists function, the second parameters should be strings
+  if (astNode.name === 'divideSeriesLists' && astNode.params && astNode.params.length >= 2) {
+    let count = 0;
+
+    astNode.params = astNode.params.map((p: AstNode) => {
+      if (p.type === 'function') {
+        count += 1;
+      }
+
+      if (count === 2 && p.type === 'function') {
+        // convert nested 2nd functions as parametors to a strings
+        // all nested functions should be strings
+        // if the node is a function it will have params
+        // if these params are functions, they will have params
+        // at some point we will have to add the params as strings
+        // then wrap them in the function
+        let functionString = '';
+        let s = p.name + '(' + nestedFunctionsToString(p, functionString);
+
+        p = {
+          type: 'string',
+          value: s,
+        };
+      }
+
+      return p;
+    });
+  }
+
+  return astNode;
+}
+
+function nestedFunctionsToString(node: AstNode, functionString: string): string | undefined {
+  let count = 0;
+  if (node.params) {
+    count++;
+
+    const paramsLength = node.params?.length ?? 0;
+
+    node.params.forEach((innerNode: AstNode, idx: number) => {
+      if (idx < paramsLength - 1) {
+        functionString += switchCase(innerNode, functionString) + ',';
+      } else {
+        functionString += switchCase(innerNode, functionString);
+      }
+    });
+
+    return functionString + ')';
+  } else {
+    return (functionString += switchCase(node, functionString));
+  }
+}
+
+function switchCase(node: AstNode, functionString: string) {
+  switch (node.type) {
+    case 'function':
+      functionString += node.name + '(';
+      return nestedFunctionsToString(node, functionString);
+    case 'metric':
+      const segmentString = join(map(node.segments, 'value'), '.');
+      return segmentString;
+    default:
+      return node.value;
   }
 }
