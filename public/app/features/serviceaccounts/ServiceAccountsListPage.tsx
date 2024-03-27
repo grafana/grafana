@@ -226,8 +226,6 @@ export const ServiceAccountsListPageUnconnected = ({
           </>
         )}
 
-        {/**InteractiveTable */}
-        {/**TODO: Skeleton */}
         {(isLoading || serviceAccounts.length !== 0) && (
           <ServiceAccountTable
             services={serviceAccounts}
@@ -241,6 +239,7 @@ export const ServiceAccountsListPageUnconnected = ({
             onDisable={onDisableButtonClick}
             onEnable={onEnable}
             onAddTokenClick={onTokenAdd}
+            isLoading={isLoading}
           />
         )}
         {currentServiceAccount && (
