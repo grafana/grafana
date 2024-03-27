@@ -88,7 +88,7 @@ const createEditPopover: CreatePlotOverlay = (element, event, plot) => {
 
         $compile(content)(scope);
         scope.$digest();
-
+        // @ts-ignore
         drop = new Drop({
           target: markerElementToAttachTo[0],
           content: content,
