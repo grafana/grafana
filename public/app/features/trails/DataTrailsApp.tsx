@@ -11,6 +11,7 @@ import { Page } from 'app/core/components/Page/Page';
 import { DataTrail } from './DataTrail';
 import { DataTrailsHome } from './DataTrailsHome';
 import { MetricsHeader } from './MetricsHeader';
+import { getTrailStore } from './TrailStore/TrailStore';
 import { HOME_ROUTE, TRAILS_ROUTE } from './shared';
 import { getMetricName, getUrlForTrail, newMetricsTrail } from './utils';
 
@@ -76,10 +77,13 @@ function DataTrailView({ trail }: { trail: DataTrail }) {
     if (!isInitialized) {
       // Set the initial state based on the URL.
       getUrlSyncManager().initSync(trail);
-      // Any further changes to the state should occur directly to the state, not through the URL,
-      // So we want to stop listening after this point.
+      // Any further changes to the state should occur directly to the state, not through the URL.
+      // We want to stop automatically syncing the URL state (and vice versa) to the trail after this point.
+      // Moving forward in the lifecycle of the trail, we will make explicit calls to trail.syncTrailToUrl()
+      // so we can ensure the URL is kept up to date at key points.
       getUrlSyncManager().cleanUp(trail);
 
+      getTrailStore().setRecentTrail(trail);
       setIsInitialized(true);
     }
   }, [trail, isInitialized]);
