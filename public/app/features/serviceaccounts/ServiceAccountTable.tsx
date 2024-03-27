@@ -56,7 +56,7 @@ export const ServiceAccountTable = ({
   const displayRolePicker =
     contextSrv.hasPermission(AccessControlAction.ActionRolesList) &&
     contextSrv.hasPermission(AccessControlAction.ActionUserRolesList);
-  /* @ts-ignore */
+
   const columns: Array<Column<ServiceAccountDTO>> = useMemo(
     () => [
       {
