@@ -14,7 +14,7 @@ import { graphFieldOptions, commonOptionsBuilder } from '@grafana/ui';
 
 import { ThresholdsStyleEditor } from '../timeseries/ThresholdsStyleEditor';
 
-import { BarChartPanel } from './BarChartPanel';
+import { BarChartPanel } from './BarChartPanel2';
 import { TickSpacingEditor } from './TickSpacingEditor';
 import { changeToBarChartPanelMigrationHandler } from './migrations';
 import { FieldConfig, Options, defaultFieldConfig, defaultOptions } from './panelcfg.gen';

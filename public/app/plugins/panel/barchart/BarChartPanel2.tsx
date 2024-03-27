@@ -1,207 +1,119 @@
-import { css } from '@emotion/css';
 import React, { useMemo } from 'react';
 
-import { FieldColorModeId, PanelProps, VizOrientation } from '@grafana/data';
-import { config } from '@grafana/runtime';
+import { PanelProps, VizOrientation } from '@grafana/data';
 import {
   TooltipDisplayMode,
   TooltipPlugin2,
   UPLOT_AXIS_FONT_SIZE,
   UPlotChart,
+  UPlotConfigBuilder,
   VizLayout,
-  VizLegend,
-  VizLegendItem,
   measureText,
   usePanelContext,
-  useStyles2,
   useTheme2,
 } from '@grafana/ui';
 import { TooltipHoverMode } from '@grafana/ui/src/components/uPlot/plugins/TooltipPlugin2';
-import { GraphNGProps, PropDiffFn } from 'app/core/components/GraphNG/GraphNG';
 
 import { TimeSeriesTooltip } from '../timeseries/TimeSeriesTooltip';
 
+import { BarChartLegend } from './BarChartLegend';
 import { Options } from './panelcfg.gen';
-import { prepSeries } from './utils2';
-
-/**
- * @alpha
- */
-export interface BarChartProps
-  extends Options,
-    Omit<GraphNGProps, 'prepConfig' | 'propsToDiff' | 'renderLegend' | 'theme'> {}
-
-const propsToDiff: Array<string | PropDiffFn> = [
-  'orientation',
-  'barWidth',
-  'barRadius',
-  'xTickLabelRotation',
-  'xTickLabelMaxLength',
-  'xTickLabelSpacing',
-  'groupWidth',
-  'stacking',
-  'showValue',
-  'xField',
-  'colorField',
-  'legend',
-  (prev: BarChartProps, next: BarChartProps) => next.text?.valueSize === prev.text?.valueSize,
-];
-
-interface Props extends PanelProps<Options> {}
+import { prepConfig, prepSeries } from './utils2';
 
 const charWidth = measureText('M', UPLOT_AXIS_FONT_SIZE).width;
 const toRads = Math.PI / 180;
 
-export const BarChartPanel = (props: Props) => {
+export const BarChartPanel = (props: PanelProps<Options>) => {
   const { data, options, fieldConfig, width, height, timeZone, id, replaceVariables } = props;
 
   const theme = useTheme2();
-  const styles = useStyles2(getStyles);
 
-  const { palette, getColorByName } = config.theme2.visualization;
-  const { dataLinkPostProcessor } = usePanelContext();
-
-  const { series, _rest, color } = useMemo(
-    () => prepSeries(data.series, fieldConfig, options.stacking, theme, options.xField, options.colorByField),
-    [data.series, fieldConfig, options.stacking, theme, options.xField, options.colorByField]
-  );
+  const {
+    barWidth,
+    barRadius = 0,
+    showValue,
+    groupWidth,
+    stacking,
+    legend,
+    tooltip,
+    text,
+    xTickLabelRotation,
+    xTickLabelSpacing,
+    fullHighlight,
+    xField,
+    colorByField,
+  } = options;
 
   // size-dependent, calculated opts that should cause viz re-config
-  const orientation =
-    options.orientation === VizOrientation.Auto
+  let { orientation, xTickLabelMaxLength = 0 } = options;
+
+  orientation =
+    orientation === VizOrientation.Auto
       ? width < height
         ? VizOrientation.Horizontal
         : VizOrientation.Vertical
-      : options.orientation;
+      : orientation;
 
   // TODO: this can be moved into axis calc internally, no need to re-config based on this
-  const xTickLabelMaxLength =
-    options.xTickLabelRotation === 0
+  // should be based on vizHeight, not full height?
+  xTickLabelMaxLength =
+    xTickLabelRotation === 0
       ? Infinity // should this calc using spacing between groups?
-      : options.xTickLabelMaxLength ||
-        // auto max length clams at half vis height, subracts 3 chars for ... ellipsis
-        height / 2 / Math.sin(Math.abs(options.xTickLabelRotation * toRads)) / charWidth - 3;
+      : xTickLabelMaxLength ||
+        // auto max length clamps to half viz height, subracts 3 chars for ... ellipsis
+        Math.floor(height / 2 / Math.sin(Math.abs(xTickLabelRotation * toRads)) / charWidth - 3);
+
+
+
+
+  const { dataLinkPostProcessor } = usePanelContext();
+  // TODO: config data links, color field
+  const { series, _rest, color } = useMemo(
+    () => prepSeries(data.series, fieldConfig, stacking, theme, xField, colorByField),
+    [data.series, fieldConfig, stacking, theme, xField, colorByField]
+  );
 
   let { builder, prepData } = useMemo(
     () => {
-      const {
-        barWidth,
-        barRadius = 0,
-        showValue,
-        groupWidth,
-        stacking,
-        legend,
-        tooltip,
-        text,
-        xTickLabelRotation,
-        xTickLabelSpacing,
-        fullHighlight,
-      } = options;
+      // prepConfig({
+      //   series: series!,
+      //   options,
+      //   timeZone,
+      //   theme,
+      // }),
 
-      return preparePlotConfigBuilder({
-        frame: alignedFrame,
-        getTimeRange,
-        timeZone,
-        theme,
-        timeZones: [timeZone],
-        orientation,
-        barWidth,
-        barRadius,
-        showValue,
-        groupWidth,
-        xTickLabelRotation,
-        xTickLabelMaxLength,
-        xTickLabelSpacing,
-        stacking,
-        legend,
-        tooltip,
-        text,
-        rawValue,
-        getColor,
-        fillOpacity,
-        allFrames: info.viz,
-        fullHighlight,
-        hoverMulti: tooltip.mode === TooltipDisplayMode.Multi,
-      });
-      //builder: preparePlotConfigBuilder(series, theme),
+      console.log('invaidate!');
+
+      return {
+        builder: new UPlotConfigBuilder(),
+        prepData: () => {},
+      };
     },
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [
+      orientation,
+      timeZone,
       props.data.structureRev,
+
+      series?.[0].length,
+
+      barWidth,
+      barRadius,
+      showValue,
+      groupWidth,
+      stacking,
+      legend,
+      tooltip,
+      text?.valueSize, // cause text itself is re-created each time?
+      xTickLabelRotation,
+      xTickLabelSpacing,
+      fullHighlight,
+      xField,
+      colorByField,
+      xTickLabelMaxLength, // maybe not?
       // props.fieldConfig, // usePrevious hideFrom on all fields?
-      options.barWidth,
-      options.barRadius,
-      options.showValue,
-      options.groupWidth,
-      options.stacking,
-      options.legend,
-      options.tooltip,
-      options.text,
-      options.xTickLabelRotation,
-      options.xTickLabelSpacing,
-      options.fullHighlight,
     ]
   );
-
-  // console.log({
-  //   height,
-  //   xTickLabelRotation: options.xTickLabelRotation,
-  //   xTickLabelMaxLength: options.xTickLabelMaxLength,
-  //   series,
-  //   _rest,
-  //   color,
-  // });
-
-  // config data links, color field, hook up propsToDiff
-
-  // TODO: React.memo()
-  const renderLegend = () => {
-    const items: VizLegendItem[] = [];
-
-    // or single frame + single series + color by value?
-    if (color != null) {
-      return null;
-    } else {
-      let fields = series![0].fields;
-
-      let paletteIdx = 0;
-
-      for (let i = 1; i < fields.length; i++) {
-        let yField = fields[i];
-
-        if (!yField.config.custom.hideFrom?.legend) {
-          let colorCfg = yField.config.color ?? { mode: FieldColorModeId.PaletteClassic };
-          let name = yField.state?.displayName ?? yField.name;
-
-          let color: string;
-
-          if (colorCfg.mode === FieldColorModeId.PaletteClassic) {
-            color = getColorByName(palette[paletteIdx++ % palette.length]); // todo: do this via state.seriesIdx and re-init displayProcessor
-          } else if (colorCfg.mode === FieldColorModeId.Fixed) {
-            color = getColorByName(colorCfg.fixedColor!);
-          }
-
-          items.push({
-            yAxis: 1, // TODO: pull from y field
-            label: name,
-            color: color!,
-            getItemKey: () => `${i}-${name}`,
-            disabled: yField.state?.hideFrom?.viz ?? false,
-          });
-        }
-      }
-    }
-
-    // sort series by calcs? table mode?
-
-    const { placement, displayMode, width } = props.options.legend;
-
-    return (
-      <VizLayout.Legend placement={placement} width={width}>
-        <VizLegend className={styles.legend} placement={placement} items={items} displayMode={displayMode} />
-      </VizLayout.Legend>
-    );
-  };
 
   // if (error) {
   //   return (
@@ -212,35 +124,40 @@ export const BarChartPanel = (props: Props) => {
   // }
 
   return (
-    <VizLayout width={props.width} height={props.height} legend={renderLegend()}>
-      {(vizWidth: number, vizHeight: number) => (
-        <UPlotChart config={builder!} data={data} width={vizWidth} height={vizHeight}>
-          {props.options.tooltip.mode !== TooltipDisplayMode.None && (
-            <TooltipPlugin2
-              config={config}
-              hoverMode={
-                options.tooltip.mode === TooltipDisplayMode.Single ? TooltipHoverMode.xOne : TooltipHoverMode.xAll
-              }
-              render={(u, dataIdxs, seriesIdx, isPinned, dismiss, timeRange2) => {
-                // TODO: render _rest fields that are not hideFrom.tooltip
-                return (
-                  <TimeSeriesTooltip
-                    frames={series}
-                    seriesFrame={series![0]}
-                    dataIdxs={dataIdxs}
-                    seriesIdx={seriesIdx}
-                    mode={options.tooltip.mode}
-                    sortOrder={options.tooltip.sort}
-                    isPinned={isPinned}
-                  />
-                );
-              }}
-              maxWidth={options.tooltip.maxWidth}
-              maxHeight={options.tooltip.maxHeight}
-            />
-          )}
-        </UPlotChart>
-      )}
+    <VizLayout
+      width={props.width}
+      height={props.height}
+      legend={<BarChartLegend frame={series![0]} options={legend} colorField={color} />}
+    >
+      {
+        (vizWidth, vizHeight) => null
+        // <UPlotChart config={builder!} data={data} width={vizWidth} height={vizHeight}>
+        //   {props.options.tooltip.mode !== TooltipDisplayMode.None && (
+        //     <TooltipPlugin2
+        //       config={config}
+        //       hoverMode={
+        //         options.tooltip.mode === TooltipDisplayMode.Single ? TooltipHoverMode.xOne : TooltipHoverMode.xAll
+        //       }
+        //       render={(u, dataIdxs, seriesIdx, isPinned, dismiss, timeRange2) => {
+        //         // TODO: render _rest fields that are not hideFrom.tooltip
+        //         return (
+        //           <TimeSeriesTooltip
+        //             frames={series}
+        //             seriesFrame={series![0]}
+        //             dataIdxs={dataIdxs}
+        //             seriesIdx={seriesIdx}
+        //             mode={options.tooltip.mode}
+        //             sortOrder={options.tooltip.sort}
+        //             isPinned={isPinned}
+        //           />
+        //         );
+        //       }}
+        //       maxWidth={options.tooltip.maxWidth}
+        //       maxHeight={options.tooltip.maxHeight}
+        //     />
+        //   )}
+        // </UPlotChart>
+      }
     </VizLayout>
   );
 
@@ -326,48 +243,6 @@ export const BarChartPanel = (props: Props) => {
   }
   */
 
-  const prepConfig = (alignedFrame: DataFrame, allFrames: DataFrame[], getTimeRange: () => TimeRange) => {
-    const {
-      barWidth,
-      barRadius = 0,
-      showValue,
-      groupWidth,
-      stacking,
-      legend,
-      tooltip,
-      text,
-      xTickLabelRotation,
-      xTickLabelSpacing,
-      fullHighlight,
-    } = options;
-
-    return preparePlotConfigBuilder({
-      frame: alignedFrame,
-      getTimeRange,
-      timeZone,
-      theme,
-      timeZones: [timeZone],
-      orientation,
-      barWidth,
-      barRadius,
-      showValue,
-      groupWidth,
-      xTickLabelRotation,
-      xTickLabelMaxLength,
-      xTickLabelSpacing,
-      stacking,
-      legend,
-      tooltip,
-      text,
-      rawValue,
-      getColor,
-      fillOpacity,
-      allFrames: info.viz,
-      fullHighlight,
-      hoverMulti: tooltip.mode === TooltipDisplayMode.Multi,
-    });
-  };
-
   return (
     <GraphNG
       theme={theme}
@@ -417,11 +292,3 @@ export const BarChartPanel = (props: Props) => {
     </GraphNG>
   );
 };
-
-const getStyles = () => ({
-  legend: css({
-    div: {
-      justifyContent: 'flex-start',
-    },
-  }),
-});
