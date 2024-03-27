@@ -4,7 +4,7 @@ import (
 	"context"
 	"testing"
 
-	example "github.com/grafana/grafana/pkg/apis/example/v0alpha1/types"
+	example "github.com/grafana/grafana/pkg/apis/example/v0alpha1"
 	"github.com/stretchr/testify/assert"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
