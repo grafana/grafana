@@ -14,7 +14,6 @@ import (
 
 	"github.com/bwmarrin/snowflake"
 	"github.com/google/uuid"
-
 	folder "github.com/grafana/grafana/pkg/apis/folder/v0alpha1"
 	"github.com/grafana/grafana/pkg/infra/appcontext"
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -1113,6 +1112,9 @@ func ParseSortBy(sort string) (*SortBy, error) {
 }
 
 func (s *sqlEntityServer) List(ctx context.Context, r *entity.EntityListRequest) (*entity.EntityListResponse, error) {
+	// Just an example for now
+	StorageServerMetrics.Lists.Inc()
+
 	if err := s.Init(); err != nil {
 		return nil, err
 	}

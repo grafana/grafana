@@ -2,10 +2,11 @@ package server
 
 import (
 	"context"
+	"errors"
+	"net/http"
 
 	"github.com/grafana/dskit/services"
-	"github.com/prometheus/client_golang/prometheus"
-
+	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/modules"
 	"github.com/grafana/grafana/pkg/registry"
@@ -17,6 +18,8 @@ import (
 	"github.com/grafana/grafana/pkg/services/store/entity/grpc"
 	"github.com/grafana/grafana/pkg/services/store/entity/sqlstash"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/prometheus/client_golang/prometheus"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
 )
 
 var (
@@ -51,11 +54,14 @@ type service struct {
 	tracing *tracing.TracingService
 
 	authenticator interceptors.Authenticator
+
+	log log.Logger
 }
 
 func ProvideService(
 	cfg *setting.Cfg,
 	features featuremgmt.FeatureToggles,
+	log log.Logger,
 ) (*service, error) {
 	tracingCfg, err := tracing.ProvideTracingConfig(cfg)
 	if err != nil {
@@ -76,6 +82,7 @@ func ProvideService(
 		stopCh:        make(chan struct{}),
 		authenticator: authn,
 		tracing:       tracing,
+		log:           log,
 	}
 
 	// This will be used when running as a dskit service
@@ -96,8 +103,35 @@ func (s *service) Run(ctx context.Context) error {
 	return s.running(ctx)
 }
 
+func (s *service) IsOnlyTarget() bool {
+	return len(s.cfg.Target) == 1 && s.cfg.Target[0] == modules.StorageServer
+}
+
+func (s *service) setupInstrumentationServer() {
+	go func() {
+		s.log.Debug("listening on port 8000 for metrics")
+		http.Handle("/metrics", promhttp.Handler())
+		// TODO make port configurable?
+		err := http.ListenAndServe(":8000", nil)
+		if err != nil && !errors.Is(err, http.ErrServerClosed) {
+			s.log.Error("instrumentation server terminated with error", "error", err)
+		}
+	}()
+}
+
 func (s *service) start(ctx context.Context) error {
 	// TODO: use wire
+
+	if s.IsOnlyTarget() {
+		s.setupInstrumentationServer()
+	}
+
+	// register metrics
+	storageMetrics := sqlstash.NewStorageMetrics()
+	err := prometheus.Register(storageMetrics)
+	if err != nil {
+		return err
+	}
 
 	// TODO: support using grafana db connection?
 	eDB, err := dbimpl.ProvideEntityDB(nil, s.cfg, s.features)

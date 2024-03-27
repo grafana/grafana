@@ -10,7 +10,6 @@ import (
 	"sync"
 
 	"github.com/grafana/dskit/services"
-
 	"github.com/grafana/grafana/pkg/api"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/modules"
@@ -131,7 +130,7 @@ func (s *ModuleServer) Run() error {
 	//}
 
 	m.RegisterModule(modules.StorageServer, func() (services.Service, error) {
-		return storageServer.ProvideService(s.cfg, s.features)
+		return storageServer.ProvideService(s.cfg, s.features, s.log)
 	})
 
 	m.RegisterModule(modules.All, nil)
