@@ -59,6 +59,7 @@ export function ToolbarActions({ dashboard }: Props) {
   // Means we are not in settings view, fullscreen panel or edit panel
   const isShowingDashboard = !editview && !isViewingPanel && !isEditingPanel;
   const isEditingAndShowingDashboard = isEditing && isShowingDashboard;
+  const initialSaveModel = dashboard.getInitialSaveModel();
 
   if (!isEditingPanel) {
     // This adds the precence indicators in enterprise
@@ -432,8 +433,10 @@ export function ToolbarActions({ dashboard }: Props) {
         );
       }
 
+      const canSave = meta.canSave || initialSaveModel?.editable;
+      console.log(`meta.canSave: ${meta.canSave}. Can save: ${canSave}`);
       // If we only can save as copy
-      if (canSaveAs && !meta.canSave) {
+      if (canSaveAs && !canSave) {
         return (
           <Button
             onClick={() => {
