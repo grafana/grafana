@@ -58,13 +58,10 @@ export class ScopesDashboardsScene extends SceneObjectBase<ScopesDashboardsScene
   private async fetchDashboardsUids(scope: string): Promise<string[]> {
     try {
       const response = await getBackendSrv().get<{
-        items: Array<{ spec: { dashboardUids: null | string[]; scopeUid: string } }>;
+        items: Array<{ spec: { dashboards: null | string[]; scope: string } }>;
       }>(this._url, { scope });
 
-      return (
-        response.items.find((item) => !!item.spec.dashboardUids && item.spec.scopeUid === scope)?.spec.dashboardUids ??
-        []
-      );
+      return response.items.find((item) => !!item.spec.dashboards && item.spec.scope === scope)?.spec.dashboards ?? [];
     } catch (err) {
       return [];
     }
