@@ -54,7 +54,6 @@ export const ServiceAccountTable = ({
   const displayRolePicker =
     contextSrv.hasPermission(AccessControlAction.ActionRolesList) &&
     contextSrv.hasPermission(AccessControlAction.ActionUserRolesList);
-
   /* @ts-ignore */
   const columns: Array<Column<ServiceAccountDTO>> = useMemo(
     () => [
@@ -114,9 +113,6 @@ export const ServiceAccountTable = ({
         header: 'Roles',
         cell: ({ cell: { value }, row: { original } }: Cell<'role'>) => {
           const canUpdateRole = contextSrv.hasPermissionInMetadata(AccessControlAction.ServiceAccountsWrite, original);
-          console.log(canUpdateRole);
-          console.log('license', contextSrv.licensedAccessControlEnabled());
-          console.log('displayRP', displayRolePicker);
           return contextSrv.licensedAccessControlEnabled() ? (
             displayRolePicker && (
               <UserRolePicker
@@ -217,7 +213,7 @@ export const ServiceAccountTable = ({
   return (
     <Stack direction={'column'} gap={2}>
       <InteractiveTable columns={columns} data={services} getRowId={(service) => String(service.id)} />
-      {showPaging && (
+      {showPaging && totalPages > 1 && (
         <Stack justifyContent={'flex-end'}>
           <Pagination numberOfPages={totalPages} currentPage={currentPage} onNavigate={onChangePage} />
         </Stack>
