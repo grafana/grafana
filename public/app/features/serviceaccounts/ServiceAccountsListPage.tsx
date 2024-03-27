@@ -284,51 +284,12 @@ export const ServiceAccountsListPageUnconnected = ({
 
 export const getStyles = (theme: GrafanaTheme2) => {
   return {
-    table: css({
-      marginTop: theme.spacing(3),
-    }),
     filter: css({
       margin: `0 ${theme.spacing(1)}`,
-    }),
-    row: css({
-      display: 'flex',
-      alignItems: 'center',
-      height: '100% !important',
-
-      a: {
-        padding: `${theme.spacing(0.5)} 0 !important`,
-      },
-    }),
-    unitTooltip: css({
-      display: 'flex',
-      flexDirection: 'column',
-    }),
-    unitItem: css({
-      cursor: 'pointer',
-      padding: theme.spacing(0.5, 0),
-      marginRight: theme.spacing(1),
-    }),
-    disabled: css({
-      color: theme.colors.text.disabled,
-    }),
-    link: css({
-      color: 'inherit',
-      cursor: 'pointer',
-      textDecoration: 'underline',
     }),
     pageHeader: css({
       display: 'flex',
       marginBottom: theme.spacing(2),
-    }),
-    apiKeyInfoLabel: css({
-      marginLeft: theme.spacing(1),
-      lineHeight: 2.2,
-      flexGrow: 1,
-      color: theme.colors.text.secondary,
-
-      span: {
-        padding: theme.spacing(0.5),
-      },
     }),
     filterDelimiter: css({
       flexGrow: 1,
