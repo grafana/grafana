@@ -306,6 +306,25 @@ export function ToolbarActions({ dashboard }: Props) {
   });
 
   toolbarActions.push({
+    group: 'main-buttons',
+    condition: !isEditing && meta.canMakeEditable && !isViewingPanel && !isPlaying,
+    render: () => (
+      <Button
+        onClick={() => {
+          dashboard.onMakeEditable();
+        }}
+        tooltip="Make dashboard editable"
+        key="edit"
+        className={buttonWithExtraMargin}
+        variant="primary"
+        size="sm"
+      >
+        Make editable
+      </Button>
+    ),
+  });
+
+  toolbarActions.push({
     group: 'settings',
     condition: isEditing && dashboard.canEditDashboard() && isShowingDashboard,
     render: () => (

@@ -354,7 +354,20 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
       overlay: new SaveDashboardDrawer({
         dashboardRef: this.getRef(),
         saveAsCopy,
-        onSaveSuccess,
+        onSaveSuccess: () => {
+          onSaveSuccess?.();
+
+          // After saving we are updating meta to reflect runtime state of the edit options
+          // Was made editable
+          if (this.state.editable && this.state.meta.canMakeEditable) {
+            this.setState({ meta: { ...this.state.meta, canMakeEditable: false } });
+          }
+
+          // Was made readonly
+          if (!this.state.editable && this.state.meta.canMakeEditable === false) {
+            this.setState({ meta: { ...this.state.meta, canMakeEditable: true, canEdit: false } });
+          }
+        },
       }),
     });
   }
@@ -774,6 +787,14 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
     return getPanelIdForVizPanel(vizPanel);
   }
 
+  public onMakeEditable() {
+    this.onEnterEditMode();
+    this.setState({
+      editable: true,
+      meta: { ...this.state.meta, canMakeEditable: false, canEdit: true, canSave: true },
+    });
+  }
+
   /**
    * Called by the SceneQueryRunner to privide contextural parameters (tracking) props for the request
    */
@@ -801,7 +822,7 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
   canEditDashboard() {
     const { meta } = this.state;
 
-    return Boolean(meta.canEdit || meta.canMakeEditable);
+    return Boolean(meta.canEdit /*|| meta.canMakeEditable*/);
   }
 
   public getInitialSaveModel() {
