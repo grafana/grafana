@@ -1,9 +1,7 @@
 package auth
 
 import (
-	"errors"
 	"net/http"
-	"strings"
 
 	"k8s.io/apiserver/pkg/authentication/authenticator"
 	"k8s.io/apiserver/pkg/authentication/user"
@@ -16,16 +14,14 @@ func NewIDTokenAuthenticator(validator *Validator) authenticator.RequestFunc {
 
 func getIDTokenAuthenticatorFunc(validator *Validator) authenticator.RequestFunc {
 	return func(req *http.Request) (*authenticator.Response, bool, error) {
-		token, err := extractBearerToken(req)
-		if err != nil {
-			return nil, false, errors.New("could not read bearer token from the authorization header")
-		}
-
-		if token == "" {
+		accessToken := req.Header.Get("X-Access-Token")
+		if accessToken == "" {
 			return nil, false, nil
 		}
 
-		result, err := validator.Validate(req.Context(), token)
+		grafanaID := req.Header.Get("X-Grafana-Id")
+
+		result, err := validator.Validate(req.Context(), accessToken)
 		if err != nil {
 			return nil, false, err
 		}
@@ -37,23 +33,10 @@ func getIDTokenAuthenticatorFunc(validator *Validator) authenticator.RequestFunc
 				UID:    "",
 				Groups: []string{},
 				Extra: map[string][]string{
-					"id-token": {token},
+					"access-token": {accessToken},
+					"grafana-id":   {grafanaID},
 				},
 			},
 		}, true, nil
 	}
-}
-
-func extractBearerToken(r *http.Request) (string, error) {
-	headerValue := r.Header.Get("Authorization")
-	if headerValue == "" {
-		return "", nil
-	}
-
-	headerValueParts := strings.Fields(headerValue)
-	if len(headerValueParts) != 2 || strings.ToLower(headerValueParts[0]) != "bearer" {
-		return "", errors.New("authorization header format must be of the form: Bearer {token}")
-	}
-
-	return headerValueParts[1], nil
 }

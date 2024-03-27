@@ -104,7 +104,7 @@ func (o *APIServerOptions) Config() (*genericapiserver.RecommendedConfig, error)
 	if len(o.Options.AuthnOptions.IDVerifierConfig.SigningKeysURL) > 0 {
 		validator := auth.NewValidator(o.Options.AuthnOptions.IDVerifierConfig)
 		idTokenAuthenticator := auth.NewIDTokenAuthenticator(validator)
-		serverConfig.Authentication.Authenticator = auth.AppendToAuthenticators(idTokenAuthenticator)
+		serverConfig.Authentication.Authenticator = auth.AppendToAuthenticators(idTokenAuthenticator, serverConfig.Authentication.Authenticator)
 	}
 
 	serverConfig.DisabledPostStartHooks = serverConfig.DisabledPostStartHooks.Insert("generic-apiserver-start-informers")

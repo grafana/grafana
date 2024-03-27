@@ -100,18 +100,24 @@ func MustUser(ctx context.Context) *user.SignedInUser {
 }
 
 // Get a token that can be forwarded to the next service
-func GetIDForwardingToken(ctx context.Context) (string, error) {
+func GetForwardingTokens(ctx context.Context) (string, string, error) {
 	user, ok := request.UserFrom(ctx)
 	if !ok {
 		user, err := User(ctx)
 		if err != nil {
-			return "", err
+			return "", "", err
 		}
-		return user.IDToken, nil
+		return "", user.IDToken, nil
 	}
-	token := user.GetExtra()["id-token"]
+	token := user.GetExtra()["access-token"]
 	if len(token) != 1 {
-		return "", fmt.Errorf("invalid k8s token")
+		return "", "", fmt.Errorf("invalid access token")
 	}
-	return token[0], nil
+
+	grafanaID := user.GetExtra()["grafana-id"]
+	if len(token) != 1 {
+		return "", "", fmt.Errorf("invalid ID token")
+	}
+
+	return token[0], grafanaID[0], nil
 }
