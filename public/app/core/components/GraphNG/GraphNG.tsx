@@ -107,14 +107,14 @@ export class GraphNG extends Component<GraphNGProps, GraphNGState> {
 
     const preparePlotFrameFn = preparePlotFrame ?? defaultPreparePlotFrame;
 
-    const matchY = fieldMatchers.get(FieldMatcherID.byTypes).get(new Set([FieldType.number, FieldType.enum]));
+    const matchYDefault = fieldMatchers.get(FieldMatcherID.byTypes).get(new Set([FieldType.number, FieldType.enum]));
 
     // if there are data links, we have to keep all fields so they're index-matched, then filter out dimFields.y
     const withLinks = frames.some((frame) => frame.fields.some((field) => (field.config.links?.length ?? 0) > 0));
 
     const dimFields = fields ?? {
       x: fieldMatchers.get(FieldMatcherID.firstTimeField).get({}),
-      y: withLinks ? () => true : matchY,
+      y: withLinks ? () => true : matchYDefault,
     };
 
     const alignedFrame = preparePlotFrameFn(frames, dimFields, props.timeRange);
@@ -151,7 +151,7 @@ export class GraphNG extends Component<GraphNGProps, GraphNGState> {
         // filter join field and dimFields.y
         alignedFrameFinal = {
           ...alignedFrame,
-          fields: alignedFrame.fields.filter((field, i) => i === 0 || matchY(field, alignedFrame, [alignedFrame])),
+          fields: alignedFrame.fields.filter((field, i) => i === 0 || dimFields.y(field, alignedFrame, [alignedFrame])),
         };
       }
 
