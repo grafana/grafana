@@ -8,7 +8,6 @@ import (
 	metainternalversion "k8s.io/apimachinery/pkg/apis/meta/internalversion"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
-	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apiserver/pkg/registry/rest"
 	"k8s.io/klog/v2"
 )
@@ -115,6 +114,7 @@ func (d *DualWriter) Create(ctx context.Context, obj runtime.Object, createValid
 // Update overrides the default behavior of the Storage and writes to both the LegacyStorage and Storage depending on the DualWriter mode.
 func (d *DualWriter) Update(ctx context.Context, name string, objInfo rest.UpdatedObjectInfo, createValidation rest.ValidateObjectFunc, updateValidation rest.ValidateObjectUpdateFunc, forceAllowCreate bool, options *metav1.UpdateOptions) (runtime.Object, bool, error) {
 	// #TODO replace with a rest.CreaterUpdater check?
+	// #TODO add back the original comments
 	legacy, ok := d.legacy.(rest.Updater)
 	if !ok {
 		return nil, false, fmt.Errorf("legacy storage rest.Updater is missing")
@@ -146,14 +146,13 @@ func (d *DualWriter) Update(ctx context.Context, name string, objInfo rest.Updat
 	}
 
 	if CurrentMode == Mode2 {
-		var (
-			old    runtime.Object
-			theRV  string
-			theUID types.UID
-		)
-
 		// #TODO figure out how to set opts.IgnoreNotFound = true here
 		// or how to specifically check for an apierrors.NewNotFound error
+		// #TODO for now assume that we are updating entities which had previously
+		// created in entity. GuaranteedUpdate is going to take into account this case:
+		// https://github.com/grafana/grafana/pull/85206
+		// #TODO figure out wht the correct resource version should be and
+		// set it properly in Get and List calls
 		old, err := d.Get(ctx, name, &metav1.GetOptions{})
 		if err != nil {
 			return nil, false, err
@@ -162,23 +161,8 @@ func (d *DualWriter) Update(ctx context.Context, name string, objInfo rest.Updat
 		if err != nil {
 			return nil, false, err
 		}
-		theRV = accessor.GetResourceVersion()
-		theUID = accessor.GetUID()
-
-		if theRV == "" {
-			old, err := d.legacy.Get(ctx, name, &metav1.GetOptions{})
-			if err != nil {
-				return nil, false, err
-			}
-
-			accessor, err := meta.Accessor(old)
-			if err != nil {
-				return nil, false, err
-			}
-			theRV = accessor.GetResourceVersion()
-			theUID = accessor.GetUID()
-
-		}
+		theRV := accessor.GetResourceVersion()
+		theUID := accessor.GetUID()
 
 		updated, err := objInfo.UpdatedObject(ctx, old)
 		if err != nil {
@@ -210,26 +194,13 @@ func (d *DualWriter) Update(ctx context.Context, name string, objInfo rest.Updat
 			updated:  obj,
 		}
 
-		if theRV == "" {
-			return d.Storage.Update(ctx, name, objInfo, createValidation, updateValidation, forceAllowCreate, options)
-		} else {
-			// #TODO would it make sense for all updates to be creates by default while we're in mode 2?
-			// The issue is that it messes with the entity history and creates a new entity probably
-			objNew, err := d.Storage.Create(ctx, obj, rest.ValidateAllObjectFunc, &metav1.CreateOptions{})
-			if err != nil {
-				return nil, false, err
-			}
-			// #TODO verify that created should be set to true here
-			return objNew, true, err
-		}
+		return d.Storage.Update(ctx, name, objInfo, createValidation, updateValidation, forceAllowCreate, options)
 	}
 
 	// if CurrentMode == Mode3 {
-
 	// }
 
 	// if CurrentMode == Mode4 {
-
 	// }
 
 	return nil, false, fmt.Errorf("dual writer mode is undefined")

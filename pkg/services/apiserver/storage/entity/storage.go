@@ -268,7 +268,7 @@ func (s *Storage) Watch(ctx context.Context, key string, opts storage.ListOption
 // match 'opts.ResourceVersion' according 'opts.ResourceVersionMatch'.
 func (s *Storage) Get(ctx context.Context, key string, opts storage.GetOptions, objPtr runtime.Object) error {
 	// #TODO: remove this after we figure out how to pass it in
-	opts.IgnoreNotFound = true
+	// opts.IgnoreNotFound = true
 
 	requestInfo, ok := request.RequestInfoFrom(ctx)
 	if !ok {
