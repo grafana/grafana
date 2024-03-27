@@ -400,7 +400,6 @@ Check out the links below to continue your learning journey with Grafana's LGTM 
 - [Alert rules][alert-rules]
 - [Contact Points][contact-points]
 
-
 {{% docs/reference %}}
 [prometheus]: "/docs/grafana/ -> /docs/grafana/<GRAFANA_VERSION>/features/datasources/prometheus/"
 [prometheus]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/connect-externally-hosted/data-sources/prometheus/"
