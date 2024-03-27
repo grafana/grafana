@@ -11,6 +11,7 @@ import {
   TextLink,
   Button,
   IconButton,
+  Icon,
 } from '@grafana/ui';
 import { UserRolePicker } from 'app/core/components/RolePicker/UserRolePicker';
 import { contextSrv } from 'app/core/core';
@@ -49,7 +50,6 @@ export const ServiceAccountTable = ({
   totalPages,
   onChangePage,
   currentPage,
-  //fetchData,
 }: ServiceAccountTableProps) => {
   const displayRolePicker =
     contextSrv.hasPermission(AccessControlAction.ActionRolesList) &&
@@ -68,9 +68,9 @@ export const ServiceAccountTable = ({
             return null;
           }
           return (
-            <LinkButton aria-label={ariaLabel} href={href} size="sm" variant="secondary">
+            <a aria-label={ariaLabel} href={href}>
               <Avatar src={original.avatarUrl} alt={'User avatar'} />
-            </LinkButton>
+            </a>
           );
         },
         sortType: 'string',
@@ -95,14 +95,14 @@ export const ServiceAccountTable = ({
       {
         id: 'id',
         header: 'ID',
-        cell: ({ cell: { value }, row: { original } }: Cell<'role'>) => {
+        cell: ({ row: { original } }: Cell<'role'>) => {
           const href = `/org/serviceaccounts/${original.id}`;
           const ariaLabel = `Edit service account's ${name} details`;
           if (!original.avatarUrl) {
             return null;
           }
           return (
-            <TextLink href={href} aria-label={ariaLabel} color="primary">
+            <TextLink href={href} aria-label={ariaLabel} color="secondary">
               {original.login}
             </TextLink>
           );
@@ -148,9 +148,12 @@ export const ServiceAccountTable = ({
           const href = `/org/serviceaccounts/${original.id}`;
           const ariaLabel = `Edit service account's ${name} details`;
           return (
-            <TextLink href={href} aria-label={ariaLabel} color="primary">
-              {value || 'No tokens'}
-            </TextLink>
+            <Stack alignItems="center">
+              <Icon name="key-skeleton-alt"></Icon>
+              <TextLink href={href} aria-label={ariaLabel} color="primary">
+                {value || 'No tokens'}
+              </TextLink>
+            </Stack>
           );
         },
         sortType: 'number',
@@ -170,7 +173,7 @@ export const ServiceAccountTable = ({
                 (original.isDisabled ? (
                   <LinkButton
                     variant="secondary"
-                    size="sm"
+                    size="md"
                     aria-label={`Enable service account ${original.name}`}
                     onClick={() => onEnable(original)}
                   >
@@ -179,7 +182,7 @@ export const ServiceAccountTable = ({
                 ) : (
                   <LinkButton
                     variant="secondary"
-                    size="sm"
+                    size="md"
                     aria-label={`Disable service account ${original.name}`}
                     onClick={() => onDisable(original)}
                   >
@@ -188,12 +191,10 @@ export const ServiceAccountTable = ({
                 ))}
 
               {contextSrv.hasPermissionInMetadata(AccessControlAction.ServiceAccountsDelete, original) && (
-                <Button
-                  icon="trash-alt"
+                <IconButton
+                  name="trash-alt"
                   aria-label={`Remove service account ${original.name}`}
-                  variant="primary"
-                  fill="outline"
-                  size="sm"
+                  variant="secondary"
                   onClick={() => onRemoveButtonClick(original)}
                 />
               )}
@@ -215,12 +216,7 @@ export const ServiceAccountTable = ({
   );
   return (
     <Stack direction={'column'} gap={2}>
-      <InteractiveTable
-        columns={columns}
-        data={services}
-        getRowId={(service) => String(service.id)}
-        //fetchData={fetchData}
-      />
+      <InteractiveTable columns={columns} data={services} getRowId={(service) => String(service.id)} />
       {showPaging && (
         <Stack justifyContent={'flex-end'}>
           <Pagination numberOfPages={totalPages} currentPage={currentPage} onNavigate={onChangePage} />
