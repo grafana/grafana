@@ -80,10 +80,21 @@ type ScopeSpec struct {
 // ScopeFilter is a hand copy of the ScopeFilter struct from pkg/apis/scope/v0alpha1/types.go
 // to avoid import (temp fix)
 type ScopeFilter struct {
-	Key      string `json:"key"`
-	Value    string `json:"value"`
-	Operator string `json:"operator"`
+	Key      string         `json:"key"`
+	Value    string         `json:"value"`
+	Operator FilterOperator `json:"operator"`
 }
+
+// FilterOperator is a hand copy of the ScopeFilter struct from pkg/apis/scope/v0alpha1/types.go
+type FilterOperator string
+
+// Hand copy of enum from pkg/apis/scope/v0alpha1/types.go
+const (
+	FilterOperatorEquals        FilterOperator = "equals"
+	FilterOperatorNotEquals     FilterOperator = "not-equals"
+	FilterOperatorRegexMatch    FilterOperator = "regex-match"
+	FilterOperatorRegexNotMatch FilterOperator = "regex-not-match"
+)
 
 // Internal interval and range variables
 const (
