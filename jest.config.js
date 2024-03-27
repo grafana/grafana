@@ -18,6 +18,8 @@ const esModules = [
   '@kusto/monaco-kusto',
   'monaco-editor',
   'lodash-es',
+  '@msagl',
+  'vscode-languageserver-types',
 ].join('|');
 
 module.exports = {
@@ -55,4 +57,5 @@ module.exports = {
   },
   // Log the test results with dynamic Loki tags. Drone CI only
   reporters: ['default', ['<rootDir>/public/test/log-reporter.js', { enable: process.env.DRONE === 'true' }]],
+  watchPlugins: ['jest-watch-typeahead/filename', 'jest-watch-typeahead/testname'],
 };
