@@ -76,7 +76,7 @@ describe('dashboardSceneGraph', () => {
         $data: undefined,
       });
 
-      expect(() => dashboardSceneGraph.getDataLayers(scene)).toThrow('SceneDataLayerSet not found');
+      expect(() => dashboardSceneGraph.getDataLayers(scene)).toThrow('DashboardDataLayerSet not found');
     });
   });
 
