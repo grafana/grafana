@@ -111,6 +111,7 @@ func (d *DualWriter) Create(ctx context.Context, obj runtime.Object, createValid
 	return rsp, err
 }
 
+// #TODO figure out failure modes, how to guarantee consistency of the transactions
 // Update overrides the default behavior of the Storage and writes to both the LegacyStorage and Storage depending on the DualWriter mode.
 func (d *DualWriter) Update(ctx context.Context, name string, objInfo rest.UpdatedObjectInfo, createValidation rest.ValidateObjectFunc, updateValidation rest.ValidateObjectUpdateFunc, forceAllowCreate bool, options *metav1.UpdateOptions) (runtime.Object, bool, error) {
 	// #TODO replace with a rest.CreaterUpdater check?
@@ -197,8 +198,37 @@ func (d *DualWriter) Update(ctx context.Context, name string, objInfo rest.Updat
 		return d.Storage.Update(ctx, name, objInfo, createValidation, updateValidation, forceAllowCreate, options)
 	}
 
-	// if CurrentMode == Mode3 {
-	// }
+	if CurrentMode == Mode3 {
+		old, err := d.Get(ctx, name, &metav1.GetOptions{})
+		if err != nil {
+			return nil, false, err
+		}
+		objInfo = &updateWrapper{
+			upstream: objInfo,
+			updated:  old,
+		}
+		updated, created, err := d.Storage.Update(ctx, name, objInfo, createValidation, updateValidation, forceAllowCreate, options)
+		if err != nil {
+			return updated, created, err
+		}
+
+		accessor, err := meta.Accessor(old)
+		if err != nil {
+			return nil, false, err
+		}
+		accessor.SetUID("")
+		accessor.SetResourceVersion("")
+
+		// #TODO do we still need to use objInfo.UpdatedObject?
+		objInfo = &updateWrapper{
+			upstream: objInfo,
+			updated:  old,
+		}
+		return legacy.Update(ctx, name, &updateWrapper{
+			upstream: objInfo,
+			updated:  updated,
+		}, createValidation, updateValidation, forceAllowCreate, options)
+	}
 
 	if CurrentMode == Mode4 {
 		old, err := d.Get(ctx, name, &metav1.GetOptions{})
