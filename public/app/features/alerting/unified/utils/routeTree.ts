@@ -58,7 +58,7 @@ export const omitRouteFromRouteTree = (findRoute: RouteWithID, routeTree: RouteW
           return acc;
         }
 
-        acc.push(route);
+        acc.push(findAndOmit(route));
         return acc;
       }, []),
     };
