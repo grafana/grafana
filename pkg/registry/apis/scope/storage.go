@@ -101,13 +101,12 @@ func newScopeDashboardStorage(scheme *runtime.Scheme, optsGetter generic.RESTOpt
 }
 
 func GetAttrs(obj runtime.Object) (labels.Set, fields.Set, error) {
-	if s, ok := obj.(*scope.Scope); ok {
-		return labels.Set(s.Labels), SelectableScopeFields(s), nil
+	s, ok := obj.(*scope.Scope)
+	if !ok {
+		return nil, nil, fmt.Errorf("not a scope")
 	}
-	if s, ok := obj.(*scope.ScopeDashboard); ok {
-		return labels.Set(s.Labels), SelectableScopeDashboardFields(s), nil
-	}
-	return nil, nil, fmt.Errorf("not a scope or scopeDashboard object")
+
+	return labels.Set(s.Labels), SelectableFields(s), nil
 }
 
 // Matcher returns a generic.SelectionPredicate that matches on label and field selectors.
@@ -119,15 +118,8 @@ func Matcher(label labels.Selector, field fields.Selector) apistore.SelectionPre
 	}
 }
 
-func SelectableScopeFields(obj *scope.Scope) fields.Set {
+func SelectableFields(obj *scope.Scope) fields.Set {
 	return generic.MergeFieldsSets(generic.ObjectMetaFieldsSet(&obj.ObjectMeta, false), fields.Set{
-		"spec.type":     obj.Spec.Type,
-		"spec.category": obj.Spec.Category,
-	})
-}
-
-func SelectableScopeDashboardFields(obj *scope.ScopeDashboard) fields.Set {
-	return generic.MergeFieldsSets(generic.ObjectMetaFieldsSet(&obj.ObjectMeta, false), fields.Set{
-		"spec.scopeUid": obj.Spec.ScopeUID,
+		"spec.type": obj.Spec.Type,
 	})
 }
