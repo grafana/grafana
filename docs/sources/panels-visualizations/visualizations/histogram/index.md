@@ -21,9 +21,9 @@ weight: 100
 
 # Histogram
 
-Histograms calculate the distribution of values and present them as a bar chart. Each bar represents a bucket, and the Y-axis and the height of each bar represent the count of values that fall into each bucket, while the X-axis represents the value range.
+Histograms calculate the distribution of values and present them as a bar chart. Each bar represents a bucket; the y-axis and the height of each bar represents the count of values that fall into each bucket, and the x-axis represents the value range.
 
-For example, if you want to understand the distribution of people's heights, you can use a histogram visualization to identify patterns or insights in the data distribution.
+For example, if you want to understand the distribution of people's heights, you can use a histogram visualization to identify patterns or insights in the data distribution:
 
 {{< figure src="/static/img/docs/histogram-panel/histogram-example-v8-0.png" max-width="625px" alt="A histogram visualization showing the distribution of people's heights" >}}
 
