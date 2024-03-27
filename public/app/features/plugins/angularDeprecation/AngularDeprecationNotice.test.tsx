@@ -12,7 +12,7 @@ jest.mock('@grafana/runtime', () => ({
 }));
 
 function localStorageKey(dsUid: string) {
-  return `grafana.angularDeprecation.dashboardNotice.isDismissed.${dsUid}`;
+  return `grafana.angularDeprecation.dashboardNoticeAndMigration.isDismissed.${dsUid}`;
 }
 
 describe('AngularDeprecationNotice', () => {
