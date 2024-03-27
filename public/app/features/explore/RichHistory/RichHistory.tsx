@@ -1,7 +1,7 @@
 import { debounce } from 'lodash';
 import React, { useState, useEffect } from 'react';
 
-import { DataSourceApi, SelectableValue } from '@grafana/data';
+import { SelectableValue } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { TabbedContainer, TabConfig } from '@grafana/ui';
 import { t } from 'app/core/internationalization';
@@ -27,11 +27,6 @@ export const getSortOrderOptions = () =>
     { label: t('explore.rich-history.datasource-a-z', 'Data source A-Z'), value: SortOrder.DatasourceAZ },
     { label: t('explore.rich-history.datasource-z-a', 'Data source Z-A'), value: SortOrder.DatasourceZA },
   ].filter((option) => supportedFeatures().availableFilters.includes(option.value));
-
-export interface DataSourceData {
-  datasource: DataSourceApi;
-  exploreIds: string[];
-}
 
 export interface RichHistoryProps {
   richHistory: RichHistoryQuery[];

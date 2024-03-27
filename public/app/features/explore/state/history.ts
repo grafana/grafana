@@ -1,4 +1,4 @@
-import { AnyAction, createAction } from '@reduxjs/toolkit';
+import { createAction } from '@reduxjs/toolkit';
 
 import { HistoryItem } from '@grafana/data';
 import { DataQuery } from '@grafana/schema';
@@ -12,7 +12,7 @@ import {
   updateRichHistorySettings,
   updateStarredInRichHistory,
 } from 'app/core/utils/richHistory';
-import { ExploreItemState, RichHistoryQuery, ThunkResult } from 'app/types';
+import { RichHistoryQuery, ThunkResult } from 'app/types';
 
 import { supportedFeatures } from '../../../core/history/richHistoryStorageProvider';
 import { RichHistorySearchFilters, RichHistorySettings } from '../../../core/utils/richHistoryTypes';
@@ -196,15 +196,4 @@ export const updateHistorySearchFilters = (filters: RichHistorySearchFilters): T
       );
     }
   };
-};
-
-export const historyReducer = (state: ExploreItemState, action: AnyAction): ExploreItemState => {
-  console.log(action.type, action.payload);
-  if (historyUpdatedAction.match(action)) {
-    return {
-      ...state,
-      history: action.payload.history,
-    };
-  }
-  return state;
 };
