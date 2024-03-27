@@ -192,8 +192,9 @@ func (s *Service) SaveEncryptedToken(ctx context.Context, token string) error {
 }
 
 func (s *Service) GetMigration(ctx context.Context, id int64) (*cloudmigration.CloudMigrationResponse, error) {
-	ctx, span := s.tracer.Start(ctx, "CloudMigrationService.GetMigration")
-	defer span.End()
+	// commenting to fix linter, uncomment when this function is implemented
+	// ctx, span := s.tracer.Start(ctx, "CloudMigrationService.GetMigration")
+	// defer span.End()
 
 	return nil, nil
 }
