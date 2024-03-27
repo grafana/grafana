@@ -2,7 +2,7 @@
   "name": "@grafana-plugins/zipkin",
   "description": "Zipkin plugin for Grafana",
   "private": true,
-  "version": "11.0.0-pre",
+  "version": "11.1.0-pre",
   "dependencies": {
     "@emotion/css": "11.11.2",
     "@grafana/data": "workspace:*",
@@ -22,7 +22,7 @@
     "@testing-library/react": "14.2.2",
     "@types/jest": "29.5.12",
     "@types/lodash": "4.17.0",
-    "@types/react": "18.2.67",
+    "@types/react": "18.2.72",
     "ts-node": "10.9.2",
     "webpack": "5.90.3"
   },
