@@ -70,7 +70,7 @@ func (b *ScopeAPIBuilder) InstallSchema(scheme *runtime.Scheme) error {
 	err = scheme.AddFieldLabelConversionFunc(
 		scope.ScopeDashboardResourceInfo.GroupVersionKind(),
 		func(label, value string) (string, string, error) {
-			fieldSet := SelectableScopeDashboardFields(&scope.ScopeDashboard{})
+			fieldSet := SelectableScopeDashboardBindingFields(&scope.ScopeDashboardBinding{})
 			for key := range fieldSet {
 				if label == key {
 					return label, value, nil
@@ -113,7 +113,7 @@ func (b *ScopeAPIBuilder) GetAPIGroupInfo(
 	}
 	storage[scopeResourceInfo.StoragePath()] = scopeStorage
 
-	scopeDashboardStorage, err := newScopeDashboardStorage(scheme, optsGetter)
+	scopeDashboardStorage, err := newScopeDashboardBindingStorage(scheme, optsGetter)
 	if err != nil {
 		return nil, err
 	}

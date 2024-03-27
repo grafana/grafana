@@ -62,10 +62,10 @@ func newScopeStorage(scheme *runtime.Scheme, optsGetter generic.RESTOptionsGette
 	return &storage{Store: store}, nil
 }
 
-func newScopeDashboardStorage(scheme *runtime.Scheme, optsGetter generic.RESTOptionsGetter) (*storage, error) {
+func newScopeDashboardBindingStorage(scheme *runtime.Scheme, optsGetter generic.RESTOptionsGetter) (*storage, error) {
 	strategy := grafanaregistry.NewStrategy(scheme)
 
-	resourceInfo := scope.ScopeDashboardResourceInfo
+	resourceInfo := scope.ScopeDashboardBindingResourceInfo
 	store := &genericregistry.Store{
 		NewFunc:                   resourceInfo.NewFunc,
 		NewListFunc:               resourceInfo.NewListFunc,
@@ -104,10 +104,10 @@ func GetAttrs(obj runtime.Object) (labels.Set, fields.Set, error) {
 	if s, ok := obj.(*scope.Scope); ok {
 		return labels.Set(s.Labels), SelectableScopeFields(s), nil
 	}
-	if s, ok := obj.(*scope.ScopeDashboard); ok {
-		return labels.Set(s.Labels), SelectableScopeDashboardFields(s), nil
+	if s, ok := obj.(*scope.ScopeDashboardBinding); ok {
+		return labels.Set(s.Labels), SelectableScopeDashboardBindingFields(s), nil
 	}
-	return nil, nil, fmt.Errorf("not a scope or scopeDashboard object")
+	return nil, nil, fmt.Errorf("not a scope or ScopeDashboardBinding object")
 }
 
 // Matcher returns a generic.SelectionPredicate that matches on label and field selectors.
@@ -126,8 +126,8 @@ func SelectableScopeFields(obj *scope.Scope) fields.Set {
 	})
 }
 
-func SelectableScopeDashboardFields(obj *scope.ScopeDashboard) fields.Set {
+func SelectableScopeDashboardBindingFields(obj *scope.ScopeDashboardBinding) fields.Set {
 	return generic.MergeFieldsSets(generic.ObjectMetaFieldsSet(&obj.ObjectMeta, false), fields.Set{
-		"spec.scopeUid": obj.Spec.ScopeUID,
+		"spec.scope": obj.Spec.Scope,
 	})
 }

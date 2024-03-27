@@ -20,7 +20,7 @@ var ScopeResourceInfo = common.NewResourceInfo(GROUP, VERSION,
 	func() runtime.Object { return &ScopeList{} },
 )
 
-var ScopeDashboardResourceInfo = common.NewResourceInfo(GROUP, VERSION,
+var ScopeDashboardBindingResourceInfo = common.NewResourceInfo(GROUP, VERSION,
 	"scopedashboards", "scopedashboard", "ScopeDashboard",
 	func() runtime.Object { return &ScopeDashboardBinding{} },
 	func() runtime.Object { return &ScopeDashboardBindingList{} },
