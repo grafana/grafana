@@ -10,7 +10,9 @@ import { getPanelPlugin } from '@grafana/data/test/__mocks__/pluginMocks';
 import { config, getPluginLinkExtensions, locationService, setPluginImportUtils } from '@grafana/runtime';
 import { Dashboard } from '@grafana/schema';
 import { getRouteComponentProps } from 'app/core/navigation/__mocks__/routeProps';
+import store from 'app/core/store';
 import { DashboardLoaderSrv, setDashboardLoaderSrv } from 'app/features/dashboard/services/DashboardLoaderSrv';
+import { DASHBOARD_FROM_LS_KEY } from 'app/features/dashboard/state/initDashboard';
 
 import { DashboardScenePage, Props } from './DashboardScenePage';
 import { getDashboardScenePageStateManager } from './DashboardScenePageStateManager';
@@ -125,6 +127,7 @@ describe('DashboardScenePage', () => {
     Object.defineProperty(HTMLElement.prototype, 'offsetWidth', { configurable: true, value: 1000 });
     getPluginLinkExtensionsMock.mockRestore();
     getPluginLinkExtensionsMock.mockReturnValue({ extensions: [] });
+    store.delete(DASHBOARD_FROM_LS_KEY);
   });
 
   it('Can render dashboard', async () => {
@@ -200,6 +203,18 @@ describe('DashboardScenePage', () => {
     setup();
 
     expect(await screen.findByText('Start your new dashboard by adding a visualization')).toBeInTheDocument();
+  });
+
+  it('is in edit mode when coming from explore to an existing dashboard', async () => {
+    store.setObject(DASHBOARD_FROM_LS_KEY, { dashboard: simpleDashboard });
+
+    setup();
+
+    await waitForDashbordToRender();
+
+    // Hacking a bit, accessing private cache property to get access to the underlying DashboardScene object
+    const dashboardScenesCache = getDashboardScenePageStateManager()['cache'];
+    expect(dashboardScenesCache['my-dash-uid'].state.isEditing).toBe(true);
   });
 });
 

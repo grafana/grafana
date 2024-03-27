@@ -1,12 +1,14 @@
 // Libraries
-import React, { useEffect } from 'react';
+import React, { useEffect, useMemo } from 'react';
 
 import { PageLayoutType } from '@grafana/data';
 import { Page } from 'app/core/components/Page/Page';
 import PageLoader from 'app/core/components/PageLoader/PageLoader';
 import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
+import store from 'app/core/store';
 import { DashboardPageRouteParams, DashboardPageRouteSearchParams } from 'app/features/dashboard/containers/types';
-import { DashboardRoutes } from 'app/types';
+import { DASHBOARD_FROM_LS_KEY } from 'app/features/dashboard/state/initDashboard';
+import { DashboardDTO, DashboardRoutes } from 'app/types';
 
 import { DashboardPrompt } from '../saving/DashboardPrompt';
 
@@ -19,6 +21,12 @@ export function DashboardScenePage({ match, route, queryParams, history }: Props
   const { dashboard, isLoading, loadError } = stateManager.useState();
   // After scene migration is complete and we get rid of old dashboard we should refactor dashboardWatcher so this route reload is not need
   const routeReloadCounter = (history.location.state as any)?.routeReloadCounter;
+
+  // Check if the user is coming from Explore, it's indicated byt the dashboard existence in local storage
+  const comingFromExplore = useMemo(() => {
+    return Boolean(store.getObject<DashboardDTO>(DASHBOARD_FROM_LS_KEY));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [match.params.uid, match.params.slug, match.params.type]);
 
   useEffect(() => {
     if (route.routeName === DashboardRoutes.Normal && match.params.type === 'snapshot') {
@@ -44,6 +52,15 @@ export function DashboardScenePage({ match, route, queryParams, history }: Props
     match.params.slug,
     match.params.type,
   ]);
+
+  useEffect(() => {
+    // when coming from explore and adding to an existing dashboard, we should enter edit mode
+    if (dashboard && comingFromExplore) {
+      if (route.routeName !== DashboardRoutes.New) {
+        dashboard.onEnterEditMode();
+      }
+    }
+  }, [dashboard, comingFromExplore, route.routeName]);
 
   if (!dashboard) {
     return (
