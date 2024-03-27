@@ -392,7 +392,6 @@
     "symbol-observable": "4.0.0",
     "systemjs": "6.15.1",
     "systemjs-cjs-extra": "0.2.1",
-    "tether-drop": "https://github.com/torkelo/drop",
     "tinycolor2": "1.6.0",
     "tslib": "2.8.1",
     "tween-functions": "^1.2.0",

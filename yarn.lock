@@ -18497,7 +18497,6 @@ __metadata:
     systemjs: "npm:6.15.1"
     systemjs-cjs-extra: "npm:0.2.1"
     testing-library-selector: "npm:0.3.1"
-    tether-drop: "https://github.com/torkelo/drop"
     tinycolor2: "npm:1.6.0"
     tracelib: "npm:1.0.1"
     ts-jest: "npm:29.2.5"
@@ -29563,22 +29562,6 @@ __metadata:
   peerDependencies:
     "@testing-library/dom": ^9.3.3
   checksum: 10/979dc68c506688fa2e0d7f974c7213e423e082bf676b2a5d076984596316b6c9b065a98fadcda468e1a2dec2e3ab658b96a93a059976e2dedc62e9e6d439617d
-  languageName: node
-  linkType: hard
-
-"tether-drop@https://github.com/torkelo/drop":
-  version: 1.5.0
-  resolution: "tether-drop@https://github.com/torkelo/drop.git#commit=fc83ca88db0076fbf6359cbe1743a9ef0f1ee6e1"
-  dependencies:
-    tether: "npm:^1.1.0"
-  checksum: 10/178c3afb889ee6dc860f767ffd7a959774adce200148e067aff631888b98fd046123f887ca40152581a13c430ad1fa72e2a9dba9de4e79e3f7634e224c229188
-  languageName: node
-  linkType: hard
-
-"tether@npm:^1.1.0":
-  version: 1.4.7
-  resolution: "tether@npm:1.4.7"
-  checksum: 10/4185215f28392733f6248ea5d1734cd411d921ba3d5ae92df977bc1d11bd88dcf469ed6ceb9195accd8facc136ddd87d286f18cab2544300412e3f2d073d8e68
   languageName: node
   linkType: hard
 
