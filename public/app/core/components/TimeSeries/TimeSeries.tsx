@@ -1,7 +1,6 @@
 import React, { Component } from 'react';
 
 import { DataFrame, TimeRange } from '@grafana/data';
-import { PanelContextRoot } from '@grafana/ui/src/components/PanelChrome/PanelContext';
 import { hasVisibleLegendSeries, PlotLegend } from '@grafana/ui/src/components/uPlot/PlotLegend';
 import { UPlotConfigBuilder } from '@grafana/ui/src/components/uPlot/config/UPlotConfigBuilder';
 import { withTheme2 } from '@grafana/ui/src/themes/ThemeContext';
@@ -15,9 +14,6 @@ const propsToDiff: Array<string | PropDiffFn> = ['legend', 'options', 'theme'];
 type TimeSeriesProps = Omit<GraphNGProps, 'prepConfig' | 'propsToDiff' | 'renderLegend'>;
 
 export class UnthemedTimeSeries extends Component<TimeSeriesProps> {
-  static contextType = PanelContextRoot;
-  declare context: React.ContextType<typeof PanelContextRoot>;
-
   prepConfig = (alignedFrame: DataFrame, allFrames: DataFrame[], getTimeRange: () => TimeRange) => {
     const { theme, timeZone, options, renderers, tweakAxis, tweakScale } = this.props;
 

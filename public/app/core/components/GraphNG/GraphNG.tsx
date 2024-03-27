@@ -14,7 +14,7 @@ import {
   TimeZone,
 } from '@grafana/data';
 import { DashboardCursorSync, VizLegendOptions } from '@grafana/schema';
-import { Themeable2, PanelContextRoot, VizLayout } from '@grafana/ui';
+import { Themeable2, VizLayout } from '@grafana/ui';
 import { UPlotChart } from '@grafana/ui/src/components/uPlot/Plot';
 import { AxisProps } from '@grafana/ui/src/components/uPlot/config/UPlotAxisBuilder';
 import { Renderers, UPlotConfigBuilder } from '@grafana/ui/src/components/uPlot/config/UPlotConfigBuilder';
@@ -87,7 +87,6 @@ export interface GraphNGState {
  * "Time as X" core component, expects ascending x
  */
 export class GraphNG extends Component<GraphNGProps, GraphNGState> {
-  static contextType = PanelContextRoot;
   private plotInstance: React.RefObject<uPlot>;
 
   constructor(props: GraphNGProps) {
