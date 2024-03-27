@@ -26,17 +26,17 @@ describe('DashboardSceneUrlSync', () => {
       expect(scene.state.viewPanelScene!.getUrlKey()).toBe('panel-2');
     });
 
-    it('Should set fitPanels when url has autofitpanels', () => {
+    it('Should set UNSAFE_fitPanels when url has autofitpanels', () => {
       const scene = buildTestScene();
       scene.urlSync?.updateFromUrl({ autofitpanels: '' });
-      expect((scene.state.body as SceneGridLayout).state.fitPanels).toBe(true);
+      expect((scene.state.body as SceneGridLayout).state.UNSAFE_fitPanels).toBe(true);
     });
 
     it('Should get the autofitpanels from the scene state', () => {
       const scene = buildTestScene();
 
       expect(scene.urlSync?.getUrlState().autofitpanels).toBeUndefined();
-      (scene.state.body as SceneGridLayout).setState({ fitPanels: true });
+      (scene.state.body as SceneGridLayout).setState({ UNSAFE_fitPanels: true });
       expect(scene.urlSync?.getUrlState().autofitpanels).toBe('true');
     });
   });

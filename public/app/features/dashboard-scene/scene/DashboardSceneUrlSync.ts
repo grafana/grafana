@@ -35,7 +35,7 @@ export class DashboardSceneUrlSync implements SceneObjectUrlSyncHandler {
     const state = this._scene.state;
     return {
       inspect: state.inspectPanelKey,
-      autofitpanels: state.body instanceof SceneGridLayout && !!state.body.state.fitPanels ? 'true' : undefined,
+      autofitpanels: state.body instanceof SceneGridLayout && !!state.body.state.UNSAFE_fitPanels ? 'true' : undefined,
       viewPanel: state.viewPanelScene?.getUrlKey(),
       editview: state.editview?.getUrlKey(),
       editPanel: state.editPanel?.getUrlKey() || undefined,
@@ -141,10 +141,10 @@ export class DashboardSceneUrlSync implements SceneObjectUrlSyncHandler {
     }
 
     if (this._scene.state.body instanceof SceneGridLayout) {
-      const fitPanels = typeof values.autofitpanels === 'string';
+      const UNSAFE_fitPanels = typeof values.autofitpanels === 'string';
 
-      if (!!this._scene.state.body.state.fitPanels !== fitPanels) {
-        this._scene.state.body.setState({ fitPanels });
+      if (!!this._scene.state.body.state.UNSAFE_fitPanels !== UNSAFE_fitPanels) {
+        this._scene.state.body.setState({ UNSAFE_fitPanels });
       }
     }
 
