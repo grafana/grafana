@@ -63,7 +63,13 @@ export const Icon = React.forwardRef<SVGElement, IconProps>(
 
     return (
       <SVG
-        aria-hidden={!title && !rest['aria-label'] && !rest['aria-labelledby'] && !rest['aria-describedby']}
+        aria-hidden={
+          rest.tabIndex === undefined &&
+          !title &&
+          !rest['aria-label'] &&
+          !rest['aria-labelledby'] &&
+          !rest['aria-describedby']
+        }
         innerRef={ref}
         src={svgPath}
         width={svgWid}

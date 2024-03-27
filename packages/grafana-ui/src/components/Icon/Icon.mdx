@@ -11,6 +11,10 @@ Grafana's wrapper component over [Font Awesome](https://fontawesome.com/) and Un
 
 `Icon` is aria-hidden by default. If your icon has semantic meaning, please provide a `title` or wrap it in a `Tooltip`.
 
+### Usage with Tooltip
+
+If you decide to use a `Tooltip` to wrap `Icon`, you need to set a `title` on the `Icon` component in order for it to appear in the accessibility tree. `Tooltip` only provides `aria-describedby` on interaction.
+
 ### Changing icon size
 
 By default `Icon` has width and height of `16px` and font-size of `14px`. Pass `className` to control icon's size:

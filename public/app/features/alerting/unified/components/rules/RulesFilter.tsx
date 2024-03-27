@@ -162,7 +162,12 @@ const RulesFilter = ({ onFilterCleared = () => undefined }: RulesFilerProps) => 
                       </div>
                     }
                   >
-                    <Icon id="data-source-picker-inline-help" name="info-circle" size="sm" />
+                    <Icon
+                      id="data-source-picker-inline-help"
+                      name="info-circle"
+                      size="sm"
+                      title="Search by data sources help"
+                    />
                   </Tooltip>
                 </Stack>
               </Label>
