@@ -5272,9 +5272,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@mswjs/interceptors@npm:^0.26.12":
-  version: 0.26.13
-  resolution: "@mswjs/interceptors@npm:0.26.13"
+"@mswjs/interceptors@npm:^0.26.14":
+  version: 0.26.14
+  resolution: "@mswjs/interceptors@npm:0.26.14"
   dependencies:
     "@open-draft/deferred-promise": "npm:^2.2.0"
     "@open-draft/logger": "npm:^0.3.0"
@@ -5282,7 +5282,7 @@ __metadata:
     is-node-process: "npm:^1.2.0"
     outvariant: "npm:^1.2.1"
     strict-event-emitter: "npm:^0.5.1"
-  checksum: 10/f6764f9f6178196fe5bb1ea6e2d9e124e938fd4e94dcc8ed7f911a12a8154edf6d3e71881220199233247c1fa793c19c08b733539f4dafc2095d939e0aa2d635
+  checksum: 10/ed5080f2f08079a0139677491ec101a94de2c06db81967580d6f777840aaaf0567e15c8a2fa6e078e3f2acba2a4bf288e8390d9de6c003206c69ff5134d061dd
   languageName: node
   linkType: hard
 
@@ -18840,7 +18840,7 @@ __metadata:
     mousetrap: "npm:1.6.5"
     mousetrap-global-bind: "npm:1.1.0"
     moveable: "npm:0.53.0"
-    msw: "npm:2.2.12"
+    msw: "npm:2.2.13"
     mutationobserver-shim: "npm:0.3.7"
     nanoid: "npm:^5.0.4"
     ngtemplate-loader: "npm:2.1.0"
@@ -23302,15 +23302,15 @@ __metadata:
   languageName: node
   linkType: hard
 
-"msw@npm:2.2.12":
-  version: 2.2.12
-  resolution: "msw@npm:2.2.12"
+"msw@npm:2.2.13":
+  version: 2.2.13
+  resolution: "msw@npm:2.2.13"
   dependencies:
     "@bundled-es-modules/cookie": "npm:^2.0.0"
     "@bundled-es-modules/statuses": "npm:^1.0.1"
     "@inquirer/confirm": "npm:^3.0.0"
     "@mswjs/cookies": "npm:^1.1.0"
-    "@mswjs/interceptors": "npm:^0.26.12"
+    "@mswjs/interceptors": "npm:^0.26.14"
     "@open-draft/until": "npm:^2.1.0"
     "@types/cookie": "npm:^0.6.0"
     "@types/statuses": "npm:^2.0.4"
@@ -23330,7 +23330,7 @@ __metadata:
       optional: true
   bin:
     msw: cli/index.js
-  checksum: 10/cd16f1697d99fe8e85bad72b16976514a56a3ac6a0e4c644303c138a02a24307d9a57eadb248f0edffac8e7dbb731bbb4ab4330b3c6eb8c49d47367c66ea92af
+  checksum: 10/3cd7f361294d7b9218a83f3a50b07d942924fb4da41ec1f30fcaa83896d30102f63bd8769212d985e0d9d20071550b54f22136710da43f3000f3d8fca18a3578
   languageName: node
   linkType: hard
 
