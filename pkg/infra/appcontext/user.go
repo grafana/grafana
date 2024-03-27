@@ -99,7 +99,7 @@ func MustUser(ctx context.Context) *user.SignedInUser {
 	return usr
 }
 
-// Get a token that can be forwarded to the next service
+// Get tokens that can be forwarded to the next service
 func GetForwardingTokens(ctx context.Context) (string, string, error) {
 	user, ok := request.UserFrom(ctx)
 	if !ok {
