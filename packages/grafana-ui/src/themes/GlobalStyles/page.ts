@@ -10,11 +10,8 @@ export function getPageStyles(theme: GrafanaTheme2) {
     '.grafana-app': {
       display: 'flex',
       alignItems: 'stretch',
-      position: 'absolute',
       width: '100%',
-      height: '100%',
-      top: 0,
-      left: 0,
+      flex: 1,
     },
 
     '.main-view': {
@@ -22,7 +19,7 @@ export function getPageStyles(theme: GrafanaTheme2) {
       display: 'flex',
       flexDirection: 'column',
       flexGrow: 1,
-      height: '100%',
+      minHeight: '100%',
       flex: '1 1 0',
       minWidth: 0,
     },

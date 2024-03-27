@@ -14,7 +14,7 @@ import { KioskMode } from 'app/types';
 
 import { AppChromeMenu } from './AppChromeMenu';
 import { DOCKED_LOCAL_STORAGE_KEY, DOCKED_MENU_OPEN_LOCAL_STORAGE_KEY } from './AppChromeService';
-import { MegaMenu } from './MegaMenu/MegaMenu';
+import { MegaMenu, MENU_WIDTH } from './MegaMenu/MegaMenu';
 import { NavToolbar } from './NavToolbar/NavToolbar';
 import { ReturnToPrevious } from './ReturnToPrevious/ReturnToPrevious';
 import { TopSearchBar } from './TopBar/TopSearchBar';
@@ -47,6 +47,12 @@ export function AppChrome({ children }: Props) {
     [styles.content]: true,
     [styles.contentNoSearchBar]: searchBarHidden,
     [styles.contentChromeless]: state.chromeless,
+    [styles.contentDockedMenu]: !state.chromeless && state.megaMenuDocked && state.megaMenuOpen,
+  });
+
+  const dockedMenuClass = cx({
+    [styles.dockedMegaMenu]: true,
+    [styles.dockedMegaMenuNoSearchBar]: searchBarHidden,
   });
 
   const handleMegaMenu = () => {
@@ -100,17 +106,15 @@ export function AppChrome({ children }: Props) {
               onToggleKioskMode={chrome.onToggleKioskMode}
             />
           </header>
+          {state.megaMenuDocked && state.megaMenuOpen && (
+            <MegaMenu className={dockedMenuClass} onClose={() => chrome.setMegaMenuOpen(false)} />
+          )}
         </>
       )}
       <div className={contentClass}>
-        <div className={styles.panes}>
-          {!state.chromeless && state.megaMenuDocked && state.megaMenuOpen && (
-            <MegaMenu className={styles.dockedMegaMenu} onClose={() => chrome.setMegaMenuOpen(false)} />
-          )}
-          <main className={styles.pageContainer} id="pageContent">
-            {children}
-          </main>
-        </div>
+        <main className={styles.pageContainer} id="pageContent">
+          {children}
+        </main>
       </div>
       {!state.chromeless && !state.megaMenuDocked && <AppChromeMenu />}
       {!state.chromeless && <CommandPalette />}
@@ -136,15 +140,24 @@ const getStyles = (theme: GrafanaTheme2) => {
     contentChromeless: css({
       paddingTop: 0,
     }),
+    contentDockedMenu: css({
+      paddingLeft: MENU_WIDTH,
+    }),
     dockedMegaMenu: css({
       background: theme.colors.background.primary,
       borderRight: `1px solid ${theme.colors.border.weak}`,
+      bottom: 0,
       display: 'none',
+      top: TOP_BAR_LEVEL_HEIGHT * 2,
+      position: 'fixed',
       zIndex: theme.zIndex.navbarFixed,
 
       [theme.breakpoints.up('xl')]: {
         display: 'block',
       },
+    }),
+    dockedMegaMenuNoSearchBar: css({
+      top: TOP_BAR_LEVEL_HEIGHT,
     }),
     topNav: css({
       display: 'flex',
@@ -154,18 +167,6 @@ const getStyles = (theme: GrafanaTheme2) => {
       right: 0,
       background: theme.colors.background.primary,
       flexDirection: 'column',
-    }),
-    panes: css({
-      label: 'page-panes',
-      display: 'flex',
-      height: '100%',
-      width: '100%',
-      flexGrow: 1,
-      minHeight: 0,
-      flexDirection: 'column',
-      [theme.breakpoints.up('md')]: {
-        flexDirection: 'row',
-      },
     }),
     pageContainer: css({
       label: 'page-container',
@@ -183,7 +184,7 @@ const getStyles = (theme: GrafanaTheme2) => {
       },
     }),
     skipLink: css({
-      position: 'absolute',
+      position: 'fixed',
       top: -1000,
 
       ':focus': {
