@@ -2186,6 +2186,10 @@ github.com/grafana/grafana-openapi-client-go v0.0.0-20231213163343-bd475d63fb79/
 github.com/grafana/grafana-plugin-sdk-go v0.114.0/go.mod h1:D7x3ah+1d4phNXpbnOaxa/osSaZlwh9/ZUnGGzegRbk=
 github.com/grafana/grafana-plugin-sdk-go v0.217.0 h1:oQjq5KRrVrhweXHxFtEMgjv1KW7hujGiRPIYrsPZ9PE=
 github.com/grafana/grafana-plugin-sdk-go v0.217.0/go.mod h1:FdvSvOliqpVLnytM7e89zCFyYPDE6VOn9SIjVQRvVxM=
+github.com/grafana/grafana-plugin-sdk-go v0.217.1-0.20240327122902-2c55795eb36d h1:yS+eXtzttVPg7bcSUx7ADxIoa5DAcAkB+8AtVqoxBzk=
+github.com/grafana/grafana-plugin-sdk-go v0.217.1-0.20240327122902-2c55795eb36d/go.mod h1:Cu+ezYbFY+IYDhIbPhkYegE3wl9VKrntSBkuVuJr+ZE=
+github.com/grafana/grafana-plugin-sdk-go v0.218.0 h1:hKu6ziTgHHfdc/7UpIcWtBoP44/a7VkAJIBnECoRqTg=
+github.com/grafana/grafana-plugin-sdk-go v0.218.0/go.mod h1:Cu+ezYbFY+IYDhIbPhkYegE3wl9VKrntSBkuVuJr+ZE=
 github.com/grafana/grafana/pkg/apimachinery v0.0.0-20240226124929-648abdbd0ea4 h1:hpyusz8c3yRFoJPlA0o34rWnsLbaOOBZleqRhFBi5Lg=
 github.com/grafana/grafana/pkg/apimachinery v0.0.0-20240226124929-648abdbd0ea4/go.mod h1:vrRQJuNprTWqwm6JPxHf3BoTJhvO15QMEjQ7Q/YUOnI=
 github.com/grafana/grafana/pkg/apiserver v0.0.0-20240226124929-648abdbd0ea4 h1:tIbI5zgos92vwJ8lV3zwHwuxkV03GR3FGLkFW9V5LxY=
@@ -3518,6 +3522,7 @@ golang.org/x/oauth2 v0.14.0/go.mod h1:lAtNWgaWfL4cm7j2OV8TxGi9Qb7ECORx8DktCY74Ow
 golang.org/x/oauth2 v0.15.0/go.mod h1:q48ptWNTY5XWf+JNten23lcvHpLJ0ZSxF5ttTHKVCAM=
 golang.org/x/oauth2 v0.16.0 h1:aDkGMBSYxElaoP81NpoUoz2oo2R2wHdZpGToUxfyQrQ=
 golang.org/x/oauth2 v0.16.0/go.mod h1:hqZ+0LWXsiVoZpeld6jVt06P3adbS2Uu911W1SsJv2o=
+golang.org/x/oauth2 v0.18.0/go.mod h1:Wf7knwG0MPoWIMMBgFlEaSUDaKskp0dCfrlJRJXbBi8=
 golang.org/x/sync v0.0.0-20180314180146-1d60e4601c6f/go.mod h1:RxMgew5VJxzue5/jJTE5uejpjVlOe/izrB70Jof72aM=
 golang.org/x/sync v0.0.0-20181108010431-42b317875d0f/go.mod h1:RxMgew5VJxzue5/jJTE5uejpjVlOe/izrB70Jof72aM=
 golang.org/x/sync v0.0.0-20181221193216-37e7f081c4d4/go.mod h1:RxMgew5VJxzue5/jJTE5uejpjVlOe/izrB70Jof72aM=
