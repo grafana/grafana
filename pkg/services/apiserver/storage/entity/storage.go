@@ -13,6 +13,7 @@ import (
 	"log"
 	"reflect"
 	"strconv"
+	"sync"
 
 	grpcCodes "google.golang.org/grpc/codes"
 	grpcStatus "google.golang.org/grpc/status"
@@ -23,6 +24,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/selection"
+	"k8s.io/apimachinery/pkg/util/net"
 	"k8s.io/apimachinery/pkg/watch"
 	"k8s.io/apiserver/pkg/endpoints/request"
 	"k8s.io/apiserver/pkg/storage"
@@ -127,6 +129,8 @@ func (s *Storage) Delete(ctx context.Context, key string, out runtime.Object, pr
 		Subresource: requestInfo.Subresource,
 	}
 
+	fmt.Printf("Delete: %s\n", k.String())
+
 	previousVersion := int64(0)
 	if preconditions != nil && preconditions.ResourceVersion != nil {
 		previousVersion, _ = strconv.ParseInt(*preconditions.ResourceVersion, 10, 64)
@@ -169,23 +173,17 @@ func (s *Storage) Watch(ctx context.Context, key string, opts storage.ListOption
 		Subresource: requestInfo.Subresource,
 	}
 
+	fmt.Printf("Watch: key=%s k=%s\n", key, k.String())
+
 	if opts.Predicate.Field != nil {
 		// check for metadata.name field selector
-		if v, ok := opts.Predicate.Field.RequiresExactMatch("metadata.name"); ok {
-			if k.Name != "" && k.Name != v {
-				return nil, apierrors.NewBadRequest("name field selector does not match key")
-			}
-
+		if v, ok := opts.Predicate.Field.RequiresExactMatch("metadata.name"); ok && k.Name == "" {
 			// just watch the specific key if we have a name field selector
 			k.Name = v
 		}
 
 		// check for metadata.namespace field selector
-		if v, ok := opts.Predicate.Field.RequiresExactMatch("metadata.namespace"); ok {
-			if k.Namespace != "" && k.Namespace != v {
-				return nil, apierrors.NewBadRequest("namespace field selector does not match key")
-			}
-
+		if v, ok := opts.Predicate.Field.RequiresExactMatch("metadata.namespace"); ok && k.Namespace == "" {
 			// just watch the specific namespace if we have a namespace field selector
 			k.Namespace = v
 		}
@@ -209,6 +207,7 @@ func (s *Storage) Watch(ctx context.Context, key string, opts storage.ListOption
 	}
 
 	req := &entityStore.EntityWatchRequest{
+		Action: entityStore.EntityWatchRequest_START,
 		Key: []string{
 			k.String(),
 		},
@@ -242,9 +241,20 @@ func (s *Storage) Watch(ctx context.Context, key string, opts storage.ListOption
 		req.Since = rv
 	}
 
-	result, err := s.store.Watch(ctx, req)
+	result, err := s.store.Watch(ctx)
 	if err != nil {
+		fmt.Printf("watch failed: %s\n", err)
 		return nil, err
+	}
+
+	err = result.Send(req)
+	if err != nil {
+		fmt.Printf("watch send failed: %s\n", err)
+		err = result.CloseSend()
+		if err != nil {
+			fmt.Printf("watch close failed: %s\n", err)
+		}
+		// return nil, err
 	}
 
 	reporter := apierrors.NewClientErrorReporter(500, "WATCH", "")
@@ -511,6 +521,8 @@ func (s *Storage) GuaranteedUpdate(
 		Subresource: requestInfo.Subresource,
 	}
 
+	fmt.Printf("GuaranteedUpdate: key=%s k=%s\n", key, k.String())
+
 	getErr := s.Get(ctx, k.String(), storage.GetOptions{}, destination)
 	if getErr != nil {
 		if ignoreNotFound && apierrors.IsNotFound(getErr) {
@@ -613,20 +625,27 @@ type Decoder struct {
 }
 
 func (d *Decoder) Decode() (action watch.EventType, object runtime.Object, err error) {
+decode:
 	for {
+		err := d.client.Context().Err()
+		if err != nil {
+			fmt.Printf("client: context error: %s\n", err)
+			return watch.Error, nil, err
+		}
+
 		resp, err := d.client.Recv()
 		if errors.Is(err, io.EOF) {
-			log.Printf("watch is done")
+			fmt.Printf("client: watch is done\n")
 			return watch.Error, nil, err
 		}
 
 		if grpcStatus.Code(err) == grpcCodes.Canceled {
-			log.Printf("watch was canceled")
+			fmt.Printf("client: watch was canceled\n")
 			return watch.Error, nil, err
 		}
 
 		if err != nil {
-			log.Printf("error receiving result: %s", err)
+			fmt.Printf("client: error receiving result: %s", err)
 			return watch.Error, nil, err
 		}
 
@@ -638,24 +657,100 @@ func (d *Decoder) Decode() (action watch.EventType, object runtime.Object, err e
 			return watch.Error, nil, err
 		}
 
-		// apply any predicates not handled in storage
-		matches, err := d.opts.Predicate.Matches(obj)
-		if err != nil {
-			log.Printf("error matching object: %s", err)
-			return watch.Error, nil, err
-		}
-		if !matches {
-			continue
-		}
-
 		var watchAction watch.EventType
 		switch resp.Entity.Action {
 		case entityStore.Entity_CREATED:
+			// apply any predicates not handled in storage
+			matches, err := d.opts.Predicate.Matches(obj)
+			if err != nil {
+				log.Printf("error matching object: %s", err)
+				return watch.Error, nil, err
+			}
+			if !matches {
+				continue decode
+			}
+
 			watchAction = watch.Added
 		case entityStore.Entity_UPDATED:
 			watchAction = watch.Modified
+
+			// apply any predicates not handled in storage
+			matches, err := d.opts.Predicate.Matches(obj)
+			if err != nil {
+				log.Printf("error matching object: %s", err)
+				return watch.Error, nil, err
+			}
+
+			// if we have a previous object, check if it matches
+			prevMatches := false
+			prevObj := d.newFunc()
+			if resp.Previous != nil {
+				err = entityToResource(resp.Previous, prevObj, d.codec)
+				if err != nil {
+					log.Printf("error decoding entity: %s", err)
+					return watch.Error, nil, err
+				}
+
+				// apply any predicates not handled in storage
+				prevMatches, err = d.opts.Predicate.Matches(prevObj)
+				if err != nil {
+					log.Printf("error matching object: %s", err)
+					return watch.Error, nil, err
+				}
+			}
+
+			if !matches {
+				if !prevMatches {
+					continue decode
+				}
+
+				// if the object didn't match, send a Deleted event
+				watchAction = watch.Deleted
+
+				// here k8s expects the previous object but with the new resource version
+				obj = prevObj
+
+				accessor, err := meta.Accessor(obj)
+				if err != nil {
+					log.Printf("error getting object accessor: %s", err)
+					return watch.Error, nil, err
+				}
+
+				accessor.SetResourceVersion(fmt.Sprintf("%d", resp.Entity.ResourceVersion))
+			} else if !prevMatches {
+				// if the object didn't previously match, send an Added event
+				watchAction = watch.Added
+			}
 		case entityStore.Entity_DELETED:
 			watchAction = watch.Deleted
+
+			// if we have a previous object, return that in the deleted event
+			if resp.Previous != nil {
+				err = entityToResource(resp.Previous, obj, d.codec)
+				if err != nil {
+					log.Printf("error decoding entity: %s", err)
+					return watch.Error, nil, err
+				}
+
+				// here k8s expects the previous object but with the new resource version
+				accessor, err := meta.Accessor(obj)
+				if err != nil {
+					log.Printf("error getting object accessor: %s", err)
+					return watch.Error, nil, err
+				}
+
+				accessor.SetResourceVersion(fmt.Sprintf("%d", resp.Entity.ResourceVersion))
+			}
+
+			// apply any predicates not handled in storage
+			matches, err := d.opts.Predicate.Matches(obj)
+			if err != nil {
+				log.Printf("error matching object: %s", err)
+				return watch.Error, nil, err
+			}
+			if !matches {
+				continue decode
+			}
 		default:
 			watchAction = watch.Error
 		}
@@ -665,7 +760,96 @@ func (d *Decoder) Decode() (action watch.EventType, object runtime.Object, err e
 }
 
 func (d *Decoder) Close() {
-	_ = d.client.CloseSend()
+	fmt.Printf("client: closing watch stream\n")
+	err := d.client.CloseSend()
+	if err != nil {
+		fmt.Printf("error closing watch stream: %s", err)
+	}
 }
 
 var _ watch.Decoder = (*Decoder)(nil)
+
+// StreamWatcher turns any stream for which you can write a Decoder interface
+// into a watch.Interface.
+type StreamWatcher struct {
+	sync.Mutex
+	source   watch.Decoder
+	reporter watch.Reporter
+	result   chan watch.Event
+	done     chan struct{}
+}
+
+// NewStreamWatcher creates a StreamWatcher from the given decoder.
+func NewStreamWatcher(d watch.Decoder, r watch.Reporter, bufferLen int) *StreamWatcher {
+	sw := &StreamWatcher{
+		source:   d,
+		reporter: r,
+		// Make a buffered channel to avoid blocking the sender
+		result: make(chan watch.Event, bufferLen),
+		// If the watcher is externally stopped there is no receiver anymore
+		// and the send operations on the result channel, especially the
+		// error reporting might block forever.
+		// Therefore a dedicated stop channel is used to resolve this blocking.
+		done: make(chan struct{}),
+	}
+	go sw.receive()
+	return sw
+}
+
+// ResultChan implements Interface.
+func (sw *StreamWatcher) ResultChan() <-chan watch.Event {
+	return sw.result
+}
+
+// Stop implements Interface.
+func (sw *StreamWatcher) Stop() {
+	// Call Close() exactly once by locking and setting a flag.
+	sw.Lock()
+	defer sw.Unlock()
+	// closing a closed channel always panics, therefore check before closing
+	select {
+	case <-sw.done:
+	default:
+		close(sw.done)
+		sw.source.Close()
+	}
+}
+
+// receive reads result from the decoder in a loop and sends down the result channel.
+func (sw *StreamWatcher) receive() {
+	// defer utilruntime.HandleCrash()
+	defer close(sw.result)
+	defer sw.Stop()
+	for {
+		action, obj, err := sw.source.Decode()
+		if err != nil {
+			switch err {
+			case io.EOF:
+				// watch closed normally
+			case io.ErrUnexpectedEOF:
+				// klog.V(1).Infof("Unexpected EOF during watch stream event decoding: %v", err)
+			default:
+				if net.IsProbableEOF(err) || net.IsTimeout(err) {
+					// klog.V(5).Infof("Unable to decode an event from the watch stream: %v", err)
+				} else {
+					select {
+					case <-sw.done:
+					case sw.result <- watch.Event{
+						Type:   watch.Error,
+						Object: sw.reporter.AsObject(fmt.Errorf("unable to decode an event from the watch stream: %v", err)),
+					}:
+					}
+				}
+			}
+			return
+		}
+		select {
+		case <-sw.done:
+			return
+		case sw.result <- watch.Event{
+			Type:   action,
+			Object: obj,
+		}:
+		}
+	}
+}

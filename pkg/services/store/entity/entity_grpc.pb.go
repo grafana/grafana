@@ -38,7 +38,7 @@ type EntityStoreClient interface {
 	Delete(ctx context.Context, in *DeleteEntityRequest, opts ...grpc.CallOption) (*DeleteEntityResponse, error)
 	History(ctx context.Context, in *EntityHistoryRequest, opts ...grpc.CallOption) (*EntityHistoryResponse, error)
 	List(ctx context.Context, in *EntityListRequest, opts ...grpc.CallOption) (*EntityListResponse, error)
-	Watch(ctx context.Context, in *EntityWatchRequest, opts ...grpc.CallOption) (EntityStore_WatchClient, error)
+	Watch(ctx context.Context, opts ...grpc.CallOption) (EntityStore_WatchClient, error)
 }
 
 type entityStoreClient struct {
@@ -103,28 +103,27 @@ func (c *entityStoreClient) List(ctx context.Context, in *EntityListRequest, opt
 	return out, nil
 }
 
-func (c *entityStoreClient) Watch(ctx context.Context, in *EntityWatchRequest, opts ...grpc.CallOption) (EntityStore_WatchClient, error) {
+func (c *entityStoreClient) Watch(ctx context.Context, opts ...grpc.CallOption) (EntityStore_WatchClient, error) {
 	stream, err := c.cc.NewStream(ctx, &EntityStore_ServiceDesc.Streams[0], EntityStore_Watch_FullMethodName, opts...)
 	if err != nil {
 		return nil, err
 	}
 	x := &entityStoreWatchClient{stream}
-	if err := x.ClientStream.SendMsg(in); err != nil {
-		return nil, err
-	}
-	if err := x.ClientStream.CloseSend(); err != nil {
-		return nil, err
-	}
 	return x, nil
 }
 
 type EntityStore_WatchClient interface {
+	Send(*EntityWatchRequest) error
 	Recv() (*EntityWatchResponse, error)
 	grpc.ClientStream
 }
 
 type entityStoreWatchClient struct {
 	grpc.ClientStream
+}
+
+func (x *entityStoreWatchClient) Send(m *EntityWatchRequest) error {
+	return x.ClientStream.SendMsg(m)
 }
 
 func (x *entityStoreWatchClient) Recv() (*EntityWatchResponse, error) {
@@ -145,7 +144,7 @@ type EntityStoreServer interface {
 	Delete(context.Context, *DeleteEntityRequest) (*DeleteEntityResponse, error)
 	History(context.Context, *EntityHistoryRequest) (*EntityHistoryResponse, error)
 	List(context.Context, *EntityListRequest) (*EntityListResponse, error)
-	Watch(*EntityWatchRequest, EntityStore_WatchServer) error
+	Watch(EntityStore_WatchServer) error
 }
 
 // UnimplementedEntityStoreServer should be embedded to have forward compatible implementations.
@@ -170,7 +169,7 @@ func (UnimplementedEntityStoreServer) History(context.Context, *EntityHistoryReq
 func (UnimplementedEntityStoreServer) List(context.Context, *EntityListRequest) (*EntityListResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method List not implemented")
 }
-func (UnimplementedEntityStoreServer) Watch(*EntityWatchRequest, EntityStore_WatchServer) error {
+func (UnimplementedEntityStoreServer) Watch(EntityStore_WatchServer) error {
 	return status.Errorf(codes.Unimplemented, "method Watch not implemented")
 }
 
@@ -294,15 +293,12 @@ func _EntityStore_List_Handler(srv interface{}, ctx context.Context, dec func(in
 }
 
 func _EntityStore_Watch_Handler(srv interface{}, stream grpc.ServerStream) error {
-	m := new(EntityWatchRequest)
-	if err := stream.RecvMsg(m); err != nil {
-		return err
-	}
-	return srv.(EntityStoreServer).Watch(m, &entityStoreWatchServer{stream})
+	return srv.(EntityStoreServer).Watch(&entityStoreWatchServer{stream})
 }
 
 type EntityStore_WatchServer interface {
 	Send(*EntityWatchResponse) error
+	Recv() (*EntityWatchRequest, error)
 	grpc.ServerStream
 }
 
@@ -312,6 +308,14 @@ type entityStoreWatchServer struct {
 
 func (x *entityStoreWatchServer) Send(m *EntityWatchResponse) error {
 	return x.ServerStream.SendMsg(m)
+}
+
+func (x *entityStoreWatchServer) Recv() (*EntityWatchRequest, error) {
+	m := new(EntityWatchRequest)
+	if err := x.ServerStream.RecvMsg(m); err != nil {
+		return nil, err
+	}
+	return m, nil
 }
 
 // EntityStore_ServiceDesc is the grpc.ServiceDesc for EntityStore service.
@@ -351,6 +355,7 @@ var EntityStore_ServiceDesc = grpc.ServiceDesc{
 			StreamName:    "Watch",
 			Handler:       _EntityStore_Watch_Handler,
 			ServerStreams: true,
+			ClientStreams: true,
 		},
 	},
 	Metadata: "entity.proto",

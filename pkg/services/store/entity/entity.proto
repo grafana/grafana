@@ -232,8 +232,14 @@ message EntityHistoryRequest {
   // Entity identifier
   string key = 1;
 
+  // return the history from before this version
+  int64 before = 2;
+
   // Maximum number of items to return
   int64 limit = 3;
+
+  // guid of the entity
+  string guid = 4;
 
   // Starting from the requested page
   string next_page_token = 5;
@@ -338,6 +344,14 @@ message EntityListResponse {
 //-----------------------------------------------
 
 message EntityWatchRequest {
+  enum WatchAction {
+    START = 0;
+    STOP = 1;
+  }
+
+  // Start or stop the watch
+  WatchAction action = 8;
+
   // ResourceVersion of last changes. Empty will default to full history
   int64 since = 1;
 
@@ -366,6 +380,9 @@ message EntityWatchResponse {
 
   // Entity that was created, updated, or deleted
   Entity entity = 2;
+
+  // previous version of the entity
+  Entity previous = 3;
 }
 
 message EntitySummary {
@@ -426,5 +443,5 @@ service EntityStore {
   rpc Delete(DeleteEntityRequest) returns (DeleteEntityResponse);
   rpc History(EntityHistoryRequest) returns (EntityHistoryResponse);
   rpc List(EntityListRequest) returns (EntityListResponse);
-  rpc Watch(EntityWatchRequest) returns (stream EntityWatchResponse);
+  rpc Watch(stream EntityWatchRequest) returns (stream EntityWatchResponse);
 }
