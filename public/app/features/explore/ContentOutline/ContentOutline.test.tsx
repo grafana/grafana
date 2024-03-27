@@ -96,8 +96,8 @@ describe('<ContentOutline />', () => {
 
   it('doesnt merge a single child item when mergeSingleChild is false', async () => {
     setup();
-    const expandSectonChevron = screen.getAllByRole('button', { name: 'Content outline item collapse button' });
-    await userEvent.click(expandSectonChevron[0]);
+    const expandSectionChevrons = screen.getAllByRole('button', { name: 'Content outline item collapse button' });
+    await userEvent.click(expandSectionChevrons[0]);
 
     const child = screen.getByRole('button', { name: 'Item 1-1' });
     expect(child).toBeInTheDocument();
@@ -112,8 +112,8 @@ describe('<ContentOutline />', () => {
 
   it('displays multiple children', async () => {
     setup();
-    const expandSectonChevron = screen.getAllByRole('button', { name: 'Content outline item collapse button' });
-    await userEvent.click(expandSectonChevron[1]);
+    const expandSectionChevrons = screen.getAllByRole('button', { name: 'Content outline item collapse button' });
+    await userEvent.click(expandSectionChevrons[1]);
 
     const child1 = screen.getByRole('button', { name: 'Item 2-1' });
     const child2 = screen.getByRole('button', { name: 'Item 2-2' });
@@ -123,13 +123,24 @@ describe('<ContentOutline />', () => {
 
   it('if item has multiple children, it displays multiple children even when mergeSingleChild is true', async () => {
     setup(true);
-    const expandSectonChevron = screen.getAllByRole('button', { name: 'Content outline item collapse button' });
+    const expandSectionChevrons = screen.getAllByRole('button', { name: 'Content outline item collapse button' });
     // since first item has only one child, we will have only one chevron
-    await userEvent.click(expandSectonChevron[0]);
+    await userEvent.click(expandSectionChevrons[0]);
 
     const child1 = screen.getByRole('button', { name: 'Item 2-1' });
     const child2 = screen.getByRole('button', { name: 'Item 2-2' });
     expect(child1).toBeInTheDocument();
     expect(child2).toBeInTheDocument();
+  });
+
+  it('collapse button has same aria-controls as the section content', async () => {
+    setup();
+    const expandSectionChevrons = screen.getAllByRole('button', { name: 'Content outline item collapse button' });
+    // chevron for the second item
+    const button = expandSectionChevrons[1];
+    // content for the second item
+    const sectionContent = screen.getByTestId('section-wrapper-item-2');
+    await userEvent.click(button);
+    expect(button.getAttribute('aria-controls')).toBe(sectionContent.id);
   });
 });

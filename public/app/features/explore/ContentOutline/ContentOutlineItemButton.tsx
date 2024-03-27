@@ -15,8 +15,9 @@ type CommonProps = {
   indentStyle?: string;
   collapsible?: boolean;
   collapsed?: boolean;
-  toggleCollapsed?: () => void;
   isActive?: boolean;
+  sectionId?: string;
+  toggleCollapsed?: () => void;
 };
 
 export type ContentOutlineItemButtonProps = CommonProps & ButtonHTMLAttributes<HTMLButtonElement>;
@@ -31,8 +32,9 @@ export function ContentOutlineItemButton({
   indentStyle,
   collapsible,
   collapsed,
-  toggleCollapsed,
   isActive,
+  sectionId,
+  toggleCollapsed,
   ...rest
 }: ContentOutlineItemButtonProps) {
   const styles = useStyles2(getStyles);
@@ -56,6 +58,7 @@ export function ContentOutlineItemButton({
           onClick={toggleCollapsed}
           aria-label="Content outline item collapse button"
           aria-expanded={!collapsed}
+          aria-controls={sectionId}
         >
           <OutlineIcon icon={collapsed ? 'angle-right' : 'angle-down'} />
         </button>

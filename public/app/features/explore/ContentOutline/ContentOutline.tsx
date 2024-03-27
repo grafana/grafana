@@ -140,37 +140,40 @@ export function ContentOutline({ scroller, panelId }: { scroller: HTMLElement | 
                   (isChildActive(item, activeSectionChildId) && !sectionsExpanded[item.id]) ||
                   (activeSectionId === item.id && !sectionsExpanded[item.id])
                 }
+                sectionId={item.id}
               />
-              {item.children &&
-                (!item.mergeSingleChild || item.children.length !== 1) &&
-                sectionsExpanded[item.id] &&
-                item.children.map((child, i) => (
-                  <div key={child.id} className={styles.itemWrapper}>
-                    {contentOutlineExpanded && (
-                      <div
-                        className={cx(styles.itemConnector, {
-                          [styles.firstItemConnector]: i === 0,
-                          [styles.lastItemConnector]: i === (item.children?.length || 0) - 1,
+              <div id={item.id} data-testid={`section-wrapper-${item.id}`}>
+                {item.children &&
+                  (!item.mergeSingleChild || item.children.length !== 1) &&
+                  sectionsExpanded[item.id] &&
+                  item.children.map((child, i) => (
+                    <div key={child.id} className={styles.itemWrapper}>
+                      {contentOutlineExpanded && (
+                        <div
+                          className={cx(styles.itemConnector, {
+                            [styles.firstItemConnector]: i === 0,
+                            [styles.lastItemConnector]: i === (item.children?.length || 0) - 1,
+                          })}
+                        />
+                      )}
+                      <ContentOutlineItemButton
+                        key={child.id}
+                        title={contentOutlineExpanded ? child.title : undefined}
+                        contentOutlineExpanded={contentOutlineExpanded}
+                        icon={contentOutlineExpanded ? undefined : item.icon}
+                        className={cx(styles.buttonStyles, {
+                          [styles.justifyCenter]: !contentOutlineExpanded,
+                          [styles.sectionHighlighter]:
+                            isChildActive(item, activeSectionChildId) && !contentOutlineExpanded,
                         })}
+                        indentStyle={styles.indentChild}
+                        onClick={() => scrollIntoView(child.ref, child.panelId, child.customTopOffset)}
+                        tooltip={child.title}
+                        isActive={activeSectionChildId === child.id}
                       />
-                    )}
-                    <ContentOutlineItemButton
-                      key={child.id}
-                      title={contentOutlineExpanded ? child.title : undefined}
-                      contentOutlineExpanded={contentOutlineExpanded}
-                      icon={contentOutlineExpanded ? undefined : item.icon}
-                      className={cx(styles.buttonStyles, {
-                        [styles.justifyCenter]: !contentOutlineExpanded,
-                        [styles.sectionHighlighter]:
-                          isChildActive(item, activeSectionChildId) && !contentOutlineExpanded,
-                      })}
-                      indentStyle={styles.indentChild}
-                      onClick={() => scrollIntoView(child.ref, child.panelId, child.customTopOffset)}
-                      tooltip={child.title}
-                      isActive={activeSectionChildId === child.id}
-                    />
-                  </div>
-                ))}
+                    </div>
+                  ))}
+              </div>
             </React.Fragment>
           ))}
         </div>
