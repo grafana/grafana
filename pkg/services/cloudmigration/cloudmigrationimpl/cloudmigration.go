@@ -198,7 +198,7 @@ func (s *Service) GetMigration(ctx context.Context, id int64) (*cloudmigration.C
 	return nil, nil
 }
 
-func (s *Service) GetMigrationList(ctx context.Context) ([]cloudmigration.CloudMigrationResponse, error) {
+func (s *Service) GetMigrationList(ctx context.Context) (*cloudmigration.CloudMigrationListResponse, error) {
 	values, err := s.store.GetAllCloudMigrations(ctx)
 	if err != nil {
 		return nil, err
@@ -213,7 +213,7 @@ func (s *Service) GetMigrationList(ctx context.Context) ([]cloudmigration.CloudM
 			Updated: v.Updated,
 		})
 	}
-	return migrations, nil
+	return &cloudmigration.CloudMigrationListResponse{Migrations: migrations}, nil
 }
 
 func (s *Service) CreateMigration(ctx context.Context, cm cloudmigration.CloudMigrationRequest) (*cloudmigration.CloudMigrationResponse, error) {
