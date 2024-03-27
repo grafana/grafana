@@ -4,6 +4,11 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
+/*
+Please keep pkg/promlib/models/query.go and pkg/promlib/models/scope.go in sync
+with this file until this package is out of the grafana/grafana module.
+*/
+
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
 type Scope struct {
 	metav1.TypeMeta   `json:",inline"`

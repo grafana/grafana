@@ -63,13 +63,13 @@ func scopeFiltersToMatchers(filters []ScopeFilter) ([]*labels.Matcher, error) {
 	for _, f := range filters {
 		var mt labels.MatchType
 		switch f.Operator {
-		case "=":
+		case FilterOperatorEquals:
 			mt = labels.MatchEqual
-		case "!=":
+		case FilterOperatorNotEquals:
 			mt = labels.MatchNotEqual
-		case "=~":
+		case FilterOperatorRegexMatch:
 			mt = labels.MatchRegexp
-		case "!~":
+		case FilterOperatorRegexNotMatch:
 			mt = labels.MatchNotRegexp
 		default:
 			return nil, fmt.Errorf("unknown operator %q", f.Operator)
