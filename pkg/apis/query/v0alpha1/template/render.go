@@ -43,7 +43,11 @@ func RenderTemplate(qt QueryTemplate, selectedValues map[string][]string) ([]Tar
 			s = s[1 : len(s)-1]
 			var offSet int64
 			for _, r := range reps {
-				value := []rune(FormatVariables(r.format, selectedValues[r.Key]))
+				sV := selectedValues[r.Key]
+				if sV == nil {
+					sV = r.DefaultValues
+				}
+				value := []rune(FormatVariables(r.format, sV))
 				if r.Position == nil {
 					return nil, fmt.Errorf("nil position not support yet, will be full replacement")
 				}

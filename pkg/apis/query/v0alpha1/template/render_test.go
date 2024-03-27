@@ -12,7 +12,8 @@ var nestedFieldRender = QueryTemplate{
 	Title: "Test",
 	Variables: []TemplateVariable{
 		{
-			Key: "metricName",
+			Key:           "metricName",
+			DefaultValues: []string{"cow_count"},
 		},
 	},
 	Targets: []Target{
@@ -64,11 +65,44 @@ var nestedFieldRenderedTargets = []Target{
 	},
 }
 
+var nestedFieldDefaultRenderedTargets = []Target{
+	{
+		DataType: data.FrameTypeUnknown,
+		Variables: map[string][]VariableReplacement{
+			"metricName": {
+				{
+					Path: "$.nestedObject.anArray[0]",
+					Position: &Position{
+						Start: 0,
+						End:   3,
+					},
+				},
+			},
+		},
+		//DataTypeVersion: data.FrameTypeVersion{0, 0},
+		Properties: apidata.NewDataQuery(
+			map[string]any{
+				"nestedObject": map[string]any{
+					"anArray": []any{"cow_count", .2},
+				},
+			}),
+	},
+}
+
 func TestNestedFieldRender(t *testing.T) {
 	rT, err := RenderTemplate(nestedFieldRender, map[string][]string{"metricName": {"up"}})
 	require.NoError(t, err)
 	require.Equal(t,
 		nestedFieldRenderedTargets,
+		rT,
+	)
+}
+
+func TestNestedFieldDefaultsRender(t *testing.T) {
+	rT, err := RenderTemplate(nestedFieldRender, nil)
+	require.NoError(t, err)
+	require.Equal(t,
+		nestedFieldDefaultRenderedTargets,
 		rT,
 	)
 }
