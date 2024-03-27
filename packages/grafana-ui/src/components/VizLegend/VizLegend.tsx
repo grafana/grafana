@@ -30,6 +30,7 @@ export function VizLegend<T>({
   // JEV: ADDITION: add other callbacks to panel context? override/config callbacks?
   const { eventBus, onToggleSeriesVisibility, onToggleLegendSort } = usePanelContext();
 
+  // JEV: OBSERVATION: basic event handling/interactivity for legend items handled in PanelContext? How???
   const onMouseOver = useCallback(
     (
       item: VizLegendItem,
