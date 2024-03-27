@@ -54,29 +54,13 @@ func (b *ScopeAPIBuilder) InstallSchema(scheme *runtime.Scheme) error {
 	err = scheme.AddFieldLabelConversionFunc(
 		scope.ScopeResourceInfo.GroupVersionKind(),
 		func(label, value string) (string, string, error) {
-			fieldSet := SelectableScopeFields(&scope.Scope{})
+			fieldSet := SelectableFields(&scope.Scope{})
 			for key := range fieldSet {
 				if label == key {
 					return label, value, nil
 				}
 			}
 			return "", "", fmt.Errorf("field label not supported for %s: %s", scope.ScopeResourceInfo.GroupVersionKind(), label)
-		},
-	)
-	if err != nil {
-		return err
-	}
-
-	err = scheme.AddFieldLabelConversionFunc(
-		scope.ScopeDashboardResourceInfo.GroupVersionKind(),
-		func(label, value string) (string, string, error) {
-			fieldSet := SelectableScopeDashboardFields(&scope.ScopeDashboard{})
-			for key := range fieldSet {
-				if label == key {
-					return label, value, nil
-				}
-			}
-			return "", "", fmt.Errorf("field label not supported for %s: %s", scope.ScopeDashboardResourceInfo.GroupVersionKind(), label)
 		},
 	)
 	if err != nil {
