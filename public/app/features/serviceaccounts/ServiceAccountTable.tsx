@@ -59,15 +59,15 @@ export const ServiceAccountTable = ({
       {
         id: 'avatarUrl',
         header: '',
-        cell: ({ row: { original } }: Cell<'role'>) => {
+        cell: ({ cell: { value }, row: { original } }: Cell<'role'>) => {
           const href = `/org/serviceaccounts/${original.id}`;
           const ariaLabel = `Edit service account's ${name} details`;
-          if (!original.avatarUrl) {
+          if (!value) {
             return null;
           }
           return (
             <a aria-label={ariaLabel} href={href}>
-              <Avatar src={original.avatarUrl} alt={'User avatar'} />
+              <Avatar src={value} alt={'User avatar'} />
             </a>
           );
         },
@@ -79,7 +79,7 @@ export const ServiceAccountTable = ({
         cell: ({ cell: { value }, row: { original } }: Cell<'role'>) => {
           const href = `/org/serviceaccounts/${original.id}`;
           const ariaLabel = `Edit service account's ${name} details`;
-          if (!original.avatarUrl) {
+          if (!value) {
             return null;
           }
           return (
@@ -93,10 +93,10 @@ export const ServiceAccountTable = ({
       {
         id: 'id',
         header: 'ID',
-        cell: ({ row: { original } }: Cell<'role'>) => {
+        cell: ({ cell: { value }, row: { original } }: Cell<'role'>) => {
           const href = `/org/serviceaccounts/${original.id}`;
           const ariaLabel = `Edit service account's ${name} details`;
-          if (!original.avatarUrl) {
+          if (!value) {
             return null;
           }
           return (
