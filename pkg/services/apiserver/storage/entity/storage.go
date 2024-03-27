@@ -10,7 +10,6 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"log"
 	"reflect"
 	"strconv"
 
@@ -29,6 +28,7 @@ import (
 	"k8s.io/apiserver/pkg/storage/storagebackend"
 	"k8s.io/apiserver/pkg/storage/storagebackend/factory"
 
+	"github.com/grafana/grafana/pkg/infra/log"
 	entityStore "github.com/grafana/grafana/pkg/services/store/entity"
 )
 
@@ -36,6 +36,7 @@ var _ storage.Interface = (*Storage)(nil)
 
 // Storage implements storage.Interface and stores resources in unified storage
 type Storage struct {
+	log          log.Logger
 	config       *storagebackend.ConfigForResource
 	store        entityStore.EntityStoreClient
 	gr           schema.GroupResource
@@ -59,6 +60,7 @@ func NewStorage(
 	getAttrsFunc storage.AttrFunc,
 ) (storage.Interface, factory.DestroyFunc, error) {
 	return &Storage{
+		log:          log.New("entity-server"),
 		config:       config,
 		gr:           gr,
 		codec:        codec,
@@ -250,6 +252,7 @@ func (s *Storage) Watch(ctx context.Context, key string, opts storage.ListOption
 	reporter := apierrors.NewClientErrorReporter(500, "WATCH", "")
 
 	decoder := &Decoder{
+		log:     s.log.New("decoder", true),
 		client:  result,
 		newFunc: s.newFunc,
 		opts:    opts,
@@ -580,6 +583,7 @@ func (s *Storage) RequestWatchProgress(ctx context.Context) error {
 }
 
 type Decoder struct {
+	log     log.Logger
 	client  entityStore.EntityStore_WatchClient
 	newFunc func() runtime.Object
 	opts    storage.ListOptions
@@ -590,17 +594,17 @@ func (d *Decoder) Decode() (action watch.EventType, object runtime.Object, err e
 	for {
 		resp, err := d.client.Recv()
 		if errors.Is(err, io.EOF) {
-			log.Printf("watch is done")
+			d.log.Debug("watch is done")
 			return watch.Error, nil, err
 		}
 
 		if grpcStatus.Code(err) == grpcCodes.Canceled {
-			log.Printf("watch was canceled")
+			d.log.Debug("watch was canceled")
 			return watch.Error, nil, err
 		}
 
 		if err != nil {
-			log.Printf("error receiving result: %s", err)
+			d.log.Error("receive result", "err", err)
 			return watch.Error, nil, err
 		}
 
@@ -608,14 +612,14 @@ func (d *Decoder) Decode() (action watch.EventType, object runtime.Object, err e
 
 		err = entityToResource(resp.Entity, obj, d.codec)
 		if err != nil {
-			log.Printf("error decoding entity: %s", err)
+			d.log.Error("decode entity", "err", err)
 			return watch.Error, nil, err
 		}
 
 		// apply any predicates not handled in storage
 		matches, err := d.opts.Predicate.Matches(obj)
 		if err != nil {
-			log.Printf("error matching object: %s", err)
+			d.log.Error("match object", "err", err)
 			return watch.Error, nil, err
 		}
 		if !matches {

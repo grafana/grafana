@@ -196,5 +196,63 @@ func initEntityTables(mg *migrator.Migrator) string {
 		}
 	}
 
+	if mg.DBEngine.Dialect().DBType() == migrator.Postgres {
+		mg.AddMigration("add trigger for postgres watch notifications", migrator.NewRawSQLMigration(`
+			create or replace function tgf_notify_entity() returns trigger as $BODY$
+				declare
+					row entity%ROWTYPE;
+				begin
+					if (TG_OP = 'DELETE') then
+						row := old;
+					else
+						row := new;
+					end if;
+
+					perform pg_notify(
+						'`+migrator.PostgresUnifiedStorageChannel+`',
+						json_build_object(
+							'ETag',             row.ETag,
+							'action',           row.action,
+							'body',             row.body,
+							'created_at',       row.created_at,
+							'created_by',       row.created_by,
+							'description',      row.description,
+							'errors',           row.errors,
+							'fields',           row.fields,
+							'folder',           row.folder,
+							'group',            row.group,
+							'group_version',    row.group_version,
+							'guid',             row.guid,
+							'key',              row.key,
+							'labels',           row.labels,
+							'message',          row.message,
+							'meta',             row.meta,
+							'name',             row.name,
+							'namespace',        row.namespace,
+							'origin',           row.origin,
+							'resource',         row.resource,
+							'resource_version', row.resource_version,
+							'size',             row.size,
+							'slug',             row.slug,
+							'status',           row.status,
+							-- 'subresource',      row.subresource,
+							'title',            row.title,
+							'updated_at',       row.updated_at,
+							'updated_by',       row.updated_by,
+							'pg_trigger_op',    lower(substring(TG_OP from 1 for 1))
+						)::text
+					);
+
+					return row;
+				end
+			$BODY$ language plpgsql;
+
+			create trigger tg_notify_entity
+				after insert or update or delete
+				on entity
+				for each row execute function tgf_notify_entity();
+		`))
+	}
+
 	return marker
 }

@@ -9,7 +9,7 @@ import (
 	grpcUtils "github.com/grafana/grafana/pkg/services/store/entity/grpc"
 )
 
-func NewEntityStoreClientLocal(server EntityStoreServer) EntityStoreClient {
+func NewEntityStoreClientLocal(server EntityStoreServerWrapper) EntityStoreClient {
 	channel := &inprocgrpc.Channel{}
 
 	auth := &grpcUtils.Authenticator{}
