@@ -63,7 +63,7 @@ export class ScopesDashboardsScene extends SceneObjectBase<ScopesDashboardsScene
         fieldSelector: `spec.scope=${scope}`,
       });
 
-      return response.items.find((item) => !!item.spec.dashboards && item.spec.scope === scope)?.spec.dashboards ?? [];
+      return response.items.find((item) => !!item.spec.dashboards)?.spec.dashboards ?? [];
     } catch (err) {
       return [];
     }
