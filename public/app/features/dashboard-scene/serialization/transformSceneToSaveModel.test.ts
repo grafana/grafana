@@ -16,7 +16,7 @@ import {
 } from '@grafana/data';
 import { getPanelPlugin } from '@grafana/data/test/__mocks__/pluginMocks';
 import { getPluginLinkExtensions, setPluginImportUtils } from '@grafana/runtime';
-import { MultiValueVariable, SceneDataLayerSet, SceneGridLayout, SceneGridRow, VizPanel } from '@grafana/scenes';
+import { MultiValueVariable, SceneGridLayout, SceneGridRow, VizPanel } from '@grafana/scenes';
 import { Dashboard, LoadingState, Panel, RowPanel, VariableRefresh } from '@grafana/schema';
 import { PanelModel } from 'app/features/dashboard/state';
 import { getTimeRange } from 'app/features/dashboard/utils/timeRange';
