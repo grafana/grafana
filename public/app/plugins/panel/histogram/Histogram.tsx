@@ -304,9 +304,11 @@ export class Histogram extends React.Component<HistogramProps, State> {
     };
   }
 
+  // JEV: OBSERVATION: another use of plotlegend
   renderLegend(config: UPlotConfigBuilder) {
     const { legend } = this.props;
 
+    // JEV: QUESTION: why would there not be a config?
     if (!config || legend.showLegend === false) {
       return null;
     }

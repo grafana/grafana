@@ -84,6 +84,7 @@ export const TimeSeriesPanel = ({
     []
   );
 
+  // JEV: REFACTOR: move this short circuit to before the calculations done above?
   if (!frames || suggestions) {
     return (
       <PanelDataErrorView
