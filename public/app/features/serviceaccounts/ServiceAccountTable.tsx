@@ -7,7 +7,6 @@ import {
   InteractiveTable,
   Pagination,
   Stack,
-  LinkButton,
   TextLink,
   Button,
   IconButton,
@@ -167,29 +166,19 @@ export const ServiceAccountTable = ({
               )}
               {contextSrv.hasPermissionInMetadata(AccessControlAction.ServiceAccountsWrite, original) &&
                 (original.isDisabled ? (
-                  <LinkButton
-                    variant="secondary"
-                    size="md"
-                    aria-label={`Enable service account ${original.name}`}
-                    onClick={() => onEnable(original)}
-                  >
+                  <Button variant="secondary" size="md" onClick={() => onEnable(original)}>
                     Enable
-                  </LinkButton>
+                  </Button>
                 ) : (
-                  <LinkButton
-                    variant="secondary"
-                    size="md"
-                    aria-label={`Disable service account ${original.name}`}
-                    onClick={() => onDisable(original)}
-                  >
+                  <Button variant="secondary" size="md" onClick={() => onDisable(original)}>
                     Disable
-                  </LinkButton>
+                  </Button>
                 ))}
 
               {contextSrv.hasPermissionInMetadata(AccessControlAction.ServiceAccountsDelete, original) && (
                 <IconButton
                   name="trash-alt"
-                  aria-label={`Remove service account ${original.name}`}
+                  aria-label={`Delete service account ${original.name}`}
                   variant="secondary"
                   onClick={() => onRemoveButtonClick(original)}
                 />
