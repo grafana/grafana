@@ -101,18 +101,10 @@ func (o *APIServerOptions) Config() (*genericapiserver.RecommendedConfig, error)
 		return nil, fmt.Errorf("failed to apply options to server config: %w", err)
 	}
 
-	if !o.Options.ExtraOptions.DevMode {
-		// When not in DevMode, we don't set up the permission requestheader auth handler
-		// Instead, we wrap it to additionally perform double-authn
-		// TODO: should we allow discovery without needing double-authn, I think we have to
+	if len(o.Options.AuthnOptions.IDVerifierConfig.SigningKeysURL) > 0 {
 		validator := auth.NewValidator(o.Options.AuthnOptions.IDVerifierConfig)
 		idTokenAuthenticator := auth.NewIDTokenAuthenticator(validator)
 		serverConfig.Authentication.Authenticator = auth.AppendToAuthenticators(idTokenAuthenticator)
-
-		if serverConfig.Authentication.RequestHeaderConfig != nil {
-			requestHeaderAuthenticator := auth.NewWrappedRequestHeaderAuthenticator(serverConfig, validator)
-			serverConfig.Authentication.Authenticator = auth.AppendToAuthenticators(requestHeaderAuthenticator.AuthenticateRequest, serverConfig.Authentication.Authenticator)
-		}
 	}
 
 	serverConfig.DisabledPostStartHooks = serverConfig.DisabledPostStartHooks.Insert("generic-apiserver-start-informers")
