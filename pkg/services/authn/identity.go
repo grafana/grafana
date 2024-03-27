@@ -197,6 +197,15 @@ func (i *Identity) HasUniqueId() bool {
 	return namespace == NamespaceUser || namespace == NamespaceServiceAccount || namespace == NamespaceAPIKey
 }
 
+func (i *Identity) IsAuthenticatedBy(providers ...string) bool {
+	for _, p := range providers {
+		if i.AuthenticatedBy == p {
+			return true
+		}
+	}
+	return false
+}
+
 func (i *Identity) IsNil() bool {
 	return i == nil
 }
