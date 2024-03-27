@@ -4,7 +4,7 @@ import { reportInteraction } from '@grafana/runtime';
 import { Alert, Button } from '@grafana/ui';
 import { LocalStorageValueProvider } from 'app/core/components/LocalStorageValueProvider';
 
-const LOCAL_STORAGE_KEY_PREFIX = 'grafana.angularDeprecation.dashboardNotice.isDismissed';
+const LOCAL_STORAGE_KEY_PREFIX = 'grafana.angularDeprecation.dashboardNoticeAndMigration.isDismissed';
 
 function localStorageKey(dashboardUid: string): string {
   return LOCAL_STORAGE_KEY_PREFIX + '.' + dashboardUid;
