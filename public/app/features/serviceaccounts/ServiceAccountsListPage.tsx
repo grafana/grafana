@@ -1,27 +1,18 @@
-import { css, cx } from '@emotion/css';
+import { css } from '@emotion/css';
 import pluralize from 'pluralize';
 import React, { useEffect, useState } from 'react';
 import { connect, ConnectedProps } from 'react-redux';
 
 import { GrafanaTheme2, OrgRole } from '@grafana/data';
-import {
-  ConfirmModal,
-  FilterInput,
-  LinkButton,
-  RadioButtonGroup,
-  useStyles2,
-  InlineField,
-  Pagination,
-  Stack,
-} from '@grafana/ui';
+import { ConfirmModal, FilterInput, LinkButton, RadioButtonGroup, useStyles2, InlineField } from '@grafana/ui';
 import EmptyListCTA from 'app/core/components/EmptyListCTA/EmptyListCTA';
 import { Page } from 'app/core/components/Page/Page';
 import config from 'app/core/config';
 import { contextSrv } from 'app/core/core';
 import { StoreState, ServiceAccountDTO, AccessControlAction, ServiceAccountStateFilter } from 'app/types';
 
+import { ServiceAccountTable } from './ServiceAccountTable';
 import { CreateTokenModal, ServiceAccountToken } from './components/CreateTokenModal';
-import ServiceAccountListItem from './components/ServiceAccountsListItem';
 import {
   changeQuery,
   changePage,
@@ -235,49 +226,22 @@ export const ServiceAccountsListPageUnconnected = ({
           </>
         )}
 
+        {/**InteractiveTable */}
+        {/**TODO: Skeleton */}
         {(isLoading || serviceAccounts.length !== 0) && (
-          <>
-            <div className={cx(styles.table, 'admin-list-table')}>
-              <table className="filter-table filter-table--hover">
-                <thead>
-                  <tr>
-                    <th></th>
-                    <th>Account</th>
-                    <th>ID</th>
-                    <th>Roles</th>
-                    <th>Tokens</th>
-                    <th style={{ width: '120px' }} />
-                  </tr>
-                </thead>
-                <tbody>
-                  {isLoading ? (
-                    <>
-                      <ServiceAccountListItem.Skeleton />
-                      <ServiceAccountListItem.Skeleton />
-                      <ServiceAccountListItem.Skeleton />
-                    </>
-                  ) : (
-                    serviceAccounts.map((serviceAccount) => (
-                      <ServiceAccountListItem
-                        serviceAccount={serviceAccount}
-                        key={serviceAccount.id}
-                        roleOptions={roleOptions}
-                        onRoleChange={onRoleChange}
-                        onRemoveButtonClick={onRemoveButtonClick}
-                        onDisable={onDisableButtonClick}
-                        onEnable={onEnable}
-                        onAddTokenClick={onTokenAdd}
-                      />
-                    ))
-                  )}
-                </tbody>
-              </table>
-
-              <Stack justifyContent="flex-end">
-                <Pagination hideWhenSinglePage currentPage={page} numberOfPages={totalPages} onNavigate={changePage} />
-              </Stack>
-            </div>
-          </>
+          <ServiceAccountTable
+            services={serviceAccounts}
+            showPaging={true}
+            totalPages={totalPages}
+            onChangePage={changePage}
+            currentPage={page}
+            onRoleChange={onRoleChange}
+            roleOptions={roleOptions}
+            onRemoveButtonClick={onRemoveButtonClick}
+            onDisable={onDisableButtonClick}
+            onEnable={onEnable}
+            onAddTokenClick={onTokenAdd}
+          />
         )}
         {currentServiceAccount && (
           <>
