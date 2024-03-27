@@ -94,7 +94,7 @@
     },
     "no-results": {
       "clear": "Clear search and filters",
-      "text": "No results found for your query."
+      "text": "No results found for your query"
     }
   },
   "clipboard-button": {
@@ -107,9 +107,6 @@
       "change-theme": "Change theme...",
       "dark-theme": "Dark",
       "light-theme": "Light"
-    },
-    "empty-state": {
-      "title": "No results found"
     },
     "search-box": {
       "placeholder": "Search or jump to..."
@@ -131,7 +128,8 @@
   },
   "connections": {
     "connect-data": {
-      "category-header-label": "Data sources"
+      "category-header-label": "Data sources",
+      "empty-message": "No results matching your query were found"
     },
     "search": {
       "placeholder": "Search all"
@@ -650,6 +648,9 @@
     }
   },
   "library-panels": {
+    "empty-state": {
+      "message": "No library panels found"
+    },
     "modal": {
       "body_one": "This panel is being used in {{count}} dashboard. Please choose which dashboard to view the panel in:",
       "body_other": "This panel is being used in {{count}} dashboards. Please choose which dashboard to view the panel in:",
@@ -1209,6 +1210,11 @@
       "pro-tip": "You can use playlists to cycle dashboards on TVs without user control",
       "pro-tip-link-title": "Learn more",
       "title": "There are no playlists created yet"
+    }
+  },
+  "playlists": {
+    "empty-state": {
+      "message": "No playlists found"
     }
   },
   "profile": {
