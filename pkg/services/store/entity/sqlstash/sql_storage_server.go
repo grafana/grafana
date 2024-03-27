@@ -453,6 +453,8 @@ func (s *sqlEntityServer) Create(ctx context.Context, r *entity.CreateEntityRequ
 		// Update resource version
 		current.ResourceVersion = s.snowflake.Generate().Int64()
 
+		current.Action = entity.Entity_CREATED
+
 		values := map[string]any{
 			"guid":             current.Guid,
 			"key":              current.Key,
@@ -482,7 +484,7 @@ func (s *sqlEntityServer) Create(ctx context.Context, r *entity.CreateEntityRequ
 			"origin_key":       current.Origin.Key,
 			"origin_ts":        current.Origin.Time,
 			"message":          current.Message,
-			"action":           entity.Entity_CREATED,
+			"action":           current.Action,
 		}
 
 		// 1. Add row to the `entity_history` values
@@ -658,6 +660,8 @@ func (s *sqlEntityServer) Update(ctx context.Context, r *entity.UpdateEntityRequ
 		// Update resource version
 		current.ResourceVersion = s.snowflake.Generate().Int64()
 
+		current.Action = entity.Entity_UPDATED
+
 		values := map[string]any{
 			// below are only set in history table
 			"guid":       current.Guid,
@@ -689,7 +693,7 @@ func (s *sqlEntityServer) Update(ctx context.Context, r *entity.UpdateEntityRequ
 			"origin_key":       current.Origin.Key,
 			"origin_ts":        current.Origin.Time,
 			"message":          current.Message,
-			"action":           entity.Entity_UPDATED,
+			"action":           current.Action,
 		}
 
 		// 1. Add the `entity_history` values
@@ -709,7 +713,6 @@ func (s *sqlEntityServer) Update(ctx context.Context, r *entity.UpdateEntityRequ
 		delete(values, "name")
 		delete(values, "created_at")
 		delete(values, "created_by")
-		delete(values, "action")
 
 		err = s.dialect.Update(
 			ctx,
@@ -825,6 +828,8 @@ func (s *sqlEntityServer) doDelete(ctx context.Context, tx *session.SessionTx, e
 	// Update resource version
 	ent.ResourceVersion = s.snowflake.Generate().Int64()
 
+	ent.Action = entity.Entity_DELETED
+
 	// Set updated at/by
 	ent.UpdatedAt = time.Now().UnixMilli()
 	modifier, err := appcontext.User(ctx)
@@ -852,6 +857,10 @@ func (s *sqlEntityServer) doDelete(ctx context.Context, tx *session.SessionTx, e
 	if err != nil {
 		s.log.Error("error marshalling errors", "msg", err.Error())
 		return err
+	}
+
+	if ent.Origin == nil {
+		ent.Origin = &entity.EntityOriginInfo{}
 	}
 
 	values := map[string]any{
@@ -885,7 +894,7 @@ func (s *sqlEntityServer) doDelete(ctx context.Context, tx *session.SessionTx, e
 		"origin_key":       ent.Origin.Key,
 		"origin_ts":        ent.Origin.Time,
 		"message":          ent.Message,
-		"action":           entity.Entity_DELETED,
+		"action":           ent.Action,
 	}
 
 	// 1. Add the `entity_history` values
@@ -1429,7 +1438,7 @@ func (s *sqlEntityServer) poller(stream chan *entity.Entity) {
 	var err error
 	since := s.snowflake.Generate().Int64()
 
-	t := time.NewTicker(5 * time.Second)
+	t := time.NewTicker(1 * time.Second)
 	defer t.Stop()
 
 	for range t.C {
