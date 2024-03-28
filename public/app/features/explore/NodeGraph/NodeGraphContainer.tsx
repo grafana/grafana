@@ -4,11 +4,10 @@ import { connect, ConnectedProps } from 'react-redux';
 import { useToggle, useWindowSize } from 'react-use';
 
 import { applyFieldOverrides, DataFrame, GrafanaTheme2, SplitOpen } from '@grafana/data';
+import { NodeGraph, useCategorizeFrames } from '@grafana/nodegraph';
 import { config, reportInteraction } from '@grafana/runtime';
 import { useStyles2, useTheme2, PanelChrome } from '@grafana/ui';
 
-import { NodeGraph } from '../../../plugins/panel/nodeGraph';
-import { useCategorizeFrames } from '../../../plugins/panel/nodeGraph/useCategorizeFrames';
 import { StoreState } from '../../../types';
 import { useLinks } from '../utils/links';
 

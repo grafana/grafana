@@ -2,10 +2,10 @@ import { PanelPlugin } from '@grafana/data';
 
 import { NodeGraphPanel } from './NodeGraphPanel';
 import { ArcOptionsEditor } from './editor/ArcOptionsEditor';
+import { Options } from './panelcfg.gen';
 import { NodeGraphSuggestionsSupplier } from './suggestions';
-import { NodeGraphOptions } from './types';
 
-export const plugin = new PanelPlugin<NodeGraphOptions>(NodeGraphPanel)
+export const plugin = new PanelPlugin<Options>(NodeGraphPanel)
   .setPanelOptions((builder, context) => {
     builder.addNestedOptions({
       category: ['Nodes'],

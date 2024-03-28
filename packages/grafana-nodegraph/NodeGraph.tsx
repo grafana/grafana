@@ -111,8 +111,9 @@ interface Props {
   dataFrames: DataFrame[];
   getLinks: (dataFrame: DataFrame, rowIndex: number) => LinkModel[];
   nodeLimit?: number;
+  layoutType?: 'layered' | 'force';
 }
-export function NodeGraph({ getLinks, dataFrames, nodeLimit }: Props) {
+export function NodeGraph({ getLinks, dataFrames, nodeLimit, layoutType = 'layered' }: Props) {
   const nodeCountLimit = nodeLimit || defaultNodeCountLimit;
   const { edges: edgesDataFrames, nodes: nodesDataFrames } = useCategorizeFrames(dataFrames);
 
@@ -156,6 +157,7 @@ export function NodeGraph({ getLinks, dataFrames, nodeLimit }: Props) {
     config,
     nodeCountLimit,
     width,
+    layoutType,
     focusedNodeId
   );
 

@@ -2,14 +2,14 @@ import memoizeOne from 'memoize-one';
 import React from 'react';
 
 import { PanelProps } from '@grafana/data';
+import { NodeGraph } from '@grafana/nodegraph';
 
 import { useLinks } from '../../../features/explore/utils/links';
 
-import { NodeGraph } from './NodeGraph';
-import { NodeGraphOptions } from './types';
+import { Options } from './panelcfg.gen';
 import { getNodeGraphDataFrames } from './utils';
 
-export const NodeGraphPanel = ({ width, height, data, options }: PanelProps<NodeGraphOptions>) => {
+export const NodeGraphPanel = ({ width, height, data, options }: PanelProps<Options>) => {
   const getLinks = useLinks(data.timeRange);
   if (!data || !data.series.length) {
     return (

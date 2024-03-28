@@ -4,7 +4,6 @@ import { useUnmount } from 'react-use';
 import useMountedState from 'react-use/lib/useMountedState';
 
 import { Field } from '@grafana/data';
-import { config as grafanaConfig } from '@grafana/runtime';
 
 import { createWorker, createMsaglWorker } from './createLayoutWorker';
 import { EdgeDatum, EdgeDatumLayout, NodeDatum } from './types';
@@ -20,7 +19,7 @@ export interface Config {
   tick: number;
   gridLayout: boolean;
   sort?: {
-    // Either a arc field or stats field
+    // Either an arc field or stats field
     field: Field;
     ascending: boolean;
   };
@@ -49,6 +48,7 @@ export function useLayout(
   config: Config = defaultConfig,
   nodeCountLimit: number,
   width: number,
+  layoutType: 'layered' | 'force',
   rootNodeId?: string
 ) {
   const [nodesGraph, setNodesGraph] = useState<NodeDatum[]>([]);
@@ -86,13 +86,13 @@ export function useLayout(
     }
 
     // Layered layout is better but also more expensive, so we switch to default force based layout for bigger graphs.
-    const layoutType =
-      grafanaConfig.featureToggles.nodeGraphDotLayout && rawNodes.length <= 500 ? 'layered' : 'default';
+    // const finalLayoutType = layoutType === 'layered' && rawNodes.length <= 500 ? 'layered' : 'force';
+    const finalLayoutType = layoutType;
 
     setLoading(true);
     // This is async but as I wanted to still run the sync grid layout, and you cannot return promise from effect so
     // having callback seems ok here.
-    const cancel = layout(rawNodes, rawEdges, layoutType, ({ nodes, edges }) => {
+    const cancel = layout(rawNodes, rawEdges, finalLayoutType, ({ nodes, edges }) => {
       if (isMounted()) {
         setNodesGraph(nodes);
         setEdgesGraph(edges as EdgeDatumLayout[]);
@@ -101,7 +101,7 @@ export function useLayout(
     });
     layoutWorkerCancelRef.current = cancel;
     return cancel;
-  }, [rawNodes, rawEdges, isMounted]);
+  }, [rawNodes, rawEdges, isMounted, layoutType]);
 
   // Compute grid separately as it is sync and do not need to be inside effect. Also it is dependant on width while
   // default layout does not care and we don't want to recalculate that on panel resize.
@@ -154,10 +154,10 @@ export function useLayout(
 function layout(
   nodes: NodeDatum[],
   edges: EdgeDatum[],
-  engine: 'default' | 'layered',
+  engine: 'force' | 'layered',
   done: (data: { nodes: NodeDatum[]; edges: EdgeDatum[] }) => void
 ) {
-  const worker = engine === 'default' ? createWorker() : createMsaglWorker();
+  const worker = engine === 'force' ? createWorker() : createMsaglWorker();
 
   worker.onmessage = (event: MessageEvent<{ nodes: NodeDatum[]; edges: EdgeDatumLayout[] }>) => {
     const nodesMap = fromPairs(nodes.map((node) => [node.id, node]));

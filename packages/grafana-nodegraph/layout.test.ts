@@ -47,7 +47,7 @@ describe('layout', () => {
     const edges: EdgeDatum[] = [];
 
     const { result } = renderHook(() => {
-      return useLayout(nodes, edges, undefined, 100, 1000);
+      return useLayout(nodes, edges, undefined, 100, 1000, 'layered');
     });
     expect(result.current.nodes).toEqual([]);
     expect(result.current.edges).toEqual([]);
@@ -57,7 +57,7 @@ describe('layout', () => {
   it('cancels worker', async () => {
     const { result, rerender } = renderHook(
       ({ nodes, edges }) => {
-        return useLayout(nodes, edges, undefined, 100, 1000);
+        return useLayout(nodes, edges, undefined, 100, 1000, 'layered');
       },
       {
         initialProps: {
@@ -88,7 +88,7 @@ describe('layout', () => {
 
     const { result, rerender } = renderHook(
       ({ nodes, edges }) => {
-        return useLayout(nodes, edges, undefined, 100, 1000);
+        return useLayout(nodes, edges, undefined, 100, 1000, 'layered');
       },
       { initialProps: { nodes: rawNodes, edges: rawEdges } }
     );

@@ -170,6 +170,7 @@ function graphToDOT(edges, nodeIDsMap) {
 function nodesDOT(nodeIdsMap) {
   let dot = '';
   for (const node of Object.keys(nodeIdsMap)) {
+    // TODO: height/width for default sizing but nodes can have variable size now
     dot += node + ' [fixedsize=true, width=1.2, height=1.7] \n';
   }
   return dot;

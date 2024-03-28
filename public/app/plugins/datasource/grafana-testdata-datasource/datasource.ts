@@ -24,7 +24,7 @@ import { Scenario, TestDataDataQuery, TestDataQueryType } from './dataquery';
 import { queryMetricTree } from './metricTree';
 import { generateRandomEdges, generateRandomNodes, generateShowcaseData, savedNodesResponse } from './nodeGraphUtils';
 import { runStream } from './runStreams';
-import { flameGraphData, flameGraphDataDiff } from './testData/flameGraphResponse';
+import { flameGraphData, flameGraphDataDiff } from './testData/flamegraph/flameGraphResponse';
 import { TestDataVariableSupport } from './variables';
 
 export class TestDataDataSource extends DataSourceWithBackend<TestDataDataQuery> {

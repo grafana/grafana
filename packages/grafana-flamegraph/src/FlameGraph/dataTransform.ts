@@ -13,14 +13,17 @@ import { SampleUnit } from '../types';
 import { mergeParentSubtrees, mergeSubtrees } from './treeTransforms';
 
 export type LevelItem = {
+  label: string;
   // Offset from the start of the level.
   start: number;
   // Value here can be different from a value of items in the data frame as for callers tree in sandwich view we have
   // to trim the value to correspond only to the part used by the children in the subtree.
   // In case of diff profile this is actually left + right value.
   value: number;
+  self: number;
   // Only exists for diff profiles.
   valueRight?: number;
+  selfRight?: number;
   // Index into the data frame. It is an array because for sandwich views we may be merging multiple items into single
   // node.
   itemIndexes: number[];
@@ -69,8 +72,11 @@ export function nestedSetToLevels(
 
     const newItem: LevelItem = {
       itemIndexes: [i],
+      label: container.getLabel(i),
       value: container.getValue(i) + container.getValueRight(i),
+      self: container.getSelf(i) + container.getSelfRight(i),
       valueRight: container.isDiffFlamegraph() ? container.getValueRight(i) : undefined,
+      selfRight: container.isDiffFlamegraph() ? container.getSelfRight(i) : undefined,
       start: offset,
       parents: parent && [parent],
       children: [],
