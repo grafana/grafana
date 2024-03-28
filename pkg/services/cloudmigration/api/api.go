@@ -48,7 +48,7 @@ func (cma *CloudMigrationAPI) registerEndpoints() {
 		cloudMigrationRoute.Get("/migration/:id/run", routing.Wrap(cma.GetMigrationRunList))
 		cloudMigrationRoute.Get("/migration/:id/run/:runID", routing.Wrap(cma.GetMigrationRun))
 		cloudMigrationRoute.Post("/token", routing.Wrap(cma.CreateToken))
-	}, middleware.ReqGrafanaAdmin)
+	}, middleware.ReqOrgAdmin)
 }
 
 func (cma *CloudMigrationAPI) CreateToken(c *contextmodel.ReqContext) response.Response {
