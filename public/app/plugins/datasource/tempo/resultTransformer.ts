@@ -468,7 +468,7 @@ function transformToTraceData(data: TraceSearchMetadata) {
   return {
     traceID: data.traceID,
     startTime: parseInt(data.startTimeUnixNano!, 10) / 1000000,
-    traceDuration: data.durationMs,
+    traceDuration: data.durationMs || '<1ms',
     traceService: data.rootServiceName || '',
     traceName: data.rootTraceName || '',
   };
@@ -915,7 +915,7 @@ interface TraceTableData {
   spanID?: string;
   startTime?: number;
   name?: string;
-  traceDuration?: number;
+  traceDuration?: number | string;
 }
 
 function transformSpanToTraceData(span: Span, spanSet: Spanset, trace: TraceSearchMetadata): TraceTableData {
