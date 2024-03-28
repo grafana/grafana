@@ -289,7 +289,7 @@ func TestStore_MigrateApiKeys(t *testing.T) {
 			store.cfg.AutoAssignOrgRole = "Viewer"
 			_, err := store.orgService.CreateWithMember(context.Background(), &org.CreateOrgCommand{Name: "main"})
 			require.NoError(t, err)
-			key := tests.SetupApiKey(t, db, c.key)
+			key := tests.SetupApiKey(t, db, store.cfg, c.key)
 			err = store.MigrateApiKey(context.Background(), key.OrgID, key.ID)
 			if c.expectedErr != nil {
 				require.ErrorIs(t, err, c.expectedErr)
@@ -402,7 +402,7 @@ func TestStore_MigrateAllApiKeys(t *testing.T) {
 			require.NoError(t, err)
 
 			for _, key := range c.keys {
-				tests.SetupApiKey(t, db, key)
+				tests.SetupApiKey(t, db, store.cfg, key)
 			}
 
 			results, err := store.MigrateApiKeysToServiceAccounts(context.Background(), c.orgId)
