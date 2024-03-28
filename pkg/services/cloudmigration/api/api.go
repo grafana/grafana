@@ -107,7 +107,7 @@ func (cma *CloudMigrationAPI) RunMigration(c *contextmodel.ReqContext) response.
 }
 
 func (cma *CloudMigrationAPI) GetMigrationRun(c *contextmodel.ReqContext) response.Response {
-	migrationStatus, err := cma.cloudMigrationsService.GetMigrationStatus(c.Req.Context(), web.Params(c.Req)[":id"], web.Params(c.Req)[":runID"])
+	migrationStatus, err := cma.cloudMigrationsService.GetMigrationRun(c.Req.Context(), web.Params(c.Req)[":id"], web.Params(c.Req)[":runID"])
 	if err != nil {
 		return response.Error(http.StatusInternalServerError, "migration status error", err)
 	}
@@ -115,7 +115,7 @@ func (cma *CloudMigrationAPI) GetMigrationRun(c *contextmodel.ReqContext) respon
 }
 
 func (cma *CloudMigrationAPI) GetMigrationRunList(c *contextmodel.ReqContext) response.Response {
-	migrationStatus, err := cma.cloudMigrationsService.GetMigrationStatusList(c.Req.Context(), web.Params(c.Req)[":id"])
+	migrationStatus, err := cma.cloudMigrationsService.GetMigrationRunList(c.Req.Context(), web.Params(c.Req)[":id"])
 	if err != nil {
 		return response.Error(http.StatusInternalServerError, "migration status error", err)
 	}

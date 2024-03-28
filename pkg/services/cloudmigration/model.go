@@ -40,8 +40,8 @@ type MigratedResource struct {
 type CloudMigrationRun struct {
 	ID                int64              `json:"id" xorm:"pk autoincr 'id'"`
 	CloudMigrationUID string             `json:"uid" xorm:"cloud_migration_uid"`
-	Resources         []MigratedResource `json:"items"`
-	Result            MigrationResult    `json:"result"`
+	Resources         []MigratedResource `json:"items" xorm:"text 'items'"`
+	Result            MigrationResult    `json:"result" xorm:"text 'result'"`
 	Created           time.Time          `json:"created"`
 	Updated           time.Time          `json:"updated"`
 	Finished          time.Time          `json:"finished"`
