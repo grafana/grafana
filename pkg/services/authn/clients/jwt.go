@@ -79,7 +79,10 @@ func (s *JWT) Authenticate(ctx context.Context, r *authn.Request) (*authn.Identi
 		id.Login, _ = claims[key].(string)
 		id.ClientParams.LookUpParams.Login = &id.Login
 	} else if key := s.cfg.JWTAuth.UsernameAttributePath; key != "" {
-		id.Login, _ = util.SearchJSONForStringAttr(s.cfg.JWTAuth.UsernameAttributePath, claims)
+		id.Login, err = util.SearchJSONForStringAttr(s.cfg.JWTAuth.UsernameAttributePath, claims)
+		if err != nil {
+			return nil, err
+		}
 		id.ClientParams.LookUpParams.Login = &id.Login
 	}
 
@@ -87,7 +90,10 @@ func (s *JWT) Authenticate(ctx context.Context, r *authn.Request) (*authn.Identi
 		id.Email, _ = claims[key].(string)
 		id.ClientParams.LookUpParams.Email = &id.Email
 	} else if key := s.cfg.JWTAuth.EmailAttributePath; key != "" {
-		id.Email, _ = util.SearchJSONForStringAttr(s.cfg.JWTAuth.EmailAttributePath, claims)
+		id.Email, err = util.SearchJSONForStringAttr(s.cfg.JWTAuth.EmailAttributePath, claims)
+		if err != nil {
+			return nil, err
+		}
 		id.ClientParams.LookUpParams.Email = &id.Email
 	}
 
