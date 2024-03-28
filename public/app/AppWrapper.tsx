@@ -5,7 +5,7 @@ import { Router, Redirect, Switch, RouteComponentProps } from 'react-router-dom'
 import { CompatRouter, CompatRoute } from 'react-router-dom-v5-compat';
 
 import { config, locationService, navigationLogger, reportInteraction } from '@grafana/runtime';
-import { ErrorBoundaryAlert, GlobalStyles, ModalRoot, ModalsProvider, PortalContainer } from '@grafana/ui';
+import { ErrorBoundaryAlert, GlobalStyles, ModalRoot, PortalContainer } from '@grafana/ui';
 import { getAppRoutes } from 'app/routes/routes';
 import { store } from 'app/store/store';
 
@@ -15,6 +15,7 @@ import { GrafanaApp } from './app';
 import { AppChrome } from './core/components/AppChrome/AppChrome';
 import { AppNotificationList } from './core/components/AppNotifications/AppNotificationList';
 import { GrafanaContext } from './core/context/GrafanaContext';
+import { ModalsContextProvider } from './core/context/ModalsContextProvider';
 import { GrafanaRoute } from './core/navigation/GrafanaRoute';
 import { RouteDescriptor } from './core/navigation/types';
 import { contextSrv } from './core/services/context_srv';
@@ -102,11 +103,11 @@ export class AppWrapper extends React.Component<AppWrapperProps, AppWrapperState
                 actions={[]}
                 options={{ enableHistory: true, callbacks: { onSelectAction: commandPaletteActionSelected } }}
               >
-                <ModalsProvider>
-                  <GlobalStyles />
-                  <div className="grafana-app">
-                    <Router history={locationService.getHistory()}>
-                      <CompatRouter>
+                <Router history={locationService.getHistory()}>
+                  <CompatRouter>
+                    <ModalsContextProvider>
+                      <GlobalStyles />
+                      <div className="grafana-app">
                         <AppChrome>
                           {pageBanners.map((Banner, index) => (
                             <Banner key={index.toString()} />
@@ -118,13 +119,13 @@ export class AppWrapper extends React.Component<AppWrapperProps, AppWrapperState
                             <Hook key={index.toString()} />
                           ))}
                         </AppChrome>
-                      </CompatRouter>
-                    </Router>
-                  </div>
-                  <LiveConnectionWarning />
-                  <ModalRoot />
-                  <PortalContainer />
-                </ModalsProvider>
+                      </div>
+                      <LiveConnectionWarning />
+                      <ModalRoot />
+                      <PortalContainer />
+                    </ModalsContextProvider>
+                  </CompatRouter>
+                </Router>
               </KBarProvider>
             </ThemeProvider>
           </GrafanaContext.Provider>

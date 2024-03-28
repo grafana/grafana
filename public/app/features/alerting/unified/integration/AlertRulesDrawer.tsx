@@ -11,12 +11,12 @@ const AlertRulesDrawerContent = React.lazy(
 
 interface Props {
   dashboardUid: string;
-  onClose: () => void;
+  onDismiss: () => void;
 }
 
-export function AlertRulesDrawer({ dashboardUid, onClose }: Props) {
+export function AlertRulesDrawer({ dashboardUid, onDismiss }: Props) {
   return (
-    <Drawer title="Alert rules" subtitle={<DrawerSubtitle dashboardUid={dashboardUid} />} onClose={onClose} size="lg">
+    <Drawer title="Alert rules" subtitle={<DrawerSubtitle dashboardUid={dashboardUid} />} onClose={onDismiss} size="lg">
       <React.Suspense fallback={<LoadingPlaceholder text="Loading alert rules" />}>
         <AlertRulesDrawerContent dashboardUid={dashboardUid} />
       </React.Suspense>
