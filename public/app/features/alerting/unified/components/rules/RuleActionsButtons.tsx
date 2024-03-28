@@ -131,14 +131,14 @@ export const RuleActionsButtons = ({ rule, rulesSource }: Props) => {
       moreActions.push(
         <MenuItemPauseRule
           rule={rule}
-          onPauseChange={async () => {
+          onPauseChange={() => {
             // Uses INSTANCES_DISPLAY_LIMIT + 1 here as exporting LIMIT_ALERTS from RuleList has the side effect
             // of breaking some unrelated tests in Policy.test.tsx due to mocking approach
             const limitAlerts = hasActiveFilters ? undefined : INSTANCES_DISPLAY_LIMIT + 1;
             // Trigger a re-fetch of the rules table
             // TODO: Migrate rules table functionality to RTK Query, so we instead rely
             // on tag invalidation (or optimistic cache updates) for this
-            await dispatch(fetchAllPromAndRulerRulesAction(false, { limitAlerts }));
+            dispatch(fetchAllPromAndRulerRulesAction(false, { limitAlerts }));
           }}
         />
       );
