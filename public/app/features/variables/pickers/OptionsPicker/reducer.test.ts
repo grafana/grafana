@@ -569,8 +569,11 @@ describe('optionsPickerReducer', () => {
           .whenActionIsDispatched(updateOptionsAndFilter(options))
           .thenStateShouldEqual({
             ...initialState,
-            options: [{ text: 'All', value: '$__all', selected: true }],
-            selectedValues: [{ text: 'All', value: '$__all', selected: true }],
+            options: [
+              { text: '> A', value: 'A', selected: false },
+              { text: 'All', value: '$__all', selected: false }
+            ],
+            selectedValues: [],
             queryValue: 'A',
             highlightIndex: 0,
           });
