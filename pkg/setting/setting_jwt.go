@@ -46,7 +46,7 @@ func (cfg *Cfg) readAuthJWTSettings() {
 	jwtSettings.SkipOrgRoleSync = authJWT.Key("skip_org_role_sync").MustBool(false)
 	jwtSettings.GroupsAttributePath = valueAsString(authJWT, "groups_attribute_path", "")
 	jwtSettings.EmailAttributePath = valueAsString(authJWT, "email_attribute_path", "")
-	jwtSettings.UsernameAttributePath = valueAsString(authJWT, "name_attribute_path", "")
+	jwtSettings.UsernameAttributePath = valueAsString(authJWT, "username_attribute_path", "")
 
 	cfg.JWTAuth = jwtSettings
 }
