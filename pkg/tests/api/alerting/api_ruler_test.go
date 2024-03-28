@@ -55,7 +55,7 @@ func TestIntegrationAlertRulePermissions(t *testing.T) {
 	permissionsStore := resourcepermissions.NewStore(store, featuremgmt.WithFeatures())
 
 	// Create a user to make authenticated requests
-	userID := createUser(t, store, user.CreateUserCommand{
+	userID := createUser(t, store, store.Cfg, user.CreateUserCommand{
 		DefaultOrgRole: string(org.RoleEditor),
 		Password:       "password",
 		Login:          "grafana",
@@ -339,7 +339,7 @@ func TestIntegrationAlertRuleNestedPermissions(t *testing.T) {
 	permissionsStore := resourcepermissions.NewStore(store, featuremgmt.WithFeatures())
 
 	// Create a user to make authenticated requests
-	userID := createUser(t, store, user.CreateUserCommand{
+	userID := createUser(t, store, store.Cfg, user.CreateUserCommand{
 		DefaultOrgRole: string(org.RoleEditor),
 		Password:       "password",
 		Login:          "grafana",
@@ -735,7 +735,7 @@ func TestAlertRulePostExport(t *testing.T) {
 	permissionsStore := resourcepermissions.NewStore(store, featuremgmt.WithFeatures())
 
 	// Create a user to make authenticated requests
-	userID := createUser(t, store, user.CreateUserCommand{
+	userID := createUser(t, store, store.Cfg, user.CreateUserCommand{
 		DefaultOrgRole: string(org.RoleEditor),
 		Password:       "password",
 		Login:          "grafana",
@@ -814,7 +814,7 @@ func TestIntegrationAlertRuleConflictingTitle(t *testing.T) {
 	grafanaListedAddr, store := testinfra.StartGrafana(t, dir, path)
 
 	// Create user
-	createUser(t, store, user.CreateUserCommand{
+	createUser(t, store, store.Cfg, user.CreateUserCommand{
 		DefaultOrgRole: string(org.RoleAdmin),
 		Password:       "admin",
 		Login:          "admin",
@@ -904,7 +904,7 @@ func TestIntegrationRulerRulesFilterByDashboard(t *testing.T) {
 	grafanaListedAddr, store := testinfra.StartGrafana(t, dir, path)
 
 	// Create a user to make authenticated requests
-	createUser(t, store, user.CreateUserCommand{
+	createUser(t, store, store.Cfg, user.CreateUserCommand{
 		DefaultOrgRole: string(org.RoleEditor),
 		Password:       "password",
 		Login:          "grafana",
@@ -1244,7 +1244,7 @@ func TestIntegrationRuleGroupSequence(t *testing.T) {
 	grafanaListedAddr, store := testinfra.StartGrafana(t, dir, path)
 
 	// Create a user to make authenticated requests
-	createUser(t, store, user.CreateUserCommand{
+	createUser(t, store, store.Cfg, user.CreateUserCommand{
 		DefaultOrgRole: string(org.RoleEditor),
 		Password:       "password",
 		Login:          "grafana",
@@ -1339,7 +1339,7 @@ func TestIntegrationRuleCreate(t *testing.T) {
 		AppModeProduction:     true,
 	})
 	grafanaListedAddr, store := testinfra.StartGrafana(t, dir, path)
-	createUser(t, store, user.CreateUserCommand{
+	createUser(t, store, store.Cfg, user.CreateUserCommand{
 		DefaultOrgRole: string(org.RoleAdmin),
 		Password:       "admin",
 		Login:          "admin",
@@ -1415,7 +1415,7 @@ func TestIntegrationRuleUpdate(t *testing.T) {
 	permissionsStore := resourcepermissions.NewStore(store, featuremgmt.WithFeatures())
 
 	// Create a user to make authenticated requests
-	userID := createUser(t, store, user.CreateUserCommand{
+	userID := createUser(t, store, store.Cfg, user.CreateUserCommand{
 		DefaultOrgRole: string(org.RoleEditor),
 		Password:       "password",
 		Login:          "grafana",
@@ -1438,7 +1438,7 @@ func TestIntegrationRuleUpdate(t *testing.T) {
 	}
 
 	// Create a user to make authenticated requests
-	createUser(t, store, user.CreateUserCommand{
+	createUser(t, store, store.Cfg, user.CreateUserCommand{
 		DefaultOrgRole: string(org.RoleAdmin),
 		Password:       "admin",
 		Login:          "admin",
@@ -1631,7 +1631,7 @@ func TestIntegrationRulePause(t *testing.T) {
 	grafanaListedAddr, store := testinfra.StartGrafana(t, dir, path)
 
 	// Create a user to make authenticated requests
-	createUser(t, store, user.CreateUserCommand{
+	createUser(t, store, store.Cfg, user.CreateUserCommand{
 		DefaultOrgRole: string(org.RoleEditor),
 		Password:       "password",
 		Login:          "grafana",
@@ -1761,7 +1761,7 @@ func TestIntegrationHysteresisRule(t *testing.T) {
 	grafanaListedAddr, store := testinfra.StartGrafana(t, dir, p)
 
 	// Create a user to make authenticated requests
-	createUser(t, store, user.CreateUserCommand{
+	createUser(t, store, store.Cfg, user.CreateUserCommand{
 		DefaultOrgRole: string(org.RoleAdmin),
 		Password:       "password",
 		Login:          "grafana",
@@ -1835,7 +1835,7 @@ func TestIntegrationRuleNotificationSettings(t *testing.T) {
 	grafanaListedAddr, store := testinfra.StartGrafana(t, dir, p)
 
 	// Create a user to make authenticated requests
-	createUser(t, store, user.CreateUserCommand{
+	createUser(t, store, store.Cfg, user.CreateUserCommand{
 		DefaultOrgRole: string(org.RoleAdmin),
 		Password:       "password",
 		Login:          "grafana",

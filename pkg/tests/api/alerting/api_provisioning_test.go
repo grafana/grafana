@@ -37,17 +37,17 @@ func TestIntegrationProvisioning(t *testing.T) {
 	grafanaListedAddr, store := testinfra.StartGrafana(t, dir, path)
 
 	// Create a users to make authenticated requests
-	createUser(t, store, user.CreateUserCommand{
+	createUser(t, store, store.Cfg, user.CreateUserCommand{
 		DefaultOrgRole: string(org.RoleViewer),
 		Password:       "viewer",
 		Login:          "viewer",
 	})
-	createUser(t, store, user.CreateUserCommand{
+	createUser(t, store, store.Cfg, user.CreateUserCommand{
 		DefaultOrgRole: string(org.RoleEditor),
 		Password:       "editor",
 		Login:          "editor",
 	})
-	createUser(t, store, user.CreateUserCommand{
+	createUser(t, store, store.Cfg, user.CreateUserCommand{
 		DefaultOrgRole: string(org.RoleAdmin),
 		Password:       "admin",
 		Login:          "admin",
@@ -387,7 +387,7 @@ func TestMuteTimings(t *testing.T) {
 
 	grafanaListedAddr, store := testinfra.StartGrafana(t, dir, path)
 
-	createUser(t, store, user.CreateUserCommand{
+	createUser(t, store, store.Cfg, user.CreateUserCommand{
 		DefaultOrgRole: string(org.RoleAdmin),
 		Password:       "admin",
 		Login:          "admin",

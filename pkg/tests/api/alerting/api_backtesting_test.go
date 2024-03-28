@@ -36,7 +36,7 @@ func TestBacktesting(t *testing.T) {
 
 	grafanaListedAddr, env := testinfra.StartGrafanaEnv(t, dir, path)
 
-	userId := createUser(t, env.SQLStore, user.CreateUserCommand{
+	userId := createUser(t, env.SQLStore, env.SQLStore.Cfg, user.CreateUserCommand{
 		DefaultOrgRole: string(org.RoleAdmin),
 		Password:       "admin",
 		Login:          "admin",
@@ -92,7 +92,7 @@ func TestBacktesting(t *testing.T) {
 	})
 
 	t.Run("if user does not have permissions", func(t *testing.T) {
-		testUserId := createUser(t, env.SQLStore, user.CreateUserCommand{
+		testUserId := createUser(t, env.SQLStore, env.SQLStore.Cfg, user.CreateUserCommand{
 			DefaultOrgRole: string(roletype.RoleNone),
 			Password:       "test",
 			Login:          "test",

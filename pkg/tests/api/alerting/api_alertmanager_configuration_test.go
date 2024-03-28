@@ -33,7 +33,7 @@ func TestIntegrationAlertmanagerConfiguration(t *testing.T) {
 		AppModeProduction:     true,
 	})
 	grafanaListedAddr, store := testinfra.StartGrafana(t, dir, path)
-	createUser(t, store, user.CreateUserCommand{
+	createUser(t, store, store.Cfg, user.CreateUserCommand{
 		DefaultOrgRole: string(org.RoleAdmin),
 		Password:       "admin",
 		Login:          "admin",
@@ -292,7 +292,7 @@ func TestIntegrationAlertmanagerConfigurationIsTransactional(t *testing.T) {
 	alertConfigURL := fmt.Sprintf("http://editor:editor@%s/api/alertmanager/grafana/config/api/v1/alerts", grafanaListedAddr)
 
 	// create user under main organisation
-	userID := createUser(t, store, user.CreateUserCommand{
+	userID := createUser(t, store, store.Cfg, user.CreateUserCommand{
 		DefaultOrgRole: string(org.RoleEditor),
 		Password:       "editor",
 		Login:          "editor",
@@ -304,7 +304,7 @@ func TestIntegrationAlertmanagerConfigurationIsTransactional(t *testing.T) {
 	orgID := newOrg.ID
 
 	// create user under different organisation
-	createUser(t, store, user.CreateUserCommand{
+	createUser(t, store, store.Cfg, user.CreateUserCommand{
 		DefaultOrgRole: string(org.RoleEditor),
 		Password:       "editor-42",
 		Login:          "editor-42",
@@ -404,7 +404,7 @@ func TestIntegrationAlertmanagerConfigurationPersistSecrets(t *testing.T) {
 	grafanaListedAddr, store := testinfra.StartGrafana(t, dir, path)
 	alertConfigURL := fmt.Sprintf("http://editor:editor@%s/api/alertmanager/grafana/config/api/v1/alerts", grafanaListedAddr)
 
-	createUser(t, store, user.CreateUserCommand{
+	createUser(t, store, store.Cfg, user.CreateUserCommand{
 		DefaultOrgRole: string(org.RoleEditor),
 		Password:       "editor",
 		Login:          "editor",

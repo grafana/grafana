@@ -47,7 +47,7 @@ func TestIntegrationAdminConfiguration_SendingToExternalAlertmanagers(t *testing
 	require.NoError(t, err)
 
 	// Create a user to make authenticated requests
-	userID := createUser(t, s, user.CreateUserCommand{
+	userID := createUser(t, s, s.Cfg, user.CreateUserCommand{
 		DefaultOrgRole: string(org.RoleAdmin),
 		Login:          "grafana",
 		Password:       "password",
@@ -63,7 +63,7 @@ func TestIntegrationAdminConfiguration_SendingToExternalAlertmanagers(t *testing
 	require.Equal(t, disableOrgID, orgID)
 
 	// create user under different organisation
-	createUser(t, s, user.CreateUserCommand{
+	createUser(t, s, s.Cfg, user.CreateUserCommand{
 		DefaultOrgRole: string(org.RoleAdmin),
 		Password:       "admin-42",
 		Login:          "admin-42",
@@ -363,7 +363,7 @@ func TestIntegrationAdminConfiguration_CannotCreateInhibitionRules(t *testing.T)
 		AppModeProduction:     true,
 	})
 	grafanaListedAddr, store := testinfra.StartGrafana(t, dir, path)
-	createUser(t, store, user.CreateUserCommand{
+	createUser(t, store, store.Cfg, user.CreateUserCommand{
 		DefaultOrgRole: string(org.RoleAdmin),
 		Password:       "admin",
 		Login:          "admin",

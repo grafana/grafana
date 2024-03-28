@@ -40,7 +40,7 @@ func TestIntegrationPrometheusRules(t *testing.T) {
 	grafanaListedAddr, store := testinfra.StartGrafana(t, dir, path)
 
 	// Create a user to make authenticated requests
-	createUser(t, store, user.CreateUserCommand{
+	createUser(t, store, store.Cfg, user.CreateUserCommand{
 		DefaultOrgRole: string(org.RoleEditor),
 		Password:       "password",
 		Login:          "grafana",
@@ -350,7 +350,7 @@ func TestIntegrationPrometheusRulesFilterByDashboard(t *testing.T) {
 	grafanaListedAddr, store := testinfra.StartGrafana(t, dir, path)
 
 	// Create a user to make authenticated requests
-	createUser(t, store, user.CreateUserCommand{
+	createUser(t, store, store.Cfg, user.CreateUserCommand{
 		DefaultOrgRole: string(org.RoleEditor),
 		Password:       "password",
 		Login:          "grafana",
@@ -660,7 +660,7 @@ func TestIntegrationPrometheusRulesPermissions(t *testing.T) {
 	grafanaListedAddr, store := testinfra.StartGrafana(t, dir, path)
 
 	// Create a user to make authenticated requests
-	userID := createUser(t, store, user.CreateUserCommand{
+	userID := createUser(t, store, store.Cfg, user.CreateUserCommand{
 		DefaultOrgRole: string(org.RoleEditor),
 		Password:       "password",
 		Login:          "grafana",

@@ -29,7 +29,7 @@ func TestTimeInterval(t *testing.T) {
 
 	grafanaListedAddr, store := testinfra.StartGrafana(t, dir, path)
 
-	createUser(t, store, user.CreateUserCommand{
+	createUser(t, store, store.Cfg, user.CreateUserCommand{
 		DefaultOrgRole: string(org.RoleAdmin),
 		Password:       "admin",
 		Login:          "admin",
