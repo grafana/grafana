@@ -115,14 +115,14 @@ func (d *DualWriter) Create(ctx context.Context, obj runtime.Object, createValid
 // Update overrides the default behavior of the Storage and writes to both the LegacyStorage and Storage depending on the DualWriter mode.
 func (d *DualWriter) Update(ctx context.Context, name string, objInfo rest.UpdatedObjectInfo, createValidation rest.ValidateObjectFunc, updateValidation rest.ValidateObjectUpdateFunc, forceAllowCreate bool, options *metav1.UpdateOptions) (runtime.Object, bool, error) {
 	// #TODO replace with a rest.CreaterUpdater check?
-	// #TODO add back the original comments
 	legacy, ok := d.legacy.(rest.Updater)
 	if !ok {
 		return nil, false, fmt.Errorf("legacy storage rest.Updater is missing")
 	}
 
 	// #TODO: Doing it the repetitive way first. Refactor once all the behavior is well defined.
-	if CurrentMode == Mode1 {
+	switch CurrentMode {
+	case Mode1:
 		old, err := d.legacy.Get(ctx, name, &metav1.GetOptions{})
 		if err != nil {
 			return nil, false, err
@@ -144,9 +144,8 @@ func (d *DualWriter) Update(ctx context.Context, name string, objInfo rest.Updat
 			upstream: objInfo,
 			updated:  updated,
 		}, createValidation, updateValidation, forceAllowCreate, options)
-	}
 
-	if CurrentMode == Mode2 {
+	case Mode2:
 		// #TODO figure out how to set opts.IgnoreNotFound = true here
 		// or how to specifically check for an apierrors.NewNotFound error
 		// #TODO for now assume that we are updating entities which had previously
@@ -154,6 +153,7 @@ func (d *DualWriter) Update(ctx context.Context, name string, objInfo rest.Updat
 		// https://github.com/grafana/grafana/pull/85206
 		// #TODO figure out wht the correct resource version should be and
 		// set it properly in Get and List calls
+		// Get the previous version from k8s storage (the one)
 		old, err := d.Get(ctx, name, &metav1.GetOptions{})
 		if err != nil {
 			return nil, false, err
@@ -162,9 +162,12 @@ func (d *DualWriter) Update(ctx context.Context, name string, objInfo rest.Updat
 		if err != nil {
 			return nil, false, err
 		}
+		// Hold on to the RV+UID for the dual write
 		theRV := accessor.GetResourceVersion()
 		theUID := accessor.GetUID()
 
+		// Changes applied within new storage
+		// will fail if RV is out of sync
 		updated, err := objInfo.UpdatedObject(ctx, old)
 		if err != nil {
 			return nil, false, err
@@ -174,11 +177,11 @@ func (d *DualWriter) Update(ctx context.Context, name string, objInfo rest.Updat
 			return nil, false, err
 		}
 
-		accessor.SetUID("")
-		accessor.SetResourceVersion("")
+		accessor.SetUID("")             // clear it
+		accessor.SetResourceVersion("") // remove it so it is not a constraint
 		obj, created, err := legacy.Update(ctx, name, &updateWrapper{
 			upstream: objInfo,
-			updated:  updated,
+			updated:  updated, // returned as the object that will be updated
 		}, createValidation, updateValidation, forceAllowCreate, options)
 		if err != nil {
 			return obj, created, err
@@ -188,17 +191,16 @@ func (d *DualWriter) Update(ctx context.Context, name string, objInfo rest.Updat
 		if err != nil {
 			return nil, false, err
 		}
-		accessor.SetResourceVersion(theRV)
+		accessor.SetResourceVersion(theRV) // the original RV
 		accessor.SetUID(theUID)
 		objInfo = &updateWrapper{
 			upstream: objInfo,
-			updated:  obj,
+			updated:  obj, // returned as the object that will be updated
 		}
 
 		return d.Storage.Update(ctx, name, objInfo, createValidation, updateValidation, forceAllowCreate, options)
-	}
 
-	if CurrentMode == Mode3 {
+	case Mode3:
 		old, err := d.Get(ctx, name, &metav1.GetOptions{})
 		if err != nil {
 			return nil, false, err
@@ -229,9 +231,8 @@ func (d *DualWriter) Update(ctx context.Context, name string, objInfo rest.Updat
 			upstream: objInfo,
 			updated:  obj,
 		}, createValidation, updateValidation, forceAllowCreate, options)
-	}
 
-	if CurrentMode == Mode4 {
+	case Mode4:
 		old, err := d.Get(ctx, name, &metav1.GetOptions{})
 		if err != nil {
 			return nil, false, err
