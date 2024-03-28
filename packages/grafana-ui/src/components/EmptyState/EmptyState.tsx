@@ -7,7 +7,7 @@ import { Text } from '../Text/Text';
 
 import { GrotNotFound } from './GrotNotFound/GrotNotFound';
 
-interface Props {
+interface BaseProps {
   /**
    * Provide a button to render below the message
    */
@@ -22,26 +22,70 @@ interface Props {
    */
   message?: string;
   /**
-   * Empty state variant. Possible values are 'search'.
+   * Which variant to use. Affects the default message and image shown.
    */
+  variant: 'nothing-here' | 'not-found';
+}
+
+interface NothingHereVariantProps extends BaseProps {
+  message: string;
+  variant: 'nothing-here';
+}
+
+interface NotFoundVariantProps extends BaseProps {
   variant: 'not-found';
 }
+
+type Props = NothingHereVariantProps | NotFoundVariantProps;
 
 export const EmptyState = ({
   button,
   children,
-  image = <GrotNotFound width={300} />,
-  message = t('grafana-ui.empty-state.not-found-message', 'No results found'),
+  image,
+  message,
   hideImage = false,
+  variant,
 }: React.PropsWithChildren<Props>) => {
+  const imageToShow = image ?? getDefaultImageForVariant(variant);
+  const messageToShow = message ?? getDefaultMessageForVariant(variant);
+
   return (
     <Box paddingY={4} gap={4} display="flex" direction="column" alignItems="center">
-      {!hideImage && image}
+      {!hideImage && imageToShow}
       <Stack direction="column" alignItems="center">
-        <Text variant="h4">{message}</Text>
+        <Text variant="h4">{messageToShow}</Text>
         {children && <Text color="secondary">{children}</Text>}
       </Stack>
       {button}
     </Box>
   );
 };
+
+function getDefaultMessageForVariant(variant: Props['variant']) {
+  switch (variant) {
+    case 'nothing-here': {
+      return t('grafana-ui.empty-state.nothing-here-message', "There's nothing here yet");
+    }
+    case 'not-found': {
+      return t('grafana-ui.empty-state.not-found-message', 'No results found');
+    }
+    default: {
+      throw new Error(`Unknown variant: ${variant}`);
+    }
+  }
+}
+
+function getDefaultImageForVariant(variant: Props['variant']) {
+  switch (variant) {
+    case 'nothing-here': {
+      // TODO replace with a different image for initial variant
+      return <GrotNotFound width={300} />;
+    }
+    case 'not-found': {
+      return <GrotNotFound width={300} />;
+    }
+    default: {
+      throw new Error(`Unknown variant: ${variant}`);
+    }
+  }
+}

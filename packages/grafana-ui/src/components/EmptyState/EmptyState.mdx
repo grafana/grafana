@@ -5,11 +5,51 @@ import { EmptyState } from './EmptyState';
 
 Use an empty state to communicate to the user that there is no data to display, or that a search query returned no results.
 
-## variant="not-found"
+## `variant="nothing-here"`
 
 ### When to use
 
-Use in place of a results table or list when a search query or filter returns no results.
+Use when nothing has been created yet, and you want to encourage the user to take an action.
+
+### Initial state with a call to action
+
+```jsx
+import { EmptyState, LinkButton, TextLink } from '@grafana/ui';
+
+<EmptyState
+  variant="nothing-here"
+  message="You haven't created any playlists yet"
+  button={
+    <LinkButton icon="plus" href="playlists/new" size="lg">
+      Create playlist
+    </LinkButton>
+  }
+>
+  You can use playlists to cycle dashboards on TVs without user control.{' '}
+  <TextLink external href="<externalDocsLink>">
+    Learn more.
+  </TextLink>
+</EmptyState>;
+```
+
+### Initial state with no call to action
+
+```jsx
+import { EmptyState, TextLink } from '@grafana/ui';
+
+<EmptyState variant="nothing-here" message="You haven't created any library panels yet">
+  Create a library panel from any existing dashboard panel through the panel context menu.{' '}
+  <TextLink external href="<externalDocsLink>">
+    Learn more.
+  </TextLink>
+</EmptyState>;
+```
+
+## `variant="not-found"`
+
+### When to use
+
+Use in place of content when a search query or filter returns no results.
 
 There are sensible defaults for the image and message, so in most cases you can use it without any additional props.
 
@@ -19,14 +59,20 @@ import { EmptyState } from '@grafana/ui';
 <EmptyState variant="not-found" />;
 ```
 
-### Providing custom overrides
+## Advanced usage
 
-You can optionally override the message or image, and add additional information or a button (e.g. to clear the search query)
+For all variants you can:
+
+- override the message
+- override the image
+- provide a button (e.g. to provide a call to action or clear the search query)
+- add additional information via React children
 
 ```jsx
-import { Button, EmptyState } from '@grafana/ui';
+import { Button, EmptyState, TextLink } from '@grafana/ui';
 
 <EmptyState
+  variant="not-found"
   button={<Button variant="secondary" onClick={clearSearchQuery} />}
   image={<AnyReactNode />}
   message="No playlists found"
