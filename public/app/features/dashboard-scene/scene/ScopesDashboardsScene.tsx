@@ -59,9 +59,11 @@ export class ScopesDashboardsScene extends SceneObjectBase<ScopesDashboardsScene
     try {
       const response = await getBackendSrv().get<{
         items: Array<{ spec: { dashboards: null | string[]; scope: string } }>;
-      }>(this._url, { scope });
+      }>(this._url, {
+        fieldSelector: `spec.scope=${scope}`,
+      });
 
-      return response.items.find((item) => !!item.spec.dashboards && item.spec.scope === scope)?.spec.dashboards ?? [];
+      return response.items.find((item) => !!item.spec.dashboards)?.spec.dashboards ?? [];
     } catch (err) {
       return [];
     }
