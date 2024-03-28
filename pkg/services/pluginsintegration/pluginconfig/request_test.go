@@ -7,8 +7,12 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana-azure-sdk-go/v2/azsettings"
+	"github.com/grafana/grafana-plugin-sdk-go/backend"
 
+	"github.com/grafana/grafana/pkg/plugins"
+	"github.com/grafana/grafana/pkg/plugins/auth"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginstore"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -22,7 +26,7 @@ func TestRequestConfigProvider_PluginRequestConfig_Defaults(t *testing.T) {
 		"GF_SQL_MAX_OPEN_CONNS_DEFAULT":            "0",
 		"GF_SQL_MAX_IDLE_CONNS_DEFAULT":            "0",
 		"GF_SQL_MAX_CONN_LIFETIME_SECONDS_DEFAULT": "0",
-	}, p.PluginRequestConfig(context.Background(), ""))
+	}, p.PluginRequestConfig(context.Background(), pluginstore.Plugin{}))
 }
 
 func TestRequestConfigProvider_PluginRequestConfig(t *testing.T) {
@@ -132,7 +136,7 @@ func TestRequestConfigProvider_PluginRequestConfig(t *testing.T) {
 	for _, tc := range tcs {
 		t.Run(tc.name, func(t *testing.T) {
 			p := NewRequestConfigProvider(tc.cfg)
-			require.Subset(t, p.PluginRequestConfig(context.Background(), ""), tc.expected)
+			require.Subset(t, p.PluginRequestConfig(context.Background(), pluginstore.Plugin{}), tc.expected)
 		})
 	}
 }
@@ -167,7 +171,7 @@ func TestRequestConfigProvider_PluginRequestConfig_featureToggles(t *testing.T) 
 			require.NoError(t, err)
 
 			p := NewRequestConfigProvider(pCfg)
-			require.Subset(t, p.PluginRequestConfig(context.Background(), ""), tc.expectedConfig)
+			require.Subset(t, p.PluginRequestConfig(context.Background(), pluginstore.Plugin{}), tc.expectedConfig)
 		}
 	})
 }
@@ -181,7 +185,7 @@ func TestRequestConfigProvider_PluginRequestConfig_appURL(t *testing.T) {
 		require.NoError(t, err)
 
 		p := NewRequestConfigProvider(pCfg)
-		require.Subset(t, p.PluginRequestConfig(context.Background(), ""), map[string]string{"GF_APP_URL": "https://myorg.com/"})
+		require.Subset(t, p.PluginRequestConfig(context.Background(), pluginstore.Plugin{}), map[string]string{"GF_APP_URL": "https://myorg.com/"})
 	})
 }
 
@@ -197,7 +201,7 @@ func TestRequestConfigProvider_PluginRequestConfig_SQL(t *testing.T) {
 		require.NoError(t, err)
 
 		p := NewRequestConfigProvider(pCfg)
-		require.Subset(t, p.PluginRequestConfig(context.Background(), ""), map[string]string{
+		require.Subset(t, p.PluginRequestConfig(context.Background(), pluginstore.Plugin{}), map[string]string{
 			"GF_SQL_ROW_LIMIT":                         "23",
 			"GF_SQL_MAX_OPEN_CONNS_DEFAULT":            "24",
 			"GF_SQL_MAX_IDLE_CONNS_DEFAULT":            "25",
@@ -219,7 +223,7 @@ func TestRequestConfigProvider_PluginRequestConfig_SQL(t *testing.T) {
 			"GF_SQL_MAX_OPEN_CONNS_DEFAULT":            "0",
 			"GF_SQL_MAX_IDLE_CONNS_DEFAULT":            "0",
 			"GF_SQL_MAX_CONN_LIFETIME_SECONDS_DEFAULT": "0",
-		}, p.PluginRequestConfig(context.Background(), ""))
+		}, p.PluginRequestConfig(context.Background(), pluginstore.Plugin{}))
 	})
 }
 
@@ -232,7 +236,7 @@ func TestRequestConfigProvider_PluginRequestConfig_concurrentQueryCount(t *testi
 		require.NoError(t, err)
 
 		p := NewRequestConfigProvider(pCfg)
-		require.Subset(t, p.PluginRequestConfig(context.Background(), ""), map[string]string{"GF_CONCURRENT_QUERY_COUNT": "42"})
+		require.Subset(t, p.PluginRequestConfig(context.Background(), pluginstore.Plugin{}), map[string]string{"GF_CONCURRENT_QUERY_COUNT": "42"})
 	})
 
 	t.Run("Doesn't set the concurrent query count if it is not in the config", func(t *testing.T) {
@@ -241,7 +245,7 @@ func TestRequestConfigProvider_PluginRequestConfig_concurrentQueryCount(t *testi
 		require.NoError(t, err)
 
 		p := NewRequestConfigProvider(pCfg)
-		require.NotContains(t, p.PluginRequestConfig(context.Background(), ""), "GF_CONCURRENT_QUERY_COUNT")
+		require.NotContains(t, p.PluginRequestConfig(context.Background(), pluginstore.Plugin{}), "GF_CONCURRENT_QUERY_COUNT")
 	})
 
 	t.Run("Doesn't set the concurrent query count if it is zero", func(t *testing.T) {
@@ -252,7 +256,7 @@ func TestRequestConfigProvider_PluginRequestConfig_concurrentQueryCount(t *testi
 		require.NoError(t, err)
 
 		p := NewRequestConfigProvider(pCfg)
-		require.NotContains(t, p.PluginRequestConfig(context.Background(), ""), "GF_CONCURRENT_QUERY_COUNT")
+		require.NotContains(t, p.PluginRequestConfig(context.Background(), pluginstore.Plugin{}), "GF_CONCURRENT_QUERY_COUNT")
 	})
 }
 
@@ -264,7 +268,7 @@ func TestRequestConfigProvider_PluginRequestConfig_azureAuthEnabled(t *testing.T
 		}
 
 		p := NewRequestConfigProvider(cfg)
-		require.Subset(t, p.PluginRequestConfig(context.Background(), ""), map[string]string{"GFAZPL_AZURE_AUTH_ENABLED": "true"})
+		require.Subset(t, p.PluginRequestConfig(context.Background(), pluginstore.Plugin{}), map[string]string{"GFAZPL_AZURE_AUTH_ENABLED": "true"})
 	})
 
 	t.Run("Doesn't set the azureAuthEnabled if it is not in the config", func(t *testing.T) {
@@ -273,7 +277,7 @@ func TestRequestConfigProvider_PluginRequestConfig_azureAuthEnabled(t *testing.T
 		}
 
 		p := NewRequestConfigProvider(cfg)
-		require.NotContains(t, p.PluginRequestConfig(context.Background(), ""), "GFAZPL_AZURE_AUTH_ENABLED")
+		require.NotContains(t, p.PluginRequestConfig(context.Background(), pluginstore.Plugin{}), "GFAZPL_AZURE_AUTH_ENABLED")
 	})
 
 	t.Run("Doesn't set the azureAuthEnabled if it is false", func(t *testing.T) {
@@ -283,7 +287,7 @@ func TestRequestConfigProvider_PluginRequestConfig_azureAuthEnabled(t *testing.T
 		}
 
 		p := NewRequestConfigProvider(cfg)
-		require.NotContains(t, p.PluginRequestConfig(context.Background(), ""), "GFAZPL_AZURE_AUTH_ENABLED")
+		require.NotContains(t, p.PluginRequestConfig(context.Background(), pluginstore.Plugin{}), "GFAZPL_AZURE_AUTH_ENABLED")
 	})
 }
 
@@ -317,7 +321,7 @@ func TestRequestConfigProvider_PluginRequestConfig_azure(t *testing.T) {
 		require.NoError(t, err)
 
 		p := NewRequestConfigProvider(pCfg)
-		require.Subset(t, p.PluginRequestConfig(context.Background(), "grafana-azure-monitor-datasource"), map[string]string{
+		require.Subset(t, p.PluginRequestConfig(context.Background(), pluginstore.Plugin{JSONData: plugins.JSONData{ID: "grafana-azure-monitor-datasource"}}), map[string]string{
 			"GFAZPL_AZURE_CLOUD": "AzureCloud", "GFAZPL_MANAGED_IDENTITY_ENABLED": "true",
 			"GFAZPL_MANAGED_IDENTITY_CLIENT_ID":                         "mock_managed_identity_client_id",
 			"GFAZPL_WORKLOAD_IDENTITY_ENABLED":                          "true",
@@ -341,7 +345,7 @@ func TestRequestConfigProvider_PluginRequestConfig_azure(t *testing.T) {
 		require.NoError(t, err)
 
 		p := NewRequestConfigProvider(pCfg)
-		m := p.PluginRequestConfig(context.Background(), "")
+		m := p.PluginRequestConfig(context.Background(), pluginstore.Plugin{})
 		require.NotContains(t, m, "GFAZPL_AZURE_CLOUD")
 		require.NotContains(t, m, "GFAZPL_MANAGED_IDENTITY_ENABLED")
 		require.NotContains(t, m, "GFAZPL_MANAGED_IDENTITY_CLIENT_ID")
@@ -366,7 +370,7 @@ func TestRequestConfigProvider_PluginRequestConfig_azure(t *testing.T) {
 		require.NoError(t, err)
 
 		p := NewRequestConfigProvider(pCfg)
-		require.Subset(t, p.PluginRequestConfig(context.Background(), "test-datasource"), map[string]string{
+		require.Subset(t, p.PluginRequestConfig(context.Background(), pluginstore.Plugin{JSONData: plugins.JSONData{ID: "test-datasource"}}), map[string]string{
 			"GFAZPL_AZURE_CLOUD": "AzureCloud", "GFAZPL_MANAGED_IDENTITY_ENABLED": "true",
 			"GFAZPL_MANAGED_IDENTITY_CLIENT_ID":                         "mock_managed_identity_client_id",
 			"GFAZPL_WORKLOAD_IDENTITY_ENABLED":                          "true",
@@ -398,7 +402,7 @@ func TestRequestConfigProvider_PluginRequestConfig_aws(t *testing.T) {
 	p := NewRequestConfigProvider(cfg)
 
 	t.Run("uses the aws settings for an AWS plugin", func(t *testing.T) {
-		require.Subset(t, p.PluginRequestConfig(context.Background(), "cloudwatch"), map[string]string{
+		require.Subset(t, p.PluginRequestConfig(context.Background(), pluginstore.Plugin{JSONData: plugins.JSONData{ID: "cloudwatch"}}), map[string]string{
 			"AWS_AUTH_AssumeRoleEnabled":     "false",
 			"AWS_AUTH_AllowedAuthProviders":  "grafana_assume_role,keys",
 			"AWS_AUTH_EXTERNAL_ID":           "mock_external_id",
@@ -408,7 +412,7 @@ func TestRequestConfigProvider_PluginRequestConfig_aws(t *testing.T) {
 	})
 
 	t.Run("does not use the aws settings for a non-aws plugin", func(t *testing.T) {
-		m := p.PluginRequestConfig(context.Background(), "")
+		m := p.PluginRequestConfig(context.Background(), pluginstore.Plugin{})
 		require.NotContains(t, m, "AWS_AUTH_AssumeRoleEnabled")
 		require.NotContains(t, m, "AWS_AUTH_AllowedAuthProviders")
 		require.NotContains(t, m, "AWS_AUTH_EXTERNAL_ID")
@@ -420,12 +424,28 @@ func TestRequestConfigProvider_PluginRequestConfig_aws(t *testing.T) {
 		cfg.AWSForwardSettingsPlugins = append(cfg.AWSForwardSettingsPlugins, "test-datasource")
 
 		p = NewRequestConfigProvider(cfg)
-		require.Subset(t, p.PluginRequestConfig(context.Background(), "test-datasource"), map[string]string{
+		require.Subset(t, p.PluginRequestConfig(context.Background(), pluginstore.Plugin{JSONData: plugins.JSONData{ID: "test-datasource"}}), map[string]string{
 			"AWS_AUTH_AssumeRoleEnabled":     "false",
 			"AWS_AUTH_AllowedAuthProviders":  "grafana_assume_role,keys",
 			"AWS_AUTH_EXTERNAL_ID":           "mock_external_id",
 			"AWS_AUTH_SESSION_DURATION":      "10m",
 			"AWS_CW_LIST_METRICS_PAGE_LIMIT": "100",
 		})
+	})
+}
+
+func TestRequestConfigProvider_PluginRequestConfig_appClientSecret(t *testing.T) {
+	t.Run("Uses the configured app URL", func(t *testing.T) {
+		cfg := setting.NewCfg()
+
+		pCfg, err := ProvidePluginInstanceConfig(cfg, setting.ProvideProvider(cfg), featuremgmt.WithFeatures())
+		require.NoError(t, err)
+
+		p := NewRequestConfigProvider(pCfg)
+		require.Subset(t, p.PluginRequestConfig(context.Background(), pluginstore.Plugin{
+			ExternalService: &auth.ExternalService{
+				ClientSecret: "mysecret",
+			},
+		}), map[string]string{backend.AppClientSecret: "mysecret"})
 	})
 }
