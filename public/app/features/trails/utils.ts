@@ -14,6 +14,7 @@ import { getDatasourceSrv } from '../plugins/datasource_srv';
 
 import { DataTrail } from './DataTrail';
 import { DataTrailSettings } from './DataTrailSettings';
+import { DataTrailsApp } from './DataTrailsApp';
 import { MetricScene } from './MetricScene';
 import { getTrailStore } from './TrailStore/TrailStore';
 import { LOGS_METRIC, TRAILS_ROUTE, VAR_DATASOURCE_EXPR } from './shared';
@@ -33,6 +34,18 @@ export function newMetricsTrail(initialDS?: string): DataTrail {
     //initialFilters: [{ key: 'job', operator: '=', value: 'grafana' }],
     embedded: false,
   });
+}
+
+export function useDataTrailsAppIntegrations(model: SceneObject) {
+  const appScene = sceneGraph.getAncestor(model, DataTrailsApp);
+  const { integrations } = appScene.useState();
+  return integrations;
+}
+
+export function useSelectedMetric(model: SceneObject) {
+  const trail = getTrailFor(model);
+  const { metric } = trail.useState();
+  return metric;
 }
 
 export function getUrlForTrail(trail: DataTrail) {

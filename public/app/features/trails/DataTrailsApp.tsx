@@ -10,6 +10,8 @@ import { Page } from 'app/core/components/Page/Page';
 
 import { DataTrail } from './DataTrail';
 import { DataTrailsHome } from './DataTrailsHome';
+import { useIntegrations } from './Integrations';
+import { DataTrailsIntegrations } from './Integrations/types';
 import { MetricsHeader } from './MetricsHeader';
 import { getTrailStore } from './TrailStore/TrailStore';
 import { HOME_ROUTE, TRAILS_ROUTE } from './shared';
@@ -18,6 +20,7 @@ import { getMetricName, getUrlForTrail, newMetricsTrail } from './utils';
 export interface DataTrailsAppState extends SceneObjectState {
   trail: DataTrail;
   home: DataTrailsHome;
+  integrations?: DataTrailsIntegrations;
 }
 
 export class DataTrailsApp extends SceneObjectBase<DataTrailsAppState> {
@@ -33,6 +36,21 @@ export class DataTrailsApp extends SceneObjectBase<DataTrailsAppState> {
   static Component = ({ model }: SceneComponentProps<DataTrailsApp>) => {
     const { trail, home } = model.useState();
     const styles = useStyles2(getStyles);
+
+    const { extensionContainer, labelProviders, metricProviders, metricSorteHeuristics, relatedMetricSortHeuristics } =
+      useIntegrations();
+
+    useEffect(() => {
+      console.log('SET STATE INTEGRATIONS.');
+      model.setState({
+        integrations: {
+          labelProviders,
+          metricProviders,
+          metricSorteHeuristics,
+          relatedMetricSortHeuristics,
+        },
+      });
+    }, [model, labelProviders, metricProviders, metricSorteHeuristics, relatedMetricSortHeuristics]);
 
     return (
       <Switch>
@@ -59,6 +77,10 @@ export class DataTrailsApp extends SceneObjectBase<DataTrailsAppState> {
               pageNav={{ text: getMetricName(trail.state.metric) }}
               layout={PageLayoutType.Custom}
             >
+              {
+                // This must be mounted to ensure the integrations are executed
+                extensionContainer
+              }
               <div className={styles.customPage}>
                 <DataTrailView trail={trail} />
               </div>
