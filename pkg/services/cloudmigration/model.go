@@ -4,7 +4,6 @@ import (
 	"time"
 
 	"github.com/grafana/grafana/pkg/util/errutil"
-	"github.com/prometheus/client_golang/prometheus"
 )
 
 var (
@@ -59,6 +58,10 @@ type CloudMigrationResponse struct {
 	Updated time.Time `json:"updated"`
 }
 
+type CloudMigrationListResponse struct {
+	Migrations []CloudMigrationResponse `json:"migrations"`
+}
+
 type MigrateDatasourcesRequest struct {
 	MigrateToPDC       bool
 	MigrateCredentials bool
@@ -77,16 +80,22 @@ type MigrateDatasourcesResponseDTO struct {
 	DatasourcesMigrated int `json:"datasourcesMigrated"`
 }
 
-const (
-	namespace = "grafana"
-	subsystem = "cloudmigrations"
-)
+type CreateAccessTokenResponse struct {
+	Token string
+}
 
-var PromMetrics = []prometheus.Collector{
-	prometheus.NewCounterVec(prometheus.CounterOpts{
-		Namespace: namespace,
-		Subsystem: subsystem,
-		Name:      "datasources_migrated",
-		Help:      "Total amount of data sources migrated",
-	}, []string{"pdc_converted"}),
+type CreateAccessTokenResponseDTO struct {
+	Token string `json:"token"`
+}
+
+type Base64EncodedTokenPayload struct {
+	Token    string
+	Instance Base64HGInstance
+}
+
+type Base64HGInstance struct {
+	StackID     int
+	Slug        string
+	RegionSlug  string
+	ClusterSlug string
 }

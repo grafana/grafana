@@ -94,7 +94,7 @@
     },
     "no-results": {
       "clear": "Suche und Filter löschen",
-      "text": "Keine Ergebnisse für Ihre Abfrage gefunden."
+      "text": ""
     }
   },
   "clipboard-button": {
@@ -107,9 +107,6 @@
       "change-theme": "Thema ändern...",
       "dark-theme": "Dunkel",
       "light-theme": "Hell"
-    },
-    "empty-state": {
-      "title": "Keine Ergebnisse gefunden"
     },
     "search-box": {
       "placeholder": "Suche oder springe zu ..."
@@ -131,7 +128,8 @@
   },
   "connections": {
     "connect-data": {
-      "category-header-label": "Datenquellen"
+      "category-header-label": "Datenquellen",
+      "empty-message": ""
     },
     "search": {
       "placeholder": "Alle durchsuchen"
@@ -653,6 +651,9 @@
     }
   },
   "library-panels": {
+    "empty-state": {
+      "message": ""
+    },
     "modal": {
       "button-cancel": "<0>Abbrechen</0>",
       "button-view-panel1": "Fenster in {{label}} anzeigen...",
@@ -1212,6 +1213,11 @@
       "pro-tip": "Sie können Playlists verwenden, um Dashboards auf TV-Geräten ohne Benutzersteuerung zu steuern",
       "pro-tip-link-title": "Mehr erfahren",
       "title": "Es gibt noch keine Playlists erstellt"
+    }
+  },
+  "playlists": {
+    "empty-state": {
+      "message": ""
     }
   },
   "profile": {

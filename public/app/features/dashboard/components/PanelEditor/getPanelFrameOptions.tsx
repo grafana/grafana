@@ -214,14 +214,7 @@ export function getPanelFrameCategory2(
         value: panel.state.title,
         popularRank: 1,
         render: function renderTitle() {
-          const { title } = panel.useState();
-          return (
-            <Input
-              id="PanelFrameTitle"
-              value={title}
-              onChange={(e) => panel.setState({ title: e.currentTarget.value })}
-            />
-          );
+          return <PanelFrameTitle panel={panel} />;
         },
         addon: config.featureToggles.dashgpt && (
           <GenAIPanelTitleButton
@@ -237,14 +230,7 @@ export function getPanelFrameCategory2(
         title: 'Description',
         value: panel.state.description,
         render: function renderDescription() {
-          const { description } = panel.useState();
-          return (
-            <TextArea
-              id="description-text-area"
-              value={description}
-              onChange={(e) => panel.setState({ description: e.currentTarget.value })}
-            />
-          );
+          return <DescriptionTextArea panel={panel} />;
         },
         addon: config.featureToggles.dashgpt && (
           <GenAIPanelDescriptionButton
@@ -366,6 +352,26 @@ function ScenePanelLinksEditor({ panelLinks }: ScenePanelLinksEditorProps) {
       onChange={(links) => panelLinks?.setState({ rawLinks: links })}
       getSuggestions={getPanelLinksVariableSuggestions}
       data={[]}
+    />
+  );
+}
+
+function PanelFrameTitle({ panel }: { panel: VizPanel }) {
+  const { title } = panel.useState();
+
+  return (
+    <Input id="PanelFrameTitle" value={title} onChange={(e) => panel.setState({ title: e.currentTarget.value })} />
+  );
+}
+
+function DescriptionTextArea({ panel }: { panel: VizPanel }) {
+  const { description } = panel.useState();
+
+  return (
+    <TextArea
+      id="description-text-area"
+      value={description}
+      onChange={(e) => panel.setState({ description: e.currentTarget.value })}
     />
   );
 }
