@@ -35,6 +35,8 @@ import (
 	"github.com/grafana/grafana/pkg/util"
 )
 
+const FULLPATH_SEPARATOR = "/"
+
 type Service struct {
 	store                store
 	db                   db.DB
@@ -555,7 +557,7 @@ func (s *Service) Create(ctx context.Context, cmd *folder.CreateFolderCommand) (
 	dashFolder := dashboards.NewDashboardFolder(cmd.Title)
 	dashFolder.OrgID = cmd.OrgID
 
-	if s.features.IsEnabled(ctx, featuremgmt.FlagNestedFolders) && cmd.ParentUID != "" {
+	if cmd.ParentUID != "" {
 		// Check that the user is allowed to create a subfolder in this folder
 		evaluator := accesscontrol.EvalPermission(dashboards.ActionFoldersWrite, dashboards.ScopeFoldersProvider.GetResourceScopeUID(cmd.ParentUID))
 		hasAccess, evalErr := s.accessControl.Evaluate(ctx, cmd.SignedInUser, evaluator)
@@ -1120,6 +1122,36 @@ func (s *Service) buildSaveDashboardCommand(ctx context.Context, dto *dashboards
 	}
 
 	return cmd, nil
+}
+
+// SplitFullpath splits a string into an array of strings using the FULLPATH_SEPARATOR as the delimiter.
+// It handles escape characters by appending the separator and the new string if the current string ends with an escape character.
+// The resulting array does not contain empty strings.
+func SplitFullpath(s string) []string {
+	splitStrings := strings.Split(s, FULLPATH_SEPARATOR)
+
+	result := make([]string, 0)
+	current := ""
+
+	for _, str := range splitStrings {
+		if strings.HasSuffix(current, "\\") {
+			// If the current string ends with an escape character, append the separator and the new string
+			current = current[:len(current)-1] + FULLPATH_SEPARATOR + str
+		} else {
+			// If the current string does not end with an escape character, append the current string to the result and start a new current string
+			if current != "" {
+				result = append(result, current)
+			}
+			current = str
+		}
+	}
+
+	// Append the last string to the result
+	if current != "" {
+		result = append(result, current)
+	}
+
+	return result
 }
 
 // getGuardianForSavePermissionCheck returns the guardian to be used for checking permission of dashboard

@@ -17,6 +17,8 @@ import (
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/folder"
+	"github.com/grafana/grafana/pkg/services/folder/folderimpl"
+	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/provisioning/utils"
 	"github.com/grafana/grafana/pkg/util"
 )
@@ -145,14 +147,29 @@ func (fr *FileReader) isDatabaseAccessRestricted() bool {
 // storeDashboardsInFolder saves dashboards from the filesystem on disk to the folder from config
 func (fr *FileReader) storeDashboardsInFolder(ctx context.Context, filesFoundOnDisk map[string]os.FileInfo,
 	dashboardRefs map[string]*dashboards.DashboardProvisioning, usageTracker *usageTracker) error {
-	folderID, folderUID, err := fr.getOrCreateFolder(ctx, fr.Cfg, fr.dashboardProvisioningService, fr.Cfg.Folder)
-	if err != nil && !errors.Is(err, ErrFolderNameMissing) {
-		return err
+	folderTitles := folderimpl.SplitFullpath(fr.Cfg.Folder)
+
+	var folderID int64
+	var folderUID *string
+
+	if len(folderTitles) == 0 {
+		// nolint:staticcheck
+		folderID, folderUID = folder.GeneralFolder.ID, &folder.GeneralFolder.UID
+	}
+
+	for i := range folderTitles {
+		id, uid, err := fr.getOrCreateFolderByTitle(ctx, folderTitles[i], fr.Cfg.OrgID, folderUID)
+		if err != nil && !errors.Is(err, ErrFolderNameMissing) {
+			return fmt.Errorf("can't create folder %q: %w", folderTitles[i], err)
+		}
+
+		folderID = id
+		folderUID = &uid
 	}
 
 	// save dashboards based on json files
 	for path, fileInfo := range filesFoundOnDisk {
-		provisioningMetadata, err := fr.saveDashboard(ctx, path, folderID, folderUID, fileInfo, dashboardRefs)
+		provisioningMetadata, err := fr.saveDashboard(ctx, path, folderID, *folderUID, fileInfo, dashboardRefs)
 		if err != nil {
 			fr.log.Error("failed to save dashboard", "file", path, "error", err)
 			continue
@@ -163,30 +180,88 @@ func (fr *FileReader) storeDashboardsInFolder(ctx context.Context, filesFoundOnD
 	return nil
 }
 
-// storeDashboardsInFoldersFromFilesystemStructure saves dashboards from the filesystem on disk to the same folder
+// storeDashboardsInFoldersFromFileStructure saves dashboards from the filesystem on disk to the same folder
 // in Grafana as they are in on the filesystem.
 func (fr *FileReader) storeDashboardsInFoldersFromFileStructure(ctx context.Context, filesFoundOnDisk map[string]os.FileInfo,
 	dashboardRefs map[string]*dashboards.DashboardProvisioning, resolvedPath string, usageTracker *usageTracker) error {
-	for path, fileInfo := range filesFoundOnDisk {
-		folderName := ""
-
-		dashboardsFolder := filepath.Dir(path)
-		if dashboardsFolder != resolvedPath {
-			folderName = filepath.Base(dashboardsFolder)
+	for filePath, fileInfo := range filesFoundOnDisk {
+		folderPath := filepath.Dir(filePath)
+		// if resolvedPath happen to be a path to a file instead of a directory, remove the file name from the path
+		if filePath == resolvedPath {
+			resolvedPath = filepath.Dir(resolvedPath)
 		}
 
-		folderID, folderUID, err := fr.getOrCreateFolder(ctx, fr.Cfg, fr.dashboardProvisioningService, folderName)
-		if err != nil && !errors.Is(err, ErrFolderNameMissing) {
-			return fmt.Errorf("can't provision folder %q from file system structure: %w", folderName, err)
+		folderTitles := folderimpl.SplitFullpath(strings.TrimPrefix(folderPath, resolvedPath))
+
+		var folderID int64
+		var folderUID *string
+
+		// If folderTitles is empty, then dashboard should be saved in the root folder
+		if len(folderTitles) == 0 {
+			// nolint:staticcheck
+			folderID, folderUID = folder.GeneralFolder.ID, &folder.GeneralFolder.UID
 		}
 
-		provisioningMetadata, err := fr.saveDashboard(ctx, path, folderID, folderUID, fileInfo, dashboardRefs)
+		for i := range folderTitles {
+			id, uid, err := fr.getOrCreateFolderByTitle(ctx, folderTitles[i], fr.Cfg.OrgID, folderUID)
+			if err != nil {
+				return fmt.Errorf("can't provision folder %q from file system structure: %w", folderTitles[i], err)
+			}
+			folderID = id
+			folderUID = &uid
+		}
+
+		provisioningMetadata, err := fr.saveDashboard(ctx, filePath, folderID, *folderUID, fileInfo, dashboardRefs)
 		usageTracker.track(provisioningMetadata)
 		if err != nil {
-			fr.log.Error("failed to save dashboard", "file", path, "error", err)
+			fr.log.Error("failed to save dashboard", "file", filePath, "error", err)
 		}
 	}
 	return nil
+}
+
+func (fr *FileReader) getOrCreateFolderByTitle(ctx context.Context, folderName string, orgID int64, parentUID *string) (int64, string, error) {
+	if folderName == "" {
+		return 0, "", ErrFolderNameMissing
+	}
+
+	cmd := &folder.GetFolderQuery{
+		Title:     &folderName,
+		ParentUID: parentUID,
+		OrgID:     orgID,
+		SignedInUser: accesscontrol.BackgroundUser("dashboard_provisioning", orgID, org.RoleAdmin, []accesscontrol.Permission{
+			{Action: dashboards.ActionFoldersRead, Scope: dashboards.ScopeFoldersAll},
+		}),
+	}
+
+	cmdResult, err := fr.folderService.Get(ctx, cmd)
+	if err != nil && !errors.Is(err, dashboards.ErrFolderNotFound) {
+		return 0, "", err
+	}
+
+	// if not found, create a new folder
+	if errors.Is(err, dashboards.ErrFolderNotFound) {
+		createCmd := &folder.CreateFolderCommand{
+			OrgID: orgID,
+			UID:   util.GenerateShortUID(),
+			Title: folderName,
+		}
+
+		if parentUID != nil {
+			createCmd.ParentUID = *parentUID
+		}
+
+		f, err := fr.dashboardProvisioningService.SaveFolderForProvisionedDashboards(ctx, createCmd)
+		if err != nil {
+			return 0, "", err
+		}
+
+		// nolint:staticcheck
+		return f.ID, f.UID, nil
+	}
+
+	// nolint:staticcheck
+	return cmdResult.ID, cmdResult.UID, nil
 }
 
 // handleMissingDashboardFiles will unprovision or delete dashboards which are missing on disk.
