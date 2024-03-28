@@ -54,12 +54,12 @@ function DashboardControlsRenderer({ model }: SceneComponentProps<DashboardContr
         {!editPanel && <DashboardLinksControls links={links} uid={dashboard.state.uid} />}
         {editPanel && <PanelEditControls panelEditor={editPanel} />}
       </Stack>
-      {!hideTimeControls && (
-        <Stack justifyContent={'flex-end'}>
+      <Stack justifyContent={'flex-end'}>
+        {!hideTimeControls && (
           <timePicker.Component model={timePicker} />
-          <refreshPicker.Component model={refreshPicker} />
-        </Stack>
-      )}
+        )}
+        <refreshPicker.Component model={refreshPicker} />
+      </Stack>
       {showDebugger && <SceneDebugger scene={model} key={'scene-debugger'} />}
     </div>
   );
