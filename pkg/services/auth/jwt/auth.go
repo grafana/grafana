@@ -4,11 +4,9 @@ import (
 	"context"
 	"encoding/base64"
 	"errors"
-	"fmt"
 	"strings"
 
 	"github.com/go-jose/go-jose/v3/jwt"
-	"github.com/jmespath/go-jmespath"
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/remotecache"
@@ -119,18 +117,4 @@ func HasSubClaim(jwtToken string) bool {
 	}
 
 	return claims.Subject != ""
-}
-
-func FindSubClaims(subclaim string, jsonMap any) (string, error) {
-	subclaimFound, err := jmespath.Search(subclaim, jsonMap)
-
-	if err != nil {
-		return "", err
-	}
-
-	if subclaimFound == nil {
-		return "", errors.New("subclaim not found")
-	}
-
-	return fmt.Sprintf("%s", subclaimFound), nil
 }

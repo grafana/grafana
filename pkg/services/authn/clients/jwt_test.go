@@ -473,9 +473,9 @@ func TestJWTSubClaimsConfig(t *testing.T) {
 	}
 	cfg := &setting.Cfg{
 		JWTAuth: setting.AuthJWTSettings{
-			HeaderName:         jwtHeaderName,
-			EmailAttributePath: "emails[2]",
-			NameAttributePath:  "name",
+			HeaderName:            jwtHeaderName,
+			EmailAttributePath:    "emails[2]",
+			UsernameAttributePath: "name",
 		},
 	}
 	httpReq := &http.Request{
