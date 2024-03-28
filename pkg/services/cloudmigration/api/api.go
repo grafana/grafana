@@ -94,7 +94,7 @@ func (cma *CloudMigrationAPI) GetMigrationList(c *contextmodel.ReqContext) respo
 	return response.JSON(http.StatusOK, cloudMigrationListResponse)
 }
 
-// swagger:route GET /cloudmigration/migration/{id} migrations migrationWithIDPathParam
+// swagger:route GET /cloudmigration/migration/{id} migrations getCloudMigration
 //
 // Get a cloud migration.
 //
@@ -115,6 +115,14 @@ func (cma *CloudMigrationAPI) GetMigration(c *contextmodel.ReqContext) response.
 		return response.Error(http.StatusNotFound, "migration not found", err)
 	}
 	return response.JSON(http.StatusOK, cloudMigration)
+}
+
+// swagger:parameters getCloudMigration
+type GetCloudMigrationRequest struct {
+	// ID of an migration
+	//
+	// in: path
+	ID int64 `json:"id"`
 }
 
 // swagger:route POST /cloudmigration/migration migrations createMigration
@@ -138,7 +146,7 @@ func (cma *CloudMigrationAPI) CreateMigration(c *contextmodel.ReqContext) respon
 	return response.JSON(http.StatusOK, cloudMigration)
 }
 
-// swagger:route GET /cloudmigration/migration/{id}/run migrations migrationWithIDPathParam
+// swagger:route GET /cloudmigration/migration/{id}/run migrations runCloudMigration
 //
 // Trigger the run of a migration to the Grafana Cloud.
 //
@@ -157,7 +165,15 @@ func (cma *CloudMigrationAPI) RunMigration(c *contextmodel.ReqContext) response.
 	return response.JSON(http.StatusOK, cloudMigrationRun)
 }
 
-// swagger:route GET /cloudmigration/migration/{id}/run/{runID} migrations migrationRunWithIDPathParam
+// swagger:parameters runCloudMigration
+type RunCloudMigrationRequest struct {
+	// ID of an migration
+	//
+	// in: path
+	ID int64 `json:"id"`
+}
+
+// swagger:route GET /cloudmigration/migration/{id}/run/{runID} migrations getCloudMigrationRun
 //
 // Get the result of a single migration run.
 //
@@ -174,7 +190,20 @@ func (cma *CloudMigrationAPI) GetMigrationRun(c *contextmodel.ReqContext) respon
 	return response.JSON(http.StatusOK, migrationStatus)
 }
 
-// swagger:route GET /cloudmigration/migration/{id}/run migrations migrationWithIDPathParam
+// swagger:parameters getCloudMigrationRun
+type GetMigrationRunParams struct {
+	// ID of an migration
+	//
+	// in: path
+	ID int64 `json:"id"`
+
+	// Run ID of a migration run
+	//
+	// in: path
+	RunID int64 `json:"runID"`
+}
+
+// swagger:route GET /cloudmigration/migration/{id}/run migrations getCloudMigrationRunList
 //
 // Get a list of migration runs for a migration.
 //
@@ -193,12 +222,17 @@ func (cma *CloudMigrationAPI) GetMigrationRunList(c *contextmodel.ReqContext) re
 	return response.JSON(http.StatusOK, runList)
 }
 
-// swagger:route DELETE /cloudmigration/migration/{id} migrations migrationWithIDPathParam
+// swagger:parameters getCloudMigrationRunList
+type GetCloudMigrationRunList struct {
+	ID int64 `json:"id"`
+}
+
+// swagger:route DELETE /cloudmigration/migration/{id} migrations deleteCloudMigration
 //
 // Delete a migration.
 //
 // Responses:
-// 200: 200okResponse
+// 200
 // 401: unauthorisedError
 // 403: forbiddenError
 // 500: internalServerError
@@ -208,4 +242,9 @@ func (cma *CloudMigrationAPI) DeleteMigration(c *contextmodel.ReqContext) respon
 		return response.Error(http.StatusInternalServerError, "migration delete error", err)
 	}
 	return response.Empty(http.StatusOK)
+}
+
+// swagger:parameters deleteCloudMigration
+type DeleteMigrationRequest struct {
+	ID int64 `json:"id"`
 }

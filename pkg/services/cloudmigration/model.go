@@ -97,30 +97,3 @@ type CreateAccessTokenResponse struct {
 type CreateAccessTokenResponseDTO struct {
 	Token string `json:"token"`
 }
-
-// Code below only exists for swagger to be happy
-
-// swagger:parameters migrationWithIDPathParam
-type GetMigrationParams struct {
-	// ID of an migration
-	//
-	// in: path
-	ID int64 `json:"id"`
-}
-
-// swagger:parameters migrationRunWithIDPathParam
-type GetMigrationRunParams struct {
-	// ID of an migration
-	//
-	// in: path
-	ID int64 `json:"id"`
-
-	// Run ID of a migration run
-	//
-	// in: path
-	RunID int64 `json:"runID"`
-}
-
-// swagger:response 200okResponse
-type OkResponse struct {
-}
