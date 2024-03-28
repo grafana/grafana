@@ -1,0 +1,5 @@
+<properties>
+  <sonar.projectKey>sonar-prueba</sonar.projectKey>
+  <sonar.projectName>sonar prueba</sonar.projectName>
+  <sonar.qualitygate.wait>true</sonar.qualitygate.wait>
+</properties>
