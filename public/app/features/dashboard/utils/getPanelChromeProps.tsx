@@ -26,8 +26,6 @@ interface CommonProps {
 }
 
 export function getPanelChromeProps(props: CommonProps) {
-  let descriptionInteractionReported = false;
-
   function hasOverlayHeader() {
     // always show normal header if we have time override
     if (props.data.request && props.data.request.timeInfo) {
@@ -40,12 +38,6 @@ export function getPanelChromeProps(props: CommonProps) {
   const onShowPanelDescription = () => {
     const descriptionMarkdown = getTemplateSrv().replace(props.panel.description, props.panel.scopedVars);
     const interpolatedDescription = renderMarkdown(descriptionMarkdown);
-
-    if (!descriptionInteractionReported) {
-      // Description rendering function can be called multiple times due to re-renders but we want to report the interaction once.
-      DashboardInteractions.panelDescriptionShown();
-      descriptionInteractionReported = true;
-    }
 
     return interpolatedDescription;
   };
