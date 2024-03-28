@@ -11,7 +11,7 @@ import {
   DataSourceJsonData,
   DataSourceUpdatedSuccessfully,
 } from '@grafana/data';
-import { getDataSourceSrv, getPluginComponentExtensions } from '@grafana/runtime';
+import { getDataSourceSrv, usePluginComponentExtensions } from '@grafana/runtime';
 import appEvents from 'app/core/app_events';
 import PageLoader from 'app/core/components/PageLoader/PageLoader';
 import { DataSourceSettingsState, useDispatch } from 'app/types';
@@ -136,15 +136,15 @@ export function EditDataSourceView({
     onTest();
   };
 
-  const extensions = useMemo(() => {
-    const allowedPluginIds = ['grafana-pdc-app', 'grafana-auth-app'];
-    const extensionPointId = PluginExtensionPoints.DataSourceConfig;
-    const { extensions } = getPluginComponentExtensions<{
-      context: PluginExtensionDataSourceConfigContext<DataSourceJsonData>;
-    }>({ extensionPointId });
+  const extensionPointId = PluginExtensionPoints.DataSourceConfig;
+  const { extensions } = usePluginComponentExtensions<{
+    context: PluginExtensionDataSourceConfigContext<DataSourceJsonData>;
+  }>({ extensionPointId });
 
+  const allowedExtensions = useMemo(() => {
+    const allowedPluginIds = ['grafana-pdc-app', 'grafana-auth-app'];
     return extensions.filter((e) => allowedPluginIds.includes(e.pluginId));
-  }, []);
+  }, [extensions]);
 
   if (loadError) {
     return (
@@ -203,7 +203,7 @@ export function EditDataSourceView({
       )}
 
       {/* Extension point */}
-      {extensions.map((extension) => {
+      {allowedExtensions.map((extension) => {
         const Component = extension.component;
 
         return (

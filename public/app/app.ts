@@ -36,7 +36,7 @@ import {
   setEmbeddedDashboard,
   setAppEvents,
   setReturnToPreviousHook,
-  type GetPluginExtensions,
+  setPluginExtensionsHook,
 } from '@grafana/runtime';
 import { setPanelDataErrorView } from '@grafana/runtime/src/components/PanelDataErrorView';
 import { setPanelRenderer } from '@grafana/runtime/src/components/PanelRenderer';
@@ -81,11 +81,12 @@ import { initGrafanaLive } from './features/live';
 import { PanelDataErrorView } from './features/panel/components/PanelDataErrorView';
 import { PanelRenderer } from './features/panel/components/PanelRenderer';
 import { DatasourceSrv } from './features/plugins/datasource_srv';
-import { createPluginExtensionRegistry } from './features/plugins/extensions/createPluginExtensionRegistry';
 import { getCoreExtensionConfigurations } from './features/plugins/extensions/getCoreExtensionConfigurations';
-import { getPluginExtensions } from './features/plugins/extensions/getPluginExtensions';
+import { createPluginExtensionsGetter } from './features/plugins/extensions/getPluginExtensions';
+import { ReactivePluginExtensionsRegistry } from './features/plugins/extensions/reactivePluginExtensionRegistry';
+import { createPluginExtensionsHook } from './features/plugins/extensions/usePluginExtensions';
 import { importPanelPlugin, syncGetPanelPlugin } from './features/plugins/importPanelPlugin';
-import { PluginPreloadResult, preloadPlugins } from './features/plugins/pluginPreloader';
+import { preloadPlugins } from './features/plugins/pluginPreloader';
 import { QueryRunner } from './features/query/state/QueryRunner';
 import { runRequest } from './features/query/state/runRequest';
 import { initWindowRuntime } from './features/runtime/init';
@@ -211,24 +212,19 @@ export class GrafanaApp {
       const modalManager = new ModalManager();
       modalManager.init();
 
-      let preloadResults: PluginPreloadResult[] = [];
+      // Initialize plugin extensions
+      const extensionsRegistry = new ReactivePluginExtensionsRegistry();
+      extensionsRegistry.register({
+        pluginId: 'grafana',
+        extensionConfigs: getCoreExtensionConfigurations(),
+      });
 
       if (contextSrv.user.orgRole !== '') {
-        // Preload selected app plugins
-        preloadResults = await preloadPlugins(config.apps);
+        preloadPlugins(config.apps, extensionsRegistry);
       }
 
-      // Create extension registry out of preloaded plugins and core extensions
-      const extensionRegistry = createPluginExtensionRegistry([
-        { pluginId: 'grafana', extensionConfigs: getCoreExtensionConfigurations() },
-        ...preloadResults,
-      ]);
-
-      // Expose the getPluginExtension function via grafana-runtime
-      const pluginExtensionGetter: GetPluginExtensions = (options) =>
-        getPluginExtensions({ ...options, registry: extensionRegistry });
-
-      setPluginExtensionGetter(pluginExtensionGetter);
+      setPluginExtensionGetter(createPluginExtensionsGetter(extensionsRegistry));
+      setPluginExtensionsHook(createPluginExtensionsHook(extensionsRegistry));
 
       // initialize chrome service
       const queryParams = locationService.getSearchObject();

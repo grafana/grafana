@@ -3,7 +3,7 @@ import React from 'react';
 import { Provider } from 'react-redux';
 
 import { PluginExtensionTypes, PluginState } from '@grafana/data';
-import { setAngularLoader, setPluginExtensionGetter } from '@grafana/runtime';
+import { setAngularLoader, setPluginExtensionsHook } from '@grafana/runtime';
 import { configureStore } from 'app/store/configureStore';
 
 import { getMockDataSource, getMockDataSourceMeta, getMockDataSourceSettingsState } from '../__mocks__';
@@ -59,7 +59,7 @@ describe('<EditDataSource>', () => {
   });
 
   beforeEach(() => {
-    setPluginExtensionGetter(jest.fn().mockReturnValue({ extensions: [] }));
+    setPluginExtensionsHook(jest.fn().mockReturnValue({ extensions: [] }));
   });
 
   describe('On loading errors', () => {
@@ -269,7 +269,7 @@ describe('<EditDataSource>', () => {
     it('should be possible to extend the form with a "component" extension in case the plugin ID is whitelisted', () => {
       const message = "I'm a UI extension component!";
 
-      setPluginExtensionGetter(
+      setPluginExtensionsHook(
         jest.fn().mockReturnValue({
           extensions: [
             {
@@ -298,7 +298,7 @@ describe('<EditDataSource>', () => {
     it('should NOT be possible to extend the form with a "component" extension in case the plugin ID is NOT whitelisted', () => {
       const message = "I'm a UI extension component!";
 
-      setPluginExtensionGetter(
+      setPluginExtensionsHook(
         jest.fn().mockReturnValue({
           extensions: [
             {
@@ -328,7 +328,7 @@ describe('<EditDataSource>', () => {
       const message = "I'm a UI extension component!";
       const component = jest.fn().mockReturnValue(<div>{message}</div>);
 
-      setPluginExtensionGetter(
+      setPluginExtensionsHook(
         jest.fn().mockReturnValue({
           extensions: [
             {
