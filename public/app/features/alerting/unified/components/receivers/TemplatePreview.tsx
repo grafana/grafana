@@ -5,7 +5,7 @@ import { useFormContext } from 'react-hook-form';
 import AutoSizer from 'react-virtualized-auto-sizer';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { Button, useStyles2, LoadingPlaceholder, Alert, Box } from '@grafana/ui';
+import { Button, useStyles2, Alert, Box } from '@grafana/ui';
 
 import {
   AlertField,
@@ -57,15 +57,15 @@ export function TemplatePreview({
   return (
     <div className={cx(styles.container, className)}>
       <EditorColumnHeader
-        label="Template preview"
+        label="Preview"
         actions={
           <Button
+            disabled={isLoading}
             icon="sync"
             aria-label="Refresh preview"
             onClick={onPreview}
             size="sm"
             variant="secondary"
-            fill="outline"
           >
             Refresh
           </Button>
@@ -73,12 +73,7 @@ export function TemplatePreview({
       />
       <Box flex={1}>
         <AutoSizer disableWidth>
-          {({ height }) => (
-            <div className={styles.viewerContainer({ height })}>
-              {isLoading && <LoadingPlaceholder text="Loading preview..." />}
-              {previewToRender}
-            </div>
-          )}
+          {({ height }) => <div className={styles.viewerContainer({ height })}>{previewToRender}</div>}
         </AutoSizer>
       </Box>
     </div>
@@ -87,12 +82,14 @@ export function TemplatePreview({
 
 function PreviewResultViewer({ previews }: { previews: TemplatePreviewResult[] }) {
   const styles = useStyles2(getStyles);
+  // If there is only one template, we don't need to show the name
+  const singleTemplate = previews.length === 1;
 
   return (
     <ul className={styles.viewer.container}>
       {previews.map((preview) => (
         <li className={styles.viewer.box} key={preview.name}>
-          <header className={styles.viewer.header}>{preview.name}</header>
+          {singleTemplate ? null : <header className={styles.viewer.header}>{preview.name}</header>}
           <pre className={styles.viewer.pre}>{preview.text ?? '<Empty>'}</pre>
         </li>
       ))}
@@ -121,37 +118,39 @@ const getStyles = (theme: GrafanaTheme2) => ({
     label: 'template-preview-container',
     display: 'flex',
     flexDirection: 'column',
+    borderRadius: theme.shape.radius.default,
+    border: `1px solid ${theme.colors.border.medium}`,
   }),
   viewerContainer: ({ height }: { height: number }) =>
     css({
       height,
       overflow: 'auto',
+      backgroundColor: theme.colors.background.primary,
     }),
   viewer: {
     container: css({
       display: 'flex',
       flexDirection: 'column',
-      padding: theme.spacing(1),
-      gap: theme.spacing(2),
     }),
     box: css({
       display: 'flex',
       flexDirection: 'column',
-      '&:not(:last-child)': {
-        borderBottom: `1px solid ${theme.colors.border.strong}`,
-      },
+      borderBottom: `1px solid ${theme.colors.border.medium}`,
     }),
     header: css({
-      fontWeight: theme.typography.fontWeightBold,
+      fontSize: theme.typography.bodySmall.fontSize,
+      padding: theme.spacing(1, 2),
+      borderBottom: `1px solid ${theme.colors.border.medium}`,
+      backgroundColor: theme.colors.background.secondary,
     }),
     errorHeader: css({
       color: theme.colors.error.text,
     }),
     pre: css({
-      backgroundColor: theme.colors.background.primary,
+      backgroundColor: 'transparent',
       margin: 0,
-      padding: 0,
       border: 'none',
+      padding: theme.spacing(2),
     }),
   },
 });

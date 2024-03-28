@@ -1,10 +1,9 @@
 import { css, cx } from '@emotion/css';
 import React, { useState } from 'react';
-import { useToggle } from 'react-use';
 import AutoSizer from 'react-virtualized-auto-sizer';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { Badge, Button, CodeEditor, Drawer, Stack, useStyles2 } from '@grafana/ui';
+import { Button, CodeEditor, Dropdown, Menu, Stack, Toggletip, useStyles2 } from '@grafana/ui';
 import { TestTemplateAlert } from 'app/plugins/datasource/alertmanager/types';
 
 import { EditorColumnHeader } from '../contact-points/templates/EditorColumnHeader';
@@ -14,7 +13,7 @@ import { AlertTemplatePreviewData } from './TemplateData';
 import { TemplateDataTable } from './TemplateDataDocs';
 import { GenerateAlertDataModal } from './form/GenerateAlertDataModal';
 
-export const RESET_TO_DEFAULT = 'Reset to default';
+export const RESET_TO_DEFAULT = 'Reset to defaults';
 
 export function PayloadEditor({
   payload,
@@ -36,7 +35,6 @@ export function PayloadEditor({
     setPayload(defaultPayload);
   };
 
-  const [cheatsheetOpened, toggleCheatsheetOpened] = useToggle(false);
   const [isEditingAlertData, setIsEditingAlertData] = useState(false);
 
   const onCloseEditAlertModal = () => {
@@ -87,9 +85,35 @@ export function PayloadEditor({
         <EditorColumnHeader
           label="Payload"
           actions={
-            <Button variant="secondary" fill="outline" size="sm" icon="info-circle" onClick={toggleCheatsheetOpened}>
-              Cheatsheet
-            </Button>
+            <Stack direction="row" alignItems="center" gap={0.5}>
+              <Toggletip content={<AlertTemplateDataTable />} placement="top" fitContent>
+                <Button variant="secondary" fill="outline" size="sm" icon="book">
+                  Cheatsheet
+                </Button>
+              </Toggletip>
+              <Dropdown
+                overlay={
+                  <Menu>
+                    <Menu.Item
+                      label="Use existing alert instances"
+                      disabled={errorInPayloadJson}
+                      onClick={onOpenAlertSelectorModal}
+                    />
+                    <Menu.Item
+                      label="Add custom alert instance"
+                      disabled={errorInPayloadJson}
+                      onClick={onOpenEditAlertModal}
+                    />
+                    <Menu.Divider />
+                    <Menu.Item label={RESET_TO_DEFAULT} onClick={onReset} destructive />
+                  </Menu>
+                }
+              >
+                <Button variant="secondary" size="sm" icon="angle-down">
+                  Edit payload
+                </Button>
+              </Dropdown>
+            </Stack>
           }
         />
 
@@ -113,51 +137,7 @@ export function PayloadEditor({
             )}
           </AutoSizer>
         </div>
-
-        <Stack wrap="wrap" gap={0.5}>
-          <Button
-            type="button"
-            variant="secondary"
-            icon="bell"
-            disabled={errorInPayloadJson}
-            onClick={onOpenAlertSelectorModal}
-          >
-            Select alert instances
-          </Button>
-
-          <Button
-            onClick={onOpenEditAlertModal}
-            icon="plus-circle"
-            type="button"
-            variant="secondary"
-            disabled={errorInPayloadJson}
-          >
-            Add custom alerts
-          </Button>
-          <Button onClick={onReset} icon="arrow-up" type="button" variant="destructive">
-            {RESET_TO_DEFAULT}
-          </Button>
-
-          {payloadFormatError !== null && (
-            <Badge
-              color="orange"
-              icon="exclamation-triangle"
-              text={'JSON Error'}
-              tooltip={'Fix errors in payload, and click Refresh preview button'}
-            />
-          )}
-        </Stack>
       </div>
-
-      {cheatsheetOpened && (
-        <Drawer
-          title="Alert template payload"
-          subtitle="This is the list of alert data fields used in the preview."
-          onClose={toggleCheatsheetOpened}
-        >
-          <AlertTemplateDataTable />
-        </Drawer>
-      )}
 
       <GenerateAlertDataModal isOpen={isEditingAlertData} onDismiss={onCloseEditAlertModal} onAccept={onAddAlertList} />
 
@@ -186,7 +166,6 @@ const getStyles = (theme: GrafanaTheme2) => ({
   }),
   editorWrapper: css({
     flex: 1,
-    minHeight: theme.spacing(50),
   }),
   editorContainer: css({
     width: 'fit-content',

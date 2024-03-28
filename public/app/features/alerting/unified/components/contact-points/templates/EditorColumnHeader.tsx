@@ -23,8 +23,9 @@ export const editorColumnStyles = (theme: GrafanaTheme2) => ({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    padding: theme.spacing(1),
+    padding: theme.spacing(1, 2),
     backgroundColor: theme.colors.background.secondary,
+    borderBottom: `1px solid ${theme.colors.border.medium}`,
   }),
   label: css({
     margin: 0,

@@ -1,4 +1,4 @@
-import { css } from '@emotion/css';
+import { css, cx } from '@emotion/css';
 import { addMinutes, subDays, subHours } from 'date-fns';
 import { Location } from 'history';
 import React, { useRef, useState } from 'react';
@@ -16,7 +16,7 @@ import {
   LinkButton,
   useStyles2,
   Stack,
-  IconButton,
+  useSplitter,
   Drawer,
   InlineField,
   FieldValidationMessage,
@@ -99,14 +99,30 @@ export const TemplateForm = ({ existing, alertManagerSourceName, config, provena
 
   useCleanup((state) => (state.unifiedAlerting.saveAMConfig = initialAsyncRequestState));
   const formRef = useRef<HTMLFormElement>(null);
+  const isGrafanaAlertManager = alertManagerSourceName === GRAFANA_RULES_SOURCE_NAME;
 
   const { loading, error } = useUnifiedAlertingSelector((state) => state.saveAMConfig);
 
   const [cheatsheetOpened, toggleCheatsheetOpened] = useToggle(false);
-  const [payloadOpened, togglePayloadOpened] = useToggle(true);
 
   const [payload, setPayload] = useState(defaultPayloadString);
   const [payloadFormatError, setPayloadFormatError] = useState<string | null>(null);
+
+  // splitter for template and payload editor
+  const columnSplitter = useSplitter({
+    direction: 'column',
+    // if Grafana Alertmanager, split 50/50, otherwise 100/0 because there is no payload editor
+    initialSize: isGrafanaAlertManager ? 0.5 : 1,
+    dragPosition: 'middle',
+  });
+
+  // splitter for template editor and preview
+  const rowSplitter = useSplitter({
+    direction: 'row',
+    // if Grafana Alertmanager, split 60/40, otherwise 100/0 because there is no preview
+    initialSize: isGrafanaAlertManager ? 0.6 : 1,
+    dragPosition: 'middle',
+  });
 
   const submit = (values: TemplateFormValues) => {
     // wrap content in "define" if it's not already wrapped, in case user did not do it/
@@ -166,7 +182,6 @@ export const TemplateForm = ({ existing, alertManagerSourceName, config, provena
       ? true
       : 'Another template with this name already exists.';
   };
-  const isGrafanaAlertManager = alertManagerSourceName === GRAFANA_RULES_SOURCE_NAME;
 
   const actionButtons = (
     <Stack>
@@ -189,12 +204,16 @@ export const TemplateForm = ({ existing, alertManagerSourceName, config, provena
       <FormProvider {...formApi}>
         <AppChromeUpdate actions={actionButtons} />
         <form onSubmit={handleSubmit(submit)} ref={formRef} className={styles.form}>
+          {/* error message */}
           {error && (
             <Alert severity="error" title="Error saving template">
               {error.message || (isFetchError(error) && error.data?.message) || String(error)}
             </Alert>
           )}
+          {/* warning about provisioned template */}
           {provenance && <ProvisioningAlert resource={ProvisionedResource.Template} />}
+
+          {/* name field for the template */}
           <FieldSet disabled={Boolean(provenance)} className={styles.fieldset}>
             <InlineField
               label="Template name"
@@ -213,63 +232,78 @@ export const TemplateForm = ({ existing, alertManagerSourceName, config, provena
                 autoFocus={true}
               />
             </InlineField>
-            <div className={styles.contentContainer}>
-              <div className={styles.contentField}>
-                <EditorColumnHeader
-                  label="Template content"
-                  actions={
-                    <Button
-                      icon="info-circle"
-                      size="sm"
-                      fill="outline"
-                      variant="secondary"
-                      onClick={toggleCheatsheetOpened}
-                    >
-                      Cheatsheet
-                    </Button>
-                  }
-                />
-                <Box flex={1}>
-                  <AutoSizer>
-                    {({ width, height }) => (
-                      <TemplateEditor
-                        value={getValues('content')}
-                        onBlur={(value) => setValue('content', value)}
-                        containerStyles={styles.editorContainer}
-                        width={width - 2}
-                        height={height}
-                      />
+
+            {/* editor layout */}
+            <div {...rowSplitter.containerProps} className={styles.contentContainer}>
+              <div {...rowSplitter.primaryProps}>
+                {/* template content and payload editor column – full height and half-wdith */}
+                <div {...columnSplitter.containerProps} className={styles.contentField}>
+                  {/* template editor */}
+                  <div
+                    {...columnSplitter.primaryProps}
+                    className={cx(styles.flexColumn, styles.containerWithBorderAndRadius)}
+                  >
+                    <EditorColumnHeader
+                      label="Template"
+                      actions={
+                        <Button
+                          icon="question-circle"
+                          size="sm"
+                          fill="outline"
+                          variant="secondary"
+                          onClick={toggleCheatsheetOpened}
+                        >
+                          Help
+                        </Button>
+                      }
+                    />
+                    <Box flex={1}>
+                      <AutoSizer>
+                        {({ width, height }) => (
+                          <TemplateEditor
+                            value={getValues('content')}
+                            onBlur={(value) => setValue('content', value)}
+                            containerStyles={styles.editorContainer}
+                            width={width}
+                            height={height}
+                          />
+                        )}
+                      </AutoSizer>
+                    </Box>
+                    {errors.content?.message && (
+                      <FieldValidationMessage>{errors?.content?.message}</FieldValidationMessage>
                     )}
-                  </AutoSizer>
-                </Box>
-                {errors.content?.message && <FieldValidationMessage>{errors?.content?.message}</FieldValidationMessage>}
+                  </div>
+                  {/* payload editor – only available for Grafana Alertmanager */}
+                  {isGrafanaAlertManager && (
+                    <>
+                      <div {...columnSplitter.splitterProps} />
+                      <div {...columnSplitter.secondaryProps} className={styles.containerWithBorderAndRadius}>
+                        <PayloadEditor
+                          payload={payload}
+                          defaultPayload={defaultPayloadString}
+                          setPayload={setPayload}
+                          setPayloadFormatError={setPayloadFormatError}
+                          payloadFormatError={payloadFormatError}
+                        />
+                      </div>
+                    </>
+                  )}
+                </div>
               </div>
+              {/* preview column – full height and half-width */}
               {isGrafanaAlertManager && (
                 <>
-                  <TemplatePreview
-                    payload={payload}
-                    templateName={watch('name')}
-                    setPayloadFormatError={setPayloadFormatError}
-                    payloadFormatError={payloadFormatError}
-                    className={styles.templatePreview}
-                  />
-                  <IconButton
-                    name={payloadOpened ? 'angle-double-right' : 'angle-double-left'}
-                    aria-label='Toggle "Payload" section'
-                    onClick={togglePayloadOpened}
-                    className={styles.payloadCollapseButton}
-                  />
-                  {payloadOpened && (
-                    <div className={styles.templatePayload}>
-                      <PayloadEditor
-                        payload={payload}
-                        defaultPayload={defaultPayloadString}
-                        setPayload={setPayload}
-                        setPayloadFormatError={setPayloadFormatError}
-                        payloadFormatError={payloadFormatError}
-                      />
-                    </div>
-                  )}
+                  <div {...rowSplitter.secondaryProps}>
+                    <div {...rowSplitter.splitterProps}></div>
+                    <TemplatePreview
+                      payload={payload}
+                      templateName={watch('name')}
+                      setPayloadFormatError={setPayloadFormatError}
+                      payloadFormatError={payloadFormatError}
+                      className={styles.templatePreview}
+                    />
+                  </div>
                 </>
               )}
             </div>
@@ -333,6 +367,14 @@ export const getStyles = (theme: GrafanaTheme2) => {
   const narrowScreenQuery = theme.breakpoints.down('md');
 
   return {
+    containerWithBorderAndRadius: css({
+      borderRadius: theme.shape.radius.default,
+      border: `1px solid ${theme.colors.border.medium}`,
+    }),
+    flexColumn: css({
+      display: 'flex',
+      flexDirection: 'column',
+    }),
     form: css({
       label: 'template-form',
       height: '100%',
@@ -349,16 +391,13 @@ export const getStyles = (theme: GrafanaTheme2) => {
       margin: 0,
     }),
     nameField: css({
-      marginBottom: theme.spacing(3),
+      marginBottom: theme.spacing(1),
     }),
     contentContainer: css({
       flex: 1,
       display: 'flex',
       flexDirection: 'row',
-      gap: theme.spacing(1),
       '& > *': {
-        borderRadius: theme.shape.radius.default,
-        border: `1px solid ${theme.colors.border.strong}`,
         [narrowScreenQuery]: {
           minHeight: theme.spacing(40),
         },
@@ -373,15 +412,15 @@ export const getStyles = (theme: GrafanaTheme2) => {
     contentField: css({
       display: 'flex',
       flexDirection: 'column',
-      flex: 3,
+      flex: 1,
       marginBottom: 0,
     }),
     templatePreview: css({
-      flex: 2,
+      flex: 1,
       display: 'flex',
     }),
     templatePayload: css({
-      flex: 2,
+      flex: 1,
     }),
     editorContainer: css({
       width: 'fit-content',
