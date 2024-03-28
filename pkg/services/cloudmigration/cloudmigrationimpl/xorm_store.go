@@ -2,6 +2,8 @@ package cloudmigrationimpl
 
 import (
 	"context"
+	"github.com/grafana/grafana/pkg/services/sqlstore"
+	"time"
 
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/services/cloudmigration"
@@ -15,7 +17,19 @@ func (ss *sqlStore) MigrateDatasources(ctx context.Context, request *cloudmigrat
 	return nil, cloudmigration.ErrInternalNotImplementedError
 }
 
-func (ss *sqlStore) CreateMigration(ctx context.Context, token cloudmigration.Base64EncodedTokenPayload) error {
+func (ss *sqlStore) CreateMigration(ctx context.Context, migration cloudmigration.CloudMigration) error {
+	err := ss.db.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
+		migration.Created = time.Now()
+		migration.Updated = time.Now()
+		_, err := sess.Insert(migration)
+		if err != nil {
+			return err
+		}
+		return nil
+	})
+	if err != nil {
+		return err
+	}
 	return nil
 }
 
