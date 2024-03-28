@@ -59,6 +59,7 @@ type JsonData struct {
 	SecureDSProxyUsername   string `json:"secureSocksProxyUsername"`
 	AllowCleartextPasswords bool   `json:"allowCleartextPasswords"`
 	AuthenticationType      string `json:"authenticationType"`
+	MySQLRequireTLS         bool   `json:"mySQLRequireTLS"`
 }
 
 type DataSourceInfo struct {
