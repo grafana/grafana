@@ -43,3 +43,11 @@ Cypress.on('uncaught:exception', (err) => {
 //   // failing the test
 //   return false;
 // });
+//
+
+before(() => {
+  if (Cypress.env('SCENES')) {
+    cy.logToConsole('enabling dashboardScene feature toggle in localstorage');
+    cy.setLocalStorage('grafana.featureToggles', 'dashboardScene=true');
+  }
+});
