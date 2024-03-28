@@ -18838,7 +18838,7 @@ __metadata:
     slate-react: "npm:0.22.10"
     style-loader: "npm:3.3.4"
     stylelint: "npm:16.3.1"
-    stylelint-config-sass-guidelines: "npm:11.0.0"
+    stylelint-config-sass-guidelines: "npm:11.1.0"
     symbol-observable: "npm:4.0.0"
     systemjs: "npm:6.14.3"
     systemjs-cjs-extra: "npm:0.2.1"
@@ -29434,22 +29434,22 @@ __metadata:
   languageName: node
   linkType: hard
 
-"stylelint-config-sass-guidelines@npm:11.0.0":
-  version: 11.0.0
-  resolution: "stylelint-config-sass-guidelines@npm:11.0.0"
+"stylelint-config-sass-guidelines@npm:11.1.0":
+  version: 11.1.0
+  resolution: "stylelint-config-sass-guidelines@npm:11.1.0"
   dependencies:
     postcss-scss: "npm:^4.0.9"
-    stylelint-scss: "npm:^6.0.0"
+    stylelint-scss: "npm:^6.2.1"
   peerDependencies:
     postcss: ^8.4.21
     stylelint: ^16.1.0
-  checksum: 10/0d55287e1a427ab3f598cfa29c27b07b803a7ad1d88239fc58a137cb50eac77616b48bf5b4ec408225c6442c912e83e63f706d8902fd17e6148d6392af0cb0cf
+  checksum: 10/2585e83932ffa1fa5b2895f8e3edbec1d3a39bc1f9737b8eb8c055ff4fc9a1d62950287d9525e0b98ad653c5777eb4bfdfe066804440938c170c263117351ba3
   languageName: node
   linkType: hard
 
-"stylelint-scss@npm:^6.0.0":
-  version: 6.1.0
-  resolution: "stylelint-scss@npm:6.1.0"
+"stylelint-scss@npm:^6.2.1":
+  version: 6.2.1
+  resolution: "stylelint-scss@npm:6.2.1"
   dependencies:
     known-css-properties: "npm:^0.29.0"
     postcss-media-query-parser: "npm:^0.2.3"
@@ -29458,7 +29458,7 @@ __metadata:
     postcss-value-parser: "npm:^4.2.0"
   peerDependencies:
     stylelint: ^16.0.2
-  checksum: 10/d1a37af38e6793f60ad3d836741ed624a7a07a56bea094750e72ed6e549243f966efcbe247940c6f1337328db700b1004f49e2119ff421235c979b2574995426
+  checksum: 10/87a7af5775cb7b361b3ac143c5fe1dd59c25466f3255b501dd1bff3084d3af25cc7c6e00ec4a0bda18c30be481c885ff13255fdaa8245576aa44f38bfcfe4f70
   languageName: node
   linkType: hard
 
