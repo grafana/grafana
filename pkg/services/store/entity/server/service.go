@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/grafana/dskit/services"
+	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/prometheus/client_golang/prometheus"
 
 	"github.com/grafana/grafana/pkg/infra/tracing"
@@ -51,11 +52,14 @@ type service struct {
 	tracing *tracing.TracingService
 
 	authenticator interceptors.Authenticator
+
+	log log.Logger
 }
 
 func ProvideService(
 	cfg *setting.Cfg,
 	features featuremgmt.FeatureToggles,
+	log log.Logger,
 ) (*service, error) {
 	tracingCfg, err := tracing.ProvideTracingConfig(cfg)
 	if err != nil {
@@ -76,6 +80,7 @@ func ProvideService(
 		stopCh:        make(chan struct{}),
 		authenticator: authn,
 		tracing:       tracing,
+		log:           log,
 	}
 
 	// This will be used when running as a dskit service
@@ -110,7 +115,7 @@ func (s *service) start(ctx context.Context) error {
 		return err
 	}
 
-	store, err := sqlstash.ProvideSQLEntityServer(eDB)
+	store, err := sqlstash.ProvideSQLEntityServer(eDB, s.tracing)
 	if err != nil {
 		return err
 	}

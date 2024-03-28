@@ -131,7 +131,7 @@ func (s *ModuleServer) Run() error {
 	//}
 
 	m.RegisterModule(modules.StorageServer, func() (services.Service, error) {
-		return storageServer.ProvideService(s.cfg, s.features)
+		return storageServer.ProvideService(s.cfg, s.features, s.log)
 	})
 
 	m.RegisterModule(modules.All, nil)

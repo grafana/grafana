@@ -18,21 +18,25 @@ import (
 	folder "github.com/grafana/grafana/pkg/apis/folder/v0alpha1"
 	"github.com/grafana/grafana/pkg/infra/appcontext"
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 	"github.com/grafana/grafana/pkg/services/sqlstore/session"
 	"github.com/grafana/grafana/pkg/services/store"
 	"github.com/grafana/grafana/pkg/services/store/entity"
 	"github.com/grafana/grafana/pkg/services/store/entity/db"
+	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/trace"
 )
 
 // Make sure we implement both store + admin
 var _ entity.EntityStoreServer = &sqlEntityServer{}
 
-func ProvideSQLEntityServer(db db.EntityDBInterface /*, cfg *setting.Cfg */) (entity.EntityStoreServer, error) {
+func ProvideSQLEntityServer(db db.EntityDBInterface, tracer tracing.Tracer /*, cfg *setting.Cfg */) (entity.EntityStoreServer, error) {
 	entityServer := &sqlEntityServer{
-		db:  db,
-		log: log.New("sql-entity-server"),
-		ctx: context.Background(),
+		db:     db,
+		log:    log.New("sql-entity-server"),
+		ctx:    context.Background(),
+		tracer: tracer,
 	}
 
 	return entityServer, nil
@@ -46,6 +50,7 @@ type sqlEntityServer struct {
 	snowflake   *snowflake.Node
 	broadcaster Broadcaster[*entity.Entity]
 	ctx         context.Context
+	tracer      tracing.Tracer
 }
 
 func (s *sqlEntityServer) Init() error {
@@ -203,6 +208,9 @@ func (s *sqlEntityServer) Read(ctx context.Context, r *entity.ReadEntityRequest)
 }
 
 func (s *sqlEntityServer) read(ctx context.Context, tx session.SessionQuerier, r *entity.ReadEntityRequest) (*entity.Entity, error) {
+	ctx, span := s.tracer.Start(ctx, "storage_server.read")
+	defer span.End()
+
 	table := "entity"
 	where := []string{}
 	args := []any{}
@@ -291,7 +299,7 @@ func (s *sqlEntityServer) BatchRead(ctx context.Context, b *entity.BatchReadEnti
 
 	query += " FROM entity" +
 		" WHERE (" + strings.Join(constraints, " OR ") + ")"
-	rows, err := s.sess.Query(ctx, query, args...)
+	rows, err := s.query(ctx, query, args...)
 	if err != nil {
 		return nil, err
 	}
@@ -311,6 +319,9 @@ func (s *sqlEntityServer) BatchRead(ctx context.Context, b *entity.BatchReadEnti
 
 //nolint:gocyclo
 func (s *sqlEntityServer) Create(ctx context.Context, r *entity.CreateEntityRequest) (*entity.CreateEntityResponse, error) {
+	ctx, span := s.tracer.Start(ctx, "storage_server.Create")
+	defer span.End()
+
 	if err := s.Init(); err != nil {
 		return nil, err
 	}
@@ -488,14 +499,12 @@ func (s *sqlEntityServer) Create(ctx context.Context, r *entity.CreateEntityRequ
 		}
 
 		// 1. Add row to the `entity_history` values
-		if err := s.dialect.Insert(ctx, tx, "entity_history", values); err != nil {
-			s.log.Error("error inserting entity history", "msg", err.Error())
+		if err = s.insert(ctx, tx, "entity_history", values); err != nil {
 			return err
 		}
 
 		// 2. Add row to the main `entity` table
-		if err := s.dialect.Insert(ctx, tx, "entity", values); err != nil {
-			s.log.Error("error inserting entity", "msg", err.Error())
+		if err = s.insert(ctx, tx, "entity", values); err != nil {
 			return err
 		}
 
@@ -525,6 +534,9 @@ func (s *sqlEntityServer) Create(ctx context.Context, r *entity.CreateEntityRequ
 
 //nolint:gocyclo
 func (s *sqlEntityServer) Update(ctx context.Context, r *entity.UpdateEntityRequest) (*entity.UpdateEntityResponse, error) {
+	ctx, span := s.tracer.Start(ctx, "storage_server.Update")
+	defer span.End()
+
 	if err := s.Init(); err != nil {
 		return nil, err
 	}
@@ -697,8 +709,7 @@ func (s *sqlEntityServer) Update(ctx context.Context, r *entity.UpdateEntityRequ
 		}
 
 		// 1. Add the `entity_history` values
-		if err := s.dialect.Insert(ctx, tx, "entity_history", values); err != nil {
-			s.log.Error("error inserting entity history", "msg", err.Error())
+		if err := s.insert(ctx, tx, "entity_history", values); err != nil {
 			return err
 		}
 
@@ -714,17 +725,7 @@ func (s *sqlEntityServer) Update(ctx context.Context, r *entity.UpdateEntityRequ
 		delete(values, "created_at")
 		delete(values, "created_by")
 
-		err = s.dialect.Update(
-			ctx,
-			tx,
-			"entity",
-			values,
-			map[string]any{
-				"guid": current.Guid,
-			},
-		)
-		if err != nil {
-			s.log.Error("error updating entity", "msg", err.Error())
+		if err = s.update(ctx, tx, "entity", values, current); err != nil {
 			return err
 		}
 
@@ -753,6 +754,9 @@ func (s *sqlEntityServer) Update(ctx context.Context, r *entity.UpdateEntityRequ
 }
 
 func (s *sqlEntityServer) setLabels(ctx context.Context, tx *session.SessionTx, guid string, labels map[string]string) error {
+	ctx, span := s.tracer.Start(ctx, "storage_server.setLabels")
+	defer span.End()
+
 	s.log.Debug("setLabels", "guid", guid, "labels", labels)
 
 	// Clear the old labels
@@ -784,6 +788,9 @@ func (s *sqlEntityServer) setLabels(ctx context.Context, tx *session.SessionTx, 
 }
 
 func (s *sqlEntityServer) Delete(ctx context.Context, r *entity.DeleteEntityRequest) (*entity.DeleteEntityResponse, error) {
+	ctx, span := s.tracer.Start(ctx, "storage_server.Delete")
+	defer span.End()
+
 	if err := s.Init(); err != nil {
 		return nil, err
 	}
@@ -825,6 +832,9 @@ func (s *sqlEntityServer) Delete(ctx context.Context, r *entity.DeleteEntityRequ
 }
 
 func (s *sqlEntityServer) doDelete(ctx context.Context, tx *session.SessionTx, ent *entity.Entity) error {
+	ctx, span := s.tracer.Start(ctx, "storage_server.doDelete")
+	defer span.End()
+
 	// Update resource version
 	ent.ResourceVersion = s.snowflake.Generate().Int64()
 
@@ -898,21 +908,17 @@ func (s *sqlEntityServer) doDelete(ctx context.Context, tx *session.SessionTx, e
 	}
 
 	// 1. Add the `entity_history` values
-	if err := s.dialect.Insert(ctx, tx, "entity_history", values); err != nil {
-		s.log.Error("error inserting entity history", "msg", err.Error())
+	if err := s.insert(ctx, tx, "entity_history", values); err != nil {
 		return err
 	}
 
-	_, err = tx.Exec(ctx, "DELETE FROM entity WHERE guid=?", ent.Guid)
-	if err != nil {
+	if err = s.exec(ctx, tx, "DELETE FROM entity WHERE guid=?", ent); err != nil {
 		return err
 	}
-	_, err = tx.Exec(ctx, "DELETE FROM entity_labels WHERE guid=?", ent.Guid)
-	if err != nil {
+	if err = s.exec(ctx, tx, "DELETE FROM entity_labels WHERE guid=?", ent); err != nil {
 		return err
 	}
-	_, err = tx.Exec(ctx, "DELETE FROM entity_ref WHERE guid=?", ent.Guid)
-	if err != nil {
+	if err = s.exec(ctx, tx, "DELETE FROM entity_ref WHERE guid=?", ent); err != nil {
 		return err
 	}
 
@@ -932,6 +938,9 @@ func (s *sqlEntityServer) doDelete(ctx context.Context, tx *session.SessionTx, e
 }
 
 func (s *sqlEntityServer) History(ctx context.Context, r *entity.EntityHistoryRequest) (*entity.EntityHistoryResponse, error) {
+	ctx, span := s.tracer.Start(ctx, "storage_server.History")
+	defer span.End()
+
 	if err := s.Init(); err != nil {
 		return nil, err
 	}
@@ -1007,7 +1016,7 @@ func (s *sqlEntityServer) History(ctx context.Context, r *entity.EntityHistoryRe
 
 	s.log.Debug("history", "query", query, "args", args)
 
-	rows, err := s.sess.Query(ctx, query, args...)
+	rows, err := s.query(ctx, query, args...)
 	if err != nil {
 		return nil, err
 	}
@@ -1113,6 +1122,9 @@ func ParseSortBy(sort string) (*SortBy, error) {
 }
 
 func (s *sqlEntityServer) List(ctx context.Context, r *entity.EntityListRequest) (*entity.EntityListResponse, error) {
+	ctx, span := s.tracer.Start(ctx, "storage_server.List")
+	defer span.End()
+
 	if err := s.Init(); err != nil {
 		return nil, err
 	}
@@ -1233,7 +1245,7 @@ func (s *sqlEntityServer) List(ctx context.Context, r *entity.EntityListRequest)
 
 	s.log.Debug("listing", "query", query, "args", args)
 
-	rows, err := s.sess.Query(ctx, query, args...)
+	rows, err := s.query(ctx, query, args...)
 	if err != nil {
 		return nil, err
 	}
@@ -1264,11 +1276,14 @@ func (s *sqlEntityServer) List(ctx context.Context, r *entity.EntityListRequest)
 }
 
 func (s *sqlEntityServer) Watch(r *entity.EntityWatchRequest, w entity.EntityStore_WatchServer) error {
+	ctx, span := s.tracer.Start(w.Context(), "storage_server.Watch")
+	defer span.End()
+
 	if err := s.Init(); err != nil {
 		return err
 	}
 
-	user, err := appcontext.User(w.Context())
+	user, err := appcontext.User(ctx)
 	if err != nil {
 		return err
 	}
@@ -1277,7 +1292,7 @@ func (s *sqlEntityServer) Watch(r *entity.EntityWatchRequest, w entity.EntitySto
 	}
 
 	// collect and send any historical events
-	err = s.watchInit(r, w)
+	err = s.watchInit(ctx, r, w)
 	if err != nil {
 		return err
 	}
@@ -1293,7 +1308,10 @@ func (s *sqlEntityServer) Watch(r *entity.EntityWatchRequest, w entity.EntitySto
 }
 
 // watchInit is a helper function to send the initial set of entities to the client
-func (s *sqlEntityServer) watchInit(r *entity.EntityWatchRequest, w entity.EntityStore_WatchServer) error {
+func (s *sqlEntityServer) watchInit(ctx context.Context, r *entity.EntityWatchRequest, w entity.EntityStore_WatchServer) error {
+	ctx, span := s.tracer.Start(ctx, "storage_server.watchInit")
+	defer span.End()
+
 	fields := s.getReadFields(r)
 
 	entityQuery := selectQuery{
@@ -1385,7 +1403,7 @@ func (s *sqlEntityServer) watchInit(r *entity.EntityWatchRequest, w entity.Entit
 
 			s.log.Debug("watch init", "query", query, "args", args)
 
-			rows, err := s.sess.Query(w.Context(), query, args...)
+			rows, err := s.query(w.Context(), query, args...)
 			if err != nil {
 				return err
 			}
@@ -1474,7 +1492,7 @@ func (s *sqlEntityServer) poll(since int64, out chan *entity.Entity) (int64, err
 
 			query, args := entityQuery.toQuery()
 
-			rows, err := s.sess.Query(s.ctx, query, args...)
+			rows, err := s.query(s.ctx, query, args...)
 			if err != nil {
 				return err
 			}
@@ -1569,9 +1587,12 @@ func watchMatches(r *entity.EntityWatchRequest, result *entity.Entity) bool {
 
 // watch is a helper to get the next set of entities and send them to the client
 func (s *sqlEntityServer) watch(r *entity.EntityWatchRequest, w entity.EntityStore_WatchServer) error {
+	ctx, span := s.tracer.Start(w.Context(), "storage_server.watch")
+	defer span.End()
+
 	s.log.Debug("watch started", "since", r.Since)
 
-	evts, err := s.broadcaster.Subscribe(w.Context())
+	evts, err := s.broadcaster.Subscribe(ctx)
 	if err != nil {
 		return err
 	}
@@ -1579,10 +1600,11 @@ func (s *sqlEntityServer) watch(r *entity.EntityWatchRequest, w entity.EntitySto
 	for {
 		select {
 		// user closed the connection
-		case <-w.Context().Done():
+		case <-ctx.Done():
 			return nil
 		// got a raw result from the broadcaster
 		case result := <-evts:
+			span.AddEvent("received event")
 			// result doesn't match our watch params, skip it
 			if !watchMatches(r, result) {
 				s.log.Debug("watch result not matched", "guid", result.Guid, "action", result.Action, "rv", result.ResourceVersion)
@@ -1613,6 +1635,9 @@ func (s *sqlEntityServer) watch(r *entity.EntityWatchRequest, w entity.EntitySto
 }
 
 func (s *sqlEntityServer) FindReferences(ctx context.Context, r *entity.ReferenceRequest) (*entity.EntityListResponse, error) {
+	ctx, span := s.tracer.Start(ctx, "storage_server.FindReferences")
+	defer span.End()
+
 	if err := s.Init(); err != nil {
 		return nil, err
 	}
@@ -1641,7 +1666,7 @@ func (s *sqlEntityServer) FindReferences(ctx context.Context, r *entity.Referenc
 		" FROM entity_ref AS er JOIN entity AS e ON er.guid = e.guid" +
 		" WHERE er.namespace=? AND er.group=? AND er.resource=? AND er.resolved_to=?"
 
-	rows, err := s.sess.Query(ctx, sql, r.Namespace, r.Group, r.Resource, r.Name)
+	rows, err := s.query(ctx, sql, r.Namespace, r.Group, r.Resource, r.Name)
 	if err != nil {
 		return nil, err
 	}
@@ -1675,4 +1700,53 @@ func (s *sqlEntityServer) FindReferences(ctx context.Context, r *entity.Referenc
 	}
 
 	return rsp, err
+}
+
+func (s *sqlEntityServer) query(ctx context.Context, query string, args ...any) (*sql.Rows, error) {
+	ctx, span := s.tracer.Start(ctx, "storage_server.query", trace.WithAttributes(attribute.String("query", query)))
+	defer span.End()
+
+	rows, err := s.sess.Query(ctx, query, args...)
+	if err != nil {
+		return nil, err
+	}
+	return rows, nil
+}
+
+func (s *sqlEntityServer) exec(ctx context.Context, tx *session.SessionTx, statement string, ent *entity.Entity) error {
+	ctx, span := s.tracer.Start(ctx, "storage_server.exec", trace.WithAttributes(attribute.String("statement", statement)))
+	defer span.End()
+
+	_, err := tx.Exec(ctx, statement, ent.Guid)
+	return err
+}
+
+func (s *sqlEntityServer) insert(ctx context.Context, tx *session.SessionTx, table string, values map[string]any) error {
+	ctx, span := s.tracer.Start(ctx, "storage_server.insert", trace.WithAttributes(attribute.String("table", table)))
+	defer span.End()
+
+	if err := s.dialect.Insert(ctx, tx, table, values); err != nil {
+		s.log.Error("error performing insert", "table", table, "msg", err.Error())
+		return err
+	}
+	return nil
+}
+
+func (s *sqlEntityServer) update(ctx context.Context, tx *session.SessionTx, table string, values map[string]any, current *entity.Entity) error {
+	ctx, span := s.tracer.Start(ctx, "storage_server.db_update", trace.WithAttributes(attribute.String("table", table)))
+	defer span.End()
+
+	err := s.dialect.Update(
+		ctx,
+		tx,
+		table,
+		values,
+		map[string]any{
+			"guid": current.Guid,
+		},
+	)
+	if err != nil {
+		s.log.Error("error performing update", "table", table, "msg", err.Error())
+	}
+	return err
 }

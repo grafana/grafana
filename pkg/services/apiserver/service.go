@@ -251,7 +251,7 @@ func (s *service) start(ctx context.Context) error {
 			return err
 		}
 
-		storeServer, err := sqlstash.ProvideSQLEntityServer(eDB)
+		storeServer, err := sqlstash.ProvideSQLEntityServer(eDB, s.tracing)
 		if err != nil {
 			return err
 		}
