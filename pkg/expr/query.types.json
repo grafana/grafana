@@ -1,0 +1,579 @@
+{
+  "kind": "QueryTypeDefinitionList",
+  "apiVersion": "query.grafana.app/v0alpha1",
+  "metadata": {
+    "resourceVersion": "1709168280033"
+  },
+  "items": [
+    {
+      "metadata": {
+        "name": "math",
+        "resourceVersion": "1709915973363",
+        "creationTimestamp": "2024-02-21T22:09:26Z"
+      },
+      "spec": {
+        "discriminators": [
+          {
+            "field": "type",
+            "value": "math"
+          }
+        ],
+        "schema": {
+          "$schema": "https://json-schema.org/draft-04/schema",
+          "additionalProperties": false,
+          "properties": {
+            "expression": {
+              "description": "General math expression",
+              "examples": [
+                "$A + 1",
+                "$A/$B"
+              ],
+              "minLength": 1,
+              "type": "string"
+            }
+          },
+          "required": [
+            "expression"
+          ],
+          "type": "object"
+        },
+        "examples": [
+          {
+            "name": "constant addition",
+            "saveModel": {
+              "expression": "$A + 10"
+            }
+          },
+          {
+            "name": "math with two queries",
+            "saveModel": {
+              "expression": "$A - $B"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "metadata": {
+        "name": "reduce",
+        "resourceVersion": "1709915979242",
+        "creationTimestamp": "2024-02-21T22:09:26Z"
+      },
+      "spec": {
+        "discriminators": [
+          {
+            "field": "type",
+            "value": "reduce"
+          }
+        ],
+        "schema": {
+          "$schema": "https://json-schema.org/draft-04/schema",
+          "additionalProperties": false,
+          "properties": {
+            "expression": {
+              "description": "Reference to single query result",
+              "examples": [
+                "$A"
+              ],
+              "minLength": 1,
+              "type": "string"
+            },
+            "reducer": {
+              "description": "The reducer\n\n\nPossible enum values:\n - `\"sum\"` \n - `\"mean\"` \n - `\"min\"` \n - `\"max\"` \n - `\"count\"` \n - `\"last\"` ",
+              "enum": [
+                "sum",
+                "mean",
+                "min",
+                "max",
+                "count",
+                "last"
+              ],
+              "type": "string",
+              "x-enum-description": {}
+            },
+            "settings": {
+              "additionalProperties": false,
+              "description": "Reducer Options",
+              "properties": {
+                "mode": {
+                  "description": "Non-number reduce behavior\n\n\nPossible enum values:\n - `\"dropNN\"` Drop non-numbers\n - `\"replaceNN\"` Replace non-numbers",
+                  "enum": [
+                    "dropNN",
+                    "replaceNN"
+                  ],
+                  "type": "string",
+                  "x-enum-description": {
+                    "dropNN": "Drop non-numbers",
+                    "replaceNN": "Replace non-numbers"
+                  }
+                },
+                "replaceWithValue": {
+                  "description": "Only valid when mode is replace",
+                  "type": "number"
+                }
+              },
+              "required": [
+                "mode"
+              ],
+              "type": "object"
+            }
+          },
+          "required": [
+            "expression",
+            "reducer"
+          ],
+          "type": "object"
+        },
+        "examples": [
+          {
+            "name": "get max value",
+            "saveModel": {
+              "expression": "$A",
+              "reducer": "max",
+              "settings": {
+                "mode": "dropNN"
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "metadata": {
+        "name": "resample",
+        "resourceVersion": "1709915973363",
+        "creationTimestamp": "2024-02-21T22:09:26Z"
+      },
+      "spec": {
+        "discriminators": [
+          {
+            "field": "type",
+            "value": "resample"
+          }
+        ],
+        "schema": {
+          "$schema": "https://json-schema.org/draft-04/schema",
+          "additionalProperties": false,
+          "description": "QueryType = resample",
+          "properties": {
+            "downsampler": {
+              "description": "The downsample function\n\n\nPossible enum values:\n - `\"sum\"` \n - `\"mean\"` \n - `\"min\"` \n - `\"max\"` \n - `\"count\"` \n - `\"last\"` ",
+              "enum": [
+                "sum",
+                "mean",
+                "min",
+                "max",
+                "count",
+                "last"
+              ],
+              "type": "string",
+              "x-enum-description": {}
+            },
+            "expression": {
+              "description": "The math expression",
+              "examples": [
+                "$A + 1",
+                "$A"
+              ],
+              "minLength": 1,
+              "type": "string"
+            },
+            "upsampler": {
+              "description": "The upsample function\n\n\nPossible enum values:\n - `\"pad\"` Use the last seen value\n - `\"backfilling\"` backfill\n - `\"fillna\"` Do not fill values (nill)",
+              "enum": [
+                "pad",
+                "backfilling",
+                "fillna"
+              ],
+              "type": "string",
+              "x-enum-description": {
+                "backfilling": "backfill",
+                "fillna": "Do not fill values (nill)",
+                "pad": "Use the last seen value"
+              }
+            },
+            "window": {
+              "description": "The time duration",
+              "examples": [
+                "1d",
+                "10m"
+              ],
+              "minLength": 1,
+              "type": "string"
+            }
+          },
+          "required": [
+            "expression",
+            "window",
+            "downsampler",
+            "upsampler"
+          ],
+          "type": "object"
+        },
+        "examples": [
+          {
+            "name": "resample at a every day",
+            "saveModel": {
+              "downsampler": "last",
+              "expression": "$A",
+              "upsampler": "pad",
+              "window": "1d"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "metadata": {
+        "name": "classic_conditions",
+        "resourceVersion": "1709915973363",
+        "creationTimestamp": "2024-02-21T22:09:26Z"
+      },
+      "spec": {
+        "discriminators": [
+          {
+            "field": "type",
+            "value": "classic_conditions"
+          }
+        ],
+        "schema": {
+          "$schema": "https://json-schema.org/draft-04/schema",
+          "additionalProperties": false,
+          "properties": {
+            "conditions": {
+              "items": {
+                "additionalProperties": false,
+                "description": "ConditionJSON is the JSON model for a single condition in ConditionsCmd.",
+                "properties": {
+                  "evaluator": {
+                    "additionalProperties": false,
+                    "properties": {
+                      "params": {
+                        "items": {
+                          "type": "number"
+                        },
+                        "type": "array"
+                      },
+                      "type": {
+                        "description": "e.g. \"gt\"",
+                        "type": "string"
+                      }
+                    },
+                    "required": [
+                      "params",
+                      "type"
+                    ],
+                    "type": "object"
+                  },
+                  "operator": {
+                    "additionalProperties": false,
+                    "properties": {
+                      "type": {
+                        "enum": [
+                          "and",
+                          "or"
+                        ],
+                        "type": "string",
+                        "x-enum-description": {}
+                      }
+                    },
+                    "required": [
+                      "type"
+                    ],
+                    "type": "object"
+                  },
+                  "query": {
+                    "additionalProperties": false,
+                    "properties": {
+                      "params": {
+                        "items": {
+                          "type": "string"
+                        },
+                        "type": "array"
+                      }
+                    },
+                    "required": [
+                      "params"
+                    ],
+                    "type": "object"
+                  },
+                  "reducer": {
+                    "additionalProperties": false,
+                    "properties": {
+                      "type": {
+                        "type": "string"
+                      }
+                    },
+                    "required": [
+                      "type"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "evaluator",
+                  "operator",
+                  "query",
+                  "reducer"
+                ],
+                "type": "object"
+              },
+              "type": "array"
+            }
+          },
+          "required": [
+            "conditions"
+          ],
+          "type": "object"
+        },
+        "examples": [
+          {
+            "name": "Where query A \u003e 5",
+            "saveModel": {
+              "conditions": [
+                {
+                  "evaluator": {
+                    "params": [
+                      5
+                    ],
+                    "type": "gt"
+                  },
+                  "operator": {
+                    "type": "and"
+                  },
+                  "query": {
+                    "params": [
+                      "A"
+                    ]
+                  },
+                  "reducer": {
+                    "type": "max"
+                  }
+                }
+              ]
+            }
+          }
+        ]
+      }
+    },
+    {
+      "metadata": {
+        "name": "threshold",
+        "resourceVersion": "1709915973363",
+        "creationTimestamp": "2024-02-21T22:09:26Z"
+      },
+      "spec": {
+        "discriminators": [
+          {
+            "field": "type",
+            "value": "threshold"
+          }
+        ],
+        "schema": {
+          "$schema": "https://json-schema.org/draft-04/schema",
+          "additionalProperties": false,
+          "properties": {
+            "conditions": {
+              "description": "Threshold Conditions",
+              "items": {
+                "additionalProperties": false,
+                "properties": {
+                  "evaluator": {
+                    "additionalProperties": false,
+                    "properties": {
+                      "params": {
+                        "items": {
+                          "type": "number"
+                        },
+                        "type": "array"
+                      },
+                      "type": {
+                        "description": "e.g. \"gt\"",
+                        "enum": [
+                          "gt",
+                          "lt",
+                          "within_range",
+                          "outside_range"
+                        ],
+                        "type": "string",
+                        "x-enum-description": {}
+                      }
+                    },
+                    "required": [
+                      "params",
+                      "type"
+                    ],
+                    "type": "object"
+                  },
+                  "loadedDimensions": {
+                    "additionalProperties": true,
+                    "type": "object",
+                    "x-grafana-type": "data.DataFrame"
+                  },
+                  "unloadEvaluator": {
+                    "additionalProperties": false,
+                    "properties": {
+                      "params": {
+                        "items": {
+                          "type": "number"
+                        },
+                        "type": "array"
+                      },
+                      "type": {
+                        "description": "e.g. \"gt\"",
+                        "enum": [
+                          "gt",
+                          "lt",
+                          "within_range",
+                          "outside_range"
+                        ],
+                        "type": "string",
+                        "x-enum-description": {}
+                      }
+                    },
+                    "required": [
+                      "params",
+                      "type"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "evaluator"
+                ],
+                "type": "object"
+              },
+              "type": "array"
+            },
+            "expression": {
+              "description": "Reference to single query result",
+              "examples": [
+                "$A"
+              ],
+              "minLength": 1,
+              "type": "string"
+            }
+          },
+          "required": [
+            "expression",
+            "conditions"
+          ],
+          "type": "object"
+        },
+        "examples": [
+          {
+            "name": "Where query A \u003e 5",
+            "saveModel": {
+              "conditions": [
+                {
+                  "evaluator": {
+                    "params": [
+                      5
+                    ],
+                    "type": "gt"
+                  }
+                }
+              ],
+              "expression": "A"
+            }
+          },
+          {
+            "name": "With loaded+unloaded evaluators",
+            "saveModel": {
+              "conditions": [
+                {
+                  "evaluator": {
+                    "params": [
+                      100
+                    ],
+                    "type": "gt"
+                  },
+                  "loadedDimensions": {
+                    "data": {
+                      "values": [
+                        [
+                          18446744073709552000,
+                          2,
+                          3,
+                          4,
+                          5
+                        ]
+                      ]
+                    },
+                    "schema": {
+                      "fields": [
+                        {
+                          "name": "fingerprints",
+                          "type": "number",
+                          "typeInfo": {
+                            "frame": "uint64"
+                          }
+                        }
+                      ],
+                      "meta": {
+                        "type": "fingerprints",
+                        "typeVersion": [
+                          1,
+                          0
+                        ]
+                      },
+                      "name": "test"
+                    }
+                  },
+                  "unloadEvaluator": {
+                    "params": [
+                      31
+                    ],
+                    "type": "lt"
+                  }
+                }
+              ],
+              "expression": "B"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "metadata": {
+        "name": "sql",
+        "resourceVersion": "1709915973363",
+        "creationTimestamp": "2024-02-29T00:58:00Z"
+      },
+      "spec": {
+        "discriminators": [
+          {
+            "field": "type",
+            "value": "sql"
+          }
+        ],
+        "schema": {
+          "$schema": "https://json-schema.org/draft-04/schema",
+          "additionalProperties": false,
+          "description": "SQLQuery requires the sqlExpression feature flag",
+          "properties": {
+            "expression": {
+              "examples": [
+                "SELECT * FROM A LIMIT 1"
+              ],
+              "minLength": 1,
+              "type": "string"
+            }
+          },
+          "required": [
+            "expression"
+          ],
+          "type": "object"
+        },
+        "examples": [
+          {
+            "name": "Select the first row from A",
+            "saveModel": {
+              "expression": "SELECT * FROM A limit 1"
+            }
+          }
+        ]
+      }
+    }
+  ]
+}
