@@ -56,18 +56,13 @@ jobs:
           token: ${{ steps.generate_token.outputs.token }}
           ref: main
           path: ephemeral
-      - name: Get latest grafana version number
-        run: |
-          # if package.json contains e.g. 11.0.0-pre, this writes 11.0.0 to version.txt
-          curl https://raw.githubusercontent.com/grafana/grafana/main/package.json | jq -r .version | grep -o  '^[0-9\.]*' > version.txt
+
       - name: Run action
         env:
           GITHUB_EVENT: ${{ toJson(github.event)}}
         run: |
-          # Create a prerelease version number using the latest version from package.json and some metadata from the github event.
-          v=$(cat version.txt)
-          export GRAFANA_VERSION="$v-ephemeral-${{ github.event.issue.number}}-${{ github.run_number }}-${{ github.run_attempt }}"
-          echo "${GRAFANA_VERSION}"
+          GRAFANA_VERSION=10.1.0
+
           cd $GITHUB_WORKSPACE/ephemeral/src
           go run . \
             -GITHUB_TOKEN="${{ steps.generate_token.outputs.token }}" \
@@ -75,7 +70,7 @@ jobs:
             -GITHUB_TRIGGERING_ACTOR="${{ github.triggering_actor }}" \
             -GCOM_HOST="${{ secrets.EI_GCOM_HOST }}" \
             -GCOM_TOKEN="${{ secrets.EI_GCOM_TOKEN }}" \
-            -HOSTED_GRAFANA_IMAGE_TAG="$GRAFANA_VERSION" \
+            -HOSTED_GRAFANA_IMAGE_TAG="$GRAFANA_VERSION-ephemeral-oss-${{ github.event.issue.number}}-${{ github.run_number }}-${{ github.run_attempt }}" \
             -REGISTRY="${{ secrets.EI_EPHEMERAL_INSTANCES_REGISTRY }}" \
             -GRAFANA_VERSION="$GRAFANA_VERSION" \
             -GCP_SERVICE_ACCOUNT_KEY_BASE64="${{ secrets.EI_GCP_SERVICE_ACCOUNT_KEY_BASE64 }}" \
