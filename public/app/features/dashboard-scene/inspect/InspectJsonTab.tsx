@@ -163,7 +163,7 @@ export class InspectJsonTab extends SceneObjectBase<InspectJsonTabState> {
 
     return (
       <div className={styles.wrap}>
-        <div className={styles.toolbar} aria-label={selectors.components.PanelInspector.Json.content}>
+        <div className={styles.toolbar} data-testid={selectors.components.PanelInspector.Json.content}>
           <Field label={t('dashboard.inspect-json.select-source', 'Select source')} className="flex-grow-1">
             <Select
               inputId="select-source-dropdown"
