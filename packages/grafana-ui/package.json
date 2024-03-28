@@ -162,7 +162,7 @@
     "core-js": "3.36.1",
     "css-loader": "6.10.0",
     "csstype": "3.1.3",
-    "esbuild": "0.18.12",
+    "esbuild": "0.20.2",
     "expose-loader": "5.0.0",
     "mock-raf": "1.0.1",
     "process": "^0.11.10",

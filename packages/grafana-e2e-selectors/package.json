@@ -41,7 +41,7 @@
   "devDependencies": {
     "@rollup/plugin-node-resolve": "15.2.3",
     "@types/node": "20.11.30",
-    "esbuild": "0.18.12",
+    "esbuild": "0.20.2",
     "rimraf": "5.0.5",
     "rollup": "2.79.1",
     "rollup-plugin-dts": "^5.0.0",
