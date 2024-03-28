@@ -47,6 +47,10 @@ func (*MockService) Logout(_ context.Context, _ identity.Requester, _ *usertoken
 	panic("unimplemented")
 }
 
+func (m *MockService) ResolveIdentity(ctx context.Context, orgID int64, namespaceID string) (*authn.Identity, error) {
+	panic("unimplemented")
+}
+
 func (m *MockService) SyncIdentity(ctx context.Context, identity *authn.Identity) error {
 	if m.SyncIdentityFunc != nil {
 		return m.SyncIdentityFunc(ctx, identity)

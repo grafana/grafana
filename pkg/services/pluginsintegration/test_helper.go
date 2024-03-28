@@ -5,6 +5,7 @@ import (
 
 	"github.com/stretchr/testify/require"
 
+	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin/coreplugin"
@@ -28,8 +29,8 @@ import (
 	"github.com/grafana/grafana/pkg/plugins/manager/sources"
 	"github.com/grafana/grafana/pkg/plugins/pluginscdn"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
-	"github.com/grafana/grafana/pkg/services/pluginsintegration/config"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pipeline"
+	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginconfig"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginerrs"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginstore"
 	"github.com/grafana/grafana/pkg/setting"
@@ -42,7 +43,7 @@ type IntegrationTestCtx struct {
 }
 
 func CreateIntegrationTestCtx(t *testing.T, cfg *setting.Cfg, coreRegistry *coreplugin.Registry) *IntegrationTestCtx {
-	pCfg, err := config.ProvideConfig(setting.ProvideProvider(cfg), cfg, featuremgmt.WithFeatures())
+	pCfg, err := pluginconfig.ProvidePluginManagementConfig(cfg, setting.ProvideProvider(cfg), featuremgmt.WithFeatures())
 	require.NoError(t, err)
 
 	cdn := pluginscdn.ProvideService(pCfg)
@@ -51,10 +52,10 @@ func CreateIntegrationTestCtx(t *testing.T, cfg *setting.Cfg, coreRegistry *core
 	proc := process.ProvideService()
 	errTracker := pluginerrs.ProvideSignatureErrorTracker()
 
-	disc := pipeline.ProvideDiscoveryStage(pCfg, finder.NewLocalFinder(true, pCfg.Features), reg)
+	disc := pipeline.ProvideDiscoveryStage(pCfg, finder.NewLocalFinder(true), reg)
 	boot := pipeline.ProvideBootstrapStage(pCfg, signature.ProvideService(pCfg, statickey.New()), assetpath.ProvideService(pCfg, cdn))
 	valid := pipeline.ProvideValidationStage(pCfg, signature.NewValidator(signature.NewUnsignedAuthorizer(pCfg)), angularInspector, errTracker)
-	init := pipeline.ProvideInitializationStage(pCfg, reg, fakes.NewFakeLicensingService(), provider.ProvideService(coreRegistry), proc, &fakes.FakeAuthService{}, fakes.NewFakeRoleRegistry())
+	init := pipeline.ProvideInitializationStage(pCfg, reg, provider.ProvideService(coreRegistry), proc, &fakes.FakeAuthService{}, fakes.NewFakeRoleRegistry(), nil, tracing.InitializeTracerForTest())
 	term, err := pipeline.ProvideTerminationStage(pCfg, reg, proc)
 	require.NoError(t, err)
 
@@ -70,7 +71,7 @@ func CreateIntegrationTestCtx(t *testing.T, cfg *setting.Cfg, coreRegistry *core
 	require.NoError(t, err)
 
 	return &IntegrationTestCtx{
-		PluginClient:   client.ProvideService(reg, pCfg),
+		PluginClient:   client.ProvideService(reg),
 		PluginStore:    ps,
 		PluginRegistry: reg,
 	}
@@ -84,9 +85,9 @@ type LoaderOpts struct {
 	Initializer  initialization.Initializer
 }
 
-func CreateTestLoader(t *testing.T, cfg *pluginsCfg.Cfg, opts LoaderOpts) *loader.Loader {
+func CreateTestLoader(t *testing.T, cfg *pluginsCfg.PluginManagementCfg, opts LoaderOpts) *loader.Loader {
 	if opts.Discoverer == nil {
-		opts.Discoverer = pipeline.ProvideDiscoveryStage(cfg, finder.NewLocalFinder(cfg.DevMode, cfg.Features), registry.ProvideService())
+		opts.Discoverer = pipeline.ProvideDiscoveryStage(cfg, finder.NewLocalFinder(cfg.DevMode), registry.ProvideService())
 	}
 
 	if opts.Bootstrapper == nil {
@@ -100,7 +101,7 @@ func CreateTestLoader(t *testing.T, cfg *pluginsCfg.Cfg, opts LoaderOpts) *loade
 	if opts.Initializer == nil {
 		reg := registry.ProvideService()
 		coreRegistry := coreplugin.NewRegistry(make(map[string]backendplugin.PluginFactoryFunc))
-		opts.Initializer = pipeline.ProvideInitializationStage(cfg, reg, fakes.NewFakeLicensingService(), provider.ProvideService(coreRegistry), process.ProvideService(), &fakes.FakeAuthService{}, fakes.NewFakeRoleRegistry())
+		opts.Initializer = pipeline.ProvideInitializationStage(cfg, reg, provider.ProvideService(coreRegistry), process.ProvideService(), &fakes.FakeAuthService{}, fakes.NewFakeRoleRegistry(), nil, tracing.InitializeTracerForTest())
 	}
 
 	if opts.Terminator == nil {

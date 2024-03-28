@@ -1,8 +1,9 @@
-/**
- * This API allows popovers to update Popper's position when e.g. popover content changes
- * update is delivered to content by react-popper.
- */
 export interface ToggletipContentProps {
+  /**
+   * @deprecated
+   * This prop is deprecated and no longer has any effect as popper position updates automatically.
+   * It will be removed in a future release.
+   */
   update?: () => void;
 }
 

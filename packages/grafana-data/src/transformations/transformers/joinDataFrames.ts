@@ -57,6 +57,16 @@ export interface JoinOptions {
   keepOriginIndices?: boolean;
 
   /**
+   * @internal -- keep any pre-cached state.displayName
+   */
+  keepDisplayNames?: boolean;
+
+  /**
+   * @internal -- Optionally specify how to treat null values
+   */
+  nullMode?: (field: Field) => JoinNullMode;
+
+  /**
    * @internal -- Optionally specify a join mode (outer or inner)
    */
   mode?: JoinMode;
@@ -89,6 +99,13 @@ export function joinDataFrames(options: JoinOptions): DataFrame | undefined {
   if (!options.frames?.length) {
     return;
   }
+
+  const nullMode =
+    options.nullMode ??
+    ((field: Field) => {
+      let spanNulls = field.config.custom?.spanNulls;
+      return spanNulls === true ? NULL_REMOVE : spanNulls === -1 ? NULL_RETAIN : NULL_EXPAND;
+    });
 
   if (options.frames.length === 1) {
     let frame = options.frames[0];
@@ -181,8 +198,7 @@ export function joinDataFrames(options: JoinOptions): DataFrame | undefined {
         }
 
         // Support the standard graph span nulls field config
-        let spanNulls = field.config.custom?.spanNulls;
-        nullModesFrame.push(spanNulls === true ? NULL_REMOVE : spanNulls === -1 ? NULL_RETAIN : NULL_EXPAND);
+        nullModesFrame.push(nullMode(field));
 
         let labels = field.labels ?? {};
         let name = field.name;
@@ -223,8 +239,10 @@ export function joinDataFrames(options: JoinOptions): DataFrame | undefined {
     for (const field of fields) {
       a.push(field.values);
       originalFields.push(field);
-      // clear field displayName state
-      delete field.state?.displayName;
+      if (!options.keepDisplayNames) {
+        // clear field displayName state
+        delete field.state?.displayName;
+      }
       // store frame field order for tabular data join
       frameFieldsOrder.push(fieldsOrder);
       fieldsOrder++;
@@ -367,9 +385,9 @@ export type AlignedData =
   | [xValues: number[] | TypedArray, ...yValues: Array<Array<number | null | undefined> | TypedArray>];
 
 // nullModes
-const NULL_REMOVE = 0; // nulls are converted to undefined (e.g. for spanGaps: true)
-const NULL_RETAIN = 1; // nulls are retained, with alignment artifacts set to undefined (default)
-const NULL_EXPAND = 2; // nulls are expanded to include any adjacent alignment artifacts
+export const NULL_REMOVE = 0; // nulls are converted to undefined (e.g. for spanGaps: true)
+export const NULL_RETAIN = 1; // nulls are retained, with alignment artifacts set to undefined (default)
+export const NULL_EXPAND = 2; // nulls are expanded to include any adjacent alignment artifacts
 
 type JoinNullMode = number; // NULL_IGNORE | NULL_RETAIN | NULL_EXPAND;
 

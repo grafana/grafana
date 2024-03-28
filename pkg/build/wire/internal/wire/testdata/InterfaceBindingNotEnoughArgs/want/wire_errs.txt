@@ -1,0 +1,3 @@
+example.com/foo/wire.go:x:y: not enough arguments in call to wire.Bind
+	have (*Fooer)
+	want (interface{}, interface{})

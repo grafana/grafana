@@ -9,7 +9,12 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/db"
 	tempuser "github.com/grafana/grafana/pkg/services/temp_user"
+	"github.com/grafana/grafana/pkg/tests/testsuite"
 )
+
+func TestMain(m *testing.M) {
+	testsuite.Run(m)
+}
 
 func TestIntegrationTempUserCommandsAndQueries(t *testing.T) {
 	if testing.Short() {
@@ -56,30 +61,14 @@ func TestIntegrationTempUserCommandsAndQueries(t *testing.T) {
 		require.Nil(t, err)
 		require.Equal(t, 1, len(queryResult))
 	})
-	t.Run("Should not be able to get temp users by case-insentive email - case sensitive", func(t *testing.T) {
-		if db.IsTestDbMySQL() {
-			t.Skip("MySQL is case insensitive by default")
-		}
-		setup(t)
-		store.cfg.CaseInsensitiveLogin = false
-		query := tempuser.GetTempUsersQuery{Email: "E@as.co", Status: tempuser.TmpUserInvitePending}
-		queryResult, err := store.GetTempUsersQuery(context.Background(), &query)
-
-		require.Nil(t, err)
-		require.Equal(t, 0, len(queryResult))
-	})
 
 	t.Run("Should be able to get temp users by email - case insensitive", func(t *testing.T) {
 		setup(t)
-		store.cfg.CaseInsensitiveLogin = true
 		query := tempuser.GetTempUsersQuery{Email: "E@as.co", Status: tempuser.TmpUserInvitePending}
 		queryResult, err := store.GetTempUsersQuery(context.Background(), &query)
 
 		require.Nil(t, err)
 		require.Equal(t, 1, len(queryResult))
-		t.Cleanup(func() {
-			store.cfg.CaseInsensitiveLogin = false
-		})
 	})
 
 	t.Run("Should be able to get temp users by code", func(t *testing.T) {
@@ -112,7 +101,32 @@ func TestIntegrationTempUserCommandsAndQueries(t *testing.T) {
 		require.False(t, queryResult[0].EmailSentOn.UTC().Before(queryResult[0].Created.UTC()))
 	})
 
-	t.Run("Should be able expire temp user", func(t *testing.T) {
+	t.Run("Should be able expire all pending verifications from a user", func(t *testing.T) {
+		userID := int64(99)
+		verifications := 5
+		cmd := tempuser.CreateTempUserCommand{
+			OrgID:           -1,
+			Name:            "email-update",
+			Code:            "asd",
+			Email:           "e@as.co",
+			Status:          tempuser.TmpUserEmailUpdateStarted,
+			InvitedByUserID: userID,
+		}
+		db := db.InitTestDB(t)
+		store = &xormStore{db: db, cfg: db.Cfg}
+
+		for i := 0; i < verifications; i++ {
+			tempUser, err = store.CreateTempUser(context.Background(), &cmd)
+			require.Nil(t, err)
+		}
+
+		cmd2 := tempuser.ExpirePreviousVerificationsCommand{InvitedByUserID: userID}
+		err := store.ExpirePreviousVerifications(context.Background(), &cmd2)
+		require.Nil(t, err)
+		require.Equal(t, int64(verifications), cmd2.NumExpired)
+	})
+
+	t.Run("Should be able expire temp user related to org invite", func(t *testing.T) {
 		setup(t)
 		createdAt := time.Unix(tempUser.Created, 0)
 		cmd2 := tempuser.ExpireTempUsersCommand{OlderThan: createdAt.Add(1 * time.Second)}
@@ -124,6 +138,36 @@ func TestIntegrationTempUserCommandsAndQueries(t *testing.T) {
 			createdAt := time.Unix(tempUser.Created, 0)
 			cmd2 := tempuser.ExpireTempUsersCommand{OlderThan: createdAt.Add(1 * time.Second)}
 			err := store.ExpireOldUserInvites(context.Background(), &cmd2)
+			require.Nil(t, err)
+			require.Equal(t, int64(0), cmd2.NumExpired)
+		})
+	})
+
+	t.Run("Should be able expire temp user related to email verification", func(t *testing.T) {
+		cmd := tempuser.CreateTempUserCommand{
+			OrgID:           2256,
+			Name:            "email-update",
+			Code:            "asd",
+			Email:           "e@as.co",
+			Status:          tempuser.TmpUserEmailUpdateStarted,
+			InvitedByUserID: 99,
+		}
+		db := db.InitTestDB(t)
+		store = &xormStore{db: db, cfg: db.Cfg}
+
+		tempUser, err = store.CreateTempUser(context.Background(), &cmd)
+		require.Nil(t, err)
+
+		createdAt := time.Unix(tempUser.Created, 0)
+		cmd2 := tempuser.ExpireTempUsersCommand{OlderThan: createdAt.Add(1 * time.Second)}
+		err := store.ExpireOldVerifications(context.Background(), &cmd2)
+		require.Nil(t, err)
+		require.Equal(t, int64(1), cmd2.NumExpired)
+
+		t.Run("Should do nothing when no temp users to expire", func(t *testing.T) {
+			createdAt := time.Unix(tempUser.Created, 0)
+			cmd2 := tempuser.ExpireTempUsersCommand{OlderThan: createdAt.Add(1 * time.Second)}
+			err := store.ExpireOldVerifications(context.Background(), &cmd2)
 			require.Nil(t, err)
 			require.Equal(t, int64(0), cmd2.NumExpired)
 		})

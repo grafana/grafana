@@ -3,50 +3,68 @@ package pipeline
 import (
 	"context"
 	"errors"
+	"fmt"
+	"slices"
+
+	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/codes"
 
 	"github.com/grafana/grafana/pkg/infra/metrics"
+	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/auth"
 	"github.com/grafana/grafana/pkg/plugins/config"
 	"github.com/grafana/grafana/pkg/plugins/log"
 	"github.com/grafana/grafana/pkg/plugins/manager/pipeline/initialization"
 	"github.com/grafana/grafana/pkg/plugins/manager/pipeline/validation"
+	"github.com/grafana/grafana/pkg/plugins/manager/registry"
 	"github.com/grafana/grafana/pkg/plugins/manager/signature"
-	"github.com/grafana/grafana/pkg/plugins/plugindef"
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/plugins/pfs"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginerrs"
 )
 
 // ExternalServiceRegistration implements an InitializeFunc for registering external services.
 type ExternalServiceRegistration struct {
-	cfg                     *config.Cfg
+	cfg                     *config.PluginManagementCfg
 	externalServiceRegistry auth.ExternalServiceRegistry
 	log                     log.Logger
+	tracer                  tracing.Tracer
 }
 
 // ExternalServiceRegistrationStep returns an InitializeFunc for registering external services.
-func ExternalServiceRegistrationStep(cfg *config.Cfg, externalServiceRegistry auth.ExternalServiceRegistry) initialization.InitializeFunc {
-	return newExternalServiceRegistration(cfg, externalServiceRegistry).Register
+func ExternalServiceRegistrationStep(cfg *config.PluginManagementCfg, externalServiceRegistry auth.ExternalServiceRegistry, tracer tracing.Tracer) initialization.InitializeFunc {
+	return newExternalServiceRegistration(cfg, externalServiceRegistry, tracer).Register
 }
 
-func newExternalServiceRegistration(cfg *config.Cfg, serviceRegistry auth.ExternalServiceRegistry) *ExternalServiceRegistration {
+func newExternalServiceRegistration(cfg *config.PluginManagementCfg, serviceRegistry auth.ExternalServiceRegistry, tracer tracing.Tracer) *ExternalServiceRegistration {
 	return &ExternalServiceRegistration{
 		cfg:                     cfg,
 		externalServiceRegistry: serviceRegistry,
 		log:                     log.New("plugins.external.registration"),
+		tracer:                  tracer,
 	}
 }
 
 // Register registers the external service with the external service registry, if the feature is enabled.
 func (r *ExternalServiceRegistration) Register(ctx context.Context, p *plugins.Plugin) (*plugins.Plugin, error) {
-	if p.IAM != nil {
-		s, err := r.externalServiceRegistry.RegisterExternalService(ctx, p.ID, plugindef.Type(p.Type), p.IAM)
-		if err != nil {
-			r.log.Error("Could not register an external service. Initialization skipped", "pluginId", p.ID, "error", err)
-			return nil, err
-		}
-		p.ExternalService = s
+	if p.IAM == nil {
+		return p, nil
 	}
+
+	ctx, span := r.tracer.Start(ctx, "ExternalServiceRegistration.Register")
+	span.SetAttributes(attribute.String("register.pluginId", p.ID))
+	defer span.End()
+
+	ctxLogger := r.log.FromContext(ctx)
+
+	s, err := r.externalServiceRegistry.RegisterExternalService(ctx, p.ID, pfs.Type(p.Type), p.IAM)
+	if err != nil {
+		ctxLogger.Error("Could not register an external service. Initialization skipped", "pluginId", p.ID, "error", err)
+		span.SetStatus(codes.Error, fmt.Sprintf("could not register external service: %v", err))
+		return nil, err
+	}
+	p.ExternalService = s
+
 	return p, nil
 }
 
@@ -126,11 +144,11 @@ func (v *SignatureValidation) Validate(ctx context.Context, p *plugins.Plugin) e
 // DisablePlugins is a filter step that will filter out any configured plugins
 type DisablePlugins struct {
 	log log.Logger
-	cfg *config.Cfg
+	cfg *config.PluginManagementCfg
 }
 
 // NewDisablePluginsStep returns a new DisablePlugins.
-func NewDisablePluginsStep(cfg *config.Cfg) *DisablePlugins {
+func NewDisablePluginsStep(cfg *config.PluginManagementCfg) *DisablePlugins {
 	return &DisablePlugins{
 		cfg: cfg,
 		log: log.New("plugins.disable"),
@@ -162,11 +180,11 @@ func (c *DisablePlugins) Filter(bundles []*plugins.FoundBundle) ([]*plugins.Foun
 // AsExternal is a filter step that will skip loading a core plugin to use an external one.
 type AsExternal struct {
 	log log.Logger
-	cfg *config.Cfg
+	cfg *config.PluginManagementCfg
 }
 
-// NewDisablePluginsStep returns a new DisablePlugins.
-func NewAsExternalStep(cfg *config.Cfg) *AsExternal {
+// NewAsExternalStep returns a new DisablePlugins.
+func NewAsExternalStep(cfg *config.PluginManagementCfg) *AsExternal {
 	return &AsExternal{
 		cfg: cfg,
 		log: log.New("plugins.asExternal"),
@@ -175,7 +193,7 @@ func NewAsExternalStep(cfg *config.Cfg) *AsExternal {
 
 // Filter will filter out any plugins that are marked to be disabled.
 func (c *AsExternal) Filter(cl plugins.Class, bundles []*plugins.FoundBundle) ([]*plugins.FoundBundle, error) {
-	if c.cfg.Features == nil || !c.cfg.Features.IsEnabledGlobally(featuremgmt.FlagExternalCorePlugins) {
+	if !c.cfg.Features.ExternalCorePluginsEnabled {
 		return bundles, nil
 	}
 
@@ -193,26 +211,56 @@ func (c *AsExternal) Filter(cl plugins.Class, bundles []*plugins.FoundBundle) ([
 		}
 		return res, nil
 	}
+	return bundles, nil
+}
 
-	if cl == plugins.ClassExternal {
-		// Warn if the plugin is not found in the external plugins directory.
-		asExternal := map[string]bool{}
-		for pluginID, pluginCfg := range c.cfg.PluginSettings {
-			if pluginCfg["as_external"] == "true" {
-				asExternal[pluginID] = true
-			}
-		}
-		for _, bundle := range bundles {
-			if asExternal[bundle.Primary.JSONData.ID] {
-				delete(asExternal, bundle.Primary.JSONData.ID)
-			}
-		}
-		if len(asExternal) > 0 {
-			for p := range asExternal {
-				c.log.Error("Core plugin expected to be loaded as external, but it is missing", "pluginID", p)
-			}
+// DuplicatePluginIDValidation is a filter step that will filter out any plugins that are already registered with the same
+// plugin ID. This includes both the primary plugin and child plugins, which are matched using the plugin.json plugin
+// ID field.
+type DuplicatePluginIDValidation struct {
+	registry registry.Service
+	log      log.Logger
+}
+
+// NewDuplicatePluginIDFilterStep returns a new DuplicatePluginIDValidation.
+func NewDuplicatePluginIDFilterStep(registry registry.Service) *DuplicatePluginIDValidation {
+	return &DuplicatePluginIDValidation{
+		registry: registry,
+		log:      log.New("plugins.dedupe"),
+	}
+}
+
+// Filter will filter out any plugins that have already been registered under the same plugin ID.
+func (d *DuplicatePluginIDValidation) Filter(ctx context.Context, bundles []*plugins.FoundBundle) ([]*plugins.FoundBundle, error) {
+	res := make([]*plugins.FoundBundle, 0, len(bundles))
+
+	var matchesPluginIDFunc = func(fp plugins.FoundPlugin) func(p *plugins.Plugin) bool {
+		return func(p *plugins.Plugin) bool {
+			return p.ID == fp.JSONData.ID
 		}
 	}
 
-	return bundles, nil
+	for _, b := range bundles {
+		ps := d.registry.Plugins(ctx)
+
+		if slices.ContainsFunc(ps, matchesPluginIDFunc(b.Primary)) {
+			d.log.Warn("Skipping loading of plugin as it's a duplicate", "pluginId", b.Primary.JSONData.ID)
+			continue
+		}
+
+		var nonDupeChildren []*plugins.FoundPlugin
+		for _, child := range b.Children {
+			if slices.ContainsFunc(ps, matchesPluginIDFunc(*child)) {
+				d.log.Warn("Skipping loading of child plugin as it's a duplicate", "pluginId", child.JSONData.ID)
+				continue
+			}
+			nonDupeChildren = append(nonDupeChildren, child)
+		}
+		res = append(res, &plugins.FoundBundle{
+			Primary:  b.Primary,
+			Children: nonDupeChildren,
+		})
+	}
+
+	return res, nil
 }

@@ -17,7 +17,7 @@ describe('QueryAssistantButton', () => {
     const props = createProps(false, 'metric', setShowDrawer);
     render(<QueryAssistantButton {...props} />);
     const button = screen.getByText('Get query suggestions');
-    userEvent.hover(button);
+    await userEvent.hover(button);
     await waitFor(() => {
       expect(screen.getByText('Install and enable the LLM plugin')).toBeInTheDocument();
     });
@@ -27,7 +27,7 @@ describe('QueryAssistantButton', () => {
     const props = createProps(true, '', setShowDrawer);
     render(<QueryAssistantButton {...props} />);
     const button = screen.getByText('Get query suggestions');
-    userEvent.hover(button);
+    await userEvent.hover(button);
     await waitFor(() => {
       expect(screen.getByText('First, select a metric.')).toBeInTheDocument();
     });

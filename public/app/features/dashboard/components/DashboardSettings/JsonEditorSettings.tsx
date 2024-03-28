@@ -12,7 +12,8 @@ import { getDashboardSrv } from '../../services/DashboardSrv';
 import { SettingsPageProps } from './types';
 
 export function JsonEditorSettings({ dashboard, sectionNav }: SettingsPageProps) {
-  const [dashboardJson, setDashboardJson] = useState<string>(JSON.stringify(dashboard.getSaveModelClone(), null, 2));
+  const dashboardSaveModel = dashboard.getSaveModelClone();
+  const [dashboardJson, setDashboardJson] = useState<string>(JSON.stringify(dashboardSaveModel, null, 2));
   const pageNav = sectionNav.node.parentItem;
 
   const onClick = async () => {

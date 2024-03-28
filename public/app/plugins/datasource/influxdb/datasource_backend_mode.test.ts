@@ -218,7 +218,10 @@ describe('InfluxDataSource Backend Mode', () => {
   });
 
   describe('variable interpolation with chained variables with backend mode', () => {
-    const variablesMock = [queryBuilder().withId('var1').withName('var1').withCurrent('var1').build()];
+    const variablesMock = [
+      queryBuilder().withId('var1').withName('var1').withCurrent('var1').build(),
+      queryBuilder().withId('path').withName('path').withCurrent('/etc/hosts').build(),
+    ];
     const mockTemplateService = new TemplateSrv({
       getVariables: () => variablesMock,
       getVariableWithName: (name: string) => variablesMock.filter((v) => v.name === name)[0],
@@ -292,6 +295,38 @@ describe('InfluxDataSource Backend Mode', () => {
       const qe = `SELECT sum("piece_count") FROM "rp"."pdata" WHERE diameter <= 8.1 AND agent_url =~ /^https:\\/\\/aaaa-aa-aaa\\.bbb\\.ccc\\.ddd:8443\\/ggggg$/`;
       const qData = fetchMock.mock.calls[0][0].data.queries[0].query;
       expect(qData).toBe(qe);
+    });
+
+    it('should interpolate variable inside a regex pattern', () => {
+      const query: InfluxQuery = {
+        refId: 'A',
+        tags: [
+          {
+            key: 'key',
+            operator: '=~',
+            value: '/^.*-$var1$/',
+          },
+        ],
+      };
+      const res = ds.applyVariables(query, {});
+      const expected = `/^.*-var1$/`;
+      expect(res.tags?.[0].value).toEqual(expected);
+    });
+
+    it('should remove regex wrappers when operator is not a regex operator', () => {
+      const query: InfluxQuery = {
+        refId: 'A',
+        tags: [
+          {
+            key: 'key',
+            operator: '=',
+            value: '/^$path$/',
+          },
+        ],
+      };
+      const res = ds.applyVariables(query, {});
+      const expected = `/etc/hosts`;
+      expect(res.tags?.[0].value).toEqual(expected);
     });
   });
 

@@ -19,6 +19,13 @@ const (
 	HelpFlagDashboardHelp1
 )
 
+type UpdateEmailActionType string
+
+const (
+	EmailUpdateAction UpdateEmailActionType = "email-update"
+	LoginUpdateAction UpdateEmailActionType = "login-update"
+)
+
 type User struct {
 	ID            int64  `xorm:"pk autoincr 'id'"`
 	UID           string `json:"uid" xorm:"uid"`
@@ -26,7 +33,7 @@ type User struct {
 	Email         string
 	Name          string
 	Login         string
-	Password      string
+	Password      Password
 	Salt          string
 	Rands         string
 	Company       string
@@ -52,7 +59,7 @@ type CreateUserCommand struct {
 	Company          string
 	OrgID            int64
 	OrgName          string
-	Password         string
+	Password         Password
 	EmailVerified    bool
 	IsAdmin          bool
 	IsDisabled       bool
@@ -75,12 +82,13 @@ type UpdateUserCommand struct {
 	Login string `json:"login"`
 	Theme string `json:"theme"`
 
-	UserID int64 `json:"-"`
+	UserID        int64 `json:"-"`
+	EmailVerified *bool `json:"-"`
 }
 
 type ChangeUserPasswordCommand struct {
-	OldPassword string `json:"oldPassword"`
-	NewPassword string `json:"newPassword"`
+	OldPassword Password `json:"oldPassword"`
+	NewPassword Password `json:"newPassword"`
 
 	UserID int64 `json:"-"`
 }
@@ -213,6 +221,16 @@ type GetUserByIDQuery struct {
 	ID int64
 }
 
+type StartVerifyEmailCommand struct {
+	User   User
+	Email  string
+	Action UpdateEmailActionType
+}
+
+type CompleteEmailVerifyCommand struct {
+	Code string
+}
+
 type ErrCaseInsensitiveLoginConflict struct {
 	Users []User
 }
@@ -279,10 +297,4 @@ const (
 type AdminCreateUserResponse struct {
 	ID      int64  `json:"id"`
 	Message string `json:"message"`
-}
-
-type Password string
-
-func (p Password) IsWeak() bool {
-	return len(p) <= 4
 }

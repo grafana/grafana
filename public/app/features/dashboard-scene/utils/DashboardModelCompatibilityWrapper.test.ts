@@ -1,15 +1,12 @@
 import { TimeRangeUpdatedEvent } from '@grafana/runtime';
 import {
   behaviors,
-  SceneGridItem,
   SceneGridLayout,
-  SceneRefreshPicker,
   SceneQueryRunner,
   SceneTimeRange,
   VizPanel,
-  SceneTimePicker,
   SceneDataTransformer,
-  SceneDataLayers,
+  SceneDataLayerSet,
 } from '@grafana/scenes';
 import { DashboardCursorSync } from '@grafana/schema';
 import { SHARED_DASHBOARD_QUERY } from 'app/plugins/datasource/dashboard';
@@ -17,7 +14,7 @@ import { SHARED_DASHBOARD_QUERY } from 'app/plugins/datasource/dashboard';
 import { AlertStatesDataLayer } from '../scene/AlertStatesDataLayer';
 import { DashboardAnnotationsDataLayer } from '../scene/DashboardAnnotationsDataLayer';
 import { DashboardControls } from '../scene/DashboardControls';
-import { DashboardLinksControls } from '../scene/DashboardLinksControls';
+import { DashboardGridItem } from '../scene/DashboardGridItem';
 import { DashboardScene } from '../scene/DashboardScene';
 import { NEW_LINK } from '../settings/links/utils';
 
@@ -37,7 +34,7 @@ describe('DashboardModelCompatibilityWrapper', () => {
     expect(wrapper.time.from).toBe('now-6h');
     expect(wrapper.timezone).toBe('America/New_York');
     expect(wrapper.weekStart).toBe('friday');
-    expect(wrapper.timepicker.refresh_intervals).toEqual(['1s']);
+    expect(wrapper.timepicker.refresh_intervals![0]).toEqual('5s');
     expect(wrapper.timepicker.hidden).toEqual(true);
     expect(wrapper.panels).toHaveLength(5);
 
@@ -60,9 +57,7 @@ describe('DashboardModelCompatibilityWrapper', () => {
     expect(wrapper.panels[3].datasource).toEqual({ uid: 'gdev-testdata', type: 'grafana-testdata-datasource' });
     expect(wrapper.panels[4].datasource).toEqual({ uid: SHARED_DASHBOARD_QUERY, type: 'datasource' });
 
-    (scene.state.controls![0] as DashboardControls).setState({
-      hideTimeControls: false,
-    });
+    scene.state.controls!.setState({ hideTimeControls: false });
 
     const wrapper2 = new DashboardModelCompatibilityWrapper(scene);
     expect(wrapper2.timepicker.hidden).toEqual(false);
@@ -156,7 +151,7 @@ function setup() {
       weekStart: 'friday',
       timeZone: 'America/New_York',
     }),
-    $data: new SceneDataLayers({
+    $data: new SceneDataLayerSet({
       layers: [
         new DashboardAnnotationsDataLayer({
           key: `annotations-test`,
@@ -175,22 +170,12 @@ function setup() {
         }),
       ],
     }),
-    controls: [
-      new DashboardControls({
-        variableControls: [],
-        linkControls: new DashboardLinksControls({}),
-        timeControls: [
-          new SceneTimePicker({}),
-          new SceneRefreshPicker({
-            intervals: ['1s'],
-          }),
-        ],
-        hideTimeControls: true,
-      }),
-    ],
+    controls: new DashboardControls({
+      hideTimeControls: true,
+    }),
     body: new SceneGridLayout({
       children: [
-        new SceneGridItem({
+        new DashboardGridItem({
           key: 'griditem-1',
           x: 0,
           body: new VizPanel({
@@ -204,7 +189,7 @@ function setup() {
             }),
           }),
         }),
-        new SceneGridItem({
+        new DashboardGridItem({
           body: new VizPanel({
             title: 'Panel with no queries',
             key: 'panel-2',
@@ -212,7 +197,7 @@ function setup() {
           }),
         }),
 
-        new SceneGridItem({
+        new DashboardGridItem({
           body: new VizPanel({
             title: 'Panel with a shared query',
             key: 'panel-3',
@@ -225,7 +210,7 @@ function setup() {
           }),
         }),
 
-        new SceneGridItem({
+        new DashboardGridItem({
           body: new VizPanel({
             title: 'Panel with a regular data source query and transformations',
             key: 'panel-4',
@@ -240,7 +225,7 @@ function setup() {
             }),
           }),
         }),
-        new SceneGridItem({
+        new DashboardGridItem({
           body: new VizPanel({
             title: 'Panel with a shared query and transformations',
             key: 'panel-4',

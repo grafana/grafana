@@ -101,7 +101,7 @@ export function AppRootPage({ pluginId, pluginNavSection }: Props) {
   // if the user has permissions to see the plugin page.
   const userHasPermissionsToPluginPage = () => {
     // Check if plugin does not have any configurations or the user is Grafana Admin
-    if (!plugin.meta?.includes || contextSrv.isGrafanaAdmin || contextSrv.user.orgRole === OrgRole.Admin) {
+    if (!plugin.meta?.includes) {
       return true;
     }
 
@@ -110,6 +110,16 @@ export function AppRootPage({ pluginId, pluginNavSection }: Props) {
     if (!pluginInclude) {
       return true;
     }
+
+    // Check if action exists and give access if user has the required permission.
+    if (pluginInclude?.action && config.featureToggles.accessControlOnCall) {
+      return contextSrv.hasPermission(pluginInclude.action);
+    }
+
+    if (contextSrv.isGrafanaAdmin || contextSrv.user.orgRole === OrgRole.Admin) {
+      return true;
+    }
+
     const pathRole: string = pluginInclude?.role || '';
     // Check if role exists  and give access to Editor to be able to see Viewer pages
     if (!pathRole || (contextSrv.isEditor && pathRole === OrgRole.Viewer)) {

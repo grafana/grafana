@@ -90,11 +90,33 @@ export class AppChromeService {
   }
 
   public setReturnToPrevious = (returnToPrevious: ReturnToPreviousProps) => {
+    const isReturnToPreviousEnabled = config.featureToggles.returnToPrevious;
+    if (!isReturnToPreviousEnabled) {
+      return;
+    }
+    const previousPage = this.state.getValue().returnToPrevious;
+    reportInteraction('grafana_return_to_previous_button_created', {
+      page: returnToPrevious.href,
+      previousPage: previousPage?.href,
+    });
+
     this.update({ returnToPrevious });
     window.sessionStorage.setItem('returnToPrevious', JSON.stringify(returnToPrevious));
   };
 
-  public clearReturnToPrevious = () => {
+  public clearReturnToPrevious = (interactionAction: 'clicked' | 'dismissed' | 'auto_dismissed') => {
+    const isReturnToPreviousEnabled = config.featureToggles.returnToPrevious;
+    if (!isReturnToPreviousEnabled) {
+      return;
+    }
+    const existingRtp = this.state.getValue().returnToPrevious;
+    if (existingRtp) {
+      reportInteraction('grafana_return_to_previous_button_dismissed', {
+        action: interactionAction,
+        page: existingRtp.href,
+      });
+    }
+
     this.update({ returnToPrevious: undefined });
     window.sessionStorage.removeItem('returnToPrevious');
   };
@@ -169,13 +191,19 @@ export class AppChromeService {
   }
 
   public setKioskModeFromUrl(kiosk: UrlQueryValue) {
+    let newKioskMode: KioskMode | undefined;
+
     switch (kiosk) {
       case 'tv':
-        this.update({ kioskMode: KioskMode.TV });
+        newKioskMode = KioskMode.TV;
         break;
       case '1':
       case true:
-        this.update({ kioskMode: KioskMode.Full });
+        newKioskMode = KioskMode.Full;
+    }
+
+    if (newKioskMode && newKioskMode !== this.state.getValue().kioskMode) {
+      this.update({ kioskMode: newKioskMode });
     }
   }
 

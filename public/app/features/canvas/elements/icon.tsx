@@ -2,13 +2,15 @@ import { css } from '@emotion/css';
 import { isString } from 'lodash';
 import React, { CSSProperties } from 'react';
 
+import { LinkModel } from '@grafana/data';
 import { ColorDimensionConfig, ResourceDimensionConfig, ResourceDimensionMode } from '@grafana/schema';
 import { SanitizedSVG } from 'app/core/components/SVG/SanitizedSVG';
 import { getPublicOrAbsoluteUrl } from 'app/features/dimensions';
 import { DimensionContext } from 'app/features/dimensions/context';
 import { ColorDimensionEditor, ResourceDimensionEditor } from 'app/features/dimensions/editors';
+import { getDataLinks } from 'app/plugins/panel/canvas/utils';
 
-import { CanvasElementItem, CanvasElementProps, defaultBgColor } from '../element';
+import { CanvasElementItem, CanvasElementOptions, CanvasElementProps, defaultBgColor } from '../element';
 import { LineConfig } from '../types';
 
 export interface IconConfig {
@@ -22,6 +24,7 @@ interface IconData {
   fill: string;
   strokeColor?: string;
   stroke?: number;
+  links?: LinkModel[];
 }
 
 // When a stoke is defined, we want the path to be in page units
@@ -80,10 +83,12 @@ export const iconItem: CanvasElementItem<IconConfig, IconData> = {
   }),
 
   // Called when data changes
-  prepareData: (ctx: DimensionContext, cfg: IconConfig) => {
+  prepareData: (dimensionContext: DimensionContext, elementOptions: CanvasElementOptions<IconConfig>) => {
+    const iconConfig = elementOptions.config;
+
     let path: string | undefined = undefined;
-    if (cfg.path) {
-      path = ctx.getResource(cfg.path).value();
+    if (iconConfig?.path) {
+      path = dimensionContext.getResource(iconConfig.path).value();
     }
     if (!path || !isString(path)) {
       path = getPublicOrAbsoluteUrl('img/icons/unicons/question-circle.svg');
@@ -91,15 +96,18 @@ export const iconItem: CanvasElementItem<IconConfig, IconData> = {
 
     const data: IconData = {
       path,
-      fill: cfg.fill ? ctx.getColor(cfg.fill).value() : defaultBgColor,
+      fill: iconConfig?.fill ? dimensionContext.getColor(iconConfig.fill).value() : defaultBgColor,
     };
 
-    if (cfg.stroke?.width && cfg.stroke.color) {
-      if (cfg.stroke.width > 0) {
-        data.stroke = cfg.stroke?.width;
-        data.strokeColor = ctx.getColor(cfg.stroke.color).value();
+    if (iconConfig?.stroke?.width && iconConfig?.stroke.color) {
+      if (iconConfig.stroke.width > 0) {
+        data.stroke = iconConfig.stroke?.width;
+        data.strokeColor = dimensionContext.getColor(iconConfig.stroke.color).value();
       }
     }
+
+    data.links = getDataLinks(dimensionContext, elementOptions, data.path);
+
     return data;
   },
 

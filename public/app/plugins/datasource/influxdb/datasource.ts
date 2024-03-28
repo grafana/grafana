@@ -44,7 +44,7 @@ import InfluxQueryModel from './influx_query_model';
 import InfluxSeries from './influx_series';
 import { buildMetadataQuery } from './influxql_query_builder';
 import { prepareAnnotation } from './migrations';
-import { buildRawQuery } from './queryUtils';
+import { buildRawQuery, removeRegexWrapper } from './queryUtils';
 import ResponseParser from './response_parser';
 import { DEFAULT_POLICY, InfluxOptions, InfluxQuery, InfluxQueryTag, InfluxVersion } from './types';
 
@@ -171,18 +171,26 @@ export default class InfluxDatasource extends DataSourceWithBackend<InfluxQuery,
   }
 
   applyTemplateVariables(query: InfluxQuery, scopedVars: ScopedVars): InfluxQuery & SQLQuery {
-    // We want to interpolate these variables on backend
-    const { __interval, __interval_ms, ...rest } = scopedVars || {};
+    const variables = scopedVars || {};
+
+    // We want to interpolate these variables on backend.
+    // The pre-calculated values are replaced withe the variable strings.
+    variables.__interval = {
+      value: '$__interval',
+    };
+    variables.__interval_ms = {
+      value: '$__interval_ms',
+    };
 
     if (this.version === InfluxVersion.Flux) {
       return {
         ...query,
-        query: this.templateSrv.replace(query.query ?? '', rest), // The raw query text
+        query: this.templateSrv.replace(query.query ?? '', variables), // The raw query text
       };
     }
 
     if (this.version === InfluxVersion.SQL || this.isMigrationToggleOnAndIsAccessProxy()) {
-      query = this.applyVariables(query, rest);
+      query = this.applyVariables(query, variables);
       if (query.adhocFilters?.length) {
         const adhocFiltersToTags: InfluxQueryTag[] = (query.adhocFilters ?? []).map((af) => {
           const { condition, ...asTag } = af;
@@ -254,10 +262,20 @@ export default class InfluxDatasource extends DataSourceWithBackend<InfluxQuery,
 
     if (query.tags) {
       expandedQuery.tags = query.tags.map((tag) => {
+        // Remove the regex wrapper if the operator is not a regex operator
+        if (tag.operator !== '=~' && tag.operator !== '!~') {
+          tag.value = removeRegexWrapper(tag.value);
+        }
+
         return {
           ...tag,
           key: this.templateSrv.replace(tag.key, scopedVars),
-          value: this.templateSrv.replace(tag.value, scopedVars, 'pipe'),
+          value: this.templateSrv.replace(
+            tag.value ?? '',
+            scopedVars,
+            (value: string | string[] = [], variable: QueryVariableModel) =>
+              this.interpolateQueryExpr(value, variable, tag.value)
+          ),
         };
       });
     }
@@ -286,7 +304,6 @@ export default class InfluxDatasource extends DataSourceWithBackend<InfluxQuery,
     };
   }
 
-  // this should only be used for rawQueries.
   interpolateQueryExpr(value: string | string[] = [], variable: QueryVariableModel, query?: string) {
     // If there is no query just return the value directly
     if (!query) {
@@ -297,26 +314,32 @@ export default class InfluxDatasource extends DataSourceWithBackend<InfluxQuery,
     // we always want to deal with special chars.
     if (variable.multi) {
       if (typeof value === 'string') {
-        return escapeRegex(value);
+        // Check the value is a number. If not run to escape special characters
+        if (isNaN(parseFloat(value))) {
+          return escapeRegex(value);
+        }
+        return value;
       }
 
       // If the value is a string array first escape them then join them with pipe
-      return value.map((v) => escapeRegex(v)).join('|');
+      // then put inside parenthesis.
+      return `(${value.map((v) => escapeRegex(v)).join('|')})`;
     }
 
     // If the variable is not a multi-value variable
     // we want to see how it's been used. If it is used in a regex expression
     // we escape it. Otherwise, we return it directly.
     // regex below checks if the variable inside /^...$/ (^ and $ is optional)
-    // i.e. /^$myVar$/ or /$myVar/
-    const regex = new RegExp(`\\/(?:\\^)?\\$${variable.name}(?:\\$)?\\/`, 'gm');
+    // i.e. /^$myVar$/ or /$myVar/ or /^($myVar)$/
+    const regex = new RegExp(`\\/(?:\\^)?(.*)(\\$${variable.name})(.*)(?:\\$)?\\/`, 'gm');
     if (regex.test(query)) {
       if (typeof value === 'string') {
         return escapeRegex(value);
       }
 
       // If the value is a string array first escape them then join them with pipe
-      return value.map((v) => escapeRegex(v)).join('|');
+      // then put inside parenthesis.
+      return `(${value.map((v) => escapeRegex(v)).join('|')})`;
     }
 
     return value;

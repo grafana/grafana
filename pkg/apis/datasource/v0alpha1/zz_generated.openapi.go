@@ -162,14 +162,14 @@ func schema_pkg_apis_datasource_v0alpha1_HealthCheckResult(ref common.ReferenceC
 					},
 					"details": {
 						SchemaProps: spec.SchemaProps{
-							Description: "Spec depends on the the plugin",
-							Ref:         ref("github.com/grafana/grafana/pkg/apis/common/v0alpha1.Unstructured"),
+							Description: "Spec depends on the plugin",
+							Ref:         ref("github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1.Unstructured"),
 						},
 					},
 				},
 			},
 		},
 		Dependencies: []string{
-			"github.com/grafana/grafana/pkg/apis/common/v0alpha1.Unstructured"},
+			"github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1.Unstructured"},
 	}
 }

@@ -4,7 +4,6 @@
 
 ```ini
 [feature_toggles]
-grafanaAPIServer = true
 kubernetesPlaylists = true
 ```
 
@@ -51,6 +50,10 @@ data/grafana-apiserver
             └── hi.json
 ```
 
+## Enable aggregation
+
+See [aggregator/README.md](./aggregator/README.md) for more information.
+
 ### `kubectl` access
 
 For kubectl to work, grafana needs to run over https.  To simplify development, you can use:
@@ -59,7 +62,6 @@ For kubectl to work, grafana needs to run over https.  To simplify development, 
 app_mode = development
 
 [feature_toggles]
-grafanaAPIServer = true
 grafanaAPIServerEnsureKubectlAccess = true 
 kubernetesPlaylists = true
 ```

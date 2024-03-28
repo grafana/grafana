@@ -5,20 +5,22 @@ import (
 	"fmt"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
-	"github.com/spf13/pflag"
+	"github.com/prometheus/client_golang/prometheus"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 
 	"github.com/grafana/grafana/pkg/apis/datasource/v0alpha1"
+	"github.com/grafana/grafana/pkg/apiserver/builder"
+	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/registry/apis/datasource"
 	"github.com/grafana/grafana/pkg/registry/apis/example"
 	"github.com/grafana/grafana/pkg/registry/apis/featuretoggle"
 	"github.com/grafana/grafana/pkg/registry/apis/query"
-	"github.com/grafana/grafana/pkg/registry/apis/query/runner"
+	"github.com/grafana/grafana/pkg/registry/apis/query/client"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/actest"
-	"github.com/grafana/grafana/pkg/services/apiserver/builder"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
+	"github.com/grafana/grafana/pkg/services/apiserver/options"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/setting"
 	testdatasource "github.com/grafana/grafana/pkg/tsdb/grafana-testdata-datasource"
@@ -26,13 +28,13 @@ import (
 
 type APIServerFactory interface {
 	// Called before the groups are loaded so any custom command can be registered
-	InitFlags(flags *pflag.FlagSet)
+	GetOptions() options.OptionsProvider
 
 	// Given the flags, what can we produce
 	GetEnabled(runtime []RuntimeConfig) ([]schema.GroupVersion, error)
 
 	// Make an API server for a given group+version
-	MakeAPIServer(gv schema.GroupVersion) (builder.APIGroupBuilder, error)
+	MakeAPIServer(tracer tracing.Tracer, gv schema.GroupVersion) (builder.APIGroupBuilder, error)
 }
 
 // Zero dependency provider for testing
@@ -42,7 +44,9 @@ func GetDummyAPIFactory() APIServerFactory {
 
 type DummyAPIFactory struct{}
 
-func (p *DummyAPIFactory) InitFlags(flags *pflag.FlagSet) {}
+func (p *DummyAPIFactory) GetOptions() options.OptionsProvider {
+	return nil
+}
 
 func (p *DummyAPIFactory) GetEnabled(runtime []RuntimeConfig) ([]schema.GroupVersion, error) {
 	gv := []schema.GroupVersion{}
@@ -58,7 +62,7 @@ func (p *DummyAPIFactory) GetEnabled(runtime []RuntimeConfig) ([]schema.GroupVer
 	return gv, nil
 }
 
-func (p *DummyAPIFactory) MakeAPIServer(gv schema.GroupVersion) (builder.APIGroupBuilder, error) {
+func (p *DummyAPIFactory) MakeAPIServer(tracer tracing.Tracer, gv schema.GroupVersion) (builder.APIGroupBuilder, error) {
 	if gv.Version != "v0alpha1" {
 		return nil, fmt.Errorf("only alpha supported now")
 	}
@@ -71,14 +75,20 @@ func (p *DummyAPIFactory) MakeAPIServer(gv schema.GroupVersion) (builder.APIGrou
 	case "query.grafana.app":
 		return query.NewQueryAPIBuilder(
 			featuremgmt.WithFeatures(),
-			runner.NewDummyTestRunner(),
-			runner.NewDummyRegistry(),
-		), nil
+			&query.CommonDataSourceClientSupplier{
+				Client: client.NewTestDataClient(),
+			},
+			client.NewTestDataRegistry(),
+			nil,                      // legacy lookup
+			prometheus.NewRegistry(), // ???
+			tracer,
+		)
 
 	case "featuretoggle.grafana.app":
 		return featuretoggle.NewFeatureFlagAPIBuilder(
 			featuremgmt.WithFeatureManager(setting.FeatureMgmtSettings{}, nil), // none... for now
 			&actest.FakeAccessControl{ExpectedEvaluate: false},
+			&setting.Cfg{},
 		), nil
 
 	case "testdata.datasource.grafana.app":
@@ -108,8 +118,8 @@ var (
 )
 
 // Get implements PluginDatasourceProvider.
-func (p *pluginDatasourceImpl) Get(ctx context.Context, pluginID string, uid string) (*v0alpha1.DataSourceConnection, error) {
-	all, err := p.List(ctx, pluginID)
+func (p *pluginDatasourceImpl) Get(ctx context.Context, uid string) (*v0alpha1.DataSourceConnection, error) {
+	all, err := p.List(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -122,7 +132,7 @@ func (p *pluginDatasourceImpl) Get(ctx context.Context, pluginID string, uid str
 }
 
 // List implements PluginConfigProvider.
-func (p *pluginDatasourceImpl) List(ctx context.Context, pluginID string) (*v0alpha1.DataSourceConnectionList, error) {
+func (p *pluginDatasourceImpl) List(ctx context.Context) (*v0alpha1.DataSourceConnectionList, error) {
 	info, err := request.NamespaceInfoFrom(ctx, true)
 	if err != nil {
 		return nil, err
@@ -144,7 +154,7 @@ func (p *pluginDatasourceImpl) List(ctx context.Context, pluginID string) (*v0al
 }
 
 // PluginContextForDataSource implements PluginConfigProvider.
-func (*pluginDatasourceImpl) GetInstanceSettings(ctx context.Context, pluginID, uid string) (*backend.DataSourceInstanceSettings, error) {
+func (*pluginDatasourceImpl) GetInstanceSettings(ctx context.Context, uid string) (*backend.DataSourceInstanceSettings, error) {
 	return &backend.DataSourceInstanceSettings{}, nil
 }
 

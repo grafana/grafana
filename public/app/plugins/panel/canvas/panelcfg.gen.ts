@@ -4,7 +4,7 @@
 //     public/app/plugins/gen.go
 // Using jennies:
 //     TSTypesJenny
-//     PluginTSTypesJenny
+//     PluginTsTypesJenny
 //
 // Run 'make gen-cue' from repository root to regenerate.
 
@@ -36,6 +36,7 @@ export interface Placement {
   height?: number;
   left?: number;
   right?: number;
+  rotation?: number;
   top?: number;
   width?: number;
 }
@@ -56,6 +57,7 @@ export interface BackgroundConfig {
 
 export interface LineConfig {
   color?: ui.ColorDimensionConfig;
+  radius?: number;
   width?: number;
 }
 
@@ -81,7 +83,12 @@ export interface CanvasConnection {
   source: ConnectionCoordinates;
   target: ConnectionCoordinates;
   targetName?: string;
+  vertices?: Array<ConnectionCoordinates>;
 }
+
+export const defaultCanvasConnection: Partial<CanvasConnection> = {
+  vertices: [],
+};
 
 export interface CanvasElementOptions {
   background?: BackgroundConfig;
@@ -102,6 +109,10 @@ export const defaultCanvasElementOptions: Partial<CanvasElementOptions> = {
 };
 
 export interface Options {
+  /**
+   * Enable infinite pan
+   */
+  infinitePan: boolean;
   /**
    * Enable inline editing
    */
@@ -135,6 +146,7 @@ export interface Options {
 }
 
 export const defaultOptions: Partial<Options> = {
+  infinitePan: true,
   inlineEditing: true,
   panZoom: true,
   showAdvancedTypes: true,

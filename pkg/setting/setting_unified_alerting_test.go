@@ -93,7 +93,7 @@ func TestUnifiedAlertingSettings(t *testing.T) {
 			alertingOptions: map[string]string{
 				"max_attempts":               strconv.FormatInt(schedulerDefaultMaxAttempts, 10),
 				"min_interval_seconds":       strconv.FormatInt(schedulerDefaultLegacyMinInterval, 10),
-				"execute_alerts":             strconv.FormatBool(schedulereDefaultExecuteAlerts),
+				"execute_alerts":             strconv.FormatBool(schedulerDefaultExecuteAlerts),
 				"evaluation_timeout_seconds": strconv.FormatInt(int64(evaluatorDefaultEvaluationTimeout.Seconds()), 10),
 			},
 			verifyCfg: func(t *testing.T, cfg Cfg) {
@@ -111,7 +111,7 @@ func TestUnifiedAlertingSettings(t *testing.T) {
 			unifiedAlertingOptions: map[string]string{
 				"admin_config_poll_interval": "120s",
 				"min_interval":               SchedulerBaseInterval.String(),
-				"execute_alerts":             strconv.FormatBool(schedulereDefaultExecuteAlerts),
+				"execute_alerts":             strconv.FormatBool(schedulerDefaultExecuteAlerts),
 				"evaluation_timeout":         evaluatorDefaultEvaluationTimeout.String(),
 			},
 			alertingOptions: map[string]string{
@@ -148,7 +148,7 @@ func TestUnifiedAlertingSettings(t *testing.T) {
 				require.Equal(t, alertmanagerDefaultConfigPollInterval, cfg.UnifiedAlerting.AdminConfigPollInterval)
 				require.Equal(t, int64(schedulerDefaultMaxAttempts), cfg.UnifiedAlerting.MaxAttempts)
 				require.Equal(t, SchedulerBaseInterval, cfg.UnifiedAlerting.MinInterval)
-				require.Equal(t, schedulereDefaultExecuteAlerts, cfg.UnifiedAlerting.ExecuteAlerts)
+				require.Equal(t, schedulerDefaultExecuteAlerts, cfg.UnifiedAlerting.ExecuteAlerts)
 				require.Equal(t, evaluatorDefaultEvaluationTimeout, cfg.UnifiedAlerting.EvaluationTimeout)
 				require.Equal(t, SchedulerBaseInterval, cfg.UnifiedAlerting.BaseInterval)
 				require.Equal(t, DefaultRuleEvaluationInterval, cfg.UnifiedAlerting.DefaultRuleEvaluationInterval)

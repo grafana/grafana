@@ -9,14 +9,18 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	utilerrors "k8s.io/apimachinery/pkg/util/errors"
 	genericapiserver "k8s.io/apiserver/pkg/server"
-	"k8s.io/apiserver/pkg/server/options"
 	"k8s.io/client-go/tools/clientcmd"
 	netutils "k8s.io/utils/net"
 
+	"github.com/grafana/grafana/pkg/apiserver/builder"
+	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/infra/tracing"
 	grafanaAPIServer "github.com/grafana/grafana/pkg/services/apiserver"
-	"github.com/grafana/grafana/pkg/services/apiserver/builder"
 	"github.com/grafana/grafana/pkg/services/apiserver/standalone"
+	standaloneoptions "github.com/grafana/grafana/pkg/services/apiserver/standalone/options"
 	"github.com/grafana/grafana/pkg/services/apiserver/utils"
+	"github.com/grafana/grafana/pkg/setting"
+	"github.com/spf13/pflag"
 )
 
 const (
@@ -26,26 +30,31 @@ const (
 
 // APIServerOptions contains the state for the apiserver
 type APIServerOptions struct {
-	factory            standalone.APIServerFactory
-	builders           []builder.APIGroupBuilder
-	RecommendedOptions *options.RecommendedOptions
-	AlternateDNS       []string
+	factory      standalone.APIServerFactory
+	builders     []builder.APIGroupBuilder
+	Options      *standaloneoptions.Options
+	AlternateDNS []string
+	logger       log.Logger
 
 	StdOut io.Writer
 	StdErr io.Writer
 }
 
 func newAPIServerOptions(out, errOut io.Writer) *APIServerOptions {
+	logger := log.New("grafana-apiserver")
+
 	return &APIServerOptions{
-		StdOut: out,
-		StdErr: errOut,
+		logger:  logger,
+		StdOut:  out,
+		StdErr:  errOut,
+		Options: standaloneoptions.New(logger, grafanaAPIServer.Codecs.LegacyCodec()),
 	}
 }
 
-func (o *APIServerOptions) loadAPIGroupBuilders(apis []schema.GroupVersion) error {
+func (o *APIServerOptions) loadAPIGroupBuilders(tracer tracing.Tracer, apis []schema.GroupVersion) error {
 	o.builders = []builder.APIGroupBuilder{}
 	for _, gv := range apis {
-		api, err := o.factory.MakeAPIServer(gv)
+		api, err := o.factory.MakeAPIServer(tracer, gv)
 		if err != nil {
 			return err
 		}
@@ -65,101 +74,69 @@ func (o *APIServerOptions) loadAPIGroupBuilders(apis []schema.GroupVersion) erro
 	return nil
 }
 
-// A copy of ApplyTo in recommended.go, but for >= 0.28, server pkg in apiserver does a bit extra causing
-// a panic when CoreAPI is set to nil
-func (o *APIServerOptions) ModifiedApplyTo(config *genericapiserver.RecommendedConfig) error {
-	if err := o.RecommendedOptions.Etcd.ApplyTo(&config.Config); err != nil {
-		return err
-	}
-	if err := o.RecommendedOptions.EgressSelector.ApplyTo(&config.Config); err != nil {
-		return err
-	}
-	if err := o.RecommendedOptions.Traces.ApplyTo(config.Config.EgressSelector, &config.Config); err != nil {
-		return err
-	}
-	if err := o.RecommendedOptions.SecureServing.ApplyTo(&config.Config.SecureServing, &config.Config.LoopbackClientConfig); err != nil {
-		return err
-	}
-	if err := o.RecommendedOptions.Authentication.ApplyTo(&config.Config.Authentication, config.SecureServing, config.OpenAPIConfig); err != nil {
-		return err
-	}
-	if err := o.RecommendedOptions.Authorization.ApplyTo(&config.Config.Authorization); err != nil {
-		return err
-	}
-	if err := o.RecommendedOptions.Audit.ApplyTo(&config.Config); err != nil {
-		return err
-	}
-
-	// TODO: determine whether we need flow control (API priority and fairness)
-	// We can't assume that a shared informers config was provided in standalone mode and will need a guard
-	// when enabling below
-	/* kubeClient, err := kubernetes.NewForConfig(config.ClientConfig)
-	if err != nil {
-		return err
-	}
-
-	if err := o.RecommendedOptions.Features.ApplyTo(&config.Config, kubeClient, config.SharedInformerFactory); err != nil {
-		return err
-	} */
-
-	if err := o.RecommendedOptions.CoreAPI.ApplyTo(config); err != nil {
-		return err
-	}
-
-	_, err := o.RecommendedOptions.ExtraAdmissionInitializers(config)
-	if err != nil {
-		return err
-	}
-	return nil
-}
-
 func (o *APIServerOptions) Config() (*genericapiserver.RecommendedConfig, error) {
-	if err := o.RecommendedOptions.SecureServing.MaybeDefaultWithSelfSignedCerts(
+	if err := o.Options.RecommendedOptions.SecureServing.MaybeDefaultWithSelfSignedCerts(
 		"localhost", o.AlternateDNS, []net.IP{netutils.ParseIPSloppy("127.0.0.1")},
 	); err != nil {
 		return nil, fmt.Errorf("error creating self-signed certificates: %v", err)
 	}
 
-	o.RecommendedOptions.Authentication.RemoteKubeConfigFileOptional = true
+	o.Options.RecommendedOptions.Authentication.RemoteKubeConfigFileOptional = true
 
 	// TODO: determine authorization, currently insecure because Authorization provided by recommended options doesn't work
 	// reason: an aggregated server won't be able to post subjectaccessreviews (Grafana doesn't have this kind)
 	// exact error: the server could not find the requested resource (post subjectaccessreviews.authorization.k8s.io)
-	o.RecommendedOptions.Authorization = nil
+	o.Options.RecommendedOptions.Authorization = nil
 
-	o.RecommendedOptions.Admission = nil
-	o.RecommendedOptions.Etcd = nil
+	o.Options.RecommendedOptions.Admission = nil
+	o.Options.RecommendedOptions.Etcd = nil
 
-	if o.RecommendedOptions.CoreAPI.CoreAPIKubeconfigPath == "" {
-		o.RecommendedOptions.CoreAPI = nil
+	if o.Options.RecommendedOptions.CoreAPI.CoreAPIKubeconfigPath == "" {
+		o.Options.RecommendedOptions.CoreAPI = nil
 	}
 
 	serverConfig := genericapiserver.NewRecommendedConfig(grafanaAPIServer.Codecs)
 
-	if o.RecommendedOptions.CoreAPI == nil {
-		if err := o.ModifiedApplyTo(serverConfig); err != nil {
-			return nil, err
-		}
-	} else {
-		if err := o.RecommendedOptions.ApplyTo(serverConfig); err != nil {
-			return nil, err
-		}
+	if err := o.Options.ApplyTo(serverConfig); err != nil {
+		return nil, fmt.Errorf("failed to apply options to server config: %w", err)
 	}
 
 	serverConfig.DisabledPostStartHooks = serverConfig.DisabledPostStartHooks.Insert("generic-apiserver-start-informers")
 	serverConfig.DisabledPostStartHooks = serverConfig.DisabledPostStartHooks.Insert("priority-and-fairness-config-consumer")
 
 	// Add OpenAPI specs for each group+version
-	err := builder.SetupConfig(grafanaAPIServer.Scheme, serverConfig, o.builders)
+	err := builder.SetupConfig(
+		grafanaAPIServer.Scheme,
+		serverConfig,
+		o.builders,
+		setting.BuildStamp,
+		setting.BuildVersion,
+		setting.BuildCommit,
+		setting.BuildBranch,
+	)
 	return serverConfig, err
 }
 
+func (o *APIServerOptions) AddFlags(fs *pflag.FlagSet) {
+	o.Options.AddFlags(fs)
+
+	if factoryOptions := o.factory.GetOptions(); factoryOptions != nil {
+		factoryOptions.AddFlags(fs)
+	}
+}
+
 // Validate validates APIServerOptions
-// NOTE: we don't call validate on the top level recommended options as it doesn't like skipping etcd-servers
-// the function is left here for troubleshooting any other config issues
-func (o *APIServerOptions) Validate(args []string) error {
-	errors := []error{}
-	errors = append(errors, o.RecommendedOptions.Validate()...)
+func (o *APIServerOptions) Validate() error {
+	errors := make([]error, 0)
+
+	if factoryOptions := o.factory.GetOptions(); factoryOptions != nil {
+		errors = append(errors, factoryOptions.ValidateOptions()...)
+	}
+
+	if errs := o.Options.Validate(); len(errs) > 0 {
+		errors = append(errors, errors...)
+	}
+
 	return utilerrors.NewAggregate(errors)
 }
 
@@ -172,7 +149,7 @@ func (o *APIServerOptions) RunAPIServer(config *genericapiserver.RecommendedConf
 	delegationTarget := genericapiserver.NewEmptyDelegate()
 	completedConfig := config.Complete()
 
-	server, err := completedConfig.New("example-apiserver", delegationTarget)
+	server, err := completedConfig.New("standalone-apiserver", delegationTarget)
 	if err != nil {
 		return err
 	}
@@ -184,11 +161,13 @@ func (o *APIServerOptions) RunAPIServer(config *genericapiserver.RecommendedConf
 	}
 
 	// write the local config to disk
-	if err = clientcmd.WriteToFile(
-		utils.FormatKubeConfig(server.LoopbackClientConfig),
-		path.Join(dataPath, "apiserver.kubeconfig"),
-	); err != nil {
-		return err
+	if o.Options.ExtraOptions.DevMode {
+		if err = clientcmd.WriteToFile(
+			utils.FormatKubeConfig(server.LoopbackClientConfig),
+			path.Join(dataPath, "apiserver.kubeconfig"),
+		); err != nil {
+			return err
+		}
 	}
 
 	return server.PrepareRun().Run(stopCh)

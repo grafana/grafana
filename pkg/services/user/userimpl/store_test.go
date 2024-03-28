@@ -15,54 +15,48 @@ import (
 	"github.com/grafana/grafana/pkg/services/org/orgimpl"
 	"github.com/grafana/grafana/pkg/services/quota/quotaimpl"
 	"github.com/grafana/grafana/pkg/services/searchusers/sortopts"
+	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 	"github.com/grafana/grafana/pkg/services/supportbundles/supportbundlestest"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/tests/testsuite"
 )
+
+func TestMain(m *testing.M) {
+	testsuite.Run(m)
+}
 
 func TestIntegrationUserGet(t *testing.T) {
 	testCases := []struct {
-		name            string
-		wantErr         error
-		searchLogin     string
-		searchEmail     string
-		caseInsensitive bool
+		name        string
+		wantErr     error
+		searchLogin string
+		searchEmail string
 	}{
 		{
-			name:            "user not found non exact - not case insensitive",
-			wantErr:         user.ErrUserNotFound,
-			searchLogin:     "Test",
-			searchEmail:     "Test@email.com",
-			caseInsensitive: false,
+			name:        "user found non exact",
+			wantErr:     nil,
+			searchLogin: "test",
+			searchEmail: "Test@email.com",
 		},
 		{
-			name:            "user found exact - not case insensitive",
-			wantErr:         nil,
-			searchLogin:     "test",
-			searchEmail:     "test@email.com",
-			caseInsensitive: false,
+			name:        "user found exact",
+			wantErr:     nil,
+			searchLogin: "test",
+			searchEmail: "test@email.com",
 		},
 		{
-			name:            "user found non exact - case insensitive",
-			wantErr:         nil,
-			searchLogin:     "Test",
-			searchEmail:     "Test@email.com",
-			caseInsensitive: true,
+			name:        "user found exact - case insensitive",
+			wantErr:     nil,
+			searchLogin: "Test",
+			searchEmail: "Test@email.com",
 		},
 		{
-			name:            "user found exact - case insensitive",
-			wantErr:         nil,
-			searchLogin:     "Test",
-			searchEmail:     "Test@email.com",
-			caseInsensitive: true,
-		},
-		{
-			name:            "user not found - case insensitive",
-			wantErr:         user.ErrUserNotFound,
-			searchLogin:     "Test_login",
-			searchEmail:     "Test*@email.com",
-			caseInsensitive: true,
+			name:        "user not found - case insensitive",
+			wantErr:     user.ErrUserNotFound,
+			searchLogin: "Test_login",
+			searchEmail: "Test*@email.com",
 		},
 	}
 
@@ -87,10 +81,9 @@ func TestIntegrationUserGet(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			if !tc.caseInsensitive && db.IsTestDbMySQL() {
+			if db.IsTestDbMySQL() {
 				t.Skip("mysql is always case insensitive")
 			}
-			cfg.CaseInsensitiveLogin = tc.caseInsensitive
 			usr, err := userStore.Get(context.Background(),
 				&user.User{
 					Email: tc.searchEmail,
@@ -204,7 +197,7 @@ func TestIntegrationUserDataAccess(t *testing.T) {
 		require.Nil(t, err)
 
 		require.Equal(t, result.Email, "usertest@test.com")
-		require.Equal(t, result.Password, "")
+		require.Equal(t, string(result.Password), "")
 		require.Len(t, result.Rands, 10)
 		require.Len(t, result.Salt, 10)
 		require.False(t, result.IsDisabled)
@@ -213,24 +206,21 @@ func TestIntegrationUserDataAccess(t *testing.T) {
 		require.Nil(t, err)
 
 		require.Equal(t, result.Email, "usertest@test.com")
-		require.Equal(t, result.Password, "")
+		require.Equal(t, string(result.Password), "")
 		require.Len(t, result.Rands, 10)
 		require.Len(t, result.Salt, 10)
 		require.False(t, result.IsDisabled)
 
 		t.Run("Get User by email case insensitive", func(t *testing.T) {
-			userStore.cfg.CaseInsensitiveLogin = true
 			query := user.GetUserByEmailQuery{Email: "USERtest@TEST.COM"}
 			result, err := userStore.GetByEmail(context.Background(), &query)
 			require.Nil(t, err)
 
 			require.Equal(t, result.Email, "usertest@test.com")
-			require.Equal(t, result.Password, "")
+			require.Equal(t, string(result.Password), "")
 			require.Len(t, result.Rands, 10)
 			require.Len(t, result.Salt, 10)
 			require.False(t, result.IsDisabled)
-
-			userStore.cfg.CaseInsensitiveLogin = false
 		})
 
 		t.Run("Testing DB - creates and loads user", func(t *testing.T) {
@@ -238,7 +228,7 @@ func TestIntegrationUserDataAccess(t *testing.T) {
 			require.Nil(t, err)
 
 			require.Equal(t, result.Email, "usertest@test.com")
-			require.Equal(t, result.Password, "")
+			require.Equal(t, string(result.Password), "")
 			require.Len(t, result.Rands, 10)
 			require.Len(t, result.Salt, 10)
 			require.False(t, result.IsDisabled)
@@ -247,11 +237,10 @@ func TestIntegrationUserDataAccess(t *testing.T) {
 			require.Nil(t, err)
 
 			require.Equal(t, result.Email, "usertest@test.com")
-			require.Equal(t, result.Password, "")
+			require.Equal(t, string(result.Password), "")
 			require.Len(t, result.Rands, 10)
 			require.Len(t, result.Salt, 10)
 			require.False(t, result.IsDisabled)
-			ss.Cfg.CaseInsensitiveLogin = false
 		})
 	})
 
@@ -259,42 +248,103 @@ func TestIntegrationUserDataAccess(t *testing.T) {
 		if ss.GetDBType() == migrator.MySQL {
 			t.Skip("Skipping on MySQL due to case insensitive indexes")
 		}
-		userStore.cfg.CaseInsensitiveLogin = true
-		cmd := user.CreateUserCommand{
-			Email: "confusertest@test.com",
-			Name:  "user name",
-			Login: "user_email_conflict",
-		}
-		// userEmailConflict
-		_, err = usrSvc.Create(context.Background(), &cmd)
+		testOrgID := int64(1)
+		err := ss.WithDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
+			// create a user
+			// add additional user with conflicting login where DOMAIN is upper case
+			cmd := user.User{
+				Email:   "confusertest@test.com",
+				Name:    "user name",
+				Login:   "user_email_conflict",
+				OrgID:   testOrgID,
+				Created: time.Now(),
+				Updated: time.Now(),
+			}
+			rawSQL := fmt.Sprintf(
+				"INSERT INTO %s (email, login, org_id, version, is_admin, created, updated) VALUES (?,?,?,0,%s,?,?)",
+				ss.Quote("user"),
+				ss.GetDialect().BooleanStr(false),
+			)
+			_, err := sess.Exec(rawSQL, cmd.Email, cmd.Login, cmd.OrgID, cmd.Created, cmd.Updated)
+			if err != nil {
+				return err
+			}
+			return nil
+		})
+		require.NoError(t, err)
+		err = ss.WithDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
+			// create a user
+			// add additional user with conflicting login where DOMAIN is upper case
+			cmd := user.User{
+				Email:   "confusertest@TEST.COM",
+				Name:    "user name",
+				Login:   "user_email_conflict_two",
+				OrgID:   testOrgID,
+				Created: time.Now(),
+				Updated: time.Now(),
+			}
+			rawSQL := fmt.Sprintf(
+				"INSERT INTO %s (email, login, org_id, version, is_admin, created, updated) VALUES (?,?,?,0,%s,?,?)",
+				ss.Quote("user"),
+				ss.GetDialect().BooleanStr(false),
+			)
+			_, err := sess.Exec(rawSQL, cmd.Email, cmd.Login, cmd.OrgID, cmd.Created, cmd.Updated)
+			if err != nil {
+				return err
+			}
+			return nil
+		})
 		require.NoError(t, err)
 
-		cmd = user.CreateUserCommand{
-			Email: "confusertest@TEST.COM",
-			Name:  "user name",
-			Login: "user_email_conflict_two",
-		}
-		_, err := usrSvc.Create(context.Background(), &cmd)
+		err = ss.WithDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
+			// create a user
+			// add additional user with conflicting login where DOMAIN is upper case
+			// userLoginConflict
+			cmd := user.User{
+				Email:   "user_test_login_conflict@test.com",
+				Name:    "user name",
+				Login:   "user_test_login_conflict",
+				OrgID:   testOrgID,
+				Created: time.Now(),
+				Updated: time.Now(),
+			}
+			rawSQL := fmt.Sprintf(
+				"INSERT INTO %s (email, login, org_id, version, is_admin, created, updated) VALUES (?,?,?,0,%s,?,?)",
+				ss.Quote("user"),
+				ss.GetDialect().BooleanStr(false),
+			)
+			_, err := sess.Exec(rawSQL, cmd.Email, cmd.Login, cmd.OrgID, cmd.Created, cmd.Updated)
+			if err != nil {
+				return err
+			}
+			return nil
+		})
 		require.NoError(t, err)
 
-		cmd = user.CreateUserCommand{
-			Email: "user_test_login_conflict@test.com",
-			Name:  "user name",
-			Login: "user_test_login_conflict",
-		}
-		// userLoginConflict
-		_, err = usrSvc.Create(context.Background(), &cmd)
+		err = ss.WithDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
+			// create a user
+			// add additional user with conflicting login where DOMAIN is upper case
+			// userLoginConflict
+			cmd := user.User{
+				Email:   "user_test_login_conflict_two@test.com",
+				Name:    "user name",
+				Login:   "user_test_login_CONFLICT",
+				OrgID:   testOrgID,
+				Created: time.Now(),
+				Updated: time.Now(),
+			}
+			rawSQL := fmt.Sprintf(
+				"INSERT INTO %s (email, login, org_id, version, is_admin, created, updated) VALUES (?,?,?,0,%s,?,?)",
+				ss.Quote("user"),
+				ss.GetDialect().BooleanStr(false),
+			)
+			_, err := sess.Exec(rawSQL, cmd.Email, cmd.Login, cmd.OrgID, cmd.Created, cmd.Updated)
+			if err != nil {
+				return err
+			}
+			return nil
+		})
 		require.NoError(t, err)
-
-		cmd = user.CreateUserCommand{
-			Email: "user_test_login_conflict_two@test.com",
-			Name:  "user name",
-			Login: "user_test_login_CONFLICT",
-		}
-		_, err = usrSvc.Create(context.Background(), &cmd)
-		require.NoError(t, err)
-
-		ss.Cfg.CaseInsensitiveLogin = true
 
 		t.Run("GetByEmail - email conflict", func(t *testing.T) {
 			query := user.GetUserByEmailQuery{Email: "confusertest@test.com"}
@@ -366,8 +416,6 @@ func TestIntegrationUserDataAccess(t *testing.T) {
 			require.NotEqual(t, user2.Login, result.Login)
 			require.NotEqual(t, user2.Name, result.Name)
 		})
-
-		ss.Cfg.CaseInsensitiveLogin = false
 	})
 
 	t.Run("Change user password", func(t *testing.T) {
@@ -875,8 +923,6 @@ func TestIntegrationUserUpdate(t *testing.T) {
 		}
 	})
 
-	userStore.cfg.CaseInsensitiveLogin = true
-
 	t.Run("Testing DB - update generates duplicate user", func(t *testing.T) {
 		err := userStore.Update(context.Background(), &user.UpdateUserCommand{
 			Login:  "loginuser2",
@@ -921,8 +967,6 @@ func TestIntegrationUserUpdate(t *testing.T) {
 		require.Equal(t, "loginUSER3", result.Login)
 		require.Equal(t, "USER3@test.com", result.Email)
 	})
-
-	ss.Cfg.CaseInsensitiveLogin = false
 }
 
 func createFiveTestUsers(t *testing.T, svc user.Service, fn func(i int) *user.CreateUserCommand) []user.User {

@@ -9,6 +9,7 @@ import (
 	"math/rand"
 	"net/http"
 	"path"
+	"slices"
 	"strings"
 	"testing"
 	"time"
@@ -16,6 +17,7 @@ import (
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/uuid"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
+	"github.com/prometheus/alertmanager/pkg/labels"
 	"github.com/prometheus/common/model"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -841,11 +843,11 @@ func TestIntegrationAlertRuleConflictingTitle(t *testing.T) {
 		rulesWithUID.Rules = append(rulesWithUID.Rules, rules.Rules[0]) // Create new copy of first rule.
 
 		_, status, body := apiClient.PostRulesGroupWithStatus(t, "folder1", &rulesWithUID)
-		assert.Equal(t, http.StatusInternalServerError, status)
+		assert.Equal(t, http.StatusConflict, status)
 
 		var res map[string]any
 		require.NoError(t, json.Unmarshal([]byte(body), &res))
-		require.Equal(t, "failed to update rule group: failed to add rules: a conflicting alert rule is found: rule title under the same organisation and folder should be unique", res["message"])
+		require.Contains(t, res["message"], ngmodels.ErrAlertRuleUniqueConstraintViolation.Error())
 	})
 
 	t.Run("trying to update an alert to the title of an existing alert in the same folder should fail", func(t *testing.T) {
@@ -853,11 +855,11 @@ func TestIntegrationAlertRuleConflictingTitle(t *testing.T) {
 		rulesWithUID.Rules[1].GrafanaManagedAlert.Title = "AlwaysFiring"
 
 		_, status, body := apiClient.PostRulesGroupWithStatus(t, "folder1", &rulesWithUID)
-		assert.Equal(t, http.StatusInternalServerError, status)
+		assert.Equal(t, http.StatusConflict, status)
 
 		var res map[string]any
 		require.NoError(t, json.Unmarshal([]byte(body), &res))
-		require.Equal(t, "failed to update rule group: failed to update rules: a conflicting alert rule is found: rule title under the same organisation and folder should be unique", res["message"])
+		require.Contains(t, res["message"], ngmodels.ErrAlertRuleUniqueConstraintViolation.Error())
 	})
 
 	t.Run("trying to create alert with same title under another folder should succeed", func(t *testing.T) {
@@ -1815,4 +1817,248 @@ func TestIntegrationHysteresisRule(t *testing.T) {
 	assert.EqualValuesf(t, 5, d.Values["B"], body)
 	require.NoErrorf(t, json.Unmarshal([]byte(f.At(normalIdx).(string)), &d), body)
 	assert.EqualValuesf(t, 1, d.Values["B"], body)
+}
+
+func TestIntegrationRuleNotificationSettings(t *testing.T) {
+	testinfra.SQLiteIntegrationTest(t)
+
+	// Setup Grafana and its Database. Scheduler is set to evaluate every 1 second
+	dir, p := testinfra.CreateGrafDir(t, testinfra.GrafanaOpts{
+		DisableLegacyAlerting:        true,
+		EnableUnifiedAlerting:        true,
+		DisableAnonymous:             true,
+		AppModeProduction:            true,
+		NGAlertSchedulerBaseInterval: 1 * time.Second,
+		EnableFeatureToggles:         []string{featuremgmt.FlagConfigurableSchedulerTick, featuremgmt.FlagAlertingSimplifiedRouting},
+	})
+
+	grafanaListedAddr, store := testinfra.StartGrafana(t, dir, p)
+
+	// Create a user to make authenticated requests
+	createUser(t, store, user.CreateUserCommand{
+		DefaultOrgRole: string(org.RoleAdmin),
+		Password:       "password",
+		Login:          "grafana",
+	})
+
+	apiClient := newAlertingApiClient(grafanaListedAddr, "grafana", "password")
+
+	folder := "Test-Alerting"
+	apiClient.CreateFolder(t, folder, folder)
+
+	testDataRaw, err := testData.ReadFile(path.Join("test-data", "rule-notification-settings-1-post.json"))
+	require.NoError(t, err)
+
+	type testData struct {
+		RuleGroup    apimodels.PostableRuleGroupConfig
+		Receiver     apimodels.EmbeddedContactPoint
+		TimeInterval apimodels.MuteTimeInterval
+	}
+	var d testData
+	err = json.Unmarshal(testDataRaw, &d)
+	require.NoError(t, err)
+
+	apiClient.EnsureReceiver(t, d.Receiver)
+	apiClient.EnsureMuteTiming(t, d.TimeInterval)
+
+	t.Run("create should fail if receiver does not exist", func(t *testing.T) {
+		var copyD testData
+		err = json.Unmarshal(testDataRaw, &copyD)
+		group := copyD.RuleGroup
+		ns := group.Rules[0].GrafanaManagedAlert.NotificationSettings
+		ns.Receiver = "random-receiver"
+
+		_, status, body := apiClient.PostRulesGroupWithStatus(t, folder, &group)
+		require.Equalf(t, http.StatusBadRequest, status, body)
+		t.Log(body)
+	})
+
+	t.Run("create should fail if mute timing does not exist", func(t *testing.T) {
+		var copyD testData
+		err = json.Unmarshal(testDataRaw, &copyD)
+		group := copyD.RuleGroup
+		ns := group.Rules[0].GrafanaManagedAlert.NotificationSettings
+		ns.MuteTimeIntervals = []string{"random-time-interval"}
+
+		_, status, body := apiClient.PostRulesGroupWithStatus(t, folder, &group)
+		require.Equalf(t, http.StatusBadRequest, status, body)
+		t.Log(body)
+	})
+
+	t.Run("create should fail if group_by does not contain special labels", func(t *testing.T) {
+		var copyD testData
+		err = json.Unmarshal(testDataRaw, &copyD)
+		group := copyD.RuleGroup
+		ns := group.Rules[0].GrafanaManagedAlert.NotificationSettings
+		ns.GroupBy = []string{"label1"}
+
+		_, status, body := apiClient.PostRulesGroupWithStatus(t, folder, &group)
+		require.Equalf(t, http.StatusBadRequest, status, body)
+		t.Log(body)
+	})
+
+	t.Run("should create rule and generate route", func(t *testing.T) {
+		_, status, body := apiClient.PostRulesGroupWithStatus(t, folder, &d.RuleGroup)
+		require.Equalf(t, http.StatusAccepted, status, body)
+		notificationSettings := d.RuleGroup.Rules[0].GrafanaManagedAlert.NotificationSettings
+
+		var routeBody string
+		if !assert.EventuallyWithT(t, func(c *assert.CollectT) {
+			amConfig, status, body := apiClient.GetAlertmanagerConfigWithStatus(t)
+			routeBody = body
+			if !assert.Equalf(t, http.StatusOK, status, body) {
+				return
+			}
+			route := amConfig.AlertmanagerConfig.Route
+
+			if !assert.Len(c, route.Routes, 1) {
+				return
+			}
+
+			// Check that we are in the auto-generated root
+			autogenRoute := route.Routes[0]
+			if !assert.Len(c, autogenRoute.ObjectMatchers, 1) {
+				return
+			}
+			canContinue := assert.Equal(c, ngmodels.AutogeneratedRouteLabel, autogenRoute.ObjectMatchers[0].Name)
+			assert.Equal(c, labels.MatchEqual, autogenRoute.ObjectMatchers[0].Type)
+			assert.Equal(c, "true", autogenRoute.ObjectMatchers[0].Value)
+
+			assert.Equalf(c, route.Receiver, autogenRoute.Receiver, "Autogenerated root receiver must be the default one")
+			assert.Nil(c, autogenRoute.GroupWait)
+			assert.Nil(c, autogenRoute.GroupInterval)
+			assert.Nil(c, autogenRoute.RepeatInterval)
+			assert.Empty(c, autogenRoute.MuteTimeIntervals)
+			assert.Empty(c, autogenRoute.GroupBy)
+			if !canContinue {
+				return
+			}
+			// Now check that the second level is route for receivers
+			if !assert.NotEmpty(c, autogenRoute.Routes) {
+				return
+			}
+			// There can be many routes, for all receivers
+			idx := slices.IndexFunc(autogenRoute.Routes, func(route *apimodels.Route) bool {
+				return route.Receiver == notificationSettings.Receiver
+			})
+			if !assert.GreaterOrEqual(t, idx, 0) {
+				return
+			}
+			receiverRoute := autogenRoute.Routes[idx]
+			if !assert.Len(c, receiverRoute.ObjectMatchers, 1) {
+				return
+			}
+			canContinue = assert.Equal(c, ngmodels.AutogeneratedRouteReceiverNameLabel, receiverRoute.ObjectMatchers[0].Name)
+			assert.Equal(c, labels.MatchEqual, receiverRoute.ObjectMatchers[0].Type)
+			assert.Equal(c, notificationSettings.Receiver, receiverRoute.ObjectMatchers[0].Value)
+
+			assert.Equal(c, notificationSettings.Receiver, receiverRoute.Receiver)
+			assert.Nil(c, receiverRoute.GroupWait)
+			assert.Nil(c, receiverRoute.GroupInterval)
+			assert.Nil(c, receiverRoute.RepeatInterval)
+			assert.Empty(c, receiverRoute.MuteTimeIntervals)
+			var groupBy []string
+			for _, name := range receiverRoute.GroupBy {
+				groupBy = append(groupBy, string(name))
+			}
+			slices.Sort(groupBy)
+			assert.EqualValues(c, []string{"alertname", "grafana_folder"}, groupBy)
+			if !canContinue {
+				return
+			}
+			// Now check that we created the 3rd level for specific combination of settings
+			if !assert.Lenf(c, receiverRoute.Routes, 1, "Receiver route should contain one options route") {
+				return
+			}
+			optionsRoute := receiverRoute.Routes[0]
+			if !assert.Len(c, optionsRoute.ObjectMatchers, 1) {
+				return
+			}
+			assert.Equal(c, ngmodels.AutogeneratedRouteSettingsHashLabel, optionsRoute.ObjectMatchers[0].Name)
+			assert.Equal(c, labels.MatchEqual, optionsRoute.ObjectMatchers[0].Type)
+			assert.EqualValues(c, notificationSettings.GroupWait, optionsRoute.GroupWait)
+			assert.EqualValues(c, notificationSettings.GroupInterval, optionsRoute.GroupInterval)
+			assert.EqualValues(c, notificationSettings.RepeatInterval, optionsRoute.RepeatInterval)
+			assert.EqualValues(c, notificationSettings.MuteTimeIntervals, optionsRoute.MuteTimeIntervals)
+			groupBy = nil
+			for _, name := range optionsRoute.GroupBy {
+				groupBy = append(groupBy, string(name))
+			}
+			assert.EqualValues(c, notificationSettings.GroupBy, groupBy)
+		}, 10*time.Second, 1*time.Second) {
+			t.Logf("config: %s", routeBody)
+		}
+	})
+
+	t.Run("should correctly create alerts", func(t *testing.T) {
+		var response string
+		if !assert.EventuallyWithT(t, func(c *assert.CollectT) {
+			groups, status, body := apiClient.GetActiveAlertsWithStatus(t)
+			require.Equalf(t, http.StatusOK, status, body)
+			response = body
+			if len(groups) == 0 {
+				return
+			}
+			g := groups[0]
+			alert := g.Alerts[0]
+			assert.Contains(c, alert.Labels, ngmodels.AutogeneratedRouteLabel)
+			assert.Equal(c, "true", alert.Labels[ngmodels.AutogeneratedRouteLabel])
+			assert.Contains(c, alert.Labels, ngmodels.AutogeneratedRouteReceiverNameLabel)
+			assert.Equal(c, d.Receiver.Name, alert.Labels[ngmodels.AutogeneratedRouteReceiverNameLabel])
+			assert.Contains(c, alert.Labels, ngmodels.AutogeneratedRouteSettingsHashLabel)
+			assert.NotEmpty(c, alert.Labels[ngmodels.AutogeneratedRouteSettingsHashLabel])
+		}, 10*time.Second, 1*time.Second) {
+			t.Logf("response: %s", response)
+		}
+	})
+
+	t.Run("should update rule with empty settings and delete route", func(t *testing.T) {
+		var copyD testData
+		err = json.Unmarshal(testDataRaw, &copyD)
+		group := copyD.RuleGroup
+		notificationSettings := group.Rules[0].GrafanaManagedAlert.NotificationSettings
+		group.Rules[0].GrafanaManagedAlert.NotificationSettings = nil
+
+		_, status, body := apiClient.PostRulesGroupWithStatus(t, folder, &group)
+		require.Equalf(t, http.StatusAccepted, status, body)
+
+		var routeBody string
+		if !assert.EventuallyWithT(t, func(c *assert.CollectT) {
+			amConfig, status, body := apiClient.GetAlertmanagerConfigWithStatus(t)
+			routeBody = body
+			if !assert.Equalf(t, http.StatusOK, status, body) {
+				return
+			}
+			route := amConfig.AlertmanagerConfig.Route
+
+			if !assert.Len(c, route.Routes, 1) {
+				return
+			}
+			// Check that we are in the auto-generated root
+			autogenRoute := route.Routes[0]
+			if !assert.Len(c, autogenRoute.ObjectMatchers, 1) {
+				return
+			}
+			if !assert.Equal(c, ngmodels.AutogeneratedRouteLabel, autogenRoute.ObjectMatchers[0].Name) {
+				return
+			}
+			// Now check that the second level is route for receivers
+			if !assert.NotEmpty(c, autogenRoute.Routes) {
+				return
+			}
+			// There can be many routes, for all receivers
+			idx := slices.IndexFunc(autogenRoute.Routes, func(route *apimodels.Route) bool {
+				return route.Receiver == notificationSettings.Receiver
+			})
+			if !assert.GreaterOrEqual(t, idx, 0) {
+				return
+			}
+			receiverRoute := autogenRoute.Routes[idx]
+			if !assert.Empty(c, receiverRoute.Routes) {
+				return
+			}
+		}, 10*time.Second, 1*time.Second) {
+			t.Logf("config: %s", routeBody)
+		}
+	})
 }

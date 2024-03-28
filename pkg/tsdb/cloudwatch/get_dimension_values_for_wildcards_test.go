@@ -3,11 +3,9 @@ package cloudwatch
 import (
 	"context"
 	"testing"
-	"time"
 
 	"github.com/aws/aws-sdk-go/service/cloudwatch"
-	"github.com/grafana/grafana-plugin-sdk-go/backend"
-	"github.com/grafana/grafana/pkg/infra/log/logtest"
+	"github.com/grafana/grafana-plugin-sdk-go/backend/log"
 	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/mocks"
 	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/models"
 	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/utils"
@@ -16,19 +14,15 @@ import (
 )
 
 func TestGetDimensionValuesForWildcards(t *testing.T) {
-	logger := &logtest.Fake{}
-	executor := &cloudWatchExecutor{im: defaultTestInstanceManager()}
+	executor := &cloudWatchExecutor{im: defaultTestInstanceManager(), logger: log.NewNullLogger()}
 	ctx := context.Background()
-	pluginCtx := backend.PluginContext{
-		DataSourceInstanceSettings: &backend.DataSourceInstanceSettings{ID: 1, Updated: time.Now()},
-	}
 	tagValueCache := cache.New(0, 0)
 
 	t.Run("Should not change non-wildcard dimension value", func(t *testing.T) {
 		query := getBaseQuery()
 		query.MetricName = "Test_MetricName1"
 		query.Dimensions = map[string][]string{"Test_DimensionName1": {"Value1"}}
-		queries, err := executor.getDimensionValuesForWildcards(ctx, pluginCtx, "us-east-1", nil, []*models.CloudWatchQuery{query}, tagValueCache, logger)
+		queries, err := executor.getDimensionValuesForWildcards(ctx, "us-east-1", nil, []*models.CloudWatchQuery{query}, tagValueCache, 50)
 		assert.Nil(t, err)
 		assert.Len(t, queries, 1)
 		assert.NotNil(t, queries[0].Dimensions["Test_DimensionName1"], 1)
@@ -39,7 +33,7 @@ func TestGetDimensionValuesForWildcards(t *testing.T) {
 		query := getBaseQuery()
 		query.MetricName = "Test_MetricName1"
 		query.Dimensions = map[string][]string{"Test_DimensionName1": {"*"}}
-		queries, err := executor.getDimensionValuesForWildcards(ctx, pluginCtx, "us-east-1", nil, []*models.CloudWatchQuery{query}, tagValueCache, logger)
+		queries, err := executor.getDimensionValuesForWildcards(ctx, "us-east-1", nil, []*models.CloudWatchQuery{query}, tagValueCache, 50)
 		assert.Nil(t, err)
 		assert.Len(t, queries, 1)
 		assert.NotNil(t, queries[0].Dimensions["Test_DimensionName1"])
@@ -58,7 +52,7 @@ func TestGetDimensionValuesForWildcards(t *testing.T) {
 			{MetricName: utils.Pointer("Test_MetricName4"), Dimensions: []*cloudwatch.Dimension{{Name: utils.Pointer("Test_DimensionName1"), Value: utils.Pointer("Value2")}}},
 		}}
 		api.On("ListMetricsPagesWithContext").Return(nil)
-		queries, err := executor.getDimensionValuesForWildcards(ctx, pluginCtx, "us-east-1", api, []*models.CloudWatchQuery{query}, tagValueCache, logger)
+		queries, err := executor.getDimensionValuesForWildcards(ctx, "us-east-1", api, []*models.CloudWatchQuery{query}, tagValueCache, 50)
 		assert.Nil(t, err)
 		assert.Len(t, queries, 1)
 		assert.Equal(t, map[string][]string{"Test_DimensionName1": {"Value1", "Value2", "Value3", "Value4"}}, queries[0].Dimensions)
@@ -74,13 +68,13 @@ func TestGetDimensionValuesForWildcards(t *testing.T) {
 			{MetricName: utils.Pointer("Test_MetricName"), Dimensions: []*cloudwatch.Dimension{{Name: utils.Pointer("Test_DimensionName"), Value: utils.Pointer("Value")}}},
 		}}
 		api.On("ListMetricsPagesWithContext").Return(nil)
-		_, err := executor.getDimensionValuesForWildcards(ctx, pluginCtx, "us-east-1", api, []*models.CloudWatchQuery{query}, tagValueCache, logger)
+		_, err := executor.getDimensionValuesForWildcards(ctx, "us-east-1", api, []*models.CloudWatchQuery{query}, tagValueCache, 50)
 		assert.Nil(t, err)
 		// make sure the original query wasn't altered
 		assert.Equal(t, map[string][]string{"Test_DimensionName": {"*"}}, query.Dimensions)
 
 		//setting the api to nil confirms that it's using the cached value
-		queries, err := executor.getDimensionValuesForWildcards(ctx, pluginCtx, "us-east-1", nil, []*models.CloudWatchQuery{query}, tagValueCache, logger)
+		queries, err := executor.getDimensionValuesForWildcards(ctx, "us-east-1", nil, []*models.CloudWatchQuery{query}, tagValueCache, 50)
 		assert.Nil(t, err)
 		assert.Len(t, queries, 1)
 		assert.Equal(t, map[string][]string{"Test_DimensionName": {"Value"}}, queries[0].Dimensions)
@@ -94,7 +88,7 @@ func TestGetDimensionValuesForWildcards(t *testing.T) {
 		query.MatchExact = false
 		api := &mocks.MetricsAPI{Metrics: []*cloudwatch.Metric{}}
 		api.On("ListMetricsPagesWithContext").Return(nil)
-		queries, err := executor.getDimensionValuesForWildcards(ctx, pluginCtx, "us-east-1", api, []*models.CloudWatchQuery{query}, tagValueCache, logger)
+		queries, err := executor.getDimensionValuesForWildcards(ctx, "us-east-1", api, []*models.CloudWatchQuery{query}, tagValueCache, 50)
 		assert.Nil(t, err)
 		assert.Len(t, queries, 1)
 		// assert that the values was set to an empty array
@@ -105,7 +99,7 @@ func TestGetDimensionValuesForWildcards(t *testing.T) {
 			{MetricName: utils.Pointer("Test_MetricName"), Dimensions: []*cloudwatch.Dimension{{Name: utils.Pointer("Test_DimensionName2"), Value: utils.Pointer("Value")}}},
 		}
 		api.On("ListMetricsPagesWithContext").Return(nil)
-		queries, err = executor.getDimensionValuesForWildcards(ctx, pluginCtx, "us-east-1", api, []*models.CloudWatchQuery{query}, tagValueCache, logger)
+		queries, err = executor.getDimensionValuesForWildcards(ctx, "us-east-1", api, []*models.CloudWatchQuery{query}, tagValueCache, 50)
 		assert.Nil(t, err)
 		assert.Len(t, queries, 1)
 		assert.Equal(t, map[string][]string{"Test_DimensionName2": {"Value"}}, queries[0].Dimensions)

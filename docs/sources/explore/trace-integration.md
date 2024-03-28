@@ -23,6 +23,7 @@ Supported data sources are:
 - [Zipkin]({{< relref "../datasources/zipkin/" >}})
 - [X-Ray](https://grafana.com/grafana/plugins/grafana-x-ray-datasource)
 - [Azure Monitor Application Insights]({{< relref "../datasources/azure-monitor/" >}})
+- [ClickHouse](https://github.com/grafana/clickhouse-datasource)
 
 For information on how to configure queries for the data sources listed above, refer to the documentation for specific data source.
 
@@ -38,6 +39,7 @@ For information on querying each data source, refer to their documentation:
 - [Jaeger query editor]({{< relref "../datasources/jaeger/#query-the-data-source" >}})
 - [Zipkin query editor]({{< relref "../datasources/zipkin/#query-the-data-source" >}})
 - [Azure Monitor Application Insights query editor]({{< relref "../datasources/azure-monitor/query-editor/#query-application-insights-traces" >}})
+- [ClickHouse query editor](https://clickhouse.com/docs/en/integrations/grafana/query-builder#traces)
 
 ## Trace view
 

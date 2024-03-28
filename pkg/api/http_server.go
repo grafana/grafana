@@ -47,7 +47,6 @@ import (
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/pluginscdn"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
-	"github.com/grafana/grafana/pkg/services/alerting"
 	"github.com/grafana/grafana/pkg/services/annotations"
 	"github.com/grafana/grafana/pkg/services/apikey"
 	"github.com/grafana/grafana/pkg/services/auth"
@@ -158,7 +157,6 @@ type HTTPServer struct {
 	ContextHandler               *contexthandler.ContextHandler
 	LoggerMiddleware             loggermw.Logger
 	SQLStore                     db.DB
-	AlertEngine                  *alerting.AlertEngine
 	AlertNG                      *ngalert.AlertNG
 	LibraryPanelService          librarypanels.Service
 	LibraryElementService        libraryelements.Service
@@ -179,12 +177,11 @@ type HTTPServer struct {
 	queryDataService             query.Service
 	serviceAccountsService       serviceaccounts.Service
 	authInfoService              login.AuthInfoService
-	NotificationService          *notifications.NotificationService
+	NotificationService          notifications.Service
 	DashboardService             dashboards.DashboardService
 	dashboardProvisioningService dashboards.DashboardProvisioningService
 	folderService                folder.Service
 	dsGuardian                   guardian.DatasourceGuardianProvider
-	AlertNotificationService     *alerting.AlertNotificationService
 	dashboardsnapshotsService    dashboardsnapshots.Service
 	PluginSettings               pluginSettings.Service
 	AvatarCacheServer            *avatar.AvatarCacheServer
@@ -217,6 +214,15 @@ type HTTPServer struct {
 	clientConfigProvider grafanaapiserver.DirectRestConfigProvider
 	namespacer           request.NamespaceMapper
 	anonService          anonymous.Service
+	userVerifier         user.Verifier
+	tlsCerts             TLSCerts
+}
+
+type TLSCerts struct {
+	certLock  sync.RWMutex
+	certMtime time.Time
+	keyMtime  time.Time
+	certs     *tls.Certificate
 }
 
 type ServerOptions struct {
@@ -225,7 +231,7 @@ type ServerOptions struct {
 
 func ProvideHTTPServer(opts ServerOptions, cfg *setting.Cfg, routeRegister routing.RouteRegister, bus bus.Bus,
 	renderService rendering.Service, licensing licensing.Licensing, hooksService *hooks.HooksService,
-	cacheService *localcache.CacheService, sqlStore *sqlstore.SQLStore, alertEngine *alerting.AlertEngine,
+	cacheService *localcache.CacheService, sqlStore *sqlstore.SQLStore,
 	pluginRequestValidator validations.PluginRequestValidator, pluginStaticRouteResolver plugins.StaticRouteResolver,
 	pluginDashboardService plugindashboards.Service, pluginStore pluginstore.Store, pluginClient plugins.Client,
 	pluginErrorResolver plugins.ErrorResolver, pluginInstaller plugins.Installer, settingsProvider setting.Provider,
@@ -242,9 +248,9 @@ func ProvideHTTPServer(opts ServerOptions, cfg *setting.Cfg, routeRegister routi
 	dataSourcesService datasources.DataSourceService, queryDataService query.Service, pluginFileStore plugins.FileStore,
 	serviceaccountsService serviceaccounts.Service,
 	authInfoService login.AuthInfoService, storageService store.StorageService,
-	notificationService *notifications.NotificationService, dashboardService dashboards.DashboardService,
+	notificationService notifications.Service, dashboardService dashboards.DashboardService,
 	dashboardProvisioningService dashboards.DashboardProvisioningService, folderService folder.Service,
-	dsGuardian guardian.DatasourceGuardianProvider, alertNotificationService *alerting.AlertNotificationService,
+	dsGuardian guardian.DatasourceGuardianProvider,
 	dashboardsnapshotsService dashboardsnapshots.Service, pluginSettings pluginSettings.Service,
 	avatarCacheServer *avatar.AvatarCacheServer, preferenceService pref.Service,
 	folderPermissionsService accesscontrol.FolderPermissionsService,
@@ -259,6 +265,7 @@ func ProvideHTTPServer(opts ServerOptions, cfg *setting.Cfg, routeRegister routi
 	annotationRepo annotations.Repository, tagService tag.Service, searchv2HTTPService searchV2.SearchHTTPService, oauthTokenService oauthtoken.OAuthTokenService,
 	statsService stats.Service, authnService authn.Service, pluginsCDNService *pluginscdn.Service, promGatherer prometheus.Gatherer,
 	starApi *starApi.API, promRegister prometheus.Registerer, clientConfigProvider grafanaapiserver.DirectRestConfigProvider, anonService anonymous.Service,
+	userVerifier user.Verifier,
 ) (*HTTPServer, error) {
 	web.Env = cfg.Env
 	m := web.New()
@@ -272,7 +279,6 @@ func ProvideHTTPServer(opts ServerOptions, cfg *setting.Cfg, routeRegister routi
 		HooksService:                 hooksService,
 		CacheService:                 cacheService,
 		SQLStore:                     sqlStore,
-		AlertEngine:                  alertEngine,
 		PluginRequestValidator:       pluginRequestValidator,
 		pluginInstaller:              pluginInstaller,
 		pluginClient:                 pluginClient,
@@ -328,7 +334,6 @@ func ProvideHTTPServer(opts ServerOptions, cfg *setting.Cfg, routeRegister routi
 		dashboardProvisioningService: dashboardProvisioningService,
 		folderService:                folderService,
 		dsGuardian:                   dsGuardian,
-		AlertNotificationService:     alertNotificationService,
 		dashboardsnapshotsService:    dashboardsnapshotsService,
 		PluginSettings:               pluginSettings,
 		AvatarCacheServer:            avatarCacheServer,
@@ -361,6 +366,7 @@ func ProvideHTTPServer(opts ServerOptions, cfg *setting.Cfg, routeRegister routi
 		clientConfigProvider:         clientConfigProvider,
 		namespacer:                   request.GetNamespaceMapper(cfg),
 		anonService:                  anonService,
+		userVerifier:                 userVerifier,
 	}
 	if hs.Listener != nil {
 		hs.log.Debug("Using provided listener")
@@ -397,13 +403,18 @@ func (hs *HTTPServer) Run(ctx context.Context) error {
 		ReadTimeout: hs.Cfg.ReadTimeout,
 	}
 	switch hs.Cfg.Protocol {
-	case setting.HTTP2Scheme:
-		if err := hs.configureHttp2(); err != nil {
+	case setting.HTTP2Scheme, setting.HTTPSScheme:
+		if err := hs.configureTLS(); err != nil {
 			return err
 		}
-	case setting.HTTPSScheme:
-		if err := hs.configureHttps(); err != nil {
-			return err
+		if hs.Cfg.CertFile != "" && hs.Cfg.KeyFile != "" {
+			if hs.Cfg.CertWatchInterval > 0 {
+				hs.httpSrv.TLSConfig.GetCertificate = hs.GetCertificate
+				go hs.WatchAndUpdateCerts(ctx)
+				hs.log.Debug("HTTP Server certificates reload feature is enabled")
+			} else {
+				hs.log.Debug("HTTP Server certificates reload feature is NOT enabled")
+			}
 		}
 	default:
 	}
@@ -551,87 +562,16 @@ func (hs *HTTPServer) tlsCertificates() ([]tls.Certificate, error) {
 		return hs.selfSignedCert()
 	}
 
-	if hs.Cfg.CertFile == "" {
-		return nil, errors.New("cert_file cannot be empty when using HTTPS")
-	}
-
-	if hs.Cfg.KeyFile == "" {
-		return nil, errors.New("cert_key cannot be empty when using HTTPS")
-	}
-
-	if _, err := os.Stat(hs.Cfg.CertFile); os.IsNotExist(err) {
-		return nil, fmt.Errorf(`cannot find SSL cert_file at %q`, hs.Cfg.CertFile)
-	}
-
-	if _, err := os.Stat(hs.Cfg.KeyFile); os.IsNotExist(err) {
-		return nil, fmt.Errorf(`cannot find SSL key_file at %q`, hs.Cfg.KeyFile)
-	}
-
-	tlsCert, err := tls.LoadX509KeyPair(hs.Cfg.CertFile, hs.Cfg.KeyFile)
+	tlsCert, err := hs.readCertificates()
 	if err != nil {
-		return nil, fmt.Errorf("could not load SSL certificate: %w", err)
+		return nil, err
 	}
+	hs.tlsCerts.certs = tlsCert
 
-	return []tls.Certificate{tlsCert}, nil
-}
-
-func (hs *HTTPServer) configureHttps() error {
-	tlsCerts, err := hs.tlsCertificates()
-	if err != nil {
-		return err
+	if err := hs.updateMtimeOfServerCerts(); err != nil {
+		return nil, err
 	}
-
-	minTlsVersion, err := util.TlsNameToVersion(hs.Cfg.MinTLSVersion)
-	if err != nil {
-		return err
-	}
-
-	tlsCiphers := hs.getDefaultCiphers(minTlsVersion, string(setting.HTTPSScheme))
-	if err != nil {
-		return err
-	}
-
-	hs.log.Info("HTTP Server TLS settings", "Min TLS Version", hs.Cfg.MinTLSVersion,
-		"configured ciphers", util.TlsCipherIdsToString(tlsCiphers))
-
-	tlsCfg := &tls.Config{
-		Certificates: tlsCerts,
-		MinVersion:   minTlsVersion,
-		CipherSuites: tlsCiphers,
-	}
-
-	hs.httpSrv.TLSConfig = tlsCfg
-	hs.httpSrv.TLSNextProto = make(map[string]func(*http.Server, *tls.Conn, http.Handler))
-
-	return nil
-}
-
-func (hs *HTTPServer) configureHttp2() error {
-	tlsCerts, err := hs.tlsCertificates()
-	if err != nil {
-		return err
-	}
-
-	minTlsVersion, err := util.TlsNameToVersion(hs.Cfg.MinTLSVersion)
-	if err != nil {
-		return err
-	}
-
-	tlsCiphers := hs.getDefaultCiphers(minTlsVersion, string(setting.HTTP2Scheme))
-
-	hs.log.Info("HTTP Server TLS settings", "Min TLS Version", hs.Cfg.MinTLSVersion,
-		"configured ciphers", util.TlsCipherIdsToString(tlsCiphers))
-
-	tlsCfg := &tls.Config{
-		Certificates: tlsCerts,
-		MinVersion:   minTlsVersion,
-		CipherSuites: tlsCiphers,
-		NextProtos:   []string{"h2", "http/1.1"},
-	}
-
-	hs.httpSrv.TLSConfig = tlsCfg
-
-	return nil
+	return []tls.Certificate{*tlsCert}, nil
 }
 
 func (hs *HTTPServer) applyRoutes() {
@@ -842,5 +782,143 @@ func (hs *HTTPServer) getDefaultCiphers(tlsVersion uint16, protocol string) []ui
 			tls.TLS_ECDHE_RSA_WITH_CHACHA20_POLY1305,
 		}
 	}
+	return nil
+}
+
+func (hs *HTTPServer) readCertificates() (*tls.Certificate, error) {
+	if hs.Cfg.CertFile == "" {
+		return nil, errors.New("cert_file cannot be empty when using HTTPS")
+	}
+
+	if hs.Cfg.KeyFile == "" {
+		return nil, errors.New("cert_key cannot be empty when using HTTPS")
+	}
+
+	if _, err := os.Stat(hs.Cfg.CertFile); os.IsNotExist(err) {
+		return nil, fmt.Errorf(`cannot find SSL cert_file at %q`, hs.Cfg.CertFile)
+	}
+
+	if _, err := os.Stat(hs.Cfg.KeyFile); os.IsNotExist(err) {
+		return nil, fmt.Errorf(`cannot find SSL key_file at %q`, hs.Cfg.KeyFile)
+	}
+
+	tlsCert, err := tls.LoadX509KeyPair(hs.Cfg.CertFile, hs.Cfg.KeyFile)
+	if err != nil {
+		return nil, fmt.Errorf("could not load SSL certificate: %w", err)
+	}
+	return &tlsCert, nil
+}
+
+func (hs *HTTPServer) configureTLS() error {
+	tlsCerts, err := hs.tlsCertificates()
+	if err != nil {
+		return err
+	}
+
+	minTlsVersion, err := util.TlsNameToVersion(hs.Cfg.MinTLSVersion)
+	if err != nil {
+		return err
+	}
+
+	tlsCiphers := hs.getDefaultCiphers(minTlsVersion, string(hs.Cfg.Protocol))
+
+	hs.log.Info("HTTP Server TLS settings", "scheme", hs.Cfg.Protocol, "Min TLS Version", hs.Cfg.MinTLSVersion,
+		"configured ciphers", util.TlsCipherIdsToString(tlsCiphers))
+
+	tlsCfg := &tls.Config{
+		Certificates: tlsCerts,
+		MinVersion:   minTlsVersion,
+		CipherSuites: tlsCiphers,
+	}
+
+	hs.httpSrv.TLSConfig = tlsCfg
+
+	if hs.Cfg.Protocol == setting.HTTP2Scheme {
+		hs.httpSrv.TLSConfig.NextProtos = []string{"h2", "http/1.1"}
+	}
+
+	if hs.Cfg.Protocol == setting.HTTPSScheme {
+		hs.httpSrv.TLSNextProto = make(map[string]func(*http.Server, *tls.Conn, http.Handler))
+	}
+
+	return nil
+}
+
+func (hs *HTTPServer) GetCertificate(*tls.ClientHelloInfo) (*tls.Certificate, error) {
+	hs.tlsCerts.certLock.RLock()
+	defer hs.tlsCerts.certLock.RUnlock()
+
+	tlsCerts := hs.tlsCerts.certs
+	return tlsCerts, nil
+}
+
+// fsnotify module can be used to detect file changes and based on the event certs can be reloaded
+// since it adds a direct dependency for the optional feature. So that is the reason periodic watching
+// of cert files is chosen. If fsnotify is added as direct dependency in future, then the implementation
+// can be revisited to align to fsnotify.
+func (hs *HTTPServer) WatchAndUpdateCerts(ctx context.Context) {
+	ticker := time.NewTicker(hs.Cfg.CertWatchInterval)
+
+	for {
+		select {
+		case <-ticker.C:
+			if err := hs.updateCerts(); err != nil {
+				hs.log.Error("Not able to reload certificates", "error", err)
+			}
+		case <-ctx.Done():
+			hs.log.Debug("Stopping the CertWatchInterval ticker")
+			ticker.Stop()
+			return
+		}
+	}
+}
+
+func (hs *HTTPServer) updateCerts() error {
+	tlsInfo := &hs.tlsCerts
+	cMtime, err := getMtime(hs.Cfg.CertFile)
+	if err != nil {
+		return err
+	}
+	kMtime, err := getMtime(hs.Cfg.KeyFile)
+	if err != nil {
+		return err
+	}
+
+	if cMtime.Compare(tlsInfo.certMtime) != 0 || kMtime.Compare(tlsInfo.keyMtime) != 0 {
+		certs, err := hs.readCertificates()
+		if err != nil {
+			return err
+		}
+		tlsInfo.certLock.Lock()
+		defer tlsInfo.certLock.Unlock()
+
+		tlsInfo.certs = certs
+		tlsInfo.certMtime = cMtime
+		tlsInfo.keyMtime = kMtime
+		hs.log.Info("Server certificates updated", "cMtime", tlsInfo.certMtime, "kMtime", tlsInfo.keyMtime)
+	}
+	return nil
+}
+
+func getMtime(name string) (time.Time, error) {
+	fInfo, err := os.Stat(name)
+	if err != nil {
+		return time.Time{}, err
+	}
+	return fInfo.ModTime(), nil
+}
+
+func (hs *HTTPServer) updateMtimeOfServerCerts() error {
+	var err error
+	hs.tlsCerts.certMtime, err = getMtime(hs.Cfg.CertFile)
+	if err != nil {
+		return err
+	}
+
+	hs.tlsCerts.keyMtime, err = getMtime(hs.Cfg.KeyFile)
+	if err != nil {
+		return err
+	}
+
 	return nil
 }

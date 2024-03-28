@@ -1,4 +1,4 @@
-import { countBy, split, trim, upperFirst } from 'lodash';
+import { countBy, difference, take, trim, upperFirst } from 'lodash';
 import { ReactNode } from 'react';
 
 import { config } from '@grafana/runtime';
@@ -7,6 +7,7 @@ import {
   GrafanaManagedContactPoint,
   GrafanaManagedReceiverConfig,
   MatcherOperator,
+  Receiver,
   Route,
 } from 'app/plugins/datasource/alertmanager/types';
 import { NotifierDTO, NotifierStatus, ReceiversStateDTO } from 'app/types';
@@ -30,21 +31,30 @@ export function isProvisioned(contactPoint: GrafanaManagedContactPoint) {
 
 // TODO we should really add some type information to these receiver settings...
 export function getReceiverDescription(receiver: ReceiverConfigWithMetadata): ReactNode | undefined {
+  if (!receiver.settings) {
+    return undefined;
+  }
   switch (receiver.type) {
     case 'email': {
       const hasEmailAddresses = 'addresses' in receiver.settings; // when dealing with alertmanager email_configs we don't normalize the settings
       return hasEmailAddresses ? summarizeEmailAddresses(receiver.settings['addresses']) : undefined;
     }
     case 'slack': {
-      const channelName = receiver.settings['recipient'];
-      return channelName ? `#${channelName}` : undefined;
+      const recipient: string | undefined = receiver.settings['recipient'];
+      if (!recipient) {
+        return;
+      }
+
+      // Slack channel name might have a "#" in the recipient already
+      const channelName = recipient.replace(/^#/, '');
+      return `#${channelName}`;
     }
     case 'kafka': {
-      const topicName = receiver.settings['kafkaTopic'];
+      const topicName: string | undefined = receiver.settings['kafkaTopic'];
       return topicName;
     }
     case 'webhook': {
-      const url = receiver.settings['url'];
+      const url: string | undefined = receiver.settings['url'];
       return url;
     }
     case ReceiverTypes.OnCall: {
@@ -57,20 +67,22 @@ export function getReceiverDescription(receiver: ReceiverConfigWithMetadata): Re
 
 // input: foo+1@bar.com, foo+2@bar.com, foo+3@bar.com, foo+4@bar.com
 // output: foo+1@bar.com, foo+2@bar.com, +2 more
-function summarizeEmailAddresses(addresses: string): string {
+export function summarizeEmailAddresses(addresses: string): string {
   const MAX_ADDRESSES_SHOWN = 3;
   const SUPPORTED_SEPARATORS = /,|;|\n+/g;
 
+  // split all email addresses
   const emails = addresses.trim().split(SUPPORTED_SEPARATORS).map(trim);
 
-  const notShown = emails.length - MAX_ADDRESSES_SHOWN;
+  // grab the first 3 and the rest
+  const summary = take(emails, MAX_ADDRESSES_SHOWN);
+  const rest = difference(emails, summary);
 
-  const truncatedAddresses = split(addresses, SUPPORTED_SEPARATORS, MAX_ADDRESSES_SHOWN);
-  if (notShown > 0) {
-    truncatedAddresses.push(`+${notShown} more`);
+  if (rest.length) {
+    summary.push(`+${rest.length} more`);
   }
 
-  return truncatedAddresses.join(', ');
+  return summary.join(', ');
 }
 
 // Grafana Managed contact points have receivers with additional diagnostics
@@ -87,7 +99,7 @@ export interface ReceiverConfigWithMetadata extends GrafanaManagedReceiverConfig
 }
 
 export interface ContactPointWithMetadata extends GrafanaManagedContactPoint {
-  numberOfPolicies: number;
+  numberOfPolicies?: number; // now is optional as we don't have the data from the read-only endpoint
   grafana_managed_receiver_configs: ReceiverConfigWithMetadata[];
 }
 
@@ -95,30 +107,36 @@ export interface ContactPointWithMetadata extends GrafanaManagedContactPoint {
  * This function adds the status information for each of the integrations (contact point types) in a contact point
  * 1. we iterate over all contact points
  * 2. for each contact point we "enhance" it with the status or "undefined" for vanilla Alertmanager
+ * contactPoints: list of contact points
+ * alertmanagerConfiguration: optional as is passed when we need to get number of policies for each contact point
+ * and we prefer using the data from the read-only endpoint.
  */
 export function enhanceContactPointsWithMetadata(
-  result: AlertManagerCortexConfig,
   status: ReceiversStateDTO[] = [],
   notifiers: NotifierDTO[] = [],
-  onCallIntegrations: OnCallIntegrationDTO[] | undefined | null
+  onCallIntegrations: OnCallIntegrationDTO[] | undefined | null,
+  contactPoints: Receiver[],
+  alertmanagerConfiguration?: AlertManagerCortexConfig
 ): ContactPointWithMetadata[] {
-  const contactPoints = result.alertmanager_config.receivers ?? [];
-
   // compute the entire inherited tree before finding what notification policies are using a particular contact point
-  const fullyInheritedTree = computeInheritedTree(result?.alertmanager_config?.route ?? {});
+  const fullyInheritedTree = computeInheritedTree(alertmanagerConfiguration?.alertmanager_config?.route ?? {});
   const usedContactPoints = getUsedContactPoints(fullyInheritedTree);
   const usedContactPointsByName = countBy(usedContactPoints);
 
-  return contactPoints.map((contactPoint) => {
+  const contactPointsList = alertmanagerConfiguration
+    ? alertmanagerConfiguration?.alertmanager_config.receivers ?? []
+    : contactPoints ?? [];
+
+  return contactPointsList.map((contactPoint) => {
     const receivers = extractReceivers(contactPoint);
     const statusForReceiver = status.find((status) => status.name === contactPoint.name);
 
     return {
       ...contactPoint,
-      numberOfPolicies: usedContactPointsByName[contactPoint.name] ?? 0,
+      numberOfPolicies:
+        alertmanagerConfiguration && usedContactPointsByName && (usedContactPointsByName[contactPoint.name] ?? 0),
       grafana_managed_receiver_configs: receivers.map((receiver, index) => {
         const isOnCallReceiver = receiver.type === ReceiverTypes.OnCall;
-
         return {
           ...receiver,
           [RECEIVER_STATUS_KEY]: statusForReceiver?.integrations[index],
@@ -130,6 +148,7 @@ export function enhanceContactPointsWithMetadata(
     };
   });
 }
+
 export function isAutoGeneratedPolicy(route: Route) {
   const simplifiedRoutingToggleEnabled = config.featureToggles.alertingSimplifiedRouting ?? false;
   if (!simplifiedRoutingToggleEnabled) {
@@ -149,8 +168,7 @@ export function isAutoGeneratedPolicy(route: Route) {
 
 export function getUsedContactPoints(route: Route): string[] {
   const childrenContactPoints = route.routes?.flatMap((route) => getUsedContactPoints(route)) ?? [];
-  // we don't want to count the autogenerated policy for receiver level, for checking if a contact point is used
-  if (route.receiver && !isAutoGeneratedPolicy(route)) {
+  if (route.receiver) {
     return [route.receiver, ...childrenContactPoints];
   }
 

@@ -1,4 +1,4 @@
-import { cloneDeep, defaults } from 'lodash';
+import { defaults } from 'lodash';
 import { lastValueFrom, Observable, throwError } from 'rxjs';
 import { map, tap } from 'rxjs/operators';
 import semver from 'semver/preload';
@@ -30,6 +30,7 @@ import {
 import {
   BackendDataSourceResponse,
   BackendSrvRequest,
+  config,
   DataSourceWithBackend,
   FetchResponse,
   getBackendSrv,
@@ -188,9 +189,9 @@ export class PrometheusDatasource
   }
 
   _isDatasourceVersionGreaterOrEqualTo(targetVersion: string, targetFlavor: PromApplication): boolean {
-    // User hasn't configured flavor/version yet, default behavior is to not support features that require version configuration when not provided
+    // User hasn't configured flavor/version yet, default behavior is to support labels match api support
     if (!this.datasourceConfigurationPrometheusVersion || !this.datasourceConfigurationPrometheusFlavor) {
-      return false;
+      return true;
     }
 
     if (targetFlavor !== this.datasourceConfigurationPrometheusFlavor) {
@@ -363,6 +364,11 @@ export class PrometheusDatasource
       // We need to pass utcOffsetSec to backend to calculate aligned range
       utcOffsetSec: request.range.to.utcOffset() * 60,
     };
+
+    if (config.featureToggles.promQLScope) {
+      processedTarget.scope = request.scope;
+    }
+
     if (target.instant && target.range) {
       // We have query type "Both" selected
       // We should send separate queries with different refId
@@ -877,7 +883,7 @@ export class PrometheusDatasource
 
   // Used when running queries through backend
   applyTemplateVariables(target: PromQuery, scopedVars: ScopedVars, filters?: AdHocVariableFilter[]) {
-    const variables = cloneDeep(scopedVars);
+    const variables = { ...scopedVars };
 
     // We want to interpolate these variables on backend.
     // The pre-calculated values are replaced withe the variable strings.

@@ -37,6 +37,8 @@ import {
   DataSourceGetTagValuesOptions,
   AdHocVariableFilter,
   DataSourceWithQueryModificationSupport,
+  AdHocVariableModel,
+  TypedVariableModel,
 } from '@grafana/data';
 import {
   DataSourceWithBackend,
@@ -113,7 +115,6 @@ export class ElasticDatasource
   name: string;
   index: string;
   timeField: string;
-  xpack: boolean;
   interval: string;
   maxConcurrentShardRequests?: number;
   queryBuilder: ElasticQueryBuilder;
@@ -142,7 +143,6 @@ export class ElasticDatasource
 
     this.index = settingsData.index ?? instanceSettings.database ?? '';
     this.timeField = settingsData.timeField;
-    this.xpack = Boolean(settingsData.xpack);
     this.indexPattern = new IndexPattern(this.index, settingsData.interval);
     this.intervalPattern = settingsData.interval;
     this.interval = settingsData.timeInterval;
@@ -260,10 +260,21 @@ export class ElasticDatasource
     );
   }
 
-  private prepareAnnotationRequest(options: { annotation: ElasticsearchAnnotationQuery; range: TimeRange }) {
+  private prepareAnnotationRequest(options: {
+    annotation: ElasticsearchAnnotationQuery;
+    // Should be DashboardModel but cannot import that here from the main app. This is a temporary solution as we need to move from deprecated annotations.
+    dashboard: { getVariables: () => TypedVariableModel[] };
+    range: TimeRange;
+  }) {
     const annotation = options.annotation;
     const timeField = annotation.timeField || '@timestamp';
     const timeEndField = annotation.timeEndField || null;
+    const dashboard = options.dashboard;
+
+    // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+    const adhocVariables = dashboard.getVariables().filter((v) => v.type === 'adhoc') as AdHocVariableModel[];
+    const annotationRelatedVariables = adhocVariables.filter((v) => v.datasource?.uid === annotation.datasource.uid);
+    const filters = annotationRelatedVariables.map((v) => v.filters).flat();
 
     // the `target.query` is the "new" location for the query.
     // normally we would write this code as
@@ -296,6 +307,8 @@ export class ElasticDatasource
     }
 
     const queryInterpolated = this.interpolateLuceneQuery(queryString);
+    const finalQuery = this.addAdHocFilters(queryInterpolated, filters);
+
     const query: {
       bool: { filter: Array<Record<string, Record<string, string | number | Array<{ range: RangeMap }>>>> };
     } = {
@@ -311,10 +324,10 @@ export class ElasticDatasource
       },
     };
 
-    if (queryInterpolated) {
+    if (finalQuery) {
       query.bool.filter.push({
         query_string: {
-          query: queryInterpolated,
+          query: finalQuery,
         },
       });
     }
@@ -812,7 +825,7 @@ export class ElasticDatasource
       searchParams.append('max_concurrent_shard_requests', `${this.maxConcurrentShardRequests}`);
     }
 
-    if (this.xpack && this.includeFrozen) {
+    if (this.includeFrozen) {
       searchParams.append('ignore_throttled', 'false');
     }
 

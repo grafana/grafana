@@ -80,7 +80,7 @@ The following table describes the ways in which you can configure your trace to 
 
 | Setting name              | Description                                                                                                                                                                                                                                                                                                  |
 | ------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| **Data source**           | Defines the target data source. You can select only Loki or Splunk \[logs\] data sources.                                                                                                                                                                                                                    |
+| **Data source**           | Defines the target data source. You can select Loki or any compatible log store.                                                                                                                                                                                                                             |
 | **Span start time shift** | Shifts the start time for the logs query, based on the span's start time. You can use time units, such as `5s`, `1m`, `3h`. To extend the time to the past, use a negative value. Default: `0`.                                                                                                              |
 | **Span end time shift**   | Shifts the end time for the logs query, based on the span's end time. You can use time units. Default: `0`.                                                                                                                                                                                                  |
 | **Tags**                  | Defines the tags to use in the logs query. Default: `cluster`, `hostname`, `namespace`, `pod`, `service.name`, `service.namespace`. You can change the tag name for example to remove dots from the name if they are not allowed in the target data source. For example, map `http.status` to `http_status`. |
@@ -90,11 +90,6 @@ The following table describes the ways in which you can configure your trace to 
 | **Query**                 | Input to write custom query. Use variable interpolation to customize it with variables from span.                                                                                                                                                                                                            |
 
 ## Trace to metrics
-
-{{% admonition type="note" %}}
-This feature is behind the `traceToMetrics` [feature toggle][configure-grafana-feature-toggles].
-If you use Grafana Cloud, open a [support ticket in the Cloud Portal](/profile/org#support) to access this feature.
-{{% /admonition %}}
 
 The **Trace to metrics** setting configures the [trace to metrics feature](/blog/2022/08/18/new-in-grafana-9.1-trace-to-metrics-allows-users-to-navigate-from-a-trace-span-to-a-selected-data-source/) available when integrating Grafana with Tempo.
 
@@ -119,7 +114,7 @@ To use a simple configuration, follow these steps:
 
 ### Custom queries
 
-To use custom queriess with the configuration, follow these steps:
+To use custom queries with the configuration, follow these steps:
 
 1. Select a metrics data source from the **Data source** drop-down.
 1. Optional: Choose any tags to use in the query. If left blank, the default values of `cluster`, `hostname`, `namespace`, `pod`, `service.name` and `service.namespace` are used.
@@ -190,13 +185,6 @@ Once enabled, Grafana displays the node graph above the trace view.
 The **Search** setting configures [Tempo search](/docs/tempo/latest/configuration/#search).
 
 You can configure the **Hide search** setting to hide the search query option in **Explore** if search is not configured in the Tempo instance.
-
-## Loki search
-
-The **Loki search** setting configures the Loki search query type.
-
-Configure the **Data source** setting to define which Loki instance you want to use to search traces.
-You must configure [derived fields]({{< relref "../loki#configure-derived-fields" >}}) in the Loki instance.
 
 ## TraceID query
 
@@ -271,8 +259,6 @@ datasources:
         enabled: true
       search:
         hide: false
-      lokiSearch:
-        datasourceUid: 'loki'
       traceQuery:
         timeShiftEnabled: true
         spanStartTimeShift: '1h'
@@ -285,9 +271,6 @@ datasources:
 {{% docs/reference %}}
 [build-dashboards]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/dashboards/build-dashboards"
 [build-dashboards]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/dashboards/build-dashboards"
-
-[configure-grafana-feature-toggles]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/setup-grafana/configure-grafana#feature_toggles"
-[configure-grafana-feature-toggles]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/setup-grafana/configure-grafana#feature_toggles"
 
 [data-source-management]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/administration/data-source-management"
 [data-source-management]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/administration/data-source-management"

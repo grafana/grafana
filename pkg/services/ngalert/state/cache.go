@@ -121,9 +121,36 @@ func (rs *ruleStates) getOrAdd(stateCandidate State) *State {
 }
 
 func calculateState(ctx context.Context, log log.Logger, alertRule *ngModels.AlertRule, result eval.Result, extraLabels data.Labels, externalURL *url.URL) State {
+	var reserved []string
+	resultLabels := result.Instance
+	if len(resultLabels) > 0 {
+		for key := range ngModels.LabelsUserCannotSpecify {
+			if value, ok := resultLabels[key]; ok {
+				if reserved == nil { // make a copy of labels if we are going to modify it
+					resultLabels = result.Instance.Copy()
+				}
+				reserved = append(reserved, key)
+				delete(resultLabels, key)
+				// we cannot delete the reserved label completely because it can cause alert instances to collide (when this label is only unique across results)
+				// so we just rename it to something that does not collide with reserved labels
+				newKey := strings.TrimSuffix(strings.TrimPrefix(key, "__"), "__")
+				if _, ok = resultLabels[newKey]; newKey == "" || newKey == key || ok { // in the case if in the future the LabelsUserCannotSpecify contains labels that do not have double underscore
+					newKey = key + "_user"
+				}
+				if _, ok = resultLabels[newKey]; !ok { // if it still collides with another existing label, we just drop the label
+					resultLabels[newKey] = value
+				} else {
+					log.Warn("Result contains reserved label, and, after renaming, a new label collides with an existing one. Removing the label completely", "deletedLabel", key, "renamedLabel", newKey)
+				}
+			}
+		}
+		if len(reserved) > 0 {
+			log.Debug("Found collision of result labels and system reserved. Renamed labels with suffix '_user'", "renamedLabels", strings.Join(reserved, ","))
+		}
+	}
 	// Merge both the extra labels and the labels from the evaluation into a common set
 	// of labels that can be expanded in custom labels and annotations.
-	templateData := template.NewData(mergeLabels(extraLabels, result.Instance), result)
+	templateData := template.NewData(mergeLabels(extraLabels, resultLabels), result)
 
 	// For now, do nothing with these errors as they are already logged in expand.
 	// In the future, we want to show these errors to the user somehow.
@@ -139,7 +166,7 @@ func calculateState(ctx context.Context, log log.Logger, alertRule *ngModels.Ale
 		}
 	}
 
-	lbs := make(data.Labels, len(extraLabels)+len(labels)+len(result.Instance))
+	lbs := make(data.Labels, len(extraLabels)+len(labels)+len(resultLabels))
 	dupes := make(data.Labels)
 	for key, val := range extraLabels {
 		lbs[key] = val
@@ -159,7 +186,7 @@ func calculateState(ctx context.Context, log log.Logger, alertRule *ngModels.Ale
 		log.Warn("Rule declares one or many reserved labels. Those rules labels will be ignored", "labels", dupes)
 	}
 	dupes = make(data.Labels)
-	for key, val := range result.Instance {
+	for key, val := range resultLabels {
 		_, ok := lbs[key]
 		// if duplicate labels exist, reserved or alert rule label will take precedence
 		if ok {
@@ -190,7 +217,7 @@ func calculateState(ctx context.Context, log log.Logger, alertRule *ngModels.Ale
 		Values:             values,
 		StartsAt:           result.EvaluatedAt,
 		EndsAt:             result.EvaluatedAt,
-		ResultFingerprint:  result.Instance.Fingerprint(),
+		ResultFingerprint:  result.Instance.Fingerprint(), // remember original result fingerprint
 	}
 	return newState
 }

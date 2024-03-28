@@ -1,13 +1,22 @@
 // this file is pretty much a copy-paste of TimeSeriesPanel.tsx :(
 // with some extra renderers passed to the <TimeSeries> component
 
-import React, { useMemo, useState } from 'react';
+import React, { useMemo, useState, useCallback } from 'react';
 import uPlot from 'uplot';
 
-import { DashboardCursorSync, Field, getDisplayProcessor, getLinksSupplier, PanelProps } from '@grafana/data';
+import { Field, getDisplayProcessor, PanelProps } from '@grafana/data';
 import { PanelDataErrorView } from '@grafana/runtime';
-import { TooltipDisplayMode } from '@grafana/schema';
-import { TooltipPlugin, TooltipPlugin2, UPlotConfigBuilder, usePanelContext, useTheme2, ZoomPlugin } from '@grafana/ui';
+import { DashboardCursorSync, TooltipDisplayMode } from '@grafana/schema';
+import {
+  EventBusPlugin,
+  KeyboardPlugin,
+  TooltipPlugin,
+  TooltipPlugin2,
+  UPlotConfigBuilder,
+  usePanelContext,
+  useTheme2,
+  ZoomPlugin,
+} from '@grafana/ui';
 import { AxisProps } from '@grafana/ui/src/components/uPlot/config/UPlotAxisBuilder';
 import { ScaleProps } from '@grafana/ui/src/components/uPlot/config/UPlotScaleBuilder';
 import { TimeRange2, TooltipHoverMode } from '@grafana/ui/src/components/uPlot/plugins/TooltipPlugin2';
@@ -42,9 +51,30 @@ export const CandlestickPanel = ({
   onChangeTimeRange,
   replaceVariables,
 }: CandlestickPanelProps) => {
-  const { sync, canAddAnnotations, onThresholdsChange, canEditThresholds, showThresholds } = usePanelContext();
+  const {
+    sync,
+    canAddAnnotations,
+    onThresholdsChange,
+    canEditThresholds,
+    showThresholds,
+    dataLinkPostProcessor,
+    eventBus,
+  } = usePanelContext();
 
   const theme = useTheme2();
+
+  // TODO: we should just re-init when this changes, and have this be a static setting
+  const syncTooltip = useCallback(
+    () => sync?.() === DashboardCursorSync.Tooltip,
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    []
+  );
+
+  const syncAny = useCallback(
+    () => sync?.() !== DashboardCursorSync.Off,
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    []
+  );
 
   const info = useMemo(() => {
     return prepareCandlestickFields(data.series, options, theme, timeRange);
@@ -233,9 +263,8 @@ export const CandlestickPanel = ({
     }
   }
 
-  const enableAnnotationCreation = Boolean(canAddAnnotations && canAddAnnotations());
-  const showNewVizTooltips =
-    config.featureToggles.newVizTooltips && (sync == null || sync() !== DashboardCursorSync.Tooltip);
+  const enableAnnotationCreation = Boolean(canAddAnnotations?.());
+  const showNewVizTooltips = Boolean(config.featureToggles.newVizTooltips);
 
   return (
     <TimeSeries
@@ -250,20 +279,14 @@ export const CandlestickPanel = ({
       tweakAxis={tweakAxis}
       tweakScale={tweakScale}
       options={options}
+      replaceVariables={replaceVariables}
+      dataLinkPostProcessor={dataLinkPostProcessor}
     >
-      {(uplotConfig, alignedDataFrame) => {
-        alignedDataFrame.fields.forEach((field) => {
-          field.getLinks = getLinksSupplier(
-            alignedDataFrame,
-            field,
-            field.state!.scopedVars!,
-            replaceVariables,
-            timeZone
-          );
-        });
-
+      {(uplotConfig, alignedFrame) => {
         return (
           <>
+            <KeyboardPlugin config={uplotConfig} />
+            <EventBusPlugin config={uplotConfig} sync={syncAny} eventBus={eventBus} frame={alignedFrame} />
             {showNewVizTooltips ? (
               <TooltipPlugin2
                 config={uplotConfig}
@@ -272,11 +295,8 @@ export const CandlestickPanel = ({
                 }
                 queryZoom={onChangeTimeRange}
                 clientZoom={true}
+                syncTooltip={syncTooltip}
                 render={(u, dataIdxs, seriesIdx, isPinned = false, dismiss, timeRange2, viaSync) => {
-                  if (viaSync) {
-                    return null;
-                  }
-
                   if (enableAnnotationCreation && timeRange2 != null) {
                     setNewAnnotationRange(timeRange2);
                     dismiss();
@@ -293,10 +313,11 @@ export const CandlestickPanel = ({
                   return (
                     <TimeSeriesTooltip
                       frames={[info.frame]}
-                      seriesFrame={alignedDataFrame}
+                      seriesFrame={alignedFrame}
                       dataIdxs={dataIdxs}
                       seriesIdx={seriesIdx}
-                      mode={options.tooltip.mode}
+                      mode={viaSync ? TooltipDisplayMode.Multi : options.tooltip.mode}
+                      sortOrder={options.tooltip.sort}
                       isPinned={isPinned}
                       annotate={enableAnnotationCreation ? annotate : undefined}
                       scrollable={isTooltipScrollable(options.tooltip)}
@@ -310,7 +331,7 @@ export const CandlestickPanel = ({
               <>
                 <ZoomPlugin config={uplotConfig} onZoom={onChangeTimeRange} withZoomY={true} />
                 <TooltipPlugin
-                  data={alignedDataFrame}
+                  data={alignedFrame}
                   config={uplotConfig}
                   mode={TooltipDisplayMode.Multi}
                   sync={sync}
@@ -335,11 +356,11 @@ export const CandlestickPanel = ({
             {/* Enables annotations creation*/}
             {!showNewVizTooltips ? (
               enableAnnotationCreation ? (
-                <AnnotationEditorPlugin data={alignedDataFrame} timeZone={timeZone} config={uplotConfig}>
+                <AnnotationEditorPlugin data={alignedFrame} timeZone={timeZone} config={uplotConfig}>
                   {({ startAnnotating }) => {
                     return (
                       <ContextMenuPlugin
-                        data={alignedDataFrame}
+                        data={alignedFrame}
                         config={uplotConfig}
                         timeZone={timeZone}
                         replaceVariables={replaceVariables}
@@ -370,7 +391,7 @@ export const CandlestickPanel = ({
                 </AnnotationEditorPlugin>
               ) : (
                 <ContextMenuPlugin
-                  data={alignedDataFrame}
+                  data={alignedFrame}
                   config={uplotConfig}
                   timeZone={timeZone}
                   replaceVariables={replaceVariables}
