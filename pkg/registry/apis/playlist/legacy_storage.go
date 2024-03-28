@@ -122,7 +122,25 @@ func (s *legacyStorage) Create(ctx context.Context,
 	if err != nil {
 		return nil, err
 	}
-	return s.Get(ctx, out.UID, nil)
+
+	created, err := s.Get(ctx, out.UID, nil)
+	if err != nil {
+		return nil, err
+	}
+
+	accessorC, err := meta.Accessor(created)
+	if err != nil {
+		return nil, err
+	}
+	accessorO, err := meta.Accessor(obj)
+	if err != nil {
+		return nil, err
+	}
+
+	accessorC.SetAnnotations(accessorO.GetAnnotations())
+	accessorC.SetLabels(accessorO.GetLabels())
+
+	return created, err
 }
 
 func (s *legacyStorage) Update(ctx context.Context,
