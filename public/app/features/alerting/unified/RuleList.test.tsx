@@ -26,6 +26,7 @@ import {
 } from 'app/features/alerting/unified/mockApi';
 import { mockAlertmanagerChoiceResponse } from 'app/features/alerting/unified/mocks/alertmanagerApi';
 import * as actions from 'app/features/alerting/unified/state/actions';
+import { getMockUser } from 'app/features/users/__mocks__/userMocks';
 import { AlertmanagerChoice } from 'app/plugins/datasource/alertmanager/types';
 import { AccessControlAction } from 'app/types';
 import { PromAlertingRuleState, PromApplication } from 'app/types/unified-alerting-dto';
@@ -49,7 +50,6 @@ import {
   somePromRules,
   someRulerRules,
   mockFolder,
-  mockUser,
 } from './mocks';
 import * as config from './utils/config';
 import { DataSourceType, GRAFANA_RULES_SOURCE_NAME } from './utils/datasource';
@@ -164,7 +164,7 @@ const server = setupServer();
 
 const configureMockServer = () => {
   mockSearchApi(server).search([]);
-  mockUserApi(server).user(mockUser());
+  mockUserApi(server).user(getMockUser());
   mockFolderApi(server).folder(
     'NAMESPACE_UID',
     mockFolder({

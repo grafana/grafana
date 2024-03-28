@@ -6,6 +6,7 @@ import { setupServer, SetupServer } from 'msw/node';
 import { DataSourceInstanceSettings, PluginMeta } from '@grafana/data';
 import { setBackendSrv } from '@grafana/runtime';
 import { AlertRuleUpdated } from 'app/features/alerting/unified/api/alertRuleApi';
+import { DashboardDTO, FolderDTO, NotifierDTO, OrgUser } from 'app/types';
 import {
   PromBuildInfoResponse,
   PromRulesResponse,
@@ -23,7 +24,6 @@ import {
   MatcherOperator,
   Route,
 } from '../../../plugins/datasource/alertmanager/types';
-import { DashboardDTO, FolderDTO, NotifierDTO, UserDTO } from '../../../types';
 import { DashboardSearchItem } from '../../search/types';
 
 import { CreateIntegrationDTO, NewOnCallIntegrationDTO, OnCallIntegrationDTO } from './api/onCallApi';
@@ -404,7 +404,7 @@ export function mockSearchApi(server: SetupServer) {
 
 export function mockUserApi(server: SetupServer) {
   return {
-    user: (user: UserDTO) => {
+    user: (user: OrgUser) => {
       server.use(http.get(`/api/user`, () => HttpResponse.json(user)));
     },
   };
