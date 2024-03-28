@@ -16,7 +16,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/quota/quotatest"
 	"github.com/grafana/grafana/pkg/services/serviceaccounts"
 	"github.com/grafana/grafana/pkg/services/serviceaccounts/tests"
-	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/supportbundles/supportbundlestest"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/services/user/userimpl"
@@ -209,7 +208,7 @@ func TestStore_DeleteServiceAccount(t *testing.T) {
 	for _, c := range cases {
 		t.Run(c.desc, func(t *testing.T) {
 			db, store := setupTestDatabase(t)
-			user := tests.SetupUserServiceAccount(t, db, c.user)
+			user := tests.SetupUserServiceAccount(t, db, store.cfg, c.user)
 			err := store.DeleteServiceAccount(context.Background(), user.OrgID, user.ID)
 			if c.expectedErr != nil {
 				require.ErrorIs(t, err, c.expectedErr)
@@ -220,18 +219,19 @@ func TestStore_DeleteServiceAccount(t *testing.T) {
 	}
 }
 
-func setupTestDatabase(t *testing.T) (*sqlstore.SQLStore, *ServiceAccountsStoreImpl) {
+func setupTestDatabase(t *testing.T) (db.DB, *ServiceAccountsStoreImpl) {
 	t.Helper()
 	db := db.InitTestDB(t)
+	cfg := db.Cfg
 	quotaService := quotatest.New(false, nil)
-	apiKeyService, err := apikeyimpl.ProvideService(db, db.Cfg, quotaService)
+	apiKeyService, err := apikeyimpl.ProvideService(db, cfg, quotaService)
 	require.NoError(t, err)
 	kvStore := kvstore.ProvideService(db)
-	orgService, err := orgimpl.ProvideService(db, db.Cfg, quotaService)
+	orgService, err := orgimpl.ProvideService(db, cfg, quotaService)
 	require.NoError(t, err)
-	userSvc, err := userimpl.ProvideService(db, orgService, db.Cfg, nil, nil, quotaService, supportbundlestest.NewFakeBundleService())
+	userSvc, err := userimpl.ProvideService(db, orgService, cfg, nil, nil, quotaService, supportbundlestest.NewFakeBundleService())
 	require.NoError(t, err)
-	return db, ProvideServiceAccountsStore(db.Cfg, db, apiKeyService, kvStore, userSvc, orgService)
+	return db, ProvideServiceAccountsStore(cfg, db, apiKeyService, kvStore, userSvc, orgService)
 }
 
 func TestStore_RetrieveServiceAccount(t *testing.T) {
@@ -255,7 +255,7 @@ func TestStore_RetrieveServiceAccount(t *testing.T) {
 	for _, c := range cases {
 		t.Run(c.desc, func(t *testing.T) {
 			db, store := setupTestDatabase(t)
-			user := tests.SetupUserServiceAccount(t, db, c.user)
+			user := tests.SetupUserServiceAccount(t, db, store.cfg, c.user)
 			dto, err := store.RetrieveServiceAccount(context.Background(), user.OrgID, user.ID)
 			if c.expectedErr != nil {
 				require.ErrorIs(t, err, c.expectedErr)
@@ -458,7 +458,7 @@ func TestServiceAccountsStoreImpl_SearchOrgServiceAccounts(t *testing.T) {
 	}
 
 	db, store := setupTestDatabase(t)
-	orgID := tests.SetupUsersServiceAccounts(t, db, initUsers)
+	orgID := tests.SetupUsersServiceAccounts(t, db, store.cfg, initUsers)
 
 	userWithPerm := &user.SignedInUser{
 		OrgID:       orgID,
@@ -582,7 +582,7 @@ func TestServiceAccountsStoreImpl_EnableServiceAccounts(t *testing.T) {
 	}
 
 	db, store := setupTestDatabase(t)
-	orgID := tests.SetupUsersServiceAccounts(t, db, initUsers)
+	orgID := tests.SetupUsersServiceAccounts(t, db, store.cfg, initUsers)
 
 	fetchStates := func() map[int64]bool {
 		sa1, err := store.RetrieveServiceAccount(ctx, orgID, 1)
