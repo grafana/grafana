@@ -86,16 +86,20 @@ func TestIntegrationScopes(t *testing.T) {
 
 	t.Run("Check create and list", func(t *testing.T) {
 		// Scope create+get
-		scopeClient := helper.Org1.Admin.ResourceClient(t, schema.GroupVersionResource{
-			Group: "scope.grafana.app", Version: "v0alpha1", Resource: "scopes",
+		scopeClient := helper.GetResourceClient(apis.ResourceClientArgs{
+			User:      helper.Org1.Admin,
+			Namespace: "default", // actually org1
+			GVR: schema.GroupVersionResource{
+				Group: "scope.grafana.app", Version: "v0alpha1", Resource: "scopes",
+			},
 		})
-		s0, err := scopeClient.Create(ctx,
+		s0, err := scopeClient.Resource.Create(ctx,
 			helper.LoadYAMLOrJSONFile("testdata/example-scope.yaml"),
 			metav1.CreateOptions{},
 		)
 		require.NoError(t, err)
 		require.Equal(t, "example", s0.GetName())
-		s1, err := scopeClient.Get(ctx, "example", metav1.GetOptions{})
+		s1, err := scopeClient.Resource.Get(ctx, "example", metav1.GetOptions{})
 		require.NoError(t, err)
 		require.Equal(t,
 			mustNestedString(s0.Object, "spec", "title"),
@@ -103,19 +107,31 @@ func TestIntegrationScopes(t *testing.T) {
 		)
 
 		// Create bindings
-		scopeDashboardBindingClient := helper.Org1.Admin.ResourceClient(t, schema.GroupVersionResource{
-			Group: "scope.grafana.app", Version: "v0alpha1", Resource: "scopedashboardbindings",
+		scopeDashboardBindingClient := helper.GetResourceClient(apis.ResourceClientArgs{
+			User:      helper.Org1.Admin,
+			Namespace: "default", // actually org1
+			GVR: schema.GroupVersionResource{
+				Group: "scope.grafana.app", Version: "v0alpha1", Resource: "scopedashboardbindings",
+			},
 		})
-		b0, err := scopeDashboardBindingClient.Create(ctx,
-			helper.LoadYAMLOrJSONFile("testdata/example-scope-dashboard-binding.yaml"),
+		_, err = scopeDashboardBindingClient.Resource.Create(ctx,
+			helper.LoadYAMLOrJSONFile("testdata/example-scope-dashboard-binding-abc.yaml"),
 			metav1.CreateOptions{},
 		)
 		require.NoError(t, err)
-		require.Equal(t, "example_abc", b0.GetName())
+		_, err = scopeDashboardBindingClient.Resource.Create(ctx,
+			helper.LoadYAMLOrJSONFile("testdata/example-scope-dashboard-binding-xyz.yaml"),
+			metav1.CreateOptions{},
+		)
+		require.NoError(t, err)
+
+		found, err := scopeDashboardBindingClient.Resource.List(ctx, metav1.ListOptions{})
+		require.NoError(t, err)
+		require.Len(t, found.Items, 2)
 	})
 }
 
 func mustNestedString(obj map[string]interface{}, fields ...string) string {
-	v, _, _ := unstructured.NestedString(obj, "spec", "title")
+	v, _, _ := unstructured.NestedString(obj, fields...)
 	return v
 }

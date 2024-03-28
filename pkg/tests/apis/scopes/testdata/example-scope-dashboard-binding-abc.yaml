@@ -6,4 +6,3 @@ spec:
     scope: example
     dashboards: 
       - abc
-      - xyz
