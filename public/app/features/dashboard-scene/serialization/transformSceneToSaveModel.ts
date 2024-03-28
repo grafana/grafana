@@ -10,7 +10,6 @@ import {
   SceneDataTransformer,
   SceneVariableSet,
   LocalValueVariable,
-  SceneDataLayerSet,
 } from '@grafana/scenes';
 import {
   AnnotationQuery,
@@ -33,6 +32,7 @@ import { DASHBOARD_SCHEMA_VERSION } from 'app/features/dashboard/state/Dashboard
 import { GrafanaQueryType } from 'app/plugins/datasource/grafana/types';
 
 import { AddLibraryPanelWidget } from '../scene/AddLibraryPanelWidget';
+import { DashboardDataLayerSet } from '../scene/DashboardDataLayerSet';
 import { DashboardGridItem } from '../scene/DashboardGridItem';
 import { DashboardScene } from '../scene/DashboardScene';
 import { LibraryVizPanel } from '../scene/LibraryVizPanel';
@@ -77,10 +77,9 @@ export function transformSceneToSaveModel(scene: DashboardScene, isSnapshot = fa
   }
 
   let annotations: AnnotationQuery[] = [];
-  if (data instanceof SceneDataLayerSet) {
-    const layers = data.state.layers;
 
-    annotations = dataLayersToAnnotations(layers);
+  if (data instanceof DashboardDataLayerSet) {
+    annotations = dataLayersToAnnotations(data.state.annotationLayers);
   }
 
   if (variablesSet instanceof SceneVariableSet) {

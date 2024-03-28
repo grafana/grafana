@@ -5,6 +5,9 @@ import { TooltipDisplayMode, SortOrder } from '@grafana/schema';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 import { DashboardModel, PanelModel as PanelModelState } from 'app/features/dashboard/state';
 import { createDashboardModelFixture } from 'app/features/dashboard/state/__fixtures__/dashboardFixtures';
+import { dataLayersToAnnotations } from 'app/features/dashboard-scene/serialization/dataLayersToAnnotations';
+import { transformSaveModelToScene } from 'app/features/dashboard-scene/serialization/transformSaveModelToScene';
+import { dashboardSceneGraph } from 'app/features/dashboard-scene/utils/dashboardSceneGraph';
 import { GrafanaQueryType } from 'app/plugins/datasource/grafana/types';
 
 import { graphPanelChangedHandler } from './migrations';
@@ -122,6 +125,42 @@ describe('Graph Migrations', () => {
       expect(dashboard.annotations.list).toHaveLength(2); // built-in + time region
       expect(
         dashboard.annotations.list.filter((annotation) => annotation.target?.queryType === GrafanaQueryType.TimeRegions)
+      ).toHaveLength(1);
+      expect(panel).toMatchSnapshot();
+    });
+
+    test('should migrate in scenes dashboard', () => {
+      const old = {
+        angular: {
+          timeRegions: [
+            {
+              colorMode: 'red',
+              fill: true,
+              fillColor: 'rgba(234, 112, 112, 0.12)',
+              fromDayOfWeek: 1,
+              line: true,
+              lineColor: 'rgba(237, 46, 24, 0.60)',
+              op: 'time',
+            },
+          ],
+        },
+      };
+
+      const panel = { datasource: { type: 'datasource', uid: 'gdev-testdata' } } as PanelModel;
+
+      dashboard.panels.push(new PanelModelState(panel));
+
+      const scene = transformSaveModelToScene({ dashboard, meta: {} });
+      window.__grafanaSceneContext = scene;
+
+      panel.options = graphPanelChangedHandler(panel, 'graph', old, prevFieldConfig);
+
+      const layers = dashboardSceneGraph.getDataLayers(scene).state.annotationLayers;
+      const annotations = dataLayersToAnnotations(layers);
+
+      expect(annotations).toHaveLength(2); // built-in + time region
+      expect(
+        annotations.filter((annotation) => annotation.target?.queryType === GrafanaQueryType.TimeRegions)
       ).toHaveLength(1);
       expect(panel).toMatchSnapshot();
     });
