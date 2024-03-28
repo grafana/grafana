@@ -41,6 +41,7 @@ const (
 	NavIDAlerting             = "alerting"
 	NavIDMonitoring           = "monitoring"
 	NavIDInfrastructure       = "infrastructure"
+	NavIDConnections          = "connections"
 	NavIDFrontend             = "frontend"
 	NavIDReporting            = "reports"
 	NavIDApps                 = "apps"
