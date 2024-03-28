@@ -8,4 +8,5 @@ import (
 
 type store interface {
 	MigrateDatasources(context.Context, *cloudmigration.MigrateDatasourcesRequest) (*cloudmigration.MigrateDatasourcesResponse, error)
+	GetAllCloudMigrations(ctx context.Context) ([]*cloudmigration.CloudMigration, error)
 }

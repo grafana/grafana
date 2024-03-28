@@ -30,7 +30,7 @@ func (s *NoopServiceImpl) GetMigration(ctx context.Context, id int64) (*cloudmig
 	return nil, cloudmigration.ErrFeatureDisabledError
 }
 
-func (s *NoopServiceImpl) GetMigrationList(ctx context.Context) ([]cloudmigration.CloudMigrationResponse, error) {
+func (s *NoopServiceImpl) GetMigrationList(ctx context.Context) (*cloudmigration.CloudMigrationListResponse, error) {
 	return nil, cloudmigration.ErrFeatureDisabledError
 }
 

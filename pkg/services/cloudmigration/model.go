@@ -58,6 +58,10 @@ type CloudMigrationResponse struct {
 	Updated time.Time `json:"updated"`
 }
 
+type CloudMigrationListResponse struct {
+	Migrations []CloudMigrationResponse `json:"migrations"`
+}
+
 type MigrateDatasourcesRequest struct {
 	MigrateToPDC       bool
 	MigrateCredentials bool
