@@ -232,12 +232,12 @@ func (s *Service) RunMigration(ctx context.Context, uid string) (*cloudmigration
 	return nil, nil
 }
 
-func (s *Service) GetMigrationStatus(ctx context.Context, id string, runID string) (*cloudmigration.CloudMigrationRun, error) {
+func (s *Service) GetMigrationRun(ctx context.Context, id string, runID string) (*cloudmigration.CloudMigrationRun, error) {
 	// TODO: Implement method
 	return nil, nil
 }
 
-func (s *Service) GetMigrationStatusList(ctx context.Context, id string) ([]cloudmigration.CloudMigrationRun, error) {
+func (s *Service) GetMigrationRunList(ctx context.Context, id string) ([]cloudmigration.CloudMigrationRun, error) {
 	// TODO: Implement method
 	return nil, nil
 }
