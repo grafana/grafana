@@ -19,6 +19,7 @@ interface Props {
   ruleUID: string;
 }
 
+const STATE_HISTORY_POLLING_INTERVAL = 10 * 1000; // 10 seconds
 const MAX_TIMELINE_SERIES = 12;
 
 const LokiStateHistory = ({ ruleUID }: Props) => {
@@ -38,12 +39,19 @@ const LokiStateHistory = ({ ruleUID }: Props) => {
     isLoading,
     isError,
     error,
-  } = useGetRuleHistoryQuery({
-    ruleUid: ruleUID,
-    from: queryTimeRange.from.unix(),
-    to: queryTimeRange.to.unix(),
-    limit: 250,
-  });
+  } = useGetRuleHistoryQuery(
+    {
+      ruleUid: ruleUID,
+      from: queryTimeRange.from.unix(),
+      to: queryTimeRange.to.unix(),
+      limit: 250,
+    },
+    {
+      refetchOnFocus: true,
+      refetchOnReconnect: true,
+      pollingInterval: STATE_HISTORY_POLLING_INTERVAL,
+    }
+  );
 
   const { dataFrames, historyRecords, commonLabels, totalRecordsCount } = useRuleHistoryRecords(
     stateHistory,
