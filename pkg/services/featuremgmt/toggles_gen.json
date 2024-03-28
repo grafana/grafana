@@ -2063,6 +2063,20 @@
         "hideFromAdminPage": true,
         "hideFromDocs": true
       }
+    },
+    {
+      "metadata": {
+        "name": "dashboardRestore",
+        "resourceVersion": "1708455041047",
+        "creationTimestamp": "2024-02-20T18:50:41Z"
+      },
+      "spec": {
+        "description": "Enables deleted dashboard restore feature",
+        "stage": "experimental",
+        "codeowner": "@grafana/grafana-frontend-platform",
+        "hideFromAdminPage": true,
+        "hideFromDocs": true
+      }
     }
   ]
 }

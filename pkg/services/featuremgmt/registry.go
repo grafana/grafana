@@ -1189,6 +1189,14 @@ var (
 			HideFromDocs:      true,
 			HideFromAdminPage: true,
 		},
+		{
+			Name:              "dashboardRestore",
+			Description:       "Enables deleted dashboard restore feature",
+			Stage:             FeatureStageExperimental,
+			Owner:             grafanaFrontendPlatformSquad,
+			HideFromDocs:      true,
+			HideFromAdminPage: true,
+		},
 	}
 )
 

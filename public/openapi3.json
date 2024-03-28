@@ -438,12 +438,6 @@
           "application/json": {
             "schema": {
               "properties": {
-                "id": {
-                  "description": "ID Identifier of the deleted dashboard.",
-                  "example": 65,
-                  "format": "int64",
-                  "type": "integer"
-                },
                 "message": {
                   "description": "Message Message of the deleted dashboard.",
                   "example": "Dashboard My Dashboard deleted",
@@ -453,10 +447,15 @@
                   "description": "Title Title of the deleted dashboard.",
                   "example": "My Dashboard",
                   "type": "string"
+                },
+                "uid": {
+                  "description": "UID Identifier of the deleted dashboard.",
+                  "example": "65",
+                  "type": "string"
                 }
               },
               "required": [
-                "id",
+                "uid",
                 "title",
                 "message"
               ],
@@ -5902,7 +5901,6 @@
       "Hit": {
         "properties": {
           "folderId": {
-            "description": "Deprecated: use FolderUID instead",
             "format": "int64",
             "type": "integer"
           },
@@ -5921,6 +5919,9 @@
           },
           "isStarred": {
             "type": "boolean"
+          },
+          "remainingTrashAtAge": {
+            "type": "string"
           },
           "slug": {
             "type": "string"
@@ -15492,6 +15493,77 @@
         ]
       }
     },
+    "/dashboards/uid/{uid}/trash": {
+      "delete": {
+        "description": "Will delete the dashboard given the specified unique identifier (uid).",
+        "operationId": "hardDeleteDashboardByUID",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "uid",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/deleteDashboardResponse"
+          },
+          "401": {
+            "$ref": "#/components/responses/unauthorisedError"
+          },
+          "403": {
+            "$ref": "#/components/responses/forbiddenError"
+          },
+          "404": {
+            "$ref": "#/components/responses/notFoundError"
+          },
+          "500": {
+            "$ref": "#/components/responses/internalServerError"
+          }
+        },
+        "summary": "Hard delete dashboard by uid.",
+        "tags": [
+          "dashboards"
+        ]
+      },
+      "patch": {
+        "operationId": "restoreDeletedDashboardByUID",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "uid",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/postDashboardResponse"
+          },
+          "401": {
+            "$ref": "#/components/responses/unauthorisedError"
+          },
+          "403": {
+            "$ref": "#/components/responses/forbiddenError"
+          },
+          "404": {
+            "$ref": "#/components/responses/notFoundError"
+          },
+          "500": {
+            "$ref": "#/components/responses/internalServerError"
+          }
+        },
+        "summary": "Restore a dashboard to a given dashboard version using UID.",
+        "tags": [
+          "dashboards"
+        ]
+      }
+    },
     "/dashboards/uid/{uid}/versions": {
       "get": {
         "operationId": "getDashboardVersionsByUID",
@@ -20461,6 +20533,14 @@
                 "alpha-desc"
               ],
               "type": "string"
+            }
+          },
+          {
+            "description": "Flag indicating if only soft deleted Dashboards should be returned",
+            "in": "query",
+            "name": "deleted",
+            "schema": {
+              "type": "boolean"
             }
           }
         ],

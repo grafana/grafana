@@ -642,4 +642,8 @@ const (
 	// FlagOauthRequireSubClaim
 	// Require that sub claims is present in oauth tokens.
 	FlagOauthRequireSubClaim = "oauthRequireSubClaim"
+
+	// FlagDashboardRestore
+	// Enables deleted dashboard restore feature
+	FlagDashboardRestore = "dashboardRestore"
 )
