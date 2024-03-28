@@ -664,11 +664,16 @@ export enum BarGaugeSizing {
  * TODO docs
  */
 export interface VizTooltipOptions {
+  calcs?: Array<string>;
   maxHeight?: number;
   maxWidth?: number;
   mode: TooltipDisplayMode;
   sort: SortOrder;
 }
+
+export const defaultVizTooltipOptions: Partial<VizTooltipOptions> = {
+  calcs: [],
+};
 
 export interface Labels {}
 

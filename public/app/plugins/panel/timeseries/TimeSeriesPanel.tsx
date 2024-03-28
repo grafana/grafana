@@ -161,6 +161,7 @@ export const TimeSeriesPanel = ({
                           isPinned={isPinned}
                           annotate={enableAnnotationCreation ? annotate : undefined}
                           scrollable={isTooltipScrollable(options.tooltip)}
+                          calcs={options.tooltip.calcs}
                         />
                       );
                     }}
