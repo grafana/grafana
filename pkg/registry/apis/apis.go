@@ -10,6 +10,7 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apis/example"
 	"github.com/grafana/grafana/pkg/registry/apis/featuretoggle"
 	"github.com/grafana/grafana/pkg/registry/apis/folders"
+	"github.com/grafana/grafana/pkg/registry/apis/frontend"
 	"github.com/grafana/grafana/pkg/registry/apis/peakq"
 	"github.com/grafana/grafana/pkg/registry/apis/playlist"
 	"github.com/grafana/grafana/pkg/registry/apis/query"
@@ -32,6 +33,7 @@ func ProvideRegistryServiceSink(
 	_ *featuretoggle.FeatureFlagAPIBuilder,
 	_ *datasource.DataSourceAPIBuilder,
 	_ *folders.FolderAPIBuilder,
+	_ *frontend.FrontendAPIBuilder,
 	_ *peakq.PeakQAPIBuilder,
 	_ *scope.ScopeAPIBuilder,
 	_ *query.QueryAPIBuilder,
