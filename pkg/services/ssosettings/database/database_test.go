@@ -28,7 +28,7 @@ func TestIntegrationGetSSOSettings(t *testing.T) {
 		t.Skip("skipping integration test")
 	}
 
-	var sqlStore *sqlstore.SQLStore
+	var sqlStore db.DB
 	var ssoSettingsStore *SSOSettingsStore
 
 	setup := func() {
@@ -458,7 +458,7 @@ func TestIntegrationDeleteSSOSettings(t *testing.T) {
 	})
 }
 
-func populateSSOSettings(sqlStore *sqlstore.SQLStore, template models.SSOSettings, providers ...string) error {
+func populateSSOSettings(sqlStore db.DB, template models.SSOSettings, providers ...string) error {
 	return sqlStore.WithDbSession(context.Background(), func(sess *db.Session) error {
 		for _, provider := range providers {
 			settings := models.SSOSettings{
