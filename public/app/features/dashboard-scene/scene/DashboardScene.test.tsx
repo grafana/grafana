@@ -537,7 +537,6 @@ describe('DashboardScene', () => {
         const body = scene.state.body as SceneGridLayout;
         const gridRow = body.state.children[2] as SceneGridRow;
 
-        console.log(gridRow.state.children);
         expect(gridRow.state.children.length).toBe(1);
       });
 
