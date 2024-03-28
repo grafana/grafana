@@ -13,13 +13,13 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/contexthandler/ctxkey"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/org/orgimpl"
 	"github.com/grafana/grafana/pkg/services/quota/quotatest"
-	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/supportbundles/supportbundlestest"
 	"github.com/grafana/grafana/pkg/services/team/teamimpl"
 	"github.com/grafana/grafana/pkg/services/user"
@@ -505,7 +505,7 @@ func checkSeededPermissions(t *testing.T, permissions []resourcePermissionDTO) {
 	}
 }
 
-func seedPermissions(t *testing.T, resourceID string, sql *sqlstore.SQLStore, service *Service) {
+func seedPermissions(t *testing.T, resourceID string, sql db.DB, service *Service) {
 	t.Helper()
 	// seed team 1 with "Edit" permission on dashboard 1
 	teamSvc, err := teamimpl.ProvideService(sql, sql.Cfg)

@@ -13,11 +13,13 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/org/orgimpl"
 	"github.com/grafana/grafana/pkg/services/quota/quotatest"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
+	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
 )
 
@@ -886,10 +888,10 @@ func TestIntegrationGetFolders(t *testing.T) {
 	})
 }
 
-func CreateOrg(t *testing.T, db *sqlstore.SQLStore) int64 {
+func CreateOrg(t *testing.T, db db.DB, cfg *setting.Cfg) int64 {
 	t.Helper()
 
-	orgService, err := orgimpl.ProvideService(db, db.Cfg, quotatest.New(false, nil))
+	orgService, err := orgimpl.ProvideService(db, cfg, quotatest.New(false, nil))
 	require.NoError(t, err)
 	orgID, err := orgService.GetOrCreate(context.Background(), "test-org")
 	require.NoError(t, err)
