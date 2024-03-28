@@ -1,3 +1,4 @@
+import { produce } from 'immer';
 import React from 'react';
 
 import { Menu } from '@grafana/ui';
@@ -37,17 +38,13 @@ const MenuItemPauseRule = ({ rule, onPauseChange }: Props) => {
 
     // Parse the rules into correct format for API
     const modifiedRules = group.rules.map((groupRule) => {
-      if (isGrafanaRulerRule(groupRule.rulerRule) && groupRule.rulerRule.grafana_alert.uid === ruleUid) {
-        return {
-          ...groupRule.rulerRule,
-          grafana_alert: {
-            ...groupRule.rulerRule.grafana_alert,
-            is_paused: newIsPaused,
-          },
-        };
+      if (!(isGrafanaRulerRule(groupRule.rulerRule) && groupRule.rulerRule.grafana_alert.uid === ruleUid)) {
+        return groupRule.rulerRule!;
       }
 
-      return groupRule.rulerRule!;
+      return produce(groupRule.rulerRule, (updatedGroupRule) => {
+        updatedGroupRule.grafana_alert.is_paused = newIsPaused;
+      });
     });
 
     const payload = {
