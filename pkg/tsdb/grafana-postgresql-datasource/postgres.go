@@ -24,12 +24,11 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/data/sqlutil"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend/log"
-	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tsdb/grafana-postgresql-datasource/tls"
 	"github.com/grafana/grafana/pkg/tsdb/sqleng"
 )
 
-func ProvideService(cfg *setting.Cfg) *Service {
+func ProvideService() *Service {
 	logger := backend.NewLoggerWith("logger", "tsdb.postgres")
 	s := &Service{
 		logger: logger,

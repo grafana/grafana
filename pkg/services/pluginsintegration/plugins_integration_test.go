@@ -85,7 +85,7 @@ func TestIntegrationPluginManager(t *testing.T) {
 	pr := prometheus.ProvideService(hcp)
 	tmpo := tempo.ProvideService(hcp)
 	td := testdatasource.ProvideService()
-	pg := postgres.ProvideService(cfg)
+	pg := postgres.ProvideService()
 	my := mysql.ProvideService()
 	ms := mssql.ProvideService(cfg)
 	sv2 := searchV2.ProvideService(cfg, db.InitTestDB(t), nil, nil, tracer, features, nil, nil, nil)
