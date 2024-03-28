@@ -30,7 +30,7 @@ func TestAuthenticateJWT(t *testing.T) {
 	testCases := []struct {
 		name           string
 		wantID         *authn.Identity
-		verifyProvider func(context.Context, string) (jwt.JWTClaims, error)
+		verifyProvider func(context.Context, string) (map[string]any, error)
 		cfg            *setting.Cfg
 	}{
 		{
@@ -63,8 +63,8 @@ func TestAuthenticateJWT(t *testing.T) {
 					},
 				},
 			},
-			verifyProvider: func(context.Context, string) (jwt.JWTClaims, error) {
-				return jwt.JWTClaims{
+			verifyProvider: func(context.Context, string) (map[string]any, error) {
+				return map[string]any{
 					"sub":                "1234567890",
 					"email":              "eai.doe@cor.po",
 					"preferred_username": "eai-doe",
@@ -117,8 +117,8 @@ func TestAuthenticateJWT(t *testing.T) {
 					},
 				},
 			},
-			verifyProvider: func(context.Context, string) (jwt.JWTClaims, error) {
-				return jwt.JWTClaims{
+			verifyProvider: func(context.Context, string) (map[string]any, error) {
+				return map[string]any{
 					"sub":                "1234567890",
 					"email":              "eai.doe@cor.po",
 					"preferred_username": "eai-doe",
@@ -171,8 +171,8 @@ func TestAuthenticateJWT(t *testing.T) {
 func TestJWTClaimConfig(t *testing.T) {
 	t.Parallel()
 	jwtService := &jwt.FakeJWTService{
-		VerifyProvider: func(context.Context, string) (jwt.JWTClaims, error) {
-			return jwt.JWTClaims{
+		VerifyProvider: func(context.Context, string) (map[string]any, error) {
+			return map[string]any{
 				"sub":                "1234567890",
 				"email":              "eai.doe@cor.po",
 				"preferred_username": "eai-doe",
@@ -399,8 +399,8 @@ func TestJWTTest(t *testing.T) {
 func TestJWTStripParam(t *testing.T) {
 	t.Parallel()
 	jwtService := &jwt.FakeJWTService{
-		VerifyProvider: func(context.Context, string) (jwt.JWTClaims, error) {
-			return jwt.JWTClaims{
+		VerifyProvider: func(context.Context, string) (map[string]any, error) {
+			return map[string]any{
 				"sub":                "1234567890",
 				"email":              "eai.doe@cor.po",
 				"preferred_username": "eai-doe",
@@ -449,7 +449,7 @@ func TestJWTSubClaimsConfig(t *testing.T) {
 	// #nosec G101 -- This is a dummy/test token
 	token := "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ2ZXIiOiIxLjAiLCJpc3MiOiJodHRwczovL2F6dXJlZG9tYWlubmFtZS5iMmNsb2dpbi5jb20vNjIwYjI2MzQtYmI4OC00MzdiLTgwYWQtYWM0YTkwZGZkZTkxL3YyLjAvIiwic3ViIjoiOWI4OTg5MDgtMWFlYy00NDc1LTljNDgtNzg1MWQyNjVkZGIxIiwiYXVkIjoiYmEyNzM0NDktMmZiNS00YTRhLTlmODItYTA2MTRhM2MxODQ1IiwiZXhwIjoxNzExNTYwMDcxLCJub25jZSI6ImRlZmF1bHROb25jZSIsImlhdCI6MTcxMTU1NjQ3MSwiYXV0aF90aW1lIjoxNzExNTU2NDcxLCJuYW1lIjoibmFtZV9vZl90aGVfdXNlciIsImdpdmVuX25hbWUiOiJVc2VyTmFtZSIsImZhbWlseV9uYW1lIjoiVXNlclN1cm5hbWUiLCJlbWFpbHMiOlsibWFpbmVtYWlsK2V4dHJhZW1haWwwNUBnbWFpbC5jb20iLCJtYWluZW1haWwrZXh0cmFlbWFpbDA0QGdtYWlsLmNvbSIsIm1haW5lbWFpbCtleHRyYWVtYWlsMDNAZ21haWwuY29tIiwibWFpbmVtYWlsK2V4dHJhZW1haWwwMkBnbWFpbC5jb20iLCJtYWluZW1haWwrZXh0cmFlbWFpbDAxQGdtYWlsLmNvbSIsIm1haW5lbWFpbEBnbWFpbC5jb20iXSwidGZwIjoiQjJDXzFfdXNlcmZsb3ciLCJuYmYiOjE3MTE1NTY0NzF9.qpN3upxUB5CTJ7kmYPHFuhlwG95vdQqJaDDC_8KJFZ8"
 	jwtHeaderName := "X-Forwarded-User"
-	response := jwt.JWTClaims{
+	response := map[string]any{
 		"ver":         "1.0",
 		"iss":         "https://azuredomainname.b2clogin.com/620b2634-bb88-437b-80ad-ac4a90dfde91/v2.0/",
 		"sub":         "9b898908-1aec-4475-9c48-7851d265ddb1",
@@ -484,7 +484,7 @@ func TestJWTSubClaimsConfig(t *testing.T) {
 			jwtHeaderName: {token}},
 	}
 	jwtService := &jwt.FakeJWTService{
-		VerifyProvider: func(context.Context, string) (jwt.JWTClaims, error) {
+		VerifyProvider: func(context.Context, string) (map[string]any, error) {
 			return response, nil
 		},
 	}
