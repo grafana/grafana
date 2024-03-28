@@ -85,11 +85,11 @@ const isBetterMatch = (newMatch: NavModelItem, currentMatch?: NavModelItem) => {
  *
  */
 const overrides: Record<string, string> = {
-  'silence-new': 'silences',
-  'silence-edit': 'silences',
   'alert-rule-add': 'alert-list',
   'alert-rule-view': 'alert-list',
   'org-new': 'global-orgs',
+  'silence-edit': 'silences',
+  'silence-new': 'silences',
 };
 
 export const getActiveItem = (
