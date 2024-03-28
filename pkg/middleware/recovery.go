@@ -39,6 +39,8 @@ var (
 	slash     = []byte("/")
 )
 
+const writingToBufferFailed = "failed to write to buffer"
+
 // stack returns a nicely formatted stack frame, skipping skip frames
 func stack(skip int) []byte {
 	buf := new(bytes.Buffer) // the returned data
@@ -52,7 +54,10 @@ func stack(skip int) []byte {
 			break
 		}
 		// Print this much at least.  If we can't find the source, it won't show.
-		fmt.Fprintf(buf, "%s:%d (0x%x)\n", file, line, pc)
+		_, writeErr := fmt.Fprintf(buf, "%s:%d (0x%x)\n", file, line, pc)
+		if writeErr != nil {
+			fmt.Println(writingToBufferFailed)
+		}
 		if file != lastFile {
 			// We can ignore the gosec G304 warning on this one because `file`
 			// comes from the runtime.Caller() function.
@@ -64,7 +69,10 @@ func stack(skip int) []byte {
 			lines = bytes.Split(data, []byte{'\n'})
 			lastFile = file
 		}
-		fmt.Fprintf(buf, "\t%s: %s\n", function(pc), source(lines, line))
+		_, writeErr = fmt.Fprintf(buf, "\t%s: %s\n", function(pc), source(lines, line))
+		if writeErr != nil {
+			fmt.Println(writingToBufferFailed)
+		}
 	}
 	return buf.Bytes()
 }
