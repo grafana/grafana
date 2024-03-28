@@ -661,7 +661,7 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
     }
 
     if (row) {
-      row.forEachChild((child: SceneObject) => {
+      row.state.children.forEach((child: SceneObject) => {
         if (child.state.key !== key) {
           panels.push(child);
         }
