@@ -101,6 +101,7 @@ describe('getActiveItem', () => {
     {
       text: 'Alerting item',
       url: '/alerting/list',
+      id: 'alert-list',
     },
     {
       text: 'Base',
@@ -120,6 +121,7 @@ describe('getActiveItem', () => {
       url: '/d/moreSpecificDashboard',
     },
   ];
+
   beforeEach(() => {
     locationUtil.initialize({
       config: { appSubUrl: '/subUrl' } as GrafanaConfig,
@@ -160,14 +162,6 @@ describe('getActiveItem', () => {
     });
   });
 
-  it('returns the alerting link if the pathname is an alert notification', () => {
-    const mockPathName = '/alerting/notification/foo';
-    expect(getActiveItem(mockNavTree, mockPathName)).toEqual({
-      text: 'Alerting item',
-      url: '/alerting/list',
-    });
-  });
-
   it('returns the dashboards route link if the pathname starts with /d/', () => {
     const mockPathName = '/d/foo';
     expect(getActiveItem(mockNavTree, mockPathName)).toEqual({
@@ -181,6 +175,19 @@ describe('getActiveItem', () => {
     expect(getActiveItem(mockNavTree, mockPathName)).toEqual({
       text: 'More specific dashboard',
       url: '/d/moreSpecificDashboard',
+    });
+  });
+
+  it('uses an override if present', () => {
+    const mockPageNavAlertView: NavModelItem = {
+      text: 'Some Alert Detail',
+      id: 'alert-rule-view',
+    };
+    const mockPathName = '/alerting/grafana/somealertuid';
+    expect(getActiveItem(mockNavTree, mockPathName, undefined, mockPageNavAlertView)).toEqual({
+      id: 'alert-list',
+      text: 'Alerting item',
+      url: '/alerting/list',
     });
   });
 });
