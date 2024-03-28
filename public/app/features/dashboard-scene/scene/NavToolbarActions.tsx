@@ -9,7 +9,6 @@ import { AppChromeUpdate } from 'app/core/components/AppChrome/AppChromeUpdate';
 import { NavToolbarSeparator } from 'app/core/components/AppChrome/NavToolbar/NavToolbarSeparator';
 import { contextSrv } from 'app/core/core';
 import { Trans, t } from 'app/core/internationalization';
-import { DashNavModalContextProvider, DashNavModalRoot } from 'app/features/dashboard/components/DashNav/DashNav';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 import { playlistSrv } from 'app/features/playlist/PlaylistSrv';
 
@@ -529,12 +528,7 @@ export function ToolbarActions({ dashboard }: Props) {
     lastGroup = action.group;
   }
 
-  return (
-    <DashNavModalContextProvider>
-      <ToolbarButtonRow alignment="right">{actionElements}</ToolbarButtonRow>
-      <DashNavModalRoot />
-    </DashNavModalContextProvider>
-  );
+  return <ToolbarButtonRow alignment="right">{actionElements}</ToolbarButtonRow>;
 }
 
 function addDynamicActions(
