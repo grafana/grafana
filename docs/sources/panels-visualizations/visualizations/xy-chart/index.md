@@ -35,12 +35,11 @@ You can use any type of tabular data in an xy chart. This type of visualization 
 
 ### Series mapping
 
-Set how series data is mapped in the visualization.
+Set how series data is mapped in the chart.
 
-<!--to be refined maybe post-GA-->
-
-- **Auto** - Automatically generates series based on field selection across multiple data frames.
-- **Manual** - Construct values from any result. You can explicitly define multiple series for which you'll set the **X-field** and **Y-field** options, as well as the **Point color** and **Point size** rules
+- **Table** - Automatically generates series from all available datasets. You can filter to select only one dataset.
+<!-- pretty sure all series should be displayed in the chart but i'm not seeing this in any instance i look at -->
+- **Manual** - Explicitly define the series by selecting from available datasets.
 
 Depending on your series mapping selection, the rest of the **XY chart** options differ. Expand the sections below for options based on your mapping mode.
 
@@ -101,6 +100,8 @@ Set the width of the lines, from 1 to 10 pixels.
 Select your data set. You have more than one dataset or table, so you can select series (dataframe)
 
 This option is only available when you set **Series mapping** to **Manual** mode.
+
+You'll set the **X-field** and **Y-field** options, as well as the **Point color** and **Point size** rules
 
 #### Add series
 
