@@ -19,9 +19,7 @@ weight: 100
 
 # XY chart
 
-XY charts provide a way to visualize...
-
-<!--add brief description here-->
+XY charts provide a way to visualize arbitrary x and y values in a graph so that you can see the easily show the relationship between two variables.
 
 ![An xy chart showing height weight distribution](screenshot-xy-chart-v10.4.png)
 
@@ -37,9 +35,8 @@ You can use any type of tabular data in an xy chart. This type of visualization 
 
 Set how series data is mapped in the chart.
 
-- **Table** - Automatically generates series from all available datasets. You can filter to select only one dataset.
-<!-- pretty sure all series should be displayed in the chart but i'm not seeing this in any instance i look at -->
-- **Manual** - Explicitly define the series by selecting from available datasets.
+- **Auto** - Automatically generates series from all available data frames (or datasets). You can filter to select only one frame.
+- **Manual** - Explicitly define the series by selecting from available data frames.
 
 Depending on your series mapping selection, the rest of the **XY chart** options differ. Expand the sections below for options based on your mapping mode.
 
@@ -47,31 +44,61 @@ Depending on your series mapping selection, the rest of the **XY chart** options
 
 {{< collapse title="Options" >}}
 
+#### Frame
+
+By default, all data frames are available and displayed in the chart. You can filter to select only one frame.
+
 #### X-field
 
-Select which field the x-axis represents.
+Select which field the x-axis represents. By default, this is the first number field in each data frame. For example, you enter the following CSV content:
 
-<!--can we make clear here how this is different when you map your series by table or manual; there seem to be more fields to choose from on manual mode-->
+| a   | b   | c   |
+| --- | --- | --- |
+| 0   | 0   | 0   |
+| 1   | 1   | 9   |
+| 2   | 2   | 4   |
+
+In the resulting chart, the values in column "a" are used as the x-field unless you define it differently.
 
 #### Y-fields
 
-Select which fields the y-axis represents.
+The series of the chart are generated from the y-fields. After the x-field is set, by default, all the remaining number fields in the data frame are designated as the y-fields. You can select one y-field to include or you can use [overrides][Configure an override] to exclude y-fields individually. To disable y-fields individually:
 
-In **Auto** mode, you can only update the x-field and the y-fields are automatically assigned based on that selection. In this mode you can enable and disable the **Y-field**.
+- Series > Hide in area > Viz
 
-For example, if your data source has a table with five columns, you may want to disable one or more of the columns so that they're not included in the visualization.
+#### Size field
+
+Use this option to set which field value controls size of the points in the chart. This value is relative to the minium and maximum of all the values in the data frame.
+
+When you select this option, you can then set the [Point size](#point-size), [Min point size](#min-point-size), and [Max point size](#max-point-size) options.
+
+<!--shouldn't the other series on the chart still show up even if you've set this using one field, assuming you're using all the data frames? -->
+
+#### Color field
+
+This option is only valid when you've set the **Size field** option. Grafana sets this field based on the size of a value relative to the min and max values of a series or the **Min point size** and **Max point size** values if they're set. To use the color value options under the Standard options, you must set this field.
+
+Typically, this option is used when you only have one series displayed in the chart.
 
 #### Show
 
 Set how values are represented in the visualization.
 
-- **Points** - Display values as points. When you select this option, the [Point size](#point-size) option is also displayed.
-- **Lines** - Display values as lines. When you select this option, the [line style](#line-style) and [line width](#line-width) options are also displayed.
+- **Points** - Display values as points. When you select this option, the [Point size](#point-size), [Min point size](#min-point-size), and [Max point size](#max-point-size) options are also displayed. These fields are only valid when you set the **Size field** option.
+- **Lines** - Display values as lines. When you select this option, the [Line style](#line-style) and [Line width](#line-width) options are also displayed.
 - **Both** - Display values as both points and lines.
 
 #### Point size
 
-Set the size of the points, from 1 to 40 pixels in diameter.
+Set the size of the points, from 1 to 100 pixels in diameter. The default size is 5 pixels. You can set an [override][Configure field overrides] to set the pixel size by series.
+
+#### Min point size
+
+Use this option to control the minimum point size when you've set the **Size field** option. You can [override][Configure field overrides] this option for specific series.
+
+#### Max point size
+
+Use this option to control the minimum point size when you've set the **Size field** option. You can [override][Configure field overrides] this option for specific series.
 
 #### Line style
 
@@ -116,6 +143,10 @@ Select which field the x-axis represents.
 Select which fields the y-axis represents.
 
 In **Manual** mode, you can control both the **X-field** and **Y-field** options.
+
+In **Auto** mode, you can only update the x-field and the y-fields are automatically assigned based on that selection. In this mode you can enable and disable the **Y-field**.
+
+For example, if your data source has a table with five columns, you may want to disable one or more of the columns so that they're not included in the visualization.
 
 #### Point color
 
