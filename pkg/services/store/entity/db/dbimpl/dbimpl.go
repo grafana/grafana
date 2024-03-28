@@ -69,7 +69,7 @@ func (db *EntityDB) GetEngine() (*xorm.Engine, error) {
 			}
 
 			connectionString := fmt.Sprintf(
-				"user=%s password=%s host=%s port=%s dbname=%s sslmode=%s", // sslcert=%s sslkey=%s sslrootcert=%s",
+				"user='%s' password='%s' host='%s' port='%s' dbname='%s' sslmode='%s'", // sslcert='%s' sslkey='%s' sslrootcert='%s'",
 				dbUser, dbPass, addr.Host, addr.Port, dbName, dbSslMode, // ss.dbCfg.ClientCertPath, ss.dbCfg.ClientKeyPath, ss.dbCfg.CaCertPath
 			)
 
