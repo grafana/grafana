@@ -11,13 +11,14 @@ export const defaultEdgeColor = '#999';
 interface Props {
   edge: EdgeDatum;
   hovering: boolean;
+  svgIdNamespace: string;
   onClick: (event: MouseEvent<SVGElement>, link: EdgeDatum) => void;
   onMouseEnter: (id: string) => void;
   onMouseLeave: (id: string) => void;
 }
 
 export const Edge = memo(function Edge(props: Props) {
-  const { edge, onClick, onMouseEnter, onMouseLeave, hovering } = props;
+  const { edge, onClick, onMouseEnter, onMouseLeave, hovering, svgIdNamespace } = props;
 
   // Not great typing but after we do layout these properties are full objects not just references
   const { source, target, sourceNodeRadius, targetNodeRadius } = edge as {
@@ -47,8 +48,8 @@ export const Edge = memo(function Edge(props: Props) {
   // in case both are provided
   const highlightedEdgeColor = edge.color || defaultHighlightedEdgeColor;
 
-  const markerId = `triangle-${edge.id}`;
-  const coloredMarkerId = `triangle-colored-${edge.id}`;
+  const markerId = `triangle-${svgIdNamespace}-${edge.id}`;
+  const coloredMarkerId = `triangle-colored-${svgIdNamespace}-${edge.id}`;
 
   return (
     <>
