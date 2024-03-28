@@ -1,7 +1,7 @@
 import React from 'react';
 
 import { AlertState } from '@grafana/data';
-import { Tag, Tooltip } from '@grafana/ui';
+import { Icon, Tooltip } from '@grafana/ui';
 import { GrafanaAlertState, GrafanaAlertStateWithReason, PromAlertingRuleState } from 'app/types/unified-alerting-dto';
 
 import { alertStateToReadable, alertStateToState } from '../../utils/rules';
@@ -17,7 +17,9 @@ export const AlertStateTag = React.memo(({ state, isPaused = false, size = 'md',
   if (isPaused) {
     return (
       <Tooltip content={'Alert evaluation is currently paused'} placement="top">
-        <Tag icon="pause" name="Paused" colorIndex={1} />
+        <StateTag state="warning" size={size} muted={muted}>
+          <Icon name="pause" size="xs" /> Paused
+        </StateTag>
       </Tooltip>
     );
   }
