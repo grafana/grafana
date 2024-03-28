@@ -35,8 +35,8 @@ func TestGetFolders(t *testing.T) {
 		EnableFeatureToggles:  []string{featuremgmt.FlagNestedFolders},
 	})
 
-	grafanaListedAddr, store := testinfra.StartGrafana(t, dir, p)
-	cfg := store.Cfg
+	grafanaListedAddr, env := testinfra.StartGrafanaEnv(t, dir, p)
+	store, cfg := env.SQLStore, env.Cfg
 
 	orgID := int64(1)
 

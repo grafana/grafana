@@ -36,8 +36,8 @@ func TestIntegrationUpdateFolder(t *testing.T) {
 		EnableQuota:      true,
 	})
 
-	grafanaListedAddr, store := testinfra.StartGrafana(t, dir, path)
-	cfg := store.Cfg
+	grafanaListedAddr, env := testinfra.StartGrafanaEnv(t, dir, path)
+	store, cfg := env.SQLStore, env.Cfg
 	// Create user
 	createUser(t, store, cfg, user.CreateUserCommand{
 		DefaultOrgRole: string(org.RoleAdmin),
@@ -73,8 +73,8 @@ func TestIntegrationCreateFolder(t *testing.T) {
 		EnableQuota:      true,
 	})
 
-	grafanaListedAddr, store := testinfra.StartGrafana(t, dir, path)
-	cfg := store.Cfg
+	grafanaListedAddr, env := testinfra.StartGrafanaEnv(t, dir, path)
+	store, cfg := env.SQLStore, env.Cfg
 	// Create user
 	createUser(t, store, cfg, user.CreateUserCommand{
 		DefaultOrgRole: string(org.RoleAdmin),
@@ -114,8 +114,8 @@ func TestIntegrationNestedFoldersOn(t *testing.T) {
 		EnableFeatureToggles: []string{featuremgmt.FlagNestedFolders},
 	})
 
-	grafanaListedAddr, store := testinfra.StartGrafana(t, dir, path)
-	cfg := store.Cfg
+	grafanaListedAddr, env := testinfra.StartGrafanaEnv(t, dir, path)
+	store, cfg := env.SQLStore, env.Cfg
 	// Create user
 	createUser(t, store, cfg, user.CreateUserCommand{
 		DefaultOrgRole: string(org.RoleAdmin),

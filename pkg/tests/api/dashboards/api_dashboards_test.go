@@ -53,8 +53,8 @@ func TestIntegrationDashboardQuota(t *testing.T) {
 		DashboardOrgQuota: &dashboardQuota,
 	})
 
-	grafanaListedAddr, store := testinfra.StartGrafana(t, dir, path)
-	cfg := store.Cfg
+	grafanaListedAddr, env := testinfra.StartGrafanaEnv(t, dir, path)
+	store, cfg := env.SQLStore, env.Cfg
 	// Create user
 	createUser(t, store, cfg, user.CreateUserCommand{
 		DefaultOrgRole: string(org.RoleAdmin),
@@ -157,8 +157,8 @@ providers:
 	provDashboardFile := filepath.Join(provDashboardsDir, "home.json")
 	err = os.WriteFile(provDashboardFile, input, 0644)
 	require.NoError(t, err)
-	grafanaListedAddr, store := testinfra.StartGrafana(t, dir, path)
-	cfg := store.Cfg
+	grafanaListedAddr, env := testinfra.StartGrafanaEnv(t, dir, path)
+	store, cfg := env.SQLStore, env.Cfg
 	// Create user
 	createUser(t, store, cfg, user.CreateUserCommand{
 		DefaultOrgRole: string(org.RoleAdmin),
@@ -294,8 +294,8 @@ func TestIntegrationCreate(t *testing.T) {
 		DisableAnonymous: true,
 	})
 
-	grafanaListedAddr, store := testinfra.StartGrafana(t, dir, path)
-	cfg := store.Cfg
+	grafanaListedAddr, env := testinfra.StartGrafanaEnv(t, dir, path)
+	store, cfg := env.SQLStore, env.Cfg
 	// Create user
 	createUser(t, store, cfg, user.CreateUserCommand{
 		DefaultOrgRole: string(org.RoleAdmin),

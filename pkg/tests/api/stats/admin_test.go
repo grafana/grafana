@@ -67,10 +67,10 @@ func grafanaSetup(t *testing.T, opts testinfra.GrafanaOpts) string {
 	// Setup Grafana and its Database
 	dir, path := testinfra.CreateGrafDir(t, opts)
 
-	grafanaListedAddr, store := testinfra.StartGrafana(t, dir, path)
+	grafanaListedAddr, env := testinfra.StartGrafanaEnv(t, dir, path)
 
 	// Create a user to make authenticated requests
-	createUser(t, store, store.Cfg, user.CreateUserCommand{
+	createUser(t, env.SQLStore, env.Cfg, user.CreateUserCommand{
 		DefaultOrgRole: string(org.RoleAdmin),
 		Login:          "grafana",
 		Password:       "password",

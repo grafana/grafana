@@ -56,7 +56,8 @@ func TestIntegrationPlugins(t *testing.T) {
 		setting.BuildVersion = origBuildVersion
 	})
 
-	grafanaListedAddr, store := testinfra.StartGrafana(t, dir, cfgPath)
+	grafanaListedAddr, env := testinfra.StartGrafanaEnv(t, dir, cfgPath)
+	store := env.SQLStore
 
 	type testCase struct {
 		desc        string
@@ -66,8 +67,8 @@ func TestIntegrationPlugins(t *testing.T) {
 	}
 
 	t.Run("Install", func(t *testing.T) {
-		createUser(t, store, store.Cfg, user.CreateUserCommand{Login: usernameNonAdmin, Password: defaultPassword, IsAdmin: false})
-		createUser(t, store, store.Cfg, user.CreateUserCommand{Login: usernameAdmin, Password: defaultPassword, IsAdmin: true})
+		createUser(t, store, env.Cfg, user.CreateUserCommand{Login: usernameNonAdmin, Password: defaultPassword, IsAdmin: false})
+		createUser(t, store, env.Cfg, user.CreateUserCommand{Login: usernameAdmin, Password: defaultPassword, IsAdmin: true})
 
 		t.Run("Request is forbidden if not from an admin", func(t *testing.T) {
 			status, body := makePostRequest(t, grafanaAPIURL(usernameNonAdmin, grafanaListedAddr, "plugins/grafana-plugin/install"))
