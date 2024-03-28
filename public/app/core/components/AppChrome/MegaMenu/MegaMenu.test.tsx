@@ -1,18 +1,17 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import { createMemoryHistory } from 'history';
 import React from 'react';
 import { Router } from 'react-router-dom';
+import { TestProvider } from 'test/helpers/TestProvider';
 import { getGrafanaContextMock } from 'test/mocks/getGrafanaContextMock';
 
 import { NavModelItem } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { locationService } from '@grafana/runtime';
-
-import { TestProvider } from '../../../../../test/helpers/TestProvider';
 
 import { MegaMenu } from './MegaMenu';
 
-const setup = () => {
+const setup = (initialUrl?: string) => {
   const navBarTree: NavModelItem[] = [
     {
       text: 'Section name',
@@ -33,14 +32,29 @@ const setup = () => {
       id: 'profile',
       url: 'profile',
     },
+    {
+      id: 'starred',
+      text: 'Starred',
+      url: '/dashboards?starred',
+    },
+    {
+      id: 'dashboards/browse',
+      text: 'Dashboards',
+      url: '/dashboards',
+    },
   ];
 
   const grafanaContext = getGrafanaContextMock();
   grafanaContext.chrome.setMegaMenuOpen(true);
 
+  const history = createMemoryHistory();
+  if (initialUrl) {
+    history.push(initialUrl);
+  }
+
   return render(
     <TestProvider storeState={{ navBarTree }} grafanaContext={grafanaContext}>
-      <Router history={locationService.getHistory()}>
+      <Router history={history}>
         <MegaMenu onClose={() => {}} />
       </Router>
     </TestProvider>
@@ -78,5 +92,19 @@ describe('MegaMenu', () => {
     setup();
 
     expect(screen.queryByLabelText('Profile')).not.toBeInTheDocument();
+  });
+
+  it('handles special case for dashboards', async () => {
+    setup('/d/someuid/a-dashboard-name');
+
+    const currentLink = await screen.findByRole('link', { current: 'page' });
+    expect(currentLink.textContent).toEqual('Dashboards');
+  });
+
+  it('handles special case for starred dashboards root', async () => {
+    setup('/dashboards?starred');
+
+    const currentLink = await screen.findByRole('link', { current: 'page' });
+    expect(currentLink.textContent).toEqual('Dashboards');
   });
 });
