@@ -39,12 +39,12 @@ type MigratedResource struct {
 }
 
 type CloudMigrationRun struct {
-	ID                int64           `json:"id" xorm:"pk autoincr 'id'"`
-	CloudMigrationUID string          `json:"uid" xorm:"cloud_migration_uid"`
-	Result            MigrationResult `json:"result"`
-	Created           time.Time       `json:"created"`
-	Updated           time.Time       `json:"updated"`
-	Finished          time.Time       `json:"finished"`
+	ID                int64     `json:"id" xorm:"pk autoincr 'id'"`
+	CloudMigrationUID string    `json:"uid" xorm:"cloud_migration_uid"`
+	Result            []byte    `json:"result"` //store raw cms response body
+	Created           time.Time `json:"created"`
+	Updated           time.Time `json:"updated"`
+	Finished          time.Time `json:"finished"`
 }
 
 type CloudMigrationRequest struct {
@@ -104,7 +104,7 @@ type MigrateDataRequestItemDTO struct {
 	Type  MigrateDataType `json:"type"`
 	RefID string          `json:"refId"`
 	Name  string          `json:"name"`
-	Data  []byte          `json:"data"`
+	Data  interface{}     `json:"data"`
 }
 
 type ItemStatus string

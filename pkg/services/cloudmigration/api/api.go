@@ -2,7 +2,6 @@ package api
 
 import (
 	"bytes"
-	"encoding/json"
 	"fmt"
 	"net/http"
 	"strconv"
@@ -126,84 +125,32 @@ func (cma *CloudMigrationAPI) RunMigration(c *contextmodel.ReqContext) response.
 	}
 	path := fmt.Sprintf("%s/api/v1/migrate-data", domain)
 
-	// TODO: filter data type migrations from request
-	// DATASOURCE MIGRATION
-	dataSourceMigrationResponse := cloudmigration.MigrateDataResponseItemDTO{
-		RefID:  stringID,
-		Status: cloudmigration.ItemStatusOK,
-	}
-	// get datasources to migrate
-	dataSourcesJSON, err := cma.cloudMigrationService.GetDataSourcesJSON(c.Req.Context(), id)
+	// Get migration data JSON
+	body, err := cma.cloudMigrationService.GetMigrationDataJSON(c.Req.Context(), id)
 	if err != nil {
-		_, err = cma.cloudMigrationService.SaveMigrationRun(c.Req.Context(), &cloudmigration.CloudMigrationRun{
-			ID: id,
-			Result: cloudmigration.MigrationResult{
-				Status:  "ERROR",
-				Message: "Data sources migration run not successful",
-			},
-		})
-		return response.Error(http.StatusInternalServerError, "datasources get error", err)
+		cma.log.Error("error getting the json request body for migration run", "err", err.Error())
+		return response.Error(http.StatusInternalServerError, "migration data get error", err)
 	}
 
-	// migrate datasources
-	if err := MigrateDataType(cloudmigration.DatasourceDataType, path, migration.AuthToken, stringID, dataSourcesJSON); err != nil {
-		dataSourceMigrationResponse.Error = err.Error()
-		dataSourceMigrationResponse.Status = cloudmigration.ItemStatusError
-	}
-	items = append(items, dataSourceMigrationResponse)
-
-	// FOLDER MIGRATION
-	folderMigrationResponse := cloudmigration.MigrateDataResponseItemDTO{
-		RefID:  stringID,
-		Status: cloudmigration.ItemStatusOK,
-	}
-	// get folders JSON to migrate
-	foldersJSON, err := cma.cloudMigrationService.GetFoldersJSON(c.Req.Context(), id)
+	req, err := http.NewRequest("POST", path, bytes.NewReader(body))
 	if err != nil {
-		_, err = cma.cloudMigrationService.SaveMigrationRun(c.Req.Context(), &cloudmigration.CloudMigrationRun{
-			ID: id,
-			Result: cloudmigration.MigrationResult{
-				Status:  "ERROR",
-				Message: "Folders migration run not successful",
-			},
-		})
-		return response.Error(http.StatusInternalServerError, "datasources get error", err)
+		cma.log.Error("error creating http request for cloud migration run", "err", err.Error())
+		return response.Error(http.StatusInternalServerError, "http request error", err)
 	}
-	if err := MigrateDataType(cloudmigration.FolderDataType, path, migration.AuthToken, stringID, foldersJSON); err != nil {
-		folderMigrationResponse.Error = err.Error()
-		folderMigrationResponse.Status = cloudmigration.ItemStatusError
-	}
-	items = append(items, folderMigrationResponse)
+	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("Authorization", "Bearer "+migration.AuthToken) //TODO Bearer <stackid>:<token>
 
-	// DASHBOARD MIGRATION
-	dashboardMigrationResponse := cloudmigration.MigrateDataResponseItemDTO{
-		RefID:  stringID,
-		Status: cloudmigration.ItemStatusOK,
-	}
-	// get dashboards JSON to migrate
-	dashboardsJSON, err := cma.cloudMigrationService.GetDashboardsJSON(c.Req.Context(), id)
+	client := &http.Client{}
+	resp, err := client.Do(req)
 	if err != nil {
-		_, err = cma.cloudMigrationService.SaveMigrationRun(c.Req.Context(), &cloudmigration.CloudMigrationRun{
-			ID: id,
-			Result: cloudmigration.MigrationResult{
-				Status:  "ERROR",
-				Message: "Dashboards migration run not successful",
-			},
-		})
-		return response.Error(http.StatusInternalServerError, "dashboards get error", err)
+		cma.log.Error("error sending http request for cloud migration run", "err", err.Error())
+		return response.Error(http.StatusInternalServerError, "http request error", err)
 	}
-	if err := MigrateDataType(cloudmigration.DashboardDataType, path, migration.AuthToken, stringID, dashboardsJSON); err != nil {
-		dashboardMigrationResponse.Error = err.Error()
-		dashboardMigrationResponse.Status = cloudmigration.ItemStatusError
-	}
-	items = append(items, dashboardMigrationResponse)
+	defer resp.Body.Close()
 
 	_, err = cma.cloudMigrationService.SaveMigrationRun(c.Req.Context(), &cloudmigration.CloudMigrationRun{
-		ID: id,
-		Result: cloudmigration.MigrationResult{
-			Status:  "OK",
-			Message: "Migration run successful",
-		},
+		ID:     id,
+		Result: body,
 	})
 	if err != nil {
 		response.Error(http.StatusInternalServerError, "migration run save error", err)
@@ -238,34 +185,4 @@ func (cma *CloudMigrationAPI) DeleteMigration(c *contextmodel.ReqContext) respon
 		return response.Error(http.StatusInternalServerError, "migration delete error", err)
 	}
 	return response.Empty(http.StatusOK)
-}
-
-func MigrateDataType(dataType cloudmigration.MigrateDataType, url, token, id string, body []byte) error {
-	result := cloudmigration.MigrateDataRequestItemDTO{
-		Type:  dataType,
-		RefID: id,
-		Name:  string(dataType),
-		Data:  body,
-	}
-	body, err := json.Marshal(result)
-	if err != nil {
-		return fmt.Errorf("json marshal error: %w", err)
-	}
-	req, err := http.NewRequest("POST", url, bytes.NewReader(body))
-	if err != nil {
-		return fmt.Errorf("http request error: %w", err)
-	}
-	req.Header.Set("Content-Type", "application/json")
-	req.Header.Set("Authorization", "Bearer "+token)
-
-	client := &http.Client{}
-	resp, err := client.Do(req)
-	if err != nil {
-		return fmt.Errorf("http request error: %w", err)
-	}
-	err = resp.Body.Close()
-	if err != nil {
-		return fmt.Errorf("http response body close error: %w", err)
-	}
-	return nil
 }

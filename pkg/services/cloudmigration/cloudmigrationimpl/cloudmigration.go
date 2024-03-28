@@ -5,6 +5,7 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
+	"strconv"
 	"time"
 
 	"github.com/grafana/grafana/pkg/api/routing"
@@ -249,14 +250,63 @@ func (s *Service) UpdateMigration(ctx context.Context, id int64, cm cloudmigrati
 	return nil, nil
 }
 
-func (s *Service) GetDataSourcesJSON(ctx context.Context, id int64) ([]byte, error) {
+func (s *Service) GetMigrationDataJSON(ctx context.Context, id int64) ([]byte, error) {
+	var migrationDataSlice []cloudmigration.MigrateDataRequestItemDTO
+	// Data sources
+	dataSources, err := s.getDataSources(ctx, id)
+	if err != nil {
+		s.log.Error("Failed to get datasources", "err", err)
+		return nil, err
+	}
+	migrationDataSlice = append(migrationDataSlice, cloudmigration.MigrateDataRequestItemDTO{
+		Type:  cloudmigration.DatasourceDataType,
+		RefID: strconv.Itoa(int(id)),
+		Name:  "datasources",
+		Data:  dataSources,
+	})
+	// Dashboards
+	dashboards, err := s.getDashboards(ctx, id)
+	if err != nil {
+		s.log.Error("Failed to get dashboards", "err", err)
+		return nil, err
+	}
+	migrationDataSlice = append(migrationDataSlice, cloudmigration.MigrateDataRequestItemDTO{
+		Type:  cloudmigration.DashboardDataType,
+		RefID: strconv.Itoa(int(id)),
+		Name:  "dashboards",
+		Data:  dashboards,
+	})
+	// Folders
+	folders, err := s.getFolders(ctx, id)
+	if err != nil {
+		s.log.Error("Failed to get folders", "err", err)
+		return nil, err
+	}
+	migrationDataSlice = append(migrationDataSlice, cloudmigration.MigrateDataRequestItemDTO{
+		Type:  cloudmigration.FolderDataType,
+		RefID: strconv.Itoa(int(id)),
+		Name:  "folders",
+		Data:  folders,
+	})
+	migrationData := cloudmigration.MigrateDataRequestDTO{
+		Items: migrationDataSlice,
+	}
+	result, err := json.Marshal(migrationData)
+	if err != nil {
+		s.log.Error("Failed to marshal datasources", "err", err)
+		return nil, err
+	}
+	return result, nil
+}
+
+func (s *Service) getDataSources(ctx context.Context, id int64) ([]datasources.AddDataSourceCommand, error) {
 	dataSources, err := s.dsService.GetAllDataSources(ctx, &datasources.GetAllDataSourcesQuery{})
 	if err != nil {
 		s.log.Error("Failed to get all datasources", "err", err)
 		return nil, err
 	}
 
-	dataSourcesToMarshal := []datasources.AddDataSourceCommand{}
+	result := []datasources.AddDataSourceCommand{}
 	for _, dataSource := range dataSources {
 		// Decrypt secure json to send raw credentials
 		decryptedData, err := s.secretsService.DecryptJsonData(ctx, dataSource.SecureJsonData)
@@ -281,53 +331,35 @@ func (s *Service) GetDataSourcesJSON(ctx context.Context, id int64) ([]byte, err
 			ReadOnly:        dataSource.ReadOnly,
 			UID:             dataSource.UID,
 		}
-		dataSourcesToMarshal = append(dataSourcesToMarshal, dataSourceCmd)
-	}
-	result, err := json.Marshal(dataSourcesToMarshal)
-	if err != nil {
-		s.log.Error("Failed to marshal datasources", "err", err)
-		return nil, err
+		result = append(result, dataSourceCmd)
 	}
 	return result, err
 }
 
-func (s *Service) GetFoldersJSON(ctx context.Context, id int64) ([]byte, error) {
+func (s *Service) getFolders(ctx context.Context, id int64) ([]folder.Folder, error) {
 	folders, err := s.folderService.GetFolders(ctx, folder.GetFoldersQuery{})
 	if err != nil {
-		s.log.Error("Failed to get all folders", "err", err)
 		return nil, err
 	}
 
-	var allFoldersToMarshal []folder.Folder
+	var result []folder.Folder
 	for _, folder := range folders {
-		allFoldersToMarshal = append(allFoldersToMarshal, *folder)
+		result = append(result, *folder)
 	}
 
-	result, err := json.Marshal(allFoldersToMarshal)
-	if err != nil {
-		s.log.Error("Failed to marshal folders", "err", err)
-		return nil, err
-	}
 	return result, nil
 }
 
-func (s *Service) GetDashboardsJSON(ctx context.Context, id int64) ([]byte, error) {
+func (s *Service) getDashboards(ctx context.Context, id int64) ([]dashboards.Dashboard, error) {
 	dashs, err := s.dashboarService.GetAllDashboards(ctx)
 	if err != nil {
-		s.log.Error("Failed to get all dashboards", "err", err)
 		return nil, err
 	}
 
-	var allDashboardsToMarshal []dashboards.Dashboard
+	var result []dashboards.Dashboard
 	for _, dashboard := range dashs {
-		allDashboardsToMarshal = append(allDashboardsToMarshal, *dashboard)
+		result = append(result, *dashboard)
 	}
-	result, err := json.Marshal(allDashboardsToMarshal)
-	if err != nil {
-		s.log.Error("Failed to marshal dashboards", "err", err)
-		return nil, err
-	}
-
 	return result, nil
 }
 

@@ -29,7 +29,7 @@ func (ss *sqlStore) GetMigration(ctx context.Context, id int64) (*cloudmigration
 
 func (ss *sqlStore) SaveMigrationRun(ctx context.Context, cmr *cloudmigration.CloudMigrationRun) error {
 	return ss.db.WithDbSession(ctx, func(sess *db.Session) error {
-		cmr, err := sess.Insert(cmr)
+		_, err := sess.Insert(cmr)
 		return err
 	})
 }
