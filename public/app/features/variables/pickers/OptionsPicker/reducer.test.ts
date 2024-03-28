@@ -571,7 +571,7 @@ describe('optionsPickerReducer', () => {
             ...initialState,
             options: [
               { text: '> A', value: 'A', selected: false },
-              { text: 'All', value: '$__all', selected: false }
+              { text: 'All', value: '$__all', selected: false },
             ],
             selectedValues: [],
             queryValue: 'A',
