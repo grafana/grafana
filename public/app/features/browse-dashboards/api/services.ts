@@ -39,6 +39,8 @@ export async function listFolders(
     title: item.title,
     parentTitle,
     parentUID,
+
+    // URLs from the backend come with subUrlPrefix already included, so we need to do it again here
     url: isSharedWithMe(item.uid) ? undefined : `${subUrlPrefix}/dashboards/f/${item.uid}/`,
   }));
 }
