@@ -43,7 +43,7 @@
     "@svgr/plugin-prettier": "^8.1.0",
     "@svgr/plugin-svgo": "^8.1.0",
     "@types/node": "20.11.30",
-    "@types/react": "18.2.67",
+    "@types/react": "18.2.73",
     "@types/react-dom": "18.2.22",
     "esbuild": "0.18.12",
     "prettier": "3.2.5",

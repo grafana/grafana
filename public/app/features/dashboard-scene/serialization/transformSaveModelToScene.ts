@@ -20,7 +20,6 @@ import {
   behaviors,
   VizPanelState,
   SceneGridItemLike,
-  SceneDataLayerSet,
   SceneDataLayerProvider,
   SceneDataLayerControls,
   TextBoxVariable,
@@ -37,6 +36,7 @@ import { AddLibraryPanelWidget } from '../scene/AddLibraryPanelWidget';
 import { AlertStatesDataLayer } from '../scene/AlertStatesDataLayer';
 import { DashboardAnnotationsDataLayer } from '../scene/DashboardAnnotationsDataLayer';
 import { DashboardControls } from '../scene/DashboardControls';
+import { DashboardDataLayerSet } from '../scene/DashboardDataLayerSet';
 import { DashboardGridItem, RepeatDirection } from '../scene/DashboardGridItem';
 import { registerDashboardMacro } from '../scene/DashboardMacro';
 import { DashboardScene } from '../scene/DashboardScene';
@@ -216,8 +216,9 @@ function createRowFromPanelModel(row: PanelModel, content: SceneGridItemLike[]):
 }
 
 export function createDashboardSceneFromDashboardModel(oldModel: DashboardModel) {
-  let variables: SceneVariableSet | undefined = undefined;
-  let layers: SceneDataLayerProvider[] = [];
+  let variables: SceneVariableSet | undefined;
+  let annotationLayers: SceneDataLayerProvider[] = [];
+  let alertStatesLayer: AlertStatesDataLayer | undefined;
 
   if (oldModel.templating?.list?.length) {
     const variableObjects = oldModel.templating.list
@@ -244,7 +245,7 @@ export function createDashboardSceneFromDashboardModel(oldModel: DashboardModel)
   }
 
   if (oldModel.annotations?.list?.length && !oldModel.isSnapshot()) {
-    layers = oldModel.annotations?.list.map((a) => {
+    annotationLayers = oldModel.annotations?.list.map((a) => {
       // Each annotation query is an individual data layer
       return new DashboardAnnotationsDataLayer({
         key: `annotations-${a.name}`,
@@ -264,12 +265,10 @@ export function createDashboardSceneFromDashboardModel(oldModel: DashboardModel)
   }
 
   if (shouldUseAlertStatesLayer) {
-    layers.push(
-      new AlertStatesDataLayer({
-        key: 'alert-states',
-        name: 'Alert States',
-      })
-    );
+    alertStatesLayer = new AlertStatesDataLayer({
+      key: 'alert-states',
+      name: 'Alert States',
+    });
   }
 
   const dashboardScene = new DashboardScene({
@@ -307,12 +306,7 @@ export function createDashboardSceneFromDashboardModel(oldModel: DashboardModel)
       trackIfIsEmpty,
       new behaviors.LiveNowTimer(oldModel.liveNow),
     ],
-    $data:
-      layers.length > 0
-        ? new SceneDataLayerSet({
-            layers,
-          })
-        : undefined,
+    $data: new DashboardDataLayerSet({ annotationLayers, alertStatesLayer }),
     controls: new DashboardControls({
       variableControls: [new VariableValueSelectors({}), new SceneDataLayerControls()],
       timePicker: new SceneTimePicker({}),
@@ -546,18 +540,6 @@ export function buildGridItemForPanel(panel: PanelModel): DashboardGridItem {
   });
 }
 
-const getLimitedDescriptionReporter = () => {
-  const reportedPanels: string[] = [];
-
-  return (key: string) => {
-    if (reportedPanels.includes(key)) {
-      return;
-    }
-    reportedPanels.push(key);
-    DashboardInteractions.panelDescriptionShown();
-  };
-};
-
 function registerDashboardSceneTracking(model: DashboardModel) {
   return () => {
     const unsetDashboardInteractionsScenesContext = DashboardInteractions.setScenesContext();
@@ -571,15 +553,10 @@ function registerDashboardSceneTracking(model: DashboardModel) {
 }
 
 function registerPanelInteractionsReporter(scene: DashboardScene) {
-  const descriptionReporter = getLimitedDescriptionReporter();
-
   // Subscriptions set with subscribeToEvent are automatically unsubscribed when the scene deactivated
   scene.subscribeToEvent(UserActionEvent, (e) => {
     const { interaction } = e.payload;
     switch (interaction) {
-      case 'panel-description-shown':
-        descriptionReporter(e.payload.origin.state.key || '');
-        break;
       case 'panel-status-message-clicked':
         DashboardInteractions.panelStatusMessageClicked();
         break;
