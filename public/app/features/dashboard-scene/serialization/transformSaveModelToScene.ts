@@ -26,7 +26,7 @@ import {
   UserActionEvent,
   GroupByVariable,
   AdHocFiltersVariable,
-  SceneFlexLayout,
+  // SceneFlexLayout,
 } from '@grafana/scenes';
 import { DashboardModel, PanelModel } from 'app/features/dashboard/state';
 import { trackDashboardLoaded } from 'app/features/dashboard/utils/tracking';
@@ -285,6 +285,7 @@ export function createDashboardSceneFromDashboardModel(oldModel: DashboardModel)
     body: new SceneGridLayout({
       isLazy: true,
       children: createSceneObjectsForPanels(oldModel.panels),
+      key: 'test-key',
     }),
     $timeRange: new SceneTimeRange({
       from: oldModel.time.from,
@@ -303,7 +304,7 @@ export function createDashboardSceneFromDashboardModel(oldModel: DashboardModel)
       registerDashboardMacro,
       registerDashboardSceneTracking(oldModel),
       registerPanelInteractionsReporter,
-      trackIfIsEmpty,
+      // trackIfIsEmpty,
       new behaviors.LiveNowTimer(oldModel.liveNow),
     ],
     $data: new DashboardDataLayerSet({ annotationLayers, alertStatesLayer }),
@@ -587,20 +588,20 @@ function registerPanelInteractionsReporter(scene: DashboardScene) {
   });
 }
 
-export function trackIfIsEmpty(parent: DashboardScene) {
-  updateIsEmpty(parent);
+// export function trackIfIsEmpty(parent: DashboardScene) {
+//   updateIsEmpty(parent);
 
-  parent.state.body.subscribeToState(() => {
-    updateIsEmpty(parent);
-  });
-}
+//   parent.state.body.subscribeToState(() => {
+//     updateIsEmpty(parent);
+//   });
+// }
 
-function updateIsEmpty(parent: DashboardScene) {
-  const { body } = parent.state;
-  if (body instanceof SceneFlexLayout || body instanceof SceneGridLayout) {
-    parent.setState({ isEmpty: body.state.children.length === 0 });
-  }
-}
+// function updateIsEmpty(parent: DashboardScene) {
+//   const { body } = parent.state;
+//   if (body instanceof SceneFlexLayout || body instanceof SceneGridLayout) {
+//     parent.setState({ isEmpty: body.state.children.length === 0 });
+//   }
+// }
 
 const convertSnapshotData = (snapshotData: DataFrameDTO[]): DataFrameJSON[] => {
   return snapshotData.map((data) => {

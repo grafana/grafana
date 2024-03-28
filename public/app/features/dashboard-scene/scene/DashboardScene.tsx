@@ -187,6 +187,19 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
     }
     const oldDashboardWrapper = new DashboardModelCompatibilityWrapper(this);
 
+    console.log('activating');
+    this.updateIsEmpty();
+
+    console.log(`(Activating) Body key: ${this.state.body.state.key}`);
+    this._subs.add(this.state.body.subscribeToState(this.updateIsEmpty));
+    this._subs.add(
+      this.subscribeToState((n, p) => {
+        if (n.body !== p.body) {
+          console.log('different bodies');
+        }
+      })
+    );
+
     // @ts-expect-error
     getDashboardSrv().setCurrent(oldDashboardWrapper);
 
@@ -200,6 +213,15 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
       dashboardWatcher.leave();
     };
   }
+
+  private updateIsEmpty = () => {
+    const { body } = this.state;
+    console.log('Updating isEmpty');
+    if (body instanceof SceneFlexLayout || body instanceof SceneGridLayout) {
+      console.log(`Child count: ${body.state.children.length}`);
+      this.setState({ isEmpty: body.state.children.length === 0 });
+    }
+  };
 
   public startUrlSync() {
     if (!this.state.meta.isEmbedded) {
@@ -302,6 +324,10 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
     if (restoreInitialState) {
       //  Restore initial state and disable editing
       this.setState({ ...this._initialState, isEditing: false });
+
+      // Need to re-add sub since body has changed
+      this.updateIsEmpty();
+      this._subs.add(this.state.body.subscribeToState(this.updateIsEmpty));
     } else {
       // Do not restore
       this.setState({ isEditing: false });
@@ -461,6 +487,13 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
   public addPanel(vizPanel: VizPanel): void {
     if (!(this.state.body instanceof SceneGridLayout)) {
       throw new Error('Trying to add a panel in a layout that is not SceneGridLayout');
+    }
+
+    console.log(`(Adding) Body key: ${this.state.body.state.key}`);
+
+    // Make sure we're in edit mode
+    if (!this.state.isEditing) {
+      this.onEnterEditMode();
     }
 
     const sceneGridLayout = this.state.body;
@@ -674,16 +707,18 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
       return;
     }
 
-    this.state.body.forEachChild((child: SceneObject) => {
-      if (child.state.key !== key) {
-        panels.push(child);
-      }
-    });
+    // this.state.body.forEachChild((child: SceneObject) => {
+    //   if (child.state.key !== key) {
+    //     panels.push(child);
+    //   }
+    // });
 
     const layout = this.state.body;
 
     if (layout instanceof SceneGridLayout || layout instanceof SceneFlexLayout) {
-      layout.setState({ children: panels });
+      console.log(`(Removing) Body key: ${layout.state.key}`);
+      console.log('Setting state when removing panel');
+      layout.setState({ children: layout.state.children.filter((c) => c.state.key !== key) });
     }
   }
 
@@ -738,6 +773,11 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
   public onCreateLibPanelWidget() {
     if (!(this.state.body instanceof SceneGridLayout)) {
       throw new Error('Trying to add a panel in a layout that is not SceneGridLayout');
+    }
+
+    // Make sure we're in edit mode
+    if (!this.state.isEditing) {
+      this.onEnterEditMode();
     }
 
     const sceneGridLayout = this.state.body;
