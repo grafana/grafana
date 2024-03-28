@@ -3,8 +3,13 @@ import { config, getBackendSrv, isFetchError, locationService } from '@grafana/r
 import { updateNavIndex } from 'app/core/actions';
 import { StateManagerBase } from 'app/core/services/StateManagerBase';
 import { backendSrv } from 'app/core/services/backend_srv';
+import { default as localStorageStore } from 'app/core/store';
 import { dashboardLoaderSrv } from 'app/features/dashboard/services/DashboardLoaderSrv';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
+import {
+  DASHBOARD_FROM_LS_KEY,
+  removeDashboardToFetchFromLocalStorage,
+} from 'app/features/dashboard/state/initDashboard';
 import { buildNavModel } from 'app/features/folders/state/navModel';
 import { store } from 'app/store/store';
 import { DashboardDTO, DashboardRoutes } from 'app/types';
@@ -36,6 +41,12 @@ export interface LoadDashboardOptions {
   uid: string;
   route: DashboardRoutes;
   urlFolderUid?: string;
+  // A temporary approach not to clean the dashboard from local storage when navigating from Explore to Dashboard
+  // We currently need it as there are two flows of fetching dashboard. The legacy one (initDashboard), uses the new one(DashboardScenePageStateManager.fetch) where the
+  // removal of the dashboard from local storage is implemented. So in the old flow we wouldn't be able to early return dashboard from local storage, if we prematurely
+  // removed it when prefetching the dashboard in DashboardPageProxy.
+  // This property will be removed when the old flow (initDashboard) is removed.
+  keepDashboardFromExploreInLocalStorage?: boolean;
 }
 
 export class DashboardScenePageStateManager extends StateManagerBase<DashboardScenePageState> {
@@ -46,7 +57,21 @@ export class DashboardScenePageStateManager extends StateManagerBase<DashboardSc
 
   // To eventualy replace the fetchDashboard function from Dashboard redux state management.
   // For now it's a simplistic version to support Home and Normal dashboard routes.
-  public async fetchDashboard({ uid, route, urlFolderUid }: LoadDashboardOptions): Promise<DashboardDTO | null> {
+  public async fetchDashboard({
+    uid,
+    route,
+    urlFolderUid,
+    keepDashboardFromExploreInLocalStorage,
+  }: LoadDashboardOptions): Promise<DashboardDTO | null> {
+    const model = localStorageStore.getObject<DashboardDTO>(DASHBOARD_FROM_LS_KEY);
+
+    if (model) {
+      if (!keepDashboardFromExploreInLocalStorage) {
+        removeDashboardToFetchFromLocalStorage();
+      }
+      return model;
+    }
+
     const cacheKey = route === DashboardRoutes.Home ? HOME_DASHBOARD_CACHE_KEY : uid;
     const cachedDashboard = this.getFromCache(cacheKey);
 
