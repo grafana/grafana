@@ -9,6 +9,7 @@ import (
 var (
 	ErrInternalNotImplementedError = errutil.Internal("cloudmigrations.notImplemented", errutil.WithPublicMessage("Internal server error"))
 	ErrFeatureDisabledError        = errutil.Internal("cloudmigrations.disabled", errutil.WithPublicMessage("Cloud migrations are disabled on this instance"))
+	ErrMigrationNotFound           = errutil.NotFound("cloudmigrations.notFound", errutil.WithPublicMessage("Migration not found"))
 )
 
 type CloudMigration struct {
@@ -38,13 +39,12 @@ type MigratedResource struct {
 }
 
 type CloudMigrationRun struct {
-	ID                int64              `json:"id" xorm:"pk autoincr 'id'"`
-	CloudMigrationUID string             `json:"uid" xorm:"cloud_migration_uid"`
-	Resources         []MigratedResource `json:"items"`
-	Result            MigrationResult    `json:"result"`
-	Created           time.Time          `json:"created"`
-	Updated           time.Time          `json:"updated"`
-	Finished          time.Time          `json:"finished"`
+	ID                int64           `json:"id" xorm:"pk autoincr 'id'"`
+	CloudMigrationUID string          `json:"uid" xorm:"cloud_migration_uid"`
+	Result            MigrationResult `json:"result"`
+	Created           time.Time       `json:"created"`
+	Updated           time.Time       `json:"updated"`
+	Finished          time.Time       `json:"finished"`
 }
 
 type CloudMigrationRequest struct {
@@ -82,4 +82,48 @@ type CreateAccessTokenResponse struct {
 
 type CreateAccessTokenResponseDTO struct {
 	Token string `json:"token"`
+}
+
+type MigrateDataType string
+
+const (
+	DashboardDataType  MigrateDataType = "DASHBOARD"
+	DatasourceDataType MigrateDataType = "DATASOURCE"
+	FolderDataType     MigrateDataType = "FOLDER"
+)
+
+type MigrateDataRequestDTO struct {
+	Items []MigrateDataRequestItemDTO `json:"items"`
+}
+
+type MigrateDataRequestItemDTO struct {
+	Type  MigrateDataType `json:"type"`
+	RefID string          `json:"refId"`
+	Name  string          `json:"name"`
+	Data  []byte          `json:"data"`
+}
+
+// Mirate data response structs
+
+type ItemStatus string
+
+const (
+	ItemStatusOK    ItemStatus = "OK"
+	ItemStatusError ItemStatus = "ERROR"
+)
+
+type MigrateDataResponseDTO struct {
+	Items []MigrateDataResponseItemDTO `json:"items"`
+}
+
+type MigrateDataResponseItemDTO struct {
+	RefID  string     `json:"refId"`
+	Status ItemStatus `json:"status"`
+	Error  string     `json:"error,omitempty"`
+}
+
+type RunMigrationResponse struct {
+	DataSources []byte `json:"dataSources"`
+	Folders     []byte `json:"folders"`
+	Dashboards  []byte `json:"dashboards"`
 }

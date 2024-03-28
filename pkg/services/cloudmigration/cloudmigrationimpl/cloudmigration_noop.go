@@ -26,7 +26,7 @@ func (s *NoopServiceImpl) SaveEncryptedToken(ctx context.Context, token string) 
 	return cloudmigration.ErrFeatureDisabledError
 }
 
-func (s *NoopServiceImpl) GetMigration(ctx context.Context, id int64) (*cloudmigration.CloudMigrationResponse, error) {
+func (s *NoopServiceImpl) GetMigration(ctx context.Context, id int64) (*cloudmigration.CloudMigration, error) {
 	return nil, cloudmigration.ErrFeatureDisabledError
 }
 
@@ -42,7 +42,7 @@ func (s *NoopServiceImpl) UpdateMigration(ctx context.Context, id int64, cm clou
 	return nil, cloudmigration.ErrFeatureDisabledError
 }
 
-func (s *NoopServiceImpl) RunMigration(ctx context.Context, uid string) (*cloudmigration.CloudMigrationRun, error) {
+func (s *NoopServiceImpl) RunMigration(ctx context.Context, id int64) (*cloudmigration.RunMigrationResponse, error) {
 	return nil, cloudmigration.ErrFeatureDisabledError
 }
 
@@ -56,4 +56,8 @@ func (s *NoopServiceImpl) GetMigrationStatusList(ctx context.Context, id string)
 
 func (s *NoopServiceImpl) DeleteMigration(ctx context.Context, id string) error {
 	return cloudmigration.ErrFeatureDisabledError
+}
+
+func (s *NoopServiceImpl) SaveMigrationRun(ctx context.Context, cmr *cloudmigration.CloudMigrationRun) error {
+	return cloudmigration.ErrInternalNotImplementedError
 }

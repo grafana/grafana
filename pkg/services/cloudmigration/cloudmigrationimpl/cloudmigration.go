@@ -13,10 +13,14 @@ import (
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/cloudmigration"
 	"github.com/grafana/grafana/pkg/services/cloudmigration/api"
+	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/gcom"
+	"github.com/grafana/grafana/pkg/services/secrets"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/util"
 	"github.com/prometheus/client_golang/prometheus"
 )
 
@@ -27,9 +31,13 @@ type Service struct {
 	log *log.ConcreteLogger
 	cfg *setting.Cfg
 
-	features    featuremgmt.FeatureToggles
-	dsService   datasources.DataSourceService
-	gcomService gcom.Service
+	features featuremgmt.FeatureToggles
+
+	dsService       datasources.DataSourceService
+	gcomService     gcom.Service
+	dashboarService dashboards.DashboardService
+	folderService   folder.Service
+	secretsService  secrets.Service
 
 	api     *api.CloudMigrationAPI
 	tracer  tracing.Tracer
@@ -191,9 +199,26 @@ func (s *Service) SaveEncryptedToken(ctx context.Context, token string) error {
 	return nil
 }
 
-func (s *Service) GetMigration(ctx context.Context, id int64) (*cloudmigration.CloudMigrationResponse, error) {
-	// TODO: Implement method
-	return nil, nil
+func (s *Service) GetMigration(ctx context.Context, id int64) (*cloudmigration.CloudMigration, error) {
+	migration, err := s.store.GetMigration(ctx, id)
+	if err != nil {
+		return nil, err
+	}
+	strValue := migration.AuthToken
+	decoded, err := base64.RawStdEncoding.DecodeString(strValue)
+	if err != nil {
+		s.log.Error("Failed to decode secret string", "err", err, "value")
+		return nil, err
+	}
+
+	decryptedToken, err := s.secretsService.Decrypt(ctx, decoded)
+	if err != nil {
+		s.log.Error("Failed to decrypt secret", "err", err)
+		return nil, err
+	}
+	migration.AuthToken = string(decryptedToken)
+
+	return migration, nil
 }
 
 func (s *Service) GetMigrationList(ctx context.Context) ([]cloudmigration.CloudMigrationResponse, error) {
@@ -211,9 +236,102 @@ func (s *Service) UpdateMigration(ctx context.Context, id int64, cm cloudmigrati
 	return nil, nil
 }
 
-func (s *Service) RunMigration(ctx context.Context, uid string) (*cloudmigration.CloudMigrationRun, error) {
-	// TODO: Implement method
-	return nil, nil
+func (s *Service) RunMigration(ctx context.Context, id int64) (*cloudmigration.RunMigrationResponse, error) {
+	var result cloudmigration.RunMigrationResponse
+
+	dataSources, err := s.dsService.GetAllDataSources(ctx, &datasources.GetAllDataSourcesQuery{})
+	if err != nil {
+		s.log.Error("Failed to get all datasources", "err", err)
+		return nil, err
+	}
+
+	folders, err := s.folderService.GetFolders(ctx, folder.GetFoldersQuery{})
+	if err != nil {
+		s.log.Error("Failed to get all folders", "err", err)
+		return nil, err
+	}
+
+	dashs, err := s.dashboarService.GetAllDashboards(ctx)
+	if err != nil {
+		s.log.Error("Failed to get all dashboards", "err", err)
+		return nil, err
+	}
+
+	dataSourcesToMarshal := []datasources.AddDataSourceCommand{}
+	for _, dataSource := range dataSources {
+		// Decrypt secure json to send raw credentials
+		decryptedData, err := s.secretsService.DecryptJsonData(ctx, dataSource.SecureJsonData)
+		if err != nil {
+			s.log.Error("Failed to decrypt secure json data", "err", err)
+			return nil, err
+		}
+		dataSourceCmd := datasources.AddDataSourceCommand{
+			OrgID:           dataSource.OrgID,
+			Name:            dataSource.Name,
+			Type:            dataSource.Type,
+			Access:          dataSource.Access,
+			URL:             dataSource.URL,
+			User:            dataSource.User,
+			Database:        dataSource.Database,
+			BasicAuth:       dataSource.BasicAuth,
+			BasicAuthUser:   dataSource.BasicAuthUser,
+			WithCredentials: dataSource.WithCredentials,
+			IsDefault:       dataSource.IsDefault,
+			JsonData:        dataSource.JsonData,
+			SecureJsonData:  decryptedData,
+			ReadOnly:        dataSource.ReadOnly,
+			UID:             dataSource.UID,
+		}
+		dataSourcesToMarshal = append(dataSourcesToMarshal, dataSourceCmd)
+	}
+	result.DataSources, err = json.Marshal(dataSourcesToMarshal)
+	if err != nil {
+		s.log.Error("Failed to marshal datasources", "err", err)
+		return nil, err
+	}
+
+	var allFoldersToMarshal []folder.Folder
+	for _, folder := range folders {
+		allFoldersToMarshal = append(allFoldersToMarshal, *folder)
+	}
+	result.Folders, err = json.Marshal(allFoldersToMarshal)
+	if err != nil {
+		s.log.Error("Failed to marshal folders", "err", err)
+		return nil, err
+	}
+
+	var allDashboardsToMarshal []dashboards.Dashboard
+	for _, dashboard := range dashs {
+		allDashboardsToMarshal = append(allDashboardsToMarshal, *dashboard)
+	}
+	result.Dashboards, err = json.Marshal(allDashboardsToMarshal)
+	if err != nil {
+		s.log.Error("Failed to marshal dashboards", "err", err)
+		return nil, err
+	}
+
+	// save migration run in DB table
+	err = s.SaveMigrationRun(ctx, &cloudmigration.CloudMigrationRun{
+		ID: id,
+		Result: cloudmigration.MigrationResult{
+			Status:  "success",
+			Message: "Migration run successful",
+		},
+	})
+	if err != nil {
+		s.log.Error("Failed to save migration run", "err", err)
+		return &result, err
+	}
+
+	return &result, nil
+}
+
+func (s *Service) SaveMigrationRun(ctx context.Context, cmr *cloudmigration.CloudMigrationRun) error {
+	cmr.CloudMigrationUID = util.GenerateShortUID()
+	cmr.Created = time.Now()
+	cmr.Updated = time.Now()
+	cmr.Finished = time.Now()
+	return s.store.SaveMigrationRun(ctx, cmr)
 }
 
 func (s *Service) GetMigrationStatus(ctx context.Context, id string, runID string) (*cloudmigration.CloudMigrationRun, error) {
@@ -231,6 +349,14 @@ func (s *Service) DeleteMigration(ctx context.Context, id string) error {
 	return nil
 }
 
-// func (s *Service) MigrateDatasources(ctx context.Context, request *cloudmigration.MigrateDatasourcesRequest) (*cloudmigration.MigrateDatasourcesResponse, error) {
-// 	return s.store.MigrateDatasources(ctx, request)
-// }
+func (s *Service) ParseCloudMigrationConfig(cfg *setting.Cfg) (string, error) {
+	if cfg == nil {
+		return "", fmt.Errorf("cfg cannot be nil")
+	}
+	section := cfg.Raw.Section("cloud_migration")
+	domain := section.Key("domain").MustString("")
+	if domain != "" {
+		s.log.Warn("cloudmigration domain not set")
+	}
+	return "", nil
+}
