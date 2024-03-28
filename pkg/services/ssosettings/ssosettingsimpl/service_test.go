@@ -1309,16 +1309,22 @@ func TestService_decryptSecrets(t *testing.T) {
 			setup: func(env testEnv) {
 				env.secrets.On("Decrypt", mock.Anything, []byte("client_secret"), mock.Anything).Return([]byte("decrypted-client-secret"), nil).Once()
 				env.secrets.On("Decrypt", mock.Anything, []byte("other_secret"), mock.Anything).Return([]byte("decrypted-other-secret"), nil).Once()
+				env.secrets.On("Decrypt", mock.Anything, []byte("private_key"), mock.Anything).Return([]byte("decrypted-private-key"), nil).Once()
+				env.secrets.On("Decrypt", mock.Anything, []byte("certificate"), mock.Anything).Return([]byte("decrypted-certificate"), nil).Once()
 			},
 			settings: map[string]any{
 				"enabled":       true,
 				"client_secret": base64.RawStdEncoding.EncodeToString([]byte("client_secret")),
 				"other_secret":  base64.RawStdEncoding.EncodeToString([]byte("other_secret")),
+				"private_key":   base64.RawStdEncoding.EncodeToString([]byte("private_key")),
+				"certificate":   base64.RawStdEncoding.EncodeToString([]byte("certificate")),
 			},
 			want: map[string]any{
 				"enabled":       true,
 				"client_secret": "decrypted-client-secret",
 				"other_secret":  "decrypted-other-secret",
+				"private_key":   "decrypted-private-key",
+				"certificate":   "decrypted-certificate",
 			},
 		},
 		{
@@ -1356,7 +1362,7 @@ func TestService_decryptSecrets(t *testing.T) {
 			wantErr: true,
 		},
 		{
-			name: "should return an error decryption fails",
+			name: "should return an error if decryption fails",
 			setup: func(env testEnv) {
 				env.secrets.On("Decrypt", mock.Anything, []byte("client_secret"), mock.Anything).Return(nil, errors.New("decryption failed")).Once()
 			},
