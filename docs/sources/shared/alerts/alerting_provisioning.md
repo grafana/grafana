@@ -34,11 +34,11 @@ For managing resources related to [data source-managed alerts]({{< relref "/docs
 
 | Method | URI                                                              | Name                                                                    | Summary                                                               |
 | ------ | ---------------------------------------------------------------- | ----------------------------------------------------------------------- | --------------------------------------------------------------------- |
-| DELETE | /api/v1/provisioning/alert-rules/:uid                            | [route delete alert rule](#route-delete-alert-rule)                     | Delete a specific alert rule by UID.                                  |
-| GET    | /api/v1/provisioning/alert-rules/:uid                            | [route get alert rule](#route-get-alert-rule)                           | Get a specific alert rule by UID.                                     |
-| POST   | /api/v1/provisioning/alert-rules                                 | [route post alert rule](#route-post-alert-rule)                         | Create a new alert rule.                                              |
-| PUT    | /api/v1/provisioning/alert-rules/:uid                            | [route put alert rule](#route-put-alert-rule)                           | Update an existing alert rule.                                        |
-| GET    | /api/v1/provisioning/alert-rules/:uid/export                     | [route get alert rule export](#route-get-alert-rule-export)             | Export an alert rule in provisioning file format.                     |
+| DELETE | /api/v1/provisioning/alert-rules/:uid                            | [route delete alert rule](#route-delete-alert-rule)                     | DEPRECATED: Delete a specific alert rule by UID.                      |
+| GET    | /api/v1/provisioning/alert-rules/:uid                            | [route get alert rule](#route-get-alert-rule)                           | DEPRECATED: Get a specific alert rule by UID.                         |
+| POST   | /api/v1/provisioning/alert-rules                                 | [route post alert rule](#route-post-alert-rule)                         | DEPRECATED: Create a new alert rule.                                  |
+| PUT    | /api/v1/provisioning/alert-rules/:uid                            | [route put alert rule](#route-put-alert-rule)                           | DEPRECATED: Update an existing alert rule.                            |
+| GET    | /api/v1/provisioning/alert-rules/:uid/export                     | [route get alert rule export](#route-get-alert-rule-export)             | DEPRECATED: Export an alert rule in provisioning file format.         |
 | GET    | /api/v1/provisioning/folder/:folderUid/rule-groups/:group        | [route get alert rule group](#route-get-alert-rule-group)               | Get a rule group.                                                     |
 | PUT    | /api/v1/provisioning/folder/:folderUid/rule-groups/:group        | [route put alert rule group](#route-put-alert-rule-group)               | Update the interval of a rule group or modify the rules of the group. |
 | GET    | /api/v1/provisioning/folder/:folderUid/rule-groups/:group/export | [route get alert rule group export](#route-get-alert-rule-group-export) | Export an alert rule group in provisioning file format.               |
@@ -179,7 +179,7 @@ To reset the notification policy tree to the default and unlock it for editing i
 
 ## Paths
 
-### <span id="route-delete-alert-rule"></span> Delete a specific alert rule by UID. (_RouteDeleteAlertRule_)
+### <span id="route-delete-alert-rule"></span> DEPRECATED: Delete a specific alert rule by UID. (_RouteDeleteAlertRule_)
 
 ```
 DELETE /api/v1/provisioning/alert-rules/:uid
@@ -292,7 +292,7 @@ Status: No Content
 
 ###### <span id="route-delete-template-204-schema"></span> Schema
 
-### <span id="route-get-alert-rule"></span> Get a specific alert rule by UID. (_RouteGetAlertRule_)
+### <span id="route-get-alert-rule"></span> DEPRECATED: Get a specific alert rule by UID. (_RouteGetAlertRule_)
 
 ```
 GET /api/v1/provisioning/alert-rules/:uid
@@ -327,7 +327,7 @@ Status: Not Found
 
 ###### <span id="route-get-alert-rule-404-schema"></span> Schema
 
-### <span id="route-get-alert-rule-export"></span> Export an alert rule in provisioning file format. (_RouteGetAlertRuleExport_)
+### <span id="route-get-alert-rule-export"></span> DEPRECATED: Export an alert rule in provisioning file format. (_RouteGetAlertRuleExport_)
 
 ```
 GET /api/v1/provisioning/alert-rules/:uid/export
@@ -878,7 +878,7 @@ Status: Not Found
 
 ###### <span id="route-get-templates-404-schema"></span> Schema
 
-### <span id="route-post-alert-rule"></span> Create a new alert rule. (_RoutePostAlertRule_)
+### <span id="route-post-alert-rule"></span> DEPRECATED: Create a new alert rule. (_RoutePostAlertRule_)
 
 ```
 POST /api/v1/provisioning/alert-rules
@@ -1016,7 +1016,7 @@ Status: Bad Request
 
 [ValidationError](#validation-error)
 
-### <span id="route-put-alert-rule"></span> Update an existing alert rule. (_RoutePutAlertRule_)
+### <span id="route-put-alert-rule"></span> DEPRECATED: Update an existing alert rule. (_RoutePutAlertRule_)
 
 ```
 PUT /api/v1/provisioning/alert-rules/:uid

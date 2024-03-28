@@ -9702,9 +9702,10 @@
           "application/json"
         ],
         "tags": [
-          "provisioning"
+          "provisioning",
+          "deprecated"
         ],
-        "summary": "Create a new alert rule.",
+        "summary": "DEPRECATED: Create a new alert rule.",
         "operationId": "RoutePostAlertRule",
         "parameters": [
           {
@@ -9808,9 +9809,10 @@
     "/v1/provisioning/alert-rules/{UID}": {
       "get": {
         "tags": [
-          "provisioning"
+          "provisioning",
+          "deprecated"
         ],
-        "summary": "Get a specific alert rule by UID.",
+        "summary": "DEPRECATED: Get a specific alert rule by UID.",
         "operationId": "RouteGetAlertRule",
         "parameters": [
           {
@@ -9838,9 +9840,10 @@
           "application/json"
         ],
         "tags": [
-          "provisioning"
+          "provisioning",
+          "deprecated"
         ],
-        "summary": "Update an existing alert rule.",
+        "summary": "DEPRECATED: Update an existing alert rule.",
         "operationId": "RoutePutAlertRule",
         "parameters": [
           {
@@ -9880,9 +9883,10 @@
       },
       "delete": {
         "tags": [
-          "provisioning"
+          "provisioning",
+          "deprecated"
         ],
-        "summary": "Delete a specific alert rule by UID.",
+        "summary": "DEPRECATED: Delete a specific alert rule by UID.",
         "operationId": "RouteDeleteAlertRule",
         "parameters": [
           {
@@ -9915,9 +9919,10 @@
           "text/hcl"
         ],
         "tags": [
-          "provisioning"
+          "provisioning",
+          "deprecated"
         ],
-        "summary": "Export an alert rule in provisioning file format.",
+        "summary": "DEPRECATED: Export an alert rule in provisioning file format.",
         "operationId": "RouteGetAlertRuleExport",
         "parameters": [
           {
