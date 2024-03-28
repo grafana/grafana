@@ -14,6 +14,7 @@ type FakeFolderStore struct {
 	mock.Mock
 }
 
+// Deprecated: use GetFolderByUID instead
 // GetFolderByID provides a mock function with given fields: ctx, orgID, id
 func (_m *FakeFolderStore) GetFolderByID(ctx context.Context, orgID int64, id int64) (*folder.Folder, error) {
 	ret := _m.Called(ctx, orgID, id)
