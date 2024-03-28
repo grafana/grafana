@@ -270,11 +270,13 @@
                 ],
                 "properties": {
                   "mode": {
-                    "description": "Non-number reduce behavior\n\n\nPossible enum values:\n - `\"dropNN\"` Drop non-numbers\n - `\"replaceNN\"` Replace non-numbers",
+                    "description": "Non-number reduce behavior\n\n\nPossible enum values:\n - `\"dropNN\"` Drop non-numbers\n - `\"replaceNN\"` Replace non-numbers\n - `\"__expr__\"` \n - `\"-100\"` ",
                     "type": "string",
                     "enum": [
                       "dropNN",
-                      "replaceNN"
+                      "replaceNN",
+                      "__expr__",
+                      "-100"
                     ],
                     "x-enum-description": {
                       "dropNN": "Drop non-numbers",
