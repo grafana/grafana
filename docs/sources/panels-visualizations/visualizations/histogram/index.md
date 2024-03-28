@@ -37,7 +37,7 @@ You can use a histogram visualization if you need to:
 
 Once you’ve created a [dashboard](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/dashboards/build-dashboards/create-dashboard/), the following video shows you how to configure a histogram visualization:
 
-<!-- video TBA here -->
+{{< youtube id="QfJ480j9-KM" >}}
 
 ## Supported data formats
 
