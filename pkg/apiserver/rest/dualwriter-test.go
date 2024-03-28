@@ -7,6 +7,7 @@ import (
 	example "github.com/grafana/grafana/pkg/apis/example/v0alpha1"
 	"github.com/stretchr/testify/assert"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/runtime"
 )
 
 func Create_Test(t *testing.T) {
@@ -20,7 +21,7 @@ func Create_Test(t *testing.T) {
 	dummy := example.DummyResource{}
 	opts := &metav1.CreateOptions{}
 
-	_, err := dw.Create(context.Background(), dummy, func(context.Context, dummy) error { return nil }, opts)
+	_, err := dw.Create(context.Background(), &dummy, func(context.Context, runtime.Object) error { return nil }, opts)
 	assert.NoError(t, err)
 
 	// it should only store data in LegacyStorage when in mode1
