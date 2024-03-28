@@ -2,7 +2,6 @@ package mock
 
 import (
 	"context"
-	"errors"
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/plugins"
@@ -121,9 +120,6 @@ func (m *Mock) Evaluate(ctx context.Context, usr identity.Requester, evaluator a
 
 	resolvedEvaluator, err := evaluator.MutateScopes(ctx, m.scopeResolvers.GetScopeAttributeMutator(usr.GetOrgID()))
 	if err != nil {
-		if errors.Is(err, accesscontrol.ErrResolverNotFound) {
-			return false, nil
-		}
 		return false, err
 	}
 

@@ -69,7 +69,9 @@ func (s *Resolvers) GetScopeAttributeMutator(orgID int64) ScopeAttributeMutator 
 			s.log.Debug("Resolved scope", "scope", scope, "resolved_scopes", scopes)
 			return scopes, nil
 		}
-		return nil, ErrResolverNotFound
+
+		// If there is no resolver registered for this scope, just return it as-is
+		return []string{scope}, nil
 	}
 }
 

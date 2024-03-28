@@ -91,12 +91,11 @@ func TestResolvers_AttributeScope(t *testing.T) {
 			wantCalls:     1,
 		},
 		{
-			name:          "should return error if no resolver is found for scope",
+			name:          "should return same scope if no resolver is found for scope",
 			orgID:         1,
 			evaluator:     accesscontrol.EvalPermission("dashboards:read", "dashboards:id:1"),
-			wantEvaluator: nil,
+			wantEvaluator: accesscontrol.EvalPermission("dashboards:read", "dashboards:id:1"),
 			wantCalls:     0,
-			wantErr:       accesscontrol.ErrResolverNotFound,
 		},
 	}
 	for _, tt := range tests {

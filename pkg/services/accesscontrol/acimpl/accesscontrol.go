@@ -2,7 +2,6 @@ package acimpl
 
 import (
 	"context"
-	"errors"
 
 	"github.com/prometheus/client_golang/prometheus"
 
@@ -56,9 +55,6 @@ func (a *AccessControl) Evaluate(ctx context.Context, user identity.Requester, e
 
 	resolvedEvaluator, err := evaluator.MutateScopes(ctx, a.resolvers.GetScopeAttributeMutator(user.GetOrgID()))
 	if err != nil {
-		if errors.Is(err, accesscontrol.ErrResolverNotFound) {
-			return false, nil
-		}
 		return false, err
 	}
 
