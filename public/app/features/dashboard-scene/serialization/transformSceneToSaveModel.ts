@@ -58,6 +58,23 @@ export function transformSceneToSaveModel(scene: DashboardScene, isSnapshot = fa
   if (body instanceof SceneGridLayout) {
     for (const child of body.state.children) {
       if (child instanceof DashboardGridItem) {
+        // If we're saving while the panel editor is open, we need to persist those changes in the panel model
+        if (
+          child.state.body instanceof VizPanel &&
+          state.editPanel?.state.vizManager &&
+          state.editPanel.state.vizManager.state.sourcePanel.resolve().state.key === child.state.body.state.key
+        ) {
+          const childClone = child.clone();
+          if (childClone.state.body instanceof VizPanel) {
+            state.editPanel.state.vizManager.commitChangesTo(childClone.state.body);
+            panels.push(gridItemToPanel(childClone, isSnapshot));
+          }
+        } else {
+          panels.push(gridItemToPanel(child, isSnapshot));
+        }
+      }
+
+      if (child instanceof DashboardGridItem) {
         // handle panel repeater scenatio
         if (child.state.variableName) {
           panels = panels.concat(panelRepeaterToPanels(child, isSnapshot));
