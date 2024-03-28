@@ -46,20 +46,11 @@ func User(ctx context.Context) (*user.SignedInUser, error) {
 	// Find the kubernetes user info
 	k8sUserInfo, ok := request.UserFrom(ctx)
 	if ok {
-		// token := k8sUserInfo.GetExtra()["id-token"]
-		// if len(token) == 1 {
-		// 	return &user.SignedInUser{
-		// 		Name:    k8sUserInfo.GetName(),
-		// 		UserUID: k8sUserInfo.GetName(),
-		// 		IDToken: token[0], // forward this
-		// 		OrgID:   1,        // from audience
-		// 		UserID:  0,        // ????
-		// 	}, nil
-		// }
-
 		for _, group := range k8sUserInfo.GetGroups() {
 			switch group {
-			case k8suser.APIServerUser, k8suser.SystemPrivilegedGroup:
+			case k8suser.APIServerUser:
+				fallthrough
+			case k8suser.SystemPrivilegedGroup:
 				orgId := int64(1)
 				return &user.SignedInUser{
 					UserID:         1,
@@ -97,27 +88,4 @@ func MustUser(ctx context.Context) *user.SignedInUser {
 		panic(err)
 	}
 	return usr
-}
-
-// Get tokens that can be forwarded to the next service
-func GetForwardingTokens(ctx context.Context) (string, string, error) {
-	user, ok := request.UserFrom(ctx)
-	if !ok {
-		user, err := User(ctx)
-		if err != nil {
-			return "", "", err
-		}
-		return "", user.IDToken, nil
-	}
-	token := user.GetExtra()["access-token"]
-	if len(token) != 1 {
-		return "", "", fmt.Errorf("invalid access token")
-	}
-
-	grafanaID := user.GetExtra()["grafana-id"]
-	if len(token) != 1 {
-		return "", "", fmt.Errorf("invalid ID token")
-	}
-
-	return token[0], grafanaID[0], nil
 }
