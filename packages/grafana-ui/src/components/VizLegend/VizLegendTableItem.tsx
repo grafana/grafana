@@ -69,7 +69,7 @@ export const LegendTableItem = ({
     <tr className={cx(styles.row, className)}>
       <td>
         <span className={styles.itemWrapper}>
-          <VizLegendSeriesIcon color={item.color} seriesName={item.label} readonly={readonly} />
+          <VizLegendSeriesIcon color={item.color} seriesName={item.fieldName ?? item.label} readonly={readonly} />
           <button
             disabled={readonly}
             type="button"

@@ -8,6 +8,7 @@ import { Scene } from 'app/features/canvas/runtime/scene';
 
 import { ConnectionState } from '../../types';
 import {
+  calculateAngle,
   calculateCoordinates,
   getConnections,
   getParentBoundingClientRect,
@@ -17,6 +18,11 @@ import {
 
 import { CONNECTION_ANCHOR_ALT, ConnectionAnchors, CONNECTION_ANCHOR_HIGHLIGHT_OFFSET } from './ConnectionAnchors';
 import { ConnectionSVG } from './ConnectionSVG';
+
+export const CONNECTION_VERTEX_ID = 'vertex';
+export const CONNECTION_VERTEX_ADD_ID = 'vertexAdd';
+const CONNECTION_VERTEX_ORTHO_TOLERANCE = 0.05; // Cartesian ratio against vertical or horizontal tolerance
+const CONNECTION_VERTEX_SNAP_TOLERANCE = (5 / 180) * Math.PI; // Multi-segment snapping angle in radians to trigger vertex removal
 
 export class Connections {
   scene: Scene;
@@ -275,6 +281,8 @@ export class Connections {
 
   // Handles mousemove and mouseup events when dragging an existing vertex
   vertexListener = (event: MouseEvent) => {
+    this.scene.selecto!.rootContainer!.style.cursor = 'crosshair';
+
     event.preventDefault();
 
     if (!(this.connectionVertex && this.scene.div && this.scene.div.parentElement)) {
@@ -323,9 +331,53 @@ export class Connections {
       }
     }
 
-    // Display temporary vertex during drag
-    this.connectionVertexPath?.setAttribute('d', `M${vx1} ${vy1} L${x} ${y} L${vx2} ${vy2}`);
-    this.connectionSVGVertex!.style.display = 'block';
+    // Check if slope before vertex and after vertex is within snapping tolerance
+    let xSnap = x;
+    let ySnap = y;
+    let deleteVertex = false;
+    // Ignore if control key being held
+    if (!event.ctrlKey) {
+      // Check if segment before and after vertex are close to vertical or horizontal
+      const verticalBefore = Math.abs((x - vx1) / (y - vy1)) < CONNECTION_VERTEX_ORTHO_TOLERANCE;
+      const verticalAfter = Math.abs((x - vx2) / (y - vy2)) < CONNECTION_VERTEX_ORTHO_TOLERANCE;
+      const horizontalBefore = Math.abs((y - vy1) / (x - vx1)) < CONNECTION_VERTEX_ORTHO_TOLERANCE;
+      const horizontalAfter = Math.abs((y - vy2) / (x - vx2)) < CONNECTION_VERTEX_ORTHO_TOLERANCE;
+
+      if (verticalBefore) {
+        xSnap = vx1;
+      } else if (verticalAfter) {
+        xSnap = vx2;
+      }
+      if (horizontalBefore) {
+        ySnap = vy1;
+      } else if (horizontalAfter) {
+        ySnap = vy2;
+      }
+
+      if ((verticalBefore || verticalAfter) && (horizontalBefore || horizontalAfter)) {
+        this.scene.selecto!.rootContainer!.style.cursor = 'move';
+      } else if (verticalBefore || verticalAfter) {
+        this.scene.selecto!.rootContainer!.style.cursor = 'col-resize';
+      } else if (horizontalBefore || horizontalAfter) {
+        this.scene.selecto!.rootContainer!.style.cursor = 'row-resize';
+      }
+
+      const angleOverall = calculateAngle(vx1, vy1, vx2, vy2);
+      const angleBefore = calculateAngle(vx1, vy1, x, y);
+      deleteVertex = Math.abs(angleBefore - angleOverall) < CONNECTION_VERTEX_SNAP_TOLERANCE;
+    }
+
+    if (deleteVertex) {
+      // Display temporary vertex removal
+      this.connectionVertexPath?.setAttribute('d', `M${vx1} ${vy1} L${vx2} ${vy2}`);
+      this.connectionSVGVertex!.style.display = 'block';
+      this.connectionVertex.style.display = 'none';
+    } else {
+      // Display temporary vertex during drag
+      this.connectionVertexPath?.setAttribute('d', `M${vx1} ${vy1} L${xSnap} ${ySnap} L${vx2} ${vy2}`);
+      this.connectionSVGVertex!.style.display = 'block';
+      this.connectionVertex.style.display = 'block';
+    }
 
     // Handle mouseup
     if (!event.buttons) {
@@ -340,17 +392,23 @@ export class Connections {
       const vertexIndex = this.selectedVertexIndex;
 
       if (connectionIndex !== undefined && vertexIndex !== undefined) {
-        const currentSource = this.scene.connections.state[connectionIndex].source;
+        const currentSource = this.selection.value!.source;
         if (currentSource.options.connections) {
           const currentConnections = [...currentSource.options.connections];
           if (currentConnections[connectionIndex].vertices) {
             const currentVertices = [...currentConnections[connectionIndex].vertices!];
-            const currentVertex = { ...currentVertices[vertexIndex] };
 
-            currentVertex.x = (x - x1) / (x2 - x1);
-            currentVertex.y = (y - y1) / (y2 - y1);
+            if (deleteVertex) {
+              currentVertices.splice(vertexIndex, 1);
+            } else {
+              const currentVertex = { ...currentVertices[vertexIndex] };
 
-            currentVertices[vertexIndex] = currentVertex;
+              currentVertex.x = (xSnap - x1) / (x2 - x1);
+              currentVertex.y = (ySnap - y1) / (y2 - y1);
+
+              currentVertices[vertexIndex] = currentVertex;
+            }
+
             currentConnections[connectionIndex] = {
               ...currentConnections[connectionIndex],
               vertices: currentVertices,
@@ -368,6 +426,8 @@ export class Connections {
 
   // Handles mousemove and mouseup events when dragging a new vertex
   vertexAddListener = (event: MouseEvent) => {
+    this.scene.selecto!.rootContainer!.style.cursor = 'crosshair';
+
     event.preventDefault();
 
     if (!(this.connectionVertex && this.scene.div && this.scene.div.parentElement)) {
@@ -413,9 +473,40 @@ export class Connections {
       }
     }
 
-    // Display temporary vertex during drag
-    this.connectionVertexPath?.setAttribute('d', `M${vx1} ${vy1} L${x} ${y} L${vx2} ${vy2}`);
+    // Check if slope before vertex and after vertex is within snapping tolerance
+    let xSnap = x;
+    let ySnap = y;
+    // Ignore if control key being held
+    if (!event.ctrlKey) {
+      // Check if segment before and after vertex are close to vertical or horizontal
+      const verticalBefore = Math.abs((x - vx1) / (y - vy1)) < CONNECTION_VERTEX_ORTHO_TOLERANCE;
+      const verticalAfter = Math.abs((x - vx2) / (y - vy2)) < CONNECTION_VERTEX_ORTHO_TOLERANCE;
+      const horizontalBefore = Math.abs((y - vy1) / (x - vx1)) < CONNECTION_VERTEX_ORTHO_TOLERANCE;
+      const horizontalAfter = Math.abs((y - vy2) / (x - vx2)) < CONNECTION_VERTEX_ORTHO_TOLERANCE;
+
+      if (verticalBefore) {
+        xSnap = vx1;
+      } else if (verticalAfter) {
+        xSnap = vx2;
+      }
+      if (horizontalBefore) {
+        ySnap = vy1;
+      } else if (horizontalAfter) {
+        ySnap = vy2;
+      }
+
+      if ((verticalBefore || verticalAfter) && (horizontalBefore || horizontalAfter)) {
+        this.scene.selecto!.rootContainer!.style.cursor = 'move';
+      } else if (verticalBefore || verticalAfter) {
+        this.scene.selecto!.rootContainer!.style.cursor = 'col-resize';
+      } else if (horizontalBefore || horizontalAfter) {
+        this.scene.selecto!.rootContainer!.style.cursor = 'row-resize';
+      }
+    }
+
+    this.connectionVertexPath?.setAttribute('d', `M${vx1} ${vy1} L${xSnap} ${ySnap} L${vx2} ${vy2}`);
     this.connectionSVGVertex!.style.display = 'block';
+    this.connectionVertex.style.display = 'block';
 
     // Handle mouseup
     if (!event.buttons) {
@@ -430,7 +521,7 @@ export class Connections {
       const vertexIndex = this.selectedVertexIndex;
 
       if (connectionIndex !== undefined && vertexIndex !== undefined) {
-        const currentSource = this.scene.connections.state[connectionIndex].source;
+        const currentSource = this.selection.value!.source;
         if (currentSource.options.connections) {
           const currentConnections = [...currentSource.options.connections];
           const newVertex = { x: (x - x1) / (x2 - x1), y: (y - y1) / (y2 - y1) };
@@ -495,7 +586,6 @@ export class Connections {
   handleVertexDragStart = (selectedTarget: HTMLElement) => {
     // Get vertex index from selected target data
     this.selectedVertexIndex = Number(selectedTarget.getAttribute('data-index'));
-    this.scene.selecto!.rootContainer!.style.cursor = 'crosshair';
 
     this.scene.selecto?.rootContainer?.addEventListener('mousemove', this.vertexListener);
     this.scene.selecto?.rootContainer?.addEventListener('mouseup', this.vertexListener);
@@ -505,7 +595,6 @@ export class Connections {
   handleVertexAddDragStart = (selectedTarget: HTMLElement) => {
     // Get vertex index from selected target data
     this.selectedVertexIndex = Number(selectedTarget.getAttribute('data-index'));
-    this.scene.selecto!.rootContainer!.style.cursor = 'crosshair';
 
     this.scene.selecto?.rootContainer?.addEventListener('mousemove', this.vertexAddListener);
     this.scene.selecto?.rootContainer?.addEventListener('mouseup', this.vertexAddListener);

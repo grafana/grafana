@@ -172,6 +172,7 @@
 /devenv/bulk-dashboards/ @grafana/dashboards-squad
 /devenv/bulk-folders/ @grafana/grafana-frontend-platform
 /devenv/create_docker_compose.sh @grafana/backend-platform
+/devenv/alert_rules.yaml @grafana/alerting-backend-product
 /devenv/dashboards.yaml @grafana/dashboards-squad
 /devenv/datasources.yaml @grafana/backend-platform
 /devenv/datasources_docker.yaml @grafana/backend-platform
@@ -388,7 +389,7 @@ playwright.config.ts @grafana/plugins-platform-frontend
 /public/app/features/admin/ @grafana/identity-access-team
 
 # Temp owners until Enterprise team takes over
-/public/app/features/admin/migrate-to-cloud @grafana/grafana-frontend-platform
+/public/app/features/migrate-to-cloud @grafana/grafana-frontend-platform
 
 /public/app/features/auth-config/ @grafana/identity-access-team
 /public/app/features/annotations/ @grafana/dashboards-squad
@@ -402,6 +403,7 @@ playwright.config.ts @grafana/plugins-platform-frontend
 /public/app/features/dashboard/ @grafana/dashboards-squad
 /public/app/features/dashboard/components/TransformationsEditor/ @grafana/dataviz-squad
 /public/app/features/dashboard-scene/ @grafana/dashboards-squad
+/public/app/features/scopes/ @grafana/dashboards-squad
 /public/app/features/datasources/ @grafana/plugins-platform-frontend @mikkancso
 /public/app/features/dimensions/ @grafana/dataviz-squad
 /public/app/features/dataframe-import/ @grafana/dataviz-squad
@@ -413,6 +415,7 @@ playwright.config.ts @grafana/plugins-platform-frontend
 /public/app/features/library-panels/ @grafana/dashboards-squad
 /public/app/features/logs/ @grafana/observability-logs
 /public/app/features/live/ @grafana/grafana-app-platform-squad
+/public/app/features/apiserver/ @grafana/grafana-app-platform-squad
 /public/app/features/manage-dashboards/ @grafana/dashboards-squad
 /public/app/features/notifications/ @grafana/grafana-frontend-platform
 /public/app/features/org/ @grafana/grafana-frontend-platform
@@ -534,7 +537,7 @@ playwright.config.ts @grafana/plugins-platform-frontend
 /scripts/generate-icon-bundle.js @grafana/plugins-platform-frontend @grafana/grafana-frontend-platform
 /scripts/levitate-parse-json-report.js @grafana/plugins-platform-frontend
 
-/scripts/docs/generate-transformations* @grafana/dataviz-squad
+/scripts/**/generate-transformations* @grafana/dataviz-squad
 /scripts/webpack/ @grafana/frontend-ops
 /scripts/generate-a11y-report.sh @grafana/grafana-frontend-platform
 .pa11yci.conf.js @grafana/grafana-frontend-platform
@@ -610,8 +613,12 @@ playwright.config.ts @grafana/plugins-platform-frontend
 
 # Grafana Operator Experience Team
 /pkg/services/caching/ @grafana/grafana-operator-experience-squad
-/pkg/services/featuremgmt/ @grafana/grafana-operator-experience-squad
 /pkg/services/cloudmigration/ @grafana/grafana-operator-experience-squad
+/pkg/services/gcom/ @grafana/grafana-operator-experience-squad
+
+# Feature toggles
+/pkg/services/featuremgmt/ @grafana/grafana-backend-services-squad
+
 
 # Kind definitions
 /kinds/dashboard @grafana/dashboards-squad
@@ -620,10 +627,10 @@ playwright.config.ts @grafana/plugins-platform-frontend
 # Kind system and code generation
 embed.go @grafana/grafana-as-code
 /pkg/kinds/ @grafana/grafana-as-code
-/pkg/cuectx/ @grafana/grafana-as-code
 /pkg/registry/ @grafana/grafana-as-code
 /pkg/registry/apis/ @grafana/grafana-app-platform-squad
 /pkg/codegen/ @grafana/grafana-as-code
+/pkg/codegen/generators @grafana/grafana-as-code
 /pkg/kinds/*/*_gen.go @grafana/grafana-as-code
 /pkg/registry/schemas/ @grafana/grafana-as-code
 /public/app/plugins/*gen.go @grafana/grafana-as-code
@@ -689,6 +696,7 @@ embed.go @grafana/grafana-as-code
 /.github/workflows/i18n-crowdin-download.yml @grafana/grafana-frontend-platform
 /.github/workflows/feature-toggle-cleanup.yml @tolzhabayev
 /.github/workflows/scripts/feature-toggle-cleanup/feature-toggle-cleanup.js @tolzhabayev
+/.github/workflows/pr-go-workspace-check.yml @grafana/grafana-app-platform-squad
 
 # Generated files not requiring owner approval
 /packages/grafana-data/src/types/featureToggles.gen.ts @grafanabot

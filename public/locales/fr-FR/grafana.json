@@ -94,7 +94,7 @@
     },
     "no-results": {
       "clear": "Effacer la recherche et les filtres",
-      "text": "Aucun résultat trouvé pour votre requête."
+      "text": ""
     }
   },
   "clipboard-button": {
@@ -107,9 +107,6 @@
       "change-theme": "Modifier le thème...",
       "dark-theme": "Sombre",
       "light-theme": "Clair"
-    },
-    "empty-state": {
-      "title": "Aucun résultat trouvé"
     },
     "search-box": {
       "placeholder": "Rechercher ou aller à..."
@@ -131,7 +128,8 @@
   },
   "connections": {
     "connect-data": {
-      "category-header-label": "Sources de données"
+      "category-header-label": "Sources de données",
+      "empty-message": ""
     },
     "search": {
       "placeholder": "Rechercher tout"
@@ -369,7 +367,6 @@
       "title-label": "Titre"
     },
     "json-editor": {
-      "apply-button": "Appliquer les modifications",
       "save-button": "Enregistrer les modifications",
       "subtitle": "Le modèle JSON ci-dessous est la structure de données qui définit le tableau de bord. Il inclut les paramètres du tableau de bord, les paramètres du panneau, la mise en page, les requêtes, etc.",
       "title": "Modèle JSON"
@@ -564,6 +561,9 @@
     "drawer": {
       "close": "Fermer"
     },
+    "empty-state": {
+      "not-found-message": ""
+    },
     "modal": {
       "close-tooltip": "Fermer"
     },
@@ -651,6 +651,9 @@
     }
   },
   "library-panels": {
+    "empty-state": {
+      "message": ""
+    },
     "modal": {
       "button-cancel": "<0>Annuler</0>",
       "button-view-panel1": "Voir le panneau dans {{label}}...",
@@ -790,8 +793,11 @@
       "datasource": "Source de données",
       "unknown": "Inconnu"
     },
-    "resources": {
-      "disconnect": "Déconnecter"
+    "summary": {
+      "disconnect": "",
+      "error-starting-migration": "",
+      "start-migration": "",
+      "target-stack-title": ""
     },
     "token-status": {
       "active": "Jeton créé et actif",
@@ -1209,6 +1215,11 @@
       "title": "Il n'y a aucune playlist créée"
     }
   },
+  "playlists": {
+    "empty-state": {
+      "message": ""
+    }
+  },
   "profile": {
     "change-password": {
       "cancel-button": "Annuler",
@@ -1344,11 +1355,12 @@
     "header": {
       "collapse-row": "Réduire la ligne de requête",
       "datasource-help": "Afficher l'aide de la source de données",
-      "disable-query": "Désactiver la requête",
       "drag-and-drop": "Glisser et déposer pour réorganiser",
       "duplicate-query": "Dupliquer la requête",
       "expand-row": "Développer la ligne de requête",
+      "hide-response": "",
       "remove-query": "Supprimer la requête",
+      "show-response": "",
       "toggle-edit-mode": "Activer/désactiver le mode édition de texte"
     },
     "query-editor-not-exported": "Le plugin source de données n'exporte aucun composant de l'éditeur de requête"
@@ -1474,7 +1486,7 @@
       "library-panel": "Panneau de bibliothèque",
       "link": "Lien",
       "panel-embed": "Intégrer",
-      "public-dashboard": "Publier le tableau de bord",
+      "public-dashboard": "",
       "public-dashboard-title": "Tableau de bord public",
       "snapshot": "Instantané"
     },

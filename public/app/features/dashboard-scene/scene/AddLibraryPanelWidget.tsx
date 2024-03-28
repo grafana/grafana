@@ -3,14 +3,7 @@ import React from 'react';
 import tinycolor from 'tinycolor2';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import {
-  SceneComponentProps,
-  SceneGridItem,
-  SceneGridLayout,
-  SceneGridRow,
-  SceneObjectBase,
-  SceneObjectState,
-} from '@grafana/scenes';
+import { SceneComponentProps, SceneGridLayout, SceneGridRow, SceneObjectBase, SceneObjectState } from '@grafana/scenes';
 import { LibraryPanel } from '@grafana/schema';
 import { IconButton, useStyles2 } from '@grafana/ui';
 import { Trans } from 'app/core/internationalization';
@@ -21,6 +14,7 @@ import {
 
 import { getDashboardSceneFor } from '../utils/utils';
 
+import { DashboardGridItem } from './DashboardGridItem';
 import { DashboardScene } from './DashboardScene';
 import { LibraryVizPanel } from './LibraryVizPanel';
 
@@ -62,7 +56,7 @@ export class AddLibraryPanelWidget extends SceneObjectBase<AddLibraryPanelWidget
         const rowChildren = [];
 
         for (const rowChild of child.state.children) {
-          if (rowChild instanceof SceneGridItem && rowChild.state.key !== this.parent?.state.key) {
+          if (rowChild instanceof DashboardGridItem && rowChild.state.key !== this.parent?.state.key) {
             rowChildren.push(rowChild);
           }
         }
@@ -86,7 +80,7 @@ export class AddLibraryPanelWidget extends SceneObjectBase<AddLibraryPanelWidget
       panelKey: this.state.key,
     });
 
-    if (this.parent instanceof SceneGridItem) {
+    if (this.parent instanceof DashboardGridItem) {
       this.parent.setState({ body });
     }
   };
