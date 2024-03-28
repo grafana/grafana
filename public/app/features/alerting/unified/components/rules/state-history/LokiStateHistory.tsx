@@ -50,7 +50,7 @@ const LokiStateHistory = ({ ruleUID }: Props) => {
     instancesFilter
   );
 
-  const { frameSubset, frameSubsetTimestamps, frameTimeRange } = useFrameSubset(dataFrames);
+  const { frameSubset, frameTimeRange } = useFrameSubset(dataFrames);
 
   const onLogRecordLabelClick = useCallback(
     (label: string) => {
@@ -65,26 +65,6 @@ const LokiStateHistory = ({ ruleUID }: Props) => {
     setInstancesFilter('');
     setValue('query', '');
   }, [setInstancesFilter, setValue]);
-
-  const refToHighlight = useRef<HTMLElement | undefined>(undefined);
-
-  const onTimelinePointerMove = useCallback(
-    (seriesIdx: number, pointIdx: number) => {
-      // remove the highlight from the previous refToHighlight
-      refToHighlight.current?.classList.remove(styles.highlightedLogRecord);
-
-      const timestamp = frameSubsetTimestamps[pointIdx];
-      const newTimestampRef = logsRef.current.get(timestamp);
-
-      // now we have the new ref, add the styles
-      newTimestampRef?.classList.add(styles.highlightedLogRecord);
-      // keeping this here (commented) in case we decide we want to go back to this
-      // newTimestampRef?.scrollIntoView({ behavior: 'smooth', block: 'center' });
-
-      refToHighlight.current = newTimestampRef;
-    },
-    [frameSubsetTimestamps, styles.highlightedLogRecord]
-  );
 
   if (isLoading) {
     return <div>Loading...</div>;
@@ -138,7 +118,7 @@ const LokiStateHistory = ({ ruleUID }: Props) => {
       ) : (
         <>
           <div className={styles.graphWrapper}>
-            <LogTimelineViewer frames={frameSubset} timeRange={frameTimeRange} onPointerMove={onTimelinePointerMove} />
+            <LogTimelineViewer frames={frameSubset} timeRange={frameTimeRange} />
           </div>
           {hasMoreInstances && (
             <div className={styles.moreInstancesWarning}>
