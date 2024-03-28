@@ -7,10 +7,10 @@ const setup = (propOverrides?: Partial<RichHistorySettingsProps>) => {
   const props: RichHistorySettingsProps = {
     retentionPeriod: 14,
     starredTabAsFirstTab: true,
-    activeDatasourceOnly: false,
+    activeDatasourcesOnly: false,
     onChangeRetentionPeriod: jest.fn(),
     toggleStarredTabAsFirstTab: jest.fn(),
-    toggleactiveDatasourceOnly: jest.fn(),
+    toggleActiveDatasourcesOnly: jest.fn(),
     deleteRichHistory: jest.fn(),
   };
 
@@ -24,7 +24,7 @@ describe('RichHistorySettings', () => {
     setup();
     expect(screen.queryByText('2 weeks')).toBeInTheDocument();
   });
-  it('should render component with correctly checked starredTabAsFirstTab and uncheched toggleActiveDatasourceOnly settings', () => {
+  it('should render component with correctly checked starredTabAsFirstTab and uncheched toggleactiveDatasourcesOnly settings', () => {
     setup();
     const checkboxes = screen.getAllByRole('checkbox');
     expect(checkboxes.length).toBe(2);

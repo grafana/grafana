@@ -5,10 +5,10 @@ import React from 'react';
 
 // Services & Utils
 import { GrafanaTheme2 } from '@grafana/data';
-import { getDragStyles, useStyles2, useTheme2 } from '@grafana/ui';
+import { getDragStyles, useTheme2 } from '@grafana/ui';
 
 export interface Props {
-  width: number;
+  width?: number;
   children: React.ReactNode;
   onResize?: ResizeCallback;
 }
@@ -16,9 +16,9 @@ export interface Props {
 export function ExploreDrawer(props: Props) {
   const { width, children, onResize } = props;
   const theme = useTheme2();
-  const styles = useStyles2(getStyles);
+  const styles = getStyles(theme, width === undefined); // if width is defined, it is not full-width
   const dragStyles = getDragStyles(theme);
-  const drawerWidth = `${width + 31.5}px`;
+  const drawerWidth = width ? `${width + 31.5}px` : '100%';
 
   return (
     <Resizable
@@ -46,25 +46,27 @@ export function ExploreDrawer(props: Props) {
 }
 
 const drawerSlide = (theme: GrafanaTheme2) => keyframes`
-  0% {
-    transform: translateY(${theme.components.horizontalDrawer.defaultHeight}px);
+  from {
+    max-height: 0px;
+    overflow: hidden;
   }
 
-  100% {
-    transform: translateY(0px);
+  to {
+    max-height: ${theme.components.horizontalDrawer.defaultHeight}px;
+    overflow: hidden;
   }
 `;
 
-const getStyles = (theme: GrafanaTheme2) => ({
+const getStyles = (theme: GrafanaTheme2, fullWidth: boolean) => ({
   // @ts-expect-error csstype doesn't allow !important. see https://github.com/frenic/csstype/issues/114
   fixed: css({
-    position: 'fixed !important',
+    position: `${fullWidth ? 'absolute' : 'fixed'} !important`,
   }),
   container: css({
-    bottom: 0,
+    bottom: `${fullWidth ? '1px' : '0'}`,
     background: theme.colors.background.primary,
     borderTop: `1px solid ${theme.colors.border.weak}`,
-    margin: theme.spacing(0, -2, 0, -2),
+    margin: theme.spacing(0, fullWidth ? 0 : -2, 0, fullWidth ? 0 : -2),
     boxShadow: theme.shadows.z3,
     zIndex: theme.zIndex.navbarFixed,
   }),

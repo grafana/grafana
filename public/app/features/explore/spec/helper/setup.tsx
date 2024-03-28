@@ -282,6 +282,11 @@ export const withinExplore = (exploreId: string) => {
   return within(container[exploreId === 'left' ? 0 : 1]);
 };
 
+export const withinQueryHistory = () => {
+  const container = screen.getByTestId('data-testid QueryHistory');
+  return within(container);
+};
+
 const exploreTestsHelper: { setupExplore: typeof setupExplore; tearDownExplore?: (options?: TearDownOptions) => void } =
   {
     setupExplore,
@@ -291,8 +296,8 @@ const exploreTestsHelper: { setupExplore: typeof setupExplore; tearDownExplore?:
 /**
  * Optimized version of getAllByRole to avoid timeouts in tests. Please check #70158, #59116 and #47635, #78236.
  */
-export const getAllByRoleInQueryHistoryTab = (exploreId: string, role: ByRoleMatcher, name: string | RegExp) => {
-  const selector = withinExplore(exploreId);
+export const getAllByRoleInQueryHistoryTab = (role: ByRoleMatcher, name: string | RegExp) => {
+  const selector = withinQueryHistory();
   // Test ID is used to avoid test timeouts reported in
   const queriesContainer = selector.getByTestId('query-history-queries-tab');
   return within(queriesContainer).getAllByRole(role, { name });

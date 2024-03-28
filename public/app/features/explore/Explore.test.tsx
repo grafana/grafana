@@ -10,7 +10,7 @@ import { configureStore } from 'app/store/configureStore';
 
 import { ContentOutlineContextProvider } from './ContentOutline/ContentOutlineContext';
 import { Explore, Props } from './Explore';
-import { initialExploreState } from './state/main';
+import { changeShowQueryHistory, initialExploreState } from './state/main';
 import { scanStopAction } from './state/query';
 import { createEmptyQueryResponse, makeExplorePaneState } from './state/utils';
 
@@ -98,6 +98,8 @@ const dummyProps: Props = {
   setSupplementaryQueryEnabled: jest.fn(),
   correlationEditorDetails: undefined,
   correlationEditorHelperData: undefined,
+  showQueryHistory: false,
+  changeShowQueryHistory: changeShowQueryHistory,
 };
 
 jest.mock('@grafana/runtime/src/services/dataSourceSrv', () => {
