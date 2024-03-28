@@ -428,7 +428,7 @@ func TestEval_MutateScopes(t *testing.T) {
 		assert.ErrorIs(t, err, ErrResolverNotFound)
 	})
 
-	t.Run("should return return if at least one scope was resolved", func(t *testing.T) {
+	t.Run("should return if at least one scope was resolved", func(t *testing.T) {
 		eval := EvalAll(
 			EvalPermission("action:1", "scope:uid:1"),
 			EvalPermission("action:2", "scope:id:1"),
