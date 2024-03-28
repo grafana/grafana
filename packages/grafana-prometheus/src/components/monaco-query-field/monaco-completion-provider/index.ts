@@ -1,6 +1,7 @@
 import type { Monaco, monacoTypes } from '@grafana/ui';
 
-import { CompletionType, DataProvider, getCompletions } from './completions';
+import { CompletionType, getCompletions } from './completions';
+import { DataProvider } from './data-provider';
 import { getSituation } from './situation';
 import { NeverCaseError } from './util';
 
@@ -69,7 +70,7 @@ export function getCompletionProvider(
       column: position.column,
       lineNumber: position.lineNumber,
     };
-    const textInRange = model.getValueInRange(range);
+    dataProvider.monacoSettings.setInputInRange(model.getValueInRange(range));
 
     // Check to see if the browser supports window.getSelection()
     if (window.getSelection) {
@@ -82,24 +83,7 @@ export function getCompletionProvider(
 
     const offset = model.getOffsetAt(positionClone);
     const situation = getSituation(model.getValue(), offset);
-    let updateAutocompleteSuggestionsOnInput = false;
-
-    /**
-     * Enable autocomplete suggestions update on every input change.
-     *
-     * @remarks
-     * If fuzzy search is used in `getCompletions` to trim down results to improve performance,
-     * we need to instruct Monaco to update the completions on every input change, so that the
-     * completions reflect the current input.
-     */
-    function enableAutocompleteSuggestionsUpdate() {
-      updateAutocompleteSuggestionsOnInput = true;
-    }
-
-    const completionsPromise =
-      situation != null
-        ? getCompletions(situation, dataProvider, textInRange, enableAutocompleteSuggestionsUpdate)
-        : Promise.resolve([]);
+    const completionsPromise = situation != null ? getCompletions(situation, dataProvider) : Promise.resolve([]);
 
     return completionsPromise.then((items) => {
       // monaco by-default alphabetically orders the items.
@@ -121,7 +105,7 @@ export function getCompletionProvider(
             }
           : undefined,
       }));
-      return { suggestions, incomplete: updateAutocompleteSuggestionsOnInput };
+      return { suggestions, incomplete: dataProvider.monacoSettings.suggestionsIncomplete };
     });
   };
 

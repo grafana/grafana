@@ -52,7 +52,10 @@ export const DURATION_REGEX = /^$|^\d+(ms|[Mwdhmsy])$/;
 // multiple duration input
 export const MULTIPLE_DURATION_REGEX = /(\d+)(.+)/;
 
+export const NON_NEGATIVE_INTEGER_REGEX = /^(0|[1-9]\d*)(\.\d+)?(e\+?\d+)?$/; // non-negative integers, including scientific notation
+
 const durationError = 'Value is not valid, you can use number with time unit specifier: y, M, w, d, h, m, s';
+export const countError = 'Value is not valid, you can use non-negative integers, including scientific notation';
 
 export const PromSettings = (props: Props) => {
   const { options, onOptionsChange } = props;
@@ -76,6 +79,14 @@ export const PromSettings = (props: Props) => {
     timeInterval: '',
     queryTimeout: '',
     incrementalQueryOverlapWindow: '',
+  });
+
+  type ValidCount = {
+    codeModeMetricNamesSuggestionLimit: string;
+  };
+
+  const [validCount, updateValidCount] = useState<ValidCount>({
+    codeModeMetricNamesSuggestionLimit: '',
   });
 
   return (
@@ -297,6 +308,40 @@ export const PromSettings = (props: Props) => {
                   }
                   data-testid={selectors.components.DataSource.Prometheus.configPage.cacheLevel}
                 />
+              </InlineField>
+            </div>
+          </div>
+
+          <div className="gf-form-inline">
+            <div className="gf-form">
+              <InlineField
+                label="Metric names suggestion limit"
+                labelWidth={PROM_CONFIG_LABEL_WIDTH}
+                tooltip={
+                  <>In Code Mode, set the maximum number of metric names that may appear as autocomplete suggestions.</>
+                }
+                interactive={true}
+                disabled={options.readOnly}
+              >
+                <>
+                  <Input
+                    className="width-20"
+                    value={options.jsonData.codeModeMetricNamesSuggestionLimit}
+                    onChange={onChangeHandler('codeModeMetricNamesSuggestionLimit', options, onOptionsChange)}
+                    spellCheck={false}
+                    placeholder="10000"
+                    onBlur={(e) =>
+                      updateValidCount({
+                        ...validCount,
+                        codeModeMetricNamesSuggestionLimit: e.currentTarget.value,
+                      })
+                    }
+                    data-testid={
+                      selectors.components.DataSource.Prometheus.configPage.codeModeMetricNamesSuggestionLimit
+                    }
+                  />
+                  {validateInput(validCount.codeModeMetricNamesSuggestionLimit, NON_NEGATIVE_INTEGER_REGEX, countError)}
+                </>
               </InlineField>
             </div>
           </div>

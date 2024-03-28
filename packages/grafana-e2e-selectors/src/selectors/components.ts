@@ -78,6 +78,7 @@ export const Components = {
         httpMethod: 'data-testid http method',
         exemplarsAddButton: 'data-testid Add exemplar config button',
         internalLinkSwitch: 'data-testid Internal link switch',
+        codeModeMetricNamesSuggestionLimit: 'data-testid code mode metric names suggestion limit',
       },
       queryEditor: {
         // kickstart: '', see QueryBuilder queryPatterns below
