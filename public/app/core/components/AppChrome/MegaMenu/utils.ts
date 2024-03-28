@@ -72,16 +72,44 @@ const isBetterMatch = (newMatch: NavModelItem, currentMatch?: NavModelItem) => {
   return newMatchUrl && newMatchUrl.length > currentMatchUrl?.length;
 };
 
+/**
+ * Mapping of page ID -> ID of corresponding nav tree link to highlight when on that ID's URL
+ *
+ * Until we have more structured routing in place, we can't rely on the route URLs to determine the necessary
+ * `MegaMenuItem` to highlight. This is because the URLs aren't all consistent, and rather than change the URLs
+ * we can instead define overrides to make sure any outliers work correctly
+ *
+ * e.g. within Alerting, the silences page is `/alerting/silences`, but the page to create a new silence is
+ * `/alerting/silence/new`. This means it's neater to override certain URLs for now rather than trying to
+ * match parts of the beginning of the URL
+ *
+ */
+const overrides: Record<string, string> = {
+  'silence-new': 'silences',
+  'silence-edit': 'silences',
+  'alert-rule-add': 'alert-list',
+  'alert-rule-view': 'alert-list',
+  'org-new': 'global-orgs',
+};
+
 export const getActiveItem = (
   navTree: NavModelItem[],
   pathname: string,
-  currentBestMatch?: NavModelItem
+  currentBestMatch?: NavModelItem,
+  pageNav?: NavModelItem
 ): NavModelItem | undefined => {
   const dashboardLinkMatch = '/dashboards';
+  const override = pageNav?.id && overrides[pageNav.id];
 
   for (const link of navTree) {
     const linkWithoutParams = stripQueryParams(link.url);
     const linkPathname = locationUtil.stripBaseFromUrl(linkWithoutParams);
+
+    if (override && override === link.id) {
+      currentBestMatch = link;
+      break;
+    }
+
     if (linkPathname && link.id !== 'starred') {
       if (linkPathname === pathname) {
         // exact match
@@ -92,11 +120,6 @@ export const getActiveItem = (
         if (isBetterMatch(link, currentBestMatch)) {
           currentBestMatch = link;
         }
-      } else if (linkPathname === '/alerting/list' && pathname.startsWith('/alerting/notification/')) {
-        // alert channel match
-        // TODO refactor routes such that we don't need this custom logic
-        currentBestMatch = link;
-        break;
       } else if (linkPathname === dashboardLinkMatch && pathname.startsWith('/d/')) {
         // dashboard match
         // TODO refactor routes such that we don't need this custom logic
@@ -106,7 +129,7 @@ export const getActiveItem = (
       }
     }
     if (link.children) {
-      currentBestMatch = getActiveItem(link.children, pathname, currentBestMatch);
+      currentBestMatch = getActiveItem(link.children, pathname, currentBestMatch, pageNav);
     }
     if (stripQueryParams(currentBestMatch?.url) === pathname) {
       return currentBestMatch;
