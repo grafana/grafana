@@ -8,13 +8,14 @@ import (
 	"strings"
 	"time"
 
+	"github.com/grafana/grafana-plugin-sdk-go/backend/gtime"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 
 	"github.com/grafana/grafana/pkg/tsdb/influxdb/models"
 )
 
 var (
-	legendFormat = regexp.MustCompile(`\[\[([\@\/\w-]+)(\.[\@\/\w-]+)*\]\]*|\$([\@\w-]+?)*`)
+	legendFormat = regexp.MustCompile(`\[\[([\@\/\w-]+)(\.[\@\/\w-]+)*\]\]*|\$([\@\w]+?)*`)
 )
 
 const (
@@ -28,6 +29,8 @@ func FormatFrameName(rowName, column string, tags map[string]string, query model
 		return BuildFrameNameFromQuery(rowName, column, tags, frameName, query.ResultFormat)
 	}
 	nameSegment := strings.Split(rowName, ".")
+	intervalText := gtime.FormatInterval(query.Interval)
+	intervalMs := int64(query.Interval / time.Millisecond)
 
 	result := legendFormat.ReplaceAllFunc([]byte(query.Alias), func(in []byte) []byte {
 		aliasFormat := string(in)
@@ -40,6 +43,12 @@ func FormatFrameName(rowName, column string, tags map[string]string, query model
 		}
 		if aliasFormat == "col" {
 			return []byte(column)
+		}
+		if aliasFormat == "__interval" {
+			return []byte(intervalText)
+		}
+		if aliasFormat == "__interval_ms" {
+			return []byte(strconv.FormatInt(intervalMs, 10))
 		}
 
 		pos, err := strconv.Atoi(aliasFormat)

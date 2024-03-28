@@ -1,33 +1,41 @@
 package setting
 
 import (
+	"encoding/pem"
 	"errors"
+	"os"
 
 	"gopkg.in/ini.v1"
 )
 
 type SecureSocksDSProxySettings struct {
-	Enabled       bool
-	ShowUI        bool
-	AllowInsecure bool
-	ClientCert    string
-	ClientKey     string
-	RootCA        string
-	ProxyAddress  string
-	ServerName    string
+	Enabled            bool
+	ShowUI             bool
+	AllowInsecure      bool
+	ClientCert         string
+	ClientCertFilePath string
+	ClientKey          string
+	ClientKeyFilePath  string
+	RootCAs            []string
+	RootCAFilePaths    []string
+	ProxyAddress       string
+	ServerName         string
 }
 
 func readSecureSocksDSProxySettings(iniFile *ini.File) (SecureSocksDSProxySettings, error) {
-	s := SecureSocksDSProxySettings{}
+	s := SecureSocksDSProxySettings{
+		RootCAs:         []string{},
+		RootCAFilePaths: []string{},
+	}
 	secureSocksProxySection := iniFile.Section("secure_socks_datasource_proxy")
 	s.Enabled = secureSocksProxySection.Key("enabled").MustBool(false)
-	s.ClientCert = secureSocksProxySection.Key("client_cert").MustString("")
-	s.ClientKey = secureSocksProxySection.Key("client_key").MustString("")
-	s.RootCA = secureSocksProxySection.Key("root_ca_cert").MustString("")
 	s.ProxyAddress = secureSocksProxySection.Key("proxy_address").MustString("")
 	s.ServerName = secureSocksProxySection.Key("server_name").MustString("")
 	s.ShowUI = secureSocksProxySection.Key("show_ui").MustBool(true)
 	s.AllowInsecure = secureSocksProxySection.Key("allow_insecure").MustBool(false)
+	s.ClientCertFilePath = secureSocksProxySection.Key("client_cert").MustString("")
+	s.ClientKeyFilePath = secureSocksProxySection.Key("client_key").MustString("")
+	s.RootCAFilePaths = secureSocksProxySection.Key("root_ca_cert").Strings(" ")
 
 	if !s.Enabled {
 		return s, nil
@@ -40,14 +48,50 @@ func readSecureSocksDSProxySettings(iniFile *ini.File) (SecureSocksDSProxySettin
 	// If the proxy is going to use TLS.
 	if !s.AllowInsecure {
 		// all fields must be specified to use the proxy
-		if s.RootCA == "" {
-			return s, errors.New("rootCA required")
-		} else if s.ClientCert == "" || s.ClientKey == "" {
+		if len(s.RootCAFilePaths) == 0 {
+			return s, errors.New("one or more rootCA required")
+		} else if s.ClientCertFilePath == "" || s.ClientKeyFilePath == "" {
 			return s, errors.New("client key pair required")
 		} else if s.ServerName == "" {
 			return s, errors.New("server name required")
 		}
+	} else {
+		return s, nil
 	}
+
+	if s.ClientCertFilePath != "" {
+		certPEMBlock, err := os.ReadFile(s.ClientCertFilePath)
+		if err != nil {
+			return s, err
+		}
+		s.ClientCert = string(certPEMBlock)
+	}
+
+	if s.ClientKeyFilePath != "" {
+		keyPEMBlock, err := os.ReadFile(s.ClientKeyFilePath)
+		if err != nil {
+			return s, err
+		}
+		s.ClientKey = string(keyPEMBlock)
+	}
+
+	var rootCAs []string
+	for _, rootCAFile := range s.RootCAFilePaths {
+		// nolint:gosec
+		// The gosec G304 warning can be ignored because `rootCAFile` comes from config ini, and we check below if
+		// it's the right file type.
+		pemBytes, err := os.ReadFile(rootCAFile)
+		if err != nil {
+			return s, err
+		}
+
+		pemDecoded, _ := pem.Decode(pemBytes)
+		if pemDecoded == nil || pemDecoded.Type != "CERTIFICATE" {
+			return s, errors.New("root ca is invalid")
+		}
+		rootCAs = append(rootCAs, string(pemBytes))
+	}
+	s.RootCAs = rootCAs
 
 	return s, nil
 }

@@ -6,13 +6,15 @@ import {
   DataSourcePluginMeta,
   PluginMeta,
 } from '@grafana/data';
-import { SystemJS } from '@grafana/runtime';
 import { DataQuery } from '@grafana/schema';
 
 import { GenericDataSourcePlugin } from '../datasources/types';
 
 import builtInPlugins from './built_in_plugins';
 import { registerPluginInCache } from './loader/cache';
+// SystemJS has to be imported before the sharedDependenciesMap
+import { SystemJS } from './loader/systemjs';
+// eslint-disable-next-line import/order
 import { sharedDependenciesMap } from './loader/sharedDependencies';
 import { decorateSystemJSFetch, decorateSystemJSResolve, decorateSystemJsOnload } from './loader/systemjsHooks';
 import { SystemJSWithLoaderHooks } from './loader/types';
@@ -21,6 +23,7 @@ import { importPluginModuleInSandbox } from './sandbox/sandbox_plugin_loader';
 import { isFrontendSandboxSupported } from './sandbox/utils';
 
 const imports = buildImportMap(sharedDependenciesMap);
+
 SystemJS.addImportMap({ imports });
 
 const systemJSPrototype: SystemJSWithLoaderHooks = SystemJS.constructor.prototype;

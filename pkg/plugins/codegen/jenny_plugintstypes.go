@@ -11,7 +11,6 @@ import (
 	tsast "github.com/grafana/cuetsy/ts/ast"
 	"github.com/grafana/grafana/pkg/build"
 	"github.com/grafana/grafana/pkg/codegen"
-	"github.com/grafana/grafana/pkg/cuectx"
 	"github.com/grafana/grafana/pkg/plugins/pfs"
 )
 
@@ -34,15 +33,11 @@ func (j *ptsJenny) JennyName() string {
 }
 
 func (j *ptsJenny) Generate(decl *pfs.PluginDecl) (codejen.Files, error) {
-	if !decl.HasSchema() {
-		return nil, nil
-	}
-
 	genFile := &tsast.File{}
 	versionedFile := &tsast.File{}
 
 	for _, im := range decl.Imports {
-		if tsim, err := cuectx.ConvertImport(im); err != nil {
+		if tsim, err := codegen.ConvertImport(im); err != nil {
 			return nil, err
 		} else if tsim.From.Value != "" {
 			genFile.Imports = append(genFile.Imports, tsim)
@@ -94,16 +89,44 @@ func getPluginVersion(pluginVersion *string) string {
 
 func adaptToPipeline(j codejen.OneToOne[codegen.SchemaForGen]) codejen.OneToOne[*pfs.PluginDecl] {
 	return codejen.AdaptOneToOne(j, func(pd *pfs.PluginDecl) codegen.SchemaForGen {
-		name := strings.ReplaceAll(pd.PluginMeta.Name, " ", "")
-		if pd.SchemaInterface.Name == "DataQuery" {
-			name = name + "DataQuery"
-		}
 		return codegen.SchemaForGen{
-			Name:    name,
-			Schema:  pd.Lineage.Latest(),
+			Name:    derivePascalName(pd.PluginMeta.Id, pd.PluginMeta.Name) + pd.SchemaInterface.Name,
+			CueFile: pd.CueFile,
 			IsGroup: pd.SchemaInterface.IsGroup,
 		}
 	})
+}
+
+func derivePascalName(id string, name string) string {
+	sani := func(s string) string {
+		ret := strings.Title(strings.Map(func(r rune) rune {
+			switch {
+			case r >= 'a' && r <= 'z':
+				return r
+			case r >= 'A' && r <= 'Z':
+				return r
+			default:
+				return -1
+			}
+		}, strings.Title(strings.Map(func(r rune) rune {
+			switch r {
+			case '-', '_':
+				return ' '
+			default:
+				return r
+			}
+		}, s))))
+		if len(ret) > 63 {
+			return ret[:63]
+		}
+		return ret
+	}
+
+	fromname := sani(name)
+	if len(fromname) != 0 {
+		return fromname
+	}
+	return sani(strings.Split(id, "-")[1])
 }
 
 func getGrafanaVersion() string {
