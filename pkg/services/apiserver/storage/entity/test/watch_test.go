@@ -196,15 +196,12 @@ func TestDelayedWatchDelivery(t *testing.T) {
 	storagetesting.RunTestWatchError(ctx, t, &storeWithPrefixTransformer{store})
 } */
 
-/*
-// TODO this fails
 func TestWatchContextCancel(t *testing.T) {
 	ctx, store, destroyFunc, err := testSetup(t)
 	defer destroyFunc()
 	assert.NoError(t, err)
 	storagetesting.RunTestWatchContextCancel(ctx, t, store)
 }
-*/
 
 func TestWatcherTimeout(t *testing.T) {
 	ctx, store, destroyFunc, err := testSetup(t)
@@ -252,7 +249,6 @@ func TestSendInitialEventsBackwardCompatibility(t *testing.T) {
 	storagetesting.RunSendInitialEventsBackwardCompatibility(ctx, t, store)
 }
 
-/*
 // TODO this test times out
 func TestEtcdWatchSemantics(t *testing.T) {
 	ctx, store, destroyFunc, err := testSetup(t)
@@ -260,7 +256,6 @@ func TestEtcdWatchSemantics(t *testing.T) {
 	assert.NoError(t, err)
 	storagetesting.RunWatchSemantics(ctx, t, store)
 }
-*/
 
 /*
 // TODO this test times out

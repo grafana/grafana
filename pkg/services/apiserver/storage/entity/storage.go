@@ -13,7 +13,6 @@ import (
 	"log"
 	"reflect"
 	"strconv"
-	"sync"
 
 	grpcCodes "google.golang.org/grpc/codes"
 	grpcStatus "google.golang.org/grpc/status"
@@ -24,7 +23,6 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/selection"
-	"k8s.io/apimachinery/pkg/util/net"
 	"k8s.io/apimachinery/pkg/watch"
 	"k8s.io/apiserver/pkg/endpoints/request"
 	"k8s.io/apiserver/pkg/storage"
@@ -129,8 +127,6 @@ func (s *Storage) Delete(ctx context.Context, key string, out runtime.Object, pr
 		Subresource: requestInfo.Subresource,
 	}
 
-	fmt.Printf("Delete: %s\n", k.String())
-
 	previousVersion := int64(0)
 	if preconditions != nil && preconditions.ResourceVersion != nil {
 		previousVersion, _ = strconv.ParseInt(*preconditions.ResourceVersion, 10, 64)
@@ -172,8 +168,6 @@ func (s *Storage) Watch(ctx context.Context, key string, opts storage.ListOption
 		Name:        requestInfo.Name,
 		Subresource: requestInfo.Subresource,
 	}
-
-	fmt.Printf("Watch: key=%s k=%s\n", key, k.String())
 
 	if opts.Predicate.Field != nil {
 		// check for metadata.name field selector
@@ -241,26 +235,26 @@ func (s *Storage) Watch(ctx context.Context, key string, opts storage.ListOption
 		req.Since = rv
 	}
 
-	result, err := s.store.Watch(ctx)
+	client, err := s.store.Watch(ctx)
 	if err != nil {
 		fmt.Printf("watch failed: %s\n", err)
 		return nil, err
 	}
 
-	err = result.Send(req)
+	err = client.Send(req)
 	if err != nil {
 		fmt.Printf("watch send failed: %s\n", err)
-		err = result.CloseSend()
+		err = client.CloseSend()
 		if err != nil {
 			fmt.Printf("watch close failed: %s\n", err)
 		}
-		// return nil, err
+		return watch.NewEmptyWatch(), err
 	}
 
 	reporter := apierrors.NewClientErrorReporter(500, "WATCH", "")
 
 	decoder := &Decoder{
-		client:  result,
+		client:  client,
 		newFunc: s.newFunc,
 		opts:    opts,
 		codec:   s.codec,
@@ -521,8 +515,6 @@ func (s *Storage) GuaranteedUpdate(
 		Subresource: requestInfo.Subresource,
 	}
 
-	fmt.Printf("GuaranteedUpdate: key=%s k=%s\n", key, k.String())
-
 	getErr := s.Get(ctx, k.String(), storage.GetOptions{}, destination)
 	if getErr != nil {
 		if ignoreNotFound && apierrors.IsNotFound(getErr) {
@@ -768,88 +760,3 @@ func (d *Decoder) Close() {
 }
 
 var _ watch.Decoder = (*Decoder)(nil)
-
-// StreamWatcher turns any stream for which you can write a Decoder interface
-// into a watch.Interface.
-type StreamWatcher struct {
-	sync.Mutex
-	source   watch.Decoder
-	reporter watch.Reporter
-	result   chan watch.Event
-	done     chan struct{}
-}
-
-// NewStreamWatcher creates a StreamWatcher from the given decoder.
-func NewStreamWatcher(d watch.Decoder, r watch.Reporter, bufferLen int) *StreamWatcher {
-	sw := &StreamWatcher{
-		source:   d,
-		reporter: r,
-		// Make a buffered channel to avoid blocking the sender
-		result: make(chan watch.Event, bufferLen),
-		// If the watcher is externally stopped there is no receiver anymore
-		// and the send operations on the result channel, especially the
-		// error reporting might block forever.
-		// Therefore a dedicated stop channel is used to resolve this blocking.
-		done: make(chan struct{}),
-	}
-	go sw.receive()
-	return sw
-}
-
-// ResultChan implements Interface.
-func (sw *StreamWatcher) ResultChan() <-chan watch.Event {
-	return sw.result
-}
-
-// Stop implements Interface.
-func (sw *StreamWatcher) Stop() {
-	// Call Close() exactly once by locking and setting a flag.
-	sw.Lock()
-	defer sw.Unlock()
-	// closing a closed channel always panics, therefore check before closing
-	select {
-	case <-sw.done:
-	default:
-		close(sw.done)
-		sw.source.Close()
-	}
-}
-
-// receive reads result from the decoder in a loop and sends down the result channel.
-func (sw *StreamWatcher) receive() {
-	// defer utilruntime.HandleCrash()
-	defer close(sw.result)
-	defer sw.Stop()
-	for {
-		action, obj, err := sw.source.Decode()
-		if err != nil {
-			switch err {
-			case io.EOF:
-				// watch closed normally
-			case io.ErrUnexpectedEOF:
-				// klog.V(1).Infof("Unexpected EOF during watch stream event decoding: %v", err)
-			default:
-				if net.IsProbableEOF(err) || net.IsTimeout(err) {
-					// klog.V(5).Infof("Unable to decode an event from the watch stream: %v", err)
-				} else {
-					select {
-					case <-sw.done:
-					case sw.result <- watch.Event{
-						Type:   watch.Error,
-						Object: sw.reporter.AsObject(fmt.Errorf("unable to decode an event from the watch stream: %v", err)),
-					}:
-					}
-				}
-			}
-			return
-		}
-		select {
-		case <-sw.done:
-			return
-		case sw.result <- watch.Event{
-			Type:   action,
-			Object: obj,
-		}:
-		}
-	}
-}
