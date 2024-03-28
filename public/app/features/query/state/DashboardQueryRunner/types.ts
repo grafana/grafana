@@ -1,6 +1,7 @@
 import { Observable } from 'rxjs';
 
 import { AlertStateInfo, AnnotationEvent, AnnotationQuery, DataSourceApi, TimeRange } from '@grafana/data';
+import { ThresholdDefinitions } from 'app/features/alerting/unified/components/rule-editor/util';
 
 import { DashboardModel } from '../../../dashboard/state';
 
@@ -12,6 +13,7 @@ export interface DashboardQueryRunnerOptions {
 export interface DashboardQueryRunnerResult {
   annotations: AnnotationEvent[];
   alertState?: AlertStateInfo;
+  thresholdsByRefId?: ThresholdDefinitions;
 }
 
 export interface DashboardQueryRunner {
@@ -25,6 +27,7 @@ export interface DashboardQueryRunner {
 export interface DashboardQueryRunnerWorkerResult {
   annotations: AnnotationEvent[];
   alertStates: AlertStateInfo[];
+  thresholdsByPanelId?: Record<number, ThresholdDefinitions>;
 }
 
 export interface DashboardQueryRunnerWorker {

@@ -1,5 +1,5 @@
 import { cloneDeep, merge } from 'lodash';
-import { Observable, of, ReplaySubject, Unsubscribable } from 'rxjs';
+import { Observable, of, ReplaySubject, Unsubscribable, combineLatest } from 'rxjs';
 import { map, mergeMap, catchError } from 'rxjs/operators';
 
 import {
@@ -40,6 +40,8 @@ import { isSharedDashboardQuery, runSharedRequest } from '../../../plugins/datas
 import { PanelModel } from '../../dashboard/state';
 
 import { getDashboardQueryRunner } from './DashboardQueryRunner/DashboardQueryRunner';
+import { DashboardQueryRunnerResult } from './DashboardQueryRunner/types';
+import { createThresholdOverrides, emptyResult } from './DashboardQueryRunner/utils';
 import { mergePanelAndDashData } from './mergePanelAndDashData';
 import { runRequest } from './runRequest';
 
@@ -111,26 +113,35 @@ export class PanelQueryRunner {
       return of(snapshotPanelData);
     }
 
-    return this.subject.pipe(
-      mergeMap((data: PanelData) => {
+    const panel = this.dataConfigSource as unknown as PanelModel;
+    let dashData: Observable<DashboardQueryRunnerResult>;
+
+    try {
+      dashData = getDashboardQueryRunner().getResult(panel.id);
+    } catch (err) {
+      dashData = emptyResult();
+    }
+
+    return combineLatest([this.subject, dashData]).pipe(
+      mergeMap(([panelData, dashData]) => {
         let fieldConfig = this.dataConfigSource.getFieldOverrideOptions();
         let transformations = this.dataConfigSource.getTransformations();
 
         if (
-          data.series === lastRawFrames &&
+          panelData.series === lastRawFrames &&
           lastFieldConfig?.fieldConfig === fieldConfig?.fieldConfig &&
           lastTransformations === transformations
         ) {
-          return of({ ...data, structureRev, series: lastProcessedFrames });
+          return of({ ...panelData, structureRev, series: lastProcessedFrames });
         }
 
         lastFieldConfig = fieldConfig;
         lastTransformations = transformations;
-        lastRawFrames = data.series;
-        let dataWithTransforms = of(data);
+        lastRawFrames = panelData.series;
+        let dataWithTransforms = of(panelData);
 
         if (withTransforms) {
-          dataWithTransforms = this.applyTransformations(data);
+          dataWithTransforms = this.applyTransformations(panelData);
         }
 
         return dataWithTransforms.pipe(
@@ -177,6 +188,8 @@ export class PanelQueryRunner {
                 }
               }
 
+              const thresholdStyleOverrides = createThresholdOverrides(dashData.thresholdsByRefId);
+
               if (fieldConfig != null && (isFirstPacket || !streamingPacketWithSameSchema)) {
                 lastConfigRev = this.dataConfigSource.configRev!;
                 processedData = {
@@ -185,8 +198,13 @@ export class PanelQueryRunner {
                     timeZone: data.request?.timezone ?? 'browser',
                     data: processedData.series,
                     ...fieldConfig!,
+                    fieldConfig: {
+                      ...fieldConfig.fieldConfig,
+                      overrides: [...thresholdStyleOverrides, ...fieldConfig.fieldConfig.overrides],
+                    },
                   }),
                 };
+
                 if (processedData.annotations) {
                   processedData.annotations = applyFieldOverrides({
                     data: processedData.annotations,

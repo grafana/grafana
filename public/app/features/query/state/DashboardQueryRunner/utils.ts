@@ -1,8 +1,16 @@
 import { cloneDeep } from 'lodash';
 import { Observable, of } from 'rxjs';
 
-import { AnnotationEvent, AnnotationQuery, DataFrame, DataFrameView, DataSourceApi } from '@grafana/data';
+import {
+  AnnotationEvent,
+  AnnotationQuery,
+  ConfigOverrideRule,
+  DataFrame,
+  DataFrameView,
+  DataSourceApi,
+} from '@grafana/data';
 import { config, toDataQueryError } from '@grafana/runtime';
+import { ThresholdDefinitions } from 'app/features/alerting/unified/components/rule-editor/util';
 import { dispatch } from 'app/store/store';
 
 import { createErrorNotification } from '../../../../core/copy/appNotification';
@@ -129,4 +137,27 @@ export function annotationsFromDataFrames(data?: DataFrame[]): AnnotationEvent[]
   }
 
   return annotations;
+}
+
+export function createThresholdOverrides(thresholds?: ThresholdDefinitions): ConfigOverrideRule[] {
+  return Object.entries(thresholds ?? {}).map(([refId, threshold]) => {
+    return {
+      matcher: {
+        id: 'byFrameRefID',
+        options: refId,
+      },
+      properties: [
+        {
+          id: 'custom.thresholdsStyle',
+          value: {
+            mode: threshold.mode,
+          },
+        },
+        {
+          id: 'thresholds',
+          value: threshold.config,
+        },
+      ],
+    };
+  });
 }
