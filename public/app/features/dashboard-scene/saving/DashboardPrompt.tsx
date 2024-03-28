@@ -40,7 +40,7 @@ export const DashboardPrompt = React.memo(({ dashboard }: DashboardPromptProps) 
       if (ignoreChanges(dashboard, dashboard.getInitialSaveModel())) {
         return;
       }
-      if (dashboard.state.isDirty) {
+      if (dashboard.state.isDirty || dashboard.state.meta.hasUnsavedFolderChange) {
         event.preventDefault();
         // No browser actually displays this message anymore.
         // But Chrome requires it to be defined else the popup won't show.
@@ -85,7 +85,7 @@ export const DashboardPrompt = React.memo(({ dashboard }: DashboardPromptProps) 
       return true;
     }
 
-    if (!dashboard.state.isDirty) {
+    if (!dashboard.state.isDirty || !dashboard.state.meta.hasUnsavedFolderChange) {
       return true;
     }
 

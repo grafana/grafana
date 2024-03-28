@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
 
 import { selectors } from '@grafana/e2e-selectors';
-import { Button, Checkbox, TextArea, Stack, Alert, Box, Field } from '@grafana/ui';
+import { Button, Checkbox, TextArea, Stack, Alert, Box, Field, Icon } from '@grafana/ui';
+import { Trans } from 'app/core/internationalization';
 import { SaveDashboardOptions } from 'app/features/dashboard/components/SaveDashboard/types';
 
 import { DashboardScene } from '../scene/DashboardScene';
@@ -24,7 +25,9 @@ export interface Props {
 }
 
 export function SaveDashboardForm({ dashboard, drawer, changeInfo }: Props) {
-  const { changedSaveModel, hasChanges } = changeInfo;
+  const { changedSaveModel, hasChanges: hasModelChanges } = changeInfo;
+  const hasFolderChanges = dashboard.getInitialState()?.meta.folderUid !== dashboard.state.meta.folderUid;
+  const hasChanges = hasModelChanges || hasFolderChanges;
 
   const { state, onSaveDashboard } = useSaveDashboard(false);
   const [options, setOptions] = useState<SaveDashboardOptions>({
@@ -46,7 +49,12 @@ export function SaveDashboardForm({ dashboard, drawer, changeInfo }: Props) {
   );
 
   const saveButton = (overwrite: boolean) => (
-    <SaveButton isValid={hasChanges} isLoading={state.loading} onSave={onSave} overwrite={overwrite} />
+    <SaveButton
+      isValid={hasChanges || hasFolderChanges}
+      isLoading={state.loading}
+      onSave={onSave}
+      overwrite={overwrite}
+    />
   );
 
   function renderFooter(error?: Error) {
@@ -104,7 +112,6 @@ export function SaveDashboardForm({ dashboard, drawer, changeInfo }: Props) {
     <Stack gap={0} direction="column">
       <SaveDashboardFormCommonOptions drawer={drawer} changeInfo={changeInfo} />
       <Field label="Message">
-        {/* config.featureToggles.dashgpt * TOOD GenAIDashboardChangesButton */}
         <TextArea
           aria-label="message"
           value={options.message ?? ''}
@@ -119,6 +126,13 @@ export function SaveDashboardForm({ dashboard, drawer, changeInfo }: Props) {
           rows={5}
         />
       </Field>
+      {hasFolderChanges && (
+        <Box>
+          Change folder: {dashboard.getInitialState()?.meta.folderTitle}
+          <Icon name="arrow-right" />
+          {dashboard.state.meta.folderTitle}
+        </Box>
+      )}
       <Box paddingTop={2}>{renderFooter(state.error)}</Box>
     </Stack>
   );
