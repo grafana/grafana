@@ -15,7 +15,22 @@ StyleDictionary.registerFormat({
 StyleDictionary.registerFormat({
   name: 'typescript/nested',
   formatter: function (dictionary) {
-    return `export default ${JsonToTs(minifyDictionary(dictionary.tokens)).join('\n')}\n`;
+    return JsonToTs(minifyDictionary(dictionary.tokens))
+      .map((typeInterface) => {
+        return `export ${typeInterface}`;
+      })
+      .join('\n');
+  },
+});
+
+StyleDictionary.registerFormat({
+  name: 'typescript/spacing',
+  formatter: function (dictionary) {
+    return JsonToTs(minifyDictionary(dictionary.tokens))
+      .map((typeInterface) => {
+        return `export ${typeInterface.replaceAll("'", '')}`;
+      })
+      .join('\n');
   },
 });
 
@@ -95,6 +110,13 @@ let sd = StyleDictionary.extend({
             },
           };
         }),
+        {
+          destination: 'code/themes/spacing.d.ts',
+          format: 'typescript/spacing',
+          filter: (token) => {
+            return token.type === 'spacing' && token.filePath === 'tokens/core.json';
+          },
+        },
         {
           destination: 'code/themes/dark.ts',
           format: 'javascript/nested',
