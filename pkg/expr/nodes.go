@@ -254,10 +254,13 @@ func executeDSNodesGrouped(ctx context.Context, now time.Time, vars mathexp.Vars
 		uid   string // in theory I think this all I need for the key, but rather be safe
 		id    int64
 		orgID int64
+		to    int64
+		from  int64
 	}
 	byDS := make(map[dsKey][]*DSNode)
 	for _, node := range nodes {
-		k := dsKey{id: node.datasource.ID, uid: node.datasource.UID, orgID: node.orgID}
+		timeRange := node.timeRange.AbsoluteTime(now)
+		k := dsKey{id: node.datasource.ID, uid: node.datasource.UID, orgID: node.orgID, to: timeRange.To.Unix(), from: timeRange.From.Unix()}
 		byDS[k] = append(byDS[k], node)
 	}
 
