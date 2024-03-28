@@ -148,9 +148,14 @@ func (s *Service) CreateToken(ctx context.Context) (cloudmigration.CreateAccessT
 	logger.Info("created access token", "id", token.ID, "name", token.Name)
 	s.metrics.accessTokenCreated.With(prometheus.Labels{"slug": s.cfg.Slug}).Inc()
 
-	bytes, err := json.Marshal(map[string]string{
-		"token":  token.Token,
-		"region": instance.ClusterSlug,
+	bytes, err := json.Marshal(cloudmigration.Base64EncodedTokenPayload{
+		Token: token.Token,
+		Instance: cloudmigration.Base64HGInstance{
+			StackID:     instance.ID,
+			RegionSlug:  instance.RegionSlug,
+			ClusterSlug: instance.ClusterSlug, // This should be used for routing to CMS
+			Slug:        instance.Slug,
+		},
 	})
 	if err != nil {
 		return cloudmigration.CreateAccessTokenResponse{}, fmt.Errorf("encoding token: %w", err)
@@ -217,9 +222,31 @@ func (s *Service) GetMigrationList(ctx context.Context) (*cloudmigration.CloudMi
 	return &cloudmigration.CloudMigrationListResponse{Migrations: migrations}, nil
 }
 
-func (s *Service) CreateMigration(ctx context.Context, cm cloudmigration.CloudMigrationRequest) (*cloudmigration.CloudMigrationResponse, error) {
-	// TODO: Implement method
-	return nil, nil
+func (s *Service) CreateMigration(ctx context.Context, cmd cloudmigration.CloudMigrationRequest) (*cloudmigration.CloudMigrationResponse, error) {
+	ctx, span := s.tracer.Start(ctx, "CloudMigrationService.createMigration")
+	defer span.End()
+
+	base64Token := cmd.AuthToken
+	b, err := base64.StdEncoding.DecodeString(base64Token)
+	if err != nil {
+		return nil, fmt.Errorf("token could not be decoded")
+	}
+	var token cloudmigration.Base64EncodedTokenPayload
+	if err := json.Unmarshal(b, &token); err != nil {
+		return nil, fmt.Errorf("invalid token") // don't want to leak info here
+	}
+
+	if err := s.store.CreateMigration(ctx, token); err != nil {
+		return nil, fmt.Errorf("error creating migration: %w", err)
+	}
+
+	return &cloudmigration.CloudMigrationResponse{
+		ID:    int64(token.Instance.StackID),
+		Stack: token.Instance.Slug,
+		// TODO replace this with the actual value once the storage piece is implemented
+		Created: time.Now(),
+		Updated: time.Now(),
+	}, nil
 }
 
 func (s *Service) UpdateMigration(ctx context.Context, id int64, cm cloudmigration.CloudMigrationRequest) (*cloudmigration.CloudMigrationResponse, error) {

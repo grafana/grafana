@@ -87,3 +87,15 @@ type CreateAccessTokenResponse struct {
 type CreateAccessTokenResponseDTO struct {
 	Token string `json:"token"`
 }
+
+type Base64EncodedTokenPayload struct {
+	Token    string
+	Instance Base64HGInstance
+}
+
+type Base64HGInstance struct {
+	StackID     int
+	Slug        string
+	RegionSlug  string
+	ClusterSlug string
+}
