@@ -2,7 +2,7 @@ import { Meta, Story } from '@storybook/react';
 import React from 'react';
 
 import mdx from './NewTokens.mdx';
-import { CoreColorsDemo, ThemeColorsDemo } from './ThemeTokens';
+import { CoreColorsDemo, ThemeColorsDemo, TypographyDemo, ColorCompare } from './ThemeTokens';
 
 const meta: Meta = {
   title: 'Docs Overview/New Theme',
@@ -24,6 +24,14 @@ export const CoreColor: Story = () => {
 
 export const ThemeColor: Story = () => {
   return <ThemeColorsDemo />;
+};
+
+export const Typography: Story = () => {
+  return <TypographyDemo />;
+};
+
+export const Compare: Story = () => {
+  return <ColorCompare />;
 };
 
 export default meta;
