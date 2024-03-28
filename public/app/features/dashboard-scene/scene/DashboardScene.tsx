@@ -245,6 +245,7 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
         url: result.url,
         slug: result.slug,
         folderUid: folderUid,
+        hasUnsavedFolderChange: false,
       },
     });
 
