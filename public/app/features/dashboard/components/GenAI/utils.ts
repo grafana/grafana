@@ -1,6 +1,7 @@
 import { pick } from 'lodash';
 
 import { llms } from '@grafana/experimental';
+import { config } from '@grafana/runtime';
 import { Panel } from '@grafana/schema';
 
 import { DashboardModel, PanelModel } from '../../state';
@@ -63,6 +64,10 @@ export function getDashboardChanges(dashboard: DashboardModel): {
  * @returns true if the LLM plugin is enabled.
  */
 export async function isLLMPluginEnabled() {
+  if (!config.apps['grafana-llm-app']) {
+    return false;
+  }
+
   // Check if the LLM plugin is enabled.
   // If not, we won't be able to make requests, so return early.
   return llms.openai.health().then((response) => response.ok);
