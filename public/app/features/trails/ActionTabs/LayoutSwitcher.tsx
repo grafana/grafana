@@ -50,7 +50,7 @@ export class LayoutSwitcher extends SceneObjectBase<LayoutSwitcherState> {
       return null;
     }
 
-    const layout = layouts[index] || layouts[0];
+    const layout = layouts[index];
 
     return <layout.Component model={layout} />;
   };
