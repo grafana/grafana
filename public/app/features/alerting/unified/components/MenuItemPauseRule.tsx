@@ -6,14 +6,12 @@ import { alertRuleApi } from 'app/features/alerting/unified/api/alertRuleApi';
 import { isGrafanaRulerRule, isGrafanaRulerRulePaused } from 'app/features/alerting/unified/utils/rules';
 import { CombinedRule } from 'app/types/unified-alerting';
 
-const { useUpdateRuleMutation } = alertRuleApi;
-
 interface Props {
   rule: CombinedRule;
   /**
    * Method invoked after the request to change the paused state has completed
    */
-  onPauseChange?: () => {};
+  onPauseChange?: () => void;
 }
 
 /**
@@ -22,7 +20,7 @@ interface Props {
  */
 const MenuItemPauseRule = ({ rule, onPauseChange }: Props) => {
   const { group } = rule;
-  const [updateRule] = useUpdateRuleMutation();
+  const [updateRule] = alertRuleApi.endpoints.updateRule.useMutation();
   const isPaused = isGrafanaRulerRule(rule.rulerRule) && isGrafanaRulerRulePaused(rule.rulerRule);
   const icon = isPaused ? 'play' : 'pause';
   const title = isPaused ? 'Resume alert evaluation' : 'Pause alert evaluation';
