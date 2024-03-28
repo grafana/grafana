@@ -331,12 +331,17 @@ func (s *Service) GetDashboardsJSON(ctx context.Context, id int64) ([]byte, erro
 	return result, nil
 }
 
-func (s *Service) SaveMigrationRun(ctx context.Context, cmr *cloudmigration.CloudMigrationRun) error {
+func (s *Service) SaveMigrationRun(ctx context.Context, cmr *cloudmigration.CloudMigrationRun) (string, error) {
 	cmr.CloudMigrationUID = util.GenerateShortUID()
 	cmr.Created = time.Now()
 	cmr.Updated = time.Now()
 	cmr.Finished = time.Now()
-	return s.store.SaveMigrationRun(ctx, cmr)
+	err := s.store.SaveMigrationRun(ctx, cmr)
+	if err != nil {
+		s.log.Error("Failed to save migration run", "err", err)
+		return "", err
+	}
+	return cmr.CloudMigrationUID, nil
 }
 
 func (s *Service) GetMigrationStatus(ctx context.Context, id string, runID string) (*cloudmigration.CloudMigrationRun, error) {

@@ -19,7 +19,7 @@ type Service interface {
 	GetMigrationStatus(context.Context, string, string) (*CloudMigrationRun, error)
 	GetMigrationStatusList(context.Context, string) ([]CloudMigrationRun, error)
 	DeleteMigration(context.Context, string) error
-	SaveMigrationRun(context.Context, *CloudMigrationRun) error
+	SaveMigrationRun(context.Context, *CloudMigrationRun) (string, error)
 
 	ParseCloudMigrationConfig() (string, error)
 }

@@ -54,8 +54,8 @@ func (s *NoopServiceImpl) DeleteMigration(ctx context.Context, id string) error 
 	return cloudmigration.ErrFeatureDisabledError
 }
 
-func (s *NoopServiceImpl) SaveMigrationRun(ctx context.Context, cmr *cloudmigration.CloudMigrationRun) error {
-	return cloudmigration.ErrInternalNotImplementedError
+func (s *NoopServiceImpl) SaveMigrationRun(ctx context.Context, cmr *cloudmigration.CloudMigrationRun) (string, error) {
+	return "", cloudmigration.ErrInternalNotImplementedError
 }
 
 func (s *NoopServiceImpl) GetDataSourcesJSON(ctx context.Context, id int64) ([]byte, error) {
