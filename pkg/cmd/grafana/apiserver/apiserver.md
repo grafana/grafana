@@ -52,6 +52,5 @@ go run ./pkg/cmd/grafana apiserver \
   --verbosity=10 \
   --grafana.metrics.enable \
   --grafana.tracing.jaeger.address=http://localhost:14268/api/traces \
-  --grafana.tracing.sampler-param=1 \
-  --grafana-apiserver-dev-mode
+  --grafana.tracing.sampler-param=1
 ```

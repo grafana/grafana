@@ -101,10 +101,13 @@ func (o *APIServerOptions) Config() (*genericapiserver.RecommendedConfig, error)
 		return nil, fmt.Errorf("failed to apply options to server config: %w", err)
 	}
 
+	// When the ID signing key exists, configure access-token support
 	if len(o.Options.AuthnOptions.IDVerifierConfig.SigningKeysURL) > 0 {
-		validator := auth.NewValidator(o.Options.AuthnOptions.IDVerifierConfig)
-		idTokenAuthenticator := auth.NewIDTokenAuthenticator(validator)
-		serverConfig.Authentication.Authenticator = auth.AppendToAuthenticators(idTokenAuthenticator, serverConfig.Authentication.Authenticator)
+		accessTokenAuthenticator := auth.NewAccessTokenAuthenticator(o.Options.AuthnOptions.IDVerifierConfig)
+		serverConfig.Authentication.Authenticator = auth.AppendToAuthenticators(
+			accessTokenAuthenticator,
+			serverConfig.Authentication.Authenticator,
+		)
 	}
 
 	serverConfig.DisabledPostStartHooks = serverConfig.DisabledPostStartHooks.Insert("generic-apiserver-start-informers")
