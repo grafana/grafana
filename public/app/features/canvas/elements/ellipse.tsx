@@ -43,7 +43,14 @@ const Ellipse = (props: CanvasElementProps<CanvasElementConfig, CanvasElementDat
           </clipPath>
         </defs>
         {/* Apply background image within the clipping area */}
-        <rect x="0" y="0" width="100%" height="100%" clipPath={`url(#ellipseClip-${uniqueId})`} />
+        <rect
+          x="0"
+          y="0"
+          width="100%"
+          height="100%"
+          clipPath={`url(#ellipseClip-${uniqueId})`}
+          style={{ fill: 'none' }}
+        />
         <ellipse
           cx="50%"
           cy="50%"
