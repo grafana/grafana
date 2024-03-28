@@ -134,6 +134,8 @@ import (
 	"github.com/grafana/grafana/pkg/services/store"
 	entityDB "github.com/grafana/grafana/pkg/services/store/entity/db"
 	"github.com/grafana/grafana/pkg/services/store/entity/db/dbimpl"
+
+	storageServer "github.com/grafana/grafana/pkg/services/store/entity/server"
 	"github.com/grafana/grafana/pkg/services/store/entity/sqlstash"
 	"github.com/grafana/grafana/pkg/services/store/resolver"
 	"github.com/grafana/grafana/pkg/services/store/sanitizer"
@@ -424,6 +426,12 @@ var wireTestSet = wire.NewSet(
 	wire.Bind(new(oauthtoken.OAuthTokenService), new(*oauthtokentest.Service)),
 )
 
+var storageSet = wire.NewSet(
+	featuremgmt.ProvideManagerService,
+	featuremgmt.ProvideToggles,
+	storageServer.ProvideService,
+)
+
 func Initialize(cfg *setting.Cfg, opts Options, apiOpts api.ServerOptions) (*Server, error) {
 	wire.Build(wireExtsSet)
 	return &Server{}, nil
@@ -437,6 +445,11 @@ func InitializeForTest(t sqlutil.ITestDB, cfg *setting.Cfg, opts Options, apiOpt
 func InitializeForCLI(cfg *setting.Cfg) (Runner, error) {
 	wire.Build(wireExtsCLISet)
 	return Runner{}, nil
+}
+
+func InitializeStorage(cfg *setting.Cfg) (*storageServer.EntityService, error) {
+	wire.Build(storageSet)
+	return &storageServer.EntityService{}, nil
 }
 
 // InitializeForCLITarget is a simplified set of dependencies for the CLI, used
