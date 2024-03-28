@@ -93,9 +93,6 @@ const getStyles = (theme: GrafanaTheme2) => {
       paddingRight: theme.spacing(2),
       marginBottom: theme.spacing(2),
     }),
-    left: css({
-      marginBottom: theme.spacing(2),
-    }),
     wrapper: css({
       position: 'absolute',
       top: 0,
@@ -370,7 +367,7 @@ export class Explore extends React.PureComponent<Props, ExploreState> {
 
     return Object.entries(groupedByPlugin).map(([pluginId, frames], index) => {
       return (
-        <ContentOutlineItem title={pluginId} icon="plug" key={index}>
+        <ContentOutlineItem panelId={pluginId} title={pluginId} icon="plug" key={index}>
           <CustomContainer
             key={index}
             timeZone={timeZone}
@@ -392,7 +389,7 @@ export class Explore extends React.PureComponent<Props, ExploreState> {
     const { graphResult, absoluteRange, timeZone, queryResponse, showFlameGraph } = this.props;
 
     return (
-      <ContentOutlineItem title="Graph" icon="graph-bar">
+      <ContentOutlineItem panelId="Graph" title="Graph" icon="graph-bar">
         <GraphContainer
           data={graphResult!}
           height={showFlameGraph ? 180 : 400}
@@ -412,7 +409,7 @@ export class Explore extends React.PureComponent<Props, ExploreState> {
   renderTablePanel(width: number) {
     const { exploreId, timeZone } = this.props;
     return (
-      <ContentOutlineItem title="Table" icon="table">
+      <ContentOutlineItem panelId="Table" title="Table" icon="table">
         <TableContainer
           ariaLabel={selectors.pages.Explore.General.table}
           width={width}
@@ -428,7 +425,7 @@ export class Explore extends React.PureComponent<Props, ExploreState> {
   renderRawPrometheus(width: number) {
     const { exploreId, datasourceInstance, timeZone } = this.props;
     return (
-      <ContentOutlineItem title="Raw Prometheus" icon="gf-prometheus">
+      <ContentOutlineItem panelId="Raw Prometheus" title="Raw Prometheus" icon="gf-prometheus">
         <RawPrometheusContainer
           showRawPrometheus={true}
           ariaLabel={selectors.pages.Explore.General.table}
@@ -452,7 +449,7 @@ export class Explore extends React.PureComponent<Props, ExploreState> {
       gap: theme.spacing(1),
     });
     return (
-      <ContentOutlineItem title="Logs" icon="gf-logs" className={logsContentOutlineWrapper}>
+      <ContentOutlineItem panelId="Logs" title="Logs" icon="gf-logs" className={logsContentOutlineWrapper}>
         <LogsContainer
           exploreId={exploreId}
           loadingState={queryResponse.state}
@@ -477,7 +474,7 @@ export class Explore extends React.PureComponent<Props, ExploreState> {
     const { logsSample, timeZone, setSupplementaryQueryEnabled, exploreId, datasourceInstance, queries } = this.props;
 
     return (
-      <ContentOutlineItem title="Logs Sample" icon="gf-logs">
+      <ContentOutlineItem panelId="Logs Sample" title="Logs Sample" icon="gf-logs">
         <LogsSamplePanel
           queryResponse={logsSample.data}
           timeZone={timeZone}
@@ -498,7 +495,7 @@ export class Explore extends React.PureComponent<Props, ExploreState> {
     const datasourceType = datasourceInstance ? datasourceInstance?.type : 'unknown';
 
     return (
-      <ContentOutlineItem title="Node Graph" icon="code-branch">
+      <ContentOutlineItem panelId="Node Graph" title="Node Graph" icon="code-branch">
         <NodeGraphContainer
           dataFrames={this.memoizedGetNodeGraphDataFrames(queryResponse.series)}
           exploreId={exploreId}
@@ -513,7 +510,7 @@ export class Explore extends React.PureComponent<Props, ExploreState> {
   renderFlameGraphPanel() {
     const { queryResponse } = this.props;
     return (
-      <ContentOutlineItem title="Flame Graph" icon="fire">
+      <ContentOutlineItem panelId="Flame Graph" title="Flame Graph" icon="fire">
         <FlameGraphExploreContainer dataFrames={queryResponse.flameGraphFrames} />
       </ContentOutlineItem>
     );
@@ -526,7 +523,7 @@ export class Explore extends React.PureComponent<Props, ExploreState> {
     return (
       // If there is no data (like 404) we show a separate error so no need to show anything here
       dataFrames.length && (
-        <ContentOutlineItem title="Traces" icon="file-alt">
+        <ContentOutlineItem panelId="Traces" title="Traces" icon="file-alt">
           <TraceViewContainer
             exploreId={exploreId}
             dataFrames={dataFrames}
@@ -586,7 +583,7 @@ export class Explore extends React.PureComponent<Props, ExploreState> {
     }
 
     return (
-      <ContentOutlineContextProvider>
+      <ContentOutlineContextProvider refreshDependencies={this.props.queries}>
         <ExploreToolbar
           exploreId={exploreId}
           onChangeTime={this.onChangeTime}
@@ -602,9 +599,7 @@ export class Explore extends React.PureComponent<Props, ExploreState> {
         >
           <div className={styles.wrapper}>
             {contentOutlineVisible && (
-              <div className={styles.left}>
-                <ContentOutline scroller={this.scrollElement} panelId={`content-outline-container-${exploreId}`} />
-              </div>
+              <ContentOutline scroller={this.scrollElement} panelId={`content-outline-container-${exploreId}`} />
             )}
             <CustomScrollbar
               testId={selectors.pages.Explore.General.scrollView}
@@ -614,7 +609,7 @@ export class Explore extends React.PureComponent<Props, ExploreState> {
               <div className={styles.exploreContainer}>
                 {datasourceInstance ? (
                   <>
-                    <ContentOutlineItem title="Queries" icon="arrow">
+                    <ContentOutlineItem panelId="Queries" title="Queries" icon="arrow" mergeSingleChild={true}>
                       <PanelContainer className={styles.queryContainer}>
                         {correlationsBox}
                         <QueryRows exploreId={exploreId} />
