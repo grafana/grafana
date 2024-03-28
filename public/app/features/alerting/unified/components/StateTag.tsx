@@ -1,26 +1,28 @@
 import { css, cx } from '@emotion/css';
-import React from 'react';
+import React, { forwardRef } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { useStyles2 } from '@grafana/ui';
 
 export type State = 'good' | 'bad' | 'warning' | 'neutral' | 'info';
 
-type Props = {
+type Props = React.PropsWithChildren<{
   state: State;
   size?: 'md' | 'sm';
   muted?: boolean;
-};
+}>;
 
-export const StateTag = ({ children, state, size = 'md', muted = false }: React.PropsWithChildren<Props>) => {
+export const StateTag = forwardRef<HTMLElement, Props>(({ children, state, size = 'md', muted = false }, ref) => {
   const styles = useStyles2(getStyles);
 
   return (
-    <span className={cx(styles.common, styles[state], styles[size], { [styles.muted]: muted })}>
+    <span className={cx(styles.common, styles[state], styles[size], { [styles.muted]: muted })} ref={ref}>
       {children || state}
     </span>
   );
-};
+});
+
+StateTag.displayName = 'StateTag';
 
 const getStyles = (theme: GrafanaTheme2) => ({
   common: css`
