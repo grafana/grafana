@@ -49,7 +49,7 @@ To enable the Azure AD OAuth2, register your application with Azure AD.
 1. Click **Certificates & secrets**, then add a new entry under **Client secrets** with the following configuration.
 
    - Description: Grafana OAuth
-   - Expires: Never
+   - Expires: Select an expiration period
 
 1. Click **Add** then copy the key value. This is the OAuth client secret.
 
