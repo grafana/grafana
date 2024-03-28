@@ -109,7 +109,6 @@ func TestVerifier_Start(t *testing.T) {
 	})
 }
 
-// TODO: Add tests
 func TestVerifier_Complete(t *testing.T) {
 	ts := &tempusertest.FakeTempUserService{}
 	us := &usertest.FakeUserService{}
