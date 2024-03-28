@@ -31,7 +31,7 @@ type Service struct {
 	accessControl  ac.AccessControl
 	bundleRegistry *bundleregistry.Service
 	cfg            *setting.Cfg
-	features       *featuremgmt.FeatureManager
+	features       featuremgmt.FeatureToggles
 	pluginSettings pluginsettings.Service
 	pluginStore    pluginstore.Store
 	store          bundleStore
@@ -49,7 +49,7 @@ func ProvideService(
 	accesscontrolService ac.Service,
 	bundleRegistry *bundleregistry.Service,
 	cfg *setting.Cfg,
-	features *featuremgmt.FeatureManager,
+	features featuremgmt.FeatureToggles,
 	httpServer *grafanaApi.HTTPServer,
 	kvStore kvstore.KVStore,
 	pluginSettings pluginsettings.Service,

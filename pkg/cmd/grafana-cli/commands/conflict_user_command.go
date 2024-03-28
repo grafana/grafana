@@ -33,7 +33,7 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 )
 
-func initConflictCfg(cmd *utils.ContextCommandLine) (*setting.Cfg, *featuremgmt.FeatureManager, error) {
+func initConflictCfg(cmd *utils.ContextCommandLine) (*setting.Cfg, featuremgmt.FeatureToggles, error) {
 	configOptions := strings.Split(cmd.String("configOverrides"), " ")
 	configOptions = append(configOptions, cmd.Args().Slice()...)
 	cfg, err := setting.NewCfgFromArgs(setting.CommandLineArgs{

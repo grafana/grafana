@@ -30,7 +30,7 @@ func ProvideServiceAccountsProxy(
 	cfg *setting.Cfg,
 	ac accesscontrol.AccessControl,
 	accesscontrolService accesscontrol.Service,
-	features *featuremgmt.FeatureManager,
+	features featuremgmt.FeatureToggles,
 	permissionService accesscontrol.ServiceAccountPermissionsService,
 	proxiedService *manager.ServiceAccountsService,
 	routeRegister routing.RouteRegister,
