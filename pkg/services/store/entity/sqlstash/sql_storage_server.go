@@ -562,6 +562,7 @@ func (s *sqlEntityServer) Update(ctx context.Context, r *entity.UpdateEntityRequ
 
 		// Optimistic locking
 		if r.PreviousVersion > 0 && r.PreviousVersion != current.ResourceVersion {
+			StorageServerMetrics.OptimisticLockFailed.WithLabelValues("update").Inc()
 			return fmt.Errorf("optimistic lock failed")
 		}
 
@@ -807,6 +808,7 @@ func (s *sqlEntityServer) Delete(ctx context.Context, r *entity.DeleteEntityRequ
 
 		if r.PreviousVersion > 0 && r.PreviousVersion != rsp.Entity.ResourceVersion {
 			rsp.Status = entity.DeleteEntityResponse_ERROR
+			StorageServerMetrics.OptimisticLockFailed.WithLabelValues("delete").Inc()
 			return fmt.Errorf("optimistic lock failed")
 		}
 
@@ -1112,9 +1114,6 @@ func ParseSortBy(sort string) (*SortBy, error) {
 }
 
 func (s *sqlEntityServer) List(ctx context.Context, r *entity.EntityListRequest) (*entity.EntityListResponse, error) {
-	// Just an example for now
-	StorageServerMetrics.Lists.Inc()
-
 	if err := s.Init(); err != nil {
 		return nil, err
 	}

@@ -127,9 +127,9 @@ func (s *service) start(ctx context.Context) error {
 	}
 
 	// register metrics
-	storageMetrics := sqlstash.NewStorageMetrics()
-	err := prometheus.Register(storageMetrics)
+	err := prometheus.Register(sqlstash.NewStorageMetrics())
 	if err != nil {
+		s.log.Debug("error registering storage server metrics", "error", err)
 		return err
 	}
 

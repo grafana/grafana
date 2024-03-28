@@ -12,25 +12,19 @@ var (
 )
 
 type StorageApiMetrics struct {
-	Lists   prometheus.Counter
-	Creates *prometheus.CounterVec
+	OptimisticLockFailed *prometheus.CounterVec
 }
 
 func NewStorageMetrics() *StorageApiMetrics {
 	once.Do(func() {
 		StorageServerMetrics = &StorageApiMetrics{
-			Lists: prometheus.NewCounter(prometheus.CounterOpts{
-				Namespace: "storage_server",
-				Name:      "list_ops",
-				Help:      "count of list operations",
-			}),
-			Creates: prometheus.NewCounterVec(
+			OptimisticLockFailed: prometheus.NewCounterVec(
 				prometheus.CounterOpts{
 					Namespace: "storage_server",
-					Name:      "create_calls",
-					Help:      "count of create operations",
+					Name:      "optimistic_lock_failed",
+					Help:      "count of optimistic locks failed",
 				},
-				[]string{"someLabel"},
+				[]string{"action"},
 			),
 		}
 	})
@@ -39,11 +33,9 @@ func NewStorageMetrics() *StorageApiMetrics {
 }
 
 func (s *StorageApiMetrics) Collect(ch chan<- prometheus.Metric) {
-	s.Lists.Collect(ch)
-	s.Creates.Collect(ch)
+	s.OptimisticLockFailed.Collect(ch)
 }
 
 func (s *StorageApiMetrics) Describe(ch chan<- *prometheus.Desc) {
-	s.Lists.Describe(ch)
-	s.Creates.Describe(ch)
+	s.OptimisticLockFailed.Describe(ch)
 }
