@@ -623,6 +623,10 @@ func (dr *DashboardServiceImpl) SearchDashboards(ctx context.Context, query *das
 	return hits, nil
 }
 
+func (dr *DashboardServiceImpl) GetAllDashboards(ctx context.Context) ([]*dashboards.Dashboard, error) {
+	return dr.dashboardStore.GetAllDashboards(ctx)
+}
+
 func getHitType(item dashboards.DashboardSearchProjection) model.HitType {
 	var hitType model.HitType
 	if item.IsFolder {

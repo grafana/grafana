@@ -5,6 +5,7 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
+	"strconv"
 	"time"
 
 	"github.com/grafana/grafana/pkg/api/routing"
@@ -13,10 +14,14 @@ import (
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/cloudmigration"
 	"github.com/grafana/grafana/pkg/services/cloudmigration/api"
+	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/gcom"
+	"github.com/grafana/grafana/pkg/services/secrets"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/util"
 	"github.com/prometheus/client_golang/prometheus"
 )
 
@@ -27,9 +32,13 @@ type Service struct {
 	log *log.ConcreteLogger
 	cfg *setting.Cfg
 
-	features    featuremgmt.FeatureToggles
-	dsService   datasources.DataSourceService
-	gcomService gcom.Service
+	features featuremgmt.FeatureToggles
+
+	dsService       datasources.DataSourceService
+	gcomService     gcom.Service
+	dashboarService dashboards.DashboardService
+	folderService   folder.Service
+	secretsService  secrets.Service
 
 	api     *api.CloudMigrationAPI
 	tracer  tracing.Tracer
@@ -191,12 +200,26 @@ func (s *Service) SaveEncryptedToken(ctx context.Context, token string) error {
 	return nil
 }
 
-func (s *Service) GetMigration(ctx context.Context, id int64) (*cloudmigration.CloudMigrationResponse, error) {
-	// commenting to fix linter, uncomment when this function is implemented
-	// ctx, span := s.tracer.Start(ctx, "CloudMigrationService.GetMigration")
-	// defer span.End()
+func (s *Service) GetMigration(ctx context.Context, id int64) (*cloudmigration.CloudMigration, error) {
+	migration, err := s.store.GetMigration(ctx, id)
+	if err != nil {
+		return nil, err
+	}
+	strValue := migration.AuthToken
+	decoded, err := base64.RawStdEncoding.DecodeString(strValue)
+	if err != nil {
+		s.log.Error("Failed to decode secret string", "err", err, "value")
+		return nil, err
+	}
 
-	return nil, nil
+	decryptedToken, err := s.secretsService.Decrypt(ctx, decoded)
+	if err != nil {
+		s.log.Error("Failed to decrypt secret", "err", err)
+		return nil, err
+	}
+	migration.AuthToken = string(decryptedToken)
+
+	return migration, nil
 }
 
 func (s *Service) GetMigrationList(ctx context.Context) (*cloudmigration.CloudMigrationListResponse, error) {
@@ -227,9 +250,130 @@ func (s *Service) UpdateMigration(ctx context.Context, id int64, cm cloudmigrati
 	return nil, nil
 }
 
-func (s *Service) RunMigration(ctx context.Context, uid string) (*cloudmigration.CloudMigrationRun, error) {
-	// TODO: Implement method
-	return nil, nil
+func (s *Service) GetMigrationDataJSON(ctx context.Context, id int64) ([]byte, error) {
+	var migrationDataSlice []cloudmigration.MigrateDataRequestItemDTO
+	// Data sources
+	dataSources, err := s.getDataSources(ctx, id)
+	if err != nil {
+		s.log.Error("Failed to get datasources", "err", err)
+		return nil, err
+	}
+	migrationDataSlice = append(migrationDataSlice, cloudmigration.MigrateDataRequestItemDTO{
+		Type:  cloudmigration.DatasourceDataType,
+		RefID: strconv.Itoa(int(id)),
+		Name:  "datasources",
+		Data:  dataSources,
+	})
+	// Dashboards
+	dashboards, err := s.getDashboards(ctx, id)
+	if err != nil {
+		s.log.Error("Failed to get dashboards", "err", err)
+		return nil, err
+	}
+	migrationDataSlice = append(migrationDataSlice, cloudmigration.MigrateDataRequestItemDTO{
+		Type:  cloudmigration.DashboardDataType,
+		RefID: strconv.Itoa(int(id)),
+		Name:  "dashboards",
+		Data:  dashboards,
+	})
+	// Folders
+	folders, err := s.getFolders(ctx, id)
+	if err != nil {
+		s.log.Error("Failed to get folders", "err", err)
+		return nil, err
+	}
+	migrationDataSlice = append(migrationDataSlice, cloudmigration.MigrateDataRequestItemDTO{
+		Type:  cloudmigration.FolderDataType,
+		RefID: strconv.Itoa(int(id)),
+		Name:  "folders",
+		Data:  folders,
+	})
+	migrationData := cloudmigration.MigrateDataRequestDTO{
+		Items: migrationDataSlice,
+	}
+	result, err := json.Marshal(migrationData)
+	if err != nil {
+		s.log.Error("Failed to marshal datasources", "err", err)
+		return nil, err
+	}
+	return result, nil
+}
+
+func (s *Service) getDataSources(ctx context.Context, id int64) ([]datasources.AddDataSourceCommand, error) {
+	dataSources, err := s.dsService.GetAllDataSources(ctx, &datasources.GetAllDataSourcesQuery{})
+	if err != nil {
+		s.log.Error("Failed to get all datasources", "err", err)
+		return nil, err
+	}
+
+	result := []datasources.AddDataSourceCommand{}
+	for _, dataSource := range dataSources {
+		// Decrypt secure json to send raw credentials
+		decryptedData, err := s.secretsService.DecryptJsonData(ctx, dataSource.SecureJsonData)
+		if err != nil {
+			s.log.Error("Failed to decrypt secure json data", "err", err)
+			return nil, err
+		}
+		dataSourceCmd := datasources.AddDataSourceCommand{
+			OrgID:           dataSource.OrgID,
+			Name:            dataSource.Name,
+			Type:            dataSource.Type,
+			Access:          dataSource.Access,
+			URL:             dataSource.URL,
+			User:            dataSource.User,
+			Database:        dataSource.Database,
+			BasicAuth:       dataSource.BasicAuth,
+			BasicAuthUser:   dataSource.BasicAuthUser,
+			WithCredentials: dataSource.WithCredentials,
+			IsDefault:       dataSource.IsDefault,
+			JsonData:        dataSource.JsonData,
+			SecureJsonData:  decryptedData,
+			ReadOnly:        dataSource.ReadOnly,
+			UID:             dataSource.UID,
+		}
+		result = append(result, dataSourceCmd)
+	}
+	return result, err
+}
+
+func (s *Service) getFolders(ctx context.Context, id int64) ([]folder.Folder, error) {
+	folders, err := s.folderService.GetFolders(ctx, folder.GetFoldersQuery{})
+	if err != nil {
+		return nil, err
+	}
+
+	var result []folder.Folder
+	for _, folder := range folders {
+		result = append(result, *folder)
+	}
+
+	return result, nil
+}
+
+func (s *Service) getDashboards(ctx context.Context, id int64) ([]dashboards.Dashboard, error) {
+	dashs, err := s.dashboarService.GetAllDashboards(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	var result []dashboards.Dashboard
+	for _, dashboard := range dashs {
+		result = append(result, *dashboard)
+	}
+	return result, nil
+}
+
+func (s *Service) SaveMigrationRun(ctx context.Context, cmr *cloudmigration.CloudMigrationRun) (string, error) {
+	cmr.CloudMigrationUID = util.GenerateShortUID()
+	cmr.Created = time.Now()
+	cmr.Updated = time.Now()
+	cmr.Finished = time.Now()
+	err := s.store.SaveMigrationRun(ctx, cmr)
+	if err != nil {
+		s.log.Error("Failed to save migration run", "err", err)
+		return "", err
+	}
+	return cmr.CloudMigrationUID, nil
 }
 
 func (s *Service) GetMigrationStatus(ctx context.Context, id string, runID string) (*cloudmigration.CloudMigrationRun, error) {
@@ -247,6 +391,14 @@ func (s *Service) DeleteMigration(ctx context.Context, id string) error {
 	return nil
 }
 
-// func (s *Service) MigrateDatasources(ctx context.Context, request *cloudmigration.MigrateDatasourcesRequest) (*cloudmigration.MigrateDatasourcesResponse, error) {
-// 	return s.store.MigrateDatasources(ctx, request)
-// }
+func (s *Service) ParseCloudMigrationConfig() (string, error) {
+	if s.cfg == nil {
+		return "", fmt.Errorf("cfg cannot be nil")
+	}
+	section := s.cfg.Raw.Section("cloud_migration")
+	domain := section.Key("domain").MustString("")
+	if domain != "" {
+		s.log.Warn("cloudmigration domain not set")
+	}
+	return "", nil
+}

@@ -9,12 +9,15 @@ type Service interface {
 	ValidateToken(context.Context, string) error
 	SaveEncryptedToken(context.Context, string) error
 	// migration
-	GetMigration(context.Context, int64) (*CloudMigrationResponse, error)
+	GetMigration(context.Context, int64) (*CloudMigration, error)
 	GetMigrationList(context.Context) (*CloudMigrationListResponse, error)
 	CreateMigration(context.Context, CloudMigrationRequest) (*CloudMigrationResponse, error)
+	GetMigrationDataJSON(context.Context, int64) ([]byte, error)
 	UpdateMigration(context.Context, int64, CloudMigrationRequest) (*CloudMigrationResponse, error)
-	RunMigration(context.Context, string) (*CloudMigrationRun, error)
 	GetMigrationStatus(context.Context, string, string) (*CloudMigrationRun, error)
 	GetMigrationStatusList(context.Context, string) ([]CloudMigrationRun, error)
 	DeleteMigration(context.Context, string) error
+	SaveMigrationRun(context.Context, *CloudMigrationRun) (string, error)
+
+	ParseCloudMigrationConfig() (string, error)
 }
