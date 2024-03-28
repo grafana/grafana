@@ -7,6 +7,22 @@ import { ColorSchemeDiff } from '../types';
 
 import murmurhash3_32_gc from './murmur3';
 
+// https://stackoverflow.com/questions/7616461/generate-a-hash-from-string-in-javascript/52171480#52171480
+const cyrb53 = (str: string, seed = 0) => {
+  let h1 = 0xdeadbeef ^ seed, h2 = 0x41c6ce57 ^ seed;
+  for(let i = 0, ch; i < str.length; i++) {
+      ch = str.charCodeAt(i);
+      h1 = Math.imul(h1 ^ ch, 2654435761);
+      h2 = Math.imul(h2 ^ ch, 1597334677);
+  }
+  h1  = Math.imul(h1 ^ (h1 >>> 16), 2246822507);
+  h1 ^= Math.imul(h2 ^ (h2 >>> 13), 3266489909);
+  h2  = Math.imul(h2 ^ (h2 >>> 16), 2246822507);
+  h2 ^= Math.imul(h1 ^ (h1 >>> 13), 3266489909);
+
+  return 4294967296 * (2097151 & h2) + (h1 >>> 0);
+};
+
 // Colors taken from pyroscope, they should be from Grafana originally, but I didn't find from where exactly.
 const packageColors = [
   color({ h: 24, s: 69, l: 60 }),
@@ -55,8 +71,8 @@ export function getBarColorByValue(value: number, totalTicks: number, rangeMin: 
 export function getBarColorByPackage(label: string, theme: GrafanaTheme2) {
   const packageName = getPackageName(label);
   // TODO: similar thing happens in trace view with selecting colors of the spans, so maybe this could be unified.
-  const hash = murmurhash3_32_gc(packageName || '', 0);
-  const colorIndex = hash % packageColors.length;
+  const hash = cyrb53(packageName || '', 0);
+  const colorIndex = Math.abs(hash % packageColors.length);
   let packageColor = packageColors[colorIndex].clone();
   if (theme.isLight) {
     packageColor = packageColor.brighten(15);
@@ -106,35 +122,15 @@ export function getBarColorByDiff(
   return color(rgbString);
 }
 
-// const getColors = memoizeOne((theme) => getFilteredColors(colors, theme));
-
-// Different regexes to get the package name and function name from the label. We may at some point get an info about
-// the language from the backend and use the right regex but right now we just try all of them from most to least
-// specific.
-const matchers = [
-  ['phpspy', /^(?<packageName>([^\/]*\/)*)(?<filename>.*\.php+)(?<line_info>.*)$/],
-  ['pyspy', /^(?<packageName>([^\/]*\/)*)(?<filename>.*\.py+)(?<line_info>.*)$/],
-  ['rbspy', /^(?<packageName>([^\/]*\/)*)(?<filename>.*\.rb+)(?<line_info>.*)$/],
-  [
-    'nodespy',
-    /^(\.\/node_modules\/)?(?<packageName>[^/]*)(?<filename>.*\.?(jsx?|tsx?)?):(?<functionName>.*):(?<line_info>.*)$/,
-  ],
-  ['gospy', /^(?<packageName>.*?\/.*?\.|.*?\.|.+)(?<functionName>.*)$/], // also 'scrape'
-  ['javaspy', /^(?<packageName>.+\/)(?<filename>.+\.)(?<functionName>.+)$/],
-  ['dotnetspy', /^(?<packageName>.+)\.(.+)\.(.+)\(.*\)$/],
-  ['tracing', /^(?<packageName>.+?):.*$/],
-  ['pyroscope-rs', /^(?<packageName>[^::]+)/],
-  ['ebpfspy', /^(?<packageName>.+)$/],
-  ['unknown', /^(?<packageName>.+)$/],
-];
+const PKG_RE =  /^(?:.*?(?:gems|node_modules|github\.com)[^\w]+)?(\w+)/;
 
 // Get the package name from the symbol. Try matchers from the list and return first one that matches.
 function getPackageName(name: string): string | undefined {
-  for (const [_, matcher] of matchers) {
-    const match = name.match(matcher);
-    if (match) {
-      return match.groups?.packageName || '';
-    }
+  let m = name.match(PKG_RE);
+
+  if (m != null) {
+    return m[1];
   }
+
   return undefined;
 }
