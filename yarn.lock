@@ -3550,13 +3550,13 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@grafana/aws-sdk@npm:0.3.2":
-  version: 0.3.2
-  resolution: "@grafana/aws-sdk@npm:0.3.2"
+"@grafana/aws-sdk@npm:0.3.3":
+  version: 0.3.3
+  resolution: "@grafana/aws-sdk@npm:0.3.3"
   dependencies:
     "@grafana/async-query-data": "npm:0.1.4"
     "@grafana/experimental": "npm:1.7.0"
-  checksum: 10/e0023948df9691c66873efd1d8f2ccde829aa7b7c520e01c7458dfe21dfdd46fd5638be006e97a34c39247b19fa9b61759cfb05e0d9b54fc9ab5f368cbae241b
+  checksum: 10/794de025e6c852ed77bd2bcc76f2b9bbe75af73e92c5d092824b4f053df23f1d4085a5710fe3851a158087283722f2b4b73a73c4b7a46c27fa879899d243bea9
   languageName: node
   linkType: hard
 
@@ -18620,7 +18620,7 @@ __metadata:
     "@fingerprintjs/fingerprintjs": "npm:^3.4.2"
     "@floating-ui/react": "npm:0.26.10"
     "@glideapps/glide-data-grid": "npm:^6.0.0"
-    "@grafana/aws-sdk": "npm:0.3.2"
+    "@grafana/aws-sdk": "npm:0.3.3"
     "@grafana/data": "workspace:*"
     "@grafana/e2e-selectors": "workspace:*"
     "@grafana/eslint-config": "npm:7.0.0"
