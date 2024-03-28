@@ -545,18 +545,6 @@ export function buildGridItemForPanel(panel: PanelModel): DashboardGridItem {
   });
 }
 
-const getLimitedDescriptionReporter = () => {
-  const reportedPanels: string[] = [];
-
-  return (key: string) => {
-    if (reportedPanels.includes(key)) {
-      return;
-    }
-    reportedPanels.push(key);
-    DashboardInteractions.panelDescriptionShown();
-  };
-};
-
 function registerDashboardSceneTracking(model: DashboardModel) {
   return () => {
     const unsetDashboardInteractionsScenesContext = DashboardInteractions.setScenesContext();
@@ -570,15 +558,10 @@ function registerDashboardSceneTracking(model: DashboardModel) {
 }
 
 function registerPanelInteractionsReporter(scene: DashboardScene) {
-  const descriptionReporter = getLimitedDescriptionReporter();
-
   // Subscriptions set with subscribeToEvent are automatically unsubscribed when the scene deactivated
   scene.subscribeToEvent(UserActionEvent, (e) => {
     const { interaction } = e.payload;
     switch (interaction) {
-      case 'panel-description-shown':
-        descriptionReporter(e.payload.origin.state.key || '');
-        break;
       case 'panel-status-message-clicked':
         DashboardInteractions.panelStatusMessageClicked();
         break;
