@@ -516,3 +516,42 @@ To set up generic OAuth2 authentication with OneLogin, follow these steps:
    team_ids =
    allowed_organizations =
    ```
+
+### Set up OAuth2 with Dex
+
+To set up generic OAuth2 authentication with [Dex IdP](https://dexidp.io/), follow these
+steps:
+
+1. Add Grafana as a client in the Dex config YAML file:
+
+   ```yaml
+   staticClients:
+     - id: <client id>
+       name: Grafana
+       secret: <client secret>
+       redirectURIs:
+         - 'https://<grafana domain>/login/generic_oauth'
+   ```
+
+   {{% admonition type="note" %}}
+   Unlike many other OAuth2 providers, Dex doesn't provide `<client secret>`.
+   Instead, a secret can be generated with for example `openssl rand -hex 20`.
+   {{% /admonition %}}
+
+2. Update the `[auth.generic_oauth]` section of the Grafana configuration:
+
+   ```bash
+   [auth.generic_oauth]
+   name = Dex
+   enabled = true
+   client_id = <client id>
+   client_secret = <client secret>
+   scopes = openid email profile groups offline_access
+   auth_url = https://<dex base uri>/auth
+   token_url = https://<dex base uri>/token
+   api_url = https://<dex base uri>/userinfo
+   ```
+
+   `<dex base uri>` corresponds to the `issuer: ` configuration in Dex (e.g. the Dex
+   domain possibly including a path such as e.g. `/dex`). The `offline_access` scope is
+   needed when using [refresh tokens]({{< relref "#configure-a-refresh-token" >}}).
