@@ -42,7 +42,21 @@ export const ExemplarHoverView = ({ displayValues, links, header = 'Exemplar' }:
       {links && links.length > 0 && (
         <div className={styles.exemplarFooter}>
           {links.map((link, i) => (
-            <LinkButton key={i} href={link.href} className={styles.linkButton}>
+            <LinkButton
+              key={i}
+              href={link.href}
+              className={styles.linkButton}
+              onClick={
+                link.onClick
+                  ? (event) => {
+                      if (!(event.ctrlKey || event.metaKey || event.shiftKey) && link.onClick) {
+                        event.preventDefault();
+                        link.onClick(event);
+                      }
+                    }
+                  : undefined
+              }
+            >
               {link.title}
             </LinkButton>
           ))}
