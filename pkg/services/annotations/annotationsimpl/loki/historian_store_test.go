@@ -11,11 +11,13 @@ import (
 	"testing"
 	"time"
 
+	"github.com/prometheus/client_golang/prometheus"
+	"github.com/stretchr/testify/require"
+
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/annotations"
-	annotation_ac "github.com/grafana/grafana/pkg/services/annotations/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/annotations/testutil"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
@@ -28,9 +30,6 @@ import (
 	historymodel "github.com/grafana/grafana/pkg/services/ngalert/state/historian/model"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tests/testsuite"
-	"github.com/prometheus/client_golang/prometheus"
-
-	"github.com/stretchr/testify/require"
 )
 
 func TestMain(m *testing.M) {
@@ -101,7 +100,7 @@ func TestIntegrationAlertStateHistoryStore(t *testing.T) {
 			res, err := store.Get(
 				context.Background(),
 				&query,
-				&annotation_ac.AccessResources{
+				&annotations.AccessResources{
 					Dashboards: map[string]int64{
 						dashboard1.UID: dashboard1.ID,
 					},
@@ -127,7 +126,7 @@ func TestIntegrationAlertStateHistoryStore(t *testing.T) {
 			res, err := store.Get(
 				context.Background(),
 				&query,
-				&annotation_ac.AccessResources{
+				&annotations.AccessResources{
 					Dashboards: map[string]int64{
 						dashboard1.UID: dashboard1.ID,
 					},
@@ -151,7 +150,7 @@ func TestIntegrationAlertStateHistoryStore(t *testing.T) {
 			res, err := store.Get(
 				context.Background(),
 				&query,
-				&annotation_ac.AccessResources{
+				&annotations.AccessResources{
 					Dashboards: map[string]int64{
 						dashboard1.UID: dashboard1.ID,
 					},
@@ -177,7 +176,7 @@ func TestIntegrationAlertStateHistoryStore(t *testing.T) {
 			res, err := store.Get(
 				context.Background(),
 				&query,
-				&annotation_ac.AccessResources{
+				&annotations.AccessResources{
 					Dashboards: map[string]int64{
 						dashboard1.UID: dashboard1.ID,
 					},
@@ -207,7 +206,7 @@ func TestIntegrationAlertStateHistoryStore(t *testing.T) {
 			res, err := store.Get(
 				context.Background(),
 				&query,
-				&annotation_ac.AccessResources{
+				&annotations.AccessResources{
 					Dashboards: map[string]int64{
 						dashboard1.UID: dashboard1.ID,
 					},
@@ -236,7 +235,7 @@ func TestIntegrationAlertStateHistoryStore(t *testing.T) {
 			res, err := store.Get(
 				context.Background(),
 				&query,
-				&annotation_ac.AccessResources{
+				&annotations.AccessResources{
 					Dashboards: map[string]int64{
 						dashboard1.UID: dashboard1.ID,
 					},
@@ -261,14 +260,14 @@ func TestIntegrationAlertStateHistoryStore(t *testing.T) {
 		store := createTestLokiStore(t, sql, fakeLokiClient)
 
 		t.Run("should return empty list when no streams", func(t *testing.T) {
-			items := store.annotationsFromStream(historian.Stream{}, annotation_ac.AccessResources{})
+			items := store.annotationsFromStream(historian.Stream{}, annotations.AccessResources{})
 			require.Empty(t, items)
 		})
 
 		t.Run("should return empty list when no entries", func(t *testing.T) {
 			items := store.annotationsFromStream(historian.Stream{
 				Values: []historian.Sample{},
-			}, annotation_ac.AccessResources{})
+			}, annotations.AccessResources{})
 			require.Empty(t, items)
 		})
 
@@ -280,7 +279,7 @@ func TestIntegrationAlertStateHistoryStore(t *testing.T) {
 
 			stream := historian.StatesToStream(ruleMetaFromRule(t, rule), transitions, map[string]string{}, log.NewNopLogger())
 
-			items := store.annotationsFromStream(stream, annotation_ac.AccessResources{
+			items := store.annotationsFromStream(stream, annotations.AccessResources{
 				Dashboards: map[string]int64{
 					dashboard1.UID: dashboard1.ID,
 				},
@@ -325,7 +324,7 @@ func TestIntegrationAlertStateHistoryStore(t *testing.T) {
 				Stream: stream1.Stream,
 			}
 
-			items := store.annotationsFromStream(stream, annotation_ac.AccessResources{
+			items := store.annotationsFromStream(stream, annotations.AccessResources{
 				Dashboards: map[string]int64{
 					dashboard1.UID: dashboard1.ID,
 				},
@@ -355,7 +354,7 @@ func TestIntegrationAlertStateHistoryStore(t *testing.T) {
 				Stream: stream1.Stream,
 			}
 
-			items := store.annotationsFromStream(stream, annotation_ac.AccessResources{
+			items := store.annotationsFromStream(stream, annotations.AccessResources{
 				Dashboards: map[string]int64{
 					dashboard1.UID: dashboard1.ID,
 				},
@@ -377,13 +376,13 @@ func TestHasAccess(t *testing.T) {
 	}
 
 	t.Run("should return false when scope is organization and entry has dashboard UID", func(t *testing.T) {
-		require.False(t, hasAccess(entry, annotation_ac.AccessResources{
+		require.False(t, hasAccess(entry, annotations.AccessResources{
 			CanAccessOrgAnnotations: true,
 		}))
 	})
 
 	t.Run("should return false when scope is dashboard and dashboard UID is not in resources", func(t *testing.T) {
-		require.False(t, hasAccess(entry, annotation_ac.AccessResources{
+		require.False(t, hasAccess(entry, annotations.AccessResources{
 			CanAccessDashAnnotations: true,
 			Dashboards: map[string]int64{
 				"other-dashboard-uid": 1,
@@ -392,13 +391,13 @@ func TestHasAccess(t *testing.T) {
 	})
 
 	t.Run("should return true when scope is organization and entry has no dashboard UID", func(t *testing.T) {
-		require.True(t, hasAccess(historian.LokiEntry{}, annotation_ac.AccessResources{
+		require.True(t, hasAccess(historian.LokiEntry{}, annotations.AccessResources{
 			CanAccessOrgAnnotations: true,
 		}))
 	})
 
 	t.Run("should return true when scope is dashboard and dashboard UID is in resources", func(t *testing.T) {
-		require.True(t, hasAccess(entry, annotation_ac.AccessResources{
+		require.True(t, hasAccess(entry, annotations.AccessResources{
 			CanAccessDashAnnotations: true,
 			Dashboards: map[string]int64{
 				"dashboard-uid": 1,

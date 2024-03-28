@@ -7,10 +7,10 @@ import (
 	"testing"
 	"time"
 
+	"github.com/stretchr/testify/require"
+
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/annotations"
-	"github.com/grafana/grafana/pkg/services/annotations/accesscontrol"
-	"github.com/stretchr/testify/require"
 )
 
 var (
@@ -21,13 +21,13 @@ var (
 func TestCompositeStore(t *testing.T) {
 	t.Run("should handle panic", func(t *testing.T) {
 		r1 := newFakeReader()
-		getPanic := func(context.Context, *annotations.ItemQuery, *accesscontrol.AccessResources) ([]*annotations.ItemDTO, error) {
+		getPanic := func(context.Context, *annotations.ItemQuery, *annotations.AccessResources) ([]*annotations.ItemDTO, error) {
 			panic("ohno")
 		}
 		r2 := newFakeReader(withGetFn(getPanic))
 		store := &CompositeStore{
 			log.NewNopLogger(),
-			[]readStore{r1, r2},
+			[]annotations.ReadStore{r1, r2},
 		}
 
 		_, err := store.Get(context.Background(), nil, nil)
@@ -43,7 +43,7 @@ func TestCompositeStore(t *testing.T) {
 
 		store := &CompositeStore{
 			log.NewNopLogger(),
-			[]readStore{r1, r2},
+			[]annotations.ReadStore{r1, r2},
 		}
 
 		tc := []struct {
@@ -83,7 +83,7 @@ func TestCompositeStore(t *testing.T) {
 
 		store := &CompositeStore{
 			log.NewNopLogger(),
-			[]readStore{r1, r2},
+			[]annotations.ReadStore{r1, r2},
 		}
 
 		expected := []*annotations.ItemDTO{
@@ -112,7 +112,7 @@ func TestCompositeStore(t *testing.T) {
 
 		store := &CompositeStore{
 			log.NewNopLogger(),
-			[]readStore{r1, r2},
+			[]annotations.ReadStore{r1, r2},
 		}
 
 		expected := []*annotations.TagsDTO{
@@ -130,7 +130,7 @@ func TestCompositeStore(t *testing.T) {
 type fakeReader struct {
 	items    []*annotations.ItemDTO
 	tagRes   annotations.FindTagsResult
-	getFn    func(context.Context, *annotations.ItemQuery, *accesscontrol.AccessResources) ([]*annotations.ItemDTO, error)
+	getFn    func(context.Context, *annotations.ItemQuery, *annotations.AccessResources) ([]*annotations.ItemDTO, error)
 	getTagFn func(context.Context, *annotations.TagsQuery) (annotations.FindTagsResult, error)
 	wait     time.Duration
 	err      error
@@ -140,7 +140,7 @@ func (f *fakeReader) Type() string {
 	return "fake"
 }
 
-func (f *fakeReader) Get(ctx context.Context, query *annotations.ItemQuery, accessResources *accesscontrol.AccessResources) ([]*annotations.ItemDTO, error) {
+func (f *fakeReader) Get(ctx context.Context, query *annotations.ItemQuery, accessResources *annotations.AccessResources) ([]*annotations.ItemDTO, error) {
 	if f.getFn != nil {
 		return f.getFn(ctx, query, accessResources)
 	}
@@ -198,7 +198,7 @@ func withTags(tags []*annotations.TagsDTO) func(*fakeReader) {
 	}
 }
 
-func withGetFn(fn func(context.Context, *annotations.ItemQuery, *accesscontrol.AccessResources) ([]*annotations.ItemDTO, error)) func(*fakeReader) {
+func withGetFn(fn func(context.Context, *annotations.ItemQuery, *annotations.AccessResources) ([]*annotations.ItemDTO, error)) func(*fakeReader) {
 	return func(f *fakeReader) {
 		f.getFn = fn
 	}

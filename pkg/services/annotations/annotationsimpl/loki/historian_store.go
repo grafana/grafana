@@ -8,11 +8,11 @@ import (
 	"sort"
 	"time"
 
+	"golang.org/x/exp/constraints"
+
 	"github.com/grafana/grafana/pkg/components/simplejson"
-	"github.com/grafana/grafana/pkg/services/annotations/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/ngalert"
-	"golang.org/x/exp/constraints"
 
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -73,7 +73,7 @@ func (r *LokiHistorianStore) Type() string {
 	return "loki"
 }
 
-func (r *LokiHistorianStore) Get(ctx context.Context, query *annotations.ItemQuery, accessResources *accesscontrol.AccessResources) ([]*annotations.ItemDTO, error) {
+func (r *LokiHistorianStore) Get(ctx context.Context, query *annotations.ItemQuery, accessResources *annotations.AccessResources) ([]*annotations.ItemDTO, error) {
 	if query.Type == "annotation" {
 		return make([]*annotations.ItemDTO, 0), nil
 	}
@@ -121,7 +121,7 @@ func (r *LokiHistorianStore) Get(ctx context.Context, query *annotations.ItemQue
 	return items, err
 }
 
-func (r *LokiHistorianStore) annotationsFromStream(stream historian.Stream, ac accesscontrol.AccessResources) []*annotations.ItemDTO {
+func (r *LokiHistorianStore) annotationsFromStream(stream historian.Stream, ac annotations.AccessResources) []*annotations.ItemDTO {
 	items := make([]*annotations.ItemDTO, 0, len(stream.Values))
 	for _, sample := range stream.Values {
 		entry := historian.LokiEntry{}
@@ -194,7 +194,7 @@ func getRule(ctx context.Context, sql db.DB, orgID int64, ruleID int64) (*ngmode
 	return rule, err
 }
 
-func hasAccess(entry historian.LokiEntry, resources accesscontrol.AccessResources) bool {
+func hasAccess(entry historian.LokiEntry, resources annotations.AccessResources) bool {
 	orgFilter := resources.CanAccessOrgAnnotations && entry.DashboardUID == ""
 	dashFilter := func() bool {
 		if !resources.CanAccessDashAnnotations {

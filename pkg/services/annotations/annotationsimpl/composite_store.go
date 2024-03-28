@@ -8,17 +8,17 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 
 	"github.com/grafana/dskit/concurrency"
+
 	"github.com/grafana/grafana/pkg/services/annotations"
-	"github.com/grafana/grafana/pkg/services/annotations/accesscontrol"
 )
 
 // CompositeStore is a read store that combines two or more read stores, and queries all stores in parallel.
 type CompositeStore struct {
 	logger  log.Logger
-	readers []readStore
+	readers []annotations.ReadStore
 }
 
-func NewCompositeStore(logger log.Logger, readers ...readStore) *CompositeStore {
+func NewCompositeStore(logger log.Logger, readers ...annotations.ReadStore) *CompositeStore {
 	return &CompositeStore{
 		logger:  logger,
 		readers: readers,
@@ -31,7 +31,7 @@ func (c *CompositeStore) Type() string {
 }
 
 // Get returns annotations from all stores, and combines the results.
-func (c *CompositeStore) Get(ctx context.Context, query *annotations.ItemQuery, accessResources *accesscontrol.AccessResources) ([]*annotations.ItemDTO, error) {
+func (c *CompositeStore) Get(ctx context.Context, query *annotations.ItemQuery, accessResources *annotations.AccessResources) ([]*annotations.ItemDTO, error) {
 	itemCh := make(chan []*annotations.ItemDTO, len(c.readers))
 
 	err := concurrency.ForEachJob(ctx, len(c.readers), len(c.readers), func(ctx context.Context, i int) (err error) {
