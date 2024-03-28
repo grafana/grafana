@@ -16,6 +16,16 @@ jest.mock('@grafana/experimental', () => ({
   },
 }));
 
+jest.mock('@grafana/runtime', () => ({
+  ...jest.requireActual('@grafana/runtime'),
+  config: {
+    ...jest.requireActual('@grafana/runtime').config,
+    apps: {
+      'grafana-llm-app': true,
+    },
+  },
+}));
+
 describe('getDashboardChanges', () => {
   it('should correctly split user changes and migration changes', () => {
     // Mock data for testing

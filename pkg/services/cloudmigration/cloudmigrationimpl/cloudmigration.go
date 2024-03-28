@@ -24,7 +24,7 @@ import (
 	"github.com/prometheus/client_golang/prometheus"
 )
 
-// CloudMigrationsServiceImpl Define the Service Implementation.
+// Service Define the cloudmigration.Service Implementation.
 type Service struct {
 	store store
 
@@ -221,9 +221,22 @@ func (s *Service) GetMigration(ctx context.Context, id int64) (*cloudmigration.C
 	return migration, nil
 }
 
-func (s *Service) GetMigrationList(ctx context.Context) ([]cloudmigration.CloudMigrationResponse, error) {
-	// TODO: Implement method
-	return nil, nil
+func (s *Service) GetMigrationList(ctx context.Context) (*cloudmigration.CloudMigrationListResponse, error) {
+	values, err := s.store.GetAllCloudMigrations(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	migrations := make([]cloudmigration.CloudMigrationResponse, 0)
+	for _, v := range values {
+		migrations = append(migrations, cloudmigration.CloudMigrationResponse{
+			ID:      v.ID,
+			Stack:   v.Stack,
+			Created: v.Created,
+			Updated: v.Updated,
+		})
+	}
+	return &cloudmigration.CloudMigrationListResponse{Migrations: migrations}, nil
 }
 
 func (s *Service) CreateMigration(ctx context.Context, cm cloudmigration.CloudMigrationRequest) (*cloudmigration.CloudMigrationResponse, error) {

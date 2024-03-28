@@ -72,7 +72,7 @@ The Grafana Assume Role also helps facilitate this. Using this role, Grafana's A
 
 If the **Assume Role ARN** field is left empty, Grafana uses the provided credentials from the selected authentication method directly, and permissions to AWS data must be attached directly to those credentials. The **Assume Role ARN** field is optional for all authentication methods except for Grafana Assume Role.
 
-To disable this feature, refer to the [`assume_role_enabled` documentation][configure-grafana-assume-role-enabled].
+To disable this feature in open source Grafana or Grafana Enterprise, refer to the [`assume_role_enabled` documentation][configure-grafana-assume-role-enabled].
 
 ### Use an external ID
 
@@ -156,7 +156,8 @@ The Grafana Assume Role authentication provider lets you authenticate with AWS w
 
 To use the Grafana Assume Role:
 
-1. Put in a request to Customer Support to enable`awsDatasourcesTempCredentials`.
+1. Grafana Cloud customers need to open a support ticket to enable the feature `awsDatasourcesTempCredentials`.
+   This feature is enabled by default in open source Grafana and Grafana Enterprise.
 2. Once the feature is enabled, create a new CloudWatch data source (or update an existing one) and select **Grafana Assume Role** as an authentication provider.
 3. In the AWS Console, create a new IAM role, and under **Trusted entity type**, select **Another AWS account** as the trusted Entity.
 4. Enter Grafana's account id (displayed in the instructions box on the **Settings** tab of the CloudWatch data source configuration) and check the **Require external ID** box.

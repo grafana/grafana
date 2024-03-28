@@ -33,3 +33,12 @@ func (ss *sqlStore) SaveMigrationRun(ctx context.Context, cmr *cloudmigration.Cl
 		return err
 	})
 }
+
+func (ss *sqlStore) GetAllCloudMigrations(ctx context.Context) ([]*cloudmigration.CloudMigration, error) {
+	var migrations = make([]*cloudmigration.CloudMigration, 0)
+	err := ss.db.WithDbSession(ctx, func(sess *db.Session) error { return sess.Find(&migrations) })
+	if err != nil {
+		return nil, err
+	}
+	return migrations, nil
+}

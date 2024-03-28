@@ -10,7 +10,7 @@ type Service interface {
 	SaveEncryptedToken(context.Context, string) error
 	// migration
 	GetMigration(context.Context, int64) (*CloudMigration, error)
-	GetMigrationList(context.Context) ([]CloudMigrationResponse, error)
+	GetMigrationList(context.Context) (*CloudMigrationListResponse, error)
 	CreateMigration(context.Context, CloudMigrationRequest) (*CloudMigrationResponse, error)
 	UpdateMigration(context.Context, int64, CloudMigrationRequest) (*CloudMigrationResponse, error)
 	RunMigration(context.Context, int64) (*RunMigrationResponse, error)

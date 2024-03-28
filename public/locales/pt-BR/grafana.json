@@ -94,7 +94,7 @@
     },
     "no-results": {
       "clear": "Limpar busca e filtros",
-      "text": "Nenhum resultado encontrado para sua consulta."
+      "text": ""
     }
   },
   "clipboard-button": {
@@ -107,9 +107,6 @@
       "change-theme": "Alterar tema...",
       "dark-theme": "Escuro",
       "light-theme": "Claro"
-    },
-    "empty-state": {
-      "title": "Nenhum resultado encontrado"
     },
     "search-box": {
       "placeholder": "Buscar ou pular para..."
@@ -131,7 +128,8 @@
   },
   "connections": {
     "connect-data": {
-      "category-header-label": "Fontes de dados"
+      "category-header-label": "Fontes de dados",
+      "empty-message": ""
     },
     "search": {
       "placeholder": "Buscar tudo"
@@ -653,6 +651,9 @@
     }
   },
   "library-panels": {
+    "empty-state": {
+      "message": ""
+    },
     "modal": {
       "button-cancel": "<0>Cancelar</0>",
       "button-view-panel1": "Visualizar painel em {{label}}...",
@@ -1212,6 +1213,11 @@
       "pro-tip": "Você pode usar listas de reprodução para alternar entre painéis de controle na TVs sem controle de usuário",
       "pro-tip-link-title": "Saiba mais",
       "title": "Não há listas de reprodução criadas ainda"
+    }
+  },
+  "playlists": {
+    "empty-state": {
+      "message": ""
     }
   },
   "profile": {
