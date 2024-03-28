@@ -133,6 +133,55 @@ describe('explore links utils', () => {
       });
     });
 
+    it('returns correct link model for internal link when link provides custom range', () => {
+      const linkRange = {
+        from: dateTime('2019-10-14T00:00:00'),
+        to: dateTime('2020-10-14T01:00:00'),
+        raw: {
+          from: 'now-1y',
+          to: 'now-1h',
+        },
+      };
+      const { field, range } = setup({
+        title: '',
+        url: '',
+        internal: {
+          query: { query: 'query_1' },
+          datasourceUid: 'uid_1',
+          datasourceName: 'test_ds',
+          range: linkRange,
+        },
+      });
+      const splitfn = jest.fn();
+      const links = getFieldLinksForExplore({
+        field,
+        rowIndex: ROW_WITH_TEXT_VALUE.index,
+        splitOpenFn: splitfn,
+        range,
+      });
+
+      expect(links[0].href).toBe(
+        `/explore?left=${encodeURIComponent(
+          '{"range":{"from":"now-1y","to":"now-1h"},"datasource":"uid_1","queries":[{"query":"query_1"}]}'
+        )}`
+      );
+      expect(links[0].title).toBe('test_ds');
+
+      const preventDefault = jest.fn();
+
+      if (links[0].onClick) {
+        links[0].onClick({
+          preventDefault,
+        });
+      }
+
+      expect(splitfn).toBeCalledWith({
+        datasourceUid: 'uid_1',
+        queries: [{ query: 'query_1' }],
+        range: linkRange,
+      });
+    });
+
     it('returns correct link model for external link when user does not have access to explore', () => {
       const { field, range } = setup(
         {
