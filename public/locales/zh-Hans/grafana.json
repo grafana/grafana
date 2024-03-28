@@ -89,7 +89,7 @@
     },
     "no-results": {
       "clear": "清除搜索和筛选条件",
-      "text": "您的查询未找到结果。"
+      "text": ""
     }
   },
   "clipboard-button": {
@@ -102,9 +102,6 @@
       "change-theme": "更改主题...",
       "dark-theme": "深色",
       "light-theme": "浅色"
-    },
-    "empty-state": {
-      "title": "未找到结果"
     },
     "search-box": {
       "placeholder": "搜索或跳转至..."
@@ -126,7 +123,8 @@
   },
   "connections": {
     "connect-data": {
-      "category-header-label": "数据源"
+      "category-header-label": "数据源",
+      "empty-message": ""
     },
     "search": {
       "placeholder": "搜索全部"
@@ -648,6 +646,9 @@
     }
   },
   "library-panels": {
+    "empty-state": {
+      "message": ""
+    },
     "modal": {
       "button-cancel": "<0>取消</0>",
       "button-view-panel1": "在 {{label}} 中查看面板...",
@@ -1206,6 +1207,11 @@
       "pro-tip": "您可以使用播放列表来循环电视上的仪表板而不受用户控制",
       "pro-tip-link-title": "了解更多",
       "title": "尚未创建播放列表"
+    }
+  },
+  "playlists": {
+    "empty-state": {
+      "message": ""
     }
   },
   "profile": {

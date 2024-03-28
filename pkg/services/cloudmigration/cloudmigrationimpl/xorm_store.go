@@ -14,3 +14,12 @@ type sqlStore struct {
 func (ss *sqlStore) MigrateDatasources(ctx context.Context, request *cloudmigration.MigrateDatasourcesRequest) (*cloudmigration.MigrateDatasourcesResponse, error) {
 	return nil, cloudmigration.ErrInternalNotImplementedError
 }
+
+func (ss *sqlStore) GetAllCloudMigrations(ctx context.Context) ([]*cloudmigration.CloudMigration, error) {
+	var migrations = make([]*cloudmigration.CloudMigration, 0)
+	err := ss.db.WithDbSession(ctx, func(sess *db.Session) error { return sess.Find(&migrations) })
+	if err != nil {
+		return nil, err
+	}
+	return migrations, nil
+}
