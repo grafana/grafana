@@ -431,8 +431,11 @@ export function ToolbarActions({ dashboard }: Props) {
         );
       }
 
+      const initialSaveModel = dashboard.getInitialSaveModel();
+      const canSave = meta.canSave || initialSaveModel?.editable;
+
       // If we only can save as copy
-      if (canSaveAs && !meta.canSave) {
+      if (canSaveAs && !canSave) {
         return (
           <Button
             onClick={() => {

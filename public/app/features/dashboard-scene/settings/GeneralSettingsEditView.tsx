@@ -6,6 +6,7 @@ import { SceneComponentProps, SceneObjectBase, behaviors, sceneGraph } from '@gr
 import { TimeZone } from '@grafana/schema';
 import {
   Box,
+  Button,
   CollapsableSection,
   Field,
   Input,
@@ -107,8 +108,11 @@ export class GeneralSettingsEditView
     this._dashboard.setState({ meta: newMeta });
   };
 
-  public onEditableChange = (value: boolean) => {
-    this._dashboard.setState({ editable: value });
+  public onEditableChange = (isEditable: boolean) => {
+    this._dashboard.setState({
+      editable: isEditable,
+      meta: { ...this._dashboard.state.meta, canMakeEditable: !isEditable, canEdit: isEditable, canSave: isEditable },
+    });
   };
 
   public onTimeZoneChange = (value: TimeZone) => {
@@ -165,6 +169,18 @@ export class GeneralSettingsEditView
     const { intervals } = model.getRefreshPicker().useState();
     const { hideTimeControls } = model.getDashboardControls().useState();
     const { enabled: liveNow } = model.getLiveNowTimer().useState();
+
+    if (!editable) {
+      return (
+        <Page navModel={navModel} pageNav={{ ...pageNav, children: [] }} layout={PageLayoutType.Standard}>
+          <NavToolbarActions dashboard={model.getDashboard()} />
+          <div className="dashboard-settings__header">Dashboard not editable</div>
+          <Button type="submit" onClick={() => model.onEditableChange(true)}>
+            Make editable
+          </Button>
+        </Page>
+      );
+    }
 
     return (
       <Page navModel={navModel} pageNav={pageNav} layout={PageLayoutType.Standard}>
