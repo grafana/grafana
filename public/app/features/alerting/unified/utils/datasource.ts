@@ -71,6 +71,12 @@ export function getExternalDsAlertManagers() {
   return getAlertManagerDataSources().filter((ds) => ds.jsonData.handleGrafanaManagedAlerts);
 }
 
+export function isAlertmanagerDataSourceInterestedInAlerts(
+  dataSourceSettings: DataSourceSettings<AlertManagerDataSourceJsonData>
+) {
+  return dataSourceSettings.jsonData.handleGrafanaManagedAlerts === true;
+}
+
 const grafanaAlertManagerDataSource: AlertManagerDataSource = {
   name: GRAFANA_RULES_SOURCE_NAME,
   imgUrl: 'public/img/grafana_icon.svg',

@@ -1,99 +1,120 @@
-import { css } from '@emotion/css';
-import React, { useEffect } from 'react';
+import { capitalize } from 'lodash';
+import React from 'react';
 
-import { GrafanaTheme2, SelectableValue } from '@grafana/data';
-import { Alert, Field, RadioButtonGroup, useStyles2 } from '@grafana/ui';
-import { loadDataSources } from 'app/features/datasources/state/actions';
+import { Badge, Button, Card, Stack, Text, TextLink } from '@grafana/ui';
+import { DATASOURCES_ROUTES } from 'app/features/datasources/constants';
 import { AlertmanagerChoice } from 'app/plugins/datasource/alertmanager/types';
-import { useDispatch } from 'app/types';
 
-import { alertmanagerApi } from '../../api/alertmanagerApi';
-import { useExternalDataSourceAlertmanagers } from '../../hooks/useExternalAmSelector';
+import { ExternalAlertmanagerDataSourceWithStatus } from '../../hooks/useExternalAmSelector';
+import {
+  isAlertmanagerDataSourceInterestedInAlerts,
+  isVanillaPrometheusAlertManagerDataSource,
+} from '../../utils/datasource';
+import { createUrl } from '../../utils/url';
+import { ProvisioningBadge } from '../Provisioning';
 
-import { ExternalAlertmanagerDataSources } from './ExternalAlertmanagerDataSources';
+import { useSettings } from './SettingsContext';
 
-const alertmanagerChoices: Array<SelectableValue<AlertmanagerChoice>> = [
-  { value: AlertmanagerChoice.Internal, label: 'Only Internal' },
-  { value: AlertmanagerChoice.External, label: 'Only External' },
-  { value: AlertmanagerChoice.All, label: 'Both internal and external' },
-];
+interface Props {
+  onEditConfiguration: (dataSourceName: string) => void;
+}
 
-export const ExternalAlertmanagers = () => {
-  const styles = useStyles2(getStyles);
-  const dispatch = useDispatch();
-
-  const externalDsAlertManagers = useExternalDataSourceAlertmanagers();
-  const gmaHandlingAlertmanagers = externalDsAlertManagers.filter(
-    (settings) => settings.dataSourceSettings.jsonData.handleGrafanaManagedAlerts === true
-  );
-
+export const ExternalAlertmanagers = ({ onEditConfiguration }: Props) => {
   const {
-    useSaveExternalAlertmanagersConfigMutation,
-    useGetExternalAlertmanagerConfigQuery,
-    useGetExternalAlertmanagersQuery,
-  } = alertmanagerApi;
+    externalAlertmanagerDataSourcesWithStatus: externalAlertmanagersWithStatus,
+    deliverySettings,
+    enableAlertmanager,
+    disableAlertmanager,
+  } = useSettings();
 
-  const [saveExternalAlertManagers] = useSaveExternalAlertmanagersConfigMutation();
-  const { currentData: externalAlertmanagerConfig } = useGetExternalAlertmanagerConfigQuery();
+  // determine if the alertmanger is receiving alerts
+  // this is true if Grafana is configured to send to either "both" or "external" and the Alertmanager datasource _wants_ to receive alerts.
+  const isReceivingOnAlertmanager = (
+    externalDataSourceAlertmanager: ExternalAlertmanagerDataSourceWithStatus
+  ): boolean => {
+    const sendingToExternal = [AlertmanagerChoice.All, AlertmanagerChoice.External].some(
+      (choice) => deliverySettings?.alertmanagersChoice === choice
+    );
+    const wantsAlertsReceived = isAlertmanagerDataSourceInterestedInAlerts(
+      externalDataSourceAlertmanager.dataSourceSettings
+    );
 
-  // Just to refresh the status periodically
-  useGetExternalAlertmanagersQuery(undefined, { pollingInterval: 5000 });
-
-  const alertmanagersChoice = externalAlertmanagerConfig?.alertmanagersChoice;
-
-  useEffect(() => {
-    dispatch(loadDataSources());
-  }, [dispatch]);
-
-  const onChangeAlertmanagerChoice = (alertmanagersChoice: AlertmanagerChoice) => {
-    saveExternalAlertManagers({ alertmanagersChoice });
+    return sendingToExternal && wantsAlertsReceived;
   };
 
   return (
-    <div>
-      <h4>External Alertmanagers</h4>
-      <Alert title="External Alertmanager changes" severity="info">
-        The way you configure external Alertmanagers has changed.
-        <br />
-        You can now use configured Alertmanager data sources as receivers of your Grafana-managed alerts.
-        <br />
-        For more information, refer to our documentation.
-      </Alert>
+    <>
+      {externalAlertmanagersWithStatus.map((alertmanager) => {
+        const { uid, name, jsonData, url } = alertmanager.dataSourceSettings;
+        const { status } = alertmanager;
 
-      <div className={styles.amChoice}>
-        <Field
-          label="Send alerts to"
-          description="Configures how the Grafana alert rule evaluation engine Alertmanager handles your alerts. Internal (Grafana built-in Alertmanager), External (All Alertmanagers configured below), or both."
-        >
-          <RadioButtonGroup
-            options={alertmanagerChoices}
-            value={alertmanagersChoice}
-            onChange={(value) => onChangeAlertmanagerChoice(value!)}
-          />
-        </Field>
-      </div>
+        const isReceiving = isReceivingOnAlertmanager(alertmanager);
+        const provisionedDataSource = alertmanager.dataSourceSettings.readOnly === true;
+        const detailHref = createUrl(DATASOURCES_ROUTES.Edit.replace(/:uid/gi, uid));
+        const readOnlyDataSource =
+          provisionedDataSource || isVanillaPrometheusAlertManagerDataSource(alertmanager.dataSourceSettings.name);
 
-      <ExternalAlertmanagerDataSources
-        alertmanagers={gmaHandlingAlertmanagers}
-        inactive={alertmanagersChoice === AlertmanagerChoice.Internal}
-      />
-    </div>
+        const handleEditConfiguration = () => onEditConfiguration(name);
+
+        return (
+          <Card key={uid}>
+            <Card.Heading>
+              <Stack alignItems="center" gap={1}>
+                <TextLink href={detailHref}>{name}</TextLink>
+                {provisionedDataSource && <ProvisioningBadge />}
+              </Stack>
+            </Card.Heading>
+            <Card.Figure>
+              <img alt="Alertmanager logo" src="public/app/plugins/datasource/alertmanager/img/logo.svg" />
+            </Card.Figure>
+
+            <Card.Meta>
+              {capitalize(jsonData.implementation ?? 'Prometheus')}
+              {url}
+            </Card.Meta>
+
+            <Card.Description>
+              {!isReceiving ? (
+                <Text variant="bodySmall">Not receiving Grafana-managed alerts</Text>
+              ) : (
+                <>
+                  {status === 'pending' && <Badge text="Activation in progress" color="orange" />}
+                  {status === 'active' && <Badge text="Receiving Grafana-managed alerts" color="green" />}
+                  {status === 'dropped' && <Badge text="Failed to adopt Alertmanager" color="red" />}
+                  {status === 'inconclusive' && <Badge text="Inconclusive" color="orange" />}
+                </>
+              )}
+            </Card.Description>
+
+            {/* we'll use the "tags" to append buttons and actions */}
+            <Card.Tags>
+              <Stack direction="row" gap={1}>
+                <Button
+                  onClick={handleEditConfiguration}
+                  icon={readOnlyDataSource ? 'eye' : 'edit'}
+                  variant="secondary"
+                  size="sm"
+                >
+                  {readOnlyDataSource ? 'View configuration' : 'Edit configuration'}
+                </Button>
+                {provisionedDataSource ? null : (
+                  <>
+                    {isReceiving ? (
+                      <Button icon="times" variant="destructive" size="sm" onClick={() => disableAlertmanager(uid)}>
+                        Disable
+                      </Button>
+                    ) : (
+                      <Button icon="check" variant="secondary" size="sm" onClick={() => enableAlertmanager(uid)}>
+                        Enable
+                      </Button>
+                    )}
+                  </>
+                )}
+              </Stack>
+            </Card.Tags>
+          </Card>
+        );
+      })}
+    </>
   );
 };
-
-export const getStyles = (theme: GrafanaTheme2) => ({
-  url: css`
-    margin-right: ${theme.spacing(1)};
-  `,
-  actions: css`
-    margin-top: ${theme.spacing(2)};
-    display: flex;
-    justify-content: flex-end;
-  `,
-  table: css`
-    margin-bottom: ${theme.spacing(2)};
-  `,
-  amChoice: css`
-    margin-bottom: ${theme.spacing(4)};
-  `,
-});

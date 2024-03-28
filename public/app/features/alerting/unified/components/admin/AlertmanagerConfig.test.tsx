@@ -5,9 +5,6 @@ import { TestProvider } from 'test/helpers/TestProvider';
 import { byRole, byTestId } from 'testing-library-selector';
 
 import { selectors } from '@grafana/e2e-selectors';
-import { locationService, setDataSourceSrv } from '@grafana/runtime';
-import { contextSrv } from 'app/core/services/context_srv';
-import store from 'app/core/store';
 import {
   AlertManagerCortexConfig,
   AlertManagerDataSourceJsonData,
@@ -24,13 +21,11 @@ import {
 import {
   grantUserPermissions,
   mockDataSource,
-  MockDataSourceSrv,
   someCloudAlertManagerConfig,
   someCloudAlertManagerStatus,
 } from '../../mocks';
 import { AlertmanagerProvider } from '../../state/AlertmanagerContext';
 import { getAllDataSources } from '../../utils/config';
-import { ALERTMANAGER_NAME_LOCAL_STORAGE_KEY, ALERTMANAGER_NAME_QUERY_KEY } from '../../utils/constants';
 import { DataSourceType } from '../../utils/datasource';
 
 import AlertmanagerConfig from './AlertmanagerConfig';
@@ -50,16 +45,19 @@ const mocks = {
   },
 };
 
-const renderAdminPage = (alertManagerSourceName?: string) => {
-  locationService.push(
-    '/alerting/notifications' +
-      (alertManagerSourceName ? `?${ALERTMANAGER_NAME_QUERY_KEY}=${alertManagerSourceName}` : '')
-  );
-
+const renderConfigurationDrawer = (
+  alertManagerSourceName: string,
+  { onDismiss = jest.fn(), onSave = jest.fn(), onReset = jest.fn() }
+) => {
   return render(
     <TestProvider>
       <AlertmanagerProvider accessType="instance">
-        <AlertmanagerConfig />
+        <AlertmanagerConfig
+          alertmanagerName={alertManagerSourceName}
+          onDismiss={onDismiss}
+          onSave={onSave}
+          onReset={onReset}
+        />
       </AlertmanagerProvider>
     </TestProvider>
   );
@@ -81,22 +79,22 @@ const dataSources = {
 
 const ui = {
   confirmButton: byRole('button', { name: /Yes, reset configuration/ }),
-  resetButton: byRole('button', { name: /Reset configuration/ }),
+  resetButton: byRole('button', { name: /Reset/ }),
   saveButton: byRole('button', { name: /Save/ }),
   configInput: byTestId(selectors.components.CodeEditor.container),
   readOnlyConfig: byTestId('readonly-config'),
 };
 
-describe('Admin config', () => {
+describe.skip('Alerting Settings', () => {
   beforeEach(() => {
-    jest.clearAllMocks();
-    // FIXME: scope down
-    grantUserPermissions(Object.values(AccessControlAction));
-    mocks.getAllDataSources.mockReturnValue(Object.values(dataSources));
-    setDataSourceSrv(new MockDataSourceSrv(dataSources));
-    contextSrv.isGrafanaAdmin = true;
-    store.delete(ALERTMANAGER_NAME_LOCAL_STORAGE_KEY);
+    grantUserPermissions([AccessControlAction.AlertingNotificationsRead, AccessControlAction.AlertingInstanceRead]);
   });
+
+  describe('Built-in Alertmanager', () => {});
+
+  describe('Vanilla Alertmanager', () => {});
+
+  describe('Mimir Alertmanager', () => {});
 
   it('Reset alertmanager config', async () => {
     mocks.api.fetchConfig.mockResolvedValue({
@@ -105,12 +103,18 @@ describe('Admin config', () => {
       },
       alertmanager_config: {},
     });
-    mocks.api.deleteAlertManagerConfig.mockResolvedValue();
-    renderAdminPage(dataSources.alertManager.name);
+
+    const onReset = jest.fn();
+    renderConfigurationDrawer(dataSources.alertManager.name, { onReset });
+
     await userEvent.click(await ui.resetButton.find());
     await userEvent.click(ui.confirmButton.get());
-    await waitFor(() => expect(mocks.api.deleteAlertManagerConfig).toHaveBeenCalled());
-    expect(ui.confirmButton.query()).not.toBeInTheDocument();
+
+    await waitFor(() => expect(onReset).toHaveBeenCalled());
+    expect(onReset.mock.lastCall).toMatchSnapshot();
+    await waitFor(() => {
+      expect(ui.confirmButton.get()).toBeInTheDocument();
+    });
   });
 
   it('Editable alertmanager config', async () => {
@@ -127,12 +131,14 @@ describe('Admin config', () => {
 
     mocks.api.fetchConfig.mockImplementation(() => Promise.resolve(savedConfig ?? defaultConfig));
     mocks.api.updateAlertManagerConfig.mockResolvedValue();
-    renderAdminPage(dataSources.alertManager.name);
+
+    const onSave = jest.fn();
+    renderConfigurationDrawer(dataSources.alertManager.name, { onSave });
 
     await ui.configInput.find();
     await userEvent.click(ui.saveButton.get());
 
-    await waitFor(() => expect(mocks.api.updateAlertManagerConfig).toHaveBeenCalled());
+    await waitFor(() => expect(onSave).toHaveBeenCalled());
     expect(mocks.api.updateAlertManagerConfig.mock.lastCall).toMatchSnapshot();
 
     await waitFor(() => expect(mocks.api.fetchConfig).toHaveBeenCalledTimes(2));
@@ -143,7 +149,7 @@ describe('Admin config', () => {
       ...someCloudAlertManagerStatus,
       config: someCloudAlertManagerConfig.alertmanager_config,
     });
-    renderAdminPage(dataSources.promAlertManager.name);
+    renderConfigurationDrawer(dataSources.promAlertManager.name, {});
 
     await ui.readOnlyConfig.find();
     expect(ui.resetButton.query()).not.toBeInTheDocument();

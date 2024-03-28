@@ -30,7 +30,7 @@ import { alertingApi } from './alertingApi';
 import { fetchAlertManagerConfig, fetchStatus } from './alertmanager';
 import { featureDiscoveryApi } from './featureDiscoveryApi';
 
-const LIMIT_TO_SUCCESSFULLY_APPLIED_AMS = 10;
+const LIMIT_TO_SUCCESSFULLY_APPLIED_AMS = 30;
 const FETCH_CONFIG_RETRY_TIMEOUT = 30 * 1000;
 
 export interface AlertmanagersChoiceResponse {
@@ -103,10 +103,16 @@ export const alertmanagerApi = alertingApi.injectEndpoints({
     getExternalAlertmanagers: build.query<ExternalAlertmanagers, void>({
       query: () => ({ url: '/api/v1/ngalert/alertmanagers' }),
       transformResponse: (response: ExternalAlertmanagersResponse) => response.data,
+      providesTags: ['AlertmanagerConnectionStatus'],
     }),
 
     saveExternalAlertmanagersConfig: build.mutation<{ message: string }, ExternalAlertmanagerConfig>({
-      query: (config) => ({ url: '/api/v1/ngalert/admin_config', method: 'POST', data: config }),
+      query: (config) => ({
+        url: '/api/v1/ngalert/admin_config',
+        method: 'POST',
+        data: config,
+        showSuccessAlert: false,
+      }),
       invalidatesTags: ['AlertmanagerChoice'],
     }),
 

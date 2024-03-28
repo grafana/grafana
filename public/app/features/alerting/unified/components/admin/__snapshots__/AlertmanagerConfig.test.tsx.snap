@@ -18,3 +18,9 @@ exports[`Admin config Editable alertmanager config 1`] = `
   },
 ]
 `;
+
+exports[`Admin config Reset alertmanager config 1`] = `
+[
+  "CloudManager",
+]
+`;
