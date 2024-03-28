@@ -1,6 +1,6 @@
 import React from 'react';
 
-import { PanelPlugin } from '@grafana/data';
+import { FieldConfigProperty, PanelPlugin } from '@grafana/data';
 import { config } from '@grafana/runtime';
 import { commonOptionsBuilder } from '@grafana/ui';
 
@@ -18,6 +18,13 @@ export const plugin = new PanelPlugin<Options>(GeomapPanel)
   .useFieldConfig({
     useCustomConfig: (builder) => {
       commonOptionsBuilder.addHideFrom(builder);
+    },
+    standardOptions: {
+      [FieldConfigProperty.Mappings]: {
+        settings: {
+          icon: true,
+        },
+      },
     },
   })
   .setPanelOptions((builder, context) => {

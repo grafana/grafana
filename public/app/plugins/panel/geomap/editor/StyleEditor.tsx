@@ -231,7 +231,7 @@ export const StyleEditor = (props: Props) => {
                     folderName: ResourceFolderName.Marker,
                     placeholderText: hasTextLabel ? 'Select a symbol' : 'Select a symbol or add a text label',
                     placeholderValue: defaultStyleConfig.symbol.fixed,
-                    showSourceRadio: false,
+                    showSourceRadio: true,
                     maxFiles,
                   },
                 } as StandardEditorsRegistryItem
