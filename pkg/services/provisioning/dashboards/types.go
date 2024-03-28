@@ -14,6 +14,7 @@ type config struct {
 	Name                  string
 	Type                  string
 	OrgID                 int64
+	OrgName               string
 	Folder                string
 	FolderUID             string
 	Editable              bool
@@ -27,6 +28,7 @@ type configV0 struct {
 	Name                  string         `json:"name" yaml:"name"`
 	Type                  string         `json:"type" yaml:"type"`
 	OrgID                 int64          `json:"org_id" yaml:"org_id"`
+	OrgName               string         `json:"org_name" yaml:"org_name"`
 	Folder                string         `json:"folder" yaml:"folder"`
 	FolderUID             string         `json:"folderUid" yaml:"folderUid"`
 	Editable              bool           `json:"editable" yaml:"editable"`
@@ -48,6 +50,7 @@ type configs struct {
 	Name                  values.StringValue `json:"name" yaml:"name"`
 	Type                  values.StringValue `json:"type" yaml:"type"`
 	OrgID                 values.Int64Value  `json:"orgId" yaml:"orgId"`
+	OrgName               values.StringValue `json:"orgName" yaml:"orgName"`
 	Folder                values.StringValue `json:"folder" yaml:"folder"`
 	FolderUID             values.StringValue `json:"folderUid" yaml:"folderUid"`
 	Editable              values.BoolValue   `json:"editable" yaml:"editable"`
@@ -90,6 +93,7 @@ func mapV0ToDashboardsAsConfig(v0 []*configV0) ([]*config, error) {
 			Name:                  v.Name,
 			Type:                  v.Type,
 			OrgID:                 v.OrgID,
+			OrgName:               v.OrgName,
 			Folder:                v.Folder,
 			FolderUID:             v.FolderUID,
 			Editable:              v.Editable,
@@ -117,6 +121,7 @@ func (dc *configV1) mapToDashboardsAsConfig() ([]*config, error) {
 			Name:                  v.Name.Value(),
 			Type:                  v.Type.Value(),
 			OrgID:                 v.OrgID.Value(),
+			OrgName:               v.OrgName.Value(),
 			Folder:                v.Folder.Value(),
 			FolderUID:             v.FolderUID.Value(),
 			Editable:              v.Editable.Value(),

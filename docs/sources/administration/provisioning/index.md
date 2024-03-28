@@ -98,7 +98,10 @@ apiVersion: 1
 # List of data sources to delete from the database.
 deleteDatasources:
   - name: Graphite
-    orgId: 1
+  # <string> org name. Ignored when orgId is set
+  orgName: Main Org.
+  # <int> org id. will default to orgId 1 if orgId and orgName are not specified
+  # orgId: 1
 
 # List of data sources to insert/update depending on what's
 # available in the database.
@@ -113,8 +116,10 @@ datasources:
     # Some data sources are incompatible with any setting
     # but proxy (Server).
     access: proxy
-    # <int> Sets the organization id. Defaults to orgId 1.
-    orgId: 1
+    # <string> org name. Ignored when orgId is set
+    orgName: Main Org.
+    # <int> org id. will default to orgId 1 if orgId and orgName are not specified
+    orgId: 0
     # <string> Sets a custom UID to reference this
     # data source in other parts of the configuration.
     # If not specified, Grafana generates one.
@@ -323,8 +328,10 @@ apiVersion: 1
 providers:
   # <string> an unique provider name. Required
   - name: 'a unique provider name'
-    # <int> Org id. Default to 1
-    orgId: 1
+    # <string> org name. Ignored when orgId is set
+    orgName: Main Org.
+    # <int> Org id. will default to orgId 1 if orgId and orgName are not specified
+    # orgId: 1
     # <string> name of the dashboard folder.
     folder: ''
     # <string> folder UID. will be automatically generated if not specified
