@@ -1,0 +1,13 @@
+apiVersion: scope.grafana.app/v0alpha1
+kind: Scope
+metadata:
+  name: example
+spec:
+    title: Example scope
+    description: Longer description for a scope
+    category: should this be an enum or an external reference?
+    type: should this be an enum or an external reference?
+    filters: 
+      - key: a
+        operator: equals
+        value: b
