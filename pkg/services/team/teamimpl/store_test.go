@@ -16,12 +16,12 @@ import (
 	"github.com/grafana/grafana/pkg/services/org/orgimpl"
 	"github.com/grafana/grafana/pkg/services/quota/quotaimpl"
 	"github.com/grafana/grafana/pkg/services/serviceaccounts"
-	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/supportbundles/supportbundlestest"
 	"github.com/grafana/grafana/pkg/services/team"
 	"github.com/grafana/grafana/pkg/services/team/sortopts"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/services/user/userimpl"
+	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tests/testsuite"
 )
 
@@ -526,17 +526,17 @@ func TestIntegrationSQLStore_GetTeamMembers_ACFilter(t *testing.T) {
 	userIds := make([]int64, 4)
 
 	// Seed 2 teams with 2 members
-	setup := func(store *sqlstore.SQLStore) {
-		teamSvc, err := ProvideService(store, store.Cfg)
+	setup := func(store db.DB, cfg *setting.Cfg) {
+		teamSvc, err := ProvideService(store, cfg)
 		require.NoError(t, err)
 		team1, errCreateTeam := teamSvc.CreateTeam("group1 name", "test1@example.org", testOrgID)
 		require.NoError(t, errCreateTeam)
 		team2, errCreateTeam := teamSvc.CreateTeam("group2 name", "test2@example.org", testOrgID)
 		require.NoError(t, errCreateTeam)
-		quotaService := quotaimpl.ProvideService(store, store.Cfg)
-		orgSvc, err := orgimpl.ProvideService(store, store.Cfg, quotaService)
+		quotaService := quotaimpl.ProvideService(store, cfg)
+		orgSvc, err := orgimpl.ProvideService(store, cfg, quotaService)
 		require.NoError(t, err)
-		userSvc, err := userimpl.ProvideService(store, orgSvc, store.Cfg, teamSvc, nil, quotaService, supportbundlestest.NewFakeBundleService())
+		userSvc, err := userimpl.ProvideService(store, orgSvc, cfg, teamSvc, nil, quotaService, supportbundlestest.NewFakeBundleService())
 		require.NoError(t, err)
 
 		for i := 0; i < 4; i++ {
@@ -561,7 +561,7 @@ func TestIntegrationSQLStore_GetTeamMembers_ACFilter(t *testing.T) {
 	}
 
 	store := db.InitTestDB(t, db.InitTestDBOpt{})
-	setup(store)
+	setup(store, store.Cfg)
 	teamSvc, err := ProvideService(store, store.Cfg)
 	require.NoError(t, err)
 

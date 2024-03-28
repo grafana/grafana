@@ -35,24 +35,25 @@ func TestGetFolders(t *testing.T) {
 		EnableFeatureToggles:  []string{featuremgmt.FlagNestedFolders},
 	})
 
-	grafanaListedAddr, store := testinfra.StartGrafana(t, dir, p)
+	grafanaListedAddr, env := testinfra.StartGrafanaEnv(t, dir, p)
+	store, cfg := env.SQLStore, env.Cfg
 
 	orgID := int64(1)
 
 	// Create a users to make authenticated requests
-	tests.CreateUser(t, store, user.CreateUserCommand{
+	tests.CreateUser(t, store, cfg, user.CreateUserCommand{
 		DefaultOrgRole: string(org.RoleViewer),
 		OrgID:          orgID,
 		Password:       "viewer",
 		Login:          "viewer",
 	})
-	tests.CreateUser(t, store, user.CreateUserCommand{
+	tests.CreateUser(t, store, cfg, user.CreateUserCommand{
 		OrgID:          orgID,
 		DefaultOrgRole: string(org.RoleEditor),
 		Password:       "editor",
 		Login:          "editor",
 	})
-	tests.CreateUser(t, store, user.CreateUserCommand{
+	tests.CreateUser(t, store, cfg, user.CreateUserCommand{
 		OrgID:          orgID,
 		DefaultOrgRole: string(org.RoleAdmin),
 		Password:       "admin",

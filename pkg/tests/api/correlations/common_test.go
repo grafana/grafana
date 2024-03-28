@@ -142,9 +142,9 @@ func (c TestContext) getURL(url string, user User) string {
 func (c TestContext) createOrg(name string) int64 {
 	c.t.Helper()
 	store := c.env.SQLStore
-	store.Cfg.AutoAssignOrg = false
-	quotaService := quotaimpl.ProvideService(store, store.Cfg)
-	orgService, err := orgimpl.ProvideService(store, store.Cfg, quotaService)
+	c.env.Cfg.AutoAssignOrg = false
+	quotaService := quotaimpl.ProvideService(store, c.env.Cfg)
+	orgService, err := orgimpl.ProvideService(store, c.env.Cfg, quotaService)
 	require.NoError(c.t, err)
 	orgId, err := orgService.GetOrCreate(context.Background(), name)
 	require.NoError(c.t, err)
@@ -154,13 +154,13 @@ func (c TestContext) createOrg(name string) int64 {
 func (c TestContext) createUser(cmd user.CreateUserCommand) User {
 	c.t.Helper()
 	store := c.env.SQLStore
-	store.Cfg.AutoAssignOrg = true
-	store.Cfg.AutoAssignOrgId = 1
+	c.env.Cfg.AutoAssignOrg = true
+	c.env.Cfg.AutoAssignOrgId = 1
 
-	quotaService := quotaimpl.ProvideService(store, store.Cfg)
-	orgService, err := orgimpl.ProvideService(store, store.Cfg, quotaService)
+	quotaService := quotaimpl.ProvideService(store, c.env.Cfg)
+	orgService, err := orgimpl.ProvideService(store, c.env.Cfg, quotaService)
 	require.NoError(c.t, err)
-	usrSvc, err := userimpl.ProvideService(store, orgService, store.Cfg, nil, nil, quotaService, supportbundlestest.NewFakeBundleService())
+	usrSvc, err := userimpl.ProvideService(store, orgService, c.env.Cfg, nil, nil, quotaService, supportbundlestest.NewFakeBundleService())
 	require.NoError(c.t, err)
 
 	user, err := usrSvc.Create(context.Background(), &cmd)
