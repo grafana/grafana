@@ -19,14 +19,13 @@ import (
 const _ = grpc.SupportPackageIsVersion7
 
 const (
-	EntityStore_Read_FullMethodName      = "/entity.EntityStore/Read"
-	EntityStore_BatchRead_FullMethodName = "/entity.EntityStore/BatchRead"
-	EntityStore_Create_FullMethodName    = "/entity.EntityStore/Create"
-	EntityStore_Update_FullMethodName    = "/entity.EntityStore/Update"
-	EntityStore_Delete_FullMethodName    = "/entity.EntityStore/Delete"
-	EntityStore_History_FullMethodName   = "/entity.EntityStore/History"
-	EntityStore_List_FullMethodName      = "/entity.EntityStore/List"
-	EntityStore_Watch_FullMethodName     = "/entity.EntityStore/Watch"
+	EntityStore_Read_FullMethodName    = "/entity.EntityStore/Read"
+	EntityStore_Create_FullMethodName  = "/entity.EntityStore/Create"
+	EntityStore_Update_FullMethodName  = "/entity.EntityStore/Update"
+	EntityStore_Delete_FullMethodName  = "/entity.EntityStore/Delete"
+	EntityStore_History_FullMethodName = "/entity.EntityStore/History"
+	EntityStore_List_FullMethodName    = "/entity.EntityStore/List"
+	EntityStore_Watch_FullMethodName   = "/entity.EntityStore/Watch"
 )
 
 // EntityStoreClient is the client API for EntityStore service.
@@ -34,7 +33,6 @@ const (
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type EntityStoreClient interface {
 	Read(ctx context.Context, in *ReadEntityRequest, opts ...grpc.CallOption) (*Entity, error)
-	BatchRead(ctx context.Context, in *BatchReadEntityRequest, opts ...grpc.CallOption) (*BatchReadEntityResponse, error)
 	Create(ctx context.Context, in *CreateEntityRequest, opts ...grpc.CallOption) (*CreateEntityResponse, error)
 	Update(ctx context.Context, in *UpdateEntityRequest, opts ...grpc.CallOption) (*UpdateEntityResponse, error)
 	Delete(ctx context.Context, in *DeleteEntityRequest, opts ...grpc.CallOption) (*DeleteEntityResponse, error)
@@ -54,15 +52,6 @@ func NewEntityStoreClient(cc grpc.ClientConnInterface) EntityStoreClient {
 func (c *entityStoreClient) Read(ctx context.Context, in *ReadEntityRequest, opts ...grpc.CallOption) (*Entity, error) {
 	out := new(Entity)
 	err := c.cc.Invoke(ctx, EntityStore_Read_FullMethodName, in, out, opts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
-func (c *entityStoreClient) BatchRead(ctx context.Context, in *BatchReadEntityRequest, opts ...grpc.CallOption) (*BatchReadEntityResponse, error) {
-	out := new(BatchReadEntityResponse)
-	err := c.cc.Invoke(ctx, EntityStore_BatchRead_FullMethodName, in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -151,7 +140,6 @@ func (x *entityStoreWatchClient) Recv() (*EntityWatchResponse, error) {
 // for forward compatibility
 type EntityStoreServer interface {
 	Read(context.Context, *ReadEntityRequest) (*Entity, error)
-	BatchRead(context.Context, *BatchReadEntityRequest) (*BatchReadEntityResponse, error)
 	Create(context.Context, *CreateEntityRequest) (*CreateEntityResponse, error)
 	Update(context.Context, *UpdateEntityRequest) (*UpdateEntityResponse, error)
 	Delete(context.Context, *DeleteEntityRequest) (*DeleteEntityResponse, error)
@@ -166,9 +154,6 @@ type UnimplementedEntityStoreServer struct {
 
 func (UnimplementedEntityStoreServer) Read(context.Context, *ReadEntityRequest) (*Entity, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Read not implemented")
-}
-func (UnimplementedEntityStoreServer) BatchRead(context.Context, *BatchReadEntityRequest) (*BatchReadEntityResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method BatchRead not implemented")
 }
 func (UnimplementedEntityStoreServer) Create(context.Context, *CreateEntityRequest) (*CreateEntityResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Create not implemented")
@@ -214,24 +199,6 @@ func _EntityStore_Read_Handler(srv interface{}, ctx context.Context, dec func(in
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(EntityStoreServer).Read(ctx, req.(*ReadEntityRequest))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
-func _EntityStore_BatchRead_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(BatchReadEntityRequest)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(EntityStoreServer).BatchRead(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: EntityStore_BatchRead_FullMethodName,
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(EntityStoreServer).BatchRead(ctx, req.(*BatchReadEntityRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -357,10 +324,6 @@ var EntityStore_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "Read",
 			Handler:    _EntityStore_Read_Handler,
-		},
-		{
-			MethodName: "BatchRead",
-			Handler:    _EntityStore_BatchRead_Handler,
 		},
 		{
 			MethodName: "Create",
