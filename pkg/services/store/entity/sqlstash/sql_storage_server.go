@@ -14,7 +14,6 @@ import (
 
 	"github.com/bwmarrin/snowflake"
 	"github.com/google/uuid"
-
 	folder "github.com/grafana/grafana/pkg/apis/folder/v0alpha1"
 	"github.com/grafana/grafana/pkg/infra/appcontext"
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -563,6 +562,7 @@ func (s *sqlEntityServer) Update(ctx context.Context, r *entity.UpdateEntityRequ
 
 		// Optimistic locking
 		if r.PreviousVersion > 0 && r.PreviousVersion != current.ResourceVersion {
+			StorageServerMetrics.OptimisticLockFailed.WithLabelValues("update").Inc()
 			return fmt.Errorf("optimistic lock failed")
 		}
 
@@ -808,6 +808,7 @@ func (s *sqlEntityServer) Delete(ctx context.Context, r *entity.DeleteEntityRequ
 
 		if r.PreviousVersion > 0 && r.PreviousVersion != rsp.Entity.ResourceVersion {
 			rsp.Status = entity.DeleteEntityResponse_ERROR
+			StorageServerMetrics.OptimisticLockFailed.WithLabelValues("delete").Inc()
 			return fmt.Errorf("optimistic lock failed")
 		}
 
