@@ -12,9 +12,10 @@ export interface Props {
   children: React.ReactNode;
 }
 
-interface StateType {
-  component: React.ComponentType<any> | null;
-  props: any;
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+interface StateType<TProps = any> {
+  component: React.ComponentType<TProps> | null;
+  props: TProps;
 }
 
 /**
@@ -28,15 +29,23 @@ export function ModalsContextProvider(props: Props) {
   });
 
   const contextValue: ModalsContextState = useMemo(() => {
+    function showModal<TProps = {}>(component: React.ComponentType<TProps>, props: TProps) {
+      setState({ component, props });
+    }
+
+    function hideModal() {
+      setState({ component: null, props: {} });
+    }
+
     return {
       component: state.component,
-      props: state.props,
-      showModal: (component: React.ComponentType<any>, props: any) => {
-        setState({ component, props });
+      props: {
+        ...state.props,
+        isOpen: true,
+        onDismiss: hideModal,
       },
-      hideModal: () => {
-        setState({ component: null, props: {} });
-      },
+      showModal,
+      hideModal,
     };
   }, [state]);
 
@@ -44,11 +53,7 @@ export function ModalsContextProvider(props: Props) {
     appEvents.subscribe(ShowModalReactEvent, ({ payload }) => {
       setState({
         component: payload.component,
-        props: {
-          ...payload.props,
-          isOpen: true,
-          onDismiss: () => setState({ component: null, props: {} }),
-        },
+        props: payload.props,
       });
     });
 
@@ -56,7 +61,7 @@ export function ModalsContextProvider(props: Props) {
       showConfirmModal(e, setState);
     });
 
-    // In case there is a link in the modal/drawer we need to hide it when location changes
+    // Dismiss the modal when the route changes (if there's a link in the modal)
     let prevPath = '';
     locationService.getHistory().listen((location) => {
       if (location.pathname !== prevPath) {
