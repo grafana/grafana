@@ -3,6 +3,7 @@ package api
 import (
 	"context"
 	"errors"
+	"github.com/grafana/grafana/pkg/services/preference/prefapi"
 	"net/http"
 	"strconv"
 
@@ -49,6 +50,50 @@ func (hs *HTTPServer) GetOrgByID(c *contextmodel.ReqContext) response.Response {
 	return hs.getOrgHelper(c.Req.Context(), orgId)
 }
 
+// swagger:route GET /orgs/{org_id}/preferences orgs getOrgPreferencesById
+//
+// Get Organization Preferences by Org ID.
+//
+// Security:
+// - basic:
+//
+// Responses:
+// 200: getPreferencesResponse
+// 401: unauthorisedError
+// 403: forbiddenError
+// 500: internalServerError
+func (hs *HTTPServer) GetOrgPreferencesByID(c *contextmodel.ReqContext) response.Response {
+	orgId, err := strconv.ParseInt(web.Params(c.Req)[":orgId"], 10, 64)
+	if err != nil {
+		return response.Error(http.StatusBadRequest, "orgId is invalid", err)
+	}
+
+	return hs.getOrgPreferences(c.Req.Context(), orgId)
+}
+
+// swagger:route PUT /orgs/{org_id}/preferences orgs updateOrgPreferencesById
+//
+// Update the Org Preferences for the provided Org_id
+//
+// Responses:
+// 200: okResponse
+// 400: badRequestError
+// 401: unauthorisedError
+// 403: forbiddenError
+// 500: internalServerError
+func (hs *HTTPServer) UpdateOrgPreferencesByID(c *contextmodel.ReqContext) response.Response {
+	orgId, err := strconv.ParseInt(web.Params(c.Req)[":orgId"], 10, 64)
+	if err != nil {
+		return response.Error(http.StatusBadRequest, "orgId is invalid", err)
+	}
+	dtoCmd := dtos.UpdatePrefsCmd{}
+	if err := web.Bind(c.Req, &dtoCmd); err != nil {
+		return response.Error(http.StatusBadRequest, "bad request data", err)
+	}
+
+	return prefapi.UpdatePreferencesFor(c.Req.Context(), hs.DashboardService, hs.preferenceService, orgId, 0, 0, &dtoCmd)
+}
+
 // swagger:route GET /orgs/name/{org_name} orgs getOrgByName
 //
 // Get Organization by ID.
@@ -84,6 +129,10 @@ func (hs *HTTPServer) GetOrgByName(c *contextmodel.ReqContext) response.Response
 	}
 
 	return response.JSON(http.StatusOK, &result)
+}
+
+func (hs *HTTPServer) getOrgPreferences(ctx context.Context, orgID int64) response.Response {
+	return prefapi.GetPreferencesFor(ctx, hs.DashboardService, hs.preferenceService, orgID, 0, 0)
 }
 
 func (hs *HTTPServer) getOrgHelper(ctx context.Context, orgID int64) response.Response {
