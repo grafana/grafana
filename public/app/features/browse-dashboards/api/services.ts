@@ -1,5 +1,4 @@
 import { config, getBackendSrv } from '@grafana/runtime';
-import { getConfig } from 'app/core/config';
 import { GENERAL_FOLDER_UID } from 'app/features/search/constants';
 import { getGrafanaSearcher, NestedFolderDTO } from 'app/features/search/service';
 import { queryResultToViewItem } from 'app/features/search/service/utils';
@@ -31,7 +30,7 @@ export async function listFolders(
       limit: pageSize,
     });
   }
-  const subUrlPrefix = getConfig().appSubUrl ?? '';
+  const subUrlPrefix = config.appSubUrl ?? '';
 
   return folders.map((item) => ({
     kind: 'folder',
