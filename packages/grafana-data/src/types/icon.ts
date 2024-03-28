@@ -14,6 +14,7 @@ export const availableIconsIndex = {
   'adjust-circle': true,
   'angle-double-down': true,
   'angle-double-right': true,
+  'angle-double-left': true,
   'angle-double-up': true,
   'angle-down': true,
   'angle-left': true,
