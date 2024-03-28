@@ -29,4 +29,8 @@ func addCloudMigrationsMigrations(mg *Migrator) {
 
 	mg.AddMigration("create cloud_migration table v1", NewAddTableMigration(migrationTable))
 	mg.AddMigration("create cloud_migration_run table v1", NewAddTableMigration(migrationRunTable))
+
+	// Add items column to db
+	itemCol := &Column{Name: "items", Type: DB_Text, Nullable: true}
+	mg.AddMigration("add column items to cloud_migration_run", NewAddColumnMigration(migrationRunTable, itemCol))
 }
