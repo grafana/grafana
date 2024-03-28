@@ -1,4 +1,5 @@
 import { omitBy, pickBy, isNil, isNumber, isString } from 'lodash';
+import tinycolor from 'tinycolor2';
 
 import {
   ConfigOverrideRule,
@@ -16,6 +17,8 @@ import {
   Threshold,
   ThresholdsMode,
 } from '@grafana/data';
+import { createColors } from '@grafana/data/src/themes/createColors';
+import { createVisualizationColors } from '@grafana/data/src/themes/createVisualizationColors';
 import {
   LegendDisplayMode,
   TooltipDisplayMode,
@@ -79,6 +82,9 @@ export const graphPanelChangedHandler: PanelTypeChangedHandler = (
   return {};
 };
 
+const darkThemeColors = createColors({});
+const vizColors = createVisualizationColors(darkThemeColors);
+
 export function graphToTimeseriesOptions(angular: any): {
   fieldConfig: FieldConfigSource;
   options: Options;
@@ -116,6 +122,7 @@ export function graphToTimeseriesOptions(angular: any): {
   if (angular.aliasColors) {
     for (const alias of Object.keys(angular.aliasColors)) {
       const color = angular.aliasColors[alias];
+
       if (color) {
         overrides.push({
           matcher: {
@@ -127,7 +134,7 @@ export function graphToTimeseriesOptions(angular: any): {
               id: FieldConfigProperty.Color,
               value: {
                 mode: FieldColorModeId.Fixed,
-                fixedColor: color,
+                fixedColor: tinycolor(vizColors.getColorByName(color)).toHexString(),
               },
             },
           ],
@@ -271,7 +278,7 @@ export function graphToTimeseriesOptions(angular: any): {
             rule.properties.push({
               id: 'color',
               value: {
-                fixedColor: v,
+                fixedColor: tinycolor(vizColors.getColorByName(v)).toHexString(),
                 mode: FieldColorModeId.Fixed,
               },
             });
@@ -339,9 +346,22 @@ export function graphToTimeseriesOptions(angular: any): {
 
   if (angular.stack) {
     graph.stacking = {
-      mode: StackingMode.Normal,
+      mode: angular.percentage ? StackingMode.Percent : StackingMode.Normal,
       group: defaultGraphConfig.stacking!.group,
     };
+
+    if (angular.percentage) {
+      if (angular.yaxis) {
+        delete y1.min;
+        delete y1.max;
+
+        // TimeSeries currently uses 0-1 for percent, so allowing zero leaves only top and bottom ticks.
+        // removing it feels better. probably should fix in TimeSeries, but let's kick it down the road
+        if (y1.decimals === 0) {
+          delete y1.decimals;
+        }
+      }
+    }
   }
 
   y1.custom = omitBy(graph, isNil);
@@ -571,18 +591,18 @@ interface GraphTimeRegionConfig extends TimeRegionConfig {
 
 function getThresholdColor(threshold: AngularThreshold): string {
   if (threshold.colorMode === 'critical') {
-    return 'red';
+    return tinycolor(vizColors.getColorByName('red')).toHexString();
   }
 
   if (threshold.colorMode === 'warning') {
-    return 'orange';
+    return tinycolor(vizColors.getColorByName('orange')).toHexString();
   }
 
   if (threshold.colorMode === 'custom') {
-    return threshold.fillColor || threshold.lineColor;
+    return tinycolor(vizColors.getColorByName(threshold.fillColor || threshold.lineColor)).toHexString();
   }
 
-  return 'red';
+  return tinycolor(vizColors.getColorByName('red')).toHexString();
 }
 
 interface AngularThreshold {
