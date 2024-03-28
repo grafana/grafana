@@ -8,4 +8,5 @@ import (
 
 type store interface {
 	MigrateDatasources(context.Context, *cloudmigration.MigrateDatasourcesRequest) (*cloudmigration.MigrateDatasourcesResponse, error)
+	CreateMigration(ctx context.Context, token cloudmigration.Base64EncodedTokenPayload) error
 }

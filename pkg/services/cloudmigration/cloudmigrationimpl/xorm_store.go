@@ -14,3 +14,7 @@ type sqlStore struct {
 func (ss *sqlStore) MigrateDatasources(ctx context.Context, request *cloudmigration.MigrateDatasourcesRequest) (*cloudmigration.MigrateDatasourcesResponse, error) {
 	return nil, cloudmigration.ErrInternalNotImplementedError
 }
+
+func (ss *sqlStore) CreateMigration(ctx context.Context, token cloudmigration.Base64EncodedTokenPayload) error {
+	return nil
+}
