@@ -155,8 +155,8 @@ const ui = {
     more: byRole('button', { name: 'More' }),
   },
   moreActionItems: {
-    pause: byRole('menuitem', { name: /pause alert evaluation/i }),
-    resume: byRole('menuitem', { name: /resume alert evaluation/i }),
+    pause: byRole('menuitem', { name: /pause evaluation/i }),
+    resume: byRole('menuitem', { name: /resume evaluation/i }),
   },
 };
 
