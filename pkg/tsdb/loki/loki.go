@@ -21,7 +21,7 @@ import (
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
 
-	"github.com/grafana/grafana/pkg/infra/tracing"
+	"github.com/grafana/grafana-plugin-sdk-go/backend/tracing"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	ngalertmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/tsdb/loki/kinds/dataquery"
@@ -30,7 +30,7 @@ import (
 type Service struct {
 	im       instancemgmt.InstanceManager
 	features featuremgmt.FeatureToggles
-	tracer   tracing.Tracer
+	tracer   trace.Tracer
 	logger   log.Logger
 }
 
@@ -40,11 +40,11 @@ var (
 	_ backend.CallResourceHandler = (*Service)(nil)
 )
 
-func ProvideService(httpClientProvider *httpclient.Provider, features featuremgmt.FeatureToggles, tracer tracing.Tracer) *Service {
+func ProvideService(httpClientProvider *httpclient.Provider, features featuremgmt.FeatureToggles) *Service {
 	return &Service{
 		im:       datasource.NewInstanceManager(newInstanceSettings(httpClientProvider)),
 		features: features,
-		tracer:   tracer,
+		tracer:   tracing.DefaultTracer(),
 		logger:   backend.NewLoggerWith("logger", "tsdb.loki"),
 	}
 }
@@ -117,7 +117,7 @@ func (s *Service) CallResource(ctx context.Context, req *backend.CallResourceReq
 	return callResource(ctx, req, sender, dsInfo, logger, s.tracer)
 }
 
-func callResource(ctx context.Context, req *backend.CallResourceRequest, sender backend.CallResourceResponseSender, dsInfo *datasourceInfo, plog log.Logger, tracer tracing.Tracer) error {
+func callResource(ctx context.Context, req *backend.CallResourceRequest, sender backend.CallResourceResponseSender, dsInfo *datasourceInfo, plog log.Logger, tracer trace.Tracer) error {
 	url := req.URL
 
 	lokiURL := fmt.Sprintf("/loki/api/v1/%s", url)
@@ -167,7 +167,7 @@ func (s *Service) QueryData(ctx context.Context, req *backend.QueryDataRequest) 
 	return queryData(ctx, req, dsInfo, responseOpts, s.tracer, logger, s.features.IsEnabled(ctx, featuremgmt.FlagLokiRunQueriesInParallel), s.features.IsEnabled(ctx, featuremgmt.FlagLokiStructuredMetadata))
 }
 
-func queryData(ctx context.Context, req *backend.QueryDataRequest, dsInfo *datasourceInfo, responseOpts ResponseOpts, tracer tracing.Tracer, plog log.Logger, runInParallel bool, requestStructuredMetadata bool) (*backend.QueryDataResponse, error) {
+func queryData(ctx context.Context, req *backend.QueryDataRequest, dsInfo *datasourceInfo, responseOpts ResponseOpts, tracer trace.Tracer, plog log.Logger, runInParallel bool, requestStructuredMetadata bool) (*backend.QueryDataResponse, error) {
 	result := backend.NewQueryDataResponse()
 
 	api := newLokiAPI(dsInfo.HTTPClient, dsInfo.URL, plog, tracer, requestStructuredMetadata)
@@ -213,7 +213,7 @@ func queryData(ctx context.Context, req *backend.QueryDataRequest, dsInfo *datas
 	return result, err
 }
 
-func executeQuery(ctx context.Context, query *lokiQuery, req *backend.QueryDataRequest, runInParallel bool, api *LokiAPI, responseOpts ResponseOpts, tracer tracing.Tracer, plog log.Logger) backend.DataResponse {
+func executeQuery(ctx context.Context, query *lokiQuery, req *backend.QueryDataRequest, runInParallel bool, api *LokiAPI, responseOpts ResponseOpts, tracer trace.Tracer, plog log.Logger) backend.DataResponse {
 	ctx, span := tracer.Start(ctx, "datasource.loki.queryData.runQueries.runQuery", trace.WithAttributes(
 		attribute.Bool("runInParallel", runInParallel),
 		attribute.String("expr", query.Expr),
