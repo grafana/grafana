@@ -21,7 +21,7 @@ export function DataSourceLogo(props: DataSourceLogoProps) {
     <img
       className={styles.pickerDSLogo}
       alt={`${dataSource.meta.name} logo`}
-      src={dataSource.meta.info.logos.small}
+      src={dataSource.jsonData?.logoUrl || dataSource.meta.info.logos.small}
     ></img>
   );
 }
