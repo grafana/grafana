@@ -1,11 +1,15 @@
 package playlist
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"testing"
 
 	"github.com/stretchr/testify/require"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/tests/apis"
@@ -22,6 +26,7 @@ func TestIntegrationScopes(t *testing.T) {
 		t.Skip("skipping integration test")
 	}
 
+	ctx := context.Background()
 	helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
 		AppModeProduction: false, // required for experimental APIs
 		EnableFeatureToggles: []string{
@@ -78,4 +83,39 @@ func TestIntegrationScopes(t *testing.T) {
 			]
 		  }`, string(v1Disco))
 	})
+
+	t.Run("Check create and list", func(t *testing.T) {
+		// Scope create+get
+		scopeClient := helper.Org1.Admin.ResourceClient(t, schema.GroupVersionResource{
+			Group: "scope.grafana.app", Version: "v0alpha1", Resource: "scopes",
+		})
+		s0, err := scopeClient.Create(ctx,
+			helper.LoadYAMLOrJSONFile("testdata/example-scope.yaml"),
+			metav1.CreateOptions{},
+		)
+		require.NoError(t, err)
+		require.Equal(t, "example", s0.GetName())
+		s1, err := scopeClient.Get(ctx, "example", metav1.GetOptions{})
+		require.NoError(t, err)
+		require.Equal(t,
+			mustNestedString(s0.Object, "spec", "title"),
+			mustNestedString(s1.Object, "spec", "title"),
+		)
+
+		// Create bindings
+		scopeDashboardBindingClient := helper.Org1.Admin.ResourceClient(t, schema.GroupVersionResource{
+			Group: "scope.grafana.app", Version: "v0alpha1", Resource: "scopedashboardbindings",
+		})
+		b0, err := scopeDashboardBindingClient.Create(ctx,
+			helper.LoadYAMLOrJSONFile("testdata/example-scope-dashboard-binding.yaml"),
+			metav1.CreateOptions{},
+		)
+		require.NoError(t, err)
+		require.Equal(t, "example_abc", b0.GetName())
+	})
+}
+
+func mustNestedString(obj map[string]interface{}, fields ...string) string {
+	v, _, _ := unstructured.NestedString(obj, "spec", "title")
+	return v
 }
