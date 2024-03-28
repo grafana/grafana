@@ -1,13 +1,16 @@
 import React, { useMemo } from 'react';
 
-import { PanelProps, VizOrientation } from '@grafana/data';
+import { DataFrame, PanelProps, VizOrientation } from '@grafana/data';
+import { TimeZone } from '@grafana/schema';
 import {
+  StackingMode,
   TooltipDisplayMode,
   TooltipPlugin2,
   UPLOT_AXIS_FONT_SIZE,
   UPlotChart,
   UPlotConfigBuilder,
   VizLayout,
+  VizTextDisplayOptions,
   measureText,
   usePanelContext,
   useTheme2,
@@ -63,12 +66,9 @@ export const BarChartPanel = (props: PanelProps<Options>) => {
         // auto max length clamps to half viz height, subracts 3 chars for ... ellipsis
         Math.floor(height / 2 / Math.sin(Math.abs(xTickLabelRotation * toRads)) / charWidth - 3);
 
-
-
-
   const { dataLinkPostProcessor } = usePanelContext();
   // TODO: config data links, color field
-  const { series, _rest, color } = useMemo(
+  const info = useMemo(
     () => prepSeries(data.series, fieldConfig, stacking, theme, xField, colorByField),
     [data.series, fieldConfig, stacking, theme, xField, colorByField]
   );
@@ -95,7 +95,7 @@ export const BarChartPanel = (props: PanelProps<Options>) => {
       timeZone,
       props.data.structureRev,
 
-      series?.[0].length,
+      info.series?.[0].length,
 
       barWidth,
       barRadius,
@@ -115,6 +115,8 @@ export const BarChartPanel = (props: PanelProps<Options>) => {
     ]
   );
 
+  // const plotData = useMemo(() => prepData(info), [prepData, series]);
+
   // if (error) {
   //   return (
   //     <div className="panel-empty">
@@ -127,7 +129,7 @@ export const BarChartPanel = (props: PanelProps<Options>) => {
     <VizLayout
       width={props.width}
       height={props.height}
-      legend={<BarChartLegend frame={series![0]} options={legend} colorField={color} />}
+      legend={<BarChartLegend frame={info.series![0]} options={legend} colorField={info.color} />}
     >
       {
         (vizWidth, vizHeight) => null
@@ -292,3 +294,25 @@ export const BarChartPanel = (props: PanelProps<Options>) => {
     </GraphNG>
   );
 };
+
+interface PrepConfig2Opts {
+  frame: DataFrame;
+
+  orientation: VizOrientation;
+  timeZone: TimeZone;
+  barWidth: number;
+  barRadius: number;
+  showValue: number;
+  groupWidth: number;
+  stacking: StackingMode;
+  text: VizTextDisplayOptions;
+  xTickLabelRotation: number;
+  xTickLabelSpacing: number;
+  fullHighlight: boolean;
+  xField: string;
+  colorField: string;
+}
+
+function prepConfig2() {
+
+}
