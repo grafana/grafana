@@ -23,7 +23,7 @@ A state timeline visualization displays data in a way that shows state changes o
 
 For example, if you're monitoring the CPU usage of a server, you can use a state timeline to visualize the different states, such as “LOW,” “NORMAL,” “HIGH,” or “CRITICAL,” over time. Each state is represented by a different color and the lengths represent the duration of time that the server remained in that state:
 
-{{< figure src="/static/img/docs/state-timeline-panel/state-timeline-panel.png" max-width="1025px" alt="A state timeline panel showing CPU usage" >}}
+{{< figure src="/static/img/docs/state-timeline-panel/state-timeline-panel.png" max-width="1025px" alt="A state timeline visualization showing CPU usage" >}}
 
 The state timeline visualization is useful when you need to monitor and analyze changes in states or statuses of various entities over time. You can use one when you need to:
 
@@ -39,7 +39,7 @@ Once you have [created a dashboard](https://grafana.com/docs/grafana/<GRAFANA_VE
 
 ## Supported data formats
 
-The state timeline panel works best if you have data capturing the various states of entities over time, formatted as a table. The data must include:
+The state timeline visualization works best if you have data capturing the various states of entities over time, formatted as a table. The data must include:
 
 - **Timestamps** - Indicate when each state change occurred. This could also be the start time for the state change. You can also add an optional timestamp to indicate the end time for the state change.
 - **Entity name/identifier** - Represents the name of the entity you're trying to monitor.
@@ -67,7 +67,7 @@ The following tables are examples of the type of data you need for a state timel
 
 The data is converted as follows, with the [null and empty values visualized as gaps](https://grafana.com/docs/grafana/latest/panels-visualizations/visualizations/state-timeline/#connect-null-values) in the state timeline:
 
-{{< figure src="/static/img/docs/state-timeline-panel/state-timeline-with-null-values.png" max-width="1025px" alt="A state timeline panel with null values showing the status of two servers" >}}
+{{< figure src="/static/img/docs/state-timeline-panel/state-timeline-with-null-values.png" max-width="1025px" alt="A state timeline visualization with null values showing the status of two servers" >}}
 
 #### Two time columns without null values
 
@@ -82,7 +82,7 @@ The data is converted as follows, with the [null and empty values visualized as 
 
 The data is converted as follows:
 
-{{< figure src="/static/img/docs/state-timeline-panel/state-timeline-with-two-timestamps.png" max-width="1025px" alt="A state timeline panel with two time columns showing the status of two servers" >}}
+{{< figure src="/static/img/docs/state-timeline-panel/state-timeline-with-two-timestamps.png" max-width="1025px" alt="A state timeline visualization with two time columns showing the status of two servers" >}}
 
 If your query results aren't in a table format like the preceding examples, especially for time-series data, you can apply specific [transformations](https://stackoverflow.com/questions/68887416/grafana-state-timeline-panel-with-values-states-supplied-by-label) to achieve this.
 
