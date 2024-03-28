@@ -376,14 +376,8 @@ function handleMultipleSeriesByTagsParams(astNode: AstNode) {
 function handleDivideSeriesListsNestedFunctions(astNode: AstNode) {
   // if divideSeriesLists function, the second parameters should be strings
   if (astNode.name === 'divideSeriesLists' && astNode.params && astNode.params.length >= 2) {
-    let count = 0;
-
-    astNode.params = astNode.params.map((p: AstNode) => {
-      if (p.type === 'function') {
-        count += 1;
-      }
-
-      if (count === 2 && p.type === 'function') {
+    astNode.params = astNode.params.map((p: AstNode, idx: number) => {
+      if (idx === 1 && p.type === 'function') {
         // convert nested 2nd functions as parametors to a strings
         // all nested functions should be strings
         // if the node is a function it will have params

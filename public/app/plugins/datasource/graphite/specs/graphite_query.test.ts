@@ -158,7 +158,7 @@ describe('Graphite query model', () => {
     });
 
     describe('when query has divideSeriesLists function where second parameter is a function is parses correctly', () => {
-      it('should parse the second function param as a string and not a second function', () => {
+      it('should parse the second function param as a string and not parse it as a second function', () => {
         const functionAsParam = 'scaleToSeconds(carbon.agents.0df7e0ba2701-a.cache.queries,1)';
 
         ctx.target = {
@@ -186,7 +186,7 @@ describe('Graphite query model', () => {
         expect(ctx.queryModel.target.target).toContain(functionAsParam);
       });
 
-      it('should recursively parse a second function param that contains another function as a string and not a second function', () => {
+      it('should recursively parse a second function argument that contains another function as a string', () => {
         const nestedFunctionAsParam =
           'scaleToSeconds(nonNegativeDerivative(carbon.agents.0df7e0ba2701-a.cache.queries,1))';
 
@@ -211,6 +211,35 @@ describe('Graphite query model', () => {
         ];
         expect(ctx.queryModel.segments.length).toBe(5);
         expect(ctx.queryModel.functions.length).toBe(3);
+        ctx.queryModel.updateModelTarget(targets);
+        expect(ctx.queryModel.target.target).toContain(nestedFunctionAsParam);
+      });
+
+      it('should recursively parse a second function argument where the first argument is a series', () => {
+        const nestedFunctionAsParam =
+          'scaleToSeconds(nonNegativeDerivative(carbon.agents.0df7e0ba2701-a.cache.queries,1))';
+
+        ctx.target = {
+          refId: 'A',
+          target: `divideSeriesLists(carbon.agents.0df7e0ba2701-a.cache.queries, ${nestedFunctionAsParam})`,
+        };
+        ctx.targets = [ctx.target];
+        ctx.queryModel = new GraphiteQuery(ctx.datasource, ctx.target, ctx.templateSrv);
+
+        const targets = [
+          {
+            refId: 'A',
+            datasource: {
+              type: 'graphite',
+              uid: 'zzz',
+            },
+            target: `divideSeriesLists(scaleToSeconds(nonNegativeDerivative(carbon.agents.0df7e0ba2701-a.cache.queries), 1), ${nestedFunctionAsParam})`,
+            textEditor: false,
+            key: '123',
+          },
+        ];
+        expect(ctx.queryModel.segments.length).toBe(5);
+        expect(ctx.queryModel.functions.length).toBe(1);
         ctx.queryModel.updateModelTarget(targets);
         expect(ctx.queryModel.target.target).toContain(nestedFunctionAsParam);
       });
