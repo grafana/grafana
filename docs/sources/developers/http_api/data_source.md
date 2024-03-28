@@ -907,15 +907,16 @@ Content-Type: application/json
 {
    "queries":[
       {
+         "expr": "kube_pod_info{container="example"}",
          "refId":"A",
          "scenarioId":"csv_metric_values",
          "datasource":{
             "uid":"PD8C576611E62080A"
          },
-         "format": "table"
+         "format": "table",
          "maxDataPoints":1848,
          "intervalMs":200,
-         "stringInput":"1,20,90,30,5,0",
+         "stringInput":"1,20,90,30,5,0"
       }
    ],
    "from":"now-5m",
