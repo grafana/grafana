@@ -136,22 +136,49 @@ func (d *DualWriter) Create(ctx context.Context, obj runtime.Object, createValid
 	if !ok {
 		return nil, fmt.Errorf("legacy storage rest.Creater is missing")
 	}
+	//TODO: consider also failure scenarios (if writing to one of the storages fails)
+	switch CurrentMode {
+	case Mode1:
+		// mode 1: only write to legacy store
+		// it's the default mode if none is set
+		return legacy.Create(ctx, obj, createValidation, options)
 
-	created, err := legacy.Create(ctx, obj, createValidation, options)
-	if err != nil {
-		return nil, err
-	}
+	// mode 2: also write to Unified Storage
+	case Mode2:
+		created, err := legacy.Create(ctx, obj, createValidation, options)
+		if err != nil {
+			return created, err
+		}
+		rsp, err := d.Storage.Create(ctx, created, createValidation, options)
+		if err != nil {
+			klog.Error("unable to create object in duplicate storage", "error", err, "mode", Mode2)
+		}
+		return rsp, err
 
-	if CurrentMode < Mode2 {
+	// mode 3: write to US first, write to legacy storage after
+	case Mode3:
+		created, err := d.Storage.Create(ctx, obj, createValidation, options)
+		if err != nil {
+			klog.Error("unable to create object in duplicate storage", "error", err, "mode", Mode3)
+			return created, err
+		}
+		rsp, err := legacy.Create(ctx, obj, createValidation, options)
+		if err != nil {
+			return rsp, err
+		}
 		return created, nil
-	}
 
-	rsp, err := d.Storage.Create(ctx, created, createValidation, options)
-	// #TODO customise error handling depending on the mode we are in
-	if err != nil {
-		klog.Error("unable to create object in duplicate storage", "error", err)
+	// mode 4: only write to US
+	case Mode4:
+		rsp, err := d.Storage.Create(ctx, obj, createValidation, options)
+		if err != nil {
+			klog.Error("unable to create object in storage", "error", err, "mode", Mode4)
+			return rsp, err
+		}
+		return rsp, nil
+	default:
+		return nil, fmt.Errorf("invalid dual writer mode")
 	}
-	return rsp, err
 }
 
 // Update overrides the default behavior of the Storage and writes to both the LegacyStorage and Storage depending on the DualWriter mode.
