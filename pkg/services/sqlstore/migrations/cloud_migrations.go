@@ -37,5 +37,4 @@ func addCloudMigrationsMigrations(mg *Migrator) {
 	mg.AddMigration("add stack_id column", NewAddColumnMigration(migrationTable, &stackIDColumn))
 	mg.AddMigration("add region_slug column", NewAddColumnMigration(migrationTable, &regionSlugColumn))
 	mg.AddMigration("add cluster_slug column", NewAddColumnMigration(migrationTable, &clusterSlugColumn))
-
 }
