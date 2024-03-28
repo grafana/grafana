@@ -15,6 +15,7 @@ func AppendToAuthenticators(newAuthenticator authenticator.RequestFunc, authRequ
 }
 
 // Get tokens that can be forwarded to the next service
+// In the future this will need to create new tokens with a new audience
 func GetIDForwardingAuthHeaders(ctx context.Context) (map[string]string, error) {
 	user, ok := request.UserFrom(ctx)
 	if !ok {

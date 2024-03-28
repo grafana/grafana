@@ -103,9 +103,8 @@ func (o *APIServerOptions) Config() (*genericapiserver.RecommendedConfig, error)
 
 	// When the ID signing key exists, configure access-token support
 	if len(o.Options.AuthnOptions.IDVerifierConfig.SigningKeysURL) > 0 {
-		accessTokenAuthenticator := auth.NewAccessTokenAuthenticator(o.Options.AuthnOptions.IDVerifierConfig)
 		serverConfig.Authentication.Authenticator = auth.AppendToAuthenticators(
-			accessTokenAuthenticator,
+			auth.NewAccessTokenAuthenticator(o.Options.AuthnOptions.IDVerifierConfig),
 			serverConfig.Authentication.Authenticator,
 		)
 	}

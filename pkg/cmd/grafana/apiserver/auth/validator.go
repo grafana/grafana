@@ -7,6 +7,7 @@ import (
 )
 
 type CustomClaims struct {
+	// Nothing yet
 }
 
 type TokenValidator struct {
