@@ -31,15 +31,7 @@ import {
   SilenceState,
 } from 'app/plugins/datasource/alertmanager/types';
 import { configureStore } from 'app/store/configureStore';
-import {
-  AccessControlAction,
-  DashboardDTO,
-  FolderDTO,
-  NotifiersState,
-  ReceiversState,
-  StoreState,
-  UserDTO,
-} from 'app/types';
+import { AccessControlAction, DashboardDTO, FolderDTO, NotifiersState, ReceiversState, StoreState } from 'app/types';
 import {
   Alert,
   AlertingRule,
@@ -615,18 +607,6 @@ export const mockFolder = (partial?: Partial<FolderDTO>): FolderDTO => {
     hasAcl: false,
     updated: '',
     updatedBy: '',
-    ...partial,
-  };
-};
-
-export const mockUser = (partial?: Partial<UserDTO>): UserDTO => {
-  return {
-    id: 1,
-    login: 'admin',
-    email: 'admin@grafana.com',
-    name: 'Admin',
-    isGrafanaAdmin: true,
-    isDisabled: false,
     ...partial,
   };
 };
