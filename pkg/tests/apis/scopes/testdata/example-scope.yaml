@@ -8,6 +8,9 @@ spec:
     category: should this be an enum or an external reference?
     type: should this be an enum or an external reference?
     filters: 
-      - key: a
+      - key: aaa
         operator: equals
-        value: b
+        value: bbb
+      - key: ccc
+        operator: not-equals
+        value: ddd

@@ -4,6 +4,6 @@ metadata:
   name: example_abc
 spec:
     scope: example
-    dashboard: 
+    dashboards: 
       - abc
       - xyz
