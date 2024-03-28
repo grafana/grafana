@@ -116,7 +116,7 @@ func TestApi_getDescription(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.desc, func(t *testing.T) {
-			service, _, _ := setupTestEnvironment(t, tt.options)
+			service, _, _, _ := setupTestEnvironment(t, tt.options)
 			server := setupTestServer(t, &user.SignedInUser{OrgID: 1, Permissions: map[int64]map[string][]string{1: accesscontrol.GroupScopesByAction(tt.permissions)}}, service)
 
 			req, err := http.NewRequest(http.MethodGet, fmt.Sprintf("/api/access-control/%s/description", tt.options.Resource), nil)
@@ -163,10 +163,10 @@ func TestApi_getPermissions(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.desc, func(t *testing.T) {
-			service, sql, _ := setupTestEnvironment(t, testOptions)
+			service, sql, cfg, _ := setupTestEnvironment(t, testOptions)
 			server := setupTestServer(t, &user.SignedInUser{OrgID: 1, Permissions: map[int64]map[string][]string{1: accesscontrol.GroupScopesByAction(tt.permissions)}}, service)
 
-			seedPermissions(t, tt.resourceID, sql, sql.Cfg, service)
+			seedPermissions(t, tt.resourceID, sql, cfg, service)
 
 			permissions, recorder := getPermission(t, server, testOptions.Resource, tt.resourceID)
 			assert.Equal(t, tt.expectedStatus, recorder.Code)
@@ -240,7 +240,7 @@ func TestApi_setBuiltinRolePermission(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.desc, func(t *testing.T) {
-			service, _, _ := setupTestEnvironment(t, testOptions)
+			service, _, _, _ := setupTestEnvironment(t, testOptions)
 			server := setupTestServer(t, &user.SignedInUser{OrgID: 1, Permissions: map[int64]map[string][]string{1: accesscontrol.GroupScopesByAction(tt.permissions)}}, service)
 
 			recorder := setPermission(t, server, testOptions.Resource, tt.resourceID, tt.permission, "builtInRoles", tt.builtInRole)
@@ -318,7 +318,7 @@ func TestApi_setTeamPermission(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.desc, func(t *testing.T) {
-			service, _, teamSvc := setupTestEnvironment(t, testOptions)
+			service, _, _, teamSvc := setupTestEnvironment(t, testOptions)
 			server := setupTestServer(t, &user.SignedInUser{OrgID: 1, Permissions: map[int64]map[string][]string{1: accesscontrol.GroupScopesByAction(tt.permissions)}}, service)
 
 			// seed team
@@ -401,16 +401,16 @@ func TestApi_setUserPermission(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.desc, func(t *testing.T) {
-			service, sql, _ := setupTestEnvironment(t, testOptions)
+			service, sql, cfg, _ := setupTestEnvironment(t, testOptions)
 			server := setupTestServer(t, &user.SignedInUser{
 				OrgID:       1,
 				Permissions: map[int64]map[string][]string{1: accesscontrol.GroupScopesByAction(tt.permissions)},
 			}, service)
 
 			// seed user
-			orgSvc, err := orgimpl.ProvideService(sql, sql.Cfg, quotatest.New(false, nil))
+			orgSvc, err := orgimpl.ProvideService(sql, cfg, quotatest.New(false, nil))
 			require.NoError(t, err)
-			usrSvc, err := userimpl.ProvideService(sql, orgSvc, sql.Cfg, nil, nil, &quotatest.FakeQuotaService{}, supportbundlestest.NewFakeBundleService())
+			usrSvc, err := userimpl.ProvideService(sql, orgSvc, cfg, nil, nil, &quotatest.FakeQuotaService{}, supportbundlestest.NewFakeBundleService())
 			require.NoError(t, err)
 			_, err = usrSvc.Create(context.Background(), &user.CreateUserCommand{Login: "test", OrgID: 1})
 			require.NoError(t, err)
