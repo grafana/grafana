@@ -1,5 +1,5 @@
 import { css, cx } from '@emotion/css';
-import { uniqueId } from 'lodash';
+import { compact, uniqueId } from 'lodash';
 import React, { useCallback, useEffect } from 'react';
 import { useFormContext } from 'react-hook-form';
 import AutoSizer from 'react-virtualized-auto-sizer';
@@ -98,19 +98,11 @@ function PreviewResultViewer({ previews }: { previews: TemplatePreviewResult[] }
 }
 
 function PreviewErrorViewer({ errors }: { errors: TemplatePreviewErrors[] }) {
-  const styles = useStyles2(getStyles);
-
-  return (
-    <ul className={styles.viewer.container}>
-      {errors.map((error) => (
-        <li key={uniqueId('errors-list')} className={styles.viewer.box}>
-          {error.name && <header className={cx(styles.viewer.header, styles.viewer.errorHeader)}>{error.name}</header>}
-          <div>{error.kind}</div>
-          <p>{error.message}</p>
-        </li>
-      ))}
-    </ul>
-  );
+  return errors.map((error) => (
+    <Alert key={uniqueId('errors-list')} title={compact([error.name, error.kind]).join(' – ')}>
+      {error.message}
+    </Alert>
+  ));
 }
 
 const getStyles = (theme: GrafanaTheme2) => ({
@@ -143,7 +135,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
       borderBottom: `1px solid ${theme.colors.border.medium}`,
       backgroundColor: theme.colors.background.secondary,
     }),
-    errorHeader: css({
+    errorText: css({
       color: theme.colors.error.text,
     }),
     pre: css({

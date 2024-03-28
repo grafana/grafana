@@ -19,7 +19,6 @@ import {
   useSplitter,
   Drawer,
   InlineField,
-  FieldValidationMessage,
   Box,
 } from '@grafana/ui';
 import { useCleanup } from 'app/core/hooks/useCleanup';
@@ -239,53 +238,52 @@ export const TemplateForm = ({ existing, alertManagerSourceName, config, provena
                 {/* template content and payload editor column – full height and half-wdith */}
                 <div {...columnSplitter.containerProps} className={styles.contentField}>
                   {/* template editor */}
-                  <div
-                    {...columnSplitter.primaryProps}
-                    className={cx(styles.flexColumn, styles.containerWithBorderAndRadius)}
-                  >
-                    <EditorColumnHeader
-                      label="Template"
-                      actions={
-                        <Button
-                          icon="question-circle"
-                          size="sm"
-                          fill="outline"
-                          variant="secondary"
-                          onClick={toggleCheatsheetOpened}
-                        >
-                          Help
-                        </Button>
-                      }
-                    />
-                    <Box flex={1}>
-                      <AutoSizer>
-                        {({ width, height }) => (
-                          <TemplateEditor
-                            value={getValues('content')}
-                            onBlur={(value) => setValue('content', value)}
-                            containerStyles={styles.editorContainer}
-                            width={width}
-                            height={height}
-                          />
-                        )}
-                      </AutoSizer>
-                    </Box>
-                    {errors.content?.message && (
-                      <FieldValidationMessage>{errors?.content?.message}</FieldValidationMessage>
-                    )}
+                  <div {...columnSplitter.primaryProps}>
+                    {/* primaryProps will set "minHeight: min-content;" so we have to make sure to apply minHeight to the child */}
+                    <div className={cx(styles.flexColumn, styles.containerWithBorderAndRadius, styles.minEditorSize)}>
+                      <EditorColumnHeader
+                        label="Template"
+                        actions={
+                          <Button
+                            icon="question-circle"
+                            size="sm"
+                            fill="outline"
+                            variant="secondary"
+                            onClick={toggleCheatsheetOpened}
+                          >
+                            Help
+                          </Button>
+                        }
+                      />
+                      <Box flex={1}>
+                        <AutoSizer>
+                          {({ width, height }) => (
+                            <TemplateEditor
+                              value={getValues('content')}
+                              onBlur={(value) => setValue('content', value)}
+                              containerStyles={styles.editorContainer}
+                              width={width}
+                              height={height}
+                            />
+                          )}
+                        </AutoSizer>
+                      </Box>
+                    </div>
                   </div>
                   {/* payload editor – only available for Grafana Alertmanager */}
                   {isGrafanaAlertManager && (
                     <>
                       <div {...columnSplitter.splitterProps} />
-                      <div {...columnSplitter.secondaryProps} className={styles.containerWithBorderAndRadius}>
-                        <PayloadEditor
-                          payload={payload}
-                          defaultPayload={defaultPayloadString}
-                          setPayload={setPayload}
-                          setPayloadFormatError={setPayloadFormatError}
-                          payloadFormatError={payloadFormatError}
-                        />
+                      <div {...columnSplitter.secondaryProps}>
+                        <div className={cx(styles.containerWithBorderAndRadius, styles.minEditorSize, styles.flexFull)}>
+                          <PayloadEditor
+                            payload={payload}
+                            defaultPayload={defaultPayloadString}
+                            setPayload={setPayload}
+                            setPayloadFormatError={setPayloadFormatError}
+                            payloadFormatError={payloadFormatError}
+                          />
+                        </div>
                       </div>
                     </>
                   )}
@@ -301,7 +299,7 @@ export const TemplateForm = ({ existing, alertManagerSourceName, config, provena
                       templateName={watch('name')}
                       setPayloadFormatError={setPayloadFormatError}
                       payloadFormatError={payloadFormatError}
-                      className={styles.templatePreview}
+                      className={cx(styles.templatePreview, styles.minEditorSize)}
                     />
                   </div>
                 </>
@@ -367,12 +365,20 @@ export const getStyles = (theme: GrafanaTheme2) => {
   const narrowScreenQuery = theme.breakpoints.down('md');
 
   return {
+    flexFull: css({
+      flex: 1,
+    }),
+    minEditorSize: css({
+      minHeight: 300,
+      minWidth: 500,
+    }),
     containerWithBorderAndRadius: css({
       borderRadius: theme.shape.radius.default,
       border: `1px solid ${theme.colors.border.medium}`,
     }),
     flexColumn: css({
       display: 'flex',
+      flex: 1,
       flexDirection: 'column',
     }),
     form: css({
@@ -397,17 +403,6 @@ export const getStyles = (theme: GrafanaTheme2) => {
       flex: 1,
       display: 'flex',
       flexDirection: 'row',
-      '& > *': {
-        [narrowScreenQuery]: {
-          minHeight: theme.spacing(40),
-        },
-      },
-      [narrowScreenQuery]: {
-        flexDirection: 'column',
-        gap: theme.spacing(2),
-        height: 'auto',
-        maxHeight: 'unset',
-      },
     }),
     contentField: css({
       display: 'flex',
