@@ -9,7 +9,6 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/infra/db"
-	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/ssosettings"
 	"github.com/grafana/grafana/pkg/services/ssosettings/models"
 	"github.com/grafana/grafana/pkg/tests/testsuite"
@@ -91,7 +90,7 @@ func TestIntegrationUpsertSSOSettings(t *testing.T) {
 		t.Skip("skipping integration test")
 	}
 
-	var sqlStore *sqlstore.SQLStore
+	var sqlStore db.DB
 	var ssoSettingsStore *SSOSettingsStore
 
 	setup := func() {
@@ -270,7 +269,7 @@ func TestIntegrationListSSOSettings(t *testing.T) {
 		t.Skip("skipping integration test")
 	}
 
-	var sqlStore *sqlstore.SQLStore
+	var sqlStore db.DB
 	var ssoSettingsStore *SSOSettingsStore
 
 	setup := func() {
@@ -336,7 +335,7 @@ func TestIntegrationDeleteSSOSettings(t *testing.T) {
 		t.Skip("skipping integration test")
 	}
 
-	var sqlStore *sqlstore.SQLStore
+	var sqlStore db.DB
 	var ssoSettingsStore *SSOSettingsStore
 
 	setup := func() {
@@ -478,7 +477,7 @@ func populateSSOSettings(sqlStore db.DB, template models.SSOSettings, providers 
 	})
 }
 
-func getSSOSettingsCountByDeleted(sqlStore *sqlstore.SQLStore) (deleted, notDeleted int64, err error) {
+func getSSOSettingsCountByDeleted(sqlStore db.DB) (deleted, notDeleted int64, err error) {
 	err = sqlStore.WithDbSession(context.Background(), func(sess *db.Session) error {
 		deleted, err = sess.Table("sso_setting").Where("is_deleted = ?", sqlStore.GetDialect().BooleanStr(true)).Count()
 		if err != nil {
@@ -491,7 +490,7 @@ func getSSOSettingsCountByDeleted(sqlStore *sqlstore.SQLStore) (deleted, notDele
 	return
 }
 
-func getSSOSettingsByProvider(sqlStore *sqlstore.SQLStore, provider string, deleted bool) (*models.SSOSettings, error) {
+func getSSOSettingsByProvider(sqlStore db.DB, provider string, deleted bool) (*models.SSOSettings, error) {
 	var model models.SSOSettings
 	var err error
 
