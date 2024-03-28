@@ -96,8 +96,33 @@ func (d *DualWriter) Get(ctx context.Context, name string, options *metav1.GetOp
 	}
 
 	switch CurrentMode {
-	case Mode1, Mode2:
+	case Mode1:
 		return legacy.Get(ctx, name, &metav1.GetOptions{})
+	case Mode2:
+		l, err := legacy.Get(ctx, name, &metav1.GetOptions{})
+		if err != nil {
+			return nil, err
+		}
+
+		s, err := d.Storage.Get(ctx, name, &metav1.GetOptions{})
+		if err != nil {
+			// #TODO error handling
+			return l, nil
+		}
+
+		accessorL, err := meta.Accessor(l)
+		if err != nil {
+			return l, err
+		}
+
+		accessorS, err := meta.Accessor(s)
+		if err != nil {
+			return l, err
+		}
+
+		// #TODO: figure out if we want to set anything else
+		accessorL.SetResourceVersion(accessorS.GetResourceVersion())
+		return l, nil
 	case Mode3, Mode4:
 		return d.Storage.Get(ctx, name, &metav1.GetOptions{})
 	}
