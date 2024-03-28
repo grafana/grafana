@@ -4320,7 +4320,7 @@ __metadata:
     react-highlight-words: "npm:0.20.0"
     react-hook-form: "npm:^7.49.2"
     react-i18next: "npm:^12.0.0"
-    react-inlinesvg: "npm:3.0.2"
+    react-inlinesvg: "npm:4.1.3"
     react-loading-skeleton: "npm:3.4.0"
     react-router-dom: "npm:5.3.3"
     react-select: "npm:5.8.0"
@@ -17094,13 +17094,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"exenv@npm:^1.2.2":
-  version: 1.2.2
-  resolution: "exenv@npm:1.2.2"
-  checksum: 10/6840185e421394bcb143debb866d31d19c3e4a4bca87d2f319d68d61afff353b3c678f2eb389e3b98ab9aecbec19f6bebbdc4193984378af0a3366c498a7efc8
-  languageName: node
-  linkType: hard
-
 "exit@npm:^0.1.2":
   version: 0.1.2
   resolution: "exit@npm:0.1.2"
@@ -18791,7 +18784,7 @@ __metadata:
     react-highlight-words: "npm:0.20.0"
     react-hook-form: "npm:^7.49.2"
     react-i18next: "npm:^12.0.0"
-    react-inlinesvg: "npm:3.0.2"
+    react-inlinesvg: "npm:4.1.3"
     react-loading-skeleton: "npm:3.4.0"
     react-moveable: "npm:0.56.0"
     react-redux: "npm:8.1.3"
@@ -26298,12 +26291,12 @@ __metadata:
   languageName: node
   linkType: hard
 
-"react-from-dom@npm:^0.6.2":
-  version: 0.6.2
-  resolution: "react-from-dom@npm:0.6.2"
+"react-from-dom@npm:^0.7.2":
+  version: 0.7.2
+  resolution: "react-from-dom@npm:0.7.2"
   peerDependencies:
     react: ^16.8.0 || ^17.0.0 || ^18.0.0
-  checksum: 10/f3954737c2677e82f72ecedcdcf5f187d2a1b86a6c5b915f7300796ac153437581ee0111c9f524e7c18124d25d0d31391d54cdee318ea390722ca57e66813ed7
+  checksum: 10/667a968ca208a251128eb9c2d6e308cfef2dfb64ad1b0fed1e456970116545f7609c2fe6db3e29aa58e47a35f165ed4233c5f2a4681505f2d288ce824a4e27f8
   languageName: node
   linkType: hard
 
@@ -26400,15 +26393,14 @@ __metadata:
   languageName: node
   linkType: hard
 
-"react-inlinesvg@npm:3.0.2":
-  version: 3.0.2
-  resolution: "react-inlinesvg@npm:3.0.2"
+"react-inlinesvg@npm:4.1.3":
+  version: 4.1.3
+  resolution: "react-inlinesvg@npm:4.1.3"
   dependencies:
-    exenv: "npm:^1.2.2"
-    react-from-dom: "npm:^0.6.2"
+    react-from-dom: "npm:^0.7.2"
   peerDependencies:
-    react: ^16.8.0 || ^17.0.0 || ^18.0.0
-  checksum: 10/740fa33c7a09012bb96509f9003dc26e4e412eed2fc861ca40bfee9a3dddcf7c4d86fd20f824d4c017e44526aa9d747d6c9543ef3f2215bc0ace72754e025316
+    react: 16.8 - 18
+  checksum: 10/4e53bd1df6d019169a776760f25106218d349ac5df491040f9bfa4caf74ad7930372c36c9f796c6e255b4140871f0ab65726ac6d5d237e1e77e1db742b6704fc
   languageName: node
   linkType: hard
 
