@@ -15,7 +15,7 @@ type CloudMigration struct {
 	ID          int64     `json:"id" xorm:"pk autoincr 'id'"`
 	AuthToken   string    `json:"authToken"`
 	Stack       string    `json:"stack"`
-	StackID     int       `json:"stackID" xorm:"'stack_id'""`
+	StackID     int       `json:"stackID" xorm:"stack_id"`
 	RegionSlug  string    `json:"regionSlug"`
 	ClusterSlug string    `json:"clusterSlug"`
 	Created     time.Time `json:"created"`
