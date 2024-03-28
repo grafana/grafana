@@ -203,30 +203,31 @@ func (d *DualWriter) Update(ctx context.Context, name string, objInfo rest.Updat
 		if err != nil {
 			return nil, false, err
 		}
-		objInfo = &updateWrapper{
-			upstream: objInfo,
-			updated:  old,
-		}
-		updated, created, err := d.Storage.Update(ctx, name, objInfo, createValidation, updateValidation, forceAllowCreate, options)
-		if err != nil {
-			return updated, created, err
-		}
 
-		accessor, err := meta.Accessor(old)
+		updated, err := objInfo.UpdatedObject(ctx, old)
 		if err != nil {
 			return nil, false, err
 		}
-		accessor.SetUID("")
-		accessor.SetResourceVersion("")
-
-		// #TODO do we still need to use objInfo.UpdatedObject?
 		objInfo = &updateWrapper{
 			upstream: objInfo,
-			updated:  old,
+			updated:  updated,
 		}
+
+		obj, created, err := d.Storage.Update(ctx, name, objInfo, createValidation, updateValidation, forceAllowCreate, options)
+		if err != nil {
+			return obj, created, err
+		}
+		accessor, err := meta.Accessor(obj)
+		if err != nil {
+			return nil, false, err
+		}
+
+		accessor.SetUID("")
+		accessor.SetResourceVersion("")
+		// #TODO do we still need to use objInfo.UpdatedObject?
 		return legacy.Update(ctx, name, &updateWrapper{
 			upstream: objInfo,
-			updated:  updated,
+			updated:  obj,
 		}, createValidation, updateValidation, forceAllowCreate, options)
 	}
 
@@ -235,9 +236,15 @@ func (d *DualWriter) Update(ctx context.Context, name string, objInfo rest.Updat
 		if err != nil {
 			return nil, false, err
 		}
+
+		updated, err := objInfo.UpdatedObject(ctx, old)
+		if err != nil {
+			return nil, false, err
+		}
+
 		objInfo = &updateWrapper{
 			upstream: objInfo,
-			updated:  old,
+			updated:  updated,
 		}
 		return d.Storage.Update(ctx, name, objInfo, createValidation, updateValidation, forceAllowCreate, options)
 	}
