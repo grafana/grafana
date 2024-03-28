@@ -745,6 +745,7 @@ export interface TableAutoCellOptions {
  * Colored text cell options
  */
 export interface TableColorTextCellOptions {
+  applyToRow?: boolean;
   type: TableCellDisplayMode.ColorText;
 }
 
