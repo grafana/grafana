@@ -333,8 +333,7 @@ export class LogContextProvider {
       // If we have parser, we use fetchSeriesLabels to fetch actual labels for selected stream
       const stream = getStreamSelectorsFromQuery(query.expr);
       // We are using stream[0] as log query can always have just 1 stream selector
-      const series = await this.datasource.languageProvider.fetchSeriesLabels(stream[0], { timeRange });
-      allLabels = Object.keys(series);
+      allLabels = await this.datasource.languageProvider.fetchLabels({ streamSelector: stream[0], timeRange });
     }
 
     const contextFilters: ContextFilter[] = [];

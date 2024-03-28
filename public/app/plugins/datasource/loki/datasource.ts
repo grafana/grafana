@@ -143,6 +143,7 @@ export class LokiDatasource
   private logContextProvider: LogContextProvider;
   languageProvider: LanguageProvider;
   maxLines: number;
+  hasLabelsMatchAPISupport: boolean;
   predefinedOperations: string;
 
   constructor(
@@ -154,6 +155,7 @@ export class LokiDatasource
     this.languageProvider = new LanguageProvider(this);
     const settingsData = instanceSettings.jsonData || {};
     this.maxLines = parseInt(settingsData.maxLines ?? '0', 10) || DEFAULT_MAX_LINES;
+    this.hasLabelsMatchAPISupport = settingsData.hasLabelsMatchAPISupport || false;
     this.predefinedOperations = settingsData.predefinedOperations ?? '';
     this.annotations = {
       QueryEditor: LokiAnnotationsQueryEditor,
@@ -680,16 +682,10 @@ export class LokiDatasource
       return [];
     }
 
-    // If we have stream selector, use /series endpoint
-    if (query.stream) {
-      const result = await this.languageProvider.fetchSeriesLabels(query.stream, { timeRange });
-      if (!result[query.label]) {
-        return [];
-      }
-      return result[query.label].map((value: string) => ({ text: value }));
-    }
-
-    const result = await this.languageProvider.fetchLabelValues(query.label, { timeRange });
+    const result = await this.languageProvider.fetchLabelValues(query.label, {
+      streamSelector: query.stream,
+      timeRange,
+    });
     return result.map((value: string) => ({ text: value }));
   }
 
