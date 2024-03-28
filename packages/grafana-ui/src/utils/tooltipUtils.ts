@@ -1,7 +1,9 @@
 import { css } from '@emotion/css';
 import { Placement } from '@floating-ui/react';
+import { Spacing } from 'src/saga-themes/code/themes/spacing';
+import { GrafanaTheme3 } from 'src/saga-themes/createTheme';
 
-import { colorManipulator, GrafanaTheme2 } from '@grafana/data';
+import { colorManipulator } from '@grafana/data';
 
 import { TooltipPlacement } from '../components/Tooltip';
 
@@ -19,11 +21,11 @@ export function getPlacement(placement?: TooltipPlacement): Placement {
 }
 
 export function buildTooltipTheme(
-  theme: GrafanaTheme2,
+  theme: GrafanaTheme3,
   tooltipBg: string,
   toggletipBorder: string,
   tooltipText: string,
-  tooltipPadding: { topBottom: number; rightLeft: number }
+  tooltipPadding: { topBottom: keyof Spacing; rightLeft: keyof Spacing }
 ) {
   return {
     arrow: css({
@@ -31,12 +33,13 @@ export function buildTooltipTheme(
     }),
     container: css({
       backgroundColor: tooltipBg,
-      borderRadius: theme.shape.radius.default,
+      borderRadius: theme.border.borderRadius.default,
       border: `1px solid ${toggletipBorder}`,
-      boxShadow: theme.shadows.z2,
+      boxShadow: theme.shadow.z2,
       color: tooltipText,
-      fontSize: theme.typography.bodySmall.fontSize,
-      padding: theme.spacing(tooltipPadding.topBottom, tooltipPadding.rightLeft),
+      font: theme.font.bodySmall,
+      // TODO: Replace with new theme
+      padding: theme.spacingFn(tooltipPadding.topBottom, tooltipPadding.rightLeft),
       transition: 'opacity 0.3s',
       zIndex: theme.zIndex.tooltip,
       maxWidth: '400px',
@@ -69,24 +72,24 @@ export function buildTooltipTheme(
       },
     }),
     headerClose: css({
-      color: theme.colors.text.secondary,
+      color: theme.color.content.secondary,
       position: 'absolute',
-      right: theme.spacing(1),
-      top: theme.spacing(1.5),
+      right: theme.spacing[100],
+      top: theme.spacing[150],
       backgroundColor: 'transparent',
       border: 0,
     }),
     header: css({
-      paddingTop: theme.spacing(1),
-      paddingBottom: theme.spacing(2),
+      paddingTop: theme.spacing[100],
+      paddingBottom: theme.spacing[200],
     }),
     body: css({
-      paddingTop: theme.spacing(1),
-      paddingBottom: theme.spacing(1),
+      paddingTop: theme.spacing[100],
+      paddingBottom: theme.spacing[100],
     }),
     footer: css({
-      paddingTop: theme.spacing(2),
-      paddingBottom: theme.spacing(1),
+      paddingTop: theme.spacing[200],
+      paddingBottom: theme.spacing[100],
     }),
   };
 }

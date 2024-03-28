@@ -12,11 +12,11 @@ import {
   useInteractions,
 } from '@floating-ui/react';
 import React, { useCallback, useId, useRef, useState } from 'react';
+import { GrafanaTheme3 } from 'src/saga-themes/createTheme';
 
-import { GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 
-import { useStyles2 } from '../../themes/ThemeContext';
+import { useStyles3 } from '../../themes/ThemeContext';
 import { buildTooltipTheme, getPlacement } from '../../utils/tooltipUtils';
 import { Portal } from '../Portal/Portal';
 
@@ -79,7 +79,7 @@ export const Tooltip = React.forwardRef<HTMLElement, TooltipProps>(
 
     const contentIsFunction = typeof content === 'function';
 
-    const styles = useStyles2(getStyles);
+    const styles = useStyles3(getStyles);
     const style = styles[theme ?? 'info'];
 
     const handleRef = useCallback(
@@ -131,20 +131,21 @@ export const Tooltip = React.forwardRef<HTMLElement, TooltipProps>(
 
 Tooltip.displayName = 'Tooltip';
 
-export const getStyles = (theme: GrafanaTheme2) => {
+export const getStyles = (theme: GrafanaTheme3) => {
   const info = buildTooltipTheme(
     theme,
-    theme.components.tooltip.background,
-    theme.components.tooltip.background,
-    theme.components.tooltip.text,
-    { topBottom: 0.5, rightLeft: 1 }
+    theme.color.background.ui.secondary,
+    theme.color.background.ui.secondary,
+    theme.color.content.secondary,
+    { topBottom: 50, rightLeft: 100 }
   );
   const error = buildTooltipTheme(
     theme,
-    theme.colors.error.main,
-    theme.colors.error.main,
-    theme.colors.error.contrastText,
-    { topBottom: 0.5, rightLeft: 1 }
+    // TODO: Should be a background color
+    theme.color.border.system.error,
+    theme.color.border.system.error,
+    theme.color.content.primary,
+    { topBottom: 50, rightLeft: 100 }
   );
 
   return {

@@ -14,10 +14,9 @@ import {
 } from '@floating-ui/react';
 import { Placement } from '@popperjs/core';
 import React, { useRef, useState } from 'react';
+import { GrafanaTheme3 } from 'src/saga-themes/createTheme';
 
-import { GrafanaTheme2 } from '@grafana/data';
-
-import { useStyles2, useTheme2 } from '../../themes/ThemeContext';
+import { useStyles3, useTheme3 } from '../../themes/ThemeContext';
 import { buildTooltipTheme, getPlacement } from '../../utils/tooltipUtils';
 import { IconButton } from '../IconButton/IconButton';
 
@@ -63,8 +62,8 @@ export const Toggletip = React.memo(
     show,
   }: ToggletipProps) => {
     const arrowRef = useRef(null);
-    const grafanaTheme = useTheme2();
-    const styles = useStyles2(getStyles);
+    const grafanaTheme = useTheme3();
+    const styles = useStyles3(getStyles);
     const style = styles[theme];
     const [controlledVisible, setControlledVisible] = useState(show);
     const isOpen = show ?? controlledVisible;
@@ -130,7 +129,7 @@ export const Toggletip = React.memo(
             >
               <FloatingArrow
                 strokeWidth={0.3}
-                stroke={grafanaTheme.colors.border.weak}
+                stroke={grafanaTheme.color.border.ui.weak}
                 className={style.arrow}
                 ref={arrowRef}
                 context={context}
@@ -164,20 +163,21 @@ export const Toggletip = React.memo(
 
 Toggletip.displayName = 'Toggletip';
 
-export const getStyles = (theme: GrafanaTheme2) => {
+export const getStyles = (theme: GrafanaTheme3) => {
   const info = buildTooltipTheme(
     theme,
-    theme.colors.background.primary,
-    theme.colors.border.weak,
-    theme.components.tooltip.text,
-    { topBottom: 2, rightLeft: 2 }
+    theme.color.background.ui.primary,
+    theme.color.border.ui.weak,
+    theme.color.content.secondary,
+    { topBottom: 200, rightLeft: 200 }
   );
   const error = buildTooltipTheme(
     theme,
-    theme.colors.error.main,
-    theme.colors.error.main,
-    theme.colors.error.contrastText,
-    { topBottom: 2, rightLeft: 2 }
+    // TODO: Should be a background color
+    theme.color.border.system.error,
+    theme.color.border.system.error,
+    theme.color.content.primary,
+    { topBottom: 200, rightLeft: 200 }
   );
 
   return {
