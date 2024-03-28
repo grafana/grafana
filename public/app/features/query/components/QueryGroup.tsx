@@ -304,7 +304,7 @@ export class QueryGroup extends PureComponent<Props, State> {
             onClick={this.onAddExpressionClick}
             variant="secondary"
             className={styles.expressionButton}
-            data-testid="query-tab-add-expression"
+            data-testid={selectors.components.QueryTab.addExpression}
           >
             <span>Expression&nbsp;</span>
           </Button>

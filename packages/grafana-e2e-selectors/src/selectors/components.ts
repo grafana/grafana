@@ -278,6 +278,7 @@ export const Components = {
     queryInspectorButton: 'Query inspector button',
     queryHistoryButton: 'data-testid query-history-button',
     addQuery: 'data-testid query-tab-add-query',
+    addExpression: 'data-testid query-tab-add-expression',
   },
   QueryHistory: {
     queryText: 'Query text',
