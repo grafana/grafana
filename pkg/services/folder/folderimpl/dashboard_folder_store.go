@@ -5,6 +5,7 @@ import (
 	"strings"
 
 	"github.com/grafana/grafana/pkg/infra/db"
+	"github.com/grafana/grafana/pkg/infra/metrics"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/folder"
 )
@@ -19,17 +20,24 @@ func ProvideDashboardFolderStore(sqlStore db.DB) *DashboardFolderStoreImpl {
 	return &DashboardFolderStoreImpl{store: sqlStore}
 }
 
-func (d *DashboardFolderStoreImpl) GetFolderByTitle(ctx context.Context, orgID int64, title string) (*folder.Folder, error) {
+func (d *DashboardFolderStoreImpl) GetFolderByTitle(ctx context.Context, orgID int64, title string, folderUID *string) (*folder.Folder, error) {
 	if title == "" {
 		return nil, dashboards.ErrFolderTitleEmpty
 	}
 
-	// there is a unique constraint on org_id, folder_id, title
+	// there is a unique constraint on org_id, folder_uid, title
 	// there are no nested folders so the parent folder id is always 0
+	metrics.MFolderIDsServiceCount.WithLabelValues(metrics.Folder).Inc()
 	// nolint:staticcheck
 	dashboard := dashboards.Dashboard{OrgID: orgID, FolderID: 0, Title: title}
 	err := d.store.WithTransactionalDbSession(ctx, func(sess *db.Session) error {
-		has, err := sess.Table(&dashboards.Dashboard{}).Where("is_folder = " + d.store.GetDialect().BooleanStr(true)).Where("folder_id=0").Get(&dashboard)
+		s := sess.Table(&dashboards.Dashboard{}).Where("is_folder = " + d.store.GetDialect().BooleanStr(true))
+		if folderUID != nil {
+			s = s.Where("folder_uid = ?", *folderUID)
+		} else {
+			s = s.Where("folder_uid IS NULL")
+		}
+		has, err := s.Get(&dashboard)
 		if err != nil {
 			return err
 		}
@@ -44,10 +52,11 @@ func (d *DashboardFolderStoreImpl) GetFolderByTitle(ctx context.Context, orgID i
 }
 
 func (d *DashboardFolderStoreImpl) GetFolderByID(ctx context.Context, orgID int64, id int64) (*folder.Folder, error) {
+	metrics.MFolderIDsServiceCount.WithLabelValues(metrics.Folder).Inc()
 	// nolint:staticcheck
 	dashboard := dashboards.Dashboard{OrgID: orgID, FolderID: 0, ID: id}
 	err := d.store.WithTransactionalDbSession(ctx, func(sess *db.Session) error {
-		has, err := sess.Table(&dashboards.Dashboard{}).Where("is_folder = " + d.store.GetDialect().BooleanStr(true)).Where("folder_id=0").Get(&dashboard)
+		has, err := sess.Table(&dashboards.Dashboard{}).Where("is_folder = " + d.store.GetDialect().BooleanStr(true)).Get(&dashboard)
 		if err != nil {
 			return err
 		}
@@ -68,11 +77,11 @@ func (d *DashboardFolderStoreImpl) GetFolderByUID(ctx context.Context, orgID int
 	if uid == "" {
 		return nil, dashboards.ErrDashboardIdentifierNotSet
 	}
-
+	metrics.MFolderIDsServiceCount.WithLabelValues(metrics.Folder).Inc()
 	// nolint:staticcheck
 	dashboard := dashboards.Dashboard{OrgID: orgID, FolderID: 0, UID: uid}
 	err := d.store.WithTransactionalDbSession(ctx, func(sess *db.Session) error {
-		has, err := sess.Table(&dashboards.Dashboard{}).Where("is_folder = " + d.store.GetDialect().BooleanStr(true)).Where("folder_id=0").Get(&dashboard)
+		has, err := sess.Table(&dashboards.Dashboard{}).Where("is_folder = " + d.store.GetDialect().BooleanStr(true)).Get(&dashboard)
 		if err != nil {
 			return err
 		}
@@ -102,7 +111,7 @@ func (d *DashboardFolderStoreImpl) GetFolders(ctx context.Context, orgID int64, 
 		b := strings.Builder{}
 		args := make([]any, 0, len(uids)+1)
 
-		b.WriteString("SELECT * FROM dashboard WHERE org_id=?")
+		b.WriteString("SELECT * FROM dashboard WHERE org_id=? AND is_folder = " + d.store.GetDialect().BooleanStr(true))
 		args = append(args, orgID)
 
 		if len(uids) == 1 {

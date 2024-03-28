@@ -2,7 +2,6 @@ import { DataSourceApi, dateTime, ExploreUrlState, LogsSortOrder } from '@grafan
 import { serializeStateToUrlParam } from '@grafana/data/src/utils/url';
 import { DataQuery } from '@grafana/schema';
 import { RefreshPicker } from '@grafana/ui';
-import store from 'app/core/store';
 import { DEFAULT_RANGE } from 'app/features/explore/state/utils';
 
 import { DatasourceSrvMock, MockDataSourceApi } from '../../../test/mocks/datasource_srv';
@@ -11,7 +10,6 @@ import {
   buildQueryTransaction,
   hasNonEmptyQuery,
   refreshIntervalToSortOrder,
-  updateHistory,
   getExploreUrl,
   GetExploreUrlArguments,
   getTimeRange,
@@ -151,27 +149,6 @@ describe('getExploreUrl', () => {
   });
 });
 
-describe('updateHistory()', () => {
-  const datasourceId = 'myDatasource';
-  const key = `grafana.explore.history.${datasourceId}`;
-
-  beforeEach(() => {
-    store.delete(key);
-    expect(store.exists(key)).toBeFalsy();
-  });
-
-  test('should save history item to localStorage', () => {
-    const expected = [
-      {
-        query: { refId: '1', expr: 'metric' },
-      },
-    ];
-    expect(updateHistory([], datasourceId, [{ refId: '1', expr: 'metric' }])).toMatchObject(expected);
-    expect(store.exists(key)).toBeTruthy();
-    expect(store.getObject(key)).toMatchObject(expected);
-  });
-});
-
 describe('hasNonEmptyQuery', () => {
   test('should return true if one query is non-empty', () => {
     expect(hasNonEmptyQuery([{ refId: '1', key: '2', context: 'explore', expr: 'foo' }])).toBeTruthy();
@@ -187,7 +164,7 @@ describe('hasNonEmptyQuery', () => {
 });
 
 describe('getTimeRange', () => {
-  describe('should flip from and to when from is after to', () => {
+  describe('should not flip from and to when from is after to', () => {
     const rawRange = {
       from: 'now',
       to: 'now-6h',
@@ -195,7 +172,7 @@ describe('getTimeRange', () => {
 
     const range = getTimeRange('utc', rawRange, 0);
 
-    expect(range.from.isBefore(range.to)).toBe(true);
+    expect(range.from.isBefore(range.to)).toBe(false);
   });
 });
 

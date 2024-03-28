@@ -25,10 +25,7 @@ func SelectSystemCompatibleVersion(log log.PrettyLogger, versions []Version, plu
 	var ver Version
 	latestForArch, exists := latestSupportedVersion(versions, compatOpts)
 	if !exists {
-		return VersionData{}, ErrArcNotFound{
-			pluginID:   pluginID,
-			systemInfo: compatOpts.OSAndArch(),
-		}
+		return VersionData{}, ErrArcNotFound(pluginID, compatOpts.OSAndArch())
 	}
 
 	if version == "" {
@@ -49,21 +46,13 @@ func SelectSystemCompatibleVersion(log log.PrettyLogger, versions []Version, plu
 	if len(ver.Version) == 0 {
 		log.Debugf("Requested plugin version %s v%s not found but potential fallback version '%s' was found",
 			pluginID, version, latestForArch.Version)
-		return VersionData{}, ErrVersionNotFound{
-			pluginID:         pluginID,
-			requestedVersion: version,
-			systemInfo:       compatOpts.OSAndArch(),
-		}
+		return VersionData{}, ErrVersionNotFound(pluginID, version, compatOpts.OSAndArch())
 	}
 
 	if !supportsCurrentArch(ver, compatOpts) {
 		log.Debugf("Requested plugin version %s v%s is not supported on your system but potential fallback version '%s' was found",
 			pluginID, version, latestForArch.Version)
-		return VersionData{}, ErrVersionUnsupported{
-			pluginID:         pluginID,
-			requestedVersion: version,
-			systemInfo:       compatOpts.OSAndArch(),
-		}
+		return VersionData{}, ErrVersionUnsupported(pluginID, version, compatOpts.OSAndArch())
 	}
 
 	return VersionData{

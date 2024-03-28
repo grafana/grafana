@@ -272,6 +272,10 @@
             "description": "The minimum role a user must have to see this page in the navigation menu.",
             "enum": ["Admin", "Editor", "Viewer"]
           },
+          "action": {
+            "type": "string",
+            "description": "The RBAC action a user must have to see this page in the navigation menu."
+          },
           "path": {
             "type": "string",
             "description": "Used for app plugins."
@@ -352,6 +356,10 @@
           },
           "reqRole": {
             "type": "string"
+          },
+          "reqAction": {
+            "type": "string",
+            "description": "The RBAC action a user must have to use this route."
           },
           "headers": {
             "type": "array",
@@ -478,63 +486,71 @@
       "type": "boolean",
       "description": "For data source plugins, if the plugin supports tracing. Used for example to link logs (e.g. Loki logs) with tracing plugins."
     },
-    "externalServiceRegistration": {
+    "iam": {
       "type": "object",
-      "description": "Oauth App Service Registration.",
+      "description": "Identity and Access Management.",
       "properties": {
-        "impersonation": {
-          "type": "object",
-          "description": "Impersonation describes the permissions that the external service will have on behalf of the user.",
-          "properties": {
-            "enabled": {
-              "type": "boolean",
-              "description": "Enabled allows the service to request access tokens to impersonate users using the jwtbearer grant"
-            },
-            "groups": {
-              "type": "boolean",
-              "description": "Groups allows the service to list the impersonated user's teams."
-            },
-            "permissions": {
-              "type": "array",
-              "description": "Permissions are the permissions that the external service needs when impersonating a user. The intersection of this set with the impersonated user's permission guarantees that the client will not gain more privileges than the impersonated user has.",
-              "items": {
-                "type": "object",
-                "additionalProperties": false,
-                "properties": {
-                  "action": {
-                    "type": "string"
-                  },
-                  "scope": {
-                    "type": "string"
+        "permissions": {
+          "type": "array",
+          "description": "Permissions are the permissions that the plugin needs its associated service account to have",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "action": {
+                "type": "string"
+              },
+              "scope": {
+                "type": "string"
+              }
+            }
+          }
+        }
+      }
+    },
+    "roles": {
+      "type": "array",
+      "description": "List of RBAC roles and their default assignments.",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "role": {
+            "type": "object",
+            "description": "RBAC role definition to bundle related RBAC permissions on the plugin.",
+            "additionalProperties": false,
+            "properties": {
+              "name": {
+                "type": "string",
+                "description": "Display name of the role."
+              },
+              "description": {
+                "type": "string",
+                "description": "Describe the aim of the role."
+              },
+              "permissions": {
+                "type": "array",
+                "description": "RBAC permission on the plugin.",
+                "items": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "properties": {
+                    "action": {
+                      "type": "string"
+                    },
+                    "scope": {
+                      "type": "string"
+                    }
                   }
                 }
               }
             }
-          }
-        },
-        "self": {
-          "type": "object",
-          "description": "Self describes the permissions that the external service will have on behalf of itself",
-          "properties": {
-            "enabled": {
-              "type": "boolean",
-              "description": "Enabled allows the service to request access tokens for itself using the client_credentials grant"
-            },
-            "permissions": {
-              "type": "array",
-              "description": "Permissions are the permissions that the external service needs its associated service account to have",
-              "items": {
-                "type": "object",
-                "additionalProperties": false,
-                "properties": {
-                  "action": {
-                    "type": "string"
-                  },
-                  "scope": {
-                    "type": "string"
-                  }
-                }
-              }
+          },
+          "grants": {
+            "type": "array",
+            "description": "Default assignments of the role to Grafana basic roles (Viewer, Editor, Admin, Grafana Admin)",
+            "items": {
+              "type": "string"
             }
           }
         }

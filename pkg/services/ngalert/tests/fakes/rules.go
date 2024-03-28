@@ -2,13 +2,13 @@ package fakes
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"math/rand"
 	"sync"
 	"testing"
 	"time"
 
+	"github.com/grafana/grafana/pkg/infra/metrics"
 	"github.com/grafana/grafana/pkg/services/auth/identity"
 	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
@@ -67,6 +67,7 @@ mainloop:
 			}
 		}
 		if existing == nil {
+			metrics.MFolderIDsServiceCount.WithLabelValues(metrics.NGAlerts).Inc()
 			folders = append(folders, &folder.Folder{
 				ID:    rand.Int63(), // nolint:staticcheck
 				UID:   r.NamespaceUID,
@@ -245,22 +246,18 @@ func (f *RuleStore) GetUserVisibleNamespaces(_ context.Context, orgID int64, _ i
 	return namespacesMap, nil
 }
 
-func (f *RuleStore) GetNamespaceByTitle(_ context.Context, title string, orgID int64, _ identity.Requester) (*folder.Folder, error) {
-	folders := f.Folders[orgID]
-	for _, folder := range folders {
-		if folder.Title == title {
-			return folder, nil
-		}
-	}
-	return nil, fmt.Errorf("not found")
-}
-
-func (f *RuleStore) GetNamespaceByUID(_ context.Context, uid string, orgID int64, _ identity.Requester) (*folder.Folder, error) {
-	f.RecordedOps = append(f.RecordedOps, GenericRecordedQuery{
+func (f *RuleStore) GetNamespaceByUID(_ context.Context, uid string, orgID int64, user identity.Requester) (*folder.Folder, error) {
+	q := GenericRecordedQuery{
 		Name:   "GetNamespaceByUID",
-		Params: []any{orgID, uid},
-	})
-
+		Params: []any{orgID, uid, user},
+	}
+	defer func() {
+		f.RecordedOps = append(f.RecordedOps, q)
+	}()
+	err := f.Hook(q)
+	if err != nil {
+		return nil, err
+	}
 	folders := f.Folders[orgID]
 	for _, folder := range folders {
 		if folder.UID == uid {
@@ -285,6 +282,12 @@ func (f *RuleStore) InsertAlertRules(_ context.Context, q []models.AlertRule) ([
 	defer f.mtx.Unlock()
 	f.RecordedOps = append(f.RecordedOps, q)
 	ids := make([]models.AlertRuleKeyWithId, 0, len(q))
+	for _, rule := range q {
+		ids = append(ids, models.AlertRuleKeyWithId{
+			AlertRuleKey: rule.GetKey(),
+			ID:           rand.Int63(),
+		})
+	}
 	if err := f.Hook(q); err != nil {
 		return ids, err
 	}
@@ -298,12 +301,16 @@ func (f *RuleStore) InTransaction(ctx context.Context, fn func(c context.Context
 func (f *RuleStore) GetRuleGroupInterval(ctx context.Context, orgID int64, namespaceUID string, ruleGroup string) (int64, error) {
 	f.mtx.Lock()
 	defer f.mtx.Unlock()
+	f.RecordedOps = append(f.RecordedOps, GenericRecordedQuery{
+		Name:   "GetRuleGroupInterval",
+		Params: []any{orgID, namespaceUID, ruleGroup},
+	})
 	for _, rule := range f.Rules[orgID] {
 		if rule.RuleGroup == ruleGroup && rule.NamespaceUID == namespaceUID {
 			return rule.IntervalSeconds, nil
 		}
 	}
-	return 0, errors.New("rule group not found")
+	return 0, models.ErrAlertRuleGroupNotFound.Errorf("")
 }
 
 func (f *RuleStore) UpdateRuleGroup(ctx context.Context, orgID int64, namespaceUID string, ruleGroup string, interval int64) error {
@@ -317,7 +324,7 @@ func (f *RuleStore) UpdateRuleGroup(ctx context.Context, orgID int64, namespaceU
 	return nil
 }
 
-func (f *RuleStore) IncreaseVersionForAllRulesInNamespace(_ context.Context, orgID int64, namespaceUID string) ([]models.AlertRuleKeyWithVersionAndPauseStatus, error) {
+func (f *RuleStore) IncreaseVersionForAllRulesInNamespace(_ context.Context, orgID int64, namespaceUID string) ([]models.AlertRuleKeyWithVersion, error) {
 	f.mtx.Lock()
 	defer f.mtx.Unlock()
 
@@ -326,28 +333,21 @@ func (f *RuleStore) IncreaseVersionForAllRulesInNamespace(_ context.Context, org
 		Params: []any{orgID, namespaceUID},
 	})
 
-	var result []models.AlertRuleKeyWithVersionAndPauseStatus
+	var result []models.AlertRuleKeyWithVersion
 
 	for _, rule := range f.Rules[orgID] {
 		if rule.NamespaceUID == namespaceUID && rule.OrgID == orgID {
 			rule.Version++
 			rule.Updated = time.Now()
-			result = append(result, models.AlertRuleKeyWithVersionAndPauseStatus{
-				IsPaused: rule.IsPaused,
-				AlertRuleKeyWithVersion: models.AlertRuleKeyWithVersion{
-					Version:      rule.Version,
-					AlertRuleKey: rule.GetKey(),
-				},
+			result = append(result, models.AlertRuleKeyWithVersion{
+				Version:      rule.Version,
+				AlertRuleKey: rule.GetKey(),
 			})
 		}
 	}
 	return result, nil
 }
 
-func (f *RuleStore) Count(ctx context.Context, orgID int64) (int64, error) {
-	return 0, nil
-}
-
-func (f *RuleStore) CountInFolder(ctx context.Context, orgID int64, folderUID string, u identity.Requester) (int64, error) {
+func (f *RuleStore) CountInFolders(ctx context.Context, orgID int64, folderUIDs []string, u identity.Requester) (int64, error) {
 	return 0, nil
 }

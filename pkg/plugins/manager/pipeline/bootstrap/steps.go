@@ -3,6 +3,7 @@ package bootstrap
 import (
 	"context"
 	"path"
+	"slices"
 	"strings"
 
 	"github.com/grafana/grafana/pkg/infra/slugify"
@@ -10,7 +11,6 @@ import (
 	"github.com/grafana/grafana/pkg/plugins/config"
 	"github.com/grafana/grafana/pkg/plugins/log"
 	"github.com/grafana/grafana/pkg/plugins/manager/loader/assetpath"
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
 )
 
 // DefaultConstructor implements the default ConstructFunc used for the Construct step of the Bootstrap stage.
@@ -28,11 +28,11 @@ func DefaultConstructFunc(signatureCalculator plugins.SignatureCalculator, asset
 }
 
 // DefaultDecorateFuncs are the default DecorateFuncs used for the Decorate step of the Bootstrap stage.
-func DefaultDecorateFuncs(cfg *config.Cfg) []DecorateFunc {
+func DefaultDecorateFuncs(cfg *config.PluginManagementCfg) []DecorateFunc {
 	return []DecorateFunc{
 		AppDefaultNavURLDecorateFunc,
 		TemplateDecorateFunc,
-		AppChildDecorateFunc(cfg),
+		AppChildDecorateFunc(),
 		SkipHostEnvVarsDecorateFunc(cfg),
 	}
 }
@@ -132,37 +132,37 @@ func setDefaultNavURL(p *plugins.Plugin) {
 }
 
 // AppChildDecorateFunc is a DecorateFunc that configures child plugins of app plugins.
-func AppChildDecorateFunc(cfg *config.Cfg) DecorateFunc {
+func AppChildDecorateFunc() DecorateFunc {
 	return func(_ context.Context, p *plugins.Plugin) (*plugins.Plugin, error) {
 		if p.Parent != nil && p.Parent.IsApp() {
-			configureAppChildPlugin(cfg, p.Parent, p)
+			configureAppChildPlugin(p.Parent, p)
 		}
 		return p, nil
 	}
 }
 
-func configureAppChildPlugin(cfg *config.Cfg, parent *plugins.Plugin, child *plugins.Plugin) {
+func configureAppChildPlugin(parent *plugins.Plugin, child *plugins.Plugin) {
 	if !parent.IsApp() {
 		return
 	}
 	child.IncludedInAppID = parent.ID
 	child.BaseURL = parent.BaseURL
 
+	// TODO move this logic within assetpath package
 	appSubPath := strings.ReplaceAll(strings.Replace(child.FS.Base(), parent.FS.Base(), "", 1), "\\", "/")
 	if parent.IsCorePlugin() {
 		child.Module = path.Join("core:plugin", parent.ID, appSubPath)
 	} else {
-		child.Module = path.Join("/", cfg.GrafanaAppSubURL, "/public/plugins", parent.ID, appSubPath, "module.js")
+		child.Module = path.Join("public/plugins", parent.ID, appSubPath, "module.js")
 	}
 }
 
 // SkipHostEnvVarsDecorateFunc returns a DecorateFunc that configures the SkipHostEnvVars field of the plugin.
-// It will be set to true if the FlagPluginsSkipHostEnvVars feature flag is set, and the plugin does not have
-// forward_host_env_vars = true in its plugin settings.
-func SkipHostEnvVarsDecorateFunc(cfg *config.Cfg) DecorateFunc {
+// It will be set to true if the FlagPluginsSkipHostEnvVars feature flag is set, and the plugin is not present in the
+// ForwardHostEnvVars plugin ids list.
+func SkipHostEnvVarsDecorateFunc(cfg *config.PluginManagementCfg) DecorateFunc {
 	return func(_ context.Context, p *plugins.Plugin) (*plugins.Plugin, error) {
-		p.SkipHostEnvVars = cfg.Features.IsEnabledGlobally(featuremgmt.FlagPluginsSkipHostEnvVars) &&
-			cfg.PluginSettings[p.ID]["forward_host_env_vars"] != "true"
+		p.SkipHostEnvVars = cfg.Features.SkipHostEnvVarsEnabled && !slices.Contains(cfg.ForwardHostEnvVars, p.ID)
 		return p, nil
 	}
 }

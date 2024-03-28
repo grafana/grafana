@@ -35,14 +35,14 @@ func TestGetPluginArchive(t *testing.T) {
 		{
 			name: "Incorrect SHA returns error",
 			sha:  "1a2b3c",
-			err:  &ErrChecksumMismatch{},
+			err:  ErrChecksumMismatchBase,
 		},
 		{
 			name:     "Core plugin",
 			sha:      "69f698961b6ea651211a187874434821c4727cc22de022e3a7059116d21c75b1",
 			apiOpSys: "any",
 			apiUrl:   "https://github.com/grafana/grafana/tree/main/public/app/plugins/test",
-			err:      &ErrCorePlugin{},
+			err:      ErrCorePluginBase,
 		},
 		{
 			name:   "Decoupled core plugin",
@@ -99,7 +99,7 @@ func TestGetPluginArchive(t *testing.T) {
 			co := NewCompatOpts(grafanaVersion, opSys, arch)
 			archive, err := m.GetPluginArchive(context.Background(), pluginID, version, co)
 			if tc.err != nil {
-				require.ErrorAs(t, err, tc.err)
+				require.ErrorIs(t, err, tc.err)
 				return
 			}
 			require.NoError(t, err)

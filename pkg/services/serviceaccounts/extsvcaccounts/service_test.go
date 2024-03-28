@@ -4,6 +4,9 @@ import (
 	"context"
 	"testing"
 
+	"github.com/stretchr/testify/mock"
+	"github.com/stretchr/testify/require"
+
 	"github.com/grafana/grafana/pkg/infra/localcache"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
@@ -18,8 +21,6 @@ import (
 	sa "github.com/grafana/grafana/pkg/services/serviceaccounts"
 	"github.com/grafana/grafana/pkg/services/serviceaccounts/tests"
 	"github.com/grafana/grafana/pkg/setting"
-	"github.com/stretchr/testify/mock"
-	"github.com/stretchr/testify/require"
 )
 
 type TestEnv struct {
@@ -84,7 +85,7 @@ func TestExtSvcAccountsService_ManageExtSvcAccount(t *testing.T) {
 					mock.Anything,
 					mock.MatchedBy(func(cmd ac.SaveExternalServiceRoleCommand) bool {
 						return cmd.ServiceAccountID == extSvcAccID && cmd.ExternalServiceID == extSvcSlug &&
-							cmd.OrgID == int64(ac.GlobalOrgID) && len(cmd.Permissions) == 1 &&
+							cmd.AssignmentOrgID == extSvcOrgID && len(cmd.Permissions) == 1 &&
 							cmd.Permissions[0] == extSvcPerms[0]
 					})).
 					Return(nil)
@@ -133,7 +134,7 @@ func TestExtSvcAccountsService_ManageExtSvcAccount(t *testing.T) {
 					mock.Anything,
 					mock.MatchedBy(func(cmd ac.SaveExternalServiceRoleCommand) bool {
 						return cmd.ServiceAccountID == extSvcAccount.Id && cmd.ExternalServiceID == extSvcSlug &&
-							cmd.OrgID == int64(ac.GlobalOrgID) && len(cmd.Permissions) == 1 &&
+							cmd.AssignmentOrgID == extSvcOrgID && len(cmd.Permissions) == 1 &&
 							cmd.Permissions[0] == extSvcPerms[0]
 					})).
 					Return(nil)
@@ -158,7 +159,7 @@ func TestExtSvcAccountsService_ManageExtSvcAccount(t *testing.T) {
 					mock.Anything,
 					mock.MatchedBy(func(cmd ac.SaveExternalServiceRoleCommand) bool {
 						return cmd.ServiceAccountID == int64(11) && cmd.ExternalServiceID == extSvcSlug &&
-							cmd.OrgID == int64(ac.GlobalOrgID) && len(cmd.Permissions) == 1 &&
+							cmd.AssignmentOrgID == extSvcOrgID && len(cmd.Permissions) == 1 &&
 							cmd.Permissions[0] == extSvcPerms[0]
 					})).
 					Return(nil)
@@ -228,7 +229,7 @@ func TestExtSvcAccountsService_SaveExternalService(t *testing.T) {
 					mock.Anything,
 					mock.MatchedBy(func(cmd ac.SaveExternalServiceRoleCommand) bool {
 						return cmd.ServiceAccountID == extSvcAccID && cmd.ExternalServiceID == extSvcSlug &&
-							cmd.OrgID == int64(ac.GlobalOrgID) && len(cmd.Permissions) == 1 &&
+							cmd.AssignmentOrgID == tmpOrgID && len(cmd.Permissions) == 1 &&
 							cmd.Permissions[0] == extSvcPerms[0]
 					})).
 					Return(nil)
@@ -291,14 +292,14 @@ func TestExtSvcAccountsService_SaveExternalService(t *testing.T) {
 						return cmd.Name == sa.ExtSvcPrefix+extSvcSlug && *cmd.Role == roletype.RoleNone
 					})).
 					Return(extSvcAccount, nil)
-				env.SaSvc.On("EnableServiceAccount", mock.Anything, extsvcauth.TmpOrgID, extSvcAccID, true).Return(nil)
+				env.SaSvc.On("EnableServiceAccount", mock.Anything, tmpOrgID, extSvcAccID, true).Return(nil)
 				// Api Key was added without problem
 				env.SaSvc.On("AddServiceAccountToken", mock.Anything, mock.Anything, mock.Anything).Return(&apikey.APIKey{}, nil)
 				env.AcStore.On("SaveExternalServiceRole",
 					mock.Anything,
 					mock.MatchedBy(func(cmd ac.SaveExternalServiceRoleCommand) bool {
 						return cmd.ServiceAccountID == extSvcAccount.Id && cmd.ExternalServiceID == extSvcSlug &&
-							cmd.OrgID == int64(ac.GlobalOrgID) && len(cmd.Permissions) == 1 &&
+							cmd.AssignmentOrgID == tmpOrgID && len(cmd.Permissions) == 1 &&
 							cmd.Permissions[0] == extSvcPerms[0]
 					})).
 					Return(nil)
@@ -327,7 +328,7 @@ func TestExtSvcAccountsService_SaveExternalService(t *testing.T) {
 					mock.Anything,
 					mock.MatchedBy(func(cmd ac.SaveExternalServiceRoleCommand) bool {
 						return cmd.ServiceAccountID == int64(11) && cmd.ExternalServiceID == extSvcSlug &&
-							cmd.OrgID == int64(ac.GlobalOrgID) && len(cmd.Permissions) == 1 &&
+							cmd.AssignmentOrgID == tmpOrgID && len(cmd.Permissions) == 1 &&
 							cmd.Permissions[0] == extSvcPerms[0]
 					})).
 					Return(nil)
@@ -447,13 +448,13 @@ func TestExtSvcAccountsService_GetExternalServiceNames(t *testing.T) {
 	sa1 := sa.ServiceAccountDTO{
 		Id:    1,
 		Name:  sa.ExtSvcPrefix + "sa-svc-1",
-		Login: sa.ServiceAccountPrefix + sa.ExtSvcPrefix + "sa-svc-1",
+		Login: sa.ExtSvcLoginPrefix + "sa-svc-1",
 		OrgId: extsvcauth.TmpOrgID,
 	}
 	sa2 := sa.ServiceAccountDTO{
 		Id:    2,
 		Name:  sa.ExtSvcPrefix + "sa-svc-2",
-		Login: sa.ServiceAccountPrefix + sa.ExtSvcPrefix + "sa-svc-2",
+		Login: sa.ExtSvcLoginPrefix + "sa-svc-2",
 		OrgId: extsvcauth.TmpOrgID,
 	}
 	tests := []struct {

@@ -1,4 +1,3 @@
-import uFuzzy from '@leeoniya/ufuzzy';
 import { RefObject, useCallback, useEffect, useMemo, useState } from 'react';
 import color from 'tinycolor2';
 
@@ -22,8 +21,6 @@ import { ClickedItemData, ColorScheme, ColorSchemeDiff, TextAlign } from '../typ
 import { getBarColorByDiff, getBarColorByPackage, getBarColorByValue } from './colors';
 import { CollapseConfig, CollapsedMap, FlameGraphDataContainer, LevelItem } from './dataTransform';
 
-const ufuzzy = new uFuzzy();
-
 type RenderOptions = {
   canvasRef: RefObject<HTMLCanvasElement>;
   data: FlameGraphDataContainer;
@@ -38,7 +35,7 @@ type RenderOptions = {
   rangeMin: number;
   rangeMax: number;
 
-  search: string;
+  matchedLabels: Set<string> | undefined;
   textAlign: TextAlign;
 
   // Total ticks that will be used for sizing
@@ -63,7 +60,7 @@ export function useFlameRender(options: RenderOptions) {
     wrapperWidth,
     rangeMin,
     rangeMax,
-    search,
+    matchedLabels,
     textAlign,
     totalViewTicks,
     totalColorTicks,
@@ -72,7 +69,6 @@ export function useFlameRender(options: RenderOptions) {
     focusedItemData,
     collapsedMap,
   } = options;
-  const foundLabels = useFoundLabels(search, data);
   const ctx = useSetupCanvas(canvasRef, wrapperWidth, depth);
   const theme = useTheme2();
 
@@ -92,7 +88,7 @@ export function useFlameRender(options: RenderOptions) {
     mutedColor,
     rangeMin,
     rangeMax,
-    foundLabels,
+    matchedLabels,
     focusedItemData ? focusedItemData.item.level : 0
   );
 
@@ -338,28 +334,6 @@ export function walkTree(
   }
 }
 
-/**
- * Based on the search string it does a fuzzy search over all the unique labels so we can highlight them later.
- */
-function useFoundLabels(search: string | undefined, data: FlameGraphDataContainer): Set<string> | undefined {
-  return useMemo(() => {
-    if (search) {
-      const foundLabels = new Set<string>();
-      let idxs = ufuzzy.filter(data.getUniqueLabels(), search);
-
-      if (idxs) {
-        for (let idx of idxs) {
-          foundLabels.add(data.getUniqueLabels()[idx]);
-        }
-      }
-
-      return foundLabels;
-    }
-    // In this case undefined means there was no search so no attempt to highlighting anything should be made.
-    return undefined;
-  }, [search, data]);
-}
-
 function useColorFunction(
   totalTicks: number,
   totalTicksRight: number | undefined,
@@ -368,13 +342,13 @@ function useColorFunction(
   mutedColor: string,
   rangeMin: number,
   rangeMax: number,
-  foundNames: Set<string> | undefined,
+  matchedLabels: Set<string> | undefined,
   topLevel: number
 ) {
   return useCallback(
     function getColor(item: LevelItem, label: string, muted: boolean) {
       // If collapsed and no search we can quickly return the muted color
-      if (muted && !foundNames) {
+      if (muted && !matchedLabels) {
         // Collapsed are always grayed
         return mutedColor;
       }
@@ -384,18 +358,18 @@ function useColorFunction(
         (colorScheme === ColorSchemeDiff.Default || colorScheme === ColorSchemeDiff.DiffColorBlind)
           ? getBarColorByDiff(item.value, item.valueRight!, totalTicks, totalTicksRight!, colorScheme)
           : colorScheme === ColorScheme.ValueBased
-          ? getBarColorByValue(item.value, totalTicks, rangeMin, rangeMax)
-          : getBarColorByPackage(label, theme);
+            ? getBarColorByValue(item.value, totalTicks, rangeMin, rangeMax)
+            : getBarColorByPackage(label, theme);
 
-      if (foundNames) {
+      if (matchedLabels) {
         // Means we are searching, we use color for matches and gray the rest
-        return foundNames.has(label) ? barColor.toHslString() : mutedColor;
+        return matchedLabels.has(label) ? barColor.toHslString() : mutedColor;
       }
 
       // Mute if we are above the focused symbol
       return item.level > topLevel - 1 ? barColor.toHslString() : barColor.lighten(15).toHslString();
     },
-    [totalTicks, totalTicksRight, colorScheme, theme, rangeMin, rangeMax, foundNames, topLevel, mutedColor]
+    [totalTicks, totalTicksRight, colorScheme, theme, rangeMin, rangeMax, matchedLabels, topLevel, mutedColor]
   );
 }
 

@@ -12,6 +12,7 @@ labels:
     - oss
 menuTitle: Modify dashboard settings
 title: Modify dashboard settings
+description: Manage and edit your dashboard settings
 weight: 8
 ---
 

@@ -13,15 +13,21 @@ import {
   TimeZone,
 } from '@grafana/data';
 import { FlameGraph } from '@grafana/flamegraph';
-import { config } from '@grafana/runtime';
+import { TraceToProfilesOptions } from '@grafana/o11y-ds-frontend';
+import { config, DataSourceWithBackend, getTemplateSrv } from '@grafana/runtime';
 import { useStyles2 } from '@grafana/ui';
-import { TraceToProfilesOptions } from 'app/core/components/TraceToProfiles/TraceToProfilesSettings';
 import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
 import { PyroscopeQueryType } from 'app/plugins/datasource/grafana-pyroscope-datasource/dataquery.gen';
-import { PyroscopeDataSource } from 'app/plugins/datasource/grafana-pyroscope-datasource/datasource';
 import { Query } from 'app/plugins/datasource/grafana-pyroscope-datasource/types';
 
-import { pyroscopeProfileIdTagKey } from '../../../createSpanLink';
+import {
+  defaultProfilingKeys,
+  getFormattedTags,
+  pyroscopeProfileIdTagKey,
+  scopedVarsFromSpan,
+  scopedVarsFromTags,
+  scopedVarsFromTrace,
+} from '../../../createSpanLink';
 import { TraceSpan } from '../../types/trace';
 
 import { TraceFlameGraphs } from '.';
@@ -33,10 +39,21 @@ export type SpanFlameGraphProps = {
   traceFlameGraphs: TraceFlameGraphs;
   setTraceFlameGraphs: (flameGraphs: TraceFlameGraphs) => void;
   setRedrawListView: (redraw: {}) => void;
+  traceDuration: number;
+  traceName: string;
 };
 
 export default function SpanFlameGraph(props: SpanFlameGraphProps) {
-  const { span, traceToProfilesOptions, timeZone, traceFlameGraphs, setTraceFlameGraphs, setRedrawListView } = props;
+  const {
+    span,
+    traceToProfilesOptions,
+    timeZone,
+    traceFlameGraphs,
+    setTraceFlameGraphs,
+    setRedrawListView,
+    traceDuration,
+    traceName,
+  } = props;
   const [sizeRef, { height: containerHeight }] = useMeasure<HTMLDivElement>();
   const styles = useStyles2(getStyles);
 
@@ -61,7 +78,7 @@ export default function SpanFlameGraph(props: SpanFlameGraphProps) {
 
   const getFlameGraphData = async (request: DataQueryRequest<Query>, datasourceUid: string) => {
     const ds = await getDatasourceSrv().get(datasourceUid);
-    if (ds instanceof PyroscopeDataSource) {
+    if (ds instanceof DataSourceWithBackend) {
       const result = await lastValueFrom(ds.query(request));
       const frame = result.data.find((x: DataFrame) => {
         return x.name === 'response';
@@ -75,8 +92,25 @@ export default function SpanFlameGraph(props: SpanFlameGraphProps) {
   const queryFlameGraph = useCallback(
     async (
       profilesDataSourceSettings: DataSourceInstanceSettings<DataSourceJsonData>,
-      traceToProfilesOptions: TraceToProfilesOptions
+      traceToProfilesOptions: TraceToProfilesOptions,
+      span: TraceSpan
     ) => {
+      let labelSelector = '{}';
+      if (traceToProfilesOptions.customQuery && traceToProfilesOptions.query) {
+        const scopedVars = {
+          ...scopedVarsFromTrace(traceDuration, traceName, span.traceID),
+          ...scopedVarsFromSpan(span),
+          ...scopedVarsFromTags(span, traceToProfilesOptions),
+        };
+        labelSelector = getTemplateSrv().replace(traceToProfilesOptions.query, scopedVars);
+      } else {
+        const tags =
+          traceToProfilesOptions.tags && traceToProfilesOptions.tags.length > 0
+            ? traceToProfilesOptions.tags
+            : defaultProfilingKeys;
+        labelSelector = `{${getFormattedTags(span, tags)}}`;
+      }
+
       const request = {
         requestId: 'span-flamegraph-requestId',
         interval: '2s',
@@ -88,7 +122,7 @@ export default function SpanFlameGraph(props: SpanFlameGraphProps) {
         startTime: span.startTime,
         targets: [
           {
-            labelSelector: '{}',
+            labelSelector,
             groupBy: [],
             profileTypeId: traceToProfilesOptions.profileTypeId ?? '',
             queryType: 'profile' as PyroscopeQueryType,
@@ -107,28 +141,26 @@ export default function SpanFlameGraph(props: SpanFlameGraphProps) {
         setTraceFlameGraphs({ ...traceFlameGraphs, [profileTagValue]: flameGraph });
       }
     },
-    [getTimeRangeForProfile, profileTagValue, setTraceFlameGraphs, span.startTime, timeZone, traceFlameGraphs]
+    [getTimeRangeForProfile, profileTagValue, setTraceFlameGraphs, timeZone, traceDuration, traceFlameGraphs, traceName]
   );
 
   useEffect(() => {
-    if (config.featureToggles.traceToProfiles && !Object.keys(traceFlameGraphs).includes(profileTagValue)) {
+    if (!Object.keys(traceFlameGraphs).includes(profileTagValue)) {
       let profilesDataSourceSettings: DataSourceInstanceSettings<DataSourceJsonData> | undefined;
       if (traceToProfilesOptions && traceToProfilesOptions?.datasourceUid) {
         profilesDataSourceSettings = getDatasourceSrv().getInstanceSettings(traceToProfilesOptions.datasourceUid);
       }
       if (traceToProfilesOptions && profilesDataSourceSettings) {
-        queryFlameGraph(profilesDataSourceSettings, traceToProfilesOptions);
+        queryFlameGraph(profilesDataSourceSettings, traceToProfilesOptions, span);
       }
     }
   }, [
     setTraceFlameGraphs,
-    span.tags,
+    span,
     traceFlameGraphs,
     traceToProfilesOptions,
     getTimeRangeForProfile,
-    span.startTime,
     timeZone,
-    span.spanID,
     queryFlameGraph,
     profileTagValue,
   ]);

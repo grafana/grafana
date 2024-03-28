@@ -71,12 +71,24 @@ export function getAppRoutes(): RouteDescriptor[] {
       ),
     },
     {
-      path: '/d-solo/:uid/:slug',
+      // We currently have no core usage of the embedded dashboard so is to have a page for e2e to test
+      path: '/dashboards/embedding-test',
+      component: SafeDynamicImport(
+        () =>
+          import(
+            /* webpackChunkName: "DashboardPage"*/ 'app/features/dashboard-scene/embedding/EmbeddedDashboardTestPage'
+          )
+      ),
+    },
+    {
+      path: '/d-solo/:uid/:slug?',
       pageClass: 'dashboard-solo',
       routeName: DashboardRoutes.Normal,
       chromeless: true,
-      component: SafeDynamicImport(
-        () => import(/* webpackChunkName: "SoloPanelPage" */ '../features/dashboard/containers/SoloPanelPage')
+      component: SafeDynamicImport(() =>
+        config.featureToggles.dashboardSceneSolo
+          ? import(/* webpackChunkName: "SoloPanelPage" */ '../features/dashboard-scene/solo/SoloPanelPage')
+          : import(/* webpackChunkName: "SoloPanelPageOld" */ '../features/dashboard/containers/SoloPanelPage')
       ),
     },
     // This route handles embedding of snapshot/scripted dashboard panels
@@ -90,17 +102,7 @@ export function getAppRoutes(): RouteDescriptor[] {
       ),
     },
     {
-      path: '/d-solo/:uid',
-      pageClass: 'dashboard-solo',
-      routeName: DashboardRoutes.Normal,
-      chromeless: true,
-      component: SafeDynamicImport(
-        () => import(/* webpackChunkName: "SoloPanelPage" */ '../features/dashboard/containers/SoloPanelPage')
-      ),
-    },
-    {
       path: '/dashboard/import',
-      roles: () => contextSrv.evaluatePermission([AccessControlAction.DashboardsCreate]),
       component: SafeDynamicImport(
         () => import(/* webpackChunkName: "DashboardImport"*/ 'app/features/manage-dashboards/DashboardImportPage')
       ),
@@ -172,8 +174,20 @@ export function getAppRoutes(): RouteDescriptor[] {
       component: () => <NavLandingPage navId="alerts-and-incidents" />,
     },
     {
+      path: '/testing-and-synthetics',
+      component: () => <NavLandingPage navId="testing-and-synthetics" />,
+    },
+    {
       path: '/monitoring',
       component: () => <NavLandingPage navId="monitoring" />,
+    },
+    {
+      path: '/infrastructure',
+      component: () => <NavLandingPage navId="infrastructure" />,
+    },
+    {
+      path: '/frontend',
+      component: () => <NavLandingPage navId="frontend" />,
     },
     {
       path: '/admin/general',
@@ -269,11 +283,25 @@ export function getAppRoutes(): RouteDescriptor[] {
       path: '/admin/authentication',
       roles: () => contextSrv.evaluatePermission([AccessControlAction.SettingsWrite]),
       component:
-        config.licenseInfo.enabledFeatures?.saml || config.ldapEnabled
+        config.licenseInfo.enabledFeatures?.saml || config.ldapEnabled || config.featureToggles.ssoSettingsApi
           ? SafeDynamicImport(
-              () => import(/* webpackChunkName: "AdminAuthentication" */ 'app/features/auth-config/AuthConfigPage')
+              () =>
+                import(/* webpackChunkName: "AdminAuthentication" */ '../features/auth-config/AuthProvidersListPage')
             )
           : () => <Redirect to="/admin" />,
+    },
+    {
+      path: '/admin/authentication/ldap',
+      component: LdapPage,
+    },
+    {
+      path: '/admin/authentication/:provider',
+      roles: () => contextSrv.evaluatePermission([AccessControlAction.SettingsWrite]),
+      component: config.featureToggles.ssoSettingsApi
+        ? SafeDynamicImport(
+            () => import(/* webpackChunkName: "AdminAuthentication" */ '../features/auth-config/ProviderConfigPage')
+          )
+        : () => <Redirect to="/admin" />,
     },
     {
       path: '/admin/settings',
@@ -334,9 +362,12 @@ export function getAppRoutes(): RouteDescriptor[] {
         () => import(/* webpackChunkName: "ServerStats" */ 'app/features/admin/ServerStats')
       ),
     },
-    {
-      path: '/admin/authentication/ldap',
-      component: LdapPage,
+    config.featureToggles.onPremToCloudMigrations && {
+      path: '/admin/migrate-to-cloud',
+      roles: () => ['Admin'],
+      component: SafeDynamicImport(
+        () => import(/* webpackChunkName: "MigrateToCloud" */ 'app/features/migrate-to-cloud/MigrateToCloud')
+      ),
     },
     // LOGIN / SIGNUP
     {
@@ -460,14 +491,13 @@ export function getAppRoutes(): RouteDescriptor[] {
       ),
     },
     {
-      path: '/data-trails',
+      path: '/explore/metrics',
       chromeless: false,
       exact: false,
       component: SafeDynamicImport(
         () => import(/* webpackChunkName: "DataTrailsPage"*/ 'app/features/trails/DataTrailsPage')
       ),
     },
-    ...getDynamicDashboardRoutes(),
     ...getPluginCatalogRoutes(),
     ...getSupportBundleRoutes(),
     ...getAlertingRoutes(),
@@ -499,41 +529,6 @@ export function getSupportBundleRoutes(cfg = config): RouteDescriptor[] {
       component: SafeDynamicImport(
         () => import(/* webpackChunkName: "SupportBundlesCreate" */ 'app/features/support-bundles/SupportBundlesCreate')
       ),
-    },
-  ];
-}
-
-export function getDynamicDashboardRoutes(cfg = config): RouteDescriptor[] {
-  if (!cfg.featureToggles.scenes) {
-    return [];
-  }
-  return [
-    {
-      path: '/scenes',
-      component: SafeDynamicImport(() => import(/* webpackChunkName: "scenes"*/ 'app/features/scenes/SceneListPage')),
-    },
-    {
-      path: '/scenes/dashboard/:uid',
-      component: SafeDynamicImport(
-        () => import(/* webpackChunkName: "scenes"*/ 'app/features/dashboard-scene/pages/DashboardScenePage')
-      ),
-    },
-    {
-      path: '/scenes/dashboard/:uid/panel-edit/:panelId',
-      component: SafeDynamicImport(
-        () => import(/* webpackChunkName: "scenes"*/ 'app/features/dashboard-scene/pages/PanelEditPage')
-      ),
-    },
-    {
-      path: '/scenes/grafana-monitoring',
-      exact: false,
-      component: SafeDynamicImport(
-        () => import(/* webpackChunkName: "scenes"*/ 'app/features/scenes/apps/GrafanaMonitoringApp')
-      ),
-    },
-    {
-      path: '/scenes/:name',
-      component: SafeDynamicImport(() => import(/* webpackChunkName: "scenes"*/ 'app/features/scenes/ScenePage')),
     },
   ];
 }

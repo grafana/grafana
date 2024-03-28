@@ -1,7 +1,5 @@
+import { CustomVariableModel } from '@grafana/data';
 import { getBackendSrv, setBackendSrv } from '@grafana/runtime';
-import { getTimeSrv } from 'app/features/dashboard/services/TimeSrv';
-import { TemplateSrv } from 'app/features/templating/template_srv';
-import { CustomVariableModel } from 'app/features/variables/types';
 
 import { ResourcesAPI } from '../resources/ResourcesAPI';
 
@@ -17,9 +15,8 @@ export function setupMockedResourcesAPI({
   variables?: CustomVariableModel[];
   mockGetVariableName?: boolean;
 } = {}) {
-  let templateService = variables ? setupMockedTemplateService(variables) : new TemplateSrv();
+  let templateService = setupMockedTemplateService(variables);
 
-  const timeSrv = getTimeSrv();
   const api = new ResourcesAPI(CloudWatchSettings, templateService);
   let resourceRequestMock = getMock ? getMock : jest.fn().mockReturnValue(response);
   setBackendSrv({
@@ -27,5 +24,5 @@ export function setupMockedResourcesAPI({
     get: resourceRequestMock,
   });
 
-  return { api, resourceRequestMock, templateService, timeSrv };
+  return { api, resourceRequestMock, templateService };
 }

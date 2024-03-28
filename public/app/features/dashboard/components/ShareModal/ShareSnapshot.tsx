@@ -1,18 +1,17 @@
 import React, { PureComponent } from 'react';
 
 import { isEmptyObject, SelectableValue } from '@grafana/data';
-import { getBackendSrv, reportInteraction } from '@grafana/runtime';
+import { getBackendSrv } from '@grafana/runtime';
 import { Button, ClipboardButton, Field, Input, LinkButton, Modal, Select, Spinner } from '@grafana/ui';
 import { t, Trans } from 'app/core/internationalization';
 import { getTimeSrv } from 'app/features/dashboard/services/TimeSrv';
 import { DashboardModel, PanelModel } from 'app/features/dashboard/state';
+import { DashboardInteractions } from 'app/features/dashboard-scene/utils/interactions';
 
 import { VariableRefresh } from '../../../variables/types';
 import { getDashboardSnapshotSrv } from '../../services/SnapshotSrv';
 
 import { ShareModalTabProps } from './types';
-
-const snapshotApiUrl = '/api/snapshots';
 
 interface Props extends ShareModalTabProps {}
 
@@ -38,10 +37,6 @@ export class ShareSnapshot extends PureComponent<Props, State> {
     this.dashboard = props.dashboard;
     this.expireOptions = [
       {
-        label: t('share-modal.snapshot.expire-never', `Never`),
-        value: 0,
-      },
-      {
         label: t('share-modal.snapshot.expire-hour', `1 Hour`),
         value: 60 * 60,
       },
@@ -50,15 +45,19 @@ export class ShareSnapshot extends PureComponent<Props, State> {
         value: 60 * 60 * 24,
       },
       {
-        label: t('share-modal.snapshot.expire-week', `7 Days`),
+        label: t('share-modal.snapshot.expire-week', `1 Week`),
         value: 60 * 60 * 24 * 7,
+      },
+      {
+        label: t('share-modal.snapshot.expire-never', `Never`),
+        value: 0,
       },
     ];
     this.state = {
       isLoading: false,
       step: 1,
-      selectedExpireOption: this.expireOptions[0],
-      snapshotExpires: this.expireOptions[0].value,
+      selectedExpireOption: this.expireOptions[2],
+      snapshotExpires: this.expireOptions[2].value,
       snapshotName: props.dashboard.title,
       timeoutSeconds: 4,
       snapshotUrl: '',
@@ -108,7 +107,7 @@ export class ShareSnapshot extends PureComponent<Props, State> {
     };
 
     try {
-      const results: { deleteUrl: string; url: string } = await getBackendSrv().post(snapshotApiUrl, cmdData);
+      const results = await getDashboardSnapshotSrv().create(cmdData);
       this.setState({
         deleteUrl: results.deleteUrl,
         snapshotUrl: results.url,
@@ -116,12 +115,12 @@ export class ShareSnapshot extends PureComponent<Props, State> {
       });
     } finally {
       if (external) {
-        reportInteraction('dashboards_sharing_snapshot_publish_clicked', {
+        DashboardInteractions.publishSnapshotClicked({
           expires: snapshotExpires,
           timeout: timeoutSeconds,
         });
       } else {
-        reportInteraction('dashboards_sharing_snapshot_local_clicked', {
+        DashboardInteractions.publishSnapshotLocalClicked({
           expires: snapshotExpires,
           timeout: timeoutSeconds,
         });
@@ -278,7 +277,7 @@ export class ShareSnapshot extends PureComponent<Props, State> {
             </Button>
           )}
           <Button variant="primary" disabled={isLoading} onClick={this.createSnapshot()}>
-            <Trans i18nKey="share-modal.snapshot.local-button">Local Snapshot</Trans>
+            <Trans i18nKey="share-modal.snapshot.local-button">Publish Snapshot</Trans>
           </Button>
         </Modal.ButtonRow>
       </>

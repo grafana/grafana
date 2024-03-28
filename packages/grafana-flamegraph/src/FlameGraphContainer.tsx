@@ -1,4 +1,5 @@
 import { css } from '@emotion/css';
+import uFuzzy from '@leeoniya/ufuzzy';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useMeasure } from 'react-use';
 
@@ -6,11 +7,14 @@ import { DataFrame, GrafanaTheme2 } from '@grafana/data';
 import { ThemeContext } from '@grafana/ui';
 
 import FlameGraph from './FlameGraph/FlameGraph';
+import { GetExtraContextMenuButtonsFunction } from './FlameGraph/FlameGraphContextMenu';
 import { FlameGraphDataContainer } from './FlameGraph/dataTransform';
 import FlameGraphHeader from './FlameGraphHeader';
 import FlameGraphTopTableContainer from './TopTable/FlameGraphTopTableContainer';
 import { MIN_WIDTH_TO_SHOW_BOTH_TOPTABLE_AND_FLAMEGRAPH } from './constants';
 import { ClickedItemData, ColorScheme, ColorSchemeDiff, SelectedView, TextAlign } from './types';
+
+const ufuzzy = new uFuzzy();
 
 export type Props = {
   /**
@@ -50,6 +54,11 @@ export type Props = {
   extraHeaderElements?: React.ReactNode;
 
   /**
+   * Extra buttons that will be shown in the context menu when user clicks on a Node.
+   */
+  getExtraContextMenuButtons?: GetExtraContextMenuButtonsFunction;
+
+  /**
    * If true the flamegraph will be rendered on top of the table.
    */
   vertical?: boolean;
@@ -77,6 +86,7 @@ const FlameGraphContainer = ({
   vertical,
   showFlameGraphOnly,
   disableCollapsing,
+  getExtraContextMenuButtons,
 }: Props) => {
   const [focusedItemData, setFocusedItemData] = useState<ClickedItemData>();
 
@@ -98,7 +108,8 @@ const FlameGraphContainer = ({
     return new FlameGraphDataContainer(data, { collapsing: !disableCollapsing }, theme);
   }, [data, theme, disableCollapsing]);
   const [colorScheme, setColorScheme] = useColorScheme(dataContainer);
-  const styles = getStyles(theme, vertical);
+  const styles = getStyles(theme);
+  const matchedLabels = useLabelSearch(search, dataContainer);
 
   // If user resizes window with both as the selected view
   useEffect(() => {
@@ -144,6 +155,69 @@ const FlameGraphContainer = ({
     return null;
   }
 
+  const flameGraph = (
+    <FlameGraph
+      data={dataContainer}
+      rangeMin={rangeMin}
+      rangeMax={rangeMax}
+      matchedLabels={matchedLabels}
+      setRangeMin={setRangeMin}
+      setRangeMax={setRangeMax}
+      onItemFocused={(data) => setFocusedItemData(data)}
+      focusedItemData={focusedItemData}
+      textAlign={textAlign}
+      sandwichItem={sandwichItem}
+      onSandwich={(label: string) => {
+        resetFocus();
+        setSandwichItem(label);
+      }}
+      onFocusPillClick={resetFocus}
+      onSandwichPillClick={resetSandwich}
+      colorScheme={colorScheme}
+      showFlameGraphOnly={showFlameGraphOnly}
+      collapsing={!disableCollapsing}
+      getExtraContextMenuButtons={getExtraContextMenuButtons}
+      selectedView={selectedView}
+      search={search}
+    />
+  );
+
+  const table = (
+    <FlameGraphTopTableContainer
+      data={dataContainer}
+      onSymbolClick={onSymbolClick}
+      search={search}
+      matchedLabels={matchedLabels}
+      sandwichItem={sandwichItem}
+      onSandwich={setSandwichItem}
+      onSearch={setSearch}
+      onTableSort={onTableSort}
+    />
+  );
+
+  let body;
+  if (showFlameGraphOnly || selectedView === SelectedView.FlameGraph) {
+    body = flameGraph;
+  } else if (selectedView === SelectedView.TopTable) {
+    body = <div className={styles.tableContainer}>{table}</div>;
+  } else if (selectedView === SelectedView.Both) {
+    if (vertical) {
+      body = (
+        <div>
+          <div className={styles.verticalGraphContainer}>{flameGraph}</div>
+          <div className={styles.verticalTableContainer}>{table}</div>
+        </div>
+      );
+    } else {
+      body = (
+        <div className={styles.horizontalContainer}>
+          <div className={styles.horizontalTableContainer}>{table}</div>
+          <div className={styles.horizontalGraphContainer}>{flameGraph}</div>
+        </div>
+      );
+    }
+  }
+
   return (
     // We add the theme context to bridge the gap if this is rendered in non grafana environment where the context
     // isn't already provided.
@@ -174,49 +248,11 @@ const FlameGraphContainer = ({
             stickyHeader={Boolean(stickyHeader)}
             extraHeaderElements={extraHeaderElements}
             vertical={vertical}
-            isDiffMode={Boolean(dataContainer.isDiffFlamegraph())}
+            isDiffMode={dataContainer.isDiffFlamegraph()}
           />
         )}
 
-        <div className={styles.body}>
-          {!showFlameGraphOnly && selectedView !== SelectedView.FlameGraph && (
-            <FlameGraphTopTableContainer
-              data={dataContainer}
-              onSymbolClick={onSymbolClick}
-              height={selectedView === SelectedView.TopTable || vertical ? 600 : undefined}
-              search={search}
-              sandwichItem={sandwichItem}
-              onSandwich={setSandwichItem}
-              onSearch={setSearch}
-              onTableSort={onTableSort}
-              vertical={vertical}
-            />
-          )}
-
-          {selectedView !== SelectedView.TopTable && (
-            <FlameGraph
-              data={dataContainer}
-              rangeMin={rangeMin}
-              rangeMax={rangeMax}
-              search={search}
-              setRangeMin={setRangeMin}
-              setRangeMax={setRangeMax}
-              onItemFocused={(data) => setFocusedItemData(data)}
-              focusedItemData={focusedItemData}
-              textAlign={textAlign}
-              sandwichItem={sandwichItem}
-              onSandwich={(label: string) => {
-                resetFocus();
-                setSandwichItem(label);
-              }}
-              onFocusPillClick={resetFocus}
-              onSandwichPillClick={resetSandwich}
-              colorScheme={colorScheme}
-              showFlameGraphOnly={showFlameGraphOnly}
-              collapsing={!disableCollapsing}
-            />
-          )}
-        </div>
+        <div className={styles.body}>{body}</div>
       </div>
     </ThemeContext.Provider>
   );
@@ -234,12 +270,38 @@ function useColorScheme(dataContainer: FlameGraphDataContainer | undefined) {
   return [colorScheme, setColorScheme] as const;
 }
 
-function getStyles(theme: GrafanaTheme2, vertical?: boolean) {
+/**
+ * Based on the search string it does a fuzzy search over all the unique labels, so we can highlight them later.
+ */
+function useLabelSearch(
+  search: string | undefined,
+  data: FlameGraphDataContainer | undefined
+): Set<string> | undefined {
+  return useMemo(() => {
+    if (search && data) {
+      const foundLabels = new Set<string>();
+      let idxs = ufuzzy.filter(data.getUniqueLabels(), search);
+
+      if (idxs) {
+        for (let idx of idxs) {
+          foundLabels.add(data.getUniqueLabels()[idx]);
+        }
+      }
+
+      return foundLabels;
+    }
+    // In this case undefined means there was no search so no attempt to highlighting anything should be made.
+    return undefined;
+  }, [search, data]);
+}
+
+function getStyles(theme: GrafanaTheme2) {
   return {
     container: css({
       label: 'container',
+      overflow: 'auto',
       height: '100%',
-      display: vertical ? 'block' : 'flex',
+      display: 'flex',
       flex: '1 1 0',
       flexDirection: 'column',
       minHeight: 0,
@@ -247,12 +309,39 @@ function getStyles(theme: GrafanaTheme2, vertical?: boolean) {
     }),
     body: css({
       label: 'body',
-      display: 'flex',
       flexGrow: 1,
+    }),
+
+    tableContainer: css({
+      // This is not ideal for dashboard panel where it creates a double scroll. In a panel it should be 100% but then
+      // in explore we need a specific height.
+      height: 800,
+    }),
+
+    horizontalContainer: css({
+      label: 'horizontalContainer',
+      display: 'flex',
       minHeight: 0,
-      height: vertical ? undefined : '100vh',
-      flexDirection: vertical ? 'column-reverse' : 'row',
+      flexDirection: 'row',
       columnGap: theme.spacing(1),
+      width: '100%',
+    }),
+
+    horizontalGraphContainer: css({
+      flexBasis: '50%',
+    }),
+
+    horizontalTableContainer: css({
+      flexBasis: '50%',
+      maxHeight: 800,
+    }),
+
+    verticalGraphContainer: css({
+      marginBottom: theme.spacing(1),
+    }),
+
+    verticalTableContainer: css({
+      height: 800,
     }),
   };
 }

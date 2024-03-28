@@ -18,12 +18,14 @@ import {
   PanelData,
   TimeRange,
 } from '@grafana/data';
-import { config, toDataQueryError, logError } from '@grafana/runtime';
+import { config, toDataQueryError } from '@grafana/runtime';
 import { isExpressionReference } from '@grafana/runtime/src/utils/DataSourceWithBackend';
 import { backendSrv } from 'app/core/services/backend_srv';
 import { queryIsEmpty } from 'app/core/utils/query';
 import { dataSource as expressionDatasource } from 'app/features/expressions/ExpressionDatasource';
 import { ExpressionQuery } from 'app/features/expressions/types';
+
+import { queryLogger } from '../utils';
 
 import { cancelNetworkRequestsOnUnsubscribe } from './processing/canceler';
 import { emitDataRequestEvent } from './queryAnalytics';
@@ -148,6 +150,12 @@ export function runRequest(
         throw new Error(`Expected response data to be array, got ${typeof packet.data}.`);
       }
 
+      // filter out responses for hidden queries
+      const hiddenQueries = request.targets.filter((q) => q.hide);
+      for (const query of hiddenQueries) {
+        packet.data = packet.data.filter((d) => d.refId !== query.refId);
+      }
+
       request.endTime = Date.now();
 
       state = processResponsePacket(packet, state);
@@ -157,7 +165,7 @@ export function runRequest(
     // handle errors
     catchError((err) => {
       console.error('runRequest.catchError', err);
-      logError(err);
+      queryLogger.logError(err);
       return of({
         ...state.panelData,
         state: LoadingState.Error,
@@ -202,6 +210,15 @@ export function callQueryMethod(
     if (isExpressionReference(target.datasource)) {
       return expressionDatasource.query(request as DataQueryRequest<ExpressionQuery>);
     }
+  }
+
+  // do not filter queries in case a custom query function is provided (for example in variable queries)
+  if (!queryFunction) {
+    request.targets = request.targets.filter((t) => datasource.filterQuery?.(t) ?? true);
+  }
+
+  if (request.targets.length === 0) {
+    return of<DataQueryResponse>({ data: [] });
   }
 
   // Otherwise it is a standard datasource request

@@ -77,6 +77,10 @@ func (h *HysteresisCommand) Execute(ctx context.Context, now time.Time, vars mat
 	return mathexp.Results{Values: append(loadingResults.Values, unloadingResults.Values...)}, nil
 }
 
+func (h HysteresisCommand) Type() string {
+	return "hysteresis"
+}
+
 func NewHysteresisCommand(refID string, referenceVar string, loadCondition ThresholdCommand, unloadCondition ThresholdCommand, l Fingerprints) (*HysteresisCommand, error) {
 	return &HysteresisCommand{
 		RefID:                  refID,
@@ -119,4 +123,18 @@ func FingerprintsFromFrame(frame *data.Frame) (Fingerprints, error) {
 		}
 	}
 	return result, nil
+}
+
+// FingerprintsToFrame converts Fingerprints to data.Frame.
+func FingerprintsToFrame(fingerprints Fingerprints) *data.Frame {
+	fp := make([]uint64, 0, len(fingerprints))
+	for fingerprint := range fingerprints {
+		fp = append(fp, uint64(fingerprint))
+	}
+	frame := data.NewFrame("", data.NewField("fingerprints", nil, fp))
+	frame.SetMeta(&data.FrameMeta{
+		Type:        "fingerprints",
+		TypeVersion: data.FrameTypeVersion{1, 0},
+	})
+	return frame
 }

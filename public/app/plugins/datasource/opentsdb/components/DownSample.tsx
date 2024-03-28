@@ -1,11 +1,9 @@
 import React from 'react';
 
 import { toOption } from '@grafana/data';
-import { InlineLabel, Select, Input, InlineFormLabel, InlineSwitch } from '@grafana/ui';
+import { InlineLabel, Select, Input, InlineFormLabel, InlineSwitch, Stack } from '@grafana/ui';
 
 import { OpenTsdbQuery } from '../types';
-
-import { paddingRightClass } from './styles';
 
 export interface DownSampleProps {
   query: OpenTsdbQuery;
@@ -21,8 +19,8 @@ export function DownSample({ query, onChange, onRunQuery, aggregators, fillPolic
   const fillPolicyOptions = fillPolicies.map((value: string) => toOption(value));
 
   return (
-    <div className="gf-form-inline" data-testid={testIds.section}>
-      <div className="gf-form">
+    <Stack gap={0.5} alignItems="flex-start" data-testid={testIds.section}>
+      <Stack gap={0}>
         <InlineFormLabel
           className="query-keyword"
           width={8}
@@ -36,7 +34,6 @@ export function DownSample({ query, onChange, onRunQuery, aggregators, fillPolic
         </InlineFormLabel>
         <Input
           width={25}
-          className={paddingRightClass}
           data-testid={testIds.interval}
           placeholder="interval"
           value={query.downsampleInterval ?? ''}
@@ -46,13 +43,12 @@ export function DownSample({ query, onChange, onRunQuery, aggregators, fillPolic
           }}
           onBlur={() => onRunQuery()}
         />
-      </div>
-      <div className="gf-form">
+      </Stack>
+      <Stack gap={0}>
         <InlineFormLabel width={'auto'} className="query-keyword">
           Aggregator
         </InlineFormLabel>
         <Select
-          className="gf-form-input"
           value={query.downsampleAggregator ? toOption(query.downsampleAggregator) : undefined}
           options={aggregatorOptions}
           onChange={({ value }) => {
@@ -62,9 +58,9 @@ export function DownSample({ query, onChange, onRunQuery, aggregators, fillPolic
             }
           }}
         />
-      </div>
+      </Stack>
       {tsdbVersion >= 2 && (
-        <div className="gf-form">
+        <Stack gap={0} alignItems="flex-start">
           <InlineLabel className="width-6 query-keyword">Fill</InlineLabel>
           <Select
             inputId="opentsdb-fillpolicy-select"
@@ -77,9 +73,9 @@ export function DownSample({ query, onChange, onRunQuery, aggregators, fillPolic
               }
             }}
           />
-        </div>
+        </Stack>
       )}
-      <div className="gf-form">
+      <Stack gap={0}>
         <InlineFormLabel className="query-keyword">Disable downsampling</InlineFormLabel>
         <InlineSwitch
           value={query.disableDownsampling ?? false}
@@ -89,11 +85,11 @@ export function DownSample({ query, onChange, onRunQuery, aggregators, fillPolic
             onRunQuery();
           }}
         />
-      </div>
-      <div className="gf-form gf-form--grow">
-        <div className="gf-form-label gf-form-label--grow"></div>
-      </div>
-    </div>
+      </Stack>
+      <Stack gap={0} grow={1}>
+        <InlineLabel> </InlineLabel>
+      </Stack>
+    </Stack>
   );
 }
 

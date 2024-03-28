@@ -10,11 +10,11 @@ import (
 	"github.com/grafana/grafana/pkg/infra/db/dbtest"
 	"github.com/grafana/grafana/pkg/infra/localcache"
 	"github.com/grafana/grafana/pkg/plugins"
-	"github.com/grafana/grafana/pkg/plugins/config"
 	pluginFakes "github.com/grafana/grafana/pkg/plugins/manager/fakes"
 	"github.com/grafana/grafana/pkg/plugins/manager/registry"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	fakeDatasources "github.com/grafana/grafana/pkg/services/datasources/fakes"
+	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginconfig"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/plugincontext"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginsettings"
 	pluginSettings "github.com/grafana/grafana/pkg/services/pluginsintegration/pluginsettings/service"
@@ -42,8 +42,8 @@ func TestGet(t *testing.T) {
 	ds := &fakeDatasources.FakeDataSourceService{}
 	db := &dbtest.FakeDB{ExpectedError: pluginsettings.ErrPluginSettingNotFound}
 	pcp := plugincontext.ProvideService(cfg, localcache.ProvideService(),
-		pluginstore.New(preg, &pluginFakes.FakeLoader{}),
-		ds, pluginSettings.ProvideService(db, secretstest.NewFakeSecretsService()), pluginFakes.NewFakeLicensingService(), &config.Cfg{},
+		pluginstore.New(preg, &pluginFakes.FakeLoader{}), &fakeDatasources.FakeCacheService{},
+		ds, pluginSettings.ProvideService(db, secretstest.NewFakeSecretsService()), pluginconfig.NewFakePluginRequestConfigProvider(),
 	)
 	identity := &user.SignedInUser{OrgID: int64(1), Login: "admin"}
 
@@ -59,6 +59,7 @@ func TestGet(t *testing.T) {
 				pCtx, err := pcp.Get(context.Background(), tc.input, identity, identity.OrgID)
 				require.NoError(t, err)
 				require.Equal(t, pluginID, pCtx.PluginID)
+				require.NotNil(t, pCtx.GrafanaConfig)
 			})
 
 			t.Run("GetWithDataSource", func(t *testing.T) {
@@ -71,6 +72,7 @@ func TestGet(t *testing.T) {
 				})
 				require.NoError(t, err)
 				require.Equal(t, pluginID, pCtx.PluginID)
+				require.NotNil(t, pCtx.GrafanaConfig)
 			})
 		})
 	}

@@ -6,6 +6,7 @@ import (
 	"fmt"
 
 	"github.com/grafana/grafana/pkg/infra/log"
+	authidentity "github.com/grafana/grafana/pkg/services/auth/identity"
 	"github.com/grafana/grafana/pkg/services/authn"
 	"github.com/grafana/grafana/pkg/services/login"
 	"github.com/grafana/grafana/pkg/services/org"
@@ -109,13 +110,19 @@ func (s *UserSync) FetchSyncedUserHook(ctx context.Context, identity *authn.Iden
 	if !identity.ClientParams.FetchSyncedUser {
 		return nil
 	}
-	namespace, id := identity.NamespacedID()
-	if namespace != authn.NamespaceUser {
+	namespace, id := identity.GetNamespacedID()
+	if namespace != authn.NamespaceUser && namespace != authn.NamespaceServiceAccount {
+		return nil
+	}
+
+	userID, err := authidentity.IntIdentifier(namespace, id)
+	if err != nil {
+		s.log.FromContext(ctx).Warn("got invalid identity ID", "id", id, "err", err)
 		return nil
 	}
 
 	usr, err := s.userService.GetSignedInUserWithCacheCtx(ctx, &user.GetSignedInUserQuery{
-		UserID: id,
+		UserID: userID,
 		OrgID:  r.OrgID,
 	})
 	if err != nil {
@@ -135,15 +142,15 @@ func (s *UserSync) SyncLastSeenHook(ctx context.Context, identity *authn.Identit
 		return nil
 	}
 
-	namespace, id := identity.NamespacedID()
-
-	// do not sync invalid users
-	if id <= 0 {
-		return nil // skip sync
+	namespace, id := identity.GetNamespacedID()
+	if namespace != authn.NamespaceUser && namespace != authn.NamespaceServiceAccount {
+		return nil
 	}
 
-	if namespace != authn.NamespaceUser && namespace != authn.NamespaceServiceAccount {
-		return nil // skip sync
+	userID, err := authidentity.IntIdentifier(namespace, id)
+	if err != nil {
+		s.log.FromContext(ctx).Warn("got invalid identity ID", "id", id, "err", err)
+		return nil
 	}
 
 	go func(userID int64) {
@@ -158,7 +165,7 @@ func (s *UserSync) SyncLastSeenHook(ctx context.Context, identity *authn.Identit
 			!errors.Is(err, user.ErrLastSeenUpToDate) {
 			s.log.Error("Failed to update last_seen_at", "err", err, "userId", userID)
 		}
-	}(id)
+	}(userID)
 
 	return nil
 }
@@ -168,12 +175,18 @@ func (s *UserSync) EnableUserHook(ctx context.Context, identity *authn.Identity,
 		return nil
 	}
 
-	namespace, id := identity.NamespacedID()
+	namespace, id := identity.GetNamespacedID()
 	if namespace != authn.NamespaceUser {
 		return nil
 	}
 
-	return s.userService.Disable(ctx, &user.DisableUserCommand{UserID: id, IsDisabled: false})
+	userID, err := authidentity.IntIdentifier(namespace, id)
+	if err != nil {
+		s.log.FromContext(ctx).Warn("got invalid identity ID", "id", id, "err", err)
+		return nil
+	}
+
+	return s.userService.Disable(ctx, &user.DisableUserCommand{UserID: userID, IsDisabled: false})
 }
 
 func (s *UserSync) upsertAuthConnection(ctx context.Context, userID int64, identity *authn.Identity, createConnection bool) error {

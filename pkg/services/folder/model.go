@@ -4,8 +4,10 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/grafana/grafana/pkg/infra/metrics"
 	"github.com/grafana/grafana/pkg/infra/slugify"
 	"github.com/grafana/grafana/pkg/services/auth/identity"
+	"github.com/grafana/grafana/pkg/services/dashboards/dashboardaccess"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util/errutil"
 )
@@ -13,14 +15,17 @@ import (
 var ErrMaximumDepthReached = errutil.BadRequest("folder.maximum-depth-reached", errutil.WithPublicMessage("Maximum nested folder depth reached"))
 var ErrBadRequest = errutil.BadRequest("folder.bad-request")
 var ErrDatabaseError = errutil.Internal("folder.database-error")
+var ErrConflict = errutil.Conflict("folder.conflict")
 var ErrInternal = errutil.Internal("folder.internal")
 var ErrCircularReference = errutil.BadRequest("folder.circular-reference", errutil.WithPublicMessage("Circular reference detected"))
 var ErrTargetRegistrySrvConflict = errutil.Internal("folder.target-registry-srv-conflict")
+var ErrFolderNotEmpty = errutil.BadRequest("folder.not-empty", errutil.WithPublicMessage("Folder cannot be deleted: folder is not empty"))
 
 const (
-	GeneralFolderUID     = "general"
-	RootFolderUID        = ""
-	MaxNestedFolderDepth = 4
+	GeneralFolderUID      = "general"
+	RootFolderUID         = ""
+	MaxNestedFolderDepth  = 4
+	SharedWithMeFolderUID = "sharedwithme"
 )
 
 var ErrFolderNotFound = errutil.NotFound("folder.notFound")
@@ -39,18 +44,27 @@ type Folder struct {
 
 	// TODO: validate if this field is required/relevant to folders.
 	// currently there is no such column
-	Version   int
-	URL       string
-	UpdatedBy int64
-	CreatedBy int64
-	HasACL    bool
-
-	Fullpath string
+	Version      int
+	URL          string
+	UpdatedBy    int64
+	CreatedBy    int64
+	HasACL       bool
+	Fullpath     string `xorm:"fullpath"`
+	FullpathUIDs string `xorm:"fullpath_uids"`
 }
 
 var GeneralFolder = Folder{ID: 0, Title: "General"}
+var RootFolder = &Folder{ID: 0, Title: "Root", UID: GeneralFolderUID, ParentUID: ""}
+var SharedWithMeFolder = Folder{
+	Title:       "Shared with me",
+	Description: "Dashboards and folders shared with me",
+	UID:         SharedWithMeFolderUID,
+	ParentUID:   "",
+	ID:          -1,
+}
 
 func (f *Folder) IsGeneral() bool {
+	metrics.MFolderIDsServiceCount.WithLabelValues(metrics.Folder).Inc()
 	// nolint:staticcheck
 	return f.ID == GeneralFolder.ID && f.Title == GeneralFolder.Title
 }
@@ -134,13 +148,28 @@ type DeleteFolderCommand struct {
 type GetFolderQuery struct {
 	UID *string
 	// Deprecated: use FolderUID instead
-	ID        *int64
-	Title     *string
-	OrgID     int64
-	ParentUID *string
+	ID           *int64
+	Title        *string
+	ParentUID    *string
+	OrgID        int64
+	WithFullpath bool
 
 	SignedInUser    identity.Requester `json:"-"`
 	IncludeFullpath bool               `json:"-"`
+}
+
+type GetFoldersQuery struct {
+	OrgID            int64
+	UIDs             []string
+	WithFullpath     bool
+	WithFullpathUIDs bool
+	BatchSize        uint64
+
+	// OrderByTitle is used to sort the folders by title
+	// Set to true when ordering is meaningful (used for listing folders)
+	// otherwise better to keep it false since ordering can have a performance impact
+	OrderByTitle bool
+	SignedInUser identity.Requester `json:"-"`
 }
 
 // GetParentsQuery captures the information required by the folder service to
@@ -154,25 +183,21 @@ type GetParentsQuery struct {
 // return a list of child folders of the given folder.
 
 type GetChildrenQuery struct {
-	UID   string `xorm:"uid"`
-	OrgID int64  `xorm:"org_id"`
+	UID   string
+	OrgID int64
 	Depth int64
 
 	// Pagination options
 	Limit int64
 	Page  int64
 
-	SignedInUser identity.Requester `json:"-"`
-}
-
-// GetFoldersQuery captures the information required by the folder service to
-// return a list of all folders of a given UIDs.
-type GetFoldersQuery struct {
-	UIDs            []string
-	OrgID           int64
-	IncludeFullpath bool `json:"-"`
+	// Permission to filter by
+	Permission dashboardaccess.PermissionType
 
 	SignedInUser identity.Requester `json:"-"`
+
+	// array of folder uids to filter by
+	FolderUIDs []string `json:"-"`
 }
 
 type HasEditPermissionInFoldersQuery struct {

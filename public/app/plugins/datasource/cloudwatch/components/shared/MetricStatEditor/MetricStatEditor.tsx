@@ -6,7 +6,7 @@ import { config } from '@grafana/runtime';
 import { Select } from '@grafana/ui';
 
 import { CloudWatchDatasource } from '../../../datasource';
-import { useAccountOptions, useDimensionKeys, useMetrics, useNamespaces } from '../../../hooks';
+import { useAccountOptions, useMetrics, useNamespaces } from '../../../hooks';
 import { standardStatistics } from '../../../standardStatistics';
 import { MetricStat } from '../../../types';
 import { appendTemplateVariables, toOption } from '../../../utils/utils';
@@ -35,7 +35,6 @@ export const MetricStatEditor = ({
 }: React.PropsWithChildren<Props>) => {
   const namespaces = useNamespaces(datasource);
   const metrics = useMetrics(datasource, metricStat);
-  const dimensionKeys = useDimensionKeys(datasource, { ...metricStat, dimensionFilters: metricStat.dimensions });
   const accountState = useAccountOptions(datasource.resources, metricStat.region);
 
   useEffect(() => {
@@ -139,7 +138,6 @@ export const MetricStatEditor = ({
           <Dimensions
             metricStat={metricStat}
             onChange={(dimensions) => onChange({ ...metricStat, dimensions })}
-            dimensionKeys={dimensionKeys}
             disableExpressions={disableExpressions}
             datasource={datasource}
           />

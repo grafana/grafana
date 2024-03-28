@@ -15,18 +15,21 @@ export interface XYDimensions {
   frame: DataFrame; // matches order from configs, excluds non-graphable values
   x: Field;
   fields: XYFieldMatchers;
-  error?: DimensionError;
   hasData?: boolean;
   hasTime?: boolean;
+}
+
+export interface XYDimensionsError {
+  error: DimensionError;
 }
 
 export function isGraphable(field: Field) {
   return field.type === FieldType.number;
 }
 
-export function getXYDimensions(cfg?: XYDimensionConfig, data?: DataFrame[]): XYDimensions {
+export function getXYDimensions(cfg?: XYDimensionConfig, data?: DataFrame[]): XYDimensions | XYDimensionsError {
   if (!data || !data.length) {
-    return { error: DimensionError.NoData } as XYDimensions;
+    return { error: DimensionError.NoData };
   }
   if (!cfg) {
     cfg = {
@@ -36,7 +39,7 @@ export function getXYDimensions(cfg?: XYDimensionConfig, data?: DataFrame[]): XY
 
   let frame = data[cfg.frame ?? 0];
   if (!frame) {
-    return { error: DimensionError.BadFrameSelection } as XYDimensions;
+    return { error: DimensionError.BadFrameSelection };
   }
 
   let xIndex = -1;
@@ -99,5 +102,5 @@ function getSimpleFieldNotMatcher(f: Field): FieldMatcher {
     return () => false;
   }
   const m = getSimpleFieldMatcher(f);
-  return (field) => !m(field, undefined as any, undefined as any);
+  return (field) => !m(field, { fields: [], length: 0 }, []);
 }

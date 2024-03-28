@@ -4,7 +4,7 @@ import React from 'react';
 import { Provider } from 'react-redux';
 import { Router } from 'react-router-dom';
 import { useEffectOnce } from 'react-use';
-import { AutoSizerProps } from 'react-virtualized-auto-sizer';
+import { Props as AutoSizerProps } from 'react-virtualized-auto-sizer';
 import { getGrafanaContextMock } from 'test/mocks/getGrafanaContextMock';
 
 import { selectors as e2eSelectors } from '@grafana/e2e-selectors/src';
@@ -37,7 +37,13 @@ jest.mock('app/features/dashboard/dashgrid/LazyLoader', () => {
 jest.mock('react-virtualized-auto-sizer', () => {
   //   //   // The size of the children need to be small enough to be outside the view.
   //   //   // So it does not trigger the query to be run by the PanelQueryRunner.
-  return ({ children }: AutoSizerProps) => children({ height: 1, width: 1 });
+  return ({ children }: AutoSizerProps) =>
+    children({
+      height: 1,
+      scaledHeight: 1,
+      scaledWidth: 1,
+      width: 1,
+    });
 });
 
 jest.mock('app/features/dashboard/state/initDashboard', () => ({
@@ -249,7 +255,7 @@ describe('PublicDashboardPage', () => {
           ...dashboardBase,
           getModel: () =>
             getTestDashboard({
-              timepicker: { hidden: false, collapse: false, refresh_intervals: [], time_options: [] },
+              timepicker: { hidden: false, refresh_intervals: [], time_options: [] },
             }),
         },
       });

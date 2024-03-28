@@ -19,8 +19,8 @@ To learn more, refer to Explore's [documentation]({{< relref "../../../explore/c
 
 ## Create a correlation in Administration page
 
-1. Go to the Administration section in Grafana.
-1. Open Correlations page.
+1. Go to the **Administration** section in Grafana.
+1. Under **Plugins and data**, open the **Correlations** page.
 1. Click the “Add” button in the top right corner.
 1. Provide a **label** for the correlation.
 1. Provide an optional **description**.

@@ -393,14 +393,14 @@ func (s *store) getResourcePermissions(sess *db.Session, orgID int64, query GetR
 			return nil, err
 		}
 
-		filter := "(" + userFilter.Where + " AND NOT u.is_service_account)"
+		filter := "((" + userFilter.Where + " AND NOT u.is_service_account)"
 
 		saFilter, err := accesscontrol.Filter(query.User, "u.id", "serviceaccounts:id:", serviceaccounts.ActionRead)
 		if err != nil {
 			return nil, err
 		}
 
-		filter += " OR (" + saFilter.Where + " AND u.is_service_account)"
+		filter += " OR (" + saFilter.Where + " AND u.is_service_account))"
 
 		userQuery += " AND " + filter
 		args = append(args, userFilter.Args...)
@@ -667,9 +667,7 @@ func (s *store) createPermissions(sess *db.Session, roleID int64, resource, reso
 		p.RoleID = roleID
 		p.Created = time.Now()
 		p.Updated = time.Now()
-		if s.features.IsEnabledGlobally(featuremgmt.FlagSplitScopes) {
-			p.Kind, p.Attribute, p.Identifier = p.SplitScope()
-		}
+		p.Kind, p.Attribute, p.Identifier = p.SplitScope()
 		permissions = append(permissions, p)
 	}
 

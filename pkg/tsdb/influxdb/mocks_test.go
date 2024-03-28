@@ -14,6 +14,7 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend/instancemgmt"
 
 	"github.com/grafana/grafana/pkg/infra/httpclient"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/tsdb/influxdb/models"
 )
 
@@ -117,5 +118,8 @@ func GetMockService(version string, rt RoundTripper) *Service {
 			version:          version,
 			fakeRoundTripper: rt,
 		},
+
+		// featuremgmt.FlagInfluxqlStreamingParser: false
+		features: featuremgmt.WithFeatures(),
 	}
 }

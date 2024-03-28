@@ -143,6 +143,30 @@ export function timeSeriesToTableTransform(options: TimeSeriesTableTransformerOp
     // Intialize object for this refId
     refId2trends[refId] = {};
 
+    // Initialize labels object for this refId
+    refId2labelz[refId] = {};
+
+    // Collect all existing label names across frames
+    // so we can fill in nulls for frames that don't
+    // have a particular label
+    const labelNames: string[] = [];
+
+    framesForRef.forEach((frame) => {
+      frame.fields.forEach((field) => {
+        if (field.type !== FieldType.number) {
+          return;
+        }
+        if (field.labels) {
+          Object.keys(field.labels).forEach((labelName) => {
+            if (!labelNames.includes(labelName)) {
+              refId2labelz[refId][labelName] = newField(labelName, FieldType.string);
+              labelNames.push(labelName);
+            }
+          });
+        }
+      });
+    });
+
     for (let i = 0; i < framesForRef.length; i++) {
       const frame = framesForRef[i];
 
@@ -196,19 +220,9 @@ export function timeSeriesToTableTransform(options: TimeSeriesTableTransformerOp
 
         // If there are labels add them to the appropriate fields
         // Because we iterate each frame
-        if (field.labels !== undefined) {
-          for (const [labelKey, labelValue] of Object.entries(field.labels)) {
-            if (refId2labelz[refId] === undefined) {
-              refId2labelz[refId] = {};
-            }
-
-            if (refId2labelz[refId][labelKey] === undefined) {
-              refId2labelz[refId][labelKey] = newField(labelKey, FieldType.string);
-            }
-
-            refId2labelz[refId][labelKey].values.push(labelValue);
-          }
-        }
+        labelNames.forEach((labelName) => {
+          refId2labelz[refId][labelName].values.push(field.labels?.[labelName] ?? '');
+        });
       }
     }
   }

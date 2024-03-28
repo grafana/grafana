@@ -13,7 +13,6 @@ const (
 )
 
 type UserGrafanaConfig struct {
-	ID                        int64  `json:"id"`
 	GrafanaAlertmanagerConfig string `json:"configuration"`
 	Hash                      string `json:"configuration_hash"`
 	CreatedAt                 int64  `json:"created"`
@@ -39,13 +38,12 @@ func (mc *Mimir) GetGrafanaAlertmanagerConfig(ctx context.Context) (*UserGrafana
 	return gc, nil
 }
 
-func (mc *Mimir) CreateGrafanaAlertmanagerConfig(ctx context.Context, c, hash string, id, created int64, d bool) error {
+func (mc *Mimir) CreateGrafanaAlertmanagerConfig(ctx context.Context, cfg, hash string, createdAt int64, isDefault bool) error {
 	payload, err := json.Marshal(&UserGrafanaConfig{
-		ID:                        id,
-		GrafanaAlertmanagerConfig: c,
+		GrafanaAlertmanagerConfig: cfg,
 		Hash:                      hash,
-		CreatedAt:                 created,
-		Default:                   d,
+		CreatedAt:                 createdAt,
+		Default:                   isDefault,
 	})
 	if err != nil {
 		return err

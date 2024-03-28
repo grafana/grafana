@@ -7,6 +7,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/services/datasources"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 )
 
 func TestServicebuildPipeLine(t *testing.T) {
@@ -231,7 +232,9 @@ func TestServicebuildPipeLine(t *testing.T) {
 			expectedOrder: []string{"B", "A"},
 		},
 	}
-	s := Service{}
+	s := Service{
+		features: featuremgmt.WithFeatures(featuremgmt.FlagExpressionParser),
+	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			nodes, err := s.buildPipeline(tt.req)
@@ -244,6 +247,41 @@ func TestServicebuildPipeLine(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestGetCommandsFromPipeline(t *testing.T) {
+	pipeline := DataPipeline{
+		&MLNode{},
+		&DSNode{},
+		&CMDNode{
+			baseNode: baseNode{},
+			CMDType:  0,
+			Command:  &ReduceCommand{},
+		},
+		&CMDNode{
+			baseNode: baseNode{},
+			CMDType:  0,
+			Command:  &ReduceCommand{},
+		},
+		&CMDNode{
+			baseNode: baseNode{},
+			CMDType:  0,
+			Command:  &HysteresisCommand{},
+		},
+	}
+	t.Run("should find command that exists", func(t *testing.T) {
+		cmds := GetCommandsFromPipeline[*HysteresisCommand](pipeline)
+		require.Len(t, cmds, 1)
+		require.Equal(t, pipeline[4].(*CMDNode).Command, cmds[0])
+	})
+	t.Run("should find all commands that exist", func(t *testing.T) {
+		cmds := GetCommandsFromPipeline[*ReduceCommand](pipeline)
+		require.Len(t, cmds, 2)
+	})
+	t.Run("should not find all command that does not exist", func(t *testing.T) {
+		cmds := GetCommandsFromPipeline[*MathCommand](pipeline)
+		require.Len(t, cmds, 0)
+	})
 }
 
 func getRefIDOrder(nodes []Node) []string {

@@ -11,15 +11,16 @@ import { PromVisualQuery } from '../../../types';
 import {
   ExplainSystemPrompt,
   GetExplainUserPrompt,
-  GetSuggestSystemPrompt,
-  SuggestSystemPromptParams,
+  SuggestSystemPrompt,
+  GetSuggestUserPrompt,
+  SuggestUserPromptParams,
 } from '../prompts';
 import { Interaction, QuerySuggestion, SuggestionType } from '../types';
 
 import { createInteraction, stateSlice } from './state';
 import { getTemplateSuggestions } from './templates';
 
-const OPENAI_MODEL_NAME = 'gpt-3.5-turbo';
+const OPENAI_MODEL_NAME = 'gpt-3.5-turbo-1106';
 const promQLTemplatesCollection = 'grafana.promql.templates';
 // actions to update the state
 const { updateInteraction } = stateSlice.actions;
@@ -77,8 +78,17 @@ export function getExplainMessage(
   ];
 }
 
-function getSuggestMessage({ promql, question, labels, templates }: SuggestSystemPromptParams): llms.openai.Message[] {
-  return [{ role: 'system', content: GetSuggestSystemPrompt({ promql, question, labels, templates }) }];
+function getSuggestMessages({
+  promql,
+  question,
+  metricType,
+  labels,
+  templates,
+}: SuggestUserPromptParams): llms.openai.Message[] {
+  return [
+    { role: 'system', content: SuggestSystemPrompt },
+    { role: 'user', content: GetSuggestUserPrompt({ promql, question, metricType, labels, templates }) },
+  ];
 }
 
 /**
@@ -97,11 +107,6 @@ export async function promQailExplain(
   suggIdx: number,
   datasource: PrometheusDatasource
 ) {
-  // const enabled = await llms.openai.enabled();
-  // if (!enabled) {
-  //   return false;
-  // }
-
   const suggestedQuery = interaction.suggestions[suggIdx].query;
 
   const promptMessages = getExplainMessage(suggestedQuery, query.metric, datasource);
@@ -262,6 +267,22 @@ function guessMetricFamily(metric: string): string {
 }
 
 /**
+ * Check if the LLM plugin is enabled.
+ * Used in the PromQueryBuilder to enable/disable the button based on openai and vector db checks
+ * @returns true if the LLM plugin is enabled.
+ */
+export async function isLLMPluginEnabled(): Promise<boolean> {
+  // Check if the LLM plugin is enabled.
+  // If not, we won't be able to make requests, so return early.
+  const openaiEnabled = llms.openai.health().then((response) => response.ok);
+  const vectorEnabled = llms.vector.health().then((response) => response.ok);
+  // combine 2 promises
+  return Promise.all([openaiEnabled, vectorEnabled]).then((results) => {
+    return results.every((result) => result);
+  });
+}
+
+/**
  * Calls the API and adds suggestions to the interaction
  *
  * @param dispatch
@@ -277,10 +298,6 @@ export async function promQailSuggest(
   datasource: PrometheusDatasource,
   interaction?: Interaction
 ) {
-  // when you're not running promqail
-  // @ts-ignore llms types issue
-  const check = (await llms.openai.enabled()) && (await llms.vector.enabled());
-
   const interactionToUpdate = interaction ? interaction : createInteraction(SuggestionType.Historical);
 
   // Decide metric type
@@ -304,7 +321,7 @@ export async function promQailSuggest(
     metricType = guessMetricType(query.metric, datasource.languageProvider.metrics);
   }
 
-  if (!check || interactionToUpdate.suggestionType === SuggestionType.Historical) {
+  if (interactionToUpdate.suggestionType === SuggestionType.Historical) {
     return new Promise<void>((resolve) => {
       return setTimeout(() => {
         const suggestions = getTemplateSuggestions(
@@ -328,9 +345,15 @@ export async function promQailSuggest(
       prompt?: string;
     };
 
+    // get all available labels
+    const metricLabels = await datasource.languageProvider.fetchLabelsWithMatch(query.metric);
+
     let feedTheAI: SuggestionBody = {
       metric: query.metric,
-      labels: promQueryModeller.renderLabels(query.labels),
+      // drop __name__ label because it's not useful
+      labels: Object.keys(metricLabels)
+        .filter((label) => label !== '__name__')
+        .join(','),
     };
 
     // @ts-ignore llms types issue
@@ -357,13 +380,14 @@ export async function promQailSuggest(
 
     const resultsString = results
       .map((r) => {
-        return `PromQL: ${r.payload.promql}\nDescription: ${r.payload.description}`;
+        return `${r.payload.promql} | ${r.payload.description} (score=${(r.score * 100).toFixed(1)})`;
       })
       .join('\n');
 
-    const promptMessages = getSuggestMessage({
+    const promptMessages = getSuggestMessages({
       promql: query.metric,
       question: interaction ? interaction.prompt : '',
+      metricType: metricType,
       labels: labelNames.join(', '),
       templates: resultsString,
     });
@@ -372,7 +396,7 @@ export async function promQailSuggest(
       .streamChatCompletions({
         model: OPENAI_MODEL_NAME,
         messages: promptMessages,
-        temperature: 0,
+        temperature: 0.5,
       })
       .pipe(llms.openai.accumulateContent())
       .subscribe((response) => {

@@ -8,6 +8,7 @@ import (
 	"testing"
 
 	"github.com/prometheus/alertmanager/config"
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
@@ -19,6 +20,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier"
+	"github.com/grafana/grafana/pkg/services/ngalert/tests/fakes"
 	"github.com/grafana/grafana/pkg/services/secrets"
 	"github.com/grafana/grafana/pkg/services/secrets/database"
 	"github.com/grafana/grafana/pkg/services/secrets/manager"
@@ -36,25 +38,28 @@ func TestContactPointService(t *testing.T) {
 		cps, err := sut.GetContactPoints(context.Background(), cpsQuery(1), nil)
 		require.NoError(t, err)
 
-		require.Len(t, cps, 1)
-		require.Equal(t, "slack receiver", cps[0].Name)
+		require.Len(t, cps, 2)
+		require.Equal(t, "grafana-default-email", cps[0].Name)
+		require.Equal(t, "slack receiver", cps[1].Name)
 	})
 
 	t.Run("service filters contact points by name", func(t *testing.T) {
 		sut := createContactPointServiceSut(t, secretsService)
-		newCp := createTestContactPoint()
-		_, err := sut.CreateContactPoint(context.Background(), 1, newCp, models.ProvenanceAPI)
-		require.NoError(t, err)
 
-		q := ContactPointQuery{
-			OrgID: 1,
-			Name:  "slack receiver",
-		}
-		cps, err := sut.GetContactPoints(context.Background(), q, nil)
+		cps, err := sut.GetContactPoints(context.Background(), cpsQueryWithName(1, "slack receiver"), nil)
 		require.NoError(t, err)
 
 		require.Len(t, cps, 1)
 		require.Equal(t, "slack receiver", cps[0].Name)
+	})
+
+	t.Run("service filters contact points by name, returns empty when no match", func(t *testing.T) {
+		sut := createContactPointServiceSut(t, secretsService)
+
+		cps, err := sut.GetContactPoints(context.Background(), cpsQueryWithName(1, "unknown"), nil)
+		require.NoError(t, err)
+
+		require.Len(t, cps, 0)
 	})
 
 	t.Run("service stitches contact point into org's AM config", func(t *testing.T) {
@@ -66,9 +71,9 @@ func TestContactPointService(t *testing.T) {
 
 		cps, err := sut.GetContactPoints(context.Background(), cpsQuery(1), nil)
 		require.NoError(t, err)
-		require.Len(t, cps, 2)
-		require.Equal(t, "test-contact-point", cps[1].Name)
-		require.Equal(t, "slack", cps[1].Type)
+		require.Len(t, cps, 3)
+		require.Equal(t, "test-contact-point", cps[2].Name)
+		require.Equal(t, "slack", cps[2].Type)
 	})
 
 	t.Run("it's possible to use a custom uid", func(t *testing.T) {
@@ -80,10 +85,10 @@ func TestContactPointService(t *testing.T) {
 		_, err := sut.CreateContactPoint(context.Background(), 1, newCp, models.ProvenanceAPI)
 		require.NoError(t, err)
 
-		cps, err := sut.GetContactPoints(context.Background(), cpsQuery(1), nil)
+		cps, err := sut.GetContactPoints(context.Background(), cpsQueryWithName(1, newCp.Name), nil)
 		require.NoError(t, err)
-		require.Len(t, cps, 2)
-		require.Equal(t, customUID, cps[1].UID)
+		require.Len(t, cps, 1)
+		require.Equal(t, customUID, cps[0].UID)
 	})
 
 	t.Run("it's not possible to use invalid UID", func(t *testing.T) {
@@ -216,19 +221,19 @@ func TestContactPointService(t *testing.T) {
 				newCp, err := sut.CreateContactPoint(context.Background(), 1, newCp, test.from)
 				require.NoError(t, err)
 
-				cps, err := sut.GetContactPoints(context.Background(), cpsQuery(1), nil)
+				cps, err := sut.GetContactPoints(context.Background(), cpsQueryWithName(1, newCp.Name), nil)
 				require.NoError(t, err)
-				require.Equal(t, newCp.UID, cps[1].UID)
-				require.Equal(t, test.from, models.Provenance(cps[1].Provenance))
+				require.Equal(t, newCp.UID, cps[0].UID)
+				require.Equal(t, test.from, models.Provenance(cps[0].Provenance))
 
 				err = sut.UpdateContactPoint(context.Background(), 1, newCp, test.to)
 				if test.errNil {
 					require.NoError(t, err)
 
-					cps, err = sut.GetContactPoints(context.Background(), cpsQuery(1), nil)
+					cps, err = sut.GetContactPoints(context.Background(), cpsQueryWithName(1, newCp.Name), nil)
 					require.NoError(t, err)
-					require.Equal(t, newCp.UID, cps[1].UID)
-					require.Equal(t, test.to, models.Provenance(cps[1].Provenance))
+					require.Equal(t, newCp.UID, cps[0].UID)
+					require.Equal(t, test.to, models.Provenance(cps[0].Provenance))
 				} else {
 					require.Error(t, err, fmt.Sprintf("cannot change provenance from '%s' to '%s'", test.from, test.to))
 				}
@@ -239,48 +244,56 @@ func TestContactPointService(t *testing.T) {
 	t.Run("service respects concurrency token when updating", func(t *testing.T) {
 		sut := createContactPointServiceSut(t, secretsService)
 		newCp := createTestContactPoint()
-		q := models.GetLatestAlertmanagerConfigurationQuery{
-			OrgID: 1,
-		}
-		config, err := sut.amStore.GetLatestAlertmanagerConfiguration(context.Background(), &q)
+		config, err := sut.configStore.store.GetLatestAlertmanagerConfiguration(context.Background(), 1)
 		require.NoError(t, err)
 		expectedConcurrencyToken := config.ConfigurationHash
 
 		_, err = sut.CreateContactPoint(context.Background(), 1, newCp, models.ProvenanceAPI)
 		require.NoError(t, err)
 
-		fake := sut.amStore.(*fakeAMConfigStore)
-		intercepted := fake.lastSaveCommand
+		fake := sut.configStore.store.(*fakes.FakeAlertmanagerConfigStore)
+		intercepted := fake.LastSaveCommand
 		require.Equal(t, expectedConcurrencyToken, intercepted.FetchedConfigurationHash)
 	})
 }
 
 func TestContactPointServiceDecryptRedact(t *testing.T) {
-	sqlStore := db.InitTestDB(t)
-	secretsService := manager.SetupTestService(t, database.ProvideSecretsStore(sqlStore))
-	ac := acimpl.ProvideAccessControl(setting.NewCfg())
+	secretsService := manager.SetupTestService(t, database.ProvideSecretsStore(db.InitTestDB(t)))
+	receiverServiceWithAC := func(ecp *ContactPointService) *notifier.ReceiverService {
+		return notifier.NewReceiverService(
+			acimpl.ProvideAccessControl(setting.NewCfg()),
+			// Get won't use the sut's config store, so we can use a different one here.
+			fakes.NewFakeAlertmanagerConfigStore(createEncryptedConfig(t, secretsService)),
+			ecp.provenanceStore,
+			ecp.encryptionService,
+			ecp.xact,
+			log.NewNopLogger(),
+		)
+	}
+
 	t.Run("GetContactPoints gets redacted contact points by default", func(t *testing.T) {
 		sut := createContactPointServiceSut(t, secretsService)
 
 		cps, err := sut.GetContactPoints(context.Background(), cpsQuery(1), nil)
 		require.NoError(t, err)
 
-		require.Len(t, cps, 1)
-		require.Equal(t, "slack receiver", cps[0].Name)
-		require.Equal(t, definitions.RedactedValue, cps[0].Settings.Get("url").MustString())
+		require.Len(t, cps, 2)
+		require.Equal(t, "slack receiver", cps[1].Name)
+		require.Equal(t, definitions.RedactedValue, cps[1].Settings.Get("url").MustString())
 	})
+
 	t.Run("GetContactPoints errors when Decrypt = true and user does not have permissions", func(t *testing.T) {
 		sut := createContactPointServiceSut(t, secretsService)
-		sut.ac = ac
+		sut.receiverService = receiverServiceWithAC(sut)
 
 		q := cpsQuery(1)
 		q.Decrypt = true
-		_, err := sut.GetContactPoints(context.Background(), q, &user.SignedInUser{})
+		_, err := sut.GetContactPoints(context.Background(), q, nil)
 		require.ErrorIs(t, err, ErrPermissionDenied)
 	})
 	t.Run("GetContactPoints errors when Decrypt = true and user is nil", func(t *testing.T) {
 		sut := createContactPointServiceSut(t, secretsService)
-		sut.ac = ac
+		sut.receiverService = receiverServiceWithAC(sut)
 
 		q := cpsQuery(1)
 		q.Decrypt = true
@@ -290,9 +303,10 @@ func TestContactPointServiceDecryptRedact(t *testing.T) {
 
 	t.Run("GetContactPoints gets decrypted contact points when Decrypt = true and user has permissions", func(t *testing.T) {
 		sut := createContactPointServiceSut(t, secretsService)
-		sut.ac = ac
+		sut.receiverService = receiverServiceWithAC(sut)
 
-		q := cpsQuery(1)
+		expectedName := "slack receiver"
+		q := cpsQueryWithName(1, expectedName)
 		q.Decrypt = true
 		cps, err := sut.GetContactPoints(context.Background(), q, &user.SignedInUser{OrgID: 1, Permissions: map[int64]map[string][]string{
 			1: {
@@ -302,7 +316,7 @@ func TestContactPointServiceDecryptRedact(t *testing.T) {
 		require.NoError(t, err)
 
 		require.Len(t, cps, 1)
-		require.Equal(t, "slack receiver", cps[0].Name)
+		require.Equal(t, expectedName, cps[0].Name)
 		require.Equal(t, "secure url", cps[0].Settings.Get("url").MustString())
 	})
 }
@@ -340,24 +354,27 @@ func TestContactPointInUse(t *testing.T) {
 
 func createContactPointServiceSut(t *testing.T, secretService secrets.Service) *ContactPointService {
 	// Encrypt secure settings.
-	c := &definitions.PostableUserConfig{}
-	err := json.Unmarshal([]byte(defaultAlertmanagerConfigJSON), c)
-	require.NoError(t, err)
-	err = notifier.EncryptReceiverConfigs(c.AlertmanagerConfig.Receivers, func(ctx context.Context, payload []byte) ([]byte, error) {
-		return secretService.Encrypt(ctx, payload, secrets.WithoutScope())
-	})
-	require.NoError(t, err)
+	cfg := createEncryptedConfig(t, secretService)
+	store := fakes.NewFakeAlertmanagerConfigStore(cfg)
+	xact := newNopTransactionManager()
+	provisioningStore := fakes.NewFakeProvisioningStore()
 
-	raw, err := json.Marshal(c)
-	require.NoError(t, err)
+	receiverService := notifier.NewReceiverService(
+		actest.FakeAccessControl{},
+		store,
+		provisioningStore,
+		secretService,
+		xact,
+		log.NewNopLogger(),
+	)
 
 	return &ContactPointService{
-		amStore:           newFakeAMConfigStore(string(raw)),
-		provenanceStore:   NewFakeProvisioningStore(),
-		xact:              newNopTransactionManager(),
+		configStore:       &alertmanagerConfigStoreImpl{store: store},
+		provenanceStore:   provisioningStore,
+		receiverService:   receiverService,
+		xact:              xact,
 		encryptionService: secretService,
 		log:               log.NewNopLogger(),
-		ac:                actest.FakeAccessControl{},
 	}
 }
 
@@ -376,13 +393,34 @@ func cpsQuery(orgID int64) ContactPointQuery {
 	}
 }
 
+func cpsQueryWithName(orgID int64, name string) ContactPointQuery {
+	return ContactPointQuery{
+		OrgID: orgID,
+		Name:  name,
+	}
+}
+
+func createEncryptedConfig(t *testing.T, secretService secrets.Service) string {
+	c := &definitions.PostableUserConfig{}
+	err := json.Unmarshal([]byte(defaultAlertmanagerConfigJSON), c)
+	require.NoError(t, err)
+	err = notifier.EncryptReceiverConfigs(c.AlertmanagerConfig.Receivers, func(ctx context.Context, payload []byte) ([]byte, error) {
+		return secretService.Encrypt(ctx, payload, secrets.WithoutScope())
+	})
+	require.NoError(t, err)
+	bytes, err := json.Marshal(c)
+	require.NoError(t, err)
+	return string(bytes)
+}
+
 func TestStitchReceivers(t *testing.T) {
 	type testCase struct {
-		name        string
-		initial     *definitions.PostableUserConfig
-		new         *definitions.PostableGrafanaReceiver
-		expModified bool
-		expCfg      definitions.PostableApiAlertingConfig
+		name               string
+		initial            *definitions.PostableUserConfig
+		new                *definitions.PostableGrafanaReceiver
+		expModified        bool
+		expCfg             definitions.PostableApiAlertingConfig
+		expRenamedReceiver string
 	}
 
 	cases := []testCase{
@@ -462,7 +500,8 @@ func TestStitchReceivers(t *testing.T) {
 				Name: "new-receiver",
 				Type: "slack",
 			},
-			expModified: true,
+			expModified:        true,
+			expRenamedReceiver: "new-receiver",
 			expCfg: definitions.PostableApiAlertingConfig{
 				Config: definitions.Config{
 					Route: &definitions.Route{
@@ -1063,7 +1102,8 @@ func TestStitchReceivers(t *testing.T) {
 				Name: "receiver-1",
 				Type: "slack",
 			},
-			expModified: true,
+			expModified:        true,
+			expRenamedReceiver: "receiver-1",
 			expCfg: definitions.PostableApiAlertingConfig{
 				Config: definitions.Config{
 					Route: &definitions.Route{
@@ -1115,8 +1155,12 @@ func TestStitchReceivers(t *testing.T) {
 				cfg = c.initial
 			}
 
-			modified := stitchReceiver(cfg, c.new)
-
+			modified, renamedReceiver := stitchReceiver(cfg, c.new)
+			if c.expRenamedReceiver != "" {
+				assert.Equal(t, c.expRenamedReceiver, renamedReceiver)
+			} else {
+				assert.Empty(t, renamedReceiver)
+			}
 			require.Equal(t, c.expModified, modified)
 			require.Equal(t, c.expCfg, cfg.AlertmanagerConfig)
 		})

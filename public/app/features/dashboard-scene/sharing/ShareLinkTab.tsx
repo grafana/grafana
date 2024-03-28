@@ -2,21 +2,21 @@ import React from 'react';
 
 import { dateTime, UrlQueryMap } from '@grafana/data';
 import { selectors as e2eSelectors } from '@grafana/e2e-selectors';
-import { config, locationService, reportInteraction } from '@grafana/runtime';
+import { config, locationService } from '@grafana/runtime';
 import { SceneComponentProps, SceneObjectBase, SceneObjectRef, VizPanel, sceneGraph } from '@grafana/scenes';
 import { TimeZone } from '@grafana/schema';
 import { Alert, ClipboardButton, Field, FieldSet, Icon, Input, Switch } from '@grafana/ui';
 import { t, Trans } from 'app/core/internationalization';
 import { createShortLink } from 'app/core/utils/shortLinks';
 import { ThemePicker } from 'app/features/dashboard/components/ShareModal/ThemePicker';
+import { shareDashboardType } from 'app/features/dashboard/components/ShareModal/utils';
 
-import { DashboardScene } from '../scene/DashboardScene';
+import { DashboardInteractions } from '../utils/interactions';
 import { getDashboardUrl } from '../utils/urlBuilders';
 
 import { SceneShareTabState } from './types';
 export interface ShareLinkTabState extends SceneShareTabState, ShareOptions {
   panelRef?: SceneObjectRef<VizPanel>;
-  dashboardRef: SceneObjectRef<DashboardScene>;
 }
 
 interface ShareOptions {
@@ -28,7 +28,7 @@ interface ShareOptions {
 }
 
 export class ShareLinkTab extends SceneObjectBase<ShareLinkTabState> {
-  public tabId = 'Link';
+  public tabId = shareDashboardType.link;
 
   static Component = ShareLinkTabRenderer;
 
@@ -71,22 +71,30 @@ export class ShareLinkTab extends SceneObjectBase<ShareLinkTabState> {
 
     let shareUrl = getDashboardUrl({
       uid: dashboard.state.uid,
+      slug: dashboard.state.meta.slug,
       currentQueryParams: location.search,
       updateQuery: urlParamsUpdate,
       absolute: true,
-      useExperimentalURL: Boolean(config.featureToggles.dashboardSceneForViewers && dashboard.state.meta.canEdit),
     });
 
     if (useShortUrl) {
       shareUrl = await createShortLink(shareUrl);
     }
 
+    // the image panel solo route uses panelId instead of viewPanel
+    let imageQueryParams = urlParamsUpdate;
+    if (panel) {
+      delete imageQueryParams.viewPanel;
+      imageQueryParams.panelId = panel.state.key;
+      // force solo route to use scenes
+      imageQueryParams['__feature.dashboardSceneSolo'] = true;
+    }
+
     const imageUrl = getDashboardUrl({
       uid: dashboard.state.uid,
       currentQueryParams: location.search,
-      updateQuery: urlParamsUpdate,
+      updateQuery: { ...urlParamsUpdate, panelId: panel?.state.key },
       absolute: true,
-
       soloRoute: true,
       render: true,
       timeZone: getRenderTimeZone(timeRange.getTimeZone()),
@@ -119,7 +127,7 @@ export class ShareLinkTab extends SceneObjectBase<ShareLinkTabState> {
   };
 
   onCopy() {
-    reportInteraction('dashboards_sharing_link_copy_clicked', {
+    DashboardInteractions.shareLinkCopied({
       currentTimeRange: this.state.useLockedTime,
       theme: this.state.selectedTheme,
       shortenURL: this.state.useShortUrl,

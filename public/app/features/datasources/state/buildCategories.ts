@@ -203,6 +203,12 @@ function getEnterprisePhantomPlugins(): DataSourcePluginMeta[] {
       name: 'SumoLogic',
       imgUrl: 'public/img/plugins/sumo.svg',
     }),
+    getPhantomPlugin({
+      id: 'grafana-pagerduty-datasource',
+      description: 'PagerDuty datasource',
+      name: 'PagerDuty',
+      imgUrl: 'public/img/plugins/pagerduty.svg',
+    }),
   ];
 }
 

@@ -147,10 +147,10 @@ func TestAddDataSource_InvalidJSONData(t *testing.T) {
 	sc := setupScenarioContext(t, "/api/datasources")
 
 	hs.Cfg = setting.NewCfg()
-	hs.Cfg.AuthProxyEnabled = true
-	hs.Cfg.AuthProxyHeaderName = "X-AUTH-PROXY-HEADER"
+	hs.Cfg.AuthProxy.Enabled = true
+	hs.Cfg.AuthProxy.HeaderName = "X-AUTH-PROXY-HEADER"
 	jsonData := simplejson.New()
-	jsonData.Set("httpHeaderName1", hs.Cfg.AuthProxyHeaderName)
+	jsonData.Set("httpHeaderName1", hs.Cfg.AuthProxy.HeaderName)
 
 	sc.m.Post(sc.url, routing.Wrap(func(c *contextmodel.ReqContext) response.Response {
 		c.Req.Body = mockRequestBody(datasources.AddDataSourceCommand{
@@ -201,10 +201,10 @@ func TestUpdateDataSource_InvalidJSONData(t *testing.T) {
 	}
 	sc := setupScenarioContext(t, "/api/datasources/1234")
 
-	hs.Cfg.AuthProxyEnabled = true
-	hs.Cfg.AuthProxyHeaderName = "X-AUTH-PROXY-HEADER"
+	hs.Cfg.AuthProxy.Enabled = true
+	hs.Cfg.AuthProxy.HeaderName = "X-AUTH-PROXY-HEADER"
 	jsonData := simplejson.New()
-	jsonData.Set("httpHeaderName1", hs.Cfg.AuthProxyHeaderName)
+	jsonData.Set("httpHeaderName1", hs.Cfg.AuthProxy.HeaderName)
 
 	sc.m.Put(sc.url, routing.Wrap(func(c *contextmodel.ReqContext) response.Response {
 		c.Req.Body = mockRequestBody(datasources.AddDataSourceCommand{
@@ -233,47 +233,52 @@ func TestUpdateDataSourceTeamHTTPHeaders_InvalidJSONData(t *testing.T) {
 	}{
 		{
 			desc: "We should only allow for headers being X-Prom-Label-Policy",
-			data: datasources.TeamHTTPHeaders{tenantID: []datasources.TeamHTTPHeader{
-				{
-					Header: "Authorization",
-					Value:  "foo!=bar",
-				},
-			},
-			},
+			data: datasources.TeamHTTPHeaders{
+				Headers: datasources.TeamHeaders{
+					tenantID: []datasources.TeamHTTPHeader{
+						{
+							Header: "Authorization",
+							Value:  "foo!=bar",
+						},
+					},
+				}},
 			want: 400,
 		},
 		{
 			desc: "Allowed header but no team id",
-			data: datasources.TeamHTTPHeaders{"": []datasources.TeamHTTPHeader{
-				{
-					Header: "X-Prom-Label-Policy",
-					Value:  "foo=bar",
+			data: datasources.TeamHTTPHeaders{
+				Headers: datasources.TeamHeaders{"": []datasources.TeamHTTPHeader{
+					{
+						Header: "X-Prom-Label-Policy",
+						Value:  "foo=bar",
+					},
 				},
-			},
-			},
+				}},
 			want: 400,
 		},
 		{
 			desc: "Allowed team id and header name with invalid header values ",
-			data: datasources.TeamHTTPHeaders{tenantID: []datasources.TeamHTTPHeader{
-				{
-					Header: "X-Prom-Label-Policy",
-					Value:  "Bad value",
+			data: datasources.TeamHTTPHeaders{
+				Headers: datasources.TeamHeaders{tenantID: []datasources.TeamHTTPHeader{
+					{
+						Header: "X-Prom-Label-Policy",
+						Value:  "Bad value",
+					},
 				},
-			},
-			},
+				}},
 			want: 400,
 		},
 		// Complete valid case, with team id, header name and header value
 		{
 			desc: "Allowed header and header values ",
-			data: datasources.TeamHTTPHeaders{tenantID: []datasources.TeamHTTPHeader{
-				{
-					Header: "X-Prom-Label-Policy",
-					Value:  `1234:{ name!="value",foo!~"bar" }`,
+			data: datasources.TeamHTTPHeaders{
+				Headers: datasources.TeamHeaders{tenantID: []datasources.TeamHTTPHeader{
+					{
+						Header: "X-Prom-Label-Policy",
+						Value:  `1234:{ name!="value",foo!~"bar" }`,
+					},
 				},
-			},
-			},
+				}},
 			want: 200,
 		},
 	}
@@ -292,7 +297,7 @@ func TestUpdateDataSourceTeamHTTPHeaders_InvalidJSONData(t *testing.T) {
 				},
 			}
 			sc := setupScenarioContext(t, fmt.Sprintf("/api/datasources/%s", tenantID))
-			hs.Cfg.AuthProxyEnabled = true
+			hs.Cfg.AuthProxy.Enabled = true
 
 			jsonData := simplejson.New()
 			jsonData.Set("teamHttpHeaders", tc.data)

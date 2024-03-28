@@ -382,14 +382,14 @@ describe('Plugin details page', () => {
     });
 
     it('should display alert with information about why the plugin is disabled', async () => {
-      const { queryByLabelText } = renderPluginDetails({
+      const { queryByTestId } = renderPluginDetails({
         id,
         isInstalled: true,
         isDisabled: true,
         error: PluginErrorCode.modifiedSignature,
       });
 
-      expect(await queryByLabelText(selectors.pages.PluginPage.disabledInfo)).toBeInTheDocument();
+      expect(queryByTestId(selectors.pages.PluginPage.disabledInfo)).toBeInTheDocument();
     });
 
     it('should display grafana dependencies for a plugin if they are available', async () => {

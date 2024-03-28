@@ -4,9 +4,10 @@ import { useAsyncFn } from 'react-use';
 
 import { GrafanaTheme2, SelectableValue, toOption } from '@grafana/data';
 import { AccessoryButton, InputGroup } from '@grafana/experimental';
-import { Select, useStyles2 } from '@grafana/ui';
+import { Alert, Select, useStyles2 } from '@grafana/ui';
 
 import { CloudWatchDatasource } from '../../../datasource';
+import { useDimensionKeys, useEnsureVariableHasSingleSelection } from '../../../hooks';
 import { Dimensions, MetricStat } from '../../../types';
 import { appendTemplateVariables } from '../../../utils/utils';
 
@@ -16,7 +17,6 @@ export interface Props {
   metricStat: MetricStat;
   datasource: CloudWatchDatasource;
   filter: DimensionFilterCondition;
-  dimensionKeys: Array<SelectableValue<string>>;
   disableExpressions: boolean;
   onChange: (value: DimensionFilterCondition) => void;
   onDelete: () => void;
@@ -32,19 +32,17 @@ const excludeCurrentKey = (dimensions: Dimensions, currentKey: string | undefine
     return acc;
   }, {});
 
-export const FilterItem = ({
-  filter,
-  metricStat: { region, namespace, metricName, dimensions, accountId },
-  datasource,
-  dimensionKeys,
-  disableExpressions,
-  onChange,
-  onDelete,
-}: Props) => {
+export const FilterItem = ({ filter, metricStat, datasource, disableExpressions, onChange, onDelete }: Props) => {
+  const { region, namespace, metricName, dimensions, accountId } = metricStat;
+  const error = useEnsureVariableHasSingleSelection(datasource, filter.key);
   const dimensionsExcludingCurrentKey = useMemo(
     () => excludeCurrentKey(dimensions ?? {}, filter.key),
     [dimensions, filter]
   );
+  const dimensionKeys = useDimensionKeys(datasource, {
+    ...metricStat,
+    dimensionFilters: dimensionsExcludingCurrentKey,
+  });
 
   const loadDimensionValues = async () => {
     if (!filter.key) {
@@ -79,7 +77,7 @@ export const FilterItem = ({
   const styles = useStyles2(getOperatorStyles);
 
   return (
-    <div data-testid="cloudwatch-dimensions-filter-item">
+    <div className={styles.container} data-testid="cloudwatch-dimensions-filter-item">
       <InputGroup>
         <Select
           aria-label="Dimensions filter key"
@@ -114,6 +112,7 @@ export const FilterItem = ({
         />
         <AccessoryButton aria-label="remove" icon="times" variant="secondary" onClick={onDelete} type="button" />
       </InputGroup>
+      {error && <Alert className={styles.alert} title={error} severity="error" topSpacing={1} />}
     </div>
   );
 };
@@ -123,4 +122,6 @@ const getOperatorStyles = (theme: GrafanaTheme2) => ({
     padding: theme.spacing(0, 1),
     alignSelf: 'center',
   }),
+  container: css({ display: 'inline-block' }),
+  alert: css({ minWidth: '100%', width: 'min-content' }),
 });

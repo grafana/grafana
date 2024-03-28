@@ -10,8 +10,10 @@ import { Page } from 'app/core/components/Page/Page';
 
 import { DataTrail } from './DataTrail';
 import { DataTrailsHome } from './DataTrailsHome';
+import { MetricsHeader } from './MetricsHeader';
 import { getTrailStore } from './TrailStore/TrailStore';
-import { getUrlForTrail, newMetricsTrail } from './utils';
+import { HOME_ROUTE, TRAILS_ROUTE } from './shared';
+import { getMetricName, getUrlForTrail, newMetricsTrail } from './utils';
 
 export interface DataTrailsAppState extends SceneObjectState {
   trail: DataTrail;
@@ -36,20 +38,27 @@ export class DataTrailsApp extends SceneObjectBase<DataTrailsAppState> {
       <Switch>
         <Route
           exact={true}
-          path="/data-trails"
+          path={HOME_ROUTE}
           render={() => (
-            <Page navId="data-trails" layout={PageLayoutType.Custom}>
-              <div className={styles.customPage}>
-                <home.Component model={home} />
-              </div>
+            <Page
+              navId="explore/metrics"
+              layout={PageLayoutType.Standard}
+              renderTitle={() => <MetricsHeader />}
+              subTitle=""
+            >
+              <home.Component model={home} />
             </Page>
           )}
         />
         <Route
           exact={true}
-          path="/data-trails/trail"
+          path={TRAILS_ROUTE}
           render={() => (
-            <Page navId="data-trails" pageNav={{ text: 'Trail' }} layout={PageLayoutType.Custom}>
+            <Page
+              navId="explore/metrics"
+              pageNav={{ text: getMetricName(trail.state.metric) }}
+              layout={PageLayoutType.Custom}
+            >
               <div className={styles.customPage}>
                 <DataTrailView trail={trail} />
               </div>

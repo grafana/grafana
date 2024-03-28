@@ -75,7 +75,7 @@ export const RolePickerInput = ({
     <div className={styles.wrapper}>
       {showBasicRoleOnLabel && <ValueContainer>{basicRole}</ValueContainer>}
       {appliedRoles.map((role) => (
-        <ValueContainer key={role.uid}>{role.displayName || role.name}</ValueContainer>
+        <ValueContainer key={role.uid}>{role.group + ':' + (role.displayName || role.name)}</ValueContainer>
       ))}
 
       {!disabled && (
@@ -114,7 +114,7 @@ export const RolesLabel = ({ showBuiltInRole, numberOfRoles, appliedRoles }: Rol
         <Tooltip
           content={
             <div className={styles.tooltip}>
-              {appliedRoles?.map((role) => <p key={role.uid}>{role.displayName}</p>)}
+              {appliedRoles?.map((role) => <p key={role.uid}>{role.group + ':' + (role.displayName || role.name)}</p>)}
             </div>
           }
         >

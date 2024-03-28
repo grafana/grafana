@@ -10,10 +10,10 @@ import (
 	"github.com/grafana/grafana/pkg/components/satokengen"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/apikey"
+	authidentity "github.com/grafana/grafana/pkg/services/auth/identity"
 	"github.com/grafana/grafana/pkg/services/authn"
 	"github.com/grafana/grafana/pkg/services/login"
 	"github.com/grafana/grafana/pkg/services/org"
-	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/util"
 	"github.com/grafana/grafana/pkg/util/errutil"
 )
@@ -28,17 +28,15 @@ var (
 var _ authn.HookClient = new(APIKey)
 var _ authn.ContextAwareClient = new(APIKey)
 
-func ProvideAPIKey(apiKeyService apikey.Service, userService user.Service) *APIKey {
+func ProvideAPIKey(apiKeyService apikey.Service) *APIKey {
 	return &APIKey{
 		log:           log.New(authn.ClientAPIKey),
-		userService:   userService,
 		apiKeyService: apiKeyService,
 	}
 }
 
 type APIKey struct {
 	log           log.Logger
-	userService   user.Service
 	apiKeyService apikey.Service
 }
 
@@ -80,16 +78,12 @@ func (s *APIKey) Authenticate(ctx context.Context, r *authn.Request) (*authn.Ide
 		}, nil
 	}
 
-	usr, err := s.userService.GetSignedInUserWithCacheCtx(ctx, &user.GetSignedInUserQuery{
-		UserID: *apiKey.ServiceAccountId,
-		OrgID:  apiKey.OrgID,
-	})
-
-	if err != nil {
-		return nil, err
-	}
-
-	return authn.IdentityFromSignedInUser(authn.NamespacedID(authn.NamespaceServiceAccount, usr.UserID), usr, authn.ClientParams{SyncPermissions: true}, login.APIKeyAuthModule), nil
+	return &authn.Identity{
+		ID:              authn.NamespacedID(authn.NamespaceServiceAccount, *apiKey.ServiceAccountId),
+		OrgID:           apiKey.OrgID,
+		AuthenticatedBy: login.APIKeyAuthModule,
+		ClientParams:    authn.ClientParams{FetchSyncedUser: true, SyncPermissions: true},
+	}, nil
 }
 
 func (s *APIKey) getAPIKey(ctx context.Context, token string) (*apikey.APIKey, error) {
@@ -154,8 +148,9 @@ func (s *APIKey) Priority() uint {
 }
 
 func (s *APIKey) Hook(ctx context.Context, identity *authn.Identity, r *authn.Request) error {
-	namespace, id := identity.NamespacedID()
-	if namespace != authn.NamespaceAPIKey {
+	id, exists := s.getAPIKeyID(ctx, identity, r)
+
+	if !exists {
 		return nil
 	}
 
@@ -171,6 +166,32 @@ func (s *APIKey) Hook(ctx context.Context, identity *authn.Identity, r *authn.Re
 	}(id)
 
 	return nil
+}
+
+func (s *APIKey) getAPIKeyID(ctx context.Context, identity *authn.Identity, r *authn.Request) (apiKeyID int64, exists bool) {
+	namespace, identifier := identity.GetNamespacedID()
+
+	id, err := authidentity.IntIdentifier(namespace, identifier)
+	if err != nil {
+		s.log.Warn("Failed to parse ID from identifier", "err", err)
+		return -1, false
+	}
+	if namespace == authn.NamespaceAPIKey {
+		return id, true
+	}
+
+	if namespace == authn.NamespaceServiceAccount {
+		// When the identity is service account, the ID in from the namespace is the service account ID.
+		// We need to fetch the API key in this scenario, as we could use it to uniquely identify a service account token.
+		apiKey, err := s.getAPIKey(ctx, getTokenFromRequest(r))
+		if err != nil {
+			s.log.Warn("Failed to fetch the API Key from request")
+			return -1, false
+		}
+
+		return apiKey.ID, true
+	}
+	return -1, false
 }
 
 func looksLikeApiKey(token string) bool {

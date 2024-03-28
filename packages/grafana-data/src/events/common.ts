@@ -17,8 +17,8 @@ export interface DataHoverPayload {
   dataId?: string; // identifying string to correlate data between publishers and subscribers
 
   // When dragging, this will capture the point when the mouse was down
-  point: Record<string, any>; // { time: 5678, lengthft: 456 }  // each axis|scale gets a value
-  down?: Record<string, any>;
+  point: Record<string, number | null>; // { time: 5678, lengthft: 456 }  // each axis|scale gets a value
+  down?: Record<string, number | null>;
 }
 
 /** @alpha */

@@ -60,7 +60,7 @@
   },
   "editable": true,
   "fiscalYearStartMonth": 1,
-  "graphTooltip": 0,
+  "graphTooltip": 1,
   "id": 1351,
   "links": [],
   "liveNow": false,
@@ -115,6 +115,7 @@
         }
       ],
       "title": "Simple time series graph ",
+      "description": "This is a simple time series graph",
       "type": "timeseries"
     },
     {

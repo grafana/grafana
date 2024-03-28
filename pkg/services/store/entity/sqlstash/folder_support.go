@@ -4,18 +4,19 @@ import (
 	"context"
 	"encoding/json"
 
-	"github.com/grafana/grafana/pkg/infra/grn"
+	folder "github.com/grafana/grafana/pkg/apis/folder/v0alpha1"
 	"github.com/grafana/grafana/pkg/services/sqlstore/session"
-	"github.com/grafana/grafana/pkg/services/store/entity"
 )
 
 type folderInfo struct {
-	UID  string `json:"uid"`
-	Name string `json:"name"` // original display name
-	Slug string `json:"slug"` // full slug
+	Guid string `json:"guid"`
+
+	UID      string `json:"uid"`
+	Name     string `json:"name"` // original display name
+	SlugPath string `json:"slug"` // full slug path
 
 	// original slug
-	originalSlug string
+	Slug string `json:"-"`
 
 	depth int32
 	left  int32
@@ -33,37 +34,34 @@ type folderInfo struct {
 // This will replace all entries in `entity_folder`
 // This is pretty heavy weight, but it does give us a sorted folder list
 // NOTE: this could be done async with a mutex/lock?  reconciler pattern
-func updateFolderTree(ctx context.Context, tx *session.SessionTx, tenant int64) error {
-	_, err := tx.Exec(ctx, "DELETE FROM entity_folder WHERE tenant_id=?", tenant)
+func (s *sqlEntityServer) updateFolderTree(ctx context.Context, tx *session.SessionTx, namespace string) error {
+	_, err := tx.Exec(ctx, "DELETE FROM entity_folder WHERE namespace=?", namespace)
 	if err != nil {
 		return err
 	}
 
+	query := "SELECT guid,name,folder,name,slug" +
+		" FROM entity" +
+		" WHERE " + s.dialect.Quote("group") + "=? AND resource=? AND namespace=?" +
+		" ORDER BY slug asc"
+	args := []interface{}{folder.GROUP, folder.RESOURCE, namespace}
+
 	all := []*folderInfo{}
-	rows, err := tx.Query(ctx, "SELECT uid,folder,name,slug FROM entity WHERE kind=? AND tenant_id=? ORDER BY slug asc;",
-		entity.StandardKindFolder, tenant)
+	rows, err := tx.Query(ctx, query, args...)
 	if err != nil {
 		return err
 	}
+	defer func() { _ = rows.Close() }()
+
 	for rows.Next() {
 		folder := folderInfo{
 			children: []*folderInfo{},
 		}
-		err = rows.Scan(&folder.UID, &folder.parentUID, &folder.Name, &folder.originalSlug)
+		err = rows.Scan(&folder.Guid, &folder.UID, &folder.parentUID, &folder.Name, &folder.Slug)
 		if err != nil {
-			break
+			return err
 		}
 		all = append(all, &folder)
-	}
-	errClose := rows.Close()
-	// TODO: Use some kind of multi-error.
-	// Until then, we want to prioritize errors coming from the .Scan
-	// over those coming from .Close.
-	if err != nil {
-		return err
-	}
-	if errClose != nil {
-		return errClose
 	}
 
 	root, lost, err := buildFolderTree(all)
@@ -71,13 +69,13 @@ func updateFolderTree(ctx context.Context, tx *session.SessionTx, tenant int64) 
 		return err
 	}
 
-	err = insertFolderInfo(ctx, tx, tenant, root, false)
+	err = insertFolderInfo(ctx, tx, namespace, root, false)
 	if err != nil {
 		return err
 	}
 
 	for _, folder := range lost {
-		err = insertFolderInfo(ctx, tx, tenant, folder, true)
+		err = insertFolderInfo(ctx, tx, namespace, folder, true)
 		if err != nil {
 			return err
 		}
@@ -123,9 +121,9 @@ func setMPTTOrder(folder *folderInfo, stack []*folderInfo, idx int32) (int32, er
 	folder.stack = stack
 
 	if folder.depth > 0 {
-		folder.Slug = "/"
+		folder.SlugPath = "/"
 		for _, f := range stack {
-			folder.Slug += f.originalSlug + "/"
+			folder.SlugPath += f.Slug + "/"
 		}
 	}
 
@@ -139,17 +137,16 @@ func setMPTTOrder(folder *folderInfo, stack []*folderInfo, idx int32) (int32, er
 	return folder.right, nil
 }
 
-func insertFolderInfo(ctx context.Context, tx *session.SessionTx, tenant int64, folder *folderInfo, isDetached bool) error {
+func insertFolderInfo(ctx context.Context, tx *session.SessionTx, namespace string, folder *folderInfo, isDetached bool) error {
 	js, _ := json.Marshal(folder.stack)
-	grn2 := grn.GRN{TenantID: tenant, ResourceKind: entity.StandardKindFolder, ResourceIdentifier: folder.UID}
 	_, err := tx.Exec(ctx,
 		`INSERT INTO entity_folder `+
-			"(grn, tenant_id, uid, slug_path, tree, depth, left, right, detached) "+
+			"(guid, namespace, name, slug_path, tree, depth, lft, rgt, detached) "+
 			`VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-		grn2.ToGRNString(),
-		tenant,
+		folder.Guid,
+		namespace,
 		folder.UID,
-		folder.Slug,
+		folder.SlugPath,
 		string(js),
 		folder.depth,
 		folder.left,
@@ -161,7 +158,7 @@ func insertFolderInfo(ctx context.Context, tx *session.SessionTx, tenant int64, 
 	}
 
 	for _, sub := range folder.children {
-		err := insertFolderInfo(ctx, tx, tenant, sub, isDetached)
+		err := insertFolderInfo(ctx, tx, namespace, sub, isDetached)
 		if err != nil {
 			return err
 		}

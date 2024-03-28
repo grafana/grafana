@@ -2,7 +2,7 @@ import React, { PureComponent } from 'react';
 import { connect, ConnectedProps } from 'react-redux';
 
 // Utils
-import { InlineField, InlineSwitch, VerticalGroup, Modal, Button } from '@grafana/ui';
+import { InlineField, InlineSwitch, Modal, Button, EmptyState } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
 import { contextSrv } from 'app/core/core';
 import { getTimeZone } from 'app/features/profile/state/selectors';
@@ -113,41 +113,31 @@ export class ApiKeysPageUnconnected extends PureComponent<Props, State> {
       migrationResult,
     } = this.props;
 
-    if (!hasFetched) {
-      return (
-        <Page {...defaultPageProps}>
-          <Page.Contents isLoading={true}>{}</Page.Contents>
-        </Page>
-      );
-    }
-
     const showTable = apiKeysCount > 0;
     return (
       <Page {...defaultPageProps}>
-        <Page.Contents isLoading={false}>
-          <>
-            <MigrateToServiceAccountsCard onMigrate={this.onMigrateApiKeys} apikeysCount={apiKeysCount} />
-            {showTable ? (
-              <ApiKeysActionBar
-                searchQuery={searchQuery}
-                disabled={!canCreate}
-                onSearchChange={this.onSearchQueryChange}
-              />
-            ) : null}
-            {showTable ? (
-              <VerticalGroup>
-                <InlineField disabled={includeExpiredDisabled} label="Include expired keys">
-                  <InlineSwitch id="showExpired" value={includeExpired} onChange={this.onIncludeExpiredChange} />
-                </InlineField>
-                <ApiKeysTable
-                  apiKeys={apiKeys}
-                  timeZone={timeZone}
-                  onMigrate={this.onMigrateApiKey}
-                  onDelete={this.onDeleteApiKey}
-                />
-              </VerticalGroup>
-            ) : null}
-          </>
+        <Page.Contents isLoading={!hasFetched}>
+          <MigrateToServiceAccountsCard onMigrate={this.onMigrateApiKeys} apikeysCount={apiKeysCount} />
+          {showTable ? (
+            <ApiKeysActionBar
+              searchQuery={searchQuery}
+              disabled={!canCreate}
+              onSearchChange={this.onSearchQueryChange}
+            />
+          ) : null}
+          <InlineField disabled={includeExpiredDisabled} label="Include expired keys">
+            <InlineSwitch id="showExpired" value={includeExpired} onChange={this.onIncludeExpiredChange} />
+          </InlineField>
+          {apiKeys.length > 0 ? (
+            <ApiKeysTable
+              apiKeys={apiKeys}
+              timeZone={timeZone}
+              onMigrate={this.onMigrateApiKey}
+              onDelete={this.onDeleteApiKey}
+            />
+          ) : (
+            <EmptyState variant="not-found" />
+          )}
         </Page.Contents>
         {migrationResult && (
           <MigrationSummary

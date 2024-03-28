@@ -6,7 +6,6 @@ import { DropEvent, FileRejection } from 'react-dropzone';
 import {
   QueryEditorProps,
   SelectableValue,
-  dataFrameFromJSON,
   rangeUtil,
   DataQueryRequest,
   DataFrame,
@@ -16,7 +15,7 @@ import {
   getValueFormat,
   formattedValueToString,
 } from '@grafana/data';
-import { config, getBackendSrv, getDataSourceSrv, reportInteraction } from '@grafana/runtime';
+import { config, getDataSourceSrv, reportInteraction } from '@grafana/runtime';
 import {
   InlineField,
   Select,
@@ -29,9 +28,11 @@ import {
   DropzoneFile,
   Themeable2,
   withTheme2,
+  Stack,
 } from '@grafana/ui';
 import { hasAlphaPanels } from 'app/core/config';
 import * as DFImport from 'app/features/dataframe-import';
+import { getManagedChannelInfo } from 'app/features/live/info';
 import { SearchQuery } from 'app/features/search/service';
 
 import { GrafanaDatasource } from '../datasource';
@@ -90,35 +91,9 @@ export class UnthemedQueryEditor extends PureComponent<Props, State> {
   }
 
   loadChannelInfo() {
-    getBackendSrv()
-      .fetch({ url: 'api/live/list' })
-      .subscribe({
-        next: (v: any) => {
-          const channelInfo = v.data?.channels as any[];
-          if (channelInfo?.length) {
-            const channelFields: Record<string, Array<SelectableValue<string>>> = {};
-            const channels: Array<SelectableValue<string>> = channelInfo.map((c) => {
-              if (c.data) {
-                const distinctFields = new Set<string>();
-                const frame = dataFrameFromJSON(c.data);
-                for (const f of frame.fields) {
-                  distinctFields.add(f.name);
-                }
-                channelFields[c.channel] = Array.from(distinctFields).map((n) => ({
-                  value: n,
-                  label: n,
-                }));
-              }
-              return {
-                value: c.channel,
-                label: c.channel + ' [' + c.minute_rate + ' msg/min]',
-              };
-            });
-
-            this.setState({ channelFields, channels });
-          }
-        },
-      });
+    getManagedChannelInfo().then((v) => {
+      this.setState(v);
+    });
   }
 
   loadFolderInfo() {
@@ -277,23 +252,22 @@ export class UnthemedQueryEditor extends PureComponent<Props, State> {
 
     return (
       <>
-        <div className="gf-form">
-          <InlineField label="Channel" grow={true} labelWidth={labelWidth}>
-            <Select
-              options={channels}
-              value={currentChannel || ''}
-              onChange={this.onChannelChange}
-              allowCustomValue={true}
-              backspaceRemovesValue={true}
-              placeholder="Select measurements channel"
-              isClearable={true}
-              noOptionsMessage="Enter channel name"
-              formatCreateLabel={(input: string) => `Connect to: ${input}`}
-            />
-          </InlineField>
-        </div>
+        <InlineField label="Channel" grow={true} labelWidth={labelWidth}>
+          <Select
+            options={channels}
+            value={currentChannel || ''}
+            onChange={this.onChannelChange}
+            allowCustomValue={true}
+            backspaceRemovesValue={true}
+            placeholder="Select measurements channel"
+            isClearable={true}
+            noOptionsMessage="Enter channel name"
+            formatCreateLabel={(input: string) => `Connect to: ${input}`}
+          />
+        </InlineField>
+
         {channel && (
-          <div className="gf-form">
+          <Stack direction="row" gap={0}>
             <InlineField label="Fields" grow={true} labelWidth={labelWidth}>
               <Select
                 options={fields}
@@ -319,7 +293,7 @@ export class UnthemedQueryEditor extends PureComponent<Props, State> {
                 spellCheck={false}
               />
             </InlineField>
-          </div>
+          </Stack>
         )}
 
         <Alert title="Grafana Live - Measurements" severity="info">

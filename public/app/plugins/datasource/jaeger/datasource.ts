@@ -11,17 +11,17 @@ import {
   dateMath,
   DateTime,
   FieldType,
+  getDefaultTimeRange,
   MutableDataFrame,
   ScopedVars,
   urlUtil,
 } from '@grafana/data';
+import { NodeGraphOptions, SpanBarOptions } from '@grafana/o11y-ds-frontend';
 import { BackendSrvRequest, getBackendSrv, getTemplateSrv, TemplateSrv } from '@grafana/runtime';
-import { NodeGraphOptions } from 'app/core/components/NodeGraphSettings';
-import { getTimeSrv, TimeSrv } from 'app/features/dashboard/services/TimeSrv';
-import { SpanBarOptions } from 'app/features/explore/TraceView/components';
 
 import { ALL_OPERATIONS_KEY } from './components/SearchForm';
 import { TraceIdTimeParamsOptions } from './configuration/TraceIdTimeParams';
+import { mapJaegerDependenciesResponse } from './dependencyGraphTransform';
 import { createGraphFrames } from './graphTransform';
 import { createTableFrame, createTraceFrame } from './responseTransform';
 import { JaegerQuery } from './types';
@@ -39,7 +39,6 @@ export class JaegerDatasource extends DataSourceApi<JaegerQuery, JaegerJsonData>
   spanBar?: SpanBarOptions;
   constructor(
     private instanceSettings: DataSourceInstanceSettings<JaegerJsonData>,
-    private readonly timeSrv: TimeSrv = getTimeSrv(),
     private readonly templateSrv: TemplateSrv = getTemplateSrv()
   ) {
     super(instanceSettings);
@@ -63,6 +62,14 @@ export class JaegerDatasource extends DataSourceApi<JaegerQuery, JaegerJsonData>
 
     if (!target) {
       return of({ data: [emptyTraceDataFrame] });
+    }
+
+    // Use the internal Jaeger /dependencies API for rendering the dependency graph.
+    if (target.queryType === 'dependencyGraph') {
+      const timeRange = options.range ?? getDefaultTimeRange();
+      const endTs = getTime(timeRange.to, true) / 1000;
+      const lookback = endTs - getTime(timeRange.from, false) / 1000;
+      return this._request('/api/dependencies', { endTs, lookback }).pipe(map(mapJaegerDependenciesResponse));
     }
 
     if (target.queryType === 'search' && !this.isSearchFormValid(target)) {
@@ -219,7 +226,7 @@ export class JaegerDatasource extends DataSourceApi<JaegerQuery, JaegerJsonData>
   }
 
   getTimeRange(): { start: number; end: number } {
-    const range = this.timeSrv.timeRange();
+    const range = getDefaultTimeRange();
     return {
       start: getTime(range.from, false),
       end: getTime(range.to, true),

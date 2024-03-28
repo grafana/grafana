@@ -1,11 +1,11 @@
 import { saveAs } from 'file-saver';
 import React, { PureComponent } from 'react';
 
-import { reportInteraction } from '@grafana/runtime';
 import { Button, Field, Modal, Switch } from '@grafana/ui';
 import { appEvents } from 'app/core/core';
 import { t, Trans } from 'app/core/internationalization';
 import { DashboardExporter } from 'app/features/dashboard/components/DashExportModal';
+import { DashboardInteractions } from 'app/features/dashboard-scene/utils/interactions';
 import { ShowModalReactEvent } from 'app/types/events';
 
 import { ViewJsonModal } from './ViewJsonModal';
@@ -39,7 +39,7 @@ export class ShareExport extends PureComponent<Props, State> {
     const { dashboard } = this.props;
     const { shareExternally } = this.state;
 
-    reportInteraction('dashboards_sharing_export_save_json_clicked', { externally: shareExternally });
+    DashboardInteractions.exportSaveJsonClicked({ externally: shareExternally });
 
     if (shareExternally) {
       this.exporter.makeExportable(dashboard).then((dashboardJson) => {
@@ -53,8 +53,7 @@ export class ShareExport extends PureComponent<Props, State> {
   onViewJson = () => {
     const { dashboard } = this.props;
     const { shareExternally } = this.state;
-
-    reportInteraction('dashboards_sharing_export_view_json_clicked', { externally: shareExternally });
+    DashboardInteractions.exportViewJsonClicked({ externally: shareExternally });
 
     if (shareExternally) {
       this.exporter.makeExportable(dashboard).then((dashboardJson) => {

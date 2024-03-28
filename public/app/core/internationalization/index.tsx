@@ -3,7 +3,7 @@ import LanguageDetector, { DetectorOptions } from 'i18next-browser-languagedetec
 import React from 'react';
 import { Trans as I18NextTrans, initReactI18next } from 'react-i18next'; // eslint-disable-line no-restricted-imports
 
-import { LANGUAGES, VALID_LANGUAGES } from './constants';
+import { DEFAULT_LANGUAGE, LANGUAGES, VALID_LANGUAGES } from './constants';
 
 const getLanguagePartFromCode = (code: string) => code.split('-')[0].toLowerCase();
 
@@ -23,7 +23,7 @@ const loadTranslations: BackendModule = {
   },
 };
 
-export function initializeI18n(language: string) {
+export function initializeI18n(language: string): Promise<{ language: string | undefined }> {
   // This is a placeholder so we can put a 'comment' in the message json files.
   // Starts with an underscore so it's sorted to the top of the file. Even though it is in a comment the following line is still extracted
   // t('_comment', 'This file is the source of truth for English strings. Edit this to change plurals and other phrases for the UI.');
@@ -35,19 +35,30 @@ export function initializeI18n(language: string) {
 
     // If translations are empty strings (no translation), fall back to the default value in source code
     returnEmptyString: false,
+
+    // Required to ensure that `resolvedLanguage` is set property when an invalid language is passed (such as through 'detect')
+    supportedLngs: VALID_LANGUAGES,
+    fallbackLng: DEFAULT_LANGUAGE,
   };
-  let init = i18n;
+  let i18nInstance = i18n;
   if (language === 'detect') {
-    init = init.use(LanguageDetector);
+    i18nInstance = i18nInstance.use(LanguageDetector);
     const detection: DetectorOptions = { order: ['navigator'], caches: [] };
     options.detection = detection;
   } else {
     options.lng = VALID_LANGUAGES.includes(language) ? language : undefined;
   }
-  return init
+
+  const loadPromise = i18nInstance
     .use(loadTranslations)
     .use(initReactI18next) // passes i18n down to react-i18next
     .init(options);
+
+  return loadPromise.then(() => {
+    return {
+      language: i18nInstance.resolvedLanguage,
+    };
+  });
 }
 
 export function changeLanguage(locale: string) {
@@ -56,7 +67,7 @@ export function changeLanguage(locale: string) {
 }
 
 export const Trans: typeof I18NextTrans = (props) => {
-  return <I18NextTrans {...props} />;
+  return <I18NextTrans shouldUnescape {...props} />;
 };
 
 // Reassign t() so i18next-parser doesn't warn on dynamic key, and we can have 'failOnWarnings' enabled

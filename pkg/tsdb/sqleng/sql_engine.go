@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"net"
 	"regexp"
+	"runtime/debug"
 	"strconv"
 	"strings"
 	"sync"
@@ -16,22 +17,13 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/grafana/grafana-plugin-sdk-go/data/sqlutil"
-	"xorm.io/core"
-	"xorm.io/xorm"
 
-	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/setting"
-	"github.com/grafana/grafana/pkg/tsdb/intervalv2"
-	"github.com/grafana/grafana/pkg/util/errutil"
+	"github.com/grafana/grafana-plugin-sdk-go/backend/gtime"
+	"github.com/grafana/grafana-plugin-sdk-go/backend/log"
 )
-
-// XormDriverMu is used to allow safe concurrent registering and querying of drivers in xorm
-var XormDriverMu sync.RWMutex
 
 // MetaKeyExecutedQueryString is the key where the executed query should get stored
 const MetaKeyExecutedQueryString = "executedQueryString"
-
-var ErrConnectionFailed = errutil.Internal("sqleng.connectionError")
 
 // SQLMacroEngine interpolates macros into sql. It takes in the Query to have access to query context and
 // timeRange to be able to generate queries that use from and to.
@@ -44,15 +36,6 @@ type SqlQueryResultTransformer interface {
 	// TransformQueryError transforms a query error.
 	TransformQueryError(logger log.Logger, err error) error
 	GetConverterList() []sqlutil.StringConverter
-}
-
-var sqlIntervalCalculator = intervalv2.NewCalculator()
-
-// NewXormEngine is an xorm.Engine factory, that can be stubbed by tests.
-//
-//nolint:gocritic
-var NewXormEngine = func(driverName string, connectionString string) (*xorm.Engine, error) {
-	return xorm.NewEngine(driverName, connectionString)
 }
 
 type JsonData struct {
@@ -89,17 +72,8 @@ type DataSourceInfo struct {
 	DecryptedSecureJSONData map[string]string
 }
 
-// Defaults for the xorm connection pool
-type DefaultConnectionInfo struct {
-	MaxOpenConns    int
-	MaxIdleConns    int
-	ConnMaxLifetime int
-}
-
 type DataPluginConfiguration struct {
-	DriverName        string
 	DSInfo            DataSourceInfo
-	ConnectionString  string
 	TimeColumnNames   []string
 	MetricColumnTypes []string
 	RowLimit          int64
@@ -108,7 +82,7 @@ type DataPluginConfiguration struct {
 type DataSourceHandler struct {
 	macroEngine            SQLMacroEngine
 	queryResultTransformer SqlQueryResultTransformer
-	engine                 *xorm.Engine
+	db                     *sql.DB
 	timeColumnNames        []string
 	metricColumnTypes      []string
 	log                    log.Logger
@@ -134,19 +108,14 @@ func (e *DataSourceHandler) TransformQueryError(logger log.Logger, err error) er
 	var opErr *net.OpError
 	if errors.As(err, &opErr) {
 		logger.Error("Query error", "err", err)
-		return ErrConnectionFailed.Errorf("failed to connect to server - %s", e.userError)
+		return fmt.Errorf("failed to connect to server - %s", e.userError)
 	}
 
 	return e.queryResultTransformer.TransformQueryError(logger, err)
 }
 
-func NewQueryDataHandler(cfg *setting.Cfg, config DataPluginConfiguration, queryResultTransformer SqlQueryResultTransformer,
+func NewQueryDataHandler(userFacingDefaultError string, db *sql.DB, config DataPluginConfiguration, queryResultTransformer SqlQueryResultTransformer,
 	macroEngine SQLMacroEngine, log log.Logger) (*DataSourceHandler, error) {
-	log.Debug("Creating engine...")
-	defer func() {
-		log.Debug("Engine created")
-	}()
-
 	queryDataHandler := DataSourceHandler{
 		queryResultTransformer: queryResultTransformer,
 		macroEngine:            macroEngine,
@@ -154,7 +123,7 @@ func NewQueryDataHandler(cfg *setting.Cfg, config DataPluginConfiguration, query
 		log:                    log,
 		dsInfo:                 config.DSInfo,
 		rowLimit:               config.RowLimit,
-		userError:              cfg.UserFacingDefaultError,
+		userError:              userFacingDefaultError,
 	}
 
 	if len(config.TimeColumnNames) > 0 {
@@ -165,16 +134,7 @@ func NewQueryDataHandler(cfg *setting.Cfg, config DataPluginConfiguration, query
 		queryDataHandler.metricColumnTypes = config.MetricColumnTypes
 	}
 
-	engine, err := NewXormEngine(config.DriverName, config.ConnectionString)
-	if err != nil {
-		return nil, err
-	}
-
-	engine.SetMaxOpenConns(config.DSInfo.JsonData.MaxOpenConns)
-	engine.SetMaxIdleConns(config.DSInfo.JsonData.MaxIdleConns)
-	engine.SetConnMaxLifetime(time.Duration(config.DSInfo.JsonData.ConnMaxLifetime) * time.Second)
-
-	queryDataHandler.engine = engine
+	queryDataHandler.db = db
 	return &queryDataHandler, nil
 }
 
@@ -184,17 +144,17 @@ type DBDataResponse struct {
 }
 
 func (e *DataSourceHandler) Dispose() {
-	e.log.Debug("Disposing engine...")
-	if e.engine != nil {
-		if err := e.engine.Close(); err != nil {
-			e.log.Error("Failed to dispose engine", "error", err)
+	e.log.Debug("Disposing DB...")
+	if e.db != nil {
+		if err := e.db.Close(); err != nil {
+			e.log.Error("Failed to dispose db", "error", err)
 		}
 	}
-	e.log.Debug("Engine disposed")
+	e.log.Debug("DB disposed")
 }
 
 func (e *DataSourceHandler) Ping() error {
-	return e.engine.Ping()
+	return e.db.Ping()
 }
 
 func (e *DataSourceHandler) QueryData(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
@@ -211,6 +171,13 @@ func (e *DataSourceHandler) QueryData(ctx context.Context, req *backend.QueryDat
 		if err != nil {
 			return nil, fmt.Errorf("error unmarshal query json: %w", err)
 		}
+
+		// the fill-params are only stored inside this function, during query-interpolation. we do not support
+		// sending them in "from the outside"
+		if queryjson.Fill || queryjson.FillInterval != 0.0 || queryjson.FillMode != "" || queryjson.FillValue != 0.0 {
+			return nil, fmt.Errorf("query fill-parameters not supported")
+		}
+
 		if queryjson.RawSql == "" {
 			continue
 		}
@@ -243,7 +210,7 @@ func (e *DataSourceHandler) executeQuery(query backend.DataQuery, wg *sync.WaitG
 
 	defer func() {
 		if r := recover(); r != nil {
-			logger.Error("ExecuteQuery panic", "error", r, "stack", log.Stack(1))
+			logger.Error("ExecuteQuery panic", "error", r, "stack", string(debug.Stack()))
 			if theErr, ok := r.(error); ok {
 				queryResult.dataResponse.Error = theErr
 			} else if theErrString, ok := r.(string); ok {
@@ -272,24 +239,16 @@ func (e *DataSourceHandler) executeQuery(query backend.DataQuery, wg *sync.WaitG
 	}
 
 	// global substitutions
-	interpolatedQuery, err := Interpolate(query, timeRange, e.dsInfo.JsonData.TimeInterval, queryJson.RawSql)
-	if err != nil {
-		errAppendDebug("interpolation failed", e.TransformQueryError(logger, err), interpolatedQuery)
-		return
-	}
+	interpolatedQuery := Interpolate(query, timeRange, e.dsInfo.JsonData.TimeInterval, queryJson.RawSql)
 
 	// data source specific substitutions
-	interpolatedQuery, err = e.macroEngine.Interpolate(&query, timeRange, interpolatedQuery)
+	interpolatedQuery, err := e.macroEngine.Interpolate(&query, timeRange, interpolatedQuery)
 	if err != nil {
 		errAppendDebug("interpolation failed", e.TransformQueryError(logger, err), interpolatedQuery)
 		return
 	}
 
-	session := e.engine.NewSession()
-	defer session.Close()
-	db := session.DB()
-
-	rows, err := db.QueryContext(queryContext, interpolatedQuery)
+	rows, err := e.db.QueryContext(queryContext, interpolatedQuery)
 	if err != nil {
 		errAppendDebug("db query error", e.TransformQueryError(logger, err), interpolatedQuery)
 		return
@@ -308,7 +267,7 @@ func (e *DataSourceHandler) executeQuery(query backend.DataQuery, wg *sync.WaitG
 
 	// Convert row.Rows to dataframe
 	stringConverters := e.queryResultTransformer.GetConverterList()
-	frame, err := sqlutil.FrameFromRows(rows.Rows, e.rowLimit, sqlutil.ToConverters(stringConverters...)...)
+	frame, err := sqlutil.FrameFromRows(rows, e.rowLimit, sqlutil.ToConverters(stringConverters...)...)
 	if err != nil {
 		errAppendDebug("convert frame from rows error", err, interpolatedQuery)
 		return
@@ -402,23 +361,19 @@ func (e *DataSourceHandler) executeQuery(query backend.DataQuery, wg *sync.WaitG
 }
 
 // Interpolate provides global macros/substitutions for all sql datasources.
-var Interpolate = func(query backend.DataQuery, timeRange backend.TimeRange, timeInterval string, sql string) (string, error) {
-	minInterval, err := intervalv2.GetIntervalFrom(timeInterval, query.Interval.String(), query.Interval.Milliseconds(), time.Second*60)
-	if err != nil {
-		return "", err
-	}
-	interval := sqlIntervalCalculator.Calculate(timeRange, minInterval, query.MaxDataPoints)
+var Interpolate = func(query backend.DataQuery, timeRange backend.TimeRange, timeInterval string, sql string) string {
+	interval := query.Interval
 
 	sql = strings.ReplaceAll(sql, "$__interval_ms", strconv.FormatInt(interval.Milliseconds(), 10))
-	sql = strings.ReplaceAll(sql, "$__interval", interval.Text)
+	sql = strings.ReplaceAll(sql, "$__interval", gtime.FormatInterval(interval))
 	sql = strings.ReplaceAll(sql, "$__unixEpochFrom()", fmt.Sprintf("%d", timeRange.From.UTC().Unix()))
 	sql = strings.ReplaceAll(sql, "$__unixEpochTo()", fmt.Sprintf("%d", timeRange.To.UTC().Unix()))
 
-	return sql, nil
+	return sql
 }
 
 func (e *DataSourceHandler) newProcessCfg(query backend.DataQuery, queryContext context.Context,
-	rows *core.Rows, interpolatedQuery string) (*dataQueryModel, error) {
+	rows *sql.Rows, interpolatedQuery string) (*dataQueryModel, error) {
 	columnNames, err := rows.Columns()
 	if err != nil {
 		return nil, err
@@ -431,7 +386,6 @@ func (e *DataSourceHandler) newProcessCfg(query backend.DataQuery, queryContext 
 	qm := &dataQueryModel{
 		columnTypes:  columnTypes,
 		columnNames:  columnNames,
-		rows:         rows,
 		timeIndex:    -1,
 		timeEndIndex: -1,
 		metricIndex:  -1,
@@ -525,332 +479,8 @@ type dataQueryModel struct {
 	timeIndex         int
 	timeEndIndex      int
 	metricIndex       int
-	rows              *core.Rows
 	metricPrefix      bool
 	queryContext      context.Context
-}
-
-func convertInt64ToFloat64(origin *data.Field, newField *data.Field) {
-	valueLength := origin.Len()
-	for i := 0; i < valueLength; i++ {
-		value := float64(origin.At(i).(int64))
-		newField.Append(&value)
-	}
-}
-
-func convertNullableInt64ToFloat64(origin *data.Field, newField *data.Field) {
-	valueLength := origin.Len()
-	for i := 0; i < valueLength; i++ {
-		iv := origin.At(i).(*int64)
-		if iv == nil {
-			newField.Append(nil)
-		} else {
-			value := float64(*iv)
-			newField.Append(&value)
-		}
-	}
-}
-
-func convertUInt64ToFloat64(origin *data.Field, newField *data.Field) {
-	valueLength := origin.Len()
-	for i := 0; i < valueLength; i++ {
-		value := float64(origin.At(i).(uint64))
-		newField.Append(&value)
-	}
-}
-
-func convertNullableUInt64ToFloat64(origin *data.Field, newField *data.Field) {
-	valueLength := origin.Len()
-	for i := 0; i < valueLength; i++ {
-		iv := origin.At(i).(*uint64)
-		if iv == nil {
-			newField.Append(nil)
-		} else {
-			value := float64(*iv)
-			newField.Append(&value)
-		}
-	}
-}
-
-func convertInt32ToFloat64(origin *data.Field, newField *data.Field) {
-	valueLength := origin.Len()
-	for i := 0; i < valueLength; i++ {
-		value := float64(origin.At(i).(int32))
-		newField.Append(&value)
-	}
-}
-
-func convertNullableInt32ToFloat64(origin *data.Field, newField *data.Field) {
-	valueLength := origin.Len()
-	for i := 0; i < valueLength; i++ {
-		iv := origin.At(i).(*int32)
-		if iv == nil {
-			newField.Append(nil)
-		} else {
-			value := float64(*iv)
-			newField.Append(&value)
-		}
-	}
-}
-
-func convertUInt32ToFloat64(origin *data.Field, newField *data.Field) {
-	valueLength := origin.Len()
-	for i := 0; i < valueLength; i++ {
-		value := float64(origin.At(i).(uint32))
-		newField.Append(&value)
-	}
-}
-
-func convertNullableUInt32ToFloat64(origin *data.Field, newField *data.Field) {
-	valueLength := origin.Len()
-	for i := 0; i < valueLength; i++ {
-		iv := origin.At(i).(*uint32)
-		if iv == nil {
-			newField.Append(nil)
-		} else {
-			value := float64(*iv)
-			newField.Append(&value)
-		}
-	}
-}
-
-func convertInt16ToFloat64(origin *data.Field, newField *data.Field) {
-	valueLength := origin.Len()
-	for i := 0; i < valueLength; i++ {
-		value := float64(origin.At(i).(int16))
-		newField.Append(&value)
-	}
-}
-
-func convertNullableInt16ToFloat64(origin *data.Field, newField *data.Field) {
-	valueLength := origin.Len()
-	for i := 0; i < valueLength; i++ {
-		iv := origin.At(i).(*int16)
-		if iv == nil {
-			newField.Append(nil)
-		} else {
-			value := float64(*iv)
-			newField.Append(&value)
-		}
-	}
-}
-
-func convertUInt16ToFloat64(origin *data.Field, newField *data.Field) {
-	valueLength := origin.Len()
-	for i := 0; i < valueLength; i++ {
-		value := float64(origin.At(i).(uint16))
-		newField.Append(&value)
-	}
-}
-
-func convertNullableUInt16ToFloat64(origin *data.Field, newField *data.Field) {
-	valueLength := origin.Len()
-	for i := 0; i < valueLength; i++ {
-		iv := origin.At(i).(*uint16)
-		if iv == nil {
-			newField.Append(nil)
-		} else {
-			value := float64(*iv)
-			newField.Append(&value)
-		}
-	}
-}
-
-func convertInt8ToFloat64(origin *data.Field, newField *data.Field) {
-	valueLength := origin.Len()
-	for i := 0; i < valueLength; i++ {
-		value := float64(origin.At(i).(int8))
-		newField.Append(&value)
-	}
-}
-
-func convertNullableInt8ToFloat64(origin *data.Field, newField *data.Field) {
-	valueLength := origin.Len()
-	for i := 0; i < valueLength; i++ {
-		iv := origin.At(i).(*int8)
-		if iv == nil {
-			newField.Append(nil)
-		} else {
-			value := float64(*iv)
-			newField.Append(&value)
-		}
-	}
-}
-
-func convertUInt8ToFloat64(origin *data.Field, newField *data.Field) {
-	valueLength := origin.Len()
-	for i := 0; i < valueLength; i++ {
-		value := float64(origin.At(i).(uint8))
-		newField.Append(&value)
-	}
-}
-
-func convertNullableUInt8ToFloat64(origin *data.Field, newField *data.Field) {
-	valueLength := origin.Len()
-	for i := 0; i < valueLength; i++ {
-		iv := origin.At(i).(*uint8)
-		if iv == nil {
-			newField.Append(nil)
-		} else {
-			value := float64(*iv)
-			newField.Append(&value)
-		}
-	}
-}
-
-func convertUnknownToZero(origin *data.Field, newField *data.Field) {
-	valueLength := origin.Len()
-	for i := 0; i < valueLength; i++ {
-		value := float64(0)
-		newField.Append(&value)
-	}
-}
-
-func convertNullableFloat32ToFloat64(origin *data.Field, newField *data.Field) {
-	valueLength := origin.Len()
-	for i := 0; i < valueLength; i++ {
-		iv := origin.At(i).(*float32)
-		if iv == nil {
-			newField.Append(nil)
-		} else {
-			value := float64(*iv)
-			newField.Append(&value)
-		}
-	}
-}
-
-func convertFloat32ToFloat64(origin *data.Field, newField *data.Field) {
-	valueLength := origin.Len()
-	for i := 0; i < valueLength; i++ {
-		value := float64(origin.At(i).(float32))
-		newField.Append(&value)
-	}
-}
-
-func convertInt64ToEpochMS(origin *data.Field, newField *data.Field) {
-	valueLength := origin.Len()
-	for i := 0; i < valueLength; i++ {
-		value := time.Unix(0, int64(epochPrecisionToMS(float64(origin.At(i).(int64))))*int64(time.Millisecond))
-		newField.Append(&value)
-	}
-}
-
-func convertNullableInt64ToEpochMS(origin *data.Field, newField *data.Field) {
-	valueLength := origin.Len()
-	for i := 0; i < valueLength; i++ {
-		iv := origin.At(i).(*int64)
-		if iv == nil {
-			newField.Append(nil)
-		} else {
-			value := time.Unix(0, int64(epochPrecisionToMS(float64(*iv)))*int64(time.Millisecond))
-			newField.Append(&value)
-		}
-	}
-}
-
-func convertUInt64ToEpochMS(origin *data.Field, newField *data.Field) {
-	valueLength := origin.Len()
-	for i := 0; i < valueLength; i++ {
-		value := time.Unix(0, int64(epochPrecisionToMS(float64(origin.At(i).(uint64))))*int64(time.Millisecond))
-		newField.Append(&value)
-	}
-}
-
-func convertNullableUInt64ToEpochMS(origin *data.Field, newField *data.Field) {
-	valueLength := origin.Len()
-	for i := 0; i < valueLength; i++ {
-		iv := origin.At(i).(*uint64)
-		if iv == nil {
-			newField.Append(nil)
-		} else {
-			value := time.Unix(0, int64(epochPrecisionToMS(float64(*iv)))*int64(time.Millisecond))
-			newField.Append(&value)
-		}
-	}
-}
-
-func convertInt32ToEpochMS(origin *data.Field, newField *data.Field) {
-	valueLength := origin.Len()
-	for i := 0; i < valueLength; i++ {
-		value := time.Unix(0, int64(epochPrecisionToMS(float64(origin.At(i).(int32))))*int64(time.Millisecond))
-		newField.Append(&value)
-	}
-}
-
-func convertNullableInt32ToEpochMS(origin *data.Field, newField *data.Field) {
-	valueLength := origin.Len()
-	for i := 0; i < valueLength; i++ {
-		iv := origin.At(i).(*int32)
-		if iv == nil {
-			newField.Append(nil)
-		} else {
-			value := time.Unix(0, int64(epochPrecisionToMS(float64(*iv)))*int64(time.Millisecond))
-			newField.Append(&value)
-		}
-	}
-}
-
-func convertUInt32ToEpochMS(origin *data.Field, newField *data.Field) {
-	valueLength := origin.Len()
-	for i := 0; i < valueLength; i++ {
-		value := time.Unix(0, int64(epochPrecisionToMS(float64(origin.At(i).(uint32))))*int64(time.Millisecond))
-		newField.Append(&value)
-	}
-}
-
-func convertNullableUInt32ToEpochMS(origin *data.Field, newField *data.Field) {
-	valueLength := origin.Len()
-	for i := 0; i < valueLength; i++ {
-		iv := origin.At(i).(*uint32)
-		if iv == nil {
-			newField.Append(nil)
-		} else {
-			value := time.Unix(0, int64(epochPrecisionToMS(float64(*iv)))*int64(time.Millisecond))
-			newField.Append(&value)
-		}
-	}
-}
-
-func convertFloat64ToEpochMS(origin *data.Field, newField *data.Field) {
-	valueLength := origin.Len()
-	for i := 0; i < valueLength; i++ {
-		value := time.Unix(0, int64(epochPrecisionToMS(origin.At(i).(float64)))*int64(time.Millisecond))
-		newField.Append(&value)
-	}
-}
-
-func convertNullableFloat64ToEpochMS(origin *data.Field, newField *data.Field) {
-	valueLength := origin.Len()
-	for i := 0; i < valueLength; i++ {
-		iv := origin.At(i).(*float64)
-		if iv == nil {
-			newField.Append(nil)
-		} else {
-			value := time.Unix(0, int64(epochPrecisionToMS(*iv))*int64(time.Millisecond))
-			newField.Append(&value)
-		}
-	}
-}
-
-func convertFloat32ToEpochMS(origin *data.Field, newField *data.Field) {
-	valueLength := origin.Len()
-	for i := 0; i < valueLength; i++ {
-		value := time.Unix(0, int64(epochPrecisionToMS(float64(origin.At(i).(float32))))*int64(time.Millisecond))
-		newField.Append(&value)
-	}
-}
-
-func convertNullableFloat32ToEpochMS(origin *data.Field, newField *data.Field) {
-	valueLength := origin.Len()
-	for i := 0; i < valueLength; i++ {
-		iv := origin.At(i).(*float32)
-		if iv == nil {
-			newField.Append(nil)
-		} else {
-			value := time.Unix(0, int64(epochPrecisionToMS(float64(*iv)))*int64(time.Millisecond))
-			newField.Append(&value)
-		}
-	}
 }
 
 func convertSQLTimeColumnsToEpochMS(frame *data.Frame, qm *dataQueryModel) error {
@@ -886,33 +516,18 @@ func convertSQLTimeColumnToEpochMS(frame *data.Frame, timeIndex int) error {
 	newField.Name = origin.Name
 	newField.Labels = origin.Labels
 
-	switch valueType {
-	case data.FieldTypeInt64:
-		convertInt64ToEpochMS(frame.Fields[timeIndex], newField)
-	case data.FieldTypeNullableInt64:
-		convertNullableInt64ToEpochMS(frame.Fields[timeIndex], newField)
-	case data.FieldTypeUint64:
-		convertUInt64ToEpochMS(frame.Fields[timeIndex], newField)
-	case data.FieldTypeNullableUint64:
-		convertNullableUInt64ToEpochMS(frame.Fields[timeIndex], newField)
-	case data.FieldTypeInt32:
-		convertInt32ToEpochMS(frame.Fields[timeIndex], newField)
-	case data.FieldTypeNullableInt32:
-		convertNullableInt32ToEpochMS(frame.Fields[timeIndex], newField)
-	case data.FieldTypeUint32:
-		convertUInt32ToEpochMS(frame.Fields[timeIndex], newField)
-	case data.FieldTypeNullableUint32:
-		convertNullableUInt32ToEpochMS(frame.Fields[timeIndex], newField)
-	case data.FieldTypeFloat64:
-		convertFloat64ToEpochMS(frame.Fields[timeIndex], newField)
-	case data.FieldTypeNullableFloat64:
-		convertNullableFloat64ToEpochMS(frame.Fields[timeIndex], newField)
-	case data.FieldTypeFloat32:
-		convertFloat32ToEpochMS(frame.Fields[timeIndex], newField)
-	case data.FieldTypeNullableFloat32:
-		convertNullableFloat32ToEpochMS(frame.Fields[timeIndex], newField)
-	default:
-		return fmt.Errorf("column type %q is not convertible to time.Time", valueType)
+	valueLength := origin.Len()
+	for i := 0; i < valueLength; i++ {
+		v, err := origin.NullableFloatAt(i)
+		if err != nil {
+			return fmt.Errorf("unable to convert data to a time field")
+		}
+		if v == nil {
+			newField.Append(nil)
+		} else {
+			timestamp := time.Unix(0, int64(epochPrecisionToMS(*v))*int64(time.Millisecond))
+			newField.Append(&timestamp)
+		}
 	}
 	frame.Fields[timeIndex] = newField
 
@@ -920,8 +535,6 @@ func convertSQLTimeColumnToEpochMS(frame *data.Frame, timeIndex int) error {
 }
 
 // convertSQLValueColumnToFloat converts timeseries value column to float.
-//
-//nolint:gocyclo
 func convertSQLValueColumnToFloat(frame *data.Frame, Index int) (*data.Frame, error) {
 	if Index < 0 || Index >= len(frame.Fields) {
 		return frame, fmt.Errorf("metricIndex %d is out of range", Index)
@@ -933,52 +546,18 @@ func convertSQLValueColumnToFloat(frame *data.Frame, Index int) (*data.Frame, er
 		return frame, nil
 	}
 
-	newField := data.NewFieldFromFieldType(data.FieldTypeNullableFloat64, 0)
+	newField := data.NewFieldFromFieldType(data.FieldTypeNullableFloat64, origin.Len())
 	newField.Name = origin.Name
 	newField.Labels = origin.Labels
 
-	switch valueType {
-	case data.FieldTypeInt64:
-		convertInt64ToFloat64(frame.Fields[Index], newField)
-	case data.FieldTypeNullableInt64:
-		convertNullableInt64ToFloat64(frame.Fields[Index], newField)
-	case data.FieldTypeUint64:
-		convertUInt64ToFloat64(frame.Fields[Index], newField)
-	case data.FieldTypeNullableUint64:
-		convertNullableUInt64ToFloat64(frame.Fields[Index], newField)
-	case data.FieldTypeInt32:
-		convertInt32ToFloat64(frame.Fields[Index], newField)
-	case data.FieldTypeNullableInt32:
-		convertNullableInt32ToFloat64(frame.Fields[Index], newField)
-	case data.FieldTypeUint32:
-		convertUInt32ToFloat64(frame.Fields[Index], newField)
-	case data.FieldTypeNullableUint32:
-		convertNullableUInt32ToFloat64(frame.Fields[Index], newField)
-	case data.FieldTypeInt16:
-		convertInt16ToFloat64(frame.Fields[Index], newField)
-	case data.FieldTypeNullableInt16:
-		convertNullableInt16ToFloat64(frame.Fields[Index], newField)
-	case data.FieldTypeUint16:
-		convertUInt16ToFloat64(frame.Fields[Index], newField)
-	case data.FieldTypeNullableUint16:
-		convertNullableUInt16ToFloat64(frame.Fields[Index], newField)
-	case data.FieldTypeInt8:
-		convertInt8ToFloat64(frame.Fields[Index], newField)
-	case data.FieldTypeNullableInt8:
-		convertNullableInt8ToFloat64(frame.Fields[Index], newField)
-	case data.FieldTypeUint8:
-		convertUInt8ToFloat64(frame.Fields[Index], newField)
-	case data.FieldTypeNullableUint8:
-		convertNullableUInt8ToFloat64(frame.Fields[Index], newField)
-	case data.FieldTypeFloat32:
-		convertFloat32ToFloat64(frame.Fields[Index], newField)
-	case data.FieldTypeNullableFloat32:
-		convertNullableFloat32ToFloat64(frame.Fields[Index], newField)
-	default:
-		convertUnknownToZero(frame.Fields[Index], newField)
-		frame.Fields[Index] = newField
-		return frame, fmt.Errorf("metricIndex %d type %s can't be converted to float", Index, valueType)
+	for i := 0; i < origin.Len(); i++ {
+		v, err := origin.NullableFloatAt(i)
+		if err != nil {
+			return frame, err
+		}
+		newField.Set(i, v)
 	}
+
 	frame.Fields[Index] = newField
 
 	return frame, nil

@@ -5,6 +5,7 @@ import { RawTimeRange, TimeRange } from '@grafana/data';
 import { reportInteraction } from '@grafana/runtime';
 import { ClipboardButton, Field, Modal, Switch, TextArea } from '@grafana/ui';
 import { t, Trans } from 'app/core/internationalization';
+import { DashboardInteractions } from 'app/features/dashboard-scene/utils/interactions';
 
 import { ThemePicker } from './ThemePicker';
 import { ShareModalTabProps } from './types';
@@ -81,7 +82,7 @@ export function ShareEmbed({ panel, dashboard, range, buildIframe = buildIframeH
           variant="primary"
           getText={() => iframeHtml}
           onClipboardCopy={() => {
-            reportInteraction('dashboards_sharing_embed_copy_clicked', {
+            DashboardInteractions.embedSnippetCopy({
               currentTimeRange: useCurrentTimeRange,
               theme: selectedTheme,
             });

@@ -2,7 +2,9 @@ package guardian
 
 import (
 	"context"
+	"slices"
 
+	"github.com/grafana/grafana/pkg/infra/metrics"
 	"github.com/grafana/grafana/pkg/services/auth/identity"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/folder"
@@ -59,17 +61,29 @@ type FakeDashboardGuardian struct {
 	CanEditValue  bool
 	CanViewValue  bool
 	CanAdminValue bool
+	CanViewUIDs   []string
+	CanEditUIDs   []string
+	CanSaveUIDs   []string
 }
 
 func (g *FakeDashboardGuardian) CanSave() (bool, error) {
+	if g.CanSaveUIDs != nil {
+		return slices.Contains(g.CanSaveUIDs, g.DashUID), nil
+	}
 	return g.CanSaveValue, nil
 }
 
 func (g *FakeDashboardGuardian) CanEdit() (bool, error) {
+	if g.CanEditUIDs != nil {
+		return slices.Contains(g.CanEditUIDs, g.DashUID), nil
+	}
 	return g.CanEditValue, nil
 }
 
 func (g *FakeDashboardGuardian) CanView() (bool, error) {
+	if g.CanViewUIDs != nil {
+		return slices.Contains(g.CanViewUIDs, g.DashUID), nil
+	}
 	return g.CanViewValue, nil
 }
 
@@ -112,6 +126,7 @@ func MockDashboardGuardian(mock *FakeDashboardGuardian) {
 	NewByFolder = func(_ context.Context, f *folder.Folder, orgId int64, user identity.Requester) (DashboardGuardian, error) {
 		mock.OrgID = orgId
 		mock.DashUID = f.UID
+		metrics.MFolderIDsServiceCount.WithLabelValues(metrics.Guardian).Inc()
 		// nolint:staticcheck
 		mock.DashID = f.ID
 		mock.User = user

@@ -2,6 +2,7 @@ package mssql
 
 import (
 	"context"
+	"database/sql"
 	"encoding/json"
 	"fmt"
 	"net/url"
@@ -9,40 +10,46 @@ import (
 	"regexp"
 	"strconv"
 	"strings"
+	"time"
 
-	"github.com/grafana/grafana-azure-sdk-go/azcredentials"
+	"github.com/grafana/grafana-azure-sdk-go/v2/azcredentials"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/datasource"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/instancemgmt"
-	sdkproxy "github.com/grafana/grafana-plugin-sdk-go/backend/proxy"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/grafana/grafana-plugin-sdk-go/data/sqlutil"
 	mssql "github.com/microsoft/go-mssqldb"
 	_ "github.com/microsoft/go-mssqldb/azuread"
+	_ "github.com/microsoft/go-mssqldb/integratedauth/krb5"
 
-	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana-plugin-sdk-go/backend/log"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/tsdb/mssql/kerberos"
 	"github.com/grafana/grafana/pkg/tsdb/mssql/utils"
 	"github.com/grafana/grafana/pkg/tsdb/sqleng"
-	"github.com/grafana/grafana/pkg/tsdb/sqleng/proxyutil"
 	"github.com/grafana/grafana/pkg/util"
 )
 
-var logger = log.New("tsdb.mssql")
-
 type Service struct {
-	im instancemgmt.InstanceManager
+	im     instancemgmt.InstanceManager
+	logger log.Logger
 }
 
 const (
-	azureAuthentication     = "Azure AD Authentication"
-	windowsAuthentication   = "Windows Authentication"
-	sqlServerAuthentication = "SQL Server Authentication"
+	azureAuthentication         = "Azure AD Authentication"
+	windowsAuthentication       = "Windows Authentication"
+	sqlServerAuthentication     = "SQL Server Authentication"
+	kerberosRaw                 = "Windows AD: Username + password"
+	kerberosKeytab              = "Windows AD: Keytab"
+	kerberosCredentialCache     = "Windows AD: Credential cache"      // #nosec G101
+	kerberosCredentialCacheFile = "Windows AD: Credential cache file" // #nosec G101
 )
 
 func ProvideService(cfg *setting.Cfg) *Service {
+	logger := backend.NewLoggerWith("logger", "tsdb.mssql")
 	return &Service{
-		im: datasource.NewInstanceManager(newInstanceSettings(cfg)),
+		im:     datasource.NewInstanceManager(newInstanceSettings(cfg, logger)),
+		logger: logger,
 	}
 }
 
@@ -63,8 +70,8 @@ func (s *Service) QueryData(ctx context.Context, req *backend.QueryDataRequest) 
 	return dsHandler.QueryData(ctx, req)
 }
 
-func newInstanceSettings(cfg *setting.Cfg) datasource.InstanceFactoryFunc {
-	return func(_ context.Context, settings backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
+func newInstanceSettings(cfg *setting.Cfg, logger log.Logger) datasource.InstanceFactoryFunc {
+	return func(ctx context.Context, settings backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
 		jsonData := sqleng.JsonData{
 			MaxOpenConns:      cfg.SqlDatasourceMaxOpenConnsDefault,
 			MaxIdleConns:      cfg.SqlDatasourceMaxIdleConnsDefault,
@@ -77,6 +84,12 @@ func newInstanceSettings(cfg *setting.Cfg) datasource.InstanceFactoryFunc {
 		if err != nil {
 			return nil, fmt.Errorf("error reading azure credentials")
 		}
+
+		kerberosAuth, err := kerberos.GetKerberosSettings(settings)
+		if err != nil {
+			return nil, fmt.Errorf("error getting kerberos settings: %w", err)
+		}
+
 		err = json.Unmarshal(settings.JSONData, &jsonData)
 		if err != nil {
 			return nil, fmt.Errorf("error reading settings: %w", err)
@@ -97,7 +110,7 @@ func newInstanceSettings(cfg *setting.Cfg) datasource.InstanceFactoryFunc {
 			UID:                     settings.UID,
 			DecryptedSecureJSONData: settings.DecryptedSecureJSONData,
 		}
-		cnnstr, err := generateConnectionString(dsInfo, cfg, azureCredentials)
+		cnnstr, err := generateConnectionString(dsInfo, cfg, azureCredentials, kerberosAuth, logger)
 		if err != nil {
 			return nil, err
 		}
@@ -110,22 +123,28 @@ func newInstanceSettings(cfg *setting.Cfg) datasource.InstanceFactoryFunc {
 			driverName = "azuresql"
 		}
 
+		proxyClient, err := settings.ProxyClient(ctx)
+		if err != nil {
+			return nil, err
+		}
+
 		// register a new proxy driver if the secure socks proxy is enabled
-		proxyOpts := proxyutil.GetSQLProxyOptions(cfg.SecureSocksDSProxy, dsInfo)
-		if sdkproxy.New(proxyOpts).SecureSocksProxyEnabled() {
-			URL, err := ParseURL(dsInfo.URL)
+		if proxyClient.SecureSocksProxyEnabled() {
+			dialer, err := proxyClient.NewSecureSocksProxyContextDialer()
 			if err != nil {
 				return nil, err
 			}
-			driverName, err = createMSSQLProxyDriver(cnnstr, URL.Hostname(), proxyOpts)
+			URL, err := ParseURL(dsInfo.URL, logger)
+			if err != nil {
+				return nil, err
+			}
+			driverName, err = createMSSQLProxyDriver(cnnstr, URL.Hostname(), dialer)
 			if err != nil {
 				return nil, err
 			}
 		}
 
 		config := sqleng.DataPluginConfiguration{
-			DriverName:        driverName,
-			ConnectionString:  cnnstr,
 			DSInfo:            dsInfo,
 			MetricColumnTypes: []string{"VARCHAR", "CHAR", "NVARCHAR", "NCHAR"},
 			RowLimit:          cfg.DataProxyRowLimit,
@@ -135,12 +154,29 @@ func newInstanceSettings(cfg *setting.Cfg) datasource.InstanceFactoryFunc {
 			userError: cfg.UserFacingDefaultError,
 		}
 
-		return sqleng.NewQueryDataHandler(cfg, config, &queryResultTransformer, newMssqlMacroEngine(), logger)
+		db, err := sql.Open(driverName, cnnstr)
+		if err != nil {
+			return nil, err
+		}
+
+		db.SetMaxOpenConns(config.DSInfo.JsonData.MaxOpenConns)
+		db.SetMaxIdleConns(config.DSInfo.JsonData.MaxIdleConns)
+		db.SetConnMaxLifetime(time.Duration(config.DSInfo.JsonData.ConnMaxLifetime) * time.Second)
+
+		return sqleng.NewQueryDataHandler(cfg.UserFacingDefaultError, db, config, &queryResultTransformer, newMssqlMacroEngine(), logger)
 	}
 }
 
+// ParseURL is called also from pkg/api/datasource/validation.go,
+// which uses a different logging interface,
+// so we have a special minimal interface that is fulfilled by
+// both places.
+type DebugOnlyLogger interface {
+	Debug(msg string, args ...interface{})
+}
+
 // ParseURL tries to parse an MSSQL URL string into a URL object.
-func ParseURL(u string) (*url.URL, error) {
+func ParseURL(u string, logger DebugOnlyLogger) (*url.URL, error) {
 	logger.Debug("Parsing MSSQL URL", "url", u)
 
 	// Recognize ODBC connection strings like host\instance:1234
@@ -160,11 +196,11 @@ func ParseURL(u string) (*url.URL, error) {
 	}, nil
 }
 
-func generateConnectionString(dsInfo sqleng.DataSourceInfo, cfg *setting.Cfg, azureCredentials azcredentials.AzureCredentials) (string, error) {
+func generateConnectionString(dsInfo sqleng.DataSourceInfo, cfg *setting.Cfg, azureCredentials azcredentials.AzureCredentials, kerberosAuth kerberos.KerberosAuth, logger log.Logger) (string, error) {
 	const dfltPort = "0"
 	var addr util.NetworkAddress
 	if dsInfo.URL != "" {
-		u, err := ParseURL(dsInfo.URL)
+		u, err := ParseURL(dsInfo.URL, logger)
 		if err != nil {
 			return "", err
 		}
@@ -205,6 +241,8 @@ func generateConnectionString(dsInfo sqleng.DataSourceInfo, cfg *setting.Cfg, az
 		connStr += azureCredentialDSNFragment
 	case windowsAuthentication:
 		// No user id or password. We're using windows single sign on.
+	case kerberosRaw, kerberosKeytab, kerberosCredentialCacheFile, kerberosCredentialCache:
+		connStr = kerberos.Krb5ParseAuthCredentials(addr.Host, addr.Port, dsInfo.Database, dsInfo.User, dsInfo.DecryptedSecureJSONData["password"], kerberosAuth)
 	default:
 		connStr += fmt.Sprintf("user id=%s;password=%s;", dsInfo.User, dsInfo.DecryptedSecureJSONData["password"])
 	}
@@ -264,7 +302,7 @@ func (t *mssqlQueryResultTransformer) TransformQueryError(logger log.Logger, err
 	// ref https://github.com/denisenkom/go-mssqldb/blob/045585d74f9069afe2e115b6235eb043c8047043/tds.go#L904
 	if strings.HasPrefix(strings.ToLower(err.Error()), "unable to open tcp connection with host") {
 		logger.Error("Query error", "error", err)
-		return sqleng.ErrConnectionFailed.Errorf("failed to connect to server - %s", t.userError)
+		return fmt.Errorf("failed to connect to server - %s", t.userError)
 	}
 
 	return err
@@ -280,7 +318,7 @@ func (s *Service) CheckHealth(ctx context.Context, req *backend.CheckHealthReque
 	err = dsHandler.Ping()
 
 	if err != nil {
-		return &backend.CheckHealthResult{Status: backend.HealthStatusError, Message: dsHandler.TransformQueryError(logger, err).Error()}, nil
+		return &backend.CheckHealthResult{Status: backend.HealthStatusError, Message: dsHandler.TransformQueryError(s.logger, err).Error()}, nil
 	}
 
 	return &backend.CheckHealthResult{Status: backend.HealthStatusOk, Message: "Database Connection OK"}, nil

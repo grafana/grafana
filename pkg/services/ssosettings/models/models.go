@@ -26,24 +26,41 @@ func (s SettingsSource) MarshalJSON() ([]byte, error) {
 	}
 }
 
-type SSOSetting struct {
-	ID        string                 `xorm:"id pk" json:"-"`
-	Provider  string                 `xorm:"provider" json:"provider"`
-	Settings  map[string]interface{} `xorm:"settings" json:"settings"`
-	Created   time.Time              `xorm:"created" json:"-"`
-	Updated   time.Time              `xorm:"updated" json:"-"`
-	IsDeleted bool                   `xorm:"is_deleted" json:"-"`
-	Source    SettingsSource         `xorm:"-" json:"source"`
+func (s *SettingsSource) UnmarshalJSON(data []byte) error {
+	var source string
+	if err := json.Unmarshal(data, &source); err != nil {
+		return err
+	}
+
+	switch source {
+	case "database":
+		*s = DB
+	case "system":
+		*s = System
+	default:
+		return fmt.Errorf("unknown source: %s", source)
+	}
+	return nil
+}
+
+type SSOSettings struct {
+	ID        string         `xorm:"id pk" json:"id"`
+	Provider  string         `xorm:"provider" json:"provider"`
+	Settings  map[string]any `xorm:"settings" json:"settings"`
+	Created   time.Time      `xorm:"created" json:"-"`
+	Updated   time.Time      `xorm:"updated" json:"-"`
+	IsDeleted bool           `xorm:"is_deleted" json:"-"`
+	Source    SettingsSource `xorm:"-" json:"source"`
 }
 
 // TableName returns the table name (needed for Xorm)
-func (s SSOSetting) TableName() string {
+func (s SSOSettings) TableName() string {
 	return "sso_setting"
 }
 
-// MarshalJSON implements the json.Marshaler interface and converts the s.Settings from map[string]any to map[string]any in camelCase
-func (s SSOSetting) MarshalJSON() ([]byte, error) {
-	type Alias SSOSetting
+// MarshalJSON implements the json.Marshaler interface and converts the s.Settings from map[string]any in snake_case to map[string]any in camelCase
+func (s SSOSettings) MarshalJSON() ([]byte, error) {
+	type Alias SSOSettings
 	aux := &struct {
 		*Alias
 	}{
@@ -60,8 +77,8 @@ func (s SSOSetting) MarshalJSON() ([]byte, error) {
 }
 
 // UnmarshalJSON implements the json.Unmarshaler interface and converts the settings from map[string]any camelCase to map[string]interface{} snake_case
-func (s *SSOSetting) UnmarshalJSON(data []byte) error {
-	type Alias SSOSetting
+func (s *SSOSettings) UnmarshalJSON(data []byte) error {
+	type Alias SSOSettings
 	aux := &struct {
 		*Alias
 	}{
@@ -79,9 +96,4 @@ func (s *SSOSetting) UnmarshalJSON(data []byte) error {
 
 	s.Settings = settings
 	return nil
-}
-
-type SSOSettingsResponse struct {
-	Settings map[string]interface{} `json:"settings"`
-	Provider string                 `json:"type"`
 }

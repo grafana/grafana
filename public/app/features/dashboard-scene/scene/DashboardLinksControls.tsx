@@ -2,27 +2,26 @@ import React from 'react';
 
 import { sanitizeUrl } from '@grafana/data/src/text/sanitize';
 import { selectors } from '@grafana/e2e-selectors';
-import { SceneComponentProps, SceneObjectBase, SceneObjectState } from '@grafana/scenes';
 import { DashboardLink } from '@grafana/schema';
 import { Tooltip } from '@grafana/ui';
-import { linkIconMap } from 'app/features/dashboard/components/LinksSettings/LinkSettingsEdit';
 import {
   DashboardLinkButton,
   DashboardLinksDashboard,
 } from 'app/features/dashboard/components/SubMenu/DashboardLinksDashboard';
 import { getLinkSrv } from 'app/features/panel/panellinks/link_srv';
 
-interface DashboardLinksControlsState extends SceneObjectState {
+import { LINK_ICON_MAP } from '../settings/links/utils';
+
+export interface Props {
   links: DashboardLink[];
-  dashboardUID: string;
+  uid?: string;
 }
 
-export class DashboardLinksControls extends SceneObjectBase<DashboardLinksControlsState> {
-  static Component = DashboardLinksControlsRenderer;
-}
+export function DashboardLinksControls({ links, uid }: Props) {
+  if (!links || !uid) {
+    return null;
+  }
 
-function DashboardLinksControlsRenderer({ model }: SceneComponentProps<DashboardLinksControls>) {
-  const { links, dashboardUID } = model.useState();
   return (
     <>
       {links.map((link: DashboardLink, index: number) => {
@@ -30,10 +29,10 @@ function DashboardLinksControlsRenderer({ model }: SceneComponentProps<Dashboard
         const key = `${link.title}-$${index}`;
 
         if (link.type === 'dashboards') {
-          return <DashboardLinksDashboard key={key} link={link} linkInfo={linkInfo} dashboardUID={dashboardUID} />;
+          return <DashboardLinksDashboard key={key} link={link} linkInfo={linkInfo} dashboardUID={uid} />;
         }
 
-        const icon = linkIconMap[link.icon];
+        const icon = LINK_ICON_MAP[link.icon];
 
         const linkElement = (
           <DashboardLinkButton

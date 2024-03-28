@@ -1,10 +1,10 @@
 import { css } from '@emotion/css';
 import { sortBy } from 'lodash';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import { useFormContext, FieldErrors, FieldValues } from 'react-hook-form';
+import { useFormContext, FieldErrors, FieldValues, Controller } from 'react-hook-form';
 
 import { GrafanaTheme2, SelectableValue } from '@grafana/data';
-import { Alert, Button, Field, InputControl, Select, useStyles2 } from '@grafana/ui';
+import { Alert, Button, Field, Select, useStyles2 } from '@grafana/ui';
 
 import { useUnifiedAlertingSelector } from '../../../hooks/useUnifiedAlertingSelector';
 import { ChannelValues, CommonSettingsComponentType } from '../../../types/receiver-form';
@@ -69,7 +69,8 @@ export function ChannelSubForm<R extends ChannelValues>({
   // Prevent forgetting about initial values when switching the integration type and the oncall integration type
   useEffect(() => {
     // Restore values when switching back from a changed integration to the default one
-    const subscription = watch((_, { name, type, value }) => {
+    const subscription = watch((v, { name, type }) => {
+      const value = name ? v[name] : '';
       if (initialValues && name === fieldName('type') && value === initialValues.type && type === 'change') {
         setValue(fieldName('settings'), initialValues.settings);
       }
@@ -133,7 +134,7 @@ export function ChannelSubForm<R extends ChannelValues>({
       <div className={styles.topRow}>
         <div>
           <Field label="Integration" htmlFor={contactPointTypeInputId} data-testid={`${pathPrefix}type`}>
-            <InputControl
+            <Controller
               name={fieldName('type')}
               defaultValue={defaultValues.type}
               render={({ field: { ref, onChange, ...field } }) => (

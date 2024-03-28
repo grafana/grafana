@@ -7,7 +7,7 @@
 //          0
 //      ]
 //  }
-//  Name: 
+//  Name: Average counter
 //  Dimensions: 2 Fields by 3 Rows
 //  +-----------------------------------+------------------+
 //  | Name: Time                        | Name: Value      |
@@ -26,6 +26,7 @@
   "frames": [
     {
       "schema": {
+        "name": "Average counter",
         "meta": {
           "type": "timeseries-multi",
           "typeVersion": [
@@ -47,10 +48,6 @@
             "typeInfo": {
               "frame": "float64",
               "nullable": true
-            },
-            "labels": {},
-            "config": {
-              "displayNameFromDS": "Average counter"
             }
           }
         ]

@@ -68,9 +68,14 @@ export const VizLegendListItem = <T = unknown,>({
   return (
     <div
       className={cx(styles.itemWrapper, item.disabled && styles.itemDisabled, className)}
-      aria-label={selectors.components.VizLegend.seriesName(item.label)}
+      data-testid={selectors.components.VizLegend.seriesName(item.label)}
     >
-      <VizLegendSeriesIcon seriesName={item.label} color={item.color} gradient={item.gradient} readonly={readonly} />
+      <VizLegendSeriesIcon
+        seriesName={item.fieldName ?? item.label}
+        color={item.color}
+        gradient={item.gradient}
+        readonly={readonly}
+      />
       <button
         disabled={readonly}
         type="button"

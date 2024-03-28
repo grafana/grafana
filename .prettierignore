@@ -12,6 +12,7 @@ node_modules
 pkg
 public/lib/monaco
 public/sass/*.generated.scss
+scripts/cli/bettererIssueTemplate.md
 scripts/grafana-server/tmp
 vendor
 
@@ -31,10 +32,5 @@ public/api-merged.json
 public/api-enterprise-spec.json
 public/openapi3.json
 
-# Generated Kinds report
-kinds/report.json
-
-# Generated schema docs
-docs/sources/developers/kinds/
-
-scripts/cli/bettererIssueTemplate.md
+# Crowdin files
+public/locales/**/*.json

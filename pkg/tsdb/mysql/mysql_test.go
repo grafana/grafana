@@ -2,6 +2,7 @@ package mysql
 
 import (
 	"context"
+	"database/sql"
 	"fmt"
 	"math/rand"
 	"os"
@@ -11,9 +12,7 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/stretchr/testify/require"
-	"xorm.io/xorm"
 
-	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tsdb/sqleng"
 )
 
@@ -37,21 +36,13 @@ func TestIntegrationMySQL(t *testing.T) {
 		t.Skip()
 	}
 
-	x := InitMySQLTestDB(t)
-
-	origXormEngine := sqleng.NewXormEngine
 	origInterpolate := sqleng.Interpolate
 	t.Cleanup(func() {
-		sqleng.NewXormEngine = origXormEngine
 		sqleng.Interpolate = origInterpolate
 	})
 
-	sqleng.NewXormEngine = func(d, c string) (*xorm.Engine, error) {
-		return x, nil
-	}
-
-	sqleng.Interpolate = func(query backend.DataQuery, timeRange backend.TimeRange, timeInterval string, sql string) (string, error) {
-		return sql, nil
+	sqleng.Interpolate = func(query backend.DataQuery, timeRange backend.TimeRange, timeInterval string, sql string) string {
+		return sql
 	}
 
 	dsInfo := sqleng.DataSourceInfo{
@@ -63,8 +54,6 @@ func TestIntegrationMySQL(t *testing.T) {
 	}
 
 	config := sqleng.DataPluginConfiguration{
-		DriverName:        "mysql",
-		ConnectionString:  "",
 		DSInfo:            dsInfo,
 		TimeColumnNames:   []string{"time", "time_sec"},
 		MetricColumnTypes: []string{"CHAR", "VARCHAR", "TINYTEXT", "TEXT", "MEDIUMTEXT", "LONGTEXT"},
@@ -73,13 +62,14 @@ func TestIntegrationMySQL(t *testing.T) {
 
 	rowTransformer := mysqlQueryResultTransformer{}
 
-	exe, err := sqleng.NewQueryDataHandler(setting.NewCfg(), config, &rowTransformer, newMysqlMacroEngine(logger, setting.NewCfg()), logger)
+	logger := backend.NewLoggerWith("logger", "mysql.test")
+
+	db := InitMySQLTestDB(t, config.DSInfo.JsonData)
+
+	exe, err := sqleng.NewQueryDataHandler("", db, config, &rowTransformer, newMysqlMacroEngine(logger, ""), logger)
 
 	require.NoError(t, err)
 
-	sess := x.NewSession()
-	t.Cleanup(sess.Close)
-	db := sess.DB()
 	fromStart := time.Date(2018, 3, 15, 13, 0, 0, 0, time.UTC)
 
 	t.Run("Given a table with different native data types", func(t *testing.T) {
@@ -100,7 +90,7 @@ func TestIntegrationMySQL(t *testing.T) {
 		sql += "`atimestamp` timestamp NOT NULL,"
 		sql += "`adatetime` datetime NOT NULL,"
 		sql += "`atime` time NOT NULL,"
-		sql += "`ayear` year," // Crashes xorm when running cleandb
+		sql += "`ayear` year,"
 		sql += "`abit` bit(1),"
 		sql += "`atinytext` tinytext,"
 		sql += "`atinyblob` tinyblob,"
@@ -339,7 +329,8 @@ func TestIntegrationMySQL(t *testing.T) {
 								"rawSql": "SELECT $__timeGroup(time, $__interval) AS time, avg(value) as value FROM metric GROUP BY 1 ORDER BY 1",
 								"format": "time_series"
 							}`),
-							RefID: "A",
+							RefID:    "A",
+							Interval: time.Second * 60,
 							TimeRange: backend.TimeRange{
 								From: fromStart,
 								To:   fromStart.Add(30 * time.Minute),
@@ -419,21 +410,21 @@ func TestIntegrationMySQL(t *testing.T) {
 
 	t.Run("Given a table with metrics having multiple values and measurements", func(t *testing.T) {
 		type metric_values struct {
-			Time                time.Time  `xorm:"datetime 'time' not null"`
-			TimeNullable        *time.Time `xorm:"datetime(6) 'timeNullable' null"`
-			TimeInt64           int64      `xorm:"bigint(20) 'timeInt64' not null"`
-			TimeInt64Nullable   *int64     `xorm:"bigint(20) 'timeInt64Nullable' null"`
-			TimeFloat64         float64    `xorm:"double 'timeFloat64' not null"`
-			TimeFloat64Nullable *float64   `xorm:"double 'timeFloat64Nullable' null"`
-			TimeInt32           int32      `xorm:"int(11) 'timeInt32' not null"`
-			TimeInt32Nullable   *int32     `xorm:"int(11) 'timeInt32Nullable' null"`
-			TimeFloat32         float32    `xorm:"double 'timeFloat32' not null"`
-			TimeFloat32Nullable *float32   `xorm:"double 'timeFloat32Nullable' null"`
+			Time                time.Time
+			TimeNullable        *time.Time
+			TimeInt64           int64
+			TimeInt64Nullable   *int64
+			TimeFloat64         float64
+			TimeFloat64Nullable *float64
+			TimeInt32           int32
+			TimeInt32Nullable   *int32
+			TimeFloat32         float32
+			TimeFloat32Nullable *float32
 			Measurement         string
-			ValueOne            int64 `xorm:"integer 'valueOne'"`
-			ValueTwo            int64 `xorm:"integer 'valueTwo'"`
-			ValueThree          int64 `xorm:"tinyint(1) null 'valueThree'"`
-			ValueFour           int64 `xorm:"smallint(1) null 'valueFour'"`
+			ValueOne            int64
+			ValueTwo            int64
+			ValueThree          int64
+			ValueFour           int64
 		}
 
 		_, err := db.Exec("DROP TABLE IF EXISTS metric_values")
@@ -1179,8 +1170,6 @@ func TestIntegrationMySQL(t *testing.T) {
 		t.Run("When row limit set to 1", func(t *testing.T) {
 			dsInfo := sqleng.DataSourceInfo{}
 			config := sqleng.DataPluginConfiguration{
-				DriverName:        "mysql",
-				ConnectionString:  "",
 				DSInfo:            dsInfo,
 				TimeColumnNames:   []string{"time", "time_sec"},
 				MetricColumnTypes: []string{"CHAR", "VARCHAR", "TINYTEXT", "TEXT", "MEDIUMTEXT", "LONGTEXT"},
@@ -1189,7 +1178,7 @@ func TestIntegrationMySQL(t *testing.T) {
 
 			queryResultTransformer := mysqlQueryResultTransformer{}
 
-			handler, err := sqleng.NewQueryDataHandler(setting.NewCfg(), config, &queryResultTransformer, newMysqlMacroEngine(logger, setting.NewCfg()), logger)
+			handler, err := sqleng.NewQueryDataHandler("", db, config, &queryResultTransformer, newMysqlMacroEngine(logger, ""), logger)
 			require.NoError(t, err)
 
 			t.Run("When doing a table query that returns 2 rows should limit the result to 1 row", func(t *testing.T) {
@@ -1291,19 +1280,18 @@ func TestIntegrationMySQL(t *testing.T) {
 	})
 }
 
-func InitMySQLTestDB(t *testing.T) *xorm.Engine {
+func InitMySQLTestDB(t *testing.T, jsonData sqleng.JsonData) *sql.DB {
 	connStr := mySQLTestDBConnStr()
-	x, err := xorm.NewEngine("mysql", connStr)
+	db, err := sql.Open("mysql", connStr)
 	if err != nil {
 		t.Fatalf("Failed to init mysql db %v", err)
 	}
 
-	x.DatabaseTZ = time.UTC
-	x.TZLocation = time.UTC
+	db.SetMaxOpenConns(jsonData.MaxOpenConns)
+	db.SetMaxIdleConns(jsonData.MaxIdleConns)
+	db.SetConnMaxLifetime(time.Duration(jsonData.ConnMaxLifetime) * time.Second)
 
-	// x.ShowSQL()
-
-	return x
+	return db
 }
 
 func genTimeRangeByInterval(from time.Time, duration time.Duration, interval time.Duration) []time.Time {

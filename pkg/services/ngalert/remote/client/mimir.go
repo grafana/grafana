@@ -12,23 +12,26 @@ import (
 	"strings"
 
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/services/ngalert/client"
+	"github.com/grafana/grafana/pkg/services/ngalert/metrics"
 )
 
 // MimirClient contains all the methods to query the migration critical endpoints of Mimir instance, it's an interface to allow multiple implementations.
 type MimirClient interface {
 	GetGrafanaAlertmanagerState(ctx context.Context) (*UserGrafanaState, error)
-	CreateGrafanaAlertmanagerState(ctx context.Context, s string) error
+	CreateGrafanaAlertmanagerState(ctx context.Context, state string) error
 	DeleteGrafanaAlertmanagerState(ctx context.Context) error
 
 	GetGrafanaAlertmanagerConfig(ctx context.Context) (*UserGrafanaConfig, error)
-	CreateGrafanaAlertmanagerConfig(ctx context.Context, configuration string, hash string, id int64, at int64, d bool) error
+	CreateGrafanaAlertmanagerConfig(ctx context.Context, configuration, hash string, createdAt int64, isDefault bool) error
 	DeleteGrafanaAlertmanagerConfig(ctx context.Context) error
 }
 
 type Mimir struct {
+	client   client.Requester
 	endpoint *url.URL
-	client   http.Client
 	logger   log.Logger
+	metrics  *metrics.RemoteAlertmanager
 }
 
 type Config struct {
@@ -60,21 +63,22 @@ func (e *errorResponse) Error() string {
 	return e.Error2
 }
 
-func New(cfg *Config) (*Mimir, error) {
+func New(cfg *Config, metrics *metrics.RemoteAlertmanager) (*Mimir, error) {
 	rt := &MimirAuthRoundTripper{
 		TenantID: cfg.TenantID,
 		Password: cfg.Password,
 		Next:     http.DefaultTransport,
 	}
 
-	c := http.Client{
+	c := &http.Client{
 		Transport: rt,
 	}
 
 	return &Mimir{
 		endpoint: cfg.URL,
-		client:   c,
+		client:   client.NewTimedClient(c, metrics.RequestLatency),
 		logger:   cfg.Logger,
+		metrics:  metrics,
 	}, nil
 }
 

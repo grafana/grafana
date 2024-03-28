@@ -26,6 +26,7 @@ export function BasicSettings({ dataSourceName, isDefault, onDefaultChange, onNa
               'preselected in new panels."
               grow
               disabled={disabled}
+              labelWidth={14}
             >
               <Input
                 id="basic-settings-name"
@@ -34,7 +35,7 @@ export function BasicSettings({ dataSourceName, isDefault, onDefaultChange, onNa
                 placeholder="Name"
                 onChange={(event) => onNameChange(event.currentTarget.value)}
                 required
-                aria-label={selectors.pages.DataSource.name}
+                data-testid={selectors.pages.DataSource.name}
               />
             </InlineField>
           </div>

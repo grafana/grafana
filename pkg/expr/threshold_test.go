@@ -3,6 +3,7 @@ package expr
 import (
 	"encoding/json"
 	"fmt"
+	"math"
 	"sort"
 	"testing"
 
@@ -13,7 +14,7 @@ import (
 
 func TestNewThresholdCommand(t *testing.T) {
 	type testCase struct {
-		fn            string
+		fn            ThresholdType
 		args          []float64
 		shouldError   bool
 		expectedError string
@@ -106,7 +107,7 @@ func TestUnmarshalThresholdCommand(t *testing.T) {
 				require.IsType(t, &ThresholdCommand{}, command)
 				cmd := command.(*ThresholdCommand)
 				require.Equal(t, []string{"A"}, cmd.NeedsVars())
-				require.Equal(t, "gt", cmd.ThresholdFunc)
+				require.Equal(t, ThresholdIsAbove, cmd.ThresholdFunc)
 				require.Equal(t, []float64{20.0, 80.0}, cmd.Conditions)
 			},
 		},
@@ -162,7 +163,7 @@ func TestUnmarshalThresholdCommand(t *testing.T) {
 				        ],
 				        "type": "lt"
 				      },
-				      "loadedDimensions": {"schema":{"name":"test","meta":{"type":"fingerprints","typeVersion":[1,0]},"fields":[{"name":"fingerprints","type":"number","typeInfo":{"frame":"uint64"}}]},"data":{"values":[[1,2,3,4,5]]}}
+				      "loadedDimensions": {"schema":{"name":"test","meta":{"type":"fingerprints","typeVersion":[1,0]},"fields":[{"name":"fingerprints","type":"number","typeInfo":{"frame":"uint64"}}]},"data":{"values":[[18446744073709551615,2,3,4,5]]}}
 				    }
 				  ]
 				}`,
@@ -171,10 +172,10 @@ func TestUnmarshalThresholdCommand(t *testing.T) {
 				cmd := c.(*HysteresisCommand)
 				require.Equal(t, []string{"B"}, cmd.NeedsVars())
 				require.Equal(t, []string{"B"}, cmd.LoadingThresholdFunc.NeedsVars())
-				require.Equal(t, "gt", cmd.LoadingThresholdFunc.ThresholdFunc)
+				require.Equal(t, ThresholdIsAbove, cmd.LoadingThresholdFunc.ThresholdFunc)
 				require.Equal(t, []float64{100.0}, cmd.LoadingThresholdFunc.Conditions)
 				require.Equal(t, []string{"B"}, cmd.UnloadingThresholdFunc.NeedsVars())
-				require.Equal(t, "lt", cmd.UnloadingThresholdFunc.ThresholdFunc)
+				require.Equal(t, ThresholdIsBelow, cmd.UnloadingThresholdFunc.ThresholdFunc)
 				require.Equal(t, []float64{31.0}, cmd.UnloadingThresholdFunc.Conditions)
 				require.True(t, cmd.UnloadingThresholdFunc.Invert)
 				require.NotNil(t, cmd.LoadedDimensions)
@@ -186,7 +187,7 @@ func TestUnmarshalThresholdCommand(t *testing.T) {
 					return actual[i] < actual[j]
 				})
 
-				require.EqualValues(t, []uint64{1, 2, 3, 4, 5}, actual)
+				require.EqualValues(t, []uint64{2, 3, 4, 5, 18446744073709551615}, actual)
 			},
 		},
 	}
@@ -232,7 +233,7 @@ func TestCreateMathExpression(t *testing.T) {
 		expected    string
 
 		ref      string
-		function string
+		function ThresholdType
 		params   []float64
 	}
 
@@ -296,7 +297,7 @@ func TestCreateMathExpression(t *testing.T) {
 
 func TestIsSupportedThresholdFunc(t *testing.T) {
 	type testCase struct {
-		function  string
+		function  ThresholdType
 		supported bool
 	}
 
@@ -324,9 +325,121 @@ func TestIsSupportedThresholdFunc(t *testing.T) {
 	}
 
 	for _, tc := range cases {
-		t.Run(tc.function, func(t *testing.T) {
-			supported := IsSupportedThresholdFunc(tc.function)
+		t.Run(string(tc.function), func(t *testing.T) {
+			supported := IsSupportedThresholdFunc(string(tc.function))
 			require.Equal(t, supported, tc.supported)
 		})
 	}
+}
+
+func TestIsHysteresisExpression(t *testing.T) {
+	cases := []struct {
+		name     string
+		input    json.RawMessage
+		expected bool
+	}{
+		{
+			name:     "false if it's empty",
+			input:    json.RawMessage(`{}`),
+			expected: false,
+		},
+		{
+			name:     "false if it is not threshold type",
+			input:    json.RawMessage(`{ "type": "reduce" }`),
+			expected: false,
+		},
+		{
+			name:     "false if no conditions",
+			input:    json.RawMessage(`{ "type": "threshold" }`),
+			expected: false,
+		},
+		{
+			name:     "false if many conditions",
+			input:    json.RawMessage(`{ "type": "threshold", "conditions": [{}, {}] }`),
+			expected: false,
+		},
+		{
+			name:     "false if condition is not an object",
+			input:    json.RawMessage(`{ "type": "threshold", "conditions": ["test"] }`),
+			expected: false,
+		},
+		{
+			name:     "false if condition is does not have unloadEvaluator",
+			input:    json.RawMessage(`{ "type": "threshold", "conditions": [{}] }`),
+			expected: false,
+		},
+		{
+			name:     "true type is threshold and a single condition has unloadEvaluator field",
+			input:    json.RawMessage(`{ "type": "threshold", "conditions": [{ "unloadEvaluator" : {}}] }`),
+			expected: true,
+		},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			query := map[string]any{}
+			require.NoError(t, json.Unmarshal(tc.input, &query))
+			require.Equal(t, tc.expected, IsHysteresisExpression(query))
+		})
+	}
+}
+
+func TestSetLoadedDimensionsToHysteresisCommand(t *testing.T) {
+	cases := []struct {
+		name  string
+		input json.RawMessage
+	}{
+		{
+			name:  "error if model is empty",
+			input: json.RawMessage(`{}`),
+		},
+		{
+			name:  "error if is not a threshold type",
+			input: json.RawMessage(`{ "type": "reduce" }`),
+		},
+		{
+			name:  "error if threshold but no conditions",
+			input: json.RawMessage(`{ "type": "threshold" }`),
+		},
+		{
+			name:  "error if threshold and many conditions",
+			input: json.RawMessage(`{ "type": "threshold", "conditions": [{}, {}] }`),
+		},
+		{
+			name:  "error if condition is not an object",
+			input: json.RawMessage(`{ "type": "threshold", "conditions": ["test"] }`),
+		},
+		{
+			name:  "error if condition does not have unloadEvaluator",
+			input: json.RawMessage(`{ "type": "threshold", "conditions": [{ "evaluator": { "params": [5], "type": "gt"}}], "expression": "A" }`),
+		},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			query := map[string]any{}
+			require.NoError(t, json.Unmarshal(tc.input, &query))
+			err := SetLoadedDimensionsToHysteresisCommand(query, Fingerprints{math.MaxUint64: {}, 2: {}, 3: {}})
+			require.Error(t, err)
+		})
+	}
+
+	t.Run("when unloadEvaluator is set, mutates query with loaded dimensions", func(t *testing.T) {
+		fingerprints := Fingerprints{math.MaxUint64: {}, 2: {}, 3: {}}
+		input := json.RawMessage(`{ "type": "threshold", "conditions": [{ "evaluator": { "params": [5], "type": "gt" }, "unloadEvaluator" : {"params": [2], "type": "lt"}}], "expression": "A" }`)
+		query := map[string]any{}
+		require.NoError(t, json.Unmarshal(input, &query))
+		require.NoError(t, SetLoadedDimensionsToHysteresisCommand(query, fingerprints))
+		raw, err := json.Marshal(query)
+		require.NoError(t, err)
+
+		// Assert the query is set by unmarshalling the query because it's the easiest way to assert Fingerprints
+		cmd, err := UnmarshalThresholdCommand(&rawNode{
+			RefID:    "B",
+			QueryRaw: raw,
+		}, featuremgmt.WithFeatures(featuremgmt.FlagRecoveryThreshold))
+		require.NoError(t, err)
+
+		require.Equal(t, fingerprints, cmd.(*HysteresisCommand).LoadedDimensions)
+	})
 }

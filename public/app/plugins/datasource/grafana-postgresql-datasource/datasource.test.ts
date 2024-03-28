@@ -21,8 +21,7 @@ import {
   getDataSourceSrv,
   setDataSourceSrv,
 } from '@grafana/runtime';
-import { QueryFormat, SQLQuery } from 'app/features/plugins/sql/types';
-import { makeVariable } from 'app/features/plugins/sql/utils/testHelpers';
+import { QueryFormat, SQLQuery, makeVariable } from '@grafana/sql';
 
 import { PostgresDatasource } from './datasource';
 import { PostgresOptions } from './types';
@@ -284,34 +283,6 @@ describe('PostgreSQLDatasource', () => {
       };
 
       runMarbleTest({ options, marble, values, expectedMarble, expectedValues });
-    });
-  });
-
-  describe('When performing a query with hidden target', () => {
-    it('should return empty result and backendSrv.fetch should not be called', async () => {
-      const options = {
-        range: {
-          from: dateTime(1432288354),
-          to: dateTime(1432288401),
-        },
-        targets: [
-          {
-            format: 'table',
-            rawQuery: true,
-            rawSql: 'select time, metric, value from grafana_metric',
-            refId: 'A',
-            datasource: 'gdev-ds',
-            hide: true,
-          },
-        ],
-      } as unknown as DataQueryRequest<SQLQuery>;
-
-      const { ds } = setupTestContext({});
-
-      await expect(ds.query(options)).toEmitValuesWith((received) => {
-        expect(received[0]).toEqual({ data: [] });
-        expect(fetchMock).not.toHaveBeenCalled();
-      });
     });
   });
 

@@ -86,7 +86,7 @@ export function addExtractedFields(frame: DataFrame, options: ExtractFieldsOptio
     for (const [key, val] of Object.entries(obj)) {
       let buffer = values.get(key);
       if (buffer == null) {
-        buffer = new Array(count);
+        buffer = new Array(count).fill(undefined);
         values.set(key, buffer);
         names.push(key);
       }

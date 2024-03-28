@@ -251,8 +251,10 @@ export class DatasourceSrv implements DataSourceService {
           continue;
         }
         let dsValue = variable.current.value === 'default' ? this.defaultName : variable.current.value;
-        if (Array.isArray(dsValue) && dsValue.length === 1) {
-          // Support for multi-value variables with only one selected datasource
+        // Support for multi-value DataSource (ds) variables
+        if (Array.isArray(dsValue)) {
+          // If the ds variable have multiple selected datasources
+          // We will use the first one
           dsValue = dsValue[0];
         }
         const dsSettings =

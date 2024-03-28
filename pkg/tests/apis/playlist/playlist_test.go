@@ -18,7 +18,12 @@ import (
 	"github.com/grafana/grafana/pkg/services/playlist"
 	"github.com/grafana/grafana/pkg/tests/apis"
 	"github.com/grafana/grafana/pkg/tests/testinfra"
+	"github.com/grafana/grafana/pkg/tests/testsuite"
 )
+
+func TestMain(m *testing.M) {
+	testsuite.Run(m)
+}
 
 var gvr = schema.GroupVersionResource{
 	Group:    "playlist.grafana.app",
@@ -26,18 +31,16 @@ var gvr = schema.GroupVersionResource{
 	Resource: "playlists",
 }
 
-func TestPlaylist(t *testing.T) {
+func TestIntegrationPlaylist(t *testing.T) {
 	if testing.Short() {
 		t.Skip("skipping integration test")
 	}
 
 	t.Run("default setup", func(t *testing.T) {
 		h := doPlaylistTests(t, apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
-			AppModeProduction: true, // do not start extra port 6443
-			DisableAnonymous:  true,
-			EnableFeatureToggles: []string{
-				featuremgmt.FlagGrafanaAPIServer,
-			},
+			AppModeProduction:    true, // do not start extra port 6443
+			DisableAnonymous:     true,
+			EnableFeatureToggles: []string{},
 		}))
 
 		// The accepted verbs will change when dual write is enabled
@@ -76,7 +79,6 @@ func TestPlaylist(t *testing.T) {
 			AppModeProduction: true, // do not start extra port 6443
 			DisableAnonymous:  true,
 			EnableFeatureToggles: []string{
-				featuremgmt.FlagGrafanaAPIServer,
 				featuremgmt.FlagKubernetesPlaylists, // <<< The change we are testing!
 			},
 		}))
@@ -88,7 +90,18 @@ func TestPlaylist(t *testing.T) {
 			DisableAnonymous:     true,
 			APIServerStorageType: "file", // write the files to disk
 			EnableFeatureToggles: []string{
-				featuremgmt.FlagGrafanaAPIServer,
+				featuremgmt.FlagKubernetesPlaylists, // Required so that legacy calls are also written
+			},
+		}))
+	})
+
+	t.Run("with dual write (unified storage)", func(t *testing.T) {
+		doPlaylistTests(t, apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
+			AppModeProduction:    false, // required for  unified storage
+			DisableAnonymous:     true,
+			APIServerStorageType: "unified", // use the entity api tables
+			EnableFeatureToggles: []string{
+				featuremgmt.FlagUnifiedStorage,
 				featuremgmt.FlagKubernetesPlaylists, // Required so that legacy calls are also written
 			},
 		}))
@@ -103,7 +116,6 @@ func TestPlaylist(t *testing.T) {
 			DisableAnonymous:     true,
 			APIServerStorageType: "etcd", // requires etcd running on localhost:2379
 			EnableFeatureToggles: []string{
-				featuremgmt.FlagGrafanaAPIServer,
 				featuremgmt.FlagKubernetesPlaylists, // Required so that legacy calls are also written
 			},
 		})
@@ -271,6 +283,7 @@ func doPlaylistTests(t *testing.T, helper *apis.K8sTestHelper) *apis.K8sTestHelp
 			Path:   "/api/playlists/" + uid,
 			Body:   []byte(legacyPayload),
 		}, &playlist.PlaylistDTO{})
+		require.Equal(t, 200, dtoResponse.Response.StatusCode)
 		require.Equal(t, uid, dtoResponse.Result.Uid)
 		require.Equal(t, "10m", dtoResponse.Result.Interval)
 
@@ -280,12 +293,13 @@ func doPlaylistTests(t *testing.T, helper *apis.K8sTestHelper) *apis.K8sTestHelp
 		require.JSONEq(t, expectedResult, client.SanitizeJSON(found))
 
 		// Delete does not return anything
-		_ = apis.DoRequest(helper, apis.RequestParams{
+		deleteResponse := apis.DoRequest(helper, apis.RequestParams{
 			User:   client.Args.User,
 			Method: http.MethodDelete,
 			Path:   "/api/playlists/" + uid,
 			Body:   []byte(legacyPayload),
 		}, &playlist.PlaylistDTO{}) // response is empty
+		require.Equal(t, 200, deleteResponse.Response.StatusCode)
 
 		found, err = client.Resource.Get(context.Background(), uid, metav1.GetOptions{})
 		statusError := helper.AsStatusError(err)

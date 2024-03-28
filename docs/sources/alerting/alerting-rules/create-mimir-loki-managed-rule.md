@@ -1,10 +1,10 @@
 ---
 aliases:
-  - ../unified-alerting/alerting-rules/create-cortex-loki-managed-recording-rule/
-  - ../unified-alerting/alerting-rules/create-mimir-loki-managed-recording-rule/
-  - ../unified-alerting/alerting-rules/create-mimir-loki-managed-rule/
+  - ../unified-alerting/alerting-rules/create-cortex-loki-managed-recording-rule/ # /docs/grafana/<GRAFANA_VERSION>/alerting/unified-alerting/alerting-rules/create-cortex-loki-managed-recording-rule/
+  - ../unified-alerting/alerting-rules/create-mimir-loki-managed-recording-rule/ # /docs/grafana/<GRAFANA_VERSION>/alerting/unified-alerting/alerting-rules/create-mimir-loki-managed-recording-rule/
+  - ../unified-alerting/alerting-rules/create-mimir-loki-managed-rule/ # /docs/grafana/<GRAFANA_VERSION>/alerting/unified-alerting/alerting-rules/create-mimir-loki-managed-rule/
 canonical: https://grafana.com/docs/grafana/latest/alerting/alerting-rules/create-mimir-loki-managed-rule/
-description: Configure data source-managed alert rules
+description: Configure data source-managed alert rules alert for an external Grafana Mimir or Loki instance
 keywords:
   - grafana
   - alerting
@@ -90,29 +90,6 @@ Use alert rule evaluation to determine how frequently an alert rule should be ev
 
    Once a condition is met, the alert goes into the **Pending** state. If the condition remains active for the duration specified, the alert transitions to the **Firing** state, else it reverts to the **Normal** state.
 
-## Add annotations
-
-Add [annotations][annotation-label]. to provide more context on the alert in your alert notifications.
-
-Annotations add metadata to provide more information on the alert in your alert notifications. For example, add a **Summary** annotation to tell you which value caused the alert to fire or which server it happened on.
-
-1. [Optional] Add a summary.
-
-   Short summary of what happened and why.
-
-2. [Optional] Add a description.
-
-   Description of what the alert rule does.
-
-3. [Optional] Add a Runbook URL.
-
-   Webpage where you keep your runbook for the alert
-
-4. [Optional] Add a custom annotation
-5. [Optional] Add a dashboard and panel link.
-
-   Links alerts to panels in a dashboard.
-
 ## Configure notifications
 
 Add labels to your alert rules to set which notification policy should handle your firing alert instances.
@@ -123,12 +100,35 @@ All alert rules and instances, irrespective of their labels, match the default n
 
    Add custom labels by selecting existing key-value pairs from the drop down, or add new labels by entering the new key or value.
 
+## Add annotations
+
+Add [annotations][annotation-label]. to provide more context on the alert in your alert notifications.
+
+Annotations add metadata to provide more information on the alert in your alert notifications. For example, add a **Summary** annotation to tell you which value caused the alert to fire or which server it happened on.
+
+1. [Optional] Add a summary.
+
+   Short summary of what happened and why.
+
+1. [Optional] Add a description.
+
+   Description of what the alert rule does.
+
+1. [Optional] Add a Runbook URL.
+
+   Webpage where you keep your runbook for the alert
+
+1. [Optional] Add a custom annotation
+1. [Optional] Add a dashboard and panel link.
+
+   Links alerts to panels in a dashboard.
+
 1. Click **Save rule**.
 
 {{% docs/reference %}}
-[alerting]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/alerting"
+[alerting]: "/docs/grafana/ -> /docs/grafana/<GRAFANA_VERSION>/alerting"
 [alerting]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/alerting-and-irm/alerting"
 
-[annotation-label]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/alerting/fundamentals/annotation-label"
-[annotation-label]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/alerting-and-irm/alerting/fundamentals/annotation-label"
+[annotation-label]: "/docs/grafana/ -> /docs/grafana/<GRAFANA_VERSION>/alerting/fundamentals/alert-rules/annotation-label"
+[annotation-label]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/alerting-and-irm/alerting/fundamentals/alert-rules/annotation-label"
 {{% /docs/reference %}}

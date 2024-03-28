@@ -194,9 +194,10 @@ func TestIntegrationDashboardFolderDataAccess(t *testing.T) {
 
 					t.Run("should not return folder with acl or its children", func(t *testing.T) {
 						query := &dashboards.FindPersistedDashboardsQuery{
-							SignedInUser: currentUser,
-							OrgId:        1,
-							DashboardIds: []int64{folder1.ID, childDash1.ID, childDash2.ID, dashInRoot.ID},
+							SignedInUser:  currentUser,
+							OrgId:         1,
+							DashboardIds:  []int64{folder1.ID, childDash1.ID, childDash2.ID, dashInRoot.ID},
+							DashboardUIDs: []string{folder1.UID, childDash1.UID, childDash2.UID, dashInRoot.UID},
 						}
 						hits, err := testSearchDashboards(dashboardStore, query)
 						require.NoError(t, err)
@@ -206,7 +207,7 @@ func TestIntegrationDashboardFolderDataAccess(t *testing.T) {
 				})
 				t.Run("and a dashboard is moved from folder with acl to the folder without an acl", func(t *testing.T) {
 					setup2()
-					moveDashboard(t, dashboardStore, 1, childDash1.Data, folder2.ID, folder2.UID)
+					moveDashboard(t, dashboardStore, 1, childDash1.Data, folder2.ID, childDash2.FolderUID)
 					currentUser.Permissions = map[int64]map[string][]string{1: {dashboards.ActionDashboardsRead: {dashboards.ScopeDashboardsProvider.GetResourceScopeUID(dashInRoot.UID), dashboards.ScopeFoldersProvider.GetResourceScopeUID(folder2.UID)}, dashboards.ActionFoldersRead: {dashboards.ScopeFoldersProvider.GetResourceScopeUID(folder2.UID)}}}
 					actest.AddUserPermissionToDB(t, sqlStore, currentUser)
 
@@ -218,11 +219,11 @@ func TestIntegrationDashboardFolderDataAccess(t *testing.T) {
 						}
 						hits, err := testSearchDashboards(dashboardStore, query)
 						require.NoError(t, err)
-						require.Equal(t, len(hits), 4)
-						require.Equal(t, hits[0].ID, folder2.ID)
-						require.Equal(t, hits[1].ID, childDash1.ID)
-						require.Equal(t, hits[2].ID, childDash2.ID)
-						require.Equal(t, hits[3].ID, dashInRoot.ID)
+						assert.Equal(t, len(hits), 4)
+						assert.Equal(t, hits[0].ID, folder2.ID)
+						assert.Equal(t, hits[1].ID, childDash1.ID)
+						assert.Equal(t, hits[2].ID, childDash2.ID)
+						assert.Equal(t, hits[3].ID, dashInRoot.ID)
 					})
 				})
 			})
@@ -294,7 +295,7 @@ func TestIntegrationDashboardInheritedFolderRBAC(t *testing.T) {
 			guardian.New = origNewGuardian
 		})
 
-		folderSvc := folderimpl.ProvideService(mock.New(), bus.ProvideBus(tracing.InitializeTracerForTest()), sqlStore.Cfg, dashboardWriteStore, folderimpl.ProvideDashboardFolderStore(sqlStore), sqlStore, features)
+		folderSvc := folderimpl.ProvideService(mock.New(), bus.ProvideBus(tracing.InitializeTracerForTest()), sqlStore.Cfg, dashboardWriteStore, folderimpl.ProvideDashboardFolderStore(sqlStore), sqlStore, features, supportbundlestest.NewFakeBundleService(), nil)
 
 		parentUID := ""
 		for i := 0; ; i++ {
@@ -339,7 +340,6 @@ func TestIntegrationDashboardInheritedFolderRBAC(t *testing.T) {
 			Dashboard: simplejson.NewFromAny(map[string]any{
 				"title": dashInParentTitle,
 			}),
-			FolderID:  nestedFolders[0].ID, // nolint:staticcheck
 			FolderUID: nestedFolders[0].UID,
 		}
 		_, err = dashboardWriteStore.SaveDashboard(context.Background(), saveDashboardCmd)
@@ -352,7 +352,6 @@ func TestIntegrationDashboardInheritedFolderRBAC(t *testing.T) {
 			Dashboard: simplejson.NewFromAny(map[string]any{
 				"title": dashInSubfolderTitle,
 			}),
-			FolderID:  nestedFolders[1].ID, // nolint:staticcheck
 			FolderUID: nestedFolders[1].UID,
 		}
 		_, err = dashboardWriteStore.SaveDashboard(context.Background(), saveDashboardCmd)
@@ -377,22 +376,6 @@ func TestIntegrationDashboardInheritedFolderRBAC(t *testing.T) {
 			features:       featuremgmt.WithFeatures(featuremgmt.FlagPanelTitleSearch),
 			permissions:    nil,
 			expectedTitles: nil,
-		},
-		{
-			desc:     "it should not return dashboard in subfolder if nested folders are disabled and the user has permission to read dashboards under parent folder",
-			features: featuremgmt.WithFeatures(featuremgmt.FlagPanelTitleSearch),
-			permissions: map[string][]string{
-				dashboards.ActionDashboardsRead: {fmt.Sprintf("folders:uid:%s", nestedFolders[0].UID)},
-			},
-			expectedTitles: []string{dashInParentTitle},
-		},
-		{
-			desc:     "it should return dashboard in subfolder if nested folders are enabled and the user has permission to read dashboards under parent folder",
-			features: featuremgmt.WithFeatures(featuremgmt.FlagPanelTitleSearch, featuremgmt.FlagNestedFolders),
-			permissions: map[string][]string{
-				dashboards.ActionDashboardsRead: {fmt.Sprintf("folders:uid:%s", nestedFolders[0].UID)},
-			},
-			expectedTitles: []string{dashInParentTitle, dashInSubfolderTitle},
 		},
 		{
 			desc:     "it should not return subfolder if nested folders are disabled and the user has permission to read folders under parent folder",

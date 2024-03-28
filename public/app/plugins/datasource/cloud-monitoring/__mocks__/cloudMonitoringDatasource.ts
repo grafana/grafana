@@ -1,11 +1,9 @@
-import { getTimeSrv } from 'app/features/dashboard/services/TimeSrv';
-import { TemplateSrv } from 'app/features/templating/template_srv';
-import { TemplateSrvMock } from 'app/features/templating/template_srv.mock';
+import { TemplateSrv, getTemplateSrv } from '@grafana/runtime';
 
 import Datasource from '../datasource';
 
 export const createMockDatasource = (overrides?: Partial<Datasource>) => {
-  const templateSrv = new TemplateSrvMock({ ALIGN_DELTA: 'delta' }) as unknown as TemplateSrv;
+  const templateSrv = getTemplateSrv() as unknown as TemplateSrv;
 
   const datasource: Partial<Datasource> = {
     intervalMs: 0,
@@ -17,7 +15,6 @@ export const createMockDatasource = (overrides?: Partial<Datasource>) => {
     filterMetricsByType: jest.fn().mockResolvedValue([]),
     getSLOServices: jest.fn().mockResolvedValue([]),
     migrateQuery: jest.fn().mockImplementation((query) => query),
-    timeSrv: getTimeSrv(),
     ...overrides,
   };
 

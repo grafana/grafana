@@ -2,14 +2,15 @@ import { css, cx } from '@emotion/css';
 import React, { useEffect, useId, useState } from 'react';
 import { Draggable } from 'react-beautiful-dnd';
 
-import { DataSourceApi, GrafanaTheme2 } from '@grafana/data';
+import { DataSourceApi, GrafanaTheme2, TimeRange } from '@grafana/data';
 import { Button, Icon, InlineField, Tooltip, useTheme2, Stack } from '@grafana/ui';
 import { isConflictingFilter } from 'app/plugins/datasource/loki/querybuilder/operationUtils';
 import { LokiOperationId } from 'app/plugins/datasource/loki/querybuilder/types';
 
+import { getOperationParamId } from '../operationUtils';
+
 import { OperationHeader } from './OperationHeader';
 import { getOperationParamEditor } from './OperationParamEditor';
-import { getOperationParamId } from './operationUtils';
 import {
   QueryBuilderOperation,
   QueryBuilderOperationDef,
@@ -29,6 +30,7 @@ export interface Props {
   onRunQuery: () => void;
   flash?: boolean;
   highlight?: boolean;
+  timeRange?: TimeRange;
 }
 
 export function OperationEditor({
@@ -42,6 +44,7 @@ export function OperationEditor({
   datasource,
   flash,
   highlight,
+  timeRange,
 }: Props) {
   const def = queryModeller.getOperationDef(operation.id);
   const shouldFlash = useFlash(flash);
@@ -106,6 +109,7 @@ export function OperationEditor({
               onRunQuery={onRunQuery}
               query={query}
               datasource={datasource}
+              timeRange={timeRange}
             />
             {paramDef.restParam && (operation.params.length > def.params.length || paramDef.optional) && (
               <Button
@@ -218,7 +222,7 @@ function renderAddRestParamButton(
       <Button
         size="sm"
         icon="plus"
-        title={`Add ${paramDef.name}`}
+        title={`Add ${paramDef.name}`.trimEnd()}
         variant="secondary"
         onClick={onAddRestParam}
         data-testid={`operations.${operationIndex}.add-rest-param`}

@@ -40,13 +40,14 @@ func TestAuthorize(t *testing.T) {
 		}
 		paths[p] = methods
 	}
-	require.Len(t, paths, 52)
+	require.Len(t, paths, 58)
 
 	ac := acmock.New()
 	api := &API{AccessControl: ac}
 
 	t.Run("should not panic on known routes", func(t *testing.T) {
 		for path, methods := range paths {
+			path := swaggerSpec.Spec().BasePath + path
 			for _, method := range methods {
 				require.NotPanics(t, func() {
 					api.authorize(method, path)

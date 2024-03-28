@@ -15,7 +15,8 @@ import { Labels } from 'app/types/unified-alerting-dto';
 import { MatcherFieldValue } from '../types/silence-form';
 
 import { getAllDataSources } from './config';
-import { DataSourceType } from './datasource';
+import { DataSourceType, GRAFANA_RULES_SOURCE_NAME } from './datasource';
+import { MatcherFormatter, unquoteWithUnescape } from './matchers';
 
 export function addDefaultsToAlertmanagerConfig(config: AlertManagerCortexConfig): AlertManagerCortexConfig {
   // add default receiver if it does not exist
@@ -53,16 +54,8 @@ export function renameMuteTimings(newMuteTimingName: string, oldMuteTimingName: 
   };
 }
 
-function isReceiverUsedInRoute(receiver: string, route: Route): boolean {
-  return (
-    (route.receiver === receiver || route.routes?.some((route) => isReceiverUsedInRoute(receiver, route))) ?? false
-  );
-}
-
-export function isReceiverUsed(receiver: string, config: AlertManagerCortexConfig): boolean {
-  return (
-    (config.alertmanager_config.route && isReceiverUsedInRoute(receiver, config.alertmanager_config.route)) ?? false
-  );
+export function unescapeObjectMatchers(matchers: ObjectMatcher[]): ObjectMatcher[] {
+  return matchers.map(([name, operator, value]) => [name, operator, unquoteWithUnescape(value)]);
 }
 
 export function matcherToOperator(matcher: Matcher): MatcherOperator {
@@ -187,6 +180,10 @@ export function combineMatcherStrings(...matcherStrings: string[]): string {
   const matchers = matcherStrings.map(parseMatchers).flat();
   const uniqueMatchers = uniqWith(matchers, isEqual);
   return matchersToString(uniqueMatchers);
+}
+
+export function getAmMatcherFormatter(alertmanagerSourceName?: string): MatcherFormatter {
+  return alertmanagerSourceName === GRAFANA_RULES_SOURCE_NAME ? 'default' : 'unquote';
 }
 
 export function getAllAlertmanagerDataSources() {

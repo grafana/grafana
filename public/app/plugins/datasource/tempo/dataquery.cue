@@ -38,8 +38,8 @@ composableKinds: DataQuery: {
 					minDuration?: string
 					// @deprecated Define the maximum duration to select traces. Use duration format, for example: 1.2s, 100ms
 					maxDuration?: string
-					// Filters to be included in a PromQL query to select data for the service graph. Example: {client="app",service="app"}
-					serviceMapQuery?: string
+					// Filters to be included in a PromQL query to select data for the service graph. Example: {client="app",service="app"}. Providing multiple values will produce union of results for each filter, using PromQL OR operator internally.
+					serviceMapQuery?: string | [...string]
 					// Use service.namespace in addition to service.name to uniquely identify a service.
 					serviceMapIncludeNamespace?: bool
 					// Defines the maximum number of traces that are returned from Tempo
@@ -53,8 +53,7 @@ composableKinds: DataQuery: {
 					tableType?: #SearchTableType
 				} @cuetsy(kind="interface") @grafana(TSVeneer="type")
 
-				// search = Loki search, nativeSearch = Tempo search for backwards compatibility
-				#TempoQueryType: "traceql" | "traceqlSearch" | "search" | "serviceMap" | "upload" | "nativeSearch" | "traceId" | "clear" @cuetsy(kind="type")
+				#TempoQueryType: "traceql" | "traceqlSearch" | "serviceMap" | "upload" | "nativeSearch" | "traceId" | "clear" @cuetsy(kind="type")
 
 				// The state of the TraceQL streaming search query
 				#SearchStreamingState: "pending" | "streaming" | "done" | "error" @cuetsy(kind="enum")

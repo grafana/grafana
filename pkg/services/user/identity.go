@@ -2,15 +2,21 @@ package user
 
 import (
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/grafana/grafana/pkg/models/roletype"
 	"github.com/grafana/grafana/pkg/services/auth/identity"
 )
 
+const (
+	GlobalOrgID = int64(0)
+)
+
 type SignedInUser struct {
-	UserID           int64 `xorm:"user_id"`
-	OrgID            int64 `xorm:"org_id"`
+	UserID           int64  `xorm:"user_id"`
+	UserUID          string `xorm:"user_uid"`
+	OrgID            int64  `xorm:"org_id"`
 	OrgName          string
 	OrgRole          roletype.RoleType
 	Login            string
@@ -54,6 +60,7 @@ func (u *SignedInUser) NameOrFallback() string {
 func (u *SignedInUser) ToUserDisplayDTO() *UserDisplayDTO {
 	return &UserDisplayDTO{
 		ID:    u.UserID,
+		UID:   u.UserUID,
 		Login: u.Login,
 		Name:  u.Name,
 		// AvatarURL: dtos.GetGravatarUrl(u.GetEmail()),
@@ -159,6 +166,19 @@ func (u *SignedInUser) GetPermissions() map[string][]string {
 	return u.Permissions[u.GetOrgID()]
 }
 
+// GetGlobalPermissions returns the permissions of the active entity that are available across all organizations
+func (u *SignedInUser) GetGlobalPermissions() map[string][]string {
+	if u.Permissions == nil {
+		return make(map[string][]string)
+	}
+
+	if u.Permissions[GlobalOrgID] == nil {
+		return make(map[string][]string)
+	}
+
+	return u.Permissions[GlobalOrgID]
+}
+
 // DEPRECATED: GetTeams returns the teams the entity is a member of
 // Retrieve the teams from the team service instead of using this method.
 func (u *SignedInUser) GetTeams() []int64 {
@@ -170,28 +190,40 @@ func (u *SignedInUser) GetOrgRole() roletype.RoleType {
 	return u.OrgRole
 }
 
-// GetNamespacedID returns the namespace and ID of the active entity
-// The namespace is one of the constants defined in pkg/services/auth/identity
-func (u *SignedInUser) GetNamespacedID() (string, string) {
+// GetID returns namespaced id for the entity
+func (u *SignedInUser) GetID() string {
 	switch {
 	case u.ApiKeyID != 0:
-		return identity.NamespaceAPIKey, fmt.Sprintf("%d", u.ApiKeyID)
+		return namespacedID(identity.NamespaceAPIKey, u.ApiKeyID)
 	case u.IsServiceAccount:
-		return identity.NamespaceServiceAccount, fmt.Sprintf("%d", u.UserID)
+		return namespacedID(identity.NamespaceServiceAccount, u.UserID)
 	case u.UserID > 0:
-		return identity.NamespaceUser, fmt.Sprintf("%d", u.UserID)
+		return namespacedID(identity.NamespaceUser, u.UserID)
 	case u.IsAnonymous:
-		return identity.NamespaceAnonymous, ""
-	case u.AuthenticatedBy == "render": //import cycle render
-		if u.UserID == 0 {
-			return identity.NamespaceRenderService, "0"
-		} else { // this should never happen as u.UserID > 0 already catches this
-			return identity.NamespaceUser, fmt.Sprintf("%d", u.UserID)
-		}
+		return identity.NamespaceAnonymous + ":"
+	case u.AuthenticatedBy == "render" && u.UserID == 0:
+		return namespacedID(identity.NamespaceRenderService, 0)
 	}
 
 	// backwards compatibility
-	return identity.NamespaceUser, fmt.Sprintf("%d", u.UserID)
+	return namespacedID(identity.NamespaceUser, u.UserID)
+}
+
+// GetNamespacedID returns the namespace and ID of the active entity
+// The namespace is one of the constants defined in pkg/services/auth/identity
+func (u *SignedInUser) GetNamespacedID() (string, string) {
+	parts := strings.Split(u.GetID(), ":")
+	// Safety: GetID always returns a ':' separated string
+	return parts[0], parts[1]
+}
+
+func (u *SignedInUser) IsAuthenticatedBy(providers ...string) bool {
+	for _, p := range providers {
+		if u.AuthenticatedBy == p {
+			return true
+		}
+	}
+	return false
 }
 
 // FIXME: remove this method once all services are using an interface
@@ -218,4 +250,8 @@ func (u *SignedInUser) GetAuthenticatedBy() string {
 
 func (u *SignedInUser) GetIDToken() string {
 	return u.IDToken
+}
+
+func namespacedID(namespace string, id int64) string {
+	return fmt.Sprintf("%s:%d", namespace, id)
 }

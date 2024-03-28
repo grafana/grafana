@@ -13,6 +13,9 @@ load(
     "frontend_metrics_step",
     "grafana_server_step",
     "identify_runner_step",
+    "playwright_e2e_report_post_link",
+    "playwright_e2e_report_upload",
+    "playwright_e2e_tests_step",
     "publish_images_step",
     "release_canary_npm_packages_step",
     "store_storybook_step",
@@ -70,7 +73,7 @@ def build_e2e(trigger, ver_mode):
             [
                 build_frontend_package_step(),
                 enterprise_downstream_step(ver_mode = ver_mode),
-                rgm_artifacts_step(artifacts = ["targz:grafana:linux/amd64", "targz:grafana:linux/arm64"], file = "packages.txt"),
+                rgm_artifacts_step(artifacts = ["targz:grafana:linux/amd64", "targz:grafana:linux/arm64", "targz:grafana:linux/arm/v7"], file = "packages.txt"),
             ],
         )
     else:
@@ -81,6 +84,7 @@ def build_e2e(trigger, ver_mode):
                 artifacts = [
                     "targz:grafana:linux/amd64",
                     "targz:grafana:linux/arm64",
+                    "targz:grafana:linux/arm/v7",
                 ],
                 depends_on = ["update-package-json-version"],
                 file = "packages.txt",
@@ -99,6 +103,9 @@ def build_e2e(trigger, ver_mode):
                 cloud = "azure",
                 trigger = trigger_oss,
             ),
+            playwright_e2e_tests_step(),
+            playwright_e2e_report_upload(),
+            playwright_e2e_report_post_link(),
             e2e_tests_artifacts(),
             build_storybook_step(ver_mode = ver_mode),
             test_a11y_frontend_step(ver_mode = ver_mode),

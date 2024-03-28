@@ -1,53 +1,77 @@
-import React, { useState } from 'react';
+import { css } from '@emotion/css';
+import React from 'react';
 
+import { GrafanaTheme2 } from '@grafana/data';
 import {
   SceneObjectState,
   SceneObjectBase,
   SceneComponentProps,
-  SceneFlexLayout,
-  SceneFlexItem,
-  SceneQueryRunner,
   SceneObjectUrlSyncConfig,
   SceneObjectUrlValues,
-  PanelBuilders,
   sceneGraph,
+  SceneVariableSet,
+  QueryVariable,
 } from '@grafana/scenes';
-import { ToolbarButton, Box, Stack, Icon } from '@grafana/ui';
+import { ToolbarButton, Box, Stack, Icon, TabsBar, Tab, useStyles2, LinkButton, Tooltip } from '@grafana/ui';
 
+import { getExploreUrl } from '../../core/utils/explore';
+
+import { buildBreakdownActionScene } from './ActionTabs/BreakdownScene';
+import { LayoutType } from './ActionTabs/LayoutSwitcher';
+import { buildMetricOverviewScene } from './ActionTabs/MetricOverviewScene';
+import { buildRelatedMetricsScene } from './ActionTabs/RelatedMetricsScene';
 import { getAutoQueriesForMetric } from './AutomaticMetricQueries/AutoQueryEngine';
-import { AutoVizPanel } from './AutomaticMetricQueries/AutoVizPanel';
-import { buildBreakdownActionScene } from './BreakdownScene';
-import { MetricSelectScene } from './MetricSelectScene';
-import { SelectMetricAction } from './SelectMetricAction';
-import { getTrailStore } from './TrailStore/TrailStore';
+import { AutoQueryDef, AutoQueryInfo } from './AutomaticMetricQueries/types';
+import { MAIN_PANEL_MAX_HEIGHT, MAIN_PANEL_MIN_HEIGHT, MetricGraphScene } from './MetricGraphScene';
+import { ShareTrailButton } from './ShareTrailButton';
+import { useBookmarkState } from './TrailStore/useBookmarkState';
 import {
   ActionViewDefinition,
+  ActionViewType,
   getVariablesWithMetricConstant,
-  LOGS_METRIC,
   MakeOptional,
-  OpenEmbeddedTrailEvent,
+  MetricSelectedEvent,
+  trailDS,
+  VAR_GROUP_BY,
+  VAR_METRIC_EXPR,
 } from './shared';
-import { getTrailFor } from './utils';
+import { getDataSource, getTrailFor, getUrlForTrail } from './utils';
 
 export interface MetricSceneState extends SceneObjectState {
-  body: SceneFlexLayout;
+  body: MetricGraphScene;
   metric: string;
   actionView?: string;
+  layout: LayoutType;
+
+  autoQuery: AutoQueryInfo;
+  queryDef?: AutoQueryDef;
 }
 
 export class MetricScene extends SceneObjectBase<MetricSceneState> {
-  protected _urlSync = new SceneObjectUrlSyncConfig(this, { keys: ['actionView'] });
+  protected _urlSync = new SceneObjectUrlSyncConfig(this, { keys: ['actionView', 'layout'] });
 
-  public constructor(state: MakeOptional<MetricSceneState, 'body'>) {
+  public constructor(state: MakeOptional<MetricSceneState, 'body' | 'autoQuery' | 'layout'>) {
+    const autoQuery = state.autoQuery ?? getAutoQueriesForMetric(state.metric);
     super({
-      $variables: state.$variables ?? getVariablesWithMetricConstant(state.metric),
-      body: state.body ?? buildGraphScene(state.metric),
+      $variables: state.$variables ?? getVariableSet(state.metric),
+      body: state.body ?? new MetricGraphScene({}),
+      autoQuery,
+      queryDef: state.queryDef ?? autoQuery.main,
+      layout: state.layout ?? 'grid',
       ...state,
     });
+
+    this.addActivationHandler(this._onActivate.bind(this));
+  }
+
+  private _onActivate() {
+    if (this.state.actionView === undefined) {
+      this.setActionView('overview');
+    }
   }
 
   getUrlState() {
-    return { actionView: this.state.actionView };
+    return { actionView: this.state.actionView, layout: this.state.layout };
   }
 
   updateFromUrl(values: SceneObjectUrlValues) {
@@ -55,26 +79,34 @@ export class MetricScene extends SceneObjectBase<MetricSceneState> {
       if (this.state.actionView !== values.actionView) {
         const actionViewDef = actionViewsDefinitions.find((v) => v.value === values.actionView);
         if (actionViewDef) {
-          this.setActionView(actionViewDef);
+          this.setActionView(actionViewDef.value);
         }
       }
     } else if (values.actionView === null) {
       this.setActionView(undefined);
     }
+
+    if (typeof values.layout === 'string') {
+      const newLayout = values.layout as LayoutType;
+      if (this.state.layout !== newLayout) {
+        this.setState({ layout: newLayout });
+      }
+    }
   }
 
-  public setActionView(actionViewDef?: ActionViewDefinition) {
+  public setActionView(actionView?: ActionViewType) {
     const { body } = this.state;
+    const actionViewDef = actionViewsDefinitions.find((v) => v.value === actionView);
 
     if (actionViewDef && actionViewDef.value !== this.state.actionView) {
       // reduce max height for main panel to reduce height flicker
-      body.state.children[0].setState({ maxHeight: MAIN_PANEL_MIN_HEIGHT });
-      body.setState({ children: [...body.state.children.slice(0, 2), actionViewDef.getScene()] });
+      body.state.topView.state.children[0].setState({ maxHeight: MAIN_PANEL_MIN_HEIGHT });
+      body.setState({ selectedTab: actionViewDef.getScene() });
       this.setState({ actionView: actionViewDef.value });
     } else {
       // restore max height
-      body.state.children[0].setState({ maxHeight: MAIN_PANEL_MAX_HEIGHT });
-      body.setState({ children: body.state.children.slice(0, 2) });
+      body.state.topView.state.children[0].setState({ maxHeight: MAIN_PANEL_MAX_HEIGHT });
+      body.setState({ selectedTab: undefined });
       this.setState({ actionView: undefined });
     }
   }
@@ -86,113 +118,141 @@ export class MetricScene extends SceneObjectBase<MetricSceneState> {
 }
 
 const actionViewsDefinitions: ActionViewDefinition[] = [
+  { displayName: 'Overview', value: 'overview', getScene: buildMetricOverviewScene },
   { displayName: 'Breakdown', value: 'breakdown', getScene: buildBreakdownActionScene },
-  { displayName: 'Logs', value: 'logs', getScene: buildLogsScene },
-  { displayName: 'Related metrics', value: 'related', getScene: buildRelatedMetricsScene },
+  {
+    displayName: 'Related metrics',
+    value: 'related',
+    getScene: buildRelatedMetricsScene,
+    description: 'Relevant metrics based on current label filters',
+  },
 ];
 
 export interface MetricActionBarState extends SceneObjectState {}
 
 export class MetricActionBar extends SceneObjectBase<MetricActionBarState> {
-  public getButtonVariant(actionViewName: string, currentView: string | undefined) {
-    return currentView === actionViewName ? 'active' : 'canvas';
-  }
+  public getLinkToExplore = async () => {
+    const metricScene = sceneGraph.getAncestor(this, MetricScene);
+    const trail = getTrailFor(this);
+    const dsValue = getDataSource(trail);
 
-  public onOpenTrail = () => {
-    this.publishEvent(new OpenEmbeddedTrailEvent(), true);
+    const queries = metricScene.state.queryDef?.queries || [];
+    const timeRange = sceneGraph.getTimeRange(this);
+
+    return getExploreUrl({
+      queries,
+      dsRef: { uid: dsValue },
+      timeRange: timeRange.state.value,
+      scopedVars: { __sceneObject: { value: metricScene } },
+    });
+  };
+
+  public openExploreLink = async () => {
+    this.getLinkToExplore().then((link) => {
+      // We use window.open instead of a Link or <a> because we want to compute the explore link when clicking,
+      // if we precompute it we have to keep track of a lot of dependencies
+      window.open(link, '_blank');
+    });
   };
 
   public static Component = ({ model }: SceneComponentProps<MetricActionBar>) => {
     const metricScene = sceneGraph.getAncestor(model, MetricScene);
+    const styles = useStyles2(getStyles);
     const trail = getTrailFor(model);
-    const [isBookmarked, setBookmarked] = useState(false);
+    const [isBookmarked, toggleBookmark] = useBookmarkState(trail);
     const { actionView } = metricScene.useState();
-
-    const onBookmarkTrail = () => {
-      getTrailStore().addBookmark(trail);
-      setBookmarked(!isBookmarked);
-    };
 
     return (
       <Box paddingY={1}>
-        <Stack gap={2}>
-          {actionViewsDefinitions.map((viewDef) => (
+        <div className={styles.actions}>
+          <Stack gap={1}>
             <ToolbarButton
-              key={viewDef.value}
-              variant={viewDef.value === actionView ? 'active' : 'canvas'}
-              onClick={() => metricScene.setActionView(viewDef)}
+              variant={'canvas'}
+              tooltip="Remove existing metric and choose a new metric"
+              onClick={() => trail.publishEvent(new MetricSelectedEvent(undefined))}
             >
-              {viewDef.displayName}
+              Select new metric
             </ToolbarButton>
-          ))}
-          <ToolbarButton variant={'canvas'}>Add to dashboard</ToolbarButton>
-          <ToolbarButton variant={'canvas'} icon="compass" tooltip="Open in explore (todo)" disabled />
-          <ToolbarButton
-            variant={'canvas'}
-            icon={
-              isBookmarked ? (
-                <Icon name={'favorite'} type={'mono'} size={'lg'} />
-              ) : (
-                <Icon name={'star'} type={'default'} size={'lg'} />
-              )
+            <ToolbarButton
+              variant={'canvas'}
+              icon="compass"
+              tooltip="Open in explore"
+              onClick={model.openExploreLink}
+            ></ToolbarButton>
+            <ShareTrailButton trail={trail} />
+            <ToolbarButton
+              variant={'canvas'}
+              icon={
+                isBookmarked ? (
+                  <Icon name={'favorite'} type={'mono'} size={'lg'} />
+                ) : (
+                  <Icon name={'star'} type={'default'} size={'lg'} />
+                )
+              }
+              tooltip={'Bookmark'}
+              onClick={toggleBookmark}
+            />
+            {trail.state.embedded && (
+              <LinkButton href={getUrlForTrail(trail)} variant={'secondary'}>
+                Open
+              </LinkButton>
+            )}
+          </Stack>
+        </div>
+
+        <TabsBar>
+          {actionViewsDefinitions.map((tab, index) => {
+            const tabRender = (
+              <Tab
+                key={index}
+                label={tab.displayName}
+                active={actionView === tab.value}
+                onChangeTab={() => metricScene.setActionView(tab.value)}
+              />
+            );
+
+            if (tab.description) {
+              return (
+                <Tooltip key={index} content={tab.description} placement="bottom-start" theme="info">
+                  {tabRender}
+                </Tooltip>
+              );
             }
-            tooltip={'Bookmark'}
-            onClick={onBookmarkTrail}
-          />
-          <ToolbarButton variant={'canvas'} icon="share-alt" tooltip="Copy url (todo)" disabled />
-          {trail.state.embedded && (
-            <ToolbarButton variant={'canvas'} onClick={model.onOpenTrail}>
-              Open
-            </ToolbarButton>
-          )}
-        </Stack>
+            return tabRender;
+          })}
+        </TabsBar>
       </Box>
     );
   };
 }
 
-const MAIN_PANEL_MIN_HEIGHT = 280;
-const MAIN_PANEL_MAX_HEIGHT = '40%';
+function getStyles(theme: GrafanaTheme2) {
+  return {
+    actions: css({
+      [theme.breakpoints.up(theme.breakpoints.values.md)]: {
+        position: 'absolute',
+        right: 0,
+        top: 16,
+        zIndex: 2,
+      },
+    }),
+  };
+}
 
-function buildGraphScene(metric: string) {
-  const autoQuery = getAutoQueriesForMetric(metric);
-
-  return new SceneFlexLayout({
-    direction: 'column',
-    children: [
-      new SceneFlexItem({
-        minHeight: MAIN_PANEL_MIN_HEIGHT,
-        maxHeight: MAIN_PANEL_MAX_HEIGHT,
-        body: new AutoVizPanel({ autoQuery }),
-      }),
-      new SceneFlexItem({
-        ySizing: 'content',
-        body: new MetricActionBar({}),
+function getVariableSet(metric: string) {
+  return new SceneVariableSet({
+    variables: [
+      ...getVariablesWithMetricConstant(metric),
+      new QueryVariable({
+        name: VAR_GROUP_BY,
+        label: 'Group by',
+        datasource: trailDS,
+        includeAll: true,
+        defaultToAll: true,
+        query: { query: `label_names(${VAR_METRIC_EXPR})`, refId: 'A' },
+        value: '',
+        text: '',
       }),
     ],
-  });
-}
-
-function buildLogsScene() {
-  return new SceneFlexItem({
-    $data: new SceneQueryRunner({
-      queries: [
-        {
-          refId: 'A',
-          datasource: { uid: 'gdev-loki' },
-          expr: '{${filters}} | logfmt',
-        },
-      ],
-    }),
-    body: PanelBuilders.logs()
-      .setTitle('Logs')
-      .setHeaderActions(new SelectMetricAction({ metric: LOGS_METRIC, title: 'Open' }))
-      .build(),
-  });
-}
-
-function buildRelatedMetricsScene() {
-  return new SceneFlexItem({
-    body: new MetricSelectScene({}),
   });
 }

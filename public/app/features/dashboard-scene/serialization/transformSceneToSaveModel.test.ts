@@ -1,3 +1,4 @@
+import 'whatwg-fetch';
 import { advanceTo } from 'jest-date-mock';
 import { map, of } from 'rxjs';
 
@@ -15,22 +16,18 @@ import {
 } from '@grafana/data';
 import { getPanelPlugin } from '@grafana/data/test/__mocks__/pluginMocks';
 import { getPluginLinkExtensions, setPluginImportUtils } from '@grafana/runtime';
-import {
-  MultiValueVariable,
-  SceneDataLayers,
-  SceneGridItemLike,
-  SceneGridLayout,
-  SceneGridRow,
-  SceneVariable,
-  VizPanel,
-} from '@grafana/scenes';
+import { MultiValueVariable, SceneGridLayout, SceneGridRow, VizPanel } from '@grafana/scenes';
 import { Dashboard, LoadingState, Panel, RowPanel, VariableRefresh } from '@grafana/schema';
 import { PanelModel } from 'app/features/dashboard/state';
 import { getTimeRange } from 'app/features/dashboard/utils/timeRange';
 import { reduceTransformRegistryItem } from 'app/features/transformers/editors/ReduceTransformerEditor';
 import { SHARED_DASHBOARD_QUERY } from 'app/plugins/datasource/dashboard';
 
+import { DashboardDataLayerSet } from '../scene/DashboardDataLayerSet';
+import { DashboardGridItem } from '../scene/DashboardGridItem';
+import { LibraryVizPanel } from '../scene/LibraryVizPanel';
 import { RowRepeaterBehavior } from '../scene/RowRepeaterBehavior';
+import { NEW_LINK } from '../settings/links/utils';
 import { activateFullSceneTree, buildPanelRepeaterScene } from '../utils/test-utils';
 import { getVizPanelKeyForPanelId } from '../utils/utils';
 
@@ -41,6 +38,7 @@ import snapshotableDashboardJson from './testfiles/snapshotable_dashboard.json';
 import snapshotableWithRowsDashboardJson from './testfiles/snapshotable_with_rows.json';
 import {
   buildGridItemForLibPanel,
+  buildGridItemForLibraryPanelWidget,
   buildGridItemForPanel,
   transformSaveModelToScene,
 } from './transformSaveModelToScene';
@@ -168,6 +166,32 @@ describe('transformSceneToSaveModel', () => {
     getPluginLinkExtensionsMock.mockReturnValue({ extensions: [] });
   });
 
+  describe('Given a simple scene with custom settings', () => {
+    it('Should transform back to persisted model', () => {
+      const dashboardWithCustomSettings = {
+        ...dashboard_to_load1,
+        title: 'My custom title',
+        description: 'My custom description',
+        tags: ['tag1', 'tag2'],
+        timezone: 'America/New_York',
+        weekStart: 'monday',
+        graphTooltip: 1,
+        editable: false,
+        timepicker: {
+          ...dashboard_to_load1.timepicker,
+          refresh_intervals: ['5m', '15m', '30m', '1h'],
+          time_options: ['5m', '15m', '30m'],
+          hidden: true,
+        },
+        links: [{ ...NEW_LINK, title: 'Link 1' }],
+      };
+      const scene = transformSaveModelToScene({ dashboard: dashboardWithCustomSettings as any, meta: {} });
+      const saveModel = transformSceneToSaveModel(scene);
+
+      expect(saveModel).toMatchSnapshot();
+    });
+  });
+
   describe('Given a simple scene with variables', () => {
     it('Should transform back to persisted model', () => {
       const scene = transformSaveModelToScene({ dashboard: dashboard_to_load1 as any, meta: {} });
@@ -180,7 +204,9 @@ describe('transformSceneToSaveModel', () => {
   describe('Given a scene with rows', () => {
     it('Should transform back to persisted model', () => {
       const scene = transformSaveModelToScene({ dashboard: repeatingRowsAndPanelsDashboardJson as any, meta: {} });
+
       const saveModel = transformSceneToSaveModel(scene);
+
       const row2: RowPanel = saveModel.panels![2] as RowPanel;
 
       expect(row2.type).toBe('row');
@@ -199,7 +225,7 @@ describe('transformSceneToSaveModel', () => {
       const rowRepeater = rowWithRepeat.state.$behaviors![0] as RowRepeaterBehavior;
 
       // trigger row repeater
-      rowRepeater.variableDependency?.variableUpdatesCompleted(new Set<SceneVariable>([variable]));
+      rowRepeater.variableDependency?.variableUpdateCompleted(variable, true);
 
       // Make sure the repeated rows have been added to runtime scene model
       expect(grid.state.children.length).toBe(5);
@@ -251,28 +277,78 @@ describe('transformSceneToSaveModel', () => {
       expect(saveModel.gridPos?.w).toBe(12);
       expect(saveModel.gridPos?.h).toBe(8);
     });
+    it('Given panel with links', () => {
+      const gridItem = buildGridItemFromPanelSchema({
+        title: '',
+        type: 'text-plugin-34',
+        gridPos: { x: 1, y: 2, w: 12, h: 8 },
+        links: [
+          // @ts-expect-error Panel link is wrongly typed as DashboardLink
+          {
+            title: 'Link 1',
+            url: 'http://some.test.link1',
+          },
+          // @ts-expect-error Panel link is wrongly typed as DashboardLink
+          {
+            targetBlank: true,
+            title: 'Link 2',
+            url: 'http://some.test.link2',
+          },
+        ],
+      });
+
+      const saveModel = gridItemToPanel(gridItem);
+      expect(saveModel.links).toEqual([
+        {
+          title: 'Link 1',
+          url: 'http://some.test.link1',
+        },
+        {
+          targetBlank: true,
+          title: 'Link 2',
+          url: 'http://some.test.link2',
+        },
+      ]);
+    });
   });
 
   describe('Library panels', () => {
     it('given a library panel', () => {
-      const panel = buildGridItemFromPanelSchema({
-        id: 4,
-        gridPos: {
-          h: 8,
-          w: 12,
-          x: 0,
-          y: 0,
-        },
-        libraryPanel: {
-          name: 'Some lib panel panel',
-          uid: 'lib-panel-uid',
-        },
+      // Not using buildGridItemFromPanelSchema since it strips options/fieldConfig
+      const libVizPanel = new LibraryVizPanel({
+        name: 'Some lib panel panel',
         title: 'A panel',
-        transformations: [],
-        fieldConfig: {
-          defaults: {},
-          overrides: [],
-        },
+        uid: 'lib-panel-uid',
+        panelKey: 'lib-panel',
+        panel: new VizPanel({
+          key: 'panel-4',
+          title: 'Panel blahh blah',
+          fieldConfig: {
+            defaults: {},
+            overrides: [],
+          },
+          options: {
+            legend: {
+              calcs: [],
+              displayMode: 'list',
+              placement: 'bottom',
+              showLegend: true,
+            },
+            tooltip: {
+              maxHeight: 600,
+              mode: 'single',
+              sort: 'none',
+            },
+          },
+        }),
+      });
+
+      const panel = new DashboardGridItem({
+        body: libVizPanel,
+        y: 0,
+        x: 0,
+        width: 12,
+        height: 8,
       });
 
       const result = gridItemToPanel(panel);
@@ -291,6 +367,31 @@ describe('transformSceneToSaveModel', () => {
       expect(result.title).toBe('A panel');
       expect(result.transformations).toBeUndefined();
       expect(result.fieldConfig).toBeUndefined();
+      expect(result.options).toBeUndefined();
+    });
+
+    it('given a library panel widget', () => {
+      const panel = buildGridItemFromPanelSchema({
+        id: 4,
+        gridPos: {
+          h: 8,
+          w: 12,
+          x: 0,
+          y: 0,
+        },
+        type: 'add-library-panel',
+      });
+
+      const result = gridItemToPanel(panel);
+
+      expect(result.id).toBe(4);
+      expect(result.gridPos).toEqual({
+        h: 8,
+        w: 12,
+        x: 0,
+        y: 0,
+      });
+      expect(result.type).toBe('add-library-panel');
     });
   });
 
@@ -302,10 +403,11 @@ describe('transformSceneToSaveModel', () => {
       expect(saveModel.annotations?.list?.length).toBe(4);
       expect(saveModel.annotations?.list).toMatchSnapshot();
     });
+
     it('should transform annotations to save model after state changes', () => {
       const scene = transformSaveModelToScene({ dashboard: dashboard_to_load1 as any, meta: {} });
 
-      const layers = (scene.state.$data as SceneDataLayers)?.state.layers;
+      const layers = (scene.state.$data as DashboardDataLayerSet)?.state.annotationLayers;
       const enabledLayer = layers[1];
       const hiddenLayer = layers[3];
 
@@ -505,6 +607,37 @@ describe('transformSceneToSaveModel', () => {
         uid: SHARED_DASHBOARD_QUERY,
       });
     });
+
+    it('Given panel with query caching options', () => {
+      const panel = buildGridItemFromPanelSchema({
+        datasource: {
+          type: 'grafana-testdata',
+          uid: 'abc',
+        },
+        cacheTimeout: '10',
+        queryCachingTTL: 200000,
+        maxDataPoints: 100,
+        targets: [
+          {
+            refId: 'A',
+            expr: 'A',
+            datasource: {
+              type: 'grafana-testdata',
+              uid: 'abc',
+            },
+          },
+          {
+            refId: 'B',
+            expr: 'B',
+          },
+        ],
+      });
+
+      const result = gridItemToPanel(panel);
+
+      expect(result.cacheTimeout).toBe('10');
+      expect(result.queryCachingTTL).toBe(200000);
+    });
   });
 
   describe('Snapshots', () => {
@@ -654,6 +787,53 @@ describe('transformSceneToSaveModel', () => {
         expect(result[1].title).toEqual('Panel $server');
       });
 
+      it('handles repeated library panels', () => {
+        const { scene, repeater } = buildPanelRepeaterScene(
+          { variableQueryTime: 0, numberOfOptions: 2 },
+          new LibraryVizPanel({
+            name: 'Some lib panel panel',
+            title: 'A panel',
+            uid: 'lib-panel-uid',
+            panelKey: 'lib-panel',
+            panel: new VizPanel({
+              key: 'panel-4',
+              title: 'Panel blahh blah',
+              fieldConfig: {
+                defaults: {},
+                overrides: [],
+              },
+              options: {
+                legend: {
+                  calcs: [],
+                  displayMode: 'list',
+                  placement: 'bottom',
+                  showLegend: true,
+                },
+                tooltip: {
+                  maxHeight: 600,
+                  mode: 'single',
+                  sort: 'none',
+                },
+              },
+            }),
+          })
+        );
+
+        activateFullSceneTree(scene);
+        const result = panelRepeaterToPanels(repeater, true);
+
+        expect(result).toHaveLength(1);
+
+        expect(result[0]).toMatchObject({
+          id: 4,
+          title: 'A panel',
+          libraryPanel: {
+            name: 'Some lib panel panel',
+            uid: 'lib-panel-uid',
+          },
+        });
+      });
+
       it('handles row repeats ', () => {
         const { scene, row } = buildPanelRepeaterScene({
           variableQueryTime: 0,
@@ -792,22 +972,24 @@ describe('transformSceneToSaveModel', () => {
         expect(result.panels?.[0].gridPos).toEqual({ w: 24, x: 0, y: 0, h: 20 });
       });
 
-      // TODO: Uncomment when we support links
-      // it('should remove links', async () => {
-      //   const scene = transformSaveModelToScene({ dashboard: snapshotableDashboardJson as any, meta: {} });
-      //   activateFullSceneTree(scene);
-      //   const snapshot = transformSceneToSaveModel(scene, true);
-      //   expect(snapshot.links?.length).toBe(1);
-      //   const result = trimDashboardForSnapshot('Snap title', getTimeRange({ from: 'now-6h', to: 'now' }), snapshot);
-      //   expect(result.links?.length).toBe(0);
-      // });
+      it('should remove links', async () => {
+        const scene = transformSaveModelToScene({ dashboard: snapshotableDashboardJson as any, meta: {} });
+        activateFullSceneTree(scene);
+        const snapshot = transformSceneToSaveModel(scene, true);
+        expect(snapshot.links?.length).toBe(1);
+        const result = trimDashboardForSnapshot('Snap title', getTimeRange({ from: 'now-6h', to: 'now' }), snapshot);
+        expect(result.links?.length).toBe(0);
+      });
     });
   });
 });
 
-export function buildGridItemFromPanelSchema(panel: Partial<Panel>): SceneGridItemLike {
+export function buildGridItemFromPanelSchema(panel: Partial<Panel>) {
   if (panel.libraryPanel) {
     return buildGridItemForLibPanel(new PanelModel(panel))!;
+  } else if (panel.type === 'add-library-panel') {
+    return buildGridItemForLibraryPanelWidget(new PanelModel(panel))!;
   }
+
   return buildGridItemForPanel(new PanelModel(panel));
 }

@@ -13,7 +13,7 @@ import (
 	"github.com/grafana/grafana/pkg/plugins/auth"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin"
 	"github.com/grafana/grafana/pkg/plugins/log"
-	"github.com/grafana/grafana/pkg/plugins/plugindef"
+	"github.com/grafana/grafana/pkg/plugins/pfs"
 	"github.com/grafana/grafana/pkg/plugins/repo"
 	"github.com/grafana/grafana/pkg/plugins/storage"
 )
@@ -176,7 +176,7 @@ func NewFakePluginRegistry() *FakePluginRegistry {
 	}
 }
 
-func (f *FakePluginRegistry) Plugin(_ context.Context, id string) (*plugins.Plugin, bool) {
+func (f *FakePluginRegistry) Plugin(_ context.Context, id, _ string) (*plugins.Plugin, bool) {
 	p, exists := f.Store[id]
 	return p, exists
 }
@@ -195,7 +195,7 @@ func (f *FakePluginRegistry) Add(_ context.Context, p *plugins.Plugin) error {
 	return nil
 }
 
-func (f *FakePluginRegistry) Remove(_ context.Context, id string) error {
+func (f *FakePluginRegistry) Remove(_ context.Context, id, _ string) error {
 	delete(f.Store, id)
 	return nil
 }
@@ -253,6 +253,21 @@ func (s *FakePluginStorage) Extract(ctx context.Context, pluginID string, dirNam
 		return s.ExtractFunc(ctx, pluginID, dirNameFunc, z)
 	}
 	return &storage.ExtractedPluginArchive{}, nil
+}
+
+type FakePluginEnvProvider struct {
+	PluginEnvVarsFunc func(ctx context.Context, plugin *plugins.Plugin) []string
+}
+
+func NewFakePluginEnvProvider() *FakePluginEnvProvider {
+	return &FakePluginEnvProvider{}
+}
+
+func (p *FakePluginEnvProvider) PluginEnvVars(ctx context.Context, plugin *plugins.Plugin) []string {
+	if p.PluginEnvVarsFunc != nil {
+		return p.PluginEnvVarsFunc(ctx, plugin)
+	}
+	return []string{}
 }
 
 type FakeProcessManager struct {
@@ -423,12 +438,12 @@ func (s *FakePluginSource) DefaultSignature(ctx context.Context) (plugins.Signat
 }
 
 type FakePluginFileStore struct {
-	FileFunc func(ctx context.Context, pluginID, filename string) (*plugins.File, error)
+	FileFunc func(ctx context.Context, pluginID, pluginVersion, filename string) (*plugins.File, error)
 }
 
-func (f *FakePluginFileStore) File(ctx context.Context, pluginID, filename string) (*plugins.File, error) {
+func (f *FakePluginFileStore) File(ctx context.Context, pluginID, pluginVersion, filename string) (*plugins.File, error) {
 	if f.FileFunc != nil {
-		return f.FileFunc(ctx, pluginID, filename)
+		return f.FileFunc(ctx, pluginID, pluginVersion, filename)
 	}
 	return nil, nil
 }
@@ -441,7 +456,7 @@ func (f *FakeAuthService) HasExternalService(ctx context.Context, pluginID strin
 	return f.Result != nil, nil
 }
 
-func (f *FakeAuthService) RegisterExternalService(ctx context.Context, pluginID string, pType plugindef.Type, svc *plugindef.ExternalServiceRegistration) (*auth.ExternalService, error) {
+func (f *FakeAuthService) RegisterExternalService(ctx context.Context, pluginID string, pType pfs.Type, svc *pfs.IAM) (*auth.ExternalService, error) {
 	return f.Result, nil
 }
 
@@ -573,27 +588,4 @@ func (p *FakeBackendPlugin) Kill() {
 	p.mutex.Lock()
 	defer p.mutex.Unlock()
 	p.Running = false
-}
-
-type FakeFeatureToggles struct {
-	features map[string]bool
-}
-
-func NewFakeFeatureToggles(features ...string) *FakeFeatureToggles {
-	m := make(map[string]bool)
-	for _, f := range features {
-		m[f] = true
-	}
-
-	return &FakeFeatureToggles{
-		features: m,
-	}
-}
-
-func (f *FakeFeatureToggles) GetEnabled(_ context.Context) map[string]bool {
-	return f.features
-}
-
-func (f *FakeFeatureToggles) IsEnabledGlobally(feature string) bool {
-	return f.features[feature]
 }

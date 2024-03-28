@@ -21,7 +21,7 @@ type Manager struct {
 	log log.PrettyLogger
 }
 
-func ProvideService(cfg *config.Cfg) (*Manager, error) {
+func ProvideService(cfg *config.PluginManagementCfg) (*Manager, error) {
 	baseURL, err := url.JoinPath(cfg.GrafanaComURL, "/api/plugins")
 	if err != nil {
 		return nil, err
@@ -98,7 +98,7 @@ func (m *Manager) PluginVersion(pluginID, version string, compatOpts CompatOpts)
 	_, hasAnyArch := compatibleVer.Arch["any"]
 	if isGrafanaCorePlugin && hasAnyArch {
 		// Trying to install a coupled core plugin
-		return VersionData{}, ErrCorePlugin{id: pluginID}
+		return VersionData{}, ErrCorePlugin(pluginID)
 	}
 
 	return compatibleVer, nil
@@ -108,8 +108,7 @@ func (m *Manager) downloadURL(pluginID, version string) string {
 	return fmt.Sprintf("%s/%s/versions/%s/download", m.baseURL, pluginID, version)
 }
 
-// grafanaCompatiblePluginVersions will get version info from /api/plugins/repo/$pluginID based on
-// the provided compatibility information (sent via HTTP headers)
+// grafanaCompatiblePluginVersions will get version info from /api/plugins/$pluginID/versions
 func (m *Manager) grafanaCompatiblePluginVersions(pluginID string, compatOpts CompatOpts) ([]Version, error) {
 	u, err := url.Parse(m.baseURL)
 	if err != nil {

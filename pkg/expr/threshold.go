@@ -3,6 +3,7 @@ package expr
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"strings"
 	"time"
@@ -17,23 +18,31 @@ import (
 type ThresholdCommand struct {
 	ReferenceVar  string
 	RefID         string
-	ThresholdFunc string
+	ThresholdFunc ThresholdType
 	Conditions    []float64
 	Invert        bool
 }
 
+// +enum
+type ThresholdType string
+
 const (
-	ThresholdIsAbove        = "gt"
-	ThresholdIsBelow        = "lt"
-	ThresholdIsWithinRange  = "within_range"
-	ThresholdIsOutsideRange = "outside_range"
+	ThresholdIsAbove        ThresholdType = "gt"
+	ThresholdIsBelow        ThresholdType = "lt"
+	ThresholdIsWithinRange  ThresholdType = "within_range"
+	ThresholdIsOutsideRange ThresholdType = "outside_range"
 )
 
 var (
-	supportedThresholdFuncs = []string{ThresholdIsAbove, ThresholdIsBelow, ThresholdIsWithinRange, ThresholdIsOutsideRange}
+	supportedThresholdFuncs = []string{
+		string(ThresholdIsAbove),
+		string(ThresholdIsBelow),
+		string(ThresholdIsWithinRange),
+		string(ThresholdIsOutsideRange),
+	}
 )
 
-func NewThresholdCommand(refID, referenceVar, thresholdFunc string, conditions []float64) (*ThresholdCommand, error) {
+func NewThresholdCommand(refID, referenceVar string, thresholdFunc ThresholdType, conditions []float64) (*ThresholdCommand, error) {
 	switch thresholdFunc {
 	case ThresholdIsOutsideRange, ThresholdIsWithinRange:
 		if len(conditions) < 2 {
@@ -56,8 +65,8 @@ func NewThresholdCommand(refID, referenceVar, thresholdFunc string, conditions [
 }
 
 type ConditionEvalJSON struct {
-	Params []float64 `json:"params"`
-	Type   string    `json:"type"` // e.g. "gt"
+	Params []float64     `json:"params"`
+	Type   ThresholdType `json:"type"` // e.g. "gt"
 }
 
 // UnmarshalResampleCommand creates a ResampleCMD from Grafana's frontend query.
@@ -119,8 +128,12 @@ func (tc *ThresholdCommand) Execute(ctx context.Context, now time.Time, vars mat
 	return mathCommand.Execute(ctx, now, vars, tracer)
 }
 
+func (tc *ThresholdCommand) Type() string {
+	return TypeThreshold.String()
+}
+
 // createMathExpression converts all the info we have about a "threshold" expression in to a Math expression
-func createMathExpression(referenceVar string, thresholdFunc string, args []float64, invert bool) (string, error) {
+func createMathExpression(referenceVar string, thresholdFunc ThresholdType, args []float64, invert bool) (string, error) {
 	var exp string
 	switch thresholdFunc {
 	case ThresholdIsAbove:
@@ -160,6 +173,67 @@ type ThresholdCommandConfig struct {
 
 type ThresholdConditionJSON struct {
 	Evaluator        ConditionEvalJSON  `json:"evaluator"`
-	UnloadEvaluator  *ConditionEvalJSON `json:"unloadEvaluator"`
-	LoadedDimensions *data.Frame        `json:"loadedDimensions"`
+	UnloadEvaluator  *ConditionEvalJSON `json:"unloadEvaluator,omitempty"`
+	LoadedDimensions *data.Frame        `json:"loadedDimensions,omitempty"`
+}
+
+// IsHysteresisExpression returns true if the raw model describes a hysteresis command:
+// - field 'type' has value "threshold",
+// - field 'conditions' is array of objects and has exactly one element
+// - field 'conditions[0].unloadEvaluator is not nil
+func IsHysteresisExpression(query map[string]any) bool {
+	c, err := getConditionForHysteresisCommand(query)
+	if err != nil {
+		return false
+	}
+	return c != nil
+}
+
+// SetLoadedDimensionsToHysteresisCommand mutates the input map and sets field "conditions[0].loadedMetrics" with the data frame created from the provided fingerprints.
+func SetLoadedDimensionsToHysteresisCommand(query map[string]any, fingerprints Fingerprints) error {
+	condition, err := getConditionForHysteresisCommand(query)
+	if err != nil {
+		return err
+	}
+	if condition == nil {
+		return errors.New("not a hysteresis command")
+	}
+	fr := FingerprintsToFrame(fingerprints)
+	condition["loadedDimensions"] = fr
+	return nil
+}
+
+func getConditionForHysteresisCommand(query map[string]any) (map[string]any, error) {
+	t, err := GetExpressionCommandType(query)
+	if err != nil {
+		return nil, err
+	}
+	if t != TypeThreshold {
+		return nil, errors.New("not a threshold command")
+	}
+
+	c, ok := query["conditions"]
+	if !ok {
+		return nil, errors.New("invalid threshold command: expected field \"condition\"")
+	}
+	var condition map[string]any
+	switch arr := c.(type) {
+	case []any:
+		if len(arr) != 1 {
+			return nil, errors.New("invalid threshold command: field \"condition\" expected to have exactly 1 field")
+		}
+		switch m := arr[0].(type) {
+		case map[string]any:
+			condition = m
+		default:
+			return nil, errors.New("invalid threshold command: value of the first element of field \"condition\" expected to be an object")
+		}
+	default:
+		return nil, errors.New("invalid threshold command: field \"condition\" expected to be an array of objects")
+	}
+	_, ok = condition["unloadEvaluator"]
+	if !ok {
+		return nil, nil
+	}
+	return condition, nil
 }

@@ -2,27 +2,25 @@ import React from 'react';
 import useAsyncFn from 'react-use/lib/useAsyncFn';
 
 import { SelectableValue } from '@grafana/data';
-import { getBackendSrv, reportInteraction } from '@grafana/runtime';
+import { getBackendSrv } from '@grafana/runtime';
 import { SceneComponentProps, sceneGraph, SceneObjectBase, SceneObjectRef, VizPanel } from '@grafana/scenes';
 import { Button, ClipboardButton, Field, Input, Modal, RadioButtonGroup } from '@grafana/ui';
 import { t, Trans } from 'app/core/internationalization';
+import { shareDashboardType } from 'app/features/dashboard/components/ShareModal/utils';
 import { getDashboardSnapshotSrv, SnapshotSharingOptions } from 'app/features/dashboard/services/SnapshotSrv';
 
-import { DashboardScene } from '../scene/DashboardScene';
 import { transformSceneToSaveModel, trimDashboardForSnapshot } from '../serialization/transformSceneToSaveModel';
+import { DashboardInteractions } from '../utils/interactions';
 
 import { SceneShareTabState } from './types';
 
-const SNAPSHOTS_API_ENDPOINT = '/api/snapshots';
-
 const getExpireOptions = () => {
   const DEFAULT_EXPIRE_OPTION: SelectableValue<number> = {
-    label: t('share-modal.snapshot.expire-never', `Never`),
-    value: 0,
+    label: t('share-modal.snapshot.expire-week', '1 Week'),
+    value: 60 * 60 * 24 * 7,
   };
 
   return [
-    DEFAULT_EXPIRE_OPTION,
     {
       label: t('share-modal.snapshot.expire-hour', '1 Hour'),
       value: 60 * 60,
@@ -31,16 +29,20 @@ const getExpireOptions = () => {
       label: t('share-modal.snapshot.expire-day', '1 Day'),
       value: 60 * 60 * 24,
     },
+    DEFAULT_EXPIRE_OPTION,
     {
-      label: t('share-modal.snapshot.expire-week', '7 Days'),
-      value: 60 * 60 * 24 * 7,
+      label: t('share-modal.snapshot.expire-never', `Never`),
+      value: 0,
     },
   ];
 };
 
+const getDefaultExpireOption = () => {
+  return getExpireOptions()[2];
+};
+
 export interface ShareSnapshotTabState extends SceneShareTabState {
   panelRef?: SceneObjectRef<VizPanel>;
-  dashboardRef: SceneObjectRef<DashboardScene>;
   snapshotName?: string;
   selectedExpireOption?: SelectableValue<number>;
 
@@ -48,14 +50,14 @@ export interface ShareSnapshotTabState extends SceneShareTabState {
 }
 
 export class ShareSnapshotTab extends SceneObjectBase<ShareSnapshotTabState> {
-  public tabId = 'Snapshot';
+  public tabId = shareDashboardType.snapshot;
   static Component = ShareSnapshoTabRenderer;
 
   public constructor(state: ShareSnapshotTabState) {
     super({
       ...state,
       snapshotName: state.dashboardRef.resolve().state.title,
-      selectedExpireOption: getExpireOptions()[0],
+      selectedExpireOption: getDefaultExpireOption(),
     });
 
     this.addActivationHandler(() => {
@@ -119,17 +121,12 @@ export class ShareSnapshotTab extends SceneObjectBase<ShareSnapshotTabState> {
     };
 
     try {
-      const results: { deleteUrl: string; url: string } = await getBackendSrv().post(SNAPSHOTS_API_ENDPOINT, cmdData);
-      return results;
+      return await getDashboardSnapshotSrv().create(cmdData);
     } finally {
       if (external) {
-        reportInteraction('dashboards_sharing_snapshot_publish_clicked', {
-          expires: cmdData.expires,
-        });
+        DashboardInteractions.publishSnapshotClicked({ expires: cmdData.expires });
       } else {
-        reportInteraction('dashboards_sharing_snapshot_local_clicked', {
-          expires: cmdData.expires,
-        });
+        DashboardInteractions.publishSnapshotLocalClicked({ expires: cmdData.expires });
       }
     }
   };
@@ -212,7 +209,7 @@ function ShareSnapshoTabRenderer({ model }: SceneComponentProps<ShareSnapshotTab
               </Button>
             )}
             <Button variant="primary" disabled={snapshotResult.loading} onClick={() => createSnapshot()}>
-              <Trans i18nKey="share-modal.snapshot.local-button">Local Snapshot</Trans>
+              <Trans i18nKey="share-modal.snapshot.local-button">Publish Snapshot</Trans>
             </Button>
           </Modal.ButtonRow>
         </>

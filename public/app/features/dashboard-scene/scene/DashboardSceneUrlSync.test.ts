@@ -1,7 +1,8 @@
 import { AppEvents } from '@grafana/data';
-import { SceneGridItem, SceneGridLayout, SceneQueryRunner, VizPanel } from '@grafana/scenes';
+import { SceneGridLayout, SceneQueryRunner, VizPanel } from '@grafana/scenes';
 import appEvents from 'app/core/app_events';
 
+import { DashboardGridItem } from './DashboardGridItem';
 import { DashboardScene } from './DashboardScene';
 import { DashboardRepeatsProcessedEvent } from './types';
 
@@ -22,7 +23,7 @@ describe('DashboardSceneUrlSync', () => {
     it('Should set viewPanelKey when url has viewPanel', () => {
       const scene = buildTestScene();
       scene.urlSync?.updateFromUrl({ viewPanel: '2' });
-      expect(scene.state.viewPanelKey).toBe('2');
+      expect(scene.state.viewPanelScene!.getUrlKey()).toBe('panel-2');
     });
   });
 
@@ -34,7 +35,7 @@ describe('DashboardSceneUrlSync', () => {
 
     scene.urlSync?.updateFromUrl({ viewPanel: 'panel-1-clone-1' });
 
-    expect(scene.state.viewPanelKey).toBeUndefined();
+    expect(scene.state.viewPanelScene).toBeUndefined();
     // Verify no error notice was shown
     expect(errorNotice).toBe(0);
 
@@ -42,7 +43,7 @@ describe('DashboardSceneUrlSync', () => {
     const layout = scene.state.body as SceneGridLayout;
     layout.setState({
       children: [
-        new SceneGridItem({
+        new DashboardGridItem({
           key: 'griditem-1',
           x: 0,
           body: new VizPanel({
@@ -56,7 +57,7 @@ describe('DashboardSceneUrlSync', () => {
 
     // Verify it subscribes to DashboardRepeatsProcessedEvent
     scene.publishEvent(new DashboardRepeatsProcessedEvent({ source: scene }));
-    expect(scene.state.viewPanelKey).toBe('panel-1-clone-1');
+    expect(scene.state.viewPanelScene?.getUrlKey()).toBe('panel-1-clone-1');
   });
 });
 
@@ -66,7 +67,7 @@ function buildTestScene() {
     uid: 'dash-1',
     body: new SceneGridLayout({
       children: [
-        new SceneGridItem({
+        new DashboardGridItem({
           key: 'griditem-1',
           x: 0,
           body: new VizPanel({
@@ -76,7 +77,7 @@ function buildTestScene() {
             $data: new SceneQueryRunner({ key: 'data-query-runner', queries: [{ refId: 'A' }] }),
           }),
         }),
-        new SceneGridItem({
+        new DashboardGridItem({
           body: new VizPanel({
             title: 'Panel B',
             key: 'panel-2',

@@ -196,6 +196,13 @@ The active users limit is turned off immediately.
 
 Settings updates at runtime are not affected by an expired license.
 
+#### Email sharing
+
+External users can't access dashboards shared via email anymore.
+These dashboards are now private but you can make them public and accessible to everyone if you want to.
+
+Grafana keeps your sharing configurations and restores them after you update your license.
+
 ## Grafana Enterprise license restrictions
 
 When you become a Grafana Enterprise customer, you receive a license that governs your use of Grafana Enterprise.

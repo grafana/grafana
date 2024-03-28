@@ -2,32 +2,33 @@ package postgres
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"math/rand"
+	"net"
+	"net/http"
 	"os"
 	"strings"
 	"testing"
 	"time"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
+	"github.com/grafana/grafana-plugin-sdk-go/backend/log"
+	backendproxy "github.com/grafana/grafana-plugin-sdk-go/backend/proxy"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"xorm.io/xorm"
+	"golang.org/x/net/proxy"
 
-	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/tsdb/grafana-postgresql-datasource/tls"
 	"github.com/grafana/grafana/pkg/tsdb/sqleng"
 
-	_ "github.com/lib/pq"
+	_ "github.com/jackc/pgx/v5/stdlib"
 )
 
-// Test generateConnectionString.
-func TestIntegrationGenerateConnectionString(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test")
-	}
-	cfg := setting.NewCfg()
-	cfg.DataPath = t.TempDir()
+func TestGenerateConnectionConfig(t *testing.T) {
+	rootCertBytes, err := tls.CreateRandomRootCertBytes()
+	require.NoError(t, err)
 
 	testCases := []struct {
 		desc        string
@@ -35,10 +36,15 @@ func TestIntegrationGenerateConnectionString(t *testing.T) {
 		user        string
 		password    string
 		database    string
-		tlsSettings tlsSettings
-		expConnStr  string
+		tlsMode     string
+		tlsRootCert []byte
 		expErr      string
-		uid         string
+		expHost     string
+		expPort     uint16
+		expUser     string
+		expPassword string
+		expDatabase string
+		expTLS      bool
 	}{
 		{
 			desc:        "Unix socket host",
@@ -46,8 +52,11 @@ func TestIntegrationGenerateConnectionString(t *testing.T) {
 			user:        "user",
 			password:    "password",
 			database:    "database",
-			tlsSettings: tlsSettings{Mode: "verify-full"},
-			expConnStr:  "user='user' password='password' host='/var/run/postgresql' dbname='database' sslmode='verify-full'",
+			tlsMode:     "disable",
+			expUser:     "user",
+			expPassword: "password",
+			expHost:     "/var/run/postgresql",
+			expDatabase: "database",
 		},
 		{
 			desc:        "TCP host",
@@ -55,8 +64,12 @@ func TestIntegrationGenerateConnectionString(t *testing.T) {
 			user:        "user",
 			password:    "password",
 			database:    "database",
-			tlsSettings: tlsSettings{Mode: "verify-full"},
-			expConnStr:  "user='user' password='password' host='host' dbname='database' sslmode='verify-full'",
+			tlsMode:     "disable",
+			expUser:     "user",
+			expPassword: "password",
+			expHost:     "host",
+			expPort:     5432,
+			expDatabase: "database",
 		},
 		{
 			desc:        "TCP/port host",
@@ -64,8 +77,12 @@ func TestIntegrationGenerateConnectionString(t *testing.T) {
 			user:        "user",
 			password:    "password",
 			database:    "database",
-			tlsSettings: tlsSettings{Mode: "verify-full"},
-			expConnStr:  "user='user' password='password' host='host' dbname='database' port=1234 sslmode='verify-full'",
+			tlsMode:     "disable",
+			expUser:     "user",
+			expPassword: "password",
+			expHost:     "host",
+			expPort:     1234,
+			expDatabase: "database",
 		},
 		{
 			desc:        "Ipv6 host",
@@ -73,8 +90,11 @@ func TestIntegrationGenerateConnectionString(t *testing.T) {
 			user:        "user",
 			password:    "password",
 			database:    "database",
-			tlsSettings: tlsSettings{Mode: "verify-full"},
-			expConnStr:  "user='user' password='password' host='::1' dbname='database' sslmode='verify-full'",
+			tlsMode:     "disable",
+			expUser:     "user",
+			expPassword: "password",
+			expHost:     "::1",
+			expDatabase: "database",
 		},
 		{
 			desc:        "Ipv6/port host",
@@ -82,16 +102,20 @@ func TestIntegrationGenerateConnectionString(t *testing.T) {
 			user:        "user",
 			password:    "password",
 			database:    "database",
-			tlsSettings: tlsSettings{Mode: "verify-full"},
-			expConnStr:  "user='user' password='password' host='::1' dbname='database' port=1234 sslmode='verify-full'",
+			tlsMode:     "disable",
+			expUser:     "user",
+			expPassword: "password",
+			expHost:     "::1",
+			expPort:     1234,
+			expDatabase: "database",
 		},
 		{
-			desc:        "Invalid port",
-			host:        "host:invalid",
-			user:        "user",
-			database:    "database",
-			tlsSettings: tlsSettings{},
-			expErr:      "invalid port in host specifier",
+			desc:     "Invalid port",
+			host:     "host:invalid",
+			user:     "user",
+			database: "database",
+			tlsMode:  "disable",
+			expErr:   "invalid port in host specifier",
 		},
 		{
 			desc:        "Password with single quote and backslash",
@@ -99,8 +123,11 @@ func TestIntegrationGenerateConnectionString(t *testing.T) {
 			user:        "user",
 			password:    `p'\assword`,
 			database:    "database",
-			tlsSettings: tlsSettings{Mode: "verify-full"},
-			expConnStr:  `user='user' password='p\'\\assword' host='host' dbname='database' sslmode='verify-full'`,
+			tlsMode:     "disable",
+			expUser:     "user",
+			expPassword: `p'\assword`,
+			expHost:     "host",
+			expDatabase: "database",
 		},
 		{
 			desc:        "User/DB with single quote and backslash",
@@ -108,8 +135,11 @@ func TestIntegrationGenerateConnectionString(t *testing.T) {
 			user:        `u'\ser`,
 			password:    `password`,
 			database:    `d'\atabase`,
-			tlsSettings: tlsSettings{Mode: "verify-full"},
-			expConnStr:  `user='u\'\\ser' password='password' host='host' dbname='d\'\\atabase' sslmode='verify-full'`,
+			tlsMode:     "disable",
+			expUser:     `u'\ser`,
+			expPassword: "password",
+			expDatabase: `d'\atabase`,
+			expHost:     "host",
 		},
 		{
 			desc:        "Custom TLS mode disabled",
@@ -117,44 +147,55 @@ func TestIntegrationGenerateConnectionString(t *testing.T) {
 			user:        "user",
 			password:    "password",
 			database:    "database",
-			tlsSettings: tlsSettings{Mode: "disable"},
-			expConnStr:  "user='user' password='password' host='host' dbname='database' sslmode='disable'",
+			tlsMode:     "disable",
+			expUser:     "user",
+			expPassword: "password",
+			expHost:     "host",
+			expDatabase: "database",
 		},
 		{
-			desc:     "Custom TLS mode verify-full with certificate files",
-			host:     "host",
-			user:     "user",
-			password: "password",
-			database: "database",
-			tlsSettings: tlsSettings{
-				Mode:         "verify-full",
-				RootCertFile: "i/am/coding/ca.crt",
-				CertFile:     "i/am/coding/client.crt",
-				CertKeyFile:  "i/am/coding/client.key",
-			},
-			expConnStr: "user='user' password='password' host='host' dbname='database' sslmode='verify-full' " +
-				"sslrootcert='i/am/coding/ca.crt' sslcert='i/am/coding/client.crt' sslkey='i/am/coding/client.key'",
+			desc:        "Custom TLS mode verify-full with certificate files",
+			host:        "host",
+			user:        "user",
+			password:    "password",
+			database:    "database",
+			tlsMode:     "verify-full",
+			tlsRootCert: rootCertBytes,
+			expUser:     "user",
+			expPassword: "password",
+			expDatabase: "database",
+			expHost:     "host",
+			expTLS:      true,
 		},
 	}
 	for _, tt := range testCases {
 		t.Run(tt.desc, func(t *testing.T) {
-			svc := Service{
-				tlsManager: &tlsTestManager{settings: tt.tlsSettings},
-			}
-
 			ds := sqleng.DataSourceInfo{
-				URL:                     tt.host,
-				User:                    tt.user,
-				DecryptedSecureJSONData: map[string]string{"password": tt.password},
-				Database:                tt.database,
-				UID:                     tt.uid,
+				URL:  tt.host,
+				User: tt.user,
+				DecryptedSecureJSONData: map[string]string{
+					"password":  tt.password,
+					"tlsCACert": string(tt.tlsRootCert),
+				},
+				Database: tt.database,
+				JsonData: sqleng.JsonData{
+					Mode:                tt.tlsMode,
+					ConfigurationMethod: "file-content",
+				},
 			}
 
-			connStr, err := svc.generateConnectionString(ds)
+			c, err := generateConnectionConfig(ds)
 
 			if tt.expErr == "" {
 				require.NoError(t, err, tt.desc)
-				assert.Equal(t, tt.expConnStr, connStr)
+				assert.Equal(t, tt.expHost, c.Host)
+				if tt.expPort != 0 {
+					assert.Equal(t, tt.expPort, c.Port)
+				}
+				assert.Equal(t, tt.expUser, c.User)
+				assert.Equal(t, tt.expDatabase, c.Database)
+				assert.Equal(t, tt.expPassword, c.Password)
+				require.Equal(t, tt.expTLS, c.TLSConfig != nil)
 			} else {
 				require.Error(t, err, tt.desc)
 				assert.True(t, strings.HasPrefix(err.Error(), tt.expErr),
@@ -183,23 +224,22 @@ func TestIntegrationPostgres(t *testing.T) {
 		t.Skip()
 	}
 
-	x := InitPostgresTestDB(t)
-
-	origXormEngine := sqleng.NewXormEngine
 	origInterpolate := sqleng.Interpolate
 	t.Cleanup(func() {
-		sqleng.NewXormEngine = origXormEngine
 		sqleng.Interpolate = origInterpolate
 	})
-	sqleng.NewXormEngine = func(d, c string) (*xorm.Engine, error) {
-		return x, nil
-	}
-	sqleng.Interpolate = func(query backend.DataQuery, timeRange backend.TimeRange, timeInterval string, sql string) (string, error) {
-		return sql, nil
+	sqleng.Interpolate = func(query backend.DataQuery, timeRange backend.TimeRange, timeInterval string, sql string) string {
+		return sql
 	}
 
-	cfg := setting.NewCfg()
-	cfg.DataPath = t.TempDir()
+	host := os.Getenv("POSTGRES_HOST")
+	if host == "" {
+		host = "localhost"
+	}
+	port := os.Getenv("POSTGRES_PORT")
+	if port == "" {
+		port = "5432"
+	}
 
 	jsonData := sqleng.JsonData{
 		MaxOpenConns:        0,
@@ -207,31 +247,28 @@ func TestIntegrationPostgres(t *testing.T) {
 		ConnMaxLifetime:     14400,
 		Timescaledb:         false,
 		ConfigurationMethod: "file-path",
+		Mode:                "disable",
 	}
 
 	dsInfo := sqleng.DataSourceInfo{
-		JsonData:                jsonData,
-		DecryptedSecureJSONData: map[string]string{},
+		JsonData: jsonData,
+		DecryptedSecureJSONData: map[string]string{
+			"password": "grafanatest",
+		},
+		URL:      host + ":" + port,
+		Database: "grafanadstest",
+		User:     "grafanatest",
 	}
 
-	config := sqleng.DataPluginConfiguration{
-		DriverName:        "postgres",
-		ConnectionString:  "",
-		DSInfo:            dsInfo,
-		MetricColumnTypes: []string{"UNKNOWN", "TEXT", "VARCHAR", "CHAR"},
-		RowLimit:          1000000,
-	}
+	logger := backend.NewLoggerWith("logger", "postgres.test")
 
-	queryResultTransformer := postgresQueryResultTransformer{}
-
-	exe, err := sqleng.NewQueryDataHandler(cfg, config, &queryResultTransformer, newPostgresMacroEngine(dsInfo.JsonData.Timescaledb),
-		logger)
+	settings := backend.DataSourceInstanceSettings{}
+	proxyClient, err := settings.ProxyClient(context.Background())
+	require.NoError(t, err)
+	db, exe, err := newPostgres("error", 10000, dsInfo, logger, proxyClient)
 
 	require.NoError(t, err)
 
-	sess := x.NewSession()
-	t.Cleanup(sess.Close)
-	db := sess.DB()
 	fromStart := time.Date(2018, 3, 15, 13, 0, 0, 0, time.UTC).In(time.Local)
 
 	t.Run("Given a table with different native data types", func(t *testing.T) {
@@ -427,7 +464,8 @@ func TestIntegrationPostgres(t *testing.T) {
 							"rawSql": "SELECT $__timeGroup(time, $__interval) AS time, avg(value) as value FROM metric GROUP BY 1 ORDER BY 1",
 							"format": "time_series"
 						}`),
-						RefID: "A",
+						RefID:    "A",
+						Interval: time.Second * 60,
 						TimeRange: backend.TimeRange{
 							From: fromStart,
 							To:   fromStart.Add(30 * time.Minute),
@@ -615,17 +653,17 @@ func TestIntegrationPostgres(t *testing.T) {
 	t.Run("Given a table with metrics having multiple values and measurements", func(t *testing.T) {
 		type metric_values struct {
 			Time                time.Time
-			TimeInt64           int64    `xorm:"bigint 'timeInt64' not null"`
-			TimeInt64Nullable   *int64   `xorm:"bigint 'timeInt64Nullable' null"`
-			TimeFloat64         float64  `xorm:"double 'timeFloat64' not null"`
-			TimeFloat64Nullable *float64 `xorm:"double 'timeFloat64Nullable' null"`
-			TimeInt32           int32    `xorm:"int(11) 'timeInt32' not null"`
-			TimeInt32Nullable   *int32   `xorm:"int(11) 'timeInt32Nullable' null"`
-			TimeFloat32         float32  `xorm:"double 'timeFloat32' not null"`
-			TimeFloat32Nullable *float32 `xorm:"double 'timeFloat32Nullable' null"`
+			TimeInt64           int64
+			TimeInt64Nullable   *int64
+			TimeFloat64         float64
+			TimeFloat64Nullable *float64
+			TimeInt32           int32
+			TimeInt32Nullable   *int32
+			TimeFloat32         float32
+			TimeFloat32Nullable *float32
 			Measurement         string
-			ValueOne            int64 `xorm:"integer 'valueOne'"`
-			ValueTwo            int64 `xorm:"integer 'valueTwo'"`
+			ValueOne            int64
+			ValueTwo            int64
 		}
 
 		_, err := db.Exec("DROP TABLE IF EXISTS metric_values")
@@ -1280,18 +1318,11 @@ func TestIntegrationPostgres(t *testing.T) {
 		})
 
 		t.Run("When row limit set to 1", func(t *testing.T) {
-			dsInfo := sqleng.DataSourceInfo{}
-			config := sqleng.DataPluginConfiguration{
-				DriverName:        "postgres",
-				ConnectionString:  "",
-				DSInfo:            dsInfo,
-				MetricColumnTypes: []string{"UNKNOWN", "TEXT", "VARCHAR", "CHAR"},
-				RowLimit:          1,
-			}
+			settings := backend.DataSourceInstanceSettings{}
+			proxyClient, err := settings.ProxyClient(context.Background())
+			require.NoError(t, err)
+			_, handler, err := newPostgres("error", 1, dsInfo, logger, proxyClient)
 
-			queryResultTransformer := postgresQueryResultTransformer{}
-
-			handler, err := sqleng.NewQueryDataHandler(setting.NewCfg(), config, &queryResultTransformer, newPostgresMacroEngine(false), logger)
 			require.NoError(t, err)
 
 			t.Run("When doing a table query that returns 2 rows should limit the result to 1 row", func(t *testing.T) {
@@ -1392,19 +1423,6 @@ func TestIntegrationPostgres(t *testing.T) {
 	})
 }
 
-func InitPostgresTestDB(t *testing.T) *xorm.Engine {
-	connStr := postgresTestDBConnString()
-	x, err := xorm.NewEngine("postgres", connStr)
-	require.NoError(t, err, "Failed to init postgres DB")
-
-	x.DatabaseTZ = time.UTC
-	x.TZLocation = time.UTC
-
-	// x.ShowSQL()
-
-	return x
-}
-
 func genTimeRangeByInterval(from time.Time, duration time.Duration, interval time.Duration) []time.Time {
 	durationSec := int64(duration.Seconds())
 	intervalSec := int64(interval.Seconds())
@@ -1418,14 +1436,6 @@ func genTimeRangeByInterval(from time.Time, duration time.Duration, interval tim
 	return timeRange
 }
 
-type tlsTestManager struct {
-	settings tlsSettings
-}
-
-func (m *tlsTestManager) getTLSSettings(dsInfo sqleng.DataSourceInfo) (tlsSettings, error) {
-	return m.settings, nil
-}
-
 func isTestDbPostgres() bool {
 	if db, present := os.LookupEnv("GRAFANA_TEST_DB"); present {
 		return db == "postgres"
@@ -1434,15 +1444,59 @@ func isTestDbPostgres() bool {
 	return false
 }
 
-func postgresTestDBConnString() string {
-	host := os.Getenv("POSTGRES_HOST")
-	if host == "" {
-		host = "localhost"
+type testNoResolveDialer struct {
+}
+
+func (d *testNoResolveDialer) Dial(network, addr string) (c net.Conn, err error) {
+	return nil, fmt.Errorf("test-dialer: dialing to '%s'. not implemented", addr)
+}
+
+var _ proxy.Dialer = (&testNoResolveDialer{})
+
+type testNoResolveProxyClient struct {
+}
+
+var _ backendproxy.Client = (&testNoResolveProxyClient{})
+
+func (p *testNoResolveProxyClient) SecureSocksProxyEnabled() bool {
+	return true
+}
+
+func (p *testNoResolveProxyClient) ConfigureSecureSocksHTTPProxy(transport *http.Transport) error {
+	return errors.New("testNoResolveProxyClient.ConfigureSecureSocksHTTPProxy not implemented")
+}
+
+func (p *testNoResolveProxyClient) NewSecureSocksProxyContextDialer() (proxy.Dialer, error) {
+	return &testNoResolveDialer{}, nil
+}
+
+// we must make sure that pgx does not resolve hostnames:
+// if we say the hostname is `localhost`, then it should
+// instruct the socks-proxy to connect to `localhost`, not to `127.0.0.1`
+// this is important, becase some other socks-proxy-code relies on this behavior.
+func TestNoResolve(t *testing.T) {
+	jsonData := sqleng.JsonData{
+		MaxOpenConns:        0,
+		MaxIdleConns:        2,
+		ConnMaxLifetime:     14400,
+		Timescaledb:         false,
+		ConfigurationMethod: "file-path",
 	}
-	port := os.Getenv("POSTGRES_PORT")
-	if port == "" {
-		port = "5432"
+
+	dsInfo := sqleng.DataSourceInfo{
+		JsonData: jsonData,
+		DecryptedSecureJSONData: map[string]string{
+			"password": "password",
+		},
+		URL:      "localhost:5432",
+		Database: "db",
+		User:     "user",
 	}
-	return fmt.Sprintf("user=grafanatest password=grafanatest host=%s port=%s dbname=grafanadstest sslmode=disable",
-		host, port)
+
+	db, _, err := newPostgres("error", 10000, dsInfo, log.New(), &testNoResolveProxyClient{})
+	require.NoError(t, err)
+	require.NotNil(t, db)
+	err = db.Ping()
+	require.Error(t, err)
+	require.Contains(t, err.Error(), "test-dialer: dialing to 'localhost:5432'. not implemented")
 }

@@ -235,7 +235,11 @@ func (srv PrometheusSrv) RouteGetRuleStatuses(c *contextmodel.ReqContext) respon
 			srv.log.Warn("Query returned rules that belong to folder the user does not have access to. All rules that belong to that namespace will not be added to the response", "folder_uid", groupKey.NamespaceUID)
 			continue
 		}
-		if !srv.authz.AuthorizeAccessToRuleGroup(c.Req.Context(), c.SignedInUser, rules) {
+		ok, err := srv.authz.HasAccessToRuleGroup(c.Req.Context(), c.SignedInUser, rules)
+		if err != nil {
+			return response.ErrOrFallback(http.StatusInternalServerError, "cannot authorize access to rule group", err)
+		}
+		if !ok {
 			continue
 		}
 		ruleGroup, totals := srv.toRuleGroup(groupKey, folder, rules, limitAlertsPerRule, withStatesFast, matchers, labelOptions)
@@ -300,7 +304,7 @@ func (srv PrometheusSrv) toRuleGroup(groupKey ngmodels.AlertRuleGroupKey, folder
 	newGroup := &apimodels.RuleGroup{
 		Name: groupKey.RuleGroup,
 		// file is what Prometheus uses for provisioning, we replace it with namespace which is the folder in Grafana.
-		File: folder.Title,
+		File: folder.Fullpath,
 	}
 
 	rulesTotals := make(map[string]int64, len(rules))

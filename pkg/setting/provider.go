@@ -85,11 +85,11 @@ type KeyValue interface {
 // service that have support for configuration reloads.
 type ReloadHandler interface {
 	// Reload handles reloading of configuration changes.
-	Reload(section Section) error
+	ReloadSection(section Section) error
 
 	// Validate validates the configuration, if the validation
 	// fails the configuration will not be updated neither reloaded.
-	Validate(section Section) error
+	ValidateSection(section Section) error
 }
 
 type SettingsBag map[string]map[string]string
@@ -143,12 +143,6 @@ func (o *OSSImpl) Section(section string) Section {
 }
 
 func (*OSSImpl) RegisterReloadHandler(string, ReloadHandler) {}
-
-// Deprecated: use feature toggles
-func (o *OSSImpl) IsFeatureToggleEnabled(name string) bool {
-	// nolint:staticcheck
-	return o.Cfg.IsFeatureToggleEnabled(name)
-}
 
 type keyValImpl struct {
 	key *ini.Key

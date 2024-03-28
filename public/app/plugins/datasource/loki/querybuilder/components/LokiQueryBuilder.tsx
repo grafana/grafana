@@ -1,30 +1,36 @@
+import { isEqual } from 'lodash';
 import React, { useEffect, useMemo, useState } from 'react';
+import { usePrevious } from 'react-use';
 
 import { DataSourceApi, getDefaultTimeRange, LoadingState, PanelData, SelectableValue, TimeRange } from '@grafana/data';
-import { EditorRow } from '@grafana/experimental';
-import { LabelFilters } from 'app/plugins/datasource/prometheus/querybuilder/shared/LabelFilters';
-import { OperationExplainedBox } from 'app/plugins/datasource/prometheus/querybuilder/shared/OperationExplainedBox';
-import { OperationList } from 'app/plugins/datasource/prometheus/querybuilder/shared/OperationList';
-import { OperationListExplained } from 'app/plugins/datasource/prometheus/querybuilder/shared/OperationListExplained';
-import { OperationsEditorRow } from 'app/plugins/datasource/prometheus/querybuilder/shared/OperationsEditorRow';
-import { QueryBuilderHints } from 'app/plugins/datasource/prometheus/querybuilder/shared/QueryBuilderHints';
-import { RawQuery } from 'app/plugins/datasource/prometheus/querybuilder/shared/RawQuery';
 import {
+  EditorRow,
+  LabelFilters,
+  OperationExplainedBox,
+  OperationList,
+  OperationListExplained,
+  OperationsEditorRow,
+  QueryBuilderHints,
+  RawQuery,
   QueryBuilderLabelFilter,
   QueryBuilderOperation,
-} from 'app/plugins/datasource/prometheus/querybuilder/shared/types';
+} from '@grafana/experimental';
+import { config } from '@grafana/runtime';
 
 import { testIds } from '../../components/LokiQueryEditor';
 import { LokiDatasource } from '../../datasource';
 import { escapeLabelValueInSelector } from '../../languageUtils';
 import logqlGrammar from '../../syntax';
+import { LokiQuery } from '../../types';
 import { lokiQueryModeller } from '../LokiQueryModeller';
+import { isConflictingFilter } from '../operationUtils';
 import { buildVisualQueryFromString } from '../parsing';
 import { LokiOperationId, LokiVisualQuery } from '../types';
 
 import { EXPLAIN_LABEL_FILTER_CONTENT } from './LokiQueryBuilderExplained';
 import { NestedQueryList } from './NestedQueryList';
 
+export const TIME_SPAN_TO_TRIGGER_SAMPLES = 5 * 60 * 1000;
 export interface Props {
   query: LokiVisualQuery;
   datasource: LokiDatasource;
@@ -37,6 +43,8 @@ export const LokiQueryBuilder = React.memo<Props>(
   ({ datasource, query, onChange, onRunQuery, showExplain, timeRange }) => {
     const [sampleData, setSampleData] = useState<PanelData>();
     const [highlightedOp, setHighlightedOp] = useState<QueryBuilderOperation | undefined>(undefined);
+    const prevQuery = usePrevious(query);
+    const prevTimeRange = usePrevious(timeRange);
 
     const onChangeLabels = (labels: QueryBuilderLabelFilter[]) => {
       onChange({ ...query, labels });
@@ -50,7 +58,10 @@ export const LokiQueryBuilder = React.memo<Props>(
     const onGetLabelNames = async (forLabel: Partial<QueryBuilderLabelFilter>): Promise<string[]> => {
       const labelsToConsider = query.labels.filter((x) => x !== forLabel);
 
-      if (labelsToConsider.length === 0) {
+      const hasEqualityOperation = labelsToConsider.find(
+        (filter) => filter.op === '=' || (filter.op === '=~' && new RegExp(filter.value).test('') === false)
+      );
+      if (labelsToConsider.length === 0 || !hasEqualityOperation) {
         return await datasource.languageProvider.fetchLabels({ timeRange });
       }
 
@@ -73,11 +84,15 @@ export const LokiQueryBuilder = React.memo<Props>(
 
       let values;
       const labelsToConsider = query.labels.filter((x) => x !== forLabel);
-      if (labelsToConsider.length === 0) {
+      // If we have no equality/regex operation with .*, we can't fetch series as it will throw an error, so we fetch label values
+      const hasEqualityOperation = labelsToConsider.find(
+        (filter) => filter.op === '=' || (filter.op === '=~' && new RegExp(filter.value).test('') === false)
+      );
+      if (labelsToConsider.length === 0 || !hasEqualityOperation) {
         values = await datasource.languageProvider.fetchLabelValues(forLabel.label, { timeRange });
       } else {
         const expr = lokiQueryModeller.renderLabels(labelsToConsider);
-        const result = await datasource.languageProvider.fetchSeriesLabels(expr);
+        const result = await datasource.languageProvider.fetchSeriesLabels(expr, { timeRange });
         values = result[datasource.interpolateString(forLabel.label)];
       }
 
@@ -99,13 +114,22 @@ export const LokiQueryBuilder = React.memo<Props>(
     useEffect(() => {
       const onGetSampleData = async () => {
         const lokiQuery = { expr: lokiQueryModeller.renderQuery(query), refId: 'data-samples' };
-        const series = await datasource.getDataSamples(lokiQuery);
-        const sampleData = { series, state: LoadingState.Done, timeRange: getDefaultTimeRange() };
+        const range = timeRange ?? getDefaultTimeRange();
+        const series = await datasource.getDataSamples(lokiQuery, range);
+        const sampleData = { series, state: LoadingState.Done, timeRange: range };
         setSampleData(sampleData);
       };
 
-      onGetSampleData().catch(console.error);
-    }, [datasource, query]);
+      const updateBasedOnChangedTimeRange =
+        prevTimeRange &&
+        timeRange &&
+        (Math.abs(timeRange.to.valueOf() - prevTimeRange.to.valueOf()) > TIME_SPAN_TO_TRIGGER_SAMPLES ||
+          Math.abs(timeRange.from.valueOf() - prevTimeRange.from.valueOf()) > TIME_SPAN_TO_TRIGGER_SAMPLES);
+      const updateBasedOnChangedQuery = !isEqual(prevQuery, query);
+      if (config.featureToggles.lokiQueryHints && (updateBasedOnChangedTimeRange || updateBasedOnChangedQuery)) {
+        onGetSampleData().catch(console.error);
+      }
+    }, [datasource, query, timeRange, prevQuery, prevTimeRange]);
 
     const lang = { grammar: logqlGrammar, name: 'logql' };
     return (
@@ -126,7 +150,7 @@ export const LokiQueryBuilder = React.memo<Props>(
         {showExplain && (
           <OperationExplainedBox
             stepNumber={1}
-            title={<RawQuery query={`${lokiQueryModeller.renderLabels(query.labels)}`} lang={lang} />}
+            title={<RawQuery query={`${lokiQueryModeller.renderLabels(query.labels)}`} language={lang} />}
           >
             {EXPLAIN_LABEL_FILTER_CONTENT}
           </OperationExplainedBox>
@@ -139,14 +163,19 @@ export const LokiQueryBuilder = React.memo<Props>(
             onRunQuery={onRunQuery}
             datasource={datasource as DataSourceApi}
             highlightedOp={highlightedOp}
+            isConflictingOperation={(operation: QueryBuilderOperation, otherOperations: QueryBuilderOperation[]) =>
+              operation.id === LokiOperationId.LabelFilter && isConflictingFilter(operation, otherOperations)
+            }
           />
-          <QueryBuilderHints<LokiVisualQuery>
+          <QueryBuilderHints<LokiVisualQuery, LokiQuery>
             datasource={datasource}
             query={query}
             onChange={onChange}
             data={sampleData}
             queryModeller={lokiQueryModeller}
             buildVisualQueryFromString={buildVisualQueryFromString}
+            buildDataQueryFromQueryString={(queryString) => ({ expr: queryString, refId: 'hints' })}
+            buildQueryStringFromDataQuery={(query) => query.expr}
           />
         </OperationsEditorRow>
         {showExplain && (
@@ -154,7 +183,7 @@ export const LokiQueryBuilder = React.memo<Props>(
             stepNumber={2}
             queryModeller={lokiQueryModeller}
             query={query}
-            lang={lang}
+            language={lang}
             onMouseEnter={(op) => {
               setHighlightedOp(op);
             }}

@@ -28,6 +28,11 @@ const (
 
 	BasicRoleNoneUID  = "basic_none"
 	BasicRoleNoneName = "basic:none"
+
+	FixedCloudRolePrefix = "fixed:cloud:"
+	FixedCloudViewerRole = "fixed:cloud:viewer"
+	FixedCloudEditorRole = "fixed:cloud:editor"
+	FixedCloudAdminRole  = "fixed:cloud:admin"
 )
 
 // Roles definition
@@ -258,6 +263,23 @@ var (
 			},
 		},
 	}
+
+	generalAuthConfigWriterRole = RoleDTO{
+		Name:        "fixed:general.auth.config:writer",
+		DisplayName: "General authentication config writer",
+		Description: "Read and update the Grafana instance's general authentication configuration.",
+		Group:       "Settings",
+		Permissions: []Permission{
+			{
+				Action: ActionSettingsRead,
+				Scope:  "settings:auth:oauth_allow_insecure_email_lookup",
+			},
+			{
+				Action: ActionSettingsWrite,
+				Scope:  "settings:auth:oauth_allow_insecure_email_lookup",
+			},
+		},
+	}
 )
 
 // Declare OSS roles to the accesscontrol service
@@ -294,6 +316,10 @@ func DeclareFixedRoles(service Service, cfg *setting.Cfg) error {
 		Role:   usersWriterRole,
 		Grants: []string{RoleGrafanaAdmin},
 	}
+	generalAuthConfigWriter := RoleRegistration{
+		Role:   generalAuthConfigWriterRole,
+		Grants: []string{RoleGrafanaAdmin},
+	}
 
 	// TODO: Move to own service when implemented
 	authenticationConfigWriter := RoleRegistration{
@@ -306,7 +332,7 @@ func DeclareFixedRoles(service Service, cfg *setting.Cfg) error {
 	}
 
 	return service.DeclareFixedRoles(ldapReader, ldapWriter, orgUsersReader, orgUsersWriter,
-		settingsReader, statsReader, usersReader, usersWriter, authenticationConfigWriter)
+		settingsReader, statsReader, usersReader, usersWriter, authenticationConfigWriter, generalAuthConfigWriter)
 }
 
 func ConcatPermissions(permissions ...[]Permission) []Permission {
@@ -374,6 +400,14 @@ func (m *RegistrationList) Range(f func(registration RoleRegistration) bool) {
 			return
 		}
 	}
+}
+
+func (m *RegistrationList) Slice() []RoleRegistration {
+	m.mx.RLock()
+	defer m.mx.RUnlock()
+	out := make([]RoleRegistration, len(m.registrations))
+	copy(out, m.registrations)
+	return out
 }
 
 func BuildBasicRoleDefinitions() map[string]*RoleDTO {

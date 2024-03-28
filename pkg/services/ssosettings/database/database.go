@@ -12,15 +12,15 @@ import (
 	"github.com/grafana/grafana/pkg/services/ssosettings/models"
 )
 
+const (
+	isDeletedColumn = "is_deleted"
+	updatedColumn   = "updated"
+)
+
 type SSOSettingsStore struct {
 	sqlStore db.DB
 	log      log.Logger
 }
-
-var (
-	// timeNow makes it possible to test usage of time
-	timeNow = time.Now
-)
 
 func ProvideStore(sqlStore db.DB) *SSOSettingsStore {
 	return &SSOSettingsStore{
@@ -31,13 +31,18 @@ func ProvideStore(sqlStore db.DB) *SSOSettingsStore {
 
 var _ ssosettings.Store = (*SSOSettingsStore)(nil)
 
-func (s *SSOSettingsStore) Get(ctx context.Context, provider string) (*models.SSOSetting, error) {
-	result := models.SSOSetting{Provider: provider}
-	err := s.sqlStore.WithDbSession(ctx, func(sess *db.Session) error {
-		var err error
-		sess.Table("sso_setting")
-		found, err := sess.Where("is_deleted = ?", s.sqlStore.GetDialect().BooleanStr(false)).Get(&result)
+func (s *SSOSettingsStore) Get(ctx context.Context, provider string) (*models.SSOSettings, error) {
+	if provider == "" {
+		return nil, ssosettings.ErrNotFound
+	}
 
+	result := models.SSOSettings{
+		Provider:  provider,
+		IsDeleted: false,
+	}
+
+	err := s.sqlStore.WithDbSession(ctx, func(sess *db.Session) error {
+		found, err := sess.UseBool(isDeletedColumn).Get(&result)
 		if err != nil {
 			return err
 		}
@@ -56,12 +61,15 @@ func (s *SSOSettingsStore) Get(ctx context.Context, provider string) (*models.SS
 	return &result, nil
 }
 
-func (s *SSOSettingsStore) List(ctx context.Context) ([]*models.SSOSetting, error) {
-	result := make([]*models.SSOSetting, 0)
-	err := s.sqlStore.WithDbSession(ctx, func(sess *db.Session) error {
-		sess.Table("sso_setting")
-		err := sess.Where("is_deleted = ?", s.sqlStore.GetDialect().BooleanStr(false)).Find(&result)
+func (s *SSOSettingsStore) List(ctx context.Context) ([]*models.SSOSettings, error) {
+	result := make([]*models.SSOSettings, 0)
 
+	err := s.sqlStore.WithDbSession(ctx, func(sess *db.Session) error {
+		condition := &models.SSOSettings{
+			IsDeleted: false,
+		}
+
+		err := sess.UseBool(isDeletedColumn).Find(&result, condition)
 		if err != nil {
 			return err
 		}
@@ -76,52 +84,54 @@ func (s *SSOSettingsStore) List(ctx context.Context) ([]*models.SSOSetting, erro
 	return result, nil
 }
 
-func (s *SSOSettingsStore) Upsert(ctx context.Context, provider string, data map[string]interface{}) error {
+func (s *SSOSettingsStore) Upsert(ctx context.Context, settings *models.SSOSettings) error {
+	if settings.Provider == "" {
+		return ssosettings.ErrNotFound
+	}
+
 	return s.sqlStore.WithDbSession(ctx, func(sess *db.Session) error {
-		existing := &models.SSOSetting{
-			Provider:  provider,
+		existing := &models.SSOSettings{
+			Provider:  settings.Provider,
 			IsDeleted: false,
 		}
-		found, err := sess.UseBool("is_deleted").Exist(existing)
+
+		found, err := sess.UseBool(isDeletedColumn).Exist(existing)
 		if err != nil {
 			return err
 		}
 
-		now := timeNow().UTC()
+		now := time.Now().UTC()
 
 		if found {
-			updated := &models.SSOSetting{
-				Settings:  data,
+			updated := &models.SSOSettings{
+				Settings:  settings.Settings,
 				Updated:   now,
 				IsDeleted: false,
 			}
-			_, err = sess.UseBool("is_deleted").Update(updated, existing)
+			_, err = sess.UseBool(isDeletedColumn).Update(updated, existing)
 		} else {
-			_, err = sess.Insert(&models.SSOSetting{
-				ID:       uuid.New().String(),
-				Provider: provider,
-				Settings: data,
-				Created:  now,
-				Updated:  now,
-			})
+			settings.ID = uuid.New().String()
+			settings.Created = now
+			settings.Updated = now
+			_, err = sess.Insert(settings)
 		}
 
 		return err
 	})
 }
 
-func (s *SSOSettingsStore) Patch(ctx context.Context, provider string, data map[string]interface{}) error {
-	panic("not implemented") // TODO: Implement
-}
-
 func (s *SSOSettingsStore) Delete(ctx context.Context, provider string) error {
+	if provider == "" {
+		return ssosettings.ErrNotFound
+	}
+
 	return s.sqlStore.WithDbSession(ctx, func(sess *db.Session) error {
-		existing := &models.SSOSetting{
+		existing := &models.SSOSettings{
 			Provider:  provider,
 			IsDeleted: false,
 		}
 
-		found, err := sess.UseBool("is_deleted").Get(existing)
+		found, err := sess.UseBool(isDeletedColumn).Get(existing)
 		if err != nil {
 			return err
 		}
@@ -130,10 +140,10 @@ func (s *SSOSettingsStore) Delete(ctx context.Context, provider string) error {
 			return ssosettings.ErrNotFound
 		}
 
-		existing.Updated = timeNow().UTC()
+		existing.Updated = time.Now().UTC()
 		existing.IsDeleted = true
 
-		_, err = sess.ID(existing.ID).MustCols("updated", "is_deleted").Update(existing)
+		_, err = sess.ID(existing.ID).MustCols(updatedColumn, isDeletedColumn).Update(existing)
 		return err
 	})
 }

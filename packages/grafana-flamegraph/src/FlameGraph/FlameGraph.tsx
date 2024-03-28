@@ -22,9 +22,10 @@ import React, { useEffect, useState } from 'react';
 import { Icon } from '@grafana/ui';
 
 import { PIXELS_PER_LEVEL } from '../constants';
-import { ClickedItemData, ColorScheme, ColorSchemeDiff, TextAlign } from '../types';
+import { ClickedItemData, ColorScheme, ColorSchemeDiff, SelectedView, TextAlign } from '../types';
 
 import FlameGraphCanvas from './FlameGraphCanvas';
+import { GetExtraContextMenuButtonsFunction } from './FlameGraphContextMenu';
 import FlameGraphMetadata from './FlameGraphMetadata';
 import { CollapsedMap, FlameGraphDataContainer, LevelItem } from './dataTransform';
 
@@ -32,7 +33,7 @@ type Props = {
   data: FlameGraphDataContainer;
   rangeMin: number;
   rangeMax: number;
-  search: string;
+  matchedLabels?: Set<string>;
   setRangeMin: (range: number) => void;
   setRangeMax: (range: number) => void;
   style?: React.CSSProperties;
@@ -45,14 +46,17 @@ type Props = {
   onSandwichPillClick: () => void;
   colorScheme: ColorScheme | ColorSchemeDiff;
   showFlameGraphOnly?: boolean;
+  getExtraContextMenuButtons?: GetExtraContextMenuButtonsFunction;
   collapsing?: boolean;
+  selectedView: SelectedView;
+  search: string;
 };
 
 const FlameGraph = ({
   data,
   rangeMin,
   rangeMax,
-  search,
+  matchedLabels,
   setRangeMin,
   setRangeMax,
   onItemFocused,
@@ -64,7 +68,10 @@ const FlameGraph = ({
   onSandwichPillClick,
   colorScheme,
   showFlameGraphOnly,
+  getExtraContextMenuButtons,
   collapsing,
+  selectedView,
+  search,
 }: Props) => {
   const styles = getStyles();
 
@@ -108,7 +115,7 @@ const FlameGraph = ({
     data,
     rangeMin,
     rangeMax,
-    search,
+    matchedLabels,
     setRangeMin,
     setRangeMax,
     onItemFocused,
@@ -122,7 +129,10 @@ const FlameGraph = ({
     showFlameGraphOnly,
     collapsedMap,
     setCollapsedMap,
+    getExtraContextMenuButtons,
     collapsing,
+    search,
+    selectedView,
   };
   const canvas = levelsCallers ? (
     <>
@@ -178,7 +188,6 @@ const getStyles = () => ({
   graph: css`
     label: graph;
     overflow: auto;
-    height: 100%;
     flex-grow: 1;
     flex-basis: 50%;
   `,

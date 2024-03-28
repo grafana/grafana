@@ -20,6 +20,11 @@ var ErrNotIntIdentifier = errors.New("identifier is not an int64")
 var ErrIdentifierNotInitialized = errors.New("identifier is not initialized")
 
 type Requester interface {
+	// GetID returns namespaced id for the entity
+	GetID() string
+	// GetNamespacedID returns the namespace and ID of the active entity.
+	// The namespace is one of the constants defined in pkg/services/auth/identity.
+	GetNamespacedID() (namespace string, identifier string)
 	// GetDisplayName returns the display name of the active entity.
 	// The display name is the name if it is set, otherwise the login or email.
 	GetDisplayName() string
@@ -31,21 +36,22 @@ type Requester interface {
 	// GetLogin returns the login of the active entity
 	// Can be empty.
 	GetLogin() string
-	// GetNamespacedID returns the namespace and ID of the active entity.
-	// The namespace is one of the constants defined in pkg/services/auth/identity.
-	GetNamespacedID() (namespace string, identifier string)
 	// GetOrgID returns the ID of the active organization
 	GetOrgID() int64
 	// GetOrgRole returns the role of the active entity in the active organization.
 	GetOrgRole() roletype.RoleType
 	// GetPermissions returns the permissions of the active entity.
 	GetPermissions() map[string][]string
+	// GetGlobalPermissions returns the permissions of the active entity that are available across all organizations.
+	GetGlobalPermissions() map[string][]string
 	// DEPRECATED: GetTeams returns the teams the entity is a member of.
 	// Retrieve the teams from the team service instead of using this method.
 	GetTeams() []int64
 	// DEPRECATED: GetOrgName returns the name of the active organization.
 	// Retrieve the organization name from the organization service instead of using this method.
 	GetOrgName() string
+	// IsAuthenticatedBy returns true if entity was authenticated by any of supplied providers.
+	IsAuthenticatedBy(providers ...string) bool
 
 	// IsNil returns true if the identity is nil
 	// FIXME: remove this method once all services are using an interface
@@ -67,12 +73,22 @@ type Requester interface {
 	GetIDToken() string
 }
 
+// IsNamespace returns true if namespace matches any expected namespace
+func IsNamespace(namespace string, expected ...string) bool {
+	for _, e := range expected {
+		if namespace == e {
+			return true
+		}
+	}
+
+	return false
+}
+
 // IntIdentifier converts a string identifier to an int64.
 // Applicable for users, service accounts, api keys and renderer service.
 // Errors if the identifier is not initialized or if namespace is not recognized.
 func IntIdentifier(namespace, identifier string) (int64, error) {
-	switch namespace {
-	case NamespaceUser, NamespaceAPIKey, NamespaceServiceAccount, NamespaceRenderService:
+	if IsNamespace(namespace, NamespaceUser, NamespaceAPIKey, NamespaceServiceAccount, NamespaceRenderService) {
 		id, err := strconv.ParseInt(identifier, 10, 64)
 		if err != nil {
 			return 0, fmt.Errorf("unrecognized format for valid namespace %s: %w", namespace, err)
@@ -98,8 +114,7 @@ func UserIdentifier(namespace, identifier string) (int64, error) {
 		return 0, nil
 	}
 
-	switch namespace {
-	case NamespaceUser, NamespaceServiceAccount:
+	if IsNamespace(namespace, NamespaceUser, NamespaceServiceAccount) {
 		return userID, nil
 	}
 

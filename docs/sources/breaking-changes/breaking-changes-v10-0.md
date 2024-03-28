@@ -1,5 +1,5 @@
 ---
-description: Breaking changes for Grafana v10.0
+description: Learn about breaking changes in Grafana v10.0
 keywords:
   - grafana
   - breaking changes
@@ -81,7 +81,7 @@ Grafana legacy alerting (dashboard alerts) has been deprecated since Grafana v9.
 
 #### Migration path
 
-The new Grafana Alerting was introduced in Grafana 8 and is a superset of legacy alerting. Learn how to migrate your alerts in the [Upgrade Alerting documentation]({{< relref "../alerting/set-up/migrating-alerts/" >}}).
+The new Grafana Alerting was introduced in Grafana 8 and is a superset of legacy alerting. Learn how to migrate your alerts in the [Upgrade Alerting documentation]({{< relref "./v10.4/alerting/set-up/migrating-alerts/" >}}).
 
 ### API keys are migrating to service accounts
 

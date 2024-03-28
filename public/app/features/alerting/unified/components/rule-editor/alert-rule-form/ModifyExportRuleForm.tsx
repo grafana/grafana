@@ -46,6 +46,10 @@ export function ModifyExportRuleForm({ ruleForm, alertUid }: ModifyExportRuleFor
   const [conditionErrorMsg, setConditionErrorMsg] = useState('');
   const [evaluateEvery, setEvaluateEvery] = useState(ruleForm?.evaluateEvery ?? MINUTE);
 
+  const onInvalid = (): void => {
+    notifyApp.error('There are errors in the form. Please correct them and try again!');
+  };
+
   const checkAlertCondition = (msg = '') => {
     setConditionErrorMsg(msg);
   };
@@ -66,7 +70,7 @@ export function ModifyExportRuleForm({ ruleForm, alertUid }: ModifyExportRuleFor
     <LinkButton href={returnTo} key="cancel" size="sm" variant="secondary" onClick={() => submit(undefined)}>
       Cancel
     </LinkButton>,
-    <Button key="export-rule" size="sm" onClick={formAPI.handleSubmit((formValues) => submit(formValues))}>
+    <Button key="export-rule" size="sm" onClick={formAPI.handleSubmit((formValues) => submit(formValues), onInvalid)}>
       Export
     </Button>,
   ];
@@ -93,10 +97,10 @@ export function ModifyExportRuleForm({ ruleForm, alertUid }: ModifyExportRuleFor
                 />
 
                 {/* Step 4 & 5 */}
-                {/* Annotations only for cloud and Grafana */}
-                <AnnotationsStep />
                 {/* Notifications step*/}
                 <NotificationsStep alertUid={alertUid} />
+                {/* Annotations only for cloud and Grafana */}
+                <AnnotationsStep />
               </Stack>
             </CustomScrollbar>
           </div>
@@ -107,14 +111,14 @@ export function ModifyExportRuleForm({ ruleForm, alertUid }: ModifyExportRuleFor
   );
 }
 
-const useGetGroup = (nameSpace: string, group: string) => {
+const useGetGroup = (nameSpaceUID: string, group: string) => {
   const { dsFeatures } = useDataSourceFeatures(GRAFANA_RULES_SOURCE_NAME);
 
   const rulerConfig = dsFeatures?.rulerConfig;
 
   const targetGroup = useAsync(async () => {
-    return rulerConfig ? await fetchRulerRulesGroup(rulerConfig, nameSpace, group) : undefined;
-  }, [rulerConfig, nameSpace, group]);
+    return rulerConfig ? await fetchRulerRulesGroup(rulerConfig, nameSpaceUID, group) : undefined;
+  }, [rulerConfig, nameSpaceUID, group]);
 
   return targetGroup;
 };
@@ -162,7 +166,7 @@ export const getPayloadToExport = (
 };
 
 const useGetPayloadToExport = (values: RuleFormValues, uid: string) => {
-  const rulerGroupDto = useGetGroup(values.folder?.title ?? '', values.group);
+  const rulerGroupDto = useGetGroup(values.folder?.uid ?? '', values.group);
   const payload: ModifyExportPayload = useMemo(() => {
     return getPayloadToExport(uid, values, rulerGroupDto?.value);
   }, [uid, rulerGroupDto, values]);
@@ -178,11 +182,11 @@ const GrafanaRuleDesignExportPreview = ({
   const [getExport, exportData] = alertRuleApi.endpoints.exportModifiedRuleGroup.useMutation();
   const { loadingGroup, payload } = useGetPayloadToExport(exportValues, uid);
 
-  const nameSpace = exportValues.folder?.title ?? '';
+  const nameSpaceUID = exportValues.folder?.uid ?? '';
 
   useEffect(() => {
-    !loadingGroup && getExport({ payload, format: exportFormat, nameSpace: nameSpace });
-  }, [nameSpace, exportFormat, payload, getExport, loadingGroup]);
+    !loadingGroup && getExport({ payload, format: exportFormat, nameSpaceUID });
+  }, [nameSpaceUID, exportFormat, payload, getExport, loadingGroup]);
 
   if (exportData.isLoading) {
     return <LoadingPlaceholder text="Loading...." />;

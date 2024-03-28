@@ -41,10 +41,18 @@ func main() {
 				SkipFlagParsing: true,
 				Action: func(context *cli.Context) error {
 					// exit here because apiserver handles its own error output
-					os.Exit(apiserver.RunCLI())
+					os.Exit(apiserver.RunCLI(gsrv.ServerOptions{
+						Version:          version,
+						Commit:           commit,
+						EnterpriseCommit: enterpriseCommit,
+						BuildBranch:      buildBranch,
+						BuildStamp:       buildstamp,
+						Context:          context,
+					}))
 					return nil
 				},
 			},
+			gsrv.ServerCommand(version, commit, enterpriseCommit, buildBranch, buildstamp),
 		},
 		CommandNotFound:      cmdNotFound,
 		EnableBashCompletion: true,

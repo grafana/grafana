@@ -19,7 +19,7 @@ func NewFakeService() *FakeService {
 
 var _ folder.Service = (*FakeService)(nil)
 
-func (s *FakeService) GetChildren(ctx context.Context, cmd *folder.GetChildrenQuery) ([]*folder.Folder, error) {
+func (s *FakeService) GetChildren(ctx context.Context, q *folder.GetChildrenQuery) ([]*folder.Folder, error) {
 	return s.ExpectedFolders, s.ExpectedError
 }
 
@@ -30,7 +30,7 @@ func (s *FakeService) GetParents(ctx context.Context, q folder.GetParentsQuery) 
 func (s *FakeService) Create(ctx context.Context, cmd *folder.CreateFolderCommand) (*folder.Folder, error) {
 	return s.ExpectedFolder, s.ExpectedError
 }
-func (s *FakeService) Get(ctx context.Context, cmd *folder.GetFolderQuery) (*folder.Folder, error) {
+func (s *FakeService) Get(ctx context.Context, q *folder.GetFolderQuery) (*folder.Folder, error) {
 	return s.ExpectedFolder, s.ExpectedError
 }
 func (s *FakeService) Update(ctx context.Context, cmd *folder.UpdateFolderCommand) (*folder.Folder, error) {
@@ -48,14 +48,10 @@ func (s *FakeService) RegisterService(service folder.RegistryService) error {
 	return s.ExpectedError
 }
 
-func (s *FakeService) GetDescendantCounts(ctx context.Context, cmd *folder.GetDescendantCountsQuery) (folder.DescendantCounts, error) {
+func (s *FakeService) GetDescendantCounts(ctx context.Context, q *folder.GetDescendantCountsQuery) (folder.DescendantCounts, error) {
 	return s.ExpectedDescendantCounts, s.ExpectedError
 }
 
-func (s *FakeService) GetFolders(ctx context.Context, q *folder.GetFoldersQuery) ([]*folder.Folder, error) {
-	return s.ExpectedFolders, nil
-}
-
-func (s *FakeService) WithFullpath(ctx context.Context, f *folder.Folder, includeFullpath bool) (*folder.Folder, error) {
-	return s.ExpectedFolder, s.ExpectedError
+func (s *FakeService) GetFolders(ctx context.Context, q folder.GetFoldersQuery) ([]*folder.Folder, error) {
+	return s.ExpectedFolders, s.ExpectedError
 }

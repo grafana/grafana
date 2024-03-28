@@ -111,6 +111,8 @@ function setupDs() {
     },
   ] as ProfileTypeMessage[]);
 
+  ds.getLabelNames = jest.fn().mockResolvedValue(['label_one']);
+
   return ds;
 }
 

@@ -1,81 +1,39 @@
 package postgres
 
 import (
-	"context"
 	"fmt"
+	"net"
 	"testing"
 
-	"github.com/grafana/grafana/pkg/setting"
-	"github.com/grafana/grafana/pkg/tsdb/sqleng"
-	"github.com/grafana/grafana/pkg/tsdb/sqleng/proxyutil"
-	"github.com/lib/pq"
+	"github.com/jackc/pgx/v5"
+	pgxstdlib "github.com/jackc/pgx/v5/stdlib"
 	"github.com/stretchr/testify/require"
-	"xorm.io/core"
+	"golang.org/x/net/proxy"
 )
 
+type testDialer struct {
+}
+
+func (d *testDialer) Dial(network, addr string) (c net.Conn, err error) {
+	return nil, fmt.Errorf("test-dialer is not functional")
+}
+
+var _ proxy.Dialer = (&testDialer{})
+
 func TestPostgresProxyDriver(t *testing.T) {
-	dialect := "postgres"
-	settings := proxyutil.SetupTestSecureSocksProxySettings(t)
-	proxySettings := setting.SecureSocksDSProxySettings{
-		Enabled:      true,
-		ClientCert:   settings.ClientCert,
-		ClientKey:    settings.ClientKey,
-		RootCA:       settings.RootCA,
-		ProxyAddress: settings.ProxyAddress,
-		ServerName:   settings.ServerName,
-	}
-	opts := proxyutil.GetSQLProxyOptions(proxySettings, sqleng.DataSourceInfo{UID: "1", JsonData: sqleng.JsonData{SecureDSProxy: true}})
 	dbURL := "localhost:5432"
 	cnnstr := fmt.Sprintf("postgres://auser:password@%s/db?sslmode=disable", dbURL)
-	driverName, err := createPostgresProxyDriver(cnnstr, opts)
-	require.NoError(t, err)
-
-	t.Run("Driver should not be registered more than once", func(t *testing.T) {
-		testDriver, err := createPostgresProxyDriver(cnnstr, opts)
-		require.NoError(t, err)
-		require.Equal(t, driverName, testDriver)
-	})
-
-	t.Run("A new driver should be created for a new connection string", func(t *testing.T) {
-		testDriver, err := createPostgresProxyDriver("server=localhost;user id=sa;password=yourStrong(!)Password;database=db2", opts)
-		require.NoError(t, err)
-		require.NotEqual(t, driverName, testDriver)
-	})
-
-	t.Run("Parse should have the same result as xorm mssql parse", func(t *testing.T) {
-		xormDriver := core.QueryDriver(dialect)
-		xormResult, err := xormDriver.Parse(dialect, cnnstr)
-		require.NoError(t, err)
-
-		xormNewDriver := core.QueryDriver(driverName)
-		xormNewResult, err := xormNewDriver.Parse(dialect, cnnstr)
-		require.NoError(t, err)
-		require.Equal(t, xormResult, xormNewResult)
-	})
 
 	t.Run("Connector should use dialer context that routes through the socks proxy to db", func(t *testing.T) {
-		connector, err := pq.NewConnector(cnnstr)
-		require.NoError(t, err)
-		driver, err := newPostgresProxyDriver(connector, opts)
+		pgxConf, err := pgx.ParseConfig(cnnstr)
 		require.NoError(t, err)
 
-		conn, err := driver.OpenConnector(cnnstr)
-		require.NoError(t, err)
+		pgxConf.DialFunc = newPgxDialFunc(&testDialer{})
 
-		_, err = conn.Connect(context.Background())
-		require.Contains(t, err.Error(), fmt.Sprintf("socks connect %s %s->%s", "tcp", settings.ProxyAddress, dbURL))
-	})
+		db := pgxstdlib.OpenDB(*pgxConf)
 
-	t.Run("Connector should use dialer context that routes through the socks proxy to db", func(t *testing.T) {
-		connector, err := pq.NewConnector(cnnstr)
-		require.NoError(t, err)
-		driver, err := newPostgresProxyDriver(connector, opts)
-		require.NoError(t, err)
+		err = db.Ping()
 
-		conn, err := driver.OpenConnector(cnnstr)
-		require.NoError(t, err)
-
-		_, err = conn.Connect(context.Background())
-		require.Contains(t, err.Error(), fmt.Sprintf("socks connect %s %s->%s", "tcp", settings.ProxyAddress, dbURL))
+		require.Contains(t, err.Error(), "test-dialer is not functional")
 	})
 }

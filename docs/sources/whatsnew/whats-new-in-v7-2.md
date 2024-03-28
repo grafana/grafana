@@ -3,7 +3,7 @@ _build:
   list: false
 aliases:
   - ../guides/whats-new-in-v7-2/
-description: Feature and improvement highlights for Grafana v7.2
+description: Learn about new and updated features in Grafana v7.2
 keywords:
   - grafana
   - new
@@ -21,7 +21,7 @@ weight: -29
 
 # What's new in Grafana v7.2
 
-This topic includes the release notes for the Grafana v7.2. For all details, read the full [CHANGELOG.md](https://github.com/grafana/grafana/blob/master/CHANGELOG.md).
+This topic includes the release notes for the Grafana v7.2. For all details, read the full [CHANGELOG.md](https://github.com/grafana/grafana/blob/main/CHANGELOG.md).
 
 The main highlights are:
 
@@ -132,7 +132,7 @@ A new layout option is available when rendering reports: the grid layout. With t
 
 The grid layout is also available for the [Export dashboard as PDF]({{< relref "../dashboards/share-dashboards-panels#export-dashboard-as-pdf" >}}) feature.
 
-{{< figure src="/static/img/docs/enterprise/reports_grid_landscape_preview.png" max-width="500px" class="docs-image--no-shadow" >}}
+{{< figure src="/static/img/docs/enterprise/reports_grid_landscape_preview.png" max-width="500px" class="docs-image--no-shadow" alt="Report in grid layout" >}}
 
 ### Report time range
 
@@ -150,7 +150,7 @@ For more information, refer to [Report settings]({{< relref "../dashboards/share
 
 ## Changelog
 
-Check out [CHANGELOG.md](https://github.com/grafana/grafana/blob/master/CHANGELOG.md) for a complete list of new features, changes, and bug fixes.
+Check out [CHANGELOG.md](https://github.com/grafana/grafana/blob/main/CHANGELOG.md) for a complete list of new features, changes, and bug fixes.
 
 ## What's new in other parts of the Grafana ecosystem
 

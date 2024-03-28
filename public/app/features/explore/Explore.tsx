@@ -3,7 +3,7 @@ import { get, groupBy } from 'lodash';
 import memoizeOne from 'memoize-one';
 import React from 'react';
 import { connect, ConnectedProps } from 'react-redux';
-import AutoSizer from 'react-virtualized-auto-sizer';
+import AutoSizer, { HorizontalSize } from 'react-virtualized-auto-sizer';
 
 import {
   AbsoluteTimeRange,
@@ -205,13 +205,13 @@ export class Explore extends React.PureComponent<Props, ExploreState> {
    * TODO: In the future, we would like to return active filters based the query that produced the log line.
    * @alpha
    */
-  isFilterLabelActive = async (key: string, value: string, refId?: string) => {
+  isFilterLabelActive = async (key: string, value: string | number, refId?: string) => {
     const query = this.props.queries.find((q) => q.refId === refId);
     if (!query) {
       return false;
     }
     const ds = await getDataSourceSrv().get(query.datasource);
-    if (hasToggleableQueryFiltersSupport(ds) && ds.queryHasFilter(query, { key, value })) {
+    if (hasToggleableQueryFiltersSupport(ds) && ds.queryHasFilter(query, { key, value: value.toString() })) {
       return true;
     }
     return false;
@@ -220,11 +220,11 @@ export class Explore extends React.PureComponent<Props, ExploreState> {
   /**
    * Used by Logs details.
    */
-  onClickFilterLabel = (key: string, value: string, frame?: DataFrame) => {
+  onClickFilterLabel = (key: string, value: string | number, frame?: DataFrame) => {
     this.onModifyQueries(
       {
         type: 'ADD_FILTER',
-        options: { key, value },
+        options: { key, value: value.toString() },
         frame,
       },
       frame?.refId
@@ -234,11 +234,11 @@ export class Explore extends React.PureComponent<Props, ExploreState> {
   /**
    * Used by Logs details.
    */
-  onClickFilterOutLabel = (key: string, value: string, frame?: DataFrame) => {
+  onClickFilterOutLabel = (key: string, value: string | number, frame?: DataFrame) => {
     this.onModifyQueries(
       {
         type: 'ADD_FILTER_OUT',
-        options: { key, value },
+        options: { key, value: value.toString() },
         frame,
       },
       frame?.refId
@@ -248,15 +248,15 @@ export class Explore extends React.PureComponent<Props, ExploreState> {
   /**
    * Used by Logs Popover Menu.
    */
-  onClickFilterValue = (value: string, refId?: string) => {
-    this.onModifyQueries({ type: 'ADD_STRING_FILTER', options: { value } }, refId);
+  onClickFilterValue = (value: string | number, refId?: string) => {
+    this.onModifyQueries({ type: 'ADD_STRING_FILTER', options: { value: value.toString() } }, refId);
   };
 
   /**
    * Used by Logs Popover Menu.
    */
-  onClickFilterOutValue = (value: string, refId?: string) => {
-    this.onModifyQueries({ type: 'ADD_STRING_FILTER_OUT', options: { value } }, refId);
+  onClickFilterOutValue = (value: string | number, refId?: string) => {
+    this.onModifyQueries({ type: 'ADD_STRING_FILTER_OUT', options: { value: value.toString() } }, refId);
   };
 
   onClickAddQueryRowButton = () => {
@@ -296,7 +296,7 @@ export class Explore extends React.PureComponent<Props, ExploreState> {
     this.props.modifyQueries(this.props.exploreId, action, modifier);
   };
 
-  onResize = (size: { height: number; width: number }) => {
+  onResize = (size: HorizontalSize) => {
     this.props.changeSize(this.props.exploreId, size);
   };
 
@@ -682,6 +682,7 @@ export class Explore extends React.PureComponent<Props, ExploreState> {
                                   width={width}
                                   onClose={this.toggleShowQueryInspector}
                                   timeZone={timeZone}
+                                  isMixed={datasourceInstance.meta.mixed || false}
                                 />
                               )}
                             </ErrorBoundaryAlert>

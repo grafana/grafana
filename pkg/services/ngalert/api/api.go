@@ -36,12 +36,14 @@ type ExternalAlertmanagerProvider interface {
 }
 
 type AlertingStore interface {
-	GetLatestAlertmanagerConfiguration(ctx context.Context, query *models.GetLatestAlertmanagerConfigurationQuery) (*models.AlertConfiguration, error)
+	GetLatestAlertmanagerConfiguration(ctx context.Context, orgID int64) (*models.AlertConfiguration, error)
 }
 
 type RuleAccessControlService interface {
-	AuthorizeAccessToRuleGroup(ctx context.Context, user identity.Requester, rules models.RulesGroup) bool
+	HasAccessToRuleGroup(ctx context.Context, user identity.Requester, rules models.RulesGroup) (bool, error)
+	AuthorizeAccessToRuleGroup(ctx context.Context, user identity.Requester, rules models.RulesGroup) error
 	AuthorizeRuleChanges(ctx context.Context, user identity.Requester, change *store.GroupDelta) error
+	AuthorizeDatasourceAccessForRule(ctx context.Context, user identity.Requester, rule *models.AlertRule) error
 }
 
 // API handlers.
@@ -54,13 +56,14 @@ type API struct {
 	TransactionManager   provisioning.TransactionManager
 	ProvenanceStore      provisioning.ProvisioningStore
 	RuleStore            RuleStore
-	AlertingStore        AlertingStore
+	AlertingStore        store.AlertingStore
 	AdminConfigStore     store.AdminConfigurationStore
 	DataProxy            *datasourceproxy.DataSourceProxyService
 	MultiOrgAlertmanager *notifier.MultiOrgAlertmanager
 	StateManager         *state.Manager
 	AccessControl        ac.AccessControl
 	Policies             *provisioning.NotificationPolicyService
+	ReceiverService      *notifier.ReceiverService
 	ContactPointService  *provisioning.ContactPointService
 	Templates            *provisioning.TemplateService
 	MuteTimings          *provisioning.MuteTimingService
@@ -110,6 +113,9 @@ func (api *API) RegisterAPIEndpoints(m *metrics.API) {
 			log:                logger,
 			cfg:                &api.Cfg.UnifiedAlerting,
 			authz:              ruleAuthzService,
+			amConfigStore:      api.AlertingStore,
+			amRefresher:        api.MultiOrgAlertmanager,
+			featureManager:     api.FeatureManager,
 		},
 	), m)
 	api.RegisterTestingApiEndpoints(NewTestingApi(
@@ -124,6 +130,7 @@ func (api *API) RegisterAPIEndpoints(m *metrics.API) {
 			featureManager:  api.FeatureManager,
 			appUrl:          api.AppUrl,
 			tracer:          api.Tracer,
+			folderService:   api.RuleStore,
 		}), m)
 	api.RegisterConfigurationApiEndpoints(NewConfiguration(
 		&ConfigSrv{
@@ -147,35 +154,10 @@ func (api *API) RegisterAPIEndpoints(m *metrics.API) {
 		logger: logger,
 		hist:   api.Historian,
 	}), m)
-}
 
-func (api *API) Usage(ctx context.Context, scopeParams *quota.ScopeParameters) (*quota.Map, error) {
-	u := &quota.Map{}
-
-	var orgID int64 = 0
-	if scopeParams != nil {
-		orgID = scopeParams.OrgID
-	}
-
-	if orgUsage, err := api.RuleStore.Count(ctx, orgID); err != nil {
-		return u, err
-	} else {
-		tag, err := quota.NewTag(models.QuotaTargetSrv, models.QuotaTarget, quota.OrgScope)
-		if err != nil {
-			return u, err
-		}
-		u.Set(tag, orgUsage)
-	}
-
-	if globalUsage, err := api.RuleStore.Count(ctx, 0); err != nil {
-		return u, err
-	} else {
-		tag, err := quota.NewTag(models.QuotaTargetSrv, models.QuotaTarget, quota.GlobalScope)
-		if err != nil {
-			return u, err
-		}
-		u.Set(tag, globalUsage)
-	}
-
-	return u, nil
+	api.RegisterNotificationsApiEndpoints(NewNotificationsApi(&NotificationSrv{
+		logger:            logger,
+		receiverService:   api.ReceiverService,
+		muteTimingService: api.MuteTimings,
+	}), m)
 }

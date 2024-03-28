@@ -13,7 +13,12 @@ import (
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
+	"github.com/grafana/grafana/pkg/tests/testsuite"
 )
+
+func TestMain(m *testing.M) {
+	testsuite.Run(m)
+}
 
 func TestIntegrationAlertmanagerStore(t *testing.T) {
 	if testing.Short() {
@@ -27,11 +32,7 @@ func TestIntegrationAlertmanagerStore(t *testing.T) {
 
 	t.Run("GetLatestAlertmanagerConfiguration for org that doesn't exist returns error", func(t *testing.T) {
 		_, _ = setupConfig(t, "my-config", store)
-		req := &models.GetLatestAlertmanagerConfigurationQuery{
-			OrgID: 1234,
-		}
-
-		config, err := store.GetLatestAlertmanagerConfiguration(context.Background(), req)
+		config, err := store.GetLatestAlertmanagerConfiguration(context.Background(), 1234)
 
 		require.ErrorIs(t, err, ErrNoAlertmanagerConfiguration)
 		require.Nil(t, config)
@@ -39,11 +40,7 @@ func TestIntegrationAlertmanagerStore(t *testing.T) {
 
 	t.Run("GetLatestAlertmanagerConfiguration return the right config", func(t *testing.T) {
 		_, configMD5 := setupConfig(t, "my-config", store)
-		req := &models.GetLatestAlertmanagerConfigurationQuery{
-			OrgID: 1,
-		}
-
-		config, err := store.GetLatestAlertmanagerConfiguration(context.Background(), req)
+		config, err := store.GetLatestAlertmanagerConfiguration(context.Background(), 1)
 
 		require.NoError(t, err)
 		require.NotNil(t, config)
@@ -55,11 +52,7 @@ func TestIntegrationAlertmanagerStore(t *testing.T) {
 		_, _ = setupConfig(t, "my-config1", store)
 		_, _ = setupConfig(t, "my-config2", store)
 		_, configMD5 := setupConfig(t, "my-config3", store)
-		req := &models.GetLatestAlertmanagerConfigurationQuery{
-			OrgID: 1,
-		}
-
-		config, err := store.GetLatestAlertmanagerConfiguration(context.Background(), req)
+		config, err := store.GetLatestAlertmanagerConfiguration(context.Background(), 1)
 
 		require.NoError(t, err)
 		require.NotNil(t, config)
@@ -109,8 +102,7 @@ func TestIntegrationAlertmanagerStore(t *testing.T) {
 
 		require.ErrorContains(t, err, "callback failed")
 		// Assert that we rolled back the transaction.
-		get := &models.GetLatestAlertmanagerConfigurationQuery{OrgID: 1}
-		config, err := store.GetLatestAlertmanagerConfiguration(context.Background(), get)
+		config, err := store.GetLatestAlertmanagerConfiguration(context.Background(), 1)
 		require.NoError(t, err)
 		require.Equal(t, config.AlertmanagerConfiguration, "my-config")
 	})
@@ -136,10 +128,7 @@ func TestIntegrationAlertmanagerHash(t *testing.T) {
 
 	t.Run("When passing the right hash the config should be updated", func(t *testing.T) {
 		_, configMD5 := setupConfig(t, "my-config", store)
-		req := &models.GetLatestAlertmanagerConfigurationQuery{
-			OrgID: 1,
-		}
-		config, err := store.GetLatestAlertmanagerConfiguration(context.Background(), req)
+		config, err := store.GetLatestAlertmanagerConfiguration(context.Background(), 1)
 		require.NoError(t, err)
 		require.Equal(t, configMD5, config.ConfigurationHash)
 		newConfig, newConfigMD5 := "my-config-new", fmt.Sprintf("%x", md5.Sum([]byte("my-config-new")))
@@ -151,7 +140,7 @@ func TestIntegrationAlertmanagerHash(t *testing.T) {
 			OrgID:                     1,
 		})
 		require.NoError(t, err)
-		config, err = store.GetLatestAlertmanagerConfiguration(context.Background(), req)
+		config, err = store.GetLatestAlertmanagerConfiguration(context.Background(), 1)
 		require.NoError(t, err)
 		require.Equal(t, newConfig, config.AlertmanagerConfiguration)
 		require.Equal(t, newConfigMD5, config.ConfigurationHash)
@@ -159,10 +148,7 @@ func TestIntegrationAlertmanagerHash(t *testing.T) {
 
 	t.Run("When passing the wrong hash the update should error", func(t *testing.T) {
 		config, configMD5 := setupConfig(t, "my-config", store)
-		req := &models.GetLatestAlertmanagerConfigurationQuery{
-			OrgID: 1,
-		}
-		amConfig, err := store.GetLatestAlertmanagerConfiguration(context.Background(), req)
+		amConfig, err := store.GetLatestAlertmanagerConfiguration(context.Background(), 1)
 		require.NoError(t, err)
 		require.Equal(t, configMD5, amConfig.ConfigurationHash)
 		err = store.UpdateAlertmanagerConfiguration(context.Background(), &models.SaveAlertmanagerConfigurationCmd{
@@ -219,10 +205,7 @@ func TestIntegrationAlertmanagerConfigCleanup(t *testing.T) {
 		require.Equal(t, int64(0), rowsAffected)
 		require.NoError(t, err)
 
-		req := &models.GetLatestAlertmanagerConfigurationQuery{
-			OrgID: orgID,
-		}
-		amConfig, err := store.GetLatestAlertmanagerConfiguration(context.Background(), req)
+		amConfig, err := store.GetLatestAlertmanagerConfiguration(context.Background(), orgID)
 		require.NoError(t, err)
 		require.Equal(t, "newest-record", amConfig.AlertmanagerConfiguration)
 	})
@@ -259,10 +242,7 @@ func TestIntegrationAlertmanagerConfigCleanup(t *testing.T) {
 		require.Equal(t, int64(2), rowsAffacted)
 		require.NoError(t, err)
 
-		req := &models.GetLatestAlertmanagerConfigurationQuery{
-			OrgID: orgID,
-		}
-		amConfig, err := store.GetLatestAlertmanagerConfiguration(context.Background(), req)
+		amConfig, err := store.GetLatestAlertmanagerConfiguration(context.Background(), orgID)
 		require.NoError(t, err)
 		require.Equal(t, "newest-record", amConfig.AlertmanagerConfiguration)
 	})
@@ -314,10 +294,7 @@ func TestIntegrationMarkConfigurationAsApplied(t *testing.T) {
 		require.NoError(tt, err)
 		require.Len(tt, configs, 0)
 
-		query := models.GetLatestAlertmanagerConfigurationQuery{
-			OrgID: orgID,
-		}
-		amConfig, err := store.GetLatestAlertmanagerConfiguration(ctx, &query)
+		amConfig, err := store.GetLatestAlertmanagerConfiguration(ctx, orgID)
 		require.NoError(tt, err)
 
 		cmd := models.MarkConfigurationAsAppliedCmd{
