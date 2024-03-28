@@ -38,7 +38,6 @@ type AlertRuleService struct {
 	ruleStore              RuleStore
 	provenanceStore        ProvisioningStore
 	folderService          folder.Service
-	dashboardService       dashboards.DashboardService
 	quotas                 QuotaChecker
 	xact                   TransactionManager
 	log                    log.Logger
@@ -186,19 +185,21 @@ func (service *AlertRuleService) GetAlertRuleWithFolderFullpath(ctx context.Cont
 		return AlertRuleWithFolderFullpath{}, err
 	}
 
-	dq := dashboards.GetDashboardQuery{
-		OrgID: user.GetOrgID(),
-		UID:   rule.NamespaceUID,
+	fq := folder.GetFolderQuery{
+		OrgID:        user.GetOrgID(),
+		UID:          &rule.NamespaceUID,
+		WithFullpath: true,
+		SignedInUser: user,
 	}
 
-	dash, err := service.dashboardService.GetDashboard(ctx, &dq)
+	f, err := service.folderService.Get(ctx, &fq)
 	if err != nil {
 		return AlertRuleWithFolderFullpath{}, err
 	}
 
 	return AlertRuleWithFolderFullpath{
 		AlertRule:      rule,
-		FolderFullpath: dash.Title,
+		FolderFullpath: f.Fullpath,
 	}, nil
 }
 
@@ -733,16 +734,18 @@ func (service *AlertRuleService) GetAlertRuleGroupWithFolderFullpath(ctx context
 		return models.AlertRuleGroupWithFolderFullpath{}, err
 	}
 
-	dq := dashboards.GetDashboardQuery{
-		OrgID: user.GetOrgID(),
-		UID:   namespaceUID,
+	fq := folder.GetFolderQuery{
+		OrgID:        user.GetOrgID(),
+		UID:          &namespaceUID,
+		WithFullpath: true,
+		SignedInUser: user,
 	}
-	dash, err := service.dashboardService.GetDashboard(ctx, &dq)
+	f, err := service.folderService.Get(ctx, &fq)
 	if err != nil {
 		return models.AlertRuleGroupWithFolderFullpath{}, err
 	}
 
-	res := models.NewAlertRuleGroupWithFolderFullpath(ruleList.Rules[0].GetGroupKey(), ruleList.Rules, dash.Title)
+	res := models.NewAlertRuleGroupWithFolderFullpath(ruleList.Rules[0].GetGroupKey(), ruleList.Rules, f.Fullpath)
 	return res, nil
 }
 
@@ -788,30 +791,33 @@ func (service *AlertRuleService) GetAlertGroupsWithFolderFullpath(ctx context.Co
 		return []models.AlertRuleGroupWithFolderFullpath{}, nil
 	}
 
-	dq := dashboards.GetDashboardsQuery{
-		DashboardUIDs: nil,
+	fq := folder.GetFoldersQuery{
+		OrgID:        user.GetOrgID(),
+		UIDs:         nil,
+		WithFullpath: true,
+		SignedInUser: user,
 	}
 	for uid := range namespaces {
-		dq.DashboardUIDs = append(dq.DashboardUIDs, uid)
+		fq.UIDs = append(fq.UIDs, uid)
 	}
 
 	// We need folder titles for the provisioning file format. We do it this way instead of using GetUserVisibleNamespaces to avoid folder:read permissions that should not apply to those with alert.provisioning:read.
-	dashes, err := service.dashboardService.GetDashboards(ctx, &dq)
+	folders, err := service.folderService.GetFolders(ctx, fq)
 	if err != nil {
 		return nil, err
 	}
-	folderUidToTitle := make(map[string]string)
-	for _, dash := range dashes {
-		folderUidToTitle[dash.UID] = dash.Title
+	folderUidToFullpath := make(map[string]string)
+	for _, dash := range folders {
+		folderUidToFullpath[dash.UID] = dash.Fullpath
 	}
 
 	result := make([]models.AlertRuleGroupWithFolderFullpath, 0)
 	for groupKey, rules := range groups {
-		title, ok := folderUidToTitle[groupKey.NamespaceUID]
+		fullpath, ok := folderUidToFullpath[groupKey.NamespaceUID]
 		if !ok {
-			return nil, fmt.Errorf("cannot find title for folder with uid '%s'", groupKey.NamespaceUID)
+			return nil, fmt.Errorf("cannot find fullpath for folder with uid '%s'", groupKey.NamespaceUID)
 		}
-		result = append(result, models.NewAlertRuleGroupWithFolderFullpathFromRulesGroup(groupKey, rules, title))
+		result = append(result, models.NewAlertRuleGroupWithFolderFullpathFromRulesGroup(groupKey, rules, fullpath))
 	}
 
 	// Return results in a stable manner.

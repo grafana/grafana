@@ -154,8 +154,7 @@ type GetFolderQuery struct {
 	OrgID        int64
 	WithFullpath bool
 
-	SignedInUser    identity.Requester `json:"-"`
-	IncludeFullpath bool               `json:"-"`
+	SignedInUser identity.Requester `json:"-"`
 }
 
 type GetFoldersQuery struct {

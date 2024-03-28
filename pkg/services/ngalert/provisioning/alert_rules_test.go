@@ -18,6 +18,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/auth/identity"
 	"github.com/grafana/grafana/pkg/services/ngalert/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/ngalert/tests/fakes"
+	"github.com/grafana/grafana/pkg/services/supportbundles/supportbundlestest"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/util"
 
@@ -1536,7 +1537,7 @@ func TestProvisiongWithFullpath(t *testing.T) {
 	_, dashboardStore := testutil.SetupDashboardService(t, sqlStore, folderStore, cfg)
 	ac := acmock.New()
 	features := featuremgmt.WithFeatures(featuremgmt.FlagNestedFolders)
-	folderService := folderimpl.ProvideService(ac, inProcBus, cfg, dashboardStore, folderStore, sqlStore, features, nil, nil)
+	folderService := folderimpl.ProvideService(ac, inProcBus, cfg, dashboardStore, folderStore, sqlStore, features, supportbundlestest.NewFakeBundleService(), nil)
 
 	ruleService := createAlertRuleService(t, folderService)
 	var orgID int64 = 1
@@ -1544,6 +1545,7 @@ func TestProvisiongWithFullpath(t *testing.T) {
 	signedInUser := user.SignedInUser{UserID: 1, OrgID: orgID, Permissions: map[int64]map[string][]string{
 		orgID: {
 			dashboards.ActionFoldersCreate: {},
+			dashboards.ActionFoldersRead:   {dashboards.ScopeFoldersAll},
 			dashboards.ActionFoldersWrite:  {dashboards.ScopeFoldersAll}},
 	}}
 	namespaceUID := "my-namespace"
@@ -1637,10 +1639,6 @@ func createAlertRuleService(t *testing.T, folderService folder.Service) AlertRul
 	// store := fakes.NewRuleStore(t)
 	quotas := MockQuotaChecker{}
 	quotas.EXPECT().LimitOK()
-
-	if folderService == nil {
-		folderService = foldertest.NewFakeService()
-	}
 
 	if folderService == nil {
 		folderService = foldertest.NewFakeService()
