@@ -62,6 +62,32 @@ email_claim = sub
 
 If `auto_sign_up` is enabled, then the `sub` claim is used as the "external Auth ID". The `name` claim is used as the user's full name if it is present.
 
+Additionaly, if the login username or the email claims are nested inside the JWT structure, you can specify the path to the attributes using the `username_attribute_path` and `email_attribute_path` configuration options using the JMESPath syntax.
+
+JWT structure example.
+
+```json
+{
+  "user": {
+    "UID": "1234567890",
+    "name": "John Doe",
+    "username": "johndoe",
+    "emails": ["personal@email.com", "profesional@email.com"]
+  }
+}
+```
+
+```ini
+# [auth.jwt]
+# ...
+
+# Specify a nested attribute to use as a username to sign in.
+username_attribute_path = user.username # user's login is johndoe
+
+# Specify a nested attribute to use as an email to sign in.
+email_attribute_path = user.emails[1] # user's email is profesional@email.com
+```
+
 ## Iframe Embedding
 
 If you want to embed Grafana in an iframe while maintaining user identity and role checks,
