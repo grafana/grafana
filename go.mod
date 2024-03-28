@@ -471,6 +471,8 @@ require (
 
 require github.com/getkin/kin-openapi v0.120.0 // @grafana/grafana-as-code
 
+require github.com/grafana/authlib v0.0.0-20240319083410-9d4a6e3861e5 // @grafana/grafana-app-platform-squad
+
 require (
 	github.com/bahlo/generic-list-go v0.2.0 // indirect
 	github.com/buger/jsonparser v1.1.1 // indirect
