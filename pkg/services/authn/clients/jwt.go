@@ -2,7 +2,6 @@ package clients
 
 import (
 	"context"
-	"encoding/json"
 	"net/http"
 	"strings"
 
@@ -76,15 +75,11 @@ func (s *JWT) Authenticate(ctx context.Context, r *authn.Request) (*authn.Identi
 			SyncTeams:       s.cfg.JWTAuth.GroupsAttributePath != "",
 		}}
 
-	serializedClaims, _ := json.Marshal(&claims)
-	var data map[string]interface{}
-	_ = json.Unmarshal(serializedClaims, &data)
-
 	if key := s.cfg.JWTAuth.UsernameClaim; key != "" {
 		id.Login, _ = claims[key].(string)
 		id.ClientParams.LookUpParams.Login = &id.Login
 	} else if key := s.cfg.JWTAuth.UsernameAttributePath; key != "" {
-		id.Login, _ = util.SearchJSONForStringAttr(s.cfg.JWTAuth.UsernameAttributePath, data)
+		id.Login, _ = util.SearchJSONForStringAttr(s.cfg.JWTAuth.UsernameAttributePath, map[string]any(claims))
 		id.ClientParams.LookUpParams.Login = &id.Login
 	}
 
@@ -92,7 +87,7 @@ func (s *JWT) Authenticate(ctx context.Context, r *authn.Request) (*authn.Identi
 		id.Email, _ = claims[key].(string)
 		id.ClientParams.LookUpParams.Email = &id.Email
 	} else if key := s.cfg.JWTAuth.EmailAttributePath; key != "" {
-		id.Email, _ = util.SearchJSONForStringAttr(s.cfg.JWTAuth.EmailAttributePath, data)
+		id.Email, _ = util.SearchJSONForStringAttr(s.cfg.JWTAuth.EmailAttributePath, map[string]any(claims))
 		id.ClientParams.LookUpParams.Email = &id.Email
 	}
 
