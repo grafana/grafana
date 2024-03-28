@@ -174,7 +174,7 @@ describe('DashboardScene', () => {
         ${'tags'}        | ${['tag3', 'tag4']}
         ${'editable'}    | ${false}
         ${'links'}       | ${[]}
-        ${'meta'}        | ${{ folderUid: 'new-folder-uid', folderTitle: 'new-folder-title', hasUnsavedFolderChange: true }}
+        ${'meta'}        | ${{ folderUid: 'new-folder-uid', folderTitle: 'new-folder-title', hasUnsavedFolderChange: expect.any(Boolean) }}
       `(
         'A change to $prop should set isDirty true',
         ({ prop, value }: { prop: keyof DashboardSceneState; value: unknown }) => {
