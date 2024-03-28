@@ -831,8 +831,8 @@ describe('optionsPickerReducer', () => {
       const expect: VariableOption[] = [
         {
           selected: false,
-          text: '> a.*',
-          value: 'a.*',
+          text: '> ' + searchQuery,
+          value: searchQuery,
         },
       ].concat(
         'A AA AB'.split(' ').map((v) => ({
