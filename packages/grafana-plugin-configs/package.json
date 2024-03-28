@@ -2,7 +2,7 @@
   "name": "@grafana/plugin-configs",
   "description": "Shared dependencies and files for core plugins",
   "private": true,
-  "version": "11.0.0-pre",
+  "version": "11.1.0-pre",
   "dependencies": {
     "tslib": "2.6.2"
   },
@@ -14,7 +14,7 @@
     "glob": "10.3.10",
     "replace-in-file-webpack-plugin": "1.0.6",
     "swc-loader": "0.2.6",
-    "webpack": "5.90.3"
+    "webpack": "5.91.0"
   },
   "packageManager": "yarn@4.1.0"
 }

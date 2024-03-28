@@ -30,7 +30,6 @@ export interface DataTrailHistoryStep {
 }
 
 export type TrailStepType = 'filters' | 'time' | 'metric' | 'start';
-
 export class DataTrailHistory extends SceneObjectBase<DataTrailsHistoryState> {
   public constructor(state: Partial<DataTrailsHistoryState>) {
     super({ steps: state.steps ?? [], currentStep: state.currentStep ?? 0 });
@@ -120,9 +119,13 @@ export class DataTrailHistory extends SceneObjectBase<DataTrailsHistoryState> {
   }
 
   public goBackToStep(stepIndex: number) {
-    this.stepTransitionInProgress = true;
+    if (stepIndex === this.state.currentStep) {
+      return;
+    }
 
+    this.stepTransitionInProgress = true;
     this.setState({ currentStep: stepIndex });
+    // The URL will update
 
     this.stepTransitionInProgress = false;
   }
@@ -142,10 +145,15 @@ export class DataTrailHistory extends SceneObjectBase<DataTrailsHistoryState> {
 
     const { ancestry, alternatePredecessorStyle } = useMemo(() => {
       const ancestry = new Set<number>();
+
       let cursor = currentStep;
       while (cursor >= 0) {
+        const step = steps[cursor];
+        if (!step) {
+          break;
+        }
         ancestry.add(cursor);
-        cursor = steps[cursor].parentIndex;
+        cursor = step.parentIndex;
       }
 
       const alternatePredecessorStyle = new Map<number, string>();
