@@ -78,7 +78,7 @@ func (cr *configReader) parseDatasourceConfig(path string, file fs.DirEntry) (*c
 			return nil, err
 		}
 
-		return v1.mapToDatasourceFromConfig(apiVersion.APIVersion), nil
+		return v1.mapToDatasourceFromConfig(apiVersion.APIVersion, file.Name()), nil
 	}
 
 	var v0 *configsV0

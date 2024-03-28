@@ -45,6 +45,16 @@ func (s *FakeDataSourceService) GetAllDataSources(ctx context.Context, query *da
 	return s.DataSources, nil
 }
 
+func (s *FakeDataSourceService) GetPrunableProvisionedDataSources(ctx context.Context, query *datasources.GetPrunableProvisionedDataSourcesQuery) (res []*datasources.DataSource, err error) {
+	var dataSources []*datasources.DataSource
+	for _, datasource := range s.DataSources {
+		if datasource.ProvisionedFrom != "" && datasource.IsPrunable {
+			dataSources = append(dataSources, datasource)
+		}
+	}
+	return dataSources, nil
+}
+
 func (s *FakeDataSourceService) GetDataSourcesByType(ctx context.Context, query *datasources.GetDataSourcesByTypeQuery) ([]*datasources.DataSource, error) {
 	var dataSources []*datasources.DataSource
 	for _, datasource := range s.DataSources {

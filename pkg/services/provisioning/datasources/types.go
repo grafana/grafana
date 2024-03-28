@@ -18,6 +18,7 @@ type configVersion struct {
 
 type configs struct {
 	APIVersion int64
+	Prune 	   bool
 
 	Datasources       []*upsertDataSourceFromConfig
 	DeleteDatasources []*deleteDatasourceConfig
@@ -47,6 +48,8 @@ type upsertDataSourceFromConfig struct {
 	SecureJSONData  map[string]string
 	Editable        bool
 	UID             string
+	ProvisionedFrom string
+	IsPrunable		bool
 }
 
 type configsV0 struct {
@@ -59,6 +62,7 @@ type configsV0 struct {
 type configsV1 struct {
 	configVersion
 	log log.Logger
+	Prune bool
 
 	Datasources       []*upsertDataSourceFromConfigV1 `json:"datasources" yaml:"datasources"`
 	DeleteDatasources []*deleteDatasourceConfigV1     `json:"deleteDatasources" yaml:"deleteDatasources"`
@@ -111,9 +115,11 @@ type upsertDataSourceFromConfigV1 struct {
 	SecureJSONData  values.StringMapValue `json:"secureJsonData" yaml:"secureJsonData"`
 	Editable        values.BoolValue      `json:"editable" yaml:"editable"`
 	UID             values.StringValue    `json:"uid" yaml:"uid"`
+	ProvisionedFrom string                `json:"provisionedFrom" yaml:"provisionedFrom"`
+	IsPrunable		bool				  `json:"isPrunable" yaml:"isPrunable"`
 }
 
-func (cfg *configsV1) mapToDatasourceFromConfig(apiVersion int64) *configs {
+func (cfg *configsV1) mapToDatasourceFromConfig(apiVersion int64, filename string) *configs {
 	r := &configs{}
 
 	r.APIVersion = apiVersion
@@ -141,6 +147,8 @@ func (cfg *configsV1) mapToDatasourceFromConfig(apiVersion int64) *configs {
 			Editable:        ds.Editable.Value(),
 			Version:         ds.Version.Value(),
 			UID:             ds.UID.Value(),
+			ProvisionedFrom: filename,
+			IsPrunable:		 cfg.Prune,
 		})
 	}
 
@@ -218,6 +226,8 @@ func createInsertCommand(ds *upsertDataSourceFromConfig) *datasources.AddDataSou
 		SecureJsonData:  ds.SecureJSONData,
 		ReadOnly:        !ds.Editable,
 		UID:             ds.UID,
+		ProvisionedFrom: ds.ProvisionedFrom,
+		IsPrunable:		 ds.IsPrunable,
 	}
 
 	if cmd.UID == "" {
@@ -260,5 +270,7 @@ func createUpdateCommand(ds *upsertDataSourceFromConfig, id int64) *datasources.
 		SecureJsonData:          ds.SecureJSONData,
 		ReadOnly:                !ds.Editable,
 		IgnoreOldSecureJsonData: true,
+		ProvisionedFrom: 		 ds.ProvisionedFrom,
+		IsPrunable:				 ds.IsPrunable,
 	}
 }
