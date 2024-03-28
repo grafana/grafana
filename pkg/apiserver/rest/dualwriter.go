@@ -87,6 +87,24 @@ func NewDualWriter(legacy LegacyStorage, storage Storage) *DualWriter {
 	}
 }
 
+// Get overrides the default behavior of the Storage and retrieves an object from
+// LegacyStorage or Storage depending on the DualWriter mode.
+func (d *DualWriter) Get(ctx context.Context, name string, options *metav1.GetOptions) (runtime.Object, error) {
+	legacy, ok := d.legacy.(rest.Getter)
+	if !ok {
+		return nil, fmt.Errorf("legacy storage rest.Getter is missing")
+	}
+
+	switch CurrentMode {
+	case Mode1, Mode2:
+		return legacy.Get(ctx, name, &metav1.GetOptions{})
+	case Mode3, Mode4:
+		return d.Storage.Get(ctx, name, &metav1.GetOptions{})
+	}
+
+	return nil, fmt.Errorf("dual writer mode is invalid")
+}
+
 // Create overrides the default behavior of the Storage and writes to LegacyStorage and Storage depending on the dual writer mode.
 func (d *DualWriter) Create(ctx context.Context, obj runtime.Object, createValidation rest.ValidateObjectFunc, options *metav1.CreateOptions) (runtime.Object, error) {
 	legacy, ok := d.legacy.(rest.Creater)
@@ -111,9 +129,10 @@ func (d *DualWriter) Create(ctx context.Context, obj runtime.Object, createValid
 	return rsp, err
 }
 
-// #TODO figure out failure modes, how to guarantee consistency of the transactions
 // Update overrides the default behavior of the Storage and writes to both the LegacyStorage and Storage depending on the DualWriter mode.
 func (d *DualWriter) Update(ctx context.Context, name string, objInfo rest.UpdatedObjectInfo, createValidation rest.ValidateObjectFunc, updateValidation rest.ValidateObjectUpdateFunc, forceAllowCreate bool, options *metav1.UpdateOptions) (runtime.Object, bool, error) {
+	// #TODO: figure out which method should be used anytime Get is called
+	// #TODO figure out failure modes, how to guarantee consistency of the updates across both stores
 	// #TODO replace with a rest.CreaterUpdater check?
 	legacy, ok := d.legacy.(rest.Updater)
 	if !ok {
@@ -123,6 +142,11 @@ func (d *DualWriter) Update(ctx context.Context, name string, objInfo rest.Updat
 	// #TODO: Doing it the repetitive way first. Refactor once all the behavior is well defined.
 	switch CurrentMode {
 	case Mode1:
+		_, ok := d.legacy.(rest.Getter)
+		if !ok {
+			return nil, false, fmt.Errorf("legacy storage rest.Getter is missing")
+		}
+
 		old, err := d.legacy.Get(ctx, name, &metav1.GetOptions{})
 		if err != nil {
 			return nil, false, err
@@ -154,7 +178,7 @@ func (d *DualWriter) Update(ctx context.Context, name string, objInfo rest.Updat
 		// #TODO figure out wht the correct resource version should be and
 		// set it properly in Get and List calls
 		// Get the previous version from k8s storage (the one)
-		old, err := d.Get(ctx, name, &metav1.GetOptions{})
+		old, err := d.Storage.Get(ctx, name, &metav1.GetOptions{})
 		if err != nil {
 			return nil, false, err
 		}
@@ -201,7 +225,7 @@ func (d *DualWriter) Update(ctx context.Context, name string, objInfo rest.Updat
 		return d.Storage.Update(ctx, name, objInfo, createValidation, updateValidation, forceAllowCreate, options)
 
 	case Mode3:
-		old, err := d.Get(ctx, name, &metav1.GetOptions{})
+		old, err := d.Storage.Get(ctx, name, &metav1.GetOptions{})
 		if err != nil {
 			return nil, false, err
 		}
@@ -233,7 +257,7 @@ func (d *DualWriter) Update(ctx context.Context, name string, objInfo rest.Updat
 		}, createValidation, updateValidation, forceAllowCreate, options)
 
 	case Mode4:
-		old, err := d.Get(ctx, name, &metav1.GetOptions{})
+		old, err := d.Storage.Get(ctx, name, &metav1.GetOptions{})
 		if err != nil {
 			return nil, false, err
 		}
@@ -250,7 +274,7 @@ func (d *DualWriter) Update(ctx context.Context, name string, objInfo rest.Updat
 		return d.Storage.Update(ctx, name, objInfo, createValidation, updateValidation, forceAllowCreate, options)
 	}
 
-	return nil, false, fmt.Errorf("dual writer mode is undefined")
+	return nil, false, fmt.Errorf("dual writer mode is invalid")
 }
 
 // Delete overrides the default behavior of the Storage and delete from both the LegacyStorage and Storage.
