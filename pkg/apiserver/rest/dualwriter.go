@@ -2,6 +2,7 @@ package rest
 
 import (
 	"context"
+	"fmt"
 
 	"k8s.io/apimachinery/pkg/api/meta"
 	metainternalversion "k8s.io/apimachinery/pkg/apis/meta/internalversion"
@@ -65,6 +66,19 @@ type DualWriter struct {
 	legacy LegacyStorage
 }
 
+type DualWriterMode int
+
+const (
+	Mode1 DualWriterMode = iota
+	Mode2
+	Mode3
+	Mode4
+)
+
+const CurrentMode = Mode2
+
+// #TODO: make CurrentMode customisable
+
 // NewDualWriter returns a new DualWriter.
 func NewDualWriter(legacy LegacyStorage, storage Storage) *DualWriter {
 	return &DualWriter{
@@ -73,36 +87,123 @@ func NewDualWriter(legacy LegacyStorage, storage Storage) *DualWriter {
 	}
 }
 
-// Create overrides the default behavior of the Storage and writes to both the LegacyStorage and Storage.
-func (d *DualWriter) Create(ctx context.Context, obj runtime.Object, createValidation rest.ValidateObjectFunc, options *metav1.CreateOptions) (runtime.Object, error) {
-	if legacy, ok := d.legacy.(rest.Creater); ok {
-		created, err := legacy.Create(ctx, obj, createValidation, options)
+// Get overrides the default behavior of the Storage and retrieves an object from
+// LegacyStorage or Storage depending on the DualWriter mode.
+func (d *DualWriter) Get(ctx context.Context, name string, options *metav1.GetOptions) (runtime.Object, error) {
+	legacy, ok := d.legacy.(rest.Getter)
+	if !ok {
+		return nil, fmt.Errorf("legacy storage rest.Getter is missing")
+	}
+
+	switch CurrentMode {
+	case Mode1:
+		return legacy.Get(ctx, name, &metav1.GetOptions{})
+	case Mode2:
+		l, err := legacy.Get(ctx, name, &metav1.GetOptions{})
 		if err != nil {
 			return nil, err
 		}
 
-		accessor, err := meta.Accessor(created)
+		s, err := d.Storage.Get(ctx, name, &metav1.GetOptions{})
 		if err != nil {
-			return created, err
+			// #TODO error handling
+			return l, nil
 		}
-		accessor.SetResourceVersion("")
-		accessor.SetUID("")
 
-		rsp, err := d.Storage.Create(ctx, created, createValidation, options)
+		accessorL, err := meta.Accessor(l)
 		if err != nil {
-			klog.Error("unable to create object in duplicate storage", "error", err)
+			return l, err
 		}
-		return rsp, err
+
+		accessorS, err := meta.Accessor(s)
+		if err != nil {
+			return l, err
+		}
+
+		// #TODO: figure out if we want to set anything else
+		accessorL.SetResourceVersion(accessorS.GetResourceVersion())
+		return l, nil
+	case Mode3, Mode4:
+		return d.Storage.Get(ctx, name, &metav1.GetOptions{})
 	}
 
-	return d.Storage.Create(ctx, obj, createValidation, options)
+	return nil, fmt.Errorf("dual writer mode is invalid")
 }
 
-// Update overrides the default behavior of the Storage and writes to both the LegacyStorage and Storage.
+// Create overrides the default behavior of the Storage and writes to LegacyStorage and Storage depending on the dual writer mode.
+func (d *DualWriter) Create(ctx context.Context, obj runtime.Object, createValidation rest.ValidateObjectFunc, options *metav1.CreateOptions) (runtime.Object, error) {
+	legacy, ok := d.legacy.(rest.Creater)
+	if !ok {
+		return nil, fmt.Errorf("legacy storage rest.Creater is missing")
+	}
+
+	created, err := legacy.Create(ctx, obj, createValidation, options)
+	if err != nil {
+		return nil, err
+	}
+
+	if CurrentMode < Mode2 {
+		return created, nil
+	}
+
+	rsp, err := d.Storage.Create(ctx, created, createValidation, options)
+	// #TODO customise error handling depending on the mode we are in
+	if err != nil {
+		klog.Error("unable to create object in duplicate storage", "error", err)
+	}
+	return rsp, err
+}
+
+// Update overrides the default behavior of the Storage and writes to both the LegacyStorage and Storage depending on the DualWriter mode.
 func (d *DualWriter) Update(ctx context.Context, name string, objInfo rest.UpdatedObjectInfo, createValidation rest.ValidateObjectFunc, updateValidation rest.ValidateObjectUpdateFunc, forceAllowCreate bool, options *metav1.UpdateOptions) (runtime.Object, bool, error) {
-	if legacy, ok := d.legacy.(rest.Updater); ok {
+	// #TODO: figure out which method should be used anytime Get is called
+	// #TODO figure out failure modes, how to guarantee consistency of the updates across both stores
+	// #TODO replace with a rest.CreaterUpdater check?
+	legacy, ok := d.legacy.(rest.Updater)
+	if !ok {
+		return nil, false, fmt.Errorf("legacy storage rest.Updater is missing")
+	}
+
+	// #TODO: Doing it the repetitive way first. Refactor once all the behavior is well defined.
+	switch CurrentMode {
+	case Mode1:
+		_, ok := d.legacy.(rest.Getter)
+		if !ok {
+			return nil, false, fmt.Errorf("legacy storage rest.Getter is missing")
+		}
+
+		old, err := d.legacy.Get(ctx, name, &metav1.GetOptions{})
+		if err != nil {
+			return nil, false, err
+		}
+
+		updated, err := objInfo.UpdatedObject(ctx, old)
+		if err != nil {
+			return nil, false, err
+		}
+		accessor, err := meta.Accessor(updated)
+		if err != nil {
+			return nil, false, err
+		}
+
+		accessor.SetUID("")
+		accessor.SetResourceVersion("")
+		// #TODO check how much we need to do before legacy.Update for mode 1
+		return legacy.Update(ctx, name, &updateWrapper{
+			upstream: objInfo,
+			updated:  updated,
+		}, createValidation, updateValidation, forceAllowCreate, options)
+
+	case Mode2:
+		// #TODO figure out how to set opts.IgnoreNotFound = true here
+		// or how to specifically check for an apierrors.NewNotFound error
+		// #TODO for now assume that we are updating entities which had previously
+		// created in entity. GuaranteedUpdate is going to take into account this case:
+		// https://github.com/grafana/grafana/pull/85206
+		// #TODO figure out wht the correct resource version should be and
+		// set it properly in Get and List calls
 		// Get the previous version from k8s storage (the one)
-		old, err := d.Get(ctx, name, &metav1.GetOptions{})
+		old, err := d.Storage.Get(ctx, name, &metav1.GetOptions{})
 		if err != nil {
 			return nil, false, err
 		}
@@ -120,11 +221,11 @@ func (d *DualWriter) Update(ctx context.Context, name string, objInfo rest.Updat
 		if err != nil {
 			return nil, false, err
 		}
-
 		accessor, err = meta.Accessor(updated)
 		if err != nil {
 			return nil, false, err
 		}
+
 		accessor.SetUID("")             // clear it
 		accessor.SetResourceVersion("") // remove it so it is not a constraint
 		obj, created, err := legacy.Update(ctx, name, &updateWrapper{
@@ -145,9 +246,60 @@ func (d *DualWriter) Update(ctx context.Context, name string, objInfo rest.Updat
 			upstream: objInfo,
 			updated:  obj, // returned as the object that will be updated
 		}
+
+		return d.Storage.Update(ctx, name, objInfo, createValidation, updateValidation, forceAllowCreate, options)
+
+	case Mode3:
+		old, err := d.Storage.Get(ctx, name, &metav1.GetOptions{})
+		if err != nil {
+			return nil, false, err
+		}
+
+		updated, err := objInfo.UpdatedObject(ctx, old)
+		if err != nil {
+			return nil, false, err
+		}
+		objInfo = &updateWrapper{
+			upstream: objInfo,
+			updated:  updated,
+		}
+
+		obj, created, err := d.Storage.Update(ctx, name, objInfo, createValidation, updateValidation, forceAllowCreate, options)
+		if err != nil {
+			return obj, created, err
+		}
+		accessor, err := meta.Accessor(obj)
+		if err != nil {
+			return nil, false, err
+		}
+
+		accessor.SetUID("")
+		accessor.SetResourceVersion("")
+		// #TODO do we still need to use objInfo.UpdatedObject?
+		return legacy.Update(ctx, name, &updateWrapper{
+			upstream: objInfo,
+			updated:  obj,
+		}, createValidation, updateValidation, forceAllowCreate, options)
+
+	case Mode4:
+		old, err := d.Storage.Get(ctx, name, &metav1.GetOptions{})
+		if err != nil {
+			return nil, false, err
+		}
+
+		updated, err := objInfo.UpdatedObject(ctx, old)
+		if err != nil {
+			return nil, false, err
+		}
+
+		objInfo = &updateWrapper{
+			upstream: objInfo,
+			updated:  updated,
+		}
+		return d.Storage.Update(ctx, name, objInfo, createValidation, updateValidation, forceAllowCreate, options)
 	}
 
-	return d.Storage.Update(ctx, name, objInfo, createValidation, updateValidation, forceAllowCreate, options)
+	return nil, false, fmt.Errorf("dual writer mode is invalid")
 }
 
 // Delete overrides the default behavior of the Storage and delete from both the LegacyStorage and Storage.

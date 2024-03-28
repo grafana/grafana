@@ -44,6 +44,7 @@ func TestPlaylistConversion(t *testing.T) {
 		  "annotations": {
 			"grafana.app/originKey": "123",
 			"grafana.app/originName": "SQL",
+			"grafana.app/originTimestamp":"1970-01-01T00:00:12Z",
 			"grafana.app/updatedTimestamp": "1970-01-01T00:00:54Z"
 		  }
 		},
