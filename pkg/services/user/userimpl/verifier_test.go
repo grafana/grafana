@@ -3,6 +3,7 @@ package userimpl
 import (
 	"context"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/assert"
 
@@ -11,9 +12,10 @@ import (
 	"github.com/grafana/grafana/pkg/services/temp_user/tempusertest"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/services/user/usertest"
+	"github.com/grafana/grafana/pkg/setting"
 )
 
-func TestVerifier_VerifyEmail(t *testing.T) {
+func TestVerifier_Start(t *testing.T) {
 	ts := &tempusertest.FakeTempUserService{}
 	us := &usertest.FakeUserService{}
 	ns := notifications.MockNotificationService()
@@ -24,10 +26,10 @@ func TestVerifier_VerifyEmail(t *testing.T) {
 		updateCalled bool
 	}
 
-	verifier := ProvideVerifier(us, ts, ns)
+	verifier := ProvideVerifier(setting.NewCfg(), us, ts, ns)
 	t.Run("should error if email already exist for other user", func(t *testing.T) {
 		us.ExpectedUser = &user.User{ID: 1}
-		err := verifier.VerifyEmail(context.Background(), user.VerifyEmailCommand{
+		err := verifier.Start(context.Background(), user.StartVerifyEmailCommand{
 			User:   user.User{ID: 2},
 			Email:  "some@email.com",
 			Action: user.EmailUpdateAction,
@@ -59,13 +61,13 @@ func TestVerifier_VerifyEmail(t *testing.T) {
 			c.updateCalled = true
 			return nil
 		}
-		err := verifier.VerifyEmail(context.Background(), user.VerifyEmailCommand{
+		err := verifier.Start(context.Background(), user.StartVerifyEmailCommand{
 			User:   user.User{ID: 2},
 			Email:  "some@email.com",
 			Action: user.EmailUpdateAction,
 		})
 
-		assert.ErrorIs(t, err, nil)
+		assert.NoError(t, err)
 		assert.True(t, c.expireCalled)
 		assert.True(t, c.createCalled)
 		assert.True(t, c.updateCalled)
@@ -94,7 +96,7 @@ func TestVerifier_VerifyEmail(t *testing.T) {
 			c.updateCalled = true
 			return nil
 		}
-		err := verifier.VerifyEmail(context.Background(), user.VerifyEmailCommand{
+		err := verifier.Start(context.Background(), user.StartVerifyEmailCommand{
 			User:   user.User{ID: 2},
 			Email:  "some@email.com",
 			Action: user.EmailUpdateAction,
@@ -104,5 +106,144 @@ func TestVerifier_VerifyEmail(t *testing.T) {
 		assert.True(t, c.expireCalled)
 		assert.True(t, c.createCalled)
 		assert.True(t, c.updateCalled)
+	})
+}
+
+func TestVerifier_Complete(t *testing.T) {
+	ts := &tempusertest.FakeTempUserService{}
+	us := &usertest.FakeUserService{}
+	ns := notifications.MockNotificationService()
+
+	type calls struct {
+		updateCalled       bool
+		updateStatusCalled bool
+	}
+
+	cfg := setting.NewCfg()
+	cfg.VerificationEmailMaxLifetime = 1 * time.Hour
+	verifier := ProvideVerifier(cfg, us, ts, ns)
+	t.Run("should return error for invalid code", func(t *testing.T) {
+		ts.GetTempUserByCodeFN = func(ctx context.Context, query *tempuser.GetTempUserByCodeQuery) (*tempuser.TempUserDTO, error) {
+			return nil, tempuser.ErrTempUserNotFound
+		}
+		err := verifier.Complete(context.Background(), user.CompleteEmailVerifyCommand{Code: "some-code"})
+		assert.ErrorIs(t, err, errInvalidCode)
+	})
+
+	t.Run("should return error when verification has wrong status", func(t *testing.T) {
+		ts.GetTempUserByCodeFN = func(ctx context.Context, query *tempuser.GetTempUserByCodeQuery) (*tempuser.TempUserDTO, error) {
+			return &tempuser.TempUserDTO{
+				Status: tempuser.TmpUserEmailUpdateCompleted,
+			}, nil
+		}
+		err := verifier.Complete(context.Background(), user.CompleteEmailVerifyCommand{Code: "some-code"})
+		assert.ErrorIs(t, err, errInvalidCode)
+	})
+
+	t.Run("should return error when verification email was never sent", func(t *testing.T) {
+		ts.GetTempUserByCodeFN = func(ctx context.Context, query *tempuser.GetTempUserByCodeQuery) (*tempuser.TempUserDTO, error) {
+			return &tempuser.TempUserDTO{
+				Status:    tempuser.TmpUserEmailUpdateStarted,
+				EmailSent: false,
+			}, nil
+		}
+		err := verifier.Complete(context.Background(), user.CompleteEmailVerifyCommand{Code: "some-code"})
+		assert.ErrorIs(t, err, errInvalidCode)
+	})
+
+	t.Run("should return error when verification code has expired", func(t *testing.T) {
+		ts.GetTempUserByCodeFN = func(ctx context.Context, query *tempuser.GetTempUserByCodeQuery) (*tempuser.TempUserDTO, error) {
+			return &tempuser.TempUserDTO{
+				Status:      tempuser.TmpUserEmailUpdateStarted,
+				EmailSent:   true,
+				EmailSentOn: time.Now().Add(-10 * time.Hour),
+			}, nil
+		}
+		err := verifier.Complete(context.Background(), user.CompleteEmailVerifyCommand{Code: "some-code"})
+		assert.ErrorIs(t, err, errExpiredCode)
+	})
+
+	t.Run("should return error user connect to code don't exists", func(t *testing.T) {
+		ts.GetTempUserByCodeFN = func(ctx context.Context, query *tempuser.GetTempUserByCodeQuery) (*tempuser.TempUserDTO, error) {
+			return &tempuser.TempUserDTO{
+				Status:      tempuser.TmpUserEmailUpdateStarted,
+				EmailSent:   true,
+				EmailSentOn: time.Now(),
+			}, nil
+		}
+		us.ExpectedError = user.ErrUserNotFound
+
+		err := verifier.Complete(context.Background(), user.CompleteEmailVerifyCommand{Code: "some-code"})
+		assert.ErrorIs(t, err, user.ErrUserNotFound)
+	})
+
+	t.Run("should update user email on valid code", func(t *testing.T) {
+		var c calls
+		ts.GetTempUserByCodeFN = func(ctx context.Context, query *tempuser.GetTempUserByCodeQuery) (*tempuser.TempUserDTO, error) {
+			return &tempuser.TempUserDTO{
+				Status:      tempuser.TmpUserEmailUpdateStarted,
+				Name:        string(user.EmailUpdateAction),
+				InvitedByID: 1,
+				Email:       "updated@email.com",
+				EmailSent:   true,
+				EmailSentOn: time.Now(),
+			}, nil
+		}
+
+		ts.UpdateTempUserStatusFN = func(ctx context.Context, cmd *tempuser.UpdateTempUserStatusCommand) error {
+			c.updateStatusCalled = true
+			return nil
+		}
+
+		us.ExpectedUser = &user.User{Email: "initial@email.com"}
+		us.ExpectedError = nil
+		us.UpdateFn = func(ctx context.Context, cmd *user.UpdateUserCommand) error {
+			c.updateCalled = true
+			assert.True(t, *cmd.EmailVerified)
+			assert.Equal(t, int64(1), cmd.UserID)
+			assert.Equal(t, "", cmd.Login)
+			assert.Equal(t, "updated@email.com", cmd.Email)
+			return nil
+		}
+
+		err := verifier.Complete(context.Background(), user.CompleteEmailVerifyCommand{Code: "some-code"})
+		assert.NoError(t, err)
+		assert.True(t, c.updateCalled)
+		assert.True(t, c.updateStatusCalled)
+	})
+
+	t.Run("should update user email and login if login is an email on valid code", func(t *testing.T) {
+		var c calls
+		ts.GetTempUserByCodeFN = func(ctx context.Context, query *tempuser.GetTempUserByCodeQuery) (*tempuser.TempUserDTO, error) {
+			return &tempuser.TempUserDTO{
+				Status:      tempuser.TmpUserEmailUpdateStarted,
+				Name:        string(user.EmailUpdateAction),
+				InvitedByID: 1,
+				Email:       "updated@email.com",
+				EmailSent:   true,
+				EmailSentOn: time.Now(),
+			}, nil
+		}
+
+		ts.UpdateTempUserStatusFN = func(ctx context.Context, cmd *tempuser.UpdateTempUserStatusCommand) error {
+			c.updateStatusCalled = true
+			return nil
+		}
+
+		us.ExpectedUser = &user.User{Email: "initial@email.com", Login: "other@email.com"}
+		us.ExpectedError = nil
+		us.UpdateFn = func(ctx context.Context, cmd *user.UpdateUserCommand) error {
+			c.updateCalled = true
+			assert.True(t, *cmd.EmailVerified)
+			assert.Equal(t, int64(1), cmd.UserID)
+			assert.Equal(t, "updated@email.com", cmd.Email)
+			assert.Equal(t, "updated@email.com", cmd.Login)
+			return nil
+		}
+
+		err := verifier.Complete(context.Background(), user.CompleteEmailVerifyCommand{Code: "some-code"})
+		assert.NoError(t, err)
+		assert.True(t, c.updateCalled)
+		assert.True(t, c.updateStatusCalled)
 	})
 }

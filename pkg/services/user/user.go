@@ -31,5 +31,6 @@ type Service interface {
 }
 
 type Verifier interface {
-	VerifyEmail(ctx context.Context, cmd VerifyEmailCommand) error
+	Start(ctx context.Context, cmd StartVerifyEmailCommand) error
+	Complete(ctx context.Context, cmd CompleteEmailVerifyCommand) error
 }

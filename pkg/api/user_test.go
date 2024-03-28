@@ -397,7 +397,7 @@ func setupUpdateEmailTests(t *testing.T, cfg *setting.Cfg) (*user.User, *HTTPSer
 	require.NoError(t, err)
 
 	nsMock := notifications.MockNotificationService()
-	verifier := userimpl.ProvideVerifier(userSvc, tempUserService, nsMock)
+	verifier := userimpl.ProvideVerifier(cfg, userSvc, tempUserService, nsMock)
 
 	hs := &HTTPServer{
 		Cfg:                 cfg,
@@ -620,7 +620,7 @@ func TestUser_UpdateEmail(t *testing.T) {
 			hs.tempUserService = tempUserSvc
 			hs.NotificationService = nsMock
 			hs.SecretsService = fakes.NewFakeSecretsService()
-			hs.userVerifier = userimpl.ProvideVerifier(userSvc, tempUserSvc, nsMock)
+			hs.userVerifier = userimpl.ProvideVerifier(settings, userSvc, tempUserSvc, nsMock)
 			// User is internal
 			hs.authInfoService = &authinfotest.FakeService{ExpectedError: user.ErrUserNotFound}
 		})
