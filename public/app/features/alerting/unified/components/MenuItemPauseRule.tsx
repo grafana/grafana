@@ -23,7 +23,7 @@ const MenuItemPauseRule = ({ rule, onPauseChange }: Props) => {
   const [updateRule] = alertRuleApi.endpoints.updateRule.useMutation();
   const isPaused = isGrafanaRulerRule(rule.rulerRule) && isGrafanaRulerRulePaused(rule.rulerRule);
   const icon = isPaused ? 'play' : 'pause';
-  const title = isPaused ? 'Resume alert evaluation' : 'Pause alert evaluation';
+  const title = isPaused ? 'Resume evaluation' : 'Pause evaluation';
 
   /**
    * Triggers API call to update the current rule to the new `is_paused` state
