@@ -33,7 +33,7 @@ export interface State {
 
 export class Typeahead extends PureComponent<Props, State> {
   static contextType = ThemeContext;
-  context!: React.ContextType<typeof ThemeContext>;
+  declare context: React.ContextType<typeof ThemeContext>;
   listRef = createRef<FixedSizeList>();
 
   state: State = {

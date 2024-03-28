@@ -32,7 +32,7 @@ import 'vendor/flot/jquery.flot.gauge';
 
 import * as grafanaData from '@grafana/data';
 import * as grafanaRuntime from '@grafana/runtime';
-import * as grafanaUIraw from '@grafana/ui';
+import * as grafanaUI from '@grafana/ui';
 import TableModel from 'app/core/TableModel';
 import config from 'app/core/config';
 import { appEvents, contextSrv } from 'app/core/core';
@@ -42,15 +42,6 @@ import TimeSeries from 'app/core/time_series2';
 import * as flatten from 'app/core/utils/flatten';
 import kbn from 'app/core/utils/kbn';
 import * as ticks from 'app/core/utils/ticks';
-
-// Help the 6.4 to 6.5 migration
-// The base classes were moved from @grafana/ui to @grafana/data
-// This exposes the same classes on both import paths
-const grafanaUI: Record<string, unknown> = grafanaUIraw;
-grafanaUI.PanelPlugin = grafanaData.PanelPlugin;
-grafanaUI.DataSourcePlugin = grafanaData.DataSourcePlugin;
-grafanaUI.AppPlugin = grafanaData.AppPlugin;
-grafanaUI.DataSourceApi = grafanaData.DataSourceApi;
 
 const jQueryFlotDeps = [
   'jquery.flot.crosshair',

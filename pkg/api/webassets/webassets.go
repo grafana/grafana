@@ -34,6 +34,28 @@ type EntryPointInfo struct {
 var entryPointAssetsCache *dtos.EntryPointAssets = nil
 
 func GetWebAssets(ctx context.Context, cfg *setting.Cfg, license licensing.Licensing) (*dtos.EntryPointAssets, error) {
+	if cfg.Env == setting.Dev && cfg.FrontendDevServer != "" {
+		// TODO: Hardcoded right now just to get vite dev env working.
+		// see https://vitejs.dev/guide/backend-integration.html
+		// Not sure we can rely on env config === dev alone as it's used in prod envs.
+		viteDev := &dtos.EntryPointAssets{
+			JSFiles: []dtos.EntryPointAsset{
+				{
+					FilePath:  fmt.Sprintf("%s/@vite/client", cfg.FrontendDevServer),
+					Integrity: "",
+				},
+				{
+					FilePath:  fmt.Sprintf("%s/app/index.ts", cfg.FrontendDevServer),
+					Integrity: "",
+				},
+			},
+			Dark:  fmt.Sprintf("%s/sass/grafana.dark.scss", cfg.FrontendDevServer),
+			Light: fmt.Sprintf("%s/sass/grafana.light.scss", cfg.FrontendDevServer),
+		}
+
+		return viteDev, nil
+	}
+
 	if cfg.Env != setting.Dev && entryPointAssetsCache != nil {
 		return entryPointAssetsCache, nil
 	}
@@ -47,7 +69,7 @@ func GetWebAssets(ctx context.Context, cfg *setting.Cfg, license licensing.Licen
 	}
 
 	if result == nil {
-		result, err = readWebAssetsFromFile(filepath.Join(cfg.StaticRootPath, "build", "assets-manifest.json"))
+		result, err = readWebAssetsFromFile(filepath.Join(cfg.StaticRootPath, "build", ".vite", "manifest.json"))
 		if err == nil {
 			cdn, _ = cfg.GetContentDeliveryURL(license.ContentDeliveryPrefix())
 			if cdn != "" {
@@ -73,7 +95,7 @@ func readWebAssetsFromFile(manifestpath string) (*dtos.EntryPointAssets, error) 
 }
 
 func readWebAssetsFromCDN(ctx context.Context, baseURL string) (*dtos.EntryPointAssets, error) {
-	req, err := http.NewRequestWithContext(ctx, http.MethodGet, baseURL+"public/build/assets-manifest.json", nil)
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, baseURL+"public/build/.vite/manifest.json", nil)
 	if err != nil {
 		return nil, err
 	}
@@ -91,45 +113,46 @@ func readWebAssetsFromCDN(ctx context.Context, baseURL string) (*dtos.EntryPoint
 	return dto, err
 }
 
+// ViteManifestEntry represents a single entry in the Vite manifest.
+type ViteManifestEntry struct {
+	File           string   `json:"file"`
+	Imports        []string `json:"imports"`
+	IsDynamicEntry bool     `json:"isDynamicEntry"`
+	IsEntry        bool     `json:"isEntry"`
+	Src            string   `json:"src"`
+}
+
 func readWebAssets(r io.Reader) (*dtos.EntryPointAssets, error) {
-	manifest := map[string]ManifestInfo{}
+	manifest := map[string]ViteManifestEntry{}
 	if err := json.NewDecoder(r).Decode(&manifest); err != nil {
 		return nil, fmt.Errorf("failed to read assets-manifest.json %w", err)
 	}
 
-	integrity := make(map[string]string, 100)
-	for _, v := range manifest {
-		if v.Integrity != "" && v.FilePath != "" {
-			integrity[v.FilePath] = v.Integrity
+	var entryPointJSAssets []dtos.EntryPointAsset
+	var darkCSS, lightCSS string
+
+	for _, entry := range manifest {
+		if entry.IsEntry {
+			if filepath.Ext(entry.File) != ".css" {
+				asset := dtos.EntryPointAsset{
+					FilePath: entry.File,
+					// Not sure what should happen with integrity here
+					Integrity: "",
+				}
+				entryPointJSAssets = append(entryPointJSAssets, asset)
+			}
+			if entry.Src == "sass/grafana.dark.scss" && entry.IsEntry {
+				darkCSS = entry.File
+			}
+			if entry.Src == "sass/grafana.light.scss" && entry.IsEntry {
+				lightCSS = entry.File
+			}
 		}
-	}
-
-	entryPoints, ok := manifest["entrypoints"]
-	if !ok {
-		return nil, fmt.Errorf("could not find entrypoints in asssets-manifest")
-	}
-
-	if entryPoints.App == nil || len(entryPoints.App.Assets.JS) == 0 {
-		return nil, fmt.Errorf("missing app entry")
-	}
-	if entryPoints.Dark == nil || len(entryPoints.Dark.Assets.CSS) == 0 {
-		return nil, fmt.Errorf("missing dark entry")
-	}
-	if entryPoints.Light == nil || len(entryPoints.Light.Assets.CSS) == 0 {
-		return nil, fmt.Errorf("missing light entry")
-	}
-
-	entryPointJSAssets := make([]dtos.EntryPointAsset, 0)
-	for _, entry := range entryPoints.App.Assets.JS {
-		entryPointJSAssets = append(entryPointJSAssets, dtos.EntryPointAsset{
-			FilePath:  entry,
-			Integrity: integrity[entry],
-		})
 	}
 
 	return &dtos.EntryPointAssets{
 		JSFiles: entryPointJSAssets,
-		Dark:    entryPoints.Dark.Assets.CSS[0],
-		Light:   entryPoints.Light.Assets.CSS[0],
+		Dark:    darkCSS,
+		Light:   lightCSS,
 	}, nil
 }

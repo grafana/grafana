@@ -1,4 +1,4 @@
-import $ from 'jquery';
+import 'jquery';
 import React, { PureComponent } from 'react';
 
 import {

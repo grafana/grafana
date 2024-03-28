@@ -19,7 +19,7 @@ import { getLocalRichHistoryStorage, getRichHistoryStorage } from '../history/ri
 
 import { RichHistorySearchFilters, RichHistorySettings, SortOrder } from './richHistoryTypes';
 
-export { RichHistorySearchFilters, RichHistorySettings, SortOrder };
+export { type RichHistorySearchFilters, type RichHistorySettings, SortOrder };
 
 /*
  * Add queries to rich history. Save only queries within the retention period, or that are starred.

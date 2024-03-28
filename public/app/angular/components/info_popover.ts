@@ -1,8 +1,9 @@
 import { each } from 'lodash';
-// @ts-ignore
-import Drop from 'tether-drop';
 
 import coreModule from 'app/angular/core_module';
+
+// @ts-ignore
+import Drop from '../../../vendor/tether-drop';
 
 export function infoPopover() {
   return {
@@ -54,6 +55,7 @@ export function infoPopover() {
 
         // Create drop in next digest after directive content is rendered.
         scope.$applyAsync(() => {
+          // @ts-ignore
           const drop = new Drop(dropOptions);
 
           const unbind = scope.$on('$destroy', () => {

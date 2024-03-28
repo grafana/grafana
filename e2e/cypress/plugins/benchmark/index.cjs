@@ -1,8 +1,8 @@
 const fs = require('fs');
 const { fromPairs } = require('lodash');
 
-const { CDPDataCollector } = require('./CDPDataCollector');
-const { formatResults } = require('./formatting');
+const { CDPDataCollector } = require('./CDPDataCollector.cjs');
+const { formatResults } = require('./formatting.cjs');
 
 const remoteDebuggingPortOptionPrefix = '--remote-debugging-port=';
 

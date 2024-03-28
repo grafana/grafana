@@ -1,14 +1,11 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import $ from 'jquery';
 import React from 'react';
 
 import { ThresholdsMode, FieldConfig, FieldColorModeId, createTheme } from '@grafana/data';
 
 import { Gauge, Props } from './Gauge';
-
-jest.mock('jquery', () => ({
-  plot: jest.fn(),
-}));
 
 const field: FieldConfig = {
   min: 0,
@@ -39,6 +36,9 @@ const props: Props = {
 };
 
 describe('Gauge', () => {
+  // @ts-ignore - mock jquery plot to prevent console.errors
+  $.plot = jest.fn();
+
   it('should render without blowing up', () => {
     expect(() => render(<Gauge {...props} />)).not.toThrow();
   });

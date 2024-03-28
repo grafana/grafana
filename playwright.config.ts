@@ -1,8 +1,10 @@
 import { defineConfig, devices } from '@playwright/test';
+import { createRequire } from 'node:module';
 import path, { dirname } from 'path';
 
 import { PluginOptions } from '@grafana/plugin-e2e';
 
+const require = createRequire(import.meta.url);
 const testDirRoot = 'e2e/plugin-e2e/';
 
 export default defineConfig<PluginOptions>({

@@ -10,13 +10,7 @@ import {
   VariableHide,
   TypedVariableModel,
 } from '@grafana/data';
-export {
-  /** @deprecated Import from @grafana/data instead */
-  VariableRefresh,
-  /** @deprecated Import from @grafana/data instead */
-  VariableSort,
-  /** @deprecated Import from @grafana/data instead */
-  VariableHide,
+export type {
   /** @deprecated Import from @grafana/data instead */
   AdHocVariableFilter,
   /** @deprecated Import from @grafana/data instead */
@@ -55,6 +49,14 @@ export {
   SystemVariable,
   /** @deprecated Import from @grafana/data instead */
   BaseVariableModel as VariableModel,
+} from '@grafana/data';
+export {
+  /** @deprecated Import from @grafana/data instead */
+  VariableRefresh,
+  /** @deprecated Import from @grafana/data instead */
+  VariableSort,
+  /** @deprecated Import from @grafana/data instead */
+  VariableHide,
 } from '@grafana/data';
 import { TemplateSrv } from '@grafana/runtime';
 

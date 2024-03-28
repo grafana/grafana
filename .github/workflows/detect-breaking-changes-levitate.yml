@@ -139,7 +139,7 @@ jobs:
         with:
           script: |
               const name = 'Detect breaking changes';
-              const script = require('./.github/workflows/scripts/pr-get-job-link.js')
+              const { default: script } = await import ('${{ github.workspace }}/.github/workflows/scripts/pr-get-job-link.js')
               await script({name, github, context, core})
 
       - name: Detect breaking changes
@@ -187,7 +187,7 @@ jobs:
         with:
           script: |
             const filePath = 'result.json';
-            const script = require('./.github/workflows/scripts/json-file-to-job-output.js');
+            const { default: script } = await import ('${{ github.workspace }}/.github/workflows/scripts/json-file-to-job-output.js')
             await script({ core, filePath });
 
       # Check if label exists

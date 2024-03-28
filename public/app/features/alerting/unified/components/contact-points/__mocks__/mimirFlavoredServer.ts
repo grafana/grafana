@@ -1,6 +1,6 @@
 import 'whatwg-fetch';
 import { http, HttpResponse } from 'msw';
-import { SetupServer } from 'msw/lib/node';
+import { SetupServer } from 'msw/node';
 
 import { AlertManagerCortexConfig } from 'app/plugins/datasource/alertmanager/types';
 

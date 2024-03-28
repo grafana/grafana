@@ -1,8 +1,8 @@
-import { BettererFileTest } from '@betterer/betterer';
-import { promises as fs } from 'fs';
-import { ESLint, Linter } from 'eslint';
-import path from 'path';
-import { glob } from 'glob';
+const { BettererFileTest } = require('@betterer/betterer');
+const fs = require('fs/promises');
+const { ESLint } = require('eslint');
+const path = require('path');
+const { glob } = require('glob');
 
 // Why are we ignoring these?
 // They're all deprecated/being removed so doesn't make sense to fix types
@@ -14,7 +14,7 @@ const eslintPathsToIgnore = [
 ];
 
 // Avoid using functions that report the position of the issues, as this causes a lot of merge conflicts
-export default {
+module.exports = {
   'better eslint': () =>
     countEslintErrors()
       .include('**/*.{ts,tsx}')
@@ -56,7 +56,7 @@ function countUndocumentedStories() {
  *  Generic regexp pattern matcher, similar to @betterer/regexp.
  *  The only difference is that the positions of the errors are not reported, as this may cause a lot of merge conflicts.
  */
-function regexp(pattern: RegExp, issueMessage: string) {
+function regexp(pattern, issueMessage) {
   return new BettererFileTest(async (filePaths, fileTestResult) => {
     await Promise.all(
       filePaths.map(async (filePath) => {
@@ -82,13 +82,13 @@ function countEslintErrors() {
     const eslintConfigFiles = await glob('**/.eslintrc');
     const eslintConfigMainPaths = eslintConfigFiles.map((file) => path.resolve(path.dirname(file)));
 
-    const baseRules: Partial<Linter.RulesRecord> = {
+    const baseRules = {
       '@emotion/syntax-preference': [2, 'object'],
       '@typescript-eslint/no-explicit-any': 'error',
       '@grafana/no-aria-label-selectors': 'error',
     };
 
-    const nonTestFilesRules: Partial<Linter.RulesRecord> = {
+    const nonTestFilesRules = {
       ...baseRules,
       '@typescript-eslint/consistent-type-assertions': ['error', { assertionStyle: 'never' }],
     };
@@ -96,7 +96,7 @@ function countEslintErrors() {
     // group files by eslint config file
     // this will create two file groups for each eslint config file
     // one for test files and one for non-test files
-    const fileGroups: Record<string, string[]> = {};
+    const fileGroups = {};
 
     for (const filePath of filePaths) {
       let configPath = eslintConfigMainPaths.find((configPath) => filePath.startsWith(configPath)) ?? '';
@@ -118,7 +118,7 @@ function countEslintErrors() {
     for (const configPath of Object.keys(fileGroups)) {
       const rules = configPath.endsWith('-test') ? baseRules : nonTestFilesRules;
       // this is by far the slowest part of this code. It takes eslint about 2 seconds just to find the config
-      const linterOptions = (await cli.calculateConfigForFile(fileGroups[configPath][0])) as Linter.Config;
+      const linterOptions = await cli.calculateConfigForFile(fileGroups[configPath][0]);
       const runner = new ESLint({
         baseConfig: {
           ...linterOptions,

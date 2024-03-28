@@ -1,5 +1,5 @@
 import { IScope, IAngularStatic } from 'angular';
-import $ from 'jquery';
+import 'jquery';
 import { defaults } from 'lodash';
 
 import { isTableData, PanelEvents, PanelPlugin } from '@grafana/data';

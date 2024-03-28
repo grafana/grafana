@@ -32,7 +32,7 @@ export function configureStore(initialState?: Partial<StoreState>) {
         browseDashboardsAPI.middleware,
         migrateToCloudAPI.middleware
       ),
-    devTools: process.env.NODE_ENV !== 'production',
+    devTools: import.meta.env.MODE !== 'production',
     preloadedState: {
       navIndex: buildInitialState(),
       ...initialState,

@@ -1,1 +1,1 @@
-export { Options } from './panelcfg.gen';
+export type { Options } from './panelcfg.gen';

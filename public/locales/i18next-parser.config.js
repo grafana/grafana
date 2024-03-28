@@ -1,4 +1,4 @@
-module.exports = {
+const config = {
   // Default namespace used in your i18next config
   defaultNamespace: 'grafana',
   // Adds changes only to en-US when extracting keys, every other language is provided by Crowdin
@@ -14,3 +14,5 @@ module.exports = {
 
   verbose: false,
 };
+
+export default config;

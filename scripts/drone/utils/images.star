@@ -30,7 +30,7 @@ images = {
     "drone_downstream": "grafana/drone-downstream",
     "docker_puppeteer": "grafana/docker-puppeteer:1.1.0",
     "docs": "grafana/docs-base:latest",
-    "cypress": "cypress/included:13.1.0",
+    "cypress": "cypress/included:13.6.6",
     "dockerize": "jwilder/dockerize:0.6.1",
     "shellcheck": "koalaman/shellcheck:stable",
     "playwright": "mcr.microsoft.com/playwright:v1.42.1-jammy",

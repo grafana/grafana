@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-export {
+export type {
   TraceSpan,
   TraceResponse,
   Trace,
@@ -21,7 +21,7 @@ export {
   TraceLink,
   CriticalPathSection,
 } from './trace';
-export { SpanBarOptions, SpanBarOptionsData } from '../settings/SpanBarSettings';
-export { default as TTraceTimeline } from './TTraceTimeline';
-export { default as TNil } from './TNil';
-export { SpanLinkFunc, SpanLinkDef } from './links';
+export type { SpanBarOptions, SpanBarOptionsData } from '../settings/SpanBarSettings';
+export type { default as TTraceTimeline } from './TTraceTimeline';
+export type { default as TNil } from './TNil';
+export type { SpanLinkFunc, SpanLinkDef } from './links';

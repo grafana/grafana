@@ -605,7 +605,7 @@ steps:
   - grafana-server
   environment:
     HOST: grafana-server
-  image: cypress/included:13.1.0
+  image: cypress/included:13.6.6
   name: end-to-end-tests-dashboards-suite
 - commands:
   - ./bin/build e2e-tests --port 3001 --suite smoke-tests-suite
@@ -613,7 +613,7 @@ steps:
   - grafana-server
   environment:
     HOST: grafana-server
-  image: cypress/included:13.1.0
+  image: cypress/included:13.6.6
   name: end-to-end-tests-smoke-tests-suite
 - commands:
   - ./bin/build e2e-tests --port 3001 --suite panels-suite
@@ -621,7 +621,7 @@ steps:
   - grafana-server
   environment:
     HOST: grafana-server
-  image: cypress/included:13.1.0
+  image: cypress/included:13.6.6
   name: end-to-end-tests-panels-suite
 - commands:
   - ./bin/build e2e-tests --port 3001 --suite various-suite
@@ -629,7 +629,7 @@ steps:
   - grafana-server
   environment:
     HOST: grafana-server
-  image: cypress/included:13.1.0
+  image: cypress/included:13.6.6
   name: end-to-end-tests-various-suite
 - commands:
   - cd /
@@ -1935,7 +1935,7 @@ steps:
   - grafana-server
   environment:
     HOST: grafana-server
-  image: cypress/included:13.1.0
+  image: cypress/included:13.6.6
   name: end-to-end-tests-dashboards-suite
 - commands:
   - ./bin/build e2e-tests --port 3001 --suite smoke-tests-suite
@@ -1943,7 +1943,7 @@ steps:
   - grafana-server
   environment:
     HOST: grafana-server
-  image: cypress/included:13.1.0
+  image: cypress/included:13.6.6
   name: end-to-end-tests-smoke-tests-suite
 - commands:
   - ./bin/build e2e-tests --port 3001 --suite panels-suite
@@ -1951,7 +1951,7 @@ steps:
   - grafana-server
   environment:
     HOST: grafana-server
-  image: cypress/included:13.1.0
+  image: cypress/included:13.6.6
   name: end-to-end-tests-panels-suite
 - commands:
   - ./bin/build e2e-tests --port 3001 --suite various-suite
@@ -1959,7 +1959,7 @@ steps:
   - grafana-server
   environment:
     HOST: grafana-server
-  image: cypress/included:13.1.0
+  image: cypress/included:13.6.6
   name: end-to-end-tests-various-suite
 - commands:
   - cd /
@@ -4653,7 +4653,7 @@ steps:
   - trivy --exit-code 0 --severity UNKNOWN,LOW,MEDIUM grafana/drone-downstream
   - trivy --exit-code 0 --severity UNKNOWN,LOW,MEDIUM grafana/docker-puppeteer:1.1.0
   - trivy --exit-code 0 --severity UNKNOWN,LOW,MEDIUM grafana/docs-base:latest
-  - trivy --exit-code 0 --severity UNKNOWN,LOW,MEDIUM cypress/included:13.1.0
+  - trivy --exit-code 0 --severity UNKNOWN,LOW,MEDIUM cypress/included:13.6.6
   - trivy --exit-code 0 --severity UNKNOWN,LOW,MEDIUM jwilder/dockerize:0.6.1
   - trivy --exit-code 0 --severity UNKNOWN,LOW,MEDIUM koalaman/shellcheck:stable
   - trivy --exit-code 0 --severity UNKNOWN,LOW,MEDIUM mcr.microsoft.com/playwright:v1.42.1-jammy
@@ -4688,7 +4688,7 @@ steps:
   - trivy --exit-code 1 --severity HIGH,CRITICAL grafana/drone-downstream
   - trivy --exit-code 1 --severity HIGH,CRITICAL grafana/docker-puppeteer:1.1.0
   - trivy --exit-code 1 --severity HIGH,CRITICAL grafana/docs-base:latest
-  - trivy --exit-code 1 --severity HIGH,CRITICAL cypress/included:13.1.0
+  - trivy --exit-code 1 --severity HIGH,CRITICAL cypress/included:13.6.6
   - trivy --exit-code 1 --severity HIGH,CRITICAL jwilder/dockerize:0.6.1
   - trivy --exit-code 1 --severity HIGH,CRITICAL koalaman/shellcheck:stable
   - trivy --exit-code 1 --severity HIGH,CRITICAL mcr.microsoft.com/playwright:v1.42.1-jammy
@@ -4923,6 +4923,6 @@ kind: secret
 name: gcr_credentials
 ---
 kind: signature
-hmac: fc8a4639e1e301965161795a12c8123f2240ff72a406acf2dad8fda2797beaef
+hmac: 3a9dc0ad4f3214110277d7ea2a94b56571b32dde19257dfc80b8b52d7bdb85f5
 
 ...

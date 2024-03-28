@@ -71,11 +71,11 @@ export interface StandardEditorConfig {
 }
 
 export {
-  Placement,
-  Constraint,
+  type Placement,
+  type Constraint,
   HorizontalConstraint,
   VerticalConstraint,
   BackgroundImageSize,
-  LineConfig,
-  BackgroundConfig,
+  type LineConfig,
+  type BackgroundConfig,
 };

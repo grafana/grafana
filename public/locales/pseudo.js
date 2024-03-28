@@ -1,6 +1,6 @@
-const fs = require('fs/promises');
-const pseudoizer = require('pseudoizer');
-const prettier = require('prettier');
+import fs from 'fs/promises';
+import pseudoizer from 'pseudoizer';
+import prettier from 'prettier';
 
 function pseudoizeJsonReplacer(key, value) {
   if (typeof value === 'string') {

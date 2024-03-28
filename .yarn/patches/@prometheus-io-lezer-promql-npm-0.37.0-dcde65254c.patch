@@ -1,0 +1,12 @@
+diff --git a/package.json b/package.json
+index c9f82756f7b8222cb0ddda9b6710ae5c8992368a..b5ae0c88d4f69fb59bd8f000c30b2055182314f6 100644
+--- a/package.json
++++ b/package.json
+@@ -5,6 +5,7 @@
+   "main": "index.cjs",
+   "type": "module",
+   "exports": {
++    "types": "./dist/index.d.ts",
+     "import": "./dist/index.es.js",
+     "require": "./dist/index.cjs"
+   },

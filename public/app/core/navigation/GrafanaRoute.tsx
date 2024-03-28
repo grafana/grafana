@@ -1,10 +1,10 @@
 import React, { Suspense, useEffect, useLayoutEffect } from 'react';
-// @ts-ignore
-import Drop from 'tether-drop';
 
 import { locationSearchToObject, navigationLogger, reportPageview } from '@grafana/runtime';
 import { ErrorBoundary } from '@grafana/ui';
 
+// @ts-ignore
+import Drop from '../../../vendor/tether-drop';
 import { useGrafana } from '../context/GrafanaContext';
 
 import { GrafanaRouteError } from './GrafanaRouteError';
@@ -88,6 +88,8 @@ function cleanupDOM() {
   }
 
   // cleanup tether-drop
+  // TODO: Vite doesn't like this. Pretty sure the lib is incompatible with Vite.
+  // @ts-ignore
   for (const drop of Drop.drops) {
     drop.destroy();
   }

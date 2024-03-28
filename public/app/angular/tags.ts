@@ -1,5 +1,5 @@
 import angular from 'angular';
-import $ from 'jquery';
+import 'jquery';
 
 import { getTagColorsFromName } from '@grafana/ui';
 

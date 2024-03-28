@@ -23,8 +23,9 @@ import { CompartmentDependencyModule, PluginFactoryFunction, SandboxEnvironment 
 import { logError, logInfo } from './utils';
 
 // Loads near membrane custom formatter for near membrane proxy objects.
-if (process.env.NODE_ENV !== 'production') {
-  require('@locker/near-membrane-dom/custom-devtools-formatter');
+if (import.meta.env.MODE !== 'production') {
+  // @ts-ignore - this is aliased in vite config but ts complains because it cannot resolve it.
+  import('@locker/near-membrane-dom/custom-devtools-formatter');
 }
 
 const pluginImportCache = new Map<string, Promise<System.Module>>();

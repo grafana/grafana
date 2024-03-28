@@ -1,0 +1,12 @@
+diff --git a/package.json b/package.json
+index 5541bd1ebe4cceaf57e695db0ca731f69407226c..7c681bcea4d8f0e74ff3f49064ddb8f6cd2bfe8c 100644
+--- a/package.json
++++ b/package.json
+@@ -48,6 +48,7 @@
+     "@lezer/lr": "^1.0.0"
+   },
+   "exports": {
++    "types": "./index.d.ts",
+     "import": "./index.es.js",
+     "require": "./index.cjs"
+   },
