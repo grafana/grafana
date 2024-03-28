@@ -292,6 +292,10 @@ In the InfluxDB data source, the legacy variable `$interval` is the same variabl
 
 The InfluxDB and Elasticsearch data sources have `Group by time interval` fields that are used to hard code the interval or to set the minimum limit for the `$__interval` variable (by using the `>` syntax -> `>10m`).
 
+### $\_\_interval_s
+
+This variable is the `$__interval` variable in seconds, not a time interval formatted string. For example, if the `$__interval` is `20m` then the `$__interval_ms` is `1200`.
+
 ### $\_\_interval_ms
 
 This variable is the `$__interval` variable in milliseconds, not a time interval formatted string. For example, if the `$__interval` is `20m` then the `$__interval_ms` is `1200000`.
@@ -324,6 +328,10 @@ Currently only supported for Prometheus and Loki data sources. This variable rep
 ### $\_\_rate_interval
 
 Currently only supported for Prometheus data sources. The `$__rate_interval` variable is meant to be used in the rate function. Refer to [Prometheus query variables][] for details.
+
+### $\_\_rate_interval_s
+
+This variable is the `$__rate_interval` variable in seconds, not a time-interval-formatted string. For example, if the `$__rate_interval` is `20m` then the `$__rate_interval_s` is `1200`.
 
 ### $\_\_rate_interval_ms
 
