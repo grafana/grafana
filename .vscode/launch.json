@@ -34,6 +34,7 @@
       "args": ["apiserver", 
           "--secure-port=8443", 
           "--runtime-config=query.grafana.app/v0alpha1=true",
+          "--grafana.authn.signing-keys-url=http://localhost:3000/api/signing-keys/keys",
           "--hg-url=http://localhost:3000",
           "--hg-key=$HGAPIKEY"]
     },

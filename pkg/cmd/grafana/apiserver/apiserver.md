@@ -11,10 +11,14 @@ aggregation path altogether and just run this example apiserver as a standalone 
 
 ### Usage
 
+For setting `--grafana.authn.signing-keys-url`, Grafana must be run with `idForwarding = true` while also ensuring
+you have logged in to the instance at least once.
+
 ```shell
 go run ./pkg/cmd/grafana apiserver \
   --runtime-config=example.grafana.app/v0alpha1=true \
   --grafana-apiserver-dev-mode \
+  --grafana.authn.signing-keys-url="http://localhost:3000/api/signing-keys/keys" \
   --verbosity 10 \
   --secure-port 7443
 ```

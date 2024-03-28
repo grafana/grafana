@@ -6,6 +6,7 @@ import (
 	"net"
 	"path"
 
+	"github.com/spf13/pflag"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	utilerrors "k8s.io/apimachinery/pkg/util/errors"
 	genericapiserver "k8s.io/apiserver/pkg/server"
@@ -13,6 +14,7 @@ import (
 	netutils "k8s.io/utils/net"
 
 	"github.com/grafana/grafana/pkg/apiserver/builder"
+	"github.com/grafana/grafana/pkg/cmd/grafana/apiserver/auth"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	grafanaAPIServer "github.com/grafana/grafana/pkg/services/apiserver"
@@ -20,12 +22,10 @@ import (
 	standaloneoptions "github.com/grafana/grafana/pkg/services/apiserver/standalone/options"
 	"github.com/grafana/grafana/pkg/services/apiserver/utils"
 	"github.com/grafana/grafana/pkg/setting"
-	"github.com/spf13/pflag"
 )
 
 const (
-	defaultEtcdPathPrefix = "/registry/grafana.app"
-	dataPath              = "data/grafana-apiserver" // same as grafana core
+	dataPath = "data/grafana-apiserver" // same as grafana core
 )
 
 // APIServerOptions contains the state for the apiserver
@@ -99,6 +99,14 @@ func (o *APIServerOptions) Config() (*genericapiserver.RecommendedConfig, error)
 
 	if err := o.Options.ApplyTo(serverConfig); err != nil {
 		return nil, fmt.Errorf("failed to apply options to server config: %w", err)
+	}
+
+	// When the ID signing key exists, configure access-token support
+	if len(o.Options.AuthnOptions.IDVerifierConfig.SigningKeysURL) > 0 {
+		serverConfig.Authentication.Authenticator = auth.AppendToAuthenticators(
+			auth.NewAccessTokenAuthenticator(o.Options.AuthnOptions.IDVerifierConfig),
+			serverConfig.Authentication.Authenticator,
+		)
 	}
 
 	serverConfig.DisabledPostStartHooks = serverConfig.DisabledPostStartHooks.Insert("generic-apiserver-start-informers")
