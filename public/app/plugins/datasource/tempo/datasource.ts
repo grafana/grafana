@@ -242,7 +242,7 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
    * @param featureName - the name of the feature to consider
    * @return true if the feature is available, false otherwise
    */
-  private isFeatureAvailable(featureName: FeatureName) {
+  isFeatureAvailable(featureName: FeatureName) {
     // We know for old Tempo instances we don't know their version, so resort to default
     const actualVersion = this.tempoVersion ?? defaultTempoVersion;
 
@@ -349,7 +349,11 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
             streaming: config.featureToggles.traceQLStreaming,
           });
 
-          if (config.featureToggles.traceQLStreaming && this.isFeatureAvailable(FeatureName.streaming)) {
+          if (
+            config.featureToggles.traceQLStreaming &&
+            this.isFeatureAvailable(FeatureName.streaming) &&
+            config.liveEnabled
+          ) {
             subQueries.push(this.handleStreamingSearch(options, traceqlSearchTargets, queryValueFromFilters));
           } else {
             subQueries.push(
@@ -599,7 +603,11 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
     },
     queryValue: string
   ): Observable<DataQueryResponse> => {
-    if (config.featureToggles.traceQLStreaming && this.isFeatureAvailable(FeatureName.streaming)) {
+    if (
+      config.featureToggles.traceQLStreaming &&
+      this.isFeatureAvailable(FeatureName.streaming) &&
+      config.liveEnabled
+    ) {
       return this.handleStreamingSearch(options, targets.traceql, queryValue);
     } else {
       return this._request('/api/search', {
@@ -690,11 +698,7 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
     return await lastValueFrom(this._request(url, params, { method: 'GET', hideFromInspector: true }));
   }
 
-  private _request(
-    apiUrl: string,
-    data?: unknown,
-    options?: Partial<BackendSrvRequest>
-  ): Observable<Record<string, any>> {
+  _request(apiUrl: string, data?: unknown, options?: Partial<BackendSrvRequest>): Observable<Record<string, any>> {
     const params = data ? urlUtil.serializeParams(data) : '';
     const url = `${this.instanceSettings.url}${apiUrl}${params.length ? `?${params}` : ''}`;
     const req = { ...options, url };
