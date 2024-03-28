@@ -150,7 +150,7 @@ func (s *Service) CreateToken(ctx context.Context) (cloudmigration.CreateAccessT
 
 	bytes, err := json.Marshal(cloudmigration.Base64EncodedTokenPayload{
 		Token: token.Token,
-		Env: cloudmigration.Base64HGEnv{
+		Instance: cloudmigration.Base64HGInstance{
 			StackID:     instance.ID,
 			RegionSlug:  instance.RegionSlug,
 			ClusterSlug: instance.ClusterSlug, // This should be used for routing to CMS
@@ -225,8 +225,8 @@ func (s *Service) CreateMigration(ctx context.Context, cmd cloudmigration.CloudM
 	}
 
 	return &cloudmigration.CloudMigrationResponse{
-		ID:    int64(token.Env.StackID),
-		Stack: token.Env.Slug,
+		ID:    int64(token.Instance.StackID),
+		Stack: token.Instance.Slug,
 		// TODO replace this with the actual value once the storage piece is implemented
 		Created: time.Now(),
 		Updated: time.Now(),

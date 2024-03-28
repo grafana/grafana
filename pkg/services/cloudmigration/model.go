@@ -85,11 +85,11 @@ type CreateAccessTokenResponseDTO struct {
 }
 
 type Base64EncodedTokenPayload struct {
-	Token string
-	Env   Base64HGEnv
+	Token    string
+	Instance Base64HGInstance
 }
 
-type Base64HGEnv struct {
+type Base64HGInstance struct {
 	StackID     int
 	Slug        string
 	RegionSlug  string
