@@ -333,12 +333,12 @@ Now that Grafana knows how to notify us, it's time to set up an alert rule:
    ```
 
 1. Press **Preview**. You should see some data returned.
-1. Keep expressions “B” and "C" as they are. These expressions (Reduce and Threshold, respectively) come by default when creating a new rule. Expression "B", selects the last value of our query “A”, while the Threshold expression "C" will check if the last value from expression "B" is above a specific value. In addition, the Threshold expression is the alert condition by default. Enter `0.2` as threshold value. [You can read more about queries and conditions here](/docs/grafana/<GRAFANA_VERSION>/alerting/fundamentals/alert-rules/queries-conditions/#expression-queries).
+1. Keep expressions “B” and "C" as they are. These expressions (Reduce and Threshold, respectively) come by default when creating a new rule. Expression "B", selects the last value of our query “A”, while the Threshold expression "C" will check if the last value from expression "B" is above a specific value. In addition, the Threshold expression is the alert condition by default. Enter `0.2` as threshold value. [You can read more about queries and conditions here](/docs/grafana/latest/alerting/fundamentals/alert-rules/queries-conditions/#expression-queries).
 1. In **Section 3**, in Folder, create a new folder, by clicking `New folder` and typing a name for the folder. This folder will contain our alerts. For example: `fundamentals`. Then, click `create`.
 1. In the Evaluation group, repeat the above step to create a new one. We will name it `fundamentals` too.
 1. Choose an Evaluation interval (how often the alert will be evaluated). For example, every `10s` (10 seconds).
 1. Set the pending period. This is the time that a condition has to be met until the alert enters in Firing state and a notification is sent. Enter `0s`. For the purposes of this tutorial, the evaluation interval is intentionally short. This makes it easier to test. This setting makes Grafana wait until an alert has fired for a given time before Grafana sends the notification.
-1. In **Section 4**, you can optionally add some sample text to your summary message. [Read more about message templating here](/docs/grafana/<GRAFANA_VERSION>/alerting/unified-alerting/message-templating/).
+1. In **Section 4**, you can optionally add some sample text to your summary message. [Read more about message templating here](/docs/grafana/latest/alerting/unified-alerting/message-templating/).
 1. Click **Save rule and exit** at the top of the page.
 1. In Grafana's sidebar, navigate to **Notification policies**.
 1. Under **Default policy**, select **...** &rsaquo; **Edit** and change the **Default contact point** from **grafana-default-email** to **RequestBin**.
@@ -393,9 +393,9 @@ Do you want to see the finished result? Check out our [completed KillerCoda sand
 
 Check out the links below to continue your learning journey with Grafana's LGTM stack.
 
-- [Prometheus](/docs/grafana/<GRAFANA_VERSION>/features/datasources/prometheus/)
-- [Loki](/docs/grafana/<GRAFANA_VERSION>/features/datasources/loki/)
-- [Explore](/docs/grafana/<GRAFANA_VERSION>/features/explore/)
-- [Alerting Overview](/docs/grafana/<GRAFANA_VERSION>/alerting/)
-- [Alert rules](/docs/grafana/<GRAFANA_VERSION>/alerting/create-alerts/)
-- [Contact Points](/docs/grafana/<GRAFANA_VERSION>/alerting/notifications/)
+- [Prometheus](/docs/grafana/latest/features/datasources/prometheus/)
+- [Loki](/docs/grafana/latest/features/datasources/loki/)
+- [Explore](/docs/grafana/latest/explore/)
+- [Alerting Overview](/docs/grafana/latest/alerting/)
+- [Alert rules](/docs/grafana/latest/alerting/create-alerts/)
+- [Contact points](/docs/grafana/latest/alerting/fundamentals/contact-points/)
