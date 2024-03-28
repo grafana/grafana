@@ -15,6 +15,10 @@ func (ss *sqlStore) MigrateDatasources(ctx context.Context, request *cloudmigrat
 	return nil, cloudmigration.ErrInternalNotImplementedError
 }
 
+func (ss *sqlStore) CreateMigration(ctx context.Context, token cloudmigration.Base64EncodedTokenPayload) error {
+	return nil
+}
+
 func (ss *sqlStore) GetAllCloudMigrations(ctx context.Context) ([]*cloudmigration.CloudMigration, error) {
 	var migrations = make([]*cloudmigration.CloudMigration, 0)
 	err := ss.db.WithDbSession(ctx, func(sess *db.Session) error { return sess.Find(&migrations) })
