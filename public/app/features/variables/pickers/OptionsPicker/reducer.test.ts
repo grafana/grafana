@@ -818,6 +818,45 @@ describe('optionsPickerReducer', () => {
           highlightIndex: 0,
         });
     });
+
+    it('should offer as-typed option even when matches exist', () => {
+      const searchQuery = 'a.*';
+
+      const options: VariableOption[] = 'A AA AB C'.split(' ').map((v) => ({
+        selected: false,
+        text: v,
+        value: v,
+      }));
+
+      const expect: VariableOption[] = [
+        {
+          selected: false,
+          text: '> a.*',
+          value: 'a.*',
+        },
+      ].concat(
+        'A AA AB'.split(' ').map((v) => ({
+          selected: false,
+          text: v,
+          value: v,
+        }))
+      );
+
+      const { initialState } = getVariableTestContext({
+        queryValue: searchQuery,
+      });
+
+      reducerTester<OptionsPickerState>()
+        .givenReducer(optionsPickerReducer, cloneDeep(initialState))
+        .whenActionIsDispatched(updateOptionsAndFilter(options))
+        .thenStateShouldEqual({
+          ...cloneDeep(initialState),
+          options: expect,
+          selectedValues: [],
+          queryValue: searchQuery,
+          highlightIndex: 1,
+        });
+    });
   });
 
   describe('when large data for updateOptionsFromSearch is dispatched and variable has searchFilter', () => {
