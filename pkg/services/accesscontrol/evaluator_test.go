@@ -449,9 +449,10 @@ func TestEval_MutateScopes(t *testing.T) {
 		assert.Equal(t, 2, calls)
 		assert.Equal(t, 1, resolved)
 
-		eval.Evaluate(map[string][]string{
+		hasAccess := eval.Evaluate(map[string][]string{
 			"action:1": {"scope:uid:1"},
 			"action:2": {"scope:uid:2"},
 		})
+		assert.True(t, hasAccess)
 	})
 }
