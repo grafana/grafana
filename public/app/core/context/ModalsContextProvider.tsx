@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 
 import { textUtil } from '@grafana/data';
 import { locationService } from '@grafana/runtime';
@@ -12,57 +12,64 @@ export interface Props {
   children: React.ReactNode;
 }
 
+interface StateType {
+  component: React.ComponentType<any> | null;
+  props: any;
+}
+
 /**
  * Implements the ModalsContext state logic (not used that much, only needed in edge cases)
  * Also implements the handling of the events ShowModalReactEvent and ShowConfirmModalEvent.
  */
 export function ModalsContextProvider(props: Props) {
-  const [state, setState] = useState<ModalsContextState>({
+  const [state, setState] = useState<StateType>({
     component: null,
     props: {},
-    showModal: (component: React.ComponentType<any>, props: any) => {
-      setState({ ...state, component, props });
-    },
-    hideModal: () => {
-      setState({ ...state, component: null, props: {} });
-    },
   });
+
+  const contextValue: ModalsContextState = useMemo(() => {
+    return {
+      component: state.component,
+      props: state.props,
+      showModal: (component: React.ComponentType<any>, props: any) => {
+        setState({ component, props });
+      },
+      hideModal: () => {
+        setState({ component: null, props: {} });
+      },
+    };
+  }, [state]);
 
   useEffect(() => {
     appEvents.subscribe(ShowModalReactEvent, ({ payload }) => {
       setState({
-        ...state,
         component: payload.component,
         props: {
           ...payload.props,
           isOpen: true,
-          onDismiss: state.hideModal,
+          onDismiss: () => setState({ component: null, props: {} }),
         },
       });
     });
 
     appEvents.subscribe(ShowConfirmModalEvent, (e) => {
-      showConfirmModal(e, state, setState);
+      showConfirmModal(e, setState);
     });
 
     // In case there is a link in the modal/drawer we need to hide it when location changes
     let prevPath = '';
     locationService.getHistory().listen((location) => {
       if (location.pathname !== prevPath) {
-        state.hideModal();
+        setState({ component: null, props: {} });
       }
       prevPath = location.pathname;
     });
-  });
+  }, []);
 
-  return <ModalsContext.Provider value={state}>{props.children}</ModalsContext.Provider>;
+  return <ModalsContext.Provider value={contextValue}>{props.children}</ModalsContext.Provider>;
 }
 
-function showConfirmModal(
-  { payload }: ShowConfirmModalEvent,
-  state: ModalsContextState,
-  setState: (state: ModalsContextState) => void
-) {
+function showConfirmModal({ payload }: ShowConfirmModalEvent, setState: (state: StateType) => void) {
   const {
     confirmText,
     onConfirm = () => undefined,
@@ -79,6 +86,8 @@ function showConfirmModal(
     yesButtonVariant,
   } = payload;
 
+  const hideModal = () => setState({ component: null, props: {} });
+
   const props: ConfirmModalProps = {
     confirmText: yesText,
     confirmButtonVariant: yesButtonVariant,
@@ -91,24 +100,20 @@ function showConfirmModal(
     dismissText: noText,
     onConfirm: () => {
       onConfirm();
-      state.hideModal();
+      hideModal();
     },
     onDismiss: () => {
       onDismiss?.();
-      state.hideModal();
+      hideModal();
     },
     onAlternative: onAltAction
       ? () => {
           onAltAction();
-          state.hideModal();
+          hideModal();
         }
       : undefined,
     alternativeText: altActionText,
   };
 
-  setState({
-    ...state,
-    component: ConfirmModal,
-    props,
-  });
+  setState({ component: ConfirmModal, props });
 }
