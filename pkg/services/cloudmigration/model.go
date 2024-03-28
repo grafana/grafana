@@ -58,6 +58,10 @@ type CloudMigrationResponse struct {
 	Updated time.Time `json:"updated"`
 }
 
+type CloudMigrationListResponse struct {
+	Migrations []CloudMigrationResponse `json:"migrations"`
+}
+
 type MigrateDatasourcesRequest struct {
 	MigrateToPDC       bool
 	MigrateCredentials bool
@@ -82,4 +86,16 @@ type CreateAccessTokenResponse struct {
 
 type CreateAccessTokenResponseDTO struct {
 	Token string `json:"token"`
+}
+
+type Base64EncodedTokenPayload struct {
+	Token    string
+	Instance Base64HGInstance
+}
+
+type Base64HGInstance struct {
+	StackID     int
+	Slug        string
+	RegionSlug  string
+	ClusterSlug string
 }
