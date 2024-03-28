@@ -751,9 +751,7 @@ func (d *dashboardStore) FindDashboards(ctx context.Context, query *dashboards.F
 		return nil, err
 	}
 
-	filters := []any{
-		permissions.NewAccessControlDashboardPermissionFilter(query.SignedInUser, query.Permission, query.Type, d.features, recursiveQueriesAreSupported),
-	}
+	filters := []any{}
 
 	for _, filter := range query.Sort.Filter {
 		filters = append(filters, filter)
@@ -801,6 +799,8 @@ func (d *dashboardStore) FindDashboards(ctx context.Context, query *dashboards.F
 			NestedFoldersEnabled: d.features.IsEnabled(ctx, featuremgmt.FlagNestedFolders),
 		})
 	}
+
+	filters = append(filters, permissions.NewAccessControlDashboardPermissionFilter(query.SignedInUser, query.Permission, query.Type, d.features, recursiveQueriesAreSupported))
 
 	var res []dashboards.DashboardSearchProjection
 	sb := &searchstore.Builder{Dialect: d.store.GetDialect(), Filters: filters, Features: d.features}
