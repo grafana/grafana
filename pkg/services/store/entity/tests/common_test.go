@@ -28,7 +28,7 @@ func TestMain(m *testing.M) {
 func createServiceAccountAdminToken(t *testing.T, env *server.TestEnv) (string, *user.SignedInUser) {
 	t.Helper()
 
-	account := saTests.SetupUserServiceAccount(t, env.SQLStore, env.SQLStore.Cfg, saTests.TestUser{
+	account := saTests.SetupUserServiceAccount(t, env.SQLStore, env.Cfg, saTests.TestUser{
 		Name:             "grpc-server-sa",
 		Role:             string(org.RoleAdmin),
 		Login:            "grpc-server-sa",
@@ -38,7 +38,7 @@ func createServiceAccountAdminToken(t *testing.T, env *server.TestEnv) (string, 
 	keyGen, err := satokengen.New(saAPI.ServiceID)
 	require.NoError(t, err)
 
-	_ = saTests.SetupApiKey(t, env.SQLStore, env.SQLStore.Cfg, saTests.TestApiKey{
+	_ = saTests.SetupApiKey(t, env.SQLStore, env.Cfg, saTests.TestApiKey{
 		Name:             "grpc-server-test",
 		Role:             org.RoleAdmin,
 		OrgId:            account.OrgID,
@@ -79,7 +79,7 @@ func createTestContext(t *testing.T) testContext {
 
 	authToken, serviceAccountUser := createServiceAccountAdminToken(t, env)
 
-	eDB, err := dbimpl.ProvideEntityDB(env.SQLStore, env.SQLStore.Cfg, env.FeatureToggles)
+	eDB, err := dbimpl.ProvideEntityDB(env.SQLStore, env.Cfg, env.FeatureToggles)
 	require.NoError(t, err)
 
 	err = eDB.Init()
