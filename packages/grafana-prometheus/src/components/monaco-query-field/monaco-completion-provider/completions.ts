@@ -1,11 +1,10 @@
 import UFuzzy from '@leeoniya/ufuzzy';
 
-import type { Monaco } from '@grafana/ui';
-
 import { SUGGESTIONS_LIMIT } from '../../../language_provider';
 import { escapeLabelValueInExactSelector } from '../../../language_utils';
 import { FUNCTIONS } from '../../../promql';
 
+import { DataProvider, type Metric } from './data-provider';
 import type { Label, Situation } from './situation';
 import { NeverCaseError } from './util';
 // FIXME: we should not load this from the "outside", but we cannot do that while we have the "old" query-field too
@@ -19,21 +18,6 @@ type Completion = {
   detail?: string;
   documentation?: string;
   triggerOnInsert?: boolean;
-};
-
-type Metric = {
-  name: string;
-  help: string;
-  type: string;
-};
-
-export type DataProvider = {
-  getHistory: () => Promise<string[]>;
-  getAllMetricNames: () => Promise<Metric[]>;
-  getAllLabelNames: () => Promise<string[]>;
-  getLabelValues: (labelName: string) => Promise<string[]>;
-  getSeriesValues: (name: string, match: string) => Promise<string[]>;
-  getSeriesLabels: (selector: string, otherLabels: Label[]) => Promise<string[]>;
 };
 
 const metricNamesSearchClient = new UFuzzy({
@@ -58,17 +42,14 @@ export function fuzzySearchMetrics(haystack: Metric[], needle: string): Metric[]
 }
 
 // we order items like: history, functions, metrics
-async function getAllMetricNamesCompletions(
-  dataProvider: DataProvider,
-  textInput: string,
-  enableAutocompleteSuggestionsUpdate: () => void
-): Promise<Completion[]> {
+async function getAllMetricNamesCompletions(dataProvider: DataProvider): Promise<Completion[]> {
   let metrics = await dataProvider.getAllMetricNames();
+  const { monacoSettings } = dataProvider;
 
-  if (metrics.length > SUGGESTIONS_LIMIT) {
-    if (textInput) {
-      enableAutocompleteSuggestionsUpdate();
-      metrics = fuzzySearchMetrics(metrics, textInput);
+  if (metrics.length > dataProvider.metricNamesSuggestionLimit) {
+    if (monacoSettings.inputInRange) {
+      monacoSettings.enableAutocompleteSuggestionsUpdate();
+      metrics = fuzzySearchMetrics(metrics, monacoSettings.inputInRange);
     } else {
       metrics = metrics.slice(0, SUGGESTIONS_LIMIT);
     }
@@ -91,12 +72,8 @@ const FUNCTION_COMPLETIONS: Completion[] = FUNCTIONS.map((f) => ({
   documentation: f.documentation,
 }));
 
-async function getAllFunctionsAndMetricNamesCompletions(
-  dataProvider: DataProvider,
-  textInput: string,
-  enableAutocompleteSuggestionsUpdate: () => void
-): Promise<Completion[]> {
-  const metricNames = await getAllMetricNamesCompletions(dataProvider, textInput, enableAutocompleteSuggestionsUpdate);
+async function getAllFunctionsAndMetricNamesCompletions(dataProvider: DataProvider): Promise<Completion[]> {
+  const metricNames = await getAllMetricNamesCompletions(dataProvider);
 
   return [...FUNCTION_COMPLETIONS, ...metricNames];
 }
@@ -220,31 +197,17 @@ async function getLabelValuesForMetricCompletions(
   }));
 }
 
-/**
- * @param situation
- * @param dataProvider
- * @param textInput The text that's been typed so far within the current {@link Monaco.Range | Range}
- */
-export async function getCompletions(
-  situation: Situation,
-  dataProvider: DataProvider,
-  textInput: string,
-  enableAutocompleteSuggestionsUpdate: () => void
-): Promise<Completion[]> {
+export async function getCompletions(situation: Situation, dataProvider: DataProvider): Promise<Completion[]> {
   switch (situation.type) {
     case 'IN_DURATION':
       return DURATION_COMPLETIONS;
     case 'IN_FUNCTION':
-      return getAllFunctionsAndMetricNamesCompletions(dataProvider, textInput, enableAutocompleteSuggestionsUpdate);
+      return getAllFunctionsAndMetricNamesCompletions(dataProvider);
     case 'AT_ROOT': {
-      return getAllFunctionsAndMetricNamesCompletions(dataProvider, textInput, enableAutocompleteSuggestionsUpdate);
+      return getAllFunctionsAndMetricNamesCompletions(dataProvider);
     }
     case 'EMPTY': {
-      const metricNames = await getAllMetricNamesCompletions(
-        dataProvider,
-        textInput,
-        enableAutocompleteSuggestionsUpdate
-      );
+      const metricNames = await getAllMetricNamesCompletions(dataProvider);
       const historyCompletions = await getAllHistoryCompletions(dataProvider);
       return [...historyCompletions, ...FUNCTION_COMPLETIONS, ...metricNames];
     }

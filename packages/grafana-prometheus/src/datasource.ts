@@ -42,7 +42,7 @@ import {
 
 import { addLabelToQuery } from './add_label_to_query';
 import { AnnotationQueryEditor } from './components/AnnotationQueryEditor';
-import PrometheusLanguageProvider from './language_provider';
+import PrometheusLanguageProvider, { SUGGESTIONS_LIMIT } from './language_provider';
 import {
   expandRecordingRules,
   getClientCacheDurationInMinutes,
@@ -97,6 +97,7 @@ export class PrometheusDatasource
   exemplarsAvailable: boolean;
   cacheLevel: PrometheusCacheLevel;
   cache: QueryCache<PromQuery>;
+  metricNamesAutocompleteSuggestionLimit: number;
 
   constructor(
     instanceSettings: DataSourceInstanceSettings<PromOptions>,
@@ -127,6 +128,8 @@ export class PrometheusDatasource
     this.variables = new PrometheusVariableSupport(this, this.templateSrv);
     this.exemplarsAvailable = true;
     this.cacheLevel = instanceSettings.jsonData.cacheLevel ?? PrometheusCacheLevel.Low;
+    this.metricNamesAutocompleteSuggestionLimit =
+      instanceSettings.jsonData.codeModeMetricNamesSuggestionLimit ?? SUGGESTIONS_LIMIT;
 
     this.cache = new QueryCache({
       getTargetSignature: this.getPrometheusTargetSignature.bind(this),
