@@ -95,7 +95,68 @@ export function parsePrometheusDuration(duration: string): number {
   return totalDuration;
 }
 
-export const safeParseDurationstr = (duration: string): number => {
+export function formatPrometheusDuration(milliseconds: number): string {
+  const seconds = Math.floor(milliseconds / 1000);
+  const minutes = Math.floor(seconds / 60);
+  const hours = Math.floor(minutes / 60);
+  const days = Math.floor(hours / 24);
+  const weeks = Math.floor(days / 7);
+  const years = Math.floor(days / 365);
+
+  // we'll make an exception here for 0, 0ms seems a bit weird
+  if (milliseconds === 0) {
+    return '0s';
+  }
+
+  if (milliseconds < 1000) {
+    return milliseconds + 'ms';
+  } else if (seconds < 60) {
+    return seconds + 's';
+  } else if (minutes < 60) {
+    return combineUnits([minutes, 'm'], [seconds % 60, 's'], [milliseconds % 1000, 'ms']);
+  } else if (hours < 24) {
+    return combineUnits([hours, 'h'], [minutes % 60, 'm'], [seconds % 60, 's'], [milliseconds % 1000, 'ms']);
+  } else if (days < 7) {
+    return combineUnits(
+      [days, 'd'],
+      [hours % 24, 'h'],
+      [minutes % 60, 'm'],
+      [seconds % 60, 's'],
+      [milliseconds % 1000, 'ms']
+    );
+  } else if (weeks < 52) {
+    return combineUnits(
+      [weeks, 'w'],
+      [days % 7, 'd'],
+      [hours % 24, 'h'],
+      [minutes % 60, 'm'],
+      [seconds % 60, 's'],
+      [milliseconds % 1000, 'ms']
+    );
+  } else {
+    return combineUnits(
+      [years, 'y'],
+      [weeks % 52, 'w'],
+      [(days % 365) - 7 * (weeks % 52), 'd'],
+      [hours % 24, 'h'],
+      [minutes % 60, 'm'],
+      [seconds % 60, 's'],
+      [milliseconds % 1000, 'ms']
+    );
+  }
+}
+
+function combineUnits(...units: Array<[number, string]>): string {
+  let result = '';
+  for (const [value, unit] of units) {
+    if (value !== 0) {
+      result += value + unit;
+    }
+  }
+  return result;
+}
+
+export const safeParsePrometheusDuration = (duration: string): number => {
   try {
     return parsePrometheusDuration(duration);
   } catch (e) {

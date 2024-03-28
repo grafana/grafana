@@ -22,6 +22,7 @@ import { isGrafanaRulerRule } from '../../utils/rules';
 import { ProvisioningBadge } from '../Provisioning';
 import { evaluateEveryValidationOptions } from '../rules/EditRuleGroupModal';
 
+import { EvaluationGroupQuickPick } from './EvaluationGroupQuickPick';
 import { containsSlashes, Folder, RuleFolderPicker } from './RuleFolderPicker';
 import { checkForPathSeparator } from './util';
 
@@ -362,7 +363,12 @@ function EvaluationGroupCreationModal({
     shouldFocusError: true,
   });
 
-  const { register, handleSubmit, formState, getValues } = formAPI;
+  const { register, handleSubmit, formState, setValue, getValues, watch: watchGroupFormValues } = formAPI;
+  const evaluationInterval = watchGroupFormValues('evaluateEvery');
+
+  const setPendingPeriod = (interval: string) => {
+    setValue('evaluateEvery', interval, { shouldValidate: true });
+  };
 
   return (
     <Modal
@@ -379,7 +385,7 @@ function EvaluationGroupCreationModal({
           <Field
             label={<Label htmlFor={'group'}>Evaluation group name</Label>}
             error={formState.errors.group?.message}
-            invalid={!!formState.errors.group}
+            invalid={Boolean(formState.errors.group) ? true : undefined}
           >
             <Input
               className={styles.formInput}
@@ -392,7 +398,7 @@ function EvaluationGroupCreationModal({
 
           <Field
             error={formState.errors.evaluateEvery?.message}
-            invalid={!!formState.errors.evaluateEvery}
+            invalid={Boolean(formState.errors.evaluateEvery) ? true : undefined}
             label={
               <Label
                 htmlFor={evaluateEveryId}
@@ -402,12 +408,17 @@ function EvaluationGroupCreationModal({
               </Label>
             }
           >
-            <Input
-              className={styles.formInput}
-              id={evaluateEveryId}
-              placeholder="e.g. 5m"
-              {...register('evaluateEvery', evaluateEveryValidationOptions(groupRules))}
-            />
+            <Stack direction="column">
+              <Input
+                className={styles.formInput}
+                id={evaluateEveryId}
+                placeholder="e.g. 5m"
+                {...register('evaluateEvery', evaluateEveryValidationOptions(groupRules))}
+              />
+              <Stack direction="row" alignItems="flex-end">
+                <EvaluationGroupQuickPick currentInterval={evaluationInterval} onSelect={setPendingPeriod} />
+              </Stack>
+            </Stack>
           </Field>
           <Modal.ButtonRow>
             <Button variant="secondary" type="button" onClick={onCancel}>

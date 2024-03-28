@@ -35,7 +35,7 @@ import { RuleHealth } from '../search/rulesSearchParser';
 import { RULER_NOT_SUPPORTED_MSG } from './constants';
 import { getRulesSourceName } from './datasource';
 import { AsyncRequestState } from './redux';
-import { safeParseDurationstr } from './time';
+import { safeParsePrometheusDuration } from './time';
 
 export function isAlertingRule(rule: Rule | undefined): rule is AlertingRule {
   return typeof rule === 'object' && rule.type === PromRuleType.Alerting;
@@ -237,8 +237,8 @@ export const getAlertInfo = (alert: RulerRuleDTO, currentEvaluation: string): Al
 };
 
 export const getNumberEvaluationsToStartAlerting = (forDuration: string, currentEvaluation: string) => {
-  const evalNumberMs = safeParseDurationstr(currentEvaluation);
-  const forNumber = safeParseDurationstr(forDuration);
+  const evalNumberMs = safeParsePrometheusDuration(currentEvaluation);
+  const forNumber = safeParsePrometheusDuration(forDuration);
   if (forNumber === 0 && evalNumberMs !== 0) {
     return 1;
   }
