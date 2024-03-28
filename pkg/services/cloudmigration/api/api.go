@@ -51,6 +51,15 @@ func (cma *CloudMigrationAPI) registerEndpoints() {
 	}, middleware.ReqGrafanaAdmin)
 }
 
+// swagger:route POST /cloudmigration/token migrations
+//
+// Create gcom access token.
+//
+// Responses:
+// 200: cloudMigrationCreateTokenResponse
+// 401: unauthorisedError
+// 403: forbiddenError
+// 500: internalServerError
 func (cma *CloudMigrationAPI) CreateToken(c *contextmodel.ReqContext) response.Response {
 	ctx, span := cma.tracer.Start(c.Req.Context(), "MigrationAPI.CreateAccessToken")
 	defer span.End()
@@ -66,14 +75,36 @@ func (cma *CloudMigrationAPI) CreateToken(c *contextmodel.ReqContext) response.R
 	return response.JSON(http.StatusOK, cloudmigration.CreateAccessTokenResponseDTO(resp))
 }
 
+// swagger:route GET /cloudmigration/migration migrations
+//
+// Get a list of all cloud migrations.
+//
+// Responses:
+// 200: cloudMigrationListResponse
+// 401: unauthorisedError
+// 403: forbiddenError
+// 500: internalServerError
 func (cma *CloudMigrationAPI) GetMigrationList(c *contextmodel.ReqContext) response.Response {
 	cloudMigrations, err := cma.cloudMigrationsService.GetMigrationList(c.Req.Context())
 	if err != nil {
 		return response.Error(http.StatusInternalServerError, "migration list error", err)
 	}
-	return response.JSON(http.StatusOK, cloudMigrations)
+
+	cloudMigrationListResponse := cloudmigration.CloudMigrationListResponse{Migrations: cloudMigrations}
+	return response.JSON(http.StatusOK, cloudMigrationListResponse)
 }
 
+// swagger:route GET /cloudmigration/migration/{id} migrations migrationWithIDPathParam
+//
+// Get a cloud migration.
+//
+// It returns migrations that has been created.
+//
+// Responses:
+// 200: cloudMigrationResponse
+// 401: unauthorisedError
+// 403: forbiddenError
+// 500: internalServerError
 func (cma *CloudMigrationAPI) GetMigration(c *contextmodel.ReqContext) response.Response {
 	id, err := strconv.ParseInt(web.Params(c.Req)[":id"], 10, 64)
 	if err != nil {
@@ -86,6 +117,15 @@ func (cma *CloudMigrationAPI) GetMigration(c *contextmodel.ReqContext) response.
 	return response.JSON(http.StatusOK, cloudMigration)
 }
 
+// swagger:route POST /cloudmigration/migration migrations createMigration
+//
+// Create a migration.
+//
+// Responses:
+// 200: cloudMigrationResponse
+// 401: unauthorisedError
+// 403: forbiddenError
+// 500: internalServerError
 func (cma *CloudMigrationAPI) CreateMigration(c *contextmodel.ReqContext) response.Response {
 	cmd := cloudmigration.CloudMigrationRequest{}
 	if err := web.Bind(c.Req, &cmd); err != nil {
@@ -98,6 +138,17 @@ func (cma *CloudMigrationAPI) CreateMigration(c *contextmodel.ReqContext) respon
 	return response.JSON(http.StatusOK, cloudMigration)
 }
 
+// swagger:route GET /cloudmigration/migration/{id}/run migrations migrationWithIDPathParam
+//
+// Trigger the run of a migration to the Grafana Cloud.
+//
+// It returns migrations that has been created.
+//
+// Responses:
+// 200: cloudMigrationRunResponse
+// 401: unauthorisedError
+// 403: forbiddenError
+// 500: internalServerError
 func (cma *CloudMigrationAPI) RunMigration(c *contextmodel.ReqContext) response.Response {
 	cloudMigrationRun, err := cma.cloudMigrationsService.RunMigration(c.Req.Context(), web.Params(c.Req)[":id"])
 	if err != nil {
@@ -106,6 +157,15 @@ func (cma *CloudMigrationAPI) RunMigration(c *contextmodel.ReqContext) response.
 	return response.JSON(http.StatusOK, cloudMigrationRun)
 }
 
+// swagger:route GET /cloudmigration/migration/{id}/run/{runID} migrations migrationRunWithIDPathParam
+//
+// Get the result of a single migration run.
+//
+// Responses:
+// 200: cloudMigrationRunResponse
+// 401: unauthorisedError
+// 403: forbiddenError
+// 500: internalServerError
 func (cma *CloudMigrationAPI) GetMigrationRun(c *contextmodel.ReqContext) response.Response {
 	migrationStatus, err := cma.cloudMigrationsService.GetMigrationStatus(c.Req.Context(), web.Params(c.Req)[":id"], web.Params(c.Req)[":runID"])
 	if err != nil {
@@ -114,14 +174,34 @@ func (cma *CloudMigrationAPI) GetMigrationRun(c *contextmodel.ReqContext) respon
 	return response.JSON(http.StatusOK, migrationStatus)
 }
 
+// swagger:route GET /cloudmigration/migration/{id}/run migrations migrationWithIDPathParam
+//
+// Get a list of migration runs for a migration.
+//
+// Responses:
+// 200: cloudMigrationRunListResponse
+// 401: unauthorisedError
+// 403: forbiddenError
+// 500: internalServerError
 func (cma *CloudMigrationAPI) GetMigrationRunList(c *contextmodel.ReqContext) response.Response {
 	migrationStatus, err := cma.cloudMigrationsService.GetMigrationStatusList(c.Req.Context(), web.Params(c.Req)[":id"])
 	if err != nil {
 		return response.Error(http.StatusInternalServerError, "migration status error", err)
 	}
-	return response.JSON(http.StatusOK, migrationStatus)
+
+	runList := cloudmigration.CloudMigrationRunList{Runs: migrationStatus}
+	return response.JSON(http.StatusOK, runList)
 }
 
+// swagger:route DELETE /cloudmigration/migration/{id} migrations migrationWithIDPathParam
+//
+// Delete a migration.
+//
+// Responses:
+// 200: 200okResponse
+// 401: unauthorisedError
+// 403: forbiddenError
+// 500: internalServerError
 func (cma *CloudMigrationAPI) DeleteMigration(c *contextmodel.ReqContext) response.Response {
 	err := cma.cloudMigrationsService.DeleteMigration(c.Req.Context(), web.Params(c.Req)[":id"])
 	if err != nil {
