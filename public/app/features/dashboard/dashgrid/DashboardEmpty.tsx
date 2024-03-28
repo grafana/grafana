@@ -27,6 +27,7 @@ const DashboardEmpty = ({ dashboard, canCreate }: Props) => {
   const onAddVisualization = () => {
     let id;
     if (dashboard instanceof DashboardScene) {
+      dashboard.onEnterEditMode();
       id = dashboard.onCreateNewPanel();
     } else {
       id = onCreateNewPanel(dashboard, initialDatasource);
@@ -113,6 +114,7 @@ const DashboardEmpty = ({ dashboard, canCreate }: Props) => {
                   onClick={() => {
                     DashboardInteractions.emptyDashboardButtonClicked({ item: 'import_from_library' });
                     if (dashboard instanceof DashboardScene) {
+                      dashboard.onEnterEditMode();
                       dashboard.onCreateLibPanelWidget();
                     } else {
                       onAddLibraryPanel(dashboard);
