@@ -80,8 +80,6 @@ export function ContentOutlineItemButton({
     </div>
   );
 
-  console.log('ContentOutlineItemButton', { title, isOverflowing, contentOutlineExpanded });
-
   // if there's a tooltip we want to show it if the text is overflowing
   const showTooltip = tooltip && (!contentOutlineExpanded || isOverflowing);
 
