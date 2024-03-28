@@ -80,10 +80,14 @@ export class DashboardSceneChangeTracker {
     });
   }
 
-  private updateIsDirty(result: DashboardChangeInfo) {
-    const { hasChanges } = result;
+  private hasMetadataChanges() {
+    return this._dashboard.state.meta.folderUid !== this._dashboard.getInitialState()?.meta.folderUid;
+  }
 
-    if (hasChanges) {
+  private updateIsDirty(result?: DashboardChangeInfo) {
+    const { hasChanges } = result || { hasChanges: false };
+
+    if (hasChanges || this.hasMetadataChanges()) {
       if (!this._dashboard.state.isDirty) {
         this._dashboard.setState({ isDirty: true });
       }
