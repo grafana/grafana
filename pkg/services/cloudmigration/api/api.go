@@ -135,6 +135,13 @@ func (cma *CloudMigrationAPI) RunMigration(c *contextmodel.ReqContext) response.
 	// get datasources to migrate
 	dataSourcesJSON, err := cma.cloudMigrationService.GetDataSourcesJSON(c.Req.Context(), id)
 	if err != nil {
+		err = cma.cloudMigrationService.SaveMigrationRun(c.Req.Context(), &cloudmigration.CloudMigrationRun{
+			ID: id,
+			Result: cloudmigration.MigrationResult{
+				Status:  "ERROR",
+				Message: "Data sources migration run not successful",
+			},
+		})
 		return response.Error(http.StatusInternalServerError, "datasources get error", err)
 	}
 
@@ -153,6 +160,13 @@ func (cma *CloudMigrationAPI) RunMigration(c *contextmodel.ReqContext) response.
 	// get folders JSON to migrate
 	foldersJSON, err := cma.cloudMigrationService.GetFoldersJSON(c.Req.Context(), id)
 	if err != nil {
+		err = cma.cloudMigrationService.SaveMigrationRun(c.Req.Context(), &cloudmigration.CloudMigrationRun{
+			ID: id,
+			Result: cloudmigration.MigrationResult{
+				Status:  "ERROR",
+				Message: "Folders migration run not successful",
+			},
+		})
 		return response.Error(http.StatusInternalServerError, "datasources get error", err)
 	}
 	if err := MigrateDataType(cloudmigration.FolderDataType, path, migration.AuthToken, stringID, foldersJSON); err != nil {
@@ -169,7 +183,14 @@ func (cma *CloudMigrationAPI) RunMigration(c *contextmodel.ReqContext) response.
 	// get dashboards JSON to migrate
 	dashboardsJSON, err := cma.cloudMigrationService.GetDashboardsJSON(c.Req.Context(), id)
 	if err != nil {
-		return response.Error(http.StatusInternalServerError, "datasources get error", err)
+		err = cma.cloudMigrationService.SaveMigrationRun(c.Req.Context(), &cloudmigration.CloudMigrationRun{
+			ID: id,
+			Result: cloudmigration.MigrationResult{
+				Status:  "ERROR",
+				Message: "Dashboards migration run not successful",
+			},
+		})
+		return response.Error(http.StatusInternalServerError, "dashboards get error", err)
 	}
 	if err := MigrateDataType(cloudmigration.DashboardDataType, path, migration.AuthToken, stringID, dashboardsJSON); err != nil {
 		dashboardMigrationResponse.Error = err.Error()
@@ -180,7 +201,7 @@ func (cma *CloudMigrationAPI) RunMigration(c *contextmodel.ReqContext) response.
 	err = cma.cloudMigrationService.SaveMigrationRun(c.Req.Context(), &cloudmigration.CloudMigrationRun{
 		ID: id,
 		Result: cloudmigration.MigrationResult{
-			Status:  "success",
+			Status:  "OK",
 			Message: "Migration run successful",
 		},
 	})
@@ -242,6 +263,9 @@ func MigrateDataType(dataType cloudmigration.MigrateDataType, url, token, id str
 	if err != nil {
 		return fmt.Errorf("http request error: %w", err)
 	}
-	resp.Body.Close()
+	err = resp.Body.Close()
+	if err != nil {
+		return fmt.Errorf("http response body close error: %w", err)
+	}
 	return nil
 }

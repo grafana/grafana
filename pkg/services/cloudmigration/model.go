@@ -107,8 +107,6 @@ type MigrateDataRequestItemDTO struct {
 	Data  []byte          `json:"data"`
 }
 
-// Mirate data response structs
-
 type ItemStatus string
 
 const (
