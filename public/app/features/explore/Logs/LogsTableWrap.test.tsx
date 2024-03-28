@@ -35,6 +35,7 @@ const getComponent = (partialProps?: Partial<ComponentProps<typeof LogsTableWrap
       width={50}
       logsFrames={[getMockLokiFrame()]}
       theme={createTheme()}
+      uniqueLabels={false}
       {...partialProps}
     />
   );
@@ -105,6 +106,11 @@ describe('LogsTableWrap', () => {
         visualisationType: 'table',
         columns: { 0: 'app', 1: 'Line', 2: 'Time' },
         labelFieldName: 'labels',
+        refId: undefined,
+        specialFields: {
+          body: 'Line',
+          time: 'Time',
+        },
       });
     });
 
@@ -118,6 +124,11 @@ describe('LogsTableWrap', () => {
         visualisationType: 'table',
         columns: { 0: 'Line', 1: 'Time' },
         labelFieldName: 'labels',
+        refId: undefined,
+        specialFields: {
+          body: 'Line',
+          time: 'Time',
+        },
       });
     });
   });

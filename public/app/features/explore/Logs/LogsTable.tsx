@@ -7,6 +7,7 @@ import {
   DataFrame,
   DataFrameType,
   DataTransformerConfig,
+  DataTransformerID,
   Field,
   FieldType,
   guessFieldTypeForField,
@@ -17,6 +18,7 @@ import {
   transformDataFrame,
   ValueLinkConfig,
 } from '@grafana/data';
+import { ReduceTransformerMode } from '@grafana/data/src/transformations/transformers/reduce';
 import { config } from '@grafana/runtime';
 import { AdHocFilterItem, Table } from '@grafana/ui';
 import { FILTER_FOR_OPERATOR, FILTER_OUT_OPERATOR } from '@grafana/ui/src/components/Table/types';
@@ -38,6 +40,7 @@ interface Props {
   onClickFilterLabel?: (key: string, value: string, frame?: DataFrame) => void;
   onClickFilterOutLabel?: (key: string, value: string, frame?: DataFrame) => void;
   logsFrame: LogsFrame | null;
+  uniqueLabels: boolean;
 }
 
 export function LogsTable(props: Props) {
@@ -130,6 +133,28 @@ export function LogsTable(props: Props) {
         });
       }
 
+      if (props.uniqueLabels) {
+        const uniqueFieldsTransform = getPartitionByValuesTransform(labelFilters, [
+          logsFrame.bodyField.name,
+          logsFrame.timeField.name,
+        ]);
+        if (uniqueFieldsTransform) {
+          transformations.push(uniqueFieldsTransform);
+          transformations.push({
+            id: DataTransformerID.reduce,
+            options: {
+              mode: ReduceTransformerMode.ReduceFields,
+              reducers: ['firstNotNull'],
+              includeTimeField: true,
+            },
+          });
+          transformations.push({
+            id: DataTransformerID.merge,
+            options: {},
+          });
+        }
+      }
+
       if (transformations.length > 0) {
         const transformedDataFrame = await lastValueFrom(transformDataFrame(transformations, [dataFrame]));
         const tableFrame = prepareTableFrame(transformedDataFrame[0]);
@@ -146,6 +171,7 @@ export function LogsTable(props: Props) {
     prepareTableFrame,
     logsFrame?.bodyField.name,
     logsFrame?.timeField.name,
+    props.uniqueLabels,
   ]);
 
   if (!tableFrame) {
@@ -237,6 +263,27 @@ function buildLabelFilters(columnsWithMeta: Record<string, FieldNameMeta>) {
     });
 
   return labelFilters;
+}
+
+export function getPartitionByValuesTransform(labelFilters: Record<string, number>, excludeFields: string[]) {
+  let labelFiltersInclude: string[] = [];
+
+  for (const key in labelFilters) {
+    if (!excludeFields.includes(key)) {
+      labelFiltersInclude.push(key);
+    }
+  }
+
+  if (labelFiltersInclude.length > 0) {
+    return {
+      id: DataTransformerID.partitionByValues,
+      options: {
+        keepFields: true,
+        fields: labelFiltersInclude,
+      },
+    };
+  }
+  return null;
 }
 
 function getLabelFiltersTransform(labelFilters: Record<string, number>) {

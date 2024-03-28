@@ -34,6 +34,7 @@ interface Props extends Themeable2 {
   onClickFilterLabel?: (key: string, value: string, frame?: DataFrame) => void;
   onClickFilterOutLabel?: (key: string, value: string, frame?: DataFrame) => void;
   datasourceType?: string;
+  uniqueLabels: boolean;
 }
 
 type ActiveFieldMeta = {
@@ -95,7 +96,7 @@ export function LogsTableWrap(props: Props) {
     if (logsFrame?.timeField.name && logsFrame?.bodyField.name && !propsColumns) {
       const defaultColumns = { 0: logsFrame?.timeField.name ?? '', 1: logsFrame?.bodyField.name ?? '' };
       updatePanelState({
-        columns: Object.values(defaultColumns),
+        columns: defaultColumns,
         visualisationType: 'table',
         labelFieldName: logsFrame?.getLabelFieldName() ?? undefined,
       });
@@ -363,6 +364,10 @@ export function LogsTableWrap(props: Props) {
       refId: currentDataFrame.refId,
       visualisationType: 'table',
       labelFieldName: logsFrame?.getLabelFieldName() ?? undefined,
+      specialFields: {
+        time: logsFrame?.timeField.name ?? undefined,
+        body: logsFrame?.bodyField.name ?? undefined,
+      },
     };
 
     // Update url state
@@ -543,6 +548,7 @@ export function LogsTableWrap(props: Props) {
           dataFrame={currentDataFrame}
           columnsWithMeta={columnsWithMeta}
           height={height}
+          uniqueLabels={props.uniqueLabels}
         />
       </div>
     </>

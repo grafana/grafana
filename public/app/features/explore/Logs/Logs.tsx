@@ -213,6 +213,7 @@ class UnthemedLogs extends PureComponent<Props, State> {
           visualisationType: logsPanelState.visualisationType ?? this.state.visualisationType,
           labelFieldName: logsPanelState.labelFieldName,
           refId: logsPanelState.refId ?? this.props.panelState?.logs?.refId,
+          specialFields: logsPanelState.specialFields ?? this.props.panelState?.logs?.specialFields,
         })
       );
     }
@@ -781,6 +782,21 @@ class UnthemedLogs extends PureComponent<Props, State> {
                 </div>
               </div>
             )}
+            {this.state.visualisationType === 'table' && hasData && (
+              <div className={styles.logOptions}>
+                <InlineFieldRow>
+                  <InlineField label="Unique labels" className={styles.horizontalInlineLabel} transparent>
+                    <InlineSwitch
+                      value={showLabels}
+                      onChange={this.onChangeLabels}
+                      className={styles.horizontalInlineSwitch}
+                      transparent
+                      id={`unique-labels_${exploreId}`}
+                    />
+                  </InlineField>
+                </InlineFieldRow>
+              </div>
+            )}
             <div ref={this.topLogsRef} />
             <LogsMetaRow
               logRows={logRows}
@@ -813,6 +829,7 @@ class UnthemedLogs extends PureComponent<Props, State> {
                   theme={theme}
                   updatePanelState={this.updatePanelState}
                   datasourceType={this.props.datasourceType}
+                  uniqueLabels={this.state.showLabels}
                 />
               </div>
             )}
