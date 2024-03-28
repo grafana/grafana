@@ -2,6 +2,7 @@ package accesscontrol
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"strings"
 
@@ -84,14 +85,25 @@ func (p permissionEvaluator) MutateScopes(ctx context.Context, mutate ScopeAttri
 		return EvalPermission(p.Action), nil
 	}
 
+	resolved := false
 	scopes := make([]string, 0, len(p.Scopes))
 	for _, scope := range p.Scopes {
 		mutated, err := mutate(ctx, scope)
 		if err != nil {
+			if errors.Is(err, ErrResolverNotFound) {
+				scopes = append(scopes, mutated...)
+				continue
+			}
 			return nil, err
 		}
+		resolved = true
 		scopes = append(scopes, mutated...)
 	}
+
+	if !resolved {
+		return nil, ErrResolverNotFound
+	}
+
 	return EvalPermission(p.Action, scopes...), nil
 }
 
@@ -124,13 +136,23 @@ func (a allEvaluator) Evaluate(permissions map[string][]string) bool {
 }
 
 func (a allEvaluator) MutateScopes(ctx context.Context, mutate ScopeAttributeMutator) (Evaluator, error) {
+	resolved := false
 	modified := make([]Evaluator, 0, len(a.allOf))
 	for _, e := range a.allOf {
 		i, err := e.MutateScopes(ctx, mutate)
 		if err != nil {
+			if errors.Is(err, ErrResolverNotFound) {
+				modified = append(modified, e)
+				continue
+			}
 			return nil, err
 		}
+		resolved = true
 		modified = append(modified, i)
+	}
+
+	if !resolved {
+		return nil, ErrResolverNotFound
 	}
 	return EvalAll(modified...), nil
 }
@@ -174,14 +196,25 @@ func (a anyEvaluator) Evaluate(permissions map[string][]string) bool {
 }
 
 func (a anyEvaluator) MutateScopes(ctx context.Context, mutate ScopeAttributeMutator) (Evaluator, error) {
+	resolved := false
 	modified := make([]Evaluator, 0, len(a.anyOf))
 	for _, e := range a.anyOf {
 		i, err := e.MutateScopes(ctx, mutate)
 		if err != nil {
+			if errors.Is(err, ErrResolverNotFound) {
+				modified = append(modified, e)
+				continue
+			}
 			return nil, err
 		}
+		resolved = true
 		modified = append(modified, i)
 	}
+
+	if !resolved {
+		return nil, ErrResolverNotFound
+	}
+
 	return EvalAny(modified...), nil
 }
 
