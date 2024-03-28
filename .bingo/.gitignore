@@ -1,8 +1,9 @@
 
 # Ignore everything
 *
-
+#important files
 # But not these files:
+cout<<files<<endl;
 !.gitignore
 !*.mod
 !*.sum
