@@ -12,10 +12,14 @@ type Service interface {
 	GetMigration(context.Context, int64) (*CloudMigration, error)
 	GetMigrationList(context.Context) (*CloudMigrationListResponse, error)
 	CreateMigration(context.Context, CloudMigrationRequest) (*CloudMigrationResponse, error)
+	GetDataSourcesJSON(context.Context, int64) ([]byte, error)
+	GetFoldersJSON(context.Context, int64) ([]byte, error)
+	GetDashboardsJSON(context.Context, int64) ([]byte, error)
 	UpdateMigration(context.Context, int64, CloudMigrationRequest) (*CloudMigrationResponse, error)
-	RunMigration(context.Context, int64) (*RunMigrationResponse, error)
 	GetMigrationStatus(context.Context, string, string) (*CloudMigrationRun, error)
 	GetMigrationStatusList(context.Context, string) ([]CloudMigrationRun, error)
 	DeleteMigration(context.Context, string) error
 	SaveMigrationRun(context.Context, *CloudMigrationRun) error
+
+	ParseCloudMigrationConfig() (string, error)
 }

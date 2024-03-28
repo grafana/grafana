@@ -42,10 +42,6 @@ func (s *NoopServiceImpl) UpdateMigration(ctx context.Context, id int64, cm clou
 	return nil, cloudmigration.ErrFeatureDisabledError
 }
 
-func (s *NoopServiceImpl) RunMigration(ctx context.Context, id int64) (*cloudmigration.RunMigrationResponse, error) {
-	return nil, cloudmigration.ErrFeatureDisabledError
-}
-
 func (s *NoopServiceImpl) GetMigrationStatus(ctx context.Context, id string, runID string) (*cloudmigration.CloudMigrationRun, error) {
 	return nil, cloudmigration.ErrFeatureDisabledError
 }
@@ -60,4 +56,20 @@ func (s *NoopServiceImpl) DeleteMigration(ctx context.Context, id string) error 
 
 func (s *NoopServiceImpl) SaveMigrationRun(ctx context.Context, cmr *cloudmigration.CloudMigrationRun) error {
 	return cloudmigration.ErrInternalNotImplementedError
+}
+
+func (s *NoopServiceImpl) GetDataSourcesJSON(ctx context.Context, id int64) ([]byte, error) {
+	return nil, cloudmigration.ErrFeatureDisabledError
+}
+
+func (s *NoopServiceImpl) GetFoldersJSON(ctx context.Context, id int64) ([]byte, error) {
+	return nil, cloudmigration.ErrFeatureDisabledError
+}
+
+func (s *NoopServiceImpl) GetDashboardsJSON(ctx context.Context, id int64) ([]byte, error) {
+	return nil, cloudmigration.ErrFeatureDisabledError
+}
+
+func (s *NoopServiceImpl) ParseCloudMigrationConfig() (string, error) {
+	return "", cloudmigration.ErrFeatureDisabledError
 }

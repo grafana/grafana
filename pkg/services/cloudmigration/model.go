@@ -125,9 +125,3 @@ type MigrateDataResponseItemDTO struct {
 	Status ItemStatus `json:"status"`
 	Error  string     `json:"error,omitempty"`
 }
-
-type RunMigrationResponse struct {
-	DataSources []byte `json:"dataSources"`
-	Folders     []byte `json:"folders"`
-	Dashboards  []byte `json:"dashboards"`
-}

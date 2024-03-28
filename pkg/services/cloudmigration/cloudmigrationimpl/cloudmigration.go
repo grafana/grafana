@@ -249,24 +249,10 @@ func (s *Service) UpdateMigration(ctx context.Context, id int64, cm cloudmigrati
 	return nil, nil
 }
 
-func (s *Service) RunMigration(ctx context.Context, id int64) (*cloudmigration.RunMigrationResponse, error) {
-	var result cloudmigration.RunMigrationResponse
-
+func (s *Service) GetDataSourcesJSON(ctx context.Context, id int64) ([]byte, error) {
 	dataSources, err := s.dsService.GetAllDataSources(ctx, &datasources.GetAllDataSourcesQuery{})
 	if err != nil {
 		s.log.Error("Failed to get all datasources", "err", err)
-		return nil, err
-	}
-
-	folders, err := s.folderService.GetFolders(ctx, folder.GetFoldersQuery{})
-	if err != nil {
-		s.log.Error("Failed to get all folders", "err", err)
-		return nil, err
-	}
-
-	dashs, err := s.dashboarService.GetAllDashboards(ctx)
-	if err != nil {
-		s.log.Error("Failed to get all dashboards", "err", err)
 		return nil, err
 	}
 
@@ -297,9 +283,18 @@ func (s *Service) RunMigration(ctx context.Context, id int64) (*cloudmigration.R
 		}
 		dataSourcesToMarshal = append(dataSourcesToMarshal, dataSourceCmd)
 	}
-	result.DataSources, err = json.Marshal(dataSourcesToMarshal)
+	result, err := json.Marshal(dataSourcesToMarshal)
 	if err != nil {
 		s.log.Error("Failed to marshal datasources", "err", err)
+		return nil, err
+	}
+	return result, err
+}
+
+func (s *Service) GetFoldersJSON(ctx context.Context, id int64) ([]byte, error) {
+	folders, err := s.folderService.GetFolders(ctx, folder.GetFoldersQuery{})
+	if err != nil {
+		s.log.Error("Failed to get all folders", "err", err)
 		return nil, err
 	}
 
@@ -307,9 +302,19 @@ func (s *Service) RunMigration(ctx context.Context, id int64) (*cloudmigration.R
 	for _, folder := range folders {
 		allFoldersToMarshal = append(allFoldersToMarshal, *folder)
 	}
-	result.Folders, err = json.Marshal(allFoldersToMarshal)
+
+	result, err := json.Marshal(allFoldersToMarshal)
 	if err != nil {
 		s.log.Error("Failed to marshal folders", "err", err)
+		return nil, err
+	}
+	return result, nil
+}
+
+func (s *Service) GetDashboardsJSON(ctx context.Context, id int64) ([]byte, error) {
+	dashs, err := s.dashboarService.GetAllDashboards(ctx)
+	if err != nil {
+		s.log.Error("Failed to get all dashboards", "err", err)
 		return nil, err
 	}
 
@@ -317,26 +322,13 @@ func (s *Service) RunMigration(ctx context.Context, id int64) (*cloudmigration.R
 	for _, dashboard := range dashs {
 		allDashboardsToMarshal = append(allDashboardsToMarshal, *dashboard)
 	}
-	result.Dashboards, err = json.Marshal(allDashboardsToMarshal)
+	result, err := json.Marshal(allDashboardsToMarshal)
 	if err != nil {
 		s.log.Error("Failed to marshal dashboards", "err", err)
 		return nil, err
 	}
 
-	// save migration run in DB table
-	err = s.SaveMigrationRun(ctx, &cloudmigration.CloudMigrationRun{
-		ID: id,
-		Result: cloudmigration.MigrationResult{
-			Status:  "success",
-			Message: "Migration run successful",
-		},
-	})
-	if err != nil {
-		s.log.Error("Failed to save migration run", "err", err)
-		return &result, err
-	}
-
-	return &result, nil
+	return result, nil
 }
 
 func (s *Service) SaveMigrationRun(ctx context.Context, cmr *cloudmigration.CloudMigrationRun) error {
@@ -362,11 +354,11 @@ func (s *Service) DeleteMigration(ctx context.Context, id string) error {
 	return nil
 }
 
-func (s *Service) ParseCloudMigrationConfig(cfg *setting.Cfg) (string, error) {
-	if cfg == nil {
+func (s *Service) ParseCloudMigrationConfig() (string, error) {
+	if s.cfg == nil {
 		return "", fmt.Errorf("cfg cannot be nil")
 	}
-	section := cfg.Raw.Section("cloud_migration")
+	section := s.cfg.Raw.Section("cloud_migration")
 	domain := section.Key("domain").MustString("")
 	if domain != "" {
 		s.log.Warn("cloudmigration domain not set")
