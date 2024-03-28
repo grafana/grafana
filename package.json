@@ -214,7 +214,7 @@
     "sass-loader": "14.1.1",
     "style-loader": "3.3.4",
     "stylelint": "16.3.1",
-    "stylelint-config-sass-guidelines": "11.0.0",
+    "stylelint-config-sass-guidelines": "11.1.0",
     "terser-webpack-plugin": "5.3.10",
     "testing-library-selector": "0.3.1",
     "tracelib": "1.0.1",
