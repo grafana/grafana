@@ -12,7 +12,7 @@ import { PromQueryEditorProps } from '../../components/types';
 import { QueryEditorMode } from '../shared/types';
 
 interface Props {
-  datasourceUid: Pick<PromQueryEditorProps, 'datasource'>['datasource']['uid'];
+  datasourceUid: PromQueryEditorProps['datasource']['uid'];
   editorMode: QueryEditorMode;
 }
 
@@ -32,10 +32,10 @@ export function PromQueryCodeEditorAutocompleteInfo(props: Readonly<Props>) {
       }
     };
 
-    window.addEventListener(CODE_MODE_SUGGESTIONS_INCOMPLETE_EVENT, handleSuggestionsIncompleteEvent);
+    document.addEventListener(CODE_MODE_SUGGESTIONS_INCOMPLETE_EVENT, handleSuggestionsIncompleteEvent);
 
     return () => {
-      window.removeEventListener(CODE_MODE_SUGGESTIONS_INCOMPLETE_EVENT, handleSuggestionsIncompleteEvent);
+      document.removeEventListener(CODE_MODE_SUGGESTIONS_INCOMPLETE_EVENT, handleSuggestionsIncompleteEvent);
     };
   }, [props.datasourceUid]);
 
