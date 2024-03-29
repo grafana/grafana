@@ -199,6 +199,8 @@ func (s *Service) findAccessPolicyByName(ctx context.Context, regionSlug, access
 }
 
 func (s *Service) ValidateToken(ctx context.Context, cm cloudmigration.CloudMigration) error {
+	ctx, span := s.tracer.Start(ctx, "CloudMigrationService.ValidateToken")
+	defer span.End()
 	logger := s.log.FromContext(ctx)
 
 	// get CMS path from the config
@@ -297,6 +299,11 @@ func (s *Service) CreateMigration(ctx context.Context, cmd cloudmigration.CloudM
 	}
 
 	migration := token.ToMigration()
+	// validate token against cms before saving
+	if err := s.ValidateToken(ctx, migration); err != nil {
+		return nil, fmt.Errorf("token validation: %w", err)
+	}
+
 	if err := s.store.CreateMigration(ctx, migration); err != nil {
 		return nil, fmt.Errorf("error creating migration: %w", err)
 	}
