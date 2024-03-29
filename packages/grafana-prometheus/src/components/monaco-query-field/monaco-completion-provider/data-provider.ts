@@ -63,8 +63,8 @@ export class DataProvider {
     this.getLabelValues = this.languageProvider.getLabelValues.bind(this.languageProvider);
   }
 
-  getHistory(): Promise<string[]> {
-    return Promise.resolve(this.historyProvider.map((h) => h.query.expr).filter((expr) => expr !== undefined));
+  getHistory(): string[] {
+    return this.historyProvider.map((h) => h.query.expr).filter((expr) => expr !== undefined);
   }
 
   getAllMetricNames(): string[] {

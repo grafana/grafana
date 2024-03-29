@@ -24,7 +24,7 @@ type Completion = {
 const metricNamesSearchClient = new UFuzzy({ intraMode: 1 });
 
 // we order items like: history, functions, metrics
-async function getAllMetricNamesCompletions(dataProvider: DataProvider): Promise<Completion[]> {
+function getAllMetricNamesCompletions(dataProvider: DataProvider): Completion[] {
   let metricNames = dataProvider.getAllMetricNames();
 
   if (
@@ -63,7 +63,7 @@ const FUNCTION_COMPLETIONS: Completion[] = FUNCTIONS.map((f) => ({
 }));
 
 async function getAllFunctionsAndMetricNamesCompletions(dataProvider: DataProvider): Promise<Completion[]> {
-  const metricNames = await getAllMetricNamesCompletions(dataProvider);
+  const metricNames = getAllMetricNamesCompletions(dataProvider);
 
   return [...FUNCTION_COMPLETIONS, ...metricNames];
 }
@@ -84,10 +84,10 @@ const DURATION_COMPLETIONS: Completion[] = [
   insertText: text,
 }));
 
-async function getAllHistoryCompletions(dataProvider: DataProvider): Promise<Completion[]> {
+function getAllHistoryCompletions(dataProvider: DataProvider): Completion[] {
   // function getAllHistoryCompletions(queryHistory: PromHistoryItem[]): Completion[] {
   // NOTE: the typescript types are wrong. historyItem.query.expr can be undefined
-  const allHistory = await dataProvider.getHistory();
+  const allHistory = dataProvider.getHistory();
   // FIXME: find a better history-limit
   return allHistory.slice(0, 10).map((expr) => ({
     type: 'HISTORY',
@@ -118,7 +118,7 @@ async function getLabelNames(
 ): Promise<string[]> {
   if (metric === undefined && otherLabels.length === 0) {
     // if there is no filtering, we have to use a special endpoint
-    return dataProvider.getAllLabelNames();
+    return Promise.resolve(dataProvider.getAllLabelNames());
   } else {
     const selector = makeSelector(metric, otherLabels);
     return await dataProvider.getSeriesLabels(selector, otherLabels);
@@ -187,19 +187,19 @@ async function getLabelValuesForMetricCompletions(
   }));
 }
 
-export async function getCompletions(situation: Situation, dataProvider: DataProvider): Promise<Completion[]> {
+export function getCompletions(situation: Situation, dataProvider: DataProvider): Promise<Completion[]> {
   switch (situation.type) {
     case 'IN_DURATION':
-      return DURATION_COMPLETIONS;
+      return Promise.resolve(DURATION_COMPLETIONS);
     case 'IN_FUNCTION':
       return getAllFunctionsAndMetricNamesCompletions(dataProvider);
     case 'AT_ROOT': {
       return getAllFunctionsAndMetricNamesCompletions(dataProvider);
     }
     case 'EMPTY': {
-      const metricNames = await getAllMetricNamesCompletions(dataProvider);
-      const historyCompletions = await getAllHistoryCompletions(dataProvider);
-      return [...historyCompletions, ...FUNCTION_COMPLETIONS, ...metricNames];
+      const metricNames = getAllMetricNamesCompletions(dataProvider);
+      const historyCompletions = getAllHistoryCompletions(dataProvider);
+      return Promise.resolve([...historyCompletions, ...FUNCTION_COMPLETIONS, ...metricNames]);
     }
     case 'IN_LABEL_SELECTOR_NO_LABEL_NAME':
       return getLabelNamesForSelectorCompletions(situation.metricName, situation.otherLabels, dataProvider);
