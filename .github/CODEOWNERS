@@ -439,7 +439,6 @@
 /.yarn @grafana/frontend-ops
 /.yarnrc.yml @grafana/frontend-ops
 /yarn.lock @grafana/frontend-ops
-/lerna.json @grafana/frontend-ops
 /.prettierrc.js @grafana/frontend-ops
 /.vim @zoltanbedi
 /jest.config.js @grafana/frontend-ops
