@@ -12,5 +12,35 @@
       "outputs": ["{projectRoot}/dist"]
     }
   },
+  "release": {
+    "projectsRelationship": "independent",
+    "groups": {
+      "fixed": {
+        "projectsRelationship": "fixed",
+        "projects": [
+          "packages/grafana-data",
+          "packages/grafana-e2e",
+          "packages/grafana-e2e-selectors",
+          "packages/grafana-eslint-rules",
+          "packages/grafana-flamegraph",
+          "packages/grafana-o11y-ds-frontend",
+          "packages/grafana-plugin-configs",
+          "packages/grafana-prometheus",
+          "packages/grafana-runtime",
+          "packages/grafana-schema",
+          "packages/grafana-sql",
+          "packages/grafana-ui",
+          "public/app/plugins/datasource/azuremonitor",
+          "public/app/plugins/datasource/cloud-monitoring",
+          "public/app/plugins/datasource/grafana-pyroscope-datasource",
+          "public/app/plugins/datasource/grafana-testdata-datasource",
+          "public/app/plugins/datasource/jaeger",
+          "public/app/plugins/datasource/parca",
+          "public/app/plugins/datasource/tempo",
+          "public/app/plugins/datasource/zipkin"
+        ]
+      }
+    }
+  },
   "defaultBase": "main"
 }
