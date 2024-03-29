@@ -236,7 +236,8 @@ func (s *Service) CreateMigration(ctx context.Context, cmd cloudmigration.CloudM
 		return nil, fmt.Errorf("invalid token") // don't want to leak info here
 	}
 
-	if err := s.store.CreateMigration(ctx, token); err != nil {
+	migration := token.ToMigration()
+	if err := s.store.CreateMigration(ctx, migration); err != nil {
 		return nil, fmt.Errorf("error creating migration: %w", err)
 	}
 
