@@ -55,7 +55,7 @@ export type PromOrLokiQuery = PromQuery | LokiQuery;
 export const MANUAL_ROUTING_KEY = 'grafana.alerting.manualRouting';
 
 // even if the min interval is < 1m we should default to 1m, but allow arbitrary values for minInterval > 1m
-const GROUP_EVALUATION_MIN_INTERVAL_MS = safeParsePrometheusDuration(config.unifiedAlerting.minInterval);
+const GROUP_EVALUATION_MIN_INTERVAL_MS = safeParsePrometheusDuration(config.unifiedAlerting?.minInterval ?? '10s');
 const GROUP_EVALUATION_INTERVAL_LOWER_BOUND = safeParsePrometheusDuration('1m');
 const GROUP_EVALUATION_INTERVAL_UPPER_BOUND = Infinity;
 
@@ -82,7 +82,7 @@ export const getDefaultFormValues = (): RuleFormValues => {
     condition: '',
     noDataState: GrafanaAlertStateDecision.NoData,
     execErrState: GrafanaAlertStateDecision.Error,
-    evaluateFor: '',
+    evaluateFor: DEFAULT_GROUP_EVALUATION_INTERVAL,
     evaluateEvery: DEFAULT_GROUP_EVALUATION_INTERVAL,
     manualRouting: getDefautManualRouting(), // we default to true if the feature toggle is enabled and the user hasn't set local storage to false
     contactPoints: {},

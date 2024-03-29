@@ -16,12 +16,13 @@ import { rulesInSameGroupHaveInvalidFor, updateLotexNamespaceAndGroupAction } fr
 import { checkEvaluationIntervalGlobalLimit } from '../../utils/config';
 import { getRulesSourceName, GRAFANA_RULES_SOURCE_NAME } from '../../utils/datasource';
 import { initialAsyncRequestState } from '../../utils/redux';
+import { DEFAULT_GROUP_EVALUATION_INTERVAL } from '../../utils/rule-form';
 import { AlertInfo, getAlertInfo, isRecordingRulerRule } from '../../utils/rules';
 import { formatPrometheusDuration, parsePrometheusDuration, safeParsePrometheusDuration } from '../../utils/time';
 import { DynamicTable, DynamicTableColumnProps, DynamicTableItemProps } from '../DynamicTable';
 import { EvaluationIntervalLimitExceeded } from '../InvalidIntervalWarning';
 import { decodeGrafanaNamespace, encodeGrafanaNamespace } from '../expressions/util';
-import { EvaluationGroupQuickPick, QUICK_PICK_OPTIONS } from '../rule-editor/EvaluationGroupQuickPick';
+import { EvaluationGroupQuickPick } from '../rule-editor/EvaluationGroupQuickPick';
 import { MIN_TIME_RANGE_STEP_S } from '../rule-editor/GrafanaEvaluationBehavior';
 
 const ITEMS_PER_PAGE = 10;
@@ -179,15 +180,13 @@ export function EditCloudGroupModal(props: ModalProps): React.ReactElement {
     useUnifiedAlertingSelector((state) => state.updateLotexNamespaceAndGroup) ?? initialAsyncRequestState;
   const notifyApp = useAppNotification();
 
-  const smallestGroupEvaluationInterval = QUICK_PICK_OPTIONS[0];
-
   const defaultValues = useMemo(
     (): FormValues => ({
       namespaceName: decodeGrafanaNamespace(namespace).name,
       groupName: group.name,
-      groupInterval: group.interval ?? smallestGroupEvaluationInterval,
+      groupInterval: group.interval ?? DEFAULT_GROUP_EVALUATION_INTERVAL,
     }),
-    [namespace, group.name, group.interval, smallestGroupEvaluationInterval]
+    [namespace, group.name, group.interval]
   );
 
   const rulesSourceName = getRulesSourceName(namespace.rulesSource);
@@ -322,7 +321,7 @@ export function EditCloudGroupModal(props: ModalProps): React.ReactElement {
               <Stack direction="column">
                 <Input
                   id="groupInterval"
-                  placeholder={smallestGroupEvaluationInterval}
+                  placeholder={DEFAULT_GROUP_EVALUATION_INTERVAL}
                   {...register('groupInterval', evaluateEveryValidationOptions(rulesWithoutRecordingRules))}
                 />
                 <EvaluationGroupQuickPick
