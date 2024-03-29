@@ -134,7 +134,6 @@ export const StatusHistoryPanel = ({
                   );
                 }}
                 maxWidth={options.tooltip.maxWidth}
-                maxHeight={options.tooltip.maxHeight}
               />
             )}
             <AnnotationsPlugin2
