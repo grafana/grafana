@@ -102,6 +102,7 @@ export const Components = {
         },
         code: {
           queryField: 'data-testid prometheus query field',
+          metricsCountInfo: 'data-testid metrics count disclaimer',
           metricsBrowser: {
             openButton: 'data-testid open metrics browser',
             selectMetric: 'data-testid select a metric',

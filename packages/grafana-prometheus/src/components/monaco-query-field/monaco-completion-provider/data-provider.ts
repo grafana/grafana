@@ -5,6 +5,13 @@ import type { Monaco } from '@grafana/ui';
 import PromQlLanguageProvider from '../../../language_provider';
 import { PromQuery } from '../../../types';
 
+export const CODE_MODE_SUGGESTIONS_INCOMPLETE_EVENT = 'codeModeSuggestionsIncomplete';
+
+export type SuggestionsIncompleteEvent = CustomEvent<{
+  limit: number;
+  datasourceUid: string;
+}>;
+
 export interface Metric {
   name: string;
   help: string;
@@ -65,6 +72,11 @@ export class DataProvider {
 
   private enableAutocompleteSuggestionsUpdate(): void {
     this.suggestionsIncomplete = true;
+    dispatchEvent(
+      new CustomEvent(CODE_MODE_SUGGESTIONS_INCOMPLETE_EVENT, {
+        detail: { limit: this.metricNamesSuggestionLimit, datasourceUid: this.languageProvider.datasource.uid },
+      })
+    );
   }
 
   private setInputInRange(textInput: string): void {
