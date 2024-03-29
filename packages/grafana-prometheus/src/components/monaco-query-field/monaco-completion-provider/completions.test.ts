@@ -23,6 +23,16 @@ const dataProviderSettings = {
   historyProvider: history.map((expr, idx) => ({ query: { expr, refId: 'some-ref' }, ts: idx })),
 } as unknown as DataProviderParams;
 let dataProvider = new DataProvider(dataProviderSettings);
+const metrics = {
+  beyondLimit: Array.from(Array(SUGGESTIONS_LIMIT + 1), (_, i) => ({
+    name: `metric_name_${i}`,
+    type: 'type',
+    help: 'metric_name help',
+  })),
+  get atLimit() {
+    return this.beyondLimit.slice(0, SUGGESTIONS_LIMIT - 1);
+  },
+};
 
 beforeEach(() => {
   dataProvider = new DataProvider(dataProviderSettings);
@@ -50,16 +60,9 @@ function getSuggestionCountForSituation(situationType: MetricNameSituation, metr
 }
 
 describe.each(metricNameCompletionSituations)('metric name completions in situation %s', (situationType) => {
-  it('should return completions for all metric names when the number of metric names is below the suggestion limit', async () => {
-    const metricNamesCount = SUGGESTIONS_LIMIT - 1;
-    jest.spyOn(dataProvider, 'getAllMetricNames').mockResolvedValue(
-      Array.from(Array(metricNamesCount), (_, i) => ({
-        name: `metric_name_${i}`,
-        type: 'type',
-        help: 'metric_name help',
-      }))
-    );
-    const expectedCompletionsCount = getSuggestionCountForSituation(situationType, metricNamesCount);
+  it('should return completions for all metric names when the number of metric names is at or below the limit', async () => {
+    jest.spyOn(dataProvider, 'getAllMetricNames').mockResolvedValue(metrics.atLimit);
+    const expectedCompletionsCount = getSuggestionCountForSituation(situationType, metrics.atLimit.length);
     const situation: Situation = {
       type: situationType,
     };
@@ -75,19 +78,12 @@ describe.each(metricNameCompletionSituations)('metric name completions in situat
     expect(completions?.length).toBeLessThanOrEqual(expectedCompletionsCount);
   });
 
-  it('should limit completions for metric names when the number of metric names is above the suggestion limit', async () => {
-    const metricNamesCount = SUGGESTIONS_LIMIT + 1;
+  it('should limit completions for metric names when the number of metric names is greater than the limit', async () => {
     const situation: Situation = {
       type: situationType,
     };
-    const expectedCompletionsCount = getSuggestionCountForSituation(situationType, metricNamesCount);
-    jest.spyOn(dataProvider, 'getAllMetricNames').mockResolvedValue(
-      Array.from(Array(metricNamesCount), (_, i) => ({
-        name: `metric_name_${i}`,
-        type: 'type',
-        help: 'metric_name help',
-      }))
-    );
+    const expectedCompletionsCount = getSuggestionCountForSituation(situationType, metrics.beyondLimit.length);
+    jest.spyOn(dataProvider, 'getAllMetricNames').mockResolvedValue(metrics.beyondLimit);
 
     // No text input
     dataProvider.monacoSettings.setInputInRange('');
@@ -100,43 +96,25 @@ describe.each(metricNameCompletionSituations)('metric name completions in situat
     expect(completions?.length).toBeLessThanOrEqual(expectedCompletionsCount);
   });
 
-  it('should enable autocomplete suggestions update when the number of metric names is above the suggestion limit and there is text input', async () => {
+  it('should enable autocomplete suggestions update when the number of metric names is greater than the limit and there is text input', async () => {
     const situation: Situation = {
       type: situationType,
     };
 
     // Do not cross the metrics names threshold
-    jest.spyOn(dataProvider, 'getAllMetricNames').mockResolvedValueOnce(
-      Array.from(Array(SUGGESTIONS_LIMIT - 1), (_, i) => ({
-        name: `metric_name_${i}`,
-        type: 'type',
-        help: 'metric_name help',
-      }))
-    );
+    jest.spyOn(dataProvider, 'getAllMetricNames').mockResolvedValueOnce(metrics.atLimit);
     dataProvider.monacoSettings.setInputInRange('name_1');
     await getCompletions(situation, dataProvider);
     expect(dataProvider.monacoSettings.suggestionsIncomplete).toBe(false);
 
     // Cross the metric names threshold, but without text input
-    jest.spyOn(dataProvider, 'getAllMetricNames').mockResolvedValueOnce(
-      Array.from(Array(SUGGESTIONS_LIMIT + 1), (_, i) => ({
-        name: `metric_name_${i}`,
-        type: 'type',
-        help: 'metric_name help',
-      }))
-    );
+    jest.spyOn(dataProvider, 'getAllMetricNames').mockResolvedValueOnce(metrics.beyondLimit);
     dataProvider.monacoSettings.setInputInRange('');
     await getCompletions(situation, dataProvider);
     expect(dataProvider.monacoSettings.suggestionsIncomplete).toBe(false);
 
     // Cross the metric names threshold, with text input
-    jest.spyOn(dataProvider, 'getAllMetricNames').mockResolvedValueOnce(
-      Array.from(Array(SUGGESTIONS_LIMIT + 1), (_, i) => ({
-        name: `metric_name_${i}`,
-        type: 'type',
-        help: 'metric_name help',
-      }))
-    );
+    jest.spyOn(dataProvider, 'getAllMetricNames').mockResolvedValueOnce(metrics.beyondLimit);
     dataProvider.monacoSettings.setInputInRange('name_1');
     await getCompletions(situation, dataProvider);
     expect(dataProvider.monacoSettings.suggestionsIncomplete).toBe(true);
