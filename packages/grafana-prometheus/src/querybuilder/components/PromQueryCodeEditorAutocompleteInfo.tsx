@@ -22,9 +22,13 @@ export function PromQueryCodeEditorAutocompleteInfo(props: Readonly<Props>) {
 
   useEffect(() => {
     const handleSuggestionsIncompleteEvent = (e: Event) => {
-      if ((e as SuggestionsIncompleteEvent).detail.datasourceUid === props.datasourceUid) {
+      if (!isCustomEvent(e)) {
+        return;
+      }
+
+      if (e.detail.datasourceUid === props.datasourceUid) {
         setAutocompleteLimitExceeded(true);
-        setAutocompleteLimit((e as SuggestionsIncompleteEvent).detail.limit.toString());
+        setAutocompleteLimit(e.detail.limit.toString());
       }
     };
 
@@ -60,4 +64,8 @@ export function PromQueryCodeEditorAutocompleteInfo(props: Readonly<Props>) {
       </Stack>
     </div>
   );
+}
+
+function isCustomEvent(event: Event): event is CustomEvent {
+  return 'detail' in event;
 }
