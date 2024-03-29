@@ -22,7 +22,7 @@ import { isGrafanaRulerRule } from '../../utils/rules';
 import { ProvisioningBadge } from '../Provisioning';
 import { evaluateEveryValidationOptions } from '../rules/EditRuleGroupModal';
 
-import { EvaluationGroupQuickPick } from './EvaluationGroupQuickPick';
+import { EvaluationGroupQuickPick, QUICK_PICK_OPTIONS } from './EvaluationGroupQuickPick';
 import { containsSlashes, Folder, RuleFolderPicker } from './RuleFolderPicker';
 import { checkForPathSeparator } from './util';
 
@@ -357,8 +357,9 @@ function EvaluationGroupCreationModal({
     onClose();
   };
 
+  const smallestGroupEvaluationInterval = QUICK_PICK_OPTIONS[0];
   const formAPI = useForm({
-    defaultValues: { group: '', evaluateEvery: '' },
+    defaultValues: { group: '', evaluateEvery: smallestGroupEvaluationInterval },
     mode: 'onChange',
     shouldFocusError: true,
   });
@@ -366,7 +367,7 @@ function EvaluationGroupCreationModal({
   const { register, handleSubmit, formState, setValue, getValues, watch: watchGroupFormValues } = formAPI;
   const evaluationInterval = watchGroupFormValues('evaluateEvery');
 
-  const setPendingPeriod = (interval: string) => {
+  const setEvaluationInterval = (interval: string) => {
     setValue('evaluateEvery', interval, { shouldValidate: true });
   };
 
@@ -385,7 +386,7 @@ function EvaluationGroupCreationModal({
           <Field
             label={<Label htmlFor={'group'}>Evaluation group name</Label>}
             error={formState.errors.group?.message}
-            invalid={Boolean(formState.errors.group) ? true : undefined}
+            invalid={Boolean(formState.errors.group)}
           >
             <Input
               className={styles.formInput}
@@ -400,10 +401,7 @@ function EvaluationGroupCreationModal({
             error={formState.errors.evaluateEvery?.message}
             invalid={Boolean(formState.errors.evaluateEvery) ? true : undefined}
             label={
-              <Label
-                htmlFor={evaluateEveryId}
-                description="How often is the rule evaluated. Applies to every rule within the group."
-              >
+              <Label htmlFor={evaluateEveryId} description="How often all rules in the group are evaluated.">
                 Evaluation interval
               </Label>
             }
@@ -412,11 +410,11 @@ function EvaluationGroupCreationModal({
               <Input
                 className={styles.formInput}
                 id={evaluateEveryId}
-                placeholder="e.g. 5m"
+                placeholder={smallestGroupEvaluationInterval}
                 {...register('evaluateEvery', evaluateEveryValidationOptions(groupRules))}
               />
               <Stack direction="row" alignItems="flex-end">
-                <EvaluationGroupQuickPick currentInterval={evaluationInterval} onSelect={setPendingPeriod} />
+                <EvaluationGroupQuickPick currentInterval={evaluationInterval} onSelect={setEvaluationInterval} />
               </Stack>
             </Stack>
           </Field>

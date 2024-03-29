@@ -21,7 +21,7 @@ describe('EvaluationGroupQuickPick', () => {
       expect(screen.queryByRole('option', { name })).not.toBeInTheDocument();
     });
 
-    expect(screen.getByRole('option', { name: '10m' })).toHaveAttribute('aria-selected', 'true');
+    expect(screen.getByRole('option', { selected: true })).toHaveTextContent('10m');
 
     await userEvent.click(screen.getByRole('option', { name: '30m' }));
     expect(onSelect).toHaveBeenCalledWith('30m');

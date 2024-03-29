@@ -21,7 +21,7 @@ describe('PendingPeriodQuickPick', () => {
       expect(screen.queryByRole('option', { name })).not.toBeInTheDocument();
     });
 
-    expect(screen.getByRole('option', { name: '2m' })).toHaveAttribute('aria-selected', 'true');
+    expect(screen.getByRole('option', { selected: true })).toHaveTextContent('2m');
 
     await userEvent.click(screen.getByRole('option', { name: '3m' }));
     expect(onSelect).toHaveBeenCalledWith('3m');

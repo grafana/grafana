@@ -38,7 +38,7 @@ export const getEvaluationGroupOptions = (minInterval = '10s') => {
   return [...head, ...tail].map(formatPrometheusDuration);
 };
 
-const QUICK_PICK_OPTIONS = getEvaluationGroupOptions(config.unifiedAlerting.minInterval);
+export const QUICK_PICK_OPTIONS = getEvaluationGroupOptions(config.unifiedAlerting.minInterval);
 
 interface Props {
   currentInterval: string;

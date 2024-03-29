@@ -10,12 +10,11 @@ interface Props {
   onSelect: (interval: string) => void;
 }
 
-export function PendingPeriodQuickPick({ selectedPendingPeriod, groupEvaluationInterval, onSelect }: Props) {
-  // @TODO maybe safe parse?
+export function getPendingPeriodQuickOptions(groupEvaluationInterval: string): string[] {
   const groupEvaluationIntervalMillis = safeParsePrometheusDuration(groupEvaluationInterval);
 
   // we generate the quick selection based on the group's evaluation interval
-  const PENDING_PERIOD_QUICK_OPTIONS: number[] = [
+  const options: number[] = [
     0,
     groupEvaluationIntervalMillis * 1,
     groupEvaluationIntervalMillis * 2,
@@ -24,24 +23,28 @@ export function PendingPeriodQuickPick({ selectedPendingPeriod, groupEvaluationI
     groupEvaluationIntervalMillis * 5,
   ];
 
-  const isQuickSelectionActive = (milliseconds: number) => {
-    return safeParsePrometheusDuration(selectedPendingPeriod) === milliseconds;
-  };
+  return options.map(formatPrometheusDuration);
+}
+
+export function PendingPeriodQuickPick({ selectedPendingPeriod, groupEvaluationInterval, onSelect }: Props) {
+  const isQuickSelectionActive = (duration: string) => selectedPendingPeriod === duration;
+
+  const options = getPendingPeriodQuickOptions(groupEvaluationInterval);
 
   return (
     <Stack direction="row" gap={0.5} role="listbox">
-      {PENDING_PERIOD_QUICK_OPTIONS.map((milliseconds) => (
+      {options.map((duration) => (
         <Button
           role="option"
-          aria-selected={isQuickSelectionActive(milliseconds)}
-          key={milliseconds}
-          variant={isQuickSelectionActive(milliseconds) ? 'primary' : 'secondary'}
+          aria-selected={isQuickSelectionActive(duration)}
+          key={duration}
+          variant={isQuickSelectionActive(duration) ? 'primary' : 'secondary'}
           size="sm"
           onClick={() => {
-            onSelect(formatPrometheusDuration(milliseconds));
+            onSelect(duration);
           }}
         >
-          {milliseconds === 0 ? 'None' : formatPrometheusDuration(milliseconds)}
+          {duration === '0s' ? 'None' : duration}
         </Button>
       ))}
     </Stack>
