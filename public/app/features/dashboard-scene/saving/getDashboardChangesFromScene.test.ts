@@ -45,7 +45,7 @@ describe('getDashboardChangesFromScene', () => {
 
     const result = getDashboardChangesFromScene(dashboard, false);
     expect(result.hasChanges).toBe(true);
-    expect(result.diffCount).toBe(0);
+    expect(result.diffCount).toBe(0); // Diff count is 0 because the diff contemplate only the model
     expect(result.hasFolderChanges).toBe(true);
   });
 
