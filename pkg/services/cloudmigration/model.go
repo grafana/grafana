@@ -12,12 +12,16 @@ var (
 	ErrMigrationNotFound           = errutil.NotFound("cloudmigrations.notFound", errutil.WithPublicMessage("Migration not found"))
 )
 
+// cloud migration api dtos
 type CloudMigration struct {
-	ID        int64     `json:"id" xorm:"pk autoincr 'id'"`
-	AuthToken string    `json:"authToken"`
-	Stack     string    `json:"stack"`
-	Created   time.Time `json:"created"`
-	Updated   time.Time `json:"updated"`
+	ID          int64     `json:"id" xorm:"pk autoincr 'id'"`
+	AuthToken   string    `json:"authToken"`
+	Stack       string    `json:"stack"`
+	StackID     int       `json:"stackID" xorm:"stack_id"`
+	RegionSlug  string    `json:"regionSlug"`
+	ClusterSlug string    `json:"clusterSlug"`
+	Created     time.Time `json:"created"`
+	Updated     time.Time `json:"updated"`
 }
 
 type MigratedResourceResult struct {
@@ -80,6 +84,8 @@ type MigrateDatasourcesResponseDTO struct {
 	DatasourcesMigrated int `json:"datasourcesMigrated"`
 }
 
+// access token
+
 type CreateAccessTokenResponse struct {
 	Token string
 }
@@ -87,6 +93,30 @@ type CreateAccessTokenResponse struct {
 type CreateAccessTokenResponseDTO struct {
 	Token string `json:"token"`
 }
+
+type Base64EncodedTokenPayload struct {
+	Token    string
+	Instance Base64HGInstance
+}
+
+func (p Base64EncodedTokenPayload) ToMigration() CloudMigration {
+	return CloudMigration{
+		AuthToken:   p.Token,
+		Stack:       p.Instance.Slug,
+		StackID:     p.Instance.StackID,
+		RegionSlug:  p.Instance.RegionSlug,
+		ClusterSlug: p.Instance.ClusterSlug,
+	}
+}
+
+type Base64HGInstance struct {
+	StackID     int
+	Slug        string
+	RegionSlug  string
+	ClusterSlug string
+}
+
+// dtos for cms api
 
 type MigrateDataType string
 
