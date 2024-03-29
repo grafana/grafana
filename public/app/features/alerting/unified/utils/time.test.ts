@@ -35,6 +35,7 @@ describe('parsePrometheusDuration', () => {
 
 describe('formatPrometheusDuration', () => {
   const tests: Array<[string, number]> = [
+    ['0s', 0],
     ['1ms', 1],
     ['1s', 1000],
     ['1m', 1000 * 60],

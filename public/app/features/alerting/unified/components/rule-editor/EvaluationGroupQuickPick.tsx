@@ -50,27 +50,23 @@ interface Props {
  * Allow a quick selection of group evaluation intervals, based on the configured "unifiedAlerting.minInterval" value
  * ie. [1m, 2m, 5m, 10m, 15m] etc.
  */
-export function EvaluationGroupQuickPick({ currentInterval, onSelect }: Props) {
-  const isQuickSelectionActive = (interval: string) => {
-    return currentInterval ? currentInterval === interval : false;
-  };
+export const EvaluationGroupQuickPick = ({ currentInterval, onSelect }: Props) => (
+  <Stack direction="row" gap={0.5} role="listbox">
+    {QUICK_PICK_OPTIONS.map((interval) => {
+      const isActive = currentInterval === interval;
 
-  return (
-    <Stack direction="row" gap={0.5} role="listbox">
-      {QUICK_PICK_OPTIONS.map((interval) => (
+      return (
         <Button
           role="option"
-          aria-selected={isQuickSelectionActive(interval)}
+          aria-selected={isActive}
           key={interval}
-          variant={isQuickSelectionActive(interval) ? 'primary' : 'secondary'}
+          variant={isActive ? 'primary' : 'secondary'}
           size="sm"
-          onClick={() => {
-            onSelect(interval);
-          }}
+          onClick={() => onSelect(interval)}
         >
           {interval}
         </Button>
-      ))}
-    </Stack>
-  );
-}
+      );
+    })}
+  </Stack>
+);
