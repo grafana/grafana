@@ -95,6 +95,12 @@ export function parsePrometheusDuration(duration: string): number {
   return totalDuration;
 }
 
+/**
+ * Formats the given duration in milliseconds into a human-readable string representation.
+ *
+ * @param milliseconds - The duration in milliseconds.
+ * @returns The formatted duration string.
+ */
 export function formatPrometheusDuration(milliseconds: number): string {
   const seconds = Math.floor(milliseconds / 1000);
   const minutes = Math.floor(seconds / 60);
@@ -108,52 +114,33 @@ export function formatPrometheusDuration(milliseconds: number): string {
     return '0s';
   }
 
-  if (milliseconds < 1000) {
-    return milliseconds + 'ms';
-  } else if (seconds < 60) {
-    return seconds + 's';
-  } else if (minutes < 60) {
-    return combineUnits([minutes, 'm'], [seconds % 60, 's'], [milliseconds % 1000, 'ms']);
-  } else if (hours < 24) {
-    return combineUnits([hours, 'h'], [minutes % 60, 'm'], [seconds % 60, 's'], [milliseconds % 1000, 'ms']);
-  } else if (days < 7) {
-    return combineUnits(
-      [days, 'd'],
-      [hours % 24, 'h'],
-      [minutes % 60, 'm'],
-      [seconds % 60, 's'],
-      [milliseconds % 1000, 'ms']
-    );
-  } else if (weeks < 52) {
-    return combineUnits(
-      [weeks, 'w'],
-      [days % 7, 'd'],
-      [hours % 24, 'h'],
-      [minutes % 60, 'm'],
-      [seconds % 60, 's'],
-      [milliseconds % 1000, 'ms']
-    );
-  } else {
-    return combineUnits(
-      [years, 'y'],
-      [weeks % 52, 'w'],
-      [(days % 365) - 7 * (weeks % 52), 'd'],
-      [hours % 24, 'h'],
-      [minutes % 60, 'm'],
-      [seconds % 60, 's'],
-      [milliseconds % 1000, 'ms']
-    );
-  }
-}
+  const allUnits: Array<[number, string]> = [
+    [years, 'y'],
+    [weeks % 52, 'w'],
+    [(days % 365) - 7 * (weeks % 52), 'd'],
+    [hours % 24, 'h'],
+    [minutes % 60, 'm'],
+    [seconds % 60, 's'],
+    [milliseconds % 1000, 'ms'],
+  ];
 
-function combineUnits(...units: Array<[number, string]>): string {
-  let result = '';
-  for (const [value, unit] of units) {
-    if (value !== 0) {
-      result += value + unit;
+  // Find the largest non-zero unit that we'll have to show
+  const largestUnitIndex = allUnits.findIndex(([time]) => {
+    return time > 0;
+  });
+
+  // Are there any units below the largest leading unit that are non-zero?
+  // e.g. is the converted value of milliseconds an exact rounded value?
+  const isRoundUnitValue = [...allUnits.slice(largestUnitIndex + 1)].some(([time]) => time > 0);
+
+  const filtered = allUnits.filter(([time], index) => {
+    if (index < largestUnitIndex) {
+      return false;
     }
-  }
-  return result;
+    return time > 0 || isRoundUnitValue;
+  });
+
+  return filtered.map((u) => u.join('')).join('');
 }
 
 export const safeParsePrometheusDuration = (duration: string): number => {
