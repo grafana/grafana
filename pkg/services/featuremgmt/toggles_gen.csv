@@ -158,3 +158,4 @@ authAPIAccessTokenAuth,experimental,@grafana/identity-access-team,false,false,fa
 scopeFilters,experimental,@grafana/dashboards-squad,false,false,false
 ssoSettingsSAML,experimental,@grafana/identity-access-team,false,false,false
 usePrometheusFrontendPackage,experimental,@grafana/observability-metrics,false,false,true
+oauthRequireSubClaim,experimental,@grafana/identity-access-team,false,false,false

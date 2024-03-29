@@ -177,4 +177,5 @@ export interface FeatureToggles {
   scopeFilters?: boolean;
   ssoSettingsSAML?: boolean;
   usePrometheusFrontendPackage?: boolean;
+  oauthRequireSubClaim?: boolean;
 }

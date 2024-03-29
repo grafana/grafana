@@ -511,9 +511,14 @@ func (s *Storage) GuaranteedUpdate(
 		Subresource: requestInfo.Subresource,
 	}
 
-	err := s.Get(ctx, k.String(), storage.GetOptions{}, destination)
-	if err != nil {
-		return err
+	getErr := s.Get(ctx, k.String(), storage.GetOptions{}, destination)
+	if getErr != nil {
+		if ignoreNotFound && apierrors.IsNotFound(getErr) {
+			// destination is already set to zero value
+			// we'll create the resource
+		} else {
+			return getErr
+		}
 	}
 
 	accessor, err := meta.Accessor(destination)
@@ -544,6 +549,27 @@ func (s *Storage) GuaranteedUpdate(
 		return err
 	}
 
+	// if we have a non-nil getErr, then we've ignored a not found error
+	if getErr != nil {
+		// object does not exist, create it
+		req := &entityStore.CreateEntityRequest{
+			Entity: e,
+		}
+
+		rsp, err := s.store.Create(ctx, req)
+		if err != nil {
+			return err
+		}
+
+		err = entityToResource(rsp.Entity, destination, s.codec)
+		if err != nil {
+			return apierrors.NewInternalError(err)
+		}
+
+		return nil
+	}
+
+	// update the existing object
 	req := &entityStore.UpdateEntityRequest{
 		Entity:          e,
 		PreviousVersion: previousVersion,

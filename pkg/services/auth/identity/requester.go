@@ -51,6 +51,8 @@ type Requester interface {
 	// DEPRECATED: GetOrgName returns the name of the active organization.
 	// Retrieve the organization name from the organization service instead of using this method.
 	GetOrgName() string
+	// IsAuthenticatedBy returns true if entity was authenticated by any of supplied providers.
+	IsAuthenticatedBy(providers ...string) bool
 
 	// IsNil returns true if the identity is nil
 	// FIXME: remove this method once all services are using an interface

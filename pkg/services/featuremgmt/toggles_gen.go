@@ -642,4 +642,8 @@ const (
 	// FlagUsePrometheusFrontendPackage
 	// Use the @grafana/prometheus frontend package in core Prometheus.
 	FlagUsePrometheusFrontendPackage = "usePrometheusFrontendPackage"
+
+	// FlagOauthRequireSubClaim
+	// Require that sub claims is present in oauth tokens.
+	FlagOauthRequireSubClaim = "oauthRequireSubClaim"
 )

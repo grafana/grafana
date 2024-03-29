@@ -17,6 +17,7 @@ export {
   type HealthCheckResultDetails,
   HealthStatus,
   type StreamOptionsProvider,
+  isExpressionReference,
 } from './utils/DataSourceWithBackend';
 export {
   toDataQueryResponse,

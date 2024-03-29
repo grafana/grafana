@@ -732,6 +732,7 @@ func TestGetQueryDataResponse(t *testing.T) {
 func TestFindAnnotations(t *testing.T) {
 	color := "red"
 	name := "annoName"
+	features := featuremgmt.WithFeatures(featuremgmt.FlagAnnotationPermissionUpdate)
 	t.Run("will build anonymous user with correct permissions to get annotations", func(t *testing.T) {
 		fakeStore := &FakePublicDashboardStore{}
 		fakeStore.On("FindByAccessToken", mock.Anything, mock.AnythingOfType("string")).
@@ -747,7 +748,7 @@ func TestFindAnnotations(t *testing.T) {
 		dash := dashboards.NewDashboard("testDashboard")
 
 		items, _ := service.FindAnnotations(context.Background(), reqDTO, "abc123")
-		anonUser := buildAnonymousUser(context.Background(), dash)
+		anonUser := buildAnonymousUser(context.Background(), dash, features)
 
 		assert.Equal(t, "dashboards:*", anonUser.Permissions[0]["dashboards:read"][0])
 		assert.Len(t, items, 0)
@@ -1323,9 +1324,10 @@ func TestBuildAnonymousUser(t *testing.T) {
 	dashboardStore, err := dashboardsDB.ProvideDashboardStore(sqlStore, sqlStore.Cfg, featuremgmt.WithFeatures(), tagimpl.ProvideService(sqlStore), quotatest.New(false, nil))
 	require.NoError(t, err)
 	dashboard := insertTestDashboard(t, dashboardStore, "testDashie", 1, 0, "", true, []map[string]interface{}{}, nil)
+	features := featuremgmt.WithFeatures()
 
 	t.Run("will add datasource read and query permissions to user for each datasource in dashboard", func(t *testing.T) {
-		user := buildAnonymousUser(context.Background(), dashboard)
+		user := buildAnonymousUser(context.Background(), dashboard, features)
 
 		require.Equal(t, dashboard.OrgID, user.OrgID)
 		require.Equal(t, "datasources:uid:ds1", user.Permissions[user.OrgID]["datasources:query"][0])
@@ -1334,10 +1336,18 @@ func TestBuildAnonymousUser(t *testing.T) {
 		require.Equal(t, "datasources:uid:ds3", user.Permissions[user.OrgID]["datasources:read"][1])
 	})
 	t.Run("will add dashboard and annotation permissions needed for getting annotations", func(t *testing.T) {
-		user := buildAnonymousUser(context.Background(), dashboard)
+		user := buildAnonymousUser(context.Background(), dashboard, features)
 
 		require.Equal(t, dashboard.OrgID, user.OrgID)
 		require.Equal(t, "annotations:type:dashboard", user.Permissions[user.OrgID]["annotations:read"][0])
+		require.Equal(t, "dashboards:*", user.Permissions[user.OrgID]["dashboards:read"][0])
+	})
+	t.Run("will add dashboard and annotation permissions needed for getting annotations when FlagAnnotationPermissionUpdate is enabled", func(t *testing.T) {
+		features = featuremgmt.WithFeatures(featuremgmt.FlagAnnotationPermissionUpdate)
+		user := buildAnonymousUser(context.Background(), dashboard, features)
+
+		require.Equal(t, dashboard.OrgID, user.OrgID)
+		require.Equal(t, "dashboards:*", user.Permissions[user.OrgID]["annotations:read"][0])
 		require.Equal(t, "dashboards:*", user.Permissions[user.OrgID]["dashboards:read"][0])
 	})
 }
