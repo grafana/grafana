@@ -403,8 +403,19 @@ export const getConnectionStyles = (
   const strokeWidth = info.size ? scene.context.getScale(info.size).get(lastRowIndex) : defaultArrowSize;
   const strokeRadius = info.radius ? scene.context.getScale(info.radius).get(lastRowIndex) : 0;
   const arrowDirection = info.direction ? info.direction : defaultArrowDirection;
-  const lineStyle = info.lineStyle === LineStyle.Dashed ? StrokeDasharray.Dashed : StrokeDasharray.Solid;
+  const lineStyle = getLineStyle(info.lineStyle);
   return { strokeColor, strokeWidth, strokeRadius, arrowDirection, lineStyle };
+};
+
+const getLineStyle = (lineStyle?: LineStyle) => {
+  switch (lineStyle) {
+    case LineStyle.Dashed:
+      return StrokeDasharray.Dashed;
+    case LineStyle.Dotted:
+      return StrokeDasharray.Dotted;
+    default:
+      return StrokeDasharray.Solid;
+  }
 };
 
 export const getParentBoundingClientRect = (scene: Scene) => {

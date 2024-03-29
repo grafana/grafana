@@ -8,6 +8,7 @@ import { LineStyle } from '../types';
 const options: Array<SelectableValue<LineStyle>> = [
   { value: LineStyle.Solid, label: 'Solid' },
   { value: LineStyle.Dashed, label: 'Dashed' },
+  { value: LineStyle.Dotted, label: 'Dotted' },
 ];
 
 export const LineStyleEditor = ({ value, onChange }: StandardEditorProps<string, undefined, undefined>) => {
