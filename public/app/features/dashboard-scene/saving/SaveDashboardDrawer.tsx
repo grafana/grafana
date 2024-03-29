@@ -67,7 +67,7 @@ export class SaveDashboardDrawer extends SceneObjectBase<SaveDashboardDrawerStat
       }
 
       if (saveAsCopy || changeInfo.isNew) {
-        return <SaveDashboardAsForm dashboard={dashboard} changeInfo={changeInfo} drawer={model} />;
+        return <SaveDashboardAsForm dashboard={dashboard} changeInfo={changeInfo} />;
       }
 
       if (isProvisioned) {

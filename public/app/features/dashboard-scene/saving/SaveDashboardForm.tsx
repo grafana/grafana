@@ -24,9 +24,7 @@ export interface Props {
 }
 
 export function SaveDashboardForm({ dashboard, drawer, changeInfo }: Props) {
-  const { changedSaveModel, hasChanges: hasModelChanges } = changeInfo;
-  const hasFolderChanges = dashboard.getInitialState()?.meta.folderUid !== dashboard.state.meta.folderUid;
-  const hasChanges = hasModelChanges || hasFolderChanges;
+  const { changedSaveModel, hasChanges, hasFolderChanges } = changeInfo;
 
   const { state, onSaveDashboard } = useSaveDashboard(false);
   const [options, setOptions] = useState<SaveDashboardOptions>({
@@ -48,12 +46,7 @@ export function SaveDashboardForm({ dashboard, drawer, changeInfo }: Props) {
   );
 
   const saveButton = (overwrite: boolean) => (
-    <SaveButton
-      isValid={hasChanges || hasFolderChanges}
-      isLoading={state.loading}
-      onSave={onSave}
-      overwrite={overwrite}
-    />
+    <SaveButton isValid={hasChanges} isLoading={state.loading} onSave={onSave} overwrite={overwrite} />
   );
 
   function renderFooter(error?: Error) {

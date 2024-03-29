@@ -84,8 +84,8 @@ export class DashboardSceneChangeTracker {
     return this._dashboard.state.meta.folderUid !== this._dashboard.getInitialState()?.meta.folderUid;
   }
 
-  private updateIsDirty(result?: DashboardChangeInfo) {
-    const { hasChanges } = result || { hasChanges: false };
+  private updateIsDirty(result: DashboardChangeInfo) {
+    const { hasChanges } = result;
 
     if (hasChanges || this.hasMetadataChanges()) {
       if (!this._dashboard.state.isDirty) {

@@ -23,11 +23,10 @@ interface SaveDashboardAsFormDTO {
 
 export interface Props {
   dashboard: DashboardScene;
-  drawer: SaveDashboardDrawer;
   changeInfo: DashboardChangeInfo;
 }
 
-export function SaveDashboardAsForm({ dashboard, drawer, changeInfo }: Props) {
+export function SaveDashboardAsForm({ dashboard, changeInfo }: Props) {
   const { changedSaveModel } = changeInfo;
 
   const { register, handleSubmit, setValue, formState, getValues, watch, trigger } = useForm<SaveDashboardAsFormDTO>({

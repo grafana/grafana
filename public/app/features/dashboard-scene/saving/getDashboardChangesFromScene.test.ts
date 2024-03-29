@@ -38,6 +38,17 @@ describe('getDashboardChangesFromScene', () => {
     expect(result.diffCount).toBe(1);
   });
 
+  it('Can detect folder change', () => {
+    const dashboard = setup();
+
+    dashboard.state.meta.folderUid = 'folder-2';
+
+    const result = getDashboardChangesFromScene(dashboard, false);
+    expect(result.hasChanges).toBe(true);
+    expect(result.diffCount).toBe(0);
+    expect(result.hasFolderChanges).toBe(true);
+  });
+
   describe('variable changes', () => {
     it('Can detect variable change', () => {
       const dashboard = setup();
