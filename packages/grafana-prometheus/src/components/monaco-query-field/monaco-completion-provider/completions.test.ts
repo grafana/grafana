@@ -8,7 +8,7 @@ import { DataProvider, DataProviderParams } from './data-provider';
 import type { Situation } from './situation';
 
 const history: string[] = ['previous_metric_name_1', 'previous_metric_name_2', 'previous_metric_name_3'];
-const dataProviderSettings: DataProviderParams = {
+const dataProviderSettings = {
   languageProvider: {
     datasource: {
       metricNamesAutocompleteSuggestionLimit: SUGGESTIONS_LIMIT,
@@ -19,9 +19,9 @@ const dataProviderSettings: DataProviderParams = {
     getSeriesValues: jest.fn(),
     metrics: [],
     metricsMetadata: {},
-  } as any,
+  },
   historyProvider: history.map((expr, idx) => ({ query: { expr, refId: 'some-ref' }, ts: idx })),
-};
+} as unknown as DataProviderParams;
 let dataProvider = new DataProvider(dataProviderSettings);
 
 beforeEach(() => {

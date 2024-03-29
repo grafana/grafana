@@ -12,6 +12,17 @@ export type SuggestionsIncompleteEvent = CustomEvent<{
   datasourceUid: string;
 }>;
 
+export function isSuggestionsIncompletEvent(e: Event): e is SuggestionsIncompleteEvent {
+  return (
+    e.type === CODE_MODE_SUGGESTIONS_INCOMPLETE_EVENT &&
+    'detail' in e &&
+    typeof e.detail === 'object' &&
+    e.detail !== null &&
+    'limit' in e.detail &&
+    'datasourceUid' in e.detail
+  );
+}
+
 export interface Metric {
   name: string;
   help: string;
