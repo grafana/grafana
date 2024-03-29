@@ -8,6 +8,7 @@ import {
 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { ConfigSubSection } from '@grafana/experimental';
+import { config } from '@grafana/runtime';
 import { InlineField, Input, Select, Switch, useTheme2 } from '@grafana/ui';
 
 import { QueryEditorMode } from '../querybuilder/shared/types';
@@ -312,39 +313,47 @@ export const PromSettings = (props: Props) => {
             </div>
           </div>
 
-          <div className="gf-form-inline">
-            <div className="gf-form">
-              <InlineField
-                label="Metric names suggestion limit"
-                labelWidth={PROM_CONFIG_LABEL_WIDTH}
-                tooltip={
-                  <>In Code Mode, set the maximum number of metric names that may appear as autocomplete suggestions.</>
-                }
-                interactive={true}
-                disabled={options.readOnly}
-              >
-                <>
-                  <Input
-                    className="width-20"
-                    value={options.jsonData.codeModeMetricNamesSuggestionLimit}
-                    onChange={onChangeHandler('codeModeMetricNamesSuggestionLimit', options, onOptionsChange)}
-                    spellCheck={false}
-                    placeholder="10000"
-                    onBlur={(e) =>
-                      updateValidCount({
-                        ...validCount,
-                        codeModeMetricNamesSuggestionLimit: e.currentTarget.value,
-                      })
-                    }
-                    data-testid={
-                      selectors.components.DataSource.Prometheus.configPage.codeModeMetricNamesSuggestionLimit
-                    }
-                  />
-                  {validateInput(validCount.codeModeMetricNamesSuggestionLimit, NON_NEGATIVE_INTEGER_REGEX, countError)}
-                </>
-              </InlineField>
+          {config.featureToggles.prometheusCodeModeMetricNamesSearch && (
+            <div className="gf-form-inline">
+              <div className="gf-form">
+                <InlineField
+                  label="Metric names suggestion limit"
+                  labelWidth={PROM_CONFIG_LABEL_WIDTH}
+                  tooltip={
+                    <>
+                      In Code Mode, set the maximum number of metric names that may appear as autocomplete suggestions.
+                    </>
+                  }
+                  interactive={true}
+                  disabled={options.readOnly}
+                >
+                  <>
+                    <Input
+                      className="width-20"
+                      value={options.jsonData.codeModeMetricNamesSuggestionLimit}
+                      onChange={onChangeHandler('codeModeMetricNamesSuggestionLimit', options, onOptionsChange)}
+                      spellCheck={false}
+                      placeholder="10000"
+                      onBlur={(e) =>
+                        updateValidCount({
+                          ...validCount,
+                          codeModeMetricNamesSuggestionLimit: e.currentTarget.value,
+                        })
+                      }
+                      data-testid={
+                        selectors.components.DataSource.Prometheus.configPage.codeModeMetricNamesSuggestionLimit
+                      }
+                    />
+                    {validateInput(
+                      validCount.codeModeMetricNamesSuggestionLimit,
+                      NON_NEGATIVE_INTEGER_REGEX,
+                      countError
+                    )}
+                  </>
+                </InlineField>
+              </div>
             </div>
-          </div>
+          )}
 
           <div className="gf-form-inline">
             <div className="gf-form max-width-30">
