@@ -29,6 +29,7 @@ type ExtJWTSettings struct {
 	Enabled        bool
 	ExpectIssuer   string
 	ExpectAudience string
+	JWKSUrl        string
 }
 
 func (cfg *Cfg) readAuthExtJWTSettings() {
@@ -36,7 +37,7 @@ func (cfg *Cfg) readAuthExtJWTSettings() {
 	jwtSettings := ExtJWTSettings{}
 	jwtSettings.Enabled = authExtendedJWT.Key("enabled").MustBool(false)
 	jwtSettings.ExpectAudience = authExtendedJWT.Key("expect_audience").MustString("")
-	jwtSettings.ExpectIssuer = authExtendedJWT.Key("expect_issuer").MustString("")
+	jwtSettings.JWKSUrl = authExtendedJWT.Key("jwks_url").MustString("")
 	cfg.ExtJWTAuth = jwtSettings
 }
 

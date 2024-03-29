@@ -7,7 +7,6 @@ import (
 	"slices"
 	"strconv"
 	"strings"
-	"time"
 
 	"github.com/go-jose/go-jose/v3/jwt"
 
@@ -25,7 +24,6 @@ var _ authn.Client = new(ExtendedJWT)
 
 var (
 	acceptedSigningMethods = []string{"RS256", "ES256"}
-	timeNow                = time.Now
 )
 
 const (
@@ -36,11 +34,19 @@ const (
 
 func ProvideExtendedJWT(userService user.Service, cfg *setting.Cfg,
 	signingKeys signingkeys.Service) *ExtendedJWT {
+	verifier := authlib.NewVerifier[ExtendedJWTClaims](authlib.IDVerifierConfig{
+		SigningKeysURL: cfg.ExtJWTAuth.JWKSUrl,
+		AllowedAudiences: []string{
+			cfg.ExtJWTAuth.ExpectAudience,
+		},
+	})
+
 	return &ExtendedJWT{
 		cfg:         cfg,
 		log:         log.New(authn.ClientExtendedJWT),
 		userService: userService,
 		signingKeys: signingKeys,
+		verifier:    verifier,
 	}
 }
 
@@ -49,6 +55,7 @@ type ExtendedJWT struct {
 	log         log.Logger
 	userService user.Service
 	signingKeys signingkeys.Service
+	verifier    authlib.Verifier[ExtendedJWTClaims]
 }
 
 type ExtendedJWTClaims struct {
@@ -78,30 +85,23 @@ func (s *ExtendedJWT) Authenticate(ctx context.Context, r *authn.Request) (*auth
 			return nil, errJWTInvalid.Errorf("Failed to verify id token: %w", err)
 		}
 
-		return s.authenticateAsUser(idTokenClaims, claims, r)
+		return s.authenticateAsUser(idTokenClaims, claims)
 	}
 
-	return s.authenticateService(ctx, claims, r)
+	return s.authenticateAsService(claims)
 }
 
 func (s *ExtendedJWT) authenticateAsUser(idTokenClaims,
-	accessTokenClaims *ExtendedJWTClaims, r *authn.Request) (*authn.Identity, error) {
+	accessTokenClaims *ExtendedJWTClaims) (*authn.Identity, error) {
 	_, err := strconv.ParseInt(strings.TrimPrefix(idTokenClaims.Subject, fmt.Sprintf("%s:", authn.NamespaceUser)), 10, 64)
 	if err != nil {
 		s.log.Error("Failed to parse sub", "error", err)
 		return nil, errJWTInvalid.Errorf("Failed to parse sub: %w", err)
 	}
 
-	// FIX multi org support
-	defaultOrgID := s.getDefaultOrgID()
-	if r.OrgID != defaultOrgID {
-		s.log.Error("Failed to verify the Organization: OrgID is not the default")
-		return nil, errJWTInvalid.Errorf("Failed to verify the Organization. Only the default org is supported")
-	}
-
 	return &authn.Identity{
 		ID:              idTokenClaims.Subject,
-		OrgID:           defaultOrgID,
+		OrgID:           s.getDefaultOrgID(),
 		AuthenticatedBy: login.ExtendedJWTModule,
 		AuthID:          accessTokenClaims.Subject,
 		ClientParams: authn.ClientParams{
@@ -113,27 +113,15 @@ func (s *ExtendedJWT) authenticateAsUser(idTokenClaims,
 		}}, nil
 }
 
-func (s *ExtendedJWT) authenticateService(ctx context.Context,
-	claims *ExtendedJWTClaims, r *authn.Request) (*authn.Identity, error) {
+func (s *ExtendedJWT) authenticateAsService(claims *ExtendedJWTClaims) (*authn.Identity, error) {
 	if !strings.HasPrefix(claims.Subject, fmt.Sprintf("%s:", authn.NamespaceAccessPolicy)) {
 		s.log.Error("Invalid subject", "subject", claims.Subject)
 		return nil, errJWTInvalid.Errorf("Failed to parse sub: %s", "invalid subject format")
 	}
 
-	defaultOrgID := s.getDefaultOrgID()
-	if r.OrgID != defaultOrgID {
-		s.log.Error("Failed to verify the Organization: OrgID is not the default")
-		return nil, errJWTInvalid.Errorf("Failed to verify the Organization. Only the default org is supported")
-	}
-
-	if len(claims.Permissions) == 0 {
-		s.log.Error("Entitlements claim is missing")
-		return nil, errJWTInvalid.Errorf("Entitlements claim is missing")
-	}
-
 	return &authn.Identity{
 		ID:              claims.Subject,
-		OrgID:           defaultOrgID,
+		OrgID:           s.getDefaultOrgID(),
 		AuthenticatedBy: login.ExtendedJWTModule,
 		AuthID:          claims.Subject,
 		ClientParams: authn.ClientParams{
@@ -166,7 +154,7 @@ func (s *ExtendedJWT) Test(ctx context.Context, r *authn.Request) bool {
 		return false
 	}
 
-	return claims.Issuer == s.cfg.ExtJWTAuth.ExpectIssuer
+	return true
 }
 
 func (s *ExtendedJWT) Name() string {
@@ -227,14 +215,7 @@ func (s *ExtendedJWT) verifyRFC9068Token(ctx context.Context, rawToken string, t
 		return nil, fmt.Errorf("missing 'kid' field from the header")
 	}
 
-	verifier := authlib.NewVerifier[ExtendedJWTClaims](authlib.IDVerifierConfig{
-		SigningKeysURL: "http://localhost:4200/keys",
-		AllowedAudiences: []string{
-			s.cfg.ExtJWTAuth.ExpectAudience,
-		},
-	})
-
-	claims, err := verifier.Verify(ctx, rawToken)
+	claims, err := s.verifier.Verify(ctx, rawToken)
 	if err != nil {
 		return nil, fmt.Errorf("failed to verify JWT: %w", err)
 	}

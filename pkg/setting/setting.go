@@ -1606,8 +1606,6 @@ func readAuthSettings(iniFile *ini.File, cfg *Cfg) (err error) {
 	cfg.BasicAuthEnabled = authBasic.Key("enabled").MustBool(true)
 	cfg.BasicAuthStrongPasswordPolicy = authBasic.Key("password_policy").MustBool(false)
 
-	// Extended JWT auth
-
 	// SSO Settings
 	ssoSettings := iniFile.Section("sso_settings")
 	cfg.SSOSettingsReloadInterval = ssoSettings.Key("reload_interval").MustDuration(1 * time.Minute)

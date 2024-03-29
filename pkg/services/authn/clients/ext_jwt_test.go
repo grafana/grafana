@@ -16,6 +16,8 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	authlib "github.com/grafana/authlib/authn"
+
 	"github.com/grafana/grafana/pkg/models/roletype"
 	"github.com/grafana/grafana/pkg/models/usertoken"
 	"github.com/grafana/grafana/pkg/services/authn"
@@ -56,6 +58,21 @@ var (
 	}
 	pk, _ = rsa.GenerateKey(rand.Reader, 4096)
 )
+
+type mockVerifier struct {
+	Claims  []ExtendedJWTClaims
+	Error   error
+	counter int
+}
+
+func (m *mockVerifier) Verify(ctx context.Context, token string) (*authlib.Claims[ExtendedJWTClaims], error) {
+	m.counter++
+	claims := m.Claims[m.counter-1]
+	return &authlib.Claims[ExtendedJWTClaims]{
+		Claims: &claims.Claims,
+		Rest:   claims,
+	}, m.Error
+}
 
 func TestExtendedJWT_Test(t *testing.T) {
 	type testCase struct {
@@ -117,7 +134,7 @@ func TestExtendedJWT_Test(t *testing.T) {
 	}
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			env := setupTestCtx(t, tc.cfg)
+			env := setupTestCtx(tc.cfg)
 
 			validHTTPReq := &http.Request{
 				Header: map[string][]string{
@@ -217,45 +234,11 @@ func TestExtendedJWT_Authenticate(t *testing.T) {
 			want:    nil,
 			wantErr: errJWTInvalid.Errorf("Failed to parse sub: %s", "invalid subject format"),
 		},
-		{
-			name: "should return error when the OrgId is not the ID of the default org",
-			payload: ExtendedJWTClaims{
-				Claims: jwt.Claims{
-					Issuer:   "http://localhost:3000",
-					Subject:  "access-policy:this-uid",
-					Audience: jwt.Audience{"http://localhost:3000"},
-					ID:       "1234567890",
-					Expiry:   jwt.NewNumericDate(time.Date(2023, 5, 3, 0, 0, 0, 0, time.UTC)),
-					IssuedAt: jwt.NewNumericDate(time.Date(2023, 5, 2, 0, 0, 0, 0, time.UTC)),
-				},
-				Permissions: []string{"fixed:folders:reader"},
-			},
-			orgID:   0,
-			want:    nil,
-			wantErr: errJWTInvalid.Errorf("Failed to verify the Organization. Only the default org is supported"),
-		},
-		{
-			name: "should return error when permissions claim is missing",
-			payload: ExtendedJWTClaims{
-				Claims: jwt.Claims{
-					Issuer:   "http://localhost:3000",
-					Subject:  "access-policy:this-uid",
-					Audience: jwt.Audience{"http://localhost:3000"},
-					ID:       "1234567890",
-					Expiry:   jwt.NewNumericDate(time.Date(2023, 5, 3, 0, 0, 0, 0, time.UTC)),
-					IssuedAt: jwt.NewNumericDate(time.Date(2023, 5, 2, 0, 0, 0, 0, time.UTC)),
-				},
-				Permissions: []string{},
-			},
-			orgID:   1,
-			want:    nil,
-			wantErr: errJWTInvalid.Errorf("Entitlements claim is missing"),
-		},
 	}
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			env := setupTestCtx(t, nil)
+			env := setupTestCtx(nil)
 			if tc.initTestEnv != nil {
 				tc.initTestEnv(env)
 			}
@@ -266,11 +249,11 @@ func TestExtendedJWT_Authenticate(t *testing.T) {
 				},
 			}
 
+			env.s.verifier = &mockVerifier{Claims: []ExtendedJWTClaims{tc.payload}}
 			if tc.idPayload != nil {
+				env.s.verifier = &mockVerifier{Claims: []ExtendedJWTClaims{tc.payload, *tc.idPayload}}
 				validHTTPReq.Header.Add(extJWTAuthorizationHeaderName, generateToken(*tc.idPayload, pk, jose.RS256, "jwt"))
 			}
-
-			mockTimeNow(time.Date(2023, 5, 2, 0, 1, 0, 0, time.UTC))
 
 			id, err := env.s.Authenticate(context.Background(), &authn.Request{
 				OrgID:       tc.orgID,
@@ -436,8 +419,7 @@ func TestVerifyRFC9068TokenFailureScenarios(t *testing.T) {
 		},
 	}
 
-	env := setupTestCtx(t, nil)
-	mockTimeNow(time.Date(2023, 5, 2, 0, 1, 0, 0, time.UTC))
+	env := setupTestCtx(nil)
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
@@ -451,7 +433,7 @@ func TestVerifyRFC9068TokenFailureScenarios(t *testing.T) {
 	}
 }
 
-func setupTestCtx(t *testing.T, cfg *setting.Cfg) *testEnv {
+func setupTestCtx(cfg *setting.Cfg) *testEnv {
 	if cfg == nil {
 		cfg = &setting.Cfg{
 			ExtJWTAuth: setting.ExtJWTSettings{
@@ -491,10 +473,4 @@ func generateToken(payload ExtendedJWTClaims, signingKey any, alg jose.Signature
 
 	result, _ := jwt.Signed(signer).Claims(payload).CompactSerialize()
 	return result
-}
-
-func mockTimeNow(timeSeed time.Time) {
-	timeNow = func() time.Time {
-		return timeSeed
-	}
 }
