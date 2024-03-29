@@ -41,6 +41,7 @@ If you are unsure which visualization to pick, Grafana can provide visualization
   - [Stat][] for big stats and optional sparkline.
   - [Bar gauge][] is a horizontal or vertical bar gauge.
 - Misc
+
   - [Table][] is the main and only table visualization.
   - [Logs][] is the main visualization for logs.
   - [Node graph][] for directed graphs or networks.
