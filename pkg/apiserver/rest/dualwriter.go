@@ -355,20 +355,7 @@ func (d *DualWriter) Update(ctx context.Context, name string, objInfo rest.Updat
 		}, createValidation, updateValidation, forceAllowCreate, options)
 
 	case Mode4:
-		old, err := d.Storage.Get(ctx, name, &metav1.GetOptions{})
-		if err != nil {
-			return nil, false, err
-		}
-
-		updated, err := objInfo.UpdatedObject(ctx, old)
-		if err != nil {
-			return nil, false, err
-		}
-
-		objInfo = &updateWrapper{
-			upstream: objInfo,
-			updated:  updated,
-		}
+		// #TODO check where else we can go straight to the d.Storage method
 		return d.Storage.Update(ctx, name, objInfo, createValidation, updateValidation, forceAllowCreate, options)
 	}
 
