@@ -2,7 +2,6 @@ import UFuzzy from '@leeoniya/ufuzzy';
 
 import { config } from '@grafana/runtime';
 
-import { SUGGESTIONS_LIMIT } from '../../../language_provider';
 import { escapeLabelValueInExactSelector } from '../../../language_utils';
 import { FUNCTIONS } from '../../../promql';
 
@@ -22,25 +21,7 @@ type Completion = {
   triggerOnInsert?: boolean;
 };
 
-const metricNamesSearchClient = new UFuzzy({
-  intraMode: 1,
-  intraChars: '[a-z0-9_:]', // characters allowed in metric names, according to the Prometheus data model
-});
-
-export function fuzzySearchMetrics(haystack: string[], needle: string): string[] {
-  const filteredMetricNames: string[] = [];
-  const [idxs] = metricNamesSearchClient.search(haystack, needle);
-
-  for (const idx of idxs ?? []) {
-    const metric = haystack[idx];
-
-    if (filteredMetricNames.length < SUGGESTIONS_LIMIT) {
-      filteredMetricNames.push(metric);
-    }
-  }
-
-  return filteredMetricNames;
-}
+const metricNamesSearchClient = new UFuzzy({ intraMode: 1 });
 
 // we order items like: history, functions, metrics
 async function getAllMetricNamesCompletions(dataProvider: DataProvider): Promise<Completion[]> {
@@ -54,9 +35,13 @@ async function getAllMetricNamesCompletions(dataProvider: DataProvider): Promise
 
     if (monacoSettings.inputInRange) {
       monacoSettings.enableAutocompleteSuggestionsUpdate();
-      metricNames = fuzzySearchMetrics(metricNames, monacoSettings.inputInRange);
+      metricNames =
+        metricNamesSearchClient
+          .filter(metricNames, monacoSettings.inputInRange)
+          ?.slice(0, dataProvider.metricNamesSuggestionLimit)
+          .map((idx) => metricNames[idx]) ?? [];
     } else {
-      metricNames = metricNames.slice(0, SUGGESTIONS_LIMIT);
+      metricNames = metricNames.slice(0, dataProvider.metricNamesSuggestionLimit);
     }
   }
 
