@@ -170,17 +170,8 @@ func getName(q *models.Query, field *data.Field) string {
 		if len(labels) > 0 {
 			legend = ""
 		}
-	} else if q.LegendFormat != "" {
-		result := legendFormatRegexp.ReplaceAllFunc([]byte(q.LegendFormat), func(in []byte) []byte {
-			labelName := strings.Replace(string(in), "{{", "", 1)
-			labelName = strings.Replace(labelName, "}}", "", 1)
-			labelName = strings.TrimSpace(labelName)
-			if val, exists := labels[labelName]; exists {
-				return []byte(val)
-			}
-			return []byte{}
-		})
-		legend = string(result)
+	} else {
+		legend = convertLabel(q.LegendFormat, field)
 	}
 
 	// If legend is empty brackets, use query expression
@@ -192,10 +183,14 @@ func getName(q *models.Query, field *data.Field) string {
 }
 
 func getUrl(q *models.Query, field *data.Field) string {
+	return convertLabel(q.LegendUrlFormat, field)
+}
+
+func convertLabel(label string, field *data.Field) string {
+	var convertedLabel string
 	labels := field.Labels
-	var legendUrl string
-	if q.LegendUrlFormat != "" {
-		result := legendFormatRegexp.ReplaceAllFunc([]byte(q.LegendUrlFormat), func(in []byte) []byte {
+	if label != "" {
+		result := legendFormatRegexp.ReplaceAllFunc([]byte(label), func(in []byte) []byte {
 			labelName := strings.Replace(string(in), "{{", "", 1)
 			labelName = strings.Replace(labelName, "}}", "", 1)
 			labelName = strings.TrimSpace(labelName)
@@ -204,12 +199,9 @@ func getUrl(q *models.Query, field *data.Field) string {
 			}
 			return []byte{}
 		})
-		legendUrl = string(result)
+		convertedLabel = string(result)
 	}
-	if legendUrl == "" {
-		legendUrl = "/?fallback_or_default_url"
-	}
-	return legendUrl
+	return convertedLabel
 }
 
 func isExemplarFrame(frame *data.Frame) bool {
