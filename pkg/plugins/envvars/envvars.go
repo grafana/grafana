@@ -151,8 +151,11 @@ func (s *Service) GetConfigMap(ctx context.Context, pluginID string, _ *auth.Ext
 	if s.cfg.ProxySettings.Enabled {
 		m[proxy.PluginSecureSocksProxyEnabled] = "true"
 		m[proxy.PluginSecureSocksProxyClientCert] = s.cfg.ProxySettings.ClientCertFilePath
+		m[proxy.PluginSecureSocksProxyClientCertContents] = s.cfg.ProxySettings.ClientCert
 		m[proxy.PluginSecureSocksProxyClientKey] = s.cfg.ProxySettings.ClientKeyFilePath
+		m[proxy.PluginSecureSocksProxyClientKeyContents] = s.cfg.ProxySettings.ClientKey
 		m[proxy.PluginSecureSocksProxyRootCAs] = strings.Join(s.cfg.ProxySettings.RootCAFilePaths, " ")
+		m[proxy.PluginSecureSocksProxyRootCAsContents] = strings.Join(s.cfg.ProxySettings.RootCAs, ",")
 		m[proxy.PluginSecureSocksProxyProxyAddress] = s.cfg.ProxySettings.ProxyAddress
 		m[proxy.PluginSecureSocksProxyServerName] = s.cfg.ProxySettings.ServerName
 		m[proxy.PluginSecureSocksProxyAllowInsecure] = strconv.FormatBool(s.cfg.ProxySettings.AllowInsecure)
