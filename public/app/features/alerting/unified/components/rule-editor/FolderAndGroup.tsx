@@ -17,12 +17,12 @@ import { useUnifiedAlertingSelector } from '../../hooks/useUnifiedAlertingSelect
 import { fetchRulerRulesAction } from '../../state/actions';
 import { RuleFormValues } from '../../types/rule-form';
 import { GRAFANA_RULES_SOURCE_NAME } from '../../utils/datasource';
-import { MINUTE } from '../../utils/rule-form';
+import { DEFAULT_GROUP_EVALUATION_INTERVAL } from '../../utils/rule-form';
 import { isGrafanaRulerRule } from '../../utils/rules';
 import { ProvisioningBadge } from '../Provisioning';
 import { evaluateEveryValidationOptions } from '../rules/EditRuleGroupModal';
 
-import { EvaluationGroupQuickPick, QUICK_PICK_OPTIONS } from './EvaluationGroupQuickPick';
+import { EvaluationGroupQuickPick } from './EvaluationGroupQuickPick';
 import { containsSlashes, Folder, RuleFolderPicker } from './RuleFolderPicker';
 import { checkForPathSeparator } from './util';
 
@@ -49,7 +49,7 @@ export const useFolderGroupOptions = (folderUid: string, enableProvisionedGroups
       return {
         label: group.name,
         value: group.name,
-        description: group.interval ?? MINUTE,
+        description: group.interval ?? DEFAULT_GROUP_EVALUATION_INTERVAL,
         // we include provisioned folders, but disable the option to select them
         isDisabled: !enableProvisionedGroups ? isProvisioned : false,
         isProvisioned: isProvisioned,
@@ -357,9 +357,8 @@ function EvaluationGroupCreationModal({
     onClose();
   };
 
-  const smallestGroupEvaluationInterval = QUICK_PICK_OPTIONS[0];
   const formAPI = useForm({
-    defaultValues: { group: '', evaluateEvery: smallestGroupEvaluationInterval },
+    defaultValues: { group: '', evaluateEvery: DEFAULT_GROUP_EVALUATION_INTERVAL },
     mode: 'onChange',
     shouldFocusError: true,
   });
@@ -410,7 +409,7 @@ function EvaluationGroupCreationModal({
               <Input
                 className={styles.formInput}
                 id={evaluateEveryId}
-                placeholder={smallestGroupEvaluationInterval}
+                placeholder={DEFAULT_GROUP_EVALUATION_INTERVAL}
                 {...register('evaluateEvery', evaluateEveryValidationOptions(groupRules))}
               />
               <Stack direction="row" alignItems="flex-end">

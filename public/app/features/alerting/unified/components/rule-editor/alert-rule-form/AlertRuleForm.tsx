@@ -27,7 +27,7 @@ import { RuleFormType, RuleFormValues } from '../../../types/rule-form';
 import { initialAsyncRequestState } from '../../../utils/redux';
 import {
   MANUAL_ROUTING_KEY,
-  MINUTE,
+  DEFAULT_GROUP_EVALUATION_INTERVAL,
   formValuesFromExistingRule,
   getDefaultFormValues,
   getDefaultQueries,
@@ -57,7 +57,7 @@ export const AlertRuleForm = ({ existing, prefill }: Props) => {
   const notifyApp = useAppNotification();
   const [queryParams] = useQueryParams();
   const [showEditYaml, setShowEditYaml] = useState(false);
-  const [evaluateEvery, setEvaluateEvery] = useState(existing?.group.interval ?? MINUTE);
+  const [evaluateEvery, setEvaluateEvery] = useState(existing?.group.interval ?? DEFAULT_GROUP_EVALUATION_INTERVAL);
 
   const routeParams = useParams<{ type: string; id: string }>();
   const ruleType = translateRouteParamToRuleType(routeParams.type);
@@ -315,7 +315,7 @@ function formValuesFromQueryParams(ruleDefinition: string, type: RuleFormType): 
     annotations: normalizeDefaultAnnotations(ruleFromQueryParams.annotations ?? []),
     queries: ruleFromQueryParams.queries ?? getDefaultQueries(),
     type: type || RuleFormType.grafana,
-    evaluateEvery: MINUTE,
+    evaluateEvery: DEFAULT_GROUP_EVALUATION_INTERVAL,
   });
 }
 

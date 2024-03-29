@@ -21,7 +21,7 @@ import { formatPrometheusDuration, parsePrometheusDuration, safeParsePrometheusD
 import { DynamicTable, DynamicTableColumnProps, DynamicTableItemProps } from '../DynamicTable';
 import { EvaluationIntervalLimitExceeded } from '../InvalidIntervalWarning';
 import { decodeGrafanaNamespace, encodeGrafanaNamespace } from '../expressions/util';
-import { EvaluationGroupQuickPick } from '../rule-editor/EvaluationGroupQuickPick';
+import { EvaluationGroupQuickPick, QUICK_PICK_OPTIONS } from '../rule-editor/EvaluationGroupQuickPick';
 import { MIN_TIME_RANGE_STEP_S } from '../rule-editor/GrafanaEvaluationBehavior';
 
 const ITEMS_PER_PAGE = 10;
@@ -179,13 +179,15 @@ export function EditCloudGroupModal(props: ModalProps): React.ReactElement {
     useUnifiedAlertingSelector((state) => state.updateLotexNamespaceAndGroup) ?? initialAsyncRequestState;
   const notifyApp = useAppNotification();
 
+  const smallestGroupEvaluationInterval = QUICK_PICK_OPTIONS[0];
+
   const defaultValues = useMemo(
     (): FormValues => ({
       namespaceName: decodeGrafanaNamespace(namespace).name,
       groupName: group.name,
-      groupInterval: group.interval ?? '',
+      groupInterval: group.interval ?? smallestGroupEvaluationInterval,
     }),
-    [namespace, group]
+    [namespace, group.name, group.interval, smallestGroupEvaluationInterval]
   );
 
   const rulesSourceName = getRulesSourceName(namespace.rulesSource);
@@ -320,7 +322,7 @@ export function EditCloudGroupModal(props: ModalProps): React.ReactElement {
               <Stack direction="column">
                 <Input
                   id="groupInterval"
-                  placeholder="1m"
+                  placeholder={smallestGroupEvaluationInterval}
                   {...register('groupInterval', evaluateEveryValidationOptions(rulesWithoutRecordingRules))}
                 />
                 <EvaluationGroupQuickPick

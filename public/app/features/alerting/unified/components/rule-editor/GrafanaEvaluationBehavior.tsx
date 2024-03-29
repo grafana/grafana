@@ -105,6 +105,11 @@ function FolderGroupAndEvaluationInterval({
     setIsEditingGroup(false);
   };
 
+  // when the group evaluation interval changes, update the pending period to match
+  useEffect(() => {
+    setValue('evaluateFor', evaluateEvery);
+  }, [evaluateEvery, setValue]);
+
   const onOpenEditGroupModal = () => setIsEditingGroup(true);
 
   const editGroupDisabled = groupfoldersForGrafana?.loading || isNewGroup || !folderUid || !groupName;
@@ -191,7 +196,7 @@ function ForInput({ evaluateEvery }: { evaluateEvery: string }) {
         invalid={Boolean(errors.evaluateFor?.message) ? true : undefined}
         validationMessageHorizontalOverflow={true}
       >
-        <Stack direction="row" alignItems="flex-end">
+        <Stack direction="row" alignItems="center">
           <Input id={evaluateForId} width={8} {...register('evaluateFor', forValidationOptions(evaluateEvery))} />
           <PendingPeriodQuickPick
             selectedPendingPeriod={currentPendingPeriod}
