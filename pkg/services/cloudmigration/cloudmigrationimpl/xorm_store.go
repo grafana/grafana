@@ -3,6 +3,7 @@ package cloudmigrationimpl
 import (
 	"context"
 	"fmt"
+	"strconv"
 	"time"
 
 	"github.com/grafana/grafana/pkg/services/secrets"
@@ -101,6 +102,29 @@ func (ss *sqlStore) DeleteMigration(ctx context.Context, id int64) (*cloudmigrat
 	})
 
 	return &c, err
+}
+
+func (ss *sqlStore) GetMigrationStatus(ctx context.Context, migrationID string, runID string) (*cloudmigration.CloudMigrationRun, error) {
+	id, err := strconv.ParseInt(runID, 10, 64)
+	if err != nil {
+		return nil, fmt.Errorf("invalid runID: %s", runID)
+	}
+	cm := cloudmigration.CloudMigrationRun{
+		ID:                id,
+		CloudMigrationUID: migrationID,
+	}
+	err = ss.db.WithDbSession(ctx, func(sess *db.Session) error {
+		exist, err := sess.Get(&cm)
+		if err != nil {
+			return err
+		}
+		if !exist {
+			return cloudmigration.ErrMigrationRunNotFound
+		}
+		return nil
+	})
+
+	return &cm, err
 }
 
 func (ss *sqlStore) encryptToken(ctx context.Context, cm *cloudmigration.CloudMigration) error {

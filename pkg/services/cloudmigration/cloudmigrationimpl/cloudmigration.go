@@ -448,8 +448,12 @@ func (s *Service) SaveMigrationRun(ctx context.Context, cmr *cloudmigration.Clou
 }
 
 func (s *Service) GetMigrationStatus(ctx context.Context, id string, runID string) (*cloudmigration.CloudMigrationRun, error) {
-	// TODO: Implement method
-	return nil, nil
+	cmr, err := s.store.GetMigrationStatus(ctx, id, runID)
+	if err != nil {
+		return nil, fmt.Errorf("retrieving migration status from db: %w", err)
+	}
+
+	return cmr, nil
 }
 
 func (s *Service) GetMigrationStatusList(ctx context.Context, id string) ([]cloudmigration.CloudMigrationRun, error) {
@@ -460,7 +464,7 @@ func (s *Service) GetMigrationStatusList(ctx context.Context, id string) ([]clou
 func (s *Service) DeleteMigration(ctx context.Context, id int64) (*cloudmigration.CloudMigration, error) {
 	c, err := s.store.DeleteMigration(ctx, id)
 	if err != nil {
-		return c, fmt.Errorf("error deleting migration from db: %w", err)
+		return c, fmt.Errorf("deleting migration from db: %w", err)
 	}
 	return c, nil
 }
