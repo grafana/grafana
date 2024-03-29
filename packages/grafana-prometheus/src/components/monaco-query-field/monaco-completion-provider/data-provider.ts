@@ -23,7 +23,7 @@ export function isSuggestionsIncompleteEvent(e: Event): e is SuggestionsIncomple
   );
 }
 
-export interface Metric {
+interface Metric {
   name: string;
   help: string;
   type: string;
@@ -67,9 +67,13 @@ export class DataProvider {
     return Promise.resolve(this.historyProvider.map((h) => h.query.expr).filter((expr) => expr !== undefined));
   }
 
-  getAllMetricNames(): Promise<Metric[]> {
-    const { metrics, metricsMetadata } = this.languageProvider;
-    const result: Metric[] = metrics.map((m) => {
+  getAllMetricNames(): string[] {
+    return this.languageProvider.metrics;
+  }
+
+  metricNamesToMetrics(metricNames: string[]): Metric[] {
+    const { metricsMetadata } = this.languageProvider;
+    const result: Metric[] = metricNames.map((m) => {
       const metaItem = metricsMetadata?.[m];
       return {
         name: m,
@@ -78,7 +82,7 @@ export class DataProvider {
       };
     });
 
-    return Promise.resolve(result);
+    return result;
   }
 
   private enableAutocompleteSuggestionsUpdate(): void {

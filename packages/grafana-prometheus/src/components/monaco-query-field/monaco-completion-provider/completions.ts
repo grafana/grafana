@@ -6,7 +6,7 @@ import { SUGGESTIONS_LIMIT } from '../../../language_provider';
 import { escapeLabelValueInExactSelector } from '../../../language_utils';
 import { FUNCTIONS } from '../../../promql';
 
-import { DataProvider, type Metric } from './data-provider';
+import { DataProvider } from './data-provider';
 import type { Label, Situation } from './situation';
 import { NeverCaseError } from './util';
 // FIXME: we should not load this from the "outside", but we cannot do that while we have the "old" query-field too
@@ -27,41 +27,40 @@ const metricNamesSearchClient = new UFuzzy({
   intraChars: '[a-z0-9_:]', // characters allowed in metric names, according to the Prometheus data model
 });
 
-export function fuzzySearchMetrics(haystack: Metric[], needle: string): Metric[] {
-  const filteredMetrics: Metric[] = [];
-  const metricNames = haystack.map((metric) => metric.name);
-  const [idxs] = metricNamesSearchClient.search(metricNames, needle);
+export function fuzzySearchMetrics(haystack: string[], needle: string): string[] {
+  const filteredMetricNames: string[] = [];
+  const [idxs] = metricNamesSearchClient.search(haystack, needle);
 
   for (const idx of idxs ?? []) {
     const metric = haystack[idx];
 
-    if (filteredMetrics.length < SUGGESTIONS_LIMIT) {
-      filteredMetrics.push(metric);
+    if (filteredMetricNames.length < SUGGESTIONS_LIMIT) {
+      filteredMetricNames.push(metric);
     }
   }
 
-  return filteredMetrics;
+  return filteredMetricNames;
 }
 
 // we order items like: history, functions, metrics
 async function getAllMetricNamesCompletions(dataProvider: DataProvider): Promise<Completion[]> {
-  let metrics = await dataProvider.getAllMetricNames();
+  let metricNames = dataProvider.getAllMetricNames();
 
   if (
     config.featureToggles.prometheusCodeModeMetricNamesSearch &&
-    metrics.length > dataProvider.metricNamesSuggestionLimit
+    metricNames.length > dataProvider.metricNamesSuggestionLimit
   ) {
     const { monacoSettings } = dataProvider;
 
     if (monacoSettings.inputInRange) {
       monacoSettings.enableAutocompleteSuggestionsUpdate();
-      metrics = fuzzySearchMetrics(metrics, monacoSettings.inputInRange);
+      metricNames = fuzzySearchMetrics(metricNames, monacoSettings.inputInRange);
     } else {
-      metrics = metrics.slice(0, SUGGESTIONS_LIMIT);
+      metricNames = metricNames.slice(0, SUGGESTIONS_LIMIT);
     }
   }
 
-  return metrics.map((metric) => ({
+  return dataProvider.metricNamesToMetrics(metricNames).map((metric) => ({
     type: 'METRIC_NAME',
     label: metric.name,
     insertText: metric.name,
