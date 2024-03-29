@@ -2,10 +2,12 @@ import { css } from '@emotion/css';
 import React from 'react';
 import { Link } from 'react-router-dom';
 
-import { AppEvents, GrafanaTheme2, ScopeDashboard } from '@grafana/data';
+import { APIScopeDashboardBinding, AppEvents, GrafanaTheme2, ScopeDashboard } from '@grafana/data';
 import { config, getAppEvents, getBackendSrv, locationService } from '@grafana/runtime';
 import { SceneComponentProps, SceneObjectBase, SceneObjectState } from '@grafana/scenes';
 import { CustomScrollbar, Icon, Input, useStyles2 } from '@grafana/ui';
+
+import { ScopedResourceServer } from '../../apiserver/server';
 
 export interface ScopesDashboardsSceneState extends SceneObjectState {
   dashboards: ScopeDashboard[];
@@ -17,8 +19,11 @@ export interface ScopesDashboardsSceneState extends SceneObjectState {
 export class ScopesDashboardsScene extends SceneObjectBase<ScopesDashboardsSceneState> {
   static Component = ScopesDashboardsSceneRenderer;
 
-  private _url =
-    config.bootData.settings.listDashboardScopesEndpoint || '/apis/scope.grafana.app/v0alpha1/scopedashboards';
+  private server = new ScopedResourceServer<APIScopeDashboardBinding, 'ScopeDashboardBinding'>({
+    group: 'scope.grafana.app',
+    version: 'v0alpha1',
+    resource: 'scopedashboardbindings',
+  });
 
   constructor() {
     super({
@@ -27,6 +32,10 @@ export class ScopesDashboardsScene extends SceneObjectBase<ScopesDashboardsScene
       isLoading: false,
       searchQuery: '',
     });
+
+    if (config.bootData.settings.listDashboardScopesEndpoint) {
+      this.server.overwriteUrl(config.bootData.settings.listDashboardScopesEndpoint);
+    }
   }
 
   public async fetchDashboards(scope: string | undefined) {
@@ -57,13 +66,17 @@ export class ScopesDashboardsScene extends SceneObjectBase<ScopesDashboardsScene
 
   private async fetchDashboardsUids(scope: string): Promise<string[]> {
     try {
-      const response = await getBackendSrv().get<{
-        items: Array<{ spec: { dashboards: null | string[]; scope: string } }>;
-      }>(this._url, {
-        fieldSelector: `spec.scope=${scope}`,
+      const response = await this.server.list({
+        fieldSelector: [
+          {
+            key: 'spec.scope',
+            operator: '=',
+            value: scope,
+          },
+        ],
       });
 
-      return response.items.find((item) => !!item.spec.dashboards)?.spec.dashboards ?? [];
+      return response.items.map((item) => item.spec.dashboard).filter((dashboardUid) => !!dashboardUid) ?? [];
     } catch (err) {
       return [];
     }

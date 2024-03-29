@@ -1,7 +1,7 @@
 import React from 'react';
 
-import { AppEvents, Scope, SelectableValue } from '@grafana/data';
-import { config, getAppEvents, getBackendSrv } from '@grafana/runtime';
+import { APIScope, AppEvents, Scope, SelectableValue } from '@grafana/data';
+import { config, getAppEvents } from '@grafana/runtime';
 import {
   SceneComponentProps,
   SceneObjectBase,
@@ -10,6 +10,8 @@ import {
   SceneObjectUrlValues,
 } from '@grafana/scenes';
 import { Select } from '@grafana/ui';
+
+import { ScopedResourceServer } from '../../apiserver/server';
 
 export interface ScopesFiltersSceneState extends SceneObjectState {
   isLoading: boolean;
@@ -23,7 +25,11 @@ export class ScopesFiltersScene extends SceneObjectBase<ScopesFiltersSceneState>
 
   protected _urlSync = new SceneObjectUrlSyncConfig(this, { keys: ['scope'] });
 
-  private _url = config.bootData.settings.listScopesEndpoint || '/apis/scope.grafana.app/v0alpha1/scopes';
+  private server = new ScopedResourceServer<APIScope, 'Scope'>({
+    group: 'scope.grafana.app',
+    version: 'v0alpha1',
+    resource: 'scopes',
+  });
 
   constructor() {
     super({
@@ -32,6 +38,10 @@ export class ScopesFiltersScene extends SceneObjectBase<ScopesFiltersSceneState>
       scopes: [],
       value: undefined,
     });
+
+    if (config.bootData.settings.listScopesEndpoint) {
+      this.server.overwriteUrl(config.bootData.settings.listScopesEndpoint);
+    }
   }
 
   getUrlState() {
@@ -44,7 +54,7 @@ export class ScopesFiltersScene extends SceneObjectBase<ScopesFiltersSceneState>
   }
 
   public getSelectedScope(): Scope | undefined {
-    return this.state.scopes.find((scope) => scope.uid === this.state.value);
+    return this.state.scopes.find((scope) => scope.name === this.state.value);
   }
 
   public setScope(newScope: string | undefined) {
@@ -52,7 +62,7 @@ export class ScopesFiltersScene extends SceneObjectBase<ScopesFiltersSceneState>
       return this.setState({ pendingValue: newScope });
     }
 
-    if (!this.state.scopes.find((scope) => scope.uid === newScope)) {
+    if (!this.state.scopes.find((scope) => scope.name === newScope)) {
       newScope = undefined;
     }
 
@@ -63,13 +73,11 @@ export class ScopesFiltersScene extends SceneObjectBase<ScopesFiltersSceneState>
     this.setState({ isLoading: true });
 
     try {
-      const response = await getBackendSrv().get<{
-        items: Array<{ metadata: { uid: string }; spec: Omit<Scope, 'uid'> }>;
-      }>(this._url);
+      const response = await this.server.list();
 
       this.setScopesAfterFetch(
-        response.items.map(({ metadata: { uid }, spec }) => ({
-          uid,
+        response.items.map(({ metadata: { name }, spec }) => ({
+          name,
           ...spec,
         }))
       );
@@ -88,7 +96,7 @@ export class ScopesFiltersScene extends SceneObjectBase<ScopesFiltersSceneState>
   private setScopesAfterFetch(scopes: Scope[]) {
     let value = this.state.pendingValue ?? this.state.value;
 
-    if (!scopes.find((scope) => scope.uid === value)) {
+    if (!scopes.find((scope) => scope.name === value)) {
       value = undefined;
     }
 
@@ -101,9 +109,9 @@ export function ScopesFiltersSceneRenderer({ model }: SceneComponentProps<Scopes
   const parentState = model.parent!.useState();
   const isViewing = 'isViewing' in parentState ? !!parentState.isViewing : false;
 
-  const options: Array<SelectableValue<string>> = scopes.map(({ uid, title, category }) => ({
+  const options: Array<SelectableValue<string>> = scopes.map(({ name, title, category }) => ({
     label: title,
-    value: uid,
+    value: name,
     description: category,
   }));
 

@@ -2,7 +2,7 @@ import { config, getBackendSrv } from '@grafana/runtime';
 
 import {
   ListOptions,
-  ListOptionsLabelSelector,
+  ListOptionsSelector,
   MetaStatus,
   Resource,
   ResourceForCreate,
@@ -17,12 +17,16 @@ export interface GroupVersionResource {
 }
 
 export class ScopedResourceServer<T = object, K = string> implements ResourceServer<T, K> {
-  readonly url: string;
+  private _url: string;
+
+  get url(): string {
+    return this._url;
+  }
 
   constructor(gvr: GroupVersionResource, namespaced = true) {
     const ns = namespaced ? `namespaces/${config.namespace}/` : '';
 
-    this.url = `/apis/${gvr.group}/${gvr.version}/${ns}${gvr.resource}`;
+    this._url = `/apis/${gvr.group}/${gvr.version}/${ns}${gvr.resource}`;
   }
 
   public async create(obj: ResourceForCreate<T, K>): Promise<void> {
@@ -33,9 +37,10 @@ export class ScopedResourceServer<T = object, K = string> implements ResourceSer
     return getBackendSrv().get<Resource<T, K>>(`${this.url}/${name}`);
   }
 
-  public async list(opts?: ListOptions<T> | undefined): Promise<ResourceList<T, K>> {
+  public async list(opts?: ListOptions | undefined): Promise<ResourceList<T, K>> {
     const finalOpts = opts || {};
-    finalOpts.labelSelector = this.parseLabelSelector(finalOpts?.labelSelector);
+    finalOpts.labelSelector = this.parseListOptionsSelector(finalOpts?.labelSelector);
+    finalOpts.fieldSelector = this.parseListOptionsSelector(finalOpts?.fieldSelector);
 
     return getBackendSrv().get<ResourceList<T, K>>(this.url, opts);
   }
@@ -48,7 +53,13 @@ export class ScopedResourceServer<T = object, K = string> implements ResourceSer
     return getBackendSrv().delete<MetaStatus>(`${this.url}/${name}`);
   }
 
-  private parseLabelSelector<T>(labelSelector: ListOptionsLabelSelector<T> | undefined): string | undefined {
+  // Allow overwriting the URL
+  // There are situations where we might want to enforce another URL: allowing users to provide their own API implementation
+  public overwriteUrl(url: string) {
+    this._url = url;
+  }
+
+  private parseListOptionsSelector(labelSelector: ListOptionsSelector | undefined): string | undefined {
     if (!Array.isArray(labelSelector)) {
       return labelSelector;
     }
