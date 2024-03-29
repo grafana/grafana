@@ -26,7 +26,7 @@ func PackFrontendPackages(ctx context.Context, tag, grafanaDir, artifactsDir str
 	}
 
 	// nolint:gosec
-	cmd := exec.CommandContext(ctx, "yarn", "lerna", "exec", "--no-private", "--", "yarn", "pack", "--out", fmt.Sprintf("../../npm-artifacts/%%s-%v.tgz", tag))
+	cmd := exec.CommandContext(ctx, "yarn", "workspaces", "foreach", "--no-private", "--include='@grafana/*'", "-A", "exec", "yarn", "pack", "--out", fmt.Sprintf("../../npm-artifacts/%%s-%v.tgz", tag))
 	cmd.Dir = grafanaDir
 	if output, err := cmd.CombinedOutput(); err != nil {
 		return fmt.Errorf("command '%s' failed to run, output: %s, err: %q", cmd.String(), output, err)
