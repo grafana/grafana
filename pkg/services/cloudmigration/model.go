@@ -15,7 +15,7 @@ var (
 // cloud migration api dtos
 type CloudMigration struct {
 	ID          int64     `json:"id" xorm:"pk autoincr 'id'"`
-	AuthToken   string    `json:"authToken"`
+	AuthToken   string    `json:"-"`
 	Stack       string    `json:"stack"`
 	StackID     int       `json:"stackID" xorm:"stack_id"`
 	RegionSlug  string    `json:"regionSlug"`
