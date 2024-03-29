@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 
 import { selectors } from '@grafana/e2e-selectors';
+import { config } from '@grafana/runtime';
 import { IconButton, Text, Stack } from '@grafana/ui';
 
 import {
@@ -35,7 +36,11 @@ export function PromQueryCodeEditorAutocompleteInfo(props: Readonly<Props>) {
   }, [props.datasourceUid]);
 
   const showCodeModeAutocompleteDisclaimer = (): boolean => {
-    return props.editorMode === QueryEditorMode.Code && autocompleteLimitExceeded;
+    return (
+      Boolean(config.featureToggles.prometheusCodeModeMetricNamesSearch) &&
+      props.editorMode === QueryEditorMode.Code &&
+      autocompleteLimitExceeded
+    );
   };
 
   if (!showCodeModeAutocompleteDisclaimer()) {

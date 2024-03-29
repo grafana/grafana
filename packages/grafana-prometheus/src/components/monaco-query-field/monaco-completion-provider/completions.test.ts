@@ -1,3 +1,5 @@
+import { config } from '@grafana/runtime';
+
 import { SUGGESTIONS_LIMIT } from '../../../language_provider';
 import { FUNCTIONS } from '../../../promql';
 
@@ -24,6 +26,13 @@ let dataProvider = new DataProvider(dataProviderSettings);
 
 beforeEach(() => {
   dataProvider = new DataProvider(dataProviderSettings);
+  jest.replaceProperty(config, 'featureToggles', {
+    prometheusCodeModeMetricNamesSearch: true,
+  });
+});
+
+afterEach(() => {
+  jest.restoreAllMocks();
 });
 
 type MetricNameSituation = Extract<Situation['type'], 'AT_ROOT' | 'EMPTY' | 'IN_FUNCTION'>;

@@ -1,5 +1,7 @@
 import UFuzzy from '@leeoniya/ufuzzy';
 
+import { config } from '@grafana/runtime';
+
 import { SUGGESTIONS_LIMIT } from '../../../language_provider';
 import { escapeLabelValueInExactSelector } from '../../../language_utils';
 import { FUNCTIONS } from '../../../promql';
@@ -44,9 +46,13 @@ export function fuzzySearchMetrics(haystack: Metric[], needle: string): Metric[]
 // we order items like: history, functions, metrics
 async function getAllMetricNamesCompletions(dataProvider: DataProvider): Promise<Completion[]> {
   let metrics = await dataProvider.getAllMetricNames();
-  const { monacoSettings } = dataProvider;
 
-  if (metrics.length > dataProvider.metricNamesSuggestionLimit) {
+  if (
+    config.featureToggles.prometheusCodeModeMetricNamesSearch &&
+    metrics.length > dataProvider.metricNamesSuggestionLimit
+  ) {
+    const { monacoSettings } = dataProvider;
+
     if (monacoSettings.inputInRange) {
       monacoSettings.enableAutocompleteSuggestionsUpdate();
       metrics = fuzzySearchMetrics(metrics, monacoSettings.inputInRange);
