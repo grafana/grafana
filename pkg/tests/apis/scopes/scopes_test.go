@@ -118,8 +118,11 @@ func TestIntegrationScopes(t *testing.T) {
 			FieldSelector: "spec.category=fun",
 		})
 		require.NoError(t, err)
-		require.NoError(t, err)
 		require.Len(t, found.Items, 1)
+		require.Equal(t,
+			"example2",
+			mustNestedString(found.Items[0].Object, "metadata", "name"),
+		)
 
 		// Create bindings
 		scopeDashboardBindingClient := helper.GetResourceClient(apis.ResourceClientArgs{
