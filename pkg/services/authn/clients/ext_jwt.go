@@ -9,8 +9,9 @@ import (
 	"strings"
 	"time"
 
-	"github.com/go-jose/go-jose/v3"
 	"github.com/go-jose/go-jose/v3/jwt"
+
+	authlib "github.com/grafana/authlib/authn"
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/authn"
@@ -226,16 +227,16 @@ func (s *ExtendedJWT) verifyRFC9068Token(ctx context.Context, rawToken string, t
 		return nil, fmt.Errorf("missing 'kid' field from the header")
 	}
 
-	var claims ExtendedJWTClaims
-	// ToDo: Use the authlib authn package to get the public key
-	_, key, err := s.signingKeys.GetOrCreatePrivateKey(ctx, keyID, jose.ES256)
-	if err != nil {
-		return nil, fmt.Errorf("failed to get public key: %w", err)
-	}
+	verifier := authlib.NewVerifier[ExtendedJWTClaims](authlib.IDVerifierConfig{
+		SigningKeysURL: "http://localhost:4200/keys",
+		AllowedAudiences: []string{
+			s.cfg.ExtJWTAuth.ExpectAudience,
+		},
+	})
 
-	err = parsedToken.Claims(key.Public(), &claims)
+	claims, err := verifier.Verify(ctx, rawToken)
 	if err != nil {
-		return nil, fmt.Errorf("failed to verify the signature: %w", err)
+		return nil, fmt.Errorf("failed to verify JWT: %w", err)
 	}
 
 	if claims.Expiry == nil {
@@ -250,17 +251,7 @@ func (s *ExtendedJWT) verifyRFC9068Token(ctx context.Context, rawToken string, t
 		return nil, fmt.Errorf("missing 'iat' claim")
 	}
 
-	err = claims.ValidateWithLeeway(jwt.Expected{
-		Issuer:   s.cfg.ExtJWTAuth.ExpectIssuer,
-		Audience: jwt.Audience{s.cfg.ExtJWTAuth.ExpectAudience},
-		Time:     timeNow(),
-	}, 0)
-
-	if err != nil {
-		return nil, fmt.Errorf("failed to validate JWT: %w", err)
-	}
-
-	return &claims, nil
+	return &claims.Rest, nil
 }
 
 func (s *ExtendedJWT) getDefaultOrgID() int64 {
