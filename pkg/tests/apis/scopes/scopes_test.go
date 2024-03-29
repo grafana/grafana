@@ -92,10 +92,12 @@ func TestIntegrationScopes(t *testing.T) {
 			},
 		})
 		createOptions := metav1.CreateOptions{FieldValidation: "Strict"}
+
 		s0, err := scopeClient.Resource.Create(ctx,
 			helper.LoadYAMLOrJSONFile("testdata/example-scope.yaml"),
 			createOptions,
 		)
+
 		require.NoError(t, err)
 		require.Equal(t, "example", s0.GetName())
 		s1, err := scopeClient.Resource.Get(ctx, "example", metav1.GetOptions{})
@@ -104,6 +106,20 @@ func TestIntegrationScopes(t *testing.T) {
 			mustNestedString(s0.Object, "spec", "title"),
 			mustNestedString(s1.Object, "spec", "title"),
 		)
+
+		_, err = scopeClient.Resource.Create(ctx,
+			helper.LoadYAMLOrJSONFile("testdata/example-scope2.yaml"),
+			createOptions,
+		)
+		require.NoError(t, err)
+
+		// Field Selector test
+		found, err := scopeClient.Resource.List(ctx, metav1.ListOptions{
+			FieldSelector: "spec.category=fun",
+		})
+		require.NoError(t, err)
+		require.NoError(t, err)
+		require.Len(t, found.Items, 1)
 
 		// Create bindings
 		scopeDashboardBindingClient := helper.GetResourceClient(apis.ResourceClientArgs{
@@ -124,7 +140,7 @@ func TestIntegrationScopes(t *testing.T) {
 		)
 		require.NoError(t, err)
 
-		found, err := scopeDashboardBindingClient.Resource.List(ctx, metav1.ListOptions{})
+		found, err = scopeDashboardBindingClient.Resource.List(ctx, metav1.ListOptions{})
 		require.NoError(t, err)
 		require.Len(t, found.Items, 2)
 	})
