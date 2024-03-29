@@ -1,10 +1,12 @@
 package cloudmigrationimpl
 
 import (
+	"bytes"
 	"context"
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
+	"net/http"
 	"strconv"
 	"time"
 
@@ -196,8 +198,47 @@ func (s *Service) findAccessPolicyByName(ctx context.Context, regionSlug, access
 	return nil, nil
 }
 
-func (s *Service) ValidateToken(ctx context.Context, token string) error {
-	// TODO: Implement method
+func (s *Service) ValidateToken(ctx context.Context, cm cloudmigration.CloudMigration) error {
+	logger := s.log.FromContext(ctx)
+
+	// get CMS path from the config
+	domain, err := s.ParseCloudMigrationConfig()
+	if err != nil {
+		return fmt.Errorf("config parse error: %w", err)
+	}
+	path := fmt.Sprintf("https://cms-dev-%s.%s/api/v1/validate-key", cm.ClusterSlug, domain)
+
+	// validation is an empty POST to CMS with the authorization header included
+	req, err := http.NewRequest("POST", path, bytes.NewReader(nil))
+	if err != nil {
+		logger.Error("error creating http request for token validation", "err", err.Error())
+		return fmt.Errorf("http request error: %w", err)
+	}
+	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("Authorization", fmt.Sprintf("Bearer %d:%s", cm.StackID, cm.AuthToken))
+
+	client := &http.Client{}
+	resp, err := client.Do(req)
+	if err != nil {
+		logger.Error("error sending http request for token validation", "err", err.Error())
+		return fmt.Errorf("http request error: %w", err)
+	}
+
+	defer func() {
+		if err := resp.Body.Close(); err != nil {
+			logger.Error("closing request body", "err", err.Error())
+		}
+	}()
+
+	if resp.StatusCode != 200 {
+		var errResp map[string]any
+		if err := json.NewDecoder(resp.Body).Decode(&errResp); err != nil {
+			logger.Error("decoding error response", "err", err.Error())
+		} else {
+			return fmt.Errorf("token validation failure: %v", errResp)
+		}
+	}
+
 	return nil
 }
 

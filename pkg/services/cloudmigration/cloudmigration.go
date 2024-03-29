@@ -6,7 +6,7 @@ import (
 
 type Service interface {
 	CreateToken(context.Context) (CreateAccessTokenResponse, error)
-	ValidateToken(context.Context, string) error
+	ValidateToken(context.Context, CloudMigration) error
 	// migration
 	GetMigration(context.Context, int64) (*CloudMigration, error)
 	GetMigrationList(context.Context) (*CloudMigrationListResponse, error)
