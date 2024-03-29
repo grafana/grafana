@@ -174,7 +174,6 @@ describe('DashboardScene', () => {
         ${'tags'}        | ${['tag3', 'tag4']}
         ${'editable'}    | ${false}
         ${'links'}       | ${[]}
-        ${'meta'}        | ${{ folderUid: 'new-folder-uid', folderTitle: 'new-folder-title', hasUnsavedFolderChange: expect.any(Boolean) }}
       `(
         'A change to $prop should set isDirty true',
         ({ prop, value }: { prop: keyof DashboardSceneState; value: unknown }) => {
@@ -187,6 +186,26 @@ describe('DashboardScene', () => {
           expect(scene.state[prop]).toEqual(prevState);
         }
       );
+
+      it('A change to folderUid should set isDirty true', () => {
+        const prevMeta = { ...scene.state.meta };
+
+        // The worker only detects changes in the model, so the folder change should be detected anyway
+        mockResultsOfDetectChangesWorker({ hasChanges: false, hasTimeChanges: false, hasVariableValueChanges: false });
+
+        scene.setState({
+          meta: {
+            ...prevMeta,
+            folderUid: 'new-folder-uid',
+            folderTitle: 'new-folder-title',
+          },
+        });
+
+        expect(scene.state.isDirty).toBe(true);
+
+        scene.exitEditMode({ skipConfirm: true });
+        expect(scene.state.meta).toEqual(prevMeta);
+      });
 
       it('A change to refresh picker interval settings should set isDirty true', () => {
         const refreshPicker = dashboardSceneGraph.getRefreshPicker(scene)!;
