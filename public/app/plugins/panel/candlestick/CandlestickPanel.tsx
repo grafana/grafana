@@ -308,11 +308,11 @@ export const CandlestickPanel = ({
                       isPinned={isPinned}
                       annotate={enableAnnotationCreation ? annotate : undefined}
                       scrollable={isTooltipScrollable(options.tooltip)}
+                      maxHeight={options.tooltip.maxHeight}
                     />
                   );
                 }}
                 maxWidth={options.tooltip.maxWidth}
-                maxHeight={options.tooltip.maxHeight}
               />
             )}
             <AnnotationsPlugin2
