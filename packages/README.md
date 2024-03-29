@@ -4,9 +4,9 @@ This document contains information about Grafana frontend package versioning and
 
 ## Versioning
 
-We use [Lerna](https://github.com/lerna/lerna) for packages versioning and releases.
+We use [Nx](https://nx.dev/recipes/nx-release/get-started-with-nx-release) for package versioning.
 
-All packages are versioned according to the current Grafana version:
+All packages defined within the [nx.json `fixed` release group](../nx.json) are versioned according to the current Grafana version:
 
 - Grafana v6.3.0-alpha1 -> @grafana/\* packages @ 6.3.0-alpha.1
 - Grafana v6.2.5 -> @grafana/\* packages @ 6.2.5
@@ -26,10 +26,10 @@ Alpha and beta releases are published under the `next` tag on npm.
 
 ### Automatic prereleases
 
-Every commit to main that has changes within the `packages` directory is a subject of npm packages release. _ALL_ packages must be released under version from lerna.json file with the drone build number added to it:
+Every commit to main that has changes within the `packages` directory is a subject of npm packages release. _ALL_ packages must be released under version from package.json file with the drone build number added to it:
 
 ```
-<lerna.json version>-<DRONE_BUILD_NUMBER>
+<package.json version>-<DRONE_BUILD_NUMBER>
 ```
 
 ### Manual release
@@ -39,7 +39,7 @@ Every commit to main that has changes within the `packages` directory is a subje
 > You must be logged in to NPM as part of Grafana NPM org before attempting to publish to the npm registry.
 
 1. Run `yarn packages:clean` script from the root directory. This will delete any previous builds of the packages.
-2. Run `yarn packages:prepare` script from the root directory. This performs tests on the packages and prompts for the version of the packages. The version should be the same as the one being released.
+2. Run `yarn packages:prepare` script from the root directory. This prompts for the version of the packages. The version should be the same as the one being released.
    - Make sure you use semver convention. So, _place a dot between prerelease id and prerelease number_, i.e. 6.3.0-alpha.1
    - Make sure you confirm the version bump when prompted!
 3. Run `yarn packages:build` script that compiles distribution code in `packages/grafana-*/dist`.
@@ -57,7 +57,7 @@ Every commit to main that has changes within the `packages` directory is a subje
 To build individual packages, run:
 
 ```
-yarn packages:build --scope=@grafana/<data|e2e|e2e-selectors|runtime|schema|ui>
+yarn nx run @grafana/<data|e2e|e2e-selectors|runtime|schema|ui>:build
 ```
 
 ### Setting up @grafana/\* packages for local development
@@ -74,7 +74,7 @@ From your terminal:
 
 1. Navigate to `devenv/local-npm` directory.
 2. Run `docker compose up`. This will start your local npm registry, available at http://localhost:4873/.
-3. To test `@grafana` packages published to your local npm registry uncomment `npmScopes` and `unsafeHttpWhitelist` properties in the `.yarnrc` file.
+3. To test `@grafana` packages published to your local npm registry uncomment `npmScopes` and `unsafeHttpWhitelist` properties in the [`.yarnrc`](../.yarnrc.yml) file.
 
 #### Publishing packages to local npm registry
 
