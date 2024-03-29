@@ -414,9 +414,12 @@ func (s *Service) GetMigrationStatusList(ctx context.Context, id string) ([]clou
 	return nil, nil
 }
 
-func (s *Service) DeleteMigration(ctx context.Context, id string) error {
-	// TODO: Implement method
-	return nil
+func (s *Service) DeleteMigration(ctx context.Context, id int64) (*cloudmigration.CloudMigration, error) {
+	c, err := s.store.DeleteMigration(ctx, id)
+	if err != nil {
+		return c, fmt.Errorf("error deleting migration from db: %w", err)
+	}
+	return c, nil
 }
 
 func (s *Service) ParseCloudMigrationConfig() (string, error) {

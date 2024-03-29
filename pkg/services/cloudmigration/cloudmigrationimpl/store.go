@@ -7,8 +7,10 @@ import (
 )
 
 type store interface {
-	GetMigration(context.Context, int64) (*cloudmigration.CloudMigration, error)
-	SaveMigrationRun(context.Context, *cloudmigration.CloudMigrationRun) error
 	CreateMigration(ctx context.Context, token cloudmigration.CloudMigration) error
+	GetMigration(context.Context, int64) (*cloudmigration.CloudMigration, error)
 	GetAllCloudMigrations(ctx context.Context) ([]*cloudmigration.CloudMigration, error)
+	DeleteMigration(ctx context.Context, id int64) (*cloudmigration.CloudMigration, error)
+
+	SaveMigrationRun(context.Context, *cloudmigration.CloudMigrationRun) error
 }

@@ -61,3 +61,25 @@ func (ss *sqlStore) GetAllCloudMigrations(ctx context.Context) ([]*cloudmigratio
 	}
 	return migrations, nil
 }
+
+func (ss *sqlStore) DeleteMigration(ctx context.Context, id int64) (*cloudmigration.CloudMigration, error) {
+	var c cloudmigration.CloudMigration
+	err := ss.db.WithDbSession(ctx, func(sess *db.Session) error {
+		exist, err := sess.ID(id).Get(&c)
+		if err != nil {
+			return err
+		}
+		if !exist {
+			return cloudmigration.ErrMigrationNotFound
+		}
+		affected, err := sess.Delete(&cloudmigration.CloudMigration{
+			ID: id,
+		})
+		if affected == 0 {
+			return cloudmigration.ErrMigrationNotDeleted.Errorf("0 affected rows for id %d", id)
+		}
+		return err
+	})
+
+	return &c, err
+}
