@@ -29,4 +29,12 @@ func addCloudMigrationsMigrations(mg *Migrator) {
 
 	mg.AddMigration("create cloud_migration table v1", NewAddTableMigration(migrationTable))
 	mg.AddMigration("create cloud_migration_run table v1", NewAddTableMigration(migrationRunTable))
+
+	stackIDColumn := Column{Name: "stack_id", Type: DB_BigInt, Nullable: false}
+	regionSlugColumn := Column{Name: "region_slug", Type: DB_Text, Nullable: false}
+	clusterSlugColumn := Column{Name: "cluster_slug", Type: DB_Text, Nullable: false}
+
+	mg.AddMigration("add stack_id column", NewAddColumnMigration(migrationTable, &stackIDColumn))
+	mg.AddMigration("add region_slug column", NewAddColumnMigration(migrationTable, &regionSlugColumn))
+	mg.AddMigration("add cluster_slug column", NewAddColumnMigration(migrationTable, &clusterSlugColumn))
 }
