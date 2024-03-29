@@ -21,7 +21,7 @@
       "scripts/webpack/**/*",
       "package.json",
       "tsconfig.json",
-      "lerna.json",
+      "nx.json",
       ".prettierrc.js",
       ".eslintrc",
       "**/*.mdx"
