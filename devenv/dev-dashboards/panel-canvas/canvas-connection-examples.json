@@ -62,9 +62,9 @@
       },
       "id": 5,
       "options": {
-        "infinitePan": false,
-        "inlineEditing": true,
-        "panZoom": false,
+        "infinitePan": true,
+        "inlineEditing": false,
+        "panZoom": true,
         "root": {
           "background": {
             "color": {
@@ -2239,8 +2239,7 @@
             "mode": "absolute",
             "steps": [
               {
-                "color": "green",
-                "value": null
+                "color": "green"
               },
               {
                 "color": "#6ED0E0",
@@ -2879,8 +2878,7 @@
             "mode": "absolute",
             "steps": [
               {
-                "color": "green",
-                "value": null
+                "color": "green"
               },
               {
                 "color": "blue",
@@ -3648,6 +3646,6 @@
   "timezone": "",
   "title": "Panel Tests - Canvas Connection Examples",
   "uid": "Pu8lwQAVz",
-  "version": 4,
+  "version": 6,
   "weekStart": ""
 }
