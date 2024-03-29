@@ -63,6 +63,7 @@ func ProvideService(
 	features featuremgmt.FeatureToggles,
 	db db.DB,
 	dsService datasources.DataSourceService,
+	secretsService secrets.Service,
 	routeRegister routing.RouteRegister,
 	prom prometheus.Registerer,
 	tracer tracing.Tracer,
@@ -72,7 +73,7 @@ func ProvideService(
 	}
 
 	s := &Service{
-		store:       &sqlStore{db: db},
+		store:       &sqlStore{db: db, secretsService: secretsService},
 		log:         log.New(LogPrefix),
 		cfg:         cfg,
 		features:    features,
@@ -200,11 +201,6 @@ func (s *Service) ValidateToken(ctx context.Context, token string) error {
 	return nil
 }
 
-func (s *Service) SaveEncryptedToken(ctx context.Context, token string) error {
-	// TODO: Implement method
-	return nil
-}
-
 func (s *Service) GetMigration(ctx context.Context, id int64) (*cloudmigration.CloudMigration, error) {
 	migration, err := s.store.GetMigration(ctx, id)
 	if err != nil {
@@ -265,9 +261,8 @@ func (s *Service) CreateMigration(ctx context.Context, cmd cloudmigration.CloudM
 	}
 
 	return &cloudmigration.CloudMigrationResponse{
-		ID:    int64(token.Instance.StackID),
-		Stack: token.Instance.Slug,
-		// TODO replace this with the actual value once the storage piece is implemented
+		ID:      int64(token.Instance.StackID),
+		Stack:   token.Instance.Slug,
 		Created: time.Now(),
 		Updated: time.Now(),
 	}, nil

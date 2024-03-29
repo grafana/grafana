@@ -7,7 +7,6 @@ import (
 type Service interface {
 	CreateToken(context.Context) (CreateAccessTokenResponse, error)
 	ValidateToken(context.Context, string) error
-	SaveEncryptedToken(context.Context, string) error
 	// migration
 	GetMigration(context.Context, int64) (*CloudMigration, error)
 	GetMigrationList(context.Context) (*CloudMigrationListResponse, error)

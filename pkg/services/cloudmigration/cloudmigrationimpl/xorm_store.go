@@ -2,8 +2,10 @@ package cloudmigrationimpl
 
 import (
 	"context"
+	"fmt"
 	"time"
 
+	"github.com/grafana/grafana/pkg/services/secrets"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 
 	"github.com/grafana/grafana/pkg/infra/db"
@@ -11,7 +13,8 @@ import (
 )
 
 type sqlStore struct {
-	db db.DB
+	db             db.DB
+	secretsService secrets.Service
 }
 
 func (ss *sqlStore) GetMigration(ctx context.Context, id int64) (*cloudmigration.CloudMigration, error) {
@@ -27,6 +30,10 @@ func (ss *sqlStore) GetMigration(ctx context.Context, id int64) (*cloudmigration
 		return nil
 	})
 
+	if err := ss.decryptToken(ctx, &cm); err != nil {
+		return &cm, err
+	}
+
 	return &cm, err
 }
 
@@ -38,6 +45,10 @@ func (ss *sqlStore) SaveMigrationRun(ctx context.Context, cmr *cloudmigration.Cl
 }
 
 func (ss *sqlStore) CreateMigration(ctx context.Context, migration cloudmigration.CloudMigration) error {
+	if err := ss.encryptToken(ctx, &migration); err != nil {
+		return err
+	}
+
 	err := ss.db.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
 		migration.Created = time.Now()
 		migration.Updated = time.Now()
@@ -59,6 +70,14 @@ func (ss *sqlStore) GetAllCloudMigrations(ctx context.Context) ([]*cloudmigratio
 	if err != nil {
 		return nil, err
 	}
+
+	for i := 0; i < len(migrations); i++ {
+		m := migrations[i]
+		if err := ss.decryptToken(ctx, m); err != nil {
+			return migrations, err
+		}
+	}
+
 	return migrations, nil
 }
 
@@ -82,4 +101,24 @@ func (ss *sqlStore) DeleteMigration(ctx context.Context, id int64) (*cloudmigrat
 	})
 
 	return &c, err
+}
+
+func (ss *sqlStore) encryptToken(ctx context.Context, cm *cloudmigration.CloudMigration) error {
+	s, err := ss.secretsService.Encrypt(ctx, []byte(cm.AuthToken), secrets.WithoutScope())
+	if err != nil {
+		return fmt.Errorf("encrypting auth token: %w", err)
+	}
+	cm.AuthToken = string(s)
+
+	return nil
+}
+
+func (ss *sqlStore) decryptToken(ctx context.Context, cm *cloudmigration.CloudMigration) error {
+	t, err := ss.secretsService.Decrypt(ctx, []byte(cm.AuthToken))
+	if err != nil {
+		return fmt.Errorf("decrypting auth token: %w", err)
+	}
+	cm.AuthToken = string(t)
+
+	return nil
 }
