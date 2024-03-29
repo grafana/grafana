@@ -456,9 +456,12 @@ func (s *Service) GetMigrationStatus(ctx context.Context, id string, runID strin
 	return cmr, nil
 }
 
-func (s *Service) GetMigrationStatusList(ctx context.Context, id string) ([]cloudmigration.CloudMigrationRun, error) {
-	// TODO: Implement method
-	return nil, nil
+func (s *Service) GetMigrationStatusList(ctx context.Context, migrationID string) ([]*cloudmigration.CloudMigrationRun, error) {
+	cmrs, err := s.store.GetMigrationStatusList(ctx, migrationID)
+	if err != nil {
+		return nil, fmt.Errorf("retrieving migration statuses from db: %w", err)
+	}
+	return cmrs, nil
 }
 
 func (s *Service) DeleteMigration(ctx context.Context, id int64) (*cloudmigration.CloudMigration, error) {

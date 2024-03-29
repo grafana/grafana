@@ -127,6 +127,20 @@ func (ss *sqlStore) GetMigrationStatus(ctx context.Context, migrationID string, 
 	return &cm, err
 }
 
+func (ss *sqlStore) GetMigrationStatusList(ctx context.Context, migrationID string) ([]*cloudmigration.CloudMigrationRun, error) {
+	var runs = make([]*cloudmigration.CloudMigrationRun, 0)
+	err := ss.db.WithDbSession(ctx, func(sess *db.Session) error {
+		return sess.Find(&runs, &cloudmigration.CloudMigrationRun{
+			CloudMigrationUID: migrationID,
+		})
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	return runs, nil
+}
+
 func (ss *sqlStore) encryptToken(ctx context.Context, cm *cloudmigration.CloudMigration) error {
 	s, err := ss.secretsService.Encrypt(ctx, []byte(cm.AuthToken), secrets.WithoutScope())
 	if err != nil {

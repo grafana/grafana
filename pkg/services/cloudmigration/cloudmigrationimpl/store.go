@@ -14,4 +14,5 @@ type store interface {
 
 	SaveMigrationRun(ctx context.Context, cmr *cloudmigration.CloudMigrationRun) error
 	GetMigrationStatus(ctx context.Context, id string, runID string) (*cloudmigration.CloudMigrationRun, error)
+	GetMigrationStatusList(ctx context.Context, migrationID string) ([]*cloudmigration.CloudMigrationRun, error)
 }
