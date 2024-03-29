@@ -3,7 +3,6 @@ package playlist
 import (
 	"context"
 	"encoding/json"
-	"fmt"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -41,7 +40,6 @@ func TestIntegrationScopes(t *testing.T) {
 
 		v1Disco, err := json.MarshalIndent(resources, "", "  ")
 		require.NoError(t, err)
-		fmt.Printf("%s", string(v1Disco))
 
 		require.JSONEq(t, `{
 			"kind": "APIResourceList",
@@ -93,9 +91,10 @@ func TestIntegrationScopes(t *testing.T) {
 				Group: "scope.grafana.app", Version: "v0alpha1", Resource: "scopes",
 			},
 		})
+		createOptions := metav1.CreateOptions{FieldValidation: "Strict"}
 		s0, err := scopeClient.Resource.Create(ctx,
 			helper.LoadYAMLOrJSONFile("testdata/example-scope.yaml"),
-			metav1.CreateOptions{},
+			createOptions,
 		)
 		require.NoError(t, err)
 		require.Equal(t, "example", s0.GetName())
@@ -116,12 +115,12 @@ func TestIntegrationScopes(t *testing.T) {
 		})
 		_, err = scopeDashboardBindingClient.Resource.Create(ctx,
 			helper.LoadYAMLOrJSONFile("testdata/example-scope-dashboard-binding-abc.yaml"),
-			metav1.CreateOptions{},
+			createOptions,
 		)
 		require.NoError(t, err)
 		_, err = scopeDashboardBindingClient.Resource.Create(ctx,
 			helper.LoadYAMLOrJSONFile("testdata/example-scope-dashboard-binding-xyz.yaml"),
-			metav1.CreateOptions{},
+			createOptions,
 		)
 		require.NoError(t, err)
 
