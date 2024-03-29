@@ -33,9 +33,9 @@ export function fuzzySearchMetrics(haystack: Metric[], needle: string): Metric[]
   const [idxs] = metricNamesSearchClient.search(metricNames, needle);
 
   for (const idx of idxs ?? []) {
-    const metric = haystack.at(idx);
+    const metric = haystack[idx];
 
-    if (metric && filteredMetrics.length < SUGGESTIONS_LIMIT) {
+    if (filteredMetrics.length < SUGGESTIONS_LIMIT) {
       filteredMetrics.push(metric);
     }
   }
