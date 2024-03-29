@@ -130,6 +130,79 @@ func (d *DualWriter) Get(ctx context.Context, name string, options *metav1.GetOp
 	return nil, fmt.Errorf("dual writer mode is invalid")
 }
 
+// List overrides the default behavior of the Storage and retrieves objects from
+// LegacyStorage or Storage depending on the DualWriter mode.
+func (d *DualWriter) List(ctx context.Context, options *metainternalversion.ListOptions) (runtime.Object, error) {
+	legacy, ok := d.legacy.(rest.Lister)
+	if !ok {
+		return nil, fmt.Errorf("legacy storage rest.Lister is missing")
+	}
+
+	switch CurrentMode {
+	case Mode1:
+		return legacy.List(ctx, options)
+	case Mode2:
+		legacyList, err := legacy.List(ctx, options)
+		if err != nil {
+			return nil, err
+		}
+		ll, err := meta.ExtractList(legacyList)
+		if err != nil {
+			return nil, err
+		}
+
+		// #TODO if no entries are found will we get an error?
+		storageList, err := d.Storage.List(ctx, options)
+		if err != nil {
+			return nil, err
+		}
+		sl, err := meta.ExtractList(storageList)
+		if err != nil {
+			return nil, err
+		}
+
+		// #TODO: define this type separately?
+		// #TODO: figure out what other fields we want
+		type fieldsToEnrich struct {
+			resourceVersion string
+		}
+
+		// #TODO: is there a better way to do this than create this intermediate map?
+		// Look into whether GetContinue()/EachListItem() could help
+		m := map[string]fieldsToEnrich{}
+		for _, obj := range sl {
+			accessor, err := meta.Accessor(obj)
+			if err != nil {
+				return nil, err
+			}
+			// #TODO: is name the best identification for this use case?
+			// #TODO: figure out if we want to set anything else
+			m[accessor.GetName()] = fieldsToEnrich{accessor.GetResourceVersion()}
+		}
+
+		// #TODO see if it would make more sense to have a more general merge function where
+		// one gets prioritised for resource version etc
+		for _, obj := range ll {
+			accessor, err := meta.Accessor(obj)
+			if err != nil {
+				return nil, err
+			}
+			if entry, ok := m[accessor.GetName()]; ok {
+				accessor.SetResourceVersion(entry.resourceVersion)
+			}
+		}
+
+		if err = meta.SetList(legacyList, ll); err != nil {
+			return nil, err
+		}
+		return legacyList, nil
+	case Mode3, Mode4:
+		return d.Storage.List(ctx, options)
+	}
+
+	return nil, fmt.Errorf("dual writer mode is invalid")
+}
+
 // Create overrides the default behavior of the Storage and writes to LegacyStorage and Storage depending on the dual writer mode.
 func (d *DualWriter) Create(ctx context.Context, obj runtime.Object, createValidation rest.ValidateObjectFunc, options *metav1.CreateOptions) (runtime.Object, error) {
 	legacy, ok := d.legacy.(rest.Creater)
