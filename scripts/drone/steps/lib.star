@@ -513,7 +513,7 @@ def update_package_json_version():
             "apk add --update jq",
             "new_version=$(cat package.json | jq -r .version | sed s/pre/${DRONE_BUILD_NUMBER}/g)",
             "echo \"New version: $new_version\"",
-            "yarn run lerna version $new_version --exact --no-git-tag-version --no-push --force-publish -y",
+            "yarn nx release version $new_version --no-git-commit --no-git-tag --no-stage-changes --group fixed",
             "yarn install --mode=update-lockfile",
         ],
     }

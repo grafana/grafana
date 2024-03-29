@@ -2106,8 +2106,8 @@ steps:
   - apk add --update jq
   - new_version=$(cat package.json | jq -r .version | sed s/pre/${DRONE_BUILD_NUMBER}/g)
   - 'echo "New version: $new_version"'
-  - yarn run lerna version $new_version --exact --no-git-tag-version --no-push --force-publish
-    -y
+  - yarn nx release version $new_version --no-git-commit --no-git-tag --no-stage-changes
+    --group fixed
   - yarn install --mode=update-lockfile
   depends_on:
   - yarn-install
@@ -5564,6 +5564,6 @@ kind: secret
 name: gcr_credentials
 ---
 kind: signature
-hmac: f16a4715c7a4e6a4ffb1fe041b42fb966310fd5da455239614e9a239493aff82
+hmac: 46c36be68216e1dfe4f15f2742c5a72a577b2113471181462c046e3d9118d4cc
 
 ...
