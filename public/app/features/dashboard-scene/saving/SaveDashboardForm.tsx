@@ -2,7 +2,6 @@ import React, { useState } from 'react';
 
 import { selectors } from '@grafana/e2e-selectors';
 import { Button, Checkbox, TextArea, Stack, Alert, Box, Field, Icon } from '@grafana/ui';
-import { Trans } from 'app/core/internationalization';
 import { SaveDashboardOptions } from 'app/features/dashboard/components/SaveDashboard/types';
 
 import { DashboardScene } from '../scene/DashboardScene';
