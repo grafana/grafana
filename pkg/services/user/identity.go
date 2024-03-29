@@ -214,6 +214,10 @@ func (u *SignedInUser) GetID() string {
 func (u *SignedInUser) GetNamespacedID() (string, string) {
 	parts := strings.Split(u.GetID(), ":")
 	// Safety: GetID always returns a ':' separated string
+	if len(parts) != 2 {
+		return "", ""
+	}
+
 	return parts[0], parts[1]
 }
 
