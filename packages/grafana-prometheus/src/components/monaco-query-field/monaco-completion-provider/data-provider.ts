@@ -12,7 +12,7 @@ export type SuggestionsIncompleteEvent = CustomEvent<{
   datasourceUid: string;
 }>;
 
-export function isSuggestionsIncompletEvent(e: Event): e is SuggestionsIncompleteEvent {
+export function isSuggestionsIncompleteEvent(e: Event): e is SuggestionsIncompleteEvent {
   return (
     e.type === CODE_MODE_SUGGESTIONS_INCOMPLETE_EVENT &&
     'detail' in e &&

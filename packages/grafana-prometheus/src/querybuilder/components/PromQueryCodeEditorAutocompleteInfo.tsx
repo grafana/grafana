@@ -6,7 +6,7 @@ import { IconButton, Text, Stack } from '@grafana/ui';
 
 import {
   CODE_MODE_SUGGESTIONS_INCOMPLETE_EVENT,
-  isSuggestionsIncompletEvent,
+  isSuggestionsIncompleteEvent,
 } from '../../components/monaco-query-field/monaco-completion-provider/data-provider';
 import { PromQueryEditorProps } from '../../components/types';
 import { QueryEditorMode } from '../shared/types';
@@ -22,7 +22,7 @@ export function PromQueryCodeEditorAutocompleteInfo(props: Readonly<Props>) {
 
   useEffect(() => {
     const handleSuggestionsIncompleteEvent = (e: Event) => {
-      if (!isSuggestionsIncompletEvent(e)) {
+      if (!isSuggestionsIncompleteEvent(e)) {
         return;
       }
 
@@ -64,8 +64,4 @@ export function PromQueryCodeEditorAutocompleteInfo(props: Readonly<Props>) {
       </Stack>
     </div>
   );
-}
-
-function isCustomEvent(event: Event): event is CustomEvent {
-  return 'detail' in event;
 }
