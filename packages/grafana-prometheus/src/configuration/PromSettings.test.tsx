@@ -3,9 +3,16 @@ import React, { SyntheticEvent } from 'react';
 
 import { SelectableValue } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
+import { config } from '@grafana/runtime';
 
 import { countError, getValueFromEventItem, PromSettings } from './PromSettings';
 import { createDefaultConfigOptions } from './mocks';
+
+beforeEach(() => {
+  jest.replaceProperty(config, 'featureToggles', {
+    prometheusCodeModeMetricNamesSearch: true,
+  });
+});
 
 describe('PromSettings', () => {
   describe('getValueFromEventItem', () => {
