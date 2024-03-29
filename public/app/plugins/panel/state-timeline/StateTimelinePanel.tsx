@@ -13,7 +13,7 @@ import {
 
 import { AnnotationsPlugin2 } from '../timeseries/plugins/AnnotationsPlugin2';
 import { OutsideRangePlugin } from '../timeseries/plugins/OutsideRangePlugin';
-import { getTimezones } from '../timeseries/utils';
+import { getTimezones, isTooltipScrollable } from '../timeseries/utils';
 
 import { StateTimelineTooltip2 } from './StateTimelineTooltip2';
 import { Options } from './panelcfg.gen';
@@ -125,6 +125,8 @@ export const StateTimelinePanel = ({
                       timeRange={timeRange}
                       annotate={enableAnnotationCreation ? annotate : undefined}
                       withDuration={true}
+                      scrollable={isTooltipScrollable(options.tooltip)}
+                      maxHeight={options.tooltip.maxHeight}
                     />
                   );
                 }}

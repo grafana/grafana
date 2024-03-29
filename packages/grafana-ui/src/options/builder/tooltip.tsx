@@ -72,7 +72,7 @@ export function addTooltipOptions<T extends OptionsWithTooltip>(
       path: 'tooltip.maxHeight',
       name: 'Max height',
       category,
-      defaultValue: 600,
+      defaultValue: undefined,
       settings: {
         integer: true,
       },
