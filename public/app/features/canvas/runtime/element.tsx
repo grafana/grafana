@@ -189,14 +189,15 @@ export class ElementState implements LayerElement {
     style.transform = `translate(${translate[0]}, ${translate[1]})`;
     this.options.placement = placement;
     this.sizeStyle = style;
+
     if (this.div) {
       for (const key in this.sizeStyle) {
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         this.div.style[key as any] = (this.sizeStyle as any)[key];
       }
 
-      const elementType = this.options.type;
       // TODO: This is a hack, we should have a better way to handle this
+      const elementType = this.options.type;
       if (!SVGElements.has(elementType)) {
         // apply styles to div if it's not an SVG element
         for (const key in this.dataStyle) {
@@ -204,9 +205,11 @@ export class ElementState implements LayerElement {
           this.div.style[key as any] = (this.dataStyle as any)[key];
         }
       } else {
-        // clean styles from div if it's an SVG element; SVG elements have their own styles;
-        // this is nessesary for changing type of element cases;
-        // wrapper div element (this.div) doesn't re-render (has static `key` property), so we have to clean styles manually;
+        // ELEMENT IS SVG
+        // clean data styles from div if it's an SVG element; SVG elements have their own data styles;
+        // this is necessary for changing type of element cases;
+        // wrapper div element (this.div) doesn't re-render (has static `key` property),
+        // so we have to clean styles manually;
         for (const key in this.dataStyle) {
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
           this.div.style[key as any] = '';
