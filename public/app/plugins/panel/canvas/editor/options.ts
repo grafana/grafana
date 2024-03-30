@@ -64,6 +64,7 @@ export const optionBuilder: OptionSuppliers = {
         },
         showIf: () => {
           // Do not show image size editor for SVG based elements
+          // See https://github.com/grafana/grafana/issues/84843#issuecomment-2010921066 for additional context
           if (context.options?.type) {
             return !SVGElements.has(context.options.type);
           }
