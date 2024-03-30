@@ -283,11 +283,15 @@ describe('DashboardScene', () => {
       });
 
       it('Should create and add a new panel to the dashboard', () => {
+        scene.exitEditMode({ skipConfirm: true });
+        expect(scene.state.isEditing).toBe(false);
+
         scene.onCreateNewPanel();
 
         const body = scene.state.body as SceneGridLayout;
         const gridItem = body.state.children[0] as DashboardGridItem;
 
+        expect(scene.state.isEditing).toBe(true);
         expect(body.state.children.length).toBe(6);
         expect(gridItem.state.body!.state.key).toBe('panel-7');
       });
@@ -298,6 +302,7 @@ describe('DashboardScene', () => {
         const body = scene.state.body as SceneGridLayout;
         const gridRow = body.state.children[0] as SceneGridRow;
 
+        expect(scene.state.isEditing).toBe(true);
         expect(body.state.children.length).toBe(4);
         expect(gridRow.state.key).toBe('panel-7');
         expect(gridRow.state.children[0].state.key).toBe('griditem-1');
@@ -509,11 +514,15 @@ describe('DashboardScene', () => {
       });
 
       it('Should create a new add library panel widget', () => {
+        scene.exitEditMode({ skipConfirm: true });
+        expect(scene.state.isEditing).toBe(false);
+
         scene.onCreateLibPanelWidget();
 
         const body = scene.state.body as SceneGridLayout;
         const gridItem = body.state.children[0] as DashboardGridItem;
 
+        expect(scene.state.isEditing).toBe(true);
         expect(body.state.children.length).toBe(6);
         expect(gridItem.state.body!.state.key).toBe('panel-7');
         expect(gridItem.state.y).toBe(0);
