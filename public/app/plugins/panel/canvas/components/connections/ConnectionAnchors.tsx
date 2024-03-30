@@ -4,12 +4,14 @@ import React, { useRef } from 'react';
 import { GrafanaTheme2 } from '@grafana/data';
 import { useStyles2 } from '@grafana/ui';
 import { ConnectionCoordinates } from 'app/features/canvas';
+import { ElementState } from 'app/features/canvas/runtime/element';
 
 type Props = {
   setRef: (anchorElement: HTMLDivElement) => void;
   handleMouseLeave: (
     event: React.MouseEvent<Element, MouseEvent> | React.FocusEvent<HTMLDivElement, Element>
   ) => boolean;
+  selectedElement?: ElementState;
 };
 
 export const CONNECTION_ANCHOR_DIV_ID = 'connectionControl';
@@ -18,7 +20,7 @@ export const CONNECTION_ANCHOR_HIGHLIGHT_OFFSET = 8;
 
 const ANCHOR_PADDING = 3;
 
-export const ConnectionAnchors = ({ setRef, handleMouseLeave }: Props) => {
+export const ConnectionAnchors = ({ setRef, handleMouseLeave, selectedElement }: Props) => {
   const highlightEllipseRef = useRef<HTMLDivElement>(null);
   const styles = useStyles2(getStyles);
   const halfSize = 2.5;
@@ -105,6 +107,9 @@ export const ConnectionAnchors = ({ setRef, handleMouseLeave }: Props) => {
     });
   };
 
+  // TODO: Figure out how to initialize customElementAnchors without needing to first select then unselect an element
+  const customElementAnchors = selectedElement?.item.customConnectionAnchors;
+
   return (
     <div className={styles.root} ref={setRef}>
       <div className={styles.mouseoutDiv} onMouseOut={handleMouseLeaveAnchors} onBlur={handleMouseLeaveAnchors} />
@@ -114,7 +119,7 @@ export const ConnectionAnchors = ({ setRef, handleMouseLeave }: Props) => {
         className={styles.highlightElement}
         onMouseLeave={onMouseLeaveHighlightElement}
       />
-      {generateAnchors()}
+      {generateAnchors(customElementAnchors)}
     </div>
   );
 };

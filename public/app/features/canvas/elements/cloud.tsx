@@ -177,6 +177,22 @@ export const cloudItem: CanvasElementItem = {
         },
       });
   },
+
+  // TODO: Fix these anchors to actually match the cloud svg
+  customConnectionAnchors: [
+    { x: -0.6, y: 0.8 }, // Top Left
+    { x: 0, y: 1 }, // Top Middle
+    { x: 0.6, y: 0.8 }, // Top Right
+    { x: 1, y: 0.6 }, // Right Top
+    { x: 0.8, y: 0 }, // Right Middle
+    { x: 1, y: -0.6 }, // Right Bottom
+    { x: 0.6, y: -0.8 }, // Bottom Right
+    { x: 0, y: -1 }, // Bottom Middle
+    { x: -0.6, y: -0.8 }, // Bottom Left
+    { x: -1, y: -0.6 }, // Left Bottom
+    { x: -0.8, y: 0 }, // Left Middle
+    { x: -1, y: 0.6 }, // Left Top
+  ],
 };
 
 const getStyles = (theme: GrafanaTheme2, data: CanvasElementData | undefined) => {

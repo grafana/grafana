@@ -615,7 +615,11 @@ export class Connections {
   render() {
     return (
       <>
-        <ConnectionAnchors setRef={this.setConnectionAnchorRef} handleMouseLeave={this.handleMouseLeave} />
+        <ConnectionAnchors
+          setRef={this.setConnectionAnchorRef}
+          handleMouseLeave={this.handleMouseLeave}
+          selectedElement={this.connectionSource}
+        />
         <ConnectionSVG
           setSVGRef={this.setConnectionSVGRef}
           setLineRef={this.setConnectionLineRef}
