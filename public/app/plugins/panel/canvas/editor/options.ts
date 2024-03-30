@@ -2,6 +2,7 @@ import { capitalize } from 'lodash';
 
 import { PanelOptionsSupplier } from '@grafana/data/src/panel/PanelPlugin';
 import { CanvasConnection, CanvasElementOptions, ConnectionDirection } from 'app/features/canvas';
+import { SVGElements } from 'app/features/canvas/runtime/element';
 import { ColorDimensionEditor, ResourceDimensionEditor, ScaleDimensionEditor } from 'app/features/dimensions/editors';
 import { BackgroundSizeEditor } from 'app/features/dimensions/editors/BackgroundSizeEditor';
 
@@ -60,6 +61,14 @@ export const optionBuilder: OptionSuppliers = {
         editor: BackgroundSizeEditor,
         settings: {
           resourceType: 'image',
+        },
+        showIf: () => {
+          // Do not show image size editor for SVG based elements
+          if (context.options?.type) {
+            return !SVGElements.has(context.options.type);
+          }
+
+          return true;
         },
       });
   },
