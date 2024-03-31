@@ -138,7 +138,7 @@ When the update is complete, you see a confirmation message that the uninstall w
 
 Grafana supports data source, panel, and app plugins.
 
-- Data Source plugins allows you  to pull data from various data sources such as databases, APIs, log files, etc and display it in the form of graphs, charts, and dashboards in Grafana.
+- Data Source plugins allows you to pull data from various data sources such as databases, APIs, log files, etc and display it in the form of graphs, charts, and dashboards in Grafana.
 - Having panels as plugins makes it easy to create and add any kind of panel, to show your data, or improve your favorite dashboards.
 - Apps enable the bundling of data sources, panels, dashboards, and Grafana pages into a cohesive experience.
 
