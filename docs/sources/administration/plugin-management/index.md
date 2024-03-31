@@ -67,11 +67,9 @@ To prevent users from seeing an app plugin, refer to [this permissions scenarios
 
 The Plugin catalog allows you to browse and manage plugins from within Grafana. Only Grafana server administrators and organization administrators can access and use the plugin catalog. For more information about Grafana Roles and Permissions, refer to [Roles and permissions]({{< relref "../administration/roles-and-permissions" >}}). The following access rules apply depending on the user role:
 
-| Org Admin | Server Admin | Permissions                                                                                 |
-| --------- | ------------ | ------------------------------------------------------------------------------------------- |
-| &check;   | &check;      | <ul><li>Can configure app plugins</li><li>Can install/uninstall/update plugins</li></ul>    |
-| &check;   | &times;      | <ul><li>Can configure app plugins</li><li>Cannot install/uninstall/update plugins</li></ul> |
-| &times;   | &check;      | <ul><li>Cannot configure app plugins</li><li>Can install/uninstall/update plugins</li></ul> |
+- If you are an Org Admin, you can configure app plugins but you cannot install/uninstall/update them.
+- If you are a Server Admin, you cannot configure app plugins but you can install/uninstall/update them.
+- If you are both (Org + Server Admin), you can configure app plugins and also install/uninstall/update them.
 
 > **Note:** The Plugin catalog is designed to work with a single Grafana server instance only. Support for Grafana clusters will be added in future Grafana releases.
 
