@@ -65,7 +65,7 @@ To prevent users from seeing an app plugin, refer to [this permissions scenarios
 
 ## Plugin catalog
 
-The Plugin catalog allows you to browse and manage plugins from within Grafana. Only Grafana server administrators and organization administrators can access and use the plugin catalog. The following access rules apply depending on the user role:
+The Plugin catalog allows you to browse and manage plugins from within Grafana. Only Grafana server administrators and organization administrators can access and use the plugin catalog. For more information about Grafana Roles and Permissions, refer to [Roles and permissions]({{< relref "../administration/roles-and-permissions" >}}). The following access rules apply depending on the user role:
 
 | Org Admin | Server Admin | Permissions                                                                                 |
 | --------- | ------------ | ------------------------------------------------------------------------------------------- |
@@ -85,6 +85,11 @@ The Plugin catalog allows you to browse and manage plugins from within Grafana. 
 _Video shows the Plugin catalog in a previous version of Grafana._
 
 In order to be able to install / uninstall / update plugins using plugin catalog, you must enable it via the `plugin_admin_enabled` flag in the [configuration]({{< relref "../../setup-grafana/configure-grafana/#plugin_admin_enabled" >}}) file.
+
+{{% admonition type="note" %}}
+In latest versions of Grafana, the `plugin_admin_enabled` flag is enabled by default.
+{{% /admonition %}}
+
 Before following the steps below, make sure you are logged in as a Grafana administrator.
 
 <a id="#plugin-catalog-entry"></a>
@@ -133,7 +138,11 @@ When the update is complete, you see a confirmation message that the uninstall w
 
 ## Install Grafana plugins
 
-Grafana supports data source, panel, and app plugins. Having panels as plugins makes it easy to create and add any kind of panel, to show your data, or improve your favorite dashboards. Apps enable the bundling of data sources, panels, dashboards, and Grafana pages into a cohesive experience.
+Grafana supports data source, panel, and app plugins.
+
+- Data Source plugins allows you  to pull data from various data sources such as databases, APIs, log files, etc and display it in the form of graphs, charts, and dashboards in Grafana.
+- Having panels as plugins makes it easy to create and add any kind of panel, to show your data, or improve your favorite dashboards.
+- Apps enable the bundling of data sources, panels, dashboards, and Grafana pages into a cohesive experience.
 
 1. In a web browser, navigate to the official [Grafana Plugins page](/plugins) and find a plugin that you want to install.
 1. Click the plugin, and then click the **Installation** tab.
@@ -148,11 +157,13 @@ If you are logged in to Grafana Cloud when you add a plugin, log out and back in
 
 ### Install plugin on local Grafana
 
-Follow the instructions on the Install tab. You can either install the plugin with a Grafana CLI command or by downloading and uncompress a .zip file into the Grafana plugins directory. We recommend using Grafana CLI in most instances. The .zip option is available if your Grafana server does not have access to the internet.
+Follow the instructions on the Install tab. You can either install the plugin with a Grafana CLI command or by downloading and uncompress a `.zip` file into the Grafana plugins directory. We recommend using Grafana CLI in most instances. The `.zip` option is available if your Grafana server does not have access to the internet.
 
 For more information about Grafana CLI plugin commands, refer to [Plugin commands]({{< relref "../../cli/#plugins-commands" >}}).
 
+{{% admonition type="note" %}}
 As of Grafana v8.0, a plugin catalog app was introduced in order to make managing plugins easier. For more information, refer to [Plugin catalog]({{< relref "#plugin-catalog" >}}).
+{{% /admonition %}}
 
 #### Install a packaged plugin
 
@@ -215,3 +226,5 @@ If you're developing a plugin, then you can enable development mode to allow all
 ## Learn more
 
 - Browse the available [Plugins](/grafana/plugins)
+- Grafana [Plugin Development](/developers/plugin-tools)
+- Grafana [Plugin Development Community](https://community.grafana.com/c/plugin-development/30)
