@@ -144,7 +144,7 @@ func (ss *sqlStore) GetApiKeyById(ctx context.Context, query *apikey.GetByIDQuer
 		if err != nil {
 			return err
 		} else if !has {
-			return apikey.ErrInvalid
+			return apikey.ErrInvalidAuth
 		}
 
 		res = &key
@@ -161,7 +161,7 @@ func (ss *sqlStore) GetApiKeyByName(ctx context.Context, query *apikey.GetByName
 		if err != nil {
 			return err
 		} else if !has {
-			return apikey.ErrInvalid
+			return apikey.ErrInvalidAuth
 		}
 
 		res = &key
@@ -177,7 +177,7 @@ func (ss *sqlStore) GetAPIKeyByHash(ctx context.Context, hash string) (*apikey.A
 		if err != nil {
 			return err
 		} else if !has {
-			return apikey.ErrInvalid
+			return apikey.ErrInvalidAuth
 		}
 		return nil
 	})

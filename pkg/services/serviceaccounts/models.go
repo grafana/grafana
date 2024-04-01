@@ -63,6 +63,8 @@ type CreateServiceAccountForm struct {
 	Role *org.RoleType `json:"role"`
 	// example: false
 	IsDisabled *bool `json:"isDisabled"`
+	// example: false
+	Force *bool `json:"force"`
 }
 
 // swagger:model

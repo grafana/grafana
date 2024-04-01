@@ -1,6 +1,7 @@
 package api
 
 import (
+	"errors"
 	"net/http"
 	"strconv"
 	"time"
@@ -108,6 +109,37 @@ func (api *ServiceAccountsAPI) ListTokens(ctx *contextmodel.ReqContext) response
 	}
 
 	return response.JSON(http.StatusOK, result)
+}
+
+// @PERCONA
+// swagger:route GET /auth/serviceaccount serviceaccounts retrieveServiceAccount
+//
+// # CurrentServiceAccount get current service account info
+//
+// Requires service account token authentication.
+//
+// Responses:
+// 200: retrieveServiceAccountResponse
+// 400: badRequestError
+// 401: unauthorisedError
+// 403: forbiddenError
+// 500: internalServerError
+func (api *ServiceAccountsAPI) CurrentServiceAccount(ctx *contextmodel.ReqContext) response.Response {
+	if !ctx.IsServiceAccount {
+		return response.Error(http.StatusBadRequest, "Auth method is not service account token", errors.New("failed to get service account info"))
+	}
+
+	serviceAccount, err := api.service.RetrieveServiceAccount(ctx.Req.Context(), ctx.OrgID, ctx.UserID)
+	if err != nil {
+		switch {
+		case errors.Is(err, serviceaccounts.ErrServiceAccountNotFound):
+			return response.Error(http.StatusNotFound, "Failed to find service account", err)
+		default:
+			return response.Error(http.StatusInternalServerError, "Failed to retrieve service account", err)
+		}
+	}
+
+	return response.JSON(http.StatusOK, serviceAccount)
 }
 
 // swagger:route POST /serviceaccounts/{serviceAccountId}/tokens service_accounts createToken
