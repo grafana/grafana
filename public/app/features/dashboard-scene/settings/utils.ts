@@ -2,9 +2,10 @@ import { useLocation } from 'react-router-dom';
 
 import { locationUtil, NavModelItem } from '@grafana/data';
 import { SceneObject, SceneObjectState } from '@grafana/scenes';
+import { contextSrv } from 'app/core/core';
 import { t } from 'app/core/internationalization';
 import { getNavModel } from 'app/core/selectors/navModel';
-import { useSelector } from 'app/types';
+import { AccessControlAction, useSelector } from 'app/types';
 
 import { DashboardScene } from '../scene/DashboardScene';
 
@@ -36,45 +37,64 @@ export function useDashboardEditPageNav(dashboard: DashboardScene, currentEditVi
   const pageNav: NavModelItem = {
     text: 'Settings',
     url: locationUtil.getUrlForPartial(location, { editview: 'settings', editIndex: null }),
-    children: [
-      {
-        text: t('dashboard-settings.general.title', 'General'),
-        url: locationUtil.getUrlForPartial(location, { editview: 'settings', editIndex: null }),
-        active: currentEditView === 'settings',
-      },
-      {
-        text: t('dashboard-settings.annotations.title', 'Annotations'),
-        url: locationUtil.getUrlForPartial(location, { editview: 'annotations', editIndex: null }),
-        active: currentEditView === 'annotations',
-      },
-      {
-        text: t('dashboard-settings.variables.title', 'Variables'),
-        url: locationUtil.getUrlForPartial(location, { editview: 'variables', editIndex: null }),
-        active: currentEditView === 'variables',
-      },
-      {
-        text: t('dashboard-settings.links.title', 'Links'),
-        url: locationUtil.getUrlForPartial(location, { editview: 'links', editIndex: null }),
-        active: currentEditView === 'links',
-      },
-      {
-        text: t('dashboard-settings.versions.title', 'Versions'),
-        url: locationUtil.getUrlForPartial(location, { editview: 'versions', editIndex: null }),
-        active: currentEditView === 'versions',
-      },
-      {
+    children: [],
+    parentItem: dashboardPageNav,
+  };
+
+  if (dashboard.state.meta.canEdit) {
+    pageNav.children!.push({
+      text: t('dashboard-settings.general.title', 'General'),
+      url: locationUtil.getUrlForPartial(location, { editview: 'settings', editIndex: null }),
+      active: currentEditView === 'settings',
+    });
+    pageNav.children!.push({
+      text: t('dashboard-settings.annotations.title', 'Annotations'),
+      url: locationUtil.getUrlForPartial(location, { editview: 'annotations', editIndex: null }),
+      active: currentEditView === 'annotations',
+    });
+    pageNav.children!.push({
+      text: t('dashboard-settings.variables.title', 'Variables'),
+      url: locationUtil.getUrlForPartial(location, { editview: 'variables', editIndex: null }),
+      active: currentEditView === 'variables',
+    });
+    pageNav.children!.push({
+      text: t('dashboard-settings.links.title', 'Links'),
+      url: locationUtil.getUrlForPartial(location, { editview: 'links', editIndex: null }),
+      active: currentEditView === 'links',
+    });
+  }
+
+  if (dashboard.state.meta.canMakeEditable) {
+    pageNav.children!.push({
+      text: t('dashboard-settings.general.title', 'General'),
+      url: locationUtil.getUrlForPartial(location, { editview: 'settings', editIndex: null }),
+      active: currentEditView === 'settings',
+    });
+  }
+
+  if (dashboard.state.id && dashboard.state.meta.canSave) {
+    pageNav.children!.push({
+      text: t('dashboard-settings.versions.title', 'Versions'),
+      url: locationUtil.getUrlForPartial(location, { editview: 'versions', editIndex: null }),
+      active: currentEditView === 'versions',
+    });
+  }
+
+  if (dashboard.state.id && dashboard.state.meta.canAdmin) {
+    if (contextSrv.hasPermission(AccessControlAction.DashboardsPermissionsRead)) {
+      pageNav.children!.push({
         text: t('dashboard-settings.permissions.title', 'Permissions'),
         url: locationUtil.getUrlForPartial(location, { editview: 'permissions', editIndex: null }),
         active: currentEditView === 'permissions',
-      },
-      {
-        text: t('dashboard-settings.json-editor.title', 'JSON Model'),
-        url: locationUtil.getUrlForPartial(location, { editview: 'json-model', editIndex: null }),
-        active: currentEditView === 'json-model',
-      },
-    ],
-    parentItem: dashboardPageNav,
-  };
+      });
+    }
+  }
+
+  pageNav.children!.push({
+    text: t('dashboard-settings.json-editor.title', 'JSON Model'),
+    url: locationUtil.getUrlForPartial(location, { editview: 'json-model', editIndex: null }),
+    active: currentEditView === 'json-model',
+  });
 
   return { navModel, pageNav };
 }

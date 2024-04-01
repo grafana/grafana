@@ -93,6 +93,7 @@
             },
             "id": 1,
             "options": {
+                "infinitePan": false,
                 "inlineEditing": false,
                 "panZoom": false,
                 "root": {
@@ -487,23 +488,16 @@
                         },
                         {
                             "background": {
-                                "color": {
-                                    "fixed": "transparent"
-                                }
+                                "fixed": "#D9D9D9"
                             },
                             "border": {
                                 "color": {
-                                    "fixed": "dark-green"
-                                }
+                                    "fixed": "transparent"
+                                },
+                                "width": 1
                             },
                             "config": {
                                 "align": "center",
-                                "backgroundColor": {
-                                    "fixed": "#D9D9D9"
-                                },
-                                "borderColor": {
-                                    "fixed": "transparent"
-                                },
                                 "color": {
                                     "fixed": "#000000"
                                 },
@@ -511,8 +505,7 @@
                                     "field": "A-hehwzd",
                                     "mode": "field"
                                 },
-                                "valign": "middle",
-                                "width": 1
+                                "valign": "middle"
                             },
                             "constraint": {
                                 "horizontal": "left",
@@ -529,23 +522,16 @@
                         },
                         {
                             "background": {
-                                "color": {
-                                    "fixed": "transparent"
-                                }
+                                "fixed": "#D9D9D9"
                             },
                             "border": {
                                 "color": {
-                                    "fixed": "dark-green"
-                                }
+                                    "fixed": "transparent"
+                                },
+                                "width": 1
                             },
                             "config": {
                                 "align": "center",
-                                "backgroundColor": {
-                                    "fixed": "#D9D9D9"
-                                },
-                                "borderColor": {
-                                    "fixed": "transparent"
-                                },
                                 "color": {
                                     "field": "A-hehwzd",
                                     "fixed": "#000000"
@@ -553,8 +539,7 @@
                                 "text": {
                                     "fixed": "Text color"
                                 },
-                                "valign": "middle",
-                                "width": 1
+                                "valign": "middle"
                             },
                             "constraint": {
                                 "horizontal": "left",
@@ -571,35 +556,28 @@
                         },
                         {
                             "background": {
-                                "color": {
-                                    "fixed": "transparent"
-                                },
+                                "fixed": "#D9D9D9",
                                 "image": {
                                     "field": "Count (transformation)",
+                                    "fixed": "",
                                     "mode": "field"
                                 }
                             },
                             "border": {
                                 "color": {
-                                    "fixed": "dark-green"
-                                }
+                                    "fixed": "transparent"
+                                },
+                                "width": 1
                             },
                             "config": {
                                 "align": "center",
-                                "backgroundColor": {
-                                    "fixed": "#D9D9D9"
-                                },
-                                "borderColor": {
-                                    "fixed": "transparent"
-                                },
                                 "color": {
                                     "fixed": "#000000"
                                 },
                                 "text": {
                                     "fixed": "Background image"
                                 },
-                                "valign": "middle",
-                                "width": 1
+                                "valign": "middle"
                             },
                             "constraint": {
                                 "horizontal": "left",
@@ -609,40 +587,32 @@
                             "placement": {
                                 "height": 50,
                                 "left": 530,
-                                "top": 249,
-                                "width": 188
+                                "top": 248.33333333333334,
+                                "width": 187.99997965494794
                             },
                             "type": "ellipse"
                         },
                         {
                             "background": {
-                                "color": {
-                                    "fixed": "transparent"
-                                }
+                                "fixed": "#D9D9D9"
                             },
                             "border": {
                                 "color": {
                                     "field": "A-hehwzd",
-                                    "fixed": "dark-green"
+                                    "fixed": "transparent"
                                 },
+                                "radius": 0,
                                 "width": 2
                             },
                             "config": {
                                 "align": "center",
-                                "backgroundColor": {
-                                    "fixed": "#D9D9D9"
-                                },
-                                "borderColor": {
-                                    "fixed": "transparent"
-                                },
                                 "color": {
                                     "fixed": "#000000"
                                 },
                                 "text": {
                                     "fixed": "Border"
                                 },
-                                "valign": "middle",
-                                "width": 1
+                                "valign": "middle"
                             },
                             "constraint": {
                                 "horizontal": "left",
@@ -652,8 +622,8 @@
                             "placement": {
                                 "height": 50,
                                 "left": 530,
-                                "top": 328,
-                                "width": 188
+                                "top": 328.33333333333337,
+                                "width": 187.99997965494794
                             },
                             "type": "ellipse"
                         },
@@ -794,9 +764,9 @@
                             "name": "Element 18",
                             "placement": {
                                 "height": 50,
-                                "left": 798,
-                                "top": 249,
-                                "width": 188
+                                "left": 798.3333333333334,
+                                "top": 248.33333333333334,
+                                "width": 187.99997965494794
                             },
                             "type": "rectangle"
                         },
@@ -830,9 +800,9 @@
                             "name": "Element 19",
                             "placement": {
                                 "height": 50,
-                                "left": 798,
-                                "top": 328,
-                                "width": 188
+                                "left": 798.3333333333334,
+                                "top": 328.33333333333337,
+                                "width": 187.99235026041669
                             },
                             "type": "rectangle"
                         },
@@ -1931,6 +1901,7 @@
                     "placement": {
                         "height": 100,
                         "left": 0,
+                        "rotation": 0,
                         "top": 0,
                         "width": 100
                     },
@@ -1938,7 +1909,7 @@
                 },
                 "showAdvancedTypes": true
             },
-            "pluginVersion": "11.0.0-pre",
+            "pluginVersion": "11.1.0-pre",
             "targets": [
                 {
                     "datasource": {
@@ -3473,6 +3444,6 @@
     "timezone": "browser",
     "title": "Panel Tests - Canvas Datalinks",
     "uid": "adf95uwu7w1s0e",
-    "version": 1,
+    "version": 10,
     "weekStart": ""
 }

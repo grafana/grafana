@@ -661,7 +661,7 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
     }
 
     if (row) {
-      row.forEachChild((child: SceneObject) => {
+      row.state.children.forEach((child: SceneObject) => {
         if (child.state.key !== key) {
           panels.push(child);
         }
@@ -740,6 +740,10 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
       throw new Error('Trying to add a panel in a layout that is not SceneGridLayout');
     }
 
+    if (!this.state.isEditing) {
+      this.onEnterEditMode();
+    }
+
     const sceneGridLayout = this.state.body;
 
     const panelId = dashboardSceneGraph.getNextPanelId(this);
@@ -767,6 +771,10 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
   }
 
   public onCreateNewPanel(): number {
+    if (!this.state.isEditing) {
+      this.onEnterEditMode();
+    }
+
     const vizPanel = getDefaultVizPanel(this);
 
     this.addPanel(vizPanel);
