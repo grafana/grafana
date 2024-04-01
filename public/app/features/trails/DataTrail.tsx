@@ -172,7 +172,7 @@ export class DataTrail extends SceneObjectBase<DataTrailState> {
   }
 
   static Component = ({ model }: SceneComponentProps<DataTrail>) => {
-    const { controls, topScene, history } = model.useState();
+    const { controls, topScene, history, settings } = model.useState();
     const styles = useStyles2(getStyles);
     const showHeaderForFirstTimeUsers = getTrailStore().recent.length < 2;
 
@@ -185,6 +185,7 @@ export class DataTrail extends SceneObjectBase<DataTrailState> {
             {controls.map((control) => (
               <control.Component key={control.state.key} model={control} />
             ))}
+            <settings.Component model={settings} />
           </div>
         )}
         <div className={styles.body}>{topScene && <topScene.Component model={topScene} />}</div>
@@ -206,7 +207,8 @@ function getVariableSet(initialDS?: string, metric?: string, initialFilters?: Ad
     variables: [
       new DataSourceVariable({
         name: VAR_DATASOURCE,
-        label: 'Prometheus data source',
+        label: 'Data source',
+        description: 'Only prometheus data sources are supported',
         value: initialDS,
         pluginId: 'prometheus',
       }),
@@ -245,7 +247,7 @@ function getStyles(theme: GrafanaTheme2) {
       flexWrap: 'wrap',
       position: 'sticky',
       background: theme.isDark ? theme.colors.background.canvas : theme.colors.background.primary,
-      zIndex: theme.zIndex.activePanel + 1,
+      zIndex: theme.zIndex.navbarFixed,
       top: 0,
     }),
   };

@@ -1,13 +1,19 @@
 import {
   cacheFieldDisplayNames,
   createDataFrame,
-  DataQueryRequest,
-  DataQueryResponse,
   FieldType,
-  PreferredVisualisationType,
+  type DataQueryRequest,
+  type DataQueryResponse,
+  type PreferredVisualisationType,
 } from '@grafana/data';
 
-import { parseSampleValue, sortSeriesByLabel, transformDFToTable, transformV2 } from './result_transformer';
+import {
+  parseSampleValue,
+  sortSeriesByLabel,
+  transformDFToTable,
+  transformToHistogramOverTime,
+  transformV2,
+} from './result_transformer';
 import { PromQuery } from './types';
 
 jest.mock('@grafana/runtime', () => ({
@@ -404,6 +410,7 @@ describe('Prometheus Result Transformer', () => {
       expect(series.data[0].fields[2].name).toEqual('2');
       expect(series.data[0].fields[3].name).toEqual('+Inf');
     });
+
     it('results with heatmap format (with metric name) should be correctly transformed', () => {
       const options = {
         targets: [
@@ -924,6 +931,89 @@ describe('Prometheus Result Transformer', () => {
       const traceField = series.data[1].fields.find((f) => f.name === 'traceID');
       expect(traceField).toBeDefined();
       expect(traceField!.config.links?.length).toBe(0);
+    });
+
+    it('should convert values less than 1e-9 to 0', () => {
+      // pulled from real response
+      const bucketValues = [
+        [0.22222222222222218, 0.24444444444444444, 0.19999999999999996], // le=0.005
+        [0.39999999999999997, 0.44444444444444436, 0.42222222222222217],
+        [0.3999999999999999, 0.44444444444444436, 0.42222222222222217],
+        [0.3999999999999999, 0.44444444444444436, 0.42222222222222217],
+        [0.3999999999999999, 0.44444444444444436, 0.42222222222222217],
+        [0.3999999999999999, 0.44444444444444436, 0.42222222222222217],
+        [0.39999999999999997, 0.44444444444444436, 0.42222222222222217],
+        [0.39999999999999997, 0.44444444444444436, 0.42222222222222217],
+        [0.3999999999999999, 0.44444444444444436, 0.42222222222222217],
+        [0.3999999999999999, 0.44444444444444436, 0.42222222222222217],
+        [0.3999999999999999, 0.44444444444444436, 0.42222222222222217],
+        [0.4666666666666666, 0.5111111111111111, 0.4888888888888888],
+        [0.4666666666666666, 0.5111111111111111, 0.4888888888888888],
+        [0.46666666666666656, 0.5111111111111111, 0.4888888888888888],
+        [0.46666666666666656, 0.5111111111111111, 0.4888888888888888], // le=+Inf
+      ];
+
+      const frames = bucketValues.map((vals) =>
+        createDataFrame({
+          refId: 'A',
+          fields: [
+            { type: FieldType.time, values: [1, 2, 3] },
+            {
+              type: FieldType.number,
+              values: vals.slice(),
+            },
+          ],
+        })
+      );
+
+      const fieldValues = transformToHistogramOverTime(frames).map((frame) => frame.fields[1].values);
+
+      expect(fieldValues).toEqual([
+        [0.22222222222222218, 0.24444444444444444, 0.19999999999999996],
+        [0.17777777777777778, 0.19999999999999993, 0.2222222222222222],
+        [0, 0, 0],
+        [0, 0, 0],
+        [0, 0, 0],
+        [0, 0, 0],
+        [0, 0, 0],
+        [0, 0, 0],
+        [0, 0, 0],
+        [0, 0, 0],
+        [0, 0, 0],
+        [0.06666666666666671, 0.06666666666666671, 0.06666666666666665],
+        [0, 0, 0],
+        [0, 0, 0],
+        [0, 0, 0],
+      ]);
+    });
+
+    it('should throw an error if the series does not contain number-type values', () => {
+      const response = {
+        state: 'Done',
+        data: [
+          ['10', '10', '0'],
+          ['20', '10', '30'],
+          ['20', '10', '35'],
+        ].map((values) =>
+          createDataFrame({
+            refId: 'A',
+            fields: [
+              { name: 'Time', type: FieldType.time, values: [6, 5, 4] },
+              { name: 'Value', type: FieldType.string, values },
+            ],
+          })
+        ),
+      } as unknown as DataQueryResponse;
+      const request = {
+        targets: [
+          {
+            format: 'heatmap',
+            refId: 'A',
+          },
+        ],
+      } as unknown as DataQueryRequest<PromQuery>;
+
+      expect(() => transformV2(response, request, {})).toThrow();
     });
   });
 
