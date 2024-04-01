@@ -106,7 +106,7 @@ func (d *DualWriter) Get(ctx context.Context, name string, options *metav1.GetOp
 		}
 
 		s, err := d.Storage.Get(ctx, name, &metav1.GetOptions{})
-		if err != nil {
+		if err != nil && !apierrors.IsNotFound(err) {
 			// #TODO error handling
 			return l, nil
 		}
