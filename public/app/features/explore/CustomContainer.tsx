@@ -55,7 +55,7 @@ export function CustomContainer({
 
   return (
     <PanelContextProvider value={panelContext}>
-      <PanelChrome title={plugin.name} width={width} height={height} loadingState={state}>
+      <PanelChrome title={plugin.name} width={width} height={plugin.preferredHeight || height} loadingState={state}>
         {(innerWidth, innerHeight) => (
           <PanelRenderer
             data={{ series: frames, state: state, timeRange }}

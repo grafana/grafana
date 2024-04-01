@@ -27,6 +27,8 @@ export interface PanelPluginMeta extends PluginMeta {
   hideFromList?: boolean;
   /** Sort order */
   sort: number;
+  /** Indicate the preferred height of this panel. */
+  preferredHeight?: number;
 }
 
 export interface PanelData {

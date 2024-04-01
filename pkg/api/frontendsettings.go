@@ -134,18 +134,19 @@ func (hs *HTTPServer) getFrontendSettings(c *contextmodel.ReqContext) (*dtos.Fro
 		}
 
 		panels[panel.ID] = plugins.PanelDTO{
-			ID:            panel.ID,
-			Name:          panel.Name,
-			AliasIDs:      panel.AliasIDs,
-			Info:          panel.Info,
-			Module:        panel.Module,
-			BaseURL:       panel.BaseURL,
-			SkipDataQuery: panel.SkipDataQuery,
-			HideFromList:  panel.HideFromList,
-			ReleaseState:  string(panel.State),
-			Signature:     string(panel.Signature),
-			Sort:          getPanelSort(panel.ID),
-			Angular:       panel.Angular,
+			ID:              panel.ID,
+			Name:            panel.Name,
+			AliasIDs:        panel.AliasIDs,
+			Info:            panel.Info,
+			Module:          panel.Module,
+			BaseURL:         panel.BaseURL,
+			SkipDataQuery:   panel.SkipDataQuery,
+			PreferredHeight: panel.PreferredHeight,
+			HideFromList:    panel.HideFromList,
+			ReleaseState:    string(panel.State),
+			Signature:       string(panel.Signature),
+			Sort:            getPanelSort(panel.ID),
+			Angular:         panel.Angular,
 		}
 	}
 
