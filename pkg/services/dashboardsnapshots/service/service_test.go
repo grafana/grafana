@@ -7,7 +7,7 @@ import (
 
 	"github.com/stretchr/testify/require"
 
-	common "github.com/grafana/grafana/pkg/apis/common/v0alpha1"
+	common "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
 	dashboardsnapshot "github.com/grafana/grafana/pkg/apis/dashboardsnapshot/v0alpha1"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/services/dashboardsnapshots"

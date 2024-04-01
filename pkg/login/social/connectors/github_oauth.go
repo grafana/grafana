@@ -24,7 +24,10 @@ import (
 	"github.com/grafana/grafana/pkg/util/errutil"
 )
 
-var ExtraGithubSettingKeys = []string{allowedOrganizationsKey, teamIdsKey}
+var ExtraGithubSettingKeys = map[string]ExtraKeyInfo{
+	allowedOrganizationsKey: {Type: String},
+	teamIdsKey:              {Type: String},
+}
 
 var _ social.SocialConnector = (*SocialGithub)(nil)
 var _ ssosettings.Reloadable = (*SocialGithub)(nil)
@@ -121,7 +124,7 @@ func (s *SocialGithub) Reload(ctx context.Context, settings ssoModels.SSOSetting
 	s.reloadMutex.Lock()
 	defer s.reloadMutex.Unlock()
 
-	s.SocialBase = newSocialBase(social.GitHubProviderName, newInfo, s.features, s.cfg)
+	s.updateInfo(social.GitHubProviderName, newInfo)
 
 	s.teamIds = teamIds
 	s.allowedOrganizations = util.SplitString(newInfo.Extra[allowedOrganizationsKey])

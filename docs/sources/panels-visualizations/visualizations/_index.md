@@ -33,6 +33,7 @@ If you are unsure which visualization to pick, Grafana can provide visualization
   - [Heatmap][] visualizes data in two dimensions, used typically for the magnitude of a phenomenon.
   - [Pie chart][] is typically used where proportionality is important.
   - [Candlestick][] is typically for financial data where the focus is price/data movement.
+  - [Gauge][] is the traditional rounded visual showing how far a single metric is from a threshold.
 - Stats & numbers
   - [Stat][] for big stats and optional sparkline.
   - [Bar gauge][] is a horizontal or vertical bar gauge.
@@ -42,6 +43,8 @@ If you are unsure which visualization to pick, Grafana can provide visualization
   - [Node graph][] for directed graphs or networks.
   - [Traces][] is the main visualization for traces.
   - [Flame graph][] is the main visualization for profiling.
+  - [Canvas][] allows you to explicitly place elements within static and dynamic layouts.
+  - [Geomap][] helps you visualize geospatial data.
 - Widgets
   - [Dashboard list][] can list dashboards.
   - [Alert list][] can list alerts.
@@ -121,6 +124,12 @@ A state timeline shows discrete state changes over time. When used with time ser
 
 [Flame graph]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/panels-visualizations/visualizations/flame-graph"
 [Flame graph]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/panels-visualizations/visualizations/flame-graph"
+
+[Canvas]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/panels-visualizations/visualizations/canvas"
+[Canvas]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/panels-visualizations/visualizations/canvas"
+
+[Geomap]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/panels-visualizations/visualizations/geomap"
+[Geomap]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/panels-visualizations/visualizations/geomap"
 
 [Status history]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/panels-visualizations/visualizations/status-history"
 [Status history]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/panels-visualizations/visualizations/status-history"

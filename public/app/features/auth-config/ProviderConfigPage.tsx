@@ -2,6 +2,7 @@ import React, { useEffect } from 'react';
 import { connect, ConnectedProps } from 'react-redux';
 
 import { NavModelItem } from '@grafana/data';
+import { Badge, Stack, Text } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
 import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
 
@@ -66,7 +67,20 @@ export const ProviderConfigPage = ({ config, loadProviders, isLoading, provider 
     return null;
   }
   return (
-    <Page navId="authentication" pageNav={pageNav}>
+    <Page
+      navId="authentication"
+      pageNav={pageNav}
+      renderTitle={(title) => (
+        <Stack gap={2} alignItems="center">
+          <Text variant={'h1'}>{title}</Text>
+          <Badge
+            text={config.settings.enabled ? 'Enabled' : 'Not enabled'}
+            color={config.settings.enabled ? 'green' : 'blue'}
+            icon={config.settings.enabled ? 'check' : undefined}
+          />
+        </Stack>
+      )}
+    >
       <ProviderConfigForm config={config} isLoading={isLoading} provider={provider} />
     </Page>
   );

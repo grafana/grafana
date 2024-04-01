@@ -33,6 +33,7 @@ import { getPanelDataFrames } from 'app/features/dashboard/components/HelpWizard
 import { DASHBOARD_SCHEMA_VERSION } from 'app/features/dashboard/state/DashboardMigrator';
 import { GrafanaQueryType } from 'app/plugins/datasource/grafana/types';
 
+import { AddLibraryPanelWidget } from '../scene/AddLibraryPanelWidget';
 import { DashboardScene } from '../scene/DashboardScene';
 import { LibraryVizPanel } from '../scene/LibraryVizPanel';
 import { PanelRepeaterGridItem } from '../scene/PanelRepeaterGridItem';
@@ -138,6 +139,22 @@ export function transformSceneToSaveModel(scene: DashboardScene, isSnapshot = fa
   return sortedDeepCloneWithoutNulls(dashboard);
 }
 
+export function libraryVizPanelToPanel(libPanel: LibraryVizPanel, gridPos: GridPos): Panel {
+  if (!libPanel.state.panel) {
+    throw new Error('Library panel has no panel');
+  }
+
+  return {
+    id: getPanelIdForVizPanel(libPanel.state.panel),
+    title: libPanel.state.title,
+    gridPos: gridPos,
+    libraryPanel: {
+      name: libPanel.state.name,
+      uid: libPanel.state.uid,
+    },
+  } as Panel;
+}
+
 export function gridItemToPanel(gridItem: SceneGridItemLike, isSnapshot = false): Panel {
   let vizPanel: VizPanel | undefined;
   let x = 0,
@@ -153,15 +170,21 @@ export function gridItemToPanel(gridItem: SceneGridItemLike, isSnapshot = false)
       w = gridItem.state.width ?? 0;
       h = gridItem.state.height ?? 0;
 
+      return libraryVizPanelToPanel(gridItem.state.body, { x, y, w, h });
+    }
+
+    // Handle library panel widget as well and exit early
+    if (gridItem.state.body instanceof AddLibraryPanelWidget) {
+      x = gridItem.state.x ?? 0;
+      y = gridItem.state.y ?? 0;
+      w = gridItem.state.width ?? 0;
+      h = gridItem.state.height ?? 0;
+
       return {
         id: getPanelIdForVizPanel(gridItem.state.body),
-        title: gridItem.state.body.state.title,
+        type: 'add-library-panel',
         gridPos: { x, y, w, h },
-        libraryPanel: {
-          name: gridItem.state.body.state.name,
-          uid: gridItem.state.body.state.uid,
-        },
-      } as Panel;
+      };
     }
 
     if (!(gridItem.state.body instanceof VizPanel)) {
@@ -176,11 +199,16 @@ export function gridItemToPanel(gridItem: SceneGridItemLike, isSnapshot = false)
   }
 
   if (gridItem instanceof PanelRepeaterGridItem) {
-    vizPanel = gridItem.state.source;
     x = gridItem.state.x ?? 0;
     y = gridItem.state.y ?? 0;
     w = gridItem.state.width ?? 0;
     h = gridItem.state.height ?? 0;
+
+    if (gridItem.state.source instanceof LibraryVizPanel) {
+      return libraryVizPanelToPanel(gridItem.state.source, { x, y, w, h });
+    } else {
+      vizPanel = gridItem.state.source;
+    }
   }
 
   if (!vizPanel) {
@@ -226,7 +254,7 @@ export function vizPanelToPanel(
   }
 
   const panelLinks = dashboardSceneGraph.getPanelLinks(vizPanel);
-  panel.links = (panelLinks.state.rawLinks as DashboardLink[]) ?? [];
+  panel.links = (panelLinks?.state.rawLinks as DashboardLink[]) ?? [];
 
   if (panel.links.length === 0) {
     delete panel.links;
@@ -298,6 +326,11 @@ export function panelRepeaterToPanels(repeater: PanelRepeaterGridItem, isSnapsho
   if (!isSnapshot) {
     return [gridItemToPanel(repeater)];
   } else {
+    if (repeater.state.source instanceof LibraryVizPanel) {
+      const { x = 0, y = 0, width: w = 0, height: h = 0 } = repeater.state;
+      return [libraryVizPanelToPanel(repeater.state.source, { x, y, w, h })];
+    }
+
     if (repeater.state.repeatedPanels) {
       const itemHeight = repeater.state.itemHeight ?? 10;
       const rowCount = Math.ceil(repeater.state.repeatedPanels!.length / repeater.getMaxPerRow());
