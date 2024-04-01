@@ -57,24 +57,55 @@ export const ServiceAccountTable = ({
     contextSrv.hasPermission(AccessControlAction.ActionRolesList) &&
     contextSrv.hasPermission(AccessControlAction.ActionUserRolesList);
 
+  const getCellContent = (
+    value: string,
+    original: ServiceAccountDTO,
+    isLoading: boolean,
+    columnName?: Column<ServiceAccountDTO>['id']
+  ) => {
+    if (isLoading) {
+      return columnName === 'avatarUrl' ? <Skeleton circle width={24} height={24} /> : <Skeleton width={100} />;
+    }
+    const href = `/org/serviceaccounts/${original.id}`;
+    const ariaLabel = `Edit service account's ${name} details`;
+    switch (columnName) {
+      case 'avatarUrl':
+        return (
+          <a aria-label={ariaLabel} href={href}>
+            <Avatar src={value} alt={'User avatar'} />
+          </a>
+        );
+      case 'id':
+        return (
+          <TextLink href={href} aria-label={ariaLabel} color="secondary">
+            {original.login}
+          </TextLink>
+        );
+      case 'tokens':
+        return (
+          <Stack alignItems="center">
+            <Icon name="key-skeleton-alt"></Icon>
+            <TextLink href={href} aria-label={ariaLabel} color="primary">
+              {value || 'No tokens'}
+            </TextLink>
+          </Stack>
+        );
+      default:
+        return (
+          <TextLink href={href} aria-label={ariaLabel} color="primary">
+            {value}
+          </TextLink>
+        );
+    }
+  };
+
   const columns: Array<Column<ServiceAccountDTO>> = useMemo(
     () => [
       {
         id: 'avatarUrl',
         header: '',
         cell: ({ cell: { value }, row: { original } }: Cell<'role'>) => {
-          const href = `/org/serviceaccounts/${original.id}`;
-          const ariaLabel = `Edit service account's ${name} details`;
-          if (!value) {
-            return null;
-          }
-          return isLoading ? (
-            <Skeleton circle width={24} height={24} />
-          ) : (
-            <a aria-label={ariaLabel} href={href}>
-              <Avatar src={value} alt={'User avatar'} />
-            </a>
-          );
+          return getCellContent(value, original, isLoading, 'avatarUrl');
         },
         sortType: 'string',
       },
@@ -82,18 +113,7 @@ export const ServiceAccountTable = ({
         id: 'name',
         header: 'Account',
         cell: ({ cell: { value }, row: { original } }: Cell<'role'>) => {
-          const href = `/org/serviceaccounts/${original.id}`;
-          const ariaLabel = `Edit service account's ${name} details`;
-          if (!value) {
-            return null;
-          }
-          return isLoading ? (
-            <Skeleton width={100} />
-          ) : (
-            <TextLink href={href} aria-label={ariaLabel} color="primary">
-              {value}
-            </TextLink>
-          );
+          return getCellContent(value, original, isLoading);
         },
         sortType: 'string',
       },
@@ -101,18 +121,7 @@ export const ServiceAccountTable = ({
         id: 'id',
         header: 'ID',
         cell: ({ cell: { value }, row: { original } }: Cell<'role'>) => {
-          const href = `/org/serviceaccounts/${original.id}`;
-          const ariaLabel = `Edit service account's ${name} details`;
-          if (!value) {
-            return null;
-          }
-          return isLoading ? (
-            <Skeleton width={100} />
-          ) : (
-            <TextLink href={href} aria-label={ariaLabel} color="secondary">
-              {original.login}
-            </TextLink>
-          );
+          return getCellContent(value, original, isLoading, 'id');
         },
         sortType: 'string',
       },
@@ -151,18 +160,7 @@ export const ServiceAccountTable = ({
         id: 'tokens',
         header: 'Tokens',
         cell: ({ cell: { value }, row: { original } }: Cell<'role'>) => {
-          const href = `/org/serviceaccounts/${original.id}`;
-          const ariaLabel = `Edit service account's ${name} details`;
-          return isLoading ? (
-            <Skeleton width={100} />
-          ) : (
-            <Stack alignItems="center">
-              <Icon name="key-skeleton-alt"></Icon>
-              <TextLink href={href} aria-label={ariaLabel} color="primary">
-                {value || 'No tokens'}
-              </TextLink>
-            </Stack>
-          );
+          return getCellContent(value, original, isLoading, 'tokens');
         },
         sortType: 'number',
       },
