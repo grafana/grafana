@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/api/meta"
 	metainternalversion "k8s.io/apimachinery/pkg/apis/meta/internalversion"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -75,9 +76,9 @@ const (
 	Mode4
 )
 
-const CurrentMode = Mode2
+var CurrentMode = Mode2
 
-// #TODO: make CurrentMode customisable
+// #TODO: make CurrentMode customisable (need to also take into account the entity)
 
 // NewDualWriter returns a new DualWriter.
 func NewDualWriter(legacy LegacyStorage, storage Storage) *DualWriter {
@@ -276,10 +277,25 @@ func (d *DualWriter) Update(ctx context.Context, name string, objInfo rest.Updat
 		// #TODO figure out wht the correct resource version should be and
 		// set it properly in Get and List calls
 		// Get the previous version from k8s storage (the one)
+		var old runtime.Object
 		old, err := d.Storage.Get(ctx, name, &metav1.GetOptions{})
 		if err != nil {
-			return nil, false, err
+			if apierrors.IsNotFound(err) {
+				// #TODO figure out what the resource version and UIDs should be in this case
+				_, ok := d.legacy.(rest.Getter)
+				if !ok {
+					return nil, false, fmt.Errorf("legacy storage rest.Getter is missing")
+				}
+
+				old, err = d.legacy.Get(ctx, name, &metav1.GetOptions{})
+				if err != nil {
+					return nil, false, err
+				}
+			} else {
+				return nil, false, err
+			}
 		}
+
 		accessor, err := meta.Accessor(old)
 		if err != nil {
 			return nil, false, err
