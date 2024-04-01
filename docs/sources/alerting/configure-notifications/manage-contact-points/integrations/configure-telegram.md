@@ -32,30 +32,30 @@ Create a [Telegram bot](https://core.telegram.org/bots/api). You can associate t
 
 To set up the bot, complete the following steps.
 
-1. **Open the Telegram app** on your device
-2. Find the Telegram bot named **BotFather**
-3. Type or press `/newbot`.
-4. Choose a name for the bot. It must end in **bot** or **\_bot**. E.g. "my_bot".
-5. **Copy the API token**
+1. **Open the Telegram app** on your device.
+1. Find the Telegram bot named **BotFather**.
+1. Type or press `/newbot`.
+1. Choose a name for the bot. It must end in **bot** or **\_bot**. E.g. "my_bot".
+1. **Copy the API token**.
 
 ### Chat ID
 
 Add the bot to a group chat by following the steps below. Once the bot is added to the chat, you will be able to route your alert notifications to that group.
 
-1. In the Telegram app, **open a group or start a new one**
-2. Search and **add the bot to the group**
-3. **Interact with the bot** by sending a dummy message that starts with "`/`". E.g. `/hola @bot_name`
+1. In the Telegram app, **open a group or start a new one**.
+1. Search and **add the bot to the group**.
+1. **Interact with the bot** by sending a dummy message that starts with "`/`". E.g. `/hola @bot_name`.
 
    {{< figure src="/media/blog/telegram-grafana-alerting/telegram-screenshot.png" alt="A screenshot that shows a message to a Telegram bot." >}}
 
-4. To obtain the **chat ID**, send an [HTTP request](https://core.telegram.org/bots/api#getupdates) to the bot. Copy the below URL and replace `{your_bot_api_token}` with your bot API token.
+1. To obtain the **chat ID**, send an [HTTP request](https://core.telegram.org/bots/api#getupdates) to the bot. Copy the below URL and replace `{your_bot_api_token}` with your bot API token.
 
    ```
    https://api.telegram.org/bot{your_bot_api_token}/getUpdates
    ```
 
-5. **Paste the URL in your browser**
-6. If the request is successful, it will return a response in JSON format.
+1. **Paste the URL in your browser**.
+1. If the request is successful, it will return a response in JSON format.
 
    ```
    ...
@@ -66,21 +66,17 @@ Add the bot to a group chat by following the steps below. Once the bot is added 
    ...
    ```
 
-7. Copy the value of the `“id”` that appears under `“chat”`.
+1. Copy the value of the `“id”` that appears under `“chat”`.
 
 ## Procedure
 
 To create your Telegram integration in Grafana Alerting, complete the following steps.
 
-### Create the contact point
-
-In Grafana, we will add our [contact point][contact-point] for Telegram:
-
-1. Navigate to **Alerts & IRM** -> **Alerting** -> **Contact points**.
+1. Navigate to **Alerts & IRM** -> **Alerting** -> **[Contact points][contact-point]**.
 1. Click **+ Add contact point**.
 1. Enter a contact point name.
 1. From the Integration list, select Telegram.
-1. In the **BOT API Token** field, copy in the bot API token
+1. In the **BOT API Token** field, copy in the bot API token.
 1. In the **Chat ID** field, copy in the chat ID.
 1. Click **Test** to check that your integration works.
 1. Click **Save contact point**.
@@ -92,12 +88,13 @@ In Grafana, we will add our [contact point][contact-point] for Telegram:
 To add the contact point and integration you created to your default [notification policy][notification-policy], complete the following steps.
 
 1. Navigate to **Alerts & IRM** -> **Alerting** -> **Notification policies**.
-1. In the **Default policy**, click the ellipsis icon (…) and then **Edit**
+1. In the **Default policy**, click the ellipsis icon (…) and then **Edit**.
 1. Change the default policy to the contact point you created.
 1. Click **Update default policy**.
 
-**Note:**
+{{<admonition type="note">}}
 If you have more than one contact point, add a new notification policy rather than edit the default one, so you can route specific alerts to Slack. For more information, refer to [Notification policies][nested-policy].
+{{</admonitition>}}
 
 {{% docs/reference %}}
 [notification-policy]: "/docs/grafana/ -> /docs/grafana/<GRAFANA_VERSION>/alerting/fundamentals/notification-policies/notifications/"
