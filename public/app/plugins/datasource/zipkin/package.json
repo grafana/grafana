@@ -22,9 +22,9 @@
     "@testing-library/react": "14.2.2",
     "@types/jest": "29.5.12",
     "@types/lodash": "4.17.0",
-    "@types/react": "18.2.67",
+    "@types/react": "18.2.73",
     "ts-node": "10.9.2",
-    "webpack": "5.90.3"
+    "webpack": "5.91.0"
   },
   "peerDependencies": {
     "@grafana/runtime": "*"
