@@ -14,6 +14,7 @@ import (
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 
+	"github.com/grafana/grafana/pkg/apiserver/rest"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/playlist"
 	"github.com/grafana/grafana/pkg/tests/apis"
@@ -84,8 +85,17 @@ func TestIntegrationPlaylist(t *testing.T) {
 		}))
 	})
 
+	// #TODO : do we want to run doPlaylistTestsWithModes for the previous two subtests?
 	t.Run("with dual write (file)", func(t *testing.T) {
 		doPlaylistTests(t, apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
+			AppModeProduction:    true,
+			DisableAnonymous:     true,
+			APIServerStorageType: "file", // write the files to disk
+			EnableFeatureToggles: []string{
+				featuremgmt.FlagKubernetesPlaylists, // Required so that legacy calls are also written
+			},
+		}))
+		doPlaylistTestsWithModes(t, apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
 			AppModeProduction:    true,
 			DisableAnonymous:     true,
 			APIServerStorageType: "file", // write the files to disk
@@ -97,6 +107,15 @@ func TestIntegrationPlaylist(t *testing.T) {
 
 	t.Run("with dual write (unified storage)", func(t *testing.T) {
 		doPlaylistTests(t, apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
+			AppModeProduction:    false, // required for  unified storage
+			DisableAnonymous:     true,
+			APIServerStorageType: "unified", // use the entity api tables
+			EnableFeatureToggles: []string{
+				featuremgmt.FlagUnifiedStorage,
+				featuremgmt.FlagKubernetesPlaylists, // Required so that legacy calls are also written
+			},
+		}))
+		doPlaylistTestsWithModes(t, apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
 			AppModeProduction:    false, // required for  unified storage
 			DisableAnonymous:     true,
 			APIServerStorageType: "unified", // use the entity api tables
@@ -129,6 +148,7 @@ func TestIntegrationPlaylist(t *testing.T) {
 		require.NoError(t, err)
 
 		doPlaylistTests(t, helper)
+		doPlaylistTestsWithModes(t, helper)
 	})
 }
 
@@ -411,6 +431,139 @@ func doPlaylistTests(t *testing.T, helper *apis.K8sTestHelper) *apis.K8sTestHelp
 	})
 
 	return helper
+}
+
+// #TODO add other checks for other methods and modes
+// #TODO : refactor once we figure out testing structure
+// #TODO : flesh out each test case, checking all requirements
+func doPlaylistTestsWithModes(t *testing.T, helper *apis.K8sTestHelper) *apis.K8sTestHelper {
+	t.Run("Mode 2: check that List returns correct resource version", func(t *testing.T) {
+		rest.CurrentMode = rest.Mode2
+
+		client := helper.GetResourceClient(apis.ResourceClientArgs{
+			User: helper.Org1.Editor,
+			GVR:  gvr,
+		})
+
+		// Create the playlist "test"
+		first, err := client.Resource.Create(context.Background(),
+			helper.LoadYAMLOrJSONFile("testdata/playlist-test-create.yaml"),
+			metav1.CreateOptions{},
+		)
+		require.NoError(t, err)
+		require.Equal(t, "test", first.GetName())
+		uids := []string{first.GetName()}
+		m := map[string]string{}
+		m[first.GetName()] = first.GetResourceVersion()
+
+		// Create (with name generation) two playlists
+		for i := 0; i < 2; i++ {
+			out, err := client.Resource.Create(context.Background(),
+				helper.LoadYAMLOrJSONFile("testdata/playlist-generate.yaml"),
+				metav1.CreateOptions{},
+			)
+			require.NoError(t, err)
+			uids = append(uids, out.GetName())
+			m[out.GetName()] = out.GetResourceVersion()
+		}
+		slices.Sort(uids) // make list compare stable
+
+		// Check that everything is returned from the List command
+		list, err := client.Resource.List(context.Background(), metav1.ListOptions{})
+		require.NoError(t, err)
+		require.Equal(t, uids, SortSlice(Map(list.Items, func(item unstructured.Unstructured) string {
+			return item.GetName()
+		})))
+		for _, item := range list.Items {
+			require.Equal(t, m[item.GetName()], item.GetResourceVersion())
+		}
+
+		deleteEntries(t, client, helper, uids)
+	})
+	t.Run("Mode 2: check that Get returns correct resource version", func(t *testing.T) { //
+		rest.CurrentMode = rest.Mode2
+
+		client := helper.GetResourceClient(apis.ResourceClientArgs{
+			User: helper.Org1.Editor,
+			GVR:  gvr,
+		})
+
+		// Create the playlist "test"
+		first, err := client.Resource.Create(context.Background(),
+			helper.LoadYAMLOrJSONFile("testdata/playlist-test-create.yaml"),
+			metav1.CreateOptions{},
+		)
+		require.NoError(t, err)
+		require.Equal(t, "test", first.GetName())
+
+		found, err := client.Resource.Get(context.Background(), first.GetName(), metav1.GetOptions{})
+		require.NoError(t, err)
+		require.Equal(t, first.GetName(), found.GetName())
+		require.Equal(t, first.GetResourceVersion(), found.GetResourceVersion())
+
+		deleteEntries(t, client, helper, []string{first.GetName()})
+	})
+
+	t.Run("Mode 2: check that k8s Update of a legacy playlist works", func(t *testing.T) {
+		// Create a playlist only in legacy storage
+		rest.CurrentMode = rest.Mode1
+
+		client := helper.GetResourceClient(apis.ResourceClientArgs{
+			User: helper.Org1.Editor,
+			GVR:  gvr,
+		})
+
+		// Create the playlist "test"
+		first, err := client.Resource.Create(context.Background(),
+			helper.LoadYAMLOrJSONFile("testdata/playlist-test-create.yaml"),
+			metav1.CreateOptions{},
+		)
+		require.NoError(t, err)
+		require.Equal(t, "test", first.GetName())
+
+		// Mode2 means we will be updating both legacy and k8s storage
+		rest.CurrentMode = rest.Mode2
+
+		// PATCH :: apply only some fields
+		updated, err := client.Resource.Apply(context.Background(), "test",
+			helper.LoadYAMLOrJSONFile("testdata/playlist-test-apply.yaml"),
+			metav1.ApplyOptions{
+				Force:        true,
+				FieldManager: "testing",
+			},
+		)
+		require.NoError(t, err)
+		require.Equal(t, first.GetName(), updated.GetName())
+		// #TODO : fix the commented out calls
+		// require.Equal(t, first.GetUID(), updated.GetUID())
+		require.Less(t, first.GetResourceVersion(), updated.GetResourceVersion())
+		// getFromBothAPIs(t, helper, client, "test", &playlist.PlaylistDTO{
+		// 	Name:     "Test playlist (apply from k8s; ??m; ?? items; PATCH)",
+		// 	Interval: "22m", // has not changed from previous update
+		// })
+
+		deleteEntries(t, client, helper, []string{first.GetName()})
+	})
+
+	return helper
+}
+
+// #TODO : refactor
+func deleteEntries(t *testing.T, client *apis.K8sResourceClient, helper *apis.K8sTestHelper, uids []string) {
+	for _, uid := range uids {
+		err := client.Resource.Delete(context.Background(), uid, metav1.DeleteOptions{})
+		require.NoError(t, err)
+
+		// Second call is not found!
+		err = client.Resource.Delete(context.Background(), uid, metav1.DeleteOptions{})
+		statusError := helper.AsStatusError(err)
+		require.Equal(t, metav1.StatusReasonNotFound, statusError.Status().Reason)
+
+		// Not found from k8s getter
+		_, err = client.Resource.Get(context.Background(), uid, metav1.GetOptions{})
+		statusError = helper.AsStatusError(err)
+		require.Equal(t, metav1.StatusReasonNotFound, statusError.Status().Reason)
+	}
 }
 
 // typescript style map function
