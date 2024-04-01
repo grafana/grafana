@@ -7,6 +7,7 @@
 - **Alerting:** Add "Keep Last State" backend functionality. [#84406](https://github.com/grafana/grafana/issues/84406), [@rwwiv](https://github.com/rwwiv)
 - **Postgres:** Allow disabling SNI on SSL-enabled connections. [#84249](https://github.com/grafana/grafana/issues/84249), [@papagian](https://github.com/papagian)
 - **DataQuery:** Track panel plugin id not type. [#83164](https://github.com/grafana/grafana/issues/83164), [@torkelo](https://github.com/torkelo)
+- **Org:** Adds an API endpoint to get/update Org preferences by ID. [#84309](https://github.com/grafana/grafana/issues/84309), [@safaci2000](https://github.com/safaci2000)
 
 ### Bug fixes
 
