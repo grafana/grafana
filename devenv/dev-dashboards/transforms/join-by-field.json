@@ -24,7 +24,6 @@
   "editable": true,
   "fiscalYearStartMonth": 0,
   "graphTooltip": 0,
-  "id": 1351,
   "links": [],
   "liveNow": false,
   "panels": [
@@ -52,6 +51,7 @@
             "mode": "palette-classic"
           },
           "custom": {
+            "axisBorderShow": false,
             "axisCenteredZero": false,
             "axisColorMode": "text",
             "axisLabel": "",
@@ -65,6 +65,7 @@
               "tooltip": false,
               "viz": false
             },
+            "insertNulls": false,
             "lineInterpolation": "linear",
             "lineWidth": 1,
             "pointSize": 5,
@@ -86,7 +87,8 @@
             "mode": "absolute",
             "steps": [
               {
-                "color": "green"
+                "color": "green",
+                "value": null
               },
               {
                 "color": "red",
@@ -112,6 +114,7 @@
           "showLegend": true
         },
         "tooltip": {
+          "maxHeight": 600,
           "mode": "single",
           "sort": "none"
         }
@@ -142,7 +145,9 @@
           },
           "custom": {
             "align": "auto",
-            "displayMode": "auto",
+            "cellOptions": {
+              "type": "auto"
+            },
             "inspect": false
           },
           "mappings": [],
@@ -150,7 +155,8 @@
             "mode": "absolute",
             "steps": [
               {
-                "color": "green"
+                "color": "green",
+                "value": null
               },
               {
                 "color": "red",
@@ -169,7 +175,9 @@
       },
       "id": 13,
       "options": {
+        "cellHeight": "sm",
         "footer": {
+          "countRows": false,
           "fields": "",
           "reducer": [
             "sum"
@@ -178,7 +186,7 @@
         },
         "showHeader": true
       },
-      "pluginVersion": "9.2.0-pre",
+      "pluginVersion": "11.1.0-pre",
       "targets": [
         {
           "datasource": {
@@ -193,6 +201,107 @@
       "type": "table"
     },
     {
+      "collapsed": false,
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 9
+      },
+      "id": 5,
+      "panels": [],
+      "title": "Join by string field",
+      "type": "row"
+    },
+    {
+      "datasource": {
+        "type": "grafana-testdata-datasource",
+        "uid": "PD8C576611E62080A"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "custom": {
+            "align": "auto",
+            "cellOptions": {
+              "type": "auto"
+            },
+            "inspect": false
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 10
+      },
+      "id": 2,
+      "options": {
+        "cellHeight": "sm",
+        "footer": {
+          "countRows": false,
+          "fields": "",
+          "reducer": [
+            "sum"
+          ],
+          "show": false
+        },
+        "frameIndex": 0,
+        "showHeader": true
+      },
+      "pluginVersion": "11.1.0-pre",
+      "targets": [
+        {
+          "csvContent": "OrderID,CustomerID,Time\n100,A,10000\n101,B,20000\n102,C,30000",
+          "datasource": {
+            "type": "testdata",
+            "uid": "PD8C576611E62080A"
+          },
+          "refId": "Orders",
+          "scenarioId": "csv_content"
+        },
+        {
+          "csvContent": "CustomerID,Name,Country\nA,Customer A,USA\nB,Customer B,Germany\nC,Customer C,Spain\nD,Customer D,Canada",
+          "datasource": {
+            "type": "testdata",
+            "uid": "PD8C576611E62080A"
+          },
+          "hide": false,
+          "refId": "Customers",
+          "scenarioId": "csv_content"
+        },
+        {
+          "csvContent": "Country,Region\nUSA,North America\nGermany,Europe\nSpain, Europe\nCanada,North America",
+          "datasource": {
+            "type": "grafana-testdata-datasource",
+            "uid": "PD8C576611E62080A"
+          },
+          "refId": "Region",
+          "scenarioId": "csv_content"
+        }
+      ],
+      "title": "Orders",
+      "type": "table"
+    },
+    {
       "datasource": {
         "type": "datasource",
         "uid": "-- Dashboard --"
@@ -204,7 +313,9 @@
           },
           "custom": {
             "align": "auto",
-            "displayMode": "auto",
+            "cellOptions": {
+              "type": "auto"
+            },
             "inspect": false
           },
           "mappings": [],
@@ -212,7 +323,76 @@
             "mode": "absolute",
             "steps": [
               {
-                "color": "green"
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 10
+      },
+      "id": 3,
+      "options": {
+        "cellHeight": "sm",
+        "footer": {
+          "countRows": false,
+          "fields": "",
+          "reducer": [
+            "sum"
+          ],
+          "show": false
+        },
+        "frameIndex": 1,
+        "showHeader": true
+      },
+      "pluginVersion": "11.1.0-pre",
+      "targets": [
+        {
+          "datasource": {
+            "type": "datasource",
+            "uid": "-- Dashboard --"
+          },
+          "panelId": 2,
+          "refId": "A"
+        }
+      ],
+      "title": "Customers",
+      "type": "table"
+    },
+    {
+      "datasource": {
+        "type": "datasource",
+        "uid": "-- Dashboard --"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "custom": {
+            "align": "auto",
+            "cellOptions": {
+              "type": "auto"
+            },
+            "inspect": false
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
               },
               {
                 "color": "red",
@@ -227,11 +407,13 @@
         "h": 5,
         "w": 24,
         "x": 0,
-        "y": 9
+        "y": 18
       },
       "id": 16,
       "options": {
+        "cellHeight": "sm",
         "footer": {
+          "countRows": false,
           "fields": "",
           "reducer": [
             "sum"
@@ -240,7 +422,7 @@
         },
         "showHeader": true
       },
-      "pluginVersion": "9.2.0-pre",
+      "pluginVersion": "11.1.0-pre",
       "targets": [
         {
           "datasource": {
@@ -261,94 +443,6 @@
       "type": "table"
     },
     {
-      "collapsed": false,
-      "gridPos": {
-        "h": 1,
-        "w": 24,
-        "x": 0,
-        "y": 14
-      },
-      "id": 5,
-      "panels": [],
-      "title": "Join by string field",
-      "type": "row"
-    },
-    {
-      "datasource": {
-        "type": "testdata",
-        "uid": "PD8C576611E62080A"
-      },
-      "fieldConfig": {
-        "defaults": {
-          "color": {
-            "mode": "thresholds"
-          },
-          "custom": {
-            "align": "auto",
-            "displayMode": "auto",
-            "inspect": false
-          },
-          "mappings": [],
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "color": "green"
-              },
-              {
-                "color": "red",
-                "value": 80
-              }
-            ]
-          }
-        },
-        "overrides": []
-      },
-      "gridPos": {
-        "h": 8,
-        "w": 12,
-        "x": 0,
-        "y": 15
-      },
-      "id": 2,
-      "options": {
-        "footer": {
-          "fields": "",
-          "reducer": [
-            "sum"
-          ],
-          "show": false
-        },
-        "frameIndex": 0,
-        "showHeader": true
-      },
-      "pluginVersion": "9.2.0-pre",
-      "targets": [
-        {
-          "csvContent": "OrderID,CustomerID,Time\n100,A,10000\n101,B,20000\n102,C,30000",
-          "datasource": {
-            "type": "testdata",
-            "uid": "PD8C576611E62080A"
-          },
-          "refId": "Orders",
-          "scenarioId": "csv_content"
-        },
-        {
-          "csvContent": "CustomerID,Name,Country\nA,Customer A,USA\nB,Customer B,Germany\nC,Customer C,Spain\nD,Customer D,Canada",
-          "datasource": {
-            "type": "testdata",
-            "uid": "PD8C576611E62080A"
-          },
-          "hide": false,
-          "refId": "Customers",
-          "scenarioId": "csv_content"
-        }
-      ],
-      "title": "Orders",
-      "transformations": [],
-      "type": "table"
-    },
-    {
       "datasource": {
         "type": "datasource",
         "uid": "-- Dashboard --"
@@ -360,7 +454,9 @@
           },
           "custom": {
             "align": "auto",
-            "displayMode": "auto",
+            "cellOptions": {
+              "type": "auto"
+            },
             "inspect": false
           },
           "mappings": [],
@@ -368,71 +464,8 @@
             "mode": "absolute",
             "steps": [
               {
-                "color": "green"
-              },
-              {
-                "color": "red",
-                "value": 80
-              }
-            ]
-          }
-        },
-        "overrides": []
-      },
-      "gridPos": {
-        "h": 8,
-        "w": 12,
-        "x": 12,
-        "y": 15
-      },
-      "id": 3,
-      "options": {
-        "footer": {
-          "fields": "",
-          "reducer": [
-            "sum"
-          ],
-          "show": false
-        },
-        "frameIndex": 1,
-        "showHeader": true
-      },
-      "pluginVersion": "9.2.0-pre",
-      "targets": [
-        {
-          "datasource": {
-            "type": "datasource",
-            "uid": "-- Dashboard --"
-          },
-          "panelId": 2,
-          "refId": "A"
-        }
-      ],
-      "title": "Customers",
-      "transformations": [],
-      "type": "table"
-    },
-    {
-      "datasource": {
-        "type": "datasource",
-        "uid": "-- Dashboard --"
-      },
-      "fieldConfig": {
-        "defaults": {
-          "color": {
-            "mode": "thresholds"
-          },
-          "custom": {
-            "align": "auto",
-            "displayMode": "auto",
-            "inspect": false
-          },
-          "mappings": [],
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "color": "green"
+                "color": "green",
+                "value": null
               },
               {
                 "color": "red",
@@ -476,7 +509,9 @@
       },
       "id": 6,
       "options": {
+        "cellHeight": "sm",
         "footer": {
+          "countRows": false,
           "fields": "",
           "reducer": [
             "sum"
@@ -487,7 +522,7 @@
         "showHeader": true,
         "sortBy": []
       },
-      "pluginVersion": "9.2.0-pre",
+      "pluginVersion": "11.1.0-pre",
       "targets": [
         {
           "datasource": {
@@ -498,13 +533,13 @@
           "refId": "A"
         }
       ],
-      "title": "OUTER join on CustomerID (keeps missing values)",
+      "title": "OUTER (TABULAR) join on CustomerID (keeps missing values)",
       "transformations": [
         {
           "id": "joinByField",
           "options": {
-            "byField": "CustomerID",
-            "mode": "outer"
+            "byField": "Country",
+            "mode": "outerTabular"
           }
         }
       ],
@@ -522,7 +557,9 @@
           },
           "custom": {
             "align": "auto",
-            "displayMode": "auto",
+            "cellOptions": {
+              "type": "auto"
+            },
             "inspect": false
           },
           "mappings": [],
@@ -530,7 +567,8 @@
             "mode": "absolute",
             "steps": [
               {
-                "color": "green"
+                "color": "green",
+                "value": null
               },
               {
                 "color": "red",
@@ -574,7 +612,9 @@
       },
       "id": 7,
       "options": {
+        "cellHeight": "sm",
         "footer": {
+          "countRows": false,
           "fields": "",
           "reducer": [
             "sum"
@@ -585,7 +625,7 @@
         "showHeader": true,
         "sortBy": []
       },
-      "pluginVersion": "9.2.0-pre",
+      "pluginVersion": "11.1.0-pre",
       "targets": [
         {
           "datasource": {
@@ -609,7 +649,7 @@
       "type": "table"
     }
   ],
-  "schemaVersion": 37,
+  "schemaVersion": 39,
   "tags": [
     "gdev",
     "transform"
@@ -621,10 +661,11 @@
     "from": "now-6h",
     "to": "now"
   },
+  "timeRangeUpdatedDuringEditOrView": false,
   "timepicker": {},
   "timezone": "",
   "title": "Transformations - Join by field",
   "uid": "gw0K4rmVz",
-  "version": 6,
+  "version": 9,
   "weekStart": ""
 }
