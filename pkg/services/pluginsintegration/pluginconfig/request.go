@@ -9,7 +9,7 @@ import (
 
 	"github.com/grafana/grafana-aws-sdk/pkg/awsds"
 	"github.com/grafana/grafana-azure-sdk-go/v2/azsettings"
-	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginstore"
+	"github.com/grafana/grafana/pkg/plugins/auth"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/proxy"
@@ -18,8 +18,13 @@ import (
 
 var _ PluginRequestConfigProvider = (*RequestConfigProvider)(nil)
 
+type PluginInfo struct {
+	ID              string
+	ExternalService *auth.ExternalService
+}
+
 type PluginRequestConfigProvider interface {
-	PluginRequestConfig(ctx context.Context, plugin pluginstore.Plugin) map[string]string
+	PluginRequestConfig(ctx context.Context, plugin PluginInfo) map[string]string
 }
 
 type RequestConfigProvider struct {
@@ -34,7 +39,7 @@ func NewRequestConfigProvider(cfg *PluginInstanceCfg) *RequestConfigProvider {
 
 // PluginRequestConfig returns a map of configuration that should be passed in a plugin request.
 // nolint:gocyclo
-func (s *RequestConfigProvider) PluginRequestConfig(ctx context.Context, plugin pluginstore.Plugin) map[string]string {
+func (s *RequestConfigProvider) PluginRequestConfig(ctx context.Context, plugin PluginInfo) map[string]string {
 	m := make(map[string]string)
 
 	if s.cfg.GrafanaAppURL != "" {

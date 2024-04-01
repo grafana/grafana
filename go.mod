@@ -51,7 +51,7 @@ require (
 	github.com/grafana/cuetsy v0.1.11 // @grafana/grafana-as-code
 	github.com/grafana/grafana-aws-sdk v0.25.0 // @grafana/aws-datasources
 	github.com/grafana/grafana-azure-sdk-go/v2 v2.0.1 // @grafana/partner-datasources
-	github.com/grafana/grafana-plugin-sdk-go v0.218.0 // @grafana/plugins-platform-backend
+	github.com/grafana/grafana-plugin-sdk-go v0.219.0 // @grafana/plugins-platform-backend
 	github.com/grpc-ecosystem/go-grpc-middleware v1.4.0 // @grafana/backend-platform
 	github.com/hashicorp/go-hclog v1.6.2 // @grafana/plugins-platform-backend
 	github.com/hashicorp/go-plugin v1.6.0 // @grafana/plugins-platform-backend
@@ -272,7 +272,7 @@ require github.com/grafana/pyroscope/api v0.3.0 // @grafana/observability-traces
 
 require github.com/grafana/pyroscope-go/godeltaprof v0.1.6 // @grafana/observability-traces-and-profiling
 
-require github.com/apache/arrow/go/v15 v15.0.0 // @grafana/observability-metrics
+require github.com/apache/arrow/go/v15 v15.0.2 // @grafana/observability-metrics
 
 require (
 	cloud.google.com/go v0.112.0 // indirect
@@ -476,6 +476,8 @@ require github.com/getkin/kin-openapi v0.120.0 // @grafana/grafana-as-code
 
 require github.com/grafana/authlib v0.0.0-20240319083410-9d4a6e3861e5 // @grafana/grafana-app-platform-squad
 
+require github.com/bmizerany/assert v0.0.0-20160611221934-b7ed37b82869
+
 require (
 	github.com/bahlo/generic-list-go v0.2.0 // indirect
 	github.com/buger/jsonparser v1.1.1 // indirect
@@ -498,8 +500,10 @@ require (
 	github.com/jcmturner/goidentity/v6 v6.0.1 // indirect
 	github.com/jcmturner/gokrb5/v8 v8.4.4 // indirect
 	github.com/jcmturner/rpc/v2 v2.0.3 // indirect
+	github.com/kr/pretty v0.3.1 // indirect
 	github.com/leodido/go-urn v1.2.4 // indirect
 	github.com/pelletier/go-toml/v2 v2.0.8 // indirect
+	github.com/rogpeppe/go-internal v1.11.0 // indirect
 	github.com/twitchyliquid64/golang-asm v0.15.1 // indirect
 	github.com/ugorji/go/codec v1.2.11 // indirect
 	github.com/wk8/go-ordered-map/v2 v2.1.8 // indirect
