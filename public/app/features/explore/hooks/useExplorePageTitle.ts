@@ -1,7 +1,8 @@
 import { useEffect, useRef } from 'react';
 
-import { NavModel } from '@grafana/data';
+import { AppChromeService } from 'app/core/components/AppChrome/AppChromeService';
 import { Branding } from 'app/core/components/Branding/Branding';
+import { useGrafana } from 'app/core/context/GrafanaContext';
 import { useNavModel } from 'app/core/hooks/useNavModel';
 import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
 import { ExploreQueryParams } from 'app/types';
@@ -9,9 +10,11 @@ import { ExploreQueryParams } from 'app/types';
 import { isFulfilled, hasKey } from './utils';
 
 export function useExplorePageTitle(params: ExploreQueryParams) {
-  const navModel = useRef<NavModel>();
-  navModel.current = useNavModel('explore');
+  const navModel = useRef(useNavModel('explore'));
+  const chromeRef = useRef<AppChromeService>();
   const dsService = useRef(getDatasourceSrv());
+  const { chrome } = useGrafana();
+  chromeRef.current = chrome;
 
   useEffect(() => {
     if (!params.panes || typeof params.panes !== 'string') {
@@ -46,18 +49,23 @@ export function useExplorePageTitle(params: ExploreQueryParams) {
     )
       .then((results) => results.filter(isFulfilled).map((result) => result.value))
       .then((datasources) => {
-        if (!navModel.current) {
-          return;
-        }
-
         const names = datasources.map((ds) => ds.name);
 
         if (names.length === 0) {
           global.document.title = `${navModel.current.main.text} - ${Branding.AppTitle}`;
+          chromeRef.current?.update({
+            pageNav: undefined,
+          });
           return;
         }
 
-        global.document.title = `${navModel.current.main.text} - ${names.join(' | ')} - ${Branding.AppTitle}`;
+        const namesString = names.join(' | ');
+        chromeRef.current?.update({
+          pageNav: {
+            text: namesString,
+          },
+        });
+        global.document.title = `${navModel.current.main.text} - ${namesString} - ${Branding.AppTitle}`;
       });
   }, [params.panes]);
 }
