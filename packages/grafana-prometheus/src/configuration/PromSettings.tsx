@@ -11,6 +11,7 @@ import { ConfigSubSection } from '@grafana/experimental';
 import { config } from '@grafana/runtime';
 import { InlineField, Input, Select, Switch, useTheme2 } from '@grafana/ui';
 
+import { SUGGESTIONS_LIMIT } from '../language_provider';
 import { QueryEditorMode } from '../querybuilder/shared/types';
 import { defaultPrometheusQueryOverlapWindow } from '../querycache/QueryCache';
 import { PromApplication, PrometheusCacheLevel, PromOptions } from '../types';
@@ -333,7 +334,7 @@ export const PromSettings = (props: Props) => {
                       value={options.jsonData.codeModeMetricNamesSuggestionLimit}
                       onChange={onChangeHandler('codeModeMetricNamesSuggestionLimit', options, onOptionsChange)}
                       spellCheck={false}
-                      placeholder="10000"
+                      placeholder={SUGGESTIONS_LIMIT.toString()}
                       onBlur={(e) =>
                         updateValidCount({
                           ...validCount,
