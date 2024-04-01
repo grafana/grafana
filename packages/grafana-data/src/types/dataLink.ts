@@ -85,7 +85,8 @@ export interface InternalDataLink<T extends DataQuery = any> {
   range?: TimeRange;
 }
 
-export type LinkTarget = '_blank' | '_self' | undefined;
+// LOGZ.IO CHANGE - allow link to be opened in the same window
+export type LinkTarget = '_blank' | '_self' | '_top' | undefined;
 
 /**
  * Processed Link Model. The values are ready to use

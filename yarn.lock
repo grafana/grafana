@@ -18489,6 +18489,7 @@ __metadata:
     ol-ext: "npm:4.0.14"
     papaparse: "npm:5.4.1"
     pluralize: "npm:^8.0.0"
+    poll-until-promise: "npm:4.0.4"
     postcss: "npm:8.4.35"
     postcss-loader: "npm:7.3.4"
     postcss-reporter: "npm:7.1.0"
@@ -24538,6 +24539,13 @@ __metadata:
   dependencies:
     "@babel/runtime": "npm:^7.17.8"
   checksum: 10/da71b15c1e1d98b7f55e143bbf9ebb1b0934286c74c333522e571e52f89e42a61d7d44c5b4f941dc927355c7ae09780877aeb8f23707376fa9f006ab861e758b
+  languageName: node
+  linkType: hard
+
+"poll-until-promise@npm:4.0.4":
+  version: 4.0.4
+  resolution: "poll-until-promise@npm:4.0.4"
+  checksum: 10/be64f296e1276f73e9c62e78cc0eee63e7bc96fd8765478121aed3285d85d5dbc5be255c70cd74d9571f0da6e5ac44c870261b71f503272c6888f76d4e00ce9e
   languageName: node
   linkType: hard
 

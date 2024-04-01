@@ -60,14 +60,8 @@ export function buildParams({
 }
 
 export function buildBaseUrl() {
-  let baseUrl = window.location.href;
-  const queryStart = baseUrl.indexOf('?');
-
-  if (queryStart !== -1) {
-    baseUrl = baseUrl.substring(0, queryStart);
-  }
-
-  return baseUrl;
+  // LOGZ.IO GRAFANA CHANGE :: DEV-20340 Use the url without the grafana-app part
+  return window.location.origin + locationUtil.stripBaseFromUrl(window.location.pathname);
 }
 
 export async function buildShareUrl(

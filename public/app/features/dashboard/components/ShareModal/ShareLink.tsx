@@ -1,5 +1,6 @@
 import React, { PureComponent } from 'react';
 
+import { logzioServices, logzioConfigs } from '@grafana/data'; // LOGZ.IO GRAFANA CHANGE :: DEV-20247 Use logzio provider
 import { selectors as e2eSelectors } from '@grafana/e2e-selectors';
 import { Alert, ClipboardButton, Field, FieldSet, Input, Switch, TextLink } from '@grafana/ui';
 import config from 'app/core/config';
@@ -52,7 +53,15 @@ export class ShareLink extends PureComponent<Props, State> {
     const { panel, dashboard } = this.props;
     const { useCurrentTimeRange, useShortUrl, selectedTheme } = this.state;
 
-    const shareUrl = await buildShareUrl(useCurrentTimeRange, selectedTheme, panel, useShortUrl);
+    // LOGZ.IO GRAFANA CHANGE :: DEV-19527 Add await to function call
+    const grafanaShareUrl = await buildShareUrl(useCurrentTimeRange, selectedTheme, panel, useShortUrl);
+
+    const shareUrl = await logzioServices.shareUrlService.getLogzioGrafanaUrl({
+      productUrl: grafanaShareUrl,
+      switchToAccountId: logzioConfigs.account.accountId,
+    });
+    // LOGZ.IO GRAFANA CHANGE :: end
+
     const imageUrl = buildImageUrl(useCurrentTimeRange, dashboard.uid, selectedTheme, panel);
 
     this.setState({ shareUrl, imageUrl });
@@ -85,7 +94,7 @@ export class ShareLink extends PureComponent<Props, State> {
   render() {
     const { panel, dashboard } = this.props;
     const isRelativeTime = dashboard ? dashboard.time.to === 'now' : false;
-    const { useCurrentTimeRange, useShortUrl, selectedTheme, shareUrl, imageUrl } = this.state;
+    const { useCurrentTimeRange, selectedTheme, shareUrl, imageUrl } = this.state; // LOGZ.IO GRAFNA CHANGE :: DEV-23431 Remove useShortenUrl
     const selectors = e2eSelectors.pages.SharePanelModal;
     const isDashboardSaved = Boolean(dashboard.id);
 
@@ -96,7 +105,8 @@ export class ShareLink extends PureComponent<Props, State> {
       `Transforms the current relative time range to an absolute time range`
     );
 
-    const shortenURLTranslation = t('share-modal.link.shorten-url', `Shorten URL`);
+    // LOGZ.IO GRAFANA CHANGE :: DEV-23431 Remove short url switcher
+    // const shortenURLTranslation = t('share-modal.link.shorten-url', `Shorten URL`);
 
     const linkURLTranslation = t('share-modal.link.link-url', `Link URL`);
 
@@ -116,9 +126,10 @@ export class ShareLink extends PureComponent<Props, State> {
             />
           </Field>
           <ThemePicker selectedTheme={selectedTheme} onChange={this.onThemeChange} />
-          <Field label={shortenURLTranslation}>
+          {/* LOGZ.IO GRAFANA CHANGE :: DEV-23431 Remove short url switcher*/}
+          {/* <Field label={shortenURLTranslation}>
             <Switch id="share-shorten-url" value={useShortUrl} onChange={this.onUrlShorten} />
-          </Field>
+          </Field> */}
 
           <Field label={linkURLTranslation}>
             <Input

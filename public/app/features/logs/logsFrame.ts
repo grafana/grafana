@@ -47,9 +47,8 @@ export function logFrameLabelsToLabels(logFrameLabels: LogFrameLabels): Labels {
 
 function parseDataplaneLogsFrame(frame: DataFrame): LogsFrame | null {
   const cache = new FieldCache(frame);
-
   const timestampField = getField(cache, DATAPLANE_TIMESTAMP_NAME, FieldType.time);
-  const bodyField = getField(cache, DATAPLANE_BODY_NAME, FieldType.string);
+  const bodyField = getField(cache, 'message', FieldType.string) || cache.getFirstFieldOfType(FieldType.string); // LOGZ.IO GRAFANA CHANGE :: DEV 23266 - Add message as default field to show
 
   // these two are mandatory
   if (timestampField === undefined || bodyField === undefined) {
@@ -57,7 +56,7 @@ function parseDataplaneLogsFrame(frame: DataFrame): LogsFrame | null {
   }
 
   const severityField = getField(cache, DATAPLANE_SEVERITY_NAME, FieldType.string) ?? null;
-  const idField = getField(cache, DATAPLANE_ID_NAME, FieldType.string) ?? null;
+  const idField = getField(cache, '_id', FieldType.string) ?? getField(cache, DATAPLANE_ID_NAME, FieldType.string) ?? null; // LOGZ.IO GRAFANA CHANGE :: DEV-23266 Fix grafana explore not showing all logs
   const labelsField = getField(cache, DATAPLANE_LABELS_NAME, FieldType.other) ?? null;
 
   const labels = labelsField === null ? null : labelsField.values;

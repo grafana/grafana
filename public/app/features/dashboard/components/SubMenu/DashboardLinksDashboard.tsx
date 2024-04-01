@@ -40,7 +40,8 @@ function DashboardLinksMenu({ dashboardUID, link }: DashboardLinksMenuProps) {
             return (
               <Menu.Item
                 url={resolvedLink.url}
-                target={link.targetBlank ? '_blank' : undefined}
+                // LOGZ.IO GRAFANA CHANGE :: link open on same tab to open on top frame
+                target={link.targetBlank ? '_blank' : '_top'}
                 key={`dashlinks-dropdown-item-${resolvedLink.uid}-${index}`}
                 label={resolvedLink.title}
                 testId={selectors.components.DashboardLinks.link}
@@ -89,7 +90,8 @@ export const DashboardLinksDashboard = (props: Props) => {
               variant="secondary"
               fill="outline"
               href={resolvedLink.url}
-              target={link.targetBlank ? '_blank' : undefined}
+              // LOGZ.IO GRAFANA CHANGE :: link open on same tab to open on top frame
+              target={link.targetBlank ? '_blank' : '_top'}
               rel="noreferrer"
               data-testid={selectors.components.DashboardLinks.link}
             >

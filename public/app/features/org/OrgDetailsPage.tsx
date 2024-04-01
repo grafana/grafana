@@ -43,7 +43,7 @@ export class OrgDetailsPage extends PureComponent<Props> {
   render() {
     const { navModel, organization } = this.props;
     const isLoading = Object.keys(organization).length === 0;
-    const canReadOrg = contextSrv.hasPermission(AccessControlAction.OrgsRead);
+    const canReadOrg = false; // LOGZ.IO GRAFANA CHANGE DEV-20609 Enable change home dashboard
     const canReadPreferences = contextSrv.hasPermission(AccessControlAction.OrgsPreferencesRead);
     const canWritePreferences = contextSrv.hasPermission(AccessControlAction.OrgsPreferencesWrite);
 

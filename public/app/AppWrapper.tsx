@@ -1,4 +1,5 @@
 import { Action, KBarProvider } from 'kbar';
+import { waitFor } from 'poll-until-promise';
 import React, { ComponentType } from 'react';
 import { Provider } from 'react-redux';
 import { Router, Redirect, Switch, RouteComponentProps } from 'react-router-dom';
@@ -50,6 +51,19 @@ export class AppWrapper extends React.Component<AppWrapperProps, AppWrapperState
   async componentDidMount() {
     await loadAndInitAngularIfEnabled();
     this.setState({ ready: true });
+
+    // LOGZ.IO GRAFANA CHANGE :: Let app know that grafana loaded successfully
+    try {
+      await waitFor(() => (window as any).logzio.productLoaded.resolve(), {
+        timeout: 5000
+      })
+    } catch (error) {
+      if (!(window as any).logzio) {
+        (window as any).logzio = { productLoadedFlag: true };
+      }
+    }
+    // LOGZ.IO GRAFANA CHANGE :: end
+
     $('.preloader').remove();
   }
 

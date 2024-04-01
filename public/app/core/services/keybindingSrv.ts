@@ -45,7 +45,8 @@ export class KeybindingSrv {
       this.bind('g d', this.goToDashboards);
       this.bind('g e', this.goToExplore);
       this.bind('g a', this.openAlerting);
-      this.bind('g p', this.goToProfile);
+      // LOGZ.IO GRAFANA CHANGE :: DEV-20681 Block profile shortcut
+      // this.bind('g p', this.goToProfile);
       this.bind('esc', this.exit);
       this.bindGlobalEsc();
     }
@@ -99,10 +100,10 @@ export class KeybindingSrv {
   private goToHome() {
     this.locationService.push('/');
   }
-
-  private goToProfile() {
-    this.locationService.push('/profile');
-  }
+// LOGZ.IO GRAFANA CHANGE :: DEV-20681 Block profile shortcut
+//   private goToProfile() {
+//     this.locationService.push('/profile');
+//   }
 
   private goToExplore() {
     this.locationService.push('/explore');

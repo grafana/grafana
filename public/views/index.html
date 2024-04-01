@@ -273,6 +273,20 @@
         }
       }
 
+      // LOGZ.IO GRAFANA CHANGE :: DEV-19549 Use browser's origin to avoid CORS
+      !(function() {
+        var datasources = window.grafanaBootData.settings.datasources
+        Object.keys(datasources).forEach(function(datasourceName) {
+          var datasource = datasources[datasourceName]
+          if(!!datasource.url) {
+            try {
+              datasource.url = window.location.origin + (new URL(datasource.url)).pathname;
+            } catch (_) {}
+          }
+        });
+      })();
+      // LOGZ.IO GRAFANA CHANGE :: DEV-19549 End
+
       // In case the js files fails to load the code below will show an info message.
       window.onload = function() {
         if (window.__grafana_app_bundle_loaded) {
@@ -333,6 +347,30 @@
       type="text/javascript"
     ></script>
     [[end]]
+
+    <script nonce="[[.Nonce]]">
+      // LOGZ.IO GRAFANA CHANGE :: don't show grafana without our wrapping frame
+      if (window.self === window.parent) {
+        var pathname = window.location.pathname.replace('/grafana-app', '');
+        window.location.href =
+          window.location.protocol +
+          '//' +
+          window.location.host +
+          '/#/dashboard/grafana' +
+          pathname +
+          window.location.search;
+        throw new Error('Using grafana not as an iframe, going back to Logzio Web App.');
+      }
+
+      // Set logzio presets on the window
+      window.logzio = window.frameElement.logzioPresets;
+
+      if (window.parent && window.parent.__logzio__) {
+        window.parent.__logzio__.services.overrideFetch(window);
+        // DEV-44251 - tech debt
+        // window.parent.__logzio__.services.overrideGrafanaFetch(window);
+      }
+    </script>
 
     <script nonce="[[.Nonce]]">
       performance.mark('frontend_boot_js_done_time_seconds');

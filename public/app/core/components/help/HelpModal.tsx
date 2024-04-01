@@ -20,7 +20,7 @@ const getShortcuts = (modKey: string) => {
           description: t('help-modal.shortcuts-description.go-to-dashboards', 'Go to Dashboards'),
         },
         { keys: ['g', 'e'], description: t('help-modal.shortcuts-description.go-to-explore', 'Go to Explore') },
-        { keys: ['g', 'p'], description: t('help-modal.shortcuts-description.go-to-profile', 'Go to Profile') },
+        // { keys: ['g', 'p'], description: 'Go to Profile' }, // LOGZ.IO GRAFANA CHANGE :: DEV-20681 Block profile shortcut
         { keys: [`${modKey} + k`], description: t('help-modal.shortcuts-description.open-search', 'Open search') },
         {
           keys: ['esc'],

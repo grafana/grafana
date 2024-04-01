@@ -30,7 +30,11 @@ export const ShareModal = ({ playlistUid, onDismiss }: Props) => {
     params.autofitpanels = true;
   }
 
-  const shareUrl = urlUtil.renderUrl(`${buildBaseUrl()}/play/${playlistUid}`, params);
+  // LOGZ.IO GRAFANA CHANGE :: DEV-42761 fix playlist sharing url
+  const shareUrl = urlUtil.renderUrl(
+    `${buildBaseUrl().replace('playlist', 'grafana-app/playlist')}/play/${playlistUid}`,
+    params
+  );
 
   return (
     <Modal isOpen={true} title={t('share-playlist.title', 'Share playlist')} onDismiss={onDismiss}>

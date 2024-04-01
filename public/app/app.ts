@@ -248,7 +248,6 @@ export class GrafanaApp {
         config,
       };
 
-      setReturnToPreviousHook(useReturnToPreviousInternal);
 
       const root = createRoot(document.getElementById('reactRoot')!);
       root.render(

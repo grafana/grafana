@@ -33,16 +33,21 @@ export interface AlertManagerDataSource {
   handleGrafanaManagedAlerts?: boolean;
 }
 
-export const RulesDataSourceTypes: string[] = [DataSourceType.Loki, DataSourceType.Prometheus];
+//LOGZ.IO GRAFANA CHANGE :: Disable fetching of rules from Prometheus(M3) datasources
+// export const RulesDataSourceTypes: string[] = [DataSourceType.Loki, DataSourceType.Prometheus];
+//LOGZ.IO GRAFANA CHANGE :: end
 
-export function getRulesDataSources() {
+export function getRulesDataSources(): Array<DataSourceInstanceSettings<DataSourceJsonData>> /** LOGZ.IO GRAFANA CHANGE */ {
   if (!contextSrv.hasPermission(AccessControlAction.AlertingRuleExternalRead)) {
     return [];
   }
 
-  return getAllDataSources()
-    .filter((ds) => RulesDataSourceTypes.includes(ds.type) && ds.jsonData.manageAlerts !== false)
-    .sort((a, b) => a.name.localeCompare(b.name));
+  // LOGZ.IO GRAFANA CHANGE :: DEV-31356: Disable fetching of rules from Prometheus(M3) datasources
+  // return getAllDataSources()
+  //   .filter((ds) => RulesDataSourceTypes.includes(ds.type) && ds.jsonData.manageAlerts !== false)
+  //   .sort((a, b) => a.name.localeCompare(b.name));
+
+  return [];
 }
 
 export function getRulesDataSource(rulesSourceName: string) {

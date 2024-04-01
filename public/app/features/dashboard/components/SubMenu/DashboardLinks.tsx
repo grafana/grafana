@@ -43,9 +43,10 @@ export const DashboardLinks = ({ dashboard, links }: Props) => {
         const icon = LINK_ICON_MAP[link.icon];
 
         const linkElement = (
+          // LOGZ.IO GRAFANA CHANGE :: link open on same tab to open on top frame
           <DashboardLinkButton
             href={sanitizeUrl(linkInfo.href)}
-            target={link.targetBlank ? '_blank' : undefined}
+            target={link.targetBlank ? '_blank' : '_top'}
             rel="noreferrer"
             data-testid={selectors.components.DashboardLinks.link}
             icon={icon}

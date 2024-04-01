@@ -138,7 +138,7 @@ func (s *ServiceImpl) getAdminNode(c *contextmodel.ReqContext) (*navtree.NavLink
 	configNode := &navtree.NavLink{
 		Id:         navtree.NavIDCfg,
 		Text:       "Administration",
-		SubTitle:   "Organization: " + c.SignedInUser.GetOrgName(),
+		SubTitle:   "", // LOGZ.IO GRAFANA CHANGE :: DEV-20609 Enable change home dashboard
 		Icon:       "cog",
 		SortWeight: navtree.WeightConfig,
 		Children:   configNodes,
