@@ -327,6 +327,8 @@ export const calculateCoordinates = (
   target: ElementState,
   transformScale: number
 ) => {
+  const minDeltaX = 100;
+  const minDeltaY = 100;
   const sourceHorizontalCenter = sourceRect.left - parentRect.left + sourceRect.width / 2;
   const sourceVerticalCenter = sourceRect.top - parentRect.top + sourceRect.height / 2;
 
@@ -352,7 +354,17 @@ export const calculateCoordinates = (
   }
   x2 /= transformScale;
   y2 /= transformScale;
-  return { x1, y1, x2, y2 };
+  let deltaX = x2 - x1;
+  let deltaY = y2 - y1;
+  if (Math.abs(deltaX) < minDeltaX) {
+    const originalSign = Math.sign(deltaX);
+    deltaX = minDeltaX * (originalSign === 0 ? 1 : originalSign);
+  }
+  if (Math.abs(deltaY) < minDeltaY) {
+    const originalSign = Math.sign(deltaY);
+    deltaY = minDeltaY * (originalSign === 0 ? 1 : originalSign);
+  }
+  return { x1, y1, x2, y2, deltaX, deltaY };
 };
 
 export const calculateMidpoint = (x1: number, y1: number, x2: number, y2: number) => {
@@ -365,9 +377,11 @@ export const calculateAbsoluteCoords = (
   x2: number,
   y2: number,
   valueX: number,
-  valueY: number
+  valueY: number,
+  deltaX: number,
+  deltaY: number
 ) => {
-  return { x: valueX * (x2 - x1) + x1, y: valueY * (y2 - y1) + y1 };
+  return { x: valueX * deltaX + x1, y: valueY * deltaY + y1 };
 };
 
 // Calculate angle between two points and return angle in radians

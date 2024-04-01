@@ -135,10 +135,16 @@ export const ConnectionSVG = ({
         return;
       }
 
-      const { x1, y1, x2, y2 } = calculateCoordinates(sourceRect, parentRect, info, target, transformScale);
+      const { x1, y1, x2, y2, deltaX, deltaY } = calculateCoordinates(
+        sourceRect,
+        parentRect,
+        info,
+        target,
+        transformScale
+      );
       const midpoint = calculateMidpoint(x1, y1, x2, y2);
-      const xDist = x2 - x1;
-      const yDist = y2 - y1;
+      const xDist = deltaX;
+      const yDist = deltaY;
 
       const { strokeColor, strokeWidth, strokeRadius, arrowDirection, lineStyle } = getConnectionStyles(
         info,
@@ -165,8 +171,8 @@ export const ConnectionSVG = ({
           const y = vertex.y;
 
           // Convert vertex relative coordinates to scene coordinates
-          const X = x * xDist + x1;
-          const Y = y * yDist + y1;
+          const X = x * deltaX + x1;
+          const Y = y * deltaY + y1;
 
           // Initialize coordinates for first arc control point
           let xa = X;
@@ -392,7 +398,7 @@ export const ConnectionSVG = ({
                 {isSelected && (
                   <g>
                     {vertices.map((value, index) => {
-                      const { x, y } = calculateAbsoluteCoords(x1, y1, x2, y2, value.x, value.y);
+                      const { x, y } = calculateAbsoluteCoords(x1, y1, x2, y2, value.x, value.y, deltaX, deltaY);
                       return (
                         <circle
                           id={CONNECTION_VERTEX_ID}
@@ -410,7 +416,7 @@ export const ConnectionSVG = ({
                     })}
                     {vertices.length < maximumVertices &&
                       addVertices.map((value, index) => {
-                        const { x, y } = calculateAbsoluteCoords(x1, y1, x2, y2, value.x, value.y);
+                        const { x, y } = calculateAbsoluteCoords(x1, y1, x2, y2, value.x, value.y, deltaX, deltaY);
                         return (
                           <circle
                             id={CONNECTION_VERTEX_ADD_ID}
