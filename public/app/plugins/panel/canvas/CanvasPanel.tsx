@@ -67,6 +67,7 @@ export class CanvasPanel extends Component<Props, State> {
       this.props.options.root,
       this.props.options.inlineEditing,
       this.props.options.showAdvancedTypes,
+      this.props.options.quickDataLinkAccess,
       this.props.options.panZoom,
       this.props.options.infinitePan,
       this.onUpdateScene,
@@ -229,12 +230,15 @@ export class CanvasPanel extends Component<Props, State> {
     const inlineEditingSwitched = this.props.options.inlineEditing !== nextProps.options.inlineEditing;
     const shouldShowAdvancedTypesSwitched =
       this.props.options.showAdvancedTypes !== nextProps.options.showAdvancedTypes;
+    const quickDataLinkAccessEnabledSwitched =
+      this.props.options.quickDataLinkAccess !== nextProps.options.quickDataLinkAccess;
     const panZoomSwitched = this.props.options.panZoom !== nextProps.options.panZoom;
     const infinitePanSwitched = this.props.options.infinitePan !== nextProps.options.infinitePan;
     if (
       this.needsReload ||
       inlineEditingSwitched ||
       shouldShowAdvancedTypesSwitched ||
+      quickDataLinkAccessEnabledSwitched ||
       panZoomSwitched ||
       infinitePanSwitched
     ) {
@@ -248,6 +252,7 @@ export class CanvasPanel extends Component<Props, State> {
         nextProps.options.root,
         nextProps.options.inlineEditing,
         nextProps.options.showAdvancedTypes,
+        nextProps.options.quickDataLinkAccess,
         nextProps.options.panZoom,
         nextProps.options.infinitePan
       );

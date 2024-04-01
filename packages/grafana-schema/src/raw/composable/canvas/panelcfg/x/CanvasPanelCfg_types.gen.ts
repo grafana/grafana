@@ -124,6 +124,10 @@ export interface Options {
    */
   panZoom: boolean;
   /**
+   * Enable quick access to data links when element is configured with one data link
+   */
+  quickDataLinkAccess: boolean;
+  /**
    * The root element of canvas (frame), where all canvas elements are nested
    * TODO: Figure out how to define a default value for this
    */
@@ -151,5 +155,6 @@ export const defaultOptions: Partial<Options> = {
   infinitePan: true,
   inlineEditing: true,
   panZoom: true,
+  quickDataLinkAccess: false,
   showAdvancedTypes: true,
 };

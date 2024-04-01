@@ -26,12 +26,20 @@ export const addStandardCanvasEditorOptions = (builder: PanelOptionsEditorBuilde
   });
 
   builder.addBooleanSwitch({
+    path: 'quickDataLinkAccess',
+    name: 'Quick data link access',
+    description: 'Enable one click access to data links for elements with a single data link',
+    defaultValue: false,
+  });
+
+  builder.addBooleanSwitch({
     path: 'panZoom',
     name: 'Pan and zoom',
     description: 'Enable pan and zoom',
     defaultValue: false,
     showIf: (opts) => config.featureToggles.canvasPanelPanZoom,
   });
+
   builder.addCustomEditor({
     id: 'panZoomHelp',
     path: 'panZoomHelp',
@@ -39,6 +47,7 @@ export const addStandardCanvasEditorOptions = (builder: PanelOptionsEditorBuilde
     editor: PanZoomHelp,
     showIf: (opts) => config.featureToggles.canvasPanelPanZoom && opts.panZoom,
   });
+
   builder.addBooleanSwitch({
     path: 'infinitePan',
     name: 'Infinite panning',

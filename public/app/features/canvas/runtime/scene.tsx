@@ -74,6 +74,7 @@ export class Scene {
   currentLayer?: FrameState;
   isEditingEnabled?: boolean;
   shouldShowAdvancedTypes?: boolean;
+  isQuickDataLinkAccessEnabled?: boolean;
   shouldPanZoom?: boolean;
   shouldInfinitePan?: boolean;
   skipNextSelectionBroadcast = false;
@@ -112,12 +113,13 @@ export class Scene {
     cfg: CanvasFrameOptions,
     enableEditing: boolean,
     showAdvancedTypes: boolean,
+    quickDataLinkAccess: boolean,
     panZoom: boolean,
     infinitePan: boolean,
     public onSave: (cfg: CanvasFrameOptions) => void,
     panel: CanvasPanel
   ) {
-    this.root = this.load(cfg, enableEditing, showAdvancedTypes, panZoom, infinitePan);
+    this.root = this.load(cfg, enableEditing, showAdvancedTypes, quickDataLinkAccess, panZoom, infinitePan);
 
     this.subscription = this.editModeEnabled.subscribe((open) => {
       if (!this.moveable || !this.isEditingEnabled) {
@@ -154,6 +156,7 @@ export class Scene {
     cfg: CanvasFrameOptions,
     enableEditing: boolean,
     showAdvancedTypes: boolean,
+    quickDataLinkAccess: boolean,
     panZoom: boolean,
     infinitePan: boolean
   ) {
@@ -168,6 +171,7 @@ export class Scene {
 
     this.isEditingEnabled = enableEditing;
     this.shouldShowAdvancedTypes = showAdvancedTypes;
+    this.isQuickDataLinkAccessEnabled = quickDataLinkAccess;
     this.shouldPanZoom = panZoom;
     this.shouldInfinitePan = infinitePan;
 

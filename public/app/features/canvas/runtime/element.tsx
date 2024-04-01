@@ -545,10 +545,18 @@ export class ElementState implements LayerElement {
 
   handleMouseEnter = (event: React.MouseEvent, isSelected: boolean | undefined) => {
     const scene = this.getScene();
-    if (!scene?.isEditingEnabled && !scene?.tooltip?.isOpen) {
+    const quickDataLinkMode = scene?.isQuickDataLinkAccessEnabled && this.data.links.length === 1;
+
+    if (!scene?.isEditingEnabled && !scene?.tooltip?.isOpen && !quickDataLinkMode) {
       this.handleTooltip(event);
     } else if (!isSelected) {
       scene?.connections.handleMouseEnter(event);
+    }
+
+    if (quickDataLinkMode && this.div) {
+      const dataLinkTitle = this.data.links[0].title;
+      this.div.style.cursor = 'pointer';
+      this.div.title = `Navigate to ${dataLinkTitle === '' ? 'data link' : dataLinkTitle}`;
     }
   };
 
@@ -566,14 +574,33 @@ export class ElementState implements LayerElement {
 
   handleMouseLeave = (event: React.MouseEvent) => {
     const scene = this.getScene();
-    if (scene?.tooltipCallback && !scene?.tooltip?.isOpen) {
+    const quickDataLinkMode = scene?.isQuickDataLinkAccessEnabled && this.data.links.length === 1;
+
+    if (scene?.tooltipCallback && !scene?.tooltip?.isOpen && !quickDataLinkMode) {
       scene.tooltipCallback(undefined);
+    }
+
+    if (quickDataLinkMode && this.div) {
+      this.div.style.cursor = 'auto';
+      this.div.title = '';
     }
   };
 
   onElementClick = (event: React.MouseEvent) => {
-    this.handleTooltip(event);
-    this.onTooltipCallback();
+    const scene = this.getScene();
+    const quickDataLinkMode = scene?.isQuickDataLinkAccessEnabled && this.data.links.length === 1;
+
+    // If there is only one datalink and quick data link access is enabled, open the link instantly
+    if (!scene?.isEditingEnabled && quickDataLinkMode) {
+      const dataLink = this.data.links[0];
+
+      // TODO: Figure out a better way of doing this?
+      window.open(dataLink.href, dataLink.target);
+    } else {
+      // If there is more than one datalink / quick data link access is disabled, open tooltip
+      this.handleTooltip(event);
+      this.onTooltipCallback();
+    }
   };
 
   onElementKeyDown = (event: React.KeyboardEvent) => {

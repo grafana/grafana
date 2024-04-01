@@ -92,6 +92,8 @@ composableKinds: PanelCfg: {
 					inlineEditing: bool | *true
 					// Show all available element types
 					showAdvancedTypes: bool | *true
+					// Enable quick access to data links when element is configured with one data link
+					quickDataLinkAccess: bool | *false
 					// Enable pan and zoom
 					panZoom: bool | *true
 					// Enable infinite pan
