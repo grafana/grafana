@@ -94,7 +94,7 @@
     },
     "no-results": {
       "clear": "Borrar la búsqueda y los filtros",
-      "text": "No se ha encontrado ningún resultado para su consulta."
+      "text": ""
     }
   },
   "clipboard-button": {
@@ -107,9 +107,6 @@
       "change-theme": "Cambiar tema...",
       "dark-theme": "Oscuro",
       "light-theme": "Claro"
-    },
-    "empty-state": {
-      "title": ""
     },
     "search-box": {
       "placeholder": "Buscar o saltar a..."
@@ -131,7 +128,8 @@
   },
   "connections": {
     "connect-data": {
-      "category-header-label": "Orígenes de datos"
+      "category-header-label": "Orígenes de datos",
+      "empty-message": ""
     },
     "search": {
       "placeholder": "Buscar todo"
@@ -369,7 +367,6 @@
       "title-label": "Título"
     },
     "json-editor": {
-      "apply-button": "Aplicar cambios",
       "save-button": "Guardar cambios",
       "subtitle": "El siguiente modelo JSON es la estructura de datos que define el tablero. Incluye ajustes del tablero, ajustes del panel, diseño, consultas, etc.",
       "title": "Modelo JSON"
@@ -564,6 +561,9 @@
     "drawer": {
       "close": "Cerrar"
     },
+    "empty-state": {
+      "not-found-message": ""
+    },
     "modal": {
       "close-tooltip": "Cerrar"
     },
@@ -651,6 +651,9 @@
     }
   },
   "library-panels": {
+    "empty-state": {
+      "message": ""
+    },
     "modal": {
       "button-cancel": "<0>Cancelar</0>",
       "button-view-panel1": "Ver panel en {{label}}...",
@@ -674,21 +677,141 @@
       "title": "Error al iniciar sesión",
       "unknown": "Se ha producido un error desconocido"
     },
-    "forgot-password": "",
+    "forgot-password": "¿Has olvidado tu contraseña?",
     "form": {
-      "password-label": "",
-      "password-required": "",
-      "submit-label": "",
-      "submit-loading-label": "",
-      "username-label": "",
-      "username-required": ""
+      "password-label": "Contraseña",
+      "password-required": "La contraseña es obligatoria",
+      "submit-label": "Iniciar sesión",
+      "submit-loading-label": "Iniciando sesión...",
+      "username-label": "Correo o nombre de usuario",
+      "username-required": "El correo o el nombre de usuario es obligatorio"
     },
     "services": {
-      "sing-in-with-prefix": ""
+      "sing-in-with-prefix": "Iniciar sesión con {{serviceName}}"
     },
     "signup": {
-      "button-label": "",
-      "new-to-question": ""
+      "button-label": "Regístrate",
+      "new-to-question": "¿Te acabas de unir a Grafana?"
+    }
+  },
+  "migrate-to-cloud": {
+    "can-i-move": {
+      "body": "Una vez que conectes esta instalación a una pila en la nube, podrás cargar fuentes de datos y paneles.",
+      "link-title": "Infórmate sobre el proceso de migrar otros ajustes",
+      "title": "¿Puedo mover esta instalación a Grafana Cloud?"
+    },
+    "connect-modal": {
+      "body-cloud-stack": "También necesitarás una pila en la nube. Si te acabas de registrar, crearemos automáticamente tu primera pila. Si tienes una cuenta, deberás seleccionar o crear una.",
+      "body-get-started": "Para empezar, necesitarás una cuenta de Grafana.com.",
+      "body-paste-stack": "Una vez que te decidas por una pila, pega la URL a continuación.",
+      "body-sign-up": "Crea una cuenta de Grafana.com",
+      "body-token": "Tu instalación autogestionada de Grafana necesita acceso especial para poder migrar el contenido de forma segura. Tendrás que crear un token de migración en la pila en la nube que hayas elegido.",
+      "body-token-field": "Token de migración",
+      "body-token-field-placeholder": "Pega el token aquí",
+      "body-token-instructions": "Inicia sesión en tu pila en la nube y ve a Administración > General > Migrar a Grafana Cloud. Crea un token de migración en esa pantalla y pégalo aquí.",
+      "body-url-field": "URL de la pila en la nube",
+      "body-view-stacks": "Ver mis pilas en la nube",
+      "cancel": "Cancelar",
+      "connect": "Conectar con esta pila",
+      "connecting": "Conectando con esta pila...",
+      "stack-required-error": "La URL de la pila es obligatoria",
+      "title": "Conectar a una pila en la nube",
+      "token-required-error": "El token de migración es obligatorio"
+    },
+    "cta": {
+      "button": "Migrar esta instancia a Cloud",
+      "header": "Déjanos gestionar tu pila de Grafana"
+    },
+    "disconnect-modal": {
+      "body": "Se eliminará el token de migración de la instalación. Si quieres subir más recursos en el futuro, deberás introducir un nuevo token de migración.",
+      "cancel": "Cancelar",
+      "disconnect": "Desconectar",
+      "disconnecting": "Desconectando...",
+      "error": "Se ha producido un error durante la desconexión",
+      "title": "Desconectar de la pila en la nube"
+    },
+    "get-started": {
+      "body": "El proceso de migración debe iniciarse desde tu instancia autogestionada de Grafana.",
+      "configure-pdc-link": "Configurar PDC para esta pila",
+      "link-title": "Más información sobre Private Data Source Connect",
+      "step-1": "Inicia sesión en tu instancia autogestionada y ve a Administración > General > Migrar a Grafana Cloud.",
+      "step-2": "Selecciona «Migrar esta instancia a Cloud».",
+      "step-3": "Se te pedirá un token de migración. Genera uno desde esta pantalla.",
+      "step-4": "En tu instancia autogestionada, selecciona «Subir todo» para subir fuentes de datos y paneles a esta pila en la nube.",
+      "step-5": "Si algunas de tus fuentes de datos no funcionan a través de la red de Internet pública, deberás instalar Private Data Source Connect en tu entorno autogestionado.",
+      "title": "Cómo empezar"
+    },
+    "is-it-secure": {
+      "body": "Grafana Labs se compromete a mantener los más altos estándares de privacidad y seguridad. Al implementar las tecnologías y los procedimientos de seguridad estándar del sector, ayudamos a proteger los datos de nuestros clientes de accesos, usos o divulgaciones no autorizados.",
+      "link-title": "Centro de confianza de Grafana Labs",
+      "title": "¿Es seguro?"
+    },
+    "migrate-to-this-stack": {
+      "body": "Puedes copiar parte de la configuración de tu instancia autogestionada de Grafana automáticamente en esta pila en la nube.",
+      "link-title": "Ver la guía de migración completa",
+      "title": "Migrar la configuración a esta pila"
+    },
+    "migration-token": {
+      "body": "Tu instancia autogestionada de Grafana necesitará un token de autenticación especial para poder conectarse de forma segura a esta pila en la nube.",
+      "delete-button": "Eliminar este token de migración",
+      "delete-modal-body": "Si ya has utilizado este token con una instalación autogestionada, la instalación ya no podrá cargar contenido.",
+      "delete-modal-cancel": "Cancelar",
+      "delete-modal-confirm": "Eliminar",
+      "delete-modal-deleting": "Eliminando...",
+      "delete-modal-title": "Eliminar token de migración",
+      "generate-button": "Generar un token de migración",
+      "generate-button-loading": "Generando un token de migración...",
+      "modal-close": "Cerrar",
+      "modal-copy-and-close": "Copiar al portapapeles y cerrar",
+      "modal-copy-button": "Copiar al portapapeles",
+      "modal-field-description": "Copia el token ahora, ya que no lo volverás a ver. Si lo pierdes, deberás crear uno nuevo.",
+      "modal-field-label": "Token",
+      "modal-title": "Se ha creado el token de migración",
+      "status": "Estado actual: <2></2>",
+      "title": "Token de migración"
+    },
+    "pdc": {
+      "body": "Exponer tus fuentes de datos en Internet puede plantear problemas de seguridad. Private Data Source Connect (PDC) permite a Grafana Cloud acceder a tus fuentes de datos a través de un túnel de red seguro.",
+      "link-title": "Infórmate sobre PDC",
+      "title": "No todas mis fuentes de datos están en la red de Internet pública"
+    },
+    "pricing": {
+      "body": "Grafana Cloud te ofrece un generoso plan gratuito y una prueba de 14 días de uso ilimitado. Una vez finalizado el período de prueba, se te facturará en función del uso que supere los límites del plan gratuito.",
+      "link-title": "Precios de Grafana Cloud",
+      "title": "¿Cuánto cuesta?"
+    },
+    "resource-status": {
+      "error-details-button": "Detalles",
+      "failed": "Error",
+      "migrated": "Se ha subido a la nube",
+      "migrating": "Subiendo...",
+      "not-migrated": "Aún no se ha subido",
+      "unknown": "Desconocido"
+    },
+    "resource-type": {
+      "dashboard": "Panel de control",
+      "datasource": "Fuente de datos",
+      "unknown": "Desconocido"
+    },
+    "summary": {
+      "disconnect": "",
+      "error-starting-migration": "",
+      "start-migration": "",
+      "target-stack-title": ""
+    },
+    "token-status": {
+      "active": "Token creado y activo",
+      "no-active": "Ningún token activo"
+    },
+    "what-is-cloud": {
+      "body": "Grafana Cloud es una plataforma de observabilidad en la nube completamente gestionada, ideal para entornos nativos de la nube. Incluye todo lo que te encanta de Grafana sin que tengas que preocuparte por el mantenimiento, las actualizaciones o la instalación.",
+      "link-title": "Más información sobre las funciones en la nube",
+      "title": "¿Qué es Grafana Cloud?"
+    },
+    "why-host": {
+      "body": "Además de la comodidad del alojamiento gestionado, Grafana Cloud incluye muchas funciones exclusivas en la nube, como SLO, gestión de incidencias, aprendizaje automático y prácticas integraciones de observabilidad.",
+      "link-title": "¿Tienes preguntas? Habla con un experto",
+      "title": "¿Por qué alojar con Grafana?"
     }
   },
   "nav": {
@@ -875,6 +998,10 @@
     },
     "manage-folder": {
       "subtitle": "Gestionar paneles de control de carpetas y permisos"
+    },
+    "migrate-to-cloud": {
+      "subtitle": "Copia la configuración de tu instalación autogestionada a una pila en la nube",
+      "title": "Migrar a Grafana Cloud"
     },
     "monitoring": {
       "subtitle": "Aplicaciones de supervisión e infraestructura",
@@ -1088,6 +1215,11 @@
       "title": "Aún no se ha creado ninguna lista de reproducción"
     }
   },
+  "playlists": {
+    "empty-state": {
+      "message": ""
+    }
+  },
   "profile": {
     "change-password": {
       "cancel-button": "Cancelar",
@@ -1101,7 +1233,8 @@
       "new-password-same-as-old": "La nueva contraseña no puede ser la misma que la antigua.",
       "old-password-label": "Contraseña antigua",
       "old-password-required": "Se requiere la contraseña antigua",
-      "passwords-must-match": "Las contraseñas deben coincidir"
+      "passwords-must-match": "Las contraseñas deben coincidir",
+      "strong-password-validation-register": "La contraseña no cumple con la política de contraseñas seguras"
     }
   },
   "public-dashboard": {
@@ -1222,11 +1355,12 @@
     "header": {
       "collapse-row": "Contraer la fila de la consulta",
       "datasource-help": "Mostrar la ayuda de la fuente de datos",
-      "disable-query": "Deshabilitar consulta",
       "drag-and-drop": "Arrastrar y soltar para reordenar",
       "duplicate-query": "Duplicar consulta",
       "expand-row": "Expandir la fila de la consulta",
+      "hide-response": "",
       "remove-query": "Eliminar consulta",
+      "show-response": "",
       "toggle-edit-mode": "Alternar el modo de edición de texto"
     },
     "query-editor-not-exported": "El complemento de la fuente de datos no exporta ningún componente del editor de consultas"
@@ -1336,10 +1470,10 @@
       "expire-day": "1 día",
       "expire-hour": "1 hora",
       "expire-never": "Nunca",
-      "expire-week": "7 días",
+      "expire-week": "1 semana",
       "info-text-1": "Una instantánea es una forma inmediata de compartir un panel interactivo públicamente. Cuando se crean, eliminamos datos confidenciales como consultas (métricas, plantilla y anotación) y enlaces de panel, dejando solo los datos de métricas visibles y los nombres de serie incrustados en el panel.",
       "info-text-2": "Tenga en cuenta que su instantánea <1>puede ser vista por cualquiera</1> que tenga el enlace y pueda acceder a la URL. Comparta sus instantáneas con cautela.",
-      "local-button": "Instantánea local",
+      "local-button": "Publicar instantánea",
       "mistake-message": "¿Ha cometido un error? ",
       "name": "Nombre de la instantánea",
       "timeout": "Tiempo de espera (segundos)",
@@ -1352,7 +1486,7 @@
       "library-panel": "Panel de librería",
       "link": "Enlace",
       "panel-embed": "Incrustar",
-      "public-dashboard": "Tablero público",
+      "public-dashboard": "",
       "public-dashboard-title": "Tablero público",
       "snapshot": "Instantánea"
     },

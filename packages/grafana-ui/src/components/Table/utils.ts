@@ -2,6 +2,7 @@ import { Property } from 'csstype';
 import { clone } from 'lodash';
 import memoize from 'micro-memoize';
 import { Row } from 'react-table';
+import tinycolor from 'tinycolor2';
 
 import {
   DataFrame,
@@ -27,6 +28,8 @@ import {
   TableCellDisplayMode,
 } from '@grafana/schema';
 
+import { getTextColorForAlphaBackground } from '../../utils';
+
 import { BarGaugeCell } from './BarGaugeCell';
 import { DataLinksCell } from './DataLinksCell';
 import { DefaultCell } from './DefaultCell';
@@ -36,6 +39,7 @@ import { ImageCell } from './ImageCell';
 import { JSONViewCell } from './JSONViewCell';
 import { RowExpander } from './RowExpander';
 import { SparklineCell } from './SparklineCell';
+import { TableStyles } from './styles';
 import {
   CellComponent,
   TableCellOptions,
@@ -43,6 +47,7 @@ import {
   FooterItem,
   GrafanaTableColumn,
   TableFooterCalc,
+  CellColors,
 } from './types';
 
 export const EXPANDER_WIDTH = 50;
@@ -385,10 +390,25 @@ export function getFooterItems(
 }
 
 function getFormattedValue(field: Field, reducer: string[], theme: GrafanaTheme2) {
-  const fmt = field.display ?? getDisplayProcessor({ field, theme });
+  // If we don't have anything to return then we display nothing
   const calc = reducer[0];
-  const v = reduceField({ field, reducers: reducer })[calc];
-  return formattedValueToString(fmt(v));
+  if (calc === undefined) {
+    return '';
+  }
+
+  // Calculate the reduction
+  const format = field.display ?? getDisplayProcessor({ field, theme });
+  const fieldCalcValue = reduceField({ field, reducers: reducer })[calc];
+
+  // If the reducer preserves units then format the
+  // end value with the field display processor
+  const reducerInfo = fieldReducers.get(calc);
+  if (reducerInfo.preservesUnits) {
+    return formattedValueToString(format(fieldCalcValue));
+  }
+
+  // Otherwise we simply return the formatted string
+  return formattedValueToString({ text: fieldCalcValue });
 }
 
 // This strips the raw vales from the `rows` object.
@@ -565,4 +585,47 @@ export function calculateAroundPointThreshold(timeField: Field): number {
   }
 
   return (max - min) / timeField.values.length;
+}
+
+/**
+ * Retrieve colors for a table cell (or table row).
+ *
+ * @param tableStyles
+ *  Styles for the table
+ * @param cellOptions
+ *  Table cell configuration options
+ * @param displayValue
+ *  The value that will be displayed
+ * @returns CellColors
+ */
+export function getCellColors(
+  tableStyles: TableStyles,
+  cellOptions: TableCellOptions,
+  displayValue: DisplayValue
+): CellColors {
+  // How much to darken elements depends upon if we're in dark mode
+  const darkeningFactor = tableStyles.theme.isDark ? 1 : -0.7;
+
+  // Setup color variables
+  let textColor: string | undefined = undefined;
+  let bgColor: string | undefined = undefined;
+
+  if (cellOptions.type === TableCellDisplayMode.ColorText) {
+    textColor = displayValue.color;
+  } else if (cellOptions.type === TableCellDisplayMode.ColorBackground) {
+    const mode = cellOptions.mode ?? TableCellBackgroundDisplayMode.Gradient;
+
+    if (mode === TableCellBackgroundDisplayMode.Basic) {
+      textColor = getTextColorForAlphaBackground(displayValue.color!, tableStyles.theme.isDark);
+      bgColor = tinycolor(displayValue.color).setAlpha(0.9).toRgbString();
+    } else if (mode === TableCellBackgroundDisplayMode.Gradient) {
+      const bgColor2 = tinycolor(displayValue.color)
+        .darken(10 * darkeningFactor)
+        .spin(5);
+      textColor = getTextColorForAlphaBackground(displayValue.color!, tableStyles.theme.isDark);
+      bgColor = `linear-gradient(120deg, ${bgColor2.toRgbString()}, ${displayValue.color})`;
+    }
+  }
+
+  return { textColor, bgColor };
 }

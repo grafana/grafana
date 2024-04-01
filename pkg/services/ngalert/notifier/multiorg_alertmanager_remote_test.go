@@ -8,6 +8,9 @@ import (
 	"testing"
 	"time"
 
+	"github.com/prometheus/client_golang/prometheus"
+	"github.com/stretchr/testify/require"
+
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/ngalert/metrics"
@@ -19,8 +22,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/secrets/fakes"
 	secretsManager "github.com/grafana/grafana/pkg/services/secrets/manager"
 	"github.com/grafana/grafana/pkg/setting"
-	"github.com/prometheus/client_golang/prometheus"
-	"github.com/stretchr/testify/require"
 )
 
 func TestMultiorgAlertmanager_RemoteSecondaryMode(t *testing.T) {
@@ -49,6 +50,7 @@ func TestMultiorgAlertmanager_RemoteSecondaryMode(t *testing.T) {
 	})
 
 	// Create the factory function for the MOA using the forked Alertmanager in remote secondary mode.
+	secretsService := secretsManager.SetupTestService(t, fakes.NewFakeSecretsStore())
 	override := notifier.WithAlertmanagerOverride(func(factoryFn notifier.OrgAlertmanagerFactory) notifier.OrgAlertmanagerFactory {
 		return func(ctx context.Context, orgID int64) (notifier.Alertmanager, error) {
 			// Create internal Alertmanager.
@@ -62,10 +64,8 @@ func TestMultiorgAlertmanager_RemoteSecondaryMode(t *testing.T) {
 				TenantID:          tenantID,
 				BasicAuthPassword: password,
 			}
-			// We won't be handling files on disk, we can pass an empty string as workingDirPath.
-			stateStore := notifier.NewFileStore(orgID, kvStore, "")
 			m := metrics.NewRemoteAlertmanagerMetrics(prometheus.NewRegistry())
-			remoteAM, err := remote.NewAlertmanager(externalAMCfg, stateStore, m)
+			remoteAM, err := remote.NewAlertmanager(externalAMCfg, notifier.NewFileStore(orgID, kvStore), secretsService.Decrypt, m)
 			require.NoError(t, err)
 
 			// Use both Alertmanager implementations in the forked Alertmanager.
@@ -87,7 +87,6 @@ func TestMultiorgAlertmanager_RemoteSecondaryMode(t *testing.T) {
 			DefaultConfiguration:           setting.GetAlertmanagerDefaultConfiguration(),
 		}, // do not poll in tests.
 	}
-	secretsService := secretsManager.SetupTestService(t, fakes.NewFakeSecretsStore())
 	moa, err := notifier.NewMultiOrgAlertmanager(
 		cfg,
 		configStore,

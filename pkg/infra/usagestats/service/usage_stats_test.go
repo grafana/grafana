@@ -9,6 +9,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"runtime"
+	"sync"
 	"testing"
 	"time"
 
@@ -85,7 +86,7 @@ func TestMetrics(t *testing.T) {
 			AnonymousEnabled:     true,
 			BasicAuthEnabled:     true,
 			LDAPAuthEnabled:      true,
-			AuthProxyEnabled:     true,
+			AuthProxy:            setting.AuthProxySettings{Enabled: true},
 			Packaging:            "deb",
 			ReportingDistributor: "hosted-grafana",
 		}
@@ -175,7 +176,9 @@ func TestRegisterMetrics(t *testing.T) {
 
 	sqlStore := dbtest.NewFakeDB()
 	uss := createService(t, sqlStore, false)
-	metrics := map[string]any{"stats.test_metric.count": 1, "stats.test_metric_second.count": 2}
+	metrics := sync.Map{}
+	metrics.Store("stats.test_metric.count", 1)
+	metrics.Store("stats.test_metric_second.count", 2)
 
 	uss.RegisterMetricsFunc(func(context.Context) (map[string]any, error) {
 		return map[string]any{goodMetricName: 1}, nil
@@ -187,9 +190,15 @@ func TestRegisterMetrics(t *testing.T) {
 		assert.Equal(t, map[string]any{goodMetricName: 1}, extMetrics)
 	}
 
-	uss.gatherMetrics(context.Background(), metrics)
-	assert.Equal(t, 1, metrics[goodMetricName])
-	metricsCount := len(metrics)
+	uss.gatherMetrics(context.Background(), &metrics)
+	v, ok := metrics.Load(goodMetricName)
+	assert.True(t, ok)
+	assert.Equal(t, 1, v)
+	metricsCountBefore := 0
+	metrics.Range(func(_, _ any) bool {
+		metricsCountBefore++
+		return true
+	})
 
 	t.Run("do not add metrics that return an error when fetched", func(t *testing.T) {
 		const badMetricName = "stats.test_external_metric_error.count"
@@ -197,15 +206,26 @@ func TestRegisterMetrics(t *testing.T) {
 		uss.RegisterMetricsFunc(func(context.Context) (map[string]any, error) {
 			return map[string]any{badMetricName: 1}, errors.New("some error")
 		})
-		uss.gatherMetrics(context.Background(), metrics)
+		uss.gatherMetrics(context.Background(), &metrics)
 
-		extErrorMetric := metrics[badMetricName]
-		extMetric := metrics[goodMetricName]
+		extErrorMetric, ok := metrics.Load(badMetricName)
+		assert.False(t, ok)
+		extMetric, ok := metrics.Load(goodMetricName)
+		assert.True(t, ok)
 
 		require.Nil(t, extErrorMetric, "Invalid metric should not be added")
 		assert.Equal(t, 1, extMetric)
-		assert.Len(t, metrics, metricsCount, "Expected same number of metrics before and after collecting bad metric")
-		assert.EqualValues(t, 1, metrics["stats.usagestats.debug.collect.error.count"])
+
+		metricsCountAfter := 0
+		metrics.Range(func(_, _ any) bool {
+			metricsCountAfter++
+			return true
+		})
+
+		assert.Equal(t, metricsCountAfter, metricsCountBefore, "Expected same number of metrics before and after collecting bad metric")
+		errCount, ok := metrics.Load("stats.usagestats.debug.collect.error.count")
+		assert.True(t, ok)
+		assert.EqualValues(t, 1, errCount)
 	})
 }
 

@@ -1,0 +1,1 @@
+example.com/foo/wire.go:x:y: inject injectedMessagePtr: no provider found for *string, output of injector

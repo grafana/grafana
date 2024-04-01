@@ -18,6 +18,7 @@ import { activePanelSubject, InstanceState } from '../../CanvasPanel';
 import { addStandardCanvasEditorOptions } from '../../module';
 import { InlineEditTabs } from '../../types';
 import { getElementTypes, onAddItem } from '../../utils';
+import { getConnectionEditor } from '../connectionEditor';
 import { getElementEditor } from '../element/elementEditor';
 import { getLayerEditor } from '../layer/layerEditor';
 
@@ -40,6 +41,17 @@ export function InlineEditBody() {
     const supplier = (builder: PanelOptionsEditorBuilder<any>) => {
       if (activeTab === InlineEditTabs.ElementManagement) {
         builder.addNestedOptions(getLayerEditor(instanceState));
+      }
+
+      const selectedConnection = state.selectedConnection;
+      if (selectedConnection && activeTab === InlineEditTabs.SelectedElement) {
+        builder.addNestedOptions(
+          getConnectionEditor({
+            category: [`Selected connection`],
+            connection: selectedConnection,
+            scene: state.scene,
+          })
+        );
       }
 
       const selection = state.selected;
@@ -82,7 +94,10 @@ export function InlineEditBody() {
   const rootLayer: FrameState | undefined = instanceState?.layer;
 
   const noElementSelected =
-    instanceState && activeTab === InlineEditTabs.SelectedElement && instanceState.selected.length === 0;
+    instanceState &&
+    activeTab === InlineEditTabs.SelectedElement &&
+    instanceState.selected.length === 0 &&
+    instanceState.selectedConnection === undefined;
 
   return (
     <>

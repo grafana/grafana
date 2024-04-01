@@ -151,19 +151,19 @@ Grafana has an LDAP debug view built-in which allows you to test your LDAP confi
 
 Within this view, you'll be able to see which LDAP servers are currently reachable and test your current configuration.
 
-{{< figure src="/static/img/docs/ldap_debug.png" class="docs-image--no-shadow" max-width="600px" >}}
+{{< figure src="/static/img/docs/ldap_debug.png" class="docs-image--no-shadow" max-width="600px" alt="LDAP testing" >}}
 
 To use the debug view, complete the following steps:
 
 1.  Type the username of a user that exists within any of your LDAP server(s)
 1.  Then, press "Run"
-1.  If the user is found within any of your LDAP instances, the mapping information is displayed
+1.  If the user is found within any of your LDAP instances, the mapping information is displayed.
 
-{{< figure src="/static/img/docs/ldap_debug_mapping_testing.png" class="docs-image--no-shadow" max-width="600px" >}}
+{{< figure src="/static/img/docs/ldap_debug_mapping_testing.png" class="docs-image--no-shadow" max-width="600px" alt="LDAP mapping displayed" >}}
 
 [Grafana Enterprise]({{< relref "../../../../introduction/grafana-enterprise" >}}) users with [enhanced LDAP integration]({{< relref "../enhanced-ldap" >}}) enabled can also see sync status in the debug view. This requires the `ldap.status:read` permission.
 
-{{< figure src="/static/img/docs/ldap_sync_debug.png" class="docs-image--no-shadow" max-width="600px" >}}
+{{< figure src="/static/img/docs/ldap_sync_debug.png" class="docs-image--no-shadow" max-width="600px" alt="LDAP sync status" >}}
 
 ### Bind and bind password
 

@@ -41,8 +41,17 @@ export class AddToFiltersGraphAction extends SceneObjectBase<AddToFiltersGraphAc
   };
 
   public static Component = ({ model }: SceneComponentProps<AddToFiltersGraphAction>) => {
+    const state = model.useState();
+    const labels = state.frame.fields[1]?.labels || {};
+
+    const canAddToFilters = Object.keys(labels).length !== 0;
+
+    if (!canAddToFilters) {
+      return null;
+    }
+
     return (
-      <Button variant="primary" size="sm" fill="text" onClick={model.onClick}>
+      <Button variant="secondary" size="sm" fill="solid" onClick={model.onClick}>
         Add to filters
       </Button>
     );

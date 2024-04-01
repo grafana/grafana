@@ -40,11 +40,11 @@ func (c *Grafana) AuthenticateProxy(ctx context.Context, r *authn.Request, usern
 			FetchSyncedUser: true,
 			SyncOrgRoles:    true,
 			SyncPermissions: true,
-			AllowSignUp:     c.cfg.AuthProxyAutoSignUp,
+			AllowSignUp:     c.cfg.AuthProxy.AutoSignUp,
 		},
 	}
 
-	switch c.cfg.AuthProxyHeaderProperty {
+	switch c.cfg.AuthProxy.HeaderProperty {
 	case "username":
 		identity.Login = username
 		addr, err := mail.ParseAddress(username)
@@ -55,7 +55,7 @@ func (c *Grafana) AuthenticateProxy(ctx context.Context, r *authn.Request, usern
 		identity.Login = username
 		identity.Email = username
 	default:
-		return nil, errInvalidProxyHeader.Errorf("invalid auth proxy header property, expected username or email but got: %s", c.cfg.AuthProxyHeaderProperty)
+		return nil, errInvalidProxyHeader.Errorf("invalid auth proxy header property, expected username or email but got: %s", c.cfg.AuthProxy.HeaderProperty)
 	}
 
 	if v, ok := additional[proxyFieldName]; ok {

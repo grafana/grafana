@@ -3,6 +3,7 @@ package pipeline
 import (
 	"context"
 
+	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/auth"
 	"github.com/grafana/grafana/pkg/plugins/config"
@@ -21,7 +22,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginerrs"
 )
 
-func ProvideDiscoveryStage(cfg *config.Cfg, pf finder.Finder, pr registry.Service) *discovery.Discovery {
+func ProvideDiscoveryStage(cfg *config.PluginManagementCfg, pf finder.Finder, pr registry.Service) *discovery.Discovery {
 	return discovery.New(cfg, discovery.Opts{
 		FindFunc: pf.Find,
 		FindFilterFuncs: []discovery.FindFilterFunc{
@@ -41,14 +42,14 @@ func ProvideDiscoveryStage(cfg *config.Cfg, pf finder.Finder, pr registry.Servic
 	})
 }
 
-func ProvideBootstrapStage(cfg *config.Cfg, sc plugins.SignatureCalculator, a *assetpath.Service) *bootstrap.Bootstrap {
+func ProvideBootstrapStage(cfg *config.PluginManagementCfg, sc plugins.SignatureCalculator, a *assetpath.Service) *bootstrap.Bootstrap {
 	return bootstrap.New(cfg, bootstrap.Opts{
 		ConstructFunc: bootstrap.DefaultConstructFunc(sc, a),
 		DecorateFuncs: bootstrap.DefaultDecorateFuncs(cfg),
 	})
 }
 
-func ProvideValidationStage(cfg *config.Cfg, sv signature.Validator, ai angularinspector.Inspector,
+func ProvideValidationStage(cfg *config.PluginManagementCfg, sv signature.Validator, ai angularinspector.Inspector,
 	et pluginerrs.SignatureErrorTracker) *validation.Validate {
 	return validation.New(cfg, validation.Opts{
 		ValidateFuncs: []validation.ValidateFunc{
@@ -59,13 +60,13 @@ func ProvideValidationStage(cfg *config.Cfg, sv signature.Validator, ai angulari
 	})
 }
 
-func ProvideInitializationStage(cfg *config.Cfg, pr registry.Service, l plugins.Licensing,
-	bp plugins.BackendFactoryProvider, pm process.Manager, externalServiceRegistry auth.ExternalServiceRegistry,
-	roleRegistry plugins.RoleRegistry) *initialization.Initialize {
+func ProvideInitializationStage(cfg *config.PluginManagementCfg, pr registry.Service, bp plugins.BackendFactoryProvider,
+	pm process.Manager, externalServiceRegistry auth.ExternalServiceRegistry,
+	roleRegistry plugins.RoleRegistry, pluginEnvProvider envvars.Provider, tracer tracing.Tracer) *initialization.Initialize {
 	return initialization.New(cfg, initialization.Opts{
 		InitializeFuncs: []initialization.InitializeFunc{
-			ExternalServiceRegistrationStep(cfg, externalServiceRegistry),
-			initialization.BackendClientInitStep(envvars.NewProvider(cfg, l), bp),
+			ExternalServiceRegistrationStep(cfg, externalServiceRegistry, tracer),
+			initialization.BackendClientInitStep(pluginEnvProvider, bp),
 			initialization.PluginRegistrationStep(pr),
 			initialization.BackendProcessStartStep(pm),
 			RegisterPluginRolesStep(roleRegistry),
@@ -74,7 +75,7 @@ func ProvideInitializationStage(cfg *config.Cfg, pr registry.Service, l plugins.
 	})
 }
 
-func ProvideTerminationStage(cfg *config.Cfg, pr registry.Service, pm process.Manager) (*termination.Terminate, error) {
+func ProvideTerminationStage(cfg *config.PluginManagementCfg, pr registry.Service, pm process.Manager) (*termination.Terminate, error) {
 	return termination.New(cfg, termination.Opts{
 		TerminateFuncs: []termination.TerminateFunc{
 			termination.BackendProcessTerminatorStep(pm),

@@ -13,11 +13,8 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/actest"
-	"github.com/grafana/grafana/pkg/services/org/orgimpl"
-	"github.com/grafana/grafana/pkg/services/quota/quotatest"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
-	"github.com/grafana/grafana/pkg/services/supportbundles/supportbundlestest"
 	"github.com/grafana/grafana/pkg/services/team/teamimpl"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/services/user/userimpl"
@@ -568,24 +565,50 @@ func TestRunValidateConflictUserFile(t *testing.T) {
 	t.Run("should validate file thats gets created", func(t *testing.T) {
 		// Restore after destructive operation
 		sqlStore := db.InitTestDB(t)
-		usrSvc := setupTestUserService(t, sqlStore)
 
 		const testOrgID int64 = 1
 		if sqlStore.GetDialect().DriverName() != ignoredDatabase {
 			// add additional user with conflicting login where DOMAIN is upper case
-			dupUserLogincmd := user.CreateUserCommand{
-				Email: "userduplicatetest1@test.com",
-				Login: "user_duplicate_test_1_login",
-				OrgID: testOrgID,
-			}
-			_, err := usrSvc.Create(context.Background(), &dupUserLogincmd)
-			require.NoError(t, err)
-			dupUserEmailcmd := user.CreateUserCommand{
-				Email: "USERDUPLICATETEST1@TEST.COM",
-				Login: "USER_DUPLICATE_TEST_1_LOGIN",
-				OrgID: testOrgID,
-			}
-			_, err = usrSvc.Create(context.Background(), &dupUserEmailcmd)
+			err := sqlStore.WithDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
+				// create a user
+				// add additional user with conflicting login where DOMAIN is upper case
+				dupUserLogincmd := user.CreateUserCommand{
+					Email: "userduplicatetest1@test.com",
+					Login: "user_duplicate_test_1_login",
+					OrgID: testOrgID,
+				}
+				rawSQL := fmt.Sprintf(
+					"INSERT INTO %s (email, login, org_id, version, is_admin, created, updated) VALUES (?,?,?,0,%s,\"2024-03-18T15:25:32\",\"2024-03-18T15:25:32\")",
+					sqlStore.Quote("user"),
+					sqlStore.Dialect.BooleanStr(false),
+				)
+				result, err := sess.Exec(rawSQL, dupUserLogincmd.Email, dupUserLogincmd.Login, dupUserLogincmd.OrgID)
+				if err != nil {
+					return err
+				}
+				n, err := result.RowsAffected()
+				if err != nil {
+					return err
+				} else if n == 0 {
+					return user.ErrUserNotFound
+				}
+				dupUserEmailcmd := user.CreateUserCommand{
+					Email: "USERDUPLICATETEST1@TEST.COM",
+					Login: "USER_DUPLICATE_TEST_1_LOGIN",
+					OrgID: testOrgID,
+				}
+				result, err = sess.Exec(rawSQL, dupUserEmailcmd.Email, dupUserEmailcmd.Login, dupUserEmailcmd.OrgID)
+				if err != nil {
+					return err
+				}
+				n, err = result.RowsAffected()
+				if err != nil {
+					return err
+				} else if n == 0 {
+					return user.ErrUserNotFound
+				}
+				return nil
+			})
 			require.NoError(t, err)
 
 			// get users
@@ -617,31 +640,78 @@ func TestIntegrationMergeUser(t *testing.T) {
 		require.NoError(t, err)
 		team1, err := teamSvc.CreateTeam("team1 name", "", 1)
 		require.NoError(t, err)
-		usrSvc := setupTestUserService(t, sqlStore)
 		const testOrgID int64 = 1
 
 		if sqlStore.GetDialect().DriverName() != ignoredDatabase {
 			// add additional user with conflicting login where DOMAIN is upper case
 
-			// the order of adding the conflict matters
-			dupUserLogincmd := user.CreateUserCommand{
-				Email: "userduplicatetest1@test.com",
-				Name:  "user name 1",
-				Login: "user_duplicate_test_1_login",
-				OrgID: testOrgID,
+			err = sqlStore.WithDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
+				// the order of adding the conflict matters
+				cmd := user.User{
+					Email:   "userduplicatetest1@test.com",
+					Name:    "user name 1",
+					Login:   "user_duplicate_test_1_login",
+					OrgID:   testOrgID,
+					Created: time.Now(),
+					Updated: time.Now(),
+				}
+
+				// call user store instead of user service so as not to prevent conflicting users
+				rawSQL := fmt.Sprintf(
+					"INSERT INTO %s (email, login, org_id, version, is_admin, created, updated) VALUES (?,?,?,0,%s,?,?)",
+					sqlStore.Quote("user"),
+					sqlStore.Dialect.BooleanStr(false),
+				)
+				result, err := sess.Exec(rawSQL, cmd.Email, cmd.Login, cmd.OrgID, cmd.Created, cmd.Updated)
+				if err != nil {
+					return err
+				}
+				n, err := result.RowsAffected()
+				if err != nil {
+					return err
+				} else if n == 0 {
+					return user.ErrUserNotFound
+				}
+				require.NoError(t, err)
+				return nil
+			})
+			if err != nil {
+				t.Error(err)
 			}
-			_, err := usrSvc.Create(context.Background(), &dupUserLogincmd)
-			require.NoError(t, err)
-			dupUserEmailcmd := user.CreateUserCommand{
-				Email: "USERDUPLICATETEST1@TEST.COM",
-				Name:  "user name 1",
-				Login: "USER_DUPLICATE_TEST_1_LOGIN",
-				OrgID: testOrgID,
+
+			err = sqlStore.WithDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
+				cmd := user.User{
+					Email:   "USERDUPLICATETEST1@TEST.COM",
+					Name:    "user name 1",
+					Login:   "USER_DUPLICATE_TEST_1_LOGIN",
+					OrgID:   testOrgID,
+					Created: time.Now(),
+					Updated: time.Now(),
+				}
+				// call user store instead of user service so as not to prevent conflicting users
+				rawSQL := fmt.Sprintf(
+					"INSERT INTO %s (email, login, org_id, version, is_admin, created, updated) VALUES (?,?,?,0,%s,?,?)",
+					sqlStore.Quote("user"),
+					sqlStore.Dialect.BooleanStr(false),
+				)
+				result, err := sess.Exec(rawSQL, cmd.Email, cmd.Login, cmd.OrgID, cmd.Created, cmd.Updated)
+				if err != nil {
+					return err
+				}
+				n, err := result.RowsAffected()
+				if err != nil {
+					return err
+				} else if n == 0 {
+					return user.ErrUserNotFound
+				}
+				require.NoError(t, err)
+				return nil
+			})
+			if err != nil {
+				t.Error(err)
 			}
-			userWithUpperCase, err := usrSvc.Create(context.Background(), &dupUserEmailcmd)
-			require.NoError(t, err)
 			// this is the user we want to update to another team
-			err = teamSvc.AddTeamMember(userWithUpperCase.ID, testOrgID, team1.ID, false, 0)
+			err = teamSvc.AddTeamMember(context.Background(), 1, testOrgID, team1.ID, false, 0)
 			require.NoError(t, err)
 
 			// get users
@@ -776,20 +846,40 @@ conflict: test2
 			// Restore after destructive operation
 			sqlStore := db.InitTestDB(t)
 			if sqlStore.GetDialect().DriverName() != ignoredDatabase {
-				userStore := userimpl.ProvideStore(sqlStore, sqlStore.Cfg)
-				for _, u := range tc.users {
-					cmd := user.User{
-						Email:   u.Email,
-						Name:    u.Name,
-						Login:   u.Login,
-						OrgID:   int64(testOrgID),
-						Created: time.Now(),
-						Updated: time.Now(),
+				err := sqlStore.WithDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
+					for _, u := range tc.users {
+						cmd := user.User{
+							Email:   u.Email,
+							Name:    u.Name,
+							Login:   u.Login,
+							OrgID:   int64(testOrgID),
+							Created: time.Now(),
+							Updated: time.Now(),
+						}
+						// call user store instead of user service so as not to prevent conflicting users
+						rawSQL := fmt.Sprintf(
+							"INSERT INTO %s (email, login, org_id, version, is_admin, created, updated) VALUES (?,?,?,0,%s,?,?)",
+							sqlStore.Quote("user"),
+							sqlStore.Dialect.BooleanStr(false),
+						)
+						result, err := sess.Exec(rawSQL, cmd.Email, cmd.Login, cmd.OrgID, cmd.Created, cmd.Updated)
+						if err != nil {
+							return err
+						}
+						n, err := result.RowsAffected()
+						if err != nil {
+							return err
+						} else if n == 0 {
+							return user.ErrUserNotFound
+						}
+						require.NoError(t, err)
 					}
-					// call user store instead of user service so as not to prevent conflicting users
-					_, err := userStore.Insert(context.Background(), &cmd)
-					require.NoError(t, err)
+					return nil
+				})
+				if err != nil {
+					t.Fatal(err)
 				}
+
 				// add additional user with conflicting login where DOMAIN is upper case
 				conflictUsers, err := GetUsersWithConflictingEmailsOrLogins(&cli.Context{Context: context.Background()}, sqlStore)
 				require.NoError(t, err)
@@ -872,14 +962,4 @@ func TestMarshalConflictUser(t *testing.T) {
 			require.Equal(t, tc.expectedUser.ConflictLogin, user.ConflictLogin)
 		})
 	}
-}
-
-func setupTestUserService(t *testing.T, sqlStore *sqlstore.SQLStore) user.Service {
-	t.Helper()
-	orgSvc, err := orgimpl.ProvideService(sqlStore, sqlStore.Cfg, &quotatest.FakeQuotaService{})
-	require.NoError(t, err)
-	usrSvc, err := userimpl.ProvideService(sqlStore, orgSvc, sqlStore.Cfg, nil, nil, &quotatest.FakeQuotaService{}, supportbundlestest.NewFakeBundleService())
-	require.NoError(t, err)
-
-	return usrSvc
 }

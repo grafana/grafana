@@ -484,7 +484,7 @@ func (s *Service) httpClientOptions(ctx context.Context, ds *datasources.DataSou
 
 	opts := &sdkhttpclient.Options{
 		Timeouts: timeouts,
-		Headers:  s.getCustomHeaders(ds.JsonData, decryptedValues),
+		Header:   s.getCustomHeaders(ds.JsonData, decryptedValues),
 		Labels: map[string]string{
 			"datasource_type": ds.Type,
 			"datasource_name": ds.Name,
@@ -532,9 +532,12 @@ func (s *Service) httpClientOptions(ctx context.Context, ds *datasources.DataSou
 			},
 			Timeouts: &sdkproxy.DefaultTimeoutOptions,
 			ClientCfg: &sdkproxy.ClientCfg{
-				ClientCert:    s.cfg.SecureSocksDSProxy.ClientCert,
-				ClientKey:     s.cfg.SecureSocksDSProxy.ClientKey,
-				RootCA:        s.cfg.SecureSocksDSProxy.RootCA,
+				ClientCert:    s.cfg.SecureSocksDSProxy.ClientCertFilePath,
+				ClientKey:     s.cfg.SecureSocksDSProxy.ClientKeyFilePath,
+				RootCAs:       s.cfg.SecureSocksDSProxy.RootCAFilePaths,
+				ClientCertVal: s.cfg.SecureSocksDSProxy.ClientCert,
+				ClientKeyVal:  s.cfg.SecureSocksDSProxy.ClientKey,
+				RootCAsVals:   s.cfg.SecureSocksDSProxy.RootCAs,
 				ProxyAddress:  s.cfg.SecureSocksDSProxy.ProxyAddress,
 				ServerName:    s.cfg.SecureSocksDSProxy.ServerName,
 				AllowInsecure: s.cfg.SecureSocksDSProxy.AllowInsecure,
@@ -654,8 +657,8 @@ func (s *Service) getTimeout(ds *datasources.DataSource) time.Duration {
 
 // getCustomHeaders returns a map with all the to be set headers
 // The map key represents the HeaderName and the value represents this header's value
-func (s *Service) getCustomHeaders(jsonData *simplejson.Json, decryptedValues map[string]string) map[string]string {
-	headers := make(map[string]string)
+func (s *Service) getCustomHeaders(jsonData *simplejson.Json, decryptedValues map[string]string) http.Header {
+	headers := make(http.Header)
 	if jsonData == nil {
 		return headers
 	}
@@ -675,12 +678,12 @@ func (s *Service) getCustomHeaders(jsonData *simplejson.Json, decryptedValues ma
 		// skip a header with name that corresponds to auth proxy header's name
 		// to make sure that data source proxy isn't used to circumvent auth proxy.
 		// For more context take a look at CVE-2022-35957
-		if s.cfg.AuthProxyEnabled && http.CanonicalHeaderKey(key) == http.CanonicalHeaderKey(s.cfg.AuthProxyHeaderName) {
+		if s.cfg.AuthProxy.Enabled && http.CanonicalHeaderKey(key) == http.CanonicalHeaderKey(s.cfg.AuthProxy.HeaderName) {
 			continue
 		}
 
 		if val, ok := decryptedValues[headerValueSuffix]; ok {
-			headers[key] = val
+			headers.Add(key, val)
 		}
 	}
 
@@ -769,7 +772,7 @@ func readQuotaConfig(cfg *setting.Cfg) (*quota.Map, error) {
 }
 
 // CustomerHeaders returns the custom headers specified in the datasource. The context is used for the decryption operation that might use the store, so consider setting an acceptable timeout for your use case.
-func (s *Service) CustomHeaders(ctx context.Context, ds *datasources.DataSource) (map[string]string, error) {
+func (s *Service) CustomHeaders(ctx context.Context, ds *datasources.DataSource) (http.Header, error) {
 	values, err := s.SecretsService.DecryptJsonData(ctx, ds.SecureJsonData)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get custom headers: %w", err)

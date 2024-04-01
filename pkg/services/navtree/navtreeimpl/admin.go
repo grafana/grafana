@@ -1,12 +1,14 @@
 package navtreeimpl
 
 import (
+	"github.com/grafana/grafana/pkg/login/social"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/ssoutils"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/correlations"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/navtree"
+	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginaccesscontrol"
 	"github.com/grafana/grafana/pkg/services/serviceaccounts"
 )
@@ -17,7 +19,7 @@ func (s *ServiceImpl) getAdminNode(c *contextmodel.ReqContext) (*navtree.NavLink
 	hasAccess := ac.HasAccess(s.accessControl, c)
 	hasGlobalAccess := ac.HasGlobalAccess(s.accessControl, s.accesscontrolService, c)
 	orgsAccessEvaluator := ac.EvalPermission(ac.ActionOrgsRead)
-	authConfigUIAvailable := s.license.FeatureEnabled("saml") || s.cfg.LDAPAuthEnabled
+	authConfigUIAvailable := s.license.FeatureEnabled(social.SAMLProviderName) || s.cfg.LDAPAuthEnabled
 
 	// FIXME: If plugin admin is disabled or externally managed, server admins still need to access the page, this is why
 	// while we don't have a permissions for listing plugins the legacy check has to stay as a default
@@ -133,6 +135,16 @@ func (s *ServiceImpl) getAdminNode(c *contextmodel.ReqContext) (*navtree.NavLink
 			Url:      s.cfg.AppSubURL + "/admin/storage",
 		}
 		configNodes = append(configNodes, storage)
+	}
+
+	if s.features.IsEnabled(ctx, featuremgmt.FlagOnPremToCloudMigrations) && c.SignedInUser.HasRole(org.RoleAdmin) {
+		migrateToCloud := &navtree.NavLink{
+			Text:     "Migrate to Grafana Cloud",
+			Id:       "migrate-to-cloud",
+			SubTitle: "Copy configuration from your self-managed installation to a cloud stack",
+			Url:      s.cfg.AppSubURL + "/admin/migrate-to-cloud",
+		}
+		configNodes = append(configNodes, migrateToCloud)
 	}
 
 	configNode := &navtree.NavLink{

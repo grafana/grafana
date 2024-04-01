@@ -3,6 +3,7 @@ import { useCopyToClipboard } from 'react-use';
 import { v4 as uuidv4 } from 'uuid';
 
 import { SelectableValue } from '@grafana/data';
+import { selectors } from '@grafana/e2e-selectors';
 import { EditorField, EditorHeader, EditorMode, EditorRow, FlexItem, InlineSelect } from '@grafana/experimental';
 import { reportInteraction } from '@grafana/runtime';
 import { Button, InlineSwitch, RadioButtonGroup, Tooltip, Space } from '@grafana/ui';
@@ -137,6 +138,7 @@ export function QueryHeader({
             <InlineSwitch
               id={`sql-filter-${uuidv4()}}`}
               label="Filter"
+              data-testid={selectors.components.SQLQueryEditor.headerFilterSwitch}
               transparent={true}
               showLabel={true}
               value={queryRowFilter.filter}
@@ -157,6 +159,7 @@ export function QueryHeader({
             <InlineSwitch
               id={`sql-group-${uuidv4()}}`}
               label="Group"
+              data-testid={selectors.components.SQLQueryEditor.headerGroupSwitch}
               transparent={true}
               showLabel={true}
               value={queryRowFilter.group}
@@ -177,6 +180,7 @@ export function QueryHeader({
             <InlineSwitch
               id={`sql-order-${uuidv4()}}`}
               label="Order"
+              data-testid={selectors.components.SQLQueryEditor.headerOrderSwitch}
               transparent={true}
               showLabel={true}
               value={queryRowFilter.order}
@@ -197,6 +201,7 @@ export function QueryHeader({
             <InlineSwitch
               id={`sql-preview-${uuidv4()}}`}
               label="Preview"
+              data-testid={selectors.components.SQLQueryEditor.headerPreviewSwitch}
               transparent={true}
               showLabel={true}
               value={queryRowFilter.preview}

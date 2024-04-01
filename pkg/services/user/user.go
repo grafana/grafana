@@ -6,6 +6,7 @@ import (
 	"github.com/grafana/grafana/pkg/registry"
 )
 
+//go:generate mockery --name Service --structname MockService --outpkg usertest --filename mock.go --output ./usertest/
 type Service interface {
 	registry.ProvidesUsageStats
 	Create(context.Context, *CreateUserCommand) (*User, error)
@@ -27,4 +28,9 @@ type Service interface {
 	UpdatePermissions(context.Context, int64, bool) error
 	SetUserHelpFlag(context.Context, *SetUserHelpFlagCommand) error
 	GetProfile(context.Context, *GetUserProfileQuery) (*UserProfileDTO, error)
+}
+
+type Verifier interface {
+	Start(ctx context.Context, cmd StartVerifyEmailCommand) error
+	Complete(ctx context.Context, cmd CompleteEmailVerifyCommand) error
 }
