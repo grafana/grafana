@@ -146,6 +146,9 @@ const getStyles = (theme: GrafanaTheme2, size: IconSize, variant: IconButtonVari
         transitionDuration: '0.2s',
         transitionTimingFunction: 'cubic-bezier(0.4, 0, 0.2, 1)',
         transitionProperty: 'opacity',
+        '@media (prefers-reduced-motion)': {
+          transition: 'none',
+        },
       },
 
       '&:focus, &:focus-visible': getFocusStyles(theme),
