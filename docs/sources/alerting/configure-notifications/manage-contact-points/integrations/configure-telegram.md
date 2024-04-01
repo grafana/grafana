@@ -28,7 +28,7 @@ To integrate Grafana with Telegram, you need to obtain a Telegram **bot API toke
 
 ### Set up your Telegram bot
 
-In order to send any messages over HTTP to Telegram, you need to create a [Telegram bot](https://core.telegram.org/bots/api). You will be able to associate this bot to your chats, and perform different actions with it, such as receiving alerts from Grafana.
+Create a [Telegram bot](https://core.telegram.org/bots/api). You can associate this bot to your chats and perform different actions with it, such as receiving alerts from Grafana.
 
 To set up the bot, complete the following steps.
 
