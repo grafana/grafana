@@ -88,11 +88,10 @@ export const LokiQueryBuilder = React.memo<Props>(
         (filter) => filter.op === '=' || (filter.op === '=~' && new RegExp(filter.value).test('') === false)
       );
       if (labelsToConsider.length === 0 || !hasEqualityOperation) {
-        // TODO: datasource.interpolateString(forLabel.label) ??
         values = await datasource.languageProvider.fetchLabelValues(forLabel.label, { timeRange });
       } else {
         const streamSelector = lokiQueryModeller.renderLabels(labelsToConsider);
-        values = await datasource.languageProvider.fetchLabelValues(datasource.interpolateString(forLabel.label), {
+        values = await datasource.languageProvider.fetchLabelValues(forLabel.label, {
           streamSelector,
           timeRange,
         });

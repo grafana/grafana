@@ -151,10 +151,9 @@ describe('Language completion provider', () => {
     });
   });
 
-  describe('fetchLabelValues, has labels API support', () => {
+  describe('fetchLabelValues', () => {
     it('should fetch label values if not cached', async () => {
       const datasource = setup({ testkey: ['label1_val1', 'label1_val2'], label2: [] });
-      datasource.hasLabelsMatchAPISupport = true;
       const provider = await getLanguageProvider(datasource);
       const requestSpy = jest.spyOn(provider, 'request');
       const labelValues = await provider.fetchLabelValues('testkey');
@@ -167,7 +166,6 @@ describe('Language completion provider', () => {
 
     it('fetch label when options.streamSelector provided and values is not cached', async () => {
       const datasource = setup({ testkey: ['label1_val1', 'label1_val2'], label2: [] });
-      datasource.hasLabelsMatchAPISupport = true;
       const provider = await getLanguageProvider(datasource);
       const requestSpy = jest.spyOn(provider, 'request');
       const labelValues = await provider.fetchLabelValues('testkey', { streamSelector: '{foo="bar"}' });
@@ -181,7 +179,6 @@ describe('Language completion provider', () => {
 
     it('fetch label with options.timeRange when provided and values is not cached', async () => {
       const datasource = setup({ testkey: ['label1_val1', 'label1_val2'], label2: [] });
-      datasource.hasLabelsMatchAPISupport = true;
       datasource.getTimeRangeParams = jest
         .fn()
         .mockImplementation((range: TimeRange) => ({ start: range.from.valueOf(), end: range.to.valueOf() }));
@@ -201,7 +198,6 @@ describe('Language completion provider', () => {
 
     it('uses default time range if fetch label does not receive options.timeRange', async () => {
       const datasource = setup({ testkey: ['label1_val1', 'label1_val2'], label2: [] });
-      datasource.hasLabelsMatchAPISupport = true;
       datasource.getTimeRangeParams = jest
         .fn()
         .mockImplementation((range: TimeRange) => ({ start: range.from.valueOf(), end: range.to.valueOf() }));
@@ -218,7 +214,6 @@ describe('Language completion provider', () => {
 
     it('should return cached values', async () => {
       const datasource = setup({ testkey: ['label1_val1', 'label1_val2'], label2: [] });
-      datasource.hasLabelsMatchAPISupport = true;
       const provider = await getLanguageProvider(datasource);
       const requestSpy = jest.spyOn(provider, 'request');
       const labelValues = await provider.fetchLabelValues('testkey');
@@ -236,7 +231,6 @@ describe('Language completion provider', () => {
 
     it('should return cached values when options.streamSelector provided', async () => {
       const datasource = setup({ testkey: ['label1_val1', 'label1_val2'], label2: [] });
-      datasource.hasLabelsMatchAPISupport = true;
       const provider = await getLanguageProvider(datasource);
       const requestSpy = jest.spyOn(provider, 'request');
       const labelValues = await provider.fetchLabelValues('testkey', { streamSelector: '{foo="bar"}' });
@@ -255,7 +249,6 @@ describe('Language completion provider', () => {
 
     it('should encode special characters', async () => {
       const datasource = setup({ '`\\"testkey': ['label1_val1', 'label1_val2'], label2: [] });
-      datasource.hasLabelsMatchAPISupport = true;
       const provider = await getLanguageProvider(datasource);
       const requestSpy = jest.spyOn(provider, 'request');
       await provider.fetchLabelValues('`\\"testkey');
@@ -265,7 +258,6 @@ describe('Language completion provider', () => {
 
     it('should encode special characters in options.streamSelector', async () => {
       const datasource = setup({ '`\\"testkey': ['label1_val1', 'label1_val2'], label2: [] });
-      datasource.hasLabelsMatchAPISupport = true;
       const provider = await getLanguageProvider(datasource);
       const requestSpy = jest.spyOn(provider, 'request');
       await provider.fetchLabelValues('`\\"testkey', { streamSelector: '{foo="\\bar"}' });
@@ -274,89 +266,6 @@ describe('Language completion provider', () => {
         query: '%7Bfoo%3D%22%5Cbar%22%7D',
         start: expect.any(Number),
         end: expect.any(Number),
-      });
-    });
-  });
-
-  describe('fetchLabelValues, no labels API support', () => {
-    it('fetch label when options.streamSelector provided', async () => {
-      const datasource = setup({}, { '{foo="bar"}': [{ testkey: 'label_val1' }, { testkey: 'label_val2' }] });
-      const provider = await getLanguageProvider(datasource);
-      const requestSpy = jest.spyOn(provider, 'request');
-      const labelValues = await provider.fetchLabelValues('testkey', { streamSelector: '{foo="bar"}' });
-      expect(requestSpy).toHaveBeenCalledWith('series', {
-        end: 1560163909000,
-        'match[]': '{foo="bar"}',
-        start: 1560153109000,
-      });
-      expect(labelValues).toEqual(['label_val1', 'label_val2']);
-    });
-
-    it('fetch label with options.timeRange and options.streamSelector', async () => {
-      const datasource = setup({});
-      datasource.getTimeRangeParams = jest
-        .fn()
-        .mockImplementation((range: TimeRange) => ({ start: range.from.valueOf(), end: range.to.valueOf() }));
-      const languageProvider = new LanguageProvider(datasource);
-      languageProvider.request = jest.fn().mockResolvedValue([]);
-      languageProvider.fetchLabelValues('testKey', { timeRange: mockTimeRange, streamSelector: '{foo="bar"}' });
-      // time range was passed to getTimeRangeParams
-      expect(datasource.getTimeRangeParams).toHaveBeenCalled();
-      expect(datasource.getTimeRangeParams).toHaveBeenCalledWith(mockTimeRange);
-      // time range was passed to request
-      expect(languageProvider.request).toHaveBeenCalled();
-      expect(languageProvider.request).toHaveBeenCalledWith('series', {
-        end: 1546380000000,
-        'match[]': '{foo="bar"}',
-        start: 1546372800000,
-      });
-    });
-
-    it('uses default time range if fetch label does not receive options.timeRange', async () => {
-      const datasource = setup({});
-      datasource.getTimeRangeParams = jest
-        .fn()
-        .mockImplementation((range: TimeRange) => ({ start: range.from.valueOf(), end: range.to.valueOf() }));
-      const languageProvider = new LanguageProvider(datasource);
-      languageProvider.request = jest.fn().mockResolvedValue([]);
-      languageProvider.fetchLabelValues('testKey', { streamSelector: '{foo="bar"}' });
-      expect(getDefaultTimeRange).toHaveBeenCalled();
-      expect(languageProvider.request).toHaveBeenCalled();
-      expect(languageProvider.request).toHaveBeenCalledWith('series', {
-        end: 1,
-        'match[]': '{foo="bar"}',
-        start: 0,
-      });
-    });
-
-    it('should return cached values', async () => {
-      const datasource = setup({}, { '{foo="bar"}': [{ testkey: 'label_val1' }, { testkey: 'label_val2' }] });
-      const provider = await getLanguageProvider(datasource);
-      const requestSpy = jest.spyOn(provider, 'request');
-      const labelValues = await provider.fetchLabelValues('testkey', { streamSelector: '{foo="bar"}' });
-      expect(requestSpy).toHaveBeenCalledTimes(1);
-      expect(labelValues).toEqual(['label_val1', 'label_val2']);
-
-      const nextLabelValues = await provider.fetchLabelValues('testkey', { streamSelector: '{foo="bar"}' });
-      expect(requestSpy).toHaveBeenCalledTimes(1);
-      expect(requestSpy).toHaveBeenCalledWith('series', {
-        end: 1560163909000,
-        'match[]': '{foo="bar"}',
-        start: 1560153109000,
-      });
-      expect(nextLabelValues).toEqual(['label_val1', 'label_val2']);
-    });
-
-    it('should encode special characters', async () => {
-      const datasource = setup({});
-      const provider = await getLanguageProvider(datasource);
-      const requestSpy = jest.spyOn(provider, 'request');
-      await provider.fetchLabelValues('`\\"testkey', { streamSelector: '{foo="\\bar"}' });
-
-      expect(requestSpy).toHaveBeenCalledWith('series', {
-        end: 1560163909000,
-        'match[]': '{foo="\\bar"}', // TODO: should it be encoded?
-        start: 1560153109000,
       });
     });
   });

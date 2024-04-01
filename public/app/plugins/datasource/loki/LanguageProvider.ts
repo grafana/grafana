@@ -235,35 +235,6 @@ export default class LokiLanguageProvider extends LanguageProvider {
   }
 
   /**
-   * Fetch labels values using the best endpoint that datasource supports.
-   *
-   * This asynchronous function fetches values associated with a specified label name.
-   * It returns a promise that resolves to an array of strings containing the label values.
-   *
-   * @param labelName - The name of the label for which you want to retrieve values.
-   * @param options - (Optional) An object containing additional options.
-   * @param options.streamSelector - (Optional) The stream selector to filter label values. If not provided, all label values are fetched.
-   * @param options.timeRange - (Optional) The time range for which you want to retrieve label values. If not provided, the default time range is used.
-   * @returns A promise containing an array of label values.
-   * @throws An error if the fetch operation fails.
-   */
-  async fetchLabelValues(
-    labelName: string,
-    options?: { streamSelector?: string; timeRange?: TimeRange }
-  ): Promise<string[]> {
-    // If there is no stream selector or datasource supports label match API - use /label endpoint
-    if (!options || !options.streamSelector || this.datasource.hasLabelsMatchAPISupport) {
-      return this.fetchLabelValuesByLabelEndpoint(labelName, options);
-    } else {
-      const result = await this.fetchSeriesLabels(options.streamSelector, { timeRange: options.timeRange });
-      if (!result[labelName]) {
-        return [];
-      }
-      return result[labelName];
-    }
-  }
-
-  /**
    * Fetch label values using label/<name>/values endpoint
    *
    * This asynchronous function fetches values associated with a specified label name.
@@ -276,7 +247,7 @@ export default class LokiLanguageProvider extends LanguageProvider {
    * @returns A promise containing an array of label values.
    * @throws An error if the fetch operation fails.
    */
-  private async fetchLabelValuesByLabelEndpoint(
+  async fetchLabelValues(
     labelName: string,
     options?: { streamSelector?: string; timeRange?: TimeRange }
   ): Promise<string[]> {

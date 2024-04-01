@@ -2,26 +2,17 @@ import React from 'react';
 
 import { ConfigDescriptionLink, ConfigSubSection } from '@grafana/experimental';
 import { config } from '@grafana/runtime';
-import { Badge, InlineField, InlineFieldRow, InlineSwitch, Input } from '@grafana/ui';
+import { Badge, InlineField, InlineFieldRow, Input } from '@grafana/ui';
 
 type Props = {
   maxLines: string;
   onMaxLinedChange: (value: string) => void;
-  hasLabelsMatchAPISupport: boolean;
-  onHasLabelsMatchAPISupportChange: (value: boolean) => void;
   predefinedOperations: string;
   onPredefinedOperationsChange: (value: string) => void;
 };
 
 export const QuerySettings = (props: Props) => {
-  const {
-    maxLines,
-    onMaxLinedChange,
-    hasLabelsMatchAPISupport,
-    onHasLabelsMatchAPISupportChange,
-    predefinedOperations,
-    onPredefinedOperationsChange,
-  } = props;
+  const { maxLines, onMaxLinedChange, predefinedOperations, onPredefinedOperationsChange } = props;
   return (
     <ConfigSubSection
       title="Queries"
@@ -53,27 +44,6 @@ export const QuerySettings = (props: Props) => {
           width={16}
           placeholder="1000"
           spellCheck={false}
-        />
-      </InlineField>
-
-      <InlineField
-        label="Labels match API"
-        htmlFor="loki_config_hasLabelsMatchAPISupport"
-        labelWidth={22}
-        tooltip={
-          <>
-            Choose the query endpoint for fetching label values. Check Labels match API to use /label/__name__/values
-            endpoint for all label values queries. If unchecked (default), the /series endpoint will be used for queries
-            with stream selectors.
-          </>
-        }
-      >
-        <InlineSwitch
-          value={hasLabelsMatchAPISupport ?? false}
-          onChange={(event: React.FormEvent<HTMLInputElement>) =>
-            onHasLabelsMatchAPISupportChange(event.currentTarget.checked)
-          }
-          id="loki_config_hasLabelsMatchAPISupport"
         />
       </InlineField>
 

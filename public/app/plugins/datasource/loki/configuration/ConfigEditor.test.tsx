@@ -19,7 +19,6 @@ describe('ConfigEditor', () => {
     expect(screen.getByRole('heading', { name: 'Authentication' })).toBeInTheDocument();
     expect(screen.getByRole('heading', { name: 'Advanced HTTP settings' })).toBeInTheDocument();
     expect(screen.getByText('Maximum lines')).toBeInTheDocument();
-    expect(screen.getByText('Labels match API')).toBeInTheDocument();
     expect(screen.getByRole('heading', { name: 'Derived fields' })).toBeInTheDocument();
   });
 
