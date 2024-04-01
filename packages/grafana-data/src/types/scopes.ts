@@ -1,20 +1,20 @@
-export interface ScopeDashboardBinding {
+export interface ScopeDashboardBindingSpec {
   dashboard: string;
   scope: string;
 }
 
-export interface ScopeBindingFilter {
+export interface ScopeSpecFilter {
   key: string;
   value: string;
   operator: string;
 }
 
-export interface ScopeBinding {
+export interface ScopeSpec {
   title: string;
   type: string;
   description: string;
   category: string;
-  filters: ScopeBindingFilter[];
+  filters: ScopeSpecFilter[];
 }
 
 export interface ScopeDashboard {
@@ -23,9 +23,9 @@ export interface ScopeDashboard {
   url: string;
 }
 
-export type ScopeFilter = ScopeBindingFilter;
+export type ScopeFilter = ScopeSpecFilter;
 
-export interface Scope extends ScopeBinding {
+export interface Scope extends ScopeSpec {
   name: string;
   filters: ScopeFilter[];
 }

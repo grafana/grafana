@@ -1,6 +1,6 @@
 import React from 'react';
 
-import { AppEvents, Scope, ScopeBinding, SelectableValue } from '@grafana/data';
+import { AppEvents, Scope, ScopeSpec, SelectableValue } from '@grafana/data';
 import { config, getAppEvents } from '@grafana/runtime';
 import {
   SceneComponentProps,
@@ -25,7 +25,7 @@ export class ScopesFiltersScene extends SceneObjectBase<ScopesFiltersSceneState>
 
   protected _urlSync = new SceneObjectUrlSyncConfig(this, { keys: ['scope'] });
 
-  private server = new ScopedResourceServer<ScopeBinding, 'Scope'>({
+  private server = new ScopedResourceServer<ScopeSpec, 'Scope'>({
     group: 'scope.grafana.app',
     version: 'v0alpha1',
     resource: 'scopes',

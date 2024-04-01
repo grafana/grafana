@@ -2,7 +2,7 @@ import { css } from '@emotion/css';
 import React from 'react';
 import { Link } from 'react-router-dom';
 
-import { AppEvents, GrafanaTheme2, ScopeDashboard, ScopeDashboardBinding } from '@grafana/data';
+import { AppEvents, GrafanaTheme2, ScopeDashboard, ScopeDashboardBindingSpec } from '@grafana/data';
 import { config, getAppEvents, getBackendSrv, locationService } from '@grafana/runtime';
 import { SceneComponentProps, SceneObjectBase, SceneObjectState } from '@grafana/scenes';
 import { CustomScrollbar, Icon, Input, useStyles2 } from '@grafana/ui';
@@ -19,7 +19,7 @@ export interface ScopesDashboardsSceneState extends SceneObjectState {
 export class ScopesDashboardsScene extends SceneObjectBase<ScopesDashboardsSceneState> {
   static Component = ScopesDashboardsSceneRenderer;
 
-  private server = new ScopedResourceServer<ScopeDashboardBinding, 'ScopeDashboardBinding'>({
+  private server = new ScopedResourceServer<ScopeDashboardBindingSpec, 'ScopeDashboardBinding'>({
     group: 'scope.grafana.app',
     version: 'v0alpha1',
     resource: 'scopedashboardbindings',
