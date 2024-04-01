@@ -163,7 +163,6 @@ require (
 	github.com/hashicorp/go-msgpack v0.5.5 // indirect
 	github.com/hashicorp/go-multierror v1.1.1 // indirect; @grafana/alerting-squad
 	github.com/hashicorp/go-sockaddr v1.0.6 // indirect
-	github.com/hashicorp/golang-lru/v2 v2.0.7 // indirect; @grafana/alerting-squad-backend
 	github.com/hashicorp/yamux v0.1.1 // indirect
 	github.com/igm/sockjs-go/v3 v3.0.2 // indirect
 	github.com/jessevdk/go-flags v1.5.0 // indirect
@@ -488,6 +487,7 @@ require (
 	github.com/go-playground/universal-translator v0.18.1 // indirect
 	github.com/go-playground/validator/v10 v10.14.0 // indirect
 	github.com/hashicorp/go-uuid v1.0.3 // indirect
+	github.com/hashicorp/golang-lru v0.6.0 // indirect
 	github.com/invopop/jsonschema v0.12.0 // indirect
 	github.com/jackc/pgpassfile v1.0.0 // indirect
 	github.com/jackc/pgservicefile v0.0.0-20221227161230-091c0ba34f0a // indirect
