@@ -9602,6 +9602,9 @@
           "403": {
             "$ref": "#/responses/forbiddenError"
           },
+          "409": {
+            "$ref": "#/responses/conflictError"
+          },
           "500": {
             "$ref": "#/responses/internalServerError"
           }
@@ -9628,6 +9631,21 @@
           },
           "500": {
             "$ref": "#/responses/internalServerError"
+          }
+        }
+      }
+    },
+    "/user/email/update": {
+      "get": {
+        "description": "Update the email of user given a verification code.",
+        "tags": [
+          "user"
+        ],
+        "summary": "Update user email.",
+        "operationId": "updateUserEmail",
+        "responses": {
+          "302": {
+            "$ref": "#/responses/okResponse"
           }
         }
       }
@@ -10277,6 +10295,9 @@
           "404": {
             "$ref": "#/responses/notFoundError"
           },
+          "409": {
+            "$ref": "#/responses/conflictError"
+          },
           "500": {
             "$ref": "#/responses/internalServerError"
           }
@@ -10351,61 +10372,6 @@
           },
           "500": {
             "$ref": "#/responses/internalServerError"
-          }
-        }
-      }
-    },
-    "/v1/notifications/time-intervals": {
-      "get": {
-        "description": "Get all the time intervals",
-        "tags": [
-          "notifications"
-        ],
-        "operationId": "RouteNotificationsGetTimeIntervals",
-        "responses": {
-          "200": {
-            "$ref": "#/responses/GetAllIntervalsResponse"
-          },
-          "403": {
-            "description": "ForbiddenError",
-            "schema": {
-              "$ref": "#/definitions/ForbiddenError"
-            }
-          }
-        }
-      }
-    },
-    "/v1/notifications/time-intervals/{name}": {
-      "get": {
-        "tags": [
-          "notifications"
-        ],
-        "summary": "Get a time interval by name.",
-        "operationId": "RouteNotificationsGetTimeInterval",
-        "parameters": [
-          {
-            "type": "string",
-            "description": "Time interval name",
-            "name": "name",
-            "in": "path",
-            "required": true
-          }
-        ],
-        "responses": {
-          "200": {
-            "$ref": "#/responses/GetIntervalsByNameResponse"
-          },
-          "403": {
-            "description": "ForbiddenError",
-            "schema": {
-              "$ref": "#/definitions/ForbiddenError"
-            }
-          },
-          "404": {
-            "description": "NotFound",
-            "schema": {
-              "$ref": "#/definitions/NotFound"
-            }
           }
         }
       }
@@ -11828,7 +11794,7 @@
           "format": "int64"
         },
         "password": {
-          "type": "string"
+          "$ref": "#/definitions/Password"
         }
       }
     },
@@ -11949,7 +11915,7 @@
       "type": "object",
       "properties": {
         "password": {
-          "type": "string"
+          "$ref": "#/definitions/Password"
         }
       }
     },
@@ -13251,10 +13217,10 @@
       "type": "object",
       "properties": {
         "newPassword": {
-          "type": "string"
+          "$ref": "#/definitions/Password"
         },
         "oldPassword": {
-          "type": "string"
+          "$ref": "#/definitions/Password"
         }
       }
     },
@@ -17230,6 +17196,9 @@
           "type": "string"
         }
       }
+    },
+    "Password": {
+      "type": "string"
     },
     "PatchAnnotationsCmd": {
       "type": "object",
@@ -21704,7 +21673,6 @@
       }
     },
     "alertGroup": {
-      "description": "AlertGroup alert group",
       "type": "object",
       "required": [
         "alerts",
@@ -21728,7 +21696,6 @@
       }
     },
     "alertGroups": {
-      "description": "AlertGroups alert groups",
       "type": "array",
       "items": {
         "$ref": "#/definitions/alertGroup"
@@ -21916,13 +21883,13 @@
       }
     },
     "gettableAlerts": {
+      "description": "GettableAlerts gettable alerts",
       "type": "array",
       "items": {
         "$ref": "#/definitions/gettableAlert"
       }
     },
     "gettableSilence": {
-      "description": "GettableSilence gettable silence",
       "type": "object",
       "required": [
         "comment",
@@ -21971,6 +21938,7 @@
       }
     },
     "gettableSilences": {
+      "description": "GettableSilences gettable silences",
       "type": "array",
       "items": {
         "$ref": "#/definitions/gettableSilence"
@@ -22121,7 +22089,6 @@
       }
     },
     "postableSilence": {
-      "description": "PostableSilence postable silence",
       "type": "object",
       "required": [
         "comment",
@@ -22386,6 +22353,21 @@
       "description": "(empty)",
       "schema": {
         "$ref": "#/definitions/GettableTimeIntervals"
+      }
+    },
+    "GetReceiverResponse": {
+      "description": "(empty)",
+      "schema": {
+        "$ref": "#/definitions/GettableApiReceiver"
+      }
+    },
+    "GetReceiversResponse": {
+      "description": "(empty)",
+      "schema": {
+        "type": "array",
+        "items": {
+          "$ref": "#/definitions/GettableApiReceiver"
+        }
       }
     },
     "GettableHistoricUserConfigs": {

@@ -108,7 +108,7 @@ describe('QueryVariableEditorForm', () => {
     const {
       renderer: { getByTestId, getByRole },
     } = setup();
-    const dataSourcePicker = getByTestId(selectors.components.DataSourcePicker.container);
+    const dataSourcePicker = getByTestId(selectors.components.DataSourcePicker.inputV2);
     //const queryEditor = getByTestId('query-editor');
     const regexInput = getByTestId(
       selectors.pages.Dashboard.Settings.Variables.Edit.QueryVariable.queryOptionsRegExInputV2
@@ -131,7 +131,7 @@ describe('QueryVariableEditorForm', () => {
     );
 
     expect(dataSourcePicker).toBeInTheDocument();
-    expect(dataSourcePicker).toHaveTextContent('Default Test Data Source');
+    expect(dataSourcePicker.getAttribute('placeholder')).toBe('Default Test Data Source');
     expect(regexInput).toBeInTheDocument();
     expect(regexInput).toHaveValue('.*');
     expect(sortSelect).toBeInTheDocument();
@@ -151,12 +151,11 @@ describe('QueryVariableEditorForm', () => {
       renderer: { getByTestId },
     } = setup();
     const dataSourcePicker = getByTestId(selectors.components.DataSourcePicker.inputV2);
-    await waitFor(async () => {
-      await userEvent.click(dataSourcePicker); // open the select
-      await userEvent.tab();
-    });
+    await userEvent.click(dataSourcePicker);
+    await userEvent.click(screen.getByText(/prometheus/i));
+
     expect(mockOnDataSourceChange).toHaveBeenCalledTimes(1);
-    expect(mockOnDataSourceChange).toHaveBeenCalledWith(defaultDatasource);
+    expect(mockOnDataSourceChange).toHaveBeenCalledWith(promDatasource, undefined);
   });
 
   it('should call onQueryChange when changing the query', async () => {

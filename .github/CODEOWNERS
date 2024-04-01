@@ -19,7 +19,6 @@
 /CONTRIBUTING.md @grafana/grafana-community-support
 /GOVERNANCE.md @RichiH
 /HALL_OF_FAME.md @grafana/grafana-community-support
-/ISSUE_TRIAGE.md @grafana/grafana-community-support
 /LICENSE @torkelo
 /LICENSING.md @torkelo
 /MAINTAINERS.md @RichiH
@@ -28,9 +27,9 @@
 /ROADMAP.md @torkelo
 /SECURITY.md @grafana/security-team
 /SUPPORT.md @torkelo
-/UPGRADING_DEPENDENCIES.md @grafana/docs-grafana
 /WORKFLOW.md @torkelo
 /contribute/ @grafana/grafana-community-support
+/contribute/UPGRADING_DEPENDENCIES.md @grafana/docs-grafana
 /devenv/README.md @grafana/docs-grafana
 
 # Technical documentation
@@ -142,11 +141,9 @@
 /pkg/tests/apis/ @grafana/grafana-app-platform-squad
 /pkg/tests/api/correlations/ @grafana/explore-squad
 /pkg/tsdb/grafanads/ @grafana/backend-platform
-/pkg/tsdb/intervalv2/ @grafana/backend-platform
 /pkg/tsdb/legacydata/ @grafana/backend-platform
 /pkg/tsdb/opentsdb/ @grafana/backend-platform
 /pkg/tsdb/sqleng/ @grafana/partner-datasources @grafana/oss-big-tent
-/pkg/tsdb/sqleng/proxyutil @grafana/hosted-grafana-team
 /pkg/util/ @grafana/backend-platform
 /pkg/web/ @grafana/backend-platform
 
@@ -271,7 +268,6 @@
 /pkg/services/searchV2/ @grafana/grafana-app-platform-squad
 /pkg/services/store/ @grafana/grafana-app-platform-squad
 /pkg/infra/filestorage/ @grafana/grafana-app-platform-squad
-/pkg/util/converter/ @grafana/grafana-app-platform-squad
 /pkg/modules/ @grafana/grafana-app-platform-squad
 /pkg/kindsysreport/ @grafana/grafana-app-platform-squad
 /pkg/services/grpcserver/ @grafana/grafana-app-platform-squad
@@ -339,10 +335,11 @@
 /packages/grafana-flamegraph/ @grafana/observability-traces-and-profiling
 /plugins-bundled/ @grafana/plugins-platform-frontend
 /packages/grafana-plugin-configs/ @grafana/plugins-platform-frontend
+/packages/grafana-prometheus/ @grafana/observability-metrics
 /packages/grafana-o11y-ds-frontend/ @grafana/observability-logs @grafana/observability-traces-and-profiling
 /packages/grafana-sql/ @grafana/partner-datasources @grafana/oss-big-tent
 
-# root files, mostly frontend 
+# root files, mostly frontend
 /.browserslistrc @grafana/frontend-ops
 /package.json @grafana/frontend-ops
 /tsconfig.json @grafana/frontend-ops
@@ -361,7 +358,6 @@
 /.vim @zoltanbedi
 /jest.config.js @grafana/frontend-ops
 /latest.json @grafana/frontend-ops
-/metadata.md @grafana/plugins-platform
 /stylelint.config.js @grafana/frontend-ops
 /tools/ @grafana/frontend-ops
 /lefthook.yml @grafana/frontend-ops
@@ -464,13 +460,13 @@
 /public/app/types/ @grafana/grafana-frontend-platform
 /public/app/types/alerting.ts @grafana/alerting-frontend
 /public/dashboards/ @grafana/dashboards-squad
-/public/fonts/ @grafana/alerting-frontend
 /public/gazetteer/ @ryantxu
 /public/img/ @grafana/grafana-frontend-platform
 /public/lib/ @grafana/grafana-frontend-platform
 /public/lib/monaco-languages/kusto.ts @grafana/partner-datasources
 /public/maps/ @ryantxu
 /public/robots.txt @grafana/frontend-ops
+/public/fonts/ @grafana/grafana-frontend-platform
 /public/sass/ @grafana/grafana-frontend-platform
 /public/test/ @grafana/grafana-frontend-platform
 /public/test/helpers/alertingRuleEditor.tsx @grafana/alerting-frontend
@@ -531,6 +527,7 @@
 .pa11yci.conf.js @grafana/grafana-frontend-platform
 .pa11yci-pr.conf.js @grafana/grafana-frontend-platform
 .betterer.results @grafanabot
+.betterer.results.json @grafanabot
 .betterer.ts @grafana/grafana-frontend-platform
 
 # @grafana/ui component documentation

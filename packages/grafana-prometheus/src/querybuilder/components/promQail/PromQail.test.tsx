@@ -10,7 +10,7 @@ import { EmptyLanguageProviderMock } from '../../../language_provider.mock';
 import { PromOptions } from '../../../types';
 import { PromVisualQuery } from '../../types';
 
-import { PromQail, testIds } from './PromQail';
+import { PromQail, queryAssistanttestIds } from './PromQail';
 
 // don't care about interaction tracking in our unit tests
 jest.mock('@grafana/runtime', () => ({
@@ -38,7 +38,7 @@ describe('PromQail', () => {
   it('shows selected metric and asks for a prompt', async () => {
     setup(defaultQuery);
 
-    clickSecurityButton();
+    await clickSecurityButton();
 
     await waitFor(() => {
       expect(screen.getByText('random_metric')).toBeInTheDocument();
@@ -49,16 +49,16 @@ describe('PromQail', () => {
   it('displays a prompt when the user knows what they want to query', async () => {
     setup(defaultQuery);
 
-    clickSecurityButton();
+    await clickSecurityButton();
 
     await waitFor(() => {
       expect(screen.getByText('random_metric')).toBeInTheDocument();
       expect(screen.getByText('Do you know what you want to query?')).toBeInTheDocument();
     });
 
-    const aiPrompt = screen.getByTestId(testIds.clickForAi);
+    const aiPrompt = screen.getByTestId(queryAssistanttestIds.clickForAi);
 
-    userEvent.click(aiPrompt);
+    await userEvent.click(aiPrompt);
 
     await waitFor(() => {
       expect(screen.getByText('What kind of data do you want to see with your metric?')).toBeInTheDocument();
@@ -68,16 +68,16 @@ describe('PromQail', () => {
   it('does not display a prompt when choosing historical', async () => {
     setup(defaultQuery);
 
-    clickSecurityButton();
+    await clickSecurityButton();
 
     await waitFor(() => {
       expect(screen.getByText('random_metric')).toBeInTheDocument();
       expect(screen.getByText('Do you know what you want to query?')).toBeInTheDocument();
     });
 
-    const historicalPrompt = screen.getByTestId(testIds.clickForHistorical);
+    const historicalPrompt = screen.getByTestId(queryAssistanttestIds.clickForHistorical);
 
-    userEvent.click(historicalPrompt);
+    await userEvent.click(historicalPrompt);
 
     await waitFor(() => {
       expect(screen.queryByText('What kind of data do you want to see with your metric?')).toBeNull();
@@ -141,8 +141,8 @@ function setup(query: PromVisualQuery) {
   return container;
 }
 
-function clickSecurityButton() {
-  const securityInfoButton = screen.getByTestId(testIds.securityInfoButton);
+async function clickSecurityButton() {
+  const securityInfoButton = screen.getByTestId(queryAssistanttestIds.securityInfoButton);
 
-  userEvent.click(securityInfoButton);
+  await userEvent.click(securityInfoButton);
 }

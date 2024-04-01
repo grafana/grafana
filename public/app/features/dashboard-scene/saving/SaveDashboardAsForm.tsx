@@ -10,7 +10,7 @@ import { DashboardScene } from '../scene/DashboardScene';
 
 import { SaveDashboardDrawer } from './SaveDashboardDrawer';
 import { DashboardChangeInfo, NameAlreadyExistsError, SaveButton, isNameExistsError } from './shared';
-import { useDashboardSave } from './useSaveDashboard';
+import { useSaveDashboard } from './useSaveDashboard';
 
 interface SaveDashboardAsFormDTO {
   firstName?: string;
@@ -45,7 +45,7 @@ export function SaveDashboardAsForm({ dashboard, drawer, changeInfo }: Props) {
   const { errors, isValid, defaultValues } = formState;
   const formValues = watch();
 
-  const { state, onSaveDashboard } = useDashboardSave(false);
+  const { state, onSaveDashboard } = useSaveDashboard(false);
 
   const onSave = async (overwrite: boolean) => {
     const data = getValues();

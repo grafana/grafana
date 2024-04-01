@@ -12,6 +12,7 @@ import (
 	"path/filepath"
 	"reflect"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/bwmarrin/snowflake"
@@ -37,15 +38,16 @@ var errResourceVersionSetOnCreate = errors.New("resourceVersion should not be se
 
 // Storage implements storage.Interface and storage resources as JSON files on disk.
 type Storage struct {
-	root         string
-	gr           schema.GroupResource
-	codec        runtime.Codec
-	keyFunc      func(obj runtime.Object) (string, error)
-	newFunc      func() runtime.Object
-	newListFunc  func() runtime.Object
-	getAttrsFunc storage.AttrFunc
-	trigger      storage.IndexerFuncs
-	indexers     *cache.Indexers
+	root           string
+	resourcePrefix string
+	gr             schema.GroupResource
+	codec          runtime.Codec
+	keyFunc        func(obj runtime.Object) (string, error)
+	newFunc        func() runtime.Object
+	newListFunc    func() runtime.Object
+	getAttrsFunc   storage.AttrFunc
+	trigger        storage.IndexerFuncs
+	indexers       *cache.Indexers
 
 	watchSet *WatchSet
 }
@@ -56,8 +58,16 @@ var ErrFileNotExists = fmt.Errorf("file doesn't exist")
 // ErrNamespaceNotExists means the directory for the namespace doesn't actually exist.
 var ErrNamespaceNotExists = errors.New("namespace does not exist")
 
+var (
+	node *snowflake.Node
+	once sync.Once
+)
+
 func getResourceVersion() (*uint64, error) {
-	node, err := snowflake.NewNode(1)
+	var err error
+	once.Do(func() {
+		node, err = snowflake.NewNode(1)
+	})
 	if err != nil {
 		return nil, err
 	}
@@ -78,20 +88,22 @@ func NewStorage(
 	trigger storage.IndexerFuncs,
 	indexers *cache.Indexers,
 ) (storage.Interface, factory.DestroyFunc, error) {
-	if err := ensureDir(resourcePrefix); err != nil {
-		return nil, func() {}, fmt.Errorf("could not establish a writable directory at path=%s", resourcePrefix)
+	root := config.Prefix
+	if err := ensureDir(root); err != nil {
+		return nil, func() {}, fmt.Errorf("could not establish a writable directory at path=%s", root)
 	}
 	ws := NewWatchSet()
 	return &Storage{
-			root:         resourcePrefix,
-			gr:           config.GroupResource,
-			codec:        config.Codec,
-			keyFunc:      keyFunc,
-			newFunc:      newFunc,
-			newListFunc:  newListFunc,
-			getAttrsFunc: getAttrsFunc,
-			trigger:      trigger,
-			indexers:     indexers,
+			root:           root,
+			resourcePrefix: resourcePrefix,
+			gr:             config.GroupResource,
+			codec:          config.Codec,
+			keyFunc:        keyFunc,
+			newFunc:        newFunc,
+			newListFunc:    newListFunc,
+			getAttrsFunc:   getAttrsFunc,
+			trigger:        trigger,
+			indexers:       indexers,
 
 			watchSet: ws,
 		}, func() {
@@ -352,7 +364,9 @@ func (s *Storage) GetList(ctx context.Context, key string, opts storage.ListOpti
 		}
 	}
 
-	objs, err := readDirRecursive(s.codec, key, s.newFunc)
+	dirname := s.dirPath(key)
+
+	objs, err := readDirRecursive(s.codec, dirname, s.newFunc)
 	if err != nil {
 		return err
 	}
@@ -524,5 +538,5 @@ func (s *Storage) validateMinimumResourceVersion(minimumResourceVersion string, 
 }
 
 func (s *Storage) nameFromKey(key string) string {
-	return strings.Replace(key, s.root+"/", "", 1)
+	return strings.Replace(key, s.resourcePrefix+"/", "", 1)
 }

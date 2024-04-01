@@ -46,7 +46,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/team/teamimpl"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/services/user/userimpl"
-	"github.com/grafana/grafana/pkg/services/user/usertest"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/web"
 	"github.com/grafana/grafana/pkg/web/webtest"
@@ -207,7 +206,8 @@ func setupDB(b testing.TB) benchScenario {
 	quotaService := quotatest.New(false, nil)
 	cfg := setting.NewCfg()
 
-	teamSvc := teamimpl.ProvideService(db, cfg)
+	teamSvc, err := teamimpl.ProvideService(db, cfg)
+	require.NoError(b, err)
 	orgService, err := orgimpl.ProvideService(db, cfg, quotaService)
 	require.NoError(b, err)
 
@@ -330,6 +330,7 @@ func setupDB(b testing.TB) benchScenario {
 				OrgID:     signedInUser.OrgID,
 				IsFolder:  false,
 				UID:       str,
+				FolderID:  f0.ID,
 				FolderUID: f0.UID,
 				Slug:      str,
 				Title:     str,
@@ -357,6 +358,7 @@ func setupDB(b testing.TB) benchScenario {
 					OrgID:     signedInUser.OrgID,
 					IsFolder:  false,
 					UID:       str,
+					FolderID:  f1.ID,
 					FolderUID: f1.UID,
 					Slug:      str,
 					Title:     str,
@@ -384,6 +386,7 @@ func setupDB(b testing.TB) benchScenario {
 						OrgID:     signedInUser.OrgID,
 						IsFolder:  false,
 						UID:       str,
+						FolderID:  f1.ID,
 						FolderUID: f2.UID,
 						Slug:      str,
 						Title:     str,
@@ -440,7 +443,7 @@ func setupServer(b testing.TB, sc benchScenario, features featuremgmt.FeatureTog
 	license := licensingtest.NewFakeLicensing()
 	license.On("FeatureEnabled", "accesscontrol.enforcement").Return(true).Maybe()
 
-	acSvc := acimpl.ProvideOSSService(sc.cfg, acdb.ProvideService(sc.db), localcache.ProvideService(), usertest.NewUserServiceFake(), features)
+	acSvc := acimpl.ProvideOSSService(sc.cfg, acdb.ProvideService(sc.db), localcache.ProvideService(), features)
 
 	quotaSrv := quotatest.New(false, nil)
 
@@ -491,7 +494,7 @@ func setupServer(b testing.TB, sc benchScenario, features featuremgmt.FeatureTog
 }
 
 type f struct {
-	// ID          int64   `xorm:"pk autoincr 'id'"`
+	ID          int64   `xorm:"pk autoincr 'id'"`
 	OrgID       int64   `xorm:"org_id"`
 	UID         string  `xorm:"uid"`
 	ParentUID   *string `xorm:"parent_uid"`
@@ -508,8 +511,8 @@ func (f *f) TableName() string {
 
 // SQL bean helper to save tags
 type dashboardTag struct {
-	ID          int64
-	DashboardID int64
+	ID          int64 `xorm:"pk autoincr 'id'"`
+	DashboardID int64 `xorm:"dashboard_id"`
 	Term        string
 }
 
@@ -517,10 +520,10 @@ func addFolder(orgID int64, id int64, uid string, parentUID *string) (*f, *dashb
 	now := time.Now()
 	title := uid
 	f := &f{
-		OrgID: orgID,
-		UID:   uid,
-		Title: title,
-		// ID:        id,
+		OrgID:     orgID,
+		UID:       uid,
+		Title:     title,
+		ID:        id,
 		Created:   now,
 		Updated:   now,
 		ParentUID: parentUID,

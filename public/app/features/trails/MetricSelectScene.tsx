@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import leven from 'leven';
+import { debounce } from 'lodash';
 import React, { useCallback } from 'react';
 
 import { GrafanaTheme2, VariableRefresh } from '@grafana/data';
@@ -28,6 +28,7 @@ import { MetricCategoryCascader } from './MetricCategory/MetricCategoryCascader'
 import { MetricScene } from './MetricScene';
 import { SelectMetricAction } from './SelectMetricAction';
 import { hideEmptyPreviews } from './hideEmptyPreviews';
+import { sortRelatedMetrics } from './relatedMetrics';
 import { getVariablesWithMetricConstant, trailDS, VAR_DATASOURCE, VAR_FILTERS_EXPR, VAR_METRIC_NAMES } from './shared';
 import { getColorByIndex, getTrailFor } from './utils';
 
@@ -288,18 +289,26 @@ export class MetricSelectScene extends SceneObjectBase<MetricSelectSceneState> {
     }
   };
 
-  public onSearchChange = (evt: React.SyntheticEvent<HTMLInputElement>) => {
+  public onSearchQueryChange = (evt: React.SyntheticEvent<HTMLInputElement>) => {
     this.setState({ searchQuery: evt.currentTarget.value });
+    this.searchQueryChangedDebounced();
+  };
+
+  private searchQueryChangedDebounced = debounce(() => {
     this.updateMetrics(); // Need to repeat entire pipeline
     this.buildLayout();
-  };
+  }, 500);
 
   public onPrefixFilterChange = (prefixFilter: string | undefined) => {
     this.setState({ prefixFilter });
+    this.prefixFilterChangedDebounced();
+  };
+
+  private prefixFilterChangedDebounced = debounce(() => {
     this.applyMetricPrefixFilter();
     this.updateMetrics(false); // Only needed to applyMetricPrefixFilter
     this.buildLayout();
-  };
+  }, 1000);
 
   public onTogglePreviews = () => {
     this.setState({ showPreviews: !this.state.showPreviews });
@@ -339,7 +348,7 @@ export class MetricSelectScene extends SceneObjectBase<MetricSelectSceneState> {
               placeholder="Search metrics"
               prefix={<Icon name={'search'} />}
               value={searchQuery}
-              onChange={model.onSearchChange}
+              onChange={model.onSearchQueryChange}
               disabled={disableSearch}
             />
           </Field>
@@ -420,22 +429,6 @@ function getCardPanelFor(metric: string) {
     .setHeaderActions(new SelectMetricAction({ metric, title: 'Select' }))
     .setOption('content', '')
     .build();
-}
-
-// Computes the Levenshtein distance between two strings, twice, once for the first half and once for the whole string.
-function sortRelatedMetrics(metricList: string[], metric: string) {
-  return metricList.sort((aValue, bValue) => {
-    const aSplit = aValue.split('_');
-    const aHalf = aSplit.slice(0, aSplit.length / 2).join('_');
-
-    const bSplit = bValue.split('_');
-    const bHalf = bSplit.slice(0, bSplit.length / 2).join('_');
-
-    return (
-      (leven(aHalf, metric!) || 0 + (leven(aValue, metric!) || 0)) -
-      (leven(bHalf, metric!) || 0 + (leven(bValue, metric!) || 0))
-    );
-  });
 }
 
 function getStyles(theme: GrafanaTheme2) {

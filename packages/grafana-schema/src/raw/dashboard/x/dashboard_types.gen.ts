@@ -349,7 +349,7 @@ export type DashboardLinkType = ('link' | 'dashboards');
  * `custom`: Define the variable options manually using a comma-separated list.
  * `system`: Variables defined by Grafana. See: https://grafana.com/docs/grafana/latest/dashboards/variables/add-template-variables/#global-variables
  */
-export type VariableType = ('query' | 'adhoc' | 'constant' | 'datasource' | 'interval' | 'textbox' | 'custom' | 'system');
+export type VariableType = ('query' | 'adhoc' | 'groupby' | 'constant' | 'datasource' | 'interval' | 'textbox' | 'custom' | 'system');
 
 /**
  * Color mode for a field. You can specify a single color, or select a continuous (gradient) color schemes, based on a value.
@@ -693,6 +693,10 @@ export const defaultDashboardCursorSync: DashboardCursorSync = DashboardCursorSy
  */
 export interface Panel {
   /**
+   * Sets panel queries cache timeout.
+   */
+  cacheTimeout?: string;
+  /**
    * The datasource used in all targets.
    */
   datasource?: DataSourceRef;
@@ -748,6 +752,10 @@ export interface Panel {
    * The version of the plugin that is used for this panel. This is used to find the plugin to display the panel and to migrate old panel configs.
    */
   pluginVersion?: string;
+  /**
+   * Overrides the data source configured time-to-live for a query cache item in milliseconds
+   */
+  queryCachingTTL?: number;
   /**
    * Name of template variable to repeat for.
    */
@@ -1088,6 +1096,10 @@ export interface Dashboard {
      * external url, if snapshot was shared in external grafana instance
      */
     externalUrl: string;
+    /**
+     * original url, url of the dashboard that was snapshotted
+     */
+    originalUrl: string;
     /**
      * Unique identifier of the snapshot
      */

@@ -44,7 +44,7 @@ import { getTimeSrv } from '../services/TimeSrv';
 import { mergePanels, PanelMergeInfo } from '../utils/panelMerge';
 
 import { DashboardMigrator } from './DashboardMigrator';
-import { PanelModel, autoMigrateAngular } from './PanelModel';
+import { PanelModel } from './PanelModel';
 import { TimeModel } from './TimeModel';
 import { deleteScopeVars, isOnTheSameGridRow } from './utils';
 
@@ -170,12 +170,54 @@ export class DashboardModel implements TimeModel {
     this.updateSchema(data);
 
     // Auto-migrate old angular panels
-    if (options?.autoMigrateOldPanels || !config.angularSupportEnabled || config.featureToggles.autoMigrateOldPanels) {
-      for (const p of this.panelIterator()) {
-        const newType = autoMigrateAngular[p.type];
-        if (!p.autoMigrateFrom && newType) {
-          p.autoMigrateFrom = p.type;
-          p.type = newType;
+    const shouldMigrateAllAngularPanels =
+      options?.autoMigrateOldPanels || !config.angularSupportEnabled || config.featureToggles.autoMigrateOldPanels;
+
+    const shouldMigrateExplicitAngularPanels =
+      config.featureToggles.autoMigrateGraphPanel ||
+      config.featureToggles.autoMigrateTablePanel ||
+      config.featureToggles.autoMigratePiechartPanel ||
+      config.featureToggles.autoMigrateWorldmapPanel ||
+      config.featureToggles.autoMigrateStatPanel;
+
+    // Handles both granular and all angular panel migration
+    if (shouldMigrateAllAngularPanels || shouldMigrateExplicitAngularPanels) {
+      for (const panel of this.panelIterator()) {
+        if (
+          !panel.autoMigrateFrom &&
+          panel.type === 'graph' &&
+          (config.featureToggles.autoMigrateGraphPanel || shouldMigrateAllAngularPanels)
+        ) {
+          panel.autoMigrateFrom = panel.type;
+          panel.type = 'timeseries';
+        } else if (
+          !panel.autoMigrateFrom &&
+          panel.type === 'table-old' &&
+          (config.featureToggles.autoMigrateTablePanel || shouldMigrateAllAngularPanels)
+        ) {
+          panel.autoMigrateFrom = panel.type;
+          panel.type = 'table';
+        } else if (
+          !panel.autoMigrateFrom &&
+          panel.type === 'grafana-piechart-panel' &&
+          (config.featureToggles.autoMigratePiechartPanel || shouldMigrateAllAngularPanels)
+        ) {
+          panel.autoMigrateFrom = panel.type;
+          panel.type = 'piechart';
+        } else if (
+          !panel.autoMigrateFrom &&
+          panel.type === 'grafana-worldmap-panel' &&
+          (config.featureToggles.autoMigrateWorldmapPanel || shouldMigrateAllAngularPanels)
+        ) {
+          panel.autoMigrateFrom = panel.type;
+          panel.type = 'geomap';
+        } else if (
+          !panel.autoMigrateFrom &&
+          (panel.type === 'singlestat' || panel.type === 'grafana-singlestat-panel') &&
+          (config.featureToggles.autoMigrateStatPanel || shouldMigrateAllAngularPanels)
+        ) {
+          panel.autoMigrateFrom = panel.type;
+          panel.type = 'stat';
         }
       }
     }

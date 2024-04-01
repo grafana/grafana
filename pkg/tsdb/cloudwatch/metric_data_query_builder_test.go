@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	"github.com/aws/aws-sdk-go/aws"
+	"github.com/grafana/grafana-plugin-sdk-go/backend/log"
 	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/models"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -12,11 +13,11 @@ import (
 func TestMetricDataQueryBuilder(t *testing.T) {
 	t.Run("buildMetricDataQuery", func(t *testing.T) {
 		t.Run("should use metric stat", func(t *testing.T) {
-			executor := newExecutor(nil, newTestConfig(), &fakeSessionCache{})
+			executor := newExecutor(nil, &fakeSessionCache{}, log.NewNullLogger())
 			query := getBaseQuery()
 			query.MetricEditorMode = models.MetricEditorModeBuilder
 			query.MetricQueryType = models.MetricQueryTypeSearch
-			mdq, err := executor.buildMetricDataQuery(logger, query)
+			mdq, err := executor.buildMetricDataQuery(query)
 			require.NoError(t, err)
 			require.Empty(t, mdq.Expression)
 			assert.Equal(t, query.MetricName, *mdq.MetricStat.Metric.MetricName)
@@ -24,70 +25,70 @@ func TestMetricDataQueryBuilder(t *testing.T) {
 		})
 
 		t.Run("should pass AccountId in metric stat query", func(t *testing.T) {
-			executor := newExecutor(nil, newTestConfig(), &fakeSessionCache{})
+			executor := newExecutor(nil, &fakeSessionCache{}, log.NewNullLogger())
 			query := getBaseQuery()
 			query.MetricEditorMode = models.MetricEditorModeBuilder
 			query.MetricQueryType = models.MetricQueryTypeSearch
 			query.AccountId = aws.String("some account id")
-			mdq, err := executor.buildMetricDataQuery(logger, query)
+			mdq, err := executor.buildMetricDataQuery(query)
 			require.NoError(t, err)
 			assert.Equal(t, "some account id", *mdq.AccountId)
 		})
 
 		t.Run("should leave AccountId in metric stat query", func(t *testing.T) {
-			executor := newExecutor(nil, newTestConfig(), &fakeSessionCache{})
+			executor := newExecutor(nil, &fakeSessionCache{}, log.NewNullLogger())
 			query := getBaseQuery()
 			query.MetricEditorMode = models.MetricEditorModeBuilder
 			query.MetricQueryType = models.MetricQueryTypeSearch
-			mdq, err := executor.buildMetricDataQuery(logger, query)
+			mdq, err := executor.buildMetricDataQuery(query)
 			require.NoError(t, err)
 			assert.Nil(t, mdq.AccountId)
 		})
 
 		t.Run("should use custom built expression", func(t *testing.T) {
-			executor := newExecutor(nil, newTestConfig(), &fakeSessionCache{})
+			executor := newExecutor(nil, &fakeSessionCache{}, log.NewNullLogger())
 			query := getBaseQuery()
 			query.MetricEditorMode = models.MetricEditorModeBuilder
 			query.MetricQueryType = models.MetricQueryTypeSearch
 			query.MatchExact = false
-			mdq, err := executor.buildMetricDataQuery(logger, query)
+			mdq, err := executor.buildMetricDataQuery(query)
 			require.NoError(t, err)
 			require.Nil(t, mdq.MetricStat)
 			assert.Equal(t, `REMOVE_EMPTY(SEARCH('Namespace="AWS/EC2" MetricName="CPUUtilization" "LoadBalancer"="lb1"', '', 300))`, *mdq.Expression)
 		})
 
 		t.Run("should use sql expression", func(t *testing.T) {
-			executor := newExecutor(nil, newTestConfig(), &fakeSessionCache{})
+			executor := newExecutor(nil, &fakeSessionCache{}, log.NewNullLogger())
 			query := getBaseQuery()
 			query.MetricEditorMode = models.MetricEditorModeRaw
 			query.MetricQueryType = models.MetricQueryTypeQuery
 			query.SqlExpression = `SELECT SUM(CPUUTilization) FROM "AWS/EC2"`
-			mdq, err := executor.buildMetricDataQuery(logger, query)
+			mdq, err := executor.buildMetricDataQuery(query)
 			require.NoError(t, err)
 			require.Nil(t, mdq.MetricStat)
 			assert.Equal(t, query.SqlExpression, *mdq.Expression)
 		})
 
 		t.Run("should use user defined math expression", func(t *testing.T) {
-			executor := newExecutor(nil, newTestConfig(), &fakeSessionCache{})
+			executor := newExecutor(nil, &fakeSessionCache{}, log.NewNullLogger())
 			query := getBaseQuery()
 			query.MetricEditorMode = models.MetricEditorModeRaw
 			query.MetricQueryType = models.MetricQueryTypeSearch
 			query.Expression = `SUM(x+y)`
-			mdq, err := executor.buildMetricDataQuery(logger, query)
+			mdq, err := executor.buildMetricDataQuery(query)
 			require.NoError(t, err)
 			require.Nil(t, mdq.MetricStat)
 			assert.Equal(t, query.Expression, *mdq.Expression)
 		})
 
 		t.Run("should set period in user defined expression", func(t *testing.T) {
-			executor := newExecutor(nil, newTestConfig(), &fakeSessionCache{})
+			executor := newExecutor(nil, &fakeSessionCache{}, log.NewNullLogger())
 			query := getBaseQuery()
 			query.MetricEditorMode = models.MetricEditorModeRaw
 			query.MetricQueryType = models.MetricQueryTypeSearch
 			query.MatchExact = false
 			query.Expression = `SUM([a,b])`
-			mdq, err := executor.buildMetricDataQuery(logger, query)
+			mdq, err := executor.buildMetricDataQuery(query)
 			require.NoError(t, err)
 			require.Nil(t, mdq.MetricStat)
 			assert.Equal(t, int64(300), *mdq.Period)
@@ -95,11 +96,11 @@ func TestMetricDataQueryBuilder(t *testing.T) {
 		})
 
 		t.Run("should set label", func(t *testing.T) {
-			executor := newExecutor(nil, newTestConfig(), &fakeSessionCache{})
+			executor := newExecutor(nil, &fakeSessionCache{}, log.NewNullLogger())
 			query := getBaseQuery()
 			query.Label = "some label"
 
-			mdq, err := executor.buildMetricDataQuery(logger, query)
+			mdq, err := executor.buildMetricDataQuery(query)
 
 			assert.NoError(t, err)
 			require.NotNil(t, mdq.Label)
@@ -107,18 +108,18 @@ func TestMetricDataQueryBuilder(t *testing.T) {
 		})
 
 		t.Run("should not set label for empty string query label", func(t *testing.T) {
-			executor := newExecutor(nil, newTestConfig(), &fakeSessionCache{})
+			executor := newExecutor(nil, &fakeSessionCache{}, log.NewNullLogger())
 			query := getBaseQuery()
 			query.Label = ""
 
-			mdq, err := executor.buildMetricDataQuery(logger, query)
+			mdq, err := executor.buildMetricDataQuery(query)
 
 			assert.NoError(t, err)
 			assert.Nil(t, mdq.Label)
 		})
 
 		t.Run(`should not specify accountId when it is "all"`, func(t *testing.T) {
-			executor := newExecutor(nil, newTestConfig(), &fakeSessionCache{})
+			executor := newExecutor(nil, &fakeSessionCache{}, log.NewNullLogger())
 			query := &models.CloudWatchQuery{
 				Namespace:  "AWS/EC2",
 				MetricName: "CPUUtilization",
@@ -128,7 +129,7 @@ func TestMetricDataQueryBuilder(t *testing.T) {
 				AccountId:  aws.String("all"),
 			}
 
-			mdq, err := executor.buildMetricDataQuery(logger, query)
+			mdq, err := executor.buildMetricDataQuery(query)
 
 			assert.NoError(t, err)
 			require.Nil(t, mdq.MetricStat)
@@ -136,7 +137,7 @@ func TestMetricDataQueryBuilder(t *testing.T) {
 		})
 
 		t.Run("should set accountId when it is specified", func(t *testing.T) {
-			executor := newExecutor(nil, newTestConfig(), &fakeSessionCache{})
+			executor := newExecutor(nil, &fakeSessionCache{}, log.NewNullLogger())
 			query := &models.CloudWatchQuery{
 				Namespace:  "AWS/EC2",
 				MetricName: "CPUUtilization",
@@ -146,7 +147,7 @@ func TestMetricDataQueryBuilder(t *testing.T) {
 				AccountId:  aws.String("12345"),
 			}
 
-			mdq, err := executor.buildMetricDataQuery(logger, query)
+			mdq, err := executor.buildMetricDataQuery(query)
 
 			assert.NoError(t, err)
 			require.Nil(t, mdq.MetricStat)

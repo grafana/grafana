@@ -9,6 +9,7 @@ Make sure you have the following dependencies installed before setting up your d
 - [Git](https://git-scm.com/)
 - [Go](https://golang.org/dl/) (see [go.mod](../go.mod#L3) for minimum required version)
 - [Node.js (Long Term Support)](https://nodejs.org), with [corepack enabled](https://nodejs.org/api/corepack.html#enabling-the-feature)
+- GCC (required for Cgo dependencies)
 
 ### macOS
 

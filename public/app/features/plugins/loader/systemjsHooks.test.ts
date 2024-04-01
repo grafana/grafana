@@ -28,11 +28,13 @@ describe('SystemJS Loader Hooks', () => {
   const originalFetch = systemJSPrototype.fetch;
   const originalResolve = systemJSPrototype.resolve;
 
-  systemJSPrototype.resolve = (moduleId: string) => moduleId;
-  systemJSPrototype.shouldFetch = () => true;
-
   beforeAll(() => {
     server.listen();
+    systemJSPrototype.resolve = (moduleId: string) => moduleId;
+    systemJSPrototype.shouldFetch = () => true;
+    // because server.listen() patches fetch, we need to reassign this to the systemJSPrototype
+    // this is identical to what happens in the original code: https://github.com/systemjs/systemjs/blob/main/src/features/fetch-load.js#L12
+    systemJSPrototype.fetch = window.fetch;
   });
   afterEach(() => server.resetHandlers());
   afterAll(() => {
@@ -43,7 +45,11 @@ describe('SystemJS Loader Hooks', () => {
 
   describe('decorateSystemJSFetch', () => {
     it('wraps AMD modules in an AMD iife', async () => {
-      const basicResult = await decorateSystemJSFetch(originalFetch, '/public/plugins/mockAmdModule/module.js', {});
+      const basicResult = await decorateSystemJSFetch(
+        systemJSPrototype.fetch,
+        '/public/plugins/mockAmdModule/module.js',
+        {}
+      );
       const basicSource = await basicResult.text();
       const basicExpected = `(function(define) {
   ${mockAmdModule}
@@ -51,7 +57,7 @@ describe('SystemJS Loader Hooks', () => {
       expect(basicSource).toBe(basicExpected);
 
       const mockAmdModuleNamedNoDepsResult = await decorateSystemJSFetch(
-        originalFetch,
+        systemJSPrototype.fetch,
         '/public/plugins/mockAmdModuleNamedNoDeps/module.js',
         {}
       );
@@ -63,7 +69,7 @@ describe('SystemJS Loader Hooks', () => {
       expect(mockAmdModuleNamedNoDepsSource).toBe(mockAmdModuleNamedNoDepsExpected);
 
       const mockAmdModuleNamedWithDepsResult = await decorateSystemJSFetch(
-        originalFetch,
+        systemJSPrototype.fetch,
         '/public/plugins/mockAmdModuleNamedWithDeps/module.js',
         {}
       );
@@ -75,7 +81,7 @@ describe('SystemJS Loader Hooks', () => {
       expect(mockAmdModuleNamedWithDepsSource).toBe(mockAmdModuleNamedWithDepsExpected);
 
       const mockAmdModuleNamedWithDeps2Result = await decorateSystemJSFetch(
-        originalFetch,
+        systemJSPrototype.fetch,
         '/public/plugins/mockAmdModuleNamedWithDeps2/module.js',
         {}
       );
@@ -87,7 +93,7 @@ describe('SystemJS Loader Hooks', () => {
       expect(mockAmdModuleNamedWithDeps2Source).toBe(mockAmdModuleNamedWithDeps2Expected);
 
       const mockAmdModuleNamedWithDeps3Result = await decorateSystemJSFetch(
-        originalFetch,
+        systemJSPrototype.fetch,
         '/public/plugins/mockAmdModuleNamedWithDeps3/module.js',
         {}
       );
@@ -99,7 +105,7 @@ describe('SystemJS Loader Hooks', () => {
       expect(mockAmdModuleNamedWithDeps3Source).toBe(mockAmdModuleNamedWithDeps3Expected);
 
       const mockAmdModuleOnlyFunctionResult = await decorateSystemJSFetch(
-        originalFetch,
+        systemJSPrototype.fetch,
         '/public/plugins/mockAmdModuleOnlyFunction/module.js',
         {}
       );
@@ -111,7 +117,7 @@ describe('SystemJS Loader Hooks', () => {
       expect(mockAmdModuleOnlyFunctionSource).toBe(mockAmdModuleOnlyFunctionExpected);
 
       const mockAmdModuleWithCommentsResult = await decorateSystemJSFetch(
-        originalFetch,
+        systemJSPrototype.fetch,
         '/public/plugins/mockAmdModuleWithComments/module.js',
         {}
       );
@@ -123,7 +129,7 @@ describe('SystemJS Loader Hooks', () => {
       expect(mockAmdModuleWithCommentsSource).toBe(mockAmdModuleWithCommentsExpected);
 
       const mockAmdModuleWithComments2Result = await decorateSystemJSFetch(
-        originalFetch,
+        systemJSPrototype.fetch,
         '/public/plugins/mockAmdModuleWithComments2/module.js',
         {}
       );
@@ -136,14 +142,14 @@ describe('SystemJS Loader Hooks', () => {
     });
     it("doesn't wrap system modules in an AMD iife", async () => {
       const url = '/public/plugins/mockSystemModule/module.js';
-      const result = await decorateSystemJSFetch(originalFetch, url, {});
+      const result = await decorateSystemJSFetch(systemJSPrototype.fetch, url, {});
       const source = await result.text();
 
       expect(source).toBe(mockSystemModule);
     });
     it("doesn't wrap modules with a define method in an AMD iife", async () => {
       const url = '/public/plugins/mockModuleWithDefineMethod/module.js';
-      const result = await decorateSystemJSFetch(originalFetch, url, {});
+      const result = await decorateSystemJSFetch(systemJSPrototype.fetch, url, {});
       const source = await result.text();
 
       expect(source).toBe(mockModuleWithDefineMethod);
@@ -151,13 +157,13 @@ describe('SystemJS Loader Hooks', () => {
     it('only transforms plugin source code hosted on cdn with cdn paths', async () => {
       config.pluginsCDNBaseURL = 'http://my-cdn.com/plugins';
       const cdnUrl = 'http://my-cdn.com/plugins/my-plugin/v1.0.0/public/plugins/my-plugin/module.js';
-      const cdnResult = await decorateSystemJSFetch(originalFetch, cdnUrl, {});
+      const cdnResult = await decorateSystemJSFetch(systemJSPrototype.fetch, cdnUrl, {});
       const cdnSource = await cdnResult.text();
 
       expect(cdnSource).toContain('var pluginPath = "http://my-cdn.com/plugins/my-plugin/v1.0.0/public/plugins/";');
 
       const url = '/public/plugins/mockAmdModule/module.js';
-      const result = await decorateSystemJSFetch(originalFetch, url, {});
+      const result = await decorateSystemJSFetch(systemJSPrototype.fetch, url, {});
       const source = await result.text();
       expect(source).toContain('var pluginPath = "/public/plugins/";');
     });

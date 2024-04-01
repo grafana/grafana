@@ -97,6 +97,9 @@ func (o *AggregatorServerOptions) ApplyTo(aggregatorConfig *aggregatorapiserver.
 	}
 	genericConfig.MergedResourceConfig = mergedResourceConfig
 
+	aggregatorConfig.ExtraConfig.ProxyClientCertFile = o.ProxyClientCertFile
+	aggregatorConfig.ExtraConfig.ProxyClientKeyFile = o.ProxyClientKeyFile
+
 	namer := openapinamer.NewDefinitionNamer(aggregatorscheme.Scheme)
 	genericConfig.OpenAPIV3Config = genericapiserver.DefaultOpenAPIV3Config(o.getMergedOpenAPIDefinitions, namer)
 	genericConfig.OpenAPIV3Config.Info.Title = "Kubernetes"

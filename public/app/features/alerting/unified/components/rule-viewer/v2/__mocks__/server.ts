@@ -1,7 +1,7 @@
-import { rest } from 'msw';
+import 'whatwg-fetch';
+import { http, HttpResponse } from 'msw';
 import { SetupServer, setupServer } from 'msw/node';
 
-import 'whatwg-fetch';
 import { AlertmanagersChoiceResponse } from 'app/features/alerting/unified/api/alertmanagerApi';
 import { mockAlertmanagerChoiceResponse } from 'app/features/alerting/unified/mocks/alertmanagerApi';
 import { AlertmanagerChoice } from 'app/plugins/datasource/alertmanager/types';
@@ -33,16 +33,15 @@ export function createMockGrafanaServer() {
 // a user must alsso have permissions for the folder (namespace) in which the alert rule is stored
 function mockFolderAccess(server: SetupServer, accessControl: Partial<Record<AccessControlAction, boolean>>) {
   server.use(
-    rest.get('/api/folders/:uid', (req, res, ctx) => {
-      const uid = req.params.uid;
+    http.get('/api/folders/:uid', ({ request }) => {
+      const url = new URL(request.url);
+      const uid = url.searchParams.get('uid');
 
-      return res(
-        ctx.json({
-          title: 'My Folder',
-          uid,
-          accessControl,
-        })
-      );
+      return HttpResponse.json({
+        title: 'My Folder',
+        uid,
+        accessControl,
+      });
     })
   );
 
@@ -51,8 +50,8 @@ function mockFolderAccess(server: SetupServer, accessControl: Partial<Record<Acc
 
 function mockGrafanaIncidentPluginSettings(server: SetupServer) {
   server.use(
-    rest.get('/api/plugins/grafana-incident-app/settings', (_, res, ctx) => {
-      return res(ctx.status(200));
+    http.get('/api/plugins/grafana-incident-app/settings', () => {
+      return HttpResponse.json({});
     })
   );
 }

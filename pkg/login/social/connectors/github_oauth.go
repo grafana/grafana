@@ -14,9 +14,11 @@ import (
 
 	"github.com/grafana/grafana/pkg/login/social"
 	"github.com/grafana/grafana/pkg/models/roletype"
+	"github.com/grafana/grafana/pkg/services/auth/identity"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/ssosettings"
 	ssoModels "github.com/grafana/grafana/pkg/services/ssosettings/models"
+	"github.com/grafana/grafana/pkg/services/ssosettings/validation"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
 	"github.com/grafana/grafana/pkg/util/errutil"
@@ -74,17 +76,25 @@ func NewGitHubProvider(info *social.OAuthInfo, cfg *setting.Cfg, ssoSettings sso
 	return provider
 }
 
-func (s *SocialGithub) Validate(ctx context.Context, settings ssoModels.SSOSettings) error {
+func (s *SocialGithub) Validate(ctx context.Context, settings ssoModels.SSOSettings, requester identity.Requester) error {
 	info, err := CreateOAuthInfoFromKeyValues(settings.Settings)
 	if err != nil {
 		return ssosettings.ErrInvalidSettings.Errorf("SSO settings map cannot be converted to OAuthInfo: %v", err)
 	}
 
-	err = validateInfo(info)
+	err = validateInfo(info, requester)
 	if err != nil {
 		return err
 	}
 
+	return validation.Validate(info, requester,
+		validation.MustBeEmptyValidator(info.AuthUrl, "Auth URL"),
+		validation.MustBeEmptyValidator(info.TokenUrl, "Token URL"),
+		validation.MustBeEmptyValidator(info.ApiUrl, "API URL"),
+		teamIdsNumbersValidator)
+}
+
+func teamIdsNumbersValidator(info *social.OAuthInfo, requester identity.Requester) error {
 	teamIdsSplitted := util.SplitString(info.Extra[teamIdsKey])
 	teamIds := mustInts(teamIdsSplitted)
 

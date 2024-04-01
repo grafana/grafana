@@ -15,10 +15,13 @@ roll out features for each service without downtime.
 To read more about the concept, see 
 [here](https://kubernetes.io/docs/tasks/extend-kubernetes/setup-extension-api-server/).
 
-Note that, this aggregation will be a totally internal detail to Grafana. External fully functional APIServers that
-may themselves act as parent API Servers to Grafana will never be made aware of them. Any of the `APIService` 
-related to Grafana Groups registered in a real K8s environment will take the address of Grafana's 
-parent server (which will bundle grafana-aggregator).
+Note that this aggregation will be a totally internal detail to Grafana. External fully functional API Servers that
+may themselves act as parent API Servers to Grafana will never be made aware of internal Grafana API Servers.
+Thus, any `APIService` objects corresponding to Grafana's API groups will take the address of 
+Grafana's main API Server (the one that bundles grafana-aggregator).
+
+Also, note that the single binary OSS offering of Grafana doesn't make use of the aggregator component at all, instead
+opting for local installation of all the Grafana API groups.
 
 ### kube-aggregator versus grafana-aggregator
 
@@ -41,7 +44,69 @@ live under that instead.
 
 ### Gotchas (Pay Attention)
 
-1. `grafana-aggregator` uses file storage under `data/grafana-aggregator` (`apiregistration.k8s.io`,
-`service.grafana.app`) and `data/grafana-apiextensions` (`apiextensions.k8s.io`).
-2. Since `grafana-aggregator` outputs configuration (TLS and kubeconfig) that is used in the invocation of aggregated
-  servers, ensure you start the aggregated service after launching the aggregator during local development.
+1. `grafana-aggregator` uses file storage under `data/grafana-apiserver` (`apiregistration.k8s.io`,
+`service.grafana.app`). Thus, any restarts will still have any prior configured aggregation in effect.
+2. During local development, ensure you start the aggregated service after launching the aggregator. This is
+so you have TLS and kubeconfig available for use with example aggregated api servers.
+3. Ensure you have `grafanaAPIServerWithExperimentalAPIs = false` in your custom.ini. Otherwise, the example
+service the following guide uses for the aggregation test is bundled as a `Local` `APIService` and will cause
+configuration overwrites on startup.
+
+## Testing aggregation locally
+
+1. Generate the PKI using `openssl` (for development purposes, we will use the CN of `system:masters`):
+  ```shell
+  ./hack/make-aggregator-pki.sh
+  ```
+2. Configure the aggregator:
+  ```ini
+  [feature_toggles]
+  grafanaAPIServerEnsureKubectlAccess = true
+  ; disable the experimental APIs flag to disable bundling of the example service locally
+  grafanaAPIServerWithExperimentalAPIs = false
+  kubernetesAggregator = true
+
+  [grafana-apiserver]
+  proxy_client_cert_file = ./data/grafana-aggregator/client.crt
+  proxy_client_key_file = ./data/grafana-aggregator/client.key
+  ```
+3. Start the server
+  ```shell
+  make run
+  ```
+4. In another tab, apply the manifests: 
+  ```shell
+  export KUBECONFIG=$PWD/data/grafana-apiserver/grafana.kubeconfig
+  kubectl apply -f ./pkg/services/apiserver/aggregator/examples/
+  # SAMPLE OUTPUT
+  # apiservice.apiregistration.k8s.io/v0alpha1.example.grafana.app created
+  # externalname.service.grafana.app/example-apiserver created
+  
+  kubectl get apiservice
+  # SAMPLE OUTPUT
+  # NAME                           SERVICE                     AVAILABLE                      AGE
+  # v0alpha1.example.grafana.app   grafana/example-apiserver   False (FailedDiscoveryCheck)   29m
+  ```
+5. In another tab, start the example microservice that will be aggregated by the parent apiserver:
+  ```shell
+  go run ./pkg/cmd/grafana apiserver \
+    --runtime-config=example.grafana.app/v0alpha1=true \
+    --secure-port 7443 \
+    --requestheader-client-ca-file=$PWD/data/grafana-aggregator/ca.crt \
+    --requestheader-extra-headers-prefix=X-Remote-Extra- \
+    --requestheader-group-headers=X-Remote-Group \
+    --requestheader-username-headers=X-Remote-User \
+    -v 10
+  ```
+6. After 10 seconds, check `APIService` again. It should report as available.
+  ```shell
+  export KUBECONFIG=$PWD/data/grafana-apiserver/grafana.kubeconfig
+  kubectl get apiservice
+  # SAMPLE OUTPUT
+  # NAME                           SERVICE                     AVAILABLE      AGE
+  # v0alpha1.example.grafana.app   grafana/example-apiserver   True           30m
+  ```
+7. For tear down of the above test:
+  ```shell
+  kubectl delete -f ./pkg/services/apiserver/aggregator/examples/
+  ```

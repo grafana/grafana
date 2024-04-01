@@ -104,9 +104,7 @@ func CreateAggregatorServer(aggregatorConfig *aggregatorapiserver.Config, shared
 	}
 
 	err = aggregatorServer.GenericAPIServer.AddPostStartHook("grafana-apiserver-autoregistration", func(context genericapiserver.PostStartHookContext) error {
-		go func() {
-			autoRegistrationController.Run(5, context.StopCh)
-		}()
+		go autoRegistrationController.Run(5, context.StopCh)
 		return nil
 	})
 	if err != nil {
@@ -198,16 +196,20 @@ func makeAPIServiceAvailableHealthCheck(name string, apiServices []*v1.APIServic
 	}
 
 	// Watch add/update events for APIServices
-	_, _ = apiServiceInformer.Informer().AddEventHandler(cache.ResourceEventHandlerFuncs{
+	_, err := apiServiceInformer.Informer().AddEventHandler(cache.ResourceEventHandlerFuncs{
 		AddFunc:    func(obj interface{}) { handleAPIServiceChange(obj.(*v1.APIService)) },
 		UpdateFunc: func(old, new interface{}) { handleAPIServiceChange(new.(*v1.APIService)) },
 	})
+	if err != nil {
+		klog.Errorf("Failed to watch APIServices for health check: %v", err)
+	}
 
 	// Don't return healthy until the pending list is empty
 	return healthz.NamedCheck(name, func(r *http.Request) error {
 		pendingServiceNamesLock.RLock()
 		defer pendingServiceNamesLock.RUnlock()
 		if pendingServiceNames.Len() > 0 {
+			klog.Error("APIServices not yet available", "services", pendingServiceNames.List())
 			return fmt.Errorf("missing APIService: %v", pendingServiceNames.List())
 		}
 		return nil

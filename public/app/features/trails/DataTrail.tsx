@@ -137,7 +137,7 @@ export class DataTrail extends SceneObjectBase<DataTrailState> {
     // Add metric to adhoc filters baseFilter
     const filterVar = sceneGraph.lookupVariable(VAR_FILTERS, this);
     if (filterVar instanceof AdHocFiltersVariable) {
-      filterVar.state.set.setState({
+      filterVar.setState({
         baseFilters: getBaseFiltersForMetric(evt.payload),
       });
     }
@@ -208,7 +208,7 @@ function getVariableSet(initialDS?: string, metric?: string, initialFilters?: Ad
         value: initialDS,
         pluginId: metric === LOGS_METRIC ? 'loki' : 'prometheus',
       }),
-      AdHocFiltersVariable.create({
+      new AdHocFiltersVariable({
         name: VAR_FILTERS,
         datasource: trailDS,
         layout: 'vertical',

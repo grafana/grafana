@@ -19,6 +19,7 @@ import (
 	"github.com/grafana/grafana/pkg/plugins/manager/registry"
 	"github.com/grafana/grafana/pkg/plugins/manager/signature"
 	"github.com/grafana/grafana/pkg/plugins/manager/sources"
+	"github.com/grafana/grafana/pkg/services/pluginsintegration/pipeline"
 	"github.com/grafana/grafana/pkg/services/rendering"
 )
 
@@ -106,7 +107,7 @@ func createLoader(cfg *config.Cfg, pr registry.Service, l plugins.Licensing) (lo
 		FindFilterFuncs: []discovery.FindFilterFunc{
 			discovery.NewPermittedPluginTypesFilterStep([]plugins.Type{plugins.TypeRenderer}),
 			func(ctx context.Context, class plugins.Class, bundles []*plugins.FoundBundle) ([]*plugins.FoundBundle, error) {
-				return discovery.NewDuplicatePluginFilterStep(pr).Filter(ctx, bundles)
+				return pipeline.NewDuplicatePluginIDFilterStep(pr).Filter(ctx, bundles)
 			},
 		},
 	})

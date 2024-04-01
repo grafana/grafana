@@ -26,9 +26,10 @@ import { InspectTab } from 'app/features/inspector/types';
 import { getPrettyJSON } from 'app/features/inspector/utils/utils';
 import { reportPanelInspectInteraction } from 'app/features/search/page/reporting';
 
+import { LibraryVizPanel } from '../scene/LibraryVizPanel';
 import { PanelRepeaterGridItem } from '../scene/PanelRepeaterGridItem';
 import { buildGridItemForPanel } from '../serialization/transformSaveModelToScene';
-import { gridItemToPanel } from '../serialization/transformSceneToSaveModel';
+import { gridItemToPanel, vizPanelToPanel } from '../serialization/transformSceneToSaveModel';
 import { getDashboardSceneFor, getPanelIdForVizPanel, getQueryRunnerFor } from '../utils/utils';
 
 export type ShowContent = 'panel-json' | 'panel-data' | 'data-frames';
@@ -202,6 +203,8 @@ function getJsonText(show: ShowContent, panel: VizPanel): string {
 
       if (panel.parent instanceof SceneGridItem || panel.parent instanceof PanelRepeaterGridItem) {
         objToStringify = gridItemToPanel(panel.parent);
+      } else if (panel.parent instanceof LibraryVizPanel) {
+        objToStringify = libraryPanelChildToLegacyRepresentation(panel);
       }
       break;
     }
@@ -232,6 +235,30 @@ function getJsonText(show: ShowContent, panel: VizPanel): string {
   }
 
   return getPrettyJSON(objToStringify);
+}
+
+/**
+ *
+ * @param panel Must be child of a LibraryVizPanel that is in turn the child of a SceneGridItem
+ * @returns object representation of the legacy library panel structure.
+ */
+function libraryPanelChildToLegacyRepresentation(panel: VizPanel<{}, {}>) {
+  if (!(panel.parent instanceof LibraryVizPanel)) {
+    throw 'Panel not child of LibraryVizPanel';
+  }
+  if (!(panel.parent.parent instanceof SceneGridItem)) {
+    throw 'LibraryPanel not child of SceneGridItem';
+  }
+  const gridItem = panel.parent.parent;
+  const libraryPanelObj = gridItemToPanel(gridItem);
+  const panelObj = vizPanelToPanel(panel);
+  panelObj.gridPos = {
+    x: gridItem.state.x || 0,
+    y: gridItem.state.y || 0,
+    h: gridItem.state.height || 0,
+    w: gridItem.state.width || 0,
+  };
+  return { ...libraryPanelObj, ...panelObj };
 }
 
 function hasGridPosChanged(a: SceneGridItemStateLike, b: SceneGridItemStateLike) {

@@ -23,10 +23,15 @@ import (
 	"github.com/grafana/grafana/pkg/services/user/userimpl"
 	"github.com/grafana/grafana/pkg/services/user/usertest"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/tests/testsuite"
 )
 
 // "Skipping conflicting users test for mysql as it does make unique constraint case insensitive by default
 const ignoredDatabase = migrator.MySQL
+
+func TestMain(m *testing.M) {
+	testsuite.Run(m)
+}
 
 func TestBuildConflictBlock(t *testing.T) {
 	type testBuildConflictBlock struct {
@@ -608,9 +613,10 @@ func TestIntegrationMergeUser(t *testing.T) {
 	t.Run("should be able to merge user", func(t *testing.T) {
 		// Restore after destructive operation
 		sqlStore := db.InitTestDB(t)
-		teamSvc := teamimpl.ProvideService(sqlStore, setting.NewCfg())
+		teamSvc, err := teamimpl.ProvideService(sqlStore, setting.NewCfg())
+		require.NoError(t, err)
 		team1, err := teamSvc.CreateTeam("team1 name", "", 1)
-		require.Nil(t, err)
+		require.NoError(t, err)
 		usrSvc := setupTestUserService(t, sqlStore)
 		const testOrgID int64 = 1
 

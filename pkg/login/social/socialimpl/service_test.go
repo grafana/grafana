@@ -18,7 +18,12 @@ import (
 	"github.com/grafana/grafana/pkg/services/ssosettings/ssosettingsimpl"
 	"github.com/grafana/grafana/pkg/services/supportbundles/supportbundlestest"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/tests/testsuite"
 )
+
+func TestMain(m *testing.M) {
+	testsuite.Run(m)
+}
 
 func TestSocialService_ProvideService(t *testing.T) {
 	type testEnv struct {
@@ -43,15 +48,6 @@ func TestSocialService_ProvideService(t *testing.T) {
 			},
 			expectedSocialMapLength:             7,
 			expectedGenericOAuthSkipOrgRoleSync: false,
-		},
-		{
-			name: "should load Enabled and SkipOrgRoleSync parameters from environment variables when ssoSettingsApi is disabled",
-			setup: func(t *testing.T, env *testEnv) {
-				t.Setenv("GF_AUTH_GENERIC_OAUTH_ENABLED", "true")
-				t.Setenv("GF_AUTH_GENERIC_OAUTH_SKIP_ORG_ROLE_SYNC", "true")
-			},
-			expectedSocialMapLength:             2,
-			expectedGenericOAuthSkipOrgRoleSync: true,
 		},
 	}
 	iniContent := `

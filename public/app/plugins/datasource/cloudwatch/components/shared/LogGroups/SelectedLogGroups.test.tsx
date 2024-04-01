@@ -64,11 +64,11 @@ describe('SelectedLogsGroups', () => {
         name: `logGroup${i}`,
       }));
       render(<SelectedLogGroups {...defaultProps} selectedLogGroups={selectedLogGroups} />);
-      await waitFor(() => userEvent.click(screen.getByText('Clear selection')));
+      await userEvent.click(screen.getByText('Clear selection'));
       await waitFor(() =>
         expect(screen.getByText('Are you sure you want to clear all log groups?')).toBeInTheDocument()
       );
-      await waitFor(() => userEvent.click(screen.getByRole('button', { name: 'Yes' })));
+      await userEvent.click(screen.getByRole('button', { name: 'Yes' }));
       expect(defaultProps.onChange).toHaveBeenCalledWith([]);
     });
   });

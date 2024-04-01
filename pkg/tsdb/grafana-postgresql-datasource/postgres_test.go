@@ -187,8 +187,8 @@ func TestIntegrationPostgres(t *testing.T) {
 	t.Cleanup(func() {
 		sqleng.Interpolate = origInterpolate
 	})
-	sqleng.Interpolate = func(query backend.DataQuery, timeRange backend.TimeRange, timeInterval string, sql string) (string, error) {
-		return sql, nil
+	sqleng.Interpolate = func(query backend.DataQuery, timeRange backend.TimeRange, timeInterval string, sql string) string {
+		return sql
 	}
 
 	cfg := setting.NewCfg()
@@ -212,7 +212,7 @@ func TestIntegrationPostgres(t *testing.T) {
 
 	cnnstr := postgresTestDBConnString()
 
-	db, exe, err := newPostgres(cfg, dsInfo, cnnstr, logger, backend.DataSourceInstanceSettings{})
+	db, exe, err := newPostgres(context.Background(), cfg, dsInfo, cnnstr, logger, backend.DataSourceInstanceSettings{})
 
 	require.NoError(t, err)
 
@@ -1268,7 +1268,7 @@ func TestIntegrationPostgres(t *testing.T) {
 			dsInfo := sqleng.DataSourceInfo{}
 			conf := setting.NewCfg()
 			conf.DataProxyRowLimit = 1
-			_, handler, err := newPostgres(conf, dsInfo, cnnstr, logger, backend.DataSourceInstanceSettings{})
+			_, handler, err := newPostgres(context.Background(), conf, dsInfo, cnnstr, logger, backend.DataSourceInstanceSettings{})
 
 			require.NoError(t, err)
 

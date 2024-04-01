@@ -280,12 +280,12 @@ grafana_folder = "Test alerts"
 ```
 
 {{% docs/reference %}}
-[create-notification-templates]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/alerting/manage-notifications/template-notifications/create-notification-templates"
+[create-notification-templates]: "/docs/grafana/ -> /docs/grafana/<GRAFANA_VERSION>/alerting/manage-notifications/template-notifications/create-notification-templates"
 [create-notification-templates]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/alerting-and-irm/alerting/manage-notifications/template-notifications/create-notification-templates"
 
-[extendeddata]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/alerting/manage-notifications/template-notifications/reference#extendeddata"
+[extendeddata]: "/docs/grafana/ -> /docs/grafana/<GRAFANA_VERSION>/alerting/manage-notifications/template-notifications/reference#extendeddata"
 [extendeddata]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/alerting-and-irm/alerting/manage-notifications/template-notifications/reference#extendeddata"
 
-[reference]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/alerting/manage-notifications/template-notifications/reference"
+[reference]: "/docs/grafana/ -> /docs/grafana/<GRAFANA_VERSION>/alerting/manage-notifications/template-notifications/reference"
 [reference]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/alerting-and-irm/alerting/manage-notifications/template-notifications/reference"
 {{% /docs/reference %}}

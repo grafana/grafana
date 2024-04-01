@@ -43,9 +43,26 @@ func (api *API) authorize(method, path string) web.Handler {
 			ac.EvalPermission(ac.ActionAlertingRuleCreate, scope),
 			ac.EvalPermission(ac.ActionAlertingRuleDelete, scope),
 		)
-		// Grafana rule state history paths
+
+	// Grafana rule state history paths
 	case http.MethodGet + "/api/v1/rules/history":
 		eval = ac.EvalPermission(ac.ActionAlertingRuleRead)
+
+	// Grafana receivers paths
+	case http.MethodGet + "/api/v1/notifications/receivers":
+		// additional authorization is done at the service level
+		eval = ac.EvalAny(
+			ac.EvalPermission(ac.ActionAlertingNotificationsRead),
+			ac.EvalPermission(ac.ActionAlertingReceiversList),
+			ac.EvalPermission(ac.ActionAlertingReceiversRead),
+			ac.EvalPermission(ac.ActionAlertingReceiversReadSecrets),
+		)
+	case http.MethodGet + "/api/v1/notifications/receivers/{Name}":
+		// TODO: scope to :Name
+		eval = ac.EvalAny(
+			ac.EvalPermission(ac.ActionAlertingReceiversRead),
+			ac.EvalPermission(ac.ActionAlertingReceiversReadSecrets),
+		)
 
 	// Grafana unified alerting upgrade paths
 	case http.MethodGet + "/api/v1/upgrade/org":

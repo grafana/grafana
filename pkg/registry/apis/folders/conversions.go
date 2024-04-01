@@ -42,7 +42,9 @@ func convertToK8sResource(v *folder.Folder, namespacer request.NamespaceMapper) 
 			meta.SetUpdatedBy(fmt.Sprintf("user:%d", v.UpdatedBy))
 		}
 	}
-
+	if v.ParentUID != "" {
+		meta.SetFolder(v.ParentUID)
+	}
 	f.UID = utils.CalculateClusterWideUID(f)
 	return f
 }

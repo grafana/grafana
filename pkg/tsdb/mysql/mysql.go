@@ -18,7 +18,6 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend/datasource"
 	sdkhttpclient "github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/instancemgmt"
-	sdkproxy "github.com/grafana/grafana-plugin-sdk-go/backend/proxy"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/grafana/grafana-plugin-sdk-go/data/sqlutil"
 
@@ -26,7 +25,6 @@ import (
 	"github.com/grafana/grafana/pkg/infra/httpclient"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tsdb/sqleng"
-	"github.com/grafana/grafana/pkg/tsdb/sqleng/proxyutil"
 )
 
 const (
@@ -89,12 +87,20 @@ func newInstanceSettings(cfg *setting.Cfg, logger log.Logger) datasource.Instanc
 			protocol = "unix"
 		}
 
+		proxyClient, err := settings.ProxyClient(ctx)
+		if err != nil {
+			return nil, err
+		}
+
 		// register the secure socks proxy dialer context, if enabled
-		proxyOpts := proxyutil.GetSQLProxyOptions(cfg.SecureSocksDSProxy, dsInfo, settings.Name, settings.Type)
-		if sdkproxy.New(proxyOpts).SecureSocksProxyEnabled() {
+		if proxyClient.SecureSocksProxyEnabled() {
+			dialer, err := proxyClient.NewSecureSocksProxyContextDialer()
+			if err != nil {
+				return nil, err
+			}
 			// UID is only unique per org, the only way to ensure uniqueness is to do it by connection information
 			uniqueIdentifier := dsInfo.User + dsInfo.DecryptedSecureJSONData["password"] + dsInfo.URL + dsInfo.Database
-			protocol, err = registerProxyDialerContext(protocol, uniqueIdentifier, proxyOpts)
+			protocol, err = registerProxyDialerContext(protocol, uniqueIdentifier, dialer)
 			if err != nil {
 				return nil, err
 			}
@@ -134,10 +140,6 @@ func newInstanceSettings(cfg *setting.Cfg, logger log.Logger) datasource.Instanc
 			cnnstr += fmt.Sprintf("&time_zone='%s'", url.QueryEscape(dsInfo.JsonData.Timezone))
 		}
 
-		if cfg.Env == setting.Dev {
-			logger.Debug("GetEngine", "connection", cnnstr)
-		}
-
 		config := sqleng.DataPluginConfiguration{
 			DSInfo:            dsInfo,
 			TimeColumnNames:   []string{"time", "time_sec"},
@@ -158,7 +160,7 @@ func newInstanceSettings(cfg *setting.Cfg, logger log.Logger) datasource.Instanc
 		db.SetMaxIdleConns(config.DSInfo.JsonData.MaxIdleConns)
 		db.SetConnMaxLifetime(time.Duration(config.DSInfo.JsonData.ConnMaxLifetime) * time.Second)
 
-		return sqleng.NewQueryDataHandler(cfg, db, config, &rowTransformer, newMysqlMacroEngine(logger, cfg), logger)
+		return sqleng.NewQueryDataHandler(cfg.UserFacingDefaultError, db, config, &rowTransformer, newMysqlMacroEngine(logger, cfg), logger)
 	}
 }
 

@@ -4,7 +4,7 @@ import React from 'react';
 import { GrafanaTheme2 } from '@grafana/data';
 import { Icon, Switch, Tooltip, useTheme2 } from '@grafana/ui';
 
-import { testIds } from './MetricsModal';
+import { metricsModaltestIds } from './MetricsModal';
 import { placeholders } from './state/helpers';
 import { MetricsModalState } from './state/state';
 
@@ -27,7 +27,7 @@ export function AdditionalSettings(props: AdditionalSettingsProps) {
     <>
       <div className={styles.selectItem}>
         <Switch
-          data-testid={testIds.searchWithMetadata}
+          data-testid={metricsModaltestIds.searchWithMetadata}
           value={state.fullMetaSearch}
           disabled={state.useBackend || !state.hasMetadata}
           onChange={() => onChangeFullMetaSearch()}
@@ -47,7 +47,11 @@ export function AdditionalSettings(props: AdditionalSettingsProps) {
         <div className={styles.selectItemLabel}>Disable text wrap</div>
       </div>
       <div className={styles.selectItem}>
-        <Switch data-testid={testIds.setUseBackend} value={state.useBackend} onChange={() => onChangeUseBackend()} />
+        <Switch
+          data-testid={metricsModaltestIds.setUseBackend}
+          value={state.useBackend}
+          onChange={() => onChangeUseBackend()}
+        />
         <div className={styles.selectItemLabel}>{placeholders.setUseBackend}&nbsp;</div>
         <Tooltip
           content={'Filter metric names by regex search, using an additional call on the Prometheus API.'}

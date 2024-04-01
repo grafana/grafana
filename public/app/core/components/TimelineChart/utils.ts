@@ -21,6 +21,7 @@ import {
   getFieldConfigWithMinMax,
   ThresholdsMode,
   TimeRange,
+  cacheFieldDisplayNames,
 } from '@grafana/data';
 import { maybeSortFrame } from '@grafana/data/src/transformations/transformers/joinDataFrames';
 import { applyNullInsertThreshold } from '@grafana/data/src/transformations/transformers/nulls/nullInsertThreshold';
@@ -63,6 +64,7 @@ interface UPlotConfigOptions {
   getValueColor: (frameIdx: number, fieldIdx: number, value: unknown) => string;
   // Identifies the shared key for uPlot cursor sync
   eventsScope?: string;
+  hoverMulti: boolean;
 }
 
 /**
@@ -105,6 +107,7 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<UPlotConfigOptions> = (
   mergeValues,
   getValueColor,
   eventsScope = '__global_',
+  hoverMulti,
 }) => {
   const builder = new UPlotConfigBuilder(timeZones[0]);
 
@@ -165,6 +168,7 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<UPlotConfigOptions> = (
       hoveredDataIdx = null;
       shouldChangeHover = true;
     },
+    hoverMulti,
   };
 
   let shouldChangeHover = false;
@@ -179,6 +183,9 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<UPlotConfigOptions> = (
     },
     data: frame,
   };
+
+  const hoverEvent = new DataHoverEvent(payload).setTags(['uplot']);
+  const clearEvent = new DataHoverClearEvent().setTags(['uplot']);
 
   builder.addHook('init', coreConfig.init);
   builder.addHook('drawClear', coreConfig.drawClear);
@@ -293,14 +300,12 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<UPlotConfigOptions> = (
           }
           payload.rowIndex = dataIdx;
           if (x < 0 && y < 0) {
-            payload.point[xScaleUnit] = null;
-            payload.point[FIXED_UNIT] = null;
-            eventBus.publish(new DataHoverClearEvent());
+            eventBus.publish(clearEvent);
           } else {
             payload.point[xScaleUnit] = src.posToVal(x, xScaleKey);
             payload.point.panelRelY = y > 0 ? y / h : 1; // used for old graph panel to position tooltip
             payload.down = undefined;
-            eventBus.publish(new DataHoverEvent(payload));
+            eventBus.publish(hoverEvent);
           }
           return true;
         },
@@ -433,6 +438,9 @@ export function prepareTimelineFields(
   if (!series?.length) {
     return { warn: 'No data in response' };
   }
+
+  cacheFieldDisplayNames(series);
+
   let hasTimeseries = false;
   const frames: DataFrame[] = [];
 

@@ -6,23 +6,17 @@ import (
 	"net"
 	"path"
 
+	"k8s.io/apimachinery/pkg/runtime/schema"
 	utilerrors "k8s.io/apimachinery/pkg/util/errors"
 	genericapiserver "k8s.io/apiserver/pkg/server"
 	"k8s.io/apiserver/pkg/server/options"
 	"k8s.io/client-go/tools/clientcmd"
 	netutils "k8s.io/utils/net"
 
-	"github.com/grafana/grafana/pkg/registry/apis/example"
-	"github.com/grafana/grafana/pkg/registry/apis/featuretoggle"
-	"github.com/grafana/grafana/pkg/registry/apis/query"
-	"github.com/grafana/grafana/pkg/registry/apis/query/runner"
-	"github.com/grafana/grafana/pkg/server"
-	"github.com/grafana/grafana/pkg/services/accesscontrol/actest"
 	grafanaAPIServer "github.com/grafana/grafana/pkg/services/apiserver"
 	"github.com/grafana/grafana/pkg/services/apiserver/builder"
+	"github.com/grafana/grafana/pkg/services/apiserver/standalone"
 	"github.com/grafana/grafana/pkg/services/apiserver/utils"
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
-	"github.com/grafana/grafana/pkg/setting"
 )
 
 const (
@@ -32,6 +26,7 @@ const (
 
 // APIServerOptions contains the state for the apiserver
 type APIServerOptions struct {
+	factory            standalone.APIServerFactory
 	builders           []builder.APIGroupBuilder
 	RecommendedOptions *options.RecommendedOptions
 	AlternateDNS       []string
@@ -47,40 +42,14 @@ func newAPIServerOptions(out, errOut io.Writer) *APIServerOptions {
 	}
 }
 
-func (o *APIServerOptions) loadAPIGroupBuilders(runtime []apiConfig) error {
+func (o *APIServerOptions) loadAPIGroupBuilders(apis []schema.GroupVersion) error {
 	o.builders = []builder.APIGroupBuilder{}
-	for _, gv := range runtime {
-		if !gv.enabled {
-			return fmt.Errorf("disabling apis is not yet supported")
+	for _, gv := range apis {
+		api, err := o.factory.MakeAPIServer(gv)
+		if err != nil {
+			return err
 		}
-		switch gv.group {
-		case "all":
-			return fmt.Errorf("managing all APIs is not yet supported")
-		case "example.grafana.app":
-			o.builders = append(o.builders, example.NewTestingAPIBuilder())
-		// Only works with testdata
-		case "query.grafana.app":
-			o.builders = append(o.builders, query.NewQueryAPIBuilder(
-				featuremgmt.WithFeatures(),
-				runner.NewDummyTestRunner(),
-				runner.NewDummyRegistry(),
-			))
-		case "featuretoggle.grafana.app":
-			o.builders = append(o.builders,
-				featuretoggle.NewFeatureFlagAPIBuilder(
-					featuremgmt.WithFeatureManager(setting.FeatureMgmtSettings{}, nil), // none... for now
-					&actest.FakeAccessControl{ExpectedEvaluate: false},
-				),
-			)
-		case "testdata.datasource.grafana.app":
-			ds, err := server.InitializeDataSourceAPIServer(gv.group)
-			if err != nil {
-				return err
-			}
-			o.builders = append(o.builders, ds)
-		default:
-			return fmt.Errorf("unsupported runtime-config: %v", gv)
-		}
+		o.builders = append(o.builders, api)
 	}
 
 	if len(o.builders) < 1 {
@@ -141,6 +110,7 @@ func (o *APIServerOptions) ModifiedApplyTo(config *genericapiserver.RecommendedC
 	if err != nil {
 		return err
 	}
+
 	return nil
 }
 
@@ -191,6 +161,7 @@ func (o *APIServerOptions) Config() (*genericapiserver.RecommendedConfig, error)
 func (o *APIServerOptions) Validate(args []string) error {
 	errors := []error{}
 	errors = append(errors, o.RecommendedOptions.Validate()...)
+	errors = append(errors, o.factory.GetOptions().ValidateOptions()...)
 	return utilerrors.NewAggregate(errors)
 }
 

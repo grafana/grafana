@@ -18,6 +18,8 @@ import (
 var (
 	// ErrPermissionDenied is returned when the user does not have permission to perform the requested action.
 	ErrPermissionDenied = errors.New("permission denied") // TODO: convert to errutil
+	// ErrNotFound is returned when the requested resource does not exist.
+	ErrNotFound = errors.New("not found") // TODO: convert to errutil
 )
 
 // ReceiverService is the service for managing alertmanager receivers.
@@ -61,19 +63,71 @@ func NewReceiverService(
 	}
 }
 
-func (rs *ReceiverService) canDecrypt(ctx context.Context, user identity.Requester, name string) (bool, error) {
-	receiverAccess := false // TODO: stub, check for read secrets access
-	eval := accesscontrol.EvalPermission(accesscontrol.ActionAlertingProvisioningReadSecrets)
-	provisioningAccess, err := rs.ac.Evaluate(ctx, user, eval)
+func (rs *ReceiverService) shouldDecrypt(ctx context.Context, user identity.Requester, name string, reqDecrypt bool) (bool, error) {
+	// TODO: migrate to new permission
+	eval := accesscontrol.EvalAny(
+		accesscontrol.EvalPermission(accesscontrol.ActionAlertingReceiversReadSecrets),
+		accesscontrol.EvalPermission(accesscontrol.ActionAlertingProvisioningReadSecrets),
+	)
+
+	decryptAccess, err := rs.ac.Evaluate(ctx, user, eval)
 	if err != nil {
 		return false, err
 	}
-	return receiverAccess || provisioningAccess, nil
+
+	if reqDecrypt && !decryptAccess {
+		return false, ErrPermissionDenied
+	}
+
+	return decryptAccess && reqDecrypt, nil
+}
+
+// GetReceiver returns a receiver by name.
+// The receiver's secure settings are decrypted if requested and the user has access to do so.
+func (rs *ReceiverService) GetReceiver(ctx context.Context, q models.GetReceiverQuery, user identity.Requester) (definitions.GettableApiReceiver, error) {
+	if q.Decrypt && user == nil {
+		return definitions.GettableApiReceiver{}, ErrPermissionDenied
+	}
+
+	baseCfg, err := rs.cfgStore.GetLatestAlertmanagerConfiguration(ctx, q.OrgID)
+	if err != nil {
+		return definitions.GettableApiReceiver{}, err
+	}
+
+	cfg := definitions.PostableUserConfig{}
+	err = json.Unmarshal([]byte(baseCfg.AlertmanagerConfiguration), &cfg)
+	if err != nil {
+		return definitions.GettableApiReceiver{}, err
+	}
+
+	provenances, err := rs.provisioningStore.GetProvenances(ctx, q.OrgID, "contactPoint")
+	if err != nil {
+		return definitions.GettableApiReceiver{}, err
+	}
+
+	receivers := cfg.AlertmanagerConfig.Receivers
+	for _, r := range receivers {
+		if r.Name == q.Name {
+			decrypt, err := rs.shouldDecrypt(ctx, user, q.Name, q.Decrypt)
+			if err != nil {
+				return definitions.GettableApiReceiver{}, err
+			}
+			decryptFn := rs.decryptOrRedact(ctx, decrypt, q.Name, "")
+
+			return PostableToGettableApiReceiver(r, provenances, decryptFn, false)
+		}
+	}
+
+	return definitions.GettableApiReceiver{}, ErrNotFound
 }
 
 // GetReceivers returns a list of receivers a user has access to.
 // Receivers can be filtered by name, and secure settings are decrypted if requested and the user has access to do so.
 func (rs *ReceiverService) GetReceivers(ctx context.Context, q models.GetReceiversQuery, user identity.Requester) ([]definitions.GettableApiReceiver, error) {
+	if q.Decrypt && user == nil {
+		return nil, ErrPermissionDenied
+	}
+
 	baseCfg, err := rs.cfgStore.GetLatestAlertmanagerConfiguration(ctx, q.OrgID)
 	if err != nil {
 		return nil, err
@@ -90,7 +144,11 @@ func (rs *ReceiverService) GetReceivers(ctx context.Context, q models.GetReceive
 		return nil, err
 	}
 
-	// TODO: check for list access
+	eval := accesscontrol.EvalPermission(accesscontrol.ActionAlertingReceiversList)
+	listAccess, err := rs.ac.Evaluate(ctx, user, eval)
+	if err != nil {
+		return nil, err
+	}
 
 	var output []definitions.GettableApiReceiver
 	for i := q.Offset; i < len(cfg.AlertmanagerConfig.Receivers); i++ {
@@ -99,24 +157,18 @@ func (rs *ReceiverService) GetReceivers(ctx context.Context, q models.GetReceive
 			continue
 		}
 
-		// TODO: check for scoped read access and continue if not allowed
-
-		decryptAccess, err := rs.canDecrypt(ctx, user, r.Name)
-		if err != nil {
-			return nil, err
-		}
-		if q.Decrypt && !decryptAccess {
-			return nil, ErrPermissionDenied
-		}
-
-		decryptFn := rs.decryptOrRedact(ctx, decryptAccess && q.Decrypt, r.Name, "")
-
-		res, err := PostableToGettableApiReceiver(r, provenances, decryptFn)
+		decrypt, err := rs.shouldDecrypt(ctx, user, r.Name, q.Decrypt)
 		if err != nil {
 			return nil, err
 		}
 
-		// TODO: redact settings if the user only has list access
+		decryptFn := rs.decryptOrRedact(ctx, decrypt, r.Name, "")
+		listOnly := !decrypt && listAccess
+
+		res, err := PostableToGettableApiReceiver(r, provenances, decryptFn, listOnly)
+		if err != nil {
+			return nil, err
+		}
 
 		output = append(output, res)
 		// stop if we have reached the limit or we have found all the requested receivers

@@ -44,6 +44,7 @@ jest.mock('app/core/components/FormPrompt/FormPrompt', () => ({
 const testConfig: SSOProvider = {
   id: '300f9b7c-0488-40db-9763-a22ce8bf6b3e',
   provider: 'github',
+  source: 'database',
   settings: {
     ...emptySettings,
     name: 'GitHub',
@@ -101,8 +102,10 @@ describe('ProviderConfigForm', () => {
       expect(putMock).toHaveBeenCalledWith(
         '/api/v1/sso-settings/github',
         {
-          ...testConfig,
+          id: '300f9b7c-0488-40db-9763-a22ce8bf6b3e',
+          provider: 'github',
           settings: {
+            name: 'GitHub',
             allowedOrganizations: 'test-org1,test-org2',
             clientId: 'test-client-id',
             clientSecret: 'test-client-secret',

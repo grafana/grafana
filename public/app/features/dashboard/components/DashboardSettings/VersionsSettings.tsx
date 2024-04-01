@@ -1,6 +1,5 @@
 import React, { PureComponent } from 'react';
 
-import { config } from '@grafana/runtime';
 import { Spinner, HorizontalGroup } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
 import {
@@ -139,7 +138,7 @@ export class VersionsSettings extends PureComponent<Props, State> {
     const canCompare = versions.filter((version) => version.checked).length === 2;
     const showButtons = versions.length > 1;
     const hasMore = versions.length >= this.limit;
-    const pageNav = config.featureToggles.dockedMegaMenu ? this.props.sectionNav.node.parentItem : undefined;
+    const pageNav = this.props.sectionNav.node.parentItem;
 
     if (viewMode === 'compare') {
       return (

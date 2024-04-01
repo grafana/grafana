@@ -11,8 +11,8 @@ import { UPlotConfigBuilder } from '../config/UPlotConfigBuilder';
 
 import { CloseButton } from './CloseButton';
 
-export const DEFAULT_TOOLTIP_WIDTH = 300;
-export const DEFAULT_TOOLTIP_HEIGHT = 600;
+export const DEFAULT_TOOLTIP_WIDTH = undefined;
+export const DEFAULT_TOOLTIP_HEIGHT = undefined;
 export const TOOLTIP_OFFSET = 10;
 
 // todo: barchart? histogram?
@@ -45,7 +45,7 @@ interface TooltipPlugin2Props {
     viaSync: boolean
   ) => React.ReactNode;
 
-  maxWidth?: number | string;
+  maxWidth?: number;
   maxHeight?: number;
 }
 
@@ -115,7 +115,7 @@ export const TooltipPlugin2 = ({
 
   const sizeRef = useRef<TooltipContainerSize>();
 
-  maxWidth = isPinned ? 'none' : maxWidth ?? DEFAULT_TOOLTIP_WIDTH;
+  maxWidth = isPinned ? DEFAULT_TOOLTIP_WIDTH : maxWidth ?? DEFAULT_TOOLTIP_WIDTH;
   maxHeight ??= DEFAULT_TOOLTIP_HEIGHT;
   const styles = useStyles2(getStyles, maxWidth, maxHeight);
 
@@ -341,8 +341,10 @@ export const TooltipPlugin2 = ({
     });
 
     config.addHook('setSelect', (u) => {
-      if (clientZoom || queryZoom != null) {
-        if (maybeZoomAction(u.cursor!.event)) {
+      let e = u.cursor!.event;
+
+      if (e != null && (clientZoom || queryZoom != null)) {
+        if (maybeZoomAction(e)) {
           if (clientZoom && yDrag) {
             if (u.select.height >= MIN_ZOOM_DIST) {
               for (let key in u.scales!) {
@@ -529,7 +531,7 @@ export const TooltipPlugin2 = ({
   return null;
 };
 
-const getStyles = (theme: GrafanaTheme2, maxWidth: number | string, maxHeight: number) => ({
+const getStyles = (theme: GrafanaTheme2, maxWidth?: number, maxHeight?: number) => ({
   tooltipWrapper: css({
     top: 0,
     left: 0,
@@ -541,8 +543,8 @@ const getStyles = (theme: GrafanaTheme2, maxWidth: number | string, maxHeight: n
     border: `1px solid ${theme.colors.border.weak}`,
     boxShadow: theme.shadows.z2,
     userSelect: 'text',
-    maxWidth: maxWidth,
-    maxHeight: maxHeight,
+    maxWidth: maxWidth ?? 'none',
+    maxHeight: maxHeight ?? 'none',
     overflowY: 'auto',
   }),
   pinned: css({

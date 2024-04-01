@@ -2,7 +2,9 @@ package accesscontrol
 
 import (
 	"context"
+	"errors"
 	"fmt"
+	"strconv"
 	"strings"
 
 	"github.com/grafana/grafana/pkg/registry"
@@ -57,8 +59,7 @@ type SearchOptions struct {
 	ActionPrefix string // Needed for the PoC v1, it's probably going to be removed.
 	Action       string
 	Scope        string
-	UserLogin    string    // Login for which to return information, if none is specified information is returned for all users.
-	UserID       int64     // ID for the user for which to return information, if none is specified information is returned for all users.
+	NamespacedID string    // ID of the identity (ex: user:3, service-account:4)
 	wildcards    Wildcards // private field computed based on the Scope
 }
 
@@ -77,17 +78,26 @@ func (s *SearchOptions) Wildcards() []string {
 	return s.wildcards
 }
 
-func (s *SearchOptions) ResolveUserLogin(ctx context.Context, userSvc user.Service) error {
-	if s.UserLogin == "" {
-		return nil
+func (s *SearchOptions) ComputeUserID() (int64, error) {
+	if s.NamespacedID == "" {
+		return 0, errors.New("namespacedID must be set")
 	}
-	// Resolve userLogin -> userID
-	dbUsr, err := userSvc.GetByLogin(ctx, &user.GetUserByLoginQuery{LoginOrEmail: s.UserLogin})
+	// Split namespaceID into namespace and ID
+	parts := strings.Split(s.NamespacedID, ":")
+	// Validate namespace ID format
+	if len(parts) != 2 {
+		return 0, fmt.Errorf("invalid namespaced ID: %s", s.NamespacedID)
+	}
+	// Validate namespace type is user or service account
+	if parts[0] != identity.NamespaceUser && parts[0] != identity.NamespaceServiceAccount {
+		return 0, fmt.Errorf("invalid namespace: %s", parts[0])
+	}
+	// Validate namespace ID is a number
+	id, err := strconv.ParseInt(parts[1], 10, 64)
 	if err != nil {
-		return err
+		return 0, fmt.Errorf("invalid namespaced ID: %s", s.NamespacedID)
 	}
-	s.UserID = dbUsr.ID
-	return nil
+	return id, nil
 }
 
 type SyncUserRolesCommand struct {

@@ -16,10 +16,12 @@ import (
 
 	"github.com/grafana/grafana/pkg/login/social"
 	"github.com/grafana/grafana/pkg/models/roletype"
+	"github.com/grafana/grafana/pkg/services/auth/identity"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/ssosettings"
 	ssoModels "github.com/grafana/grafana/pkg/services/ssosettings/models"
 	"github.com/grafana/grafana/pkg/services/ssosettings/ssosettingstests"
+	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -669,17 +671,23 @@ func TestSocialGoogle_UserInfo(t *testing.T) {
 
 func TestSocialGoogle_Validate(t *testing.T) {
 	testCases := []struct {
-		name     string
-		settings ssoModels.SSOSettings
-		wantErr  error
+		name      string
+		settings  ssoModels.SSOSettings
+		requester identity.Requester
+		wantErr   error
 	}{
 		{
 			name: "SSOSettings is valid",
 			settings: ssoModels.SSOSettings{
 				Settings: map[string]any{
-					"client_id": "client-id",
+					"client_id":                  "client-id",
+					"allow_assign_grafana_admin": "true",
+					"auth_url":                   "",
+					"token_url":                  "",
+					"api_url":                    "",
 				},
 			},
+			requester: &user.SignedInUser{IsGrafanaAdmin: true},
 		},
 		{
 			name: "fails if settings map contains an invalid field",
@@ -714,6 +722,71 @@ func TestSocialGoogle_Validate(t *testing.T) {
 					"client_id":                  "client-id",
 					"allow_assign_grafana_admin": "true",
 					"skip_org_role_sync":         "true",
+					"auth_url":                   "https://example.com/auth",
+					"token_url":                  "https://example.com/token",
+				},
+			},
+			requester: &user.SignedInUser{IsGrafanaAdmin: true},
+			wantErr:   ssosettings.ErrBaseInvalidOAuthConfig,
+		},
+		{
+			name: "fails if the user is not allowed to update allow assign grafana admin",
+			requester: &user.SignedInUser{
+				IsGrafanaAdmin: false,
+			},
+			settings: ssoModels.SSOSettings{
+				Settings: map[string]any{
+					"client_id":                  "client-id",
+					"allow_assign_grafana_admin": "true",
+					"auth_url":                   "https://example.com/auth",
+					"token_url":                  "https://example.com/token",
+				},
+			},
+			wantErr: ssosettings.ErrBaseInvalidOAuthConfig,
+		},
+		{
+			name: "fails if api url is not empty",
+			settings: ssoModels.SSOSettings{
+				Settings: map[string]any{
+					"client_id": "client-id",
+					"auth_url":  "",
+					"token_url": "",
+					"api_url":   "https://example.com/api",
+				},
+			},
+			wantErr: ssosettings.ErrBaseInvalidOAuthConfig,
+		},
+		{
+			name: "fails if token url is empty",
+			settings: ssoModels.SSOSettings{
+				Settings: map[string]any{
+					"client_id": "client-id",
+					"auth_url":  "https://example.com/auth",
+					"token_url": "",
+				},
+			},
+			wantErr: ssosettings.ErrBaseInvalidOAuthConfig,
+		},
+		{
+			name: "fails if auth url is not empty",
+			settings: ssoModels.SSOSettings{
+				Settings: map[string]any{
+					"client_id": "client-id",
+					"auth_url":  "https://example.com/auth",
+					"token_url": "",
+					"api_url":   "",
+				},
+			},
+			wantErr: ssosettings.ErrBaseInvalidOAuthConfig,
+		},
+		{
+			name: "fails if api token url is not empty",
+			settings: ssoModels.SSOSettings{
+				Settings: map[string]any{
+					"client_id": "client-id",
+					"auth_url":  "",
+					"token_url": "https://example.com/token",
+					"api_url":   "",
 				},
 			},
 			wantErr: ssosettings.ErrBaseInvalidOAuthConfig,
@@ -724,7 +797,11 @@ func TestSocialGoogle_Validate(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			s := NewGoogleProvider(&social.OAuthInfo{}, &setting.Cfg{}, &ssosettingstests.MockService{}, featuremgmt.WithFeatures())
 
-			err := s.Validate(context.Background(), tc.settings)
+			if tc.requester == nil {
+				tc.requester = &user.SignedInUser{IsGrafanaAdmin: false}
+			}
+
+			err := s.Validate(context.Background(), tc.settings, tc.requester)
 			if tc.wantErr != nil {
 				require.ErrorIs(t, err, tc.wantErr)
 				return

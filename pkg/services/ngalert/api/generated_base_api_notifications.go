@@ -19,10 +19,20 @@ import (
 )
 
 type NotificationsApi interface {
+	RouteGetReceiver(*contextmodel.ReqContext) response.Response
+	RouteGetReceivers(*contextmodel.ReqContext) response.Response
 	RouteNotificationsGetTimeInterval(*contextmodel.ReqContext) response.Response
 	RouteNotificationsGetTimeIntervals(*contextmodel.ReqContext) response.Response
 }
 
+func (f *NotificationsApiHandler) RouteGetReceiver(ctx *contextmodel.ReqContext) response.Response {
+	// Parse Path Parameters
+	nameParam := web.Params(ctx.Req)[":name"]
+	return f.handleRouteGetReceiver(ctx, nameParam)
+}
+func (f *NotificationsApiHandler) RouteGetReceivers(ctx *contextmodel.ReqContext) response.Response {
+	return f.handleRouteGetReceivers(ctx)
+}
 func (f *NotificationsApiHandler) RouteNotificationsGetTimeInterval(ctx *contextmodel.ReqContext) response.Response {
 	// Parse Path Parameters
 	nameParam := web.Params(ctx.Req)[":name"]
@@ -34,6 +44,30 @@ func (f *NotificationsApiHandler) RouteNotificationsGetTimeIntervals(ctx *contex
 
 func (api *API) RegisterNotificationsApiEndpoints(srv NotificationsApi, m *metrics.API) {
 	api.RouteRegister.Group("", func(group routing.RouteRegister) {
+		group.Get(
+			toMacaronPath("/api/v1/notifications/receivers/{Name}"),
+			requestmeta.SetOwner(requestmeta.TeamAlerting),
+			requestmeta.SetSLOGroup(requestmeta.SLOGroupHighSlow),
+			api.authorize(http.MethodGet, "/api/v1/notifications/receivers/{Name}"),
+			metrics.Instrument(
+				http.MethodGet,
+				"/api/v1/notifications/receivers/{Name}",
+				api.Hooks.Wrap(srv.RouteGetReceiver),
+				m,
+			),
+		)
+		group.Get(
+			toMacaronPath("/api/v1/notifications/receivers"),
+			requestmeta.SetOwner(requestmeta.TeamAlerting),
+			requestmeta.SetSLOGroup(requestmeta.SLOGroupHighSlow),
+			api.authorize(http.MethodGet, "/api/v1/notifications/receivers"),
+			metrics.Instrument(
+				http.MethodGet,
+				"/api/v1/notifications/receivers",
+				api.Hooks.Wrap(srv.RouteGetReceivers),
+				m,
+			),
+		)
 		group.Get(
 			toMacaronPath("/api/v1/notifications/time-intervals/{name}"),
 			requestmeta.SetOwner(requestmeta.TeamAlerting),

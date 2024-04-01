@@ -9,7 +9,7 @@ import {
   VizOrientation,
 } from '@grafana/data';
 import { config } from '@grafana/runtime';
-import { GraphTransform, GraphTresholdsStyleMode, StackingMode, VisibilityMode } from '@grafana/schema';
+import { GraphTransform, GraphThresholdsStyleMode, StackingMode, VisibilityMode } from '@grafana/schema';
 import { graphFieldOptions, commonOptionsBuilder } from '@grafana/ui';
 
 import { ThresholdsStyleEditor } from '../timeseries/ThresholdsStyleEditor';
@@ -93,7 +93,7 @@ export const plugin = new PanelPlugin<Options, FieldConfig>(BarChartPanel)
         path: 'thresholdsStyle',
         name: 'Show thresholds',
         category: ['Thresholds'],
-        defaultValue: { mode: GraphTresholdsStyleMode.Off },
+        defaultValue: { mode: GraphThresholdsStyleMode.Off },
         settings: {
           options: graphFieldOptions.thresholdsDisplayModes,
         },

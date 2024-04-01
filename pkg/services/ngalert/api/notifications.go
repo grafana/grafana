@@ -1,34 +1,32 @@
 package api
 
 import (
-	"net/http"
-
 	"github.com/grafana/grafana/pkg/api/response"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 )
 
 type NotificationsApiHandler struct {
-	muteTimingService MuteTimingService
+	notificationSrv *NotificationSrv
 }
 
-func NewNotificationsApi(muteTimingService MuteTimingService) NotificationsApi {
+func NewNotificationsApi(notificationSrv *NotificationSrv) *NotificationsApiHandler {
 	return &NotificationsApiHandler{
-		muteTimingService: muteTimingService,
+		notificationSrv: notificationSrv,
 	}
 }
 
 func (f *NotificationsApiHandler) handleRouteNotificationsGetTimeInterval(ctx *contextmodel.ReqContext, name string) response.Response {
-	model, err := f.muteTimingService.GetMuteTiming(ctx.Req.Context(), name, ctx.OrgID)
-	if err != nil {
-		return errorToResponse(err)
-	}
-	return response.JSON(http.StatusOK, model) // TODO convert to timing interval
+	return f.notificationSrv.RouteGetTimeInterval(ctx, name)
 }
 
 func (f *NotificationsApiHandler) handleRouteNotificationsGetTimeIntervals(ctx *contextmodel.ReqContext) response.Response {
-	model, err := f.muteTimingService.GetMuteTimings(ctx.Req.Context(), ctx.OrgID)
-	if err != nil {
-		return errorToResponse(err)
-	}
-	return response.JSON(http.StatusOK, model) // TODO convert to timing interval
+	return f.notificationSrv.RouteGetTimeIntervals(ctx)
+}
+
+func (f *NotificationsApiHandler) handleRouteGetReceiver(ctx *contextmodel.ReqContext, name string) response.Response {
+	return f.notificationSrv.RouteGetReceiver(ctx, name)
+}
+
+func (f *NotificationsApiHandler) handleRouteGetReceivers(ctx *contextmodel.ReqContext) response.Response {
+	return f.notificationSrv.RouteGetReceivers(ctx)
 }

@@ -17,10 +17,12 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/login/social"
+	"github.com/grafana/grafana/pkg/services/auth/identity"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/org"
-	"github.com/grafana/grafana/pkg/services/ssosettings"
+	"github.com/grafana/grafana/pkg/services/ssosettings/validation"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/util"
 )
 
 type SocialBase struct {
@@ -111,13 +113,13 @@ func (s *SocialBase) extractRoleAndAdmin(rawJSON []byte, groups []string) (org.R
 }
 
 func (s *SocialBase) searchRole(rawJSON []byte, groups []string) (org.RoleType, bool) {
-	role, err := s.searchJSONForStringAttr(s.info.RoleAttributePath, rawJSON)
+	role, err := util.SearchJSONForStringAttr(s.info.RoleAttributePath, rawJSON)
 	if err == nil && role != "" {
 		return getRoleFromSearch(role)
 	}
 
 	if groupBytes, err := json.Marshal(groupStruct{groups}); err == nil {
-		role, err := s.searchJSONForStringAttr(s.info.RoleAttributePath, groupBytes)
+		role, err := util.SearchJSONForStringAttr(s.info.RoleAttributePath, groupBytes)
 		if err == nil && role != "" {
 			return getRoleFromSearch(role)
 		}
@@ -220,14 +222,9 @@ func getRoleFromSearch(role string) (org.RoleType, bool) {
 	return org.RoleType(cases.Title(language.Und).String(role)), false
 }
 
-func validateInfo(info *social.OAuthInfo) error {
-	if info.ClientId == "" {
-		return ssosettings.ErrInvalidOAuthConfig("ClientId is empty")
-	}
-
-	if info.AllowAssignGrafanaAdmin && info.SkipOrgRoleSync {
-		return ssosettings.ErrInvalidOAuthConfig("Allow assign Grafana Admin and Skip org role sync are both set thus Grafana Admin role will not be synced. Consider setting one or the other.")
-	}
-
-	return nil
+func validateInfo(info *social.OAuthInfo, requester identity.Requester) error {
+	return validation.Validate(info, requester,
+		validation.RequiredValidator(info.ClientId, "Client Id"),
+		validation.AllowAssignGrafanaAdminValidator,
+		validation.SkipOrgRoleSyncAllowAssignGrafanaAdminValidator)
 }
