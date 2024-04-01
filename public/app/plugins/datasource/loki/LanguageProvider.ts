@@ -119,7 +119,7 @@ export default class LokiLanguageProvider extends LanguageProvider {
   }
 
   /**
-   * Fetch label names using the best endpoint that datasource supports.
+   * Fetch label names using the best applicable endpoint.
    *
    * This asynchronous function returns all available label keys from the data source.
    * It returns a promise that resolves to an array of strings containing the label keys.
@@ -131,8 +131,7 @@ export default class LokiLanguageProvider extends LanguageProvider {
    * @throws An error if the fetch operation fails.
    */
   async fetchLabels(options?: { streamSelector?: string; timeRange?: TimeRange }): Promise<string[]> {
-    // If there is no stream selector or datasource supports labels match API - use /labels endpoint
-    // TODO: add check for datasource supports labels match API: https://github.com/grafana/loki/pull/11982
+    // If there is no stream selector - use /labels endpoint (https://github.com/grafana/loki/pull/11982)
     if (!options || !options.streamSelector) {
       return this.fetchLabelsByLabelsEndpoint(options);
     } else {
@@ -235,7 +234,7 @@ export default class LokiLanguageProvider extends LanguageProvider {
   }
 
   /**
-   * Fetch label values using label/<name>/values endpoint
+   * Fetch label values
    *
    * This asynchronous function fetches values associated with a specified label name.
    * It returns a promise that resolves to an array of strings containing the label values.
