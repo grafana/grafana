@@ -11,7 +11,6 @@ import { getPanelPlugin } from '@grafana/data/test/__mocks__/pluginMocks';
 import { getPluginLinkExtensions, locationService } from '@grafana/runtime';
 import {
   LocalValueVariable,
-  SceneGridItem,
   SceneGridLayout,
   SceneQueryRunner,
   SceneTimeRange,
@@ -24,6 +23,7 @@ import { GetExploreUrlArguments } from 'app/core/utils/explore';
 
 import { buildPanelEditScene } from '../panel-edit/PanelEditor';
 
+import { DashboardGridItem } from './DashboardGridItem';
 import { DashboardScene } from './DashboardScene';
 import { VizPanelLinks, VizPanelLinksMenu } from './PanelLinks';
 import { panelMenuBehavior } from './PanelMenuBehavior';
@@ -590,7 +590,7 @@ async function buildTestScene(options: SceneOptions) {
     },
     body: new SceneGridLayout({
       children: [
-        new SceneGridItem({
+        new DashboardGridItem({
           key: 'griditem-1',
           x: 0,
           y: 0,
