@@ -404,7 +404,7 @@ export default class InfluxDatasource extends DataSourceWithBackend<InfluxQuery,
     return this.metricFindQuery(query);
   }
 
-  getTagValues(options: DataSourceGetTagValuesOptions) {
+  getTagValues(options: DataSourceGetTagValuesOptions<InfluxQuery>) {
     const query = buildMetadataQuery({
       type: 'TAG_VALUES',
       templateService: this.templateSrv,
