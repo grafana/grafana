@@ -89,7 +89,7 @@ func ProvideService(cfg *setting.Cfg, features featuremgmt.FeatureToggles) (*Ser
 	reflection.Register(grpcServer)
 
 	// FIXME: This is a dev env to start the server on a fixed port.
-	lis, err := net.Listen("tcp", "0.0.0.0:8082")
+	lis, err := net.Listen("tcp", "127.0.0.1:8082")
 	if err != nil {
 		return nil, fmt.Errorf("failed to listen: %w", err)
 	}
@@ -143,7 +143,7 @@ func ProvideService(cfg *setting.Cfg, features featuremgmt.FeatureToggles) (*Ser
 			}
 
 			httpServer := &http.Server{
-				Addr: "0.0.0.0:8080",
+				Addr: "127.0.0.1:8080",
 				Handler: cors.New(cors.Options{
 					AllowedOrigins:   []string{"*"},
 					AllowCredentials: true,
