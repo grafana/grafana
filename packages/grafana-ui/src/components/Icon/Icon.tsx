@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 
 import { IconName } from '@grafana/data';
 import { IconProps } from '@grafana/saga-icons';
@@ -12,19 +12,27 @@ interface Props extends IconProps {
 
 export const Icon = React.forwardRef<SVGSVGElement, Props>(
   ({ size = 'md', type = 'default', name, className, style, title = '', ...rest }, ref) => {
-    if (!iconToComponentMap[name]) {
-      console.warn('Icon component passed an invalid icon name', name);
-      return null; // TODO should this be a default icon?
+    const [DynamicIconComponent, setDynamicIconComponent] = useState<React.ComponentType<IconProps> | null>(null);
+    useEffect(() => {
+      const iconName: IconName = name === 'fa fa-spinner' ? 'spinner' : name;
+
+      if (!iconToComponentMap[iconName]) {
+        console.warn('Icon component passed an invalid icon name', iconName);
+        return;
+      }
+      iconToComponentMap[iconName]()
+        .then((Comp) => {
+          setDynamicIconComponent(() => Comp.default);
+        })
+        .catch((error) => console.error(`Failed to load icon: ${iconName}`, error));
+    }, [name]);
+
+    if (!DynamicIconComponent) {
+      const iconSize = getSvgSize(size);
+      return <div style={{ width: iconSize, height: iconSize }} />; //TODO should this return a default icon instead?
     }
 
-    const DynamicIconComponent = React.lazy(iconToComponentMap[name]);
-
-    const iconSize = getSvgSize(size);
-    return (
-      <React.Suspense fallback={<div style={{ width: iconSize, height: iconSize }} />}>
-        <DynamicIconComponent title={title} className={className} style={style} size={size} {...rest} />
-      </React.Suspense>
-    );
+    return <DynamicIconComponent title={title} className={className} style={style} size={size} {...rest} />;
   }
 );
 Icon.displayName = 'Icon';

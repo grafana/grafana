@@ -4,13 +4,8 @@ import { IconProps } from '@grafana/saga-icons';
 
 type IconImport = () => Promise<{ default: React.ComponentType<IconProps> }>;
 
-const importCache: { [iconName: string]: () => Promise<{ default: React.ComponentType<IconProps> }> } = {};
-
 const dynamicIconImport = (iconName: string): IconImport => {
-  if (!importCache[iconName]) {
-    importCache[iconName] = () => import(`@grafana/saga-icons/src/icons-gen/${iconName}`);
-  }
-  return importCache[iconName];
+  return () => import(/* webpackChunkName: "[request]" */ `@grafana/saga-icons/src/icons-gen/${iconName}`);
 };
 
 export const iconToComponentMap = {
@@ -35,9 +30,6 @@ export const iconToComponentMap = {
   'arrow-up': dynamicIconImport('ArrowUp'),
   'arrows-h': dynamicIconImport('ArrowsH'),
   'arrows-v': dynamicIconImport('ArrowsV'),
-  'gf-bar-alignment-after': dynamicIconImport('BarAlignmentAfter'),
-  'gf-bar-alignment-before': dynamicIconImport('BarAlignmentBefore'),
-  'gf-bar-alignment-center': dynamicIconImport('BarAlignmentCenter'),
   'bell-slash': dynamicIconImport('BellSlash'),
   'book-open': dynamicIconImport('BookOpen'),
   'brackets-curly': dynamicIconImport('BracketsCurly'),
@@ -83,6 +75,27 @@ export const iconToComponentMap = {
   'folder-plus': dynamicIconImport('FolderPlus'),
   'folder-upload': dynamicIconImport('FolderUpload'),
   'frontend-observability': dynamicIconImport('FrontendObservability'),
+  'gf-bar-alignment-after': dynamicIconImport('BarAlignmentAfter'),
+  'gf-bar-alignment-before': dynamicIconImport('BarAlignmentBefore'),
+  'gf-bar-alignment-center': dynamicIconImport('BarAlignmentCenter'),
+  'gf-glue': dynamicIconImport('Glue'),
+  'gf-grid': dynamicIconImport('Grid'),
+  'gf-interpolation-linear': dynamicIconImport('InterpolationLinear'),
+  'gf-interpolation-smooth': dynamicIconImport('InterpolationSmooth'),
+  'gf-interpolation-step-after': dynamicIconImport('InterpolationStepAfter'),
+  'gf-interpolation-step-before': dynamicIconImport('InterpolationStepBefore'),
+  'gf-landscape': dynamicIconImport('Landscape'),
+  'gf-layout-simple': dynamicIconImport('LayoutSimple'),
+  'gf-logs': dynamicIconImport('Logs'),
+  'gf-ml': dynamicIconImport('Ml'),
+  'gf-movepane-left': dynamicIconImport('MovepaneLeft'),
+  'gf-movepane-right': dynamicIconImport('MovepaneRight'),
+  'gf-pin': dynamicIconImport('Pin'),
+  'gf-portrait': dynamicIconImport('Portrait'),
+  'gf-prometheus': dynamicIconImport('Prometheus'),
+  'gf-service-account': dynamicIconImport('ServiceAccount'),
+  'gf-show-context': dynamicIconImport('ShowContext'),
+  'gf-traces': dynamicIconImport('Traces'),
   'google-hangouts-alt': dynamicIconImport('GoogleHangoutsAlt'),
   'graph-bar': dynamicIconImport('GraphBar'),
   'heart-break': dynamicIconImport('HeartBreak'),
@@ -93,14 +106,9 @@ export const iconToComponentMap = {
   'horizontal-align-left': dynamicIconImport('HorizontalAlignLeft'),
   'horizontal-align-right': dynamicIconImport('HorizontalAlignRight'),
   'info-circle': dynamicIconImport('InfoCircle'),
-  'gf-interpolation-linear': dynamicIconImport('InterpolationLinear'),
-  'gf-interpolation-smooth': dynamicIconImport('InterpolationSmooth'),
-  'gf-interpolation-step-after': dynamicIconImport('InterpolationStepAfter'),
-  'gf-interpolation-step-before': dynamicIconImport('InterpolationStepBefore'),
   'key-skeleton-alt': dynamicIconImport('KeySkeletonAlt'),
   'layer-group': dynamicIconImport('LayerGroup'),
   'layers-alt': dynamicIconImport('LayersAlt'),
-  'gf-layout-simple': dynamicIconImport('LayoutSimple'),
   'library-panel': dynamicIconImport('LibraryPanel'),
   'line-alt': dynamicIconImport('LineAlt'),
   'list-ol': dynamicIconImport('ListOl'),
@@ -111,8 +119,6 @@ export const iconToComponentMap = {
   'map-marker-plus': dynamicIconImport('MapMarkerPlus'),
   'minus-circle': dynamicIconImport('MinusCircle'),
   'mobile-android': dynamicIconImport('MobileAndroid'),
-  'gf-movepane-left': dynamicIconImport('MovepaneLeft'),
-  'gf-movepane-right': dynamicIconImport('MovepaneRight'),
   'panel-add': dynamicIconImport('PanelAdd'),
   'pathfinder-unite': dynamicIconImport('PathfinderUnite'),
   'plus-circle': dynamicIconImport('PlusCircle'),
@@ -123,10 +129,8 @@ export const iconToComponentMap = {
   'ruler-combined': dynamicIconImport('RulerCombined'),
   'search-minus': dynamicIconImport('SearchMinus'),
   'search-plus': dynamicIconImport('SearchPlus'),
-  'gf-service-account': dynamicIconImport('ServiceAccount'),
   'share-alt': dynamicIconImport('ShareAlt'),
   'shield-exclamation': dynamicIconImport('ShieldExclamation'),
-  'gf-show-context': dynamicIconImport('ShowContext'),
   'sliders-v-alt': dynamicIconImport('SlidersVAlt'),
   'sort-amount-down': dynamicIconImport('SortAmountDown'),
   'sort-amount-up': dynamicIconImport('SortAmountUp'),
@@ -151,7 +155,6 @@ export const iconToComponentMap = {
   'vertical-align-top': dynamicIconImport('VerticalAlignTop'),
   'web-section-alt': dynamicIconImport('WebSectionAlt'),
   'wrap-text': dynamicIconImport('WrapText'),
-  // Add your remaining mappings here
   ai: dynamicIconImport('Ai'),
   amazon: dynamicIconImport('Amazon'),
   anchor: dynamicIconImport('Anchor'),
@@ -197,10 +200,8 @@ export const iconToComponentMap = {
   github: dynamicIconImport('Github'),
   gitlab: dynamicIconImport('Gitlab'),
   globe: dynamicIconImport('Globe'),
-  'gf-glue': dynamicIconImport('Glue'),
   google: dynamicIconImport('Google'),
   grafana: dynamicIconImport('Grafana'),
-  'gf-grid': dynamicIconImport('Grid'),
   heart: dynamicIconImport('Heart'),
   hipchat: dynamicIconImport('Hipchat'),
   history: dynamicIconImport('History'),
@@ -210,15 +211,12 @@ export const iconToComponentMap = {
   info: dynamicIconImport('Info'),
   k6: dynamicIconImport('K6'),
   keyboard: dynamicIconImport('Keyboard'),
-  'gf-landscape': dynamicIconImport('Landscape'),
   line: dynamicIconImport('Line'),
   link: dynamicIconImport('Link'),
   lock: dynamicIconImport('Lock'),
-  'gf-logs': dynamicIconImport('Logs'),
   message: dynamicIconImport('Message'),
   microsoft: dynamicIconImport('Microsoft'),
   minus: dynamicIconImport('Minus'),
-  'gf-ml': dynamicIconImport('Ml'),
   monitor: dynamicIconImport('Monitor'),
   okta: dynamicIconImport('Okta'),
   pagerduty: dynamicIconImport('Pagerduty'),
@@ -227,14 +225,11 @@ export const iconToComponentMap = {
   pause: dynamicIconImport('Pause'),
   pen: dynamicIconImport('Pen'),
   percentage: dynamicIconImport('Percentage'),
-  'gf-pin': dynamicIconImport('Pin'),
   play: dynamicIconImport('Play'),
   plug: dynamicIconImport('Plug'),
   plus: dynamicIconImport('Plus'),
-  'gf-portrait': dynamicIconImport('Portrait'),
   power: dynamicIconImport('Power'),
   process: dynamicIconImport('Process'),
-  'gf-prometheus': dynamicIconImport('Prometheus'),
   repeat: dynamicIconImport('Repeat'),
   rocket: dynamicIconImport('Rocket'),
   rss: dynamicIconImport('Rss'),
@@ -252,7 +247,6 @@ export const iconToComponentMap = {
   sync: dynamicIconImport('Sync'),
   table: dynamicIconImport('Table'),
   times: dynamicIconImport('Times'),
-  'gf-traces': dynamicIconImport('Traces'),
   unarchive: dynamicIconImport('Unarchive'),
   unlock: dynamicIconImport('Unlock'),
   upload: dynamicIconImport('Upload'),
@@ -261,4 +255,5 @@ export const iconToComponentMap = {
   'fa fa-spinner': dynamicIconImport('Spinner'),
 };
 
+// TODO: This should be used instead the type from grafana/data
 export type IconName = keyof typeof iconToComponentMap;
