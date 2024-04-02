@@ -267,9 +267,6 @@ func (s *Storage) Watch(ctx context.Context, key string, opts storage.ListOption
 // The returned contents may be delayed, but it is guaranteed that they will
 // match 'opts.ResourceVersion' according 'opts.ResourceVersionMatch'.
 func (s *Storage) Get(ctx context.Context, key string, opts storage.GetOptions, objPtr runtime.Object) error {
-	// #TODO: remove this after we figure out how to pass it in
-	// opts.IgnoreNotFound = true
-
 	requestInfo, ok := request.RequestInfoFrom(ctx)
 	if !ok {
 		return apierrors.NewInternalError(fmt.Errorf("could not get request info"))

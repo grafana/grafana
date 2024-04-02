@@ -32,7 +32,6 @@ func (d *DualWriterMode3) Create(ctx context.Context, obj runtime.Object, create
 		return created, err
 	}
 
-	// #TODO figure out if we need to clear RV and UID for legacy call
 	if _, err := legacy.Create(ctx, obj, createValidation, options); err != nil {
 		klog.Error("unable to create object in legacy storage", "error", err)
 	}
@@ -71,7 +70,6 @@ func (d *DualWriterMode3) Update(ctx context.Context, name string, objInfo rest.
 
 	accessor.SetUID("")
 	accessor.SetResourceVersion("")
-	// #TODO do we still need to use objInfo.UpdatedObject?
 	return legacy.Update(ctx, name, &updateWrapper{
 		upstream: objInfo,
 		updated:  obj,

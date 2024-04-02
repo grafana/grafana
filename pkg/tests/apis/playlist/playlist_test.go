@@ -85,7 +85,6 @@ func TestIntegrationPlaylist(t *testing.T) {
 		}))
 	})
 
-	// #TODO : do we want to run doPlaylistTestsWithModes for the previous two subtests?
 	t.Run("with dual write (file)", func(t *testing.T) {
 		doPlaylistTests(t, apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
 			AppModeProduction:    true,
@@ -433,9 +432,6 @@ func doPlaylistTests(t *testing.T, helper *apis.K8sTestHelper) *apis.K8sTestHelp
 	return helper
 }
 
-// #TODO add other checks for other methods and modes
-// #TODO : refactor once we figure out testing structure
-// #TODO : flesh out each test case, checking all requirements
 func doPlaylistTestsWithModes(t *testing.T, helper *apis.K8sTestHelper) *apis.K8sTestHelper {
 	t.Run("Mode 2: check that List returns correct resource version", func(t *testing.T) {
 		rest.CurrentMode = rest.Mode2
@@ -548,7 +544,6 @@ func doPlaylistTestsWithModes(t *testing.T, helper *apis.K8sTestHelper) *apis.K8
 	return helper
 }
 
-// #TODO : refactor
 func deleteEntries(t *testing.T, client *apis.K8sResourceClient, helper *apis.K8sTestHelper, uids []string) {
 	for _, uid := range uids {
 		err := client.Resource.Delete(context.Background(), uid, metav1.DeleteOptions{})

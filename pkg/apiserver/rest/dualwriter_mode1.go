@@ -13,9 +13,6 @@ type DualWriterMode1 struct {
 	DualWriter
 }
 
-// #TODO: for all practical purposes mode 1 only gets enabled if the feature flag `unifiedStorage` is
-// enabled. DualWriterMode1 is not needed except for testing so that's why only Create has been added.
-
 // NewDualWriterMode1 returns a new DualWriter in mode 1.
 func NewDualWriterMode1(legacy LegacyStorage, storage Storage) *DualWriterMode1 {
 	return &DualWriterMode1{*newDualWriter(legacy, storage)}

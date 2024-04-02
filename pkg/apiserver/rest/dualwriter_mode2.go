@@ -17,10 +17,6 @@ type DualWriterMode2 struct {
 	DualWriter
 }
 
-// #TODO: the other methods still work because we are embedding dualwriter right?
-// better way to create a mode 2 dual writer?
-// #TODO add /update documentation comments
-
 // NewDualWriterMode2 returns a new DualWriter in mode 2.
 func NewDualWriterMode2(legacy LegacyStorage, storage Storage) *DualWriterMode2 {
 	return &DualWriterMode2{*newDualWriter(legacy, storage)}
@@ -40,8 +36,7 @@ func (d *DualWriterMode2) Get(ctx context.Context, name string, options *metav1.
 	}
 
 	s, err := d.Storage.Get(ctx, name, &metav1.GetOptions{})
-	if err != nil && !apierrors.IsNotFound(err) {
-		// #TODO error handling
+	if err != nil {
 		return l, nil
 	}
 
@@ -55,7 +50,6 @@ func (d *DualWriterMode2) Get(ctx context.Context, name string, options *metav1.
 		return l, err
 	}
 
-	// #TODO: figure out if we want to set anything else
 	accessorL.SetResourceVersion(accessorS.GetResourceVersion())
 	return l, nil
 }
@@ -77,7 +71,6 @@ func (d *DualWriterMode2) List(ctx context.Context, options *metainternalversion
 		return nil, err
 	}
 
-	// #TODO if no entries are found will we get an error?
 	storageList, err := d.Storage.List(ctx, options)
 	if err != nil {
 		return nil, err
@@ -87,27 +80,19 @@ func (d *DualWriterMode2) List(ctx context.Context, options *metainternalversion
 		return nil, err
 	}
 
-	// #TODO: define this type separately?
-	// #TODO: figure out what other fields we want
 	type fieldsToEnrich struct {
 		resourceVersion string
 	}
 
-	// #TODO: is there a better way to do this than create this intermediate map?
-	// Look into whether GetContinue()/EachListItem() could help
 	m := map[string]fieldsToEnrich{}
 	for _, obj := range sl {
 		accessor, err := meta.Accessor(obj)
 		if err != nil {
 			return nil, err
 		}
-		// #TODO: is name the best identification for this use case?
-		// #TODO: figure out if we want to set anything else
 		m[accessor.GetName()] = fieldsToEnrich{accessor.GetResourceVersion()}
 	}
 
-	// #TODO see if it would make more sense to have a more general merge function where
-	// one gets prioritised for resource version etc
 	for _, obj := range ll {
 		accessor, err := meta.Accessor(obj)
 		if err != nil {
@@ -136,7 +121,6 @@ func (d *DualWriterMode2) Create(ctx context.Context, obj runtime.Object, create
 		return created, err
 	}
 
-	// #TODO check where we want to do the clearing of RV and UID
 	accessor, err := meta.Accessor(created)
 	if err != nil {
 		return created, err
@@ -153,27 +137,16 @@ func (d *DualWriterMode2) Create(ctx context.Context, obj runtime.Object, create
 
 // Update overrides the default behavior of the Storage and writes to both the LegacyStorage and Storage depending on the DualWriter mode.
 func (d *DualWriterMode2) Update(ctx context.Context, name string, objInfo rest.UpdatedObjectInfo, createValidation rest.ValidateObjectFunc, updateValidation rest.ValidateObjectUpdateFunc, forceAllowCreate bool, options *metav1.UpdateOptions) (runtime.Object, bool, error) {
-	// #TODO: figure out which method should be used anytime Get is called
-	// #TODO figure out failure modes, how to guarantee consistency of the updates across both stores
-	// #TODO replace with a rest.CreaterUpdater check?
 	legacy, ok := d.legacy.(rest.Updater)
 	if !ok {
 		return nil, false, fmt.Errorf("legacy storage rest.Updater is missing")
 	}
 
-	// #TODO figure out how to set opts.IgnoreNotFound = true here
-	// or how to specifically check for an apierrors.NewNotFound error
-	// #TODO for now assume that we are updating entities which had previously
-	// created in entity. GuaranteedUpdate is going to take into account this case:
-	// https://github.com/grafana/grafana/pull/85206
-	// #TODO figure out wht the correct resource version should be and
-	// set it properly in Get and List calls
 	// Get the previous version from k8s storage (the one)
 	var old runtime.Object
 	old, err := d.Storage.Get(ctx, name, &metav1.GetOptions{})
 	if err != nil {
 		if apierrors.IsNotFound(err) {
-			// #TODO figure out what the resource version and UIDs should be in this case
 			_, ok := d.legacy.(rest.Getter)
 			if !ok {
 				return nil, false, fmt.Errorf("legacy storage rest.Getter is missing")
@@ -228,5 +201,7 @@ func (d *DualWriterMode2) Update(ctx context.Context, name string, objInfo rest.
 		updated:  obj, // returned as the object that will be updated
 	}
 
+	// #TODO: relies on GuaranteedUpdate creating the object if
+	// it doesn't exist: https://github.com/grafana/grafana/pull/85206
 	return d.Storage.Update(ctx, name, objInfo, createValidation, updateValidation, forceAllowCreate, options)
 }
