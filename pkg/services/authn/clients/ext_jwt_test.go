@@ -52,7 +52,7 @@ var (
 			Expiry:   jwt.NewNumericDate(time.Date(2023, 5, 3, 0, 0, 0, 0, time.UTC)),
 			IssuedAt: jwt.NewNumericDate(time.Date(2023, 5, 2, 0, 0, 0, 0, time.UTC)),
 		},
-		Scopes:               []string{"profile", "groups"},
+		Scopes: []string{"profile", "groups"},
 	}
 	pk, _ = rsa.GenerateKey(rand.Reader, 4096)
 )
