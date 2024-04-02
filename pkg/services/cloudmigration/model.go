@@ -52,7 +52,7 @@ type CloudMigrationRun struct {
 }
 
 type CloudMigrationRunList struct {
-	Runs []CloudMigrationRun `json:"runs"`
+	Runs []MigrateDataResponseDTO `json:"runs"`
 }
 
 // swagger:parameters createMigration

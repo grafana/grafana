@@ -318,7 +318,7 @@ type DeleteMigrationRequest struct {
 // swagger:response cloudMigrationRunResponse
 type CloudMigrationRunResponse struct {
 	// in: body
-	Body cloudmigration.CloudMigrationRun
+	Body cloudmigration.MigrateDataResponseDTO
 }
 
 // swagger:response cloudMigrationListResponse
