@@ -1,8 +1,9 @@
 import React from 'react';
 
+import { IconName } from '@grafana/data';
 import { IconProps } from '@grafana/saga-icons';
 
-import { iconToComponentMap, IconName } from './iconMap';
+import { iconToComponentMap } from './iconMap';
 
 interface Props extends IconProps {
   name: IconName;
