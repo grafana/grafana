@@ -19,11 +19,9 @@ weight: 100
 
 # XY chart
 
-XY charts provide a way to visualize arbitrary x and y values in a graph so that you can see the easily show the relationship between two variables.
+XY charts provide a way to visualize arbitrary x and y values in a graph so that you can easily show the relationship between two variables.
 
 ![An xy chart showing height weight distribution](screenshot-xy-chart-v10.4.png)
-
-<!--add more ideal use cases/examples here-->
 
 ## Supported data formats
 
@@ -35,12 +33,18 @@ You can use any type of tabular data in an xy chart. This type of visualization 
 
 Set how series data is mapped in the chart.
 
-- **Auto** - Automatically generates series from all available data frames (or datasets). You can filter to select only one frame.
-- **Manual** - Explicitly define the series by selecting from available data frames.
+- [Auto](#auto-series-mapping-options) - Automatically generates series from all available data frames (or datasets). You can filter to select only one frame.
+- [Manual](#manual-series-mapping-options) - Explicitly define the series by selecting from available data frames.
 
 Depending on your series mapping selection, some of the **XY chart** options differ.
 
 #### Auto series mapping options
+
+When you select **Auto** as your series mapping mode, the following options become available:
+
+- [Frame](#frame)
+- [X-field](#x-field)
+- [Y-fields](#y-fields)
 
 ##### Frame
 
@@ -60,23 +64,17 @@ In the resulting chart, the values in column "a" are used as the x-field unless 
 
 ##### Y-fields
 
-The series of the chart are generated from the y-fields. After the x-field is set, by default, all the remaining number fields in the data frame are designated as the y-fields. You can select one y-field to include or you can use [overrides][Configure an override] to exclude y-fields individually. To disable y-fields individually:
+The series of the chart are generated from the y-fields. After the x-field is set, by default, all the remaining number fields in the data frame are designated as the y-fields. You can select one y-field to include or you can use [overrides][Configure field overrides] to exclude y-fields individually. To disable y-fields individually:
 
 - Series > Hide in area > Viz
 
 #### Manual series mapping options
 
-##### Frame
+When you select **Manual** as your series mapping mode, the following options become available:
 
-Select your data frame or dataset. You have more than one data frame.
-
-##### X-field
-
-Select which field the x-axis represents.
-
-##### Y-field
-
-Select which field the y-axis represents.
+- **Frame** - Select your data frame or dataset. You can have more than one data frame.
+- **X-field** - Select which field the x-axis represents.
+- **Y-field** - Select which field the y-axis represents.
 
 ### Size field
 
@@ -140,7 +138,7 @@ Legend options control the series names and statistics that appear under or to t
 
 ## Axis options
 
-Options under the axis category change how the x- and y-axes are rendered. Some options do not take effect until you click outside of the field option box you are editing. You can also or press `Enter`.
+Options under the axis category change how the x- and y-axes are rendered. Some options don't take effect until you click outside of the field option box you are editing. You can also or press `Enter`.
 
 ### Placement
 
