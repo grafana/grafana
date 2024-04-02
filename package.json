@@ -85,6 +85,7 @@
     "@react-types/menu": "3.9.7",
     "@react-types/overlays": "3.8.5",
     "@react-types/shared": "3.22.1",
+    "@rtk-query/codegen-openapi": "^1.2.0",
     "@rtsao/plugin-proposal-class-properties": "7.0.1-patch.1",
     "@swc/core": "1.4.2",
     "@swc/helpers": "0.5.8",
