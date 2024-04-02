@@ -403,7 +403,7 @@ export const getConnectionStyles = (
   const strokeWidth = info.size ? scene.context.getScale(info.size).get(lastRowIndex) : defaultArrowSize;
   const strokeRadius = info.radius ? scene.context.getScale(info.radius).get(lastRowIndex) : 0;
   const arrowDirection = info.direction ? info.direction : defaultArrowDirection;
-  const lineStyle = getLineStyle(info.lineStyle);
+  const lineStyle = getLineStyle(info.lineStyle?.lineStyle);
   return { strokeColor, strokeWidth, strokeRadius, arrowDirection, lineStyle };
 };
 

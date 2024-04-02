@@ -5,7 +5,7 @@ import { PanelOptionsSupplier } from '@grafana/data/src/panel/PanelPlugin';
 import { ColorDimensionConfig, ScaleDimensionConfig } from '@grafana/schema';
 import { config } from 'app/core/config';
 
-import { LineStyle } from '../../plugins/panel/canvas/types';
+import { LineStyleConfig } from '../../plugins/panel/canvas/editor/LineStyleEditor';
 import { DimensionContext } from '../dimensions';
 
 import { BackgroundConfig, Constraint, LineConfig, Placement, StandardEditorConfig } from './types';
@@ -57,7 +57,7 @@ export interface CanvasConnection {
   path: ConnectionPath;
   color?: ColorDimensionConfig;
   size?: ScaleDimensionConfig;
-  lineStyle?: LineStyle;
+  lineStyle?: LineStyleConfig;
   vertices?: ConnectionCoordinates[];
   radius?: ScaleDimensionConfig;
   direction?: ConnectionDirection;
