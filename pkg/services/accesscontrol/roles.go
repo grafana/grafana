@@ -327,9 +327,7 @@ func DeclareFixedRoles(service Service, cfg *setting.Cfg) error {
 		Grants: []string{RoleGrafanaAdmin},
 	}
 
-	if cfg.AuthConfigUIAdminAccess {
-		authenticationConfigWriter.Grants = append(authenticationConfigWriter.Grants, string(org.RoleAdmin))
-	}
+	authenticationConfigWriter.Grants = append(authenticationConfigWriter.Grants, string(org.RoleAdmin))
 
 	return service.DeclareFixedRoles(ldapReader, ldapWriter, orgUsersReader, orgUsersWriter,
 		settingsReader, statsReader, usersReader, usersWriter, authenticationConfigWriter, generalAuthConfigWriter)
