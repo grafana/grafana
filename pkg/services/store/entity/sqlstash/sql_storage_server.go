@@ -1373,7 +1373,7 @@ func (s *sqlEntityServer) Watch(w entity.EntityStore_WatchServer) error {
 	if r.SendInitialEvents {
 		r.Since, err = s.watchInit(r, w)
 		if err != nil {
-			fmt.Printf("watch init error: %v\n", err)
+			s.log.Error("watch init error", "err", err)
 			return err
 		}
 
@@ -1385,7 +1385,6 @@ func (s *sqlEntityServer) Watch(w entity.EntityStore_WatchServer) error {
 	err = s.watch(r, w)
 	if err != nil {
 		s.log.Error("watch error", "err", err)
-		fmt.Printf("watch error: %v\n", err)
 		return err
 	}
 
@@ -1486,7 +1485,6 @@ func (s *sqlEntityServer) watchInit(r *entity.EntityWatchRequest, w entity.Entit
 			query, args := entityQuery.ToQuery()
 
 			s.log.Debug("watch init", "query", query, "args", args)
-			fmt.Printf("watch init: %v %v\n", query, args)
 
 			rows, err := s.sess.Query(w.Context(), query, args...)
 			if err != nil {
@@ -1517,29 +1515,7 @@ func (s *sqlEntityServer) watchInit(r *entity.EntityWatchRequest, w entity.Entit
 					Entity:    result,
 				}
 
-				/*
-					if r.Since > 0 && (result.Action == entity.Entity_UPDATED || result.Action == entity.Entity_DELETED) {
-						rr := &entity.EntityHistoryRequest{
-							Guid:       result.Guid,
-							Before:     result.ResourceVersion,
-							Limit:      1,
-							Sort:       []string{"resource_version_desc"},
-							WithBody:   r.WithBody,
-							WithStatus: r.WithStatus,
-						}
-						history, err := s.history(s.ctx, rr)
-						if err != nil {
-							s.log.Error("error reading previous entity", "guid", result.Guid, "err", err)
-							fmt.Printf("error reading previous entity: %v\n", err)
-							return err
-						}
-
-						resp.Previous = history.Versions[0]
-					}
-				*/
-
 				s.log.Debug("sending init event", "guid", result.Guid, "action", result.Action, "rv", result.ResourceVersion)
-				// fmt.Printf("sending init event: %v\n", resp)
 
 				err = w.Send(resp)
 				if err != nil {
@@ -1661,7 +1637,6 @@ func (s *sqlEntityServer) poll(since int64, out chan *entity.EntityWatchResponse
 					history, err := s.history(s.ctx, rr)
 					if err != nil {
 						s.log.Error("error reading previous entity", "guid", updated.Guid, "err", err)
-						fmt.Printf("error reading previous entity: %v\n", err)
 						return err
 					}
 
@@ -1741,7 +1716,6 @@ func watchMatches(r *entity.EntityWatchRequest, result *entity.Entity) bool {
 // watch is a helper to get the next set of entities and send them to the client
 func (s *sqlEntityServer) watch(r *entity.EntityWatchRequest, w entity.EntityStore_WatchServer) error {
 	s.log.Debug("watch started", "since", r.Since)
-	// fmt.Printf("watch started since %d\n", r.Since)
 
 	evts, err := s.broadcaster.Subscribe(w.Context())
 	if err != nil {
@@ -1761,13 +1735,11 @@ func (s *sqlEntityServer) watch(r *entity.EntityWatchRequest, w entity.EntitySto
 			}
 			if err != nil {
 				s.log.Error("error receiving message", "err", err)
-				fmt.Printf("error receiving message: %v\n", err)
 				stop <- struct{}{}
 				return
 			}
 			if r.Action == entity.EntityWatchRequest_STOP {
 				s.log.Debug("watch stop requested")
-				fmt.Printf("watch stop requested\n")
 				stop <- struct{}{}
 				return
 			}
@@ -1779,20 +1751,18 @@ func (s *sqlEntityServer) watch(r *entity.EntityWatchRequest, w entity.EntitySto
 		select {
 		// stop signal
 		case <-stop:
-			// fmt.Printf("watch stop\n")
+			s.log.Debug("watch stopped")
 			return nil
 		// user closed the connection
 		case <-w.Context().Done():
-			// fmt.Printf("watch context done\n")
+			s.log.Debug("watch context done")
 			return nil
 		// got a raw result from the broadcaster
 		case result, ok := <-evts:
 			if !ok {
-				// fmt.Printf("watch events closed\n")
+				s.log.Debug("watch events closed")
 				return nil
 			}
-
-			// fmt.Printf("got result: %v\n", result)
 
 			// Invalid result or resource version too old
 			if result == nil || result.Entity == nil || result.Entity.ResourceVersion <= since {
@@ -1824,14 +1794,12 @@ func (s *sqlEntityServer) watchEvent(r *entity.EntityWatchRequest, result *entit
 		// if neither the previous nor the current result match our watch params, skip it
 		if !watchMatches(r, result.Entity) && !watchMatches(r, result.Previous) {
 			s.log.Debug("watch result not matched", "guid", result.Entity.Guid, "action", result.Entity.Action, "rv", result.Entity.ResourceVersion)
-			// fmt.Printf("event and previous both didn't match %v\n", result.Previous)
 			return nil, nil
 		}
 	} else {
 		// if result doesn't match our watch params, skip it
 		if !watchMatches(r, result.Entity) {
 			s.log.Debug("watch result not matched", "guid", result.Entity.Guid, "action", result.Entity.Action, "rv", result.Entity.ResourceVersion)
-			// fmt.Printf("event didn't match\n")
 			return nil, nil
 		}
 	}
@@ -1851,7 +1819,6 @@ func (s *sqlEntityServer) watchEvent(r *entity.EntityWatchRequest, result *entit
 	}
 
 	s.log.Debug("sending watch result", "guid", result.Entity.Guid, "action", result.Entity.Action, "rv", result.Entity.ResourceVersion)
-	// fmt.Printf("sending watch result: %v\n", result)
 	return result, nil
 }
 

@@ -119,9 +119,6 @@ type Key struct {
 	Name      string
 }
 
-// While this is an inefficient way to differentiate the ambiguous keys,
-// we only need it for initial namespace calculation in watch
-// This helps us with watcher tests that don't always set up requestcontext correctly
 func convertToParsedKey(key string) (*Key, error) {
 	// NOTE: the following supports the watcher tests that run against v1/pods
 	// Other than that, there are ambiguities in the key format that only field selector

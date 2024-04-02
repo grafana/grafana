@@ -10,7 +10,6 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"log"
 	"reflect"
 	"strconv"
 
@@ -28,6 +27,7 @@ import (
 	"k8s.io/apiserver/pkg/storage"
 	"k8s.io/apiserver/pkg/storage/storagebackend"
 	"k8s.io/apiserver/pkg/storage/storagebackend/factory"
+	"k8s.io/klog/v2"
 
 	entityStore "github.com/grafana/grafana/pkg/services/store/entity"
 )
@@ -245,16 +245,14 @@ func (s *Storage) Watch(ctx context.Context, key string, opts storage.ListOption
 
 	client, err := s.store.Watch(ctx)
 	if err != nil {
-		fmt.Printf("watch failed: %s\n", err)
 		return nil, err
 	}
 
 	err = client.Send(req)
 	if err != nil {
-		fmt.Printf("watch send failed: %s\n", err)
-		err = client.CloseSend()
-		if err != nil {
-			fmt.Printf("watch close failed: %s\n", err)
+		err2 := client.CloseSend()
+		if err2 != nil {
+			klog.Errorf("watch close failed: %s\n", err2)
 		}
 		return watch.NewEmptyWatch(), err
 	}
@@ -629,28 +627,26 @@ decode:
 	for {
 		err := d.client.Context().Err()
 		if err != nil {
-			fmt.Printf("client: context error: %s\n", err)
+			klog.Errorf("client: context error: %s\n", err)
 			return watch.Error, nil, err
 		}
 
 		resp, err := d.client.Recv()
 		if errors.Is(err, io.EOF) {
-			// fmt.Printf("client: watch is done\n")
 			return watch.Error, nil, err
 		}
 
 		if grpcStatus.Code(err) == grpcCodes.Canceled {
-			// fmt.Printf("client: watch was canceled\n")
 			return watch.Error, nil, err
 		}
 
 		if err != nil {
-			fmt.Printf("client: error receiving result: %s", err)
+			klog.Errorf("client: error receiving result: %s", err)
 			return watch.Error, nil, err
 		}
 
 		if resp.Entity == nil {
-			fmt.Printf("client: received nil entity\n")
+			klog.Errorf("client: received nil entity\n")
 			continue decode
 		}
 
@@ -660,7 +656,7 @@ decode:
 			// here k8s expects an empty object with just resource version and k8s.io/initial-events-end annotation
 			accessor, err := meta.Accessor(obj)
 			if err != nil {
-				log.Printf("error getting object accessor: %s", err)
+				klog.Errorf("error getting object accessor: %s", err)
 				return watch.Error, nil, err
 			}
 
@@ -671,7 +667,7 @@ decode:
 
 		err = entityToResource(resp.Entity, obj, d.codec)
 		if err != nil {
-			log.Printf("error decoding entity: %s", err)
+			klog.Errorf("error decoding entity: %s", err)
 			return watch.Error, nil, err
 		}
 
@@ -681,7 +677,7 @@ decode:
 			// apply any predicates not handled in storage
 			matches, err := d.opts.Predicate.Matches(obj)
 			if err != nil {
-				log.Printf("error matching object: %s", err)
+				klog.Errorf("error matching object: %s", err)
 				return watch.Error, nil, err
 			}
 			if !matches {
@@ -695,7 +691,7 @@ decode:
 			// apply any predicates not handled in storage
 			matches, err := d.opts.Predicate.Matches(obj)
 			if err != nil {
-				log.Printf("error matching object: %s", err)
+				klog.Errorf("error matching object: %s", err)
 				return watch.Error, nil, err
 			}
 
@@ -705,14 +701,14 @@ decode:
 			if resp.Previous != nil {
 				err = entityToResource(resp.Previous, prevObj, d.codec)
 				if err != nil {
-					log.Printf("error decoding entity: %s", err)
+					klog.Errorf("error decoding entity: %s", err)
 					return watch.Error, nil, err
 				}
 
 				// apply any predicates not handled in storage
 				prevMatches, err = d.opts.Predicate.Matches(prevObj)
 				if err != nil {
-					log.Printf("error matching object: %s", err)
+					klog.Errorf("error matching object: %s", err)
 					return watch.Error, nil, err
 				}
 			}
@@ -730,7 +726,7 @@ decode:
 
 				accessor, err := meta.Accessor(obj)
 				if err != nil {
-					log.Printf("error getting object accessor: %s", err)
+					klog.Errorf("error getting object accessor: %s", err)
 					return watch.Error, nil, err
 				}
 
@@ -746,14 +742,14 @@ decode:
 			if resp.Previous != nil {
 				err = entityToResource(resp.Previous, obj, d.codec)
 				if err != nil {
-					log.Printf("error decoding entity: %s", err)
+					klog.Errorf("error decoding entity: %s", err)
 					return watch.Error, nil, err
 				}
 
 				// here k8s expects the previous object but with the new resource version
 				accessor, err := meta.Accessor(obj)
 				if err != nil {
-					log.Printf("error getting object accessor: %s", err)
+					klog.Errorf("error getting object accessor: %s", err)
 					return watch.Error, nil, err
 				}
 
@@ -763,7 +759,7 @@ decode:
 			// apply any predicates not handled in storage
 			matches, err := d.opts.Predicate.Matches(obj)
 			if err != nil {
-				log.Printf("error matching object: %s", err)
+				klog.Errorf("error matching object: %s", err)
 				return watch.Error, nil, err
 			}
 			if !matches {
@@ -778,10 +774,9 @@ decode:
 }
 
 func (d *Decoder) Close() {
-	// fmt.Printf("client: closing watch stream\n")
 	err := d.client.CloseSend()
 	if err != nil {
-		// fmt.Printf("error closing watch stream: %s", err)
+		klog.Errorf("error closing watch stream: %s", err)
 	}
 }
 
