@@ -30,7 +30,7 @@ The logs visualization shows the result of queries that were entered in the Quer
 
 To limit the number of lines rendered, you can use the **Max data points** setting in the **Query options**. If it is not set, then the data source will usually enforce a default limit.
 
-In the following video you can watch a walkthrough creating a Log Panel Visualization. You will learn as well how to customize a few settings and some Log Panel caveats, check out the video:
+The following video provides a walkthrough of creating a logs visualization. You'll also learn how to customize some settings and some log visualization caveats:
 
 {{< youtube id="jSSi_x-fD_8" >}}
 
