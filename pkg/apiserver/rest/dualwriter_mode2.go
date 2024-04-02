@@ -30,28 +30,15 @@ func (d *DualWriterMode2) Get(ctx context.Context, name string, options *metav1.
 		return nil, fmt.Errorf("legacy storage rest.Getter is missing")
 	}
 
-	l, err := legacy.Get(ctx, name, &metav1.GetOptions{})
-	if err != nil {
+	s, err := d.Storage.Get(ctx, name, &metav1.GetOptions{})
+	if err == nil {
+		return s, err
+	}
+	if !apierrors.IsNotFound(err) {
 		return nil, err
 	}
 
-	s, err := d.Storage.Get(ctx, name, &metav1.GetOptions{})
-	if err != nil {
-		return l, nil
-	}
-
-	accessorL, err := meta.Accessor(l)
-	if err != nil {
-		return l, err
-	}
-
-	accessorS, err := meta.Accessor(s)
-	if err != nil {
-		return l, err
-	}
-
-	accessorL.SetResourceVersion(accessorS.GetResourceVersion())
-	return l, nil
+	return legacy.Get(ctx, name, &metav1.GetOptions{})
 }
 
 // List overrides the default behavior of the Storage and retrieves objects from
@@ -144,21 +131,9 @@ func (d *DualWriterMode2) Update(ctx context.Context, name string, objInfo rest.
 
 	// Get the previous version from k8s storage (the one)
 	var old runtime.Object
-	old, err := d.Storage.Get(ctx, name, &metav1.GetOptions{})
+	old, err := d.Get(ctx, name, &metav1.GetOptions{})
 	if err != nil {
-		if apierrors.IsNotFound(err) {
-			_, ok := d.legacy.(rest.Getter)
-			if !ok {
-				return nil, false, fmt.Errorf("legacy storage rest.Getter is missing")
-			}
-
-			old, err = d.legacy.Get(ctx, name, &metav1.GetOptions{})
-			if err != nil {
-				return nil, false, err
-			}
-		} else {
-			return nil, false, err
-		}
+		return nil, false, err
 	}
 
 	accessor, err := meta.Accessor(old)
