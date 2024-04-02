@@ -1,6 +1,5 @@
-import { useEffect, useRef } from 'react';
+import { useEffect } from 'react';
 
-import { AppChromeService } from 'app/core/components/AppChrome/AppChromeService';
 import { Branding } from 'app/core/components/Branding/Branding';
 import { useGrafana } from 'app/core/context/GrafanaContext';
 import { useNavModel } from 'app/core/hooks/useNavModel';
@@ -10,11 +9,8 @@ import { ExploreQueryParams } from 'app/types';
 import { isFulfilled, hasKey } from './utils';
 
 export function useExplorePageTitle(params: ExploreQueryParams) {
-  const navModel = useRef(useNavModel('explore'));
-  const chromeRef = useRef<AppChromeService>();
-  const dsService = useRef(getDatasourceSrv());
+  const navModel = useNavModel('explore');
   const { chrome } = useGrafana();
-  chromeRef.current = chrome;
 
   useEffect(() => {
     if (!params.panes || typeof params.panes !== 'string') {
@@ -44,28 +40,26 @@ export function useExplorePageTitle(params: ExploreQueryParams) {
           return Promise.reject();
         }
 
-        return dsService.current.get(pane.datasource);
+        return getDatasourceSrv().get(pane.datasource);
       })
     )
       .then((results) => results.filter(isFulfilled).map((result) => result.value))
       .then((datasources) => {
-        const names = datasources.map((ds) => ds.name);
-
-        if (names.length === 0) {
-          global.document.title = `${navModel.current.main.text} - ${Branding.AppTitle}`;
-          chromeRef.current?.update({
+        if (datasources.length === 0) {
+          global.document.title = `${navModel.main.text} - ${Branding.AppTitle}`;
+          chrome.update({
             pageNav: undefined,
           });
           return;
         }
 
-        const namesString = names.join(' | ');
-        chromeRef.current?.update({
+        const namesString = datasources.map((ds) => ds.name).join(' | ');
+        chrome.update({
           pageNav: {
             text: namesString,
           },
         });
-        global.document.title = `${navModel.current.main.text} - ${namesString} - ${Branding.AppTitle}`;
+        global.document.title = `${navModel.main.text} - ${namesString} - ${Branding.AppTitle}`;
       });
-  }, [params.panes]);
+  }, [params.panes, navModel.main.text, chrome]);
 }
