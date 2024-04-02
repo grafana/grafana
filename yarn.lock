@@ -3489,7 +3489,7 @@ __metadata:
     "@types/uuid": "npm:9.0.8"
     buffer: "npm:6.0.3"
     events: "npm:3.3.0"
-    glob: "npm:10.3.10"
+    glob: "npm:10.3.12"
     i18next: "npm:^23.0.0"
     lodash: "npm:4.17.21"
     lru-cache: "npm:10.2.0"
@@ -3912,7 +3912,7 @@ __metadata:
     copy-webpack-plugin: "npm:12.0.2"
     eslint-webpack-plugin: "npm:4.1.0"
     fork-ts-checker-webpack-plugin: "npm:9.0.2"
-    glob: "npm:10.3.10"
+    glob: "npm:10.3.12"
     replace-in-file-webpack-plugin: "npm:1.0.6"
     swc-loader: "npm:0.2.6"
     tslib: "npm:2.6.2"
@@ -4001,7 +4001,7 @@ __metadata:
     eslint-webpack-plugin: "npm:4.1.0"
     eventemitter3: "npm:5.0.1"
     fork-ts-checker-webpack-plugin: "npm:9.0.2"
-    glob: "npm:10.3.10"
+    glob: "npm:10.3.12"
     jest: "npm:29.7.0"
     jest-environment-jsdom: "npm:29.7.0"
     jest-matcher-utils: "npm:29.7.0"
@@ -18324,18 +18324,18 @@ __metadata:
   languageName: node
   linkType: hard
 
-"glob@npm:10.3.10, glob@npm:^10.0.0, glob@npm:^10.2.2, glob@npm:^10.2.5, glob@npm:^10.2.7, glob@npm:^10.3.10, glob@npm:^10.3.7":
-  version: 10.3.10
-  resolution: "glob@npm:10.3.10"
+"glob@npm:10.3.12, glob@npm:^10.0.0, glob@npm:^10.2.2, glob@npm:^10.2.5, glob@npm:^10.2.7, glob@npm:^10.3.10, glob@npm:^10.3.7":
+  version: 10.3.12
+  resolution: "glob@npm:10.3.12"
   dependencies:
     foreground-child: "npm:^3.1.0"
-    jackspeak: "npm:^2.3.5"
+    jackspeak: "npm:^2.3.6"
     minimatch: "npm:^9.0.1"
-    minipass: "npm:^5.0.0 || ^6.0.2 || ^7.0.0"
-    path-scurry: "npm:^1.10.1"
+    minipass: "npm:^7.0.4"
+    path-scurry: "npm:^1.10.2"
   bin:
     glob: dist/esm/bin.mjs
-  checksum: 10/38bdb2c9ce75eb5ed168f309d4ed05b0798f640b637034800a6bf306f39d35409bf278b0eaaffaec07591085d3acb7184a201eae791468f0f617771c2486a6a8
+  checksum: 10/9e8186abc22dc824b5dd86cefd8e6b5621a72d1be7f68bacc0fd681e8c162ec5546660a6ec0553d6a74757a585e655956c7f8f1a6d24570e8d865c307323d178
   languageName: node
   linkType: hard
 
@@ -18711,7 +18711,7 @@ __metadata:
     file-saver: "npm:2.0.5"
     fork-ts-checker-webpack-plugin: "npm:9.0.2"
     framework-utils: "npm:^1.1.0"
-    glob: "npm:10.3.10"
+    glob: "npm:10.3.12"
     history: "npm:4.10.1"
     hoist-non-react-statics: "npm:3.3.2"
     html-loader: "npm:5.0.0"
@@ -20683,7 +20683,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"jackspeak@npm:^2.3.5":
+"jackspeak@npm:^2.3.6":
   version: 2.3.6
   resolution: "jackspeak@npm:2.3.6"
   dependencies:
@@ -22258,7 +22258,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"lru-cache@npm:10.2.0, lru-cache@npm:^10.0.1, lru-cache@npm:^9.1.1 || ^10.0.0":
+"lru-cache@npm:10.2.0, lru-cache@npm:^10.0.1, lru-cache@npm:^10.2.0":
   version: 10.2.0
   resolution: "lru-cache@npm:10.2.0"
   checksum: 10/502ec42c3309c0eae1ce41afca471f831c278566d45a5273a0c51102dee31e0e250a62fa9029c3370988df33a14188a38e682c16143b794de78668de3643e302
@@ -22946,7 +22946,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"minipass@npm:^5.0.0 || ^6.0.2 || ^7.0.0, minipass@npm:^7.0.2, minipass@npm:^7.0.3":
+"minipass@npm:^5.0.0 || ^6.0.2 || ^7.0.0, minipass@npm:^7.0.2, minipass@npm:^7.0.3, minipass@npm:^7.0.4":
   version: 7.0.4
   resolution: "minipass@npm:7.0.4"
   checksum: 10/e864bd02ceb5e0707696d58f7ce3a0b89233f0d686ef0d447a66db705c0846a8dc6f34865cd85256c1472ff623665f616b90b8ff58058b2ad996c5de747d2d18
@@ -24630,13 +24630,13 @@ __metadata:
   languageName: node
   linkType: hard
 
-"path-scurry@npm:^1.10.1, path-scurry@npm:^1.6.1":
-  version: 1.10.1
-  resolution: "path-scurry@npm:1.10.1"
+"path-scurry@npm:^1.10.2, path-scurry@npm:^1.6.1":
+  version: 1.10.2
+  resolution: "path-scurry@npm:1.10.2"
   dependencies:
-    lru-cache: "npm:^9.1.1 || ^10.0.0"
+    lru-cache: "npm:^10.2.0"
     minipass: "npm:^5.0.0 || ^6.0.2 || ^7.0.0"
-  checksum: 10/eebfb8304fef1d4f7e1486df987e4fd77413de4fce16508dea69fcf8eb318c09a6b15a7a2f4c22877cec1cb7ecbd3071d18ca9de79eeece0df874a00f1f0bdc8
+  checksum: 10/a2bbbe8dc284c49dd9be78ca25f3a8b89300e0acc24a77e6c74824d353ef50efbf163e64a69f4330b301afca42d0e2229be0560d6d616ac4e99d48b4062016b1
   languageName: node
   linkType: hard
 
