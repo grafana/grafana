@@ -3304,7 +3304,7 @@ __metadata:
     "@types/lodash": "npm:4.17.0"
     "@types/node": "npm:20.11.30"
     "@types/prismjs": "npm:1.26.3"
-    "@types/react": "npm:18.2.73"
+    "@types/react": "npm:18.2.74"
     "@types/testing-library__jest-dom": "npm:5.14.9"
     fast-deep-equal: "npm:^3.1.3"
     i18next: "npm:^23.0.0"
@@ -3341,7 +3341,7 @@ __metadata:
     "@types/jest": "npm:29.5.12"
     "@types/lodash": "npm:4.17.0"
     "@types/prismjs": "npm:1.26.3"
-    "@types/react": "npm:18.2.73"
+    "@types/react": "npm:18.2.74"
     "@types/react-dom": "npm:18.2.23"
     "@types/testing-library__jest-dom": "npm:5.14.9"
     css-loader: "npm:6.10.0"
@@ -3382,7 +3382,7 @@ __metadata:
     "@types/jest": "npm:29.5.12"
     "@types/lodash": "npm:4.17.0"
     "@types/node": "npm:20.11.30"
-    "@types/react": "npm:18.2.73"
+    "@types/react": "npm:18.2.74"
     "@types/testing-library__jest-dom": "npm:5.14.9"
     "@types/uuid": "npm:9.0.8"
     d3-random: "npm:^3.0.1"
@@ -3446,7 +3446,7 @@ __metadata:
     "@testing-library/react": "npm:14.2.2"
     "@testing-library/user-event": "npm:14.5.2"
     "@types/lodash": "npm:4.17.0"
-    "@types/react": "npm:18.2.73"
+    "@types/react": "npm:18.2.74"
     lodash: "npm:4.17.21"
     monaco-editor: "npm:0.34.0"
     react: "npm:18.2.0"
@@ -3480,7 +3480,7 @@ __metadata:
     "@types/lodash": "npm:4.17.0"
     "@types/node": "npm:20.11.30"
     "@types/prismjs": "npm:1.26.3"
-    "@types/react": "npm:18.2.73"
+    "@types/react": "npm:18.2.74"
     "@types/react-test-renderer": "npm:18.0.7"
     "@types/testing-library__jest-dom": "npm:5.14.9"
     debounce-promise: "npm:3.1.2"
@@ -3532,7 +3532,7 @@ __metadata:
     "@types/lodash": "npm:4.17.0"
     "@types/node": "npm:20.11.30"
     "@types/prismjs": "npm:1.26.3"
-    "@types/react": "npm:18.2.73"
+    "@types/react": "npm:18.2.74"
     "@types/react-dom": "npm:18.2.23"
     "@types/semver": "npm:7.5.8"
     "@types/uuid": "npm:9.0.8"
@@ -3577,7 +3577,7 @@ __metadata:
     "@testing-library/react": "npm:14.2.2"
     "@types/jest": "npm:29.5.12"
     "@types/lodash": "npm:4.17.0"
-    "@types/react": "npm:18.2.73"
+    "@types/react": "npm:18.2.74"
     lodash: "npm:4.17.21"
     react: "npm:18.2.0"
     react-use: "npm:17.5.0"
@@ -3624,7 +3624,7 @@ __metadata:
     "@types/marked": "npm:5.0.2"
     "@types/node": "npm:20.11.30"
     "@types/papaparse": "npm:5.3.14"
-    "@types/react": "npm:18.2.73"
+    "@types/react": "npm:18.2.74"
     "@types/react-dom": "npm:18.2.23"
     "@types/string-hash": "npm:1.1.3"
     "@types/tinycolor2": "npm:1.4.6"
@@ -3855,7 +3855,7 @@ __metadata:
     "@types/d3": "npm:^7"
     "@types/jest": "npm:^29.5.4"
     "@types/lodash": "npm:4.17.0"
-    "@types/react": "npm:18.2.73"
+    "@types/react": "npm:18.2.74"
     "@types/react-virtualized-auto-sizer": "npm:1.0.4"
     "@types/tinycolor2": "npm:1.4.6"
     babel-jest: "npm:29.7.0"
@@ -3936,7 +3936,7 @@ __metadata:
     "@testing-library/react": "npm:14.2.2"
     "@testing-library/user-event": "npm:14.5.2"
     "@types/jest": "npm:^29.5.4"
-    "@types/react": "npm:18.2.73"
+    "@types/react": "npm:18.2.74"
     "@types/systemjs": "npm:6.13.5"
     "@types/testing-library__jest-dom": "npm:5.14.9"
     jest: "npm:^29.6.4"
@@ -4022,7 +4022,7 @@ __metadata:
     "@types/node": "npm:20.11.30"
     "@types/pluralize": "npm:^0.0.33"
     "@types/prismjs": "npm:1.26.3"
-    "@types/react": "npm:18.2.73"
+    "@types/react": "npm:18.2.74"
     "@types/react-beautiful-dnd": "npm:13.1.8"
     "@types/react-dom": "npm:18.2.23"
     "@types/react-highlight-words": "npm:0.16.7"
@@ -4115,7 +4115,7 @@ __metadata:
     "@types/history": "npm:4.7.11"
     "@types/jest": "npm:29.5.12"
     "@types/lodash": "npm:4.17.0"
-    "@types/react": "npm:18.2.73"
+    "@types/react": "npm:18.2.74"
     "@types/react-dom": "npm:18.2.23"
     "@types/systemjs": "npm:6.13.5"
     esbuild: "npm:0.18.12"
@@ -4151,7 +4151,7 @@ __metadata:
     "@svgr/plugin-prettier": "npm:^8.1.0"
     "@svgr/plugin-svgo": "npm:^8.1.0"
     "@types/node": "npm:20.11.30"
-    "@types/react": "npm:18.2.73"
+    "@types/react": "npm:18.2.74"
     "@types/react-dom": "npm:18.2.23"
     esbuild: "npm:0.18.12"
     prettier: "npm:3.2.5"
@@ -4225,7 +4225,7 @@ __metadata:
     "@testing-library/user-event": "npm:14.5.2"
     "@types/jest": "npm:^29.5.4"
     "@types/lodash": "npm:4.17.0"
-    "@types/react": "npm:18.2.73"
+    "@types/react": "npm:18.2.74"
     "@types/react-virtualized-auto-sizer": "npm:1.0.4"
     "@types/systemjs": "npm:6.13.5"
     "@types/testing-library__jest-dom": "npm:5.14.9"
@@ -4312,7 +4312,7 @@ __metadata:
     "@types/mock-raf": "npm:1.0.6"
     "@types/node": "npm:20.11.30"
     "@types/prismjs": "npm:1.26.3"
-    "@types/react": "npm:18.2.73"
+    "@types/react": "npm:18.2.74"
     "@types/react-beautiful-dnd": "npm:13.1.8"
     "@types/react-calendar": "npm:3.9.0"
     "@types/react-color": "npm:3.0.12"
@@ -10264,13 +10264,13 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@types/react@npm:*, @types/react@npm:18.2.73, @types/react@npm:>=16":
-  version: 18.2.73
-  resolution: "@types/react@npm:18.2.73"
+"@types/react@npm:*, @types/react@npm:18.2.74, @types/react@npm:>=16":
+  version: 18.2.74
+  resolution: "@types/react@npm:18.2.74"
   dependencies:
     "@types/prop-types": "npm:*"
     csstype: "npm:^3.0.2"
-  checksum: 10/799e30e73464dff40e04f4eb7499ebc31f99b1711a69263b9af340af738e35c9cdf53084e3dacc3b21c031aaa0cba1b51f4ba60490204b7abb75f115b841583f
+  checksum: 10/4057aa7d082d434f8e580e5aebd4007e5dbe7f8e9ae5e506a34a629e382070694a0401bf3f0d38fe8d64f4b38622e5794341e634b9739784deae19b037ae43fa
   languageName: node
   linkType: hard
 
@@ -18728,7 +18728,7 @@ __metadata:
     "@types/papaparse": "npm:5.3.14"
     "@types/pluralize": "npm:^0.0.33"
     "@types/prismjs": "npm:1.26.3"
-    "@types/react": "npm:18.2.73"
+    "@types/react": "npm:18.2.74"
     "@types/react-beautiful-dnd": "npm:13.1.8"
     "@types/react-dom": "npm:18.2.23"
     "@types/react-grid-layout": "npm:1.3.5"
@@ -23550,21 +23550,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"node-fetch@npm:^2.0.0, node-fetch@npm:^2.6.7":
-  version: 2.6.12
-  resolution: "node-fetch@npm:2.6.12"
-  dependencies:
-    whatwg-url: "npm:^5.0.0"
-  peerDependencies:
-    encoding: ^0.1.0
-  peerDependenciesMeta:
-    encoding:
-      optional: true
-  checksum: 10/370ed4d906edad9709a81b54a0141d37d2973a27dc80c723d8ac14afcec6dc67bc6c70986a96992b64ec75d08159cc4b65ce6aa9063941168ea5ac73b24df9f8
-  languageName: node
-  linkType: hard
-
-"node-fetch@npm:^2.6.1":
+"node-fetch@npm:^2.0.0, node-fetch@npm:^2.6.1, node-fetch@npm:^2.6.7":
   version: 2.7.0
   resolution: "node-fetch@npm:2.7.0"
   dependencies:
@@ -30844,7 +30830,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"typescript@npm:5.3.3, typescript@npm:>=2.7, typescript@npm:>=3 < 6, typescript@npm:^5.0.4":
+"typescript@npm:5.3.3":
   version: 5.3.3
   resolution: "typescript@npm:5.3.3"
   bin:
@@ -30854,7 +30840,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"typescript@npm:^5.0.0, typescript@npm:^5.2.2":
+"typescript@npm:>=2.7, typescript@npm:>=3 < 6, typescript@npm:^5.0.0, typescript@npm:^5.0.4, typescript@npm:^5.2.2":
   version: 5.4.3
   resolution: "typescript@npm:5.4.3"
   bin:
@@ -30874,7 +30860,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"typescript@patch:typescript@npm%3A5.3.3#optional!builtin<compat/typescript>, typescript@patch:typescript@npm%3A>=2.7#optional!builtin<compat/typescript>, typescript@patch:typescript@npm%3A>=3 < 6#optional!builtin<compat/typescript>, typescript@patch:typescript@npm%3A^5.0.4#optional!builtin<compat/typescript>":
+"typescript@patch:typescript@npm%3A5.3.3#optional!builtin<compat/typescript>":
   version: 5.3.3
   resolution: "typescript@patch:typescript@npm%3A5.3.3#optional!builtin<compat/typescript>::version=5.3.3&hash=e012d7"
   bin:
@@ -30884,7 +30870,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"typescript@patch:typescript@npm%3A^5.0.0#optional!builtin<compat/typescript>, typescript@patch:typescript@npm%3A^5.2.2#optional!builtin<compat/typescript>":
+"typescript@patch:typescript@npm%3A>=2.7#optional!builtin<compat/typescript>, typescript@patch:typescript@npm%3A>=3 < 6#optional!builtin<compat/typescript>, typescript@patch:typescript@npm%3A^5.0.0#optional!builtin<compat/typescript>, typescript@patch:typescript@npm%3A^5.0.4#optional!builtin<compat/typescript>, typescript@patch:typescript@npm%3A^5.2.2#optional!builtin<compat/typescript>":
   version: 5.4.3
   resolution: "typescript@patch:typescript@npm%3A5.4.3#optional!builtin<compat/typescript>::version=5.4.3&hash=5adc0c"
   bin:

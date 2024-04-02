@@ -69,7 +69,7 @@
     "@types/marked": "5.0.2",
     "@types/node": "20.11.30",
     "@types/papaparse": "5.3.14",
-    "@types/react": "18.2.73",
+    "@types/react": "18.2.74",
     "@types/react-dom": "18.2.23",
     "@types/tinycolor2": "1.4.6",
     "esbuild": "0.18.12",
