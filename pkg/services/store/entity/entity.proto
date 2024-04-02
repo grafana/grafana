@@ -92,6 +92,7 @@ message Entity {
     UPDATED = 2;
     DELETED = 3;
     ERROR = 4;
+    BOOKMARK = 5;
   }
 }
 
@@ -372,6 +373,11 @@ message EntityWatchRequest {
 
   // Return the full status in each payload
   bool with_status = 7;
+
+  // Return initial events
+  bool send_initial_events = 9;
+
+  bool allow_watch_bookmarks = 10;
 }
 
 message EntityWatchResponse {

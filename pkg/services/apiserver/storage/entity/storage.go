@@ -205,9 +205,26 @@ func (s *Storage) Watch(ctx context.Context, key string, opts storage.ListOption
 		Key: []string{
 			k.String(),
 		},
-		Labels:     map[string]string{},
-		WithBody:   true,
-		WithStatus: true,
+		Labels:              map[string]string{},
+		WithBody:            true,
+		WithStatus:          true,
+		SendInitialEvents:   false,
+		AllowWatchBookmarks: opts.Predicate.AllowWatchBookmarks,
+	}
+
+	if opts.ResourceVersion != "" {
+		rv, err := strconv.ParseInt(opts.ResourceVersion, 10, 64)
+		if err != nil {
+			return nil, apierrors.NewBadRequest(fmt.Sprintf("invalid resource version: %s", opts.ResourceVersion))
+		}
+
+		req.Since = rv
+	}
+
+	if opts.SendInitialEvents == nil && req.Since == 0 {
+		req.SendInitialEvents = true
+	} else if opts.SendInitialEvents != nil {
+		req.SendInitialEvents = *opts.SendInitialEvents
 	}
 
 	if requirements.Folder != nil {
@@ -224,15 +241,6 @@ func (s *Storage) Watch(ctx context.Context, key string, opts storage.ListOption
 		if r.Operator() == selection.Equals {
 			req.Labels[r.Key()] = r.Values().List()[0]
 		}
-	}
-
-	if opts.ResourceVersion != "" {
-		rv, err := strconv.ParseInt(opts.ResourceVersion, 10, 64)
-		if err != nil {
-			return nil, apierrors.NewBadRequest(fmt.Sprintf("invalid resource version: %s", opts.ResourceVersion))
-		}
-
-		req.Since = rv
 	}
 
 	client, err := s.store.Watch(ctx)
@@ -627,12 +635,12 @@ decode:
 
 		resp, err := d.client.Recv()
 		if errors.Is(err, io.EOF) {
-			fmt.Printf("client: watch is done\n")
+			// fmt.Printf("client: watch is done\n")
 			return watch.Error, nil, err
 		}
 
 		if grpcStatus.Code(err) == grpcCodes.Canceled {
-			fmt.Printf("client: watch was canceled\n")
+			// fmt.Printf("client: watch was canceled\n")
 			return watch.Error, nil, err
 		}
 
@@ -641,7 +649,25 @@ decode:
 			return watch.Error, nil, err
 		}
 
+		if resp.Entity == nil {
+			fmt.Printf("client: received nil entity\n")
+			continue decode
+		}
+
 		obj := d.newFunc()
+
+		if resp.Entity.Action == entityStore.Entity_BOOKMARK {
+			// here k8s expects an empty object with just resource version and k8s.io/initial-events-end annotation
+			accessor, err := meta.Accessor(obj)
+			if err != nil {
+				log.Printf("error getting object accessor: %s", err)
+				return watch.Error, nil, err
+			}
+
+			accessor.SetResourceVersion(fmt.Sprintf("%d", resp.Entity.ResourceVersion))
+			accessor.SetAnnotations(map[string]string{"k8s.io/initial-events-end": "true"})
+			return watch.Bookmark, obj, nil
+		}
 
 		err = entityToResource(resp.Entity, obj, d.codec)
 		if err != nil {
@@ -752,10 +778,10 @@ decode:
 }
 
 func (d *Decoder) Close() {
-	fmt.Printf("client: closing watch stream\n")
+	// fmt.Printf("client: closing watch stream\n")
 	err := d.client.CloseSend()
 	if err != nil {
-		fmt.Printf("error closing watch stream: %s", err)
+		// fmt.Printf("error closing watch stream: %s", err)
 	}
 }
 

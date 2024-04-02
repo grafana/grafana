@@ -26,9 +26,11 @@ import (
 
 	"github.com/grafana/grafana/pkg/services/apiserver/storage/entity"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/services/sqlstore"
 	entityStore "github.com/grafana/grafana/pkg/services/store/entity"
 	"github.com/grafana/grafana/pkg/services/store/entity/db/dbimpl"
 	"github.com/grafana/grafana/pkg/services/store/entity/sqlstash"
+	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tests/testinfra"
 	"github.com/grafana/grafana/pkg/tests/testsuite"
 )
@@ -40,10 +42,10 @@ func TestMain(m *testing.M) {
 	testsuite.Run(m)
 }
 
-func createTestContext(t *testing.T) (client entityStore.EntityStoreClient) {
+func createTestContext(t *testing.T) (entityStore.EntityStoreClient, factory.DestroyFunc) {
 	t.Helper()
 
-	dir, path := testinfra.CreateGrafDir(t, testinfra.GrafanaOpts{
+	grafDir, cfgPath := testinfra.CreateGrafDir(t, testinfra.GrafanaOpts{
 		EnableFeatureToggles: []string{
 			featuremgmt.FlagGrpcServer,
 			featuremgmt.FlagUnifiedStorage,
@@ -52,9 +54,18 @@ func createTestContext(t *testing.T) (client entityStore.EntityStoreClient) {
 		GRPCServerAddress: "127.0.0.1:0", // :0 for choosing the port automatically
 	})
 
-	_, env := testinfra.StartGrafanaEnv(t, dir, path)
+	cfg, err := setting.NewCfgFromArgs(setting.CommandLineArgs{Config: cfgPath, HomePath: grafDir})
+	assert.NoError(t, err)
 
-	eDB, err := dbimpl.ProvideEntityDB(env.SQLStore, env.SQLStore.Cfg, env.FeatureToggles)
+	featureManager, err := featuremgmt.ProvideManagerService(cfg)
+	assert.NoError(t, err)
+
+	featureToggles := featuremgmt.ProvideToggles(featureManager)
+
+	db := sqlstore.InitTestDBWithMigration(t, nil, sqlstore.InitTestDBOpt{EnsureDefaultOrgAndUser: false})
+	require.NoError(t, err)
+
+	eDB, err := dbimpl.ProvideEntityDB(db, cfg, featureToggles)
 	require.NoError(t, err)
 
 	err = eDB.Init()
@@ -63,9 +74,9 @@ func createTestContext(t *testing.T) (client entityStore.EntityStoreClient) {
 	store, err := sqlstash.ProvideSQLEntityServer(eDB)
 	require.NoError(t, err)
 
-	client = entityStore.NewEntityStoreClientLocal(store)
+	client := entityStore.NewEntityStoreClientLocal(store)
 
-	return client
+	return client, func() { store.Stop() }
 }
 
 func init() {
@@ -105,9 +116,9 @@ func testSetup(t *testing.T, opts ...setupOption) (context.Context, storage.Inte
 
 	config := storagebackend.NewDefaultConfig(setupOpts.prefix, setupOpts.codec)
 
-	client := createTestContext(t)
+	client, destroyFunc := createTestContext(t)
 
-	store, destroyFunc, err := entity.NewStorage(
+	store, _, err := entity.NewStorage(
 		config.ForResource(setupOpts.groupResource),
 		setupOpts.groupResource,
 		client,
@@ -128,10 +139,6 @@ func testSetup(t *testing.T, opts ...setupOption) (context.Context, storage.Inte
 	wrappedStore := &RequestInfoWrapper{
 		store: store,
 		gr:    setupOpts.groupResource,
-	}
-
-	if destroyFunc == nil {
-		destroyFunc = func() {}
 	}
 
 	return ctx, wrappedStore, destroyFunc, nil

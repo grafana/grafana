@@ -107,6 +107,10 @@ func (db *SQLite3) TruncateDBTables(engine *xorm.Engine) error {
 		switch table.Name {
 		case "migration_log":
 			continue
+		case "sqlite_sequence":
+			if _, err := sess.Exec("UPDATE sqlite_sequence SET seq = 0 WHERE name != 'dashboard_acl';"); err != nil {
+				return fmt.Errorf("failed to cleanup sqlite_sequence: %w", err)
+			}
 		case "dashboard_acl":
 			// keep default dashboard permissions
 			if _, err := sess.Exec(fmt.Sprintf("DELETE FROM %q WHERE dashboard_id != -1 AND org_id != -1;", table.Name)); err != nil {
@@ -120,9 +124,6 @@ func (db *SQLite3) TruncateDBTables(engine *xorm.Engine) error {
 				return fmt.Errorf("failed to truncate table %q: %w", table.Name, err)
 			}
 		}
-	}
-	if _, err := sess.Exec("UPDATE sqlite_sequence SET seq = 0 WHERE name != 'dashboard_acl';"); err != nil {
-		return fmt.Errorf("failed to cleanup sqlite_sequence: %w", err)
 	}
 	return nil
 }

@@ -7,6 +7,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"io"
 	"math/rand"
 	"slices"
 	"strings"
@@ -14,6 +15,8 @@ import (
 
 	"github.com/bwmarrin/snowflake"
 	"github.com/google/uuid"
+	"google.golang.org/protobuf/proto"
+
 	folder "github.com/grafana/grafana/pkg/apis/folder/v0alpha1"
 	"github.com/grafana/grafana/pkg/infra/appcontext"
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -31,11 +34,14 @@ const entityHistoryTable = "entity_history"
 // Make sure we implement both store + admin
 var _ entity.EntityStoreServer = &sqlEntityServer{}
 
-func ProvideSQLEntityServer(db db.EntityDBInterface /*, cfg *setting.Cfg */) (entity.EntityStoreServer, error) {
+func ProvideSQLEntityServer(db db.EntityDBInterface /*, cfg *setting.Cfg */) (*sqlEntityServer, error) {
+	ctx, cancel := context.WithCancel(context.Background())
+
 	entityServer := &sqlEntityServer{
-		db:  db,
-		log: log.New("sql-entity-server"),
-		ctx: context.Background(),
+		db:     db,
+		log:    log.New("sql-entity-server"),
+		ctx:    ctx,
+		cancel: cancel,
 	}
 
 	if err := prometheus.Register(NewStorageMetrics()); err != nil {
@@ -53,6 +59,8 @@ type sqlEntityServer struct {
 	snowflake   *snowflake.Node
 	broadcaster Broadcaster[*entity.EntityWatchResponse]
 	ctx         context.Context
+	cancel      context.CancelFunc
+	stream      chan *entity.EntityWatchResponse
 }
 
 func (s *sqlEntityServer) Init() error {
@@ -90,6 +98,8 @@ func (s *sqlEntityServer) Init() error {
 
 	// set up the broadcaster
 	s.broadcaster, err = NewBroadcaster(s.ctx, func(stream chan *entity.EntityWatchResponse) error {
+		s.stream = stream
+
 		// start the poller
 		go s.poller(stream)
 
@@ -100,6 +110,10 @@ func (s *sqlEntityServer) Init() error {
 	}
 
 	return nil
+}
+
+func (s *sqlEntityServer) Stop() {
+	s.cancel()
 }
 
 type FieldSelectRequest interface {
@@ -475,6 +489,12 @@ func (s *sqlEntityServer) Create(ctx context.Context, r *entity.CreateEntityRequ
 		rsp.Status = entity.CreateEntityResponse_ERROR
 	}
 
+	evt := &entity.EntityWatchResponse{
+		Timestamp: time.Now().UnixMilli(),
+		Entity:    rsp.Entity,
+	}
+	s.stream <- evt
+
 	return rsp, err
 }
 
@@ -506,8 +526,11 @@ func (s *sqlEntityServer) Update(ctx context.Context, r *entity.UpdateEntityRequ
 		Status: entity.UpdateEntityResponse_UPDATED, // Will be changed if not true
 	}
 
-	err := s.sess.WithTransaction(ctx, func(tx *session.SessionTx) error {
-		current, err := s.read(ctx, tx, &entity.ReadEntityRequest{
+	var previous *entity.Entity
+	var err error
+
+	err = s.sess.WithTransaction(ctx, func(tx *session.SessionTx) error {
+		previous, err = s.read(ctx, tx, &entity.ReadEntityRequest{
 			Key:        r.Entity.Key,
 			WithBody:   true,
 			WithStatus: true,
@@ -517,58 +540,60 @@ func (s *sqlEntityServer) Update(ctx context.Context, r *entity.UpdateEntityRequ
 		}
 
 		// Optimistic locking
-		if r.PreviousVersion > 0 && r.PreviousVersion != current.ResourceVersion {
+		if r.PreviousVersion > 0 && r.PreviousVersion != previous.ResourceVersion {
 			StorageServerMetrics.OptimisticLockFailed.WithLabelValues("update").Inc()
 			return fmt.Errorf("optimistic lock failed")
 		}
 
 		// if we didn't find an existing entity
-		if current.Guid == "" {
+		if previous.Guid == "" {
 			return fmt.Errorf("entity not found")
 		}
 
-		rsp.Entity.Guid = current.Guid
+		rsp.Entity.Guid = previous.Guid
 
 		// Clear the refs
 		if _, err := tx.Exec(ctx, "DELETE FROM entity_ref WHERE guid=?", rsp.Entity.Guid); err != nil {
 			return err
 		}
 
+		updated := proto.Clone(previous).(*entity.Entity)
+
 		if r.Entity.GroupVersion != "" {
-			current.GroupVersion = r.Entity.GroupVersion
+			updated.GroupVersion = r.Entity.GroupVersion
 		}
 
 		if r.Entity.Folder != "" {
-			current.Folder = r.Entity.Folder
+			updated.Folder = r.Entity.Folder
 		}
 		if r.Entity.Slug != "" {
-			current.Slug = r.Entity.Slug
+			updated.Slug = r.Entity.Slug
 		}
 
 		if r.Entity.Body != nil {
-			current.Body = r.Entity.Body
-			current.Size = int64(len(current.Body))
+			updated.Body = r.Entity.Body
+			updated.Size = int64(len(updated.Body))
 		}
 
 		if r.Entity.Meta != nil {
-			current.Meta = r.Entity.Meta
+			updated.Meta = r.Entity.Meta
 		}
 
 		if r.Entity.Status != nil {
-			current.Status = r.Entity.Status
+			updated.Status = r.Entity.Status
 		}
 
-		etag := createContentsHash(current.Body, current.Meta, current.Status)
-		current.ETag = etag
+		etag := createContentsHash(updated.Body, updated.Meta, updated.Status)
+		updated.ETag = etag
 
-		current.UpdatedAt = updatedAt
-		current.UpdatedBy = updatedBy
+		updated.UpdatedAt = updatedAt
+		updated.UpdatedBy = updatedBy
 
 		if r.Entity.Title != "" {
-			current.Title = r.Entity.Title
+			updated.Title = r.Entity.Title
 		}
 		if r.Entity.Description != "" {
-			current.Description = r.Entity.Description
+			updated.Description = r.Entity.Description
 		}
 
 		labels, err := json.Marshal(r.Entity.Labels)
@@ -576,80 +601,80 @@ func (s *sqlEntityServer) Update(ctx context.Context, r *entity.UpdateEntityRequ
 			s.log.Error("error marshalling labels", "msg", err.Error())
 			return err
 		}
-		current.Labels = r.Entity.Labels
+		updated.Labels = r.Entity.Labels
 
 		fields, err := json.Marshal(r.Entity.Fields)
 		if err != nil {
 			s.log.Error("error marshalling fields", "msg", err.Error())
 			return err
 		}
-		current.Fields = r.Entity.Fields
+		updated.Fields = r.Entity.Fields
 
 		errors, err := json.Marshal(r.Entity.Errors)
 		if err != nil {
 			s.log.Error("error marshalling errors", "msg", err.Error())
 			return err
 		}
-		current.Errors = r.Entity.Errors
+		updated.Errors = r.Entity.Errors
 
-		if current.Origin == nil {
-			current.Origin = &entity.EntityOriginInfo{}
+		if updated.Origin == nil {
+			updated.Origin = &entity.EntityOriginInfo{}
 		}
 
 		if r.Entity.Origin != nil {
 			if r.Entity.Origin.Source != "" {
-				current.Origin.Source = r.Entity.Origin.Source
+				updated.Origin.Source = r.Entity.Origin.Source
 			}
 			if r.Entity.Origin.Key != "" {
-				current.Origin.Key = r.Entity.Origin.Key
+				updated.Origin.Key = r.Entity.Origin.Key
 			}
 			if r.Entity.Origin.Time > 0 {
-				current.Origin.Time = r.Entity.Origin.Time
+				updated.Origin.Time = r.Entity.Origin.Time
 			}
 		}
 
 		// Set the comment on this write
 		if r.Entity.Message != "" {
-			current.Message = r.Entity.Message
+			updated.Message = r.Entity.Message
 		}
 
 		// Update resource version
-		current.ResourceVersion = s.snowflake.Generate().Int64()
+		updated.ResourceVersion = s.snowflake.Generate().Int64()
 
-		current.Action = entity.Entity_UPDATED
+		updated.Action = entity.Entity_UPDATED
 
 		values := map[string]any{
 			// below are only set in history table
-			"guid":       current.Guid,
-			"key":        current.Key,
-			"namespace":  current.Namespace,
-			"group":      current.Group,
-			"resource":   current.Resource,
-			"name":       current.Name,
-			"created_at": current.CreatedAt,
-			"created_by": current.CreatedBy,
+			"guid":       updated.Guid,
+			"key":        updated.Key,
+			"namespace":  updated.Namespace,
+			"group":      updated.Group,
+			"resource":   updated.Resource,
+			"name":       updated.Name,
+			"created_at": updated.CreatedAt,
+			"created_by": updated.CreatedBy,
 			// below are updated
-			"group_version":    current.GroupVersion,
-			"folder":           current.Folder,
-			"slug":             current.Slug,
-			"updated_at":       current.UpdatedAt,
-			"updated_by":       current.UpdatedBy,
-			"body":             current.Body,
-			"meta":             current.Meta,
-			"status":           current.Status,
-			"size":             current.Size,
-			"etag":             current.ETag,
-			"resource_version": current.ResourceVersion,
-			"title":            current.Title,
-			"description":      current.Description,
+			"group_version":    updated.GroupVersion,
+			"folder":           updated.Folder,
+			"slug":             updated.Slug,
+			"updated_at":       updated.UpdatedAt,
+			"updated_by":       updated.UpdatedBy,
+			"body":             updated.Body,
+			"meta":             updated.Meta,
+			"status":           updated.Status,
+			"size":             updated.Size,
+			"etag":             updated.ETag,
+			"resource_version": updated.ResourceVersion,
+			"title":            updated.Title,
+			"description":      updated.Description,
 			"labels":           labels,
 			"fields":           fields,
 			"errors":           errors,
-			"origin":           current.Origin.Source,
-			"origin_key":       current.Origin.Key,
-			"origin_ts":        current.Origin.Time,
-			"message":          current.Message,
-			"action":           current.Action,
+			"origin":           updated.Origin.Source,
+			"origin_key":       updated.Origin.Key,
+			"origin_ts":        updated.Origin.Time,
+			"message":          updated.Message,
+			"action":           updated.Action,
 		}
 
 		// 1. Add the `entity_history` values
@@ -676,7 +701,7 @@ func (s *sqlEntityServer) Update(ctx context.Context, r *entity.UpdateEntityRequ
 			entityTable,
 			values,
 			map[string]any{
-				"guid": current.Guid,
+				"guid": updated.Guid,
 			},
 		)
 		if err != nil {
@@ -684,11 +709,11 @@ func (s *sqlEntityServer) Update(ctx context.Context, r *entity.UpdateEntityRequ
 			return err
 		}
 
-		switch current.Group {
+		switch updated.Group {
 		case folder.GROUP:
-			switch current.Resource {
+			switch updated.Resource {
 			case folder.RESOURCE:
-				err = s.updateFolderTree(ctx, tx, current.Namespace)
+				err = s.updateFolderTree(ctx, tx, updated.Namespace)
 				if err != nil {
 					s.log.Error("error updating folder tree", "msg", err.Error())
 					return err
@@ -696,14 +721,22 @@ func (s *sqlEntityServer) Update(ctx context.Context, r *entity.UpdateEntityRequ
 			}
 		}
 
-		rsp.Entity = current
+		rsp.Entity = updated
 
-		return s.setLabels(ctx, tx, current.Guid, current.Labels)
+		return s.setLabels(ctx, tx, updated.Guid, updated.Labels)
 	})
 	if err != nil {
 		s.log.Error("error updating entity", "msg", err.Error())
 		rsp.Status = entity.UpdateEntityResponse_ERROR
 	}
+
+	evt := &entity.EntityWatchResponse{
+		Timestamp: time.Now().UnixMilli(),
+		Entity:    rsp.Entity,
+		Previous:  previous,
+	}
+
+	s.stream <- evt
 
 	return rsp, err
 }
@@ -746,9 +779,12 @@ func (s *sqlEntityServer) Delete(ctx context.Context, r *entity.DeleteEntityRequ
 
 	rsp := &entity.DeleteEntityResponse{}
 
+	var previous *entity.Entity
+	var updated *entity.Entity
+
 	err := s.sess.WithTransaction(ctx, func(tx *session.SessionTx) error {
 		var err error
-		rsp.Entity, err = s.Read(ctx, &entity.ReadEntityRequest{
+		previous, err = s.Read(ctx, &entity.ReadEntityRequest{
 			Key:        r.Key,
 			WithBody:   true,
 			WithStatus: true,
@@ -762,13 +798,18 @@ func (s *sqlEntityServer) Delete(ctx context.Context, r *entity.DeleteEntityRequ
 			return err
 		}
 
-		if r.PreviousVersion > 0 && r.PreviousVersion != rsp.Entity.ResourceVersion {
+		if previous.Guid == "" {
+			rsp.Status = entity.DeleteEntityResponse_NOTFOUND
+			return nil
+		}
+
+		if r.PreviousVersion > 0 && r.PreviousVersion != previous.ResourceVersion {
 			rsp.Status = entity.DeleteEntityResponse_ERROR
 			StorageServerMetrics.OptimisticLockFailed.WithLabelValues("delete").Inc()
 			return fmt.Errorf("optimistic lock failed")
 		}
 
-		err = s.doDelete(ctx, tx, rsp.Entity)
+		updated, err = s.doDelete(ctx, tx, previous)
 		if err != nil {
 			rsp.Status = entity.DeleteEntityResponse_ERROR
 			return err
@@ -778,116 +819,132 @@ func (s *sqlEntityServer) Delete(ctx context.Context, r *entity.DeleteEntityRequ
 		return nil
 	})
 
+	if rsp.Status == entity.DeleteEntityResponse_DELETED {
+		// k8s expects us to return the entity as it was before the deletion, but with the updated RV
+		rsp.Entity = proto.Clone(previous).(*entity.Entity)
+		rsp.Entity.ResourceVersion = updated.ResourceVersion
+
+		evt := &entity.EntityWatchResponse{
+			Timestamp: time.Now().UnixMilli(),
+			Entity:    updated,
+			Previous:  previous,
+		}
+		s.stream <- evt
+	} else {
+		rsp.Entity = previous
+	}
+
 	return rsp, err
 }
 
-func (s *sqlEntityServer) doDelete(ctx context.Context, tx *session.SessionTx, ent *entity.Entity) error {
-	fmt.Printf("doDelete: %v\n", ent.ResourceVersion)
+func (s *sqlEntityServer) doDelete(ctx context.Context, tx *session.SessionTx, ent *entity.Entity) (*entity.Entity, error) {
+	updated := proto.Clone(ent).(*entity.Entity)
 
 	// Update resource version
-	ent.ResourceVersion = s.snowflake.Generate().Int64()
+	updated.ResourceVersion = s.snowflake.Generate().Int64()
 
-	ent.Action = entity.Entity_DELETED
+	updated.Action = entity.Entity_DELETED
 
-	// Set updated at/by
-	ent.UpdatedAt = time.Now().UnixMilli()
+	// Get updated by
 	modifier, err := appcontext.User(ctx)
 	if err != nil {
-		return err
+		return nil, err
 	}
 	if modifier == nil {
-		return fmt.Errorf("can not find user in context")
+		return nil, fmt.Errorf("can not find user in context")
 	}
-	ent.UpdatedBy = store.GetUserIDString(modifier)
 
-	labels, err := json.Marshal(ent.Labels)
+	labels, err := json.Marshal(updated.Labels)
 	if err != nil {
 		s.log.Error("error marshalling labels", "msg", err.Error())
-		return err
+		return nil, err
 	}
 
-	fields, err := json.Marshal(ent.Fields)
+	fields, err := json.Marshal(updated.Fields)
 	if err != nil {
 		s.log.Error("error marshalling fields", "msg", err.Error())
-		return err
+		return nil, err
 	}
 
-	errors, err := json.Marshal(ent.Errors)
+	errors, err := json.Marshal(updated.Errors)
 	if err != nil {
 		s.log.Error("error marshalling errors", "msg", err.Error())
-		return err
+		return nil, err
 	}
 
-	if ent.Origin == nil {
-		ent.Origin = &entity.EntityOriginInfo{}
+	if updated.Origin == nil {
+		updated.Origin = &entity.EntityOriginInfo{}
 	}
+
+	updated.UpdatedAt = time.Now().UnixMilli()
+	updated.UpdatedBy = store.GetUserIDString(modifier)
 
 	values := map[string]any{
 		// below are only set in history table
-		"guid":       ent.Guid,
-		"key":        ent.Key,
-		"namespace":  ent.Namespace,
-		"group":      ent.Group,
-		"resource":   ent.Resource,
-		"name":       ent.Name,
-		"created_at": ent.CreatedAt,
-		"created_by": ent.CreatedBy,
+		"guid":       updated.Guid,
+		"key":        updated.Key,
+		"namespace":  updated.Namespace,
+		"group":      updated.Group,
+		"resource":   updated.Resource,
+		"name":       updated.Name,
+		"created_at": updated.CreatedAt,
+		"created_by": updated.CreatedBy,
 		// below are updated
-		"group_version":    ent.GroupVersion,
-		"folder":           ent.Folder,
-		"slug":             ent.Slug,
-		"updated_at":       ent.UpdatedAt,
-		"updated_by":       ent.UpdatedBy,
-		"body":             ent.Body,
-		"meta":             ent.Meta,
-		"status":           ent.Status,
-		"size":             ent.Size,
-		"etag":             ent.ETag,
-		"resource_version": ent.ResourceVersion,
-		"title":            ent.Title,
-		"description":      ent.Description,
+		"group_version":    updated.GroupVersion,
+		"folder":           updated.Folder,
+		"slug":             updated.Slug,
+		"updated_at":       updated.UpdatedAt,
+		"updated_by":       updated.UpdatedBy,
+		"body":             updated.Body,
+		"meta":             updated.Meta,
+		"status":           updated.Status,
+		"size":             updated.Size,
+		"etag":             updated.ETag,
+		"resource_version": updated.ResourceVersion,
+		"title":            updated.Title,
+		"description":      updated.Description,
 		"labels":           labels,
 		"fields":           fields,
 		"errors":           errors,
-		"origin":           ent.Origin.Source,
-		"origin_key":       ent.Origin.Key,
-		"origin_ts":        ent.Origin.Time,
-		"message":          ent.Message,
-		"action":           ent.Action,
+		"origin":           updated.Origin.Source,
+		"origin_key":       updated.Origin.Key,
+		"origin_ts":        updated.Origin.Time,
+		"message":          updated.Message,
+		"action":           updated.Action,
 	}
 
 	// 1. Add the `entity_history` values
 	if err := s.dialect.Insert(ctx, tx, entityHistoryTable, values); err != nil {
 		s.log.Error("error inserting entity history", "msg", err.Error())
-		return err
+		return nil, err
 	}
 
-	_, err = tx.Exec(ctx, "DELETE FROM entity WHERE guid=?", ent.Guid)
+	_, err = tx.Exec(ctx, "DELETE FROM entity WHERE guid=?", updated.Guid)
 	if err != nil {
-		return err
+		return nil, err
 	}
-	_, err = tx.Exec(ctx, "DELETE FROM entity_labels WHERE guid=?", ent.Guid)
+	_, err = tx.Exec(ctx, "DELETE FROM entity_labels WHERE guid=?", updated.Guid)
 	if err != nil {
-		return err
+		return nil, err
 	}
-	_, err = tx.Exec(ctx, "DELETE FROM entity_ref WHERE guid=?", ent.Guid)
+	_, err = tx.Exec(ctx, "DELETE FROM entity_ref WHERE guid=?", updated.Guid)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
-	switch ent.Group {
+	switch updated.Group {
 	case folder.GROUP:
-		switch ent.Resource {
+		switch updated.Resource {
 		case folder.RESOURCE:
-			err = s.updateFolderTree(ctx, tx, ent.Namespace)
+			err = s.updateFolderTree(ctx, tx, updated.Namespace)
 			if err != nil {
 				s.log.Error("error updating folder tree", "msg", err.Error())
-				return err
+				return nil, err
 			}
 		}
 	}
 
-	return nil
+	return updated, nil
 }
 
 func (s *sqlEntityServer) History(ctx context.Context, r *entity.EntityHistoryRequest) (*entity.EntityHistoryResponse, error) {
@@ -1312,16 +1369,17 @@ func (s *sqlEntityServer) Watch(w entity.EntityStore_WatchServer) error {
 		return err
 	}
 
-	fmt.Printf("watch: %v\n", r)
-
 	// collect and send any historical events
-	err = s.watchInit(r, w)
-	if err != nil {
-		fmt.Printf("watch init error: %v\n", err)
-		return err
-	}
+	if r.SendInitialEvents {
+		r.Since, err = s.watchInit(r, w)
+		if err != nil {
+			fmt.Printf("watch init error: %v\n", err)
+			return err
+		}
 
-	fmt.Printf("watch init done\n")
+	} else if r.Since == 0 {
+		r.Since = s.snowflake.Generate().Int64()
+	}
 
 	// subscribe to new events
 	err = s.watch(r, w)
@@ -1335,7 +1393,9 @@ func (s *sqlEntityServer) Watch(w entity.EntityStore_WatchServer) error {
 }
 
 // watchInit is a helper function to send the initial set of entities to the client
-func (s *sqlEntityServer) watchInit(r *entity.EntityWatchRequest, w entity.EntityStore_WatchServer) error {
+func (s *sqlEntityServer) watchInit(r *entity.EntityWatchRequest, w entity.EntityStore_WatchServer) (int64, error) {
+	lastRv := r.Since
+
 	fields := s.getReadFields(r)
 
 	entityQuery := selectQuery{
@@ -1347,14 +1407,16 @@ func (s *sqlEntityServer) watchInit(r *entity.EntityWatchRequest, w entity.Entit
 
 	entityQuery.AddFields(fields...)
 
-	// if we got an initial resource version, start from that location in the history
-	if r.Since > 0 {
-		entityQuery.from = entityHistoryTable
-		entityQuery.AddWhere("resource_version > ?", r.Since)
-	}
-
 	// TODO fix this
 	// entityQuery.addWhere("namespace", user.OrgID)
+
+	// only send events that have happened since the requested resource version
+	/*
+		if r.Since > 0 {
+			entityQuery.from = entityHistoryTable
+			entityQuery.AddWhere(s.dialect.Quote("resource_version")+" > ?", r.Since)
+		}
+	*/
 
 	if len(r.Resource) > 0 {
 		entityQuery.AddWhereIn("resource", ToAnyList(r.Resource))
@@ -1366,7 +1428,7 @@ func (s *sqlEntityServer) watchInit(r *entity.EntityWatchRequest, w entity.Entit
 		for _, k := range r.Key {
 			key, err := entity.ParseKey(k)
 			if err != nil {
-				return err
+				return lastRv, err
 			}
 
 			args = append(args, key.Group, key.Resource)
@@ -1393,7 +1455,7 @@ func (s *sqlEntityServer) watchInit(r *entity.EntityWatchRequest, w entity.Entit
 	}
 
 	if len(r.Labels) > 0 {
-		if r.Since > 0 {
+		if entityQuery.from != entityTable {
 			for labelKey, labelValue := range r.Labels {
 				entityQuery.AddWhereJsonContainsKV("labels", labelKey, labelValue)
 			}
@@ -1446,18 +1508,38 @@ func (s *sqlEntityServer) watchInit(r *entity.EntityWatchRequest, w entity.Entit
 					return err
 				}
 
-				if r.Since > 0 && result.ResourceVersion < r.Since {
-					continue
+				if result.ResourceVersion > lastRv {
+					lastRv = result.ResourceVersion
 				}
-				r.Since = result.ResourceVersion
-
-				s.log.Debug("sending init event", "guid", result.Guid, "action", result.Action, "rv", result.ResourceVersion)
-				fmt.Printf("sending init event: %v\n", result)
 
 				resp := &entity.EntityWatchResponse{
 					Timestamp: time.Now().UnixMilli(),
 					Entity:    result,
 				}
+
+				/*
+					if r.Since > 0 && (result.Action == entity.Entity_UPDATED || result.Action == entity.Entity_DELETED) {
+						rr := &entity.EntityHistoryRequest{
+							Guid:       result.Guid,
+							Before:     result.ResourceVersion,
+							Limit:      1,
+							Sort:       []string{"resource_version_desc"},
+							WithBody:   r.WithBody,
+							WithStatus: r.WithStatus,
+						}
+						history, err := s.history(s.ctx, rr)
+						if err != nil {
+							s.log.Error("error reading previous entity", "guid", result.Guid, "err", err)
+							fmt.Printf("error reading previous entity: %v\n", err)
+							return err
+						}
+
+						resp.Previous = history.Versions[0]
+					}
+				*/
+
+				s.log.Debug("sending init event", "guid", result.Guid, "action", result.Action, "rv", result.ResourceVersion)
+				// fmt.Printf("sending init event: %v\n", resp)
 
 				err = w.Send(resp)
 				if err != nil {
@@ -1469,11 +1551,26 @@ func (s *sqlEntityServer) watchInit(r *entity.EntityWatchRequest, w entity.Entit
 			return nil
 		}()
 		if err != nil {
-			return err
+			return lastRv, err
 		}
 	}
 
-	return nil
+	// send a bookmark event
+	if r.AllowWatchBookmarks {
+		resp := &entity.EntityWatchResponse{
+			Timestamp: time.Now().UnixMilli(),
+			Entity: &entity.Entity{
+				Action:          entity.Entity_BOOKMARK,
+				ResourceVersion: lastRv,
+			},
+		}
+		err = w.Send(resp)
+		if err != nil {
+			return lastRv, err
+		}
+	}
+
+	return lastRv, nil
 }
 
 func (s *sqlEntityServer) poller(stream chan *entity.EntityWatchResponse) {
@@ -1483,7 +1580,10 @@ func (s *sqlEntityServer) poller(stream chan *entity.EntityWatchResponse) {
 	t := time.NewTicker(100 * time.Millisecond)
 	defer t.Stop()
 
-	for range t.C {
+	select {
+	case <-s.ctx.Done():
+		return
+	case <-t.C:
 		since, err = s.poll(since, stream)
 		if err != nil {
 			s.log.Error("watch error", "err", err)
@@ -1524,6 +1624,12 @@ func (s *sqlEntityServer) poll(since int64, out chan *entity.EntityWatchResponse
 
 			found := int64(0)
 			for rows.Next() {
+				// check if the context is done
+				if s.ctx.Err() != nil {
+					hasmore = false
+					return nil
+				}
+
 				found++
 				if found > entityQuery.limit {
 					return nil
@@ -1635,7 +1741,7 @@ func watchMatches(r *entity.EntityWatchRequest, result *entity.Entity) bool {
 // watch is a helper to get the next set of entities and send them to the client
 func (s *sqlEntityServer) watch(r *entity.EntityWatchRequest, w entity.EntityStore_WatchServer) error {
 	s.log.Debug("watch started", "since", r.Since)
-	fmt.Printf("watch started\n")
+	// fmt.Printf("watch started since %d\n", r.Since)
 
 	evts, err := s.broadcaster.Subscribe(w.Context())
 	if err != nil {
@@ -1648,6 +1754,11 @@ func (s *sqlEntityServer) watch(r *entity.EntityWatchRequest, w entity.EntitySto
 	go func() {
 		for {
 			r, err := w.Recv()
+			if errors.Is(err, io.EOF) {
+				s.log.Debug("watch client closed stream")
+				stop <- struct{}{}
+				return
+			}
 			if err != nil {
 				s.log.Error("error receiving message", "err", err)
 				fmt.Printf("error receiving message: %v\n", err)
@@ -1668,18 +1779,23 @@ func (s *sqlEntityServer) watch(r *entity.EntityWatchRequest, w entity.EntitySto
 		select {
 		// stop signal
 		case <-stop:
-			fmt.Printf("watch stop\n")
+			// fmt.Printf("watch stop\n")
 			return nil
 		// user closed the connection
 		case <-w.Context().Done():
-			fmt.Printf("watch context done\n")
+			// fmt.Printf("watch context done\n")
 			return nil
 		// got a raw result from the broadcaster
-		case result := <-evts:
-			fmt.Printf("got result: %v\n", result)
+		case result, ok := <-evts:
+			if !ok {
+				// fmt.Printf("watch events closed\n")
+				return nil
+			}
 
-			// Resource version too old
-			if result.Entity.ResourceVersion <= since {
+			// fmt.Printf("got result: %v\n", result)
+
+			// Invalid result or resource version too old
+			if result == nil || result.Entity == nil || result.Entity.ResourceVersion <= since {
 				break
 			}
 
@@ -1708,14 +1824,14 @@ func (s *sqlEntityServer) watchEvent(r *entity.EntityWatchRequest, result *entit
 		// if neither the previous nor the current result match our watch params, skip it
 		if !watchMatches(r, result.Entity) && !watchMatches(r, result.Previous) {
 			s.log.Debug("watch result not matched", "guid", result.Entity.Guid, "action", result.Entity.Action, "rv", result.Entity.ResourceVersion)
-			fmt.Printf("event and previous both didn't match %v\n", result.Previous)
+			// fmt.Printf("event and previous both didn't match %v\n", result.Previous)
 			return nil, nil
 		}
 	} else {
 		// if result doesn't match our watch params, skip it
 		if !watchMatches(r, result.Entity) {
 			s.log.Debug("watch result not matched", "guid", result.Entity.Guid, "action", result.Entity.Action, "rv", result.Entity.ResourceVersion)
-			fmt.Printf("event didn't match\n")
+			// fmt.Printf("event didn't match\n")
 			return nil, nil
 		}
 	}
@@ -1735,7 +1851,7 @@ func (s *sqlEntityServer) watchEvent(r *entity.EntityWatchRequest, result *entit
 	}
 
 	s.log.Debug("sending watch result", "guid", result.Entity.Guid, "action", result.Entity.Action, "rv", result.Entity.ResourceVersion)
-	fmt.Printf("sending watch result: %v\n", result)
+	// fmt.Printf("sending watch result: %v\n", result)
 	return result, nil
 }
 
