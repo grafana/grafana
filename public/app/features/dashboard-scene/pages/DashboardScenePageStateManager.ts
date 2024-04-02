@@ -181,12 +181,20 @@ export class DashboardScenePageStateManager extends StateManagerBase<DashboardSc
   }
 
   private async loadScene(options: LoadDashboardOptions): Promise<DashboardScene> {
+    const comingFromExplore = Boolean(
+      localStorageStore.getObject<DashboardDTO>(DASHBOARD_FROM_LS_KEY) &&
+        options.keepDashboardFromExploreInLocalStorage === false
+    );
+
     const rsp = await this.fetchDashboard(options);
 
     const fromCache = this.cache[options.uid];
 
-    if (fromCache && fromCache.state.version === rsp?.dashboard.version) {
-      return fromCache;
+    // When coming from Explore, skip returnning scene from cache
+    if (!comingFromExplore) {
+      if (fromCache && fromCache.state.version === rsp?.dashboard.version) {
+        return fromCache;
+      }
     }
 
     this.setState({ isLoading: true });
@@ -194,7 +202,8 @@ export class DashboardScenePageStateManager extends StateManagerBase<DashboardSc
     if (rsp?.dashboard) {
       const scene = transformSaveModelToScene(rsp);
 
-      if (options.uid) {
+      // Cache scene only if not coming from Explore, we don't want to cache temporary dashboard
+      if (options.uid && !comingFromExplore) {
         this.cache[options.uid] = scene;
       }
 

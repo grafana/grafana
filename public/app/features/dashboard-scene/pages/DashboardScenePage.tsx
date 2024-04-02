@@ -53,11 +53,12 @@ export function DashboardScenePage({ match, route, queryParams, history }: Props
     match.params.type,
   ]);
 
+  // Effect that handles explore->dashboards workflow
   useEffect(() => {
-    // when coming from explore and adding to an existing dashboard, we should enter edit mode
+    // When coming from explore and adding to an existing dashboard, we should enter edit mode
     if (dashboard && comingFromExplore) {
       if (route.routeName !== DashboardRoutes.New) {
-        dashboard.onEnterEditMode();
+        dashboard.onEnterEditMode(comingFromExplore);
       }
     }
   }, [dashboard, comingFromExplore, route.routeName]);
