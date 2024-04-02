@@ -6,7 +6,7 @@ import { GrafanaTheme2 } from '@grafana/data';
 import { Modal, Button, Stack, TextLink, Field, Input, Text, useStyles2 } from '@grafana/ui';
 import { Trans, t } from 'app/core/internationalization';
 
-import { ConnectStackDTO } from '../../../api';
+import { ConnectStackDTO } from '../../../mockAPI';
 
 interface Props {
   hideModal: () => void;

@@ -3,7 +3,11 @@ import React from 'react';
 import { Box, Button, ModalsController, Text } from '@grafana/ui';
 import { t, Trans } from 'app/core/internationalization';
 
-import { useCreateMigrationTokenMutation, useDeleteMigrationTokenMutation, useHasMigrationTokenQuery } from '../../api';
+import {
+  useCreateMigrationTokenMutation,
+  useDeleteMigrationTokenMutation,
+  useHasMigrationTokenQuery,
+} from '../../mockAPI';
 import { InfoItem } from '../../shared/InfoItem';
 
 import { DeleteMigrationTokenModal } from './DeleteMigrationTokenModal';

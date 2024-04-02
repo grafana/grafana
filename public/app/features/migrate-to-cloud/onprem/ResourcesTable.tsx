@@ -5,7 +5,7 @@ import { InteractiveTable, CellProps, Stack, Text, Icon, useStyles2, Button } fr
 import { getSvgSize } from '@grafana/ui/src/components/Icon/utils';
 import { t } from 'app/core/internationalization';
 
-import { MigrationResourceDTO } from '../api';
+import { MigrationResourceDTO } from '../mockAPI';
 
 interface ResourcesTableProps {
   resources: MigrationResourceDTO[];

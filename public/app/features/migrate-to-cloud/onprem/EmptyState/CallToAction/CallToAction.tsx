@@ -3,7 +3,7 @@ import React from 'react';
 import { Box, Button, ModalsController, Text } from '@grafana/ui';
 import { Trans } from 'app/core/internationalization';
 
-import { useConnectStackMutation, useGetStatusQuery } from '../../../api';
+import { useConnectStackMutation, useGetStatusQuery } from '../../../mockAPI';
 
 import { ConnectModal } from './ConnectModal';
 

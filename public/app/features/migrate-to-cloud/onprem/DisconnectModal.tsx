@@ -3,7 +3,7 @@ import React, { useCallback } from 'react';
 import { Alert, ConfirmModal, Stack } from '@grafana/ui';
 import { Trans, t } from 'app/core/internationalization';
 
-import { useDisconnectStackMutation } from '../api';
+import { useDisconnectStackMutation } from '../mockAPI';
 
 interface Props {
   isOpen: boolean;

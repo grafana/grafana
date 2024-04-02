@@ -4,7 +4,7 @@ import React, { useState } from 'react';
 import { Alert, Box, Button, Stack } from '@grafana/ui';
 import { Trans, t } from 'app/core/internationalization';
 
-import { useGetStatusQuery, useListResourcesQuery, useStartMigrationMutation } from '../api';
+import { useGetStatusQuery, useListResourcesQuery, useStartMigrationMutation } from '../mockAPI';
 
 import { DisconnectModal } from './DisconnectModal';
 import { EmptyState } from './EmptyState/EmptyState';
