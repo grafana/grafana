@@ -31,10 +31,11 @@ import (
 const entityTable = "entity"
 const entityHistoryTable = "entity_history"
 
-// Make sure we implement both store + admin
+// Make sure we implement correct interfaces
 var _ entity.EntityStoreServer = &sqlEntityServer{}
+var _ SqlEntityServer = &sqlEntityServer{}
 
-func ProvideSQLEntityServer(db db.EntityDBInterface /*, cfg *setting.Cfg */) (*sqlEntityServer, error) {
+func ProvideSQLEntityServer(db db.EntityDBInterface /*, cfg *setting.Cfg */) (SqlEntityServer, error) {
 	ctx, cancel := context.WithCancel(context.Background())
 
 	entityServer := &sqlEntityServer{
@@ -49,6 +50,13 @@ func ProvideSQLEntityServer(db db.EntityDBInterface /*, cfg *setting.Cfg */) (*s
 	}
 
 	return entityServer, nil
+}
+
+type SqlEntityServer interface {
+	entity.EntityStoreServer
+
+	Init() error
+	Stop()
 }
 
 type sqlEntityServer struct {
