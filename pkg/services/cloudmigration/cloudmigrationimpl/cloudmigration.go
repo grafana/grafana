@@ -245,25 +245,11 @@ func (s *Service) ValidateToken(ctx context.Context, cm cloudmigration.CloudMigr
 
 func (s *Service) GetMigration(ctx context.Context, id int64) (*cloudmigration.CloudMigration, error) {
 	ctx, span := s.tracer.Start(ctx, "CloudMigrationService.GetMigration")
-	logger := s.log.FromContext(ctx)
 	defer span.End()
 	migration, err := s.store.GetMigration(ctx, id)
 	if err != nil {
 		return nil, err
 	}
-	strValue := migration.AuthToken
-	decoded, err := base64.RawStdEncoding.DecodeString(strValue)
-	if err != nil {
-		s.log.Error("Failed to decode secret string", "err", err, "value")
-		return nil, err
-	}
-
-	decryptedToken, err := s.secretsService.Decrypt(ctx, decoded)
-	if err != nil {
-		logger.Error("Failed to decrypt secret", "err", err)
-		return nil, err
-	}
-	migration.AuthToken = string(decryptedToken)
 
 	return migration, nil
 }
