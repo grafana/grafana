@@ -224,7 +224,7 @@ var (
 			Name:            "unifiedStorage",
 			Description:     "SQL-based k8s storage",
 			Stage:           FeatureStageExperimental,
-			RequiresDevMode: true,
+			RequiresDevMode: false,
 			RequiresRestart: true, // new SQL tables created
 			Owner:           grafanaAppPlatformSquad,
 		},
