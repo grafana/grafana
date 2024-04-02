@@ -114,7 +114,7 @@ type upsertDataSourceFromConfigV1 struct {
 	SecureJSONData  values.StringMapValue `json:"secureJsonData" yaml:"secureJsonData"`
 	Editable        values.BoolValue      `json:"editable" yaml:"editable"`
 	UID             values.StringValue    `json:"uid" yaml:"uid"`
-	IsPrunable		bool				  `json:"isPrunable" yaml:"isPrunable"`
+	IsPrunable		values.BoolValue
 }
 
 func (cfg *configsV1) mapToDatasourceFromConfig(apiVersion int64) *configs {
