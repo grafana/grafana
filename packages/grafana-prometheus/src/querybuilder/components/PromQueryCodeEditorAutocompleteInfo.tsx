@@ -53,14 +53,14 @@ export function PromQueryCodeEditorAutocompleteInfo(props: Readonly<Props>) {
 
   return (
     <div data-testid={selectors.components.DataSource.Prometheus.queryEditor.code.metricsCountInfo}>
-      <Stack direction="row" gap={0.25}>
-        <IconButton
-          name="info-circle"
-          tooltip={`The number of metric names exceeds the maximum for autocomplete in the code editor. Only the ${autocompleteLimit}-most relevant metric names will be shown. The threshold for metric names used in code editor autocomplete can be configured in the Prometheus data source settings.`}
-        />
+      <Stack direction="row" gap={1}>
         <Text color="secondary" element="p" italic={true}>
           Autocomplete suggestions limited
         </Text>
+        <IconButton
+          name="info-circle"
+          tooltip={`The number of metric names exceeds the autocomplete limit. Only the ${autocompleteLimit}-most relevant metrics are displayed. You can adjust the threshold in the data source settings.`}
+        />
       </Stack>
     </div>
   );

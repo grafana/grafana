@@ -322,7 +322,8 @@ export const PromSettings = (props: Props) => {
                   labelWidth={PROM_CONFIG_LABEL_WIDTH}
                   tooltip={
                     <>
-                      In Code Mode, set the maximum number of metric names that may appear as autocomplete suggestions.
+                      The maximum number of metric names that may appear as autocomplete suggestions in the query
+                      editor&apos;s Code mode.
                     </>
                   }
                   interactive={true}
