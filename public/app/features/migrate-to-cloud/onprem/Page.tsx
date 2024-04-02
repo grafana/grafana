@@ -4,7 +4,7 @@ import React, { useState } from 'react';
 import { Alert, Box, Button, Stack } from '@grafana/ui';
 import { Trans, t } from 'app/core/internationalization';
 
-import { useGetStatusQuery, useListResourcesQuery, useStartMigrationMutation } from '../api';
+import { useGetStatusQueryMock, useListResourcesQueryMock, useStartMigrationMutationMock } from '../mockAPI';
 
 import { DisconnectModal } from './DisconnectModal';
 import { EmptyState } from './EmptyState/EmptyState';
@@ -12,10 +12,10 @@ import { MigrationInfo } from './MigrationInfo';
 import { ResourcesTable } from './ResourcesTable';
 
 export const Page = () => {
-  const { data: status, isFetching } = useGetStatusQuery();
-  const { data: resources } = useListResourcesQuery(status?.enabled ? undefined : skipToken);
+  const { data: status, isFetching } = useGetStatusQueryMock();
+  const { data: resources } = useListResourcesQueryMock(status?.enabled ? undefined : skipToken);
   const [startMigration, { isLoading: startMigrationIsLoading, isError: startMigrationIsError }] =
-    useStartMigrationMutation();
+    useStartMigrationMutationMock();
   const [isDisconnecting, setIsDisconnecting] = useState(false);
 
   if (!status?.enabled) {
