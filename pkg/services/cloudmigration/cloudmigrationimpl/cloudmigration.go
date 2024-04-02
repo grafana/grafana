@@ -208,7 +208,7 @@ func (s *Service) ValidateToken(ctx context.Context, cm cloudmigration.CloudMigr
 	if err != nil {
 		return fmt.Errorf("config parse error: %w", err)
 	}
-	path := fmt.Sprintf("https://cms-dev-%s.%s/api/v1/validate-key", cm.ClusterSlug, domain)
+	path := fmt.Sprintf("https://cms-dev-%s.%s/cloud-migrations/api/v1/validate-key", cm.ClusterSlug, domain)
 
 	// validation is an empty POST to CMS with the authorization header included
 	req, err := http.NewRequest("POST", path, bytes.NewReader(nil))

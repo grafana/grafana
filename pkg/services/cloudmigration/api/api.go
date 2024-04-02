@@ -136,7 +136,7 @@ func (cma *CloudMigrationAPI) RunMigration(c *contextmodel.ReqContext) response.
 	if err != nil {
 		return response.Error(http.StatusInternalServerError, "config parse error", err)
 	}
-	path := fmt.Sprintf("https://cms-dev-%s.%s/api/v1/migrate-data", migration.ClusterSlug, domain)
+	path := fmt.Sprintf("https://cms-dev-%s.%s/cloud-migrations/api/v1/migrate-data", migration.ClusterSlug, domain)
 
 	// Get migration data JSON
 	body, err := cma.cloudMigrationService.GetMigrationDataJSON(ctx, id)
