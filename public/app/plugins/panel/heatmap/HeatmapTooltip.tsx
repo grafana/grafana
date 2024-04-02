@@ -39,6 +39,8 @@ interface HeatmapTooltipProps {
   dismiss: () => void;
   panelData: PanelData;
   annotate?: () => void;
+  scrollable?: boolean;
+  maxHeight?: number;
 }
 
 export const HeatmapTooltip = (props: HeatmapTooltipProps) => {
@@ -64,6 +66,8 @@ const HeatmapHoverCell = ({
   showColorScale = false,
   mode,
   annotate,
+  scrollable,
+  maxHeight,
 }: HeatmapTooltipProps) => {
   const index = dataIdxs[1]!;
   const data = dataRef.current;
@@ -349,7 +353,7 @@ const HeatmapHoverCell = ({
   return (
     <div className={styles.wrapper}>
       <VizTooltipHeader item={headerItem} isPinned={isPinned} />
-      <VizTooltipContent items={contentItems} isPinned={isPinned}>
+      <VizTooltipContent items={contentItems} isPinned={isPinned} scrollable={scrollable} maxHeight={maxHeight}>
         {customContent?.map((content, i) => (
           <div key={i} style={{ padding: `${theme.spacing(1)} 0` }}>
             {content}

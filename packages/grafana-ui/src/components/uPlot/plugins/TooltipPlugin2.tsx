@@ -4,6 +4,7 @@ import { createPortal } from 'react-dom';
 import uPlot from 'uplot';
 
 import { GrafanaTheme2 } from '@grafana/data';
+import { DashboardCursorSync } from '@grafana/schema';
 
 import { useStyles2 } from '../../../themes';
 import { getPortalContainer } from '../../Portal/Portal';
@@ -29,7 +30,8 @@ interface TooltipPlugin2Props {
   config: UPlotConfigBuilder;
   hoverMode: TooltipHoverMode;
 
-  syncTooltip?: () => boolean;
+  syncMode?: DashboardCursorSync;
+  syncScope?: string;
 
   // x only
   queryZoom?: (range: { from: number; to: number }) => void;
@@ -48,7 +50,6 @@ interface TooltipPlugin2Props {
   ) => React.ReactNode;
 
   maxWidth?: number;
-  maxHeight?: number;
 }
 
 interface TooltipContainerState {
@@ -108,8 +109,8 @@ export const TooltipPlugin2 = ({
   clientZoom = false,
   queryZoom,
   maxWidth,
-  maxHeight,
-  syncTooltip = () => false,
+  syncMode = DashboardCursorSync.Off,
+  syncScope = 'global', // eventsScope
 }: TooltipPlugin2Props) => {
   const domRef = useRef<HTMLDivElement>(null);
   const portalRoot = useRef<HTMLElement | null>(null);
@@ -123,8 +124,7 @@ export const TooltipPlugin2 = ({
   const sizeRef = useRef<TooltipContainerSize>();
 
   maxWidth = isPinned ? DEFAULT_TOOLTIP_WIDTH : maxWidth ?? DEFAULT_TOOLTIP_WIDTH;
-  maxHeight ??= DEFAULT_TOOLTIP_HEIGHT;
-  const styles = useStyles2(getStyles, maxWidth, maxHeight);
+  const styles = useStyles2(getStyles, maxWidth);
 
   const renderRef = useRef(render);
   renderRef.current = render;
@@ -159,9 +159,20 @@ export const TooltipPlugin2 = ({
 
     let plotVisible = false;
 
+    const syncTooltip = syncMode === DashboardCursorSync.Tooltip;
+
+    if (syncMode !== DashboardCursorSync.Off && config.scales[0].props.isTime) {
+      config.setCursor({
+        sync: {
+          key: syncScope,
+          scales: ['x', null],
+        },
+      });
+    }
+
     const updateHovering = () => {
       if (viaSync) {
-        _isHovering = plotVisible && _someSeriesIdx && syncTooltip();
+        _isHovering = plotVisible && _someSeriesIdx && syncTooltip;
       } else {
         _isHovering = closestSeriesIdx != null || (hoverMode === TooltipHoverMode.xAll && _someSeriesIdx);
       }
@@ -570,7 +581,7 @@ export const TooltipPlugin2 = ({
   return null;
 };
 
-const getStyles = (theme: GrafanaTheme2, maxWidth?: number, maxHeight?: number) => ({
+const getStyles = (theme: GrafanaTheme2, maxWidth?: number) => ({
   tooltipWrapper: css({
     top: 0,
     left: 0,
@@ -583,8 +594,6 @@ const getStyles = (theme: GrafanaTheme2, maxWidth?: number, maxHeight?: number) 
     boxShadow: theme.shadows.z2,
     userSelect: 'text',
     maxWidth: maxWidth ?? 'none',
-    maxHeight: maxHeight ?? 'none',
-    overflowY: 'auto',
   }),
   pinned: css({
     boxShadow: theme.shadows.z3,

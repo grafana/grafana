@@ -428,11 +428,11 @@ export const plugin = new PanelPlugin<Options, GraphFieldConfig>(HeatmapPanel)
       path: 'tooltip.maxHeight',
       name: 'Max height',
       category,
-      defaultValue: 600,
+      defaultValue: undefined,
       settings: {
         integer: true,
       },
-      showIf: (options) => false, // config.featureToggles.newVizTooltips && options.tooltip?.mode !== TooltipDisplayMode.None,
+      showIf: (options) => options.tooltip?.mode !== TooltipDisplayMode.None,
     });
 
     category = ['Legend'];

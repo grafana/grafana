@@ -30,6 +30,7 @@ export const StateTimelineTooltip2 = ({
   annotate,
   timeRange,
   withDuration,
+  maxHeight,
 }: StateTimelineTooltip2Props) => {
   const styles = useStyles2(getStyles);
 
@@ -83,7 +84,7 @@ export const StateTimelineTooltip2 = ({
   return (
     <div className={styles.wrapper}>
       <VizTooltipHeader item={headerItem} isPinned={isPinned} />
-      <VizTooltipContent items={contentItems} isPinned={isPinned} scrollable={scrollable} />
+      <VizTooltipContent items={contentItems} isPinned={isPinned} scrollable={scrollable} maxHeight={maxHeight} />
       {footer}
     </div>
   );
