@@ -439,6 +439,11 @@ func TestBuildExternalURL(t *testing.T) {
 			name: "datasource without auth",
 			ds: &datasources.DataSource{
 				URL: "https://localhost:9000",
+				JsonData: func() *simplejson.Json {
+					r := simplejson.New()
+					r.Set("implementation", "prometheus")
+					return r
+				}(),
 			},
 			expectedURL: "https://localhost:9000",
 		},
@@ -446,6 +451,11 @@ func TestBuildExternalURL(t *testing.T) {
 			name: "datasource without auth and with path",
 			ds: &datasources.DataSource{
 				URL: "https://localhost:9000/path/to/am",
+				JsonData: func() *simplejson.Json {
+					r := simplejson.New()
+					r.Set("implementation", "prometheus")
+					return r
+				}(),
 			},
 			expectedURL: "https://localhost:9000/path/to/am",
 		},
@@ -458,6 +468,11 @@ func TestBuildExternalURL(t *testing.T) {
 				SecureJsonData: map[string][]byte{
 					"basicAuthPassword": []byte("123"),
 				},
+				JsonData: func() *simplejson.Json {
+					r := simplejson.New()
+					r.Set("implementation", "prometheus")
+					return r
+				}(),
 			},
 			expectedURL: "https://johndoe:123@localhost:9000",
 		},
@@ -470,6 +485,11 @@ func TestBuildExternalURL(t *testing.T) {
 				SecureJsonData: map[string][]byte{
 					"basicAuthPassword": []byte("123#!"),
 				},
+				JsonData: func() *simplejson.Json {
+					r := simplejson.New()
+					r.Set("implementation", "prometheus")
+					return r
+				}(),
 			},
 			expectedURL: "https://johndoe:123%23%21@localhost:9000",
 		},
@@ -482,6 +502,11 @@ func TestBuildExternalURL(t *testing.T) {
 				SecureJsonData: map[string][]byte{
 					"basicAuthPassword": []byte("123"),
 				},
+				JsonData: func() *simplejson.Json {
+					r := simplejson.New()
+					r.Set("implementation", "prometheus")
+					return r
+				}(),
 			},
 			expectedURL: "https://johndoe:123@localhost:9000/path/to/am",
 		},
@@ -494,6 +519,11 @@ func TestBuildExternalURL(t *testing.T) {
 				SecureJsonData: map[string][]byte{
 					"basicAuthPassword": []byte("123"),
 				},
+				JsonData: func() *simplejson.Json {
+					r := simplejson.New()
+					r.Set("implementation", "prometheus")
+					return r
+				}(),
 			},
 			expectedURL: "http://johndoe:123@localhost:9000/path/to/am",
 		},
@@ -501,8 +531,22 @@ func TestBuildExternalURL(t *testing.T) {
 			name: "with no scheme specified not auth in the datasource",
 			ds: &datasources.DataSource{
 				URL: "localhost:9000/path/to/am",
+				JsonData: func() *simplejson.Json {
+					r := simplejson.New()
+					r.Set("implementation", "prometheus")
+					return r
+				}(),
 			},
 			expectedURL: "http://localhost:9000/path/to/am",
+		},
+		{
+			name: "adds /alertmanager to path when implementation is not specified",
+			ds: &datasources.DataSource{
+				URL: "https://localhost:9000/alertmanager",
+				JsonData: func() *simplejson.Json {
+					return simplejson.New()
+				}(),
+			},
 		},
 		{
 			name: "adds /alertmanager to path when implementation is mimir",
