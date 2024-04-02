@@ -76,7 +76,8 @@ func TestPluginProxy(t *testing.T) {
 			secretsService,
 			&contextmodel.ReqContext{
 				SignedInUser: &user.SignedInUser{
-					Login: "test_user",
+					Login:        "test_user",
+					NamespacedID: "user:1",
 				},
 				Context: &web.Context{
 					Req: httpReq,
