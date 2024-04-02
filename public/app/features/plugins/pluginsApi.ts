@@ -35,6 +35,7 @@ export const pluginsApi = createApi({
       query: ({ pluginId }) => ({
         url: `/plugins/${pluginId}/settings`,
       }),
+      keepUnusedDataFor: 60 * 60, // 1 hour
     }),
   }),
 });

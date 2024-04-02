@@ -12,8 +12,16 @@ import { PromAlertingRuleState, PromRuleType } from 'app/types/unified-alerting-
 import { defaultPageNav } from '../../RuleViewer';
 import { Annotation } from '../../utils/constants';
 import { makeDashboardLink, makePanelLink } from '../../utils/misc';
-import { isAlertingRule, isFederatedRuleGroup, isGrafanaRulerRule, isRecordingRule } from '../../utils/rules';
+import {
+  RuleOriginMeta,
+  getRuleOriginMetadata,
+  isAlertingRule,
+  isFederatedRuleGroup,
+  isGrafanaRulerRule,
+  isRecordingRule,
+} from '../../utils/rules';
 import { createUrl } from '../../utils/url';
+import { PluginOriginBadge } from '../../vertical-integrations/PluginOriginBadge';
 import { AlertLabels } from '../AlertLabels';
 import { AlertingPageWrapper } from '../AlertingPageWrapper';
 import { ProvisionedResource, ProvisioningAlert } from '../Provisioning';
@@ -62,6 +70,7 @@ const RuleViewer = () => {
 
   const isFederatedRule = isFederatedRuleGroup(rule.group);
   const isProvisioned = isGrafanaRulerRule(rule.rulerRule) && Boolean(rule.rulerRule.grafana_alert.provenance);
+  const originMeta = getRuleOriginMetadata(rule);
 
   const summary = annotations[Annotation.summary];
 
@@ -76,6 +85,7 @@ const RuleViewer = () => {
           state={isAlertType ? promRule.state : undefined}
           health={rule.promRule?.health}
           ruleType={rule.promRule?.type}
+          ruleOrigin={originMeta}
         />
       )}
       actions={actions}
@@ -210,15 +220,17 @@ interface TitleProps {
   state?: PromAlertingRuleState;
   health?: RuleHealth;
   ruleType?: PromRuleType;
+  ruleOrigin?: RuleOriginMeta;
 }
 
-export const Title = ({ name, state, health, ruleType }: TitleProps) => {
+export const Title = ({ name, state, health, ruleType, ruleOrigin }: TitleProps) => {
   const styles = useStyles2(getStyles);
   const isRecordingRule = ruleType === PromRuleType.Recording;
 
   return (
     <div className={styles.title}>
       <LinkButton variant="secondary" icon="angle-left" href="/alerting/list" />
+      {ruleOrigin && <PluginOriginBadge pluginId={ruleOrigin.pluginId} />}
       <Text variant="h1" truncate>
         {name}
       </Text>

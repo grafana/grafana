@@ -106,24 +106,24 @@ export interface RuleOriginMeta {
   pluginId: string;
 }
 
-export function getRuleOriginMetadata(rule: CombinedRule) {
+export function getRuleOriginMetadata(rule: CombinedRule): RuleOriginMeta | undefined {
   // com.grafana.origin=plugin/<plugin-identifier>
   // Prom and Mimir do not support dots in label names 😔
   const origin = rule.labels['__grafana_origin'];
   if (!origin) {
-    return null;
+    return undefined;
   }
 
   const match = origin.match(/^plugin\/(?<pluginId>.+)$/);
   if (!match?.groups) {
-    return null;
+    return undefined;
   }
 
   const pluginId = match.groups['pluginId'];
   const pluginInstalled = isPluginInstalled(pluginId);
 
   if (!pluginInstalled) {
-    return null;
+    return undefined;
   }
 
   return { pluginId };
