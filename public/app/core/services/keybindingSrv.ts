@@ -40,7 +40,7 @@ export class KeybindingSrv {
 
     // Chromeless pages like login and signup page don't get any global bindings
     if (!route.chromeless) {
-      this.bind(['?', 'mod+h'], this.showHelpModal);
+      this.bind('?', this.showHelpModal);
       this.bind('g h', this.goToHome);
       this.bind('g d', this.goToDashboards);
       this.bind('g e', this.goToExplore);
