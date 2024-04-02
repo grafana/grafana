@@ -5,7 +5,6 @@ import (
 	"strconv"
 	"testing"
 
-	"github.com/bmizerany/assert"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/tests/testsuite"
 	"github.com/stretchr/testify/require"
@@ -40,14 +39,14 @@ func TestGetAllCloudMigrations(t *testing.T) {
 		for _, m := range value {
 			switch m.ID {
 			case 1:
-				assert.Equal(t, "11111", m.Stack)
-				assert.Equal(t, "12345", m.AuthToken)
+				require.Equal(t, "11111", m.Stack)
+				require.Equal(t, "12345", m.AuthToken)
 			case 2:
-				assert.Equal(t, "22222", m.Stack)
-				assert.Equal(t, "6789", m.AuthToken)
+				require.Equal(t, "22222", m.Stack)
+				require.Equal(t, "6789", m.AuthToken)
 			case 3:
-				assert.Equal(t, "33333", m.Stack)
-				assert.Equal(t, "777", m.AuthToken)
+				require.Equal(t, "33333", m.Stack)
+				require.Equal(t, "777", m.AuthToken)
 			default:
 				require.Fail(t, "ID value not expected: "+strconv.FormatInt(m.ID, 10))
 			}

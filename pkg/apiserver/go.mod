@@ -5,7 +5,7 @@ go 1.21.0
 require (
 	github.com/bwmarrin/snowflake v0.3.0
 	github.com/gorilla/mux v1.8.1
-	github.com/grafana/grafana-plugin-sdk-go v0.218.0
+	github.com/grafana/grafana-plugin-sdk-go v0.219.0
 	github.com/stretchr/testify v1.9.0
 	golang.org/x/mod v0.14.0
 	k8s.io/apimachinery v0.29.2
@@ -19,7 +19,7 @@ require (
 	github.com/BurntSushi/toml v1.3.2 // indirect
 	github.com/NYTimes/gziphandler v1.1.1 // indirect
 	github.com/antlr/antlr4/runtime/Go/antlr/v4 v4.0.0-20230305170008-8188dc5388df // indirect
-	github.com/apache/arrow/go/v15 v15.0.0 // indirect
+	github.com/apache/arrow/go/v15 v15.0.2 // indirect
 	github.com/asaskevich/govalidator v0.0.0-20230301143203-a9d515a09cc2 // indirect
 	github.com/beorn7/perks v1.0.1 // indirect
 	github.com/blang/semver/v4 v4.0.0 // indirect
