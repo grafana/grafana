@@ -246,7 +246,7 @@ func (s *Storage) Watch(ctx context.Context, key string, opts storage.ListOption
 	client, err := s.store.Watch(ctx)
 	if err != nil {
 		// if the context was canceled, just return a new empty watch
-		if errors.Is(err, context.Canceled) {
+		if errors.Is(err, context.Canceled) || errors.Is(err, context.DeadlineExceeded) || errors.Is(err, io.EOF) {
 			return watch.NewEmptyWatch(), nil
 		}
 
@@ -261,11 +261,11 @@ func (s *Storage) Watch(ctx context.Context, key string, opts storage.ListOption
 		}
 
 		// if the context was canceled, just return a new empty watch
-		if errors.Is(err, context.Canceled) {
+		if errors.Is(err, context.Canceled) || errors.Is(err, context.DeadlineExceeded) || errors.Is(err, io.EOF) {
 			return watch.NewEmptyWatch(), nil
 		}
 
-		return watch.NewEmptyWatch(), err
+		return nil, err
 	}
 
 	reporter := apierrors.NewClientErrorReporter(500, "WATCH", "")
