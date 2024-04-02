@@ -53,52 +53,6 @@ export const ServiceAccountTable = ({
   currentPage,
   isLoading,
 }: ServiceAccountTableProps) => {
-  const displayRolePicker =
-    contextSrv.hasPermission(AccessControlAction.ActionRolesList) &&
-    contextSrv.hasPermission(AccessControlAction.ActionUserRolesList);
-
-  const getCellContent = (
-    value: string,
-    original: ServiceAccountDTO,
-    isLoading: boolean,
-    columnName?: Column<ServiceAccountDTO>['id']
-  ) => {
-    if (isLoading) {
-      return columnName === 'avatarUrl' ? <Skeleton circle width={24} height={24} /> : <Skeleton width={100} />;
-    }
-    const href = `/org/serviceaccounts/${original.id}`;
-    const ariaLabel = `Edit service account's ${name} details`;
-    switch (columnName) {
-      case 'avatarUrl':
-        return (
-          <a aria-label={ariaLabel} href={href}>
-            <Avatar src={value} alt={'User avatar'} />
-          </a>
-        );
-      case 'id':
-        return (
-          <TextLink href={href} aria-label={ariaLabel} color="secondary">
-            {original.login}
-          </TextLink>
-        );
-      case 'tokens':
-        return (
-          <Stack alignItems="center">
-            <Icon name="key-skeleton-alt"/>
-            <TextLink href={href} aria-label={ariaLabel} color="primary">
-              {value || 'No tokens'}
-            </TextLink>
-          </Stack>
-        );
-      default:
-        return (
-          <TextLink href={href} aria-label={ariaLabel} color="primary">
-            {value}
-          </TextLink>
-        );
-    }
-  };
-
   const columns: Array<Column<ServiceAccountDTO>> = useMemo(
     () => [
       {
@@ -129,31 +83,7 @@ export const ServiceAccountTable = ({
         id: 'role',
         header: 'Roles',
         cell: ({ cell: { value }, row: { original } }: Cell<'role'>) => {
-          const canUpdateRole = contextSrv.hasPermissionInMetadata(AccessControlAction.ServiceAccountsWrite, original);
-          return isLoading ? (
-            <Skeleton width={100} />
-          ) : contextSrv.licensedAccessControlEnabled() ? (
-            displayRolePicker && (
-              <UserRolePicker
-                userId={original.id}
-                orgId={original.orgId}
-                basicRole={value}
-                roles={original.roles || []}
-                onBasicRoleChange={(newRole) => onRoleChange(newRole, original)}
-                roleOptions={roleOptions}
-                basicRoleDisabled={!canUpdateRole}
-                disabled={original.isExternal || original.isDisabled}
-                width={40}
-              />
-            )
-          ) : (
-            <OrgRolePicker
-              aria-label="Role"
-              value={value}
-              disabled={original.isExternal || !canUpdateRole || original.isDisabled}
-              onChange={(newRole) => onRoleChange(newRole, original)}
-            />
-          );
+          return getRoleCell(value, original, isLoading, roleOptions, onRoleChange);
         },
       },
       {
@@ -168,49 +98,11 @@ export const ServiceAccountTable = ({
         id: 'actions',
         header: '',
         cell: ({ row: { original } }: Cell) => {
-          return isLoading ? (
-            <Skeleton width={100} />
-          ) : !original.isExternal ? (
-            <Stack alignItems="center" justifyContent="flex-end">
-              {contextSrv.hasPermission(AccessControlAction.ServiceAccountsWrite) && !original.tokens && (
-                <Button onClick={() => onAddTokenClick(original)} disabled={original.isDisabled}>
-                  Add token
-                </Button>
-              )}
-              {contextSrv.hasPermissionInMetadata(AccessControlAction.ServiceAccountsWrite, original) &&
-                (original.isDisabled ? (
-                  <Button variant="secondary" size="md" onClick={() => onEnable(original)}>
-                    Enable
-                  </Button>
-                ) : (
-                  <Button variant="secondary" size="md" onClick={() => onDisable(original)}>
-                    Disable
-                  </Button>
-                ))}
-
-              {contextSrv.hasPermissionInMetadata(AccessControlAction.ServiceAccountsDelete, original) && (
-                <IconButton
-                  name="trash-alt"
-                  aria-label={`Delete service account ${original.name}`}
-                  variant="secondary"
-                  onClick={() => onRemoveButtonClick(original)}
-                />
-              )}
-            </Stack>
-          ) : (
-            <Stack alignItems="center" justifyContent="flex-end">
-              <IconButton
-                disabled={true}
-                name="lock"
-                size="md"
-                tooltip={`This is a managed service account and cannot be modified.`}
-              />
-            </Stack>
-          );
+          return getActionsCell(original, isLoading, onAddTokenClick, onEnable, onDisable, onRemoveButtonClick);
         },
       },
     ],
-    [displayRolePicker, isLoading, onAddTokenClick, onDisable, onEnable, onRemoveButtonClick, onRoleChange, roleOptions]
+    [isLoading, onAddTokenClick, onDisable, onEnable, onRemoveButtonClick, onRoleChange, roleOptions]
   );
   return (
     <Stack direction={'column'} gap={2}>
@@ -223,3 +115,138 @@ export const ServiceAccountTable = ({
     </Stack>
   );
 };
+
+const getCellContent = (
+  value: string,
+  original: ServiceAccountDTO,
+  isLoading: boolean,
+  columnName?: Column<ServiceAccountDTO>['id']
+) => {
+  if (isLoading) {
+    return columnName === 'avatarUrl' ? <Skeleton circle width={24} height={24} /> : <Skeleton width={100} />;
+  }
+  const href = `/org/serviceaccounts/${original.id}`;
+  const ariaLabel = `Edit service account's ${name} details`;
+  switch (columnName) {
+    case 'avatarUrl':
+      return (
+        <a aria-label={ariaLabel} href={href}>
+          <Avatar src={value} alt={'User avatar'} />
+        </a>
+      );
+    case 'id':
+      return (
+        <TextLink href={href} aria-label={ariaLabel} color="secondary">
+          {original.login}
+        </TextLink>
+      );
+    case 'tokens':
+      return (
+        <Stack alignItems="center">
+          <Icon name="key-skeleton-alt" />
+          <TextLink href={href} aria-label={ariaLabel} color="primary">
+            {value || 'No tokens'}
+          </TextLink>
+        </Stack>
+      );
+    default:
+      return (
+        <TextLink href={href} aria-label={ariaLabel} color="primary">
+          {value}
+        </TextLink>
+      );
+  }
+};
+
+const getRoleCell = (
+  value: OrgRole,
+  original: ServiceAccountDTO,
+  isLoading: boolean,
+  roleOptions: Role[],
+  onRoleChange: (role: OrgRole, serviceAccount: ServiceAccountDTO) => void
+) => {
+  const displayRolePicker =
+    contextSrv.hasPermission(AccessControlAction.ActionRolesList) &&
+    contextSrv.hasPermission(AccessControlAction.ActionUserRolesList);
+  const canUpdateRole = contextSrv.hasPermissionInMetadata(AccessControlAction.ServiceAccountsWrite, original);
+
+  if (isLoading) {
+    return <Skeleton width={100} />;
+  } else {
+    return contextSrv.licensedAccessControlEnabled() ? (
+      displayRolePicker && (
+        <UserRolePicker
+          userId={original.id}
+          orgId={original.orgId}
+          basicRole={value}
+          roles={original.roles || []}
+          onBasicRoleChange={(newRole) => onRoleChange(newRole, original)}
+          roleOptions={roleOptions}
+          basicRoleDisabled={!canUpdateRole}
+          disabled={original.isExternal || original.isDisabled}
+          width={40}
+        />
+      )
+    ) : (
+      <OrgRolePicker
+        aria-label="Role"
+        value={value}
+        disabled={original.isExternal || !canUpdateRole || original.isDisabled}
+        onChange={(newRole) => onRoleChange(newRole, original)}
+      />
+    );
+  }
+};
+
+const getActionsCell = (
+  original: ServiceAccountDTO,
+  isLoading: boolean,
+  onAddTokenClick: (serviceAccount: ServiceAccountDTO) => void,
+  onEnable: (serviceAccount: ServiceAccountDTO) => void,
+  onDisable: (serviceAccount: ServiceAccountDTO) => void,
+  onRemoveButtonClick: (serviceAccount: ServiceAccountDTO) => void
+) => {
+  if (isLoading) {
+    return <Skeleton width={100} />;
+  } else {
+    return !original.isExternal ? (
+      <Stack alignItems="center" justifyContent="flex-end">
+        {contextSrv.hasPermission(AccessControlAction.ServiceAccountsWrite) && !original.tokens && (
+          <Button onClick={() => onAddTokenClick(original)} disabled={original.isDisabled}>
+            Add token
+          </Button>
+        )}
+        {contextSrv.hasPermissionInMetadata(AccessControlAction.ServiceAccountsWrite, original) &&
+          (original.isDisabled ? (
+            <Button variant="secondary" size="md" onClick={() => onEnable(original)}>
+              Enable
+            </Button>
+          ) : (
+            <Button variant="secondary" size="md" onClick={() => onDisable(original)}>
+              Disable
+            </Button>
+          ))}
+
+        {contextSrv.hasPermissionInMetadata(AccessControlAction.ServiceAccountsDelete, original) && (
+          <IconButton
+            name="trash-alt"
+            aria-label={`Delete service account ${original.name}`}
+            variant="secondary"
+            onClick={() => onRemoveButtonClick(original)}
+          />
+        )}
+      </Stack>
+    ) : (
+      <Stack alignItems="center" justifyContent="flex-end">
+        <IconButton
+          disabled={true}
+          name="lock"
+          size="md"
+          tooltip={`This is a managed service account and cannot be modified.`}
+        />
+      </Stack>
+    );
+  }
+};
+
+ServiceAccountTable.displayName = 'ServiceAccountTable';
