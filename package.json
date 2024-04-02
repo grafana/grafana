@@ -61,7 +61,8 @@
     "plugin:build": "nx run-many -t build --projects='@grafana-plugins/*' --exclude \"@grafana-plugins/input-datasource\"",
     "plugin:build:commit": "nx run-many -t build:commit --projects='@grafana-plugins/*' --exclude \"@grafana-plugins/input-datasource\"",
     "plugin:build:dev": "nx run-many -t dev --projects='@grafana-plugins/*' --exclude \"@grafana-plugins/input-datasource\"",
-    "generate-icons": "yarn workspace @grafana/saga-icons generate"
+    "generate-icons": "yarn workspace @grafana/saga-icons generate",
+    "generate-apis": "rtk-query-codegen-openapi ./scripts/generate-rtk-apis.ts"
   },
   "grafana": {
     "whatsNewUrl": "https://grafana.com/docs/grafana/next/whatsnew/whats-new-in-v11-0/",
