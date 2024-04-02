@@ -53,8 +53,6 @@ var (
 			IssuedAt: jwt.NewNumericDate(time.Date(2023, 5, 2, 0, 0, 0, 0, time.UTC)),
 		},
 		Scopes:               []string{"profile", "groups"},
-		DelegatedPermissions: []string{"dashboards:create", "folders:read", "datasources:explore", "datasources.insights:read"},
-		Permissions:          []string{"fixed:folders:reader"},
 	}
 	pk, _ = rsa.GenerateKey(rand.Reader, 4096)
 )
