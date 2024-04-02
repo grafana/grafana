@@ -241,9 +241,6 @@ type Cfg struct {
 	IDResponseHeaderEnabled       bool
 	IDResponseHeaderPrefix        string
 	IDResponseHeaderNamespaces    map[string]struct{}
-	// Not documented & not supported
-	// stand in until a more complete solution is implemented
-	AuthConfigUIAdminAccess bool
 
 	// AWS Plugin Auth
 	AWSAllowedAuthProviders   []string
@@ -1557,9 +1554,6 @@ func readAuthSettings(iniFile *ini.File, cfg *Cfg) (err error) {
 	if cfg.TokenRotationIntervalMinutes < 2 {
 		cfg.TokenRotationIntervalMinutes = 2
 	}
-
-	// Do not use
-	cfg.AuthConfigUIAdminAccess = auth.Key("config_ui_admin_access").MustBool(false)
 
 	cfg.DisableLoginForm = auth.Key("disable_login_form").MustBool(false)
 	cfg.DisableSignoutMenu = auth.Key("disable_signout_menu").MustBool(false)
