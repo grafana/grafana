@@ -221,6 +221,7 @@ export const Components = {
       content: 'Panel editor option pane content',
       select: 'Panel editor option pane select',
       fieldLabel: (type: string) => `${type} field property editor`,
+      fieldInput: (title: string) => `data-testid Panel editor option pane field input ${title}`,
     },
     // not sure about the naming *DataPane*
     DataPane: {
@@ -285,12 +286,17 @@ export const Components = {
     rows: 'Query editor row',
   },
   QueryEditorRow: {
-    actionButton: (title: string) => `${title}`,
+    actionButton: (title: string) => `data-testid ${title}`,
     title: (refId: string) => `Query editor row title ${refId}`,
     container: (refId: string) => `Query editor row ${refId}`,
   },
   AlertTab: {
     content: 'data-testid Alert editor tab content',
+  },
+  AlertRules: {
+    groupToggle: 'data-testid group-collapse-toggle',
+    toggle: 'data-testid collapse-toggle',
+    expandedContent: 'data-testid expanded-content',
   },
   Alert: {
     /**
@@ -392,7 +398,7 @@ export const Components = {
      */
     container: 'Folder picker select container',
     containerV2: 'data-testid Folder picker select container',
-    input: 'Select a folder',
+    input: 'data-testid folder-picker-input',
   },
   ReadonlyFolderPicker: {
     container: 'data-testid Readonly folder picker select container',
@@ -404,6 +410,11 @@ export const Components = {
      */
     input: () => 'input[id="data-source-picker"]',
     inputV2: 'data-testid Select a data source',
+    dataSourceList: 'data-testid Data source list dropdown',
+    advancedModal: {
+      dataSourceList: 'data-testid Data source list',
+      builtInDataSourceList: 'data-testid Built in data source list',
+    },
   },
   TimeZonePicker: {
     /**
@@ -411,6 +422,7 @@ export const Components = {
      */
     container: 'Time zone picker select container',
     containerV2: 'data-testid Time zone picker select container',
+    changeTimeSettingsButton: 'data-testid Time zone picker Change time settings button',
   },
   WeekStartPicker: {
     /**
@@ -522,8 +534,30 @@ export const Components = {
   Annotations: {
     annotationsTypeInput: 'annotations-type-input',
     annotationsChoosePanelInput: 'choose-panels-input',
+    editor: {
+      testButton: 'data-testid annotations-test-button',
+      resultContainer: 'data-testid annotations-query-result-container',
+    },
   },
   Tooltip: {
     container: 'data-testid tooltip',
+  },
+  ReturnToPrevious: {
+    buttonGroup: 'data-testid dismissable button group',
+    backButton: 'data-testid back',
+    dismissButton: 'data-testid dismiss',
+  },
+  SQLQueryEditor: {
+    selectColumn: 'data-testid select-column',
+    selectAggregation: 'data-testid select-aggregation',
+    selectAlias: 'data-testid select-alias',
+    filterConjunction: 'data-testid filter-conjunction',
+    filterField: 'data-testid filter-field',
+    filterOperator: 'data-testid filter-operator',
+    headerTableSelector: 'data-testid header-table-selector',
+    headerFilterSwitch: 'data-testid header-filter-switch',
+    headerGroupSwitch: 'data-testid header-group-switch',
+    headerOrderSwitch: 'data-testid header-order-switch',
+    headerPreviewSwitch: 'data-testid header-preview-switch',
   },
 };

@@ -18,10 +18,12 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/remotecache"
 	"github.com/grafana/grafana/pkg/login/social"
+	"github.com/grafana/grafana/pkg/services/auth/identity"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/ssosettings"
 	ssoModels "github.com/grafana/grafana/pkg/services/ssosettings/models"
 	"github.com/grafana/grafana/pkg/services/ssosettings/ssosettingstests"
+	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -798,8 +800,7 @@ func TestSocialAzureAD_SkipOrgRole(t *testing.T) {
 					SkipOrgRoleSync:         false,
 				},
 				cfg: &setting.Cfg{
-					AutoAssignOrgRole:          "",
-					OAuthSkipOrgRoleUpdateSync: false,
+					AutoAssignOrgRole: "",
 				},
 			},
 			claims: &azureClaims{
@@ -829,8 +830,7 @@ func TestSocialAzureAD_SkipOrgRole(t *testing.T) {
 					SkipOrgRoleSync:         false,
 				},
 				cfg: &setting.Cfg{
-					AutoAssignOrgRole:          "",
-					OAuthSkipOrgRoleUpdateSync: false,
+					AutoAssignOrgRole: "",
 				},
 			},
 			claims: &azureClaims{
@@ -992,18 +992,23 @@ func TestSocialAzureAD_InitializeExtraFields(t *testing.T) {
 
 func TestSocialAzureAD_Validate(t *testing.T) {
 	testCases := []struct {
-		name     string
-		settings ssoModels.SSOSettings
-		wantErr  error
+		name      string
+		settings  ssoModels.SSOSettings
+		requester identity.Requester
+		wantErr   error
 	}{
 		{
 			name: "SSOSettings is valid",
 			settings: ssoModels.SSOSettings{
 				Settings: map[string]any{
-					"client_id":      "client-id",
-					"allowed_groups": "0bb9c9cc-4945-418f-9b6a-c1d3b81141b0, 6034d328-0e6a-4240-8d03-cb9f2c1f16e4",
+					"client_id":                  "client-id",
+					"allowed_groups":             "0bb9c9cc-4945-418f-9b6a-c1d3b81141b0, 6034d328-0e6a-4240-8d03-cb9f2c1f16e4",
+					"allow_assign_grafana_admin": "true",
+					"auth_url":                   "https://example.com/auth",
+					"token_url":                  "https://example.com/token",
 				},
 			},
+			requester: &user.SignedInUser{IsGrafanaAdmin: true},
 		},
 		{
 			name: "fails if settings map contains an invalid field",
@@ -1037,6 +1042,8 @@ func TestSocialAzureAD_Validate(t *testing.T) {
 				Settings: map[string]any{
 					"client_id":      "client-id",
 					"allowed_groups": "abc, def",
+					"auth_url":       "https://example.com/auth",
+					"token_url":      "https://example.com/token",
 				},
 			},
 			wantErr: ssosettings.ErrBaseInvalidOAuthConfig,
@@ -1048,6 +1055,68 @@ func TestSocialAzureAD_Validate(t *testing.T) {
 					"client_id":                  "client-id",
 					"allow_assign_grafana_admin": "true",
 					"skip_org_role_sync":         "true",
+					"auth_url":                   "https://example.com/auth",
+					"token_url":                  "https://example.com/token",
+				},
+			},
+			requester: &user.SignedInUser{IsGrafanaAdmin: true},
+			wantErr:   ssosettings.ErrBaseInvalidOAuthConfig,
+		},
+		{
+			name: "fails if the user is not allowed to update allow assign grafana admin",
+			requester: &user.SignedInUser{
+				IsGrafanaAdmin: false,
+			},
+			settings: ssoModels.SSOSettings{
+				Settings: map[string]any{
+					"client_id":                  "client-id",
+					"allow_assign_grafana_admin": "true",
+					"auth_url":                   "https://example.com/auth",
+					"token_url":                  "https://example.com/token",
+				},
+			},
+			wantErr: ssosettings.ErrBaseInvalidOAuthConfig,
+		},
+		{
+			name: "fails if auth url is empty",
+			settings: ssoModels.SSOSettings{
+				Settings: map[string]any{
+					"client_id": "client-id",
+					"auth_url":  "",
+					"token_url": "https://example.com/token",
+				},
+			},
+			wantErr: ssosettings.ErrBaseInvalidOAuthConfig,
+		},
+		{
+			name: "fails if token url is empty",
+			settings: ssoModels.SSOSettings{
+				Settings: map[string]any{
+					"client_id": "client-id",
+					"auth_url":  "https://example.com/auth",
+					"token_url": "",
+				},
+			},
+			wantErr: ssosettings.ErrBaseInvalidOAuthConfig,
+		},
+		{
+			name: "fails if auth url is invalid",
+			settings: ssoModels.SSOSettings{
+				Settings: map[string]any{
+					"client_id": "client-id",
+					"auth_url":  "invalid_url",
+					"token_url": "https://example.com/token",
+				},
+			},
+			wantErr: ssosettings.ErrBaseInvalidOAuthConfig,
+		},
+		{
+			name: "fails if token url is invalid",
+			settings: ssoModels.SSOSettings{
+				Settings: map[string]any{
+					"client_id": "client-id",
+					"auth_url":  "https://example.com/auth",
+					"token_url": "/path",
 				},
 			},
 			wantErr: ssosettings.ErrBaseInvalidOAuthConfig,
@@ -1058,7 +1127,10 @@ func TestSocialAzureAD_Validate(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			s := NewAzureADProvider(&social.OAuthInfo{}, &setting.Cfg{}, &ssosettingstests.MockService{}, featuremgmt.WithFeatures(), nil)
 
-			err := s.Validate(context.Background(), tc.settings)
+			if tc.requester == nil {
+				tc.requester = &user.SignedInUser{IsGrafanaAdmin: false}
+			}
+			err := s.Validate(context.Background(), tc.settings, tc.requester)
 			if tc.wantErr != nil {
 				require.ErrorIs(t, err, tc.wantErr)
 				return

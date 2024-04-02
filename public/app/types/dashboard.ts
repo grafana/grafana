@@ -8,6 +8,23 @@ export interface DashboardDTO {
   meta: DashboardMeta;
 }
 
+export interface ImportDashboardResponseDTO {
+  uid: string;
+  pluginId: string;
+  title: string;
+  imported: boolean;
+  importedRevision?: number;
+  importedUri: string;
+  importedUrl: string;
+  slug: string;
+  dashboardId: number;
+  folderId: number;
+  folderUid: string;
+  description: string;
+  path: string;
+  removed: boolean;
+}
+
 export interface SaveDashboardResponseDTO {
   id: number;
   slug: string;
@@ -27,7 +44,6 @@ export interface DashboardMeta {
   canStar?: boolean;
   canAdmin?: boolean;
   url?: string;
-  folderId?: number;
   folderUid?: string;
   canMakeEditable?: boolean;
   provisioned?: boolean;
@@ -51,6 +67,7 @@ export interface DashboardMeta {
   publicDashboardEnabled?: boolean;
   dashboardNotFound?: boolean;
   isEmbedded?: boolean;
+  isNew?: boolean;
 }
 
 export interface AnnotationActions {
@@ -79,6 +96,7 @@ export enum DashboardRoutes {
   Scripted = 'scripted-dashboard',
   Public = 'public-dashboard',
   Embedded = 'embedded-dashboard',
+  Report = 'report-dashboard',
 }
 
 export enum DashboardInitPhase {

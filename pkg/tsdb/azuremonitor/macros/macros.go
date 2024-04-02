@@ -8,9 +8,9 @@ import (
 	"time"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
+	"github.com/grafana/grafana-plugin-sdk-go/backend/gtime"
 
 	"github.com/grafana/grafana/pkg/tsdb/azuremonitor/kinds/dataquery"
-	azTime "github.com/grafana/grafana/pkg/tsdb/azuremonitor/time"
 	"github.com/grafana/grafana/pkg/tsdb/azuremonitor/types"
 )
 
@@ -126,7 +126,7 @@ func (m *kqlMacroEngine) evaluateMacro(name string, defaultTimeField string, arg
 				if dsInterval, ok = dsInfo.JSONData["interval"].(string); !ok {
 					dsInterval = ""
 				}
-				it, err = azTime.GetIntervalFrom(dsInterval, queryInterval.Interval, queryInterval.IntervalMs, defaultInterval)
+				it, err = gtime.GetIntervalFrom(dsInterval, queryInterval.Interval, queryInterval.IntervalMs, defaultInterval)
 				if err != nil {
 					it = defaultInterval
 				}

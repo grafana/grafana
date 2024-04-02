@@ -58,16 +58,18 @@ type Plugin interface {
 }
 
 func ProvideService(cfg *setting.Cfg, features *featuremgmt.FeatureManager, remoteCache *remotecache.RemoteCache, rm PluginManager) (*RenderingService, error) {
-	// ensure ImagesDir exists
-	err := os.MkdirAll(cfg.ImagesDir, 0700)
-	if err != nil {
-		return nil, fmt.Errorf("failed to create images directory %q: %w", cfg.ImagesDir, err)
+	folders := []string{
+		cfg.ImagesDir,
+		cfg.CSVsDir,
+		cfg.PDFsDir,
 	}
 
-	// ensure CSVsDir exists
-	err = os.MkdirAll(cfg.CSVsDir, 0700)
-	if err != nil {
-		return nil, fmt.Errorf("failed to create CSVs directory %q: %w", cfg.CSVsDir, err)
+	// ensure folders exists
+	for _, f := range folders {
+		err := os.MkdirAll(f, 0700)
+		if err != nil {
+			return nil, fmt.Errorf("failed to create directory %q: %w", f, err)
+		}
 	}
 
 	logger := log.New("rendering")
@@ -123,8 +125,12 @@ func ProvideService(cfg *setting.Cfg, features *featuremgmt.FeatureManager, remo
 				semverConstraint: ">= 3.4.0",
 			},
 			{
-				name:             SvgSanitization,
+				name:             SVGSanitization,
 				semverConstraint: ">= 3.5.0",
+			},
+			{
+				name:             PDFRendering,
+				semverConstraint: ">= 3.10.0",
 			},
 		},
 		Cfg:                   cfg,
@@ -248,14 +254,14 @@ func (rs *RenderingService) renderUnavailableImage() *RenderResult {
 	}
 }
 
-func (rs *RenderingService) Render(ctx context.Context, opts Opts, session Session) (*RenderResult, error) {
+func (rs *RenderingService) Render(ctx context.Context, renderType RenderType, opts Opts, session Session) (*RenderResult, error) {
 	startTime := time.Now()
 
 	renderKeyProvider := rs.perRequestRenderKeyProvider
 	if session != nil {
 		renderKeyProvider = session
 	}
-	result, err := rs.render(ctx, opts, renderKeyProvider)
+	result, err := rs.render(ctx, renderType, opts, renderKeyProvider)
 
 	elapsedTime := time.Since(startTime).Milliseconds()
 	saveMetrics(elapsedTime, err, RenderPNG)
@@ -263,7 +269,7 @@ func (rs *RenderingService) Render(ctx context.Context, opts Opts, session Sessi
 	return result, err
 }
 
-func (rs *RenderingService) render(ctx context.Context, opts Opts, renderKeyProvider renderKeyProvider) (*RenderResult, error) {
+func (rs *RenderingService) render(ctx context.Context, renderType RenderType, opts Opts, renderKeyProvider renderKeyProvider) (*RenderResult, error) {
 	if int(atomic.LoadInt32(&rs.inProgressCount)) > opts.ConcurrentLimit {
 		rs.log.Warn("Could not render image, hit the currency limit", "concurrencyLimit", opts.ConcurrentLimit, "path", opts.Path)
 		if opts.ErrorConcurrentLimitReached {
@@ -290,6 +296,16 @@ func (rs *RenderingService) render(ctx context.Context, opts Opts, renderKeyProv
 		return rs.renderUnavailableImage(), nil
 	}
 
+	if renderType == RenderPDF || opts.Encoding == "pdf" {
+		if !rs.features.IsEnabled(ctx, featuremgmt.FlagNewPDFRendering) {
+			return nil, fmt.Errorf("feature 'newPDFRendering' disabled")
+		}
+
+		if err := rs.IsCapabilitySupported(ctx, PDFRendering); err != nil {
+			return nil, err
+		}
+	}
+
 	rs.log.Info("Rendering", "path", opts.Path)
 	if math.IsInf(opts.DeviceScaleFactor, 0) || math.IsNaN(opts.DeviceScaleFactor) || opts.DeviceScaleFactor == 0 {
 		opts.DeviceScaleFactor = 1
@@ -306,7 +322,7 @@ func (rs *RenderingService) render(ctx context.Context, opts Opts, renderKeyProv
 	}()
 
 	metrics.MRenderingQueue.Set(float64(atomic.AddInt32(&rs.inProgressCount, 1)))
-	return rs.renderAction(ctx, renderKey, opts)
+	return rs.renderAction(ctx, renderType, renderKey, opts)
 }
 
 func (rs *RenderingService) RenderCSV(ctx context.Context, opts CSVOpts, session Session) (*RenderCSVResult, error) {
@@ -325,7 +341,7 @@ func (rs *RenderingService) RenderCSV(ctx context.Context, opts CSVOpts, session
 }
 
 func (rs *RenderingService) SanitizeSVG(ctx context.Context, req *SanitizeSVGRequest) (*SanitizeSVGResponse, error) {
-	capability, err := rs.HasCapability(ctx, SvgSanitization)
+	capability, err := rs.HasCapability(ctx, SVGSanitization)
 	if err != nil {
 		return nil, err
 	}
@@ -373,11 +389,18 @@ func (rs *RenderingService) getNewFilePath(rt RenderType) (string, error) {
 		return "", err
 	}
 
-	ext := "png"
-	folder := rs.Cfg.ImagesDir
-	if rt == RenderCSV {
+	var ext string
+	var folder string
+	switch rt {
+	case RenderCSV:
 		ext = "csv"
 		folder = rs.Cfg.CSVsDir
+	case RenderPDF:
+		ext = "pdf"
+		folder = rs.Cfg.PDFsDir
+	default:
+		ext = "png"
+		folder = rs.Cfg.ImagesDir
 	}
 
 	return filepath.Abs(filepath.Join(folder, fmt.Sprintf("%s.%s", rand, ext)))

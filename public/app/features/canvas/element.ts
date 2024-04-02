@@ -42,6 +42,13 @@ export enum ConnectionPath {
   Straight = 'straight',
 }
 
+export enum ConnectionDirection {
+  Forward = 'forward',
+  Reverse = 'reverse',
+  Both = 'both',
+  None = 'none',
+}
+
 export interface CanvasConnection {
   source: ConnectionCoordinates;
   target: ConnectionCoordinates;
@@ -49,6 +56,10 @@ export interface CanvasConnection {
   path: ConnectionPath;
   color?: ColorDimensionConfig;
   size?: ScaleDimensionConfig;
+  lineStyle?: string;
+  vertices?: ConnectionCoordinates[];
+  radius?: ScaleDimensionConfig;
+  direction?: ConnectionDirection;
   // See https://github.com/anseki/leader-line#options for more examples of more properties
 }
 
@@ -72,7 +83,7 @@ export interface CanvasElementItem<TConfig = any, TData = any> extends RegistryI
   /** The default width/height to use when adding  */
   defaultSize?: Placement;
 
-  prepareData?: (ctx: DimensionContext, cfg: TConfig) => TData;
+  prepareData?: (dimensionContext: DimensionContext, elementOptions: CanvasElementOptions<TConfig>) => TData;
 
   /** Component used to draw */
   display: ComponentType<CanvasElementProps<TConfig, TData>>;

@@ -395,10 +395,7 @@ export class MockDataSourceSrv implements DataSourceSrv {
    * Get settings and plugin metadata by name or uid
    */
   getInstanceSettings(nameOrUid: string | null | undefined): DataSourceInstanceSettings | undefined {
-    return (
-      DatasourceSrv.prototype.getInstanceSettings.call(this, nameOrUid) ||
-      ({ meta: { info: { logos: {} } } } as unknown as DataSourceInstanceSettings)
-    );
+    return DatasourceSrv.prototype.getInstanceSettings.call(this, nameOrUid);
   }
 
   async loadDatasource(name: string): Promise<DataSourceApi<any, any>> {
@@ -601,19 +598,6 @@ export const grantUserPermissions = (permissions: AccessControlAction[]) => {
     .spyOn(contextSrv, 'hasPermission')
     .mockImplementation((action) => permissions.includes(action as AccessControlAction));
 };
-
-export function mockDataSourcesStore(partial?: Partial<StoreState['dataSources']>) {
-  const defaultState = configureStore().getState();
-  const store = configureStore({
-    ...defaultState,
-    dataSources: {
-      ...defaultState.dataSources,
-      ...partial,
-    },
-  });
-
-  return store;
-}
 
 export function mockUnifiedAlertingStore(unifiedAlerting?: Partial<StoreState['unifiedAlerting']>) {
   const defaultState = configureStore().getState();

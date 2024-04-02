@@ -1,10 +1,14 @@
 import { debounce, isEqual } from 'lodash';
 
-import { SceneObject, SceneObjectRef, SceneObjectUrlValues, getUrlSyncManager, sceneUtils } from '@grafana/scenes';
+import { getUrlSyncManager, SceneObject, SceneObjectRef, SceneObjectUrlValues, sceneUtils } from '@grafana/scenes';
+import { dispatch } from 'app/store/store';
 
+import { notifyApp } from '../../../core/reducers/appNotification';
 import { DataTrail } from '../DataTrail';
 import { TrailStepType } from '../DataTrailsHistory';
 import { BOOKMARKED_TRAILS_KEY, RECENT_TRAILS_KEY } from '../shared';
+
+import { createBookmarkSavedNotification } from './utils';
 
 const MAX_RECENT_TRAILS = 20;
 
@@ -100,6 +104,7 @@ export class TrailStore {
   load() {
     this._recent = this._loadFromStorage(RECENT_TRAILS_KEY);
     this._bookmarks = this._loadFromStorage(BOOKMARKED_TRAILS_KEY);
+    this._refreshBookmarkIndexMap();
   }
 
   setRecentTrail(trail: DataTrail) {
@@ -125,15 +130,48 @@ export class TrailStore {
 
   addBookmark(trail: DataTrail) {
     this._bookmarks.unshift(trail.getRef());
+    this._refreshBookmarkIndexMap();
     this._save();
+    dispatch(notifyApp(createBookmarkSavedNotification()));
   }
 
   removeBookmark(index: number) {
     if (index < this._bookmarks.length) {
       this._bookmarks.splice(index, 1);
+      this._refreshBookmarkIndexMap();
       this._save();
     }
   }
+
+  getBookmarkIndex(trail: DataTrail) {
+    const bookmarkKey = getBookmarkKey(trail);
+    const bookmarkIndex = this._bookmarkIndexMap.get(bookmarkKey);
+    return bookmarkIndex;
+  }
+
+  private _bookmarkIndexMap = new Map<string, number>();
+
+  private _refreshBookmarkIndexMap() {
+    this._bookmarkIndexMap.clear();
+    this._bookmarks.forEach((bookmarked, index) => {
+      const trail = bookmarked.resolve();
+      const key = getBookmarkKey(trail);
+      // If there are duplicate bookmarks, the latest index will be kept
+      this._bookmarkIndexMap.set(key, index);
+    });
+  }
+}
+
+function getBookmarkKey(trail: DataTrail) {
+  const urlState = getUrlSyncManager().getUrlState(trail);
+  // Not part of state
+  delete urlState.actionView;
+  // Populate defaults
+  if (urlState['var-groupby'] === '') {
+    urlState['var-groupby'] = '$__all';
+  }
+  const key = JSON.stringify(urlState);
+  return key;
 }
 
 let store: TrailStore | undefined;

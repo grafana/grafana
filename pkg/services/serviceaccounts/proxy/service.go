@@ -38,7 +38,7 @@ func ProvideServiceAccountsProxy(
 	s := &ServiceAccountsProxy{
 		log:            log.New("serviceaccounts.proxy"),
 		proxiedService: proxiedService,
-		isProxyEnabled: features.IsEnabledGlobally(featuremgmt.FlagExternalServiceAccounts) || features.IsEnabledGlobally(featuremgmt.FlagExternalServiceAuth),
+		isProxyEnabled: features.IsEnabledGlobally(featuremgmt.FlagExternalServiceAccounts),
 	}
 
 	serviceaccountsAPI := api.NewServiceAccountsAPI(cfg, s, ac, accesscontrolService, routeRegister, permissionService, features)
@@ -187,5 +187,5 @@ func isNameValid(name string) bool {
 }
 
 func isExternalServiceAccount(login string) bool {
-	return strings.HasPrefix(login, serviceaccounts.ServiceAccountPrefix+serviceaccounts.ExtSvcPrefix)
+	return strings.HasPrefix(login, serviceaccounts.ExtSvcLoginPrefix)
 }

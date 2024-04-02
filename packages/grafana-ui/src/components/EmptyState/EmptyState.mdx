@@ -1,0 +1,44 @@
+import { ArgTypes } from '@storybook/blocks';
+import { EmptyState } from './EmptyState';
+
+# EmptyState
+
+Use an empty state to communicate to the user that there is no data to display, or that a search query returned no results.
+
+## variant="not-found"
+
+### When to use
+
+Use in place of a results table or list when a search query or filter returns no results.
+
+There are sensible defaults for the image and message, so in most cases you can use it without any additional props.
+
+```jsx
+import { EmptyState } from '@grafana/ui';
+
+<EmptyState variant="not-found" />;
+```
+
+### Providing custom overrides
+
+You can optionally override the message or image, and add additional information or a button (e.g. to clear the search query)
+
+```jsx
+import { Button, EmptyState } from '@grafana/ui';
+
+<EmptyState
+  button={<Button variant="secondary" onClick={clearSearchQuery} />}
+  image={<AnyReactNode />}
+  message="No playlists found"
+  variant="not-found"
+>
+  Optionally provide some additional information here. Maybe even a link to{' '}
+  <TextLink href="<externalDocsLink>" external>
+    documentation.
+  </TextLink>
+</EmptyState>;
+```
+
+## Props
+
+<ArgTypes of={EmptyState} />

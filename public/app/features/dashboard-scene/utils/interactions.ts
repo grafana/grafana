@@ -41,9 +41,6 @@ export const DashboardInteractions = {
   panelCancelQueryClicked: (properties?: Record<string, unknown>) => {
     reportDashboardInteraction('panelheader_cancelquery_clicked', properties);
   },
-  panelDescriptionShown: (properties?: Record<string, unknown>) => {
-    reportDashboardInteraction('panelheader_description_displayed', properties);
-  },
 
   // Sharing interactions:
   sharingTabChanged: (properties?: Record<string, unknown>) => {
@@ -135,7 +132,9 @@ export const DashboardInteractions = {
   toolbarSaveClick: () => {
     reportDashboardInteraction('toolbar_actions_clicked', { item: 'save' });
   },
-
+  toolbarSaveAsClick: () => {
+    reportDashboardInteraction('toolbar_actions_clicked', { item: 'save_as' });
+  },
   toolbarAddClick: () => {
     reportDashboardInteraction('toolbar_actions_clicked', { item: 'add' });
   },

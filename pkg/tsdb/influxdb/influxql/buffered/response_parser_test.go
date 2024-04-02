@@ -43,6 +43,10 @@ func generateQuery(resFormat string, alias string) *models.Query {
 	}
 }
 
+// show_diagnostics file won't be added to test files because of its inconsistent
+// json data with other responses. But I do add it here just to have it.
+// It can be parsed with time_series response but not table.
+// It only works with InfluxDB v1.x. The usage of it is quite limited.
 var testFiles = []string{
 	"all_values_are_null",
 	"influx_select_all_from_cpu",

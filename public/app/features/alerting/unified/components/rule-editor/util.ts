@@ -9,7 +9,7 @@ import {
   ThresholdsConfig,
   ThresholdsMode,
 } from '@grafana/data';
-import { GraphTresholdsStyleMode } from '@grafana/schema';
+import { GraphThresholdsStyleMode } from '@grafana/schema';
 import { config } from 'app/core/config';
 import { EvalFunction } from 'app/features/alerting/state/alertDef';
 import { isExpressionQuery } from 'app/features/expressions/guards';
@@ -136,7 +136,7 @@ export function warningFromSeries(series: DataFrame[]): Error | undefined {
 
 export type ThresholdDefinition = {
   config: ThresholdsConfig;
-  mode: GraphTresholdsStyleMode;
+  mode: GraphThresholdsStyleMode;
 };
 
 export type ThresholdDefinitions = Record<string, ThresholdDefinition>;
@@ -210,7 +210,7 @@ export function getThresholdsForQueries(queries: AlertQuery[], condition: string
                 mode: ThresholdsMode.Absolute,
                 steps: [],
               },
-              mode: GraphTresholdsStyleMode.Line,
+              mode: GraphThresholdsStyleMode.Line,
             };
           }
 
@@ -218,7 +218,7 @@ export function getThresholdsForQueries(queries: AlertQuery[], condition: string
             appendSingleThreshold(originRefID, threshold[0]);
           } else if (originRefID && hasValidOrigin && isRangeThreshold) {
             appendRangeThreshold(originRefID, threshold, condition.evaluator.type);
-            thresholds[originRefID].mode = GraphTresholdsStyleMode.LineAndArea;
+            thresholds[originRefID].mode = GraphThresholdsStyleMode.LineAndArea;
           }
         });
       } catch (err) {

@@ -157,7 +157,7 @@ export const DashNav = React.memo<Props>((props) => {
   };
 
   const isPlaylistRunning = () => {
-    return playlistSrv.isPlaying;
+    return playlistSrv.state.isPlaying;
   };
 
   const renderLeftActions = () => {
@@ -188,11 +188,17 @@ export const DashNav = React.memo<Props>((props) => {
     if (dashboard.meta.publicDashboardEnabled) {
       // TODO: This will be replaced with the new badge component. Color is required but gets override by css
       buttons.push(
-        <Badge color="blue" text="Public" className={publicBadgeStyle} data-testid={selectors.publicDashboardTag} />
+        <Badge
+          color="blue"
+          text="Public"
+          key="public-dashboard-button-badge"
+          className={publicBadgeStyle}
+          data-testid={selectors.publicDashboardTag}
+        />
       );
     }
 
-    if (config.featureToggles.scenes && !dashboard.isSnapshot()) {
+    if (config.featureToggles.scenes) {
       buttons.push(
         <DashNavButton
           key="button-scenes"

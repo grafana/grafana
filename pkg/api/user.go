@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"net/http"
+	"net/url"
 	"strconv"
 	"strings"
 
@@ -30,10 +31,23 @@ import (
 // 404: notFoundError
 // 500: internalServerError
 func (hs *HTTPServer) GetSignedInUser(c *contextmodel.ReqContext) response.Response {
-	userID, errResponse := getUserID(c)
-	if errResponse != nil {
-		return errResponse
+	namespace, identifier := c.SignedInUser.GetNamespacedID()
+	if namespace != identity.NamespaceUser {
+		return response.JSON(http.StatusOK, user.UserProfileDTO{
+			IsGrafanaAdmin: c.SignedInUser.GetIsGrafanaAdmin(),
+			OrgID:          c.SignedInUser.GetOrgID(),
+			UID:            strings.Join([]string{namespace, identifier}, ":"),
+			Name:           c.SignedInUser.NameOrFallback(),
+			Email:          c.SignedInUser.GetEmail(),
+			Login:          c.SignedInUser.GetLogin(),
+		})
 	}
+
+	userID, err := identity.IntIdentifier(namespace, identifier)
+	if err != nil {
+		return response.Error(http.StatusInternalServerError, "Failed to parse user id", err)
+	}
+
 	return hs.getUserUserProfile(c, userID)
 }
 
@@ -61,9 +75,9 @@ func (hs *HTTPServer) getUserUserProfile(c *contextmodel.ReqContext, userID int6
 	userProfile, err := hs.userService.GetProfile(c.Req.Context(), &query)
 	if err != nil {
 		if errors.Is(err, user.ErrUserNotFound) {
-			return response.Error(404, user.ErrUserNotFound.Error(), nil)
+			return response.Error(http.StatusNotFound, user.ErrUserNotFound.Error(), nil)
 		}
-		return response.Error(500, "Failed to get user", err)
+		return response.Error(http.StatusInternalServerError, "Failed to get user", err)
 	}
 
 	getAuthQuery := login.GetAuthInfoQuery{UserId: userID}
@@ -78,7 +92,7 @@ func (hs *HTTPServer) getUserUserProfile(c *contextmodel.ReqContext, userID int6
 		userProfile.IsGrafanaAdminExternallySynced = login.IsGrafanaAdminExternallySynced(hs.Cfg, oauthInfo, authInfo.AuthModule)
 	}
 
-	userProfile.AccessControl = hs.getAccessControlMetadata(c, c.SignedInUser.GetOrgID(), "global.users:id:", strconv.FormatInt(userID, 10))
+	userProfile.AccessControl = hs.getAccessControlMetadata(c, "global.users:id:", strconv.FormatInt(userID, 10))
 	userProfile.AvatarURL = dtos.GetGravatarUrl(hs.Cfg, userProfile.Email)
 
 	return response.JSON(http.StatusOK, userProfile)
@@ -99,9 +113,9 @@ func (hs *HTTPServer) GetUserByLoginOrEmail(c *contextmodel.ReqContext) response
 	usr, err := hs.userService.GetByLogin(c.Req.Context(), &query)
 	if err != nil {
 		if errors.Is(err, user.ErrUserNotFound) {
-			return response.Error(404, user.ErrUserNotFound.Error(), nil)
+			return response.Error(http.StatusNotFound, user.ErrUserNotFound.Error(), nil)
 		}
-		return response.Error(500, "Failed to get user", err)
+		return response.Error(http.StatusInternalServerError, "Failed to get user", err)
 	}
 	result := user.UserProfileDTO{
 		ID:             usr.ID,
@@ -125,6 +139,7 @@ func (hs *HTTPServer) GetUserByLoginOrEmail(c *contextmodel.ReqContext) response
 // 200: okResponse
 // 401: unauthorisedError
 // 403: forbiddenError
+// 409: conflictError
 // 500: internalServerError
 func (hs *HTTPServer) UpdateSignedInUser(c *contextmodel.ReqContext) response.Response {
 	cmd := user.UpdateUserCommand{}
@@ -141,11 +156,11 @@ func (hs *HTTPServer) UpdateSignedInUser(c *contextmodel.ReqContext) response.Re
 		return errResponse
 	}
 
-	if hs.Cfg.AuthProxyEnabled {
-		if hs.Cfg.AuthProxyHeaderProperty == "email" && cmd.Email != c.SignedInUser.GetEmail() {
+	if hs.Cfg.AuthProxy.Enabled {
+		if hs.Cfg.AuthProxy.HeaderProperty == "email" && cmd.Email != c.SignedInUser.GetEmail() {
 			return response.Error(http.StatusBadRequest, "Not allowed to change email when auth proxy is using email property", nil)
 		}
-		if hs.Cfg.AuthProxyHeaderProperty == "username" && cmd.Login != c.SignedInUser.GetLogin() {
+		if hs.Cfg.AuthProxy.HeaderProperty == "username" && cmd.Login != c.SignedInUser.GetLogin() {
 			return response.Error(http.StatusBadRequest, "Not allowed to change username when auth proxy is using username property", nil)
 		}
 	}
@@ -165,6 +180,7 @@ func (hs *HTTPServer) UpdateSignedInUser(c *contextmodel.ReqContext) response.Re
 // 401: unauthorisedError
 // 403: forbiddenError
 // 404: notFoundError
+// 409: conflictError
 // 500: internalServerError
 func (hs *HTTPServer) UpdateUser(c *contextmodel.ReqContext) response.Response {
 	cmd := user.UpdateUserCommand{}
@@ -196,13 +212,13 @@ func (hs *HTTPServer) UpdateUserActiveOrg(c *contextmodel.ReqContext) response.R
 	}
 
 	if !hs.validateUsingOrg(c.Req.Context(), userID, orgID) {
-		return response.Error(401, "Not a valid organization", nil)
+		return response.Error(http.StatusUnauthorized, "Not a valid organization", nil)
 	}
 
 	cmd := user.SetUsingOrgCommand{UserID: userID, OrgID: orgID}
 
 	if err := hs.userService.SetUsingOrg(c.Req.Context(), &cmd); err != nil {
-		return response.Error(500, "Failed to change active organization", err)
+		return response.Error(http.StatusInternalServerError, "Failed to change active organization", err)
 	}
 
 	return response.Success("Active organization changed")
@@ -228,6 +244,36 @@ func (hs *HTTPServer) handleUpdateUser(ctx context.Context, cmd user.UpdateUserC
 		return response.Err(user.ErrEmptyUsernameAndEmail.Errorf("user cannot be created with empty username and email"))
 	}
 
+	// If email is being updated, we need to verify it. Likewise, if username is being updated and the new username
+	// is an email, we also need to verify it.
+	// To avoid breaking changes, email verification is implemented in a way that if the email field is being updated,
+	// all the other fields being updated in the same request are disregarded. We do this because email might need to
+	// be verified and if so, it goes through a different code flow.
+	if hs.Cfg.Smtp.Enabled && hs.Cfg.VerifyEmailEnabled {
+		query := user.GetUserByIDQuery{ID: cmd.UserID}
+		usr, err := hs.userService.GetByID(ctx, &query)
+		if err != nil {
+			if errors.Is(err, user.ErrUserNotFound) {
+				return response.Error(http.StatusNotFound, user.ErrUserNotFound.Error(), err)
+			}
+			return response.Error(http.StatusInternalServerError, "Failed to get user", err)
+		}
+
+		if len(cmd.Email) != 0 && usr.Email != cmd.Email {
+			normalized, err := ValidateAndNormalizeEmail(cmd.Email)
+			if err != nil {
+				return response.Error(http.StatusBadRequest, "Invalid email address", err)
+			}
+			return hs.verifyEmailUpdate(ctx, normalized, user.EmailUpdateAction, usr)
+		}
+		if len(cmd.Login) != 0 && usr.Login != cmd.Login {
+			normalized, err := ValidateAndNormalizeEmail(cmd.Login)
+			if err == nil && usr.Email != normalized {
+				return hs.verifyEmailUpdate(ctx, cmd.Login, user.LoginUpdateAction, usr)
+			}
+		}
+	}
+
 	if err := hs.userService.Update(ctx, &cmd); err != nil {
 		if errors.Is(err, user.ErrCaseInsensitive) {
 			return response.Error(http.StatusConflict, "Update would result in user login conflict", err)
@@ -236,6 +282,39 @@ func (hs *HTTPServer) handleUpdateUser(ctx context.Context, cmd user.UpdateUserC
 	}
 
 	return response.Success("User updated")
+}
+
+func (hs *HTTPServer) verifyEmailUpdate(ctx context.Context, email string, field user.UpdateEmailActionType, usr *user.User) response.Response {
+	if err := hs.userVerifier.Start(ctx, user.StartVerifyEmailCommand{
+		User:   *usr,
+		Email:  email,
+		Action: field,
+	}); err != nil {
+		return response.ErrOrFallback(http.StatusInternalServerError, "Failed to generate email verification", err)
+	}
+
+	return response.Success("Email sent for verification")
+}
+
+// swagger:route GET /user/email/update user updateUserEmail
+//
+// Update user email.
+//
+// Update the email of user given a verification code.
+//
+// Responses:
+// 302: okResponse
+func (hs *HTTPServer) UpdateUserEmail(c *contextmodel.ReqContext) response.Response {
+	code, err := url.QueryUnescape(c.Req.URL.Query().Get("code"))
+	if err != nil || code == "" {
+		return hs.RedirectResponseWithError(c, errors.New("bad request data"))
+	}
+
+	if err := hs.userVerifier.Complete(c.Req.Context(), user.CompleteEmailVerifyCommand{Code: code}); err != nil {
+		return hs.RedirectResponseWithError(c, err)
+	}
+
+	return response.Redirect(hs.Cfg.AppSubURL + "/profile")
 }
 
 func (hs *HTTPServer) isExternalUser(ctx context.Context, userID int64) (bool, error) {
@@ -490,24 +569,25 @@ func (hs *HTTPServer) ChangeUserPassword(c *contextmodel.ReqContext) response.Re
 		}
 	}
 
-	passwordHashed, err := util.EncodePassword(cmd.OldPassword, usr.Salt)
+	passwordHashed, err := util.EncodePassword(string(cmd.OldPassword), usr.Salt)
 	if err != nil {
 		return response.Error(http.StatusInternalServerError, "Failed to encode password", err)
 	}
-	if passwordHashed != usr.Password {
+	if user.Password(passwordHashed) != usr.Password {
 		return response.Error(http.StatusUnauthorized, "Invalid old password", nil)
 	}
 
-	password := user.Password(cmd.NewPassword)
-	if password.IsWeak() {
-		return response.Error(http.StatusBadRequest, "New password is too short", nil)
+	if err := cmd.NewPassword.Validate(hs.Cfg); err != nil {
+		c.Logger.Warn("the new password doesn't meet the password policy criteria", "err", err)
+		return response.Err(err)
 	}
 
 	cmd.UserID = userID
-	cmd.NewPassword, err = util.EncodePassword(cmd.NewPassword, usr.Salt)
+	encodedPassword, err := util.EncodePassword(string(cmd.NewPassword), usr.Salt)
 	if err != nil {
 		return response.Error(http.StatusInternalServerError, "Failed to encode password", err)
 	}
+	cmd.NewPassword = user.Password(encodedPassword)
 
 	if err := hs.userService.ChangePassword(c.Req.Context(), &cmd); err != nil {
 		return response.Error(http.StatusInternalServerError, "Failed to change user password", err)
@@ -582,7 +662,7 @@ func (hs *HTTPServer) ClearHelpFlags(c *contextmodel.ReqContext) response.Respon
 	}
 
 	if err := hs.userService.SetUserHelpFlag(c.Req.Context(), &cmd); err != nil {
-		return response.Error(500, "Failed to update help flag", err)
+		return response.Error(http.StatusInternalServerError, "Failed to update help flag", err)
 	}
 
 	return response.JSON(http.StatusOK, &util.DynMap{"message": "Help flag set", "helpFlags1": cmd.HelpFlags1})

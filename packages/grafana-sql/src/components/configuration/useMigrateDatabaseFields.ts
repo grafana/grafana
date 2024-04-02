@@ -1,9 +1,10 @@
 import { useEffect } from 'react';
 
 import { DataSourcePluginOptionsEditorProps } from '@grafana/data';
-import { logDebug, config } from '@grafana/runtime';
+import { config } from '@grafana/runtime';
 
 import { SQLOptions } from '../../types';
+import { sqlPluginLogger } from '../../utils/logging';
 
 /**
  * 1. Moves the database field from the options object to jsonData.database and empties the database field.
@@ -20,7 +21,7 @@ export function useMigrateDatabaseFields<T extends SQLOptions, S = {}>({
 
     // Migrate the database field from the column into the jsonData object
     if (options.database) {
-      logDebug(`Migrating from options.database with value ${options.database} for ${options.name}`);
+      sqlPluginLogger.logDebug(`Migrating from options.database with value ${options.database} for ${options.name}`);
       newOptions.database = '';
       newOptions.jsonData = { ...jsonData, database: options.database };
       optionsUpdated = true;
@@ -35,7 +36,7 @@ export function useMigrateDatabaseFields<T extends SQLOptions, S = {}>({
     ) {
       const { maxOpenConns, maxIdleConns } = config.sqlConnectionLimits;
 
-      logDebug(
+      sqlPluginLogger.logDebug(
         `Setting default max open connections to ${maxOpenConns} and setting max idle connection to ${maxIdleConns}`
       );
 

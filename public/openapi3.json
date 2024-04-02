@@ -1,6 +1,52 @@
 {
   "components": {
     "responses": {
+      "GetAllIntervalsResponse": {
+        "content": {
+          "application/json": {
+            "schema": {
+              "items": {
+                "$ref": "#/components/schemas/GettableTimeIntervals"
+              },
+              "type": "array"
+            }
+          }
+        },
+        "description": "(empty)"
+      },
+      "GetIntervalsByNameResponse": {
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/GettableTimeIntervals"
+            }
+          }
+        },
+        "description": "(empty)"
+      },
+      "GetReceiverResponse": {
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/GettableApiReceiver"
+            }
+          }
+        },
+        "description": "(empty)"
+      },
+      "GetReceiversResponse": {
+        "content": {
+          "application/json": {
+            "schema": {
+              "items": {
+                "$ref": "#/components/schemas/GettableApiReceiver"
+              },
+              "type": "array"
+            }
+          }
+        },
+        "description": "(empty)"
+      },
       "GettableHistoricUserConfigs": {
         "content": {
           "application/json": {
@@ -122,6 +168,56 @@
                 "type": "integer"
               },
               "type": "array"
+            }
+          }
+        },
+        "description": "(empty)"
+      },
+      "cloudMigrationCreateTokenResponse": {
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/CreateAccessTokenResponseDTO"
+            }
+          }
+        },
+        "description": "(empty)"
+      },
+      "cloudMigrationListResponse": {
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/CloudMigrationListResponse"
+            }
+          }
+        },
+        "description": "(empty)"
+      },
+      "cloudMigrationResponse": {
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/CloudMigrationResponse"
+            }
+          }
+        },
+        "description": "(empty)"
+      },
+      "cloudMigrationRunListResponse": {
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/CloudMigrationRunList"
+            }
+          }
+        },
+        "description": "(empty)"
+      },
+      "cloudMigrationRunResponse": {
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/CloudMigrationRun"
             }
           }
         },
@@ -377,32 +473,6 @@
         },
         "description": "(empty)"
       },
-      "deleteAlertNotificationChannelResponse": {
-        "content": {
-          "application/json": {
-            "schema": {
-              "properties": {
-                "id": {
-                  "description": "ID Identifier of the deleted notification channel.",
-                  "example": 65,
-                  "format": "int64",
-                  "type": "integer"
-                },
-                "message": {
-                  "description": "Message Message of the deleted notificatiton channel.",
-                  "type": "string"
-                }
-              },
-              "required": [
-                "id",
-                "message"
-              ],
-              "type": "object"
-            }
-          }
-        },
-        "description": "(empty)"
-      },
       "deleteCorrelationResponse": {
         "content": {
           "application/json": {
@@ -592,65 +662,6 @@
         },
         "description": "(empty)"
       },
-      "getAlertNotificationChannelResponse": {
-        "content": {
-          "application/json": {
-            "schema": {
-              "$ref": "#/components/schemas/AlertNotification"
-            }
-          }
-        },
-        "description": "(empty)"
-      },
-      "getAlertNotificationChannelsResponse": {
-        "content": {
-          "application/json": {
-            "schema": {
-              "items": {
-                "$ref": "#/components/schemas/AlertNotification"
-              },
-              "type": "array"
-            }
-          }
-        },
-        "description": "(empty)"
-      },
-      "getAlertNotificationLookupResponse": {
-        "content": {
-          "application/json": {
-            "schema": {
-              "items": {
-                "$ref": "#/components/schemas/AlertNotificationLookup"
-              },
-              "type": "array"
-            }
-          }
-        },
-        "description": "(empty)"
-      },
-      "getAlertResponse": {
-        "content": {
-          "application/json": {
-            "schema": {
-              "$ref": "#/components/schemas/LegacyAlert"
-            }
-          }
-        },
-        "description": "(empty)"
-      },
-      "getAlertsResponse": {
-        "content": {
-          "application/json": {
-            "schema": {
-              "items": {
-                "$ref": "#/components/schemas/AlertListItemDTO"
-              },
-              "type": "array"
-            }
-          }
-        },
-        "description": "(empty)"
-      },
       "getAllRolesResponse": {
         "content": {
           "application/json": {
@@ -757,19 +768,6 @@
         "description": "(empty)"
       },
       "getDashboardSnapshotResponse": {
-        "description": "(empty)"
-      },
-      "getDashboardStatesResponse": {
-        "content": {
-          "application/json": {
-            "schema": {
-              "items": {
-                "$ref": "#/components/schemas/AlertStateInfoDTO"
-              },
-              "type": "array"
-            }
-          }
-        },
         "description": "(empty)"
       },
       "getDashboardsTagsResponse": {
@@ -1173,7 +1171,22 @@
         "content": {
           "application/json": {
             "schema": {
-              "$ref": "#/components/schemas/SSOSettings"
+              "properties": {
+                "id": {
+                  "type": "string"
+                },
+                "provider": {
+                  "type": "string"
+                },
+                "settings": {
+                  "additionalProperties": false,
+                  "type": "object"
+                },
+                "source": {
+                  "type": "string"
+                }
+              },
+              "type": "object"
             }
           }
         },
@@ -1438,7 +1451,22 @@
           "application/json": {
             "schema": {
               "items": {
-                "$ref": "#/components/schemas/SSOSettings"
+                "properties": {
+                  "id": {
+                    "type": "string"
+                  },
+                  "provider": {
+                    "type": "string"
+                  },
+                  "settings": {
+                    "additionalProperties": false,
+                    "type": "object"
+                  },
+                  "source": {
+                    "type": "string"
+                  }
+                },
+                "type": "object"
               },
               "type": "array"
             }
@@ -1544,61 +1572,6 @@
           }
         },
         "description": "An OKResponse is returned if the request was successful."
-      },
-      "pauseAlertResponse": {
-        "content": {
-          "application/json": {
-            "schema": {
-              "properties": {
-                "alertId": {
-                  "format": "int64",
-                  "type": "integer"
-                },
-                "message": {
-                  "type": "string"
-                },
-                "state": {
-                  "description": "Alert result state\nrequired true",
-                  "type": "string"
-                }
-              },
-              "required": [
-                "alertId",
-                "message"
-              ],
-              "type": "object"
-            }
-          }
-        },
-        "description": "(empty)"
-      },
-      "pauseAlertsResponse": {
-        "content": {
-          "application/json": {
-            "schema": {
-              "properties": {
-                "alertsAffected": {
-                  "description": "AlertsAffected is the number of the affected alerts.",
-                  "format": "int64",
-                  "type": "integer"
-                },
-                "message": {
-                  "type": "string"
-                },
-                "state": {
-                  "description": "Alert result state\nrequired true",
-                  "type": "string"
-                }
-              },
-              "required": [
-                "alertsAffected",
-                "message"
-              ],
-              "type": "object"
-            }
-          }
-        },
-        "description": "(empty)"
       },
       "postAPIkeyResponse": {
         "content": {
@@ -1912,16 +1885,6 @@
           "application/json": {
             "schema": {
               "$ref": "#/components/schemas/RoleAssignmentsDTO"
-            }
-          }
-        },
-        "description": "(empty)"
-      },
-      "testAlertResponse": {
-        "content": {
-          "application/json": {
-            "schema": {
-              "$ref": "#/components/schemas/AlertTestResult"
             }
           }
         },
@@ -2265,7 +2228,7 @@
             "type": "integer"
           },
           "password": {
-            "type": "string"
+            "$ref": "#/components/schemas/Password"
           }
         },
         "type": "object"
@@ -2386,7 +2349,7 @@
       "AdminUpdateUserPasswordForm": {
         "properties": {
           "password": {
-            "type": "string"
+            "$ref": "#/components/schemas/Password"
           }
         },
         "type": "object"
@@ -2458,52 +2421,6 @@
         },
         "type": "object"
       },
-      "AlertListItemDTO": {
-        "properties": {
-          "dashboardId": {
-            "format": "int64",
-            "type": "integer"
-          },
-          "dashboardSlug": {
-            "type": "string"
-          },
-          "dashboardUid": {
-            "type": "string"
-          },
-          "evalData": {
-            "$ref": "#/components/schemas/Json"
-          },
-          "evalDate": {
-            "format": "date-time",
-            "type": "string"
-          },
-          "executionError": {
-            "type": "string"
-          },
-          "id": {
-            "format": "int64",
-            "type": "integer"
-          },
-          "name": {
-            "type": "string"
-          },
-          "newStateDate": {
-            "format": "date-time",
-            "type": "string"
-          },
-          "panelId": {
-            "format": "int64",
-            "type": "integer"
-          },
-          "state": {
-            "$ref": "#/components/schemas/AlertStateType"
-          },
-          "url": {
-            "type": "string"
-          }
-        },
-        "type": "object"
-      },
       "AlertManager": {
         "properties": {
           "url": {
@@ -2532,88 +2449,6 @@
           }
         },
         "title": "AlertManagersResult contains the result from querying the alertmanagers endpoint.",
-        "type": "object"
-      },
-      "AlertNotification": {
-        "properties": {
-          "created": {
-            "format": "date-time",
-            "type": "string"
-          },
-          "disableResolveMessage": {
-            "type": "boolean"
-          },
-          "frequency": {
-            "type": "string"
-          },
-          "id": {
-            "format": "int64",
-            "type": "integer"
-          },
-          "isDefault": {
-            "type": "boolean"
-          },
-          "name": {
-            "type": "string"
-          },
-          "secureFields": {
-            "additionalProperties": {
-              "type": "boolean"
-            },
-            "type": "object"
-          },
-          "sendReminder": {
-            "type": "boolean"
-          },
-          "settings": {
-            "$ref": "#/components/schemas/Json"
-          },
-          "type": {
-            "type": "string"
-          },
-          "uid": {
-            "type": "string"
-          },
-          "updated": {
-            "format": "date-time",
-            "type": "string"
-          }
-        },
-        "type": "object"
-      },
-      "AlertNotificationLookup": {
-        "properties": {
-          "id": {
-            "format": "int64",
-            "type": "integer"
-          },
-          "isDefault": {
-            "type": "boolean"
-          },
-          "name": {
-            "type": "string"
-          },
-          "type": {
-            "type": "string"
-          },
-          "uid": {
-            "type": "string"
-          }
-        },
-        "type": "object"
-      },
-      "AlertPair": {
-        "properties": {
-          "alertRule": {
-            "$ref": "#/components/schemas/AlertRuleUpgrade"
-          },
-          "error": {
-            "type": "string"
-          },
-          "legacyAlert": {
-            "$ref": "#/components/schemas/LegacyAlert"
-          }
-        },
         "type": "object"
       },
       "AlertQuery": {
@@ -2731,6 +2566,9 @@
             ],
             "type": "string"
           },
+          "notification_settings": {
+            "$ref": "#/components/schemas/AlertRuleNotificationSettingsExport"
+          },
           "panelId": {
             "format": "int64",
             "type": "integer"
@@ -2800,101 +2638,88 @@
         },
         "type": "object"
       },
-      "AlertRuleUpgrade": {
+      "AlertRuleNotificationSettings": {
         "properties": {
-          "sendsTo": {
+          "group_by": {
+            "default": [
+              "alertname",
+              "grafana_folder"
+            ],
+            "description": "Override the labels by which incoming alerts are grouped together. For example, multiple alerts coming in for\ncluster=A and alertname=LatencyHigh would be batched into a single group. To aggregate by all possible labels\nuse the special value '...' as the sole label name.\nThis effectively disables aggregation entirely, passing through all alerts as-is. This is unlikely to be what\nyou want, unless you have a very low alert volume or your upstream notification system performs its own grouping.\nMust include 'alertname' and 'grafana_folder' if not using '...'.",
+            "example": [
+              "alertname",
+              "grafana_folder",
+              "cluster"
+            ],
             "items": {
               "type": "string"
             },
             "type": "array"
           },
-          "title": {
+          "group_interval": {
+            "description": "Override how long to wait before sending a notification about new alerts that are added to a group of alerts for\nwhich an initial notification has already been sent. (Usually ~5m or more.)",
+            "example": "5m",
             "type": "string"
           },
-          "uid": {
-            "type": "string"
-          }
-        },
-        "type": "object"
-      },
-      "AlertStateInfoDTO": {
-        "properties": {
-          "dashboardId": {
-            "format": "int64",
-            "type": "integer"
-          },
-          "id": {
-            "format": "int64",
-            "type": "integer"
-          },
-          "newStateDate": {
-            "format": "date-time",
+          "group_wait": {
+            "description": "Override how long to initially wait to send a notification for a group of alerts. Allows to wait for an\ninhibiting alert to arrive or collect more initial alerts for the same group. (Usually ~0s to few minutes.)",
+            "example": "30s",
             "type": "string"
           },
-          "panelId": {
-            "format": "int64",
-            "type": "integer"
-          },
-          "state": {
-            "$ref": "#/components/schemas/AlertStateType"
-          }
-        },
-        "type": "object"
-      },
-      "AlertStateType": {
-        "type": "string"
-      },
-      "AlertTestCommand": {
-        "properties": {
-          "dashboard": {
-            "$ref": "#/components/schemas/Json"
-          },
-          "panelId": {
-            "format": "int64",
-            "type": "integer"
-          }
-        },
-        "type": "object"
-      },
-      "AlertTestResult": {
-        "properties": {
-          "conditionEvals": {
-            "type": "string"
-          },
-          "error": {
-            "type": "string"
-          },
-          "firing": {
-            "type": "boolean"
-          },
-          "logs": {
+          "mute_time_intervals": {
+            "description": "Override the times when notifications should be muted. These must match the name of a mute time interval defined\nin the alertmanager configuration mute_time_intervals section. When muted it will not send any notifications, but\notherwise acts normally.",
+            "example": [
+              "maintenance"
+            ],
             "items": {
-              "$ref": "#/components/schemas/AlertTestResultLog"
+              "type": "string"
             },
             "type": "array"
           },
-          "matches": {
+          "receiver": {
+            "description": "Name of the receiver to send notifications to.",
+            "example": "grafana-default-email",
+            "type": "string"
+          },
+          "repeat_interval": {
+            "description": "Override how long to wait before sending a notification again if it has already been sent successfully for an\nalert. (Usually ~3h or more).\nNote that this parameter is implicitly bound by Alertmanager's `--data.retention` configuration flag.\nNotifications will be resent after either repeat_interval or the data retention period have passed, whichever\noccurs first. `repeat_interval` should not be less than `group_interval`.",
+            "example": "4h",
+            "type": "string"
+          }
+        },
+        "required": [
+          "receiver"
+        ],
+        "type": "object"
+      },
+      "AlertRuleNotificationSettingsExport": {
+        "properties": {
+          "group_by": {
             "items": {
-              "$ref": "#/components/schemas/EvalMatch"
+              "type": "string"
             },
             "type": "array"
           },
-          "state": {
-            "$ref": "#/components/schemas/AlertStateType"
+          "group_interval": {
+            "type": "string"
           },
-          "timeMs": {
+          "group_wait": {
+            "type": "string"
+          },
+          "mute_time_intervals": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "receiver": {
+            "type": "string"
+          },
+          "repeat_interval": {
             "type": "string"
           }
         },
-        "type": "object"
-      },
-      "AlertTestResultLog": {
-        "properties": {
-          "data": {},
-          "message": {
-            "type": "string"
-          }
-        },
+        "title": "AlertRuleNotificationSettingsExport is the provisioned export of models.NotificationSettings.",
         "type": "object"
       },
       "AlertingFileExport": {
@@ -3688,10 +3513,85 @@
       "ChangeUserPasswordCommand": {
         "properties": {
           "newPassword": {
-            "type": "string"
+            "$ref": "#/components/schemas/Password"
           },
           "oldPassword": {
+            "$ref": "#/components/schemas/Password"
+          }
+        },
+        "type": "object"
+      },
+      "CloudMigrationListResponse": {
+        "properties": {
+          "migrations": {
+            "items": {
+              "$ref": "#/components/schemas/CloudMigrationResponse"
+            },
+            "type": "array"
+          }
+        },
+        "type": "object"
+      },
+      "CloudMigrationResponse": {
+        "properties": {
+          "created": {
+            "format": "date-time",
             "type": "string"
+          },
+          "id": {
+            "format": "int64",
+            "type": "integer"
+          },
+          "stack": {
+            "type": "string"
+          },
+          "updated": {
+            "format": "date-time",
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "CloudMigrationRun": {
+        "properties": {
+          "created": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "finished": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "id": {
+            "format": "int64",
+            "type": "integer"
+          },
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/MigratedResource"
+            },
+            "type": "array"
+          },
+          "result": {
+            "$ref": "#/components/schemas/MigrationResult"
+          },
+          "uid": {
+            "type": "string"
+          },
+          "updated": {
+            "format": "date-time",
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "CloudMigrationRunList": {
+        "properties": {
+          "runs": {
+            "items": {
+              "$ref": "#/components/schemas/CloudMigrationRun"
+            },
+            "type": "array"
           }
         },
         "type": "object"
@@ -3713,6 +3613,7 @@
             "type": "array"
           },
           "mute_time_intervals": {
+            "description": "MuteTimeIntervals is deprecated and will be removed before Alertmanager 1.0.",
             "items": {
               "$ref": "#/components/schemas/MuteTimeInterval"
             },
@@ -3726,23 +3627,15 @@
               "type": "string"
             },
             "type": "array"
+          },
+          "time_intervals": {
+            "items": {
+              "$ref": "#/components/schemas/TimeInterval"
+            },
+            "type": "array"
           }
         },
         "title": "Config is the top-level configuration for Alertmanager's config files.",
-        "type": "object"
-      },
-      "ContactPair": {
-        "properties": {
-          "contactPoint": {
-            "$ref": "#/components/schemas/ContactPointUpgrade"
-          },
-          "error": {
-            "type": "string"
-          },
-          "legacyChannel": {
-            "$ref": "#/components/schemas/LegacyChannel"
-          }
-        },
         "type": "object"
       },
       "ContactPointExport": {
@@ -3762,20 +3655,6 @@
           }
         },
         "title": "ContactPointExport is the provisioned file export of alerting.ContactPointV1.",
-        "type": "object"
-      },
-      "ContactPointUpgrade": {
-        "properties": {
-          "name": {
-            "type": "string"
-          },
-          "routeMatchers": {
-            "$ref": "#/components/schemas/ObjectMatchers"
-          },
-          "type": {
-            "type": "string"
-          }
-        },
         "type": "object"
       },
       "ContactPoints": {
@@ -3927,36 +3806,9 @@
         "title": "CounterResetHint contains the known information about a counter reset,",
         "type": "integer"
       },
-      "CreateAlertNotificationCommand": {
+      "CreateAccessTokenResponseDTO": {
         "properties": {
-          "disableResolveMessage": {
-            "type": "boolean"
-          },
-          "frequency": {
-            "type": "string"
-          },
-          "isDefault": {
-            "type": "boolean"
-          },
-          "name": {
-            "type": "string"
-          },
-          "secureSettings": {
-            "additionalProperties": {
-              "type": "string"
-            },
-            "type": "object"
-          },
-          "sendReminder": {
-            "type": "boolean"
-          },
-          "settings": {
-            "$ref": "#/components/schemas/Json"
-          },
-          "type": {
-            "type": "string"
-          },
-          "uid": {
+          "token": {
             "type": "string"
           }
         },
@@ -4005,8 +3857,12 @@
       },
       "CreateDashboardSnapshotCommand": {
         "properties": {
+          "apiVersion": {
+            "description": "APIVersion defines the versioned schema of this representation of an object.\nServers should convert recognized schemas to the latest internal value, and\nmay reject unrecognized values.\nMore info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources\n+optional",
+            "type": "string"
+          },
           "dashboard": {
-            "$ref": "#/components/schemas/Json"
+            "$ref": "#/components/schemas/Unstructured"
           },
           "deleteKey": {
             "description": "Unique key used to delete the snapshot. It is different from the `key` so that only the creator can delete the snapshot. Required if `external` is `true`.",
@@ -4025,6 +3881,10 @@
           },
           "key": {
             "description": "Define the unique key. Required if `external` is `true`.",
+            "type": "string"
+          },
+          "kind": {
+            "description": "Kind is a string value representing the REST resource this object represents.\nServers may infer this from the endpoint the client submits requests to.\nCannot be updated.\nIn CamelCase.\nMore info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds\n+optional",
             "type": "string"
           },
           "name": {
@@ -4092,13 +3952,6 @@
       },
       "CreateOrUpdateReportConfig": {
         "properties": {
-          "dashboardId": {
-            "format": "int64",
-            "type": "integer"
-          },
-          "dashboardUid": {
-            "type": "string"
-          },
           "dashboards": {
             "items": {
               "$ref": "#/components/schemas/ReportDashboard"
@@ -4141,9 +3994,6 @@
           },
           "state": {
             "$ref": "#/components/schemas/State"
-          },
-          "templateVars": {
-            "type": "object"
           }
         },
         "type": "object"
@@ -4369,6 +4219,41 @@
         },
         "type": "object"
       },
+      "DashboardCreateCommand": {
+        "description": "These are the values expected to be sent from an end user\n+k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object",
+        "properties": {
+          "apiVersion": {
+            "description": "APIVersion defines the versioned schema of this representation of an object.\nServers should convert recognized schemas to the latest internal value, and\nmay reject unrecognized values.\nMore info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources\n+optional",
+            "type": "string"
+          },
+          "dashboard": {
+            "$ref": "#/components/schemas/Unstructured"
+          },
+          "expires": {
+            "default": 0,
+            "description": "When the snapshot should expire in seconds in seconds. Default is never to expire.",
+            "format": "int64",
+            "type": "integer"
+          },
+          "external": {
+            "default": false,
+            "description": "these are passed when storing an external snapshot ref\nSave the snapshot on an external server rather than locally.",
+            "type": "boolean"
+          },
+          "kind": {
+            "description": "Kind is a string value representing the REST resource this object represents.\nServers may infer this from the endpoint the client submits requests to.\nCannot be updated.\nIn CamelCase.\nMore info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds\n+optional",
+            "type": "string"
+          },
+          "name": {
+            "description": "Snapshot name",
+            "type": "string"
+          }
+        },
+        "required": [
+          "dashboard"
+        ],
+        "type": "object"
+      },
       "DashboardFullWithMeta": {
         "properties": {
           "dashboard": {
@@ -4517,48 +4402,6 @@
             "type": "integer"
           },
           "term": {
-            "type": "string"
-          }
-        },
-        "type": "object"
-      },
-      "DashboardUpgrade": {
-        "properties": {
-          "dashboardId": {
-            "format": "int64",
-            "type": "integer"
-          },
-          "dashboardName": {
-            "type": "string"
-          },
-          "dashboardUid": {
-            "type": "string"
-          },
-          "error": {
-            "type": "string"
-          },
-          "folderName": {
-            "type": "string"
-          },
-          "folderUid": {
-            "type": "string"
-          },
-          "migratedAlerts": {
-            "items": {
-              "$ref": "#/components/schemas/AlertPair"
-            },
-            "type": "array"
-          },
-          "newFolderName": {
-            "type": "string"
-          },
-          "newFolderUid": {
-            "type": "string"
-          },
-          "provisioned": {
-            "type": "boolean"
-          },
-          "warning": {
             "type": "string"
           }
         },
@@ -4869,6 +4712,9 @@
           },
           "webhook_url": {
             "$ref": "#/components/schemas/SecretURL"
+          },
+          "webhook_url_file": {
+            "type": "string"
           }
         },
         "title": "DiscordConfig configures notifications via Discord.",
@@ -5104,23 +4950,6 @@
           },
           "now": {
             "format": "date-time",
-            "type": "string"
-          }
-        },
-        "type": "object"
-      },
-      "EvalMatch": {
-        "properties": {
-          "metric": {
-            "type": "string"
-          },
-          "tags": {
-            "additionalProperties": {
-              "type": "string"
-            },
-            "type": "object"
-          },
-          "value": {
             "type": "string"
           }
         },
@@ -5581,7 +5410,7 @@
         "type": "object"
       },
       "FrameType": {
-        "description": "A FrameType string, when present in a frame's metadata, asserts that the\nframe's structure conforms to the FrameType's specification.\nThis property is currently optional, so FrameType may be FrameTypeUnknown even if the properties of\nthe Frame correspond to a defined FrameType.",
+        "description": "A FrameType string, when present in a frame's metadata, asserts that the\nframe's structure conforms to the FrameType's specification.\nThis property is currently optional, so FrameType may be FrameTypeUnknown even if the properties of\nthe Frame correspond to a defined FrameType.\n+enum",
         "type": "string"
       },
       "FrameTypeVersion": {
@@ -5670,6 +5499,7 @@
             "type": "object"
           },
           "mute_time_intervals": {
+            "description": "MuteTimeIntervals is deprecated and will be removed before Alertmanager 1.0.",
             "items": {
               "$ref": "#/components/schemas/MuteTimeInterval"
             },
@@ -5688,6 +5518,12 @@
           "templates": {
             "items": {
               "type": "string"
+            },
+            "type": "array"
+          },
+          "time_intervals": {
+            "items": {
+              "$ref": "#/components/schemas/TimeInterval"
             },
             "type": "array"
           }
@@ -5903,6 +5739,9 @@
             ],
             "type": "string"
           },
+          "notification_settings": {
+            "$ref": "#/components/schemas/AlertRuleNotificationSettings"
+          },
           "orgId": {
             "format": "int64",
             "type": "integer"
@@ -6017,6 +5856,23 @@
           "uptime",
           "versionInfo"
         ],
+        "type": "object"
+      },
+      "GettableTimeIntervals": {
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "provenance": {
+            "$ref": "#/components/schemas/Provenance"
+          },
+          "time_intervals": {
+            "items": {
+              "$ref": "#/components/schemas/TimeIntervalItem"
+            },
+            "type": "array"
+          }
+        },
         "type": "object"
       },
       "GettableUserConfig": {
@@ -6447,6 +6303,7 @@
         "type": "object"
       },
       "JSONWebKey": {
+        "description": "JSONWebKey represents a public or private key in JWK format. It can be\nmarshaled into JSON and unmarshaled from JSON.",
         "properties": {
           "Algorithm": {
             "description": "Key algorithm, parsed from `alg` header.",
@@ -6479,7 +6336,7 @@
             "$ref": "#/components/schemas/URL"
           },
           "Key": {
-            "description": "Cryptographic key, can be a symmetric or asymmetric key."
+            "description": "Key is the Go in-memory representation of this key. It must have one\nof these types:\ned25519.PublicKey\ned25519.PrivateKey\necdsa.PublicKey\necdsa.PrivateKey\nrsa.PublicKey\nrsa.PrivateKey\n[]byte (a symmetric key)\n\nWhen marshaling this JSONWebKey into JSON, the \"kty\" header parameter\nwill be automatically set based on the type of this field."
           },
           "KeyID": {
             "description": "Key identifier, parsed from `kid` header.",
@@ -6490,7 +6347,6 @@
             "type": "string"
           }
         },
-        "title": "JSONWebKey represents a public or private key in JWK format.",
         "type": "object"
       },
       "Json": {
@@ -6538,97 +6394,6 @@
           "$ref": "#/components/schemas/Label"
         },
         "type": "array"
-      },
-      "LegacyAlert": {
-        "properties": {
-          "Created": {
-            "format": "date-time",
-            "type": "string"
-          },
-          "DashboardID": {
-            "format": "int64",
-            "type": "integer"
-          },
-          "EvalData": {
-            "$ref": "#/components/schemas/Json"
-          },
-          "ExecutionError": {
-            "type": "string"
-          },
-          "For": {
-            "$ref": "#/components/schemas/Duration"
-          },
-          "Frequency": {
-            "format": "int64",
-            "type": "integer"
-          },
-          "Handler": {
-            "format": "int64",
-            "type": "integer"
-          },
-          "ID": {
-            "format": "int64",
-            "type": "integer"
-          },
-          "Message": {
-            "type": "string"
-          },
-          "Name": {
-            "type": "string"
-          },
-          "NewStateDate": {
-            "format": "date-time",
-            "type": "string"
-          },
-          "OrgID": {
-            "format": "int64",
-            "type": "integer"
-          },
-          "PanelID": {
-            "format": "int64",
-            "type": "integer"
-          },
-          "Settings": {
-            "$ref": "#/components/schemas/Json"
-          },
-          "Severity": {
-            "type": "string"
-          },
-          "Silenced": {
-            "type": "boolean"
-          },
-          "State": {
-            "$ref": "#/components/schemas/AlertStateType"
-          },
-          "StateChanges": {
-            "format": "int64",
-            "type": "integer"
-          },
-          "Updated": {
-            "format": "date-time",
-            "type": "string"
-          },
-          "Version": {
-            "format": "int64",
-            "type": "integer"
-          }
-        },
-        "type": "object"
-      },
-      "LegacyChannel": {
-        "properties": {
-          "id": {
-            "format": "int64",
-            "type": "integer"
-          },
-          "name": {
-            "type": "string"
-          },
-          "type": {
-            "type": "string"
-          }
-        },
-        "type": "object"
       },
       "LibraryElementArrayResponse": {
         "properties": {
@@ -6851,6 +6616,9 @@
           "send_resolved": {
             "type": "boolean"
           },
+          "summary": {
+            "type": "string"
+          },
           "text": {
             "type": "string"
           },
@@ -6859,6 +6627,9 @@
           },
           "webhook_url": {
             "$ref": "#/components/schemas/SecretURL"
+          },
+          "webhook_url_file": {
+            "type": "string"
           }
         },
         "type": "object"
@@ -6964,6 +6735,48 @@
           "to",
           "queries"
         ],
+        "type": "object"
+      },
+      "MigratedResource": {
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "refID": {
+            "type": "string"
+          },
+          "result": {
+            "$ref": "#/components/schemas/MigratedResourceResult"
+          },
+          "type": {
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "MigratedResourceResult": {
+        "properties": {
+          "message": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "MigrationResult": {
+        "properties": {
+          "message": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string"
+          }
+        },
         "type": "object"
       },
       "MoveFolderCommand": {
@@ -7200,39 +7013,6 @@
         },
         "type": "array"
       },
-      "NotificationTestCommand": {
-        "properties": {
-          "disableResolveMessage": {
-            "type": "boolean"
-          },
-          "frequency": {
-            "type": "string"
-          },
-          "id": {
-            "format": "int64",
-            "type": "integer"
-          },
-          "name": {
-            "type": "string"
-          },
-          "secureSettings": {
-            "additionalProperties": {
-              "type": "string"
-            },
-            "type": "object"
-          },
-          "sendReminder": {
-            "type": "boolean"
-          },
-          "settings": {
-            "$ref": "#/components/schemas/Json"
-          },
-          "type": {
-            "type": "string"
-          }
-        },
-        "type": "object"
-      },
       "NotifierConfig": {
         "properties": {
           "send_resolved": {
@@ -7308,6 +7088,7 @@
         "items": {
           "$ref": "#/components/schemas/ObjectMatcher"
         },
+        "title": "ObjectMatchers is a list of matchers that can be used to filter alerts.",
         "type": "array"
       },
       "OpsGenieConfig": {
@@ -7412,50 +7193,6 @@
           },
           "name": {
             "type": "string"
-          }
-        },
-        "type": "object"
-      },
-      "OrgMigrationState": {
-        "properties": {
-          "migratedChannels": {
-            "items": {
-              "$ref": "#/components/schemas/ContactPair"
-            },
-            "type": "array"
-          },
-          "migratedDashboards": {
-            "items": {
-              "$ref": "#/components/schemas/DashboardUpgrade"
-            },
-            "type": "array"
-          },
-          "orgId": {
-            "format": "int64",
-            "type": "integer"
-          }
-        },
-        "type": "object"
-      },
-      "OrgMigrationSummary": {
-        "properties": {
-          "hasErrors": {
-            "type": "boolean"
-          },
-          "newAlerts": {
-            "format": "int64",
-            "type": "integer"
-          },
-          "newChannels": {
-            "format": "int64",
-            "type": "integer"
-          },
-          "newDashboards": {
-            "format": "int64",
-            "type": "integer"
-          },
-          "removed": {
-            "type": "boolean"
           }
         },
         "type": "object"
@@ -7609,6 +7346,9 @@
         },
         "type": "object"
       },
+      "Password": {
+        "type": "string"
+      },
       "PatchAnnotationsCmd": {
         "properties": {
           "data": {
@@ -7727,26 +7467,6 @@
           "comment": {
             "description": "Updated comment",
             "type": "string"
-          }
-        },
-        "type": "object"
-      },
-      "PauseAlertCommand": {
-        "properties": {
-          "alertId": {
-            "format": "int64",
-            "type": "integer"
-          },
-          "paused": {
-            "type": "boolean"
-          }
-        },
-        "type": "object"
-      },
-      "PauseAllAlertsCommand": {
-        "properties": {
-          "paused": {
-            "type": "boolean"
           }
         },
         "type": "object"
@@ -7901,24 +7621,6 @@
         },
         "type": "array"
       },
-      "Point": {
-        "description": "If H is not nil, then this is a histogram point and only (T, H) is valid.\nIf H is nil, then only (T, V) is valid.",
-        "properties": {
-          "H": {
-            "$ref": "#/components/schemas/FloatHistogram"
-          },
-          "T": {
-            "format": "int64",
-            "type": "integer"
-          },
-          "V": {
-            "format": "double",
-            "type": "number"
-          }
-        },
-        "title": "Point represents a single data point for a given timestamp.",
-        "type": "object"
-      },
       "PostAnnotationsCmd": {
         "properties": {
           "dashboardId": {
@@ -7975,6 +7677,7 @@
         "type": "object"
       },
       "PostableApiAlertingConfig": {
+        "description": "nolint:revive",
         "properties": {
           "global": {
             "$ref": "#/components/schemas/GlobalConfig"
@@ -7986,6 +7689,7 @@
             "type": "array"
           },
           "mute_time_intervals": {
+            "description": "MuteTimeIntervals is deprecated and will be removed before Alertmanager 1.0.",
             "items": {
               "$ref": "#/components/schemas/MuteTimeInterval"
             },
@@ -8006,11 +7710,18 @@
               "type": "string"
             },
             "type": "array"
+          },
+          "time_intervals": {
+            "items": {
+              "$ref": "#/components/schemas/TimeInterval"
+            },
+            "type": "array"
           }
         },
         "type": "object"
       },
       "PostableApiReceiver": {
+        "description": "nolint:revive",
         "properties": {
           "discord_configs": {
             "items": {
@@ -8228,6 +7939,9 @@
             ],
             "type": "string"
           },
+          "notification_settings": {
+            "$ref": "#/components/schemas/AlertRuleNotificationSettings"
+          },
           "title": {
             "type": "string"
           },
@@ -8261,6 +7975,20 @@
           "rules": {
             "items": {
               "$ref": "#/components/schemas/PostableExtendedRuleNode"
+            },
+            "type": "array"
+          }
+        },
+        "type": "object"
+      },
+      "PostableTimeIntervals": {
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "time_intervals": {
+            "items": {
+              "$ref": "#/components/schemas/TimeIntervalItem"
             },
             "type": "array"
           }
@@ -8435,6 +8163,9 @@
               "OK"
             ],
             "type": "string"
+          },
+          "notification_settings": {
+            "$ref": "#/components/schemas/AlertRuleNotificationSettings"
           },
           "orgID": {
             "format": "int64",
@@ -8705,7 +8436,7 @@
       "QueryDataResponse": {
         "description": "It is the return type of a QueryData call.",
         "properties": {
-          "Responses": {
+          "results": {
             "$ref": "#/components/schemas/Responses"
           }
         },
@@ -9097,16 +8828,6 @@
             "format": "date-time",
             "type": "string"
           },
-          "dashboardId": {
-            "format": "int64",
-            "type": "integer"
-          },
-          "dashboardName": {
-            "type": "string"
-          },
-          "dashboardUid": {
-            "type": "string"
-          },
           "dashboards": {
             "items": {
               "$ref": "#/components/schemas/ReportDashboard"
@@ -9158,8 +8879,8 @@
           "state": {
             "$ref": "#/components/schemas/State"
           },
-          "templateVars": {
-            "type": "object"
+          "uid": {
+            "type": "string"
           },
           "updated": {
             "format": "date-time",
@@ -9223,9 +8944,6 @@
       },
       "ReportEmail": {
         "properties": {
-          "email": {
-            "type": "string"
-          },
           "emails": {
             "description": "Comma-separated list of emails to which to send the report to.",
             "type": "string"
@@ -9258,9 +8976,6 @@
       },
       "ReportSchedule": {
         "properties": {
-          "day": {
-            "type": "string"
-          },
           "dayOfMonth": {
             "type": "string"
           },
@@ -9271,20 +8986,12 @@
           "frequency": {
             "type": "string"
           },
-          "hour": {
-            "format": "int64",
-            "type": "integer"
-          },
           "intervalAmount": {
             "format": "int64",
             "type": "integer"
           },
           "intervalFrequency": {
             "type": "string"
-          },
-          "minute": {
-            "format": "int64",
-            "type": "integer"
           },
           "startDate": {
             "format": "date-time",
@@ -9766,26 +9473,13 @@
         },
         "type": "object"
       },
-      "SSOSettings": {
-        "properties": {
-          "id": {
-            "type": "string"
-          },
-          "provider": {
-            "type": "string"
-          },
-          "settings": {
-            "additionalProperties": false,
-            "type": "object"
-          },
-          "source": {
-            "$ref": "#/components/schemas/SettingsSource"
-          }
-        },
-        "type": "object"
-      },
       "Sample": {
+        "description": "Sample is a single sample belonging to a metric. It represents either a float\nsample or a histogram sample. If H is nil, it is a float sample. Otherwise,\nit is a histogram sample.",
         "properties": {
+          "F": {
+            "format": "double",
+            "type": "number"
+          },
           "H": {
             "$ref": "#/components/schemas/FloatHistogram"
           },
@@ -9795,13 +9489,8 @@
           "T": {
             "format": "int64",
             "type": "integer"
-          },
-          "V": {
-            "format": "double",
-            "type": "number"
           }
         },
-        "title": "Sample is a single sample belonging to a metric.",
         "type": "object"
       },
       "SaveDashboardCommand": {
@@ -10200,10 +9889,6 @@
           "type": "object"
         },
         "type": "object"
-      },
-      "SettingsSource": {
-        "format": "int64",
-        "type": "integer"
       },
       "ShareType": {
         "type": "string"
@@ -10917,7 +10602,21 @@
         "type": "string"
       },
       "TimeInterval": {
-        "description": "TimeInterval describes intervals of time. ContainsTime will tell you if a golang time is contained\nwithin the interval.",
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "time_intervals": {
+            "items": {
+              "$ref": "#/components/schemas/TimeInterval"
+            },
+            "type": "array"
+          }
+        },
+        "title": "TimeInterval represents a named set of time intervals for which a route should be muted.",
+        "type": "object"
+      },
+      "TimeIntervalItem": {
         "properties": {
           "days_of_month": {
             "items": {
@@ -10936,7 +10635,7 @@
           },
           "times": {
             "items": {
-              "$ref": "#/components/schemas/TimeRange"
+              "$ref": "#/components/schemas/TimeIntervalTimeRange"
             },
             "type": "array"
           },
@@ -10951,6 +10650,17 @@
               "type": "string"
             },
             "type": "array"
+          }
+        },
+        "type": "object"
+      },
+      "TimeIntervalTimeRange": {
+        "properties": {
+          "end_time": {
+            "type": "string"
+          },
+          "start_time": {
+            "type": "string"
           }
         },
         "type": "object"
@@ -11136,6 +10846,21 @@
       "Type": {
         "type": "string"
       },
+      "TypeMeta": {
+        "description": "+k8s:deepcopy-gen=false",
+        "properties": {
+          "apiVersion": {
+            "description": "APIVersion defines the versioned schema of this representation of an object.\nServers should convert recognized schemas to the latest internal value, and\nmay reject unrecognized values.\nMore info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources\n+optional",
+            "type": "string"
+          },
+          "kind": {
+            "description": "Kind is a string value representing the REST resource this object represents.\nServers may infer this from the endpoint the client submits requests to.\nCannot be updated.\nIn CamelCase.\nMore info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds\n+optional",
+            "type": "string"
+          }
+        },
+        "title": "TypeMeta describes an individual object in an API response or request\nwith strings representing the type of the object and its API schema version.\nStructures that are versioned or persisted should inline TypeMeta.",
+        "type": "object"
+      },
       "URL": {
         "description": "The general form represented is:\n\n[scheme:][//[userinfo@]host][/]path[?query][#fragment]\n\nURLs that do not start with a slash after the scheme are interpreted as:\n\nscheme:opaque[?query][#fragment]\n\nNote that the Path field is stored in decoded form: /%47%6f%2f becomes /Go/.\nA consequence is that it is impossible to tell which slashes in the Path were\nslashes in the raw URL and which were %2f. This distinction is rarely important,\nbut when it is, the code should use the EscapedPath method, which preserves\nthe original encoding of Path.\n\nThe RawPath field is an optional field which is only set when the default\nencoding of Path is different from the escaped path. See the EscapedPath method\nfor more details.\n\nURL's String method uses the EscapedPath method to obtain the path.",
         "properties": {
@@ -11176,76 +10901,13 @@
         "title": "A URL represents a parsed URL (technically, a URI reference).",
         "type": "object"
       },
-      "UpdateAlertNotificationCommand": {
+      "Unstructured": {
+        "description": "Unstructured allows objects that do not have Golang structs registered to be manipulated\ngenerically.",
         "properties": {
-          "disableResolveMessage": {
-            "type": "boolean"
-          },
-          "frequency": {
-            "type": "string"
-          },
-          "id": {
-            "format": "int64",
-            "type": "integer"
-          },
-          "isDefault": {
-            "type": "boolean"
-          },
-          "name": {
-            "type": "string"
-          },
-          "secureSettings": {
-            "additionalProperties": {
-              "type": "string"
-            },
+          "Object": {
+            "additionalProperties": false,
+            "description": "Object is a JSON compatible map with string, float, int, bool, []interface{},\nor map[string]interface{} children.",
             "type": "object"
-          },
-          "sendReminder": {
-            "type": "boolean"
-          },
-          "settings": {
-            "$ref": "#/components/schemas/Json"
-          },
-          "type": {
-            "type": "string"
-          },
-          "uid": {
-            "type": "string"
-          }
-        },
-        "type": "object"
-      },
-      "UpdateAlertNotificationWithUidCommand": {
-        "properties": {
-          "disableResolveMessage": {
-            "type": "boolean"
-          },
-          "frequency": {
-            "type": "string"
-          },
-          "isDefault": {
-            "type": "boolean"
-          },
-          "name": {
-            "type": "string"
-          },
-          "secureSettings": {
-            "additionalProperties": {
-              "type": "string"
-            },
-            "type": "object"
-          },
-          "sendReminder": {
-            "type": "boolean"
-          },
-          "settings": {
-            "$ref": "#/components/schemas/Json"
-          },
-          "type": {
-            "type": "string"
-          },
-          "uid": {
-            "type": "string"
           }
         },
         "type": "object"
@@ -11732,6 +11394,9 @@
           "theme": {
             "type": "string"
           },
+          "uid": {
+            "type": "string"
+          },
           "updatedAt": {
             "format": "date-time",
             "type": "string"
@@ -11774,6 +11439,9 @@
             "type": "string"
           },
           "name": {
+            "type": "string"
+          },
+          "uid": {
             "type": "string"
           }
         },
@@ -11855,7 +11523,7 @@
         "type": "array"
       },
       "Vector": {
-        "description": "Vector is basically only an alias for model.Samples, but the\ncontract is that in a Vector, all Samples have the same timestamp.",
+        "description": "Vector is basically only an alias for []Sample, but the contract is that\nin a Vector, all Samples have the same timestamp.",
         "items": {
           "$ref": "#/components/schemas/Sample"
         },
@@ -12165,6 +11833,7 @@
         "type": "object"
       },
       "gettableAlert": {
+        "description": "GettableAlert gettable alert",
         "properties": {
           "annotations": {
             "$ref": "#/components/schemas/labelSet"
@@ -12281,6 +11950,7 @@
         "type": "array"
       },
       "integration": {
+        "description": "Integration integration",
         "properties": {
           "lastNotifyAttempt": {
             "description": "A timestamp indicating the last attempt to deliver a notification regardless of the outcome.\nFormat: date-time",
@@ -12490,7 +12160,6 @@
         "type": "object"
       },
       "receiver": {
-        "description": "Receiver receiver",
         "properties": {
           "active": {
             "description": "active",
@@ -13924,45 +13593,6 @@
         ]
       }
     },
-    "/admin/pause-all-alerts": {
-      "post": {
-        "operationId": "pauseAllAlerts",
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/PauseAllAlertsCommand"
-              }
-            }
-          },
-          "required": true,
-          "x-originalParamName": "body"
-        },
-        "responses": {
-          "200": {
-            "$ref": "#/components/responses/pauseAlertsResponse"
-          },
-          "401": {
-            "$ref": "#/components/responses/unauthorisedError"
-          },
-          "403": {
-            "$ref": "#/components/responses/forbiddenError"
-          },
-          "500": {
-            "$ref": "#/components/responses/internalServerError"
-          }
-        },
-        "security": [
-          {
-            "basic": []
-          }
-        ],
-        "summary": "Pause/unpause all (legacy) alerts.",
-        "tags": [
-          "admin"
-        ]
-      }
-    },
     "/admin/provisioning/access-control/reload": {
       "post": {
         "operationId": "adminProvisioningReloadAccessControl",
@@ -14037,35 +13667,6 @@
           }
         ],
         "summary": "Reload datasource provisioning configurations.",
-        "tags": [
-          "admin_provisioning"
-        ]
-      }
-    },
-    "/admin/provisioning/notifications/reload": {
-      "post": {
-        "description": "Reloads the provisioning config files for legacy alert notifiers again. It won’t return until the new provisioned entities are already stored in the database. In case of dashboards, it will stop polling for changes in dashboard files and then restart it with new configurations after returning.\nIf you are running Grafana Enterprise and have Fine-grained access control enabled, you need to have a permission with action `provisioning:reload` and scope `provisioners:notifications`.",
-        "operationId": "adminProvisioningReloadNotifications",
-        "responses": {
-          "200": {
-            "$ref": "#/components/responses/okResponse"
-          },
-          "401": {
-            "$ref": "#/components/responses/unauthorisedError"
-          },
-          "403": {
-            "$ref": "#/components/responses/forbiddenError"
-          },
-          "500": {
-            "$ref": "#/components/responses/internalServerError"
-          }
-        },
-        "security": [
-          {
-            "basic": []
-          }
-        ],
-        "summary": "Reload legacy alert notifier provisioning configurations.",
         "tags": [
           "admin_provisioning"
         ]
@@ -14676,621 +14277,6 @@
         ]
       }
     },
-    "/alert-notifications": {
-      "get": {
-        "description": "Returns all notification channels that the authenticated user has permission to view.",
-        "operationId": "getAlertNotificationChannels",
-        "responses": {
-          "200": {
-            "$ref": "#/components/responses/getAlertNotificationChannelsResponse"
-          },
-          "401": {
-            "$ref": "#/components/responses/unauthorisedError"
-          },
-          "403": {
-            "$ref": "#/components/responses/forbiddenError"
-          },
-          "500": {
-            "$ref": "#/components/responses/internalServerError"
-          }
-        },
-        "summary": "Get all notification channels.",
-        "tags": [
-          "legacy_alerts_notification_channels"
-        ]
-      },
-      "post": {
-        "description": "You can find the full list of [supported notifiers](https://grafana.com/docs/grafana/latest/alerting/old-alerting/notifications/#list-of-supported-notifiers) on the alert notifiers page.",
-        "operationId": "createAlertNotificationChannel",
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/CreateAlertNotificationCommand"
-              }
-            }
-          },
-          "required": true,
-          "x-originalParamName": "body"
-        },
-        "responses": {
-          "200": {
-            "$ref": "#/components/responses/getAlertNotificationChannelResponse"
-          },
-          "401": {
-            "$ref": "#/components/responses/unauthorisedError"
-          },
-          "403": {
-            "$ref": "#/components/responses/forbiddenError"
-          },
-          "409": {
-            "$ref": "#/components/responses/conflictError"
-          },
-          "500": {
-            "$ref": "#/components/responses/internalServerError"
-          }
-        },
-        "summary": "Create notification channel.",
-        "tags": [
-          "legacy_alerts_notification_channels"
-        ]
-      }
-    },
-    "/alert-notifications/lookup": {
-      "get": {
-        "description": "Returns all notification channels, but with less detailed information. Accessible by any authenticated user and is mainly used by providing alert notification channels in Grafana UI when configuring alert rule.",
-        "operationId": "getAlertNotificationLookup",
-        "responses": {
-          "200": {
-            "$ref": "#/components/responses/getAlertNotificationLookupResponse"
-          },
-          "401": {
-            "$ref": "#/components/responses/unauthorisedError"
-          },
-          "403": {
-            "$ref": "#/components/responses/forbiddenError"
-          },
-          "500": {
-            "$ref": "#/components/responses/internalServerError"
-          }
-        },
-        "summary": "Get all notification channels (lookup).",
-        "tags": [
-          "legacy_alerts_notification_channels"
-        ]
-      }
-    },
-    "/alert-notifications/test": {
-      "post": {
-        "description": "Sends a test notification to the channel.",
-        "operationId": "notificationChannelTest",
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/NotificationTestCommand"
-              }
-            }
-          },
-          "required": true,
-          "x-originalParamName": "body"
-        },
-        "responses": {
-          "200": {
-            "$ref": "#/components/responses/okResponse"
-          },
-          "400": {
-            "$ref": "#/components/responses/badRequestError"
-          },
-          "401": {
-            "$ref": "#/components/responses/unauthorisedError"
-          },
-          "403": {
-            "$ref": "#/components/responses/forbiddenError"
-          },
-          "412": {
-            "$ref": "#/components/responses/SMTPNotEnabledError"
-          },
-          "500": {
-            "$ref": "#/components/responses/internalServerError"
-          }
-        },
-        "summary": "Test notification channel.",
-        "tags": [
-          "legacy_alerts_notification_channels"
-        ]
-      }
-    },
-    "/alert-notifications/uid/{notification_channel_uid}": {
-      "delete": {
-        "description": "Deletes an existing notification channel identified by UID.",
-        "operationId": "deleteAlertNotificationChannelByUID",
-        "parameters": [
-          {
-            "in": "path",
-            "name": "notification_channel_uid",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "$ref": "#/components/responses/deleteAlertNotificationChannelResponse"
-          },
-          "401": {
-            "$ref": "#/components/responses/unauthorisedError"
-          },
-          "403": {
-            "$ref": "#/components/responses/forbiddenError"
-          },
-          "404": {
-            "$ref": "#/components/responses/notFoundError"
-          },
-          "500": {
-            "$ref": "#/components/responses/internalServerError"
-          }
-        },
-        "summary": "Delete alert notification by UID.",
-        "tags": [
-          "legacy_alerts_notification_channels"
-        ]
-      },
-      "get": {
-        "description": "Returns the notification channel given the notification channel UID.",
-        "operationId": "getAlertNotificationChannelByUID",
-        "parameters": [
-          {
-            "in": "path",
-            "name": "notification_channel_uid",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "$ref": "#/components/responses/getAlertNotificationChannelResponse"
-          },
-          "401": {
-            "$ref": "#/components/responses/unauthorisedError"
-          },
-          "403": {
-            "$ref": "#/components/responses/forbiddenError"
-          },
-          "404": {
-            "$ref": "#/components/responses/notFoundError"
-          },
-          "500": {
-            "$ref": "#/components/responses/internalServerError"
-          }
-        },
-        "summary": "Get notification channel by UID.",
-        "tags": [
-          "legacy_alerts_notification_channels"
-        ]
-      },
-      "put": {
-        "description": "Updates an existing notification channel identified by uid.",
-        "operationId": "updateAlertNotificationChannelByUID",
-        "parameters": [
-          {
-            "in": "path",
-            "name": "notification_channel_uid",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/UpdateAlertNotificationWithUidCommand"
-              }
-            }
-          },
-          "required": true,
-          "x-originalParamName": "body"
-        },
-        "responses": {
-          "200": {
-            "$ref": "#/components/responses/getAlertNotificationChannelResponse"
-          },
-          "401": {
-            "$ref": "#/components/responses/unauthorisedError"
-          },
-          "403": {
-            "$ref": "#/components/responses/forbiddenError"
-          },
-          "404": {
-            "$ref": "#/components/responses/notFoundError"
-          },
-          "500": {
-            "$ref": "#/components/responses/internalServerError"
-          }
-        },
-        "summary": "Update notification channel by UID.",
-        "tags": [
-          "legacy_alerts_notification_channels"
-        ]
-      }
-    },
-    "/alert-notifications/{notification_channel_id}": {
-      "delete": {
-        "description": "Deletes an existing notification channel identified by ID.",
-        "operationId": "deleteAlertNotificationChannel",
-        "parameters": [
-          {
-            "in": "path",
-            "name": "notification_channel_id",
-            "required": true,
-            "schema": {
-              "format": "int64",
-              "type": "integer"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "$ref": "#/components/responses/okResponse"
-          },
-          "401": {
-            "$ref": "#/components/responses/unauthorisedError"
-          },
-          "403": {
-            "$ref": "#/components/responses/forbiddenError"
-          },
-          "404": {
-            "$ref": "#/components/responses/notFoundError"
-          },
-          "500": {
-            "$ref": "#/components/responses/internalServerError"
-          }
-        },
-        "summary": "Delete alert notification by ID.",
-        "tags": [
-          "legacy_alerts_notification_channels"
-        ]
-      },
-      "get": {
-        "description": "Returns the notification channel given the notification channel ID.",
-        "operationId": "getAlertNotificationChannelByID",
-        "parameters": [
-          {
-            "in": "path",
-            "name": "notification_channel_id",
-            "required": true,
-            "schema": {
-              "format": "int64",
-              "type": "integer"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "$ref": "#/components/responses/getAlertNotificationChannelResponse"
-          },
-          "401": {
-            "$ref": "#/components/responses/unauthorisedError"
-          },
-          "403": {
-            "$ref": "#/components/responses/forbiddenError"
-          },
-          "404": {
-            "$ref": "#/components/responses/notFoundError"
-          },
-          "500": {
-            "$ref": "#/components/responses/internalServerError"
-          }
-        },
-        "summary": "Get notification channel by ID.",
-        "tags": [
-          "legacy_alerts_notification_channels"
-        ]
-      },
-      "put": {
-        "description": "Updates an existing notification channel identified by ID.",
-        "operationId": "updateAlertNotificationChannel",
-        "parameters": [
-          {
-            "in": "path",
-            "name": "notification_channel_id",
-            "required": true,
-            "schema": {
-              "format": "int64",
-              "type": "integer"
-            }
-          }
-        ],
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/UpdateAlertNotificationCommand"
-              }
-            }
-          },
-          "required": true,
-          "x-originalParamName": "body"
-        },
-        "responses": {
-          "200": {
-            "$ref": "#/components/responses/getAlertNotificationChannelResponse"
-          },
-          "401": {
-            "$ref": "#/components/responses/unauthorisedError"
-          },
-          "403": {
-            "$ref": "#/components/responses/forbiddenError"
-          },
-          "404": {
-            "$ref": "#/components/responses/notFoundError"
-          },
-          "500": {
-            "$ref": "#/components/responses/internalServerError"
-          }
-        },
-        "summary": "Update notification channel by ID.",
-        "tags": [
-          "legacy_alerts_notification_channels"
-        ]
-      }
-    },
-    "/alerts": {
-      "get": {
-        "operationId": "getAlerts",
-        "parameters": [
-          {
-            "description": "Limit response to alerts in specified dashboard(s). You can specify multiple dashboards.",
-            "in": "query",
-            "name": "dashboardId",
-            "schema": {
-              "items": {
-                "type": "string"
-              },
-              "type": "array"
-            }
-          },
-          {
-            "description": "Limit response to alert for a specified panel on a dashboard.",
-            "in": "query",
-            "name": "panelId",
-            "schema": {
-              "format": "int64",
-              "type": "integer"
-            }
-          },
-          {
-            "description": "Limit response to alerts having a name like this value.",
-            "in": "query",
-            "name": "query",
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "description": "Return alerts with one or more of the following alert states",
-            "in": "query",
-            "name": "state",
-            "schema": {
-              "enum": [
-                "all",
-                "no_data",
-                "paused",
-                "alerting",
-                "ok",
-                "pending",
-                "unknown"
-              ],
-              "type": "string"
-            }
-          },
-          {
-            "description": "Limit response to X number of alerts.",
-            "in": "query",
-            "name": "limit",
-            "schema": {
-              "format": "int64",
-              "type": "integer"
-            }
-          },
-          {
-            "description": "Limit response to alerts of dashboards in specified folder(s). You can specify multiple folders",
-            "in": "query",
-            "name": "folderId",
-            "schema": {
-              "items": {
-                "type": "string"
-              },
-              "type": "array"
-            }
-          },
-          {
-            "description": "Limit response to alerts having a dashboard name like this value./ Limit response to alerts having a dashboard name like this value.",
-            "in": "query",
-            "name": "dashboardQuery",
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "description": "Limit response to alerts of dashboards with specified tags. To do an “AND” filtering with multiple tags, specify the tags parameter multiple times",
-            "in": "query",
-            "name": "dashboardTag",
-            "schema": {
-              "items": {
-                "type": "string"
-              },
-              "type": "array"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "$ref": "#/components/responses/getAlertsResponse"
-          },
-          "401": {
-            "$ref": "#/components/responses/unauthorisedError"
-          },
-          "500": {
-            "$ref": "#/components/responses/internalServerError"
-          }
-        },
-        "summary": "Get legacy alerts.",
-        "tags": [
-          "legacy_alerts"
-        ]
-      }
-    },
-    "/alerts/states-for-dashboard": {
-      "get": {
-        "operationId": "getDashboardStates",
-        "parameters": [
-          {
-            "in": "query",
-            "name": "dashboardId",
-            "required": true,
-            "schema": {
-              "format": "int64",
-              "type": "integer"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "$ref": "#/components/responses/getDashboardStatesResponse"
-          },
-          "400": {
-            "$ref": "#/components/responses/badRequestError"
-          },
-          "500": {
-            "$ref": "#/components/responses/internalServerError"
-          }
-        },
-        "summary": "Get alert states for a dashboard.",
-        "tags": [
-          "legacy_alerts"
-        ]
-      }
-    },
-    "/alerts/test": {
-      "post": {
-        "operationId": "testAlert",
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/AlertTestCommand"
-              }
-            }
-          },
-          "x-originalParamName": "body"
-        },
-        "responses": {
-          "200": {
-            "$ref": "#/components/responses/testAlertResponse"
-          },
-          "400": {
-            "$ref": "#/components/responses/badRequestError"
-          },
-          "403": {
-            "$ref": "#/components/responses/forbiddenError"
-          },
-          "422": {
-            "$ref": "#/components/responses/unprocessableEntityError"
-          },
-          "500": {
-            "$ref": "#/components/responses/internalServerError"
-          }
-        },
-        "summary": "Test alert.",
-        "tags": [
-          "legacy_alerts"
-        ]
-      }
-    },
-    "/alerts/{alert_id}": {
-      "get": {
-        "description": "“evalMatches” data in the response is cached in the db when and only when the state of the alert changes (e.g. transitioning from “ok” to “alerting” state).\nIf data from one server triggers the alert first and, before that server is seen leaving alerting state, a second server also enters a state that would trigger the alert, the second server will not be visible in “evalMatches” data.",
-        "operationId": "getAlertByID",
-        "parameters": [
-          {
-            "in": "path",
-            "name": "alert_id",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "$ref": "#/components/responses/getAlertResponse"
-          },
-          "401": {
-            "$ref": "#/components/responses/unauthorisedError"
-          },
-          "500": {
-            "$ref": "#/components/responses/internalServerError"
-          }
-        },
-        "summary": "Get alert by ID.",
-        "tags": [
-          "legacy_alerts"
-        ]
-      }
-    },
-    "/alerts/{alert_id}/pause": {
-      "post": {
-        "operationId": "pauseAlert",
-        "parameters": [
-          {
-            "in": "path",
-            "name": "alert_id",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/PauseAlertCommand"
-              }
-            }
-          },
-          "required": true,
-          "x-originalParamName": "body"
-        },
-        "responses": {
-          "200": {
-            "$ref": "#/components/responses/pauseAlertResponse"
-          },
-          "401": {
-            "$ref": "#/components/responses/unauthorisedError"
-          },
-          "403": {
-            "$ref": "#/components/responses/forbiddenError"
-          },
-          "404": {
-            "$ref": "#/components/responses/notFoundError"
-          },
-          "500": {
-            "$ref": "#/components/responses/internalServerError"
-          }
-        },
-        "summary": "Pause/unpause alert by id.",
-        "tags": [
-          "legacy_alerts"
-        ]
-      }
-    },
     "/annotations": {
       "get": {
         "description": "Starting in Grafana v6.4 regions annotations are now returned in one entity that now includes the timeEnd property.",
@@ -15832,6 +14818,228 @@
         ]
       }
     },
+    "/cloudmigration/migration": {
+      "get": {
+        "operationId": "getMigrationList",
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/cloudMigrationListResponse"
+          },
+          "401": {
+            "$ref": "#/components/responses/unauthorisedError"
+          },
+          "403": {
+            "$ref": "#/components/responses/forbiddenError"
+          },
+          "500": {
+            "$ref": "#/components/responses/internalServerError"
+          }
+        },
+        "summary": "Get a list of all cloud migrations.",
+        "tags": [
+          "migrations"
+        ]
+      },
+      "post": {
+        "operationId": "createMigration",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "authToken",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/cloudMigrationResponse"
+          },
+          "401": {
+            "$ref": "#/components/responses/unauthorisedError"
+          },
+          "403": {
+            "$ref": "#/components/responses/forbiddenError"
+          },
+          "500": {
+            "$ref": "#/components/responses/internalServerError"
+          }
+        },
+        "summary": "Create a migration.",
+        "tags": [
+          "migrations"
+        ]
+      }
+    },
+    "/cloudmigration/migration/{id}": {
+      "delete": {
+        "operationId": "deleteCloudMigration",
+        "parameters": [
+          {
+            "description": "ID of an migration",
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "format": "int64",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "401": {
+            "$ref": "#/components/responses/unauthorisedError"
+          },
+          "403": {
+            "$ref": "#/components/responses/forbiddenError"
+          },
+          "500": {
+            "$ref": "#/components/responses/internalServerError"
+          }
+        },
+        "summary": "Delete a migration.",
+        "tags": [
+          "migrations"
+        ]
+      },
+      "get": {
+        "description": "It returns migrations that has been created.",
+        "operationId": "getCloudMigration",
+        "parameters": [
+          {
+            "description": "ID of an migration",
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "format": "int64",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/cloudMigrationResponse"
+          },
+          "401": {
+            "$ref": "#/components/responses/unauthorisedError"
+          },
+          "403": {
+            "$ref": "#/components/responses/forbiddenError"
+          },
+          "500": {
+            "$ref": "#/components/responses/internalServerError"
+          }
+        },
+        "summary": "Get a cloud migration.",
+        "tags": [
+          "migrations"
+        ]
+      }
+    },
+    "/cloudmigration/migration/{id}/run": {
+      "get": {
+        "operationId": "getCloudMigrationRunList",
+        "parameters": [
+          {
+            "description": "ID of an migration",
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "format": "int64",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/cloudMigrationRunListResponse"
+          },
+          "401": {
+            "$ref": "#/components/responses/unauthorisedError"
+          },
+          "403": {
+            "$ref": "#/components/responses/forbiddenError"
+          },
+          "500": {
+            "$ref": "#/components/responses/internalServerError"
+          }
+        },
+        "summary": "Get a list of migration runs for a migration.",
+        "tags": [
+          "migrations"
+        ]
+      }
+    },
+    "/cloudmigration/migration/{id}/run/{runID}": {
+      "get": {
+        "operationId": "getCloudMigrationRun",
+        "parameters": [
+          {
+            "description": "ID of an migration",
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "format": "int64",
+              "type": "integer"
+            }
+          },
+          {
+            "description": "Run ID of a migration run",
+            "in": "path",
+            "name": "runID",
+            "required": true,
+            "schema": {
+              "format": "int64",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/cloudMigrationRunResponse"
+          },
+          "401": {
+            "$ref": "#/components/responses/unauthorisedError"
+          },
+          "403": {
+            "$ref": "#/components/responses/forbiddenError"
+          },
+          "500": {
+            "$ref": "#/components/responses/internalServerError"
+          }
+        },
+        "summary": "Get the result of a single migration run.",
+        "tags": [
+          "migrations"
+        ]
+      }
+    },
+    "/cloudmigration/token": {
+      "post": {
+        "operationId": "createCloudMigrationToken",
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/cloudMigrationCreateTokenResponse"
+          },
+          "401": {
+            "$ref": "#/components/responses/unauthorisedError"
+          },
+          "403": {
+            "$ref": "#/components/responses/forbiddenError"
+          },
+          "500": {
+            "$ref": "#/components/responses/internalServerError"
+          }
+        },
+        "summary": "Create gcom access token.",
+        "tags": [
+          "migrations"
+        ]
+      }
+    },
     "/dashboard/snapshots": {
       "get": {
         "operationId": "searchDashboardSnapshots",
@@ -15921,7 +15129,7 @@
     },
     "/dashboards/db": {
       "post": {
-        "description": "Creates a new dashboard or updates an existing dashboard.",
+        "description": "Creates a new dashboard or updates an existing dashboard.\nNote: This endpoint is not intended for creating folders, use `POST /api/folders` for that.",
         "operationId": "postDashboard",
         "requestBody": {
           "content": {
@@ -17985,7 +17193,7 @@
     },
     "/folders": {
       "get": {
-        "description": "Returns all folders that the authenticated user has permission to view.\nIf nested folders are enabled, it expects an additional query parameter with the parent folder UID\nand returns the immediate subfolders that the authenticated user has permission to view.\nIf the parameter is not supplied then it returns immediate subfolders under the root\nthat the authenticated user has permission to view.",
+        "description": "It returns all folders that the authenticated user has permission to view.\nIf nested folders are enabled, it expects an additional query parameter with the parent folder UID\nand returns the immediate subfolders that the authenticated user has permission to view.\nIf the parameter is not supplied then it returns immediate subfolders under the root\nthat the authenticated user has permission to view.",
         "operationId": "getFolders",
         "parameters": [
           {
@@ -18013,6 +17221,19 @@
             "in": "query",
             "name": "parentUid",
             "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "Set to `Edit` to return folders that the user can edit",
+            "in": "query",
+            "name": "permission",
+            "schema": {
+              "default": "View",
+              "enum": [
+                "Edit",
+                "View"
+              ],
               "type": "string"
             }
           }
@@ -21091,94 +20312,6 @@
         ]
       }
     },
-    "/reports/render/pdf/{dashboardID}": {
-      "get": {
-        "deprecated": true,
-        "description": "Please refer to [reports enterprise](#/reports/renderReportPDFs) instead. This will be removed in Grafana 10.",
-        "operationId": "renderReportPDF",
-        "parameters": [
-          {
-            "in": "path",
-            "name": "DashboardID",
-            "required": true,
-            "schema": {
-              "format": "int64",
-              "type": "integer"
-            }
-          },
-          {
-            "in": "path",
-            "name": "dashboardID",
-            "required": true,
-            "schema": {
-              "format": "int64",
-              "type": "integer"
-            }
-          },
-          {
-            "in": "query",
-            "name": "title",
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "in": "query",
-            "name": "variables",
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "in": "query",
-            "name": "from",
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "in": "query",
-            "name": "to",
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "in": "query",
-            "name": "orientation",
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "in": "query",
-            "name": "layout",
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "$ref": "#/components/responses/contentResponse"
-          },
-          "400": {
-            "$ref": "#/components/responses/badRequestError"
-          },
-          "401": {
-            "$ref": "#/components/responses/unauthorisedError"
-          },
-          "500": {
-            "$ref": "#/components/responses/internalServerError"
-          }
-        },
-        "summary": "Render report for dashboard.",
-        "tags": [
-          "reports",
-          "enterprise"
-        ]
-      }
-    },
     "/reports/render/pdfs": {
       "get": {
         "description": "Available to all users and with a valid license.",
@@ -23006,6 +22139,9 @@
           "403": {
             "$ref": "#/components/responses/forbiddenError"
           },
+          "409": {
+            "$ref": "#/components/responses/conflictError"
+          },
           "500": {
             "$ref": "#/components/responses/internalServerError"
           }
@@ -23037,6 +22173,21 @@
         "summary": "Auth tokens of the actual User.",
         "tags": [
           "signed_in_user"
+        ]
+      }
+    },
+    "/user/email/update": {
+      "get": {
+        "description": "Update the email of user given a verification code.",
+        "operationId": "updateUserEmail",
+        "responses": {
+          "302": {
+            "$ref": "#/components/responses/okResponse"
+          }
+        },
+        "summary": "Update user email.",
+        "tags": [
+          "user"
         ]
       }
     },
@@ -23710,6 +22861,9 @@
           "404": {
             "$ref": "#/components/responses/notFoundError"
           },
+          "409": {
+            "$ref": "#/components/responses/conflictError"
+          },
           "500": {
             "$ref": "#/components/responses/internalServerError"
           }
@@ -23879,11 +23033,16 @@
             }
           },
           {
-            "description": "Format of the downloaded file, either yaml or json. Accept header can also be used, but the query parameter will take precedence.",
+            "description": "Format of the downloaded file. Supported yaml, json or hcl. Accept header can also be used, but the query parameter will take precedence.",
             "in": "query",
             "name": "format",
             "schema": {
               "default": "yaml",
+              "enum": [
+                "yaml",
+                "json",
+                "hcl"
+              ],
               "type": "string"
             }
           },
@@ -23919,6 +23078,26 @@
           "200": {
             "content": {
               "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AlertingFileExport"
+                }
+              },
+              "application/terraform+hcl": {
+                "schema": {
+                  "$ref": "#/components/schemas/AlertingFileExport"
+                }
+              },
+              "application/yaml": {
+                "schema": {
+                  "$ref": "#/components/schemas/AlertingFileExport"
+                }
+              },
+              "text/hcl": {
+                "schema": {
+                  "$ref": "#/components/schemas/AlertingFileExport"
+                }
+              },
+              "text/yaml": {
                 "schema": {
                   "$ref": "#/components/schemas/AlertingFileExport"
                 }
@@ -24072,11 +23251,16 @@
             }
           },
           {
-            "description": "Format of the downloaded file, either yaml or json. Accept header can also be used, but the query parameter will take precedence.",
+            "description": "Format of the downloaded file. Supported yaml, json or hcl. Accept header can also be used, but the query parameter will take precedence.",
             "in": "query",
             "name": "format",
             "schema": {
               "default": "yaml",
+              "enum": [
+                "yaml",
+                "json",
+                "hcl"
+              ],
               "type": "string"
             }
           },
@@ -24098,7 +23282,17 @@
                   "$ref": "#/components/schemas/AlertingFileExport"
                 }
               },
+              "application/terraform+hcl": {
+                "schema": {
+                  "$ref": "#/components/schemas/AlertingFileExport"
+                }
+              },
               "application/yaml": {
+                "schema": {
+                  "$ref": "#/components/schemas/AlertingFileExport"
+                }
+              },
+              "text/hcl": {
                 "schema": {
                   "$ref": "#/components/schemas/AlertingFileExport"
                 }
@@ -24214,11 +23408,16 @@
             }
           },
           {
-            "description": "Format of the downloaded file, either yaml or json. Accept header can also be used, but the query parameter will take precedence.",
+            "description": "Format of the downloaded file. Supported yaml, json or hcl. Accept header can also be used, but the query parameter will take precedence.",
             "in": "query",
             "name": "format",
             "schema": {
               "default": "yaml",
+              "enum": [
+                "yaml",
+                "json",
+                "hcl"
+              ],
               "type": "string"
             }
           },
@@ -24247,6 +23446,26 @@
                 "schema": {
                   "$ref": "#/components/schemas/AlertingFileExport"
                 }
+              },
+              "application/terraform+hcl": {
+                "schema": {
+                  "$ref": "#/components/schemas/AlertingFileExport"
+                }
+              },
+              "application/yaml": {
+                "schema": {
+                  "$ref": "#/components/schemas/AlertingFileExport"
+                }
+              },
+              "text/hcl": {
+                "schema": {
+                  "$ref": "#/components/schemas/AlertingFileExport"
+                }
+              },
+              "text/yaml": {
+                "schema": {
+                  "$ref": "#/components/schemas/AlertingFileExport"
+                }
               }
             },
             "description": "AlertingFileExport"
@@ -24254,6 +23473,26 @@
           "403": {
             "content": {
               "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PermissionDenied"
+                }
+              },
+              "application/terraform+hcl": {
+                "schema": {
+                  "$ref": "#/components/schemas/PermissionDenied"
+                }
+              },
+              "application/yaml": {
+                "schema": {
+                  "$ref": "#/components/schemas/PermissionDenied"
+                }
+              },
+              "text/hcl": {
+                "schema": {
+                  "$ref": "#/components/schemas/PermissionDenied"
+                }
+              },
+              "text/yaml": {
                 "schema": {
                   "$ref": "#/components/schemas/PermissionDenied"
                 }
@@ -24351,6 +23590,56 @@
       }
     },
     "/v1/provisioning/folder/{FolderUID}/rule-groups/{Group}": {
+      "delete": {
+        "description": "Delete rule group",
+        "operationId": "RouteDeleteAlertRuleGroup",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "FolderUID",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "Group",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": " The alert rule group was deleted successfully."
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ForbiddenError"
+                }
+              }
+            },
+            "description": "ForbiddenError"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NotFound"
+                }
+              }
+            },
+            "description": "NotFound"
+          }
+        },
+        "tags": [
+          "provisioning"
+        ]
+      },
       "get": {
         "operationId": "RouteGetAlertRuleGroup",
         "parameters": [
@@ -24450,7 +23739,7 @@
             "description": "ValidationError"
           }
         },
-        "summary": "Update the interval of a rule group.",
+        "summary": "Create or update alert rule group.",
         "tags": [
           "provisioning"
         ]
@@ -24470,11 +23759,16 @@
             }
           },
           {
-            "description": "Format of the downloaded file, either yaml or json. Accept header can also be used, but the query parameter will take precedence.",
+            "description": "Format of the downloaded file. Supported yaml, json or hcl. Accept header can also be used, but the query parameter will take precedence.",
             "in": "query",
             "name": "format",
             "schema": {
               "default": "yaml",
+              "enum": [
+                "yaml",
+                "json",
+                "hcl"
+              ],
               "type": "string"
             }
           },
@@ -24503,7 +23797,17 @@
                   "$ref": "#/components/schemas/AlertingFileExport"
                 }
               },
+              "application/terraform+hcl": {
+                "schema": {
+                  "$ref": "#/components/schemas/AlertingFileExport"
+                }
+              },
               "application/yaml": {
+                "schema": {
+                  "$ref": "#/components/schemas/AlertingFileExport"
+                }
+              },
+              "text/hcl": {
                 "schema": {
                   "$ref": "#/components/schemas/AlertingFileExport"
                 }
@@ -24609,11 +23913,16 @@
             }
           },
           {
-            "description": "Format of the downloaded file, either yaml or json. Accept header can also be used, but the query parameter will take precedence.",
+            "description": "Format of the downloaded file. Supported yaml, json or hcl. Accept header can also be used, but the query parameter will take precedence.",
             "in": "query",
             "name": "format",
             "schema": {
               "default": "yaml",
+              "enum": [
+                "yaml",
+                "json",
+                "hcl"
+              ],
               "type": "string"
             }
           }
@@ -24625,6 +23934,26 @@
                 "schema": {
                   "$ref": "#/components/schemas/AlertingFileExport"
                 }
+              },
+              "application/terraform+hcl": {
+                "schema": {
+                  "$ref": "#/components/schemas/AlertingFileExport"
+                }
+              },
+              "application/yaml": {
+                "schema": {
+                  "$ref": "#/components/schemas/AlertingFileExport"
+                }
+              },
+              "text/hcl": {
+                "schema": {
+                  "$ref": "#/components/schemas/AlertingFileExport"
+                }
+              },
+              "text/yaml": {
+                "schema": {
+                  "$ref": "#/components/schemas/AlertingFileExport"
+                }
               }
             },
             "description": "AlertingFileExport"
@@ -24632,6 +23961,26 @@
           "403": {
             "content": {
               "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PermissionDenied"
+                }
+              },
+              "application/terraform+hcl": {
+                "schema": {
+                  "$ref": "#/components/schemas/PermissionDenied"
+                }
+              },
+              "application/yaml": {
+                "schema": {
+                  "$ref": "#/components/schemas/PermissionDenied"
+                }
+              },
+              "text/hcl": {
+                "schema": {
+                  "$ref": "#/components/schemas/PermissionDenied"
+                }
+              },
+              "text/yaml": {
                 "schema": {
                   "$ref": "#/components/schemas/PermissionDenied"
                 }
@@ -24785,11 +24134,16 @@
             }
           },
           {
-            "description": "Format of the downloaded file, either yaml or json. Accept header can also be used, but the query parameter will take precedence.",
+            "description": "Format of the downloaded file. Supported yaml, json or hcl. Accept header can also be used, but the query parameter will take precedence.",
             "in": "query",
             "name": "format",
             "schema": {
               "default": "yaml",
+              "enum": [
+                "yaml",
+                "json",
+                "hcl"
+              ],
               "type": "string"
             }
           },
@@ -24810,6 +24164,26 @@
                 "schema": {
                   "$ref": "#/components/schemas/AlertingFileExport"
                 }
+              },
+              "application/terraform+hcl": {
+                "schema": {
+                  "$ref": "#/components/schemas/AlertingFileExport"
+                }
+              },
+              "application/yaml": {
+                "schema": {
+                  "$ref": "#/components/schemas/AlertingFileExport"
+                }
+              },
+              "text/hcl": {
+                "schema": {
+                  "$ref": "#/components/schemas/AlertingFileExport"
+                }
+              },
+              "text/yaml": {
+                "schema": {
+                  "$ref": "#/components/schemas/AlertingFileExport"
+                }
               }
             },
             "description": "AlertingFileExport"
@@ -24817,6 +24191,26 @@
           "403": {
             "content": {
               "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PermissionDenied"
+                }
+              },
+              "application/terraform+hcl": {
+                "schema": {
+                  "$ref": "#/components/schemas/PermissionDenied"
+                }
+              },
+              "application/yaml": {
+                "schema": {
+                  "$ref": "#/components/schemas/PermissionDenied"
+                }
+              },
+              "text/hcl": {
+                "schema": {
+                  "$ref": "#/components/schemas/PermissionDenied"
+                }
+              },
+              "text/yaml": {
                 "schema": {
                   "$ref": "#/components/schemas/PermissionDenied"
                 }
@@ -24930,6 +24324,26 @@
                 "schema": {
                   "$ref": "#/components/schemas/AlertingFileExport"
                 }
+              },
+              "application/terraform+hcl": {
+                "schema": {
+                  "$ref": "#/components/schemas/AlertingFileExport"
+                }
+              },
+              "application/yaml": {
+                "schema": {
+                  "$ref": "#/components/schemas/AlertingFileExport"
+                }
+              },
+              "text/hcl": {
+                "schema": {
+                  "$ref": "#/components/schemas/AlertingFileExport"
+                }
+              },
+              "text/yaml": {
+                "schema": {
+                  "$ref": "#/components/schemas/AlertingFileExport"
+                }
               }
             },
             "description": "AlertingFileExport"
@@ -24937,6 +24351,26 @@
           "404": {
             "content": {
               "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NotFound"
+                }
+              },
+              "application/terraform+hcl": {
+                "schema": {
+                  "$ref": "#/components/schemas/NotFound"
+                }
+              },
+              "application/yaml": {
+                "schema": {
+                  "$ref": "#/components/schemas/NotFound"
+                }
+              },
+              "text/hcl": {
+                "schema": {
+                  "$ref": "#/components/schemas/NotFound"
+                }
+              },
+              "text/yaml": {
                 "schema": {
                   "$ref": "#/components/schemas/NotFound"
                 }
@@ -25205,7 +24639,19 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/SSOSettings"
+                "properties": {
+                  "id": {
+                    "type": "string"
+                  },
+                  "provider": {
+                    "type": "string"
+                  },
+                  "settings": {
+                    "additionalProperties": false,
+                    "type": "object"
+                  }
+                },
+                "type": "object"
               }
             }
           },

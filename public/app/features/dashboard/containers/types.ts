@@ -19,4 +19,16 @@ export type DashboardPageRouteSearchParams = {
   refresh?: string;
   kiosk?: string | true;
   scenes?: boolean;
+  shareView?: string;
+};
+
+export type PublicDashboardPageRouteParams = {
+  accessToken?: string;
+};
+
+export type PublicDashboardPageRouteSearchParams = {
+  from?: string;
+  to?: string;
+  refresh?: string;
+  scenes?: boolean;
 };

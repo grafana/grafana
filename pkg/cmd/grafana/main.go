@@ -41,23 +41,18 @@ func main() {
 				SkipFlagParsing: true,
 				Action: func(context *cli.Context) error {
 					// exit here because apiserver handles its own error output
-					os.Exit(apiserver.RunCLI())
+					os.Exit(apiserver.RunCLI(gsrv.ServerOptions{
+						Version:          version,
+						Commit:           commit,
+						EnterpriseCommit: enterpriseCommit,
+						BuildBranch:      buildBranch,
+						BuildStamp:       buildstamp,
+						Context:          context,
+					}))
 					return nil
 				},
 			},
 			gsrv.ServerCommand(version, commit, enterpriseCommit, buildBranch, buildstamp),
-			{
-				// The kube-aggregator inspired grafana aggregator
-				Name:  "aggregator",
-				Usage: "run grafana aggregator (experimental)",
-				// Skip parsing flags because the command line is actually managed by cobra
-				SkipFlagParsing: true,
-				Action: func(context *cli.Context) error {
-					// exit here because apiserver handles its own error output
-					os.Exit(apiserver.RunCobraWrapper())
-					return nil
-				},
-			},
 		},
 		CommandNotFound:      cmdNotFound,
 		EnableBashCompletion: true,

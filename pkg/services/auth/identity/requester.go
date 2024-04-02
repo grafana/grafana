@@ -14,12 +14,18 @@ const (
 	NamespaceServiceAccount = "service-account"
 	NamespaceAnonymous      = "anonymous"
 	NamespaceRenderService  = "render"
+	NamespaceAccessPolicy   = "access-policy"
 )
 
 var ErrNotIntIdentifier = errors.New("identifier is not an int64")
 var ErrIdentifierNotInitialized = errors.New("identifier is not initialized")
 
 type Requester interface {
+	// GetID returns namespaced id for the entity
+	GetID() string
+	// GetNamespacedID returns the namespace and ID of the active entity.
+	// The namespace is one of the constants defined in pkg/services/auth/identity.
+	GetNamespacedID() (namespace string, identifier string)
 	// GetDisplayName returns the display name of the active entity.
 	// The display name is the name if it is set, otherwise the login or email.
 	GetDisplayName() string
@@ -31,21 +37,22 @@ type Requester interface {
 	// GetLogin returns the login of the active entity
 	// Can be empty.
 	GetLogin() string
-	// GetNamespacedID returns the namespace and ID of the active entity.
-	// The namespace is one of the constants defined in pkg/services/auth/identity.
-	GetNamespacedID() (namespace string, identifier string)
 	// GetOrgID returns the ID of the active organization
 	GetOrgID() int64
 	// GetOrgRole returns the role of the active entity in the active organization.
 	GetOrgRole() roletype.RoleType
 	// GetPermissions returns the permissions of the active entity.
 	GetPermissions() map[string][]string
+	// GetGlobalPermissions returns the permissions of the active entity that are available across all organizations.
+	GetGlobalPermissions() map[string][]string
 	// DEPRECATED: GetTeams returns the teams the entity is a member of.
 	// Retrieve the teams from the team service instead of using this method.
 	GetTeams() []int64
 	// DEPRECATED: GetOrgName returns the name of the active organization.
 	// Retrieve the organization name from the organization service instead of using this method.
 	GetOrgName() string
+	// IsAuthenticatedBy returns true if entity was authenticated by any of supplied providers.
+	IsAuthenticatedBy(providers ...string) bool
 
 	// IsNil returns true if the identity is nil
 	// FIXME: remove this method once all services are using an interface

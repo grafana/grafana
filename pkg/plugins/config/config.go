@@ -1,16 +1,12 @@
 package config
 
 import (
-	"github.com/grafana/grafana-azure-sdk-go/azsettings"
-
-	"github.com/grafana/grafana/pkg/plugins/log"
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
-type Cfg struct {
-	log log.Logger
-
+// PluginManagementCfg is the configuration for the plugin management system.
+// It includes settings which are used to configure different components of plugin management.
+type PluginManagementCfg struct {
 	DevMode bool
 
 	PluginsPath string
@@ -20,62 +16,41 @@ type Cfg struct {
 	DisablePlugins       []string
 	ForwardHostEnvVars   []string
 
-	// AWS Plugin Auth
-	AWSAllowedAuthProviders []string
-	AWSAssumeRoleEnabled    bool
-	AWSExternalId           string
-
-	// Azure Cloud settings
-	Azure *azsettings.AzureSettings
-
-	// Proxy Settings
-	ProxySettings setting.SecureSocksDSProxySettings
-
-	BuildVersion string // TODO Remove
-
-	LogDatasourceRequests bool
-
 	PluginsCDNURLTemplate string
-
-	Tracing Tracing
 
 	GrafanaComURL string
 
-	GrafanaAppURL    string
-	GrafanaAppSubURL string
+	GrafanaAppURL string
 
-	Features featuremgmt.FeatureToggles
+	Features Features
 
 	AngularSupportEnabled  bool
 	HideAngularDeprecation []string
 }
 
-func NewCfg(devMode bool, pluginsPath string, pluginSettings setting.PluginSettings, pluginsAllowUnsigned []string,
-	awsAllowedAuthProviders []string, awsAssumeRoleEnabled bool, awsExternalId string, azure *azsettings.AzureSettings, secureSocksDSProxy setting.SecureSocksDSProxySettings,
-	grafanaVersion string, logDatasourceRequests bool, pluginsCDNURLTemplate string, appURL string, appSubURL string, tracing Tracing, features featuremgmt.FeatureToggles, angularSupportEnabled bool,
-	grafanaComURL string, disablePlugins []string, hideAngularDeprecation []string, forwardHostEnvVars []string) *Cfg {
-	return &Cfg{
-		log:                     log.New("plugin.cfg"),
-		PluginsPath:             pluginsPath,
-		BuildVersion:            grafanaVersion,
-		DevMode:                 devMode,
-		PluginSettings:          pluginSettings,
-		PluginsAllowUnsigned:    pluginsAllowUnsigned,
-		DisablePlugins:          disablePlugins,
-		AWSAllowedAuthProviders: awsAllowedAuthProviders,
-		AWSAssumeRoleEnabled:    awsAssumeRoleEnabled,
-		AWSExternalId:           awsExternalId,
-		Azure:                   azure,
-		ProxySettings:           secureSocksDSProxy,
-		LogDatasourceRequests:   logDatasourceRequests,
-		PluginsCDNURLTemplate:   pluginsCDNURLTemplate,
-		Tracing:                 tracing,
-		GrafanaComURL:           grafanaComURL,
-		GrafanaAppURL:           appURL,
-		GrafanaAppSubURL:        appSubURL,
-		Features:                features,
-		AngularSupportEnabled:   angularSupportEnabled,
-		HideAngularDeprecation:  hideAngularDeprecation,
-		ForwardHostEnvVars:      forwardHostEnvVars,
+// Features contains the feature toggles used for the plugin management system.
+type Features struct {
+	ExternalCorePluginsEnabled bool
+	SkipHostEnvVarsEnabled     bool
+}
+
+// NewPluginManagementCfg returns a new PluginManagementCfg.
+func NewPluginManagementCfg(devMode bool, pluginsPath string, pluginSettings setting.PluginSettings, pluginsAllowUnsigned []string,
+	pluginsCDNURLTemplate string, appURL string, features Features, angularSupportEnabled bool,
+	grafanaComURL string, disablePlugins []string, hideAngularDeprecation []string, forwardHostEnvVars []string,
+) *PluginManagementCfg {
+	return &PluginManagementCfg{
+		PluginsPath:            pluginsPath,
+		DevMode:                devMode,
+		PluginSettings:         pluginSettings,
+		PluginsAllowUnsigned:   pluginsAllowUnsigned,
+		DisablePlugins:         disablePlugins,
+		PluginsCDNURLTemplate:  pluginsCDNURLTemplate,
+		GrafanaComURL:          grafanaComURL,
+		GrafanaAppURL:          appURL,
+		Features:               features,
+		AngularSupportEnabled:  angularSupportEnabled,
+		HideAngularDeprecation: hideAngularDeprecation,
+		ForwardHostEnvVars:     forwardHostEnvVars,
 	}
 }

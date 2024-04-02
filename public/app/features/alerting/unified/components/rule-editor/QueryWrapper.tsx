@@ -13,7 +13,7 @@ import {
   ThresholdsConfig,
 } from '@grafana/data';
 import { DataQuery } from '@grafana/schema';
-import { GraphTresholdsStyleMode, Icon, InlineField, Input, Tooltip, useStyles2, Stack } from '@grafana/ui';
+import { GraphThresholdsStyleMode, Icon, InlineField, Input, Tooltip, useStyles2, Stack } from '@grafana/ui';
 import { QueryEditorRow } from 'app/features/query/components/QueryEditorRow';
 import { AlertQuery } from 'app/types/unified-alerting-dto';
 
@@ -45,7 +45,7 @@ interface Props {
   onRunQueries: () => void;
   index: number;
   thresholds: ThresholdsConfig;
-  thresholdsType?: GraphTresholdsStyleMode;
+  thresholdsType?: GraphThresholdsStyleMode;
   onChangeThreshold?: (thresholds: ThresholdsConfig, index: number) => void;
   condition: string | null;
   onSetCondition: (refId: string) => void;
@@ -161,7 +161,7 @@ export const QueryWrapper = ({
           queries={editorQueries}
           renderHeaderExtras={() => <HeaderExtras query={query} index={index} error={error} />}
           app={CoreApp.UnifiedAlerting}
-          hideDisableQuery={true}
+          hideHideQueryButton={true}
         />
       </div>
       {showVizualisation && (

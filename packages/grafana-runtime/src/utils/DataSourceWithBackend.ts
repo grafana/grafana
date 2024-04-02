@@ -43,7 +43,7 @@ export const ExpressionDatasourceRef = Object.freeze({
 });
 
 /**
- * @internal
+ * @public
  */
 export function isExpressionReference(ref?: DataSourceRef | string | null): boolean {
   if (!ref) {
@@ -80,7 +80,7 @@ enum PluginRequestHeaders {
   DatasourceUID = 'X-Datasource-Uid', // can be used for routing/ load balancing
   DashboardUID = 'X-Dashboard-Uid', // mainly useful for debugging slow queries
   PanelID = 'X-Panel-Id', // mainly useful for debugging slow queries
-  PanelPluginType = 'X-Panel-Plugin-Type',
+  PanelPluginId = 'X-Panel-Plugin-Id',
   QueryGroupID = 'X-Query-Group-Id', // mainly useful to find related queries with query splitting
   FromExpression = 'X-Grafana-From-Expr', // used by datasources to identify expression queries
   SkipQueryCache = 'X-Cache-Skip', // used by datasources to skip the query cache
@@ -133,10 +133,6 @@ class DataSourceWithBackend<
 
     const { intervalMs, maxDataPoints, queryCachingTTL, range, requestId, hideFromInspector = false } = request;
     let targets = request.targets;
-
-    if (this.filterQuery) {
-      targets = targets.filter((q) => this.filterQuery!(q));
-    }
 
     let hasExpr = false;
     const pluginIDs = new Set<string>();
@@ -227,8 +223,8 @@ class DataSourceWithBackend<
     if (request.panelId) {
       headers[PluginRequestHeaders.PanelID] = `${request.panelId}`;
     }
-    if (request.panelPluginType) {
-      headers[PluginRequestHeaders.PanelPluginType] = `${request.panelPluginType}`;
+    if (request.panelPluginId) {
+      headers[PluginRequestHeaders.PanelPluginId] = `${request.panelPluginId}`;
     }
     if (request.queryGroupId) {
       headers[PluginRequestHeaders.QueryGroupID] = `${request.queryGroupId}`;
@@ -274,16 +270,6 @@ class DataSourceWithBackend<
   interpolateVariablesInQueries(queries: TQuery[], scopedVars: ScopedVars, filters?: AdHocVariableFilter[]): TQuery[] {
     return queries.map((q) => this.applyTemplateVariables(q, scopedVars, filters));
   }
-
-  /**
-   * Override to skip executing a query.  Note this function may not be called
-   * if the query method is overwritten.
-   *
-   * @returns false if the query should be skipped
-   *
-   * @virtual
-   */
-  filterQuery?(query: TQuery): boolean;
 
   /**
    * Override to apply template variables and adhoc filters.  The result is usually also `TQuery`, but sometimes this can

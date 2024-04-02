@@ -267,6 +267,7 @@ func GetAvailableNotifiers() []*NotifierPlugin {
 					Description:  "Optional message. You can use templates to customize this field. Using a custom message will replace the default message",
 					Element:      ElementTypeTextArea,
 					PropertyName: "message",
+					Placeholder:  alertingTemplates.DefaultMessageEmbed,
 				},
 				{ // New in 9.0.
 					Label:        "Subject",
@@ -814,6 +815,15 @@ func GetAvailableNotifiers() []*NotifierPlugin {
 					Description:  "Integer Telegram Chat Identifier",
 					PropertyName: "chatid",
 					Required:     true,
+				},
+				{
+					Label:          "Message Thread ID",
+					Element:        ElementTypeInput,
+					InputType:      InputTypeText,
+					Description:    "Integer Telegram Message Thread Identifier",
+					PropertyName:   "message_thread_id",
+					Required:       false,
+					ValidationRule: "-?[0-9]{1,10}",
 				},
 				{ // New in 8.0.
 					Label:        "Message",

@@ -2,18 +2,23 @@ import { css } from '@emotion/css';
 import React from 'react';
 
 import { AnnotationQuery } from '@grafana/data';
+import { selectors } from '@grafana/e2e-selectors';
 import { getDataSourceSrv } from '@grafana/runtime';
 import { Button, DeleteButton, IconButton, useStyles2, VerticalGroup } from '@grafana/ui';
 import EmptyListCTA from 'app/core/components/EmptyListCTA/EmptyListCTA';
 import { ListNewButton } from 'app/features/dashboard/components/DashboardSettings/ListNewButton';
 
+import { MoveDirection } from '../AnnotationsEditView';
+
 type Props = {
   annotations: AnnotationQuery[];
   onNew: () => void;
   onEdit: (idx: number) => void;
-  onMove: (idx: number, dir: number) => void;
+  onMove: (idx: number, dir: MoveDirection) => void;
   onDelete: (idx: number) => void;
 };
+
+export const BUTTON_TITLE = 'Add annotation query';
 
 export const AnnotationSettingsList = ({ annotations, onNew, onEdit, onMove, onDelete }: Props) => {
   const styles = useStyles2(getStyles);
@@ -45,7 +50,7 @@ export const AnnotationSettingsList = ({ annotations, onNew, onEdit, onMove, onD
                 <th colSpan={3}></th>
               </tr>
             </thead>
-            <tbody>
+            <tbody data-testid={selectors.pages.Dashboard.Settings.Annotations.List.annotations}>
               {annotations.map((annotation, idx) => (
                 <tr key={`${annotation.name}-${idx}`}>
                   {annotation.builtIn ? (
@@ -65,11 +70,17 @@ export const AnnotationSettingsList = ({ annotations, onNew, onEdit, onMove, onD
                     {dataSourceSrv.getInstanceSettings(annotation.datasource)?.name || annotation.datasource?.uid}
                   </td>
                   <td role="gridcell" style={{ width: '1%' }}>
-                    {idx !== 0 && <IconButton name="arrow-up" onClick={() => onMove(idx, -1)} tooltip="Move up" />}
+                    {idx !== 0 && (
+                      <IconButton name="arrow-up" onClick={() => onMove(idx, MoveDirection.UP)} tooltip="Move up" />
+                    )}
                   </td>
                   <td role="gridcell" style={{ width: '1%' }}>
                     {annotations.length > 1 && idx !== annotations.length - 1 ? (
-                      <IconButton name="arrow-down" onClick={() => onMove(idx, 1)} tooltip="Move down" />
+                      <IconButton
+                        name="arrow-down"
+                        onClick={() => onMove(idx, MoveDirection.DOWN)}
+                        tooltip="Move down"
+                      />
                     ) : null}
                   </td>
                   <td role="gridcell" style={{ width: '1%' }}>
@@ -92,7 +103,7 @@ export const AnnotationSettingsList = ({ annotations, onNew, onEdit, onMove, onD
           onClick={onNew}
           title="There are no custom annotation queries added yet"
           buttonIcon="comment-alt"
-          buttonTitle="Add annotation query"
+          buttonTitle={BUTTON_TITLE}
           infoBoxTitle="What are annotation queries?"
           infoBox={{
             __html: `<p>Annotations provide a way to integrate event data into your graphs. They are visualized as vertical lines
@@ -108,7 +119,14 @@ export const AnnotationSettingsList = ({ annotations, onNew, onEdit, onMove, onD
           }}
         />
       )}
-      {!showEmptyListCTA && <ListNewButton onClick={onNew}>New query</ListNewButton>}
+      {!showEmptyListCTA && (
+        <ListNewButton
+          data-testid={selectors.pages.Dashboard.Settings.Annotations.List.addAnnotationCTAV2}
+          onClick={onNew}
+        >
+          New query
+        </ListNewButton>
+      )}
     </VerticalGroup>
   );
 };
@@ -116,6 +134,6 @@ export const AnnotationSettingsList = ({ annotations, onNew, onEdit, onMove, onD
 const getStyles = () => ({
   table: css({
     width: '100%',
-    overflowX: 'scroll',
+    overflowX: 'auto',
   }),
 });

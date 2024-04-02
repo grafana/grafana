@@ -2,40 +2,60 @@ package apiserver
 
 import (
 	"os"
-	"path"
 
 	"github.com/spf13/cobra"
-	genericapifilters "k8s.io/apiserver/pkg/endpoints/filters"
 	genericapiserver "k8s.io/apiserver/pkg/server"
-	"k8s.io/apiserver/pkg/server/options"
-	"k8s.io/apiserver/pkg/util/notfoundhandler"
-	"k8s.io/client-go/tools/clientcmd"
 	"k8s.io/component-base/cli"
-	"k8s.io/klog/v2"
-	aggregatorscheme "k8s.io/kube-aggregator/pkg/apiserver/scheme"
 
-	"github.com/grafana/grafana/pkg/aggregator"
-	grafanaapiserver "github.com/grafana/grafana/pkg/services/grafana-apiserver"
-	"github.com/grafana/grafana/pkg/services/grafana-apiserver/utils"
-)
-
-const (
-	aggregatorDataPath              = "data"
-	defaultAggregatorEtcdPathPrefix = "/registry/grafana.aggregator"
+	"github.com/grafana/grafana/pkg/cmd/grafana-server/commands"
+	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/infra/tracing"
+	"github.com/grafana/grafana/pkg/server"
+	"github.com/grafana/grafana/pkg/services/apiserver/standalone"
 )
 
 func newCommandStartExampleAPIServer(o *APIServerOptions, stopCh <-chan struct{}) *cobra.Command {
 	devAcknowledgementNotice := "The apiserver command is in heavy development. The entire setup is subject to change without notice"
+	runtimeConfig := ""
+
+	factory, err := server.InitializeAPIServerFactory()
+	if err != nil {
+		return nil
+	}
+	o.factory = factory
 
 	cmd := &cobra.Command{
 		Use:   "apiserver [api group(s)]",
 		Short: "Run the grafana apiserver",
 		Long: "Run a standalone kubernetes based apiserver that can be aggregated by a root apiserver. " +
 			devAcknowledgementNotice,
-		Example: "grafana apiserver example.grafana.app",
+		Example: "grafana apiserver --runtime-config=example.grafana.app/v0alpha1=true",
 		RunE: func(c *cobra.Command, args []string) error {
+			if err := log.SetupConsoleLogger("debug"); err != nil {
+				return nil
+			}
+
+			if err := o.Validate(); err != nil {
+				return err
+			}
+
+			runtime, err := standalone.ReadRuntimeConfig(runtimeConfig)
+			if err != nil {
+				return err
+			}
+			apis, err := o.factory.GetEnabled(runtime)
+			if err != nil {
+				return err
+			}
+
+			// Currently TracingOptions.ApplyTo, which will configure/initialize tracing,
+			// happens after loadAPIGroupBuilders. Hack to workaround this for now to allow
+			// the tracer to be initialized at a later stage, when tracer is available.
+			// TODO: Fix so that TracingOptions.ApplyTo happens before or during loadAPIGroupBuilders.
+			tracer := newLateInitializedTracingService()
+
 			// Load each group from the args
-			if err := o.loadAPIGroupBuilders(args[1:]); err != nil {
+			if err := o.loadAPIGroupBuilders(tracer, apis); err != nil {
 				return err
 			}
 
@@ -49,25 +69,29 @@ func newCommandStartExampleAPIServer(o *APIServerOptions, stopCh <-chan struct{}
 				return err
 			}
 
+			if o.Options.TracingOptions.TracingService != nil {
+				tracer.InitTracer(o.Options.TracingOptions.TracingService)
+			}
+
 			if err := o.RunAPIServer(config, stopCh); err != nil {
 				return err
 			}
+
 			return nil
 		},
 	}
 
-	// Register standard k8s flags with the command line
-	o.RecommendedOptions = options.NewRecommendedOptions(
-		defaultEtcdPathPrefix,
-		grafanaapiserver.Codecs.LegacyCodec(), // the codec is passed to etcd and not used
-	)
-	o.RecommendedOptions.AddFlags(cmd.Flags())
+	cmd.Flags().StringVar(&runtimeConfig, "runtime-config", "", "A set of key=value pairs that enable or disable built-in APIs.")
+
+	o.AddFlags(cmd.Flags())
 
 	return cmd
 }
 
-func RunCLI() int {
+func RunCLI(opts commands.ServerOptions) int {
 	stopCh := genericapiserver.SetupSignalHandler()
+
+	commands.SetBuildInfo(opts)
 
 	options := newAPIServerOptions(os.Stdout, os.Stderr)
 	cmd := newCommandStartExampleAPIServer(options, stopCh)
@@ -75,96 +99,18 @@ func RunCLI() int {
 	return cli.Run(cmd)
 }
 
-func newCommandStartAggregator() *cobra.Command {
-	devAcknowledgementNotice := "The aggregator command is in heavy development. The entire setup is subject to change without notice"
-
-	cwd, err := os.Getwd()
-	if err != nil {
-		panic("could not determine current directory")
-	}
-
-	extraConfig := &aggregator.ExtraConfig{
-		DataPath: path.Join(cwd, aggregatorDataPath),
-	}
-
-	// Register standard k8s flags with the command line
-	recommendedOptions := options.NewRecommendedOptions(
-		defaultAggregatorEtcdPathPrefix,
-		aggregatorscheme.Codecs.LegacyCodec(), // codec is passed to etcd and hence not used
-	)
-
-	cmd := &cobra.Command{
-		Use:   "aggregator",
-		Short: "Run the grafana aggregator",
-		Long: "Run a standalone kubernetes based aggregator server. " +
-			devAcknowledgementNotice,
-		Example: "grafana aggregator",
-		RunE: func(c *cobra.Command, args []string) error {
-			serverOptions, err := aggregator.NewAggregatorServerOptions(os.Stdout, os.Stderr, recommendedOptions, extraConfig)
-			serverOptions.Config.Complete()
-
-			if err != nil {
-				klog.Errorf("Could not create aggregator server options: %s", err)
-				os.Exit(1)
-			}
-
-			return run(serverOptions)
-		},
-	}
-
-	recommendedOptions.AddFlags(cmd.Flags())
-	extraConfig.AddFlags(cmd.Flags())
-
-	return cmd
+type lateInitializedTracingService struct {
+	tracing.Tracer
 }
 
-func run(serverOptions *aggregator.AggregatorServerOptions) error {
-	if err := serverOptions.LoadAPIGroupBuilders(); err != nil {
-		klog.Errorf("Error loading prerequisite APIs: %s", err)
-		return err
+func newLateInitializedTracingService() *lateInitializedTracingService {
+	return &lateInitializedTracingService{
+		Tracer: tracing.InitializeTracerForTest(),
 	}
-
-	notFoundHandler := notfoundhandler.New(serverOptions.Config.SharedConfig.Serializer, genericapifilters.NoMuxAndDiscoveryIncompleteKey)
-	apiExtensionsServer, err := serverOptions.Config.ApiExtensionsComplete.New(genericapiserver.NewEmptyDelegateWithCustomHandler(notFoundHandler))
-	if err != nil {
-		return err
-	}
-
-	aggregator, err := serverOptions.CreateAggregatorServer(apiExtensionsServer.GenericAPIServer, apiExtensionsServer.Informers)
-	if err != nil {
-		klog.Errorf("Error creating aggregator server: %s", err)
-		return err
-	}
-
-	// Install the API Group+version
-	err = grafanaapiserver.InstallAPIs(aggregator.GenericAPIServer, serverOptions.Config.Aggregator.GenericConfig.RESTOptionsGetter, serverOptions.Builders)
-	if err != nil {
-		klog.Errorf("Error installing apis: %s", err)
-		return err
-	}
-
-	if err := clientcmd.WriteToFile(
-		utils.FormatKubeConfig(aggregator.GenericAPIServer.LoopbackClientConfig),
-		path.Join(aggregatorDataPath, "grafana-aggregator", "aggregator.kubeconfig"),
-	); err != nil {
-		klog.Errorf("Error persisting aggregator.kubeconfig: %s", err)
-		return err
-	}
-
-	prepared, err := aggregator.PrepareRun()
-	if err != nil {
-		return err
-	}
-
-	stopCh := genericapiserver.SetupSignalHandler()
-	if err := prepared.Run(stopCh); err != nil {
-		return err
-	}
-	return nil
 }
 
-func RunCobraWrapper() int {
-	cmd := newCommandStartAggregator()
-
-	return cli.Run(cmd)
+func (s *lateInitializedTracingService) InitTracer(tracer tracing.Tracer) {
+	s.Tracer = tracer
 }
+
+var _ tracing.Tracer = &lateInitializedTracingService{}

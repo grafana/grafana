@@ -6,8 +6,9 @@ import React from 'react';
 import { dateTime } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { config, locationService } from '@grafana/runtime';
-import { SceneGridItem, SceneGridLayout, SceneTimeRange, VizPanel } from '@grafana/scenes';
+import { SceneGridLayout, SceneTimeRange, VizPanel } from '@grafana/scenes';
 
+import { DashboardGridItem } from '../scene/DashboardGridItem';
 import { DashboardScene } from '../scene/DashboardScene';
 
 import { ShareLinkTab } from './ShareLinkTab';
@@ -80,7 +81,7 @@ describe('ShareLinkTab', () => {
       await screen.findByRole('link', { name: selectors.pages.SharePanelModal.linkToRenderedImage })
     ).toHaveAttribute(
       'href',
-      'http://dashboards.grafana.com/grafana/render/d-solo/dash-1?from=2019-02-11T13:00:00.000Z&to=2019-02-11T19:00:00.000Z&viewPanel=panel-12&width=1000&height=500&tz=Pacific%2FEaster'
+      'http://dashboards.grafana.com/grafana/render/d-solo/dash-1?from=2019-02-11T13:00:00.000Z&to=2019-02-11T19:00:00.000Z&panelId=panel-12&__feature.dashboardSceneSolo&width=1000&height=500&tz=Pacific%2FEaster'
     );
   });
 });
@@ -105,7 +106,7 @@ function buildAndRenderScenario(options: ScenarioOptions) {
     $timeRange: new SceneTimeRange({}),
     body: new SceneGridLayout({
       children: [
-        new SceneGridItem({
+        new DashboardGridItem({
           key: 'griditem-1',
           x: 0,
           y: 0,
