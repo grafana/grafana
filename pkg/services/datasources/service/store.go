@@ -31,7 +31,7 @@ type Store interface {
 	AddDataSource(context.Context, *datasources.AddDataSourceCommand) (*datasources.DataSource, error)
 	UpdateDataSource(context.Context, *datasources.UpdateDataSourceCommand) (*datasources.DataSource, error)
 	GetAllDataSources(ctx context.Context, query *datasources.GetAllDataSourcesQuery) (res []*datasources.DataSource, err error)
-	GetPrunableProvisionedDataSources(ctx context.Context, query *datasources.GetPrunableProvisionedDataSourcesQuery) (res []*datasources.DataSource, err error)
+	GetPrunableProvisionedDataSources(ctx context.Context) (res []*datasources.DataSource, err error)
 
 	Count(context.Context, *quota.ScopeParameters) (*quota.Map, error)
 }
@@ -126,13 +126,13 @@ func (ss *SqlStore) GetDataSourcesByType(ctx context.Context, query *datasources
 	})
 }
 
-// GetPrunableProvisionedDataSources returns all datasources that have a non-empty provisioned_from field and can be pruned
-func (ss *SqlStore) GetPrunableProvisionedDataSources(ctx context.Context, query *datasources.GetPrunableProvisionedDataSourcesQuery) ([]*datasources.DataSource, error) {
-	provisionedQuery := "provisioned_from IS NOT NULL AND provisioned_from <> \"\" AND is_prunable IS TRUE"
+// GetPrunableProvisionedDataSources returns all datasources that can be pruned
+func (ss *SqlStore) GetPrunableProvisionedDataSources(ctx context.Context) ([]*datasources.DataSource, error) {
+	prunableQuery := "is_prunable IS TRUE"
 
 	dataSources := make([]*datasources.DataSource, 0)
 	return dataSources, ss.db.WithDbSession(ctx, func(sess *db.Session) error {
-		return sess.Where(provisionedQuery).Asc("id").Find(&dataSources)
+		return sess.Where(prunableQuery).Asc("id").Find(&dataSources)
 	})
 }
 
@@ -287,7 +287,6 @@ func (ss *SqlStore) AddDataSource(ctx context.Context, cmd *datasources.AddDataS
 			Version:         1,
 			ReadOnly:        cmd.ReadOnly,
 			UID:             cmd.UID,
-			ProvisionedFrom: cmd.ProvisionedFrom,
 			IsPrunable:      cmd.IsPrunable,
 		}
 
@@ -356,6 +355,7 @@ func (ss *SqlStore) UpdateDataSource(ctx context.Context, cmd *datasources.Updat
 			ReadOnly:        cmd.ReadOnly,
 			Version:         cmd.Version + 1,
 			UID:             cmd.UID,
+			IsPrunable: 	 cmd.IsPrunable,
 		}
 
 		sess.UseBool("is_default")

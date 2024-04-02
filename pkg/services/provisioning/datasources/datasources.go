@@ -14,7 +14,7 @@ import (
 
 type Store interface {
 	GetDataSource(ctx context.Context, query *datasources.GetDataSourceQuery) (*datasources.DataSource, error)
-	GetPrunableProvisionedDataSources(ctx context.Context, query *datasources.GetPrunableProvisionedDataSourcesQuery) ([]*datasources.DataSource, error)
+	GetPrunableProvisionedDataSources(ctx context.Context) ([]*datasources.DataSource, error)
 	AddDataSource(ctx context.Context, cmd *datasources.AddDataSourceCommand) (*datasources.DataSource, error)
 	UpdateDataSource(ctx context.Context, cmd *datasources.UpdateDataSourceCommand) (*datasources.DataSource, error)
 	DeleteDataSource(ctx context.Context, cmd *datasources.DeleteDataSourceCommand) error
@@ -154,7 +154,7 @@ func (dc *DatasourceProvisioner) applyChanges(ctx context.Context, configPath st
 		}
 	}
 
-	prunableProvisionedDataSources, err := dc.store.GetPrunableProvisionedDataSources(ctx, &datasources.GetPrunableProvisionedDataSourcesQuery{})
+	prunableProvisionedDataSources, err := dc.store.GetPrunableProvisionedDataSources(ctx)
 	if err != nil {
 		return err
 	}

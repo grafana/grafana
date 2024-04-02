@@ -175,8 +175,8 @@ func (s *Service) GetAllDataSources(ctx context.Context, query *datasources.GetA
 	return s.SQLStore.GetAllDataSources(ctx, query)
 }
 
-func (s *Service) GetPrunableProvisionedDataSources(ctx context.Context, query *datasources.GetPrunableProvisionedDataSourcesQuery) (res []*datasources.DataSource, err error) {
-	return s.SQLStore.GetPrunableProvisionedDataSources(ctx, query)
+func (s *Service) GetPrunableProvisionedDataSources(ctx context.Context) (res []*datasources.DataSource, err error) {
+	return s.SQLStore.GetPrunableProvisionedDataSources(ctx)
 }
 
 func (s *Service) GetDataSourcesByType(ctx context.Context, query *datasources.GetDataSourcesByTypeQuery) ([]*datasources.DataSource, error) {

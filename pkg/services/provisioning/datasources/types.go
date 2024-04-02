@@ -48,7 +48,6 @@ type upsertDataSourceFromConfig struct {
 	SecureJSONData  map[string]string
 	Editable        bool
 	UID             string
-	ProvisionedFrom string
 	IsPrunable		bool
 }
 
@@ -115,11 +114,10 @@ type upsertDataSourceFromConfigV1 struct {
 	SecureJSONData  values.StringMapValue `json:"secureJsonData" yaml:"secureJsonData"`
 	Editable        values.BoolValue      `json:"editable" yaml:"editable"`
 	UID             values.StringValue    `json:"uid" yaml:"uid"`
-	ProvisionedFrom string                `json:"provisionedFrom" yaml:"provisionedFrom"`
 	IsPrunable		bool				  `json:"isPrunable" yaml:"isPrunable"`
 }
 
-func (cfg *configsV1) mapToDatasourceFromConfig(apiVersion int64, filename string) *configs {
+func (cfg *configsV1) mapToDatasourceFromConfig(apiVersion int64) *configs {
 	r := &configs{}
 
 	r.APIVersion = apiVersion
@@ -147,7 +145,6 @@ func (cfg *configsV1) mapToDatasourceFromConfig(apiVersion int64, filename strin
 			Editable:        ds.Editable.Value(),
 			Version:         ds.Version.Value(),
 			UID:             ds.UID.Value(),
-			ProvisionedFrom: filename,
 			IsPrunable:		 cfg.Prune,
 		})
 	}
@@ -226,7 +223,6 @@ func createInsertCommand(ds *upsertDataSourceFromConfig) *datasources.AddDataSou
 		SecureJsonData:  ds.SecureJSONData,
 		ReadOnly:        !ds.Editable,
 		UID:             ds.UID,
-		ProvisionedFrom: ds.ProvisionedFrom,
 		IsPrunable:		 ds.IsPrunable,
 	}
 
@@ -270,7 +266,6 @@ func createUpdateCommand(ds *upsertDataSourceFromConfig, id int64) *datasources.
 		SecureJsonData:          ds.SecureJSONData,
 		ReadOnly:                !ds.Editable,
 		IgnoreOldSecureJsonData: true,
-		ProvisionedFrom: 		 ds.ProvisionedFrom,
 		IsPrunable:				 ds.IsPrunable,
 	}
 }

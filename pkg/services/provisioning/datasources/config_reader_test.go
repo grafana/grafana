@@ -464,10 +464,10 @@ func (s *spyStore) GetDataSource(ctx context.Context, query *datasources.GetData
 	return nil, datasources.ErrDataSourceNotFound
 }
 
-func (s *spyStore) GetPrunableProvisionedDataSources(ctx context.Context, query *datasources.GetPrunableProvisionedDataSourcesQuery) ([]*datasources.DataSource, error) {
+func (s *spyStore) GetPrunableProvisionedDataSources(ctx context.Context) ([]*datasources.DataSource, error) {
 	prunableProvisionedDataSources := []*datasources.DataSource{}
 	for _, item := range s.items {
-		if item.ProvisionedFrom != "" && item.IsPrunable {
+		if item.IsPrunable {
 			prunableProvisionedDataSources = append(prunableProvisionedDataSources, item)
 		}
 	}
@@ -488,7 +488,7 @@ func (s *spyStore) DeleteDataSource(ctx context.Context, cmd *datasources.Delete
 
 func (s *spyStore) AddDataSource(ctx context.Context, cmd *datasources.AddDataSourceCommand) (*datasources.DataSource, error) {
 	s.inserted = append(s.inserted, cmd)
-	newDataSource := &datasources.DataSource{UID: cmd.UID, Name: cmd.Name, OrgID: cmd.OrgID, ProvisionedFrom: cmd.ProvisionedFrom, IsPrunable: cmd.IsPrunable}
+	newDataSource := &datasources.DataSource{UID: cmd.UID, Name: cmd.Name, OrgID: cmd.OrgID, IsPrunable: cmd.IsPrunable}
 	s.items = append(s.items, newDataSource)
 	return newDataSource, nil
 }
