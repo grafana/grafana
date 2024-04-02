@@ -478,7 +478,7 @@ func (s *Service) ParseCloudMigrationConfig() (string, error) {
 	}
 	section := s.cfg.Raw.Section("cloud_migration")
 	domain := section.Key("domain").MustString("")
-	if domain != "" {
+	if domain == "" {
 		s.log.Warn("cloudmigration domain not set")
 	}
 	return "", nil
