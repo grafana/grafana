@@ -21,6 +21,7 @@ import { readHeatmapRowsCustomMeta } from 'app/features/transformers/calculateHe
 
 import { AnnotationsPlugin2 } from '../timeseries/plugins/AnnotationsPlugin2';
 import { OutsideRangePlugin } from '../timeseries/plugins/OutsideRangePlugin';
+import { isTooltipScrollable } from '../timeseries/utils';
 
 import { HeatmapTooltip } from './HeatmapTooltip';
 import { prepareHeatmapData } from './fields';
@@ -207,11 +208,12 @@ export const HeatmapPanel = ({
                       showColorScale={options.tooltip.showColorScale}
                       panelData={data}
                       annotate={enableAnnotationCreation ? annotate : undefined}
+                      scrollable={isTooltipScrollable(options.tooltip)}
+                      maxHeight={options.tooltip.maxHeight}
                     />
                   );
                 }}
                 maxWidth={options.tooltip.maxWidth}
-                maxHeight={options.tooltip.maxHeight}
               />
             )}
             <AnnotationsPlugin2

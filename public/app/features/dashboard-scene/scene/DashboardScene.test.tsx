@@ -30,6 +30,7 @@ import { DashboardControls } from './DashboardControls';
 import { DashboardGridItem } from './DashboardGridItem';
 import { DashboardScene, DashboardSceneState } from './DashboardScene';
 import { LibraryVizPanel } from './LibraryVizPanel';
+import { RowActions } from './row-actions/RowActions';
 
 jest.mock('../settings/version-history/HistorySrv');
 jest.mock('../serialization/transformSaveModelToScene');
@@ -282,11 +283,15 @@ describe('DashboardScene', () => {
       });
 
       it('Should create and add a new panel to the dashboard', () => {
+        scene.exitEditMode({ skipConfirm: true });
+        expect(scene.state.isEditing).toBe(false);
+
         scene.onCreateNewPanel();
 
         const body = scene.state.body as SceneGridLayout;
         const gridItem = body.state.children[0] as DashboardGridItem;
 
+        expect(scene.state.isEditing).toBe(true);
         expect(body.state.children.length).toBe(6);
         expect(gridItem.state.body!.state.key).toBe('panel-7');
       });
@@ -297,6 +302,7 @@ describe('DashboardScene', () => {
         const body = scene.state.body as SceneGridLayout;
         const gridRow = body.state.children[0] as SceneGridRow;
 
+        expect(scene.state.isEditing).toBe(true);
         expect(body.state.children.length).toBe(4);
         expect(gridRow.state.key).toBe('panel-7');
         expect(gridRow.state.children[0].state.key).toBe('griditem-1');
@@ -508,11 +514,15 @@ describe('DashboardScene', () => {
       });
 
       it('Should create a new add library panel widget', () => {
+        scene.exitEditMode({ skipConfirm: true });
+        expect(scene.state.isEditing).toBe(false);
+
         scene.onCreateLibPanelWidget();
 
         const body = scene.state.body as SceneGridLayout;
         const gridItem = body.state.children[0] as DashboardGridItem;
 
+        expect(scene.state.isEditing).toBe(true);
         expect(body.state.children.length).toBe(6);
         expect(gridItem.state.body!.state.key).toBe('panel-7');
         expect(gridItem.state.y).toBe(0);
@@ -535,6 +545,7 @@ describe('DashboardScene', () => {
 
         const body = scene.state.body as SceneGridLayout;
         const gridRow = body.state.children[2] as SceneGridRow;
+
         expect(gridRow.state.children.length).toBe(1);
       });
 
@@ -888,6 +899,7 @@ function buildTestScene(overrides?: Partial<DashboardSceneState>) {
         }),
         new SceneGridRow({
           key: 'panel-3',
+          actions: new RowActions({}),
           children: [
             new DashboardGridItem({
               body: new VizPanel({

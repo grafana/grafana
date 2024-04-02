@@ -131,11 +131,11 @@ export const TrendPanel = ({
                       sortOrder={options.tooltip.sort}
                       isPinned={isPinned}
                       scrollable={isTooltipScrollable(options.tooltip)}
+                      maxHeight={options.tooltip.maxHeight}
                     />
                   );
                 }}
                 maxWidth={options.tooltip.maxWidth}
-                maxHeight={options.tooltip.maxHeight}
               />
             )}
           </>

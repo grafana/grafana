@@ -27,12 +27,12 @@
     "@types/d3-random": "^3.0.2",
     "@types/jest": "29.5.12",
     "@types/lodash": "4.17.0",
-    "@types/node": "20.11.30",
-    "@types/react": "18.2.73",
+    "@types/node": "20.12.2",
+    "@types/react": "18.2.74",
     "@types/testing-library__jest-dom": "5.14.9",
     "@types/uuid": "9.0.8",
     "ts-node": "10.9.2",
-    "webpack": "5.90.3"
+    "webpack": "5.91.0"
   },
   "peerDependencies": {
     "@grafana/runtime": "*"
@@ -42,5 +42,5 @@
     "build:commit": "webpack -c ./webpack.config.ts --env production --env commit=$(git rev-parse --short HEAD)",
     "dev": "webpack -w -c ./webpack.config.ts --env development"
   },
-  "packageManager": "yarn@4.1.0"
+  "packageManager": "yarn@4.1.1"
 }

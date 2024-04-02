@@ -272,7 +272,6 @@ export const BarChartPanel = ({ data, options, fieldConfig, width, height, timeZ
                 );
               }}
               maxWidth={options.tooltip.maxWidth}
-              maxHeight={options.tooltip.maxHeight}
             />
           );
         }
