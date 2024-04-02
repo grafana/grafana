@@ -144,35 +144,55 @@ func testSetup(t *testing.T, opts ...setupOption) (context.Context, storage.Inte
 	return ctx, wrappedStore, destroyFunc, nil
 }
 
-func TestWatch(t *testing.T) {
+func TestIntegrationWatch(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test")
+	}
+
 	ctx, store, destroyFunc, err := testSetup(t)
 	defer destroyFunc()
 	assert.NoError(t, err)
 	storagetesting.RunTestWatch(ctx, t, store)
 }
 
-func TestClusterScopedWatch(t *testing.T) {
+func TestIntegrationClusterScopedWatch(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test")
+	}
+
 	ctx, store, destroyFunc, err := testSetup(t)
 	defer destroyFunc()
 	assert.NoError(t, err)
 	storagetesting.RunTestClusterScopedWatch(ctx, t, store)
 }
 
-func TestNamespaceScopedWatch(t *testing.T) {
+func TestIntegrationNamespaceScopedWatch(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test")
+	}
+
 	ctx, store, destroyFunc, err := testSetup(t)
 	defer destroyFunc()
 	assert.NoError(t, err)
 	storagetesting.RunTestNamespaceScopedWatch(ctx, t, store)
 }
 
-func TestDeleteTriggerWatch(t *testing.T) {
+func TestIntegrationDeleteTriggerWatch(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test")
+	}
+
 	ctx, store, destroyFunc, err := testSetup(t)
 	defer destroyFunc()
 	assert.NoError(t, err)
 	storagetesting.RunTestDeleteTriggerWatch(ctx, t, store)
 }
 
-func TestWatchFromZero(t *testing.T) {
+func TestIntegrationWatchFromZero(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test")
+	}
+
 	ctx, store, destroyFunc, err := testSetup(t)
 	defer destroyFunc()
 	assert.NoError(t, err)
@@ -181,7 +201,11 @@ func TestWatchFromZero(t *testing.T) {
 
 // TestWatchFromNonZero tests that
 // - watch from non-0 should just watch changes after given version
-func TestWatchFromNonZero(t *testing.T) {
+func TestIntegrationWatchFromNonZero(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test")
+	}
+
 	ctx, store, destroyFunc, err := testSetup(t)
 	defer destroyFunc()
 	assert.NoError(t, err)
@@ -190,7 +214,11 @@ func TestWatchFromNonZero(t *testing.T) {
 
 /*
 // TODO this times out, we need to buffer events
-func TestDelayedWatchDelivery(t *testing.T) {
+func TestIntegrationDelayedWatchDelivery(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test")
+	}
+
 	ctx, store, destroyFunc, err := testSetup(t)
 	defer destroyFunc()
 	assert.NoError(t, err)
@@ -198,26 +226,42 @@ func TestDelayedWatchDelivery(t *testing.T) {
 }
 */
 
-/* func TestWatchError(t *testing.T) {
+/* func TestIntegrationWatchError(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test")
+	}
+
 	ctx, store, _ := testSetup(t)
 	storagetesting.RunTestWatchError(ctx, t, &storeWithPrefixTransformer{store})
 } */
 
-func TestWatchContextCancel(t *testing.T) {
+func TestIntegrationWatchContextCancel(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test")
+	}
+
 	ctx, store, destroyFunc, err := testSetup(t)
 	defer destroyFunc()
 	assert.NoError(t, err)
 	storagetesting.RunTestWatchContextCancel(ctx, t, store)
 }
 
-func TestWatcherTimeout(t *testing.T) {
+func TestIntegrationWatcherTimeout(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test")
+	}
+
 	ctx, store, destroyFunc, err := testSetup(t)
 	defer destroyFunc()
 	assert.NoError(t, err)
 	storagetesting.RunTestWatcherTimeout(ctx, t, store)
 }
 
-func TestWatchDeleteEventObjectHaveLatestRV(t *testing.T) {
+func TestIntegrationWatchDeleteEventObjectHaveLatestRV(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test")
+	}
+
 	ctx, store, destroyFunc, err := testSetup(t)
 	defer destroyFunc()
 	assert.NoError(t, err)
@@ -225,14 +269,22 @@ func TestWatchDeleteEventObjectHaveLatestRV(t *testing.T) {
 }
 
 // TODO: enable when we support flow control and priority fairness
-/* func TestWatchInitializationSignal(t *testing.T) {
+/* func TestIntegrationWatchInitializationSignal(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test")
+	}
+
 	ctx, store, destroyFunc, err := testSetup(t)
 	defer destroyFunc()
 	assert.NoError(t, err)
 	storagetesting.RunTestWatchInitializationSignal(ctx, t, store)
 } */
 
-/* func TestProgressNotify(t *testing.T) {
+/* func TestIntegrationProgressNotify(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test")
+	}
+
 	ctx, store, destroyFunc, err := testSetup(t)
 	defer destroyFunc()
 	assert.NoError(t, err)
@@ -242,14 +294,22 @@ func TestWatchDeleteEventObjectHaveLatestRV(t *testing.T) {
 // TestWatchDispatchBookmarkEvents makes sure that
 // setting allowWatchBookmarks query param against
 // etcd implementation doesn't have any effect.
-func TestWatchDispatchBookmarkEvents(t *testing.T) {
+func TestIntegrationWatchDispatchBookmarkEvents(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test")
+	}
+
 	ctx, store, destroyFunc, err := testSetup(t)
 	defer destroyFunc()
 	assert.NoError(t, err)
 	storagetesting.RunTestWatchDispatchBookmarkEvents(ctx, t, store, false)
 }
 
-func TestSendInitialEventsBackwardCompatibility(t *testing.T) {
+func TestIntegrationSendInitialEventsBackwardCompatibility(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test")
+	}
+
 	ctx, store, destroyFunc, err := testSetup(t)
 	defer destroyFunc()
 	assert.NoError(t, err)
@@ -257,7 +317,11 @@ func TestSendInitialEventsBackwardCompatibility(t *testing.T) {
 }
 
 // TODO this test times out
-func TestEtcdWatchSemantics(t *testing.T) {
+func TestIntegrationEtcdWatchSemantics(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test")
+	}
+
 	ctx, store, destroyFunc, err := testSetup(t)
 	defer destroyFunc()
 	assert.NoError(t, err)
@@ -266,7 +330,11 @@ func TestEtcdWatchSemantics(t *testing.T) {
 
 /*
 // TODO this test times out
-func TestEtcdWatchSemanticInitialEventsExtended(t *testing.T) {
+func TestIntegrationEtcdWatchSemanticInitialEventsExtended(t *testing.T) {
+		if testing.Short() {
+		t.Skip("skipping integration test")
+	}
+
 	ctx, store, destroyFunc, err := testSetup(t)
 	defer destroyFunc()
 	assert.NoError(t, err)

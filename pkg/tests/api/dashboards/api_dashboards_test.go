@@ -168,6 +168,9 @@ providers:
 		Login:          "admin",
 	})
 
+	// give provisioner some time to load dashboards
+	time.Sleep(1 * time.Second)
+
 	type errorResponseBody struct {
 		Message string `json:"message"`
 	}
