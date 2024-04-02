@@ -24,9 +24,9 @@ func TestWillCreateMetricServerWhenOnlyStorageServerTarget(t *testing.T) {
 	require.NoError(t, err)
 
 	client := http.Client{}
-	res, err := client.Get("http://localhost:8000/metrics")
+	res, err := client.Get("http://127.0.0.1:8000/metrics")
 	require.NoError(t, err)
-	assert.Equal(t, 200, res.Status)
+	assert.Equal(t, 200, res.StatusCode)
 }
 
 func TestWillNotCreateMetricServerWhenTargetIsAll(t *testing.T) {
