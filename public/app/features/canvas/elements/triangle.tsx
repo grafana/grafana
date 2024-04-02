@@ -43,7 +43,14 @@ const Triangle = (props: CanvasElementProps<CanvasElementConfig, CanvasElementDa
           </clipPath>
         </defs>
         {/* Apply background image within the clipping area */}
-        <rect x="0" y="0" width="100%" height="100%" clipPath={`url(#triangleClip-${uniqueId})`} />
+        <rect
+          x="0"
+          y="0"
+          width="100%"
+          height="100%"
+          clipPath={`url(#triangleClip-${uniqueId})`}
+          style={{ fill: 'none' }}
+        />
         <polygon
           points="100,0 200,200 0,200"
           className={styles.element}

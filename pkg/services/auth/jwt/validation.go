@@ -52,7 +52,7 @@ func (s *AuthService) initClaimExpectations() error {
 	return nil
 }
 
-func (s *AuthService) validateClaims(claims JWTClaims) error {
+func (s *AuthService) validateClaims(claims map[string]any) error {
 	var registeredClaims jwt.Claims
 	for key, value := range claims {
 		switch key {
