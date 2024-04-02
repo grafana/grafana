@@ -33,14 +33,11 @@ export const dataSourcesApi = alertingApi.injectEndpoints({
   }),
 });
 
-type EnableOrDisableFunction = (uid: string, handleGrafanaManagedAlerts: boolean) => void;
-type LoadingState = { isLoading: boolean; isError: boolean; error: unknown; data: unknown };
-
-export const enableOrDisableHandlingGrafanaManagedAlerts = (): [EnableOrDisableFunction, LoadingState] => {
+export const enableOrDisableHandlingGrafanaManagedAlerts = () => {
   const [getSettings, getSettingsState] = dataSourcesApi.endpoints.getDataSourceSettingsForUID.useLazyQuery();
   const [updateSettings, updateSettingsState] = dataSourcesApi.endpoints.updateDataSourceSettingsForUID.useMutation();
 
-  const enableOrDisable: EnableOrDisableFunction = async (uid, handleGrafanaManagedAlerts) => {
+  const enableOrDisable = async (uid: string, handleGrafanaManagedAlerts: boolean) => {
     const existingSettings = await getSettings(uid).unwrap();
     if (!isAlertmanagerDataSource(existingSettings)) {
       throw new Error(`Data source with UID ${uid} is not an Alertmanager data source`);
@@ -53,12 +50,12 @@ export const enableOrDisableHandlingGrafanaManagedAlerts = (): [EnableOrDisableF
     updateSettings({ uid, settings: newSettings });
   };
 
-  const loadingState: LoadingState = {
+  const loadingState = {
     isLoading: getSettingsState.isLoading || updateSettingsState.isLoading,
     isError: getSettingsState.isError || updateSettingsState.isError,
     error: getSettingsState.error || updateSettingsState.error,
     data: updateSettingsState.data,
   };
 
-  return [enableOrDisable, loadingState];
+  return [enableOrDisable, loadingState] as const;
 };
