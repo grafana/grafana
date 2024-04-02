@@ -4,7 +4,6 @@ import (
 	"context"
 	"net/http"
 	"testing"
-	"time"
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/modules"
@@ -21,13 +20,15 @@ func TestWillCreateMetricServerWhenOnlyStorageServerTarget(t *testing.T) {
 	svc, err := ProvideService(cfg, featuremgmt.WithFeatures(), logger)
 	require.NoError(t, err)
 
-	err = svc.initInstrumentation(context.Background())
-	require.NoError(t, err)
-
-	time.Sleep(5 * time.Second)
+	srv := svc.initInstrumentation(context.Background())
+	defer func() {
+		if err := srv.Shutdown(context.Background()); err != nil {
+			t.Errorf("Error shutting down server: %v", err)
+		}
+	}()
 
 	client := http.Client{}
-	res, err := client.Get("http://127.0.0.1:8000/metrics")
+	res, err := client.Get("http://localhost:8000/metrics")
 	require.NoError(t, err)
 	assert.Equal(t, 200, res.StatusCode)
 }
@@ -39,10 +40,6 @@ func TestWillNotCreateMetricServerWhenTargetIsAll(t *testing.T) {
 	svc, err := ProvideService(cfg, featuremgmt.WithFeatures(), logger)
 	require.NoError(t, err)
 
-	err = svc.initInstrumentation(context.Background())
-	require.NoError(t, err)
-
-	client := http.Client{}
-	_, err = client.Get("http://localhost:8000/metrics")
-	require.ErrorContainsf(t, err, "connection refused", err.Error())
+	srv := svc.initInstrumentation(context.Background())
+	assert.Nil(t, srv)
 }

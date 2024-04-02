@@ -108,9 +108,7 @@ func (s *service) Run(ctx context.Context) error {
 func (s *service) start(ctx context.Context) error {
 	// TODO: use wire
 
-	if err := s.initInstrumentation(ctx); err != nil {
-		return err
-	}
+	_ = s.initInstrumentation(ctx)
 
 	// TODO: support using grafana db connection?
 	eDB, err := dbimpl.ProvideEntityDB(nil, s.cfg, s.features)
@@ -161,16 +159,16 @@ func (s *service) running(ctx context.Context) error {
 	return nil
 }
 
-func (s *service) initInstrumentation(ctx context.Context) error {
+func (s *service) initInstrumentation(ctx context.Context) *http.Server {
 	// Only start up instrumentation server when storage-server is the sole target module
 	if len(s.cfg.Target) == 1 && s.cfg.Target[0] == modules.StorageServer {
-		s.setupInstrumentationServer(ctx)
+		return s.setupInstrumentationServer(ctx)
 	}
 
 	return nil
 }
 
-func (s *service) setupInstrumentationServer(ctx context.Context) {
+func (s *service) setupInstrumentationServer(ctx context.Context) *http.Server {
 	router := http.NewServeMux()
 	router.Handle("/metrics", promhttp.Handler())
 
@@ -182,12 +180,19 @@ func (s *service) setupInstrumentationServer(ctx context.Context) {
 		BaseContext:       func(_ net.Listener) context.Context { return ctx },
 	}
 
+	serverReady := make(chan struct{})
+
 	go func() {
+		defer close(serverReady)
 		err := srv.ListenAndServe()
 		if err != nil && !errors.Is(err, http.ErrServerClosed) {
 			s.log.Error("instrumentation server terminated with error", "error", err)
 		}
 	}()
 
+	<-serverReady
+
 	s.log.Info("instrumentation server listening on port 8000")
+
+	return srv
 }
