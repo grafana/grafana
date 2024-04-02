@@ -4,8 +4,13 @@ import { IconProps } from '@grafana/saga-icons';
 
 type IconImport = () => Promise<{ default: React.ComponentType<IconProps> }>;
 
+const importCache: { [iconName: string]: Promise<{ default: React.ComponentType<IconProps> }> } = {};
+
 const dynamicIconImport = (iconName: string): IconImport => {
-  return () => import(`@grafana/saga-icons/src/icons-gen/${iconName}`);
+  if (!importCache[iconName]) {
+    importCache[iconName] = import(`@grafana/saga-icons/src/icons-gen/${iconName}`);
+  }
+  return () => importCache[iconName];
 };
 
 export const iconToComponentMap = {
