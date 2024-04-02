@@ -42,7 +42,7 @@
     "@svgr/plugin-jsx": "^8.1.0",
     "@svgr/plugin-prettier": "^8.1.0",
     "@svgr/plugin-svgo": "^8.1.0",
-    "@types/node": "20.11.30",
+    "@types/node": "20.12.2",
     "@types/react": "18.2.74",
     "@types/react-dom": "18.2.23",
     "esbuild": "0.18.12",
