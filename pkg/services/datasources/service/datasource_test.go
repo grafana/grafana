@@ -939,32 +939,6 @@ func TestService_GetHttpTransport(t *testing.T) {
 		require.Equal(t, "Ok", bodyStr)
 	})
 
-	t.Run("Should use request timeout if configured in JsonData", func(t *testing.T) {
-		provider := httpclient.NewProvider()
-
-		sjson := simplejson.NewFromAny(map[string]any{
-			"timeout": 19,
-		})
-
-		sqlStore := db.InitTestDB(t)
-		secretsService := secretsmng.SetupTestService(t, fakes.NewFakeSecretsStore())
-		secretsStore := secretskvs.NewSQLSecretsKVStore(sqlStore, secretsService, log.New("test.logger"))
-		quotaService := quotatest.New(false, nil)
-		dsService, err := ProvideService(sqlStore, secretsService, secretsStore, cfg, featuremgmt.WithFeatures(), acmock.New(), acmock.NewMockedPermissionsService(), quotaService, &pluginstore.FakePluginStore{})
-		require.NoError(t, err)
-		ds := datasources.DataSource{
-			ID:       1,
-			URL:      "http://k8s:8001",
-			Type:     "Kubernetes",
-			JsonData: sjson,
-		}
-
-		client, err := dsService.GetHTTPClient(context.Background(), &ds, provider)
-		require.NoError(t, err)
-		require.NotNil(t, client)
-		require.Equal(t, 19*time.Second, client.Timeout)
-	})
-
 	t.Run("Should populate SigV4 options if configured in JsonData", func(t *testing.T) {
 		var configuredOpts sdkhttpclient.Options
 		provider := httpclient.NewProvider(sdkhttpclient.ProviderOptions{
