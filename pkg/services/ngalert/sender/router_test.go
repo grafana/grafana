@@ -584,6 +584,30 @@ func TestBuildExternalURL(t *testing.T) {
 			},
 			expectedURL: "https://localhost:9000/path/to/am",
 		},
+		{
+			name: "do not add /alertmanager to path when a segment already contains it",
+			ds: &datasources.DataSource{
+				URL: "https://localhost:9000/path/to/alertmanager",
+				JsonData: func() *simplejson.Json {
+					r := simplejson.New()
+					r.Set("implementation", "mimir")
+					return r
+				}(),
+			},
+			expectedURL: "https://localhost:9000/path/to/alertmanager",
+		},
+		{
+			name: "add /alertmanager to path when a segment does not exactly match it",
+			ds: &datasources.DataSource{
+				URL: "https://localhost:9000/path/to/alertmanagerasdf",
+				JsonData: func() *simplejson.Json {
+					r := simplejson.New()
+					r.Set("implementation", "mimir")
+					return r
+				}(),
+			},
+			expectedURL: "https://localhost:9000/alertmanagerasdf/alertmanager",
+		},
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {

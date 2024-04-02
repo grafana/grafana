@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"net/url"
 	"sort"
+	"strings"
 	"sync"
 	"time"
 
@@ -267,7 +268,18 @@ func (d *AlertsRouter) buildExternalURL(ds *datasources.DataSource) (string, err
 		if parsed.Path == "" {
 			parsed.Path = "/"
 		}
-		parsed = parsed.JoinPath("/alertmanager")
+		// Only add /alertmanager if it is not already present.
+		containsAlertmanagerSegment := false
+		parts := strings.Split(parsed.Path, "/")
+		for _, part := range parts {
+			if part == "alertmanager" {
+				containsAlertmanagerSegment = true
+				break
+			}
+		}
+		if !containsAlertmanagerSegment {
+			parsed = parsed.JoinPath("/alertmanager")
+		}
 	}
 
 	// If basic auth is enabled we need to build the url with basic auth baked in.
