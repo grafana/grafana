@@ -175,6 +175,9 @@ export const getLoginStyles = (theme: GrafanaTheme2) => {
     }),
     enterAnimation: css({
       animation: `${flyInAnimation} ease-out 0.2s`,
+      '@media (prefers-reduced-motion)': {
+        animation: 'none',
+      },
     }),
   };
 };
