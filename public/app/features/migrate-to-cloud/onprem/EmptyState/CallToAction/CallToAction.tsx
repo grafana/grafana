@@ -3,13 +3,13 @@ import React from 'react';
 import { Box, Button, ModalsController, Text } from '@grafana/ui';
 import { Trans } from 'app/core/internationalization';
 
-import { useConnectStackMutation, useGetStatusQuery } from '../../../mockAPI';
+import { useConnectStackMutationMock, useGetStatusQueryMock } from '../../../mockAPI';
 
 import { ConnectModal } from './ConnectModal';
 
 export const CallToAction = () => {
-  const [connectStack, connectResponse] = useConnectStackMutation();
-  const { isFetching } = useGetStatusQuery();
+  const [connectStack, connectResponse] = useConnectStackMutationMock();
+  const { isFetching } = useGetStatusQueryMock();
 
   return (
     <ModalsController>
