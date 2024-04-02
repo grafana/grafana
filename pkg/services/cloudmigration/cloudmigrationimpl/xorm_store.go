@@ -46,24 +46,24 @@ func (ss *sqlStore) SaveMigrationRun(ctx context.Context, cmr *cloudmigration.Cl
 	})
 }
 
-func (ss *sqlStore) CreateMigration(ctx context.Context, migration cloudmigration.CloudMigration) error {
+func (ss *sqlStore) CreateMigration(ctx context.Context, migration cloudmigration.CloudMigration) (*cloudmigration.CloudMigration, error) {
 	if err := ss.encryptToken(ctx, &migration); err != nil {
-		return err
+		return nil, err
 	}
 
 	err := ss.db.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
 		migration.Created = time.Now()
 		migration.Updated = time.Now()
-		_, err := sess.Insert(migration)
+		_, err := sess.Insert(&migration)
 		if err != nil {
 			return err
 		}
 		return nil
 	})
 	if err != nil {
-		return err
+		return nil, err
 	}
-	return nil
+	return &migration, nil
 }
 
 func (ss *sqlStore) GetAllCloudMigrations(ctx context.Context) ([]*cloudmigration.CloudMigration, error) {

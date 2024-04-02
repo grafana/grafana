@@ -292,15 +292,16 @@ func (s *Service) CreateMigration(ctx context.Context, cmd cloudmigration.CloudM
 		return nil, fmt.Errorf("token validation: %w", err)
 	}
 
-	if err := s.store.CreateMigration(ctx, migration); err != nil {
+	cm, err := s.store.CreateMigration(ctx, migration)
+	if err != nil {
 		return nil, fmt.Errorf("error creating migration: %w", err)
 	}
 
 	return &cloudmigration.CloudMigrationResponse{
-		ID:      int64(token.Instance.StackID),
+		ID:      cm.ID,
 		Stack:   token.Instance.Slug,
-		Created: time.Now(),
-		Updated: time.Now(),
+		Created: cm.Created,
+		Updated: cm.Updated,
 	}, nil
 }
 
