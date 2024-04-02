@@ -36,7 +36,7 @@ Set how series data is mapped in the chart.
 - [Auto](#auto-series-mapping-options) - Automatically generates series from all available data frames (or datasets). You can filter to select only one frame.
 - [Manual](#manual-series-mapping-options) - Explicitly define the series by selecting from available data frames.
 
-Depending on your series mapping selection, some of the **XY chart** options differ.
+Depending on your series mapping selection, the **Frame**, **X-field**, and **Y-field(s)** options differ. The [Auto](#auto-series-mapping-options) and [Manual](#auto-series-mapping-options) series mapping sections describe those different settings.
 
 #### Auto series mapping options
 
@@ -48,11 +48,11 @@ When you select **Auto** as your series mapping mode, the following options beco
 
 ##### Frame
 
-By default, all data frames are available and displayed in the chart. You can filter to select only one frame.
+By default, xy chart displays all data frames. You can filter to select only one frame.
 
 ##### X-field
 
-Select which field the x-axis represents. By default, this is the first number field in each data frame. For example, you enter the following CSV content:
+Select which field or fields x represents. By default, this is the first number field in each data frame. For example, you enter the following CSV content:
 
 | a   | b   | c   |
 | --- | --- | --- |
@@ -60,33 +60,37 @@ Select which field the x-axis represents. By default, this is the first number f
 | 1   | 1   | 9   |
 | 2   | 2   | 4   |
 
-In the resulting chart, the values in column "a" are used as the x-field unless you define it differently.
+In the resulting chart, x-fields are generated from the values in column "a" unless you define it differently.
 
 ##### Y-fields
 
-The series of the chart are generated from the y-fields. After the x-field is set, by default, all the remaining number fields in the data frame are designated as the y-fields. You can select one y-field to include or you can use [overrides][Configure field overrides] to exclude y-fields individually. To disable y-fields individually:
+The series of the chart are generated from the y-fields. After the x-field is set, by default, all the remaining number fields in the data frame are designated as the y-fields.
 
-- Series > Hide in area > Viz
+You can select one y-field to include or you can use [overrides][Configure field overrides] to exclude y-fields individually. To disable y-fields individually, add an override with the following properties for each y-field you want removed:
+
+- Override type: **Fields with name**
+- Override property: **Series > Hide in area**
+- Area: **Viz**
 
 #### Manual series mapping options
 
 When you select **Manual** as your series mapping mode, the following options become available:
 
-- **Frame** - Select your data frame or dataset. You can have more than one data frame.
-- **X-field** - Select which field the x-axis represents.
-- **Y-field** - Select which field the y-axis represents.
+- **Frame** - Select your data frame or dataset. You can add as many data frames as you want.
+- **X-field** - Select which field x represents.
+- **Y-field** - Select which field y represents.
 
 ### Size field
 
-Use this option to set which field value controls size of the points in the chart. This value is relative to the minium and maximum of all the values in the data frame.
+Use this option to set which field value controls size of the points in the chart. This value is relative to the min and max of all the values in the data frame.
 
-When you select this option, you can then set the [Point size](#point-size), [Min point size](#min-point-size), and [Max point size](#max-point-size) options.
+When you select this option, you can then set the [Min point size](#min-point-size) and [Max point size](#max-point-size) options.
 
 <!--shouldn't the other series on the chart still show up even if you've set this using one field, assuming you're using all the data frames? -->
 
 ### Color field
 
-This option is only valid when you've set the **Size field** option. Grafana sets this field based on the size of a value relative to the min and max values of a series or the **Min point size** and **Max point size** values if they're set. To use the color value options under the Standard options, you must set this field.
+This option is only valid when you've set the **Size field** option. Grafana sets this field based on the size of a value relative to the min and max values of a series or the **Min point size** and **Max point size** values if they're set. To use the color value options under the **Standard options**, you must set this field.
 
 Typically, this option is used when you only have one series displayed in the chart.
 
@@ -94,13 +98,13 @@ Typically, this option is used when you only have one series displayed in the ch
 
 Set how values are represented in the visualization.
 
-- **Points** - Display values as points. When you select this option, the [Point size](#point-size), [Min point size](#min-point-size), and [Max point size](#max-point-size) options are also displayed. These fields are only valid when you set the **Size field** option.
+- **Points** - Display values as points. When you select this option, the [Point size](#point-size), [Min point size](#min-point-size), and [Max point size](#max-point-size) options are also displayed.
 - **Lines** - Display values as lines. When you select this option, the [Line style](#line-style) and [Line width](#line-width) options are also displayed.
 - **Both** - Display values as both points and lines.
 
 ### Point size
 
-Set the size of the points, from 1 to 100 pixels in diameter. The default size is 5 pixels. You can set an [override][Configure field overrides] to set the pixel size by series.
+Set the size of all points in the chart, from 1 to 100 pixels in diameter. The default size is five pixels. You can set an [override][Configure field overrides] to set the pixel size by series.
 
 ### Min point size
 
@@ -117,12 +121,12 @@ Set the style of the line. To change the color, use the standard [color scheme][
 ![Line style option](/static/img/docs/time-series-panel/line-style-option-v9.png)
 
 - **Solid:** Display a solid line. This is the default setting.
-- **Dash:** Display a dashed line. When you choose this option, a list appears for you to select the length and gap (length, gap) for the line dashes. Dash spacing set to 10, 10 (default).
-- **Dots:** Display dotted lines. When you choose this option, a list appears for you to select the gap (length = 0, gap) for the dot spacing. Dot spacing set to 0, 10 (default)
+- **Dash:** Display a dashed line. When you choose this option, a drop-down list is displayed where you can select the length and gap setting for the line dashes. By default, the length and gap are set to `10, 10`.
+- **Dots:** Display dotted lines. When you choose this option, a drop-down list is displayed where you can select dot spacing. By default, the dot spacing is set to `0, 10` (the first number represents dot length, which is always zero).
 
 ### Line width
 
-Set the width of the lines, from 1 to 10 pixels.
+Set the width of the lines, from one to 10 pixels.
 
 ## Tooltip options
 
