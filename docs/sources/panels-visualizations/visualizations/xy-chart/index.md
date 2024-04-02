@@ -38,17 +38,15 @@ Set how series data is mapped in the chart.
 - **Auto** - Automatically generates series from all available data frames (or datasets). You can filter to select only one frame.
 - **Manual** - Explicitly define the series by selecting from available data frames.
 
-Depending on your series mapping selection, the rest of the **XY chart** options differ. Expand the sections below for options based on your mapping mode.
+Depending on your series mapping selection, some of the **XY chart** options differ.
 
-### Auto series mapping options
+#### Auto series mapping options
 
-{{< collapse title="Options" >}}
-
-#### Frame
+##### Frame
 
 By default, all data frames are available and displayed in the chart. You can filter to select only one frame.
 
-#### X-field
+##### X-field
 
 Select which field the x-axis represents. By default, this is the first number field in each data frame. For example, you enter the following CSV content:
 
@@ -60,13 +58,27 @@ Select which field the x-axis represents. By default, this is the first number f
 
 In the resulting chart, the values in column "a" are used as the x-field unless you define it differently.
 
-#### Y-fields
+##### Y-fields
 
 The series of the chart are generated from the y-fields. After the x-field is set, by default, all the remaining number fields in the data frame are designated as the y-fields. You can select one y-field to include or you can use [overrides][Configure an override] to exclude y-fields individually. To disable y-fields individually:
 
 - Series > Hide in area > Viz
 
-#### Size field
+#### Manual series mapping options
+
+##### Frame
+
+Select your data frame or dataset. You have more than one data frame.
+
+##### X-field
+
+Select which field the x-axis represents.
+
+##### Y-field
+
+Select which field the y-axis represents.
+
+### Size field
 
 Use this option to set which field value controls size of the points in the chart. This value is relative to the minium and maximum of all the values in the data frame.
 
@@ -74,13 +86,13 @@ When you select this option, you can then set the [Point size](#point-size), [Mi
 
 <!--shouldn't the other series on the chart still show up even if you've set this using one field, assuming you're using all the data frames? -->
 
-#### Color field
+### Color field
 
 This option is only valid when you've set the **Size field** option. Grafana sets this field based on the size of a value relative to the min and max values of a series or the **Min point size** and **Max point size** values if they're set. To use the color value options under the Standard options, you must set this field.
 
 Typically, this option is used when you only have one series displayed in the chart.
 
-#### Show
+### Show
 
 Set how values are represented in the visualization.
 
@@ -88,19 +100,19 @@ Set how values are represented in the visualization.
 - **Lines** - Display values as lines. When you select this option, the [Line style](#line-style) and [Line width](#line-width) options are also displayed.
 - **Both** - Display values as both points and lines.
 
-#### Point size
+### Point size
 
 Set the size of the points, from 1 to 100 pixels in diameter. The default size is 5 pixels. You can set an [override][Configure field overrides] to set the pixel size by series.
 
-#### Min point size
+### Min point size
 
 Use this option to control the minimum point size when you've set the **Size field** option. You can [override][Configure field overrides] this option for specific series.
 
-#### Max point size
+### Max point size
 
 Use this option to control the minimum point size when you've set the **Size field** option. You can [override][Configure field overrides] this option for specific series.
 
-#### Line style
+### Line style
 
 Set the style of the line. To change the color, use the standard [color scheme][] field option.
 
@@ -110,79 +122,9 @@ Set the style of the line. To change the color, use the standard [color scheme][
 - **Dash:** Display a dashed line. When you choose this option, a list appears for you to select the length and gap (length, gap) for the line dashes. Dash spacing set to 10, 10 (default).
 - **Dots:** Display dotted lines. When you choose this option, a list appears for you to select the gap (length = 0, gap) for the dot spacing. Dot spacing set to 0, 10 (default)
 
-#### Line width
+### Line width
 
 Set the width of the lines, from 1 to 10 pixels.
-
-{{< /collapse >}}
-
-### Manual series mapping options
-
-{{< collapse title="Options" >}}
-
-#### Data
-
-<!--what is the scenario where you need to choose a data set?-->
-
-Select your data set. You have more than one dataset or table, so you can select series (dataframe)
-
-This option is only available when you set **Series mapping** to **Manual** mode.
-
-You'll set the **X-field** and **Y-field** options, as well as the **Point color** and **Point size** rules
-
-#### Add series
-
-Select the series that you want to include in the visualization.
-
-#### X-field
-
-Select which field the x-axis represents.
-
-#### Y-fields
-
-Select which fields the y-axis represents.
-
-In **Manual** mode, you can control both the **X-field** and **Y-field** options.
-
-In **Auto** mode, you can only update the x-field and the y-fields are automatically assigned based on that selection. In this mode you can enable and disable the **Y-field**.
-
-For example, if your data source has a table with five columns, you may want to disable one or more of the columns so that they're not included in the visualization.
-
-#### Point color
-
-Explicitly define the **Point color** rules. Select from **Fixed color** or a field.
-
-#### Point size (Manual mode)
-
-Explicitly define the **Point size** rules. This option is specific to when you're defining fields in manual mode and not the same as the general [Point size option](#point-size) for the visualization. Select from **Fixed value** or a field.
-
-#### Show
-
-Set how values are represented in the visualization.
-
-- **Points** - Display values as points. When you select this option, the [Point size](#point-size) option is also displayed.
-- **Lines** - Display values as lines. When you select this option, the [line style](#line-style) and [line width](#line-width) options are also displayed.
-- **Both** - Display values as both points and lines.
-
-#### Point size
-
-Set the size of the points, from 1 to 40 pixels in diameter.
-
-#### Line style
-
-Set the style of the line. To change the color, use the standard [color scheme][] field option.
-
-![Line style option](/static/img/docs/time-series-panel/line-style-option-v9.png)
-
-- **Solid:** Display a solid line. This is the default setting.
-- **Dash:** Display a dashed line. When you choose this option, a list appears for you to select the length and gap (length, gap) for the line dashes. Dash spacing set to 10, 10 (default).
-- **Dots:** Display dotted lines. When you choose this option, a list appears for you to select the gap (length = 0, gap) for the dot spacing. Dot spacing set to 0, 10 (default)
-
-#### Line width
-
-Set the width of the lines, from 1 to 10 pixels.
-
-{{< /collapse >}}
 
 ## Tooltip options
 
