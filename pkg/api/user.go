@@ -31,10 +31,23 @@ import (
 // 404: notFoundError
 // 500: internalServerError
 func (hs *HTTPServer) GetSignedInUser(c *contextmodel.ReqContext) response.Response {
-	userID, errResponse := getUserID(c)
-	if errResponse != nil {
-		return errResponse
+	namespace, identifier := c.SignedInUser.GetNamespacedID()
+	if namespace != identity.NamespaceUser {
+		return response.JSON(http.StatusOK, user.UserProfileDTO{
+			IsGrafanaAdmin: c.SignedInUser.GetIsGrafanaAdmin(),
+			OrgID:          c.SignedInUser.GetOrgID(),
+			UID:            strings.Join([]string{namespace, identifier}, ":"),
+			Name:           c.SignedInUser.NameOrFallback(),
+			Email:          c.SignedInUser.GetEmail(),
+			Login:          c.SignedInUser.GetLogin(),
+		})
 	}
+
+	userID, err := identity.IntIdentifier(namespace, identifier)
+	if err != nil {
+		return response.Error(http.StatusInternalServerError, "Failed to parse user id", err)
+	}
+
 	return hs.getUserUserProfile(c, userID)
 }
 

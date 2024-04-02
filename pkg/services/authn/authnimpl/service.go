@@ -135,10 +135,9 @@ func ProvideService(
 		s.RegisterClient(clients.ProvideJWT(jwtService, cfg))
 	}
 
-	// FIXME (gamab): Commenting that out for now as we want to re-use the client for external service auth
-	// if s.cfg.ExtendedJWTAuthEnabled && features.IsEnabledGlobally(featuremgmt.FlagExternalServiceAuth) {
-	// 	s.RegisterClient(clients.ProvideExtendedJWT(userService, cfg, signingKeysService, oauthServer))
-	// }
+	if s.cfg.ExtJWTAuth.Enabled && features.IsEnabledGlobally(featuremgmt.FlagAuthAPIAccessTokenAuth) {
+		s.RegisterClient(clients.ProvideExtendedJWT(userService, cfg, signingKeysService))
+	}
 
 	for name := range socialService.GetOAuthProviders() {
 		clientName := authn.ClientWithPrefix(name)
