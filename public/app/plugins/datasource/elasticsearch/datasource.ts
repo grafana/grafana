@@ -855,7 +855,7 @@ export class ElasticDatasource
     return lastValueFrom(this.getFields());
   }
 
-  getTagValues(options: DataSourceGetTagValuesOptions) {
+  getTagValues(options: DataSourceGetTagValuesOptions<ElasticsearchQuery>) {
     return lastValueFrom(this.getTerms({ field: options.key }, options.timeRange));
   }
 
