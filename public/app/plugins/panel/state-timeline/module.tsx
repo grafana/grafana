@@ -5,7 +5,6 @@ import {
   identityOverrideProcessor,
   PanelPlugin,
 } from '@grafana/data';
-import { config } from '@grafana/runtime';
 import { VisibilityMode } from '@grafana/schema';
 import { commonOptionsBuilder } from '@grafana/ui';
 
@@ -122,7 +121,7 @@ export const plugin = new PanelPlugin<Options, FieldConfig>(StateTimelinePanel)
       });
 
     commonOptionsBuilder.addLegendOptions(builder, false);
-    commonOptionsBuilder.addTooltipOptions(builder, !config.featureToggles.newVizTooltips);
+    commonOptionsBuilder.addTooltipOptions(builder);
   })
   .setSuggestionsSupplier(new StatTimelineSuggestionsSupplier())
   .setDataSupport({ annotations: true });
