@@ -93,6 +93,12 @@ func (s *ExtendedJWT) Authenticate(ctx context.Context, r *authn.Request) (*auth
 
 func (s *ExtendedJWT) authenticateAsUser(idTokenClaims,
 	accessTokenClaims *ExtendedJWTClaims) (*authn.Identity, error) {
+	// Only allow access policies to impersonate
+	if !strings.HasPrefix(claims.Subject, fmt.Sprintf("%s:", authn.NamespaceAccessPolicy)) {
+		s.log.Error("Invalid subject", "subject", claims.Subject)
+		return nil, errJWTInvalid.Errorf("Failed to parse sub: %s", "invalid subject format")
+	}
+	// Allow only user impersonation
 	_, err := strconv.ParseInt(strings.TrimPrefix(idTokenClaims.Subject, fmt.Sprintf("%s:", authn.NamespaceUser)), 10, 64)
 	if err != nil {
 		s.log.Error("Failed to parse sub", "error", err)
