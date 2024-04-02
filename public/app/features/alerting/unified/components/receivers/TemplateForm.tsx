@@ -59,39 +59,26 @@ interface Props {
 }
 export const isDuplicating = (location: Location) => location.pathname.endsWith('/duplicate');
 
-const defaultPayload: TestTemplateAlert[] = [
-  {
-    status: 'firing',
-    annotations: {
-      summary: 'Instance instance1 has been down for more than 5 minutes',
-    },
-    labels: {
-      alertname: 'InstanceDown',
-      instance: 'instance1',
-    },
-    startsAt: subDays(new Date(), 1).toISOString(),
-    endsAt: addMinutes(new Date(), 5).toISOString(),
-    fingerprint: 'a5331f0d5a9d81d4',
-    generatorURL: 'http://grafana.com/alerting/grafana/cdeqmlhvflz40f/view',
-  },
-  {
-    status: 'resolved',
-    annotations: {
-      summary: 'CPU usage above 90%',
-    },
-    labels: {
-      alertname: 'CpuUsage',
-      instance: 'instance1',
-    },
-    startsAt: subHours(new Date(), 4).toISOString(),
-    endsAt: new Date().toISOString(),
-    fingerprint: 'b77d941310f9d381',
-    generatorURL: 'http://grafana.com/alerting/grafana/oZSMdGj7z/view',
-  },
-];
-
-const defaultPayloadString = JSON.stringify(defaultPayload, null, 2);
-
+/**
+ * We're going for this type of layout, but with the ability to resize the columns.
+ * To achieve this, we're using the useSplitter hook from Grafana UI twice.
+ * The first hook is for the vertical splitter between the template editor and the payload editor.
+ * The second hook is for the horizontal splitter between the template editor and the preview.
+ * If we're using a vanilla Alertmanager source, we don't show the payload editor nor the preview but we still use the splitter at 100/0.
+ *
+ * ┌───────────────────┐┌───────────┐
+ * │ Template          ││ Preview   │
+ * │                   ││           │
+ * │                   ││           │
+ * │                   ││           │
+ * └───────────────────┘│           │
+ * ┌───────────────────┐│           │
+ * │ Payload           ││           │
+ * │                   ││           │
+ * │                   ││           │
+ * │                   ││           │
+ * └───────────────────┘└───────────┘
+ */
 export const TemplateForm = ({ existing, alertManagerSourceName, config, provenance }: Props) => {
   const styles = useStyles2(getStyles);
   const dispatch = useDispatch();
@@ -235,7 +222,7 @@ export const TemplateForm = ({ existing, alertManagerSourceName, config, provena
             {/* editor layout */}
             <div {...rowSplitter.containerProps} className={styles.contentContainer}>
               <div {...rowSplitter.primaryProps}>
-                {/* template content and payload editor column – full height and half-wdith */}
+                {/* template content and payload editor column – full height and half-width */}
                 <div {...columnSplitter.containerProps} className={styles.contentField}>
                   {/* template editor */}
                   <div {...columnSplitter.primaryProps}>
@@ -438,3 +425,36 @@ export const getStyles = (theme: GrafanaTheme2) => {
     `,
   };
 };
+
+const defaultPayload: TestTemplateAlert[] = [
+  {
+    status: 'firing',
+    annotations: {
+      summary: 'Instance instance1 has been down for more than 5 minutes',
+    },
+    labels: {
+      alertname: 'InstanceDown',
+      instance: 'instance1',
+    },
+    startsAt: subDays(new Date(), 1).toISOString(),
+    endsAt: addMinutes(new Date(), 5).toISOString(),
+    fingerprint: 'a5331f0d5a9d81d4',
+    generatorURL: 'http://grafana.com/alerting/grafana/cdeqmlhvflz40f/view',
+  },
+  {
+    status: 'resolved',
+    annotations: {
+      summary: 'CPU usage above 90%',
+    },
+    labels: {
+      alertname: 'CpuUsage',
+      instance: 'instance1',
+    },
+    startsAt: subHours(new Date(), 4).toISOString(),
+    endsAt: new Date().toISOString(),
+    fingerprint: 'b77d941310f9d381',
+    generatorURL: 'http://grafana.com/alerting/grafana/oZSMdGj7z/view',
+  },
+];
+
+const defaultPayloadString = JSON.stringify(defaultPayload, null, 2);
