@@ -150,13 +150,6 @@ func (d *DualWriterMode2) Update(ctx context.Context, name string, objInfo rest.
 	if err != nil {
 		return nil, false, err
 	}
-	accessor, err = meta.Accessor(updated)
-	if err != nil {
-		return nil, false, err
-	}
-
-	accessor.SetUID("")             // clear it
-	accessor.SetResourceVersion("") // remove it so it is not a constraint
 	obj, created, err := legacy.Update(ctx, name, &updateWrapper{
 		upstream: objInfo,
 		updated:  updated, // returned as the object that will be updated

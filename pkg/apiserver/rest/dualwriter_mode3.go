@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 
-	"k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apiserver/pkg/registry/rest"
@@ -63,13 +62,6 @@ func (d *DualWriterMode3) Update(ctx context.Context, name string, objInfo rest.
 	if err != nil {
 		return obj, created, err
 	}
-	accessor, err := meta.Accessor(obj)
-	if err != nil {
-		return nil, false, err
-	}
-
-	accessor.SetUID("")
-	accessor.SetResourceVersion("")
 	return legacy.Update(ctx, name, &updateWrapper{
 		upstream: objInfo,
 		updated:  obj,
