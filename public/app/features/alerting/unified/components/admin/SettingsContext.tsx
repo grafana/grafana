@@ -5,7 +5,7 @@ import { AlertmanagerChoice, ExternalAlertmanagerConfig } from 'app/plugins/data
 import { dispatch } from 'app/store/store';
 
 import { alertmanagerApi } from '../../api/alertmanagerApi';
-import { dataSourcesApi, dataSourcesApiExtra } from '../../api/dataSourcesApi';
+import { dataSourcesApi, enableOrDisableHandlingGrafanaManagedAlerts } from '../../api/dataSourcesApi';
 import {
   ExternalAlertmanagerDataSourceWithStatus,
   useExternalDataSourceAlertmanagers,
@@ -44,8 +44,8 @@ export const SettingsProvider = (props: PropsWithChildren) => {
 
   const [updateDeliverySettings, updateDeliverySettingsState] =
     alertmanagerApi.endpoints.saveExternalAlertmanagersConfig.useMutation();
-  const [updateAlertmanagerDataSource, updateAlertmanagerDataSourceState] =
-    dataSourcesApiExtra.endpoints.enableOrDisableHandlingGrafanaManagedAlerts.useMutation();
+  const [enableGrafanaManagedAlerts, enableOrDisableHandlingGrafanaManagedAlertsState] =
+    enableOrDisableHandlingGrafanaManagedAlerts();
 
   const externalAlertmanagersWithStatus = useExternalDataSourceAlertmanagers();
 
@@ -71,7 +71,7 @@ export const SettingsProvider = (props: PropsWithChildren) => {
     }
 
     if (!isInternalAlertmanager(uid)) {
-      updateAlertmanagerDataSource({ uid, handleGrafanaManagedAlerts: true });
+      enableGrafanaManagedAlerts(uid, true);
     }
   };
 
@@ -84,7 +84,7 @@ export const SettingsProvider = (props: PropsWithChildren) => {
     }
 
     if (!isInternalAlertmanager(uid)) {
-      updateAlertmanagerDataSource({ uid, handleGrafanaManagedAlerts: false });
+      enableGrafanaManagedAlerts(uid, false);
     }
   };
 
@@ -109,7 +109,7 @@ export const SettingsProvider = (props: PropsWithChildren) => {
     enableAlertmanager,
     disableAlertmanager,
     isLoading: isLoadingDeliverySettings,
-    isUpdating: updateDeliverySettingsState.isLoading || updateAlertmanagerDataSourceState.isLoading,
+    isUpdating: updateDeliverySettingsState.isLoading || enableOrDisableHandlingGrafanaManagedAlertsState.isLoading,
 
     // CRUD for Alertmanager settings
     updateAlertmanagerSettings,
