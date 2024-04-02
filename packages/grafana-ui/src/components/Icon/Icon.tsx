@@ -4,6 +4,7 @@ import { IconName } from '@grafana/data';
 import { IconProps } from '@grafana/saga-icons';
 
 import { iconToComponentMap } from './iconMap';
+import { getSvgSize } from './utils';
 
 interface Props extends IconProps {
   name: IconName;
@@ -18,8 +19,9 @@ export const Icon = React.forwardRef<SVGSVGElement, Props>(
 
     const DynamicIconComponent = React.lazy(iconToComponentMap[name]);
 
+    const iconSize = getSvgSize(size);
     return (
-      <React.Suspense fallback={<div>...</div>}>
+      <React.Suspense fallback={<div style={{ width: iconSize, height: iconSize }} />}>
         <DynamicIconComponent title={title} className={className} style={style} size={size} {...rest} />
       </React.Suspense>
     );
