@@ -3,7 +3,11 @@ import React from 'react';
 import { Box, Button, ModalsController, Text } from '@grafana/ui';
 import { t, Trans } from 'app/core/internationalization';
 
-import { useCreateMigrationTokenMutation, useDeleteMigrationTokenMutation, useHasMigrationTokenQuery } from '../../api';
+import {
+  useCreateMigrationTokenMutationMock,
+  useDeleteMigrationTokenMutationMock,
+  useHasMigrationTokenQueryMock,
+} from '../../mockAPI';
 import { InfoItem } from '../../shared/InfoItem';
 
 import { DeleteMigrationTokenModal } from './DeleteMigrationTokenModal';
@@ -11,9 +15,9 @@ import { MigrationTokenModal } from './MigrationTokenModal';
 import { TokenStatus } from './TokenStatus';
 
 export const MigrationTokenPane = () => {
-  const { data: hasToken, isFetching } = useHasMigrationTokenQuery();
-  const [createToken, createTokenResponse] = useCreateMigrationTokenMutation();
-  const [deleteToken, deleteTokenResponse] = useDeleteMigrationTokenMutation();
+  const { data: hasToken, isFetching } = useHasMigrationTokenQueryMock();
+  const [createToken, createTokenResponse] = useCreateMigrationTokenMutationMock();
+  const [deleteToken, deleteTokenResponse] = useDeleteMigrationTokenMutationMock();
 
   return (
     <ModalsController>

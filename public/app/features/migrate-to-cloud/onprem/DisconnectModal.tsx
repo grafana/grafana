@@ -3,7 +3,7 @@ import React, { useCallback } from 'react';
 import { Alert, ConfirmModal, Stack } from '@grafana/ui';
 import { Trans, t } from 'app/core/internationalization';
 
-import { useDisconnectStackMutation } from '../api';
+import { useDisconnectStackMutationMock } from '../mockAPI';
 
 interface Props {
   isOpen: boolean;
@@ -11,7 +11,7 @@ interface Props {
 }
 
 export const DisconnectModal = ({ isOpen, onDismiss }: Props) => {
-  const [disconnectStack, { isLoading, isError }] = useDisconnectStackMutation();
+  const [disconnectStack, { isLoading, isError }] = useDisconnectStackMutationMock();
 
   const handleConfirm = useCallback(async () => {
     const resp = await disconnectStack();

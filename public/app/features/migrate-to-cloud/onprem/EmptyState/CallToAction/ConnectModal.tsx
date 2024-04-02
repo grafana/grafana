@@ -6,11 +6,11 @@ import { GrafanaTheme2 } from '@grafana/data';
 import { Modal, Button, Stack, TextLink, Field, Input, Text, useStyles2 } from '@grafana/ui';
 import { Trans, t } from 'app/core/internationalization';
 
-import { ConnectStackDTO } from '../../../api';
+import { ConnectStackDTOMock } from '../../../mockAPI';
 
 interface Props {
   hideModal: () => void;
-  onConfirm: (connectStackData: ConnectStackDTO) => Promise<{ data: void } | { error: unknown }>;
+  onConfirm: (connectStackData: ConnectStackDTOMock) => Promise<{ data: void } | { error: unknown }>;
 }
 
 export const ConnectModal = ({ hideModal, onConfirm }: Props) => {
@@ -24,7 +24,7 @@ export const ConnectModal = ({ hideModal, onConfirm }: Props) => {
     register,
     formState: { errors },
     watch,
-  } = useForm<ConnectStackDTO>({
+  } = useForm<ConnectStackDTOMock>({
     defaultValues: {
       stackURL: '',
       token: '',
@@ -34,7 +34,7 @@ export const ConnectModal = ({ hideModal, onConfirm }: Props) => {
   const stackURL = watch('stackURL');
   const token = watch('token');
 
-  const onConfirmConnect: SubmitHandler<ConnectStackDTO> = async (formData) => {
+  const onConfirmConnect: SubmitHandler<ConnectStackDTOMock> = async (formData) => {
     setIsConnecting(true);
     await onConfirm(formData);
     setIsConnecting(false);
