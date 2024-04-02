@@ -1,20 +1,12 @@
 import { css, cx } from '@emotion/css';
 import React from 'react';
-import SVG from 'react-inlinesvg';
 
-import { GrafanaTheme2, isIconName } from '@grafana/data';
+import { GrafanaTheme2 } from '@grafana/data';
+import { IconProps } from '@grafana/saga-icons';
 
 import { useStyles2 } from '../../themes/ThemeContext';
-import { IconName, IconType, IconSize } from '../../types/icon';
 
-import { getIconRoot, getIconSubDir, getSvgSize } from './utils';
-
-export interface IconProps extends Omit<React.SVGProps<SVGElement>, 'onLoad' | 'onError' | 'ref'> {
-  name: IconName;
-  size?: IconSize;
-  type?: IconType;
-  title?: string;
-}
+import { iconToComponentMap, IconName } from './iconMap';
 
 const getIconStyles = (theme: GrafanaTheme2) => {
   return {
@@ -33,23 +25,19 @@ const getIconStyles = (theme: GrafanaTheme2) => {
   };
 };
 
-export const Icon = React.forwardRef<SVGElement, IconProps>(
+export const Icon = React.forwardRef<SVGSVGElement, IconProps>(
   ({ size = 'md', type = 'default', name, className, style, title = '', ...rest }, ref) => {
     const styles = useStyles2(getIconStyles);
 
-    if (!isIconName(name)) {
+    const iconName: IconName = (name === 'fa fa-spinner' ? 'spinner' : name) as IconName;
+
+    if (!iconToComponentMap[iconName]) {
       console.warn('Icon component passed an invalid icon name', name);
+      return null; // TODO should this be a default icon?
     }
 
-    // handle the deprecated 'fa fa-spinner'
-    const iconName: IconName = name === 'fa fa-spinner' ? 'spinner' : name;
-
-    const iconRoot = getIconRoot();
-    const svgSize = getSvgSize(size);
-    const svgHgt = svgSize;
-    const svgWid = name.startsWith('gf-bar-align') ? 16 : name.startsWith('gf-interp') ? 30 : svgSize;
-    const subDir = getIconSubDir(iconName, type);
-    const svgPath = `${iconRoot}${subDir}/${iconName}.svg`;
+    // Dynamically load the IconComponent
+    const DynamicIconComponent = React.lazy(iconToComponentMap[iconName]);
 
     const composedClassName = cx(
       styles.icon,
@@ -59,18 +47,10 @@ export const Icon = React.forwardRef<SVGElement, IconProps>(
     );
 
     return (
-      <SVG
-        innerRef={ref}
-        src={svgPath}
-        width={svgWid}
-        height={svgHgt}
-        title={title}
-        className={composedClassName}
-        style={style}
-        {...rest}
-      />
+      <React.Suspense fallback={<div>Loading...</div>}>
+        <DynamicIconComponent title={title} className={composedClassName} style={style} size={size} {...rest} />
+      </React.Suspense>
     );
   }
 );
-
 Icon.displayName = 'Icon';
