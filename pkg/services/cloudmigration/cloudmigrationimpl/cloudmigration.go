@@ -35,11 +35,11 @@ type Service struct {
 
 	features featuremgmt.FeatureToggles
 
-	dsService       datasources.DataSourceService
-	gcomService     gcom.Service
-	dashboarService dashboards.DashboardService
-	folderService   folder.Service
-	secretsService  secrets.Service
+	dsService        datasources.DataSourceService
+	gcomService      gcom.Service
+	dashboardService dashboards.DashboardService
+	folderService    folder.Service
+	secretsService   secrets.Service
 
 	api     *api.CloudMigrationAPI
 	tracer  tracing.Tracer
@@ -68,20 +68,25 @@ func ProvideService(
 	routeRegister routing.RouteRegister,
 	prom prometheus.Registerer,
 	tracer tracing.Tracer,
+	dashboardService dashboards.DashboardService,
+	folderService folder.Service,
 ) cloudmigration.Service {
 	if !features.IsEnabledGlobally(featuremgmt.FlagOnPremToCloudMigrations) {
 		return &NoopServiceImpl{}
 	}
 
 	s := &Service{
-		store:       &sqlStore{db: db, secretsService: secretsService},
-		log:         log.New(LogPrefix),
-		cfg:         cfg,
-		features:    features,
-		dsService:   dsService,
-		gcomService: gcom.New(gcom.Config{ApiURL: cfg.GrafanaComAPIURL, Token: cfg.CloudMigration.GcomAPIToken}),
-		tracer:      tracer,
-		metrics:     newMetrics(),
+		store:            &sqlStore{db: db, secretsService: secretsService},
+		log:              log.New(LogPrefix),
+		cfg:              cfg,
+		features:         features,
+		dsService:        dsService,
+		gcomService:      gcom.New(gcom.Config{ApiURL: cfg.GrafanaComAPIURL, Token: cfg.CloudMigration.GcomAPIToken}),
+		tracer:           tracer,
+		metrics:          newMetrics(),
+		secretsService:   secretsService,
+		dashboardService: dashboardService,
+		folderService:    folderService,
 	}
 	s.api = api.RegisterApi(routeRegister, s, tracer)
 
@@ -420,7 +425,7 @@ func (s *Service) getFolders(ctx context.Context, id int64) ([]folder.Folder, er
 }
 
 func (s *Service) getDashboards(ctx context.Context, id int64) ([]dashboards.Dashboard, error) {
-	dashs, err := s.dashboarService.GetAllDashboards(ctx)
+	dashs, err := s.dashboardService.GetAllDashboards(ctx)
 	if err != nil {
 		return nil, err
 	}

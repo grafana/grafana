@@ -180,10 +180,6 @@ func (cma *CloudMigrationAPI) RunMigration(c *contextmodel.ReqContext) response.
 	if err != nil {
 		return response.Error(http.StatusBadRequest, "id is invalid", err)
 	}
-	cmd := cloudmigration.MigrateDataRequestDTO{}
-	if err := web.Bind(c.Req, &cmd); err != nil {
-		return response.Error(http.StatusBadRequest, "bad request data", err)
-	}
 
 	// Get migration to read the auth token
 	migration, err := cma.cloudMigrationService.GetMigration(ctx, id)
