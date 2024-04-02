@@ -46,7 +46,7 @@ func (cma *CloudMigrationAPI) registerEndpoints() {
 		cloudMigrationRoute.Get("/migration", routing.Wrap(cma.GetMigrationList))
 		cloudMigrationRoute.Post("/migration", routing.Wrap(cma.CreateMigration))
 		cloudMigrationRoute.Get("/migration/:id", routing.Wrap(cma.GetMigration))
-		cloudMigrationRoute.Delete("migration/:id", routing.Wrap(cma.DeleteMigration))
+		cloudMigrationRoute.Delete("/migration/:id", routing.Wrap(cma.DeleteMigration))
 		cloudMigrationRoute.Post("/migration/:id/run", routing.Wrap(cma.RunMigration))
 		cloudMigrationRoute.Get("/migration/:id/run", routing.Wrap(cma.GetMigrationRunList))
 		cloudMigrationRoute.Get("/migration/:id/run/:runID", routing.Wrap(cma.GetMigrationRun))
