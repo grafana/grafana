@@ -216,7 +216,7 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
   }
 
   // Allows to retrieve the list of tag values for ad-hoc filters
-  getTagValues(options: DataSourceGetTagValuesOptions): Promise<Array<{ text: string }>> {
+  getTagValues(options: DataSourceGetTagValuesOptions<TempoQuery>): Promise<Array<{ text: string }>> {
     return this.labelValuesQuery(options.key.replace(/^(resource|span)\./, ''));
   }
 
