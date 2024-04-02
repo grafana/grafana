@@ -14,6 +14,7 @@ import {
   TemplatePreviewResult,
   usePreviewTemplateMutation,
 } from '../../api/templateApi';
+import { stringifyErrorLike } from '../../utils/misc';
 import { EditorColumnHeader } from '../contact-points/templates/EditorColumnHeader';
 
 import type { TemplateFormValues } from './TemplateForm';
@@ -37,9 +38,9 @@ export function TemplatePreview({
 
   const templateContent = watch('content');
 
-  const [trigger, { data, isError: isPreviewError, isLoading }] = usePreviewTemplateMutation();
+  const [trigger, { data, error: previewError, isLoading }] = usePreviewTemplateMutation();
 
-  const previewToRender = getPreviewTorender(isPreviewError, payloadFormatError, data);
+  const previewToRender = getPreviewResults(previewError, payloadFormatError, data);
 
   const onPreview = useCallback(() => {
     try {
@@ -147,16 +148,15 @@ const getStyles = (theme: GrafanaTheme2) => ({
   },
 });
 
-export const PREVIEW_NOT_AVAILABLE = 'Preview request failed. Check if the payload data has the correct structure.';
+export const PREVIEW_NOT_AVAILABLE = 'Preview request failed.';
 
-export function getPreviewTorender(
-  isPreviewError: boolean,
+export function getPreviewResults(
+  previewError: unknown | undefined,
   payloadFormatError: string | null,
   data: TemplatePreviewResponse | undefined
 ): JSX.Element {
   // ERRORS IN JSON OR IN REQUEST (endpoint not available, for example)
-  const previewErrorRequest = isPreviewError ? PREVIEW_NOT_AVAILABLE : undefined;
-  const somethingWasWrong: boolean = isPreviewError || Boolean(payloadFormatError);
+  const previewErrorRequest = previewError ? stringifyErrorLike(previewError) : undefined;
   const errorToRender = payloadFormatError || previewErrorRequest;
 
   //PREVIEW : RESULTS AND ERRORS
@@ -165,13 +165,13 @@ export function getPreviewTorender(
 
   return (
     <>
-      {somethingWasWrong && (
+      {errorToRender && (
         <Alert severity="error" title="Error">
           {errorToRender}
         </Alert>
       )}
-      {previewResponseErrors && <PreviewErrorViewer errors={previewResponseErrors} data-testId="payloadJSON" />}
-      {previewResponseResults && <PreviewResultViewer previews={previewResponseResults} data-testid="payloadJSON" />}
+      {previewResponseErrors && <PreviewErrorViewer errors={previewResponseErrors} />}
+      {previewResponseResults && <PreviewResultViewer previews={previewResponseResults} />}
     </>
   );
 }
