@@ -46,21 +46,20 @@ export function ExploreDrawer(props: Props) {
 }
 
 const drawerSlide = (theme: GrafanaTheme2) => keyframes`
-  from {
-    max-height: 0px;
-    overflow: hidden;
+  0% {
+    transform: translateY(${theme.components.horizontalDrawer.defaultHeight}px);
   }
-
-  to {
-    max-height: ${theme.components.horizontalDrawer.defaultHeight}px;
-    overflow: hidden;
+  100% {
+    transform: translateY(0px);
   }
 `;
 
 const getStyles = (theme: GrafanaTheme2, fullWidth: boolean) => ({
   // @ts-expect-error csstype doesn't allow !important. see https://github.com/frenic/csstype/issues/114
   fixed: css({
-    position: `${fullWidth ? 'absolute' : 'fixed'} !important`,
+    position: `fixed !important`,
+    bottom: 0,
+    right: 0,
   }),
   container: css({
     bottom: `${fullWidth ? '1px' : '0'}`,
@@ -68,7 +67,7 @@ const getStyles = (theme: GrafanaTheme2, fullWidth: boolean) => ({
     borderTop: `1px solid ${theme.colors.border.weak}`,
     margin: theme.spacing(0, fullWidth ? 0 : -2, 0, fullWidth ? 0 : -2),
     boxShadow: theme.shadows.z3,
-    zIndex: theme.zIndex.navbarFixed,
+    zIndex: theme.zIndex.modal,
   }),
   drawerActive: css({
     opacity: 1,

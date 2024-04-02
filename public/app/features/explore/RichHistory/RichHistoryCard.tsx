@@ -363,9 +363,14 @@ export function RichHistoryCard(props: Props) {
       const exploreId = exploreActiveDS.exploreToDS[0].exploreId;
       const buttonText = runQueryText(exploreId, props.queryHistoryItem.datasourceUid);
       return (
-        <ToolbarButton aria-label={buttonText.fallbackText} onClick={() => onRunQuery(exploreId)} disabled={disabled}>
+        <Button
+          variant="secondary"
+          aria-label={buttonText.fallbackText}
+          onClick={() => onRunQuery(exploreId)}
+          disabled={disabled}
+        >
           {buttonText.translation}
-        </ToolbarButton>
+        </Button>
       );
     } else {
       const menu = (
