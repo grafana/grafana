@@ -2,16 +2,13 @@ import React from 'react';
 
 import { IconProps } from '@grafana/saga-icons';
 
-type IconPromise = Promise<{ default: React.ComponentType<IconProps> }>;
-const dynamicIconImport = (iconName: string): (() => IconPromise) => {
+type IconImport = () => Promise<{ default: React.ComponentType<IconProps> }>;
+
+const dynamicIconImport = (iconName: string): IconImport => {
   return () => import(`@grafana/saga-icons/src/icons-gen/${iconName}`);
 };
 
-interface IconMap {
-  [icon: string]: () => IconPromise;
-}
-
-export const iconToComponentMap: IconMap = {
+export const iconToComponentMap = {
   'adjust-circle': dynamicIconImport('AdjustCircle'),
   'align-left': dynamicIconImport('AlignLeft'),
   'align-right': dynamicIconImport('AlignRight'),
@@ -256,6 +253,7 @@ export const iconToComponentMap: IconMap = {
   upload: dynamicIconImport('Upload'),
   user: dynamicIconImport('User'),
   x: dynamicIconImport('X'),
+  'fa fa-spinner': dynamicIconImport('Spinner'),
 };
 
 export type IconName = keyof typeof iconToComponentMap;
