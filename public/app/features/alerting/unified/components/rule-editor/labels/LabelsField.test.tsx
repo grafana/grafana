@@ -4,7 +4,12 @@ import React from 'react';
 import { FormProvider, useForm } from 'react-hook-form';
 import { Provider } from 'react-redux';
 
+import { clearPluginSettingsCache } from 'app/features/plugins/pluginSettings';
 import { configureStore } from 'app/store/configureStore';
+
+import { mockAlertRuleApi, mockApi, setupMswServer } from '../../../mockApi';
+import { getGrafanaRule, labelslPluginMetaMock } from '../../../mocks';
+import { GRAFANA_RULES_SOURCE_NAME } from '../../../utils/datasource';
 
 import LabelsField from './LabelsField';
 
@@ -29,7 +34,38 @@ function renderAlertLabels(dataSourceName?: string) {
   );
 }
 
+const grafanaRule = getGrafanaRule(undefined, {
+  uid: 'test-rule-uid',
+  title: 'cpu-usage',
+  namespace_uid: 'folderUID1',
+  data: [
+    {
+      refId: 'A',
+      datasourceUid: 'uid1',
+      queryType: 'alerting',
+      relativeTimeRange: { from: 1000, to: 2000 },
+      model: {
+        refId: 'A',
+        expression: 'vector(1)',
+        queryType: 'alerting',
+        datasource: { uid: 'uid1', type: 'prometheus' },
+      },
+    },
+  ],
+});
+const server = setupMswServer();
 describe('LabelsField with suggestions', () => {
+  afterEach(() => {
+    server.resetHandlers();
+    clearPluginSettingsCache();
+  });
+  beforeEach(() => {
+    mockApi(server).plugins.getPluginSettings({ ...labelslPluginMetaMock, enabled: false });
+    mockAlertRuleApi(server).rulerRules(GRAFANA_RULES_SOURCE_NAME, {
+      [grafanaRule.namespace.name]: [{ name: grafanaRule.group.name, interval: '1m', rules: [grafanaRule.rulerRule!] }],
+    });
+  });
+
   it('Should display two dropdowns with the existing labels', async () => {
     renderAlertLabels('grafana');
 

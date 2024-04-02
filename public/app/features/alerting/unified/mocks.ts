@@ -729,3 +729,23 @@ export const onCallPluginMetaMock: PluginMeta = {
     screenshots: [],
   },
 };
+
+export const labelslPluginMetaMock: PluginMeta = {
+  name: 'Grafana IRM Labels',
+  id: 'grafana-labels-app',
+  type: PluginType.app,
+  module: 'plugins/grafana-labels-app/module',
+  baseUrl: 'public/plugins/grafana-labels-app',
+  info: {
+    author: { name: 'Grafana Labs' },
+    description: '',
+    updated: '',
+    version: '',
+    links: [],
+    logos: {
+      small: '',
+      large: '',
+    },
+    screenshots: [],
+  },
+};
