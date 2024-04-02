@@ -18,13 +18,8 @@ import (
 
 var _ PluginRequestConfigProvider = (*RequestConfigProvider)(nil)
 
-type PluginInfo struct {
-	ID              string
-	ExternalService *auth.ExternalService
-}
-
 type PluginRequestConfigProvider interface {
-	PluginRequestConfig(ctx context.Context, plugin PluginInfo) map[string]string
+	PluginRequestConfig(ctx context.Context, pluginID string, externalService *auth.ExternalService) map[string]string
 }
 
 type RequestConfigProvider struct {
@@ -39,7 +34,7 @@ func NewRequestConfigProvider(cfg *PluginInstanceCfg) *RequestConfigProvider {
 
 // PluginRequestConfig returns a map of configuration that should be passed in a plugin request.
 // nolint:gocyclo
-func (s *RequestConfigProvider) PluginRequestConfig(ctx context.Context, plugin PluginInfo) map[string]string {
+func (s *RequestConfigProvider) PluginRequestConfig(ctx context.Context, pluginID string, externalService *auth.ExternalService) map[string]string {
 	m := make(map[string]string)
 
 	if s.cfg.GrafanaAppURL != "" {
@@ -59,7 +54,7 @@ func (s *RequestConfigProvider) PluginRequestConfig(ctx context.Context, plugin 
 		m[featuretoggles.EnabledFeatures] = strings.Join(features, ",")
 	}
 
-	if slices.Contains[[]string, string](s.cfg.AWSForwardSettingsPlugins, plugin.ID) {
+	if slices.Contains[[]string, string](s.cfg.AWSForwardSettingsPlugins, pluginID) {
 		if !s.cfg.AWSAssumeRoleEnabled {
 			m[awsds.AssumeRoleEnabledEnvVarKeyName] = "false"
 		}
@@ -95,7 +90,7 @@ func (s *RequestConfigProvider) PluginRequestConfig(ctx context.Context, plugin 
 		m[azsettings.AzureAuthEnabled] = strconv.FormatBool(s.cfg.AzureAuthEnabled)
 	}
 	azureSettings := s.cfg.Azure
-	if azureSettings != nil && slices.Contains[[]string, string](azureSettings.ForwardSettingsPlugins, plugin.ID) {
+	if azureSettings != nil && slices.Contains[[]string, string](azureSettings.ForwardSettingsPlugins, pluginID) {
 		if azureSettings.Cloud != "" {
 			m[azsettings.AzureCloud] = azureSettings.Cloud
 		}
@@ -166,8 +161,8 @@ func (s *RequestConfigProvider) PluginRequestConfig(ctx context.Context, plugin 
 		m[awsds.SigV4VerboseLoggingEnvVarKeyName] = strconv.FormatBool(s.cfg.SigV4VerboseLogging)
 	}
 
-	if plugin.ExternalService != nil {
-		m[backend.AppClientSecret] = plugin.ExternalService.ClientSecret
+	if externalService != nil {
+		m[backend.AppClientSecret] = externalService.ClientSecret
 	}
 
 	return m
