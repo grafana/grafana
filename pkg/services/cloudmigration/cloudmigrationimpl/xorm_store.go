@@ -2,6 +2,7 @@ package cloudmigrationimpl
 
 import (
 	"context"
+	"encoding/base64"
 	"fmt"
 	"strconv"
 	"time"
@@ -146,13 +147,19 @@ func (ss *sqlStore) encryptToken(ctx context.Context, cm *cloudmigration.CloudMi
 	if err != nil {
 		return fmt.Errorf("encrypting auth token: %w", err)
 	}
-	cm.AuthToken = string(s)
+
+	cm.AuthToken = base64.StdEncoding.EncodeToString(s)
 
 	return nil
 }
 
 func (ss *sqlStore) decryptToken(ctx context.Context, cm *cloudmigration.CloudMigration) error {
-	t, err := ss.secretsService.Decrypt(ctx, []byte(cm.AuthToken))
+	decoded, err := base64.StdEncoding.DecodeString(cm.AuthToken)
+	if err != nil {
+		return fmt.Errorf("token could not be decoded")
+	}
+
+	t, err := ss.secretsService.Decrypt(ctx, decoded)
 	if err != nil {
 		return fmt.Errorf("decrypting auth token: %w", err)
 	}
