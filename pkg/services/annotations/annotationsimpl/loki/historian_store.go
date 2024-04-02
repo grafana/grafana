@@ -78,8 +78,9 @@ func (r *LokiHistorianStore) Get(ctx context.Context, query *annotations.ItemQue
 		return make([]*annotations.ItemDTO, 0), nil
 	}
 
-	// alert state history does not contain tags, so we should return nothing if we want to match all tags from the query
-	if len(query.Tags) > 0 && !query.MatchAny {
+	// if the query is filtering on tags, but not on a specific dashboard, we shouldn't query loki
+	// since state history won't have tags for annotations
+	if len(query.Tags) > 0 && query.DashboardID == 0 && query.DashboardUID == "" {
 		return make([]*annotations.ItemDTO, 0), nil
 	}
 
