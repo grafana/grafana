@@ -22,6 +22,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/store"
 	"github.com/grafana/grafana/pkg/services/store/entity"
 	"github.com/grafana/grafana/pkg/services/store/entity/db"
+	"github.com/prometheus/client_golang/prometheus"
 )
 
 // Make sure we implement both store + admin
@@ -32,6 +33,10 @@ func ProvideSQLEntityServer(db db.EntityDBInterface /*, cfg *setting.Cfg */) (en
 		db:  db,
 		log: log.New("sql-entity-server"),
 		ctx: context.Background(),
+	}
+
+	if err := prometheus.Register(NewStorageMetrics()); err != nil {
+		entityServer.log.Warn("error registering storage server metrics", "error", err)
 	}
 
 	return entityServer, nil
@@ -1117,6 +1122,8 @@ func (s *sqlEntityServer) List(ctx context.Context, r *entity.EntityListRequest)
 	if err := s.Init(); err != nil {
 		return nil, err
 	}
+
+	StorageServerMetrics.OptimisticLockFailed.WithLabelValues("list").Inc()
 
 	user, err := appcontext.User(ctx)
 	if err != nil {

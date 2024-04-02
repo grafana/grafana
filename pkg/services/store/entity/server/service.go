@@ -108,6 +108,10 @@ func (s *service) Run(ctx context.Context) error {
 func (s *service) start(ctx context.Context) error {
 	// TODO: use wire
 
+	if err := s.initInstrumentation(ctx); err != nil {
+		return err
+	}
+
 	// TODO: support using grafana db connection?
 	eDB, err := dbimpl.ProvideEntityDB(nil, s.cfg, s.features)
 	if err != nil {
@@ -157,15 +161,10 @@ func (s *service) running(ctx context.Context) error {
 	return nil
 }
 
-func (s *service) registerMetrics(ctx context.Context) error {
+func (s *service) initInstrumentation(ctx context.Context) error {
+	// Only start up instrumentation server when storage-server is the sole target module
 	if len(s.cfg.Target) == 1 && s.cfg.Target[0] == modules.StorageServer {
 		s.setupInstrumentationServer(ctx)
-	}
-
-	err := prometheus.Register(sqlstash.NewStorageMetrics())
-	if err != nil {
-		s.log.Error("error registering storage server metrics", "error", err)
-		return err
 	}
 
 	return nil

@@ -20,7 +20,7 @@ func TestWillCreateMetricServerWhenOnlyStorageServerTarget(t *testing.T) {
 	svc, err := ProvideService(cfg, featuremgmt.WithFeatures(), logger)
 	require.NoError(t, err)
 
-	err = svc.registerMetrics(context.Background())
+	err = svc.initInstrumentation(context.Background())
 	require.NoError(t, err)
 
 	client := http.Client{}
@@ -36,7 +36,7 @@ func TestWillNotCreateMetricServerWhenTargetIsAll(t *testing.T) {
 	svc, err := ProvideService(cfg, featuremgmt.WithFeatures(), logger)
 	require.NoError(t, err)
 
-	err = svc.registerMetrics(context.Background())
+	err = svc.initInstrumentation(context.Background())
 	require.NoError(t, err)
 
 	client := http.Client{}
