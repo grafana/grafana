@@ -797,7 +797,9 @@
             "name": "Body",
             "in": "body",
             "required": true,
-            "schema": {}
+            "schema": {
+              "$ref": "#/definitions/setPermissionsCommand"
+            }
           }
         ],
         "responses": {
@@ -850,7 +852,9 @@
             "name": "Body",
             "in": "body",
             "required": true,
-            "schema": {}
+            "schema": {
+              "$ref": "#/definitions/setPermissionCommand"
+            }
           }
         ],
         "responses": {
@@ -904,7 +908,9 @@
             "name": "Body",
             "in": "body",
             "required": true,
-            "schema": {}
+            "schema": {
+              "$ref": "#/definitions/setPermissionCommand"
+            }
           }
         ],
         "responses": {
@@ -958,7 +964,9 @@
             "name": "Body",
             "in": "body",
             "required": true,
-            "schema": {}
+            "schema": {
+              "$ref": "#/definitions/setPermissionCommand"
+            }
           }
         ],
         "responses": {
@@ -1314,7 +1322,9 @@
             "name": "body",
             "in": "body",
             "required": true,
-            "schema": {}
+            "schema": {
+              "$ref": "#/definitions/AdminCreateUserForm"
+            }
           }
         ],
         "responses": {
@@ -1562,7 +1572,9 @@
             "name": "body",
             "in": "body",
             "required": true,
-            "schema": {}
+            "schema": {
+              "$ref": "#/definitions/AdminUpdateUserPasswordForm"
+            }
           },
           {
             "type": "integer",
@@ -1604,7 +1616,9 @@
             "name": "body",
             "in": "body",
             "required": true,
-            "schema": {}
+            "schema": {
+              "$ref": "#/definitions/AdminUpdateUserPermissionsForm"
+            }
           },
           {
             "type": "integer",
@@ -1692,7 +1706,9 @@
             "name": "body",
             "in": "body",
             "required": true,
-            "schema": {}
+            "schema": {
+              "$ref": "#/definitions/UpdateQuotaCmd"
+            }
           },
           {
             "type": "string",
@@ -1745,7 +1761,9 @@
             "name": "body",
             "in": "body",
             "required": true,
-            "schema": {}
+            "schema": {
+              "$ref": "#/definitions/RevokeAuthTokenCmd"
+            }
           },
           {
             "type": "integer",
@@ -1892,7 +1910,9 @@
             "name": "body",
             "in": "body",
             "required": true,
-            "schema": {}
+            "schema": {
+              "$ref": "#/definitions/PostAnnotationsCmd"
+            }
           }
         ],
         "responses": {
@@ -1927,7 +1947,9 @@
             "name": "body",
             "in": "body",
             "required": true,
-            "schema": {}
+            "schema": {
+              "$ref": "#/definitions/PostGraphiteAnnotationsCmd"
+            }
           }
         ],
         "responses": {
@@ -1961,7 +1983,9 @@
             "name": "body",
             "in": "body",
             "required": true,
-            "schema": {}
+            "schema": {
+              "$ref": "#/definitions/MassDeleteAnnotationsCmd"
+            }
           }
         ],
         "responses": {
@@ -2058,7 +2082,9 @@
             "name": "body",
             "in": "body",
             "required": true,
-            "schema": {}
+            "schema": {
+              "$ref": "#/definitions/UpdateAnnotationsCmd"
+            }
           }
         ],
         "responses": {
@@ -2127,7 +2153,9 @@
             "name": "body",
             "in": "body",
             "required": true,
-            "schema": {}
+            "schema": {
+              "$ref": "#/definitions/PatchAnnotationsCmd"
+            }
           }
         ],
         "responses": {
@@ -2197,7 +2225,9 @@
             "name": "Body",
             "in": "body",
             "required": true,
-            "schema": {}
+            "schema": {
+              "$ref": "#/definitions/AddAPIKeyCommand"
+            }
           }
         ],
         "responses": {
@@ -2261,8 +2291,11 @@
     },
     "/cloudmigration/migration": {
       "get": {
+        "tags": [
+          "migrations"
+        ],
         "summary": "Get a list of all cloud migrations.",
-        "operationId": "migrations",
+        "operationId": "getMigrationList",
         "responses": {
           "200": {
             "$ref": "#/responses/cloudMigrationListResponse"
@@ -2350,8 +2383,10 @@
           {
             "type": "integer",
             "format": "int64",
+            "description": "ID of an migration",
             "name": "id",
-            "in": "query"
+            "in": "path",
+            "required": true
           }
         ],
         "responses": {
@@ -2378,8 +2413,10 @@
           {
             "type": "integer",
             "format": "int64",
+            "description": "ID of an migration",
             "name": "id",
-            "in": "query"
+            "in": "path",
+            "required": true
           }
         ],
         "responses": {
@@ -2441,8 +2478,11 @@
     },
     "/cloudmigration/token": {
       "post": {
+        "tags": [
+          "migrations"
+        ],
         "summary": "Create gcom access token.",
-        "operationId": "migrations",
+        "operationId": "createCloudMigrationToken",
         "responses": {
           "200": {
             "$ref": "#/responses/cloudMigrationCreateTokenResponse"
@@ -2508,7 +2548,25 @@
             "name": "Body",
             "in": "body",
             "required": true,
-            "schema": {}
+            "schema": {
+              "type": "object",
+              "properties": {
+                "base": {
+                  "$ref": "#/definitions/CalculateDiffTarget"
+                },
+                "diffType": {
+                  "description": "The type of diff to return\nDescription:\n`basic`\n`json`",
+                  "type": "string",
+                  "enum": [
+                    "basic",
+                    "json"
+                  ]
+                },
+                "new": {
+                  "$ref": "#/definitions/CalculateDiffTarget"
+                }
+              }
+            }
           }
         ],
         "responses": {
@@ -2540,7 +2598,9 @@
             "name": "Body",
             "in": "body",
             "required": true,
-            "schema": {}
+            "schema": {
+              "$ref": "#/definitions/SaveDashboardCommand"
+            }
           }
         ],
         "responses": {
@@ -2640,7 +2700,9 @@
             "name": "Body",
             "in": "body",
             "required": true,
-            "schema": {}
+            "schema": {
+              "$ref": "#/definitions/UpdateDashboardACLCommand"
+            }
           },
           {
             "type": "integer",
@@ -2686,7 +2748,9 @@
             "name": "Body",
             "in": "body",
             "required": true,
-            "schema": {}
+            "schema": {
+              "$ref": "#/definitions/RestoreDashboardVersionCommand"
+            }
           },
           {
             "type": "integer",
@@ -2808,7 +2872,9 @@
             "name": "Body",
             "in": "body",
             "required": true,
-            "schema": {}
+            "schema": {
+              "$ref": "#/definitions/ImportDashboardRequest"
+            }
           }
         ],
         "responses": {
@@ -2932,7 +2998,9 @@
             "name": "Body",
             "in": "body",
             "required": true,
-            "schema": {}
+            "schema": {
+              "$ref": "#/definitions/PublicDashboardDTO"
+            }
           }
         ],
         "responses": {
@@ -3019,7 +3087,9 @@
             "name": "Body",
             "in": "body",
             "required": true,
-            "schema": {}
+            "schema": {
+              "$ref": "#/definitions/PublicDashboardDTO"
+            }
           }
         ],
         "responses": {
@@ -3154,7 +3224,9 @@
             "name": "Body",
             "in": "body",
             "required": true,
-            "schema": {}
+            "schema": {
+              "$ref": "#/definitions/UpdateDashboardACLCommand"
+            }
           },
           {
             "type": "string",
@@ -3197,7 +3269,9 @@
             "name": "Body",
             "in": "body",
             "required": true,
-            "schema": {}
+            "schema": {
+              "$ref": "#/definitions/RestoreDashboardVersionCommand"
+            }
           },
           {
             "type": "string",
@@ -3351,7 +3425,9 @@
             "name": "Body",
             "in": "body",
             "required": true,
-            "schema": {}
+            "schema": {
+              "$ref": "#/definitions/AddDataSourceCommand"
+            }
           }
         ],
         "responses": {
@@ -3843,7 +3919,9 @@
             "name": "body",
             "in": "body",
             "required": true,
-            "schema": {}
+            "schema": {
+              "$ref": "#/definitions/CreateCorrelationCommand"
+            }
           },
           {
             "type": "string",
@@ -3932,7 +4010,9 @@
           {
             "name": "body",
             "in": "body",
-            "schema": {}
+            "schema": {
+              "$ref": "#/definitions/UpdateCorrelationCommand"
+            }
           }
         ],
         "responses": {
@@ -4006,7 +4086,9 @@
             "name": "Body",
             "in": "body",
             "required": true,
-            "schema": {}
+            "schema": {
+              "$ref": "#/definitions/UpdateDataSourceCommand"
+            }
           },
           {
             "type": "string",
@@ -4232,7 +4314,9 @@
             "name": "Body",
             "in": "body",
             "required": true,
-            "schema": {}
+            "schema": {
+              "$ref": "#/definitions/UpdateDataSourceCommand"
+            }
           },
           {
             "type": "string",
@@ -4385,7 +4469,9 @@
             "name": "body",
             "in": "body",
             "required": true,
-            "schema": {}
+            "schema": {
+              "$ref": "#/definitions/MetricRequest"
+            }
           }
         ],
         "responses": {
@@ -4480,7 +4566,9 @@
             "name": "body",
             "in": "body",
             "required": true,
-            "schema": {}
+            "schema": {
+              "$ref": "#/definitions/CreateFolderCommand"
+            }
           }
         ],
         "responses": {
@@ -4593,7 +4681,9 @@
             "name": "body",
             "in": "body",
             "required": true,
-            "schema": {}
+            "schema": {
+              "$ref": "#/definitions/UpdateFolderCommand"
+            }
           }
         ],
         "responses": {
@@ -4716,7 +4806,9 @@
             "name": "body",
             "in": "body",
             "required": true,
-            "schema": {}
+            "schema": {
+              "$ref": "#/definitions/MoveFolderCommand"
+            }
           }
         ],
         "responses": {
@@ -4788,7 +4880,9 @@
             "name": "Body",
             "in": "body",
             "required": true,
-            "schema": {}
+            "schema": {
+              "$ref": "#/definitions/UpdateDashboardACLCommand"
+            }
           }
         ],
         "responses": {
@@ -4905,7 +4999,9 @@
             "name": "body",
             "in": "body",
             "required": true,
-            "schema": {}
+            "schema": {
+              "$ref": "#/definitions/CreateLibraryElementCommand"
+            }
           }
         ],
         "responses": {
@@ -5044,7 +5140,9 @@
             "name": "body",
             "in": "body",
             "required": true,
-            "schema": {}
+            "schema": {
+              "$ref": "#/definitions/PatchLibraryElementCommand"
+            }
           },
           {
             "type": "string",
@@ -5352,7 +5450,9 @@
             "name": "body",
             "in": "body",
             "required": true,
-            "schema": {}
+            "schema": {
+              "$ref": "#/definitions/UpdateOrgForm"
+            }
           }
         ],
         "responses": {
@@ -5386,7 +5486,9 @@
             "name": "body",
             "in": "body",
             "required": true,
-            "schema": {}
+            "schema": {
+              "$ref": "#/definitions/UpdateOrgAddressForm"
+            }
           }
         ],
         "responses": {
@@ -5441,7 +5543,9 @@
             "name": "body",
             "in": "body",
             "required": true,
-            "schema": {}
+            "schema": {
+              "$ref": "#/definitions/AddInviteForm"
+            }
           }
         ],
         "responses": {
@@ -5533,7 +5637,9 @@
             "name": "body",
             "in": "body",
             "required": true,
-            "schema": {}
+            "schema": {
+              "$ref": "#/definitions/UpdatePrefsCmd"
+            }
           }
         ],
         "responses": {
@@ -5565,7 +5671,9 @@
             "name": "body",
             "in": "body",
             "required": true,
-            "schema": {}
+            "schema": {
+              "$ref": "#/definitions/PatchPrefsCmd"
+            }
           }
         ],
         "responses": {
@@ -5649,7 +5757,9 @@
             "name": "body",
             "in": "body",
             "required": true,
-            "schema": {}
+            "schema": {
+              "$ref": "#/definitions/AddOrgUserCommand"
+            }
           }
         ],
         "responses": {
@@ -5752,7 +5862,9 @@
             "name": "body",
             "in": "body",
             "required": true,
-            "schema": {}
+            "schema": {
+              "$ref": "#/definitions/UpdateOrgUserCommand"
+            }
           },
           {
             "type": "integer",
@@ -5851,7 +5963,9 @@
             "name": "body",
             "in": "body",
             "required": true,
-            "schema": {}
+            "schema": {
+              "$ref": "#/definitions/CreateOrgCommand"
+            }
           }
         ],
         "responses": {
@@ -5961,7 +6075,9 @@
             "name": "body",
             "in": "body",
             "required": true,
-            "schema": {}
+            "schema": {
+              "$ref": "#/definitions/UpdateOrgForm"
+            }
           },
           {
             "type": "integer",
@@ -6043,7 +6159,9 @@
             "name": "body",
             "in": "body",
             "required": true,
-            "schema": {}
+            "schema": {
+              "$ref": "#/definitions/UpdateOrgAddressForm"
+            }
           },
           {
             "type": "integer",
@@ -6126,7 +6244,9 @@
             "name": "body",
             "in": "body",
             "required": true,
-            "schema": {}
+            "schema": {
+              "$ref": "#/definitions/UpdateQuotaCmd"
+            }
           },
           {
             "type": "string",
@@ -6210,7 +6330,9 @@
             "name": "body",
             "in": "body",
             "required": true,
-            "schema": {}
+            "schema": {
+              "$ref": "#/definitions/AddOrgUserCommand"
+            }
           },
           {
             "type": "integer",
@@ -6328,7 +6450,9 @@
             "name": "body",
             "in": "body",
             "required": true,
-            "schema": {}
+            "schema": {
+              "$ref": "#/definitions/UpdateOrgUserCommand"
+            }
           },
           {
             "type": "integer",
@@ -6405,7 +6529,9 @@
             "name": "Body",
             "in": "body",
             "required": true,
-            "schema": {}
+            "schema": {
+              "$ref": "#/definitions/CreatePlaylistCommand"
+            }
           }
         ],
         "responses": {
@@ -6471,7 +6597,9 @@
             "name": "Body",
             "in": "body",
             "required": true,
-            "schema": {}
+            "schema": {
+              "$ref": "#/definitions/UpdatePlaylistCommand"
+            }
           },
           {
             "type": "string",
@@ -6778,7 +6906,9 @@
             "name": "body",
             "in": "body",
             "required": true,
-            "schema": {}
+            "schema": {
+              "$ref": "#/definitions/CreateQueryInQueryHistoryCommand"
+            }
           }
         ],
         "responses": {
@@ -6899,7 +7029,9 @@
             "name": "body",
             "in": "body",
             "required": true,
-            "schema": {}
+            "schema": {
+              "$ref": "#/definitions/PatchQueryCommentInQueryHistoryCommand"
+            }
           }
         ],
         "responses": {
@@ -7865,7 +7997,9 @@
           {
             "name": "Body",
             "in": "body",
-            "schema": {}
+            "schema": {
+              "$ref": "#/definitions/CreateServiceAccountForm"
+            }
           }
         ],
         "responses": {
@@ -8033,7 +8167,9 @@
           {
             "name": "Body",
             "in": "body",
-            "schema": {}
+            "schema": {
+              "$ref": "#/definitions/UpdateServiceAccountForm"
+            }
           }
         ],
         "responses": {
@@ -8111,7 +8247,9 @@
           {
             "name": "Body",
             "in": "body",
-            "schema": {}
+            "schema": {
+              "$ref": "#/definitions/AddServiceAccountTokenCommand"
+            }
           }
         ],
         "responses": {
@@ -8233,7 +8371,9 @@
             "name": "body",
             "in": "body",
             "required": true,
-            "schema": {}
+            "schema": {
+              "$ref": "#/definitions/CreateDashboardSnapshotCommand"
+            }
           }
         ],
         "responses": {
@@ -8388,7 +8528,9 @@
             "name": "body",
             "in": "body",
             "required": true,
-            "schema": {}
+            "schema": {
+              "$ref": "#/definitions/CreateTeamCommand"
+            }
           }
         ],
         "responses": {
@@ -8631,7 +8773,9 @@
             "name": "body",
             "in": "body",
             "required": true,
-            "schema": {}
+            "schema": {
+              "$ref": "#/definitions/UpdateTeamCommand"
+            }
           },
           {
             "type": "string",
@@ -8738,7 +8882,9 @@
             "name": "body",
             "in": "body",
             "required": true,
-            "schema": {}
+            "schema": {
+              "$ref": "#/definitions/AddTeamMemberCommand"
+            }
           },
           {
             "type": "string",
@@ -8778,7 +8924,9 @@
             "name": "body",
             "in": "body",
             "required": true,
-            "schema": {}
+            "schema": {
+              "$ref": "#/definitions/UpdateTeamMemberCommand"
+            }
           },
           {
             "type": "string",
@@ -8896,7 +9044,9 @@
             "name": "body",
             "in": "body",
             "required": true,
-            "schema": {}
+            "schema": {
+              "$ref": "#/definitions/UpdatePrefsCmd"
+            }
           }
         ],
         "responses": {
@@ -8952,7 +9102,9 @@
             "name": "body",
             "in": "body",
             "required": true,
-            "schema": {}
+            "schema": {
+              "$ref": "#/definitions/UpdateUserCommand"
+            }
           }
         ],
         "responses": {
@@ -9115,7 +9267,9 @@
             "name": "body",
             "in": "body",
             "required": true,
-            "schema": {}
+            "schema": {
+              "$ref": "#/definitions/ChangeUserPasswordCommand"
+            }
           }
         ],
         "responses": {
@@ -9168,7 +9322,9 @@
             "name": "body",
             "in": "body",
             "required": true,
-            "schema": {}
+            "schema": {
+              "$ref": "#/definitions/UpdatePrefsCmd"
+            }
           }
         ],
         "responses": {
@@ -9197,7 +9353,9 @@
             "name": "body",
             "in": "body",
             "required": true,
-            "schema": {}
+            "schema": {
+              "$ref": "#/definitions/PatchPrefsCmd"
+            }
           }
         ],
         "responses": {
@@ -9255,7 +9413,9 @@
             "name": "body",
             "in": "body",
             "required": true,
-            "schema": {}
+            "schema": {
+              "$ref": "#/definitions/RevokeAuthTokenCmd"
+            }
           }
         ],
         "responses": {
@@ -9625,7 +9785,9 @@
             "name": "body",
             "in": "body",
             "required": true,
-            "schema": {}
+            "schema": {
+              "$ref": "#/definitions/UpdateUserCommand"
+            }
           },
           {
             "type": "integer",
@@ -10948,7 +11110,21 @@
             "name": "body",
             "in": "body",
             "required": true,
-            "schema": {}
+            "schema": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string"
+                },
+                "provider": {
+                  "type": "string"
+                },
+                "settings": {
+                  "type": "object",
+                  "additionalProperties": false
+                }
+              }
+            }
           }
         ],
         "responses": {
@@ -11051,7 +11227,27 @@
         }
       }
     },
-    "AddAPIKeyCommand": {},
+    "AddAPIKeyCommand": {
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "role": {
+          "type": "string",
+          "enum": [
+            "None",
+            "Viewer",
+            "Editor",
+            "Admin"
+          ]
+        },
+        "secondsToLive": {
+          "type": "integer",
+          "format": "int64"
+        }
+      }
+    },
     "AddDataSourceCommand": {
       "description": "Also acts as api DTO",
       "type": "object",
@@ -11840,7 +12036,80 @@
         }
       }
     },
-    "Annotation": {},
+    "Annotation": {
+      "type": "object",
+      "properties": {
+        "alertId": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "alertName": {
+          "type": "string"
+        },
+        "avatarUrl": {
+          "type": "string"
+        },
+        "created": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "dashboardId": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "dashboardUID": {
+          "type": "string"
+        },
+        "data": {
+          "$ref": "#/definitions/Json"
+        },
+        "email": {
+          "type": "string"
+        },
+        "id": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "login": {
+          "type": "string"
+        },
+        "newState": {
+          "type": "string"
+        },
+        "panelId": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "prevState": {
+          "type": "string"
+        },
+        "tags": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "text": {
+          "type": "string"
+        },
+        "time": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "timeEnd": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "updated": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "userId": {
+          "type": "integer",
+          "format": "int64"
+        }
+      }
+    },
     "AnnotationActions": {
       "type": "object",
       "properties": {
@@ -12439,6 +12708,81 @@
         }
       }
     },
+    "CloudMigrationListResponse": {
+      "type": "object",
+      "properties": {
+        "migrations": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/CloudMigrationResponse"
+          }
+        }
+      }
+    },
+    "CloudMigrationResponse": {
+      "type": "object",
+      "properties": {
+        "created": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "id": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "stack": {
+          "type": "string"
+        },
+        "updated": {
+          "type": "string",
+          "format": "date-time"
+        }
+      }
+    },
+    "CloudMigrationRun": {
+      "type": "object",
+      "properties": {
+        "created": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "finished": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "id": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "items": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/MigratedResource"
+          }
+        },
+        "result": {
+          "$ref": "#/definitions/MigrationResult"
+        },
+        "uid": {
+          "type": "string"
+        },
+        "updated": {
+          "type": "string",
+          "format": "date-time"
+        }
+      }
+    },
+    "CloudMigrationRunList": {
+      "type": "object",
+      "properties": {
+        "runs": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/CloudMigrationRun"
+          }
+        }
+      }
+    },
     "ConfFloat64": {
       "description": "ConfFloat64 is a float64. It Marshals float64 values of NaN of Inf\nto null.",
       "type": "number",
@@ -12524,28 +12868,222 @@
         }
       }
     },
-    "CookieType": {},
-    "Correlation": {
-      "description": "Correlation is the model for correlations definitions"
+    "CookieType": {
+      "type": "string"
     },
-    "CorrelationConfig": {},
+    "Correlation": {
+      "description": "Correlation is the model for correlations definitions",
+      "type": "object",
+      "properties": {
+        "config": {
+          "$ref": "#/definitions/CorrelationConfig"
+        },
+        "description": {
+          "description": "Description of the correlation",
+          "type": "string",
+          "example": "Logs to Traces"
+        },
+        "label": {
+          "description": "Label identifying the correlation",
+          "type": "string",
+          "example": "My Label"
+        },
+        "orgId": {
+          "description": "OrgID of the data source the correlation originates from",
+          "type": "integer",
+          "format": "int64",
+          "example": 1
+        },
+        "provisioned": {
+          "description": "Provisioned True if the correlation was created during provisioning",
+          "type": "boolean"
+        },
+        "sourceUID": {
+          "description": "UID of the data source the correlation originates from",
+          "type": "string",
+          "example": "d0oxYRg4z"
+        },
+        "targetUID": {
+          "description": "UID of the data source the correlation points to",
+          "type": "string",
+          "example": "PE1C5CBDA0504A6A3"
+        },
+        "uid": {
+          "description": "Unique identifier of the correlation",
+          "type": "string",
+          "example": "50xhMlg9k"
+        }
+      }
+    },
+    "CorrelationConfig": {
+      "type": "object",
+      "required": [
+        "field",
+        "type",
+        "target"
+      ],
+      "properties": {
+        "field": {
+          "description": "Field used to attach the correlation link",
+          "type": "string",
+          "example": "message"
+        },
+        "target": {
+          "description": "Target data query",
+          "type": "object",
+          "additionalProperties": false,
+          "example": {
+            "prop1": "value1",
+            "prop2": "value"
+          }
+        },
+        "transformations": {
+          "$ref": "#/definitions/Transformations"
+        },
+        "type": {
+          "$ref": "#/definitions/CorrelationConfigType"
+        }
+      }
+    },
     "CorrelationConfigType": {
       "type": "string"
     },
-    "CorrelationConfigUpdateDTO": {},
+    "CorrelationConfigUpdateDTO": {
+      "type": "object",
+      "properties": {
+        "field": {
+          "description": "Field used to attach the correlation link",
+          "type": "string",
+          "example": "message"
+        },
+        "target": {
+          "description": "Target data query",
+          "type": "object",
+          "additionalProperties": false,
+          "example": {
+            "prop1": "value1",
+            "prop2": "value"
+          }
+        },
+        "transformations": {
+          "description": "Source data transformations",
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/Transformation"
+          },
+          "example": [
+            {
+              "type": "logfmt"
+            },
+            {
+              "expression": "(Superman|Batman)",
+              "type": "regex",
+              "variable": "name"
+            }
+          ]
+        },
+        "type": {
+          "$ref": "#/definitions/CorrelationConfigType"
+        }
+      }
+    },
     "CounterResetHint": {
       "description": "or alternatively that we are dealing with a gauge histogram, where counter resets do not apply.",
       "type": "integer",
       "format": "uint8",
       "title": "CounterResetHint contains the known information about a counter reset,"
     },
+    "CreateAccessTokenResponseDTO": {
+      "type": "object",
+      "properties": {
+        "token": {
+          "type": "string"
+        }
+      }
+    },
     "CreateCorrelationCommand": {
-      "description": "CreateCorrelationCommand is the command for creating a correlation"
+      "description": "CreateCorrelationCommand is the command for creating a correlation",
+      "type": "object",
+      "properties": {
+        "config": {
+          "$ref": "#/definitions/CorrelationConfig"
+        },
+        "description": {
+          "description": "Optional description of the correlation",
+          "type": "string",
+          "example": "Logs to Traces"
+        },
+        "label": {
+          "description": "Optional label identifying the correlation",
+          "type": "string",
+          "example": "My label"
+        },
+        "provisioned": {
+          "description": "True if correlation was created with provisioning. This makes it read-only.",
+          "type": "boolean"
+        },
+        "targetUID": {
+          "description": "Target data source UID to which the correlation is created. required if config.type = query",
+          "type": "string",
+          "example": "PE1C5CBDA0504A6A3"
+        }
+      }
     },
     "CreateCorrelationResponseBody": {
-      "description": "CreateCorrelationResponse is the response struct for CreateCorrelationCommand"
+      "description": "CreateCorrelationResponse is the response struct for CreateCorrelationCommand",
+      "type": "object",
+      "properties": {
+        "message": {
+          "type": "string",
+          "example": "Correlation created"
+        },
+        "result": {
+          "$ref": "#/definitions/Correlation"
+        }
+      }
     },
-    "CreateDashboardSnapshotCommand": {},
+    "CreateDashboardSnapshotCommand": {
+      "type": "object",
+      "required": [
+        "dashboard"
+      ],
+      "properties": {
+        "apiVersion": {
+          "description": "APIVersion defines the versioned schema of this representation of an object.\nServers should convert recognized schemas to the latest internal value, and\nmay reject unrecognized values.\nMore info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources\n+optional",
+          "type": "string"
+        },
+        "dashboard": {
+          "$ref": "#/definitions/Unstructured"
+        },
+        "deleteKey": {
+          "description": "Unique key used to delete the snapshot. It is different from the `key` so that only the creator can delete the snapshot. Required if `external` is `true`.",
+          "type": "string"
+        },
+        "expires": {
+          "description": "When the snapshot should expire in seconds in seconds. Default is never to expire.",
+          "type": "integer",
+          "format": "int64",
+          "default": 0
+        },
+        "external": {
+          "description": "these are passed when storing an external snapshot ref\nSave the snapshot on an external server rather than locally.",
+          "type": "boolean",
+          "default": false
+        },
+        "key": {
+          "description": "Define the unique key. Required if `external` is `true`.",
+          "type": "string"
+        },
+        "kind": {
+          "description": "Kind is a string value representing the REST resource this object represents.\nServers may infer this from the endpoint the client submits requests to.\nCannot be updated.\nIn CamelCase.\nMore info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds\n+optional",
+          "type": "string"
+        },
+        "name": {
+          "description": "Snapshot name",
+          "type": "string"
+        }
+      }
+    },
     "CreateFolderCommand": {
       "description": "CreateFolderCommand captures the information required by the folder service\nto create a folder.",
       "type": "object",
@@ -12565,7 +13103,39 @@
       }
     },
     "CreateLibraryElementCommand": {
-      "description": "CreateLibraryElementCommand is the command for adding a LibraryElement"
+      "description": "CreateLibraryElementCommand is the command for adding a LibraryElement",
+      "type": "object",
+      "properties": {
+        "folderId": {
+          "description": "ID of the folder where the library element is stored.\n\nDeprecated: use FolderUID instead",
+          "type": "integer",
+          "format": "int64"
+        },
+        "folderUid": {
+          "description": "UID of the folder where the library element is stored.",
+          "type": "string"
+        },
+        "kind": {
+          "description": "Kind of element to create, Use 1 for library panels or 2 for c.\nDescription:\n1 - library panels\n2 - library variables",
+          "type": "integer",
+          "format": "int64",
+          "enum": [
+            1,
+            2
+          ]
+        },
+        "model": {
+          "description": "The JSON model for the library element.",
+          "type": "object"
+        },
+        "name": {
+          "description": "Name of the library element.",
+          "type": "string"
+        },
+        "uid": {
+          "type": "string"
+        }
+      }
     },
     "CreateOrUpdateReportConfig": {
       "type": "object",
@@ -12641,7 +13211,21 @@
       }
     },
     "CreateQueryInQueryHistoryCommand": {
-      "description": "CreateQueryInQueryHistoryCommand is the command for adding query history"
+      "description": "CreateQueryInQueryHistoryCommand is the command for adding query history",
+      "type": "object",
+      "required": [
+        "queries"
+      ],
+      "properties": {
+        "datasourceUid": {
+          "description": "UID of the data source for which are queries stored.",
+          "type": "string",
+          "example": "PE1C5CBDA0504A6A3"
+        },
+        "queries": {
+          "$ref": "#/definitions/Json"
+        }
+      }
     },
     "CreateRoleForm": {
       "type": "object",
@@ -12679,7 +13263,29 @@
         }
       }
     },
-    "CreateServiceAccountForm": {},
+    "CreateServiceAccountForm": {
+      "type": "object",
+      "properties": {
+        "isDisabled": {
+          "type": "boolean",
+          "example": false
+        },
+        "name": {
+          "type": "string",
+          "example": "grafana"
+        },
+        "role": {
+          "type": "string",
+          "enum": [
+            "None",
+            "Viewer",
+            "Editor",
+            "Admin"
+          ],
+          "example": "Admin"
+        }
+      }
+    },
     "CreateTeamCommand": {
       "type": "object",
       "properties": {
@@ -12775,7 +13381,31 @@
         }
       }
     },
-    "DashboardACLUpdateItem": {},
+    "DashboardACLUpdateItem": {
+      "type": "object",
+      "properties": {
+        "permission": {
+          "$ref": "#/definitions/PermissionType"
+        },
+        "role": {
+          "type": "string",
+          "enum": [
+            "None",
+            "Viewer",
+            "Editor",
+            "Admin"
+          ]
+        },
+        "teamId": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "userId": {
+          "type": "integer",
+          "format": "int64"
+        }
+      }
+    },
     "DashboardCreateCommand": {
       "description": "These are the values expected to be sent from an end user\n+k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object",
       "type": "object",
@@ -13026,7 +13656,23 @@
     },
     "DataResponse": {
       "description": "A map of RefIDs (unique query identifiers) to this type makes up the Responses property of a QueryDataResponse.\nThe Error property is used to allow for partial success responses from the containing QueryDataResponse.",
-      "title": "DataResponse contains the results from a DataQuery."
+      "type": "object",
+      "title": "DataResponse contains the results from a DataQuery.",
+      "properties": {
+        "Error": {
+          "description": "Error is a property to be set if the corresponding DataQuery has an error.",
+          "type": "string"
+        },
+        "ErrorSource": {
+          "$ref": "#/definitions/ErrorSource"
+        },
+        "Frames": {
+          "$ref": "#/definitions/Frames"
+        },
+        "Status": {
+          "$ref": "#/definitions/Status"
+        }
+      }
     },
     "DataSource": {
       "type": "object",
@@ -13173,7 +13819,15 @@
       "type": "string",
       "title": "DataTopic is used to identify which topic the frame should be assigned to."
     },
-    "DeleteCorrelationResponseBody": {},
+    "DeleteCorrelationResponseBody": {
+      "type": "object",
+      "properties": {
+        "message": {
+          "type": "string",
+          "example": "Correlation deleted"
+        }
+      }
+    },
     "DeleteTokenCommand": {
       "type": "object",
       "properties": {
@@ -13584,7 +14238,20 @@
     },
     "Field": {
       "description": "A Field is essentially a slice of various types with extra properties and methods.\nSee NewField() for supported types.\n\nThe slice data in the Field is a not exported, so methods on the Field are used to to manipulate its data.",
-      "title": "Field represents a typed column of data within a Frame."
+      "type": "object",
+      "title": "Field represents a typed column of data within a Frame.",
+      "properties": {
+        "config": {
+          "$ref": "#/definitions/FieldConfig"
+        },
+        "labels": {
+          "$ref": "#/definitions/FrameLabels"
+        },
+        "name": {
+          "description": "Name is default identifier of the field. The name does not have to be unique, but the combination\nof name and Labels should be unique for proper behavior in all situations.",
+          "type": "string"
+        }
+      }
     },
     "FieldConfig": {
       "type": "object",
@@ -13834,14 +14501,100 @@
     },
     "Frame": {
       "description": "Each Field is well typed by its FieldType and supports optional Labels.\n\nA Frame is a general data container for Grafana. A Frame can be table data\nor time series data depending on its content and field types.",
-      "title": "Frame is a columnar data structure where each column is a Field."
+      "type": "object",
+      "title": "Frame is a columnar data structure where each column is a Field.",
+      "properties": {
+        "Fields": {
+          "description": "Fields are the columns of a frame.\nAll Fields must be of the same the length when marshalling the Frame for transmission.\nThere should be no `nil` entries in the Fields slice (making them pointers was a mistake).",
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/Field"
+          }
+        },
+        "Meta": {
+          "$ref": "#/definitions/FrameMeta"
+        },
+        "Name": {
+          "description": "Name is used in some Grafana visualizations.",
+          "type": "string"
+        },
+        "RefID": {
+          "description": "RefID is a property that can be set to match a Frame to its originating query.",
+          "type": "string"
+        }
+      }
     },
     "FrameLabels": {
-      "description": "Labels are used to add metadata to an object.  The JSON will always be sorted keys"
+      "description": "Labels are used to add metadata to an object.  The JSON will always be sorted keys",
+      "type": "object",
+      "additionalProperties": {
+        "type": "string"
+      }
     },
     "FrameMeta": {
       "description": "https://github.com/grafana/grafana/blob/master/packages/grafana-data/src/types/data.ts#L11\nNOTE -- in javascript this can accept any `[key: string]: any;` however\nthis interface only exposes the values we want to be exposed",
-      "title": "FrameMeta matches:"
+      "type": "object",
+      "title": "FrameMeta matches:",
+      "properties": {
+        "channel": {
+          "description": "Channel is the path to a stream in grafana live that has real-time updates for this data.",
+          "type": "string"
+        },
+        "custom": {
+          "description": "Custom datasource specific values."
+        },
+        "dataTopic": {
+          "$ref": "#/definitions/DataTopic"
+        },
+        "executedQueryString": {
+          "description": "ExecutedQueryString is the raw query sent to the underlying system. All macros and templating\nhave been applied.  When metadata contains this value, it will be shown in the query inspector.",
+          "type": "string"
+        },
+        "notices": {
+          "description": "Notices provide additional information about the data in the Frame that\nGrafana can display to the user in the user interface.",
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/Notice"
+          }
+        },
+        "path": {
+          "description": "Path is a browsable path on the datasource.",
+          "type": "string"
+        },
+        "pathSeparator": {
+          "description": "PathSeparator defines the separator pattern to decode a hierarchy. The default separator is '/'.",
+          "type": "string"
+        },
+        "preferredVisualisationPluginId": {
+          "description": "PreferredVisualizationPluginId sets the panel plugin id to use to render the data when using Explore. If\nthe plugin cannot be found will fall back to PreferredVisualization.",
+          "type": "string"
+        },
+        "preferredVisualisationType": {
+          "$ref": "#/definitions/VisType"
+        },
+        "stats": {
+          "description": "Stats is an array of query result statistics.",
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/QueryStat"
+          }
+        },
+        "type": {
+          "$ref": "#/definitions/FrameType"
+        },
+        "typeVersion": {
+          "$ref": "#/definitions/FrameTypeVersion"
+        },
+        "uniqueRowIdFields": {
+          "description": "Array of field indices which values create a unique id for each row. Ideally this should be globally unique ID\nbut that isn't guarantied. Should help with keeping track and deduplicating rows in visualizations, especially\nwith streaming data with frequent updates.",
+          "type": "array",
+          "items": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "example": "TraceID in Tempo, table name + primary key in SQL"
+        }
+      }
     },
     "FrameType": {
       "description": "A FrameType string, when present in a frame's metadata, asserts that the\nframe's structure conforms to the FrameType's specification.\nThis property is currently optional, so FrameType may be FrameTypeUnknown even if the properties of\nthe Frame correspond to a defined FrameType.\n+enum",
@@ -13857,7 +14610,11 @@
     },
     "Frames": {
       "description": "It is the main data container within a backend.DataResponse.\nThere should be no `nil` entries in the Frames slice (making them pointers was a mistake).",
-      "title": "Frames is a slice of Frame pointers."
+      "type": "array",
+      "title": "Frames is a slice of Frame pointers.",
+      "items": {
+        "$ref": "#/definitions/Frame"
+      }
     },
     "GenericPublicError": {
       "type": "object",
@@ -13877,7 +14634,28 @@
       }
     },
     "GetHomeDashboardResponse": {
-      "title": "Get home dashboard response."
+      "title": "Get home dashboard response.",
+      "allOf": [
+        {
+          "type": "object",
+          "properties": {
+            "dashboard": {
+              "$ref": "#/definitions/Json"
+            },
+            "meta": {
+              "$ref": "#/definitions/DashboardMeta"
+            }
+          }
+        },
+        {
+          "type": "object",
+          "properties": {
+            "redirectUri": {
+              "type": "string"
+            }
+          }
+        }
+      ]
     },
     "GettableAlertmanagers": {
       "type": "object",
@@ -15104,7 +15882,90 @@
         "type": "boolean"
       }
     },
-    "MetricRequest": {},
+    "MetricRequest": {
+      "type": "object",
+      "required": [
+        "from",
+        "to",
+        "queries"
+      ],
+      "properties": {
+        "debug": {
+          "type": "boolean"
+        },
+        "from": {
+          "description": "From Start time in epoch timestamps in milliseconds or relative using Grafana time units.",
+          "type": "string",
+          "example": "now-1h"
+        },
+        "queries": {
+          "description": "queries.refId – Specifies an identifier of the query. Is optional and default to “A”.\nqueries.datasourceId – Specifies the data source to be queried. Each query in the request must have an unique datasourceId.\nqueries.maxDataPoints - Species maximum amount of data points that dashboard panel can render. Is optional and default to 100.\nqueries.intervalMs - Specifies the time interval in milliseconds of time series. Is optional and defaults to 1000.",
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/Json"
+          },
+          "example": [
+            {
+              "datasource": {
+                "uid": "PD8C576611E62080A"
+              },
+              "format": "table",
+              "intervalMs": 86400000,
+              "maxDataPoints": 1092,
+              "rawSql": "SELECT 1 as valueOne, 2 as valueTwo",
+              "refId": "A"
+            }
+          ]
+        },
+        "to": {
+          "description": "To End time in epoch timestamps in milliseconds or relative using Grafana time units.",
+          "type": "string",
+          "example": "now"
+        }
+      }
+    },
+    "MigratedResource": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "name": {
+          "type": "string"
+        },
+        "refID": {
+          "type": "string"
+        },
+        "result": {
+          "$ref": "#/definitions/MigratedResourceResult"
+        },
+        "type": {
+          "type": "string"
+        }
+      }
+    },
+    "MigratedResourceResult": {
+      "type": "object",
+      "properties": {
+        "message": {
+          "type": "string"
+        },
+        "status": {
+          "type": "string"
+        }
+      }
+    },
+    "MigrationResult": {
+      "type": "object",
+      "properties": {
+        "message": {
+          "type": "string"
+        },
+        "status": {
+          "type": "string"
+        }
+      }
+    },
     "MoveFolderCommand": {
       "description": "MoveFolderCommand captures the information required by the folder service\nto move a folder.",
       "type": "object",
@@ -15206,7 +16067,24 @@
         }
       }
     },
-    "NewApiKeyResult": {},
+    "NewApiKeyResult": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "integer",
+          "format": "int64",
+          "example": 1
+        },
+        "key": {
+          "type": "string",
+          "example": "glsa_yscW25imSKJIuav8zF37RZmnbiDvB05G_fcaaf58a"
+        },
+        "name": {
+          "type": "string",
+          "example": "grafana"
+        }
+      }
+    },
     "NotFound": {
       "type": "object"
     },
@@ -15387,10 +16265,18 @@
       }
     },
     "ObjectMatcher": {
-      "title": "ObjectMatcher is a matcher that can be used to filter alerts."
+      "type": "array",
+      "title": "ObjectMatcher is a matcher that can be used to filter alerts.",
+      "items": {
+        "type": "string"
+      }
     },
     "ObjectMatchers": {
-      "title": "ObjectMatchers is a list of matchers that can be used to filter alerts."
+      "type": "array",
+      "title": "ObjectMatchers is a list of matchers that can be used to filter alerts.",
+      "items": {
+        "$ref": "#/definitions/ObjectMatcher"
+      }
     },
     "OpsGenieConfig": {
       "type": "object",
@@ -15719,9 +16605,58 @@
         }
       }
     },
-    "PatchPrefsCmd": {},
+    "PatchPrefsCmd": {
+      "type": "object",
+      "properties": {
+        "cookies": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/CookieType"
+          }
+        },
+        "homeDashboardId": {
+          "description": "The numerical :id of a favorited dashboard",
+          "type": "integer",
+          "format": "int64",
+          "default": 0
+        },
+        "homeDashboardUID": {
+          "type": "string"
+        },
+        "language": {
+          "type": "string"
+        },
+        "queryHistory": {
+          "$ref": "#/definitions/QueryHistoryPreference"
+        },
+        "theme": {
+          "type": "string",
+          "enum": [
+            "light",
+            "dark"
+          ]
+        },
+        "timezone": {
+          "type": "string",
+          "enum": [
+            "utc",
+            "browser"
+          ]
+        },
+        "weekStart": {
+          "type": "string"
+        }
+      }
+    },
     "PatchQueryCommentInQueryHistoryCommand": {
-      "description": "PatchQueryCommentInQueryHistoryCommand is the command for updating comment for query in query history"
+      "description": "PatchQueryCommentInQueryHistoryCommand is the command for updating comment for query in query history",
+      "type": "object",
+      "properties": {
+        "comment": {
+          "description": "Updated comment",
+          "type": "string"
+        }
+      }
     },
     "Permission": {
       "type": "object",
@@ -16262,7 +17197,36 @@
       }
     },
     "Preferences": {
-      "description": "Spec defines user, team or org Grafana preferences"
+      "description": "Spec defines user, team or org Grafana preferences",
+      "type": "object",
+      "properties": {
+        "cookiePreferences": {
+          "$ref": "#/definitions/CookiePreferences"
+        },
+        "homeDashboardUID": {
+          "description": "UID for the home dashboard",
+          "type": "string"
+        },
+        "language": {
+          "description": "Selected language (beta)",
+          "type": "string"
+        },
+        "queryHistory": {
+          "$ref": "#/definitions/QueryHistoryPreference"
+        },
+        "theme": {
+          "description": "Theme light, dark, empty is default",
+          "type": "string"
+        },
+        "timezone": {
+          "description": "The timezone selection\nTODO: this should use the timezone defined in common",
+          "type": "string"
+        },
+        "weekStart": {
+          "description": "WeekStart day of the week (sunday, monday, etc)",
+          "type": "string"
+        }
+      }
     },
     "PrometheusRemoteWriteTargetJSON": {
       "type": "object",
@@ -17270,7 +18234,11 @@
     },
     "Responses": {
       "description": "The QueryData method the QueryDataHandler method will set the RefId\nproperty on the DataResponses' frames based on these RefIDs.",
-      "title": "Responses is a map of RefIDs (Unique Query ID) to DataResponses."
+      "type": "object",
+      "title": "Responses is a map of RefIDs (Unique Query ID) to DataResponses.",
+      "additionalProperties": {
+        "$ref": "#/definitions/DataResponse"
+      }
     },
     "RestoreDashboardVersionCommand": {
       "type": "object",
@@ -17319,7 +18287,53 @@
         }
       }
     },
-    "RoleDTO": {},
+    "RoleDTO": {
+      "type": "object",
+      "properties": {
+        "created": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "delegatable": {
+          "type": "boolean"
+        },
+        "description": {
+          "type": "string"
+        },
+        "displayName": {
+          "type": "string"
+        },
+        "global": {
+          "type": "boolean"
+        },
+        "group": {
+          "type": "string"
+        },
+        "hidden": {
+          "type": "boolean"
+        },
+        "name": {
+          "type": "string"
+        },
+        "permissions": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/Permission"
+          }
+        },
+        "uid": {
+          "type": "string"
+        },
+        "updated": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "version": {
+          "type": "integer",
+          "format": "int64"
+        }
+      }
+    },
     "RolesSearchQuery": {
       "type": "object",
       "properties": {
@@ -17923,7 +18937,76 @@
         }
       }
     },
-    "ServiceAccountProfileDTO": {},
+    "ServiceAccountProfileDTO": {
+      "type": "object",
+      "properties": {
+        "accessControl": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "boolean"
+          }
+        },
+        "avatarUrl": {
+          "type": "string",
+          "example": "/avatar/8ea890a677d6a223c591a1beea6ea9d2"
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "example": "2022-03-21T14:35:33Z"
+        },
+        "id": {
+          "type": "integer",
+          "format": "int64",
+          "example": 2
+        },
+        "isDisabled": {
+          "type": "boolean",
+          "example": false
+        },
+        "isExternal": {
+          "type": "boolean",
+          "example": false
+        },
+        "login": {
+          "type": "string",
+          "example": "sa-grafana"
+        },
+        "name": {
+          "type": "string",
+          "example": "test"
+        },
+        "orgId": {
+          "type": "integer",
+          "format": "int64",
+          "example": 1
+        },
+        "requiredBy": {
+          "type": "string",
+          "example": "grafana-app"
+        },
+        "role": {
+          "type": "string",
+          "example": "Editor"
+        },
+        "teams": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "example": []
+        },
+        "tokens": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time",
+          "example": "2022-03-21T14:35:33Z"
+        }
+      }
+    },
     "SetResourcePermissionCommand": {
       "type": "object",
       "properties": {
@@ -18199,7 +19282,14 @@
     "Success": {
       "$ref": "#/definitions/ResponseDetails"
     },
-    "SuccessResponseBody": {},
+    "SuccessResponseBody": {
+      "type": "object",
+      "properties": {
+        "message": {
+          "type": "string"
+        }
+      }
+    },
     "SupportedTransformationTypes": {
       "type": "string"
     },
@@ -18868,7 +19958,48 @@
         }
       }
     },
-    "TokenDTO": {},
+    "TokenDTO": {
+      "type": "object",
+      "properties": {
+        "created": {
+          "type": "string",
+          "format": "date-time",
+          "example": "2022-03-23T10:31:02Z"
+        },
+        "expiration": {
+          "type": "string",
+          "format": "date-time",
+          "example": "2022-03-23T10:31:02Z"
+        },
+        "hasExpired": {
+          "type": "boolean",
+          "example": false
+        },
+        "id": {
+          "type": "integer",
+          "format": "int64",
+          "example": 1
+        },
+        "isRevoked": {
+          "type": "boolean",
+          "example": false
+        },
+        "lastUsedAt": {
+          "type": "string",
+          "format": "date-time",
+          "example": "2022-03-23T10:31:02Z"
+        },
+        "name": {
+          "type": "string",
+          "example": "grafana"
+        },
+        "secondsUntilExpiration": {
+          "type": "number",
+          "format": "double",
+          "example": 0
+        }
+      }
+    },
     "TokenStatus": {
       "type": "integer",
       "format": "int64"
@@ -18999,10 +20130,47 @@
       }
     },
     "UpdateCorrelationCommand": {
-      "description": "UpdateCorrelationCommand is the command for updating a correlation"
+      "description": "UpdateCorrelationCommand is the command for updating a correlation",
+      "type": "object",
+      "properties": {
+        "config": {
+          "$ref": "#/definitions/CorrelationConfigUpdateDTO"
+        },
+        "description": {
+          "description": "Optional description of the correlation",
+          "type": "string",
+          "example": "Logs to Traces"
+        },
+        "label": {
+          "description": "Optional label identifying the correlation",
+          "type": "string",
+          "example": "My label"
+        }
+      }
     },
-    "UpdateCorrelationResponseBody": {},
-    "UpdateDashboardACLCommand": {},
+    "UpdateCorrelationResponseBody": {
+      "type": "object",
+      "properties": {
+        "message": {
+          "type": "string",
+          "example": "Correlation updated"
+        },
+        "result": {
+          "$ref": "#/definitions/Correlation"
+        }
+      }
+    },
+    "UpdateDashboardACLCommand": {
+      "type": "object",
+      "properties": {
+        "items": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/DashboardACLUpdateItem"
+          }
+        }
+      }
+    },
     "UpdateDataSourceCommand": {
       "description": "Also acts as api DTO",
       "type": "object",
@@ -19143,7 +20311,50 @@
         }
       }
     },
-    "UpdatePrefsCmd": {},
+    "UpdatePrefsCmd": {
+      "type": "object",
+      "properties": {
+        "cookies": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/CookieType"
+          }
+        },
+        "homeDashboardId": {
+          "description": "The numerical :id of a favorited dashboard",
+          "type": "integer",
+          "format": "int64",
+          "default": 0
+        },
+        "homeDashboardUID": {
+          "type": "string"
+        },
+        "language": {
+          "type": "string"
+        },
+        "queryHistory": {
+          "$ref": "#/definitions/QueryHistoryPreference"
+        },
+        "theme": {
+          "type": "string",
+          "enum": [
+            "light",
+            "dark",
+            "system"
+          ]
+        },
+        "timezone": {
+          "type": "string",
+          "enum": [
+            "utc",
+            "browser"
+          ]
+        },
+        "weekStart": {
+          "type": "string"
+        }
+      }
+    },
     "UpdateQuotaCmd": {
       "type": "object",
       "properties": {
@@ -19215,7 +20426,30 @@
         }
       }
     },
-    "UpdateServiceAccountForm": {},
+    "UpdateServiceAccountForm": {
+      "type": "object",
+      "properties": {
+        "isDisabled": {
+          "type": "boolean"
+        },
+        "name": {
+          "type": "string"
+        },
+        "role": {
+          "type": "string",
+          "enum": [
+            "None",
+            "Viewer",
+            "Editor",
+            "Admin"
+          ]
+        },
+        "serviceAccountId": {
+          "type": "integer",
+          "format": "int64"
+        }
+      }
+    },
     "UpdateTeamCommand": {
       "type": "object",
       "properties": {
@@ -20086,7 +21320,32 @@
       }
     },
     "publicError": {
-      "description": "PublicError is derived from Error and only contains information\navailable to the end user."
+      "description": "PublicError is derived from Error and only contains information\navailable to the end user.",
+      "type": "object",
+      "required": [
+        "statusCode",
+        "messageId"
+      ],
+      "properties": {
+        "extra": {
+          "description": "Extra Additional information about the error",
+          "type": "object",
+          "additionalProperties": false
+        },
+        "message": {
+          "description": "Message A human readable message",
+          "type": "string"
+        },
+        "messageId": {
+          "description": "MessageID A unique identifier for the error",
+          "type": "string"
+        },
+        "statusCode": {
+          "description": "StatusCode The HTTP status code returned",
+          "type": "integer",
+          "format": "int64"
+        }
+      }
     },
     "receiver": {
       "type": "object",
@@ -20333,29 +21592,49 @@
       }
     },
     "acceptedResponse": {
-      "description": "AcceptedResponse"
+      "description": "AcceptedResponse",
+      "schema": {
+        "$ref": "#/definitions/ErrorResponseBody"
+      }
     },
     "adminCreateUserResponse": {
-      "description": "(empty)"
+      "description": "(empty)",
+      "schema": {
+        "$ref": "#/definitions/AdminCreateUserResponse"
+      }
     },
     "adminGetSettingsResponse": {
-      "description": "(empty)"
+      "description": "(empty)",
+      "schema": {
+        "$ref": "#/definitions/SettingsBag"
+      }
     },
     "adminGetStatsResponse": {
-      "description": "(empty)"
+      "description": "(empty)",
+      "schema": {
+        "$ref": "#/definitions/AdminStats"
+      }
     },
     "adminGetUserAuthTokensResponse": {
       "description": "(empty)",
       "schema": {
         "type": "array",
-        "items": {}
+        "items": {
+          "$ref": "#/definitions/UserToken"
+        }
       }
     },
     "badRequestError": {
-      "description": "BadRequestError is returned when the request is invalid and it cannot be processed."
+      "description": "BadRequestError is returned when the request is invalid and it cannot be processed.",
+      "schema": {
+        "$ref": "#/definitions/ErrorResponseBody"
+      }
     },
     "badRequestPublicError": {
-      "description": "BadRequestPublicError is returned when the request is invalid and it cannot be processed."
+      "description": "BadRequestPublicError is returned when the request is invalid and it cannot be processed.",
+      "schema": {
+        "$ref": "#/definitions/publicError"
+      }
     },
     "calculateDashboardDiffResponse": {
       "description": "(empty)",
@@ -20369,81 +21648,39 @@
     },
     "cloudMigrationCreateTokenResponse": {
       "description": "(empty)",
-      "headers": {
-        "Token": {
-          "type": "string"
-        }
+      "schema": {
+        "$ref": "#/definitions/CreateAccessTokenResponseDTO"
       }
     },
     "cloudMigrationListResponse": {
       "description": "(empty)",
-      "headers": {
-        "migrations": {
-          "type": "array",
-          "items": {}
-        }
+      "schema": {
+        "$ref": "#/definitions/CloudMigrationListResponse"
       }
     },
     "cloudMigrationResponse": {
       "description": "(empty)",
-      "headers": {
-        "created": {
-          "type": "string",
-          "format": "date-time"
-        },
-        "id": {
-          "type": "integer",
-          "format": "int64"
-        },
-        "stack": {
-          "type": "string"
-        },
-        "updated": {
-          "type": "string",
-          "format": "date-time"
-        }
+      "schema": {
+        "$ref": "#/definitions/CloudMigrationResponse"
       }
     },
     "cloudMigrationRunListResponse": {
       "description": "(empty)",
-      "headers": {
-        "runs": {
-          "type": "array",
-          "items": {}
-        }
+      "schema": {
+        "$ref": "#/definitions/CloudMigrationRunList"
       }
     },
     "cloudMigrationRunResponse": {
       "description": "(empty)",
-      "headers": {
-        "created": {
-          "type": "string",
-          "format": "date-time"
-        },
-        "finished": {
-          "type": "string",
-          "format": "date-time"
-        },
-        "id": {
-          "type": "integer",
-          "format": "int64"
-        },
-        "items": {
-          "type": "array",
-          "items": {}
-        },
-        "result": {},
-        "uid": {
-          "type": "string"
-        },
-        "updated": {
-          "type": "string",
-          "format": "date-time"
-        }
+      "schema": {
+        "$ref": "#/definitions/CloudMigrationRun"
       }
     },
     "conflictError": {
-      "description": "ConflictError"
+      "description": "ConflictError",
+      "schema": {
+        "$ref": "#/definitions/ErrorResponseBody"
+      }
     },
     "contentResponse": {
       "description": "(empty)",
@@ -20456,22 +21693,105 @@
       }
     },
     "createCorrelationResponse": {
-      "description": "(empty)"
+      "description": "(empty)",
+      "schema": {
+        "$ref": "#/definitions/CreateCorrelationResponseBody"
+      }
     },
     "createDashboardSnapshotResponse": {
-      "description": "(empty)"
+      "description": "(empty)",
+      "schema": {
+        "type": "object",
+        "properties": {
+          "deleteKey": {
+            "description": "Unique key used to delete the snapshot. It is different from the key so that only the creator can delete the snapshot.",
+            "type": "string"
+          },
+          "deleteUrl": {
+            "type": "string"
+          },
+          "id": {
+            "description": "Snapshot id",
+            "type": "integer",
+            "format": "int64"
+          },
+          "key": {
+            "description": "Unique key",
+            "type": "string"
+          },
+          "url": {
+            "type": "string"
+          }
+        }
+      }
     },
     "createOrUpdateDatasourceResponse": {
-      "description": "(empty)"
+      "description": "(empty)",
+      "schema": {
+        "type": "object",
+        "required": [
+          "id",
+          "name",
+          "message",
+          "datasource"
+        ],
+        "properties": {
+          "datasource": {
+            "$ref": "#/definitions/DataSource"
+          },
+          "id": {
+            "description": "ID Identifier of the new data source.",
+            "type": "integer",
+            "format": "int64",
+            "example": 65
+          },
+          "message": {
+            "description": "Message Message of the deleted dashboard.",
+            "type": "string",
+            "example": "Data source added"
+          },
+          "name": {
+            "description": "Name of the new data source.",
+            "type": "string",
+            "example": "My Data source"
+          }
+        }
+      }
     },
     "createOrgResponse": {
-      "description": "(empty)"
+      "description": "(empty)",
+      "schema": {
+        "type": "object",
+        "required": [
+          "orgId",
+          "message"
+        ],
+        "properties": {
+          "message": {
+            "description": "Message Message of the created org.",
+            "type": "string",
+            "example": "Data source added"
+          },
+          "orgId": {
+            "description": "ID Identifier of the created org.",
+            "type": "integer",
+            "format": "int64",
+            "example": 65
+          }
+        }
+      }
     },
     "createPlaylistResponse": {
-      "description": "(empty)"
+      "description": "(empty)",
+      "schema": {
+        "$ref": "#/definitions/Playlist"
+      }
     },
     "createPublicDashboardResponse": {
-      "description": "(empty)"
+      "description": "(empty)",
+      "schema": {
+        "$ref": "#/definitions/PublicDashboard"
+      }
     },
     "createReportResponse": {
       "description": "(empty)",
@@ -20495,66 +21815,186 @@
       }
     },
     "createServiceAccountResponse": {
-      "description": "(empty)"
+      "description": "(empty)",
+      "schema": {
+        "$ref": "#/definitions/ServiceAccountDTO"
+      }
     },
     "createTeamResponse": {
-      "description": "(empty)"
+      "description": "(empty)",
+      "schema": {
+        "type": "object",
+        "properties": {
+          "message": {
+            "type": "string"
+          },
+          "teamId": {
+            "type": "integer",
+            "format": "int64"
+          }
+        }
+      }
     },
     "createTokenResponse": {
-      "description": "(empty)"
+      "description": "(empty)",
+      "schema": {
+        "$ref": "#/definitions/NewApiKeyResult"
+      }
     },
     "dashboardResponse": {
-      "description": "(empty)"
+      "description": "(empty)",
+      "schema": {
+        "$ref": "#/definitions/DashboardFullWithMeta"
+      }
     },
     "dashboardVersionResponse": {
-      "description": "(empty)"
+      "description": "(empty)",
+      "schema": {
+        "$ref": "#/definitions/DashboardVersionMeta"
+      }
     },
     "dashboardVersionsResponse": {
       "description": "(empty)",
       "schema": {
         "type": "array",
-        "items": {}
+        "items": {
+          "$ref": "#/definitions/DashboardVersionMeta"
+        }
       }
     },
     "deleteCorrelationResponse": {
-      "description": "(empty)"
+      "description": "(empty)",
+      "schema": {
+        "$ref": "#/definitions/DeleteCorrelationResponseBody"
+      }
     },
     "deleteDashboardResponse": {
-      "description": "(empty)"
+      "description": "(empty)",
+      "schema": {
+        "type": "object",
+        "required": [
+          "id",
+          "title",
+          "message"
+        ],
+        "properties": {
+          "id": {
+            "description": "ID Identifier of the deleted dashboard.",
+            "type": "integer",
+            "format": "int64",
+            "example": 65
+          },
+          "message": {
+            "description": "Message Message of the deleted dashboard.",
+            "type": "string",
+            "example": "Dashboard My Dashboard deleted"
+          },
+          "title": {
+            "description": "Title Title of the deleted dashboard.",
+            "type": "string",
+            "example": "My Dashboard"
+          }
+        }
+      }
     },
     "deleteDataSourceByNameResponse": {
-      "description": "(empty)"
+      "description": "(empty)",
+      "schema": {
+        "type": "object",
+        "required": [
+          "id",
+          "message"
+        ],
+        "properties": {
+          "id": {
+            "description": "ID Identifier of the deleted data source.",
+            "type": "integer",
+            "format": "int64",
+            "example": 65
+          },
+          "message": {
+            "description": "Message Message of the deleted dashboard.",
+            "type": "string",
+            "example": "Dashboard My Dashboard deleted"
+          }
+        }
+      }
     },
     "deleteFolderResponse": {
-      "description": "(empty)"
+      "description": "(empty)",
+      "schema": {
+        "type": "object",
+        "required": [
+          "id",
+          "title",
+          "message"
+        ],
+        "properties": {
+          "id": {
+            "description": "ID Identifier of the deleted folder.",
+            "type": "integer",
+            "format": "int64",
+            "example": 65
+          },
+          "message": {
+            "description": "Message Message of the deleted folder.",
+            "type": "string",
+            "example": "Folder My Folder deleted"
+          },
+          "title": {
+            "description": "Title of the deleted folder.",
+            "type": "string",
+            "example": "My Folder"
+          }
+        }
+      }
     },
     "devicesResponse": {
       "description": "(empty)",
       "schema": {
         "type": "array",
-        "items": {}
+        "items": {
+          "$ref": "#/definitions/deviceDTO"
+        }
       }
     },
     "devicesSearchResponse": {
-      "description": "(empty)"
+      "description": "(empty)",
+      "schema": {
+        "$ref": "#/definitions/SearchDeviceQueryResult"
+      }
     },
     "folderResponse": {
-      "description": "(empty)"
+      "description": "(empty)",
+      "schema": {
+        "$ref": "#/definitions/Folder"
+      }
     },
     "forbiddenError": {
-      "description": "ForbiddenError is returned if the user/token has insufficient permissions to access the requested resource."
+      "description": "ForbiddenError is returned if the user/token has insufficient permissions to access the requested resource.",
+      "schema": {
+        "$ref": "#/definitions/ErrorResponseBody"
+      }
     },
     "forbiddenPublicError": {
-      "description": "ForbiddenPublicError is returned if the user/token has insufficient permissions to access the requested resource."
+      "description": "ForbiddenPublicError is returned if the user/token has insufficient permissions to access the requested resource.",
+      "schema": {
+        "$ref": "#/definitions/publicError"
+      }
     },
     "genericError": {
-      "description": "A GenericError is the default error message that is generated.\nFor certain status codes there are more appropriate error structures."
+      "description": "A GenericError is the default error message that is generated.\nFor certain status codes there are more appropriate error structures.",
+      "schema": {
+        "$ref": "#/definitions/ErrorResponseBody"
+      }
     },
     "getAPIkeyResponse": {
       "description": "(empty)",
       "schema": {
         "type": "array",
-        "items": {}
+        "items": {
+          "$ref": "#/definitions/ApiKeyDTO"
+        }
       }
     },
     "getAccessControlStatusResponse": {
@@ -20573,43 +22013,63 @@
       }
     },
     "getAnnotationByIDResponse": {
-      "description": "(empty)"
+      "description": "(empty)",
+      "schema": {
+        "$ref": "#/definitions/Annotation"
+      }
     },
     "getAnnotationTagsResponse": {
-      "description": "(empty)"
+      "description": "(empty)",
+      "schema": {
+        "$ref": "#/definitions/GetAnnotationTagsResponse"
+      }
     },
     "getAnnotationsResponse": {
       "description": "(empty)",
       "schema": {
         "type": "array",
-        "items": {}
+        "items": {
+          "$ref": "#/definitions/Annotation"
+        }
       }
     },
     "getCorrelationResponse": {
-      "description": "(empty)"
+      "description": "(empty)",
+      "schema": {
+        "$ref": "#/definitions/Correlation"
+      }
     },
     "getCorrelationsBySourceUIDResponse": {
       "description": "(empty)",
       "schema": {
         "type": "array",
-        "items": {}
+        "items": {
+          "$ref": "#/definitions/Correlation"
+        }
       }
     },
     "getCorrelationsResponse": {
       "description": "(empty)",
       "schema": {
         "type": "array",
-        "items": {}
+        "items": {
+          "$ref": "#/definitions/Correlation"
+        }
       }
     },
     "getCurrentOrgResponse": {
-      "description": "(empty)"
+      "description": "(empty)",
+      "schema": {
+        "$ref": "#/definitions/OrgDetailsDTO"
+      }
     },
     "getDashboardPermissionsListResponse": {
       "description": "(empty)",
       "schema": {
         "type": "array",
-        "items": {}
+        "items": {
+          "$ref": "#/definitions/DashboardACLInfoDTO"
+        }
       }
     },
     "getDashboardSnapshotResponse": {
@@ -20619,49 +22079,93 @@
       "description": "(empty)",
       "schema": {
         "type": "array",
-        "items": {}
+        "items": {
+          "$ref": "#/definitions/DashboardTagCloudItem"
+        }
       }
     },
     "getDataSourceIDResponse": {
-      "description": "(empty)"
+      "description": "(empty)",
+      "schema": {
+        "type": "object",
+        "required": [
+          "id"
+        ],
+        "properties": {
+          "id": {
+            "description": "ID Identifier of the data source.",
+            "type": "integer",
+            "format": "int64",
+            "example": 65
+          }
+        }
+      }
     },
     "getDataSourceResponse": {
-      "description": "(empty)"
+      "description": "(empty)",
+      "schema": {
+        "$ref": "#/definitions/DataSource"
+      }
     },
     "getDataSourcesResponse": {
-      "description": "(empty)"
+      "description": "(empty)",
+      "schema": {
+        "$ref": "#/definitions/DataSourceList"
+      }
     },
     "getFolderDescendantCountsResponse": {
-      "description": "(empty)"
+      "description": "(empty)",
+      "schema": {
+        "$ref": "#/definitions/DescendantCounts"
+      }
     },
     "getFolderPermissionListResponse": {
       "description": "(empty)",
       "schema": {
         "type": "array",
-        "items": {}
+        "items": {
+          "$ref": "#/definitions/DashboardACLInfoDTO"
+        }
       }
     },
     "getFoldersResponse": {
       "description": "(empty)",
       "schema": {
         "type": "array",
-        "items": {}
+        "items": {
+          "$ref": "#/definitions/FolderSearchHit"
+        }
       }
     },
     "getHomeDashboardResponse": {
-      "description": "(empty)"
+      "description": "(empty)",
+      "schema": {
+        "$ref": "#/definitions/GetHomeDashboardResponse"
+      }
     },
     "getLibraryElementArrayResponse": {
-      "description": "(empty)"
+      "description": "(empty)",
+      "schema": {
+        "$ref": "#/definitions/LibraryElementArrayResponse"
+      }
     },
     "getLibraryElementConnectionsResponse": {
-      "description": "(empty)"
+      "description": "(empty)",
+      "schema": {
+        "$ref": "#/definitions/LibraryElementConnectionsResponse"
+      }
     },
     "getLibraryElementResponse": {
-      "description": "(empty)"
+      "description": "(empty)",
+      "schema": {
+        "$ref": "#/definitions/LibraryElementResponse"
+      }
     },
     "getLibraryElementsResponse": {
-      "description": "(empty)"
+      "description": "(empty)",
+      "schema": {
+        "$ref": "#/definitions/LibraryElementSearchResponse"
+      }
     },
     "getLicenseTokenResponse": {
       "description": "(empty)",
@@ -20670,79 +22174,120 @@
       }
     },
     "getOrgByIDResponse": {
-      "description": "(empty)"
+      "description": "(empty)",
+      "schema": {
+        "$ref": "#/definitions/OrgDetailsDTO"
+      }
     },
     "getOrgByNameResponse": {
-      "description": "(empty)"
+      "description": "(empty)",
+      "schema": {
+        "$ref": "#/definitions/OrgDetailsDTO"
+      }
     },
     "getOrgUsersForCurrentOrgLookupResponse": {
       "description": "(empty)",
       "schema": {
         "type": "array",
-        "items": {}
+        "items": {
+          "$ref": "#/definitions/UserLookupDTO"
+        }
       }
     },
     "getOrgUsersForCurrentOrgResponse": {
       "description": "(empty)",
       "schema": {
         "type": "array",
-        "items": {}
+        "items": {
+          "$ref": "#/definitions/OrgUserDTO"
+        }
       }
     },
     "getOrgUsersResponse": {
       "description": "(empty)",
       "schema": {
         "type": "array",
-        "items": {}
+        "items": {
+          "$ref": "#/definitions/OrgUserDTO"
+        }
       }
     },
     "getPendingOrgInvitesResponse": {
       "description": "(empty)",
       "schema": {
         "type": "array",
-        "items": {}
+        "items": {
+          "$ref": "#/definitions/TempUserDTO"
+        }
       }
     },
     "getPlaylistDashboardsResponse": {
-      "description": "(empty)"
+      "description": "(empty)",
+      "schema": {
+        "$ref": "#/definitions/PlaylistDashboardsSlice"
+      }
     },
     "getPlaylistItemsResponse": {
       "description": "(empty)",
       "schema": {
         "type": "array",
-        "items": {}
+        "items": {
+          "$ref": "#/definitions/PlaylistItemDTO"
+        }
       }
     },
     "getPlaylistResponse": {
-      "description": "(empty)"
+      "description": "(empty)",
+      "schema": {
+        "$ref": "#/definitions/PlaylistDTO"
+      }
     },
     "getPreferencesResponse": {
-      "description": "(empty)"
+      "description": "(empty)",
+      "schema": {
+        "$ref": "#/definitions/Preferences"
+      }
     },
     "getPublicAnnotationsResponse": {
       "description": "(empty)",
       "schema": {
         "type": "array",
-        "items": {}
+        "items": {
+          "$ref": "#/definitions/AnnotationEvent"
+        }
       }
     },
     "getPublicDashboardResponse": {
-      "description": "(empty)"
+      "description": "(empty)",
+      "schema": {
+        "$ref": "#/definitions/PublicDashboard"
+      }
     },
     "getQueryHistoryDeleteQueryResponse": {
-      "description": "(empty)"
+      "description": "(empty)",
+      "schema": {
+        "$ref": "#/definitions/QueryHistoryDeleteQueryResponse"
+      }
     },
     "getQueryHistoryResponse": {
-      "description": "(empty)"
+      "description": "(empty)",
+      "schema": {
+        "$ref": "#/definitions/QueryHistoryResponse"
+      }
     },
     "getQueryHistorySearchResponse": {
-      "description": "(empty)"
+      "description": "(empty)",
+      "schema": {
+        "$ref": "#/definitions/QueryHistorySearchResponse"
+      }
     },
     "getQuotaResponse": {
       "description": "(empty)",
       "schema": {
         "type": "array",
-        "items": {}
+        "items": {
+          "$ref": "#/definitions/QuotaDTO"
+        }
       }
     },
     "getReportResponse": {
@@ -20768,7 +22313,12 @@
     },
     "getResourcePermissionsResponse": {
       "description": "(empty)",
-      "schema": {}
+      "schema": {
+        "type": "array",
+        "items": {
+          "$ref": "#/definitions/resourcePermissionDTO"
+        }
+      }
     },
     "getRoleAssignmentsResponse": {
       "description": "(empty)",
@@ -20783,23 +22333,59 @@
       }
     },
     "getSSOSettingsResponse": {
-      "description": "(empty)"
+      "description": "(empty)",
+      "schema": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "provider": {
+            "type": "string"
+          },
+          "settings": {
+            "type": "object",
+            "additionalProperties": false
+          },
+          "source": {
+            "type": "string"
+          }
+        }
+      }
     },
     "getSharingOptionsResponse": {
-      "description": "(empty)"
+      "description": "(empty)",
+      "schema": {
+        "type": "object",
+        "properties": {
+          "externalEnabled": {
+            "type": "boolean"
+          },
+          "externalSnapshotName": {
+            "type": "string"
+          },
+          "externalSnapshotURL": {
+            "type": "string"
+          }
+        }
+      }
     },
     "getSignedInUserOrgListResponse": {
       "description": "(empty)",
       "schema": {
         "type": "array",
-        "items": {}
+        "items": {
+          "$ref": "#/definitions/UserOrgDTO"
+        }
       }
     },
     "getSignedInUserTeamListResponse": {
       "description": "(empty)",
       "schema": {
         "type": "array",
-        "items": {}
+        "items": {
+          "$ref": "#/definitions/TeamDTO"
+        }
       }
     },
     "getStatusResponse": {
@@ -20812,7 +22398,10 @@
       }
     },
     "getTeamByIDResponse": {
-      "description": "(empty)"
+      "description": "(empty)",
+      "schema": {
+        "$ref": "#/definitions/TeamDTO"
+      }
     },
     "getTeamGroupsApiResponse": {
       "description": "(empty)",
@@ -20827,44 +22416,84 @@
       "description": "(empty)",
       "schema": {
         "type": "array",
-        "items": {}
+        "items": {
+          "$ref": "#/definitions/TeamMemberDTO"
+        }
       }
     },
     "getUserAuthTokensResponse": {
       "description": "(empty)",
       "schema": {
         "type": "array",
-        "items": {}
+        "items": {
+          "$ref": "#/definitions/UserToken"
+        }
       }
     },
     "getUserOrgListResponse": {
       "description": "(empty)",
       "schema": {
         "type": "array",
-        "items": {}
+        "items": {
+          "$ref": "#/definitions/UserOrgDTO"
+        }
       }
     },
     "getUserTeamsResponse": {
       "description": "(empty)",
       "schema": {
         "type": "array",
-        "items": {}
+        "items": {
+          "$ref": "#/definitions/TeamDTO"
+        }
       }
     },
     "helpFlagResponse": {
-      "description": "(empty)"
+      "description": "(empty)",
+      "schema": {
+        "type": "object",
+        "properties": {
+          "helpFlags1": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "message": {
+            "type": "string"
+          }
+        }
+      }
     },
     "importDashboardResponse": {
-      "description": "(empty)"
+      "description": "(empty)",
+      "schema": {
+        "$ref": "#/definitions/ImportDashboardResponse"
+      }
     },
     "internalServerError": {
-      "description": "InternalServerError is a general error indicating something went wrong internally."
+      "description": "InternalServerError is a general error indicating something went wrong internally.",
+      "schema": {
+        "$ref": "#/definitions/ErrorResponseBody"
+      }
     },
     "internalServerPublicError": {
-      "description": "InternalServerPublicError is a general error indicating something went wrong internally."
+      "description": "InternalServerPublicError is a general error indicating something went wrong internally.",
+      "schema": {
+        "$ref": "#/definitions/publicError"
+      }
     },
     "jwksResponse": {
-      "description": "(empty)"
+      "description": "(empty)",
+      "schema": {
+        "type": "object",
+        "properties": {
+          "keys": {
+            "type": "array",
+            "items": {
+              "$ref": "#/definitions/JSONWebKey"
+            }
+          }
+        }
+      }
     },
     "listBuiltinRolesResponse": {
       "description": "(empty)",
@@ -20879,7 +22508,10 @@
       }
     },
     "listPublicDashboardsResponse": {
-      "description": "(empty)"
+      "description": "(empty)",
+      "schema": {
+        "$ref": "#/definitions/PublicDashboardListResponseWithPagination"
+      }
     },
     "listRecordingRulesResponse": {
       "description": "(empty)",
@@ -20903,11 +22535,45 @@
       "description": "(empty)",
       "schema": {
         "type": "array",
-        "items": {}
+        "items": {
+          "type": "object",
+          "properties": {
+            "id": {
+              "type": "string"
+            },
+            "provider": {
+              "type": "string"
+            },
+            "settings": {
+              "type": "object",
+              "additionalProperties": false
+            },
+            "source": {
+              "type": "string"
+            }
+          }
+        }
       }
     },
     "listSortOptionsResponse": {
-      "description": "(empty)"
+      "description": "(empty)",
+      "schema": {
+        "type": "object",
+        "properties": {
+          "description": {
+            "type": "string"
+          },
+          "displayName": {
+            "type": "string"
+          },
+          "meta": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          }
+        }
+      }
     },
     "listTeamsRolesResponse": {
       "description": "(empty)",
@@ -20925,7 +22591,9 @@
       "description": "(empty)",
       "schema": {
         "type": "array",
-        "items": {}
+        "items": {
+          "$ref": "#/definitions/TokenDTO"
+        }
       }
     },
     "listUsersRolesResponse": {
@@ -20941,37 +22609,129 @@
       }
     },
     "notFoundError": {
-      "description": "NotFoundError is returned when the requested resource was not found."
+      "description": "NotFoundError is returned when the requested resource was not found.",
+      "schema": {
+        "$ref": "#/definitions/ErrorResponseBody"
+      }
     },
     "notFoundPublicError": {
-      "description": "NotFoundPublicError is returned when the requested resource was not found."
+      "description": "NotFoundPublicError is returned when the requested resource was not found.",
+      "schema": {
+        "$ref": "#/definitions/publicError"
+      }
     },
     "okResponse": {
-      "description": "An OKResponse is returned if the request was successful."
+      "description": "An OKResponse is returned if the request was successful.",
+      "schema": {
+        "$ref": "#/definitions/SuccessResponseBody"
+      }
     },
     "postAPIkeyResponse": {
-      "description": "(empty)"
+      "description": "(empty)",
+      "schema": {
+        "$ref": "#/definitions/NewApiKeyResult"
+      }
     },
     "postAnnotationResponse": {
-      "description": "(empty)"
+      "description": "(empty)",
+      "schema": {
+        "type": "object",
+        "required": [
+          "id",
+          "message"
+        ],
+        "properties": {
+          "id": {
+            "description": "ID Identifier of the created annotation.",
+            "type": "integer",
+            "format": "int64",
+            "example": 65
+          },
+          "message": {
+            "description": "Message Message of the created annotation.",
+            "type": "string"
+          }
+        }
+      }
     },
     "postDashboardResponse": {
-      "description": "(empty)"
+      "description": "(empty)",
+      "schema": {
+        "type": "object",
+        "required": [
+          "status",
+          "title",
+          "version",
+          "id",
+          "uid",
+          "url"
+        ],
+        "properties": {
+          "folderUid": {
+            "description": "FolderUID The unique identifier (uid) of the folder the dashboard belongs to.",
+            "type": "string"
+          },
+          "id": {
+            "description": "ID The unique identifier (id) of the created/updated dashboard.",
+            "type": "integer",
+            "format": "int64",
+            "example": 1
+          },
+          "status": {
+            "description": "Status status of the response.",
+            "type": "string",
+            "example": "success"
+          },
+          "title": {
+            "description": "Slug The slug of the dashboard.",
+            "type": "string",
+            "example": "my-dashboard"
+          },
+          "uid": {
+            "description": "UID The unique identifier (uid) of the created/updated dashboard.",
+            "type": "string",
+            "example": "nHz3SXiiz"
+          },
+          "url": {
+            "description": "URL The relative URL for accessing the created/updated dashboard.",
+            "type": "string",
+            "example": "/d/nHz3SXiiz/my-dashboard"
+          },
+          "version": {
+            "description": "Version The version of the dashboard.",
+            "type": "integer",
+            "format": "int64",
+            "example": 2
+          }
+        }
+      }
     },
     "postRenewLicenseTokenResponse": {
       "description": "(empty)"
     },
     "preconditionFailedError": {
-      "description": "PreconditionFailedError"
+      "description": "PreconditionFailedError",
+      "schema": {
+        "$ref": "#/definitions/ErrorResponseBody"
+      }
     },
     "publicErrorResponse": {
-      "description": "(empty)"
+      "description": "(empty)",
+      "schema": {
+        "$ref": "#/definitions/publicError"
+      }
     },
     "queryMetricsWithExpressionsRespons": {
-      "description": "(empty)"
+      "description": "(empty)",
+      "schema": {
+        "$ref": "#/definitions/QueryDataResponse"
+      }
     },
     "queryPublicDashboardResponse": {
-      "description": "(empty)"
+      "description": "(empty)",
+      "schema": {
+        "$ref": "#/definitions/QueryDataResponse"
+      }
     },
     "receiversResponse": {
       "description": "(empty)",
@@ -21001,36 +22761,58 @@
       }
     },
     "resourcePermissionsDescription": {
-      "description": "(empty)"
+      "description": "(empty)",
+      "schema": {
+        "$ref": "#/definitions/Description"
+      }
     },
     "retrieveServiceAccountResponse": {
-      "description": "(empty)"
+      "description": "(empty)",
+      "schema": {
+        "$ref": "#/definitions/ServiceAccountDTO"
+      }
     },
     "searchDashboardSnapshotsResponse": {
       "description": "(empty)",
       "schema": {
         "type": "array",
-        "items": {}
+        "items": {
+          "$ref": "#/definitions/DashboardSnapshotDTO"
+        }
       }
     },
     "searchOrgServiceAccountsWithPagingResponse": {
-      "description": "(empty)"
+      "description": "(empty)",
+      "schema": {
+        "$ref": "#/definitions/SearchOrgServiceAccountsResult"
+      }
     },
     "searchOrgUsersResponse": {
-      "description": "(empty)"
+      "description": "(empty)",
+      "schema": {
+        "$ref": "#/definitions/SearchOrgUsersQueryResult"
+      }
     },
     "searchOrgsResponse": {
       "description": "(empty)",
       "schema": {
         "type": "array",
-        "items": {}
+        "items": {
+          "$ref": "#/definitions/OrgDTO"
+        }
       }
     },
     "searchPlaylistsResponse": {
-      "description": "(empty)"
+      "description": "(empty)",
+      "schema": {
+        "$ref": "#/definitions/Playlists"
+      }
     },
     "searchResponse": {
-      "description": "(empty)"
+      "description": "(empty)",
+      "schema": {
+        "$ref": "#/definitions/HitList"
+      }
     },
     "searchResultResponse": {
       "description": "(empty)",
@@ -21039,17 +22821,25 @@
       }
     },
     "searchTeamsResponse": {
-      "description": "(empty)"
+      "description": "(empty)",
+      "schema": {
+        "$ref": "#/definitions/SearchTeamQueryResult"
+      }
     },
     "searchUsersResponse": {
       "description": "(empty)",
       "schema": {
         "type": "array",
-        "items": {}
+        "items": {
+          "$ref": "#/definitions/UserSearchHitDTO"
+        }
       }
     },
     "searchUsersWithPagingResponse": {
-      "description": "(empty)"
+      "description": "(empty)",
+      "schema": {
+        "$ref": "#/definitions/SearchUserQueryResult"
+      }
     },
     "setRoleAssignmentsResponse": {
       "description": "(empty)",
@@ -21058,31 +22848,73 @@
       }
     },
     "unauthorisedError": {
-      "description": "UnauthorizedError is returned when the request is not authenticated."
+      "description": "UnauthorizedError is returned when the request is not authenticated.",
+      "schema": {
+        "$ref": "#/definitions/ErrorResponseBody"
+      }
     },
     "unauthorisedPublicError": {
-      "description": "UnauthorisedPublicError is returned when the request is not authenticated."
+      "description": "UnauthorisedPublicError is returned when the request is not authenticated.",
+      "schema": {
+        "$ref": "#/definitions/publicError"
+      }
     },
     "unprocessableEntityError": {
-      "description": "UnprocessableEntityError"
+      "description": "UnprocessableEntityError",
+      "schema": {
+        "$ref": "#/definitions/ErrorResponseBody"
+      }
     },
     "updateCorrelationResponse": {
-      "description": "(empty)"
+      "description": "(empty)",
+      "schema": {
+        "$ref": "#/definitions/UpdateCorrelationResponseBody"
+      }
     },
     "updatePlaylistResponse": {
-      "description": "(empty)"
+      "description": "(empty)",
+      "schema": {
+        "$ref": "#/definitions/PlaylistDTO"
+      }
     },
     "updatePublicDashboardResponse": {
-      "description": "(empty)"
+      "description": "(empty)",
+      "schema": {
+        "$ref": "#/definitions/PublicDashboard"
+      }
     },
     "updateServiceAccountResponse": {
-      "description": "(empty)"
+      "description": "(empty)",
+      "schema": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "message": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "serviceaccount": {
+            "$ref": "#/definitions/ServiceAccountProfileDTO"
+          }
+        }
+      }
     },
     "userResponse": {
-      "description": "(empty)"
+      "description": "(empty)",
+      "schema": {
+        "$ref": "#/definitions/UserProfileDTO"
+      }
     },
     "viewPublicDashboardResponse": {
-      "description": "(empty)"
+      "description": "(empty)",
+      "schema": {
+        "$ref": "#/definitions/DashboardFullWithMeta"
+      }
     }
   },
   "securityDefinitions": {

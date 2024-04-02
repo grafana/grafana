@@ -37,7 +37,6 @@ type MigratedResource struct {
 	Result MigratedResourceResult `json:"result"`
 }
 
-// swagger:response cloudMigrationRunResponse
 type CloudMigrationRun struct {
 	ID                int64              `json:"id" xorm:"pk autoincr 'id'"`
 	CloudMigrationUID string             `json:"uid" xorm:"cloud_migration_uid"`
@@ -48,7 +47,6 @@ type CloudMigrationRun struct {
 	Finished          time.Time          `json:"finished"`
 }
 
-// swagger:response cloudMigrationRunListResponse
 type CloudMigrationRunList struct {
 	Runs []CloudMigrationRun `json:"runs"`
 }
@@ -58,7 +56,6 @@ type CloudMigrationRequest struct {
 	AuthToken string `json:"authToken"`
 }
 
-// swagger:response cloudMigrationResponse
 type CloudMigrationResponse struct {
 	ID      int64     `json:"id"`
 	Stack   string    `json:"stack"`
@@ -66,7 +63,6 @@ type CloudMigrationResponse struct {
 	Updated time.Time `json:"updated"`
 }
 
-// swagger:response cloudMigrationListResponse
 type CloudMigrationListResponse struct {
 	Migrations []CloudMigrationResponse `json:"migrations"`
 }
@@ -89,7 +85,6 @@ type MigrateDatasourcesResponseDTO struct {
 	DatasourcesMigrated int `json:"datasourcesMigrated"`
 }
 
-// swagger:response cloudMigrationCreateTokenResponse
 type CreateAccessTokenResponse struct {
 	Token string
 }

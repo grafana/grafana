@@ -51,7 +51,7 @@ func (cma *CloudMigrationAPI) registerEndpoints() {
 	}, middleware.ReqGrafanaAdmin)
 }
 
-// swagger:route POST /cloudmigration/token migrations
+// swagger:route POST /cloudmigration/token migrations createCloudMigrationToken
 //
 // Create gcom access token.
 //
@@ -75,7 +75,7 @@ func (cma *CloudMigrationAPI) CreateToken(c *contextmodel.ReqContext) response.R
 	return response.JSON(http.StatusOK, cloudmigration.CreateAccessTokenResponseDTO(resp))
 }
 
-// swagger:route GET /cloudmigration/migration migrations
+// swagger:route GET /cloudmigration/migration migrations getMigrationList
 //
 // Get a list of all cloud migrations.
 //
@@ -224,6 +224,9 @@ func (cma *CloudMigrationAPI) GetMigrationRunList(c *contextmodel.ReqContext) re
 
 // swagger:parameters getCloudMigrationRunList
 type GetCloudMigrationRunList struct {
+	// ID of an migration
+	//
+	// in: path
 	ID int64 `json:"id"`
 }
 
@@ -246,5 +249,38 @@ func (cma *CloudMigrationAPI) DeleteMigration(c *contextmodel.ReqContext) respon
 
 // swagger:parameters deleteCloudMigration
 type DeleteMigrationRequest struct {
+	// ID of an migration
+	//
+	// in: path
 	ID int64 `json:"id"`
+}
+
+// swagger:response cloudMigrationRunResponse
+type CloudMigrationRunResponse struct {
+	// in: body
+	Body cloudmigration.CloudMigrationRun
+}
+
+// swagger:response cloudMigrationListResponse
+type CloudMigrationListResponse struct {
+	// in: body
+	Body cloudmigration.CloudMigrationListResponse
+}
+
+// swagger:response cloudMigrationResponse
+type CloudMigrationResponse struct {
+	// in: body
+	Body cloudmigration.CloudMigrationResponse
+}
+
+// swagger:response cloudMigrationRunListResponse
+type CloudMigrationRunListResponse struct {
+	// in: body
+	Body cloudmigration.CloudMigrationRunList
+}
+
+// swagger:response cloudMigrationCreateTokenResponse
+type CloudMigrationCreateTokenResponse struct {
+	// in: body
+	Body cloudmigration.CreateAccessTokenResponseDTO
 }
