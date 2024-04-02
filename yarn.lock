@@ -3293,7 +3293,7 @@ __metadata:
     "@types/lodash": "npm:4.17.0"
     "@types/prismjs": "npm:1.26.3"
     "@types/react": "npm:18.2.73"
-    "@types/react-dom": "npm:18.2.22"
+    "@types/react-dom": "npm:18.2.23"
     "@types/testing-library__jest-dom": "npm:5.14.9"
     css-loader: "npm:6.10.0"
     fast-deep-equal: "npm:^3.1.3"
@@ -3484,12 +3484,12 @@ __metadata:
     "@types/node": "npm:20.11.30"
     "@types/prismjs": "npm:1.26.3"
     "@types/react": "npm:18.2.73"
-    "@types/react-dom": "npm:18.2.22"
+    "@types/react-dom": "npm:18.2.23"
     "@types/semver": "npm:7.5.8"
     "@types/uuid": "npm:9.0.8"
     buffer: "npm:6.0.3"
     events: "npm:3.3.0"
-    glob: "npm:10.3.10"
+    glob: "npm:10.3.12"
     i18next: "npm:^23.0.0"
     lodash: "npm:4.17.21"
     lru-cache: "npm:10.2.0"
@@ -3576,7 +3576,7 @@ __metadata:
     "@types/node": "npm:20.11.30"
     "@types/papaparse": "npm:5.3.14"
     "@types/react": "npm:18.2.73"
-    "@types/react-dom": "npm:18.2.22"
+    "@types/react-dom": "npm:18.2.23"
     "@types/string-hash": "npm:1.1.3"
     "@types/tinycolor2": "npm:1.4.6"
     d3-interpolate: "npm:3.0.1"
@@ -3912,7 +3912,7 @@ __metadata:
     copy-webpack-plugin: "npm:12.0.2"
     eslint-webpack-plugin: "npm:4.1.0"
     fork-ts-checker-webpack-plugin: "npm:9.0.2"
-    glob: "npm:10.3.10"
+    glob: "npm:10.3.12"
     replace-in-file-webpack-plugin: "npm:1.0.6"
     swc-loader: "npm:0.2.6"
     tslib: "npm:2.6.2"
@@ -3921,15 +3921,15 @@ __metadata:
   linkType: soft
 
 "@grafana/plugin-e2e@npm:^0.25.0":
-  version: 0.25.0
-  resolution: "@grafana/plugin-e2e@npm:0.25.0"
+  version: 0.25.1
+  resolution: "@grafana/plugin-e2e@npm:0.25.1"
   dependencies:
     semver: "npm:^7.5.4"
     uuid: "npm:^9.0.1"
     yaml: "npm:^2.3.4"
   peerDependencies:
     "@playwright/test": ^1.41.2
-  checksum: 10/31a6106839e47d59b67bb550aa5f6ae0affa0685973c70b23ca396d095ed93ee69afaa602b50359e0e3de970a82772755c2e03786752b8b31825053673ccb0c6
+  checksum: 10/7a478d280202e4757df8152bf47779f107a14007ac5644fec4a691d939dbc0a4ee1b57a4be1b1eaaf85a07365a9287ce5c32e24a0333fa7ead89f638014834ca
   languageName: node
   linkType: hard
 
@@ -3965,7 +3965,7 @@ __metadata:
     "@testing-library/user-event": "npm:14.5.2"
     "@types/d3": "npm:7.4.3"
     "@types/debounce-promise": "npm:3.1.9"
-    "@types/eslint": "npm:8.56.6"
+    "@types/eslint": "npm:8.56.7"
     "@types/jest": "npm:29.5.12"
     "@types/jquery": "npm:3.5.29"
     "@types/lodash": "npm:4.17.0"
@@ -3975,7 +3975,7 @@ __metadata:
     "@types/prismjs": "npm:1.26.3"
     "@types/react": "npm:18.2.73"
     "@types/react-beautiful-dnd": "npm:13.1.8"
-    "@types/react-dom": "npm:18.2.22"
+    "@types/react-dom": "npm:18.2.23"
     "@types/react-highlight-words": "npm:0.16.7"
     "@types/react-window": "npm:1.8.8"
     "@types/semver": "npm:7.5.8"
@@ -4001,7 +4001,7 @@ __metadata:
     eslint-webpack-plugin: "npm:4.1.0"
     eventemitter3: "npm:5.0.1"
     fork-ts-checker-webpack-plugin: "npm:9.0.2"
-    glob: "npm:10.3.10"
+    glob: "npm:10.3.12"
     jest: "npm:29.7.0"
     jest-environment-jsdom: "npm:29.7.0"
     jest-matcher-utils: "npm:29.7.0"
@@ -4067,7 +4067,7 @@ __metadata:
     "@types/jest": "npm:29.5.12"
     "@types/lodash": "npm:4.17.0"
     "@types/react": "npm:18.2.73"
-    "@types/react-dom": "npm:18.2.22"
+    "@types/react-dom": "npm:18.2.23"
     "@types/systemjs": "npm:6.13.5"
     esbuild: "npm:0.18.12"
     history: "npm:4.10.1"
@@ -4103,7 +4103,7 @@ __metadata:
     "@svgr/plugin-svgo": "npm:^8.1.0"
     "@types/node": "npm:20.11.30"
     "@types/react": "npm:18.2.73"
-    "@types/react-dom": "npm:18.2.22"
+    "@types/react-dom": "npm:18.2.23"
     esbuild: "npm:0.18.12"
     prettier: "npm:3.2.5"
     react: "npm:18.2.0"
@@ -4267,7 +4267,7 @@ __metadata:
     "@types/react-beautiful-dnd": "npm:13.1.8"
     "@types/react-calendar": "npm:3.9.0"
     "@types/react-color": "npm:3.0.12"
-    "@types/react-dom": "npm:18.2.22"
+    "@types/react-dom": "npm:18.2.23"
     "@types/react-highlight-words": "npm:0.16.7"
     "@types/react-router-dom": "npm:5.3.3"
     "@types/react-table": "npm:7.7.20"
@@ -9518,13 +9518,13 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@types/eslint@npm:*, @types/eslint@npm:8.56.6, @types/eslint@npm:^8.56.5":
-  version: 8.56.6
-  resolution: "@types/eslint@npm:8.56.6"
+"@types/eslint@npm:*, @types/eslint@npm:8.56.7, @types/eslint@npm:^8.56.5":
+  version: 8.56.7
+  resolution: "@types/eslint@npm:8.56.7"
   dependencies:
     "@types/estree": "npm:*"
     "@types/json-schema": "npm:*"
-  checksum: 10/34ed696547688ef37669493cff3040e4d1e65ffc9b927f7a6c37d27232578dd31a13af23b11f8c4bc2e4230d17bb912005962afe5ff2afeb2f6817b4c64fa44c
+  checksum: 10/4c90f30a19bc5a01b27afc4f7e3efa28d191b7c9505fd4f6373d1dcdf8e93b939628d92ae730c3ef77bf2a094622296bb307cbecbad7cb6b43ef31dd722f6944
   languageName: node
   linkType: hard
 
@@ -10067,12 +10067,12 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@types/react-dom@npm:*, @types/react-dom@npm:18.2.22, @types/react-dom@npm:^18.0.0":
-  version: 18.2.22
-  resolution: "@types/react-dom@npm:18.2.22"
+"@types/react-dom@npm:*, @types/react-dom@npm:18.2.23, @types/react-dom@npm:^18.0.0":
+  version: 18.2.23
+  resolution: "@types/react-dom@npm:18.2.23"
   dependencies:
     "@types/react": "npm:*"
-  checksum: 10/310da22244c1bb65a7f213f8727bda821dd211cfb2dd62d1f9b28dd50ef1c196d59e908494bd5f25c13a3844343f3a6135f39fb830aca6f79646fa56c1b56c08
+  checksum: 10/8311c67767b0aafb5cd94176a90f801f0f5f6930731d57caaa04bb0d87fdef6bc6f723a116d9777d2082ec022682acaad7a62d04dc27e330e818cf34f2ef2703
   languageName: node
   linkType: hard
 
@@ -18324,18 +18324,18 @@ __metadata:
   languageName: node
   linkType: hard
 
-"glob@npm:10.3.10, glob@npm:^10.0.0, glob@npm:^10.2.2, glob@npm:^10.2.5, glob@npm:^10.2.7, glob@npm:^10.3.10, glob@npm:^10.3.7":
-  version: 10.3.10
-  resolution: "glob@npm:10.3.10"
+"glob@npm:10.3.12, glob@npm:^10.0.0, glob@npm:^10.2.2, glob@npm:^10.2.5, glob@npm:^10.2.7, glob@npm:^10.3.10, glob@npm:^10.3.7":
+  version: 10.3.12
+  resolution: "glob@npm:10.3.12"
   dependencies:
     foreground-child: "npm:^3.1.0"
-    jackspeak: "npm:^2.3.5"
+    jackspeak: "npm:^2.3.6"
     minimatch: "npm:^9.0.1"
-    minipass: "npm:^5.0.0 || ^6.0.2 || ^7.0.0"
-    path-scurry: "npm:^1.10.1"
+    minipass: "npm:^7.0.4"
+    path-scurry: "npm:^1.10.2"
   bin:
     glob: dist/esm/bin.mjs
-  checksum: 10/38bdb2c9ce75eb5ed168f309d4ed05b0798f640b637034800a6bf306f39d35409bf278b0eaaffaec07591085d3acb7184a201eae791468f0f617771c2486a6a8
+  checksum: 10/9e8186abc22dc824b5dd86cefd8e6b5621a72d1be7f68bacc0fd681e8c162ec5546660a6ec0553d6a74757a585e655956c7f8f1a6d24570e8d865c307323d178
   languageName: node
   linkType: hard
 
@@ -18598,7 +18598,7 @@ __metadata:
     "@types/d3-scale-chromatic": "npm:3.0.3"
     "@types/debounce-promise": "npm:3.1.9"
     "@types/diff": "npm:^5"
-    "@types/eslint": "npm:8.56.6"
+    "@types/eslint": "npm:8.56.7"
     "@types/eslint-scope": "npm:^3.7.7"
     "@types/file-saver": "npm:2.0.7"
     "@types/glob": "npm:^8.0.0"
@@ -18623,7 +18623,7 @@ __metadata:
     "@types/prismjs": "npm:1.26.3"
     "@types/react": "npm:18.2.73"
     "@types/react-beautiful-dnd": "npm:13.1.8"
-    "@types/react-dom": "npm:18.2.22"
+    "@types/react-dom": "npm:18.2.23"
     "@types/react-grid-layout": "npm:1.3.5"
     "@types/react-highlight-words": "npm:0.16.7"
     "@types/react-resizable": "npm:3.0.7"
@@ -18711,7 +18711,7 @@ __metadata:
     file-saver: "npm:2.0.5"
     fork-ts-checker-webpack-plugin: "npm:9.0.2"
     framework-utils: "npm:^1.1.0"
-    glob: "npm:10.3.10"
+    glob: "npm:10.3.12"
     history: "npm:4.10.1"
     hoist-non-react-statics: "npm:3.3.2"
     html-loader: "npm:5.0.0"
@@ -19576,11 +19576,11 @@ __metadata:
   linkType: hard
 
 "i18next-browser-languagedetector@npm:^7.0.2":
-  version: 7.2.0
-  resolution: "i18next-browser-languagedetector@npm:7.2.0"
+  version: 7.2.1
+  resolution: "i18next-browser-languagedetector@npm:7.2.1"
   dependencies:
     "@babel/runtime": "npm:^7.23.2"
-  checksum: 10/5117b4961e0f32818f0d4587e81767d38c3a8e27305f1734fff2b07fe8c256161e2cdbd453b766b3c097055813fe89c43bce68b1d8f765b5b7f694d9852fe703
+  checksum: 10/20c93cbd23d62703e12268ec24679a91743cb6d652a6e83e6a102b2ecb8f79542821046a7f8f567a93fabfdc5cd9353dc7f3050c9c48948fe2ae0640d859a0dd
   languageName: node
   linkType: hard
 
@@ -20683,7 +20683,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"jackspeak@npm:^2.3.5":
+"jackspeak@npm:^2.3.6":
   version: 2.3.6
   resolution: "jackspeak@npm:2.3.6"
   dependencies:
@@ -22258,7 +22258,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"lru-cache@npm:10.2.0, lru-cache@npm:^10.0.1, lru-cache@npm:^9.1.1 || ^10.0.0":
+"lru-cache@npm:10.2.0, lru-cache@npm:^10.0.1, lru-cache@npm:^10.2.0":
   version: 10.2.0
   resolution: "lru-cache@npm:10.2.0"
   checksum: 10/502ec42c3309c0eae1ce41afca471f831c278566d45a5273a0c51102dee31e0e250a62fa9029c3370988df33a14188a38e682c16143b794de78668de3643e302
@@ -22946,7 +22946,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"minipass@npm:^5.0.0 || ^6.0.2 || ^7.0.0, minipass@npm:^7.0.2, minipass@npm:^7.0.3":
+"minipass@npm:^5.0.0 || ^6.0.2 || ^7.0.0, minipass@npm:^7.0.2, minipass@npm:^7.0.3, minipass@npm:^7.0.4":
   version: 7.0.4
   resolution: "minipass@npm:7.0.4"
   checksum: 10/e864bd02ceb5e0707696d58f7ce3a0b89233f0d686ef0d447a66db705c0846a8dc6f34865cd85256c1472ff623665f616b90b8ff58058b2ad996c5de747d2d18
@@ -24630,13 +24630,13 @@ __metadata:
   languageName: node
   linkType: hard
 
-"path-scurry@npm:^1.10.1, path-scurry@npm:^1.6.1":
-  version: 1.10.1
-  resolution: "path-scurry@npm:1.10.1"
+"path-scurry@npm:^1.10.2, path-scurry@npm:^1.6.1":
+  version: 1.10.2
+  resolution: "path-scurry@npm:1.10.2"
   dependencies:
-    lru-cache: "npm:^9.1.1 || ^10.0.0"
+    lru-cache: "npm:^10.2.0"
     minipass: "npm:^5.0.0 || ^6.0.2 || ^7.0.0"
-  checksum: 10/eebfb8304fef1d4f7e1486df987e4fd77413de4fce16508dea69fcf8eb318c09a6b15a7a2f4c22877cec1cb7ecbd3071d18ca9de79eeece0df874a00f1f0bdc8
+  checksum: 10/a2bbbe8dc284c49dd9be78ca25f3a8b89300e0acc24a77e6c74824d353ef50efbf163e64a69f4330b301afca42d0e2229be0560d6d616ac4e99d48b4062016b1
   languageName: node
   linkType: hard
 
