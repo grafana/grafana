@@ -18,11 +18,7 @@ func (s *NoopServiceImpl) MigrateDatasources(ctx context.Context, request *cloud
 func (s *NoopServiceImpl) CreateToken(ctx context.Context) (cloudmigration.CreateAccessTokenResponse, error) {
 	return cloudmigration.CreateAccessTokenResponse{}, cloudmigration.ErrFeatureDisabledError
 }
-func (s *NoopServiceImpl) ValidateToken(ctx context.Context, token string) error {
-	return cloudmigration.ErrFeatureDisabledError
-}
-
-func (s *NoopServiceImpl) SaveEncryptedToken(ctx context.Context, token string) error {
+func (s *NoopServiceImpl) ValidateToken(ctx context.Context, cm cloudmigration.CloudMigration) error {
 	return cloudmigration.ErrFeatureDisabledError
 }
 
@@ -46,12 +42,12 @@ func (s *NoopServiceImpl) GetMigrationStatus(ctx context.Context, id string, run
 	return nil, cloudmigration.ErrFeatureDisabledError
 }
 
-func (s *NoopServiceImpl) GetMigrationStatusList(ctx context.Context, id string) ([]cloudmigration.CloudMigrationRun, error) {
+func (s *NoopServiceImpl) GetMigrationStatusList(ctx context.Context, id string) ([]*cloudmigration.CloudMigrationRun, error) {
 	return nil, cloudmigration.ErrFeatureDisabledError
 }
 
-func (s *NoopServiceImpl) DeleteMigration(ctx context.Context, id string) error {
-	return cloudmigration.ErrFeatureDisabledError
+func (s *NoopServiceImpl) DeleteMigration(ctx context.Context, id int64) (*cloudmigration.CloudMigration, error) {
+	return nil, cloudmigration.ErrFeatureDisabledError
 }
 
 func (s *NoopServiceImpl) SaveMigrationRun(ctx context.Context, cmr *cloudmigration.CloudMigrationRun) (string, error) {

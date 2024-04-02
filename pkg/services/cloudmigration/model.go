@@ -9,7 +9,9 @@ import (
 var (
 	ErrInternalNotImplementedError = errutil.Internal("cloudmigrations.notImplemented", errutil.WithPublicMessage("Internal server error"))
 	ErrFeatureDisabledError        = errutil.Internal("cloudmigrations.disabled", errutil.WithPublicMessage("Cloud migrations are disabled on this instance"))
-	ErrMigrationNotFound           = errutil.NotFound("cloudmigrations.notFound", errutil.WithPublicMessage("Migration not found"))
+	ErrMigrationNotFound           = errutil.NotFound("cloudmigrations.migrationNotFound", errutil.WithPublicMessage("Migration not found"))
+	ErrMigrationRunNotFound        = errutil.NotFound("cloudmigrations.migrationRunNotFound", errutil.WithPublicMessage("Migration run not found"))
+	ErrMigrationNotDeleted         = errutil.Internal("cloudmigrations.migrationNotDeleted", errutil.WithPublicMessage("Migration not deleted"))
 )
 
 // cloud migration api dtos

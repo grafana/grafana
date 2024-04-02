@@ -1,10 +1,12 @@
 package cloudmigrationimpl
 
 import (
+	"bytes"
 	"context"
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
+	"net/http"
 	"time"
 
 	"github.com/grafana/grafana/pkg/api/routing"
@@ -62,6 +64,7 @@ func ProvideService(
 	features featuremgmt.FeatureToggles,
 	db db.DB,
 	dsService datasources.DataSourceService,
+	secretsService secrets.Service,
 	routeRegister routing.RouteRegister,
 	prom prometheus.Registerer,
 	tracer tracing.Tracer,
@@ -71,7 +74,7 @@ func ProvideService(
 	}
 
 	s := &Service{
-		store:       &sqlStore{db: db},
+		store:       &sqlStore{db: db, secretsService: secretsService},
 		log:         log.New(LogPrefix),
 		cfg:         cfg,
 		features:    features,
@@ -194,13 +197,49 @@ func (s *Service) findAccessPolicyByName(ctx context.Context, regionSlug, access
 	return nil, nil
 }
 
-func (s *Service) ValidateToken(ctx context.Context, token string) error {
-	// TODO: Implement method
-	return nil
-}
+func (s *Service) ValidateToken(ctx context.Context, cm cloudmigration.CloudMigration) error {
+	ctx, span := s.tracer.Start(ctx, "CloudMigrationService.ValidateToken")
+	defer span.End()
+	logger := s.log.FromContext(ctx)
 
-func (s *Service) SaveEncryptedToken(ctx context.Context, token string) error {
-	// TODO: Implement method
+	// get CMS path from the config
+	domain, err := s.ParseCloudMigrationConfig()
+	if err != nil {
+		return fmt.Errorf("config parse error: %w", err)
+	}
+	path := fmt.Sprintf("https://cms-dev-%s.%s/cloud-migrations/api/v1/validate-key", cm.ClusterSlug, domain)
+
+	// validation is an empty POST to CMS with the authorization header included
+	req, err := http.NewRequest("POST", path, bytes.NewReader(nil))
+	if err != nil {
+		logger.Error("error creating http request for token validation", "err", err.Error())
+		return fmt.Errorf("http request error: %w", err)
+	}
+	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("Authorization", fmt.Sprintf("Bearer %d:%s", cm.StackID, cm.AuthToken))
+
+	client := &http.Client{}
+	resp, err := client.Do(req)
+	if err != nil {
+		logger.Error("error sending http request for token validation", "err", err.Error())
+		return fmt.Errorf("http request error: %w", err)
+	}
+
+	defer func() {
+		if err := resp.Body.Close(); err != nil {
+			logger.Error("closing request body", "err", err.Error())
+		}
+	}()
+
+	if resp.StatusCode != 200 {
+		var errResp map[string]any
+		if err := json.NewDecoder(resp.Body).Decode(&errResp); err != nil {
+			logger.Error("decoding error response", "err", err.Error())
+		} else {
+			return fmt.Errorf("token validation failure: %v", errResp)
+		}
+	}
+
 	return nil
 }
 
@@ -262,14 +301,18 @@ func (s *Service) CreateMigration(ctx context.Context, cmd cloudmigration.CloudM
 	}
 
 	migration := token.ToMigration()
+	// validate token against cms before saving
+	if err := s.ValidateToken(ctx, migration); err != nil {
+		return nil, fmt.Errorf("token validation: %w", err)
+	}
+
 	if err := s.store.CreateMigration(ctx, migration); err != nil {
 		return nil, fmt.Errorf("error creating migration: %w", err)
 	}
 
 	return &cloudmigration.CloudMigrationResponse{
-		ID:    int64(token.Instance.StackID),
-		Stack: token.Instance.Slug,
-		// TODO replace this with the actual value once the storage piece is implemented
+		ID:      int64(token.Instance.StackID),
+		Stack:   token.Instance.Slug,
 		Created: time.Now(),
 		Updated: time.Now(),
 	}, nil
@@ -416,18 +459,28 @@ func (s *Service) SaveMigrationRun(ctx context.Context, cmr *cloudmigration.Clou
 }
 
 func (s *Service) GetMigrationStatus(ctx context.Context, id string, runID string) (*cloudmigration.CloudMigrationRun, error) {
-	// TODO: Implement method
-	return nil, nil
+	cmr, err := s.store.GetMigrationStatus(ctx, id, runID)
+	if err != nil {
+		return nil, fmt.Errorf("retrieving migration status from db: %w", err)
+	}
+
+	return cmr, nil
 }
 
-func (s *Service) GetMigrationStatusList(ctx context.Context, id string) ([]cloudmigration.CloudMigrationRun, error) {
-	// TODO: Implement method
-	return nil, nil
+func (s *Service) GetMigrationStatusList(ctx context.Context, migrationID string) ([]*cloudmigration.CloudMigrationRun, error) {
+	cmrs, err := s.store.GetMigrationStatusList(ctx, migrationID)
+	if err != nil {
+		return nil, fmt.Errorf("retrieving migration statuses from db: %w", err)
+	}
+	return cmrs, nil
 }
 
-func (s *Service) DeleteMigration(ctx context.Context, id string) error {
-	// TODO: Implement method
-	return nil
+func (s *Service) DeleteMigration(ctx context.Context, id int64) (*cloudmigration.CloudMigration, error) {
+	c, err := s.store.DeleteMigration(ctx, id)
+	if err != nil {
+		return c, fmt.Errorf("deleting migration from db: %w", err)
+	}
+	return c, nil
 }
 
 func (s *Service) ParseCloudMigrationConfig() (string, error) {
@@ -436,8 +489,8 @@ func (s *Service) ParseCloudMigrationConfig() (string, error) {
 	}
 	section := s.cfg.Raw.Section("cloud_migration")
 	domain := section.Key("domain").MustString("")
-	if domain != "" {
-		s.log.Warn("cloudmigration domain not set")
+	if domain == "" {
+		return "", fmt.Errorf("cloudmigration domain not set")
 	}
-	return "", nil
+	return domain, nil
 }
