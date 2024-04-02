@@ -3,7 +3,9 @@ package server
 import (
 	"context"
 	"errors"
+	"net"
 	"net/http"
+	"time"
 
 	"github.com/grafana/dskit/services"
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -103,35 +105,8 @@ func (s *service) Run(ctx context.Context) error {
 	return s.running(ctx)
 }
 
-func (s *service) IsOnlyTarget() bool {
-	return len(s.cfg.Target) == 1 && s.cfg.Target[0] == modules.StorageServer
-}
-
-func (s *service) setupInstrumentationServer() {
-	go func() {
-		s.log.Debug("listening on port 8000 for metrics")
-		http.Handle("/metrics", promhttp.Handler())
-		// TODO make port configurable?
-		err := http.ListenAndServe(":8000", nil)
-		if err != nil && !errors.Is(err, http.ErrServerClosed) {
-			s.log.Error("instrumentation server terminated with error", "error", err)
-		}
-	}()
-}
-
 func (s *service) start(ctx context.Context) error {
 	// TODO: use wire
-
-	if s.IsOnlyTarget() {
-		s.setupInstrumentationServer()
-	}
-
-	// register metrics
-	err := prometheus.Register(sqlstash.NewStorageMetrics())
-	if err != nil {
-		s.log.Debug("error registering storage server metrics", "error", err)
-		return err
-	}
 
 	// TODO: support using grafana db connection?
 	eDB, err := dbimpl.ProvideEntityDB(nil, s.cfg, s.features)
@@ -180,4 +155,40 @@ func (s *service) running(ctx context.Context) error {
 		close(s.stopCh)
 	}
 	return nil
+}
+
+func (s *service) registerMetrics(ctx context.Context) error {
+	if len(s.cfg.Target) == 1 && s.cfg.Target[0] == modules.StorageServer {
+		s.setupInstrumentationServer(ctx)
+	}
+
+	err := prometheus.Register(sqlstash.NewStorageMetrics())
+	if err != nil {
+		s.log.Error("error registering storage server metrics", "error", err)
+		return err
+	}
+
+	return nil
+}
+
+func (s *service) setupInstrumentationServer(ctx context.Context) {
+	router := http.NewServeMux()
+	router.Handle("/metrics", promhttp.Handler())
+
+	srv := &http.Server{
+		// 5s timeout for header reads to avoid Slowloris attacks (https://thetooth.io/blog/slowloris-attack/)
+		ReadHeaderTimeout: 5 * time.Second,
+		Addr:              ":8000", // TODO - make configurable?
+		Handler:           router,
+		BaseContext:       func(_ net.Listener) context.Context { return ctx },
+	}
+
+	go func() {
+		err := srv.ListenAndServe()
+		if err != nil && !errors.Is(err, http.ErrServerClosed) {
+			s.log.Error("instrumentation server terminated with error", "error", err)
+		}
+	}()
+
+	s.log.Info("instrumentation server listening on port 8000")
 }
