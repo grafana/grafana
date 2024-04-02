@@ -263,16 +263,11 @@ func (d *AlertsRouter) buildExternalURL(ds *datasources.DataSource) (string, err
 	}
 
 	// If this is a Mimir or Cortex implementation, the Alert API is under a different path than config API
-	if ds.JsonData != nil {
-		impl := ds.JsonData.Get("implementation").MustString("")
-		switch impl {
-		case "mimir", "cortex":
-			if parsed.Path == "" {
-				parsed.Path = "/"
-			}
-			parsed = parsed.JoinPath("/alertmanager")
-		default:
+	if isMimirOrCortexDatasource(ds) {
+		if parsed.Path == "" {
+			parsed.Path = "/"
 		}
+		parsed = parsed.JoinPath("/alertmanager")
 	}
 
 	// If basic auth is enabled we need to build the url with basic auth baked in.
@@ -285,6 +280,18 @@ func (d *AlertsRouter) buildExternalURL(ds *datasources.DataSource) (string, err
 	}
 
 	return parsed.String(), nil
+}
+
+func isMimirOrCortexDatasource(ds *datasources.DataSource) bool {
+	// Assume it is Mimir if not specified.
+	if ds.JsonData == nil {
+		return true
+	}
+	impl := ds.JsonData.Get("implementation").MustString("mimir")
+	if impl == "mimir" || impl == "cortex" {
+		return true
+	}
+	return false
 }
 
 func (d *AlertsRouter) Send(ctx context.Context, key models.AlertRuleKey, alerts definitions.PostableAlerts) {
