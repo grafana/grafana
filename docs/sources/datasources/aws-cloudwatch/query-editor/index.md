@@ -47,8 +47,8 @@ You can build two types of queries with the CloudWatch query editor:
 
 To create a valid Metric Search query, specify the namespace, metric name, and at least one statistic. Dimensions are optional, but for a dimension to be considered part of the query it must have both a key and a value.
 
-If you enable `Match Exact`, you must also specify all dimensions of the metric you're querying so that the [metric schema](https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/search-expression-syntax.html) matches exactly. The query will only return metrics that have the specified dimensions and no others, so dimensions that are on the metric but that you are not filtering on must be added as a wildcard (`*`) filter.
-If `Match Exact` is disabled, you can specify any number of dimensions on which you'd like to filter. The query will return any metrics that match at least the namespace, metric name, and all defined dimensions, whether or not they have additional dimensions.
+If you enable `Match Exact`, you must also specify all dimensions of the metric you're querying so that the [metric schema](https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/search-expression-syntax.html) matches exactly. The query will only return metrics that have the specified dimensions and no others, so dimensions that are on the metric but that are not being filtered on must be added as a wildcard (`*`) filter.
+If `Match Exact` is disabled, you can specify any number of dimensions on which you'd like to filter. The query will return any metrics that match the namespace, metric name, and all defined dimensions, whether or not they have additional dimensions.
 The data source returns up to 100 metrics matching your filter criteria.
 
 You can also augment queries by using [template variables]({{< relref "./template-variables" >}}).
