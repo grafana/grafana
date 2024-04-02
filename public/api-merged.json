@@ -2289,6 +2289,216 @@
         }
       }
     },
+    "/cloudmigration/migration": {
+      "get": {
+        "tags": [
+          "migrations"
+        ],
+        "summary": "Get a list of all cloud migrations.",
+        "operationId": "getMigrationList",
+        "responses": {
+          "200": {
+            "$ref": "#/responses/cloudMigrationListResponse"
+          },
+          "401": {
+            "$ref": "#/responses/unauthorisedError"
+          },
+          "403": {
+            "$ref": "#/responses/forbiddenError"
+          },
+          "500": {
+            "$ref": "#/responses/internalServerError"
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "migrations"
+        ],
+        "summary": "Create a migration.",
+        "operationId": "createMigration",
+        "parameters": [
+          {
+            "type": "string",
+            "name": "authToken",
+            "in": "query"
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/responses/cloudMigrationResponse"
+          },
+          "401": {
+            "$ref": "#/responses/unauthorisedError"
+          },
+          "403": {
+            "$ref": "#/responses/forbiddenError"
+          },
+          "500": {
+            "$ref": "#/responses/internalServerError"
+          }
+        }
+      }
+    },
+    "/cloudmigration/migration/{id}": {
+      "get": {
+        "description": "It returns migrations that has been created.",
+        "tags": [
+          "migrations"
+        ],
+        "summary": "Get a cloud migration.",
+        "operationId": "getCloudMigration",
+        "parameters": [
+          {
+            "type": "integer",
+            "format": "int64",
+            "description": "ID of an migration",
+            "name": "id",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/responses/cloudMigrationResponse"
+          },
+          "401": {
+            "$ref": "#/responses/unauthorisedError"
+          },
+          "403": {
+            "$ref": "#/responses/forbiddenError"
+          },
+          "500": {
+            "$ref": "#/responses/internalServerError"
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "migrations"
+        ],
+        "summary": "Delete a migration.",
+        "operationId": "deleteCloudMigration",
+        "parameters": [
+          {
+            "type": "integer",
+            "format": "int64",
+            "description": "ID of an migration",
+            "name": "id",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "401": {
+            "$ref": "#/responses/unauthorisedError"
+          },
+          "403": {
+            "$ref": "#/responses/forbiddenError"
+          },
+          "500": {
+            "$ref": "#/responses/internalServerError"
+          }
+        }
+      }
+    },
+    "/cloudmigration/migration/{id}/run": {
+      "get": {
+        "tags": [
+          "migrations"
+        ],
+        "summary": "Get a list of migration runs for a migration.",
+        "operationId": "getCloudMigrationRunList",
+        "parameters": [
+          {
+            "type": "integer",
+            "format": "int64",
+            "description": "ID of an migration",
+            "name": "id",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/responses/cloudMigrationRunListResponse"
+          },
+          "401": {
+            "$ref": "#/responses/unauthorisedError"
+          },
+          "403": {
+            "$ref": "#/responses/forbiddenError"
+          },
+          "500": {
+            "$ref": "#/responses/internalServerError"
+          }
+        }
+      }
+    },
+    "/cloudmigration/migration/{id}/run/{runID}": {
+      "get": {
+        "tags": [
+          "migrations"
+        ],
+        "summary": "Get the result of a single migration run.",
+        "operationId": "getCloudMigrationRun",
+        "parameters": [
+          {
+            "type": "integer",
+            "format": "int64",
+            "description": "ID of an migration",
+            "name": "id",
+            "in": "path",
+            "required": true
+          },
+          {
+            "type": "integer",
+            "format": "int64",
+            "description": "Run ID of a migration run",
+            "name": "runID",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/responses/cloudMigrationRunResponse"
+          },
+          "401": {
+            "$ref": "#/responses/unauthorisedError"
+          },
+          "403": {
+            "$ref": "#/responses/forbiddenError"
+          },
+          "500": {
+            "$ref": "#/responses/internalServerError"
+          }
+        }
+      }
+    },
+    "/cloudmigration/token": {
+      "post": {
+        "tags": [
+          "migrations"
+        ],
+        "summary": "Create gcom access token.",
+        "operationId": "createCloudMigrationToken",
+        "responses": {
+          "200": {
+            "$ref": "#/responses/cloudMigrationCreateTokenResponse"
+          },
+          "401": {
+            "$ref": "#/responses/unauthorisedError"
+          },
+          "403": {
+            "$ref": "#/responses/forbiddenError"
+          },
+          "500": {
+            "$ref": "#/responses/internalServerError"
+          }
+        }
+      }
+    },
     "/dashboard/snapshots": {
       "get": {
         "tags": [
@@ -7209,74 +7419,6 @@
         }
       }
     },
-    "/reports/render/pdf/{dashboardID}": {
-      "get": {
-        "description": "Please refer to [reports enterprise](#/reports/renderReportPDFs) instead. This will be removed in Grafana 10.",
-        "produces": [
-          "application/pdf"
-        ],
-        "tags": [
-          "reports",
-          "enterprise"
-        ],
-        "summary": "Render report for dashboard.",
-        "operationId": "renderReportPDF",
-        "deprecated": true,
-        "parameters": [
-          {
-            "type": "integer",
-            "format": "int64",
-            "name": "dashboardID",
-            "in": "path",
-            "required": true
-          },
-          {
-            "type": "string",
-            "name": "title",
-            "in": "query"
-          },
-          {
-            "type": "string",
-            "name": "variables",
-            "in": "query"
-          },
-          {
-            "type": "string",
-            "name": "from",
-            "in": "query"
-          },
-          {
-            "type": "string",
-            "name": "to",
-            "in": "query"
-          },
-          {
-            "type": "string",
-            "name": "orientation",
-            "in": "query"
-          },
-          {
-            "type": "string",
-            "name": "layout",
-            "in": "query"
-          }
-        ],
-        "responses": {
-          "200": {
-            "$ref": "#/responses/contentResponse"
-          },
-          "400": {
-            "$ref": "#/responses/badRequestError"
-          },
-          "401": {
-            "$ref": "#/responses/unauthorisedError"
-          },
-          "500": {
-            "$ref": "#/responses/internalServerError"
-          }
-        }
-      }
-    },
     "/reports/render/pdfs": {
       "get": {
         "description": "Available to all users and with a valid license.",
@@ -9806,6 +9948,13 @@
     },
     "/v1/provisioning/alert-rules/export": {
       "get": {
+        "produces": [
+          "application/json",
+          "application/yaml",
+          "application/terraform+hcl",
+          "text/yaml",
+          "text/hcl"
+        ],
         "tags": [
           "provisioning"
         ],
@@ -9820,9 +9969,14 @@
             "in": "query"
           },
           {
+            "enum": [
+              "yaml",
+              "json",
+              "hcl"
+            ],
             "type": "string",
             "default": "yaml",
-            "description": "Format of the downloaded file, either yaml or json. Accept header can also be used, but the query parameter will take precedence.",
+            "description": "Format of the downloaded file. Supported yaml, json or hcl. Accept header can also be used, but the query parameter will take precedence.",
             "name": "format",
             "in": "query"
           },
@@ -9966,7 +10120,9 @@
         "produces": [
           "application/json",
           "application/yaml",
-          "text/yaml"
+          "application/terraform+hcl",
+          "text/yaml",
+          "text/hcl"
         ],
         "tags": [
           "provisioning"
@@ -9982,9 +10138,14 @@
             "in": "query"
           },
           {
+            "enum": [
+              "yaml",
+              "json",
+              "hcl"
+            ],
             "type": "string",
             "default": "yaml",
-            "description": "Format of the downloaded file, either yaml or json. Accept header can also be used, but the query parameter will take precedence.",
+            "description": "Format of the downloaded file. Supported yaml, json or hcl. Accept header can also be used, but the query parameter will take precedence.",
             "name": "format",
             "in": "query"
           },
@@ -10074,6 +10235,13 @@
     },
     "/v1/provisioning/contact-points/export": {
       "get": {
+        "produces": [
+          "application/json",
+          "application/yaml",
+          "application/terraform+hcl",
+          "text/yaml",
+          "text/hcl"
+        ],
         "tags": [
           "provisioning"
         ],
@@ -10088,9 +10256,14 @@
             "in": "query"
           },
           {
+            "enum": [
+              "yaml",
+              "json",
+              "hcl"
+            ],
             "type": "string",
             "default": "yaml",
-            "description": "Format of the downloaded file, either yaml or json. Accept header can also be used, but the query parameter will take precedence.",
+            "description": "Format of the downloaded file. Supported yaml, json or hcl. Accept header can also be used, but the query parameter will take precedence.",
             "name": "format",
             "in": "query"
           },
@@ -10235,7 +10408,7 @@
         "tags": [
           "provisioning"
         ],
-        "summary": "Update the interval of a rule group.",
+        "summary": "Create or update alert rule group.",
         "operationId": "RoutePutAlertRuleGroup",
         "parameters": [
           {
@@ -10322,7 +10495,9 @@
         "produces": [
           "application/json",
           "application/yaml",
-          "text/yaml"
+          "application/terraform+hcl",
+          "text/yaml",
+          "text/hcl"
         ],
         "tags": [
           "provisioning"
@@ -10338,9 +10513,14 @@
             "in": "query"
           },
           {
+            "enum": [
+              "yaml",
+              "json",
+              "hcl"
+            ],
             "type": "string",
             "default": "yaml",
-            "description": "Format of the downloaded file, either yaml or json. Accept header can also be used, but the query parameter will take precedence.",
+            "description": "Format of the downloaded file. Supported yaml, json or hcl. Accept header can also be used, but the query parameter will take precedence.",
             "name": "format",
             "in": "query"
           },
@@ -10427,6 +10607,13 @@
     },
     "/v1/provisioning/mute-timings/export": {
       "get": {
+        "produces": [
+          "application/json",
+          "application/yaml",
+          "application/terraform+hcl",
+          "text/yaml",
+          "text/hcl"
+        ],
         "tags": [
           "provisioning"
         ],
@@ -10441,9 +10628,14 @@
             "in": "query"
           },
           {
+            "enum": [
+              "yaml",
+              "json",
+              "hcl"
+            ],
             "type": "string",
             "default": "yaml",
-            "description": "Format of the downloaded file, either yaml or json. Accept header can also be used, but the query parameter will take precedence.",
+            "description": "Format of the downloaded file. Supported yaml, json or hcl. Accept header can also be used, but the query parameter will take precedence.",
             "name": "format",
             "in": "query"
           }
@@ -10567,6 +10759,13 @@
     },
     "/v1/provisioning/mute-timings/{name}/export": {
       "get": {
+        "produces": [
+          "application/json",
+          "application/yaml",
+          "application/terraform+hcl",
+          "text/yaml",
+          "text/hcl"
+        ],
         "tags": [
           "provisioning"
         ],
@@ -10581,9 +10780,14 @@
             "in": "query"
           },
           {
+            "enum": [
+              "yaml",
+              "json",
+              "hcl"
+            ],
             "type": "string",
             "default": "yaml",
-            "description": "Format of the downloaded file, either yaml or json. Accept header can also be used, but the query parameter will take precedence.",
+            "description": "Format of the downloaded file. Supported yaml, json or hcl. Accept header can also be used, but the query parameter will take precedence.",
             "name": "format",
             "in": "query"
           },
@@ -10687,6 +10891,13 @@
     },
     "/v1/provisioning/policies/export": {
       "get": {
+        "produces": [
+          "application/json",
+          "application/yaml",
+          "application/terraform+hcl",
+          "text/yaml",
+          "text/hcl"
+        ],
         "tags": [
           "provisioning"
         ],
@@ -12497,6 +12708,81 @@
         }
       }
     },
+    "CloudMigrationListResponse": {
+      "type": "object",
+      "properties": {
+        "migrations": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/CloudMigrationResponse"
+          }
+        }
+      }
+    },
+    "CloudMigrationResponse": {
+      "type": "object",
+      "properties": {
+        "created": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "id": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "stack": {
+          "type": "string"
+        },
+        "updated": {
+          "type": "string",
+          "format": "date-time"
+        }
+      }
+    },
+    "CloudMigrationRun": {
+      "type": "object",
+      "properties": {
+        "created": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "finished": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "id": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "items": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/MigratedResource"
+          }
+        },
+        "result": {
+          "$ref": "#/definitions/MigrationResult"
+        },
+        "uid": {
+          "type": "string"
+        },
+        "updated": {
+          "type": "string",
+          "format": "date-time"
+        }
+      }
+    },
+    "CloudMigrationRunList": {
+      "type": "object",
+      "properties": {
+        "runs": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/CloudMigrationRun"
+          }
+        }
+      }
+    },
     "ConfFloat64": {
       "description": "ConfFloat64 is a float64. It Marshals float64 values of NaN of Inf\nto null.",
       "type": "number",
@@ -12707,6 +12993,14 @@
       "format": "uint8",
       "title": "CounterResetHint contains the known information about a counter reset,"
     },
+    "CreateAccessTokenResponseDTO": {
+      "type": "object",
+      "properties": {
+        "token": {
+          "type": "string"
+        }
+      }
+    },
     "CreateCorrelationCommand": {
       "description": "CreateCorrelationCommand is the command for creating a correlation",
       "type": "object",
@@ -12846,13 +13140,6 @@
     "CreateOrUpdateReportConfig": {
       "type": "object",
       "properties": {
-        "dashboardId": {
-          "type": "integer",
-          "format": "int64"
-        },
-        "dashboardUid": {
-          "type": "string"
-        },
         "dashboards": {
           "type": "array",
           "items": {
@@ -12895,9 +13182,6 @@
         },
         "state": {
           "$ref": "#/definitions/State"
-        },
-        "templateVars": {
-          "type": "object"
         }
       }
     },
@@ -15640,6 +15924,48 @@
         }
       }
     },
+    "MigratedResource": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "name": {
+          "type": "string"
+        },
+        "refID": {
+          "type": "string"
+        },
+        "result": {
+          "$ref": "#/definitions/MigratedResourceResult"
+        },
+        "type": {
+          "type": "string"
+        }
+      }
+    },
+    "MigratedResourceResult": {
+      "type": "object",
+      "properties": {
+        "message": {
+          "type": "string"
+        },
+        "status": {
+          "type": "string"
+        }
+      }
+    },
+    "MigrationResult": {
+      "type": "object",
+      "properties": {
+        "message": {
+          "type": "string"
+        },
+        "status": {
+          "type": "string"
+        }
+      }
+    },
     "MoveFolderCommand": {
       "description": "MoveFolderCommand captures the information required by the folder service\nto move a folder.",
       "type": "object",
@@ -17690,16 +18016,6 @@
           "type": "string",
           "format": "date-time"
         },
-        "dashboardId": {
-          "type": "integer",
-          "format": "int64"
-        },
-        "dashboardName": {
-          "type": "string"
-        },
-        "dashboardUid": {
-          "type": "string"
-        },
         "dashboards": {
           "type": "array",
           "items": {
@@ -17750,9 +18066,6 @@
         },
         "state": {
           "$ref": "#/definitions/State"
-        },
-        "templateVars": {
-          "type": "object"
         },
         "uid": {
           "type": "string"
@@ -20575,6 +20888,7 @@
       }
     },
     "alertGroups": {
+      "description": "AlertGroups alert groups",
       "type": "array",
       "items": {
         "$ref": "#/definitions/alertGroup"
@@ -20968,6 +21282,7 @@
       }
     },
     "postableSilence": {
+      "description": "PostableSilence postable silence",
       "type": "object",
       "required": [
         "comment",
@@ -21033,7 +21348,6 @@
       }
     },
     "receiver": {
-      "description": "Receiver receiver",
       "type": "object",
       "required": [
         "active",
@@ -21330,6 +21644,36 @@
           "type": "integer",
           "format": "uint8"
         }
+      }
+    },
+    "cloudMigrationCreateTokenResponse": {
+      "description": "(empty)",
+      "schema": {
+        "$ref": "#/definitions/CreateAccessTokenResponseDTO"
+      }
+    },
+    "cloudMigrationListResponse": {
+      "description": "(empty)",
+      "schema": {
+        "$ref": "#/definitions/CloudMigrationListResponse"
+      }
+    },
+    "cloudMigrationResponse": {
+      "description": "(empty)",
+      "schema": {
+        "$ref": "#/definitions/CloudMigrationResponse"
+      }
+    },
+    "cloudMigrationRunListResponse": {
+      "description": "(empty)",
+      "schema": {
+        "$ref": "#/definitions/CloudMigrationRunList"
+      }
+    },
+    "cloudMigrationRunResponse": {
+      "description": "(empty)",
+      "schema": {
+        "$ref": "#/definitions/CloudMigrationRun"
       }
     },
     "conflictError": {

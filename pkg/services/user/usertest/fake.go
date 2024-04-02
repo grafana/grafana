@@ -16,6 +16,7 @@ type FakeUserService struct {
 	ExpectedUserProfileDTOs  []*user.UserProfileDTO
 	ExpectedUsageStats       map[string]any
 
+	UpdateFn            func(ctx context.Context, cmd *user.UpdateUserCommand) error
 	GetSignedInUserFn   func(ctx context.Context, query *user.GetSignedInUserQuery) (*user.SignedInUser, error)
 	CreateFn            func(ctx context.Context, cmd *user.CreateUserCommand) (*user.User, error)
 	DisableFn           func(ctx context.Context, cmd *user.DisableUserCommand) error
@@ -61,6 +62,9 @@ func (f *FakeUserService) GetByEmail(ctx context.Context, query *user.GetUserByE
 }
 
 func (f *FakeUserService) Update(ctx context.Context, cmd *user.UpdateUserCommand) error {
+	if f.UpdateFn != nil {
+		return f.UpdateFn(ctx, cmd)
+	}
 	return f.ExpectedError
 }
 

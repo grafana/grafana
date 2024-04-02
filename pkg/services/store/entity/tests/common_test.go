@@ -58,7 +58,7 @@ func createServiceAccountAdminToken(t *testing.T, env *server.TestEnv) (string, 
 
 type testContext struct {
 	authToken string
-	client    entity.EntityStoreServer
+	client    entity.EntityStoreClient
 	user      *user.SignedInUser
 	ctx       context.Context
 }
@@ -88,9 +88,11 @@ func createTestContext(t *testing.T) testContext {
 	store, err := sqlstash.ProvideSQLEntityServer(eDB)
 	require.NoError(t, err)
 
+	client := entity.NewEntityStoreClientLocal(store)
+
 	return testContext{
 		authToken: authToken,
-		client:    store,
+		client:    client,
 		user:      serviceAccountUser,
 		ctx:       appcontext.WithUser(context.Background(), serviceAccountUser),
 	}

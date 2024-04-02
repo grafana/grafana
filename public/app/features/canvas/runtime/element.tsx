@@ -1,5 +1,5 @@
 import React, { CSSProperties } from 'react';
-import { OnDrag, OnResize } from 'react-moveable/declaration/types';
+import { OnDrag, OnResize, OnRotate } from 'react-moveable/declaration/types';
 
 import { LayerElement } from 'app/core/components/Layers/types';
 import {
@@ -19,6 +19,8 @@ import { RootElement } from './root';
 import { Scene } from './scene';
 
 let counter = 0;
+
+const SVGElements = new Set<string>(['parallelogram', 'triangle', 'cloud', 'ellipse']);
 
 export class ElementState implements LayerElement {
   // UID necessary for moveable to work (for now)
@@ -50,7 +52,7 @@ export class ElementState implements LayerElement {
       vertical: VerticalConstraint.Top,
       horizontal: HorizontalConstraint.Left,
     };
-    options.placement = options.placement ?? { width: 100, height: 100, top: 0, left: 0 };
+    options.placement = options.placement ?? { width: 100, height: 100, top: 0, left: 0, rotation: 0 };
     options.background = options.background ?? { color: { fixed: 'transparent' } };
     options.border = options.border ?? { color: { fixed: 'dark-green' } };
     const scene = this.getScene();
@@ -97,6 +99,7 @@ export class ElementState implements LayerElement {
       // Minimum element size is 10x10
       minWidth: '10px',
       minHeight: '10px',
+      rotate: `${placement.rotation ?? 0}deg`,
     };
 
     const translate = ['0px', '0px'];
@@ -186,13 +189,31 @@ export class ElementState implements LayerElement {
     style.transform = `translate(${translate[0]}, ${translate[1]})`;
     this.options.placement = placement;
     this.sizeStyle = style;
+
     if (this.div) {
       for (const key in this.sizeStyle) {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         this.div.style[key as any] = (this.sizeStyle as any)[key];
       }
 
-      for (const key in this.dataStyle) {
-        this.div.style[key as any] = (this.dataStyle as any)[key];
+      // TODO: This is a hack, we should have a better way to handle this
+      const elementType = this.options.type;
+      if (!SVGElements.has(elementType)) {
+        // apply styles to div if it's not an SVG element
+        for (const key in this.dataStyle) {
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          this.div.style[key as any] = (this.dataStyle as any)[key];
+        }
+      } else {
+        // ELEMENT IS SVG
+        // clean data styles from div if it's an SVG element; SVG elements have their own data styles;
+        // this is necessary for changing type of element cases;
+        // wrapper div element (this.div) doesn't re-render (has static `key` property),
+        // so we have to clean styles manually;
+        for (const key in this.dataStyle) {
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          this.div.style[key as any] = '';
+        }
       }
     }
   }
@@ -212,21 +233,56 @@ export class ElementState implements LayerElement {
         : parseFloat(getComputedStyle(this.div?.parentElement!).borderWidth);
     }
 
+    // For elements with rotation, a delta needs to be applied to account for bounding box rotation
+    // TODO: Fix behavior for top+bottom, left+right, center, and scale constraints
+    let rotationTopOffset = 0;
+    let rotationLeftOffset = 0;
+    if (this.options.placement?.rotation && this.options.placement?.width && this.options.placement?.height) {
+      const rotationDegrees = this.options.placement.rotation;
+      const rotationRadians = (Math.PI / 180) * rotationDegrees;
+      let rotationOffset = rotationRadians;
+
+      switch (true) {
+        case rotationDegrees >= 0 && rotationDegrees < 90:
+          // no-op
+          break;
+        case rotationDegrees >= 90 && rotationDegrees < 180:
+          rotationOffset = Math.PI - rotationRadians;
+          break;
+        case rotationDegrees >= 180 && rotationDegrees < 270:
+          rotationOffset = Math.PI + rotationRadians;
+          break;
+        case rotationDegrees >= 270:
+          rotationOffset = -rotationRadians;
+          break;
+      }
+
+      const calculateDelta = (dimension1: number, dimension2: number) =>
+        (dimension1 / 2) * Math.sin(rotationOffset) + (dimension2 / 2) * (Math.cos(rotationOffset) - 1);
+
+      rotationTopOffset = calculateDelta(this.options.placement.width, this.options.placement.height);
+      rotationLeftOffset = calculateDelta(this.options.placement.height, this.options.placement.width);
+    }
+
     const relativeTop =
       elementContainer && parentContainer
-        ? Math.round(elementContainer.top - parentContainer.top - parentBorderWidth) / transformScale
+        ? Math.round(elementContainer.top - parentContainer.top - parentBorderWidth + rotationTopOffset) /
+          transformScale
         : 0;
     const relativeBottom =
       elementContainer && parentContainer
-        ? Math.round(parentContainer.bottom - parentBorderWidth - elementContainer.bottom) / transformScale
+        ? Math.round(parentContainer.bottom - parentBorderWidth - elementContainer.bottom + rotationTopOffset) /
+          transformScale
         : 0;
     const relativeLeft =
       elementContainer && parentContainer
-        ? Math.round(elementContainer.left - parentContainer.left - parentBorderWidth) / transformScale
+        ? Math.round(elementContainer.left - parentContainer.left - parentBorderWidth + rotationLeftOffset) /
+          transformScale
         : 0;
     const relativeRight =
       elementContainer && parentContainer
-        ? Math.round(parentContainer.right - parentBorderWidth - elementContainer.right) / transformScale
+        ? Math.round(parentContainer.right - parentBorderWidth - elementContainer.right + rotationLeftOffset) /
+          transformScale
         : 0;
 
     const placement: Placement = {};
@@ -284,6 +340,12 @@ export class ElementState implements LayerElement {
         placement.left = (relativeLeft / (parentContainer?.width ?? width)) * 100;
         placement.right = (relativeRight / (parentContainer?.width ?? width)) * 100;
         break;
+    }
+
+    if (this.options.placement?.rotation) {
+      placement.rotation = this.options.placement.rotation;
+      placement.width = this.options.placement.width;
+      placement.height = this.options.placement.height;
     }
 
     this.options.placement = placement;
@@ -349,6 +411,10 @@ export class ElementState implements LayerElement {
       if (css.backgroundImage) {
         css.backgroundOrigin = 'padding-box';
       }
+    }
+
+    if (border && border.radius !== undefined) {
+      css.borderRadius = `${border.radius}px`;
     }
 
     this.dataStyle = css;
@@ -425,16 +491,36 @@ export class ElementState implements LayerElement {
     event.target.style.transform = event.transform;
   };
 
+  applyRotate = (event: OnRotate) => {
+    const absoluteRotationDegree = event.absoluteRotation;
+
+    const placement = this.options.placement!;
+    // Ensure rotation is between 0 and 360
+    placement.rotation = absoluteRotationDegree - Math.floor(absoluteRotationDegree / 360) * 360;
+    event.target.style.transform = event.transform;
+  };
+
   // kinda like:
   // https://github.com/grafana/grafana-edge-app/blob/main/src/panels/draw/WrapItem.tsx#L44
   applyResize = (event: OnResize, transformScale = 1) => {
     const placement = this.options.placement!;
 
     const style = event.target.style;
-    const deltaX = event.delta[0] / transformScale;
-    const deltaY = event.delta[1] / transformScale;
-    const dirLR = event.direction[0];
-    const dirTB = event.direction[1];
+    let deltaX = event.delta[0] / transformScale;
+    let deltaY = event.delta[1] / transformScale;
+    let dirLR = event.direction[0];
+    let dirTB = event.direction[1];
+
+    // Handle case when element is rotated
+    if (placement.rotation) {
+      const rotation = placement.rotation ?? 0;
+      const rotationInRadians = (rotation * Math.PI) / 180;
+      const originalDirLR = dirLR;
+      const originalDirTB = dirTB;
+
+      dirLR = Math.sign(originalDirLR * Math.cos(rotationInRadians) - originalDirTB * Math.sin(rotationInRadians));
+      dirTB = Math.sign(originalDirLR * Math.sin(rotationInRadians) + originalDirTB * Math.cos(rotationInRadians));
+    }
 
     if (dirLR === 1) {
       placement.width = event.width;

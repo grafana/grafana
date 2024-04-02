@@ -25,6 +25,7 @@ export interface AzureSettings {
   managedIdentityEnabled: boolean;
   workloadIdentityEnabled: boolean;
   userIdentityEnabled: boolean;
+  userIdentityFallbackCredentialsEnabled: boolean;
 }
 
 export interface AzureCloudInfo {
@@ -129,6 +130,7 @@ export class GrafanaBootConfig implements GrafanaConfig {
     managedIdentityEnabled: false,
     workloadIdentityEnabled: false,
     userIdentityEnabled: false,
+    userIdentityFallbackCredentialsEnabled: false,
   };
   caching = {
     enabled: false,
@@ -212,7 +214,9 @@ export class GrafanaBootConfig implements GrafanaConfig {
       systemDateFormats.update(this.dateFormats);
     }
 
-    overrideFeatureTogglesFromUrl(this);
+    if (this.buildInfo.env === 'development') {
+      overrideFeatureTogglesFromUrl(this);
+    }
     overrideFeatureTogglesFromLocalStorage(this);
 
     if (this.featureToggles.disableAngular) {
@@ -249,9 +253,7 @@ function overrideFeatureTogglesFromUrl(config: GrafanaBootConfig) {
     return;
   }
 
-  const isLocalDevEnv = config.buildInfo.env === 'development';
-
-  const prodUrlAllowedFeatureFlags = new Set([
+  const migrationFeatureFlags = new Set([
     'autoMigrateOldPanels',
     'autoMigrateGraphPanel',
     'autoMigrateTablePanel',
@@ -267,7 +269,8 @@ function overrideFeatureTogglesFromUrl(config: GrafanaBootConfig) {
       const featureToggles = config.featureToggles as Record<string, boolean>;
       const featureName = key.substring(10);
 
-      if (!isLocalDevEnv && !prodUrlAllowedFeatureFlags.has(featureName)) {
+      // skip the migration feature flags
+      if (migrationFeatureFlags.has(featureName)) {
         return;
       }
 

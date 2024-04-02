@@ -27,6 +27,24 @@ Canvases combine the power of Grafana with the flexibility of custom elements. C
 
 ## Elements
 
+Elements are the basic building blocks of a canvas and they help you visualize data with different shapes and options. You can rotate and move elements around the canvas. When you move elements, snapping and alignment guides help you create more precise layouts.
+
+{{% admonition type="note" %}}
+Element snapping and alignment only works when the canvas is not zoomed in.
+{{% /admonition %}}
+
+When you select an element that you've added to a canvas, you can access editing options for it that are dependent on the element type. The following sections describe the different elements available.
+
+### Basic shapes
+
+A basic shape element can display text (both fixed and field data) and its background color can be changed based on data thresholds. You can add the following basic shapes to a canvas:
+
+- Cloud
+- Ellipse
+- Parallelogram
+- Rectangle
+- Triangle
+
 ### Metric value
 
 The metric value element lets you easily select the data you want to display on a canvas. This element has a unique “edit” mode that can be triggered either through the context menu “Edit” option or by double clicking. When in edit mode you can select which field data that you want to display.
@@ -38,14 +56,6 @@ The metric value element lets you easily select the data you want to display on 
 The text element lets you easily add text to the canvas. The element also supports an editing mode, triggered via either double clicking or the edit menu option in the context menu.
 
 {{< video-embed src="/static/img/docs/canvas-panel/canvas-text-9-2-0.mp4" max-width="750px" caption="Text element demo" >}}
-
-### Ellipse
-
-The ellipse element lets you add a basic ellipse to the canvas. An ellipse element can display text (both fixed and field data) and its background color can be changed based on data thresholds.
-
-### Rectangle
-
-The rectangle element lets you add a basic rectangle to the canvas. A rectangle element can display text (both fixed and field data) and its background color can be changed based on data thresholds.
 
 ### Icon
 
@@ -69,13 +79,27 @@ A button click will only trigger an API call when [inline editing](#inline-editi
 
 ## Connections
 
-When building a canvas, you can connect elements together to create more complex visualizations. Connections are created by dragging from the connection anchor of one element to the connection anchor of another element. You can also create connections to the background of the canvas. Connection anchors are displayed when you hover over an element and inline editing is turned on. To remove a connection, simply click on the connection directly and then press the "Delete" or "Backspace" key.
+When building a canvas, you can connect elements together to create more complex visualizations. Connections are created by dragging from the connection anchor of one element to the connection anchor of another element. You can also create connections to the background of the canvas. Connection anchors are displayed when you hover over an element and inline editing is turned on.
+
+To remove a connection, simply click on the connection directly and then press the "Delete" or "Backspace" key.
 
 {{< video-embed src="/media/docs/grafana/canvas-connections-9-4-0.mp4" max-width="750px" caption="Canvas connections demo" >}}
 
-You can set both the size and color of connections based on fixed or field values. To do so, enter into panel edit mode, select the connection, and modify the connection's properties in the panel editor.
+### Adjust connectors
+
+You can adjust connectors, adding angles to them, to fit the canvas you're working in. When you move connected elements, the connector resizes to fit the space. To adjust a connector, click it to display the midpoint controls and move those as needed. To make a connector a straight line again, move the element or connector until the midpoint controls disappear.
+
+By default, if you move a connector so that it's almost a right angle or a straight line, the connector snaps into that angle or into a straight line. To disable this behavior, press and hold the Ctrl key while adjusting the connector.
+
+{{< video-embed src="/media/docs/grafana/panels-visualizations/gif-canvas-connector-vertex-control-v11.0.mp4>" alt="Changing a connector from a straight line to a right angle" >}}
+
+### Style connectors
+
+You can set the size, color, direction, and style of connections based on fixed or field values. To do so, enter into panel edit mode, select the connection, and modify the connection's properties in the panel editor.
 
 {{< figure src="/media/docs/grafana/screenshot-grafana-10-0-canvas-service-graph.png" max-width="750px" caption="Canvas service graph" >}}
+
+You can also change the shape of a connection anchor to a circle or remove the anchor entirely.
 
 ## Canvas editing
 
@@ -107,16 +131,6 @@ When right clicking an element, you are able to edit, delete, duplicate, and mod
 
 {{< figure src="/static/img/docs/canvas-panel/canvas-context-menu-9-2-0.png" max-width="750px" caption="Canvas element context menu" >}}
 
-### Element snapping and alignment
-
-When you're moving elements around the canvas, snapping and alignment guides help you create more precise layouts.
-
-{{% admonition type="note" %}}
-Currently, element snapping and alignment only works when the canvas is not zoomed in.
-{{% /admonition %}}
-
-<!-- TODO: Add gif showcasing feature (when creating what's new entry for 10.4) -->
-
 ## Canvas options
 
 ### Inline editing
@@ -127,7 +141,7 @@ The inline editing toggle lets you lock or unlock the canvas. When turned off th
 
 ### Data links
 
-Canvases support [data links](https://grafana.com/docs/grafana/latest/panels-visualizations/configure-data-links/), but only for metric-value, text, rectangle, and ellipse elements. You can add a data link by following these steps:
+Canvases support [data links](https://grafana.com/docs/grafana/latest/panels-visualizations/configure-data-links/), but only for all elements except drone and button elements. You can add a data link by following these steps:
 
 1. Set an element to be tied to a field value.
 1. Turn off the inline editing toggle.

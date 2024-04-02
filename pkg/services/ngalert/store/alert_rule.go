@@ -198,7 +198,10 @@ func (st DBstore) UpdateAlertRules(ctx context.Context, rules []ngmodels.UpdateR
 		}
 
 		ruleVersions := make([]ngmodels.AlertRuleVersion, 0, len(rules))
-		for _, r := range rules {
+		for i := range rules {
+			// We do indexed access way to avoid "G601: Implicit memory aliasing in for loop."
+			// Doing this will be unnecessary with go 1.22 https://stackoverflow.com/a/68247837/767660
+			r := rules[i]
 			var parentVersion int64
 			r.New.ID = r.Existing.ID
 			r.New.Version = r.Existing.Version // xorm will take care of increasing it (see https://xorm.io/docs/chapter-06/1.lock/)
