@@ -16,5 +16,5 @@
     "swc-loader": "0.2.6",
     "webpack": "5.91.0"
   },
-  "packageManager": "yarn@4.1.0"
+  "packageManager": "yarn@4.1.1"
 }
