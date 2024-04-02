@@ -92,8 +92,8 @@ jest.mock('@grafana/runtime', () => ({
         return {
           items: Object.values(scopesMocks).map((scope) => ({
             spec: {
-              dashboardUids: scope.dashboards.map((dashboard) => dashboard.uid),
-              scopeUid: scope.uid,
+              dashboards: scope.dashboards.map((dashboard) => dashboard.uid),
+              scope: scope.uid,
             },
           })),
         };

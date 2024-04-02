@@ -37,7 +37,7 @@ export const HoverCard = ({
   }
 
   const body = (
-    <Stack direction="column" gap={0}>
+    <Stack direction="column" gap={0} role="tooltip">
       {header && <div className={styles.card.header}>{header}</div>}
       <div className={styles.card.body}>{content}</div>
       {footer && <div className={styles.card.footer}>{footer}</div>}
@@ -69,6 +69,7 @@ export const HoverCard = ({
               onMouseLeave: hidePopper,
               onFocus: showPopper,
               onBlur: hidePopper,
+              tabIndex: 0,
             })}
           </>
         );

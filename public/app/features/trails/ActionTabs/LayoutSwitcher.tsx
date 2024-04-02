@@ -20,13 +20,21 @@ export class LayoutSwitcher extends SceneObjectBase<LayoutSwitcherState> {
 
   public Selector({ model }: { model: LayoutSwitcher }) {
     const { options } = model.useState();
-    const { layout } = model.getMetricScene().useState();
+    const activeLayout = model.useActiveLayout();
 
     return (
       <Field label="View">
-        <RadioButtonGroup options={options} value={layout} onChange={model.onLayoutChange} />
+        <RadioButtonGroup options={options} value={activeLayout} onChange={model.onLayoutChange} />
       </Field>
     );
+  }
+
+  private useActiveLayout() {
+    const { options } = this.useState();
+    const { layout } = this.getMetricScene().useState();
+
+    const activeLayout = options.map((option) => option.value).includes(layout) ? layout : options[0].value;
+    return activeLayout;
   }
 
   public onLayoutChange = (active: LayoutType) => {
@@ -35,7 +43,7 @@ export class LayoutSwitcher extends SceneObjectBase<LayoutSwitcherState> {
 
   public static Component = ({ model }: SceneComponentProps<LayoutSwitcher>) => {
     const { layouts, options } = model.useState();
-    const { layout: activeLayout } = model.getMetricScene().useState();
+    const activeLayout = model.useActiveLayout();
 
     const index = options.findIndex((o) => o.value === activeLayout);
     if (index === -1) {
