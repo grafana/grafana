@@ -88,7 +88,7 @@ func (cma *CloudMigrationAPI) CreateToken(c *contextmodel.ReqContext) response.R
 // 403: forbiddenError
 // 500: internalServerError
 func (cma *CloudMigrationAPI) GetMigrationList(c *contextmodel.ReqContext) response.Response {
-	ctx, span := cma.tracer.Start(c.Req.Context(), "MigrationAPI.GetMigration")
+	ctx, span := cma.tracer.Start(c.Req.Context(), "MigrationAPI.GetMigrationList")
 	defer span.End()
 
 	cloudMigrations, err := cma.cloudMigrationService.GetMigrationList(ctx)
