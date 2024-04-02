@@ -103,6 +103,7 @@ These built-in core data sources are also included in the Grafana documentation:
 - [OpenTSDB]({{< relref "./opentsdb" >}})
 - [PostgreSQL]({{< relref "./postgres" >}})
 - [Prometheus]({{< relref "./prometheus" >}})
+- [Pyroscope]({{< relref "./pyroscope" >}})
 - [Tempo]({{< relref "./tempo" >}})
 - [Testdata]({{< relref "./testdata" >}})
 - [Zipkin]({{< relref "./zipkin" >}})
