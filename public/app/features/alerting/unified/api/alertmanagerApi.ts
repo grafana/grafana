@@ -30,7 +30,8 @@ import { alertingApi } from './alertingApi';
 import { fetchAlertManagerConfig, fetchStatus } from './alertmanager';
 import { featureDiscoveryApi } from './featureDiscoveryApi';
 
-const LIMIT_TO_SUCCESSFULLY_APPLIED_AMS = 30;
+// limits the number of previously applied Alertmanager configurations to be shown in the UI
+const ALERTMANAGER_CONFIGURATION_CONFIGURATION_HISTORY_LIMIT = 30;
 const FETCH_CONFIG_RETRY_TIMEOUT = 30 * 1000;
 
 export interface AlertmanagersChoiceResponse {
@@ -121,7 +122,7 @@ export const alertmanagerApi = alertingApi.injectEndpoints({
       query: () => ({
         url: `/api/alertmanager/${getDatasourceAPIUid(
           GRAFANA_RULES_SOURCE_NAME
-        )}/config/history?limit=${LIMIT_TO_SUCCESSFULLY_APPLIED_AMS}`,
+        )}/config/history?limit=${ALERTMANAGER_CONFIGURATION_CONFIGURATION_HISTORY_LIMIT}`,
       }),
     }),
 
