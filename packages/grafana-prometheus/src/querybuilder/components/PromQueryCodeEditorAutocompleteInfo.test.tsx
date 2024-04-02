@@ -113,10 +113,10 @@ describe('PromQueryEditorSelector', () => {
   it('shows autocomplete info when the expected event fires', async () => {
     const { findByTestId } = renderWithCodeMode();
     fireEvent(
-      document,
+      window,
       createEvent(
         CODE_MODE_SUGGESTIONS_INCOMPLETE_EVENT,
-        document,
+        window,
         {
           detail: { limit: 100, datasourceUid: 'myDataSourceUid' },
         },
@@ -131,10 +131,10 @@ describe('PromQueryEditorSelector', () => {
   it('does not show autocomplete info when the triggering event refers to a different data source', async () => {
     const { queryByTestId } = renderWithCodeMode();
     fireEvent(
-      document,
+      window,
       createEvent(
         CODE_MODE_SUGGESTIONS_INCOMPLETE_EVENT,
-        document,
+        window,
         {
           detail: { limit: 100, datasourceUid: 'theWrongUid' },
         },

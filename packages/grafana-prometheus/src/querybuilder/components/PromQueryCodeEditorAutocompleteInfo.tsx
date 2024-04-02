@@ -32,10 +32,10 @@ export function PromQueryCodeEditorAutocompleteInfo(props: Readonly<Props>) {
       }
     };
 
-    document.addEventListener(CODE_MODE_SUGGESTIONS_INCOMPLETE_EVENT, handleSuggestionsIncompleteEvent);
+    addEventListener(CODE_MODE_SUGGESTIONS_INCOMPLETE_EVENT, handleSuggestionsIncompleteEvent);
 
     return () => {
-      document.removeEventListener(CODE_MODE_SUGGESTIONS_INCOMPLETE_EVENT, handleSuggestionsIncompleteEvent);
+      removeEventListener(CODE_MODE_SUGGESTIONS_INCOMPLETE_EVENT, handleSuggestionsIncompleteEvent);
     };
   }, [props.datasourceUid]);
 
