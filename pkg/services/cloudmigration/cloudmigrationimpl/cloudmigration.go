@@ -205,6 +205,9 @@ func (s *Service) SaveEncryptedToken(ctx context.Context, token string) error {
 }
 
 func (s *Service) GetMigration(ctx context.Context, id int64) (*cloudmigration.CloudMigration, error) {
+	ctx, span := s.tracer.Start(ctx, "CloudMigrationService.GetMigration")
+	logger := s.log.FromContext(ctx)
+	defer span.End()
 	migration, err := s.store.GetMigration(ctx, id)
 	if err != nil {
 		return nil, err
@@ -218,7 +221,7 @@ func (s *Service) GetMigration(ctx context.Context, id int64) (*cloudmigration.C
 
 	decryptedToken, err := s.secretsService.Decrypt(ctx, decoded)
 	if err != nil {
-		s.log.Error("Failed to decrypt secret", "err", err)
+		logger.Error("Failed to decrypt secret", "err", err)
 		return nil, err
 	}
 	migration.AuthToken = string(decryptedToken)
