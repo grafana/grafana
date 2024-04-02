@@ -5,6 +5,7 @@ import React, { useState } from 'react';
 import { createPortal } from 'react-dom';
 
 import { GrafanaTheme2 } from '@grafana/data';
+import { selectors } from '@grafana/e2e-selectors';
 import { TimeZone } from '@grafana/schema';
 import { useStyles2 } from '@grafana/ui';
 
@@ -83,7 +84,12 @@ export const AnnotationMarker2 = ({
     >
       {contents &&
         createPortal(
-          <div ref={refs.setFloating} className={styles.annoBox} style={floatingStyles} data-testid="annotation-marker">
+          <div
+            ref={refs.setFloating}
+            className={styles.annoBox}
+            style={floatingStyles}
+            data-testid={selectors.pages.Dashboard.Annotations.marker}
+          >
             {contents}
           </div>,
           portalRoot
