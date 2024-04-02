@@ -6,8 +6,8 @@ import (
 	"errors"
 	"fmt"
 	"net/url"
+	"path"
 	"sort"
-	"strings"
 	"sync"
 	"time"
 
@@ -268,16 +268,8 @@ func (d *AlertsRouter) buildExternalURL(ds *datasources.DataSource) (string, err
 		if parsed.Path == "" {
 			parsed.Path = "/"
 		}
-		// Only add /alertmanager if it is not already present.
-		containsAlertmanagerSegment := false
-		parts := strings.Split(parsed.Path, "/")
-		for _, part := range parts {
-			if part == "alertmanager" {
-				containsAlertmanagerSegment = true
-				break
-			}
-		}
-		if !containsAlertmanagerSegment {
+		lastSegment := path.Base(parsed.Path)
+		if lastSegment != "alertmanager" {
 			parsed = parsed.JoinPath("/alertmanager")
 		}
 	}
