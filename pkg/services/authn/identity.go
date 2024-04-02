@@ -27,6 +27,7 @@ const (
 	NamespaceServiceAccount = identity.NamespaceServiceAccount
 	NamespaceAnonymous      = identity.NamespaceAnonymous
 	NamespaceRenderService  = identity.NamespaceRenderService
+	NamespaceAccessPolicy   = identity.NamespaceAccessPolicy
 )
 
 const (
@@ -230,6 +231,7 @@ func (i *Identity) SignedInUser() *user.SignedInUser {
 		Teams:           i.Teams,
 		Permissions:     i.Permissions,
 		IDToken:         i.IDToken,
+		NamespacedID:    i.ID,
 	}
 
 	if namespace == NamespaceAPIKey {

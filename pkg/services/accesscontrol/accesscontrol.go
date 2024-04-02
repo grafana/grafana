@@ -24,6 +24,8 @@ type AccessControl interface {
 
 type Service interface {
 	registry.ProvidesUsageStats
+	// GetRoleByName returns a role by name
+	GetRoleByName(ctx context.Context, orgID int64, roleName string) (*RoleDTO, error)
 	// GetUserPermissions returns user permissions with only action and scope fields set.
 	GetUserPermissions(ctx context.Context, user identity.Requester, options Options) ([]Permission, error)
 	// GetUserPermissionsInOrg return user permission in a specific organization

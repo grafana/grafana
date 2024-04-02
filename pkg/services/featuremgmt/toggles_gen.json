@@ -2063,6 +2063,20 @@
         "hideFromAdminPage": true,
         "hideFromDocs": true
       }
+    },
+    {
+      "metadata": {
+        "name": "authAPIAccessTokenAuth",
+        "resourceVersion": "1711701535283",
+        "creationTimestamp": "2024-03-29T08:38:55Z"
+      },
+      "spec": {
+        "description": "Enables the use of Auth API access tokens for authentication",
+        "stage": "experimental",
+        "codeowner": "@grafana/identity-access-team",
+        "hideFromAdminPage": true,
+        "hideFromDocs": true
+      }
     }
   ]
 }
