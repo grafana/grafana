@@ -861,7 +861,7 @@ var (
 		},
 		{
 			Name:         "prometheusCodeModeMetricNamesSearch",
-			Description:  "Enables search for metric names in Code Mode, to improve performance when working with enormous number of metric names",
+			Description:  "Enables search for metric names in Code Mode, to improve performance when working with an enormous number of metric names",
 			FrontendOnly: true,
 			Stage:        FeatureStageExperimental,
 			Owner:        grafanaObservabilityMetricsSquad,

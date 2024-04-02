@@ -2115,7 +2115,7 @@
         "creationTimestamp": "2024-04-04T14:36:32Z"
       },
       "spec": {
-        "description": "Enables search for metric names in Code Mode, to improve performance when working with enormous number of metric names",
+        "description": "Enables search for metric names in Code Mode, to improve performance when working with an enormous number of metric names",
         "stage": "experimental",
         "codeowner": "@grafana/observability-metrics",
         "frontend": true
