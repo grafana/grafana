@@ -36,7 +36,7 @@ If you are unsure which visualization to pick, Grafana can provide visualization
   - [Pie chart][] is typically used where proportionality is important.
   - [Candlestick][] is typically for financial data where the focus is price/data movement.
   - [Gauge][] is the traditional rounded visual showing how far a single metric is from a threshold.
-  - [XY chart][]
+  - [XY chart][] provides a way to visualize arbitrary x and y values in a graph.
 - Stats & numbers
   - [Stat][] for big stats and optional sparkline.
   - [Bar gauge][] is a horizontal or vertical bar gauge.
