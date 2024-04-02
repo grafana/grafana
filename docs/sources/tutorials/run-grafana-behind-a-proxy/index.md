@@ -225,6 +225,36 @@ http:
           - url: http://192.168.30.10:3000
 ```
 
+### Configure Apache
+
+
+[apache](https://httpd.apache.org/) is a free and open-source cross-platform web server software and can be used as reverse proxy
+
+In your apache vhost configuration file , add the following:
+
+```
+<VirtualHost *:80>
+  ServerName grafana
+  <Location />
+        ProxyPreserveHost On
+        Header always set Cache-Control "no-cache" "expr=%{CONTENT_TYPE} =~ m#text/html#"
+  </Location>
+  ProxyPass / unix:/run/grafana/grafana.sock|http://127.0.0.1:3000/
+  ProxyPassReverse /grafana unix:/run/grafana/grafana.sock|http://127.0.0.1:3000/
+</VirtualHost>
+```
+
+To configure apache to serve Grafana under a _sub path_:
+
+```
+ProxyPass /grafana unix:/run/grafana/grafana.sock|http://127.0.0.1:3000/grafana
+ProxyPassReverse /grafana unix:/run/grafana/grafana.sock|http://127.0.0.1:3000/grafana
+<Location /grafana>
+        ProxyPreserveHost On
+        Header always set Cache-Control "no-cache" "expr=%{CONTENT_TYPE} =~ m#text/html#"
+</Location>
+```
+
 ## Alternative for serving Grafana under a sub path
 
 {{< admonition type="note" >}}
