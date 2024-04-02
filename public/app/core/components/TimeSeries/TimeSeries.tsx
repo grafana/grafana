@@ -42,7 +42,7 @@ export class UnthemedTimeSeries extends Component<TimeSeriesProps> {
   renderLegend = (config: UPlotConfigBuilder) => {
     const { legend, frames } = this.props;
 
-    // JEV: REFACTOR: send this logic to the legend component? or cut off early in a shared function?
+    // JEV: REFACTOR: send this short circuit to the legend component? or cut off early in a shared function?
     if (!config || (legend && !legend.showLegend) || !hasVisibleLegendSeries(config, frames)) {
       return null;
     }

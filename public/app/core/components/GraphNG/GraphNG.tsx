@@ -212,6 +212,7 @@ export class GraphNG extends Component<GraphNGProps, GraphNGState> {
 
     return (
       // JEV: REFACTOR: build legend before here?
+      // JEV: REFACTOR: move layout to panel level?
       <VizLayout width={width} height={height} legend={renderLegend(config)}>
         {(vizWidth: number, vizHeight: number) => (
           <UPlotChart

@@ -116,7 +116,7 @@ export const TimeSeriesPanel = ({
       timeZone={timezones}
       width={width}
       height={height}
-      // JEV: OBSERVATION: this is not a legend, but a legend configuration
+      // JEV: OBSERVATION: this is not a legend, but a legend configuration; also do we need this? this is alrady in "options"?
       legend={options.legend}
       options={options}
       replaceVariables={replaceVariables}

@@ -3,6 +3,7 @@ import React from 'react';
 import { DataFrameFieldIndex, DisplayValue } from '@grafana/data';
 import { LegendDisplayMode, LegendPlacement } from '@grafana/schema';
 
+// JEV: REFACTOR: explicitly defined the values here
 export enum SeriesVisibilityChangeBehavior {
   Isolate,
   Hide,
