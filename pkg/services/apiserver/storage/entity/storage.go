@@ -245,6 +245,11 @@ func (s *Storage) Watch(ctx context.Context, key string, opts storage.ListOption
 
 	client, err := s.store.Watch(ctx)
 	if err != nil {
+		// if the context was canceled, just return a new emtpy watch
+		if errors.Is(err, context.Canceled) {
+			return watch.NewEmptyWatch(), nil
+		}
+
 		return nil, err
 	}
 
@@ -254,6 +259,12 @@ func (s *Storage) Watch(ctx context.Context, key string, opts storage.ListOption
 		if err2 != nil {
 			klog.Errorf("watch close failed: %s\n", err2)
 		}
+
+		// if the context was canceled, just return a new emtpy watch
+		if errors.Is(err, context.Canceled) {
+			return watch.NewEmptyWatch(), nil
+		}
+
 		return watch.NewEmptyWatch(), err
 	}
 
