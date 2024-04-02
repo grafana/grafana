@@ -5,7 +5,6 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
-	"strconv"
 	"time"
 
 	"github.com/grafana/grafana/pkg/api/routing"
@@ -286,36 +285,45 @@ func (s *Service) GetMigrationDataJSON(ctx context.Context, id int64) ([]byte, e
 		s.log.Error("Failed to get datasources", "err", err)
 		return nil, err
 	}
-	migrationDataSlice = append(migrationDataSlice, cloudmigration.MigrateDataRequestItemDTO{
-		Type:  cloudmigration.DatasourceDataType,
-		RefID: strconv.Itoa(int(id)),
-		Name:  "datasources",
-		Data:  dataSources,
-	})
+	for _, ds := range dataSources {
+		migrationDataSlice = append(migrationDataSlice, cloudmigration.MigrateDataRequestItemDTO{
+			Type:  cloudmigration.DatasourceDataType,
+			RefID: ds.UID,
+			Name:  ds.Name,
+			Data:  ds,
+		})
+	}
+
 	// Dashboards
 	dashboards, err := s.getDashboards(ctx, id)
 	if err != nil {
 		s.log.Error("Failed to get dashboards", "err", err)
 		return nil, err
 	}
-	migrationDataSlice = append(migrationDataSlice, cloudmigration.MigrateDataRequestItemDTO{
-		Type:  cloudmigration.DashboardDataType,
-		RefID: strconv.Itoa(int(id)),
-		Name:  "dashboards",
-		Data:  dashboards,
-	})
+	for _, dashboard := range dashboards {
+		migrationDataSlice = append(migrationDataSlice, cloudmigration.MigrateDataRequestItemDTO{
+			Type:  cloudmigration.DashboardDataType,
+			RefID: dashboard.UID,
+			Name:  dashboard.Title,
+			Data:  dashboard,
+		})
+	}
+
 	// Folders
 	folders, err := s.getFolders(ctx, id)
 	if err != nil {
 		s.log.Error("Failed to get folders", "err", err)
 		return nil, err
 	}
-	migrationDataSlice = append(migrationDataSlice, cloudmigration.MigrateDataRequestItemDTO{
-		Type:  cloudmigration.FolderDataType,
-		RefID: strconv.Itoa(int(id)),
-		Name:  "folders",
-		Data:  folders,
-	})
+
+	for _, f := range folders {
+		migrationDataSlice = append(migrationDataSlice, cloudmigration.MigrateDataRequestItemDTO{
+			Type:  cloudmigration.FolderDataType,
+			RefID: f.UID,
+			Name:  f.Title,
+			Data:  f,
+		})
+	}
 	migrationData := cloudmigration.MigrateDataRequestDTO{
 		Items: migrationDataSlice,
 	}
