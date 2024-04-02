@@ -61,7 +61,6 @@ export const ServiceAccountTable = ({
         cell: ({ cell: { value }, row: { original } }: Cell<'role'>) => {
           return getCellContent(value, original, isLoading, 'avatarUrl');
         },
-        sortType: 'string',
       },
       {
         id: 'name',
@@ -77,7 +76,6 @@ export const ServiceAccountTable = ({
         cell: ({ cell: { value }, row: { original } }: Cell<'role'>) => {
           return getCellContent(value, original, isLoading, 'id');
         },
-        sortType: 'string',
       },
       {
         id: 'role',
@@ -92,7 +90,6 @@ export const ServiceAccountTable = ({
         cell: ({ cell: { value }, row: { original } }: Cell<'role'>) => {
           return getCellContent(value, original, isLoading, 'tokens');
         },
-        sortType: 'number',
       },
       {
         id: 'actions',
