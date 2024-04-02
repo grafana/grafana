@@ -341,7 +341,6 @@ func UseOrgFromRequestData(c *contextmodel.ReqContext) (int64, error) {
 // If RBACSingleOrganization is set, the org where user is logged in is returned - this is intended only for cloud workflows, where instances are limited to a single organization.
 func UseGlobalOrgFromRequestData(cfg *setting.Cfg) func(*contextmodel.ReqContext) (int64, error) {
 	return func(c *contextmodel.ReqContext) (int64, error) {
-
 		query, err := getOrgQueryFromRequest(c)
 		if err != nil {
 			// Special case of macaron handling invalid params
