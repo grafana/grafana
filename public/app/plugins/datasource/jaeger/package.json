@@ -2,7 +2,7 @@
   "name": "@grafana-plugins/jaeger",
   "description": "Jaeger plugin for Grafana",
   "private": true,
-  "version": "11.1.0-pre",
+  "version": "11.0.0-preview",
   "dependencies": {
     "@emotion/css": "11.11.2",
     "@grafana/data": "workspace:*",
