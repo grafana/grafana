@@ -81,15 +81,11 @@ export const AnnotationMarker2 = ({
       style={style!}
       onMouseEnter={() => state !== STATE_EDITING && setState(STATE_HOVERED)}
       onMouseLeave={() => state !== STATE_EDITING && setState(STATE_DEFAULT)}
+      data-testid={selectors.pages.Dashboard.Annotations.marker}
     >
       {contents &&
         createPortal(
-          <div
-            ref={refs.setFloating}
-            className={styles.annoBox}
-            style={floatingStyles}
-            data-testid={selectors.pages.Dashboard.Annotations.marker}
-          >
+          <div ref={refs.setFloating} className={styles.annoBox} style={floatingStyles}>
             {contents}
           </div>,
           portalRoot
