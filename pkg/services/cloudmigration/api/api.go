@@ -90,7 +90,7 @@ func (cma *CloudMigrationAPI) GetMigrationList(c *contextmodel.ReqContext) respo
 		return response.Error(http.StatusInternalServerError, "migration list error", err)
 	}
 
-	cloudMigrationListResponse := cloudmigration.CloudMigrationListResponse{Migrations: cloudMigrations}
+	cloudMigrationListResponse := cloudMigrations
 	return response.JSON(http.StatusOK, cloudMigrationListResponse)
 }
 
