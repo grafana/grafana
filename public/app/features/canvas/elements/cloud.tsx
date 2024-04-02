@@ -43,7 +43,14 @@ const Cloud = (props: CanvasElementProps<CanvasElementConfig, CanvasElementData>
           </clipPath>
         </defs>
         {/* Apply background image within the clipping area */}
-        <rect x="0" y="0" width="100%" height="100%" clipPath={`url(#cloudClip-${uniqueId})`} />
+        <rect
+          x="0"
+          y="0"
+          width="100%"
+          height="100%"
+          clipPath={`url(#cloudClip-${uniqueId})`}
+          style={{ fill: 'none' }}
+        />
         <path
           d="M 23 13 C -1 13 -7 33 12.2 37 C -7 45.8 14.6 65 30.2 57 C 41 73 77 73 89 57 C 113 57 113 41 98 33 C 113 17 89 1 68 9 C 53 -3 29 -3 23 13 Z"
           className={styles.element}

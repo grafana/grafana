@@ -5,10 +5,10 @@ import { InteractiveTable, CellProps, Stack, Text, Icon, useStyles2, Button } fr
 import { getSvgSize } from '@grafana/ui/src/components/Icon/utils';
 import { t } from 'app/core/internationalization';
 
-import { MigrationResourceDTO } from '../api';
+import { MigrationResourceDTOMock } from '../mockAPI';
 
 interface ResourcesTableProps {
-  resources: MigrationResourceDTO[];
+  resources: MigrationResourceDTOMock[];
 }
 
 const columns = [
@@ -21,7 +21,7 @@ export function ResourcesTable({ resources }: ResourcesTableProps) {
   return <InteractiveTable columns={columns} data={resources} getRowId={(r) => r.uid} pageSize={15} />;
 }
 
-function NameCell(props: CellProps<MigrationResourceDTO>) {
+function NameCell(props: CellProps<MigrationResourceDTOMock>) {
   const data = props.row.original;
   return (
     <Stack direction="row" gap={2} alignItems="center">
@@ -35,7 +35,7 @@ function NameCell(props: CellProps<MigrationResourceDTO>) {
   );
 }
 
-function TypeCell(props: CellProps<MigrationResourceDTO>) {
+function TypeCell(props: CellProps<MigrationResourceDTOMock>) {
   const { type } = props.row.original;
 
   if (type === 'datasource') {
@@ -49,7 +49,7 @@ function TypeCell(props: CellProps<MigrationResourceDTO>) {
   return t('migrate-to-cloud.resource-type.unknown', 'Unknown');
 }
 
-function StatusCell(props: CellProps<MigrationResourceDTO>) {
+function StatusCell(props: CellProps<MigrationResourceDTOMock>) {
   const { status, statusMessage } = props.row.original;
 
   if (status === 'not-migrated') {
@@ -76,7 +76,7 @@ function StatusCell(props: CellProps<MigrationResourceDTO>) {
   return <Text color="secondary">{t('migrate-to-cloud.resource-status.unknown', 'Unknown')}</Text>;
 }
 
-function ResourceIcon({ resource }: { resource: MigrationResourceDTO }) {
+function ResourceIcon({ resource }: { resource: MigrationResourceDTOMock }) {
   const styles = useStyles2(getIconStyles);
 
   if (resource.type === 'dashboard') {
