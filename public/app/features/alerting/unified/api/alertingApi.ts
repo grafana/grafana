@@ -38,6 +38,7 @@ export const alertingApi = createApi({
     'OnCallIntegrations',
     'OrgMigrationState',
     'DataSourceSettings',
+    'Labels',
   ],
   endpoints: () => ({}),
 });

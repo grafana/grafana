@@ -4,12 +4,12 @@ import React, { useState } from 'react';
 import { FormProvider, useForm } from 'react-hook-form';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { Button, Card, Modal, RadioButtonGroup, useStyles2, Stack } from '@grafana/ui';
+import { Button, Card, Modal, RadioButtonGroup, Stack, useStyles2 } from '@grafana/ui';
 import { TestTemplateAlert } from 'app/plugins/datasource/alertmanager/types';
 
 import { KeyValueField } from '../../../api/templateApi';
 import AnnotationsStep from '../../rule-editor/AnnotationsStep';
-import LabelsField from '../../rule-editor/LabelsField';
+import LabelsField from '../../rule-editor/labels/LabelsField';
 
 interface Props {
   isOpen: boolean;

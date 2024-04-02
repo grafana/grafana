@@ -25,7 +25,7 @@ function customFilter(opt: SelectableValue, searchQuery: string) {
 
 const handleIsValidNewOption = (
   inputValue: string,
-  value: SelectableValue<string> | null,
+  _: SelectableValue<string> | null,
   options: OptionsOrGroups<SelectableValue<string>, GroupBase<SelectableValue<string>>>
 ) => {
   const exactValueExists = options.some((el) => el.label === inputValue);

@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import React from 'react';
+import React, { useState } from 'react';
 import { useFormContext } from 'react-hook-form';
 
 import { GrafanaTheme2 } from '@grafana/data';
@@ -9,10 +9,11 @@ import { Icon, RadioButtonGroup, Stack, Text, useStyles2 } from '@grafana/ui';
 import { RuleFormType, RuleFormValues } from '../../types/rule-form';
 import { GRAFANA_RULES_SOURCE_NAME } from '../../utils/datasource';
 
-import LabelsField from './LabelsField';
 import { NeedHelpInfo } from './NeedHelpInfo';
 import { RuleEditorSection } from './RuleEditorSection';
 import { SimplifiedRouting } from './alert-rule-form/simplifiedRouting/SimplifiedRouting';
+import { LabelsEditorModal } from './labels/LabelsEditorModal';
+import { LabelsFieldInForm } from './labels/LabelsFieldInForm';
 import { NotificationPreview } from './notificaton-preview/NotificationPreview';
 
 type NotificationsStepProps = {
@@ -29,6 +30,11 @@ export const NotificationsStep = ({ alertUid }: NotificationsStepProps) => {
   const styles = useStyles2(getStyles);
 
   const [type] = watch(['type', 'labels', 'queries', 'condition', 'folder', 'name', 'manualRouting']);
+  const [showLabelsEditor, setShowLabelsEditor] = useState(false);
+
+  function onEditClick() {
+    setShowLabelsEditor(true);
+  }
 
   const dataSourceName = watch('dataSourceName') ?? GRAFANA_RULES_SOURCE_NAME;
   const simplifiedRoutingToggleEnabled = config.featureToggles.alertingSimplifiedRouting ?? false;
@@ -56,7 +62,14 @@ export const NotificationsStep = ({ alertUid }: NotificationsStepProps) => {
       }
       fullWidth
     >
-      <LabelsField dataSourceName={dataSourceName} />
+      <LabelsFieldInForm onEditClick={onEditClick} />
+      {showLabelsEditor && (
+        <LabelsEditorModal
+          isOpen={showLabelsEditor}
+          onDismiss={() => setShowLabelsEditor(false)}
+          dataSourceName={dataSourceName}
+        />
+      )}
       {shouldAllowSimplifiedRouting && (
         <div className={styles.configureNotifications}>
           <Text element="h5">Notifications</Text>

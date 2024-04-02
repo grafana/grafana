@@ -1,23 +1,29 @@
 import { css, cx } from '@emotion/css';
 import React, { FC, useCallback, useEffect, useMemo, useState } from 'react';
-import { useFieldArray, UseFieldArrayAppend, useFormContext, Controller } from 'react-hook-form';
+import { Controller, useFieldArray, useFormContext } from 'react-hook-form';
 
 import { GrafanaTheme2, SelectableValue } from '@grafana/data';
-import { Button, Field, InlineLabel, Input, LoadingPlaceholder, Stack, Text, useStyles2 } from '@grafana/ui';
+import { Field, InlineLabel, Input, LoadingPlaceholder, Stack, Text, useStyles2 } from '@grafana/ui';
 import { useDispatch } from 'app/types';
 
-import { useUnifiedAlertingSelector } from '../../hooks/useUnifiedAlertingSelector';
-import { fetchRulerRulesIfNotFetchedYet } from '../../state/actions';
-import { RuleFormValues } from '../../types/rule-form';
-import AlertLabelDropdown from '../AlertLabelDropdown';
+import { labelsApi } from '../../../api/labelsApi';
+import { usePluginBridge } from '../../../hooks/usePluginBridge';
+import { useUnifiedAlertingSelector } from '../../../hooks/useUnifiedAlertingSelector';
+import { fetchRulerRulesIfNotFetchedYet } from '../../../state/actions';
+import { SupportedPlugin } from '../../../types/pluginBridges';
+import { RuleFormValues } from '../../../types/rule-form';
+import AlertLabelDropdown from '../../AlertLabelDropdown';
+import { AlertLabels } from '../../AlertLabels';
+import { NeedHelpInfo } from '../NeedHelpInfo';
 
-import { NeedHelpInfo } from './NeedHelpInfo';
+import { AddButton, RemoveButton } from './LabelsButtons';
 
-interface Props {
-  className?: string;
-  dataSourceName?: string | null;
-}
-
+const useGetOpsLabelsKeys = (skip: boolean) => {
+  const { currentData, isLoading: isloadingLabels } = labelsApi.endpoints.getLabels.useQuery(undefined, {
+    skip,
+  });
+  return { loading: isloadingLabels, labelsOpsKeys: currentData };
+};
 const useGetCustomLabels = (dataSourceName: string): { loading: boolean; labelsByKey: Record<string, Set<string>> } => {
   const dispatch = useDispatch();
 
@@ -67,41 +73,24 @@ function mapLabelsToOptions(items: Iterable<string> = []): Array<SelectableValue
   return Array.from(items, (item) => ({ label: item, value: item }));
 }
 
-const RemoveButton: FC<{
-  remove: (index?: number | number[] | undefined) => void;
-  className: string;
-  index: number;
-}> = ({ remove, className, index }) => (
-  <Button
-    className={className}
-    aria-label="delete label"
-    icon="trash-alt"
-    data-testid={`delete-label-${index}`}
-    variant="secondary"
-    onClick={() => {
-      remove(index);
-    }}
-  />
-);
+export const LabelsInRule = () => {
+  const { watch } = useFormContext<RuleFormValues>();
+  const labels = watch('labels');
 
-const AddButton: FC<{
-  append: UseFieldArrayAppend<RuleFormValues, 'labels'>;
-  className: string;
-}> = ({ append, className }) => (
-  <Button
-    className={className}
-    icon="plus-circle"
-    type="button"
-    variant="secondary"
-    onClick={() => {
-      append({ key: '', value: '' });
-    }}
-  >
-    Add label
-  </Button>
-);
+  const labelsObj: Record<string, string> = labels.reduce((acc: Record<string, string>, label) => {
+    if (label.key) {
+      acc[label.key] = label.value;
+    }
+    return acc;
+  }, {});
 
-const LabelsWithSuggestions: FC<{ dataSourceName: string }> = ({ dataSourceName }) => {
+  return <AlertLabels labels={labelsObj} />;
+};
+/*
+  We will suggest labels from two sources: existing alerts and ops labels.
+  We only will suggest labels from ops if the grafana-labels-app plugin is installed
+  */
+export const LabelsWithSuggestions: FC<{ dataSourceName: string }> = ({ dataSourceName }) => {
   const styles = useStyles2(getStyles);
   const {
     control,
@@ -112,29 +101,106 @@ const LabelsWithSuggestions: FC<{ dataSourceName: string }> = ({ dataSourceName 
   const labels = watch('labels');
   const { fields, remove, append } = useFieldArray({ control, name: 'labels' });
 
-  const { loading, labelsByKey } = useGetCustomLabels(dataSourceName);
-
+  // check if the labels plugin is installed
+  const { installed: labelsPluginInstalled = false, loading: loadingLabelsPlugin } = usePluginBridge(
+    SupportedPlugin.Labels
+  );
   const [selectedKey, setSelectedKey] = useState('');
 
-  const keys = useMemo(() => {
-    return mapLabelsToOptions(Object.keys(labelsByKey));
-  }, [labelsByKey]);
+  // ------- Get labels keys and their values from existing alerts
+  const { loading, labelsByKey: labelsByKeyFromExisingAlerts } = useGetCustomLabels(dataSourceName);
+  // ------- Get only the keys from the ops labels, as we will fetch the values for the keys once the key is selected.
+  const { loading: isLoadingLabels, labelsOpsKeys = [] } = useGetOpsLabelsKeys(
+    !labelsPluginInstalled || loadingLabelsPlugin
+  );
+  //------ Convert the labelsOpsKeys to the same format as the labelsByKeyFromExisingAlerts
+  const labelsByKeyOps = useMemo(() => {
+    return labelsOpsKeys.reduce((acc: Record<string, Set<string>>, label) => {
+      acc[label.name] = new Set();
+      return acc;
+    }, {});
+  }, [labelsOpsKeys]);
+
+  //------- Convert the keys from the ops labels to options for the dropdown
+  const keysFromGopsLabels = useMemo(() => {
+    return mapLabelsToOptions(Object.keys(labelsByKeyOps));
+  }, [labelsByKeyOps]);
+
+  //------- Convert the keys from the existing alerts to options for the dropdown
+  const keysFromExistingAlerts = useMemo(() => {
+    return mapLabelsToOptions(Object.keys(labelsByKeyFromExisingAlerts));
+  }, [labelsByKeyFromExisingAlerts]);
+
+  // create two groups of labels, one for ops and one for custom
+  const groupedOptions = [
+    {
+      label: 'From alerts',
+      options: keysFromExistingAlerts,
+    },
+    {
+      label: 'From system',
+      options: keysFromGopsLabels,
+    },
+  ];
+
+  const selectedKeyIsFromAlerts =
+    labelsByKeyFromExisingAlerts[selectedKey] !== undefined && labelsByKeyFromExisingAlerts[selectedKey]?.size > 0;
+  const valuesAlreadyFetched = !selectedKeyIsFromAlerts && labelsByKeyOps[selectedKey]?.size > 0;
+
+  // Only fetch the values for the selected key if it is from ops and the values are not already fetched (the selected key is not in the labelsByKeyOps object)
+  const {
+    currentData: valuesData,
+    isLoading: isLoadingValues = false,
+    error,
+  } = labelsApi.endpoints.getLabelValues.useQuery(
+    { key: selectedKey },
+    {
+      skip: !labelsPluginInstalled || !selectedKey || selectedKeyIsFromAlerts || valuesAlreadyFetched,
+    }
+  );
+
+  // these are the values for the selected key in case it is from ops
+  const valuesFromSelectedGopsKey = useMemo(() => {
+    // if it is from alerts, we need to fetch the values from the existing alerts
+    if (selectedKeyIsFromAlerts) {
+      return [];
+    }
+    // in case of a label from ops, we need to fetch the values from the plugin
+    // fetch values from ops only if there is no value for the key
+    const valuesForSelectedKey = labelsByKeyOps[selectedKey];
+    const valuesAlreadyFetched = valuesForSelectedKey?.size > 0;
+    if (valuesAlreadyFetched) {
+      return mapLabelsToOptions(valuesForSelectedKey);
+    }
+    if (!isLoadingValues && valuesData?.values?.length && !error) {
+      const values = valuesData?.values.map((value) => value.name);
+      labelsByKeyOps[selectedKey] = new Set(values);
+      return mapLabelsToOptions(values);
+    }
+    return [];
+  }, [selectedKeyIsFromAlerts, labelsByKeyOps, selectedKey, isLoadingValues, valuesData, error]);
 
   const getValuesForLabel = useCallback(
     (key: string) => {
-      return mapLabelsToOptions(labelsByKey[key]);
+      // values from existing alerts will take precedence over values from ops
+      if (selectedKeyIsFromAlerts || !labelsPluginInstalled) {
+        return mapLabelsToOptions(labelsByKeyFromExisingAlerts[key]);
+      }
+      return valuesFromSelectedGopsKey;
     },
-    [labelsByKey]
+    [labelsByKeyFromExisingAlerts, labelsPluginInstalled, valuesFromSelectedGopsKey, selectedKeyIsFromAlerts]
   );
 
   const values = useMemo(() => {
     return getValuesForLabel(selectedKey);
   }, [selectedKey, getValuesForLabel]);
 
+  const isLoading = isLoadingLabels || loading || loadingLabelsPlugin;
+
   return (
     <>
-      {loading && <LoadingPlaceholder text="Loading" />}
-      {!loading && (
+      {isLoading && <LoadingPlaceholder text="Loading existing labels" />}
+      {!isLoading && (
         <Stack direction="column" gap={0.5}>
           {fields.map((field, index) => {
             return (
@@ -155,7 +221,7 @@ const LabelsWithSuggestions: FC<{ dataSourceName: string }> = ({ dataSourceName 
                           <AlertLabelDropdown
                             {...rest}
                             defaultValue={field.key ? { label: field.key, value: field.key } : undefined}
-                            options={keys}
+                            options={labelsPluginInstalled ? groupedOptions : keysFromExistingAlerts}
                             onChange={(newValue: SelectableValue) => {
                               onChange(newValue.value);
                               setSelectedKey(newValue.value);
@@ -208,7 +274,7 @@ const LabelsWithSuggestions: FC<{ dataSourceName: string }> = ({ dataSourceName 
   );
 };
 
-const LabelsWithoutSuggestions: FC = () => {
+export const LabelsWithoutSuggestions: FC = () => {
   const styles = useStyles2(getStyles);
   const {
     register,
@@ -265,7 +331,11 @@ const LabelsWithoutSuggestions: FC = () => {
   );
 };
 
-const LabelsField: FC<Props> = ({ dataSourceName }) => {
+interface LabelsFieldProps {
+  dataSourceName?: string;
+}
+
+function LabelsField({ dataSourceName }: LabelsFieldProps) {
   const styles = useStyles2(getStyles);
 
   return (
@@ -287,7 +357,7 @@ const LabelsField: FC<Props> = ({ dataSourceName }) => {
       {dataSourceName ? <LabelsWithSuggestions dataSourceName={dataSourceName} /> : <LabelsWithoutSuggestions />}
     </div>
   );
-};
+}
 
 const getStyles = (theme: GrafanaTheme2) => {
   return {

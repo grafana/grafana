@@ -23,7 +23,7 @@ function renderAlertLabels(dataSourceName?: string) {
 
   render(
     <Provider store={store}>
-      {dataSourceName ? <LabelsField dataSourceName={dataSourceName} /> : <LabelsField />}
+      <LabelsField dataSourceName={dataSourceName} />
     </Provider>,
     { wrapper: FormProviderWrapper }
   );
