@@ -147,7 +147,10 @@ func (cma *CloudMigrationAPI) RunMigration(c *contextmodel.ReqContext) response.
 		cma.log.Error("error sending http request for cloud migration run", "err", err.Error())
 		return response.Error(http.StatusInternalServerError, "http request error", err)
 	}
-	defer resp.Body.Close()
+	defer func() {
+		err = resp.Body.Close()
+		cma.log.Error("error clousing response body", "err", err)
+	}()
 
 	_, err = cma.cloudMigrationService.SaveMigrationRun(c.Req.Context(), &cloudmigration.CloudMigrationRun{
 		ID:     id,
