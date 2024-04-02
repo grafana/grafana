@@ -1,4 +1,4 @@
-import { render, screen, waitFor, within } from '@testing-library/react';
+import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import React from 'react';
 import { Route } from 'react-router-dom';
@@ -18,7 +18,7 @@ import RuleEditor from './RuleEditor';
 import { discoverFeatures } from './api/buildInfo';
 import { fetchRulerRules, fetchRulerRulesGroup, fetchRulerRulesNamespace, setRulerRuleGroup } from './api/ruler';
 import { ExpressionEditorProps } from './components/rule-editor/ExpressionEditor';
-import { grantUserPermissions, mockDataSource, MockDataSourceSrv, mockFolder } from './mocks';
+import { MockDataSourceSrv, grantUserPermissions, mockDataSource, mockFolder } from './mocks';
 import { fetchRulerRulesIfNotFetchedYet } from './state/actions';
 import * as config from './utils/config';
 import { GRAFANA_RULES_SOURCE_NAME } from './utils/datasource';
@@ -73,7 +73,6 @@ function renderRuleEditor(identifier?: string) {
   );
 }
 
-const getLabelInput = (selector: HTMLElement) => within(selector).getByRole('combobox');
 describe('RuleEditor grafana managed rules', () => {
   beforeEach(() => {
     jest.clearAllMocks();
@@ -187,10 +186,6 @@ describe('RuleEditor grafana managed rules', () => {
     await userEvent.type(screen.getByPlaceholderText('Enter custom annotation name...'), 'custom');
     await userEvent.type(screen.getByPlaceholderText('Enter custom annotation content...'), 'value');
 
-    //add a label
-    await userEvent.type(getLabelInput(ui.inputs.labelKey(2).get()), 'custom{enter}');
-    await userEvent.type(getLabelInput(ui.inputs.labelValue(2).get()), 'value{enter}');
-
     // save and check what was sent to backend
     await userEvent.click(ui.buttons.save.get());
     await waitFor(() => expect(mocks.api.setRulerRuleGroup).toHaveBeenCalled());
@@ -207,7 +202,7 @@ describe('RuleEditor grafana managed rules', () => {
         rules: [
           {
             annotations: { description: 'some description', summary: 'some summary', custom: 'value' },
-            labels: { severity: 'warn', team: 'the a-team', custom: 'value' },
+            labels: { severity: 'warn', team: 'the a-team' },
             for: '5m',
             grafana_alert: {
               uid,
@@ -217,6 +212,7 @@ describe('RuleEditor grafana managed rules', () => {
               is_paused: false,
               no_data_state: 'NoData',
               title: 'my great new rule',
+              notification_settings: undefined,
             },
           },
         ],

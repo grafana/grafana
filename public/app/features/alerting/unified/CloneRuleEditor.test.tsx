@@ -1,4 +1,3 @@
-import 'whatwg-fetch';
 import { render, waitFor, waitForElementToBeRemoved, within } from '@testing-library/react';
 import { setupServer } from 'msw/node';
 import React from 'react';
@@ -22,8 +21,9 @@ import {
 
 import { cloneRuleDefinition, CloneRuleEditor } from './CloneRuleEditor';
 import { ExpressionEditorProps } from './components/rule-editor/ExpressionEditor';
-import { mockSearchApi } from './mockApi';
+import { mockApi, mockSearchApi } from './mockApi';
 import {
+  labelslPluginMetaMock,
   mockDataSource,
   MockDataSourceSrv,
   mockRulerAlertingRule,
@@ -139,6 +139,7 @@ const amConfig: AlertManagerCortexConfig = {
   template_files: {},
 };
 
+mockApi(server).plugins.getPluginSettings({ ...labelslPluginMetaMock, enabled: false });
 describe('CloneRuleEditor', function () {
   describe('Grafana-managed rules', function () {
     it('should populate form values from the existing alert rule', async function () {
@@ -175,8 +176,16 @@ describe('CloneRuleEditor', function () {
         expect(ui.inputs.name.get()).toHaveValue('First Grafana Rule (copy)');
         expect(ui.inputs.folderContainer.get()).toHaveTextContent('folder-one');
         expect(ui.inputs.group.get()).toHaveTextContent('group1');
-        expect(ui.inputs.labelValue(0).get()).toHaveTextContent('critical');
-        expect(ui.inputs.labelValue(1).get()).toHaveTextContent('nasa');
+        expect(
+          byRole('listitem', {
+            name: 'severity: critical',
+          }).get()
+        ).toBeInTheDocument();
+        expect(
+          byRole('listitem', {
+            name: 'region: nasa',
+          }).get()
+        ).toBeInTheDocument();
         expect(ui.inputs.annotationValue(0).get()).toHaveTextContent('This is a very important alert rule');
       });
     });
@@ -245,8 +254,16 @@ describe('CloneRuleEditor', function () {
         expect(ui.inputs.expr.get()).toHaveValue('vector(1) > 0');
         expect(ui.inputs.namespace.get()).toHaveTextContent('namespace-one');
         expect(ui.inputs.group.get()).toHaveTextContent('group1');
-        expect(ui.inputs.labelValue(0).get()).toHaveTextContent('critical');
-        expect(ui.inputs.labelValue(1).get()).toHaveTextContent('nasa');
+        expect(
+          byRole('listitem', {
+            name: 'severity: critical',
+          }).get()
+        ).toBeInTheDocument();
+        expect(
+          byRole('listitem', {
+            name: 'region: nasa',
+          }).get()
+        ).toBeInTheDocument();
         expect(ui.inputs.annotationValue(0).get()).toHaveTextContent('This is a very important alert rule');
       });
     });
