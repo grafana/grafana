@@ -84,7 +84,7 @@ export const ServiceAccountTable = ({
       case 'tokens':
         return (
           <Stack alignItems="center">
-            <Icon name="key-skeleton-alt"></Icon>
+            <Icon name="key-skeleton-alt"/>
             <TextLink href={href} aria-label={ariaLabel} color="primary">
               {value || 'No tokens'}
             </TextLink>
