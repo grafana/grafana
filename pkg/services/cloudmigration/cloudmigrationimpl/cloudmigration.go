@@ -15,6 +15,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/cloudmigration"
 	"github.com/grafana/grafana/pkg/services/cloudmigration/api"
+	"github.com/grafana/grafana/pkg/services/contexthandler"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
@@ -411,7 +412,10 @@ func (s *Service) getDataSources(ctx context.Context, id int64) ([]datasources.A
 }
 
 func (s *Service) getFolders(ctx context.Context, id int64) ([]folder.Folder, error) {
-	folders, err := s.folderService.GetFolders(ctx, folder.GetFoldersQuery{})
+	reqCtx := contexthandler.FromContext(ctx)
+	folders, err := s.folderService.GetFolders(ctx, folder.GetFoldersQuery{
+		SignedInUser: reqCtx.SignedInUser,
+	})
 	if err != nil {
 		return nil, err
 	}

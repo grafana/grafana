@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"io"
 	"net/http"
 	"strconv"
 
@@ -171,9 +172,7 @@ func (cma *CloudMigrationAPI) CreateMigration(c *contextmodel.ReqContext) respon
 func (cma *CloudMigrationAPI) RunMigration(c *contextmodel.ReqContext) response.Response {
 	ctx, span := cma.tracer.Start(c.Req.Context(), "MigrationAPI.RunMigration")
 	defer span.End()
-
 	logger := cma.log.FromContext(ctx)
-	var items []cloudmigration.MigrateDataResponseItemDTO
 
 	stringID := web.Params(c.Req)[":id"]
 	id, err := strconv.ParseInt(stringID, 10, 64)
@@ -213,6 +212,9 @@ func (cma *CloudMigrationAPI) RunMigration(c *contextmodel.ReqContext) response.
 	if err != nil {
 		cma.log.Error("error sending http request for cloud migration run", "err", err.Error())
 		return response.Error(http.StatusInternalServerError, "http request error", err)
+	} else if resp.StatusCode >= 400 {
+		cma.log.Error("received error response for cloud migration run", "statusCode", resp.StatusCode)
+		return response.Error(http.StatusInternalServerError, "http request error", fmt.Errorf("http request error while migrating data"))
 	}
 
 	defer func() {
@@ -221,16 +223,24 @@ func (cma *CloudMigrationAPI) RunMigration(c *contextmodel.ReqContext) response.
 		}
 	}()
 
+	// read response so we can unmarshal it
+	respData, err := io.ReadAll(resp.Body)
+	if err != nil {
+		logger.Error("reading response body: %w", err)
+		return response.Error(http.StatusInternalServerError, "reading migration run response", err)
+	}
+	var result cloudmigration.MigrateDataResponseDTO
+	if err := json.Unmarshal(respData, &result); err != nil {
+		logger.Error("unmarshalling response body: %w", err)
+		return response.Error(http.StatusInternalServerError, "unmarshalling migration run response", err)
+	}
+
 	_, err = cma.cloudMigrationService.SaveMigrationRun(ctx, &cloudmigration.CloudMigrationRun{
-		ID:     id,
-		Result: body,
+		CloudMigrationUID: stringID,
+		Result:            respData,
 	})
 	if err != nil {
 		response.Error(http.StatusInternalServerError, "migration run save error", err)
-	}
-
-	result := cloudmigration.MigrateDataResponseDTO{
-		Items: items,
 	}
 
 	return response.JSON(http.StatusOK, result)
