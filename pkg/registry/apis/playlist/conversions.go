@@ -6,10 +6,8 @@ import (
 	"strconv"
 	"time"
 
-	"k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
-	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
 
 	playlist "github.com/grafana/grafana/pkg/apis/playlist/v0alpha1"
@@ -104,26 +102,6 @@ func convertToK8sResource(v *playlistsvc.PlaylistDTO, namespacer request.Namespa
 
 	p.UID = utils.CalculateClusterWideUID(p)
 	return p
-}
-
-func enrichObject(orig, copy runtime.Object) (runtime.Object, error) {
-	accessorC, err := meta.Accessor(copy)
-	if err != nil {
-		return nil, err
-	}
-	accessorO, err := meta.Accessor(orig)
-	if err != nil {
-		return nil, err
-	}
-	accessorC.SetLabels(accessorO.GetLabels())
-
-	ac := accessorC.GetAnnotations()
-	for k, v := range accessorO.GetAnnotations() {
-		ac[k] = v
-	}
-	accessorC.SetAnnotations(ac)
-
-	return copy, nil
 }
 
 func convertToLegacyUpdateCommand(p *playlist.Playlist, orgId int64) (*playlistsvc.UpdatePlaylistCommand, error) {

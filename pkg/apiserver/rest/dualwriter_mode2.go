@@ -49,51 +49,56 @@ func (d *DualWriterMode2) List(ctx context.Context, options *metainternalversion
 		return nil, fmt.Errorf("legacy storage rest.Lister is missing")
 	}
 
-	legacyList, err := legacy.List(ctx, options)
+	ll, err := legacy.List(ctx, options)
 	if err != nil {
 		return nil, err
 	}
-	ll, err := meta.ExtractList(legacyList)
-	if err != nil {
-		return nil, err
-	}
-
-	storageList, err := d.Storage.List(ctx, options)
-	if err != nil {
-		return nil, err
-	}
-	sl, err := meta.ExtractList(storageList)
+	legacyList, err := meta.ExtractList(ll)
 	if err != nil {
 		return nil, err
 	}
 
-	type fieldsToEnrich struct {
-		resourceVersion string
+	sl, err := d.Storage.List(ctx, options)
+	if err != nil {
+		return nil, err
+	}
+	storageList, err := meta.ExtractList(sl)
+	if err != nil {
+		return nil, err
 	}
 
-	m := map[string]fieldsToEnrich{}
-	for _, obj := range sl {
+	enriched := []runtime.Object{}
+
+	m := map[string]int{}
+	for i, obj := range storageList {
 		accessor, err := meta.Accessor(obj)
 		if err != nil {
 			return nil, err
 		}
-		m[accessor.GetName()] = fieldsToEnrich{accessor.GetResourceVersion()}
+		m[accessor.GetName()] = i
 	}
 
-	for _, obj := range ll {
+	for _, obj := range legacyList {
 		accessor, err := meta.Accessor(obj)
 		if err != nil {
 			return nil, err
 		}
-		if entry, ok := m[accessor.GetName()]; ok {
-			accessor.SetResourceVersion(entry.resourceVersion)
+		// Enrich the legacy object if it has a corresponding entry in storage.
+		if index, ok := m[accessor.GetName()]; ok {
+			c, err := enrichObject(storageList[index], obj)
+			if err != nil {
+				return nil, err
+			}
+			enriched = append(enriched, c)
+		} else { // Otherwise include it as is.
+			enriched = append(enriched, obj)
 		}
 	}
 
-	if err = meta.SetList(legacyList, ll); err != nil {
+	if err = meta.SetList(ll, enriched); err != nil {
 		return nil, err
 	}
-	return legacyList, nil
+	return ll, nil
 }
 
 // Create overrides the default behavior of the Storage and writes to LegacyStorage and Storage depending on the dual writer mode.
@@ -108,14 +113,19 @@ func (d *DualWriterMode2) Create(ctx context.Context, obj runtime.Object, create
 		return created, err
 	}
 
-	accessor, err := meta.Accessor(created)
+	c, err := enrichObject(obj, created)
+	if err != nil {
+		return created, err
+	}
+
+	accessor, err := meta.Accessor(c)
 	if err != nil {
 		return created, err
 	}
 	accessor.SetResourceVersion("")
 	accessor.SetUID("")
 
-	rsp, err := d.Storage.Create(ctx, created, createValidation, options)
+	rsp, err := d.Storage.Create(ctx, c, createValidation, options)
 	if err != nil {
 		klog.Error("unable to create object in duplicate storage", "error", err, "mode", Mode2)
 	}
@@ -129,12 +139,13 @@ func (d *DualWriterMode2) Update(ctx context.Context, name string, objInfo rest.
 		return nil, false, fmt.Errorf("legacy storage rest.Updater is missing")
 	}
 
-	// Get the previous version from k8s storage (the one)
+	// Get the previous version
 	var old runtime.Object
 	old, err := d.Get(ctx, name, &metav1.GetOptions{})
 	if err != nil {
 		return nil, false, err
 	}
+	// #TODO: in tests why does old have resource version but not updated?
 
 	accessor, err := meta.Accessor(old)
 	if err != nil {
@@ -158,7 +169,12 @@ func (d *DualWriterMode2) Update(ctx context.Context, name string, objInfo rest.
 		return obj, created, err
 	}
 
-	accessor, err = meta.Accessor(obj)
+	o, err := enrichObject(updated, obj)
+	if err != nil {
+		return obj, false, err
+	}
+
+	accessor, err = meta.Accessor(o)
 	if err != nil {
 		return nil, false, err
 	}
@@ -166,10 +182,35 @@ func (d *DualWriterMode2) Update(ctx context.Context, name string, objInfo rest.
 	accessor.SetUID(theUID)
 	objInfo = &updateWrapper{
 		upstream: objInfo,
-		updated:  obj, // returned as the object that will be updated
+		updated:  o, // returned as the object that will be updated
 	}
 
 	// #TODO: relies on GuaranteedUpdate creating the object if
 	// it doesn't exist: https://github.com/grafana/grafana/pull/85206
 	return d.Storage.Update(ctx, name, objInfo, createValidation, updateValidation, forceAllowCreate, options)
+}
+
+func enrichObject(orig, copy runtime.Object) (runtime.Object, error) {
+	accessorC, err := meta.Accessor(copy)
+	if err != nil {
+		return nil, err
+	}
+	accessorO, err := meta.Accessor(orig)
+	if err != nil {
+		return nil, err
+	}
+
+	accessorC.SetLabels(accessorO.GetLabels())
+
+	ac := accessorC.GetAnnotations()
+	for k, v := range accessorO.GetAnnotations() {
+		ac[k] = v
+	}
+	accessorC.SetAnnotations(ac)
+
+	accessorC.SetResourceVersion(accessorO.GetResourceVersion())
+
+	accessorC.SetUID(accessorO.GetUID())
+
+	return copy, nil
 }

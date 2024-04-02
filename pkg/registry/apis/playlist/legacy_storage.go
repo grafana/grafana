@@ -123,13 +123,7 @@ func (s *legacyStorage) Create(ctx context.Context,
 		return nil, err
 	}
 
-	created, err := s.Get(ctx, out.UID, nil)
-	if err != nil {
-		return nil, err
-	}
-
-	// add fields from the k8s object for inclusion in entity store
-	return enrichObject(obj, created)
+	return s.Get(ctx, out.UID, nil)
 }
 
 func (s *legacyStorage) Update(ctx context.Context,
@@ -170,17 +164,7 @@ func (s *legacyStorage) Update(ctx context.Context,
 	}
 
 	r, err := s.Get(ctx, name, nil)
-	if err != nil {
-		return nil, created, err
-	}
-
-	// add fields from the k8s object for inclusion in entity store
-	enriched, err := enrichObject(obj, r)
-	if err != nil {
-		return nil, created, err
-	}
-
-	return enriched, created, err
+	return r, created, err
 }
 
 // GracefulDeleter
