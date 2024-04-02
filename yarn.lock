@@ -3921,15 +3921,15 @@ __metadata:
   linkType: soft
 
 "@grafana/plugin-e2e@npm:^0.25.0":
-  version: 0.25.0
-  resolution: "@grafana/plugin-e2e@npm:0.25.0"
+  version: 0.25.1
+  resolution: "@grafana/plugin-e2e@npm:0.25.1"
   dependencies:
     semver: "npm:^7.5.4"
     uuid: "npm:^9.0.1"
     yaml: "npm:^2.3.4"
   peerDependencies:
     "@playwright/test": ^1.41.2
-  checksum: 10/31a6106839e47d59b67bb550aa5f6ae0affa0685973c70b23ca396d095ed93ee69afaa602b50359e0e3de970a82772755c2e03786752b8b31825053673ccb0c6
+  checksum: 10/7a478d280202e4757df8152bf47779f107a14007ac5644fec4a691d939dbc0a4ee1b57a4be1b1eaaf85a07365a9287ce5c32e24a0333fa7ead89f638014834ca
   languageName: node
   linkType: hard
 
