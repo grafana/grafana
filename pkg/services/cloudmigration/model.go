@@ -53,6 +53,11 @@ type CloudMigrationRun struct {
 	Finished          time.Time `json:"finished"`
 }
 
+type CloudMigrationRunList struct {
+	Runs []MigrateDataResponseDTO `json:"runs"`
+}
+
+// swagger:parameters createMigration
 type CloudMigrationRequest struct {
 	AuthToken string `json:"authToken"`
 }
