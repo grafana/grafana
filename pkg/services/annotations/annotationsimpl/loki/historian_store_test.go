@@ -254,6 +254,34 @@ func TestIntegrationAlertStateHistoryStore(t *testing.T) {
 				lastTime = item.Time
 			}
 		})
+
+		t.Run("should return nothing if query is for tags and match any is false", func(t *testing.T) {
+			fakeLokiClient.rangeQueryRes = []historian.Stream{
+				historian.StatesToStream(ruleMetaFromRule(t, dashboardRules[dashboard1.UID][0]), transitions, map[string]string{}, log.NewNopLogger()),
+				historian.StatesToStream(ruleMetaFromRule(t, dashboardRules[dashboard1.UID][1]), transitions, map[string]string{}, log.NewNopLogger()),
+			}
+
+			query := annotations.ItemQuery{
+				OrgID:       1,
+				DashboardID: dashboard1.ID,
+				From:        start.UnixMilli(),
+				To:          start.Add(time.Second * time.Duration(numTransitions+1)).UnixMilli(),
+				Tags:        []string{"tag1"},
+				MatchAny:    false,
+			}
+			res, err := store.Get(
+				context.Background(),
+				&query,
+				&annotation_ac.AccessResources{
+					Dashboards: map[string]int64{
+						dashboard1.UID: dashboard1.ID,
+					},
+					CanAccessDashAnnotations: true,
+				},
+			)
+			require.NoError(t, err)
+			require.Empty(t, res)
+		})
 	})
 
 	t.Run("Testing items from Loki stream", func(t *testing.T) {

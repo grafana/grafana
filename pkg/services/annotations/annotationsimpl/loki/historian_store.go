@@ -78,6 +78,11 @@ func (r *LokiHistorianStore) Get(ctx context.Context, query *annotations.ItemQue
 		return make([]*annotations.ItemDTO, 0), nil
 	}
 
+	// alert state history does not contain tags, so we should return nothing if we want to match all tags from the query
+	if len(query.Tags) > 0 && !query.MatchAny {
+		return make([]*annotations.ItemDTO, 0), nil
+	}
+
 	rule := &ngmodels.AlertRule{}
 	if query.AlertID != 0 {
 		var err error
@@ -173,7 +178,7 @@ func (r *LokiHistorianStore) annotationsFromStream(stream historian.Stream, ac a
 }
 
 func (r *LokiHistorianStore) GetTags(ctx context.Context, query *annotations.TagsQuery) (annotations.FindTagsResult, error) {
-	return annotations.FindTagsResult{}, nil
+	return annotations.FindTagsResult{Tags: []*annotations.TagsDTO{}}, nil
 }
 
 // util
