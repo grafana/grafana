@@ -157,6 +157,14 @@ func (api *API) RegisterAPIEndpoints(m *metrics.API) {
 		hist:   api.Historian,
 	}), m)
 
+	// LOGZ.IO GRAFANA CHANGE :: DEV-43895: add logzio alerting endpoints
+	api.RegisterLogzioAlertingApiEndpoints(NewLogzioAlertingApi(
+		NewLogzioAlertingService(
+			api.MultiOrgAlertmanager,
+		),
+	), m)
+	// LOGZ.IO GRAFANA CHANGE :: end
+
 	api.RegisterNotificationsApiEndpoints(NewNotificationsApi(&NotificationSrv{
 		logger:            logger,
 		receiverService:   api.ReceiverService,

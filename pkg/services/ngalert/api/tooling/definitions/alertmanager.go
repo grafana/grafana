@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"reflect"
 	"sort"
 	"strings"
@@ -550,6 +551,14 @@ type PostableUserConfig struct {
 	AlertmanagerConfig PostableApiAlertingConfig `yaml:"alertmanager_config" json:"alertmanager_config"`
 	amSimple           map[string]interface{}    `yaml:"-" json:"-"`
 }
+
+// LOGZ.IO GRAFANA CHANGE :: DEV-43895 (add endpoint to send alert notifications).
+type AlertSendNotificationsRequest struct {
+	AlertRuleKey models.AlertRuleKey `json:"alertRuleKey"`
+	Alerts       PostableAlerts      `json:"alerts"`
+}
+
+// LOGZ.IO GRAFANA CHANGE :: end
 
 func (c *PostableUserConfig) UnmarshalJSON(b []byte) error {
 	type plain PostableUserConfig
