@@ -130,6 +130,9 @@ const getAnimStyles = (theme: GrafanaTheme2, animationDuration: number) => {
     [theme.breakpoints.down('md')]: {
       overflow: 'hidden',
     },
+    '@media (prefers-reduced-motion)': {
+      transition: 'none',
+    },
   };
 
   const overlayTransition = {
