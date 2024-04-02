@@ -1376,7 +1376,6 @@ func (s *sqlEntityServer) Watch(w entity.EntityStore_WatchServer) error {
 			s.log.Error("watch init error", "err", err)
 			return err
 		}
-
 	} else if r.Since == 0 {
 		r.Since = s.snowflake.Generate().Int64()
 	}
@@ -1408,14 +1407,6 @@ func (s *sqlEntityServer) watchInit(r *entity.EntityWatchRequest, w entity.Entit
 
 	// TODO fix this
 	// entityQuery.addWhere("namespace", user.OrgID)
-
-	// only send events that have happened since the requested resource version
-	/*
-		if r.Since > 0 {
-			entityQuery.from = entityHistoryTable
-			entityQuery.AddWhere(s.dialect.Quote("resource_version")+" > ?", r.Since)
-		}
-	*/
 
 	if len(r.Resource) > 0 {
 		entityQuery.AddWhereIn("resource", ToAnyList(r.Resource))
@@ -1553,18 +1544,22 @@ func (s *sqlEntityServer) poller(stream chan *entity.EntityWatchResponse) {
 	var err error
 	since := s.snowflake.Generate().Int64()
 
-	t := time.NewTicker(100 * time.Millisecond)
+	interval := 1 * time.Second
+
+	t := time.NewTicker(interval)
 	defer t.Stop()
 
-	select {
-	case <-s.ctx.Done():
-		return
-	case <-t.C:
-		since, err = s.poll(since, stream)
-		if err != nil {
-			s.log.Error("watch error", "err", err)
+	for {
+		select {
+		case <-s.ctx.Done():
+			return
+		case <-t.C:
+			since, err = s.poll(since, stream)
+			if err != nil {
+				s.log.Error("watch error", "err", err)
+			}
+			t.Reset(interval)
 		}
-		t.Reset(100 * time.Millisecond)
 	}
 }
 
@@ -1744,6 +1739,7 @@ func (s *sqlEntityServer) watch(r *entity.EntityWatchRequest, w entity.EntitySto
 				return
 			}
 			// handle any other message types
+			s.log.Debug("watch received unexpected message", "action", r.Action)
 		}
 	}()
 
@@ -1753,7 +1749,7 @@ func (s *sqlEntityServer) watch(r *entity.EntityWatchRequest, w entity.EntitySto
 		case <-stop:
 			s.log.Debug("watch stopped")
 			return nil
-		// user closed the connection
+		// context canceled
 		case <-w.Context().Done():
 			s.log.Debug("watch context done")
 			return nil
