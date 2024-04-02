@@ -1,10 +1,11 @@
-import { render, waitFor } from '@testing-library/react';
+import { screen, render, waitFor } from '@testing-library/react';
 import { setupServer } from 'msw/node';
 import { default as React } from 'react';
 import { FormProvider, useForm } from 'react-hook-form';
 import { Provider } from 'react-redux';
 import { byRole } from 'testing-library-selector';
 
+import { Components } from '@grafana/e2e-selectors';
 import { setBackendSrv } from '@grafana/runtime';
 import { backendSrv } from 'app/core/services/backend_srv';
 import { configureStore } from 'app/store/configureStore';
@@ -169,11 +170,14 @@ describe('TemplatePreview component', () => {
     );
 
     await waitFor(() => {
-      const previews = ui.resultItems.getAll();
-      expect(previews).toHaveLength(3);
-      expect(previews[0]).toHaveTextContent('Unexpected "{" in operand');
-      expect(previews[1]).toHaveTextContent('Unexpected "{" in operand');
-      expect(previews[2]).toHaveTextContent('This is the template result bla bla bla');
+      const alerts = screen.getAllByTestId(Components.Alert.alertV2('error'));
+      const previewContent = screen.getByRole('listitem');
+
+      expect(alerts).toHaveLength(2);
+      expect(alerts[0]).toHaveTextContent(/Unexpected "{" in operand/i);
+      expect(alerts[1]).toHaveTextContent(/Unexpected "{" in operand/i);
+
+      expect(previewContent).toHaveTextContent('This is the template result bla bla bla');
     });
   });
 });
