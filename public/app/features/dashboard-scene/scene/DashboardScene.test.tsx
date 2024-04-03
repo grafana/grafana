@@ -212,7 +212,7 @@ describe('DashboardScene', () => {
         const restoredLiveNowTimer = scene.state.$behaviors?.find(
           (b) => b instanceof behaviors.LiveNowTimer
         ) as behaviors.LiveNowTimer;
-        expect(restoredLiveNowTimer.state).toBeFalsy();
+        expect(restoredLiveNowTimer.state.enabled).toBeFalsy();
       });
 
       it('A change to time picker visibility settings should set isDirty true', () => {
