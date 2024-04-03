@@ -94,7 +94,7 @@
     },
     "no-results": {
       "clear": "Effacer la recherche et les filtres",
-      "text": "Aucun résultat trouvé pour votre requête."
+      "text": ""
     }
   },
   "clipboard-button": {
@@ -107,9 +107,6 @@
       "change-theme": "Modifier le thème...",
       "dark-theme": "Sombre",
       "light-theme": "Clair"
-    },
-    "empty-state": {
-      "title": "Aucun résultat trouvé"
     },
     "search-box": {
       "placeholder": "Rechercher ou aller à..."
@@ -131,7 +128,8 @@
   },
   "connections": {
     "connect-data": {
-      "category-header-label": "Sources de données"
+      "category-header-label": "Sources de données",
+      "empty-message": ""
     },
     "search": {
       "placeholder": "Rechercher tout"
@@ -653,6 +651,9 @@
     }
   },
   "library-panels": {
+    "empty-state": {
+      "message": ""
+    },
     "modal": {
       "button-cancel": "<0>Annuler</0>",
       "button-view-panel1": "Voir le panneau dans {{label}}...",
@@ -752,12 +753,13 @@
     },
     "migration-token": {
       "body": "Votre instance Grafana autogérée aura besoin d'un jeton d'authentification spécial pour se connecter de manière sécurisée à cette pile cloud.",
-      "delete-button": "Supprimer ce jeton de migration",
       "delete-modal-body": "Si vous avez déjà utilisé ce jeton avec une installation autogérée, celle-ci ne pourra plus importer de contenu.",
       "delete-modal-cancel": "Annuler",
       "delete-modal-confirm": "Supprimer",
       "delete-modal-deleting": "Suppression...",
       "delete-modal-title": "Supprimer le jeton de migration",
+      "error-body": "",
+      "error-title": "",
       "generate-button": "Générer un jeton de migration",
       "generate-button-loading": "Génération d'un jeton de migration…",
       "modal-close": "Fermer",
@@ -766,7 +768,7 @@
       "modal-field-description": "Copiez le jeton maintenant, car vous ne pourrez plus le revoir. Si vous perdez un jeton, vous devrez 'en créer un nouveau.",
       "modal-field-label": "Jeton",
       "modal-title": "Jeton de migration créé",
-      "status": "Statut actuel : <2></2>",
+      "status": "",
       "title": "Jeton de migration"
     },
     "pdc": {
@@ -1212,6 +1214,11 @@
       "pro-tip": "Vous pouvez utiliser des playlists pour faire défiler des tableaux de bord sur des téléviseurs sans contrôle utilisateur",
       "pro-tip-link-title": "En savoir plus",
       "title": "Il n'y a aucune playlist créée"
+    }
+  },
+  "playlists": {
+    "empty-state": {
+      "message": ""
     }
   },
   "profile": {

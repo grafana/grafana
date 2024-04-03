@@ -55,31 +55,23 @@ func (r *subResourceREST) Connect(ctx context.Context, name string, opts runtime
 	ctx = contextualMiddlewares(ctx)
 
 	return http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
+		clonedReq, err := resourceRequest(req)
+		if err != nil {
+			responder.Error(err)
+			return
+		}
+
 		body, err := io.ReadAll(req.Body)
 		if err != nil {
 			responder.Error(err)
 			return
 		}
 
-		idx := strings.LastIndex(req.URL.Path, "/resource")
-		if idx < 0 {
-			responder.Error(fmt.Errorf("expected resource path")) // 400?
-			return
-		}
-
-		clonedReq := req.Clone(req.Context())
-		rawURL := req.URL.Path[idx+len("/resource"):]
-
-		clonedReq.URL = &url.URL{
-			Path:     rawURL,
-			RawQuery: clonedReq.URL.RawQuery,
-		}
-
 		err = r.builder.client.CallResource(ctx, &backend.CallResourceRequest{
 			PluginContext: pluginCtx,
 			Path:          clonedReq.URL.Path,
 			Method:        req.Method,
-			URL:           req.URL.String(),
+			URL:           clonedReq.URL.String(),
 			Body:          body,
 			Headers:       req.Header,
 		}, httpresponsesender.New(w))
@@ -88,4 +80,21 @@ func (r *subResourceREST) Connect(ctx context.Context, name string, opts runtime
 			responder.Error(err)
 		}
 	}), nil
+}
+
+func resourceRequest(req *http.Request) (*http.Request, error) {
+	idx := strings.LastIndex(req.URL.Path, "/resource")
+	if idx < 0 {
+		return nil, fmt.Errorf("expected resource path") // 400?
+	}
+
+	clonedReq := req.Clone(req.Context())
+	rawURL := strings.TrimLeft(req.URL.Path[idx+len("/resource"):], "/")
+
+	clonedReq.URL = &url.URL{
+		Path:     rawURL,
+		RawQuery: clonedReq.URL.RawQuery,
+	}
+
+	return clonedReq, nil
 }
