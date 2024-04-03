@@ -728,7 +728,8 @@
       "metadata": {
         "name": "newVizTooltips",
         "resourceVersion": "1711130211436",
-        "creationTimestamp": "2024-03-22T17:56:51Z"
+        "creationTimestamp": "2024-03-22T17:56:51Z",
+        "deletionTimestamp": "2024-04-02T22:11:56Z"
       },
       "spec": {
         "description": "New visualizations tooltips UX",
