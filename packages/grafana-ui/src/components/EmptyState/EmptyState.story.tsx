@@ -20,7 +20,7 @@ const meta: Meta<typeof EmptyState> = {
   argTypes: {
     button: {
       control: 'select',
-      options: ['None', 'CTA', 'Clear filters'],
+      options: ['None', 'Create', 'Clear filters'],
     },
     children: {
       type: 'string',
@@ -30,7 +30,7 @@ const meta: Meta<typeof EmptyState> = {
 
 export const Basic: StoryFn<typeof EmptyState> = (args) => {
   let button;
-  if (args.button === 'CTA') {
+  if (args.button === 'Create') {
     button = (
       <Button icon="plus" size="lg">
         Create dashboard
@@ -43,9 +43,9 @@ export const Basic: StoryFn<typeof EmptyState> = (args) => {
 };
 
 Basic.args = {
-  button: 'CTA',
+  button: 'Create',
   children: 'Use this space to add any additional information',
-  variant: 'nothing-here',
+  variant: 'call-to-action',
 };
 
 export default meta;

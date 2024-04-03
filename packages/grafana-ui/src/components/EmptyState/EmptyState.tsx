@@ -24,19 +24,19 @@ interface BaseProps {
   /**
    * Which variant to use. Affects the default message and image shown.
    */
-  variant: 'nothing-here' | 'not-found';
+  variant: 'call-to-action' | 'not-found';
 }
 
-interface NothingHereVariantProps extends BaseProps {
+interface CallToActionVariantProps extends BaseProps {
   message: string;
-  variant: 'nothing-here';
+  variant: 'call-to-action';
 }
 
 interface NotFoundVariantProps extends BaseProps {
   variant: 'not-found';
 }
 
-type Props = NothingHereVariantProps | NotFoundVariantProps;
+type Props = CallToActionVariantProps | NotFoundVariantProps;
 
 export const EmptyState = ({
   button,
@@ -63,8 +63,8 @@ export const EmptyState = ({
 
 function getDefaultMessageForVariant(variant: Props['variant']) {
   switch (variant) {
-    case 'nothing-here': {
-      return t('grafana-ui.empty-state.nothing-here-message', "There's nothing here yet");
+    case 'call-to-action': {
+      return t('grafana-ui.empty-state.call-to-action-message', "There's nothing here yet");
     }
     case 'not-found': {
       return t('grafana-ui.empty-state.not-found-message', 'No results found');
@@ -77,7 +77,7 @@ function getDefaultMessageForVariant(variant: Props['variant']) {
 
 function getDefaultImageForVariant(variant: Props['variant']) {
   switch (variant) {
-    case 'nothing-here': {
+    case 'call-to-action': {
       // TODO replace with a different image for initial variant
       return <GrotNotFound width={300} />;
     }

@@ -3,21 +3,30 @@ import { EmptyState } from './EmptyState';
 
 # EmptyState
 
-Use an empty state to communicate to the user that there is no data to display, or that a search query returned no results.
+The EmptyState component consists of a message and optionally an image, button, and additional information.
 
-## `variant="nothing-here"`
+## When to use
 
-### When to use
+Use an empty state to communicate to the user that there is no data to display and provide instructions for what to do next.
+Example use cases:
 
-Use when nothing has been created yet, and you want to encourage the user to take an action.
+- When a user has not created a particular resource yet
+- When a filter or search query returns no results
+- When a user completes all actions, such as clearing their inbox or notifications
 
-### Initial state with a call to action
+There are different variants to handle the most common empty state use cases. These variants provide a specific default message and image.
+
+## Usage
+
+### `variant="call-to-action"`
+
+Use when there is no data to display and you want to encourage the user to take an action. Usually either to complete some initial configuration, or to create an item.
 
 ```jsx
 import { EmptyState, LinkButton, TextLink } from '@grafana/ui';
 
 <EmptyState
-  variant="nothing-here"
+  variant="call-to-action"
   message="You haven't created any playlists yet"
   button={
     <LinkButton icon="plus" href="playlists/new" size="lg">
@@ -32,12 +41,12 @@ import { EmptyState, LinkButton, TextLink } from '@grafana/ui';
 </EmptyState>;
 ```
 
-### Initial state with no call to action
+For scenarios where there is no single button that can be clicked to create the item, you can omit the `button` prop. Instead, provide additional information to help the user understand how to create the specific resource.
 
 ```jsx
 import { EmptyState, TextLink } from '@grafana/ui';
 
-<EmptyState variant="nothing-here" message="You haven't created any library panels yet">
+<EmptyState variant="call-to-action" message="You haven't created any library panels yet">
   Create a library panel from any existing dashboard panel through the panel context menu.{' '}
   <TextLink external href="<externalDocsLink>">
     Learn more.
@@ -45,9 +54,7 @@ import { EmptyState, TextLink } from '@grafana/ui';
 </EmptyState>;
 ```
 
-## `variant="not-found"`
-
-### When to use
+### `variant="not-found"`
 
 Use in place of content when a search query or filter returns no results.
 
@@ -59,14 +66,14 @@ import { EmptyState } from '@grafana/ui';
 <EmptyState variant="not-found" />;
 ```
 
-## Advanced usage
+## Customization
 
 For all variants you can:
 
-- override the message
-- override the image
+- provide a custom message
+- provide a custom image or hide the image entirely
 - provide a button (e.g. to provide a call to action or clear the search query)
-- add additional information via React children
+- provide additional information via React children
 
 ```jsx
 import { Button, EmptyState, TextLink } from '@grafana/ui';
