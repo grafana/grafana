@@ -101,7 +101,7 @@ const maybeZoomAction = (e?: MouseEvent | null) => e != null && !e.ctrlKey && !e
 /**
  * @alpha
  */
-export const TooltipPlugin2 = ({
+export const TooltipPlugin2: React.FC<TooltipPlugin2Props> = ({
   config,
   hoverMode,
   render,
