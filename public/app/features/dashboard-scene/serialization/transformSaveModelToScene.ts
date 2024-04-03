@@ -304,7 +304,7 @@ export function createDashboardSceneFromDashboardModel(oldModel: DashboardModel)
       registerDashboardMacro,
       registerDashboardSceneTracking(oldModel),
       registerPanelInteractionsReporter,
-      new behaviors.LiveNowTimer(oldModel.liveNow),
+      new behaviors.LiveNowTimer({ enabled: oldModel.liveNow }),
     ],
     $data: new DashboardDataLayerSet({ annotationLayers, alertStatesLayer }),
     controls: new DashboardControls({
