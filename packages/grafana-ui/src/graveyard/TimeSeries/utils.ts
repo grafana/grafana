@@ -2,6 +2,7 @@ import { isNumber } from 'lodash';
 import uPlot from 'uplot';
 
 import {
+  DashboardCursorSync,
   DataFrame,
   FieldConfig,
   FieldType,
@@ -70,15 +71,19 @@ const defaultConfig: GraphFieldConfig = {
   axisPlacement: AxisPlacement.Auto,
 };
 
-export const preparePlotConfigBuilder: UPlotConfigPrepFn = ({
+export const preparePlotConfigBuilder: UPlotConfigPrepFn<{
+  sync?: () => DashboardCursorSync;
+}> = ({
   frame,
   theme,
   timeZones,
   getTimeRange,
+  sync,
   allFrames,
   renderers,
   tweakScale = (opts) => opts,
   tweakAxis = (opts) => opts,
+  eventsScope = '__global_',
 }) => {
   const builder = new UPlotConfigBuilder(timeZones[0]);
 
@@ -98,6 +103,7 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn = ({
   }
 
   const xScaleKey = 'x';
+  let yScaleKey = '';
 
   const xFieldAxisPlacement =
     xField.config.custom?.axisPlacement !== AxisPlacement.Hidden ? AxisPlacement.Bottom : AxisPlacement.Hidden;
@@ -257,6 +263,10 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn = ({
         field
       )
     );
+
+    if (!yScaleKey) {
+      yScaleKey = scaleKey;
+    }
 
     if (customConfig.axisPlacement !== AxisPlacement.Hidden) {
       let axisColor: uPlot.Axis.Stroke | undefined;
@@ -533,6 +543,8 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn = ({
     r.init(builder, fieldIndices);
   });
 
+  builder.scaleKeys = [xScaleKey, yScaleKey];
+
   // if hovered value is null, how far we may scan left/right to hover nearest non-null
   const hoverProximityPx = 15;
 
@@ -585,12 +597,20 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn = ({
     },
   };
 
+  if (sync && sync() !== DashboardCursorSync.Off) {
+    cursor.sync = {
+      key: eventsScope,
+      scales: [xScaleKey, null],
+    };
+  }
+
+  builder.setSync();
   builder.setCursor(cursor);
 
   return builder;
 };
 
-function getNamesToFieldIndex(frame: DataFrame, allFrames: DataFrame[]): Map<string, number> {
+export function getNamesToFieldIndex(frame: DataFrame, allFrames: DataFrame[]): Map<string, number> {
   const originNames = new Map<string, number>();
   frame.fields.forEach((field, i) => {
     const origin = field.state?.origin;

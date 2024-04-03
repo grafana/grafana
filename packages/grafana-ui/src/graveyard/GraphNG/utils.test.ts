@@ -1,7 +1,9 @@
 import {
   createTheme,
+  DashboardCursorSync,
   DataFrame,
   DefaultTimeZone,
+  // EventBusSrv,
   FieldColorModeId,
   FieldConfig,
   FieldMatcherID,
@@ -213,6 +215,7 @@ describe('GraphNG utils', () => {
       theme: createTheme(),
       timeZones: [DefaultTimeZone],
       getTimeRange: getDefaultTimeRange,
+      sync: () => DashboardCursorSync.Tooltip,
       allFrames: [frame!],
     }).getConfig();
     expect(result).toMatchSnapshot();
