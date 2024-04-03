@@ -728,7 +728,8 @@
       "metadata": {
         "name": "newVizTooltips",
         "resourceVersion": "1711130211436",
-        "creationTimestamp": "2024-03-22T17:56:51Z"
+        "creationTimestamp": "2024-03-22T17:56:51Z",
+        "deletionTimestamp": "2024-04-02T22:11:56Z"
       },
       "spec": {
         "description": "New visualizations tooltips UX",
@@ -2058,6 +2059,20 @@
       },
       "spec": {
         "description": "Require that sub claims is present in oauth tokens.",
+        "stage": "experimental",
+        "codeowner": "@grafana/identity-access-team",
+        "hideFromAdminPage": true,
+        "hideFromDocs": true
+      }
+    },
+    {
+      "metadata": {
+        "name": "authAPIAccessTokenAuth",
+        "resourceVersion": "1711701535283",
+        "creationTimestamp": "2024-03-29T08:38:55Z"
+      },
+      "spec": {
+        "description": "Enables the use of Auth API access tokens for authentication",
         "stage": "experimental",
         "codeowner": "@grafana/identity-access-team",
         "hideFromAdminPage": true,

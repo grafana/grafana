@@ -20,7 +20,6 @@ import {
   GroupByVariable,
   QueryVariable,
   SceneDataLayerControls,
-  SceneDataLayerSet,
   SceneDataTransformer,
   SceneGridLayout,
   SceneGridRow,
@@ -42,6 +41,7 @@ import { DASHBOARD_DATASOURCE_PLUGIN_ID } from 'app/plugins/datasource/dashboard
 import { DashboardDataDTO } from 'app/types';
 
 import { AddLibraryPanelWidget } from '../scene/AddLibraryPanelWidget';
+import { DashboardDataLayerSet } from '../scene/DashboardDataLayerSet';
 import { DashboardGridItem } from '../scene/DashboardGridItem';
 import { LibraryVizPanel } from '../scene/LibraryVizPanel';
 import { PanelTimeRange } from '../scene/PanelTimeRange';
@@ -234,8 +234,10 @@ describe('transformSaveModelToScene', () => {
       expect(rowScene.state.children[0]).toBeInstanceOf(DashboardGridItem);
       expect(rowScene.state.children[1]).toBeInstanceOf(DashboardGridItem);
       expect(rowScene.state.children[2]).toBeInstanceOf(DashboardGridItem);
-      expect((rowScene.state.children[1] as DashboardGridItem).state.body!).toBeInstanceOf(AddLibraryPanelWidget);
-      expect((rowScene.state.children[2] as DashboardGridItem).state.body!).toBeInstanceOf(LibraryVizPanel);
+      // Panels are sorted by position in the row
+      expect((rowScene.state.children[0] as DashboardGridItem).state.body!).toBeInstanceOf(AddLibraryPanelWidget);
+      expect((rowScene.state.children[1] as DashboardGridItem).state.body!).toBeInstanceOf(LibraryVizPanel);
+      expect((rowScene.state.children[2] as DashboardGridItem).state.body!).toBeInstanceOf(VizPanel);
     });
 
     it('should create panels within expanded row', () => {
@@ -1230,26 +1232,26 @@ describe('transformSaveModelToScene', () => {
     it('Should build correct scene model', () => {
       const scene = transformSaveModelToScene({ dashboard: dashboard_to_load1 as any, meta: {} });
 
-      expect(scene.state.$data).toBeInstanceOf(SceneDataLayerSet);
+      expect(scene.state.$data).toBeInstanceOf(DashboardDataLayerSet);
       expect(scene.state.controls!.state.variableControls[1]).toBeInstanceOf(SceneDataLayerControls);
 
-      const dataLayers = scene.state.$data as SceneDataLayerSet;
-      expect(dataLayers.state.layers).toHaveLength(4);
-      expect(dataLayers.state.layers[0].state.name).toBe('Annotations & Alerts');
-      expect(dataLayers.state.layers[0].state.isEnabled).toBe(true);
-      expect(dataLayers.state.layers[0].state.isHidden).toBe(false);
+      const dataLayers = scene.state.$data as DashboardDataLayerSet;
+      expect(dataLayers.state.annotationLayers).toHaveLength(4);
+      expect(dataLayers.state.annotationLayers[0].state.name).toBe('Annotations & Alerts');
+      expect(dataLayers.state.annotationLayers[0].state.isEnabled).toBe(true);
+      expect(dataLayers.state.annotationLayers[0].state.isHidden).toBe(false);
 
-      expect(dataLayers.state.layers[1].state.name).toBe('Enabled');
-      expect(dataLayers.state.layers[1].state.isEnabled).toBe(true);
-      expect(dataLayers.state.layers[1].state.isHidden).toBe(false);
+      expect(dataLayers.state.annotationLayers[1].state.name).toBe('Enabled');
+      expect(dataLayers.state.annotationLayers[1].state.isEnabled).toBe(true);
+      expect(dataLayers.state.annotationLayers[1].state.isHidden).toBe(false);
 
-      expect(dataLayers.state.layers[2].state.name).toBe('Disabled');
-      expect(dataLayers.state.layers[2].state.isEnabled).toBe(false);
-      expect(dataLayers.state.layers[2].state.isHidden).toBe(false);
+      expect(dataLayers.state.annotationLayers[2].state.name).toBe('Disabled');
+      expect(dataLayers.state.annotationLayers[2].state.isEnabled).toBe(false);
+      expect(dataLayers.state.annotationLayers[2].state.isHidden).toBe(false);
 
-      expect(dataLayers.state.layers[3].state.name).toBe('Hidden');
-      expect(dataLayers.state.layers[3].state.isEnabled).toBe(true);
-      expect(dataLayers.state.layers[3].state.isHidden).toBe(true);
+      expect(dataLayers.state.annotationLayers[3].state.name).toBe('Hidden');
+      expect(dataLayers.state.annotationLayers[3].state.isEnabled).toBe(true);
+      expect(dataLayers.state.annotationLayers[3].state.isHidden).toBe(true);
     });
   });
 
@@ -1258,12 +1260,11 @@ describe('transformSaveModelToScene', () => {
       config.unifiedAlertingEnabled = true;
       const scene = transformSaveModelToScene({ dashboard: dashboard_to_load1 as any, meta: {} });
 
-      expect(scene.state.$data).toBeInstanceOf(SceneDataLayerSet);
+      expect(scene.state.$data).toBeInstanceOf(DashboardDataLayerSet);
       expect(scene.state.controls!.state.variableControls[1]).toBeInstanceOf(SceneDataLayerControls);
 
-      const dataLayers = scene.state.$data as SceneDataLayerSet;
-      expect(dataLayers.state.layers).toHaveLength(5);
-      expect(dataLayers.state.layers[4].state.name).toBe('Alert States');
+      const dataLayers = scene.state.$data as DashboardDataLayerSet;
+      expect(dataLayers.state.alertStatesLayer).toBeDefined();
     });
 
     it('Should add alert states data layer if any panel has a legacy alert defined', () => {
@@ -1272,12 +1273,11 @@ describe('transformSaveModelToScene', () => {
       dashboard.panels![0].alert = {};
       const scene = transformSaveModelToScene({ dashboard: dashboard_to_load1 as any, meta: {} });
 
-      expect(scene.state.$data).toBeInstanceOf(SceneDataLayerSet);
+      expect(scene.state.$data).toBeInstanceOf(DashboardDataLayerSet);
       expect(scene.state.controls!.state.variableControls[1]).toBeInstanceOf(SceneDataLayerControls);
 
-      const dataLayers = scene.state.$data as SceneDataLayerSet;
-      expect(dataLayers.state.layers).toHaveLength(5);
-      expect(dataLayers.state.layers[4].state.name).toBe('Alert States');
+      const dataLayers = scene.state.$data as DashboardDataLayerSet;
+      expect(dataLayers.state.alertStatesLayer).toBeDefined();
     });
   });
 

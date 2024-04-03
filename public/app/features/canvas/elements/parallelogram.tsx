@@ -43,7 +43,14 @@ const Parallelogram = (props: CanvasElementProps<CanvasElementConfig, CanvasElem
           </clipPath>
         </defs>
         {/* Apply background image within the clipping area */}
-        <rect x="0" y="0" width="100%" height="100%" clipPath={`url(#parallelogramClip-${uniqueId})`} />
+        <rect
+          x="0"
+          y="0"
+          width="100%"
+          height="100%"
+          clipPath={`url(#parallelogramClip-${uniqueId})`}
+          style={{ fill: 'none' }}
+        />
         <polygon
           points="0,150 50,0 250,0 200,150"
           className={styles.element}

@@ -12,11 +12,14 @@ var (
 )
 
 type CloudMigration struct {
-	ID        int64     `json:"id" xorm:"pk autoincr 'id'"`
-	AuthToken string    `json:"authToken"`
-	Stack     string    `json:"stack"`
-	Created   time.Time `json:"created"`
-	Updated   time.Time `json:"updated"`
+	ID          int64     `json:"id" xorm:"pk autoincr 'id'"`
+	AuthToken   string    `json:"authToken"`
+	Stack       string    `json:"stack"`
+	StackID     int       `json:"stackID" xorm:"stack_id"`
+	RegionSlug  string    `json:"regionSlug"`
+	ClusterSlug string    `json:"clusterSlug"`
+	Created     time.Time `json:"created"`
+	Updated     time.Time `json:"updated"`
 }
 
 type MigratedResourceResult struct {
@@ -47,6 +50,11 @@ type CloudMigrationRun struct {
 	Finished          time.Time          `json:"finished"`
 }
 
+type CloudMigrationRunList struct {
+	Runs []CloudMigrationRun `json:"runs"`
+}
+
+// swagger:parameters createMigration
 type CloudMigrationRequest struct {
 	AuthToken string `json:"authToken"`
 }
@@ -56,6 +64,10 @@ type CloudMigrationResponse struct {
 	Stack   string    `json:"stack"`
 	Created time.Time `json:"created"`
 	Updated time.Time `json:"updated"`
+}
+
+type CloudMigrationListResponse struct {
+	Migrations []CloudMigrationResponse `json:"migrations"`
 }
 
 type MigrateDatasourcesRequest struct {
@@ -82,4 +94,26 @@ type CreateAccessTokenResponse struct {
 
 type CreateAccessTokenResponseDTO struct {
 	Token string `json:"token"`
+}
+
+type Base64EncodedTokenPayload struct {
+	Token    string
+	Instance Base64HGInstance
+}
+
+func (p Base64EncodedTokenPayload) ToMigration() CloudMigration {
+	return CloudMigration{
+		AuthToken:   p.Token,
+		Stack:       p.Instance.Slug,
+		StackID:     p.Instance.StackID,
+		RegionSlug:  p.Instance.RegionSlug,
+		ClusterSlug: p.Instance.ClusterSlug,
+	}
+}
+
+type Base64HGInstance struct {
+	StackID     int
+	Slug        string
+	RegionSlug  string
+	ClusterSlug string
 }
