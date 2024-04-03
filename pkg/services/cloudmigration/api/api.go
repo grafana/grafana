@@ -31,14 +31,12 @@ func RegisterApi(
 	rr routing.RouteRegister,
 	cms cloudmigration.Service,
 	tracer tracing.Tracer,
-	accessControl accesscontrol.AccessControl,
 ) *CloudMigrationAPI {
 	api := &CloudMigrationAPI{
 		log:                   log.New("cloudmigrations.api"),
 		routeRegister:         rr,
 		cloudMigrationService: cms,
 		tracer:                tracer,
-		accessControl:         accessControl,
 	}
 	api.registerEndpoints()
 	return api
@@ -46,7 +44,6 @@ func RegisterApi(
 
 // RegisterAPIEndpoints Registers Endpoints on Grafana Router
 func (cma *CloudMigrationAPI) registerEndpoints() {
-	//authorize := accesscontrol.Middleware(cma.accessControl)
 	cma.routeRegister.Group("/api/cloudmigration", func(cloudMigrationRoute routing.RouteRegister) {
 		// migration
 		cloudMigrationRoute.Get("/migration", routing.Wrap(cma.GetMigrationList))
@@ -57,7 +54,7 @@ func (cma *CloudMigrationAPI) registerEndpoints() {
 		cloudMigrationRoute.Get("/migration/:id/run", routing.Wrap(cma.GetMigrationRunList))
 		cloudMigrationRoute.Get("/migration/:id/run/:runID", routing.Wrap(cma.GetMigrationRun))
 		cloudMigrationRoute.Post("/token", routing.Wrap(cma.CreateToken))
-	}, middleware.ReqSignedIn)
+	}, middleware.ReqOrgAdmin)
 }
 
 // swagger:route POST /cloudmigration/token migrations createCloudMigrationToken

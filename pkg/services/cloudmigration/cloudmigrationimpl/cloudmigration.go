@@ -13,7 +13,6 @@ import (
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
-	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/cloudmigration"
 	"github.com/grafana/grafana/pkg/services/cloudmigration/api"
 	"github.com/grafana/grafana/pkg/services/contexthandler"
@@ -71,7 +70,6 @@ func ProvideService(
 	tracer tracing.Tracer,
 	dashboardService dashboards.DashboardService,
 	folderService folder.Service,
-	accessControl accesscontrol.AccessControl,
 ) cloudmigration.Service {
 	if !features.IsEnabledGlobally(featuremgmt.FlagOnPremToCloudMigrations) {
 		return &NoopServiceImpl{}
@@ -90,7 +88,7 @@ func ProvideService(
 		dashboardService: dashboardService,
 		folderService:    folderService,
 	}
-	s.api = api.RegisterApi(routeRegister, s, tracer, accessControl)
+	s.api = api.RegisterApi(routeRegister, s, tracer)
 
 	if err := s.registerMetrics(prom, s.metrics); err != nil {
 		s.log.Warn("error registering prom metrics", "error", err.Error())
