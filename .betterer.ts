@@ -86,6 +86,7 @@ function countEslintErrors() {
       '@emotion/syntax-preference': [2, 'object'],
       '@typescript-eslint/no-explicit-any': 'error',
       '@grafana/no-aria-label-selectors': 'error',
+      'no-barrel-files/no-barrel-files': 'error',
       'no-restricted-imports': [
         'error',
         {
