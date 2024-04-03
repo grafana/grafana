@@ -95,10 +95,6 @@ const (
 	// Allow elements nesting
 	FlagCanvasPanelNesting = "canvasPanelNesting"
 
-	// FlagNewVizTooltips
-	// New visualizations tooltips UX
-	FlagNewVizTooltips = "newVizTooltips"
-
 	// FlagScenes
 	// Experimental framework to build interactive dashboards
 	FlagScenes = "scenes"
@@ -626,6 +622,10 @@ const (
 	// FlagBetterPageScrolling
 	// Removes CustomScrollbar from the UI, relying on native browser scrollbars
 	FlagBetterPageScrolling = "betterPageScrolling"
+
+	// FlagAuthAPIAccessTokenAuth
+	// Enables the use of Auth API access tokens for authentication
+	FlagAuthAPIAccessTokenAuth = "authAPIAccessTokenAuth"
 
 	// FlagScopeFilters
 	// Enables the use of scope filters in Grafana
