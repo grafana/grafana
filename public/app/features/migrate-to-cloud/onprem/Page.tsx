@@ -101,9 +101,9 @@ export const Page = () => {
 
     const betterResources: MigrationResourceDTOMock[] = rawResources.items.flatMap((item) => {
       if (item.type === 'DATASOURCE') {
-        const datasourceConfig = item.refId
-          ? config.datasources[item.refId ?? ''] || Object.values(config.datasources).find((v) => v.uid === item.refId)
-          : undefined;
+        const datasourceConfig = Object.values(config.datasources).find((v) => v.uid === item.refId);
+
+        console.log('ds', item.refId, datasourceConfig);
 
         return {
           uid: item.refId ?? '',
@@ -113,8 +113,7 @@ export const Page = () => {
             uid: item.refId ?? '',
             name: datasourceConfig?.name ?? 'Unknown data source',
             type: datasourceConfig?.meta?.name ?? 'Unknown type',
-            /// @ts-expect-error
-            icon: datasourceConfig?.meta?.logos?.small,
+            icon: datasourceConfig?.meta?.info?.logos?.small,
           },
         };
       }

@@ -19,6 +19,7 @@ const config: ConfigFile = {
         'getCloudMigrationRun',
         'getCloudMigrationRunList',
         'deleteCloudMigration',
+        'getDashboardByUid',
       ],
     },
   },
