@@ -338,12 +338,14 @@ func (s *Service) GetMigrationDataJSON(ctx context.Context, id int64) ([]byte, e
 		s.log.Error("Failed to get dashboards", "err", err)
 		return nil, err
 	}
+
 	for _, dashboard := range dashboards {
+		dashboard.Data.Del("id")
 		migrationDataSlice = append(migrationDataSlice, cloudmigration.MigrateDataRequestItemDTO{
 			Type:  cloudmigration.DashboardDataType,
 			RefID: dashboard.UID,
 			Name:  dashboard.Title,
-			Data:  dashboard,
+			Data:  map[string]any{"dashboard": dashboard.Data},
 		})
 	}
 
