@@ -27,18 +27,16 @@ export const canvasMigrationHandler = (panel: PanelModel): Partial<Options> => {
           // Take existing ellipse specific background and border config and apply it to the element's general background and border config
           if (element.config.backgroundColor) {
             element.background = element.config.backgroundColor;
+            delete element.config.backgroundColor;
           }
           if (element.config.borderColor) {
             element.border.color = element.config.borderColor;
+            delete element.config.borderColor;
           }
           if (element.config.width) {
             element.border.width = element.config.width;
+            delete element.config.width;
           }
-
-          // Remove the ellipse specific background and border config
-          delete element.config.backgroundColor;
-          delete element.config.borderColor;
-          delete element.config.width;
         }
       }
     }
