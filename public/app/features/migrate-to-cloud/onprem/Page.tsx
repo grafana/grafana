@@ -7,7 +7,6 @@ import { Trans, t } from 'app/core/internationalization';
 
 import {
   MigrateDataResponseDto,
-  MigrateDataResponseItemDto,
   useDeleteCloudMigrationMutation,
   useGetCloudMigrationRunListQuery,
   useGetCloudMigrationRunQuery,
