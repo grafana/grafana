@@ -70,7 +70,6 @@ export const Page = () => {
   const [actuallyRunMigration, actuallyRunMigrationResult] = useRunCloudMigrationMutation();
 
   const isBusy = actuallyRunMigrationResult.isLoading || migrationDestination.isFetching || migrationRun.isFetching;
-  // const resources: MigrationResourceDTOMock[] = [];
 
   // TODO: API returns this in a *very* wrong format - got to unmarshall it
   const resources = useMemo(() => {
@@ -130,8 +129,6 @@ export const Page = () => {
     return betterResources;
   }, [migrationRun.data]);
 
-  console.log('migration run resources', resources);
-
   const handleDisconnect = useCallback(() => {
     window.alert('TODO: Disconnect');
   }, []);
@@ -139,8 +136,6 @@ export const Page = () => {
   const handleStartMigration = useCallback(() => {
     if (migrationDestination.data?.id) {
       actuallyRunMigration({ id: migrationDestination.data?.id });
-    } else {
-      window.alert('id still aint there');
     }
   }, [actuallyRunMigration, migrationDestination]);
 
