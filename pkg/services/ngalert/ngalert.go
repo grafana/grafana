@@ -279,7 +279,7 @@ func (ng *AlertNG) init() error {
 	cfg := state.ManagerCfg{
 		Metrics:                        ng.Metrics.GetStateMetrics(),
 		ExternalURL:                    appUrl,
-		ExecuteAlerts:                  ng.Cfg.UnifiedAlerting.ExecuteAlerts,
+		DisableExecution:               !ng.Cfg.UnifiedAlerting.ExecuteAlerts,
 		InstanceStore:                  ng.store,
 		Images:                         ng.ImageService,
 		Clock:                          clk,
