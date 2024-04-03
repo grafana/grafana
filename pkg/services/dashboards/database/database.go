@@ -907,6 +907,18 @@ func (d *dashboardStore) DeleteDashboardsInFolders(
 	})
 }
 
+func (d *dashboardStore) GetAllDashboards(ctx context.Context) ([]*dashboards.Dashboard, error) {
+	var dashboards = make([]*dashboards.Dashboard, 0)
+	err := d.store.WithDbSession(ctx, func(session *db.Session) error {
+		err := session.Find(&dashboards)
+		return err
+	})
+	if err != nil {
+		return nil, err
+	}
+	return dashboards, nil
+}
+
 func readQuotaConfig(cfg *setting.Cfg) (*quota.Map, error) {
 	limits := &quota.Map{}
 

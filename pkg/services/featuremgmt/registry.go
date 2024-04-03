@@ -177,14 +177,6 @@ var (
 			HideFromAdminPage: true,
 		},
 		{
-			Name:           "newVizTooltips",
-			Description:    "New visualizations tooltips UX",
-			Stage:          FeatureStagePublicPreview,
-			FrontendOnly:   true,
-			Owner:          grafanaDatavizSquad,
-			AllowSelfServe: false,
-		},
-		{
 			Name:         "scenes",
 			Description:  "Experimental framework to build interactive dashboards",
 			Stage:        FeatureStageExperimental,
@@ -1154,6 +1146,14 @@ var (
 			FrontendOnly: true,
 			Owner:        grafanaFrontendPlatformSquad,
 			Expression:   "true", // enabled by default
+		},
+		{
+			Name:              "authAPIAccessTokenAuth",
+			Description:       "Enables the use of Auth API access tokens for authentication",
+			Stage:             FeatureStageExperimental,
+			Owner:             identityAccessTeam,
+			HideFromDocs:      true,
+			HideFromAdminPage: true,
 		},
 		{
 			Name:              "scopeFilters",

@@ -94,7 +94,7 @@
     },
     "no-results": {
       "clear": "Borrar la búsqueda y los filtros",
-      "text": "No se ha encontrado ningún resultado para su consulta."
+      "text": ""
     }
   },
   "clipboard-button": {
@@ -107,9 +107,6 @@
       "change-theme": "Cambiar tema...",
       "dark-theme": "Oscuro",
       "light-theme": "Claro"
-    },
-    "empty-state": {
-      "title": "No se han encontrado resultados"
     },
     "search-box": {
       "placeholder": "Buscar o saltar a..."
@@ -131,7 +128,8 @@
   },
   "connections": {
     "connect-data": {
-      "category-header-label": "Orígenes de datos"
+      "category-header-label": "Orígenes de datos",
+      "empty-message": ""
     },
     "search": {
       "placeholder": "Buscar todo"
@@ -653,6 +651,9 @@
     }
   },
   "library-panels": {
+    "empty-state": {
+      "message": ""
+    },
     "modal": {
       "button-cancel": "<0>Cancelar</0>",
       "button-view-panel1": "Ver panel en {{label}}...",
@@ -752,12 +753,13 @@
     },
     "migration-token": {
       "body": "Tu instancia autogestionada de Grafana necesitará un token de autenticación especial para poder conectarse de forma segura a esta pila en la nube.",
-      "delete-button": "Eliminar este token de migración",
       "delete-modal-body": "Si ya has utilizado este token con una instalación autogestionada, la instalación ya no podrá cargar contenido.",
       "delete-modal-cancel": "Cancelar",
       "delete-modal-confirm": "Eliminar",
       "delete-modal-deleting": "Eliminando...",
       "delete-modal-title": "Eliminar token de migración",
+      "error-body": "",
+      "error-title": "",
       "generate-button": "Generar un token de migración",
       "generate-button-loading": "Generando un token de migración...",
       "modal-close": "Cerrar",
@@ -766,7 +768,7 @@
       "modal-field-description": "Copia el token ahora, ya que no lo volverás a ver. Si lo pierdes, deberás crear uno nuevo.",
       "modal-field-label": "Token",
       "modal-title": "Se ha creado el token de migración",
-      "status": "Estado actual: <2></2>",
+      "status": "",
       "title": "Token de migración"
     },
     "pdc": {
@@ -1212,6 +1214,11 @@
       "pro-tip": "Puede usar las listas de reproducción para crear ciclos de tableros en televisiones sin control de usuario",
       "pro-tip-link-title": "Más información",
       "title": "Aún no se ha creado ninguna lista de reproducción"
+    }
+  },
+  "playlists": {
+    "empty-state": {
+      "message": ""
     }
   },
   "profile": {

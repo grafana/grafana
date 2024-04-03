@@ -173,6 +173,56 @@
         },
         "description": "(empty)"
       },
+      "cloudMigrationCreateTokenResponse": {
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/CreateAccessTokenResponseDTO"
+            }
+          }
+        },
+        "description": "(empty)"
+      },
+      "cloudMigrationListResponse": {
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/CloudMigrationListResponse"
+            }
+          }
+        },
+        "description": "(empty)"
+      },
+      "cloudMigrationResponse": {
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/CloudMigrationResponse"
+            }
+          }
+        },
+        "description": "(empty)"
+      },
+      "cloudMigrationRunListResponse": {
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/CloudMigrationRunList"
+            }
+          }
+        },
+        "description": "(empty)"
+      },
+      "cloudMigrationRunResponse": {
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/MigrateDataResponseDTO"
+            }
+          }
+        },
+        "description": "(empty)"
+      },
       "conflictError": {
         "content": {
           "application/json": {
@@ -3471,6 +3521,56 @@
         },
         "type": "object"
       },
+      "CloudMigrationListResponse": {
+        "properties": {
+          "migrations": {
+            "items": {
+              "$ref": "#/components/schemas/CloudMigrationResponse"
+            },
+            "type": "array"
+          }
+        },
+        "type": "object"
+      },
+      "CloudMigrationRequest": {
+        "properties": {
+          "authToken": {
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "CloudMigrationResponse": {
+        "properties": {
+          "created": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "id": {
+            "format": "int64",
+            "type": "integer"
+          },
+          "stack": {
+            "type": "string"
+          },
+          "updated": {
+            "format": "date-time",
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "CloudMigrationRunList": {
+        "properties": {
+          "runs": {
+            "items": {
+              "$ref": "#/components/schemas/MigrateDataResponseDTO"
+            },
+            "type": "array"
+          }
+        },
+        "type": "object"
+      },
       "ConfFloat64": {
         "description": "ConfFloat64 is a float64. It Marshals float64 values of NaN of Inf\nto null.",
         "format": "double",
@@ -3680,6 +3780,14 @@
         "format": "uint8",
         "title": "CounterResetHint contains the known information about a counter reset,",
         "type": "integer"
+      },
+      "CreateAccessTokenResponseDTO": {
+        "properties": {
+          "token": {
+            "type": "string"
+          }
+        },
+        "type": "object"
       },
       "CreateCorrelationCommand": {
         "description": "CreateCorrelationCommand is the command for creating a correlation",
@@ -6169,6 +6277,9 @@
         },
         "type": "object"
       },
+      "ItemStatus": {
+        "type": "string"
+      },
       "JSONWebKey": {
         "description": "JSONWebKey represents a public or private key in JWK format. It can be\nmarshaled into JSON and unmarshaled from JSON.",
         "properties": {
@@ -6602,6 +6713,35 @@
           "to",
           "queries"
         ],
+        "type": "object"
+      },
+      "MigrateDataResponseDTO": {
+        "properties": {
+          "id": {
+            "format": "int64",
+            "type": "integer"
+          },
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/MigrateDataResponseItemDTO"
+            },
+            "type": "array"
+          }
+        },
+        "type": "object"
+      },
+      "MigrateDataResponseItemDTO": {
+        "properties": {
+          "error": {
+            "type": "string"
+          },
+          "refId": {
+            "type": "string"
+          },
+          "status": {
+            "$ref": "#/components/schemas/ItemStatus"
+          }
+        },
         "type": "object"
       },
       "MoveFolderCommand": {
@@ -14640,6 +14780,264 @@
         "summary": "Delete API key.",
         "tags": [
           "api_keys"
+        ]
+      }
+    },
+    "/cloudmigration/migration": {
+      "get": {
+        "operationId": "getMigrationList",
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/cloudMigrationListResponse"
+          },
+          "401": {
+            "$ref": "#/components/responses/unauthorisedError"
+          },
+          "403": {
+            "$ref": "#/components/responses/forbiddenError"
+          },
+          "500": {
+            "$ref": "#/components/responses/internalServerError"
+          }
+        },
+        "summary": "Get a list of all cloud migrations.",
+        "tags": [
+          "migrations"
+        ]
+      },
+      "post": {
+        "operationId": "createMigration",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CloudMigrationRequest"
+              }
+            }
+          },
+          "required": true,
+          "x-originalParamName": "body"
+        },
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/cloudMigrationResponse"
+          },
+          "401": {
+            "$ref": "#/components/responses/unauthorisedError"
+          },
+          "403": {
+            "$ref": "#/components/responses/forbiddenError"
+          },
+          "500": {
+            "$ref": "#/components/responses/internalServerError"
+          }
+        },
+        "summary": "Create a migration.",
+        "tags": [
+          "migrations"
+        ]
+      }
+    },
+    "/cloudmigration/migration/{id}": {
+      "delete": {
+        "operationId": "deleteCloudMigration",
+        "parameters": [
+          {
+            "description": "ID of an migration",
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "format": "int64",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "401": {
+            "$ref": "#/components/responses/unauthorisedError"
+          },
+          "403": {
+            "$ref": "#/components/responses/forbiddenError"
+          },
+          "500": {
+            "$ref": "#/components/responses/internalServerError"
+          }
+        },
+        "summary": "Delete a migration.",
+        "tags": [
+          "migrations"
+        ]
+      },
+      "get": {
+        "description": "It returns migrations that has been created.",
+        "operationId": "getCloudMigration",
+        "parameters": [
+          {
+            "description": "ID of an migration",
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "format": "int64",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/cloudMigrationResponse"
+          },
+          "401": {
+            "$ref": "#/components/responses/unauthorisedError"
+          },
+          "403": {
+            "$ref": "#/components/responses/forbiddenError"
+          },
+          "500": {
+            "$ref": "#/components/responses/internalServerError"
+          }
+        },
+        "summary": "Get a cloud migration.",
+        "tags": [
+          "migrations"
+        ]
+      }
+    },
+    "/cloudmigration/migration/{id}/run": {
+      "get": {
+        "operationId": "getCloudMigrationRunList",
+        "parameters": [
+          {
+            "description": "ID of an migration",
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "format": "int64",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/cloudMigrationRunListResponse"
+          },
+          "401": {
+            "$ref": "#/components/responses/unauthorisedError"
+          },
+          "403": {
+            "$ref": "#/components/responses/forbiddenError"
+          },
+          "500": {
+            "$ref": "#/components/responses/internalServerError"
+          }
+        },
+        "summary": "Get a list of migration runs for a migration.",
+        "tags": [
+          "migrations"
+        ]
+      },
+      "post": {
+        "description": "It returns migrations that has been created.",
+        "operationId": "runCloudMigration",
+        "parameters": [
+          {
+            "description": "ID of an migration",
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "format": "int64",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/cloudMigrationRunResponse"
+          },
+          "401": {
+            "$ref": "#/components/responses/unauthorisedError"
+          },
+          "403": {
+            "$ref": "#/components/responses/forbiddenError"
+          },
+          "500": {
+            "$ref": "#/components/responses/internalServerError"
+          }
+        },
+        "summary": "Trigger the run of a migration to the Grafana Cloud.",
+        "tags": [
+          "migrations"
+        ]
+      }
+    },
+    "/cloudmigration/migration/{id}/run/{runID}": {
+      "get": {
+        "operationId": "getCloudMigrationRun",
+        "parameters": [
+          {
+            "description": "ID of an migration",
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "format": "int64",
+              "type": "integer"
+            }
+          },
+          {
+            "description": "Run ID of a migration run",
+            "in": "path",
+            "name": "runID",
+            "required": true,
+            "schema": {
+              "format": "int64",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/cloudMigrationRunResponse"
+          },
+          "401": {
+            "$ref": "#/components/responses/unauthorisedError"
+          },
+          "403": {
+            "$ref": "#/components/responses/forbiddenError"
+          },
+          "500": {
+            "$ref": "#/components/responses/internalServerError"
+          }
+        },
+        "summary": "Get the result of a single migration run.",
+        "tags": [
+          "migrations"
+        ]
+      }
+    },
+    "/cloudmigration/token": {
+      "post": {
+        "operationId": "createCloudMigrationToken",
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/cloudMigrationCreateTokenResponse"
+          },
+          "401": {
+            "$ref": "#/components/responses/unauthorisedError"
+          },
+          "403": {
+            "$ref": "#/components/responses/forbiddenError"
+          },
+          "500": {
+            "$ref": "#/components/responses/internalServerError"
+          }
+        },
+        "summary": "Create gcom access token.",
+        "tags": [
+          "migrations"
         ]
       }
     },
