@@ -94,10 +94,12 @@ export type CloudMigrationRequest = {
   authToken?: string;
 };
 export type ItemStatus = string;
+export type MigrateDataType = string;
 export type MigrateDataResponseItemDto = {
   error?: string;
   refId?: string;
   status?: ItemStatus;
+  type?: MigrateDataType;
 };
 export type MigrateDataResponseDto = {
   id?: number;
