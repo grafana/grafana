@@ -55,13 +55,13 @@ type CloudMigrationRun struct {
 	Finished          time.Time `json:"finished"`
 }
 
-func (r CloudMigrationRun) ToResponse(*CloudMigrationRun) (error, *MigrateDataResponseDTO) {
+func (r CloudMigrationRun) ToResponse(*CloudMigrationRun) (*MigrateDataResponseDTO, error) {
 	var result MigrateDataResponseDTO
 	err := json.Unmarshal(r.Result, &result)
 	if err != nil {
-		return errors.New("could not parse result of run"), nil
+		return nil, errors.New("could not parse result of run")
 	}
-	return nil, &result
+	return &result, nil
 }
 
 type CloudMigrationRunList struct {
