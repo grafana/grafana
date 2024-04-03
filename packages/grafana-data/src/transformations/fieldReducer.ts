@@ -313,7 +313,8 @@ export const fieldReducers = new Registry<FieldReducerInfo>(() => [
     name: '25th percentile',
     description: '25th percentile value',
     standard: false,
-    reduce: (field: Field, ignoreNulls: boolean, nullAsZero: boolean) => calculatePercentile(ReducerID.twentyFifthPercentile, 0.25, field, ignoreNulls, nullAsZero),
+    reduce: (field: Field, ignoreNulls: boolean, nullAsZero: boolean) =>
+      calculatePercentile(ReducerID.twentyFifthPercentile, 0.25, field, ignoreNulls, nullAsZero),
     preservesUnits: true,
   },
   {
@@ -321,7 +322,8 @@ export const fieldReducers = new Registry<FieldReducerInfo>(() => [
     name: '50th percentile',
     description: '50th percentile value',
     standard: false,
-    reduce: (field: Field, ignoreNulls: boolean, nullAsZero: boolean) => calculatePercentile(ReducerID.fiftiethPercentile, 0.5, field, ignoreNulls, nullAsZero),
+    reduce: (field: Field, ignoreNulls: boolean, nullAsZero: boolean) =>
+      calculatePercentile(ReducerID.fiftiethPercentile, 0.5, field, ignoreNulls, nullAsZero),
     preservesUnits: true,
   },
   {
@@ -329,7 +331,8 @@ export const fieldReducers = new Registry<FieldReducerInfo>(() => [
     name: '75th percentile',
     description: '75th percentile value',
     standard: false,
-    reduce: (field: Field, ignoreNulls: boolean, nullAsZero: boolean) => calculatePercentile(ReducerID.seventyFifthPercentile, 0.75, field, ignoreNulls, nullAsZero),
+    reduce: (field: Field, ignoreNulls: boolean, nullAsZero: boolean) =>
+      calculatePercentile(ReducerID.seventyFifthPercentile, 0.75, field, ignoreNulls, nullAsZero),
     preservesUnits: true,
   },
   {
@@ -337,7 +340,8 @@ export const fieldReducers = new Registry<FieldReducerInfo>(() => [
     name: '90th percentile',
     description: '90th percentile value',
     standard: false,
-    reduce: (field: Field, ignoreNulls: boolean, nullAsZero: boolean) => calculatePercentile(ReducerID.ninetiethPercentile, 0.9, field, ignoreNulls, nullAsZero),
+    reduce: (field: Field, ignoreNulls: boolean, nullAsZero: boolean) =>
+      calculatePercentile(ReducerID.ninetiethPercentile, 0.9, field, ignoreNulls, nullAsZero),
     preservesUnits: true,
   },
   {
@@ -345,7 +349,8 @@ export const fieldReducers = new Registry<FieldReducerInfo>(() => [
     name: '99th percentile',
     description: '99th percentile value',
     standard: false,
-    reduce: (field: Field, ignoreNulls: boolean, nullAsZero: boolean) => calculatePercentile(ReducerID.ninetyNinthPercentile, 0.99, field, ignoreNulls, nullAsZero),
+    reduce: (field: Field, ignoreNulls: boolean, nullAsZero: boolean) =>
+      calculatePercentile(ReducerID.ninetyNinthPercentile, 0.99, field, ignoreNulls, nullAsZero),
     preservesUnits: true,
   },
 ]);
@@ -598,16 +603,22 @@ function calculateDistinctCount(field: Field, ignoreNulls: boolean, nullAsZero: 
   return { distinctCount: distinct.size };
 }
 
-function calculatePercentile(name: string, percentile: number, field: Field, ignoreNulls: boolean, nullAsZero: boolean): FieldCalcs {
+function calculatePercentile(
+  name: string,
+  percentile: number,
+  field: Field,
+  ignoreNulls: boolean,
+  nullAsZero: boolean
+): FieldCalcs {
   let data = field.values;
-  
+
   if (ignoreNulls) {
-    data = data.filter(value => value !== null);
-  }  
-  if (nullAsZero) {
-    data = data.map(value => value === null ? 0 : value);
+    data = data.filter((value) => value !== null);
   }
-  
+  if (nullAsZero) {
+    data = data.map((value) => (value === null ? 0 : value));
+  }
+
   const sorted = data.slice().sort((a, b) => a - b);
   const index = Math.floor((sorted.length - 1) * percentile);
   return { [name]: sorted[index] };
