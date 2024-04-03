@@ -32,6 +32,8 @@ func TestWillCreateMetricServerWhenOnlyStorageServerTarget(t *testing.T) {
 	client := http.Client{}
 	res, err := client.Get("http://localhost:8000/metrics")
 	require.NoError(t, err)
+	err = res.Body.Close()
+	require.NoError(t, err)
 	assert.Equal(t, 200, res.StatusCode)
 }
 
