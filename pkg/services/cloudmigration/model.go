@@ -64,15 +64,6 @@ func (r CloudMigrationRun) ToResponse(*CloudMigrationRun) (error, *MigrateDataRe
 	return nil, &result
 }
 
-type CloudMigrationRunResponse struct {
-	ID                int64              `json:"id" xorm:"pk autoincr 'id'"`
-	CloudMigrationUID string             `json:"uid" xorm:"cloud_migration_uid"`
-	Result            []MigratedResource `json:"result"` //store raw cms response body
-	Created           time.Time          `json:"created"`
-	Updated           time.Time          `json:"updated"`
-	Finished          time.Time          `json:"finished"`
-}
-
 type CloudMigrationRunList struct {
 	Runs []MigrateDataResponseDTO `json:"runs"`
 }
