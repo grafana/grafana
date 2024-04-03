@@ -28,6 +28,7 @@ export enum ReducerID {
   allIsNull = 'allIsNull',
   allValues = 'allValues',
   uniqueValues = 'uniqueValues',
+  tenthPercentile = 'tenthPercentile',
   twentyFifthPercentile = 'twentyFifthPercentile',
   fiftiethPercentile = 'fiftiethPercentile',
   seventyFifthPercentile = 'seventyFifthPercentile',
@@ -307,6 +308,15 @@ export const fieldReducers = new Registry<FieldReducerInfo>(() => [
       uniqueValues: [...new Set(field.values)],
     }),
     preservesUnits: false,
+  },
+  {
+    id: ReducerID.tenthPercentile,
+    name: '10th percentile',
+    description: '10th percentile value',
+    standard: false,
+    reduce: (field: Field, ignoreNulls: boolean, nullAsZero: boolean) =>
+      calculatePercentile(ReducerID.twentyFifthPercentile, 0.1, field, ignoreNulls, nullAsZero),
+    preservesUnits: true,
   },
   {
     id: ReducerID.twentyFifthPercentile,

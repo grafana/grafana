@@ -252,6 +252,15 @@ describe('Stats Calculators', () => {
     expect(reduce(someNulls, ReducerID.count)).toEqual(4);
   });
 
+  it('can reduce 10th percentile', () => {
+    const stats = reduceField({
+      field: createField('x', [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]),
+      reducers: [ReducerID.tenthPercentile],
+    });
+
+    expect(stats.twentyFifthPercentile).toEqual(1);
+  });
+
   it('can reduce 25th percentile', () => {
     const stats = reduceField({
       field: createField('x', [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]),
