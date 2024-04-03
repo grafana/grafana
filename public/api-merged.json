@@ -2319,9 +2319,12 @@
         "operationId": "createMigration",
         "parameters": [
           {
-            "type": "string",
-            "name": "authToken",
-            "in": "query"
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/CloudMigrationRequest"
+            }
           }
         ],
         "responses": {
@@ -12748,6 +12751,14 @@
           "items": {
             "$ref": "#/definitions/CloudMigrationResponse"
           }
+        }
+      }
+    },
+    "CloudMigrationRequest": {
+      "type": "object",
+      "properties": {
+        "authToken": {
+          "type": "string"
         }
       }
     },
