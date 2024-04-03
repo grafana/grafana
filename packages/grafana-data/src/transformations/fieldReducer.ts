@@ -370,8 +370,6 @@ export const defaultCalcs: FieldCalcs = {
   delta: 0,
   step: Number.MAX_VALUE,
   diffperc: 0,
-  fiftiethPercentile: null,
-
   // Just used for calculations -- not exposed as a stat
   previousDeltaUp: true,
 };
