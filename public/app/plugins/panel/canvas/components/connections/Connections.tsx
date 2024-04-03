@@ -305,7 +305,7 @@ export class Connections {
     const sourceRect = this.selection.value!.source.div!.getBoundingClientRect();
 
     // calculate relative coordinates based on source and target coorindates of connection
-    const { x1, y1, x2, y2 } = calculateCoordinates(
+    const { x1, y1, x2, y2, deltaX, deltaY } = calculateCoordinates(
       sourceRect,
       parentBoundingRect,
       this.selection.value?.info!,
@@ -403,8 +403,8 @@ export class Connections {
             } else {
               const currentVertex = { ...currentVertices[vertexIndex] };
 
-              currentVertex.x = (xSnap - x1) / (x2 - x1);
-              currentVertex.y = (ySnap - y1) / (y2 - y1);
+              currentVertex.x = (xSnap - x1) / deltaX;
+              currentVertex.y = (ySnap - y1) / deltaY;
 
               currentVertices[vertexIndex] = currentVertex;
             }
