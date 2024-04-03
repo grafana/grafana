@@ -297,6 +297,7 @@ describe('Stats Calculators', () => {
     const preciseStats = reduceField({
       field: createField(
         'x',
+        // This will create an array from 0 to 100
         Array.from({ length: 101 }, (_, index) => index)
       ),
       reducers: [ReducerID.ninetiethPercentile],
