@@ -185,7 +185,7 @@ type teamService interface {
 	GetTeamIDsByUser(ctx context.Context, query *team.GetTeamIDsByUserQuery) ([]int64, error)
 }
 
-func AuthorizeInOrgMiddleware(ac AccessControl, service Service, userService userCache, teamService teamService) func(OrgIDGetter, Evaluator) web.Handler {
+func AuthorizeInOrgMiddleware(ac AccessControl, service Service, userService userCache, teamService teamService, authnService authn.Service) func(OrgIDGetter, Evaluator) web.Handler {
 	return func(getTargetOrg OrgIDGetter, evaluator Evaluator) web.Handler {
 		return func(c *contextmodel.ReqContext) {
 			targetOrgID, err := getTargetOrg(c)
@@ -194,19 +194,23 @@ func AuthorizeInOrgMiddleware(ac AccessControl, service Service, userService use
 				return
 			}
 
-			tmpUser, err := makeTmpUser(c.Req.Context(), service, userService, teamService, c.SignedInUser, targetOrgID)
+			if targetOrgID == c.SignedInUser.GetOrgID() {
+				authorize(c, ac, c.SignedInUser, evaluator)
+				return
+			}
+
+			orgUser, err := authnService.ResolveIdentity(c.Req.Context(), targetOrgID, c.SignedInUser.GetID())
 			if err != nil {
 				deny(c, nil, fmt.Errorf("failed to authenticate user in target org: %w", err))
 				return
 			}
-
-			authorize(c, ac, tmpUser, evaluator)
+			authorize(c, ac, orgUser, evaluator)
 
 			// guard against nil map
 			if c.SignedInUser.Permissions == nil {
 				c.SignedInUser.Permissions = make(map[int64]map[string][]string)
 			}
-			c.SignedInUser.Permissions[tmpUser.GetOrgID()] = tmpUser.GetPermissions()
+			c.SignedInUser.Permissions[orgUser.GetOrgID()] = orgUser.GetPermissions()
 		}
 	}
 }

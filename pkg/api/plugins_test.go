@@ -12,11 +12,16 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/grafana/grafana-plugin-sdk-go/backend"
+	"github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/authn"
+	"github.com/grafana/grafana/pkg/services/authn/authntest"
+
 	"github.com/prometheus/client_golang/prometheus"
 	dto "github.com/prometheus/client_model/go"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+
+	"github.com/grafana/grafana-plugin-sdk-go/backend"
 
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -94,6 +99,15 @@ func Test_PluginsInstallAndUninstall(t *testing.T) {
 					ID: pluginID,
 				},
 			})
+
+			expectedIdentity := &authn.Identity{
+				OrgID:       tc.permissionOrg,
+				Permissions: map[int64]map[string][]string{},
+			}
+			expectedIdentity.Permissions[tc.permissionOrg] = accesscontrol.GroupScopesByAction(tc.permissions)
+			hs.authnService = &authntest.FakeService{
+				ExpectedIdentity: expectedIdentity,
+			}
 		})
 
 		t.Run(testName("Install", tc), func(t *testing.T) {

@@ -6,6 +6,9 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/grafana/grafana/pkg/services/authn"
+	"github.com/grafana/grafana/pkg/services/authn/authntest"
+
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
@@ -67,6 +70,9 @@ func TestAPIEndpoint_GetOrgQuotas(t *testing.T) {
 		hs.userService = &usertest.FakeUserService{
 			ExpectedSignedInUser: &user.SignedInUser{OrgID: 2},
 		}
+		hs.authnService = &authntest.FakeService{
+			ExpectedIdentity: &authn.Identity{OrgID: 1},
+		}
 	})
 
 	t.Run("AccessControl allows viewing another org quotas with correct permissions", func(t *testing.T) {
@@ -115,6 +121,9 @@ func TestAPIEndpoint_PutOrgQuotas(t *testing.T) {
 		hs.accesscontrolService = fakeACService
 		hs.userService = &usertest.FakeUserService{
 			ExpectedSignedInUser: &user.SignedInUser{OrgID: 2},
+		}
+		hs.authnService = &authntest.FakeService{
+			ExpectedIdentity: &authn.Identity{OrgID: 2},
 		}
 	})
 

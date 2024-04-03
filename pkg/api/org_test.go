@@ -5,6 +5,9 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/grafana/grafana/pkg/services/authn"
+	"github.com/grafana/grafana/pkg/services/authn/authntest"
+
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
@@ -136,6 +139,11 @@ func TestAPIEndpoint_UpdateOrg(t *testing.T) {
 					ExpectedSignedInUser: &user.SignedInUser{OrgID: tt.targetOrgID},
 				}
 				hs.accesscontrolService = actest.FakeService{}
+				hs.authnService = &authntest.FakeService{
+					ExpectedIdentity: &authn.Identity{
+						OrgID: tt.targetOrgID,
+					},
+				}
 			})
 
 			req := webtest.RequestWithSignedInUser(server.NewRequest(http.MethodPut, tt.path, strings.NewReader(tt.body)), userWithPermissions(1, tt.permission))
@@ -209,11 +217,22 @@ func TestAPIEndpoint_DeleteOrgs(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.desc, func(t *testing.T) {
+			expectedIdentity := &authn.Identity{
+				OrgID: 1,
+				Permissions: map[int64]map[string][]string{
+					1: accesscontrol.GroupScopesByAction(tt.permission),
+				},
+			}
+
 			server := SetupAPITestServer(t, func(hs *HTTPServer) {
 				hs.Cfg = setting.NewCfg()
 				hs.orgService = &orgtest.FakeOrgService{ExpectedOrg: &org.Org{}}
 				hs.userService = &usertest.FakeUserService{ExpectedSignedInUser: &user.SignedInUser{OrgID: 1}}
 				hs.accesscontrolService = actest.FakeService{ExpectedPermissions: tt.permission}
+				hs.authnService = &authntest.FakeService{}
+				hs.authnService = &authntest.FakeService{
+					ExpectedIdentity: expectedIdentity,
+				}
 			})
 
 			req := webtest.RequestWithSignedInUser(server.NewRequest(http.MethodDelete, "/api/orgs/1", nil), userWithPermissions(2, nil))
@@ -246,11 +265,21 @@ func TestAPIEndpoint_GetOrg(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.desc, func(t *testing.T) {
+			expectedIdentity := &authn.Identity{
+				OrgID: 1,
+				Permissions: map[int64]map[string][]string{
+					1: accesscontrol.GroupScopesByAction(tt.permissions),
+				},
+			}
+
 			server := SetupAPITestServer(t, func(hs *HTTPServer) {
 				hs.Cfg = setting.NewCfg()
 				hs.orgService = &orgtest.FakeOrgService{ExpectedOrg: &org.Org{}}
 				hs.userService = &usertest.FakeUserService{ExpectedSignedInUser: &user.SignedInUser{OrgID: 1}}
 				hs.accesscontrolService = &actest.FakeService{ExpectedPermissions: tt.permissions}
+				hs.authnService = &authntest.FakeService{
+					ExpectedIdentity: expectedIdentity,
+				}
 			})
 			verify := func(path string) {
 				req := webtest.RequestWithSignedInUser(server.NewGetRequest(path), authedUserWithPermissions(1, 1, tt.permissions))

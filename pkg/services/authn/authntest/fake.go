@@ -73,7 +73,23 @@ func (f *FakeService) Logout(_ context.Context, _ identity.Requester, _ *usertok
 }
 
 func (f *FakeService) ResolveIdentity(ctx context.Context, orgID int64, namespaceID string) (*authn.Identity, error) {
-	panic("unimplemented")
+	if f.ExpectedIdentities != nil {
+		if f.CurrentIndex >= len(f.ExpectedIdentities) {
+			panic("ExpectedIdentities is empty")
+		}
+		if f.CurrentIndex >= len(f.ExpectedErrs) {
+			panic("ExpectedErrs is empty")
+		}
+
+		identity := f.ExpectedIdentities[f.CurrentIndex]
+		err := f.ExpectedErrs[f.CurrentIndex]
+
+		f.CurrentIndex += 1
+
+		return identity, err
+	}
+
+	return f.ExpectedIdentity, f.ExpectedErr
 }
 
 func (f *FakeService) RegisterClient(c authn.Client) {}
