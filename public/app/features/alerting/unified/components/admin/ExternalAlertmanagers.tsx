@@ -12,6 +12,7 @@ import {
 } from '../../utils/datasource';
 import { createUrl } from '../../utils/url';
 import { ProvisioningBadge } from '../Provisioning';
+import { WithReturnButton } from '../WithReturnButton';
 
 import { useSettings } from './SettingsContext';
 
@@ -43,7 +44,7 @@ export const ExternalAlertmanagers = ({ onEditConfiguration }: Props) => {
   };
 
   return (
-    <>
+    <Stack direction="column" gap={0}>
       {externalAlertmanagersWithStatus.map((alertmanager) => {
         const { uid, name, jsonData, url } = alertmanager.dataSourceSettings;
         const { status } = alertmanager;
@@ -60,7 +61,7 @@ export const ExternalAlertmanagers = ({ onEditConfiguration }: Props) => {
           <Card key={uid}>
             <Card.Heading>
               <Stack alignItems="center" gap={1}>
-                <TextLink href={detailHref}>{name}</TextLink>
+                <WithReturnButton title="Alerting settings" component={<TextLink href={detailHref}>{name}</TextLink>} />
                 {provisionedDataSource && <ProvisioningBadge />}
               </Stack>
             </Card.Heading>
@@ -93,18 +94,23 @@ export const ExternalAlertmanagers = ({ onEditConfiguration }: Props) => {
                   onClick={handleEditConfiguration}
                   icon={readOnlyDataSource ? 'eye' : 'edit'}
                   variant="secondary"
-                  size="sm"
+                  fill="outline"
                 >
                   {readOnlyDataSource ? 'View configuration' : 'Edit configuration'}
                 </Button>
                 {provisionedDataSource ? null : (
                   <>
                     {isReceiving ? (
-                      <Button icon="times" variant="destructive" size="sm" onClick={() => disableAlertmanager(uid)}>
+                      <Button
+                        icon="times"
+                        variant="destructive"
+                        fill="outline"
+                        onClick={() => disableAlertmanager(uid)}
+                      >
                         Disable
                       </Button>
                     ) : (
-                      <Button icon="check" variant="secondary" size="sm" onClick={() => enableAlertmanager(uid)}>
+                      <Button icon="check" variant="secondary" fill="outline" onClick={() => enableAlertmanager(uid)}>
                         Enable
                       </Button>
                     )}
@@ -115,6 +121,6 @@ export const ExternalAlertmanagers = ({ onEditConfiguration }: Props) => {
           </Card>
         );
       })}
-    </>
+    </Stack>
   );
 };

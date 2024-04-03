@@ -27,12 +27,12 @@ function SettingsContent() {
 
   return (
     <AlertingPageWrapper navId="alerting-admin" subTitle={SUBTITLE} isLoading={isLoading}>
-      <Stack direction="column" gap={3}>
+      <Stack direction="column" gap={2}>
         {/* internal Alertmanager */}
         <Text variant="h5">Built-in Alertmanager</Text>
         <InternalAlertmanager onEditConfiguration={showConfiguration} />
         {/* external Alertmanagers (data sources) we have added to Grafana (vanilla, Mimir, Cortex) */}
-        <Stack>
+        <Stack alignItems="center">
           <Text variant="h5">Other Alertmanagers</Text>
           <Spacer />
           <LinkButton href="/connections/datasources/alertmanager" icon="plus" variant="secondary">

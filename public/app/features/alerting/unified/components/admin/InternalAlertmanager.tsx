@@ -34,14 +34,14 @@ export default function InternalAlertmanager({ onEditConfiguration }: Props) {
 
       <Card.Tags>
         <Stack direction="row" gap={1}>
-          <Button icon="edit" variant="secondary" size="sm" onClick={handleEditConfiguration}>
+          <Button icon="edit" variant="secondary" fill="outline" onClick={handleEditConfiguration}>
             Edit configuration
           </Button>
           {isReceiving ? (
             <Button
               icon="times"
               variant="destructive"
-              size="sm"
+              fill="outline"
               onClick={() => disableAlertmanager(GRAFANA_RULES_SOURCE_NAME)}
             >
               Disable
@@ -50,7 +50,7 @@ export default function InternalAlertmanager({ onEditConfiguration }: Props) {
             <Button
               icon="check"
               variant="secondary"
-              size="sm"
+              fill="outline"
               onClick={() => enableAlertmanager(GRAFANA_RULES_SOURCE_NAME)}
             >
               Enable
