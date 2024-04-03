@@ -62,7 +62,8 @@ type DataSource struct {
 	SecureJsonData    map[string][]byte `json:"secureJsonData"`
 	ReadOnly          bool              `json:"readOnly"`
 	UID               string            `json:"uid" xorm:"uid"`
-	IsPrunable        bool              `xorm:"is_prunable"`
+	// swagger:ignore
+	IsPrunable bool `xorm:"is_prunable"`
 
 	Created time.Time `json:"created,omitempty"`
 	Updated time.Time `json:"updated,omitempty"`
