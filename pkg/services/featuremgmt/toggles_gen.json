@@ -2078,6 +2078,20 @@
         "hideFromAdminPage": true,
         "hideFromDocs": true
       }
+    },
+    {
+      "metadata": {
+        "name": "filtersOnByDefault",
+        "resourceVersion": "1712149621080",
+        "creationTimestamp": "2024-04-03T13:07:01Z"
+      },
+      "spec": {
+        "description": "Enables filters and group by variables on all new dashboards. Variables are added only if default data source supports filtering.",
+        "stage": "experimental",
+        "codeowner": "@grafana/dashboards-squad",
+        "hideFromAdminPage": true,
+        "hideFromDocs": true
+      }
     }
   ]
 }
