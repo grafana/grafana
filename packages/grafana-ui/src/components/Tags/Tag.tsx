@@ -1,6 +1,7 @@
 import { cx, css } from '@emotion/css';
-import React, { forwardRef, HTMLAttributes } from 'react';
+import React, { forwardRef, HTMLAttributes, ReactNode } from 'react';
 import Skeleton from 'react-loading-skeleton';
+import tinycolor2 from 'tinycolor2';
 
 import { GrafanaTheme2 } from '@grafana/data';
 
@@ -9,11 +10,7 @@ import { IconName } from '../../types/icon';
 import { getTagColor, getTagColorsFromName } from '../../utils';
 import { SkeletonComponent, attachSkeleton } from '../../utils/skeleton';
 import { Icon } from '../Icon/Icon';
-
-/**
- * @public
- */
-export type OnTagClick = (name: string, event: React.MouseEvent<HTMLElement>) => void;
+import { Stack } from '../Layout/Stack/Stack';
 
 export interface Props extends Omit<HTMLAttributes<HTMLElement>, 'onClick'> {
   /** Name of the tag to display */
@@ -22,33 +19,53 @@ export interface Props extends Omit<HTMLAttributes<HTMLElement>, 'onClick'> {
   /** Use constant color from TAG_COLORS. Using index instead of color directly so we can match other styling. */
   colorIndex?: number;
   onClick?: OnTagClick;
+  value?: string | number | ReactNode;
 }
 
-const TagComponent = forwardRef<HTMLElement, Props>(({ name, onClick, icon, className, colorIndex, ...rest }, ref) => {
-  const theme = useTheme2();
-  const styles = getTagStyles(theme, name, colorIndex);
+/**
+ * @public
+ */
+export type OnTagClick = (name: Props['name'], event: React.MouseEvent<HTMLElement>) => void;
 
-  const onTagClick = (event: React.MouseEvent<HTMLElement>) => {
-    event.preventDefault();
-    event.stopPropagation();
+const TagComponent = forwardRef<HTMLButtonElement | HTMLDivElement, Props>(
+  ({ name, onClick, icon, className, colorIndex, value, ...rest }, ref) => {
+    const theme = useTheme2();
+    const styles = getTagStyles(theme, name, colorIndex, value);
 
-    onClick?.(name, event);
-  };
+    const onTagClick = (event: React.MouseEvent<HTMLElement>) => {
+      event.preventDefault();
+      event.stopPropagation();
 
-  const classes = cx(styles.wrapper, className, { [styles.hover]: onClick !== undefined });
+      onClick?.(name, event);
+    };
 
-  return onClick ? (
-    <button {...rest} className={classes} onClick={onTagClick} ref={ref as React.ForwardedRef<HTMLButtonElement>}>
-      {icon && <Icon name={icon} />}
-      {name}
-    </button>
-  ) : (
-    <span {...rest} className={classes} ref={ref}>
-      {icon && <Icon name={icon} />}
-      {name}
-    </span>
-  );
-});
+    const classes = cx(styles.wrapper, className, { [styles.hover]: onClick !== undefined });
+
+    const valueToDisplay = value ? <div className={styles.value}>{value}</div> : null;
+
+    const contents = (
+      <Stack gap={0} justifyContent={'center'}>
+        <div className={styles.name}>
+          {icon && <Icon name={icon} />}
+          {name}
+        </div>
+        {valueToDisplay}
+      </Stack>
+    );
+
+    return onClick ? (
+      // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+      <button {...rest} className={classes} onClick={onTagClick} ref={ref as React.ForwardedRef<HTMLButtonElement>}>
+        {contents}
+      </button>
+    ) : (
+      // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+      <div {...rest} className={classes} ref={ref as React.ForwardedRef<HTMLDivElement>}>
+        {contents}
+      </div>
+    );
+  }
+);
 TagComponent.displayName = 'Tag';
 
 const TagSkeleton: SkeletonComponent = ({ rootProps }) => {
@@ -64,27 +81,44 @@ const getSkeletonStyles = () => ({
   }),
 });
 
-const getTagStyles = (theme: GrafanaTheme2, name: string, colorIndex?: number) => {
-  let colors;
-  if (colorIndex === undefined) {
-    colors = getTagColorsFromName(name);
-  } else {
-    colors = getTagColor(colorIndex);
-  }
+const adjustColor = (color: string, isDark: boolean) => {
+  const tinycolor = tinycolor2(color);
+  return isDark ? tinycolor.darken(5).toString() : tinycolor.lighten(5).toString();
+};
+
+const getTagStyles = (theme: GrafanaTheme2, name: Props['value'], colorIndex?: number, value?: Props['value']) => {
+  const { color, borderColor } =
+    colorIndex === undefined ? getTagColorsFromName(String(name)) : getTagColor(colorIndex);
+  const valueBackgroundColor = adjustColor(color, theme.isDark);
+
   return {
     wrapper: css({
+      display: 'inline-block',
       appearance: 'none',
       borderStyle: 'none',
       fontWeight: theme.typography.fontWeightMedium,
-      fontSize: theme.typography.size.sm,
+      fontSize: theme.typography.bodySmall.fontSize,
       lineHeight: theme.typography.bodySmall.lineHeight,
       verticalAlign: 'baseline',
-      backgroundColor: colors.color,
-      color: theme.v1.palette.gray98,
-      whiteSpace: 'nowrap',
+      backgroundColor: color,
+      color: '#fff',
       textShadow: 'none',
-      padding: '3px 6px',
       borderRadius: theme.shape.radius.default,
+      border: value ? `solid 1px ${borderColor}` : 'none',
+      padding: 0,
+    }),
+    name: css({
+      padding: theme.spacing(0.25, 0.5),
+      display: 'flex',
+      alignItems: 'center',
+      gap: theme.spacing(0.5),
+    }),
+    value: css({
+      padding: theme.spacing(0.25, 0.5),
+      backgroundColor: valueBackgroundColor,
+      borderLeft: `1px solid ${borderColor}`,
+      width: '100%',
+      justifyContent: 'center',
     }),
     hover: css({
       '&:hover': {
