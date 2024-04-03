@@ -23,10 +23,10 @@ export interface StyleRuleEditorSettings {
   layerInfo: Observable<LayerContentInfo>;
 }
 
-type Props = StandardEditorProps<FeatureStyleConfig, any, unknown, StyleRuleEditorSettings>;
+type Props = StandardEditorProps<FeatureStyleConfig, StyleRuleEditorSettings, unknown, StyleRuleEditorSettings>;
 
 export const StyleRuleEditor = ({ value, onChange, item, context }: Props) => {
-  const settings: StyleRuleEditorSettings = item.settings;
+  const settings = item.settings!;
   const { features, layerInfo } = settings;
 
   const propertyOptions = useObservable(layerInfo);
