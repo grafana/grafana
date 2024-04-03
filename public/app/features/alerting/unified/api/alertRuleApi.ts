@@ -272,7 +272,6 @@ export const alertRuleApi = alertingApi.injectEndpoints({
         url: `/api/ruler/grafana/api/v1/rules/${nameSpaceUID}/`,
         data: payload,
         method: 'POST',
-        showSuccessAlert: false,
       }),
       invalidatesTags: ['CombinedAlertRule'],
     }),
