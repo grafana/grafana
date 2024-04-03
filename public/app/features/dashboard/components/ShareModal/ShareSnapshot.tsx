@@ -13,6 +13,8 @@ import { getDashboardSnapshotSrv } from '../../services/SnapshotSrv';
 
 import { ShareModalTabProps } from './types';
 
+const snapshotApiUrl = '/api/snapshots';
+
 interface Props extends ShareModalTabProps {}
 
 interface State {
@@ -110,7 +112,7 @@ export class ShareSnapshot extends PureComponent<Props, State> {
       const results: { deleteUrl: string; url: string } = await getBackendSrv().post(snapshotApiUrl, cmdData);
 
       // LOGZ.IO GRAFANA CHANGE :: DEV-20896 Change snapshot url to logzio
-      const logzioUrl = await logzioServices.shareUrlService.getLogzioGrafanaUrl({
+      const logzioUrl = await logzioServices?.shareUrlService?.getLogzioGrafanaUrl({
         productUrl: window.location.origin,
       });
 

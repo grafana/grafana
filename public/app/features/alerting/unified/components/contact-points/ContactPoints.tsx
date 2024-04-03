@@ -31,6 +31,7 @@ import { GrafanaManagedReceiverConfig } from 'app/plugins/datasource/alertmanage
 import { GrafanaNotifierType, NotifierStatus } from 'app/types/alerting';
 
 import { AlertmanagerAction, useAlertmanagerAbility } from '../../hooks/useAbilities';
+import { useAlertmanagerConfig } from '../../hooks/useAlertmanagerConfig'; // LOGZ.IO GRAFANA CHANGE :: DEV-42042	Disable the option to delete or edit the default email
 import { usePagination } from '../../hooks/usePagination';
 import { useURLSearchParams } from '../../hooks/useURLSearchParams';
 import { useAlertmanager } from '../../state/AlertmanagerContext';
@@ -212,6 +213,18 @@ const ContactPointsList = ({
   const searchResults = useContactPointsSearch(contactPoints, search);
   const { page, pageItems, numberOfPages, onPageChange } = usePagination(searchResults, 1, pageSize);
 
+  // LOGZ.IO GRAFANA CHANGE :: DEV-42042	Disable the option to delete or edit the default email
+  const { selectedAlertmanager } = useAlertmanager();
+  const { data: config, isLoading, error } = useAlertmanagerConfig(selectedAlertmanager);
+  const defaultContactPoint = useMemo(() => {
+    if (isLoading || error || !config) {
+      return null;
+    }
+    return config.alertmanager_config.route?.receiver;
+  }, [isLoading, config, error]);
+  // LOGZ.IO GRAFANA CHANGE :: end
+
+
   return (
     <>
       {pageItems.map((contactPoint, index) => {
@@ -223,7 +236,8 @@ const ContactPointsList = ({
           <ContactPoint
             key={key}
             name={contactPoint.name}
-            disabled={disabled}
+            // LOGZ.IO GRAFANA CHANGE :: DEV-42042	Disable the option to delete or edit the default email
+            disabled={disabled || contactPoint.name === defaultContactPoint}
             onDelete={onDelete}
             receivers={contactPoint.grafana_managed_receiver_configs}
             provisioned={provisioned}

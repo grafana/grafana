@@ -37,7 +37,7 @@ export const getSelectStyles = stylesFactory((theme: GrafanaTheme2) => {
     }),
     optionImage: css({
       label: 'grafana-select-option-image',
-      width: '16px',
+      width: '45px', //LOGZ.IO GRAFANA CHANGE :: DEV-19985: add datasource logos
       marginRight: '10px',
     }),
     optionDescription: css({

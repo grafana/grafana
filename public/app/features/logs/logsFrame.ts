@@ -30,7 +30,7 @@ function getField(cache: FieldCache, name: string, fieldType: FieldType): FieldW
 }
 
 const DATAPLANE_TIMESTAMP_NAME = 'timestamp';
-const DATAPLANE_BODY_NAME = 'body';
+// const DATAPLANE_BODY_NAME = 'body'; LOGZ.IO GRAFANA CHANGE :: DEV 23266 - Add message as default field to show
 const DATAPLANE_SEVERITY_NAME = 'severity';
 const DATAPLANE_ID_NAME = 'id';
 const DATAPLANE_LABELS_NAME = 'labels';

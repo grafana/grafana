@@ -158,7 +158,8 @@ export class DataSourcePicker extends PureComponent<DataSourcePickerProps, DataS
         label: `${ds.name}${ds.isDefault ? ' (default)' : ''}`,
         imgUrl: ds.meta.info.logos.small,
         meta: ds.meta,
-      }));
+      }))
+      .filter((ds) => ds.value !== '-- Grafana --'); // LOGZ.IO GRAFANA CHANGE :: DEV-19985: add datasource logos
 
     return options;
   }

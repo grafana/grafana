@@ -682,6 +682,7 @@ export interface DataSourceInstanceSettings<T extends DataSourceJsonData = DataS
   isDefault?: boolean;
   access: 'direct' | 'proxy'; // Currently we support 2 options - direct (browser) and proxy (server)
 
+  sort?: string; // LOGZ.IO GRAFANA CHANGE :: DEV-19985: add datasource logos
   /**
    * This is the full Authorization header if basic auth is enabled.
    * Only available here when access is Browser (direct), when access is Server (proxy)
