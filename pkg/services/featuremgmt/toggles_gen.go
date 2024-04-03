@@ -531,9 +531,9 @@ const (
 	// Allow collapsing of flame graph items
 	FlagFlameGraphItemCollapsing = "flameGraphItemCollapsing"
 
-	// FlagDatatrails
-	// Enables the new Metrics Explore core app
-	FlagDatatrails = "datatrails"
+	// FlagExploreMetrics
+	// Enables the new Explore Metrics core app
+	FlagExploreMetrics = "exploreMetrics"
 
 	// FlagAlertingSimplifiedRouting
 	// Enables users to easily configure alert notifications by specifying a contact point directly when editing or creating an alert rule
