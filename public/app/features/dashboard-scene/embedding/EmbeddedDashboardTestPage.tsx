@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 
+import { PageLayoutType } from '@grafana/data';
 import { Box } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
 
@@ -12,6 +13,7 @@ export function EmbeddedDashboardTestPage() {
     <Page
       navId="dashboards/browse"
       pageNav={{ text: 'Embedding dashboard', subTitle: 'Showing dashboard: Panel Tests - Pie chart' }}
+      layout={PageLayoutType.Canvas}
     >
       <Box paddingY={2}>Internal url state: {state}</Box>
       <EmbeddedDashboard uid="lVE-2YFMz" initialState={state} onStateChange={setState} />
