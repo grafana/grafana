@@ -180,17 +180,12 @@ func (s *service) setupInstrumentationServer(ctx context.Context) *http.Server {
 		BaseContext:       func(_ net.Listener) context.Context { return ctx },
 	}
 
-	serverReady := make(chan struct{})
-
 	go func() {
-		defer close(serverReady)
 		err := srv.ListenAndServe()
 		if err != nil && !errors.Is(err, http.ErrServerClosed) {
 			s.log.Error("instrumentation server terminated with error", "error", err)
 		}
 	}()
-
-	<-serverReady
 
 	s.log.Info("instrumentation server listening on port 8000")
 
