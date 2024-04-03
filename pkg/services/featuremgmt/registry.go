@@ -177,14 +177,6 @@ var (
 			HideFromAdminPage: true,
 		},
 		{
-			Name:           "newVizTooltips",
-			Description:    "New visualizations tooltips UX",
-			Stage:          FeatureStagePublicPreview,
-			FrontendOnly:   true,
-			Owner:          grafanaDatavizSquad,
-			AllowSelfServe: false,
-		},
-		{
 			Name:         "scenes",
 			Description:  "Experimental framework to build interactive dashboards",
 			Stage:        FeatureStageExperimental,
