@@ -10,7 +10,7 @@ import { CreateMigrationApiArg } from '../../../api';
 
 interface Props {
   hideModal: () => void;
-  onConfirm: (connectStackData: CreateMigrationApiArg) => Promise<unknown>;
+  onConfirm: (connectStackData: CreateMigrationApiArg) => Promise<void>;
 }
 
 interface FormData {

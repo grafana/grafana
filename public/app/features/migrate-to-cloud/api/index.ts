@@ -1,5 +1,5 @@
 export * from './endpoints.gen';
-import { enhancedApi as generatedAPI } from './endpoints.gen';
+import { generatedAPI } from './endpoints.gen';
 
 export const cloudMigrationAPI = generatedAPI.enhanceEndpoints({
   addTagTypes: ['cloud-migration-config', 'cloud-migration-run'],

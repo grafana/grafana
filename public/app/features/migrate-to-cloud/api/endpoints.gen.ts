@@ -31,7 +31,7 @@ const injectedRtkApi = api.injectEndpoints({
   }),
   overrideExisting: false,
 });
-export { injectedRtkApi as enhancedApi };
+export { injectedRtkApi as generatedAPI };
 export type GetMigrationListApiResponse = /** status 200 (empty) */ CloudMigrationListResponse;
 export type GetMigrationListApiArg = void;
 export type CreateMigrationApiResponse = /** status 200 (empty) */ CloudMigrationResponse;
