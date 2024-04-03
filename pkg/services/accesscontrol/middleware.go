@@ -194,15 +194,13 @@ func AuthorizeInOrgMiddleware(ac AccessControl, service Service, userService use
 				return
 			}
 
-			if targetOrgID == c.SignedInUser.GetOrgID() {
-				authorize(c, ac, c.SignedInUser, evaluator)
-				return
-			}
-
-			orgUser, err := authnService.ResolveIdentity(c.Req.Context(), targetOrgID, c.SignedInUser.GetID())
-			if err != nil {
-				deny(c, nil, fmt.Errorf("failed to authenticate user in target org: %w", err))
-				return
+			var orgUser identity.Requester = c.SignedInUser
+			if targetOrgID != c.SignedInUser.GetOrgID() {
+				orgUser, err = authnService.ResolveIdentity(c.Req.Context(), targetOrgID, c.SignedInUser.GetID())
+				if err != nil {
+					deny(c, nil, fmt.Errorf("failed to authenticate user in target org: %w", err))
+					return
+				}
 			}
 			authorize(c, ac, orgUser, evaluator)
 

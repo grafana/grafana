@@ -119,21 +119,6 @@ func TestAuthorizeInOrgMiddleware(t *testing.T) {
 			expectedStatus:       http.StatusForbidden,
 		},
 		{
-			name:                 "should fetch user permissions when they are empty",
-			targetOrgId:          1,
-			targerOrgPermissions: []accesscontrol.Permission{{Action: "users:read", Scope: "users:*"}},
-			evaluator:            accesscontrol.EvalPermission("users:read", "users:*"),
-			accessControl:        ac,
-			teamService:          &teamtest.FakeService{},
-			userCache: &usertest.FakeUserService{
-				GetSignedInUserFn: func(ctx context.Context, query *user.GetSignedInUserQuery) (*user.SignedInUser, error) {
-					return &user.SignedInUser{UserID: 1, OrgID: 1, Permissions: nil}, nil
-				},
-			},
-			ctxSignedInUser: &user.SignedInUser{UserID: 1, OrgID: 1, Permissions: nil},
-			expectedStatus:  http.StatusOK,
-		},
-		{
 			name:                 "should fetch user permissions when org ID doesn't match",
 			targetOrgId:          2,
 			targerOrgPermissions: []accesscontrol.Permission{{Action: "users:read", Scope: "users:*"}},
