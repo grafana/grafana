@@ -19,11 +19,16 @@ const meta: Meta<typeof Tag> = {
   args: {
     name: 'Tag',
     colorIndex: 0,
+    value: 'some value',
   },
 };
 
 export const Single: StoryFn<typeof Tag> = (args) => {
   return <Tag name={args.name} colorIndex={args.colorIndex} onClick={action('Tag clicked')} icon={args.icon} />;
+};
+
+export const WithValue: StoryFn<typeof Tag> = (args) => {
+  return <Tag value={args.value} name={args.name} onClick={action('Tag clicked')} icon={args.icon} />;
 };
 
 export default meta;
