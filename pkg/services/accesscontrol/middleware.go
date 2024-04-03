@@ -185,7 +185,7 @@ type teamService interface {
 	GetTeamIDsByUser(ctx context.Context, query *team.GetTeamIDsByUserQuery) ([]int64, error)
 }
 
-func AuthorizeInOrgMiddleware(ac AccessControl, service Service, userService userCache, teamService teamService, authnService authn.Service) func(OrgIDGetter, Evaluator) web.Handler {
+func AuthorizeInOrgMiddleware(ac AccessControl, authnService authn.Service) func(OrgIDGetter, Evaluator) web.Handler {
 	return func(getTargetOrg OrgIDGetter, evaluator Evaluator) web.Handler {
 		return func(c *contextmodel.ReqContext) {
 			targetOrgID, err := getTargetOrg(c)

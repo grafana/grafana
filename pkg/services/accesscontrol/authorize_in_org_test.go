@@ -185,15 +185,6 @@ func TestAuthorizeInOrgMiddleware(t *testing.T) {
 			// Create test context
 			req := httptest.NewRequest(http.MethodGet, "/api/endpoint", nil)
 
-			var service accesscontrol.Service
-			if tc.acService != nil {
-				service = tc.acService
-			} else {
-				service = &actest.FakeService{
-					ExpectedPermissions: tc.targerOrgPermissions,
-				}
-			}
-
 			expectedIdentity := &authn.Identity{
 				ID:          fmt.Sprintf("user:%v", tc.ctxSignedInUser.UserID),
 				OrgID:       tc.targetOrgId,
@@ -215,13 +206,7 @@ func TestAuthorizeInOrgMiddleware(t *testing.T) {
 			}
 
 			// Create middleware
-			middleware := accesscontrol.AuthorizeInOrgMiddleware(
-				tc.accessControl,
-				service,
-				tc.userCache,
-				tc.teamService,
-				authnService,
-			)(orgIDGetter, tc.evaluator)
+			middleware := accesscontrol.AuthorizeInOrgMiddleware(tc.accessControl, authnService)(orgIDGetter, tc.evaluator)
 
 			// Create test server
 			server := web.New()
