@@ -753,12 +753,13 @@
     },
     "migration-token": {
       "body": "Ihre selbst verwaltete Grafana-Instanz benötigt ein spezielles Authentifizierungs-Token, um sich sicher mit diesem Cloud Stack zu verbinden.",
-      "delete-button": "Diesen Migrationstoken löschen",
       "delete-modal-body": "Wenn Sie dieses Token bereits mit einer selbst verwalteten Installation verwendet haben, kann diese Installation keine Inhalte mehr hochladen.",
       "delete-modal-cancel": "Abbrechen",
       "delete-modal-confirm": "Löschen",
       "delete-modal-deleting": "Wird gelöscht...",
       "delete-modal-title": "Migrationstoken löschen",
+      "error-body": "",
+      "error-title": "",
       "generate-button": "Migrationstoken generieren",
       "generate-button-loading": "Migrationstoken wird generiert...",
       "modal-close": "Schließen",
@@ -767,7 +768,7 @@
       "modal-field-description": "Kopieren Sie den Token jetzt, denn Sie werden ihn später nicht mehr sehen können. Wenn Sie einen Token verlieren, müssen Sie einen neuen Token erstellen.",
       "modal-field-label": "Token",
       "modal-title": "Migrationstoken erstellt",
-      "status": "Aktueller Status: <2></2>",
+      "status": "",
       "title": "Migrationstoken"
     },
     "pdc": {
