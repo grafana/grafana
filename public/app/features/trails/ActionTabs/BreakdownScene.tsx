@@ -4,7 +4,6 @@ import React from 'react';
 
 import { DataFrame, FieldType, GrafanaTheme2, PanelData, SelectableValue } from '@grafana/data';
 import {
-  FieldConfigBuilders,
   PanelBuilders,
   QueryVariable,
   SceneComponentProps,
@@ -303,7 +302,6 @@ export function buildAllLayout(options: Array<SelectableValue<string>>, queryDef
       })
     );
   }
-
   return new LayoutSwitcher({
     options: [
       { value: 'grid', label: 'Grid' },
@@ -332,6 +330,32 @@ const GRID_TEMPLATE_COLUMNS = 'repeat(auto-fit, minmax(400px, 1fr))';
 function buildNormalLayout(queryDef: AutoQueryDef) {
   const unit = queryDef.unit;
 
+  function getLayoutChild(data: PanelData, frame: DataFrame, frameIndex: number): SceneFlexItem {
+    const vizPanel: VizPanel = queryDef
+      .vizBuilder()
+      .setTitle(getLabelValue(frame))
+      .setData(new SceneDataNode({ data: { ...data, series: [frame] } }))
+      .setColor({ mode: 'fixed', fixedColor: getColorByIndex(frameIndex) })
+      .setHeaderActions(new AddToFiltersGraphAction({ frame }))
+      .setUnit(unit)
+      .build();
+
+    // Find a frame that has at more than one point.
+    const isHidden = frame.length <= 1;
+
+    const item: SceneCSSGridItem = new SceneCSSGridItem({
+      $behaviors: [yAxisSyncBehavior],
+      body: vizPanel,
+      isHidden,
+    });
+
+    vizPanel.addActivationHandler(() => {
+      vizPanel.onOptionsChange(breakdownPanelOptions);
+    });
+
+    return item;
+  }
+
   return new LayoutSwitcher({
     $data: new SceneQueryRunner({
       datasource: trailDS,
@@ -359,29 +383,7 @@ function buildNormalLayout(queryDef: AutoQueryDef) {
           autoRows: '200px',
           children: [],
         }),
-        getLayoutChild: (data, frame, frameIndex) => {
-          const vizPanel = queryDef
-            .vizBuilder()
-            .setTitle(getLabelValue(frame))
-            .setData(new SceneDataNode({ data: { ...data, series: [frame] } }))
-            .setColor({ mode: 'fixed', fixedColor: getColorByIndex(frameIndex) })
-            .setHeaderActions(new AddToFiltersGraphAction({ frame }))
-            .setUnit(unit)
-            .build();
-
-          if (vizPanel.isActive) {
-            vizPanel.onOptionsChange(breakdownPanelOptions);
-          } else {
-            vizPanel.addActivationHandler(() => {
-              vizPanel.onOptionsChange(breakdownPanelOptions);
-            });
-          }
-
-          return new SceneCSSGridItem({
-            $behaviors: [yAxisSyncBehavior],
-            body: vizPanel,
-          });
-        },
+        getLayoutChild,
       }),
       new ByFrameRepeater({
         body: new SceneCSSGridLayout({
@@ -389,31 +391,7 @@ function buildNormalLayout(queryDef: AutoQueryDef) {
           autoRows: '200px',
           children: [],
         }),
-        getLayoutChild: (data, frame, frameIndex) => {
-          const vizPanel: VizPanel = queryDef
-            .vizBuilder()
-            .setTitle(getLabelValue(frame))
-            .setData(new SceneDataNode({ data: { ...data, series: [frame] } }))
-            .setColor({ mode: 'fixed', fixedColor: getColorByIndex(frameIndex) })
-            .setHeaderActions(new AddToFiltersGraphAction({ frame }))
-            .setUnit(unit)
-            .build();
-
-          if (vizPanel.isActive) {
-            vizPanel.onOptionsChange(breakdownPanelOptions);
-          } else {
-            vizPanel.addActivationHandler(() => {
-              vizPanel.onOptionsChange(breakdownPanelOptions);
-            });
-          }
-
-          FieldConfigBuilders.timeseries().build();
-
-          return new SceneCSSGridItem({
-            $behaviors: [yAxisSyncBehavior],
-            body: vizPanel,
-          });
-        },
+        getLayoutChild,
       }),
     ],
   });
