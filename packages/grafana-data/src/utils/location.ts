@@ -17,6 +17,14 @@ const maybeParseUrl = (input: string): URL | undefined => {
   }
 };
 
+// .. and /.. must come first of . and /.
+enum problematicRelativeLinks {
+  '..',
+  '/..',
+  '.',
+  '/.',
+}
+
 /**
  *
  * @param url
@@ -43,6 +51,16 @@ const stripBaseFromUrl = (urlOrPath: string): string => {
     segmentToStrip = `${window.location.origin}${appSubUrl}`;
   }
 
+  // strip bases of some problematic relative links
+  if (!isAbsoluteUrl){
+    for (const segment in problematicRelativeLinks){
+      if (urlOrPath.startsWith(segment)){
+        segmentToStrip =  segment;
+        break;
+      }
+    }
+  }
+  
   // Check if the segment is either exactly the same as the url
   // or followed by a '/' so it does not replace incorrect similarly named segments
   // i.e. /grafana should not replace /grafanadashboards
