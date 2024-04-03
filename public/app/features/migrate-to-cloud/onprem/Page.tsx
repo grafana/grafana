@@ -69,10 +69,6 @@ export const Page = () => {
   const migrationRun = useGetLatestMigrationRun(migrationDestination.data?.id);
   const [actuallyRunMigration, actuallyRunMigrationResult] = useRunCloudMigrationMutation();
 
-  console.log('migrationList', migrationDestination);
-  console.log('migrationRun', migrationRun);
-  console.log('actuallyRunMigrationResult', actuallyRunMigrationResult);
-
   const isBusy = actuallyRunMigrationResult.isLoading || migrationDestination.isFetching || migrationRun.isFetching;
   // const resources: MigrationResourceDTOMock[] = [];
 
@@ -102,8 +98,6 @@ export const Page = () => {
     const betterResources: MigrationResourceDTOMock[] = rawResources.items.flatMap((item) => {
       if (item.type === 'DATASOURCE') {
         const datasourceConfig = Object.values(config.datasources).find((v) => v.uid === item.refId);
-
-        console.log('ds', item.refId, datasourceConfig);
 
         return {
           uid: item.refId ?? '',
