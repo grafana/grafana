@@ -49,7 +49,7 @@ func (d *DualWriterMode1) Get(ctx context.Context, name string, options *metav1.
 func (d *DualWriterMode1) List(ctx context.Context, options *metainternalversion.ListOptions) (runtime.Object, error) {
 	legacy, ok := d.legacy.(rest.Lister)
 	if !ok {
-		return nil, fmt.Errorf("legacy storage rest.Creater is missing")
+		return nil, fmt.Errorf("legacy storage rest.Lister is missing")
 	}
 
 	return legacy.List(ctx, options)
