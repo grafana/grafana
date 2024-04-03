@@ -32,6 +32,7 @@ type ScheduleService interface {
 	// Run the scheduler until the context is canceled or the scheduler returns
 	// an error. The scheduler is terminated when this function returns.
 	Run(context.Context) error
+	RunRuleEvaluation(ctx context.Context, evalReq ngmodels.ExternalAlertEvaluationRequest) error // LOGZ.IO GRAFANA CHANGE :: DEV-43744 Add logzio external evaluation
 }
 
 // retryDelay represents how long to wait between each failed rule evaluation.
@@ -95,6 +96,8 @@ type schedule struct {
 	schedulableAlertRules alertRulesRegistry
 
 	tracer tracing.Tracer
+
+	scheduledEvalEnabled bool // LOGZ.IO GRAFANA CHANGE :: DEV-43744 Add scheduled evaluation enabled config
 }
 
 // SchedulerCfg is the scheduler configuration.
@@ -112,6 +115,7 @@ type SchedulerCfg struct {
 	AlertSender          AlertsSender
 	Tracer               tracing.Tracer
 	Log                  log.Logger
+	ScheduledEvalEnabled bool // LOGZ.IO GRAFANA CHANGE :: DEV-43744 Add scheduled evaluation enabled config
 }
 
 // NewScheduler returns a new schedule.
@@ -139,6 +143,7 @@ func NewScheduler(cfg SchedulerCfg, stateManager *state.Manager) *schedule {
 		schedulableAlertRules: alertRulesRegistry{rules: make(map[ngmodels.AlertRuleKey]*ngmodels.AlertRule)},
 		alertsSender:          cfg.AlertSender,
 		tracer:                cfg.Tracer,
+		scheduledEvalEnabled:  cfg.ScheduledEvalEnabled, // LOGZ.IO GRAFANA CHANGE :: DEV-43744 Add scheduled evaluation enabled config
 	}
 
 	return &sch
@@ -281,14 +286,20 @@ func (sch *schedule) processTick(ctx context.Context, dispatcherGroup *errgroup.
 			}
 		}
 
-		if isReadyToRun {
-			sch.log.Debug("Rule is ready to run on the current tick", "uid", item.UID, "tick", tickNum, "frequency", itemFrequency, "offset", offset)
-			readyToRun = append(readyToRun, readyToRunItem{ruleInfo: ruleInfo, evaluation: evaluation{
-				scheduledAt: tick,
-				rule:        item,
-				folderTitle: folderTitle,
-			}})
+		// LOGZ.IO GRAFANA CHANGE :: DEV-43744 Add scheduled evaluation enabled config
+		if sch.scheduledEvalEnabled {
+			if isReadyToRun {
+				sch.log.Debug("Rule is ready to run on the current tick", "uid", item.UID, "tick", tickNum, "frequency", itemFrequency, "offset", offset)
+				readyToRun = append(readyToRun, readyToRunItem{ruleInfo: ruleInfo, evaluation: evaluation{
+					scheduledAt: tick,
+					rule:        item,
+					folderTitle: folderTitle,
+				}})
+			}
+		} else {
+			sch.log.Debug("Scheduled evaluation disabled, not adding alerts to run")
 		}
+
 		if _, isUpdated := updated[key]; isUpdated && !isReadyToRun {
 			// if we do not need to eval the rule, check the whether rule was just updated and if it was, notify evaluation routine about that
 			sch.log.Debug("Rule has been updated. Notifying evaluation routine", key.LogContext()...)
@@ -344,6 +355,40 @@ func (sch *schedule) processTick(ctx context.Context, dispatcherGroup *errgroup.
 	return readyToRun, registeredDefinitions, updatedRules
 }
 
+// LOGZ.IO GRAFANA CHANGE :: DEV-43744 Add logzio external evaluation
+func (sch *schedule) RunRuleEvaluation(ctx context.Context, evalReq ngmodels.ExternalAlertEvaluationRequest) error {
+	logger := sch.log.FromContext(ctx)
+	alertKey := ngmodels.AlertRuleKey{
+		OrgID: evalReq.AlertRule.OrgID,
+		UID:   evalReq.AlertRule.UID,
+	}
+	ev := evaluation{
+		scheduledAt:       evalReq.EvalTime,
+		rule:              &evalReq.AlertRule,
+		folderTitle:       evalReq.FolderTitle,
+		logzioEvalContext: evalReq.LogzioEvalContext,
+	}
+
+	// TODO: decide if we want to create the new routine if needed, or return error and rely on scheduler creating it + retrying on the sending side ??
+	ruleInfo, newRoutine := sch.registry.getOrCreateInfo(ctx, alertKey)
+	if !newRoutine {
+		logger.Debug("RunRuleEvaluation: sending ruleInfo.eval")
+		sent, dropped := ruleInfo.eval(&ev)
+		if !sent {
+			return fmt.Errorf("evaluation was not sent")
+		}
+		if dropped != nil {
+			logger.Warn("RunRuleEvaluation: got dropped eval", "dropped", dropped)
+		}
+	} else {
+		return fmt.Errorf("no rule routine for alert key %s", alertKey)
+	}
+
+	return nil
+}
+
+// LOGZ.IO GRAFANA CHANGE :: End
+
 //nolint:gocyclo
 func (sch *schedule) ruleRoutine(grafanaCtx context.Context, key ngmodels.AlertRuleKey, evalCh <-chan *evaluation, updateCh <-chan ruleVersionAndPauseStatus) error {
 	grafanaCtx = ngmodels.WithRuleKey(grafanaCtx, key)
@@ -378,7 +423,7 @@ func (sch *schedule) ruleRoutine(grafanaCtx context.Context, key ngmodels.AlertR
 		logger := logger.New("version", e.rule.Version, "fingerprint", f, "attempt", attempt, "now", e.scheduledAt).FromContext(ctx)
 		start := sch.clock.Now()
 
-		evalCtx := eval.NewContextWithPreviousResults(ctx, SchedulerUserFor(e.rule.OrgID), sch.newLoadedMetricsReader(e.rule))
+		evalCtx := eval.NewContextWithPreviousResults(ctx, SchedulerUserFor(e.rule.OrgID), sch.newLoadedMetricsReader(e.rule), &e.logzioEvalContext) // LOGZ.IO GRAFANA CHANGE :: DEV-43889 - Add logzio datasources support
 		if sch.evaluatorFactory == nil {
 			panic("evalfactory nil")
 		}

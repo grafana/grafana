@@ -127,9 +127,10 @@ func (a *alertRuleInfo) update(lastVersion ruleVersionAndPauseStatus) bool {
 }
 
 type evaluation struct {
-	scheduledAt time.Time
-	rule        *models.AlertRule
-	folderTitle string
+	scheduledAt       time.Time
+	rule              *models.AlertRule
+	folderTitle       string
+	logzioEvalContext models.LogzioAlertRuleEvalContext // LOGZ.IO GRAFANA CHANGE :: DEV-43889 - Add logzio datasources support
 }
 
 type alertRulesRegistry struct {

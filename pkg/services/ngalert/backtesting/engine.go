@@ -156,7 +156,7 @@ func newBacktestingEvaluator(ctx context.Context, evalFactory eval.EvaluatorFact
 		}
 	}
 
-	evaluator, err := evalFactory.Create(eval.NewContextWithPreviousResults(ctx, user, reader), condition)
+	evaluator, err := evalFactory.Create(eval.NewContextWithPreviousResults(ctx, user, reader, nil), condition) // LOGZ.IO GRAFANA CHANGE :: DEV-43889 - Add logzio datasources support
 
 	if err != nil {
 		return nil, err

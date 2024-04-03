@@ -18,6 +18,7 @@ import (
 	"github.com/grafana/grafana/pkg/expr"
 	"github.com/grafana/grafana/pkg/expr/classic"
 	"github.com/grafana/grafana/pkg/infra/log"
+	m "github.com/grafana/grafana/pkg/models" // LOGZ.IO GRAFANA CHANGE :: DEV-43744 - change to EvaluationContext
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
@@ -292,7 +293,7 @@ func ParseStateString(repr string) (State, error) {
 	}
 }
 
-func buildDatasourceHeaders(ctx context.Context) map[string]string {
+func buildDatasourceHeaders(ctx EvaluationContext) map[string]string { // LOGZ.IO GRAFANA CHANGE :: DEV-43744 - change to EvaluationContext
 	headers := map[string]string{
 		// Many data sources check this in query method as sometimes alerting needs special considerations.
 		// Several existing systems also compare against the value of this header. Altering this constitutes a breaking change.
@@ -305,11 +306,26 @@ func buildDatasourceHeaders(ctx context.Context) map[string]string {
 		models.CacheSkipHeaderName: "true",
 	}
 
-	key, ok := models.RuleKeyFromContext(ctx)
+	key, ok := models.RuleKeyFromContext(ctx.Ctx) // LOGZ.IO GRAFANA CHANGE :: DEV-43744 - change to EvaluationContext
 	if ok {
 		headers["X-Rule-Uid"] = key.UID
 		headers["X-Grafana-Org-Id"] = strconv.FormatInt(key.OrgID, 10)
 	}
+
+	// LOGZ.IO GRAFANA CHANGE :: DEV-43744 - Pass headers and custom datasource to evaluate alerts
+	logzioEvalContext := ctx.LogzioEvalContext
+	logzioHeaders := m.LogzIoHeaders{RequestHeaders: logzioEvalContext.LogzioHeaders}
+	requestHeaders := make(map[string][]string, len(headers))
+
+	for k, v := range headers {
+		requestHeaders[k] = []string{v}
+	}
+
+	for k, v := range logzioHeaders.GetDatasourceQueryHeaders(requestHeaders) {
+		headers[k] = v[0]
+	}
+	logger.Debug("Added following headers to request", "headers", headers)
+	// LOGZ.IO GRAFANA CHANGE :: End
 
 	return headers
 }
@@ -318,7 +334,7 @@ func buildDatasourceHeaders(ctx context.Context) map[string]string {
 func getExprRequest(ctx EvaluationContext, condition models.Condition, dsCacheService datasources.CacheService, reader AlertingResultsReader) (*expr.Request, error) {
 	req := &expr.Request{
 		OrgId:   ctx.User.GetOrgID(),
-		Headers: buildDatasourceHeaders(ctx.Ctx),
+		Headers: buildDatasourceHeaders(ctx), // LOGZ.IO GRAFANA CHANGE :: DEV-43883 - Change to EvaluationContext
 		User:    ctx.User,
 	}
 	datasources := make(map[string]*datasources.DataSource, len(condition.Data))
@@ -330,6 +346,14 @@ func getExprRequest(ctx EvaluationContext, condition models.Condition, dsCacheSe
 			switch nodeType := expr.NodeTypeFromDatasourceUID(q.DatasourceUID); nodeType {
 			case expr.TypeDatasourceNode:
 				ds, err = dsCacheService.GetDatasourceByUID(ctx.Ctx, q.DatasourceUID, ctx.User, false /*skipCache*/)
+				// LOGZ.IO GRAFANA CHANGE :: DEV-43889 - Add logzio datasource url override
+				if ds != nil {
+					if dsOverride, found := ctx.LogzioEvalContext.DsOverrideByDsUid[q.DatasourceUID]; found {
+						logger.Debug("Adding dsOverride", "datasource_uid", q.DatasourceUID, "dsOverride", dsOverride.UrlOverride)
+						ds.URL = dsOverride.UrlOverride
+					}
+				}
+				// // LOGZ.IO GRAFANA CHANGE :: End
 			default:
 				ds, err = expr.DataSourceModelFromNodeType(nodeType)
 			}

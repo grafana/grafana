@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"net/http" // LOGZ.IO GRAFANA CHANGE :: DEV-43883 Override datasource URL and pass custom headers to alert rule evaluator
 	"sort"
 	"strconv"
 	"strings"
@@ -659,6 +660,26 @@ func (c Condition) IsValid() bool {
 	// TODO search for refIDs in QueriesAndExpressions
 	return len(c.Data) != 0
 }
+
+// LOGZ.IO GRAFANA CHANGE :: DEV-43883 Override datasource URL and pass custom headers to alert rule evaluator
+type ExternalAlertEvaluationRequest struct {
+	AlertRule         AlertRule                  `json:"alertRule"`
+	EvalTime          time.Time                  `json:"evalTime"`
+	FolderTitle       string                     `json:"folderTitle"`
+	LogzioEvalContext LogzioAlertRuleEvalContext `json:"logzioEvalContext"`
+}
+
+type LogzioAlertRuleEvalContext struct {
+	LogzioHeaders     http.Header                             `json:"headers"`
+	DsOverrideByDsUid map[string]EvaluationDatasourceOverride `json:"dsOverride"`
+}
+
+type EvaluationDatasourceOverride struct {
+	DsUid       string `json:"dsUid"`
+	UrlOverride string `json:"urlOverride"`
+}
+
+// LOGZ.IO GRAFANA CHANGE :: end
 
 // PatchPartialAlertRule patches `ruleToPatch` by `existingRule` following the rule that if a field of `ruleToPatch` is empty or has the default value, it is populated by the value of the corresponding field from `existingRule`.
 // There are several exceptions:

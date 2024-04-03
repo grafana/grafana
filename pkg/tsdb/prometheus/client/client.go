@@ -33,7 +33,7 @@ func NewClient(d doer, method, baseUrl string) *Client {
 	return &Client{doer: d, method: method, baseUrl: baseUrl}
 }
 
-func (c *Client) QueryRange(ctx context.Context, q *models.Query) (*http.Response, error) {
+func (c *Client) QueryRange(ctx context.Context, q *models.Query, headers map[string]string) (*http.Response, error) { // LOGZ.IO GRAFANA CHANGE :: DEV-43889 - Add headers for logzio datasources support
 	tr := q.TimeRange()
 	qv := map[string]string{
 		"query": q.Expr,
@@ -47,10 +47,12 @@ func (c *Client) QueryRange(ctx context.Context, q *models.Query) (*http.Respons
 		return nil, err
 	}
 
+	c.addHeaders(headers, req) // LOGZ.IO GRAFANA CHANGE :: DEV-43889 - Add headers for logzio datasources support
+
 	return c.doer.Do(req)
 }
 
-func (c *Client) QueryInstant(ctx context.Context, q *models.Query) (*http.Response, error) {
+func (c *Client) QueryInstant(ctx context.Context, q *models.Query, headers map[string]string) (*http.Response, error) { // LOGZ.IO GRAFANA CHANGE :: DEV-43889 - Add headers for logzio datasources support
 	// We do not need a time range here.
 	// Instant query evaluates at a single point in time.
 	// Using q.TimeRange is aligning the query range to step.
@@ -63,10 +65,12 @@ func (c *Client) QueryInstant(ctx context.Context, q *models.Query) (*http.Respo
 		return nil, err
 	}
 
+	c.addHeaders(headers, req) // LOGZ.IO GRAFANA CHANGE :: DEV-43889 - Add headers for logzio datasources support
+
 	return c.doer.Do(req)
 }
 
-func (c *Client) QueryExemplars(ctx context.Context, q *models.Query) (*http.Response, error) {
+func (c *Client) QueryExemplars(ctx context.Context, q *models.Query, headers map[string]string) (*http.Response, error) { // LOGZ.IO GRAFANA CHANGE :: DEV-43889 - Add headers for logzio datasources support
 	tr := q.TimeRange()
 	qv := map[string]string{
 		"query": q.Expr,
@@ -78,6 +82,8 @@ func (c *Client) QueryExemplars(ctx context.Context, q *models.Query) (*http.Res
 	if err != nil {
 		return nil, err
 	}
+
+	c.addHeaders(headers, req) // LOGZ.IO GRAFANA CHANGE :: DEV-43889 - Add headers for logzio datasources support
 
 	return c.doer.Do(req)
 }
@@ -170,3 +176,12 @@ func createRequest(ctx context.Context, method string, u *url.URL, bodyReader io
 func formatTime(t time.Time) string {
 	return strconv.FormatFloat(float64(t.Unix())+float64(t.Nanosecond())/1e9, 'f', -1, 64)
 }
+
+// LOGZ.IO GRAFANA CHANGE :: DEV-43889 - Add headers for logzio datasources support
+func (c *Client) addHeaders(headers map[string]string, req *http.Request) {
+	for k, v := range headers {
+		req.Header[k] = []string{v}
+	}
+}
+
+// LOGZ.IO GRAFANA CHANGE :: End

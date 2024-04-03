@@ -21,6 +21,7 @@ import (
 	exp "github.com/grafana/grafana-plugin-sdk-go/experimental/errorsource"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
+	"github.com/grafana/grafana/pkg/models" // LOGZ.IO GRAFANA CHANGE :: DEV-43883 - add LogzIoHeaders
 )
 
 // Used in logging to mark a stage
@@ -71,6 +72,17 @@ var NewClient = func(ctx context.Context, ds *DatasourceInfo, timeRange backend.
 	}
 	logger.Debug("Creating new client", "configuredFields", fmt.Sprintf("%#v", ds.ConfiguredFields), "indices", strings.Join(indices, ", "), "interval", ds.Interval, "index", ds.Database)
 
+	// LOGZ.IO GRAFANA CHANGE :: DEV-43883 - add LogzIoHeaders
+	logzIoHeaders := &models.LogzIoHeaders{}
+	headers := ctx.Value("logzioHeaders")
+	if headers != nil {
+		logzIoHeaders.RequestHeaders = http.Header{}
+		for key, value := range headers.(map[string]string) {
+			logzIoHeaders.RequestHeaders.Set(key, value)
+		}
+	}
+	// LOGZ.IO GRAFANA CHANGE :: End
+
 	return &baseClientImpl{
 		logger:           logger,
 		ctx:              ctx,
@@ -79,6 +91,7 @@ var NewClient = func(ctx context.Context, ds *DatasourceInfo, timeRange backend.
 		indices:          indices,
 		timeRange:        timeRange,
 		tracer:           tracer,
+		logzIoHeaders:    logzIoHeaders, // LOGZ.IO GRAFANA CHANGE :: DEV-43883 Support external alert evaluation
 	}, nil
 }
 
@@ -90,6 +103,7 @@ type baseClientImpl struct {
 	timeRange        backend.TimeRange
 	logger           log.Logger
 	tracer           tracing.Tracer
+	logzIoHeaders    *models.LogzIoHeaders // LOGZ.IO GRAFANA CHANGE :: DEV-43883 - add LogzIoHeaders
 }
 
 func (c *baseClientImpl) GetConfiguredFields() ConfiguredFields {
@@ -158,13 +172,29 @@ func (c *baseClientImpl) executeRequest(method, uriPath, uriQuery string, body [
 		return nil, err
 	}
 
-	req.Header.Set("Content-Type", "application/x-ndjson")
+	req.Header = c.logzIoHeaders.GetDatasourceQueryHeaders(req.Header) // LOGZ.IO GRAFANA CHANGE :: DEV-43883 Support external alert evaluation
+
+	req.Header.Set("Content-Type", "application/json") // LOGZ.IO GRAFANA CHANGE :: DEV-43744 use application/json to interact with query-service
 
 	//nolint:bodyclose
 	resp, err := c.ds.HTTPClient.Do(req)
 	if err != nil {
 		return nil, err
 	}
+
+	// LOGZ.IO GRAFANA CHANGE :: DEV-43744 - Add error msg
+	if resp != nil && (resp.StatusCode < 200 || resp.StatusCode >= 300) {
+		errorResponse, err := c.DecodeErrorResponse(resp)
+		if err != nil {
+			return nil, err
+		}
+		errMsg := fmt.Sprintf("got bad response status from datasource. StatusCode: %d, Status: %s, RequestId: '%s', Message: %s",
+			resp.StatusCode, resp.Status, errorResponse.RequestId, errorResponse.Message)
+		c.logger.Error(errMsg)
+		return nil, errors.New(errMsg)
+	}
+	// LOGZ.IO GRAFANA CHANGE :: end
+
 	return resp, nil
 }
 
@@ -257,6 +287,16 @@ func (c *baseClientImpl) createMultiSearchRequests(searchRequests []*SearchReque
 
 func (c *baseClientImpl) getMultiSearchQueryParameters() string {
 	var qs []string
+
+	// LOGZ.IO GRAFANA CHANGE :: DEV-43889 Grafana alerts evaluation - set 'accountsToSearch' query param
+	datasourceUrl, _ := url.Parse(c.ds.URL)
+	q, _ := url.ParseQuery(datasourceUrl.RawQuery)
+	if len(q.Get("querySource")) > 0 {
+		// set/override 'accountsToSearch' as Database (accountId)
+		qs = append(qs, fmt.Sprintf("accountsToSearch=%s", c.ds.Database))
+		qs = append(qs, "querySource=INTERNAL_METRICS_ALERTS")
+	}
+	// LOGZ.IO end
 
 	maxConcurrentShardRequests := c.ds.MaxConcurrentShardRequests
 	if maxConcurrentShardRequests == 0 {

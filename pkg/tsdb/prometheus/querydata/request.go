@@ -99,7 +99,7 @@ func (s *QueryData) Execute(ctx context.Context, req *backend.QueryDataRequest) 
 			return &result, err
 		}
 
-		r := s.fetch(ctx, s.client, query, hasPrometheusDataplaneFeatureFlag)
+		r := s.fetch(ctx, s.client, query, hasPrometheusDataplaneFeatureFlag, req.Headers) // LOGZ.IO GRAFANA CHANGE :: DEV-43889 - Add headers for logzio datasources support
 		if r == nil {
 			s.log.FromContext(ctx).Debug("Received nil response from runQuery", "query", query.Expr)
 			continue
@@ -110,7 +110,7 @@ func (s *QueryData) Execute(ctx context.Context, req *backend.QueryDataRequest) 
 	return &result, nil
 }
 
-func (s *QueryData) fetch(ctx context.Context, client *client.Client, q *models.Query, enablePrometheusDataplane bool) *backend.DataResponse {
+func (s *QueryData) fetch(ctx context.Context, client *client.Client, q *models.Query, enablePrometheusDataplane bool, headers map[string]string) *backend.DataResponse { // LOGZ.IO GRAFANA CHANGE :: DEV-43889 - Add headers for logzio datasources support
 	traceCtx, end := s.trace(ctx, q)
 	defer end()
 
@@ -123,14 +123,14 @@ func (s *QueryData) fetch(ctx context.Context, client *client.Client, q *models.
 	}
 
 	if q.InstantQuery {
-		res := s.instantQuery(traceCtx, client, q, enablePrometheusDataplane)
+		res := s.instantQuery(traceCtx, client, q, enablePrometheusDataplane, headers) // LOGZ.IO GRAFANA CHANGE :: DEV-43889 - Add headers for logzio datasources support
 		dr.Error = res.Error
 		dr.Frames = res.Frames
 		dr.Status = res.Status
 	}
 
 	if q.RangeQuery {
-		res := s.rangeQuery(traceCtx, client, q, enablePrometheusDataplane)
+		res := s.rangeQuery(traceCtx, client, q, enablePrometheusDataplane, headers) // LOGZ.IO GRAFANA CHANGE :: DEV-43889 - Add headers for logzio datasources support
 		if res.Error != nil {
 			if dr.Error == nil {
 				dr.Error = res.Error
@@ -145,7 +145,7 @@ func (s *QueryData) fetch(ctx context.Context, client *client.Client, q *models.
 	}
 
 	if q.ExemplarQuery {
-		res := s.exemplarQuery(traceCtx, client, q, enablePrometheusDataplane)
+		res := s.exemplarQuery(traceCtx, client, q, enablePrometheusDataplane, headers) // LOGZ.IO GRAFANA CHANGE :: DEV-43889 - Add headers for logzio datasources support
 		if res.Error != nil {
 			// If exemplar query returns error, we want to only log it and
 			// continue with other results processing
@@ -157,8 +157,8 @@ func (s *QueryData) fetch(ctx context.Context, client *client.Client, q *models.
 	return dr
 }
 
-func (s *QueryData) rangeQuery(ctx context.Context, c *client.Client, q *models.Query, enablePrometheusDataplaneFlag bool) backend.DataResponse {
-	res, err := c.QueryRange(ctx, q)
+func (s *QueryData) rangeQuery(ctx context.Context, c *client.Client, q *models.Query, enablePrometheusDataplaneFlag bool, headers map[string]string) backend.DataResponse { // LOGZ.IO GRAFANA CHANGE :: DEV-43889 - Add headers for logzio datasources support
+	res, err := c.QueryRange(ctx, q, headers) // LOGZ.IO GRAFANA CHANGE :: DEV-43889 - Add headers for logzio datasources support
 	if err != nil {
 		return backend.DataResponse{
 			Error:  err,
@@ -176,8 +176,8 @@ func (s *QueryData) rangeQuery(ctx context.Context, c *client.Client, q *models.
 	return s.parseResponse(ctx, q, res, enablePrometheusDataplaneFlag)
 }
 
-func (s *QueryData) instantQuery(ctx context.Context, c *client.Client, q *models.Query, enablePrometheusDataplaneFlag bool) backend.DataResponse {
-	res, err := c.QueryInstant(ctx, q)
+func (s *QueryData) instantQuery(ctx context.Context, c *client.Client, q *models.Query, enablePrometheusDataplaneFlag bool, headers map[string]string) backend.DataResponse { // LOGZ.IO GRAFANA CHANGE :: DEV-43889 - Add headers for logzio datasources support
+	res, err := c.QueryInstant(ctx, q, headers) // LOGZ.IO GRAFANA CHANGE :: DEV-43889 - Add headers for logzio datasources support
 	if err != nil {
 		return backend.DataResponse{
 			Error:  err,
@@ -202,8 +202,8 @@ func (s *QueryData) instantQuery(ctx context.Context, c *client.Client, q *model
 	return s.parseResponse(ctx, q, res, enablePrometheusDataplaneFlag)
 }
 
-func (s *QueryData) exemplarQuery(ctx context.Context, c *client.Client, q *models.Query, enablePrometheusDataplaneFlag bool) backend.DataResponse {
-	res, err := c.QueryExemplars(ctx, q)
+func (s *QueryData) exemplarQuery(ctx context.Context, c *client.Client, q *models.Query, enablePrometheusDataplaneFlag bool, headers map[string]string) backend.DataResponse { // LOGZ.IO GRAFANA CHANGE :: DEV-43889 - Add headers for logzio datasources support
+	res, err := c.QueryExemplars(ctx, q, headers) // LOGZ.IO GRAFANA CHANGE :: DEV-43889 - Add headers for logzio datasources support
 	if err != nil {
 		return backend.DataResponse{
 			Error: err,

@@ -4,7 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"github.com/grafana/grafana/pkg/services/ngalert/models"
+	"github.com/grafana/grafana/pkg/services/ngalert/models" // LOGZ.IO GRAFANA CHANGE :: DEV-43744, DEV-43895 Add logzio external evaluation and notification
 	"reflect"
 	"sort"
 	"strings"
@@ -556,6 +556,26 @@ type PostableUserConfig struct {
 type AlertSendNotificationsRequest struct {
 	AlertRuleKey models.AlertRuleKey `json:"alertRuleKey"`
 	Alerts       PostableAlerts      `json:"alerts"`
+}
+
+// LOGZ.IO GRAFANA CHANGE :: end
+
+// LOGZ.IO GRAFANA CHANGE :: DEV-43744: add api models for alert evaluation requests/responses
+type AlertEvaluationRequest struct {
+	AlertRule   models.AlertRule                      `json:"alertRule"`
+	EvalTime    time.Time                             `json:"evalTime"`
+	FolderTitle string                                `json:"folderTitle"`
+	DsOverrides []models.EvaluationDatasourceOverride `json:"dsOverrides"`
+}
+
+type AlertEvalRunResult struct {
+	UID       string    `json:"uid"`
+	EvalTime  time.Time `json:"evalTime"`
+	RunResult string    `json:"runResult"`
+}
+
+type EvalRunsResponse struct {
+	RunResults []AlertEvalRunResult `json:"runResults"`
 }
 
 // LOGZ.IO GRAFANA CHANGE :: end

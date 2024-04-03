@@ -25,6 +25,15 @@ func NewLogzioAlertingApi(service *LogzioAlertingService) *LogzioAlertingApi {
 func (api *API) RegisterLogzioAlertingApiEndpoints(srv *LogzioAlertingApi, m *metrics.API) {
 	api.RouteRegister.Group("", func(group routing.RouteRegister) {
 		group.Post(
+			toMacaronPath("/internal/alert/api/v1/eval"),
+			metrics.Instrument(
+				http.MethodPost,
+				"/internal/alert/api/v1/eval",
+				srv.RouteEvaluateAlert,
+				m,
+			),
+		)
+		group.Post(
 			toMacaronPath("/internal/alert/api/v1/send-notifications"),
 			metrics.Instrument(
 				http.MethodPost,
@@ -34,6 +43,15 @@ func (api *API) RegisterLogzioAlertingApiEndpoints(srv *LogzioAlertingApi, m *me
 			),
 		)
 	})
+}
+
+func (api *LogzioAlertingApi) RouteEvaluateAlert(ctx *contextmodel.ReqContext) response.Response {
+	var body []apimodels.AlertEvaluationRequest
+	if err := web.Bind(ctx.Req, &body); err != nil {
+		return response.Error(http.StatusBadRequest, "bad request data", err)
+	}
+
+	return api.service.RouteEvaluateAlert(ctx, body)
 }
 
 func (api *LogzioAlertingApi) RouteSendAlertNotifications(ctx *contextmodel.ReqContext) response.Response {

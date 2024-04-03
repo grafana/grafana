@@ -267,6 +267,18 @@ func (ng *AlertNG) init() error {
 
 	ng.AlertsRouter = alertsRouter
 
+	// LOGZ.IO GRAFANA CHANGE :: DEV-43744 Add logzio notification route
+	var alertsSender schedule.AlertsSender
+	if ng.Cfg.UnifiedAlerting.ScheduledEvalEnabled {
+		alertsSender = alertsRouter
+	} else {
+		alertsSender, err = sender.NewLogzioAlertsRouter(ng.Cfg.UnifiedAlerting.LogzioAlertsRouterUrl)
+		if err != nil {
+			return err
+		}
+	}
+	// LOGZ.IO GRAFANA CHANGE :: End
+
 	evalFactory := eval.NewEvaluatorFactory(ng.Cfg.UnifiedAlerting, ng.DataSourceCache, ng.ExpressionService, ng.pluginsStore)
 	schedCfg := schedule.SchedulerCfg{
 		MaxAttempts:          ng.Cfg.UnifiedAlerting.MaxAttempts,
@@ -279,9 +291,10 @@ func (ng *AlertNG) init() error {
 		EvaluatorFactory:     evalFactory,
 		RuleStore:            ng.store,
 		Metrics:              ng.Metrics.GetSchedulerMetrics(),
-		AlertSender:          alertsRouter,
+		AlertSender:          alertsSender, // LOGZ.IO GRAFANA CHANGE :: DEV-43744 Add logzio notification route
 		Tracer:               ng.tracer,
 		Log:                  log.New("ngalert.scheduler"),
+		ScheduledEvalEnabled: ng.Cfg.UnifiedAlerting.ScheduledEvalEnabled, // LOGZ.IO GRAFANA CHANGE :: DEV-43744 Add scheduled evaluation enabled config
 	}
 
 	// There are a set of feature toggles available that act as short-circuits for common configurations.
@@ -363,6 +376,7 @@ func (ng *AlertNG) init() error {
 		Hooks:                api.NewHooks(ng.Log),
 		Tracer:               ng.tracer,
 		UpgradeService:       ng.upgradeService,
+		Schedule:             ng.schedule, // LOGZ.IO GRAFANA CHANGE :: DEV-43744 Add alert evaluation API
 	}
 	ng.api.RegisterAPIEndpoints(ng.Metrics.GetAPIMetrics())
 

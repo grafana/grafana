@@ -94,7 +94,8 @@ func TestClient(t *testing.T) {
 				RangeQuery: true,
 				Step:       1 * time.Second,
 			}
-			res, err := client.QueryRange(context.Background(), req)
+			res, err := client.QueryRange(context.Background(), req, map[string]string{}) // LOGZ.IO GRAFANA CHANGE :: DEV-43889 - Add headers for logzio datasources support
+
 			defer func() {
 				if res != nil && res.Body != nil {
 					if err := res.Body.Close(); err != nil {
@@ -121,7 +122,8 @@ func TestClient(t *testing.T) {
 				RangeQuery: true,
 				Step:       1 * time.Second,
 			}
-			res, err := client.QueryRange(context.Background(), req)
+			res, err := client.QueryRange(context.Background(), req, map[string]string{}) // LOGZ.IO GRAFANA CHANGE :: DEV-43889 - Add headers for logzio datasources support
+
 			defer func() {
 				if res != nil && res.Body != nil {
 					if err := res.Body.Close(); err != nil {
