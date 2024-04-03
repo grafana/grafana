@@ -433,7 +433,7 @@ func doPlaylistTests(t *testing.T, helper *apis.K8sTestHelper) *apis.K8sTestHelp
 }
 
 func doPlaylistTestsWithModes(t *testing.T, helper *apis.K8sTestHelper) *apis.K8sTestHelper {
-	t.Run("Mode 2: check that List returns correct resource version", func(t *testing.T) {
+	t.Run("Mode 2: check that Get and List return correct resource versions", func(t *testing.T) {
 		rest.CurrentMode = rest.Mode2
 
 		client := helper.GetResourceClient(apis.ResourceClientArgs{
@@ -464,7 +464,7 @@ func doPlaylistTestsWithModes(t *testing.T, helper *apis.K8sTestHelper) *apis.K8
 		}
 		slices.Sort(uids) // make list compare stable
 
-		// Check that everything is returned from the List command
+		// Check that resource versions are correct for the List command
 		list, err := client.Resource.List(context.Background(), metav1.ListOptions{})
 		require.NoError(t, err)
 		require.Equal(t, uids, SortSlice(Map(list.Items, func(item unstructured.Unstructured) string {
@@ -474,32 +474,14 @@ func doPlaylistTestsWithModes(t *testing.T, helper *apis.K8sTestHelper) *apis.K8
 			require.Equal(t, m[item.GetName()], item.GetResourceVersion())
 		}
 
-		deleteEntries(t, client, helper, uids)
-	})
-	t.Run("Mode 2: check that Get returns correct resource version", func(t *testing.T) { //
-		rest.CurrentMode = rest.Mode2
-
-		client := helper.GetResourceClient(apis.ResourceClientArgs{
-			User: helper.Org1.Editor,
-			GVR:  gvr,
-		})
-
-		// Create the playlist "test"
-		first, err := client.Resource.Create(context.Background(),
-			helper.LoadYAMLOrJSONFile("testdata/playlist-test-create.yaml"),
-			metav1.CreateOptions{},
-		)
-		require.NoError(t, err)
-		require.Equal(t, "test", first.GetName())
-
+		// Check that the resource version is correct for the Get command
 		found, err := client.Resource.Get(context.Background(), first.GetName(), metav1.GetOptions{})
 		require.NoError(t, err)
 		require.Equal(t, first.GetName(), found.GetName())
 		require.Equal(t, first.GetResourceVersion(), found.GetResourceVersion())
 
-		deleteEntries(t, client, helper, []string{first.GetName()})
+		deleteEntries(t, client, helper, uids)
 	})
-
 	t.Run("Mode 2: check that k8s Update of a legacy playlist works", func(t *testing.T) {
 		// Create a playlist only in legacy storage
 		rest.CurrentMode = rest.Mode1
