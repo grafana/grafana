@@ -12985,6 +12985,40 @@
         "tags": [
           "migrations"
         ]
+      },
+      "post": {
+        "description": "It returns migrations that has been created.",
+        "operationId": "runCloudMigration",
+        "parameters": [
+          {
+            "description": "ID of an migration",
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "format": "int64",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/cloudMigrationRunResponse"
+          },
+          "401": {
+            "$ref": "#/components/responses/unauthorisedError"
+          },
+          "403": {
+            "$ref": "#/components/responses/forbiddenError"
+          },
+          "500": {
+            "$ref": "#/components/responses/internalServerError"
+          }
+        },
+        "summary": "Trigger the run of a migration to the Grafana Cloud.",
+        "tags": [
+          "migrations"
+        ]
       }
     },
     "/cloudmigration/migration/{id}/run/{runID}": {

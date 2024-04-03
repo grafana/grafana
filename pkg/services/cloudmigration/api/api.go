@@ -158,7 +158,7 @@ func (cma *CloudMigrationAPI) CreateMigration(c *contextmodel.ReqContext) respon
 	return response.JSON(http.StatusOK, cloudMigration)
 }
 
-// swagger:route GET /cloudmigration/migration/{id}/run migrations runCloudMigration
+// swagger:route POST /cloudmigration/migration/{id}/run migrations runCloudMigration
 //
 // Trigger the run of a migration to the Grafana Cloud.
 //
