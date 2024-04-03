@@ -32,6 +32,8 @@ type Requester interface {
 	// GetEmail returns the email of the active entity.
 	// Can be empty.
 	GetEmail() string
+	// GetEmailVerified returns if email is verified for entity.
+	GetEmailVerified() bool
 	// GetIsGrafanaAdmin returns true if the user is a server admin
 	GetIsGrafanaAdmin() bool
 	// GetLogin returns the login of the active entity

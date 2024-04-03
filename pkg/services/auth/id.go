@@ -19,5 +19,7 @@ type IDSigner interface {
 
 type IDClaims struct {
 	jwt.Claims
+	Email           string `json:"email"`
+	EmailVerified   bool   `json:"email_verified"`
 	AuthenticatedBy string `json:"authenticatedBy,omitempty"`
 }

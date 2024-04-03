@@ -90,10 +90,12 @@ func (s *Service) SignIdentity(ctx context.Context, id identity.Requester) (stri
 		}
 
 		if identity.IsNamespace(namespace, identity.NamespaceUser) {
-			if err := s.setUserClaims(ctx, identifier, claims); err != nil {
+			if err := s.setUserClaims(ctx, id, identifier, claims); err != nil {
 				return "", err
 			}
 		}
+
+		fmt.Println(claims)
 
 		token, err := s.signer.SignIDToken(ctx, claims)
 		if err != nil {
@@ -130,7 +132,7 @@ func (s *Service) SignIdentity(ctx context.Context, id identity.Requester) (stri
 	return result.(string), nil
 }
 
-func (s *Service) setUserClaims(ctx context.Context, identifier string, claims *auth.IDClaims) error {
+func (s *Service) setUserClaims(ctx context.Context, ident identity.Requester, identifier string, claims *auth.IDClaims) error {
 	id, err := strconv.ParseInt(identifier, 10, 64)
 	if err != nil {
 		return err
@@ -151,6 +153,8 @@ func (s *Service) setUserClaims(ctx context.Context, identifier string, claims *
 	}
 
 	claims.AuthenticatedBy = info.AuthModule
+	claims.Email = ident.GetEmail()
+	claims.EmailVerified = ident.GetEmailVerified()
 
 	return nil
 }
