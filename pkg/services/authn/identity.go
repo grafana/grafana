@@ -27,6 +27,7 @@ const (
 	NamespaceServiceAccount = identity.NamespaceServiceAccount
 	NamespaceAnonymous      = identity.NamespaceAnonymous
 	NamespaceRenderService  = identity.NamespaceRenderService
+	NamespaceAccessPolicy   = identity.NamespaceAccessPolicy
 )
 
 const (
@@ -87,6 +88,18 @@ type Identity struct {
 	IDToken string
 }
 
+func (i *Identity) GetID() string {
+	return i.ID
+}
+
+func (i *Identity) GetNamespacedID() (namespace string, identifier string) {
+	split := strings.Split(i.GetID(), ":")
+	if len(split) != 2 {
+		return "", ""
+	}
+	return split[0], split[1]
+}
+
 func (i *Identity) GetAuthenticatedBy() string {
 	return i.AuthenticatedBy
 }
@@ -120,16 +133,6 @@ func (i *Identity) GetIsGrafanaAdmin() bool {
 
 func (i *Identity) GetLogin() string {
 	return i.Login
-}
-
-func (i *Identity) GetNamespacedID() (namespace string, identifier string) {
-	split := strings.Split(i.ID, ":")
-
-	if len(split) != 2 {
-		return "", ""
-	}
-
-	return split[0], split[1]
 }
 
 // GetOrgID implements identity.Requester.
@@ -195,6 +198,15 @@ func (i *Identity) HasUniqueId() bool {
 	return namespace == NamespaceUser || namespace == NamespaceServiceAccount || namespace == NamespaceAPIKey
 }
 
+func (i *Identity) IsAuthenticatedBy(providers ...string) bool {
+	for _, p := range providers {
+		if i.AuthenticatedBy == p {
+			return true
+		}
+	}
+	return false
+}
+
 func (i *Identity) IsNil() bool {
 	return i == nil
 }
@@ -219,6 +231,7 @@ func (i *Identity) SignedInUser() *user.SignedInUser {
 		Teams:           i.Teams,
 		Permissions:     i.Permissions,
 		IDToken:         i.IDToken,
+		NamespacedID:    i.ID,
 	}
 
 	if namespace == NamespaceAPIKey {

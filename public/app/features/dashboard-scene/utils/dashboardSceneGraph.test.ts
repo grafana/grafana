@@ -1,92 +1,23 @@
-import {
-  SceneDataLayers,
-  SceneGridItem,
-  SceneGridLayout,
-  SceneGridRow,
-  SceneQueryRunner,
-  SceneRefreshPicker,
-  SceneTimePicker,
-  SceneTimeRange,
-  VizPanel,
-} from '@grafana/scenes';
+import { SceneGridLayout, SceneGridRow, SceneQueryRunner, SceneTimeRange, VizPanel, behaviors } from '@grafana/scenes';
+import { DashboardCursorSync } from '@grafana/schema';
 
-import { AlertStatesDataLayer } from '../scene/AlertStatesDataLayer';
 import { DashboardAnnotationsDataLayer } from '../scene/DashboardAnnotationsDataLayer';
 import { DashboardControls } from '../scene/DashboardControls';
-import { DashboardLinksControls } from '../scene/DashboardLinksControls';
+import { DashboardDataLayerSet } from '../scene/DashboardDataLayerSet';
+import { DashboardGridItem } from '../scene/DashboardGridItem';
 import { DashboardScene, DashboardSceneState } from '../scene/DashboardScene';
+import { LibraryVizPanel } from '../scene/LibraryVizPanel';
 import { VizPanelLinks, VizPanelLinksMenu } from '../scene/PanelLinks';
 
-import { dashboardSceneGraph } from './dashboardSceneGraph';
+import { dashboardSceneGraph, getNextPanelId } from './dashboardSceneGraph';
 import { findVizPanelByKey } from './utils';
 
 describe('dashboardSceneGraph', () => {
-  describe('getTimePicker', () => {
-    it('should return null if no time picker', () => {
-      const scene = buildTestScene({
-        controls: [
-          new DashboardControls({
-            variableControls: [],
-            linkControls: new DashboardLinksControls({}),
-            timeControls: [],
-          }),
-        ],
-      });
-
-      const timePicker = dashboardSceneGraph.getTimePicker(scene);
-      expect(timePicker).toBeNull();
-    });
-
-    it('should return time picker', () => {
-      const scene = buildTestScene();
-      const timePicker = dashboardSceneGraph.getTimePicker(scene);
-      expect(timePicker).not.toBeNull();
-    });
-  });
-
-  describe('getRefreshPicker', () => {
-    it('should return null if no refresh picker', () => {
-      const scene = buildTestScene({
-        controls: [
-          new DashboardControls({
-            variableControls: [],
-            linkControls: new DashboardLinksControls({}),
-            timeControls: [],
-          }),
-        ],
-      });
-
-      const refreshPicker = dashboardSceneGraph.getRefreshPicker(scene);
-      expect(refreshPicker).toBeNull();
-    });
-
-    it('should return refresh picker', () => {
-      const scene = buildTestScene();
-      const refreshPicker = dashboardSceneGraph.getRefreshPicker(scene);
-      expect(refreshPicker).not.toBeNull();
-    });
-  });
-
-  describe('getDashboardControls', () => {
-    it('should return null if no dashboard controls', () => {
-      const scene = buildTestScene({ controls: [] });
-
-      const dashboardControls = dashboardSceneGraph.getDashboardControls(scene);
-      expect(dashboardControls).toBeNull();
-    });
-
-    it('should return dashboard controls', () => {
-      const scene = buildTestScene();
-      const dashboardControls = dashboardSceneGraph.getDashboardControls(scene);
-      expect(dashboardControls).not.toBeNull();
-    });
-  });
-
   describe('getPanelLinks', () => {
-    it('should throw if no links object defined', () => {
+    it('should return null if no links object defined', () => {
       const scene = buildTestScene();
       const panelWithNoLinks = findVizPanelByKey(scene, 'panel-1')!;
-      expect(() => dashboardSceneGraph.getPanelLinks(panelWithNoLinks)).toThrow();
+      expect(dashboardSceneGraph.getPanelLinks(panelWithNoLinks)).toBeNull();
     });
 
     it('should resolve VizPanelLinks object', () => {
@@ -136,8 +67,8 @@ describe('dashboardSceneGraph', () => {
     it('should return the scene data layers', () => {
       const dataLayers = dashboardSceneGraph.getDataLayers(scene);
 
-      expect(dataLayers).toBeInstanceOf(SceneDataLayers);
-      expect(dataLayers?.state.layers.length).toBe(2);
+      expect(dataLayers).toBeInstanceOf(DashboardDataLayerSet);
+      expect(dataLayers?.state.annotationLayers.length).toBe(1);
     });
 
     it('should throw if there are no scene data layers', () => {
@@ -145,7 +76,148 @@ describe('dashboardSceneGraph', () => {
         $data: undefined,
       });
 
-      expect(() => dashboardSceneGraph.getDataLayers(scene)).toThrow('SceneDataLayers not found');
+      expect(() => dashboardSceneGraph.getDataLayers(scene)).toThrow('DashboardDataLayerSet not found');
+    });
+  });
+
+  describe('getNextPanelId', () => {
+    it('should get next panel id in a simple 3 panel layout', () => {
+      const scene = buildTestScene({
+        body: new SceneGridLayout({
+          children: [
+            new DashboardGridItem({
+              body: new VizPanel({
+                title: 'Panel A',
+                key: 'panel-1',
+                pluginId: 'table',
+              }),
+            }),
+            new DashboardGridItem({
+              body: new VizPanel({
+                title: 'Panel B',
+                key: 'panel-2',
+                pluginId: 'table',
+              }),
+            }),
+            new DashboardGridItem({
+              body: new VizPanel({
+                title: 'Panel C',
+                key: 'panel-3',
+                pluginId: 'table',
+              }),
+            }),
+          ],
+        }),
+      });
+
+      const id = getNextPanelId(scene);
+
+      expect(id).toBe(4);
+    });
+
+    it('should take library panels, panels in rows and panel repeaters into account', () => {
+      const scene = buildTestScene({
+        body: new SceneGridLayout({
+          children: [
+            new DashboardGridItem({
+              key: 'griditem-1',
+              x: 0,
+              body: new VizPanel({
+                title: 'Panel A',
+                key: 'panel-1',
+                pluginId: 'table',
+              }),
+            }),
+            new DashboardGridItem({
+              body: new LibraryVizPanel({
+                uid: 'uid',
+                name: 'LibPanel',
+                title: 'Library Panel',
+                panelKey: 'panel-2',
+              }),
+            }),
+            new DashboardGridItem({
+              body: new VizPanel({
+                title: 'Panel C',
+                key: 'panel-2-clone-1',
+                pluginId: 'table',
+              }),
+            }),
+            new DashboardGridItem({
+              body: new VizPanel({
+                title: 'Panel C',
+                key: 'panel-4',
+                pluginId: 'table',
+              }),
+              variableName: 'repeat',
+              repeatedPanels: [],
+              repeatDirection: 'h',
+              maxPerRow: 1,
+            }),
+            new SceneGridRow({
+              key: 'key',
+              title: 'row',
+              children: [
+                new DashboardGridItem({
+                  body: new VizPanel({
+                    title: 'Panel E',
+                    key: 'panel-2-clone-2',
+                    pluginId: 'table',
+                  }),
+                }),
+                new DashboardGridItem({
+                  body: new LibraryVizPanel({
+                    uid: 'uid',
+                    name: 'LibPanel',
+                    title: 'Library Panel',
+                    panelKey: 'panel-3',
+                  }),
+                }),
+              ],
+            }),
+          ],
+        }),
+      });
+
+      const id = getNextPanelId(scene);
+
+      expect(id).toBe(5);
+    });
+
+    it('should get next panel id in a layout with rows', () => {
+      const scene = buildTestScene();
+      const id = getNextPanelId(scene);
+
+      expect(id).toBe(3);
+    });
+
+    it('should return 1 if no panels are found', () => {
+      const scene = buildTestScene({ body: new SceneGridLayout({ children: [] }) });
+      const id = getNextPanelId(scene);
+
+      expect(id).toBe(1);
+    });
+
+    it('should throw an error if body is not SceneGridLayout', () => {
+      const scene = buildTestScene({ body: undefined });
+
+      expect(() => getNextPanelId(scene)).toThrow('Dashboard body is not a SceneGridLayout');
+    });
+  });
+
+  describe('getCursorSync', () => {
+    it('should return cursor sync behavior', () => {
+      const scene = buildTestScene();
+      const cursorSync = dashboardSceneGraph.getCursorSync(scene);
+
+      expect(cursorSync).toBeInstanceOf(behaviors.CursorSync);
+    });
+
+    it('should return undefined if no cursor sync behavior', () => {
+      const scene = buildTestScene({ $behaviors: [] });
+      const cursorSync = dashboardSceneGraph.getCursorSync(scene);
+
+      expect(cursorSync).toBeUndefined();
     });
   });
 });
@@ -155,20 +227,14 @@ function buildTestScene(overrides?: Partial<DashboardSceneState>) {
     title: 'hello',
     uid: 'dash-1',
     $timeRange: new SceneTimeRange({}),
-    controls: [
-      new DashboardControls({
-        variableControls: [],
-        linkControls: new DashboardLinksControls({}),
-        timeControls: [
-          new SceneTimePicker({}),
-          new SceneRefreshPicker({
-            intervals: ['1s'],
-          }),
-        ],
+    controls: new DashboardControls({}),
+    $behaviors: [
+      new behaviors.CursorSync({
+        sync: DashboardCursorSync.Crosshair,
       }),
     ],
-    $data: new SceneDataLayers({
-      layers: [
+    $data: new DashboardDataLayerSet({
+      annotationLayers: [
         new DashboardAnnotationsDataLayer({
           key: `annotation`,
           query: {
@@ -181,15 +247,11 @@ function buildTestScene(overrides?: Partial<DashboardSceneState>) {
           isEnabled: true,
           isHidden: false,
         }),
-        new AlertStatesDataLayer({
-          key: 'alert-states',
-          name: 'Alert States',
-        }),
       ],
     }),
     body: new SceneGridLayout({
       children: [
-        new SceneGridItem({
+        new DashboardGridItem({
           key: 'griditem-1',
           x: 0,
           body: new VizPanel({
@@ -199,14 +261,14 @@ function buildTestScene(overrides?: Partial<DashboardSceneState>) {
             $data: new SceneQueryRunner({ key: 'data-query-runner', queries: [{ refId: 'A' }] }),
           }),
         }),
-        new SceneGridItem({
+        new DashboardGridItem({
           body: new VizPanel({
             title: 'Panel B',
             key: 'panel-2',
             pluginId: 'table',
           }),
         }),
-        new SceneGridItem({
+        new DashboardGridItem({
           body: new VizPanel({
             title: 'Panel C',
             key: 'panel-2-clone-1',
@@ -214,7 +276,7 @@ function buildTestScene(overrides?: Partial<DashboardSceneState>) {
             $data: new SceneQueryRunner({ key: 'data-query-runner2', queries: [{ refId: 'A' }] }),
           }),
         }),
-        new SceneGridItem({
+        new DashboardGridItem({
           body: new VizPanel({
             title: 'Panel D',
             key: 'panel-with-links',
@@ -227,14 +289,14 @@ function buildTestScene(overrides?: Partial<DashboardSceneState>) {
           key: 'key',
           title: 'row',
           children: [
-            new SceneGridItem({
+            new DashboardGridItem({
               body: new VizPanel({
                 title: 'Panel E',
                 key: 'panel-2-clone-2',
                 pluginId: 'table',
               }),
             }),
-            new SceneGridItem({
+            new DashboardGridItem({
               body: new VizPanel({
                 title: 'Panel F',
                 key: 'panel-2-clone-2',

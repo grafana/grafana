@@ -115,7 +115,6 @@ export class ElasticDatasource
   name: string;
   index: string;
   timeField: string;
-  xpack: boolean;
   interval: string;
   maxConcurrentShardRequests?: number;
   queryBuilder: ElasticQueryBuilder;
@@ -144,7 +143,6 @@ export class ElasticDatasource
 
     this.index = settingsData.index ?? instanceSettings.database ?? '';
     this.timeField = settingsData.timeField;
-    this.xpack = Boolean(settingsData.xpack);
     this.indexPattern = new IndexPattern(this.index, settingsData.interval);
     this.intervalPattern = settingsData.interval;
     this.interval = settingsData.timeInterval;
@@ -827,7 +825,7 @@ export class ElasticDatasource
       searchParams.append('max_concurrent_shard_requests', `${this.maxConcurrentShardRequests}`);
     }
 
-    if (this.xpack && this.includeFrozen) {
+    if (this.includeFrozen) {
       searchParams.append('ignore_throttled', 'false');
     }
 
@@ -857,7 +855,7 @@ export class ElasticDatasource
     return lastValueFrom(this.getFields());
   }
 
-  getTagValues(options: DataSourceGetTagValuesOptions) {
+  getTagValues(options: DataSourceGetTagValuesOptions<ElasticsearchQuery>) {
     return lastValueFrom(this.getTerms({ field: options.key }, options.timeRange));
   }
 

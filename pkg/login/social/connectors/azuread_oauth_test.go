@@ -800,8 +800,7 @@ func TestSocialAzureAD_SkipOrgRole(t *testing.T) {
 					SkipOrgRoleSync:         false,
 				},
 				cfg: &setting.Cfg{
-					AutoAssignOrgRole:          "",
-					OAuthSkipOrgRoleUpdateSync: false,
+					AutoAssignOrgRole: "",
 				},
 			},
 			claims: &azureClaims{
@@ -831,8 +830,7 @@ func TestSocialAzureAD_SkipOrgRole(t *testing.T) {
 					SkipOrgRoleSync:         false,
 				},
 				cfg: &setting.Cfg{
-					AutoAssignOrgRole:          "",
-					OAuthSkipOrgRoleUpdateSync: false,
+					AutoAssignOrgRole: "",
 				},
 			},
 			claims: &azureClaims{

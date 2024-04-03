@@ -105,6 +105,7 @@ export const Basic: Story<StoryProps> = (args) => {
     </>
   );
 };
+
 export const BasicVirtualizedList: Story<StoryProps> = (args) => {
   const [value, setValue] = useState<SelectableValue<string>>();
 
@@ -123,6 +124,7 @@ export const BasicVirtualizedList: Story<StoryProps> = (args) => {
     </>
   );
 };
+
 /**
  * Uses plain values instead of SelectableValue<T>
  */
@@ -143,6 +145,7 @@ export const BasicSelectPlainValue: Story<StoryProps> = (args) => {
     </>
   );
 };
+
 /**
  * Uses plain values instead of SelectableValue<T>
  */

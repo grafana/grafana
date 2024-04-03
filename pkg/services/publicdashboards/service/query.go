@@ -13,6 +13,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/annotations"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/datasources"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/publicdashboards/models"
 	"github.com/grafana/grafana/pkg/services/publicdashboards/validation"
 	"github.com/grafana/grafana/pkg/services/user"
@@ -36,7 +37,7 @@ func (pd *PublicDashboardServiceImpl) FindAnnotations(ctx context.Context, reqDT
 		return nil, models.ErrInternalServerError.Errorf("FindAnnotations: failed to unmarshal dashboard annotations: %w", err)
 	}
 
-	anonymousUser := buildAnonymousUser(ctx, dash)
+	anonymousUser := buildAnonymousUser(ctx, dash, pd.features)
 
 	uniqueEvents := make(map[int64]models.AnnotationEvent, 0)
 	for _, anno := range annoDto.Annotations.List {
@@ -138,7 +139,7 @@ func (pd *PublicDashboardServiceImpl) GetQueryDataResponse(ctx context.Context, 
 		return nil, models.ErrPanelQueriesNotFound.Errorf("GetQueryDataResponse: failed to extract queries from panel")
 	}
 
-	anonymousUser := buildAnonymousUser(ctx, dashboard)
+	anonymousUser := buildAnonymousUser(ctx, dashboard, pd.features)
 	res, err := pd.QueryDataService.QueryData(ctx, anonymousUser, skipDSCache, metricReq)
 
 	reqDatasources := metricReq.GetUniqueDatasourceTypes()
@@ -180,7 +181,7 @@ func (pd *PublicDashboardServiceImpl) buildMetricRequest(dashboard *dashboards.D
 }
 
 // buildAnonymousUser creates a user with permissions to read from all datasources used in the dashboard
-func buildAnonymousUser(ctx context.Context, dashboard *dashboards.Dashboard) *user.SignedInUser {
+func buildAnonymousUser(ctx context.Context, dashboard *dashboards.Dashboard, features featuremgmt.FeatureToggles) *user.SignedInUser {
 	datasourceUids := getUniqueDashboardDatasourceUids(dashboard.Data)
 
 	// Create a user with blank permissions
@@ -204,8 +205,12 @@ func buildAnonymousUser(ctx context.Context, dashboard *dashboards.Dashboard) *u
 	permissions := make(map[string][]string)
 	permissions[datasources.ActionQuery] = queryScopes
 	permissions[datasources.ActionRead] = readScopes
-	permissions[accesscontrol.ActionAnnotationsRead] = annotationScopes
 	permissions[dashboards.ActionDashboardsRead] = dashboardScopes
+	permissions[accesscontrol.ActionAnnotationsRead] = annotationScopes
+
+	if features.IsEnabled(ctx, featuremgmt.FlagAnnotationPermissionUpdate) {
+		permissions[accesscontrol.ActionAnnotationsRead] = dashboardScopes
+	}
 
 	anonymousUser.Permissions[dashboard.OrgID] = permissions
 

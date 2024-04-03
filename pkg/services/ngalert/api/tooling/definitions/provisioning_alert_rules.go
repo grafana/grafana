@@ -17,6 +17,13 @@ import (
 //
 // Export all alert rules in provisioning file format.
 //
+//     Produces:
+//     - application/json
+//     - application/yaml
+//     - application/terraform+hcl
+//     - text/yaml
+//     - text/hcl
+//
 //     Responses:
 //       200: AlertingFileExport
 //       404: description: Not found.
@@ -36,7 +43,9 @@ import (
 //     Produces:
 //     - application/json
 //     - application/yaml
+//     - application/terraform+hcl
 //     - text/yaml
+//     - text/hcl
 //
 //     Responses:
 //       200: AlertingFileExport
@@ -168,6 +177,15 @@ type ProvisionedAlertRule struct {
 //       200: AlertRuleGroup
 //       404: description: Not found.
 
+// swagger:route DELETE /v1/provisioning/folder/{FolderUID}/rule-groups/{Group} provisioning stable RouteDeleteAlertRuleGroup
+//
+// Delete rule group
+//
+//     Responses:
+//       204: description: The alert rule group was deleted successfully.
+//       403: ForbiddenError
+//       404: NotFound
+
 // swagger:route GET /v1/provisioning/folder/{FolderUID}/rule-groups/{Group}/export provisioning stable RouteGetAlertRuleGroupExport
 //
 // Export an alert rule group in provisioning file format.
@@ -175,7 +193,9 @@ type ProvisionedAlertRule struct {
 //     Produces:
 //     - application/json
 //     - application/yaml
+//     - application/terraform+hcl
 //     - text/yaml
+//     - text/hcl
 //
 //     Responses:
 //       200: AlertingFileExport
@@ -183,7 +203,7 @@ type ProvisionedAlertRule struct {
 
 // swagger:route PUT /v1/provisioning/folder/{FolderUID}/rule-groups/{Group} provisioning stable RoutePutAlertRuleGroup
 //
-// Update the interval of a rule group.
+// Create or update alert rule group.
 //
 //     Consumes:
 //     - application/json
@@ -192,13 +212,13 @@ type ProvisionedAlertRule struct {
 //       200: AlertRuleGroup
 //       400: ValidationError
 
-// swagger:parameters RouteGetAlertRuleGroup RoutePutAlertRuleGroup RouteGetAlertRuleGroupExport
+// swagger:parameters RouteGetAlertRuleGroup RoutePutAlertRuleGroup RouteGetAlertRuleGroupExport RouteDeleteAlertRuleGroup
 type FolderUIDPathParam struct {
 	// in:path
 	FolderUID string `json:"FolderUID"`
 }
 
-// swagger:parameters RouteGetAlertRuleGroup RoutePutAlertRuleGroup RouteGetAlertRuleGroupExport
+// swagger:parameters RouteGetAlertRuleGroup RoutePutAlertRuleGroup RouteGetAlertRuleGroupExport RouteDeleteAlertRuleGroup
 type RuleGroupPathParam struct {
 	// in:path
 	Group string `json:"Group"`

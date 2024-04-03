@@ -18,7 +18,6 @@
       },
       "build": {},
       "screenshots": null,
-      "version": "",
       "updated": "",
       "keywords": null
     },
@@ -48,7 +47,7 @@
         "name": "Prometheus alertmanager",
         "url": "https://grafana.com"
       },
-      "description": "",
+      "description": "Add external Alertmanagers (supports Prometheus and Mimir implementations) so you can use the Grafana Alerting UI to manage silences, contact points, and notification policies.",
       "links": [
         {
           "name": "Learn more",
@@ -61,9 +60,15 @@
       },
       "build": {},
       "screenshots": null,
-      "version": "",
       "updated": "",
-      "keywords": null
+      "keywords": [
+        "alerts",
+        "alerting",
+        "prometheus",
+        "alertmanager",
+        "mimir",
+        "cortex"
+      ]
     },
     "dependencies": {
       "grafanaDependency": "",
@@ -99,7 +104,6 @@
       },
       "build": {},
       "screenshots": null,
-      "version": "",
       "updated": "",
       "keywords": null
     },
@@ -159,7 +163,6 @@
           "path": "public/app/plugins/datasource/azuremonitor/img/azure_monitor_cpu.png"
         }
       ],
-      "version": "",
       "updated": "",
       "keywords": [
         "azure",
@@ -203,7 +206,6 @@
       },
       "build": {},
       "screenshots": null,
-      "version": "",
       "updated": "",
       "keywords": null
     },
@@ -241,7 +243,6 @@
       },
       "build": {},
       "screenshots": null,
-      "version": "",
       "updated": "",
       "keywords": null
     },
@@ -271,7 +272,7 @@
         "name": "Grafana Labs",
         "url": "https://grafana.com"
       },
-      "description": "",
+      "description": "Graphical representation of price movements of a security, derivative, or currency.",
       "links": null,
       "logos": {
         "small": "public/app/plugins/panel/candlestick/img/candlestick.svg",
@@ -279,9 +280,13 @@
       },
       "build": {},
       "screenshots": null,
-      "version": "",
       "updated": "",
-      "keywords": null
+      "keywords": [
+        "financial",
+        "price",
+        "currency",
+        "k-line"
+      ]
     },
     "dependencies": {
       "grafanaDependency": "",
@@ -317,7 +322,6 @@
       },
       "build": {},
       "screenshots": null,
-      "version": "",
       "updated": "",
       "keywords": null
     },
@@ -355,7 +359,6 @@
       },
       "build": {},
       "screenshots": null,
-      "version": "",
       "updated": "",
       "keywords": null
     },
@@ -393,7 +396,6 @@
       },
       "build": {},
       "screenshots": null,
-      "version": "",
       "updated": "",
       "keywords": null
     },
@@ -431,7 +433,6 @@
       },
       "build": {},
       "screenshots": null,
-      "version": "",
       "updated": "",
       "keywords": null
     },
@@ -474,7 +475,6 @@
       },
       "build": {},
       "screenshots": null,
-      "version": "",
       "updated": "",
       "keywords": [
         "elasticsearch"
@@ -514,7 +514,6 @@
       },
       "build": {},
       "screenshots": null,
-      "version": "",
       "updated": "",
       "keywords": null
     },
@@ -552,7 +551,6 @@
       },
       "build": {},
       "screenshots": null,
-      "version": "",
       "updated": "",
       "keywords": null
     },
@@ -590,7 +588,6 @@
       },
       "build": {},
       "screenshots": null,
-      "version": "",
       "updated": "",
       "keywords": null
     },
@@ -628,7 +625,6 @@
       },
       "build": {},
       "screenshots": null,
-      "version": "",
       "updated": "",
       "keywords": null
     },
@@ -666,7 +662,6 @@
       },
       "build": {},
       "screenshots": null,
-      "version": "",
       "updated": "",
       "keywords": null
     },
@@ -709,7 +704,6 @@
       },
       "build": {},
       "screenshots": null,
-      "version": "",
       "updated": "",
       "keywords": [
         "grafana",
@@ -755,7 +749,6 @@
       },
       "build": {},
       "screenshots": null,
-      "version": "",
       "updated": "",
       "keywords": null
     },
@@ -802,7 +795,6 @@
       },
       "build": {},
       "screenshots": null,
-      "version": "",
       "updated": "",
       "keywords": null
     },
@@ -840,7 +832,6 @@
       },
       "build": {},
       "screenshots": null,
-      "version": "",
       "updated": "",
       "keywords": null
     },
@@ -870,7 +861,7 @@
         "name": "Grafana Labs",
         "url": "https://grafana.com"
       },
-      "description": "",
+      "description": "Distribution of values presented as a bar chart.",
       "links": null,
       "logos": {
         "small": "public/app/plugins/panel/histogram/img/histogram.svg",
@@ -878,9 +869,13 @@
       },
       "build": {},
       "screenshots": null,
-      "version": "",
       "updated": "",
-      "keywords": null
+      "keywords": [
+        "distribution",
+        "bar chart",
+        "frequency",
+        "proportional"
+      ]
     },
     "dependencies": {
       "grafanaDependency": "",
@@ -916,7 +911,6 @@
       },
       "build": {},
       "screenshots": null,
-      "version": "",
       "updated": "",
       "keywords": null
     },
@@ -963,12 +957,11 @@
       },
       "build": {},
       "screenshots": null,
-      "version": "",
       "updated": "",
       "keywords": null
     },
     "dependencies": {
-      "grafanaDependency": "",
+      "grafanaDependency": "\u003e=10.3.0-0",
       "grafanaVersion": "*",
       "plugins": []
     },
@@ -1001,7 +994,6 @@
       },
       "build": {},
       "screenshots": null,
-      "version": "",
       "updated": "",
       "keywords": null
     },
@@ -1048,7 +1040,6 @@
       },
       "build": {},
       "screenshots": null,
-      "version": "",
       "updated": "",
       "keywords": null
     },
@@ -1086,7 +1077,6 @@
       },
       "build": {},
       "screenshots": null,
-      "version": "",
       "updated": "",
       "keywords": null
     },
@@ -1124,7 +1114,6 @@
       },
       "build": {},
       "screenshots": null,
-      "version": "",
       "updated": "",
       "keywords": null
     },
@@ -1162,7 +1151,6 @@
       },
       "build": {},
       "screenshots": null,
-      "version": "",
       "updated": "",
       "keywords": null
     },
@@ -1200,7 +1188,6 @@
       },
       "build": {},
       "screenshots": null,
-      "version": "",
       "updated": "",
       "keywords": null
     },
@@ -1238,7 +1225,6 @@
       },
       "build": {},
       "screenshots": null,
-      "version": "",
       "updated": "",
       "keywords": null
     },
@@ -1281,7 +1267,6 @@
       },
       "build": {},
       "screenshots": null,
-      "version": "",
       "updated": "",
       "keywords": [
         "grafana",
@@ -1324,7 +1309,6 @@
       },
       "build": {},
       "screenshots": null,
-      "version": "",
       "updated": "",
       "keywords": null
     },
@@ -1362,7 +1346,6 @@
       },
       "build": {},
       "screenshots": null,
-      "version": "",
       "updated": "",
       "keywords": null
     },
@@ -1405,7 +1388,6 @@
       },
       "build": {},
       "screenshots": null,
-      "version": "",
       "updated": "",
       "keywords": null
     },
@@ -1443,7 +1425,6 @@
       },
       "build": {},
       "screenshots": null,
-      "version": "",
       "updated": "",
       "keywords": null
     },
@@ -1481,7 +1462,6 @@
       },
       "build": {},
       "screenshots": null,
-      "version": "",
       "updated": "",
       "keywords": null
     },
@@ -1519,7 +1499,6 @@
       },
       "build": {},
       "screenshots": null,
-      "version": "",
       "updated": "",
       "keywords": null
     },
@@ -1557,7 +1536,6 @@
       },
       "build": {},
       "screenshots": null,
-      "version": "",
       "updated": "",
       "keywords": null
     },
@@ -1595,7 +1573,6 @@
       },
       "build": {},
       "screenshots": null,
-      "version": "",
       "updated": "",
       "keywords": null
     },
@@ -1638,7 +1615,6 @@
       },
       "build": {},
       "screenshots": null,
-      "version": "",
       "updated": "",
       "keywords": null
     },
@@ -1676,7 +1652,6 @@
       },
       "build": {},
       "screenshots": null,
-      "version": "",
       "updated": "",
       "keywords": null
     },
@@ -1714,7 +1689,6 @@
       },
       "build": {},
       "screenshots": null,
-      "version": "",
       "updated": "",
       "keywords": null
     },
@@ -1752,7 +1726,6 @@
       },
       "build": {},
       "screenshots": null,
-      "version": "",
       "updated": "",
       "keywords": null
     },
@@ -1790,7 +1763,6 @@
       },
       "build": {},
       "screenshots": null,
-      "version": "",
       "updated": "",
       "keywords": null
     },
@@ -1828,7 +1800,6 @@
       },
       "build": {},
       "screenshots": null,
-      "version": "",
       "updated": "",
       "keywords": null
     },
@@ -1866,7 +1837,6 @@
       },
       "build": {},
       "screenshots": null,
-      "version": "",
       "updated": "",
       "keywords": null
     },
@@ -1896,7 +1866,7 @@
         "name": "Grafana Labs",
         "url": "https://grafana.com"
       },
-      "description": "",
+      "description": "Supports arbitrary X vs Y in a graph to visualize the relationship between two variables.",
       "links": null,
       "logos": {
         "small": "public/app/plugins/panel/xychart/img/icn-xychart.svg",
@@ -1904,9 +1874,11 @@
       },
       "build": {},
       "screenshots": null,
-      "version": "",
       "updated": "",
-      "keywords": null
+      "keywords": [
+        "scatter",
+        "plot"
+      ]
     },
     "dependencies": {
       "grafanaDependency": "",
@@ -1947,12 +1919,11 @@
       },
       "build": {},
       "screenshots": null,
-      "version": "",
       "updated": "",
       "keywords": null
     },
     "dependencies": {
-      "grafanaDependency": "",
+      "grafanaDependency": "\u003e=10.3.0-0",
       "grafanaVersion": "*",
       "plugins": []
     },

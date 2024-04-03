@@ -2,11 +2,7 @@ import { isNumber } from 'lodash';
 import uPlot from 'uplot';
 
 import {
-  DashboardCursorSync,
   DataFrame,
-  DataHoverClearEvent,
-  DataHoverEvent,
-  DataHoverPayload,
   FieldConfig,
   FieldType,
   formattedValueToString,
@@ -74,20 +70,15 @@ const defaultConfig: GraphFieldConfig = {
   axisPlacement: AxisPlacement.Auto,
 };
 
-export const preparePlotConfigBuilder: UPlotConfigPrepFn<{
-  sync?: () => DashboardCursorSync;
-}> = ({
+export const preparePlotConfigBuilder: UPlotConfigPrepFn = ({
   frame,
   theme,
   timeZones,
   getTimeRange,
-  eventBus,
-  sync,
   allFrames,
   renderers,
   tweakScale = (opts) => opts,
   tweakAxis = (opts) => opts,
-  eventsScope = '__global_',
 }) => {
   const builder = new UPlotConfigBuilder(timeZones[0]);
 
@@ -107,15 +98,12 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<{
   }
 
   const xScaleKey = 'x';
-  let xScaleUnit = '_x';
-  let yScaleKey = '';
 
   const xFieldAxisPlacement =
     xField.config.custom?.axisPlacement !== AxisPlacement.Hidden ? AxisPlacement.Bottom : AxisPlacement.Hidden;
   const xFieldAxisShow = xField.config.custom?.axisPlacement !== AxisPlacement.Hidden;
 
   if (xField.type === FieldType.time) {
-    xScaleUnit = 'time';
     builder.addScale({
       scaleKey: xScaleKey,
       orientation: ScaleOrientation.Horizontal,
@@ -173,11 +161,6 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<{
       });
     }
   } else {
-    // Not time!
-    if (xField.config.unit) {
-      xScaleUnit = xField.config.unit;
-    }
-
     builder.addScale({
       scaleKey: xScaleKey,
       orientation: ScaleOrientation.Horizontal,
@@ -274,10 +257,6 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<{
         field
       )
     );
-
-    if (!yScaleKey) {
-      yScaleKey = scaleKey;
-    }
 
     if (customConfig.axisPlacement !== AxisPlacement.Hidden) {
       let axisColor: uPlot.Axis.Stroke | undefined;
@@ -554,8 +533,6 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<{
     r.init(builder, fieldIndices);
   });
 
-  builder.scaleKeys = [xScaleKey, yScaleKey];
-
   // if hovered value is null, how far we may scan left/right to hover nearest non-null
   const hoverProximityPx = 15;
 
@@ -608,52 +585,12 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<{
     },
   };
 
-  if (sync && sync() !== DashboardCursorSync.Off) {
-    const payload: DataHoverPayload = {
-      point: {
-        [xScaleKey]: null,
-        [yScaleKey]: null,
-      },
-      data: frame,
-    };
-
-    const hoverEvent = new DataHoverEvent(payload);
-    cursor.sync = {
-      key: eventsScope,
-      filters: {
-        pub: (type: string, src: uPlot, x: number, y: number, w: number, h: number, dataIdx: number) => {
-          if (sync && sync() === DashboardCursorSync.Off) {
-            return false;
-          }
-
-          payload.rowIndex = dataIdx;
-          if (x < 0 && y < 0) {
-            payload.point[xScaleUnit] = null;
-            payload.point[yScaleKey] = null;
-            eventBus.publish(new DataHoverClearEvent());
-          } else {
-            // convert the points
-            payload.point[xScaleUnit] = src.posToVal(x, xScaleKey);
-            payload.point[yScaleKey] = src.posToVal(y, yScaleKey);
-            payload.point.panelRelY = y > 0 ? y / h : 1; // used by old graph panel to position tooltip
-            eventBus.publish(hoverEvent);
-            hoverEvent.payload.down = undefined;
-          }
-          return true;
-        },
-      },
-      scales: [xScaleKey, yScaleKey],
-      // match: [() => true, (a, b) => a === b],
-    };
-  }
-
-  builder.setSync();
   builder.setCursor(cursor);
 
   return builder;
 };
 
-export function getNamesToFieldIndex(frame: DataFrame, allFrames: DataFrame[]): Map<string, number> {
+function getNamesToFieldIndex(frame: DataFrame, allFrames: DataFrame[]): Map<string, number> {
   const originNames = new Map<string, number>();
   frame.fields.forEach((field, i) => {
     const origin = field.state?.origin;

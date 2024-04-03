@@ -8,9 +8,12 @@ import { getGrafanaContextMock } from 'test/mocks/getGrafanaContextMock';
 import { PanelProps } from '@grafana/data';
 import { getPanelPlugin } from '@grafana/data/test/__mocks__/pluginMocks';
 import { config, getPluginLinkExtensions, locationService, setPluginImportUtils } from '@grafana/runtime';
+import { VizPanel } from '@grafana/scenes';
 import { Dashboard } from '@grafana/schema';
 import { getRouteComponentProps } from 'app/core/navigation/__mocks__/routeProps';
 import { DashboardLoaderSrv, setDashboardLoaderSrv } from 'app/features/dashboard/services/DashboardLoaderSrv';
+
+import { dashboardSceneGraph } from '../utils/dashboardSceneGraph';
 
 import { DashboardScenePage, Props } from './DashboardScenePage';
 import { getDashboardScenePageStateManager } from './DashboardScenePageStateManager';
@@ -193,6 +196,45 @@ describe('DashboardScenePage', () => {
 
     expect(screen.queryByTitle('Panel A')).not.toBeInTheDocument();
     expect(await screen.findByTitle('Panel B')).toBeInTheDocument();
+  });
+
+  describe('empty state', () => {
+    it('Shows empty state when dashboard is empty', async () => {
+      loadDashboardMock.mockResolvedValue({ dashboard: { panels: [] }, meta: {} });
+      setup();
+
+      expect(await screen.findByText('Start your new dashboard by adding a visualization')).toBeInTheDocument();
+    });
+
+    it('shows and hides empty state when panels are added and removed', async () => {
+      setup();
+
+      await waitForDashbordToRender();
+
+      expect(await screen.queryByText('Start your new dashboard by adding a visualization')).not.toBeInTheDocument();
+
+      // Hacking a bit, accessing private cache property to get access to the underlying DashboardScene object
+      const dashboardScenesCache = getDashboardScenePageStateManager()['cache'];
+      const dashboard = dashboardScenesCache['my-dash-uid'];
+      const panels = dashboardSceneGraph.getVizPanels(dashboard);
+
+      act(() => {
+        dashboard.removePanel(panels[0]);
+      });
+      expect(await screen.queryByText('Start your new dashboard by adding a visualization')).not.toBeInTheDocument();
+
+      act(() => {
+        dashboard.removePanel(panels[1]);
+      });
+      expect(await screen.findByText('Start your new dashboard by adding a visualization')).toBeInTheDocument();
+
+      act(() => {
+        dashboard.addPanel(new VizPanel({ title: 'Panel Added', key: 'panel-4', pluginId: 'timeseries' }));
+      });
+
+      expect(await screen.findByTitle('Panel Added')).toBeInTheDocument();
+      expect(await screen.queryByText('Start your new dashboard by adding a visualization')).not.toBeInTheDocument();
+    });
   });
 });
 

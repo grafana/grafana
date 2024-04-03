@@ -3,8 +3,6 @@ import { isEqual } from 'lodash';
 import { isEmptyObject, ScopedVars, TimeRange } from '@grafana/data';
 import {
   behaviors,
-  SceneDataLayers,
-  SceneGridItem,
   SceneGridItemLike,
   SceneGridLayout,
   SceneGridRow,
@@ -12,7 +10,6 @@ import {
   SceneDataTransformer,
   SceneVariableSet,
   LocalValueVariable,
-  SceneRefreshPicker,
 } from '@grafana/scenes';
 import {
   AnnotationQuery,
@@ -22,6 +19,7 @@ import {
   defaultDashboard,
   defaultTimePickerConfig,
   FieldConfigSource,
+  GridPos,
   Panel,
   RowPanel,
   TimePickerConfig,
@@ -33,10 +31,11 @@ import { getPanelDataFrames } from 'app/features/dashboard/components/HelpWizard
 import { DASHBOARD_SCHEMA_VERSION } from 'app/features/dashboard/state/DashboardMigrator';
 import { GrafanaQueryType } from 'app/plugins/datasource/grafana/types';
 
-import { DashboardControls } from '../scene/DashboardControls';
+import { AddLibraryPanelWidget } from '../scene/AddLibraryPanelWidget';
+import { DashboardDataLayerSet } from '../scene/DashboardDataLayerSet';
+import { DashboardGridItem } from '../scene/DashboardGridItem';
 import { DashboardScene } from '../scene/DashboardScene';
 import { LibraryVizPanel } from '../scene/LibraryVizPanel';
-import { PanelRepeaterGridItem } from '../scene/PanelRepeaterGridItem';
 import { PanelTimeRange } from '../scene/PanelTimeRange';
 import { RowRepeaterBehavior } from '../scene/RowRepeaterBehavior';
 import { dashboardSceneGraph } from '../utils/dashboardSceneGraph';
@@ -53,21 +52,18 @@ export function transformSceneToSaveModel(scene: DashboardScene, isSnapshot = fa
   const variablesSet = state.$variables;
   const body = state.body;
 
-  let refreshIntervals: string[] | undefined;
-  let hideTimePicker: boolean | undefined;
-
   let panels: Panel[] = [];
-  let graphTooltip = defaultDashboard.graphTooltip;
   let variables: VariableModel[] = [];
 
   if (body instanceof SceneGridLayout) {
     for (const child of body.state.children) {
-      if (child instanceof SceneGridItem) {
-        panels.push(gridItemToPanel(child, isSnapshot));
-      }
-
-      if (child instanceof PanelRepeaterGridItem) {
-        panels = panels.concat(panelRepeaterToPanels(child, isSnapshot));
+      if (child instanceof DashboardGridItem) {
+        // handle panel repeater scenatio
+        if (child.state.variableName) {
+          panels = panels.concat(panelRepeaterToPanels(child, isSnapshot));
+        } else {
+          panels.push(gridItemToPanel(child, isSnapshot));
+        }
       }
 
       if (child instanceof SceneGridRow) {
@@ -81,43 +77,32 @@ export function transformSceneToSaveModel(scene: DashboardScene, isSnapshot = fa
   }
 
   let annotations: AnnotationQuery[] = [];
-  if (data instanceof SceneDataLayers) {
-    const layers = data.state.layers;
 
-    annotations = dataLayersToAnnotations(layers);
+  if (data instanceof DashboardDataLayerSet) {
+    annotations = dataLayersToAnnotations(data.state.annotationLayers);
   }
 
   if (variablesSet instanceof SceneVariableSet) {
     variables = sceneVariablesSetToVariables(variablesSet);
   }
 
-  if (state.controls && state.controls[0] instanceof DashboardControls) {
-    hideTimePicker = state.controls[0].state.hideTimeControls;
-
-    const timeControls = state.controls[0].state.timeControls;
-    for (const control of timeControls) {
-      if (control instanceof SceneRefreshPicker && control.state.intervals) {
-        refreshIntervals = control.state.intervals;
-      }
-    }
-  }
-
-  if (state.$behaviors) {
-    for (const behavior of state.$behaviors!) {
-      if (behavior instanceof behaviors.CursorSync) {
-        graphTooltip = behavior.state.sync;
-      }
-    }
-  }
+  const controlsState = state.controls?.state;
 
   const timePickerWithoutDefaults = removeDefaults<TimePickerConfig>(
     {
-      refresh_intervals: refreshIntervals,
-      hidden: hideTimePicker,
+      refresh_intervals: controlsState?.refreshPicker.state.intervals,
+      hidden: controlsState?.hideTimeControls,
       nowDelay: timeRange.UNSAFE_nowDelay,
     },
     defaultTimePickerConfig
   );
+
+  const graphTooltip =
+    state.$behaviors?.find((b): b is behaviors.CursorSync => b instanceof behaviors.CursorSync)?.state.sync ??
+    defaultDashboard.graphTooltip;
+  const liveNow =
+    state.$behaviors?.find((b): b is behaviors.LiveNowTimer => b instanceof behaviors.LiveNowTimer)?.isEnabled ||
+    undefined;
 
   const dashboard: Dashboard = {
     ...defaultDashboard,
@@ -145,66 +130,91 @@ export function transformSceneToSaveModel(scene: DashboardScene, isSnapshot = fa
     tags: state.tags,
     links: state.links,
     graphTooltip,
+    liveNow,
     schemaVersion: DASHBOARD_SCHEMA_VERSION,
   };
 
   return sortedDeepCloneWithoutNulls(dashboard);
 }
 
-export function gridItemToPanel(gridItem: SceneGridItemLike, isSnapshot = false): Panel {
+export function libraryVizPanelToPanel(libPanel: LibraryVizPanel, gridPos: GridPos): Panel {
+  if (!libPanel.state.panel) {
+    throw new Error('Library panel has no panel');
+  }
+
+  return {
+    id: getPanelIdForVizPanel(libPanel.state.panel),
+    title: libPanel.state.title,
+    gridPos: gridPos,
+    libraryPanel: {
+      name: libPanel.state.name,
+      uid: libPanel.state.uid,
+    },
+  } as Panel;
+}
+
+export function gridItemToPanel(gridItem: DashboardGridItem, isSnapshot = false): Panel {
   let vizPanel: VizPanel | undefined;
   let x = 0,
     y = 0,
     w = 0,
     h = 0;
 
-  if (gridItem instanceof SceneGridItem) {
-    // Handle library panels, early exit
-    if (gridItem.state.body instanceof LibraryVizPanel) {
-      x = gridItem.state.x ?? 0;
-      y = gridItem.state.y ?? 0;
-      w = gridItem.state.width ?? 0;
-      h = gridItem.state.height ?? 0;
-
-      return {
-        id: getPanelIdForVizPanel(gridItem.state.body),
-        title: gridItem.state.body.state.title,
-        gridPos: { x, y, w, h },
-        libraryPanel: {
-          name: gridItem.state.body.state.name,
-          uid: gridItem.state.body.state.uid,
-        },
-      } as Panel;
-    }
-
-    if (!(gridItem.state.body instanceof VizPanel)) {
-      throw new Error('SceneGridItem body expected to be VizPanel');
-    }
-
-    vizPanel = gridItem.state.body;
+  // Handle library panels, early exit
+  if (gridItem.state.body instanceof LibraryVizPanel) {
     x = gridItem.state.x ?? 0;
     y = gridItem.state.y ?? 0;
     w = gridItem.state.width ?? 0;
     h = gridItem.state.height ?? 0;
+
+    return libraryVizPanelToPanel(gridItem.state.body, { x, y, w, h });
   }
 
-  if (gridItem instanceof PanelRepeaterGridItem) {
-    vizPanel = gridItem.state.source;
+  // Handle library panel widget as well and exit early
+  if (gridItem.state.body instanceof AddLibraryPanelWidget) {
     x = gridItem.state.x ?? 0;
     y = gridItem.state.y ?? 0;
     w = gridItem.state.width ?? 0;
     h = gridItem.state.height ?? 0;
+
+    return {
+      id: getPanelIdForVizPanel(gridItem.state.body),
+      type: 'add-library-panel',
+      gridPos: { x, y, w, h },
+    };
   }
+
+  if (!(gridItem.state.body instanceof VizPanel)) {
+    throw new Error('DashboardGridItem body expected to be VizPanel');
+  }
+
+  vizPanel = gridItem.state.body;
+  x = gridItem.state.x ?? 0;
+  y = gridItem.state.y ?? 0;
+  w = gridItem.state.width ?? 0;
+  h = gridItem.state.height ?? 0;
 
   if (!vizPanel) {
     throw new Error('Unsupported grid item type');
   }
 
+  const panel: Panel = vizPanelToPanel(vizPanel, { x, y, h, w }, isSnapshot, gridItem);
+
+  return panel;
+}
+
+export function vizPanelToPanel(
+  vizPanel: VizPanel,
+  gridPos?: GridPos,
+  isSnapshot = false,
+  gridItem?: SceneGridItemLike
+) {
   const panel: Panel = {
     id: getPanelIdForVizPanel(vizPanel),
     type: vizPanel.state.pluginId,
     title: vizPanel.state.title,
-    gridPos: { x, y, w, h },
+    description: vizPanel.state.description ?? undefined,
+    gridPos,
     options: vizPanel.state.options,
     fieldConfig: (vizPanel.state.fieldConfig as FieldConfigSource) ?? { defaults: {}, overrides: [] },
     transformations: [],
@@ -221,14 +231,21 @@ export function gridItemToPanel(gridItem: SceneGridItemLike, isSnapshot = false)
     panel.hideTimeOverride = panelTime.state.hideTimeOverride;
   }
 
-  if (gridItem instanceof PanelRepeaterGridItem) {
-    panel.repeat = gridItem.state.variableName;
-    panel.maxPerRow = gridItem.state.maxPerRow;
-    panel.repeatDirection = gridItem.getRepeatDirection();
+  if (gridItem instanceof DashboardGridItem) {
+    if (gridItem.state.variableName) {
+      panel.repeat = gridItem.state.variableName;
+    }
+
+    if (gridItem.state.maxPerRow) {
+      panel.maxPerRow = gridItem.state.maxPerRow;
+    }
+    if (gridItem.state.repeatDirection) {
+      panel.repeatDirection = gridItem.getRepeatDirection();
+    }
   }
 
   const panelLinks = dashboardSceneGraph.getPanelLinks(vizPanel);
-  panel.links = (panelLinks.state.rawLinks as DashboardLink[]) ?? [];
+  panel.links = (panelLinks?.state.rawLinks as DashboardLink[]) ?? [];
 
   if (panel.links.length === 0) {
     delete panel.links;
@@ -241,7 +258,6 @@ export function gridItemToPanel(gridItem: SceneGridItemLike, isSnapshot = false)
   if (!panel.transparent) {
     delete panel.transparent;
   }
-
   return panel;
 }
 
@@ -297,10 +313,16 @@ function vizPanelDataToPanel(
   return panel;
 }
 
-export function panelRepeaterToPanels(repeater: PanelRepeaterGridItem, isSnapshot = false): Panel[] {
+export function panelRepeaterToPanels(repeater: DashboardGridItem, isSnapshot = false): Panel[] {
   if (!isSnapshot) {
     return [gridItemToPanel(repeater)];
   } else {
+    if (repeater.state.body instanceof LibraryVizPanel) {
+      const { x = 0, y = 0, width: w = 0, height: h = 0 } = repeater.state;
+      return [libraryVizPanelToPanel(repeater.state.body, { x, y, w, h })];
+    }
+
+    // console.log('repeater.state', repeater.state);
     if (repeater.state.repeatedPanels) {
       const itemHeight = repeater.state.itemHeight ?? 10;
       const rowCount = Math.ceil(repeater.state.repeatedPanels!.length / repeater.getMaxPerRow());
@@ -397,16 +419,23 @@ export function gridRowToSaveModel(gridRow: SceneGridRow, panelsArray: Array<Pan
 
   if (isSnapshot) {
     gridRow.state.children.forEach((c) => {
-      if (c instanceof PanelRepeaterGridItem) {
-        // Perform snapshot only for uncollapsed rows
-        panelsInsideRow = panelsInsideRow.concat(panelRepeaterToPanels(c, !collapsed));
-      } else {
-        // Perform snapshot only for uncollapsed panels
-        panelsInsideRow.push(gridItemToPanel(c, !collapsed));
+      if (c instanceof DashboardGridItem) {
+        if (c.state.variableName) {
+          // Perform snapshot only for uncollapsed rows
+          panelsInsideRow = panelsInsideRow.concat(panelRepeaterToPanels(c, !collapsed));
+        } else {
+          // Perform snapshot only for uncollapsed panels
+          panelsInsideRow.push(gridItemToPanel(c, !collapsed));
+        }
       }
     });
   } else {
-    panelsInsideRow = gridRow.state.children.map((c) => gridItemToPanel(c));
+    panelsInsideRow = gridRow.state.children.map((c) => {
+      if (!(c instanceof DashboardGridItem)) {
+        throw new Error('Row child expected to be DashboardGridItem');
+      }
+      return gridItemToPanel(c);
+    });
   }
 
   if (gridRow.state.isCollapsed) {

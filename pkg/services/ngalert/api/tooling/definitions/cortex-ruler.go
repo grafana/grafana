@@ -24,9 +24,12 @@ import (
 //
 // List rules in provisioning format
 //
-//     Consumes:
+//     Produces:
 //     - application/json
 //     - application/yaml
+//     - application/terraform+hcl
+//     - text/yaml
+//     - text/hcl
 //
 //     Responses:
 //       200: AlertingFileExport
@@ -64,7 +67,13 @@ import (
 //
 //     Consumes:
 //     - application/json
+//
+//     Produces:
+//     - application/json
 //     - application/yaml
+//     - application/terraform+hcl
+//     - text/yaml
+//     - text/hcl
 //
 //     Responses:
 //       200: AlertingFileExport
@@ -406,7 +415,7 @@ const (
 	ErrorErrState    ExecutionErrorState = "Error"
 )
 
-// swagger: model
+// swagger:model
 type AlertRuleNotificationSettings struct {
 	// Name of the receiver to send notifications to.
 	// required: true

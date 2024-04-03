@@ -1,9 +1,9 @@
 import { css, cx } from '@emotion/css';
 import React from 'react';
-import { useFormContext, useFieldArray } from 'react-hook-form';
+import { useFormContext, useFieldArray, Controller } from 'react-hook-form';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { Button, Field, Input, IconButton, InputControl, useStyles2, Select } from '@grafana/ui';
+import { Button, Field, Input, IconButton, useStyles2, Select } from '@grafana/ui';
 import { MatcherOperator } from 'app/plugins/datasource/alertmanager/types';
 
 import { SilenceFormFields } from '../../types/silence-form';
@@ -46,7 +46,7 @@ const MatchersField = ({ className }: Props) => {
                     />
                   </Field>
                   <Field label={'Operator'}>
-                    <InputControl
+                    <Controller
                       control={control}
                       render={({ field: { onChange, ref, ...field } }) => (
                         <Select

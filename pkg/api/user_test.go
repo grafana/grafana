@@ -49,7 +49,7 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 )
 
-const newEmail = "newEmail@localhost"
+const newEmail = "newemail@localhost"
 
 func TestUserAPIEndpoint_userLoggedIn(t *testing.T) {
 	settings := setting.NewCfg()
@@ -397,6 +397,7 @@ func setupUpdateEmailTests(t *testing.T, cfg *setting.Cfg) (*user.User, *HTTPSer
 	require.NoError(t, err)
 
 	nsMock := notifications.MockNotificationService()
+	verifier := userimpl.ProvideVerifier(cfg, userSvc, tempUserService, nsMock)
 
 	hs := &HTTPServer{
 		Cfg:                 cfg,
@@ -404,6 +405,7 @@ func setupUpdateEmailTests(t *testing.T, cfg *setting.Cfg) (*user.User, *HTTPSer
 		userService:         userSvc,
 		tempUserService:     tempUserService,
 		NotificationService: nsMock,
+		userVerifier:        verifier,
 	}
 	return usr, hs, nsMock
 }
@@ -618,6 +620,7 @@ func TestUser_UpdateEmail(t *testing.T) {
 			hs.tempUserService = tempUserSvc
 			hs.NotificationService = nsMock
 			hs.SecretsService = fakes.NewFakeSecretsService()
+			hs.userVerifier = userimpl.ProvideVerifier(settings, userSvc, tempUserSvc, nsMock)
 			// User is internal
 			hs.authInfoService = &authinfotest.FakeService{ExpectedError: user.ErrUserNotFound}
 		})
@@ -647,7 +650,7 @@ func TestUser_UpdateEmail(t *testing.T) {
 		require.False(t, nsMock.EmailVerified)
 
 		// Start email update
-		newName := "newName"
+		newName := "newname"
 		body := fmt.Sprintf(`{"email": "%s", "name": "%s"}`, newEmail, newName)
 		sendUpdateReq(server, originalUsr, body)
 
@@ -749,8 +752,8 @@ func TestUser_UpdateEmail(t *testing.T) {
 		require.False(t, nsMock.EmailVerified)
 
 		// Start email update
-		newLogin := "newLogin"
-		newName := "newName"
+		newLogin := "newlogin"
+		newName := "newname"
 		body := fmt.Sprintf(`{"login": "%s", "name": "%s"}`, newLogin, newName)
 		sendUpdateReq(server, originalUsr, body)
 
@@ -802,7 +805,7 @@ func TestUser_UpdateEmail(t *testing.T) {
 		require.False(t, nsMock.EmailVerified)
 
 		// Start email update
-		newLogin := "newEmail2@localhost"
+		newLogin := "newemail2@localhost"
 		body := fmt.Sprintf(`{"email": "%s", "login": "%s"}`, newEmail, newLogin)
 		sendUpdateReq(server, originalUsr, body)
 
@@ -837,7 +840,7 @@ func TestUser_UpdateEmail(t *testing.T) {
 		require.False(t, nsMock.EmailVerified)
 
 		// Start email update
-		newLogin := "newEmail2@localhost"
+		newLogin := "newemail2@localhost"
 		body := fmt.Sprintf(`{"email": "%s", "login": "%s"}`, newEmail, newLogin)
 		sendUpdateReq(server, originalUsr, body)
 
@@ -909,14 +912,14 @@ func TestUser_UpdateEmail(t *testing.T) {
 		require.False(t, nsMock.EmailVerified)
 
 		// First email verification
-		firstNewEmail := "newEmail1@localhost"
+		firstNewEmail := "newemail1@localhost"
 		body := fmt.Sprintf(`{"email": "%s"}`, firstNewEmail)
 		sendUpdateReq(server, originalUsr, body)
 		verifyEmailData(tempUserSvc, nsMock, originalUsr, firstNewEmail)
 		firstCode := nsMock.EmailVerification.Code
 
 		// Second email verification
-		secondNewEmail := "newEmail2@localhost"
+		secondNewEmail := "newemail2@localhost"
 		body = fmt.Sprintf(`{"email": "%s"}`, secondNewEmail)
 		sendUpdateReq(server, originalUsr, body)
 		verifyEmailData(tempUserSvc, nsMock, originalUsr, secondNewEmail)

@@ -3,6 +3,7 @@ import { uniqueId } from 'lodash';
 import React, { useCallback } from 'react';
 
 import { SelectableValue, toOption } from '@grafana/data';
+import { selectors } from '@grafana/e2e-selectors';
 import { EditorField, Stack } from '@grafana/experimental';
 import { Button, Select, useStyles2 } from '@grafana/ui';
 
@@ -115,6 +116,7 @@ export function SelectRow({ sql, format, columns, onSqlChange, functions }: Sele
             <EditorField label="Column" width={25}>
               <Select
                 value={getColumnValue(item)}
+                data-testid={selectors.components.SQLQueryEditor.selectColumn}
                 options={columnsWithAsterisk}
                 inputId={`select-column-${index}-${uniqueId()}`}
                 menuShouldPortal
@@ -127,6 +129,7 @@ export function SelectRow({ sql, format, columns, onSqlChange, functions }: Sele
               <Select
                 value={item.name ? toOption(item.name) : null}
                 inputId={`select-aggregation-${index}-${uniqueId()}`}
+                data-testid={selectors.components.SQLQueryEditor.selectAggregation}
                 isClearable
                 menuShouldPortal
                 allowCustomValue
@@ -138,6 +141,7 @@ export function SelectRow({ sql, format, columns, onSqlChange, functions }: Sele
               <Select
                 value={item.alias ? toOption(item.alias) : null}
                 inputId={`select-alias-${index}-${uniqueId()}`}
+                data-testid={selectors.components.SQLQueryEditor.selectAlias}
                 options={timeSeriesAliasOpts}
                 onChange={onAliasChange(item, index)}
                 isClearable

@@ -8,32 +8,22 @@ import { TestProvider } from 'test/helpers/TestProvider';
 
 import { config } from '@grafana/runtime';
 import { backendSrv } from 'app/core/services/backend_srv';
+import { PermissionLevelString } from 'app/types';
 
-import { wellFormedTree } from '../../../features/browse-dashboards/fixtures/dashboardsTreeItem.fixture';
+import {
+  treeViewersCanEdit,
+  wellFormedTree,
+} from '../../../features/browse-dashboards/fixtures/dashboardsTreeItem.fixture';
 
 import { NestedFolderPicker } from './NestedFolderPicker';
 
 const [mockTree, { folderA, folderB, folderC, folderA_folderA, folderA_folderB }] = wellFormedTree();
+const [mockTreeThatViewersCanEdit /* shares folders with wellFormedTree */] = treeViewersCanEdit();
 
 jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
   getBackendSrv: () => backendSrv,
 }));
-
-jest.mock('app/features/browse-dashboards/api/services', () => {
-  const orig = jest.requireActual('app/features/browse-dashboards/api/services');
-
-  return {
-    ...orig,
-    listFolders(parentUID?: string) {
-      const childrenForUID = mockTree
-        .filter((v) => v.item.kind === 'folder' && v.item.parentUID === parentUID)
-        .map((v) => v.item);
-
-      return Promise.resolve(childrenForUID);
-    },
-  };
-});
 
 function render(...[ui, options]: Parameters<typeof rtlRender>) {
   rtlRender(<TestProvider>{ui}</TestProvider>, options);
@@ -46,14 +36,40 @@ describe('NestedFolderPicker', () => {
 
   beforeAll(() => {
     window.HTMLElement.prototype.scrollIntoView = function () {};
+
     server = setupServer(
       http.get('/api/folders/:uid', () => {
         return HttpResponse.json({
           title: folderA.item.title,
           uid: folderA.item.uid,
         });
+      }),
+
+      http.get('/api/folders', ({ request }) => {
+        const url = new URL(request.url);
+        const parentUid = url.searchParams.get('parentUid') ?? undefined;
+        const permission = url.searchParams.get('permission');
+
+        const limit = parseInt(url.searchParams.get('limit') ?? '1000', 10);
+        const page = parseInt(url.searchParams.get('page') ?? '1', 10);
+
+        const tree = permission === 'Edit' ? mockTreeThatViewersCanEdit : mockTree;
+
+        // reconstruct a folder API response from the flat tree fixture
+        const folders = tree
+          .filter((v) => v.item.kind === 'folder' && v.item.parentUID === parentUid)
+          .map((folder) => {
+            return {
+              uid: folder.item.uid,
+              title: folder.item.kind === 'folder' ? folder.item.title : "invalid - this shouldn't happen",
+            };
+          })
+          .slice(limit * (page - 1), limit * page);
+
+        return HttpResponse.json(folders);
       })
     );
+
     server.listen();
   });
 
@@ -94,7 +110,7 @@ describe('NestedFolderPicker', () => {
     expect(screen.getByPlaceholderText('Search folders')).toBeInTheDocument();
     expect(screen.getByLabelText('Dashboards')).toBeInTheDocument();
     expect(screen.getByLabelText(folderA.item.title)).toBeInTheDocument();
-    expect(screen.getByLabelText(folderB.item.title)).toBeInTheDocument();
+    // expect(screen.getByLabelText(folderB.item.title)).toBeInTheDocument();
     expect(screen.getByLabelText(folderC.item.title)).toBeInTheDocument();
   });
 
@@ -127,6 +143,62 @@ describe('NestedFolderPicker', () => {
     expect(mockOnChange).toHaveBeenCalledWith(folderA.item.uid, folderA.item.title);
   });
 
+  it('shows the root folder by default', async () => {
+    render(<NestedFolderPicker onChange={mockOnChange} />);
+
+    // Open the picker and wait for children to load
+    const button = await screen.findByRole('button', { name: 'Select folder' });
+    await userEvent.click(button);
+    await screen.findByLabelText(folderA.item.title);
+
+    await userEvent.click(screen.getByLabelText('Dashboards'));
+    expect(mockOnChange).toHaveBeenCalledWith('', 'Dashboards');
+  });
+
+  it('hides the root folder if the prop says so', async () => {
+    render(<NestedFolderPicker showRootFolder={false} onChange={mockOnChange} />);
+
+    // Open the picker and wait for children to load
+    const button = await screen.findByRole('button', { name: 'Select folder' });
+    await userEvent.click(button);
+    await screen.findByLabelText(folderA.item.title);
+
+    expect(screen.queryByLabelText('Dashboards')).not.toBeInTheDocument();
+  });
+
+  it('hides folders specififed by UID', async () => {
+    render(<NestedFolderPicker excludeUIDs={[folderC.item.uid]} onChange={mockOnChange} />);
+
+    // Open the picker and wait for children to load
+    const button = await screen.findByRole('button', { name: 'Select folder' });
+    await userEvent.click(button);
+    await screen.findByLabelText(folderA.item.title);
+
+    expect(screen.queryByLabelText(folderC.item.title)).not.toBeInTheDocument();
+  });
+
+  it('by default only shows items the user can edit', async () => {
+    render(<NestedFolderPicker onChange={mockOnChange} />);
+
+    const button = await screen.findByRole('button', { name: 'Select folder' });
+    await userEvent.click(button);
+    await screen.findByLabelText(folderA.item.title);
+
+    expect(screen.queryByLabelText(folderB.item.title)).not.toBeInTheDocument(); // folderB is not editable
+    expect(screen.getByLabelText(folderC.item.title)).toBeInTheDocument(); // but folderC is
+  });
+
+  it('shows items the user can view, with the prop', async () => {
+    render(<NestedFolderPicker permission={PermissionLevelString.View} onChange={mockOnChange} />);
+
+    const button = await screen.findByRole('button', { name: 'Select folder' });
+    await userEvent.click(button);
+    await screen.findByLabelText(folderA.item.title);
+
+    expect(screen.getByLabelText(folderB.item.title)).toBeInTheDocument();
+    expect(screen.getByLabelText(folderC.item.title)).toBeInTheDocument();
+  });
+
   describe('when nestedFolders is enabled', () => {
     let originalToggles = { ...config.featureToggles };
 
@@ -139,7 +211,7 @@ describe('NestedFolderPicker', () => {
     });
 
     it('can expand and collapse a folder to show its children', async () => {
-      render(<NestedFolderPicker onChange={mockOnChange} />);
+      render(<NestedFolderPicker permission={PermissionLevelString.View} onChange={mockOnChange} />);
 
       // Open the picker and wait for children to load
       const button = await screen.findByRole('button', { name: 'Select folder' });
@@ -170,7 +242,7 @@ describe('NestedFolderPicker', () => {
     });
 
     it('can expand and collapse a folder to show its children with the keyboard', async () => {
-      render(<NestedFolderPicker onChange={mockOnChange} />);
+      render(<NestedFolderPicker permission={PermissionLevelString.View} onChange={mockOnChange} />);
       const button = await screen.findByRole('button', { name: 'Select folder' });
 
       await userEvent.click(button);

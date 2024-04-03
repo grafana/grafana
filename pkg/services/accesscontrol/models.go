@@ -341,9 +341,8 @@ const (
 	ActionAPIKeyDelete = "apikeys:delete"
 
 	// Users actions
-	ActionUsersRead        = "users:read"
-	ActionUsersWrite       = "users:write"
-	ActionUsersImpersonate = "users:impersonate"
+	ActionUsersRead  = "users:read"
+	ActionUsersWrite = "users:write"
 
 	// We can ignore gosec G101 since this does not contain any credentials.
 	// nolint:gosec
@@ -470,6 +469,8 @@ const (
 	ActionAlertingProvisioningRead        = "alert.provisioning:read"
 	ActionAlertingProvisioningReadSecrets = "alert.provisioning.secrets:read"
 	ActionAlertingProvisioningWrite       = "alert.provisioning:write"
+	// ActionAlertingProvisioningSetStatus Gives access to set provisioning status to alerting resources. Cannot be used alone. Only in conjunction with other permissions.
+	ActionAlertingProvisioningSetStatus = "alert.provisioning.provenance:write"
 
 	// Feature Management actions
 	ActionFeatureManagementRead  = "featuremgmt.read"
@@ -525,6 +526,7 @@ var TeamsAccessEvaluator = EvalAny(
 		EvalAny(
 			EvalPermission(ActionTeamsWrite),
 			EvalPermission(ActionTeamsPermissionsWrite),
+			EvalPermission(ActionTeamsPermissionsRead),
 		),
 	),
 )
@@ -563,3 +565,8 @@ var OrgsCreateAccessEvaluator = EvalAll(
 
 // ApiKeyAccessEvaluator is used to protect the "Configuration > API keys" page access
 var ApiKeyAccessEvaluator = EvalPermission(ActionAPIKeyRead)
+
+type QueryWithOrg struct {
+	OrgId  *int64 `json:"orgId"`
+	Global bool   `json:"global"`
+}
