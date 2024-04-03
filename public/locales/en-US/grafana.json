@@ -562,7 +562,7 @@
       "close": "Close"
     },
     "empty-state": {
-      "nothing-here-message": "There's nothing here yet",
+      "call-to-action-message": "There's nothing here yet",
       "not-found-message": "No results found"
     },
     "modal": {
