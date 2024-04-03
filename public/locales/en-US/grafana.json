@@ -793,6 +793,10 @@
     },
     "summary": {
       "disconnect": "Disconnect",
+      "disconnect-error-description": "See the Grafana server logs for more details",
+      "disconnect-error-title": "There was an error disconnecting",
+      "run-migration-error-description": "See the Grafana server logs for more details",
+      "run-migration-error-title": "There was an error migrating your resources",
       "start-migration": "Upload everything",
       "target-stack-title": "Uploading to"
     },
