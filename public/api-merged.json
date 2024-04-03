@@ -15963,8 +15963,14 @@
         },
         "status": {
           "$ref": "#/definitions/ItemStatus"
+        },
+        "type": {
+          "$ref": "#/definitions/MigrateDataType"
         }
       }
+    },
+    "MigrateDataType": {
+      "type": "string"
     },
     "MoveFolderCommand": {
       "description": "MoveFolderCommand captures the information required by the folder service\nto move a folder.",

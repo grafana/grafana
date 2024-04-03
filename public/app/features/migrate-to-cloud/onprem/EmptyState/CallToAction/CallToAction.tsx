@@ -3,13 +3,12 @@ import React from 'react';
 import { Box, Button, ModalsController, Text } from '@grafana/ui';
 import { Trans } from 'app/core/internationalization';
 
-import { useConnectStackMutationMock, useGetStatusQueryMock } from '../../../mockAPI';
+import { useCreateMigrationMutation } from '../../../api';
 
 import { ConnectModal } from './ConnectModal';
 
 export const CallToAction = () => {
-  const [connectStack, connectResponse] = useConnectStackMutationMock();
-  const { isFetching } = useGetStatusQueryMock();
+  const [createMigration, createMigrationResponse] = useCreateMigrationMutation();
 
   return (
     <ModalsController>
@@ -19,11 +18,11 @@ export const CallToAction = () => {
             <Trans i18nKey="migrate-to-cloud.cta.header">Let us manage your Grafana stack</Trans>
           </Text>
           <Button
-            disabled={isFetching || connectResponse.isLoading}
+            disabled={createMigrationResponse.isLoading}
             onClick={() =>
               showModal(ConnectModal, {
                 hideModal,
-                onConfirm: connectStack,
+                onConfirm: createMigration,
               })
             }
           >

@@ -41,11 +41,13 @@ export interface ConnectStackDTOMock {
   token: string;
 }
 
-export interface MigrationResourceDTOMock {
+type MigrationResourceStatus = 'not-migrated' | 'migrated' | 'migrating' | 'failed';
+
+export interface MigrationResourceDatasource {
   uid: string;
-  status: 'not-migrated' | 'migrated' | 'migrating' | 'failed';
+  status: MigrationResourceStatus;
   statusMessage?: string;
-  type: 'datasource' | 'dashboard'; // TODO: in future this would be a discriminated union with the resource details
+  type: 'datasource';
   resource: {
     uid: string;
     name: string;
@@ -53,6 +55,19 @@ export interface MigrationResourceDTOMock {
     icon?: string;
   };
 }
+
+export interface MigrationResourceDashboard {
+  uid: string;
+  status: MigrationResourceStatus;
+  statusMessage?: string;
+  type: 'dashboard';
+  resource: {
+    uid: string;
+    name: string;
+  };
+}
+
+export type MigrationResourceDTOMock = MigrationResourceDatasource | MigrationResourceDashboard;
 
 const mockApplications = ['auth-service', 'web server', 'backend'];
 const mockEnvs = ['DEV', 'PROD'];

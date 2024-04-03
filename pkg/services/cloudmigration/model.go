@@ -175,7 +175,8 @@ type MigrateDataResponseDTO struct {
 }
 
 type MigrateDataResponseItemDTO struct {
-	RefID  string     `json:"refId"`
-	Status ItemStatus `json:"status"`
-	Error  string     `json:"error,omitempty"`
+	Type   MigrateDataType `json:"type"`
+	RefID  string          `json:"refId"`
+	Status ItemStatus      `json:"status"`
+	Error  string          `json:"error,omitempty"`
 }
