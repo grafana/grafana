@@ -25,7 +25,7 @@ XY charts provide a way to visualize arbitrary x and y values in a graph so that
 
 ## Supported data formats
 
-You can use any type of tabular data in an xy chart. This type of visualization doesn't require time data.
+You can use any type of tabular data with at least two numeric fields in an xy chart. This type of visualization doesn't require time data.
 
 ## XY chart options
 
