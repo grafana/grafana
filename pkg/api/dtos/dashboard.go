@@ -34,6 +34,7 @@ type DashboardMeta struct {
 	Provisioned            bool                               `json:"provisioned"`
 	ProvisionedExternalId  string                             `json:"provisionedExternalId"`
 	AnnotationsPermissions *dashboardsV0.AnnotationPermission `json:"annotationsPermissions"`
+	PublicDashboardUID     string                             `json:"publicDashboardUid,omitempty"`
 	PublicDashboardEnabled bool                               `json:"publicDashboardEnabled,omitempty"`
 }
 

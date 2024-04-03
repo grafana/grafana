@@ -86,11 +86,12 @@ export const publicDashboardApi = createApi({
 
         if (dashboard instanceof DashboardScene) {
           dashboard.setState({
-            meta: { ...dashboard.state.meta, publicDashboardEnabled: data.isEnabled },
+            meta: { ...dashboard.state.meta, publicDashboardEnabled: data.isEnabled, publicDashboardUid: data.uid },
           });
         } else {
           // Update runtime meta flag
           dashboard.updateMeta({
+            publicDashboardUid: data.uid,
             publicDashboardEnabled: data.isEnabled,
           });
         }
@@ -120,10 +121,11 @@ export const publicDashboardApi = createApi({
 
         if (dashboard instanceof DashboardScene) {
           dashboard.setState({
-            meta: { ...dashboard.state.meta, publicDashboardEnabled: data.isEnabled },
+            meta: { ...dashboard.state.meta, publicDashboardEnabled: data.isEnabled, publicDashboardUid: data.uid },
           });
         } else {
           dashboard.updateMeta?.({
+            publicDashboardUid: data.uid,
             publicDashboardEnabled: data.isEnabled,
           });
         }
@@ -181,16 +183,17 @@ export const publicDashboardApi = createApi({
         url: `/dashboards/uid/${params.dashboardUid}/public-dashboards/${params.uid}`,
         method: 'DELETE',
       }),
-      async onQueryStarted({ dashboard }, { dispatch, queryFulfilled }) {
+      async onQueryStarted({ dashboard, uid }, { dispatch, queryFulfilled }) {
         await queryFulfilled;
         dispatch(notifyApp(createSuccessNotification('Public dashboard deleted!')));
 
         if (dashboard instanceof DashboardScene) {
           dashboard.setState({
-            meta: { ...dashboard.state.meta, publicDashboardEnabled: false },
+            meta: { ...dashboard.state.meta, publicDashboardUid: uid, publicDashboardEnabled: false },
           });
         } else {
           dashboard?.updateMeta({
+            publicDashboardUid: uid,
             publicDashboardEnabled: false,
           });
         }
