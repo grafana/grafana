@@ -338,18 +338,23 @@ func UseOrgFromRequestData(c *contextmodel.ReqContext) (int64, error) {
 }
 
 // UseGlobalOrgFromRequestData returns global org if `global` flag is set or the org where user is logged in.
-func UseGlobalOrgFromRequestData(c *contextmodel.ReqContext) (int64, error) {
-	query, err := getOrgQueryFromRequest(c)
-	if err != nil {
-		// Special case of macaron handling invalid params
-		return NoOrgID, org.ErrOrgNotFound.Errorf("failed to get organization from context: %w", err)
-	}
+// If RBACSingleOrganization is set, the org where user is logged in is returned - this is intended only for cloud workflows, where instances are limited to a single organization.
+func UseGlobalOrgFromRequestData(cfg *setting.Cfg) func(*contextmodel.ReqContext) (int64, error) {
+	return func(c *contextmodel.ReqContext) (int64, error) {
+		query, err := getOrgQueryFromRequest(c)
+		if err != nil {
+			// Special case of macaron handling invalid params
+			return NoOrgID, org.ErrOrgNotFound.Errorf("failed to get organization from context: %w", err)
+		}
 
-	if query.Global {
-		return GlobalOrgID, nil
-	}
+		// We only check permissions in the global organization if we are not running a SingleOrganization setup
+		// That allows Organization Admins to modify global roles and make global assignments.
+		if query.Global && !cfg.RBACSingleOrganization {
+			return GlobalOrgID, nil
+		}
 
-	return c.SignedInUser.GetOrgID(), nil
+		return c.SignedInUser.GetOrgID(), nil
+	}
 }
 
 // UseGlobalOrgFromRequestParams returns global org if `global` flag is set or the org where user is logged in.
