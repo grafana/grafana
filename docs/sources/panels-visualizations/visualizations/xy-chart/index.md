@@ -64,7 +64,7 @@ In the resulting chart, x-fields are generated from the values in column "a" unl
 
 ##### Y-fields
 
-After the x-field is set, by default, all the remaining number fields in the data frame are designated as the y-fields. You can use the y-field selector to explictly choose which fields to use for y.
+After the x-field is set, by default, all the remaining number fields in the data frame are designated as the y-fields. You can use the y-field selector to explicitly choose which fields to use for y.
 
 The series of the chart are generated from the y-fields. To make changes to a series in an xy chart, make [overrides][Configure field overrides] to the y-field.
 
