@@ -52,7 +52,7 @@ func (cma *CloudMigrationAPI) registerEndpoints() {
 		cloudMigrationRoute.Get("/migration/:id/run", routing.Wrap(cma.GetMigrationRunList))
 		cloudMigrationRoute.Get("/migration/:id/run/:runID", routing.Wrap(cma.GetMigrationRun))
 		cloudMigrationRoute.Post("/token", routing.Wrap(cma.CreateToken))
-	}, middleware.ReqGrafanaAdmin)
+	}, middleware.ReqOrgAdmin)
 }
 
 // swagger:route POST /cloudmigration/token migrations createCloudMigrationToken
