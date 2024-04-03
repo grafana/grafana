@@ -180,37 +180,35 @@ export const Page = () => {
   );
 };
 
+// converts API status to our expected/mocked status
+function convertStatus(status: string) {
+  switch (status) {
+    case 'OK':
+      return 'migrated';
+    case 'ERROR':
+      return 'failed';
+    case 'failed':
+      return 'failed';
+    default:
+      return 'failed';
+  }
+}
+
 function useFixResources(data: MigrateDataResponseDto | undefined) {
   return useMemo(() => {
-    if (!data) {
+    if (!data?.items) {
       return undefined;
     }
 
-    const rawResources: { items: Array<MigrateDataResponseItemDto & { type: string }> } = JSON.parse(
-      /// @ts-expect-error
-      atob(data.result)
-    );
-
-    // converts API status to our expected/mocked status
-    function convertStatus(status: string) {
-      switch (status) {
-        case 'OK':
-          return 'migrated';
-        case 'failed':
-          return 'failed';
-        default:
-          return 'failed';
-      }
-    }
-
-    const betterResources: MigrationResourceDTOMock[] = rawResources.items.flatMap((item) => {
+    const betterResources: MigrationResourceDTOMock[] = data.items.flatMap((item) => {
       if (item.type === 'DATASOURCE') {
         const datasourceConfig = Object.values(config.datasources).find((v) => v.uid === item.refId);
 
         return {
+          type: 'datasource',
           uid: item.refId ?? '',
           status: convertStatus(item.status ?? ''),
-          type: 'datasource',
+          statusMessage: item.error,
           resource: {
             uid: item.refId ?? '',
             name: datasourceConfig?.name ?? 'Unknown data source',
@@ -222,9 +220,10 @@ function useFixResources(data: MigrateDataResponseDto | undefined) {
 
       if (item.type === 'DASHBOARD') {
         return {
+          type: 'dashboard',
           uid: item.refId ?? '',
           status: convertStatus(item.status ?? ''),
-          type: 'dashboard',
+          statusMessage: item.error,
           resource: {
             uid: item.refId ?? '',
             name: item.refId ?? 'Unknown dashboard',
