@@ -8,7 +8,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apiserver/pkg/registry/rest"
-	"k8s.io/klog/v2"
+	"k8s.io/klog"
 )
 
 var (
@@ -65,8 +65,20 @@ type DualWriter struct {
 	legacy LegacyStorage
 }
 
-// NewDualWriter returns a new DualWriter.
-func NewDualWriter(legacy LegacyStorage, storage Storage) *DualWriter {
+type DualWriterMode int
+
+const (
+	Mode1 DualWriterMode = iota
+	Mode2
+	Mode3
+	Mode4
+)
+
+// #TODO make CurrentMode customisable and specific to each entity
+var CurrentMode = Mode2
+
+// newDualWriter returns a new DualWriter.
+func newDualWriter(legacy LegacyStorage, storage Storage) *DualWriter {
 	return &DualWriter{
 		Storage: storage,
 		legacy:  legacy,
