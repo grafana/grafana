@@ -272,7 +272,7 @@ func (cma *CloudMigrationAPI) GetMigrationRun(c *contextmodel.ReqContext) respon
 		return response.Error(http.StatusInternalServerError, "migration status error", err)
 	}
 
-	err, runResponse := migrationStatus.ToResponse(migrationStatus)
+	runResponse, err := migrationStatus.ToResponse()
 	if err != nil {
 		cma.log.Error("could not return migration run", "err", err)
 		return response.Error(http.StatusInternalServerError, "migration run get error", err)
