@@ -72,9 +72,12 @@ func (o *TracingOptions) Validate() []error {
 }
 
 func (o *TracingOptions) ApplyTo(config *genericapiserver.RecommendedConfig) error {
-	utilfeature.DefaultMutableFeatureGate.SetFromMap(map[string]bool{
+	if err := utilfeature.DefaultMutableFeatureGate.SetFromMap(map[string]bool{
 		string(genericfeatures.APIServerTracing): false,
-	})
+	}); err != nil {
+		return err
+	}
+
 	tracingCfg := tracing.NewEmptyTracingConfig()
 	var err error
 
