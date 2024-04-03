@@ -3,7 +3,7 @@ import React from 'react';
 import { LinkButton, Stack, Text } from '@grafana/ui';
 
 import { AlertingPageWrapper } from './components/AlertingPageWrapper';
-import { Spacer } from './components/Spacer';
+import { WithReturnButton } from './components/WithReturnButton';
 import { useEditConfigurationDrawer } from './components/admin/ConfigurationDrawer';
 import { ExternalAlertmanagers } from './components/admin/ExternalAlertmanagers';
 import InternalAlertmanager from './components/admin/InternalAlertmanager';
@@ -26,19 +26,28 @@ function SettingsContent() {
   const { isLoading } = useSettings();
 
   return (
-    <AlertingPageWrapper navId="alerting-admin" subTitle={SUBTITLE} isLoading={isLoading}>
+    <AlertingPageWrapper
+      navId="alerting-admin"
+      subTitle={SUBTITLE}
+      isLoading={isLoading}
+      actions={[
+        <WithReturnButton
+          key="add-alertmanager"
+          title="Alerting settings"
+          component={
+            <LinkButton href="/connections/datasources/alertmanager" icon="plus" variant="primary">
+              Add new Alertmanager
+            </LinkButton>
+          }
+        />,
+      ]}
+    >
       <Stack direction="column" gap={2}>
         {/* internal Alertmanager */}
         <Text variant="h5">Built-in Alertmanager</Text>
         <InternalAlertmanager onEditConfiguration={showConfiguration} />
         {/* external Alertmanagers (data sources) we have added to Grafana (vanilla, Mimir, Cortex) */}
-        <Stack alignItems="center">
-          <Text variant="h5">Other Alertmanagers</Text>
-          <Spacer />
-          <LinkButton href="/connections/datasources/alertmanager" icon="plus" variant="secondary">
-            Add Alertmanager
-          </LinkButton>
-        </Stack>
+        <Text variant="h5">Other Alertmanagers</Text>
         <ExternalAlertmanagers onEditConfiguration={showConfiguration} />
       </Stack>
       {configurationDrawer}

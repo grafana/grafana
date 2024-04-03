@@ -33,6 +33,7 @@ export default function AlertmanagerConfig({ alertmanagerName, onDismiss, onSave
   const {
     currentData: config,
     error: loadingError,
+    isSuccess: isLoadingSuccessful,
     isLoading: isLoadingConfig,
   } = useAlertmanagerConfig(alertmanagerName);
 
@@ -64,7 +65,7 @@ export default function AlertmanagerConfig({ alertmanagerName, onDismiss, onSave
 
   // manually register the config field with validation
   register('configJSON', {
-    required: { value: true, message: 'Required' },
+    required: { value: true, message: 'Configuration cannot be empty' },
     validate: (value: string) => {
       try {
         JSON.parse(value);
@@ -113,28 +114,31 @@ export default function AlertmanagerConfig({ alertmanagerName, onDismiss, onSave
         </Alert>
       )}
 
-      <div className={styles.content}>
-        <AutoSizer>
-          {({ height, width }) => (
-            <>
-              <CodeEditor
-                language="json"
-                width={width}
-                height={height}
-                showLineNumbers={true}
-                monacoOptions={{
-                  scrollBeyondLastLine: false,
-                }}
-                value={defaultValues.configJSON}
-                showMiniMap={false}
-                onSave={(value) => setValue('configJSON', value)}
-                onBlur={(value) => setValue('configJSON', value)}
-                readOnly={isOperating}
-              />
-            </>
-          )}
-        </AutoSizer>
-      </div>
+      {isLoadingSuccessful && (
+        <div className={styles.content}>
+          <AutoSizer>
+            {({ height, width }) => (
+              <>
+                <CodeEditor
+                  language="json"
+                  width={width}
+                  height={height}
+                  showLineNumbers={true}
+                  monacoOptions={{
+                    scrollBeyondLastLine: false,
+                  }}
+                  value={defaultValues.configJSON}
+                  showMiniMap={false}
+                  onSave={(value) => setValue('configJSON', value)}
+                  onBlur={(value) => setValue('configJSON', value)}
+                  readOnly={isOperating}
+                />
+              </>
+            )}
+          </AutoSizer>
+        </div>
+      )}
+
       {!readOnly && (
         <Stack justifyContent="flex-end">
           <Button variant="destructive" disabled={isOperating} onClick={() => setShowResetConfirmation(true)}>

@@ -10,16 +10,16 @@ import { AlertmanagerConfigurationVersionManager } from './VersionManager';
 
 type ActiveTab = 'configuration' | 'versions';
 
-export function useEditConfigurationDrawer(): [React.ReactNode, (dataSourceName: string) => void, () => void] {
+export function useEditConfigurationDrawer() {
   const [activeTab, setActiveTab] = useState<ActiveTab>('configuration');
   const [dataSourceName, setDataSourceName] = useState<string | undefined>();
   const [open, setOpen] = useState(false);
   const { updateAlertmanagerSettings, resetAlertmanagerSettings } = useSettings();
 
-  const showConfiguration = useCallback((dataSourceName: string) => {
+  const showConfiguration = (dataSourceName: string) => {
     setDataSourceName(dataSourceName);
     setOpen(true);
-  }, []);
+  };
 
   const handleDismiss = useCallback(() => {
     setActiveTab('configuration');
@@ -75,5 +75,5 @@ export function useEditConfigurationDrawer(): [React.ReactNode, (dataSourceName:
     );
   }, [open, dataSourceName, handleDismiss, activeTab, updateAlertmanagerSettings, resetAlertmanagerSettings]);
 
-  return [drawer, showConfiguration, handleDismiss];
+  return [drawer, showConfiguration, handleDismiss] as const;
 }
