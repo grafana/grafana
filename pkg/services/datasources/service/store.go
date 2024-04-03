@@ -355,13 +355,14 @@ func (ss *SqlStore) UpdateDataSource(ctx context.Context, cmd *datasources.Updat
 			ReadOnly:        cmd.ReadOnly,
 			Version:         cmd.Version + 1,
 			UID:             cmd.UID,
-			IsPrunable: 	 cmd.IsPrunable,
+			IsPrunable:      cmd.IsPrunable,
 		}
 
 		sess.UseBool("is_default")
 		sess.UseBool("basic_auth")
 		sess.UseBool("with_credentials")
 		sess.UseBool("read_only")
+		sess.UseBool("is_prunable")
 		// Make sure database field is zeroed out if empty. We want to migrate away from this field.
 		sess.MustCols("database")
 		// Make sure password are zeroed out if empty. We do this as we want to migrate passwords from
