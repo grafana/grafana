@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import React, { useEffect, useLayoutEffect, useRef, useState } from 'react';
+import React, { useLayoutEffect, useRef, useState } from 'react';
 import { useMountedState } from 'react-use';
 import uPlot from 'uplot';
 
@@ -59,14 +59,7 @@ export const TooltipPlugin = ({
   const isMounted = useMountedState();
   let parentWithFocus: HTMLElement | null = null;
 
-  const pluginId = `TooltipPlugin`;
-
   const style = useStyles2(getStyles);
-
-  // Debug logs
-  useEffect(() => {
-    pluginLog(pluginId, true, `Focused series: ${focusedSeriesIdx}, focused point: ${focusedPointIdx}`);
-  }, [focusedPointIdx, focusedSeriesIdx]);
 
   // Add uPlot hooks to the config, or re-add when the config changed
   useLayoutEffect(() => {
