@@ -195,7 +195,7 @@ func TestAuthorizeInOrgMiddleware(t *testing.T) {
 			}
 
 			expectedIdentity := &authn.Identity{
-				ID:          fmt.Sprintf("user:%v", tc.ctxSignedInUser.UserUID),
+				ID:          fmt.Sprintf("user:%v", tc.ctxSignedInUser.UserID),
 				OrgID:       tc.targetOrgId,
 				Permissions: map[int64]map[string][]string{},
 			}

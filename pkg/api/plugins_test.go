@@ -749,6 +749,14 @@ func TestHTTPServer_hasPluginRequestedPermissions(t *testing.T) {
 			hs.accesscontrolService = actest.FakeService{}
 			hs.AccessControl = acimpl.ProvideAccessControl(hs.Cfg)
 
+			expectedIdentity := &authn.Identity{
+				OrgID:       tt.orgID,
+				Permissions: tt.permissions,
+			}
+			hs.authnService = &authntest.FakeService{
+				ExpectedIdentity: expectedIdentity,
+			}
+
 			c := &contextmodel.ReqContext{
 				Context:      &web.Context{Req: httpReq},
 				SignedInUser: &user.SignedInUser{OrgID: tt.orgID, Permissions: tt.permissions},

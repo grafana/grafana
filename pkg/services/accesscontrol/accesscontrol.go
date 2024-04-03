@@ -9,6 +9,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/registry"
 	"github.com/grafana/grafana/pkg/services/auth/identity"
+	"github.com/grafana/grafana/pkg/services/authn"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/user"
@@ -171,22 +172,26 @@ type User struct {
 }
 
 // HasGlobalAccess checks user access with globally assigned permissions only
-func HasGlobalAccess(ac AccessControl, service Service, c *contextmodel.ReqContext) func(evaluator Evaluator) bool {
+func HasGlobalAccess(ac AccessControl, authnService authn.Service, c *contextmodel.ReqContext) func(evaluator Evaluator) bool {
 	return func(evaluator Evaluator) bool {
 		var targetOrgID int64 = GlobalOrgID
-		tmpUser, err := makeTmpUser(c.Req.Context(), service, nil, nil, c.SignedInUser, targetOrgID)
+		orgUser, err := authnService.ResolveIdentity(c.Req.Context(), targetOrgID, c.SignedInUser.GetID())
 		if err != nil {
 			deny(c, nil, fmt.Errorf("failed to authenticate user in target org: %w", err))
 		}
 
-		hasAccess, err := ac.Evaluate(c.Req.Context(), tmpUser, evaluator)
+		hasAccess, err := ac.Evaluate(c.Req.Context(), orgUser, evaluator)
 		if err != nil {
 			c.Logger.Error("Error from access control system", "error", err)
 			return false
 		}
 
+		// guard against nil map
+		if c.SignedInUser.Permissions == nil {
+			c.SignedInUser.Permissions = make(map[int64]map[string][]string)
+		}
 		// set on user so we don't fetch global permissions every time this is called
-		c.SignedInUser.Permissions[tmpUser.GetOrgID()] = tmpUser.GetPermissions()
+		c.SignedInUser.Permissions[orgUser.GetOrgID()] = orgUser.GetPermissions()
 
 		return hasAccess
 	}
