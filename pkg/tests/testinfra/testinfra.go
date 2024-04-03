@@ -140,7 +140,7 @@ func CreateGrafDir(t *testing.T, opts ...GrafanaOpts) (string, string) {
 	require.NoError(t, err)
 
 	viewsDir := filepath.Join(publicDir, "views")
-	err = fs.CopyRecursive(filepath.Join(rootDir, "public", "views"), viewsDir)
+	err = os.Symlink(filepath.Join(rootDir, "public", "views"), viewsDir)
 	require.NoError(t, err)
 
 	// add a stub manifest to the build directory
@@ -174,7 +174,7 @@ func CreateGrafDir(t *testing.T, opts ...GrafanaOpts) (string, string) {
 	require.NoError(t, err)
 
 	emailsDir := filepath.Join(publicDir, "emails")
-	err = fs.CopyRecursive(filepath.Join(rootDir, "public", "emails"), emailsDir)
+	err = os.Symlink(filepath.Join(rootDir, "public", "emails"), emailsDir)
 	require.NoError(t, err)
 	provDir := filepath.Join(cfgDir, "provisioning")
 	provDSDir := filepath.Join(provDir, "datasources")
@@ -189,8 +189,11 @@ func CreateGrafDir(t *testing.T, opts ...GrafanaOpts) (string, string) {
 	provDashboardsDir := filepath.Join(provDir, "dashboards")
 	err = os.MkdirAll(provDashboardsDir, 0750)
 	require.NoError(t, err)
-	corePluginsDir := filepath.Join(publicDir, "app/plugins")
-	err = fs.CopyRecursive(filepath.Join(rootDir, "public", "app/plugins"), corePluginsDir)
+	appDir := filepath.Join(publicDir, "app")
+	err = os.MkdirAll(appDir, 0750)
+	require.NoError(t, err)
+	corePluginsDir := filepath.Join(appDir, "plugins")
+	err = os.Symlink(filepath.Join(rootDir, "public", "app", "plugins"), corePluginsDir)
 	require.NoError(t, err)
 
 	cfg := ini.Empty()
