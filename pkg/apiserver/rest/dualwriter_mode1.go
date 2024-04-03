@@ -58,7 +58,7 @@ func (d *DualWriterMode1) List(ctx context.Context, options *metainternalversion
 func (d *DualWriterMode1) Delete(ctx context.Context, name string, deleteValidation rest.ValidateObjectFunc, options *metav1.DeleteOptions) (runtime.Object, bool, error) {
 	legacy, ok := d.legacy.(rest.GracefulDeleter)
 	if !ok {
-		return nil, false, fmt.Errorf("legacy storage rest.Creater is missing")
+		return nil, false, fmt.Errorf("legacy storage rest.GracefulDeleter is missing")
 	}
 
 	return legacy.Delete(ctx, name, deleteValidation, options)
