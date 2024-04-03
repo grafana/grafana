@@ -217,7 +217,7 @@
         "content": {
           "application/json": {
             "schema": {
-              "$ref": "#/components/schemas/CloudMigrationRun"
+              "$ref": "#/components/schemas/MigrateDataResponseDTO"
             }
           }
         },
@@ -3552,44 +3552,11 @@
         },
         "type": "object"
       },
-      "CloudMigrationRun": {
-        "properties": {
-          "created": {
-            "format": "date-time",
-            "type": "string"
-          },
-          "finished": {
-            "format": "date-time",
-            "type": "string"
-          },
-          "id": {
-            "format": "int64",
-            "type": "integer"
-          },
-          "items": {
-            "items": {
-              "$ref": "#/components/schemas/MigratedResource"
-            },
-            "type": "array"
-          },
-          "result": {
-            "$ref": "#/components/schemas/MigrationResult"
-          },
-          "uid": {
-            "type": "string"
-          },
-          "updated": {
-            "format": "date-time",
-            "type": "string"
-          }
-        },
-        "type": "object"
-      },
       "CloudMigrationRunList": {
         "properties": {
           "runs": {
             "items": {
-              "$ref": "#/components/schemas/CloudMigrationRun"
+              "$ref": "#/components/schemas/MigrateDataResponseDTO"
             },
             "type": "array"
           }
@@ -6302,6 +6269,9 @@
         },
         "type": "object"
       },
+      "ItemStatus": {
+        "type": "string"
+      },
       "JSONWebKey": {
         "description": "JSONWebKey represents a public or private key in JWK format. It can be\nmarshaled into JSON and unmarshaled from JSON.",
         "properties": {
@@ -6737,44 +6707,31 @@
         ],
         "type": "object"
       },
-      "MigratedResource": {
+      "MigrateDataResponseDTO": {
         "properties": {
           "id": {
-            "type": "string"
+            "format": "int64",
+            "type": "integer"
           },
-          "name": {
-            "type": "string"
-          },
-          "refID": {
-            "type": "string"
-          },
-          "result": {
-            "$ref": "#/components/schemas/MigratedResourceResult"
-          },
-          "type": {
-            "type": "string"
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/MigrateDataResponseItemDTO"
+            },
+            "type": "array"
           }
         },
         "type": "object"
       },
-      "MigratedResourceResult": {
+      "MigrateDataResponseItemDTO": {
         "properties": {
-          "message": {
+          "error": {
+            "type": "string"
+          },
+          "refId": {
             "type": "string"
           },
           "status": {
-            "type": "string"
-          }
-        },
-        "type": "object"
-      },
-      "MigrationResult": {
-        "properties": {
-          "message": {
-            "type": "string"
-          },
-          "status": {
-            "type": "string"
+            "$ref": "#/components/schemas/ItemStatus"
           }
         },
         "type": "object"
@@ -14967,6 +14924,40 @@
           }
         },
         "summary": "Get a list of migration runs for a migration.",
+        "tags": [
+          "migrations"
+        ]
+      },
+      "post": {
+        "description": "It returns migrations that has been created.",
+        "operationId": "runCloudMigration",
+        "parameters": [
+          {
+            "description": "ID of an migration",
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "format": "int64",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/cloudMigrationRunResponse"
+          },
+          "401": {
+            "$ref": "#/components/responses/unauthorisedError"
+          },
+          "403": {
+            "$ref": "#/components/responses/forbiddenError"
+          },
+          "500": {
+            "$ref": "#/components/responses/internalServerError"
+          }
+        },
+        "summary": "Trigger the run of a migration to the Grafana Cloud.",
         "tags": [
           "migrations"
         ]
