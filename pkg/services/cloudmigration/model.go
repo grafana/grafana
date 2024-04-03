@@ -58,6 +58,12 @@ type CloudMigrationRunList struct {
 }
 
 // swagger:parameters createMigration
+type CloudMigrationRequestParams struct {
+	// required: true
+	// in: body
+	Body CloudMigrationRequest `json:"body"`
+}
+
 type CloudMigrationRequest struct {
 	AuthToken string `json:"authToken"`
 }
