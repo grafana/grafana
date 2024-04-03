@@ -33,17 +33,25 @@ Access Metrics as a standalone experience:
 
 1. Click the arrow next to **Explore** in the left-side menu and click **Metrics**.You are taken to an overview page that shows recent metrics, bookmarks, and the option to select a new metric exploration.
 1. Click **+ New metric exploration**
-1. Select **Prometheus** in the drop-down menu under **Data source**. You can also select a Prometheus-compatible data source.
-1. Click **+ Add label** and select a label from the drop-down menu. You can add multiple labels.  
-1. Search for metrics under **Search metrics**. 
-1. Use the time picker to select a date/time range from the drop-down menu or use an absolute time range. 
-1. You can set a refresh rate from the drop down menu. The default is `Off`. 
+1. Select **Prometheus** in the drop-down menu under **Data source**. You can also select a Prometheus-compatible data source available in the list.
+1. Click **+ Add label** to select a label from the drop-down menu. You can add multiple labels.  
+1. You can also search for metrics under **Search metrics**. 
+1. Use the time picker to select a date and time range from the drop-down menu or use an absolute time range. 
+1. You can set a refresh rate from the drop-down menu. The default is `Off`. 
 
-Click on **Select** in a metric to learn more about it. 
-The **Overview** tab provides a description for each metric, as well as the metric type and unit associated with the metric. It also provides a list of labels associated with the metric.
-The **Breakdown** tab 
+{{< admonition type="note" >}}
+The **History** button in the upper left maps all the steps when navigating through metrics and their filters.  you can jump back and forth?  `ask how this works, it's a bit wonky when I play around with it`
+{{< /admonition >}}
 
-The **Related metrics** tab
+To further explore a metric, click **Select** in the upper right of the metric to learn more about it. 
+
+- The **Overview** tab provides a description for each metric, as well as the metric `type` and `unit` associated with the metric. It also provides a list of labels associated with the metric.
+- The **Breakdown** tab depicts time series visualizations for each of the label-value pairs for the selected metric. You can further drill down and **Add to filter** - `ask for more info about this from Mary!`
+- The **Related metrics** tab depicts any other metrics with relevant key words. You can repeat the drill down process for any related metric and see all of the preceding tabs. 
+
+Click the **Explore** icon on the right hand side to open the graph in Explore, where you can modify the query or add the graph to a dashboard or incident.
+
+Click 
 
 You can click on
 Basic controls
