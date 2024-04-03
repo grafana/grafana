@@ -8,7 +8,7 @@ interface RequestOptions extends BackendSrvRequest {
   showErrorAlert?: boolean;
 
   // rtk codegen sets this
-  body: BackendSrvRequest['data'];
+  body?: BackendSrvRequest['data'];
 }
 
 function createBackendSrvBaseQuery({ baseURL }: { baseURL: string }): BaseQueryFn<RequestOptions> {
