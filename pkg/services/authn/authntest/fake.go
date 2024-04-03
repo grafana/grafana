@@ -89,7 +89,9 @@ func (f *FakeService) ResolveIdentity(ctx context.Context, orgID int64, namespac
 		return identity, err
 	}
 
-	return f.ExpectedIdentity, f.ExpectedErr
+	identity := f.ExpectedIdentity
+	identity.OrgID = orgID
+	return identity, f.ExpectedErr
 }
 
 func (f *FakeService) RegisterClient(c authn.Client) {}

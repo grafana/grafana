@@ -266,8 +266,10 @@ func TestAPIEndpoint_GetOrg(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.desc, func(t *testing.T) {
 			expectedIdentity := &authn.Identity{
+				ID:    "user:1",
 				OrgID: 1,
 				Permissions: map[int64]map[string][]string{
+					0: accesscontrol.GroupScopesByAction(tt.permissions),
 					1: accesscontrol.GroupScopesByAction(tt.permissions),
 				},
 			}

@@ -102,63 +102,88 @@ func TestAPIEndpoint_GetOrgQuotas(t *testing.T) {
 }
 
 func TestAPIEndpoint_PutOrgQuotas(t *testing.T) {
-	cfg := setting.NewCfg()
-	cfg.Quota = setting.QuotaSettings{
-		Enabled: true,
-		Global: setting.GlobalQuota{
-			Org: 5,
+	type testCase struct {
+		desc         string
+		userOrg      int64
+		targetOrg    int64
+		permissions  map[int64][]accesscontrol.Permission
+		expectedCode int
+	}
+
+	tests := []testCase{
+		{
+			desc:         "AccessControl allows updating another org quotas with correct permissions",
+			userOrg:      1,
+			targetOrg:    2,
+			permissions:  map[int64][]accesscontrol.Permission{2: {{Action: accesscontrol.ActionOrgsQuotasWrite}}},
+			expectedCode: http.StatusOK,
 		},
-		Org: setting.OrgQuota{
-			User: 5,
+		{
+			desc:         "AccessControl prevents updating another org quotas with correct permissions in another org",
+			userOrg:      1,
+			targetOrg:    2,
+			permissions:  map[int64][]accesscontrol.Permission{1: {{Action: accesscontrol.ActionOrgsQuotasWrite}}},
+			expectedCode: http.StatusForbidden,
 		},
-		User: setting.UserQuota{
-			Org: 5,
+		{
+			desc:         "AccessControl prevents updating another org quotas with incorrect permissions",
+			userOrg:      2,
+			targetOrg:    2,
+			permissions:  map[int64][]accesscontrol.Permission{2: {{Action: "orgs:invalid"}}},
+			expectedCode: http.StatusForbidden,
 		},
 	}
-	fakeACService := &actest.FakeService{}
-	server := SetupAPITestServer(t, func(hs *HTTPServer) {
-		hs.Cfg = cfg
-		hs.accesscontrolService = fakeACService
-		hs.userService = &usertest.FakeUserService{
-			ExpectedSignedInUser: &user.SignedInUser{OrgID: 2},
-		}
-		hs.authnService = &authntest.FakeService{
-			ExpectedIdentity: &authn.Identity{OrgID: 2},
-		}
-	})
 
-	input := strings.NewReader(testUpdateOrgQuotaCmd)
-	t.Run("AccessControl allows updating another org quotas with correct permissions", func(t *testing.T) {
-		user := userWithPermissions(2, []accesscontrol.Permission{{Action: accesscontrol.ActionOrgsQuotasWrite}})
-		user.OrgID = 1
-		fakeACService.ExpectedPermissions = []accesscontrol.Permission{{Action: accesscontrol.ActionOrgsQuotasWrite}}
-		req := webtest.RequestWithSignedInUser(server.NewRequest(http.MethodPut, fmt.Sprintf(putOrgsQuotasURL, 2, "org_user"), input), user)
-		response, err := server.SendJSON(req)
-		require.NoError(t, err)
-		assert.Equal(t, http.StatusOK, response.StatusCode)
-		require.NoError(t, response.Body.Close())
-	})
+	for _, tt := range tests {
+		t.Run(tt.desc, func(t *testing.T) {
+			cfg := setting.NewCfg()
+			cfg.Quota = setting.QuotaSettings{
+				Enabled: true,
+				Global: setting.GlobalQuota{
+					Org: 5,
+				},
+				Org: setting.OrgQuota{
+					User: 5,
+				},
+				User: setting.UserQuota{
+					Org: 5,
+				},
+			}
+			fakeACService := &actest.FakeService{}
+			input := strings.NewReader(testUpdateOrgQuotaCmd)
+			expectedIdentity := &authn.Identity{
+				OrgID:       tt.userOrg,
+				Permissions: map[int64]map[string][]string{},
+			}
+			for orgID, permissions := range tt.permissions {
+				expectedIdentity.Permissions[orgID] = accesscontrol.GroupScopesByAction(permissions)
+			}
 
-	input = strings.NewReader(testUpdateOrgQuotaCmd)
-	t.Run("AccessControl prevents updating another org quotas with correct permissions in another org", func(t *testing.T) {
-		user := userWithPermissions(1, []accesscontrol.Permission{{Action: accesscontrol.ActionOrgsQuotasWrite}})
-		user.Permissions[2] = nil
-		fakeACService.ExpectedPermissions = []accesscontrol.Permission{}
-		req := webtest.RequestWithSignedInUser(server.NewRequest(http.MethodPut, fmt.Sprintf(putOrgsQuotasURL, 2, "org_user"), input), user)
-		response, err := server.SendJSON(req)
-		require.NoError(t, err)
-		assert.Equal(t, http.StatusForbidden, response.StatusCode)
-		require.NoError(t, response.Body.Close())
-	})
+			server := SetupAPITestServer(t, func(hs *HTTPServer) {
+				hs.Cfg = cfg
+				hs.accesscontrolService = fakeACService
+				hs.userService = &usertest.FakeUserService{
+					ExpectedSignedInUser: &user.SignedInUser{OrgID: tt.userOrg},
+				}
+				hs.authnService = &authntest.FakeService{
+					ExpectedIdentity: expectedIdentity,
+				}
+			})
 
-	input = strings.NewReader(testUpdateOrgQuotaCmd)
-	t.Run("AccessControl prevents updating another org quotas with incorrect permissions", func(t *testing.T) {
-		user := userWithPermissions(2, []accesscontrol.Permission{{Action: "orgs:invalid"}})
-		fakeACService.ExpectedPermissions = []accesscontrol.Permission{}
-		req := webtest.RequestWithSignedInUser(server.NewRequest(http.MethodPut, fmt.Sprintf(putOrgsQuotasURL, 2, "org_user"), input), user)
-		response, err := server.SendJSON(req)
-		require.NoError(t, err)
-		assert.Equal(t, http.StatusForbidden, response.StatusCode)
-		require.NoError(t, response.Body.Close())
-	})
+			user := userWithPermissions(tt.userOrg, getFirstOrgPermissions(tt.permissions))
+			fakeACService.ExpectedPermissions = []accesscontrol.Permission{{Action: accesscontrol.ActionOrgsQuotasWrite}}
+			req := webtest.RequestWithSignedInUser(server.NewRequest(http.MethodPut, fmt.Sprintf(putOrgsQuotasURL, tt.targetOrg, "org_user"), input), user)
+			response, err := server.SendJSON(req)
+			require.NoError(t, err)
+			assert.Equal(t, tt.expectedCode, response.StatusCode)
+			require.NoError(t, response.Body.Close())
+		})
+	}
+}
+
+func getFirstOrgPermissions(p map[int64][]accesscontrol.Permission) []accesscontrol.Permission {
+	for _, permissions := range p {
+		return permissions
+	}
+	return []accesscontrol.Permission{}
 }
