@@ -7,6 +7,9 @@ import { DataTransformerInfo } from '../../types/transformations';
 import { reduceField, ReducerID } from '../fieldReducer';
 
 import { DataTransformerID } from './ids';
+import { findMaxFields } from './utils';
+
+const MINIMUM_FIELDS_REQUIRED = 2;
 
 export enum GroupByOperationID {
   aggregate = 'aggregate',
@@ -34,32 +37,19 @@ export const groupByTransformer: DataTransformerInfo<GroupByTransformerOptions> 
     fields: {},
   },
   isApplicable: (data: DataFrame[]) => {
-    let maxFields = 0;
-
     // Group by needs at least two fields
     // a field to group on and a field to aggregate
     // We make sure that at least one frame has at
     // least two fields
-    for (const frame of data) {
-      if (frame.fields.length > maxFields) {
-        maxFields = frame.fields.length;
-      }
-    }
+    const maxFields = findMaxFields(data);
 
-    return maxFields >= 2
+    return maxFields >= MINIMUM_FIELDS_REQUIRED
       ? TransformationApplicabilityLevels.Applicable
       : TransformationApplicabilityLevels.NotApplicable;
   },
   isApplicableDescription: (data: DataFrame[]) => {
-    let maxFields = 0;
-
-    for (const frame of data) {
-      if (frame.fields.length > maxFields) {
-        maxFields = frame.fields.length;
-      }
-    }
-
-    return `The Group by transformation requires a series with at least two fields to work. The maximum number of fields found on a series is ${maxFields}`;
+    const maxFields = findMaxFields(data);
+    return `The Group by transformation requires a series with at least ${MINIMUM_FIELDS_REQUIRED} fields to work. The maximum number of fields found on a series is ${maxFields}`;
   },
   /**
    * Return a modified copy of the series. If the transform is not or should not
