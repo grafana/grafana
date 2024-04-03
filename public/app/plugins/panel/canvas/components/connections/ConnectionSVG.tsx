@@ -323,7 +323,7 @@ export const ConnectionSVG = ({
           }
           if (index === vertices.length - 1) {
             // For last vertex only
-            addVertices.push(calculateMidpoint(1, 1, x, y));
+            addVertices.push(calculateMidpoint((x2 - x1) / deltaX, (y2 - y1) / deltaY, x, y));
           }
           // Add segment to path
           pathString += `L${xa} ${ya} `;
