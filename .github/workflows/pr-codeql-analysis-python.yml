@@ -14,6 +14,7 @@ jobs:
   analyze:
     name: Analyze
     runs-on: ubuntu-latest
+    if: github.repository == 'grafana/grafana'
 
     steps:
     - name: Checkout repository
@@ -31,4 +32,3 @@ jobs:
 
     - name: Perform CodeQL Analysis
       uses: github/codeql-action/analyze@v2
-      if: github.repository == 'grafana/grafana'
