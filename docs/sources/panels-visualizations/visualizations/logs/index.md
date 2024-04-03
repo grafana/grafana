@@ -29,6 +29,10 @@ The logs visualization shows the result of queries that were entered in the Quer
 
 To limit the number of lines rendered, you can use the **Max data points** setting in the **Query options**. If it is not set, then the data source will usually enforce a default limit.
 
+The following video provides a walkthrough of creating a logs visualization. You'll also learn how to customize some settings and log visualization caveats:
+
+{{< youtube id="jSSi_x-fD_8" >}}
+
 ## Log level
 
 For logs where a **level** label is specified, we use the value of the label to determine the log level and update color accordingly. If the log doesn't have a level label specified, we try to find out if its content matches any of the supported expressions (see below for more information). The log level is always determined by the first match. In case Grafana is not able to determine a log level, it will be visualized with **unknown** log level. See [supported log levels and mappings of log level abbreviation and expressions][].
