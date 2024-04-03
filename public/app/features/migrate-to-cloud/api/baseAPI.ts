@@ -6,6 +6,9 @@ import { BackendSrvRequest, getBackendSrv } from '@grafana/runtime';
 interface RequestOptions extends BackendSrvRequest {
   manageError?: (err: unknown) => { error: unknown };
   showErrorAlert?: boolean;
+
+  // rtk codegen sets this
+  body: BackendSrvRequest['data'];
 }
 
 function createBackendSrvBaseQuery({ baseURL }: { baseURL: string }): BaseQueryFn<RequestOptions> {
@@ -16,6 +19,7 @@ function createBackendSrvBaseQuery({ baseURL }: { baseURL: string }): BaseQueryF
           ...requestOptions,
           url: baseURL + requestOptions.url,
           showErrorAlert: requestOptions.showErrorAlert,
+          data: requestOptions.body,
         })
       );
       return { data: responseData, meta };

@@ -1,33 +1,92 @@
 import { skipToken } from '@reduxjs/toolkit/query/react';
-import React, { useState } from 'react';
+import React, { useCallback } from 'react';
 
-import { Alert, Box, Button, Stack } from '@grafana/ui';
+import { Box, Button, Stack } from '@grafana/ui';
 import { Trans, t } from 'app/core/internationalization';
 
-import { useGetStatusQueryMock, useListResourcesQueryMock, useStartMigrationMutationMock } from '../mockAPI';
+import { useGetCloudMigrationRunListQuery, useGetCloudMigrationRunQuery, useGetMigrationListQuery } from '../api';
+import { MigrationResourceDTOMock } from '../mockAPI';
 
-import { DisconnectModal } from './DisconnectModal';
 import { EmptyState } from './EmptyState/EmptyState';
 import { MigrationInfo } from './MigrationInfo';
 import { ResourcesTable } from './ResourcesTable';
 
-export const Page = () => {
-  const { data: status, isFetching } = useGetStatusQueryMock();
-  const { data: resources } = useListResourcesQueryMock(status?.enabled ? undefined : skipToken);
-  const [startMigration, { isLoading: startMigrationIsLoading, isError: startMigrationIsError }] =
-    useStartMigrationMutationMock();
-  const [isDisconnecting, setIsDisconnecting] = useState(false);
+/**
+ * Here's how migrations work:
+ *
+ * A single on-prem instance can be configured to be migrated to multiple cloud instances.
+ *  - GetMigrationList returns this the list of migration targets for the on prem instance
+ *  - If GetMigrationList returns an empty list, then the empty state with a prompt to enter a token should be shown
+ *
+ * A single on-prem migration 'target' (CloudMigrationResponse) can have multiple migration runs (CloudMigrationRun)
+ *  - To list the migration resources:
+ *      1. call GetCloudMigratiopnRunList to list all runs
+ *      2. call GetCloudMigrationRun with the ID from first step to list the result of that migration
+ */
 
-  if (!status?.enabled) {
+function useGetLatestMigrationDestination() {
+  const result = useGetMigrationListQuery();
+  const latestMigration = result.data?.migrations?.[0];
+
+  return {
+    ...result,
+    data: latestMigration,
+  };
+}
+
+function useGetLatestMigrationRun(migrationId?: number) {
+  const listResult = useGetCloudMigrationRunListQuery(migrationId ? { id: migrationId } : skipToken);
+  const latestMigrationRun = listResult.data?.runs?.[0];
+
+  const runResult = useGetCloudMigrationRunQuery(
+    latestMigrationRun?.id && migrationId ? { runId: latestMigrationRun.id, id: migrationId } : skipToken
+  );
+
+  return {
+    ...runResult,
+
+    data: runResult.data,
+
+    error: listResult.error || runResult.error,
+
+    isError: listResult.isError || runResult.isError,
+    isLoading: listResult.isLoading || runResult.isLoading,
+    isFetching: listResult.isFetching || runResult.isFetching,
+  };
+}
+
+export const Page = () => {
+  const migrationDestination = useGetLatestMigrationDestination();
+  const migrationRun = useGetLatestMigrationRun(migrationDestination.data?.id);
+
+  console.log('migrationList', migrationDestination);
+  console.log('migrationRun', migrationRun);
+
+  const isBusy = false;
+  const startMigrationIsLoading = false;
+  const resources: MigrationResourceDTOMock[] = [];
+
+  const handleDisconnect = useCallback(() => {
+    window.alert('TODO: Disconnect');
+  }, []);
+
+  const handleStartMigration = useCallback(() => {
+    // call createMigrationRun() mutation
+    window.alert('TODO: createMigrationRun');
+  }, []);
+
+  const migrationMeta = migrationDestination.data;
+  const isInitialLoading = migrationDestination.isLoading;
+  if (isInitialLoading) {
+    return <div>Loading...</div>;
+  } else if (!migrationMeta) {
     return <EmptyState />;
   }
-
-  const isBusy = isFetching || isDisconnecting || startMigrationIsLoading;
 
   return (
     <>
       <Stack direction="column" gap={4}>
-        {startMigrationIsError && (
+        {/* {startMigrationIsError && (
           <Alert
             severity="error"
             title={t(
@@ -35,9 +94,9 @@ export const Page = () => {
               'There was an error starting cloud migration'
             )}
           />
-        )}
+        )} */}
 
-        {status.stackURL && (
+        {migrationMeta.stack && (
           <Box
             borderColor="weak"
             borderStyle="solid"
@@ -51,8 +110,8 @@ export const Page = () => {
               title={t('migrate-to-cloud.summary.target-stack-title', 'Uploading to')}
               value={
                 <>
-                  {status.stackURL}{' '}
-                  <Button onClick={() => setIsDisconnecting(true)} disabled={isBusy} variant="secondary" size="sm">
+                  {migrationMeta.stack}{' '}
+                  <Button onClick={handleDisconnect} disabled={isBusy} variant="secondary" size="sm">
                     <Trans i18nKey="migrate-to-cloud.summary.disconnect">Disconnect</Trans>
                   </Button>
                 </>
@@ -61,7 +120,7 @@ export const Page = () => {
 
             <Button
               disabled={isBusy}
-              onClick={() => startMigration()}
+              onClick={handleStartMigration}
               icon={startMigrationIsLoading ? 'spinner' : undefined}
             >
               <Trans i18nKey="migrate-to-cloud.summary.start-migration">Upload everything</Trans>
@@ -72,7 +131,7 @@ export const Page = () => {
         {resources && <ResourcesTable resources={resources} />}
       </Stack>
 
-      <DisconnectModal isOpen={isDisconnecting} onDismiss={() => setIsDisconnecting(false)} />
+      {/* <DisconnectModal isOpen={isDisconnecting} onDismiss={() => setIsDisconnecting(false)} /> */}
     </>
   );
 };
