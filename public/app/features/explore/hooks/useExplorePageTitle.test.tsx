@@ -1,8 +1,11 @@
 import { renderHook, waitFor } from '@testing-library/react';
+import React from 'react';
 import { TestProvider } from 'test/helpers/TestProvider';
+import { getGrafanaContextMock } from 'test/mocks/getGrafanaContextMock';
 
 import { setDataSourceSrv } from '@grafana/runtime';
 import { DataSourceRef } from '@grafana/schema';
+import { AppChromeService } from 'app/core/components/AppChrome/AppChromeService';
 
 import { makeDatasourceSetup } from '../spec/helper/setup';
 
@@ -39,13 +42,27 @@ describe('useExplorePageTitle', () => {
       reload: jest.fn(),
     });
 
+    const chromeMock: AppChromeService = jest.mocked(new AppChromeService());
+    chromeMock.update = jest.fn();
+
     renderHook(() => useExplorePageTitle({ panes: JSON.stringify({ a: { datasource: 'loki-uid' } }) }), {
-      wrapper: TestProvider,
+      wrapper: ({ children }) => (
+        <TestProvider
+          grafanaContext={{
+            ...getGrafanaContextMock(),
+            chrome: chromeMock,
+          }}
+        >
+          {children}
+        </TestProvider>
+      ),
     });
 
     await waitFor(() => {
       expect(global.document.title).toEqual(expect.stringContaining('loki'));
       expect(global.document.title).toEqual(expect.not.stringContaining('elastic'));
+      // checks if the breadcrumb is updated with the datasource name
+      expect(chromeMock.update).toHaveBeenCalledWith({ pageNav: { text: 'loki' } });
     });
   });
 
@@ -79,18 +96,32 @@ describe('useExplorePageTitle', () => {
       reload: jest.fn(),
     });
 
+    const chromeMock: AppChromeService = jest.mocked(new AppChromeService());
+    chromeMock.update = jest.fn();
+
     renderHook(
       () =>
         useExplorePageTitle({
           panes: JSON.stringify({ a: { datasource: 'loki-uid' }, b: { datasource: 'elastic-uid' } }),
         }),
       {
-        wrapper: TestProvider,
+        wrapper: ({ children }) => (
+          <TestProvider
+            grafanaContext={{
+              ...getGrafanaContextMock(),
+              chrome: chromeMock,
+            }}
+          >
+            {children}
+          </TestProvider>
+        ),
       }
     );
 
     await waitFor(() => {
       expect(global.document.title).toEqual(expect.stringContaining('loki | elastic'));
+      // checks if the breadcrumb is updated with the datasource name
+      expect(chromeMock.update).toHaveBeenCalledWith({ pageNav: { text: 'loki | elastic' } });
     });
   });
 });
