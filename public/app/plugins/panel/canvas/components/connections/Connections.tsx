@@ -319,15 +319,15 @@ export class Connections {
     let vy2 = y2;
     if (this.selection.value && this.selection.value.vertices) {
       if (this.selectedVertexIndex !== undefined && this.selectedVertexIndex > 0) {
-        vx1 += this.selection.value.vertices[this.selectedVertexIndex - 1].x * (x2 - x1);
-        vy1 += this.selection.value.vertices[this.selectedVertexIndex - 1].y * (y2 - y1);
+        vx1 += this.selection.value.vertices[this.selectedVertexIndex - 1].x * deltaX;
+        vy1 += this.selection.value.vertices[this.selectedVertexIndex - 1].y * deltaY;
       }
       if (
         this.selectedVertexIndex !== undefined &&
         this.selectedVertexIndex < this.selection.value.vertices.length - 1
       ) {
-        vx2 = this.selection.value.vertices[this.selectedVertexIndex + 1].x * (x2 - x1) + x1;
-        vy2 = this.selection.value.vertices[this.selectedVertexIndex + 1].y * (y2 - y1) + y1;
+        vx2 = this.selection.value.vertices[this.selectedVertexIndex + 1].x * deltaX + x1;
+        vy2 = this.selection.value.vertices[this.selectedVertexIndex + 1].y * deltaY + y1;
       }
     }
 
@@ -464,12 +464,12 @@ export class Connections {
     let vy2 = y2;
     if (this.selection.value && this.selection.value.vertices) {
       if (this.selectedVertexIndex !== undefined && this.selectedVertexIndex > 0) {
-        vx1 += this.selection.value.vertices[this.selectedVertexIndex - 1].x * (x2 - x1);
-        vy1 += this.selection.value.vertices[this.selectedVertexIndex - 1].y * (y2 - y1);
+        vx1 += this.selection.value.vertices[this.selectedVertexIndex - 1].x * deltaX;
+        vy1 += this.selection.value.vertices[this.selectedVertexIndex - 1].y * deltaY;
       }
       if (this.selectedVertexIndex !== undefined && this.selectedVertexIndex < this.selection.value.vertices.length) {
-        vx2 = this.selection.value.vertices[this.selectedVertexIndex].x * (x2 - x1) + x1;
-        vy2 = this.selection.value.vertices[this.selectedVertexIndex].y * (y2 - y1) + y1;
+        vx2 = this.selection.value.vertices[this.selectedVertexIndex].x * deltaX + x1;
+        vy2 = this.selection.value.vertices[this.selectedVertexIndex].y * deltaY + y1;
       }
     }
 
