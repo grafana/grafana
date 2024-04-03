@@ -3532,6 +3532,14 @@
         },
         "type": "object"
       },
+      "CloudMigrationRequestBody": {
+        "properties": {
+          "authToken": {
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
       "CloudMigrationResponse": {
         "properties": {
           "created": {
@@ -14799,15 +14807,17 @@
       },
       "post": {
         "operationId": "createMigration",
-        "parameters": [
-          {
-            "in": "query",
-            "name": "authToken",
-            "schema": {
-              "type": "string"
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CloudMigrationRequestBody"
+              }
             }
-          }
-        ],
+          },
+          "required": true,
+          "x-originalParamName": "body"
+        },
         "responses": {
           "200": {
             "$ref": "#/components/responses/cloudMigrationResponse"

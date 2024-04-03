@@ -8,7 +8,7 @@ const injectedRtkApi = api.injectEndpoints({
       query: (queryArg) => ({
         url: `/cloudmigration/migration`,
         method: 'POST',
-        params: { authToken: queryArg.authToken },
+        body: queryArg.cloudMigrationRequestBody,
       }),
     }),
     deleteCloudMigration: build.mutation<DeleteCloudMigrationApiResponse, DeleteCloudMigrationApiArg>({
@@ -19,6 +19,9 @@ const injectedRtkApi = api.injectEndpoints({
     }),
     getCloudMigrationRunList: build.query<GetCloudMigrationRunListApiResponse, GetCloudMigrationRunListApiArg>({
       query: (queryArg) => ({ url: `/cloudmigration/migration/${queryArg.id}/run` }),
+    }),
+    runCloudMigration: build.mutation<RunCloudMigrationApiResponse, RunCloudMigrationApiArg>({
+      query: (queryArg) => ({ url: `/cloudmigration/migration/${queryArg.id}/run`, method: 'POST' }),
     }),
     getCloudMigrationRun: build.query<GetCloudMigrationRunApiResponse, GetCloudMigrationRunApiArg>({
       query: (queryArg) => ({ url: `/cloudmigration/migration/${queryArg.id}/run/${queryArg.runId}` }),
@@ -34,7 +37,7 @@ export type GetMigrationListApiResponse = /** status 200 (empty) */ CloudMigrati
 export type GetMigrationListApiArg = void;
 export type CreateMigrationApiResponse = /** status 200 (empty) */ CloudMigrationResponse;
 export type CreateMigrationApiArg = {
-  authToken?: string;
+  cloudMigrationRequestBody: CloudMigrationRequestBody;
 };
 export type DeleteCloudMigrationApiResponse = unknown;
 export type DeleteCloudMigrationApiArg = {
@@ -51,7 +54,12 @@ export type GetCloudMigrationRunListApiArg = {
   /** ID of an migration */
   id: number;
 };
-export type GetCloudMigrationRunApiResponse = /** status 200 (empty) */ CloudMigrationRun;
+export type RunCloudMigrationApiResponse = /** status 200 (empty) */ MigrateDataResponseDto;
+export type RunCloudMigrationApiArg = {
+  /** ID of an migration */
+  id: number;
+};
+export type GetCloudMigrationRunApiResponse = /** status 200 (empty) */ MigrateDataResponseDto;
 export type GetCloudMigrationRunApiArg = {
   /** ID of an migration */
   id: number;
@@ -79,32 +87,21 @@ export type ErrorResponseBody = {
     For example, a 412 Precondition Failed error may include additional information of why that error happened. */
   status?: string;
 };
-export type MigratedResourceResult = {
-  message?: string;
-  status?: string;
+export type CloudMigrationRequestBody = {
+  authToken?: string;
 };
-export type MigratedResource = {
-  id?: string;
-  name?: string;
-  refID?: string;
-  result?: MigratedResourceResult;
-  type?: string;
+export type ItemStatus = string;
+export type MigrateDataResponseItemDto = {
+  error?: string;
+  refId?: string;
+  status?: ItemStatus;
 };
-export type MigrationResult = {
-  message?: string;
-  status?: string;
-};
-export type CloudMigrationRun = {
-  created?: string;
-  finished?: string;
+export type MigrateDataResponseDto = {
   id?: number;
-  items?: MigratedResource[];
-  result?: MigrationResult;
-  uid?: string;
-  updated?: string;
+  items?: MigrateDataResponseItemDto[];
 };
 export type CloudMigrationRunList = {
-  runs?: CloudMigrationRun[];
+  runs?: MigrateDataResponseDto[];
 };
 export type CreateAccessTokenResponseDto = {
   token?: string;
@@ -115,6 +112,7 @@ export const {
   useDeleteCloudMigrationMutation,
   useGetCloudMigrationQuery,
   useGetCloudMigrationRunListQuery,
+  useRunCloudMigrationMutation,
   useGetCloudMigrationRunQuery,
   useCreateCloudMigrationTokenMutation,
 } = injectedRtkApi;
