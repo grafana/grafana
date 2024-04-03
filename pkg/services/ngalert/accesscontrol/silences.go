@@ -22,7 +22,7 @@ const (
 
 var (
 	// asserts full read-only access to silences
-	readAnySilenceEvaluator = ac.EvalPermission(instancesRead)
+	readAllSilencesEvaluator = ac.EvalPermission(instancesRead)
 	// asserts that user has access to silences at all
 	readSomeSilenceEvaluator = ac.EvalAny(ac.EvalPermission(instancesRead), ac.EvalPermission(silenceRead))
 	// asserts whether user has read access to rules in a specific folder
@@ -33,8 +33,8 @@ var (
 		)
 	}
 
-	// asserts that user has access to create any silence (ie full create access)
-	createAnySilenceEvaluator = ac.EvalAll(ac.EvalPermission(instancesCreate), readAnySilenceEvaluator)
+	// shortcut assertion to check if user can create any silence
+	createAnySilenceEvaluator = ac.EvalAll(ac.EvalPermission(instancesCreate), readAllSilencesEvaluator)
 	// asserts that user has access to create global silences
 	createGlobalSilenceEvaluator = ac.EvalAll(ac.EvalPermission(instancesCreate), readSomeSilenceEvaluator)
 	// asserts that user has access to create silences at all
@@ -55,11 +55,11 @@ var (
 		)
 	}
 
-	// asserts that user has access to create any silence (ie full update access)
-	updateAnySilenceEvaluator = ac.EvalAll(ac.EvalPermission(instancesWrite), readAnySilenceEvaluator)
+	// shortcut assertion to check if user can update any silence
+	updateAnySilenceEvaluator = ac.EvalAll(ac.EvalPermission(instancesWrite), readAllSilencesEvaluator)
 	// asserts that user has access to update global silences
 	updateGlobalSilenceEvaluator = ac.EvalAll(ac.EvalPermission(instancesWrite), readSomeSilenceEvaluator)
-	// asserts that user has access to create silences at all
+	// asserts that user has access to update silences at all
 	updateSomeRuleSilenceEvaluator = ac.EvalAll(
 		readSomeSilenceEvaluator,
 		ac.EvalAny(
@@ -105,12 +105,12 @@ func NewSilenceService(ac ac.AccessControl, store RuleUIDToNamespaceStore) *Sile
 // For silences that are not attached to a rule, are checked against authorization.
 // This method is more preferred when many silences need to be checked.
 func (s SilenceService) FilterByAccess(ctx context.Context, user identity.Requester, silences ...Silence) ([]Silence, error) {
-	canAll, err := s.HasAccess(ctx, user, readAnySilenceEvaluator)
-	if err != nil || canAll { // exit if user can either read all silences or there is error
+	canAll, err := s.HasAccess(ctx, user, readAllSilencesEvaluator)
+	if err != nil || canAll { // return early if user can either read all silences or there is an error
 		return silences, err
 	}
-	canGlobal, err := s.HasAccess(ctx, user, readSomeSilenceEvaluator)
-	if err != nil || !canGlobal { // if user cannot read global silences, then it does not have silence permissions at all.
+	canSome, err := s.HasAccess(ctx, user, readSomeSilenceEvaluator)
+	if err != nil || !canSome {
 		return nil, err
 	}
 	result := make([]Silence, 0, len(silences))
@@ -151,6 +151,11 @@ func (s SilenceService) FilterByAccess(ctx context.Context, user identity.Reques
 
 // AuthorizeReadSilence checks if user has access to read a silence
 func (s SilenceService) AuthorizeReadSilence(ctx context.Context, user identity.Requester, silence Silence) error {
+	canAll, err := s.HasAccess(ctx, user, readAllSilencesEvaluator)
+	if canAll || err != nil { // return early if user can either read all silences or there is error
+		return err
+	}
+
 	can, err := s.HasAccess(ctx, user, readSomeSilenceEvaluator)
 	if err != nil {
 		return err
@@ -161,11 +166,6 @@ func (s SilenceService) AuthorizeReadSilence(ctx context.Context, user identity.
 	ruleUID := silence.GetRuleUID()
 	if ruleUID == nil {
 		return nil // user can read global
-	}
-
-	canAll, err := s.HasAccess(ctx, user, readAnySilenceEvaluator)
-	if canAll || err != nil { // exit if user can either read all silences or there is error
-		return err
 	}
 
 	// otherwise resolve rule key to the action's scope
@@ -183,16 +183,16 @@ func (s SilenceService) AuthorizeReadSilence(ctx context.Context, user identity.
 
 // AuthorizeCreateSilence checks if user has access to create a silence. Returns ErrAuthorizationBase if user is not authorized
 func (s SilenceService) AuthorizeCreateSilence(ctx context.Context, user identity.Requester, silence Silence) error {
+	canAny, err := s.HasAccess(ctx, user, createAnySilenceEvaluator)
+	if err != nil || canAny {
+		// return early if user can either create any silence or there is an error
+		return err
+	}
 	ruleUID := silence.GetRuleUID()
 	if ruleUID == nil {
 		return s.HasAccessOrError(ctx, user, createGlobalSilenceEvaluator, func() string {
-			return "create silences that can potentially affect multiple rules"
+			return "create global silence"
 		})
-	} else {
-		canAll, err := s.HasAccess(ctx, user, createAnySilenceEvaluator)
-		if err != nil || canAll { // exit if user can either read all silences or there is error
-			return err
-		}
 	}
 	// pre-check whether a user has at least some basic permissions before hit the store
 	if err := s.HasAccessOrError(ctx, user, createSomeRuleSilenceEvaluator, func() string { return "create any silences" }); err != nil {
@@ -212,16 +212,16 @@ func (s SilenceService) AuthorizeCreateSilence(ctx context.Context, user identit
 
 // AuthorizeUpdateSilence checks if user has access to update\expire a silence. Returns ErrAuthorizationBase if user is not authorized
 func (s SilenceService) AuthorizeUpdateSilence(ctx context.Context, user identity.Requester, silence Silence) error {
+	canAny, err := s.HasAccess(ctx, user, updateAnySilenceEvaluator)
+	if err != nil || canAny {
+		// return early if user can either update any silence or there is an error
+		return err
+	}
 	ruleUID := silence.GetRuleUID()
 	if ruleUID == nil {
 		return s.HasAccessOrError(ctx, user, updateGlobalSilenceEvaluator, func() string {
-			return "update silences that can potentially affect multiple rules"
+			return "update global silence"
 		})
-	} else {
-		canAll, err := s.HasAccess(ctx, user, updateAnySilenceEvaluator)
-		if err != nil || canAll { // exit if user can either read all silences or there is error
-			return err
-		}
 	}
 	// pre-check whether a user has at least some basic permissions before hit the store
 	if err := s.HasAccessOrError(ctx, user, updateSomeRuleSilenceEvaluator, func() string { return "update any silences" }); err != nil {
