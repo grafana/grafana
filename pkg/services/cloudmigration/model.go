@@ -1,6 +1,8 @@
 package cloudmigration
 
 import (
+	"encoding/json"
+	"errors"
 	"time"
 
 	"github.com/grafana/grafana/pkg/util/errutil"
@@ -51,6 +53,16 @@ type CloudMigrationRun struct {
 	Created           time.Time `json:"created"`
 	Updated           time.Time `json:"updated"`
 	Finished          time.Time `json:"finished"`
+}
+
+func (r CloudMigrationRun) ToResponse() (*MigrateDataResponseDTO, error) {
+	var result MigrateDataResponseDTO
+	err := json.Unmarshal(r.Result, &result)
+	if err != nil {
+		return nil, errors.New("could not parse result of run")
+	}
+	result.RunID = r.ID
+	return &result, nil
 }
 
 type CloudMigrationRunList struct {
