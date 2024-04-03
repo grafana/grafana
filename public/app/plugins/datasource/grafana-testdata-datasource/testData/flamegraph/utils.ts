@@ -1,3 +1,7 @@
+import { addRow, DataFrame, Field, FieldType } from '@grafana/data';
+
+import profile from './pyroscope_flamebearer.json';
+
 // START_OFFSET is offset of the bar relative to previous sibling
 const START_OFFSET = 0;
 // VALUE_OFFSET is value or width of the bar
@@ -100,4 +104,50 @@ function levelsToTree(levels: number[][], names: string[]): ProfileNode | undefi
   }
 
   return tree;
+}
+
+function treeToNestedSetDataFrame(tree: ProfileNode, unit: string): DataFrame {
+  const levelField: Field = { name: 'level', type: FieldType.number, config: {}, values: [] };
+  const valueField: Field = { name: 'value', type: FieldType.number, config: { unit }, values: [] };
+  const selfField: Field = { name: 'self', type: FieldType.number, config: { unit }, values: [] };
+  const labelField: Field = { name: 'label', type: FieldType.string, config: {}, values: [] };
+
+  const frame: DataFrame = {
+    name: 'response',
+    fields: [levelField, valueField, selfField, labelField],
+    length: 0,
+    meta: {
+      preferredVisualisationType: 'flamegraph',
+    },
+  };
+
+  if (tree) {
+    walkTree(tree, (tree) => {
+      addRow(frame, [tree.level, tree.value, tree.self, tree.name]);
+    });
+  }
+
+  return frame;
+}
+
+function walkTree(tree: ProfileNode, fn: (tree: ProfileNode) => void) {
+  const stack = [tree];
+
+  while (true) {
+    if (stack.length === 0) {
+      break;
+    }
+
+    const node = stack.shift()!;
+    fn(node);
+
+    if (node.children) {
+      stack.unshift(...node.children);
+    }
+  }
+}
+
+export function getProfile() {
+  const tree = levelsToTree(profile.flamebearer.levels, profile.flamebearer.names);
+  return treeToNestedSetDataFrame(tree!, profile.metadata.units);
 }

@@ -24,7 +24,8 @@ import { Scenario, TestDataDataQuery, TestDataQueryType } from './dataquery';
 import { queryMetricTree } from './metricTree';
 import { generateRandomEdges, generateRandomNodes, generateShowcaseData, savedNodesResponse } from './nodeGraphUtils';
 import { runStream } from './runStreams';
-import { flameGraphData, flameGraphDataDiff } from './testData/flamegraph/flameGraphResponse';
+import { flameGraphDataDiff } from './testData/flamegraph/profileFrameDiff';
+import { getProfile } from './testData/flamegraph/utils';
 import { TestDataVariableSupport } from './variables';
 
 export class TestDataDataSource extends DataSourceWithBackend<TestDataDataQuery> {
@@ -260,7 +261,7 @@ export class TestDataDataSource extends DataSourceWithBackend<TestDataDataQuery>
   }
 
   flameGraphQuery(target: TestDataDataQuery): Observable<DataQueryResponse> {
-    const data = target.flamegraphDiff ? flameGraphDataDiff : flameGraphData;
+    const data = target.flamegraphDiff ? flameGraphDataDiff : getProfile();
     return of({ data: [{ ...data, refId: target.refId }] }).pipe(delay(100));
   }
 
