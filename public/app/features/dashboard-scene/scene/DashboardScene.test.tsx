@@ -863,6 +863,53 @@ describe('DashboardScene', () => {
       }
     });
   });
+
+  describe('When coming from explore', () => {
+    // When coming from Explore the first panel in a dashboard is a temporary panel
+    it('should remove first panel from the grid when discarding changes', () => {
+      const scene = new DashboardScene({
+        title: 'hello',
+        uid: 'dash-1',
+        description: 'hello description',
+        editable: true,
+        $timeRange: new SceneTimeRange({
+          timeZone: 'browser',
+        }),
+        controls: new DashboardControls({}),
+        $behaviors: [new behaviors.CursorSync({})],
+        body: new SceneGridLayout({
+          children: [
+            new DashboardGridItem({
+              key: 'griditem-1',
+              x: 0,
+              body: new VizPanel({
+                title: 'Panel A',
+                key: 'panel-1',
+                pluginId: 'table',
+                $data: new SceneQueryRunner({ key: 'data-query-runner', queries: [{ refId: 'A' }] }),
+              }),
+            }),
+            new DashboardGridItem({
+              key: 'griditem-2',
+              body: new VizPanel({
+                title: 'Panel B',
+                key: 'panel-2',
+                pluginId: 'table',
+              }),
+            }),
+          ],
+        }),
+      });
+
+      scene.onEnterEditMode(true);
+      expect(scene.state.isEditing).toBe(true);
+      expect((scene.state.body as SceneGridLayout).state.children.length).toBe(2);
+
+      scene.exitEditMode({ skipConfirm: true });
+      expect(scene.state.isEditing).toBe(false);
+      expect((scene.state.body as SceneGridLayout).state.children.length).toBe(1);
+    });
+  });
 });
 
 function buildTestScene(overrides?: Partial<DashboardSceneState>) {
