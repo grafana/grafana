@@ -14,6 +14,10 @@ weight: 200
 
 Grafana Metrics Explore is a query-less experience for browsing Prometheus-compatible metrics. Search for or filter to find a metric. Quickly find related metrics with just a few simple clicks. A key feature of Metrics Explore is that you don't need to learn PromQL to retrieve metrics.
 
+{{% admonition type="warning" %}}
+Metric Explore is currently in [private preview](/docs/release-life-cycle/). Grafana Labs offers support on a best-effort basis, and breaking changes might occur prior to the feature being made generally available.
+{{% /admonition %}}
+
 With Explore Metrics, you can:
 
 - easily slice and dice metrics based on their labels, so you can see anomalies right away
@@ -29,42 +33,45 @@ You can access Metrics Explore either as a standalone experience or as part of G
 
 ## Standalone experience
 
-Access Metrics as a standalone experience:
+To access Metrics Explore as a standalone experience:
 
-1. Click the arrow next to **Explore** in the left-side menu and click **Metrics**.You are taken to an overview page that shows recent metrics, bookmarks, and the option to select a new metric exploration.
-1. Click **+ New metric exploration**
+1. Click the arrow next to **Explore** in the Grafana left-side menu and click **Metrics**. You will be taken to an overview page that shows recent metrics, bookmarks, and the option to select a new metric exploration.
+1. Click **+ New metric exploration**.
 1. Select **Prometheus** in the drop-down menu under **Data source**. You can also select a Prometheus-compatible data source available in the list.
-1. Click **+ Add label** to select a label from the drop-down menu. You can add multiple labels.  
+1. Click **+ Add label** to select a label from the drop-down menu. You can add multiple labels.  A label type will appear above the label with a drop-down of options. For example, if you select the label `container` a drop-down list of available containers appears.
 1. You can also search for metrics under **Search metrics**. 
 1. Use the time picker to select a date and time range from the drop-down menu or use an absolute time range. 
-1. You can set a refresh rate from the drop-down menu. The default is `Off`. 
+1. Click the arrow next to the **Refresh** icon to set a refresh rate from the drop-down menu. The default is `Off`. 
+1. Click the **Settings** icon and toggle **Always keep selected metric graph in-view** to keep your main graph always in view on the Breakdown drill-down tab. 
+
 
 {{< admonition type="note" >}}
-The **History** button in the upper left maps all the steps when navigating through metrics and their filters.  you can jump back and forth?  `ask how this works, it's a bit wonky when I play around with it`
+The **History** button in the upper left maps all the steps when navigating through metrics and their filters.   `ask how this works, it's a bit wonky when I play around with it`
 {{< /admonition >}}
 
-To further explore a metric, click **Select** in the upper right of the metric to learn more about it. 
+### Metrics exploration
+
+To further explore a metric, click **Select** in the upper right of the metric visualization.
+
+![show select box](/media/metrics-explore/select-metric.png)
 
 - The **Overview** tab provides a description for each metric, as well as the metric `type` and `unit` associated with the metric. It also provides a list of labels associated with the metric.
 - The **Breakdown** tab depicts time series visualizations for each of the label-value pairs for the selected metric. You can further drill down and **Add to filter** - `ask for more info about this from Mary!`
 - The **Related metrics** tab depicts any other metrics with relevant key words. You can repeat the drill down process for any related metric and see all of the preceding tabs. 
 
-Click the **Explore** icon on the right hand side to open the graph in Explore, where you can modify the query or add the graph to a dashboard or incident.
+Once you have the information you need you can:
 
-Click 
+- click the **Explore** icon on the right side to open the graph in Explore, where you can modify the query or add the graph to a dashboard or incident.
 
-You can click on
-Basic controls
-You can modify your time range in two ways: 
-With the standard time range picker on the top left
-By dragging and dropping the time range you want to see on any time series visualization
-Refresh Metrics Explore time interval
-Click to select a dashboard auto refresh time interval
-Settings
-Select Always keep selected metric graph in-view to keep your main graph always in view on the Breakdown drill down tab (in-page link)
+- click the **Share** icon on the right side to copy the metric drill down URL to the clipboard so it can be shared.
+
+- click the **Star** icon on the right side to bookmark and save the metrics exploration.
+
+
+
 Narrow down your results
 Filter label / value pairs
-Use the drop down on the top right to filter your results by relevant label-value pairs 
+Use the drop-down on the top right to filter your results by relevant label-value pairs 
 Keyword search
 The search bar allows you to search your metrics via keyword
 Explain which type of query displays on which type of metric
@@ -87,19 +94,14 @@ You can view all of the label-value pairs or drill into specific labels
 You can also select Add to filters to add a specific label-value pair to your filters
 Related metrics
 The related metrics tab shows other metrics with relevant keywords
-Additional functionality
-There is additional functionality in this section of the product, which include: 
-Explore
-Clicking on the Explore icon will open the graph in Explore, where you’ll be able to modify the query or add the graph to a dashboard or incident
-Share
-Clicking on the Share icon, will copy the URL of your drill down to your clipboard so you can easily share it
-Bookmark
-Clicking on the Star icon, will save your exploration so that you can come back to it later.
+
+
+
 Bookmarks & Recents
 You can access all of your Bookmarks by click Explore > Metrics on the main navigation
 You can also see your recent metrics explorations on this page.
 
-Dashboards experience
+## Dashboards experience
 
 To access the Metrics Explore experience via a dashboard
 
