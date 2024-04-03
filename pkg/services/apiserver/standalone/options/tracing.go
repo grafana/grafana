@@ -11,7 +11,10 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/spf13/pflag"
 	"go.opentelemetry.io/otel/attribute"
+	genericfeatures "k8s.io/apiserver/pkg/features"
 	genericapiserver "k8s.io/apiserver/pkg/server"
+	utilfeature "k8s.io/apiserver/pkg/util/feature"
+	k8stracing "k8s.io/component-base/tracing"
 )
 
 type TracingOptions struct {
@@ -69,6 +72,12 @@ func (o *TracingOptions) Validate() []error {
 }
 
 func (o *TracingOptions) ApplyTo(config *genericapiserver.RecommendedConfig) error {
+	if err := utilfeature.DefaultMutableFeatureGate.SetFromMap(map[string]bool{
+		string(genericfeatures.APIServerTracing): false,
+	}); err != nil {
+		return err
+	}
+
 	tracingCfg := tracing.NewEmptyTracingConfig()
 	var err error
 
@@ -102,6 +111,10 @@ func (o *TracingOptions) ApplyTo(config *genericapiserver.RecommendedConfig) err
 
 	o.TracingService = ts
 	config.TracerProvider = ts.GetTracerProvider()
+
+	if config.LoopbackClientConfig != nil {
+		config.LoopbackClientConfig.Wrap(k8stracing.WrapperFor(config.TracerProvider))
+	}
 
 	config.AddPostStartHookOrDie("grafana-tracing-service", func(hookCtx genericapiserver.PostStartHookContext) error {
 		ctx, cancel := context.WithCancel(context.Background())
