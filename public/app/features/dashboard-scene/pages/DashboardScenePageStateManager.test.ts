@@ -52,21 +52,6 @@ describe('DashboardScenePageStateManager', () => {
       expect(store.getObject(DASHBOARD_FROM_LS_KEY)).toBeUndefined();
     });
 
-    it('shoud fetch dashboard from local storage and keep it there after when asked', async () => {
-      const loader = new DashboardScenePageStateManager({});
-      const localStorageDashboard = { uid: 'fake-dash' };
-      store.setObject(DASHBOARD_FROM_LS_KEY, localStorageDashboard);
-
-      const result = await loader.fetchDashboard({
-        uid: 'fake-dash',
-        route: DashboardRoutes.Normal,
-        keepDashboardFromExploreInLocalStorage: true,
-      });
-
-      expect(result).toEqual(localStorageDashboard);
-      expect(store.getObject(DASHBOARD_FROM_LS_KEY)).toEqual(localStorageDashboard);
-    });
-
     it('should initialize the dashboard scene with the loaded dashboard', async () => {
       setupLoadDashboardMock({ dashboard: { uid: 'fake-dash' }, meta: {} });
 
@@ -217,6 +202,37 @@ describe('DashboardScenePageStateManager', () => {
         advanceBy(DASHBOARD_CACHE_TTL / 2 + 1);
         await loader.fetchDashboard({ uid: 'fake-dash', route: DashboardRoutes.Normal });
         expect(loadDashSpy).toHaveBeenCalledTimes(2);
+      });
+    });
+
+    describe('When coming from explore', () => {
+      it('shoud fetch dashboard from local storage and keep it there after when asked', async () => {
+        const loader = new DashboardScenePageStateManager({});
+        const localStorageDashboard = { uid: 'fake-dash' };
+        store.setObject(DASHBOARD_FROM_LS_KEY, { dashboard: localStorageDashboard });
+
+        const result = await loader.fetchDashboard({
+          uid: 'fake-dash',
+          route: DashboardRoutes.Normal,
+          keepDashboardFromExploreInLocalStorage: true,
+        });
+
+        expect(result).toEqual({ dashboard: localStorageDashboard });
+        expect(store.getObject(DASHBOARD_FROM_LS_KEY)).toEqual({ dashboard: localStorageDashboard });
+      });
+
+      it('shoud not store dashboard in cache when coming from Explore', async () => {
+        const loader = new DashboardScenePageStateManager({});
+        const localStorageDashboard = { uid: 'fake-dash' };
+        store.setObject(DASHBOARD_FROM_LS_KEY, { dashboard: localStorageDashboard });
+
+        await loader.loadDashboard({
+          uid: 'fake-dash',
+          route: DashboardRoutes.Normal,
+          keepDashboardFromExploreInLocalStorage: false,
+        });
+
+        expect(loader.getFromCache('fake-dash')).toBeNull();
       });
     });
   });

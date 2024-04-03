@@ -247,9 +247,11 @@ describe('DashboardScenePage', () => {
 
     await waitForDashbordToRender();
 
-    // Hacking a bit, accessing private cache property to get access to the underlying DashboardScene object
-    const dashboardScenesCache = getDashboardScenePageStateManager()['cache'];
-    expect(dashboardScenesCache['my-dash-uid'].state.isEditing).toBe(true);
+    const panelAMenu = await screen.findByLabelText('Menu for panel with title Panel A');
+    expect(panelAMenu).toBeInTheDocument();
+    await userEvent.click(panelAMenu);
+    const editMenuItem = await screen.findAllByText('Edit');
+    expect(editMenuItem).toHaveLength(1);
   });
 });
 
