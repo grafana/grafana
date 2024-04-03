@@ -1,6 +1,7 @@
 import { skipToken } from '@reduxjs/toolkit/query/react';
 import React, { useCallback, useMemo } from 'react';
 
+import { config } from '@grafana/runtime';
 import { Box, Button, Stack } from '@grafana/ui';
 import { Trans, t } from 'app/core/internationalization';
 
@@ -73,22 +74,58 @@ export const Page = () => {
   console.log('actuallyRunMigrationResult', actuallyRunMigrationResult);
 
   const isBusy = actuallyRunMigrationResult.isLoading || migrationDestination.isFetching || migrationRun.isFetching;
-  const resources: MigrationResourceDTOMock[] = [];
+  // const resources: MigrationResourceDTOMock[] = [];
 
-  const newResources = useMemo(() => {
+  // TODO: API returns this in a *very* wrong format - got to unmarshall it
+  const resources = useMemo(() => {
     if (!migrationRun.data) {
       return undefined;
     }
 
-    const rawResources: Array<MigrateDataResponseItemDto & { type: string }> = JSON.parse(
+    const rawResources: { items: Array<MigrateDataResponseItemDto & { type: string }> } = JSON.parse(
       /// @ts-expect-error
       atob(migrationRun.data.result)
     );
 
-    return rawResources;
+    // converts API status to our expected/mocked status
+    function convertStatus(status: string) {
+      switch (status) {
+        case 'OK':
+          return 'migrated';
+        default:
+          return 'failed';
+      }
+    }
+
+    const betterResources: MigrationResourceDTOMock[] = rawResources.items.flatMap((item) => {
+      if (item.type === 'DATASOURCE') {
+        const datasourceConfig = item.refId
+          ? config.datasources[item.refId ?? ''] || Object.values(config.datasources).find((v) => v.uid === item.refId)
+          : undefined;
+
+        return [
+          {
+            uid: item.refId ?? '',
+            status: convertStatus(item.status ?? ''),
+            type: 'datasource',
+            resource: {
+              uid: item.refId ?? '',
+              name: datasourceConfig?.name ?? 'Unknown data source',
+              type: datasourceConfig?.meta?.name ?? 'Unknown type',
+              /// @ts-expect-error
+              icon: datasourceConfig?.meta?.logos?.small,
+            },
+          },
+        ];
+      }
+
+      return [];
+    });
+
+    return betterResources;
   }, [migrationRun.data]);
 
-  console.log('migration run resources', newResources);
+  console.log('migration run resources', resources);
 
   const handleDisconnect = useCallback(() => {
     window.alert('TODO: Disconnect');
