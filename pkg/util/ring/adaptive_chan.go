@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 	"sync"
-	"sync/atomic"
 )
 
 // Package level named errors.
@@ -165,7 +164,6 @@ type AdaptiveChanController struct {
 	statsChan <-chan AdaptiveChanStats
 	cmdChan   chan<- acCmd
 	cmdChanMu sync.Mutex
-	closed    uint32
 }
 
 // Close releases resources associated with this controller. After calling this
@@ -179,20 +177,11 @@ func (r *AdaptiveChanController) Close() {
 	if r.cmdChan != nil {
 		close(r.cmdChan)
 		r.cmdChan = nil
-		atomic.StoreUint32(&r.closed, 1)
 	}
-}
-
-func (r *AdaptiveChanController) isClosed() bool {
-	return atomic.LoadUint32(&r.closed) != 0
 }
 
 // Min sets the value of Min in the internal *Ring.
 func (r *AdaptiveChanController) Min(ctx context.Context, n int) error {
-	if r.isClosed() {
-		return ErrAdaptiveChanControllerClosed
-	}
-
 	r.cmdChanMu.Lock()
 	defer r.cmdChanMu.Unlock()
 
@@ -204,10 +193,6 @@ func (r *AdaptiveChanController) Min(ctx context.Context, n int) error {
 
 // Max sets the value of Max in the internal *Ring.
 func (r *AdaptiveChanController) Max(ctx context.Context, n int) error {
-	if r.isClosed() {
-		return ErrAdaptiveChanControllerClosed
-	}
-
 	r.cmdChanMu.Lock()
 	defer r.cmdChanMu.Unlock()
 
@@ -219,10 +204,6 @@ func (r *AdaptiveChanController) Max(ctx context.Context, n int) error {
 
 // Grow calls Grow on the internal *Ring.
 func (r *AdaptiveChanController) Grow(ctx context.Context, n int) error {
-	if r.isClosed() {
-		return ErrAdaptiveChanControllerClosed
-	}
-
 	r.cmdChanMu.Lock()
 	defer r.cmdChanMu.Unlock()
 
@@ -234,10 +215,6 @@ func (r *AdaptiveChanController) Grow(ctx context.Context, n int) error {
 
 // Shrink calls Shrink on the internal *Ring.
 func (r *AdaptiveChanController) Shrink(ctx context.Context, n int) error {
-	if r.isClosed() {
-		return ErrAdaptiveChanControllerClosed
-	}
-
 	r.cmdChanMu.Lock()
 	defer r.cmdChanMu.Unlock()
 
@@ -249,10 +226,6 @@ func (r *AdaptiveChanController) Shrink(ctx context.Context, n int) error {
 
 // Clear calls Clear on the internal *Ring.
 func (r *AdaptiveChanController) Clear(ctx context.Context) error {
-	if r.isClosed() {
-		return ErrAdaptiveChanControllerClosed
-	}
-
 	r.cmdChanMu.Lock()
 	defer r.cmdChanMu.Unlock()
 
@@ -264,7 +237,9 @@ func (r *AdaptiveChanController) Clear(ctx context.Context) error {
 // WriteStats writes a snapshot of general stats about the associated
 // AdaptiveChan to the given *AdaptiveChanStats.
 func (r *AdaptiveChanController) WriteStats(ctx context.Context, s *AdaptiveChanStats) error {
-	if r.isClosed() {
+	r.cmdChanMu.Lock()
+	defer r.cmdChanMu.Unlock()
+	if r.cmdChan == nil {
 		return ErrAdaptiveChanControllerClosed
 	}
 
