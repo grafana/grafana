@@ -1,7 +1,7 @@
 import React, { ReactElement } from 'react';
 import { useAsync } from 'react-use';
 
-import { Box, Icon, Spinner, Stack } from '@grafana/ui';
+import { Box, Spinner, Stack } from '@grafana/ui';
 import { Diffs } from 'app/features/dashboard-scene/settings/version-history/utils';
 
 import { DiffGroup } from '../../../dashboard-scene/settings/version-history/DiffGroup';
