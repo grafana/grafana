@@ -23,7 +23,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/gcom"
 	"github.com/grafana/grafana/pkg/services/secrets"
 	"github.com/grafana/grafana/pkg/setting"
-	"github.com/grafana/grafana/pkg/util"
 	"github.com/prometheus/client_golang/prometheus"
 )
 
@@ -442,7 +441,6 @@ func (s *Service) getDashboards(ctx context.Context, id int64) ([]dashboards.Das
 }
 
 func (s *Service) SaveMigrationRun(ctx context.Context, cmr *cloudmigration.CloudMigrationRun) (string, error) {
-	cmr.CloudMigrationUID = util.GenerateShortUID()
 	cmr.Created = time.Now()
 	cmr.Updated = time.Now()
 	cmr.Finished = time.Now()

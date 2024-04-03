@@ -152,6 +152,7 @@ const (
 )
 
 type MigrateDataResponseDTO struct {
+	RunID int64                        `json:"id"`
 	Items []MigrateDataResponseItemDTO `json:"items"`
 }
 

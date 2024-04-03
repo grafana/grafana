@@ -311,9 +311,10 @@ func (cma *CloudMigrationAPI) GetMigrationRunList(c *contextmodel.ReqContext) re
 		r := cloudmigration.MigrateDataResponseDTO{
 			Items: []cloudmigration.MigrateDataResponseItemDTO{},
 		}
-		if err := json.Unmarshal(s.Result, &r.Items); err != nil {
-			return response.Error(http.StatusInternalServerError, "error unmarshaling migration response items", err)
+		if err := json.Unmarshal(s.Result, &r); err != nil {
+			return response.Error(http.StatusInternalServerError, "error unmarshalling migration response items", err)
 		}
+		r.RunID = s.ID
 		runList.Runs = append(runList.Runs, r)
 	}
 
