@@ -19,9 +19,9 @@ weight: 100
 
 # XY chart
 
-XY charts provide a way to visualize arbitrary x and y values in a graph so that you can easily show the relationship between two variables.
+XY charts provide a way to visualize arbitrary x and y values in a graph so that you can easily show the relationship between two variables. XY charts are typically used to create scatter plots. You can also use them to create bubble charts where field values determine the size of each bubble.
 
-![An xy chart showing height weight distribution](screenshot-xy-chart-v10.4.png)
+![An xy chart showing height weight distribution]
 
 ## Supported data formats
 
@@ -40,7 +40,7 @@ Depending on your series mapping selection, the **Frame**, **X-field**, and **Y-
 
 #### Auto series mapping options
 
-When you select **Auto** as your series mapping mode, the following options become available:
+When you select **Auto** as your series mapping mode, the following options are preconfigured, but you can also define them yourself:
 
 - [Frame](#frame)
 - [X-field](#x-field)
@@ -64,17 +64,23 @@ In the resulting chart, x-fields are generated from the values in column "a" unl
 
 ##### Y-fields
 
-The series of the chart are generated from the y-fields. After the x-field is set, by default, all the remaining number fields in the data frame are designated as the y-fields.
+After the x-field is set, by default, all the remaining number fields in the data frame are designated as the y-fields. You can use the y-field selector to explictly choose which fields to use for y.
 
-You can select one y-field to include or you can use [overrides][Configure field overrides] to exclude y-fields individually. To disable y-fields individually, add an override with the following properties for each y-field you want removed:
+The series of the chart are generated from the y-fields. To make changes to a series in an xy chart, make [overrides][Configure field overrides] to the y-field.
+
+You can also use [overrides][Configure field overrides] to exclude y-fields individually. To exclude y-fields individually, add an override with the following properties for each y-field you want removed:
 
 - Override type: **Fields with name**
 - Override property: **Series > Hide in area**
 - Area: **Viz**
 
+Any field you use in the [Size field](#size-field) or [Color field](#color-field), doesn't generate a series.
+
 #### Manual series mapping options
 
-When you select **Manual** as your series mapping mode, the following options become available:
+When you select **Manual** as your series mode, you can add, edit, and delete series. To manage a series, click the **Series** field; to rename the series, click the series name.
+
+In **Manual** mode, you must set the following options:
 
 - **Frame** - Select your data frame or dataset. You can add as many data frames as you want.
 - **X-field** - Select which field x represents.
@@ -82,15 +88,13 @@ When you select **Manual** as your series mapping mode, the following options be
 
 ### Size field
 
-Use this option to set which field value controls size of the points in the chart. This value is relative to the min and max of all the values in the data frame.
+Use this option to set which field's values control the size of the points in the chart. This value is relative to the min and max of all the values in the data frame.
 
 When you select this option, you can then set the [Min point size](#min-point-size) and [Max point size](#max-point-size) options.
 
-<!--shouldn't the other series on the chart still show up even if you've set this using one field, assuming you're using all the data frames? -->
-
 ### Color field
 
-This option is only valid when you've set the **Size field** option. Grafana sets this field based on the size of a value relative to the min and max values of a series or the **Min point size** and **Max point size** values if they're set. To use the color value options under the **Standard options**, you must set this field.
+Use this option to set which field's values control the color of the points in the chart. To use the color value options under the **Standard options**, you must set this field.
 
 Typically, this option is used when you only have one series displayed in the chart.
 
@@ -98,21 +102,17 @@ Typically, this option is used when you only have one series displayed in the ch
 
 Set how values are represented in the visualization.
 
-- **Points** - Display values as points. When you select this option, the [Point size](#point-size), [Min point size](#min-point-size), and [Max point size](#max-point-size) options are also displayed.
-- **Lines** - Display values as lines. When you select this option, the [Line style](#line-style) and [Line width](#line-width) options are also displayed.
-- **Both** - Display values as both points and lines.
+- **Points** - Display values as points. When you select this option, the [Point size](#point-size) option is also displayed.
+- **Lines** - Adds a line between values. When you select this option, the [Line style](#line-style) and [Line width](#line-width) options are also displayed.
+- **Both** - Display both points and lines.
 
 ### Point size
 
-Set the size of all points in the chart, from 1 to 100 pixels in diameter. The default size is five pixels. You can set an [override][Configure field overrides] to set the pixel size by series.
+Set the size of all points in the chart, from one to one hundred pixels in diameter. The default size is five pixels. You can set an [override][Configure field overrides] to set the pixel size by series (y-field).
 
-### Min point size
+### Min/Max point size
 
-Use this option to control the minimum point size when you've set the **Size field** option. You can [override][Configure field overrides] this option for specific series.
-
-### Max point size
-
-Use this option to control the minimum point size when you've set the **Size field** option. You can [override][Configure field overrides] this option for specific series.
+Use this option to control the minimum or maximum point size when you've set the **Size field** option. You can [override][Configure field overrides] this option for specific series.
 
 ### Line style
 
@@ -126,7 +126,7 @@ Set the style of the line. To change the color, use the standard [color scheme][
 
 ### Line width
 
-Set the width of the lines, from one to 10 pixels.
+Set the width of the lines in pixels.
 
 ## Tooltip options
 
