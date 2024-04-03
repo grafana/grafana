@@ -258,7 +258,7 @@ describe('Stats Calculators', () => {
       reducers: [ReducerID.tenthPercentile],
     });
 
-    expect(stats.twentyFifthPercentile).toEqual(1);
+    expect(stats.tenthPercentile).toEqual(1);
   });
 
   it('can reduce 25th percentile', () => {
@@ -290,19 +290,25 @@ describe('Stats Calculators', () => {
 
   it('can reduce the 90th percentile', () => {
     const stats = reduceField({
-      field: createField('x', [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]),
+      field: createField(
+        'x',
+        Array.from({ length: 101 }, (_, index) => index)
+      ),
       reducers: [ReducerID.ninetiethPercentile],
     });
 
-    expect(stats.ninetiethPercentile).toEqual(9);
+    expect(stats.ninetiethPercentile).toEqual(90);
   });
 
   it('can reduce the 99th percentile', () => {
     const stats = reduceField({
-      field: createField('x', [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]),
+      field: createField(
+        'x',
+        Array.from({ length: 101 }, (_, index) => index)
+      ),
       reducers: [ReducerID.ninetyNinthPercentile],
     });
 
-    expect(stats.ninetyNinthPercentile).toEqual(9);
+    expect(stats.ninetyNinthPercentile).toEqual(99);
   });
 });

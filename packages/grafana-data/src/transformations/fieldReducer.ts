@@ -315,7 +315,7 @@ export const fieldReducers = new Registry<FieldReducerInfo>(() => [
     description: '10th percentile value',
     standard: false,
     reduce: (field: Field, ignoreNulls: boolean, nullAsZero: boolean) =>
-      calculatePercentile(ReducerID.twentyFifthPercentile, 0.1, field, ignoreNulls, nullAsZero),
+      calculatePercentile(ReducerID.tenthPercentile, 0.1, field, ignoreNulls, nullAsZero),
     preservesUnits: true,
   },
   {
