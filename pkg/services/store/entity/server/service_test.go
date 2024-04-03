@@ -4,6 +4,7 @@ import (
 	"context"
 	"net/http"
 	"testing"
+	"time"
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/modules"
@@ -26,6 +27,7 @@ func TestWillCreateMetricServerWhenOnlyStorageServerTarget(t *testing.T) {
 			t.Errorf("Error shutting down server: %v", err)
 		}
 	}()
+	time.Sleep(500 * time.Millisecond) // wait for http server to be running
 
 	client := http.Client{}
 	res, err := client.Get("http://localhost:8000/metrics")
