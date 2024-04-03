@@ -1,6 +1,8 @@
 package peakq
 
 import (
+	"fmt"
+
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -47,6 +49,22 @@ func (b *PeakQAPIBuilder) GetGroupVersion() schema.GroupVersion {
 func (b *PeakQAPIBuilder) InstallSchema(scheme *runtime.Scheme) error {
 	gv := peakq.SchemeGroupVersion
 	err := peakq.AddToScheme(scheme)
+	if err != nil {
+		return err
+	}
+
+	err = scheme.AddFieldLabelConversionFunc(
+		peakq.QueryTemplateResourceInfo.GroupVersionKind(),
+		func(label, value string) (string, string, error) {
+			fieldSet := SelectableQueryTemplateFields(&peakq.QueryTemplate{})
+			for key := range fieldSet {
+				if label == key {
+					return label, value, nil
+				}
+			}
+			return "", "", fmt.Errorf("field label not supported for %s: %s", peakq.QueryTemplateResourceInfo.GroupVersionKind(), label)
+		},
+	)
 	if err != nil {
 		return err
 	}

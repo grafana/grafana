@@ -5,6 +5,8 @@ import (
 	"time"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/fields"
+	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apiserver/pkg/registry/generic"
 	genericregistry "k8s.io/apiserver/pkg/registry/generic/registry"
@@ -13,6 +15,7 @@ import (
 	grafanaregistry "github.com/grafana/grafana/pkg/apiserver/registry/generic"
 	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
 	"github.com/grafana/grafana/pkg/services/apiserver/utils"
+	apistore "k8s.io/apiserver/pkg/storage"
 )
 
 var _ grafanarest.Storage = (*storage)(nil)
@@ -28,7 +31,7 @@ func newStorage(scheme *runtime.Scheme, optsGetter generic.RESTOptionsGetter) (*
 	store := &genericregistry.Store{
 		NewFunc:                   resourceInfo.NewFunc,
 		NewListFunc:               resourceInfo.NewListFunc,
-		PredicateFunc:             grafanaregistry.Matcher,
+		PredicateFunc:             Matcher,
 		DefaultQualifiedResource:  resourceInfo.GroupResource(),
 		SingularQualifiedResource: resourceInfo.SingularGroupResource(),
 		TableConvertor: utils.NewTableConverter(
@@ -54,9 +57,31 @@ func newStorage(scheme *runtime.Scheme, optsGetter generic.RESTOptionsGetter) (*
 		UpdateStrategy: strategy,
 		DeleteStrategy: strategy,
 	}
-	options := &generic.StoreOptions{RESTOptions: optsGetter, AttrFunc: grafanaregistry.GetAttrs}
+	options := &generic.StoreOptions{RESTOptions: optsGetter, AttrFunc: GetAttrs}
 	if err := store.CompleteWithOptions(options); err != nil {
 		return nil, err
 	}
 	return &storage{Store: store}, nil
+}
+
+func GetAttrs(obj runtime.Object) (labels.Set, fields.Set, error) {
+	if s, ok := obj.(*peakq.QueryTemplate); ok {
+		return labels.Set(s.Labels), SelectableQueryTemplateFields(s), nil
+	}
+	return nil, nil, fmt.Errorf("not a scope or ScopeDashboardBinding object")
+}
+
+// Matcher returns a generic.SelectionPredicate that matches on label and field selectors.
+func Matcher(label labels.Selector, field fields.Selector) apistore.SelectionPredicate {
+	return apistore.SelectionPredicate{
+		Label:    label,
+		Field:    field,
+		GetAttrs: GetAttrs,
+	}
+}
+
+func SelectableQueryTemplateFields(obj *peakq.QueryTemplate) fields.Set {
+	return generic.MergeFieldsSets(generic.ObjectMetaFieldsSet(&obj.ObjectMeta, false), fields.Set{
+		"spec.title": obj.Spec.Title,
+	})
 }
