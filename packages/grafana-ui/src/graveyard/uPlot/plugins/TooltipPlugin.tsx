@@ -103,62 +103,34 @@ export const TooltipPlugin = ({
       }
     });
 
-    const tooltipInterpolator = config.getTooltipInterpolator();
+    config.addHook('setLegend', (u) => {
+      if (!isMounted()) {
+        return;
+      }
+      setFocusedPointIdx(u.legend.idx!);
+      setFocusedPointIdxs(u.legend.idxs!.slice());
+    });
 
-    if (tooltipInterpolator) {
-      // Custom toolitp positioning
-      config.addHook('setCursor', (u) => {
-        tooltipInterpolator(
-          setFocusedSeriesIdx,
-          setFocusedPointIdx,
-          (clear) => {
-            if (clear) {
-              setCoords(null);
-              return;
-            }
+    // default series/datapoint idx retireval
+    config.addHook('setCursor', (u) => {
+      if (!bbox || !isMounted()) {
+        return;
+      }
 
-            if (!bbox) {
-              return;
-            }
+      const { x, y } = positionTooltip(u, bbox);
+      if (x !== undefined && y !== undefined) {
+        setCoords({ x, y });
+      } else {
+        setCoords(null);
+      }
+    });
 
-            const { x, y } = positionTooltip(u, bbox);
-            if (x !== undefined && y !== undefined) {
-              setCoords({ x, y });
-            }
-          },
-          u
-        );
-      });
-    } else {
-      config.addHook('setLegend', (u) => {
-        if (!isMounted()) {
-          return;
-        }
-        setFocusedPointIdx(u.legend.idx!);
-        setFocusedPointIdxs(u.legend.idxs!.slice());
-      });
-
-      // default series/datapoint idx retireval
-      config.addHook('setCursor', (u) => {
-        if (!bbox || !isMounted()) {
-          return;
-        }
-
-        const { x, y } = positionTooltip(u, bbox);
-        if (x !== undefined && y !== undefined) {
-          setCoords({ x, y });
-        } else {
-          setCoords(null);
-        }
-      });
-
-      config.addHook('setSeries', (_, idx) => {
-        if (!isMounted()) {
-          return;
-        }
-        setFocusedSeriesIdx(idx);
-      });
-    }
+    config.addHook('setSeries', (_, idx) => {
+      if (!isMounted()) {
+        return;
+      }
+      setFocusedSeriesIdx(idx);
+    });
 
     return () => {
       setCoords(null);
