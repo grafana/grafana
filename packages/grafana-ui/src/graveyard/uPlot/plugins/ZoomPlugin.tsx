@@ -121,7 +121,7 @@ export const ZoomPlugin = ({ onZoom, config, withZoomY = false }: ZoomPluginProp
         },
       },
     });
-  }, [config]);
+  }, [config, onZoom, withZoomY]);
 
   return null;
 };

@@ -91,6 +91,7 @@ export const TooltipPlugin = ({
       u.over.addEventListener('mouseenter', plotEnter);
       u.over.addEventListener('mouseleave', plotLeave);
 
+      // eslint-disable-next-line react-hooks/exhaustive-deps
       parentWithFocus = u.root.closest('[tabindex]');
 
       if (parentWithFocus) {
