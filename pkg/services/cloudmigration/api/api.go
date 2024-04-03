@@ -13,7 +13,6 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/middleware"
-	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/cloudmigration"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/web"
@@ -24,7 +23,6 @@ type CloudMigrationAPI struct {
 	routeRegister         routing.RouteRegister
 	log                   log.Logger
 	tracer                tracing.Tracer
-	accessControl         accesscontrol.AccessControl
 }
 
 func RegisterApi(
