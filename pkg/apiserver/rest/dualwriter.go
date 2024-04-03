@@ -202,3 +202,18 @@ func (u *updateWrapper) Preconditions() *metav1.Preconditions {
 func (u *updateWrapper) UpdatedObject(ctx context.Context, oldObj runtime.Object) (newObj runtime.Object, err error) {
 	return u.updated, nil
 }
+
+func SelectDualWriter(mode DualWriterMode, legacy LegacyStorage, storage Storage) Storage {
+	switch mode {
+	case Mode1:
+		return NewDualWriterMode1(legacy, storage)
+	case Mode2:
+		return NewDualWriterMode2(legacy, storage)
+	case Mode3:
+		return NewDualWriterMode3(legacy, storage)
+	case Mode4:
+		return NewDualWriterMode4(legacy, storage)
+	default:
+		return NewDualWriterMode2(legacy, storage)
+	}
+}

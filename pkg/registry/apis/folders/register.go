@@ -139,7 +139,7 @@ func (b *FolderAPIBuilder) GetAPIGroupInfo(
 		if err != nil {
 			return nil, err
 		}
-		storage[resourceInfo.StoragePath()] = grafanarest.NewDualWriterMode2(legacyStore, store)
+		storage[resourceInfo.StoragePath()] = grafanarest.SelectDualWriter(grafanarest.Mode2, legacyStore, store)
 	}
 
 	apiGroupInfo.VersionedResourcesStorageMap[v0alpha1.VERSION] = storage

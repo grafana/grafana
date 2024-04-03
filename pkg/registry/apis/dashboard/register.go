@@ -178,7 +178,7 @@ func (b *DashboardsAPIBuilder) GetAPIGroupInfo(
 		if err := store.CompleteWithOptions(options); err != nil {
 			return nil, err
 		}
-		storage[resourceInfo.StoragePath()] = grafanarest.NewDualWriterMode2(legacyStore, store)
+		storage[resourceInfo.StoragePath()] = grafanarest.SelectDualWriter(grafanarest.Mode2, legacyStore, store)
 	}
 
 	// Summary
