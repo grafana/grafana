@@ -1,4 +1,4 @@
-import { DataFrame } from "../../types";
+import { DataFrame } from '../../types';
 
 export const transformationsVariableSupport = () => {
   return (window as any)?.grafanaBootData?.settings?.featureToggles?.transformationsVariableSupport;
