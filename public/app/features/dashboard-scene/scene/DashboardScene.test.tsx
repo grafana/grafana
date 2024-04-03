@@ -200,6 +200,21 @@ describe('DashboardScene', () => {
         expect(dashboardSceneGraph.getRefreshPicker(scene)!.state.intervals).toEqual(prevState);
       });
 
+      it('A enabling/disabling live now setting should set isDirty true', () => {
+        const liveNowTimer = scene.state.$behaviors?.find(
+          (b) => b instanceof behaviors.LiveNowTimer
+        ) as behaviors.LiveNowTimer;
+        liveNowTimer.enable();
+
+        expect(scene.state.isDirty).toBe(true);
+
+        scene.exitEditMode({ skipConfirm: true });
+        const restoredLiveNowTimer = scene.state.$behaviors?.find(
+          (b) => b instanceof behaviors.LiveNowTimer
+        ) as behaviors.LiveNowTimer;
+        expect(restoredLiveNowTimer.state.enabled).toBeFalsy();
+      });
+
       it('A change to time picker visibility settings should set isDirty true', () => {
         const dashboardControls = scene.state.controls!;
         const prevState = dashboardControls.state.hideTimeControls;
@@ -923,7 +938,7 @@ function buildTestScene(overrides?: Partial<DashboardSceneState>) {
       timeZone: 'browser',
     }),
     controls: new DashboardControls({}),
-    $behaviors: [new behaviors.CursorSync({})],
+    $behaviors: [new behaviors.CursorSync({}), new behaviors.LiveNowTimer({})],
     body: new SceneGridLayout({
       children: [
         new DashboardGridItem({
