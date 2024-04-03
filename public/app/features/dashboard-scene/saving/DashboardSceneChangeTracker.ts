@@ -68,6 +68,9 @@ export class DashboardSceneChangeTracker {
         this.detectChanges();
       }
     }
+    if (payload.changedObject instanceof behaviors.LiveNowTimer) {
+      this.detectChanges();
+    }
     if (isSceneVariableInstance(payload.changedObject)) {
       this.detectChanges();
     }
