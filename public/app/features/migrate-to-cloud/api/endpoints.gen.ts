@@ -5,11 +5,7 @@ const injectedRtkApi = api.injectEndpoints({
       query: () => ({ url: `/cloudmigration/migration` }),
     }),
     createMigration: build.mutation<CreateMigrationApiResponse, CreateMigrationApiArg>({
-      query: (queryArg) => ({
-        url: `/cloudmigration/migration`,
-        method: 'POST',
-        body: queryArg.cloudMigrationRequestBody,
-      }),
+      query: (queryArg) => ({ url: `/cloudmigration/migration`, method: 'POST', body: queryArg.cloudMigrationRequest }),
     }),
     deleteCloudMigration: build.mutation<DeleteCloudMigrationApiResponse, DeleteCloudMigrationApiArg>({
       query: (queryArg) => ({ url: `/cloudmigration/migration/${queryArg.id}`, method: 'DELETE' }),
@@ -37,7 +33,7 @@ export type GetMigrationListApiResponse = /** status 200 (empty) */ CloudMigrati
 export type GetMigrationListApiArg = void;
 export type CreateMigrationApiResponse = /** status 200 (empty) */ CloudMigrationResponse;
 export type CreateMigrationApiArg = {
-  cloudMigrationRequestBody: CloudMigrationRequestBody;
+  cloudMigrationRequest: CloudMigrationRequest;
 };
 export type DeleteCloudMigrationApiResponse = unknown;
 export type DeleteCloudMigrationApiArg = {
@@ -87,7 +83,7 @@ export type ErrorResponseBody = {
     For example, a 412 Precondition Failed error may include additional information of why that error happened. */
   status?: string;
 };
-export type CloudMigrationRequestBody = {
+export type CloudMigrationRequest = {
   authToken?: string;
 };
 export type ItemStatus = string;

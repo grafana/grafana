@@ -277,7 +277,7 @@ func (s *Service) GetMigrationList(ctx context.Context) (*cloudmigration.CloudMi
 	return &cloudmigration.CloudMigrationListResponse{Migrations: migrations}, nil
 }
 
-func (s *Service) CreateMigration(ctx context.Context, cmd cloudmigration.CloudMigrationRequestBody) (*cloudmigration.CloudMigrationResponse, error) {
+func (s *Service) CreateMigration(ctx context.Context, cmd cloudmigration.CloudMigrationRequest) (*cloudmigration.CloudMigrationResponse, error) {
 	ctx, span := s.tracer.Start(ctx, "CloudMigrationService.createMigration")
 	defer span.End()
 
@@ -310,7 +310,7 @@ func (s *Service) CreateMigration(ctx context.Context, cmd cloudmigration.CloudM
 	}, nil
 }
 
-func (s *Service) UpdateMigration(ctx context.Context, id int64, cm cloudmigration.CloudMigrationRequestBody) (*cloudmigration.CloudMigrationResponse, error) {
+func (s *Service) UpdateMigration(ctx context.Context, id int64, cm cloudmigration.CloudMigrationRequest) (*cloudmigration.CloudMigrationResponse, error) {
 	// TODO: Implement method
 	return nil, nil
 }

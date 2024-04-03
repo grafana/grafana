@@ -2323,7 +2323,7 @@
             "in": "body",
             "required": true,
             "schema": {
-              "$ref": "#/definitions/CloudMigrationRequestBody"
+              "$ref": "#/definitions/CloudMigrationRequest"
             }
           }
         ],
@@ -12754,7 +12754,7 @@
         }
       }
     },
-    "CloudMigrationRequestBody": {
+    "CloudMigrationRequest": {
       "type": "object",
       "properties": {
         "authToken": {

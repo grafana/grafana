@@ -147,7 +147,7 @@ func (cma *CloudMigrationAPI) CreateMigration(c *contextmodel.ReqContext) respon
 	ctx, span := cma.tracer.Start(c.Req.Context(), "MigrationAPI.CreateMigration")
 	defer span.End()
 
-	cmd := cloudmigration.CloudMigrationRequestBody{}
+	cmd := cloudmigration.CloudMigrationRequest{}
 	if err := web.Bind(c.Req, &cmd); err != nil {
 		return response.Error(http.StatusBadRequest, "bad request data", err)
 	}
