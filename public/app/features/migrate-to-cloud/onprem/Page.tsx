@@ -92,6 +92,8 @@ export const Page = () => {
       switch (status) {
         case 'OK':
           return 'migrated';
+        case 'failed':
+          return 'failed';
         default:
           return 'failed';
       }
@@ -103,20 +105,30 @@ export const Page = () => {
           ? config.datasources[item.refId ?? ''] || Object.values(config.datasources).find((v) => v.uid === item.refId)
           : undefined;
 
-        return [
-          {
+        return {
+          uid: item.refId ?? '',
+          status: convertStatus(item.status ?? ''),
+          type: 'datasource',
+          resource: {
             uid: item.refId ?? '',
-            status: convertStatus(item.status ?? ''),
-            type: 'datasource',
-            resource: {
-              uid: item.refId ?? '',
-              name: datasourceConfig?.name ?? 'Unknown data source',
-              type: datasourceConfig?.meta?.name ?? 'Unknown type',
-              /// @ts-expect-error
-              icon: datasourceConfig?.meta?.logos?.small,
-            },
+            name: datasourceConfig?.name ?? 'Unknown data source',
+            type: datasourceConfig?.meta?.name ?? 'Unknown type',
+            /// @ts-expect-error
+            icon: datasourceConfig?.meta?.logos?.small,
           },
-        ];
+        };
+      }
+
+      if (item.type === 'DASHBOARD') {
+        return {
+          uid: item.refId ?? '',
+          status: convertStatus(item.status ?? ''),
+          type: 'dashboard',
+          resource: {
+            uid: item.refId ?? '',
+            name: item.refId ?? 'Unknown dashboard',
+          },
+        };
       }
 
       return [];
