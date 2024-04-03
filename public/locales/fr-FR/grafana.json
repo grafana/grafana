@@ -753,12 +753,13 @@
     },
     "migration-token": {
       "body": "Votre instance Grafana autogérée aura besoin d'un jeton d'authentification spécial pour se connecter de manière sécurisée à cette pile cloud.",
-      "delete-button": "Supprimer ce jeton de migration",
       "delete-modal-body": "Si vous avez déjà utilisé ce jeton avec une installation autogérée, celle-ci ne pourra plus importer de contenu.",
       "delete-modal-cancel": "Annuler",
       "delete-modal-confirm": "Supprimer",
       "delete-modal-deleting": "Suppression...",
       "delete-modal-title": "Supprimer le jeton de migration",
+      "error-body": "",
+      "error-title": "",
       "generate-button": "Générer un jeton de migration",
       "generate-button-loading": "Génération d'un jeton de migration…",
       "modal-close": "Fermer",
@@ -767,7 +768,7 @@
       "modal-field-description": "Copiez le jeton maintenant, car vous ne pourrez plus le revoir. Si vous perdez un jeton, vous devrez 'en créer un nouveau.",
       "modal-field-label": "Jeton",
       "modal-title": "Jeton de migration créé",
-      "status": "Statut actuel : <2></2>",
+      "status": "",
       "title": "Jeton de migration"
     },
     "pdc": {

@@ -747,12 +747,13 @@
     },
     "migration-token": {
       "body": "您自己管理的 Grafana 实例需要特殊的身份验证令牌才能安全地连接到该云堆栈。",
-      "delete-button": "删除此迁移令牌",
       "delete-modal-body": "如果您已经在自己管理的安装中使用了此令牌，则该安装将无法再上传内容。",
       "delete-modal-cancel": "取消",
       "delete-modal-confirm": "删除",
       "delete-modal-deleting": "正在删除...",
       "delete-modal-title": "删除迁移令牌",
+      "error-body": "",
+      "error-title": "",
       "generate-button": "生成迁移令牌",
       "generate-button-loading": "正在生成迁移令牌...",
       "modal-close": "关闭",
@@ -761,7 +762,7 @@
       "modal-field-description": "现在就复制令牌，因为您将无法再次看到它。丢失令牌后需要创建一个新令牌。",
       "modal-field-label": "令牌",
       "modal-title": "已创建迁移令牌",
-      "status": "当前状态： <2></2>",
+      "status": "",
       "title": "迁移令牌"
     },
     "pdc": {

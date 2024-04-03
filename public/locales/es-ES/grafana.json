@@ -753,12 +753,13 @@
     },
     "migration-token": {
       "body": "Tu instancia autogestionada de Grafana necesitará un token de autenticación especial para poder conectarse de forma segura a esta pila en la nube.",
-      "delete-button": "Eliminar este token de migración",
       "delete-modal-body": "Si ya has utilizado este token con una instalación autogestionada, la instalación ya no podrá cargar contenido.",
       "delete-modal-cancel": "Cancelar",
       "delete-modal-confirm": "Eliminar",
       "delete-modal-deleting": "Eliminando...",
       "delete-modal-title": "Eliminar token de migración",
+      "error-body": "",
+      "error-title": "",
       "generate-button": "Generar un token de migración",
       "generate-button-loading": "Generando un token de migración...",
       "modal-close": "Cerrar",
@@ -767,7 +768,7 @@
       "modal-field-description": "Copia el token ahora, ya que no lo volverás a ver. Si lo pierdes, deberás crear uno nuevo.",
       "modal-field-label": "Token",
       "modal-title": "Se ha creado el token de migración",
-      "status": "Estado actual: <2></2>",
+      "status": "",
       "title": "Token de migración"
     },
     "pdc": {
