@@ -12,14 +12,14 @@ const options: Array<SelectableValue<LineStyle>> = [
 ];
 
 export interface LineStyleConfig {
-  lineStyle: LineStyle;
+  style: LineStyle;
   animate?: boolean;
 }
 
 type Props = StandardEditorProps<LineStyleConfig>;
 
 export const defaultLineStyleConfig: LineStyleConfig = {
-  lineStyle: LineStyle.Solid,
+  style: LineStyle.Solid,
   animate: false,
 };
 
@@ -28,14 +28,14 @@ export const LineStyleEditor = ({ value, onChange }: Props) => {
     value = defaultLineStyleConfig;
   } else if (typeof value !== 'object') {
     value = {
-      lineStyle: value,
+      style: value,
       animate: false,
     };
   }
 
   const onLineStyleChange = useCallback(
     (lineStyle: LineStyle) => {
-      onChange({ ...value, lineStyle });
+      onChange({ ...value, style: lineStyle });
     },
     [onChange, value]
   );
@@ -49,11 +49,14 @@ export const LineStyleEditor = ({ value, onChange }: Props) => {
 
   return (
     <>
-      <RadioButtonGroup value={value.lineStyle} options={options} onChange={onLineStyleChange} fullWidth />
-      {value.lineStyle !== LineStyle.Solid && (
-        <Field label="Animate">
-          <Switch value={value.animate} onChange={(e) => onAnimateChange(e.currentTarget.checked)} />
-        </Field>
+      <RadioButtonGroup value={value.style} options={options} onChange={onLineStyleChange} fullWidth />
+      {value.style !== LineStyle.Solid && (
+        <>
+          <br />
+          <Field label="Animate">
+            <Switch value={value.animate} onChange={(e) => onAnimateChange(e.currentTarget.checked)} />
+          </Field>
+        </>
       )}
     </>
   );

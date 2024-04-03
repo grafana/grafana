@@ -140,7 +140,7 @@ export const ConnectionSVG = ({
       const xDist = x2 - x1;
       const yDist = y2 - y1;
 
-      const { strokeColor, strokeWidth, strokeRadius, arrowDirection, lineStyle } = getConnectionStyles(
+      const { strokeColor, strokeWidth, strokeRadius, arrowDirection, lineStyle, shouldAnimate } = getConnectionStyles(
         info,
         scene,
         defaultArrowSize,
@@ -341,6 +341,16 @@ export const ConnectionSVG = ({
           ? `url(#${CONNECTION_HEAD_ID_END})`
           : undefined;
 
+      const getAnimationDirection = () => {
+        let values = '100;0';
+
+        if (arrowDirection === ConnectionDirection.Reverse) {
+          values = '0;100';
+        }
+
+        return values;
+      };
+
       return (
         <svg className={styles.connection} key={idx}>
           <g onClick={() => selectConnection(v)}>
@@ -385,10 +395,22 @@ export const ConnectionSVG = ({
                   stroke={strokeColor}
                   strokeWidth={strokeWidth}
                   strokeDasharray={lineStyle}
+                  strokeDashoffset={1}
                   fill={'none'}
                   markerEnd={markerEnd}
                   markerStart={markerStart}
-                />
+                >
+                  {shouldAnimate && (
+                    <animate
+                      attributeName="stroke-dashoffset"
+                      values={getAnimationDirection()}
+                      dur="5s"
+                      calcMode="linear"
+                      repeatCount="indefinite"
+                      fill={'freeze'}
+                    />
+                  )}
+                </path>
                 {isSelected && (
                   <g>
                     {vertices.map((value, index) => {
@@ -451,12 +473,24 @@ export const ConnectionSVG = ({
                   markerEnd={markerEnd}
                   markerStart={markerStart}
                   strokeDasharray={lineStyle}
+                  strokeDashoffset={1}
                   x1={x1}
                   y1={y1}
                   x2={x2}
                   y2={y2}
                   cursor={connectionCursorStyle}
-                />
+                >
+                  {shouldAnimate && (
+                    <animate
+                      attributeName="stroke-dashoffset"
+                      values={getAnimationDirection()}
+                      dur="5s"
+                      calcMode="linear"
+                      repeatCount="indefinite"
+                      fill={'freeze'}
+                    />
+                  )}
+                </line>
                 {isSelected && (
                   <circle
                     id={CONNECTION_VERTEX_ADD_ID}
