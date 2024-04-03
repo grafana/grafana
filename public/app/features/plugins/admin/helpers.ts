@@ -76,7 +76,6 @@ export function mergeLocalsAndRemotes({
           catalogPlugin.hasUpdate &&
           catalogPlugin.installedVersion !== instancePlugin?.version;
 
-        // force rebuild
         if (instancePlugin?.version && instancePlugin?.version !== remotePlugin.version) {
           catalogPlugin.hasUpdate = true;
         }
