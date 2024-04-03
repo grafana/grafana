@@ -4,7 +4,7 @@ import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
 import { DashboardDTO } from 'app/types';
 
 export async function buildNewDashboardSaveModel(urlFolderUid?: string): Promise<DashboardDTO> {
-  let variablesList = defaultDashboard.templating?.list || [];
+  let variablesList = defaultDashboard.templating?.list;
 
   if (config.featureToggles.filtersOnByDefault) {
     // Add filter and group by variables if the datasource supports it
@@ -28,7 +28,7 @@ export async function buildNewDashboardSaveModel(urlFolderUid?: string): Promise
         type: 'groupby',
       };
 
-      variablesList = variablesList.concat([fitlerVariable, groupByVariable]);
+      variablesList = (variablesList || []).concat([fitlerVariable, groupByVariable]);
     }
   }
 
@@ -45,11 +45,14 @@ export async function buildNewDashboardSaveModel(urlFolderUid?: string): Promise
       uid: '',
       title: 'New dashboard',
       panels: [],
-      templating: {
-        list: variablesList,
-      },
     },
   };
+
+  if (variablesList) {
+    data.dashboard.templating = {
+      list: variablesList,
+    };
+  }
 
   if (urlFolderUid) {
     data.meta.folderUid = urlFolderUid;
