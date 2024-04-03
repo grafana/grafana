@@ -6,31 +6,46 @@ labels:
     - oss
 title: Grafana Metrics Explore
 aliases: 
-description: 
+description: This doc describes the Metrics Explore feature
 weight: 200
 ---
 
 # Grafana Metrics Explore
 
-Grafana Metrics Explore is a query-less experience for browsing Prometheus-compatible metrics. Search for or filter to find a metric. Quickly find related metrics - all in just a few clicks. No PromQL to be found anywhere! With Explore Metrics, you can:
+Grafana Metrics Explore is a query-less experience for browsing Prometheus-compatible metrics. Search for or filter to find a metric. Quickly find related metrics with just a few simple clicks. A key feature of Metrics Explore is that you don't need to learn PromQL to retrieve metrics.
 
-easily slice and dice metrics based on their labels, so you can see anomalies right away
-See the right visualization for your metric based on its type (e.g. gauge vs. counter) without writing it yourself
-surface other metrics relevant to the current metric
-“explore in a drawer” - expand a drawer over a dashboard with more content, so you don’t lose your place
-view a history of user steps when navigating through metrics and their filters
-easily pivot to other related telemetry - IE, logs or traces 
+With Explore Metrics, you can:
 
-… all without writing any queries!
+- easily slice and dice metrics based on their labels, so you can see anomalies right away
+- see the right visualization for your metric based on its type (e.g. gauge vs. counter) without writing it yourself
+- surface other metrics relevant to the current metric
+- “explore in a drawer” - expand a drawer over a dashboard with more content, so you don’t lose your place
+- view a history of user steps when navigating through metrics and their filters
+- easily pivot to other related telemetry - IE, logs or traces 
 
-You can access Metrics Explore either as a standalone experience or as part of our Dashboards. 
+You can do all of these things without writing a single query!
 
-Standalone experience
+You can access Metrics Explore either as a standalone experience or as part of Grafana Dashboards. 
 
-Click on Explore > Metrics in the main navigation bar
-You’ll land on an overview page that shows a time series visualization for all of the metrics in your default Prometheus instance
-Change your data source with the drop-down on the top right
-You can change your data source with the Select Prometheus-compatible data source (and we only show these in the data sources for you in the drop-down). 
+## Standalone experience
+
+Access Metrics as a standalone experience:
+
+1. Click the arrow next to **Explore** in the left-side menu and click **Metrics**.You are taken to an overview page that shows recent metrics, bookmarks, and the option to select a new metric exploration.
+1. Click **+ New metric exploration**
+1. Select **Prometheus** in the drop-down menu under **Data source**. You can also select a Prometheus-compatible data source.
+1. Click **+ Add label** and select a label from the drop-down menu. You can add multiple labels.  
+1. Search for metrics under **Search metrics**. 
+1. Use the time picker to select a date/time range from the drop-down menu or use an absolute time range. 
+1. You can set a refresh rate from the drop down menu. The default is `Off`. 
+
+Click on **Select** in a metric to learn more about it. 
+The **Overview** tab provides a description for each metric, as well as the metric type and unit associated with the metric. It also provides a list of labels associated with the metric.
+The **Breakdown** tab 
+
+The **Related metrics** tab
+
+You can click on
 Basic controls
 You can modify your time range in two ways: 
 With the standard time range picker on the top left
