@@ -289,7 +289,12 @@ describe('Stats Calculators', () => {
   });
 
   it('can reduce the 90th percentile', () => {
-    const stats = reduceField({
+    const looseStats = reduceField({
+      field: createField('x', [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]),
+      reducers: [ReducerID.ninetiethPercentile],
+    });
+
+    const preciseStats = reduceField({
       field: createField(
         'x',
         Array.from({ length: 101 }, (_, index) => index)
@@ -297,11 +302,17 @@ describe('Stats Calculators', () => {
       reducers: [ReducerID.ninetiethPercentile],
     });
 
-    expect(stats.ninetiethPercentile).toEqual(90);
+    expect(looseStats.ninetiethPercentile).toEqual(9);
+    expect(preciseStats.ninetiethPercentile).toEqual(90);
   });
 
   it('can reduce the 99th percentile', () => {
-    const stats = reduceField({
+    const looseStats = reduceField({
+      field: createField('x', [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]),
+      reducers: [ReducerID.ninetyNinthPercentile],
+    });
+
+    const preciseStats = reduceField({
       field: createField(
         'x',
         Array.from({ length: 101 }, (_, index) => index)
@@ -309,6 +320,7 @@ describe('Stats Calculators', () => {
       reducers: [ReducerID.ninetyNinthPercentile],
     });
 
-    expect(stats.ninetyNinthPercentile).toEqual(99);
+    expect(looseStats.ninetyNinthPercentile).toEqual(9);
+    expect(preciseStats.ninetyNinthPercentile).toEqual(99);
   });
 });
