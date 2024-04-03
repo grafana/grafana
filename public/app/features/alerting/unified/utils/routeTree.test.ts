@@ -65,14 +65,17 @@ describe('omitRouteFromRouteTree', () => {
       receiver: 'root',
       routes: [
         { id: 'route-2', receiver: 'receiver-2' },
-        { id: 'route-3', receiver: 'receiver-3' },
+        { id: 'route-3', receiver: 'receiver-3', routes: [{ id: 'route-4', receiver: 'receiver-4' }] },
       ],
     };
 
-    expect(omitRouteFromRouteTree({ id: 'route-2' }, tree)).toEqual({
+    expect(omitRouteFromRouteTree({ id: 'route-4' }, tree)).toEqual({
       id: 'route-1',
       receiver: 'root',
-      routes: [{ id: 'route-3', receiver: 'receiver-3', routes: undefined }],
+      routes: [
+        { id: 'route-2', receiver: 'receiver-2' },
+        { id: 'route-3', receiver: 'receiver-3', routes: [] },
+      ],
     });
   });
 
