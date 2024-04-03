@@ -2,11 +2,13 @@ import { skipToken } from '@reduxjs/toolkit/query/react';
 import React, { useCallback, useMemo } from 'react';
 
 import { config } from '@grafana/runtime';
-import { Box, Button, Stack } from '@grafana/ui';
+import { Alert, Box, Button, Stack } from '@grafana/ui';
 import { Trans, t } from 'app/core/internationalization';
 
 import {
+  MigrateDataResponseDto,
   MigrateDataResponseItemDto,
+  useDeleteCloudMigrationMutation,
   useGetCloudMigrationRunListQuery,
   useGetCloudMigrationRunQuery,
   useGetMigrationListQuery,
@@ -66,20 +68,127 @@ function useGetLatestMigrationRun(migrationId?: number) {
 
 export const Page = () => {
   const migrationDestination = useGetLatestMigrationDestination();
-  const migrationRun = useGetLatestMigrationRun(migrationDestination.data?.id);
-  const [actuallyRunMigration, actuallyRunMigrationResult] = useRunCloudMigrationMutation();
+  const lastMigrationRun = useGetLatestMigrationRun(migrationDestination.data?.id);
+  const [performRunMigration, runMigrationResult] = useRunCloudMigrationMutation();
+  const [performDisconnect, disconnectResult] = useDeleteCloudMigrationMutation();
 
-  const isBusy = actuallyRunMigrationResult.isLoading || migrationDestination.isFetching || migrationRun.isFetching;
+  // isBusy is not a loading state, but indicates that the system is doing *something*
+  // and all buttons should be disabled
+  const isBusy =
+    runMigrationResult.isLoading ||
+    migrationDestination.isFetching ||
+    lastMigrationRun.isFetching ||
+    disconnectResult.isLoading;
 
-  // TODO: API returns this in a *very* wrong format - got to unmarshall it
-  const resources = useMemo(() => {
-    if (!migrationRun.data) {
+  const resources = useFixResources(lastMigrationRun.data);
+
+  const handleDisconnect = useCallback(() => {
+    if (migrationDestination.data?.id) {
+      performDisconnect({
+        id: migrationDestination.data.id,
+      });
+    }
+  }, [migrationDestination.data?.id, performDisconnect]);
+
+  const handleStartMigration = useCallback(() => {
+    if (migrationDestination.data?.id) {
+      performRunMigration({ id: migrationDestination.data?.id });
+    }
+  }, [performRunMigration, migrationDestination]);
+
+  const migrationMeta = migrationDestination.data;
+  const isInitialLoading = migrationDestination.isLoading;
+
+  if (isInitialLoading) {
+    // TODO: better loading state
+    return <div>Loading...</div>;
+  } else if (!migrationMeta) {
+    return <EmptyState />;
+  }
+
+  return (
+    <>
+      <Stack direction="column" gap={4}>
+        {runMigrationResult.isError && (
+          <Alert
+            severity="error"
+            title={t(
+              'migrate-to-cloud.summary.run-migration-error-title',
+              'There was an error migrating your resources'
+            )}
+          >
+            <Trans i18nKey="migrate-to-cloud.summary.run-migration-error-description">
+              See the Grafana server logs for more details
+            </Trans>
+          </Alert>
+        )}
+
+        {disconnectResult.isError && (
+          <Alert
+            severity="error"
+            title={t('migrate-to-cloud.summary.disconnect-error-title', 'There was an error disconnecting')}
+          >
+            <Trans i18nKey="migrate-to-cloud.summary.disconnect-error-description">
+              See the Grafana server logs for more details
+            </Trans>
+          </Alert>
+        )}
+
+        {migrationMeta.stack && (
+          <Box
+            borderColor="weak"
+            borderStyle="solid"
+            padding={2}
+            display="flex"
+            gap={4}
+            alignItems="center"
+            justifyContent="space-between"
+          >
+            <MigrationInfo
+              title={t('migrate-to-cloud.summary.target-stack-title', 'Uploading to')}
+              value={
+                <>
+                  {migrationMeta.stack}{' '}
+                  <Button
+                    disabled={isBusy}
+                    onClick={handleDisconnect}
+                    variant="secondary"
+                    size="sm"
+                    icon={disconnectResult.isLoading ? 'spinner' : undefined}
+                  >
+                    <Trans i18nKey="migrate-to-cloud.summary.disconnect">Disconnect</Trans>
+                  </Button>
+                </>
+              }
+            />
+
+            <Button
+              disabled={isBusy}
+              onClick={handleStartMigration}
+              icon={runMigrationResult.isLoading ? 'spinner' : undefined}
+            >
+              <Trans i18nKey="migrate-to-cloud.summary.start-migration">Upload everything</Trans>
+            </Button>
+          </Box>
+        )}
+
+        {resources && <ResourcesTable resources={resources} />}
+      </Stack>
+
+      {/* <DisconnectModal isOpen={isDisconnecting} onDismiss={() => setIsDisconnecting(false)} /> */}
+    </>
+  );
+};
+
+function useFixResources(data: MigrateDataResponseDto | undefined) {
+  return useMemo(() => {
+    if (!data) {
       return undefined;
     }
 
     const rawResources: { items: Array<MigrateDataResponseItemDto & { type: string }> } = JSON.parse(
       /// @ts-expect-error
-      atob(migrationRun.data.result)
+      atob(data.result)
     );
 
     // converts API status to our expected/mocked status
@@ -127,76 +236,5 @@ export const Page = () => {
     });
 
     return betterResources;
-  }, [migrationRun.data]);
-
-  const handleDisconnect = useCallback(() => {
-    window.alert('TODO: Disconnect');
-  }, []);
-
-  const handleStartMigration = useCallback(() => {
-    if (migrationDestination.data?.id) {
-      actuallyRunMigration({ id: migrationDestination.data?.id });
-    }
-  }, [actuallyRunMigration, migrationDestination]);
-
-  const migrationMeta = migrationDestination.data;
-  const isInitialLoading = migrationDestination.isLoading;
-  if (isInitialLoading) {
-    // TODO: better loading state
-    return <div>Loading...</div>;
-  } else if (!migrationMeta) {
-    return <EmptyState />;
-  }
-
-  return (
-    <>
-      <Stack direction="column" gap={4}>
-        {/* {startMigrationIsError && (
-          <Alert
-            severity="error"
-            title={t(
-              'migrate-to-cloud.summary.error-starting-migration',
-              'There was an error starting cloud migration'
-            )}
-          />
-        )} */}
-
-        {migrationMeta.stack && (
-          <Box
-            borderColor="weak"
-            borderStyle="solid"
-            padding={2}
-            display="flex"
-            gap={4}
-            alignItems="center"
-            justifyContent="space-between"
-          >
-            <MigrationInfo
-              title={t('migrate-to-cloud.summary.target-stack-title', 'Uploading to')}
-              value={
-                <>
-                  {migrationMeta.stack}{' '}
-                  <Button onClick={handleDisconnect} disabled={isBusy} variant="secondary" size="sm">
-                    <Trans i18nKey="migrate-to-cloud.summary.disconnect">Disconnect</Trans>
-                  </Button>
-                </>
-              }
-            />
-
-            <Button
-              disabled={isBusy}
-              onClick={handleStartMigration}
-              icon={actuallyRunMigrationResult.isLoading ? 'spinner' : undefined}
-            >
-              <Trans i18nKey="migrate-to-cloud.summary.start-migration">Upload everything</Trans>
-            </Button>
-          </Box>
-        )}
-
-        {resources && <ResourcesTable resources={resources} />}
-      </Stack>
-
-      {/* <DisconnectModal isOpen={isDisconnecting} onDismiss={() => setIsDisconnecting(false)} /> */}
-    </>
-  );
-};
+  }, [data]);
+}
