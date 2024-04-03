@@ -373,9 +373,32 @@
         "description": "(empty)"
       },
       "createReportResponse": {
+        "content": {
+          "application/json": {
+            "schema": {
+              "properties": {
+                "id": {
+                  "format": "int64",
+                  "type": "integer"
+                },
+                "message": {
+                  "type": "string"
+                }
+              },
+              "type": "object"
+            }
+          }
+        },
         "description": "(empty)"
       },
       "createRoleResponse": {
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/RoleDTO"
+            }
+          }
+        },
         "description": "(empty)"
       },
       "createServiceAccountResponse": {
@@ -630,13 +653,22 @@
         "description": "(empty)"
       },
       "getAccessControlStatusResponse": {
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/Status"
+            }
+          }
+        },
         "description": "(empty)"
       },
       "getAllRolesResponse": {
         "content": {
           "application/json": {
             "schema": {
-              "items": {},
+              "items": {
+                "$ref": "#/components/schemas/RoleDTO"
+              },
               "type": "array"
             }
           }
@@ -879,6 +911,13 @@
         "description": "(empty)"
       },
       "getLicenseTokenResponse": {
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/Token"
+            }
+          }
+        },
         "description": "(empty)"
       },
       "getOrgByIDResponse": {
@@ -1063,16 +1102,32 @@
         "description": "(empty)"
       },
       "getReportResponse": {
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/Report"
+            }
+          }
+        },
         "description": "(empty)"
       },
       "getReportSettingsResponse": {
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/ReportSettings"
+            }
+          }
+        },
         "description": "(empty)"
       },
       "getReportsResponse": {
         "content": {
           "application/json": {
             "schema": {
-              "items": {},
+              "items": {
+                "$ref": "#/components/schemas/Report"
+              },
               "type": "array"
             }
           }
@@ -1093,9 +1148,23 @@
         "description": "(empty)"
       },
       "getRoleAssignmentsResponse": {
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/RoleAssignmentsDTO"
+            }
+          }
+        },
         "description": "(empty)"
       },
       "getRoleResponse": {
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/RoleDTO"
+            }
+          }
+        },
         "description": "(empty)"
       },
       "getSSOSettingsResponse": {
@@ -1174,6 +1243,13 @@
         "description": "(empty)"
       },
       "getSyncStatusResponse": {
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/ActiveSyncStatusDTO"
+            }
+          }
+        },
         "description": "(empty)"
       },
       "getTeamByIDResponse": {
@@ -1190,7 +1266,9 @@
         "content": {
           "application/json": {
             "schema": {
-              "items": {},
+              "items": {
+                "$ref": "#/components/schemas/TeamGroupDTO"
+              },
               "type": "array"
             }
           }
@@ -1320,7 +1398,12 @@
         "content": {
           "application/json": {
             "schema": {
-              "additionalProperties": false,
+              "additionalProperties": {
+                "items": {
+                  "$ref": "#/components/schemas/RoleDTO"
+                },
+                "type": "array"
+              },
               "type": "object"
             }
           }
@@ -1341,7 +1424,9 @@
         "content": {
           "application/json": {
             "schema": {
-              "items": {},
+              "items": {
+                "$ref": "#/components/schemas/RecordingRuleJSON"
+              },
               "type": "array"
             }
           }
@@ -1352,7 +1437,9 @@
         "content": {
           "application/json": {
             "schema": {
-              "items": {},
+              "items": {
+                "$ref": "#/components/schemas/RoleDTO"
+              },
               "type": "array"
             }
           }
@@ -1415,7 +1502,12 @@
         "content": {
           "application/json": {
             "schema": {
-              "additionalProperties": false,
+              "additionalProperties": {
+                "items": {
+                  "$ref": "#/components/schemas/RoleDTO"
+                },
+                "type": "array"
+              },
               "type": "object"
             }
           }
@@ -1439,7 +1531,12 @@
         "content": {
           "application/json": {
             "schema": {
-              "additionalProperties": false,
+              "additionalProperties": {
+                "items": {
+                  "$ref": "#/components/schemas/RoleDTO"
+                },
+                "type": "array"
+              },
               "type": "object"
             }
           }
@@ -1625,12 +1722,33 @@
         "description": "(empty)"
       },
       "recordingRuleResponse": {
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/RecordingRuleJSON"
+            }
+          }
+        },
         "description": "(empty)"
       },
       "recordingRuleWriteTargetResponse": {
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/PrometheusRemoteWriteTargetJSON"
+            }
+          }
+        },
         "description": "(empty)"
       },
       "refreshLicenseStatsResponse": {
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/ActiveUserStats"
+            }
+          }
+        },
         "description": "(empty)"
       },
       "resourcePermissionsDescription": {
@@ -1720,6 +1838,13 @@
         "description": "(empty)"
       },
       "searchResultResponse": {
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/SearchResult"
+            }
+          }
+        },
         "description": "(empty)"
       },
       "searchTeamsResponse": {
@@ -1756,6 +1881,13 @@
         "description": "(empty)"
       },
       "setRoleAssignmentsResponse": {
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/RoleAssignmentsDTO"
+            }
+          }
+        },
         "description": "(empty)"
       },
       "unauthorisedError": {
@@ -1866,6 +1998,46 @@
     },
     "schemas": {
       "Ack": {
+        "type": "object"
+      },
+      "ActiveSyncStatusDTO": {
+        "description": "ActiveSyncStatusDTO holds the information for LDAP background Sync",
+        "properties": {
+          "enabled": {
+            "type": "boolean"
+          },
+          "nextSync": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "prevSync": {
+            "$ref": "#/components/schemas/SyncResult"
+          },
+          "schedule": {
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "ActiveUserStats": {
+        "properties": {
+          "active_admins_and_editors": {
+            "format": "int64",
+            "type": "integer"
+          },
+          "active_anonymous_devices": {
+            "format": "int64",
+            "type": "integer"
+          },
+          "active_users": {
+            "format": "int64",
+            "type": "integer"
+          },
+          "active_viewers": {
+            "format": "int64",
+            "type": "integer"
+          }
+        },
         "type": "object"
       },
       "AddAPIKeyCommand": {
@@ -1994,6 +2166,25 @@
           "userId": {
             "format": "int64",
             "type": "integer"
+          }
+        },
+        "type": "object"
+      },
+      "AddTeamRoleCommand": {
+        "properties": {
+          "roleUid": {
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "AddUserRoleCommand": {
+        "properties": {
+          "global": {
+            "type": "boolean"
+          },
+          "roleUid": {
+            "type": "string"
           }
         },
         "type": "object"
@@ -3726,7 +3917,54 @@
         },
         "type": "object"
       },
-      "CreateOrUpdateReportConfig": {},
+      "CreateOrUpdateReportConfig": {
+        "properties": {
+          "dashboards": {
+            "items": {
+              "$ref": "#/components/schemas/ReportDashboard"
+            },
+            "type": "array"
+          },
+          "enableCsv": {
+            "type": "boolean"
+          },
+          "enableDashboardUrl": {
+            "type": "boolean"
+          },
+          "formats": {
+            "items": {
+              "$ref": "#/components/schemas/Type"
+            },
+            "type": "array"
+          },
+          "message": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "options": {
+            "$ref": "#/components/schemas/ReportOptions"
+          },
+          "recipients": {
+            "type": "string"
+          },
+          "replyTo": {
+            "type": "string"
+          },
+          "scaleFactor": {
+            "format": "int64",
+            "type": "integer"
+          },
+          "schedule": {
+            "$ref": "#/components/schemas/ReportSchedule"
+          },
+          "state": {
+            "$ref": "#/components/schemas/State"
+          }
+        },
+        "type": "object"
+      },
       "CreateOrgCommand": {
         "properties": {
           "name": {
@@ -3767,6 +4005,42 @@
         "required": [
           "queries"
         ],
+        "type": "object"
+      },
+      "CreateRoleForm": {
+        "properties": {
+          "description": {
+            "type": "string"
+          },
+          "displayName": {
+            "type": "string"
+          },
+          "global": {
+            "type": "boolean"
+          },
+          "group": {
+            "type": "string"
+          },
+          "hidden": {
+            "type": "boolean"
+          },
+          "name": {
+            "type": "string"
+          },
+          "permissions": {
+            "items": {
+              "$ref": "#/components/schemas/Permission"
+            },
+            "type": "array"
+          },
+          "uid": {
+            "type": "string"
+          },
+          "version": {
+            "format": "int64",
+            "type": "integer"
+          }
+        },
         "type": "object"
       },
       "CreateServiceAccountForm": {
@@ -4334,6 +4608,14 @@
         },
         "type": "object"
       },
+      "DeleteTokenCommand": {
+        "properties": {
+          "instance": {
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
       "DescendantCounts": {
         "additionalProperties": {
           "format": "int64",
@@ -4426,11 +4708,13 @@
         "type": "string"
       },
       "DsPermissionType": {
-        "description": "Datasource permission\nDescription:\n`0` - No Access\n`1` - Query\n`2` - Edit\nEnum: 0,1,2"
+        "description": "Datasource permission\nDescription:\n`0` - No Access\n`1` - Query\n`2` - Edit\nEnum: 0,1,2",
+        "format": "int64",
+        "type": "integer"
       },
       "Duration": {
+        "description": "A Duration represents the elapsed time between two instants\nas an int64 nanosecond count. The representation limits the\nlargest representable duration to approximately 290 years.",
         "format": "int64",
-        "title": "Duration is a type used for marshalling durations.",
         "type": "integer"
       },
       "EmailConfig": {
@@ -4713,6 +4997,18 @@
               "type": "integer"
             },
             "type": "array"
+          }
+        },
+        "type": "object"
+      },
+      "FailedUser": {
+        "description": "FailedUser holds the information of an user that failed",
+        "properties": {
+          "Error": {
+            "type": "string"
+          },
+          "Login": {
+            "type": "string"
           }
         },
         "type": "object"
@@ -7702,6 +7998,20 @@
         },
         "type": "object"
       },
+      "PrometheusRemoteWriteTargetJSON": {
+        "properties": {
+          "data_source_uid": {
+            "type": "string"
+          },
+          "id": {
+            "type": "string"
+          },
+          "remote_write_path": {
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
       "Provenance": {
         "type": "string"
       },
@@ -8398,6 +8708,51 @@
         "title": "ReceiverExport is the provisioned file export of alerting.ReceiverV1.",
         "type": "object"
       },
+      "RecordingRuleJSON": {
+        "description": "RecordingRuleJSON is the external representation of a recording rule",
+        "properties": {
+          "active": {
+            "type": "boolean"
+          },
+          "count": {
+            "type": "boolean"
+          },
+          "description": {
+            "type": "string"
+          },
+          "dest_data_source_uid": {
+            "type": "string"
+          },
+          "id": {
+            "type": "string"
+          },
+          "interval": {
+            "format": "int64",
+            "type": "integer"
+          },
+          "name": {
+            "type": "string"
+          },
+          "prom_name": {
+            "type": "string"
+          },
+          "queries": {
+            "items": {
+              "additionalProperties": false,
+              "type": "object"
+            },
+            "type": "array"
+          },
+          "range": {
+            "format": "int64",
+            "type": "integer"
+          },
+          "target_ref_id": {
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
       "RelativeTimeRange": {
         "description": "RelativeTimeRange is the per query start and end time\nfor requests.",
         "properties": {
@@ -8424,16 +8779,221 @@
         "type": "object"
       },
       "Report": {
-        "description": "ConfigDTO is model representation in transfer"
+        "description": "ConfigDTO is model representation in transfer",
+        "properties": {
+          "created": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "dashboards": {
+            "items": {
+              "$ref": "#/components/schemas/ReportDashboard"
+            },
+            "type": "array"
+          },
+          "enableCsv": {
+            "type": "boolean"
+          },
+          "enableDashboardUrl": {
+            "type": "boolean"
+          },
+          "formats": {
+            "items": {
+              "$ref": "#/components/schemas/Type"
+            },
+            "type": "array"
+          },
+          "id": {
+            "format": "int64",
+            "type": "integer"
+          },
+          "message": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "options": {
+            "$ref": "#/components/schemas/ReportOptions"
+          },
+          "orgId": {
+            "format": "int64",
+            "type": "integer"
+          },
+          "recipients": {
+            "type": "string"
+          },
+          "replyTo": {
+            "type": "string"
+          },
+          "scaleFactor": {
+            "format": "int64",
+            "type": "integer"
+          },
+          "schedule": {
+            "$ref": "#/components/schemas/ReportSchedule"
+          },
+          "state": {
+            "$ref": "#/components/schemas/State"
+          },
+          "uid": {
+            "type": "string"
+          },
+          "updated": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "userId": {
+            "format": "int64",
+            "type": "integer"
+          }
+        },
+        "type": "object"
       },
-      "ReportBrandingOptions": {},
-      "ReportDashboard": {},
-      "ReportDashboardID": {},
-      "ReportEmail": {},
-      "ReportOptions": {},
-      "ReportSchedule": {},
-      "ReportSettings": {},
-      "ReportTimeRange": {},
+      "ReportBrandingOptions": {
+        "properties": {
+          "emailFooterLink": {
+            "type": "string"
+          },
+          "emailFooterMode": {
+            "type": "string"
+          },
+          "emailFooterText": {
+            "type": "string"
+          },
+          "emailLogoUrl": {
+            "type": "string"
+          },
+          "reportLogoUrl": {
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "ReportDashboard": {
+        "properties": {
+          "dashboard": {
+            "$ref": "#/components/schemas/ReportDashboardID"
+          },
+          "reportVariables": {
+            "type": "object"
+          },
+          "timeRange": {
+            "$ref": "#/components/schemas/ReportTimeRange"
+          }
+        },
+        "type": "object"
+      },
+      "ReportDashboardID": {
+        "properties": {
+          "id": {
+            "format": "int64",
+            "type": "integer"
+          },
+          "name": {
+            "type": "string"
+          },
+          "uid": {
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "ReportEmail": {
+        "properties": {
+          "emails": {
+            "description": "Comma-separated list of emails to which to send the report to.",
+            "type": "string"
+          },
+          "id": {
+            "description": "Send the report to the emails specified in the report. Required if emails is not present.",
+            "format": "int64",
+            "type": "string"
+          },
+          "useEmailsFromReport": {
+            "description": "Send the report to the emails specified in the report. Required if emails is not present.",
+            "type": "boolean"
+          }
+        },
+        "type": "object"
+      },
+      "ReportOptions": {
+        "properties": {
+          "layout": {
+            "type": "string"
+          },
+          "orientation": {
+            "type": "string"
+          },
+          "timeRange": {
+            "$ref": "#/components/schemas/ReportTimeRange"
+          }
+        },
+        "type": "object"
+      },
+      "ReportSchedule": {
+        "properties": {
+          "dayOfMonth": {
+            "type": "string"
+          },
+          "endDate": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "frequency": {
+            "type": "string"
+          },
+          "intervalAmount": {
+            "format": "int64",
+            "type": "integer"
+          },
+          "intervalFrequency": {
+            "type": "string"
+          },
+          "startDate": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "timeZone": {
+            "type": "string"
+          },
+          "workdaysOnly": {
+            "type": "boolean"
+          }
+        },
+        "type": "object"
+      },
+      "ReportSettings": {
+        "properties": {
+          "branding": {
+            "$ref": "#/components/schemas/ReportBrandingOptions"
+          },
+          "id": {
+            "format": "int64",
+            "type": "integer"
+          },
+          "orgId": {
+            "format": "int64",
+            "type": "integer"
+          },
+          "userId": {
+            "format": "int64",
+            "type": "integer"
+          }
+        },
+        "type": "object"
+      },
+      "ReportTimeRange": {
+        "properties": {
+          "from": {
+            "type": "string"
+          },
+          "to": {
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
       "ResponseDetails": {
         "properties": {
           "msg": {
@@ -8464,6 +9024,35 @@
           "authTokenId": {
             "format": "int64",
             "type": "integer"
+          }
+        },
+        "type": "object"
+      },
+      "RoleAssignmentsDTO": {
+        "properties": {
+          "role_uid": {
+            "type": "string"
+          },
+          "service_accounts": {
+            "items": {
+              "format": "int64",
+              "type": "integer"
+            },
+            "type": "array"
+          },
+          "teams": {
+            "items": {
+              "format": "int64",
+              "type": "integer"
+            },
+            "type": "array"
+          },
+          "users": {
+            "items": {
+              "format": "int64",
+              "type": "integer"
+            },
+            "type": "array"
           }
         },
         "type": "object"
@@ -8511,6 +9100,32 @@
           "version": {
             "format": "int64",
             "type": "integer"
+          }
+        },
+        "type": "object"
+      },
+      "RolesSearchQuery": {
+        "properties": {
+          "includeHidden": {
+            "type": "boolean"
+          },
+          "orgId": {
+            "format": "int64",
+            "type": "integer"
+          },
+          "teamIds": {
+            "items": {
+              "format": "int64",
+              "type": "integer"
+            },
+            "type": "array"
+          },
+          "userIds": {
+            "items": {
+              "format": "int64",
+              "type": "integer"
+            },
+            "type": "array"
           }
         },
         "type": "object"
@@ -8939,6 +9554,50 @@
         },
         "type": "object"
       },
+      "SearchResult": {
+        "properties": {
+          "result": {
+            "items": {
+              "$ref": "#/components/schemas/SearchResultItem"
+            },
+            "type": "array"
+          }
+        },
+        "type": "object"
+      },
+      "SearchResultItem": {
+        "properties": {
+          "action": {
+            "type": "string"
+          },
+          "basicRole": {
+            "type": "string"
+          },
+          "orgId": {
+            "format": "int64",
+            "type": "integer"
+          },
+          "roleName": {
+            "type": "string"
+          },
+          "scope": {
+            "type": "string"
+          },
+          "teamId": {
+            "format": "int64",
+            "type": "integer"
+          },
+          "userId": {
+            "format": "int64",
+            "type": "integer"
+          },
+          "version": {
+            "format": "int64",
+            "type": "integer"
+          }
+        },
+        "type": "object"
+      },
       "SearchTeamQueryResult": {
         "properties": {
           "page": {
@@ -9132,6 +9791,49 @@
           "userId": {
             "format": "int64",
             "type": "integer"
+          }
+        },
+        "type": "object"
+      },
+      "SetRoleAssignmentsCommand": {
+        "properties": {
+          "service_accounts": {
+            "items": {
+              "format": "int64",
+              "type": "integer"
+            },
+            "type": "array"
+          },
+          "teams": {
+            "items": {
+              "format": "int64",
+              "type": "integer"
+            },
+            "type": "array"
+          },
+          "users": {
+            "items": {
+              "format": "int64",
+              "type": "integer"
+            },
+            "type": "array"
+          }
+        },
+        "type": "object"
+      },
+      "SetUserRolesCommand": {
+        "properties": {
+          "global": {
+            "type": "boolean"
+          },
+          "includeHidden": {
+            "type": "boolean"
+          },
+          "roleUids": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
           }
         },
         "type": "object"
@@ -9339,6 +10041,9 @@
         "title": "A Span defines a continuous sequence of buckets.",
         "type": "object"
       },
+      "State": {
+        "type": "string"
+      },
       "Status": {
         "format": "int64",
         "type": "integer"
@@ -9356,6 +10061,39 @@
       },
       "SupportedTransformationTypes": {
         "type": "string"
+      },
+      "SyncResult": {
+        "properties": {
+          "Elapsed": {
+            "$ref": "#/components/schemas/Duration"
+          },
+          "FailedUsers": {
+            "items": {
+              "$ref": "#/components/schemas/FailedUser"
+            },
+            "type": "array"
+          },
+          "MissingUserIds": {
+            "items": {
+              "format": "int64",
+              "type": "integer"
+            },
+            "type": "array"
+          },
+          "Started": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "UpdatedUserIds": {
+            "items": {
+              "format": "int64",
+              "type": "integer"
+            },
+            "type": "array"
+          }
+        },
+        "title": "SyncResult holds the result of a sync with LDAP. This gives us information on which users were updated and how.",
+        "type": "object"
       },
       "TLSConfig": {
         "properties": {
@@ -9450,6 +10188,30 @@
             "$ref": "#/components/schemas/PermissionType"
           },
           "uid": {
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "TeamGroupDTO": {
+        "properties": {
+          "groupId": {
+            "type": "string"
+          },
+          "orgId": {
+            "format": "int64",
+            "type": "integer"
+          },
+          "teamId": {
+            "format": "int64",
+            "type": "integer"
+          }
+        },
+        "type": "object"
+      },
+      "TeamGroupMapping": {
+        "properties": {
+          "groupId": {
             "type": "string"
           }
         },
@@ -9874,6 +10636,97 @@
         },
         "type": "object"
       },
+      "Token": {
+        "properties": {
+          "account": {
+            "type": "string"
+          },
+          "anonymousRatio": {
+            "format": "int64",
+            "type": "integer"
+          },
+          "company": {
+            "type": "string"
+          },
+          "details_url": {
+            "type": "string"
+          },
+          "exp": {
+            "format": "int64",
+            "type": "integer"
+          },
+          "iat": {
+            "format": "int64",
+            "type": "integer"
+          },
+          "included_users": {
+            "format": "int64",
+            "type": "integer"
+          },
+          "iss": {
+            "type": "string"
+          },
+          "jti": {
+            "type": "string"
+          },
+          "lexp": {
+            "format": "int64",
+            "type": "integer"
+          },
+          "lic_exp_warn_days": {
+            "format": "int64",
+            "type": "integer"
+          },
+          "lid": {
+            "type": "string"
+          },
+          "limit_by": {
+            "type": "string"
+          },
+          "max_concurrent_user_sessions": {
+            "format": "int64",
+            "type": "integer"
+          },
+          "nbf": {
+            "format": "int64",
+            "type": "integer"
+          },
+          "prod": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "slug": {
+            "type": "string"
+          },
+          "status": {
+            "$ref": "#/components/schemas/TokenStatus"
+          },
+          "sub": {
+            "type": "string"
+          },
+          "tok_exp_warn_days": {
+            "format": "int64",
+            "type": "integer"
+          },
+          "trial": {
+            "type": "boolean"
+          },
+          "trial_exp": {
+            "format": "int64",
+            "type": "integer"
+          },
+          "update_days": {
+            "format": "int64",
+            "type": "integer"
+          },
+          "usage_billing": {
+            "type": "boolean"
+          }
+        },
+        "type": "object"
+      },
       "TokenDTO": {
         "properties": {
           "created": {
@@ -9916,6 +10769,10 @@
         },
         "type": "object"
       },
+      "TokenStatus": {
+        "format": "int64",
+        "type": "integer"
+      },
       "Transformation": {
         "properties": {
           "expression": {
@@ -9942,6 +10799,9 @@
           "$ref": "#/components/schemas/Transformation"
         },
         "type": "array"
+      },
+      "Type": {
+        "type": "string"
       },
       "TypeMeta": {
         "description": "+k8s:deepcopy-gen=false",
@@ -10272,6 +11132,39 @@
           },
           "target": {
             "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "UpdateRoleCommand": {
+        "properties": {
+          "description": {
+            "type": "string"
+          },
+          "displayName": {
+            "type": "string"
+          },
+          "global": {
+            "type": "boolean"
+          },
+          "group": {
+            "type": "string"
+          },
+          "hidden": {
+            "type": "boolean"
+          },
+          "name": {
+            "type": "string"
+          },
+          "permissions": {
+            "items": {
+              "$ref": "#/components/schemas/Permission"
+            },
+            "type": "array"
+          },
+          "version": {
+            "format": "int64",
+            "type": "integer"
           }
         },
         "type": "object"
@@ -11493,7 +12386,9 @@
         "requestBody": {
           "content": {
             "application/json": {
-              "schema": {}
+              "schema": {
+                "$ref": "#/components/schemas/CreateRoleForm"
+              }
             }
           },
           "required": true,
@@ -11614,7 +12509,9 @@
         "requestBody": {
           "content": {
             "application/json": {
-              "schema": {}
+              "schema": {
+                "$ref": "#/components/schemas/UpdateRoleCommand"
+              }
             }
           },
           "required": true,
@@ -11694,7 +12591,9 @@
         "requestBody": {
           "content": {
             "application/json": {
-              "schema": {}
+              "schema": {
+                "$ref": "#/components/schemas/SetRoleAssignmentsCommand"
+              }
             }
           },
           "required": true,
@@ -11753,7 +12652,9 @@
         "requestBody": {
           "content": {
             "application/json": {
-              "schema": {}
+              "schema": {
+                "$ref": "#/components/schemas/RolesSearchQuery"
+              }
             }
           },
           "required": true,
@@ -11832,7 +12733,9 @@
         "requestBody": {
           "content": {
             "application/json": {
-              "schema": {}
+              "schema": {
+                "$ref": "#/components/schemas/AddTeamRoleCommand"
+              }
             }
           },
           "required": true,
@@ -11953,7 +12856,9 @@
         "requestBody": {
           "content": {
             "application/json": {
-              "schema": {}
+              "schema": {
+                "$ref": "#/components/schemas/RolesSearchQuery"
+              }
             }
           },
           "required": true,
@@ -12032,7 +12937,9 @@
         "requestBody": {
           "content": {
             "application/json": {
-              "schema": {}
+              "schema": {
+                "$ref": "#/components/schemas/AddUserRoleCommand"
+              }
             }
           },
           "required": true,
@@ -12075,7 +12982,9 @@
         "requestBody": {
           "content": {
             "application/json": {
-              "schema": {}
+              "schema": {
+                "$ref": "#/components/schemas/SetUserRolesCommand"
+              }
             }
           },
           "required": true,
@@ -17129,7 +18038,9 @@
         "requestBody": {
           "content": {
             "application/json": {
-              "schema": {}
+              "schema": {
+                "$ref": "#/components/schemas/DeleteTokenCommand"
+              }
             }
           },
           "required": true,
@@ -17181,7 +18092,9 @@
         "requestBody": {
           "content": {
             "application/json": {
-              "schema": {}
+              "schema": {
+                "$ref": "#/components/schemas/DeleteTokenCommand"
+              }
             }
           },
           "required": true,
@@ -17209,7 +18122,9 @@
         "requestBody": {
           "content": {
             "application/json": {
-              "schema": {}
+              "schema": {
+                "type": "object"
+              }
             }
           },
           "required": true,
@@ -19042,7 +19957,9 @@
         "requestBody": {
           "content": {
             "application/json": {
-              "schema": {}
+              "schema": {
+                "$ref": "#/components/schemas/RecordingRuleJSON"
+              }
             }
           },
           "required": true,
@@ -19076,7 +19993,9 @@
         "requestBody": {
           "content": {
             "application/json": {
-              "schema": {}
+              "schema": {
+                "$ref": "#/components/schemas/RecordingRuleJSON"
+              }
             }
           },
           "required": true,
@@ -19112,7 +20031,9 @@
         "requestBody": {
           "content": {
             "application/json": {
-              "schema": {}
+              "schema": {
+                "$ref": "#/components/schemas/RecordingRuleJSON"
+              }
             }
           },
           "required": true,
@@ -19202,7 +20123,9 @@
         "requestBody": {
           "content": {
             "application/json": {
-              "schema": {}
+              "schema": {
+                "$ref": "#/components/schemas/PrometheusRemoteWriteTargetJSON"
+              }
             }
           },
           "required": true,
@@ -19303,7 +20226,9 @@
         "requestBody": {
           "content": {
             "application/json": {
-              "schema": {}
+              "schema": {
+                "$ref": "#/components/schemas/CreateOrUpdateReportConfig"
+              }
             }
           },
           "required": true,
@@ -19343,7 +20268,9 @@
         "requestBody": {
           "content": {
             "application/json": {
-              "schema": {}
+              "schema": {
+                "$ref": "#/components/schemas/ReportEmail"
+              }
             }
           },
           "required": true,
@@ -19475,7 +20402,9 @@
         "requestBody": {
           "content": {
             "application/json": {
-              "schema": {}
+              "schema": {
+                "$ref": "#/components/schemas/ReportSettings"
+              }
             }
           },
           "required": true,
@@ -19512,7 +20441,9 @@
         "requestBody": {
           "content": {
             "application/json": {
-              "schema": {}
+              "schema": {
+                "$ref": "#/components/schemas/CreateOrUpdateReportConfig"
+              }
             }
           },
           "required": true,
@@ -19643,7 +20574,9 @@
         "requestBody": {
           "content": {
             "application/json": {
-              "schema": {}
+              "schema": {
+                "$ref": "#/components/schemas/CreateOrUpdateReportConfig"
+              }
             }
           },
           "required": true,
@@ -20743,7 +21676,9 @@
         "requestBody": {
           "content": {
             "application/json": {
-              "schema": {}
+              "schema": {
+                "$ref": "#/components/schemas/TeamGroupMapping"
+              }
             }
           },
           "required": true,
