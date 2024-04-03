@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 
 import { selectors } from '@grafana/e2e-selectors';
-import { Button, Checkbox, TextArea, Stack, Alert, Box, Field, Icon } from '@grafana/ui';
+import { Button, Checkbox, TextArea, Stack, Alert, Box, Field } from '@grafana/ui';
 import { SaveDashboardOptions } from 'app/features/dashboard/components/SaveDashboard/types';
 
 import { DashboardScene } from '../scene/DashboardScene';
@@ -24,7 +24,7 @@ export interface Props {
 }
 
 export function SaveDashboardForm({ dashboard, drawer, changeInfo }: Props) {
-  const { changedSaveModel, hasChanges, hasFolderChanges } = changeInfo;
+  const { changedSaveModel, hasChanges } = changeInfo;
 
   const { state, onSaveDashboard } = useSaveDashboard(false);
   const [options, setOptions] = useState<SaveDashboardOptions>({
@@ -118,13 +118,6 @@ export function SaveDashboardForm({ dashboard, drawer, changeInfo }: Props) {
           rows={5}
         />
       </Field>
-      {hasFolderChanges && (
-        <Box>
-          Change folder: {dashboard.getInitialState()?.meta.folderTitle}
-          <Icon name="arrow-right" />
-          {dashboard.state.meta.folderTitle}
-        </Box>
-      )}
       <Box paddingTop={2}>{renderFooter(state.error)}</Box>
     </Stack>
   );
