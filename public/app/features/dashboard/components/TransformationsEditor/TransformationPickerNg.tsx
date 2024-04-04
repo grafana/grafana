@@ -265,7 +265,7 @@ function getTransformationGridStyles(theme: GrafanaTheme2) {
       color: `${theme.colors.text.disabled} !important`,
       'img': {
         filter: 'grayscale(100%)',
-        opacity: 0.1,
+        opacity: 0.33,
       },
     }),
     cardApplicableInfo: css({
