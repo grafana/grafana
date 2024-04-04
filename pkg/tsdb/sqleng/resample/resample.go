@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 )
 
@@ -66,13 +67,13 @@ func getRowFillValues(f *data.Frame, tsSchema data.TimeSeriesSchema, currentTime
 // This is needed in the case of the selected query interval doesn't
 // match the intervals of the time-series field in the data.Frame and
 // therefore needs to be resampled.
-func resample(f *data.Frame, qm dataQueryModel) (*data.Frame, error) {
+func Resample(f *data.Frame, fillMissing *data.FillMissing, timeRange backend.TimeRange, interval time.Duration) (*data.Frame, error) {
 	tsSchema := f.TimeSeriesSchema()
 	if tsSchema.Type == data.TimeSeriesTypeNot {
 		return f, fmt.Errorf("can not fill missing, not timeseries frame")
 	}
 
-	if qm.Interval == 0 {
+	if interval == 0 {
 		return f, nil
 	}
 
@@ -90,10 +91,10 @@ func resample(f *data.Frame, qm dataQueryModel) (*data.Frame, error) {
 	lastSeenRowIdx := -1
 	timeField := f.Fields[tsSchema.TimeIndex]
 
-	startUnixTime := qm.TimeRange.From.Unix() / int64(qm.Interval.Seconds()) * int64(qm.Interval.Seconds())
+	startUnixTime := timeRange.From.Unix() / int64(interval.Seconds()) * int64(interval.Seconds())
 	startTime := time.Unix(startUnixTime, 0)
 
-	for currentTime := startTime; !currentTime.After(qm.TimeRange.To); currentTime = currentTime.Add(qm.Interval) {
+	for currentTime := startTime; !currentTime.After(timeRange.To); currentTime = currentTime.Add(interval) {
 		initialRowIdx := 0
 		if lastSeenRowIdx > 0 {
 			initialRowIdx = lastSeenRowIdx + 1
@@ -114,7 +115,7 @@ func resample(f *data.Frame, qm dataQueryModel) (*data.Frame, error) {
 			}
 
 			// take the last element of the period current - interval <-> current, use it as value for current data point value
-			previousTime := currentTime.Add(-qm.Interval)
+			previousTime := currentTime.Add(-interval)
 			if t.(time.Time).After(previousTime) {
 				if !t.(time.Time).After(currentTime) {
 					intermediateRows = append(intermediateRows, initialRowIdx)
@@ -128,7 +129,7 @@ func resample(f *data.Frame, qm dataQueryModel) (*data.Frame, error) {
 		}
 
 		// no intermediate points; set values following fill missing mode
-		fieldVals := getRowFillValues(f, tsSchema, currentTime, qm.FillMissing, intermediateRows, lastSeenRowIdx)
+		fieldVals := getRowFillValues(f, tsSchema, currentTime, fillMissing, intermediateRows, lastSeenRowIdx)
 
 		resampledFrame.InsertRow(resampledRowidx, fieldVals...)
 		resampledRowidx++
