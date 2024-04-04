@@ -95,8 +95,6 @@ func (s *Service) SignIdentity(ctx context.Context, id identity.Requester) (stri
 			}
 		}
 
-		fmt.Println(claims)
-
 		token, err := s.signer.SignIDToken(ctx, claims)
 		if err != nil {
 			s.metrics.failedTokenSigningCounter.Inc()
@@ -130,6 +128,10 @@ func (s *Service) SignIdentity(ctx context.Context, id identity.Requester) (stri
 	}
 
 	return result.(string), nil
+}
+
+func (s *Service) RemoveIDToken(ctx context.Context, id identity.Requester) error {
+	return s.cache.Delete(ctx, prefixCacheKey(id.GetCacheKey()))
 }
 
 func (s *Service) setUserClaims(ctx context.Context, ident identity.Requester, identifier string, claims *auth.IDClaims) error {

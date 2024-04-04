@@ -11,6 +11,9 @@ import (
 type IDService interface {
 	// SignIdentity signs a id token for provided identity that can be forwarded to plugins and external services
 	SignIdentity(ctx context.Context, identity identity.Requester) (string, error)
+
+	// RemoveIDToken removes any locally stored id tokens for key
+	RemoveIDToken(ctx context.Context, identity identity.Requester) error
 }
 
 type IDSigner interface {
