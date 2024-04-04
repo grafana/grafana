@@ -73,7 +73,7 @@ export interface GrafanaTableState extends TableState {
   lastExpandedOrCollapsedIndex?: number;
 }
 
-export interface GrafanaTableRow extends Row, UseExpandedRowProps<{}> { }
+export interface GrafanaTableRow extends Row, UseExpandedRowProps<{}> {}
 
 export interface Props {
   ariaLabel?: string;

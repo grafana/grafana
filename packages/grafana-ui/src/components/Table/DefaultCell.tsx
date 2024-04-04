@@ -119,7 +119,6 @@ function getCellStyle(
   let bgColor: string | undefined = undefined;
   let bgHoverColor: string | undefined = undefined;
 
-
   // Get colors
   const colors = getCellColors(tableStyles, cellOptions, displayValue);
   textColor = colors.textColor;
