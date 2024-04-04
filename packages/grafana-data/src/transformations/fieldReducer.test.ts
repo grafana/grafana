@@ -252,39 +252,17 @@ describe('Stats Calculators', () => {
     expect(reduce(someNulls, ReducerID.count)).toEqual(4);
   });
 
-  it('can reduce the 95th percentile', () => {
-    const looseStats = reduceField({
-      field: createField('x', [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]),
-      reducers: [ReducerID.p95],
+  for (let i = 1; i < 100; i++) {
+    it(`can reduce the ${i}th percentile`, () => {
+      const preciseStats = reduceField({
+        field: createField(
+          'x',
+          Array.from({ length: 101 }, (_, index) => index)
+        ),
+        reducers: [(ReducerID as Record<string, ReducerID>)[`p${i}`]],
+      });
+
+      expect(preciseStats[`p${i}`]).toEqual(i);
     });
-
-    const preciseStats = reduceField({
-      field: createField(
-        'x',
-        Array.from({ length: 101 }, (_, index) => index)
-      ),
-      reducers: [ReducerID.p95],
-    });
-
-    expect(looseStats.p95).toEqual(9);
-    expect(preciseStats.p95).toEqual(95);
-  });
-
-  it('can reduce the 5th percentile', () => {
-    const looseStats = reduceField({
-      field: createField('x', [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]),
-      reducers: [ReducerID.p5],
-    });
-
-    const preciseStats = reduceField({
-      field: createField(
-        'x',
-        Array.from({ length: 101 }, (_, index) => index)
-      ),
-      reducers: [ReducerID.p5],
-    });
-
-    expect(looseStats.p5).toEqual(1);
-    expect(preciseStats.p5).toEqual(5);
-  });
+  }
 });

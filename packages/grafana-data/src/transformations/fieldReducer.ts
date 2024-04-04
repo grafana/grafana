@@ -682,6 +682,6 @@ function calculatePercentile(field: Field, percentile: number, ignoreNulls: bool
   }
 
   const sorted = data.slice().sort((a, b) => a - b);
-  const index = Math.floor((sorted.length - 1) * percentile);
+  const index = Math.round((sorted.length - 1) * percentile);
   return sorted[index];
 }
