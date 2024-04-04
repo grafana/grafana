@@ -1,29 +1,6 @@
 const fs = require('fs');
 const path = require('path');
 
-// Function to get yarn link aliases from package.json
-const getYarnLinkAliases = (packageJsonPath) => {
-  if (!fs.existsSync(packageJsonPath)) {
-    return {};
-  }
-
-  const packageJson = JSON.parse(fs.readFileSync(packageJsonPath, 'utf8'));
-  const dependencies = packageJson.dependencies || {};
-  const linkAliases = {};
-
-  for (const [key, value] of Object.entries(dependencies)) {
-    if (value.startsWith('link:')) {
-      linkAliases[key] = value.substring(5); // Remove 'link:' prefix
-    }
-  }
-
-  return linkAliases;
-};
-
-// Assuming package.json is in the root directory of the project
-const packageJsonPath = path.join(__dirname, 'package.json');
-const yarnLinkAliases = getYarnLinkAliases(packageJsonPath);
-
 module.exports = function (fileInfo, api) {
   const j = api.jscodeshift;
   const root = j.withParser('tsx')(fileInfo.source);
@@ -40,17 +17,7 @@ module.exports = function (fileInfo, api) {
     return false;
   };
 
-  // Function to resolve import path considering yarn link aliases
-  const resolveImportPath = (importPath) => {
-    for (const [alias, actualPath] of Object.entries(yarnLinkAliases)) {
-      if (importPath.startsWith(alias)) {
-        return path.join(actualPath, importPath.substring(alias.length));
-      }
-    }
-    return importPath;
-  };
-
-  // Replace import declarations that import from barrel files
+  // Udpate import declarations that import from barrel files
   root
     .find(j.ImportDeclaration)
     .filter((path) => mightBeBarrelFileImport(path.node.source.value))
@@ -64,7 +31,7 @@ module.exports = function (fileInfo, api) {
       }
       path.node.comments.push(comment);
 
-      // Replace the import path (this example simply appends '/index')
+      // Update the import path appending '/index'
       path.node.source.value = path.node.source.value + '/index';
     });
 
