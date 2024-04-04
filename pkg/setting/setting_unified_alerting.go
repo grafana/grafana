@@ -101,6 +101,9 @@ type UnifiedAlertingSettings struct {
 	MaxStateSaveConcurrency   int
 	StatePeriodicSaveInterval time.Duration
 	RulesPerRuleGroupLimit    int64
+
+	// Retention period for Alertmanager notification log entries.
+	NotificationLogRetention time.Duration
 }
 
 // RemoteAlertmanagerSettings contains the configuration needed
@@ -374,6 +377,11 @@ func (cfg *Cfg) ReadUnifiedAlertingSettings(iniFile *ini.File) error {
 	uaCfg.MaxStateSaveConcurrency = ua.Key("max_state_save_concurrency").MustInt(1)
 
 	uaCfg.StatePeriodicSaveInterval, err = gtime.ParseDuration(valueAsString(ua, "state_periodic_save_interval", (time.Minute * 5).String()))
+	if err != nil {
+		return err
+	}
+
+	uaCfg.NotificationLogRetention, err = gtime.ParseDuration(valueAsString(ua, "notification_log_retention", (5 * 24 * time.Hour).String()))
 	if err != nil {
 		return err
 	}
