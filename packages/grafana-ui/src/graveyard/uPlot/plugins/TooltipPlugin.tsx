@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import React, { useEffect, useLayoutEffect, useRef, useState } from 'react';
+import React, { useLayoutEffect, useRef, useState } from 'react';
 import { useMountedState } from 'react-use';
 import uPlot from 'uplot';
 
@@ -18,11 +18,9 @@ import {
 } from '@grafana/data';
 import { TooltipDisplayMode, SortOrder } from '@grafana/schema';
 
+import { Portal, SeriesTable, SeriesTableRowProps, UPlotConfigBuilder, VizTooltipContainer } from '../../../components';
+import { findMidPointYPosition } from '../../../components/uPlot/utils';
 import { useStyles2, useTheme2 } from '../../../themes/ThemeContext';
-import { Portal } from '../../Portal/Portal';
-import { SeriesTable, SeriesTableRowProps, VizTooltipContainer } from '../../VizTooltip';
-import { UPlotConfigBuilder } from '../config/UPlotConfigBuilder';
-import { findMidPointYPosition, pluginLog } from '../utils';
 
 interface TooltipPluginProps {
   timeZone: TimeZone;
@@ -61,14 +59,7 @@ export const TooltipPlugin = ({
   const isMounted = useMountedState();
   let parentWithFocus: HTMLElement | null = null;
 
-  const pluginId = `TooltipPlugin`;
-
   const style = useStyles2(getStyles);
-
-  // Debug logs
-  useEffect(() => {
-    pluginLog(pluginId, true, `Focused series: ${focusedSeriesIdx}, focused point: ${focusedPointIdx}`);
-  }, [focusedPointIdx, focusedSeriesIdx]);
 
   // Add uPlot hooks to the config, or re-add when the config changed
   useLayoutEffect(() => {
@@ -100,6 +91,7 @@ export const TooltipPlugin = ({
       u.over.addEventListener('mouseenter', plotEnter);
       u.over.addEventListener('mouseleave', plotLeave);
 
+      // eslint-disable-next-line react-hooks/exhaustive-deps
       parentWithFocus = u.root.closest('[tabindex]');
 
       if (parentWithFocus) {
@@ -112,62 +104,34 @@ export const TooltipPlugin = ({
       }
     });
 
-    const tooltipInterpolator = config.getTooltipInterpolator();
+    config.addHook('setLegend', (u) => {
+      if (!isMounted()) {
+        return;
+      }
+      setFocusedPointIdx(u.legend.idx!);
+      setFocusedPointIdxs(u.legend.idxs!.slice());
+    });
 
-    if (tooltipInterpolator) {
-      // Custom toolitp positioning
-      config.addHook('setCursor', (u) => {
-        tooltipInterpolator(
-          setFocusedSeriesIdx,
-          setFocusedPointIdx,
-          (clear) => {
-            if (clear) {
-              setCoords(null);
-              return;
-            }
+    // default series/datapoint idx retireval
+    config.addHook('setCursor', (u) => {
+      if (!bbox || !isMounted()) {
+        return;
+      }
 
-            if (!bbox) {
-              return;
-            }
+      const { x, y } = positionTooltip(u, bbox);
+      if (x !== undefined && y !== undefined) {
+        setCoords({ x, y });
+      } else {
+        setCoords(null);
+      }
+    });
 
-            const { x, y } = positionTooltip(u, bbox);
-            if (x !== undefined && y !== undefined) {
-              setCoords({ x, y });
-            }
-          },
-          u
-        );
-      });
-    } else {
-      config.addHook('setLegend', (u) => {
-        if (!isMounted()) {
-          return;
-        }
-        setFocusedPointIdx(u.legend.idx!);
-        setFocusedPointIdxs(u.legend.idxs!.slice());
-      });
-
-      // default series/datapoint idx retireval
-      config.addHook('setCursor', (u) => {
-        if (!bbox || !isMounted()) {
-          return;
-        }
-
-        const { x, y } = positionTooltip(u, bbox);
-        if (x !== undefined && y !== undefined) {
-          setCoords({ x, y });
-        } else {
-          setCoords(null);
-        }
-      });
-
-      config.addHook('setSeries', (_, idx) => {
-        if (!isMounted()) {
-          return;
-        }
-        setFocusedSeriesIdx(idx);
-      });
-    }
+    config.addHook('setSeries', (_, idx) => {
+      if (!isMounted()) {
+        return;
+      }
+      setFocusedSeriesIdx(idx);
+    });
 
     return () => {
       setCoords(null);

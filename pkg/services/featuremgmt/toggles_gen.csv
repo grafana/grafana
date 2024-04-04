@@ -21,7 +21,6 @@ autoMigrateStatPanel,preview,@grafana/dataviz-squad,false,false,true
 autoMigrateXYChartPanel,preview,@grafana/dataviz-squad,false,false,true
 disableAngular,preview,@grafana/dataviz-squad,false,false,true
 canvasPanelNesting,experimental,@grafana/dataviz-squad,false,false,true
-newVizTooltips,preview,@grafana/dataviz-squad,false,false,true
 scenes,experimental,@grafana/dashboards-squad,false,false,true
 disableSecretsCompatibility,experimental,@grafana/hosted-grafana-team,false,true,false
 logRequestsInstrumentedAsUnknown,experimental,@grafana/hosted-grafana-team,false,false,false
@@ -154,7 +153,9 @@ kubernetesAggregator,experimental,@grafana/grafana-app-platform-squad,false,true
 expressionParser,experimental,@grafana/grafana-app-platform-squad,false,true,false
 groupByVariable,experimental,@grafana/dashboards-squad,false,false,false
 betterPageScrolling,GA,@grafana/grafana-frontend-platform,false,false,true
+authAPIAccessTokenAuth,experimental,@grafana/identity-access-team,false,false,false
 scopeFilters,experimental,@grafana/dashboards-squad,false,false,false
 ssoSettingsSAML,experimental,@grafana/identity-access-team,false,false,false
 usePrometheusFrontendPackage,experimental,@grafana/observability-metrics,false,false,true
 oauthRequireSubClaim,experimental,@grafana/identity-access-team,false,false,false
+newDashboardWithFiltersAndGroupBy,experimental,@grafana/dashboards-squad,false,false,false
