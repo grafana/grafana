@@ -57,22 +57,11 @@ const AlertmanagerConfigurationVersionManager = ({
 
   const {
     currentData: historicalConfigs = [],
-    isLoading: isLoadingPreviousVersions,
-    error: errorLoadingPreviousVersions,
+    isLoading,
+    error,
   } = alertmanagerApi.endpoints.getValidAlertManagersConfig.useQuery(undefined, {
     refetchOnMountOrArgChange: true,
   });
-
-  const {
-    currentData: currentConfig,
-    isLoading: isLoadingCurrentVersion,
-    error: errorLoadingCurrentConfiguration,
-  } = alertmanagerApi.endpoints.getAlertmanagerConfiguration.useQuery(alertmanagerName, {
-    refetchOnMountOrArgChange: true,
-  });
-
-  const loadingError = errorLoadingPreviousVersions ?? errorLoadingCurrentConfiguration;
-  const isLoadingData = isLoadingPreviousVersions ?? isLoadingCurrentVersion;
 
   const [resetAlertManagerConfigToOldVersion, restoreVersionState] =
     alertmanagerApi.endpoints.resetAlertManagerConfigToOldVersion.useMutation();
@@ -92,11 +81,11 @@ const AlertmanagerConfigurationVersionManager = ({
     resetAlertManagerConfigToOldVersion({ id });
   };
 
-  if (loadingError) {
-    return <Alert title="Failed to load configuration history">{stringifyErrorLike(loadingError)}</Alert>;
+  if (error) {
+    return <Alert title="Failed to load configuration history">{stringifyErrorLike(error)}</Alert>;
   }
 
-  if (isLoadingData) {
+  if (isLoading) {
     return 'Loading...';
   }
 
@@ -106,7 +95,7 @@ const AlertmanagerConfigurationVersionManager = ({
 
   // with this function we'll compute the diff with the previous version; that way the user can get some idea of how many lines where changed in each update that was applied
   const previousVersions: ConfigWithDiff[] = historicalConfigs.map((config, index) => {
-    const priorConfig = historicalConfigs[index + 1] ?? currentConfig;
+    const priorConfig = historicalConfigs[index + 1];
 
     return {
       ...config,
@@ -159,8 +148,11 @@ const AlertmanagerConfigurationVersionManager = ({
                   icon="code-branch"
                   fill="outline"
                   onClick={() => {
-                    const left = currentConfig ? normalizeConfig(currentConfig) : {};
-                    const right = normalizeConfig(historicalConfigs[row.index]);
+                    const latestConfiguration = historicalConfigs[0];
+                    const historicalConfiguration = historicalConfigs[row.index];
+
+                    const left = normalizeConfig(latestConfiguration);
+                    const right = normalizeConfig(historicalConfiguration);
 
                     setActiveRestoreVersion(versionID);
                     setActiveComparison([JSON.stringify(left, null, 2), JSON.stringify(right, null, 2)]);
@@ -302,7 +294,7 @@ function computeConfigDiff(json1: AlertManagerCortexConfig, json2: AlertManagerC
   const added = chain(diff)
     .values()
     .flatMap()
-    .filter((operation) => operation.op === 'add' || operation.op === 'replace')
+    .filter((operation) => operation.op === 'add' || operation.op === 'replace' || operation.op === 'move')
     .size()
     .value();
 
