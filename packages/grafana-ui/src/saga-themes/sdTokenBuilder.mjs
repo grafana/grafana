@@ -8,7 +8,10 @@ const { minifyDictionary } = StyleDictionary.formatHelpers;
 StyleDictionary.registerFormat({
   name: 'javascript/nested',
   formatter: function (dictionary) {
-    return `export default ${JSON.stringify(minifyDictionary(dictionary.tokens), null, 2)};\n`;
+    let stringTokens = JSON.stringify(minifyDictionary(dictionary.tokens), null, 2);
+    // Replace number keys like '100' with 'x100' to make them valid JS keys
+    stringTokens = stringTokens.replace(/"([0-9]*)":/g, 'x$1:');
+    return `export default ${stringTokens};\n`;
   },
 });
 
