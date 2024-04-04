@@ -32,9 +32,9 @@ function getAllMetricNamesCompletions(dataProvider: DataProvider): Completion[] 
     metricNames.length > dataProvider.metricNamesSuggestionLimit
   ) {
     const { monacoSettings } = dataProvider;
+    monacoSettings.enableAutocompleteSuggestionsUpdate();
 
     if (monacoSettings.inputInRange) {
-      monacoSettings.enableAutocompleteSuggestionsUpdate();
       metricNames =
         metricNamesSearchClient
           .filter(metricNames, monacoSettings.inputInRange)

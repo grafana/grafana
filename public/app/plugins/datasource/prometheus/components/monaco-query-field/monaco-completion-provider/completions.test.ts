@@ -92,7 +92,7 @@ describe.each(metricNameCompletionSituations)('metric name completions in situat
     expect(completions?.length).toBeLessThanOrEqual(expectedCompletionsCount);
   });
 
-  it('should enable autocomplete suggestions update when the number of metric names is greater than the limit and there is text input', async () => {
+  it('should enable autocomplete suggestions update when the number of metric names is greater than the limit', async () => {
     const situation: Situation = {
       type: situationType,
     };
@@ -103,11 +103,11 @@ describe.each(metricNameCompletionSituations)('metric name completions in situat
     await getCompletions(situation, dataProvider);
     expect(dataProvider.monacoSettings.suggestionsIncomplete).toBe(false);
 
-    // Cross the metric names threshold, but without text input
+    // Cross the metric names threshold, without text input
     jest.spyOn(dataProvider, 'getAllMetricNames').mockReturnValueOnce(metrics.beyondLimit);
     dataProvider.monacoSettings.setInputInRange('');
     await getCompletions(situation, dataProvider);
-    expect(dataProvider.monacoSettings.suggestionsIncomplete).toBe(false);
+    expect(dataProvider.monacoSettings.suggestionsIncomplete).toBe(true);
 
     // Cross the metric names threshold, with text input
     jest.spyOn(dataProvider, 'getAllMetricNames').mockReturnValueOnce(metrics.beyondLimit);
