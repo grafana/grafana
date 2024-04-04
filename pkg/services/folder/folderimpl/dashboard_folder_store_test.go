@@ -12,7 +12,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/dashboards/database"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/quota/quotatest"
-	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/tag/tagimpl"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tests/testsuite"
@@ -24,7 +23,7 @@ func TestMain(m *testing.M) {
 }
 
 func TestIntegrationDashboardFolderStore(t *testing.T) {
-	var sqlStore *sqlstore.SQLStore
+	var sqlStore db.DB
 	var cfg *setting.Cfg
 	var dashboardStore dashboards.Store
 
@@ -39,7 +38,7 @@ func TestIntegrationDashboardFolderStore(t *testing.T) {
 		setup()
 		var orgId int64 = 1
 		title := "Very Unique Name"
-		var sqlStore *sqlstore.SQLStore
+		var sqlStore db.DB
 		var folder1, folder2 *dashboards.Dashboard
 		sqlStore = db.InitTestDB(t)
 		folderStore := ProvideDashboardFolderStore(sqlStore)

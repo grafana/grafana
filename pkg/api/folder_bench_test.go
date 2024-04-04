@@ -17,6 +17,7 @@ import (
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/components/simplejson"
+	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/localcache"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
@@ -66,7 +67,7 @@ const (
 )
 
 type benchScenario struct {
-	db *sqlstore.SQLStore
+	db db.DB
 	// signedInUser is the user that is signed in to the server
 	cfg          *setting.Cfg
 	signedInUser *user.SignedInUser
@@ -448,7 +449,7 @@ func setupServer(b testing.TB, sc benchScenario, features featuremgmt.FeatureTog
 
 	quotaSrv := quotatest.New(false, nil)
 
-	dashStore, err := database.ProvideDashboardStore(sc.db, sc.db.Cfg, features, tagimpl.ProvideService(sc.db), quotaSrv)
+	dashStore, err := database.ProvideDashboardStore(sc.db, sc.cfg, features, tagimpl.ProvideService(sc.db), quotaSrv)
 	require.NoError(b, err)
 
 	folderStore := folderimpl.ProvideDashboardFolderStore(sc.db)

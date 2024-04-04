@@ -24,7 +24,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/folder/folderimpl"
 	"github.com/grafana/grafana/pkg/services/ngalert/testutil"
 	"github.com/grafana/grafana/pkg/services/org"
-	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/user"
 
 	"github.com/stretchr/testify/require"
@@ -867,7 +866,7 @@ func createFolder(t *testing.T, store *DBstore, uid, title string, orgID int64, 
 	require.NoError(t, err)
 }
 
-func setupFolderService(t *testing.T, sqlStore *sqlstore.SQLStore, cfg *setting.Cfg, features featuremgmt.FeatureToggles) folder.Service {
+func setupFolderService(t *testing.T, sqlStore db.DB, cfg *setting.Cfg, features featuremgmt.FeatureToggles) folder.Service {
 	tracer := tracing.InitializeTracerForTest()
 	inProcBus := bus.ProvideBus(tracer)
 	folderStore := folderimpl.ProvideDashboardFolderStore(sqlStore)

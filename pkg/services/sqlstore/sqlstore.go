@@ -409,13 +409,15 @@ type InitTestDBOpt struct {
 	// EnsureDefaultOrgAndUser flags whether to ensure that default org and user exist.
 	EnsureDefaultOrgAndUser bool
 	FeatureFlags            []string
+	Cfg                     *setting.Cfg
 }
 
 // InitTestDBWithMigration initializes the test DB given custom migrations.
 func InitTestDBWithMigration(t sqlutil.ITestDB, migration registry.DatabaseMigrator, opts ...InitTestDBOpt) *SQLStore {
 	t.Helper()
 	features := getFeaturesForTesting(opts...)
-	store, err := initTestDB(t, setting.NewCfg(), features, migration, opts...)
+	cfg := getCfgForTesting(opts...)
+	store, err := initTestDB(t, cfg, features, migration, opts...)
 	if err != nil {
 		t.Fatalf("failed to initialize sql store: %s", err)
 	}
@@ -426,8 +428,9 @@ func InitTestDBWithMigration(t sqlutil.ITestDB, migration registry.DatabaseMigra
 func InitTestDB(t sqlutil.ITestDB, opts ...InitTestDBOpt) *SQLStore {
 	t.Helper()
 	features := getFeaturesForTesting(opts...)
+	cfg := getCfgForTesting(opts...)
 
-	store, err := initTestDB(t, setting.NewCfg(), features, migrations.ProvideOSSMigrations(features), opts...)
+	store, err := initTestDB(t, cfg, features, migrations.ProvideOSSMigrations(features), opts...)
 	if err != nil {
 		t.Fatalf("failed to initialize sql store: %s", err)
 	}
@@ -463,6 +466,16 @@ func CleanupTestDB() {
 		testSQLStoreCleanup = []func(){}
 		testSQLStore = nil
 	}
+}
+
+func getCfgForTesting(opts ...InitTestDBOpt) *setting.Cfg {
+	cfg := setting.NewCfg()
+	for _, opt := range opts {
+		if len(opt.FeatureFlags) > 0 {
+			cfg = opt.Cfg
+		}
+	}
+	return cfg
 }
 
 func getFeaturesForTesting(opts ...InitTestDBOpt) featuremgmt.FeatureToggles {
