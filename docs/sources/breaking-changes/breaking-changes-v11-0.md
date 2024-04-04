@@ -16,6 +16,9 @@ title: Breaking changes in Grafana v11.0-preview
 weight: -3
 ---
 
+<!-- vale GoogleWe = NO -->
+<!-- vale We = NO -->
+
 # Breaking changes in Grafana v11.0-preview
 
 Following are breaking changes that you should be aware of when upgrading to Grafana v11.0-preview.
@@ -93,7 +96,7 @@ For more details on the code removal, review the following PRs:
 
 #### Description
 
-In Grafana v11, support for deprecated endpoints and fields in Reporting related to old scheduling format, email, and dashboard is fully removed . This prevents any calls to deprecated endpoints and passing in values to deprecated fields. This feature only affects Cloud and Enterprise customers who use API to generate reports.
+In Grafana v11, support for deprecated endpoints and fields in **Reporting** related to the old scheduling format, email, and dashboard is fully removed. This prevents any calls to deprecated endpoints and passing in values to deprecated fields. This feature only affects Cloud and Enterprise customers who use the API to generate reports.
 
 #### Migration/mitigation
 
@@ -101,7 +104,7 @@ Ensure deprecated endpoints are updated to new corresponding endpoints and depre
 
 #### Learn more
 
-[Reporting documentation](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developers/http_api/reporting/) lists all supported endpoints and fields
+The [Reporting documentation](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developers/http_api/reporting/) lists all supported endpoints and fields.
 
 ### Change custom branding public dashboard footer behavior
 
@@ -111,7 +114,7 @@ In Grafana v11, custom branding public dashboard footer behavior is changed to d
 
 #### Migration/mitigation
 
-Ensure you have a public dashboard footer logo or footer text set if they don't want to display the default Grafana footer.
+Ensure you have a public dashboard footer logo or footer text set if you don't want to display the default Grafana footer.
 
 #### Learn more
 
@@ -146,9 +149,9 @@ Review [this PR](https://github.com/grafana/grafana/pull/83163) for details.
 
 The **Disable query** button in the query editor row has caused a lot of confusion among data source developers and end-users. Until now, it has been up to data source developers to filter out any hidden queries before or after they’re executed. Starting from Grafana v11, the tooltip of this button is changed from **Disable query** to **Hide response/Show response**. Responses that are associated with hidden queries will be removed by Grafana before they’re passed to the panel.
 
-Users of data source plugins that didn't previously remove hidden queries (before or after they were executed) will see a change of behavior as, previously, clicking the **Disable query** button had no impact on the query result. Starting from Grafana v11, responses associated with hidden queries are longer be returned to the panel.
+Users of data source plugins that didn't previously remove hidden queries (before or after they were executed) will see a change of behavior as, previously, clicking the **Disable query** button had no impact on the query result. Starting from Grafana v11, responses associated with hidden queries are longer returned to the panel.
 
-We’re also moving the call to the `datasource.filterQuery` method to the query runner. This means that also frontend-only data sources (or any data source that doesn't extend `DataSourceWithBackend` class) can implement this method. This streamlines data source plugin behavior, ensuring filtering works in the same way for all kinds of data source plugins.
+We’re also moving the call to the `datasource.filterQuery` method to the query runner. This means that frontend-only data sources (or any data source that doesn't extend `DataSourceWithBackend` class) can implement this method. This streamlines data source plugin behavior, ensuring filtering works in the same way for all kinds of data source plugins.
 
 #### Migration/mitigation
 
@@ -164,7 +167,7 @@ We've added a validation between the response of the ID token HD parameter and t
 
 If you set Google OAuth configuration using `api_url,` you might be using the legacy implementation of OAuth, which doesn't have the HD parameter describing the organization from which the approved token comes. This could break your login flow.
 
-This feature can be turned off through the configuration toggle `validate_hd `. Anyone using the legacy Google OAuth configuration should turn off this validation if the ID Token response doesn't have the HD parameter.
+You can turn off this feature through the configuration toggle `validate_hd `. Anyone using the legacy Google OAuth configuration should turn off this validation if the ID Token response doesn't have the HD parameter.
 
 [Github issue](https://github.com/grafana/grafana/pull/83229)
 
@@ -174,7 +177,7 @@ This feature can be turned off through the configuration toggle `validate_hd `. 
 
 With the introduction of the Scenes library to dashboards, the URL that’s generated when viewing an individual repeated panel has changed. We’ve changed how these panels are referenced and what used to be `&viewPanel=panel-5` is now `&viewPanel=panel-3-clone1`.
 
-This means that the previous URLs won’t work anymore and instead you'll be redirected to the dashboard view and get a _Panel not found_ error. From this point on, the dashboard will continue to work as expected.
+This means that the previous URLs won’t work anymore and instead you'll be redirected to the dashboard view and you'll get a _Panel not found_ error. From this point on, the dashboard will continue to work as expected.
 
 #### Migration/mitigation
 

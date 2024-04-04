@@ -21,13 +21,13 @@ weight: -42
 
 # What’s new in Grafana v11.0-preview
 
-Welcome to Grafana 11.0-preview! This preview release contains some notable improvements...
+Welcome to Grafana 11.0-preview! This preview release contains some notable improvements, most notably, the ability to explore your metrics without queries. We've taken strides to improve the dashboard experience with subfolders becoming generally available and the addition of enhanced flowcharting capabilities. We've also migrated the dashboard viewing experience so that it's using our Scenes library.
 
 For even more detail about all the changes in this release, refer to the [changelog](https://github.com/grafana/grafana/blob/main/CHANGELOG.md). For the specific steps we recommend when you upgrade to v11.0-preview, check out our [Upgrade Guide](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/upgrade-guide/upgrade-v11.0/).
 
 ## Breaking changes
 
-For Grafana v11.0-preview, we've also provided a list of [breaking changes](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/breaking-changes/breaking-changes-v11-0) to help you upgrade with greater confidence. For information about these along with guidance on how to proceed, refer to [Breaking changes in Grafana v10.3](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/breaking-changes/breaking-changes-v11-0/).
+For Grafana v11.0-preview, we've also provided a list of [breaking changes](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/breaking-changes/breaking-changes-v11-0) to help you upgrade with greater confidence. For information about these along with guidance on how to proceed, refer to [Breaking changes in Grafana v11.0-preview](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/breaking-changes/breaking-changes-v11-0/).
 
 <!-- Template below
 
@@ -83,24 +83,24 @@ This is the first step towards a more robust and dynamic dashboarding system tha
 
 <!-- #grafana-dashboards -->
 
-For the past few months we've been working on a major update of our **Dashboards** architecture and migrated it to the Scenes library. This migration provides us with more stable, dynamic, and flexible dashboards as well as setting the foundation for what we envision the future of Grafana dashboards will be. Here are two of the improvements that are being introduced as part of this work:
+_Available in public preview in all editions of Grafana_
 
-## Edit mode
+For the past few months we've been working on a major update of our **Dashboards** architecture and migrated it to the Scenes library. This migration provides us with more stable, dynamic, and flexible dashboards as well as setting the foundation for what we envision the future of Grafana dashboards will be. Here are two of the improvements that are being introduced as part of this work.
+
+#### Edit mode
 
 It can be difficult to efficiently navigate through the visually cluttered options during the dashboard editing process. With the introduction of the edit mode, we aim to provide an easier way to discover and interact with the dashboard edit experience.
 
-## Fixed positioning of template variables and time picker
+#### Fixed positioning of template variables and time picker
 
 We moved the time picker into the dashboard canvas and now, together with template variables, it will stick to the top as you scroll through your dashboard. This has historically been a very [requested feature](https://github.com/grafana/grafana/issues/11166) that we're very happy to be able to finally roll out!
 
-## Known limitations
+#### Known limitations
 
 - The [variable dependency graph](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/dashboards/variables/inspect-variable/) is not yet available.
 - It's no longer possible to switch a regular panel to a library panel from the edit view.
 
 If you want to learn more, in detail, about all the improvements we've made, don't miss our blog post.
-
-_Available in public preview in all editions of Grafana_
 
 ### Subfolders
 
@@ -146,7 +146,7 @@ When enabled, look for the **✨ Auto generate** option next to the **Title** an
 
 <!-- #grafana-dataviz -->
 
-_Generally available in Grafana Open Source and Grafana Cloud_
+_Generally available in Grafana Cloud and Open Source_
 
 This update to the **Filter data by values** transformation simplifies data filtering by enabling partial string matching on field values thanks to two new matchers: **Contains substring** and **Does not contain substring**. With the substring matcher built into the **Filter data by values** transformation, you can efficiently filter large datasets, displaying relevant information with speed and precision. Whether you're searching for keywords, product names, or user IDs, this feature streamlines the process, saving time and effort while ensuring accurate data output.
 
@@ -209,7 +209,7 @@ Grafana 11 adds the ability to color full table rows using the **Colored backgro
 
 This feature is useful for a wide variety of use cases including mapping status fields to colors (for example, `info`, `debug`, `warning`) and allowing rows to be colored based on threshold values. This is one of the first steps in making formatting tables more seamless, and allows for quick scanning of data using the table visualization.
 
-To learn more, refer to the [documentation for the **Colored background** cell type](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/panels-visualizations/visualizations/table/#color-background-gradient-or-solid).
+To learn more, refer to the [documentation for the Colored background cell type](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/panels-visualizations/visualizations/table/#color-background-gradient-or-solid).
 
 ### Set threshold colors in the Config from query transformation
 
@@ -220,8 +220,6 @@ _Generally available in all editions of Grafana_
 You now have the ability to customize specific colors for individual thresholds when using the **Config from query results** transformer. Previously, when you added multiple thresholds, they all defaulted to the same color, red. With this addition, you gain the flexibility to assign distinct colors to each threshold.
 
 This feature addresses a common pain point highlighted by users. With customizable threshold colors, you now have greater control over your data representation, fostering more insightful and impactful analyses across diverse datasets.
-
-This feature will be rolled out over the next few weeks.
 
 ## Reporting
 
