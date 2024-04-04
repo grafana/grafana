@@ -1,10 +1,10 @@
 import { css, cx } from '@emotion/css';
 import React, { AriaRole, HTMLAttributes, ReactNode } from 'react';
+import { GrafanaTheme3 } from 'src/saga-themes/createTheme';
 
-import { GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 
-import { useTheme2 } from '../../themes';
+import { useTheme3 } from '../../themes';
 import { IconName } from '../../types/icon';
 import { Button } from '../Button/Button';
 import { Icon } from '../Icon/Icon';
@@ -21,6 +21,7 @@ export interface Props extends HTMLAttributes<HTMLDivElement> {
   children?: ReactNode;
   elevated?: boolean;
   buttonContent?: React.ReactNode | string;
+  // TODO: Deprecate use of numbers for spacing
   bottomSpacing?: number;
   topSpacing?: number;
 }
@@ -41,7 +42,7 @@ export const Alert = React.forwardRef<HTMLDivElement, Props>(
     },
     ref
   ) => {
-    const theme = useTheme2();
+    const theme = useTheme3();
     const hasTitle = Boolean(title);
     const styles = getStyles(theme, severity, hasTitle, elevated, bottomSpacing, topSpacing);
     const rolesBySeverity: Record<AlertVariant, AriaRole> = {
@@ -122,20 +123,18 @@ export const getIconFromSeverity = (severity: AlertVariant): IconName => {
 };
 
 const getStyles = (
-  theme: GrafanaTheme2,
+  theme: GrafanaTheme3,
   severity: AlertVariant,
   hasTitle: boolean,
   elevated?: boolean,
   bottomSpacing?: number,
   topSpacing?: number
 ) => {
-  const color = theme.colors[severity];
-
   return {
     wrapper: css({
       flexGrow: 1,
-      marginBottom: theme.spacing(bottomSpacing ?? 2),
-      marginTop: theme.spacing(topSpacing ?? 0),
+      marginBottom: bottomSpacing ? `calc(${bottomSpacing} * ${theme.dimension}` : theme.spacing.x200,
+      marginTop: topSpacing ? `calc(${topSpacing} * ${theme.dimension}` : theme.spacing.x0,
       position: 'relative',
 
       '&:before': {
@@ -145,22 +144,22 @@ const getStyles = (
         left: 0,
         bottom: 0,
         right: 0,
-        background: theme.colors.background.primary,
+        background: theme.color.background.ui.primary,
         zIndex: -1,
       },
     }),
     icon: css({
-      color: color.text,
+      color: theme.color.content.system[severity].heading,
     }),
     content: css({
-      color: theme.colors.text.primary,
-      paddingTop: hasTitle ? theme.spacing(0.5) : 0,
+      color: theme.color.content.secondary,
+      paddingTop: hasTitle ? theme.spacing.x50 : 0,
       maxHeight: '50vh',
       overflowY: 'auto',
     }),
     close: css({
       position: 'relative',
-      color: theme.colors.text.secondary,
+      color: theme.color.content.disabled,
       background: 'none',
       display: 'flex',
       top: '-6px',

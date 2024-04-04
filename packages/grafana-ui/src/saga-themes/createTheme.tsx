@@ -21,7 +21,7 @@ const spacingFn = (...args: SpacingTokens[]): string => {
 
   return args
     .map((argument) => {
-      return spacing.spacing[argument];
+      return spacing.spacing[`x${argument}`];
     })
     .join(' ');
 };
