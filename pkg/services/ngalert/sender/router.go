@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"net/url"
+	"path"
 	"sort"
 	"sync"
 	"time"
@@ -270,7 +271,10 @@ func (d *AlertsRouter) buildExternalURL(ds *datasources.DataSource) (string, err
 			if parsed.Path == "" {
 				parsed.Path = "/"
 			}
-			parsed = parsed.JoinPath("/alertmanager")
+			lastSegment := path.Base(parsed.Path)
+			if lastSegment != "alertmanager" {
+				parsed = parsed.JoinPath("/alertmanager")
+			}
 		default:
 		}
 	}

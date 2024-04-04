@@ -540,6 +540,42 @@ func TestBuildExternalURL(t *testing.T) {
 			},
 			expectedURL: "https://localhost:9000/path/to/am",
 		},
+		{
+			name: "do not add /alertmanager to path when last segment already contains it",
+			ds: &datasources.DataSource{
+				URL: "https://localhost:9000/path/to/alertmanager",
+				JsonData: func() *simplejson.Json {
+					r := simplejson.New()
+					r.Set("implementation", "mimir")
+					return r
+				}(),
+			},
+			expectedURL: "https://localhost:9000/path/to/alertmanager",
+		},
+		{
+			name: "add /alertmanager to path when last segment does not exactly match",
+			ds: &datasources.DataSource{
+				URL: "https://localhost:9000/path/to/alertmanagerasdf",
+				JsonData: func() *simplejson.Json {
+					r := simplejson.New()
+					r.Set("implementation", "mimir")
+					return r
+				}(),
+			},
+			expectedURL: "https://localhost:9000/path/to/alertmanagerasdf/alertmanager",
+		},
+		{
+			name: "add /alertmanager to path when exists but is not last segment",
+			ds: &datasources.DataSource{
+				URL: "https://localhost:9000/alertmanager/path/to/am",
+				JsonData: func() *simplejson.Json {
+					r := simplejson.New()
+					r.Set("implementation", "mimir")
+					return r
+				}(),
+			},
+			expectedURL: "https://localhost:9000/alertmanager/path/to/am/alertmanager",
+		},
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
