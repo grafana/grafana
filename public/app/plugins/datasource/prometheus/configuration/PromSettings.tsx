@@ -10,10 +10,12 @@ import {
 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { ConfigSubSection } from '@grafana/experimental';
+import { config } from '@grafana/runtime';
 import { getBackendSrv } from '@grafana/runtime/src';
 import { InlineField, Input, Select, Switch, useTheme2 } from '@grafana/ui';
 
 import { useUpdateDatasource } from '../../../../features/datasources/state';
+import { SUGGESTIONS_LIMIT } from '../language_provider';
 import { QueryEditorMode } from '../querybuilder/shared/types';
 import { defaultPrometheusQueryOverlapWindow } from '../querycache/QueryCache';
 import { PromApplication, PromBuildInfoResponse, PrometheusCacheLevel, PromOptions } from '../types';
@@ -56,7 +58,10 @@ export const DURATION_REGEX = /^$|^\d+(ms|[Mwdhmsy])$/;
 // multiple duration input
 export const MULTIPLE_DURATION_REGEX = /(\d+)(.+)/;
 
+export const NON_NEGATIVE_INTEGER_REGEX = /^(0|[1-9]\d*)(\.\d+)?(e\+?\d+)?$/; // non-negative integers, including scientific notation
+
 const durationError = 'Value is not valid, you can use number with time unit specifier: y, M, w, d, h, m, s';
+export const countError = 'Value is not valid, you can use non-negative integers, including scientific notation';
 /**
  * Returns the closest version to what the user provided that we have in our PromFlavorVersions for the currently selected flavor
  * Bugs: It will only reject versions that are a major release apart, so Mimir 2.x might get selected for Prometheus 2.8 if the user selects an incorrect flavor
@@ -167,6 +172,14 @@ export const PromSettings = (props: Props) => {
     timeInterval: '',
     queryTimeout: '',
     incrementalQueryOverlapWindow: '',
+  });
+
+  type ValidCount = {
+    codeModeMetricNamesSuggestionLimit: string;
+  };
+
+  const [validCount, updateValidCount] = useState<ValidCount>({
+    codeModeMetricNamesSuggestionLimit: '',
   });
 
   return (
@@ -404,6 +417,49 @@ export const PromSettings = (props: Props) => {
               </InlineField>
             </div>
           </div>
+
+          {config.featureToggles.prometheusCodeModeMetricNamesSearch && (
+            <div className="gf-form-inline">
+              <div className="gf-form">
+                <InlineField
+                  label="Metric names suggestion limit"
+                  labelWidth={PROM_CONFIG_LABEL_WIDTH}
+                  tooltip={
+                    <>
+                      The maximum number of metric names that may appear as autocomplete suggestions in the query
+                      editor&apos;s Code mode.
+                    </>
+                  }
+                  interactive={true}
+                  disabled={options.readOnly}
+                >
+                  <>
+                    <Input
+                      className="width-20"
+                      value={options.jsonData.codeModeMetricNamesSuggestionLimit}
+                      onChange={onChangeHandler('codeModeMetricNamesSuggestionLimit', options, onOptionsChange)}
+                      spellCheck={false}
+                      placeholder={SUGGESTIONS_LIMIT.toString()}
+                      onBlur={(e) =>
+                        updateValidCount({
+                          ...validCount,
+                          codeModeMetricNamesSuggestionLimit: e.currentTarget.value,
+                        })
+                      }
+                      data-testid={
+                        selectors.components.DataSource.Prometheus.configPage.codeModeMetricNamesSuggestionLimit
+                      }
+                    />
+                    {validateInput(
+                      validCount.codeModeMetricNamesSuggestionLimit,
+                      NON_NEGATIVE_INTEGER_REGEX,
+                      countError
+                    )}
+                  </>
+                </InlineField>
+              </div>
+            </div>
+          )}
 
           <div className="gf-form-inline">
             <div className="gf-form max-width-30">
