@@ -40,7 +40,7 @@ func TestIntegrationDashboardFolderStore(t *testing.T) {
 		title := "Very Unique Name"
 		var sqlStore db.DB
 		var folder1, folder2 *dashboards.Dashboard
-		sqlStore = db.InitTestDB(t)
+		sqlStore, cfg = db.InitTestDB(t)
 		folderStore := ProvideDashboardFolderStore(sqlStore)
 		folder2 = insertTestFolder(t, dashboardStore, "TEST", orgId, "", "prod")
 		_ = insertTestDashboard(t, dashboardStore, title, orgId, folder2.ID, folder2.UID, "prod")
@@ -63,7 +63,7 @@ func TestIntegrationDashboardFolderStore(t *testing.T) {
 	t.Run("GetFolderByUID", func(t *testing.T) {
 		setup()
 		var orgId int64 = 1
-		sqlStore := db.InitTestDB(t)
+		sqlStore, _ := db.InitTestDB(t)
 		folderStore := ProvideDashboardFolderStore(sqlStore)
 		folder := insertTestFolder(t, dashboardStore, "TEST", orgId, "", "prod")
 		dash := insertTestDashboard(t, dashboardStore, "Very Unique Name", orgId, folder.ID, folder.UID, "prod")
@@ -88,7 +88,7 @@ func TestIntegrationDashboardFolderStore(t *testing.T) {
 	t.Run("GetFolderByID", func(t *testing.T) {
 		setup()
 		var orgId int64 = 1
-		sqlStore := db.InitTestDB(t)
+		sqlStore, _ := db.InitTestDB(t)
 		folderStore := ProvideDashboardFolderStore(sqlStore)
 		folder := insertTestFolder(t, dashboardStore, "TEST", orgId, "", "prod")
 		dash := insertTestDashboard(t, dashboardStore, "Very Unique Name", orgId, folder.ID, folder.UID, "prod")

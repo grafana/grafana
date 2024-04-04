@@ -742,9 +742,9 @@ func TestIntegrationDelete(t *testing.T) {
 
 func TestFindByFolder(t *testing.T) {
 	t.Run("returns nil when dashboard is not a folder", func(t *testing.T) {
-		sqlStore, _ := db.InitTestDBwithCfg(t)
+		sqlStore, cfg := db.InitTestDBwithCfg(t)
 		dashboard := &dashboards.Dashboard{OrgID: 1, UID: "dashboarduid", IsFolder: false}
-		store := ProvideStore(sqlStore, sqlStore.Cfg, featuremgmt.WithFeatures())
+		store := ProvideStore(sqlStore, cfg, featuremgmt.WithFeatures())
 		pubdashes, err := store.FindByFolder(context.Background(), dashboard.OrgID, dashboard.UID)
 
 		require.NoError(t, err)
@@ -752,8 +752,8 @@ func TestFindByFolder(t *testing.T) {
 	})
 
 	t.Run("returns nil when parameters are empty", func(t *testing.T) {
-		sqlStore, _ := db.InitTestDBwithCfg(t)
-		store := ProvideStore(sqlStore, sqlStore.Cfg, featuremgmt.WithFeatures())
+		sqlStore, cfg := db.InitTestDBwithCfg(t)
+		store := ProvideStore(sqlStore, cfg, featuremgmt.WithFeatures())
 		pubdashes, err := store.FindByFolder(context.Background(), 0, "")
 
 		require.NoError(t, err)
@@ -761,11 +761,11 @@ func TestFindByFolder(t *testing.T) {
 	})
 
 	t.Run("can get all pubdashes for dashboard folder and org", func(t *testing.T) {
-		sqlStore, _ := db.InitTestDBwithCfg(t)
+		sqlStore, cfg := db.InitTestDBwithCfg(t)
 		quotaService := quotatest.New(false, nil)
-		dashboardStore, err := dashboardsDB.ProvideDashboardStore(sqlStore, sqlStore.Cfg, featuremgmt.WithFeatures(), tagimpl.ProvideService(sqlStore), quotaService)
+		dashboardStore, err := dashboardsDB.ProvideDashboardStore(sqlStore, cfg, featuremgmt.WithFeatures(), tagimpl.ProvideService(sqlStore), quotaService)
 		require.NoError(t, err)
-		pubdashStore := ProvideStore(sqlStore, sqlStore.Cfg, featuremgmt.WithFeatures())
+		pubdashStore := ProvideStore(sqlStore, cfg, featuremgmt.WithFeatures())
 		// insert folders
 		folder := insertTestDashboard(t, dashboardStore, "This is a folder", 1, "", true, PublicShareType)
 		folder2 := insertTestDashboard(t, dashboardStore, "This is another folder", 1, "", true, PublicShareType)

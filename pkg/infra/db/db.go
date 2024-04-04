@@ -59,8 +59,7 @@ var CleanupTestDB = sqlstore.CleanupTestDB
 var ProvideService = sqlstore.ProvideService
 
 func InitTestDBwithCfg(t sqlutil.ITestDB, opts ...InitTestDBOpt) (*sqlstore.SQLStore, *setting.Cfg) {
-	store := InitTestDB(t, opts...)
-	return store, store.Cfg
+	return InitTestDB(t, opts...)
 }
 
 func IsTestDbSQLite() bool {
