@@ -8,6 +8,8 @@ export function mockPreviewTemplateResponse(server: SetupServer, response: Templ
   server.use(http.post(previewTemplateUrl, () => HttpResponse.json(response)));
 }
 
+export const REJECTED_PREVIEW_RESPONSE = 'error, something went wrong';
+
 export function mockPreviewTemplateResponseRejected(server: SetupServer) {
-  server.use(http.post(previewTemplateUrl, () => HttpResponse.json('error', { status: 500 })));
+  server.use(http.post(previewTemplateUrl, () => HttpResponse.json(REJECTED_PREVIEW_RESPONSE, { status: 500 })));
 }

@@ -1807,13 +1807,7 @@ exports[`better eslint`] = {
     "public/app/features/alerting/unified/components/receivers/PayloadEditor.tsx:5381": [
       [0, 0, 0, "Styles should be written using objects.", "0"],
       [0, 0, 0, "Styles should be written using objects.", "1"],
-      [0, 0, 0, "Styles should be written using objects.", "2"],
-      [0, 0, 0, "Styles should be written using objects.", "3"],
-      [0, 0, 0, "Styles should be written using objects.", "4"],
-      [0, 0, 0, "Styles should be written using objects.", "5"],
-      [0, 0, 0, "Styles should be written using objects.", "6"],
-      [0, 0, 0, "Styles should be written using objects.", "7"],
-      [0, 0, 0, "Styles should be written using objects.", "8"]
+      [0, 0, 0, "Styles should be written using objects.", "2"]
     ],
     "public/app/features/alerting/unified/components/receivers/ReceiversSection.tsx:5381": [
       [0, 0, 0, "Styles should be written using objects.", "0"],
@@ -1826,18 +1820,7 @@ exports[`better eslint`] = {
     ],
     "public/app/features/alerting/unified/components/receivers/TemplateForm.tsx:5381": [
       [0, 0, 0, "Styles should be written using objects.", "0"],
-      [0, 0, 0, "Styles should be written using objects.", "1"],
-      [0, 0, 0, "Styles should be written using objects.", "2"],
-      [0, 0, 0, "Styles should be written using objects.", "3"],
-      [0, 0, 0, "Styles should be written using objects.", "4"],
-      [0, 0, 0, "Styles should be written using objects.", "5"],
-      [0, 0, 0, "Styles should be written using objects.", "6"],
-      [0, 0, 0, "Styles should be written using objects.", "7"],
-      [0, 0, 0, "Styles should be written using objects.", "8"],
-      [0, 0, 0, "Styles should be written using objects.", "9"],
-      [0, 0, 0, "Styles should be written using objects.", "10"],
-      [0, 0, 0, "Styles should be written using objects.", "11"],
-      [0, 0, 0, "Styles should be written using objects.", "12"]
+      [0, 0, 0, "Styles should be written using objects.", "1"]
     ],
     "public/app/features/alerting/unified/components/receivers/form/ChannelOptions.tsx:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"],

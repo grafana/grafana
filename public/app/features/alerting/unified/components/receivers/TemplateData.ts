@@ -1,6 +1,6 @@
 export interface TemplateDataItem {
   name: string;
-  type: 'string' | '[]Alert' | 'KeyValue' | 'time.Time';
+  type: string;
   notes: string;
 }
 
@@ -61,23 +61,23 @@ export const GlobalTemplateData: TemplateDataItem[] = [
 
 export const AlertTemplatePreviewData: TemplateDataItem[] = [
   {
-    name: 'Labels',
-    type: 'KeyValue',
+    name: 'labels',
+    type: 'Object{}',
     notes: 'Set of labels attached to the alert.',
   },
   {
-    name: 'Annotations',
-    type: 'KeyValue',
+    name: 'annotations',
+    type: 'Object{}',
     notes: 'Set of annotations attached to the alert.',
   },
   {
-    name: 'StartsAt',
-    type: 'time.Time',
+    name: 'startsAt',
+    type: 'string (ISO8601)',
     notes: 'Time the alert started firing.',
   },
   {
-    name: 'EndsAt',
-    type: 'time.Time',
+    name: 'endsAt',
+    type: 'string (ISO8601)',
     notes: 'Time the alert ends firing.',
   },
 ];

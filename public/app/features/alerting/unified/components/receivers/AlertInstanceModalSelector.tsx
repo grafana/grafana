@@ -168,10 +168,13 @@ export function AlertInstanceModalSelector({
     const instances: TestTemplateAlert[] =
       selectedInstances?.map((instance: AlertmanagerAlert) => {
         const alert: TestTemplateAlert = {
+          status: 'firing',
           annotations: instance.annotations,
           labels: instance.labels,
           startsAt: instance.startsAt,
           endsAt: instance.endsAt,
+          generatorURL: instance.generatorURL,
+          fingerprint: instance.fingerprint,
         };
         return alert;
       }) || [];
