@@ -42,14 +42,14 @@ If there's only one data link in the visualization, clicking anywhere on the vis
 
 You can configure data links for the following visualizations:
 
-|                            |                                   |                                  |
-| -------------------------- | --------------------------------- | -------------------------------- |
-| [Bar chart][bar chart]     | [Heatmap][heatmap]                | [Status history][status history] |
-| [Bar gauge][bar gauge]     | [Histogram][histogram]            | [Table][table]                   |
-| [Candlestick][candlestick] | [Pie chart][pie chart]            | [Time series][time series]       |
-| [Canvas][canvas]           | [Stat][stat]                      | [Trend][trend]                   |
-| [Gauge][gauge]             | [[State timeline][state timeline] | [XY chart][xy chart]             |
-| [Geomap][geomap]           |                                   |                                  |
+|                            |                                  |                                  |
+| -------------------------- | -------------------------------- | -------------------------------- |
+| [Bar chart][bar chart]     | [Heatmap][heatmap]               | [Status history][status history] |
+| [Bar gauge][bar gauge]     | [Histogram][histogram]           | [Table][table]                   |
+| [Candlestick][candlestick] | [Pie chart][pie chart]           | [Time series][time series]       |
+| [Canvas][canvas]           | [Stat][stat]                     | [Trend][trend]                   |
+| [Gauge][gauge]             | [State timeline][state timeline] | [XY chart][xy chart]             |
+| [Geomap][geomap]           |                                  |                                  |
 
 ## Data link variables
 
