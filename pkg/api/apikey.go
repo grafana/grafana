@@ -20,7 +20,7 @@ import (
 // see https://grafana.com/docs/grafana/next/administration/api-keys/#migrate-api-keys-to-grafana-service-accounts-using-the-api.
 //
 // Responses:
-// 301: StatusMovedPermanently
+// 301: statusMovedPermanently
 func (hs *HTTPServer) GetAPIKeys(c *contextmodel.ReqContext) response.Response {
 	// Set the Location header to the new URL
 	c.Context.Resp.Header().Set("Location", "/api/serviceaccounts/tokens")
@@ -39,7 +39,7 @@ func (hs *HTTPServer) GetAPIKeys(c *contextmodel.ReqContext) response.Response {
 //
 // Deprecated: true
 // Responses:
-// 301: StatusMovedPermanently
+// 301: statusMovedPermanently
 func (hs *HTTPServer) DeleteAPIKey(c *contextmodel.ReqContext) response.Response {
 	// Set the Location header to the new URL
 	c.Context.Resp.Header().Set("Location", "/api/serviceaccounts/tokens")
@@ -61,7 +61,7 @@ func (hs *HTTPServer) DeleteAPIKey(c *contextmodel.ReqContext) response.Response
 // see: https://grafana.com/docs/grafana/next/administration/api-keys/#migrate-api-keys-to-grafana-service-accounts-using-the-api.
 //
 // Responses:
-// 301: StatusMovedPermanently
+// 301: statusMovedPermanently
 func (hs *HTTPServer) AddAPIKey(c *contextmodel.ReqContext) response.Response {
 	// Set the Location header to the new URL
 	c.Context.Resp.Header().Set("Location", "/api/serviceaccounts/tokens")
