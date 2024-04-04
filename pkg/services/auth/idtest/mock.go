@@ -22,7 +22,7 @@ func (m *MockService) SignIdentity(ctx context.Context, identity identity.Reques
 }
 
 func (m *MockService) RemoveIDToken(ctx context.Context, identity identity.Requester) error {
-	if m.SignIdentityFn != nil {
+	if m.RemoveIDTokenFn != nil {
 		return m.RemoveIDTokenFn(ctx, identity)
 	}
 	return nil
