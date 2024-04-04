@@ -6277,9 +6277,6 @@
         },
         "type": "object"
       },
-      "ItemStatus": {
-        "type": "string"
-      },
       "JSONWebKey": {
         "description": "JSONWebKey represents a public or private key in JWK format. It can be\nmarshaled into JSON and unmarshaled from JSON.",
         "properties": {
