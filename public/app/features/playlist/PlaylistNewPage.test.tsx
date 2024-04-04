@@ -39,15 +39,11 @@ function getTestContext({ name, interval, items }: Partial<Playlist> = {}) {
 }
 
 describe('PlaylistNewPage', () => {
-  beforeEach(() => {
-    jest.spyOn(console, 'error').mockImplementation(() => {});
-  });
-
   describe('when mounted', () => {
-    it('then header should be correct', () => {
+    it('then header should be correct', async () => {
       getTestContext();
 
-      expect(screen.getByRole('heading', { name: /new playlist/i })).toBeInTheDocument();
+      expect(await screen.findByRole('heading', { name: /new playlist/i })).toBeInTheDocument();
     });
   });
 
