@@ -43,7 +43,7 @@ RBAC roles contain multiple permissions, each of which has an action and a scope
     - **Action:** `datasources:read`
     - **Scope:** `datasources:*`
 
-For information on the RBAC API refer to [RBAC API](https://grafana.com/docs/grafana/latest/developers/http_api/access_control/#rbac-api).
+For information on the RBAC API refer to [RBAC API](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developers/http_api/access_control/#rbac-api).
 
 ### Basic roles
 
