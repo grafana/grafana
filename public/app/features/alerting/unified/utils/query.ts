@@ -9,7 +9,7 @@ import { AlertQuery } from 'app/types/unified-alerting-dto';
 
 import { isCloudRulesSource } from './datasource';
 import { isGrafanaRulerRule } from './rules';
-import { safeParseDurationstr } from './time';
+import { safeParsePrometheusDuration } from './time';
 
 export function alertRuleToQueries(combinedRule: CombinedRule | undefined | null): AlertQuery[] {
   if (!combinedRule) {
@@ -45,7 +45,7 @@ export function alertRuleToQueries(combinedRule: CombinedRule | undefined | null
 export function widenRelativeTimeRanges(queries: AlertQuery[], pendingPeriod: string, groupInterval?: string) {
   // if pending period is zero that means inherit from group interval, if that is empty then assume 1m
   const pendingPeriodDurationMillis =
-    safeParseDurationstr(pendingPeriod) ?? safeParseDurationstr(groupInterval ?? '1m');
+    safeParsePrometheusDuration(pendingPeriod) ?? safeParsePrometheusDuration(groupInterval ?? '1m');
   const pendingPeriodDuration = Math.floor(pendingPeriodDurationMillis / 1000);
 
   return queries.map((query) =>

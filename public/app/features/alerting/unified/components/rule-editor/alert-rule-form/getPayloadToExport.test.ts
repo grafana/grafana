@@ -61,7 +61,7 @@ const expectedModifiedRule2 = (uid: string) => ({
   annotations: {
     summary: 'This grafana rule2 updated',
   },
-  for: '5m',
+  for: '1m',
   grafana_alert: {
     condition: 'A',
     data: [

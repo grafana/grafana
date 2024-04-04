@@ -17,11 +17,12 @@ import { useUnifiedAlertingSelector } from '../../hooks/useUnifiedAlertingSelect
 import { fetchRulerRulesAction } from '../../state/actions';
 import { RuleFormValues } from '../../types/rule-form';
 import { GRAFANA_RULES_SOURCE_NAME } from '../../utils/datasource';
-import { MINUTE } from '../../utils/rule-form';
+import { DEFAULT_GROUP_EVALUATION_INTERVAL } from '../../utils/rule-form';
 import { isGrafanaRulerRule } from '../../utils/rules';
 import { ProvisioningBadge } from '../Provisioning';
 import { evaluateEveryValidationOptions } from '../rules/EditRuleGroupModal';
 
+import { EvaluationGroupQuickPick } from './EvaluationGroupQuickPick';
 import { containsSlashes, Folder, RuleFolderPicker } from './RuleFolderPicker';
 import { checkForPathSeparator } from './util';
 
@@ -48,7 +49,7 @@ export const useFolderGroupOptions = (folderUid: string, enableProvisionedGroups
       return {
         label: group.name,
         value: group.name,
-        description: group.interval ?? MINUTE,
+        description: group.interval ?? DEFAULT_GROUP_EVALUATION_INTERVAL,
         // we include provisioned folders, but disable the option to select them
         isDisabled: !enableProvisionedGroups ? isProvisioned : false,
         isProvisioned: isProvisioned,
@@ -357,12 +358,17 @@ function EvaluationGroupCreationModal({
   };
 
   const formAPI = useForm({
-    defaultValues: { group: '', evaluateEvery: '' },
+    defaultValues: { group: '', evaluateEvery: DEFAULT_GROUP_EVALUATION_INTERVAL },
     mode: 'onChange',
     shouldFocusError: true,
   });
 
-  const { register, handleSubmit, formState, getValues } = formAPI;
+  const { register, handleSubmit, formState, setValue, getValues, watch: watchGroupFormValues } = formAPI;
+  const evaluationInterval = watchGroupFormValues('evaluateEvery');
+
+  const setEvaluationInterval = (interval: string) => {
+    setValue('evaluateEvery', interval, { shouldValidate: true });
+  };
 
   return (
     <Modal
@@ -379,7 +385,7 @@ function EvaluationGroupCreationModal({
           <Field
             label={<Label htmlFor={'group'}>Evaluation group name</Label>}
             error={formState.errors.group?.message}
-            invalid={!!formState.errors.group}
+            invalid={Boolean(formState.errors.group)}
           >
             <Input
               className={styles.formInput}
@@ -392,22 +398,24 @@ function EvaluationGroupCreationModal({
 
           <Field
             error={formState.errors.evaluateEvery?.message}
-            invalid={!!formState.errors.evaluateEvery}
+            invalid={Boolean(formState.errors.evaluateEvery) ? true : undefined}
             label={
-              <Label
-                htmlFor={evaluateEveryId}
-                description="How often is the rule evaluated. Applies to every rule within the group."
-              >
+              <Label htmlFor={evaluateEveryId} description="How often all rules in the group are evaluated.">
                 Evaluation interval
               </Label>
             }
           >
-            <Input
-              className={styles.formInput}
-              id={evaluateEveryId}
-              placeholder="e.g. 5m"
-              {...register('evaluateEvery', evaluateEveryValidationOptions(groupRules))}
-            />
+            <Stack direction="column">
+              <Input
+                className={styles.formInput}
+                id={evaluateEveryId}
+                placeholder={DEFAULT_GROUP_EVALUATION_INTERVAL}
+                {...register('evaluateEvery', evaluateEveryValidationOptions(groupRules))}
+              />
+              <Stack direction="row" alignItems="flex-end">
+                <EvaluationGroupQuickPick currentInterval={evaluationInterval} onSelect={setEvaluationInterval} />
+              </Stack>
+            </Stack>
           </Field>
           <Modal.ButtonRow>
             <Button variant="secondary" type="button" onClick={onCancel}>
