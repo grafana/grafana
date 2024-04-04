@@ -64,7 +64,7 @@ export class DataProvider {
   }
 
   getHistory(): string[] {
-    return this.historyProvider.map((h) => h.query.expr).filter((expr) => expr !== undefined);
+    return this.historyProvider.map((h) => h.query.expr).filter(Boolean);
   }
 
   getAllMetricNames(): string[] {
