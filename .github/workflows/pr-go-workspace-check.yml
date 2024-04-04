@@ -1,0 +1,49 @@
+name: "Go Workspace Check"
+
+on:
+  workflow_dispatch:
+  pull_request:
+    branches: [main]
+    paths:
+      - '**/go.work'
+      - '**/go.work.sum'
+      - '**/go.mod'
+      - '**/go.sum'
+
+jobs:
+  check:
+    name: Go Workspace Check
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+
+    - name: Set go version
+      uses: actions/setup-go@v4
+      with:
+        go-version: '1.21.8'
+
+    - name: Workspace Sync
+      run: go work sync
+
+    - name: Check for go mod & workspace changes 
+      run: |
+        if ! git diff --exit-code --quiet; then
+          echo "Changes detected:"
+          git diff
+          echo "Please run 'go work sync' and commit the changes."
+          exit 1
+        fi
+
+    - name: Build
+      run: make build-go
+
+    - name: Check for go workspace changes 
+      run: |
+        if ! git diff --exit-code --quiet; then
+          echo "Changes detected:"
+          git diff
+          echo "Please run 'make build-go' and commit the changes."
+          exit 1
+        fi

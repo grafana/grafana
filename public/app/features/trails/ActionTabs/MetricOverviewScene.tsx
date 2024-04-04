@@ -10,12 +10,11 @@ import {
 } from '@grafana/scenes';
 import { Stack, Text, TextLink } from '@grafana/ui';
 
-import PrometheusLanguageProvider from '../../../plugins/datasource/prometheus/language_provider';
 import { PromMetricsMetadataItem } from '../../../plugins/datasource/prometheus/types';
-import { getDatasourceSrv } from '../../plugins/datasource_srv';
 import { ALL_VARIABLE_VALUE } from '../../variables/constants';
+import { MetricScene } from '../MetricScene';
 import { StatusWrapper } from '../StatusWrapper';
-import { TRAILS_ROUTE, VAR_DATASOURCE_EXPR, VAR_GROUP_BY } from '../shared';
+import { VAR_DATASOURCE_EXPR, VAR_GROUP_BY } from '../shared';
 import { getMetricSceneFor, getTrailFor } from '../utils';
 
 import { getLabelOptions } from './utils';
@@ -58,25 +57,12 @@ export class MetricOverviewScene extends SceneObjectBase<MetricOverviewSceneStat
 
   private async updateMetadata() {
     this.setState({ metadataLoading: true, metadata: undefined });
-    const ds = await getDatasourceSrv().get(VAR_DATASOURCE_EXPR, { __sceneObject: { value: this } });
-
-    const languageProvider: PrometheusLanguageProvider = ds.languageProvider;
-
-    if (!languageProvider) {
-      return;
-    }
-
     const metricScene = getMetricSceneFor(this);
     const metric = metricScene.state.metric;
 
-    if (languageProvider.metricsMetadata) {
-      this.setState({ metadata: languageProvider.metricsMetadata[metric], metadataLoading: false });
-      return;
-    }
-
-    await languageProvider.start();
-
-    this.setState({ metadata: languageProvider.metricsMetadata?.[metric], metadataLoading: false });
+    const trail = getTrailFor(this);
+    const metadata = await trail.getMetricMetadata(metric);
+    this.setState({ metadata, metadataLoading: false });
   }
 
   public static Component = ({ model }: SceneComponentProps<MetricOverviewScene>) => {
@@ -106,26 +92,25 @@ export class MetricOverviewScene extends SceneObjectBase<MetricOverviewSceneStat
             <Stack direction="column" gap={0.5}>
               <Text weight={'medium'}>Labels</Text>
               {labelOptions.length === 0 && 'Unable to fetch labels.'}
-              {labelOptions.map((l) =>
-                getTrailFor(model).state.embedded ? (
-                  // Do not render as TextLink when in embedded mode, as any direct URL
-                  // manipulation will take the browser out out of the current page.
-                  <div key={l.label}>{l.label}</div>
-                ) : (
-                  <TextLink
-                    key={l.label}
-                    href={sceneGraph.interpolate(
-                      model,
-                      `${TRAILS_ROUTE}$\{__url.params:exclude:actionView,var-groupby}&actionView=breakdown&var-groupby=${encodeURIComponent(
-                        l.value!
-                      )}`
-                    )}
-                    title="View breakdown"
-                  >
-                    {l.label!}
-                  </TextLink>
-                )
-              )}
+              {labelOptions.map((l) => (
+                <TextLink
+                  key={l.label}
+                  href={`#View breakdown for ${l.label}`}
+                  title={`View breakdown for ${l.label}`}
+                  onClick={(event) => {
+                    event.preventDefault();
+                    event.stopPropagation();
+                    sceneGraph.getAncestor(model, MetricScene).setActionView('breakdown');
+                    const groupByVar = sceneGraph.lookupVariable(VAR_GROUP_BY, model);
+                    if (groupByVar instanceof QueryVariable) {
+                      groupByVar.setState({ value: l.value });
+                    }
+                    return false;
+                  }}
+                >
+                  {l.label!}
+                </TextLink>
+              ))}
             </Stack>
           </>
         </Stack>

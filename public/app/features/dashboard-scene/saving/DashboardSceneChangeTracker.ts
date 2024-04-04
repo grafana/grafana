@@ -1,7 +1,7 @@
 import { Unsubscribable } from 'rxjs';
 
 import {
-  SceneDataLayers,
+  SceneDataLayerSet,
   SceneGridLayout,
   SceneObjectStateChangedEvent,
   SceneRefreshPicker,
@@ -38,7 +38,7 @@ export class DashboardSceneChangeTracker {
     if (payload.changedObject instanceof behaviors.CursorSync) {
       this.detectChanges();
     }
-    if (payload.changedObject instanceof SceneDataLayers) {
+    if (payload.changedObject instanceof SceneDataLayerSet) {
       this.detectChanges();
     }
     if (payload.changedObject instanceof DashboardGridItem) {
@@ -67,6 +67,9 @@ export class DashboardSceneChangeTracker {
       if (!Object.prototype.hasOwnProperty.call(payload.partialUpdate, 'data')) {
         this.detectChanges();
       }
+    }
+    if (payload.changedObject instanceof behaviors.LiveNowTimer) {
+      this.detectChanges();
     }
     if (isSceneVariableInstance(payload.changedObject)) {
       this.detectChanges();

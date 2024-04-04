@@ -35,7 +35,8 @@ type SignedInUser struct {
 	Permissions map[int64]map[string][]string `json:"-"`
 	// IDToken is a signed token representing the identity that can be forwarded to plugins and external services.
 	// Will only be set when featuremgmt.FlagIdForwarding is enabled.
-	IDToken string `json:"-" xorm:"-"`
+	IDToken      string `json:"-" xorm:"-"`
+	NamespacedID string
 }
 
 func (u *SignedInUser) ShouldUpdateLastSeenAt() bool {
@@ -205,8 +206,7 @@ func (u *SignedInUser) GetID() string {
 		return namespacedID(identity.NamespaceRenderService, 0)
 	}
 
-	// backwards compatibility
-	return namespacedID(identity.NamespaceUser, u.UserID)
+	return u.NamespacedID
 }
 
 // GetNamespacedID returns the namespace and ID of the active entity
@@ -214,7 +214,20 @@ func (u *SignedInUser) GetID() string {
 func (u *SignedInUser) GetNamespacedID() (string, string) {
 	parts := strings.Split(u.GetID(), ":")
 	// Safety: GetID always returns a ':' separated string
+	if len(parts) != 2 {
+		return "", ""
+	}
+
 	return parts[0], parts[1]
+}
+
+func (u *SignedInUser) IsAuthenticatedBy(providers ...string) bool {
+	for _, p := range providers {
+		if u.AuthenticatedBy == p {
+			return true
+		}
+	}
+	return false
 }
 
 // FIXME: remove this method once all services are using an interface

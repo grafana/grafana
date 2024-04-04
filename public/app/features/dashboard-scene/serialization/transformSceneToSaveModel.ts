@@ -3,7 +3,6 @@ import { isEqual } from 'lodash';
 import { isEmptyObject, ScopedVars, TimeRange } from '@grafana/data';
 import {
   behaviors,
-  SceneDataLayers,
   SceneGridItemLike,
   SceneGridLayout,
   SceneGridRow,
@@ -33,6 +32,7 @@ import { DASHBOARD_SCHEMA_VERSION } from 'app/features/dashboard/state/Dashboard
 import { GrafanaQueryType } from 'app/plugins/datasource/grafana/types';
 
 import { AddLibraryPanelWidget } from '../scene/AddLibraryPanelWidget';
+import { DashboardDataLayerSet } from '../scene/DashboardDataLayerSet';
 import { DashboardGridItem } from '../scene/DashboardGridItem';
 import { DashboardScene } from '../scene/DashboardScene';
 import { LibraryVizPanel } from '../scene/LibraryVizPanel';
@@ -94,10 +94,9 @@ export function transformSceneToSaveModel(scene: DashboardScene, isSnapshot = fa
   }
 
   let annotations: AnnotationQuery[] = [];
-  if (data instanceof SceneDataLayers) {
-    const layers = data.state.layers;
 
-    annotations = dataLayersToAnnotations(layers);
+  if (data instanceof DashboardDataLayerSet) {
+    annotations = dataLayersToAnnotations(data.state.annotationLayers);
   }
 
   if (variablesSet instanceof SceneVariableSet) {
@@ -231,6 +230,7 @@ export function vizPanelToPanel(
     id: getPanelIdForVizPanel(vizPanel),
     type: vizPanel.state.pluginId,
     title: vizPanel.state.title,
+    description: vizPanel.state.description ?? undefined,
     gridPos,
     options: vizPanel.state.options,
     fieldConfig: (vizPanel.state.fieldConfig as FieldConfigSource) ?? { defaults: {}, overrides: [] },

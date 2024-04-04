@@ -1,5 +1,6 @@
-import { VizPanel, SceneGridRow, SceneDataLayers, sceneGraph, SceneGridLayout, behaviors } from '@grafana/scenes';
+import { VizPanel, SceneGridRow, sceneGraph, SceneGridLayout, behaviors } from '@grafana/scenes';
 
+import { DashboardDataLayerSet } from '../scene/DashboardDataLayerSet';
 import { DashboardGridItem } from '../scene/DashboardGridItem';
 import { DashboardScene } from '../scene/DashboardScene';
 import { LibraryVizPanel } from '../scene/LibraryVizPanel';
@@ -53,11 +54,11 @@ function getVizPanels(scene: DashboardScene): VizPanel[] {
   return panels;
 }
 
-function getDataLayers(scene: DashboardScene): SceneDataLayers {
+function getDataLayers(scene: DashboardScene): DashboardDataLayerSet {
   const data = sceneGraph.getData(scene);
 
-  if (!(data instanceof SceneDataLayers)) {
-    throw new Error('SceneDataLayers not found');
+  if (!(data instanceof DashboardDataLayerSet)) {
+    throw new Error('DashboardDataLayerSet not found');
   }
 
   return data;

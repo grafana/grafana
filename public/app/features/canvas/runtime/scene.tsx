@@ -75,6 +75,7 @@ export class Scene {
   isEditingEnabled?: boolean;
   shouldShowAdvancedTypes?: boolean;
   shouldPanZoom?: boolean;
+  shouldInfinitePan?: boolean;
   skipNextSelectionBroadcast = false;
   ignoreDataUpdate = false;
   panel: CanvasPanel;
@@ -112,10 +113,11 @@ export class Scene {
     enableEditing: boolean,
     showAdvancedTypes: boolean,
     panZoom: boolean,
+    infinitePan: boolean,
     public onSave: (cfg: CanvasFrameOptions) => void,
     panel: CanvasPanel
   ) {
-    this.root = this.load(cfg, enableEditing, showAdvancedTypes, panZoom);
+    this.root = this.load(cfg, enableEditing, showAdvancedTypes, panZoom, infinitePan);
 
     this.subscription = this.editModeEnabled.subscribe((open) => {
       if (!this.moveable || !this.isEditingEnabled) {
@@ -148,7 +150,13 @@ export class Scene {
     return !this.byName.has(v);
   };
 
-  load(cfg: CanvasFrameOptions, enableEditing: boolean, showAdvancedTypes: boolean, panZoom: boolean) {
+  load(
+    cfg: CanvasFrameOptions,
+    enableEditing: boolean,
+    showAdvancedTypes: boolean,
+    panZoom: boolean,
+    infinitePan: boolean
+  ) {
     this.root = new RootElement(
       cfg ?? {
         type: 'frame',
@@ -161,6 +169,7 @@ export class Scene {
     this.isEditingEnabled = enableEditing;
     this.shouldShowAdvancedTypes = showAdvancedTypes;
     this.shouldPanZoom = panZoom;
+    this.shouldInfinitePan = infinitePan;
 
     setTimeout(() => {
       if (this.div) {
@@ -385,6 +394,22 @@ export class Scene {
     return targetElements;
   };
 
+  disableCustomables = () => {
+    this.moveable!.props = {
+      dimensionViewable: false,
+      constraintViewable: false,
+      settingsViewable: false,
+    };
+  };
+
+  enableCustomables = () => {
+    this.moveable!.props = {
+      dimensionViewable: true,
+      constraintViewable: true,
+      settingsViewable: true,
+    };
+  };
+
   initMoveable = (destroySelecto = false, allowChanges = true) => {
     const targetElements = this.generateTargetElements(this.root.elements);
 
@@ -408,6 +433,10 @@ export class Scene {
       draggable: allowChanges && !this.editModeEnabled.getValue(),
       resizable: allowChanges,
 
+      // Setup rotatable
+      rotatable: allowChanges,
+      throttleRotate: 5,
+
       // Setup snappable
       snappable: allowChanges,
       snapDirections: snapDirections,
@@ -423,6 +452,21 @@ export class Scene {
       origin: false,
       className: this.styles.selected,
     })
+      .on('rotateStart', () => {
+        this.disableCustomables();
+      })
+      .on('rotate', (event) => {
+        const targetedElement = this.findElementByTarget(event.target);
+
+        if (targetedElement) {
+          targetedElement.applyRotate(event);
+        }
+      })
+      .on('rotateEnd', () => {
+        this.enableCustomables();
+        // Update the editor with the new rotation
+        this.moved.next(Date.now());
+      })
       .on('click', (event) => {
         const targetedElement = this.findElementByTarget(event.target);
         let elementSupportsEditing = false;

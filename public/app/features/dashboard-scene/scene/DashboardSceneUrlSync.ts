@@ -3,6 +3,7 @@ import { Unsubscribable } from 'rxjs';
 import { AppEvents } from '@grafana/data';
 import { locationService } from '@grafana/runtime';
 import {
+  SceneGridLayout,
   SceneObjectBase,
   SceneObjectState,
   SceneObjectUrlSyncHandler,
@@ -27,13 +28,14 @@ export class DashboardSceneUrlSync implements SceneObjectUrlSyncHandler {
   constructor(private _scene: DashboardScene) {}
 
   getKeys(): string[] {
-    return ['inspect', 'viewPanel', 'editPanel', 'editview'];
+    return ['inspect', 'viewPanel', 'editPanel', 'editview', 'autofitpanels'];
   }
 
   getUrlState(): SceneObjectUrlValues {
     const state = this._scene.state;
     return {
       inspect: state.inspectPanelKey,
+      autofitpanels: state.body instanceof SceneGridLayout && !!state.body.state.UNSAFE_fitPanels ? 'true' : undefined,
       viewPanel: state.viewPanelScene?.getUrlKey(),
       editview: state.editview?.getUrlKey(),
       editPanel: state.editPanel?.getUrlKey() || undefined,
@@ -136,6 +138,14 @@ export class DashboardSceneUrlSync implements SceneObjectUrlSyncHandler {
       update.editPanel = buildPanelEditScene(panel);
     } else if (editPanel && values.editPanel === null) {
       update.editPanel = undefined;
+    }
+
+    if (this._scene.state.body instanceof SceneGridLayout) {
+      const UNSAFE_fitPanels = typeof values.autofitpanels === 'string';
+
+      if (!!this._scene.state.body.state.UNSAFE_fitPanels !== UNSAFE_fitPanels) {
+        this._scene.state.body.setState({ UNSAFE_fitPanels });
+      }
     }
 
     if (Object.keys(update).length > 0) {

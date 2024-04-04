@@ -7,7 +7,12 @@ import { VizPanel } from '@grafana/scenes';
 import { DataLinksInlineEditor, Input, RadioButtonGroup, Select, Switch, TextArea } from '@grafana/ui';
 import { VizPanelManager, VizPanelManagerState } from 'app/features/dashboard-scene/panel-edit/VizPanelManager';
 import { VizPanelLinks } from 'app/features/dashboard-scene/scene/PanelLinks';
+import {
+  transformSceneToSaveModel,
+  vizPanelToPanel,
+} from 'app/features/dashboard-scene/serialization/transformSceneToSaveModel';
 import { dashboardSceneGraph } from 'app/features/dashboard-scene/utils/dashboardSceneGraph';
+import { getDashboardSceneFor } from 'app/features/dashboard-scene/utils/utils';
 import { getPanelLinksVariableSuggestions } from 'app/features/panel/panellinks/link_srv';
 
 import { GenAIPanelDescriptionButton } from '../GenAI/GenAIPanelDescriptionButton';
@@ -19,7 +24,7 @@ import { OptionsPaneItemDescriptor } from './OptionsPaneItemDescriptor';
 import { OptionPaneRenderProps } from './types';
 
 export function getPanelFrameCategory(props: OptionPaneRenderProps): OptionsPaneCategoryDescriptor {
-  const { panel, onPanelConfigChange } = props;
+  const { dashboard, panel, onPanelConfigChange } = props;
   const descriptor = new OptionsPaneCategoryDescriptor({
     title: 'Panel options',
     id: 'Panel options',
@@ -58,7 +63,13 @@ export function getPanelFrameCategory(props: OptionPaneRenderProps): OptionsPane
             />
           );
         },
-        addon: config.featureToggles.dashgpt && <GenAIPanelTitleButton onGenerate={setPanelTitle} panel={panel} />,
+        addon: config.featureToggles.dashgpt && (
+          <GenAIPanelTitleButton
+            onGenerate={setPanelTitle}
+            panel={panel.getSaveModel()}
+            dashboard={dashboard.getSaveModelClone()}
+          />
+        ),
       })
     )
     .addItem(
@@ -77,7 +88,7 @@ export function getPanelFrameCategory(props: OptionPaneRenderProps): OptionsPane
           );
         },
         addon: config.featureToggles.dashgpt && (
-          <GenAIPanelDescriptionButton onGenerate={setPanelDescription} panel={panel} />
+          <GenAIPanelDescriptionButton onGenerate={setPanelDescription} panel={panel.getSaveModel()} />
         ),
       })
     )
@@ -194,6 +205,7 @@ export function getPanelFrameCategory2(
 
   const panelLinksObject = dashboardSceneGraph.getPanelLinks(panel);
   const links = panelLinksObject?.state.rawLinks ?? [];
+  const dashboard = getDashboardSceneFor(panel);
 
   return descriptor
     .addItem(
@@ -202,34 +214,30 @@ export function getPanelFrameCategory2(
         value: panel.state.title,
         popularRank: 1,
         render: function renderTitle() {
-          return (
-            <Input
-              id="PanelFrameTitle"
-              defaultValue={panel.state.title}
-              onBlur={(e) => panel.setState({ title: e.currentTarget.value })}
-            />
-          );
+          return <PanelFrameTitle panel={panel} />;
         },
-        // addon: config.featureToggles.dashgpt && <GenAIPanelTitleButton onGenerate={setPanelTitle} panel={panel} />,
+        addon: config.featureToggles.dashgpt && (
+          <GenAIPanelTitleButton
+            onGenerate={(title) => panel.setState({ title })}
+            panel={vizPanelToPanel(panel)}
+            dashboard={transformSceneToSaveModel(dashboard)}
+          />
+        ),
       })
     )
     .addItem(
       new OptionsPaneItemDescriptor({
         title: 'Description',
-        description: panel.state.description,
         value: panel.state.description,
         render: function renderDescription() {
-          return (
-            <TextArea
-              id="description-text-area"
-              defaultValue={panel.state.description}
-              onBlur={(e) => panel.setState({ description: e.currentTarget.value })}
-            />
-          );
+          return <DescriptionTextArea panel={panel} />;
         },
-        // addon: config.featureToggles.dashgpt && (
-        //   <GenAIPanelDescriptionButton onGenerate={setPanelDescription} panel={panel} />
-        // ),
+        addon: config.featureToggles.dashgpt && (
+          <GenAIPanelDescriptionButton
+            onGenerate={(description) => panel.setState({ description })}
+            panel={vizPanelToPanel(panel)}
+          />
+        ),
       })
     )
     .addItem(
@@ -344,6 +352,26 @@ function ScenePanelLinksEditor({ panelLinks }: ScenePanelLinksEditorProps) {
       onChange={(links) => panelLinks?.setState({ rawLinks: links })}
       getSuggestions={getPanelLinksVariableSuggestions}
       data={[]}
+    />
+  );
+}
+
+function PanelFrameTitle({ panel }: { panel: VizPanel }) {
+  const { title } = panel.useState();
+
+  return (
+    <Input id="PanelFrameTitle" value={title} onChange={(e) => panel.setState({ title: e.currentTarget.value })} />
+  );
+}
+
+function DescriptionTextArea({ panel }: { panel: VizPanel }) {
+  const { description } = panel.useState();
+
+  return (
+    <TextArea
+      id="description-text-area"
+      value={description}
+      onChange={(e) => panel.setState({ description: e.currentTarget.value })}
     />
   );
 }

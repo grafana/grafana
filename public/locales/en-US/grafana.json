@@ -94,7 +94,7 @@
     },
     "no-results": {
       "clear": "Clear search and filters",
-      "text": "No results found for your query."
+      "text": "No results found for your query"
     }
   },
   "clipboard-button": {
@@ -107,9 +107,6 @@
       "change-theme": "Change theme...",
       "dark-theme": "Dark",
       "light-theme": "Light"
-    },
-    "empty-state": {
-      "title": "No results found"
     },
     "search-box": {
       "placeholder": "Search or jump to..."
@@ -131,7 +128,8 @@
   },
   "connections": {
     "connect-data": {
-      "category-header-label": "Data sources"
+      "category-header-label": "Data sources",
+      "empty-message": "No results matching your query were found"
     },
     "search": {
       "placeholder": "Search all"
@@ -563,6 +561,9 @@
     "drawer": {
       "close": "Close"
     },
+    "empty-state": {
+      "not-found-message": "No results found"
+    },
     "modal": {
       "close-tooltip": "Close"
     },
@@ -650,6 +651,9 @@
     }
   },
   "library-panels": {
+    "empty-state": {
+      "message": "No library panels found"
+    },
     "modal": {
       "body_one": "This panel is being used in {{count}} dashboard. Please choose which dashboard to view the panel in:",
       "body_other": "This panel is being used in {{count}} dashboards. Please choose which dashboard to view the panel in:",
@@ -699,18 +703,15 @@
     "connect-modal": {
       "body-cloud-stack": "You'll also need a cloud stack. If you just signed up, we'll automatically create your first stack. If you have an account, you'll need to select or create a stack.",
       "body-get-started": "To get started, you'll need a Grafana.com account.",
-      "body-paste-stack": "Once you've decided on a stack, paste the URL below.",
       "body-sign-up": "Sign up for a Grafana.com account",
       "body-token": "Your self-managed Grafana installation needs special access to securely migrate content. You'll need to create a migration token on your chosen cloud stack.",
       "body-token-field": "Migration token",
       "body-token-field-placeholder": "Paste token here",
       "body-token-instructions": "Log into your cloud stack and navigate to Administration, General, Migrate to Grafana Cloud. Create a migration token on that screen and paste the token here.",
-      "body-url-field": "Cloud stack URL",
       "body-view-stacks": "View my cloud stacks",
       "cancel": "Cancel",
       "connect": "Connect to this stack",
       "connecting": "Connecting to this stack...",
-      "stack-required-error": "Stack URL is required",
       "title": "Connect to a cloud stack",
       "token-required-error": "Migration token is required"
     },
@@ -749,12 +750,13 @@
     },
     "migration-token": {
       "body": "Your self-managed Grafana instance will require a special authentication token to securely connect to this cloud stack.",
-      "delete-button": "Delete this migration token",
       "delete-modal-body": "If you've already used this token with a self-managed installation, that installation will no longer be able to upload content.",
       "delete-modal-cancel": "Cancel",
       "delete-modal-confirm": "Delete",
       "delete-modal-deleting": "Deleting...",
       "delete-modal-title": "Delete migration token",
+      "error-body": "Unable to generate a migration token. Please try again later.",
+      "error-title": "Something went wrong",
       "generate-button": "Generate a migration token",
       "generate-button-loading": "Generating a migration token...",
       "modal-close": "Close",
@@ -763,7 +765,7 @@
       "modal-field-description": "Copy the token now as you will not be able to see it again. Losing a token requires creating a new one.",
       "modal-field-label": "Token",
       "modal-title": "Migration token created",
-      "status": "Current status: <2></2>",
+      "status": "Current status: <1></1>",
       "title": "Migration token"
     },
     "pdc": {
@@ -791,7 +793,10 @@
     },
     "summary": {
       "disconnect": "Disconnect",
-      "error-starting-migration": "There was an error starting cloud migration",
+      "disconnect-error-description": "See the Grafana server logs for more details",
+      "disconnect-error-title": "There was an error disconnecting",
+      "run-migration-error-description": "See the Grafana server logs for more details",
+      "run-migration-error-title": "There was an error migrating your resources",
       "start-migration": "Upload everything",
       "target-stack-title": "Uploading to"
     },
@@ -1211,6 +1216,11 @@
       "title": "There are no playlists created yet"
     }
   },
+  "playlists": {
+    "empty-state": {
+      "message": "No playlists found"
+    }
+  },
   "profile": {
     "change-password": {
       "cancel-button": "Cancel",
@@ -1477,7 +1487,7 @@
       "library-panel": "Library panel",
       "link": "Link",
       "panel-embed": "Embed",
-      "public-dashboard": "Publish Dashboard",
+      "public-dashboard": "Public Dashboard",
       "public-dashboard-title": "Public dashboard",
       "snapshot": "Snapshot"
     },

@@ -95,6 +95,17 @@ const instance2SettingsMock = {
   },
 };
 
+// Mocking the build in Grafana data source to avoid annotations data layer errors.
+const grafanaDs = {
+  id: 1,
+  uid: '-- Grafana --',
+  name: 'grafana',
+  type: 'grafana',
+  meta: {
+    id: 'grafana',
+  },
+};
+
 // Mock the store module
 jest.mock('app/core/store', () => ({
   exists: jest.fn(),
@@ -112,6 +123,11 @@ jest.mock('@grafana/runtime', () => ({
   },
   getDataSourceSrv: () => ({
     get: async (ref: DataSourceRef) => {
+      // Mocking the build in Grafana data source to avoid annotations data layer errors.
+      if (ref.uid === '-- Grafana --') {
+        return grafanaDs;
+      }
+
       if (ref.uid === 'gdev-testdata') {
         return ds1Mock;
       }
@@ -163,7 +179,14 @@ describe('VizPanelManager', () => {
         title: 'Panel A',
         key: 'panel-1',
         pluginId: 'table',
-        $data: new SceneQueryRunner({ key: 'data-query-runner', queries: [{ refId: 'A' }] }),
+        $data: new SceneQueryRunner({
+          key: 'data-query-runner',
+          datasource: {
+            type: 'grafana-testdata-datasource',
+            uid: 'gdev-testdata',
+          },
+          queries: [{ refId: 'A' }],
+        }),
         options: undefined,
         fieldConfig: {
           defaults: {
@@ -194,7 +217,14 @@ describe('VizPanelManager', () => {
         title: 'Panel A',
         key: 'panel-1',
         pluginId: 'table',
-        $data: new SceneQueryRunner({ key: 'data-query-runner', queries: [{ refId: 'A' }] }),
+        $data: new SceneQueryRunner({
+          key: 'data-query-runner',
+          datasource: {
+            type: 'grafana-testdata-datasource',
+            uid: 'gdev-testdata',
+          },
+          queries: [{ refId: 'A' }],
+        }),
         options: {
           customOption: 'A',
         },
@@ -703,10 +733,28 @@ describe('VizPanelManager', () => {
       });
     });
   });
+
+  it('should load last used data source if no data source specified for a panel', async () => {
+    store.exists.mockReturnValue(true);
+    store.getObject.mockReturnValue({
+      dashboardUid: 'ffbe00e2-803c-4d49-adb7-41aad336234f',
+      datasourceUid: 'gdev-testdata',
+    });
+    const { scene, panel } = setupTest('panel-5');
+    scene.setState({ editPanel: buildPanelEditScene(panel) });
+
+    const vizPanelManager = scene.state.editPanel!.state.vizManager;
+    vizPanelManager.activate();
+    await Promise.resolve();
+
+    expect(vizPanelManager.state.datasource).toEqual(ds1Mock);
+    expect(vizPanelManager.state.dsSettings).toEqual(instance1SettingsMock);
+  });
 });
 
 const setupTest = (panelId: string) => {
   const scene = transformSaveModelToScene({ dashboard: testDashboard, meta: {} });
+
   const panel = findVizPanelByKey(scene, panelId)!;
 
   const vizPanelManager = VizPanelManager.createFor(panel);

@@ -2,7 +2,6 @@ package service
 
 import (
 	"context"
-	"errors"
 	"strconv"
 	"testing"
 	"time"
@@ -490,63 +489,5 @@ func TestIntegrationDataAccess(t *testing.T) {
 			require.NoError(t, err)
 			require.Equal(t, 1, len(dataSources))
 		})
-	})
-}
-
-func TestIntegrationGetDefaultDataSource(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test")
-	}
-
-	t.Run("should return error if there is no default datasource", func(t *testing.T) {
-		db := db.InitTestDB(t)
-		ss := SqlStore{db: db}
-
-		cmd := datasources.AddDataSourceCommand{
-			OrgID:  10,
-			Name:   "nisse",
-			Type:   datasources.DS_GRAPHITE,
-			Access: datasources.DS_ACCESS_DIRECT,
-			URL:    "http://test",
-		}
-
-		_, err := ss.AddDataSource(context.Background(), &cmd)
-		require.NoError(t, err)
-
-		query := datasources.GetDefaultDataSourceQuery{OrgID: 10}
-		_, err = ss.GetDefaultDataSource(context.Background(), &query)
-		require.Error(t, err)
-		assert.True(t, errors.Is(err, datasources.ErrDataSourceNotFound))
-	})
-
-	t.Run("should return default datasource if exists", func(t *testing.T) {
-		db := db.InitTestDB(t)
-		ss := SqlStore{db: db}
-
-		cmd := datasources.AddDataSourceCommand{
-			OrgID:     10,
-			Name:      "default datasource",
-			Type:      datasources.DS_GRAPHITE,
-			Access:    datasources.DS_ACCESS_DIRECT,
-			URL:       "http://test",
-			IsDefault: true,
-		}
-
-		_, err := ss.AddDataSource(context.Background(), &cmd)
-		require.NoError(t, err)
-
-		query := datasources.GetDefaultDataSourceQuery{OrgID: 10}
-		dataSource, err := ss.GetDefaultDataSource(context.Background(), &query)
-		require.NoError(t, err)
-		assert.Equal(t, "default datasource", dataSource.Name)
-	})
-
-	t.Run("should not return default datasource of other organisation", func(t *testing.T) {
-		db := db.InitTestDB(t)
-		ss := SqlStore{db: db}
-		query := datasources.GetDefaultDataSourceQuery{OrgID: 1}
-		_, err := ss.GetDefaultDataSource(context.Background(), &query)
-		require.Error(t, err)
-		assert.True(t, errors.Is(err, datasources.ErrDataSourceNotFound))
 	})
 }

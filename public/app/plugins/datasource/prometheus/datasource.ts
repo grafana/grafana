@@ -189,9 +189,9 @@ export class PrometheusDatasource
   }
 
   _isDatasourceVersionGreaterOrEqualTo(targetVersion: string, targetFlavor: PromApplication): boolean {
-    // User hasn't configured flavor/version yet, default behavior is to not support features that require version configuration when not provided
+    // User hasn't configured flavor/version yet, default behavior is to support labels match api support
     if (!this.datasourceConfigurationPrometheusVersion || !this.datasourceConfigurationPrometheusFlavor) {
-      return false;
+      return true;
     }
 
     if (targetFlavor !== this.datasourceConfigurationPrometheusFlavor) {
@@ -696,7 +696,7 @@ export class PrometheusDatasource
   }
 
   // By implementing getTagKeys and getTagValues we add ad-hoc filters functionality
-  async getTagValues(options: DataSourceGetTagValuesOptions) {
+  async getTagValues(options: DataSourceGetTagValuesOptions<PromQuery>) {
     const labelFilters: QueryBuilderLabelFilter[] = options.filters.map((f) => ({
       label: f.key,
       value: f.value,
