@@ -88,6 +88,9 @@ export const RolePicker = ({
       // Off set to display the role picker menu at the bottom of the screen
       // without resorting to scroll the page
       vertical = top - MENU_MAX_HEIGHT - 50;
+      // if the vertical offset is negative, we need to move the menu to the right
+      horizontal += right - left + 8;
+      vertical = vertical < 0 ? 0 : vertical + 350;
     }
 
     /*
