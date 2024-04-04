@@ -51,7 +51,7 @@ require (
 	github.com/grafana/cuetsy v0.1.11 // @grafana/grafana-as-code
 	github.com/grafana/grafana-aws-sdk v0.25.0 // @grafana/aws-datasources
 	github.com/grafana/grafana-azure-sdk-go/v2 v2.0.1 // @grafana/partner-datasources
-	github.com/grafana/grafana-plugin-sdk-go v0.219.0 // @grafana/plugins-platform-backend
+	github.com/grafana/grafana-plugin-sdk-go v0.220.0 // @grafana/plugins-platform-backend
 	github.com/grpc-ecosystem/go-grpc-middleware v1.4.0 // @grafana/backend-platform
 	github.com/hashicorp/go-hclog v1.6.2 // @grafana/plugins-platform-backend
 	github.com/hashicorp/go-plugin v1.6.0 // @grafana/plugins-platform-backend
@@ -469,8 +469,6 @@ require (
 	github.com/xwb1989/sqlparser v0.0.0-20180606152119-120387863bf2 // @grafana/grafana-app-platform-squad
 )
 
-require github.com/jackc/pgx/v5 v5.5.5 // @grafana/oss-big-tent
-
 require github.com/getkin/kin-openapi v0.120.0 // @grafana/grafana-as-code
 
 require github.com/grafana/authlib v0.0.0-20240328140636-a7388d0bac72 // @grafana/identity-access-team
@@ -489,9 +487,6 @@ require (
 	github.com/hashicorp/go-uuid v1.0.3 // indirect
 	github.com/hashicorp/golang-lru v0.6.0 // indirect
 	github.com/invopop/jsonschema v0.12.0 // indirect
-	github.com/jackc/pgpassfile v1.0.0 // indirect
-	github.com/jackc/pgservicefile v0.0.0-20221227161230-091c0ba34f0a // indirect
-	github.com/jackc/puddle/v2 v2.2.1 // indirect
 	github.com/jcmturner/aescts/v2 v2.0.0 // indirect
 	github.com/jcmturner/dnsutils/v2 v2.0.0 // indirect
 	github.com/jcmturner/gofork v1.7.6 // indirect
