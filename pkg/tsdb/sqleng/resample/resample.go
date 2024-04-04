@@ -91,10 +91,7 @@ func Resample(f *data.Frame, fillMissing *data.FillMissing, timeRange backend.Ti
 	lastSeenRowIdx := -1
 	timeField := f.Fields[tsSchema.TimeIndex]
 
-	startUnixTime := timeRange.From.Unix() / int64(interval.Seconds()) * int64(interval.Seconds())
-	startTime := time.Unix(startUnixTime, 0)
-
-	for currentTime := startTime; !currentTime.After(timeRange.To); currentTime = currentTime.Add(interval) {
+	for currentTime := timeRange.From; !currentTime.After(timeRange.To); currentTime = currentTime.Add(interval) {
 		initialRowIdx := 0
 		if lastSeenRowIdx > 0 {
 			initialRowIdx = lastSeenRowIdx + 1
