@@ -17,8 +17,6 @@ type StorageSpyClient interface {
 
 	//Counts returns the number of times a certain method was called
 	Counts(string) int
-	// Reset the counter to zero
-	Reset()
 }
 
 type StorageSpy struct {
@@ -42,10 +40,6 @@ func NewStorageSpyClient(s Storage) StorageSpyClient {
 
 func (c *spyStorageClient) Counts(method string) int {
 	return c.spy.counts[method]
-}
-
-func (c *spyStorageClient) Reset() {
-	c.spy.counts = map[string]int{}
 }
 
 //nolint:golint,unused
@@ -97,8 +91,6 @@ type LegacyStorageSpyClient interface {
 
 	//Counts returns the number of times a certain method was called
 	Counts(string) int
-	// Reset the counter to zero
-	Reset()
 }
 
 type LegacyStorageSpy struct {
@@ -123,10 +115,6 @@ func NewLegacyStorageSpyClient(ls LegacyStorage) LegacyStorageSpyClient {
 
 func (c *spyLegacyStorageClient) Counts(method string) int {
 	return c.spy.counts[method]
-}
-
-func (c *spyLegacyStorageClient) Reset() {
-	c.spy.counts = map[string]int{}
 }
 
 func (c *spyLegacyStorageClient) Create(ctx context.Context, obj runtime.Object, valitation rest.ValidateObjectFunc, options *metav1.CreateOptions) (runtime.Object, error) {
