@@ -36,16 +36,18 @@ interface CreateMigrationTokenResponseDTO {
   token: string;
 }
 
-export interface ConnectStackDTO {
+export interface ConnectStackDTOMock {
   stackURL: string;
   token: string;
 }
 
-export interface MigrationResourceDTO {
+type MigrationResourceStatus = 'not-migrated' | 'migrated' | 'migrating' | 'failed';
+
+export interface MigrationResourceDatasource {
   uid: string;
-  status: 'not-migrated' | 'migrated' | 'migrating' | 'failed';
+  status: MigrationResourceStatus;
   statusMessage?: string;
-  type: 'datasource' | 'dashboard'; // TODO: in future this would be a discriminated union with the resource details
+  type: 'datasource';
   resource: {
     uid: string;
     name: string;
@@ -53,6 +55,19 @@ export interface MigrationResourceDTO {
     icon?: string;
   };
 }
+
+export interface MigrationResourceDashboard {
+  uid: string;
+  status: MigrationResourceStatus;
+  statusMessage?: string;
+  type: 'dashboard';
+  resource: {
+    uid: string;
+    name: string;
+  };
+}
+
+export type MigrationResourceDTOMock = MigrationResourceDatasource | MigrationResourceDashboard;
 
 const mockApplications = ['auth-service', 'web server', 'backend'];
 const mockEnvs = ['DEV', 'PROD'];
@@ -85,7 +100,7 @@ const mockDataSourceMetadata: Record<string, { image: string }> = {
   },
 };
 
-const mockMigrationResources: MigrationResourceDTO[] = Array.from({ length: 500 }).map((_, index) => {
+const mockMigrationResources: MigrationResourceDTOMock[] = Array.from({ length: 500 }).map((_, index) => {
   const dataSource = mockDataSources[index % mockDataSources.length];
   const environment = mockEnvs[index % mockEnvs.length];
   const application = mockApplications[index % mockApplications.length];
@@ -130,9 +145,9 @@ function dataWithMockDelay<T>(data: T): Promise<{ data: T }> {
   });
 }
 
-export const migrateToCloudAPI = createApi({
+export const migrateToCloudMockAPI = createApi({
   tagTypes: ['migrationToken', 'stackDetails', 'resource'],
-  reducerPath: 'migrateToCloudAPI',
+  reducerPath: 'migrateToCloudMockAPI',
   baseQuery: createBackendSrvBaseQuery({ baseURL: '/api' }),
   endpoints: (builder) => ({
     // TODO :)
@@ -147,7 +162,7 @@ export const migrateToCloudAPI = createApi({
       },
     }),
 
-    connectStack: builder.mutation<void, ConnectStackDTO>({
+    connectStack: builder.mutation<void, ConnectStackDTOMock>({
       invalidatesTags: ['stackDetails'],
       queryFn: async ({ stackURL }) => {
         HAS_STACK_DETAILS = true;
@@ -193,7 +208,7 @@ export const migrateToCloudAPI = createApi({
       },
     }),
 
-    listResources: builder.query<MigrationResourceDTO[], void>({
+    listResources: builder.query<MigrationResourceDTOMock[], void>({
       providesTags: ['resource'],
       queryFn: async () => {
         return dataWithMockDelay(mockMigrationResources);
@@ -203,12 +218,12 @@ export const migrateToCloudAPI = createApi({
 });
 
 export const {
-  useGetStatusQuery,
-  useConnectStackMutation,
-  useDisconnectStackMutation,
-  useCreateMigrationTokenMutation,
-  useDeleteMigrationTokenMutation,
-  useHasMigrationTokenQuery,
-  useListResourcesQuery,
-  useStartMigrationMutation,
-} = migrateToCloudAPI;
+  useGetStatusQuery: useGetStatusQueryMock,
+  useConnectStackMutation: useConnectStackMutationMock,
+  useDisconnectStackMutation: useDisconnectStackMutationMock,
+  useCreateMigrationTokenMutation: useCreateMigrationTokenMutationMock,
+  useDeleteMigrationTokenMutation: useDeleteMigrationTokenMutationMock,
+  useHasMigrationTokenQuery: useHasMigrationTokenQueryMock,
+  useListResourcesQuery: useListResourcesQueryMock,
+  useStartMigrationMutation: useStartMigrationMutationMock,
+} = migrateToCloudMockAPI;
