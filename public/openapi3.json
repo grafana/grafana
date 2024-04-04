@@ -6739,16 +6739,27 @@
             "type": "string"
           },
           "status": {
-            "$ref": "#/components/schemas/ItemStatus"
+            "enum": [
+              "OK",
+              "ERROR"
+            ],
+            "type": "string"
           },
           "type": {
-            "$ref": "#/components/schemas/MigrateDataType"
+            "enum": [
+              "DASHBOARD",
+              "DATASOURCE",
+              "FOLDER"
+            ],
+            "type": "string"
           }
         },
+        "required": [
+          "type",
+          "refId",
+          "status"
+        ],
         "type": "object"
-      },
-      "MigrateDataType": {
-        "type": "string"
       },
       "MoveFolderCommand": {
         "description": "MoveFolderCommand captures the information required by the folder service\nto move a folder.",
