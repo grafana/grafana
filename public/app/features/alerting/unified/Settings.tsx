@@ -4,10 +4,10 @@ import { LinkButton, Stack, Text } from '@grafana/ui';
 
 import { AlertingPageWrapper } from './components/AlertingPageWrapper';
 import { WithReturnButton } from './components/WithReturnButton';
-import { useEditConfigurationDrawer } from './components/admin/ConfigurationDrawer';
-import { ExternalAlertmanagers } from './components/admin/ExternalAlertmanagers';
-import InternalAlertmanager from './components/admin/InternalAlertmanager';
-import { SettingsProvider, useSettings } from './components/admin/SettingsContext';
+import { useEditConfigurationDrawer } from './components/settings/ConfigurationDrawer';
+import { ExternalAlertmanagers } from './components/settings/ExternalAlertmanagers';
+import InternalAlertmanager from './components/settings/InternalAlertmanager';
+import { SettingsProvider, useSettings } from './components/settings/SettingsContext';
 
 // @todo translate subtitle – move to navtree?
 const SUBTITLE =
