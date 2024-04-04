@@ -262,7 +262,14 @@ export const TemplateForm = ({ existing, alertManagerSourceName, config, provena
                     <>
                       <div {...columnSplitter.splitterProps} />
                       <div {...columnSplitter.secondaryProps}>
-                        <div className={cx(styles.containerWithBorderAndRadius, styles.minEditorSize, styles.flexFull)}>
+                        <div
+                          className={cx(
+                            styles.containerWithBorderAndRadius,
+                            styles.minEditorSize,
+                            styles.payloadEditor,
+                            styles.flexFull
+                          )}
+                        >
                           <PayloadEditor
                             payload={payload}
                             defaultPayload={defaultPayloadString}
@@ -357,7 +364,10 @@ export const getStyles = (theme: GrafanaTheme2) => {
     }),
     minEditorSize: css({
       minHeight: 300,
-      minWidth: 500,
+      minWidth: 300,
+    }),
+    payloadEditor: css({
+      minHeight: 0,
     }),
     containerWithBorderAndRadius: css({
       borderRadius: theme.shape.radius.default,

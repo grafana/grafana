@@ -87,8 +87,8 @@ export function PayloadEditor({
           actions={
             <Stack direction="row" alignItems="center" gap={0.5}>
               <Toggletip content={<AlertTemplateDataTable />} placement="top" fitContent>
-                <Button variant="secondary" fill="outline" size="sm" icon="book">
-                  Cheatsheet
+                <Button variant="secondary" fill="outline" size="sm" icon="question-circle">
+                  Help
                 </Button>
               </Toggletip>
               <Dropdown
