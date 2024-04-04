@@ -297,7 +297,7 @@ export function getVariablesFromUrl() {
   const variables = getTemplateSrv().getVariables();
   const queryParams = locationService.getSearchObject();
 
-  const v = Object.keys(queryParams)
+  return Object.keys(queryParams)
     .filter(
       (key) => key.indexOf(VARIABLE_PREFIX) !== -1 && variables.some((v) => v.name === key.replace(VARIABLE_PREFIX, ''))
     )
@@ -307,6 +307,4 @@ export function getVariablesFromUrl() {
 
       return obj;
     }, {});
-
-  return v;
 }
