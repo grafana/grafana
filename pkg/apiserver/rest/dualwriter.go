@@ -74,11 +74,12 @@ const (
 	Mode4
 )
 
-// #TODO make CurrentMode customisable and specific to each entity
 var CurrentMode = Mode2
 
-// newDualWriter returns a new DualWriter.
-func newDualWriter(legacy LegacyStorage, storage Storage) *DualWriter {
+// #TODO make CurrentMode customisable and specific to each entity
+
+// NewDualWriter returns a new DualWriter.
+func NewDualWriter(legacy LegacyStorage, storage Storage) *DualWriter {
 	return &DualWriter{
 		Storage: storage,
 		legacy:  legacy,

@@ -15,7 +15,7 @@ type DualWriterMode4 struct {
 // NewDualWriterMode4 returns a new DualWriter in mode 4.
 // Mode 4 represents writing and reading from Storage.
 func NewDualWriterMode4(legacy LegacyStorage, storage Storage) *DualWriterMode4 {
-	return &DualWriterMode4{*newDualWriter(legacy, storage)}
+	return &DualWriterMode4{*NewDualWriter(legacy, storage)}
 }
 
 // Create overrides the default behavior of the DualWriter and writes only to Storage.
