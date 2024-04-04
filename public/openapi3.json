@@ -6740,9 +6740,15 @@
           },
           "status": {
             "$ref": "#/components/schemas/ItemStatus"
+          },
+          "type": {
+            "$ref": "#/components/schemas/MigrateDataType"
           }
         },
         "type": "object"
+      },
+      "MigrateDataType": {
+        "type": "string"
       },
       "MoveFolderCommand": {
         "description": "MoveFolderCommand captures the information required by the folder service\nto move a folder.",
