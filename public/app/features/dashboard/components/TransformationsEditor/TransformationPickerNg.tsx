@@ -263,7 +263,7 @@ function getTransformationGridStyles(theme: GrafanaTheme2) {
     cardDisabled: css({
       backgroundColor: 'rgb(204, 204, 220, 0.045)',
       color: `${theme.colors.text.disabled} !important`,
-      'img': {
+      img: {
         filter: 'grayscale(100%)',
         opacity: 0.1,
       },
