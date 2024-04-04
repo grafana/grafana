@@ -67,18 +67,6 @@ Once you have the information you need you can:
 
 - click the **Star** icon on the right side to bookmark and save the metrics exploration.
 
-<!-- 
-Narrow down your results
-Filter label / value pairs
-Use the drop-down on the top right to filter your results by relevant label-value pairs 
-
-
-Explain which type of query displays on which type of metric
-Bucket = 
-Gauge = 
-Counter = 
-
- -->
 ## Dashboard experience
 
 To access Metrics Explore via a dashboard:
