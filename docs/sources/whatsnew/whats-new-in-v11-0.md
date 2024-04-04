@@ -16,6 +16,9 @@ title: What's new in Grafana v11.0-preview
 weight: -42
 ---
 
+<!-- vale GoogleWe = NO -->
+<!-- vale We = NO -->
+
 # What’s new in Grafana v11.0-preview
 
 Welcome to Grafana 11.0-preview! This preview release contains some notable improvements...
@@ -60,7 +63,7 @@ Metrics Explore is a query-less experience for browsing Prometheus-compatible me
 
 … all without writing any queries!
 
-<!--To learn more, refer to the Metrics Explore documentation (forthcoming), as well as the following video demo (forthcoming):-->
+To learn more, refer to the Metrics Explore [documentation](http://grafana.com/docs/grafana/<GRAFANA_VERSION>/explore/metrics-explore/). <!-- as well as the following video demo (forthcoming):-->
 
 ## Dashboards and visualizations
 
@@ -352,7 +355,7 @@ To learn more about Grafana's strong password policy, refer to the [documentatio
 
 <!-- Daniel Ken Lee -->
 
-_Generally available in Grafana Open Source and Enterprise_
+_Generally available in Grafana Enterprise_
 
 We are announcing a license change to the anonymous access feature in Grafana 11. As you may already be aware, anonymous access allows users access to Grafana without login credentials. Anonymous access was an early feature of Grafana to share dashboards; however, we recently introduced [Public Dashboards](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/dashboards/dashboard-public/) which allows you to share dashboards in a more secure manner. We also noticed that anonymous access inadvertently resulted in user licensing issues. After careful consideration, we have decided to charge for the continued use of anonymous access starting in Grafana 11.
 
