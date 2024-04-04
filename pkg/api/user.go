@@ -264,12 +264,12 @@ func (hs *HTTPServer) handleUpdateUser(ctx context.Context, cmd user.UpdateUserC
 			if err != nil {
 				return response.Error(http.StatusBadRequest, "Invalid email address", err)
 			}
-			return hs.verifyEmailUpdate(ctx, normalized, user.EmailUpdateAction, usr)
+			return hs.startEmailVerification(ctx, normalized, user.EmailUpdateAction, usr)
 		}
 		if len(cmd.Login) != 0 && usr.Login != cmd.Login {
 			normalized, err := ValidateAndNormalizeEmail(cmd.Login)
 			if err == nil && usr.Email != normalized {
-				return hs.verifyEmailUpdate(ctx, cmd.Login, user.LoginUpdateAction, usr)
+				return hs.startEmailVerification(ctx, cmd.Login, user.LoginUpdateAction, usr)
 			}
 		}
 	}
@@ -284,7 +284,34 @@ func (hs *HTTPServer) handleUpdateUser(ctx context.Context, cmd user.UpdateUserC
 	return response.Success("User updated")
 }
 
-func (hs *HTTPServer) verifyEmailUpdate(ctx context.Context, email string, field user.UpdateEmailActionType, usr *user.User) response.Response {
+func (hs *HTTPServer) StartEmailVerificaton(c *contextmodel.ReqContext) response.Response {
+	namespace, id := c.SignedInUser.GetNamespacedID()
+	if !identity.IsNamespace(namespace, identity.NamespaceUser) {
+		return response.Error(http.StatusBadRequest, "Only users can verify their email", nil)
+	}
+
+	if c.SignedInUser.GetEmailVerified() {
+		// email is already verified so we don't need to trigger the flow.
+		return response.Respond(http.StatusNotModified, nil)
+	}
+
+	userID, err := strconv.ParseInt(id, 10, 64)
+	if err != nil {
+		return response.Error(http.StatusInternalServerError, "Got invalid user id", err)
+	}
+
+	usr, err := hs.userService.GetByID(c.Req.Context(), &user.GetUserByIDQuery{
+		ID: userID,
+	})
+
+	if err != nil {
+		return response.ErrOrFallback(http.StatusInternalServerError, "Failed to fetch user", err)
+	}
+
+	return hs.startEmailVerification(c.Req.Context(), usr.Email, user.EmailUpdateAction, usr)
+}
+
+func (hs *HTTPServer) startEmailVerification(ctx context.Context, email string, field user.UpdateEmailActionType, usr *user.User) response.Response {
 	if err := hs.userVerifier.Start(ctx, user.StartVerifyEmailCommand{
 		User:   *usr,
 		Email:  email,
