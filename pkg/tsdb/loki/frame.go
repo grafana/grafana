@@ -285,17 +285,7 @@ func formatName(labels map[string]string, query *lokiQuery) string {
 		return formatNamePrometheusStyle(labels)
 	}
 
-	result := legendFormat.ReplaceAllFunc([]byte(query.LegendFormat), func(in []byte) []byte {
-		labelName := strings.Replace(string(in), "{{", "", 1)
-		labelName = strings.Replace(labelName, "}}", "", 1)
-		labelName = strings.TrimSpace(labelName)
-		if val, exists := labels[labelName]; exists {
-			return []byte(val)
-		}
-		return []byte{}
-	})
-
-	return string(result)
+	return convertLabel(query.LegendFormat, labels)
 }
 
 func formatUrl(labels map[string]string, query *lokiQuery) string {
