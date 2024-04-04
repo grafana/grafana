@@ -17,8 +17,8 @@ type instrumentationService struct {
 	log      log.Logger
 }
 
-func NewInstrumentationService() (*instrumentationService, error) {
-	s := &instrumentationService{}
+func NewInstrumentationService(log log.Logger) (*instrumentationService, error) {
+	s := &instrumentationService{log: log}
 	s.BasicService = services.NewBasicService(s.start, s.running, s.stop)
 	return s, nil
 }

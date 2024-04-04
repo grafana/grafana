@@ -121,7 +121,7 @@ func (s *ModuleServer) Run() error {
 		if m.IsModuleEnabled(modules.All) || m.IsModuleEnabled(modules.Core) {
 			return services.NewBasicService(nil, nil, nil).WithName(modules.InstrumentationServer), nil
 		}
-		return NewInstrumentationService()
+		return NewInstrumentationService(s.log)
 	})
 
 	m.RegisterModule(modules.Core, func() (services.Service, error) {
