@@ -275,6 +275,7 @@ func Test_buildDataFrames_parse_label_to_name_and_labels(t *testing.T) {
 
 	t.Run("when no values are returned and a multi-valued template variable is used", func(t *testing.T) {
 		timestamp := time.Unix(0, 0)
+		// When there are no results, CloudWatch sets the label values to --
 		response := &models.QueryRowResponse{
 			Metrics: []*cloudwatch.MetricDataResult{
 				{
@@ -315,6 +316,7 @@ func Test_buildDataFrames_parse_label_to_name_and_labels(t *testing.T) {
 
 	t.Run("when no values are returned and a multi-valued template variable and two single-valued dimensions are used", func(t *testing.T) {
 		timestamp := time.Unix(0, 0)
+		// When there are no results, CloudWatch sets the label values to --
 		response := &models.QueryRowResponse{
 			Metrics: []*cloudwatch.MetricDataResult{
 				{

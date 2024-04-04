@@ -97,6 +97,7 @@ func parseLabels(cloudwatchLabel string, query *models.CloudWatchQuery) (string,
 	sort.Strings(dims)
 
 	splitLabels := strings.Split(cloudwatchLabel, keySeparator)
+	// The first part is the name of the time series, followed by the labels
 	labelsIndex := 1
 
 	labels := data.Labels{}
