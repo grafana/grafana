@@ -117,17 +117,21 @@ function getCellStyle(
   // Setup color variables
   let textColor: string | undefined = undefined;
   let bgColor: string | undefined = undefined;
+  let bgHoverColor: string | undefined = undefined;
+
 
   // Get colors
   const colors = getCellColors(tableStyles, cellOptions, displayValue);
   textColor = colors.textColor;
   bgColor = colors.bgColor;
+  bgHoverColor = colors.bgHoverColor;
 
   // If we have definied colors return those styles
   // Otherwise we return default styles
   return tableStyles.buildCellContainerStyle(
     textColor,
     bgColor,
+    bgHoverColor,
     !disableOverflowOnHover,
     isStringValue,
     shouldWrapText,
