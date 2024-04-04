@@ -481,6 +481,9 @@ const (
 	ActionLibraryPanelsRead   = "library.panels:read"
 	ActionLibraryPanelsWrite  = "library.panels:write"
 	ActionLibraryPanelsDelete = "library.panels:delete"
+
+	// Usage stats actions
+	ActionUsageStatsRead = "server.usagestats.report:read"
 )
 
 var (
