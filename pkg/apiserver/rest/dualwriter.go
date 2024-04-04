@@ -3,7 +3,6 @@ package rest
 import (
 	"context"
 
-	"github.com/grafana/grafana/pkg/infra/log"
 	"k8s.io/apimachinery/pkg/api/meta"
 	metainternalversion "k8s.io/apimachinery/pkg/apis/meta/internalversion"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -63,7 +62,6 @@ type LegacyStorage interface {
 type DualWriter struct {
 	Storage
 	Legacy LegacyStorage
-	Log    log.Logger
 }
 
 type DualWriterMode int
@@ -84,7 +82,6 @@ func NewDualWriter(legacy LegacyStorage, storage Storage) *DualWriter {
 	return &DualWriter{
 		Storage: storage,
 		Legacy:  legacy,
-		Log:     log.New("dualwriter"),
 	}
 }
 

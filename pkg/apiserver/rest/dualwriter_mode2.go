@@ -8,6 +8,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apiserver/pkg/registry/rest"
+	"k8s.io/klog/v2"
 )
 
 type DualWriterMode2 struct {
@@ -29,7 +30,7 @@ func (d *DualWriterMode2) Create(ctx context.Context, obj runtime.Object, create
 
 	created, err := legacy.Create(ctx, obj, createValidation, options)
 	if err != nil {
-		d.Log.Error("unable to create object in legacy storage", "error", err, ctx)
+		klog.FromContext(ctx).Error(err, "unable to create object in legacy storage")
 		return created, err
 	}
 
@@ -49,7 +50,7 @@ func (d *DualWriterMode2) Create(ctx context.Context, obj runtime.Object, create
 
 	rsp, err := d.Storage.Create(ctx, c, createValidation, options)
 	if err != nil {
-		d.Log.Error("unable to create object in unified storage", "error", err, "mode", Mode2, ctx)
+		klog.FromContext(ctx).Error(err, "unable to create object in unified storage", "mode", Mode2)
 	}
 	return rsp, err
 }

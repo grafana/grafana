@@ -7,6 +7,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apiserver/pkg/registry/rest"
+	"k8s.io/klog/v2"
 )
 
 type DualWriterMode1 struct {
@@ -23,8 +24,9 @@ func NewDualWriterMode1(legacy LegacyStorage, storage Storage) *DualWriterMode1 
 func (d *DualWriterMode1) Create(ctx context.Context, obj runtime.Object, createValidation rest.ValidateObjectFunc, options *metav1.CreateOptions) (runtime.Object, error) {
 	legacy, ok := d.Legacy.(rest.Creater)
 	if !ok {
-		d.Log.Error("legacy storage rest.Creater is missing", ctx)
-		return nil, errors.New("legacy storage rest.Creater is missing")
+		err := errors.New("legacy storage rest.Creater is missing")
+		klog.FromContext(ctx).Error(err, "legacy storage rest.Creater is missing")
+		return nil, err
 	}
 
 	return legacy.Create(ctx, obj, createValidation, options)
