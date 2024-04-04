@@ -15933,7 +15933,7 @@
           "dashboards"
         ]
       },
-      "patch": {
+      "post": {
         "operationId": "restoreDeletedDashboardByUID",
         "parameters": [
           {
@@ -15945,9 +15945,23 @@
             }
           }
         ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SaveDashboardCommand"
+              }
+            }
+          },
+          "required": true,
+          "x-originalParamName": "Body"
+        },
         "responses": {
           "200": {
             "$ref": "#/components/responses/postDashboardResponse"
+          },
+          "400": {
+            "$ref": "#/components/responses/badRequestError"
           },
           "401": {
             "$ref": "#/components/responses/unauthorisedError"

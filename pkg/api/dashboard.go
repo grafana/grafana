@@ -61,6 +61,10 @@ func (hs *HTTPServer) isDashboardStarredByUser(c *contextmodel.ReqContext, dashI
 
 func dashboardGuardianResponse(err error) response.Response {
 	if err != nil {
+		var dashboardErr dashboards.DashboardErr
+		if ok := errors.As(err, &dashboardErr); ok {
+			return response.Error(dashboardErr.StatusCode, dashboardErr.Error(), err)
+		}
 		return response.Error(http.StatusInternalServerError, "Error while checking dashboard permissions", err)
 	}
 	return response.Error(http.StatusForbidden, "Access denied to this dashboard", nil)
@@ -272,18 +276,24 @@ func (hs *HTTPServer) getDashboardHelper(ctx context.Context, orgID int64, id in
 	return queryResult, nil
 }
 
-// swagger:route PATCH /dashboards/uid/{uid}/trash dashboards restoreDeletedDashboardByUID
+// swagger:route POST /dashboards/uid/{uid}/trash dashboards restoreDeletedDashboardByUID
 //
 // Restore a dashboard to a given dashboard version using UID.
 //
 // Responses:
 // 200: postDashboardResponse
+// 400: badRequestError
 // 401: unauthorisedError
 // 403: forbiddenError
 // 404: notFoundError
 // 500: internalServerError
 func (hs *HTTPServer) RestoreDeletedDashboard(c *contextmodel.ReqContext) response.Response {
 	uid := web.Params(c.Req)[":uid"]
+	cmd := dashboards.RestoreDeletedDashboardCommand{}
+
+	if err := web.Bind(c.Req, &cmd); err != nil {
+		return response.Error(http.StatusBadRequest, "bad request data", err)
+	}
 
 	dash, err := hs.DashboardService.GetSoftDeletedDashboard(c.Req.Context(), c.SignedInUser.GetOrgID(), uid)
 	if err != nil {
@@ -299,8 +309,12 @@ func (hs *HTTPServer) RestoreDeletedDashboard(c *contextmodel.ReqContext) respon
 		return dashboardGuardianResponse(err)
 	}
 
-	err = hs.DashboardService.RestoreDashboard(c.Req.Context(), c.SignedInUser.GetOrgID(), uid)
+	err = hs.DashboardService.RestoreDashboard(c.Req.Context(), dash, c.SignedInUser, cmd.FolderUID)
 	if err != nil {
+		var dashboardErr dashboards.DashboardErr
+		if ok := errors.As(err, &dashboardErr); ok {
+			return response.Error(dashboardErr.StatusCode, dashboardErr.Error(), err)
+		}
 		return response.Error(http.StatusInternalServerError, "Dashboard cannot be restored", err)
 	}
 
@@ -1367,4 +1381,8 @@ type RestoreDeletedDashboardByUID struct {
 	// in:path
 	// required:true
 	UID string `json:"uid"`
+
+	// in:body
+	// required:true
+	Body dashboards.SaveDashboardCommand
 }

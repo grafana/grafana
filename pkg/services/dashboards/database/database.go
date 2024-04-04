@@ -14,6 +14,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	dashver "github.com/grafana/grafana/pkg/services/dashboardversion"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/quota"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
@@ -534,16 +535,16 @@ func (d *dashboardStore) GetSoftDeletedDashboard(ctx context.Context, orgID int6
 	return queryResult, err
 }
 
-func (d *dashboardStore) RestoreDashboard(ctx context.Context, orgID int64, dashboardUID string) error {
+func (d *dashboardStore) RestoreDashboard(ctx context.Context, orgID int64, dashboardUID string, folder *folder.Folder) error {
 	return d.store.WithTransactionalDbSession(ctx, func(sess *db.Session) error {
-		_, err := sess.Exec("UPDATE dashboard SET deleted=NULL WHERE org_id=? AND uid=?", orgID, dashboardUID)
+		_, err := sess.Exec("UPDATE dashboard SET deleted=NULL, folder_id = ?, folder_uid=? WHERE org_id=? AND uid=?", folder.ID, folder.UID, orgID, dashboardUID)
 		return err
 	})
 }
 
 func (d *dashboardStore) SoftDeleteDashboard(ctx context.Context, orgID int64, dashboardUID string) error {
 	return d.store.WithTransactionalDbSession(ctx, func(sess *db.Session) error {
-		_, err := sess.Exec("UPDATE dashboard SET deleted=?, folder_id=0, folder_uid=NULL WHERE org_id=? AND uid=?", time.Now(), orgID, dashboardUID)
+		_, err := sess.Exec("UPDATE dashboard SET deleted=? WHERE org_id=? AND uid=?", time.Now(), orgID, dashboardUID)
 		return err
 	})
 }
@@ -555,7 +556,7 @@ func (d *dashboardStore) SoftDeleteDashboardsInFolders(ctx context.Context, orgI
 
 	return d.store.WithTransactionalDbSession(ctx, func(sess *db.Session) error {
 		s := strings.Builder{}
-		s.WriteString("UPDATE dashboard SET deleted=?, folder_id=0, folder_uid=NULL WHERE ")
+		s.WriteString("UPDATE dashboard SET deleted=? WHERE ")
 		s.WriteString(fmt.Sprintf("folder_uid IN (%s)", strings.Repeat("?,", len(folderUids)-1)+"?"))
 		s.WriteString(" AND org_id = ? AND is_folder = ?")
 
@@ -603,10 +604,13 @@ func (d *dashboardStore) deleteDashboard(cmd *dashboards.DeleteDashboardCommand,
 	}
 
 	if dashboard.IsFolder {
-		deletes = append(deletes, "DELETE FROM dashboard WHERE folder_id = ?")
+		// if this is a soft delete, we need to skip children deletion.
+		if !d.features.IsEnabledGlobally(featuremgmt.FlagDashboardRestore) && !cmd.SkipSoftDeletedDashboards {
+			deletes = append(deletes, "DELETE FROM dashboard WHERE folder_id = ? AND deleted IS NULL")
 
-		if err := d.deleteChildrenDashboardAssociations(sess, &dashboard); err != nil {
-			return err
+			if err := d.deleteChildrenDashboardAssociations(sess, &dashboard); err != nil {
+				return err
+			}
 		}
 
 		// remove all access control permission with folder scope
@@ -934,7 +938,7 @@ func (d *dashboardStore) CountDashboardsInFolders(
 				args = append(args, folderUID)
 			}
 		}
-		s.WriteString(" AND org_id = ? AND is_folder = ?")
+		s.WriteString(" AND org_id = ? AND is_folder = ? AND deleted IS NULL")
 		args = append(args, req.OrgID, d.store.GetDialect().BooleanStr(false))
 		sql := s.String()
 		_, err := sess.SQL(sql, args...).Get(&count)

@@ -210,6 +210,10 @@ type SaveDashboardCommand struct {
 	UpdatedAt time.Time
 }
 
+type RestoreDeletedDashboardCommand struct {
+	FolderUID string `json:"folderUid" xorm:"folder_uid"`
+}
+
 type DashboardProvisioning struct {
 	ID          int64 `xorm:"pk autoincr 'id'"`
 	DashboardID int64 `xorm:"dashboard_id"`
@@ -220,10 +224,11 @@ type DashboardProvisioning struct {
 }
 
 type DeleteDashboardCommand struct {
-	ID                     int64
-	UID                    string
-	OrgID                  int64
-	ForceDeleteFolderRules bool
+	ID                        int64
+	UID                       string
+	OrgID                     int64
+	ForceDeleteFolderRules    bool
+	SkipSoftDeletedDashboards bool
 }
 
 type DeleteOrphanedProvisionedDashboardsCommand struct {

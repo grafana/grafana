@@ -372,12 +372,58 @@ func (dr *DashboardServiceImpl) GetSoftDeletedDashboard(ctx context.Context, org
 	return dr.dashboardStore.GetSoftDeletedDashboard(ctx, orgID, uid)
 }
 
-func (dr *DashboardServiceImpl) RestoreDashboard(ctx context.Context, orgID int64, dashboardUID string) error {
+func (dr *DashboardServiceImpl) RestoreDashboard(ctx context.Context, dashboard *dashboards.Dashboard, user identity.Requester, optionalFolderUID string) error {
 	if !dr.features.IsEnabledGlobally(featuremgmt.FlagDashboardRestore) {
 		return fmt.Errorf("feature flag %s is not enabled", featuremgmt.FlagDashboardRestore)
 	}
 
-	return dr.dashboardStore.RestoreDashboard(ctx, orgID, dashboardUID)
+	// validate if the folder exists and user has access to it
+	restoringFolderUID := dashboard.FolderUID
+
+	// GetFolders return only folders available to user. So we can use is to check access.
+	folders, err := dr.folderService.GetFolders(ctx, folder.GetFoldersQuery{
+		UIDs:         []string{dashboard.FolderUID},
+		OrgID:        dashboard.OrgID,
+		OrderByTitle: true,
+		SignedInUser: user,
+	})
+	if err != nil {
+		return folder.ErrInternal.Errorf("failed to fetch parent folders from store: %w", err)
+	}
+
+	if len(folders) == 0 {
+		// the folder does not exist or the user does not have access to it
+		if optionalFolderUID == "" {
+			return dashboards.ErrFolderRestoreNotFound
+		}
+
+		// GetFolders return only folders available to user. So we can use is to check access.
+		folders, err := dr.folderService.GetFolders(ctx, folder.GetFoldersQuery{
+			UIDs:         []string{optionalFolderUID},
+			OrgID:        dashboard.OrgID,
+			OrderByTitle: true,
+			SignedInUser: user,
+		})
+		if err != nil {
+			return folder.ErrInternal.Errorf("failed to fetch parent folders from store: %w", err)
+		}
+		if len(folders) == 0 {
+			return dashboards.ErrFolderRestoreNotFound
+		}
+
+		restoringFolderUID = optionalFolderUID
+	}
+
+	restoringFolder, err := dr.folderService.Get(ctx, &folder.GetFolderQuery{
+		UID:          &restoringFolderUID,
+		SignedInUser: user,
+		OrgID:        dashboard.OrgID,
+	})
+	if err != nil {
+		return folder.ErrInternal.Errorf("failed to fetch parent folder from store: %w", err)
+	}
+
+	return dr.dashboardStore.RestoreDashboard(ctx, dashboard.OrgID, dashboard.UID, restoringFolder)
 }
 
 func (dr *DashboardServiceImpl) SoftDeleteDashboard(ctx context.Context, orgID int64, dashboardUID string) error {

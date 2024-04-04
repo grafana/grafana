@@ -872,7 +872,7 @@ func (s *Service) legacyDelete(ctx context.Context, cmd *folder.DeleteFolderComm
 	for _, folderUID := range folderUIDs {
 		// only hard delete the folder representation in the dashboard store
 		// nolint:staticcheck
-		deleteCmd := dashboards.DeleteDashboardCommand{OrgID: cmd.OrgID, UID: folderUID, ForceDeleteFolderRules: cmd.ForceDeleteRules}
+		deleteCmd := dashboards.DeleteDashboardCommand{OrgID: cmd.OrgID, UID: folderUID, ForceDeleteFolderRules: cmd.ForceDeleteRules, SkipSoftDeletedDashboards: true}
 		if err := s.dashboardStore.DeleteDashboard(ctx, &deleteCmd); err != nil {
 			return toFolderError(err)
 		}
