@@ -95,6 +95,16 @@ You can enable panning and zooming in a canvas. This allows you to both create a
 
 {{< video-embed src="/media/docs/grafana/2024-01-05-Canvas-Pan-&-Zoom-Enablement-Video.mp4" max-width="750px" caption="Canvas pan and zoom enablement video" >}}
 
+#### Infinite panning
+
+You can enable infinite panning in a canvas when pan and zoom is enabled. This allows you to pan and zoom the canvas and uncover larger designs.
+
+{{% admonition type="note" %}}
+Infinite panning is an experimental feature that may not work as expected in all scenarios. For example, elements that are not top-left constrained may experience unexpected movement when panning.
+{{% /admonition %}}
+
+<!-- TODO: Add gif -->
+
 ### Context menu
 
 The context menu lets you perform common tasks quickly and efficiently. Supported functionality includes opening / closing the inline editor, duplicating an element, deleting an element, and more.
