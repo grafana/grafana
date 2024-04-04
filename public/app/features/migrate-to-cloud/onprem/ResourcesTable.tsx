@@ -2,14 +2,14 @@ import React from 'react';
 
 import { InteractiveTable } from '@grafana/ui';
 
-import { MigrationResourceDTOMock } from '../mockAPI';
+import { MigrateDataResponseItemDto } from '../api';
 
 import { NameCell } from './NameCell';
 import { StatusCell } from './StatusCell';
 import { TypeCell } from './TypeCell';
 
 interface ResourcesTableProps {
-  resources: MigrationResourceDTOMock[];
+  resources: MigrateDataResponseItemDto[];
 }
 
 const columns = [
@@ -19,5 +19,5 @@ const columns = [
 ];
 
 export function ResourcesTable({ resources }: ResourcesTableProps) {
-  return <InteractiveTable columns={columns} data={resources} getRowId={(r) => r.uid} pageSize={15} />;
+  return <InteractiveTable columns={columns} data={resources} getRowId={(r) => r.refId} pageSize={15} />;
 }

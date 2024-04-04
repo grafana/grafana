@@ -1,18 +1,19 @@
 import { CellProps } from '@grafana/ui';
 import { t } from 'app/core/internationalization';
 
-import { MigrationResourceDTOMock } from '../mockAPI';
+import { MigrateDataResponseItemDto } from '../api';
 
-export function TypeCell(props: CellProps<MigrationResourceDTOMock>) {
+export function TypeCell(props: CellProps<MigrateDataResponseItemDto>) {
   const { type } = props.row.original;
 
-  if (type === 'datasource') {
-    return t('migrate-to-cloud.resource-type.datasource', 'Data source');
+  switch (type) {
+    case 'DATASOURCE':
+      return t('migrate-to-cloud.resource-type.datasource', 'Data source');
+    case 'DASHBOARD':
+      return t('migrate-to-cloud.resource-type.dashboard', 'Dashboard');
+    case 'FOLDER':
+      return t('migrate-to-cloud.resource-type.folder', 'Folder');
+    default:
+      return t('migrate-to-cloud.resource-type.unknown', 'Unknown');
   }
-
-  if (type === 'dashboard') {
-    return t('migrate-to-cloud.resource-type.dashboard', 'Dashboard');
-  }
-
-  return t('migrate-to-cloud.resource-type.unknown', 'Unknown');
 }
