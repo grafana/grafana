@@ -1,5 +1,7 @@
+import 'whatwg-fetch';
 import { render, screen, waitFor, waitForElementToBeRemoved } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import { setupServer } from 'msw/node';
 import React from 'react';
 import { Route } from 'react-router-dom';
 import { TestProvider } from 'test/helpers/TestProvider';
@@ -19,6 +21,7 @@ import {
 } from 'app/features/alerting/unified/api/ruler';
 import * as useContactPoints from 'app/features/alerting/unified/components/contact-points/useContactPoints';
 import * as dsByPermission from 'app/features/alerting/unified/hooks/useAlertManagerSources';
+import { mockApi } from 'app/features/alerting/unified/mockApi';
 import { MockDataSourceSrv, grantUserPermissions, mockDataSource } from 'app/features/alerting/unified/mocks';
 import { AlertmanagerProvider } from 'app/features/alerting/unified/state/AlertmanagerContext';
 import { fetchRulerRulesIfNotFetchedYet } from 'app/features/alerting/unified/state/actions';
@@ -102,8 +105,12 @@ const mocks = {
   },
 };
 
+const server = setupServer();
+
 describe('Can create a new grafana managed alert unsing simplified routing', () => {
   beforeEach(() => {
+    mockApi(server).eval({ results: {} });
+    server.listen();
     jest.clearAllMocks();
     contextSrv.isEditor = true;
     contextSrv.hasEditPermissionInFolders = true;
@@ -133,6 +140,14 @@ describe('Can create a new grafana managed alert unsing simplified routing', () 
       availableInternalDataSources: [grafanaAlertManagerDataSource],
       availableExternalDataSources: [],
     });
+  });
+
+  afterEach(() => {
+    server.resetHandlers();
+  });
+
+  afterAll(() => {
+    server.close();
   });
 
   const dataSources = {
