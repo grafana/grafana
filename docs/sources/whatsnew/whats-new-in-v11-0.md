@@ -253,7 +253,7 @@ You can now choose to keep the last evaluated state of an alert rule when that r
 
 ### Alert detail view redesign
 
-<!-- Gilles de Mey -->
+<!-- Gilles deMey -->
 
 _Generally available in all editions of Grafana_
 
