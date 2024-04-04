@@ -68,6 +68,9 @@ export const SettingsProvider = (props: PropsWithChildren) => {
   const enableAlertmanager = (uid: string) => {
     const updatedInterestedAlertmanagers = union([uid], interestedAlertmanagers); // union will give us a unique array of uids
     const newDeliveryMode = determineDeliveryMode(updatedInterestedAlertmanagers);
+    if (newDeliveryMode === null) {
+      return;
+    }
 
     if (newDeliveryMode !== deliverySettings?.alertmanagersChoice) {
       updateDeliverySettings({ alertmanagersChoice: newDeliveryMode });
@@ -80,17 +83,10 @@ export const SettingsProvider = (props: PropsWithChildren) => {
 
   const disableAlertmanager = (uid: string) => {
     const updatedInterestedAlertmanagers = without(interestedAlertmanagers, uid);
-
-    // show the user they can't disable all Alertmanagers
-    if (updatedInterestedAlertmanagers.length === 0) {
-      appEvents.publish({
-        type: AppEvents.alertError.name,
-        payload: ['You need to have at least one Alertmanager to receive alerts.'],
-      });
+    const newDeliveryMode = determineDeliveryMode(updatedInterestedAlertmanagers);
+    if (newDeliveryMode === null) {
       return;
     }
-
-    const newDeliveryMode = determineDeliveryMode(updatedInterestedAlertmanagers);
 
     if (newDeliveryMode !== deliverySettings?.alertmanagersChoice) {
       updateDeliverySettings({ alertmanagersChoice: newDeliveryMode });
@@ -132,7 +128,7 @@ export const SettingsProvider = (props: PropsWithChildren) => {
   return <SettingsContext.Provider value={value}>{props.children}</SettingsContext.Provider>;
 };
 
-function determineDeliveryMode(interestedAlertmanagers: string[]): AlertmanagerChoice {
+function determineDeliveryMode(interestedAlertmanagers: string[]): AlertmanagerChoice | null {
   const containsInternalAlertmanager = interestedAlertmanagers.some((uid) => uid === GRAFANA_RULES_SOURCE_NAME);
   const containsExternalAlertmanager = interestedAlertmanagers.some((uid) => uid !== GRAFANA_RULES_SOURCE_NAME);
 
@@ -149,8 +145,12 @@ function determineDeliveryMode(interestedAlertmanagers: string[]): AlertmanagerC
   }
 
   // if we get here we probably have no targets at all and that's not supposed to be possible.
-  // @TODO we're currently not handling this error and we should show the user that they need at least 1 target.
-  throw new Error('No interested Alertmanager targets found, illegal configuration');
+  appEvents.publish({
+    type: AppEvents.alertError.name,
+    payload: ['You need to have at least one Alertmanager to receive alerts.'],
+  });
+
+  return null;
 }
 
 export function useSettings() {
