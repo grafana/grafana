@@ -12,7 +12,11 @@ import { configureStore } from 'app/store/configureStore';
 
 import 'whatwg-fetch';
 import { TemplatePreviewResponse } from '../../api/templateApi';
-import { mockPreviewTemplateResponse, mockPreviewTemplateResponseRejected } from '../../mocks/templatesApi';
+import {
+  mockPreviewTemplateResponse,
+  mockPreviewTemplateResponseRejected,
+  REJECTED_PREVIEW_RESPONSE,
+} from '../../mocks/templatesApi';
 
 import { defaults, TemplateFormValues } from './TemplateForm';
 import { TemplatePreview, PREVIEW_NOT_AVAILABLE } from './TemplatePreview';
@@ -119,7 +123,7 @@ describe('TemplatePreview component', () => {
     );
 
     await waitFor(() => {
-      expect(ui.errorAlert.get()).toHaveTextContent(PREVIEW_NOT_AVAILABLE);
+      expect(ui.errorAlert.get()).toHaveTextContent(REJECTED_PREVIEW_RESPONSE);
     });
   });
 
