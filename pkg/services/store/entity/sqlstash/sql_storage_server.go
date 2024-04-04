@@ -1123,8 +1123,6 @@ func (s *sqlEntityServer) List(ctx context.Context, r *entity.EntityListRequest)
 		return nil, err
 	}
 
-	StorageServerMetrics.OptimisticLockFailed.WithLabelValues("list").Inc()
-
 	user, err := appcontext.User(ctx)
 	if err != nil {
 		return nil, err

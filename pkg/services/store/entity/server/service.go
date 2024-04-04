@@ -175,7 +175,7 @@ func (s *service) setupInstrumentationServer(ctx context.Context) *http.Server {
 	srv := &http.Server{
 		// 5s timeout for header reads to avoid Slowloris attacks (https://thetooth.io/blog/slowloris-attack/)
 		ReadHeaderTimeout: 5 * time.Second,
-		Addr:              ":8000", // TODO - make configurable?
+		Addr:              ":3000", // TODO - make configurable?
 		Handler:           router,
 		BaseContext:       func(_ net.Listener) context.Context { return ctx },
 	}
@@ -187,7 +187,7 @@ func (s *service) setupInstrumentationServer(ctx context.Context) *http.Server {
 		}
 	}()
 
-	s.log.Info("instrumentation server listening on port 8000")
+	s.log.Info("instrumentation server listening on port 3000")
 
 	return srv
 }
