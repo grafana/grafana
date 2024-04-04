@@ -89,8 +89,13 @@ describe('PromSettings', () => {
     });
     it('should show a valid metric name count if codeModeMetricNamesSuggestionLimit is configured correctly', () => {
       const options = defaultProps;
+      const store = configureStore();
 
-      const { getByTestId, queryByText } = render(<PromSettings onOptionsChange={() => {}} options={options} />);
+      const { getByTestId, queryByText } = render(
+        <Provider store={store}>
+          <PromSettings onOptionsChange={() => {}} options={options} />
+        </Provider>
+      );
       const input = getByTestId(
         selectors.components.DataSource.Prometheus.configPage.codeModeMetricNamesSuggestionLimit
       );
@@ -112,8 +117,13 @@ describe('PromSettings', () => {
     });
     it('should show the expected error when an invalid value is provided for codeModeMetricNamesSuggestionLimit', () => {
       const options = defaultProps;
+      const store = configureStore();
 
-      const { getByTestId, queryByText } = render(<PromSettings onOptionsChange={() => {}} options={options} />);
+      const { getByTestId, queryByText } = render(
+        <Provider store={store}>
+          <PromSettings onOptionsChange={() => {}} options={options} />
+        </Provider>
+      );
       const input = getByTestId(
         selectors.components.DataSource.Prometheus.configPage.codeModeMetricNamesSuggestionLimit
       );
