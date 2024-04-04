@@ -43,6 +43,25 @@ Use full URLs for links. When linking to versioned docs, replace the version wit
 <!--Learn how to upload images here: https://grafana.com/docs/writers-toolkit/write/image-guidelines/#where-to-store-media-assets-->
 <!---->
 
+## Explore Metrics
+
+<!-- #proj-datatrails-dev, PM: Jay Goodson, Engineering: Darren Janeczek, André Pereira, Design: Catherine Gui -->
+
+_Generally available in all editions of Grafana_
+
+Metrics Explore is a query-less experience for browsing Prometheus-compatible metrics. Search for or filter to find a metric. Quickly find related metrics - all in just a few clicks. No PromQL to be found anywhere! With Explore Metrics, you can:
+
+- easily slice and dice metrics based on their labels, so you can see anomalies right away
+- See the right visualization for your metric based on its type (e.g. gauge vs. counter) without writing it yourself
+- surface other metrics relevant to the current metric
+- “explore in a drawer” - expand a drawer over a dashboard with more content, so you don’t lose your place
+- view a history of user steps when navigating through metrics and their filters
+- easily pivot to other related telemetry - IE, logs or traces
+
+… all without writing any queries!
+
+<!--To learn more, refer to the Metrics Explore documentation (forthcoming), as well as the following video demo (forthcoming):-->
+
 ## Dashboards and visualizations
 
 ### Scenes for viewers
@@ -56,6 +75,29 @@ Dashboards, when accessed by users with the Viewer role, are now using the Scene
 Dashboards aren't affected for users in other roles.
 
 This is the first step towards a more robust and dynamic dashboarding system that we'll be releasing in the upcoming months.
+
+### Scenes powered Dashboards
+
+<!-- #grafana-dashboards -->
+
+For the past few months we've been working on a major update of our **Dashboards** architecture and migrated it to the Scenes library. This migration provides us with more stable, dynamic, and flexible dashboards as well as setting the foundation for what we envision the future of Grafana dashboards will be. Here are two of the improvements that are being introduced as part of this work:
+
+## Edit mode
+
+It can be difficult to efficiently navigate through the visually cluttered options during the dashboard editing process. With the introduction of the edit mode, we aim to provide an easier way to discover and interact with the dashboard edit experience.
+
+## Fixed positioning of template variables and time picker
+
+We moved the time picker into the dashboard canvas and now, together with template variables, it will stick to the top as you scroll through your dashboard. This has historically been a very [requested feature](https://github.com/grafana/grafana/issues/11166) that we're very happy to be able to finally roll out!
+
+## Known limitations
+
+- The [variable dependency graph](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/dashboards/variables/inspect-variable/) is not yet available.
+- It's no longer possible to switch a regular panel to a library panel from the edit view.
+
+If you want to learn more, in detail, about all the improvements we've made, don't miss our blog post.
+
+_Available in public preview in all editions of Grafana_
 
 ### Subfolders
 
@@ -96,8 +138,6 @@ Make sure to enable and configure Grafana's LLM app plugin. For more information
 When enabled, look for the **✨ Auto generate** option next to the **Title** and **Description** fields in your panels and dashboards, or when you press the **Save** button.
 
 ![Auto-generate a panel description using AI](/media/docs/grafana/dashboards/auto-generate-description-10-2.gif)
-
-[Documentation](https://grafana.com/docs/grafana-cloud/alerting-and-irm/machine-learning/llm-plugin/)
 
 ### Substring matcher added to the filter by value transformation
 
@@ -154,6 +194,20 @@ To try out this feature, you must first enable the `canvasPanelPanZoom` feature 
 
 [Documentation](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/panels-visualizations/visualizations/canvas/)
 
+### Colored table rows with conditional formatting
+
+<!-- #grafana-dataviz, Kyle Cunningham -->
+
+_Generally available in all editions of Grafana_
+
+Grafana 11 adds the ability to color full table rows using the **Colored background** cell type of the table visualization. When you configure fields in a table to use this cell type, an option to apply the color of the cell to the entire row becomes available.
+
+{{< figure src="/static/img/docs/tables/colored-rows.png" max-width="500px" alt="Colored row background" class="docs-image--no-shadow" >}}
+
+This feature is useful for a wide variety of use cases including mapping status fields to colors (for example, `info`, `debug`, `warning`) and allowing rows to be colored based on threshold values. This is one of the first steps in making formatting tables more seamless, and allows for quick scanning of data using the table visualization.
+
+To learn more, refer to the [documentation for the **Colored background** cell type](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/panels-visualizations/visualizations/table/#color-background-gradient-or-solid).
+
 ### Set threshold colors in the Config from query transformation
 
 <!--  #grafana-dataviz" -->
@@ -165,6 +219,22 @@ You now have the ability to customize specific colors for individual thresholds 
 This feature addresses a common pain point highlighted by users. With customizable threshold colors, you now have greater control over your data representation, fostering more insightful and impactful analyses across diverse datasets.
 
 This feature will be rolled out over the next few weeks.
+
+## Reporting
+
+### PDF export improvements
+
+<!-- #grafana-sharing -->
+
+_Available in public preview in Grafana Cloud and Enterprise_
+
+Introducing a major performance improvement for the PDF export feature.
+
+Are you tired of waiting for your PDF to be generated or your report to be sent? We're working on a major update of the dashboard-to-PDF feature to make it faster for large dashboards. The generation time will no longer be proportional to the number of panels in your dashboard. As an example, an SLO dashboard containing around 200 panels has gone from taking more than seven minutes to be generated to only eleven seconds.
+
+This update also fixes all [caveats](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/dashboards/create-reports/#caveats) related to rendering a report with panels or rows set to repeat by a variable, like rendering repeating panels inside collapsed rows.
+
+To try out this update, enable the `newPDFRendering` [feature toggle](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-grafana/feature-toggles/).
 
 ## Alerting
 
@@ -224,8 +294,6 @@ To get started with Current User authentication, refer to the [Azure Monitor dat
 
 {{< figure src="/media/docs/grafana/data-sources/screenshot-current-user.png" alt="Data source configured with Current User authentication" >}}
 
-[Documentation](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/azure-monitor/#configure-current-user-authentication)
-
 ### Removal of old Tempo Search and Loki Search in Tempo
 
 <!-- Joey Tawadrous -->
@@ -249,4 +317,47 @@ This search is used by a low number of users in comparison to the TraceQL-powere
 
 If you would like to see what logs are linked to a specific trace or service, you can use the [Trace to logs feature](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/tempo/configure-tempo-data-source/#trace-to-logs), which provides an easy way to create a custom link and set an appropriate time range if necessary.
 
-[Documentation](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/tempo/query-editor/)
+### MSSQL: Windows Active Directory (Kerberos) authentication
+
+<!--#grafana-partner-datasources, @adam -->
+
+_Generally available in Grafana Open Source and Enterprise_
+
+You can now use Windows Active Directory (or Kerberos) to authenticate to MSSQL servers from Grafana.
+
+There are four primary ways to authenticate from Grafana to a MSSQL instance with Windows Active Directory:
+
+1. Windows Active Directory username and password
+1. Specify the path to a valid [keytab file](https://web.mit.edu/kerberos/krb5-1.12/doc/basic/keytab_def.html).
+1. Specify the path to an up to date [credential cache](https://web.mit.edu/kerberos/krb5-1.12/doc/basic/ccache_def.html).
+1. Specify the path to a JSON document that holds information about several credential caches and the user and database for each one.
+
+To get started, refer to the [Getting Started documentation for MSSQL](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/getting-started/get-started-grafana-ms-sql-server/#windows-active-directory-kerberos).
+
+## Authentication and authorization
+
+### New strong password policy
+
+<!-- #iam-identity-dev -->
+
+_Available in public preview in Grafana Open Source and Enterprise_
+
+If you manage your users using Grafana's built-in basic authorization as an identity provider, consider enabling our new strong password policy feature.
+
+Starting with Grafana v11.0, you can enable an opinionated strong password policy feature. This configuration option validates all password updates to comply with our strong password policy.
+
+To learn more about Grafana's strong password policy, refer to the [documentation](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-security/configure-authentication/grafana/#strong-password-policy).
+
+### Anonymous users are billed in Grafana Enterprise
+
+<!-- Daniel Ken Lee -->
+
+_Generally available in Grafana Open Source and Enterprise_
+
+We are announcing a license change to the anonymous access feature in Grafana 11. As you may already be aware, anonymous access allows users access to Grafana without login credentials. Anonymous access was an early feature of Grafana to share dashboards; however, we recently introduced [Public Dashboards](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/dashboards/dashboard-public/) which allows you to share dashboards in a more secure manner. We also noticed that anonymous access inadvertently resulted in user licensing issues. After careful consideration, we have decided to charge for the continued use of anonymous access starting in Grafana 11.
+
+**Affected Grafana versions**
+
+[Anonymous authentication](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-security/configure-authentication/grafana/#anonymous-authentication) is disabled by default in Grafana Cloud. This licensing change only affects Grafana Enterprise (self-managed) edition. Anonymous users will be charged as active users in Grafana Enterprise.
+
+[Documentation](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-security/configure-authentication/grafana/#anonymous-devices)
