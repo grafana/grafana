@@ -1,3 +1,4 @@
+import 'whatwg-fetch';
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import React from 'react';
@@ -25,7 +26,8 @@ jest.mock('app/core/components/TagFilter/TagFilter', () => ({
 function getTestContext({ name, interval, items }: Partial<Playlist> = {}) {
   jest.clearAllMocks();
   const playlist = { name, items, interval } as unknown as Playlist;
-  const backendSrvMock = jest.spyOn(backendSrv, 'post');
+  const backendSrvMock = jest.spyOn(backendSrv, 'post').mockImplementation(() => Promise.resolve());
+  jest.spyOn(backendSrv, 'search').mockResolvedValue([]);
 
   const { rerender } = render(
     <TestProvider>
