@@ -83,7 +83,7 @@ To create your Telegram integration in Grafana Alerting, complete the following 
 
 ## Next steps
 
-To add the contact point and integration you created to your default **Notification policy**, complete the following steps.
+To add the contact point and integration you created to your default notification policy, complete the following steps.
 
 1. Navigate to **Alerts & IRM** -> **Alerting** -> **Notification policies**.
 1. In the **Default policy**, click the ellipsis icon (…) and then **Edit**.
