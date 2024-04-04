@@ -249,6 +249,7 @@ func CreateGrafDir(t *testing.T, opts ...GrafanaOpts) (string, string) {
 		return section, err
 	}
 
+	queryRetries := 3
 	for _, o := range opts {
 		if o.EnableCSP {
 			securitySect, err := cfg.NewSection("security")
@@ -363,14 +364,9 @@ func CreateGrafDir(t *testing.T, opts ...GrafanaOpts) (string, string) {
 			require.NoError(t, err)
 		}
 		// retry queries 3 times by default
-		queryRetries := 3
 		if o.QueryRetries != 0 {
 			queryRetries = int(o.QueryRetries)
 		}
-		logSection, err := getOrCreateSection("database")
-		require.NoError(t, err)
-		_, err = logSection.NewKey("query_retries", fmt.Sprintf("%d", queryRetries))
-		require.NoError(t, err)
 
 		if o.NGAlertSchedulerBaseInterval > 0 {
 			unifiedAlertingSection, err := getOrCreateSection("unified_alerting")
@@ -381,6 +377,10 @@ func CreateGrafDir(t *testing.T, opts ...GrafanaOpts) (string, string) {
 			require.NoError(t, err)
 		}
 	}
+	logSection, err := getOrCreateSection("database")
+	require.NoError(t, err)
+	_, err = logSection.NewKey("query_retries", fmt.Sprintf("%d", queryRetries))
+	require.NoError(t, err)
 
 	cfgPath := filepath.Join(cfgDir, "test.ini")
 	err = cfg.SaveTo(cfgPath)
