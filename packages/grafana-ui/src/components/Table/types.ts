@@ -146,4 +146,5 @@ export type TableFieldOptions = Omit<schema.TableFieldOptions, 'cellOptions'> & 
 export interface CellColors {
   textColor?: string;
   bgColor?: string;
+  bgHoverColor?: string;
 }
