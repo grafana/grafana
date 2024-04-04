@@ -1396,6 +1396,9 @@ exports[`better eslint`] = {
       [0, 0, 0, "Styles should be written using objects.", "0"],
       [0, 0, 0, "Styles should be written using objects.", "1"]
     ],
+    "public/app/features/admin/UserListPublicDashboardPage/UserListPublicDashboardPage.tsx:5381": [
+      [0, 0, 0, "\'HorizontalGroup\' import from \'@grafana/ui/src\' is restricted from being used by a pattern. Use Stack component instead.", "0"]
+    ],
     "public/app/features/admin/UserOrgs.tsx:5381": [
       [0, 0, 0, "Styles should be written using objects.", "0"],
       [0, 0, 0, "Styles should be written using objects.", "1"],
@@ -2609,6 +2612,9 @@ exports[`better eslint`] = {
       [0, 0, 0, "Styles should be written using objects.", "1"],
       [0, 0, 0, "Styles should be written using objects.", "2"]
     ],
+    "public/app/features/dashboard/components/PanelEditor/PanelNotSupported.tsx:5381": [
+      [0, 0, 0, "\'Layout\' import from \'@grafana/ui/src/components/Layout/Layout\' is restricted from being used by a pattern. Use Stack component instead.", "0"]
+    ],
     "public/app/features/dashboard/components/PanelEditor/VisualizationButton.tsx:5381": [
       [0, 0, 0, "Styles should be written using objects.", "0"],
       [0, 0, 0, "Styles should be written using objects.", "1"]
@@ -2686,9 +2692,15 @@ exports[`better eslint`] = {
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"]
     ],
     "public/app/features/dashboard/components/ShareModal/SharePublicDashboard/ConfigPublicDashboard/ConfigPublicDashboard.tsx:5381": [
-      [0, 0, 0, "Styles should be written using objects.", "0"],
-      [0, 0, 0, "Styles should be written using objects.", "1"],
-      [0, 0, 0, "Styles should be written using objects.", "2"]
+      [0, 0, 0, "\'HorizontalGroup\' import from \'@grafana/ui/src\' is restricted from being used by a pattern. Use Stack component instead.", "0"],
+      [0, 0, 0, "\'Layout\' import from \'@grafana/ui/src/components/Layout/Layout\' is restricted from being used by a pattern. Use Stack component instead.", "1"],
+      [0, 0, 0, "Styles should be written using objects.", "2"],
+      [0, 0, 0, "Styles should be written using objects.", "3"],
+      [0, 0, 0, "Styles should be written using objects.", "4"]
+    ],
+    "public/app/features/dashboard/components/ShareModal/SharePublicDashboard/ConfigPublicDashboard/Configuration.tsx:5381": [
+      [0, 0, 0, "\'VerticalGroup\' import from \'@grafana/ui/src\' is restricted from being used by a pattern. Use Stack component instead.", "0"],
+      [0, 0, 0, "\'Layout\' import from \'@grafana/ui/src/components/Layout/Layout\' is restricted from being used by a pattern. Use Stack component instead.", "1"]
     ],
     "public/app/features/dashboard/components/ShareModal/SharePublicDashboard/ConfigPublicDashboard/EmailSharingConfiguration.tsx:5381": [
       [0, 0, 0, "Styles should be written using objects.", "0"],
@@ -2702,7 +2714,9 @@ exports[`better eslint`] = {
       [0, 0, 0, "Styles should be written using objects.", "0"]
     ],
     "public/app/features/dashboard/components/ShareModal/SharePublicDashboard/CreatePublicDashboard/AcknowledgeCheckboxes.tsx:5381": [
-      [0, 0, 0, "Styles should be written using objects.", "0"]
+      [0, 0, 0, "\'HorizontalGroup\' import from \'@grafana/ui/src\' is restricted from being used by a pattern. Use Stack component instead.", "0"],
+      [0, 0, 0, "\'VerticalGroup\' import from \'@grafana/ui/src\' is restricted from being used by a pattern. Use Stack component instead.", "1"],
+      [0, 0, 0, "Styles should be written using objects.", "2"]
     ],
     "public/app/features/dashboard/components/ShareModal/SharePublicDashboard/CreatePublicDashboard/CreatePublicDashboard.tsx:5381": [
       [0, 0, 0, "Styles should be written using objects.", "0"],
@@ -3697,12 +3711,13 @@ exports[`better eslint`] = {
       [0, 0, 0, "Styles should be written using objects.", "1"]
     ],
     "public/app/features/manage-dashboards/components/PublicDashboardListTable/PublicDashboardListTable.tsx:5381": [
-      [0, 0, 0, "Styles should be written using objects.", "0"],
+      [0, 0, 0, "\'HorizontalGroup\' import from \'@grafana/ui/src\' is restricted from being used by a pattern. Use Stack component instead.", "0"],
       [0, 0, 0, "Styles should be written using objects.", "1"],
       [0, 0, 0, "Styles should be written using objects.", "2"],
       [0, 0, 0, "Styles should be written using objects.", "3"],
       [0, 0, 0, "Styles should be written using objects.", "4"],
-      [0, 0, 0, "Styles should be written using objects.", "5"]
+      [0, 0, 0, "Styles should be written using objects.", "5"],
+      [0, 0, 0, "Styles should be written using objects.", "6"]
     ],
     "public/app/features/manage-dashboards/state/actions.ts:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
@@ -3793,10 +3808,11 @@ exports[`better eslint`] = {
       [0, 0, 0, "Styles should be written using objects.", "1"]
     ],
     "public/app/features/plugins/admin/components/PluginDetailsPage.tsx:5381": [
-      [0, 0, 0, "Do not use any type assertions.", "0"],
-      [0, 0, 0, "Styles should be written using objects.", "1"],
+      [0, 0, 0, "\'Layout\' import from \'@grafana/ui/src/components/Layout/Layout\' is restricted from being used by a pattern. Use Stack component instead.", "0"],
+      [0, 0, 0, "Do not use any type assertions.", "1"],
       [0, 0, 0, "Styles should be written using objects.", "2"],
-      [0, 0, 0, "Styles should be written using objects.", "3"]
+      [0, 0, 0, "Styles should be written using objects.", "3"],
+      [0, 0, 0, "Styles should be written using objects.", "4"]
     ],
     "public/app/features/plugins/admin/components/PluginSignatureDetailsBadge.tsx:5381": [
       [0, 0, 0, "Styles should be written using objects.", "0"],
