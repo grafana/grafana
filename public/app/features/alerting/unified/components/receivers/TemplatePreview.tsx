@@ -148,8 +148,6 @@ const getStyles = (theme: GrafanaTheme2) => ({
   },
 });
 
-export const PREVIEW_NOT_AVAILABLE = 'Preview request failed.';
-
 export function getPreviewResults(
   previewError: unknown | undefined,
   payloadFormatError: string | null,
