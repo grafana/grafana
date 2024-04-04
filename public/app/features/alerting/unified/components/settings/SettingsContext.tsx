@@ -1,6 +1,8 @@
 import { union, without, debounce } from 'lodash';
 import React, { PropsWithChildren, useEffect, useRef } from 'react';
 
+import { AppEvents } from '@grafana/data';
+import { getAppEvents } from '@grafana/runtime';
 import { AlertmanagerChoice, ExternalAlertmanagerConfig } from 'app/plugins/datasource/alertmanager/types';
 import { dispatch } from 'app/store/store';
 
@@ -13,6 +15,7 @@ import {
 import { deleteAlertManagerConfigAction, updateAlertManagerConfigAction } from '../../state/actions';
 import { GRAFANA_RULES_SOURCE_NAME, isAlertmanagerDataSourceInterestedInAlerts } from '../../utils/datasource';
 
+const appEvents = getAppEvents();
 const USING_INTERNAL_ALERTMANAGER_SETTINGS = [AlertmanagerChoice.Internal, AlertmanagerChoice.All];
 
 interface Context {
@@ -77,6 +80,16 @@ export const SettingsProvider = (props: PropsWithChildren) => {
 
   const disableAlertmanager = (uid: string) => {
     const updatedInterestedAlertmanagers = without(interestedAlertmanagers, uid);
+
+    // show the user they can't disable all Alertmanagers
+    if (updatedInterestedAlertmanagers.length === 0) {
+      appEvents.publish({
+        type: AppEvents.alertError.name,
+        payload: ['You need to have at least one Alertmanager to receive alerts.'],
+      });
+      return;
+    }
+
     const newDeliveryMode = determineDeliveryMode(updatedInterestedAlertmanagers);
 
     if (newDeliveryMode !== deliverySettings?.alertmanagersChoice) {
