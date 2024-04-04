@@ -35,15 +35,14 @@ After you've set them, your overrides appear in both the **All** and **Overrides
 
 You can configure field overrides for the following visualizations:
 
-|                            |                        |                                  |
-| -------------------------- | ---------------------- | -------------------------------- |
-| [Bar chart][bar chart]     | [Geomap][geomap]       | [State timeline][state timeline] |
-| [Bar gauge][bar gauge]     | [Heatmap][heatmap]     | [Status history][status history] |
-| [Candlestick][candlestick] | [Histogram][histogram] | [Table][table]                   |
-| [Canvas][canvas]           | [Pie chart][pie chart] | [Time series][time series]       |
-| [Gauge][gauge]             | [Stat][stat]           | [Trend][trend]                   |
-
-<!--Also xy chart-->
+|                            |                                  |                                  |
+| -------------------------- | -------------------------------- | -------------------------------- |
+| [Bar chart][bar chart]     | [Heatmap][heatmap]               | [Status history][status history] |
+| [Bar gauge][bar gauge]     | [Histogram][histogram]           | [Table][table]                   |
+| [Candlestick][candlestick] | [Pie chart][pie chart]           | [Time series][time series]       |
+| [Canvas][canvas]           | [Stat][stat]                     | [Trend][trend]                   |
+| [Gauge][gauge]             | [State timeline][state timeline] | [XY chart][xy chart]             |
+| [Geomap][geomap]           |                                  |                                  |
 
 ## Override rules
 
@@ -222,6 +221,9 @@ The changes you make take effect immediately.
 
 [trend]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/panels-visualizations/visualizations/trend"
 [trend]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/visualizations/panels-visualizations/visualizations/trend"
+
+[xy chart]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/panels-visualizations/visualizations/xy-chart"
+[xy chart]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/visualizations/panels-visualizations/visualizations/xy-chart"
 
 [Rename by regex transformation]: "/docs/grafana/ -> /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/query-transform-data/transform-data#rename-by-regex"
 [Rename by regex transformation]: "/docs/grafana-cloud -> /docs/grafana-cloud/visualizations/panels-visualizations/query-transform-data/transform-data#rename-by-regex"
