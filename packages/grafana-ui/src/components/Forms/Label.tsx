@@ -39,7 +39,7 @@ export const getLabelStyles = (theme: GrafanaTheme3) => ({
   label: css({
     label: 'Label',
     font: theme.font.bodySmallStrong,
-    marginBottom: theme.spacing[50],
+    marginBottom: theme.spacing.x50,
     color: theme.color.content.secondary,
     maxWidth: '480px',
   }),
@@ -51,7 +51,7 @@ export const getLabelStyles = (theme: GrafanaTheme3) => ({
     label: 'Label-description',
     color: theme.color.content.disabled,
     font: theme.font.bodySmall,
-    marginTop: theme.spacing[25],
+    marginTop: theme.spacing.x25,
     display: 'block',
   }),
   categories: css({
@@ -60,6 +60,6 @@ export const getLabelStyles = (theme: GrafanaTheme3) => ({
     alignItems: 'center',
   }),
   chevron: css({
-    margin: `${theme.spacing[0]} ${theme.spacing[25]}`,
+    margin: theme.spacingFn(0, 25),
   }),
 });

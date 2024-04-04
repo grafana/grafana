@@ -74,22 +74,22 @@ export function buildTooltipTheme(
     headerClose: css({
       color: theme.color.content.secondary,
       position: 'absolute',
-      right: theme.spacing[100],
-      top: theme.spacing[150],
+      right: theme.spacing.x100,
+      top: theme.spacing.x150,
       backgroundColor: 'transparent',
       border: 0,
     }),
     header: css({
-      paddingTop: theme.spacing[100],
-      paddingBottom: theme.spacing[200],
+      paddingTop: theme.spacing.x100,
+      paddingBottom: theme.spacing.x200,
     }),
     body: css({
-      paddingTop: theme.spacing[100],
-      paddingBottom: theme.spacing[100],
+      paddingTop: theme.spacing.x100,
+      paddingBottom: theme.spacing.x100,
     }),
     footer: css({
-      paddingTop: theme.spacing[200],
-      paddingBottom: theme.spacing[100],
+      paddingTop: theme.spacing.x200,
+      paddingBottom: theme.spacing.x100,
     }),
   };
 }
