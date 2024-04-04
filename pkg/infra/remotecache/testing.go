@@ -20,7 +20,7 @@ func NewFakeStore(t *testing.T) *RemoteCache {
 		ConnStr: "",
 	}
 
-	sqlStore, _ := db.InitTestDB(t)
+	sqlStore := db.InitTestDB(t)
 
 	dc, err := ProvideService(&setting.Cfg{
 		RemoteCacheOptions: opts,
