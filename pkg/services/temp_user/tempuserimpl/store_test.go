@@ -31,7 +31,7 @@ func TestIntegrationTempUserCommandsAndQueries(t *testing.T) {
 		Status: tempuser.TmpUserInvitePending,
 	}
 	setup := func(t *testing.T) {
-		db, cfg := db.InitTestDBwithCfg(t)
+		db, cfg := db.InitTestDBWithCfg(t)
 		store = &xormStore{db: db, cfg: cfg}
 		tempUser, err = store.CreateTempUser(context.Background(), &cmd)
 		require.Nil(t, err)
@@ -112,7 +112,7 @@ func TestIntegrationTempUserCommandsAndQueries(t *testing.T) {
 			Status:          tempuser.TmpUserEmailUpdateStarted,
 			InvitedByUserID: userID,
 		}
-		db, cfg := db.InitTestDBwithCfg(t)
+		db, cfg := db.InitTestDBWithCfg(t)
 		store = &xormStore{db: db, cfg: cfg}
 
 		for i := 0; i < verifications; i++ {
@@ -152,7 +152,7 @@ func TestIntegrationTempUserCommandsAndQueries(t *testing.T) {
 			Status:          tempuser.TmpUserEmailUpdateStarted,
 			InvitedByUserID: 99,
 		}
-		db, cfg := db.InitTestDBwithCfg(t)
+		db, cfg := db.InitTestDBWithCfg(t)
 		store = &xormStore{db: db, cfg: cfg}
 
 		tempUser, err = store.CreateTempUser(context.Background(), &cmd)

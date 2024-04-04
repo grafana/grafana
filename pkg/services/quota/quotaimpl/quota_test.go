@@ -64,7 +64,7 @@ func TestIntegrationQuotaCommandsAndQueries(t *testing.T) {
 	if testing.Short() {
 		t.Skip("skipping integration test")
 	}
-	sqlStore, cfg := db.InitTestDBwithCfg(t)
+	sqlStore, cfg := db.InitTestDBWithCfg(t)
 	cfg.Quota = setting.QuotaSettings{
 		Enabled: true,
 

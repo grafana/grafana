@@ -697,7 +697,7 @@ func setupTest(t *testing.T, numFolders, numDashboards int, permissions []access
 func setupNestedTest(t *testing.T, usr *user.SignedInUser, perms []accesscontrol.Permission, orgID int64, features featuremgmt.FeatureToggles) db.DB {
 	t.Helper()
 
-	db, cfg := db.InitTestDBwithCfg(t)
+	db, cfg := db.InitTestDBWithCfg(t)
 
 	// dashboard store commands that should be called.
 	dashStore, err := database.ProvideDashboardStore(db, cfg, features, tagimpl.ProvideService(db), quotatest.New(false, nil))

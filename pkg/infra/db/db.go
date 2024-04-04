@@ -58,11 +58,11 @@ var CleanupTestDB = sqlstore.CleanupTestDB
 var ProvideService = sqlstore.ProvideService
 
 func InitTestDB(t sqlutil.ITestDB, opts ...InitTestDBOpt) *sqlstore.SQLStore {
-	db, _ := InitTestDBwithCfg(t, opts...)
+	db, _ := InitTestDBWithCfg(t, opts...)
 	return db
 }
 
-func InitTestDBwithCfg(t sqlutil.ITestDB, opts ...InitTestDBOpt) (*sqlstore.SQLStore, *setting.Cfg) {
+func InitTestDBWithCfg(t sqlutil.ITestDB, opts ...InitTestDBOpt) (*sqlstore.SQLStore, *setting.Cfg) {
 	return sqlstore.InitTestDB(t, opts...)
 }
 

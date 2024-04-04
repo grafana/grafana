@@ -815,7 +815,7 @@ func testScenario(t *testing.T, desc string, fn func(t *testing.T, sc scenarioCo
 	t.Run(desc, func(t *testing.T) {
 		orgID := int64(1)
 		role := org.RoleAdmin
-		sqlStore, cfg := db.InitTestDBwithCfg(t)
+		sqlStore, cfg := db.InitTestDBWithCfg(t)
 		quotaService := quotatest.New(false, nil)
 
 		ac := actest.FakeAccessControl{ExpectedEvaluate: true}

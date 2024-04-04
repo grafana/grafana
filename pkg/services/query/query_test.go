@@ -465,7 +465,7 @@ func setup(t *testing.T) *testContext {
 	dc := &fakeDataSourceCache{cache: dss}
 	rv := &fakePluginRequestValidator{}
 
-	sqlStore, cfg := db.InitTestDBwithCfg(t)
+	sqlStore, cfg := db.InitTestDBWithCfg(t)
 	secretsService := secretsmng.SetupTestService(t, fakes.NewFakeSecretsStore())
 	ss := secretskvs.NewSQLSecretsKVStore(sqlStore, secretsService, log.New("test.logger"))
 	fakeDatasourceService := &fakeDatasources.FakeDataSourceService{

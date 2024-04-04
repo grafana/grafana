@@ -814,7 +814,7 @@ func getDashboardShouldReturn200WithConfig(t *testing.T, sc *scenarioContext, pr
 	features := featuremgmt.WithFeatures()
 	var err error
 	if dashboardStore == nil {
-		sql, cfg := db.InitTestDBwithCfg(t)
+		sql, cfg := db.InitTestDBWithCfg(t)
 		quotaService := quotatest.New(false, nil)
 		dashboardStore, err = database.ProvideDashboardStore(sql, cfg, features, tagimpl.ProvideService(sql), quotaService)
 		require.NoError(t, err)

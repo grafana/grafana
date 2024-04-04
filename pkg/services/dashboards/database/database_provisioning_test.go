@@ -18,7 +18,7 @@ func TestIntegrationDashboardProvisioningTest(t *testing.T) {
 	if testing.Short() {
 		t.Skip("skipping integration test")
 	}
-	sqlStore, cfg := db.InitTestDBwithCfg(t)
+	sqlStore, cfg := db.InitTestDBWithCfg(t)
 	quotaService := quotatest.New(false, nil)
 	dashboardStore, err := ProvideDashboardStore(sqlStore, cfg, testFeatureToggles, tagimpl.ProvideService(sqlStore), quotaService)
 	require.NoError(t, err)

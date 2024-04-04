@@ -379,7 +379,7 @@ func scenarioWithPanel(t *testing.T, desc string, fn func(t *testing.T, sc scena
 	t.Helper()
 
 	features := featuremgmt.WithFeatures()
-	sqlStore, cfg := db.InitTestDBwithCfg(t)
+	sqlStore, cfg := db.InitTestDBWithCfg(t)
 	ac := actest.FakeAccessControl{}
 	quotaService := quotatest.New(false, nil)
 	dashboardStore, err := database.ProvideDashboardStore(sqlStore, cfg, features, tagimpl.ProvideService(sqlStore), quotaService)
@@ -439,7 +439,7 @@ func testScenario(t *testing.T, desc string, fn func(t *testing.T, sc scenarioCo
 		webCtx := web.Context{Req: req}
 
 		features := featuremgmt.WithFeatures()
-		sqlStore, cfg := db.InitTestDBwithCfg(t)
+		sqlStore, cfg := db.InitTestDBWithCfg(t)
 		quotaService := quotatest.New(false, nil)
 		dashboardStore, err := database.ProvideDashboardStore(sqlStore, cfg, features, tagimpl.ProvideService(sqlStore), quotaService)
 		require.NoError(t, err)

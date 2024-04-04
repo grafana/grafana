@@ -109,7 +109,7 @@ func TestBuildConflictBlock(t *testing.T) {
 	for _, tc := range testCases {
 		t.Run(tc.desc, func(t *testing.T) {
 			// Restore after destructive operation
-			sqlStore, cfg := db.InitTestDBwithCfg(t)
+			sqlStore, cfg := db.InitTestDBWithCfg(t)
 			if sqlStore.GetDialect().DriverName() != ignoredDatabase {
 				userStore := userimpl.ProvideStore(sqlStore, cfg)
 				for _, u := range tc.users {
@@ -217,7 +217,7 @@ conflict: test2
 	for _, tc := range testCases {
 		t.Run(tc.desc, func(t *testing.T) {
 			// Restore after destructive operation
-			sqlStore, cfg := db.InitTestDBwithCfg(t)
+			sqlStore, cfg := db.InitTestDBWithCfg(t)
 			if sqlStore.GetDialect().DriverName() != ignoredDatabase {
 				userStore := userimpl.ProvideStore(sqlStore, cfg)
 				for _, u := range tc.users {
@@ -398,7 +398,7 @@ func TestGetConflictingUsers(t *testing.T) {
 	for _, tc := range testCases {
 		t.Run(tc.desc, func(t *testing.T) {
 			// Restore after destructive operation
-			sqlStore, cfg := db.InitTestDBwithCfg(t)
+			sqlStore, cfg := db.InitTestDBWithCfg(t)
 			if sqlStore.GetDialect().DriverName() != ignoredDatabase {
 				userStore := userimpl.ProvideStore(sqlStore, cfg)
 				for _, u := range tc.users {
@@ -510,7 +510,7 @@ func TestGenerateConflictingUsersFile(t *testing.T) {
 	for _, tc := range testCases {
 		t.Run(tc.desc, func(t *testing.T) {
 			// Restore after destructive operation
-			sqlStore, cfg := db.InitTestDBwithCfg(t)
+			sqlStore, cfg := db.InitTestDBWithCfg(t)
 			if sqlStore.GetDialect().DriverName() != ignoredDatabase {
 				userStore := userimpl.ProvideStore(sqlStore, cfg)
 				for _, u := range tc.users {

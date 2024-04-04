@@ -221,7 +221,7 @@ func TestStore_DeleteServiceAccount(t *testing.T) {
 
 func setupTestDatabase(t *testing.T) (db.DB, *ServiceAccountsStoreImpl) {
 	t.Helper()
-	db, cfg := db.InitTestDBwithCfg(t)
+	db, cfg := db.InitTestDBWithCfg(t)
 	quotaService := quotatest.New(false, nil)
 	apiKeyService, err := apikeyimpl.ProvideService(db, cfg, quotaService)
 	require.NoError(t, err)

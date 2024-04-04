@@ -64,7 +64,7 @@ func TestIntegrationUserGet(t *testing.T) {
 		t.Skip("skipping integration test")
 	}
 
-	ss, cfg := db.InitTestDBwithCfg(t)
+	ss, cfg := db.InitTestDBWithCfg(t)
 	userStore := ProvideStore(ss, cfg)
 
 	_, errUser := userStore.Insert(context.Background(),
@@ -107,7 +107,7 @@ func TestIntegrationUserDataAccess(t *testing.T) {
 		t.Skip("skipping integration test")
 	}
 
-	ss, cfg := db.InitTestDBwithCfg(t)
+	ss, cfg := db.InitTestDBWithCfg(t)
 	quotaService := quotaimpl.ProvideService(ss, cfg)
 	orgService, err := orgimpl.ProvideService(ss, cfg, quotaService)
 	require.NoError(t, err)
@@ -933,7 +933,7 @@ func TestIntegrationUserUpdate(t *testing.T) {
 		t.Skip("skipping integration test")
 	}
 
-	ss, cfg := db.InitTestDBwithCfg(t)
+	ss, cfg := db.InitTestDBWithCfg(t)
 	userStore := ProvideStore(ss, cfg)
 	_, usrSvc := createOrgAndUserSvc(t, ss, cfg)
 
@@ -998,7 +998,7 @@ func createFiveTestUsers(t *testing.T, svc user.Service, fn func(i int) *user.Cr
 }
 
 func TestMetricsUsage(t *testing.T) {
-	ss, cfg := db.InitTestDBwithCfg(t)
+	ss, cfg := db.InitTestDBWithCfg(t)
 	userStore := ProvideStore(ss, setting.NewCfg())
 	quotaService := quotaimpl.ProvideService(ss, cfg)
 	orgService, err := orgimpl.ProvideService(ss, cfg, quotaService)

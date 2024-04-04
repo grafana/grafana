@@ -209,7 +209,7 @@ func TestIntegrationAnnotationListingWithInheritedRBAC(t *testing.T) {
 	annotationsTexts := make([]string, 0, folder.MaxNestedFolderDepth+1)
 
 	setupFolderStructure := func() db.DB {
-		sql, cfg := db.InitTestDBwithCfg(t)
+		sql, cfg := db.InitTestDBWithCfg(t)
 
 		// enable nested folders so that the folder table is populated for all the tests
 		features := featuremgmt.WithFeatures(featuremgmt.FlagNestedFolders)

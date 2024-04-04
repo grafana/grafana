@@ -26,7 +26,7 @@ func newPublicDashboardServiceImpl(
 ) (*PublicDashboardServiceImpl, db.DB, *setting.Cfg) {
 	t.Helper()
 
-	db, cfg := db.InitTestDBwithCfg(t)
+	db, cfg := db.InitTestDBWithCfg(t)
 	tagService := tagimpl.ProvideService(db)
 	if annotationsRepo == nil {
 		annotationsRepo = annotationsimpl.ProvideService(db, cfg, featuremgmt.WithFeatures(), tagService)

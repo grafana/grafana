@@ -34,7 +34,7 @@ func TestIntegrationTeamCommandsAndQueries(t *testing.T) {
 		t.Skip("skipping integration test")
 	}
 	t.Run("Testing Team commands and queries", func(t *testing.T) {
-		sqlStore, cfg := db.InitTestDBwithCfg(t)
+		sqlStore, cfg := db.InitTestDBWithCfg(t)
 		teamSvc, err := ProvideService(sqlStore, cfg)
 		require.NoError(t, err)
 		testUser := &user.SignedInUser{
@@ -489,7 +489,7 @@ func TestIntegrationSQLStore_SearchTeams(t *testing.T) {
 		},
 	}
 
-	store, cfg := db.InitTestDBwithCfg(t, db.InitTestDBOpt{})
+	store, cfg := db.InitTestDBWithCfg(t, db.InitTestDBOpt{})
 	teamSvc, err := ProvideService(store, cfg)
 	require.NoError(t, err)
 
@@ -560,7 +560,7 @@ func TestIntegrationSQLStore_GetTeamMembers_ACFilter(t *testing.T) {
 		require.NoError(t, errAddMember)
 	}
 
-	store, cfg := db.InitTestDBwithCfg(t, db.InitTestDBOpt{})
+	store, cfg := db.InitTestDBWithCfg(t, db.InitTestDBOpt{})
 	setup(store, cfg)
 	teamSvc, err := ProvideService(store, cfg)
 	require.NoError(t, err)

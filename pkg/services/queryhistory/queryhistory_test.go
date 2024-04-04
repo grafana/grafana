@@ -55,7 +55,7 @@ func testScenario(t *testing.T, desc string, fn func(t *testing.T, sc scenarioCo
 			Form:   url.Values{},
 		}}
 		ctx.Req.Header.Add("Content-Type", "application/json")
-		sqlStore, cfg := db.InitTestDBwithCfg(t)
+		sqlStore, cfg := db.InitTestDBWithCfg(t)
 		service := QueryHistoryService{
 			Cfg:   setting.NewCfg(),
 			store: sqlStore,

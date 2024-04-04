@@ -42,7 +42,7 @@ func TestHandleRequest(t *testing.T) {
 			actualReq = req
 			return backend.NewQueryDataResponse(), nil
 		}
-		sqlStore, cfg := db.InitTestDBwithCfg(t)
+		sqlStore, cfg := db.InitTestDBWithCfg(t)
 		secretsService := secretsmng.SetupTestService(t, fakes.NewFakeSecretsStore())
 		secretsStore := secretskvs.NewSQLSecretsKVStore(sqlStore, secretsService, log.New("test.logger"))
 		datasourcePermissions := acmock.NewMockedPermissionsService()
