@@ -20,7 +20,9 @@ type fullAccessControl interface {
 
 type Calls struct {
 	Evaluate                       []interface{}
+	GetRoleByName                  []interface{}
 	GetUserPermissions             []interface{}
+	GetUserPermissionsInOrg        []interface{}
 	ClearUserPermissionCache       []interface{}
 	DeclareFixedRoles              []interface{}
 	DeclarePluginRoles             []interface{}
@@ -46,7 +48,9 @@ type Mock struct {
 
 	// Override functions
 	EvaluateFunc                       func(context.Context, identity.Requester, accesscontrol.Evaluator) (bool, error)
+	GetRoleByNameFunc                  func(context.Context, int64, string) (*accesscontrol.RoleDTO, error)
 	GetUserPermissionsFunc             func(context.Context, identity.Requester, accesscontrol.Options) ([]accesscontrol.Permission, error)
+	GetUserPermissionsInOrgFunc        func(context.Context, identity.Requester, int64) ([]accesscontrol.Permission, error)
 	ClearUserPermissionCacheFunc       func(identity.Requester)
 	DeclareFixedRolesFunc              func(...accesscontrol.RoleRegistration) error
 	DeclarePluginRolesFunc             func(context.Context, string, string, []plugins.RoleRegistration) error
@@ -77,6 +81,14 @@ func New() *Mock {
 	}
 
 	return mock
+}
+
+func (m *Mock) GetRoleByName(ctx context.Context, orgID int64, roleName string) (*accesscontrol.RoleDTO, error) {
+	m.Calls.GetRoleByName = append(m.Calls.GetRoleByName, []interface{}{ctx, orgID, roleName})
+	if m.GetRoleByNameFunc != nil {
+		return m.GetRoleByNameFunc(ctx, orgID, roleName)
+	}
+	return nil, nil
 }
 
 func (m *Mock) GetUsageStats(ctx context.Context) map[string]interface{} {
@@ -135,6 +147,16 @@ func (m *Mock) GetUserPermissions(ctx context.Context, user identity.Requester, 
 	// Use override if provided
 	if m.GetUserPermissionsFunc != nil {
 		return m.GetUserPermissionsFunc(ctx, user, opts)
+	}
+	// Otherwise return the Permissions list
+	return m.permissions, nil
+}
+
+func (m *Mock) GetUserPermissionsInOrg(ctx context.Context, user identity.Requester, orgID int64) ([]accesscontrol.Permission, error) {
+	m.Calls.GetUserPermissionsInOrg = append(m.Calls.GetUserPermissionsInOrg, []interface{}{ctx, user, orgID})
+	// Use override if provided
+	if m.GetUserPermissionsInOrgFunc != nil {
+		return m.GetUserPermissionsInOrgFunc(ctx, user, orgID)
 	}
 	// Otherwise return the Permissions list
 	return m.permissions, nil

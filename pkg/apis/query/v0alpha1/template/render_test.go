@@ -4,16 +4,16 @@ import (
 	"testing"
 
 	"github.com/grafana/grafana-plugin-sdk-go/data"
+	apidata "github.com/grafana/grafana-plugin-sdk-go/experimental/apis/data/v0alpha1"
 	"github.com/stretchr/testify/require"
-
-	query "github.com/grafana/grafana/pkg/apis/query/v0alpha1"
 )
 
 var nestedFieldRender = QueryTemplate{
 	Title: "Test",
 	Variables: []TemplateVariable{
 		{
-			Key: "metricName",
+			Key:           "metricName",
+			DefaultValues: []string{"cow_count"},
 		},
 	},
 	Targets: []Target{
@@ -32,7 +32,7 @@ var nestedFieldRender = QueryTemplate{
 					},
 				},
 			},
-			Properties: query.NewGenericDataQuery(map[string]any{
+			Properties: apidata.NewDataQuery(map[string]any{
 				"nestedObject": map[string]any{
 					"anArray": []any{"foo", .2},
 				},
@@ -56,10 +56,34 @@ var nestedFieldRenderedTargets = []Target{
 			},
 		},
 		//DataTypeVersion: data.FrameTypeVersion{0, 0},
-		Properties: query.NewGenericDataQuery(
+		Properties: apidata.NewDataQuery(
 			map[string]any{
 				"nestedObject": map[string]any{
 					"anArray": []any{"up", .2},
+				},
+			}),
+	},
+}
+
+var nestedFieldDefaultRenderedTargets = []Target{
+	{
+		DataType: data.FrameTypeUnknown,
+		Variables: map[string][]VariableReplacement{
+			"metricName": {
+				{
+					Path: "$.nestedObject.anArray[0]",
+					Position: &Position{
+						Start: 0,
+						End:   3,
+					},
+				},
+			},
+		},
+		//DataTypeVersion: data.FrameTypeVersion{0, 0},
+		Properties: apidata.NewDataQuery(
+			map[string]any{
+				"nestedObject": map[string]any{
+					"anArray": []any{"cow_count", .2},
 				},
 			}),
 	},
@@ -70,6 +94,15 @@ func TestNestedFieldRender(t *testing.T) {
 	require.NoError(t, err)
 	require.Equal(t,
 		nestedFieldRenderedTargets,
+		rT,
+	)
+}
+
+func TestNestedFieldDefaultsRender(t *testing.T) {
+	rT, err := RenderTemplate(nestedFieldRender, nil)
+	require.NoError(t, err)
+	require.Equal(t,
+		nestedFieldDefaultRenderedTargets,
 		rT,
 	)
 }
@@ -117,7 +150,7 @@ var multiVarTemplate = QueryTemplate{
 				},
 			},
 
-			Properties: query.NewGenericDataQuery(map[string]any{
+			Properties: apidata.NewDataQuery(map[string]any{
 				"expr": "1 + metricName + 1 + anotherMetric + metricName",
 			}),
 		},
@@ -155,7 +188,7 @@ var multiVarRenderedTargets = []Target{
 			},
 		},
 		//DataTypeVersion: data.FrameTypeVersion{0, 0},
-		Properties: query.NewGenericDataQuery(map[string]any{
+		Properties: apidata.NewDataQuery(map[string]any{
 			"expr": "1 + up + 1 + sloths_do_like_a_good_nap + up",
 		}),
 	},
@@ -182,7 +215,7 @@ func TestRenderWithRune(t *testing.T) {
 		},
 		Targets: []Target{
 			{
-				Properties: query.NewGenericDataQuery(map[string]any{
+				Properties: apidata.NewDataQuery(map[string]any{
 					"message": "🐦 name!",
 				}),
 				Variables: map[string][]VariableReplacement{
@@ -207,5 +240,5 @@ func TestRenderWithRune(t *testing.T) {
 	rq, err := RenderTemplate(qt, selectedValues)
 	require.NoError(t, err)
 
-	require.Equal(t, "🐦 🦥!", rq[0].Properties.AdditionalProperties()["message"])
+	require.Equal(t, "🐦 🦥!", rq[0].Properties.GetString("message"))
 }

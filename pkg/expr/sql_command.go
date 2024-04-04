@@ -19,12 +19,11 @@ import (
 type SQLCommand struct {
 	query       string
 	varsToQuery []string
-	timeRange   TimeRange
 	refID       string
 }
 
 // NewSQLCommand creates a new SQLCommand.
-func NewSQLCommand(refID, rawSQL string, tr TimeRange) (*SQLCommand, error) {
+func NewSQLCommand(refID, rawSQL string) (*SQLCommand, error) {
 	if rawSQL == "" {
 		return nil, errutil.BadRequest("sql-missing-query",
 			errutil.WithPublicMessage("missing SQL query"))
@@ -39,7 +38,6 @@ func NewSQLCommand(refID, rawSQL string, tr TimeRange) (*SQLCommand, error) {
 	return &SQLCommand{
 		query:       rawSQL,
 		varsToQuery: tables,
-		timeRange:   tr,
 		refID:       refID,
 	}, nil
 }
@@ -59,7 +57,7 @@ func UnmarshalSQLCommand(rn *rawNode) (*SQLCommand, error) {
 		return nil, fmt.Errorf("expected sql expression to be type string, but got type %T", expressionRaw)
 	}
 
-	return NewSQLCommand(rn.RefID, expression, rn.TimeRange)
+	return NewSQLCommand(rn.RefID, expression)
 }
 
 // NeedsVars returns the variable names (refIds) that are dependencies
@@ -104,4 +102,8 @@ func (gr *SQLCommand) Execute(ctx context.Context, now time.Time, vars mathexp.V
 	}
 
 	return rsp, nil
+}
+
+func (gr *SQLCommand) Type() string {
+	return TypeSQL.String()
 }

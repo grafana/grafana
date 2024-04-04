@@ -57,6 +57,15 @@ type ClientParams struct {
 	LookUpParams login.UserLookupParams
 	// SyncPermissions ensure that permissions are loaded from DB and added to the identity
 	SyncPermissions bool
+	// FetchPermissionsParams are the arguments used to fetch permissions from the DB
+	FetchPermissionsParams FetchPermissionsParams
+}
+
+type FetchPermissionsParams struct {
+	// ActionsLookup will restrict the permissions to only these actions
+	ActionsLookup []string
+	// Roles permissions will be directly added to the identity permissions
+	Roles []string
 }
 
 type PostAuthHookFn func(ctx context.Context, identity *Identity, r *Request) error
@@ -77,6 +86,10 @@ type Service interface {
 	RedirectURL(ctx context.Context, client string, r *Request) (*Redirect, error)
 	// Logout revokes session token and does additional clean up if client used to authenticate supports it
 	Logout(ctx context.Context, user identity.Requester, sessionToken *usertoken.UserToken) (*Redirect, error)
+
+	// ResolveIdentity resolves an identity from org and namespace id.
+	ResolveIdentity(ctx context.Context, orgID int64, namespaceID string) (*Identity, error)
+
 	// RegisterClient will register a new authn.Client that can be used for authentication
 	RegisterClient(c Client)
 }

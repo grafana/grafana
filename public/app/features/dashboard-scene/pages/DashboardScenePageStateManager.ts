@@ -1,10 +1,15 @@
 import { locationUtil } from '@grafana/data';
-import { getBackendSrv, isFetchError, locationService } from '@grafana/runtime';
+import { config, getBackendSrv, isFetchError, locationService } from '@grafana/runtime';
 import { updateNavIndex } from 'app/core/actions';
 import { StateManagerBase } from 'app/core/services/StateManagerBase';
 import { backendSrv } from 'app/core/services/backend_srv';
+import { default as localStorageStore } from 'app/core/store';
 import { dashboardLoaderSrv } from 'app/features/dashboard/services/DashboardLoaderSrv';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
+import {
+  DASHBOARD_FROM_LS_KEY,
+  removeDashboardToFetchFromLocalStorage,
+} from 'app/features/dashboard/state/initDashboard';
 import { buildNavModel } from 'app/features/folders/state/navModel';
 import { store } from 'app/store/store';
 import { DashboardDTO, DashboardRoutes } from 'app/types';
@@ -36,6 +41,12 @@ export interface LoadDashboardOptions {
   uid: string;
   route: DashboardRoutes;
   urlFolderUid?: string;
+  // A temporary approach not to clean the dashboard from local storage when navigating from Explore to Dashboard
+  // We currently need it as there are two flows of fetching dashboard. The legacy one (initDashboard), uses the new one(DashboardScenePageStateManager.fetch) where the
+  // removal of the dashboard from local storage is implemented. So in the old flow we wouldn't be able to early return dashboard from local storage, if we prematurely
+  // removed it when prefetching the dashboard in DashboardPageProxy.
+  // This property will be removed when the old flow (initDashboard) is removed.
+  keepDashboardFromExploreInLocalStorage?: boolean;
 }
 
 export class DashboardScenePageStateManager extends StateManagerBase<DashboardScenePageState> {
@@ -46,7 +57,21 @@ export class DashboardScenePageStateManager extends StateManagerBase<DashboardSc
 
   // To eventualy replace the fetchDashboard function from Dashboard redux state management.
   // For now it's a simplistic version to support Home and Normal dashboard routes.
-  public async fetchDashboard({ uid, route, urlFolderUid }: LoadDashboardOptions): Promise<DashboardDTO | null> {
+  public async fetchDashboard({
+    uid,
+    route,
+    urlFolderUid,
+    keepDashboardFromExploreInLocalStorage,
+  }: LoadDashboardOptions): Promise<DashboardDTO | null> {
+    const model = localStorageStore.getObject<DashboardDTO>(DASHBOARD_FROM_LS_KEY);
+
+    if (model) {
+      if (!keepDashboardFromExploreInLocalStorage) {
+        removeDashboardToFetchFromLocalStorage();
+      }
+      return model;
+    }
+
     const cacheKey = route === DashboardRoutes.Home ? HOME_DASHBOARD_CACHE_KEY : uid;
     const cachedDashboard = this.getFromCache(cacheKey);
 
@@ -78,16 +103,21 @@ export class DashboardScenePageStateManager extends StateManagerBase<DashboardSc
           }
 
           break;
+        case DashboardRoutes.Public: {
+          return await dashboardLoaderSrv.loadDashboard('public', '', uid);
+        }
         default:
           rsp = await dashboardLoaderSrv.loadDashboard('db', '', uid);
+
           if (route === DashboardRoutes.Embedded) {
             rsp.meta.isEmbedded = true;
           }
       }
 
-      if (rsp.meta.url && route !== DashboardRoutes.Embedded) {
+      if (rsp.meta.url && route === DashboardRoutes.Normal) {
         const dashboardUrl = locationUtil.stripBaseFromUrl(rsp.meta.url);
         const currentPath = locationService.getLocation().pathname;
+
         if (dashboardUrl !== currentPath) {
           // Spread current location to persist search params used for navigation
           locationService.replace({
@@ -140,7 +170,9 @@ export class DashboardScenePageStateManager extends StateManagerBase<DashboardSc
   public async loadDashboard(options: LoadDashboardOptions) {
     try {
       const dashboard = await this.loadScene(options);
-      dashboard.startUrlSync();
+      if (!(config.publicDashboardAccessToken && dashboard.state.controls?.state.hideTimeControls)) {
+        dashboard.startUrlSync();
+      }
 
       this.setState({ dashboard: dashboard, isLoading: false });
     } catch (err) {
@@ -149,12 +181,20 @@ export class DashboardScenePageStateManager extends StateManagerBase<DashboardSc
   }
 
   private async loadScene(options: LoadDashboardOptions): Promise<DashboardScene> {
+    const comingFromExplore = Boolean(
+      localStorageStore.getObject<DashboardDTO>(DASHBOARD_FROM_LS_KEY) &&
+        options.keepDashboardFromExploreInLocalStorage === false
+    );
+
     const rsp = await this.fetchDashboard(options);
 
     const fromCache = this.cache[options.uid];
 
-    if (fromCache && fromCache.state.version === rsp?.dashboard.version) {
-      return fromCache;
+    // When coming from Explore, skip returnning scene from cache
+    if (!comingFromExplore) {
+      if (fromCache && fromCache.state.version === rsp?.dashboard.version) {
+        return fromCache;
+      }
     }
 
     this.setState({ isLoading: true });
@@ -162,7 +202,8 @@ export class DashboardScenePageStateManager extends StateManagerBase<DashboardSc
     if (rsp?.dashboard) {
       const scene = transformSaveModelToScene(rsp);
 
-      if (options.uid) {
+      // Cache scene only if not coming from Explore, we don't want to cache temporary dashboard
+      if (options.uid && !comingFromExplore) {
         this.cache[options.uid] = scene;
       }
 

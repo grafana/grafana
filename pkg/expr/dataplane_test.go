@@ -50,12 +50,13 @@ func framesPassThroughService(t *testing.T, frames data.Frames) (data.Frames, er
 		map[string]backend.DataResponse{"A": {Frames: frames}},
 	}
 
+	features := featuremgmt.WithFeatures()
 	cfg := setting.NewCfg()
 
 	s := Service{
 		cfg:         cfg,
 		dataService: me,
-		features:    &featuremgmt.FeatureManager{},
+		features:    features,
 		pCtxProvider: plugincontext.ProvideService(cfg, nil, &pluginstore.FakePluginStore{
 			PluginList: []pluginstore.Plugin{
 				{JSONData: plugins.JSONData{ID: "test"}},
@@ -64,6 +65,10 @@ func framesPassThroughService(t *testing.T, frames data.Frames) (data.Frames, er
 			nil, pluginconfig.NewFakePluginRequestConfigProvider()),
 		tracer:  tracing.InitializeTracerForTest(),
 		metrics: newMetrics(nil),
+		converter: &ResultConverter{
+			Features: features,
+			Tracer:   tracing.InitializeTracerForTest(),
+		},
 	}
 	queries := []Query{{
 		RefID: "A",

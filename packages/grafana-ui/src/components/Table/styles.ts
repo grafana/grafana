@@ -16,7 +16,8 @@ export function useTableStyles(theme: GrafanaTheme2, cellHeightOption: TableCell
     background?: string,
     overflowOnHover?: boolean,
     asCellText?: boolean,
-    textShouldWrap?: boolean
+    textShouldWrap?: boolean,
+    rowStyled?: boolean
   ) => {
     return css({
       label: overflowOnHover ? 'cellContainerOverflow' : 'cellContainerNoOverflow',
@@ -39,8 +40,8 @@ export function useTableStyles(theme: GrafanaTheme2, cellHeightOption: TableCell
       alignItems: 'center',
       borderRight: `1px solid ${borderColor}`,
 
-      color: color ?? undefined,
-      background: background ?? undefined,
+      color: rowStyled ? 'inherit' : color ?? undefined,
+      background: rowStyled ? undefined : background ?? undefined,
       backgroundClip: 'padding-box',
 
       '&:last-child:not(:only-child)': {
@@ -49,18 +50,20 @@ export function useTableStyles(theme: GrafanaTheme2, cellHeightOption: TableCell
 
       '&:hover': {
         overflow: overflowOnHover ? 'visible' : undefined,
-        width: textShouldWrap ? 'auto' : 'auto !important',
-        height: textShouldWrap ? 'auto !important' : `${rowHeight - 1}px`,
+        width: textShouldWrap || !overflowOnHover ? 'auto' : 'auto !important',
+        height: textShouldWrap || overflowOnHover ? 'auto !important' : `${rowHeight - 1}px`,
         minHeight: `${rowHeight - 1}px`,
         wordBreak: textShouldWrap ? 'break-word' : undefined,
-        whiteSpace: overflowOnHover ? 'normal' : 'nowrap',
+        whiteSpace: textShouldWrap && overflowOnHover ? 'normal' : 'nowrap',
         boxShadow: overflowOnHover ? `0 0 2px ${theme.colors.primary.main}` : undefined,
-        background: overflowOnHover ? background ?? theme.components.table.rowHoverBackground : undefined,
-        zIndex: overflowOnHover ? 1 : undefined,
+        background: rowStyled ? 'inherit' : background ?? theme.colors.background.primary,
+        zIndex: 1,
         '.cellActions': {
+          color: '#FFF',
           visibility: 'visible',
           opacity: 1,
           width: 'auto',
+          background: 'rgba(0, 0, 0, 0.6)',
         },
       },
 
@@ -71,7 +74,7 @@ export function useTableStyles(theme: GrafanaTheme2, cellHeightOption: TableCell
       '.cellActions': {
         display: 'flex',
         position: overflowOnHover ? undefined : 'absolute',
-        top: overflowOnHover ? undefined : 0,
+        top: overflowOnHover ? undefined : '1px',
         right: overflowOnHover ? undefined : 0,
         margin: overflowOnHover ? theme.spacing(0, -0.5, 0, 0.5) : 'auto',
         visibility: 'hidden',
@@ -79,8 +82,8 @@ export function useTableStyles(theme: GrafanaTheme2, cellHeightOption: TableCell
         width: 0,
         alignItems: 'center',
         height: '100%',
-        padding: theme.spacing(1, 0.5, 1, 0.5),
-        background: background ? 'none' : theme.colors.emphasize(theme.colors.background.primary, 0.03),
+        padding: theme.spacing(1, 0.5, 1, 1),
+        background: background ? 'none' : 'rgba(0, 0, 0, 0.5)',
 
         svg: {
           color,

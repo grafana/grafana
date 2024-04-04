@@ -11,6 +11,7 @@ import (
 	"github.com/google/go-cmp/cmp/cmpopts"
 	"github.com/stretchr/testify/require"
 
+	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/auth"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin"
@@ -24,9 +25,8 @@ import (
 	"github.com/grafana/grafana/pkg/plugins/manager/registry"
 	"github.com/grafana/grafana/pkg/plugins/manager/signature"
 	"github.com/grafana/grafana/pkg/plugins/manager/sources"
-	"github.com/grafana/grafana/pkg/plugins/plugindef"
+	"github.com/grafana/grafana/pkg/plugins/pfs"
 	"github.com/grafana/grafana/pkg/plugins/pluginscdn"
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pipeline"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginerrs"
@@ -68,7 +68,7 @@ func TestLoader_Load(t *testing.T) {
 		{
 			name:        "Load a Core plugin",
 			class:       plugins.ClassCore,
-			cfg:         &config.PluginManagementCfg{Features: featuremgmt.WithFeatures()},
+			cfg:         &config.PluginManagementCfg{},
 			pluginPaths: []string{filepath.Join(corePluginDir(t), "app/plugins/datasource/cloudwatch")},
 			want: []*plugins.Plugin{
 				{
@@ -117,7 +117,7 @@ func TestLoader_Load(t *testing.T) {
 		{
 			name:        "Load a Bundled plugin",
 			class:       plugins.ClassBundled,
-			cfg:         &config.PluginManagementCfg{Features: featuremgmt.WithFeatures()},
+			cfg:         &config.PluginManagementCfg{},
 			pluginPaths: []string{filepath.Join(testDataDir(t), "valid-v2-signature")},
 			want: []*plugins.Plugin{
 				{
@@ -158,7 +158,7 @@ func TestLoader_Load(t *testing.T) {
 		{
 			name:        "Load plugin with symbolic links",
 			class:       plugins.ClassExternal,
-			cfg:         &config.PluginManagementCfg{Features: featuremgmt.WithFeatures()},
+			cfg:         &config.PluginManagementCfg{},
 			pluginPaths: []string{filepath.Join(testDataDir(t), "symbolic-plugin-dirs")},
 			want: []*plugins.Plugin{
 				{
@@ -238,8 +238,7 @@ func TestLoader_Load(t *testing.T) {
 			name:  "Load an unsigned plugin (development)",
 			class: plugins.ClassExternal,
 			cfg: &config.PluginManagementCfg{
-				DevMode:  true,
-				Features: featuremgmt.WithFeatures(),
+				DevMode: true,
 			},
 			pluginPaths: []string{filepath.Join(testDataDir(t), "unsigned-datasource")},
 			want: []*plugins.Plugin{
@@ -277,7 +276,7 @@ func TestLoader_Load(t *testing.T) {
 		{
 			name:        "Load an unsigned plugin (production)",
 			class:       plugins.ClassExternal,
-			cfg:         &config.PluginManagementCfg{Features: featuremgmt.WithFeatures()},
+			cfg:         &config.PluginManagementCfg{},
 			pluginPaths: []string{filepath.Join(testDataDir(t), "unsigned-datasource")},
 			want:        []*plugins.Plugin{},
 			pluginErrors: map[string]*plugins.SignatureError{
@@ -292,7 +291,6 @@ func TestLoader_Load(t *testing.T) {
 			class: plugins.ClassExternal,
 			cfg: &config.PluginManagementCfg{
 				PluginsAllowUnsigned: []string{"test-datasource"},
-				Features:             featuremgmt.WithFeatures(),
 			},
 			pluginPaths: []string{filepath.Join(testDataDir(t), "unsigned-datasource")},
 			want: []*plugins.Plugin{
@@ -330,7 +328,7 @@ func TestLoader_Load(t *testing.T) {
 		{
 			name:        "Load a plugin with v1 manifest should return signatureInvalid",
 			class:       plugins.ClassExternal,
-			cfg:         &config.PluginManagementCfg{Features: featuremgmt.WithFeatures()},
+			cfg:         &config.PluginManagementCfg{},
 			pluginPaths: []string{filepath.Join(testDataDir(t), "lacking-files")},
 			want:        []*plugins.Plugin{},
 			pluginErrors: map[string]*plugins.SignatureError{
@@ -345,7 +343,6 @@ func TestLoader_Load(t *testing.T) {
 			class: plugins.ClassExternal,
 			cfg: &config.PluginManagementCfg{
 				PluginsAllowUnsigned: []string{"test-datasource"},
-				Features:             featuremgmt.WithFeatures(),
 			},
 			pluginPaths: []string{filepath.Join(testDataDir(t), "lacking-files")},
 			want:        []*plugins.Plugin{},
@@ -361,7 +358,6 @@ func TestLoader_Load(t *testing.T) {
 			class: plugins.ClassExternal,
 			cfg: &config.PluginManagementCfg{
 				PluginsAllowUnsigned: []string{"test-datasource"},
-				Features:             featuremgmt.WithFeatures(),
 			},
 			pluginPaths: []string{filepath.Join(testDataDir(t), "invalid-v2-missing-file")},
 			want:        []*plugins.Plugin{},
@@ -377,7 +373,6 @@ func TestLoader_Load(t *testing.T) {
 			class: plugins.ClassExternal,
 			cfg: &config.PluginManagementCfg{
 				PluginsAllowUnsigned: []string{"test-datasource"},
-				Features:             featuremgmt.WithFeatures(),
 			},
 			pluginPaths: []string{filepath.Join(testDataDir(t), "invalid-v2-extra-file")},
 			want:        []*plugins.Plugin{},
@@ -393,7 +388,6 @@ func TestLoader_Load(t *testing.T) {
 			class: plugins.ClassExternal,
 			cfg: &config.PluginManagementCfg{
 				PluginsAllowUnsigned: []string{"test-app"},
-				Features:             featuremgmt.WithFeatures(),
 			},
 			pluginPaths: []string{filepath.Join(testDataDir(t), "test-app-with-includes")},
 			want: []*plugins.Plugin{
@@ -440,47 +434,6 @@ func TestLoader_Load(t *testing.T) {
 				},
 			},
 		},
-		{
-			name:  "Load a plugin with app sub url set",
-			class: plugins.ClassExternal,
-			cfg: &config.PluginManagementCfg{
-				DevMode:          true,
-				GrafanaAppSubURL: "grafana",
-				Features:         featuremgmt.WithFeatures(),
-			},
-			pluginPaths: []string{filepath.Join(testDataDir(t), "unsigned-datasource")},
-			want: []*plugins.Plugin{
-				{
-					JSONData: plugins.JSONData{
-						ID:   "test-datasource",
-						Type: plugins.TypeDataSource,
-						Name: "Test",
-						Info: plugins.Info{
-							Author: plugins.InfoLink{
-								Name: "Grafana Labs",
-								URL:  "https://grafana.com",
-							},
-							Logos: plugins.Logos{
-								Small: "public/img/icn-datasource.svg",
-								Large: "public/img/icn-datasource.svg",
-							},
-							Description: "Test",
-						},
-						Dependencies: plugins.Dependencies{
-							GrafanaVersion: "*",
-							Plugins:        []plugins.Dependency{},
-						},
-						Backend: true,
-						State:   plugins.ReleaseStateAlpha,
-					},
-					Class:     plugins.ClassExternal,
-					Module:    "public/plugins/test-datasource/module.js",
-					BaseURL:   "public/plugins/test-datasource",
-					FS:        mustNewStaticFSForTests(t, filepath.Join(testDataDir(t), "unsigned-datasource/plugin")),
-					Signature: plugins.SignatureStatusUnsigned,
-				},
-			},
-		},
 	}
 	for _, tt := range tests {
 		reg := fakes.NewFakePluginRegistry()
@@ -512,7 +465,6 @@ func TestLoader_Load_ExternalRegistration(t *testing.T) {
 
 	t.Run("Load a plugin with service account registration", func(t *testing.T) {
 		cfg := &config.PluginManagementCfg{
-			Features:             featuremgmt.WithFeatures(featuremgmt.FlagExternalServiceAccounts),
 			PluginsAllowUnsigned: []string{"grafana-test-datasource"},
 		}
 		pluginPaths := []string{filepath.Join(testDataDir(t), "external-registration")}
@@ -541,8 +493,8 @@ func TestLoader_Load_ExternalRegistration(t *testing.T) {
 						GrafanaVersion: "*",
 						Plugins:        []plugins.Dependency{},
 					},
-					IAM: &plugindef.IAM{
-						Permissions: []plugindef.Permission{
+					IAM: &pfs.IAM{
+						Permissions: []pfs.Permission{
 							{
 								Action: "read",
 								Scope:  stringPtr("datasource"),
@@ -605,7 +557,6 @@ func TestLoader_Load_CustomSource(t *testing.T) {
 			PluginSettings: setting.PluginSettings{
 				"grafana-worldmap-panel": {"cdn": "true"},
 			},
-			Features: featuremgmt.WithFeatures(),
 		}
 
 		pluginPaths := []string{filepath.Join(testDataDir(t), "cdn")}
@@ -688,7 +639,6 @@ func TestLoader_Load_MultiplePlugins(t *testing.T) {
 				name: "Load multiple plugins (broken, valid, unsigned)",
 				cfg: &config.PluginManagementCfg{
 					GrafanaAppURL: "http://localhost:3000",
-					Features:      featuremgmt.WithFeatures(),
 				},
 				pluginPaths: []string{
 					filepath.Join(testDataDir(t), "invalid-plugin-json"),    // test-app
@@ -785,7 +735,6 @@ func TestLoader_Load_RBACReady(t *testing.T) {
 			name: "Load plugin defining one RBAC role",
 			cfg: &config.PluginManagementCfg{
 				GrafanaAppURL: "http://localhost:3000",
-				Features:      featuremgmt.WithFeatures(),
 			},
 			pluginPaths: []string{filepath.Join(testDataDir(t), "test-app-with-roles")},
 			want: []*plugins.Plugin{
@@ -904,7 +853,7 @@ func TestLoader_Load_Signature_RootURL(t *testing.T) {
 		reg := fakes.NewFakePluginRegistry()
 		procPrvdr := fakes.NewFakeBackendProcessProvider()
 		procMgr := fakes.NewFakeProcessManager()
-		cfg := &config.PluginManagementCfg{GrafanaAppURL: defaultAppURL, Features: featuremgmt.WithFeatures()}
+		cfg := &config.PluginManagementCfg{GrafanaAppURL: defaultAppURL}
 		l := newLoader(t, cfg, reg, procMgr, procPrvdr, newFakeSignatureErrorTracker())
 		got, err := l.Load(context.Background(), &fakes.FakePluginSource{
 			PluginClassFunc: func(ctx context.Context) plugins.Class {
@@ -981,7 +930,7 @@ func TestLoader_Load_DuplicatePlugins(t *testing.T) {
 		reg := fakes.NewFakePluginRegistry()
 		procPrvdr := fakes.NewFakeBackendProcessProvider()
 		procMgr := fakes.NewFakeProcessManager()
-		cfg := &config.PluginManagementCfg{Features: featuremgmt.WithFeatures()}
+		cfg := &config.PluginManagementCfg{}
 		l := newLoader(t, cfg, reg, procMgr, procPrvdr, newFakeSignatureErrorTracker())
 		got, err := l.Load(context.Background(), &fakes.FakePluginSource{
 			PluginClassFunc: func(ctx context.Context) plugins.Class {
@@ -1071,7 +1020,7 @@ func TestLoader_Load_SkipUninitializedPlugins(t *testing.T) {
 			}
 		}
 		procMgr := fakes.NewFakeProcessManager()
-		cfg := &config.PluginManagementCfg{Features: featuremgmt.WithFeatures()}
+		cfg := &config.PluginManagementCfg{}
 		l := newLoader(t, cfg, reg, procMgr, procPrvdr, newFakeSignatureErrorTracker())
 		got, err := l.Load(context.Background(), &fakes.FakePluginSource{
 			PluginClassFunc: func(ctx context.Context) plugins.Class {
@@ -1128,7 +1077,7 @@ func TestLoader_AngularClass(t *testing.T) {
 				},
 			}
 			// if angularDetected = true, it means that the detection has run
-			l := newLoaderWithOpts(t, &config.PluginManagementCfg{AngularSupportEnabled: true, Features: featuremgmt.WithFeatures()}, loaderDepOpts{
+			l := newLoaderWithOpts(t, &config.PluginManagementCfg{AngularSupportEnabled: true}, loaderDepOpts{
 				angularInspector: angularinspector.AlwaysAngularFakeInspector,
 			})
 			p, err := l.Load(context.Background(), fakePluginSource)
@@ -1156,8 +1105,8 @@ func TestLoader_Load_Angular(t *testing.T) {
 		name string
 		cfg  *config.PluginManagementCfg
 	}{
-		{name: "angular support enabled", cfg: &config.PluginManagementCfg{AngularSupportEnabled: true, Features: featuremgmt.WithFeatures()}},
-		{name: "angular support disabled", cfg: &config.PluginManagementCfg{AngularSupportEnabled: false, Features: featuremgmt.WithFeatures()}},
+		{name: "angular support enabled", cfg: &config.PluginManagementCfg{AngularSupportEnabled: true}},
+		{name: "angular support disabled", cfg: &config.PluginManagementCfg{AngularSupportEnabled: false}},
 	} {
 		t.Run(cfgTc.name, func(t *testing.T) {
 			for _, tc := range []struct {
@@ -1210,17 +1159,14 @@ func TestLoader_HideAngularDeprecation(t *testing.T) {
 		{name: "with plugin id in HideAngularDeprecation list", cfg: &config.PluginManagementCfg{
 			AngularSupportEnabled:  true,
 			HideAngularDeprecation: []string{"one-app", "two-panel", "test-datasource", "three-datasource"},
-			Features:               featuremgmt.WithFeatures(),
 		}, expHideAngularDeprecation: true},
 		{name: "without plugin id in HideAngularDeprecation list", cfg: &config.PluginManagementCfg{
 			AngularSupportEnabled:  true,
 			HideAngularDeprecation: []string{"one-app", "two-panel", "three-datasource"},
-			Features:               featuremgmt.WithFeatures(),
 		}, expHideAngularDeprecation: false},
 		{name: "with empty HideAngularDeprecation", cfg: &config.PluginManagementCfg{
 			AngularSupportEnabled:  true,
 			HideAngularDeprecation: nil,
-			Features:               featuremgmt.WithFeatures(),
 		}, expHideAngularDeprecation: false},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
@@ -1308,7 +1254,7 @@ func TestLoader_Load_NestedPlugins(t *testing.T) {
 		procPrvdr := fakes.NewFakeBackendProcessProvider()
 		procMgr := fakes.NewFakeProcessManager()
 		reg := fakes.NewFakePluginRegistry()
-		cfg := &config.PluginManagementCfg{Features: featuremgmt.WithFeatures()}
+		cfg := &config.PluginManagementCfg{}
 		l := newLoader(t, cfg, reg, procMgr, procPrvdr, newFakeSignatureErrorTracker())
 
 		got, err := l.Load(context.Background(), &fakes.FakePluginSource{
@@ -1485,7 +1431,7 @@ func TestLoader_Load_NestedPlugins(t *testing.T) {
 		reg := fakes.NewFakePluginRegistry()
 		procPrvdr := fakes.NewFakeBackendProcessProvider()
 		procMgr := fakes.NewFakeProcessManager()
-		cfg := &config.PluginManagementCfg{Features: featuremgmt.WithFeatures()}
+		cfg := &config.PluginManagementCfg{}
 		l := newLoader(t, cfg, reg, procMgr, procPrvdr, newFakeSignatureErrorTracker())
 		got, err := l.Load(context.Background(), &fakes.FakePluginSource{
 			PluginClassFunc: func(ctx context.Context) plugins.Class {
@@ -1526,10 +1472,10 @@ func newLoader(t *testing.T, cfg *config.PluginManagementCfg, reg registry.Servi
 	require.NoError(t, err)
 
 	return ProvideService(pipeline.ProvideDiscoveryStage(cfg,
-		finder.NewLocalFinder(false, featuremgmt.WithFeatures()), reg),
+		finder.NewLocalFinder(false), reg),
 		pipeline.ProvideBootstrapStage(cfg, signature.DefaultCalculator(cfg), assets),
 		pipeline.ProvideValidationStage(cfg, signature.NewValidator(signature.NewUnsignedAuthorizer(cfg)), angularInspector, sigErrTracker),
-		pipeline.ProvideInitializationStage(cfg, reg, backendFactory, proc, &fakes.FakeAuthService{}, fakes.NewFakeRoleRegistry(), fakes.NewFakePluginEnvProvider()),
+		pipeline.ProvideInitializationStage(cfg, reg, backendFactory, proc, &fakes.FakeAuthService{}, fakes.NewFakeRoleRegistry(), fakes.NewFakePluginEnvProvider(), tracing.InitializeTracerForTest()),
 		terminate)
 }
 
@@ -1558,10 +1504,10 @@ func newLoaderWithOpts(t *testing.T, cfg *config.PluginManagementCfg, opts loade
 	}
 
 	return ProvideService(pipeline.ProvideDiscoveryStage(cfg,
-		finder.NewLocalFinder(false, featuremgmt.WithFeatures()), reg),
+		finder.NewLocalFinder(false), reg),
 		pipeline.ProvideBootstrapStage(cfg, signature.DefaultCalculator(cfg), assets),
 		pipeline.ProvideValidationStage(cfg, signature.NewValidator(signature.NewUnsignedAuthorizer(cfg)), angularInspector, sigErrTracker),
-		pipeline.ProvideInitializationStage(cfg, reg, backendFactoryProvider, proc, authServiceRegistry, fakes.NewFakeRoleRegistry(), fakes.NewFakePluginEnvProvider()),
+		pipeline.ProvideInitializationStage(cfg, reg, backendFactoryProvider, proc, authServiceRegistry, fakes.NewFakeRoleRegistry(), fakes.NewFakePluginEnvProvider(), tracing.InitializeTracerForTest()),
 		terminate)
 }
 

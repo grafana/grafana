@@ -80,7 +80,7 @@ The following table describes the ways in which you can configure your trace to 
 
 | Setting name              | Description                                                                                                                                                                                                                                                                                                  |
 | ------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| **Data source**           | Defines the target data source. You can select only Loki or Splunk \[logs\] data sources.                                                                                                                                                                                                                    |
+| **Data source**           | Defines the target data source. You can select Loki or any compatible log store.                                                                                                                                                                                                                             |
 | **Span start time shift** | Shifts the start time for the logs query, based on the span's start time. You can use time units, such as `5s`, `1m`, `3h`. To extend the time to the past, use a negative value. Default: `0`.                                                                                                              |
 | **Span end time shift**   | Shifts the end time for the logs query, based on the span's end time. You can use time units. Default: `0`.                                                                                                                                                                                                  |
 | **Tags**                  | Defines the tags to use in the logs query. Default: `cluster`, `hostname`, `namespace`, `pod`, `service.name`, `service.namespace`. You can change the tag name for example to remove dots from the name if they are not allowed in the target data source. For example, map `http.status` to `http_status`. |
@@ -186,13 +186,6 @@ The **Search** setting configures [Tempo search](/docs/tempo/latest/configuratio
 
 You can configure the **Hide search** setting to hide the search query option in **Explore** if search is not configured in the Tempo instance.
 
-## Loki search
-
-The **Loki search** setting configures the Loki search query type.
-
-Configure the **Data source** setting to define which Loki instance you want to use to search traces.
-You must configure [derived fields]({{< relref "../loki#configure-derived-fields" >}}) in the Loki instance.
-
 ## TraceID query
 
 The **TraceID query** setting modifies how TraceID queries are run. The time range can be used when there are performance issues or timeouts since it will narrow down the search to the defined range. This setting is disabled by default.
@@ -254,7 +247,7 @@ datasources:
         queries:
           - name: 'Sample query'
             query: 'sum(rate(traces_spanmetrics_latency_bucket{$$__tags}[5m]))'
-      traceToProfiles:
+      tracesToProfiles:
         datasourceUid: 'grafana-pyroscope-datasource'
         tags: ['job', 'instance', 'pod', 'namespace']
         profileTypeId: 'process_cpu:cpu:nanoseconds:cpu:nanoseconds'
@@ -266,8 +259,6 @@ datasources:
         enabled: true
       search:
         hide: false
-      lokiSearch:
-        datasourceUid: 'loki'
       traceQuery:
         timeShiftEnabled: true
         spanStartTimeShift: '1h'

@@ -27,7 +27,7 @@ Grafana provides OAuth2 integrations for the following auth providers:
 - [GitHub OAuth]({{< relref "../github" >}})
 - [GitLab OAuth]({{< relref "../gitlab" >}})
 - [Google OAuth]({{< relref "../google" >}})
-- [Grafana Com OAuth]({{< relref "../grafana-com" >}})
+- [Grafana Com OAuth]({{< relref "../grafana-cloud" >}})
 - [Keycloak OAuth]({{< relref "../keycloak" >}})
 - [Okta OAuth]({{< relref "../okta" >}})
 
@@ -42,6 +42,10 @@ To follow this guide:
 - Ensure you know how to create an OAuth2 application with your OAuth2 provider. Consult the documentation of your OAuth2 provider for more information.
 - Ensure your identity provider returns OpenID UserInfo compatible information such as the `sub` claim.
 - If you are using refresh tokens, ensure you know how to set them up with your OAuth2 provider. Consult the documentation of your OAuth2 provider for more information.
+
+{{% admonition type="note" %}}
+If Users use the same email address in Azure AD that they use with other authentication providers (such as Grafana.com), you need to do additional configuration to ensure that the users are matched correctly. Please refer to the [Using the same email address to login with different identity providers]({{< relref "../../configure-authentication#using-the-same-email-address-to-login-with-different-identity-providers" >}}) documentation for more information.
+{{% /admonition %}}
 
 ## Configure generic OAuth authentication client using the Grafana UI
 
@@ -512,3 +516,42 @@ To set up generic OAuth2 authentication with OneLogin, follow these steps:
    team_ids =
    allowed_organizations =
    ```
+
+### Set up OAuth2 with Dex
+
+To set up generic OAuth2 authentication with [Dex IdP](https://dexidp.io/), follow these
+steps:
+
+1. Add Grafana as a client in the Dex config YAML file:
+
+   ```yaml
+   staticClients:
+     - id: <client id>
+       name: Grafana
+       secret: <client secret>
+       redirectURIs:
+         - 'https://<grafana domain>/login/generic_oauth'
+   ```
+
+   {{% admonition type="note" %}}
+   Unlike many other OAuth2 providers, Dex doesn't provide `<client secret>`.
+   Instead, a secret can be generated with for example `openssl rand -hex 20`.
+   {{% /admonition %}}
+
+2. Update the `[auth.generic_oauth]` section of the Grafana configuration:
+
+   ```bash
+   [auth.generic_oauth]
+   name = Dex
+   enabled = true
+   client_id = <client id>
+   client_secret = <client secret>
+   scopes = openid email profile groups offline_access
+   auth_url = https://<dex base uri>/auth
+   token_url = https://<dex base uri>/token
+   api_url = https://<dex base uri>/userinfo
+   ```
+
+   `<dex base uri>` corresponds to the `issuer: ` configuration in Dex (e.g. the Dex
+   domain possibly including a path such as e.g. `/dex`). The `offline_access` scope is
+   needed when using [refresh tokens]({{< relref "#configure-a-refresh-token" >}}).

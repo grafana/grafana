@@ -30,6 +30,7 @@ export interface TimeSeriesTooltipProps {
   scrollable?: boolean;
 
   annotate?: () => void;
+  maxHeight?: number;
 }
 
 export const TimeSeriesTooltip = ({
@@ -42,6 +43,7 @@ export const TimeSeriesTooltip = ({
   scrollable = false,
   isPinned,
   annotate,
+  maxHeight,
 }: TimeSeriesTooltipProps) => {
   const styles = useStyles2(getStyles);
 
@@ -56,7 +58,7 @@ export const TimeSeriesTooltip = ({
     seriesIdx,
     mode,
     sortOrder,
-    (field) => field.type === FieldType.number
+    (field) => field.type === FieldType.number || field.type === FieldType.enum
   );
 
   let footer: ReactNode;
@@ -77,7 +79,7 @@ export const TimeSeriesTooltip = ({
   return (
     <div className={styles.wrapper}>
       <VizTooltipHeader item={headerItem} isPinned={isPinned} />
-      <VizTooltipContent items={contentItems} isPinned={isPinned} scrollable={scrollable} />
+      <VizTooltipContent items={contentItems} isPinned={isPinned} scrollable={scrollable} maxHeight={maxHeight} />
       {footer}
     </div>
   );

@@ -21,9 +21,16 @@ import {
 
 export interface AzureSettings {
   cloud?: string;
+  clouds?: AzureCloudInfo[];
   managedIdentityEnabled: boolean;
   workloadIdentityEnabled: boolean;
   userIdentityEnabled: boolean;
+  userIdentityFallbackCredentialsEnabled: boolean;
+}
+
+export interface AzureCloudInfo {
+  name: string;
+  displayName: string;
 }
 
 export type AppPluginConfig = {
@@ -57,10 +64,6 @@ export class GrafanaBootConfig implements GrafanaConfig {
   feedbackLinksEnabled = true;
   disableLoginForm = false;
   defaultDatasource = ''; // UID
-  alertingEnabled = false;
-  alertingErrorOrTimeout = '';
-  alertingNoDataOrNullValues = '';
-  alertingMinInterval = 1;
   angularSupportEnabled = false;
   authProxyEnabled = false;
   exploreEnabled = false;
@@ -127,6 +130,7 @@ export class GrafanaBootConfig implements GrafanaConfig {
     managedIdentityEnabled: false,
     workloadIdentityEnabled: false,
     userIdentityEnabled: false,
+    userIdentityFallbackCredentialsEnabled: false,
   };
   caching = {
     enabled: false,
@@ -172,6 +176,13 @@ export class GrafanaBootConfig implements GrafanaConfig {
   sharedWithMeFolderUID: string | undefined;
   rootFolderUID: string | undefined;
   localFileSystemAvailable: boolean | undefined;
+  cloudMigrationIsTarget: boolean | undefined;
+
+  /**
+   * Language used in Grafana's UI. This is after the user's preference (or deteceted locale) is resolved to one of
+   * Grafana's supported language.
+   */
+  language: string | undefined;
 
   constructor(options: GrafanaBootConfig) {
     this.bootData = options.bootData;
@@ -206,7 +217,6 @@ export class GrafanaBootConfig implements GrafanaConfig {
     if (this.buildInfo.env === 'development') {
       overrideFeatureTogglesFromUrl(this);
     }
-
     overrideFeatureTogglesFromLocalStorage(this);
 
     if (this.featureToggles.disableAngular) {
@@ -243,11 +253,27 @@ function overrideFeatureTogglesFromUrl(config: GrafanaBootConfig) {
     return;
   }
 
+  const migrationFeatureFlags = new Set([
+    'autoMigrateOldPanels',
+    'autoMigrateGraphPanel',
+    'autoMigrateTablePanel',
+    'autoMigratePiechartPanel',
+    'autoMigrateWorldmapPanel',
+    'autoMigrateStatPanel',
+    'disableAngular',
+  ]);
+
   const params = new URLSearchParams(window.location.search);
   params.forEach((value, key) => {
     if (key.startsWith('__feature.')) {
       const featureToggles = config.featureToggles as Record<string, boolean>;
       const featureName = key.substring(10);
+
+      // skip the migration feature flags
+      if (migrationFeatureFlags.has(featureName)) {
+        return;
+      }
+
       const toggleState = value === 'true' || value === ''; // browser rewrites true as ''
       if (toggleState !== featureToggles[key]) {
         featureToggles[featureName] = toggleState;

@@ -119,7 +119,14 @@ export const AnnotationSettingsList = ({ annotations, onNew, onEdit, onMove, onD
           }}
         />
       )}
-      {!showEmptyListCTA && <ListNewButton onClick={onNew}>New query</ListNewButton>}
+      {!showEmptyListCTA && (
+        <ListNewButton
+          data-testid={selectors.pages.Dashboard.Settings.Annotations.List.addAnnotationCTAV2}
+          onClick={onNew}
+        >
+          New query
+        </ListNewButton>
+      )}
     </VerticalGroup>
   );
 };
@@ -127,6 +134,6 @@ export const AnnotationSettingsList = ({ annotations, onNew, onEdit, onMove, onD
 const getStyles = () => ({
   table: css({
     width: '100%',
-    overflowX: 'scroll',
+    overflowX: 'auto',
   }),
 });

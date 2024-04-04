@@ -3,9 +3,14 @@ package pipeline
 import (
 	"context"
 	"errors"
+	"fmt"
 	"slices"
 
+	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/codes"
+
 	"github.com/grafana/grafana/pkg/infra/metrics"
+	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/auth"
 	"github.com/grafana/grafana/pkg/plugins/config"
@@ -14,8 +19,7 @@ import (
 	"github.com/grafana/grafana/pkg/plugins/manager/pipeline/validation"
 	"github.com/grafana/grafana/pkg/plugins/manager/registry"
 	"github.com/grafana/grafana/pkg/plugins/manager/signature"
-	"github.com/grafana/grafana/pkg/plugins/plugindef"
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/plugins/pfs"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginerrs"
 )
 
@@ -24,31 +28,43 @@ type ExternalServiceRegistration struct {
 	cfg                     *config.PluginManagementCfg
 	externalServiceRegistry auth.ExternalServiceRegistry
 	log                     log.Logger
+	tracer                  tracing.Tracer
 }
 
 // ExternalServiceRegistrationStep returns an InitializeFunc for registering external services.
-func ExternalServiceRegistrationStep(cfg *config.PluginManagementCfg, externalServiceRegistry auth.ExternalServiceRegistry) initialization.InitializeFunc {
-	return newExternalServiceRegistration(cfg, externalServiceRegistry).Register
+func ExternalServiceRegistrationStep(cfg *config.PluginManagementCfg, externalServiceRegistry auth.ExternalServiceRegistry, tracer tracing.Tracer) initialization.InitializeFunc {
+	return newExternalServiceRegistration(cfg, externalServiceRegistry, tracer).Register
 }
 
-func newExternalServiceRegistration(cfg *config.PluginManagementCfg, serviceRegistry auth.ExternalServiceRegistry) *ExternalServiceRegistration {
+func newExternalServiceRegistration(cfg *config.PluginManagementCfg, serviceRegistry auth.ExternalServiceRegistry, tracer tracing.Tracer) *ExternalServiceRegistration {
 	return &ExternalServiceRegistration{
 		cfg:                     cfg,
 		externalServiceRegistry: serviceRegistry,
 		log:                     log.New("plugins.external.registration"),
+		tracer:                  tracer,
 	}
 }
 
 // Register registers the external service with the external service registry, if the feature is enabled.
 func (r *ExternalServiceRegistration) Register(ctx context.Context, p *plugins.Plugin) (*plugins.Plugin, error) {
-	if p.IAM != nil {
-		s, err := r.externalServiceRegistry.RegisterExternalService(ctx, p.ID, plugindef.Type(p.Type), p.IAM)
-		if err != nil {
-			r.log.Error("Could not register an external service. Initialization skipped", "pluginId", p.ID, "error", err)
-			return nil, err
-		}
-		p.ExternalService = s
+	if p.IAM == nil {
+		return p, nil
 	}
+
+	ctx, span := r.tracer.Start(ctx, "ExternalServiceRegistration.Register")
+	span.SetAttributes(attribute.String("register.pluginId", p.ID))
+	defer span.End()
+
+	ctxLogger := r.log.FromContext(ctx)
+
+	s, err := r.externalServiceRegistry.RegisterExternalService(ctx, p.ID, pfs.Type(p.Type), p.IAM)
+	if err != nil {
+		ctxLogger.Error("Could not register an external service. Initialization skipped", "pluginId", p.ID, "error", err)
+		span.SetStatus(codes.Error, fmt.Sprintf("could not register external service: %v", err))
+		return nil, err
+	}
+	p.ExternalService = s
+
 	return p, nil
 }
 
@@ -167,7 +183,7 @@ type AsExternal struct {
 	cfg *config.PluginManagementCfg
 }
 
-// NewDisablePluginsStep returns a new DisablePlugins.
+// NewAsExternalStep returns a new DisablePlugins.
 func NewAsExternalStep(cfg *config.PluginManagementCfg) *AsExternal {
 	return &AsExternal{
 		cfg: cfg,
@@ -177,7 +193,7 @@ func NewAsExternalStep(cfg *config.PluginManagementCfg) *AsExternal {
 
 // Filter will filter out any plugins that are marked to be disabled.
 func (c *AsExternal) Filter(cl plugins.Class, bundles []*plugins.FoundBundle) ([]*plugins.FoundBundle, error) {
-	if c.cfg.Features == nil || !c.cfg.Features.IsEnabledGlobally(featuremgmt.FlagExternalCorePlugins) {
+	if !c.cfg.Features.ExternalCorePluginsEnabled {
 		return bundles, nil
 	}
 

@@ -173,13 +173,6 @@ func (s *ServiceImpl) addPluginToSection(c *contextmodel.ReqContext, treeRoot *n
 	if alertingNode != nil {
 		alertingNodes = append(alertingNodes, alertingNode)
 	}
-	if len(alertingNodes) == 0 || s.features.IsEnabled(c.Req.Context(), featuremgmt.FlagAlertingPreviewUpgrade) {
-		// If FlagAlertingPreviewUpgrade is enabled, we want to add both the legacy and new alerting nodes.
-		alertingNode := treeRoot.FindById(navtree.NavIDAlertingLegacy)
-		if alertingNode != nil {
-			alertingNodes = append(alertingNodes, alertingNode)
-		}
-	}
 	sectionID := navtree.NavIDApps
 
 	if navConfig, hasOverride := s.navigationAppConfig[plugin.ID]; hasOverride {
@@ -294,6 +287,7 @@ func (s *ServiceImpl) readNavigationSettings() {
 		"grafana-aws-app":                  {SectionID: navtree.NavIDInfrastructure, SortWeight: 2},
 		"grafana-app-observability-app":    {SectionID: navtree.NavIDRoot, SortWeight: navtree.WeightApplication, Text: "Application", Icon: "graph-bar"},
 		"grafana-pyroscope-app":            {SectionID: navtree.NavIDExplore, SortWeight: 1, Text: "Profiles"},
+		"grafana-lokiexplore-app":          {SectionID: navtree.NavIDExplore, SortWeight: 2, Text: "Logs"},
 		"grafana-kowalski-app":             {SectionID: navtree.NavIDRoot, SortWeight: navtree.WeightFrontend, Text: "Frontend", Icon: "frontend-observability"},
 		"grafana-synthetic-monitoring-app": {SectionID: navtree.NavIDTestingAndSynthetics, SortWeight: 2, Text: "Synthetics"},
 		"grafana-oncall-app":               {SectionID: navtree.NavIDAlertsAndIncidents, SortWeight: 1, Text: "OnCall"},

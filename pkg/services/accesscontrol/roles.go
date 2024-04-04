@@ -271,6 +271,10 @@ var (
 		Group:       "Settings",
 		Permissions: []Permission{
 			{
+				Action: ActionSettingsRead,
+				Scope:  "settings:auth:oauth_allow_insecure_email_lookup",
+			},
+			{
 				Action: ActionSettingsWrite,
 				Scope:  "settings:auth:oauth_allow_insecure_email_lookup",
 			},
@@ -321,10 +325,6 @@ func DeclareFixedRoles(service Service, cfg *setting.Cfg) error {
 	authenticationConfigWriter := RoleRegistration{
 		Role:   authenticationConfigWriterRole,
 		Grants: []string{RoleGrafanaAdmin},
-	}
-
-	if cfg.AuthConfigUIAdminAccess {
-		authenticationConfigWriter.Grants = append(authenticationConfigWriter.Grants, string(org.RoleAdmin))
 	}
 
 	return service.DeclareFixedRoles(ldapReader, ldapWriter, orgUsersReader, orgUsersWriter,

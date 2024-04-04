@@ -1,8 +1,7 @@
 import { Unsubscribable } from 'rxjs';
 
 import {
-  SceneDataLayers,
-  SceneGridItem,
+  SceneDataLayerSet,
   SceneGridLayout,
   SceneObjectStateChangedEvent,
   SceneRefreshPicker,
@@ -14,6 +13,7 @@ import { createWorker } from 'app/features/dashboard-scene/saving/createDetectCh
 
 import { DashboardAnnotationsDataLayer } from '../scene/DashboardAnnotationsDataLayer';
 import { DashboardControls } from '../scene/DashboardControls';
+import { DashboardGridItem } from '../scene/DashboardGridItem';
 import { DashboardScene, PERSISTED_PROPS } from '../scene/DashboardScene';
 import { transformSceneToSaveModel } from '../serialization/transformSceneToSaveModel';
 import { isSceneVariableInstance } from '../settings/variables/utils';
@@ -22,12 +22,11 @@ import { DashboardChangeInfo } from './shared';
 
 export class DashboardSceneChangeTracker {
   private _changeTrackerSub: Unsubscribable | undefined;
-  private _changesWorker: Worker;
+  private _changesWorker?: Worker;
   private _dashboard: DashboardScene;
 
   constructor(dashboard: DashboardScene) {
     this._dashboard = dashboard;
-    this._changesWorker = createWorker();
   }
 
   private onStateChanged({ payload }: SceneObjectStateChangedEvent) {
@@ -39,10 +38,10 @@ export class DashboardSceneChangeTracker {
     if (payload.changedObject instanceof behaviors.CursorSync) {
       this.detectChanges();
     }
-    if (payload.changedObject instanceof SceneDataLayers) {
+    if (payload.changedObject instanceof SceneDataLayerSet) {
       this.detectChanges();
     }
-    if (payload.changedObject instanceof SceneGridItem) {
+    if (payload.changedObject instanceof DashboardGridItem) {
       this.detectChanges();
     }
     if (payload.changedObject instanceof SceneGridLayout) {
@@ -68,6 +67,9 @@ export class DashboardSceneChangeTracker {
       if (!Object.prototype.hasOwnProperty.call(payload.partialUpdate, 'data')) {
         this.detectChanges();
       }
+    }
+    if (payload.changedObject instanceof behaviors.LiveNowTimer) {
+      this.detectChanges();
     }
     if (isSceneVariableInstance(payload.changedObject)) {
       this.detectChanges();
@@ -95,8 +97,15 @@ export class DashboardSceneChangeTracker {
     }
   }
 
+  private init() {
+    this._changesWorker = createWorker();
+  }
+
   public startTrackingChanges() {
-    this._changesWorker.onmessage = (e: MessageEvent<DashboardChangeInfo>) => {
+    if (!this._changesWorker) {
+      this.init();
+    }
+    this._changesWorker!.onmessage = (e: MessageEvent<DashboardChangeInfo>) => {
       this.updateIsDirty(e.data);
     };
 
@@ -112,6 +121,6 @@ export class DashboardSceneChangeTracker {
 
   public terminate() {
     this.stopTrackingChanges();
-    this._changesWorker.terminate();
+    this._changesWorker?.terminate();
   }
 }

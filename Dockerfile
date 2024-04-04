@@ -1,9 +1,9 @@
 # syntax=docker/dockerfile:1
 
-ARG BASE_IMAGE=alpine:3.18.5
-ARG JS_IMAGE=node:20-alpine3.18
+ARG BASE_IMAGE=alpine:3.19.1
+ARG JS_IMAGE=node:20-alpine
 ARG JS_PLATFORM=linux/amd64
-ARG GO_IMAGE=golang:1.21.6-alpine3.18
+ARG GO_IMAGE=golang:1.21.8-alpine
 
 ARG GO_SRC=go-builder
 ARG JS_SRC=js-builder
@@ -40,12 +40,12 @@ ARG GO_BUILD_TAGS="oss"
 ARG WIRE_TAGS="oss"
 ARG BINGO="true"
 
-# This is required to allow building on arm64 due to https://github.com/golang/go/issues/22040
-RUN apk add --no-cache binutils-gold
-
-# Install build dependencies
 RUN if grep -i -q alpine /etc/issue; then \
-      apk add --no-cache gcc g++ make git; \
+      apk add --no-cache \
+          # This is required to allow building on arm64 due to https://github.com/golang/go/issues/22040
+          binutils-gold \
+          # Install build dependencies
+          gcc g++ make git; \
     fi
 
 WORKDIR /tmp/grafana
@@ -57,6 +57,8 @@ COPY .bingo .bingo
 COPY pkg/util/xorm/go.* pkg/util/xorm/
 COPY pkg/apiserver/go.* pkg/apiserver/
 COPY pkg/apimachinery/go.* pkg/apimachinery/
+COPY pkg/build/wire/go.* pkg/build/wire/
+COPY pkg/promlib/go.* pkg/promlib/
 
 RUN go mod download
 RUN if [[ "$BINGO" = "true" ]]; then \

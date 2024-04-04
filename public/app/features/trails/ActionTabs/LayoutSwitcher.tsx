@@ -1,11 +1,12 @@
 import React from 'react';
 
 import { SelectableValue } from '@grafana/data';
-import { SceneComponentProps, SceneObject, SceneObjectBase, SceneObjectState } from '@grafana/scenes';
+import { SceneComponentProps, sceneGraph, SceneObject, SceneObjectBase, SceneObjectState } from '@grafana/scenes';
 import { Field, RadioButtonGroup } from '@grafana/ui';
 
+import { MetricScene } from '../MetricScene';
+
 export interface LayoutSwitcherState extends SceneObjectState {
-  active: LayoutType;
   layouts: SceneObject[];
   options: Array<SelectableValue<LayoutType>>;
 }
@@ -13,24 +14,38 @@ export interface LayoutSwitcherState extends SceneObjectState {
 export type LayoutType = 'single' | 'grid' | 'rows';
 
 export class LayoutSwitcher extends SceneObjectBase<LayoutSwitcherState> {
+  private getMetricScene() {
+    return sceneGraph.getAncestor(this, MetricScene);
+  }
+
   public Selector({ model }: { model: LayoutSwitcher }) {
-    const { active, options } = model.useState();
+    const { options } = model.useState();
+    const activeLayout = model.useActiveLayout();
 
     return (
       <Field label="View">
-        <RadioButtonGroup options={options} value={active} onChange={model.onLayoutChange} />
+        <RadioButtonGroup options={options} value={activeLayout} onChange={model.onLayoutChange} />
       </Field>
     );
   }
 
+  private useActiveLayout() {
+    const { options } = this.useState();
+    const { layout } = this.getMetricScene().useState();
+
+    const activeLayout = options.map((option) => option.value).includes(layout) ? layout : options[0].value;
+    return activeLayout;
+  }
+
   public onLayoutChange = (active: LayoutType) => {
-    this.setState({ active });
+    this.getMetricScene().setState({ layout: active });
   };
 
   public static Component = ({ model }: SceneComponentProps<LayoutSwitcher>) => {
-    const { layouts, options, active } = model.useState();
+    const { layouts, options } = model.useState();
+    const activeLayout = model.useActiveLayout();
 
-    const index = options.findIndex((o) => o.value === active);
+    const index = options.findIndex((o) => o.value === activeLayout);
     if (index === -1) {
       return null;
     }

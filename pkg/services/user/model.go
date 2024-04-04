@@ -82,7 +82,8 @@ type UpdateUserCommand struct {
 	Login string `json:"login"`
 	Theme string `json:"theme"`
 
-	UserID int64 `json:"-"`
+	UserID        int64 `json:"-"`
+	EmailVerified *bool `json:"-"`
 }
 
 type ChangeUserPasswordCommand struct {
@@ -218,6 +219,16 @@ type DeleteUserCommand struct {
 
 type GetUserByIDQuery struct {
 	ID int64
+}
+
+type StartVerifyEmailCommand struct {
+	User   User
+	Email  string
+	Action UpdateEmailActionType
+}
+
+type CompleteEmailVerifyCommand struct {
+	Code string
 }
 
 type ErrCaseInsensitiveLoginConflict struct {

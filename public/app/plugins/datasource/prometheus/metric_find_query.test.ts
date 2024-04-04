@@ -23,7 +23,11 @@ const instanceSettings = {
   uid: 'ABCDEF',
   user: 'test',
   password: 'mupp',
-  jsonData: { httpMethod: 'GET' },
+  jsonData: {
+    httpMethod: 'GET',
+    prometheusVersion: '2.20.0',
+    prometheusType: PromApplication.Prometheus,
+  },
 } as Partial<DataSourceInstanceSettings<PromOptions>> as DataSourceInstanceSettings<PromOptions>;
 
 const raw: TimeRange = {

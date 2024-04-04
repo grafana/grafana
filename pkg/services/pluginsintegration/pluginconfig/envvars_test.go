@@ -10,14 +10,14 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/grafana/grafana-azure-sdk-go/azsettings"
+	"github.com/grafana/grafana-azure-sdk-go/v2/azsettings"
 
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/auth"
 	"github.com/grafana/grafana/pkg/plugins/config"
 	"github.com/grafana/grafana/pkg/plugins/envvars"
 	"github.com/grafana/grafana/pkg/plugins/manager/fakes"
-	"github.com/grafana/grafana/pkg/plugins/plugindef"
+	"github.com/grafana/grafana/pkg/plugins/pfs"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/setting"
 )
@@ -590,7 +590,7 @@ func TestPluginEnvVarsProvider_authEnvVars(t *testing.T) {
 		p := &plugins.Plugin{
 			JSONData: plugins.JSONData{
 				ID:  "test",
-				IAM: &plugindef.IAM{},
+				IAM: &pfs.IAM{},
 			},
 			ExternalService: &auth.ExternalService{
 				ClientID:     "clientID",
@@ -699,9 +699,9 @@ func TestPluginEnvVarsProvider_featureToggleEnvVar(t *testing.T) {
 func TestPluginEnvVarsProvider_azureEnvVars(t *testing.T) {
 	t.Run("backend datasource with azure settings", func(t *testing.T) {
 		cfg := &setting.Cfg{
-			Raw:                  ini.Empty(),
-			AWSAssumeRoleEnabled: true,
+			Raw: ini.Empty(),
 			Azure: &azsettings.AzureSettings{
+				AzureAuthEnabled:        true,
 				Cloud:                   azsettings.AzurePublic,
 				ManagedIdentityEnabled:  true,
 				ManagedIdentityClientId: "mock_managed_identity_client_id",
@@ -711,7 +711,8 @@ func TestPluginEnvVarsProvider_azureEnvVars(t *testing.T) {
 					ClientId:  "mock_workload_identity_client_id",
 					TokenFile: "mock_workload_identity_token_file",
 				},
-				UserIdentityEnabled: true,
+				UserIdentityEnabled:                    true,
+				UserIdentityFallbackCredentialsEnabled: true,
 				UserIdentityTokenEndpoint: &azsettings.TokenEndpointSettings{
 					TokenUrl:          "mock_user_identity_token_url",
 					ClientId:          "mock_user_identity_client_id",
@@ -726,13 +727,15 @@ func TestPluginEnvVarsProvider_azureEnvVars(t *testing.T) {
 
 		provider := NewEnvVarsProvider(pCfg, nil)
 		envVars := provider.PluginEnvVars(context.Background(), &plugins.Plugin{})
-		assert.ElementsMatch(t, []string{"GF_VERSION=", "GFAZPL_AZURE_CLOUD=AzureCloud", "GFAZPL_MANAGED_IDENTITY_ENABLED=true",
+		assert.ElementsMatch(t, []string{"GF_VERSION=", "GFAZPL_AZURE_CLOUD=AzureCloud", "GFAZPL_AZURE_AUTH_ENABLED=true",
+			"GFAZPL_MANAGED_IDENTITY_ENABLED=true",
 			"GFAZPL_MANAGED_IDENTITY_CLIENT_ID=mock_managed_identity_client_id",
 			"GFAZPL_WORKLOAD_IDENTITY_ENABLED=true",
 			"GFAZPL_WORKLOAD_IDENTITY_TENANT_ID=mock_workload_identity_tenant_id",
 			"GFAZPL_WORKLOAD_IDENTITY_CLIENT_ID=mock_workload_identity_client_id",
 			"GFAZPL_WORKLOAD_IDENTITY_TOKEN_FILE=mock_workload_identity_token_file",
 			"GFAZPL_USER_IDENTITY_ENABLED=true",
+			"GFAZPL_USER_IDENTITY_FALLBACK_SERVICE_CREDENTIALS_ENABLED=true",
 			"GFAZPL_USER_IDENTITY_TOKEN_URL=mock_user_identity_token_url",
 			"GFAZPL_USER_IDENTITY_CLIENT_ID=mock_user_identity_client_id",
 			"GFAZPL_USER_IDENTITY_CLIENT_SECRET=mock_user_identity_client_secret",
