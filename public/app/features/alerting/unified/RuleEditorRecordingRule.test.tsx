@@ -1,5 +1,7 @@
+import 'whatwg-fetch';
 import { screen, waitFor, waitForElementToBeRemoved, within } from '@testing-library/react';
 import userEvent, { PointerEventsCheckLevel } from '@testing-library/user-event';
+import { setupServer } from 'msw/node';
 import React from 'react';
 import { renderRuleEditor, ui } from 'test/helpers/alertingRuleEditor';
 import { clickSelectOption } from 'test/helpers/selectOptionInTest';
@@ -7,6 +9,7 @@ import { byText } from 'testing-library-selector';
 
 import { setDataSourceSrv } from '@grafana/runtime';
 import { contextSrv } from 'app/core/services/context_srv';
+import { mockApi } from 'app/features/alerting/unified/mockApi';
 import { AccessControlAction } from 'app/types';
 import { PromApplication } from 'app/types/unified-alerting-dto';
 
@@ -93,8 +96,12 @@ const mocks = {
 
 const getLabelInput = (selector: HTMLElement) => within(selector).getByRole('combobox');
 
+const server = setupServer();
+
 describe('RuleEditor recording rules', () => {
   beforeEach(() => {
+    mockApi(server).eval({ results: {} });
+    server.listen();
     jest.clearAllMocks();
     contextSrv.isEditor = true;
     contextSrv.hasEditPermissionInFolders = true;
@@ -111,6 +118,14 @@ describe('RuleEditor recording rules', () => {
       AccessControlAction.AlertingRuleExternalRead,
       AccessControlAction.AlertingRuleExternalWrite,
     ]);
+  });
+
+  afterEach(() => {
+    server.resetHandlers();
+  });
+
+  afterAll(() => {
+    server.close();
   });
 
   it('can create a new cloud recording rule', async () => {
