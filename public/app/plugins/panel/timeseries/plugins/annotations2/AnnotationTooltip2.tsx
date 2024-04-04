@@ -54,7 +54,7 @@ export const AnnotationTooltip2 = ({ annoVals, annoIdx, timeZone, onEdit }: Prop
       </div>
     );
 
-    // alertText = alertDef.getAlertAnnotationInfo(annotation); // @TODO ??
+    alertText = annoVals.data?.[annoIdx] ? alertDef.getAlertAnnotationText(annoVals.data[annoIdx]) : '';
   } else if (annoVals.title?.[annoIdx]) {
     text = annoVals.title[annoIdx] + (text ? `<br />${text}` : '');
   }
