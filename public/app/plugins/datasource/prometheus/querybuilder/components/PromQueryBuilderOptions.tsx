@@ -36,7 +36,7 @@ export const PromQueryBuilderOptions = React.memo<Props>(({ query, app, onChange
   };
 
   const onChangeStep = (evt: React.FormEvent<HTMLInputElement>) => {
-    onChange({ ...query, interval: evt.currentTarget.value });
+    onChange({ ...query, interval: evt.currentTarget.value.trim() });
     onRunQuery();
   };
 
