@@ -153,6 +153,11 @@ export class DataTrail extends SceneObjectBase<DataTrailState> {
       return;
     }
     const urlState = getUrlSyncManager().getUrlState(this);
+
+    // Clear the search
+    const location = locationService.getLocation();
+    locationService.replace({ ...location, search: '' });
+    // Replace the search with the new current urlState
     locationService.partial(urlState, true);
   }
 
