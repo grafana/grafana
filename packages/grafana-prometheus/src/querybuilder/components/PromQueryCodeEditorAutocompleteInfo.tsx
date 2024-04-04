@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 
 import { selectors } from '@grafana/e2e-selectors';
 import { config } from '@grafana/runtime';
@@ -19,9 +19,8 @@ interface Props {
 export function PromQueryCodeEditorAutocompleteInfo(props: Readonly<Props>) {
   const [autocompleteLimit, setAutocompleteLimit] = useState('n');
   const [autocompleteLimitExceeded, setAutocompleteLimitExceeded] = useState(false);
-
-  useEffect(() => {
-    const handleSuggestionsIncompleteEvent = (e: Event) => {
+  const handleSuggestionsIncompleteEvent = useCallback(
+    (e: Event) => {
       if (!isSuggestionsIncompleteEvent(e)) {
         return;
       }
@@ -30,14 +29,17 @@ export function PromQueryCodeEditorAutocompleteInfo(props: Readonly<Props>) {
         setAutocompleteLimitExceeded(true);
         setAutocompleteLimit(e.detail.limit.toString());
       }
-    };
+    },
+    [props.datasourceUid]
+  );
 
+  useEffect(() => {
     addEventListener(CODE_MODE_SUGGESTIONS_INCOMPLETE_EVENT, handleSuggestionsIncompleteEvent);
 
     return () => {
       removeEventListener(CODE_MODE_SUGGESTIONS_INCOMPLETE_EVENT, handleSuggestionsIncompleteEvent);
     };
-  }, [props.datasourceUid]);
+  }, [handleSuggestionsIncompleteEvent]);
 
   const showCodeModeAutocompleteDisclaimer = (): boolean => {
     return (
