@@ -703,18 +703,15 @@
     "connect-modal": {
       "body-cloud-stack": "Sie benötigen außerdem einen Cloud Stack. Wenn Sie sich gerade angemeldet haben, erstellen wir automatisch Ihren ersten Stack. Wenn Sie bereits ein Konto haben, müssen Sie einen Stack auswählen oder erstellen.",
       "body-get-started": "Um loszulegen, benötigen Sie einen Grafana.com-Account.",
-      "body-paste-stack": "Wenn Sie sich für einen Stack entschieden haben, fügen Sie die URL unten ein.",
       "body-sign-up": "Für einen Grafana.com-Account registrieren",
       "body-token": "Ihre selbstverwaltete Grafana-Installation benötigt einen speziellen Zugang, um Inhalte sicher zu migrieren. Sie müssen ein Migrationstoken für den von Ihnen gewählten Cloud-Stack erstellen.",
       "body-token-field": "Migrationstoken",
       "body-token-field-placeholder": "Token hier einfügen",
       "body-token-instructions": "Loggen Sie sich in Ihren Cloud Stack ein und navigieren Sie zu Administration, Allgemein, Zu Grafana Cloud migrieren. Erstellen Sie auf diesem Bildschirm ein Migrationstoken und fügen Sie das Token hier ein.",
-      "body-url-field": "Cloud Stack-URL",
       "body-view-stacks": "Meine Cloud Stacks anzeigen",
       "cancel": "Abbrechen",
       "connect": "Mit diesem Stack verbinden",
       "connecting": "Verbindung mit diesem Stack läuft...",
-      "stack-required-error": "Stack-URL ist erforderlich",
       "title": "Mit einem Cloud Stack verbinden",
       "token-required-error": "Migrationstoken ist erforderlich"
     },
@@ -796,7 +793,10 @@
     },
     "summary": {
       "disconnect": "",
-      "error-starting-migration": "",
+      "disconnect-error-description": "",
+      "disconnect-error-title": "",
+      "run-migration-error-description": "",
+      "run-migration-error-title": "",
       "start-migration": "",
       "target-stack-title": ""
     },

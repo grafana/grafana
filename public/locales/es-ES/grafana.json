@@ -703,18 +703,15 @@
     "connect-modal": {
       "body-cloud-stack": "También necesitarás una pila en la nube. Si te acabas de registrar, crearemos automáticamente tu primera pila. Si tienes una cuenta, deberás seleccionar o crear una.",
       "body-get-started": "Para empezar, necesitarás una cuenta de Grafana.com.",
-      "body-paste-stack": "Una vez que te decidas por una pila, pega la URL a continuación.",
       "body-sign-up": "Crea una cuenta de Grafana.com",
       "body-token": "Tu instalación autogestionada de Grafana necesita acceso especial para poder migrar el contenido de forma segura. Tendrás que crear un token de migración en la pila en la nube que hayas elegido.",
       "body-token-field": "Token de migración",
       "body-token-field-placeholder": "Pega el token aquí",
       "body-token-instructions": "Inicia sesión en tu pila en la nube y ve a Administración > General > Migrar a Grafana Cloud. Crea un token de migración en esa pantalla y pégalo aquí.",
-      "body-url-field": "URL de la pila en la nube",
       "body-view-stacks": "Ver mis pilas en la nube",
       "cancel": "Cancelar",
       "connect": "Conectar con esta pila",
       "connecting": "Conectando con esta pila...",
-      "stack-required-error": "La URL de la pila es obligatoria",
       "title": "Conectar a una pila en la nube",
       "token-required-error": "El token de migración es obligatorio"
     },
@@ -796,7 +793,10 @@
     },
     "summary": {
       "disconnect": "",
-      "error-starting-migration": "",
+      "disconnect-error-description": "",
+      "disconnect-error-title": "",
+      "run-migration-error-description": "",
+      "run-migration-error-title": "",
       "start-migration": "",
       "target-stack-title": ""
     },

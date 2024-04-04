@@ -703,18 +703,15 @@
     "connect-modal": {
       "body-cloud-stack": "Você também precisará de uma pilha na nuvem. Se você se inscreveu, criaremos automaticamente sua primeira pilha. Se você tem uma conta, precisará selecionar ou criar uma pilha.",
       "body-get-started": "Para começar, você precisará de uma conta do Grafana.com.",
-      "body-paste-stack": "Quando você se decidir sobre a pilha, cole o URL abaixo.",
       "body-sign-up": "Inscreva-se para criar uma conta do Grafana.com",
       "body-token": "Sua instalação autogerenciada do Grafana precisa de acesso especial para migrar conteúdo com segurança. Você precisará criar um token de migração para a pilha na nuvem escolhida.",
       "body-token-field": "Token de migração",
       "body-token-field-placeholder": "Cole o token aqui",
       "body-token-instructions": "Entre na sua pilha de nuvem e navegue para Administração, Geral, Migrar para o Grafana Cloud. Crie um token de migração nesta tela e cole o token aqui.",
-      "body-url-field": "URL da pilha na nuvem",
       "body-view-stacks": "Visualizar minhas pilhas na nuvem",
       "cancel": "Cancelar",
       "connect": "Conectar-se a esta pilha",
       "connecting": "Conectando-se a esta pilha...",
-      "stack-required-error": "O URL da pilha é obrigatório",
       "title": "Conectar-se a uma pilha na nuvem",
       "token-required-error": "O token de migração é obrigatório"
     },
@@ -796,7 +793,10 @@
     },
     "summary": {
       "disconnect": "",
-      "error-starting-migration": "",
+      "disconnect-error-description": "",
+      "disconnect-error-title": "",
+      "run-migration-error-description": "",
+      "run-migration-error-title": "",
       "start-migration": "",
       "target-stack-title": ""
     },
