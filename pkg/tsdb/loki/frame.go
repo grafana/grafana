@@ -50,6 +50,7 @@ func adjustMetricFrame(frame *data.Frame, query *lokiQuery, setFrameName bool) e
 	isMetricRange := query.QueryType == QueryTypeRange
 
 	name := formatName(labels, query)
+	Url := formatUrl(labels, query)
 	if setFrameName {
 		frame.Name = name
 	}
@@ -78,6 +79,7 @@ func adjustMetricFrame(frame *data.Frame, query *lokiQuery, setFrameName bool) e
 		valueField.Config = &data.FieldConfig{}
 	}
 	valueField.Config.DisplayNameFromDS = name
+	valueField.Config.UrlFromDS = Url
 
 	return nil
 }
@@ -294,6 +296,27 @@ func formatName(labels map[string]string, query *lokiQuery) string {
 	})
 
 	return string(result)
+}
+
+func formatUrl(labels map[string]string, query *lokiQuery) string {
+	return convertLabel(query.LegendUrlFormat, labels)
+}
+
+func convertLabel(label string, labels map[string]string) string {
+	var convertedLabel string
+	if label != "" {
+		result := legendFormat.ReplaceAllFunc([]byte(label), func(in []byte) []byte {
+			labelName := strings.Replace(string(in), "{{", "", 1)
+			labelName = strings.Replace(labelName, "}}", "", 1)
+			labelName = strings.TrimSpace(labelName)
+			if val, exists := labels[labelName]; exists {
+				return []byte(val)
+			}
+			return []byte{}
+		})
+		convertedLabel = string(result)
+	}
+	return convertedLabel
 }
 
 func getFrameLabels(frame *data.Frame) map[string]string {
