@@ -4,11 +4,9 @@ import (
 	"context"
 	"errors"
 	"net/http"
-	"net/mail"
 	"net/url"
 	"strconv"
 	"strings"
-	"time"
 
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/api/response"
@@ -17,7 +15,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/login"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/team"
-	tempuser "github.com/grafana/grafana/pkg/services/temp_user"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/util"
 	"github.com/grafana/grafana/pkg/web"
@@ -34,10 +31,23 @@ import (
 // 404: notFoundError
 // 500: internalServerError
 func (hs *HTTPServer) GetSignedInUser(c *contextmodel.ReqContext) response.Response {
-	userID, errResponse := getUserID(c)
-	if errResponse != nil {
-		return errResponse
+	namespace, identifier := c.SignedInUser.GetNamespacedID()
+	if namespace != identity.NamespaceUser {
+		return response.JSON(http.StatusOK, user.UserProfileDTO{
+			IsGrafanaAdmin: c.SignedInUser.GetIsGrafanaAdmin(),
+			OrgID:          c.SignedInUser.GetOrgID(),
+			UID:            strings.Join([]string{namespace, identifier}, ":"),
+			Name:           c.SignedInUser.NameOrFallback(),
+			Email:          c.SignedInUser.GetEmail(),
+			Login:          c.SignedInUser.GetLogin(),
+		})
 	}
+
+	userID, err := identity.IntIdentifier(namespace, identifier)
+	if err != nil {
+		return response.Error(http.StatusInternalServerError, "Failed to parse user id", err)
+	}
+
 	return hs.getUserUserProfile(c, userID)
 }
 
@@ -275,7 +285,7 @@ func (hs *HTTPServer) handleUpdateUser(ctx context.Context, cmd user.UpdateUserC
 }
 
 func (hs *HTTPServer) verifyEmailUpdate(ctx context.Context, email string, field user.UpdateEmailActionType, usr *user.User) response.Response {
-	if err := hs.userVerifier.VerifyEmail(ctx, user.VerifyEmailCommand{
+	if err := hs.userVerifier.Start(ctx, user.StartVerifyEmailCommand{
 		User:   *usr,
 		Email:  email,
 		Action: field,
@@ -295,35 +305,13 @@ func (hs *HTTPServer) verifyEmailUpdate(ctx context.Context, email string, field
 // Responses:
 // 302: okResponse
 func (hs *HTTPServer) UpdateUserEmail(c *contextmodel.ReqContext) response.Response {
-	var err error
-
-	q := c.Req.URL.Query()
-	code, err := url.QueryUnescape(q.Get("code"))
+	code, err := url.QueryUnescape(c.Req.URL.Query().Get("code"))
 	if err != nil || code == "" {
 		return hs.RedirectResponseWithError(c, errors.New("bad request data"))
 	}
 
-	tempUser, err := hs.validateEmailCode(c.Req.Context(), code)
-	if err != nil {
+	if err := hs.userVerifier.Complete(c.Req.Context(), user.CompleteEmailVerifyCommand{Code: code}); err != nil {
 		return hs.RedirectResponseWithError(c, err)
-	}
-
-	cmd, err := hs.updateCmdFromEmailVerification(c.Req.Context(), tempUser)
-	if err != nil {
-		return hs.RedirectResponseWithError(c, err)
-	}
-
-	if err := hs.userService.Update(c.Req.Context(), cmd); err != nil {
-		if errors.Is(err, user.ErrCaseInsensitive) {
-			return hs.RedirectResponseWithError(c, errors.New("update would result in user login conflict"))
-		}
-		return hs.RedirectResponseWithError(c, errors.New("failed to update user"))
-	}
-
-	// Mark temp user as completed
-	updateTmpUserCmd := tempuser.UpdateTempUserStatusCommand{Code: code, Status: tempuser.TmpUserEmailUpdateCompleted}
-	if err := hs.tempUserService.UpdateTempUserStatus(c.Req.Context(), &updateTmpUserCmd); err != nil {
-		return hs.RedirectResponseWithError(c, errors.New("failed to update verification status"))
 	}
 
 	return response.Redirect(hs.Cfg.AppSubURL + "/profile")
@@ -692,57 +680,6 @@ func getUserID(c *contextmodel.ReqContext) (int64, *response.NormalResponse) {
 	}
 
 	return userID, nil
-}
-
-func (hs *HTTPServer) updateCmdFromEmailVerification(ctx context.Context, tempUser *tempuser.TempUserDTO) (*user.UpdateUserCommand, error) {
-	userQuery := user.GetUserByLoginQuery{LoginOrEmail: tempUser.InvitedByLogin}
-	usr, err := hs.userService.GetByLogin(ctx, &userQuery)
-	if err != nil {
-		if errors.Is(err, user.ErrUserNotFound) {
-			return nil, user.ErrUserNotFound
-		}
-		return nil, errors.New("failed to get user")
-	}
-
-	cmd := &user.UpdateUserCommand{UserID: usr.ID, Email: tempUser.Email}
-
-	switch tempUser.Name {
-	case string(user.EmailUpdateAction):
-		// User updated the email field
-		if _, err := mail.ParseAddress(usr.Login); err == nil {
-			// If username was also an email, we update it to keep it in sync with the email field
-			cmd.Login = tempUser.Email
-		}
-	case string(user.LoginUpdateAction):
-		// User updated the username field with a new email
-		cmd.Login = tempUser.Email
-	default:
-		return nil, errors.New("trying to update email on unknown field")
-	}
-	return cmd, nil
-}
-
-func (hs *HTTPServer) validateEmailCode(ctx context.Context, code string) (*tempuser.TempUserDTO, error) {
-	tempUserQuery := tempuser.GetTempUserByCodeQuery{Code: code}
-	tempUser, err := hs.tempUserService.GetTempUserByCode(ctx, &tempUserQuery)
-	if err != nil {
-		if errors.Is(err, tempuser.ErrTempUserNotFound) {
-			return nil, errors.New("invalid email verification code")
-		}
-		return nil, errors.New("failed to read temp user")
-	}
-
-	if tempUser.Status != tempuser.TmpUserEmailUpdateStarted {
-		return nil, errors.New("invalid email verification code")
-	}
-	if !tempUser.EmailSent {
-		return nil, errors.New("verification email was not recorded as sent")
-	}
-	if tempUser.EmailSentOn.Add(hs.Cfg.VerificationEmailMaxLifetime).Before(time.Now()) {
-		return nil, errors.New("invalid email verification code")
-	}
-
-	return tempUser, nil
 }
 
 // swagger:parameters searchUsers

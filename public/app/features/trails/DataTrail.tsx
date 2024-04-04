@@ -33,7 +33,6 @@ import { MetricsHeader } from './MetricsHeader';
 import { getTrailStore } from './TrailStore/TrailStore';
 import { MetricDatasourceHelper } from './helpers/MetricDatasourceHelper';
 import { MetricSelectedEvent, trailDS, VAR_DATASOURCE, VAR_FILTERS } from './shared';
-import { getUrlForTrail } from './utils';
 
 export interface DataTrailState extends SceneObjectState {
   topScene?: SceneObject;
@@ -89,9 +88,11 @@ export class DataTrail extends SceneObjectBase<DataTrailState> {
       const newStepWasAppended = newNumberOfSteps > oldNumberOfSteps;
 
       if (newStepWasAppended) {
+        // A new step is a significant change. Update the URL to match the new state.
+        this.syncTrailToUrl();
         // In order for the `useBookmarkState` to re-evaluate after a new step was made:
         this.forceRender();
-        // Do nothing because the state is already up to date -- it created a new step!
+        // Do nothing else because the step state is already up to date -- it created a new step!
         return;
       }
 
@@ -103,12 +104,15 @@ export class DataTrail extends SceneObjectBase<DataTrailState> {
       // History changed because a different node was selected
       const step = newState.steps[newState.currentStep];
 
+      if (!step) {
+        return;
+      }
+
       this.goBackToStep(step);
     });
 
     return () => {
       if (!this.state.embedded) {
-        getUrlSyncManager().cleanUp(this);
         getTrailStore().setRecentTrail(this);
       }
     };
@@ -135,29 +139,25 @@ export class DataTrail extends SceneObjectBase<DataTrailState> {
   }
 
   private goBackToStep(step: DataTrailHistoryStep) {
-    if (!this.state.embedded) {
-      getUrlSyncManager().cleanUp(this);
-    }
-
     if (!step.trailState.metric) {
       step.trailState.metric = undefined;
     }
 
     this.setState(step.trailState);
+    this.syncTrailToUrl();
+  }
 
-    if (!this.state.embedded) {
-      locationService.replace(getUrlForTrail(this));
-
-      getUrlSyncManager().initSync(this);
+  private syncTrailToUrl() {
+    if (this.state.embedded) {
+      // Embedded trails should not be altering the URL
+      return;
     }
+    const urlState = getUrlSyncManager().getUrlState(this);
+    locationService.partial(urlState, true);
   }
 
   private _handleMetricSelectedEvent(evt: MetricSelectedEvent) {
-    if (this.state.embedded) {
-      this.setState(this.getSceneUpdatesForNewMetricValue(evt.payload));
-    } else {
-      locationService.partial({ metric: evt.payload, actionView: null });
-    }
+    this.setState(this.getSceneUpdatesForNewMetricValue(evt.payload));
 
     // Add metric to adhoc filters baseFilter
     const filterVar = sceneGraph.lookupVariable(VAR_FILTERS, this);

@@ -1,14 +1,16 @@
 import { css } from '@emotion/css';
-import React from 'react';
+import React, { useMemo } from 'react';
+import Skeleton from 'react-loading-skeleton';
 
 import { InteractiveTable, CellProps, Stack, Text, Icon, useStyles2, Button } from '@grafana/ui';
 import { getSvgSize } from '@grafana/ui/src/components/Icon/utils';
 import { t } from 'app/core/internationalization';
 
-import { MigrationResourceDTO } from '../api';
+import { useGetDashboardByUidQuery } from '../api';
+import { MigrationResourceDTOMock, MigrationResourceDashboard, MigrationResourceDatasource } from '../mockAPI';
 
 interface ResourcesTableProps {
-  resources: MigrationResourceDTO[];
+  resources: MigrationResourceDTOMock[];
 }
 
 const columns = [
@@ -21,21 +23,69 @@ export function ResourcesTable({ resources }: ResourcesTableProps) {
   return <InteractiveTable columns={columns} data={resources} getRowId={(r) => r.uid} pageSize={15} />;
 }
 
-function NameCell(props: CellProps<MigrationResourceDTO>) {
+function NameCell(props: CellProps<MigrationResourceDTOMock>) {
   const data = props.row.original;
+
   return (
     <Stack direction="row" gap={2} alignItems="center">
       <ResourceIcon resource={data} />
 
       <Stack direction="column" gap={0}>
-        <span>{data.resource.name}</span>
-        <Text color="secondary">{data.resource.type}</Text>
+        {data.type === 'datasource' ? <DatasourceInfo data={data} /> : <DashboardInfo data={data} />}
       </Stack>
     </Stack>
   );
 }
 
-function TypeCell(props: CellProps<MigrationResourceDTO>) {
+function getDashboardTitle(dashboardData: object) {
+  if ('title' in dashboardData && typeof dashboardData.title === 'string') {
+    return dashboardData.title;
+  }
+
+  return undefined;
+}
+
+function DatasourceInfo({ data }: { data: MigrationResourceDatasource }) {
+  return (
+    <>
+      <span>{data.resource.name}</span>
+      <Text color="secondary">{data.resource.type}</Text>
+    </>
+  );
+}
+
+// TODO: really, the API should return this directly
+function DashboardInfo({ data }: { data: MigrationResourceDashboard }) {
+  const { data: dashboardData } = useGetDashboardByUidQuery({
+    uid: data.resource.uid,
+  });
+
+  const dashboardName = useMemo(() => {
+    return (dashboardData?.dashboard && getDashboardTitle(dashboardData.dashboard)) ?? data.resource.uid;
+  }, [dashboardData, data.resource.uid]);
+
+  if (!dashboardData) {
+    return (
+      <>
+        <span>
+          <Skeleton width={250} />
+        </span>
+        <span>
+          <Skeleton width={130} />
+        </span>
+      </>
+    );
+  }
+
+  return (
+    <>
+      <span>{dashboardName}</span>
+      <Text color="secondary">{dashboardData.meta?.folderTitle ?? 'Dashboards'}</Text>
+    </>
+  );
+}
+
+function TypeCell(props: CellProps<MigrationResourceDTOMock>) {
   const { type } = props.row.original;
 
   if (type === 'datasource') {
@@ -49,7 +99,7 @@ function TypeCell(props: CellProps<MigrationResourceDTO>) {
   return t('migrate-to-cloud.resource-type.unknown', 'Unknown');
 }
 
-function StatusCell(props: CellProps<MigrationResourceDTO>) {
+function StatusCell(props: CellProps<MigrationResourceDTOMock>) {
   const { status, statusMessage } = props.row.original;
 
   if (status === 'not-migrated') {
@@ -76,7 +126,7 @@ function StatusCell(props: CellProps<MigrationResourceDTO>) {
   return <Text color="secondary">{t('migrate-to-cloud.resource-status.unknown', 'Unknown')}</Text>;
 }
 
-function ResourceIcon({ resource }: { resource: MigrationResourceDTO }) {
+function ResourceIcon({ resource }: { resource: MigrationResourceDTOMock }) {
   const styles = useStyles2(getIconStyles);
 
   if (resource.type === 'dashboard') {

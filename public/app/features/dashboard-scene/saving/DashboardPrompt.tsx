@@ -1,11 +1,11 @@
 import { css } from '@emotion/css';
 import * as H from 'history';
-import React, { useState, useContext, useEffect } from 'react';
+import React, { useContext, useEffect, useMemo } from 'react';
 import { Prompt } from 'react-router';
 
 import { locationService } from '@grafana/runtime';
 import { Dashboard } from '@grafana/schema/dist/esm/index.gen';
-import { ModalsContext, Modal, Button } from '@grafana/ui';
+import { ModalsContext, Modal, Button, useStyles2 } from '@grafana/ui';
 import { contextSrv } from 'app/core/services/context_srv';
 
 import { DashboardScene } from '../scene/DashboardScene';
@@ -14,32 +14,17 @@ interface DashboardPromptProps {
   dashboard: DashboardScene;
 }
 
-interface DashboardPromptState {
-  originalPath?: string;
-}
 export const DashboardPrompt = React.memo(({ dashboard }: DashboardPromptProps) => {
-  const [state, setState] = useState<DashboardPromptState>({ originalPath: undefined });
-  const { originalPath } = state;
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  const originalPath = useMemo(() => locationService.getLocation().pathname, [dashboard]);
   const { showModal, hideModal } = useContext(ModalsContext);
-
-  useEffect(() => {
-    // This timeout delay is to wait for panels to load and migrate scheme before capturing the original state
-    // This is to minimize unsaved changes warnings due to automatic schema migrations
-    const timeoutId = setTimeout(() => {
-      const originalPath = locationService.getLocation().pathname;
-      setState({ originalPath });
-    }, 1000);
-
-    return () => {
-      clearTimeout(timeoutId);
-    };
-  }, [dashboard, originalPath]);
 
   useEffect(() => {
     const handleUnload = (event: BeforeUnloadEvent) => {
       if (ignoreChanges(dashboard, dashboard.getInitialSaveModel())) {
         return;
       }
+
       if (dashboard.state.isDirty) {
         event.preventDefault();
         // No browser actually displays this message anymore.
@@ -47,6 +32,7 @@ export const DashboardPrompt = React.memo(({ dashboard }: DashboardPromptProps) 
         event.returnValue = '';
       }
     };
+
     window.addEventListener('beforeunload', handleUnload);
     return () => window.removeEventListener('beforeunload', handleUnload);
   }, [dashboard]);
@@ -121,6 +107,7 @@ function moveToBlockedLocationAfterReactStateUpdate(location?: H.Location | null
     setTimeout(() => locationService.push(location), 10);
   }
 }
+
 interface UnsavedChangesModalProps {
   onDiscard: () => void;
   onDismiss: () => void;
@@ -128,7 +115,8 @@ interface UnsavedChangesModalProps {
 }
 
 export const UnsavedChangesModal = ({ onDiscard, onDismiss, onSaveDashboardClick }: UnsavedChangesModalProps) => {
-  const styles = getStyles();
+  const styles = useStyles2(getStyles);
+
   return (
     <Modal
       isOpen={true}
@@ -166,7 +154,7 @@ export function ignoreChanges(current: DashboardScene | null, original?: Dashboa
   }
 
   // Ignore changes if original is unsaved
-  if ((original as Dashboard).version === 0) {
+  if (original.version === 0) {
     return true;
   }
 
