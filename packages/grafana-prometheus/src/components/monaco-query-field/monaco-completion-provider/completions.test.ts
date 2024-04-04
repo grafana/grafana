@@ -4,7 +4,7 @@ import { SUGGESTIONS_LIMIT } from '../../../language_provider';
 import { FUNCTIONS } from '../../../promql';
 
 import { getCompletions } from './completions';
-import { DataProvider, DataProviderParams } from './data-provider';
+import { DataProvider, DataProviderParams } from './data_provider';
 import type { Situation } from './situation';
 
 const history: string[] = ['previous_metric_name_1', 'previous_metric_name_2', 'previous_metric_name_3'];

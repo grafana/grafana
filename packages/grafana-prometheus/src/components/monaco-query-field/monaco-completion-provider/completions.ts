@@ -5,7 +5,7 @@ import { config } from '@grafana/runtime';
 import { escapeLabelValueInExactSelector } from '../../../language_utils';
 import { FUNCTIONS } from '../../../promql';
 
-import { DataProvider } from './data-provider';
+import { DataProvider } from './data_provider';
 import type { Label, Situation } from './situation';
 import { NeverCaseError } from './util';
 // FIXME: we should not load this from the "outside", but we cannot do that while we have the "old" query-field too

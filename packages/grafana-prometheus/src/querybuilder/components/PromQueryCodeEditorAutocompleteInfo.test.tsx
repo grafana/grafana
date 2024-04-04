@@ -6,7 +6,7 @@ import { PluginMeta, PluginType } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { config } from '@grafana/runtime';
 
-import { CODE_MODE_SUGGESTIONS_INCOMPLETE_EVENT } from '../../components/monaco-query-field/monaco-completion-provider/data-provider';
+import { CODE_MODE_SUGGESTIONS_INCOMPLETE_EVENT } from '../../components/monaco-query-field/monaco-completion-provider/data_provider';
 import { PromQueryEditorProps } from '../../components/types';
 import { PrometheusDatasource } from '../../datasource';
 import PromQlLanguageProvider from '../../language_provider';

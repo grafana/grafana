@@ -7,7 +7,7 @@ import { IconButton, Text, Stack } from '@grafana/ui';
 import {
   CODE_MODE_SUGGESTIONS_INCOMPLETE_EVENT,
   isSuggestionsIncompleteEvent,
-} from '../../components/monaco-query-field/monaco-completion-provider/data-provider';
+} from '../../components/monaco-query-field/monaco-completion-provider/data_provider';
 import { PromQueryEditorProps } from '../../components/types';
 import { QueryEditorMode } from '../shared/types';
 
