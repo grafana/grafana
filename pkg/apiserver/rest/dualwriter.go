@@ -8,6 +8,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apiserver/pkg/registry/rest"
+	"k8s.io/klog"
 )
 
 var (
@@ -79,10 +80,37 @@ var CurrentMode = Mode2
 
 // NewDualWriter returns a new DualWriter.
 func NewDualWriter(legacy LegacyStorage, storage Storage) *DualWriter {
+	//TODO: replace this with
+	// SelectDualWriter(CurrentMode, legacy, storage)
 	return &DualWriter{
 		Storage: storage,
 		Legacy:  legacy,
 	}
+}
+
+// Create overrides the default behavior of the Storage and writes to both the LegacyStorage and Storage.
+func (d *DualWriter) Create(ctx context.Context, obj runtime.Object, createValidation rest.ValidateObjectFunc, options *metav1.CreateOptions) (runtime.Object, error) {
+	if legacy, ok := d.Legacy.(rest.Creater); ok {
+		created, err := legacy.Create(ctx, obj, createValidation, options)
+		if err != nil {
+			return nil, err
+		}
+
+		accessor, err := meta.Accessor(created)
+		if err != nil {
+			return created, err
+		}
+		accessor.SetResourceVersion("")
+		accessor.SetUID("")
+
+		rsp, err := d.Storage.Create(ctx, created, createValidation, options)
+		if err != nil {
+			klog.Error("unable to create object in duplicate storage", "error", err)
+		}
+		return rsp, err
+	}
+
+	return d.Storage.Create(ctx, obj, createValidation, options)
 }
 
 // Update overrides the default behavior of the Storage and writes to both the LegacyStorage and Storage.
