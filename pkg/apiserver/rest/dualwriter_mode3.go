@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apiserver/pkg/registry/rest"
@@ -37,4 +38,25 @@ func (d *DualWriterMode3) Create(ctx context.Context, obj runtime.Object, create
 		klog.FromContext(ctx).Error(err, "unable to create object in legacy storage", "mode", 3)
 	}
 	return created, nil
+}
+
+// Get overrides the default behavior of the Storage and retrieves an object from Unified Storage
+// the object is still fetched from Legacy Storage if there is an error with Unified Storage
+func (d *DualWriterMode3) Get(ctx context.Context, name string, options *metav1.GetOptions) (runtime.Object, error) {
+	legacy, ok := d.legacy.(rest.Getter)
+	if !ok {
+		return nil, fmt.Errorf("legacy storage rest.Getter is missing")
+	}
+
+	s, err := d.Storage.Get(ctx, name, &metav1.GetOptions{})
+	if err == nil {
+		return s, err
+	}
+	if !apierrors.IsNotFound(err) {
+		return nil, err
+	}
+
+	fmt.Println("getting object from Unified Storage failed. Getting it from Legacy Storage.")
+
+	return legacy.Get(ctx, name, &metav1.GetOptions{})
 }
