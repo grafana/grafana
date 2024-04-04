@@ -36,7 +36,7 @@ Set how series data is mapped in the chart.
 - [Auto](#auto-series-mapping-options) - Automatically generates series from all available data frames (or datasets). You can filter to select only one frame.
 - [Manual](#manual-series-mapping-options) - Explicitly define the series by selecting from available data frames.
 
-Depending on your series mapping selection, the **Frame**, **X-field**, and **Y-field** options differ. The [Auto](#auto-series-mapping-options) and [Manual](#auto-series-mapping-options) series mapping sections describe these different options.
+Depending on your series mapping selection, the **Frame**, **X-field**, and **Y-field** options differ. The [Auto](#auto-series-mapping-options) and [Manual](#manual-series-mapping-options) series mapping sections describe these different options.
 
 #### Auto series mapping options
 
@@ -44,7 +44,7 @@ When you select **Auto** as your series mapping mode, the following options are 
 
 - [Frame](#frame)
 - [X-field](#x-field)
-- [Y-fields](#y-field)
+- [Y-field](#y-field)
 
 ##### Frame
 
@@ -92,7 +92,7 @@ In **Manual** mode, you must set the following options:
 
 Use this option to set which field's values control the size of the points in the chart. This value is relative to the min and max of all the values in the data frame.
 
-When you select this option, you can then set the [Min point size](#min-point-size) and [Max point size](#max-point-size) options.
+When you select this option, you can then set the [Min point size](#minmax-point-size) and [Max point size](#minmax-point-size) options.
 
 ### Color field
 
