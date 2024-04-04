@@ -127,7 +127,6 @@ export enum ReducerID {
   p97 = 'p97',
   p98 = 'p98',
   p99 = 'p99',
-
 }
 
 export function isReducerID(id: string): id is ReducerID {
@@ -408,7 +407,8 @@ export const fieldReducers = new Registry<FieldReducerInfo>(() => [
 for (let i = 1; i < 100; i++) {
   const percentile = i / 100;
   const id = `p${i}` as ReducerID;
-  const nth = (n: number) => n>3&&n<21?"th":n%10===1?"st":n%10===2?"nd":n%10===3?"rd":"th";
+  const nth = (n: number) =>
+    n > 3 && n < 21 ? 'th' : n % 10 === 1 ? 'st' : n % 10 === 2 ? 'nd' : n % 10 === 3 ? 'rd' : 'th';
   const name = `${i}${nth(i)} percentile`;
   const description = `${i}${nth(i)} percentile value`;
 
@@ -418,7 +418,7 @@ for (let i = 1; i < 100; i++) {
     description: description,
     standard: false,
     reduce: (field: Field, ignoreNulls: boolean, nullAsZero: boolean) => {
-      return {[id]: calculatePercentile(field, percentile, ignoreNulls, nullAsZero)};    
+      return { [id]: calculatePercentile(field, percentile, ignoreNulls, nullAsZero) };
     },
     preservesUnits: true,
   });
@@ -671,12 +671,7 @@ function calculateDistinctCount(field: Field, ignoreNulls: boolean, nullAsZero: 
   return { distinctCount: distinct.size };
 }
 
-function calculatePercentile(
-  field: Field,
-  percentile: number,
-  ignoreNulls: boolean,
-  nullAsZero: boolean
-): FieldCalcs {
+function calculatePercentile(field: Field, percentile: number, ignoreNulls: boolean, nullAsZero: boolean): FieldCalcs {
   let data = field.values;
 
   if (ignoreNulls) {
