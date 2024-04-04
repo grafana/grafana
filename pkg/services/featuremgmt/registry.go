@@ -1189,6 +1189,15 @@ var (
 			HideFromDocs:      true,
 			HideFromAdminPage: true,
 		},
+		{
+			Name:              "newDashboardWithFiltersAndGroupBy",
+			Description:       "Enables filters and group by variables on all new dashboards. Variables are added only if default data source supports filtering.",
+			Stage:             FeatureStageExperimental,
+			Owner:             grafanaDashboardsSquad,
+			AllowSelfServe:    false,
+			HideFromDocs:      true,
+			HideFromAdminPage: true,
+		},
 	}
 )
 

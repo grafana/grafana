@@ -85,7 +85,7 @@ export async function setDashboardInLocalStorage(options: AddPanelToDashboardOpt
       throw AddToDashboardError.FETCH_DASHBOARD;
     }
   } else {
-    dto = buildNewDashboardSaveModel();
+    dto = await buildNewDashboardSaveModel();
   }
 
   dto.dashboard.panels = [panel, ...(dto.dashboard.panels ?? [])];
