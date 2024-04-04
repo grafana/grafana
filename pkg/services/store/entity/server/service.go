@@ -2,10 +2,6 @@ package server
 
 import (
 	"context"
-	"errors"
-	"net"
-	"net/http"
-	"time"
 
 	"github.com/grafana/dskit/services"
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -21,7 +17,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/store/entity/sqlstash"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/prometheus/client_golang/prometheus"
-	"github.com/prometheus/client_golang/prometheus/promhttp"
 )
 
 var (
@@ -108,8 +103,6 @@ func (s *service) Run(ctx context.Context) error {
 func (s *service) start(ctx context.Context) error {
 	// TODO: use wire
 
-	_ = s.initInstrumentation(ctx)
-
 	// TODO: support using grafana db connection?
 	eDB, err := dbimpl.ProvideEntityDB(nil, s.cfg, s.features)
 	if err != nil {
@@ -157,37 +150,4 @@ func (s *service) running(ctx context.Context) error {
 		close(s.stopCh)
 	}
 	return nil
-}
-
-func (s *service) initInstrumentation(ctx context.Context) *http.Server {
-	// Only start up instrumentation server when storage-server is the sole target module
-	if len(s.cfg.Target) == 1 && s.cfg.Target[0] == modules.StorageServer {
-		return s.setupInstrumentationServer(ctx)
-	}
-
-	return nil
-}
-
-func (s *service) setupInstrumentationServer(ctx context.Context) *http.Server {
-	router := http.NewServeMux()
-	router.Handle("/metrics", promhttp.Handler())
-
-	srv := &http.Server{
-		// 5s timeout for header reads to avoid Slowloris attacks (https://thetooth.io/blog/slowloris-attack/)
-		ReadHeaderTimeout: 5 * time.Second,
-		Addr:              ":3000", // TODO - make configurable?
-		Handler:           router,
-		BaseContext:       func(_ net.Listener) context.Context { return ctx },
-	}
-
-	go func() {
-		err := srv.ListenAndServe()
-		if err != nil && !errors.Is(err, http.ErrServerClosed) {
-			s.log.Error("instrumentation server terminated with error", "error", err)
-		}
-	}()
-
-	s.log.Info("instrumentation server listening on port 3000")
-
-	return srv
 }

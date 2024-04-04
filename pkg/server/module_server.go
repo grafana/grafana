@@ -114,7 +114,14 @@ func (s *ModuleServer) Run() error {
 		}
 	}
 
-	m := modules.New(s.cfg.Target)
+	// only run instrumentation server module if were running a single target and not running a module that already contains and http server
+	targets := s.cfg.Target
+	if len(s.cfg.Target) == 1 && (s.cfg.Target[0] != modules.All && s.cfg.Target[0] != modules.Core) {
+		targets = append(targets, modules.InstrumentationServer)
+	}
+	m := modules.New(targets)
+
+	m.RegisterInvisibleModule(modules.InstrumentationServer, func() (services.Service, error) { return NewInstrumentationService() })
 
 	m.RegisterModule(modules.Core, func() (services.Service, error) {
 		return NewService(s.cfg, s.opts, s.apiOpts)
