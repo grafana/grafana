@@ -91,7 +91,7 @@ function countEslintErrors() {
         {
           patterns: [
             {
-              group: ['@grafana/ui/*'],
+              group: ['@grafana/ui*'],
               importNames: ['Layout', 'HorizontalGroup', 'VerticalGroup'],
               message: 'Use Stack component instead.',
             },
