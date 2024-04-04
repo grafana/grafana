@@ -1,6 +1,5 @@
 export * from './endpoints.gen';
 import { BaseQueryFn, QueryDefinition } from '@reduxjs/toolkit/dist/query';
-import { A } from 'msw/lib/core/HttpResponse-vQNlixkj';
 
 import { generatedAPI } from './endpoints.gen';
 
