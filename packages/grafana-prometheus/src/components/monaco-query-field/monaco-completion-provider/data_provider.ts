@@ -1,4 +1,5 @@
 import { HistoryItem } from '@grafana/data';
+import type { Monaco } from '@grafana/ui'; // used in TSDoc `@link` below
 
 import PromQlLanguageProvider from '../../../language_provider';
 import { PromQuery } from '../../../types';
@@ -41,7 +42,7 @@ export class DataProvider {
   readonly getLabelValues: typeof this.languageProvider.getLabelValues;
   readonly metricNamesSuggestionLimit: number;
   /**
-   * The text that's been typed so far within the current `Monaco.Range`.
+   * The text that's been typed so far within the current {@link Monaco.Range | Range}.
    *
    * @remarks
    * This is useful with fuzzy searching items to provide as Monaco autocomplete suggestions.
