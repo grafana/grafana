@@ -86,11 +86,6 @@ export function PayloadEditor({
           label="Payload"
           actions={
             <Stack direction="row" alignItems="center" gap={0.5}>
-              <Toggletip content={<AlertTemplateDataTable />} placement="top" fitContent>
-                <Button variant="secondary" fill="outline" size="sm" icon="question-circle">
-                  Help
-                </Button>
-              </Toggletip>
               <Dropdown
                 overlay={
                   <Menu>
@@ -113,6 +108,11 @@ export function PayloadEditor({
                   Edit payload
                 </Button>
               </Dropdown>
+              <Toggletip content={<AlertTemplateDataTable />} placement="top" fitContent>
+                <Button variant="secondary" fill="outline" size="sm" icon="question-circle">
+                  Help
+                </Button>
+              </Toggletip>
             </Stack>
           }
         />
