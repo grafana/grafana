@@ -22,7 +22,7 @@ func NewDualWriterMode3(legacy LegacyStorage, storage Storage) *DualWriterMode3 
 
 // Create overrides the default behavior of the DualWriter and writes to LegacyStorage and Storage.
 func (d *DualWriterMode3) Create(ctx context.Context, obj runtime.Object, createValidation rest.ValidateObjectFunc, options *metav1.CreateOptions) (runtime.Object, error) {
-	legacy, ok := d.legacy.(rest.Creater)
+	legacy, ok := d.Legacy.(rest.Creater)
 	if !ok {
 		return nil, fmt.Errorf("legacy storage rest.Creater is missing")
 	}
