@@ -86,6 +86,18 @@ function countEslintErrors() {
       '@emotion/syntax-preference': [2, 'object'],
       '@typescript-eslint/no-explicit-any': 'error',
       '@grafana/no-aria-label-selectors': 'error',
+      'no-restricted-imports': [
+        'error',
+        {
+          patterns: [
+            {
+              group: ['@grafana/ui/*'],
+              importNames: ['Layout', 'HorizontalGroup', 'VerticalGroup'],
+              message: 'Use Stack component instead.',
+            },
+          ],
+        },
+      ],
     };
 
     const nonTestFilesRules: Partial<Linter.RulesRecord> = {
