@@ -19,7 +19,7 @@ import {
 } from '../../mocks/templatesApi';
 
 import { defaults, TemplateFormValues } from './TemplateForm';
-import { TemplatePreview, PREVIEW_NOT_AVAILABLE } from './TemplatePreview';
+import { TemplatePreview } from './TemplatePreview';
 
 jest.mock(
   'react-virtualized-auto-sizer',
