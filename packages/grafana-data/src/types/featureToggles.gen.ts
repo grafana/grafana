@@ -40,7 +40,6 @@ export interface FeatureToggles {
   autoMigrateXYChartPanel?: boolean;
   disableAngular?: boolean;
   canvasPanelNesting?: boolean;
-  newVizTooltips?: boolean;
   scenes?: boolean;
   disableSecretsCompatibility?: boolean;
   logRequestsInstrumentedAsUnknown?: boolean;
@@ -173,7 +172,9 @@ export interface FeatureToggles {
   expressionParser?: boolean;
   groupByVariable?: boolean;
   betterPageScrolling?: boolean;
+  authAPIAccessTokenAuth?: boolean;
   scopeFilters?: boolean;
   ssoSettingsSAML?: boolean;
   usePrometheusFrontendPackage?: boolean;
+  oauthRequireSubClaim?: boolean;
 }

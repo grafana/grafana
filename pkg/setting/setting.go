@@ -241,9 +241,6 @@ type Cfg struct {
 	IDResponseHeaderEnabled       bool
 	IDResponseHeaderPrefix        string
 	IDResponseHeaderNamespaces    map[string]struct{}
-	// Not documented & not supported
-	// stand in until a more complete solution is implemented
-	AuthConfigUIAdminAccess bool
 
 	// AWS Plugin Auth
 	AWSAllowedAuthProviders   []string
@@ -264,11 +261,8 @@ type Cfg struct {
 	OAuthCookieMaxAge             int
 	OAuthAllowInsecureEmailLookup bool
 
-	JWTAuth AuthJWTSettings
-	// Extended JWT Auth
-	ExtendedJWTAuthEnabled    bool
-	ExtendedJWTExpectIssuer   string
-	ExtendedJWTExpectAudience string
+	JWTAuth    AuthJWTSettings
+	ExtJWTAuth ExtJWTSettings
 
 	// SSO Settings Auth
 	SSOSettingsReloadInterval        time.Duration
@@ -495,7 +489,7 @@ type Cfg struct {
 	PublicDashboardsEnabled bool
 
 	// Cloud Migration
-	CloudMigrationIsTarget bool
+	CloudMigration CloudMigrationSettings
 
 	// Feature Management Settings
 	FeatureManagement FeatureMgmtSettings
@@ -1189,6 +1183,7 @@ func (cfg *Cfg) parseINIFile(iniFile *ini.File) error {
 	cfg.handleAWSConfig()
 	cfg.readAzureSettings()
 	cfg.readAuthJWTSettings()
+	cfg.readAuthExtJWTSettings()
 	cfg.readAuthProxySettings()
 	cfg.readSessionConfig()
 	if err := cfg.readSmtpSettings(); err != nil {
@@ -1558,9 +1553,6 @@ func readAuthSettings(iniFile *ini.File, cfg *Cfg) (err error) {
 		cfg.TokenRotationIntervalMinutes = 2
 	}
 
-	// Do not use
-	cfg.AuthConfigUIAdminAccess = auth.Key("config_ui_admin_access").MustBool(false)
-
 	cfg.DisableLoginForm = auth.Key("disable_login_form").MustBool(false)
 	cfg.DisableSignoutMenu = auth.Key("disable_signout_menu").MustBool(false)
 
@@ -1607,12 +1599,6 @@ func readAuthSettings(iniFile *ini.File, cfg *Cfg) (err error) {
 	authBasic := iniFile.Section("auth.basic")
 	cfg.BasicAuthEnabled = authBasic.Key("enabled").MustBool(true)
 	cfg.BasicAuthStrongPasswordPolicy = authBasic.Key("password_policy").MustBool(false)
-
-	// Extended JWT auth
-	authExtendedJWT := cfg.SectionWithEnvOverrides("auth.extended_jwt")
-	cfg.ExtendedJWTAuthEnabled = authExtendedJWT.Key("enabled").MustBool(false)
-	cfg.ExtendedJWTExpectAudience = authExtendedJWT.Key("expect_audience").MustString("")
-	cfg.ExtendedJWTExpectIssuer = authExtendedJWT.Key("expect_issuer").MustString("")
 
 	// SSO Settings
 	ssoSettings := iniFile.Section("sso_settings")
@@ -1995,9 +1981,4 @@ func (cfg *Cfg) readLiveSettings(iniFile *ini.File) error {
 func (cfg *Cfg) readPublicDashboardsSettings() {
 	publicDashboards := cfg.Raw.Section("public_dashboards")
 	cfg.PublicDashboardsEnabled = publicDashboards.Key("enabled").MustBool(true)
-}
-
-func (cfg *Cfg) readCloudMigrationSettings() {
-	cloudMigration := cfg.Raw.Section("cloud_migration")
-	cfg.CloudMigrationIsTarget = cloudMigration.Key("is_target").MustBool(false)
 }

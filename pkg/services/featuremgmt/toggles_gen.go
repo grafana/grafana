@@ -95,10 +95,6 @@ const (
 	// Allow elements nesting
 	FlagCanvasPanelNesting = "canvasPanelNesting"
 
-	// FlagNewVizTooltips
-	// New visualizations tooltips UX
-	FlagNewVizTooltips = "newVizTooltips"
-
 	// FlagScenes
 	// Experimental framework to build interactive dashboards
 	FlagScenes = "scenes"
@@ -627,6 +623,10 @@ const (
 	// Removes CustomScrollbar from the UI, relying on native browser scrollbars
 	FlagBetterPageScrolling = "betterPageScrolling"
 
+	// FlagAuthAPIAccessTokenAuth
+	// Enables the use of Auth API access tokens for authentication
+	FlagAuthAPIAccessTokenAuth = "authAPIAccessTokenAuth"
+
 	// FlagScopeFilters
 	// Enables the use of scope filters in Grafana
 	FlagScopeFilters = "scopeFilters"
@@ -638,4 +638,8 @@ const (
 	// FlagUsePrometheusFrontendPackage
 	// Use the @grafana/prometheus frontend package in core Prometheus.
 	FlagUsePrometheusFrontendPackage = "usePrometheusFrontendPackage"
+
+	// FlagOauthRequireSubClaim
+	// Require that sub claims is present in oauth tokens.
+	FlagOauthRequireSubClaim = "oauthRequireSubClaim"
 )

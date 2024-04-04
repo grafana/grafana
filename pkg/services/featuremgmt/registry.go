@@ -177,14 +177,6 @@ var (
 			HideFromAdminPage: true,
 		},
 		{
-			Name:           "newVizTooltips",
-			Description:    "New visualizations tooltips UX",
-			Stage:          FeatureStagePublicPreview,
-			FrontendOnly:   true,
-			Owner:          grafanaDatavizSquad,
-			AllowSelfServe: false,
-		},
-		{
 			Name:         "scenes",
 			Description:  "Experimental framework to build interactive dashboards",
 			Stage:        FeatureStageExperimental,
@@ -1156,6 +1148,14 @@ var (
 			Expression:   "true", // enabled by default
 		},
 		{
+			Name:              "authAPIAccessTokenAuth",
+			Description:       "Enables the use of Auth API access tokens for authentication",
+			Stage:             FeatureStageExperimental,
+			Owner:             identityAccessTeam,
+			HideFromDocs:      true,
+			HideFromAdminPage: true,
+		},
+		{
 			Name:              "scopeFilters",
 			Description:       "Enables the use of scope filters in Grafana",
 			FrontendOnly:      false,
@@ -1180,6 +1180,14 @@ var (
 			Stage:        FeatureStageExperimental,
 			FrontendOnly: true,
 			Owner:        grafanaObservabilityMetricsSquad,
+		},
+		{
+			Name:              "oauthRequireSubClaim",
+			Description:       "Require that sub claims is present in oauth tokens.",
+			Stage:             FeatureStageExperimental,
+			Owner:             identityAccessTeam,
+			HideFromDocs:      true,
+			HideFromAdminPage: true,
 		},
 	}
 )
