@@ -31,7 +31,7 @@ jest.mock('../../components/monaco-query-field/MonacoQueryFieldWrapper', () => {
   };
 });
 
-jest.mock('../../gcopypaste/app/core/store', () => {
+jest.mock('app/core/store', () => {
   return {
     get() {
       return undefined;
