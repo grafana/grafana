@@ -52,7 +52,7 @@ func (cma *CloudMigrationAPI) registerEndpoints() {
 		cloudMigrationRoute.Get("/migration/:id/run", routing.Wrap(cma.GetMigrationRunList))
 		cloudMigrationRoute.Get("/migration/:id/run/:runID", routing.Wrap(cma.GetMigrationRun))
 		cloudMigrationRoute.Post("/token", routing.Wrap(cma.CreateToken))
-	}, middleware.ReqGrafanaAdmin)
+	}, middleware.ReqOrgAdmin)
 }
 
 // swagger:route POST /cloudmigration/token migrations createCloudMigrationToken
@@ -271,7 +271,14 @@ func (cma *CloudMigrationAPI) GetMigrationRun(c *contextmodel.ReqContext) respon
 	if err != nil {
 		return response.Error(http.StatusInternalServerError, "migration status error", err)
 	}
-	return response.JSON(http.StatusOK, migrationStatus)
+
+	runResponse, err := migrationStatus.ToResponse()
+	if err != nil {
+		cma.log.Error("could not return migration run", "err", err)
+		return response.Error(http.StatusInternalServerError, "migration run get error", err)
+	}
+
+	return response.JSON(http.StatusOK, runResponse)
 }
 
 // swagger:parameters getCloudMigrationRun

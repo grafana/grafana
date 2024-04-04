@@ -11,6 +11,8 @@ import { useAppNotification } from 'app/core/copy/appNotification';
 import { contextSrv } from 'app/core/core';
 import { useCleanup } from 'app/core/hooks/useCleanup';
 import { useQueryParams } from 'app/core/hooks/useQueryParams';
+import InfoPausedRule from 'app/features/alerting/unified/components/InfoPausedRule';
+import { isGrafanaRulerRule, isGrafanaRulerRulePaused } from 'app/features/alerting/unified/utils/rules';
 import { useDispatch } from 'app/types';
 import { RuleWithLocation } from 'app/types/unified-alerting';
 
@@ -230,11 +232,13 @@ export const AlertRuleForm = ({ existing, prefill }: Props) => {
     </HorizontalGroup>
   );
 
+  const isPaused = existing && isGrafanaRulerRule(existing.rule) && isGrafanaRulerRulePaused(existing.rule);
   return (
     <FormProvider {...formAPI}>
       <AppChromeUpdate actions={actionButtons} />
       <form onSubmit={(e) => e.preventDefault()} className={styles.form}>
         <div className={styles.contentOuter}>
+          {isPaused && <InfoPausedRule />}
           <CustomScrollbar autoHeightMin="100%" hideHorizontalTrack={true}>
             <Stack direction="column" gap={3}>
               {/* Step 1 */}
@@ -339,6 +343,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
   contentOuter: css({
     background: theme.colors.background.primary,
     overflow: 'hidden',
+    maxWidth: theme.breakpoints.values.xl,
     flex: 1,
   }),
   flexRow: css({
