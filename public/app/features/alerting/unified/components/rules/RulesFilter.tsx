@@ -162,7 +162,12 @@ const RulesFilter = ({ onFilterCleared = () => undefined }: RulesFilerProps) => 
                       </div>
                     }
                   >
-                    <Icon id="data-source-picker-inline-help" name="info-circle" size="sm" />
+                    <Icon
+                      id="data-source-picker-inline-help"
+                      name="info-circle"
+                      size="sm"
+                      title="Search by data sources help"
+                    />
                   </Tooltip>
                 </Stack>
               </Label>
@@ -232,7 +237,7 @@ const RulesFilter = ({ onFilterCleared = () => undefined }: RulesFilerProps) => 
                     <Stack gap={0.5}>
                       <span>Search</span>
                       <HoverCard content={<SearchQueryHelp />}>
-                        <Icon name="info-circle" size="sm" tabIndex={0} />
+                        <Icon name="info-circle" size="sm" tabIndex={0} title="Search help" />
                       </HoverCard>
                     </Stack>
                   </Label>
