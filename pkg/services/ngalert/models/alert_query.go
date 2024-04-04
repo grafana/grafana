@@ -303,7 +303,8 @@ func (aq *AlertQuery) PreSave() error {
 	}
 
 	if ok := isExpression || aq.RelativeTimeRange.isValid(); !ok {
-		return fmt.Errorf("invalid relative time range: %+v", aq.RelativeTimeRange)
+		// return fmt.Errorf("invalid relative time range: %+v", aq.RelativeTimeRange)
+		return ErrInvalidRelativeTimeRange(aq.RefID, aq.RelativeTimeRange)
 	}
 	return nil
 }
