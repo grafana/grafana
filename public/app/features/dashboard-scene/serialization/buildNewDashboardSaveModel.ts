@@ -6,7 +6,7 @@ import { DashboardDTO } from 'app/types';
 export async function buildNewDashboardSaveModel(urlFolderUid?: string): Promise<DashboardDTO> {
   let variablesList = defaultDashboard.templating?.list;
 
-  if (config.featureToggles.filtersOnByDefault) {
+  if (config.featureToggles.newDashboardWithFiltersAndGroupBy) {
     // Add filter and group by variables if the datasource supports it
     const defaultDs = await getDatasourceSrv().get();
 

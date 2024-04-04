@@ -42,7 +42,7 @@ jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
   config: {
     featureToggles: {
-      filtersOnByDefault: false,
+      newDashboardWithFiltersAndGroupBy: false,
     },
   },
   getDataSourceSrv: () => ({
@@ -58,12 +58,12 @@ describe('buildNewDashboardSaveModel', () => {
     expect(result.dashboard.templating).toBeUndefined();
   });
 
-  describe('when featureToggles.filtersOnByDefault is true', () => {
+  describe('when featureToggles.newDashboardWithFiltersAndGroupBy is true', () => {
     beforeAll(() => {
-      config.featureToggles.filtersOnByDefault = true;
+      config.featureToggles.newDashboardWithFiltersAndGroupBy = true;
     });
     afterAll(() => {
-      config.featureToggles.filtersOnByDefault = false;
+      config.featureToggles.newDashboardWithFiltersAndGroupBy = false;
     });
 
     it('should add filter and group by variables if the datasource supports it and is set as default', async () => {

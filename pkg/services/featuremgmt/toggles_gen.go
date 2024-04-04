@@ -643,7 +643,7 @@ const (
 	// Require that sub claims is present in oauth tokens.
 	FlagOauthRequireSubClaim = "oauthRequireSubClaim"
 
-	// FlagFiltersOnByDefault
+	// FlagNewDashboardWithFiltersAndGroupBy
 	// Enables filters and group by variables on all new dashboards. Variables are added only if default data source supports filtering.
-	FlagFiltersOnByDefault = "filtersOnByDefault"
+	FlagNewDashboardWithFiltersAndGroupBy = "newDashboardWithFiltersAndGroupBy"
 )
