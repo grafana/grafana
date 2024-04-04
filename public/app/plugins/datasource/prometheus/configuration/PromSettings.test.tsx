@@ -1,13 +1,21 @@
-import { render, screen } from '@testing-library/react';
+import { render, screen, fireEvent } from '@testing-library/react';
 import React, { SyntheticEvent } from 'react';
 import { Provider } from 'react-redux';
 
 import { SelectableValue } from '@grafana/data';
+import { selectors } from '@grafana/e2e-selectors';
+import { config } from '@grafana/runtime';
 
 import { configureStore } from '../../../../store/configureStore';
 
-import { getValueFromEventItem, PromSettings } from './PromSettings';
+import { countError, getValueFromEventItem, PromSettings } from './PromSettings';
 import { createDefaultConfigOptions } from './mocks';
+
+beforeEach(() => {
+  jest.replaceProperty(config, 'featureToggles', {
+    prometheusCodeModeMetricNamesSearch: true,
+  });
+});
 
 describe('PromSettings', () => {
   describe('getValueFromEventItem', () => {
@@ -78,6 +86,47 @@ describe('PromSettings', () => {
         </Provider>
       );
       expect(screen.getByText('GET')).toBeInTheDocument();
+    });
+    it('should show a valid metric name count if codeModeMetricNamesSuggestionLimit is configured correctly', () => {
+      const options = defaultProps;
+
+      const { getByTestId, queryByText } = render(<PromSettings onOptionsChange={() => {}} options={options} />);
+      const input = getByTestId(
+        selectors.components.DataSource.Prometheus.configPage.codeModeMetricNamesSuggestionLimit
+      );
+
+      // Non-negative integer
+      fireEvent.change(input, { target: { value: '3000' } });
+      fireEvent.blur(input);
+      expect(queryByText(countError)).not.toBeInTheDocument();
+
+      // Non-negative integer with scientific notation
+      fireEvent.change(input, { target: { value: '1e5' } });
+      fireEvent.blur(input);
+      expect(queryByText(countError)).not.toBeInTheDocument();
+
+      // Non-negative integer with decimal scientific notation
+      fireEvent.change(input, { target: { value: '1.4e4' } });
+      fireEvent.blur(input);
+      expect(queryByText(countError)).not.toBeInTheDocument();
+    });
+    it('should show the expected error when an invalid value is provided for codeModeMetricNamesSuggestionLimit', () => {
+      const options = defaultProps;
+
+      const { getByTestId, queryByText } = render(<PromSettings onOptionsChange={() => {}} options={options} />);
+      const input = getByTestId(
+        selectors.components.DataSource.Prometheus.configPage.codeModeMetricNamesSuggestionLimit
+      );
+
+      // No negative values
+      fireEvent.change(input, { target: { value: '-50' } });
+      fireEvent.blur(input);
+      expect(queryByText(countError)).toBeInTheDocument();
+
+      // No negative values with scientific notation
+      fireEvent.change(input, { target: { value: '-5e5' } });
+      fireEvent.blur(input);
+      expect(queryByText(countError)).toBeInTheDocument();
     });
   });
 });

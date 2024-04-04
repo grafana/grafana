@@ -1,6 +1,7 @@
 import type { Monaco, monacoTypes } from '@grafana/ui';
 
-import { getCompletions, DataProvider, CompletionType } from './completions';
+import { CompletionType, getCompletions } from './completions';
+import { DataProvider } from './data_provider';
 import { getSituation } from './situation';
 import { NeverCaseError } from './util';
 
@@ -69,6 +70,7 @@ export function getCompletionProvider(
       column: position.column,
       lineNumber: position.lineNumber,
     };
+    dataProvider.monacoSettings.setInputInRange(model.getValueInRange(range));
 
     // Check to see if the browser supports window.getSelection()
     if (window.getSelection) {
@@ -82,6 +84,7 @@ export function getCompletionProvider(
     const offset = model.getOffsetAt(positionClone);
     const situation = getSituation(model.getValue(), offset);
     const completionsPromise = situation != null ? getCompletions(situation, dataProvider) : Promise.resolve([]);
+
     return completionsPromise.then((items) => {
       // monaco by-default alphabetically orders the items.
       // to stop it, we use a number-as-string sortkey,
@@ -102,7 +105,7 @@ export function getCompletionProvider(
             }
           : undefined,
       }));
-      return { suggestions };
+      return { suggestions, incomplete: dataProvider.monacoSettings.suggestionsIncomplete };
     });
   };
 
