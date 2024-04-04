@@ -19,7 +19,9 @@ func TestRunInstrumentationService(t *testing.T) {
 	err = s.start(context.Background())
 	require.NoError(t, err)
 
-	go s.running(context.Background())
+	go func() {
+		_ = s.running(context.Background())
+	}()
 
 	require.NoError(t, err)
 	time.Sleep(500 * time.Millisecond) // wait for http server to be running
