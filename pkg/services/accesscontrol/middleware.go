@@ -250,7 +250,7 @@ func UseOrgFromRequestData(c *contextmodel.ReqContext) (int64, error) {
 
 // UseGlobalOrgFromRequestData returns global org if `global` flag is set or the org where user is logged in.
 // If RBACSingleOrganization is set, the org where user is logged in is returned - this is intended only for cloud workflows, where instances are limited to a single organization.
-func UseGlobalOrgFromRequestData(cfg *setting.Cfg) func(*contextmodel.ReqContext) (int64, error) {
+func UseGlobalOrgFromRequestData(cfg *setting.Cfg) OrgIDGetter {
 	return func(c *contextmodel.ReqContext) (int64, error) {
 		query, err := getOrgQueryFromRequest(c)
 		if err != nil {
