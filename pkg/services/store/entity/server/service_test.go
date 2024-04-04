@@ -30,7 +30,7 @@ func TestWillCreateMetricServerWhenOnlyStorageServerTarget(t *testing.T) {
 	time.Sleep(500 * time.Millisecond) // wait for http server to be running
 
 	client := http.Client{}
-	res, err := client.Get("http://localhost:8000/metrics")
+	res, err := client.Get("http://localhost:3000/metrics")
 	require.NoError(t, err)
 	err = res.Body.Close()
 	require.NoError(t, err)
