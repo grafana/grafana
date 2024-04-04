@@ -417,8 +417,9 @@ for (let i = 1; i < 100; i++) {
     name: name,
     description: description,
     standard: false,
-    reduce: (field: Field, ignoreNulls: boolean, nullAsZero: boolean) =>
-      calculatePercentile(id, percentile, field, ignoreNulls, nullAsZero),
+    reduce: (field: Field, ignoreNulls: boolean, nullAsZero: boolean) => {
+      return {[id]: calculatePercentile(field, percentile, ignoreNulls, nullAsZero)};    
+    },
     preservesUnits: true,
   });
 }
@@ -671,9 +672,8 @@ function calculateDistinctCount(field: Field, ignoreNulls: boolean, nullAsZero: 
 }
 
 function calculatePercentile(
-  name: string,
-  percentile: number,
   field: Field,
+  percentile: number,
   ignoreNulls: boolean,
   nullAsZero: boolean
 ): FieldCalcs {
@@ -688,5 +688,5 @@ function calculatePercentile(
 
   const sorted = data.slice().sort((a, b) => a - b);
   const index = Math.floor((sorted.length - 1) * percentile);
-  return { [name]: sorted[index] };
+  return sorted[index];
 }
