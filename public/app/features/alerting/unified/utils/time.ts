@@ -114,7 +114,7 @@ export function formatPrometheusDuration(milliseconds: number): string {
     return '0s';
   }
 
-  const allUnits: Array<[number, string]> = [
+  const timeUnits: Array<[number, string]> = [
     [years, 'y'],
     [weeks % 52, 'w'],
     [(days % 365) - 7 * (weeks % 52), 'd'],
@@ -124,23 +124,14 @@ export function formatPrometheusDuration(milliseconds: number): string {
     [milliseconds % 1000, 'ms'],
   ];
 
-  // Find the largest non-zero unit that we'll have to show
-  const largestUnitIndex = allUnits.findIndex(([time]) => {
-    return time > 0;
-  });
-
-  // Are there any units below the largest leading unit that are non-zero?
-  // e.g. is the converted value of milliseconds an exact rounded value?
-  const isRoundUnitValue = [...allUnits.slice(largestUnitIndex + 1)].some(([time]) => time > 0);
-
-  const filtered = allUnits.filter(([time], index) => {
-    if (index < largestUnitIndex) {
-      return false;
-    }
-    return time > 0 || isRoundUnitValue;
-  });
-
-  return filtered.map((u) => u.join('')).join('');
+  return (
+    timeUnits
+      // remove all 0 values
+      .filter(([time]) => time > 0)
+      // join time and unit
+      .map(([time, unit]) => time + unit)
+      .join('')
+  );
 }
 
 export const safeParsePrometheusDuration = (duration: string): number => {
