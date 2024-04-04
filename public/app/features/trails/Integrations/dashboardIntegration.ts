@@ -8,6 +8,7 @@ import { DataSourceRef } from '@grafana/schema';
 import { DashboardModel } from '../../dashboard/state';
 import { DashboardScene } from '../../dashboard-scene/scene/DashboardScene';
 import { MetricScene } from '../MetricScene';
+import { reportExploreMetrics } from '../interactions';
 
 import { DataTrailEmbedded, DataTrailEmbeddedState } from './DataTrailEmbedded';
 import { SceneDrawerAsScene, launchSceneDrawerInGlobalModal } from './SceneDrawer';
@@ -118,9 +119,13 @@ function createClickHandler(item: QueryMetric, dashboard: DashboardScene | Dashb
         ...commonProps,
         onDismiss: () => dashboard.closeModal(),
       });
+      reportExploreMetrics('exploration_started', { cause: 'dashboard_panel' });
       dashboard.showModal(drawerScene);
     };
   } else {
-    return () => launchSceneDrawerInGlobalModal(createCommonEmbeddedTrailStateProps(item, dashboard, ds));
+    return () => {
+      reportExploreMetrics('exploration_started', { cause: 'dashboard_panel' });
+      launchSceneDrawerInGlobalModal(createCommonEmbeddedTrailStateProps(item, dashboard, ds));
+    };
   }
 }

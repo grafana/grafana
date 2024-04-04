@@ -1,6 +1,7 @@
 import { useState } from 'react';
 
 import { DataTrail } from '../DataTrail';
+import { reportExploreMetrics } from '../interactions';
 
 import { getTrailStore } from './TrailStore';
 
@@ -21,6 +22,7 @@ export function useBookmarkState(trail: DataTrail) {
   const isBookmarked = bookmarkIndex != null;
 
   const toggleBookmark = () => {
+    reportExploreMetrics('bookmark_changed', { change: isBookmarked ? 'toggled_off' : 'toggled_on' });
     if (isBookmarked) {
       let indexToRemove = getBookmarkIndex();
       while (indexToRemove != null) {

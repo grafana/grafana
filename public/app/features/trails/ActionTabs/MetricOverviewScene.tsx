@@ -14,6 +14,7 @@ import { PromMetricsMetadataItem } from '../../../plugins/datasource/prometheus/
 import { ALL_VARIABLE_VALUE } from '../../variables/constants';
 import { MetricScene } from '../MetricScene';
 import { StatusWrapper } from '../StatusWrapper';
+import { reportExploreMetrics } from '../interactions';
 import { VAR_DATASOURCE_EXPR, VAR_GROUP_BY } from '../shared';
 import { getMetricSceneFor, getTrailFor } from '../utils';
 
@@ -102,7 +103,8 @@ export class MetricOverviewScene extends SceneObjectBase<MetricOverviewSceneStat
                     event.stopPropagation();
                     sceneGraph.getAncestor(model, MetricScene).setActionView('breakdown');
                     const groupByVar = sceneGraph.lookupVariable(VAR_GROUP_BY, model);
-                    if (groupByVar instanceof QueryVariable) {
+                    if (groupByVar instanceof QueryVariable && l.label != null) {
+                      reportExploreMetrics('label_selected', { label: l.label, cause: 'overview_link' });
                       groupByVar.setState({ value: l.value });
                     }
                     return false;
