@@ -63,7 +63,7 @@ Metrics Explore is a query-less experience for browsing Prometheus-compatible me
 
 … all without writing any queries!
 
-To learn more, refer to the Metrics Explore [documentation](http://grafana.com/docs/grafana/<GRAFANA_VERSION>/explore/metrics-explore/). <!-- as well as the following video demo (forthcoming):-->
+<!--To learn more, refer to the Metrics Explore [documentation](http://grafana.com/docs/grafana/<GRAFANA_VERSION>/explore/metrics-explore/) as well as the following video demo (forthcoming):-->
 
 ## Dashboards and visualizations
 
