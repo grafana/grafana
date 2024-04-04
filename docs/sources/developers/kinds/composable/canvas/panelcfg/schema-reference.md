@@ -141,6 +141,7 @@ It extends [BaseDimensionConfig](#basedimensionconfig).
 
 | Property            | Type            | Required | Default | Description                                                                                                                          |
 |---------------------|-----------------|----------|---------|--------------------------------------------------------------------------------------------------------------------------------------|
+| `infinitePan`       | boolean         | **Yes**  | `true`  | Enable infinite pan                                                                                                                  |
 | `inlineEditing`     | boolean         | **Yes**  | `true`  | Enable inline editing                                                                                                                |
 | `panZoom`           | boolean         | **Yes**  | `true`  | Enable pan and zoom                                                                                                                  |
 | `root`              | [object](#root) | **Yes**  |         | The root element of canvas (frame), where all canvas elements are nested<br/>TODO: Figure out how to define a default value for this |
