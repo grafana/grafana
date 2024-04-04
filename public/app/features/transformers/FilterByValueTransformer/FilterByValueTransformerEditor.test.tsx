@@ -1,8 +1,10 @@
+import { render, fireEvent } from '@testing-library/react';
 import React from 'react';
-import { render, fireEvent} from '@testing-library/react';
+
+import { DataFrame, FieldType, ValueMatcherID, valueMatchers } from '@grafana/data';
+import { FilterByValueMatch, FilterByValueType } from '@grafana/data/src/transformations/transformers/filterByValue';
+
 import { FilterByValueTransformerEditor } from './FilterByValueTransformerEditor';
-import {DataFrame, FieldType, ValueMatcherID, valueMatchers} from "@grafana/data";
-import {FilterByValueMatch, FilterByValueType} from "@grafana/data/src/transformations/transformers/filterByValue";
 
 describe('FilterByValueTransformerEditor', () => {
   it('adds a filter with default isNull option when onAddFilter is called', () => {
@@ -20,11 +22,21 @@ describe('FilterByValueTransformerEditor', () => {
     const input: DataFrame[] = [
       {
         fields: [
-          { name: 'person', type: FieldType.string, config: { displayName: 'Person' }, values: ['john', 'jill', 'jeremy', ''] },
-          { name: 'city', type: FieldType.string, config: { displayName: 'City' }, values: ['london', 'budapest', '', 'lisbon'] }
+          {
+            name: 'person',
+            type: FieldType.string,
+            config: { displayName: 'Person' },
+            values: ['john', 'jill', 'jeremy', ''],
+          },
+          {
+            name: 'city',
+            type: FieldType.string,
+            config: { displayName: 'City' },
+            values: ['london', 'budapest', '', 'lisbon'],
+          },
         ],
-        length: 4
-      }
+        length: 4,
+      },
     ];
 
     // Render the component
@@ -42,9 +54,12 @@ describe('FilterByValueTransformerEditor', () => {
           fieldName: 'Person',
           config: {
             id: ValueMatcherID.isNull,
-            options: valueMatchers.get(ValueMatcherID.isNull).getDefaultOptions(
-              { name: 'person', type: FieldType.string, config: { displayName: 'Person' }, values: ['john', 'jill', 'jeremy', ''] }
-            ),
+            options: valueMatchers.get(ValueMatcherID.isNull).getDefaultOptions({
+              name: 'person',
+              type: FieldType.string,
+              config: { displayName: 'Person' },
+              values: ['john', 'jill', 'jeremy', ''],
+            }),
           },
         },
       ],
