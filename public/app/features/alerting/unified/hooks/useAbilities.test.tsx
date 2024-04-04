@@ -1,4 +1,3 @@
-import 'whatwg-fetch';
 import { renderHook, waitFor } from '@testing-library/react';
 import { createBrowserHistory } from 'history';
 import React, { PropsWithChildren } from 'react';

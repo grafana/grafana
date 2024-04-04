@@ -1,4 +1,3 @@
-import 'whatwg-fetch';
 import { uniqueId } from 'lodash';
 import { http, HttpResponse } from 'msw';
 import { setupServer, SetupServer } from 'msw/node';

@@ -1,4 +1,3 @@
-import 'whatwg-fetch'; // fetch polyfill needed for PhantomJs rendering
 import {
   isContentTypeApplicationJson,
   parseBody,

@@ -1,6 +1,3 @@
-// mock fetch for SystemJS
-import 'whatwg-fetch';
-
 import { config } from '@grafana/runtime';
 
 jest.mock('./cache', () => ({
