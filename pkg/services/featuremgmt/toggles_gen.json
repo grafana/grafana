@@ -2110,6 +2110,19 @@
     },
     {
       "metadata": {
+        "name": "prometheusCodeModeMetricNamesSearch",
+        "resourceVersion": "1712241392690",
+        "creationTimestamp": "2024-04-04T14:36:32Z"
+      },
+      "spec": {
+        "description": "Enables search for metric names in Code Mode, to improve performance when working with an enormous number of metric names",
+        "stage": "experimental",
+        "codeowner": "@grafana/observability-metrics",
+        "frontend": true
+      }
+    },
+    {
+      "metadata": {
         "name": "dashboardRestore",
         "resourceVersion": "1708455041047",
         "creationTimestamp": "2024-02-20T18:50:41Z"
