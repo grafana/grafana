@@ -1,3 +1,4 @@
+import 'whatwg-fetch';
 import { act, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import React, { ReactNode } from 'react';
@@ -54,6 +55,12 @@ const openModal = async (nameOverride?: string) => {
 describe('AddToDashboardButton', () => {
   beforeAll(() => {
     setEchoSrv(new Echo());
+  });
+
+  beforeEach(() => {
+    // Mock the search response so we don't get any refused connection errors
+    // from this test (as the fetch polyfill means this logic would actually try and call the API)
+    jest.spyOn(backendSrv, 'search').mockResolvedValue([]);
   });
 
   it('Is disabled if explore pane has no queries', async () => {
