@@ -42,7 +42,7 @@ type RenderingService struct {
 
 	perRequestRenderKeyProvider renderKeyProvider
 	Cfg                         *setting.Cfg
-	features                    *featuremgmt.FeatureManager
+	features                    featuremgmt.FeatureToggles
 	RemoteCacheService          *remotecache.RemoteCache
 	RendererPluginManager       PluginManager
 }
@@ -57,7 +57,7 @@ type Plugin interface {
 	Version() string
 }
 
-func ProvideService(cfg *setting.Cfg, features *featuremgmt.FeatureManager, remoteCache *remotecache.RemoteCache, rm PluginManager) (*RenderingService, error) {
+func ProvideService(cfg *setting.Cfg, features featuremgmt.FeatureToggles, remoteCache *remotecache.RemoteCache, rm PluginManager) (*RenderingService, error) {
 	folders := []string{
 		cfg.ImagesDir,
 		cfg.CSVsDir,
