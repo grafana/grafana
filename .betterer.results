@@ -827,9 +827,6 @@ exports[`better eslint`] = {
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "1"]
     ],
-    "packages/grafana-ui/src/components/ConfirmModal/ConfirmModal.tsx:5381": [
-      [0, 0, 0, "\'HorizontalGroup\' import from \'../Layout/Layout\' is restricted from being used by a pattern. Use Stack component instead.", "0"]
-    ],
     "packages/grafana-ui/src/components/DataLinks/DataLinkInput.tsx:5381": [
       [0, 0, 0, "Do not use any type assertions.", "0"]
     ],
