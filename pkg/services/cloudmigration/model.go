@@ -1,6 +1,8 @@
 package cloudmigration
 
 import (
+	"encoding/json"
+	"errors"
 	"time"
 
 	"github.com/grafana/grafana/pkg/util/errutil"
@@ -51,6 +53,16 @@ type CloudMigrationRun struct {
 	Created           time.Time `json:"created"`
 	Updated           time.Time `json:"updated"`
 	Finished          time.Time `json:"finished"`
+}
+
+func (r CloudMigrationRun) ToResponse() (*MigrateDataResponseDTO, error) {
+	var result MigrateDataResponseDTO
+	err := json.Unmarshal(r.Result, &result)
+	if err != nil {
+		return nil, errors.New("could not parse result of run")
+	}
+	result.RunID = r.ID
+	return &result, nil
 }
 
 type CloudMigrationRunList struct {
@@ -131,6 +143,7 @@ type Base64HGInstance struct {
 
 // dtos for cms api
 
+// swagger:enum MigrateDataType
 type MigrateDataType string
 
 const (
@@ -150,6 +163,7 @@ type MigrateDataRequestItemDTO struct {
 	Data  interface{}     `json:"data"`
 }
 
+// swagger:enum ItemStatus
 type ItemStatus string
 
 const (
@@ -163,7 +177,11 @@ type MigrateDataResponseDTO struct {
 }
 
 type MigrateDataResponseItemDTO struct {
-	RefID  string     `json:"refId"`
+	// required:true
+	Type MigrateDataType `json:"type"`
+	// required:true
+	RefID string `json:"refId"`
+	// required:true
 	Status ItemStatus `json:"status"`
 	Error  string     `json:"error,omitempty"`
 }
