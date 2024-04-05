@@ -37,7 +37,6 @@ func (fam *RemotePrimaryForkedAlertmanager) ApplyConfig(ctx context.Context, con
 	return nil
 }
 
-// TODO: save the new configuration hash in memory.
 func (fam *RemotePrimaryForkedAlertmanager) SaveAndApplyConfig(ctx context.Context, config *apimodels.PostableUserConfig) error {
 	if err := fam.internal.SaveAndApplyConfig(ctx, config); err != nil {
 		return err
@@ -46,12 +45,11 @@ func (fam *RemotePrimaryForkedAlertmanager) SaveAndApplyConfig(ctx context.Conte
 	return fam.remote.SaveAndApplyConfig(ctx, config)
 }
 
-// TODO: save the new configuration hash in memory.
 func (fam *RemotePrimaryForkedAlertmanager) SaveAndApplyDefaultConfig(ctx context.Context) error {
-	// Do nothing on the remote Alertmanager side, it will receive a configuration on startup or config change.
 	if err := fam.remote.SaveAndApplyDefaultConfig(ctx); err != nil {
-		return err
+		return fmt.Errorf("failed to send the default configuration to the remote Alertmanager: %w", err)
 	}
+
 	return fam.internal.SaveAndApplyDefaultConfig(ctx)
 }
 
