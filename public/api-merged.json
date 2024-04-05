@@ -2319,9 +2319,12 @@
         "operationId": "createMigration",
         "parameters": [
           {
-            "type": "string",
-            "name": "authToken",
-            "in": "query"
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/CloudMigrationRequest"
+            }
           }
         ],
         "responses": {
@@ -2422,6 +2425,38 @@
         "responses": {
           "200": {
             "$ref": "#/responses/cloudMigrationRunListResponse"
+          },
+          "401": {
+            "$ref": "#/responses/unauthorisedError"
+          },
+          "403": {
+            "$ref": "#/responses/forbiddenError"
+          },
+          "500": {
+            "$ref": "#/responses/internalServerError"
+          }
+        }
+      },
+      "post": {
+        "description": "It returns migrations that has been created.",
+        "tags": [
+          "migrations"
+        ],
+        "summary": "Trigger the run of a migration to the Grafana Cloud.",
+        "operationId": "runCloudMigration",
+        "parameters": [
+          {
+            "type": "integer",
+            "format": "int64",
+            "description": "ID of an migration",
+            "name": "id",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/responses/cloudMigrationRunResponse"
           },
           "401": {
             "$ref": "#/responses/unauthorisedError"
@@ -12719,6 +12754,14 @@
         }
       }
     },
+    "CloudMigrationRequest": {
+      "type": "object",
+      "properties": {
+        "authToken": {
+          "type": "string"
+        }
+      }
+    },
     "CloudMigrationResponse": {
       "type": "object",
       "properties": {
@@ -12739,46 +12782,13 @@
         }
       }
     },
-    "CloudMigrationRun": {
-      "type": "object",
-      "properties": {
-        "created": {
-          "type": "string",
-          "format": "date-time"
-        },
-        "finished": {
-          "type": "string",
-          "format": "date-time"
-        },
-        "id": {
-          "type": "integer",
-          "format": "int64"
-        },
-        "items": {
-          "type": "array",
-          "items": {
-            "$ref": "#/definitions/MigratedResource"
-          }
-        },
-        "result": {
-          "$ref": "#/definitions/MigrationResult"
-        },
-        "uid": {
-          "type": "string"
-        },
-        "updated": {
-          "type": "string",
-          "format": "date-time"
-        }
-      }
-    },
     "CloudMigrationRunList": {
       "type": "object",
       "properties": {
         "runs": {
           "type": "array",
           "items": {
-            "$ref": "#/definitions/CloudMigrationRun"
+            "$ref": "#/definitions/MigrateDataResponseDTO"
           }
         }
       }
@@ -15489,6 +15499,9 @@
         }
       }
     },
+    "ItemStatus": {
+      "type": "string"
+    },
     "JSONWebKey": {
       "description": "JSONWebKey represents a public or private key in JWK format. It can be\nmarshaled into JSON and unmarshaled from JSON.",
       "type": "object",
@@ -15924,47 +15937,40 @@
         }
       }
     },
-    "MigratedResource": {
+    "MigrateDataResponseDTO": {
       "type": "object",
       "properties": {
         "id": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "items": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/MigrateDataResponseItemDTO"
+          }
+        }
+      }
+    },
+    "MigrateDataResponseItemDTO": {
+      "type": "object",
+      "properties": {
+        "error": {
           "type": "string"
         },
-        "name": {
+        "refId": {
           "type": "string"
         },
-        "refID": {
-          "type": "string"
-        },
-        "result": {
-          "$ref": "#/definitions/MigratedResourceResult"
+        "status": {
+          "$ref": "#/definitions/ItemStatus"
         },
         "type": {
-          "type": "string"
+          "$ref": "#/definitions/MigrateDataType"
         }
       }
     },
-    "MigratedResourceResult": {
-      "type": "object",
-      "properties": {
-        "message": {
-          "type": "string"
-        },
-        "status": {
-          "type": "string"
-        }
-      }
-    },
-    "MigrationResult": {
-      "type": "object",
-      "properties": {
-        "message": {
-          "type": "string"
-        },
-        "status": {
-          "type": "string"
-        }
-      }
+    "MigrateDataType": {
+      "type": "string"
     },
     "MoveFolderCommand": {
       "description": "MoveFolderCommand captures the information required by the folder service\nto move a folder.",
@@ -21673,7 +21679,7 @@
     "cloudMigrationRunResponse": {
       "description": "(empty)",
       "schema": {
-        "$ref": "#/definitions/CloudMigrationRun"
+        "$ref": "#/definitions/MigrateDataResponseDTO"
       }
     },
     "conflictError": {

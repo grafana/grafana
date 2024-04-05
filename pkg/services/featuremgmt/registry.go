@@ -177,14 +177,6 @@ var (
 			HideFromAdminPage: true,
 		},
 		{
-			Name:           "newVizTooltips",
-			Description:    "New visualizations tooltips UX",
-			Stage:          FeatureStagePublicPreview,
-			FrontendOnly:   true,
-			Owner:          grafanaDatavizSquad,
-			AllowSelfServe: false,
-		},
-		{
 			Name:         "scenes",
 			Description:  "Experimental framework to build interactive dashboards",
 			Stage:        FeatureStageExperimental,
@@ -868,6 +860,13 @@ var (
 			Owner:        grafanaObservabilityMetricsSquad,
 		},
 		{
+			Name:         "prometheusCodeModeMetricNamesSearch",
+			Description:  "Enables search for metric names in Code Mode, to improve performance when working with an enormous number of metric names",
+			FrontendOnly: true,
+			Stage:        FeatureStageExperimental,
+			Owner:        grafanaObservabilityMetricsSquad,
+		},
+		{
 			Name:         "addFieldFromCalculationStatFunctions",
 			Description:  "Add cumulative and window functions to the add field from calculation transformation",
 			Stage:        FeatureStagePublicPreview,
@@ -1156,6 +1155,14 @@ var (
 			Expression:   "true", // enabled by default
 		},
 		{
+			Name:              "authAPIAccessTokenAuth",
+			Description:       "Enables the use of Auth API access tokens for authentication",
+			Stage:             FeatureStageExperimental,
+			Owner:             identityAccessTeam,
+			HideFromDocs:      true,
+			HideFromAdminPage: true,
+		},
+		{
 			Name:              "scopeFilters",
 			Description:       "Enables the use of scope filters in Grafana",
 			FrontendOnly:      false,
@@ -1186,6 +1193,15 @@ var (
 			Description:       "Require that sub claims is present in oauth tokens.",
 			Stage:             FeatureStageExperimental,
 			Owner:             identityAccessTeam,
+			HideFromDocs:      true,
+			HideFromAdminPage: true,
+		},
+		{
+			Name:              "newDashboardWithFiltersAndGroupBy",
+			Description:       "Enables filters and group by variables on all new dashboards. Variables are added only if default data source supports filtering.",
+			Stage:             FeatureStageExperimental,
+			Owner:             grafanaDashboardsSquad,
+			AllowSelfServe:    false,
 			HideFromDocs:      true,
 			HideFromAdminPage: true,
 		},

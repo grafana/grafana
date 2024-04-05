@@ -141,7 +141,7 @@ describe('RuleEditor grafana managed rules', () => {
             {
               annotations: { description: 'some description', summary: 'some summary' },
               labels: { severity: 'warn', team: 'the a-team' },
-              for: '5m',
+              for: '1m',
               grafana_alert: {
                 uid,
                 namespace_uid: 'abcd',
@@ -203,16 +203,16 @@ describe('RuleEditor grafana managed rules', () => {
           {
             annotations: { description: 'some description', summary: 'some summary', custom: 'value' },
             labels: { severity: 'warn', team: 'the a-team' },
-            for: '5m',
+            for: '1m',
             grafana_alert: {
               uid,
               condition: 'B',
               data: getDefaultQueries(),
               exec_err_state: GrafanaAlertStateDecision.Error,
+              notification_settings: undefined,
               is_paused: false,
               no_data_state: 'NoData',
               title: 'my great new rule',
-              notification_settings: undefined,
             },
           },
         ],
