@@ -697,18 +697,15 @@
     "connect-modal": {
       "body-cloud-stack": "您还需要一个云堆栈。如果您刚刚注册，我们会自动创建您的第一个堆栈。 如果您已有帐户，您需要选择或创建一个堆栈。",
       "body-get-started": "要开始使用，您需要一个 Grafana.com 账户。",
-      "body-paste-stack": "确定堆栈后，请将其 URL 粘贴到下面。",
       "body-sign-up": "注册 Grafana.com 帐户",
       "body-token": "自我管理的 Grafana 安装需要特殊访问权限才能安全迁移内容。您需要在所选云栈上创建一个迁移令牌。",
       "body-token-field": "迁移令牌",
       "body-token-field-placeholder": "在此粘贴令牌",
       "body-token-instructions": "登录云堆栈，并导航至“管理”、“通用”、“迁移到 Grafana Cloud”。在该屏幕上创建迁移令牌，并将令牌粘贴到此处。",
-      "body-url-field": "云堆栈网址",
       "body-view-stacks": "查看我的云堆栈。",
       "cancel": "取消",
       "connect": "连接到这个堆栈",
       "connecting": "正在连接此堆栈...",
-      "stack-required-error": "堆栈网址是必需项",
       "title": "连接到云堆栈",
       "token-required-error": "迁移令牌是必需项"
     },
@@ -790,7 +787,10 @@
     },
     "summary": {
       "disconnect": "",
-      "error-starting-migration": "",
+      "disconnect-error-description": "",
+      "disconnect-error-title": "",
+      "run-migration-error-description": "",
+      "run-migration-error-title": "",
       "start-migration": "",
       "target-stack-title": ""
     },
