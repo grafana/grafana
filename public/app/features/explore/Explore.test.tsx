@@ -51,6 +51,8 @@ const makeEmptyQueryResponse = (loadingState: LoadingState) => {
 };
 
 const dummyProps: Props = {
+  setShowQueryInspector: (value: boolean) => {},
+  showQueryInspector: false,
   logsResult: undefined,
   changeSize: jest.fn(),
   datasourceInstance: {

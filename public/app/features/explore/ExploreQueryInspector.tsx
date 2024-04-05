@@ -20,17 +20,15 @@ import { GetDataOptions } from '../query/state/PanelQueryRunner';
 import { runQueries } from './state/query';
 
 interface DispatchProps {
-  width: number;
   exploreId: string;
   timeZone: TimeZone;
   onClose: () => void;
-  isMixed: boolean;
 }
 
 type Props = DispatchProps & ConnectedProps<typeof connector>;
 
 export function ExploreQueryInspector(props: Props) {
-  const { width, onClose, queryResponse, timeZone, isMixed, exploreId } = props;
+  const { onClose, queryResponse, timeZone, isMixed, exploreId } = props;
   const [dataOptions, setDataOptions] = useState<GetDataOptions>({
     withTransforms: false,
     withFieldConfig: true,
@@ -101,7 +99,7 @@ export function ExploreQueryInspector(props: Props) {
     tabs.push(errorTab);
   }
   return (
-    <ExploreDrawer width={width}>
+    <ExploreDrawer>
       <TabbedContainer tabs={tabs} onClose={onClose} closeIconTooltip="Close query inspector" />
     </ExploreDrawer>
   );
@@ -114,6 +112,7 @@ function mapStateToProps(state: StoreState, { exploreId }: { exploreId: string }
 
   return {
     queryResponse,
+    isMixed: item.datasourceInstance?.meta.mixed || false,
   };
 }
 

@@ -104,6 +104,7 @@ const getStyles = (theme: GrafanaTheme2) => {
       minHeight: 0,
       height: '100%',
       position: 'relative',
+      overflow: 'hidden',
     }),
     correlationsEditorIndicator: css({
       borderLeft: `4px solid ${theme.colors.primary.main}`,
