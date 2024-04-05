@@ -574,6 +574,7 @@ func TestIntegrationGetSoftDeletedDashboard(t *testing.T) {
 		var dash *dashboards.Dashboard
 		// Get the soft deleted dashboard should be empty
 		dash, err = dashboardStore.GetDashboard(context.Background(), &dashboards.GetDashboardQuery{UID: savedDash.UID, OrgID: savedDash.OrgID})
+		require.NoError(t, err)
 		assert.Error(t, dashboards.ErrDashboardNotFound)
 		assert.Nil(t, dash)
 
@@ -629,6 +630,7 @@ func TestIntegrationGetSoftDeletedDashboard(t *testing.T) {
 		assert.Equal(t, savedDash.Title, dash.Title)
 
 		// Restore deleted dashboard
+		// nolint:staticcheck
 		err = dashboardStore.RestoreDashboard(context.Background(), savedDash.OrgID, savedDash.UID, &folder.Folder{ID: savedDash.FolderID, UID: savedDash.FolderUID})
 		require.NoError(t, err)
 
@@ -648,6 +650,7 @@ func TestIntegrationGetSoftDeletedDashboard(t *testing.T) {
 		assert.Equal(t, savedDash.ID, dash.ID)
 		assert.Equal(t, savedDash.UID, dash.UID)
 		assert.Equal(t, savedDash.Title, dash.Title)
+		// nolint:staticcheck
 		assert.Equal(t, savedDash.FolderID, dash.FolderID)
 		assert.Equal(t, savedDash.FolderUID, dash.FolderUID)
 	})
