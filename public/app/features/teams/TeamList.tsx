@@ -17,7 +17,6 @@ import {
   Pagination,
   Stack,
   TextLink,
-  Tooltip,
   useStyles2,
 } from '@grafana/ui';
 import EmptyListCTA from 'app/core/components/EmptyListCTA/EmptyListCTA';
@@ -181,15 +180,14 @@ export const TeamList = ({
           return (
             <Stack direction="row" justifyContent="flex-end" gap={2}>
               {canReadTeam && (
-                <Tooltip content={'Edit team'}>
-                  <LinkButton
-                    href={`org/teams/edit/${original.id}`}
-                    aria-label={`Edit team ${original.name}`}
-                    icon="pen"
-                    size="sm"
-                    variant="secondary"
-                  />
-                </Tooltip>
+                <LinkButton
+                  href={`org/teams/edit/${original.id}`}
+                  aria-label={`Edit team ${original.name}`}
+                  icon="pen"
+                  size="sm"
+                  variant="secondary"
+                  tooltip={'Edit team'}
+                />
               )}
               <DeleteButton
                 aria-label={`Delete team ${original.name}`}
