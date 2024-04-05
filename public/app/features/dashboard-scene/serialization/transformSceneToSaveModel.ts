@@ -134,7 +134,7 @@ export function transformSceneToSaveModel(scene: DashboardScene, isSnapshot = fa
     graphTooltip,
     liveNow,
     schemaVersion: DASHBOARD_SCHEMA_VERSION,
-    refresh: refreshPicker?.state.refresh || undefined,
+    refresh: refreshPicker?.state.refresh,
   };
 
   return sortedDeepCloneWithoutNulls(dashboard);
