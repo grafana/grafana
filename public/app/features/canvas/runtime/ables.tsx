@@ -74,7 +74,7 @@ export const dimensionViewable = {
         style={{
           position: 'absolute',
           left: `${rect.width / 2}px`,
-          top: `${rect.height + 10}px`,
+          top: `${rect.height + 20}px`,
           background: '#4af',
           borderRadius: '2px',
           padding: '2px 4px',
