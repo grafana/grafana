@@ -163,7 +163,8 @@ type AddDataSourceCommand struct {
 	JsonData        *simplejson.Json  `json:"jsonData"`
 	SecureJsonData  map[string]string `json:"secureJsonData"`
 	UID             string            `json:"uid"`
-	IsPrunable      bool
+	// swagger:ignore
+	IsPrunable bool
 
 	OrgID                   int64             `json:"-"`
 	UserID                  int64             `json:"-"`
@@ -188,7 +189,8 @@ type UpdateDataSourceCommand struct {
 	SecureJsonData  map[string]string `json:"secureJsonData"`
 	Version         int               `json:"version"`
 	UID             string            `json:"uid"`
-	IsPrunable      bool
+	// swagger:ignore
+	IsPrunable bool
 
 	OrgID                   int64             `json:"-"`
 	ID                      int64             `json:"-"`
