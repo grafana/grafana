@@ -31,7 +31,10 @@ export class DashboardSceneChangeTracker {
 
   private onStateChanged({ payload }: SceneObjectStateChangedEvent) {
     if (payload.changedObject instanceof SceneRefreshPicker) {
-      if (Object.prototype.hasOwnProperty.call(payload.partialUpdate, 'intervals')) {
+      if (
+        Object.prototype.hasOwnProperty.call(payload.partialUpdate, 'intervals') ||
+        Object.prototype.hasOwnProperty.call(payload.partialUpdate, 'refresh')
+      ) {
         this.detectChanges();
       }
     }
@@ -67,6 +70,9 @@ export class DashboardSceneChangeTracker {
       if (!Object.prototype.hasOwnProperty.call(payload.partialUpdate, 'data')) {
         this.detectChanges();
       }
+    }
+    if (payload.changedObject instanceof behaviors.LiveNowTimer) {
+      this.detectChanges();
     }
     if (isSceneVariableInstance(payload.changedObject)) {
       this.detectChanges();
