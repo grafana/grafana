@@ -153,8 +153,11 @@ function getQueryTypeValue(query: PromQuery) {
 function getCollapsedInfo(query: PromQuery, formatOption: string, queryType: string, app?: CoreApp): string[] {
   const items: string[] = [];
 
+  let rawLegendUrl = getLegendUrlModeLabel(query.legendUrlFormat);
+  let legendUrl = rawLegendUrl!.length > 10 ? rawLegendUrl!.slice(0,10) + "..." : rawLegendUrl!;
+
   items.push(`Legend: ${getLegendModeLabel(query.legendFormat)}`);
-  items.push(`URL: ${getLegendUrlModeLabel(query.legendUrlFormat)}`);
+  items.push(`URL: ${legendUrl}`);
   items.push(`Format: ${formatOption}`);
   items.push(`Step: ${query.interval ?? 'auto'}`);
   items.push(`Type: ${queryType}`);
