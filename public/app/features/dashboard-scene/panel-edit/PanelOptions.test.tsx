@@ -25,14 +25,22 @@ jest.mock('react-router-dom', () => ({
 // Needed when the panel is not part of an DashboardScene
 jest.spyOn(utils, 'getDashboardSceneFor').mockReturnValue(new DashboardScene({}));
 
-function setup() {
-  const panel = new VizPanel({
-    key: 'panel-1',
-    pluginId: 'text',
-    title: 'My title',
-  });
+interface SetupOptions {
+  panel?: VizPanel;
+}
 
-  new DashboardGridItem({ body: panel });
+function setup(options: SetupOptions = {}) {
+  let panel = options.panel;
+
+  if (!panel) {
+    panel = new VizPanel({
+      key: 'panel-1',
+      pluginId: 'text',
+      title: 'My title',
+    });
+
+    new DashboardGridItem({ body: panel });
+  }
 
   const vizManager = VizPanelManager.createFor(panel);
 
@@ -99,63 +107,15 @@ describe('PanelOptions', () => {
 
     new DashboardGridItem({ body: libraryPanel });
 
-    const panelManger = VizPanelManager.createFor(panel);
+    const { renderResult, vizManager } = setup({ panel: panel });
 
-    const panelOptions = (
-      <PanelOptions vizManager={panelManger} searchQuery="" listMode={OptionFilter.All}></PanelOptions>
-    );
+    const input = await renderResult.findByTestId('library panel name input');
 
-    const r = render(panelOptions);
-    const input = await r.findByTestId('library panel name input');
     await act(async () => {
       fireEvent.blur(input, { target: { value: 'new library panel name' } });
     });
 
-    expect((panelManger.state.sourcePanel.resolve().parent as LibraryVizPanel).state.name).toBe(
-      'new library panel name'
-    );
-  });
-
-  it('gets library panel options when the editing a library panel', async () => {
-    const panel = new VizPanel({
-      key: 'panel-1',
-      pluginId: 'text',
-    });
-
-    const libraryPanelModel = {
-      title: 'title',
-      uid: 'uid',
-      name: 'libraryPanelName',
-      model: vizPanelToPanel(panel),
-      type: 'panel',
-      version: 1,
-    };
-
-    const libraryPanel = new LibraryVizPanel({
-      isLoaded: true,
-      title: libraryPanelModel.title,
-      uid: libraryPanelModel.uid,
-      name: libraryPanelModel.name,
-      panelKey: panel.state.key!,
-      panel: panel,
-      _loadedPanel: libraryPanelModel,
-    });
-
-    new DashboardGridItem({ body: libraryPanel });
-
-    const panelManger = VizPanelManager.createFor(panel);
-
-    const panelOptions = (
-      <PanelOptions vizManager={panelManger} searchQuery="" listMode={OptionFilter.All}></PanelOptions>
-    );
-
-    const r = render(panelOptions);
-    const input = await r.findByTestId('library panel name input');
-    await act(async () => {
-      fireEvent.blur(input, { target: { value: 'new library panel name' } });
-    });
-
-    expect((panelManger.state.sourcePanel.resolve().parent as LibraryVizPanel).state.name).toBe(
+    expect((vizManager.state.sourcePanel.resolve().parent as LibraryVizPanel).state.name).toBe(
       'new library panel name'
     );
   });
