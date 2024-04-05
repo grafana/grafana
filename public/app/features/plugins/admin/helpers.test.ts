@@ -182,6 +182,7 @@ describe('Plugins/Helpers', () => {
         type: 'app',
         updatedAt: '2021-05-18T14:53:01.000Z',
         isFullyInstalled: false,
+        angularDetected: false,
       });
     });
 
@@ -261,6 +262,7 @@ describe('Plugins/Helpers', () => {
         updatedAt: '2021-08-25',
         installedVersion: '4.2.2',
         isFullyInstalled: true,
+        angularDetected: false,
       });
     });
 
@@ -312,6 +314,7 @@ describe('Plugins/Helpers', () => {
         updatedAt: '2021-05-18T14:53:01.000Z',
         installedVersion: '4.2.2',
         isFullyInstalled: true,
+        angularDetected: false,
       });
     });
 
@@ -693,6 +696,35 @@ describe('Plugins/Helpers', () => {
 
       // No local or remote
       expect(mapToCatalogPlugin()).toMatchObject({ updatedAt: '' });
+    });
+
+    test('`.angularDetected` - prefers the local', () => {
+      // Both false shoul return false
+      expect(
+        mapToCatalogPlugin({ ...localPlugin, angularDetected: false }, { ...remotePlugin, angularDetected: false })
+      ).toMatchObject({ angularDetected: false });
+
+      // Remote version is using angular, local isn't, should prefer local
+      expect(
+        mapToCatalogPlugin({ ...localPlugin, angularDetected: false }, { ...remotePlugin, angularDetected: true })
+      ).toMatchObject({ angularDetected: false });
+
+      // Remote only
+      expect(mapToCatalogPlugin(undefined, remotePlugin)).toMatchObject({ angularDetected: false });
+      expect(mapToCatalogPlugin(undefined, { ...remotePlugin, angularDetected: true })).toMatchObject({
+        angularDetected: true,
+      });
+
+      // Local only
+      expect(mapToCatalogPlugin({ ...localPlugin, angularDetected: false }, undefined)).toMatchObject({
+        angularDetected: false,
+      });
+      expect(mapToCatalogPlugin({ ...localPlugin, angularDetected: true }, undefined)).toMatchObject({
+        angularDetected: true,
+      });
+
+      // No local or remote
+      expect(mapToCatalogPlugin()).toMatchObject({ angularDetected: undefined });
     });
   });
 
