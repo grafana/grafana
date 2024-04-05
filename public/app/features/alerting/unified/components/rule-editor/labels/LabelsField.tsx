@@ -331,11 +331,7 @@ export const LabelsWithoutSuggestions: FC = () => {
   );
 };
 
-interface LabelsFieldProps {
-  dataSourceName?: string;
-}
-
-function LabelsField({ dataSourceName }: LabelsFieldProps) {
+function LabelsField() {
   const styles = useStyles2(getStyles);
 
   return (
@@ -354,7 +350,7 @@ function LabelsField({ dataSourceName }: LabelsFieldProps) {
         </Stack>
       </Stack>
       <div className={styles.labelsContainer}></div>
-      {dataSourceName ? <LabelsWithSuggestions dataSourceName={dataSourceName} /> : <LabelsWithoutSuggestions />}
+      <LabelsWithoutSuggestions />
     </div>
   );
 }

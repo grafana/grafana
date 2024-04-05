@@ -11,7 +11,7 @@ import { mockAlertRuleApi, mockApi, setupMswServer } from '../../../mockApi';
 import { getGrafanaRule, labelslPluginMetaMock } from '../../../mocks';
 import { GRAFANA_RULES_SOURCE_NAME } from '../../../utils/datasource';
 
-import LabelsField from './LabelsField';
+import LabelsField, { LabelsWithSuggestions } from './LabelsField';
 
 const labels = [
   { key: 'key1', value: 'value1' },
@@ -23,12 +23,23 @@ const FormProviderWrapper = ({ children }: React.PropsWithChildren<{}>) => {
   return <FormProvider {...methods}>{children}</FormProvider>;
 };
 
-function renderAlertLabels(dataSourceName?: string) {
+function renderAlertLabels() {
   const store = configureStore({});
 
   render(
     <Provider store={store}>
-      <LabelsField dataSourceName={dataSourceName} />
+      <LabelsField />
+    </Provider>,
+    { wrapper: FormProviderWrapper }
+  );
+}
+
+function renderLabelsWithSuggestions() {
+  const store = configureStore({});
+
+  render(
+    <Provider store={store}>
+      <LabelsWithSuggestions dataSourceName="grafana" />
     </Provider>,
     { wrapper: FormProviderWrapper }
   );
@@ -67,7 +78,7 @@ describe('LabelsField with suggestions', () => {
   });
 
   it('Should display two dropdowns with the existing labels', async () => {
-    renderAlertLabels('grafana');
+    renderLabelsWithSuggestions();
 
     await waitFor(() => expect(screen.getAllByTestId('alertlabel-key-picker')).toHaveLength(2));
 
@@ -81,7 +92,7 @@ describe('LabelsField with suggestions', () => {
   });
 
   it('Should delete a key-value combination', async () => {
-    renderAlertLabels('grafana');
+    renderLabelsWithSuggestions();
 
     await waitFor(() => expect(screen.getAllByTestId('alertlabel-key-picker')).toHaveLength(2));
 
@@ -95,7 +106,7 @@ describe('LabelsField with suggestions', () => {
   });
 
   it('Should add new key-value dropdowns', async () => {
-    renderAlertLabels('grafana');
+    renderLabelsWithSuggestions();
 
     await waitFor(() => expect(screen.getByText('Add label')).toBeVisible());
     await userEvent.click(screen.getByText('Add label'));
@@ -114,7 +125,7 @@ describe('LabelsField with suggestions', () => {
   });
 
   it('Should be able to write new keys and values using the dropdowns', async () => {
-    renderAlertLabels('grafana');
+    renderLabelsWithSuggestions();
 
     await waitFor(() => expect(screen.getByText('Add label')).toBeVisible());
     await userEvent.click(screen.getByText('Add label'));
@@ -129,7 +140,7 @@ describe('LabelsField with suggestions', () => {
     expect(screen.getByTestId('label-value-2').textContent).toBe('value3');
   });
   it('Should be able to write new keys and values using the dropdowns, case sensitive', async () => {
-    renderAlertLabels('grafana');
+    renderLabelsWithSuggestions();
 
     await waitFor(() => expect(screen.getAllByTestId('alertlabel-key-picker')).toHaveLength(2));
     expect(screen.getByTestId('label-key-0').textContent).toBe('key1');
