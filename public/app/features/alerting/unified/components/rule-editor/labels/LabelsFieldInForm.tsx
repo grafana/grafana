@@ -3,7 +3,7 @@ import React from 'react';
 import { useFormContext } from 'react-hook-form';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { Button, Icon, Stack, Text, useStyles2 } from '@grafana/ui';
+import { Badge, Button, Icon, Stack, Text, useStyles2 } from '@grafana/ui';
 
 import { RuleFormValues } from '../../../types/rule-form';
 import { NeedHelpInfo } from '../NeedHelpInfo';
@@ -40,9 +40,12 @@ export function LabelsFieldInForm({ onEditClick }: LabelsFieldInFormProps) {
         {hasLabels ? (
           <Icon name={'pen'} onClick={onEditClick} className={styles.editIcon} />
         ) : (
-          <Button icon="plus" type="button" variant="secondary" onClick={onEditClick}>
-            Add labels
-          </Button>
+          <Stack direction="row" gap={1}>
+            <Badge color="orange" text=" No labels selected " />
+            <Button icon="plus" type="button" variant="secondary" onClick={onEditClick}>
+              Add labels
+            </Button>
+          </Stack>
         )}
       </Stack>
     </div>
