@@ -25,7 +25,7 @@ func (d *DualWriterMode1) Create(ctx context.Context, obj runtime.Object, create
 	legacy, ok := d.Legacy.(rest.Creater)
 	if !ok {
 		err := errors.New("legacy storage rest.Creater is missing")
-		klog.FromContext(ctx).Error(err, "legacy storage rest.Creater is missing")
+		klog.FromContext(ctx).Error(err, "unable to create object in legacy storage")
 		return nil, err
 	}
 
