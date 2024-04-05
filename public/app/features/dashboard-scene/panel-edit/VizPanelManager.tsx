@@ -387,12 +387,16 @@ export class VizPanelManager extends SceneObjectBase<VizPanelManagerState> {
 
   public commitChanges() {
     const sourcePanel = this.state.sourcePanel.resolve();
+    this.commitChangesTo(sourcePanel);
+  }
 
+  public commitChangesTo(sourcePanel: VizPanel) {
     const repeatUpdate = {
       variableName: this.state.repeat,
       repeatDirection: this.state.repeatDirection,
       maxPerRow: this.state.maxPerRow,
     };
+
     if (sourcePanel.parent instanceof DashboardGridItem) {
       sourcePanel.parent.setState({
         ...repeatUpdate,
@@ -446,6 +450,10 @@ export class VizPanelManager extends SceneObjectBase<VizPanelManagerState> {
 
   public getPanelCloneWithData(): VizPanel {
     return this.state.panel.clone({ $data: this.state.$data?.clone() });
+  }
+
+  public setPanelTitle(newTitle: string) {
+    this.state.panel.setState({ title: newTitle, hoverHeader: newTitle === '' });
   }
 
   public static Component = ({ model }: SceneComponentProps<VizPanelManager>) => {
