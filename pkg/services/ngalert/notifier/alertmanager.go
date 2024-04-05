@@ -26,13 +26,12 @@ import (
 )
 
 const (
-	// maintenanceNotificationAndSilences how often should we flush and garbage collect notifications
-	notificationLogMaintenanceInterval = 15 * time.Minute
-)
+	// How often we flush and garbage collect notifications and silences.
+	maintenanceInterval = 15 * time.Minute
 
-// How long should we keep silences and notification entries on-disk after they've served their purpose.
-var retentionNotificationsAndSilences = 5 * 24 * time.Hour
-var silenceMaintenanceInterval = 15 * time.Minute
+	// How long we keep silences in the kvstore after they've expired.
+	silenceRetention = 5 * 24 * time.Hour
+)
 
 type AlertingStore interface {
 	store.AlertingStore
@@ -104,8 +103,8 @@ func NewAlertmanager(ctx context.Context, orgID int64, cfg *setting.Cfg, store A
 
 	silencesOptions := maintenanceOptions{
 		initialState:         silences,
-		retention:            retentionNotificationsAndSilences,
-		maintenanceFrequency: silenceMaintenanceInterval,
+		retention:            silenceRetention,
+		maintenanceFrequency: maintenanceInterval,
 		maintenanceFunc: func(state alertingNotify.State) (int64, error) {
 			// Detached context here is to make sure that when the service is shut down the persist operation is executed.
 			return stateStore.SaveSilences(context.Background(), state)
@@ -114,8 +113,8 @@ func NewAlertmanager(ctx context.Context, orgID int64, cfg *setting.Cfg, store A
 
 	nflogOptions := maintenanceOptions{
 		initialState:         nflog,
-		retention:            retentionNotificationsAndSilences,
-		maintenanceFrequency: notificationLogMaintenanceInterval,
+		retention:            cfg.UnifiedAlerting.NotificationLogRetention,
+		maintenanceFrequency: maintenanceInterval,
 		maintenanceFunc: func(state alertingNotify.State) (int64, error) {
 			// Detached context here is to make sure that when the service is shut down the persist operation is executed.
 			return stateStore.SaveNotificationLog(context.Background(), state)

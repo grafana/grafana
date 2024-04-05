@@ -6277,9 +6277,6 @@
         },
         "type": "object"
       },
-      "ItemStatus": {
-        "type": "string"
-      },
       "JSONWebKey": {
         "description": "JSONWebKey represents a public or private key in JWK format. It can be\nmarshaled into JSON and unmarshaled from JSON.",
         "properties": {
@@ -6739,9 +6736,26 @@
             "type": "string"
           },
           "status": {
-            "$ref": "#/components/schemas/ItemStatus"
+            "enum": [
+              "OK",
+              "ERROR"
+            ],
+            "type": "string"
+          },
+          "type": {
+            "enum": [
+              "DASHBOARD",
+              "DATASOURCE",
+              "FOLDER"
+            ],
+            "type": "string"
           }
         },
+        "required": [
+          "type",
+          "refId",
+          "status"
+        ],
         "type": "object"
       },
       "MoveFolderCommand": {

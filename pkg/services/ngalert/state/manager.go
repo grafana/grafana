@@ -71,6 +71,8 @@ type ManagerCfg struct {
 	ApplyNoDataAndErrorToAllStates bool
 	RulesPerRuleGroupLimit         int64
 
+	DisableExecution bool
+
 	Tracer tracing.Tracer
 	Log    log.Logger
 }
@@ -78,7 +80,8 @@ type ManagerCfg struct {
 func NewManager(cfg ManagerCfg, statePersister StatePersister) *Manager {
 	// Metrics for the cache use a collector, so they need access to the register directly.
 	c := newCache()
-	if cfg.Metrics != nil {
+	// Only expose the metrics if this grafana server does execute alerts.
+	if cfg.Metrics != nil && !cfg.DisableExecution {
 		c.RegisterMetrics(cfg.Metrics.Registerer())
 	}
 

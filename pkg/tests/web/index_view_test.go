@@ -125,8 +125,9 @@ func TestIntegrationIndexViewAnalytics(t *testing.T) {
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 			grafDir, cfgPath := testinfra.CreateGrafDir(t, testinfra.GrafanaOpts{})
-			addr, store := testinfra.StartGrafana(t, grafDir, cfgPath)
-			createdUser := testinfra.CreateUser(t, store, user.CreateUserCommand{
+			addr, env := testinfra.StartGrafanaEnv(t, grafDir, cfgPath)
+			store := env.SQLStore
+			createdUser := testinfra.CreateUser(t, store, env.Cfg, user.CreateUserCommand{
 				Login:    "admin",
 				Password: "admin",
 				Email:    "admin@grafana.com",

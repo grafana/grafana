@@ -69,7 +69,7 @@ export const RuleState = ({ rule, isDeleting, isCreating, isPaused }: Props) => 
     return (
       <Stack gap={1}>
         <AlertStateTag state={promRule.state} isPaused={isPaused} />
-        {forTime}
+        {!isPaused && forTime}
       </Stack>
     );
   } else if (promRule && isRecordingRule(promRule)) {
