@@ -1,16 +1,16 @@
 import { css } from '@emotion/css';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import { useLocation } from 'react-router-dom';
 import { useAsyncFn, useInterval } from 'react-use';
 
-import { GrafanaTheme2, urlUtil } from '@grafana/data';
+import { GrafanaTheme2 } from '@grafana/data';
 import { Button, LinkButton, useStyles2, withErrorBoundary } from '@grafana/ui';
 import { useQueryParams } from 'app/core/hooks/useQueryParams';
+import { Essentials } from 'app/features/gops/configuration-tracker/components/Essentials';
 import { useDispatch } from 'app/types';
 
 import { CombinedRuleNamespace } from '../../../types/unified-alerting';
 
-import { LogMessages, logInfo, trackRuleListNavigation } from './Analytics';
+import { trackRuleListNavigation } from './Analytics';
 import { AlertingPageWrapper } from './components/AlertingPageWrapper';
 import { NoRulesSplash } from './components/rules/NoRulesCTA';
 import { INSTANCES_DISPLAY_LIMIT } from './components/rules/RuleDetails';
@@ -164,21 +164,26 @@ export function CreateAlertButton() {
   const [createRuleSupported, createRuleAllowed] = useAlertingAbility(AlertingAction.CreateAlertRule);
   const [createCloudRuleSupported, createCloudRuleAllowed] = useAlertingAbility(AlertingAction.CreateExternalAlertRule);
 
-  const location = useLocation();
+  // const location = useLocation();
 
   const canCreateCloudRules = createCloudRuleSupported && createCloudRuleAllowed;
 
   const canCreateGrafanaRules = createRuleSupported && createRuleAllowed;
+  const [essentialsOpen, setEssentialsOpen] = useState(false);
 
   if (canCreateGrafanaRules || canCreateCloudRules) {
     return (
-      <LinkButton
-        href={urlUtil.renderUrl('alerting/new/alerting', { returnTo: location.pathname + location.search })}
-        icon="plus"
-        onClick={() => logInfo(LogMessages.alertRuleFromScratch)}
-      >
-        New alert rule
-      </LinkButton>
+      <>
+        {essentialsOpen && <Essentials onClose={() => setEssentialsOpen(false)} />}
+        <LinkButton
+          // href={urlUtil.renderUrl('alerting/new/alerting', { returnTo: location.pathname + location.search })}
+          icon="plus"
+          // onClick={() => logInfo(LogMessages.alertRuleFromScratch)}
+          onClick={() => setEssentialsOpen(true)}
+        >
+          New alert rule
+        </LinkButton>
+      </>
     );
   }
   return null;
