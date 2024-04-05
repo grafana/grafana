@@ -205,7 +205,7 @@ export default class PromQlLanguageProvider extends LanguageProvider {
   /**
    * Fetches all label keys
    */
-  async fetchLabels(timeRange?: TimeRange, queries?: PromQuery[]): Promise<string[]> {
+  fetchLabels = async (timeRange?: TimeRange, queries?: PromQuery[]): Promise<string[]> => {
     if (timeRange) {
       this.timeRange = timeRange;
     }
@@ -234,7 +234,7 @@ export default class PromQlLanguageProvider extends LanguageProvider {
     }
 
     return [];
-  }
+  };
 
   /**
    * Gets series values
