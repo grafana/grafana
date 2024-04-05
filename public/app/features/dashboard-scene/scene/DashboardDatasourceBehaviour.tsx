@@ -5,6 +5,7 @@ import { findVizPanelByKey, getDashboardSceneFor, getQueryRunnerFor, getVizPanel
 interface DashboardDatasourceBehaviourState extends SceneObjectState {}
 
 export class DashboardDatasourceBehaviour extends SceneObjectBase<DashboardDatasourceBehaviourState> {
+  private prevRequestId: string | undefined;
   public constructor(state: DashboardDatasourceBehaviourState) {
     super(state);
 
@@ -33,15 +34,19 @@ export class DashboardDatasourceBehaviour extends SceneObjectBase<DashboardDatas
       throw new Error('Could not find SceneQueryRunner for panel');
     }
 
-    const sub = sourcePanelQueryRunner.subscribeToState(() => {
-      queryRunner.cancelQuery();
-      queryRunner.runQueries();
-    });
-
-    console.log('Activated dashboard datasource behaviour');
+    if (this.prevRequestId) {
+      if (this.prevRequestId !== sourcePanelQueryRunner.state.data?.request?.requestId) {
+        console.log('Request ID changed, running queries');
+        queryRunner.runQueries();
+      } else {
+        console.log('Request ID did not change, skipping queries');
+      }
+    } else {
+      console.log('No previous request ID, not running queries');
+    }
 
     return () => {
-      sub.unsubscribe();
+      this.prevRequestId = sourcePanelQueryRunner.state.data?.request?.requestId;
     };
   }
 }

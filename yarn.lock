@@ -4170,9 +4170,9 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@grafana/scenes@npm:^4.2.1":
-  version: 4.3.0
-  resolution: "@grafana/scenes@npm:4.3.0"
+"@grafana/scenes@npm:4.5.4--canary.681.8570869587.0":
+  version: 4.5.4--canary.681.8570869587.0
+  resolution: "@grafana/scenes@npm:4.5.4--canary.681.8570869587.0"
   dependencies:
     "@grafana/e2e-selectors": "npm:10.3.3"
     react-grid-layout: "npm:1.3.4"
@@ -4186,7 +4186,7 @@ __metadata:
     "@grafana/ui": ^10.0.3
     react: ^18.0.0
     react-dom: ^18.0.0
-  checksum: 10/c8af6135ec96307c45cb2ed60fc17580abb5bd304c8f2948e1d901604394f48c3e7378d1274548a88eb9ae76fd6093fcb2194b746e105b08110a0e14423c6731
+  checksum: 10/df1d33cbc0116e3f2677e4b4c90a270afbbe9216df00274ee3e24e954cee2e9bca8175230c4067c039a120bb940d3778d9301908ad28921751b20a49ef87a78e
   languageName: node
   linkType: hard
 
@@ -18652,7 +18652,7 @@ __metadata:
     "@grafana/prometheus": "workspace:*"
     "@grafana/runtime": "workspace:*"
     "@grafana/saga-icons": "workspace:*"
-    "@grafana/scenes": "npm:^4.2.1"
+    "@grafana/scenes": "npm:4.5.4--canary.681.8570869587.0"
     "@grafana/schema": "workspace:*"
     "@grafana/sql": "workspace:*"
     "@grafana/tsconfig": "npm:^1.3.0-rc1"
