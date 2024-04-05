@@ -52,6 +52,10 @@ export const LokiQueryBuilderOptions = React.memo<Props>(
       onChange({ ...query, legendFormat: evt.currentTarget.value });
       onRunQuery();
     };
+    const onLegendUrlFormatChanged = (evt: React.FormEvent<HTMLInputElement>) => {
+      onChange({ ...query, legendUrlFormat: evt.currentTarget.value });
+      onRunQuery();
+    };
 
     function onMaxLinesChange(e: React.SyntheticEvent<HTMLInputElement>) {
       const newMaxLines = preprocessMaxLines(e.currentTarget.value);
@@ -93,6 +97,18 @@ export const LokiQueryBuilderOptions = React.memo<Props>(
               minWidth={14}
               defaultValue={query.legendFormat}
               onCommitChange={onLegendFormatChanged}
+            />
+          </EditorField>
+          <EditorField
+            label="Legend URL"
+            tooltip="Series name override or template. Ex. {{hostname}} will be replaced with label value for hostname."
+          >
+            <AutoSizeInput
+              placeholder="{{label}}"
+              type="string"
+              minWidth={14}
+              defaultValue={query.legendUrlFormat}
+              onCommitChange={onLegendUrlFormatChanged}
             />
           </EditorField>
           <EditorField label="Type">
@@ -183,6 +199,10 @@ function getCollapsedInfo(
 
   if (query.legendFormat) {
     items.push(`Legend: ${query.legendFormat}`);
+  }
+
+  if (query.legendUrlFormat) {
+    items.push(`Legend URL: ${query.legendUrlFormat}`);
   }
 
   items.push(`Type: ${queryTypeLabel?.label}`);
