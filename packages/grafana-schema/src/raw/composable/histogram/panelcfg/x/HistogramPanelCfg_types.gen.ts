@@ -10,7 +10,7 @@
 
 import * as common from '@grafana/schema';
 
-export const pluginVersion = "11.0.0-pre";
+export const pluginVersion = "11.1.0-pre";
 
 export interface Options extends common.OptionsWithLegend, common.OptionsWithTooltip {
   /**
@@ -36,7 +36,7 @@ export const defaultOptions: Partial<Options> = {
   bucketOffset: 0,
 };
 
-export interface FieldConfig extends common.AxisConfig, common.HideableFieldConfig {
+export interface FieldConfig extends common.AxisConfig, common.HideableFieldConfig, common.StackableFieldConfig {
   /**
    * Controls the fill opacity of the bars.
    */

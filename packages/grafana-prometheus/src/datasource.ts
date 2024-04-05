@@ -30,6 +30,7 @@ import {
 import {
   BackendDataSourceResponse,
   BackendSrvRequest,
+  config,
   DataSourceWithBackend,
   FetchResponse,
   getBackendSrv,
@@ -41,7 +42,7 @@ import {
 
 import { addLabelToQuery } from './add_label_to_query';
 import { AnnotationQueryEditor } from './components/AnnotationQueryEditor';
-import PrometheusLanguageProvider from './language_provider';
+import PrometheusLanguageProvider, { SUGGESTIONS_LIMIT } from './language_provider';
 import {
   expandRecordingRules,
   getClientCacheDurationInMinutes,
@@ -96,6 +97,7 @@ export class PrometheusDatasource
   exemplarsAvailable: boolean;
   cacheLevel: PrometheusCacheLevel;
   cache: QueryCache<PromQuery>;
+  metricNamesAutocompleteSuggestionLimit: number;
 
   constructor(
     instanceSettings: DataSourceInstanceSettings<PromOptions>,
@@ -126,6 +128,8 @@ export class PrometheusDatasource
     this.variables = new PrometheusVariableSupport(this, this.templateSrv);
     this.exemplarsAvailable = true;
     this.cacheLevel = instanceSettings.jsonData.cacheLevel ?? PrometheusCacheLevel.Low;
+    this.metricNamesAutocompleteSuggestionLimit =
+      instanceSettings.jsonData.codeModeMetricNamesSuggestionLimit ?? SUGGESTIONS_LIMIT;
 
     this.cache = new QueryCache({
       getTargetSignature: this.getPrometheusTargetSignature.bind(this),
@@ -363,6 +367,11 @@ export class PrometheusDatasource
       // We need to pass utcOffsetSec to backend to calculate aligned range
       utcOffsetSec: request.range.to.utcOffset() * 60,
     };
+
+    if (config.featureToggles.promQLScope) {
+      processedTarget.scope = request.scope;
+    }
+
     if (target.instant && target.range) {
       // We have query type "Both" selected
       // We should send separate queries with different refId
@@ -690,7 +699,7 @@ export class PrometheusDatasource
   }
 
   // By implementing getTagKeys and getTagValues we add ad-hoc filters functionality
-  async getTagValues(options: DataSourceGetTagValuesOptions) {
+  async getTagValues(options: DataSourceGetTagValuesOptions<PromQuery>) {
     const labelFilters: QueryBuilderLabelFilter[] = options.filters.map((f) => ({
       label: f.key,
       value: f.value,

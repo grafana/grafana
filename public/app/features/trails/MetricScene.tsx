@@ -12,11 +12,12 @@ import {
   SceneVariableSet,
   QueryVariable,
 } from '@grafana/scenes';
-import { ToolbarButton, Box, Stack, Icon, TabsBar, Tab, useStyles2, LinkButton } from '@grafana/ui';
+import { ToolbarButton, Box, Stack, Icon, TabsBar, Tab, useStyles2, LinkButton, Tooltip } from '@grafana/ui';
 
 import { getExploreUrl } from '../../core/utils/explore';
 
 import { buildBreakdownActionScene } from './ActionTabs/BreakdownScene';
+import { LayoutType } from './ActionTabs/LayoutSwitcher';
 import { buildMetricOverviewScene } from './ActionTabs/MetricOverviewScene';
 import { buildRelatedMetricsScene } from './ActionTabs/RelatedMetricsScene';
 import { getAutoQueriesForMetric } from './AutomaticMetricQueries/AutoQueryEngine';
@@ -29,6 +30,7 @@ import {
   ActionViewType,
   getVariablesWithMetricConstant,
   MakeOptional,
+  MetricSelectedEvent,
   trailDS,
   VAR_GROUP_BY,
   VAR_METRIC_EXPR,
@@ -39,21 +41,23 @@ export interface MetricSceneState extends SceneObjectState {
   body: MetricGraphScene;
   metric: string;
   actionView?: string;
+  layout: LayoutType;
 
   autoQuery: AutoQueryInfo;
   queryDef?: AutoQueryDef;
 }
 
 export class MetricScene extends SceneObjectBase<MetricSceneState> {
-  protected _urlSync = new SceneObjectUrlSyncConfig(this, { keys: ['actionView'] });
+  protected _urlSync = new SceneObjectUrlSyncConfig(this, { keys: ['actionView', 'layout'] });
 
-  public constructor(state: MakeOptional<MetricSceneState, 'body' | 'autoQuery'>) {
+  public constructor(state: MakeOptional<MetricSceneState, 'body' | 'autoQuery' | 'layout'>) {
     const autoQuery = state.autoQuery ?? getAutoQueriesForMetric(state.metric);
     super({
       $variables: state.$variables ?? getVariableSet(state.metric),
       body: state.body ?? new MetricGraphScene({}),
       autoQuery,
       queryDef: state.queryDef ?? autoQuery.main,
+      layout: state.layout ?? 'grid',
       ...state,
     });
 
@@ -67,7 +71,7 @@ export class MetricScene extends SceneObjectBase<MetricSceneState> {
   }
 
   getUrlState() {
-    return { actionView: this.state.actionView };
+    return { actionView: this.state.actionView, layout: this.state.layout };
   }
 
   updateFromUrl(values: SceneObjectUrlValues) {
@@ -80,6 +84,13 @@ export class MetricScene extends SceneObjectBase<MetricSceneState> {
       }
     } else if (values.actionView === null) {
       this.setActionView(undefined);
+    }
+
+    if (typeof values.layout === 'string') {
+      const newLayout = values.layout as LayoutType;
+      if (this.state.layout !== newLayout) {
+        this.setState({ layout: newLayout });
+      }
     }
   }
 
@@ -109,7 +120,12 @@ export class MetricScene extends SceneObjectBase<MetricSceneState> {
 const actionViewsDefinitions: ActionViewDefinition[] = [
   { displayName: 'Overview', value: 'overview', getScene: buildMetricOverviewScene },
   { displayName: 'Breakdown', value: 'breakdown', getScene: buildBreakdownActionScene },
-  { displayName: 'Related metrics', value: 'related', getScene: buildRelatedMetricsScene },
+  {
+    displayName: 'Related metrics',
+    value: 'related',
+    getScene: buildRelatedMetricsScene,
+    description: 'Relevant metrics based on current label filters',
+  },
 ];
 
 export interface MetricActionBarState extends SceneObjectState {}
@@ -152,6 +168,13 @@ export class MetricActionBar extends SceneObjectBase<MetricActionBarState> {
           <Stack gap={1}>
             <ToolbarButton
               variant={'canvas'}
+              tooltip="Remove existing metric and choose a new metric"
+              onClick={() => trail.publishEvent(new MetricSelectedEvent(undefined))}
+            >
+              Select new metric
+            </ToolbarButton>
+            <ToolbarButton
+              variant={'canvas'}
               icon="compass"
               tooltip="Open in explore"
               onClick={model.openExploreLink}
@@ -179,7 +202,7 @@ export class MetricActionBar extends SceneObjectBase<MetricActionBarState> {
 
         <TabsBar>
           {actionViewsDefinitions.map((tab, index) => {
-            return (
+            const tabRender = (
               <Tab
                 key={index}
                 label={tab.displayName}
@@ -187,6 +210,15 @@ export class MetricActionBar extends SceneObjectBase<MetricActionBarState> {
                 onChangeTab={() => metricScene.setActionView(tab.value)}
               />
             );
+
+            if (tab.description) {
+              return (
+                <Tooltip key={index} content={tab.description} placement="bottom-start" theme="info">
+                  {tabRender}
+                </Tooltip>
+              );
+            }
+            return tabRender;
           })}
         </TabsBar>
       </Box>

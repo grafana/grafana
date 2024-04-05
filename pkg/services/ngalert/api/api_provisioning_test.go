@@ -28,6 +28,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/folder/foldertest"
+	"github.com/grafana/grafana/pkg/services/ngalert/accesscontrol/fakes"
 	"github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier"
@@ -1613,6 +1614,7 @@ type testEnvironment struct {
 	quotas           provisioning.QuotaChecker
 	prov             provisioning.ProvisioningStore
 	ac               *recordingAccessControlFake
+	rulesAuthz       *fakes.FakeRuleService
 }
 
 func createTestEnv(t *testing.T, testConfig string) testEnvironment {
@@ -1674,6 +1676,8 @@ func createTestEnv(t *testing.T, testConfig string) testEnvironment {
 
 	ac := &recordingAccessControlFake{}
 
+	ruleAuthz := &fakes.FakeRuleService{}
+
 	return testEnvironment{
 		secrets:          secretsService,
 		log:              log,
@@ -1685,6 +1689,7 @@ func createTestEnv(t *testing.T, testConfig string) testEnvironment {
 		prov:             prov,
 		quotas:           quotas,
 		ac:               ac,
+		rulesAuthz:       ruleAuthz,
 	}
 }
 
@@ -1705,7 +1710,7 @@ func createProvisioningSrvSutFromEnv(t *testing.T, env *testEnvironment) Provisi
 		contactPointService: provisioning.NewContactPointService(env.configs, env.secrets, env.prov, env.xact, receiverSvc, env.log, env.store),
 		templates:           provisioning.NewTemplateService(env.configs, env.prov, env.xact, env.log),
 		muteTimings:         provisioning.NewMuteTimingService(env.configs, env.prov, env.xact, env.log),
-		alertRules:          provisioning.NewAlertRuleService(env.store, env.prov, env.folderService, env.dashboardService, env.quotas, env.xact, 60, 10, 100, env.log, &provisioning.NotificationSettingsValidatorProviderFake{}),
+		alertRules:          provisioning.NewAlertRuleService(env.store, env.prov, env.folderService, env.dashboardService, env.quotas, env.xact, 60, 10, 100, env.log, &provisioning.NotificationSettingsValidatorProviderFake{}, env.rulesAuthz),
 	}
 }
 

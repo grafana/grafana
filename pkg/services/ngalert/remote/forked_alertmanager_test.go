@@ -377,96 +377,24 @@ func TestForkedAlertmanager_ModeRemotePrimary(t *testing.T) {
 
 	t.Run("ApplyConfig", func(tt *testing.T) {
 		{
-			hash := "test"
 			// If the remote Alertmanager is not ready, ApplyConfig should be called on both Alertmanagers,
 			// first on the remote, then on the internal.
-			internal, remote, f := genTestAlertmanagers(tt, modeRemotePrimary)
-			forked, ok := f.(*RemotePrimaryForkedAlertmanager)
-			require.True(tt, ok)
-
-			internalCall := internal.EXPECT().ApplyConfig(ctx, mock.Anything).Return(nil).Once()
-			readyCall := remote.EXPECT().Ready().Return(false).Once().NotBefore(internalCall)
-			remote.EXPECT().ApplyConfig(ctx, mock.Anything).Return(nil).Once().NotBefore(readyCall)
-			require.NoError(tt, forked.ApplyConfig(ctx, &models.AlertConfiguration{ConfigurationHash: hash}))
-
-			// The config hash should be updated.
-			require.Equal(tt, hash, forked.currentConfigHash)
-
-			// Calling ApplyConfig again with a ready remote Alertmanager and the same config hash
-			// should result in the forked Alertmanager calling ApplyConfig only on the internal Alertmanager.
-			internalCall = internal.EXPECT().ApplyConfig(ctx, mock.Anything).Return(nil).Once()
-			remote.EXPECT().Ready().Return(true).Once().NotBefore(internalCall)
-			require.NoError(tt, forked.ApplyConfig(ctx, &models.AlertConfiguration{ConfigurationHash: hash}))
-
-			// The config hash should stay the same.
-			require.Equal(tt, hash, forked.currentConfigHash)
-
-			// Calling ApplyConfig again with a ready remote Alertmanager and a different config hash
-			// should result in the forked Alertmanager updating the config in both Alertmanagers.
-			newHash := "new-hash"
-			internalCall = internal.EXPECT().ApplyConfig(ctx, mock.Anything).Return(nil).Once()
-			readyCall = remote.EXPECT().Ready().Return(true).Once().NotBefore(internalCall)
-			remote.EXPECT().DecryptAndSendConfiguration(ctx, mock.Anything).Return(nil).Once().NotBefore(readyCall)
-			require.NoError(tt, forked.ApplyConfig(ctx, &models.AlertConfiguration{ConfigurationHash: newHash}))
-
-			// The config hash should be updated.
-			require.Equal(tt, newHash, forked.currentConfigHash)
-		}
-
-		{
-			hash := "test"
-			// An error in the internal Alertmanager should be returned.
-			internal, _, f := genTestAlertmanagers(tt, modeRemotePrimary)
-			forked, ok := f.(*RemotePrimaryForkedAlertmanager)
-			require.True(tt, ok)
-
-			internal.EXPECT().ApplyConfig(ctx, mock.Anything).Return(expErr).Once()
-			require.ErrorIs(tt, forked.ApplyConfig(ctx, &models.AlertConfiguration{ConfigurationHash: hash}), expErr)
-
-			// The hash shouldn't be updated.
-			require.Equal(tt, "", forked.currentConfigHash)
+			internal, remote, forked := genTestAlertmanagers(tt, modeRemotePrimary)
+			remoteCall := remote.EXPECT().ApplyConfig(ctx, mock.Anything).Return(nil).Once()
+			internal.EXPECT().ApplyConfig(ctx, mock.Anything).Return(nil).Once().NotBefore(remoteCall)
+			require.NoError(tt, forked.ApplyConfig(ctx, &models.AlertConfiguration{}))
 
 			// An error in the remote Alertmanager should be returned.
-			internal, remote, f := genTestAlertmanagers(tt, modeRemotePrimary)
-			forked, ok = f.(*RemotePrimaryForkedAlertmanager)
-			require.True(tt, ok)
+			_, remote, forked = genTestAlertmanagers(tt, modeRemotePrimary)
+			remote.EXPECT().ApplyConfig(ctx, mock.Anything).Return(expErr).Once()
+			require.ErrorIs(tt, forked.ApplyConfig(ctx, &models.AlertConfiguration{}), expErr)
 
-			internalCall := internal.EXPECT().ApplyConfig(ctx, mock.Anything).Return(nil).Once()
-			readyCall := remote.EXPECT().Ready().Return(false).Once().NotBefore(internalCall)
-			remote.EXPECT().ApplyConfig(ctx, mock.Anything).Return(expErr).Once().NotBefore(readyCall)
-			require.ErrorIs(tt, forked.ApplyConfig(ctx, &models.AlertConfiguration{ConfigurationHash: hash}), expErr)
-
-			// The hash shouldn't be updated.
-			require.Equal(tt, "", forked.currentConfigHash)
-
-			// An error from DecryptAndSendConfiguration should be returned.
-			internalCall = internal.EXPECT().ApplyConfig(ctx, mock.Anything).Return(nil).Once()
-			remote.EXPECT().Ready().Return(true).Once().NotBefore(internalCall)
-			remote.EXPECT().DecryptAndSendConfiguration(ctx, mock.Anything).Return(expErr).Once()
-			require.ErrorIs(tt, forked.ApplyConfig(ctx, &models.AlertConfiguration{ConfigurationHash: hash}), expErr)
-
-			// The config hash should not be updated.
-			require.Equal(tt, forked.currentConfigHash, "")
+			// An error in the internal Alertmanager should not be returned.
+			internal, remote, forked = genTestAlertmanagers(tt, modeRemotePrimary)
+			remote.EXPECT().ApplyConfig(ctx, mock.Anything).Return(nil).Once()
+			internal.EXPECT().ApplyConfig(ctx, mock.Anything).Return(expErr).Once()
+			require.NoError(tt, forked.ApplyConfig(ctx, &models.AlertConfiguration{}))
 		}
-	})
-
-	t.Run("SaveAndApplyConfig", func(tt *testing.T) {
-		// SaveAndApplyConfig should first be called on the internal Alertmanager
-		// and then on the remote one.
-		internal, remote, forked := genTestAlertmanagers(tt, modeRemotePrimary)
-		internalCall := internal.EXPECT().SaveAndApplyConfig(ctx, mock.Anything).Return(nil).Once()
-		remote.EXPECT().SaveAndApplyConfig(ctx, mock.Anything).Return(nil).Once().NotBefore(internalCall)
-		require.NoError(tt, forked.SaveAndApplyConfig(ctx, &apimodels.PostableUserConfig{}))
-
-		// If there's an error in any Alertmanager, it should be returned.
-		internal, _, forked = genTestAlertmanagers(tt, modeRemotePrimary)
-		internal.EXPECT().SaveAndApplyConfig(ctx, mock.Anything).Return(expErr).Once()
-		require.ErrorIs(tt, expErr, forked.SaveAndApplyConfig(ctx, &apimodels.PostableUserConfig{}))
-
-		internal, remote, forked = genTestAlertmanagers(tt, modeRemotePrimary)
-		internal.EXPECT().SaveAndApplyConfig(ctx, mock.Anything).Return(nil).Once()
-		remote.EXPECT().SaveAndApplyConfig(ctx, mock.Anything).Return(expErr).Once()
-		require.ErrorIs(tt, expErr, forked.SaveAndApplyConfig(ctx, &apimodels.PostableUserConfig{}))
 	})
 
 	t.Run("GetStatus", func(tt *testing.T) {

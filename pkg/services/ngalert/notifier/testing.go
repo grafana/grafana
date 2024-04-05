@@ -1,12 +1,19 @@
 package notifier
 
 import (
+	"bytes"
 	"context"
 	"crypto/md5"
 	"errors"
 	"fmt"
+	"io"
 	"testing"
 	"time"
+
+	"github.com/matttproud/golang_protobuf_extensions/pbutil"
+	"github.com/prometheus/alertmanager/nflog/nflogpb"
+	"github.com/prometheus/alertmanager/silence/silencepb"
+	"github.com/prometheus/common/model"
 
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/store"
@@ -221,17 +228,132 @@ func (f *FakeOrgStore) GetOrgs(_ context.Context) ([]int64, error) {
 	return f.orgs, nil
 }
 
-type fakeState struct {
-	data string
-}
-
-func (fs *fakeState) MarshalBinary() ([]byte, error) {
-	return []byte(fs.data), nil
-}
-
 type NoValidation struct {
 }
 
 func (n NoValidation) Validate(_ models.NotificationSettings) error {
 	return nil
+}
+
+var errInvalidState = fmt.Errorf("invalid state")
+
+// silenceState copied from state in prometheus-alertmanager/silence/silence.go.
+type silenceState map[string]*silencepb.MeshSilence
+
+// MarshalBinary copied from prometheus-alertmanager/silence/silence.go.
+func (s silenceState) MarshalBinary() ([]byte, error) {
+	var buf bytes.Buffer
+
+	for _, e := range s {
+		if _, err := pbutil.WriteDelimited(&buf, e); err != nil {
+			return nil, err
+		}
+	}
+	return buf.Bytes(), nil
+}
+
+// decodeSilenceState copied from decodeState in prometheus-alertmanager/silence/silence.go.
+func decodeSilenceState(r io.Reader) (silenceState, error) {
+	st := silenceState{}
+	for {
+		var s silencepb.MeshSilence
+		_, err := pbutil.ReadDelimited(r, &s)
+		if err == nil {
+			if s.Silence == nil {
+				return nil, errInvalidState
+			}
+			st[s.Silence.Id] = &s
+			continue
+		}
+		//nolint:errorlint
+		if err == io.EOF {
+			break
+		}
+		return nil, err
+	}
+	return st, nil
+}
+
+func createSilence(id string, startsAt, expiresAt time.Time) *silencepb.MeshSilence {
+	return &silencepb.MeshSilence{
+		Silence: &silencepb.Silence{
+			Id: id,
+			Matchers: []*silencepb.Matcher{
+				{
+					Type:    silencepb.Matcher_EQUAL,
+					Name:    model.AlertNameLabel,
+					Pattern: "test_alert",
+				},
+				{
+					Type:    silencepb.Matcher_EQUAL,
+					Name:    models.FolderTitleLabel,
+					Pattern: "test_alert_folder",
+				},
+			},
+			StartsAt:  startsAt,
+			EndsAt:    expiresAt,
+			CreatedBy: "Grafana Test",
+			Comment:   "Test Silence",
+		},
+		ExpiresAt: expiresAt,
+	}
+}
+
+// receiverKey copied from prometheus-alertmanager/nflog/nflog.go.
+func receiverKey(r *nflogpb.Receiver) string {
+	return fmt.Sprintf("%s/%s/%d", r.GroupName, r.Integration, r.Idx)
+}
+
+// stateKey copied from prometheus-alertmanager/nflog/nflog.go.
+func stateKey(k string, r *nflogpb.Receiver) string {
+	return fmt.Sprintf("%s:%s", k, receiverKey(r))
+}
+
+// nflogState copied from state in prometheus-alertmanager/nflog/nflog.go.
+type nflogState map[string]*nflogpb.MeshEntry
+
+// MarshalBinary copied from prometheus-alertmanager/nflog/nflog.go.
+func (s nflogState) MarshalBinary() ([]byte, error) {
+	var buf bytes.Buffer
+
+	for _, e := range s {
+		if _, err := pbutil.WriteDelimited(&buf, e); err != nil {
+			return nil, err
+		}
+	}
+	return buf.Bytes(), nil
+}
+
+// decodeNflogState copied from decodeState in prometheus-alertmanager/nflog/nflog.go.
+func decodeNflogState(r io.Reader) (nflogState, error) {
+	st := nflogState{}
+	for {
+		var e nflogpb.MeshEntry
+		_, err := pbutil.ReadDelimited(r, &e)
+		if err == nil {
+			if e.Entry == nil || e.Entry.Receiver == nil {
+				return nil, errInvalidState
+			}
+			st[stateKey(string(e.Entry.GroupKey), e.Entry.Receiver)] = &e
+			continue
+		}
+		if errors.Is(err, io.EOF) {
+			break
+		}
+		return nil, err
+	}
+	return st, nil
+}
+
+func createNotificationLog(groupKey string, receiverName string, sentAt, expiresAt time.Time) (string, *nflogpb.MeshEntry) {
+	recv := nflogpb.Receiver{GroupName: receiverName, Integration: "test3", Idx: 0}
+	return stateKey(groupKey, &recv), &nflogpb.MeshEntry{
+		Entry: &nflogpb.Entry{
+			GroupKey:  []byte(groupKey),
+			Receiver:  &recv,
+			Resolved:  false,
+			Timestamp: sentAt,
+		},
+		ExpiresAt: expiresAt,
+	}
 }

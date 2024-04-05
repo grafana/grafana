@@ -16,26 +16,21 @@ import {
 } from '@grafana/data';
 import { getPanelPlugin } from '@grafana/data/test/__mocks__/pluginMocks';
 import { getPluginLinkExtensions, setPluginImportUtils } from '@grafana/runtime';
-import {
-  MultiValueVariable,
-  SceneDataLayers,
-  SceneGridItem,
-  SceneGridItemLike,
-  SceneGridLayout,
-  SceneGridRow,
-  VizPanel,
-} from '@grafana/scenes';
+import { MultiValueVariable, SceneGridLayout, SceneGridRow, VizPanel } from '@grafana/scenes';
 import { Dashboard, LoadingState, Panel, RowPanel, VariableRefresh } from '@grafana/schema';
 import { PanelModel } from 'app/features/dashboard/state';
 import { getTimeRange } from 'app/features/dashboard/utils/timeRange';
 import { reduceTransformRegistryItem } from 'app/features/transformers/editors/ReduceTransformerEditor';
 import { SHARED_DASHBOARD_QUERY } from 'app/plugins/datasource/dashboard';
 
+import { buildPanelEditScene } from '../panel-edit/PanelEditor';
+import { DashboardDataLayerSet } from '../scene/DashboardDataLayerSet';
+import { DashboardGridItem } from '../scene/DashboardGridItem';
 import { LibraryVizPanel } from '../scene/LibraryVizPanel';
 import { RowRepeaterBehavior } from '../scene/RowRepeaterBehavior';
 import { NEW_LINK } from '../settings/links/utils';
 import { activateFullSceneTree, buildPanelRepeaterScene } from '../utils/test-utils';
-import { getVizPanelKeyForPanelId } from '../utils/utils';
+import { findVizPanelByKey, getVizPanelKeyForPanelId } from '../utils/utils';
 
 import { GRAFANA_DATASOURCE_REF } from './const';
 import dashboard_to_load1 from './testfiles/dashboard_to_load1.json';
@@ -210,7 +205,9 @@ describe('transformSceneToSaveModel', () => {
   describe('Given a scene with rows', () => {
     it('Should transform back to persisted model', () => {
       const scene = transformSaveModelToScene({ dashboard: repeatingRowsAndPanelsDashboardJson as any, meta: {} });
+
       const saveModel = transformSceneToSaveModel(scene);
+
       const row2: RowPanel = saveModel.panels![2] as RowPanel;
 
       expect(row2.type).toBe('row');
@@ -347,7 +344,7 @@ describe('transformSceneToSaveModel', () => {
         }),
       });
 
-      const panel = new SceneGridItem({
+      const panel = new DashboardGridItem({
         body: libVizPanel,
         y: 0,
         x: 0,
@@ -407,10 +404,11 @@ describe('transformSceneToSaveModel', () => {
       expect(saveModel.annotations?.list?.length).toBe(4);
       expect(saveModel.annotations?.list).toMatchSnapshot();
     });
+
     it('should transform annotations to save model after state changes', () => {
       const scene = transformSaveModelToScene({ dashboard: dashboard_to_load1 as any, meta: {} });
 
-      const layers = (scene.state.$data as SceneDataLayers)?.state.layers;
+      const layers = (scene.state.$data as DashboardDataLayerSet)?.state.annotationLayers;
       const enabledLayer = layers[1];
       const hiddenLayer = layers[3];
 
@@ -985,9 +983,31 @@ describe('transformSceneToSaveModel', () => {
       });
     });
   });
+
+  describe('Given a scene with an open panel editor', () => {
+    it('should persist changes to panel model', async () => {
+      const scene = transformSaveModelToScene({ dashboard: repeatingRowsAndPanelsDashboardJson as any, meta: {} });
+      activateFullSceneTree(scene);
+      await new Promise((r) => setTimeout(r, 1));
+      scene.onEnterEditMode();
+      const panel = findVizPanelByKey(scene, '15')!;
+      scene.setState({ editPanel: buildPanelEditScene(panel) });
+      panel.onOptionsChange({
+        mode: 'markdown',
+        code: {
+          language: 'plaintext',
+          showLineNumbers: false,
+          showMiniMap: false,
+        },
+        content: 'new content',
+      });
+      const saveModel = transformSceneToSaveModel(scene);
+      expect((saveModel.panels![1] as any).options.content).toBe('new content');
+    });
+  });
 });
 
-export function buildGridItemFromPanelSchema(panel: Partial<Panel>): SceneGridItemLike {
+export function buildGridItemFromPanelSchema(panel: Partial<Panel>) {
   if (panel.libraryPanel) {
     return buildGridItemForLibPanel(new PanelModel(panel))!;
   } else if (panel.type === 'add-library-panel') {

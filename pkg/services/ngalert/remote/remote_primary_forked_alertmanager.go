@@ -3,7 +3,6 @@ package remote
 import (
 	"context"
 	"fmt"
-	"sync"
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
@@ -13,12 +12,9 @@ import (
 
 type RemotePrimaryForkedAlertmanager struct {
 	log log.Logger
-	mtx sync.Mutex
 
 	internal notifier.Alertmanager
 	remote   remoteAlertmanager
-
-	currentConfigHash string
 }
 
 func NewRemotePrimaryForkedAlertmanager(log log.Logger, internal notifier.Alertmanager, remote remoteAlertmanager) *RemotePrimaryForkedAlertmanager {
@@ -29,33 +25,14 @@ func NewRemotePrimaryForkedAlertmanager(log log.Logger, internal notifier.Alertm
 	}
 }
 
-// ApplyConfig will send the configuration to the remote Alertmanager on startup and on change.
-// The call is always first delegated to the internal Alertmanager.
+// ApplyConfig will send the configuration to the remote Alertmanager on startup.
 func (fam *RemotePrimaryForkedAlertmanager) ApplyConfig(ctx context.Context, config *models.AlertConfiguration) error {
+	if err := fam.remote.ApplyConfig(ctx, config); err != nil {
+		return fmt.Errorf("failed to call ApplyConfig on the remote Alertmanager: %w", err)
+	}
+
 	if err := fam.internal.ApplyConfig(ctx, config); err != nil {
-		return fmt.Errorf("failed to call ApplyConfig on the internal Alertmanager: %w", err)
-	}
-
-	fam.mtx.Lock()
-	defer fam.mtx.Unlock()
-	if !fam.remote.Ready() {
-		// On startup, ApplyConfig will perform a readiness check and sync the Alertmanagers.
-		if err := fam.remote.ApplyConfig(ctx, config); err != nil {
-			return fmt.Errorf("failed to call ApplyConfig on the remote Alertmanager: %w", err)
-		}
-		fam.currentConfigHash = config.ConfigurationHash
-		return nil
-	}
-
-	// If the remote Alertmanager was ready and the configuration changed, send it.
-	if config.ConfigurationHash != fam.currentConfigHash {
-		fam.log.Info("Configuration has changed, sending it to the remote Alertmanager")
-		if err := fam.remote.DecryptAndSendConfiguration(ctx, config); err != nil {
-			return fmt.Errorf("failed to send config to the remote Alertmanager: %w", err)
-		}
-		fam.currentConfigHash = config.ConfigurationHash
-	} else {
-		fam.log.Debug("Configuration has not changed, skipping sending it to the remote Alertmanager")
+		fam.log.Error("Error applying config to the internal Alertmanager", "err", err)
 	}
 	return nil
 }

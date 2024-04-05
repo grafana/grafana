@@ -43,7 +43,7 @@ export const ExpressionDatasourceRef = Object.freeze({
 });
 
 /**
- * @internal
+ * @public
  */
 export function isExpressionReference(ref?: DataSourceRef | string | null): boolean {
   if (!ref) {
@@ -133,10 +133,6 @@ class DataSourceWithBackend<
 
     const { intervalMs, maxDataPoints, queryCachingTTL, range, requestId, hideFromInspector = false } = request;
     let targets = request.targets;
-
-    if (this.filterQuery) {
-      targets = targets.filter((q) => this.filterQuery!(q));
-    }
 
     let hasExpr = false;
     const pluginIDs = new Set<string>();
@@ -274,16 +270,6 @@ class DataSourceWithBackend<
   interpolateVariablesInQueries(queries: TQuery[], scopedVars: ScopedVars, filters?: AdHocVariableFilter[]): TQuery[] {
     return queries.map((q) => this.applyTemplateVariables(q, scopedVars, filters));
   }
-
-  /**
-   * Override to skip executing a query.  Note this function may not be called
-   * if the query method is overwritten.
-   *
-   * @returns false if the query should be skipped
-   *
-   * @virtual
-   */
-  filterQuery?(query: TQuery): boolean;
 
   /**
    * Override to apply template variables and adhoc filters.  The result is usually also `TQuery`, but sometimes this can

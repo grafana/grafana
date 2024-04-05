@@ -17,6 +17,10 @@ import (
 	"time"
 
 	"github.com/go-openapi/strfmt"
+	amv2 "github.com/prometheus/alertmanager/api/v2/models"
+	"github.com/prometheus/client_golang/prometheus"
+	"github.com/stretchr/testify/require"
+
 	"github.com/grafana/grafana/pkg/infra/db"
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/metrics"
@@ -30,10 +34,6 @@ import (
 	secretsManager "github.com/grafana/grafana/pkg/services/secrets/manager"
 	"github.com/grafana/grafana/pkg/tests/testsuite"
 	"github.com/grafana/grafana/pkg/util"
-	amv2 "github.com/prometheus/alertmanager/api/v2/models"
-	"github.com/prometheus/alertmanager/cluster/clusterpb"
-	"github.com/prometheus/client_golang/prometheus"
-	"github.com/stretchr/testify/require"
 )
 
 // Valid Grafana Alertmanager configurations.
@@ -145,7 +145,7 @@ func TestApplyConfig(t *testing.T) {
 
 	ctx := context.Background()
 	store := ngfakes.NewFakeKVStore(t)
-	fstore := notifier.NewFileStore(1, store, "")
+	fstore := notifier.NewFileStore(1, store)
 	require.NoError(t, store.Set(ctx, cfg.OrgID, "alertmanager", notifier.SilencesFilename, "test"))
 	require.NoError(t, store.Set(ctx, cfg.OrgID, "alertmanager", notifier.NotificationLogFilename, "test"))
 
@@ -197,7 +197,7 @@ func TestCompareAndSendConfiguration(t *testing.T) {
 		require.NoError(t, err)
 	}))
 
-	fstore := notifier.NewFileStore(1, ngfakes.NewFakeKVStore(t), "")
+	fstore := notifier.NewFileStore(1, ngfakes.NewFakeKVStore(t))
 	m := metrics.NewRemoteAlertmanagerMetrics(prometheus.NewRegistry())
 	cfg := AlertmanagerConfig{
 		OrgID:    1,
@@ -297,25 +297,18 @@ func TestIntegrationRemoteAlertmanagerConfiguration(t *testing.T) {
 	silences := []byte("test-silences")
 	nflog := []byte("test-notifications")
 	store := ngfakes.NewFakeKVStore(t)
-	fstore := notifier.NewFileStore(cfg.OrgID, store, "")
+	fstore := notifier.NewFileStore(cfg.OrgID, store)
 
 	ctx := context.Background()
 	require.NoError(t, store.Set(ctx, cfg.OrgID, "alertmanager", notifier.SilencesFilename, base64.StdEncoding.EncodeToString(silences)))
 	require.NoError(t, store.Set(ctx, cfg.OrgID, "alertmanager", notifier.NotificationLogFilename, base64.StdEncoding.EncodeToString(nflog)))
 
-	fs := clusterpb.FullState{
-		Parts: []clusterpb.Part{
-			{Key: "silences", Data: silences},
-			{Key: "notifications", Data: nflog},
-		},
-	}
-	fullState, err := fs.Marshal()
-	require.NoError(t, err)
-	encodedFullState := base64.StdEncoding.EncodeToString(fullState)
-
 	secretsService := secretsManager.SetupTestService(t, fakes.NewFakeSecretsStore())
 	m := metrics.NewRemoteAlertmanagerMetrics(prometheus.NewRegistry())
 	am, err := NewAlertmanager(cfg, fstore, secretsService.Decrypt, m)
+	require.NoError(t, err)
+
+	encodedFullState, err := am.getFullState(ctx)
 	require.NoError(t, err)
 
 	// We should have no configuration or state at first.
