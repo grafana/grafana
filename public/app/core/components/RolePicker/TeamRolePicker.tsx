@@ -1,3 +1,4 @@
+import { isEqual } from 'lodash';
 import React, { useEffect } from 'react';
 import { useAsyncFn } from 'react-use';
 
@@ -44,13 +45,12 @@ export const TeamRolePicker = ({
   width,
   isLoading,
 }: Props) => {
-  const [{ loading, value: appliedRoles = roles || [] }, getTeamRoles] = useAsyncFn(async () => {
+  const [teamRolesState, getTeamRoles] = useAsyncFn(async () => {
     try {
-      if (roles) {
-        return roles;
-      }
-      if (apply && Boolean(pendingRoles?.length)) {
-        return pendingRoles;
+      if (isEqual(roles, teamRolesState.value)) {
+        if (apply && Boolean(pendingRoles?.length)) {
+          return pendingRoles;
+        }
       }
 
       if (contextSrv.hasPermission(AccessControlAction.ActionTeamsRolesList) && teamId > 0) {
@@ -84,8 +84,8 @@ export const TeamRolePicker = ({
       apply={apply}
       onRolesChange={onRolesChange}
       roleOptions={roleOptions}
-      appliedRoles={appliedRoles}
-      isLoading={loading || isLoading}
+      appliedRoles={teamRolesState.value || []}
+      isLoading={teamRolesState.loading || isLoading}
       disabled={disabled}
       basicRoleDisabled={true}
       canUpdateRoles={canUpdateRoles}
