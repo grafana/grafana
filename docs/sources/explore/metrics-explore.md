@@ -35,8 +35,8 @@ To access Metrics Explore as a standalone experience:
 
 1. Click the arrow next to **Explore** in the Grafana left-side menu and click **Metrics**. You are taken to an overview page that shows recent metrics, bookmarks, and the option to select a new metric exploration. 
 1. To get started with a new exploration, click **+ New metric exploration**.
-1. Select **Prometheus** in the drop-down menu under **Data source**. You can also select any Prometheus-compatible data source available in the list.
-1. Click **+ Add label** to select a label from the drop-down menu. You can add multiple labels. A label type will appear above the selected label with a drop-down list of options from which to choose. For example, if you select the label `container` a drop-down list of available containers appears.
+1. Select **Prometheus** or any Prometheus-compatible data source available in the drop-down menu under **Data source**. 
+1. Click **+ Add label** to select a label-value pair from the drop-down menu. You can add multiple label-value pairs. A label type will appear above the selected label with a drop-down list of options from which to choose. For example, if you select the label `container` a drop-down list of available containers appears.
 1. You can also search for metrics using keywords under **Search metrics** in the search bar. 
 1. Use the time picker to select a date and time range from the drop-down menu or use an absolute time range. 
 1. Click the down arrow next to the **Refresh** icon to set a refresh rate from the drop-down menu. The default is `Off`. 
