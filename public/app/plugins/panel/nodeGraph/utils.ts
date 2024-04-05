@@ -599,8 +599,7 @@ export const applyOptionsToFrames = (frames: DataFrame[], options: NodeGraphOpti
       }
       if (options?.nodes?.arcs?.length) {
         for (const arc of options.nodes.arcs) {
-          // TODO: deprecate using mismatched names for fields and the coloring options at a later date.
-          //   Immediately removing both of these toLowerCase calls can break existing user dashboards. 
+          // As the arc__ field suffixes can be custom we compare them case insensitively to be safe.
           const field = frame.fields.find((field) => field.name.toLowerCase() === arc.field?.toLowerCase());
           if (field && arc.color) {
             field.config = { ...field.config, color: { fixedColor: arc.color, mode: FieldColorModeId.Fixed } };
