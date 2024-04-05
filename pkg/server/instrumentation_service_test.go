@@ -7,6 +7,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/grafana/dskit/services"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -16,15 +17,12 @@ func TestRunInstrumentationService(t *testing.T) {
 	s, err := NewInstrumentationService(log.New("test-logger"))
 	require.NoError(t, err)
 
-	err = s.start(context.Background())
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
+
+	err = services.StartAndAwaitRunning(ctx, s)
 	require.NoError(t, err)
 
-	go func() {
-		_ = s.running(context.Background())
-	}()
-
-	require.NoError(t, err)
-	time.Sleep(500 * time.Millisecond) // wait for http server to be running
 	client := http.Client{}
 	res, err := client.Get("http://localhost:3000/metrics")
 	require.NoError(t, err)
