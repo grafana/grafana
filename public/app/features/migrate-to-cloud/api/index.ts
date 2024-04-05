@@ -4,7 +4,7 @@ import { BaseQueryFn, QueryDefinition } from '@reduxjs/toolkit/dist/query';
 import { generatedAPI } from './endpoints.gen';
 
 export const cloudMigrationAPI = generatedAPI.enhanceEndpoints({
-  addTagTypes: ['cloud-migration-config', 'cloud-migration-run'],
+  addTagTypes: ['cloud-migration-config', 'cloud-migration-run', 'cloud-migration-run-list'],
   endpoints: {
     // List Cloud Configs
     getMigrationList: {
@@ -27,7 +27,7 @@ export const cloudMigrationAPI = generatedAPI.enhanceEndpoints({
     },
 
     getCloudMigrationRunList: {
-      providesTags: ['cloud-migration-run'] /* should this be a -list? */,
+      providesTags: ['cloud-migration-run-list'],
     },
 
     getCloudMigrationRun: {
@@ -35,7 +35,7 @@ export const cloudMigrationAPI = generatedAPI.enhanceEndpoints({
     },
 
     runCloudMigration: {
-      invalidatesTags: ['cloud-migration-run'],
+      invalidatesTags: ['cloud-migration-run-list'],
     },
 
     getDashboardByUid(endpoint) {
