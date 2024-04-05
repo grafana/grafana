@@ -703,18 +703,15 @@
     "connect-modal": {
       "body-cloud-stack": "Vous aurez également besoin d'une pile cloud. Si vous venez de vous inscrire, nous créerons automatiquement votre première pile. Si vous avez déjà un compte, vous devez sélectionner ou créer une pile.",
       "body-get-started": "Pour commencer, vous aurez besoin d'un compte Grafana.com.",
-      "body-paste-stack": "Lorsque vous aurez choisi une pile, collez l'URL ci-dessous.",
       "body-sign-up": "Créez un compte Grafana.com",
       "body-token": "Votre installation Grafana autogérée a besoin d'un accès spécial pour migrer du contenu de manière sécurisée. Vous devrez créer un jeton de migration sur la pile cloud que vous avez choisie.",
       "body-token-field": "Jeton de migration",
       "body-token-field-placeholder": "Coller le jeton ici",
       "body-token-instructions": "Connectez-vous à votre pile cloud et accédez à Administration > Général > Migrer vers Grafana Cloud. Créez un jeton de migration sur cet écran et collez-le ici.",
-      "body-url-field": "URL de la pile cloud",
       "body-view-stacks": "Voir mes piles cloud",
       "cancel": "Annuler",
       "connect": "Se connecter à cette pile",
       "connecting": "Connexion à cette pile…",
-      "stack-required-error": "Vous devez renseigner l'URL de la pile",
       "title": "Se connecter à une pile cloud",
       "token-required-error": "Vous devez renseigner le jeton de migration"
     },
@@ -796,7 +793,10 @@
     },
     "summary": {
       "disconnect": "",
-      "error-starting-migration": "",
+      "disconnect-error-description": "",
+      "disconnect-error-title": "",
+      "run-migration-error-description": "",
+      "run-migration-error-title": "",
       "start-migration": "",
       "target-stack-title": ""
     },

@@ -5,7 +5,7 @@ go 1.21.0
 require (
 	github.com/bwmarrin/snowflake v0.3.0
 	github.com/gorilla/mux v1.8.1
-	github.com/grafana/grafana-plugin-sdk-go v0.219.0
+	github.com/grafana/grafana-plugin-sdk-go v0.220.0
 	github.com/stretchr/testify v1.9.0
 	golang.org/x/mod v0.14.0
 	k8s.io/apimachinery v0.29.2

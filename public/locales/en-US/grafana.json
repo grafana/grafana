@@ -703,18 +703,15 @@
     "connect-modal": {
       "body-cloud-stack": "You'll also need a cloud stack. If you just signed up, we'll automatically create your first stack. If you have an account, you'll need to select or create a stack.",
       "body-get-started": "To get started, you'll need a Grafana.com account.",
-      "body-paste-stack": "Once you've decided on a stack, paste the URL below.",
       "body-sign-up": "Sign up for a Grafana.com account",
       "body-token": "Your self-managed Grafana installation needs special access to securely migrate content. You'll need to create a migration token on your chosen cloud stack.",
       "body-token-field": "Migration token",
       "body-token-field-placeholder": "Paste token here",
       "body-token-instructions": "Log into your cloud stack and navigate to Administration, General, Migrate to Grafana Cloud. Create a migration token on that screen and paste the token here.",
-      "body-url-field": "Cloud stack URL",
       "body-view-stacks": "View my cloud stacks",
       "cancel": "Cancel",
       "connect": "Connect to this stack",
       "connecting": "Connecting to this stack...",
-      "stack-required-error": "Stack URL is required",
       "title": "Connect to a cloud stack",
       "token-required-error": "Migration token is required"
     },
@@ -789,14 +786,22 @@
       "not-migrated": "Not yet uploaded",
       "unknown": "Unknown"
     },
+    "resource-table": {
+      "unknown-datasource-title": "Data source {{datasourceUID}}",
+      "unknown-datasource-type": "Unknown data source"
+    },
     "resource-type": {
       "dashboard": "Dashboard",
       "datasource": "Data source",
+      "folder": "Folder",
       "unknown": "Unknown"
     },
     "summary": {
       "disconnect": "Disconnect",
-      "error-starting-migration": "There was an error starting cloud migration",
+      "disconnect-error-description": "See the Grafana server logs for more details",
+      "disconnect-error-title": "There was an error disconnecting",
+      "run-migration-error-description": "See the Grafana server logs for more details",
+      "run-migration-error-title": "There was an error migrating your resources",
       "start-migration": "Upload everything",
       "target-stack-title": "Uploading to"
     },
