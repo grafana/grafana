@@ -823,9 +823,16 @@ exports[`better eslint`] = {
     "packages/grafana-ui/src/components/Alert/Toast.story.tsx:5381": [
       [0, 0, 0, "\'VerticalGroup\' import from \'@grafana/ui\' is restricted from being used by a pattern. Use Stack component instead.", "0"]
     ],
+    "packages/grafana-ui/src/components/Button/Button.story.tsx:5381": [
+      [0, 0, 0, "\'HorizontalGroup\' import from \'../Layout/Layout\' is restricted from being used by a pattern. Use Stack component instead.", "0"],
+      [0, 0, 0, "\'VerticalGroup\' import from \'../Layout/Layout\' is restricted from being used by a pattern. Use Stack component instead.", "1"]
+    ],
     "packages/grafana-ui/src/components/ColorPicker/ColorPicker.tsx:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "1"]
+    ],
+    "packages/grafana-ui/src/components/ConfirmModal/ConfirmModal.tsx:5381": [
+      [0, 0, 0, "\'HorizontalGroup\' import from \'../Layout/Layout\' is restricted from being used by a pattern. Use Stack component instead.", "0"]
     ],
     "packages/grafana-ui/src/components/DataLinks/DataLinkInput.tsx:5381": [
       [0, 0, 0, "Do not use any type assertions.", "0"]
@@ -843,6 +850,15 @@ exports[`better eslint`] = {
       [0, 0, 0, "Unexpected any. Specify a different type.", "5"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "6"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "7"]
+    ],
+    "packages/grafana-ui/src/components/Dropdown/Dropdown.story.tsx:5381": [
+      [0, 0, 0, "\'VerticalGroup\' import from \'../Layout/Layout\' is restricted from being used by a pattern. Use Stack component instead.", "0"]
+    ],
+    "packages/grafana-ui/src/components/FilterPill/FilterPill.story.tsx:5381": [
+      [0, 0, 0, "\'HorizontalGroup\' import from \'../Layout/Layout\' is restricted from being used by a pattern. Use Stack component instead.", "0"]
+    ],
+    "packages/grafana-ui/src/components/Forms/Checkbox.story.tsx:5381": [
+      [0, 0, 0, "\'VerticalGroup\' import from \'../Layout/Layout\' is restricted from being used by a pattern. Use Stack component instead.", "0"]
     ],
     "packages/grafana-ui/src/components/Forms/FieldArray.story.tsx:5381": [
       [0, 0, 0, "\'HorizontalGroup\' import from \'@grafana/ui\' is restricted from being used by a pattern. Use Stack component instead.", "0"]
@@ -873,11 +889,20 @@ exports[`better eslint`] = {
       [0, 0, 0, "\'VerticalGroup\' import from \'@grafana/ui\' is restricted from being used by a pattern. Use Stack component instead.", "0"],
       [0, 0, 0, "\'HorizontalGroup\' import from \'@grafana/ui\' is restricted from being used by a pattern. Use Stack component instead.", "1"]
     ],
+    "packages/grafana-ui/src/components/Link/TextLink.story.tsx:5381": [
+      [0, 0, 0, "\'VerticalGroup\' import from \'../Layout/Layout\' is restricted from being used by a pattern. Use Stack component instead.", "0"]
+    ],
     "packages/grafana-ui/src/components/MatchersUI/FieldValueMatcher.tsx:5381": [
       [0, 0, 0, "Do not use any type assertions.", "0"]
     ],
     "packages/grafana-ui/src/components/MatchersUI/fieldMatchersUI.ts:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"]
+    ],
+    "packages/grafana-ui/src/components/Menu/Menu.story.tsx:5381": [
+      [0, 0, 0, "\'VerticalGroup\' import from \'../Layout/Layout\' is restricted from being used by a pattern. Use Stack component instead.", "0"]
+    ],
+    "packages/grafana-ui/src/components/Modal/Modal.tsx:5381": [
+      [0, 0, 0, "\'HorizontalGroup\' import from \'../Layout/Layout\' is restricted from being used by a pattern. Use Stack component instead.", "0"]
     ],
     "packages/grafana-ui/src/components/Modal/ModalsContext.tsx:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
@@ -888,12 +913,18 @@ exports[`better eslint`] = {
     "packages/grafana-ui/src/components/PageLayout/PageToolbar.story.tsx:5381": [
       [0, 0, 0, "\'VerticalGroup\' import from \'@grafana/ui\' is restricted from being used by a pattern. Use Stack component instead.", "0"]
     ],
+    "packages/grafana-ui/src/components/PanelChrome/PanelChrome.story.tsx:5381": [
+      [0, 0, 0, "\'HorizontalGroup\' import from \'../Layout/Layout\' is restricted from being used by a pattern. Use Stack component instead.", "0"]
+    ],
     "packages/grafana-ui/src/components/PanelChrome/PanelContext.ts:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "1"]
     ],
     "packages/grafana-ui/src/components/PanelChrome/index.ts:5381": [
       [0, 0, 0, "Do not use any type assertions.", "0"]
+    ],
+    "packages/grafana-ui/src/components/SecretTextArea/SecretTextArea.tsx:5381": [
+      [0, 0, 0, "\'HorizontalGroup\' import from \'../Layout/Layout\' is restricted from being used by a pattern. Use Stack component instead.", "0"]
     ],
     "packages/grafana-ui/src/components/Segment/SegmentSelect.tsx:5381": [
       [0, 0, 0, "Do not use any type assertions.", "0"]
@@ -961,6 +992,9 @@ exports[`better eslint`] = {
       [0, 0, 0, "Unexpected any. Specify a different type.", "1"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "2"]
     ],
+    "packages/grafana-ui/src/components/Table/CellActions.tsx:5381": [
+      [0, 0, 0, "\'HorizontalGroup\' import from \'../Layout/Layout\' is restricted from being used by a pattern. Use Stack component instead.", "0"]
+    ],
     "packages/grafana-ui/src/components/Table/Filter.tsx:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"]
     ],
@@ -1007,6 +1041,23 @@ exports[`better eslint`] = {
     "packages/grafana-ui/src/components/Tags/Tag.tsx:5381": [
       [0, 0, 0, "Do not use any type assertions.", "0"]
     ],
+    "packages/grafana-ui/src/components/TagsInput/TagsInput.story.tsx:5381": [
+      [0, 0, 0, "\'VerticalGroup\' import from \'../Layout/Layout\' is restricted from being used by a pattern. Use Stack component instead.", "0"]
+    ],
+    "packages/grafana-ui/src/components/Text/Text.story.tsx:5381": [
+      [0, 0, 0, "\'VerticalGroup\' import from \'../Layout/Layout\' is restricted from being used by a pattern. Use Stack component instead.", "0"]
+    ],
+    "packages/grafana-ui/src/components/ThemeDemos/EmotionPerfTest.tsx:5381": [
+      [0, 0, 0, "\'VerticalGroup\' import from \'../Layout/Layout\' is restricted from being used by a pattern. Use Stack component instead.", "0"]
+    ],
+    "packages/grafana-ui/src/components/ThemeDemos/ThemeDemo.tsx:5381": [
+      [0, 0, 0, "\'HorizontalGroup\' import from \'../Layout/Layout\' is restricted from being used by a pattern. Use Stack component instead.", "0"],
+      [0, 0, 0, "\'VerticalGroup\' import from \'../Layout/Layout\' is restricted from being used by a pattern. Use Stack component instead.", "1"]
+    ],
+    "packages/grafana-ui/src/components/ToolbarButton/ToolbarButton.story.tsx:5381": [
+      [0, 0, 0, "\'HorizontalGroup\' import from \'../Layout/Layout\' is restricted from being used by a pattern. Use Stack component instead.", "0"],
+      [0, 0, 0, "\'VerticalGroup\' import from \'../Layout/Layout\' is restricted from being used by a pattern. Use Stack component instead.", "1"]
+    ],
     "packages/grafana-ui/src/components/ValuePicker/ValuePicker.tsx:5381": [
       [0, 0, 0, "Use data-testid for E2E selectors instead of aria-label", "0"]
     ],
@@ -1023,6 +1074,10 @@ exports[`better eslint`] = {
     "packages/grafana-ui/src/components/VizTooltip/VizTooltip.tsx:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "1"]
+    ],
+    "packages/grafana-ui/src/components/index.ts:5381": [
+      [0, 0, 0, "\'HorizontalGroup\' import from \'./Layout/Layout\' is restricted from being used by a pattern. Use Stack component instead.", "0"],
+      [0, 0, 0, "\'VerticalGroup\' import from \'./Layout/Layout\' is restricted from being used by a pattern. Use Stack component instead.", "1"]
     ],
     "packages/grafana-ui/src/components/uPlot/Plot.tsx:5381": [
       [0, 0, 0, "Do not use any type assertions.", "0"],
