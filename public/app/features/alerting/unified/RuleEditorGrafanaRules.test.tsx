@@ -1,7 +1,6 @@
 import 'whatwg-fetch';
 import { screen, waitFor, waitForElementToBeRemoved, within } from '@testing-library/react';
 import userEvent, { PointerEventsCheckLevel } from '@testing-library/user-event';
-import { setupServer } from 'msw/node';
 import React from 'react';
 import { renderRuleEditor, ui } from 'test/helpers/alertingRuleEditor';
 import { clickSelectOption } from 'test/helpers/selectOptionInTest';
@@ -9,7 +8,11 @@ import { byRole } from 'testing-library-selector';
 
 import { setDataSourceSrv } from '@grafana/runtime';
 import { contextSrv } from 'app/core/services/context_srv';
-import { mockApi } from 'app/features/alerting/unified/mockApi';
+import { mockApi, setupMswServer } from 'app/features/alerting/unified/mockApi';
+import {
+  defaultAlertmanagerChoiceResponse,
+  mockAlertmanagerChoiceResponse,
+} from 'app/features/alerting/unified/mocks/alertmanagerApi';
 import { DashboardSearchHit, DashboardSearchItemType } from 'app/features/search/types';
 import { AccessControlAction } from 'app/types';
 import { GrafanaAlertStateDecision, PromApplication } from 'app/types/unified-alerting-dto';
@@ -64,13 +67,13 @@ const mocks = {
   },
 };
 
-const server = setupServer();
+const server = setupMswServer();
 
 const getLabelInput = (selector: HTMLElement) => within(selector).getByRole('combobox');
 describe('RuleEditor grafana managed rules', () => {
   beforeEach(() => {
     mockApi(server).eval({ results: {} });
-    server.listen();
+    mockAlertmanagerChoiceResponse(server, defaultAlertmanagerChoiceResponse);
     jest.clearAllMocks();
     contextSrv.isEditor = true;
     contextSrv.hasEditPermissionInFolders = true;
@@ -87,14 +90,6 @@ describe('RuleEditor grafana managed rules', () => {
       AccessControlAction.AlertingRuleExternalRead,
       AccessControlAction.AlertingRuleExternalWrite,
     ]);
-  });
-
-  afterEach(() => {
-    server.resetHandlers();
-  });
-
-  afterAll(() => {
-    server.close();
   });
 
   it('can create new grafana managed alert', async () => {
