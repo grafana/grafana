@@ -227,13 +227,7 @@ func (am *Alertmanager) decryptConfiguration(ctx context.Context, cfg string) ([
 	fn := func(payload []byte) ([]byte, error) {
 		return am.decrypt(ctx, payload)
 	}
-
-	return am.sendConfiguration(ctx, string(rawDecrypted), config.ConfigurationHash, config.CreatedAt, config.Default)
-}
-
-// DecryptAndSendConfiguration decrypts secure fields and sends a configuration to the remote Alertmanager.
-func (am *Alertmanager) DecryptAndSendConfiguration(ctx context.Context, config *models.AlertConfiguration) error {
-	rawDecrypted, err := am.decryptConfiguration(ctx, config.AlertmanagerConfiguration)
+	decrypted, err := c.Decrypt(fn)
 	if err != nil {
 		return nil, err
 	}
@@ -303,6 +297,7 @@ func (am *Alertmanager) SaveAndApplyConfig(ctx context.Context, cfg *apimodels.P
 
 // SaveAndApplyDefaultConfig sends the default Grafana Alertmanager configuration to the remote Alertmanager.
 func (am *Alertmanager) SaveAndApplyDefaultConfig(ctx context.Context) error {
+	fmt.Println("SaveAndApplyDefaultConfig with default config:", am.decrypt)
 	rawDecrypted, err := am.decryptConfiguration(ctx, am.defaultConfig)
 	if err != nil {
 		return fmt.Errorf("unable to decrypt default configuration: %w", err)

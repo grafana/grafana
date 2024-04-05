@@ -49,6 +49,9 @@ func (fam *RemotePrimaryForkedAlertmanager) SaveAndApplyConfig(ctx context.Conte
 // TODO: save the new configuration hash in memory.
 func (fam *RemotePrimaryForkedAlertmanager) SaveAndApplyDefaultConfig(ctx context.Context) error {
 	// Do nothing on the remote Alertmanager side, it will receive a configuration on startup or config change.
+	if err := fam.remote.SaveAndApplyDefaultConfig(ctx); err != nil {
+		return err
+	}
 	return fam.internal.SaveAndApplyDefaultConfig(ctx)
 }
 
