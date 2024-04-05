@@ -81,6 +81,24 @@ If the data source already exists, Grafana reconfigures it to match the provisio
 The configuration file can also list data sources to automatically delete, called `deleteDatasources`.
 Grafana deletes the data sources listed in `deleteDatasources` _before_ adding or updating those in the `datasources` list.
 
+In order to delete data sources by simply removing the configuration from the file instead of manually listing them under `deleteDatasources`, include a `prune` parameter at the root of the YAML configuration file when provisioning them.
+
+```
+apiVersion: 1
+
+prune: true
+datasources:
+  - name: PostgreSQL
+    type: postgres
+    ...
+```
+
+If the datasources are provisioned with this parameter, they can also be deleted by simply removing them from the YAML file or by deleting the YAML file.
+
+> [!NOTE]
+> This `prune` parameter is available only in apiVersion 1
+
+
 ### Running multiple Grafana instances
 
 If you run multiple instances of Grafana, add a version number to each data source in the configuration and increase it when you update the configuration.
