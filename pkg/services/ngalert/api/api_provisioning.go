@@ -488,10 +488,10 @@ func (srv *ProvisioningSrv) RoutePutAlertRuleGroup(c *contextmodel.ReqContext, a
 	if errors.Is(err, alerting_models.ErrAlertRuleFailedValidation) {
 		return ErrResp(http.StatusBadRequest, err, "")
 	}
+	if errors.Is(err, store.ErrOptimisticLock) {
+		return ErrResp(http.StatusConflict, err, "")
+	}
 	if err != nil {
-		if errors.Is(err, store.ErrOptimisticLock) {
-			return ErrResp(http.StatusConflict, err, "")
-		}
 		return response.ErrOrFallback(http.StatusInternalServerError, "", err)
 	}
 	return response.JSON(http.StatusOK, ag)
