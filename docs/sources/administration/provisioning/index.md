@@ -89,7 +89,6 @@ With this configuration, Grafana also removes the provisioned data sources if yo
 The `prune` parameter is available in Grafana v11.1 and higher.
 {{% /admonition %}}
 
-
 ### Running multiple Grafana instances
 
 If you run multiple instances of Grafana, add a version number to each data source in the configuration and increase it when you update the configuration.
