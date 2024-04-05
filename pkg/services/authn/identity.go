@@ -55,6 +55,8 @@ type Identity struct {
 	Name string
 	// Email is the email address of the entity. Should be unique.
 	Email string
+	// EmailVerified is true if entity has verified their email with grafana.
+	EmailVerified bool
 	// IsGrafanaAdmin is true if the entity is a Grafana admin.
 	IsGrafanaAdmin *bool
 	// AuthenticatedBy is the name of the authentication client that was used to authenticate the current Identity.
@@ -121,6 +123,10 @@ func (i *Identity) GetDisplayName() string {
 
 func (i *Identity) GetEmail() string {
 	return i.Email
+}
+
+func (i *Identity) IsEmailVerified() bool {
+	return i.EmailVerified
 }
 
 func (i *Identity) GetIDToken() string {
