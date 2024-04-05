@@ -203,7 +203,7 @@ function getCollapsedInfo(
 
   if (query.legendUrlFormat) {
     let legendUrl = query.legendUrlFormat.length > 10 ? query.legendUrlFormat.slice(0,10) + "..." : query.legendUrlFormat 
-    items.push(`Legend URL: ${legendUrl}`);
+    items.push(`URL: ${legendUrl}`);
   }
 
   items.push(`Type: ${queryTypeLabel?.label}`);
