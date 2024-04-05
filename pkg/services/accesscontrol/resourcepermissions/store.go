@@ -2,6 +2,7 @@ package resourcepermissions
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"strings"
 	"time"
@@ -16,13 +17,14 @@ import (
 	"github.com/grafana/grafana/pkg/util"
 )
 
-func NewStore(sql db.DB, features featuremgmt.FeatureToggles) *store {
-	return &store{sql, features}
+func NewStore(sql db.DB, features featuremgmt.FeatureToggles, inmemoryActionSets InMemoryActionSetsPermission) *store {
+	return &store{sql, features, inmemoryActionSets}
 }
 
 type store struct {
-	sql      db.DB
-	features featuremgmt.FeatureToggles
+	sql                db.DB
+	features           featuremgmt.FeatureToggles
+	inmemoryActionSets InMemoryActionSetsPermission
 }
 
 type flatResourcePermission struct {
@@ -671,9 +673,46 @@ func (s *store) createPermissions(sess *db.Session, roleID int64, resource, reso
 		permissions = append(permissions, p)
 	}
 
+	// TODO: Instead of inserting multiple records, we store the actionsset from the actionset service
+	// and then we can check if the action is part of the actionset
+	// check actionSetinMemory
+
+	/*
+		desc:              "should add new resource permission for user",
+		orgID:             1,
+		userID:            1,
+		actions:           []string{"datasources:query", "datasources:write"},
+		resource:          "datasources",
+		resourceID:        "1",
+		resourceAttribute: "uid",
+		seeds: []SetResourcePermissionCommand{
+			{
+				Actions:    []string{"datasources:write"},
+				Resource:   "datasources",
+				ResourceID: "1",
+			},
+		},
+	*/
+	// from actions, scope to ActionSet and a permission
+	// convert actions to []string of actions
+	a := make([]string, 0, len(actions))
+	for action := range actions {
+		a = append(a, action)
+	}
+	actionSetName := s.inmemoryActionSets.ToActionSetName(resource, resourceID, resourceAttribute, a)
+	permissions = append(permissions, accesscontrol.Permission{
+		Action:     actionSetName,
+		Scope:      accesscontrol.Scope(resource, resourceAttribute, resourceID),
+		Attribute:  "*",
+		Identifier: "*",
+		RoleID:     roleID,
+		Created:    time.Now(),
+		Updated:    time.Now(),
+	})
 	if _, err := sess.InsertMulti(&permissions); err != nil {
 		return err
 	}
+
 	return nil
 }
 
@@ -702,4 +741,91 @@ func managedPermission(action, resource string, resourceID, resourceAttribute st
 		Action: action,
 		Scope:  accesscontrol.Scope(resource, resourceAttribute, resourceID),
 	}
+}
+
+/*
+ACTION SETS
+
+Stores actionsets IN MEMORY
+*/
+// - To grant access to users/teams/basic roles during runtime, users will go through the managed permissions view and access-control will be enforced based on their permissions.
+type ActionSet struct {
+	Action  string   `json:"action"`
+	Scope   string   `json:"scope"`
+	Actions []string `json:"actions"`
+}
+
+type RegisteredActionSet struct {
+	Action  string   `json:"action"`
+	Actions []string `json:"actions"`
+}
+
+type ActionSetRegisterer interface {
+	RegisterActionSet(action string, actions []string) error
+}
+
+type InMemoryActionSetsPermission interface {
+	GetActionSet(action string) (*ActionSet, error)
+	DeleteActionSet(action string) error
+	ToActionSetName(resource, scope, resourceAttribute string, actions []string) string
+	ActionSetRegisterer
+}
+
+// InMemoryActionSets is an in-memory implementation of the ActionSetService.
+type InMemoryActionSets struct {
+	actionSets           map[string]*ActionSet
+	registeredActionSets map[string]*[]string
+}
+
+// NewInMemoryActionSets returns a new instance of InMemoryActionSetService.
+func NewInMemoryActionSets() *InMemoryActionSets {
+	return &InMemoryActionSets{
+		actionSets:           make(map[string]*ActionSet),
+		registeredActionSets: make(map[string]*[]string),
+	}
+}
+
+func (s *InMemoryActionSets) RegisterActionSet(action string, actions []string) error {
+	// check if action is already registered
+	if _, ok := s.registeredActionSets[action]; ok {
+		return errors.New("action already registered")
+	}
+	s.registeredActionSets[action] = &actions
+	return nil
+}
+
+// GetActionSet returns the action set for the given action.
+func (s *InMemoryActionSets) GetActionSet(action string) (*ActionSet, error) {
+	actionSet, ok := s.actionSets[action]
+	if !ok {
+		return nil, errors.New("action not in action set")
+	}
+	return actionSet, nil
+}
+
+// CreateActionSet creates a new action set.
+func (s *InMemoryActionSets) StoreActionSet(actionSet *ActionSet) error {
+	s.actionSets[actionSet.Action] = actionSet
+	return nil
+}
+
+// DeleteActionSet deletes the action set for the given action.
+func (s *InMemoryActionSets) DeleteActionSet(action string) error {
+	delete(s.actionSets, action)
+	return nil
+}
+
+// ToActionSetName returns the name of the action set for the given action.
+func (s *InMemoryActionSets) ToActionSetName(resource, scope, resourceAttribute string, actions []string) string {
+	return fmt.Sprintf("%s:%s:%s:%s", resource, scope, resourceAttribute, strings.Join(actions, ","))
+}
+
+// ActionSet is a helper function to create an action set from a list of actions.
+func CreateActionSet(action string, scope string, actions ...string) *ActionSet {
+	actionSet := &ActionSet{
+		Action:  action,
+		Scope:   scope,
+		Actions: actions,
+	}
+	return actionSet
 }

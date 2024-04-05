@@ -77,9 +77,16 @@ func New(cfg *setting.Cfg,
 		actions = append(actions, action)
 	}
 
+	// ACTION SETS
+	// create action sets from the permissionsToActions
+	inmemoryActionSets := NewInMemoryActionSets()
+	for permission, actions := range options.PermissionsToActions {
+		inmemoryActionSets.registeredActionSets[permission] = &actions
+	}
+
 	s := &Service{
 		ac:          ac,
-		store:       NewStore(sqlStore, features),
+		store:       NewStore(sqlStore, features, inmemoryActionSets),
 		options:     options,
 		license:     license,
 		permissions: permissions,

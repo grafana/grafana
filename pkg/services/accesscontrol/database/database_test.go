@@ -393,7 +393,8 @@ func setupTestEnv(t testing.TB) (*AccessControlStore, rs.Store, user.Service, te
 	cfg.AutoAssignOrgRole = "Viewer"
 	cfg.AutoAssignOrgId = 1
 	acstore := ProvideService(sql)
-	permissionStore := rs.NewStore(sql, featuremgmt.WithFeatures())
+	newinmemory := rs.NewInMemoryActionSets()
+	permissionStore := rs.NewStore(sql, featuremgmt.WithFeatures(), newinmemory)
 	teamService, err := teamimpl.ProvideService(sql, cfg)
 	require.NoError(t, err)
 	orgService, err := orgimpl.ProvideService(sql, cfg, quotatest.New(false, nil))
