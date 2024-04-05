@@ -806,6 +806,7 @@ exports[`transformSceneToSaveModel Given a simple scene with variables Should tr
       "type": "text",
     },
   ],
+  "refresh": "",
   "schemaVersion": 39,
   "tags": [
     "gdev",
