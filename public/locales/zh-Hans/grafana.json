@@ -780,9 +780,14 @@
       "not-migrated": "尚未上传",
       "unknown": "未知"
     },
+    "resource-table": {
+      "unknown-datasource-title": "",
+      "unknown-datasource-type": ""
+    },
     "resource-type": {
       "dashboard": "仪表板",
       "datasource": "数据源",
+      "folder": "",
       "unknown": "未知"
     },
     "summary": {
