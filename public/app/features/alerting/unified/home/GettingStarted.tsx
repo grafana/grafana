@@ -6,6 +6,8 @@ import { GrafanaTheme2 } from '@grafana/data';
 import { EmbeddedScene, SceneFlexLayout, SceneFlexItem, SceneReactObject } from '@grafana/scenes';
 import { useStyles2, useTheme2, Stack, Text, TextLink } from '@grafana/ui';
 
+import { PluginIntegrations } from './PluginIntegrations';
+
 export const getOverviewScene = () => {
   return new EmbeddedScene({
     body: new SceneFlexLayout({
@@ -110,8 +112,8 @@ export function WelcomeHeader({ className }: { className?: string }) {
   const styles = useStyles2(getWelcomeHeaderStyles);
 
   return (
-    <div className={styles.welcomeHeaderWrapper}>
-      <div className={styles.subtitle}>Learn about problems in your systems moments after they occur</div>
+    <Stack gap={2} direction="column">
+      <Text color="secondary">Learn about problems in your systems moments after they occur</Text>
 
       <ContentBox className={cx(styles.ctaContainer, className)}>
         <WelcomeCTABox
@@ -135,18 +137,13 @@ export function WelcomeHeader({ className }: { className?: string }) {
           hrefText="Manage notification policies"
         />
       </ContentBox>
-    </div>
+
+      <PluginIntegrations />
+    </Stack>
   );
 }
 
 const getWelcomeHeaderStyles = (theme: GrafanaTheme2) => ({
-  welcomeHeaderWrapper: css({
-    color: theme.colors.text.primary,
-  }),
-  subtitle: css({
-    color: theme.colors.text.secondary,
-    paddingBottom: theme.spacing(2),
-  }),
   ctaContainer: css({
     padding: theme.spacing(2),
     display: 'flex',
@@ -195,6 +192,7 @@ function WelcomeCTABox({ title, description, href, hrefText }: WelcomeCTABoxProp
 
 const getWelcomeCTAButtonStyles = (theme: GrafanaTheme2) => ({
   container: css({
+    color: theme.colors.text.primary,
     flex: 1,
     minWidth: '240px',
     display: 'grid',
