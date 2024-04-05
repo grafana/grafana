@@ -127,7 +127,7 @@ func (ss *SqlStore) GetDataSourcesByType(ctx context.Context, query *datasources
 
 // GetPrunableProvisionedDataSources returns all datasources that can be pruned
 func (ss *SqlStore) GetPrunableProvisionedDataSources(ctx context.Context) ([]*datasources.DataSource, error) {
-	prunableQuery := "is_prunable IS TRUE"
+	prunableQuery := "is_prunable  = ?"
 
 	dataSources := make([]*datasources.DataSource, 0)
 	return dataSources, ss.db.WithDbSession(ctx, func(sess *db.Session) error {
