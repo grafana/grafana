@@ -36,6 +36,7 @@ If you are unsure which visualization to pick, Grafana can provide visualization
   - [Pie chart][] is typically used where proportionality is important.
   - [Candlestick][] is typically for financial data where the focus is price/data movement.
   - [Gauge][] is the traditional rounded visual showing how far a single metric is from a threshold.
+  - [Trend][] for datasets that have a sequential, numeric x that is not time.
   - [XY chart][] provides a way to visualize arbitrary x and y values in a graph.
 - Stats & numbers
   - [Stat][] for big stats and optional sparkline.
@@ -48,9 +49,11 @@ If you are unsure which visualization to pick, Grafana can provide visualization
   - [Flame graph][] is the main visualization for profiling.
   - [Canvas][] allows you to explicitly place elements within static and dynamic layouts.
   - [Geomap][] helps you visualize geospatial data.
+  - [Datagrid][] allows you to create and manipulate data, and act as data source for other panels.
 - Widgets
   - [Dashboard list][] can list dashboards.
   - [Alert list][] can list alerts.
+  - [Annotations list][] can list available annotations.
   - [Text][] can show markdown and html.
   - [News][] can show RSS feeds.
 
@@ -60,7 +63,7 @@ The following video shows you how to create gauge, time series line graph, stats
 
 ## Get more
 
-You can add more visualization types by installing panel [panel plugins](https://grafana.com/grafana/plugins/?type=panel).
+You can add more visualization types by installing [panel plugins](https://grafana.com/grafana/plugins/?type=panel).
 
 ## Examples
 
@@ -185,6 +188,15 @@ A state timeline shows discrete state changes over time. When used with time ser
 
 [Time series]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/panels-visualizations/visualizations/time-series"
 [Time series]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/visualizations/panels-visualizations/visualizations/time-series"
+
+[Trend]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/panels-visualizations/visualizations/trend"
+[Trend]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/visualizations/panels-visualizations/visualizations/trend"
+
+[Annotations list]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/panels-visualizations/visualizations/annotations"
+[Annotations list]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/visualizations/panels-visualizations/visualizations/annotations"
+
+[Datagrid]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/panels-visualizations/visualizations/datagrid"
+[Datagrid]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/visualizations/panels-visualizations/visualizations/datagrid"
 
 [XY chart]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/panels-visualizations/visualizations/xy-chart"
 [XY chart]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/visualizations/panels-visualizations/visualizations/xy-chart"
