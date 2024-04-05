@@ -53,7 +53,10 @@ func (fam *RemotePrimaryForkedAlertmanager) SaveAndApplyDefaultConfig(ctx contex
 		return fmt.Errorf("failed to send the default configuration to the remote Alertmanager: %w", err)
 	}
 
-	return fam.internal.SaveAndApplyDefaultConfig(ctx)
+	if err := fam.internal.SaveAndApplyDefaultConfig(ctx); err != nil {
+		fam.log.Error("Error applying the default configuration to the internal Alertmanager", "err", err)
+	}
+	return nil
 }
 
 func (fam *RemotePrimaryForkedAlertmanager) GetStatus(ctx context.Context) (apimodels.GettableStatus, error) {

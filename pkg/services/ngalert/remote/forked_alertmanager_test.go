@@ -416,15 +416,16 @@ func TestForkedAlertmanager_ModeRemotePrimary(t *testing.T) {
 		internal.EXPECT().SaveAndApplyDefaultConfig(ctx).Return(nil).Once()
 		require.NoError(tt, forked.SaveAndApplyDefaultConfig(ctx))
 
-		// If there's an error in any Alertmanager, it should be returned.
-		internal, remote, forked = genTestAlertmanagers(tt, modeRemotePrimary)
-		remote.EXPECT().SaveAndApplyDefaultConfig(ctx).Return(nil).Once()
-		internal.EXPECT().SaveAndApplyDefaultConfig(ctx).Return(expErr).Once()
-		require.ErrorIs(tt, forked.SaveAndApplyDefaultConfig(ctx), expErr)
-
+		// An error in the remote Alertmanager should be returned.
 		_, remote, forked = genTestAlertmanagers(tt, modeRemotePrimary)
 		remote.EXPECT().SaveAndApplyDefaultConfig(ctx).Return(expErr).Once()
 		require.ErrorIs(tt, forked.SaveAndApplyDefaultConfig(ctx), expErr)
+
+		// An error in the internal Alertmanager should not be returned.
+		internal, remote, forked = genTestAlertmanagers(tt, modeRemotePrimary)
+		remote.EXPECT().SaveAndApplyDefaultConfig(ctx).Return(nil).Once()
+		internal.EXPECT().SaveAndApplyDefaultConfig(ctx).Return(expErr).Once()
+		require.NoError(tt, forked.SaveAndApplyDefaultConfig(ctx))
 	})
 
 	t.Run("GetStatus", func(tt *testing.T) {
