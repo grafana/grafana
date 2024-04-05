@@ -102,9 +102,11 @@ export function transformSceneToSaveModel(scene: DashboardScene, isSnapshot = fa
 
   const controlsState = state.controls?.state;
 
+  const refreshPicker = controlsState?.refreshPicker;
+
   const timePickerWithoutDefaults = removeDefaults<TimePickerConfig>(
     {
-      refresh_intervals: controlsState?.refreshPicker.state.intervals,
+      refresh_intervals: refreshPicker?.state.intervals,
       hidden: controlsState?.hideTimeControls,
       nowDelay: timeRange.UNSAFE_nowDelay,
     },
@@ -146,6 +148,7 @@ export function transformSceneToSaveModel(scene: DashboardScene, isSnapshot = fa
     graphTooltip,
     liveNow,
     schemaVersion: DASHBOARD_SCHEMA_VERSION,
+    refresh: refreshPicker?.state.refresh,
   };
 
   return sortedDeepCloneWithoutNulls(dashboard);
