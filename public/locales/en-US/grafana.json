@@ -786,9 +786,14 @@
       "not-migrated": "Not yet uploaded",
       "unknown": "Unknown"
     },
+    "resource-table": {
+      "unknown-datasource-title": "Data source {{datasourceUID}}",
+      "unknown-datasource-type": "Unknown data source"
+    },
     "resource-type": {
       "dashboard": "Dashboard",
       "datasource": "Data source",
+      "folder": "Folder",
       "unknown": "Unknown"
     },
     "summary": {
