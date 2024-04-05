@@ -135,8 +135,6 @@ Please note that if you use file provisioning, you can upgrade and update the ro
 
 #### Learn more
 
-[Subfolders announcement](https://grafana.com/docs/grafana-cloud/whats-new/#subfolders)
-
 [Provisioning: Provision dashboards into subfolders PR](https://github.com/grafana/grafana/pull/79793)
 
 ### The Input data source is removed
