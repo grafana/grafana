@@ -144,6 +144,9 @@ func (s *Service) setUserClaims(ctx context.Context, ident identity.Requester, i
 		return nil
 	}
 
+	claims.Email = ident.GetEmail()
+	claims.EmailVerified = ident.IsEmailVerified()
+
 	info, err := s.authInfoService.GetAuthInfo(ctx, &login.GetAuthInfoQuery{UserId: id})
 	if err != nil {
 		// we ignore errors when a user don't have external user auth
@@ -155,8 +158,6 @@ func (s *Service) setUserClaims(ctx context.Context, ident identity.Requester, i
 	}
 
 	claims.AuthenticatedBy = info.AuthModule
-	claims.Email = ident.GetEmail()
-	claims.EmailVerified = ident.IsEmailVerified()
 
 	return nil
 }
