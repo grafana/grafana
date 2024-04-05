@@ -348,7 +348,6 @@ func (e *DataSourceHandler) executeQuery(query backend.DataQuery, wg *sync.WaitG
 			}
 		}
 		if qm.FillMissing != nil {
-
 			// we align the start-time
 			startUnixTime := qm.TimeRange.From.Unix() / int64(qm.Interval.Seconds()) * int64(qm.Interval.Seconds())
 			alignedTimeRange := backend.TimeRange{
