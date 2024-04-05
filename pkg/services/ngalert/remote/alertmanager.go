@@ -137,7 +137,7 @@ func NewAlertmanager(cfg AlertmanagerConfig, store stateStore, decryptFn Decrypt
 		amClient:          amc,
 		decrypt:           decryptFn,
 		defaultConfig:     string(rawCfg),
-		defaultConfigHash: fmt.Sprintf("%x", md5.Sum([]byte(rawCfg))),
+		defaultConfigHash: fmt.Sprintf("%x", md5.Sum(rawCfg)),
 		log:               logger,
 		metrics:           metrics,
 		mimirClient:       mc,
