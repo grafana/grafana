@@ -21,6 +21,7 @@ import {
   toPromLikeQuery,
 } from './language_utils';
 import PromqlSyntax from './promql';
+import { buildVisualQueryFromString } from './querybuilder/parsing';
 import { PrometheusCacheLevel, PromMetricsMetadata, PromQuery } from './types';
 
 const DEFAULT_KEYS = ['job', 'instance'];
@@ -213,7 +214,15 @@ export default class PromQlLanguageProvider extends LanguageProvider {
     this.labelFetchTs = Date.now().valueOf();
 
     const searchParams = new URLSearchParams({ ...timeParams });
-    queries?.forEach((q) => searchParams.append('match[]', q.expr));
+    queries?.forEach((q) => {
+      const visualQuery = buildVisualQueryFromString(q.expr);
+      searchParams.append('match[]', visualQuery.query.metric);
+      if (visualQuery.query.binaryQueries) {
+        visualQuery.query.binaryQueries.forEach((bq) => {
+          searchParams.append('match[]', bq.query.metric);
+        });
+      }
+    });
 
     if (this.datasource.httpMethod === 'GET') {
       url += `?${searchParams.toString()}`;
