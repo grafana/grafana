@@ -1,6 +1,5 @@
-import { render, screen } from '@testing-library/react';
 import React from 'react';
-import { TestProvider } from 'test/helpers/TestProvider';
+import { render, screen } from 'test/test-utils';
 
 import { OrgRole } from '@grafana/data';
 import { ContextSrv, setContextSrv } from 'app/core/services/context_srv';
@@ -21,11 +20,7 @@ jest.mock('app/types', () => ({
 }));
 
 const renderWithProvider = ({ initialState }: { initialState?: Partial<appTypes.StoreState> }) => {
-  render(
-    <TestProvider storeState={initialState}>
-      <OrganizationSwitcher />
-    </TestProvider>
-  );
+  render(<OrganizationSwitcher />, { preloadedState: initialState });
 };
 
 describe('OrganisationSwitcher', () => {

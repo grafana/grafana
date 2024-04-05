@@ -1,7 +1,7 @@
-import { renderHook } from '@testing-library/react';
 import { createMemoryHistory } from 'history';
 import React from 'react';
 import { MemoryRouter, Router } from 'react-router-dom';
+import { getWrapper, renderHook } from 'test/test-utils';
 
 import store from 'app/core/store';
 import { AlertManagerImplementation } from 'app/plugins/datasource/alertmanager/types';
@@ -66,10 +66,13 @@ describe('useAlertmanager', () => {
     const history = createMemoryHistory();
     history.push({ search: `alertmanager=${externalAmProm.name}` });
 
+    const Wrapper = getWrapper({ renderWithRouter: false });
     const wrapper = ({ children }: React.PropsWithChildren) => (
-      <Router history={history}>
-        <AlertmanagerProvider accessType="instance">{children}</AlertmanagerProvider>
-      </Router>
+      <Wrapper>
+        <Router history={history}>
+          <AlertmanagerProvider accessType="instance">{children}</AlertmanagerProvider>
+        </Router>
+      </Wrapper>
     );
 
     const { result } = renderHook(() => useAlertmanager(), { wrapper });

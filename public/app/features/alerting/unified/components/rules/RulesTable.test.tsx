@@ -1,11 +1,7 @@
-import { render } from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
 import React from 'react';
-import { Provider } from 'react-redux';
-import { MemoryRouter } from 'react-router-dom';
+import { render, userEvent } from 'test/test-utils';
 import { byRole } from 'testing-library-selector';
 
-import { configureStore } from 'app/store/configureStore';
 import { CombinedRule } from 'app/types/unified-alerting';
 
 import { AlertRuleAction, useAlertRuleAbility } from '../../hooks/useAbilities';
@@ -31,15 +27,7 @@ const ui = {
 };
 
 function renderRulesTable(rule: CombinedRule) {
-  const store = configureStore();
-
-  render(
-    <Provider store={store}>
-      <MemoryRouter>
-        <RulesTable rules={[rule]} />
-      </MemoryRouter>
-    </Provider>
-  );
+  render(<RulesTable rules={[rule]} />);
 }
 
 const user = userEvent.setup();

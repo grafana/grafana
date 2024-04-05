@@ -1,10 +1,8 @@
 import 'whatwg-fetch'; // fetch polyfill
-import { fireEvent, render as rtlRender, screen } from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
 import { HttpResponse, http } from 'msw';
 import { SetupServer, setupServer } from 'msw/node';
 import React from 'react';
-import { TestProvider } from 'test/helpers/TestProvider';
+import { render, screen, fireEvent, userEvent } from 'test/test-utils';
 
 import { config } from '@grafana/runtime';
 import { backendSrv } from 'app/core/services/backend_srv';
@@ -16,7 +14,6 @@ import {
 } from '../../../features/browse-dashboards/fixtures/dashboardsTreeItem.fixture';
 
 import { NestedFolderPicker } from './NestedFolderPicker';
-
 const [mockTree, { folderA, folderB, folderC, folderA_folderA, folderA_folderB }] = wellFormedTree();
 const [mockTreeThatViewersCanEdit /* shares folders with wellFormedTree */] = treeViewersCanEdit();
 
@@ -24,10 +21,6 @@ jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
   getBackendSrv: () => backendSrv,
 }));
-
-function render(...[ui, options]: Parameters<typeof rtlRender>) {
-  rtlRender(<TestProvider>{ui}</TestProvider>, options);
-}
 
 describe('NestedFolderPicker', () => {
   const mockOnChange = jest.fn();

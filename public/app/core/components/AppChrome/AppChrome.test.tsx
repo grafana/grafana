@@ -1,9 +1,7 @@
-import { render, screen, waitFor, act } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { KBarProvider } from 'kbar';
 import React, { ReactNode } from 'react';
-import { TestProvider } from 'test/helpers/TestProvider';
 import { getGrafanaContextMock } from 'test/mocks/getGrafanaContextMock';
+import { render, screen, waitFor, act } from 'test/test-utils';
 
 import { DataFrame, DataFrameView, FieldType } from '@grafana/data';
 import { config } from '@grafana/runtime';
@@ -62,13 +60,9 @@ const setup = (children: ReactNode) => {
   const context = getGrafanaContextMock();
 
   const renderResult = render(
-    <KBarProvider>
-      <TestProvider grafanaContext={context}>
-        <AppChrome>
-          <div data-testid="page-children">{children}</div>
-        </AppChrome>
-      </TestProvider>
-    </KBarProvider>
+    <AppChrome>
+      <div data-testid="page-children">{children}</div>
+    </AppChrome>
   );
 
   return { renderResult, context };

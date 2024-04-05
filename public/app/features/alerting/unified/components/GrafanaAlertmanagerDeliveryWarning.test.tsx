@@ -1,12 +1,10 @@
 import 'whatwg-fetch';
-import { render, screen, waitFor } from '@testing-library/react';
 import { setupServer } from 'msw/node';
 import React from 'react';
-import { Provider } from 'react-redux';
+import { render, screen, waitFor } from 'test/test-utils';
 
 import { setBackendSrv } from '@grafana/runtime';
 import { backendSrv } from 'app/core/services/backend_srv';
-import { configureStore } from 'app/store/configureStore';
 
 import { AlertmanagerChoice } from '../../../../plugins/datasource/alertmanager/types';
 import { mockAlertmanagerChoiceResponse } from '../mocks/alertmanagerApi';
@@ -36,9 +34,7 @@ describe('GrafanaAlertmanagerDeliveryWarning', () => {
       numExternalAlertmanagers: 0,
     });
 
-    const { container } = renderWithStore(
-      <GrafanaAlertmanagerDeliveryWarning currentAlertmanager="custom-alertmanager" />
-    );
+    const { container } = render(<GrafanaAlertmanagerDeliveryWarning currentAlertmanager="custom-alertmanager" />);
 
     expect(container).toBeEmptyDOMElement();
   });
@@ -49,7 +45,7 @@ describe('GrafanaAlertmanagerDeliveryWarning', () => {
       numExternalAlertmanagers: 1,
     });
 
-    renderWithStore(<GrafanaAlertmanagerDeliveryWarning currentAlertmanager={GRAFANA_RULES_SOURCE_NAME} />);
+    render(<GrafanaAlertmanagerDeliveryWarning currentAlertmanager={GRAFANA_RULES_SOURCE_NAME} />);
 
     expect(await screen.findByText('Grafana alerts are not delivered to Grafana Alertmanager')).toBeVisible();
   });
@@ -60,7 +56,7 @@ describe('GrafanaAlertmanagerDeliveryWarning', () => {
       numExternalAlertmanagers: 1,
     });
 
-    renderWithStore(<GrafanaAlertmanagerDeliveryWarning currentAlertmanager={GRAFANA_RULES_SOURCE_NAME} />);
+    render(<GrafanaAlertmanagerDeliveryWarning currentAlertmanager={GRAFANA_RULES_SOURCE_NAME} />);
 
     expect(await screen.findByText('You have additional Alertmanagers to configure')).toBeVisible();
   });
@@ -71,7 +67,7 @@ describe('GrafanaAlertmanagerDeliveryWarning', () => {
       numExternalAlertmanagers: 1,
     });
 
-    const { container } = renderWithStore(
+    const { container } = render(
       <GrafanaAlertmanagerDeliveryWarning currentAlertmanager={GRAFANA_RULES_SOURCE_NAME} />
     );
 
@@ -86,7 +82,7 @@ describe('GrafanaAlertmanagerDeliveryWarning', () => {
       numExternalAlertmanagers: 0,
     });
 
-    const { container } = renderWithStore(
+    const { container } = render(
       <GrafanaAlertmanagerDeliveryWarning currentAlertmanager={GRAFANA_RULES_SOURCE_NAME} />
     );
 
@@ -95,9 +91,3 @@ describe('GrafanaAlertmanagerDeliveryWarning', () => {
     });
   });
 });
-
-function renderWithStore(element: JSX.Element) {
-  const store = configureStore();
-
-  return render(<Provider store={store}>{element}</Provider>);
-}

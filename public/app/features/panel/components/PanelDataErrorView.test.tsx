@@ -1,11 +1,9 @@
-import { render, screen } from '@testing-library/react';
 import { defaultsDeep } from 'lodash';
 import React from 'react';
-import { Provider } from 'react-redux';
+import { render, screen } from 'test/test-utils';
 
 import { FieldType, getDefaultTimeRange, LoadingState } from '@grafana/data';
 import { PanelDataErrorViewProps } from '@grafana/runtime';
-import { configureStore } from 'app/store/configureStore';
 
 import { PanelDataErrorView } from './PanelDataErrorView';
 
@@ -84,12 +82,7 @@ function renderWithProps(overrides?: Partial<PanelDataErrorViewProps>) {
   };
 
   const props = defaultsDeep(overrides ?? {}, defaults);
-  const store = configureStore();
 
-  const stuff = render(
-    <Provider store={store}>
-      <PanelDataErrorView {...props} />
-    </Provider>
-  );
+  const stuff = render(<PanelDataErrorView {...props} />);
   return { ...stuff };
 }

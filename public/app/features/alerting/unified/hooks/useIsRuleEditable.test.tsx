@@ -1,6 +1,4 @@
-import { renderHook, waitFor } from '@testing-library/react';
-import React from 'react';
-import { Provider } from 'react-redux';
+import { renderHook, waitFor, getWrapper } from 'test/test-utils';
 
 import { contextSrv } from 'app/core/services/context_srv';
 import { AccessControlAction, FolderDTO, StoreState } from 'app/types';
@@ -137,8 +135,7 @@ function mockPermissions(grantedPermissions: AccessControlAction[]) {
 function getProviderWrapper() {
   const dataSources = getMockedDataSources();
   const store = mockUnifiedAlertingStore({ dataSources });
-  const wrapper = ({ children }: React.PropsWithChildren<{}>) => <Provider store={store}>{children}</Provider>;
-  return wrapper;
+  return getWrapper({ store });
 }
 
 function getMockedDataSources(): StoreState['unifiedAlerting']['dataSources'] {

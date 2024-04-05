@@ -1,7 +1,5 @@
-import { render as rtlRender, screen, within } from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
 import React from 'react';
-import { TestProvider } from 'test/helpers/TestProvider';
+import { render, screen, within, userEvent } from 'test/test-utils';
 
 import { FolderDTO } from 'app/types';
 
@@ -10,10 +8,6 @@ import { mockFolderDTO } from '../fixtures/folder.fixture';
 import CreateNewButton from './CreateNewButton';
 
 const mockParentFolder = mockFolderDTO();
-
-function render(...[ui, options]: Parameters<typeof rtlRender>) {
-  rtlRender(<TestProvider>{ui}</TestProvider>, options);
-}
 
 async function renderAndOpen(folder?: FolderDTO) {
   render(<CreateNewButton canCreateDashboard canCreateFolder parentFolder={folder} />);
