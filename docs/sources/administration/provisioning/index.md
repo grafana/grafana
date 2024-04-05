@@ -83,18 +83,6 @@ Grafana deletes the data sources listed in `deleteDatasources` _before_ adding o
 
 To automatically delete data sources once they no longer appear in the provisioning file (or when the file is deleted), add `prune: true` to the root of your provisioning file.
 
-```
-apiVersion: 1
-
-prune: true
-datasources:
-  - name: PostgreSQL
-    type: postgres
-    ...
-```
-
-If the datasources are provisioned with this parameter, they can also be deleted by simply removing them from the YAML file or by deleting the YAML file.
-
 {{% admonition type="note" %}}
 The `prune` parameter is available in Grafana v11.1 and higher.
 {{% /admonition %}}
@@ -118,6 +106,10 @@ apiVersion: 1
 deleteDatasources:
   - name: Graphite
     orgId: 1
+
+# Mark provisioned datasources for deletion if they are no longer in a provisioning file.
+# It takes no effect if datasources are already listed in the deleteDatasources section.
+prune: true
 
 # List of data sources to insert/update depending on what's
 # available in the database.
