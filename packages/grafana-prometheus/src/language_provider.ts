@@ -204,15 +204,22 @@ export default class PromQlLanguageProvider extends LanguageProvider {
   /**
    * Fetches all label keys
    */
-  async fetchLabels(timeRange?: TimeRange): Promise<string[]> {
+  async fetchLabels(timeRange?: TimeRange, queries?: PromQuery[]): Promise<string[]> {
     if (timeRange) {
       this.timeRange = timeRange;
     }
-    const url = '/api/v1/labels';
-    const params = this.datasource.getAdjustedInterval(this.timeRange);
+    let url = '/api/v1/labels';
+    const timeParams = this.datasource.getAdjustedInterval(this.timeRange);
     this.labelFetchTs = Date.now().valueOf();
 
-    const res = await this.request(url, [], params, this.getDefaultCacheHeaders());
+    const searchParams = new URLSearchParams({ ...timeParams });
+    queries?.forEach((q) => searchParams.append('match[]', q.expr));
+
+    if (this.datasource.httpMethod === 'GET') {
+      url += `?${searchParams.toString()}`;
+    }
+
+    const res = await this.request(url, [], searchParams, this.getDefaultCacheHeaders());
     if (Array.isArray(res)) {
       this.labelKeys = res.slice().sort();
     }
