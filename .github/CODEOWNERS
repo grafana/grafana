@@ -38,11 +38,11 @@
 /docs/.codespellignore                                                            @grafana/docs-tooling
 /docs/sources/                                                                    @Eve832
 
-/docs/sources/administration/                                                     @jdbaldry @lwandz13
+/docs/sources/administration/                                                     @jdbaldry
 /docs/sources/alerting/                                                           @brendamuir
 /docs/sources/dashboards/                                                         @imatwawana
 /docs/sources/datasources/                                                        @jdbaldry
-/docs/sources/explore/                                                            @grafana/explore-squad
+/docs/sources/explore/                                                            @grafana/explore-squad @lwandz13
 /docs/sources/fundamentals                                                        @chri2547
 /docs/sources/getting-started/                                                    @chri2547
 /docs/sources/introduction/                                                       @chri2547
