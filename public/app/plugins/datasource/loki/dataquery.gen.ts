@@ -48,6 +48,10 @@ export interface LokiDataQuery extends common.DataQuery {
    */
   legendFormat?: string;
   /**
+   * Used for drilldown/clickable legend labels.
+   */
+  legendUrlFormat?: string;
+  /**
    * Used to limit the number of log rows returned.
    */
   maxLines?: number;
