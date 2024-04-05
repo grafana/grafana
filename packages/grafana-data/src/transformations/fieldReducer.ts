@@ -423,6 +423,7 @@ for (let i = 1; i < 100; i++) {
     preservesUnits: true,
   });
 }
+
 // Used for test cases
 export const defaultCalcs: FieldCalcs = {
   sum: 0,
