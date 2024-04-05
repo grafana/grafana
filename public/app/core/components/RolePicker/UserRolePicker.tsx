@@ -1,3 +1,4 @@
+import { isEqual } from 'lodash';
 import React, { useEffect } from 'react';
 import { useAsyncFn } from 'react-use';
 
@@ -53,15 +54,14 @@ export const UserRolePicker = ({
   width,
   isLoading,
 }: Props) => {
-  const [{ loading, value: appliedRoles = roles || [] }, getUserRoles] = useAsyncFn(async () => {
+  const [userRolesState, getUserRoles] = useAsyncFn(async () => {
     try {
-      if (roles) {
+      if (isEqual(roles, userRolesState.value)) {
         return roles;
       }
       if (apply && Boolean(pendingRoles?.length)) {
         return pendingRoles;
       }
-
       if (contextSrv.hasPermission(AccessControlAction.ActionUserRolesList) && userId > 0) {
         return await fetchUserRoles(userId, orgId);
       }
@@ -94,12 +94,12 @@ export const UserRolePicker = ({
 
   return (
     <RolePicker
-      appliedRoles={appliedRoles}
+      appliedRoles={userRolesState.value || []}
       basicRole={basicRole}
       onRolesChange={onRolesChange}
       onBasicRoleChange={onBasicRoleChange}
       roleOptions={roleOptions}
-      isLoading={loading || isLoading}
+      isLoading={userRolesState.loading || isLoading}
       disabled={disabled}
       basicRoleDisabled={basicRoleDisabled}
       basicRoleDisabledMessage={basicRoleDisabledMessage}

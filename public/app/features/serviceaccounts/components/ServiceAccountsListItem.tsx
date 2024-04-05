@@ -24,6 +24,9 @@ const getServiceAccountsAriaLabel = (name: string) => {
   return `Edit service account's ${name} details`;
 };
 
+/**
+ * TODO(aarongodin): it appears this file is unused - check if it can be removed
+ */
 const ServiceAccountListItemComponent = memo(
   ({
     serviceAccount,
