@@ -176,6 +176,8 @@ func (cfg *Cfg) readUnifiedAlertingEnabledSetting(section *ini.Section) (*bool, 
 
 // ReadUnifiedAlertingSettings reads both the `unified_alerting` and `alerting` sections of the configuration while preferring configuration the `alerting` section.
 // It first reads the `unified_alerting` section, then looks for non-defaults on the `alerting` section and prefers those.
+//
+// nolint: gocyclo
 func (cfg *Cfg) ReadUnifiedAlertingSettings(iniFile *ini.File) error {
 	var err error
 	uaCfg := UnifiedAlertingSettings{}
