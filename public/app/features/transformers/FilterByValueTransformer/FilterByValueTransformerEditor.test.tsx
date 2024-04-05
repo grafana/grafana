@@ -7,7 +7,7 @@ import { FilterByValueMatch, FilterByValueType } from '@grafana/data/src/transfo
 import { FilterByValueTransformerEditor } from './FilterByValueTransformerEditor';
 
 describe('FilterByValueTransformerEditor', () => {
-  it('adds a filter with default isNull option when onAddFilter is called', () => {
+  it('correctly applies the default isNull option when onAddFilter is first called', () => {
     // Mock onChange function
     const onChangeMock = jest.fn();
 
