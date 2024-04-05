@@ -3,7 +3,7 @@ import { Registry, RegistryItem } from '@grafana/data';
 import { FieldExtractorID } from './types';
 
 export interface FieldExtractor extends RegistryItem {
-  parse: (v: string) => Record<string, any> | undefined;
+  parse: (v: string, exp?: string) => Record<string, any> | undefined;
 }
 
 const extJSON: FieldExtractor = {
@@ -110,14 +110,40 @@ const extLabels: FieldExtractor = {
   parse: parseKeyValuePairs,
 };
 
-const fmts = [extJSON, extLabels];
+const extRegex: FieldExtractor = {
+  id: FieldExtractorID.Regex,
+  name: 'Regex',
+  description: 'Parse with Regex',
+  parse: (v: string, exp?: string) => {
+    if (exp) {
+      try {
+        const re = new RegExp(exp, 'gi');
+        const matches = Array.from(v.matchAll(re));
+        console.log(matches);
+        const match = v.match(re);
+        if (matches[0]?.groups) {
+          return matches[0].groups;
+        } else {
+          return { [v]: match };
+        }
+      } catch {
+        return undefined;
+      }
+    } else {
+      return undefined;
+    }
+  },
+};
+
+const fmts = [extJSON, extLabels, extRegex];
+const autoFormats = [extJSON, extLabels]; // regular expression cannot be parsed automatically
 
 const extAuto: FieldExtractor = {
   id: FieldExtractorID.Auto,
   name: 'Auto',
   description: 'parse new fields automatically',
   parse: (v: string) => {
-    for (const f of fmts) {
+    for (const f of autoFormats) {
       try {
         const r = f.parse(v);
         if (r != null) {
