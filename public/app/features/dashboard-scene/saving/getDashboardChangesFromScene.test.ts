@@ -55,7 +55,7 @@ describe('getDashboardChangesFromScene', () => {
     const result = getDashboardChangesFromScene(dashboard, false, false, false);
     expect(result.hasChanges).toBe(false);
     expect(result.diffCount).toBe(0);
-    expect(result.hasTimeChanges).toBe(true);
+    expect(result.hasRefreshChange).toBe(true);
   });
 
   it('Can save refresh change', () => {

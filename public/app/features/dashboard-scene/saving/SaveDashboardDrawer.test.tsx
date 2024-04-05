@@ -78,7 +78,7 @@ describe('SaveDashboardDrawer', () => {
 
       openAndRender();
 
-      expect(await screen.findByText('Save refresh')).toBeInTheDocument();
+      expect(await screen.findByText('Save dashboard')).toBeInTheDocument();
       expect(screen.queryByTestId(selectors.pages.SaveDashboardModal.saveRefresh)).toBeInTheDocument();
     });
 
@@ -92,7 +92,7 @@ describe('SaveDashboardDrawer', () => {
 
       openAndRender();
 
-      expect(await screen.findByText('Save refresh')).toBeInTheDocument();
+      expect(await screen.findByText('Save dashboard')).toBeInTheDocument();
       expect(screen.getByTestId(selectors.pages.SaveDashboardModal.saveRefresh)).toBeInTheDocument();
       expect(screen.queryByLabelText('Tab Changes')).not.toBeInTheDocument();
 
