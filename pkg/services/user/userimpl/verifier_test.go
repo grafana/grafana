@@ -7,6 +7,8 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
+	"github.com/grafana/grafana/pkg/services/auth/identity"
+	"github.com/grafana/grafana/pkg/services/auth/idtest"
 	"github.com/grafana/grafana/pkg/services/notifications"
 	tempuser "github.com/grafana/grafana/pkg/services/temp_user"
 	"github.com/grafana/grafana/pkg/services/temp_user/tempusertest"
@@ -19,6 +21,7 @@ func TestVerifier_Start(t *testing.T) {
 	ts := &tempusertest.FakeTempUserService{}
 	us := &usertest.FakeUserService{}
 	ns := notifications.MockNotificationService()
+	is := &idtest.MockService{}
 
 	type calls struct {
 		expireCalled bool
@@ -26,7 +29,7 @@ func TestVerifier_Start(t *testing.T) {
 		updateCalled bool
 	}
 
-	verifier := ProvideVerifier(setting.NewCfg(), us, ts, ns)
+	verifier := ProvideVerifier(setting.NewCfg(), us, ts, ns, is)
 	t.Run("should error if email already exist for other user", func(t *testing.T) {
 		us.ExpectedUser = &user.User{ID: 1}
 		err := verifier.Start(context.Background(), user.StartVerifyEmailCommand{
@@ -113,15 +116,17 @@ func TestVerifier_Complete(t *testing.T) {
 	ts := &tempusertest.FakeTempUserService{}
 	us := &usertest.FakeUserService{}
 	ns := notifications.MockNotificationService()
+	is := &idtest.MockService{}
 
 	type calls struct {
 		updateCalled       bool
 		updateStatusCalled bool
+		removeTokenCalled  bool
 	}
 
 	cfg := setting.NewCfg()
 	cfg.VerificationEmailMaxLifetime = 1 * time.Hour
-	verifier := ProvideVerifier(cfg, us, ts, ns)
+	verifier := ProvideVerifier(cfg, us, ts, ns, is)
 	t.Run("should return error for invalid code", func(t *testing.T) {
 		ts.GetTempUserByCodeFN = func(ctx context.Context, query *tempuser.GetTempUserByCodeQuery) (*tempuser.TempUserDTO, error) {
 			return nil, tempuser.ErrTempUserNotFound
@@ -195,6 +200,11 @@ func TestVerifier_Complete(t *testing.T) {
 			return nil
 		}
 
+		is.RemoveIDTokenFn = func(ctx context.Context, identity identity.Requester) error {
+			c.removeTokenCalled = true
+			return nil
+		}
+
 		us.ExpectedUser = &user.User{Email: "initial@email.com"}
 		us.ExpectedError = nil
 		us.UpdateFn = func(ctx context.Context, cmd *user.UpdateUserCommand) error {
@@ -210,6 +220,7 @@ func TestVerifier_Complete(t *testing.T) {
 		assert.NoError(t, err)
 		assert.True(t, c.updateCalled)
 		assert.True(t, c.updateStatusCalled)
+		assert.True(t, c.removeTokenCalled)
 	})
 
 	t.Run("should update user email and login if login is an email on valid code", func(t *testing.T) {
@@ -230,6 +241,11 @@ func TestVerifier_Complete(t *testing.T) {
 			return nil
 		}
 
+		is.RemoveIDTokenFn = func(ctx context.Context, identity identity.Requester) error {
+			c.removeTokenCalled = true
+			return nil
+		}
+
 		us.ExpectedUser = &user.User{Email: "initial@email.com", Login: "other@email.com"}
 		us.ExpectedError = nil
 		us.UpdateFn = func(ctx context.Context, cmd *user.UpdateUserCommand) error {
@@ -245,5 +261,6 @@ func TestVerifier_Complete(t *testing.T) {
 		assert.NoError(t, err)
 		assert.True(t, c.updateCalled)
 		assert.True(t, c.updateStatusCalled)
+		assert.True(t, c.removeTokenCalled)
 	})
 }

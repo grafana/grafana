@@ -228,6 +228,7 @@ type StartVerifyEmailCommand struct {
 }
 
 type CompleteEmailVerifyCommand struct {
+	User identity.Requester
 	Code string
 }
 

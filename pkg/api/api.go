@@ -191,6 +191,7 @@ func (hs *HTTPServer) registerRoutes() {
 	// update user email
 	if hs.Cfg.Smtp.Enabled && hs.Cfg.VerifyEmailEnabled {
 		r.Get("/user/email/update", reqSignedInNoAnonymous, routing.Wrap(hs.UpdateUserEmail))
+		r.Post("/api/user/email/start-verify", reqSignedInNoAnonymous, routing.Wrap(hs.StartEmailVerificaton))
 	}
 
 	// invited

@@ -382,6 +382,7 @@ func (ss *sqlStore) GetSignedInUser(ctx context.Context, query *user.GetSignedIn
 		u.uid                 as user_uid,
 		u.is_admin            as is_grafana_admin,
 		u.email               as email,
+		u.email_verified      as email_verified,
 		u.login               as login,
 		u.name                as name,
 		u.is_disabled         as is_disabled,
