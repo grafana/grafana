@@ -25,10 +25,13 @@ const injectedRtkApi = api.injectEndpoints({
     createCloudMigrationToken: build.mutation<CreateCloudMigrationTokenApiResponse, CreateCloudMigrationTokenApiArg>({
       query: () => ({ url: `/cloudmigration/token`, method: 'POST' }),
     }),
+    getDashboardByUid: build.query<GetDashboardByUidApiResponse, GetDashboardByUidApiArg>({
+      query: (queryArg) => ({ url: `/dashboards/uid/${queryArg.uid}` }),
+    }),
   }),
   overrideExisting: false,
 });
-export { injectedRtkApi as enhancedApi };
+export { injectedRtkApi as generatedAPI };
 export type GetMigrationListApiResponse = /** status 200 (empty) */ CloudMigrationListResponse;
 export type GetMigrationListApiArg = void;
 export type CreateMigrationApiResponse = /** status 200 (empty) */ CloudMigrationResponse;
@@ -64,6 +67,10 @@ export type GetCloudMigrationRunApiArg = {
 };
 export type CreateCloudMigrationTokenApiResponse = /** status 200 (empty) */ CreateAccessTokenResponseDto;
 export type CreateCloudMigrationTokenApiArg = void;
+export type GetDashboardByUidApiResponse = /** status 200 (empty) */ DashboardFullWithMeta;
+export type GetDashboardByUidApiArg = {
+  uid: string;
+};
 export type CloudMigrationResponse = {
   created?: string;
   id?: number;
@@ -86,11 +93,11 @@ export type ErrorResponseBody = {
 export type CloudMigrationRequest = {
   authToken?: string;
 };
-export type ItemStatus = string;
 export type MigrateDataResponseItemDto = {
   error?: string;
-  refId?: string;
-  status?: ItemStatus;
+  refId: string;
+  status: 'OK' | 'ERROR';
+  type: 'DASHBOARD' | 'DATASOURCE' | 'FOLDER';
 };
 export type MigrateDataResponseDto = {
   id?: number;
@@ -102,6 +109,50 @@ export type CloudMigrationRunList = {
 export type CreateAccessTokenResponseDto = {
   token?: string;
 };
+export type Json = object;
+export type AnnotationActions = {
+  canAdd?: boolean;
+  canDelete?: boolean;
+  canEdit?: boolean;
+};
+export type AnnotationPermission = {
+  dashboard?: AnnotationActions;
+  organization?: AnnotationActions;
+};
+export type DashboardMeta = {
+  annotationsPermissions?: AnnotationPermission;
+  canAdmin?: boolean;
+  canDelete?: boolean;
+  canEdit?: boolean;
+  canSave?: boolean;
+  canStar?: boolean;
+  created?: string;
+  createdBy?: string;
+  expires?: string;
+  /** Deprecated: use FolderUID instead */
+  folderId?: number;
+  folderTitle?: string;
+  folderUid?: string;
+  folderUrl?: string;
+  hasAcl?: boolean;
+  isFolder?: boolean;
+  isSnapshot?: boolean;
+  isStarred?: boolean;
+  provisioned?: boolean;
+  provisionedExternalId?: string;
+  publicDashboardEnabled?: boolean;
+  publicDashboardUid?: string;
+  slug?: string;
+  type?: string;
+  updated?: string;
+  updatedBy?: string;
+  url?: string;
+  version?: number;
+};
+export type DashboardFullWithMeta = {
+  dashboard?: Json;
+  meta?: DashboardMeta;
+};
 export const {
   useGetMigrationListQuery,
   useCreateMigrationMutation,
@@ -111,4 +162,5 @@ export const {
   useRunCloudMigrationMutation,
   useGetCloudMigrationRunQuery,
   useCreateCloudMigrationTokenMutation,
+  useGetDashboardByUidQuery,
 } = injectedRtkApi;
