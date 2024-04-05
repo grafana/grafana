@@ -2,7 +2,6 @@ package server
 
 import (
 	"context"
-	"fmt"
 	"net"
 	"net/http"
 	"time"
@@ -47,7 +46,6 @@ func (s *instrumentationService) running(ctx context.Context) error {
 }
 
 func (s *instrumentationService) stop(failureReason error) error {
-	fmt.Println("STOPPING")
 	s.log.Info("stopping instrumentation server", "reason", failureReason)
 	if err := s.httpServ.Shutdown(context.Background()); err != nil {
 		s.log.Error("failed to shutdown instrumentation server", "error", err)
