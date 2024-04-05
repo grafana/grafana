@@ -356,6 +356,7 @@ var wireBasicSet = wire.NewSet(
 	authnimpl.ProvideService,
 	authnimpl.ProvideIdentitySynchronizer,
 	authnimpl.ProvideAuthnService,
+	authnimpl.ProvideRegistration,
 	supportbundlesimpl.ProvideService,
 	extsvcaccounts.ProvideExtSvcAccountsService,
 	wire.Bind(new(serviceaccounts.ExtSvcAccountsService), new(*extsvcaccounts.ExtSvcAccountsService)),
@@ -431,7 +432,7 @@ func Initialize(cfg *setting.Cfg, opts Options, apiOpts api.ServerOptions) (*Ser
 
 func InitializeForTest(t sqlutil.ITestDB, cfg *setting.Cfg, opts Options, apiOpts api.ServerOptions) (*TestEnv, error) {
 	wire.Build(wireExtsTestSet)
-	return &TestEnv{Server: &Server{}, SQLStore: &sqlstore.SQLStore{}}, nil
+	return &TestEnv{Server: &Server{}, SQLStore: &sqlstore.SQLStore{}, Cfg: &setting.Cfg{}}, nil
 }
 
 func InitializeForCLI(cfg *setting.Cfg) (Runner, error) {

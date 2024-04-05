@@ -1,8 +1,10 @@
 export * from './endpoints.gen';
+import { BaseQueryFn, QueryDefinition } from '@reduxjs/toolkit/dist/query';
+
 import { generatedAPI } from './endpoints.gen';
 
 export const cloudMigrationAPI = generatedAPI.enhanceEndpoints({
-  addTagTypes: ['cloud-migration-config', 'cloud-migration-run'],
+  addTagTypes: ['cloud-migration-config', 'cloud-migration-run', 'cloud-migration-run-list'],
   endpoints: {
     // List Cloud Configs
     getMigrationList: {
@@ -25,7 +27,7 @@ export const cloudMigrationAPI = generatedAPI.enhanceEndpoints({
     },
 
     getCloudMigrationRunList: {
-      providesTags: ['cloud-migration-run'] /* should this be a -list? */,
+      providesTags: ['cloud-migration-run-list'],
     },
 
     getCloudMigrationRun: {
@@ -33,7 +35,26 @@ export const cloudMigrationAPI = generatedAPI.enhanceEndpoints({
     },
 
     runCloudMigration: {
-      invalidatesTags: ['cloud-migration-run'],
+      invalidatesTags: ['cloud-migration-run-list'],
+    },
+
+    getDashboardByUid(endpoint) {
+      suppressErrorsOnQuery(endpoint);
     },
   },
 });
+
+function suppressErrorsOnQuery<QueryArg, BaseQuery extends BaseQueryFn, TagTypes extends string, ResultType>(
+  endpoint: QueryDefinition<QueryArg, BaseQuery, TagTypes, ResultType>
+) {
+  if (!endpoint.query) {
+    return;
+  }
+
+  const originalQuery = endpoint.query;
+  endpoint.query = (...args) => {
+    const baseQuery = originalQuery(...args);
+    baseQuery.showErrorAlert = false;
+    return baseQuery;
+  };
+}

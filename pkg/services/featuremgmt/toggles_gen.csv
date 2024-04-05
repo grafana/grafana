@@ -114,6 +114,7 @@ cachingOptimizeSerializationMemoryUsage,experimental,@grafana/grafana-operator-e
 panelTitleSearchInV1,experimental,@grafana/backend-platform,true,false,false
 managedPluginsInstall,GA,@grafana/plugins-platform-backend,false,false,false
 prometheusPromQAIL,experimental,@grafana/observability-metrics,false,false,true
+prometheusCodeModeMetricNamesSearch,experimental,@grafana/observability-metrics,false,false,true
 addFieldFromCalculationStatFunctions,preview,@grafana/dataviz-squad,false,false,true
 alertmanagerRemoteSecondary,experimental,@grafana/alerting-squad,false,false,false
 alertmanagerRemotePrimary,experimental,@grafana/alerting-squad,false,false,false
@@ -158,3 +159,5 @@ scopeFilters,experimental,@grafana/dashboards-squad,false,false,false
 ssoSettingsSAML,experimental,@grafana/identity-access-team,false,false,false
 usePrometheusFrontendPackage,experimental,@grafana/observability-metrics,false,false,true
 oauthRequireSubClaim,experimental,@grafana/identity-access-team,false,false,false
+newDashboardWithFiltersAndGroupBy,experimental,@grafana/dashboards-squad,false,false,false
+cloudWatchNewLabelParsing,GA,@grafana/aws-datasources,false,false,false

@@ -311,3 +311,6 @@ export { TimeSeries } from '../graveyard/TimeSeries/TimeSeries';
 export { useGraphNGContext } from '../graveyard/GraphNG/hooks';
 export { preparePlotFrame, buildScaleKey } from '../graveyard/GraphNG/utils';
 export { type GraphNGLegendEvent } from '../graveyard/GraphNG/types';
+
+export { ZoomPlugin } from '../graveyard/uPlot/plugins/ZoomPlugin';
+export { TooltipPlugin } from '../graveyard/uPlot/plugins/TooltipPlugin';

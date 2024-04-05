@@ -143,6 +143,7 @@ type Base64HGInstance struct {
 
 // dtos for cms api
 
+// swagger:enum MigrateDataType
 type MigrateDataType string
 
 const (
@@ -162,6 +163,7 @@ type MigrateDataRequestItemDTO struct {
 	Data  interface{}     `json:"data"`
 }
 
+// swagger:enum ItemStatus
 type ItemStatus string
 
 const (
@@ -175,8 +177,11 @@ type MigrateDataResponseDTO struct {
 }
 
 type MigrateDataResponseItemDTO struct {
-	Type   MigrateDataType `json:"type"`
-	RefID  string          `json:"refId"`
-	Status ItemStatus      `json:"status"`
-	Error  string          `json:"error,omitempty"`
+	// required:true
+	Type MigrateDataType `json:"type"`
+	// required:true
+	RefID string `json:"refId"`
+	// required:true
+	Status ItemStatus `json:"status"`
+	Error  string     `json:"error,omitempty"`
 }

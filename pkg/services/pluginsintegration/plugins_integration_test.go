@@ -20,6 +20,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginstore"
 	"github.com/grafana/grafana/pkg/services/searchV2"
+	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tests/testsuite"
 	"github.com/grafana/grafana/pkg/tsdb/azuremonitor"
@@ -88,7 +89,7 @@ func TestIntegrationPluginManager(t *testing.T) {
 	pg := postgres.ProvideService(cfg)
 	my := mysql.ProvideService()
 	ms := mssql.ProvideService(cfg)
-	sv2 := searchV2.ProvideService(cfg, db.InitTestDB(t), nil, nil, tracer, features, nil, nil, nil)
+	sv2 := searchV2.ProvideService(cfg, db.InitTestDB(t, sqlstore.InitTestDBOpt{Cfg: cfg}), nil, nil, tracer, features, nil, nil, nil)
 	graf := grafanads.ProvideService(sv2, nil)
 	pyroscope := pyroscope.ProvideService(hcp)
 	parca := parca.ProvideService(hcp)

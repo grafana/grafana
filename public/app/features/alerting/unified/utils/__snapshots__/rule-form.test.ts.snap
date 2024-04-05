@@ -7,7 +7,7 @@ exports[`formValuesToRulerGrafanaRuleDTO should correctly convert rule form valu
     "runbook_url": "",
     "summary": "",
   },
-  "for": "5m",
+  "for": "1m",
   "grafana_alert": {
     "condition": "A",
     "data": [],
@@ -30,7 +30,7 @@ exports[`formValuesToRulerGrafanaRuleDTO should not save both instant and range 
     "runbook_url": "",
     "summary": "",
   },
-  "for": "5m",
+  "for": "1m",
   "grafana_alert": {
     "condition": "A",
     "data": [

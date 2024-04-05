@@ -31,7 +31,10 @@ export class DashboardSceneChangeTracker {
 
   private onStateChanged({ payload }: SceneObjectStateChangedEvent) {
     if (payload.changedObject instanceof SceneRefreshPicker) {
-      if (Object.prototype.hasOwnProperty.call(payload.partialUpdate, 'intervals')) {
+      if (
+        Object.prototype.hasOwnProperty.call(payload.partialUpdate, 'intervals') ||
+        Object.prototype.hasOwnProperty.call(payload.partialUpdate, 'refresh')
+      ) {
         this.detectChanges();
       }
     }

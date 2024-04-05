@@ -280,6 +280,16 @@ var (
 			},
 		},
 	}
+
+	usagestatsReaderRole = RoleDTO{
+		Name:        "fixed:usagestats:reader",
+		DisplayName: "Usage stats report reader",
+		Description: "View usage statistics report",
+		Group:       "Statistics",
+		Permissions: []Permission{
+			{Action: ActionUsageStatsRead},
+		},
+	}
 )
 
 // Declare OSS roles to the accesscontrol service
@@ -320,15 +330,22 @@ func DeclareFixedRoles(service Service, cfg *setting.Cfg) error {
 		Role:   generalAuthConfigWriterRole,
 		Grants: []string{RoleGrafanaAdmin},
 	}
-
 	// TODO: Move to own service when implemented
 	authenticationConfigWriter := RoleRegistration{
 		Role:   authenticationConfigWriterRole,
 		Grants: []string{RoleGrafanaAdmin},
 	}
 
-	return service.DeclareFixedRoles(ldapReader, ldapWriter, orgUsersReader, orgUsersWriter,
-		settingsReader, statsReader, usersReader, usersWriter, authenticationConfigWriter, generalAuthConfigWriter)
+	usageStatsReader := RoleRegistration{
+		Role:   usagestatsReaderRole,
+		Grants: []string{RoleGrafanaAdmin},
+	}
+
+	return service.DeclareFixedRoles(
+		ldapReader, ldapWriter, orgUsersReader, orgUsersWriter,
+		settingsReader, statsReader, usersReader, usersWriter,
+		authenticationConfigWriter, generalAuthConfigWriter, usageStatsReader,
+	)
 }
 
 func ConcatPermissions(permissions ...[]Permission) []Permission {
