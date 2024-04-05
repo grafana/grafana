@@ -81,7 +81,7 @@ If the data source already exists, Grafana reconfigures it to match the provisio
 The configuration file can also list data sources to automatically delete, called `deleteDatasources`.
 Grafana deletes the data sources listed in `deleteDatasources` _before_ adding or updating those in the `datasources` list.
 
-In order to delete data sources by simply removing the configuration from the file instead of manually listing them under `deleteDatasources`, include a `prune` parameter at the root of the YAML configuration file when provisioning them.
+To automatically delete data sources once they no longer appear in the provisioning file (or when the file is deleted), add `prune: true` to the root of your provisioning file.
 
 ```
 apiVersion: 1
