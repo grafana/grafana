@@ -80,6 +80,7 @@ export const serverItem: CanvasElementItem<ServerConfig, ServerData> = {
       height: options?.placement?.height ?? 100,
       top: options?.placement?.top,
       left: options?.placement?.left,
+      rotation: options?.placement?.rotation ?? 0,
     },
     config: {
       type: ServerType.Single,
