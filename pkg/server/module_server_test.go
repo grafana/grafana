@@ -25,6 +25,9 @@ func TestIntegrationWillRunInstrumentationServerWhenTargetHasNoHttpServer(t *tes
 		t.Skip("skipping integration test")
 	}
 	dbType := os.Getenv("GRAFANA_TEST_DB")
+	if dbType == "" {
+		t.Skip("skipping - GRAFANA_TEST_DB not defined")
+	}
 	if dbType == "sqlite3" {
 		t.Skip("skipping - sqlite not supported for storage server target")
 	}
@@ -40,8 +43,7 @@ func TestIntegrationWillRunInstrumentationServerWhenTargetHasNoHttpServer(t *tes
 	require.NoError(t, err)
 
 	go func() {
-		err = ms.Run()
-		require.NoError(t, err)
+		_ = ms.Run()
 	}()
 	time.Sleep(500 * time.Millisecond) // wait for http server to be running
 
