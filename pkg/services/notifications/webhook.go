@@ -4,10 +4,12 @@ import (
 	"bytes"
 	"context"
 	"crypto/tls"
+	"errors"
 	"fmt"
 	"io"
 	"net"
 	"net/http"
+	"net/url"
 	"time"
 
 	"github.com/grafana/grafana/pkg/util"
@@ -80,7 +82,7 @@ func (ns *NotificationService) sendWebRequestSync(ctx context.Context, webhook *
 
 	resp, err := netClient.Do(request)
 	if err != nil {
-		return err
+		return redactURL(err)
 	}
 	defer func() {
 		if err := resp.Body.Close(); err != nil {
@@ -96,16 +98,25 @@ func (ns *NotificationService) sendWebRequestSync(ctx context.Context, webhook *
 	if webhook.Validation != nil {
 		err := webhook.Validation(body, resp.StatusCode)
 		if err != nil {
-			ns.log.Debug("Webhook failed validation", "url", webhook.Url, "statuscode", resp.Status, "body", string(body))
+			ns.log.Debug("Webhook failed validation", "statuscode", resp.Status, "body", string(body))
 			return fmt.Errorf("webhook failed validation: %w", err)
 		}
 	}
 
 	if resp.StatusCode/100 == 2 {
-		ns.log.Debug("Webhook succeeded", "url", webhook.Url, "statuscode", resp.Status)
+		ns.log.Debug("Webhook succeeded", "statuscode", resp.Status)
 		return nil
 	}
 
-	ns.log.Debug("Webhook failed", "url", webhook.Url, "statuscode", resp.Status, "body", string(body))
+	ns.log.Debug("Webhook failed", "statuscode", resp.Status, "body", string(body))
 	return fmt.Errorf("webhook response status %v", resp.Status)
+}
+
+func redactURL(err error) error {
+	var e *url.Error
+	if !errors.As(err, &e) {
+		return err
+	}
+	e.URL = "<redacted>"
+	return e
 }
