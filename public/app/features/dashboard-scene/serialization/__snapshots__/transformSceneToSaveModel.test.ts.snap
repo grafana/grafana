@@ -183,6 +183,7 @@ exports[`transformSceneToSaveModel Given a scene with rows Should transform back
       "type": "row",
     },
   ],
+  "refresh": "",
   "schemaVersion": 39,
   "tags": [
     "templating",
