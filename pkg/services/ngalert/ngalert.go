@@ -191,19 +191,14 @@ func (ng *AlertNG) init() error {
 					}
 
 					// Create remote Alertmanager.
-					remoteAM, err := createRemoteAlertmanager(orgID, ng.Cfg.UnifiedAlerting.RemoteAlertmanager, ng.KVStore, m)
+					remoteAM, err := createRemoteAlertmanager(orgID, ng.Cfg.UnifiedAlerting.RemoteAlertmanager, ng.KVStore, ng.SecretsService.Decrypt, m)
 					if err != nil {
 						moaLogger.Error("Failed to create remote Alertmanager, falling back to using only the internal one", "err", err)
 						return internalAM, nil
 					}
 
 					// Use both Alertmanager implementations in the forked Alertmanager.
-					cfg := remote.RemotePrimaryConfig{
-						Logger: log.New("ngalert.forked-alertmanager.remote-primary"),
-						OrgID:  orgID,
-						Store:  ng.store,
-					}
-					return remote.NewRemotePrimaryForkedAlertmanager(cfg, internalAM, remoteAM)
+					return remote.NewRemotePrimaryForkedAlertmanager(log.New("ngalert.forked-alertmanager.remote-primary"), internalAM, remoteAM), nil
 				}
 			})
 
