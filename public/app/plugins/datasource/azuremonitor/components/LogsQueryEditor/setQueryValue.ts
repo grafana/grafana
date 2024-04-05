@@ -39,3 +39,13 @@ export function setTimeColumn(query: AzureMonitorQuery, timeColumn: string): Azu
     },
   };
 }
+
+export function setBasicLogsQuery(query: AzureMonitorQuery, basicLogsQuery: boolean): AzureMonitorQuery {
+  return {
+    ...query,
+    azureLogAnalytics: {
+      ...query.azureLogAnalytics,
+      basicLogsQuery,
+    },
+  };
+}
