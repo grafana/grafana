@@ -449,6 +449,7 @@ exports[`transformSceneToSaveModel Given a simple scene with custom settings Sho
       "type": "text",
     },
   ],
+  "refresh": "5m",
   "schemaVersion": 39,
   "tags": [
     "tag1",
