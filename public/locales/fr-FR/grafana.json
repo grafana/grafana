@@ -786,9 +786,14 @@
       "not-migrated": "Pas encore importé",
       "unknown": "Inconnu"
     },
+    "resource-table": {
+      "unknown-datasource-title": "",
+      "unknown-datasource-type": ""
+    },
     "resource-type": {
       "dashboard": "Tableau de bord",
       "datasource": "Source de données",
+      "folder": "",
       "unknown": "Inconnu"
     },
     "summary": {
