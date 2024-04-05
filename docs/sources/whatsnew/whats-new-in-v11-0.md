@@ -46,25 +46,6 @@ Use full URLs for links. When linking to versioned docs, replace the version wit
 <!--Learn how to upload images here: https://grafana.com/docs/writers-toolkit/write/image-guidelines/#where-to-store-media-assets-->
 <!---->
 
-## Explore Metrics
-
-<!-- #proj-datatrails-dev, PM: Jay Goodson, Engineering: Darren Janeczek, André Pereira, Design: Catherine Gui -->
-
-_Generally available in all editions of Grafana_
-
-Metrics Explore is a query-less experience for browsing Prometheus-compatible metrics. Search for or filter to find a metric. Quickly find related metrics - all in just a few clicks. No PromQL to be found anywhere! With Explore Metrics, you can:
-
-- easily slice and dice metrics based on their labels, so you can see anomalies right away
-- See the right visualization for your metric based on its type (e.g. gauge vs. counter) without writing it yourself
-- surface other metrics relevant to the current metric
-- “explore in a drawer” - expand a drawer over a dashboard with more content, so you don’t lose your place
-- view a history of user steps when navigating through metrics and their filters
-- easily pivot to other related telemetry - IE, logs or traces
-
-… all without writing any queries!
-
-<!--To learn more, refer to the Metrics Explore [documentation](http://grafana.com/docs/grafana/<GRAFANA_VERSION>/explore/metrics-explore/) as well as the following video demo (forthcoming):-->
-
 ## Dashboards and visualizations
 
 ### Scenes for viewers
@@ -276,6 +257,42 @@ Debug or audit using the alert rule metadata and view the alert rule annotations
 ![Image shows details of an alert rule](/media/docs/alerting/alert-detail-view.png)
 
 ## Data sources
+
+### Explore Metrics
+
+<!-- #proj-datatrails-dev, PM: Jay Goodson, Engineering: Darren Janeczek, André Pereira, Design: Catherine Gui -->
+
+_Generally available in all editions of Grafana_
+
+Explore Metrics is a query-less experience for browsing Prometheus-compatible metrics. Search for or filter to find a metric. Quickly find related metrics - all in just a few clicks. No PromQL to be found anywhere! With Explore Metrics, you can:
+
+- easily slice and dice metrics based on their labels, so you can see anomalies right away
+- See the right visualization for your metric based on its type (e.g. gauge vs. counter) without writing it yourself
+- surface other metrics relevant to the current metric
+- “explore in a drawer” - expand a drawer over a dashboard with more content, so you don’t lose your place
+- view a history of user steps when navigating through metrics and their filters
+- easily pivot to other related telemetry - IE, logs or traces
+
+… all without writing any queries!
+
+<!--To learn more, refer to the Explore Metrics [documentation](http://grafana.com/docs/grafana/<GRAFANA_VERSION>/explore/metrics-explore/) as well as the following video demo (forthcoming):-->
+
+### Explore Logs
+
+<!-- Slack: #proj-lokiapp-dev, PM: Steven Dungan, Engineering: Andrew Stucky, Cyril Tovena, Design: Joan Wortman -->
+
+_Experimental in Grafana Open Source and Enterprise_
+
+Explore Logs is a queryless experience for exploring Loki logs - no LogQL required! The primary interaction modes are point-and-click based on log volume, similar to Explore Metrics.
+
+Highlights:
+
+- View log volume and log line samples when you first land in Explore Logs (no more "blank screen!")
+- Explore additional labels and detected fields in a similar way, focusing on volume and distribution; add them to your "query" to refine your logs search without needing LogQL
+  – See common patterns in your log lines, to easily filter out noise or focus in on anomalies
+- For power users, an easy way to hop into the familiar Explore while preserving context
+
+Explore Logs is Open Source, and in preview - some papercuts are to be expected. Give it a try and let us know what you think!
 
 ### Azure Monitor: Current User authentication
 
