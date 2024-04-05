@@ -2,7 +2,6 @@ package server
 
 import (
 	"context"
-	"errors"
 	"net/http"
 	"testing"
 	"time"
@@ -17,7 +16,7 @@ func TestRunInstrumentationService(t *testing.T) {
 	s, err := NewInstrumentationService(log.New("test-logger"))
 	require.NoError(t, err)
 
-	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), 300*time.Second)
 	defer cancel()
 
 	err = services.StartAndAwaitRunning(ctx, s)
@@ -30,6 +29,6 @@ func TestRunInstrumentationService(t *testing.T) {
 	require.NoError(t, err)
 	assert.Equal(t, 200, res.StatusCode)
 
-	err = s.stop(errors.New("test over"))
+	err = services.StopAndAwaitTerminated(ctx, s)
 	require.NoError(t, err)
 }

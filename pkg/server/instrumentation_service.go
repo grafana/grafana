@@ -2,6 +2,7 @@ package server
 
 import (
 	"context"
+	"fmt"
 	"net"
 	"net/http"
 	"time"
@@ -28,11 +29,25 @@ func (s *instrumentationService) start(ctx context.Context) error {
 	return nil
 }
 
-func (s *instrumentationService) running(_ context.Context) error {
-	return s.httpServ.ListenAndServe()
+func (s *instrumentationService) running(ctx context.Context) error {
+	errChan := make(chan error, 1)
+	go func() {
+		errChan <- s.httpServ.ListenAndServe()
+	}()
+
+	select {
+	case <-ctx.Done():
+	case err := <-errChan:
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
 }
 
 func (s *instrumentationService) stop(failureReason error) error {
+	fmt.Println("STOPPING")
 	s.log.Info("stopping instrumentation server", "reason", failureReason)
 	if err := s.httpServ.Shutdown(context.Background()); err != nil {
 		s.log.Error("failed to shutdown instrumentation server", "error", err)
