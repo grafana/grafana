@@ -299,11 +299,7 @@ func TestResampleWide(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			frame, err := Resample(tt.input, 
-				tt.fillMissing,
-				tt.timeRange,
-				tt.interval,
-			)
+			frame, err := Resample(tt.input, tt.fillMissing, tt.timeRange, tt.interval)
 			require.NoError(t, err)
 			if diff := cmp.Diff(tt.output, frame, data.FrameTestCompareOptions()...); diff != "" {
 				t.Errorf("Result mismatch (-want +got):\n%s", diff)
