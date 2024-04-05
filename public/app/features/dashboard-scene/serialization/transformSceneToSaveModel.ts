@@ -63,7 +63,7 @@ export function transformSceneToSaveModel(scene: DashboardScene, isSnapshot = fa
         if (
           child.state.body instanceof VizPanel &&
           state.editPanel?.state.vizManager &&
-          state.editPanel.state.vizManager.state.sourcePanel.resolve().state.key === child.state.body.state.key
+          state.editPanel.state.vizManager.state.sourcePanel.resolve() === child.state.body
         ) {
           const childClone = child.clone();
           if (childClone.state.body instanceof VizPanel) {
