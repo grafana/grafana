@@ -238,7 +238,7 @@ func (s *UserSync) updateUserAttributes(ctx context.Context, usr *user.User, id 
 		// If we get a new email for a user we need to mark it as non-verified.
 		verified := false
 		updateCmd.EmailVerified = &verified
-		usr.EmailVerified = false
+		usr.EmailVerified = verified
 
 		needsUpdate = true
 	}
