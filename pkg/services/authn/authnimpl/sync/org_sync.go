@@ -132,9 +132,9 @@ func (s *OrgSync) SyncOrgRolesHook(ctx context.Context, id *authn.Identity, _ *a
 	return nil
 }
 
-func (s *OrgSync) SetDefaultOrgHook(ctx context.Context, currentIdentity *authn.Identity, r *authn.Request) error {
-	if s.cfg.LoginDefaultOrgId < 1 || currentIdentity == nil || !currentIdentity.ClientParams.SyncDefaultOrg {
-		return nil
+func (s *OrgSync) SetDefaultOrgHook(ctx context.Context, currentIdentity *authn.Identity, r *authn.Request, err error) {
+	if s.cfg.LoginDefaultOrgId < 1 || currentIdentity == nil || err != nil {
+		return
 	}
 
 	ctxLogger := s.log.FromContext(ctx)
@@ -142,33 +142,30 @@ func (s *OrgSync) SetDefaultOrgHook(ctx context.Context, currentIdentity *authn.
 	namespace, identifier := currentIdentity.GetNamespacedID()
 	if namespace != identity.NamespaceUser {
 		ctxLogger.Debug("Skipping default org sync, not a user", "namespace", namespace)
-		return nil
+		return
 	}
 
 	userID, err := identity.IntIdentifier(namespace, identifier)
 	if err != nil {
 		ctxLogger.Debug("Skipping default org sync, invalid ID for identity", "id", currentIdentity.ID, "namespace", namespace, "err", err)
-		return nil
+		return
 	}
 
 	hasAssignedToOrg, err := s.validateUsingOrg(ctx, userID, s.cfg.LoginDefaultOrgId)
 	if err != nil {
 		ctxLogger.Error("Skipping default org sync, failed to validate user's organizations", "id", currentIdentity.ID, "err", err)
-		return nil
+		return
 	}
 
 	if !hasAssignedToOrg {
 		ctxLogger.Debug("Skipping default org sync, user is not assigned to org", "id", currentIdentity.ID, "org", s.cfg.LoginDefaultOrgId)
-		return nil
+		return
 	}
 
 	cmd := user.SetUsingOrgCommand{UserID: userID, OrgID: s.cfg.LoginDefaultOrgId}
-	if err := s.userService.SetUsingOrg(ctx, &cmd); err != nil {
-		ctxLogger.Error("Failed to set default org", "id", currentIdentity.ID, "err", err)
-		return err
+	if svcErr := s.userService.SetUsingOrg(ctx, &cmd); svcErr != nil {
+		ctxLogger.Error("Failed to set default org", "id", currentIdentity.ID, "err", svcErr)
 	}
-
-	return nil
 }
 
 func (s *OrgSync) validateUsingOrg(ctx context.Context, userID int64, orgID int64) (bool, error) {

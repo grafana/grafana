@@ -147,7 +147,7 @@ func TestGrafana_AuthenticatePassword(t *testing.T) {
 				OrgID:           1,
 				OrgRoles:        map[int64]org.RoleType{1: "Viewer"},
 				IsGrafanaAdmin:  boolPtr(false),
-				ClientParams:    authn.ClientParams{SyncPermissions: true, SyncDefaultOrg: true},
+				ClientParams:    authn.ClientParams{SyncPermissions: true},
 				AuthenticatedBy: login.PasswordAuthModule,
 			},
 		},

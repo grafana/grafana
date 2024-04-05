@@ -51,8 +51,6 @@ type ClientParams struct {
 	SyncTeams bool
 	// SyncOrgRoles will sync the roles from the identity to orgs in grafana
 	SyncOrgRoles bool
-	// SyncDefaultOrg will set the default org for the user after authentication
-	SyncDefaultOrg bool
 	// CacheAuthProxyKey  if this key is set we will try to cache the user id for proxy client
 	CacheAuthProxyKey string
 	// LookUpParams are the arguments used to look up the entity in the DB.
