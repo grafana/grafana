@@ -57,6 +57,7 @@ export const CreateTeam = (): JSX.Element => {
             {contextSrv.licensedAccessControlEnabled() && (
               <Field label="Role">
                 <TeamRolePicker
+                  currentRoles={[]}
                   teamId={0}
                   roleOptions={roleOptions}
                   disabled={false}

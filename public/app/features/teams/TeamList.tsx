@@ -150,7 +150,7 @@ export const TeamList = ({
                   canSeeTeamRoles && (
                     <TeamRolePicker
                       teamId={original.id}
-                      roles={original.roles || []}
+                      currentRoles={original.roles || []}
                       isLoading={rolesLoading}
                       roleOptions={roleOptions}
                       width={40}

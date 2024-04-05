@@ -118,6 +118,7 @@ export const ServiceAccountCreatePage = ({}: Props): JSX.Element => {
                     {contextSrv.licensedAccessControlEnabled() ? (
                       <UserRolePicker
                         apply
+                        currentRoles={[]}
                         userId={serviceAccount.id || 0}
                         orgId={serviceAccount.orgId}
                         basicRole={serviceAccount.role}

@@ -200,6 +200,7 @@ class UnThemedOrgRow extends PureComponent<OrgRowProps> {
             <div className={styles.rolePickerWrapper}>
               <div className={styles.rolePicker}>
                 <UserRolePicker
+                  currentRoles={[]}
                   userId={user?.id || 0}
                   orgId={org.orgId}
                   basicRole={org.role}
@@ -374,6 +375,7 @@ export class AddToOrgModal extends PureComponent<AddToOrgModalProps, AddToOrgMod
         </Field>
         <Field label="Role" disabled={selectedOrg === null}>
           <UserRolePicker
+            currentRoles={[]}
             userId={user?.id || 0}
             orgId={selectedOrg?.id}
             basicRole={role}

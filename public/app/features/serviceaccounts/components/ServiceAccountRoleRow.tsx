@@ -25,6 +25,7 @@ export const ServiceAccountRoleRow = ({ label, serviceAccount, roleOptions, onRo
       {contextSrv.licensedAccessControlEnabled() ? (
         <td colSpan={3}>
           <UserRolePicker
+            currentRoles={[]}
             userId={serviceAccount.id}
             orgId={serviceAccount.orgId}
             basicRole={serviceAccount.role}

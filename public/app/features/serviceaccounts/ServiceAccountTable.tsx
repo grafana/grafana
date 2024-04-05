@@ -176,7 +176,7 @@ const getRoleCell = (
           userId={original.id}
           orgId={original.orgId}
           basicRole={value}
-          roles={original.roles || []}
+          currentRoles={original.roles || []}
           onBasicRoleChange={(newRole) => onRoleChange(newRole, original)}
           roleOptions={roleOptions}
           basicRoleDisabled={!canUpdateRole}

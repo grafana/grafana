@@ -121,7 +121,7 @@ export const OrgUsersTable = ({
           return contextSrv.licensedAccessControlEnabled() ? (
             <UserRolePicker
               userId={original.userId}
-              roles={original.roles || []}
+              currentRoles={original.roles || []}
               isLoading={rolesLoading}
               orgId={orgId}
               roleOptions={roleOptions}

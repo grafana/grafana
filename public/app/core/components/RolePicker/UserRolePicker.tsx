@@ -5,61 +5,41 @@ import { useAsyncFn } from 'react-use';
 import { contextSrv } from 'app/core/core';
 import { Role, OrgRole, AccessControlAction } from 'app/types';
 
-import { RolePicker } from './RolePicker';
+import { RolePicker, GenericRolePickerProps } from './RolePicker';
 import { fetchUserRoles, updateUserRoles } from './api';
 
-export interface Props {
+export interface UserRolePickerProps extends GenericRolePickerProps {
+  // RolePicker overrides
   basicRole: OrgRole;
-  roles?: Role[];
+  onBasicRoleChange: (newRole: OrgRole) => void;
+  // Local props
   userId: number;
   orgId?: number;
-  onBasicRoleChange: (newRole: OrgRole) => void;
-  roleOptions: Role[];
-  disabled?: boolean;
-  basicRoleDisabled?: boolean;
-  basicRoleDisabledMessage?: string;
-  /**
-   * Set whether the component should send a request with the new roles to the
-   * backend in UserRolePicker.onRolesChange (apply=false), or call {@link onApplyRoles}
-   * with the updated list of roles (apply=true).
-   *
-   * Besides it sets the RolePickerMenu's Button title to
-   *   * `Update` in case apply equals false
-   *   * `Apply` in case apply equals true
-   *
-   * @default false
-   */
+  // TODO: remove these two and implement the logic higher up
   apply?: boolean;
   onApplyRoles?: (newRoles: Role[], userId: number, orgId: number | undefined) => void;
   pendingRoles?: Role[];
-  maxWidth?: string | number;
-  width?: string | number;
-  isLoading?: boolean;
 }
 
 export const UserRolePicker = ({
-  basicRole,
-  roles,
+  // RolePicker props
+  currentRoles,
+  isLoading,
+  apply = false,
+  // Local props
   userId,
   orgId,
-  onBasicRoleChange,
-  roleOptions,
-  disabled,
-  basicRoleDisabled,
-  basicRoleDisabledMessage,
-  apply = false,
+  // TODO: remove these two
   onApplyRoles,
   pendingRoles,
-  maxWidth,
-  width,
-  isLoading,
-}: Props) => {
+  ...rolePickerProps
+}: UserRolePickerProps) => {
   const [userRolesState, getUserRoles] = useAsyncFn(async () => {
     try {
-      if (isEqual(roles, userRolesState.value)) {
-        return roles;
+      if (isEqual(currentRoles, userRolesState.value)) {
+        return currentRoles;
       }
-      if (apply && Boolean(pendingRoles?.length)) {
+      if (apply && Array.isArray(pendingRoles) && pendingRoles.length > 0) {
         return pendingRoles;
       }
       if (contextSrv.hasPermission(AccessControlAction.ActionUserRolesList) && userId > 0) {
@@ -70,15 +50,15 @@ export const UserRolePicker = ({
       console.error('Error loading options');
     }
     return [];
-  }, [orgId, userId, pendingRoles, roles]);
+  }, [orgId, userId, pendingRoles, currentRoles]);
 
   useEffect(() => {
-    // only load roles when there is an Org selected
     if (orgId) {
       getUserRoles();
     }
   }, [getUserRoles, orgId]);
 
+  // TODO: this will need to be changed after I remove the logic for apply
   const onRolesChange = async (roles: Role[]) => {
     if (!apply) {
       await updateUserRoles(roles, userId, orgId);
@@ -92,22 +72,18 @@ export const UserRolePicker = ({
     contextSrv.hasPermission(AccessControlAction.ActionUserRolesAdd) &&
     contextSrv.hasPermission(AccessControlAction.ActionUserRolesRemove);
 
+  if (apply) {
+    rolePickerProps.submitButtonText = 'Apply';
+  }
+
   return (
     <RolePicker
-      appliedRoles={userRolesState.value || []}
-      basicRole={basicRole}
+      currentRoles={userRolesState.value || []}
       onRolesChange={onRolesChange}
-      onBasicRoleChange={onBasicRoleChange}
-      roleOptions={roleOptions}
       isLoading={userRolesState.loading || isLoading}
-      disabled={disabled}
-      basicRoleDisabled={basicRoleDisabled}
-      basicRoleDisabledMessage={basicRoleDisabledMessage}
       showBasicRole
-      apply={apply}
       canUpdateRoles={canUpdateRoles}
-      maxWidth={maxWidth}
-      width={width}
+      {...rolePickerProps}
     />
   );
 };

@@ -5,31 +5,31 @@ import { Role, OrgRole } from 'app/types';
 
 import { RolePickerInput } from './RolePickerInput';
 import { RolePickerMenu } from './RolePickerMenu';
-import { MENU_MAX_HEIGHT, ROLE_PICKER_MAX_MENU_WIDTH, ROLE_PICKER_WIDTH } from './constants';
+import { MENU_SUBMIT_BUTTON_TEXT, MENU_MAX_HEIGHT, ROLE_PICKER_MAX_MENU_WIDTH, ROLE_PICKER_WIDTH } from './constants';
 
-export interface Props {
-  basicRole?: OrgRole;
-  appliedRoles: Role[];
+export interface RolePickerProps {
+  currentRoles: Role[];
+  onRolesChange: (newRoles: Role[]) => void;
   roleOptions: Role[];
-  isLoading?: boolean;
-  disabled?: boolean;
+
+  basicRole?: OrgRole;
   basicRoleDisabled?: boolean;
   basicRoleDisabledMessage?: string;
-  showBasicRole?: boolean;
-  onRolesChange: (newRoles: Role[]) => void;
-  onBasicRoleChange?: (newRole: OrgRole) => void;
   canUpdateRoles?: boolean;
-  /**
-   * Set {@link RolePickerMenu}'s button to display either `Apply` (apply=true) or `Update` (apply=false)
-   */
-  apply?: boolean;
+  disabled?: boolean;
+  isLoading?: boolean;
   maxWidth?: string | number;
+  onBasicRoleChange?: (newRole: OrgRole) => void;
+  showBasicRole?: boolean;
   width?: string | number;
+  submitButtonText?: string;
 }
+
+export type GenericRolePickerProps = Omit<RolePickerProps, 'onRolesChange'>;
 
 export const RolePicker = ({
   basicRole,
-  appliedRoles,
+  currentRoles,
   roleOptions,
   disabled,
   isLoading,
@@ -39,12 +39,12 @@ export const RolePicker = ({
   onRolesChange,
   onBasicRoleChange,
   canUpdateRoles = true,
-  apply = false,
+  submitButtonText = MENU_SUBMIT_BUTTON_TEXT,
   maxWidth = ROLE_PICKER_WIDTH,
   width,
-}: Props): JSX.Element | null => {
+}: RolePickerProps): JSX.Element | null => {
   const [isOpen, setOpen] = useState(false);
-  const [selectedRoles, setSelectedRoles] = useState<Role[]>(appliedRoles);
+  const [selectedRoles, setSelectedRoles] = useState<Role[]>(currentRoles);
   const [selectedBuiltInRole, setSelectedBuiltInRole] = useState<OrgRole | undefined>(basicRole);
   const [query, setQuery] = useState('');
   const [offset, setOffset] = useState({ vertical: 0, horizontal: 0 });
@@ -55,8 +55,8 @@ export const RolePicker = ({
 
   useEffect(() => {
     setSelectedBuiltInRole(basicRole);
-    setSelectedRoles(appliedRoles);
-  }, [appliedRoles, basicRole, onBasicRoleChange]);
+    setSelectedRoles(currentRoles);
+  }, [currentRoles, basicRole, onBasicRoleChange]);
 
   const setMenuPosition = useCallback(() => {
     const { horizontal, vertical, menuToLeft } = calculateMenuPosition();
@@ -120,9 +120,9 @@ export const RolePicker = ({
   const onClose = useCallback(() => {
     setOpen(false);
     setQuery('');
-    setSelectedRoles(appliedRoles);
+    setSelectedRoles(currentRoles);
     setSelectedBuiltInRole(basicRole);
-  }, [appliedRoles, basicRole]);
+  }, [currentRoles, basicRole]);
 
   // Only call onClose if menu is open. Prevent unnecessary calls for multiple pickers on the page.
   const onClickOutside = () => isOpen && onClose();
@@ -197,7 +197,7 @@ export const RolePicker = ({
               <RolePickerMenu
                 options={getOptions()}
                 basicRole={selectedBuiltInRole}
-                appliedRoles={appliedRoles}
+                appliedRoles={currentRoles}
                 onBasicRoleSelect={onBasicRoleSelect}
                 onSelect={onSelect}
                 onUpdate={onUpdate}
@@ -206,7 +206,7 @@ export const RolePicker = ({
                 disabledMessage={basicRoleDisabledMessage}
                 showBasicRole={showBasicRole}
                 updateDisabled={basicRoleDisabled && !canUpdateRoles}
-                apply={apply}
+                submitButtonText={submitButtonText}
                 offset={offset}
                 menuLeft={menuLeft}
               />

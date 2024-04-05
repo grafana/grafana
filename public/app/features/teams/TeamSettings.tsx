@@ -67,6 +67,7 @@ export const TeamSettings = ({ team, updateTeam }: Props) => {
           {contextSrv.licensedAccessControlEnabled() && canListRoles && (
             <Field label="Role">
               <TeamRolePicker
+                currentRoles={[]}
                 teamId={team.id}
                 roleOptions={roleOptions}
                 disabled={!canUpdateRoles}

@@ -24,9 +24,6 @@ const getServiceAccountsAriaLabel = (name: string) => {
   return `Edit service account's ${name} details`;
 };
 
-/**
- * TODO(aarongodin): it appears this file is unused - check if it can be removed
- */
 const ServiceAccountListItemComponent = memo(
   ({
     serviceAccount,
@@ -82,7 +79,7 @@ const ServiceAccountListItemComponent = memo(
                 userId={serviceAccount.id}
                 orgId={serviceAccount.orgId}
                 basicRole={serviceAccount.role}
-                roles={serviceAccount.roles || []}
+                currentRoles={serviceAccount.roles || []}
                 onBasicRoleChange={(newRole) => onRoleChange(newRole, serviceAccount)}
                 roleOptions={roleOptions}
                 basicRoleDisabled={!canUpdateRole}
