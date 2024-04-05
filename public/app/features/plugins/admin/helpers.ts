@@ -249,7 +249,7 @@ export function mapToCatalogPlugin(local?: LocalPlugin, remote?: RemotePlugin, e
     error: error?.errorCode,
     // Only local plugins have access control metadata
     accessControl: local?.accessControl,
-    angularDetected: local?.angularDetected || remote?.angularDetected,
+    angularDetected: local?.angularDetected ?? remote?.angularDetected,
     isFullyInstalled: Boolean(local) || isDisabled,
     iam: local?.iam,
   };

@@ -47,4 +47,5 @@ export default {
       links: [],
     },
   },
+  angularDetected: false,
 } as RemotePlugin;
