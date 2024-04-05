@@ -1,7 +1,6 @@
 import 'whatwg-fetch';
 import { renderHook, waitFor } from '@testing-library/react';
 import { createBrowserHistory } from 'history';
-import { setupServer } from 'msw/node';
 import React, { PropsWithChildren } from 'react';
 import { Router } from 'react-router-dom';
 import { TestProvider } from 'test/helpers/TestProvider';
