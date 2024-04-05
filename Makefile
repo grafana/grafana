@@ -363,6 +363,10 @@ gen-ts:
 	tscriptify -interface -package=github.com/grafana/grafana/pkg/services/live/pipeline -import="import { FieldConfig } from '@grafana/data'" -target=public/app/features/live/pipeline/models.gen.ts pkg/services/live/pipeline/config.go
 	go mod tidy
 
+sample.ini:
+	@echo "Generating conf/sample.ini from conf/defaults.ini"
+	bash scripts/sample-ini.sh
+
 # This repository's configuration is protected (https://readme.drone.io/signature/).
 # Use this make target to regenerate the configuration YAML files when
 # you modify starlark files.
