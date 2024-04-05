@@ -14,6 +14,7 @@ import { ConnectionsRedirectNotice } from 'app/features/connections/components/C
 import { ROUTES as CONNECTIONS_ROUTES } from 'app/features/connections/constants';
 import { getRoutes as getDataConnectionsRoutes } from 'app/features/connections/routes';
 import { DATASOURCES_ROUTES } from 'app/features/datasources/constants';
+import { ConfigureIRM } from 'app/features/gops/configuration-tracker/components/ConfigureIRM';
 import { getRoutes as getPluginCatalogRoutes } from 'app/features/plugins/admin/routes';
 import { getAppPluginRoutes } from 'app/features/plugins/routes';
 import { getProfileRoutes } from 'app/features/profile/routes';
@@ -171,7 +172,7 @@ export function getAppRoutes(): RouteDescriptor[] {
     },
     {
       path: '/alerts-and-incidents',
-      component: () => <NavLandingPage navId="alerts-and-incidents" />,
+      component: () => <NavLandingPage navId="alerts-and-incidents" HeaderComponent={ConfigureIRM} />,
     },
     {
       path: '/testing-and-synthetics',
