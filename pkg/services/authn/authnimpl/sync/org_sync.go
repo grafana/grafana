@@ -133,7 +133,7 @@ func (s *OrgSync) SyncOrgRolesHook(ctx context.Context, id *authn.Identity, _ *a
 }
 
 func (s *OrgSync) SetDefaultOrgHook(ctx context.Context, currentIdentity *authn.Identity, r *authn.Request) error {
-	if s.cfg.LoginDefaultOrgId < 1 || currentIdentity == nil {
+	if s.cfg.LoginDefaultOrgId < 1 || currentIdentity == nil || !currentIdentity.ClientParams.SyncDefaultOrg {
 		return nil
 	}
 

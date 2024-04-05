@@ -123,6 +123,7 @@ func (c *LDAP) identityFromLDAPInfo(orgID int64, info *login.ExternalUserInfo) *
 			EnableUser:      true,
 			FetchSyncedUser: true,
 			SyncPermissions: true,
+			SyncDefaultOrg:  true,
 			SyncOrgRoles:    !c.cfg.LDAPSkipOrgRoleSync,
 			AllowSignUp:     c.cfg.LDAPAllowSignup,
 			LookUpParams: login.UserLookupParams{

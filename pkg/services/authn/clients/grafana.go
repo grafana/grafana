@@ -109,7 +109,7 @@ func (c *Grafana) AuthenticatePassword(ctx context.Context, r *authn.Request, us
 		return nil, err
 	}
 
-	return authn.IdentityFromSignedInUser(authn.NamespacedID(authn.NamespaceUser, signedInUser.UserID), signedInUser, authn.ClientParams{SyncPermissions: true}, login.PasswordAuthModule), nil
+	return authn.IdentityFromSignedInUser(authn.NamespacedID(authn.NamespaceUser, signedInUser.UserID), signedInUser, authn.ClientParams{SyncPermissions: true, SyncDefaultOrg: true}, login.PasswordAuthModule), nil
 }
 
 func comparePassword(password, salt, hash string) bool {
