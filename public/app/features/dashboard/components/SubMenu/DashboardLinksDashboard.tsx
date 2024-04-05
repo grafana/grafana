@@ -28,7 +28,22 @@ interface DashboardLinksMenuProps {
 
 function DashboardLinksMenu({ dashboardUID, link }: DashboardLinksMenuProps) {
   const styles = useStyles2(getStyles);
-  const resolvedLinks = useResolvedLinks({ dashboardUID, link });
+  let resolvedLinks = useResolvedLinks({ dashboardUID, link });
+
+  // @PERCONA
+  // TODO: PMM-7736 remove it ASAP after migration transition period is finished
+  if (link.title === 'PMM') {
+    if (isPmmAdmin(config.bootData.user)) {
+      resolvedLinks = [
+        { uid: '1000', url: '/graph/add-instance', title: 'PMM Add Instance' },
+        { uid: '1001', url: '/graph/advisors/insights', title: 'PMM Advisors' },
+        { uid: '1002', url: '/graph/inventory', title: 'PMM Inventory' },
+        { uid: '1003', url: '/graph/settings', title: 'PMM Settings' },
+      ];
+    } else {
+      return <></>;
+    }
+  }
 
   if (!resolvedLinks || resolveLinks.length === 0) {
     return null;
@@ -58,23 +73,8 @@ function DashboardLinksMenu({ dashboardUID, link }: DashboardLinksMenuProps) {
 
 export const DashboardLinksDashboard = (props: Props) => {
   const { link, linkInfo, dashboardUID } = props;
-  let resolvedLinks = useResolvedLinks(props);
+  const resolvedLinks = useResolvedLinks(props);
   const styles = useStyles2(getStyles);
-
-  // @PERCONA
-  // TODO: PMM-7736 remove it ASAP after migration transition period is finished
-  if (link.title === 'PMM') {
-    if (isPmmAdmin(config.bootData.user)) {
-      resolvedLinks = [
-        { uid: '1000', url: '/graph/add-instance', title: 'PMM Add Instance' },
-        { uid: '1001', url: '/graph/advisors/insights', title: 'PMM Advisors' },
-        { uid: '1002', url: '/graph/inventory', title: 'PMM Inventory' },
-        { uid: '1003', url: '/graph/settings', title: 'PMM Settings' },
-      ];
-    } else {
-      return <></>;
-    }
-  }
 
   if (link.asDropdown) {
     return (
