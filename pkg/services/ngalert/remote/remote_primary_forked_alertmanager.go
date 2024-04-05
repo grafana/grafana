@@ -56,9 +56,8 @@ func (fam *RemotePrimaryForkedAlertmanager) SaveAndApplyDefaultConfig(ctx contex
 	return fam.internal.SaveAndApplyDefaultConfig(ctx)
 }
 
-func (fam *RemotePrimaryForkedAlertmanager) GetStatus() apimodels.GettableStatus {
-	fmt.Println("forked.GetStatus()")
-	return fam.remote.GetStatus()
+func (fam *RemotePrimaryForkedAlertmanager) GetStatus(ctx context.Context) (apimodels.GettableStatus, error) {
+	return fam.remote.GetStatus(ctx)
 }
 
 func (fam *RemotePrimaryForkedAlertmanager) CreateSilence(ctx context.Context, silence *apimodels.PostableSilence) (string, error) {

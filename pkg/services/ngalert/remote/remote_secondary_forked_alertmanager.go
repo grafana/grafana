@@ -122,8 +122,8 @@ func (fam *RemoteSecondaryForkedAlertmanager) SaveAndApplyDefaultConfig(ctx cont
 	return fam.internal.SaveAndApplyDefaultConfig(ctx)
 }
 
-func (fam *RemoteSecondaryForkedAlertmanager) GetStatus() apimodels.GettableStatus {
-	return fam.internal.GetStatus()
+func (fam *RemoteSecondaryForkedAlertmanager) GetStatus(ctx context.Context) (apimodels.GettableStatus, error) {
+	return fam.internal.GetStatus(ctx)
 }
 
 func (fam *RemoteSecondaryForkedAlertmanager) CreateSilence(ctx context.Context, silence *apimodels.PostableSilence) (string, error) {
