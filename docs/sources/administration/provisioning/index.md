@@ -81,7 +81,9 @@ If the data source already exists, Grafana reconfigures it to match the provisio
 The configuration file can also list data sources to automatically delete, called `deleteDatasources`.
 Grafana deletes the data sources listed in `deleteDatasources` _before_ adding or updating those in the `datasources` list.
 
-To automatically delete data sources once they no longer appear in the provisioning file (or when the file is deleted), add `prune: true` to the root of your provisioning file.
+You can configure Grafana to automatically delete provisioned data sources when they're removed from the provisioning file.
+To do so, add `prune: true` to the root of your provisioning file.
+With this configuration, Grafana also removes the provisioned data sources if you remove the provisioning file entirely.
 
 {{% admonition type="note" %}}
 The `prune` parameter is available in Grafana v11.1 and higher.
@@ -107,8 +109,8 @@ deleteDatasources:
   - name: Graphite
     orgId: 1
 
-# Mark provisioned datasources for deletion if they are no longer in a provisioning file.
-# It takes no effect if datasources are already listed in the deleteDatasources section.
+# Mark provisioned data sources for deletion if they are no longer in a provisioning file.
+# It takes no effect if data sources are already listed in the deleteDatasources section.
 prune: true
 
 # List of data sources to insert/update depending on what's

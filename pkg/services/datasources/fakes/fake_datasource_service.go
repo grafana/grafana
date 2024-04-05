@@ -47,9 +47,9 @@ func (s *FakeDataSourceService) GetAllDataSources(ctx context.Context, query *da
 
 func (s *FakeDataSourceService) GetPrunableProvisionedDataSources(ctx context.Context) (res []*datasources.DataSource, err error) {
 	var dataSources []*datasources.DataSource
-	for _, datasource := range s.DataSources {
-		if datasource.IsPrunable {
-			dataSources = append(dataSources, datasource)
+	for _, dataSource := range s.DataSources {
+		if dataSource.IsPrunable {
+			dataSources = append(dataSources, dataSource)
 		}
 	}
 	return dataSources, nil

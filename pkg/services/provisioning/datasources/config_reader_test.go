@@ -171,7 +171,7 @@ func TestDatasourceAsConfig(t *testing.T) {
 		require.Equal(t, len(store.updated), 1)
 	})
 
-	t.Run("Delete datasources when removing them from provision files", func(t *testing.T) {
+	t.Run("Delete data sources when removing them from provision files", func(t *testing.T) {
 		store := &spyStore{}
 		orgFake := &orgtest.FakeOrgService{}
 		correlationsStore := &mockCorrelationsStore{}

@@ -490,7 +490,7 @@ func TestIntegrationDataAccess(t *testing.T) {
 			require.Equal(t, 1, len(dataSources))
 		})
 
-		t.Run("Get prunable datasources", func(t *testing.T) {
+		t.Run("Get prunable data sources", func(t *testing.T) {
 			db := db.InitTestDB(t)
 			ss := SqlStore{db: db}
 
