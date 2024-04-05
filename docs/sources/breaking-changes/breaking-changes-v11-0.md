@@ -134,6 +134,7 @@ In these cases, we recommend that you take these steps before the upgrade to ena
 Please note that if you use file provisioning, you can upgrade and update the routes at the same time.
 
 #### Learn more
+[Subfolders announcement](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/whatsnew/whats-new-in-v11-0/#subfolders)
 
 [Provisioning: Provision dashboards into subfolders PR](https://github.com/grafana/grafana/pull/79793)
 
