@@ -166,11 +166,6 @@ func (fam *RemoteSecondaryForkedAlertmanager) TestTemplate(ctx context.Context, 
 	return fam.internal.TestTemplate(ctx, c)
 }
 
-func (fam *RemoteSecondaryForkedAlertmanager) CleanUp() {
-	// No cleanup to do in the remote Alertmanager.
-	fam.internal.CleanUp()
-}
-
 func (fam *RemoteSecondaryForkedAlertmanager) StopAndWait() {
 	// Stop the internal Alertmanager.
 	fam.internal.StopAndWait()

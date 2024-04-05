@@ -77,38 +77,6 @@ func (_c *RemoteAlertmanagerMock_ApplyConfig_Call) RunAndReturn(run func(context
 	return _c
 }
 
-// CleanUp provides a mock function with given fields:
-func (_m *RemoteAlertmanagerMock) CleanUp() {
-	_m.Called()
-}
-
-// RemoteAlertmanagerMock_CleanUp_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'CleanUp'
-type RemoteAlertmanagerMock_CleanUp_Call struct {
-	*mock.Call
-}
-
-// CleanUp is a helper method to define mock.On call
-func (_e *RemoteAlertmanagerMock_Expecter) CleanUp() *RemoteAlertmanagerMock_CleanUp_Call {
-	return &RemoteAlertmanagerMock_CleanUp_Call{Call: _e.mock.On("CleanUp")}
-}
-
-func (_c *RemoteAlertmanagerMock_CleanUp_Call) Run(run func()) *RemoteAlertmanagerMock_CleanUp_Call {
-	_c.Call.Run(func(args mock.Arguments) {
-		run()
-	})
-	return _c
-}
-
-func (_c *RemoteAlertmanagerMock_CleanUp_Call) Return() *RemoteAlertmanagerMock_CleanUp_Call {
-	_c.Call.Return()
-	return _c
-}
-
-func (_c *RemoteAlertmanagerMock_CleanUp_Call) RunAndReturn(run func()) *RemoteAlertmanagerMock_CleanUp_Call {
-	_c.Call.Return(run)
-	return _c
-}
-
 // CompareAndSendConfiguration provides a mock function with given fields: _a0, _a1
 func (_m *RemoteAlertmanagerMock) CompareAndSendConfiguration(_a0 context.Context, _a1 *models.AlertConfiguration) error {
 	ret := _m.Called(_a0, _a1)
