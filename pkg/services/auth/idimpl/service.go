@@ -156,7 +156,7 @@ func (s *Service) setUserClaims(ctx context.Context, ident identity.Requester, i
 
 	claims.AuthenticatedBy = info.AuthModule
 	claims.Email = ident.GetEmail()
-	claims.EmailVerified = ident.GetEmailVerified()
+	claims.EmailVerified = ident.IsEmailVerified()
 
 	return nil
 }

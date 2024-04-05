@@ -242,7 +242,7 @@ func (u *SignedInUser) GetEmail() string {
 	return u.Email
 }
 
-func (u *SignedInUser) GetEmailVerified() bool {
+func (u *SignedInUser) IsEmailVerified() bool {
 	return u.EmailVerified
 }
 

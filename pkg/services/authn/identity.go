@@ -125,7 +125,7 @@ func (i *Identity) GetEmail() string {
 	return i.Email
 }
 
-func (i *Identity) GetEmailVerified() bool {
+func (i *Identity) IsEmailVerified() bool {
 	return i.EmailVerified
 }
 
