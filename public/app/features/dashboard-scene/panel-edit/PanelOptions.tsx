@@ -3,7 +3,6 @@ import React, { useMemo } from 'react';
 import { PanelData } from '@grafana/data';
 import { OptionFilter, renderSearchHits } from 'app/features/dashboard/components/PanelEditor/OptionsPaneOptions';
 import { getFieldOverrideCategories } from 'app/features/dashboard/components/PanelEditor/getFieldOverrideElements';
-import { getPanelFrameCategory2 } from 'app/features/dashboard/components/PanelEditor/getPanelFrameOptions';
 import {
   getLibraryVizPanelOptionsCategory,
   getVisualizationOptions2,
@@ -12,6 +11,7 @@ import {
 import { LibraryVizPanel } from '../scene/LibraryVizPanel';
 
 import { VizPanelManager } from './VizPanelManager';
+import { getPanelFrameCategory2 } from './getPanelFrameOptions';
 
 interface Props {
   vizManager: VizPanelManager;
