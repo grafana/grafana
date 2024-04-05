@@ -387,7 +387,10 @@ export class VizPanelManager extends SceneObjectBase<VizPanelManagerState> {
 
   public commitChanges() {
     const sourcePanel = this.state.sourcePanel.resolve();
+    this.commitChangesTo(sourcePanel);
+  }
 
+  public commitChangesTo(sourcePanel: VizPanel) {
     const repeatUpdate = {
       variableName: this.state.repeat,
       repeatDirection: this.state.repeatDirection,
