@@ -407,4 +407,5 @@ func syncSignedInUserToIdentity(usr *user.SignedInUser, identity *authn.Identity
 	identity.LastSeenAt = usr.LastSeenAt
 	identity.IsDisabled = usr.IsDisabled
 	identity.IsGrafanaAdmin = &usr.IsGrafanaAdmin
+	identity.EmailVerified = usr.EmailVerified
 }

@@ -22,6 +22,7 @@ type SignedInUser struct {
 	Login            string
 	Name             string
 	Email            string
+	EmailVerified    bool
 	AuthenticatedBy  string
 	ApiKeyID         int64 `xorm:"api_key_id"`
 	IsServiceAccount bool  `xorm:"is_service_account"`
@@ -239,6 +240,10 @@ func (u *SignedInUser) IsNil() bool {
 // Can be empty.
 func (u *SignedInUser) GetEmail() string {
 	return u.Email
+}
+
+func (u *SignedInUser) IsEmailVerified() bool {
+	return u.EmailVerified
 }
 
 // GetDisplayName returns the display name of the active entity
