@@ -211,7 +211,7 @@ func TestCompareAndSendConfiguration(t *testing.T) {
 	am, err := NewAlertmanager(cfg,
 		fstore,
 		decryptFn,
-		"",
+		defaultGrafanaConfig,
 		m,
 	)
 	require.NoError(t, err)
