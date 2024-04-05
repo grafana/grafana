@@ -3,7 +3,7 @@ import uFuzzy from '@leeoniya/ufuzzy';
 import { SerializedError } from '@reduxjs/toolkit';
 import { groupBy, size, uniq, upperFirst } from 'lodash';
 import pluralize from 'pluralize';
-import React, { Fragment, ReactNode, useCallback, useMemo, useState } from 'react';
+import React, { Fragment, ReactNode, useCallback, useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useToggle } from 'react-use';
 
@@ -25,6 +25,7 @@ import {
   Tooltip,
   useStyles2,
 } from '@grafana/ui';
+import { useQueryParams } from 'app/core/hooks/useQueryParams';
 import ConditionalWrap from 'app/features/alerting/unified/components/ConditionalWrap';
 import { receiverTypeNames } from 'app/plugins/datasource/alertmanager/consts';
 import { GrafanaManagedReceiverConfig } from 'app/plugins/datasource/alertmanager/types';
@@ -32,7 +33,6 @@ import { GrafanaNotifierType, NotifierStatus } from 'app/types/alerting';
 
 import { AlertmanagerAction, useAlertmanagerAbility } from '../../hooks/useAbilities';
 import { usePagination } from '../../hooks/usePagination';
-import { useURLSearchParams } from '../../hooks/useURLSearchParams';
 import { useAlertmanager } from '../../state/AlertmanagerContext';
 import { INTEGRATION_ICONS } from '../../types/contact-points';
 import { GRAFANA_RULES_SOURCE_NAME } from '../../utils/datasource';
@@ -62,17 +62,19 @@ import {
 } from './useContactPoints';
 import { ContactPointWithMetadata, getReceiverDescription, isProvisioned, ReceiverConfigWithMetadata } from './utils';
 
-enum ActiveTab {
-  ContactPoints,
-  NotificationTemplates,
+export enum ActiveTab {
+  ContactPoints = 'contact_points',
+  NotificationTemplates = 'templates',
 }
 
 const DEFAULT_PAGE_SIZE = 10;
 
 const ContactPoints = () => {
   const { selectedAlertmanager } = useAlertmanager();
-  // TODO hook up to query params
-  const [activeTab, setActiveTab] = useState<ActiveTab>(ActiveTab.ContactPoints);
+  const [queryParams, setQueryParams] = useQueryParams();
+  // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+  const initialActiveTab = queryParams.tab as ActiveTab;
+  const [activeTab, setActiveTab] = useState<ActiveTab>(initialActiveTab || ActiveTab.ContactPoints);
   let { isLoading, error, contactPoints } = useContactPointsWithStatus();
   const { deleteTrigger, updateAlertmanagerState } = useDeleteContactPoint(selectedAlertmanager!);
   const [addContactPointSupported, addContactPointAllowed] = useAlertmanagerAbility(
@@ -88,11 +90,14 @@ const ContactPoints = () => {
   const [DeleteModal, showDeleteModal] = useDeleteContactPointModal(deleteTrigger, updateAlertmanagerState.isLoading);
   const [ExportDrawer, showExportDrawer] = useExportContactPoint();
 
-  const [searchParams] = useURLSearchParams();
-  const { search } = getContactPointsFilters(searchParams);
+  const search = String(queryParams.search || '');
 
   const showingContactPoints = activeTab === ActiveTab.ContactPoints;
   const showNotificationTemplates = activeTab === ActiveTab.NotificationTemplates;
+
+  useEffect(() => {
+    setQueryParams({ tab: activeTab });
+  }, [activeTab, setQueryParams]);
 
   if (error) {
     // TODO fix this type casting, when error comes from "getContactPointsStatus" it probably won't be a SerializedError
@@ -206,7 +211,7 @@ const ContactPoints = () => {
 
 interface ContactPointsListProps {
   contactPoints: ContactPointWithMetadata[];
-  search?: string;
+  search?: string | null;
   disabled?: boolean;
   onDelete: (name: string) => void;
   pageSize?: number;
@@ -257,7 +262,7 @@ const fuzzyFinder = new uFuzzy({
 // let's search in two different haystacks, the name of the contact point and the type of the receiver(s)
 function useContactPointsSearch(
   contactPoints: ContactPointWithMetadata[],
-  search?: string
+  search?: string | null
 ): ContactPointWithMetadata[] {
   const nameHaystack = useMemo(() => {
     return contactPoints.map((contactPoint) => contactPoint.name);
@@ -647,10 +652,6 @@ const useExportContactPoint = (): ExportProps => {
 
   return [drawer, handleOpen];
 };
-
-const getContactPointsFilters = (searchParams: URLSearchParams) => ({
-  search: searchParams.get('search') ?? undefined,
-});
 
 const getStyles = (theme: GrafanaTheme2) => ({
   contactPointWrapper: css({
