@@ -22,6 +22,7 @@ import {
   Box,
 } from '@grafana/ui';
 import { useCleanup } from 'app/core/hooks/useCleanup';
+import { ActiveTab as ContactPointsActiveTabs } from 'app/features/alerting/unified/components/contact-points/ContactPoints';
 import { AlertManagerCortexConfig, TestTemplateAlert } from 'app/plugins/datasource/alertmanager/types';
 import { useDispatch } from 'app/types';
 
@@ -146,6 +147,7 @@ export const TemplateForm = ({ existing, alertManagerSourceName, config, provena
         oldConfig: config,
         successMessage: 'Template saved.',
         redirectPath: '/alerting/notifications',
+        redirectSearch: `tab=${ContactPointsActiveTabs.NotificationTemplates}`,
       })
     );
   };
@@ -176,7 +178,9 @@ export const TemplateForm = ({ existing, alertManagerSourceName, config, provena
       </Button>
       <LinkButton
         disabled={loading}
-        href={makeAMLink('alerting/notifications', alertManagerSourceName)}
+        href={makeAMLink('alerting/notifications', alertManagerSourceName, {
+          tab: ContactPointsActiveTabs.NotificationTemplates,
+        })}
         variant="secondary"
         size="sm"
       >
