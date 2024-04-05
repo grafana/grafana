@@ -75,14 +75,6 @@ function DataTrailView({ trail }: { trail: DataTrail }) {
 
   useEffect(() => {
     if (!isInitialized) {
-      // Set the initial state based on the URL.
-      getUrlSyncManager().initSync(trail);
-      // Any further changes to the state should occur directly to the state, not through the URL.
-      // We want to stop automatically syncing the URL state (and vice versa) to the trail after this point.
-      // Moving forward in the lifecycle of the trail, we will make explicit calls to trail.syncTrailToUrl()
-      // so we can ensure the URL is kept up to date at key points.
-      getUrlSyncManager().cleanUp(trail);
-
       getTrailStore().setRecentTrail(trail);
       setIsInitialized(true);
     }
@@ -99,8 +91,26 @@ let dataTrailsApp: DataTrailsApp;
 
 export function getDataTrailsApp() {
   if (!dataTrailsApp) {
+    const newTrail = newMetricsTrail();
+
+    // Set the initial state of the newTrail based on the URL,
+    // In case we are initializing from an externally created URL or a page reload
+    getUrlSyncManager().initSync(newTrail);
+    // Any further changes to the state should occur directly to the state, not through the URL.
+    // We want to stop automatically syncing the URL state (and vice versa) to the trail after this point.
+    // Moving forward in the lifecycle of the trail, we will make explicit calls to trail.syncTrailToUrl()
+    // so we can ensure the URL is kept up to date at key points.
+    getUrlSyncManager().cleanUp(newTrail);
+
+    // If one of the recent trails is a match to the newTrail derived from the current URL,
+    // let's restore that trail so that a page refresh doesn't create a new trail.
+    const recentMatchingTrail = getTrailStore().findMatchingRecentTrail(newTrail)?.resolve();
+
+    // If there is a matching trail, initialize with that. Otherwise, use the new trail.
+    const trail = recentMatchingTrail || newTrail;
+
     dataTrailsApp = new DataTrailsApp({
-      trail: newMetricsTrail(),
+      trail,
       home: new DataTrailsHome({}),
     });
   }
