@@ -42,8 +42,9 @@ export function NewsWrapper({ feedUrl }: NewsWrapperProps) {
         </>
       )}
       <div className={styles.grot}>
-        <a href="https://grafana.com/blog/" target="_blank" rel="noreferrer" title="Go to Grafana labs blog">
-          <img src="public/img/grot-news.svg" alt="Grot reading news" />
+        {/* @PERCONA */}
+        <a href="https://www.percona.com/blog/" target="_blank" rel="noreferrer" title="Go to Percona blog">
+          <img src="public/img/percona-logo.svg" alt="Percona logo" />
         </a>
       </div>
     </div>
