@@ -23,10 +23,14 @@ export interface StyleRuleEditorSettings {
   layerInfo: Observable<LayerContentInfo>;
 }
 
-type Props = StandardEditorProps<FeatureStyleConfig, StyleRuleEditorSettings, unknown, StyleRuleEditorSettings>;
+type Props = StandardEditorProps<FeatureStyleConfig, StyleRuleEditorSettings, unknown>;
 
 export const StyleRuleEditor = ({ value, onChange, item, context }: Props) => {
-  const settings = item.settings!;
+  const settings = item.settings;
+  if (!settings) {
+    // Shouldn't be possible to hit this block, but just in case
+    throw Error('Settings not found');
+  }
   const { features, layerInfo } = settings;
 
   const propertyOptions = useObservable(layerInfo);
