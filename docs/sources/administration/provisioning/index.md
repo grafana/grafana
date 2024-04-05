@@ -95,8 +95,9 @@ datasources:
 
 If the datasources are provisioned with this parameter, they can also be deleted by simply removing them from the YAML file or by deleting the YAML file.
 
-> [!NOTE]
-> This `prune` parameter is available only in apiVersion 1
+{{% admonition type="note" %}}
+The `prune` parameter is available in Grafana v11.1 and higher.
+{{% /admonition %}}
 
 
 ### Running multiple Grafana instances
