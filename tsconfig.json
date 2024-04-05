@@ -11,14 +11,15 @@
     "incremental": true,
     "tsBuildInfoFile": "./tsconfig.tsbuildinfo",
     "paths": {
-      "@grafana/schema/dist/esm/*": ["../packages/grafana-schema/src/*"]
+      "@grafana/schema/dist/esm/*": ["../packages/grafana-schema/src/*"],
+      "@grafana/test-utils": ["./test/test-utils.tsx"]
     }
   },
   "extends": "@grafana/tsconfig/base.json",
   "include": [
     "public/app/**/*.ts*",
     "public/e2e-test/**/*.ts",
-    "public/test/**/*.ts",
+    "public/test/**/*.ts*",
     "public/vendor/**/*.ts",
     "packages/grafana-data/typings",
     "packages/grafana-ui/src/types"

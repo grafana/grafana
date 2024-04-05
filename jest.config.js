@@ -31,7 +31,7 @@ module.exports = {
   transformIgnorePatterns: [
     `/node_modules/(?!${esModules})`, // exclude es modules to prevent TS complaining
   ],
-  moduleDirectories: ['public', 'node_modules'],
+  moduleDirectories: ['public', 'node_modules', 'public/test'],
   roots: ['<rootDir>/public/app', '<rootDir>/public/test', '<rootDir>/packages', '<rootDir>/scripts/tests'],
   testRegex: '(\\.|/)(test)\\.(jsx?|tsx?)$',
   moduleFileExtensions: ['ts', 'tsx', 'js', 'jsx', 'json'],
@@ -54,6 +54,7 @@ module.exports = {
     '^@grafana/schema/dist/esm/(.*)$': '<rootDir>/packages/grafana-schema/src/$1',
     // prevent systemjs amd extra from breaking tests.
     'systemjs/dist/extras/amd': '<rootDir>/public/test/mocks/systemjsAMDExtra.ts',
+    '@grafana/test-utils': '<rootDir>/public/test/test-utils.tsx',
   },
   // Log the test results with dynamic Loki tags. Drone CI only
   reporters: ['default', ['<rootDir>/public/test/log-reporter.js', { enable: process.env.DRONE === 'true' }]],
