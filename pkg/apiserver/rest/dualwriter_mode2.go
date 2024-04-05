@@ -30,7 +30,7 @@ func (d *DualWriterMode2) Create(ctx context.Context, obj runtime.Object, create
 
 	created, err := legacy.Create(ctx, obj, createValidation, options)
 	if err != nil {
-		klog.FromContext(ctx).Error(err, "unable to create object in legacy storage")
+		klog.FromContext(ctx).Error(err, "unable to create object in legacy storage", "mode", 2)
 		return created, err
 	}
 
