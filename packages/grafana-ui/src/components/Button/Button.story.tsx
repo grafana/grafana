@@ -3,7 +3,6 @@ import React from 'react';
 
 import { ComponentSize } from '../../types';
 import { Card } from '../Card/Card';
-import { Box } from '../Layout/Box/Box';
 import { Stack } from '../Layout/Stack/Stack';
 
 import { allButtonVariants, allButtonFills, Button, ButtonProps } from './Button';
@@ -42,13 +41,11 @@ export const Examples: StoryFn<typeof Button> = () => {
         <Stack direction="column" key={buttonFill}>
           <Stack gap={3}>
             {allButtonVariants.map((variant) => (
-              <Stack direction="column" gap={3} key={`${buttonFill}-${variant}`}>
+              <Stack direction="column" gap={3} alignItems="flex-start" key={`${buttonFill}-${variant}`}>
                 {sizes.map((size) => (
-                  <Box key={size}>
-                    <Button variant={variant} fill={buttonFill} size={size}>
-                      {variant} {size}
-                    </Button>
-                  </Box>
+                  <Button variant={variant} fill={buttonFill} size={size} key={size}>
+                    {variant} {size}
+                  </Button>
                 ))}
                 <Button variant={variant} fill={buttonFill} disabled>
                   {variant} disabled
