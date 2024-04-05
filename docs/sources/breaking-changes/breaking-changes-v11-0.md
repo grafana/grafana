@@ -134,6 +134,7 @@ In these cases, we recommend that you take these steps before the upgrade to ena
 Please note that if you use file provisioning, you can upgrade and update the routes at the same time.
 
 #### Learn more
+
 [Subfolders announcement](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/whatsnew/whats-new-in-v11-0/#subfolders)
 
 [Provisioning: Provision dashboards into subfolders PR](https://github.com/grafana/grafana/pull/79793)
@@ -158,7 +159,7 @@ If data is missing in panels, make sure the query editor **Hide response** butto
 
 #### Learn more
 
-[Github PR](https://github.com/grafana/grafana/pull/84656)
+[GitHub PR](https://github.com/grafana/grafana/pull/84656)
 
 ### Chore: Query oauth info from a new instance
 
@@ -168,7 +169,7 @@ If you set Google OAuth configuration using `api_url,` you might be using the le
 
 You can turn off this feature through the configuration toggle `validate_hd `. Anyone using the legacy Google OAuth configuration should turn off this validation if the ID Token response doesn't have the HD parameter.
 
-[Github issue](https://github.com/grafana/grafana/pull/83229)
+[GitHub issue](https://github.com/grafana/grafana/pull/83229)
 
 ### Changes to how the panel view URL is generated for repeated panels
 
@@ -202,18 +203,18 @@ For a complete guide, please follow our [migration docs on the developer portal]
 
 ### Chore: Taint ArrayVector with `never` to further discourage
 
-[Github PR](https://github.com/grafana/grafana/pull/83681)
+[GitHub PR](https://github.com/grafana/grafana/pull/83681)
 
 The Vector interface that was deprecated in Grafana v10 is further deprecated. Using it now generates build-time Typescript errors, but it remains working at runtime. If you're still using ArrayVector in your code, you should remove it immediately and replace it with plain arrays. Plugins that are compiled against older versions and depend on calling get/set will continue to work because the Array prototype still has a modified prototype. This will be removed in the future.
 
 ### Chore: Remove React 17 peer deps
 
-[Github PR](https://github.com/grafana/grafana/pull/83524)
+[GitHub PR](https://github.com/grafana/grafana/pull/83524)
 
 We've removed React 17 as a peer dependency from our packages. Anyone using the new versions of these packages should ensure they've upgraded to React 18 following [the upgrade steps](https://react.dev/blog/2022/03/08/react-18-upgrade-guide).
 
 ### Chore: Remove SystemJS from Grafana/Runtime
 
-[Github PR](https://github.com/grafana/grafana/pull/84561)
+[GitHub PR](https://github.com/grafana/grafana/pull/84561)
 
 SystemJS is no longer exported from `@grafana/runtime`. Plugin developers should instead rely on importing modules/packages using standard TS import syntax and npm/yarn for package installation.
