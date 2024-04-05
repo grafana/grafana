@@ -29,7 +29,7 @@ const (
 	// How often we flush and garbage collect notifications and silences.
 	maintenanceInterval = 15 * time.Minute
 
-	// How long we keep silences on disk after they've expired.
+	// How long we keep silences in the kvstore after they've expired.
 	silenceRetention = 5 * 24 * time.Hour
 )
 
