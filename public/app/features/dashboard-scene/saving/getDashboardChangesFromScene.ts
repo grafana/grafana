@@ -3,12 +3,18 @@ import { transformSceneToSaveModel } from '../serialization/transformSceneToSave
 
 import { getDashboardChanges } from './getDashboardChanges';
 
-export function getDashboardChangesFromScene(scene: DashboardScene, saveTimeRange?: boolean, saveVariables?: boolean) {
+export function getDashboardChangesFromScene(
+  scene: DashboardScene,
+  saveTimeRange?: boolean,
+  saveVariables?: boolean,
+  saveRefresh?: boolean
+) {
   const changeInfo = getDashboardChanges(
     scene.getInitialSaveModel()!,
     transformSceneToSaveModel(scene),
     saveTimeRange,
-    saveVariables
+    saveVariables,
+    saveRefresh
   );
   return changeInfo;
 }

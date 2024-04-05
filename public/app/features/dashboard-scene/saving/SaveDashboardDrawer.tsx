@@ -16,6 +16,7 @@ interface SaveDashboardDrawerState extends SceneObjectState {
   showDiff?: boolean;
   saveTimeRange?: boolean;
   saveVariables?: boolean;
+  saveRefresh?: boolean;
   saveAsCopy?: boolean;
   onSaveSuccess?: () => void;
 }
@@ -33,9 +34,18 @@ export class SaveDashboardDrawer extends SceneObjectBase<SaveDashboardDrawerStat
     this.setState({ saveVariables: !this.state.saveVariables });
   };
 
+  public onToggleSaveRefresh = () => {
+    this.setState({ saveRefresh: !this.state.saveRefresh });
+  };
+
   static Component = ({ model }: SceneComponentProps<SaveDashboardDrawer>) => {
-    const { showDiff, saveAsCopy, saveTimeRange, saveVariables } = model.useState();
-    const changeInfo = getDashboardChangesFromScene(model.state.dashboardRef.resolve(), saveTimeRange, saveVariables);
+    const { showDiff, saveAsCopy, saveTimeRange, saveVariables, saveRefresh } = model.useState();
+    const changeInfo = getDashboardChangesFromScene(
+      model.state.dashboardRef.resolve(),
+      saveTimeRange,
+      saveVariables,
+      saveRefresh
+    );
     const { changedSaveModel, initialSaveModel, diffs, diffCount } = changeInfo;
     const dashboard = model.state.dashboardRef.resolve();
     const isProvisioned = dashboard.state.meta.provisioned;

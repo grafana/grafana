@@ -12,7 +12,8 @@ import { DashboardChangeInfo } from './shared';
 export function getSaveDashboardChange(
   dashboard: DashboardScene,
   saveTimeRange?: boolean,
-  saveVariables?: boolean
+  saveVariables?: boolean,
+  saveRefresh?: boolean
 ): DashboardChangeInfo {
   const initialSaveModel = dashboard.getInitialSaveModel()!;
 
@@ -24,9 +25,14 @@ export function getSaveDashboardChange(
   const hasTimeChanged = getHasTimeChanged(changedSaveModel, initialSaveModel);
 
   const hasVariableValueChanges = applyVariableChanges(changedSaveModel, initialSaveModel, saveVariables);
+  const hasRefreshChanged = changedSaveModel.refresh !== initialSaveModel.refresh;
 
   if (!saveTimeRange) {
     changedSaveModel.time = initialSaveModel.time;
+  }
+
+  if (!saveRefresh) {
+    changedSaveModel.refresh = initialSaveModel.refresh;
   }
 
   const diff = jsonDiff(initialSaveModel, changedSaveModel);
@@ -45,6 +51,7 @@ export function getSaveDashboardChange(
     hasTimeChanges: hasTimeChanged,
     isNew: changedSaveModel.version === 0,
     hasVariableValueChanges,
+    hasRefreshChange: hasRefreshChanged,
   };
 }
 

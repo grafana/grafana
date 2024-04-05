@@ -130,8 +130,8 @@ export interface SaveDashboardFormCommonOptionsProps {
 }
 
 export function SaveDashboardFormCommonOptions({ drawer, changeInfo }: SaveDashboardFormCommonOptionsProps) {
-  const { saveVariables = false, saveTimeRange = false } = drawer.useState();
-  const { hasTimeChanges, hasVariableValueChanges } = changeInfo;
+  const { saveVariables = false, saveTimeRange = false, saveRefresh = false } = drawer.useState();
+  const { hasTimeChanges, hasVariableValueChanges, hasRefreshChange } = changeInfo;
 
   return (
     <>
@@ -141,7 +141,17 @@ export function SaveDashboardFormCommonOptions({ drawer, changeInfo }: SaveDashb
             id="save-timerange"
             checked={saveTimeRange}
             onChange={drawer.onToggleSaveTimeRange}
-            aria-label={selectors.pages.SaveDashboardModal.saveTimerange}
+            data-testid={selectors.pages.SaveDashboardModal.saveTimerange}
+          />
+        </Field>
+      )}
+      {hasRefreshChange && (
+        <Field label="Update default refresh value" description="Will make the current refresh the new default">
+          <Checkbox
+            id="save-refresh"
+            checked={saveRefresh}
+            onChange={drawer.onToggleSaveRefresh}
+            data-testid={selectors.pages.SaveDashboardModal.saveRefresh}
           />
         </Field>
       )}
@@ -151,7 +161,7 @@ export function SaveDashboardFormCommonOptions({ drawer, changeInfo }: SaveDashb
             id="save-variables"
             checked={saveVariables}
             onChange={drawer.onToggleSaveVariables}
-            aria-label={selectors.pages.SaveDashboardModal.saveVariables}
+            data-testid={selectors.pages.SaveDashboardModal.saveVariables}
           />
         </Field>
       )}

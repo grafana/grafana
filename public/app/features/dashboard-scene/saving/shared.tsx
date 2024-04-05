@@ -15,6 +15,7 @@ export interface DashboardChangeInfo {
   hasChanges: boolean;
   hasTimeChanges: boolean;
   hasVariableValueChanges: boolean;
+  hasRefreshChange: boolean;
   isNew?: boolean;
 }
 
@@ -63,7 +64,7 @@ export function SaveButton({ overwrite, isLoading, isValid, onSave }: SaveButton
     <Button
       disabled={!isValid || isLoading}
       icon={isLoading ? 'spinner' : undefined}
-      aria-label={selectors.pages.SaveDashboardModal.save}
+      data-testid={selectors.pages.SaveDashboardModal.save}
       onClick={() => onSave(overwrite)}
       variant={overwrite ? 'destructive' : 'primary'}
     >
