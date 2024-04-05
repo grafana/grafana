@@ -126,10 +126,6 @@ export const dateTimeForTimeZone = (
   input?: DateTimeInput,
   formatInput?: FormatInput
 ): DateTime => {
-  if (timezone === 'utc') {
-    return toUtc(input, formatInput);
-  }
-
   if (timezone && timezone !== 'browser') {
     let result: moment.Moment;
 
