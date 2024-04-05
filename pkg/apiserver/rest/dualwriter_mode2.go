@@ -50,7 +50,7 @@ func (d *DualWriterMode2) Create(ctx context.Context, obj runtime.Object, create
 
 	rsp, err := d.Storage.Create(ctx, c, createValidation, options)
 	if err != nil {
-		klog.FromContext(ctx).Error(err, "unable to create object in unified storage", "mode", Mode2)
+		klog.FromContext(ctx).Error(err, "unable to create object in Storage", "mode", 2)
 	}
 	return rsp, err
 }
