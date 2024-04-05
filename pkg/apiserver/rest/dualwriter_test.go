@@ -6,31 +6,29 @@ import (
 
 	"github.com/zeebo/assert"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/runtime"
 )
 
 const kind = "dummy"
 
-func Mode1_Test(t *testing.T) {
-	var ls = (LegacyStorage)(nil)
-	var s = (Storage)(nil)
-	lsSpy := NewLegacyStorageSpyClient(ls)
-	sSpy := NewStorageSpyClient(s)
+func Test_Mode1(t *testing.T) {
+	t.Run("mode 1", func(t *testing.T) {
+		var ls = (LegacyStorage)(nil)
+		var s = (Storage)(nil)
+		lsSpy := NewLegacyStorageSpyClient(ls)
+		sSpy := NewStorageSpyClient(s)
 
-	dw := NewDualWriterMode1(lsSpy, sSpy)
+		dw := NewDualWriterMode1(lsSpy, sSpy)
 
-	var dummy = (runtime.Object)(nil)
-	assert.NotNil(t, dummy)
+		_, err := dw.Get(context.Background(), kind, &metav1.GetOptions{})
+		assert.NoError(t, err)
 
-	_, err := dw.Get(context.Background(), kind, &metav1.GetOptions{})
-	assert.NoError(t, err)
-
-	// it should use the Legacy Get implementation
-	assert.Equal(t, 1, sSpy.Counts("LegacyStorage.Get"))
-	assert.Equal(t, 0, sSpy.Counts("Storage.Get"))
+		// it should use the Legacy Get implementation
+		assert.Equal(t, 1, lsSpy.Counts("LegacyStorage.Get"))
+		assert.Equal(t, 0, sSpy.Counts("Storage.Get"))
+	})
 }
 
-func Mode2_Test(t *testing.T) {
+func Test_Mode2(t *testing.T) {
 	var ls = (LegacyStorage)(nil)
 	var s = (Storage)(nil)
 	lsSpy := NewLegacyStorageSpyClient(ls)
@@ -38,14 +36,11 @@ func Mode2_Test(t *testing.T) {
 
 	dw := NewDualWriterMode2(lsSpy, sSpy)
 
-	var dummy = (runtime.Object)(nil)
-	assert.NotNil(t, dummy)
-
 	_, err := dw.Get(context.Background(), kind, &metav1.GetOptions{})
 	assert.NoError(t, err)
 
 	// it should use the Legacy Get implementation
-	assert.Equal(t, 1, sSpy.Counts("LegacyStorage.Get"))
+	assert.Equal(t, 1, lsSpy.Counts("LegacyStorage.Get"))
 	assert.Equal(t, 0, sSpy.Counts("Storage.Get"))
 }
 
@@ -57,9 +52,6 @@ func Mode3_Test(t *testing.T) {
 
 	dw := NewDualWriterMode3(lsSpy, sSpy)
 
-	var dummy = (runtime.Object)(nil)
-	assert.NotNil(t, dummy)
-
 	_, err := dw.Get(context.Background(), kind, &metav1.GetOptions{})
 	assert.NoError(t, err)
 
@@ -68,7 +60,7 @@ func Mode3_Test(t *testing.T) {
 	assert.Equal(t, 1, sSpy.Counts("Storage.Get"))
 }
 
-func Mode4_Test(t *testing.T) {
+func Test_Mode4(t *testing.T) {
 	var ls = (LegacyStorage)(nil)
 	var s = (Storage)(nil)
 	lsSpy := NewLegacyStorageSpyClient(ls)
@@ -76,13 +68,10 @@ func Mode4_Test(t *testing.T) {
 
 	dw := NewDualWriterMode3(lsSpy, sSpy)
 
-	var dummy = (runtime.Object)(nil)
-	assert.NotNil(t, dummy)
-
 	_, err := dw.Get(context.Background(), kind, &metav1.GetOptions{})
 	assert.NoError(t, err)
 
 	// it should use the Unified Storage Get implementation
-	assert.Equal(t, 0, sSpy.Counts("LegacyStorage.Get"))
+	assert.Equal(t, 0, lsSpy.Counts("LegacyStorage.Get"))
 	assert.Equal(t, 1, sSpy.Counts("Storage.Get"))
 }
