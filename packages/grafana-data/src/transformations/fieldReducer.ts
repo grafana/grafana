@@ -417,7 +417,7 @@ for (let i = 1; i < 100; i++) {
     name: name,
     description: description,
     standard: false,
-    reduce: (field: Field, ignoreNulls: boolean, nullAsZero: boolean) => {
+    reduce: (field: Field, ignoreNulls: boolean, nullAsZero: boolean): FieldCalcs => {
       return { [id]: calculatePercentile(field, percentile, ignoreNulls, nullAsZero) };
     },
     preservesUnits: true,
@@ -671,7 +671,7 @@ function calculateDistinctCount(field: Field, ignoreNulls: boolean, nullAsZero: 
   return { distinctCount: distinct.size };
 }
 
-function calculatePercentile(field: Field, percentile: number, ignoreNulls: boolean, nullAsZero: boolean): FieldCalcs {
+function calculatePercentile(field: Field, percentile: number, ignoreNulls: boolean, nullAsZero: boolean): number {
   let data = field.values;
 
   if (ignoreNulls) {
