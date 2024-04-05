@@ -1,20 +1,19 @@
 import 'whatwg-fetch';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { setupServer } from 'msw/node';
 import React from 'react';
 import { TestProvider } from 'test/helpers/TestProvider';
 import { byLabelText, byRole } from 'testing-library-selector';
 
 import { locationService, setDataSourceSrv } from '@grafana/runtime';
-import { mockSearchApi } from 'app/features/alerting/unified/mockApi';
+import { mockSearchApi, setupMswServer } from 'app/features/alerting/unified/mockApi';
 
 import * as analytics from '../../Analytics';
 import { MockDataSourceSrv } from '../../mocks';
 
 import RulesFilter from './RulesFilter';
 
-const server = setupServer();
+const server = setupMswServer();
 jest.spyOn(analytics, 'logInfo');
 
 jest.mock('./MultipleDataSourcePicker', () => {
@@ -44,15 +43,6 @@ const ui = {
 beforeEach(() => {
   locationService.replace({ search: '' });
   mockSearchApi(server).search([]);
-  server.listen({ onUnhandledRequest: 'error' });
-});
-
-afterEach(() => {
-  server.resetHandlers();
-});
-
-afterAll(() => {
-  server.close();
 });
 
 describe('RulesFilter', () => {
