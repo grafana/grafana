@@ -15,6 +15,7 @@ type instrumentationService struct {
 	*services.BasicService
 	httpServ *http.Server
 	log      log.Logger
+	errChan  chan error
 }
 
 func NewInstrumentationService(log log.Logger) (*instrumentationService, error) {
@@ -25,24 +26,20 @@ func NewInstrumentationService(log log.Logger) (*instrumentationService, error) 
 
 func (s *instrumentationService) start(ctx context.Context) error {
 	s.httpServ = s.newInstrumentationServer(ctx)
+	s.errChan = make(chan error)
+	go func() {
+		s.errChan <- s.httpServ.ListenAndServe()
+	}()
 	return nil
 }
 
 func (s *instrumentationService) running(ctx context.Context) error {
-	errChan := make(chan error, 1)
-	go func() {
-		errChan <- s.httpServ.ListenAndServe()
-	}()
-
 	select {
 	case <-ctx.Done():
-	case err := <-errChan:
-		if err != nil {
-			return err
-		}
+		return nil
+	case err := <-s.errChan:
+		return err
 	}
-
-	return nil
 }
 
 func (s *instrumentationService) stop(failureReason error) error {
