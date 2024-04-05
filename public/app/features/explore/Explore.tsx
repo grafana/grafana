@@ -41,7 +41,6 @@ import { ContentOutlineContextProvider } from './ContentOutline/ContentOutlineCo
 import { ContentOutlineItem } from './ContentOutline/ContentOutlineItem';
 import { CorrelationHelper } from './CorrelationHelper';
 import { CustomContainer } from './CustomContainer';
-import ExploreQueryInspector from './ExploreQueryInspector';
 import { ExploreToolbar } from './ExploreToolbar';
 import { FlameGraphExploreContainer } from './FlameGraph/FlameGraphExploreContainer';
 import { GraphContainer } from './Graph/GraphContainer';
@@ -107,15 +106,11 @@ export interface ExploreProps extends Themeable2 {
   exploreId: string;
   theme: GrafanaTheme2;
   eventBus: EventBus;
-}
-
-enum ExploreDrawer {
-  RichHistory,
-  QueryInspector,
+  setShowQueryInspector: (value: boolean) => void;
+  showQueryInspector: boolean;
 }
 
 interface ExploreState {
-  openDrawer?: ExploreDrawer;
   contentOutlineVisible: boolean;
 }
 
@@ -155,7 +150,6 @@ export class Explore extends React.PureComponent<Props, ExploreState> {
   constructor(props: Props) {
     super(props);
     this.state = {
-      openDrawer: undefined,
       contentOutlineVisible: false,
     };
     this.graphEventBus = props.eventBus.newScopedBus('graph', { onlyLocal: false });
@@ -308,14 +302,6 @@ export class Explore extends React.PureComponent<Props, ExploreState> {
   onUpdateTimeRange = (absoluteRange: AbsoluteTimeRange) => {
     const { exploreId, updateTimeRange } = this.props;
     updateTimeRange({ exploreId, absoluteRange });
-  };
-
-  toggleShowQueryInspector = () => {
-    this.setState((state) => {
-      return {
-        openDrawer: state.openDrawer === ExploreDrawer.QueryInspector ? undefined : ExploreDrawer.QueryInspector,
-      };
-    });
   };
 
   toggleShowQueryHistory = () => {
@@ -546,17 +532,17 @@ export class Explore extends React.PureComponent<Props, ExploreState> {
       showCustom,
       showNodeGraph,
       showFlameGraph,
-      timeZone,
       showLogsSample,
       correlationEditorDetails,
       correlationEditorHelperData,
       showQueryHistory,
+      showQueryInspector,
+      setShowQueryInspector,
     } = this.props;
-    const { openDrawer, contentOutlineVisible } = this.state;
+    const { contentOutlineVisible } = this.state;
     const styles = getStyles(theme);
     const showPanels = queryResponse && queryResponse.state !== LoadingState.NotStarted;
     const richHistoryRowButtonHidden = !supportedFeatures().queryHistoryAvailable;
-    const showQueryInspector = openDrawer === ExploreDrawer.QueryInspector;
     const showNoData =
       queryResponse.state === LoadingState.Done &&
       [
@@ -621,7 +607,7 @@ export class Explore extends React.PureComponent<Props, ExploreState> {
                           queryInspectorButtonActive={showQueryInspector}
                           onClickAddQueryRowButton={this.onClickAddQueryRowButton}
                           onClickRichHistoryButton={this.toggleShowQueryHistory}
-                          onClickQueryInspectorButton={this.toggleShowQueryInspector}
+                          onClickQueryInspectorButton={() => setShowQueryInspector(!showQueryInspector)}
                         />
                         <ResponseErrorContainer exploreId={exploreId} />
                       </PanelContainer>
@@ -658,15 +644,6 @@ export class Explore extends React.PureComponent<Props, ExploreState> {
                                   {showCustom && <ErrorBoundaryAlert>{this.renderCustom(width)}</ErrorBoundaryAlert>}
                                   {showNoData && <ErrorBoundaryAlert>{this.renderNoData()}</ErrorBoundaryAlert>}
                                 </>
-                              )}
-                              {showQueryInspector && (
-                                <ExploreQueryInspector
-                                  exploreId={exploreId}
-                                  width={width}
-                                  onClose={this.toggleShowQueryInspector}
-                                  timeZone={timeZone}
-                                  isMixed={datasourceInstance.meta.mixed || false}
-                                />
                               )}
                             </ErrorBoundaryAlert>
                           </main>

@@ -5,25 +5,23 @@ import React from 'react';
 
 // Services & Utils
 import { GrafanaTheme2 } from '@grafana/data';
-import { getDragStyles, useTheme2 } from '@grafana/ui';
+import { getDragStyles, useStyles2, useTheme2 } from '@grafana/ui';
 
 export interface Props {
-  width?: number;
   children: React.ReactNode;
   onResize?: ResizeCallback;
 }
 
 export function ExploreDrawer(props: Props) {
-  const { width, children, onResize } = props;
+  const { children, onResize } = props;
   const theme = useTheme2();
-  const styles = getStyles(theme, width === undefined); // if width is defined, it is not full-width
+  const styles = useStyles2(getStyles);
   const dragStyles = getDragStyles(theme);
-  const drawerWidth = width ? `${width + 31.5}px` : '100%';
 
   return (
     <Resizable
       className={cx(styles.fixed, styles.container, styles.drawerActive)}
-      defaultSize={{ width: drawerWidth, height: `${theme.components.horizontalDrawer.defaultHeight}px` }}
+      defaultSize={{ width: '100%', height: `${theme.components.horizontalDrawer.defaultHeight}px` }}
       handleClasses={{ top: dragStyles.dragHandleHorizontal }}
       enable={{
         top: true,
@@ -36,8 +34,6 @@ export function ExploreDrawer(props: Props) {
         topLeft: false,
       }}
       maxHeight="100vh"
-      maxWidth={drawerWidth}
-      minWidth={drawerWidth}
       onResize={onResize}
     >
       {children}
@@ -49,25 +45,23 @@ const drawerSlide = (theme: GrafanaTheme2) => keyframes`
   0% {
     transform: translateY(${theme.components.horizontalDrawer.defaultHeight}px);
   }
+
   100% {
     transform: translateY(0px);
   }
 `;
 
-const getStyles = (theme: GrafanaTheme2, fullWidth: boolean) => ({
+const getStyles = (theme: GrafanaTheme2) => ({
   // @ts-expect-error csstype doesn't allow !important. see https://github.com/frenic/csstype/issues/114
   fixed: css({
-    position: `fixed !important`,
-    bottom: 0,
-    right: 0,
+    position: 'absolute !important',
   }),
   container: css({
-    bottom: `${fullWidth ? '1px' : '0'}`,
+    bottom: 0,
     background: theme.colors.background.primary,
     borderTop: `1px solid ${theme.colors.border.weak}`,
-    margin: theme.spacing(0, fullWidth ? 0 : -2, 0, fullWidth ? 0 : -2),
     boxShadow: theme.shadows.z3,
-    zIndex: theme.zIndex.modal,
+    zIndex: theme.zIndex.navbarFixed,
   }),
   drawerActive: css({
     opacity: 1,
