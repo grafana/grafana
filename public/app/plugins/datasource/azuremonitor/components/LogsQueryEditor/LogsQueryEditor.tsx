@@ -16,7 +16,7 @@ import AdvancedResourcePicker from './AdvancedResourcePicker';
 import { LogsManagement } from './LogsManagement';
 import QueryField from './QueryField';
 import { TimeManagement } from './TimeManagement';
-import { setFormatAs } from './setQueryValue';
+import { setBasicLogsQuery, setFormatAs } from './setQueryValue';
 import useMigrations from './useMigrations';
 
 interface LogsQueryEditorProps {
@@ -79,6 +79,11 @@ const LogsQueryEditor = ({
     }
   }, [query.azureLogAnalytics?.resources]);
 
+  useEffect(() => {
+    if (!basicLogsEnabled) {
+      onChange(setBasicLogsQuery(query, false));
+    }
+  }, [basicLogsEnabled]);
   let portalLinkButton = null;
 
   if (data?.series) {
