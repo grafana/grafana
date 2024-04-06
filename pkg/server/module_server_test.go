@@ -43,7 +43,10 @@ func TestIntegrationWillRunInstrumentationServerWhenTargetHasNoHttpServer(t *tes
 	require.NoError(t, err)
 
 	go func() {
-		_ = ms.Run()
+		err = ms.Run()
+		if err.Error() != "context canceled" {
+			t.Error(err)
+		}
 	}()
 	time.Sleep(500 * time.Millisecond) // wait for http server to be running
 
