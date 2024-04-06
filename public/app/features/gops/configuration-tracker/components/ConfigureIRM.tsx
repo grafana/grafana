@@ -1,8 +1,9 @@
 import { css } from '@emotion/css';
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import { useHistory } from 'react-router-dom';
 
 import { Card, Button, Icon, useStyles2 } from '@grafana/ui';
+import { useRulesSourcesWithRuler } from 'app/features/alerting/unified/hooks/useRuleSourcesWithRuler';
 import { DATASOURCES_ROUTES } from 'app/features/datasources/constants';
 
 import { Essentials } from './Essentials';
@@ -10,25 +11,30 @@ import { Essentials } from './Essentials';
 export function ConfigureIRM() {
   const styles = useStyles2(getStyles);
   const history = useHistory();
-  const [essentialsOpen, setEssentialsOpen] = useState(false);
+  const rulesSourcesWithRuler = useRulesSourcesWithRuler();
 
-  const configuration = [
-    {
-      id: 1,
-      title: 'Connect datasource to recieve data',
-      description: 'Before your start configuration you need to connect at least one datasource.',
-      text: 'Configure IRM',
-      actionButtonTitle: 'Connect',
-    },
-    {
-      id: 2,
-      title: 'Essentials',
-      titleIcon: 'star',
-      description: 'Complete the basic configuration to start using the apps',
-      text: 'Configure IRM',
-      actionButtonTitle: 'View tasks',
-    },
-  ];
+  const [essentialsOpen, setEssentialsOpen] = useState(false);
+  const configuration = useMemo(() => {
+    return [
+      {
+        id: 1,
+        title: 'Connect datasource to recieve data',
+        description: 'Before your start configuration you need to connect at least one datasource.',
+        text: 'Configure IRM',
+        actionButtonTitle: 'Connect',
+        isVisible: rulesSourcesWithRuler.length === 0,
+      },
+      {
+        id: 2,
+        title: 'Essentials',
+        titleIcon: 'star',
+        description: 'Complete the basic configuration to start using the apps',
+        text: 'Configure IRM',
+        actionButtonTitle: 'View tasks',
+        isVisible: true,
+      },
+    ];
+  }, [rulesSourcesWithRuler]);
 
   const handleActionClick = (configID: number) => {
     switch (configID) {
@@ -47,19 +53,21 @@ export function ConfigureIRM() {
     <section className={styles.container}>
       {configuration.map((config) => {
         return (
-          <Card key={config.id}>
-            <Card.Heading className={styles.title}>
-              {config.title}
-              {config.titleIcon && <Icon name={config.titleIcon} />}
-            </Card.Heading>
+          config.isVisible && (
+            <Card key={config.id}>
+              <Card.Heading className={styles.title}>
+                {config.title}
+                {config.titleIcon && <Icon name={config.titleIcon} />}
+              </Card.Heading>
 
-            <Card.Description className={styles.description}>{config.description}</Card.Description>
-            <Card.Actions>
-              <Button variant="secondary" className={styles.actions} onClick={() => handleActionClick(config.id)}>
-                {config.actionButtonTitle}
-              </Button>
-            </Card.Actions>
-          </Card>
+              <Card.Description className={styles.description}>{config.description}</Card.Description>
+              <Card.Actions>
+                <Button variant="secondary" className={styles.actions} onClick={() => handleActionClick(config.id)}>
+                  {config.actionButtonTitle}
+                </Button>
+              </Card.Actions>
+            </Card>
+          )
         );
       })}
       {essentialsOpen && <Essentials onClose={() => setEssentialsOpen(false)} />}

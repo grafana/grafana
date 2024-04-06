@@ -146,7 +146,7 @@ const ESSENTIAL_CONTENT: Sections = {
           description: 'tbd',
           button: {
             type: 'openLink',
-            url: '/alerting/test',
+            url: '/a/grafana-incident-app?declare=new&drill=1',
             label: 'Start drill',
           },
         },
