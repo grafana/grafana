@@ -251,4 +251,18 @@ describe('Stats Calculators', () => {
 
     expect(reduce(someNulls, ReducerID.count)).toEqual(4);
   });
+
+  for (let i = 1; i < 100; i++) {
+    it(`can reduce the ${i}th percentile`, () => {
+      const preciseStats = reduceField({
+        field: createField(
+          'x',
+          Array.from({ length: 101 }, (_, index) => index)
+        ),
+        reducers: [(ReducerID as Record<string, ReducerID>)[`p${i}`]],
+      });
+
+      expect(preciseStats[`p${i}`]).toEqual(i);
+    });
+  }
 });
