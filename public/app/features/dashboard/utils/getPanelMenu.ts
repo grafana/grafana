@@ -19,7 +19,7 @@ import {
   copyPanel,
   duplicatePanel,
   removePanel,
-  sharePanel,
+  // sharePanel, // LOGZ.IO GRAFANA CHANGE :: hide share for now
   toggleLegend,
   unlinkLibraryPanel,
 } from 'app/features/dashboard/utils/panel';
@@ -56,11 +56,11 @@ export function getPanelMenu(
     DashboardInteractions.panelMenuItemClicked('edit');
   };
 
-  const onSharePanel = (event: React.MouseEvent) => {
-    event.preventDefault();
-    sharePanel(dashboard, panel);
-    DashboardInteractions.panelMenuItemClicked('share');
-  };
+  // LOGZ.IO GRAFANA CHANGE :: hide share for now
+  // const onSharePanel = (event: React.MouseEvent<any>) => {
+  //   event.preventDefault();
+  //   sharePanel(dashboard, panel);
+  // };
 
   const onAddLibraryPanel = (event: React.MouseEvent) => {
     event.preventDefault();
@@ -144,12 +144,13 @@ export function getPanelMenu(
     });
   }
 
-  menu.push({
-    text: t('panel.header-menu.share', `Share`),
-    iconClassName: 'share-alt',
-    onClick: onSharePanel,
-    shortcut: 'p s',
-  });
+// LOGZ.IO GRAFANA CHANGE :: hide share for now
+//menu.push({
+//  text: t('panel.header-menu.share', `Share`),
+//  iconClassName: 'share-alt',
+//  onClick: onSharePanel,
+//  shortcut: 'p s',
+//});
 
   if (
     contextSrv.hasAccessToExplore() &&

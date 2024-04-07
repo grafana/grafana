@@ -39,6 +39,11 @@ export class AlertTabCtrl {
   alertingMinIntervalSecs: number;
   alertingMinInterval: string;
   frequencyWarning: any;
+  // LOGZ.IO GRAFANA CHANGE :: (ALERTS) Email validation
+  isEmailValid: boolean;
+  alertEmailNotifications: any;
+  emailInEdit: string;
+  // LOGZ.IO GRAFANA CHANGE :: end
 
   static $inject = ['$scope', 'dashboardSrv', 'uiSegmentSrv', 'datasourceSrv'];
 
@@ -61,6 +66,11 @@ export class AlertTabCtrl {
     this.panelCtrl._enableAlert = this.enable;
     this.alertingMinIntervalSecs = config.alertingMinInterval;
     this.alertingMinInterval = rangeUtil.secondsToHms(config.alertingMinInterval);
+    // LOGZ.IO GRAFANA CHANGE :: (ALERTS) Email validation
+    this.isEmailValid = true;
+    this.alertEmailNotifications = [];
+    this.emailInEdit = '';
+    // LOGZ.IO GRAFANA CHANGE :: end
   }
 
   $onInit() {
@@ -131,6 +141,11 @@ export class AlertTabCtrl {
         return 'arrow-random';
       case 'teams':
         return 'fa fa-windows';
+      // LOGZ.IO GRAFANA CHANGE :: (ALERTS) Adding types icons
+      case 'custom':
+        return 'fa fa-wrench';
+      case 'datadog':
+        return 'fa fa-paw';
     }
     return 'bell';
   }
@@ -138,15 +153,21 @@ export class AlertTabCtrl {
   getNotifications() {
     return Promise.resolve(
       this.notifications.map((item: any) => {
-        return this.uiSegmentSrv.newSegment(item.name);
+        // LOGZ.IO GRAFANA CHANGE :: (ALERTS) Alert {type.name}
+        return this.uiSegmentSrv.newSegment(`${item.type}.${item.name}`);
       })
     );
   }
 
   notificationAdded() {
+    // LOGZ.IO GRAFANA CHANGE :: (ALERTS) Get name from 'type.name'
+    const endpointName = this.addNotificationSegment.value.substr(this.addNotificationSegment.value.indexOf('.') + 1);
+
     const model: any = find(this.notifications, {
-      name: this.addNotificationSegment.value,
+      name: endpointName,
     });
+    // LOGZ.IO GRAFANA CHANGE :: end
+
     if (!model) {
       return;
     }
@@ -168,6 +189,55 @@ export class AlertTabCtrl {
     this.addNotificationSegment.html = this.uiSegmentSrv.newPlusButton().html;
     this.addNotificationSegment.fake = true;
   }
+
+  // LOGZ.IO GRAFANA CHANGE :: (ALERTS) Handle email endpoint
+  emailInputChanged(e: any) {
+    if (e.keyCode === 13) {
+      this.addEmail();
+      return;
+    }
+
+    this.isEmailValid = !this.emailInEdit || (window as any).logzio.services.logzPatterns.email.test(this.emailInEdit);
+  }
+
+  addEmail() {
+    if (!this.emailInEdit || !this.isEmailValid) {
+      this.isEmailValid = false;
+
+      return;
+    }
+
+    const address = this.emailInEdit;
+    this.emailInEdit = '';
+
+    this.alert.emailNotifications.push({
+      address,
+    });
+
+    this.alertEmailNotifications.push({
+      name: address,
+      iconClass: this.getNotificationIcon('email'),
+      isDefault: false,
+    });
+  }
+
+  initEmails() {
+    this.alert.emailNotifications = this.alert.emailNotifications || [];
+
+    this.alert.emailNotifications.forEach((email: any) => {
+      this.alertEmailNotifications.push({
+        name: email.address,
+        iconClass: this.getNotificationIcon('email'),
+        isDefault: false,
+      });
+    });
+  }
+
+  removeEmailNotification(an: any) {
+    remove(this.alertEmailNotifications, (n: any) => n.name === an.name);
+    remove(this.alert.emailNotifications, (n: any) => n.address === an.name);
+  }
+  // LOGZ.IO GRAFANA CHANGE :: (ALERTS) Handle email endpoint : End
 
   removeNotification(an: any) {
     // remove notifiers referred to by id and uid to support notifiers added
@@ -262,6 +332,9 @@ export class AlertTabCtrl {
         this.alertNotifications.push(notification);
       }
     }
+
+    // LOGZ.IO GRAFANA CHANGE :: (ALERTS) Init emails
+    this.initEmails();
 
     this.panelCtrl.editingThresholds = true;
     this.panelCtrl.render();

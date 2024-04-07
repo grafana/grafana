@@ -32,6 +32,7 @@ export const AlertManagerPicker = ({ disabled = false }: Props) => {
   return (
     <InlineField
       className={styles.field}
+      style={{display: 'none'}} // LOGZ.IO Change :: Disable AM Selector
       label={disabled ? 'Alertmanager' : 'Choose Alertmanager'}
       disabled={disabled || options.length === 1}
       data-testid="alertmanager-picker"

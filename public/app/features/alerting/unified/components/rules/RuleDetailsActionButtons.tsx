@@ -52,7 +52,7 @@ export const RuleDetailsActionButtons = ({ rule, rulesSource, isViewMode }: Prop
   const { namespace, group, rulerRule } = rule;
   // LOGZ.IO GRAFANA CHANGE :: DEV-31760 - Retrieve annotations for migrated unified alerts
   const oldAlertId = rule.annotations[Annotation.alertId] ?? '';
-  const { StateHistoryModal, showStateHistoryModal } = useStateHistoryModal(alertId, oldAlertId);
+  const { StateHistoryModal, showStateHistoryModal } = useStateHistoryModal(oldAlertId);
   // LOGZ.IO GRAFANA CHANGE :: end
   const dispatch = useDispatch();
   const location = useLocation();
@@ -326,7 +326,7 @@ export const RuleDetailsActionButtons = ({ rule, rulesSource, isViewMode }: Prop
   }
 
   return null;
-};
+}
 
 /**
  * Since Incident isn't available as an open-source product we shouldn't show it for Open-Source licenced editions of Grafana.

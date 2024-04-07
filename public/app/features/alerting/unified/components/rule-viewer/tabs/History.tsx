@@ -4,6 +4,7 @@ import { config } from '@grafana/runtime';
 import { RulerGrafanaRuleDTO } from 'app/types/unified-alerting-dto';
 
 import { StateHistoryImplementation } from '../../../hooks/useStateHistoryModal';
+import { Annotation } from '../../../utils/constants';
 
 const AnnotationsStateHistory = lazy(() => import('../../../components/rules/state-history/StateHistory'));
 const LokiStateHistory = lazy(() => import('../../../components/rules/state-history/LokiStateHistory'));
@@ -29,10 +30,13 @@ const History = ({ rule }: HistoryProps) => {
   const ruleID = rule.grafana_alert.id ?? '';
   const ruleUID = rule.grafana_alert.uid;
 
+  // LOGZ.IO GRAFANA CHANGE :: DEV-31760 - Retrieve annotations for migrated unified alerts
+  const oldAlertId = rule.annotations[Annotation.alertId] ?? '';
+
   return (
     <Suspense fallback={'Loading...'}>
       {implementation === StateHistoryImplementation.Loki && <LokiStateHistory ruleUID={ruleUID} />}
-      {implementation === StateHistoryImplementation.Annotations && <AnnotationsStateHistory alertId={ruleID} />}
+      {implementation === StateHistoryImplementation.Annotations && <AnnotationsStateHistory oldAlertId={oldAlertId} alertId={ruleID} />}
     </Suspense>
   );
 };

@@ -20,6 +20,7 @@ import {
 import appEvents from 'app/core/app_events';
 import { contextSrv } from 'app/core/services/context_srv';
 import { createFolder } from 'app/features/manage-dashboards/state/actions';
+import { DashboardSearchHit } from 'app/features/search/types';
 import { AccessControlAction, useDispatch } from 'app/types';
 import { CombinedRuleGroup } from 'app/types/unified-alerting';
 import { RulerRulesConfigDTO } from 'app/types/unified-alerting-dto';
@@ -36,7 +37,6 @@ import { evaluateEveryValidationOptions } from '../rules/EditRuleGroupModal';
 
 import { containsSlashes, Folder, RuleFolderPicker } from './RuleFolderPicker';
 import { checkForPathSeparator } from './util';
-import { DashboardSearchHit } from 'app/features/search/types';
 
 export const MAX_GROUP_RESULTS = 1000;
 

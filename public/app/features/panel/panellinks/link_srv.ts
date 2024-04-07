@@ -11,10 +11,10 @@ import {
   InterpolateFunction,
   KeyValue,
   LinkModel,
-  locationUtil,
+  // locationUtil, // LOGZ.IO GRAFANA CHANGE :: comment out to prevent ts errors
   ScopedVars,
   textUtil,
-  urlUtil,
+  // urlUtil, // LOGZ.IO GRAFANA CHANGE :: comment out to prevent ts errors
   VariableOrigin,
   VariableSuggestion,
   VariableSuggestionsScope,
@@ -262,8 +262,10 @@ export class LinkSrv implements LinkService {
       params[`\$${DataLinkBuiltInVars.includeVars}`] = true;
     }
 
-    let url = locationUtil.assureBaseUrl(urlUtil.appendQueryToUrl(link.url || '', urlUtil.toUrlParams(params)));
-    url = getTemplateSrv().replace(url);
+    // LOGZ.IO GRAFANA CHANGE :: Disable adding appSubUrl (/grafana-app) to the url
+    // let url = locationUtil.assureBaseUrl(urlUtil.appendQueryToUrl(link.url || '', urlUtil.toUrlParams(params)));
+    let url = getTemplateSrv().replace(link.url || '');
+    // LOGZ.IO GRAFANA CHANGE :: END
 
     return getConfig().disableSanitizeHtml ? url : textUtil.sanitizeUrl(url);
   }
@@ -295,9 +297,15 @@ export class LinkSrv implements LinkService {
     }
 
     const info: LinkModel<T> = {
-      href: locationUtil.assureBaseUrl(href.replace(/\n/g, '')),
+      // LOGZ.IO GRAFANA CHANGE :: Do not remove spaces from data link
+      // href: locationUtil.assureBaseUrl(href.replace(/\n/g, '')),
+      href: href.replace(/\n/g, ''),
+      // LOGZ.IO GRAFANA CHANGE :: END
       title: link.title ?? '',
-      target: link.targetBlank ? '_blank' : undefined,
+      // LOGZ.IO GRAFANA CHANGE :: link open on same tab to open on top frame
+      // target: link.targetBlank ? '_blank' : undefined,
+      target: link.targetBlank ? '_blank' : '_top',
+      // LOGZ.IO GRAFANA CHANGE :: END
       origin,
     };
 

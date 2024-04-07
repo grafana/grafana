@@ -7,7 +7,7 @@ import { AlertingAction } from '../../hooks/useAbilities';
 import { isCloudRulesSource, isGrafanaRulesSource } from '../../utils/datasource';
 import { Authorize } from '../Authorize';
 
-import { CloudRules } from './CloudRules';
+// import { CloudRules } from './CloudRules'; // LOGZ.IO GRAFANA CHANGE :: hide cloud managed alerts
 import { GrafanaRules } from './GrafanaRules';
 
 interface Props {
@@ -16,7 +16,7 @@ interface Props {
 }
 
 export const RuleListGroupView = ({ namespaces, expandAll }: Props) => {
-  const [grafanaNamespaces, cloudNamespaces] = useMemo(() => {
+  const [grafanaNamespaces /*, cloudNamespaces LOGZ.IO Change */] = useMemo(() => {
     const sorted = namespaces
       .map((namespace) => ({
         ...namespace,
@@ -38,9 +38,10 @@ export const RuleListGroupView = ({ namespaces, expandAll }: Props) => {
       <Authorize actions={[AlertingAction.ViewAlertRule]}>
         <GrafanaRules namespaces={grafanaNamespaces} expandAll={expandAll} />
       </Authorize>
-      <Authorize actions={[AlertingAction.ViewExternalAlertRule]}>
+      {// LOGZ.IO Changes
+      /* <Authorize actions={[AccessControlAction.AlertingRuleExternalRead]}>
         <CloudRules namespaces={cloudNamespaces} expandAll={expandAll} />
-      </Authorize>
+      </Authorize> */}
     </>
   );
 };

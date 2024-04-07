@@ -15,12 +15,15 @@
       </div>
       <div class="gf-form">
         <span class="gf-form-label width-9">Evaluate every</span>
+        <!-- LOGZ.IO GRAFANA CHANGE :: (ALERTS) only allow 60s by atlas -->
         <input
           class="gf-form-input max-width-6"
           type="text"
           ng-model="ctrl.alert.frequency"
           ng-blur="ctrl.checkFrequency()"
-        />
+          disabled
+        /> 
+        <!-- LOGZ.IO GRAFANA CHANGE :: end -->
       </div>
       <div class="gf-form max-width-11">
         <label class="gf-form-label width-5">For</label>
@@ -187,6 +190,23 @@
       ></metric-segment>
     </div>
   </div>
+  <!-- LOGZ.IO GRAFANA CHANGE :: (ALERTS) Add emails input -->
+  <div class="gf-form-inline offset-width-8" style="padding-left: 4px;">
+    <div class="gf-form" ng-repeat="nc in ctrl.alertEmailNotifications">
+          <span class="gf-form-label" ng-style="{'background-color': nc.bgColor }">
+            <i class="{{nc.iconClass}}"></i>&nbsp;{{nc.name}}&nbsp;
+            <i class="fa fa-remove pointer muted" ng-click="ctrl.removeEmailNotification(nc)" ng-if="nc.isDefault === false"></i>
+          </span>
+    </div>
+    <div class="gf-form">
+      <input class="gf-form-input max-width-15" ng-model="ctrl.emailInEdit"
+             placeholder="Enter valid email"
+             ng-keyup="ctrl.emailInputChanged($event)"
+             ng-class="{'invalid':!ctrl.isEmailValid}">
+    </div>
+    <a class="gf-form-label query-part" ng-click="ctrl.addEmail()">Add email</a>
+  </div>
+  <!-- LOGZ.IO GRAFANA CHANGE :: (ALERTS) End -->
   <div class="gf-form gf-form--v-stretch">
     <span class="gf-form-label width-8">Message</span>
     <textarea

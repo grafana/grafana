@@ -124,7 +124,7 @@ export class PrometheusDatasource
     this.defaultEditor = instanceSettings.jsonData.defaultEditor;
     this.disableRecordingRules = instanceSettings.jsonData.disableRecordingRules ?? false;
     this.variables = new PrometheusVariableSupport(this, this.templateSrv);
-    this.exemplarsAvailable = true;
+    this.exemplarsAvailable = false; // LOGZ.IO GRAFANA CHANGE :: Disable exemplars
     this.cacheLevel = instanceSettings.jsonData.cacheLevel ?? PrometheusCacheLevel.Low;
 
     this.cache = new QueryCache({
@@ -339,18 +339,19 @@ export class PrometheusDatasource
   }
 
   shouldRunExemplarQuery(target: PromQuery, request: DataQueryRequest<PromQuery>): boolean {
-    if (target.exemplar) {
-      // We check all already processed targets and only create exemplar target for not used metric names
-      const metricName = this.languageProvider.histogramMetrics.find((m) => target.expr.includes(m));
-      // Remove targets that weren't processed yet (in targets array they are after current target)
-      const currentTargetIdx = request.targets.findIndex((t) => t.refId === target.refId);
-      const targets = request.targets.slice(0, currentTargetIdx).filter((t) => !t.hide);
+    // LOGZ.IO GRAFANA CHANGE :: Disable exemplars
+    // if (target.exemplar) {
+    //   // We check all already processed targets and only create exemplar target for not used metric names
+    //   const metricName = this.languageProvider.histogramMetrics.find((m) => target.expr.includes(m));
+    //   // Remove targets that weren't processed yet (in targets array they are after current target)
+    //   const currentTargetIdx = request.targets.findIndex((t) => t.refId === target.refId);
+    //   const targets = request.targets.slice(0, currentTargetIdx).filter((t) => !t.hide);
 
-      if (!metricName || (metricName && !targets.some((t) => t.expr.includes(metricName)))) {
-        return true;
-      }
-      return false;
-    }
+    //   if (!metricName || (metricName && !targets.some((t) => t.expr.includes(metricName)))) {
+    //     return true;
+    //   }
+    //   return false;
+    // }
     return false;
   }
 
@@ -758,27 +759,29 @@ export class PrometheusDatasource
     }
   }
 
+  // LOGZ.IO GRAFANA CHANGE :: Disable exemplars
   async areExemplarsAvailable() {
-    try {
-      const res = await this.metadataRequest(
-        '/api/v1/query_exemplars',
-        {
-          query: 'test',
-          start: dateTime().subtract(30, 'minutes').valueOf().toString(),
-          end: dateTime().valueOf().toString(),
-        },
-        {
-          // Avoid alerting the user if this test fails
-          showErrorAlert: false,
-        }
-      );
-      if (res.data.status === 'success') {
-        return true;
-      }
-      return false;
-    } catch (err) {
-      return false;
-    }
+    return false;
+    // try {
+    //   const res = await this.metadataRequest(
+    //     '/api/v1/query_exemplars',
+    //     {
+    //       query: 'test',
+    //       start: dateTime().subtract(30, 'minutes').valueOf().toString(),
+    //       end: dateTime().valueOf().toString(),
+    //     },
+    //     {
+    //       // Avoid alerting the user if this test fails
+    //       showErrorAlert: false,
+    //     }
+    //   );
+    //   if (res.data.status === 'success') {
+    //     return true;
+    //   }
+    //   return false;
+    // } catch (err) {
+    //   return false;
+    // }
   }
 
   modifyQuery(query: PromQuery, action: QueryFixAction): PromQuery {

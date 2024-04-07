@@ -82,6 +82,9 @@ export default class PrometheusMetricFindQuery {
     const end = getPrometheusTime(this.range.to, true);
     const params = { ...(metric && { 'match[]': metric }), start: start.toString(), end: end.toString() };
 
+    // LOGZ.IO GRAFANA CHANGE :: DEV-26768 - Use new label resolving api for m3
+    const isLabelResolving = (window as any).logzio.configs.featureFlags.grafanaV2LabelResolving;
+
     if (!metric || this.datasource.hasLabelsMatchAPISupport()) {
       const url = `/api/v1/label/${label}/values`;
 
@@ -90,6 +93,22 @@ export default class PrometheusMetricFindQuery {
           return { text: value };
         });
       });
+      // LOGZ.IO GRAFANA CHANGE :: DEV-26768 - Use new label resolving api for m3
+    } else if (isLabelResolving) {
+      const params = new URLSearchParams({
+        'match[]': metric,
+        start: start.toString(),
+        end: end.toString(),
+      });
+      // return label values globally
+      const url = `/api/v1/label/${label}/values?${params.toString()}`;
+
+      return this.datasource.metadataRequest(url).then((result: any) => {
+        return _map(result.data.data, (value) => {
+          return { text: value };
+        });
+      });
+      // LOGZ.IO GRAFANA CHANGE :: end
     } else {
       const url = `/api/v1/series`;
 

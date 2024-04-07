@@ -5,13 +5,13 @@ import { api } from '../api';
 import { ChangePasswordFields, ProfileUpdateFields } from '../types';
 
 import {
-  initLoadOrgs,
-  initLoadSessions,
-  initLoadTeams,
-  orgsLoaded,
-  sessionsLoaded,
+//initLoadOrgs, // LOGZ.IO CHANGES
+//initLoadSessions, // LOGZ.IO CHANGES
+//initLoadTeams, // LOGZ.IO CHANGES
+//orgsLoaded, // LOGZ.IO CHANGES
+//sessionsLoaded, // LOGZ.IO CHANGES
   setUpdating,
-  teamsLoaded,
+//teamsLoaded, // LOGZ.IO CHANGES
   userLoaded,
   userSessionRevoked,
 } from './reducers';
@@ -27,9 +27,9 @@ export function changePassword(payload: ChangePasswordFields): ThunkResult<void>
 export function initUserProfilePage(): ThunkResult<void> {
   return async function (dispatch) {
     await dispatch(loadUser());
-    dispatch(loadTeams());
-    dispatch(loadOrgs());
-    dispatch(loadSessions());
+    // dispatch(loadTeams()); // LOGZ.IO CHANGES
+    // dispatch(loadOrgs()); // LOGZ.IO CHANGES
+    // dispatch(loadSessions()); // LOGZ.IO CHANGES
   };
 }
 
@@ -40,6 +40,7 @@ export function loadUser(): ThunkResult<void> {
   };
 }
 
+/* LOGZ.IO CHANGES :: start
 function loadTeams(): ThunkResult<void> {
   return async function (dispatch) {
     dispatch(initLoadTeams());
@@ -63,6 +64,7 @@ function loadSessions(): ThunkResult<void> {
     dispatch(sessionsLoaded({ sessions }));
   };
 }
+// LOGZ.IO CHANGES :: end */
 
 export function revokeUserSession(tokenId: number): ThunkResult<void> {
   return async function (dispatch) {
