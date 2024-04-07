@@ -2,8 +2,10 @@ import { Unsubscribable } from 'rxjs';
 
 import {
   SceneDataLayerSet,
+  SceneDataTransformer,
   SceneGridLayout,
   SceneObjectStateChangedEvent,
+  SceneQueryRunner,
   SceneRefreshPicker,
   SceneTimeRange,
   SceneVariableSet,
@@ -12,10 +14,13 @@ import {
 } from '@grafana/scenes';
 import { createWorker } from 'app/features/dashboard-scene/saving/createDetectChangesWorker';
 
+import { VizPanelManager } from '../panel-edit/VizPanelManager';
 import { DashboardAnnotationsDataLayer } from '../scene/DashboardAnnotationsDataLayer';
 import { DashboardControls } from '../scene/DashboardControls';
 import { DashboardGridItem } from '../scene/DashboardGridItem';
 import { DashboardScene, PERSISTED_PROPS } from '../scene/DashboardScene';
+import { VizPanelLinks } from '../scene/PanelLinks';
+import { PanelTimeRange } from '../scene/PanelTimeRange';
 import { transformSceneToSaveModel } from '../serialization/transformSceneToSaveModel';
 import { isSceneVariableInstance } from '../settings/variables/utils';
 
@@ -36,7 +41,29 @@ export class DashboardSceneChangeTracker {
       return;
     }
 
-    if (payload.changedObject instanceof VizPanel) {
+    // Any change in the panel should trigger a change detection
+    // The VizPanelManager includes configuration for the panel like repeat
+    // The PanelTimeRange includes the overrides configuration
+    if (
+      payload.changedObject instanceof VizPanel ||
+      payload.changedObject instanceof DashboardGridItem ||
+      payload.changedObject instanceof PanelTimeRange
+    ) {
+      return this.detectChanges();
+    }
+    // SceneQueryRunner includes the DS configuration
+    if (payload.changedObject instanceof SceneQueryRunner) {
+      if (!Object.prototype.hasOwnProperty.call(payload.partialUpdate, 'data')) {
+        return this.detectChanges();
+      }
+    }
+    // SceneDataTransformer includes the transformation configuration
+    if (payload.changedObject instanceof SceneDataTransformer) {
+      if (!Object.prototype.hasOwnProperty.call(payload.partialUpdate, 'data')) {
+        return this.detectChanges();
+      }
+    }
+    if (payload.changedObject instanceof VizPanelLinks) {
       return this.detectChanges();
     }
     if (payload.changedObject instanceof SceneRefreshPicker) {
@@ -89,6 +116,7 @@ export class DashboardSceneChangeTracker {
   }
 
   private detectChanges() {
+    console.log('detectChanges');
     this._changesWorker?.postMessage({
       changed: transformSceneToSaveModel(this._dashboard),
       initial: this._dashboard.getInitialSaveModel(),
