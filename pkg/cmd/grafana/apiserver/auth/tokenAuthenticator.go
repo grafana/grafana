@@ -83,7 +83,7 @@ func newAuthAPIAuthorizedRequest(method, path string, token string, body []byte)
 	return req, nil
 }
 
-func (auth *AccessTokenAuthenticator) signAccessToken(idTokenClaims *authn.Claims[CustomClaims]) (string, error) {
+func (auth *AccessTokenAuthenticator) signAccessToken(tokenValidationResult *authn.Claims[CustomClaims]) (string, error) {
 	body, err := json.Marshal(signAccessTokenRequest{})
 	if err != nil {
 		return "", err
@@ -98,9 +98,9 @@ func (auth *AccessTokenAuthenticator) signAccessToken(idTokenClaims *authn.Claim
 		return "", err
 	}
 
-	req.Header.Add("X-Org-ID", idTokenClaims.Rest.OrgId)
+	req.Header.Add("X-Org-ID", tokenValidationResult.Rest.OrgId)
 
-	audience := strings.Split(idTokenClaims.Claims.Audience[0], ":")
+	audience := strings.Split(tokenValidationResult.Claims.Audience[0], ":")
 	req.Header.Add("X-Realms", fmt.Sprintf(`[{"type":"%s","identifier":"%s"}]`, audience[0], audience[1]))
 
 	client := &http.Client{
@@ -124,17 +124,31 @@ func (auth *AccessTokenAuthenticator) signAccessToken(idTokenClaims *authn.Claim
 }
 
 func (auth *AccessTokenAuthenticator) AuthenticateRequest(req *http.Request) (*authenticator.Response, bool, error) {
-	result, err := auth.validator.Validate(req.Context(), req.Header.Get("X-Grafana-Id"))
+	var (
+		accessToken           string
+		tokenValidationResult *authn.Claims[CustomClaims]
+		err                   error
+	)
+
+	idToken := req.Header.Get(headerKeyGrafanaID)
+	if idToken == "" {
+		accessToken = req.Header.Get(headerKeyAccessToken)
+		if accessToken == "" {
+			return nil, false, nil
+		}
+		tokenValidationResult, err = auth.validator.Validate(req.Context(), accessToken)
+	} else {
+		tokenValidationResult, err = auth.validator.Validate(req.Context(), idToken)
+	}
 	if err != nil {
 		return nil, false, err
 	}
 
-	// TODO: this getting of access token header is likely wrong and only for supporting the GLSA
-	// based workflow in dev (subject to removal)
-	accessToken := req.Header.Get(headerKeyAccessToken)
+	// Sign an access token regardless of whether
+	accessToken = req.Header.Get(headerKeyAccessToken)
 	if len(auth.systemCAPToken) > 0 {
 		var err error
-		accessToken, err = auth.signAccessToken(result)
+		accessToken, err = auth.signAccessToken(tokenValidationResult)
 		if err != nil {
 			return nil, false, err
 		}
@@ -159,14 +173,14 @@ func (auth *AccessTokenAuthenticator) AuthenticateRequest(req *http.Request) (*a
 	}
 
 	return &authenticator.Response{
-		Audiences: authenticator.Audiences(result.Claims.Audience),
+		Audiences: authenticator.Audiences(tokenValidationResult.Claims.Audience),
 		User: &user.DefaultInfo{
-			Name:   result.Subject,
+			Name:   tokenValidationResult.Subject,
 			UID:    "",
 			Groups: []string{},
 			Extra: map[string][]string{
 				extraKeyAccessToken: {accessToken},
-				extraKeyGrafanaID:   {req.Header.Get("X-Grafana-Id")}, // this may exist if starting with a user
+				extraKeyGrafanaID:   {req.Header.Get(headerKeyGrafanaID)}, // this may exist if starting with a user
 			},
 		},
 	}, true, nil
