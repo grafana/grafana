@@ -17,11 +17,14 @@ import {
   Stack,
 } from '@grafana/ui';
 import { useAppNotification } from 'app/core/copy/appNotification';
+import MenuItemPauseRule from 'app/features/alerting/unified/components/MenuItemPauseRule';
+import { INSTANCES_DISPLAY_LIMIT } from 'app/features/alerting/unified/components/rules/RuleDetails';
+import { useRulesFilter } from 'app/features/alerting/unified/hooks/useFilteredRules';
 import { useDispatch } from 'app/types';
 import { CombinedRule, RuleIdentifier, RulesSource } from 'app/types/unified-alerting';
 
 import { AlertRuleAction, useAlertRuleAbility } from '../../hooks/useAbilities';
-import { deleteRuleAction } from '../../state/actions';
+import { deleteRuleAction, fetchAllPromAndRulerRulesAction } from '../../state/actions';
 import { getRulesSourceName } from '../../utils/datasource';
 import { createShareLink, createViewLink } from '../../utils/misc';
 import * as ruleId from '../../utils/rule-id';
@@ -49,6 +52,7 @@ export const RuleActionsButtons = ({ rule, rulesSource }: Props) => {
 
   const { namespace, group, rulerRule } = rule;
   const [ruleToDelete, setRuleToDelete] = useState<CombinedRule>();
+  const { hasActiveFilters } = useRulesFilter();
 
   const returnTo = location.pathname + location.search;
   const isViewMode = inViewMode(location.pathname);
@@ -122,6 +126,21 @@ export const RuleActionsButtons = ({ rule, rulesSource }: Props) => {
             href={editURL}
           />
         </Tooltip>
+      );
+
+      moreActions.push(
+        <MenuItemPauseRule
+          rule={rule}
+          onPauseChange={() => {
+            // Uses INSTANCES_DISPLAY_LIMIT + 1 here as exporting LIMIT_ALERTS from RuleList has the side effect
+            // of breaking some unrelated tests in Policy.test.tsx due to mocking approach
+            const limitAlerts = hasActiveFilters ? undefined : INSTANCES_DISPLAY_LIMIT + 1;
+            // Trigger a re-fetch of the rules table
+            // TODO: Migrate rules table functionality to RTK Query, so we instead rely
+            // on tag invalidation (or optimistic cache updates) for this
+            dispatch(fetchAllPromAndRulerRulesAction(false, { limitAlerts }));
+          }}
+        />
       );
     }
 

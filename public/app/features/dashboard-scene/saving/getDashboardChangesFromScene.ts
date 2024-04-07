@@ -9,14 +9,21 @@ import { getDashboardChanges as getDashboardSaveModelChanges } from './getDashbo
  * @param scene DashboardScene object
  * @param saveTimeRange if true, compare the time range
  * @param saveVariables if true, compare the variables
+ * @param saveRefresh if true, compare the refresh interval
  * @returns
  */
-export function getDashboardChangesFromScene(scene: DashboardScene, saveTimeRange?: boolean, saveVariables?: boolean) {
+export function getDashboardChangesFromScene(
+  scene: DashboardScene,
+  saveTimeRange?: boolean,
+  saveVariables?: boolean,
+  saveRefresh?: boolean
+) {
   const changeInfo = getDashboardSaveModelChanges(
     scene.getInitialSaveModel()!,
     transformSceneToSaveModel(scene),
     saveTimeRange,
-    saveVariables
+    saveVariables,
+    saveRefresh
   );
   const hasFolderChanges = scene.getInitialState()?.meta.folderUid !== scene.state.meta.folderUid;
 

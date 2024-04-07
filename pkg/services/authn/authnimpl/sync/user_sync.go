@@ -234,6 +234,12 @@ func (s *UserSync) updateUserAttributes(ctx context.Context, usr *user.User, id 
 	if id.Email != "" && id.Email != usr.Email {
 		updateCmd.Email = id.Email
 		usr.Email = id.Email
+
+		// If we get a new email for a user we need to mark it as non-verified.
+		verified := false
+		updateCmd.EmailVerified = &verified
+		usr.EmailVerified = verified
+
 		needsUpdate = true
 	}
 
@@ -391,6 +397,7 @@ func syncUserToIdentity(usr *user.User, id *authn.Identity) {
 	id.Login = usr.Login
 	id.Email = usr.Email
 	id.Name = usr.Name
+	id.EmailVerified = usr.EmailVerified
 	id.IsGrafanaAdmin = &usr.IsAdmin
 }
 
@@ -407,4 +414,5 @@ func syncSignedInUserToIdentity(usr *user.SignedInUser, identity *authn.Identity
 	identity.LastSeenAt = usr.LastSeenAt
 	identity.IsDisabled = usr.IsDisabled
 	identity.IsGrafanaAdmin = &usr.IsGrafanaAdmin
+	identity.EmailVerified = usr.EmailVerified
 }

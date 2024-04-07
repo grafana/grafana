@@ -8,7 +8,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apiserver/pkg/registry/rest"
-	"k8s.io/klog/v2"
+	"k8s.io/klog"
 )
 
 var (
@@ -64,6 +64,19 @@ type DualWriter struct {
 	Storage
 	legacy LegacyStorage
 }
+
+type DualWriterMode int
+
+const (
+	Mode1 DualWriterMode = iota
+	Mode2
+	Mode3
+	Mode4
+)
+
+var CurrentMode = Mode2
+
+// #TODO make CurrentMode customisable and specific to each entity
 
 // NewDualWriter returns a new DualWriter.
 func NewDualWriter(legacy LegacyStorage, storage Storage) *DualWriter {
@@ -189,4 +202,19 @@ func (u *updateWrapper) Preconditions() *metav1.Preconditions {
 // The only time an empty oldObj should be passed in is if a "create on update" is occurring (there is no oldObj).
 func (u *updateWrapper) UpdatedObject(ctx context.Context, oldObj runtime.Object) (newObj runtime.Object, err error) {
 	return u.updated, nil
+}
+
+func SelectDualWriter(mode DualWriterMode, legacy LegacyStorage, storage Storage) Storage {
+	switch mode {
+	case Mode1:
+		return NewDualWriterMode1(legacy, storage)
+	case Mode2:
+		return NewDualWriterMode2(legacy, storage)
+	case Mode3:
+		return NewDualWriterMode3(legacy, storage)
+	case Mode4:
+		return NewDualWriterMode4(legacy, storage)
+	default:
+		return NewDualWriterMode2(legacy, storage)
+	}
 }

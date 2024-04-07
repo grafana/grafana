@@ -46,7 +46,9 @@ export default function ExplorePage(props: GrafanaRouteComponentProps<{}, Explor
   useEffect(() => {
     //This is needed for breadcrumbs and topnav.
     //We should probably abstract this out at some point
-    chrome.update({ sectionNav: navModel });
+    chrome.update({
+      sectionNav: navModel,
+    });
   }, [chrome, navModel]);
 
   useKeyboardShortcuts();

@@ -1,17 +1,9 @@
-import {
-  SceneDataLayerSet,
-  SceneGridLayout,
-  SceneGridRow,
-  SceneQueryRunner,
-  SceneTimeRange,
-  VizPanel,
-  behaviors,
-} from '@grafana/scenes';
+import { SceneGridLayout, SceneGridRow, SceneQueryRunner, SceneTimeRange, VizPanel, behaviors } from '@grafana/scenes';
 import { DashboardCursorSync } from '@grafana/schema';
 
-import { AlertStatesDataLayer } from '../scene/AlertStatesDataLayer';
 import { DashboardAnnotationsDataLayer } from '../scene/DashboardAnnotationsDataLayer';
 import { DashboardControls } from '../scene/DashboardControls';
+import { DashboardDataLayerSet } from '../scene/DashboardDataLayerSet';
 import { DashboardGridItem } from '../scene/DashboardGridItem';
 import { DashboardScene, DashboardSceneState } from '../scene/DashboardScene';
 import { LibraryVizPanel } from '../scene/LibraryVizPanel';
@@ -75,8 +67,8 @@ describe('dashboardSceneGraph', () => {
     it('should return the scene data layers', () => {
       const dataLayers = dashboardSceneGraph.getDataLayers(scene);
 
-      expect(dataLayers).toBeInstanceOf(SceneDataLayerSet);
-      expect(dataLayers?.state.layers.length).toBe(2);
+      expect(dataLayers).toBeInstanceOf(DashboardDataLayerSet);
+      expect(dataLayers?.state.annotationLayers.length).toBe(1);
     });
 
     it('should throw if there are no scene data layers', () => {
@@ -84,7 +76,7 @@ describe('dashboardSceneGraph', () => {
         $data: undefined,
       });
 
-      expect(() => dashboardSceneGraph.getDataLayers(scene)).toThrow('SceneDataLayerSet not found');
+      expect(() => dashboardSceneGraph.getDataLayers(scene)).toThrow('DashboardDataLayerSet not found');
     });
   });
 
@@ -241,8 +233,8 @@ function buildTestScene(overrides?: Partial<DashboardSceneState>) {
         sync: DashboardCursorSync.Crosshair,
       }),
     ],
-    $data: new SceneDataLayerSet({
-      layers: [
+    $data: new DashboardDataLayerSet({
+      annotationLayers: [
         new DashboardAnnotationsDataLayer({
           key: `annotation`,
           query: {
@@ -254,10 +246,6 @@ function buildTestScene(overrides?: Partial<DashboardSceneState>) {
           name: 'a',
           isEnabled: true,
           isHidden: false,
-        }),
-        new AlertStatesDataLayer({
-          key: 'alert-states',
-          name: 'Alert States',
         }),
       ],
     }),
