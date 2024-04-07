@@ -7,7 +7,7 @@ import (
 )
 
 type CustomClaims struct {
-	// Nothing yet
+	OrgId string `json:"org_id"`
 }
 
 type TokenValidator struct {
