@@ -251,6 +251,17 @@ describe('DashboardScene', () => {
         expect(dashboardSceneGraph.getCursorSync(scene)!.state).toEqual(initialState);
       });
 
+      it('A change to a any VizPanel state should set isDirty true', () => {
+        const panel = sceneGraph.findObject(scene, (p) => p instanceof VizPanel) as VizPanel;
+        const prevTitle = panel.state.title;
+        panel.setState({ title: 'new title' });
+
+        expect(scene.state.isDirty).toBe(true);
+
+        scene.exitEditMode({ skipConfirm: true });
+        expect((sceneGraph.findObject(scene, (p) => p instanceof VizPanel) as VizPanel).state.title).toBe(prevTitle);
+      });
+
       it.each([
         { hasChanges: true, hasTimeChanges: false, hasVariableValueChanges: false },
         { hasChanges: true, hasTimeChanges: true, hasVariableValueChanges: false },

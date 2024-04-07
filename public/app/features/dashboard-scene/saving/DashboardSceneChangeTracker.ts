@@ -7,6 +7,7 @@ import {
   SceneRefreshPicker,
   SceneTimeRange,
   SceneVariableSet,
+  VizPanel,
   behaviors,
 } from '@grafana/scenes';
 import { createWorker } from 'app/features/dashboard-scene/saving/createDetectChangesWorker';
@@ -30,52 +31,60 @@ export class DashboardSceneChangeTracker {
   }
 
   private onStateChanged({ payload }: SceneObjectStateChangedEvent) {
+    // If there are no changes in the sate, the check is not needed
+    if (Object.keys(payload.partialUpdate).length === 0) {
+      return;
+    }
+
+    if (payload.changedObject instanceof VizPanel) {
+      return this.detectChanges();
+    }
     if (payload.changedObject instanceof SceneRefreshPicker) {
       if (
         Object.prototype.hasOwnProperty.call(payload.partialUpdate, 'intervals') ||
         Object.prototype.hasOwnProperty.call(payload.partialUpdate, 'refresh')
       ) {
-        this.detectChanges();
+        return this.detectChanges();
       }
     }
     if (payload.changedObject instanceof behaviors.CursorSync) {
-      this.detectChanges();
+      return this.detectChanges();
     }
     if (payload.changedObject instanceof SceneDataLayerSet) {
-      this.detectChanges();
+      return this.detectChanges();
     }
     if (payload.changedObject instanceof DashboardGridItem) {
-      this.detectChanges();
+      return this.detectChanges();
     }
     if (payload.changedObject instanceof SceneGridLayout) {
-      this.detectChanges();
+      return this.detectChanges();
     }
     if (payload.changedObject instanceof DashboardScene) {
       if (Object.keys(payload.partialUpdate).some((key) => PERSISTED_PROPS.includes(key))) {
-        this.detectChanges();
+        return this.detectChanges();
       }
     }
     if (payload.changedObject instanceof SceneTimeRange) {
-      this.detectChanges();
+      return this.detectChanges();
     }
     if (payload.changedObject instanceof DashboardControls) {
       if (Object.prototype.hasOwnProperty.call(payload.partialUpdate, 'hideTimeControls')) {
-        this.detectChanges();
+        return this.detectChanges();
       }
     }
     if (payload.changedObject instanceof SceneVariableSet) {
-      this.detectChanges();
+      return this.detectChanges();
     }
     if (payload.changedObject instanceof DashboardAnnotationsDataLayer) {
       if (!Object.prototype.hasOwnProperty.call(payload.partialUpdate, 'data')) {
-        this.detectChanges();
+        return this.detectChanges();
       }
     }
     if (payload.changedObject instanceof behaviors.LiveNowTimer) {
-      this.detectChanges();
+      return this.detectChanges();
     }
     if (isSceneVariableInstance(payload.changedObject)) {
-      this.detectChanges();
+      return this.detectChanges();
     }
   }
 
