@@ -144,15 +144,12 @@ func (auth *AccessTokenAuthenticator) AuthenticateRequest(req *http.Request) (*a
 		return nil, false, err
 	}
 
-	// Sign an access token regardless of whether
-	accessToken = req.Header.Get(headerKeyAccessToken)
 	if len(auth.systemCAPToken) > 0 {
 		var err error
 		accessToken, err = auth.signAccessToken(tokenValidationResult)
 		if err != nil {
 			return nil, false, err
 		}
-
 	}
 
 	// While the authn token system is in development, we can temporarily use
