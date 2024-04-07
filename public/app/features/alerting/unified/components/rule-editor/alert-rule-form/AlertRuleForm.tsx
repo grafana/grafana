@@ -230,7 +230,7 @@ export const AlertRuleForm = ({ existing, prefill }: Props) => {
               {/* Step 1 */}
               <AlertRuleNameInput />
               {/* Step 2 */}
-              <QueryAndExpressionsStep editingExistingRule={!!existing} onDataChange={checkAlertCondition} />
+              <QueryAndExpressionsStep editingExistingRule={true  /* // LOGZ.IO CHANGES */} onDataChange={checkAlertCondition} />
               {/* Step 3-4-5 */}
               {showDataSourceDependantStep && (
                 <>

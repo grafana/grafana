@@ -14,7 +14,7 @@ export enum StateHistoryImplementation {
   Annotations = 'annotations',
 }
 
-function useStateHistoryModal() {
+function useStateHistoryModal(oldAlertId: string) { // LOGZ.IO GRAFANA CHANGE :: DEV-31760 - Retrieve annotations for migrated unified alerts
   const [showModal, setShowModal] = useState<boolean>(false);
   const [rule, setRule] = useState<RulerGrafanaRuleDTO | undefined>();
 
@@ -61,12 +61,13 @@ function useStateHistoryModal() {
         <Suspense fallback={'Loading...'}>
           {implementation === StateHistoryImplementation.Loki && <LokiStateHistory ruleUID={rule.grafana_alert.uid} />}
           {implementation === StateHistoryImplementation.Annotations && (
-            <AnnotationsStateHistory alertId={rule.grafana_alert.id ?? ''} />
+            <AnnotationsStateHistory alertId={rule.grafana_alert.id ?? ''} oldAlertId={oldAlertId} /> /* LOGZ.IO GRAFANA CHANGE :: DEV-31760 - Retrieve annotations for migrated unified alerts */
+
           )}
         </Suspense>
       </Modal>
     );
-  }, [rule, showModal, dismissModal, implementation, styles]);
+  }, [rule, showModal, dismissModal, implementation, styles, oldAlertId]);// LOGZ.IO GRAFANA CHANGE :: DEV-31760 - Retrieve annotations for migrated unified alerts
 
   return {
     StateHistoryModal,

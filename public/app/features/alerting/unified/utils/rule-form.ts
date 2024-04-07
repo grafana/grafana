@@ -74,7 +74,7 @@ export const getDefaultFormValues = (): RuleFormValues => {
     recordingRulesQueries: [],
     condition: '',
     noDataState: GrafanaAlertStateDecision.NoData,
-    execErrState: GrafanaAlertStateDecision.Error,
+    execErrState: GrafanaAlertStateDecision.OK, // LOGZ.IO GRAFANA CHANGE :: make error query error state OK by default
     evaluateFor: '5m',
     evaluateEvery: MINUTE,
     manualRouting: getDefautManualRouting(), // we default to true if the feature toggle is enabled and the user hasn't set local storage to false

@@ -55,7 +55,7 @@ export const emptyRoute: FormAmRoute = {
   groupBy: defaultGroupBy,
   object_matchers: [],
   routes: [],
-  continue: false,
+  continue: true, // LOGZ.IO GRAFANA CHANGE :: DEV-38666
   receiver: '',
   overrideTimings: false,
   groupWaitValue: '',

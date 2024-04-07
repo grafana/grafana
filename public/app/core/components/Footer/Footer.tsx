@@ -66,14 +66,16 @@ export function getVersionLinks(hideEdition?: boolean): FooterLink[] {
     return links;
   }
 
-  const { hasReleaseNotes } = getVersionMeta(buildInfo.version);
+  // LOGZ.IO GRAFANA CHANGE :: DEV-23468 Hide grafana commit id
+  // const { hasReleaseNotes } = getVersionMeta(buildInfo.version);
 
   links.push({
     target: '_blank',
     id: 'version',
-    text: `v${buildInfo.version} (${buildInfo.commit})`,
-    url: hasReleaseNotes ? `https://github.com/grafana/grafana/blob/main/CHANGELOG.md` : undefined,
+    text: `v${buildInfo.version}`,
+    url: undefined,
   });
+  // LOGZ.IO GRAFANA CHANGE :: end
 
   if (buildInfo.hasUpdate) {
     links.push({
@@ -99,7 +101,8 @@ export interface Props {
 }
 
 export const Footer = React.memo(({ customLinks, hideEdition }: Props) => {
-  const links = (customLinks || getFooterLinks()).concat(getVersionLinks(hideEdition));
+  // LOGZ.IO GRAFANA CHANGE :: DEV-27175 Remove grafana footer links in configuration page
+  const links = getVersionLinks();
 
   return (
     <footer className="footer">

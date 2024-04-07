@@ -1,15 +1,34 @@
 import { getBackendSrv } from '@grafana/runtime';
 import { StateHistoryItem } from 'app/types/unified-alerting';
 
-export function fetchAnnotations(alertId: string): Promise<StateHistoryItem[]> {
-  return getBackendSrv()
+// LOGZ.IO GRAFANA CHANGE :: DEV-31760 - Retrieve annotations for migrated unified alerts
+export function fetchAnnotations(alertId: string, oldAlertId = ''): Promise<StateHistoryItem[]> {
+  const maxAnnotationToReturn = 100
+
+  const fetchUalertAnnotationsPromise = getBackendSrv()
     .get('/api/annotations', {
       alertId,
-    })
-    .then((result) => {
+      'type': 'unified_alert_rule'
+    });
+
+  if (oldAlertId === '' || alertId === oldAlertId) {
+    return fetchUalertAnnotationsPromise.then((result) => {
       return result?.sort(sortStateHistory);
     });
+  } else {
+    const fetchOldAlertAnnotationsPromise = getBackendSrv()
+      .get('/api/annotations', {
+        'alertId': oldAlertId,
+        'type': 'alert'
+      })
+
+    return Promise.all([fetchUalertAnnotationsPromise, fetchOldAlertAnnotationsPromise])
+      .then((results) => {
+        return results?.flatMap((item) => item).sort(sortStateHistory).slice(0, maxAnnotationToReturn);
+      })
+  }
 }
+// LOGZ.IO GRAFANA CHANGE :: end
 
 export function sortStateHistory(a: StateHistoryItem, b: StateHistoryItem): number {
   const compareDesc = (a: number, b: number): number => {

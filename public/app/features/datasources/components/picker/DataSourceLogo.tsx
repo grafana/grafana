@@ -35,7 +35,7 @@ function getStyles(theme: GrafanaTheme2, builtIn = false) {
   return {
     pickerDSLogo: css`
       height: 20px;
-      width: 20px;
+      width: 45px; /* LOGZ.IO GRAFANA CHANGE :: DEV-19985: add datasource logos */
       filter: invert(${builtIn && theme.isLight ? 1 : 0});
     `,
   };

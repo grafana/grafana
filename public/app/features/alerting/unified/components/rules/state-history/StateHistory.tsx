@@ -27,15 +27,15 @@ type StateHistoryRow = DynamicTableItemProps<StateHistoryRowItem>;
 
 interface Props {
   alertId: string;
+  oldAlertId: string;// LOGZ.IO GRAFANA CHANGE :: DEV-31760 - Retrieve annotations for migrated unified alerts
 }
-
-const StateHistory = ({ alertId }: Props) => {
+const StateHistory = ({ alertId, oldAlertId }: Props) => { // LOGZ.IO GRAFANA CHANGE :: DEV-31760 - Retrieve annotations for migrated unified alerts
   const [textFilter, setTextFilter] = useState<string>('');
   const handleTextFilter = useCallback((event: FormEvent<HTMLInputElement>) => {
     setTextFilter(event.currentTarget.value);
   }, []);
 
-  const { loading, error, result = [] } = useManagedAlertStateHistory(alertId);
+  const { loading, error, result = [] } = useManagedAlertStateHistory(alertId, oldAlertId);// LOGZ.IO GRAFANA CHANGE :: DEV-31760 - Retrieve annotations for migrated unified alerts
 
   const styles = useStyles2(getStyles);
 

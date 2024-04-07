@@ -299,6 +299,7 @@ export function GrafanaEvaluationBehavior({
               render={({ field: { onChange, ref, ...field } }) => (
                 <GrafanaAlertStatePicker
                   {...field}
+                  // LOGZ.IO GRAFANA CHANGE :: disable edit of error state handling
                   inputId="exec-err-state-input"
                   width={42}
                   includeNoData={false}

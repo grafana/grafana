@@ -36,6 +36,7 @@ import { evaluateEveryValidationOptions } from '../rules/EditRuleGroupModal';
 
 import { containsSlashes, Folder, RuleFolderPicker } from './RuleFolderPicker';
 import { checkForPathSeparator } from './util';
+import { DashboardSearchHit } from 'app/features/search/types';
 
 export const MAX_GROUP_RESULTS = 1000;
 
@@ -86,6 +87,10 @@ const findGroupMatchingLabel = (group: SelectableValue<string>, query: string) =
   return group.label?.toLowerCase().includes(query.toLowerCase());
 };
 
+//LOGZIO GRAFANA CHANGE :: DEV-33636 - Blacklist folder selection options
+const blackListedFolderUids = ['logzio-dashboards-folder'];
+//LOGZIO GRAFANA CHANGE :: end
+
 export function FolderAndGroup({
   groupfoldersForGrafana,
   enableProvisionedGroups,
@@ -123,6 +128,10 @@ export function FolderAndGroup({
     setValue('group', groupName);
     setValue('evaluateEvery', evaluationInterval);
     setIsCreatingEvaluationGroup(false);
+  };
+
+  const folderFilter = (hits: DashboardSearchHit[]) => {
+    return hits.filter((hit) => !blackListedFolderUids.includes(hit.uid || ''));
   };
 
   const resetGroup = useCallback(() => {
@@ -172,6 +181,7 @@ export function FolderAndGroup({
                             field.onChange({ title, uid });
                             resetGroup();
                           }}
+                          filter={folderFilter} // LOGZ.IO GRAFANA CHANGE :: DEV-31760 - migrated unified alerts , not sure
                         />
                       </div>
                     )}
@@ -408,13 +418,14 @@ function EvaluationGroupCreationModal({
             label={
               <Label
                 htmlFor={evaluateEveryId}
-                description="How often is the rule evaluated. Applies to every rule within the group."
+                // description="How often is the rule evaluated. Applies to every rule within the group." // LOGZIO GRAFANA CHANGE :: 
               >
                 Evaluation interval
               </Label>
             }
           >
             <Input
+              readOnly={true /* // LOGZ.IO Changes*/}
               className={styles.formInput}
               id={evaluateEveryId}
               placeholder="e.g. 5m"

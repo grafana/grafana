@@ -47,6 +47,22 @@ export function VariableEditorList({
 
   return (
     <div>
+
+      {/* LOGZ.IO GRAFANA CHANGE :: DEV-20683 Add link to logz docs */}
+      <p>
+        Add variables to make your dashboard more interactive and add dropdown menus.
+        <a
+          className="external-link"
+          href="https://docs.logz.io/user-guide/infrastructure-monitoring/configure-grafana-drilldown-links.html"
+          target="_blank"
+          rel="noreferrer"
+          style={{ paddingLeft: '4px' }}
+        >
+          Learn more
+        </a>
+      </p>
+      {/* LOGZ.IO GRAFANA CHANGE :: end */}
+
       <div>
         {variables.length === 0 && <EmptyVariablesList onAdd={onAdd} />}
 

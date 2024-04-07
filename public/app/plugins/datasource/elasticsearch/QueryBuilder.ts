@@ -14,6 +14,7 @@ import {
   highlightTags,
   defaultGeoHashPrecisionString,
 } from './queryDef';
+import { populateLogzioQuery } from './query_populator.logzio'; // LOGZ.IO GRAFANA CHANGE :: DEV-18135 populate query with logzio extensions
 import {
   ElasticsearchQuery,
   TermsQuery,
@@ -372,7 +373,7 @@ export class ElasticQueryBuilder {
       nestedAggs.aggs[metric.id] = aggField;
     }
 
-    return query;
+    return populateLogzioQuery(query); // LOGZ.IO GRAFANA CHANGE :: DEV-18135 populate query with logzio extensions
   }
 
   private buildScript(script: string) {

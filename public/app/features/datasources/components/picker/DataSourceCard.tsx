@@ -67,8 +67,9 @@ function getStyles(theme: GrafanaTheme2, builtIn = false) {
       justify-content: space-between;
     `,
     logo: css`
-      width: 32px;
-      height: 32px;
+      width: 45px;
+      height: 32px; /* LOGZ.IO GRAFANA CHANGE :: DEV-19985: add datasource logos */
+      padding-inline-end: 0; /* LOGZ.IO GRAFANA CHANGE :: DEV-19985: add datasource logos */
       padding: ${theme.spacing(0, 1)};
       display: flex;
       align-items: center;

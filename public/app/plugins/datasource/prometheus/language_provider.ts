@@ -15,7 +15,7 @@ import { Label } from './components/monaco-query-field/monaco-completion-provide
 import { PrometheusDatasource } from './datasource';
 import {
   extractLabelMatchers,
-  fixSummariesMetadata,
+  // fixSummariesMetadata, // LOGZ.IO GRAFANA CHANGE :: DEV-24838: Remove fixSummariesMetadata
   processHistogramMetrics,
   processLabels,
   toPromLikeQuery,
@@ -61,7 +61,7 @@ export function getMetadataType(metric: string, metadata: PromMetricsMetadata): 
 const PREFIX_DELIMITER_REGEX =
   /(="|!="|=~"|!~"|\{|\[|\(|\+|-|\/|\*|%|\^|\band\b|\bor\b|\bunless\b|==|>=|!=|<=|>|<|=|~|,)/;
 
-const secondsInDay = 86400;
+// const secondsInDay = 86400;  // LOGZ.IO GRAFANA CHANGE :: DEV-24838: Remove fixSummariesMetadata
 export default class PromQlLanguageProvider extends LanguageProvider {
   histogramMetrics: string[];
   timeRange: TimeRange;
@@ -124,19 +124,21 @@ export default class PromQlLanguageProvider extends LanguageProvider {
     return Promise.all([this.loadMetricsMetadata(), this.fetchLabels()]);
   };
 
+  // LOGZ.IO GRAFANA CHANGE :: DEV-24838: Remove fixSummariesMetadata
   async loadMetricsMetadata() {
-    const headers = buildCacheHeaders(this.datasource.getDaysToCacheMetadata() * secondsInDay);
-    this.metricsMetadata = fixSummariesMetadata(
-      await this.request(
-        '/api/v1/metadata',
-        {},
-        {},
-        {
-          showErrorAlert: false,
-          ...headers,
-        }
-      )
-    );
+    this.metricsMetadata = await Promise.resolve({});
+    // const headers = buildCacheHeaders(this.datasource.getDaysToCacheMetadata() * secondsInDay);
+    // this.metricsMetadata = fixSummariesMetadata(
+    //   await this.request(
+    //     '/api/v1/metadata',
+    //     {},
+    //     {},
+    //     {
+    //       showErrorAlert: false,
+    //       ...headers,
+    //     }
+    //   )
+    // );
   }
 
   getLabelKeys(): string[] {

@@ -496,10 +496,12 @@ export const fetchGrafanaNotifiersAction = createAsyncThunk(
   (): Promise<NotifierDTO[]> => withSerializedError(fetchNotifiers())
 );
 
-export const fetchGrafanaAnnotationsAction = createAsyncThunk(
+// LOGZ.IO GRAFANA CHANGE :: DEV-31760 - Retrieve annotation for alert pre migration and new unified alert
+export const fetchGrafanaAnnotationsAction = createAsyncThunk<StateHistoryItem[], {alertId: string, oldAlertId?: string}, {}>(
   'unifiedalerting/fetchGrafanaAnnotations',
-  (alertId: string): Promise<StateHistoryItem[]> => withSerializedError(fetchAnnotations(alertId))
+  ({alertId, oldAlertId}): Promise<StateHistoryItem[]> => withSerializedError(fetchAnnotations(alertId, oldAlertId))
 );
+// LOGZ.IO GRAFANA CHANGE :: end
 
 interface UpdateAlertManagerConfigActionOptions {
   alertManagerSourceName: string;

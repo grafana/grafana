@@ -1,4 +1,4 @@
-import { LinkModel } from '@grafana/data';
+import { LinkModel, locationUtil } from '@grafana/data';
 
 import { MenuItemProps } from '../components/Menu/MenuItem';
 
@@ -11,7 +11,7 @@ export const linkModelToContextMenuItems: (links: () => LinkModel[]) => MenuItem
       label: link.title,
       ariaLabel: link.title,
       // TODO: rename to href
-      url: link.href,
+      url: locationUtil.stripBaseFromUrl(link.href), // LOGZ.IO GRAFANA CHANGE :: DEV-23541 Use the url without the grafana-app part
       target: link.target,
       icon: `${link.target === '_blank' ? 'external-link-alt' : 'link'}`,
       onClick: link.onClick,

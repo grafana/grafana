@@ -63,7 +63,6 @@ interface Props {
   editingExistingRule: boolean;
   onDataChange: (error: string) => void;
 }
-
 export const QueryAndExpressionsStep = ({ editingExistingRule, onDataChange }: Props) => {
   const {
     setValue,

@@ -50,7 +50,10 @@ interface Props {
 export const RuleDetailsActionButtons = ({ rule, rulesSource, isViewMode }: Props) => {
   const style = useStyles2(getStyles);
   const { namespace, group, rulerRule } = rule;
-  const { StateHistoryModal, showStateHistoryModal } = useStateHistoryModal();
+  // LOGZ.IO GRAFANA CHANGE :: DEV-31760 - Retrieve annotations for migrated unified alerts
+  const oldAlertId = rule.annotations[Annotation.alertId] ?? '';
+  const { StateHistoryModal, showStateHistoryModal } = useStateHistoryModal(alertId, oldAlertId);
+  // LOGZ.IO GRAFANA CHANGE :: end
   const dispatch = useDispatch();
   const location = useLocation();
   const notifyApp = useAppNotification();
