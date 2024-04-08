@@ -285,6 +285,22 @@ describe('DashboardScene', () => {
         expect(restoredDashboardGridItem.state.variableName).toBe(prevValue);
       });
 
+      it('A change to any LibraryVizPanel name should set isDirty true', () => {
+        const libraryVizPanel = sceneGraph.findObject(scene, (p) => p instanceof LibraryVizPanel) as LibraryVizPanel;
+        const prevValue = libraryVizPanel.state.name;
+
+        libraryVizPanel.setState({ name: 'new name' });
+
+        expect(scene.state.isDirty).toBe(true);
+
+        scene.exitEditMode({ skipConfirm: true });
+        const restoredLibraryVizPanel = sceneGraph.findObject(
+          scene,
+          (p) => p instanceof LibraryVizPanel
+        ) as LibraryVizPanel;
+        expect(restoredLibraryVizPanel.state.name).toBe(prevValue);
+      });
+
       it('A change to any PanelTimeRange state should set isDirty true', () => {
         const panelTimeRange = sceneGraph.findObject(scene, (p) => p instanceof PanelTimeRange) as PanelTimeRange;
         const prevValue = panelTimeRange.state.from;
