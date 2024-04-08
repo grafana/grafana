@@ -116,7 +116,6 @@ export class DashboardSceneChangeTracker {
   }
 
   private detectChanges() {
-    console.log('detectChanges');
     this._changesWorker?.postMessage({
       changed: transformSceneToSaveModel(this._dashboard),
       initial: this._dashboard.getInitialSaveModel(),
