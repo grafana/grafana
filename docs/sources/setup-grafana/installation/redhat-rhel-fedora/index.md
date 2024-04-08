@@ -21,11 +21,11 @@ If you install via RPM or the `.tar.gz` file, then you must manually update Graf
 
 If you install from the RPM repository, then Grafana is automatically updated every time you update your applications.
 
-| Grafana Version           | Package            | Repository                |
-| ------------------------- | ------------------ | ------------------------- |
-| Grafana Enterprise        | grafana-enterprise | `https://rpm.grafana.com` |
+| Grafana Version           | Package            | Repository                     |
+| ------------------------- | ------------------ | ------------------------------ |
+| Grafana Enterprise        | grafana-enterprise | `https://rpm.grafana.com`      |
 | Grafana Enterprise (Beta) | grafana-enterprise | `https://rpm-beta.grafana.com` |
-| Grafana OSS               | grafana            | `https://rpm.grafana.com` |
+| Grafana OSS               | grafana            | `https://rpm.grafana.com`      |
 | Grafana OSS (Beta)        | grafana            | `https://rpm-beta.grafana.com` |
 
 {{% admonition type="note" %}}
@@ -37,7 +37,6 @@ To install Grafana from the RPM repository, complete the following steps:
 {{% admonition type="note" %}}
 If you wish to install beta versions of Grafana, substitute the repository URL for the beta URL listed above.
 {{% /admonition %}}
-
 
 1. Import the GPG key:
 
