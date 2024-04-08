@@ -104,7 +104,6 @@ export function SaveDashboardForm({ dashboard, drawer, changeInfo }: Props) {
     <Stack gap={0} direction="column">
       <SaveDashboardFormCommonOptions drawer={drawer} changeInfo={changeInfo} />
       <Field label="Message">
-        {/* config.featureToggles.dashgpt * TOOD GenAIDashboardChangesButton */}
         <TextArea
           aria-label="message"
           value={options.message ?? ''}

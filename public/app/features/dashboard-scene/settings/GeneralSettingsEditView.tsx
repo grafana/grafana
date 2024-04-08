@@ -101,7 +101,6 @@ export class GeneralSettingsEditView
       ...this._dashboard.state.meta,
       folderUid: newUID || this._dashboard.state.meta.folderUid,
       folderTitle: newTitle || this._dashboard.state.meta.folderTitle,
-      hasUnsavedFolderChange: true,
     };
 
     this._dashboard.setState({ meta: newMeta });
