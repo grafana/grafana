@@ -60,7 +60,15 @@ do
   THEME_TOKEN_USAGE+="\"grafana.ci-code.themeUsage.${name}\": \"${value}\","
 done <<< "$(yarn themes:usage | awk '$4 == "@grafana/theme-token-usage" {print $3}' | awk '{!seen[$0]++}END{for (i in seen) print i, seen[i]}')"
 
+THEME_TOKEN_USAGE_PER_FILE=""
+while read -r name value
+do
+  THEME_TOKEN_USAGE_PER_FILE+=$'\n  '
+  THEME_TOKEN_USAGE_PER_FILE+="\"grafana.ci-code.themeUsagePerFile.${name}\": \"${value}\","
+done <<< "$(yarn themes:usage | awk -F: '{print $1, $2}')"
+
 echo "Metrics: {
+  $THEME_TOKEN_USAGE_PER_FILE
   $THEME_TOKEN_USAGE
   $BETTERER_STATS
   $I18N_STATS
