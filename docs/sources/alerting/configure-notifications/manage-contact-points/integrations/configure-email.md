@@ -22,26 +22,27 @@ Use the Grafana Alerting - email integration to send email notifications when yo
 
 ## Before you begin
 
-For Grafana OSS, you enable email notifications by first configuring [SMTP settings][smtp-settings] in the Grafana configuration settings.
 {{<admonition type="note">}}
 This section is for Grafana OSS only. For Grafana Cloud, SMTP configuration is not required.
 {{</admonition>}}
 
+For Grafana OSS, you enable email notifications by first configuring [SMTP settings][smtp-settings] in the Grafana configuration settings.
+
 ### SMTP configuration
 
-1. Access the Configuration File.
+1. Access the configuration file.
 
    Locate the Grafana configuration file. This file is typically named `grafana.ini` or `custom.ini` and is located in the `conf` directory within the Grafana installation directory.
 
-1. Open the Configuration File:
+1. Open the configuration file:
 
    Open the configuration file using a text editor.
 
-1. Locate SMTP Settings Section.
+1. Locate SMTP settings section.
 
    Search for the [SMTP settings section][smtp-settings] in the configuration file. It starts with `[smtp]`.
 
-1. Configure SMTP Settings.
+1. Configure SMTP settings.
 
    Within the `[smtp]` settings section, specify the following parameters:
 
@@ -53,7 +54,7 @@ This section is for Grafana OSS only. For Grafana Cloud, SMTP configuration is n
    - `from_name`: The name associated with the from_address.
    - `skip_verify = true`: Skip SSL/TLS certificate verification (useful for testing, but not recommended for production).
 
-1. Save and Close the Configuration File.
+1. Save and close the configuration file.
 
    After configuring the SMTP settings, save the changes to the configuration file and close the text editor.
 
@@ -61,7 +62,7 @@ This section is for Grafana OSS only. For Grafana Cloud, SMTP configuration is n
 
    Restart the Grafana service to apply the changes made to the configuration file. The method for restarting Grafana depends on your operating system and how Grafana was installed (e.g., `systemctl restart grafana-server` for systems using systemd).
 
-1. Test Email Notifications.
+1. Test email notifications.
 
    After restarting Grafana, test the email notification functionality by creating an email contact point.
 
@@ -72,10 +73,10 @@ To set up email integration, complete the following steps.
 1. Navigate to **Alerts & IRM** -> **Alerting** -> **Contact points**.
 1. Click **+ Add contact point**.
 1. Enter a contact point name.
-1. From the Integration list, select Email.
+1. From the Integration list, select **Email**.
 1. Enter the email addresses you want to send notifications to.
 1. Click **Test** to check that your integration works.
-1. Click Save contact point.
+1. Click **Save contact point**.
 
 ## Next steps
 
