@@ -122,7 +122,11 @@ func (db *SQLite3) TruncateDBTables(engine *xorm.Engine) error {
 		}
 	}
 	if _, err := sess.Exec("UPDATE sqlite_sequence SET seq = 0 WHERE name != 'dashboard_acl';"); err != nil {
-		return fmt.Errorf("failed to cleanup sqlite_sequence: %w", err)
+		// if we have not created any autoincrement columns in the database this will fail, the error is expected and we can ignore it
+		// we can't discriminate based on code because sqlite returns a generic error code
+		if err.Error() != "no such table: sqlite_sequence" {
+			return fmt.Errorf("failed to cleanup sqlite_sequence: %w", err)
+		}
 	}
 	return nil
 }

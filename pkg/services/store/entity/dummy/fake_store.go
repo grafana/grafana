@@ -40,7 +40,7 @@ func (i fakeEntityStore) List(ctx context.Context, r *entity.EntityListRequest) 
 	return nil, fmt.Errorf("unimplemented")
 }
 
-func (i fakeEntityStore) Watch(*entity.EntityWatchRequest, entity.EntityStore_WatchServer) error {
+func (i fakeEntityStore) Watch(entity.EntityStore_WatchServer) error {
 	return fmt.Errorf("unimplemented")
 }
 

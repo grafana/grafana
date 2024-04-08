@@ -168,6 +168,10 @@ providers:
 		Login:          "admin",
 	})
 
+	// give provisioner some time since we don't have a way to know when provisioning is complete
+	// TODO https://github.com/grafana/grafana/issues/85617
+	time.Sleep(1 * time.Second)
+
 	type errorResponseBody struct {
 		Message string `json:"message"`
 	}
