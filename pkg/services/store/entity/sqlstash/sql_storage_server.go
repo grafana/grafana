@@ -14,7 +14,6 @@ import (
 
 	"github.com/bwmarrin/snowflake"
 	"github.com/google/uuid"
-
 	folder "github.com/grafana/grafana/pkg/apis/folder/v0alpha1"
 	"github.com/grafana/grafana/pkg/infra/appcontext"
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -23,6 +22,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/store"
 	"github.com/grafana/grafana/pkg/services/store/entity"
 	"github.com/grafana/grafana/pkg/services/store/entity/db"
+	"github.com/prometheus/client_golang/prometheus"
 )
 
 const entityTable = "entity"
@@ -36,6 +36,10 @@ func ProvideSQLEntityServer(db db.EntityDBInterface /*, cfg *setting.Cfg */) (en
 		db:  db,
 		log: log.New("sql-entity-server"),
 		ctx: context.Background(),
+	}
+
+	if err := prometheus.Register(NewStorageMetrics()); err != nil {
+		entityServer.log.Warn("error registering storage server metrics", "error", err)
 	}
 
 	return entityServer, nil
@@ -514,6 +518,7 @@ func (s *sqlEntityServer) Update(ctx context.Context, r *entity.UpdateEntityRequ
 
 		// Optimistic locking
 		if r.PreviousVersion > 0 && r.PreviousVersion != current.ResourceVersion {
+			StorageServerMetrics.OptimisticLockFailed.WithLabelValues("update").Inc()
 			return fmt.Errorf("optimistic lock failed")
 		}
 
@@ -759,6 +764,7 @@ func (s *sqlEntityServer) Delete(ctx context.Context, r *entity.DeleteEntityRequ
 
 		if r.PreviousVersion > 0 && r.PreviousVersion != rsp.Entity.ResourceVersion {
 			rsp.Status = entity.DeleteEntityResponse_ERROR
+			StorageServerMetrics.OptimisticLockFailed.WithLabelValues("delete").Inc()
 			return fmt.Errorf("optimistic lock failed")
 		}
 
