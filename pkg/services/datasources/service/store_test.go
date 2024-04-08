@@ -489,5 +489,41 @@ func TestIntegrationDataAccess(t *testing.T) {
 			require.NoError(t, err)
 			require.Equal(t, 1, len(dataSources))
 		})
+
+		t.Run("Get prunable data sources", func(t *testing.T) {
+			db := db.InitTestDB(t)
+			ss := SqlStore{db: db}
+
+			_, errPrunable := ss.AddDataSource(context.Background(), &datasources.AddDataSourceCommand{
+				OrgID:      10,
+				Name:       "ElasticsearchPrunable",
+				Type:       "other",
+				Access:     datasources.DS_ACCESS_DIRECT,
+				URL:        "http://test",
+				Database:   "site",
+				ReadOnly:   true,
+				IsPrunable: true,
+			})
+			require.NoError(t, errPrunable)
+
+			_, errNotPrunable := ss.AddDataSource(context.Background(), &datasources.AddDataSourceCommand{
+				OrgID:    10,
+				Name:     "ElasticsearchNotPrunable",
+				Type:     "other",
+				Access:   datasources.DS_ACCESS_DIRECT,
+				URL:      "http://test",
+				Database: "site",
+				ReadOnly: true,
+			})
+			require.NoError(t, errNotPrunable)
+
+			dataSources, err := ss.GetPrunableProvisionedDataSources(context.Background())
+
+			require.NoError(t, err)
+			require.Equal(t, 1, len(dataSources))
+
+			dataSource := dataSources[0]
+			require.Equal(t, "ElasticsearchPrunable", dataSource.Name)
+		})
 	})
 }

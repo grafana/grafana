@@ -15,7 +15,7 @@ import { Button } from '../../Button/Button';
 import { InlineField } from '../../Forms/InlineField';
 import { Icon } from '../../Icon/Icon';
 import { Input } from '../../Input/Input';
-import { HorizontalGroup } from '../../Layout/Layout';
+import { Stack } from '../../Layout/Stack/Stack';
 import { getModalStyles } from '../../Modal/getModalStyles';
 import { Portal } from '../../Portal/Portal';
 import { TimeOfDayPicker, POPUP_CLASS_NAME } from '../TimeOfDayPicker';
@@ -329,14 +329,14 @@ const DateTimeCalendar = React.forwardRef<HTMLDivElement, DateTimeCalendarProps>
             disabledSeconds={disabledSeconds}
           />
         </div>
-        <HorizontalGroup>
+        <Stack>
           <Button type="button" onClick={() => onChange(dateTime(internalDate))}>
             Apply
           </Button>
           <Button variant="secondary" type="button" onClick={onClose}>
             Cancel
           </Button>
-        </HorizontalGroup>
+        </Stack>
       </div>
     );
   }

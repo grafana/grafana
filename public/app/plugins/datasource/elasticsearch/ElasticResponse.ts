@@ -186,7 +186,7 @@ export class ElasticResponse {
     }
 
     // helper func to add values to value array
-    const addMetricValue = (values: any[], metricName: string, value: any) => {
+    const addMetricValue = (values: unknown[], metricName: string, value: unknown) => {
       table.addColumn({ text: metricName });
       values.push(value);
     };
