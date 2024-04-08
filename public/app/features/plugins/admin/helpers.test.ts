@@ -148,7 +148,7 @@ describe('Plugins/Helpers', () => {
       const remotePlugin = getRemotePluginMock({ slug: pluginId, version: '1.0.0' });
       const instancePlugin = {
         pluginSlug: pluginId,
-        version: '0.0.9'
+        version: '0.0.9',
       };
 
       const merged = mergeLocalsAndRemotes({
