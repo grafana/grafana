@@ -89,6 +89,7 @@ export const LabelsInRule = () => {
 /*
   We will suggest labels from two sources: existing alerts and ops labels.
   We only will suggest labels from ops if the grafana-labels-app plugin is installed
+  This component is only used by the alert rule form.
   */
 export const LabelsWithSuggestions: FC<{ dataSourceName: string }> = ({ dataSourceName }) => {
   const styles = useStyles2(getStyles);

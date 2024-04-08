@@ -34,7 +34,6 @@ export function LabelsFieldInForm({ onEditClick }: LabelsFieldInFormProps) {
           />
         </Stack>
       </Stack>
-      <div className={styles.labelsContainer}></div>
       <Stack direction="row" gap={1} alignItems="center">
         <LabelsInRule />
         {hasLabels ? (
