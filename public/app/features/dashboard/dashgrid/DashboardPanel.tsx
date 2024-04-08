@@ -28,7 +28,7 @@ export interface OwnProps {
 const mapStateToProps = (state: StoreState, props: OwnProps) => {
   const panelState = state.panels[props.stateKey];
   if (!panelState) {
-    return { plugin: undefined };
+    return { plugin: null };
   }
 
   return {
@@ -58,7 +58,7 @@ export class DashboardPanelUnconnected extends PureComponent<Props> {
     }
   }
 
-  onInstanceStateChange = (value: unknown) => {
+  onInstanceStateChange = (value: any) => {
     this.props.setPanelInstanceState({ key: this.props.stateKey, value });
   };
 
@@ -71,6 +71,15 @@ export class DashboardPanelUnconnected extends PureComponent<Props> {
       this.props.initPanelState(this.props.panel);
     }
   };
+
+  componentDidUpdate(prevProps: Props) {
+    const { panel } = this.props;
+    if (!prevProps.panel || prevProps.panel.id !== panel.id) {
+      this.props.panel.isInView = !this.props.lazy;
+      if (!this.props.lazy) {
+        this.onPanelLoad();
+      }    }
+  }
 
   renderPanel = ({ isInView }: { isInView: boolean }) => {
     const {
