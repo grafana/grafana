@@ -1,6 +1,6 @@
 import { filter, find, indexOf, map } from 'lodash';
 
-import { escapeRegex, ScopedVars } from '@grafana/data';
+import { AdHocVariableFilter, escapeRegex, ScopedVars } from '@grafana/data';
 import { TemplateSrv } from '@grafana/runtime';
 
 import { removeRegexWrapper } from './queryUtils';
@@ -333,7 +333,7 @@ export default class InfluxQueryModel {
     return query;
   }
 
-  renderAdhocFilters(filters: any[]) {
+  renderAdhocFilters(filters: AdHocVariableFilter[]) {
     const conditions = map(filters, (tag, index) => {
       return this.renderTagCondition(tag, index, true);
     });

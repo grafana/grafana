@@ -74,7 +74,7 @@ export const selectorRegexp = /\{[^}]*?(\}|$)/;
 // comma and space is useful for addLabelsToExpression function
 export const labelRegexp = /\b(\w+)(!?=~?)("[^"\n]*?")(,)?(\s*)?/g;
 
-export function parseSelector(query: string, cursorOffset = 1): { labelKeys: any[]; selector: string } {
+export function parseSelector(query: string, cursorOffset = 1): { labelKeys: string[]; selector: string } {
   if (!query.match(selectorRegexp)) {
     // Special matcher for metrics
     if (query.match(/^[A-Za-z:][\w:]*$/)) {
@@ -345,7 +345,7 @@ export function limitSuggestions(items: string[]) {
   return items.slice(0, SUGGESTIONS_LIMIT);
 }
 
-export function addLimitInfo(items: any[] | undefined): string {
+export function addLimitInfo(items: unknown[] | undefined): string {
   return items && items.length >= SUGGESTIONS_LIMIT ? `, limited to the first ${SUGGESTIONS_LIMIT} received items` : '';
 }
 

@@ -580,7 +580,7 @@ export default class InfluxDatasource extends DataSourceWithBackend<InfluxQuery,
     return 'time >= ' + from + ' and time <= ' + until;
   }
 
-  getInfluxTime(date: DateTime | string, roundUp: any, timezone: any) {
+  getInfluxTime(date: DateTime | string, roundUp: boolean, timezone: string) {
     let outPutDate;
     if (isString(date)) {
       if (date === 'now') {

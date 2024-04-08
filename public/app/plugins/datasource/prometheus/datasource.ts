@@ -745,7 +745,7 @@ export class PrometheusDatasource
     return expandedQueries;
   }
 
-  getQueryHints(query: PromQuery, result: any[]) {
+  getQueryHints(query: PromQuery, result: unknown[]) {
     return getQueryHints(query.expr ?? '', result, this);
   }
 
@@ -865,7 +865,7 @@ export class PrometheusDatasource
       return expr;
     }
 
-    const finalQuery = filters.reduce((acc: string, filter: { key?: any; operator?: any; value?: any }) => {
+    const finalQuery = filters.reduce((acc, filter) => {
       const { key, operator } = filter;
       let { value } = filter;
       if (operator === '=~' || operator === '!~') {
@@ -1014,10 +1014,10 @@ export function extractRuleMappingFromGroups(groups: any[]) {
 // NOTE: these two functions are very similar to the escapeLabelValueIn* functions
 // in language_utils.ts, but they are not exactly the same algorithm, and we found
 // no way to reuse one in the another or vice versa.
-export function prometheusRegularEscape(value: unknown) {
+export function prometheusRegularEscape<T>(value: T) {
   return typeof value === 'string' ? value.replace(/\\/g, '\\\\').replace(/'/g, "\\\\'") : value;
 }
 
-export function prometheusSpecialRegexEscape(value: unknown) {
+export function prometheusSpecialRegexEscape<T>(value: T) {
   return typeof value === 'string' ? value.replace(/\\/g, '\\\\\\\\').replace(/[$^*{}\[\]\'+?.()|]/g, '\\\\$&') : value;
 }

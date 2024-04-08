@@ -101,7 +101,7 @@ export default class PromQlLanguageProvider extends LanguageProvider {
     return PromqlSyntax;
   }
 
-  request = async (url: string, defaultValue: any, params = {}, options?: Partial<BackendSrvRequest>): Promise<any> => {
+  request = async (url: string, defaultValue: any, params = {}, options?: Partial<BackendSrvRequest>) => {
     try {
       const res = await this.datasource.metadataRequest(url, params, options);
       return res.data.data;
@@ -365,7 +365,7 @@ export default class PromQlLanguageProvider extends LanguageProvider {
   });
 }
 
-function getNameLabelValue(promQuery: string, tokens: any): string {
+function getNameLabelValue(promQuery: string, tokens: Array<string | Prism.Token>): string {
   let nameLabelValue = '';
 
   for (const token of tokens) {

@@ -527,6 +527,6 @@ const createFetchResponse = <T>(data: T): FetchResponse<T> => ({
   type: 'basic',
   statusText: 'Ok',
   redirected: false,
-  headers: {} as unknown as Headers,
+  headers: new Headers(),
   ok: true,
 });

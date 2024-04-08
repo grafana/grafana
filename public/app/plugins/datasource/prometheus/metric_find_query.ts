@@ -85,7 +85,7 @@ export default class PrometheusMetricFindQuery {
     if (!metric || this.datasource.hasLabelsMatchAPISupport()) {
       const url = `/api/v1/label/${label}/values`;
 
-      return this.datasource.metadataRequest(url, params).then((result: any) => {
+      return this.datasource.metadataRequest(url, params).then((result) => {
         return _map(result.data.data, (value) => {
           return { text: value };
         });
@@ -93,7 +93,7 @@ export default class PrometheusMetricFindQuery {
     } else {
       const url = `/api/v1/series`;
 
-      return this.datasource.metadataRequest(url, params).then((result: any) => {
+      return this.datasource.metadataRequest(url, params).then((result) => {
         const _labels = _map(result.data.data, (metric) => {
           return metric[label] || '';
         }).filter((label) => {
@@ -119,7 +119,7 @@ export default class PrometheusMetricFindQuery {
     };
     const url = `/api/v1/label/__name__/values`;
 
-    return this.datasource.metadataRequest(url, params).then((result: any) => {
+    return this.datasource.metadataRequest(url, params).then((result) => {
       return chain(result.data.data)
         .filter((metricName) => {
           const r = new RegExp(metricFilterPattern);
@@ -141,7 +141,7 @@ export default class PrometheusMetricFindQuery {
       query,
       time: getPrometheusTime(this.range.to, true).toString(),
     };
-    return this.datasource.metadataRequest(url, params).then((result: any) => {
+    return this.datasource.metadataRequest(url, params).then((result) => {
       switch (result.data.data.resultType) {
         case 'scalar': // [ <unix_time>, "<scalar_value>" ]
         case 'string': // [ <unix_time>, "<string_value>" ]
@@ -186,7 +186,7 @@ export default class PrometheusMetricFindQuery {
     const url = `/api/v1/series`;
     const self = this;
 
-    return this.datasource.metadataRequest(url, params).then((result: any) => {
+    return this.datasource.metadataRequest(url, params).then((result) => {
       return _map(result.data.data, (metric: { [key: string]: string }) => {
         return {
           text: self.datasource.getOriginalMetricName(metric),

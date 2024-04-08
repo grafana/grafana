@@ -40,7 +40,7 @@ export default class LokiLanguageProvider extends LanguageProvider {
     Object.assign(this, initialValues);
   }
 
-  request = async (url: string, params?: any) => {
+  request = async (url: string, params?: Record<string, string | number>) => {
     try {
       return await this.datasource.metadataRequest(url, params);
     } catch (error) {

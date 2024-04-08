@@ -9,7 +9,7 @@ import { PrometheusDatasource } from './datasource';
  */
 export const SUM_HINT_THRESHOLD_COUNT = 20;
 
-export function getQueryHints(query: string, series?: any[], datasource?: PrometheusDatasource): QueryHint[] {
+export function getQueryHints(query: string, series?: unknown[], datasource?: PrometheusDatasource): QueryHint[] {
   const hints = [];
 
   // ..._bucket metric needs a histogram_quantile()

@@ -62,7 +62,7 @@ export function doLokiChannelStream(
   return defer(() => getLiveStreamKey(query)).pipe(
     mergeMap((key) => {
       return getGrafanaLiveSrv()
-        .getStream<any>({
+        .getStream({
           scope: LiveChannelScope.DataSource,
           namespace: ds.uid,
           path: `tail/${key}`,

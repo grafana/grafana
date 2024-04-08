@@ -30,8 +30,8 @@ export const ConfigEditor = (props: Props) => {
 
   const azureAuthSettings = {
     azureAuthSupported: config.azureAuthEnabled,
-    getAzureAuthEnabled: (config: DataSourceSettings<any, any>): boolean => hasCredentials(config),
-    setAzureAuthEnabled: (config: DataSourceSettings<any, any>, enabled: boolean) =>
+    getAzureAuthEnabled: (config: DataSourceSettings): boolean => hasCredentials(config),
+    setAzureAuthEnabled: (config: DataSourceSettings, enabled: boolean) =>
       enabled ? setDefaultCredentials(config) : resetCredentials(config),
     azureSettingsUI: AzureAuthSettings,
   };
