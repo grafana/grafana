@@ -121,6 +121,8 @@ func TestIntegrationPostgresSnapshots(t *testing.T) {
 		{format: "time_series", name: "fill_value"},
 		{format: "time_series", name: "fill_value_wide"},
 		{format: "table", name: "simple"},
+		{format: "table", name: "multi_stat1"},
+		{format: "table", name: "multi_stat2"},
 		{format: "table", name: "no_rows"},
 		{format: "table", name: "types_numeric"},
 		{format: "table", name: "types_char"},
