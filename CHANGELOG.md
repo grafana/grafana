@@ -105,7 +105,7 @@
 - **CloudWatch:** Update AWS/Kafka metrics. [#83035](https://github.com/grafana/grafana/issues/83035), [@jangaraj](https://github.com/jangaraj)
 - **Page:** Use browser native scrollbars for the main page content. [#82919](https://github.com/grafana/grafana/issues/82919), [@joshhunt](https://github.com/joshhunt)
 - **Parca:** Apply template variables for labelSelector in query. [#82910](https://github.com/grafana/grafana/issues/82910), [@lzakharov](https://github.com/lzakharov)
-- **Grafana/UI:** Replace Splitter with useSplitter hook  and refactor PanelEdit snapping logic to useSnappingSplitter hook . [#82895](https://github.com/grafana/grafana/issues/82895), [@torkelo](https://github.com/torkelo)
+- **Grafana/UI:** Replace Splitter with useSplitter hook and refactor PanelEdit snapping logic to useSnappingSplitter hook . [#82895](https://github.com/grafana/grafana/issues/82895), [@torkelo](https://github.com/torkelo)
 - **Cloudwatch:** Add linting to restrict imports from core. [#82538](https://github.com/grafana/grafana/issues/82538), [@idastambuk](https://github.com/idastambuk)
 - **Grafana/icons:** Add icons package. [#82314](https://github.com/grafana/grafana/issues/82314), [@Clarity-89](https://github.com/Clarity-89)
 - **Storage:** Watch support. [#82282](https://github.com/grafana/grafana/issues/82282), [@DanCech](https://github.com/DanCech)
@@ -140,7 +140,7 @@
 - **BrowseDashboards:** Add subpath to URLs on Browse Dashboards page. [#84992](https://github.com/grafana/grafana/issues/84992), [@butkovv](https://github.com/butkovv)
 - **Datasources:** Fix expressions that reference hidden queries. [#84977](https://github.com/grafana/grafana/issues/84977), [@sunker](https://github.com/sunker)
 - **Canvas:** Fix crash when trying to add wind turbine element. [#84962](https://github.com/grafana/grafana/issues/84962), [@nmarrs](https://github.com/nmarrs)
-- **InfluxDB:** Fix alias interpolation when it has $__interval or multiple tags. [#84940](https://github.com/grafana/grafana/issues/84940), [@itsmylife](https://github.com/itsmylife)
+- **InfluxDB:** Fix alias interpolation when it has $\_\_interval or multiple tags. [#84940](https://github.com/grafana/grafana/issues/84940), [@itsmylife](https://github.com/itsmylife)
 - **Alerting:** Stop returning autogen routes for non-admin on api/v2/status. [#84864](https://github.com/grafana/grafana/issues/84864), [@JacobsonMT](https://github.com/JacobsonMT)
 - **Alerting:** Fix broken panelId links. [#84839](https://github.com/grafana/grafana/issues/84839), [@gillesdemey](https://github.com/gillesdemey)
 - **Alerting:** External AM fix parsing basic auth with escape characters. [#84681](https://github.com/grafana/grafana/issues/84681), [@JacobsonMT](https://github.com/JacobsonMT)
@@ -209,6 +209,7 @@ Angular support is turned `off` by default starting Grafana 11, you can find all
 **Special notes for your reviewer:**
 
 Please check that:
+
 - [x] It works as expected from a user's perspective.
 - [ ] If this is a pre-GA feature, it is behind a feature toggle.
 - [x] The docs are updated, and if this is a [notable improvement](https://grafana.com/docs/writers-toolkit/writing-guide/contribute-release-notes/#how-to-determine-if-content-belongs-in-a-whats-new-document), it's added to our [What's New](https://grafana.com/docs/writers-toolkit/writing-guide/contribute-release-notes/) doc. Issue [#84738](https://github.com/grafana/grafana/issues/84738)
@@ -222,6 +223,7 @@ Users of data source plugins that did not previously remove hidden queries will 
 SystemJS is no longer exported from `@grafana/runtime`. Plugin developers should instead rely on importing modules / packages using standard TS import syntax and npm/yarn for package installation.
 
 Please check that:
+
 - [ ] It works as expected from a user's perspective.
 - [ ] If this is a pre-GA feature, it is behind a feature toggle.
 - [ ] The docs are updated, and if this is a [notable improvement](https://grafana.com/docs/writers-toolkit/writing-guide/contribute-release-notes/#how-to-determine-if-content-belongs-in-a-whats-new-document), it's added to our [What's New](https://grafana.com/docs/writers-toolkit/writing-guide/contribute-release-notes/) doc. Issue [#84561](https://github.com/grafana/grafana/issues/84561)
@@ -234,7 +236,7 @@ Since https://github.com/grafana/grafana/pull/38942 (Grafana `8.2.0`) the `Explo
 
 Since https://github.com/grafana/grafana/pull/38942 `exploreId` is no longer supplied to query editors in Explore. The property was deprecated in `10.3.0` and is now removed. If your query editor needs to know from which app is being rendered, you can check the `app` prop in `QueryEditorProps`. Issue [#83971](https://github.com/grafana/grafana/issues/83971)
 
-The Vector interface that was deprecated in Grafana 10 has been further deprecated. Using it will now generate build-time Typescript errors, but remain working at runtime. If you're still using ArrayVector in your code, it should be removed immediately and replaced with plain arrays. Plugins compiled against older versions and depend on calling get/set will continue to work because the Array prototype still has a modified prototype.  This will be removed in the future Issue [#83681](https://github.com/grafana/grafana/issues/83681)
+The Vector interface that was deprecated in Grafana 10 has been further deprecated. Using it will now generate build-time Typescript errors, but remain working at runtime. If you're still using ArrayVector in your code, it should be removed immediately and replaced with plain arrays. Plugins compiled against older versions and depend on calling get/set will continue to work because the Array prototype still has a modified prototype. This will be removed in the future Issue [#83681](https://github.com/grafana/grafana/issues/83681)
 
 In Grafana 11 the legacy alerting reaches the end-of-life. Users cannot enable it and Grafana will refuse to start if the settings are not updated to run the new Grafana Alerting. Migration from legacy alerting is not available as well. Grafana 10.4.x is the last version that offers the migration.
 
@@ -258,15 +260,16 @@ This feature can be turned off through the configuration toggle `validate_hd `. 
 The direct input datasource plugin has been removed in Grafana 11. It has been in alpha for 4 years and is superseded by [TestData](https://grafana.com/docs/grafana/latest/datasources/testdata/) that ships with Grafana.
 
 Please check that:
+
 - [ ] It works as expected from a user's perspective.
 - [ ] If this is a pre-GA feature, it is behind a feature toggle.
 - [ ] The docs are updated, and if this is a [notable improvement](https://grafana.com/docs/writers-toolkit/writing-guide/contribute-release-notes/#how-to-determine-if-content-belongs-in-a-whats-new-document), it's added to our [What's New](https://grafana.com/docs/writers-toolkit/writing-guide/contribute-release-notes/) doc. Issue [#83163](https://github.com/grafana/grafana/issues/83163)
 
-The alert rule API methods now require more permissions for users to perform changes to rules. To create a new rule or update or delete an existing one, the user must have permission to read from the folder that stores the rules (i.e. permission `folder:read` in the scope of the rule's folder)  and permission to read alert rules in that folder (i.e. permission `alert.rules:read`
+The alert rule API methods now require more permissions for users to perform changes to rules. To create a new rule or update or delete an existing one, the user must have permission to read from the folder that stores the rules (i.e. permission `folder:read` in the scope of the rule's folder) and permission to read alert rules in that folder (i.e. permission `alert.rules:read`
 
-The standard roles already have all required permissions, and therefore, neither OSS nor Grafana Enterprise users who use the fixed roles (standard roles provided by Grafana) are affected. __Only Grafana Enterprise users who create custom roles can be affected__ Issue [#78289](https://github.com/grafana/grafana/issues/78289)
+The standard roles already have all required permissions, and therefore, neither OSS nor Grafana Enterprise users who use the fixed roles (standard roles provided by Grafana) are affected. **Only Grafana Enterprise users who create custom roles can be affected** Issue [#78289](https://github.com/grafana/grafana/issues/78289)
 
-The deprecated endpoint for rendering pdf of a single dashboard  `GET /render/pdf/:dashboardID` and report model fields `dashboardId`, `dashboardName`, `dashboardUid`, and `templateVars` have been removed. Only new endpoint `GET /api/reports/render/pdfs` accepting `dashboards` list is support moving forward Issue [#6362](https://github.com/grafana/grafana/issues/6362)
+The deprecated endpoint for rendering pdf of a single dashboard `GET /render/pdf/:dashboardID` and report model fields `dashboardId`, `dashboardName`, `dashboardUid`, and `templateVars` have been removed. Only new endpoint `GET /api/reports/render/pdfs` accepting `dashboards` list is support moving forward Issue [#6362](https://github.com/grafana/grafana/issues/6362)
 
 The deprecated old schedule setting with separate fields `hour,` `minute`, `day` have been removed. Only new schedule setting with `startDate` will be supported moving forward Issue [#6329](https://github.com/grafana/grafana/issues/6329)
 
