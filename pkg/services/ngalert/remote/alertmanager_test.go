@@ -21,6 +21,7 @@ import (
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/stretchr/testify/require"
 
+	"github.com/grafana/alerting/cluster/clusterpb"
 	"github.com/grafana/grafana/pkg/infra/db"
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/metrics"
@@ -40,7 +41,6 @@ import (
 
 // Valid Grafana Alertmanager configurations.
 const testGrafanaConfig = `{"template_files":{},"alertmanager_config":{"route":{"receiver":"grafana-default-email","group_by":["grafana_folder","alertname"]},"templates":null,"receivers":[{"name":"grafana-default-email","grafana_managed_receiver_configs":[{"uid":"","name":"some other name","type":"email","disableResolveMessage":false,"settings":{"addresses":"\u003cexample@email.com\u003e"},"secureSettings":null}]}]}}`
-const testGrafanaConfig2 = `{"template_files":{},"alertmanager_config":{"route":{"receiver":"test-email-receiver","group_by":["grafana_folder","alertname"]},"templates":null,"receivers":[{"name":"test-email-receiver","grafana_managed_receiver_configs":[{"uid":"","name":"test","type":"email","disableResolveMessage":false,"settings":{"addresses":"\u003cexample@email.com\u003e"},"secureSettings":null}]}]}}`
 const testGrafanaConfigWithSecret = `{"template_files":{},"alertmanager_config":{"route":{"receiver":"grafana-default-email","group_by":["grafana_folder","alertname"]},"templates":null,"receivers":[{"name":"grafana-default-email","grafana_managed_receiver_configs":[{"uid":"dde6ntuob69dtf","name":"WH","type":"webhook","disableResolveMessage":false,"settings":{"url":"http://localhost:8080","username":"test"},"secureSettings":{"password":"test"}}]}]}}`
 
 var (
@@ -138,7 +138,7 @@ func TestApplyConfig(t *testing.T) {
 	// The encrypted configuration should be different than the one we will send.
 	encryptedConfig, err := json.Marshal(c)
 	require.NoError(t, err)
-	require.NotEqual(t, testGrafanaConfig, encryptedConfig)
+	require.NotEqual(t, testGrafanaConfigWithSecret, encryptedConfig)
 
 	// ApplyConfig performs a readiness check at startup.
 	// A non-200 response should result in an error.
@@ -309,12 +309,19 @@ func TestIntegrationRemoteAlertmanagerConfiguration(t *testing.T) {
 	require.NoError(t, store.Set(ctx, cfg.OrgID, "alertmanager", notifier.SilencesFilename, base64.StdEncoding.EncodeToString(silences)))
 	require.NoError(t, store.Set(ctx, cfg.OrgID, "alertmanager", notifier.NotificationLogFilename, base64.StdEncoding.EncodeToString(nflog)))
 
-	secretsService := secretsManager.SetupTestService(t, fakes.NewFakeSecretsStore())
+	fs := clusterpb.FullState{
+		Parts: []clusterpb.Part{
+			{Key: "silences", Data: silences},
+			{Key: "notifications", Data: nflog},
+		},
+	}
+	fullState, err := fs.Marshal()
+	require.NoError(t, err)
+	encodedFullState := base64.StdEncoding.EncodeToString(fullState)
+
+	secretsService := secretsManager.SetupTestService(t, database.ProvideSecretsStore(db.InitTestDB(t)))
 	m := metrics.NewRemoteAlertmanagerMetrics(prometheus.NewRegistry())
 	am, err := NewAlertmanager(cfg, fstore, secretsService.Decrypt, defaultGrafanaConfig, m)
-	require.NoError(t, err)
-
-	encodedFullState, err := am.getFullState(ctx)
 	require.NoError(t, err)
 
 	// We should have no configuration or state at first.
@@ -373,23 +380,31 @@ func TestIntegrationRemoteAlertmanagerConfiguration(t *testing.T) {
 		require.Equal(t, encodedFullState, state.State)
 	}
 
-	// `SaveAndApplyDefaultConfig` should send the default Alertmanager configuration to the remote Alertmanager.
+	// `SaveAndApplyConfig` is called whenever a user manually changes the Alertmanager configuration.
+	// Calling this method should decrypt and send a configuration to the remote Alertmanager.
 	{
-		require.NoError(t, am.SaveAndApplyDefaultConfig(ctx))
+		postableCfg, err := notifier.Load([]byte(testGrafanaConfigWithSecret))
+		require.NoError(t, err)
+		err = notifier.EncryptReceiverConfigs(postableCfg.AlertmanagerConfig.Receivers, func(ctx context.Context, payload []byte) ([]byte, error) {
+			return secretsService.Encrypt(ctx, payload, secrets.WithoutScope())
+		})
+		require.NoError(t, err)
+
+		// The encrypted configuration should be different than the one we will send.
+		encryptedConfig, err := json.Marshal(postableCfg)
+		require.NoError(t, err)
+		require.NotEqual(t, testGrafanaConfigWithSecret, encryptedConfig)
+
+		// Call `SaveAndApplyConfig` with the encrypted configuration.
+		require.NoError(t, err)
+		require.NoError(t, am.SaveAndApplyConfig(ctx, postableCfg))
 
 		// Check that the default configuration was uploaded.
 		config, err := am.mimirClient.GetGrafanaAlertmanagerConfig(ctx)
 		require.NoError(t, err)
-
-		pCfg, err := notifier.Load([]byte(defaultGrafanaConfig))
-		require.NoError(t, err)
-
-		want, err := json.Marshal(pCfg)
-		require.NoError(t, err)
-
-		require.JSONEq(t, string(want), config.GrafanaAlertmanagerConfig)
-		require.Equal(t, fmt.Sprintf("%x", md5.Sum(want)), config.Hash)
-		require.True(t, config.Default)
+		require.Equal(t, testGrafanaConfigWithSecret, config.GrafanaAlertmanagerConfig)
+		require.Equal(t, fmt.Sprintf("%x", md5.Sum([]byte(encryptedConfig))), config.Hash)
+		require.False(t, config.Default)
 	}
 
 	// TODO: Now, shutdown the Alertmanager and we expect the latest configuration to be uploaded.
