@@ -15,7 +15,7 @@ weight: 200
 Grafana Explore Metrics is a query-less experience for browsing **Prometheus-compatible** metrics. Quickly find related metrics with just a few simple clicks, without needing to write PromQL queries to retrieve metrics.
 
 {{% admonition type="warning" %}}
-Metric Explore is currently in [private preview](/docs/release-life-cycle/). Grafana Labs offers support on a best-effort basis, and breaking changes might occur prior to the feature being made generally available.
+Explore Metrics is currently in [private preview](/docs/release-life-cycle/). Grafana Labs offers support on a best-effort basis, and breaking changes might occur prior to the feature being made generally available.
 {{% /admonition %}}
 
 With Explore Metrics, you can:
