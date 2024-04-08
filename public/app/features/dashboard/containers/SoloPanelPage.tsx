@@ -61,27 +61,30 @@ export class SoloPanelPage extends Component<Props, State> {
   }
 
   componentDidUpdate(prevProps: Props) {
-    const { dashboard } = this.props;
+    const { dashboard, queryParams } = this.props;
 
     if (!dashboard) {
       return;
     }
 
-    // we just got a new dashboard
     if (!prevProps.dashboard || prevProps.dashboard.uid !== dashboard.uid) {
       const panel = dashboard.getPanelByUrlId(this.props.queryParams.panelId);
+      if (!panel) {
+        this.setState({ notFound: true });
+        return;
+      }
+      this.setState({ panel, notFound: false });
+    }
+
+    if (!prevProps.queryParams || prevProps.queryParams.panelId !== queryParams.panelId) {
+      const panel = dashboard.getPanelByUrlId(this.getPanelId());
 
       if (!panel) {
         this.setState({ notFound: true });
         return;
       }
 
-      if (panel) {
-        dashboard.exitViewPanel(panel);
-      }
-
-      this.setState({ panel });
-      dashboard.initViewPanel(panel);
+      this.setState({ panel, notFound: false });
     }
   }
 
