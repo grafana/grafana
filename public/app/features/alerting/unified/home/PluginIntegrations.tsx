@@ -15,7 +15,6 @@ export function PluginIntegrations() {
 
   return (
     <div className={styles.container}>
-      {/* <h4>Enhance Alerting experience with our tailored apps</h4> */}
       <Stack gap={1} wrap="wrap" direction="column">
         {extensions.map((extension) => (
           <Box key={extension.id} borderColor="weak" borderRadius="default" padding={2} flex={1}>
