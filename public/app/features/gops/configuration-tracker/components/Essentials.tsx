@@ -25,7 +25,7 @@ interface StepButton {
   url: string;
   label: string;
   options?: [{ label: string; value: string }];
-  // done: boolean;
+  done: boolean;
 }
 interface Section {
   title: string;
