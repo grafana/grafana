@@ -8,7 +8,7 @@ keywords:
   - '11.0'
   - '11.0-preview'
 title: Upgrade to Grafana v11.0-preview
-menuTitle: Upgrade to v11.0
+menuTitle: Upgrade to v11.0-preview
 weight: 1200
 ---
 
