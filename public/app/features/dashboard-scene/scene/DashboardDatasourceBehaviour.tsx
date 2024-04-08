@@ -3,6 +3,8 @@ import { SHARED_DASHBOARD_QUERY } from 'app/plugins/datasource/dashboard';
 
 import { findVizPanelByKey, getDashboardSceneFor, getQueryRunnerFor, getVizPanelKeyForPanelId } from '../utils/utils';
 
+import { DashboardScene } from './DashboardScene';
+
 interface DashboardDatasourceBehaviourState extends SceneObjectState {}
 
 export class DashboardDatasourceBehaviour extends SceneObjectBase<DashboardDatasourceBehaviourState> {
@@ -24,10 +26,16 @@ export class DashboardDatasourceBehaviour extends SceneObjectBase<DashboardDatas
       return;
     }
 
-    const panelId = queryRunner.state.queries[0].panelId;
+    let dashboard: DashboardScene;
 
+    try {
+      dashboard = getDashboardSceneFor(queryRunner);
+    } catch {
+      return;
+    }
+
+    const panelId = queryRunner.state.queries[0].panelId;
     const vizKey = getVizPanelKeyForPanelId(panelId);
-    const dashboard = getDashboardSceneFor(queryRunner);
     const panel = findVizPanelByKey(dashboard, vizKey);
 
     if (!(panel instanceof VizPanel)) {

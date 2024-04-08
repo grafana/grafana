@@ -15,6 +15,7 @@ import { SceneGridLayout, SceneQueryRunner, VizPanel } from '@grafana/scenes';
 import { SHARED_DASHBOARD_QUERY } from 'app/plugins/datasource/dashboard';
 import { DASHBOARD_DATASOURCE_PLUGIN_ID } from 'app/plugins/datasource/dashboard/types';
 
+import { VizPanelManager } from '../panel-edit/VizPanelManager';
 import { activateFullSceneTree } from '../utils/test-utils';
 
 import { DashboardDatasourceBehaviour } from './DashboardDatasourceBehaviour';
@@ -267,6 +268,21 @@ describe('DashboardDatasourceBehaviour', () => {
       expect(spy).toHaveBeenCalledTimes(1);
       // since there is no previous request ID on dashboard load, the behaviour should not re-run queries
       expect(behaviour['prevRequestId']).toBeUndefined();
+    });
+
+    it('Should exit behaviour early if not in a dashboard scene', async () => {
+      // spy on runQueries
+      const spy = jest.spyOn(dashboardDSPanel.state.$data as SceneQueryRunner, 'runQueries');
+
+      const vizPanelManager = new VizPanelManager({
+        panel: dashboardDSPanel.clone({ $data: undefined }),
+        $data: dashboardDSPanel.state.$data?.clone(),
+        sourcePanel: dashboardDSPanel.getRef(),
+      });
+
+      vizPanelManager.activate();
+
+      expect(spy).not.toHaveBeenCalled();
     });
 
     it('Should not re-run queries if dashboard DS panel references an invalid source panel', async () => {
