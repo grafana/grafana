@@ -65,7 +65,7 @@ while read -r name value
 do
   THEME_TOKEN_USAGE_PER_FILE+=$'\n  '
   THEME_TOKEN_USAGE_PER_FILE+="\"grafana.ci-code.themeUsagePerFile.${name}\": \"${value}\","
-done <<< "$(yarn themes:usage | awk -F: '{print $1, $2}')"
+done <<< "$(yarn themes:usage | awk '{print $1, $3}')"
 
 echo "Metrics: {
   $THEME_TOKEN_USAGE_PER_FILE
