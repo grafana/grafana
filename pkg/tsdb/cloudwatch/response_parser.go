@@ -2,7 +2,6 @@ package cloudwatch
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"regexp"
 	"sort"
@@ -13,7 +12,6 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/features"
-	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/kinds/dataquery"
 	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/models"
 )
 
@@ -116,36 +114,9 @@ func parseLabels(cloudwatchLabel string, query *models.CloudWatchQuery) (string,
 	return splitLabels[0], labels
 }
 
-type groupByExpression struct {
-	Property dataquery.QueryEditorProperty              `json:"property"`
-	Type     dataquery.QueryEditorGroupByExpressionType `json:"type"`
-}
-
-func getLabelsForMetricQuery(label string, query *models.CloudWatchQuery) data.Labels {
+func getLabelsForMetricQuery(label string) data.Labels {
 	labels := data.Labels{}
-
-	if query.Sql.GroupBy == nil || len(query.Sql.GroupBy.Expressions) != 1 {
-		return labels
-	}
-
-	groupByExpressionJSON, err := json.Marshal(query.Sql.GroupBy.Expressions[0])
-	if err != nil {
-		return labels
-	}
-
-	groupBy := groupByExpression{}
-	err = json.Unmarshal(groupByExpressionJSON, &groupBy)
-	if err != nil {
-		return labels
-	}
-
-	key := "Series"
-	if groupBy.Property.Name != nil && query.Label == "" {
-		key = *groupBy.Property.Name
-	}
-
-	labels[key] = label
-
+	labels["Series"] = label
 	return labels
 }
 
@@ -235,7 +206,8 @@ func buildDataFrames(ctx context.Context, startTime time.Time, endTime time.Time
 			if hasStaticLabel {
 				metricQueryLabel = query.Label
 			}
-			labels = getLabelsForMetricQuery(metricQueryLabel, query)
+			labels = data.Labels{}
+			labels["Series"] = metricQueryLabel
 		} else if features.IsEnabled(ctx, features.FlagCloudWatchNewLabelParsing) {
 			name, labels = parseLabels(label, query)
 		} else {
