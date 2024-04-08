@@ -15,7 +15,7 @@ func (am *alertmanager) GetSilence(_ context.Context, silenceID string) (alertin
 }
 
 func (am *alertmanager) CreateSilence(_ context.Context, ps *alertingNotify.PostableSilence) (string, error) {
-	return am.Base.CreateSilence(ps)
+	return am.Base.UpsertSilence(ps)
 }
 
 func (am *alertmanager) DeleteSilence(_ context.Context, silenceID string) error {
