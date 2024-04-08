@@ -114,7 +114,7 @@ func (s SilenceService) FilterByAccess(ctx context.Context, user identity.Reques
 		return nil, err
 	}
 	result := make([]Silence, 0, len(silences))
-	keys := make(map[string][]Silence, len(silences))
+	silencesByRuleUID := make(map[string][]Silence, len(silences))
 	for _, silence := range silences {
 		ruleUID := silence.GetRuleUID()
 		if ruleUID == nil { // if this is a general silence
@@ -122,18 +122,18 @@ func (s SilenceService) FilterByAccess(ctx context.Context, user identity.Reques
 			continue
 		}
 		key := *ruleUID
-		keys[key] = append(keys[key], silence)
+		silencesByRuleUID[key] = append(silencesByRuleUID[key], silence)
 	}
-	if len(keys) == 0 { // if only general silences are provided no need in other checks
+	if len(silencesByRuleUID) == 0 { // if only general silences are provided no need in other checks
 		return result, nil
 	}
-	namespaces, err := s.store.GetNamespacesByRuleUID(ctx, user.GetOrgID(), maps.Keys(keys)...)
+	namespacesByRuleUID, err := s.store.GetNamespacesByRuleUID(ctx, user.GetOrgID(), maps.Keys(silencesByRuleUID)...)
 	if err != nil {
 		return nil, err
 	}
 
-	for key, silence := range keys {
-		ns, ok := namespaces[key]
+	for ruleUID, silence := range silencesByRuleUID {
+		ns, ok := namespacesByRuleUID[ruleUID]
 		if !ok {
 			continue
 		}
