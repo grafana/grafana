@@ -40,7 +40,7 @@ test.describe('query editor with mocked responses', () => {
     const queryEditorRow = await panelEditPage.getQueryEditorRow('A');
     await queryEditorRow.getByLabel('Scenario').last().click();
     await expect(
-      panelEditPage.getByTestIdOrAriaLabel(selectors.components.Select.option),
+      panelEditPage.getByGrafanaSelector(selectors.components.Select.option),
       formatExpectError('Expected certain select options to be displayed after clicking on the select input')
     ).toHaveText(scenarios.map((s) => s.name));
   });
@@ -55,7 +55,7 @@ test.describe('query editor with mocked responses', () => {
       formatExpectError('Did not expect panel error to be displayed after query execution')
     ).not.toBeVisible();
     await expect(
-      panelEditPage.getByTestIdOrAriaLabel(selectors.components.Panels.Visualization.Table.body),
+      panelEditPage.getByGrafanaSelector(selectors.components.Panels.Visualization.Table.body),
       formatExpectError('Expected certain select options to be displayed after clicking on the select input')
     ).toHaveText('val1val2val3val4');
   });
@@ -69,12 +69,12 @@ test.describe('edit panel plugin settings', () => {
   }) => {
     await panelEditPage.setVisualization(TABLE_VIZ_NAME);
     await expect(
-      panelEditPage.getByTestIdOrAriaLabel(selectors.components.PanelEditor.toggleVizPicker),
+      panelEditPage.getByGrafanaSelector(selectors.components.PanelEditor.toggleVizPicker),
       formatExpectError('Expected panel visualization to be set to table')
     ).toHaveText(TABLE_VIZ_NAME);
     await panelEditPage.setPanelTitle(PANEL_TITLE);
     await expect(
-      panelEditPage.getByTestIdOrAriaLabel(selectors.components.Panels.Panel.title(PANEL_TITLE)),
+      panelEditPage.getByGrafanaSelector(selectors.components.Panels.Panel.title(PANEL_TITLE)),
       formatExpectError('Expected panel title to be updated')
     ).toBeVisible();
     await panelEditPage.collapseSection(STANDARD_OTIONS_CATEGORY);
