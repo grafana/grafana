@@ -1,5 +1,6 @@
 import { SceneObjectBase, SceneObjectState, SceneQueryRunner, VizPanel } from '@grafana/scenes';
 import { SHARED_DASHBOARD_QUERY } from 'app/plugins/datasource/dashboard';
+import { MIXED_DATASOURCE_NAME } from 'app/plugins/datasource/mixed/MixedDataSource';
 
 import { findVizPanelByKey, getDashboardSceneFor, getQueryRunnerFor, getVizPanelKeyForPanelId } from '../utils/utils';
 
@@ -17,16 +18,18 @@ export class DashboardDatasourceBehaviour extends SceneObjectBase<DashboardDatas
 
   private _activationHandler() {
     const queryRunner = this.parent;
+    let dashboard: DashboardScene;
 
     if (!(queryRunner instanceof SceneQueryRunner)) {
       throw new Error('DashboardDatasourceBehaviour must be attached to a SceneQueryRunner');
     }
 
-    if (queryRunner.state.datasource?.uid !== SHARED_DASHBOARD_QUERY) {
+    if (
+      queryRunner.state.datasource?.uid !== SHARED_DASHBOARD_QUERY &&
+      queryRunner.state.datasource?.uid !== MIXED_DATASOURCE_NAME
+    ) {
       return;
     }
-
-    let dashboard: DashboardScene;
 
     try {
       dashboard = getDashboardSceneFor(queryRunner);
@@ -34,7 +37,13 @@ export class DashboardDatasourceBehaviour extends SceneObjectBase<DashboardDatas
       return;
     }
 
-    const panelId = queryRunner.state.queries[0].panelId;
+    const dashboardQuery = queryRunner.state.queries.find((query) => query.panelId !== undefined);
+
+    if (!dashboardQuery) {
+      return;
+    }
+
+    const panelId = dashboardQuery.panelId;
     const vizKey = getVizPanelKeyForPanelId(panelId);
     const panel = findVizPanelByKey(dashboard, vizKey);
 
