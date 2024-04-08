@@ -24,9 +24,9 @@ export const onCallReceiverMeta: ReceiverPluginMetadata = {
 export function getOnCallMetadata(
   onCallIntegrations: OnCallIntegrationDTO[] | undefined | null,
   receiver: GrafanaManagedReceiverConfig,
-  alertManagerConfigData = true
+  hasAlertManagerConfigData = true
 ): ReceiverPluginMetadata {
-  if (!alertManagerConfigData) {
+  if (!hasAlertManagerConfigData) {
     return onCallReceiverMeta;
   }
 
