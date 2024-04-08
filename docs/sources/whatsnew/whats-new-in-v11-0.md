@@ -218,7 +218,7 @@ This feature is useful for a wide variety of use cases including mapping status 
 
 To learn more, refer to the [documentation for the Colored background cell type](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/panels-visualizations/visualizations/table/#color-background-gradient-or-solid).
 
-### Set threshold colors in the Config from Query transformation
+### Set threshold colors in the Config from query transformation
 
 <!--  #grafana-dataviz" -->
 
@@ -228,7 +228,7 @@ You now have the ability to customize specific colors for individual thresholds 
 
 This feature addresses a common pain point highlighted by users. With customizable threshold colors, you now have greater control over your data representation, fostering more insightful and impactful analyses across diverse datasets.
 
-### Substring matcher added to the Filter by Value transformation
+### Substring matcher added to the Filter by value transformation
 
 <!-- #grafana-dataviz -->
 
