@@ -67,7 +67,9 @@ Explore Metrics is a query-less experience for browsing Prometheus-compatible me
 
 … all without writing any queries!
 
-<!--To learn more, refer to the Explore Metrics [documentation](http://grafana.com/docs/grafana/<GRAFANA_VERSION>/explore/metrics-explore/) as well as the following video demo (forthcoming):-->
+To learn more, refer to <!-- the Explore Metrics [documentation](http://grafana.com/docs/grafana/<GRAFANA_VERSION>/explore/metrics-explore/) as well as --> the following video demo:
+
+{{< youtube id="JbaPufQs5LY" >}}
 
 ### Explore Logs
 
@@ -111,6 +113,8 @@ We moved the time picker into the dashboard canvas and now, together with templa
 
 If you want to learn more, in detail, about all the improvements we've made, don't miss our blog post.
 
+<!-- {{< youtube id="ECahW01W5gs" >}} commented out until team decides if there will be changes to the video -->
+
 ### Scenes for viewers
 
 <!-- #grafana-dashboards, Dominik Prokop, Natalia Bernarte -->
@@ -149,6 +153,8 @@ To correct this, take the following steps:
 
 If you use file provisioning, you can upgrade and update the routes at the same time.
 
+{{< youtube id="R9mehA0EssU" >}}
+
 ### Use AI to generate titles and descriptions for panels and dashboards
 
 <!-- Ivan Ortega -->
@@ -162,6 +168,8 @@ Make sure to enable and configure Grafana's LLM app plugin. For more information
 When enabled, look for the **✨ Auto generate** option next to the **Title** and **Description** fields in your panels and dashboards, or when you press the **Save** button.
 
 ![Auto-generate a panel description using AI](/media/docs/grafana/dashboards/auto-generate-description-10-2.gif)
+
+{{< youtube id="s61WHREHuYE" >}}
 
 ### Improvements to the canvas visualization
 
@@ -190,6 +198,8 @@ We've updated data links so that you can add them to almost all elements or elem
 This update doesn't apply to the drone and button elements.
 {{< /admonition >}}
 
+{{< youtube id="0iO2gqv0XNA" >}}
+
 [Documentation](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/panels-visualizations/visualizations/canvas/)
 
 ### Infinite panning for the canvas visualization
@@ -217,6 +227,8 @@ Grafana 11 adds the ability to color full table rows using the **Colored backgro
 This feature is useful for a wide variety of use cases including mapping status fields to colors (for example, `info`, `debug`, `warning`) and allowing rows to be colored based on threshold values. This is one of the first steps in making formatting tables more seamless, and allows for quick scanning of data using the table visualization.
 
 To learn more, refer to the [documentation for the Colored background cell type](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/panels-visualizations/visualizations/table/#color-background-gradient-or-solid).
+
+{{< youtube id="PLfADTtCnmg" >}}
 
 ### Set threshold colors in the Config from query transformation
 
@@ -257,6 +269,8 @@ Are you tired of waiting for your PDF to be generated or your report to be sent?
 This update also fixes all [caveats](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/dashboards/create-reports/#caveats) related to rendering a report with panels or rows set to repeat by a variable, like rendering repeating panels inside collapsed rows.
 
 To try out this update, enable the `newPDFRendering` [feature toggle](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-grafana/feature-toggles/).
+
+{{< youtube id="ypk1usnE7D8" >}}
 
 ## Alerting
 
