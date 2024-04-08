@@ -4,12 +4,13 @@ import { Route, Switch } from 'react-router-dom';
 
 import { GrafanaTheme2, PageLayoutType } from '@grafana/data';
 import { locationService } from '@grafana/runtime';
-import { getUrlSyncManager, SceneComponentProps, SceneObjectBase, SceneObjectState } from '@grafana/scenes';
+import { SceneComponentProps, SceneObjectBase, SceneObjectState, getUrlSyncManager } from '@grafana/scenes';
 import { useStyles2 } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
 
 import { DataTrail } from './DataTrail';
 import { DataTrailsHome } from './DataTrailsHome';
+import { MetricsHeader } from './MetricsHeader';
 import { getTrailStore } from './TrailStore/TrailStore';
 import { HOME_ROUTE, TRAILS_ROUTE } from './shared';
 import { getMetricName, getUrlForTrail, newMetricsTrail } from './utils';
@@ -39,10 +40,13 @@ export class DataTrailsApp extends SceneObjectBase<DataTrailsAppState> {
           exact={true}
           path={HOME_ROUTE}
           render={() => (
-            <Page navId="explore/metrics" layout={PageLayoutType.Custom}>
-              <div className={styles.customPage}>
-                <home.Component model={home} />
-              </div>
+            <Page
+              navId="explore/metrics"
+              layout={PageLayoutType.Standard}
+              renderTitle={() => <MetricsHeader />}
+              subTitle=""
+            >
+              <home.Component model={home} />
             </Page>
           )}
         />
@@ -71,7 +75,14 @@ function DataTrailView({ trail }: { trail: DataTrail }) {
 
   useEffect(() => {
     if (!isInitialized) {
+      // Set the initial state based on the URL.
       getUrlSyncManager().initSync(trail);
+      // Any further changes to the state should occur directly to the state, not through the URL.
+      // We want to stop automatically syncing the URL state (and vice versa) to the trail after this point.
+      // Moving forward in the lifecycle of the trail, we will make explicit calls to trail.syncTrailToUrl()
+      // so we can ensure the URL is kept up to date at key points.
+      getUrlSyncManager().cleanUp(trail);
+
       getTrailStore().setRecentTrail(trail);
       setIsInitialized(true);
     }

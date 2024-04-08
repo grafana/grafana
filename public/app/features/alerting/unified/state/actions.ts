@@ -82,7 +82,7 @@ import { AsyncRequestMapSlice, withAppEvents, withSerializedError } from '../uti
 import * as ruleId from '../utils/rule-id';
 import { getRulerClient } from '../utils/rulerClient';
 import { getAlertInfo, isGrafanaRulerRule, isRulerNotSupportedResponse } from '../utils/rules';
-import { safeParseDurationstr } from '../utils/time';
+import { safeParsePrometheusDuration } from '../utils/time';
 
 function getDataSourceConfig(getState: () => unknown, rulesSourceName: string) {
   const dataSources = (getState() as StoreState).unifiedAlerting.dataSources;
@@ -782,8 +782,8 @@ interface UpdateNamespaceAndGroupOptions {
 export const rulesInSameGroupHaveInvalidFor = (rules: RulerRuleDTO[], everyDuration: string) => {
   return rules.filter((rule: RulerRuleDTO) => {
     const { forDuration } = getAlertInfo(rule, everyDuration);
-    const forNumber = safeParseDurationstr(forDuration);
-    const everyNumber = safeParseDurationstr(everyDuration);
+    const forNumber = safeParsePrometheusDuration(forDuration);
+    const everyNumber = safeParsePrometheusDuration(everyDuration);
 
     return forNumber !== 0 && forNumber < everyNumber;
   });

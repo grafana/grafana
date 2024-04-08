@@ -272,6 +272,17 @@ Path to the certificate file (if `protocol` is set to `https` or `h2`).
 
 Path to the certificate key file (if `protocol` is set to `https` or `h2`).
 
+### certs_watch_interval
+
+Controls whether `cert_key` and `cert_file` are periodically watched for changes.
+Disabled, by default. When enabled, `cert_key` and `cert_file`
+are watched for changes. If there is change, the new certificates are loaded automatically.
+
+{{% admonition type="warning" %}}
+After the new certificates are loaded, connections with old certificates
+will not work. You must reload the connections to the old certs for them to work.
+{{% /admonition %}}
+
 ### socket_gid
 
 GID where the socket should be set when `protocol=socket`.
@@ -361,9 +372,13 @@ The maximum number of open connections to the database. For MYSQL, configure thi
 
 Sets the maximum amount of time a connection may be reused. The default is 14400 (which means 14400 seconds or 4 hours). For MySQL, this setting should be shorter than the [`wait_timeout`](https://dev.mysql.com/doc/refman/5.7/en/server-system-variables.html#sysvar_wait_timeout) variable.
 
+### migration_locking
+
+Set to `false` to disable database locking during the migrations. Default is true.
+
 ### locking_attempt_timeout_sec
 
-For "mysql", if the `migrationLocking` feature toggle is set, specify the time (in seconds) to wait before failing to lock the database for the migrations. Default is 0.
+For "mysql" and "postgres" only. Specify the time (in seconds) to wait before failing to lock the database for the migrations. Default is 0.
 
 ### log_queries
 
@@ -1636,6 +1651,11 @@ For more information about screenshots, refer to [Images in notifications]({{< r
 ### capture
 
 Enable screenshots in notifications. This option requires a remote HTTP image rendering service. Please see `[rendering]` for further configuration options.
+
+### capture_timeout
+
+The timeout for capturing screenshots. If a screenshot cannot be captured within the timeout then the notification is sent without a screenshot.
+The maximum duration is 30 seconds. This timeout should be less than the minimum Interval of all Evaluation Groups to avoid back pressure on alert rule evaluation.
 
 ### max_concurrent_screenshots
 

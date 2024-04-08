@@ -11,11 +11,11 @@
     "url": "https://github.com/grafana/grafana.git",
     "directory": "packages/grafana-icons"
   },
+  "type": "module",
   "main": "src/index.ts",
   "types": "src/index.ts",
   "publishConfig": {
     "main": "dist/index.js",
-    "module": "dist/index.js",
     "types": "dist/index.d.ts",
     "access": "public"
   },
@@ -27,7 +27,7 @@
   ],
   "scripts": {
     "clean": "rimraf ./dist ./compiled ./package.tgz ./src/icons-gen",
-    "generate": "yarn clean && npx @svgr/cli ./svg && mv ./src/icons-gen/index.ts ./src",
+    "generate": "yarn clean && npx @svgr/cli ./svg --silent && mv ./src/icons-gen/index.ts ./src",
     "typecheck": "tsc --emitDeclarationOnly false --noEmit",
     "lint": "eslint --ext .ts,.tsx ./src",
     "prettier:check": "prettier --check --list-different=false --log-level=warn \"**/*.{ts,tsx,scss,md,mdx,json}\"",
@@ -42,9 +42,9 @@
     "@svgr/plugin-jsx": "^8.1.0",
     "@svgr/plugin-prettier": "^8.1.0",
     "@svgr/plugin-svgo": "^8.1.0",
-    "@types/node": "20.11.30",
-    "@types/react": "18.2.67",
-    "@types/react-dom": "18.2.22",
+    "@types/node": "20.12.2",
+    "@types/react": "18.2.74",
+    "@types/react-dom": "18.2.23",
     "esbuild": "0.18.12",
     "prettier": "3.2.5",
     "react": "18.2.0",

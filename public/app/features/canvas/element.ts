@@ -5,6 +5,7 @@ import { PanelOptionsSupplier } from '@grafana/data/src/panel/PanelPlugin';
 import { ColorDimensionConfig, ScaleDimensionConfig } from '@grafana/schema';
 import { config } from 'app/core/config';
 
+import { LineStyleConfig } from '../../plugins/panel/canvas/editor/LineStyleEditor';
 import { DimensionContext } from '../dimensions';
 
 import { BackgroundConfig, Constraint, LineConfig, Placement, StandardEditorConfig } from './types';
@@ -56,8 +57,9 @@ export interface CanvasConnection {
   path: ConnectionPath;
   color?: ColorDimensionConfig;
   size?: ScaleDimensionConfig;
-  lineStyle?: string;
+  lineStyle?: LineStyleConfig;
   vertices?: ConnectionCoordinates[];
+  radius?: ScaleDimensionConfig;
   direction?: ConnectionDirection;
   // See https://github.com/anseki/leader-line#options for more examples of more properties
 }

@@ -84,12 +84,6 @@ var (
 			AllowSelfServe: true,
 		},
 		{
-			Name:        "migrationLocking",
-			Description: "Lock database during migrations",
-			Stage:       FeatureStagePublicPreview,
-			Owner:       grafanaBackendPlatformSquad,
-		},
-		{
 			Name:        "storage",
 			Description: "Configurable storage for dashboards, datasources, and resources",
 			Stage:       FeatureStageExperimental,
@@ -160,6 +154,13 @@ var (
 			Owner:        grafanaDatavizSquad,
 		},
 		{
+			Name:         "autoMigrateXYChartPanel",
+			Description:  "Migrate old XYChart panel to new XYChart2 model",
+			Stage:        FeatureStagePublicPreview,
+			FrontendOnly: true,
+			Owner:        grafanaDatavizSquad,
+		},
+		{
 			Name:              "disableAngular",
 			Description:       "Dynamic flag to disable angular at runtime. The preferred method is to set `angular_support_enabled` to `false` in the [security] settings, which allows you to change the state at runtime.",
 			Stage:             FeatureStagePublicPreview,
@@ -174,14 +175,6 @@ var (
 			FrontendOnly:      true,
 			Owner:             grafanaDatavizSquad,
 			HideFromAdminPage: true,
-		},
-		{
-			Name:           "newVizTooltips",
-			Description:    "New visualizations tooltips UX",
-			Stage:          FeatureStagePublicPreview,
-			FrontendOnly:   true,
-			Owner:          grafanaDatavizSquad,
-			AllowSelfServe: false,
 		},
 		{
 			Name:         "scenes",
@@ -867,6 +860,13 @@ var (
 			Owner:        grafanaObservabilityMetricsSquad,
 		},
 		{
+			Name:         "prometheusCodeModeMetricNamesSearch",
+			Description:  "Enables search for metric names in Code Mode, to improve performance when working with an enormous number of metric names",
+			FrontendOnly: true,
+			Stage:        FeatureStageExperimental,
+			Owner:        grafanaObservabilityMetricsSquad,
+		},
+		{
 			Name:         "addFieldFromCalculationStatFunctions",
 			Description:  "Add cumulative and window functions to the add field from calculation transformation",
 			Stage:        FeatureStagePublicPreview,
@@ -982,9 +982,10 @@ var (
 		{
 			Name:         "alertingSimplifiedRouting",
 			Description:  "Enables users to easily configure alert notifications by specifying a contact point directly when editing or creating an alert rule",
-			Stage:        FeatureStagePublicPreview,
+			Stage:        FeatureStageGeneralAvailability,
 			FrontendOnly: false,
 			Owner:        grafanaAlertingSquad,
+			Expression:   "true", // enabled by default
 		},
 		{
 			Name:         "logRowsPopoverMenu",
@@ -1154,6 +1155,14 @@ var (
 			Expression:   "true", // enabled by default
 		},
 		{
+			Name:              "authAPIAccessTokenAuth",
+			Description:       "Enables the use of Auth API access tokens for authentication",
+			Stage:             FeatureStageExperimental,
+			Owner:             identityAccessTeam,
+			HideFromDocs:      true,
+			HideFromAdminPage: true,
+		},
+		{
 			Name:              "scopeFilters",
 			Description:       "Enables the use of scope filters in Grafana",
 			FrontendOnly:      false,
@@ -1171,6 +1180,39 @@ var (
 			Owner:             identityAccessTeam,
 			HideFromDocs:      true,
 			HideFromAdminPage: true,
+		},
+		{
+			Name:         "usePrometheusFrontendPackage",
+			Description:  "Use the @grafana/prometheus frontend package in core Prometheus.",
+			Stage:        FeatureStageExperimental,
+			FrontendOnly: true,
+			Owner:        grafanaObservabilityMetricsSquad,
+		},
+		{
+			Name:              "oauthRequireSubClaim",
+			Description:       "Require that sub claims is present in oauth tokens.",
+			Stage:             FeatureStageExperimental,
+			Owner:             identityAccessTeam,
+			HideFromDocs:      true,
+			HideFromAdminPage: true,
+		},
+		{
+			Name:              "newDashboardWithFiltersAndGroupBy",
+			Description:       "Enables filters and group by variables on all new dashboards. Variables are added only if default data source supports filtering.",
+			Stage:             FeatureStageExperimental,
+			Owner:             grafanaDashboardsSquad,
+			AllowSelfServe:    false,
+			HideFromDocs:      true,
+			HideFromAdminPage: true,
+		},
+		{
+			Name:           "cloudWatchNewLabelParsing",
+			Description:    "Updates CloudWatch label parsing to be more accurate",
+			Stage:          FeatureStageGeneralAvailability,
+			Expression:     "true", // enabled by default
+			Owner:          awsDatasourcesSquad,
+			FrontendOnly:   false,
+			AllowSelfServe: false,
 		},
 	}
 )

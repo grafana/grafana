@@ -27,7 +27,6 @@ export interface FeatureToggles {
   publicDashboardsScene?: boolean;
   lokiExperimentalStreaming?: boolean;
   featureHighlights?: boolean;
-  migrationLocking?: boolean;
   storage?: boolean;
   correlations?: boolean;
   exploreContentOutline?: boolean;
@@ -38,9 +37,9 @@ export interface FeatureToggles {
   autoMigratePiechartPanel?: boolean;
   autoMigrateWorldmapPanel?: boolean;
   autoMigrateStatPanel?: boolean;
+  autoMigrateXYChartPanel?: boolean;
   disableAngular?: boolean;
   canvasPanelNesting?: boolean;
-  newVizTooltips?: boolean;
   scenes?: boolean;
   disableSecretsCompatibility?: boolean;
   logRequestsInstrumentedAsUnknown?: boolean;
@@ -134,6 +133,7 @@ export interface FeatureToggles {
   panelTitleSearchInV1?: boolean;
   managedPluginsInstall?: boolean;
   prometheusPromQAIL?: boolean;
+  prometheusCodeModeMetricNamesSearch?: boolean;
   addFieldFromCalculationStatFunctions?: boolean;
   alertmanagerRemoteSecondary?: boolean;
   alertmanagerRemotePrimary?: boolean;
@@ -173,6 +173,11 @@ export interface FeatureToggles {
   expressionParser?: boolean;
   groupByVariable?: boolean;
   betterPageScrolling?: boolean;
+  authAPIAccessTokenAuth?: boolean;
   scopeFilters?: boolean;
   ssoSettingsSAML?: boolean;
+  usePrometheusFrontendPackage?: boolean;
+  oauthRequireSubClaim?: boolean;
+  newDashboardWithFiltersAndGroupBy?: boolean;
+  cloudWatchNewLabelParsing?: boolean;
 }

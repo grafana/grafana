@@ -13,8 +13,8 @@ import {
   TimeRange,
   TimeZone,
 } from '@grafana/data';
-import { VizLegendOptions } from '@grafana/schema';
-import { Themeable2, PanelContextRoot, VizLayout } from '@grafana/ui';
+import { DashboardCursorSync, VizLegendOptions } from '@grafana/schema';
+import { Themeable2, VizLayout } from '@grafana/ui';
 import { UPlotChart } from '@grafana/ui/src/components/uPlot/Plot';
 import { AxisProps } from '@grafana/ui/src/components/uPlot/config/UPlotAxisBuilder';
 import { Renderers, UPlotConfigBuilder } from '@grafana/ui/src/components/uPlot/config/UPlotConfigBuilder';
@@ -49,6 +49,7 @@ export interface GraphNGProps extends Themeable2 {
   renderLegend: (config: UPlotConfigBuilder) => React.ReactElement | null;
   replaceVariables: InterpolateFunction;
   dataLinkPostProcessor?: DataLinkPostProcessor;
+  cursorSync?: DashboardCursorSync;
 
   /**
    * needed for propsToDiff to re-init the plot & config
@@ -86,7 +87,6 @@ export interface GraphNGState {
  * "Time as X" core component, expects ascending x
  */
 export class GraphNG extends Component<GraphNGProps, GraphNGState> {
-  static contextType = PanelContextRoot;
   private plotInstance: React.RefObject<uPlot>;
 
   constructor(props: GraphNGProps) {
@@ -106,14 +106,14 @@ export class GraphNG extends Component<GraphNGProps, GraphNGState> {
 
     const preparePlotFrameFn = preparePlotFrame ?? defaultPreparePlotFrame;
 
-    const matchY = fieldMatchers.get(FieldMatcherID.byTypes).get(new Set([FieldType.number, FieldType.enum]));
+    const matchYDefault = fieldMatchers.get(FieldMatcherID.byTypes).get(new Set([FieldType.number, FieldType.enum]));
 
     // if there are data links, we have to keep all fields so they're index-matched, then filter out dimFields.y
     const withLinks = frames.some((frame) => frame.fields.some((field) => (field.config.links?.length ?? 0) > 0));
 
     const dimFields = fields ?? {
       x: fieldMatchers.get(FieldMatcherID.firstTimeField).get({}),
-      y: withLinks ? () => true : matchY,
+      y: withLinks ? () => true : matchYDefault,
     };
 
     const alignedFrame = preparePlotFrameFn(frames, dimFields, props.timeRange);
@@ -150,7 +150,7 @@ export class GraphNG extends Component<GraphNGProps, GraphNGState> {
         // filter join field and dimFields.y
         alignedFrameFinal = {
           ...alignedFrame,
-          fields: alignedFrame.fields.filter((field, i) => i === 0 || matchY(field, alignedFrame, [alignedFrame])),
+          fields: alignedFrame.fields.filter((field, i) => i === 0 || dimFields.y(field, alignedFrame, [alignedFrame])),
         };
       }
 
@@ -173,17 +173,23 @@ export class GraphNG extends Component<GraphNGProps, GraphNGState> {
   }
 
   componentDidUpdate(prevProps: GraphNGProps) {
-    const { frames, structureRev, timeZone, propsToDiff } = this.props;
+    const { frames, structureRev, timeZone, cursorSync, propsToDiff } = this.props;
 
     const propsChanged = !sameProps(prevProps, this.props, propsToDiff);
 
-    if (frames !== prevProps.frames || propsChanged || timeZone !== prevProps.timeZone) {
+    if (
+      frames !== prevProps.frames ||
+      propsChanged ||
+      timeZone !== prevProps.timeZone ||
+      cursorSync !== prevProps.cursorSync
+    ) {
       let newState = this.prepState(this.props, false);
 
       if (newState) {
         const shouldReconfig =
           this.state.config === undefined ||
           timeZone !== prevProps.timeZone ||
+          cursorSync !== prevProps.cursorSync ||
           structureRev !== prevProps.structureRev ||
           !structureRev ||
           propsChanged;

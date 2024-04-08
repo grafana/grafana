@@ -6,13 +6,14 @@ import (
 	"encoding/pem"
 	"fmt"
 
-	jose "github.com/go-jose/go-jose/v3"
+	"github.com/go-jose/go-jose/v3"
 )
 
 var rsaKeys [3]*rsa.PrivateKey
 var jwKeys [3]jose.JSONWebKey
 var jwksPublic jose.JSONWebKeySet
 
+// #nosec G101
 const rsaKeysPEM = `
 -----BEGIN RSA PRIVATE KEY-----
 MIIEpAIBAAKCAQEA0vKKKQzRHxtnvgvScOvZW2lIBiZ0YBN8ZwAfQdpEQy2w7qAT

@@ -4,7 +4,7 @@ import { connect, ConnectedProps } from 'react-redux';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { selectors as e2eSelectors } from '@grafana/e2e-selectors/src';
-import { LinkButton, RadioButtonGroup, useStyles2, FilterInput } from '@grafana/ui';
+import { LinkButton, RadioButtonGroup, useStyles2, FilterInput, EmptyState } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
 import { contextSrv } from 'app/core/core';
 
@@ -40,6 +40,7 @@ const mapStateToProps = (state: StoreState) => ({
   totalPages: state.userListAdmin.totalPages,
   page: state.userListAdmin.page,
   filters: state.userListAdmin.filters,
+  isLoading: state.userListAdmin.isLoading,
 });
 
 const connector = connect(mapStateToProps, mapDispatchToProps);
@@ -60,6 +61,7 @@ const UserListAdminPageUnConnected = ({
   page,
   changePage,
   changeSort,
+  isLoading,
 }: Props) => {
   const styles = useStyles2(getStyles);
 
@@ -96,14 +98,18 @@ const UserListAdminPageUnConnected = ({
           )}
         </div>
       </div>
-      <UsersTable
-        users={users}
-        showPaging={showPaging}
-        totalPages={totalPages}
-        onChangePage={changePage}
-        currentPage={page}
-        fetchData={changeSort}
-      />
+      {!isLoading && users.length === 0 ? (
+        <EmptyState variant="not-found" />
+      ) : (
+        <UsersTable
+          users={users}
+          showPaging={showPaging}
+          totalPages={totalPages}
+          onChangePage={changePage}
+          currentPage={page}
+          fetchData={changeSort}
+        />
+      )}
     </Page.Contents>
   );
 };
