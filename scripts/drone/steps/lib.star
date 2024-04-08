@@ -102,7 +102,7 @@ def clone_enterprise_step_pr(source = "${DRONE_COMMIT}", target = "main", canFai
     if isPromote:
         check = []
     else:
-        packages += ["python3", "pip"]
+        packages += ["python3", "py3-pip"]
         pip_cmd += ["pip install requests"]
         check = [
             """python -c '

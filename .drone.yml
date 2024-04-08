@@ -136,7 +136,7 @@ steps:
   image: node:20.9.0-alpine
   name: betterer-frontend
 - commands:
-  - apk add --update curl jq bash python3 pip
+  - apk add --update curl jq bash python3 py3-pip
   - pip install requests
   - "python -c '\nfrom datetime import datetime, timezone\nimport requests\nimport
     os\nimport sys\nimport time\n\ndef is_fork(pr):\n\tprint(f'Checking if PR {pr}
@@ -213,7 +213,7 @@ platform:
 services: []
 steps:
 - commands:
-  - apk add --update curl jq bash python3 pip
+  - apk add --update curl jq bash python3 py3-pip
   - pip install requests
   - "python -c '\nfrom datetime import datetime, timezone\nimport requests\nimport
     os\nimport sys\nimport time\n\ndef is_fork(pr):\n\tprint(f'Checking if PR {pr}
@@ -317,7 +317,7 @@ platform:
 services: []
 steps:
 - commands:
-  - apk add --update curl jq bash python3 pip
+  - apk add --update curl jq bash python3 py3-pip
   - pip install requests
   - "python -c '\nfrom datetime import datetime, timezone\nimport requests\nimport
     os\nimport sys\nimport time\n\ndef is_fork(pr):\n\tprint(f'Checking if PR {pr}
@@ -450,7 +450,7 @@ steps:
   image: golang:1.21.8-alpine
   name: compile-build-cmd
 - commands:
-  - apk add --update curl jq bash python3 pip
+  - apk add --update curl jq bash python3 py3-pip
   - pip install requests
   - "python -c '\nfrom datetime import datetime, timezone\nimport requests\nimport
     os\nimport sys\nimport time\n\ndef is_fork(pr):\n\tprint(f'Checking if PR {pr}
@@ -940,7 +940,7 @@ services:
   name: memcached
 steps:
 - commands:
-  - apk add --update curl jq bash python3 pip
+  - apk add --update curl jq bash python3 py3-pip
   - pip install requests
   - "python -c '\nfrom datetime import datetime, timezone\nimport requests\nimport
     os\nimport sys\nimport time\n\ndef is_fork(pr):\n\tprint(f'Checking if PR {pr}
@@ -1294,7 +1294,7 @@ platform:
 services: []
 steps:
 - commands:
-  - apk add --update curl jq bash python3 pip
+  - apk add --update curl jq bash python3 py3-pip
   - pip install requests
   - "python -c '\nfrom datetime import datetime, timezone\nimport requests\nimport
     os\nimport sys\nimport time\n\ndef is_fork(pr):\n\tprint(f'Checking if PR {pr}
@@ -5001,6 +5001,6 @@ kind: secret
 name: gcr_credentials
 ---
 kind: signature
-hmac: 7e99637b60ab0122eb442065698be52023c4700393393a5a07f76844ab193799
+hmac: d41f0ef7541a036c15bc0d706272cdcbe4a3ef6ac0f817dfa6c0870f3c3050b5
 
 ...
