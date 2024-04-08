@@ -84,11 +84,11 @@ func CopyWithReqContext(ctx context.Context) context.Context {
 // Middleware provides a middleware to initialize the request context.
 func (h *ContextHandler) Middleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		ctx, span := h.tracer.Start(r.Context(), "Auth - Middleware")
-		defer span.End() // this will span to next handlers as well
+		ctx := r.Context()
+		_, span := h.tracer.Start(ctx, "Auth - Middleware")
 
 		reqContext := &contextmodel.ReqContext{
-			Context: web.FromContext(ctx), // Extract web context from context (no knowledge of the trace)
+			Context: web.FromContext(ctx),
 			SignedInUser: &user.SignedInUser{
 				Permissions: map[int64]map[string][]string{},
 			},
@@ -111,7 +111,9 @@ func (h *ContextHandler) Middleware(next http.Handler) http.Handler {
 			reqContext.Logger = reqContext.Logger.New("traceID", traceID)
 		}
 
-		identity, err := h.authnService.Authenticate(reqContext.Req.Context(), &authn.Request{HTTPRequest: reqContext.Req, Resp: reqContext.Resp})
+		ctx = trace.ContextWithSpan(reqContext.Req.Context(), span)
+
+		identity, err := h.authnService.Authenticate(ctx, &authn.Request{HTTPRequest: reqContext.Req, Resp: reqContext.Resp})
 		if err != nil {
 			// Hack: set all errors on LookupTokenErr, so we can check it in auth middlewares
 			reqContext.LookupTokenErr = err
@@ -133,6 +135,9 @@ func (h *ContextHandler) Middleware(next http.Handler) http.Handler {
 		if h.Cfg.IDResponseHeaderEnabled && reqContext.SignedInUser != nil {
 			reqContext.Resp.Before(h.addIDHeaderEndOfRequestFunc(reqContext.SignedInUser))
 		}
+
+		// End the span to make next handlers not wrapped within middleware span
+		span.End()
 
 		next.ServeHTTP(w, r)
 	})
