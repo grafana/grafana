@@ -87,9 +87,9 @@ To add the contact point and integration you created to your default notificatio
 1. Change the default policy to the contact point you created.
 1. Click **Update default policy**.
 
-{{<admonition type="note">}}
+{{% admonition type="note" %}}
 If you have more than one contact point, add a new child notification policy rather than edit the default one, so you can route specific alerts to one or mutiple email addresses.
-{{</admonition>}}
+{{% /admonition %}}
 
 {{% docs/reference %}}
 
