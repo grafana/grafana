@@ -32,11 +32,10 @@ export function LabelsFieldInForm({ onEditClick }: LabelsFieldInFormProps) {
         </Stack>
       </Stack>
       <Stack direction="row" gap={1} alignItems="center">
-        <LabelsInRule />
+        <LabelsInRule labels={labels} />
         {hasLabels ? (
-          <Button variant="secondary" type="button">
-            {' '}
-            Edit labels{' '}
+          <Button variant="secondary" type="button" onClick={onEditClick}>
+            Edit labels
           </Button>
         ) : (
           <Stack direction="row" gap={1}>

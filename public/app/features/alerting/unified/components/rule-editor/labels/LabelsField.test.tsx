@@ -22,6 +22,10 @@ const FormProviderWrapper = ({ children }: React.PropsWithChildren<{}>) => {
   const methods = useForm({ defaultValues: { labels } });
   return <FormProvider {...methods}>{children}</FormProvider>;
 };
+const SubFormProviderWrapper = ({ children }: React.PropsWithChildren<{}>) => {
+  const methods = useForm({ defaultValues: { labelsInSubform: labels } });
+  return <FormProvider {...methods}>{children}</FormProvider>;
+};
 
 function renderAlertLabels() {
   const store = configureStore({});
@@ -41,7 +45,7 @@ function renderLabelsWithSuggestions() {
     <Provider store={store}>
       <LabelsWithSuggestions dataSourceName="grafana" />
     </Provider>,
-    { wrapper: FormProviderWrapper }
+    { wrapper: SubFormProviderWrapper }
   );
 }
 

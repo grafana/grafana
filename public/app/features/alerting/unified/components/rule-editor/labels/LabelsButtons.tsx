@@ -1,9 +1,6 @@
 import React from 'react';
-import { UseFieldArrayAppend } from 'react-hook-form';
 
 import { Button } from '@grafana/ui';
-
-import { RuleFormValues } from '../../../types/rule-form';
 
 interface RemoveButtonProps {
   remove: (index?: number | number[] | undefined) => void;
@@ -26,20 +23,12 @@ export function RemoveButton({ remove, className, index }: RemoveButtonProps) {
 }
 
 interface AddButtonProps {
-  append: UseFieldArrayAppend<RuleFormValues, 'labels'>;
+  append: () => void;
   className: string;
 }
 export function AddButton({ append, className }: AddButtonProps) {
   return (
-    <Button
-      className={className}
-      icon="plus-circle"
-      type="button"
-      variant="secondary"
-      onClick={() => {
-        append({ key: '', value: '' });
-      }}
-    >
+    <Button className={className} icon="plus-circle" type="button" variant="secondary" onClick={append}>
       Add label
     </Button>
   );

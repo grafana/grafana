@@ -66,7 +66,7 @@ export const NotificationsStep = ({ alertUid }: NotificationsStepProps) => {
       {showLabelsEditor && (
         <LabelsEditorModal
           isOpen={showLabelsEditor}
-          onDismiss={() => setShowLabelsEditor(false)}
+          onClose={() => setShowLabelsEditor(false)}
           dataSourceName={dataSourceName}
         />
       )}

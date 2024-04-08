@@ -1,9 +1,9 @@
 import { css, cx } from '@emotion/css';
 import React, { FC, useCallback, useEffect, useMemo, useState } from 'react';
-import { Controller, useFieldArray, useFormContext } from 'react-hook-form';
+import { Controller, FormProvider, useFieldArray, useForm, useFormContext } from 'react-hook-form';
 
 import { GrafanaTheme2, SelectableValue } from '@grafana/data';
-import { Field, InlineLabel, Input, LoadingPlaceholder, Stack, Text, useStyles2 } from '@grafana/ui';
+import { Button, Field, InlineLabel, Input, LoadingPlaceholder, Space, Stack, Text, useStyles2 } from '@grafana/ui';
 import { useDispatch } from 'app/types';
 
 import { labelsApi } from '../../../api/labelsApi';
@@ -73,10 +73,11 @@ function mapLabelsToOptions(items: Iterable<string> = []): Array<SelectableValue
   return Array.from(items, (item) => ({ label: item, value: item }));
 }
 
-export const LabelsInRule = () => {
-  const { watch } = useFormContext<RuleFormValues>();
-  const labels = watch('labels');
+export interface LabelsInRuleProps {
+  labels: Array<{ key: string; value: string }>;
+}
 
+export const LabelsInRule = ({ labels }: LabelsInRuleProps) => {
   const labelsObj: Record<string, string> = labels.reduce((acc: Record<string, string>, label) => {
     if (label.key) {
       acc[label.key] = label.value;
@@ -86,21 +87,72 @@ export const LabelsInRule = () => {
 
   return <AlertLabels labels={labelsObj} />;
 };
+
+export type LabelsSubformValues = {
+  labelsInSubform: Array<{ key: string; value: string }>;
+};
+
+export interface LabelsSubFormProps {
+  dataSourceName: string;
+  onClose: () => void;
+}
+
+export function LabelsSubForm({ dataSourceName, onClose }: LabelsSubFormProps) {
+  const styles = useStyles2(getStyles);
+  // get initial values from the parent form
+  const { setValue, getValues } = useFormContext<RuleFormValues>();
+  const initialLabels = getValues('labels');
+
+  const onSave = (labels: LabelsSubformValues) => {
+    // Save the labels to the parent form
+    setValue('labels', labels.labelsInSubform);
+    onClose();
+  };
+  // default values for the subform are the initial labels
+  const defaultValues: LabelsSubformValues = useMemo(() => {
+    return { labelsInSubform: initialLabels };
+  }, [initialLabels]);
+  const formAPI = useForm<LabelsSubformValues>({ defaultValues });
+  return (
+    <FormProvider {...formAPI}>
+      <form onSubmit={formAPI.handleSubmit(onSave)}>
+        <Stack direction="column" gap={1} alignItems="center">
+          <LabelsInRule labels={formAPI.watch('labelsInSubform')} />
+          <Space v={0.5} />
+          <LabelsWithSuggestions dataSourceName={dataSourceName} />
+          <div className={styles.confirmButton}>
+            <Button type="button" variant="secondary" onClick={onClose}>
+              Cancel
+            </Button>
+            <Button type="submit">Confirm</Button>
+          </div>
+        </Stack>
+      </form>
+    </FormProvider>
+  );
+}
+
 /*
   We will suggest labels from two sources: existing alerts and ops labels.
   We only will suggest labels from ops if the grafana-labels-app plugin is installed
   This component is only used by the alert rule form.
   */
-export const LabelsWithSuggestions: FC<{ dataSourceName: string }> = ({ dataSourceName }) => {
+export interface LabelsWithSuggestionsProps {
+  dataSourceName: string;
+}
+export function LabelsWithSuggestions({ dataSourceName }: LabelsWithSuggestionsProps) {
   const styles = useStyles2(getStyles);
   const {
     control,
     watch,
     formState: { errors },
-  } = useFormContext<RuleFormValues>();
+  } = useFormContext<LabelsSubformValues>();
 
-  const labels = watch('labels');
-  const { fields, remove, append } = useFieldArray({ control, name: 'labels' });
+  const labelsInSubform = watch('labelsInSubform');
+  const { fields, remove, append } = useFieldArray({ control, name: 'labelsInSubform' });
+  const appendLabel = useCallback(() => {
+    append({ key: '', value: '' });
+  }, [append]);
 
   // check if the labels plugin is installed
   const { installed: labelsPluginInstalled = false, loading: loadingLabelsPlugin } = usePluginBridge(
@@ -209,14 +261,14 @@ export const LabelsWithSuggestions: FC<{ dataSourceName: string }> = ({ dataSour
                 <div className={cx(styles.flexRow, styles.centerAlignRow)}>
                   <Field
                     className={styles.labelInput}
-                    invalid={Boolean(errors.labels?.[index]?.key?.message)}
-                    error={errors.labels?.[index]?.key?.message}
-                    data-testid={`label-key-${index}`}
+                    invalid={Boolean(errors.labelsInSubform?.[index]?.key?.message)}
+                    error={errors.labelsInSubform?.[index]?.key?.message}
+                    data-testid={`labelsInSubform-key-${index}`}
                   >
                     <Controller
-                      name={`labels.${index}.key`}
+                      name={`labelsInSubform.${index}.key`}
                       control={control}
-                      rules={{ required: Boolean(labels[index]?.value) ? 'Required.' : false }}
+                      rules={{ required: Boolean(labelsInSubform[index]?.value) ? 'Required.' : false }}
                       render={({ field: { onChange, ref, ...rest } }) => {
                         return (
                           <AlertLabelDropdown
@@ -236,14 +288,14 @@ export const LabelsWithSuggestions: FC<{ dataSourceName: string }> = ({ dataSour
                   <InlineLabel className={styles.equalSign}>=</InlineLabel>
                   <Field
                     className={styles.labelInput}
-                    invalid={Boolean(errors.labels?.[index]?.value?.message)}
-                    error={errors.labels?.[index]?.value?.message}
-                    data-testid={`label-value-${index}`}
+                    invalid={Boolean(errors.labelsInSubform?.[index]?.value?.message)}
+                    error={errors.labelsInSubform?.[index]?.value?.message}
+                    data-testid={`labelsInSubform-value-${index}`}
                   >
                     <Controller
                       control={control}
-                      name={`labels.${index}.value`}
-                      rules={{ required: Boolean(labels[index]?.value) ? 'Required.' : false }}
+                      name={`labelsInSubform.${index}.value`}
+                      rules={{ required: Boolean(labelsInSubform[index]?.value) ? 'Required.' : false }}
                       render={({ field: { onChange, ref, ...rest } }) => {
                         return (
                           <AlertLabelDropdown
@@ -254,7 +306,7 @@ export const LabelsWithSuggestions: FC<{ dataSourceName: string }> = ({ dataSour
                               onChange(newValue.value);
                             }}
                             onOpenMenu={() => {
-                              setSelectedKey(labels[index].key);
+                              setSelectedKey(labelsInSubform[index].key);
                             }}
                             type="value"
                           />
@@ -268,12 +320,12 @@ export const LabelsWithSuggestions: FC<{ dataSourceName: string }> = ({ dataSour
               </div>
             );
           })}
-          <AddButton className={styles.addLabelButton} append={append} />
+          <AddButton className={styles.addLabelButton} append={appendLabel} />
         </Stack>
       )}
     </>
   );
-};
+}
 
 export const LabelsWithoutSuggestions: FC = () => {
   const styles = useStyles2(getStyles);
@@ -286,6 +338,9 @@ export const LabelsWithoutSuggestions: FC = () => {
 
   const labels = watch('labels');
   const { fields, remove, append } = useFieldArray({ control, name: 'labels' });
+  const appendLabel = useCallback(() => {
+    append({ key: '', value: '' });
+  }, [append]);
 
   return (
     <>
@@ -327,7 +382,7 @@ export const LabelsWithoutSuggestions: FC = () => {
           </div>
         );
       })}
-      <AddButton className={styles.addLabelButton} append={append} />
+      <AddButton className={styles.addLabelButton} append={appendLabel} />
     </>
   );
 };
@@ -399,6 +454,12 @@ const getStyles = (theme: GrafanaTheme2) => {
     }),
     labelsContainer: css({
       marginBottom: theme.spacing(3),
+    }),
+    confirmButton: css({
+      display: 'flex',
+      flexDirection: 'row',
+      gap: theme.spacing(1),
+      marginLeft: 'auto',
     }),
   };
 };
