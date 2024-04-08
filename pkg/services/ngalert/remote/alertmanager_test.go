@@ -38,7 +38,6 @@ import (
 
 // Valid Grafana Alertmanager configurations.
 const testGrafanaConfig = `{"template_files":{},"alertmanager_config":{"route":{"receiver":"grafana-default-email","group_by":["grafana_folder","alertname"]},"templates":null,"receivers":[{"name":"grafana-default-email","grafana_managed_receiver_configs":[{"uid":"","name":"some other name","type":"email","disableResolveMessage":false,"settings":{"addresses":"\u003cexample@email.com\u003e"},"secureSettings":null}]}]}}`
-const testGrafanaConfig2 = `{"template_files":{},"alertmanager_config":{"route":{"receiver":"test-email-receiver","group_by":["grafana_folder","alertname"]},"templates":null,"receivers":[{"name":"test-email-receiver","grafana_managed_receiver_configs":[{"uid":"","name":"test","type":"email","disableResolveMessage":false,"settings":{"addresses":"\u003cexample@email.com\u003e"},"secureSettings":null}]}]}}`
 const testGrafanaConfigWithSecret = `{"template_files":{},"alertmanager_config":{"route":{"receiver":"grafana-default-email","group_by":["grafana_folder","alertname"]},"templates":null,"receivers":[{"name":"grafana-default-email","grafana_managed_receiver_configs":[{"uid":"dde6ntuob69dtf","name":"WH","type":"webhook","disableResolveMessage":false,"settings":{"url":"http://localhost:8080","username":"test"},"secureSettings":{"password":"test"}}]}]}}`
 
 func TestMain(m *testing.M) {
@@ -132,7 +131,7 @@ func TestApplyConfig(t *testing.T) {
 	// The encrypted configuration should be different than the one we will send.
 	encryptedConfig, err := json.Marshal(c)
 	require.NoError(t, err)
-	require.NotEqual(t, testGrafanaConfig, encryptedConfig)
+	require.NotEqual(t, testGrafanaConfigWithSecret, encryptedConfig)
 
 	// ApplyConfig performs a readiness check at startup.
 	// A non-200 response should result in an error.
@@ -313,7 +312,7 @@ func TestIntegrationRemoteAlertmanagerConfiguration(t *testing.T) {
 	require.NoError(t, err)
 	encodedFullState := base64.StdEncoding.EncodeToString(fullState)
 
-	secretsService := secretsManager.SetupTestService(t, fakes.NewFakeSecretsStore())
+	secretsService := secretsManager.SetupTestService(t, database.ProvideSecretsStore(db.InitTestDB(t)))
 	m := metrics.NewRemoteAlertmanagerMetrics(prometheus.NewRegistry())
 	am, err := NewAlertmanager(cfg, fstore, secretsService.Decrypt, m)
 	require.NoError(t, err)
@@ -375,17 +374,29 @@ func TestIntegrationRemoteAlertmanagerConfiguration(t *testing.T) {
 	}
 
 	// `SaveAndApplyConfig` is called whenever a user manually changes the Alertmanager configuration.
-	// Calling this method should send the configuration to the remote Alertmanager.
+	// Calling this method should decrypt and send a configuration to the remote Alertmanager.
 	{
-		postableCfg, err := notifier.Load([]byte(testGrafanaConfig2))
+		postableCfg, err := notifier.Load([]byte(testGrafanaConfigWithSecret))
+		require.NoError(t, err)
+		err = notifier.EncryptReceiverConfigs(postableCfg.AlertmanagerConfig.Receivers, func(ctx context.Context, payload []byte) ([]byte, error) {
+			return secretsService.Encrypt(ctx, payload, secrets.WithoutScope())
+		})
+		require.NoError(t, err)
+
+		// The encrypted configuration should be different than the one we will send.
+		encryptedConfig, err := json.Marshal(postableCfg)
+		require.NoError(t, err)
+		require.NotEqual(t, testGrafanaConfigWithSecret, encryptedConfig)
+
+		// Call `SaveAndApplyConfig` with the encrypted configuration.
 		require.NoError(t, err)
 		require.NoError(t, am.SaveAndApplyConfig(ctx, postableCfg))
 
 		// Check that the configuration was uploaded to the remote Alertmanager.
 		config, err := am.mimirClient.GetGrafanaAlertmanagerConfig(ctx)
 		require.NoError(t, err)
-		require.Equal(t, testGrafanaConfig2, config.GrafanaAlertmanagerConfig)
-		require.Equal(t, fmt.Sprintf("%x", md5.Sum([]byte(testGrafanaConfig2))), config.Hash)
+		require.Equal(t, testGrafanaConfigWithSecret, config.GrafanaAlertmanagerConfig)
+		require.Equal(t, fmt.Sprintf("%x", md5.Sum([]byte(encryptedConfig))), config.Hash)
 		require.False(t, config.Default)
 	}
 

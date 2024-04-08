@@ -189,36 +189,15 @@ func (am *Alertmanager) CompareAndSendConfiguration(ctx context.Context, config 
 	}
 
 	// Decrypt the configuration before comparing.
-	fn := func(payload []byte) ([]byte, error) {
-		return am.decrypt(ctx, payload)
-	}
-	decrypted, err := c.Decrypt(fn)
-	if err != nil {
-		return err
-	}
-	rawDecrypted, err := json.Marshal(decrypted)
+	decrypted, err := am.decryptConfiguration(ctx, c)
 	if err != nil {
 		return err
 	}
 
-	// Send the configuration only if we need to.
-	if !am.shouldSendConfig(ctx, rawDecrypted) {
+	if !am.shouldSendConfig(ctx, decrypted) {
 		return nil
 	}
-
-	am.metrics.ConfigSyncsTotal.Inc()
-	if err := am.mimirClient.CreateGrafanaAlertmanagerConfig(
-		ctx,
-		string(rawDecrypted),
-		config.ConfigurationHash,
-		config.CreatedAt,
-		config.Default,
-	); err != nil {
-		am.metrics.ConfigSyncErrorsTotal.Inc()
-		return err
-	}
-	am.metrics.LastConfigSync.SetToCurrentTime()
-	return nil
+	return am.sendConfiguration(ctx, string(decrypted), config.ConfigurationHash, config.CreatedAt, config.Default)
 }
 
 // CompareAndSendState gets the Alertmanager's internal state and compares it with the remote Alertmanager's one.
@@ -240,20 +219,52 @@ func (am *Alertmanager) CompareAndSendState(ctx context.Context) error {
 	return nil
 }
 
-// SaveAndApplyConfig should forward the configuration to the remote Alertmanager.
+// SaveAndApplyConfig decrypts and sends a configuration to the remote Alertmanager.
 func (am *Alertmanager) SaveAndApplyConfig(ctx context.Context, cfg *apimodels.PostableUserConfig) error {
-	rawConfig, err := json.Marshal(cfg)
+	// Get the hash for the encrypted configuration.
+	rawCfg, err := json.Marshal(cfg)
 	if err != nil {
 		return err
 	}
+	hash := fmt.Sprintf("%x", md5.Sum(rawCfg))
 
-	return am.mimirClient.CreateGrafanaAlertmanagerConfig(
+	// Decrypt and send.
+	decrypted, err := am.decryptConfiguration(ctx, cfg)
+	if err != nil {
+		return err
+	}
+	return am.sendConfiguration(ctx, string(decrypted), hash, time.Now().Unix(), false)
+}
+
+// decryptConfiguration decrypts secure settings in receivers.
+func (am *Alertmanager) decryptConfiguration(ctx context.Context, cfg *apimodels.PostableUserConfig) ([]byte, error) {
+	fn := func(payload []byte) ([]byte, error) {
+		return am.decrypt(ctx, payload)
+	}
+	decrypted, err := cfg.Decrypt(fn)
+	if err != nil {
+		return nil, err
+	}
+
+	return json.Marshal(decrypted)
+}
+
+// sendConfiguration expects a decrypted configuration to send to the remote Alertmanager.
+// The hash should correspond to the encrypted configuration, like the hash we store in the DB.
+func (am *Alertmanager) sendConfiguration(ctx context.Context, rawConfig, hash string, createdAt int64, isDefault bool) error {
+	am.metrics.ConfigSyncsTotal.Inc()
+	if err := am.mimirClient.CreateGrafanaAlertmanagerConfig(
 		ctx,
-		string(rawConfig),
-		fmt.Sprintf("%x", md5.Sum(rawConfig)),
-		time.Now().Unix(),
-		false,
-	)
+		rawConfig,
+		hash,
+		createdAt,
+		isDefault,
+	); err != nil {
+		am.metrics.ConfigSyncErrorsTotal.Inc()
+		return err
+	}
+	am.metrics.LastConfigSync.SetToCurrentTime()
+	return nil
 }
 
 func (am *Alertmanager) SaveAndApplyDefaultConfig(ctx context.Context) error {
