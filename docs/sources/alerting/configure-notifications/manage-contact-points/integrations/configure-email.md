@@ -16,16 +16,15 @@ title: Configure email for Alerting
 weight: 300
 ---
 
-## Configure Email for Alerting
+## Configure email for Alerting
 
 Use the Grafana Alerting - email integration to send email notifications when your alerts are firing. An email is sent when an alert fires and when an alert gets resolved.
 
 ## Before you begin
 
-When utilizing Grafana OSS, enabling email notifications requires configuring [SMTP settings][smtp-settings] in the Grafana configuration settings.
-
+For Grafana OSS, you enable email notifications by first configuring [SMTP settings][smtp-settings] in the Grafana configuration settings.
 {{<admonition type="note">}}
-This section is for Grafana OSS only. For Grafana Cloud SMTP configuration is not required.
+This section is for Grafana OSS only. For Grafana Cloud, SMTP configuration is not required.
 {{</admonition>}}
 
 ### SMTP configuration
