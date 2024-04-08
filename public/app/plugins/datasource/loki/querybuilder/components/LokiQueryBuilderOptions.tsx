@@ -202,7 +202,12 @@ function getCollapsedInfo(
   }
 
   if (query.legendUrlFormat) {
-    let legendUrl = query.legendUrlFormat.length > 10 ? query.legendUrlFormat.slice(0,10) + "..." : query.legendUrlFormat 
+    let legendUrl = query.legendUrlFormat; 
+     
+    if (typeof legendUrl === 'string' && legendUrl.length > 10) {
+      legendUrl = legendUrl.slice(0, 10) + "...";
+    }
+
     items.push(`URL: ${legendUrl}`);
   }
 
