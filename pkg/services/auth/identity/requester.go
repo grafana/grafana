@@ -14,6 +14,7 @@ const (
 	NamespaceServiceAccount = "service-account"
 	NamespaceAnonymous      = "anonymous"
 	NamespaceRenderService  = "render"
+	NamespaceAccessPolicy   = "access-policy"
 )
 
 var ErrNotIntIdentifier = errors.New("identifier is not an int64")
@@ -31,6 +32,8 @@ type Requester interface {
 	// GetEmail returns the email of the active entity.
 	// Can be empty.
 	GetEmail() string
+	// IsEmailVerified returns if email is verified for entity.
+	IsEmailVerified() bool
 	// GetIsGrafanaAdmin returns true if the user is a server admin
 	GetIsGrafanaAdmin() bool
 	// GetLogin returns the login of the active entity

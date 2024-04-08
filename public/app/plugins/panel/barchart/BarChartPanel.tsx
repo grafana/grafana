@@ -1,25 +1,20 @@
-import React, { useMemo, useRef, useState } from 'react';
+import React, { useMemo, useRef } from 'react';
 
 import {
-  CartesianCoords2D,
   compareDataFrameStructures,
   DataFrame,
   Field,
   FieldColorModeId,
   FieldType,
-  getFieldDisplayName,
   PanelProps,
   TimeRange,
   VizOrientation,
 } from '@grafana/data';
-import { PanelDataErrorView, config } from '@grafana/runtime';
-import { SortOrder } from '@grafana/schema';
+import { PanelDataErrorView } from '@grafana/runtime';
 import {
   GraphGradientMode,
   measureText,
   PlotLegend,
-  Portal,
-  StackingMode,
   TooltipDisplayMode,
   UPlotConfigBuilder,
   UPLOT_AXIS_FONT_SIZE,
@@ -27,22 +22,16 @@ import {
   useTheme2,
   VizLayout,
   VizLegend,
-  VizTooltipContainer,
   TooltipPlugin2,
 } from '@grafana/ui';
-import { HoverEvent, addTooltipSupport } from '@grafana/ui/src/components/uPlot/config/addTooltipSupport';
 import { TooltipHoverMode } from '@grafana/ui/src/components/uPlot/plugins/TooltipPlugin2';
-import { CloseButton } from 'app/core/components/CloseButton/CloseButton';
 import { GraphNG, GraphNGProps, PropDiffFn } from 'app/core/components/GraphNG/GraphNG';
 import { getFieldLegendItem } from 'app/core/components/TimelineChart/utils';
-import { DataHoverView } from 'app/features/visualization/data-hover/DataHoverView';
 
 import { TimeSeriesTooltip } from '../timeseries/TimeSeriesTooltip';
 
 import { Options } from './panelcfg.gen';
 import { prepareBarChartDisplayValues, preparePlotConfigBuilder } from './utils';
-
-const TOOLTIP_OFFSET = 10;
 
 /**
  * @alpha
@@ -72,29 +61,6 @@ interface Props extends PanelProps<Options> {}
 export const BarChartPanel = ({ data, options, fieldConfig, width, height, timeZone, id, replaceVariables }: Props) => {
   const theme = useTheme2();
   const { dataLinkPostProcessor } = usePanelContext();
-
-  const oldConfig = useRef<UPlotConfigBuilder | undefined>(undefined);
-  const isToolTipOpen = useRef<boolean>(false);
-
-  const [hover, setHover] = useState<HoverEvent | undefined>(undefined);
-  const [coords, setCoords] = useState<{ viewport: CartesianCoords2D; canvas: CartesianCoords2D } | null>(null);
-  const [focusedSeriesIdx, setFocusedSeriesIdx] = useState<number | null>(null);
-  const [focusedPointIdx, setFocusedPointIdx] = useState<number | null>(null);
-  const [isActive, setIsActive] = useState<boolean>(false);
-  const [shouldDisplayCloseButton, setShouldDisplayCloseButton] = useState<boolean>(false);
-
-  const onCloseToolTip = () => {
-    isToolTipOpen.current = false;
-    setCoords(null);
-    setShouldDisplayCloseButton(false);
-  };
-
-  const onUPlotClick = () => {
-    isToolTipOpen.current = !isToolTipOpen.current;
-
-    // Linking into useState required to re-render tooltip
-    setShouldDisplayCloseButton(isToolTipOpen.current);
-  };
 
   const frame0Ref = useRef<DataFrame>();
   const colorByFieldRef = useRef<Field>();
@@ -157,52 +123,9 @@ export const BarChartPanel = ({ data, options, fieldConfig, width, height, timeZ
     );
   }
 
-  const renderTooltip = (alignedFrame: DataFrame, seriesIdx: number | null, datapointIdx: number | null) => {
-    const field = seriesIdx == null ? null : alignedFrame.fields[seriesIdx];
-    if (field) {
-      const disp = getFieldDisplayName(field, alignedFrame);
-      seriesIdx = info.aligned.fields.findIndex((f) => disp === getFieldDisplayName(f, info.aligned));
-    }
-    const tooltipMode =
-      options.fullHighlight && options.stacking !== StackingMode.None ? TooltipDisplayMode.Multi : options.tooltip.mode;
-
-    const tooltipSort = options.tooltip.mode === TooltipDisplayMode.Multi ? options.tooltip.sort : SortOrder.None;
-
-    return (
-      <>
-        {shouldDisplayCloseButton && (
-          <div
-            style={{
-              width: '100%',
-              display: 'flex',
-              justifyContent: 'flex-end',
-            }}
-          >
-            <CloseButton
-              onClick={onCloseToolTip}
-              style={{
-                position: 'relative',
-                top: 'auto',
-                right: 'auto',
-                marginRight: 0,
-              }}
-            />
-          </div>
-        )}
-        <DataHoverView
-          data={info.aligned}
-          rowIndex={datapointIdx}
-          columnIndex={seriesIdx}
-          sortOrder={tooltipSort}
-          mode={tooltipMode}
-        />
-      </>
-    );
-  };
-
-  // JEV: REFACTOR: also uses this method in timeseries
   const renderLegend = (config: UPlotConfigBuilder) => {
     const { legend } = options;
+
     if (!config || legend.showLegend === false) {
       return null;
     }
@@ -310,8 +233,6 @@ export const BarChartPanel = ({ data, options, fieldConfig, width, height, timeZ
     });
   };
 
-  const showNewVizTooltips = Boolean(config.featureToggles.newVizTooltips);
-
   return (
     <GraphNG
       theme={theme}
@@ -332,7 +253,7 @@ export const BarChartPanel = ({ data, options, fieldConfig, width, height, timeZ
       dataLinkPostProcessor={dataLinkPostProcessor}
     >
       {(config) => {
-        if (showNewVizTooltips && options.tooltip.mode !== TooltipDisplayMode.None) {
+        if (options.tooltip.mode !== TooltipDisplayMode.None) {
           return (
             <TooltipPlugin2
               config={config}
@@ -353,42 +274,11 @@ export const BarChartPanel = ({ data, options, fieldConfig, width, height, timeZ
                 );
               }}
               maxWidth={options.tooltip.maxWidth}
-              maxHeight={options.tooltip.maxHeight}
             />
           );
         }
 
-        if (!showNewVizTooltips && oldConfig.current !== config) {
-          oldConfig.current = addTooltipSupport({
-            config,
-            onUPlotClick,
-            setFocusedSeriesIdx,
-            setFocusedPointIdx,
-            setCoords,
-            setHover,
-            isToolTipOpen,
-            isActive,
-            setIsActive,
-          });
-        }
-
-        if (options.tooltip.mode === TooltipDisplayMode.None) {
-          return null;
-        }
-
-        return (
-          <Portal>
-            {hover && coords && focusedSeriesIdx && (
-              <VizTooltipContainer
-                position={{ x: coords.viewport.x, y: coords.viewport.y }}
-                offset={{ x: TOOLTIP_OFFSET, y: TOOLTIP_OFFSET }}
-                allowPointerEvents={isToolTipOpen.current}
-              >
-                {renderTooltip(info.viz[0], focusedSeriesIdx, focusedPointIdx)}
-              </VizTooltipContainer>
-            )}
-          </Portal>
-        );
+        return null;
       }}
     </GraphNG>
   );
