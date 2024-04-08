@@ -13,6 +13,10 @@ export function PluginIntegrations() {
     limitPerPlugin: 1,
   });
 
+  if (extensions.length === 0) {
+    return null;
+  }
+
   return (
     <div className={styles.container}>
       <Stack gap={1} wrap="wrap" direction="column">
