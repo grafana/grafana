@@ -114,12 +114,6 @@ func parseLabels(cloudwatchLabel string, query *models.CloudWatchQuery) (string,
 	return splitLabels[0], labels
 }
 
-func getLabelsForMetricQuery(label string) data.Labels {
-	labels := data.Labels{}
-	labels["Series"] = label
-	return labels
-}
-
 func getLabels(cloudwatchLabel string, query *models.CloudWatchQuery) data.Labels {
 	dims := make([]string, 0, len(query.Dimensions))
 	for k := range query.Dimensions {
