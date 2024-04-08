@@ -21,14 +21,9 @@ weight: -42
 
 # What’s new in Grafana v11.0-preview
 
-<<<<<<< HEAD
-Welcome to Grafana 11.0-preview! This preview release contains several improvements, most notably, the ability to explore your metrics and logs without queries. We've taken strides to improve the dashboard experience with subfolders becoming generally available and the addition of enhanced flowcharting capabilities. We've also migrated the dashboard viewing experience so that it's using our Scenes library.
-=======
 Welcome to Grafana 11.0-preview! This release contains some major improvements: most notably, the ability to explore your Prometheus metrics and loki logs without writing any PromQL or LogQL, using Explore Metrics and Explore Logs. The dashboard experience is better than ever with Edit mode for dashboards, AI-generated dashboard names and descriptions, and general availability for subfolders. You can also take advantage of improvements to the Canvas and Table panels, new Transformations, a revamp of the Alert Rule page, and more.
 
 Why "preview?" The Grafana 11.0 stable release is planned for this May. This is an early release to coincide with [Grafanacon 2024](https://grafana.com/about/events/grafanacon/2024/), so that you can try the new functionality early. To understand the differences between preview and GA releases, review the [release life cycle](https://grafana.com/docs/release-life-cycle/).
-
-> > > > > > > 3865b8c980a (Docs: Re-order features and update intro in Grafana 11.0-preview What's new (#85702))
 
 For even more detail about all the changes in this release, refer to the [changelog](https://github.com/grafana/grafana/blob/main/CHANGELOG.md). For the specific steps we recommend when you upgrade to v11.0-preview, check out our [Upgrade Guide](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/upgrade-guide/upgrade-v11.0/).
 
