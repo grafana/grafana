@@ -21,7 +21,7 @@ weight: -42
 
 # What’s new in Grafana v11.0-preview
 
-Welcome to Grafana 11.0-preview! This preview release contains some notable improvements, most notably, the ability to explore your metrics without queries. We've taken strides to improve the dashboard experience with subfolders becoming generally available and the addition of enhanced flowcharting capabilities. We've also migrated the dashboard viewing experience so that it's using our Scenes library.
+Welcome to Grafana 11.0-preview! This preview release contains several improvements, most notably, the ability to explore your metrics and logs without queries. We've taken strides to improve the dashboard experience with subfolders becoming generally available and the addition of enhanced flowcharting capabilities. We've also migrated the dashboard viewing experience so that it's using our Scenes library.
 
 For even more detail about all the changes in this release, refer to the [changelog](https://github.com/grafana/grafana/blob/main/CHANGELOG.md). For the specific steps we recommend when you upgrade to v11.0-preview, check out our [Upgrade Guide](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/upgrade-guide/upgrade-v11.0/).
 
