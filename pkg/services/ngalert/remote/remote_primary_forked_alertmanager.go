@@ -56,7 +56,13 @@ func (fam *RemotePrimaryForkedAlertmanager) CreateSilence(ctx context.Context, s
 }
 
 func (fam *RemotePrimaryForkedAlertmanager) DeleteSilence(ctx context.Context, id string) error {
-	return fam.remote.DeleteSilence(ctx, id)
+	if err := fam.remote.DeleteSilence(ctx, id); err != nil {
+		return err
+	}
+	if err := fam.internal.DeleteSilence(ctx, id); err != nil {
+		fam.log.Error("Error deleting silence in the internal Alertmanager", "err", err, "id", id)
+	}
+	return nil
 }
 
 func (fam *RemotePrimaryForkedAlertmanager) GetSilence(ctx context.Context, id string) (apimodels.GettableSilence, error) {
