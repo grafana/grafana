@@ -35,61 +35,65 @@ export class DashboardSceneChangeTracker {
         Object.prototype.hasOwnProperty.call(payload.partialUpdate, 'intervals') ||
         Object.prototype.hasOwnProperty.call(payload.partialUpdate, 'refresh')
       ) {
-        this.detectChanges();
+        this.detectSaveModelChanges();
       }
     }
     if (payload.changedObject instanceof behaviors.CursorSync) {
-      this.detectChanges();
+      this.detectSaveModelChanges();
     }
     if (payload.changedObject instanceof SceneDataLayerSet) {
-      this.detectChanges();
+      this.detectSaveModelChanges();
     }
     if (payload.changedObject instanceof DashboardGridItem) {
-      this.detectChanges();
+      this.detectSaveModelChanges();
     }
     if (payload.changedObject instanceof SceneGridLayout) {
-      this.detectChanges();
+      this.detectSaveModelChanges();
     }
     if (payload.changedObject instanceof DashboardScene) {
       if (Object.keys(payload.partialUpdate).some((key) => PERSISTED_PROPS.includes(key))) {
-        this.detectChanges();
+        this.detectSaveModelChanges();
       }
     }
     if (payload.changedObject instanceof SceneTimeRange) {
-      this.detectChanges();
+      this.detectSaveModelChanges();
     }
     if (payload.changedObject instanceof DashboardControls) {
       if (Object.prototype.hasOwnProperty.call(payload.partialUpdate, 'hideTimeControls')) {
-        this.detectChanges();
+        this.detectSaveModelChanges();
       }
     }
     if (payload.changedObject instanceof SceneVariableSet) {
-      this.detectChanges();
+      this.detectSaveModelChanges();
     }
     if (payload.changedObject instanceof DashboardAnnotationsDataLayer) {
       if (!Object.prototype.hasOwnProperty.call(payload.partialUpdate, 'data')) {
-        this.detectChanges();
+        this.detectSaveModelChanges();
       }
     }
     if (payload.changedObject instanceof behaviors.LiveNowTimer) {
-      this.detectChanges();
+      this.detectSaveModelChanges();
     }
     if (isSceneVariableInstance(payload.changedObject)) {
-      this.detectChanges();
+      this.detectSaveModelChanges();
     }
   }
 
-  private detectChanges() {
+  private detectSaveModelChanges() {
     this._changesWorker?.postMessage({
       changed: transformSceneToSaveModel(this._dashboard),
       initial: this._dashboard.getInitialSaveModel(),
     });
   }
 
+  private hasMetadataChanges() {
+    return this._dashboard.state.meta.folderUid !== this._dashboard.getInitialState()?.meta.folderUid;
+  }
+
   private updateIsDirty(result: DashboardChangeInfo) {
     const { hasChanges } = result;
 
-    if (hasChanges) {
+    if (hasChanges || this.hasMetadataChanges()) {
       if (!this._dashboard.state.isDirty) {
         this._dashboard.setState({ isDirty: true });
       }

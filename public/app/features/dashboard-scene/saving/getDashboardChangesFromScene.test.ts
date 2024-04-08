@@ -44,6 +44,17 @@ describe('getDashboardChangesFromScene', () => {
     expect(result.diffCount).toBe(1);
   });
 
+  it('Can detect folder change', () => {
+    const dashboard = setup();
+
+    dashboard.state.meta.folderUid = 'folder-2';
+
+    const result = getDashboardChangesFromScene(dashboard, false);
+    expect(result.hasChanges).toBe(true);
+    expect(result.diffCount).toBe(0); // Diff count is 0 because the diff contemplate only the model
+    expect(result.hasFolderChanges).toBe(true);
+  });
+
   it('Can detect refresh changed', () => {
     const dashboard = setup();
 
