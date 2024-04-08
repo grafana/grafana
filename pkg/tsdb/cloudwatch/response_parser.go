@@ -2,6 +2,7 @@ package cloudwatch
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"regexp"
 	"sort"
@@ -12,6 +13,7 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/features"
+	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/kinds/dataquery"
 	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/models"
 )
 
@@ -114,6 +116,39 @@ func parseLabels(cloudwatchLabel string, query *models.CloudWatchQuery) (string,
 	return splitLabels[0], labels
 }
 
+type groupByExpression struct {
+	Property dataquery.QueryEditorProperty              `json:"property"`
+	Type     dataquery.QueryEditorGroupByExpressionType `json:"type"`
+}
+
+func getLabelsForMetricQuery(label string, query *models.CloudWatchQuery) data.Labels {
+	labels := data.Labels{}
+
+	if query.Sql.GroupBy == nil || len(query.Sql.GroupBy.Expressions) != 1 {
+		return labels
+	}
+
+	groupByExpressionJSON, err := json.Marshal(query.Sql.GroupBy.Expressions[0])
+	if err != nil {
+		return labels
+	}
+
+	groupBy := groupByExpression{}
+	err = json.Unmarshal(groupByExpressionJSON, &groupBy)
+	if err != nil {
+		return labels
+	}
+
+	key := "Series"
+	if groupBy.Property.Name != nil && query.Label == "" {
+		key = *groupBy.Property.Name
+	}
+
+	labels[key] = label
+
+	return labels
+}
+
 func getLabels(cloudwatchLabel string, query *models.CloudWatchQuery) data.Labels {
 	dims := make([]string, 0, len(query.Dimensions))
 	for k := range query.Dimensions {
@@ -195,7 +230,13 @@ func buildDataFrames(ctx context.Context, startTime time.Time, endTime time.Time
 
 		name := label
 		var labels data.Labels
-		if features.IsEnabled(ctx, features.FlagCloudWatchNewLabelParsing) {
+		if query.GetGetMetricDataAPIMode() == models.GMDApiModeSQLExpression {
+			metricQueryLabel := label
+			if hasStaticLabel {
+				metricQueryLabel = query.Label
+			}
+			labels = getLabelsForMetricQuery(metricQueryLabel, query)
+		} else if features.IsEnabled(ctx, features.FlagCloudWatchNewLabelParsing) {
 			name, labels = parseLabels(label, query)
 		} else {
 			labels = getLabels(label, query)
