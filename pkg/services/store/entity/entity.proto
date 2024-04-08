@@ -138,18 +138,6 @@ message ReadEntityRequest {
   bool with_status = 5;
 }
 
-//------------------------------------------------------
-// Make many read requests at once (by key+version)
-//------------------------------------------------------
-
-message BatchReadEntityRequest {
-  repeated ReadEntityRequest batch = 1;
-}
-
-message BatchReadEntityResponse {
-  repeated Entity results = 1;
-}
-
 //-----------------------------------------------
 // Create request/response
 //-----------------------------------------------
@@ -433,7 +421,6 @@ message EntityExternalReference {
 // The entity store provides a basic CRUD (+watch eventually) interface for generic entitys
 service EntityStore {
   rpc Read(ReadEntityRequest) returns (Entity);
-  rpc BatchRead(BatchReadEntityRequest) returns (BatchReadEntityResponse);
   rpc Create(CreateEntityRequest) returns (CreateEntityResponse);
   rpc Update(UpdateEntityRequest) returns (UpdateEntityResponse);
   rpc Delete(DeleteEntityRequest) returns (DeleteEntityResponse);

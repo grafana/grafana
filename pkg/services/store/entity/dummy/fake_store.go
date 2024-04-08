@@ -28,10 +28,6 @@ func (i fakeEntityStore) Read(ctx context.Context, r *entity.ReadEntityRequest) 
 	return nil, fmt.Errorf("unimplemented")
 }
 
-func (i fakeEntityStore) BatchRead(ctx context.Context, batchR *entity.BatchReadEntityRequest) (*entity.BatchReadEntityResponse, error) {
-	return nil, fmt.Errorf("unimplemented")
-}
-
 func (i fakeEntityStore) Delete(ctx context.Context, r *entity.DeleteEntityRequest) (*entity.DeleteEntityResponse, error) {
 	return nil, fmt.Errorf("unimplemented")
 }
