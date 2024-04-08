@@ -2996,8 +2996,7 @@ exports[`better eslint`] = {
     ],
     "public/app/features/datasources/components/DataSourceTestingStatus.tsx:5381": [
       [0, 0, 0, "Styles should be written using objects.", "0"],
-      [0, 0, 0, "Styles should be written using objects.", "1"],
-      [0, 0, 0, "Do not use any type assertions.", "2"]
+      [0, 0, 0, "Styles should be written using objects.", "1"]
     ],
     "public/app/features/datasources/components/DataSourceTypeCard.tsx:5381": [
       [0, 0, 0, "Use data-testid for E2E selectors instead of aria-label", "0"]
@@ -3412,9 +3411,6 @@ exports[`better eslint`] = {
       [0, 0, 0, "Styles should be written using objects.", "3"],
       [0, 0, 0, "Styles should be written using objects.", "4"],
       [0, 0, 0, "Styles should be written using objects.", "5"]
-    ],
-    "public/app/features/explore/TraceView/components/TraceTimelineViewer/SpanDetail/SpanFlameGraph.tsx:5381": [
-      [0, 0, 0, "Do not use any type assertions.", "0"]
     ],
     "public/app/features/explore/TraceView/components/TraceTimelineViewer/SpanDetail/TextList.tsx:5381": [
       [0, 0, 0, "Styles should be written using objects.", "0"],
