@@ -19,6 +19,7 @@ export class DashboardDatasourceBehaviour extends SceneObjectBase<DashboardDatas
     if (!(queryRunner instanceof SceneQueryRunner)) {
       throw new Error('DashboardDatasourceBehaviour must be attached to a SceneQueryRunner');
     }
+
     if (queryRunner.state.datasource?.uid !== SHARED_DASHBOARD_QUERY) {
       return;
     }
@@ -41,13 +42,8 @@ export class DashboardDatasourceBehaviour extends SceneObjectBase<DashboardDatas
 
     if (this.prevRequestId) {
       if (this.prevRequestId !== sourcePanelQueryRunner.state.data?.request?.requestId) {
-        console.log('Request ID changed, running queries');
         queryRunner.runQueries();
-      } else {
-        console.log('Request ID did not change, skipping queries');
       }
-    } else {
-      console.log('No previous request ID, not running queries');
     }
 
     return () => {

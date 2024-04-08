@@ -1,7 +1,6 @@
 import { config } from '@grafana/runtime';
 import { SceneDataProvider, SceneDataTransformer, SceneQueryRunner } from '@grafana/scenes';
 import { PanelModel } from 'app/features/dashboard/state';
-import { SHARED_DASHBOARD_QUERY } from 'app/plugins/datasource/dashboard';
 
 import { DashboardDatasourceBehaviour } from '../scene/DashboardDatasourceBehaviour';
 
@@ -28,7 +27,7 @@ export function createPanelDataProvider(panel: PanelModel): SceneDataProvider | 
     dataLayerFilter: {
       panelId: panel.id,
     },
-    $behaviors: panel.datasource?.uid === SHARED_DASHBOARD_QUERY ? [new DashboardDatasourceBehaviour({})] : [],
+    $behaviors: [new DashboardDatasourceBehaviour({})],
   });
 
   // Wrap inner data provider in a data transformer
