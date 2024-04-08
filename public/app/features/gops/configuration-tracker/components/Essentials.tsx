@@ -84,7 +84,7 @@ const ESSENTIAL_CONTENT: Sections = {
           description: 'tbd',
           button: {
             type: 'openLink',
-            url: '/alerting/notifications',
+            url: '/a/grafana-incident-app/walkthrough/generate-key',
             label: 'Initialize',
           },
         },
@@ -108,11 +108,11 @@ const ESSENTIAL_CONTENT: Sections = {
           },
         },
         {
-          title: 'Createyour ChatOps workspace to Incident',
+          title: 'Create your ChatOps workspace to Incident',
           description: 'tbd',
           button: {
             type: 'dropDown',
-            url: '/alerting/notifications',
+            url: '/a/grafana-incident-app/integrations/grate.slack',
             label: 'Connect',
           },
         },
