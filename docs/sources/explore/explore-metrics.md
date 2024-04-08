@@ -5,7 +5,7 @@ labels:
     - enterprise
     - oss
 title: Explore Metrics
-aliases: 
+aliases:
 description: This topic describes the Explore Metrics feature
 weight: 200
 ---
@@ -20,29 +20,29 @@ Explore Metrics is currently in [private preview](/docs/release-life-cycle/). Gr
 
 With Explore Metrics, you can:
 
-- easily slice and dice metrics based on their labels, so you can immediately see anomalies and identify issues 
+- easily slice and dice metrics based on their labels, so you can immediately see anomalies and identify issues
 - see the right visualization for your metric based on its type (gauge vs. counter, for example) without building it yourself
 - surface other metrics relevant to the current metric
 - “explore in a drawer” - expand a drawer over a dashboard with more content so you don’t lose your place
 - view a history of user steps when navigating through metrics and their filters
-- easily pivot to other related telemetry, including logs or traces 
+- easily pivot to other related telemetry, including logs or traces
 
-You can access Explore Metrics either as a standalone experience or as part of Grafana dashboards. 
+You can access Explore Metrics either as a standalone experience or as part of Grafana dashboards.
 
 ## Standalone experience
 
 To access Explore Metrics as a standalone experience:
 
-1. Click the arrow next to **Explore** in the Grafana left-side menu and click **Metrics**. You are taken to an overview page that shows recent metrics, bookmarks, and the option to select a new metric exploration. 
+1. Click the arrow next to **Explore** in the Grafana left-side menu and click **Metrics**. You are taken to an overview page that shows recent metrics, bookmarks, and the option to select a new metric exploration.
 1. To get started with a new exploration, click **+ New metric exploration**.
-1. Select **Prometheus** or any Prometheus-compatible data source available in the drop-down menu under **Data source**. 
+1. Select **Prometheus** or any Prometheus-compatible data source available in the drop-down menu under **Data source**.
 1. Click **+ Add label** to select a label-value pair from the drop-down menu. You can add multiple label-value pairs. A label type will appear above the selected label with a drop-down list of options from which to choose. For example, if you select the label `container` a drop-down list of available containers appears.
-1. You can also search for metrics using keywords under **Search metrics** in the search bar. 
-1. Use the time picker to select a date and time range from the drop-down menu or use an absolute time range. 
-1. Click the down arrow next to the **Refresh** icon to set a refresh rate from the drop-down menu. The default is `Off`. 
-1. Click the **Settings** icon and toggle **Always keep selected metric graph in-view** to keep your main graph always in view on the Breakdown drill-down tab. 
+1. You can also search for metrics using keywords under **Search metrics** in the search bar.
+1. Use the time picker to select a date and time range from the drop-down menu or use an absolute time range.
+1. Click the down arrow next to the **Refresh** icon to set a refresh rate from the drop-down menu. The default is `Off`.
+1. Click the **Settings** icon and toggle **Always keep selected metric graph in-view** to keep your main graph always in view on the Breakdown drill-down tab.
 
-The **History** button in the upper left corner tracks every step navigating through metric exploration. 
+The **History** button in the upper left corner tracks every step navigating through metric exploration.
 
 ![show metrics explore overview](/media/metrics-explore/metrics-explore-overview.png)
 
@@ -53,7 +53,7 @@ To further explore a metric, click **Select** in the upper right corner of the m
 ![show select box](/media/metrics-explore/select-metric.png)
 
 - The **Overview** tab provides a description for each metric, as well as the metric `type` and `unit` associated with the metric. It also provides a list of labels associated with the metric. Click on any label to view drill-down visualizations.
-- The **Breakdown** tab depicts time series visualizations for each of the label-value pairs for the selected metric. You can further drill down on each label and click **Add to filter** to add the label/value pair into your filters. You can also change the **View** from grid to rows. 
+- The **Breakdown** tab depicts time series visualizations for each of the label-value pairs for the selected metric. You can further drill down on each label and click **Add to filter** to add the label/value pair into your filters. You can also change the **View** from grid to rows.
 - The **Related metrics** tab depicts related metrics with relevant key words. You can repeat the drill down process for any related metric. Toggle **SHow previews** to preview visualizations.
 
 Once you have gathered your metrics exploration data you can:
