@@ -413,7 +413,7 @@ const ContactPointHeader = (props: ContactPointHeaderProps) => {
     <div className={styles.headerWrapper}>
       <Stack direction="row" alignItems="center" gap={1}>
         <Stack alignItems="center" gap={1}>
-          <Text variant="body" weight="medium">
+          <Text element="h2" variant="body" weight="medium">
             {name}
           </Text>
         </Stack>
