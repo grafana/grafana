@@ -156,7 +156,7 @@ export class DataTrail extends SceneObjectBase<DataTrailState> {
     const urlState = getUrlSyncManager().getUrlState(this);
     const fullUrl = urlUtil.renderUrl(locationService.getLocation().pathname, urlState);
 
-    locationService.replace(fullUrl);
+    locationService.replace(encodeURI(fullUrl));
   }
 
   private _handleMetricSelectedEvent(evt: MetricSelectedEvent) {
