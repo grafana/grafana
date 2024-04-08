@@ -39,8 +39,7 @@ exports[`better eslint`] = {
       [0, 0, 0, "Do not use any type assertions.", "1"],
       [0, 0, 0, "Do not use any type assertions.", "2"],
       [0, 0, 0, "Do not use any type assertions.", "3"],
-      [0, 0, 0, "Do not use any type assertions.", "4"],
-      [0, 0, 0, "Do not use any type assertions.", "5"]
+      [0, 0, 0, "Do not use any type assertions.", "4"]
     ],
     "packages/grafana-data/src/dataframe/dimensions.ts:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"]
@@ -190,10 +189,8 @@ exports[`better eslint`] = {
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"]
     ],
     "packages/grafana-data/src/transformations/transformers/nulls/nullInsertThreshold.ts:5381": [
-      [0, 0, 0, "Do not use any type assertions.", "0"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "1"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "2"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "3"]
+      [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
+      [0, 0, 0, "Unexpected any. Specify a different type.", "1"]
     ],
     "packages/grafana-data/src/transformations/transformers/reduce.ts:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
@@ -319,8 +316,7 @@ exports[`better eslint`] = {
       [0, 0, 0, "Unexpected any. Specify a different type.", "4"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "5"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "6"],
-      [0, 0, 0, "Do not use any type assertions.", "7"],
-      [0, 0, 0, "Do not use any type assertions.", "8"]
+      [0, 0, 0, "Do not use any type assertions.", "7"]
     ],
     "packages/grafana-data/src/types/options.ts:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
@@ -677,9 +673,6 @@ exports[`better eslint`] = {
       [0, 0, 0, "Styles should be written using objects.", "17"],
       [0, 0, 0, "Styles should be written using objects.", "18"]
     ],
-    "packages/grafana-prometheus/src/querybuilder/operationUtils.ts:5381": [
-      [0, 0, 0, "Do not use any type assertions.", "0"]
-    ],
     "packages/grafana-prometheus/src/querybuilder/shared/OperationEditor.tsx:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"]
     ],
@@ -900,10 +893,8 @@ exports[`better eslint`] = {
       [0, 0, 0, "Unexpected any. Specify a different type.", "5"],
       [0, 0, 0, "Do not use any type assertions.", "6"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "7"],
-      [0, 0, 0, "Do not use any type assertions.", "8"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "9"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "10"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "11"]
+      [0, 0, 0, "Unexpected any. Specify a different type.", "8"],
+      [0, 0, 0, "Unexpected any. Specify a different type.", "9"]
     ],
     "packages/grafana-ui/src/components/Select/SelectOptionGroup.tsx:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
@@ -1104,12 +1095,6 @@ exports[`better eslint`] = {
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
       [0, 0, 0, "Do not use any type assertions.", "1"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "2"]
-    ],
-    "packages/grafana-ui/src/options/builder/axis.tsx:5381": [
-      [0, 0, 0, "Do not use any type assertions.", "0"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "1"],
-      [0, 0, 0, "Do not use any type assertions.", "2"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "3"]
     ],
     "packages/grafana-ui/src/options/builder/hideSeries.tsx:5381": [
       [0, 0, 0, "Do not use any type assertions.", "0"]
@@ -5565,9 +5550,6 @@ exports[`better eslint`] = {
       [0, 0, 0, "Styles should be written using objects.", "16"],
       [0, 0, 0, "Styles should be written using objects.", "17"],
       [0, 0, 0, "Styles should be written using objects.", "18"]
-    ],
-    "public/app/plugins/datasource/prometheus/querybuilder/operationUtils.ts:5381": [
-      [0, 0, 0, "Do not use any type assertions.", "0"]
     ],
     "public/app/plugins/datasource/prometheus/querybuilder/shared/LabelFilterItem.tsx:5381": [
       [0, 0, 0, "Do not use any type assertions.", "0"],
