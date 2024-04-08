@@ -25,8 +25,8 @@ import {
   Tooltip,
   useStyles2,
 } from '@grafana/ui';
-import { useQueryParams } from 'app/core/hooks/useQueryParams';
 import ConditionalWrap from 'app/features/alerting/unified/components/ConditionalWrap';
+import { useURLSearchParams } from 'app/features/alerting/unified/hooks/useURLSearchParams';
 import { receiverTypeNames } from 'app/plugins/datasource/alertmanager/consts';
 import { GrafanaManagedReceiverConfig } from 'app/plugins/datasource/alertmanager/types';
 import { GrafanaNotifierType, NotifierStatus } from 'app/types/alerting';
@@ -69,12 +69,25 @@ export enum ActiveTab {
 
 const DEFAULT_PAGE_SIZE = 10;
 
+const useTabQueryParam = () => {
+  const [queryParams] = useURLSearchParams();
+  return useMemo(() => {
+    const queryParam = queryParams.get('tab');
+
+    if (!queryParam || !Object.values(ActiveTab).map(String).includes(queryParam)) {
+      return ActiveTab.ContactPoints;
+    }
+
+    return queryParam || ActiveTab.ContactPoints;
+  }, [queryParams]);
+};
+
 const ContactPoints = () => {
   const { selectedAlertmanager } = useAlertmanager();
-  const [queryParams, setQueryParams] = useQueryParams();
-  // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-  const initialActiveTab = queryParams.tab as ActiveTab;
-  const [activeTab, setActiveTab] = useState<ActiveTab>(initialActiveTab || ActiveTab.ContactPoints);
+  const [queryParams, setQueryParams] = useURLSearchParams();
+  const activeTabVal = useTabQueryParam();
+
+  const [activeTab, setActiveTab] = useState(activeTabVal);
   let { isLoading, error, contactPoints } = useContactPointsWithStatus();
   const { deleteTrigger, updateAlertmanagerState } = useDeleteContactPoint(selectedAlertmanager!);
   const [addContactPointSupported, addContactPointAllowed] = useAlertmanagerAbility(
@@ -90,7 +103,7 @@ const ContactPoints = () => {
   const [DeleteModal, showDeleteModal] = useDeleteContactPointModal(deleteTrigger, updateAlertmanagerState.isLoading);
   const [ExportDrawer, showExportDrawer] = useExportContactPoint();
 
-  const search = String(queryParams.search || '');
+  const search = queryParams.get('search');
 
   const showingContactPoints = activeTab === ActiveTab.ContactPoints;
   const showNotificationTemplates = activeTab === ActiveTab.NotificationTemplates;
