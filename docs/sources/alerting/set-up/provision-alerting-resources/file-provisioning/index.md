@@ -776,21 +776,22 @@ contactPoints:
 
 In this example, provisioning replaces `$EMAIL` with the value of the `EMAIL` environment variable or an empty string if it is not present. For more information, refer to [Using environment variables in the Provision documentation][provisioning_env_vars].
 
-Note that the provisioning interpolation may unexpectedly substitute template variables in alerting resources.
+In alerting resources, most properties support template variable interpolation, with a few exceptions:
 
-In alerting resources, you can use template variables with the same `$variable` syntax for some properties. For instance:
+- Alert rule annotations: `groups[].rules[].annotations`
+- Alert rule time range: `groups[].rules[].relativeTimeRange`
+- Alert rule query model: `groups[].rules[].data.model`
+- Mute timings name: `muteTimes[].name`
+- Mute timings time intervals: `muteTimes[].time_intervals[]`
+- Notification template name: `templates[].name`
+- Notification template content: `templates[].template`
 
-- Alert rule labels
-- Alert rule annotations (omits interpolation)
-- Contact point messages
-- Notification template content (omits interpolation)
+Note for properties that support interpolation, you may unexpectedly substitute template variables when not intended. To avoid this, you can escape the `$variable` with `$$variable`.
 
-Properties that omit the provisioning interpolation, like annotation or notification templates, do not require changes. For the others, if you’ve defined a template variable such as `$variable`, **use `$$variable` to avoid interpolation.**
+For example, when provisioning a `subject` property in a `contactPoints.receivers.settings` object that is meant to use the `$labels` variable.
 
-For example, you could use a `subject` property in the `contactPoints.receivers.settings` object alongside an undefined environment variable.
-
-1. `subject: '{{ $labels }}'` will convert to `subject: '{{ }}'` which is incorrect.
-1. `subject: '{{ $$labels }}'` will convert to `subject: '{{ $labels }}'` as desired.
+1. `subject: '{{ $labels }}'` will interpolate, incorrectly defining the subject as `subject: '{{ }}'`.
+1. `subject: '{{ $$labels }}'` will not interpolate, correctly defining the subject as `subject: '{{ $labels }}'`.
 
 ## More examples
 
