@@ -1,74 +1,56 @@
 import React, { useState } from 'react';
 
 import { config } from '@grafana/runtime';
-import { SceneApp, SceneAppPage } from '@grafana/scenes';
-import { usePageNav } from 'app/core/components/Page/usePageNav';
-import { PluginPageContext, PluginPageContextType } from 'app/features/plugins/components/PluginPageContext';
+import { Box, Stack, Tab, TabContent, TabsBar } from '@grafana/ui';
 
+import { AlertingPageWrapper } from '../components/AlertingPageWrapper';
 import { isLocalDevEnv, isOpenSourceEdition } from '../utils/misc';
 
-import { getOverviewScene, WelcomeHeader } from './GettingStarted';
+import GettingStarted, { WelcomeHeader } from './GettingStarted';
 import { getInsightsScenes } from './Insights';
-
-let homeApp: SceneApp | undefined;
-
-export function getHomeApp(insightsEnabled: boolean) {
-  if (homeApp) {
-    return homeApp;
-  }
-
-  if (insightsEnabled) {
-    homeApp = new SceneApp({
-      pages: [
-        new SceneAppPage({
-          title: 'Alerting',
-          subTitle: <WelcomeHeader />,
-          url: '/alerting',
-          hideFromBreadcrumbs: true,
-          tabs: [
-            new SceneAppPage({
-              title: 'Insights',
-              url: '/alerting/home/insights',
-              getScene: getInsightsScenes,
-            }),
-            new SceneAppPage({
-              title: 'Get started',
-              url: '/alerting/home/overview',
-              getScene: getOverviewScene,
-            }),
-          ],
-        }),
-      ],
-    });
-  } else {
-    homeApp = new SceneApp({
-      pages: [
-        new SceneAppPage({
-          title: 'Alerting',
-          subTitle: <WelcomeHeader />,
-          url: '/alerting',
-          hideFromBreadcrumbs: true,
-          getScene: getOverviewScene,
-        }),
-      ],
-    });
-  }
-
-  return homeApp;
-}
+import { PluginIntegrations } from './PluginIntegrations';
 
 export default function Home() {
   const insightsEnabled =
     (!isOpenSourceEdition() || isLocalDevEnv()) && Boolean(config.featureToggles.alertingInsights);
 
-  const appScene = getHomeApp(insightsEnabled);
-
-  const sectionNav = usePageNav('alerting')!;
-  const [pluginContext] = useState<PluginPageContextType>({ sectionNav });
+  const [activeTab, setActiveTab] = useState<'insights' | 'overview'>(insightsEnabled ? 'insights' : 'overview');
+  const insightsScene = getInsightsScenes();
 
   return (
-    <PluginPageContext.Provider value={pluginContext}>
-      <appScene.Component model={appScene} />
-    </PluginPageContext.Provider>
+    <AlertingPageWrapper
+      title="Alerting"
+      subTitle="Learn about problems in your systems moments after they occur"
+      navId="alerting"
+    >
+      <Stack gap={2} direction="row" wrap="wrap">
+        <Box flex="1 1 300px">
+          <WelcomeHeader />
+          <TabsBar>
+            {insightsEnabled && (
+              <Tab
+                key="insights"
+                label="Insights"
+                active={activeTab === 'insights'}
+                onChangeTab={() => setActiveTab('insights')}
+              />
+            )}
+            <Tab
+              key="overview"
+              label="Get started"
+              active={activeTab === 'overview'}
+              onChangeTab={() => setActiveTab('overview')}
+            />
+          </TabsBar>
+          <TabContent>
+            {activeTab === 'insights' && <insightsScene.Component model={insightsScene} />}
+            {activeTab === 'overview' && <GettingStarted />}
+          </TabContent>
+        </Box>
+        <Box flex="0 1 300px">
+          <PluginIntegrations />
+        </Box>
+      </Stack>
+    </AlertingPageWrapper>
   );
 }

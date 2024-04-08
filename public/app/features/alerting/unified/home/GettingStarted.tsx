@@ -3,24 +3,7 @@ import React from 'react';
 import SVG from 'react-inlinesvg';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { EmbeddedScene, SceneFlexLayout, SceneFlexItem, SceneReactObject } from '@grafana/scenes';
 import { useStyles2, useTheme2, Stack, Text, TextLink } from '@grafana/ui';
-
-import { PluginIntegrations } from './PluginIntegrations';
-
-export const getOverviewScene = () => {
-  return new EmbeddedScene({
-    body: new SceneFlexLayout({
-      children: [
-        new SceneFlexItem({
-          body: new SceneReactObject({
-            component: GettingStarted,
-          }),
-        }),
-      ],
-    }),
-  });
-};
 
 export default function GettingStarted() {
   const theme = useTheme2();
@@ -113,8 +96,6 @@ export function WelcomeHeader({ className }: { className?: string }) {
 
   return (
     <Stack gap={2} direction="column">
-      <Text color="secondary">Learn about problems in your systems moments after they occur</Text>
-
       <ContentBox className={cx(styles.ctaContainer, className)}>
         <WelcomeCTABox
           title="Alert rules"
@@ -137,8 +118,6 @@ export function WelcomeHeader({ className }: { className?: string }) {
           hrefText="Manage notification policies"
         />
       </ContentBox>
-
-      <PluginIntegrations />
     </Stack>
   );
 }

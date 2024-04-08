@@ -15,8 +15,8 @@ export function PluginIntegrations() {
 
   return (
     <div className={styles.container}>
-      <h4>Enhance Alerting experience with our tailored apps</h4>
-      <Stack gap={1} wrap="wrap">
+      {/* <h4>Enhance Alerting experience with our tailored apps</h4> */}
+      <Stack gap={1} wrap="wrap" direction="column">
         {extensions.map((extension) => (
           <Box key={extension.id} borderColor="weak" borderRadius="default" padding={2} flex={1}>
             <extension.component />
@@ -32,8 +32,5 @@ const getPluginIntegrationsStyles = (theme: GrafanaTheme2) => ({
     display: 'flex',
     flexDirection: 'column',
     gap: theme.spacing(2),
-    color: theme.colors.text.primary,
-    borderTop: `1px solid ${theme.colors.border.weak}`,
-    paddingTop: theme.spacing(2),
   }),
 });
