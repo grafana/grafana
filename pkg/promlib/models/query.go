@@ -63,6 +63,9 @@ type PrometheusQueryProperties struct {
 	// Series name override or template. Ex. {{hostname}} will be replaced with label value for hostname
 	LegendFormat string `json:"legendFormat,omitempty"`
 
+	// UrlFromDS adds the drilldown link to the legend labels.
+	LegendUrlFormat string `json:"legendUrlFormat,omitempty"`
+
 	// ???
 	Scope *ScopeSpec `json:"scope,omitempty"`
 }
