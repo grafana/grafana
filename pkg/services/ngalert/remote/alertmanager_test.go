@@ -397,7 +397,7 @@ func TestIntegrationRemoteAlertmanagerConfiguration(t *testing.T) {
 		config, err := am.mimirClient.GetGrafanaAlertmanagerConfig(ctx)
 		require.NoError(t, err)
 		require.Equal(t, testGrafanaConfigWithSecret, config.GrafanaAlertmanagerConfig)
-		require.Equal(t, fmt.Sprintf("%x", md5.Sum([]byte(encryptedConfig))), config.Hash)
+		require.Equal(t, fmt.Sprintf("%x", md5.Sum(encryptedConfig)), config.Hash)
 		require.False(t, config.Default)
 	}
 
