@@ -21,7 +21,9 @@ weight: -42
 
 # What’s new in Grafana v11.0-preview
 
-Welcome to Grafana 11.0-preview! This preview release contains some notable improvements, most notably, the ability to explore your metrics without queries. We've taken strides to improve the dashboard experience with subfolders becoming generally available and the addition of enhanced flowcharting capabilities. We've also migrated the dashboard viewing experience so that it's using our Scenes library.
+Welcome to Grafana 11.0-preview! This release contains some major improvements: most notably, the ability to explore your Prometheus metrics and loki logs without writing any PromQL or LogQL, using Explore Metrics and Explore Logs. The dashboard experience is better than ever with Edit mode for dashboards, AI-generated dashboard names and descriptions, and general availability for subfolders. You can also take advantage of improvements to the Canvas and Table panels, new Transformations, a revamp of the Alert Rule page, and more.
+
+Why "preview?" The Grafana 11.0 stable release is planned for this May. This is an early release to coincide with [Grafanacon 2024](https://grafana.com/about/events/grafanacon/2024/), so that you can try the new functionality early. To understand the differences between preview and GA releases, review the [release life cycle](https://grafana.com/docs/release-life-cycle/).
 
 For even more detail about all the changes in this release, refer to the [changelog](https://github.com/grafana/grafana/blob/main/CHANGELOG.md). For the specific steps we recommend when you upgrade to v11.0-preview, check out our [Upgrade Guide](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/upgrade-guide/upgrade-v11.0/).
 
@@ -46,19 +48,45 @@ Use full URLs for links. When linking to versioned docs, replace the version wit
 <!--Learn how to upload images here: https://grafana.com/docs/writers-toolkit/write/image-guidelines/#where-to-store-media-assets-->
 <!---->
 
+## Explore Metrics and Logs
+
+### Explore Metrics
+
+<!-- #proj-datatrails-dev, PM: Jay Goodson, Engineering: Darren Janeczek, André Pereira, Design: Catherine Gui -->
+
+_Public preview in all editions of Grafana_
+
+Explore Metrics is a query-less experience for browsing Prometheus-compatible metrics. Search or filter to find a metric. Quickly find related metrics - all in just a few clicks. No PromQL to be found anywhere! With Explore Metrics, you can:
+
+- easily slice and dice metrics based on their labels, so you can see anomalies right away
+- See the right visualization for your metric based on its type (e.g. gauge vs. counter) without writing it yourself
+- surface other metrics relevant to the current metric
+- “explore in a drawer” - expand a drawer over a dashboard with more content, so you don’t lose your place
+- view a history of user steps when navigating through metrics and their filters
+- easily pivot to other related telemetry - IE, logs or traces
+
+… all without writing any queries!
+
+<!--To learn more, refer to the Explore Metrics [documentation](http://grafana.com/docs/grafana/<GRAFANA_VERSION>/explore/metrics-explore/) as well as the following video demo (forthcoming):-->
+
+### Explore Logs
+
+<!-- Slack: #proj-lokiapp-dev, PM: Steven Dungan, Engineering: Andrew Stucky, Cyril Tovena, Design: Joan Wortman -->
+
+_Experimental in Grafana Open Source and Enterprise_
+
+Explore Logs is a queryless experience for exploring Loki logs - no LogQL required! The primary interaction modes are point-and-click based on log volume, similar to Explore Metrics.
+
+Highlights:
+
+- View log volume and log line samples when you first land in Explore Logs (no more "blank screen!")
+- Explore additional labels and detected fields in a similar way, focusing on volume and distribution; add them to your "query" to refine your logs search without needing LogQL
+  – See common patterns in your log lines, to easily filter out noise or focus in on anomalies
+- For power users, an easy way to hop into the familiar Explore while preserving context
+
+Explore Logs is Open Source, and experimental - some papercuts are to be expected. Give it a try and let us know what you think!
+
 ## Dashboards and visualizations
-
-### Scenes for viewers
-
-<!-- #grafana-dashboards, Dominik Prokop, Natalia Bernarte -->
-
-_Generally available in all editions of Grafana_
-
-Dashboards, when accessed by users with the Viewer role, are now using the Scenes library. Those users shouldn't see any difference in the dashboards apart from two small changes to the user interface (UI): the variables UI has slightly changed and the time picker is now part of the dashboard container.
-
-Dashboards aren't affected for users in other roles.
-
-This is the first step towards a more robust and dynamic dashboarding system that we'll be releasing in the upcoming months.
 
 ### Scenes powered Dashboards
 
@@ -82,6 +110,18 @@ We moved the time picker into the dashboard canvas and now, together with templa
 - It's no longer possible to switch a regular panel to a library panel from the edit view.
 
 If you want to learn more, in detail, about all the improvements we've made, don't miss our blog post.
+
+### Scenes for viewers
+
+<!-- #grafana-dashboards, Dominik Prokop, Natalia Bernarte -->
+
+_Generally available in all editions of Grafana_
+
+Dashboards, when accessed by users with the Viewer role, are now using the Scenes library. Those users shouldn't see any difference in the dashboards apart from two small changes to the user interface (UI): the variables UI has slightly changed and the time picker is now part of the dashboard container.
+
+Dashboards aren't affected for users in other roles.
+
+This is the first step towards a more robust and dynamic dashboarding system that we'll be releasing in the upcoming months.
 
 ### Subfolders
 
@@ -122,20 +162,6 @@ Make sure to enable and configure Grafana's LLM app plugin. For more information
 When enabled, look for the **✨ Auto generate** option next to the **Title** and **Description** fields in your panels and dashboards, or when you press the **Save** button.
 
 ![Auto-generate a panel description using AI](/media/docs/grafana/dashboards/auto-generate-description-10-2.gif)
-
-### Substring matcher added to the filter by value transformation
-
-<!-- #grafana-dataviz -->
-
-_Generally available in Grafana Cloud and Open Source_
-
-This update to the **Filter data by values** transformation simplifies data filtering by enabling partial string matching on field values thanks to two new matchers: **Contains substring** and **Does not contain substring**. With the substring matcher built into the **Filter data by values** transformation, you can efficiently filter large datasets, displaying relevant information with speed and precision. Whether you're searching for keywords, product names, or user IDs, this feature streamlines the process, saving time and effort while ensuring accurate data output.
-
-In the **Filter data by values** transformation, simply add a condition, choose a field, choose your matcher, and then input the string to match against.
-
-This update will be rolled out to customers over the next few weeks.
-
-{{< video-embed src="/media/docs/grafana/substring-matcher.mp4" >}}
 
 ### Improvements to the canvas visualization
 
@@ -202,6 +228,20 @@ You now have the ability to customize specific colors for individual thresholds 
 
 This feature addresses a common pain point highlighted by users. With customizable threshold colors, you now have greater control over your data representation, fostering more insightful and impactful analyses across diverse datasets.
 
+### Substring matcher added to the Filter by value transformation
+
+<!-- #grafana-dataviz -->
+
+_Generally available in Grafana Cloud and Open Source_
+
+This update to the **Filter data by values** transformation simplifies data filtering by enabling partial string matching on field values thanks to two new matchers: **Contains substring** and **Does not contain substring**. With the substring matcher built into the **Filter data by values** transformation, you can efficiently filter large datasets, displaying relevant information with speed and precision. Whether you're searching for keywords, product names, or user IDs, this feature streamlines the process, saving time and effort while ensuring accurate data output.
+
+In the **Filter data by values** transformation, simply add a condition, choose a field, choose your matcher, and then input the string to match against.
+
+This update will be rolled out to customers over the next few weeks.
+
+{{< video-embed src="/media/docs/grafana/substring-matcher.mp4" >}}
+
 ## Reporting
 
 ### PDF export improvements
@@ -257,42 +297,6 @@ Debug or audit using the alert rule metadata and view the alert rule annotations
 ![Image shows details of an alert rule](/media/docs/alerting/alert-detail-view.png)
 
 ## Data sources
-
-### Explore Metrics
-
-<!-- #proj-datatrails-dev, PM: Jay Goodson, Engineering: Darren Janeczek, André Pereira, Design: Catherine Gui -->
-
-_Generally available in all editions of Grafana_
-
-Explore Metrics is a query-less experience for browsing Prometheus-compatible metrics. Search for or filter to find a metric. Quickly find related metrics - all in just a few clicks. No PromQL to be found anywhere! With Explore Metrics, you can:
-
-- easily slice and dice metrics based on their labels, so you can see anomalies right away
-- See the right visualization for your metric based on its type (e.g. gauge vs. counter) without writing it yourself
-- surface other metrics relevant to the current metric
-- “explore in a drawer” - expand a drawer over a dashboard with more content, so you don’t lose your place
-- view a history of user steps when navigating through metrics and their filters
-- easily pivot to other related telemetry - IE, logs or traces
-
-… all without writing any queries!
-
-<!--To learn more, refer to the Explore Metrics [documentation](http://grafana.com/docs/grafana/<GRAFANA_VERSION>/explore/metrics-explore/) as well as the following video demo (forthcoming):-->
-
-### Explore Logs
-
-<!-- Slack: #proj-lokiapp-dev, PM: Steven Dungan, Engineering: Andrew Stucky, Cyril Tovena, Design: Joan Wortman -->
-
-_Experimental in Grafana Open Source and Enterprise_
-
-Explore Logs is a queryless experience for exploring Loki logs - no LogQL required! The primary interaction modes are point-and-click based on log volume, similar to Explore Metrics.
-
-Highlights:
-
-- View log volume and log line samples when you first land in Explore Logs (no more "blank screen!")
-- Explore additional labels and detected fields in a similar way, focusing on volume and distribution; add them to your "query" to refine your logs search without needing LogQL
-  – See common patterns in your log lines, to easily filter out noise or focus in on anomalies
-- For power users, an easy way to hop into the familiar Explore while preserving context
-
-Explore Logs is Open Source, and in preview - some papercuts are to be expected. Give it a try and let us know what you think!
 
 ### Azure Monitor: Current User authentication
 
