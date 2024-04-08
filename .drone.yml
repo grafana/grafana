@@ -136,10 +136,24 @@ steps:
   image: node:20.9.0-alpine
   name: betterer-frontend
 - commands:
-  - apk add --update curl jq bash
-  - is_fork=$(curl "https://$GITHUB_TOKEN@api.github.com/repos/grafana/grafana/pulls/$DRONE_PULL_REQUEST"
-    | jq .head.repo.fork)
-  - if [ "$is_fork" != false ]; then return 1; fi
+  - apk add --update curl jq bash python3 pip
+  - pip install requests
+  - "python -c '\nfrom datetime import datetime, timezone\nimport requests\nimport
+    os\nimport sys\nimport time\n\ndef is_fork(pr):\n\tprint(f'Checking if PR {pr}
+    is a fork')\n\tapi_url = f'https://api.github.com/repos/grafana/grafana/pulls/{pr}'\n\n\t#
+    Headers with authentication token\n\theaders = {\n\t#'Authorization': os.environ.get['GITHUB_TOKEN'],\n\t'Accept':
+    'application/json'\n\t}\n\n\tretries = 5\n\tfor i in range(retries): \n\t\tr =
+    requests.get(api_url.format(), headers=headers)\n\t\tprint(f'API response code:
+    {r.status_code}: {retries - i} retries left')\n\t\tif r.status_code == 200:\n\t\t\treturn
+    r.json()['head']['repo']['fork']\n\t\tif r.headers.get('X-RateLimit-Remaining')
+    == 0:\n\t\t\treset_time_utc = int(r.headers['X-RateLimit-Reset'])\n\t\t\tcurrent_time_utc
+    = datetime.now(timezone.utc)\n\t\t\ttimestamp_utc = int(current_time_utc.timestamp())\n\n\t\t\tseconds_until_reset
+    = max(0, reset_time_utc - timestamp_utc)\n\t\t\tprint(f\"Sleeping for {seconds_until_reset}
+    seconds until X-RateLimit-Reset\")\n\t\t\tsleep(r.headers.get('X-RateLimit-Reset'))\n\telse:\n\t\traise
+    Exception('Failed to get PR information: retries exceeded')\n\nif is_fork(os.environ.get('PULL_REQUEST')):\n\tsys.exit(1)\n'\n"
+  - is_fork=$?
+  - 'echo "is_fork: $is_fork"'
+  - if [ $is_fork -eq 1 ]; then return 1; fi
   - git clone "https://$${GITHUB_TOKEN}@github.com/grafana/grafana-enterprise.git"
     ../grafana-enterprise
   - cd ../grafana-enterprise
@@ -200,10 +214,24 @@ platform:
 services: []
 steps:
 - commands:
-  - apk add --update curl jq bash
-  - is_fork=$(curl "https://$GITHUB_TOKEN@api.github.com/repos/grafana/grafana/pulls/$DRONE_PULL_REQUEST"
-    | jq .head.repo.fork)
-  - if [ "$is_fork" != false ]; then return 1; fi
+  - apk add --update curl jq bash python3 pip
+  - pip install requests
+  - "python -c '\nfrom datetime import datetime, timezone\nimport requests\nimport
+    os\nimport sys\nimport time\n\ndef is_fork(pr):\n\tprint(f'Checking if PR {pr}
+    is a fork')\n\tapi_url = f'https://api.github.com/repos/grafana/grafana/pulls/{pr}'\n\n\t#
+    Headers with authentication token\n\theaders = {\n\t#'Authorization': os.environ.get['GITHUB_TOKEN'],\n\t'Accept':
+    'application/json'\n\t}\n\n\tretries = 5\n\tfor i in range(retries): \n\t\tr =
+    requests.get(api_url.format(), headers=headers)\n\t\tprint(f'API response code:
+    {r.status_code}: {retries - i} retries left')\n\t\tif r.status_code == 200:\n\t\t\treturn
+    r.json()['head']['repo']['fork']\n\t\tif r.headers.get('X-RateLimit-Remaining')
+    == 0:\n\t\t\treset_time_utc = int(r.headers['X-RateLimit-Reset'])\n\t\t\tcurrent_time_utc
+    = datetime.now(timezone.utc)\n\t\t\ttimestamp_utc = int(current_time_utc.timestamp())\n\n\t\t\tseconds_until_reset
+    = max(0, reset_time_utc - timestamp_utc)\n\t\t\tprint(f\"Sleeping for {seconds_until_reset}
+    seconds until X-RateLimit-Reset\")\n\t\t\tsleep(r.headers.get('X-RateLimit-Reset'))\n\telse:\n\t\traise
+    Exception('Failed to get PR information: retries exceeded')\n\nif is_fork(os.environ.get('PULL_REQUEST')):\n\tsys.exit(1)\n'\n"
+  - is_fork=$?
+  - 'echo "is_fork: $is_fork"'
+  - if [ $is_fork -eq 1 ]; then return 1; fi
   - git clone "https://$${GITHUB_TOKEN}@github.com/grafana/grafana-enterprise.git"
     ../grafana-enterprise
   - cd ../grafana-enterprise
@@ -291,10 +319,24 @@ platform:
 services: []
 steps:
 - commands:
-  - apk add --update curl jq bash
-  - is_fork=$(curl "https://$GITHUB_TOKEN@api.github.com/repos/grafana/grafana/pulls/$DRONE_PULL_REQUEST"
-    | jq .head.repo.fork)
-  - if [ "$is_fork" != false ]; then return 1; fi
+  - apk add --update curl jq bash python3 pip
+  - pip install requests
+  - "python -c '\nfrom datetime import datetime, timezone\nimport requests\nimport
+    os\nimport sys\nimport time\n\ndef is_fork(pr):\n\tprint(f'Checking if PR {pr}
+    is a fork')\n\tapi_url = f'https://api.github.com/repos/grafana/grafana/pulls/{pr}'\n\n\t#
+    Headers with authentication token\n\theaders = {\n\t#'Authorization': os.environ.get['GITHUB_TOKEN'],\n\t'Accept':
+    'application/json'\n\t}\n\n\tretries = 5\n\tfor i in range(retries): \n\t\tr =
+    requests.get(api_url.format(), headers=headers)\n\t\tprint(f'API response code:
+    {r.status_code}: {retries - i} retries left')\n\t\tif r.status_code == 200:\n\t\t\treturn
+    r.json()['head']['repo']['fork']\n\t\tif r.headers.get('X-RateLimit-Remaining')
+    == 0:\n\t\t\treset_time_utc = int(r.headers['X-RateLimit-Reset'])\n\t\t\tcurrent_time_utc
+    = datetime.now(timezone.utc)\n\t\t\ttimestamp_utc = int(current_time_utc.timestamp())\n\n\t\t\tseconds_until_reset
+    = max(0, reset_time_utc - timestamp_utc)\n\t\t\tprint(f\"Sleeping for {seconds_until_reset}
+    seconds until X-RateLimit-Reset\")\n\t\t\tsleep(r.headers.get('X-RateLimit-Reset'))\n\telse:\n\t\traise
+    Exception('Failed to get PR information: retries exceeded')\n\nif is_fork(os.environ.get('PULL_REQUEST')):\n\tsys.exit(1)\n'\n"
+  - is_fork=$?
+  - 'echo "is_fork: $is_fork"'
+  - if [ $is_fork -eq 1 ]; then return 1; fi
   - git clone "https://$${GITHUB_TOKEN}@github.com/grafana/grafana-enterprise.git"
     ../grafana-enterprise
   - cd ../grafana-enterprise
@@ -411,10 +453,24 @@ steps:
   image: golang:1.21.8-alpine
   name: compile-build-cmd
 - commands:
-  - apk add --update curl jq bash
-  - is_fork=$(curl "https://$GITHUB_TOKEN@api.github.com/repos/grafana/grafana/pulls/$DRONE_PULL_REQUEST"
-    | jq .head.repo.fork)
-  - if [ "$is_fork" != false ]; then return 1; fi
+  - apk add --update curl jq bash python3 pip
+  - pip install requests
+  - "python -c '\nfrom datetime import datetime, timezone\nimport requests\nimport
+    os\nimport sys\nimport time\n\ndef is_fork(pr):\n\tprint(f'Checking if PR {pr}
+    is a fork')\n\tapi_url = f'https://api.github.com/repos/grafana/grafana/pulls/{pr}'\n\n\t#
+    Headers with authentication token\n\theaders = {\n\t#'Authorization': os.environ.get['GITHUB_TOKEN'],\n\t'Accept':
+    'application/json'\n\t}\n\n\tretries = 5\n\tfor i in range(retries): \n\t\tr =
+    requests.get(api_url.format(), headers=headers)\n\t\tprint(f'API response code:
+    {r.status_code}: {retries - i} retries left')\n\t\tif r.status_code == 200:\n\t\t\treturn
+    r.json()['head']['repo']['fork']\n\t\tif r.headers.get('X-RateLimit-Remaining')
+    == 0:\n\t\t\treset_time_utc = int(r.headers['X-RateLimit-Reset'])\n\t\t\tcurrent_time_utc
+    = datetime.now(timezone.utc)\n\t\t\ttimestamp_utc = int(current_time_utc.timestamp())\n\n\t\t\tseconds_until_reset
+    = max(0, reset_time_utc - timestamp_utc)\n\t\t\tprint(f\"Sleeping for {seconds_until_reset}
+    seconds until X-RateLimit-Reset\")\n\t\t\tsleep(r.headers.get('X-RateLimit-Reset'))\n\telse:\n\t\traise
+    Exception('Failed to get PR information: retries exceeded')\n\nif is_fork(os.environ.get('PULL_REQUEST')):\n\tsys.exit(1)\n'\n"
+  - is_fork=$?
+  - 'echo "is_fork: $is_fork"'
+  - if [ $is_fork -eq 1 ]; then return 1; fi
   - git clone "https://$${GITHUB_TOKEN}@github.com/grafana/grafana-enterprise.git"
     ../grafana-enterprise
   - cd ../grafana-enterprise
@@ -888,10 +944,24 @@ services:
   name: memcached
 steps:
 - commands:
-  - apk add --update curl jq bash
-  - is_fork=$(curl "https://$GITHUB_TOKEN@api.github.com/repos/grafana/grafana/pulls/$DRONE_PULL_REQUEST"
-    | jq .head.repo.fork)
-  - if [ "$is_fork" != false ]; then return 1; fi
+  - apk add --update curl jq bash python3 pip
+  - pip install requests
+  - "python -c '\nfrom datetime import datetime, timezone\nimport requests\nimport
+    os\nimport sys\nimport time\n\ndef is_fork(pr):\n\tprint(f'Checking if PR {pr}
+    is a fork')\n\tapi_url = f'https://api.github.com/repos/grafana/grafana/pulls/{pr}'\n\n\t#
+    Headers with authentication token\n\theaders = {\n\t#'Authorization': os.environ.get['GITHUB_TOKEN'],\n\t'Accept':
+    'application/json'\n\t}\n\n\tretries = 5\n\tfor i in range(retries): \n\t\tr =
+    requests.get(api_url.format(), headers=headers)\n\t\tprint(f'API response code:
+    {r.status_code}: {retries - i} retries left')\n\t\tif r.status_code == 200:\n\t\t\treturn
+    r.json()['head']['repo']['fork']\n\t\tif r.headers.get('X-RateLimit-Remaining')
+    == 0:\n\t\t\treset_time_utc = int(r.headers['X-RateLimit-Reset'])\n\t\t\tcurrent_time_utc
+    = datetime.now(timezone.utc)\n\t\t\ttimestamp_utc = int(current_time_utc.timestamp())\n\n\t\t\tseconds_until_reset
+    = max(0, reset_time_utc - timestamp_utc)\n\t\t\tprint(f\"Sleeping for {seconds_until_reset}
+    seconds until X-RateLimit-Reset\")\n\t\t\tsleep(r.headers.get('X-RateLimit-Reset'))\n\telse:\n\t\traise
+    Exception('Failed to get PR information: retries exceeded')\n\nif is_fork(os.environ.get('PULL_REQUEST')):\n\tsys.exit(1)\n'\n"
+  - is_fork=$?
+  - 'echo "is_fork: $is_fork"'
+  - if [ $is_fork -eq 1 ]; then return 1; fi
   - git clone "https://$${GITHUB_TOKEN}@github.com/grafana/grafana-enterprise.git"
     ../grafana-enterprise
   - cd ../grafana-enterprise
@@ -1229,10 +1299,24 @@ platform:
 services: []
 steps:
 - commands:
-  - apk add --update curl jq bash
-  - is_fork=$(curl "https://$GITHUB_TOKEN@api.github.com/repos/grafana/grafana/pulls/$DRONE_PULL_REQUEST"
-    | jq .head.repo.fork)
-  - if [ "$is_fork" != false ]; then return 1; fi
+  - apk add --update curl jq bash python3 pip
+  - pip install requests
+  - "python -c '\nfrom datetime import datetime, timezone\nimport requests\nimport
+    os\nimport sys\nimport time\n\ndef is_fork(pr):\n\tprint(f'Checking if PR {pr}
+    is a fork')\n\tapi_url = f'https://api.github.com/repos/grafana/grafana/pulls/{pr}'\n\n\t#
+    Headers with authentication token\n\theaders = {\n\t#'Authorization': os.environ.get['GITHUB_TOKEN'],\n\t'Accept':
+    'application/json'\n\t}\n\n\tretries = 5\n\tfor i in range(retries): \n\t\tr =
+    requests.get(api_url.format(), headers=headers)\n\t\tprint(f'API response code:
+    {r.status_code}: {retries - i} retries left')\n\t\tif r.status_code == 200:\n\t\t\treturn
+    r.json()['head']['repo']['fork']\n\t\tif r.headers.get('X-RateLimit-Remaining')
+    == 0:\n\t\t\treset_time_utc = int(r.headers['X-RateLimit-Reset'])\n\t\t\tcurrent_time_utc
+    = datetime.now(timezone.utc)\n\t\t\ttimestamp_utc = int(current_time_utc.timestamp())\n\n\t\t\tseconds_until_reset
+    = max(0, reset_time_utc - timestamp_utc)\n\t\t\tprint(f\"Sleeping for {seconds_until_reset}
+    seconds until X-RateLimit-Reset\")\n\t\t\tsleep(r.headers.get('X-RateLimit-Reset'))\n\telse:\n\t\traise
+    Exception('Failed to get PR information: retries exceeded')\n\nif is_fork(os.environ.get('PULL_REQUEST')):\n\tsys.exit(1)\n'\n"
+  - is_fork=$?
+  - 'echo "is_fork: $is_fork"'
+  - if [ $is_fork -eq 1 ]; then return 1; fi
   - git clone "https://$${GITHUB_TOKEN}@github.com/grafana/grafana-enterprise.git"
     ../grafana-enterprise
   - cd ../grafana-enterprise
@@ -4923,6 +5007,6 @@ kind: secret
 name: gcr_credentials
 ---
 kind: signature
-hmac: fc8a4639e1e301965161795a12c8123f2240ff72a406acf2dad8fda2797beaef
+hmac: c2cb09d5582d3de195d6e7f76b22c837a76bb5c3b57f5580f6ab9b0dca4e5a28
 
 ...

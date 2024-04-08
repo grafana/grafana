@@ -97,12 +97,55 @@ def clone_enterprise_step_pr(source = "${DRONE_COMMIT}", target = "main", canFai
       Drone step.
     """
 
+    packages = ["curl", "jq", "bash"]
+    pip_cmd = []
     if isPromote:
         check = []
     else:
+        packages += ["python3", "pip"]
+        pip_cmd += ["pip install requests"]
         check = [
-            'is_fork=$(curl "https://$GITHUB_TOKEN@api.github.com/repos/grafana/grafana/pulls/$DRONE_PULL_REQUEST" | jq .head.repo.fork)',
-            'if [ "$is_fork" != false ]; then return 1; fi',  # Only clone if we're confident that 'fork' is 'false'. Fail if it's also empty.
+            """python -c '
+from datetime import datetime, timezone
+import requests
+import os
+import sys
+import time
+
+def is_fork(pr):
+	print(f'Checking if PR {pr} is a fork')
+	api_url = f'https://api.github.com/repos/grafana/grafana/pulls/{pr}'
+
+	# Headers with authentication token
+	headers = {
+	#'Authorization': os.environ.get['GITHUB_TOKEN'],
+	'Accept': 'application/json'
+	}
+
+	retries = 5
+	for i in range(retries): 
+		r = requests.get(api_url.format(), headers=headers)
+		print(f'API response code: {r.status_code}: {retries - i} retries left')
+		if r.status_code == 200:
+			return r.json()['head']['repo']['fork']
+		if r.headers.get('X-RateLimit-Remaining') == 0:
+			reset_time_utc = int(r.headers['X-RateLimit-Reset'])
+			current_time_utc = datetime.now(timezone.utc)
+			timestamp_utc = int(current_time_utc.timestamp())
+
+			seconds_until_reset = max(0, reset_time_utc - timestamp_utc)
+			print(f"Sleeping for {seconds_until_reset} seconds until X-RateLimit-Reset")
+			sleep(r.headers.get('X-RateLimit-Reset'))
+	else:
+		raise Exception('Failed to get PR information: retries exceeded')
+
+if is_fork(os.environ.get('PULL_REQUEST')):
+	sys.exit(1)
+'
+""",
+            'is_fork=$?',
+            'echo "is_fork: $is_fork"',
+            'if [ $is_fork -eq 1 ]; then return 1; fi',  # Only clone if we're confident that 'fork' is 'false'. Fail if it's also empty.
         ]
 
     step = {
@@ -112,8 +155,8 @@ def clone_enterprise_step_pr(source = "${DRONE_COMMIT}", target = "main", canFai
             "GITHUB_TOKEN": from_secret("github_token"),
         },
         "commands": [
-            "apk add --update curl jq bash",
-        ] + check + [
+            "apk add --update {}".format(" ".join(packages)),
+        ] + pip_cmd + check + [
             'git clone "https://$${GITHUB_TOKEN}@github.com/grafana/grafana-enterprise.git" ' + location,
             "cd {}".format(location),
             'if git checkout {0}; then echo "checked out {0}"; elif git checkout {1}; then echo "git checkout {1}"; else git checkout main; fi'.format(source, target),
