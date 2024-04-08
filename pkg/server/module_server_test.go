@@ -7,6 +7,7 @@ import (
 	"testing"
 	"time"
 
+	"cuelang.org/go/pkg/regexp"
 	"github.com/grafana/grafana/pkg/api"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/modules"
@@ -34,10 +35,6 @@ func TestIntegrationWillRunInstrumentationServerWhenTargetHasNoHttpServer(t *tes
 
 	testdb := db.InitTestDB(t)
 	cfg := testdb.Cfg
-
-	sec, err := cfg.Raw.GetSection("database")
-	t.Log(sec.Key("connection_string").String())
-
 	cfg.GRPCServerNetwork = "tcp"
 	cfg.GRPCServerAddress = "localhost:10000"
 	addStorageServerToConfig(t, cfg, dbType)
@@ -77,9 +74,15 @@ func addStorageServerToConfig(t *testing.T, cfg *setting.Cfg, dbType string) {
 		_, _ = s.NewKey("db_user", "grafanatest")
 		_, _ = s.NewKey("db_pass", "grafanatest")
 	} else {
-		_, _ = s.NewKey("db_host", "mysql57")
-		_, _ = s.NewKey("db_name", "grafana_tests")
-		_, _ = s.NewKey("db_user", "grafana")
-		_, _ = s.NewKey("db_pass", "password")
+		// cant use localhost as hostname in drone tests for mysql, so need to parse it from connection string
+		sec, err := cfg.Raw.GetSection("database")
+		require.NoError(t, err)
+		connString := sec.Key("connection_string").String()
+		matches, err := regexp.FindSubmatch("(.+):(.+)@tcp\\((.+):(\\d+)\\)/(.+)\\?", connString)
+		require.NoError(t, err)
+		_, _ = s.NewKey("db_host", matches[3])
+		_, _ = s.NewKey("db_name", matches[5])
+		_, _ = s.NewKey("db_user", matches[1])
+		_, _ = s.NewKey("db_pass", matches[2])
 	}
 }
