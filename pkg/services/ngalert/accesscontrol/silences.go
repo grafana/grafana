@@ -160,7 +160,7 @@ func (s SilenceService) AuthorizeReadSilence(ctx context.Context, user identity.
 	if err != nil {
 		return err
 	}
-	if !can { // if user cannot read global silences, then it does not have silence permissions at all.
+	if !can { // User does not have silence permissions at all.
 		return NewAuthorizationErrorWithPermissions("read any silences", readSomeSilenceEvaluator)
 	}
 	ruleUID := silence.GetRuleUID()
