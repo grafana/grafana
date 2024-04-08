@@ -77,7 +77,7 @@ func addStorageServerToConfig(t *testing.T, cfg *setting.Cfg, dbType string) {
 		_, _ = s.NewKey("db_user", "grafanatest")
 		_, _ = s.NewKey("db_pass", "grafanatest")
 	} else {
-		_, _ = s.NewKey("db_host", "localhost")
+		_, _ = s.NewKey("db_host", "mysql57")
 		_, _ = s.NewKey("db_name", "grafana_tests")
 		_, _ = s.NewKey("db_user", "grafana")
 		_, _ = s.NewKey("db_pass", "password")
