@@ -21,6 +21,9 @@ type DataSourceService interface {
 	// GetAllDataSources gets all datasources.
 	GetAllDataSources(ctx context.Context, query *GetAllDataSourcesQuery) (res []*DataSource, err error)
 
+	// GetPrunableProvisionedDataSources gets all provisioned data sources that can be pruned.
+	GetPrunableProvisionedDataSources(ctx context.Context) (res []*DataSource, err error)
+
 	// GetDataSourcesByType gets datasources by type.
 	GetDataSourcesByType(ctx context.Context, query *GetDataSourcesByTypeQuery) ([]*DataSource, error)
 

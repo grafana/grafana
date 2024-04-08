@@ -1,0 +1,10 @@
+apiVersion: 1
+datasources:
+  - name: test_graphite_without_prune
+    type: graphite
+    access: proxy
+    url: http://localhost:8080
+  - name: test_prometheus_without_prune
+    type: prometheus
+    access: proxy
+    url: http://localhost:9090
