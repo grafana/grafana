@@ -40,10 +40,8 @@ export class DashboardDatasourceBehaviour extends SceneObjectBase<DashboardDatas
       throw new Error('Could not find SceneQueryRunner for panel');
     }
 
-    if (this.prevRequestId) {
-      if (this.prevRequestId !== sourcePanelQueryRunner.state.data?.request?.requestId) {
-        queryRunner.runQueries();
-      }
+    if (this.prevRequestId && this.prevRequestId !== sourcePanelQueryRunner.state.data?.request?.requestId) {
+      queryRunner.runQueries();
     }
 
     return () => {
