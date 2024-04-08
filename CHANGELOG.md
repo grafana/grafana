@@ -206,13 +206,7 @@ If you are not willing to grant the annotation permissions back to the basic rol
 
 Angular support is turned `off` by default starting Grafana 11, you can find all the details in a [dedicated documentation page.](https://grafana.com/docs/grafana/latest/developers/angular_deprecation/)
 
-**Special notes for your reviewer:**
-
-Please check that:
-
-- [x] It works as expected from a user's perspective.
-- [ ] If this is a pre-GA feature, it is behind a feature toggle.
-- [x] The docs are updated, and if this is a [notable improvement](https://grafana.com/docs/writers-toolkit/writing-guide/contribute-release-notes/#how-to-determine-if-content-belongs-in-a-whats-new-document), it's added to our [What's New](https://grafana.com/docs/writers-toolkit/writing-guide/contribute-release-notes/) doc. Issue [#84738](https://github.com/grafana/grafana/issues/84738)
+Issue [#84738](https://github.com/grafana/grafana/issues/84738)
 
 The **xpack** checkbox dependency for enabling the **Include Frozen Indices** functionality has been removed, allowing direct control over frozen indices inclusion. Users should review their datasource settings to ensure the "Include Frozen Indices" option is configured as desired, particularly if xpack was previously disabled. This change aims to simplify configuration options and may affect queries if settings are not adjusted accordingly. Issue [#84734](https://github.com/grafana/grafana/issues/84734)
 
@@ -222,11 +216,7 @@ Users of data source plugins that did not previously remove hidden queries will 
 
 SystemJS is no longer exported from `@grafana/runtime`. Plugin developers should instead rely on importing modules / packages using standard TS import syntax and npm/yarn for package installation.
 
-Please check that:
-
-- [ ] It works as expected from a user's perspective.
-- [ ] If this is a pre-GA feature, it is behind a feature toggle.
-- [ ] The docs are updated, and if this is a [notable improvement](https://grafana.com/docs/writers-toolkit/writing-guide/contribute-release-notes/#how-to-determine-if-content-belongs-in-a-whats-new-document), it's added to our [What's New](https://grafana.com/docs/writers-toolkit/writing-guide/contribute-release-notes/) doc. Issue [#84561](https://github.com/grafana/grafana/issues/84561)
+Issue [#84561](https://github.com/grafana/grafana/issues/84561)
 
 We've removed the Loki tab from the Tempo data source. You can still access Logs through the Loki data source or can also create a link from Tempo to Loki via our [trace to logs](https://grafana.com/docs/grafana/latest/datasources/tempo/configure-tempo-data-source/#trace-to-logs) feature. Issue [#84346](https://github.com/grafana/grafana/issues/84346)
 
@@ -259,11 +249,7 @@ This feature can be turned off through the configuration toggle `validate_hd `. 
 
 The direct input datasource plugin has been removed in Grafana 11. It has been in alpha for 4 years and is superseded by [TestData](https://grafana.com/docs/grafana/latest/datasources/testdata/) that ships with Grafana.
 
-Please check that:
-
-- [ ] It works as expected from a user's perspective.
-- [ ] If this is a pre-GA feature, it is behind a feature toggle.
-- [ ] The docs are updated, and if this is a [notable improvement](https://grafana.com/docs/writers-toolkit/writing-guide/contribute-release-notes/#how-to-determine-if-content-belongs-in-a-whats-new-document), it's added to our [What's New](https://grafana.com/docs/writers-toolkit/writing-guide/contribute-release-notes/) doc. Issue [#83163](https://github.com/grafana/grafana/issues/83163)
+Issue [#83163](https://github.com/grafana/grafana/issues/83163)
 
 The alert rule API methods now require more permissions for users to perform changes to rules. To create a new rule or update or delete an existing one, the user must have permission to read from the folder that stores the rules (i.e. permission `folder:read` in the scope of the rule's folder) and permission to read alert rules in that folder (i.e. permission `alert.rules:read`
 
