@@ -87,19 +87,19 @@ To remove a connection, simply click on the connection directly and then press t
 
 ### Adjust connectors
 
-You can adjust connectors, adding angles to them, to fit the canvas you're working in. When you move connected elements, the connector resizes to fit the space. To adjust a connector, click it to display the midpoint controls and move those as needed. To make a connector a straight line again, move the element or connector until the midpoint controls disappear.
+You can adjust connectors, adding angles to them, to fit the canvas you're working in. When you move connected elements, the connector resizes to fit the space. To adjust a connector, click it to display the midpoint controls and move those as needed. To make a connector a straight line again, move the midpoint back until the midpoint controls disappear.
 
-By default, if you move a connector so that it's almost a right angle or a straight line, the connector snaps into that angle or into a straight line. To disable this behavior, press and hold the Ctrl key while adjusting the connector.
+If you move a connector so that it's almost a right angle or a straight line, the connector snaps into that angle or into a straight line.
 
-{{< video-embed src="/media/docs/grafana/panels-visualizations/gif-canvas-connector-vertex-control-v11.0.mp4>" alt="Changing a connector from a straight line to a right angle" >}}
+<!-- TODO: Use updated demo from what's new when uploaded to YouTube -->
+
+{{< video-embed src="/media/docs/grafana/panels-visualizations/gif-canvas-connector-vertex-control-v11.0.mp4" alt="Changing a connector from a straight line to a right angle" >}}
 
 ### Style connectors
 
 You can set the size, color, direction, and style of connections based on fixed or field values. To do so, enter into panel edit mode, select the connection, and modify the connection's properties in the panel editor.
 
 {{< figure src="/media/docs/grafana/screenshot-grafana-10-0-canvas-service-graph.png" max-width="750px" caption="Canvas service graph" >}}
-
-You can also change the shape of a connection anchor to a circle or remove the anchor entirely.
 
 ## Canvas editing
 
@@ -118,6 +118,16 @@ You can enable panning and zooming in a canvas. This allows you to both create a
 {{< figure src="/media/docs/grafana/screenshot-grafana-10-3-canvas-pan-zoom-setting.png" max-width="300px" alt="Canvas pan zoom control" >}}
 
 {{< video-embed src="/media/docs/grafana/2024-01-05-Canvas-Pan-&-Zoom-Enablement-Video.mp4" max-width="750px" caption="Canvas pan and zoom enablement video" >}}
+
+#### Infinite panning
+
+You can enable infinite panning in a canvas when pan and zoom is enabled. This allows you to pan and zoom the canvas and uncover larger designs.
+
+{{% admonition type="note" %}}
+Infinite panning is an experimental feature that may not work as expected in all scenarios. For example, elements that are not top-left constrained may experience unexpected movement when panning.
+{{% /admonition %}}
+
+<!-- TODO: Add gif -->
 
 ### Context menu
 
