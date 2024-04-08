@@ -1,4 +1,4 @@
-import { screen, waitFor, waitForElementToBeRemoved, within } from '@testing-library/react';
+import { screen, waitFor, waitForElementToBeRemoved } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import React from 'react';
 import { renderRuleEditor, ui } from 'test/helpers/alertingRuleEditor';
@@ -76,8 +76,6 @@ const mocks = {
     fetchRulerRulesIfNotFetchedYet: jest.mocked(fetchRulerRulesIfNotFetchedYet),
   },
 };
-
-const getLabelInput = (selector: HTMLElement) => within(selector).getByRole('combobox');
 
 describe('RuleEditor cloud', () => {
   beforeEach(() => {
