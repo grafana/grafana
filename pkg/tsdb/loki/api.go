@@ -21,7 +21,6 @@ import (
 	"google.golang.org/grpc/metadata"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
-
 	"github.com/grafana/grafana-plugin-sdk-go/backend/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/promlib/converter"
@@ -362,12 +361,12 @@ func setXScopeOrgIDHeader(req *http.Request, ctx context.Context) *http.Request 
 	if !ok {
 		logger.Error("Error in retrieving metadata from context. Header not set")
 		return req
-	} 
-	
+	}
+
 	tenantid := md.Get("tenantid") // all values are []string, but it should only be one element
 	if len(tenantid) == 0 {
 		logger.Debug("Tenant ID not present. Header not set")
-	} else if len(tenantid[0]) > 1{
+	} else if len(tenantid[0]) > 1 {
 		logger.Error(strconv.Itoa(len(tenantid)) + " tenant IDs found. Header not set")
 	} else {
 		logger.Debug("Adding tenant ID " + tenantid[0] + " to Loki request")
