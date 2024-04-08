@@ -4,10 +4,13 @@ import (
 	"encoding/json"
 	"fmt"
 	"math"
+	"regexp"
 	"strings"
 	"time"
 	"unicode"
 )
+
+var stringListItemMatcher = regexp.MustCompile(`"[^"]+"|[^, ]+`)
 
 // StringsFallback2 returns the first of two not empty strings.
 func StringsFallback2(val1 string, val2 string) string {
@@ -42,6 +45,16 @@ func SplitString(str string) []string {
 			return []string{}
 		}
 		return res
+	}
+
+	// Support strings (with spaces) enclosed in quotation marks like "foo one", "bar two", "baz three"
+	if strings.Index(strings.TrimSpace(str), "\"") == 0 {
+		var result []string
+		matches := stringListItemMatcher.FindAllString(str, -1)
+		for _, match := range matches {
+			result = append(result, strings.Trim(match, "\""))
+		}
+		return result
 	}
 
 	return strings.Fields(strings.ReplaceAll(str, ",", " "))
