@@ -4,5 +4,4 @@ export type SystemJSWithLoaderHooks = typeof System & {
   shouldFetch: (url: string) => Boolean;
   fetch: (url: string, options?: Record<string, unknown>) => Promise<Response>;
   onload: (err: unknown, id: string) => void;
-  prepareImport: () => Promise<void>;
 };
