@@ -16,7 +16,6 @@ import appEvents from 'app/core/app_events';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 import { VariablesChanged } from 'app/features/variables/types';
 
-import { VizPanelManager } from '../panel-edit/VizPanelManager';
 import { createWorker } from '../saving/createDetectChangesWorker';
 import {
   buildGridItemForLibPanel,
