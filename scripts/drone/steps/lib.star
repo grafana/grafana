@@ -118,13 +118,13 @@ def is_fork(pr):
 
 	# Headers with authentication token
 	headers = {
-	#'Authorization': os.environ.get['GITHUB_TOKEN'],
+	'Authorization': 'token: {}'.format(os.environ.get('GITHUB_TOKEN')),
 	'Accept': 'application/json'
 	}
 
 	retries = 5
 	for i in range(retries): 
-		r = requests.get(api_url.format(), headers=headers)
+		r = requests.get(api_url, headers=headers)
 		print(f'API response code: {r.status_code}: {retries - i} retries left')
 		if r.status_code == 200:
 			return r.json()['head']['repo']['fork']

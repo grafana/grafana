@@ -141,12 +141,11 @@ steps:
   - "python -c '\nfrom datetime import datetime, timezone\nimport requests\nimport
     os\nimport sys\nimport time\n\ndef is_fork(pr):\n\tprint(f'Checking if PR {pr}
     is a fork')\n\tapi_url = f'https://api.github.com/repos/grafana/grafana/pulls/{pr}'\n\n\t#
-    Headers with authentication token\n\theaders = {\n\t#'Authorization': os.environ.get['GITHUB_TOKEN'],\n\t'Accept':
+    Headers with authentication token\n\theaders = {\n\t'Authorization': 'token: {}'.format(os.environ.get('GITHUB_TOKEN')),\n\t'Accept':
     'application/json'\n\t}\n\n\tretries = 5\n\tfor i in range(retries): \n\t\tr =
-    requests.get(api_url.format(), headers=headers)\n\t\tprint(f'API response code:
-    {r.status_code}: {retries - i} retries left')\n\t\tif r.status_code == 200:\n\t\t\treturn
-    r.json()['head']['repo']['fork']\n\t\tif r.headers.get('X-RateLimit-Remaining')
-    == 0:\n\t\t\treset_time_utc = int(r.headers['X-RateLimit-Reset'])\n\t\t\tcurrent_time_utc
+    requests.get(api_url, headers=headers)\n\t\tprint(f'API response code: {r.status_code}:
+    {retries - i} retries left')\n\t\tif r.status_code == 200:\n\t\t\treturn r.json()['head']['repo']['fork']\n\t\tif
+    r.headers.get('X-RateLimit-Remaining') == 0:\n\t\t\treset_time_utc = int(r.headers['X-RateLimit-Reset'])\n\t\t\tcurrent_time_utc
     = datetime.now(timezone.utc)\n\t\t\ttimestamp_utc = int(current_time_utc.timestamp())\n\n\t\t\tseconds_until_reset
     = max(0, reset_time_utc - timestamp_utc)\n\t\t\tprint(f\"Sleeping for {seconds_until_reset}
     seconds until X-RateLimit-Reset\")\n\t\t\tsleep(r.headers.get('X-RateLimit-Reset'))\n\telse:\n\t\traise
@@ -219,12 +218,11 @@ steps:
   - "python -c '\nfrom datetime import datetime, timezone\nimport requests\nimport
     os\nimport sys\nimport time\n\ndef is_fork(pr):\n\tprint(f'Checking if PR {pr}
     is a fork')\n\tapi_url = f'https://api.github.com/repos/grafana/grafana/pulls/{pr}'\n\n\t#
-    Headers with authentication token\n\theaders = {\n\t#'Authorization': os.environ.get['GITHUB_TOKEN'],\n\t'Accept':
+    Headers with authentication token\n\theaders = {\n\t'Authorization': 'token: {}'.format(os.environ.get('GITHUB_TOKEN')),\n\t'Accept':
     'application/json'\n\t}\n\n\tretries = 5\n\tfor i in range(retries): \n\t\tr =
-    requests.get(api_url.format(), headers=headers)\n\t\tprint(f'API response code:
-    {r.status_code}: {retries - i} retries left')\n\t\tif r.status_code == 200:\n\t\t\treturn
-    r.json()['head']['repo']['fork']\n\t\tif r.headers.get('X-RateLimit-Remaining')
-    == 0:\n\t\t\treset_time_utc = int(r.headers['X-RateLimit-Reset'])\n\t\t\tcurrent_time_utc
+    requests.get(api_url, headers=headers)\n\t\tprint(f'API response code: {r.status_code}:
+    {retries - i} retries left')\n\t\tif r.status_code == 200:\n\t\t\treturn r.json()['head']['repo']['fork']\n\t\tif
+    r.headers.get('X-RateLimit-Remaining') == 0:\n\t\t\treset_time_utc = int(r.headers['X-RateLimit-Reset'])\n\t\t\tcurrent_time_utc
     = datetime.now(timezone.utc)\n\t\t\ttimestamp_utc = int(current_time_utc.timestamp())\n\n\t\t\tseconds_until_reset
     = max(0, reset_time_utc - timestamp_utc)\n\t\t\tprint(f\"Sleeping for {seconds_until_reset}
     seconds until X-RateLimit-Reset\")\n\t\t\tsleep(r.headers.get('X-RateLimit-Reset'))\n\telse:\n\t\traise
@@ -324,12 +322,11 @@ steps:
   - "python -c '\nfrom datetime import datetime, timezone\nimport requests\nimport
     os\nimport sys\nimport time\n\ndef is_fork(pr):\n\tprint(f'Checking if PR {pr}
     is a fork')\n\tapi_url = f'https://api.github.com/repos/grafana/grafana/pulls/{pr}'\n\n\t#
-    Headers with authentication token\n\theaders = {\n\t#'Authorization': os.environ.get['GITHUB_TOKEN'],\n\t'Accept':
+    Headers with authentication token\n\theaders = {\n\t'Authorization': 'token: {}'.format(os.environ.get('GITHUB_TOKEN')),\n\t'Accept':
     'application/json'\n\t}\n\n\tretries = 5\n\tfor i in range(retries): \n\t\tr =
-    requests.get(api_url.format(), headers=headers)\n\t\tprint(f'API response code:
-    {r.status_code}: {retries - i} retries left')\n\t\tif r.status_code == 200:\n\t\t\treturn
-    r.json()['head']['repo']['fork']\n\t\tif r.headers.get('X-RateLimit-Remaining')
-    == 0:\n\t\t\treset_time_utc = int(r.headers['X-RateLimit-Reset'])\n\t\t\tcurrent_time_utc
+    requests.get(api_url, headers=headers)\n\t\tprint(f'API response code: {r.status_code}:
+    {retries - i} retries left')\n\t\tif r.status_code == 200:\n\t\t\treturn r.json()['head']['repo']['fork']\n\t\tif
+    r.headers.get('X-RateLimit-Remaining') == 0:\n\t\t\treset_time_utc = int(r.headers['X-RateLimit-Reset'])\n\t\t\tcurrent_time_utc
     = datetime.now(timezone.utc)\n\t\t\ttimestamp_utc = int(current_time_utc.timestamp())\n\n\t\t\tseconds_until_reset
     = max(0, reset_time_utc - timestamp_utc)\n\t\t\tprint(f\"Sleeping for {seconds_until_reset}
     seconds until X-RateLimit-Reset\")\n\t\t\tsleep(r.headers.get('X-RateLimit-Reset'))\n\telse:\n\t\traise
@@ -458,12 +455,11 @@ steps:
   - "python -c '\nfrom datetime import datetime, timezone\nimport requests\nimport
     os\nimport sys\nimport time\n\ndef is_fork(pr):\n\tprint(f'Checking if PR {pr}
     is a fork')\n\tapi_url = f'https://api.github.com/repos/grafana/grafana/pulls/{pr}'\n\n\t#
-    Headers with authentication token\n\theaders = {\n\t#'Authorization': os.environ.get['GITHUB_TOKEN'],\n\t'Accept':
+    Headers with authentication token\n\theaders = {\n\t'Authorization': 'token: {}'.format(os.environ.get('GITHUB_TOKEN')),\n\t'Accept':
     'application/json'\n\t}\n\n\tretries = 5\n\tfor i in range(retries): \n\t\tr =
-    requests.get(api_url.format(), headers=headers)\n\t\tprint(f'API response code:
-    {r.status_code}: {retries - i} retries left')\n\t\tif r.status_code == 200:\n\t\t\treturn
-    r.json()['head']['repo']['fork']\n\t\tif r.headers.get('X-RateLimit-Remaining')
-    == 0:\n\t\t\treset_time_utc = int(r.headers['X-RateLimit-Reset'])\n\t\t\tcurrent_time_utc
+    requests.get(api_url, headers=headers)\n\t\tprint(f'API response code: {r.status_code}:
+    {retries - i} retries left')\n\t\tif r.status_code == 200:\n\t\t\treturn r.json()['head']['repo']['fork']\n\t\tif
+    r.headers.get('X-RateLimit-Remaining') == 0:\n\t\t\treset_time_utc = int(r.headers['X-RateLimit-Reset'])\n\t\t\tcurrent_time_utc
     = datetime.now(timezone.utc)\n\t\t\ttimestamp_utc = int(current_time_utc.timestamp())\n\n\t\t\tseconds_until_reset
     = max(0, reset_time_utc - timestamp_utc)\n\t\t\tprint(f\"Sleeping for {seconds_until_reset}
     seconds until X-RateLimit-Reset\")\n\t\t\tsleep(r.headers.get('X-RateLimit-Reset'))\n\telse:\n\t\traise
@@ -949,12 +945,11 @@ steps:
   - "python -c '\nfrom datetime import datetime, timezone\nimport requests\nimport
     os\nimport sys\nimport time\n\ndef is_fork(pr):\n\tprint(f'Checking if PR {pr}
     is a fork')\n\tapi_url = f'https://api.github.com/repos/grafana/grafana/pulls/{pr}'\n\n\t#
-    Headers with authentication token\n\theaders = {\n\t#'Authorization': os.environ.get['GITHUB_TOKEN'],\n\t'Accept':
+    Headers with authentication token\n\theaders = {\n\t'Authorization': 'token: {}'.format(os.environ.get('GITHUB_TOKEN')),\n\t'Accept':
     'application/json'\n\t}\n\n\tretries = 5\n\tfor i in range(retries): \n\t\tr =
-    requests.get(api_url.format(), headers=headers)\n\t\tprint(f'API response code:
-    {r.status_code}: {retries - i} retries left')\n\t\tif r.status_code == 200:\n\t\t\treturn
-    r.json()['head']['repo']['fork']\n\t\tif r.headers.get('X-RateLimit-Remaining')
-    == 0:\n\t\t\treset_time_utc = int(r.headers['X-RateLimit-Reset'])\n\t\t\tcurrent_time_utc
+    requests.get(api_url, headers=headers)\n\t\tprint(f'API response code: {r.status_code}:
+    {retries - i} retries left')\n\t\tif r.status_code == 200:\n\t\t\treturn r.json()['head']['repo']['fork']\n\t\tif
+    r.headers.get('X-RateLimit-Remaining') == 0:\n\t\t\treset_time_utc = int(r.headers['X-RateLimit-Reset'])\n\t\t\tcurrent_time_utc
     = datetime.now(timezone.utc)\n\t\t\ttimestamp_utc = int(current_time_utc.timestamp())\n\n\t\t\tseconds_until_reset
     = max(0, reset_time_utc - timestamp_utc)\n\t\t\tprint(f\"Sleeping for {seconds_until_reset}
     seconds until X-RateLimit-Reset\")\n\t\t\tsleep(r.headers.get('X-RateLimit-Reset'))\n\telse:\n\t\traise
@@ -1304,12 +1299,11 @@ steps:
   - "python -c '\nfrom datetime import datetime, timezone\nimport requests\nimport
     os\nimport sys\nimport time\n\ndef is_fork(pr):\n\tprint(f'Checking if PR {pr}
     is a fork')\n\tapi_url = f'https://api.github.com/repos/grafana/grafana/pulls/{pr}'\n\n\t#
-    Headers with authentication token\n\theaders = {\n\t#'Authorization': os.environ.get['GITHUB_TOKEN'],\n\t'Accept':
+    Headers with authentication token\n\theaders = {\n\t'Authorization': 'token: {}'.format(os.environ.get('GITHUB_TOKEN')),\n\t'Accept':
     'application/json'\n\t}\n\n\tretries = 5\n\tfor i in range(retries): \n\t\tr =
-    requests.get(api_url.format(), headers=headers)\n\t\tprint(f'API response code:
-    {r.status_code}: {retries - i} retries left')\n\t\tif r.status_code == 200:\n\t\t\treturn
-    r.json()['head']['repo']['fork']\n\t\tif r.headers.get('X-RateLimit-Remaining')
-    == 0:\n\t\t\treset_time_utc = int(r.headers['X-RateLimit-Reset'])\n\t\t\tcurrent_time_utc
+    requests.get(api_url, headers=headers)\n\t\tprint(f'API response code: {r.status_code}:
+    {retries - i} retries left')\n\t\tif r.status_code == 200:\n\t\t\treturn r.json()['head']['repo']['fork']\n\t\tif
+    r.headers.get('X-RateLimit-Remaining') == 0:\n\t\t\treset_time_utc = int(r.headers['X-RateLimit-Reset'])\n\t\t\tcurrent_time_utc
     = datetime.now(timezone.utc)\n\t\t\ttimestamp_utc = int(current_time_utc.timestamp())\n\n\t\t\tseconds_until_reset
     = max(0, reset_time_utc - timestamp_utc)\n\t\t\tprint(f\"Sleeping for {seconds_until_reset}
     seconds until X-RateLimit-Reset\")\n\t\t\tsleep(r.headers.get('X-RateLimit-Reset'))\n\telse:\n\t\traise
@@ -5007,6 +5001,6 @@ kind: secret
 name: gcr_credentials
 ---
 kind: signature
-hmac: c2cb09d5582d3de195d6e7f76b22c837a76bb5c3b57f5580f6ab9b0dca4e5a28
+hmac: 7e99637b60ab0122eb442065698be52023c4700393393a5a07f76844ab193799
 
 ...
