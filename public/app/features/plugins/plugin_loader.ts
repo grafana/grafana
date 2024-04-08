@@ -6,13 +6,12 @@ import {
   DataSourcePluginMeta,
   PluginMeta,
 } from '@grafana/data';
-import { config } from '@grafana/runtime';
 import { DataQuery } from '@grafana/schema';
 
 import { GenericDataSourcePlugin } from '../datasources/types';
 
 import builtInPlugins from './built_in_plugins';
-import { registerPluginInCache } from './loader/cache';
+import { getPluginFromCache, registerPluginInCache } from './loader/cache';
 // SystemJS has to be imported before the sharedDependenciesMap
 import { SystemJS } from './loader/systemjs';
 // eslint-disable-next-line import/order
@@ -29,13 +28,12 @@ SystemJS.addImportMap({ imports });
 
 const systemJSPrototype: SystemJSWithLoaderHooks = SystemJS.constructor.prototype;
 
+// This controls whether SystemJS will load a plugin with a script tag or fetch and eval.
+// We only want to fetch and eval plugins that are hosted on a CDN or are Angular plugins.
 systemJSPrototype.shouldFetch = function (url) {
-  // currently we need to fetch and eval for CDN hosted plugins as we transform the source paths
-  if (isHostedOnCDN(url)) {
-    return true;
-  }
+  const pluginInfo = getPluginFromCache(url);
 
-  return config.angularSupportEnabled;
+  return isHostedOnCDN(url) || Boolean(pluginInfo?.isAngular);
 };
 
 const originalImport = systemJSPrototype.import;
@@ -74,7 +72,7 @@ export async function importPluginModule({
   isAngular?: boolean;
 }): Promise<System.Module> {
   if (version) {
-    registerPluginInCache({ path, version });
+    registerPluginInCache({ path, version, isAngular });
   }
 
   const builtIn = builtInPlugins[path];
