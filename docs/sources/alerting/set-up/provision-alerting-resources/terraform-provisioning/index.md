@@ -340,8 +340,6 @@ resource "grafana_message_template" "my_template" {
 ...
 ```
 
-Note that `disable_provenance` is not supported for [grafana_mute_timing](https://registry.terraform.io/providers/grafana/grafana/latest/docs/resources/mute_timing).
-
 ## Provision Grafana resources with Terraform
 
 To create the previous alerting resources in Grafana with the Terraform CLI, complete the following steps.
