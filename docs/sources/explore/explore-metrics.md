@@ -4,21 +4,21 @@ labels:
     - cloud
     - enterprise
     - oss
-title: Grafana Metrics Explore
+title: Explore Metrics
 aliases: 
-description: This topic describes the Metrics Explore feature
+description: This topic describes the Explore Metrics feature
 weight: 200
 ---
 
-# Grafana Metrics Explore
+# Grafana Explore Metrics
 
-Grafana Metrics Explore is a query-less experience for browsing **Prometheus-compatible** metrics. Quickly find related metrics with just a few simple clicks, without needing to write PromQL queries to retrieve metrics.
+Grafana Explore Metrics is a query-less experience for browsing **Prometheus-compatible** metrics. Quickly find related metrics with just a few simple clicks, without needing to write PromQL queries to retrieve metrics.
 
 {{% admonition type="warning" %}}
 Metric Explore is currently in [private preview](/docs/release-life-cycle/). Grafana Labs offers support on a best-effort basis, and breaking changes might occur prior to the feature being made generally available.
 {{% /admonition %}}
 
-With Metrics Explore, you can:
+With Explore Metrics, you can:
 
 - easily slice and dice metrics based on their labels, so you can immediately see anomalies and identify issues 
 - see the right visualization for your metric based on its type (gauge vs. counter, for example) without building it yourself
@@ -27,11 +27,11 @@ With Metrics Explore, you can:
 - view a history of user steps when navigating through metrics and their filters
 - easily pivot to other related telemetry, including logs or traces 
 
-You can access Metrics Explore either as a standalone experience or as part of Grafana dashboards. 
+You can access Explore Metrics either as a standalone experience or as part of Grafana dashboards. 
 
 ## Standalone experience
 
-To access Metrics Explore as a standalone experience:
+To access Explore Metrics as a standalone experience:
 
 1. Click the arrow next to **Explore** in the Grafana left-side menu and click **Metrics**. You are taken to an overview page that shows recent metrics, bookmarks, and the option to select a new metric exploration. 
 1. To get started with a new exploration, click **+ New metric exploration**.
@@ -64,7 +64,7 @@ Once you have gathered your metrics exploration data you can:
 
 ## Dashboard experience
 
-To access Metrics Explore via a dashboard:
+To access Explore Metrics via a dashboard:
 
 1. Navigate to your dashboard.
 1. Select a time series panel.
