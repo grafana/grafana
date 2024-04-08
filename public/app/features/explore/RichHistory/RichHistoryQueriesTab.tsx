@@ -50,7 +50,7 @@ const getStyles = (theme: GrafanaTheme2, height: number) => {
       }
     `,
     containerContent: css`
-      /* 134px is based on the width of the Query history tabs bar, so the content is aligned to right side of the tab 442 */
+      /* 134px is based on the width of the Query history tabs bar, so the content is aligned to right side of the tab */
       width: calc(100% - 134px);
     `,
     containerSlider: css`

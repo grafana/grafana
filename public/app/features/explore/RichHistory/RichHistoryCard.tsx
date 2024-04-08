@@ -365,7 +365,7 @@ export function RichHistoryCard(props: Props) {
       return (
         <Button
           variant="secondary"
-          aria-label={buttonText.fallbackText}
+          aria-label={buttonText.translation}
           onClick={() => onRunQuery(exploreId)}
           disabled={disabled}
         >

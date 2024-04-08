@@ -99,6 +99,7 @@ jest.mock('app/core/utils/explore', () => ({
 
 jest.mock('app/core/app_events', () => ({
   publish: jest.fn(),
+  subscribe: jest.fn(),
 }));
 
 interface MockQuery extends DataQuery {

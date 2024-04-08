@@ -30,9 +30,9 @@ export const selectShowQueryHistory = createSelector(selectExploreRoot, (state) 
 
 export const selectExploreDSMaps = createSelector(selectPanesEntries, (panes) => {
   const exploreDSMap = panes
-    .map((pane) => {
-      const rootDatasource = [pane[1]?.datasourceInstance?.getRef()];
-      const queryDatasources = pane[1]?.queries.map((q) => q.datasource) || [];
+    .map(([exploreId, pane]) => {
+      const rootDatasource = [pane?.datasourceInstance?.getRef()];
+      const queryDatasources = pane?.queries.map((q) => q.datasource) || [];
       const datasources = [...rootDatasource, ...queryDatasources].filter(
         (datasource): datasource is DataSourceRef => !!datasource
       );
@@ -41,7 +41,7 @@ export const selectExploreDSMaps = createSelector(selectPanesEntries, (panes) =>
         return undefined;
       } else {
         return {
-          exploreId: pane[0],
+          exploreId,
           datasources: uniqBy(datasources, (ds) => ds.uid),
         };
       }
