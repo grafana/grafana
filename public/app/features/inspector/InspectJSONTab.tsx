@@ -78,11 +78,11 @@ export function InspectJSONTab({ panel, dashboard, data, onClose }: Props) {
   const onApplyPanelModel = useCallback(() => {
     if (panel && dashboard && text) {
       try {
-        if (!dashboard!.meta.canEdit) {
+        if (!dashboard.meta.canEdit) {
           appEvents.emit(AppEvents.alertError, ['Unable to apply']);
         } else {
           const updates = JSON.parse(text);
-          dashboard!.shouldUpdateDashboardPanelFromJSON(updates, panel);
+          dashboard.shouldUpdateDashboardPanelFromJSON(updates, panel);
 
           //Report relevant updates
           reportPanelInspectInteraction(InspectTab.JSON, 'apply', {
