@@ -360,7 +360,7 @@ func setXScopeOrgIDHeader(req *http.Request, ctx context.Context) *http.Request 
 
 	md, ok := metadata.FromIncomingContext(ctx)
 	if !ok {
-		logger.Error("Error in retriving metadata from context. Header not set")
+		logger.Error("Error in retrieving metadata from context. Header not set")
 		return req
 	} 
 	
