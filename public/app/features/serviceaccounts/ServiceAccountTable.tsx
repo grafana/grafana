@@ -13,7 +13,8 @@ import {
   IconButton,
   Icon,
 } from '@grafana/ui';
-import { UserRolePicker } from 'app/core/components/RolePicker/UserRolePicker';
+import { RolePicker } from 'app/core/components/RolePicker/RolePicker';
+import { updateUserRoles } from 'app/core/components/RolePicker/api';
 import { contextSrv } from 'app/core/core';
 import { AccessControlAction, OrgRole, Role, ServiceAccountDTO } from 'app/types';
 
@@ -166,20 +167,28 @@ const getRoleCell = (
     contextSrv.hasPermission(AccessControlAction.ActionRolesList) &&
     contextSrv.hasPermission(AccessControlAction.ActionUserRolesList);
   const canUpdateRole = contextSrv.hasPermissionInMetadata(AccessControlAction.ServiceAccountsWrite, original);
+  const canUpdateRoles =
+    contextSrv.hasPermission(AccessControlAction.ActionUserRolesAdd) &&
+    contextSrv.hasPermission(AccessControlAction.ActionUserRolesRemove);
 
   if (isLoading) {
     return <Skeleton width={100} />;
   } else {
     return contextSrv.licensedAccessControlEnabled() ? (
       displayRolePicker && (
-        <UserRolePicker
-          userId={original.id}
-          orgId={original.orgId}
+        <RolePicker
+          onSubmit={async (newRoles: Role[], newRole?: OrgRole) => {
+            await updateUserRoles(newRoles, original.id);
+            if (newRole !== undefined) {
+              onRoleChange(newRole, original);
+            }
+          }}
+          showBasicRole
           basicRole={value}
-          currentRoles={original.roles || []}
-          onBasicRoleChange={(newRole) => onRoleChange(newRole, original)}
+          roles={original.roles || []}
           roleOptions={roleOptions}
           basicRoleDisabled={!canUpdateRole}
+          canUpdateRoles={canUpdateRoles}
           disabled={original.isExternal || original.isDisabled}
           width={40}
         />

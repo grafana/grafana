@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useForm } from 'react-hook-form';
 import { useAsyncFn } from 'react-use';
 
@@ -7,7 +7,7 @@ import { Field, Input, Button, Legend, Alert } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
 import { contextSrv } from 'app/core/core';
 import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
-import { OrgUser, AccessControlAction, OrgRole } from 'app/types';
+import { OrgUser, AccessControlAction, OrgRole, Role } from 'app/types';
 
 import { OrgUsersTable } from './Users/OrgUsersTable';
 import { getOrg, getOrgUsers, getUsersRoles, removeOrgUser, updateOrgName, updateOrgUserRole } from './api';
@@ -33,18 +33,21 @@ const AdminEditOrgPage = ({ match }: Props) => {
     register,
     formState: { errors },
   } = useForm<OrgNameDTO>();
-  const [, fetchOrgUsers] = useAsyncFn(async (page) => {
-    const result = await getOrgUsers(orgId, page);
+  const fetchOrgUsers = useCallback(
+    async (page: number) => {
+      const result = await getOrgUsers(orgId, page);
 
-    if (contextSrv.licensedAccessControlEnabled()) {
-      await getUsersRoles(orgId, result.orgUsers);
-    }
+      if (contextSrv.licensedAccessControlEnabled()) {
+        await getUsersRoles(orgId, result.orgUsers);
+      }
 
-    const totalPages = result?.perPage !== 0 ? Math.ceil(result.totalCount / result.perPage) : 0;
-    setTotalPages(totalPages);
-    setUsers(result.orgUsers);
-    return result.orgUsers;
-  }, []);
+      const totalPages = result?.perPage !== 0 ? Math.ceil(result.totalCount / result.perPage) : 0;
+      setTotalPages(totalPages);
+      setUsers(result.orgUsers);
+      return result.orgUsers;
+    },
+    [orgId]
+  );
 
   useEffect(() => {
     fetchOrg();
@@ -73,6 +76,10 @@ const AdminEditOrgPage = ({ match }: Props) => {
 
   const onRoleChange = async (role: OrgRole, orgUser: OrgUser) => {
     await updateOrgUserRole({ ...orgUser, role }, orgId);
+    fetchOrgUsers(page);
+  };
+
+  const onRolesChange = async (user: OrgUser, roles: Role[]) => {
     fetchOrgUsers(page);
   };
 
@@ -110,6 +117,7 @@ const AdminEditOrgPage = ({ match }: Props) => {
                 users={users}
                 orgId={orgId}
                 onRoleChange={onRoleChange}
+                onRolesChange={onRolesChange}
                 onRemoveUser={onRemoveUser}
                 changePage={onPageChange}
                 page={page}

@@ -5,7 +5,7 @@ import { NavModelItem } from '@grafana/data';
 import { getBackendSrv, locationService } from '@grafana/runtime';
 import { Button, Field, Input, FieldSet } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
-import { TeamRolePicker } from 'app/core/components/RolePicker/TeamRolePicker';
+import { RolePicker } from 'app/core/components/RolePicker/RolePicker';
 import { updateTeamRoles } from 'app/core/components/RolePicker/api';
 import { useRoleOptions } from 'app/core/components/RolePicker/hooks';
 import { contextSrv } from 'app/core/core';
@@ -56,14 +56,12 @@ export const CreateTeam = (): JSX.Element => {
             </Field>
             {contextSrv.licensedAccessControlEnabled() && (
               <Field label="Role">
-                <TeamRolePicker
-                  currentRoles={[]}
-                  teamId={0}
+                <RolePicker
+                  onSubmit={setPendingRoles}
+                  roles={pendingRoles}
                   roleOptions={roleOptions}
                   disabled={false}
-                  apply={true}
-                  onApplyRoles={setPendingRoles}
-                  pendingRoles={pendingRoles}
+                  submitButtonText="Apply"
                   maxWidth="100%"
                 />
               </Field>

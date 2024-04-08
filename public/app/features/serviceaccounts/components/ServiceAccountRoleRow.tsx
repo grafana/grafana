@@ -1,7 +1,8 @@
 import React from 'react';
 
 import { Label } from '@grafana/ui';
-import { UserRolePicker } from 'app/core/components/RolePicker/UserRolePicker';
+import { RolePicker } from 'app/core/components/RolePicker/RolePicker';
+import { updateUserRoles } from 'app/core/components/RolePicker/api';
 import { contextSrv } from 'app/core/core';
 import { OrgRolePicker } from 'app/features/admin/OrgRolePicker';
 import { AccessControlAction, OrgRole, Role, ServiceAccountDTO } from 'app/types';
@@ -24,12 +25,15 @@ export const ServiceAccountRoleRow = ({ label, serviceAccount, roleOptions, onRo
       </td>
       {contextSrv.licensedAccessControlEnabled() ? (
         <td colSpan={3}>
-          <UserRolePicker
-            currentRoles={[]}
-            userId={serviceAccount.id}
-            orgId={serviceAccount.orgId}
+          <RolePicker
+            onSubmit={async (newRoles: Role[], newRole?: OrgRole) => {
+              await updateUserRoles(newRoles, serviceAccount.id);
+              if (newRole !== undefined) {
+                onRoleChange(newRole);
+              }
+            }}
+            roles={serviceAccount.roles || []}
             basicRole={serviceAccount.role}
-            onBasicRoleChange={onRoleChange}
             roleOptions={roleOptions}
             basicRoleDisabled={!canUpdateRole}
             disabled={serviceAccount.isExternal || serviceAccount.isDisabled}

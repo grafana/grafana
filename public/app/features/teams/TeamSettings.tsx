@@ -1,10 +1,10 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { connect, ConnectedProps } from 'react-redux';
 
 import { Input, Field, Button, FieldSet, Stack } from '@grafana/ui';
-import { TeamRolePicker } from 'app/core/components/RolePicker/TeamRolePicker';
-import { updateTeamRoles } from 'app/core/components/RolePicker/api';
+import { RolePicker } from 'app/core/components/RolePicker/RolePicker';
+import { fetchTeamRoles, updateTeamRoles } from 'app/core/components/RolePicker/api';
 import { useRoleOptions } from 'app/core/components/RolePicker/hooks';
 import { SharedPreferences } from 'app/core/components/SharedPreferences/SharedPreferences';
 import { contextSrv } from 'app/core/services/context_srv';
@@ -27,6 +27,7 @@ export const TeamSettings = ({ team, updateTeam }: Props) => {
   const canWriteTeamSettings = contextSrv.hasPermissionInMetadata(AccessControlAction.ActionTeamsWrite, team);
   const currentOrgId = contextSrv.user.orgId;
 
+  const [isLoading, setIsLoading] = useState(true);
   const [{ roleOptions }] = useRoleOptions(currentOrgId);
   const [pendingRoles, setPendingRoles] = useState<Role[]>([]);
   const {
@@ -34,6 +35,18 @@ export const TeamSettings = ({ team, updateTeam }: Props) => {
     register,
     formState: { errors },
   } = useForm<Team>({ defaultValues: team });
+
+  useEffect(() => {
+    setIsLoading(true);
+    fetchTeamRoles(team.id, team.orgId)
+      .then((roles) => {
+        setPendingRoles(roles);
+        setIsLoading(false);
+      })
+      .catch((err) => {
+        // todo
+      });
+  }, [team.id, team.orgId]);
 
   const canUpdateRoles =
     contextSrv.hasPermission(AccessControlAction.ActionTeamsRolesAdd) &&
@@ -45,7 +58,9 @@ export const TeamSettings = ({ team, updateTeam }: Props) => {
 
   const onSubmit = async (formTeam: Team) => {
     if (contextSrv.licensedAccessControlEnabled() && canUpdateRoles) {
+      setIsLoading(true);
       await updateTeamRoles(pendingRoles, team.id);
+      setIsLoading(false);
     }
     updateTeam(formTeam.name, formTeam.email || '');
   };
@@ -66,14 +81,13 @@ export const TeamSettings = ({ team, updateTeam }: Props) => {
 
           {contextSrv.licensedAccessControlEnabled() && canListRoles && (
             <Field label="Role">
-              <TeamRolePicker
-                currentRoles={[]}
-                teamId={team.id}
+              <RolePicker
+                onSubmit={setPendingRoles}
+                roles={pendingRoles}
                 roleOptions={roleOptions}
                 disabled={!canUpdateRoles}
-                apply={true}
-                onApplyRoles={setPendingRoles}
-                pendingRoles={pendingRoles}
+                isLoading={isLoading}
+                submitButtonText="Apply"
                 maxWidth="100%"
               />
             </Field>

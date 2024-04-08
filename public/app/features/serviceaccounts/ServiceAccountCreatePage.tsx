@@ -4,7 +4,7 @@ import { getBackendSrv, locationService } from '@grafana/runtime';
 import { Button, Input, Field, FieldSet } from '@grafana/ui';
 import { Form } from 'app/core/components/Form/Form';
 import { Page } from 'app/core/components/Page/Page';
-import { UserRolePicker } from 'app/core/components/RolePicker/UserRolePicker';
+import { RolePicker } from 'app/core/components/RolePicker/RolePicker';
 import { fetchRoleOptions, updateUserRoles } from 'app/core/components/RolePicker/api';
 import { contextSrv } from 'app/core/core';
 import { AccessControlAction, OrgRole, Role, ServiceAccountCreateApiResponse, ServiceAccountDTO } from 'app/types';
@@ -55,6 +55,11 @@ export const ServiceAccountCreatePage = ({}: Props): JSX.Element => {
     }
   }, [currentOrgId]);
 
+  const canUpdateRoles =
+    contextSrv.licensedAccessControlEnabled() &&
+    contextSrv.hasPermission(AccessControlAction.ActionUserRolesAdd) &&
+    contextSrv.hasPermission(AccessControlAction.ActionUserRolesRemove);
+
   const onSubmit = useCallback(
     async (data: ServiceAccountDTO) => {
       data.role = serviceAccount.role;
@@ -71,11 +76,7 @@ export const ServiceAccountCreatePage = ({}: Props): JSX.Element => {
           tokens: response.tokens,
         };
         await updateServiceAccount(response.id, data);
-        if (
-          contextSrv.licensedAccessControlEnabled() &&
-          contextSrv.hasPermission(AccessControlAction.ActionUserRolesAdd) &&
-          contextSrv.hasPermission(AccessControlAction.ActionUserRolesRemove)
-        ) {
+        if (canUpdateRoles) {
           await updateUserRoles(pendingRoles, newAccount.id, newAccount.orgId);
         }
       } catch (e) {
@@ -83,19 +84,21 @@ export const ServiceAccountCreatePage = ({}: Props): JSX.Element => {
       }
       locationService.push(`/org/serviceaccounts/${response.id}`);
     },
-    [serviceAccount.role, pendingRoles]
+    [serviceAccount.role, pendingRoles, canUpdateRoles]
   );
 
-  const onRoleChange = (role: OrgRole) => {
+  const setBasicRole = (newRole: OrgRole) => {
     setServiceAccount({
       ...serviceAccount,
-      role: role,
+      role: newRole,
     });
   };
 
-  const onPendingRolesUpdate = (roles: Role[], userId: number, orgId: number | undefined) => {
-    // keep the new role assignments for user
-    setPendingRoles(roles);
+  const rolePickerOnSubmit = (newRoles: Role[], newRole?: OrgRole) => {
+    setPendingRoles(newRoles);
+    if (newRole !== undefined) {
+      setBasicRole(newRole);
+    }
   };
 
   return (
@@ -116,20 +119,22 @@ export const ServiceAccountCreatePage = ({}: Props): JSX.Element => {
                   </Field>
                   <Field label="Role">
                     {contextSrv.licensedAccessControlEnabled() ? (
-                      <UserRolePicker
-                        apply
-                        currentRoles={[]}
-                        userId={serviceAccount.id || 0}
-                        orgId={serviceAccount.orgId}
-                        basicRole={serviceAccount.role}
-                        onBasicRoleChange={onRoleChange}
+                      <RolePicker
+                        onSubmit={rolePickerOnSubmit}
                         roleOptions={roleOptions}
-                        onApplyRoles={onPendingRolesUpdate}
-                        pendingRoles={pendingRoles}
+                        roles={pendingRoles}
+                        showBasicRole
+                        basicRole={serviceAccount.role}
+                        canUpdateRoles={canUpdateRoles}
+                        submitButtonText="Apply"
                         maxWidth="100%"
                       />
                     ) : (
-                      <OrgRolePicker aria-label="Role" value={serviceAccount.role} onChange={onRoleChange} />
+                      <OrgRolePicker
+                        aria-label="Role"
+                        value={serviceAccount.role}
+                        onChange={(newRole) => setBasicRole(newRole)}
+                      />
                     )}
                   </Field>
                 </FieldSet>

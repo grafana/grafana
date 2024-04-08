@@ -19,6 +19,7 @@ const setup = (propOverrides?: object) => {
   const props: Props = {
     users: [] as OrgUser[],
     onRoleChange: jest.fn(),
+    onRolesChange: jest.fn(),
     onRemoveUser: jest.fn(),
     changePage: jest.fn(),
     page: 0,

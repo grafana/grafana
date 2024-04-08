@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo } from 'react';
 import Skeleton from 'react-loading-skeleton';
 import { connect, ConnectedProps } from 'react-redux';
 
@@ -21,11 +21,12 @@ import {
 } from '@grafana/ui';
 import EmptyListCTA from 'app/core/components/EmptyListCTA/EmptyListCTA';
 import { Page } from 'app/core/components/Page/Page';
-import { fetchRoleOptions } from 'app/core/components/RolePicker/api';
+import { RolePicker } from 'app/core/components/RolePicker/RolePicker';
+import { updateTeamRoles } from 'app/core/components/RolePicker/api';
+import { useRoleOptions } from 'app/core/components/RolePicker/hooks';
+// import { fetchRoleOptions } from 'app/core/components/RolePicker/api';
 import { contextSrv } from 'app/core/services/context_srv';
 import { AccessControlAction, Role, StoreState, Team } from 'app/types';
-
-import { TeamRolePicker } from '../../core/components/RolePicker/TeamRolePicker';
 
 import { deleteTeam, loadTeams, changePage, changeQuery, changeSort } from './state/actions';
 
@@ -59,21 +60,18 @@ export const TeamList = ({
   changePage,
   changeSort,
 }: Props) => {
-  const [roleOptions, setRoleOptions] = useState<Role[]>([]);
+  const [{ roleOptions }] = useRoleOptions(contextSrv.user.orgId);
   const styles = useStyles2(getStyles);
 
   useEffect(() => {
     loadTeams(true);
   }, [loadTeams]);
 
-  useEffect(() => {
-    if (contextSrv.licensedAccessControlEnabled() && contextSrv.hasPermission(AccessControlAction.ActionRolesList)) {
-      fetchRoleOptions().then((roles) => setRoleOptions(roles));
-    }
-  }, []);
-
   const canCreate = contextSrv.hasPermission(AccessControlAction.ActionTeamsCreate);
-  const displayRolePicker = shouldDisplayRolePicker();
+  const displayRolePicker =
+    contextSrv.licensedAccessControlEnabled() &&
+    contextSrv.hasPermission(AccessControlAction.ActionTeamsRolesList) &&
+    contextSrv.hasPermission(AccessControlAction.ActionRolesList);
 
   const columns: Array<Column<Team>> = useMemo(
     () => [
@@ -148,9 +146,11 @@ export const TeamList = ({
                 );
                 return (
                   canSeeTeamRoles && (
-                    <TeamRolePicker
-                      teamId={original.id}
-                      currentRoles={original.roles || []}
+                    <RolePicker
+                      onSubmit={async (newRoles: Role[]) => {
+                        await updateTeamRoles(newRoles, original.id, original.orgId);
+                      }}
+                      roles={original.roles || []}
                       isLoading={rolesLoading}
                       roleOptions={roleOptions}
                       width={40}
@@ -258,14 +258,6 @@ export const TeamList = ({
     </Page>
   );
 };
-
-function shouldDisplayRolePicker(): boolean {
-  return (
-    contextSrv.licensedAccessControlEnabled() &&
-    contextSrv.hasPermission(AccessControlAction.ActionTeamsRolesList) &&
-    contextSrv.hasPermission(AccessControlAction.ActionRolesList)
-  );
-}
 
 function mapStateToProps(state: StoreState) {
   return {

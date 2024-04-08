@@ -18,8 +18,8 @@ import {
   Text,
   Tooltip,
 } from '@grafana/ui';
-import { UserRolePicker } from 'app/core/components/RolePicker/UserRolePicker';
-import { fetchRoleOptions } from 'app/core/components/RolePicker/api';
+import { RolePicker } from 'app/core/components/RolePicker/RolePicker';
+import { fetchRoleOptions, updateUserRoles } from 'app/core/components/RolePicker/api';
 import { TagBadge } from 'app/core/components/TagFilter/TagBadge';
 import { contextSrv } from 'app/core/core';
 import { AccessControlAction, OrgUser, Role } from 'app/types';
@@ -42,6 +42,7 @@ export interface Props {
   users: OrgUser[];
   orgId?: number;
   onRoleChange: (role: OrgRole, user: OrgUser) => void;
+  onRolesChange: (user: OrgUser, roles: Role[]) => void;
   onRemoveUser: (user: OrgUser) => void;
   fetchData?: FetchDataFunc<OrgUser>;
   changePage: (page: number) => void;
@@ -54,6 +55,7 @@ export const OrgUsersTable = ({
   users,
   orgId,
   onRoleChange,
+  onRolesChange,
   onRemoveUser,
   fetchData,
   changePage,
@@ -66,13 +68,9 @@ export const OrgUsersTable = ({
 
   useEffect(() => {
     async function fetchOptions() {
-      try {
-        if (contextSrv.hasPermission(AccessControlAction.ActionRolesList)) {
-          let options = await fetchRoleOptions(orgId);
-          setRoleOptions(options);
-        }
-      } catch (e) {
-        console.error('Error loading options');
+      if (contextSrv.hasPermission(AccessControlAction.ActionRolesList)) {
+        let options = await fetchRoleOptions(orgId);
+        setRoleOptions(options);
       }
     }
     if (contextSrv.licensedAccessControlEnabled()) {
@@ -119,14 +117,19 @@ export const OrgUsersTable = ({
         cell: ({ cell: { value }, row: { original } }: Cell<'role'>) => {
           const basicRoleDisabled = getBasicRoleDisabled(original);
           return contextSrv.licensedAccessControlEnabled() ? (
-            <UserRolePicker
-              userId={original.userId}
-              currentRoles={original.roles || []}
+            <RolePicker
+              onSubmit={async (newRoles: Role[], newRole?: OrgRole) => {
+                await updateUserRoles(newRoles, original.userId, orgId);
+                if (newRole !== undefined) {
+                  onRoleChange(newRole, original);
+                }
+                onRolesChange(original, newRoles);
+              }}
+              roles={original.roles || []}
               isLoading={rolesLoading}
-              orgId={orgId}
               roleOptions={roleOptions}
+              showBasicRole
               basicRole={value}
-              onBasicRoleChange={(newRole) => onRoleChange(newRole, original)}
               basicRoleDisabled={basicRoleDisabled}
               basicRoleDisabledMessage={disabledRoleMessage}
               width={40}
@@ -207,7 +210,7 @@ export const OrgUsersTable = ({
         },
       },
     ],
-    [rolesLoading, orgId, roleOptions, onRoleChange]
+    [rolesLoading, orgId, roleOptions, onRoleChange, onRolesChange]
   );
 
   return (

@@ -145,7 +145,7 @@ export class UserAdminPage extends PureComponent<Props> {
               </>
             )}
 
-            {orgs && (
+            {user && orgs && (
               <UserOrgs
                 user={user}
                 orgs={orgs}

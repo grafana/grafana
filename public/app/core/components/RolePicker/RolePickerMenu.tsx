@@ -59,8 +59,8 @@ interface RolePickerMenuProps {
   showBasicRole?: boolean;
   onSelect: (roles: Role[]) => void;
   onBasicRoleSelect?: (role: OrgRole) => void;
-  onUpdate: (newRoles: Role[], newBuiltInRole?: OrgRole) => void;
-  updateDisabled?: boolean;
+  onSubmit: (newRoles: Role[], newBuiltInRole?: OrgRole) => void;
+  submitDisabled?: boolean;
   submitButtonText: string;
   offset: { vertical: number; horizontal: number };
   menuLeft?: boolean;
@@ -76,8 +76,8 @@ export const RolePickerMenu = ({
   showBasicRole,
   onSelect,
   onBasicRoleSelect,
-  onUpdate,
-  updateDisabled,
+  onSubmit,
+  submitDisabled,
   offset,
   menuLeft,
   submitButtonText,
@@ -199,10 +199,6 @@ export const RolePickerMenu = ({
     setSelectedOptions(options);
   };
 
-  const onUpdateInternal = () => {
-    onUpdate(selectedOptions, selectedBuiltInRole);
-  };
-
   return (
     <div
       className={cx(
@@ -257,10 +253,16 @@ export const RolePickerMenu = ({
         </CustomScrollbar>
         <div className={customStyles.menuButtonRow}>
           <HorizontalGroup justify="flex-end">
-            <Button size="sm" fill="text" onClick={onClearInternal} disabled={updateDisabled}>
+            <Button size="sm" fill="text" onClick={onClearInternal} disabled={submitDisabled}>
               Clear all
             </Button>
-            <Button size="sm" onClick={onUpdateInternal} disabled={updateDisabled}>
+            <Button
+              size="sm"
+              onClick={() => {
+                onSubmit(selectedOptions, selectedBuiltInRole);
+              }}
+              disabled={submitDisabled}
+            >
               {submitButtonText}
             </Button>
           </HorizontalGroup>

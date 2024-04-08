@@ -4,7 +4,7 @@ import { connect, ConnectedProps } from 'react-redux';
 import { renderMarkdown } from '@grafana/data';
 import { Page } from 'app/core/components/Page/Page';
 import { contextSrv } from 'app/core/core';
-import { OrgUser, OrgRole, StoreState } from 'app/types';
+import { OrgUser, OrgRole, StoreState, Role } from 'app/types';
 
 import { OrgUsersTable } from '../admin/Users/OrgUsersTable';
 import InviteesTable from '../invites/InviteesTable';
@@ -71,7 +71,11 @@ export const UsersListPageUnconnected = ({
   }, [fetchInvitees, loadUsers]);
 
   const onRoleChange = (role: OrgRole, user: OrgUser) => {
-    updateUser({ ...user, role: role });
+    updateUser({ ...user, role });
+  };
+
+  const onRolesChange = (user: OrgUser, roles: Role[]) => {
+    updateUser({ ...user, roles });
   };
 
   const onRemoveUser = (user: OrgUser) => removeUser(user.userId);
@@ -90,6 +94,7 @@ export const UsersListPageUnconnected = ({
           orgId={contextSrv.user.orgId}
           rolesLoading={rolesLoading}
           onRoleChange={onRoleChange}
+          onRolesChange={onRolesChange}
           onRemoveUser={onRemoveUser}
           fetchData={changeSort}
           changePage={changePage}
