@@ -352,7 +352,7 @@ func TestAuthorizeRuleChanges(t *testing.T) {
 				for _, missing := range permissionCombinations {
 					ac := &recordingAccessControlFake{}
 					srv := RuleService{
-						ac: ac,
+						genericService{ac: ac},
 					}
 					err := srv.AuthorizeRuleChanges(context.Background(), createUserWithPermissions(missing), groupChanges)
 
@@ -369,7 +369,7 @@ func TestAuthorizeRuleChanges(t *testing.T) {
 				},
 			}
 			srv := RuleService{
-				ac: ac,
+				genericService{ac: ac},
 			}
 			err := srv.AuthorizeRuleChanges(context.Background(), createUserWithPermissions(permissions), groupChanges)
 			require.NoError(t, err)
@@ -414,7 +414,7 @@ func TestCheckDatasourcePermissionsForRule(t *testing.T) {
 
 		ac := &recordingAccessControlFake{}
 		svc := RuleService{
-			ac: ac,
+			genericService{ac: ac},
 		}
 
 		eval := svc.AuthorizeDatasourceAccessForRule(context.Background(), createUserWithPermissions(permissions), rule)
@@ -430,7 +430,7 @@ func TestCheckDatasourcePermissionsForRule(t *testing.T) {
 			},
 		}
 		svc := RuleService{
-			ac: ac,
+			genericService{ac: ac},
 		}
 
 		result := svc.AuthorizeDatasourceAccessForRule(context.Background(), createUserWithPermissions(nil), rule)
@@ -460,7 +460,7 @@ func Test_authorizeAccessToRuleGroup(t *testing.T) {
 		}
 		ac := &recordingAccessControlFake{}
 		svc := RuleService{
-			ac: ac,
+			genericService{ac: ac},
 		}
 
 		result := svc.AuthorizeAccessToRuleGroup(context.Background(), createUserWithPermissions(permissions), rules)
@@ -493,7 +493,7 @@ func Test_authorizeAccessToRuleGroup(t *testing.T) {
 		ac := &recordingAccessControlFake{}
 
 		svc := RuleService{
-			ac: ac,
+			genericService{ac: ac},
 		}
 
 		result := svc.AuthorizeAccessToRuleGroup(context.Background(), createUserWithPermissions(permissions), rules)

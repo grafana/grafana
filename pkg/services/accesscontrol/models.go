@@ -440,6 +440,10 @@ const (
 	ActionAlertingInstanceUpdate = "alert.instances:write"
 	ActionAlertingInstanceRead   = "alert.instances:read"
 
+	ActionAlertingSilencesRead   = "alert.silences:read"
+	ActionAlertingSilencesCreate = "alert.silences:create"
+	ActionAlertingSilencesWrite  = "alert.silences:write"
+
 	// Alerting Notification policies actions
 	ActionAlertingNotificationsRead  = "alert.notifications:read"
 	ActionAlertingNotificationsWrite = "alert.notifications:write"
