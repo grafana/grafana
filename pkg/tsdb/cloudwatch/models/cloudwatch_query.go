@@ -59,7 +59,6 @@ type CloudWatchQuery struct {
 	MetricName        string
 	Statistic         string
 	Expression        string
-	Sql               dataquery.SQLExpression
 	SqlExpression     string
 	ReturnData        bool
 	Dimensions        map[string][]string
@@ -253,10 +252,6 @@ func ParseMetricDataQueries(dataQueries []backend.DataQuery, startTime time.Time
 
 		if mdq.MetricQueryType != nil {
 			cwQuery.MetricQueryType = *mdq.MetricQueryType
-		}
-
-		if mdq.Sql != nil {
-			cwQuery.Sql = *mdq.Sql
 		}
 
 		if mdq.SqlExpression != nil {
