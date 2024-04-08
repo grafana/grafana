@@ -64,15 +64,16 @@ func (fam *RemotePrimaryForkedAlertmanager) GetStatus(ctx context.Context) (apim
 }
 
 func (fam *RemotePrimaryForkedAlertmanager) CreateSilence(ctx context.Context, silence *apimodels.PostableSilence) (string, error) {
-	// Create que silence in the remote Alertmanager.
-	_, err := fam.remote.CreateSilence(ctx, silence)
+	uid, err := fam.remote.CreateSilence(ctx, silence)
 	if err != nil {
-		return "", fmt.Errorf("failed to create silence in the remote Alertmanager: %w", err)
+		return "", err
 	}
 
-	// Use the returned ID to create a silence in the internal Alertmanager.
-	// TODO: refactor silence creation to be able to specify the ID.
-	return fam.internal.CreateSilence(ctx, silence)
+	silence.ID = uid
+	if _, err := fam.internal.CreateSilence(ctx, silence); err != nil {
+		fam.log.Error("Error creating silence in the internal Alertmanager", "err", err, "silence", silence)
+	}
+	return uid, nil
 }
 
 func (fam *RemotePrimaryForkedAlertmanager) DeleteSilence(ctx context.Context, id string) error {

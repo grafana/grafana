@@ -1973,7 +1973,7 @@ func TestIntegrationAlertmanagerCreateSilence(t *testing.T) {
 				StartsAt: util.Pointer(strfmt.DateTime(time.Now())),
 			},
 		},
-		expErr: "unable to save silence: silence invalid: invalid label matcher 0: invalid label name \"\": unable to create silence",
+		expErr: "unable to upsert silence: silence invalid: invalid label matcher 0: invalid label name \"\": unable to create silence",
 	}, {
 		name: "can't create silence for missing label value",
 		silence: apimodels.PostableSilence{
@@ -1990,7 +1990,7 @@ func TestIntegrationAlertmanagerCreateSilence(t *testing.T) {
 				StartsAt: util.Pointer(strfmt.DateTime(time.Now())),
 			},
 		},
-		expErr: "unable to save silence: silence invalid: at least one matcher must not match the empty string: unable to create silence",
+		expErr: "unable to upsert silence: silence invalid: at least one matcher must not match the empty string: unable to create silence",
 	}}
 
 	for _, tc := range cases {
