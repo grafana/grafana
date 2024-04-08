@@ -56,7 +56,5 @@ func (d *DualWriterMode3) Get(ctx context.Context, name string, options *metav1.
 		return nil, err
 	}
 
-	fmt.Println("Resource not found in Unified Storage. Getting it from Legacy Storage.")
-
 	return legacy.Get(ctx, name, &metav1.GetOptions{})
 }
