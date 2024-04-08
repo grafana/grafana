@@ -9,7 +9,6 @@ import { validationSrv } from 'app/features/manage-dashboards/services/Validatio
 
 import { DashboardScene } from '../scene/DashboardScene';
 
-import { SaveDashboardDrawer } from './SaveDashboardDrawer';
 import { DashboardChangeInfo, NameAlreadyExistsError, SaveButton, isNameExistsError } from './shared';
 import { useSaveDashboard } from './useSaveDashboard';
 
@@ -23,11 +22,10 @@ interface SaveDashboardAsFormDTO {
 
 export interface Props {
   dashboard: DashboardScene;
-  drawer: SaveDashboardDrawer;
   changeInfo: DashboardChangeInfo;
 }
 
-export function SaveDashboardAsForm({ dashboard, drawer, changeInfo }: Props) {
+export function SaveDashboardAsForm({ dashboard, changeInfo }: Props) {
   const { changedSaveModel } = changeInfo;
 
   const { register, handleSubmit, setValue, formState, getValues, watch, trigger } = useForm<SaveDashboardAsFormDTO>({
