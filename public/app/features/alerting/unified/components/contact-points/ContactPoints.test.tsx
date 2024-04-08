@@ -5,6 +5,7 @@ import React, { PropsWithChildren } from 'react';
 import { TestProvider } from 'test/helpers/TestProvider';
 
 import { selectors } from '@grafana/e2e-selectors';
+import { locationService } from '@grafana/runtime';
 import { AlertManagerDataSourceJsonData, AlertManagerImplementation } from 'app/plugins/datasource/alertmanager/types';
 import { AccessControlAction } from 'app/types';
 
@@ -40,6 +41,13 @@ import setupVanillaAlertmanagerFlavoredServer, {
 const server = setupMswServer();
 
 describe('contact points', () => {
+  beforeEach(() => {
+    // The location service is stateful between tests - `TestProvider` uses the same instance between each test
+    // and this results in the query params being persisted between tests
+    // To get round this for now, we can push "/" onto the history so there are no query params
+    locationService.push('/');
+  });
+
   describe('Contact points with Grafana managed alertmanager', () => {
     beforeEach(() => {
       grantUserPermissions([
@@ -124,7 +132,7 @@ describe('contact points', () => {
       // check if all of the delete buttons are disabled
       for await (const button of moreButtons) {
         await userEvent.click(button);
-        const deleteButton = await screen.queryByRole('menuitem', { name: 'delete' });
+        const deleteButton = screen.queryByRole('menuitem', { name: 'delete' });
         expect(deleteButton).toBeDisabled();
         // click outside the menu to close it otherwise we can't interact with the rest of the page
         await userEvent.click(document.body);
@@ -289,9 +297,6 @@ describe('contact points', () => {
   describe('Vanilla Alertmanager ', () => {
     beforeEach(() => {
       setupVanillaAlertmanagerFlavoredServer(server);
-    });
-
-    beforeAll(() => {
       grantUserPermissions([
         AccessControlAction.AlertingNotificationsExternalRead,
         AccessControlAction.AlertingNotificationsExternalWrite,
