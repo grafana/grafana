@@ -34,6 +34,10 @@ func TestIntegrationWillRunInstrumentationServerWhenTargetHasNoHttpServer(t *tes
 
 	testdb := db.InitTestDB(t)
 	cfg := testdb.Cfg
+
+	sec, err := cfg.Raw.GetSection("database")
+	t.Log(sec.Key("connection_string").String())
+
 	cfg.GRPCServerNetwork = "tcp"
 	cfg.GRPCServerAddress = "localhost:10000"
 	addStorageServerToConfig(t, cfg, dbType)
