@@ -42,7 +42,7 @@ describe('LokiQueryBuilderOptions', () => {
 
     await userEvent.click(screen.getByRole('button', { name: /Options/ }));
     // Second autosize input is a Line limit
-    const element = screen.getAllByTestId('autosize-input')[1];
+    const element = screen.getAllByTestId('autosize-input')[2];
     await userEvent.type(element, '10');
     await userEvent.keyboard('{enter}');
 
@@ -59,7 +59,7 @@ describe('LokiQueryBuilderOptions', () => {
 
     await userEvent.click(screen.getByRole('button', { name: /Options/ }));
     // Second autosize input is a Line limit
-    const element = screen.getAllByTestId('autosize-input')[1];
+    const element = screen.getAllByTestId('autosize-input')[2];
     await userEvent.type(element, '-10');
     await userEvent.keyboard('{enter}');
 
@@ -76,7 +76,7 @@ describe('LokiQueryBuilderOptions', () => {
 
     await userEvent.click(screen.getByRole('button', { name: /Options/ }));
     // Second autosize input is a Line limit
-    const element = screen.getAllByTestId('autosize-input')[1];
+    const element = screen.getAllByTestId('autosize-input')[2];
     await userEvent.type(element, 'asd');
     await userEvent.keyboard('{enter}');
 
@@ -153,6 +153,32 @@ describe('LokiQueryBuilderOptions', () => {
     expect(screen.queryByText(/Invalid step/)).not.toBeInTheDocument();
   });
 });
+
+describe('getCollapsedInfo', () => {
+  it('displays a clipped legend URL for long URLs', () => {
+    const longUrl = 'extremelyLongUrlThatShouldBeCutOffElseItTakesUpTooMuchOnScreenRealestate';
+    setup({ legendUrlFormat: longUrl });
+
+    const urlText = screen.getByText((content, node) => {
+      const hasText = (node: any) => node.textContent === `URL: ${longUrl.slice(0, 10)}...`;
+      const nodeHasText = hasText(node);
+      const childrenDontHaveText = Array.from(node!.children).every(
+        (child) => !hasText(child)
+      );
+      return nodeHasText && childrenDontHaveText;
+    });
+    expect(urlText).toBeInTheDocument();
+  });
+
+  it('displays the full legend URL for short URLs', () => {
+    const shortUrl = 'shortUrl';
+    setup({ legendUrlFormat: shortUrl });
+
+    const urlTextElement = screen.getByText(`URL: ${shortUrl}`);
+    expect(urlTextElement).toBeInTheDocument();
+  });
+});
+
 
 function setup(queryOverrides: Partial<LokiQuery> = {}) {
   const props = {
