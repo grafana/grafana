@@ -318,9 +318,6 @@ func TestIntegrationRemoteAlertmanagerConfiguration(t *testing.T) {
 	am, err := NewAlertmanager(cfg, fstore, secretsService.Decrypt, m)
 	require.NoError(t, err)
 
-	encodedFullState, err := am.getFullState(ctx)
-	require.NoError(t, err)
-
 	// We should have no configuration or state at first.
 	{
 		_, err := am.mimirClient.GetGrafanaAlertmanagerConfig(ctx)
