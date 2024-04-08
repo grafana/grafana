@@ -320,6 +320,10 @@ func (s *Service) SyncIdentity(ctx context.Context, identity *authn.Identity) er
 }
 
 func (s *Service) errorLogFunc(ctx context.Context, err error) func(msg string, ctx ...any) {
+	if errors.Is(err, context.Canceled) {
+		return func(msg string, ctx ...any) {}
+	}
+
 	l := s.log.FromContext(ctx)
 
 	var grfErr errutil.Error
