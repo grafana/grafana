@@ -281,8 +281,8 @@ func (am *Alertmanager) decryptConfiguration(ctx context.Context, cfg *apimodels
 	return json.Marshal(decrypted)
 }
 
-// sendConfiguration expects a decrypted configuration to send to the remote Alertmanager.
-// The hash should correspond to the encrypted configuration, like the hash we store in the DB.
+// sendConfiguration forwards a configuration to the remote Alertmanager and updates metrics.
+// The configuration should be decrypted, but the hash should correspond to the encrypted configuration.
 func (am *Alertmanager) sendConfiguration(ctx context.Context, rawConfig, hash string, createdAt int64, isDefault bool) error {
 	am.metrics.ConfigSyncsTotal.Inc()
 	if err := am.mimirClient.CreateGrafanaAlertmanagerConfig(
