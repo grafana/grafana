@@ -16,11 +16,13 @@ import { rulesInSameGroupHaveInvalidFor, updateLotexNamespaceAndGroupAction } fr
 import { checkEvaluationIntervalGlobalLimit } from '../../utils/config';
 import { getRulesSourceName, GRAFANA_RULES_SOURCE_NAME } from '../../utils/datasource';
 import { initialAsyncRequestState } from '../../utils/redux';
+import { DEFAULT_GROUP_EVALUATION_INTERVAL } from '../../utils/rule-form';
 import { AlertInfo, getAlertInfo, isRecordingRulerRule } from '../../utils/rules';
-import { parsePrometheusDuration, safeParseDurationstr } from '../../utils/time';
+import { formatPrometheusDuration, parsePrometheusDuration, safeParsePrometheusDuration } from '../../utils/time';
 import { DynamicTable, DynamicTableColumnProps, DynamicTableItemProps } from '../DynamicTable';
 import { EvaluationIntervalLimitExceeded } from '../InvalidIntervalWarning';
 import { decodeGrafanaNamespace, encodeGrafanaNamespace } from '../expressions/util';
+import { EvaluationGroupQuickPick } from '../rule-editor/EvaluationGroupQuickPick';
 import { MIN_TIME_RANGE_STEP_S } from '../rule-editor/GrafanaEvaluationBehavior';
 
 const ITEMS_PER_PAGE = 10;
@@ -68,7 +70,8 @@ export const RulesForGroupTable = ({ rulesWithoutRecordingRules }: { rulesWithou
       data: getAlertInfo(rule, currentInterval),
     }))
     .sort(
-      (alert1, alert2) => safeParseDurationstr(alert1.data.forDuration) - safeParseDurationstr(alert2.data.forDuration)
+      (alert1, alert2) =>
+        safeParsePrometheusDuration(alert1.data.forDuration) - safeParsePrometheusDuration(alert2.data.forDuration)
     );
 
   const columns: AlertsWithForTableColumnProps[] = useMemo(() => {
@@ -145,7 +148,12 @@ export const evaluateEveryValidationOptions = (rules: RulerRuleDTO[]): RegisterO
       if (rulesInSameGroupHaveInvalidFor(rules, evaluateEvery).length === 0) {
         return true;
       } else {
-        return `Invalid evaluation interval. Evaluation interval should be smaller or equal to 'For' values for existing rules in this group.`;
+        const rulePendingPeriods = rules.map((rule) => {
+          const { forDuration } = getAlertInfo(rule, evaluateEvery);
+          return safeParsePrometheusDuration(forDuration);
+        });
+        const largestPendingPeriod = Math.min(...rulePendingPeriods);
+        return `Evaluation interval should be smaller or equal to "pending period" values for existing rules in this rule group. Choose a value smaller than or equal to "${formatPrometheusDuration(largestPendingPeriod)}".`;
       }
     } catch (error) {
       return error instanceof Error ? error.message : 'Failed to parse duration';
@@ -176,9 +184,9 @@ export function EditCloudGroupModal(props: ModalProps): React.ReactElement {
     (): FormValues => ({
       namespaceName: decodeGrafanaNamespace(namespace).name,
       groupName: group.name,
-      groupInterval: group.interval ?? '',
+      groupInterval: group.interval ?? DEFAULT_GROUP_EVALUATION_INTERVAL,
     }),
-    [namespace, group]
+    [namespace, group.name, group.interval]
   );
 
   const rulesSourceName = getRulesSourceName(namespace.rulesSource);
@@ -227,6 +235,8 @@ export function EditCloudGroupModal(props: ModalProps): React.ReactElement {
     register,
     watch,
     formState: { isDirty, errors },
+    setValue,
+    getValues,
   } = formAPI;
 
   const onInvalid = () => {
@@ -260,7 +270,7 @@ export function EditCloudGroupModal(props: ModalProps): React.ReactElement {
                       {nameSpaceLabel}
                     </Label>
                   }
-                  invalid={!!errors.namespaceName}
+                  invalid={Boolean(errors.namespaceName) ? true : undefined}
                   error={errors.namespaceName?.message}
                 >
                   <Input
@@ -305,14 +315,20 @@ export function EditCloudGroupModal(props: ModalProps): React.ReactElement {
                   <Stack gap={0.5}>Evaluation interval</Stack>
                 </Label>
               }
-              invalid={!!errors.groupInterval}
+              invalid={Boolean(errors.groupInterval) ? true : undefined}
               error={errors.groupInterval?.message}
             >
-              <Input
-                id="groupInterval"
-                placeholder="1m"
-                {...register('groupInterval', evaluateEveryValidationOptions(rulesWithoutRecordingRules))}
-              />
+              <Stack direction="column">
+                <Input
+                  id="groupInterval"
+                  placeholder={DEFAULT_GROUP_EVALUATION_INTERVAL}
+                  {...register('groupInterval', evaluateEveryValidationOptions(rulesWithoutRecordingRules))}
+                />
+                <EvaluationGroupQuickPick
+                  currentInterval={getValues('groupInterval')}
+                  onSelect={(value) => setValue('groupInterval', value, { shouldValidate: true })}
+                />
+              </Stack>
             </Field>
 
             {checkEvaluationIntervalGlobalLimit(watch('groupInterval')).exceedsLimit && (

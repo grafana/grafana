@@ -10,7 +10,7 @@ import {
   VariableWithOptions,
   QueryVariableModel,
 } from '@grafana/data';
-import { getTemplateSrv } from '@grafana/runtime';
+import { getTemplateSrv, locationService } from '@grafana/runtime';
 import { safeStringifyValue } from 'app/core/utils/explore';
 
 import { getState } from '../../store/store';
@@ -291,4 +291,20 @@ export function toVariablePayload<T extends any = undefined>(
   data?: T
 ): VariablePayload<T> {
   return { type: obj.type, id: obj.id, data: data as T };
+}
+
+export function getVariablesFromUrl() {
+  const variables = getTemplateSrv().getVariables();
+  const queryParams = locationService.getSearchObject();
+
+  return Object.keys(queryParams)
+    .filter(
+      (key) => key.indexOf(VARIABLE_PREFIX) !== -1 && variables.some((v) => v.name === key.replace(VARIABLE_PREFIX, ''))
+    )
+    .reduce<UrlQueryMap>((obj, key) => {
+      const variableName = key.replace(VARIABLE_PREFIX, '');
+      obj[variableName] = queryParams[key];
+
+      return obj;
+    }, {});
 }

@@ -177,8 +177,8 @@ describe('transformSaveModelToScene', () => {
   });
 
   describe('When creating a new dashboard', () => {
-    it('should initialize the DashboardScene in edit mode and dirty', () => {
-      const rsp = buildNewDashboardSaveModel();
+    it('should initialize the DashboardScene in edit mode and dirty', async () => {
+      const rsp = await buildNewDashboardSaveModel();
       const scene = transformSaveModelToScene(rsp);
       expect(scene.state.isEditing).toBe(undefined);
       expect(scene.state.isDirty).toBe(false);
@@ -234,8 +234,10 @@ describe('transformSaveModelToScene', () => {
       expect(rowScene.state.children[0]).toBeInstanceOf(DashboardGridItem);
       expect(rowScene.state.children[1]).toBeInstanceOf(DashboardGridItem);
       expect(rowScene.state.children[2]).toBeInstanceOf(DashboardGridItem);
-      expect((rowScene.state.children[1] as DashboardGridItem).state.body!).toBeInstanceOf(AddLibraryPanelWidget);
-      expect((rowScene.state.children[2] as DashboardGridItem).state.body!).toBeInstanceOf(LibraryVizPanel);
+      // Panels are sorted by position in the row
+      expect((rowScene.state.children[0] as DashboardGridItem).state.body!).toBeInstanceOf(AddLibraryPanelWidget);
+      expect((rowScene.state.children[1] as DashboardGridItem).state.body!).toBeInstanceOf(LibraryVizPanel);
+      expect((rowScene.state.children[2] as DashboardGridItem).state.body!).toBeInstanceOf(VizPanel);
     });
 
     it('should create panels within expanded row', () => {
