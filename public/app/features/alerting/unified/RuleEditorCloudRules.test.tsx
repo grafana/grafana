@@ -159,9 +159,6 @@ describe('RuleEditor cloud', () => {
     // TODO remove skipPointerEventsCheck once https://github.com/jsdom/jsdom/issues/3232 is fixed
     await user.click(ui.buttons.addLabel.get());
 
-    await user.type(getLabelInput(ui.inputs.labelKey(0).get()), 'severity{enter}');
-    await user.type(getLabelInput(ui.inputs.labelValue(0).get()), 'warn{enter}');
-
     // save and check what was sent to backend
     await user.click(ui.buttons.saveAndExit.get());
     await waitFor(() => expect(mocks.api.setRulerRuleGroup).toHaveBeenCalled());
@@ -174,9 +171,10 @@ describe('RuleEditor cloud', () => {
           {
             alert: 'my great new rule',
             annotations: { description: 'some description', summary: 'some summary' },
-            labels: { severity: 'warn' },
             expr: 'up == 1',
             for: '1m',
+            labels: {},
+            keep_firing_for: undefined,
           },
         ],
       }

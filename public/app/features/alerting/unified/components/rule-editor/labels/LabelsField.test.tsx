@@ -86,13 +86,13 @@ describe('LabelsField with suggestions', () => {
 
     await waitFor(() => expect(screen.getAllByTestId('alertlabel-key-picker')).toHaveLength(2));
 
-    expect(screen.getByTestId('label-key-0').textContent).toBe('key1');
-    expect(screen.getByTestId('label-key-1').textContent).toBe('key2');
+    expect(screen.getByTestId('labelsInSubform-key-0').textContent).toBe('key1');
+    expect(screen.getByTestId('labelsInSubform-key-1').textContent).toBe('key2');
 
     expect(screen.getAllByTestId('alertlabel-value-picker')).toHaveLength(2);
 
-    expect(screen.getByTestId('label-value-0').textContent).toBe('value1');
-    expect(screen.getByTestId('label-value-1').textContent).toBe('value2');
+    expect(screen.getByTestId('labelsInSubform-value-0').textContent).toBe('value1');
+    expect(screen.getByTestId('labelsInSubform-value-1').textContent).toBe('value2');
   });
 
   it('Should delete a key-value combination', async () => {
@@ -117,15 +117,15 @@ describe('LabelsField with suggestions', () => {
 
     expect(screen.getAllByTestId('alertlabel-key-picker')).toHaveLength(3);
 
-    expect(screen.getByTestId('label-key-0').textContent).toBe('key1');
-    expect(screen.getByTestId('label-key-1').textContent).toBe('key2');
-    expect(screen.getByTestId('label-key-2').textContent).toBe('Choose key');
+    expect(screen.getByTestId('labelsInSubform-key-0').textContent).toBe('key1');
+    expect(screen.getByTestId('labelsInSubform-key-1').textContent).toBe('key2');
+    expect(screen.getByTestId('labelsInSubform-key-2').textContent).toBe('Choose key');
 
     expect(screen.getAllByTestId('alertlabel-value-picker')).toHaveLength(3);
 
-    expect(screen.getByTestId('label-value-0').textContent).toBe('value1');
-    expect(screen.getByTestId('label-value-1').textContent).toBe('value2');
-    expect(screen.getByTestId('label-value-2').textContent).toBe('Choose value');
+    expect(screen.getByTestId('labelsInSubform-value-0').textContent).toBe('value1');
+    expect(screen.getByTestId('labelsInSubform-value-1').textContent).toBe('value2');
+    expect(screen.getByTestId('labelsInSubform-value-2').textContent).toBe('Choose value');
   });
 
   it('Should be able to write new keys and values using the dropdowns', async () => {
@@ -134,34 +134,34 @@ describe('LabelsField with suggestions', () => {
     await waitFor(() => expect(screen.getByText('Add label')).toBeVisible());
     await userEvent.click(screen.getByText('Add label'));
 
-    const LastKeyDropdown = within(screen.getByTestId('label-key-2'));
-    const LastValueDropdown = within(screen.getByTestId('label-value-2'));
+    const LastKeyDropdown = within(screen.getByTestId('labelsInSubform-key-2'));
+    const LastValueDropdown = within(screen.getByTestId('labelsInSubform-value-2'));
 
     await userEvent.type(LastKeyDropdown.getByRole('combobox'), 'key3{enter}');
     await userEvent.type(LastValueDropdown.getByRole('combobox'), 'value3{enter}');
 
-    expect(screen.getByTestId('label-key-2').textContent).toBe('key3');
-    expect(screen.getByTestId('label-value-2').textContent).toBe('value3');
+    expect(screen.getByTestId('labelsInSubform-key-2').textContent).toBe('key3');
+    expect(screen.getByTestId('labelsInSubform-value-2').textContent).toBe('value3');
   });
   it('Should be able to write new keys and values using the dropdowns, case sensitive', async () => {
     renderLabelsWithSuggestions();
 
     await waitFor(() => expect(screen.getAllByTestId('alertlabel-key-picker')).toHaveLength(2));
-    expect(screen.getByTestId('label-key-0').textContent).toBe('key1');
-    expect(screen.getByTestId('label-key-1').textContent).toBe('key2');
-    expect(screen.getByTestId('label-value-0').textContent).toBe('value1');
-    expect(screen.getByTestId('label-value-1').textContent).toBe('value2');
+    expect(screen.getByTestId('labelsInSubform-key-0').textContent).toBe('key1');
+    expect(screen.getByTestId('labelsInSubform-key-1').textContent).toBe('key2');
+    expect(screen.getByTestId('labelsInSubform-value-0').textContent).toBe('value1');
+    expect(screen.getByTestId('labelsInSubform-value-1').textContent).toBe('value2');
 
-    const LastKeyDropdown = within(screen.getByTestId('label-key-1'));
-    const LastValueDropdown = within(screen.getByTestId('label-value-1'));
+    const LastKeyDropdown = within(screen.getByTestId('labelsInSubform-key-1'));
+    const LastValueDropdown = within(screen.getByTestId('labelsInSubform-value-1'));
 
     await userEvent.type(LastKeyDropdown.getByRole('combobox'), 'KEY2{enter}');
-    expect(screen.getByTestId('label-key-0').textContent).toBe('key1');
-    expect(screen.getByTestId('label-key-1').textContent).toBe('KEY2');
+    expect(screen.getByTestId('labelsInSubform-key-0').textContent).toBe('key1');
+    expect(screen.getByTestId('labelsInSubform-key-1').textContent).toBe('KEY2');
 
     await userEvent.type(LastValueDropdown.getByRole('combobox'), 'VALUE2{enter}');
-    expect(screen.getByTestId('label-value-0').textContent).toBe('value1');
-    expect(screen.getByTestId('label-value-1').textContent).toBe('VALUE2');
+    expect(screen.getByTestId('labelsInSubform-value-0').textContent).toBe('value1');
+    expect(screen.getByTestId('labelsInSubform-value-1').textContent).toBe('VALUE2');
   });
 });
 
