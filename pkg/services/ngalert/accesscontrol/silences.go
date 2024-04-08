@@ -132,19 +132,23 @@ func (s SilenceService) FilterByAccess(ctx context.Context, user identity.Reques
 		return nil, err
 	}
 
+	namespacesByAccess := make(map[string]bool) // caches results of permissions check for each namespace to avoid repeated checks for the same folder
 	for ruleUID, silence := range silencesByRuleUID {
 		ns, ok := namespacesByRuleUID[ruleUID]
+		if !ok { // this means that there is no rule with such UID.
+			continue
+		}
+		hasAccess, ok := namespacesByAccess[ns]
 		if !ok {
-			continue
+			hasAccess, err = s.HasAccess(ctx, user, readRuleSilenceEvaluator(ns))
+			if err != nil {
+				return nil, err
+			}
+			namespacesByAccess[ns] = hasAccess
 		}
-		hasAccess, err := s.HasAccess(ctx, user, readRuleSilenceEvaluator(ns))
-		if err != nil {
-			return nil, err
+		if hasAccess {
+			result = append(result, silence...)
 		}
-		if !hasAccess {
-			continue
-		}
-		result = append(result, silence...)
 	}
 	return result, nil
 }
