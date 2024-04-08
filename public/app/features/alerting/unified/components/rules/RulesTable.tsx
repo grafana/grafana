@@ -120,7 +120,11 @@ function useColumns(showSummaryColumn: boolean, showGroupColumn: boolean, showNe
     const isValidLastEvaluation = rule.promRule?.lastEvaluation && isValidDate(rule.promRule.lastEvaluation);
     const isValidIntervalDuration = rule.group.interval && isValidDuration(rule.group.interval);
 
-    if (!isValidLastEvaluation || !isValidIntervalDuration || isGrafanaRulerRulePaused(rule)) {
+    if (
+      !isValidLastEvaluation ||
+      !isValidIntervalDuration ||
+      (isGrafanaRulerRule(rule.rulerRule) && isGrafanaRulerRulePaused(rule.rulerRule))
+    ) {
       return;
     }
 
@@ -158,7 +162,7 @@ function useColumns(showSummaryColumn: boolean, showGroupColumn: boolean, showNe
 
           const isDeleting = !!(hasRuler(rulesSource) && rulerRulesLoaded(rulesSource) && promRule && !rulerRule);
           const isCreating = !!(hasRuler(rulesSource) && rulerRulesLoaded(rulesSource) && rulerRule && !promRule);
-          const isPaused = isGrafanaRulerRulePaused(rule);
+          const isPaused = isGrafanaRulerRule(rule.rulerRule) && isGrafanaRulerRulePaused(rule.rulerRule);
 
           return <RuleState rule={rule} isDeleting={isDeleting} isCreating={isCreating} isPaused={isPaused} />;
         },

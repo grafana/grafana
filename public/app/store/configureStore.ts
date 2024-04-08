@@ -3,7 +3,8 @@ import { setupListeners } from '@reduxjs/toolkit/query';
 
 import { browseDashboardsAPI } from 'app/features/browse-dashboards/api/browseDashboardsAPI';
 import { publicDashboardApi } from 'app/features/dashboard/api/publicDashboardApi';
-import { migrateToCloudAPI } from 'app/features/migrate-to-cloud/api';
+import { cloudMigrationAPI } from 'app/features/migrate-to-cloud/api';
+import { migrateToCloudMockAPI } from 'app/features/migrate-to-cloud/mockAPI';
 import { pluginsApi } from 'app/features/plugins/pluginsApi';
 import { StoreState } from 'app/types/store';
 
@@ -31,7 +32,8 @@ export function configureStore(initialState?: Partial<StoreState>) {
         alertingApi.middleware,
         publicDashboardApi.middleware,
         browseDashboardsAPI.middleware,
-        migrateToCloudAPI.middleware,
+        cloudMigrationAPI.middleware,
+        migrateToCloudMockAPI.middleware,
         pluginsApi.middleware
       ),
     devTools: process.env.NODE_ENV !== 'production',

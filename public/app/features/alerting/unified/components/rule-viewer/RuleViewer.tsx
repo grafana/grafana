@@ -6,6 +6,7 @@ import { NavModelItem, UrlQueryValue } from '@grafana/data';
 import { Alert, LinkButton, Stack, TabContent, Text, TextLink, useStyles2 } from '@grafana/ui';
 import { PageInfoItem } from 'app/core/components/Page/types';
 import { useQueryParams } from 'app/core/hooks/useQueryParams';
+import InfoPausedRule from 'app/features/alerting/unified/components/InfoPausedRule';
 import { CombinedRule, RuleHealth, RuleIdentifier } from 'app/types/unified-alerting';
 import { PromAlertingRuleState, PromRuleType } from 'app/types/unified-alerting-dto';
 
@@ -18,6 +19,7 @@ import {
   isAlertingRule,
   isFederatedRuleGroup,
   isGrafanaRulerRule,
+  isGrafanaRulerRulePaused,
   isRecordingRule,
 } from '../../utils/rules';
 import { createUrl } from '../../utils/url';
@@ -32,6 +34,7 @@ import { RedirectToCloneRule } from '../rules/CloneRule';
 import { useAlertRulePageActions } from './Actions';
 import { useDeleteModal } from './DeleteModal';
 import { FederatedRuleWarning } from './FederatedRuleWarning';
+import PausedBadge from './PausedBadge';
 import { useAlertRule } from './RuleContext';
 import { RecordingBadge, StateBadge } from './StateBadges';
 import { Details } from './tabs/Details';
@@ -70,6 +73,9 @@ const RuleViewer = () => {
 
   const isFederatedRule = isFederatedRuleGroup(rule.group);
   const isProvisioned = isGrafanaRulerRule(rule.rulerRule) && Boolean(rule.rulerRule.grafana_alert.provenance);
+  const isPaused = isGrafanaRulerRule(rule.rulerRule) && isGrafanaRulerRulePaused(rule.rulerRule);
+
+  const showError = hasError && !isPaused;
   const originMeta = getRuleOriginMetadata(rule);
 
   const summary = annotations[Annotation.summary];
@@ -82,6 +88,7 @@ const RuleViewer = () => {
       renderTitle={(title) => (
         <Title
           name={title}
+          paused={isPaused}
           state={isAlertType ? promRule.state : undefined}
           health={rule.promRule?.health}
           ruleType={rule.promRule?.type}
@@ -92,6 +99,7 @@ const RuleViewer = () => {
       info={createMetadata(rule)}
       subTitle={
         <Stack direction="column">
+          {isPaused && <InfoPausedRule />}
           {summary}
           {/* alerts and notifications and stuff */}
           {isFederatedRule && <FederatedRuleWarning />}
@@ -100,7 +108,7 @@ const RuleViewer = () => {
             <ProvisioningAlert resource={ProvisionedResource.AlertRule} bottomSpacing={0} topSpacing={2} />
           )}
           {/* error state */}
-          {hasError && (
+          {showError && (
             <Alert title="Something went wrong when evaluating this alert rule" bottomSpacing={0} topSpacing={2}>
               <pre style={{ marginBottom: 0 }}>
                 <code>{rule.promRule?.lastError ?? 'No error message'}</code>
@@ -120,7 +128,6 @@ const RuleViewer = () => {
           {activeTab === ActiveTab.Details && <Details rule={rule} />}
         </TabContent>
       </Stack>
-
       {deleteModal}
       {duplicateRuleIdentifier && (
         <RedirectToCloneRule
@@ -216,6 +223,7 @@ export const createListFilterLink = (values: Array<[string, string]>) => {
 
 interface TitleProps {
   name: string;
+  paused?: boolean;
   // recording rules don't have a state
   state?: PromAlertingRuleState;
   health?: RuleHealth;
@@ -223,7 +231,7 @@ interface TitleProps {
   ruleOrigin?: RuleOriginMeta;
 }
 
-export const Title = ({ name, state, health, ruleType, ruleOrigin }: TitleProps) => {
+export const Title = ({ name, paused = false, state, health, ruleType, ruleOrigin }: TitleProps) => {
   const styles = useStyles2(getStyles);
   const isRecordingRule = ruleType === PromRuleType.Recording;
 
@@ -234,9 +242,15 @@ export const Title = ({ name, state, health, ruleType, ruleOrigin }: TitleProps)
       <Text variant="h1" truncate>
         {name}
       </Text>
-      {/* recording rules won't have a state */}
-      {state && <StateBadge state={state} health={health} />}
-      {isRecordingRule && <RecordingBadge health={health} />}
+      {paused ? (
+        <PausedBadge />
+      ) : (
+        <>
+          {/* recording rules won't have a state */}
+          {state && <StateBadge state={state} health={health} />}
+          {isRecordingRule && <RecordingBadge health={health} />}
+        </>
+      )}
     </div>
   );
 };

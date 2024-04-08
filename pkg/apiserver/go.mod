@@ -5,12 +5,14 @@ go 1.21.0
 require (
 	github.com/bwmarrin/snowflake v0.3.0
 	github.com/gorilla/mux v1.8.1
-	github.com/grafana/grafana-plugin-sdk-go v0.219.0
+	github.com/grafana/grafana-plugin-sdk-go v0.220.0
 	github.com/stretchr/testify v1.9.0
 	golang.org/x/mod v0.14.0
 	k8s.io/apimachinery v0.29.2
 	k8s.io/apiserver v0.29.2
 	k8s.io/client-go v0.29.2
+	k8s.io/component-base v0.29.2
+	k8s.io/klog v1.0.0
 	k8s.io/klog/v2 v2.120.1
 	k8s.io/kube-openapi v0.0.0-20240220201932-37d671a357a5
 )
@@ -142,7 +144,6 @@ require (
 	gopkg.in/yaml.v2 v2.4.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 	k8s.io/api v0.29.2 // indirect
-	k8s.io/component-base v0.29.2 // indirect
 	k8s.io/utils v0.0.0-20230726121419-3b25d923346b // indirect
 	sigs.k8s.io/apiserver-network-proxy/konnectivity-client v0.28.0 // indirect
 	sigs.k8s.io/json v0.0.0-20221116044647-bc3834ca7abd // indirect

@@ -1,6 +1,7 @@
 import React from 'react';
 
 import { AlertState } from '@grafana/data';
+import { Icon, Tooltip } from '@grafana/ui';
 import { GrafanaAlertState, GrafanaAlertStateWithReason, PromAlertingRuleState } from 'app/types/unified-alerting-dto';
 
 import { alertStateToReadable, alertStateToState } from '../../utils/rules';
@@ -12,9 +13,20 @@ interface Props {
   muted?: boolean;
 }
 
-export const AlertStateTag = React.memo(({ state, isPaused = false, size = 'md', muted = false }: Props) => (
-  <StateTag state={alertStateToState(state)} size={size} muted={muted}>
-    {alertStateToReadable(state)} {isPaused ? ' (Paused)' : ''}
-  </StateTag>
-));
+export const AlertStateTag = React.memo(({ state, isPaused = false, size = 'md', muted = false }: Props) => {
+  if (isPaused) {
+    return (
+      <Tooltip content={'Alert evaluation is currently paused'} placement="top">
+        <StateTag state="warning" size={size} muted={muted}>
+          <Icon name="pause" size="xs" /> Paused
+        </StateTag>
+      </Tooltip>
+    );
+  }
+  return (
+    <StateTag state={alertStateToState(state)} size={size} muted={muted}>
+      {alertStateToReadable(state)}
+    </StateTag>
+  );
+});
 AlertStateTag.displayName = 'AlertStateTag';

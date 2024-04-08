@@ -1,3 +1,5 @@
+import { uniqueId } from 'lodash';
+
 import { DataFrameDTO, DataFrameJSON, TypedVariableModel } from '@grafana/data';
 import { config } from '@grafana/runtime';
 import {
@@ -248,7 +250,7 @@ export function createDashboardSceneFromDashboardModel(oldModel: DashboardModel)
     annotationLayers = oldModel.annotations?.list.map((a) => {
       // Each annotation query is an individual data layer
       return new DashboardAnnotationsDataLayer({
-        key: `annotations-${a.name}`,
+        key: uniqueId('annotations-'),
         query: a,
         name: a.name,
         isEnabled: Boolean(a.enable),
@@ -304,7 +306,7 @@ export function createDashboardSceneFromDashboardModel(oldModel: DashboardModel)
       registerDashboardMacro,
       registerDashboardSceneTracking(oldModel),
       registerPanelInteractionsReporter,
-      new behaviors.LiveNowTimer(oldModel.liveNow),
+      new behaviors.LiveNowTimer({ enabled: oldModel.liveNow }),
     ],
     $data: new DashboardDataLayerSet({ annotationLayers, alertStatesLayer }),
     controls: new DashboardControls({
