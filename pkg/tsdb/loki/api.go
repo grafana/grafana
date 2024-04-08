@@ -18,6 +18,7 @@ import (
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/codes"
 	"go.opentelemetry.io/otel/trace"
+	"google.golang.org/grpc/metadata"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 
@@ -108,6 +109,8 @@ func makeDataRequest(ctx context.Context, lokiDsUrl string, query lokiQuery, cat
 	if categorizeLabels {
 		req.Header.Set("X-Loki-Response-Encoding-Flags", "categorize-labels")
 	}
+
+	setXScopeOrgIDHeader(req, ctx)
 
 	return req, nil
 }
@@ -257,6 +260,8 @@ func makeRawRequest(ctx context.Context, lokiDsUrl string, resourcePath string) 
 		return nil, err
 	}
 
+	setXScopeOrgIDHeader(req, ctx)
+
 	return req, nil
 }
 
@@ -345,4 +350,28 @@ func getSupportingQueryHeaderValue(supportingQueryType SupportingQueryType) stri
 	}
 
 	return value
+}
+
+// setXScopeOrgIDHeader sets the X-Scope-OrgID header in the provided HTTP request based on the tenant ID retrieved from the context.
+// If the tenant ID is not found or if there are multiple tenant IDs, an error message is logged and the header is not set.
+// The updated HTTP request is returned.
+func setXScopeOrgIDHeader(req *http.Request, ctx context.Context) *http.Request {
+	logger := backend.NewLoggerWith("logger", "tsdb.loki")
+
+	md, ok := metadata.FromIncomingContext(ctx)
+	if !ok {
+		logger.Error("Error in retriving metadata from context. Header not set")
+		return req
+	} 
+	
+	tenantid := md.Get("tenantid") // all values are []string, but it should only be one element
+	if len(tenantid) == 0 {
+		logger.Debug("Tenant ID not present. Header not set")
+	} else if len(tenantid[0]) > 1{
+		logger.Error(strconv.Itoa(len(tenantid)) + " tenant IDs found. Header not set")
+	} else {
+		logger.Debug("Adding tenant ID " + tenantid[0] + " to Loki request")
+		req.Header.Add("X-Scope-OrgID", tenantid[0])
+	}
+	return req
 }
