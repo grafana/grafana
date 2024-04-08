@@ -6,6 +6,7 @@ import {
   DataSourcePluginMeta,
   PluginMeta,
 } from '@grafana/data';
+import { config } from '@grafana/runtime';
 import { DataQuery } from '@grafana/schema';
 
 import { GenericDataSourcePlugin } from '../datasources/types';
@@ -18,7 +19,7 @@ import { SystemJS } from './loader/systemjs';
 import { sharedDependenciesMap } from './loader/sharedDependencies';
 import { decorateSystemJSFetch, decorateSystemJSResolve, decorateSystemJsOnload } from './loader/systemjsHooks';
 import { SystemJSWithLoaderHooks } from './loader/types';
-import { buildImportMap, resolveModulePath } from './loader/utils';
+import { buildImportMap, isHostedOnCDN, resolveModulePath } from './loader/utils';
 import { importPluginModuleInSandbox } from './sandbox/sandbox_plugin_loader';
 import { isFrontendSandboxSupported } from './sandbox/utils';
 
@@ -28,9 +29,14 @@ SystemJS.addImportMap({ imports });
 
 const systemJSPrototype: SystemJSWithLoaderHooks = SystemJS.constructor.prototype;
 
-// Monaco Editors reliance on RequireJS means we need to transform
-// the content of the plugin code at runtime which can only be done with fetch/eval.
-systemJSPrototype.shouldFetch = () => true;
+systemJSPrototype.shouldFetch = function (url) {
+  // currently we need to fetch and eval for CDN hosted plugins as we transform the source paths
+  if (isHostedOnCDN(url)) {
+    return true;
+  }
+
+  return config.angularSupportEnabled;
+};
 
 const originalImport = systemJSPrototype.import;
 // Hook Systemjs import to support plugins that only have a default export.
