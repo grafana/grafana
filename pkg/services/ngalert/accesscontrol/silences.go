@@ -23,7 +23,7 @@ const (
 var (
 	// asserts full read-only access to silences
 	readAllSilencesEvaluator = ac.EvalPermission(instancesRead)
-	// asserts that user has access to silences at all
+	// shortcut assertion that to check if user can read silences
 	readSomeSilenceEvaluator = ac.EvalAny(ac.EvalPermission(instancesRead), ac.EvalPermission(silenceRead))
 	// asserts whether user has read access to rules in a specific folder
 	readRuleSilenceEvaluator = func(folderUID string) ac.Evaluator {
@@ -35,9 +35,9 @@ var (
 
 	// shortcut assertion to check if user can create any silence
 	createAnySilenceEvaluator = ac.EvalAll(ac.EvalPermission(instancesCreate), readAllSilencesEvaluator)
-	// asserts that user has access to create global silences
-	createGlobalSilenceEvaluator = ac.EvalAll(ac.EvalPermission(instancesCreate), readSomeSilenceEvaluator)
-	// asserts that user has access to create silences at all
+	// asserts that user has access to create general silences, the ones that can match alerts created by one or many rules
+	createGeneralSilenceEvaluator = ac.EvalAll(ac.EvalPermission(instancesCreate), readSomeSilenceEvaluator)
+	// shortcut assertion to check if user can create silences at all
 	createSomeRuleSilenceEvaluator = ac.EvalAll(
 		readSomeSilenceEvaluator,
 		ac.EvalAny(
@@ -57,8 +57,8 @@ var (
 
 	// shortcut assertion to check if user can update any silence
 	updateAnySilenceEvaluator = ac.EvalAll(ac.EvalPermission(instancesWrite), readAllSilencesEvaluator)
-	// asserts that user has access to update global silences
-	updateGlobalSilenceEvaluator = ac.EvalAll(ac.EvalPermission(instancesWrite), readSomeSilenceEvaluator)
+	// asserts that user has access to update general silences
+	updateGeneralSilenceEvaluator = ac.EvalAll(ac.EvalPermission(instancesWrite), readSomeSilenceEvaluator)
 	// asserts that user has access to update silences at all
 	updateSomeRuleSilenceEvaluator = ac.EvalAll(
 		readSomeSilenceEvaluator,
@@ -117,14 +117,14 @@ func (s SilenceService) FilterByAccess(ctx context.Context, user identity.Reques
 	keys := make(map[string][]Silence, len(silences))
 	for _, silence := range silences {
 		ruleUID := silence.GetRuleUID()
-		if ruleUID == nil { // if this is a global silence
+		if ruleUID == nil { // if this is a general silence
 			result = append(result, silence)
 			continue
 		}
 		key := *ruleUID
 		keys[key] = append(keys[key], silence)
 	}
-	if len(keys) == 0 { // if only global silences are provided no need in other checks
+	if len(keys) == 0 { // if only general silences are provided no need in other checks
 		return result, nil
 	}
 	namespaces, err := s.store.GetNamespacesByRuleUID(ctx, user.GetOrgID(), maps.Keys(keys)...)
@@ -165,7 +165,7 @@ func (s SilenceService) AuthorizeReadSilence(ctx context.Context, user identity.
 	}
 	ruleUID := silence.GetRuleUID()
 	if ruleUID == nil {
-		return nil // user can read global
+		return nil // no rule UID means that this is a general silence and at this point the user can read them
 	}
 
 	// otherwise resolve rule key to the action's scope
@@ -190,8 +190,8 @@ func (s SilenceService) AuthorizeCreateSilence(ctx context.Context, user identit
 	}
 	ruleUID := silence.GetRuleUID()
 	if ruleUID == nil {
-		return s.HasAccessOrError(ctx, user, createGlobalSilenceEvaluator, func() string {
-			return "create global silence"
+		return s.HasAccessOrError(ctx, user, createGeneralSilenceEvaluator, func() string {
+			return "create a general silence"
 		})
 	}
 	// pre-check whether a user has at least some basic permissions before hit the store
@@ -219,8 +219,8 @@ func (s SilenceService) AuthorizeUpdateSilence(ctx context.Context, user identit
 	}
 	ruleUID := silence.GetRuleUID()
 	if ruleUID == nil {
-		return s.HasAccessOrError(ctx, user, updateGlobalSilenceEvaluator, func() string {
-			return "update global silence"
+		return s.HasAccessOrError(ctx, user, updateGeneralSilenceEvaluator, func() string {
+			return "update a general silence"
 		})
 	}
 	// pre-check whether a user has at least some basic permissions before hit the store
