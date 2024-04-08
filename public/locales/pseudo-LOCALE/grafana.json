@@ -786,9 +786,14 @@
       "not-migrated": "Ńőŧ yęŧ ūpľőäđęđ",
       "unknown": "Ůŉĸŉőŵŉ"
     },
+    "resource-table": {
+      "unknown-datasource-title": "Đäŧä şőūřčę {{datasourceUID}}",
+      "unknown-datasource-type": "Ůŉĸŉőŵŉ đäŧä şőūřčę"
+    },
     "resource-type": {
       "dashboard": "Đäşĥþőäřđ",
       "datasource": "Đäŧä şőūřčę",
+      "folder": "Főľđęř",
       "unknown": "Ůŉĸŉőŵŉ"
     },
     "summary": {

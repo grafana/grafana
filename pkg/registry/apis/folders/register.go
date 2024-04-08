@@ -35,14 +35,14 @@ var resourceInfo = v0alpha1.FolderResourceInfo
 // This is used just so wire has something unique to return
 type FolderAPIBuilder struct {
 	gv            schema.GroupVersion
-	features      *featuremgmt.FeatureManager
+	features      featuremgmt.FeatureToggles
 	namespacer    request.NamespaceMapper
 	folderSvc     folder.Service
 	accessControl accesscontrol.AccessControl
 }
 
 func RegisterAPIService(cfg *setting.Cfg,
-	features *featuremgmt.FeatureManager,
+	features featuremgmt.FeatureToggles,
 	apiregistration builder.APIRegistrar,
 	folderSvc folder.Service,
 	accessControl accesscontrol.AccessControl,

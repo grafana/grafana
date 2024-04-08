@@ -110,7 +110,7 @@ func ProvideRegistration(
 	}
 
 	authnSvc.RegisterPostAuthHook(rbacSync.SyncPermissionsHook, 120)
-	authnSvc.RegisterPostAuthHook(orgSync.SetDefaultOrgHook, 130)
+	authnSvc.RegisterPostLoginHook(orgSync.SetDefaultOrgHook, 140)
 
 	return Registration{}
 }
