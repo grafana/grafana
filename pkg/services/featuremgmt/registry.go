@@ -1205,6 +1205,15 @@ var (
 			HideFromDocs:      true,
 			HideFromAdminPage: true,
 		},
+		{
+			Name:           "cloudWatchNewLabelParsing",
+			Description:    "Updates CloudWatch label parsing to be more accurate",
+			Stage:          FeatureStageGeneralAvailability,
+			Expression:     "true", // enabled by default
+			Owner:          awsDatasourcesSquad,
+			FrontendOnly:   false,
+			AllowSelfServe: false,
+		},
 	}
 )
 
