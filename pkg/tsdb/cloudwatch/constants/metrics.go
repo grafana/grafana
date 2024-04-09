@@ -534,7 +534,7 @@ var NamespaceDimensionKeysMap = map[string][]string{
 	"AWS/FraudDetector":                  {"DetectorID", "DetectorVersionID", "ModelEndpoint", "ModelID", "ModelType", "OutcomeName", "RuleID", "VariableName"},
 	"AWS/GameLift":                       {"GameServerGroup", "FleetId", "InstanceType", "Location", "MatchmakingConfigurationName", "MatchmakingConfigurationName-RuleName", "MetricGroup", "OperatingSystem", "QueueName"},
 	"AWS/GlobalAccelerator":              {"Accelerator", "Listener", "EndpointGroup", "SourceRegion", "DestinationEdge", "TransportProtocol", "AcceleratorIPAddress"},
-	"AWS/Glue":                           {"JobName", "JobRunId", "Type"},
+	"Glue":                               {"JobName", "JobRunId", "Type"},
 	"AWS/GroundStation":                  {"Channel", "Polarization", "SatelliteId"},
 	"AWS/Inspector":                      {},
 	"AWS/IVS":                            {"Channel", "ViewerCountryCode"},
