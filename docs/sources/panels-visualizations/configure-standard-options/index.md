@@ -41,7 +41,7 @@ You can configure standard options for the following visualizations:
 | [Bar gauge][bar gauge]     | [Histogram][histogram]           | [Table][table]                   |
 | [Candlestick][candlestick] | [Pie chart][pie chart]           | [Time series][time series]       |
 | [Canvas][canvas]           | [Stat][stat]                     | [Trend][trend]                   |
-| [Gauge][gauge]             | [State timeline][state timeline] | <!-- xychart -->                 |
+| [Gauge][gauge]             | [State timeline][state timeline] | [XY chart][xy chart]             |
 
 ## Standard options
 
@@ -191,6 +191,9 @@ Enter what Grafana should display if the field value is empty or null. The defau
 
 [trend]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/panels-visualizations/visualizations/trend"
 [trend]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/visualizations/panels-visualizations/visualizations/trend"
+
+[xy chart]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/panels-visualizations/visualizations/xy-chart"
+[xy chart]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/visualizations/panels-visualizations/visualizations/xy-chart"
 
 [variables]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/dashboards/variables"
 [variables]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/visualizations/dashboards/variables"

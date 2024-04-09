@@ -212,7 +212,7 @@ export class DashboardGridItem extends SceneObjectBase<DashboardGridItemState> i
   }
 
   public getClassName() {
-    return 'panel-repeater-grid-item';
+    return this.state.variableName ? 'panel-repeater-grid-item' : '';
   }
 
   public isRepeated() {

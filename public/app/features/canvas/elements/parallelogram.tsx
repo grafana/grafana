@@ -43,11 +43,24 @@ const Parallelogram = (props: CanvasElementProps<CanvasElementConfig, CanvasElem
           </clipPath>
         </defs>
         {/* Apply background image within the clipping area */}
-        <rect x="0" y="0" width="100%" height="100%" clipPath={`url(#parallelogramClip-${uniqueId})`} />
+        <rect
+          x="0"
+          y="0"
+          width="100%"
+          height="100%"
+          clipPath={`url(#parallelogramClip-${uniqueId})`}
+          style={{ fill: 'none' }}
+        />
         <polygon
           points="0,150 50,0 250,0 200,150"
-          className={styles.element}
           style={{ fill: data?.backgroundImage ? `url(#image-${uniqueId})` : data?.backgroundColor }}
+        />
+
+        {/* Border */}
+        <polygon
+          points="0,150 50,0 250,0 200,150"
+          clipPath={`url(#parallelogramClip-${uniqueId})`}
+          className={styles.elementBorder}
         />
       </svg>
       <span className={styles.text}>{data?.text}</span>
@@ -192,9 +205,11 @@ const getStyles = (theme: GrafanaTheme2, data: CanvasElementData | undefined) =>
       fontSize: `${data?.size}px`,
       color: data?.color,
     }),
-    element: css({
-      stroke: data?.borderColor,
-      strokeWidth: data?.borderWidth,
+    elementBorder: css({
+      fill: 'none',
+      stroke: data?.borderColor ?? 'none',
+      strokeWidth: data?.borderWidth ?? 0,
+      strokeLinejoin: 'round',
     }),
   };
 };

@@ -145,6 +145,11 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
    */
   private _changeTracker: DashboardSceneChangeTracker;
 
+  /**
+   * Flag to indicate if the user came from Explore
+   */
+  private _fromExplore = false;
+
   public constructor(state: Partial<DashboardSceneState>) {
     super({
       title: 'Dashboard',
@@ -181,7 +186,10 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
       dashboardWatcher.watch(this.state.uid);
     }
 
-    const clearKeyBindings = setupKeyboardShortcuts(this);
+    let clearKeyBindings = () => {};
+    if (!config.publicDashboardAccessToken) {
+      clearKeyBindings = setupKeyboardShortcuts(this);
+    }
     const oldDashboardWrapper = new DashboardModelCompatibilityWrapper(this);
 
     // @ts-expect-error
@@ -208,9 +216,11 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
     getUrlSyncManager().cleanUp(this);
   }
 
-  public onEnterEditMode = () => {
+  public onEnterEditMode = (fromExplore = false) => {
+    this._fromExplore = fromExplore;
     // Save this state
     this._initialState = sceneUtils.cloneSceneObjectState(this.state);
+
     this._initialUrlState = locationService.getLocation();
 
     // Switch to edit mode
@@ -296,6 +306,10 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
       })
     );
 
+    if (this._fromExplore) {
+      this.cleanupStateFromExplore();
+    }
+
     if (restoreInitialState) {
       //  Restore initial state and disable editing
       this.setState({ ...this._initialState, isEditing: false });
@@ -307,6 +321,20 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
     this.startUrlSync();
     // Disable grid dragging
     this.propagateEditModeChange();
+  }
+
+  private cleanupStateFromExplore() {
+    this._fromExplore = false;
+    // When coming from explore but discarding changes, remove the panel that explore is potentially adding.
+    if (this._initialSaveModel?.panels) {
+      this._initialSaveModel.panels = this._initialSaveModel.panels.slice(1);
+    }
+
+    if (this._initialState && this._initialState.body instanceof SceneGridLayout) {
+      this._initialState.body.setState({
+        children: this._initialState.body.state.children.slice(1),
+      });
+    }
   }
 
   public canDiscard() {
@@ -658,7 +686,7 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
     }
 
     if (row) {
-      row.forEachChild((child: SceneObject) => {
+      row.state.children.forEach((child: SceneObject) => {
         if (child.state.key !== key) {
           panels.push(child);
         }
@@ -737,6 +765,10 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
       throw new Error('Trying to add a panel in a layout that is not SceneGridLayout');
     }
 
+    if (!this.state.isEditing) {
+      this.onEnterEditMode();
+    }
+
     const sceneGridLayout = this.state.body;
 
     const panelId = dashboardSceneGraph.getNextPanelId(this);
@@ -764,6 +796,10 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
   }
 
   public onCreateNewPanel(): number {
+    if (!this.state.isEditing) {
+      this.onEnterEditMode();
+    }
+
     const vizPanel = getDefaultVizPanel(this);
 
     this.addPanel(vizPanel);

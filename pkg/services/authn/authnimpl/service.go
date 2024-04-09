@@ -13,26 +13,13 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/network"
-	"github.com/grafana/grafana/pkg/infra/remotecache"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/infra/usagestats"
-	"github.com/grafana/grafana/pkg/login/social"
-	"github.com/grafana/grafana/pkg/services/accesscontrol"
-	"github.com/grafana/grafana/pkg/services/apikey"
 	"github.com/grafana/grafana/pkg/services/auth"
 	"github.com/grafana/grafana/pkg/services/auth/identity"
 	"github.com/grafana/grafana/pkg/services/authn"
-	"github.com/grafana/grafana/pkg/services/authn/authnimpl/sync"
 	"github.com/grafana/grafana/pkg/services/authn/clients"
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
-	"github.com/grafana/grafana/pkg/services/ldap/service"
 	"github.com/grafana/grafana/pkg/services/login"
-	"github.com/grafana/grafana/pkg/services/loginattempt"
-	"github.com/grafana/grafana/pkg/services/oauthtoken"
-	"github.com/grafana/grafana/pkg/services/org"
-	"github.com/grafana/grafana/pkg/services/quota"
-	"github.com/grafana/grafana/pkg/services/rendering"
-	"github.com/grafana/grafana/pkg/services/signingkeys"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util/errutil"
@@ -60,19 +47,8 @@ func ProvideIdentitySynchronizer(s *Service) authn.IdentitySynchronizer {
 
 func ProvideService(
 	cfg *setting.Cfg, tracer tracing.Tracer,
-	orgService org.Service, sessionService auth.UserTokenService,
-	accessControlService accesscontrol.Service,
-	apikeyService apikey.Service, userService user.Service,
-	jwtService auth.JWTVerifierService,
-	usageStats usagestats.Service,
-	userProtectionService login.UserProtectionService,
-	loginAttempts loginattempt.Service, quotaService quota.Service,
-	authInfoService login.AuthInfoService, renderService rendering.Service,
-	features *featuremgmt.FeatureManager, oauthTokenService oauthtoken.OAuthTokenService,
-	socialService social.Service, cache *remotecache.RemoteCache,
-	ldapService service.LDAP, registerer prometheus.Registerer,
-	signingKeysService signingkeys.Service,
-	settingsProviderService setting.Provider,
+	sessionService auth.UserTokenService, usageStats usagestats.Service,
+	authInfoService login.AuthInfoService, registerer prometheus.Registerer,
 ) *Service {
 	s := &Service{
 		log:             log.New("authn.service"),
@@ -88,82 +64,6 @@ func ProvideService(
 	}
 
 	usageStats.RegisterMetricsFunc(s.getUsageStats)
-
-	s.RegisterClient(clients.ProvideRender(renderService))
-	s.RegisterClient(clients.ProvideAPIKey(apikeyService))
-
-	if cfg.LoginCookieName != "" {
-		s.RegisterClient(clients.ProvideSession(cfg, sessionService))
-	}
-
-	var proxyClients []authn.ProxyClient
-	var passwordClients []authn.PasswordClient
-	if s.cfg.LDAPAuthEnabled {
-		ldap := clients.ProvideLDAP(cfg, ldapService, userService, authInfoService)
-		proxyClients = append(proxyClients, ldap)
-		passwordClients = append(passwordClients, ldap)
-	}
-
-	if !s.cfg.DisableLogin {
-		grafana := clients.ProvideGrafana(cfg, userService)
-		proxyClients = append(proxyClients, grafana)
-		passwordClients = append(passwordClients, grafana)
-	}
-
-	// if we have password clients configure check if basic auth or form auth is enabled
-	if len(passwordClients) > 0 {
-		passwordClient := clients.ProvidePassword(loginAttempts, passwordClients...)
-		if s.cfg.BasicAuthEnabled {
-			s.RegisterClient(clients.ProvideBasic(passwordClient))
-		}
-
-		if !s.cfg.DisableLoginForm {
-			s.RegisterClient(clients.ProvideForm(passwordClient))
-		}
-	}
-
-	if s.cfg.AuthProxy.Enabled && len(proxyClients) > 0 {
-		proxy, err := clients.ProvideProxy(cfg, cache, proxyClients...)
-		if err != nil {
-			s.log.Error("Failed to configure auth proxy", "err", err)
-		} else {
-			s.RegisterClient(proxy)
-		}
-	}
-
-	if s.cfg.JWTAuth.Enabled {
-		s.RegisterClient(clients.ProvideJWT(jwtService, cfg))
-	}
-
-	// FIXME (gamab): Commenting that out for now as we want to re-use the client for external service auth
-	// if s.cfg.ExtendedJWTAuthEnabled && features.IsEnabledGlobally(featuremgmt.FlagExternalServiceAuth) {
-	// 	s.RegisterClient(clients.ProvideExtendedJWT(userService, cfg, signingKeysService, oauthServer))
-	// }
-
-	for name := range socialService.GetOAuthProviders() {
-		clientName := authn.ClientWithPrefix(name)
-		s.RegisterClient(clients.ProvideOAuth(clientName, cfg, oauthTokenService, socialService, settingsProviderService))
-	}
-
-	// FIXME (jguer): move to User package
-	userSyncService := sync.ProvideUserSync(userService, userProtectionService, authInfoService, quotaService)
-	orgUserSyncService := sync.ProvideOrgSync(userService, orgService, accessControlService, cfg)
-	s.RegisterPostAuthHook(userSyncService.SyncUserHook, 10)
-	s.RegisterPostAuthHook(userSyncService.EnableUserHook, 20)
-	s.RegisterPostAuthHook(orgUserSyncService.SyncOrgRolesHook, 30)
-	s.RegisterPostAuthHook(userSyncService.SyncLastSeenHook, 130)
-	s.RegisterPostAuthHook(sync.ProvideOAuthTokenSync(oauthTokenService, sessionService, socialService).SyncOauthTokenHook, 60)
-	s.RegisterPostAuthHook(userSyncService.FetchSyncedUserHook, 100)
-
-	rbacSync := sync.ProvideRBACSync(accessControlService)
-	if features.IsEnabledGlobally(featuremgmt.FlagCloudRBACRoles) {
-		s.RegisterPostAuthHook(rbacSync.SyncCloudRoles, 110)
-	}
-
-	s.RegisterPostAuthHook(rbacSync.SyncPermissionsHook, 120)
-
-	s.RegisterPostAuthHook(orgUserSyncService.SetDefaultOrgHook, 130)
-
 	return s
 }
 
@@ -420,6 +320,10 @@ func (s *Service) SyncIdentity(ctx context.Context, identity *authn.Identity) er
 }
 
 func (s *Service) errorLogFunc(ctx context.Context, err error) func(msg string, ctx ...any) {
+	if errors.Is(err, context.Canceled) {
+		return func(msg string, ctx ...any) {}
+	}
+
 	l := s.log.FromContext(ctx)
 
 	var grfErr errutil.Error

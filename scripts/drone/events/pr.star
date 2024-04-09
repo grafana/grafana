@@ -113,6 +113,7 @@ def pr_pipelines():
         lint_backend_pipeline(
             get_pr_trigger(
                 include_paths = [
+                    ".golangci.toml",
                     "Makefile",
                     "pkg/**",
                     "packaging/**",

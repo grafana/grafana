@@ -13,7 +13,7 @@ import { ConstraintSelectionBox } from './ConstraintSelectionBox';
 import { QuickPositioning } from './QuickPositioning';
 import { CanvasEditorOptions } from './elementEditor';
 
-const places: Array<keyof Placement> = ['top', 'left', 'bottom', 'right', 'width', 'height'];
+const places: Array<keyof Placement> = ['top', 'left', 'bottom', 'right', 'width', 'height', 'rotation'];
 
 const horizontalOptions: Array<SelectableValue<HorizontalConstraint>> = [
   { label: 'Left', value: HorizontalConstraint.Left },
@@ -31,7 +31,7 @@ const verticalOptions: Array<SelectableValue<VerticalConstraint>> = [
   { label: 'Scale', value: VerticalConstraint.Scale },
 ];
 
-type Props = StandardEditorProps<any, CanvasEditorOptions, Options>;
+type Props = StandardEditorProps<unknown, CanvasEditorOptions, Options>;
 
 export function PlacementEditor({ item }: Props) {
   const settings = item.settings;
@@ -126,10 +126,15 @@ export function PlacementEditor({ item }: Props) {
             if (v == null) {
               return null;
             }
+
+            // Need to set explicit min/max for rotation as logic only can handle 0-360
+            const min = p === 'rotation' ? 0 : undefined;
+            const max = p === 'rotation' ? 360 : undefined;
+
             return (
               <InlineFieldRow key={p}>
                 <InlineField label={p} labelWidth={8} grow={true}>
-                  <NumberInput value={v} onChange={(v) => onPositionChange(v, p)} />
+                  <NumberInput min={min} max={max} value={v} onChange={(v) => onPositionChange(v, p)} />
                 </InlineField>
               </InlineFieldRow>
             );

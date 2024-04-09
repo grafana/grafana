@@ -12,6 +12,7 @@ import {
   PanelData,
 } from '@grafana/data';
 import { setEchoSrv } from '@grafana/runtime';
+import { ExpressionDatasourceRef } from '@grafana/runtime/src/utils/DataSourceWithBackend';
 import { DataQuery } from '@grafana/schema';
 
 import { deepFreeze } from '../../../../test/core/redux/reducerTester';
@@ -32,6 +33,12 @@ jest.mock('app/features/dashboard/services/DashboardSrv', () => ({
     return {
       getCurrent: () => dashboardModel,
     };
+  },
+}));
+
+jest.mock('app/features/expressions/ExpressionDatasource', () => ({
+  dataSource: {
+    query: jest.fn(),
   },
 }));
 
@@ -530,6 +537,28 @@ describe('callQueryMethod', () => {
         ],
       })
     );
+  });
+
+  it('Should not call filterQuery when targets include expression query', async () => {
+    setup({
+      targets: [
+        {
+          refId: 'A',
+          q: 'SUM(foo)',
+        },
+        {
+          refId: 'B',
+          q: 'SUM(foo2)',
+        },
+        {
+          datasource: ExpressionDatasourceRef,
+          refId: 'C',
+          q: 'SUM(foo3)',
+        },
+      ],
+      filterQuery: (query: DataQuery) => query.refId !== 'A',
+    });
+    expect(filterQuerySpy).not.toHaveBeenCalled();
   });
 
   it('Should get ds default query when query is empty', async () => {
