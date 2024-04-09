@@ -1,6 +1,5 @@
 import { SceneObjectBase, SceneObjectState, SceneQueryRunner, VizPanel } from '@grafana/scenes';
 import { SHARED_DASHBOARD_QUERY } from 'app/plugins/datasource/dashboard';
-import { MIXED_DATASOURCE_NAME } from 'app/plugins/datasource/mixed/MixedDataSource';
 
 import { findVizPanelByKey, getDashboardSceneFor, getQueryRunnerFor, getVizPanelKeyForPanelId } from '../utils/utils';
 
@@ -24,10 +23,7 @@ export class DashboardDatasourceBehaviour extends SceneObjectBase<DashboardDatas
       throw new Error('DashboardDatasourceBehaviour must be attached to a SceneQueryRunner');
     }
 
-    if (
-      queryRunner.state.datasource?.uid !== SHARED_DASHBOARD_QUERY &&
-      queryRunner.state.datasource?.uid !== MIXED_DATASOURCE_NAME
-    ) {
+    if (queryRunner.state.datasource?.uid !== SHARED_DASHBOARD_QUERY) {
       return;
     }
 
