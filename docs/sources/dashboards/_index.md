@@ -12,7 +12,7 @@ description: Create and manage dashboards
 hero:
   title: Dashboards
   level: 1
-  image: /media/docs/grafana-cloud/alerting-and-irm/grafana-cloud-docs-hero-alerts-irm.svg
+  image: /icon_dashboard.svg
   width: 110
   height: 110
   description: >-
