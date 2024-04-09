@@ -17,14 +17,20 @@ If you install via RPM or the `.tar.gz` file, then you must manually update Graf
 
 If you install from the RPM repository, then Grafana is automatically updated every time you update your applications.
 
-| Grafana Version    | Package            | Repository                |
-| ------------------ | ------------------ | ------------------------- |
-| Grafana Enterprise | grafana-enterprise | `https://rpm.grafana.com` |
-| Grafana OSS        | grafana            | `https://rpm.grafana.com` |
+| Grafana Version           | Package            | Repository                     |
+| ------------------------- | ------------------ | ------------------------------ |
+| Grafana Enterprise        | grafana-enterprise | `https://rpm.grafana.com`      |
+| Grafana Enterprise (Beta) | grafana-enterprise | `https://rpm-beta.grafana.com` |
+| Grafana OSS               | grafana            | `https://rpm.grafana.com`      |
+| Grafana OSS (Beta)        | grafana            | `https://rpm-beta.grafana.com` |
 
 > **Note:** Grafana Enterprise is the recommended and default edition. It is available for free and includes all the features of the OSS edition. You can also upgrade to the [full Enterprise feature set](https://grafana.com/products/enterprise/?utm_source=grafana-install-page), which has support for [Enterprise plugins](https://grafana.com/grafana/plugins/?enterprise=1&utcm_source=grafana-install-page).
 
 To install Grafana from the RPM repository, complete the following steps:
+
+{{% admonition type="note" %}}
+If you wish to install beta versions of Grafana, substitute the repository URL for the beta URL listed above.
+{{% /admonition %}}
 
 1. Import the GPG key:
 
@@ -45,12 +51,6 @@ To install Grafana from the RPM repository, complete the following steps:
    gpgkey=https://rpm.grafana.com/gpg.key
    sslverify=1
    sslcacert=/etc/pki/tls/certs/ca-bundle.crt
-   ```
-
-1. To prevent beta versions from being installed, add the following exclude line to your `.repo` file.
-
-   ```bash
-   exclude=*beta*
    ```
 
 1. To install Grafana OSS, run the following command:
