@@ -8,6 +8,7 @@ require (
 	github.com/grafana/grafana-plugin-sdk-go v0.221.0
 	github.com/grafana/grafana/pkg/apimachinery v0.0.0-20240409140820-518d3341d58f
 	github.com/stretchr/testify v1.9.0
+	github.com/zeebo/assert v1.3.0
 	golang.org/x/mod v0.14.0
 	k8s.io/apimachinery v0.29.2
 	k8s.io/apiserver v0.29.2
