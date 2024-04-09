@@ -146,9 +146,9 @@ if is_fork(os.environ.get("DRONE_PULL_REQUEST")):
 	sys.exit(1)
 '
 """,
-            'is_fork=$?',
+            "is_fork=$?",
             'echo "is_fork: $is_fork"',
-            'if [ $is_fork -eq 1 ]; then return 1; fi',  # Only clone if we're confident that 'fork' is 'false'. Fail if it's also empty.
+            "if [ $is_fork -eq 1 ]; then return 1; fi",  # Only clone if we're confident that 'fork' is 'false'. Fail if it's also empty.
         ]
 
     step = {
