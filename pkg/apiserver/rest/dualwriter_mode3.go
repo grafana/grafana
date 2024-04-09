@@ -41,7 +41,7 @@ func (d *DualWriterMode3) Create(ctx context.Context, obj runtime.Object, create
 }
 
 // Get overrides the default behavior of the Storage and retrieves an object from Unified Storage
-// the object is still fetched from Legacy Storage if there is an error with Unified Storage
+// the object is still fetched from Legacy Storage if it's not found in Unified Storage
 func (d *DualWriterMode3) Get(ctx context.Context, name string, options *metav1.GetOptions) (runtime.Object, error) {
 	legacy, ok := d.legacy.(rest.Getter)
 	if !ok {
