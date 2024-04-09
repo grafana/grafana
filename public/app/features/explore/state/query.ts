@@ -37,7 +37,6 @@ import {
 } from 'app/core/utils/explore';
 import { getShiftedTimeRange } from 'app/core/utils/timePicker';
 import { getCorrelationsBySourceUIDs } from 'app/features/correlations/utils';
-import { dataSource } from 'app/features/expressions/ExpressionDatasource';
 import { infiniteScrollRefId } from 'app/features/logs/logsModel';
 import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
 import { getFiscalYearStartMonth, getTimeZone } from 'app/features/profile/state/selectors';
