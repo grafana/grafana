@@ -42,7 +42,7 @@ func (d *DualWriterMode1) Get(ctx context.Context, name string, options *metav1.
 
 // List overrides the generic DualWriter List method and reads only from LegacyStorage.
 func (d *DualWriterMode1) List(ctx context.Context, options *metainternalversion.ListOptions) (runtime.Object, error) {
-	legacy, ok := d.legacy.(rest.Lister)
+	legacy, ok := d.Legacy.(rest.Lister)
 	if !ok {
 		return nil, fmt.Errorf("legacy storage rest.Lister is missing")
 	}
