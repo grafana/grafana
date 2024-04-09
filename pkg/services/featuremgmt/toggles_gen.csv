@@ -30,9 +30,9 @@ grpcServer,preview,@grafana/grafana-app-platform-squad,false,false,false
 unifiedStorage,experimental,@grafana/grafana-app-platform-squad,true,true,false
 cloudWatchCrossAccountQuerying,GA,@grafana/aws-datasources,false,false,false
 showDashboardValidationWarnings,experimental,@grafana/dashboards-squad,false,false,false
-mysqlAnsiQuotes,experimental,@grafana/backend-platform,false,false,false
+mysqlAnsiQuotes,experimental,@grafana/search-and-storage,false,false,false
 accessControlOnCall,preview,@grafana/identity-access-team,false,false,false
-nestedFolders,GA,@grafana/backend-platform,false,false,false
+nestedFolders,GA,@grafana/search-and-storage,false,false,false
 nestedFolderPicker,GA,@grafana/grafana-frontend-platform,false,false,true
 alertingBacktesting,experimental,@grafana/alerting-squad,false,false,false
 editPanelCSVDragAndDrop,experimental,@grafana/dataviz-squad,false,false,true
@@ -40,7 +40,7 @@ alertingNoNormalState,preview,@grafana/alerting-squad,false,false,false
 logsContextDatasourceUi,GA,@grafana/observability-logs,false,false,true
 lokiQuerySplitting,GA,@grafana/observability-logs,false,false,true
 lokiQuerySplittingConfig,experimental,@grafana/observability-logs,false,false,true
-individualCookiePreferences,experimental,@grafana/backend-platform,false,false,false
+individualCookiePreferences,experimental,@grafana/grafana-backend-group,false,false,false
 prometheusMetricEncyclopedia,GA,@grafana/observability-metrics,false,false,true
 influxdbBackendMigration,GA,@grafana/observability-metrics,false,false,true
 influxqlStreamingParser,experimental,@grafana/observability-metrics,false,false,false
@@ -53,7 +53,7 @@ disableSSEDataplane,experimental,@grafana/observability-metrics,false,false,fals
 alertStateHistoryLokiSecondary,experimental,@grafana/alerting-squad,false,false,false
 alertStateHistoryLokiPrimary,experimental,@grafana/alerting-squad,false,false,false
 alertStateHistoryLokiOnly,experimental,@grafana/alerting-squad,false,false,false
-unifiedRequestLog,experimental,@grafana/backend-platform,false,false,false
+unifiedRequestLog,experimental,@grafana/grafana-backend-group,false,false,false
 renderAuthJWT,preview,@grafana/grafana-as-code,false,false,false
 refactorVariablesTimeRange,preview,@grafana/dashboards-squad,false,false,false
 enableElasticsearchBackendQuerying,GA,@grafana/observability-logs,false,false,false
@@ -80,7 +80,7 @@ grafanaAPIServerWithExperimentalAPIs,experimental,@grafana/grafana-app-platform-
 grafanaAPIServerEnsureKubectlAccess,experimental,@grafana/grafana-app-platform-squad,true,true,false
 featureToggleAdminPage,experimental,@grafana/grafana-operator-experience-squad,false,true,false
 awsAsyncQueryCaching,GA,@grafana/aws-datasources,false,false,false
-permissionsFilterRemoveSubquery,experimental,@grafana/backend-platform,false,false,false
+permissionsFilterRemoveSubquery,experimental,@grafana/grafana-backend-group,false,false,false
 prometheusConfigOverhaulAuth,GA,@grafana/observability-metrics,false,false,false
 configurableSchedulerTick,experimental,@grafana/alerting-squad,false,true,false
 influxdbSqlSupport,GA,@grafana/observability-metrics,false,true,false
@@ -111,7 +111,7 @@ lokiStructuredMetadata,GA,@grafana/observability-logs,false,false,false
 teamHttpHeaders,preview,@grafana/identity-access-team,false,false,false
 awsDatasourcesNewFormStyling,preview,@grafana/aws-datasources,false,false,true
 cachingOptimizeSerializationMemoryUsage,experimental,@grafana/grafana-operator-experience-squad,false,false,false
-panelTitleSearchInV1,experimental,@grafana/backend-platform,true,false,false
+panelTitleSearchInV1,experimental,@grafana/search-and-storage,true,false,false
 managedPluginsInstall,GA,@grafana/plugins-platform-backend,false,false,false
 prometheusPromQAIL,experimental,@grafana/observability-metrics,false,false,true
 prometheusCodeModeMetricNamesSearch,experimental,@grafana/observability-metrics,false,false,true
