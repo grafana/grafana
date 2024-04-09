@@ -3,6 +3,7 @@ import { debounce } from 'lodash';
 import { dateTimeFormatTimeAgo } from '@grafana/data';
 import { featureEnabled, getBackendSrv, isFetchError, locationService } from '@grafana/runtime';
 import { FetchDataArgs } from '@grafana/ui';
+import { updateUserRoles } from 'app/core/components/RolePicker/api';
 import config from 'app/core/config';
 import { contextSrv } from 'app/core/core';
 import { accessControlQueryParam } from 'app/core/utils/accessControl';
@@ -14,6 +15,7 @@ import {
   AccessControlAction,
   UserFilter,
   AnonUserFilter,
+  Role,
 } from 'app/types';
 
 import {
@@ -127,13 +129,16 @@ export function loadUserOrgs(userId: number): ThunkResult<void> {
   };
 }
 
-export function addOrgUser(user: UserDTO, orgId: number, role: string): ThunkResult<void> {
+export function addOrgUser(user: UserDTO, orgId: number, basicRole: string, roles?: Role[]): ThunkResult<void> {
   return async (dispatch) => {
     const payload = {
       loginOrEmail: user.login,
-      role: role,
+      role: basicRole,
     };
     await getBackendSrv().post(`/api/orgs/${orgId}/users/`, payload);
+    if (roles !== undefined && roles.length > 0) {
+      await updateUserRoles(roles, user.id, orgId);
+    }
     dispatch(loadAdminUserPage(user.id));
   };
 }

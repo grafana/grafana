@@ -31,7 +31,7 @@ interface Props {
 
   onOrgRemove: (orgId: number) => void;
   onOrgRoleChange: (orgId: number, newRole: OrgRole) => void;
-  onOrgAdd: (orgId: number, role: OrgRole) => void;
+  onOrgAdd: (orgId: number, role: OrgRole, roles?: Role[]) => void;
 }
 
 interface State {
@@ -289,8 +289,7 @@ interface AddToOrgModalProps {
   isOpen: boolean;
   user: UserDTO;
   userOrgs: UserOrg[];
-  onOrgAdd(orgId: number, role: string): void;
-
+  onOrgAdd(orgId: number, basicRole: string, roles?: Role[]): void;
   onDismiss?(): void;
 }
 
@@ -298,9 +297,7 @@ interface AddToOrgModalState {
   selectedOrg: Organization | null;
   role: OrgRole;
   roleOptions: Role[];
-  pendingOrgId: number | null;
-  pendingUserId: number | null;
-  pendingRoles: Role[];
+  roles: Role[];
 }
 
 export class AddToOrgModal extends PureComponent<AddToOrgModalProps, AddToOrgModalState> {
@@ -308,9 +305,7 @@ export class AddToOrgModal extends PureComponent<AddToOrgModalProps, AddToOrgMod
     selectedOrg: null,
     role: OrgRole.Viewer,
     roleOptions: [],
-    pendingOrgId: null,
-    pendingUserId: null,
-    pendingRoles: [],
+    roles: [],
   };
 
   onOrgSelect = (org: OrgSelectItem) => {
@@ -325,55 +320,35 @@ export class AddToOrgModal extends PureComponent<AddToOrgModalProps, AddToOrgMod
     }
   };
 
-  onOrgRoleChange = (newRole: OrgRole) => {
-    this.setState({
-      role: newRole,
-    });
-  };
-
-  onAddUserToOrg = async () => {
-    const { selectedOrg, role } = this.state;
-    this.props.onOrgAdd(selectedOrg!.id, role);
-    // add the stored userRoles also
-    if (contextSrv.licensedAccessControlEnabled()) {
-      if (contextSrv.hasPermission(AccessControlAction.ActionUserRolesAdd)) {
-        if (this.state.pendingUserId) {
-          await updateUserRoles(this.state.pendingRoles, this.state.pendingUserId!, this.state.pendingOrgId!);
-          // clear pending state
-          this.setState({
-            pendingOrgId: null,
-            pendingRoles: [],
-            pendingUserId: null,
-          });
-        }
-      }
+  onSubmit = async () => {
+    const { selectedOrg, role, roles: pendingRoles } = this.state;
+    if (selectedOrg === null) {
+      throw new Error('invalid form state: selectedOrg must be present');
     }
+    const roles =
+      contextSrv.licensedAccessControlEnabled() && contextSrv.hasPermission(AccessControlAction.ActionUserRolesAdd)
+        ? pendingRoles
+        : undefined;
+    this.props.onOrgAdd(selectedOrg.id, role, roles);
+    this.setState({
+      roles: [],
+      selectedOrg: null,
+    });
   };
 
   onCancel = () => {
     // clear selectedOrg when modal is canceled
     this.setState({
       selectedOrg: null,
-      pendingRoles: [],
-      pendingOrgId: null,
-      pendingUserId: null,
+      roles: [],
     });
     if (this.props.onDismiss) {
       this.props.onDismiss();
     }
   };
 
-  onRoleUpdate = async (roles: Role[], userId: number, orgId: number | undefined) => {
-    // keep the new role assignments for user
-    this.setState({
-      pendingRoles: roles,
-      pendingOrgId: orgId!,
-      pendingUserId: userId,
-    });
-  };
-
   render() {
-    const { isOpen, user, userOrgs } = this.props;
+    const { isOpen, userOrgs } = this.props;
     const { role, roleOptions, selectedOrg } = this.state;
     const styles = getAddToOrgModalStyles();
     const canUpdateRoles =
@@ -394,12 +369,12 @@ export class AddToOrgModal extends PureComponent<AddToOrgModalProps, AddToOrgMod
         <Field label="Role" disabled={selectedOrg === null}>
           <RolePicker
             onSubmit={(newRoles: Role[], basicRole?: OrgRole) => {
-              this.onRoleUpdate(newRoles, user.id, selectedOrg?.id);
-              if (basicRole !== undefined) {
-                this.onOrgRoleChange(basicRole);
-              }
+              this.setState((current) => ({
+                roles: newRoles,
+                role: basicRole || current.role,
+              }));
             }}
-            roles={this.state.pendingRoles}
+            roles={this.state.roles}
             showBasicRole
             basicRole={role}
             basicRoleDisabled={false}
@@ -413,7 +388,7 @@ export class AddToOrgModal extends PureComponent<AddToOrgModalProps, AddToOrgMod
             <Button variant="secondary" fill="outline" onClick={this.onCancel}>
               Cancel
             </Button>
-            <Button variant="primary" disabled={selectedOrg === null} onClick={this.onAddUserToOrg}>
+            <Button variant="primary" disabled={selectedOrg === null} onClick={this.onSubmit}>
               Add to organization
             </Button>
           </HorizontalGroup>

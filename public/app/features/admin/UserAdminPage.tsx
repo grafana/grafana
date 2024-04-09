@@ -7,7 +7,16 @@ import { Stack } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
 import { contextSrv } from 'app/core/core';
 import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
-import { StoreState, UserDTO, UserOrg, UserSession, SyncInfo, UserAdminError, AccessControlAction } from 'app/types';
+import {
+  StoreState,
+  UserDTO,
+  UserOrg,
+  UserSession,
+  SyncInfo,
+  UserAdminError,
+  AccessControlAction,
+  Role,
+} from 'app/types';
 
 import { UserLdapSyncInfo } from './UserLdapSyncInfo';
 import { UserOrgs } from './UserOrgs';
@@ -81,9 +90,9 @@ export class UserAdminPage extends PureComponent<Props> {
     user && updateOrgUserRole(user.id, orgId, newRole);
   };
 
-  onOrgAdd = (orgId: number, role: string) => {
+  onOrgAdd = (orgId: number, basicRole: string, roles?: Role[]) => {
     const { user, addOrgUser } = this.props;
-    user && addOrgUser(user, orgId, role);
+    user && addOrgUser(user, orgId, basicRole, roles);
   };
 
   onSessionRevoke = (tokenId: number) => {
