@@ -56,10 +56,6 @@ const getStyles = (_theme: GrafanaTheme2, delay: number, duration: number) => {
       animationTimingFunction: 'linear',
       animationIterationCount: 'infinite',
       willChange: 'transform',
-      '@media (prefers-reduced-motion)': {
-        animation: 'none',
-        transform: 'none',
-      },
     }),
   };
 };
