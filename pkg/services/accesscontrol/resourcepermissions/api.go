@@ -144,7 +144,7 @@ func (a *api) getPermissions(c *contextmodel.ReqContext) response.Response {
 
 	permissions, err := a.service.GetPermissions(c.Req.Context(), c.SignedInUser, resourceID)
 	if err != nil {
-		return response.ErrOrFallback(http.StatusInternalServerError, "failed to get permissions", err)
+		return response.ErrOrFallback(http.StatusInternalServerError, "Failed to get permissions", err)
 	}
 
 	if a.service.options.Assignments.BuiltInRoles && !a.service.license.FeatureEnabled("accesscontrol.enforcement") {
@@ -240,7 +240,7 @@ func (a *api) setUserPermission(c *contextmodel.ReqContext) response.Response {
 
 	_, err = a.service.SetUserPermission(c.Req.Context(), c.SignedInUser.GetOrgID(), accesscontrol.User{ID: userID}, resourceID, cmd.Permission)
 	if err != nil {
-		return response.ErrOrFallback(http.StatusBadRequest, "failed to set user permission", err)
+		return response.ErrOrFallback(http.StatusBadRequest, "Failed to set user permission: "+err.Error(), err)
 	}
 
 	return permissionSetResponse(cmd)
@@ -293,7 +293,7 @@ func (a *api) setTeamPermission(c *contextmodel.ReqContext) response.Response {
 
 	_, err = a.service.SetTeamPermission(c.Req.Context(), c.SignedInUser.GetOrgID(), teamID, resourceID, cmd.Permission)
 	if err != nil {
-		return response.ErrOrFallback(http.StatusBadRequest, "failed to set team permission", err)
+		return response.ErrOrFallback(http.StatusBadRequest, "Failed to set team permission: %w"+err.Error(), err)
 	}
 
 	return permissionSetResponse(cmd)
@@ -343,7 +343,7 @@ func (a *api) setBuiltinRolePermission(c *contextmodel.ReqContext) response.Resp
 
 	_, err := a.service.SetBuiltInRolePermission(c.Req.Context(), c.SignedInUser.GetOrgID(), builtInRole, resourceID, cmd.Permission)
 	if err != nil {
-		return response.ErrOrFallback(http.StatusBadRequest, "failed to set role permission", err)
+		return response.ErrOrFallback(http.StatusBadRequest, "Failed to set role permission: "+err.Error(), err)
 	}
 
 	return permissionSetResponse(cmd)
@@ -383,12 +383,12 @@ func (a *api) setPermissions(c *contextmodel.ReqContext) response.Response {
 
 	cmd := setPermissionsCommand{}
 	if err := web.Bind(c.Req, &cmd); err != nil {
-		return response.Error(http.StatusBadRequest, "bad request data", err)
+		return response.Error(http.StatusBadRequest, "Bad request data: "+err.Error(), err)
 	}
 
 	_, err := a.service.SetPermissions(c.Req.Context(), c.SignedInUser.GetOrgID(), resourceID, cmd.Permissions...)
 	if err != nil {
-		return response.ErrOrFallback(http.StatusBadRequest, "failed to set permission", err)
+		return response.ErrOrFallback(http.StatusBadRequest, "Failed to set permission: "+err.Error(), err)
 	}
 
 	return response.Success("Permissions updated")

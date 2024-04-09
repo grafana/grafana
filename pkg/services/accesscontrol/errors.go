@@ -6,6 +6,7 @@ import (
 )
 
 var (
+	ErrInvalidRequestBody     = errors.New("invalid request body")
 	ErrFixedRolePrefixMissing = errors.New("fixed role should be prefixed with '" + FixedRolePrefix + "'")
 	ErrInvalidBuiltinRole     = errors.New("built-in role is not valid")
 	ErrNoneRoleAssignment     = errors.New("none role cannot receive permissions")

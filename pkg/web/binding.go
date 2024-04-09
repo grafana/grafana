@@ -8,6 +8,8 @@ import (
 	"mime"
 	"net/http"
 	"reflect"
+
+	"github.com/davecgh/go-spew/spew"
 )
 
 // Bind deserializes JSON payload from the request
@@ -23,6 +25,7 @@ func Bind(req *http.Request, v any) error {
 		defer func() { _ = req.Body.Close() }()
 		err = json.NewDecoder(req.Body).Decode(v)
 		if err != nil && !errors.Is(err, io.EOF) {
+			spew.Dump(err)
 			return err
 		}
 	}
