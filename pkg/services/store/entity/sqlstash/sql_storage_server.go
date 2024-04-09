@@ -39,10 +39,11 @@ var _ entity.EntityStoreServer = &sqlEntityServer{}
 
 func ProvideSQLEntityServer(db db.EntityDBInterface, tracer tracing.Tracer /*, cfg *setting.Cfg */) (SqlEntityServer, error) {
 	ctx, cancel := context.WithCancel(context.Background())
+	log := log.New("sql-entity-server")
 
 	entityServer := &sqlEntityServer{
 		db:     db,
-		log:    log.New("sql-entity-server"),
+		log:    log.FromContext(ctx),
 		ctx:    ctx,
 		cancel: cancel,
 		tracer: tracer,
@@ -1423,7 +1424,7 @@ func (s *sqlEntityServer) Watch(w entity.EntityStore_WatchServer) error {
 }
 
 // watchInit is a helper function to send the initial set of entities to the client
-func (s *sqlEntityServer) watchInit(r *entity.EntityWatchRequest, w entity.EntityStore_WatchServer) (int64, error) {
+func (s *sqlEntityServer) watchInit(ctx context.Context, r *entity.EntityWatchRequest, w entity.EntityStore_WatchServer) (int64, error) {
 	ctx, span := s.tracer.Start(ctx, "storage_server.watchInit")
 	defer span.End()
 
@@ -1935,11 +1936,11 @@ func (s *sqlEntityServer) query(ctx context.Context, query string, args ...any) 
 	return rows, nil
 }
 
-func (s *sqlEntityServer) exec(ctx context.Context, tx *session.SessionTx, statement string, ent *entity.Entity) error {
+func (s *sqlEntityServer) exec(ctx context.Context, tx *session.SessionTx, statement string, args ...any) error {
 	ctx, span := s.tracer.Start(ctx, "storage_server.exec", trace.WithAttributes(attribute.String("statement", statement)))
 	defer span.End()
 
-	_, err := tx.Exec(ctx, statement, ent.Guid)
+	_, err := tx.Exec(ctx, statement, args)
 	return err
 }
 
@@ -1954,7 +1955,7 @@ func (s *sqlEntityServer) insert(ctx context.Context, tx *session.SessionTx, tab
 	return nil
 }
 
-func (s *sqlEntityServer) update(ctx context.Context, tx *session.SessionTx, table string, values map[string]any, current *entity.Entity) error {
+func (s *sqlEntityServer) update(ctx context.Context, tx *session.SessionTx, table string, row map[string]any, where map[string]any) error {
 	ctx, span := s.tracer.Start(ctx, "storage_server.db_update", trace.WithAttributes(attribute.String("table", table)))
 	defer span.End()
 
@@ -1962,10 +1963,8 @@ func (s *sqlEntityServer) update(ctx context.Context, tx *session.SessionTx, tab
 		ctx,
 		tx,
 		table,
-		values,
-		map[string]any{
-			"guid": current.Guid,
-		},
+		row,
+		where,
 	)
 	if err != nil {
 		s.log.Error("error performing update", "table", table, "msg", err.Error())
