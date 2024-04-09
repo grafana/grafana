@@ -14,7 +14,7 @@ type DualWriterMode1 struct {
 	DualWriter
 }
 
-var noCreaterMethod = errors.New("legacy storage rest.Creater is missing")
+var errNoCreaterMethod = errors.New("legacy storage rest.Creater is missing")
 
 // NewDualWriterMode1 returns a new DualWriter in mode 1.
 // Mode 1 represents writing to and reading from LegacyStorage.
@@ -26,8 +26,8 @@ func NewDualWriterMode1(legacy LegacyStorage, storage Storage) *DualWriterMode1 
 func (d *DualWriterMode1) Create(ctx context.Context, obj runtime.Object, createValidation rest.ValidateObjectFunc, options *metav1.CreateOptions) (runtime.Object, error) {
 	legacy, ok := d.Legacy.(rest.Creater)
 	if !ok {
-		klog.FromContext(ctx).Error(noCreaterMethod, "legacy storage rest.Creater is missing")
-		return nil, noCreaterMethod
+		klog.FromContext(ctx).Error(errNoCreaterMethod, "legacy storage rest.Creater is missing")
+		return nil, errNoCreaterMethod
 	}
 
 	return legacy.Create(ctx, obj, createValidation, options)
