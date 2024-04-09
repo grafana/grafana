@@ -3,7 +3,9 @@ import React, { useEffect } from 'react';
 
 import { GrafanaTheme2, urlUtil } from '@grafana/data';
 import { getBackendSrv } from '@grafana/runtime';
-import { Badge, Button, Dropdown, Icon, LinkButton, Menu, Stack, Text, useStyles2 } from '@grafana/ui';
+import { Button, Dropdown, Icon, LinkButton, Menu, Stack, Text, useStyles2 } from '@grafana/ui';
+import { alertRuleApi } from 'app/features/alerting/unified/api/alertRuleApi';
+import { GRAFANA_RULES_SOURCE_NAME } from 'app/features/alerting/unified/utils/datasource';
 import { useGetSingle } from 'app/features/plugins/admin/state/hooks';
 
 import { ConfigurationTrackerDrawer } from './ConfigurationTrackerDrawer';
@@ -245,21 +247,19 @@ function Step({ step }: { step: SectionDto['steps'][0] }) {
   return (
     <Stack direction={'row'} justifyContent={'space-between'}>
       <Stack direction={'row'} alignItems="center">
+        {step.button.done ? <Icon name="check-circle" color="green" /> : <Icon name="circle" />}
         <Text variant="body">{step.title}</Text>
         <Icon name="question-circle" />
       </Stack>
-      <StepButton {...step.button} />
+      {!step.button.done && <StepButton {...step.button} />}
     </Stack>
   );
 }
 
-function StepButton({ type, url, label, options, done = false }: StepButtonDto) {
+function StepButton({ type, url, label, options, done }: StepButtonDto) {
   const urlToGo = urlUtil.renderUrl(url, {
     returnTo: location.pathname + location.search,
   });
-  if (done) {
-    return <Badge color="green" icon="check" text="Done" />;
-  }
   switch (type) {
     case 'openLink':
       return (
@@ -299,5 +299,15 @@ const getStyles = (theme: GrafanaTheme2) => {
 };
 
 function isCreateAlertRuleDone() {
-  return true;
+  const { data: namespaces = [] } = alertRuleApi.endpoints.prometheusRuleNamespaces.useQuery(
+    {
+      ruleSourceName: GRAFANA_RULES_SOURCE_NAME,
+    },
+    {
+      refetchOnFocus: true,
+      refetchOnReconnect: true,
+      refetchOnMountOrArgChange: true,
+    }
+  );
+  return namespaces.length > 0;
 }
