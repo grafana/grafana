@@ -22,7 +22,7 @@ cards:
   items:
     - title: Build dashboards
       href: /docs/grafana/latest/dashboards/build-dashboards/
-      description: Get step-by-step directions for how to create or import your first dashboard and modify dashboard settings. Learn how to create and manage reusable library panels, configure dashboard links, annotate visualizations, and use the dashboard JSON. 
+      description: Get step-by-step directions for how to create or import your first dashboard and modify dashboard settings. Learn how to create and manage reusable library panels, configure dashboard links, annotate visualizations, and use the dashboard JSON.
       height: 24
     - title: Manage dashboards
       href: /docs/grafana/latest/dashboards/manage-dashboards/
@@ -40,7 +40,7 @@ cards:
       href: /docs/grafana/latest/dashboards/create-reports/
       description: Generate and share PDF reports from your Grafana dashboards
       height: 24
-      - title: Sharing
+    - title: Sharing
       href: /docs/grafana/latest/dashboards/share-dashboards-panels/
       description: Share Grafana dashboards and panels within your organization and publicly
       height: 24
