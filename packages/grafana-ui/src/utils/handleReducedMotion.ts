@@ -1,7 +1,7 @@
 import { CSSInterpolation } from '@emotion/css';
 
 /**
- * @param styles - Regular styles.
+ * @param styles - Styles to apply when no `prefers-reduced-motion` preference is set.
  * @param reducedMotionStyles - Styles to apply when `prefers-reduced-motion` is enabled.
  * If @param reducedMotionStyles is not provided, there won't be any animation or transition shown.
  */
