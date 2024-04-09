@@ -47,6 +47,7 @@ export function ToolbarActions({ dashboard }: Props) {
     hasCopiedPanel: copiedPanel,
   } = dashboard.useState();
   const { isPlaying } = playlistSrv.useState();
+  const [isAddPanelMenuOpen, setIsAddPanelMenuOpen] = useState(false);
 
   const canSaveAs = contextSrv.hasEditPermissionInFolders;
   const toolbarActions: ToolbarAction[] = [];
@@ -65,68 +66,69 @@ export function ToolbarActions({ dashboard }: Props) {
   }
 
   toolbarActions.push({
-    group: 'icon-actions',
+    group: 'add-panel',
     condition: isEditingAndShowingDashboard,
     render: () => (
-      <ToolbarButton
-        key="add-visualization"
-        tooltip={'Add visualization'}
-        icon="graph-bar"
-        onClick={() => {
-          const id = dashboard.onCreateNewPanel();
-          DashboardInteractions.toolbarAddButtonClicked({ item: 'add_visualization' });
-          locationService.partial({ editPanel: id });
+      <Dropdown
+        onVisibleChange={(isOpen) => {
+          setIsAddPanelMenuOpen(isOpen);
+          DashboardInteractions.toolbarAddClick();
         }}
-      />
-    ),
-  });
-
-  toolbarActions.push({
-    group: 'icon-actions',
-    condition: isEditingAndShowingDashboard,
-    render: () => (
-      <ToolbarButton
-        key="add-library-panel"
-        tooltip={'Add library panel'}
-        icon="library-panel"
-        onClick={() => {
-          dashboard.onCreateLibPanelWidget();
-          DashboardInteractions.toolbarAddButtonClicked({ item: 'add_library_panel' });
-        }}
-      />
-    ),
-  });
-
-  toolbarActions.push({
-    group: 'icon-actions',
-    condition: isEditingAndShowingDashboard,
-    render: () => (
-      <ToolbarButton
-        key="add-row"
-        tooltip={'Add row'}
-        icon="wrap-text"
-        onClick={() => {
-          dashboard.onCreateNewRow();
-          DashboardInteractions.toolbarAddButtonClicked({ item: 'add_row' });
-        }}
-      />
-    ),
-  });
-
-  toolbarActions.push({
-    group: 'icon-actions',
-    condition: isEditingAndShowingDashboard,
-    render: () => (
-      <ToolbarButton
-        key="paste-panel"
-        disabled={!hasCopiedPanel}
-        tooltip={'Paste panel'}
-        icon="copy"
-        onClick={() => {
-          dashboard.pastePanel();
-          DashboardInteractions.toolbarAddButtonClicked({ item: 'paste_panel' });
-        }}
-      />
+        overlay={() => (
+          <Menu>
+            <Menu.Item
+              key="add-visualization"
+              testId={selectors.pages.AddDashboard.itemButton('Add new visualization menu item')}
+              label={t('dashboard.add-menu.visualization', 'Visualization')}
+              onClick={() => {
+                const id = dashboard.onCreateNewPanel();
+                DashboardInteractions.toolbarAddButtonClicked({ item: 'add_visualization' });
+                locationService.partial({ editPanel: id });
+              }}
+            />
+            <Menu.Item
+              key="add-panel-lib"
+              testId={selectors.pages.AddDashboard.itemButton('Add new panel from panel library menu item')}
+              label={t('dashboard.add-menu.import', 'Import from library')}
+              onClick={() => {
+                dashboard.onCreateLibPanelWidget();
+                DashboardInteractions.toolbarAddButtonClicked({ item: 'add_library_panel' });
+              }}
+            />
+            <Menu.Item
+              key="add-row"
+              testId={selectors.pages.AddDashboard.itemButton('Add new row menu item')}
+              label={t('dashboard.add-menu.row', 'Row')}
+              onClick={() => {
+                dashboard.onCreateNewRow();
+                DashboardInteractions.toolbarAddButtonClicked({ item: 'add_row' });
+              }}
+            />
+            <Menu.Item
+              key="paste-panel"
+              disabled={!hasCopiedPanel}
+              testId={selectors.pages.AddDashboard.itemButton('Add new panel from clipboard menu item')}
+              label={t('dashboard.add-menu.paste-panel', 'Paste panel')}
+              onClick={() => {
+                dashboard.pastePanel();
+                DashboardInteractions.toolbarAddButtonClicked({ item: 'paste_panel' });
+              }}
+            />
+          </Menu>
+        )}
+        placement="bottom"
+        offset={[0, 6]}
+      >
+        <Button
+          variant="secondary"
+          size="sm"
+          fill="outline"
+          data-testid={selectors.components.PageToolbar.itemButton('Add button')}
+        >
+          <Trans i18nKey="dashboard.toolbar.add">Add</Trans>
+          <Icon name={isAddPanelMenuOpen ? 'angle-up' : 'angle-down'} size="lg" />
+        </Button>
+      </Dropdown>
     ),
   });
 
