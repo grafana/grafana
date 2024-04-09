@@ -2,7 +2,8 @@ import { config, getBackendSrv } from '@grafana/runtime';
 
 import {
   ListOptions,
-  ListOptionsSelector,
+  ListOptionsFieldSelector,
+  ListOptionsLabelSelector,
   MetaStatus,
   Resource,
   ResourceForCreate,
@@ -59,12 +60,14 @@ export class ScopedResourceServer<T = object, K = string> implements ResourceSer
     this._url = url;
   }
 
-  private parseListOptionsSelector(labelSelector: ListOptionsSelector | undefined): string | undefined {
-    if (!Array.isArray(labelSelector)) {
-      return labelSelector;
+  private parseListOptionsSelector(
+    selector: ListOptionsLabelSelector | ListOptionsFieldSelector | undefined
+  ): string | undefined {
+    if (!Array.isArray(selector)) {
+      return selector;
     }
 
-    return labelSelector
+    return selector
       .map((label) => {
         const key = String(label.key);
         const operator = label.operator;

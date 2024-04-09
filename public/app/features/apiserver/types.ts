@@ -78,7 +78,7 @@ export interface ResourceList<T, K = string> extends TypeMeta {
   items: Array<Resource<T, K>>;
 }
 
-export type ListOptionsSelector =
+export type ListOptionsLabelSelector =
   | string
   | Array<
       | {
@@ -97,17 +97,25 @@ export type ListOptionsSelector =
         }
     >;
 
+export type ListOptionsFieldSelector =
+  | string
+  | Array<{
+      key: string;
+      operator: '=' | '!=';
+      value: string;
+    }>;
+
 export interface ListOptions {
   // continue the list at a given batch
   continue?: string;
 
   // Query by labels
   // https://kubernetes.io/docs/concepts/overview/working-with-objects/labels/#label-selectors
-  labelSelector?: ListOptionsSelector;
+  labelSelector?: ListOptionsLabelSelector;
 
   // Query by fields
   // https://kubernetes.io/docs/concepts/overview/working-with-objects/field-selectors/
-  fieldSelector?: ListOptionsSelector;
+  fieldSelector?: ListOptionsFieldSelector;
 
   // Limit the response count
   limit?: number;
