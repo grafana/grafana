@@ -1,6 +1,7 @@
 import { cx } from '@emotion/css';
 import memoizeOne from 'memoize-one';
-import { PureComponent, MouseEvent, createRef, ReactNode } from 'react';
+import { PureComponent, MouseEvent, createRef, ReactNode, CSSProperties } from 'react';
+import { VariableSizeList } from 'react-window';
 
 import {
   TimeZone,
@@ -165,19 +166,6 @@ class UnThemedLogRows extends PureComponent<Props, State> {
     });
   };
 
-  componentDidMount() {
-    // Staged rendering
-    const { logRows, previewLimit } = this.props;
-    const rowCount = logRows ? logRows.length : 0;
-    // Render all right away if not too far over the limit
-    const renderAll = rowCount <= previewLimit! * 2;
-    if (renderAll) {
-      this.setState({ renderAll });
-    } else {
-      this.renderAllTimer = window.setTimeout(() => this.setState({ renderAll: true }), 2000);
-    }
-  }
-
   componentWillUnmount() {
     document.removeEventListener('click', this.handleDeselection);
     document.removeEventListener('contextmenu', this.handleDeselection);
@@ -195,13 +183,38 @@ class UnThemedLogRows extends PureComponent<Props, State> {
     sortLogRows(logRows, logsSortOrder)
   );
 
+  Row = ({ getRows, rows, showDuplicates, keyMaker, styles }: { getRows(): LogRowModel[], rows: LogRowModel[], showDuplicates: boolean, keyMaker: UniqueKeyMaker, styles: ReturnType<typeof getLogRowStyles> }, { index, style }: { index: number, style: CSSProperties }) => {
+    return <LogRow
+      style={style}
+      key={keyMaker.getKey(rows[index].uid)}
+      getRows={getRows}
+      row={rows[index]}
+      showDuplicates={showDuplicates}
+      logsSortOrder={this.props.logsSortOrder}
+      onOpenContext={this.openContext}
+      styles={styles}
+      onPermalinkClick={this.props.onPermalinkClick}
+      scrollIntoView={this.props.scrollIntoView}
+      permalinkedRowId={this.props.permalinkedRowId}
+      onPinLine={this.props.onPinLine}
+      onUnpinLine={this.props.onUnpinLine}
+      pinLineButtonTooltipTitle={this.props.pinLineButtonTooltipTitle}
+      pinned={this.props.pinnedRowId === rows[index].uid || this.props.pinnedLogs?.some((logId) => logId === rows[index].rowId)}
+      isFilterLabelActive={this.props.isFilterLabelActive}
+      handleTextSelection={this.popoverMenuSupported() ? this.handleSelection : undefined}
+      {...this.props}
+    />
+  }
+
+  getItemSize = (index: number) => {
+    return 20;
+  }
+
   render() {
     const { deduplicatedRows, logRows, dedupStrategy, theme, logsSortOrder, previewLimit, pinnedLogs, ...rest } =
       this.props;
-    const { renderAll } = this.state;
     const styles = getLogRowStyles(theme);
     const dedupedRows = deduplicatedRows ? deduplicatedRows : logRows;
-    const hasData = logRows && logRows.length > 0;
     const dedupCount = dedupedRows
       ? dedupedRows.reduce((sum, row) => (row.duplicates ? sum + row.duplicates : sum), 0)
       : 0;
@@ -209,11 +222,10 @@ class UnThemedLogRows extends PureComponent<Props, State> {
     // Staged rendering
     const processedRows = dedupedRows ? dedupedRows : [];
     const orderedRows = logsSortOrder ? this.sortLogs(processedRows, logsSortOrder) : processedRows;
-    const firstRows = orderedRows.slice(0, previewLimit!);
-    const lastRows = orderedRows.slice(previewLimit!, orderedRows.length);
 
     // React profiler becomes unusable if we pass all rows to all rows and their labels, using getter instead
     const getRows = this.makeGetRows(orderedRows);
+    const height = window.innerHeight * 0.75;
 
     const keyMaker = new UniqueKeyMaker();
 
@@ -231,56 +243,16 @@ class UnThemedLogRows extends PureComponent<Props, State> {
         )}
         <table className={cx(styles.logsRowsTable, this.props.overflowingContent ? '' : styles.logsRowsTableContain)}>
           <tbody>
-            {hasData &&
-              firstRows.map((row) => (
-                <LogRow
-                  key={keyMaker.getKey(row.uid)}
-                  getRows={getRows}
-                  row={row}
-                  showDuplicates={showDuplicates}
-                  logsSortOrder={logsSortOrder}
-                  onOpenContext={this.openContext}
-                  styles={styles}
-                  onPermalinkClick={this.props.onPermalinkClick}
-                  scrollIntoView={this.props.scrollIntoView}
-                  permalinkedRowId={this.props.permalinkedRowId}
-                  onPinLine={this.props.onPinLine}
-                  onUnpinLine={this.props.onUnpinLine}
-                  pinLineButtonTooltipTitle={this.props.pinLineButtonTooltipTitle}
-                  pinned={this.props.pinnedRowId === row.uid || pinnedLogs?.some((logId) => logId === row.rowId)}
-                  isFilterLabelActive={this.props.isFilterLabelActive}
-                  handleTextSelection={this.handleSelection}
-                  {...rest}
-                />
-              ))}
-            {hasData &&
-              renderAll &&
-              lastRows.map((row) => (
-                <LogRow
-                  key={keyMaker.getKey(row.uid)}
-                  getRows={getRows}
-                  row={row}
-                  showDuplicates={showDuplicates}
-                  logsSortOrder={logsSortOrder}
-                  onOpenContext={this.openContext}
-                  styles={styles}
-                  onPermalinkClick={this.props.onPermalinkClick}
-                  scrollIntoView={this.props.scrollIntoView}
-                  permalinkedRowId={this.props.permalinkedRowId}
-                  onPinLine={this.props.onPinLine}
-                  onUnpinLine={this.props.onUnpinLine}
-                  pinLineButtonTooltipTitle={this.props.pinLineButtonTooltipTitle}
-                  pinned={this.props.pinnedRowId === row.uid || pinnedLogs?.some((logId) => logId === row.rowId)}
-                  isFilterLabelActive={this.props.isFilterLabelActive}
-                  handleTextSelection={this.handleSelection}
-                  {...rest}
-                />
-              ))}
-            {hasData && !renderAll && (
-              <tr>
-                <td colSpan={5}>Rendering {orderedRows.length - previewLimit!} rows...</td>
-              </tr>
-            )}
+            <VariableSizeList
+              height={height}
+              itemCount={orderedRows?.length || 0}
+              itemSize={this.getItemSize}
+              itemKey={(index: number) => keyMaker.getKey(orderedRows[index].uid)}
+              width={'100%'}
+              layout="vertical"
+            >
+              {this.Row.bind(this, { getRows, showDuplicates, rows: orderedRows, keyMaker, styles })}  
+            </VariableSizeList>
           </tbody>
         </table>
       </div>
