@@ -45,7 +45,7 @@ If you wish to install beta versions of Grafana, substitute the repository URL f
    sudo rpm --import gpg.key
    ```
 
-2. Create `/etc/yum.repos.d/grafana.repo` with the following content:
+1. Create `/etc/yum.repos.d/grafana.repo` with the following content:
 
    ```bash
    [grafana]
@@ -59,13 +59,13 @@ If you wish to install beta versions of Grafana, substitute the repository URL f
    sslcacert=/etc/pki/tls/certs/ca-bundle.crt
    ```
 
-3. To install Grafana OSS, run the following command:
+1. To install Grafana OSS, run the following command:
 
    ```bash
    sudo dnf install grafana
    ```
 
-4. To install Grafana Enterprise, run the following command:
+1. To install Grafana Enterprise, run the following command:
 
    ```bash
    sudo dnf install grafana-enterprise
