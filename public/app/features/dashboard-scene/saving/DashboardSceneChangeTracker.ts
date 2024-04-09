@@ -36,7 +36,7 @@ export class DashboardSceneChangeTracker {
   }
 
   private onStateChanged({ payload }: SceneObjectStateChangedEvent) {
-    // If there are no changes in the sate, the check is not needed
+    // If there are no changes in the state, the check is not needed
     if (Object.keys(payload.partialUpdate).length === 0) {
       return;
     }
