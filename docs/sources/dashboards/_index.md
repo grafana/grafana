@@ -10,40 +10,39 @@ title: Dashboards
 weight: 70
 description: Create and manage dashboards
 hero:
-  title: Alerts and IRM
+  title: Dashboards
   level: 1
   image: /media/docs/grafana-cloud/alerting-and-irm/grafana-cloud-docs-hero-alerts-irm.svg
   width: 110
   height: 110
   description: >-
-    Alerts & IRM is Grafana Cloud’s Incident Response Management (IRM) solution, which enables you to detect, respond, and learn from incidents in one centralized platform.
+    Dashboards allow you to query, visualize, alert on, and understand your data no matter where it’s stored. Translate and transform any of your data into flexible and versatile dashboards.
 cards:
   title_class: pt-0 lh-1
   items:
-    - title: Grafana Alerting
-      href: /docs/grafana-cloud/alerting-and-irm/alerting/
-      description: Allows you to learn about problems in your systems moments after they occur. Monitor your incoming metrics data or log entries and set up your Alerting system to watch for specific events or circumstances and then send notifications when those things are found.
-      logo: /media/docs/grafana-cloud/alerting-and-irm/grafana-icon-alerting.svg
+    - title: Build dashboards
+      href: /docs/grafana/latest/dashboards/build-dashboards/
+      description: Get step-by-step directions for how to create or import your first dashboard and modify dashboard settings. Learn how to create and manage reusable library panels, configure dashboard links, annotate visualizations, and use the dashboard JSON. 
       height: 24
-    - title: Grafana SLO
-      href: /docs/grafana-cloud/alerting-and-irm/slo/
-      description: Provides a framework for measuring the quality of service you provide to users. Use SLOs to collect data on the reliability of your systems over time and as a result, help engineering teams reduce alert fatigue, focus on reliability, and provide better service to your customers.
-      logo: /media/docs/grafana-cloud/alerting-and-irm/grafana-icon-slo.svg
+    - title: Manage dashboards
+      href: /docs/grafana/latest/dashboards/manage-dashboards/
+      description: Learn about dashboard management and generative AI features for dashboards
       height: 24
-    - title: Grafana OnCall
-      href: /docs/grafana-cloud/alerting-and-irm/oncall/
-      description: Enable a developer-first workflow to easily create and manage on-call schedules. Automate escalations, define alert rules and integrate seamlessly with existing alerting sources and monitoring tools.
-      logo: /media/docs/grafana-cloud/alerting-and-irm/grafana-icon-oncall.svg
+    - title: Variables
+      href: /docs/grafana/latest/dashboards/variables/
+      description: Add variables to metric queries and panel titles to create interactive and dynamic dashboards
       height: 24
-    - title: Grafana Incident
-      href: /docs/grafana-cloud/alerting-and-irm/incident/
-      description: Leverage the Incident tool to quickly assign roles and document learnings from chat ops/UI. Benefit from integrations with your favorite tools, such as GitHub, Slack, and Google Suite.
-      logo: /media/docs/grafana-cloud/alerting-and-irm/grafana-icon-incident.svg
+    - title: Public dashboards
+      href: /docs/grafana/latest/dashboards/dashboard-public/
+      description: Make your Grafana dashboards public and share them with anyone
       height: 24
-    - title: Grafana Machine Learning
-      href: /docs/grafana-cloud/alerting-and-irm/machine-learning/
-      description: Leverage ML features in Grafana Cloud to learn patterns in your data and get predictive insights for your time series. These forecasts can inform the creation of alerts, forecast capacity requirements, and identify anomalous activities.
-      logo: /media/docs/grafana-cloud/alerting-and-irm/grafana-icon-ml.svg
+    - title: Reporting
+      href: /docs/grafana/latest/dashboards/create-reports/
+      description: Generate and share PDF reports from your Grafana dashboards
+      height: 24
+      - title: Sharing
+      href: /docs/grafana/latest/dashboards/share-dashboards-panels/
+      description: Share Grafana dashboards and panels within your organization and publicly
       height: 24
 ---
 
@@ -60,19 +59,6 @@ Dashboard snapshots are static. Queries and expressions cannot be re-executed fr
 Before you begin, ensure that you have configured a data source. See also:
 
 {{< card-grid key="cards" type="simple" >}}
-
-- [Use dashboards][]
-- [Build dashboards][]
-- [Create dashboard folders][]
-- [Manage dashboards][]
-- [Public dashboards][]
-- [Annotations][]
-- [Playlist][]
-- [Reporting][]
-- [Version history][]
-- [Import][]
-- [Export and share][]
-- [JSON model][]
 
 {{% docs/reference %}}
 [data source]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/datasources"
