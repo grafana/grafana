@@ -39,6 +39,12 @@ import (
 const testGrafanaConfig = `{"template_files":{},"alertmanager_config":{"route":{"receiver":"grafana-default-email","group_by":["grafana_folder","alertname"]},"templates":null,"receivers":[{"name":"grafana-default-email","grafana_managed_receiver_configs":[{"uid":"","name":"some other name","type":"email","disableResolveMessage":false,"settings":{"addresses":"\u003cexample@email.com\u003e"},"secureSettings":null}]}]}}`
 const testGrafanaConfigWithSecret = `{"template_files":{},"alertmanager_config":{"route":{"receiver":"grafana-default-email","group_by":["grafana_folder","alertname"]},"templates":null,"receivers":[{"name":"grafana-default-email","grafana_managed_receiver_configs":[{"uid":"dde6ntuob69dtf","name":"WH","type":"webhook","disableResolveMessage":false,"settings":{"url":"http://localhost:8080","username":"test"},"secureSettings":{"password":"test"}}]}]}}`
 
+// Valid Alertmanager state base64 encoded.
+const testSilence1 = "lwEKhgEKATISFxIJYWxlcnRuYW1lGgp0ZXN0X2FsZXJ0EiMSDmdyYWZhbmFfZm9sZGVyGhF0ZXN0X2FsZXJ0X2ZvbGRlchoMCN2CkbAGEJbKrMsDIgwI7Z6RsAYQlsqsywMqCwiAkrjDmP7///8BQgxHcmFmYW5hIFRlc3RKDFRlc3QgU2lsZW5jZRIMCO2ekbAGEJbKrMsDlwEKhgEKATESFxIJYWxlcnRuYW1lGgp0ZXN0X2FsZXJ0EiMSDmdyYWZhbmFfZm9sZGVyGhF0ZXN0X2FsZXJ0X2ZvbGRlchoMCN2CkbAGEJbKrMsDIgwI7Z6RsAYQlsqsywMqCwiAkrjDmP7///8BQgxHcmFmYW5hIFRlc3RKDFRlc3QgU2lsZW5jZRIMCO2ekbAGEJbKrMsD"
+const testSilence2 = "lwEKhgEKAWESFxIJYWxlcnRuYW1lGgp0ZXN0X2FsZXJ0EiMSDmdyYWZhbmFfZm9sZGVyGhF0ZXN0X2FsZXJ0X2ZvbGRlchoMCPuEkbAGEK3AhM8CIgwIi6GRsAYQrcCEzwIqCwiAkrjDmP7///8BQgxHcmFmYW5hIFRlc3RKDFRlc3QgU2lsZW5jZRIMCIuhkbAGEK3AhM8ClwEKhgEKAWISFxIJYWxlcnRuYW1lGgp0ZXN0X2FsZXJ0EiMSDmdyYWZhbmFfZm9sZGVyGhF0ZXN0X2FsZXJ0X2ZvbGRlchoMCPuEkbAGEK3AhM8CIgwIi6GRsAYQrcCEzwIqCwiAkrjDmP7///8BQgxHcmFmYW5hIFRlc3RKDFRlc3QgU2lsZW5jZRIMCIuhkbAGEK3AhM8C"
+const testNflog1 = "OgoqCgZncm91cDISEgoJcmVjZWl2ZXIyEgV0ZXN0MyoMCLSDkbAGEMvaofYCEgwIxJ+RsAYQy9qh9gI6CioKBmdyb3VwMRISCglyZWNlaXZlcjESBXRlc3QzKgwItIORsAYQy9qh9gISDAjEn5GwBhDL2qH2Ag=="
+const testNflog2 = "OAopCgZncm91cEESEgoJcmVjZWl2ZXJBEgV0ZXN0MyoLCNmEkbAGEOzO0BUSCwjpoJGwBhDsztAVOAopCgZncm91cEISEgoJcmVjZWl2ZXJCEgV0ZXN0MyoLCNmEkbAGEOzO0BUSCwjpoJGwBhDsztAV"
+
 func TestMain(m *testing.M) {
 	testsuite.Run(m)
 }
@@ -144,8 +150,8 @@ func TestApplyConfig(t *testing.T) {
 	ctx := context.Background()
 	store := ngfakes.NewFakeKVStore(t)
 	fstore := notifier.NewFileStore(1, store)
-	require.NoError(t, store.Set(ctx, cfg.OrgID, "alertmanager", notifier.SilencesFilename, "test"))
-	require.NoError(t, store.Set(ctx, cfg.OrgID, "alertmanager", notifier.NotificationLogFilename, "test"))
+	require.NoError(t, store.Set(ctx, cfg.OrgID, "alertmanager", notifier.SilencesFilename, testSilence1))
+	require.NoError(t, store.Set(ctx, cfg.OrgID, "alertmanager", notifier.NotificationLogFilename, testNflog1))
 
 	// An error response from the remote Alertmanager should result in the readiness check failing.
 	m := metrics.NewRemoteAlertmanagerMetrics(prometheus.NewRegistry())
@@ -292,14 +298,12 @@ func TestIntegrationRemoteAlertmanagerApplyConfigOnlyUploadsOnce(t *testing.T) {
 		OrgID:                     1,
 	}
 
-	silences := []byte("test-silences")
-	nflog := []byte("test-notifications")
 	store := ngfakes.NewFakeKVStore(t)
 	fstore := notifier.NewFileStore(cfg.OrgID, store)
 
 	ctx := context.Background()
-	require.NoError(t, store.Set(ctx, cfg.OrgID, "alertmanager", notifier.SilencesFilename, base64.StdEncoding.EncodeToString(silences)))
-	require.NoError(t, store.Set(ctx, cfg.OrgID, "alertmanager", notifier.NotificationLogFilename, base64.StdEncoding.EncodeToString(nflog)))
+	require.NoError(t, store.Set(ctx, cfg.OrgID, "alertmanager", notifier.SilencesFilename, testSilence1))
+	require.NoError(t, store.Set(ctx, cfg.OrgID, "alertmanager", notifier.NotificationLogFilename, testNflog1))
 
 	secretsService := secretsManager.SetupTestService(t, fakes.NewFakeSecretsStore())
 	m := metrics.NewRemoteAlertmanagerMetrics(prometheus.NewRegistry())
@@ -343,8 +347,8 @@ func TestIntegrationRemoteAlertmanagerApplyConfigOnlyUploadsOnce(t *testing.T) {
 
 	// Calling `ApplyConfig` again with a changed configuration and state yields no effect.
 	{
-		require.NoError(t, store.Set(ctx, cfg.OrgID, "alertmanager", "silences", base64.StdEncoding.EncodeToString([]byte("abc123"))))
-		require.NoError(t, store.Set(ctx, cfg.OrgID, "alertmanager", "notifications", base64.StdEncoding.EncodeToString([]byte("abc123"))))
+		require.NoError(t, store.Set(ctx, cfg.OrgID, "alertmanager", "silences", testSilence2))
+		require.NoError(t, store.Set(ctx, cfg.OrgID, "alertmanager", "notifications", testNflog2))
 		fakeConfig.ID = 30000000000000000
 		require.NoError(t, am.ApplyConfig(ctx, fakeConfig))
 
