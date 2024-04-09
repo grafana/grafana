@@ -2,12 +2,18 @@ import { css } from '@emotion/css';
 import React from 'react';
 import { Link } from 'react-router-dom';
 
-import { AppEvents, GrafanaTheme2, ScopeDashboard, ScopeDashboardBindingSpec } from '@grafana/data';
+import { AppEvents, GrafanaTheme2, ScopeDashboardBindingSpec } from '@grafana/data';
 import { config, getAppEvents, getBackendSrv, locationService } from '@grafana/runtime';
 import { SceneComponentProps, SceneObjectBase, SceneObjectState } from '@grafana/scenes';
 import { CustomScrollbar, Icon, Input, useStyles2 } from '@grafana/ui';
 
 import { ScopedResourceServer } from '../../apiserver/server';
+
+export interface ScopeDashboard {
+  uid: string;
+  title: string;
+  url: string;
+}
 
 export interface ScopesDashboardsSceneState extends SceneObjectState {
   dashboards: ScopeDashboard[];

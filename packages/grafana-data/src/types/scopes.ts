@@ -17,15 +17,10 @@ export interface ScopeSpec {
   filters: ScopeSpecFilter[];
 }
 
-export interface ScopeDashboard {
-  uid: string;
-  title: string;
-  url: string;
-}
-
-export type ScopeFilter = ScopeSpecFilter;
-
-export interface Scope extends ScopeSpec {
-  name: string;
-  filters: ScopeFilter[];
+// TODO: Use Resource from apiserver when we export the types
+export interface Scope {
+  metadata: {
+    name: string;
+  };
+  spec: ScopeSpec;
 }

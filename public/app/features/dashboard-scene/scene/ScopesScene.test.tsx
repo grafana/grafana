@@ -1,6 +1,6 @@
 import { waitFor } from '@testing-library/react';
 
-import { Scope, ScopeDashboard } from '@grafana/data';
+import { Scope } from '@grafana/data';
 import { config } from '@grafana/runtime';
 import {
   behaviors,
@@ -14,7 +14,7 @@ import {
 
 import { DashboardControls } from './DashboardControls';
 import { DashboardScene } from './DashboardScene';
-import { ScopesDashboardsScene } from './ScopesDashboardsScene';
+import { ScopeDashboard, ScopesDashboardsScene } from './ScopesDashboardsScene';
 import { ScopesFiltersScene } from './ScopesFiltersScene';
 import { ScopesScene } from './ScopesScene';
 
@@ -43,33 +43,45 @@ const scopesMocks: Record<
   }
 > = {
   scope1: {
-    name: 'scope1',
-    title: 'Scope 1',
-    type: 'Type 1',
-    description: 'Description 1',
-    category: 'Category 1',
-    filters: [
-      { key: 'a-key', operator: '=', value: 'a-value' },
-      { key: 'b-key', operator: '!=', value: 'b-value' },
-    ],
+    metadata: {
+      name: 'scope1',
+    },
+    spec: {
+      title: 'Scope 1',
+      type: 'Type 1',
+      description: 'Description 1',
+      category: 'Category 1',
+      filters: [
+        { key: 'a-key', operator: '=', value: 'a-value' },
+        { key: 'b-key', operator: '!=', value: 'b-value' },
+      ],
+    },
     dashboards: [dashboardsMocks.dashboard1, dashboardsMocks.dashboard2, dashboardsMocks.dashboard3],
   },
   scope2: {
-    name: 'scope2',
-    title: 'Scope 2',
-    type: 'Type 2',
-    description: 'Description 2',
-    category: 'Category 2',
-    filters: [{ key: 'c-key', operator: '!=', value: 'c-value' }],
+    metadata: {
+      name: 'scope2',
+    },
+    spec: {
+      title: 'Scope 2',
+      type: 'Type 2',
+      description: 'Description 2',
+      category: 'Category 2',
+      filters: [{ key: 'c-key', operator: '!=', value: 'c-value' }],
+    },
     dashboards: [dashboardsMocks.dashboard3],
   },
   scope3: {
-    name: 'scope3',
-    title: 'Scope 3',
-    type: 'Type 1',
-    description: 'Description 3',
-    category: 'Category 1',
-    filters: [{ key: 'd-key', operator: '=', value: 'd-value' }],
+    metadata: {
+      name: 'scope3',
+    },
+    spec: {
+      title: 'Scope 3',
+      type: 'Type 1',
+      description: 'Description 3',
+      category: 'Category 1',
+      filters: [{ key: 'd-key', operator: '=', value: 'd-value' }],
+    },
     dashboards: [dashboardsMocks.dashboard1, dashboardsMocks.dashboard2],
   },
 };
@@ -81,16 +93,7 @@ jest.mock('@grafana/runtime', () => ({
     get: jest.fn().mockImplementation((url: string) => {
       if (url.startsWith('/apis/scope.grafana.app/v0alpha1/namespaces/default/scopes')) {
         return {
-          items: Object.values(scopesMocks).map((scope) => ({
-            metadata: { name: scope.name },
-            spec: {
-              title: scope.title,
-              type: scope.type,
-              description: scope.description,
-              category: scope.category,
-              filters: scope.filters,
-            },
-          })),
+          items: Object.values(scopesMocks).map(({ dashboards: _dashboards, ...scope }) => scope),
         };
       }
 
@@ -192,14 +195,14 @@ describe('ScopesScene', () => {
     });
 
     it('Fetches dashboards list', () => {
-      filtersScene.setScope(scopesMocks.scope1.name);
+      filtersScene.setScope(scopesMocks.scope1.metadata.name);
 
       waitFor(() => {
         expect(fetchDashboardsSpy).toHaveBeenCalled();
         expect(dashboardsScene.state.dashboards).toEqual(scopesMocks.scope1.dashboards);
       });
 
-      filtersScene.setScope(scopesMocks.scope2.name);
+      filtersScene.setScope(scopesMocks.scope2.metadata.name);
 
       waitFor(() => {
         expect(fetchDashboardsSpy).toHaveBeenCalled();
@@ -210,7 +213,7 @@ describe('ScopesScene', () => {
     it('Enriches data requests', () => {
       const { dashboards: _dashboards, ...scope1 } = scopesMocks.scope1;
 
-      filtersScene.setScope(scope1.name);
+      filtersScene.setScope(scope1.metadata.name);
 
       const queryRunner = sceneGraph.findObject(dashboardScene, (o) => o.state.key === 'data-query-runner')!;
 
