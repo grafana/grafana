@@ -17,7 +17,7 @@ export function EmbeddedDashboardTestPage() {
     >
       <Drawer title="test" onClose={() => {}}>
         <div style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
-          <Box paddingY={2}>Internal url state: {state}</Box>
+          <Box paddingBottom={2}>Internal url state: {state}</Box>
           <EmbeddedDashboard uid="O6GmNPvWk" initialState={state} onStateChange={setState} />
         </div>
       </Drawer>
