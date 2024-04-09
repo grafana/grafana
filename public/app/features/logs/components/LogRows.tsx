@@ -206,8 +206,19 @@ class UnThemedLogRows extends PureComponent<Props, State> {
     />
   }
 
-  getItemSize = (index: number) => {
-    return 20;
+  /**
+   * Heuristic function to estimate row size. Needs to be updated when log row styles changes.
+   * It does not need to be exact, just know the amount of lines that the message will use if the
+   * message is wrapped.
+   */
+  estimateRowHeight = (rows: LogRowModel[], index: number) => {
+    const rowHeight = 20.14;
+    if (!this.props.wrapLogMessage) {
+      return rowHeight;
+    }
+    const margins = 310;
+    const letter = 7.34;
+    return Math.ceil((rows[index].raw.length * letter) / (window.innerWidth - margins)) * rowHeight;
   }
 
   render() {
@@ -246,7 +257,7 @@ class UnThemedLogRows extends PureComponent<Props, State> {
             <VariableSizeList
               height={height}
               itemCount={orderedRows?.length || 0}
-              itemSize={this.getItemSize}
+              itemSize={this.estimateRowHeight.bind(this, orderedRows)}
               itemKey={(index: number) => keyMaker.getKey(orderedRows[index].uid)}
               width={'100%'}
               layout="vertical"
