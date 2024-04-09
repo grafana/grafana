@@ -523,6 +523,10 @@ func (_m *RemoteAlertmanagerMock) GetStatus(_a0 context.Context) (definitions.Ge
 		panic("no return value specified for GetStatus")
 	}
 
+	if len(ret) == 0 {
+		panic("no return value specified for GetStatus")
+	}
+
 	var r0 definitions.GettableStatus
 	var r1 error
 	if rf, ok := ret.Get(0).(func(context.Context) (definitions.GettableStatus, error)); ok {

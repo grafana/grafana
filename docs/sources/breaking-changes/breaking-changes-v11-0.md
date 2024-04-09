@@ -169,7 +169,7 @@ If you set Google OAuth configuration using `api_url,` you might be using the le
 
 You can turn off this feature through the configuration toggle `validate_hd `. Anyone using the legacy Google OAuth configuration should turn off this validation if the ID Token response doesn't have the HD parameter.
 
-[GitHub issue](https://github.com/grafana/grafana/pull/83229)
+[GitHub PR](https://github.com/grafana/grafana/pull/83229)
 
 ### Changes to how the panel view URL is generated for repeated panels
 
