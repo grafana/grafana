@@ -112,7 +112,7 @@ func (hs *HTTPServer) setIndexViewData(c *contextmodel.ReqContext) (*dtos.IndexV
 			HelpFlags1:                 c.HelpFlags1,
 			HasEditPermissionInFolders: hasEditPerm,
 			Analytics:                  hs.buildUserAnalyticsSettings(c),
-			AuthenticatedBy:            hs.getUserAuthenticatedBy(c, userID),
+			AuthenticatedBy:            c.GetAuthenticatedBy(),
 		},
 		Settings:                            settings,
 		ThemeType:                           theme.Type,
@@ -214,32 +214,6 @@ func (hs *HTTPServer) getUserOrgCount(c *contextmodel.ReqContext, userID int64) 
 	}
 
 	return len(userOrgs)
-}
-
-// getUserAuthenticatedBy returns external authentication method used for user.
-// If user does not have an external authentication method an empty string is returned
-func (hs *HTTPServer) getUserAuthenticatedBy(c *contextmodel.ReqContext, userID int64) string {
-	if userID == 0 {
-		return ""
-	}
-
-	// Special case for image renderer. Frontend relies on this information
-	// to render dashboards in a bit different way.
-	if c.IsRenderCall {
-		return login.RenderModule
-	}
-
-	info, err := hs.authInfoService.GetAuthInfo(c.Req.Context(), &login.GetAuthInfoQuery{UserId: userID})
-	// we ignore errors where a user does not have external user auth
-	if err != nil && !errors.Is(err, user.ErrUserNotFound) {
-		hs.log.FromContext(c.Req.Context()).Error("Failed to fetch auth info", "userId", c.SignedInUser.UserID, "error", err)
-	}
-
-	if err != nil {
-		return ""
-	}
-
-	return info.AuthModule
 }
 
 func hashUserIdentifier(identifier string, secret string) string {
