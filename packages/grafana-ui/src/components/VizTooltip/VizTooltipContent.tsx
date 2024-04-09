@@ -13,15 +13,22 @@ interface VizTooltipContentProps {
   children?: ReactNode;
   scrollable?: boolean;
   isPinned: boolean;
+  maxHeight?: number;
 }
 
-export const VizTooltipContent = ({ items, children, isPinned, scrollable = false }: VizTooltipContentProps) => {
+export const VizTooltipContent = ({
+  items,
+  children,
+  isPinned,
+  scrollable = false,
+  maxHeight,
+}: VizTooltipContentProps) => {
   const styles = useStyles2(getStyles);
 
   const scrollableStyle: CSSProperties = scrollable
     ? {
-        maxHeight: 400,
-        overflowY: 'auto',
+        maxHeight: maxHeight,
+        overflowY: 'scroll',
       }
     : {};
 

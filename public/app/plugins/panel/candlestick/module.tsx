@@ -137,10 +137,7 @@ export const plugin = new PanelPlugin<Options, GraphFieldConfig>(CandlestickPane
       },
     });
 
-    if (config.featureToggles.newVizTooltips) {
-      commonOptionsBuilder.addTooltipOptions(builder, false, true, opts);
-    }
-
+    commonOptionsBuilder.addTooltipOptions(builder, false, true, opts);
     commonOptionsBuilder.addLegendOptions(builder);
   })
   .setDataSupport({ annotations: true, alertStates: true })
