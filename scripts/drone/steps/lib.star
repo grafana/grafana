@@ -142,7 +142,7 @@ def is_fork(pr):
 	else:
 		raise Exception("Failed to get PR information: retries exceeded")
 
-if is_fork(os.environ.get("PULL_REQUEST")):
+if is_fork(os.environ.get("DRONE_PULL_REQUEST")):
 	sys.exit(1)
 '
 """,

@@ -151,7 +151,7 @@ steps:
     = datetime.now(timezone.utc)\n\t\t\ttimestamp_utc = int(current_time_utc.timestamp())\n\n\t\t\tseconds_until_reset
     = max(0, reset_time_utc - timestamp_utc)\n\t\t\tprint(f\"Sleeping for {seconds_until_reset}
     seconds until X-RateLimit-Reset\")\n\t\t\tsleep(seconds_until_reset)\n\telse:\n\t\traise
-    Exception(\"Failed to get PR information: retries exceeded\")\n\nif is_fork(os.environ.get(\"PULL_REQUEST\")):\n\tsys.exit(1)\n'\n"
+    Exception(\"Failed to get PR information: retries exceeded\")\n\nif is_fork(os.environ.get(\"DRONE_PULL_REQUEST\")):\n\tsys.exit(1)\n'\n"
   - is_fork=$?
   - 'echo "is_fork: $is_fork"'
   - if [ $is_fork -eq 1 ]; then return 1; fi
@@ -230,7 +230,7 @@ steps:
     = datetime.now(timezone.utc)\n\t\t\ttimestamp_utc = int(current_time_utc.timestamp())\n\n\t\t\tseconds_until_reset
     = max(0, reset_time_utc - timestamp_utc)\n\t\t\tprint(f\"Sleeping for {seconds_until_reset}
     seconds until X-RateLimit-Reset\")\n\t\t\tsleep(seconds_until_reset)\n\telse:\n\t\traise
-    Exception(\"Failed to get PR information: retries exceeded\")\n\nif is_fork(os.environ.get(\"PULL_REQUEST\")):\n\tsys.exit(1)\n'\n"
+    Exception(\"Failed to get PR information: retries exceeded\")\n\nif is_fork(os.environ.get(\"DRONE_PULL_REQUEST\")):\n\tsys.exit(1)\n'\n"
   - is_fork=$?
   - 'echo "is_fork: $is_fork"'
   - if [ $is_fork -eq 1 ]; then return 1; fi
@@ -336,7 +336,7 @@ steps:
     = datetime.now(timezone.utc)\n\t\t\ttimestamp_utc = int(current_time_utc.timestamp())\n\n\t\t\tseconds_until_reset
     = max(0, reset_time_utc - timestamp_utc)\n\t\t\tprint(f\"Sleeping for {seconds_until_reset}
     seconds until X-RateLimit-Reset\")\n\t\t\tsleep(seconds_until_reset)\n\telse:\n\t\traise
-    Exception(\"Failed to get PR information: retries exceeded\")\n\nif is_fork(os.environ.get(\"PULL_REQUEST\")):\n\tsys.exit(1)\n'\n"
+    Exception(\"Failed to get PR information: retries exceeded\")\n\nif is_fork(os.environ.get(\"DRONE_PULL_REQUEST\")):\n\tsys.exit(1)\n'\n"
   - is_fork=$?
   - 'echo "is_fork: $is_fork"'
   - if [ $is_fork -eq 1 ]; then return 1; fi
@@ -471,7 +471,7 @@ steps:
     = datetime.now(timezone.utc)\n\t\t\ttimestamp_utc = int(current_time_utc.timestamp())\n\n\t\t\tseconds_until_reset
     = max(0, reset_time_utc - timestamp_utc)\n\t\t\tprint(f\"Sleeping for {seconds_until_reset}
     seconds until X-RateLimit-Reset\")\n\t\t\tsleep(seconds_until_reset)\n\telse:\n\t\traise
-    Exception(\"Failed to get PR information: retries exceeded\")\n\nif is_fork(os.environ.get(\"PULL_REQUEST\")):\n\tsys.exit(1)\n'\n"
+    Exception(\"Failed to get PR information: retries exceeded\")\n\nif is_fork(os.environ.get(\"DRONE_PULL_REQUEST\")):\n\tsys.exit(1)\n'\n"
   - is_fork=$?
   - 'echo "is_fork: $is_fork"'
   - if [ $is_fork -eq 1 ]; then return 1; fi
@@ -963,7 +963,7 @@ steps:
     = datetime.now(timezone.utc)\n\t\t\ttimestamp_utc = int(current_time_utc.timestamp())\n\n\t\t\tseconds_until_reset
     = max(0, reset_time_utc - timestamp_utc)\n\t\t\tprint(f\"Sleeping for {seconds_until_reset}
     seconds until X-RateLimit-Reset\")\n\t\t\tsleep(seconds_until_reset)\n\telse:\n\t\traise
-    Exception(\"Failed to get PR information: retries exceeded\")\n\nif is_fork(os.environ.get(\"PULL_REQUEST\")):\n\tsys.exit(1)\n'\n"
+    Exception(\"Failed to get PR information: retries exceeded\")\n\nif is_fork(os.environ.get(\"DRONE_PULL_REQUEST\")):\n\tsys.exit(1)\n'\n"
   - is_fork=$?
   - 'echo "is_fork: $is_fork"'
   - if [ $is_fork -eq 1 ]; then return 1; fi
@@ -1319,7 +1319,7 @@ steps:
     = datetime.now(timezone.utc)\n\t\t\ttimestamp_utc = int(current_time_utc.timestamp())\n\n\t\t\tseconds_until_reset
     = max(0, reset_time_utc - timestamp_utc)\n\t\t\tprint(f\"Sleeping for {seconds_until_reset}
     seconds until X-RateLimit-Reset\")\n\t\t\tsleep(seconds_until_reset)\n\telse:\n\t\traise
-    Exception(\"Failed to get PR information: retries exceeded\")\n\nif is_fork(os.environ.get(\"PULL_REQUEST\")):\n\tsys.exit(1)\n'\n"
+    Exception(\"Failed to get PR information: retries exceeded\")\n\nif is_fork(os.environ.get(\"DRONE_PULL_REQUEST\")):\n\tsys.exit(1)\n'\n"
   - is_fork=$?
   - 'echo "is_fork: $is_fork"'
   - if [ $is_fork -eq 1 ]; then return 1; fi
@@ -5013,6 +5013,6 @@ kind: secret
 name: gcr_credentials
 ---
 kind: signature
-hmac: c4ce905e79099a60c1d87cb994c8378850764d069b573fe781eeb994aab0864a
+hmac: 4fc95de3ec36b134b409a8c8eca5abc706738037b2eec6665bb025bcb780e073
 
 ...
