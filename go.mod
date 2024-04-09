@@ -51,9 +51,9 @@ require (
 	github.com/grafana/cuetsy v0.1.11 // @grafana/grafana-as-code
 	github.com/grafana/grafana-aws-sdk v0.25.0 // @grafana/aws-datasources
 	github.com/grafana/grafana-azure-sdk-go/v2 v2.0.1 // @grafana/partner-datasources
-	github.com/grafana/grafana-plugin-sdk-go v0.220.0 // @grafana/plugins-platform-backend
+	github.com/grafana/grafana-plugin-sdk-go v0.221.0 // @grafana/plugins-platform-backend
 	github.com/grpc-ecosystem/go-grpc-middleware v1.4.0 // @grafana/backend-platform
-	github.com/hashicorp/go-hclog v1.6.2 // @grafana/plugins-platform-backend
+	github.com/hashicorp/go-hclog v1.6.3 // @grafana/plugins-platform-backend
 	github.com/hashicorp/go-plugin v1.6.0 // @grafana/plugins-platform-backend
 	github.com/hashicorp/go-version v1.6.0 // @grafana/backend-platform
 	github.com/hashicorp/hcl/v2 v2.17.0 // @grafana/alerting-squad-backend
@@ -161,7 +161,7 @@ require (
 	github.com/grpc-ecosystem/go-grpc-prometheus v1.2.1-0.20191002090509-6af20e3a5340 // indirect
 	github.com/hashicorp/errwrap v1.1.0 // indirect
 	github.com/hashicorp/go-msgpack v0.5.5 // indirect
-	github.com/hashicorp/go-multierror v1.1.1 // indirect; @grafana/alerting-squad
+	github.com/hashicorp/go-multierror v1.1.1 // @grafana/alerting-squad
 	github.com/hashicorp/go-sockaddr v1.0.6 // indirect
 	github.com/hashicorp/yamux v0.1.1 // indirect
 	github.com/igm/sockjs-go/v3 v3.0.2 // indirect
@@ -316,7 +316,7 @@ require (
 	github.com/googleapis/enterprise-certificate-proxy v0.3.2 // indirect
 	github.com/grafana/regexp v0.0.0-20221123153739-15dc172cd2db // indirect
 	github.com/hashicorp/go-immutable-radix v1.3.1 // indirect
-	github.com/hashicorp/golang-lru/v2 v2.0.7 // indirect; @grafana/alerting-squad-backend
+	github.com/hashicorp/golang-lru/v2 v2.0.7 // @grafana/alerting-squad-backend
 	github.com/hashicorp/memberlist v0.5.0 // indirect
 	github.com/inconshreveable/mousetrap v1.1.0 // indirect
 	github.com/invopop/yaml v0.2.0 // indirect
@@ -407,7 +407,7 @@ require (
 	github.com/docker/docker v24.0.7+incompatible // @grafana/grafana-release-guild
 	github.com/elazarl/goproxy v0.0.0-20230731152917-f99041a5c027 // indirect
 	github.com/ghodss/yaml v1.0.1-0.20190212211648-25d852aebe32 // indirect
-	github.com/go-logr/logr v1.4.1 // @grafana/grafana-app-platform-squad
+	github.com/go-logr/logr v1.4.1 // indirect; @grafana/grafana-app-platform-squad
 	github.com/go-logr/stdr v1.2.2 // indirect
 	github.com/grpc-ecosystem/grpc-gateway/v2 v2.19.0 // indirect
 	github.com/imdario/mergo v0.3.16 // indirect

@@ -188,7 +188,7 @@ describe('RichHistoryRemoteStorage', () => {
     } as UserPreferencesDTO);
     const settings = await storage.getSettings();
     expect(settings).toMatchObject({
-      activeDatasourceOnly: false,
+      activeDatasourcesOnly: false,
       lastUsedDatasourceFilters: undefined,
       retentionPeriod: 14,
       starredTabAsFirstTab: true,
@@ -203,7 +203,7 @@ describe('RichHistoryRemoteStorage', () => {
     } as UserPreferencesDTO);
     const settings = await storage.getSettings();
     expect(settings).toMatchObject({
-      activeDatasourceOnly: false,
+      activeDatasourcesOnly: false,
       lastUsedDatasourceFilters: undefined,
       retentionPeriod: 14,
       starredTabAsFirstTab: false,
@@ -212,7 +212,7 @@ describe('RichHistoryRemoteStorage', () => {
 
   it('updates user settings', async () => {
     await storage.updateSettings({
-      activeDatasourceOnly: false,
+      activeDatasourcesOnly: false,
       lastUsedDatasourceFilters: undefined,
       retentionPeriod: 14,
       starredTabAsFirstTab: false,
@@ -222,7 +222,7 @@ describe('RichHistoryRemoteStorage', () => {
     } as Partial<UserPreferencesDTO>);
 
     await storage.updateSettings({
-      activeDatasourceOnly: false,
+      activeDatasourcesOnly: false,
       lastUsedDatasourceFilters: undefined,
       retentionPeriod: 14,
       starredTabAsFirstTab: true,
