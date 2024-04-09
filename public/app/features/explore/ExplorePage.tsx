@@ -7,6 +7,7 @@ import { ErrorBoundaryAlert, useStyles2, useTheme2 } from '@grafana/ui';
 import { SplitPaneWrapper } from 'app/core/components/SplitPaneWrapper/SplitPaneWrapper';
 import { useGrafana } from 'app/core/context/GrafanaContext';
 import { useNavModel } from 'app/core/hooks/useNavModel';
+import { Trans } from 'app/core/internationalization';
 import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
 import { useSelector } from 'app/types';
 import { ExploreQueryParams } from 'app/types/explore';
@@ -59,6 +60,9 @@ export default function ExplorePage(props: GrafanaRouteComponentProps<{}, Explor
         [styles.correlationsEditorIndicator]: showCorrelationEditorBar,
       })}
     >
+      <h1 className="sr-only">
+        <Trans i18nKey="nav.explore.title" />
+      </h1>
       <ExploreActions />
       {showCorrelationEditorBar && <CorrelationEditorModeBar panes={panes} />}
       <SplitPaneWrapper
