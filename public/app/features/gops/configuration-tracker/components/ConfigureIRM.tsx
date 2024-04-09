@@ -4,7 +4,9 @@ import { useHistory } from 'react-router-dom';
 
 import { Button, Card, Icon, IconName, useStyles2 } from '@grafana/ui';
 import { useRulesSourcesWithRuler } from 'app/features/alerting/unified/hooks/useRuleSourcesWithRuler';
+import { AlertmanagerProvider } from 'app/features/alerting/unified/state/AlertmanagerContext';
 import { fetchAllPromBuildInfoAction } from 'app/features/alerting/unified/state/actions';
+import { GRAFANA_RULES_SOURCE_NAME } from 'app/features/alerting/unified/utils/datasource';
 import { DATASOURCES_ROUTES } from 'app/features/datasources/constants';
 import { useDispatch } from 'app/types';
 
@@ -85,7 +87,11 @@ export function ConfigureIRM() {
           )
         );
       })}
-      {essentialsOpen && <Essentials onClose={() => setEssentialsOpen(false)} />}
+      {essentialsOpen && (
+        <AlertmanagerProvider accessType={'notification'} alertmanagerSourceName={GRAFANA_RULES_SOURCE_NAME}>
+          <Essentials onClose={() => setEssentialsOpen(false)} />
+        </AlertmanagerProvider>
+      )}
     </section>
   );
 }

@@ -5,8 +5,10 @@ import { GrafanaTheme2, urlUtil } from '@grafana/data';
 import { getBackendSrv } from '@grafana/runtime';
 import { Button, Dropdown, Icon, LinkButton, Menu, Stack, Text, useStyles2 } from '@grafana/ui';
 import { alertRuleApi } from 'app/features/alerting/unified/api/alertRuleApi';
+import { alertmanagerApi } from 'app/features/alerting/unified/api/alertmanagerApi';
 import { GRAFANA_RULES_SOURCE_NAME } from 'app/features/alerting/unified/utils/datasource';
 import { useGetSingle } from 'app/features/plugins/admin/state/hooks';
+import { Receiver } from 'app/plugins/datasource/alertmanager/types';
 
 import { ConfigurationTrackerDrawer } from './ConfigurationTrackerDrawer';
 
@@ -75,6 +77,16 @@ export function Essentials({ onClose }: EssentialsProps) {
         description: 'Configure alerting',
         steps: [
           {
+            title: 'Contact point ready',
+            description: 'tbd',
+            button: {
+              type: 'openLink',
+              url: '/alerting/notifications',
+              label: 'Update',
+              done: useIsContactPointReady(),
+            },
+          },
+          {
             title: 'Create alert rule',
             description: 'tbd',
             button: {
@@ -82,15 +94,6 @@ export function Essentials({ onClose }: EssentialsProps) {
               url: '/alerting/new',
               label: 'Create',
               done: isCreateAlertRuleDone(),
-            },
-          },
-          {
-            title: 'Update notification policy',
-            description: 'tbd',
-            button: {
-              type: 'openLink',
-              url: '/alerting/notifications',
-              label: 'Update',
             },
           },
           {
@@ -310,4 +313,31 @@ function isCreateAlertRuleDone() {
     }
   );
   return namespaces.length > 0;
+}
+
+function useIsContactPointReady() {
+  // We consider the contact point ready if the default contact has the address filled or if there is at least one contact point created by the user
+
+  const alertmanagerConfiguration = alertmanagerApi.endpoints.getAlertmanagerConfiguration.useQuery(
+    GRAFANA_RULES_SOURCE_NAME,
+    {
+      refetchOnFocus: true,
+      refetchOnReconnect: true,
+      refetchOnMountOrArgChange: true,
+    }
+  );
+
+  const contactPoints = alertmanagerConfiguration.data?.alertmanager_config?.receivers ?? [];
+
+  const defaultEmailUpdated = contactPoints.some(
+    (contactPoint: Receiver) =>
+      contactPoint.name === 'grafana-default-email' &&
+      contactPoint.grafana_managed_receiver_configs?.some(
+        (receiver) => receiver.name === 'grafana-default-email' && receiver.settings?.address !== '<example@email.com>'
+      )
+  );
+  const hasAnotherContactPoint = contactPoints.some((contactPoint: Receiver) =>
+    contactPoint.grafana_managed_receiver_configs?.some((receiver) => receiver.name !== 'grafana-default-email')
+  );
+  return defaultEmailUpdated || hasAnotherContactPoint;
 }
