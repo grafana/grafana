@@ -14,7 +14,7 @@ type slogHandler struct {
 }
 
 // NewSLogHandler returns a new slog.Handler that logs to the given log.Logger.
-func NewSLogHandler(logger log.Logger) *slogHandler {
+func New(logger log.Logger) *slogHandler {
 	return &slogHandler{logger}
 }
 
@@ -51,7 +51,7 @@ func (h *slogHandler) WithAttrs(attrs []slog.Attr) slog.Handler {
 	for _, attr := range attrs {
 		out = append(out, attr.Key, attr.Value)
 	}
-	return NewSLogHandler(h.Logger.New(out...))
+	return New(h.Logger.New(out...))
 }
 
 // WithGroup implements slog.Handler.WithGroup.
@@ -59,5 +59,5 @@ func (h *slogHandler) WithGroup(name string) slog.Handler {
 	if name == "" {
 		return h
 	}
-	return NewSLogHandler(h.Logger.New("group", name))
+	return New(h.Logger.New("group", name))
 }

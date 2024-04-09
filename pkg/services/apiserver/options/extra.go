@@ -38,7 +38,7 @@ func (o *ExtraOptions) Validate() []error {
 }
 
 func (o *ExtraOptions) ApplyTo(c *genericapiserver.RecommendedConfig) error {
-	handler := slogadapter.NewSLogHandler(log.New("grafana-apiserver"))
+	handler := slogadapter.New(log.New("grafana-apiserver"))
 	logger := slog.New(handler)
 
 	klog.SetSlogLogger(logger)
