@@ -54,7 +54,7 @@ func Mode3_Test(t *testing.T) {
 	assert.NoError(t, err)
 
 	// it should use the Unified Storage Get implementation
-	assert.Equal(t, 0, sSpy.Counts("LegacyStorage.Get"))
+	assert.Equal(t, 0, lsSpy.Counts("LegacyStorage.Get"))
 	assert.Equal(t, 1, sSpy.Counts("Storage.Get"))
 }
 
