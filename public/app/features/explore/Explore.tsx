@@ -30,6 +30,7 @@ import {
 } from '@grafana/ui';
 import { FILTER_FOR_OPERATOR, FILTER_OUT_OPERATOR } from '@grafana/ui/src/components/Table/types';
 import { supportedFeatures } from 'app/core/history/richHistoryStorageProvider';
+import { Trans } from 'app/core/internationalization';
 import { MIXED_DATASOURCE_NAME } from 'app/plugins/datasource/mixed/MixedDataSource';
 import { getNodeGraphDataFrames } from 'app/plugins/panel/nodeGraph/utils';
 import { StoreState } from 'app/types';
@@ -584,7 +585,9 @@ export class Explore extends React.PureComponent<Props, ExploreState> {
 
     return (
       <ContentOutlineContextProvider refreshDependencies={this.props.queries}>
-        <h1 className="sr-only">Explore</h1>
+        <h1 className="sr-only">
+          <Trans i18nKey="nav.explore.title" />
+        </h1>
         <ExploreToolbar
           exploreId={exploreId}
           onChangeTime={this.onChangeTime}
