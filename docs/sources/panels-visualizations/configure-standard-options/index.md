@@ -84,9 +84,9 @@ You can also paste a native emoji in the **Unit** drop-down and select it as a c
 
 ![A time series visualization using custom thumbs up emoji units](/media/docs/grafana/panels-visualizations/thumbsup_panel_v11.0.png)
 
-##### Control unit scaling
+#### Control unit scaling
 
-By default, Grafana automatically scales the unit based on the magnitude of the value. For example, if you have a value of 0.14 kW, Grafana displays it as 140 W or a value of 3000 kW displays as 3 MW. You can use custom units to control this behavior.
+By default, Grafana automatically scales the unit based on the magnitude of the value. For example, if you have values of 0.14kW and 3000kW, Grafana displays them as 140W and 3MW, respectively. You can use custom units to control this behavior by setting a prefix, suffix, or custom SI unit.
 
 #### String units
 
