@@ -6,7 +6,6 @@ import {
   DataQueryResponse,
   DataSourceInstanceSettings,
   TestDataSourceResponse,
-  LoadingState,
 } from '@grafana/data';
 import { SceneDataProvider, SceneDataTransformer, SceneObject } from '@grafana/scenes';
 import { findVizPanelByKey, getVizPanelKeyForPanelId } from 'app/features/dashboard-scene/utils/utils';
