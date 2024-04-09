@@ -14,8 +14,8 @@ import { defaultPageNav } from '../../RuleViewer';
 import { Annotation } from '../../utils/constants';
 import { makeDashboardLink, makePanelLink } from '../../utils/misc';
 import {
-  RuleOriginMeta,
-  getRuleOriginMetadata,
+  RuleOrigin,
+  getRuleOrigin,
   isAlertingRule,
   isFederatedRuleGroup,
   isGrafanaRulerRule,
@@ -76,7 +76,7 @@ const RuleViewer = () => {
   const isPaused = isGrafanaRulerRule(rule.rulerRule) && isGrafanaRulerRulePaused(rule.rulerRule);
 
   const showError = hasError && !isPaused;
-  const originMeta = getRuleOriginMetadata(rule);
+  const originMeta = getRuleOrigin(rule);
 
   const summary = annotations[Annotation.summary];
 
@@ -228,7 +228,7 @@ interface TitleProps {
   state?: PromAlertingRuleState;
   health?: RuleHealth;
   ruleType?: PromRuleType;
-  ruleOrigin?: RuleOriginMeta;
+  ruleOrigin?: RuleOrigin;
 }
 
 export const Title = ({ name, paused = false, state, health, ruleType, ruleOrigin }: TitleProps) => {

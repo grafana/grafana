@@ -116,6 +116,7 @@ export type PluginExtensionEventHelpers<Context extends object = object> = {
 // Extension Points available in core Grafana
 export enum PluginExtensionPoints {
   AlertInstanceAction = 'grafana/alerting/instance/action',
+  AlertRuleAction = 'grafana/alerting/rule/action',
   CommandPalette = 'grafana/commandpalette/action',
   DashboardPanelMenu = 'grafana/dashboard/panel/menu',
   DataSourceConfig = 'grafana/datasources/config',

@@ -6,6 +6,7 @@ import {
   Alert,
   AlertingRule,
   CloudRuleIdentifier,
+  CombinedRule,
   CombinedRuleGroup,
   CombinedRuleWithLocation,
   GrafanaRuleIdentifier,
@@ -101,11 +102,11 @@ export function getRuleHealth(health: string): RuleHealth | undefined {
   }
 }
 
-export interface RuleOriginMeta {
+export interface RuleOrigin {
   pluginId: string;
 }
 
-export function getRuleOriginMetadata(rule: CombinedRule): RuleOriginMeta | undefined {
+export function getRuleOrigin(rule: CombinedRule): RuleOrigin | undefined {
   // com.grafana.origin=plugin/<plugin-identifier>
   // Prom and Mimir do not support dots in label names 😔
   const origin = rule.labels['__grafana_origin'];
@@ -133,7 +134,7 @@ function isPluginInstalled(pluginId: string) {
 }
 
 export function isPluginProvidedRule(rule: CombinedRule): boolean {
-  return Boolean(getRuleOriginMetadata(rule));
+  return Boolean(getRuleOrigin(rule));
 }
 
 export function alertStateToReadable(state: PromAlertingRuleState | GrafanaAlertStateWithReason | AlertState): string {

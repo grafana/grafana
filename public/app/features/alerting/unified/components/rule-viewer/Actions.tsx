@@ -1,6 +1,7 @@
 import React from 'react';
 
-import { AppEvents } from '@grafana/data';
+import { AppEvents, PluginExtensionPoints } from '@grafana/data';
+import { getPluginLinkExtensions } from '@grafana/runtime';
 import { Dropdown, LinkButton, Menu } from '@grafana/ui';
 import appEvents from 'app/core/app_events';
 import MenuItemPauseRule from 'app/features/alerting/unified/components/MenuItemPauseRule';
@@ -9,6 +10,7 @@ import { CombinedRule, RuleIdentifier } from 'app/types/unified-alerting';
 import { AlertRuleAction, useAlertRuleAbility } from '../../hooks/useAbilities';
 import { createShareLink, isLocalDevEnv, isOpenSourceEdition, makeRuleBasedSilenceLink } from '../../utils/misc';
 import * as ruleId from '../../utils/rule-id';
+import { getRuleOrigin } from '../../utils/rules';
 import { createUrl } from '../../utils/url';
 import MoreButton from '../MoreButton';
 import { DeclareIncidentMenuItem } from '../bridges/DeclareIncidentButton';
@@ -22,6 +24,7 @@ interface Props {
 
 export const useAlertRulePageActions = ({ handleDelete, handleDuplicateRule }: Props) => {
   const { rule, identifier } = useAlertRule();
+  const rulePluginLinkExtension = useRulePluginLinkExtension(rule);
 
   // check all abilities and permissions
   const [editSupported, editAllowed] = useAlertRuleAbility(rule, AlertRuleAction.Update);
@@ -71,6 +74,19 @@ export const useAlertRulePageActions = ({ handleDelete, handleDuplicateRule }: P
               childItems={[<ExportMenuItem key="export-with-modifications" identifier={identifier} />]}
             />
           )}
+          {rulePluginLinkExtension.length > 0 && (
+            <>
+              <Menu.Divider />
+              {rulePluginLinkExtension.map((extension) => (
+                <Menu.Item
+                  key={extension.id}
+                  label={extension.title}
+                  icon={extension.icon}
+                  onClick={extension.onClick}
+                />
+              ))}
+            </>
+          )}
           {canDelete && (
             <>
               <Menu.Divider />
@@ -113,3 +129,51 @@ const EditButton = ({ identifier }: PropsWithIdentifier) => {
     </LinkButton>
   );
 };
+
+function useRulePluginLinkExtension(rule: CombinedRule) {
+  const ruleOrigin = getRuleOrigin(rule);
+
+  if (!ruleOrigin) {
+    return [];
+  }
+
+  const { pluginId } = ruleOrigin;
+  const pluginLinkExtension = getRuleActionPluginLinkExtension({ pluginId, rule });
+  return pluginLinkExtension;
+}
+
+function getRuleActionPluginLinkExtension({ pluginId, rule }: { pluginId: string; rule: CombinedRule }) {
+  const context: AlertingRuleExtensionContext = {
+    name: rule.name,
+    namespace: rule.namespace.name,
+    group: rule.group.name,
+    expression: rule.query,
+    labels: rule.labels,
+    annotations: rule.annotations,
+  };
+
+  const { extensions } = getPluginLinkExtensions({
+    extensionPointId: PluginExtensionPoints.AlertRuleAction,
+    context,
+    limitPerPlugin: 3,
+  });
+
+  return extensions.filter((extension) => extension.pluginId === pluginId);
+}
+
+interface AlertingRuleExtensionContext {
+  name: string;
+  namespace: string;
+  group: string;
+  expression: string;
+  labels: Record<string, string>;
+  annotations: Record<string, string>;
+}
+
+interface RecordingRuleExtensionContext {
+  name: string;
+  namespace: string;
+  group: string;
+  expression: string;
+  labels: Record<string, string>;
+}
