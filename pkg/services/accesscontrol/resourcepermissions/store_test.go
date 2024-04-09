@@ -739,6 +739,86 @@ func TestIntegrationStore_DeleteResourcePermissions(t *testing.T) {
 	}
 }
 
+// TODO: Fix this test
+func TestStore_ResourcePermissionsStoringActionSets(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test")
+	}
+
+	type deleteResourcePermissionsTest struct {
+		desc       string
+		resource   string
+		scope      string
+		resourceID string
+		actionname string
+		actions    []string
+	}
+
+	tests := []deleteResourcePermissionsTest{
+		{
+			desc: "should delete all permissions for resource id in org 1",
+			// orgID:             1,
+			// resourceAttribute: "uid",
+			// command: DeleteResourcePermissionsCmd{
+			// 	Resource:          "datasources",
+			// 	ResourceID:        "1",
+			// 	ResourceAttribute: "uid",
+			// },
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.desc, func(t *testing.T) {
+			store, _, _ := setupTestEnv(t)
+
+			_, err := store.SetResourcePermissions(context.Background(), 1, []SetResourcePermissionsCommand{
+				{
+					User: accesscontrol.User{ID: 1},
+					SetResourcePermissionCommand: SetResourcePermissionCommand{
+						Actions:           []string{"datasources:query", "datasources:write"},
+						Resource:          "datasources",
+						ResourceID:        "1",
+						ResourceAttribute: "uid",
+					},
+				},
+			}, ResourceHooks{})
+			require.NoError(t, err)
+
+			_, err = store.SetResourcePermissions(context.Background(), 1, []SetResourcePermissionsCommand{
+				{
+					User: accesscontrol.User{ID: 1},
+					SetResourcePermissionCommand: SetResourcePermissionCommand{
+						Actions:           []string{"datasources:query", "datasources:write"},
+						Resource:          "datasources",
+						ResourceID:        "2",
+						ResourceAttribute: "uid",
+					},
+				},
+			}, ResourceHooks{})
+			require.NoError(t, err)
+
+			_, err = store.SetResourcePermissions(context.Background(), 2, []SetResourcePermissionsCommand{
+				{
+					User: accesscontrol.User{ID: 1},
+					SetResourcePermissionCommand: SetResourcePermissionCommand{
+						Actions:           []string{"datasources:query", "datasources:write"},
+						Resource:          "datasources",
+						ResourceID:        "1",
+						ResourceAttribute: "uid",
+					},
+				},
+			}, ResourceHooks{})
+			require.NoError(t, err)
+
+			err = store.DeleteResourcePermissions(context.Background(), tt.orgID, &tt.command)
+			require.NoError(t, err)
+
+			// FIXME: check that action exists
+			store.inmemoryActionSets.GetActionSet(tt.actionname)
+		})
+	}
+}
+
 func retrievePermissionsHelper(store *store, t *testing.T) []orgPermission {
 	permissions := []orgPermission{}
 	err := store.sql.WithDbSession(context.Background(), func(sess *db.Session) error {

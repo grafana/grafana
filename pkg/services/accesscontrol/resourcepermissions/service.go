@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"sort"
+	"strings"
 
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/infra/db"
@@ -80,8 +81,22 @@ func New(cfg *setting.Cfg,
 	// ACTION SETS
 	// create action sets from the permissionsToActions
 	inmemoryActionSets := NewInMemoryActionSets()
+	// to create an action set we need to know the resource
+	resource := ""
 	for permission, actions := range options.PermissionsToActions {
-		inmemoryActionSets.registeredActionSets[permission] = &actions
+		// assuming we get the ordering of this right,
+		// we might want to whitelist the resource name
+		// as a starter
+		for _, a := range actions {
+			if resource == "" && strings.Contains(a, ":") {
+				resource = strings.Split(a, ":")[0]
+				// now that we have defined resource we do not need to loop through the actions
+				break
+			}
+		}
+		// FIXME: what would the ToActionSetName take in and what would it return
+		actionSet := inmemoryActionSets.CreateActionSet(resource, permission, "*", "*", actions)
+		inmemoryActionSets.AddActionSet(actionSet)
 	}
 
 	s := &Service{
