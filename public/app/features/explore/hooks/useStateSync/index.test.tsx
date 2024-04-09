@@ -138,11 +138,14 @@ describe('useStateSync', () => {
     const { location, waitForNextUpdate, store } = setup({
       queryParams: {
         panes: JSON.stringify({
-          one: { datasource: 'loki-uid', queries: [
-            { datasource: { name: 'loki', uid: 'loki-uid' }, refId: '1+2' },
-            { datasource: 'loki-uid', refId: '3' },
-            { datasource: 'loki', refId: '4' },
-          ] },
+          one: {
+            datasource: 'loki-uid',
+            queries: [
+              { datasource: { name: 'loki', uid: 'loki-uid' }, refId: '1+2' },
+              { datasource: 'loki-uid', refId: '3' },
+              { datasource: 'loki', refId: '4' },
+            ],
+          },
           two: { datasource: 'elastic-uid', queries: [{ datasource: { name: 'elastic', uid: 'elastic-uid' } }] },
         }),
         schemaVersion: 1,
