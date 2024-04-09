@@ -136,7 +136,7 @@ type RedirectClient interface {
 // that should happen during logout and supports client specific redirect URL.
 type LogoutClient interface {
 	Client
-	Logout(ctx context.Context, user identity.Requester, info *login.UserAuth) (*Redirect, bool)
+	Logout(ctx context.Context, user identity.Requester) (*Redirect, bool)
 }
 
 type PasswordClient interface {
