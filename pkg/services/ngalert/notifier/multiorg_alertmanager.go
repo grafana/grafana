@@ -421,7 +421,12 @@ func (moa *MultiOrgAlertmanager) CreateSilence(ctx context.Context, orgID int64,
 		return "", err
 	}
 
-	return silenceID, moa.updateSilenceState(ctx, orgAM, orgID)
+	err = moa.updateSilenceState(ctx, orgAM, orgID)
+	if err != nil {
+		moa.logger.Warn("Failed to persist silence state on create, will be corrected by next maintenance run", "orgID", orgID, "silenceID", silenceID, "error", err)
+	}
+
+	return silenceID, nil
 }
 
 // DeleteSilence deletes a silence in the Alertmanager for the organization provided. It will also persist the silence
@@ -444,7 +449,12 @@ func (moa *MultiOrgAlertmanager) DeleteSilence(ctx context.Context, orgID int64,
 		return err
 	}
 
-	return moa.updateSilenceState(ctx, orgAM, orgID)
+	err = moa.updateSilenceState(ctx, orgAM, orgID)
+	if err != nil {
+		moa.logger.Warn("Failed to persist silence state on delete, will be corrected by next maintenance run", "orgID", orgID, "silenceID", silenceID, "error", err)
+	}
+
+	return nil
 }
 
 // updateSilenceState persists the silence state to the kvstore immediately instead of waiting for the next maintenance
