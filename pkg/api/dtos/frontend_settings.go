@@ -148,6 +148,13 @@ type FrontendSettingsSqlConnectionLimitsDTO struct {
 	ConnMaxLifetime int `json:"connMaxLifetime"`
 }
 
+type FrontendSettingsApiServerUrlOverrideDTO struct {
+	Group    *string `json:"group"`
+	Version  *string `json:"version"`
+	Resource *string `json:"resource"`
+	Url      *string `json:"url"`
+}
+
 type FrontendSettingsDTO struct {
 	DefaultDatasource  string                           `json:"defaultDatasource"`
 	Datasources        map[string]plugins.DataSourceDTO `json:"datasources"`

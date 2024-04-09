@@ -3,7 +3,7 @@ import React from 'react';
 import { Link } from 'react-router-dom';
 
 import { AppEvents, GrafanaTheme2, ScopeDashboardBindingSpec } from '@grafana/data';
-import { config, getAppEvents, getBackendSrv, locationService } from '@grafana/runtime';
+import { getAppEvents, getBackendSrv, locationService } from '@grafana/runtime';
 import { SceneComponentProps, SceneObjectBase, SceneObjectState } from '@grafana/scenes';
 import { CustomScrollbar, Icon, Input, useStyles2 } from '@grafana/ui';
 
@@ -38,10 +38,6 @@ export class ScopesDashboardsScene extends SceneObjectBase<ScopesDashboardsScene
       isLoading: false,
       searchQuery: '',
     });
-
-    if (config.bootData.settings.listDashboardScopesEndpoint) {
-      this.server.overwriteUrl(config.bootData.settings.listDashboardScopesEndpoint);
-    }
   }
 
   public async fetchDashboards(scope: string | undefined) {

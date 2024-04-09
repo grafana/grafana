@@ -144,5 +144,4 @@ export interface ResourceServer<T = object, K = string> {
   list(opts?: ListOptions): Promise<ResourceList<T, K>>;
   update(obj: ResourceForCreate<T, K>): Promise<Resource<T, K>>;
   delete(name: string): Promise<MetaStatus>;
-  overwriteUrl(url: string): void;
 }

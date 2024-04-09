@@ -18,16 +18,17 @@ export interface GroupVersionResource {
 }
 
 export class ScopedResourceServer<T = object, K = string> implements ResourceServer<T, K> {
-  private _url: string;
-
-  get url(): string {
-    return this._url;
-  }
+  readonly url: string;
 
   constructor(gvr: GroupVersionResource, namespaced = true) {
+    const configUrl = config.bootData.settings.apiServerUrlOverrides?.find(
+      (override) =>
+        override.group === gvr.group && override.version === gvr.version && override.resource === gvr.resource
+    )?.url;
+
     const ns = namespaced ? `namespaces/${config.namespace}/` : '';
 
-    this._url = `/apis/${gvr.group}/${gvr.version}/${ns}${gvr.resource}`;
+    this.url = configUrl ?? `/apis/${gvr.group}/${gvr.version}/${ns}${gvr.resource}`;
   }
 
   public async create(obj: ResourceForCreate<T, K>): Promise<void> {
@@ -52,12 +53,6 @@ export class ScopedResourceServer<T = object, K = string> implements ResourceSer
 
   public async delete(name: string): Promise<MetaStatus> {
     return getBackendSrv().delete<MetaStatus>(`${this.url}/${name}`);
-  }
-
-  // Allow overwriting the URL
-  // There are situations where we might want to enforce another URL: allowing users to provide their own API implementation
-  public overwriteUrl(url: string) {
-    this._url = url;
   }
 
   private parseListOptionsSelector(

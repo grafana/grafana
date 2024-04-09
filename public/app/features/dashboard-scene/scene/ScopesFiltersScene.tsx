@@ -1,7 +1,7 @@
 import React from 'react';
 
 import { AppEvents, Scope, ScopeSpec, SelectableValue } from '@grafana/data';
-import { config, getAppEvents } from '@grafana/runtime';
+import { getAppEvents } from '@grafana/runtime';
 import {
   SceneComponentProps,
   SceneObjectBase,
@@ -38,10 +38,6 @@ export class ScopesFiltersScene extends SceneObjectBase<ScopesFiltersSceneState>
       scopes: [],
       value: undefined,
     });
-
-    if (config.bootData.settings.listScopesEndpoint) {
-      this.server.overwriteUrl(config.bootData.settings.listScopesEndpoint);
-    }
   }
 
   getUrlState() {
@@ -54,7 +50,7 @@ export class ScopesFiltersScene extends SceneObjectBase<ScopesFiltersSceneState>
   }
 
   public getSelectedScope(): Scope | undefined {
-    return this.state.scopes.find((scope) => scope.name === this.state.value);
+    return this.state.scopes.find((scope) => scope.metadata.name === this.state.value);
   }
 
   public setScope(newScope: string | undefined) {
@@ -62,7 +58,7 @@ export class ScopesFiltersScene extends SceneObjectBase<ScopesFiltersSceneState>
       return this.setState({ pendingValue: newScope });
     }
 
-    if (!this.state.scopes.find((scope) => scope.name === newScope)) {
+    if (!this.state.scopes.find((scope) => scope.metadata.name === newScope)) {
       newScope = undefined;
     }
 
@@ -75,12 +71,7 @@ export class ScopesFiltersScene extends SceneObjectBase<ScopesFiltersSceneState>
     try {
       const response = await this.server.list();
 
-      this.setScopesAfterFetch(
-        response.items.map(({ metadata: { name }, spec }) => ({
-          name,
-          ...spec,
-        }))
-      );
+      this.setScopesAfterFetch(response.items);
     } catch (err) {
       getAppEvents().publish({
         type: AppEvents.alertError.name,
@@ -96,7 +87,7 @@ export class ScopesFiltersScene extends SceneObjectBase<ScopesFiltersSceneState>
   private setScopesAfterFetch(scopes: Scope[]) {
     let value = this.state.pendingValue ?? this.state.value;
 
-    if (!scopes.find((scope) => scope.name === value)) {
+    if (!scopes.find((scope) => scope.metadata.name === value)) {
       value = undefined;
     }
 
@@ -109,7 +100,7 @@ export function ScopesFiltersSceneRenderer({ model }: SceneComponentProps<Scopes
   const parentState = model.parent!.useState();
   const isViewing = 'isViewing' in parentState ? !!parentState.isViewing : false;
 
-  const options: Array<SelectableValue<string>> = scopes.map(({ name, title, category }) => ({
+  const options: Array<SelectableValue<string>> = scopes.map(({ metadata: { name }, spec: { title, category } }) => ({
     label: title,
     value: name,
     description: category,
