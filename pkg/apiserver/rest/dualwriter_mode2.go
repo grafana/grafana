@@ -83,10 +83,5 @@ func enrichObject(orig, copy runtime.Object) (runtime.Object, error) {
 
 // Get overrides the default behavior of the Storage and retrieves an object from LegacyStorage
 func (d *DualWriterMode2) Get(ctx context.Context, name string, options *metav1.GetOptions) (runtime.Object, error) {
-	legacy, ok := d.legacy.(rest.Getter)
-	if !ok {
-		return nil, fmt.Errorf("legacy storage rest.Getter is missing")
-	}
-
-	return legacy.Get(ctx, name, &metav1.GetOptions{})
+	return d.legacy.Get(ctx, name, &metav1.GetOptions{})
 }

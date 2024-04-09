@@ -56,5 +56,7 @@ func (d *DualWriterMode3) Get(ctx context.Context, name string, options *metav1.
 		return nil, err
 	}
 
+	klog.Info("object not found in unified storage. Getting it from legacy", "name", name)
+
 	return legacy.Get(ctx, name, &metav1.GetOptions{})
 }
