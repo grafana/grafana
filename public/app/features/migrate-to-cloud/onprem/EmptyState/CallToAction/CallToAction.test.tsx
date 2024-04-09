@@ -7,8 +7,8 @@ import { TestProvider } from 'test/helpers/TestProvider';
 import { setBackendSrv } from '@grafana/runtime';
 import { backendSrv } from 'app/core/services/backend_srv';
 
-import { validCloudMigrationToken } from '../../..//fixtures/tokens';
 import { registerMockAPI } from '../../../fixtures/mswAPI';
+import { validCloudMigrationToken } from '../../../fixtures/tokens';
 
 import { CallToAction } from './CallToAction';
 
