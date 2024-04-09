@@ -476,9 +476,9 @@ export function buildGridItemForLibPanel(panel: PanelModel) {
 }
 
 const hoverHeaderOffsetBehavior = (grid: DashboardGridItem) => {
-  grid.subscribeToState((test) => {
+  grid.subscribeToState(() => {
     grid.forEachChild((child) => {
-      if (child instanceof VizPanel) {
+      if (child instanceof VizPanel && child.state.hoverHeader) {
         child.setState({ hoverHeaderOffset: grid.state.y === 0 ? 0 : undefined });
       }
     });
