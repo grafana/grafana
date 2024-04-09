@@ -1,11 +1,16 @@
 import { CSSInterpolation } from '@emotion/css';
 
-export const handleReduceMotion = (styles: CSSInterpolation, reduceMotionStyles?: CSSInterpolation) => {
+/**
+ * @param styles - Regular styles.
+ * @param reducedMotionStyles - Styles to apply when `prefers-reduced-motion` is enabled.
+ * If not @param reducedMotionStyles is not provided, there won't be any animation or transition shown.
+ */
+export const handleReducedMotion = (styles: CSSInterpolation, reducedMotionStyles?: CSSInterpolation) => {
   const result: Record<string, CSSInterpolation> = {
     '@media (prefers-reduced-motion: no-preference)': styles,
   };
-  if (reduceMotionStyles) {
-    result['@media (prefers-reduced-motion: reduce)'] = reduceMotionStyles;
+  if (reducedMotionStyles) {
+    result['@media (prefers-reduced-motion: reduce)'] = reducedMotionStyles;
   }
   return result;
 };
