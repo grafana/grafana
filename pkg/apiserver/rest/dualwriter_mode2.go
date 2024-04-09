@@ -8,7 +8,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apiserver/pkg/registry/rest"
-	"k8s.io/klog"
+	"k8s.io/klog/v2"
 )
 
 type DualWriterMode2 struct {
@@ -23,13 +23,14 @@ func NewDualWriterMode2(legacy LegacyStorage, storage Storage) *DualWriterMode2 
 
 // Create overrides the default behavior of the DualWriter and writes to LegacyStorage and Storage.
 func (d *DualWriterMode2) Create(ctx context.Context, obj runtime.Object, createValidation rest.ValidateObjectFunc, options *metav1.CreateOptions) (runtime.Object, error) {
-	legacy, ok := d.legacy.(rest.Creater)
+	legacy, ok := d.Legacy.(rest.Creater)
 	if !ok {
 		return nil, fmt.Errorf("legacy storage rest.Creater is missing")
 	}
 
 	created, err := legacy.Create(ctx, obj, createValidation, options)
 	if err != nil {
+		klog.FromContext(ctx).Error(err, "unable to create object in legacy storage", "mode", 2)
 		return created, err
 	}
 
@@ -42,12 +43,14 @@ func (d *DualWriterMode2) Create(ctx context.Context, obj runtime.Object, create
 	if err != nil {
 		return created, err
 	}
+
+	// create method expects an empty resource version
 	accessor.SetResourceVersion("")
 	accessor.SetUID("")
 
 	rsp, err := d.Storage.Create(ctx, c, createValidation, options)
 	if err != nil {
-		klog.Error("unable to create object in duplicate storage", "error", err, "mode", Mode2)
+		klog.FromContext(ctx).Error(err, "unable to create object in Storage", "mode", 2)
 	}
 	return rsp, err
 }
@@ -76,4 +79,9 @@ func enrichObject(orig, copy runtime.Object) (runtime.Object, error) {
 	// accessorC.SetUID(accessorO.GetUID())
 
 	return copy, nil
+}
+
+// Get overrides the default behavior of the Storage and retrieves an object from LegacyStorage
+func (d *DualWriterMode2) Get(ctx context.Context, name string, options *metav1.GetOptions) (runtime.Object, error) {
+	return d.Legacy.Get(ctx, name, &metav1.GetOptions{})
 }

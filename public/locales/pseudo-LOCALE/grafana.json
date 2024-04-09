@@ -446,10 +446,11 @@
       "delete-query-tooltip": "Đęľęŧę qūęřy",
       "delete-starred-query-confirmation-text": "Åřę yőū şūřę yőū ŵäŉŧ ŧő pęřmäŉęŉŧľy đęľęŧę yőūř şŧäřřęđ qūęřy?",
       "edit-comment-tooltip": "Ēđįŧ čőmmęŉŧ",
-      "loading-text": "ľőäđįŉģ...",
+      "left-pane": "Ŀęƒŧ päŉę",
       "optional-description": "Åŉ őpŧįőŉäľ đęşčřįpŧįőŉ őƒ ŵĥäŧ ŧĥę qūęřy đőęş.",
       "query-comment-label": "Qūęřy čőmmęŉŧ",
       "query-text-label": "Qūęřy ŧęχŧ",
+      "right-pane": "Ŗįģĥŧ päŉę",
       "run-query-button": "Ŗūŉ qūęřy",
       "save-comment": "Ŝävę čőmmęŉŧ",
       "star-query-tooltip": "Ŝŧäř qūęřy",
@@ -786,9 +787,14 @@
       "not-migrated": "Ńőŧ yęŧ ūpľőäđęđ",
       "unknown": "Ůŉĸŉőŵŉ"
     },
+    "resource-table": {
+      "unknown-datasource-title": "Đäŧä şőūřčę {{datasourceUID}}",
+      "unknown-datasource-type": "Ůŉĸŉőŵŉ đäŧä şőūřčę"
+    },
     "resource-type": {
       "dashboard": "Đäşĥþőäřđ",
       "datasource": "Đäŧä şőūřčę",
+      "folder": "Főľđęř",
       "unknown": "Ůŉĸŉőŵŉ"
     },
     "summary": {

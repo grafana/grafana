@@ -467,6 +467,10 @@ const (
 	// Prometheus and AI/ML to assist users in creating a query
 	FlagPrometheusPromQAIL = "prometheusPromQAIL"
 
+	// FlagPrometheusCodeModeMetricNamesSearch
+	// Enables search for metric names in Code Mode, to improve performance when working with an enormous number of metric names
+	FlagPrometheusCodeModeMetricNamesSearch = "prometheusCodeModeMetricNamesSearch"
+
 	// FlagAddFieldFromCalculationStatFunctions
 	// Add cumulative and window functions to the add field from calculation transformation
 	FlagAddFieldFromCalculationStatFunctions = "addFieldFromCalculationStatFunctions"
@@ -646,4 +650,8 @@ const (
 	// FlagNewDashboardWithFiltersAndGroupBy
 	// Enables filters and group by variables on all new dashboards. Variables are added only if default data source supports filtering.
 	FlagNewDashboardWithFiltersAndGroupBy = "newDashboardWithFiltersAndGroupBy"
+
+	// FlagCloudWatchNewLabelParsing
+	// Updates CloudWatch label parsing to be more accurate
+	FlagCloudWatchNewLabelParsing = "cloudWatchNewLabelParsing"
 )

@@ -860,6 +860,13 @@ var (
 			Owner:        grafanaObservabilityMetricsSquad,
 		},
 		{
+			Name:         "prometheusCodeModeMetricNamesSearch",
+			Description:  "Enables search for metric names in Code Mode, to improve performance when working with an enormous number of metric names",
+			FrontendOnly: true,
+			Stage:        FeatureStageExperimental,
+			Owner:        grafanaObservabilityMetricsSquad,
+		},
+		{
 			Name:         "addFieldFromCalculationStatFunctions",
 			Description:  "Add cumulative and window functions to the add field from calculation transformation",
 			Stage:        FeatureStagePublicPreview,
@@ -1197,6 +1204,15 @@ var (
 			AllowSelfServe:    false,
 			HideFromDocs:      true,
 			HideFromAdminPage: true,
+		},
+		{
+			Name:           "cloudWatchNewLabelParsing",
+			Description:    "Updates CloudWatch label parsing to be more accurate",
+			Stage:          FeatureStageGeneralAvailability,
+			Expression:     "true", // enabled by default
+			Owner:          awsDatasourcesSquad,
+			FrontendOnly:   false,
+			AllowSelfServe: false,
 		},
 	}
 )

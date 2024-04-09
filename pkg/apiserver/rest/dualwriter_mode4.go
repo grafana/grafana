@@ -23,3 +23,8 @@ func NewDualWriterMode4(legacy LegacyStorage, storage Storage) *DualWriterMode4 
 func (d *DualWriterMode4) Create(ctx context.Context, obj runtime.Object, createValidation rest.ValidateObjectFunc, options *metav1.CreateOptions) (runtime.Object, error) {
 	return d.Storage.Create(ctx, obj, createValidation, options)
 }
+
+// Get overrides the default behavior of the Storage and retrieves an object from Unified Storage
+func (d *DualWriterMode4) Get(ctx context.Context, name string, options *metav1.GetOptions) (runtime.Object, error) {
+	return d.Storage.Get(ctx, name, &metav1.GetOptions{})
+}
