@@ -11,9 +11,8 @@ export const hoverHeaderOffsetBehavior = (grid: DashboardGridItem) => {
         }
       });
     }
-
-    return () => {
-      sub.unsubscribe();
-    };
   });
+  return () => {
+    sub.unsubscribe();
+  };
 };
