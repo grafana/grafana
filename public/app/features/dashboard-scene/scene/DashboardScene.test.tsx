@@ -175,7 +175,6 @@ describe('DashboardScene', () => {
         ${'tags'}        | ${['tag3', 'tag4']}
         ${'editable'}    | ${false}
         ${'links'}       | ${[]}
-        ${'meta'}        | ${{ folderUid: 'new-folder-uid', folderTitle: 'new-folder-title', hasUnsavedFolderChange: true }}
       `(
         'A change to $prop should set isDirty true',
         ({ prop, value }: { prop: keyof DashboardSceneState; value: unknown }) => {
@@ -189,6 +188,26 @@ describe('DashboardScene', () => {
         }
       );
 
+      it('A change to folderUid should set isDirty true', () => {
+        const prevMeta = { ...scene.state.meta };
+
+        // The worker only detects changes in the model, so the folder change should be detected anyway
+        mockResultsOfDetectChangesWorker({ hasChanges: false, hasTimeChanges: false, hasVariableValueChanges: false });
+
+        scene.setState({
+          meta: {
+            ...prevMeta,
+            folderUid: 'new-folder-uid',
+            folderTitle: 'new-folder-title',
+          },
+        });
+
+        expect(scene.state.isDirty).toBe(true);
+
+        scene.exitEditMode({ skipConfirm: true });
+        expect(scene.state.meta).toEqual(prevMeta);
+      });
+
       it('A change to refresh picker interval settings should set isDirty true', () => {
         const refreshPicker = dashboardSceneGraph.getRefreshPicker(scene)!;
         const prevState = [...refreshPicker.state.intervals!];
@@ -198,6 +217,21 @@ describe('DashboardScene', () => {
 
         scene.exitEditMode({ skipConfirm: true });
         expect(dashboardSceneGraph.getRefreshPicker(scene)!.state.intervals).toEqual(prevState);
+      });
+
+      it('A enabling/disabling live now setting should set isDirty true', () => {
+        const liveNowTimer = scene.state.$behaviors?.find(
+          (b) => b instanceof behaviors.LiveNowTimer
+        ) as behaviors.LiveNowTimer;
+        liveNowTimer.enable();
+
+        expect(scene.state.isDirty).toBe(true);
+
+        scene.exitEditMode({ skipConfirm: true });
+        const restoredLiveNowTimer = scene.state.$behaviors?.find(
+          (b) => b instanceof behaviors.LiveNowTimer
+        ) as behaviors.LiveNowTimer;
+        expect(restoredLiveNowTimer.state.enabled).toBeFalsy();
       });
 
       it('A change to time picker visibility settings should set isDirty true', () => {
@@ -863,6 +897,53 @@ describe('DashboardScene', () => {
       }
     });
   });
+
+  describe('When coming from explore', () => {
+    // When coming from Explore the first panel in a dashboard is a temporary panel
+    it('should remove first panel from the grid when discarding changes', () => {
+      const scene = new DashboardScene({
+        title: 'hello',
+        uid: 'dash-1',
+        description: 'hello description',
+        editable: true,
+        $timeRange: new SceneTimeRange({
+          timeZone: 'browser',
+        }),
+        controls: new DashboardControls({}),
+        $behaviors: [new behaviors.CursorSync({})],
+        body: new SceneGridLayout({
+          children: [
+            new DashboardGridItem({
+              key: 'griditem-1',
+              x: 0,
+              body: new VizPanel({
+                title: 'Panel A',
+                key: 'panel-1',
+                pluginId: 'table',
+                $data: new SceneQueryRunner({ key: 'data-query-runner', queries: [{ refId: 'A' }] }),
+              }),
+            }),
+            new DashboardGridItem({
+              key: 'griditem-2',
+              body: new VizPanel({
+                title: 'Panel B',
+                key: 'panel-2',
+                pluginId: 'table',
+              }),
+            }),
+          ],
+        }),
+      });
+
+      scene.onEnterEditMode(true);
+      expect(scene.state.isEditing).toBe(true);
+      expect((scene.state.body as SceneGridLayout).state.children.length).toBe(2);
+
+      scene.exitEditMode({ skipConfirm: true });
+      expect(scene.state.isEditing).toBe(false);
+      expect((scene.state.body as SceneGridLayout).state.children.length).toBe(1);
+    });
+  });
 });
 
 function buildTestScene(overrides?: Partial<DashboardSceneState>) {
@@ -876,7 +957,7 @@ function buildTestScene(overrides?: Partial<DashboardSceneState>) {
       timeZone: 'browser',
     }),
     controls: new DashboardControls({}),
-    $behaviors: [new behaviors.CursorSync({})],
+    $behaviors: [new behaviors.CursorSync({}), new behaviors.LiveNowTimer({})],
     body: new SceneGridLayout({
       children: [
         new DashboardGridItem({

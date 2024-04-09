@@ -38,11 +38,11 @@
 /docs/.codespellignore                                                            @grafana/docs-tooling
 /docs/sources/                                                                    @Eve832
 
-/docs/sources/administration/                                                     @jdbaldry @lwandz13
+/docs/sources/administration/                                                     @jdbaldry
 /docs/sources/alerting/                                                           @brendamuir
 /docs/sources/dashboards/                                                         @imatwawana
 /docs/sources/datasources/                                                        @jdbaldry
-/docs/sources/explore/                                                            @grafana/explore-squad
+/docs/sources/explore/                                                            @grafana/explore-squad @lwandz13
 /docs/sources/fundamentals                                                        @chri2547
 /docs/sources/getting-started/                                                    @chri2547
 /docs/sources/introduction/                                                       @chri2547
@@ -535,6 +535,7 @@ playwright.config.ts @grafana/plugins-platform-frontend
 /scripts/cleanup-husky.sh @grafana/frontend-ops
 /scripts/verify-repo-update/ @grafana/grafana-release-guild
 /scripts/generate-icon-bundle.js @grafana/plugins-platform-frontend @grafana/grafana-frontend-platform
+/scripts/generate-rtk-apis.ts @grafana/grafana-frontend-platform
 /scripts/levitate-parse-json-report.js @grafana/plugins-platform-frontend
 
 /scripts/**/generate-transformations* @grafana/dataviz-squad
