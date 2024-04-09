@@ -3,7 +3,7 @@ import { difference } from 'lodash';
 import { createDataFrame, guessFieldTypeFromValue } from '../dataframe/processDataFrame';
 import { Field, FieldType, NullValueMode } from '../types/index';
 
-import { fieldReducers, ReducerID, reduceField, defaultCalcs } from './fieldReducer';
+import { fieldReducers, ReducerID, reduceField, defaultCalcs, DEFAULT_PERCENTILE_OPTIONS } from './fieldReducer';
 
 /**
  * Run a reducer and get back the value
@@ -252,17 +252,17 @@ describe('Stats Calculators', () => {
     expect(reduce(someNulls, ReducerID.count)).toEqual(4);
   });
 
-  for (let i = 1; i < 100; i++) {
-    it(`can reduce the ${i}th percentile`, () => {
+  it('can reduce to percentiles', () => {
+    DEFAULT_PERCENTILE_OPTIONS.forEach((percentile) => {
       const preciseStats = reduceField({
         field: createField(
           'x',
           Array.from({ length: 101 }, (_, index) => index)
         ),
-        reducers: [(ReducerID as Record<string, ReducerID>)[`p${i}`]],
+        reducers: [(ReducerID as Record<string, ReducerID>)[`p${percentile}`]],
       });
 
-      expect(preciseStats[`p${i}`]).toEqual(i);
+      expect(preciseStats[`p${percentile}`]).toEqual(percentile);
     });
-  }
+  });
 });
