@@ -1,22 +1,197 @@
 import { css } from '@emotion/css';
-import React from 'react';
+import React, { useEffect } from 'react';
 
 import { GrafanaTheme2, urlUtil } from '@grafana/data';
+import { getBackendSrv } from '@grafana/runtime';
 import { Badge, Button, Dropdown, Icon, LinkButton, Menu, Stack, Text, useStyles2 } from '@grafana/ui';
+import { useGetSingle } from 'app/features/plugins/admin/state/hooks';
 
 import { ConfigurationTrackerDrawer } from './ConfigurationTrackerDrawer';
 
 export interface EssentialsProps {
   onClose: () => void;
 }
+
+interface IncidentsPluginConfig {
+  isInstalled: boolean;
+  isChatOpsInstalled: boolean;
+  isDrillCreated: boolean;
+}
+
 export function Essentials({ onClose }: EssentialsProps) {
+  const incidentsPluginConfig = useGetSingle('grafana-incident-app');
+  const isIncidentPluginInstalled = incidentsPluginConfig?.isInstalled ?? false;
+  const [incidentPluginConfig, setIncidentPluginConfig] = React.useState<IncidentsPluginConfig | null>(null);
+
+  useEffect(() => {
+    if (!isIncidentPluginInstalled) {
+      setIncidentPluginConfig({
+        isInstalled: false,
+        isChatOpsInstalled: false,
+        isDrillCreated: false,
+      });
+    }
+    const getIncidentChatoOpsnstalled = async () => {
+      if (!isIncidentPluginInstalled) {
+        return false;
+      }
+      const availableIntegrations = await getBackendSrv().get(
+        '/api/plugins/grafana-incident-app/resources/api/IntegrationService.GetAvailableIntegrations'
+      );
+
+      const isSackInstalled = availableIntegrations?.find(
+        (integration: { id: string }) => integration.id === 'grate.slack'
+      );
+      const isMSTeamsInstalled = availableIntegrations?.find(
+        (integration: { id: string }) => integration.id === 'grate.msTeams'
+      );
+      return isSackInstalled || isMSTeamsInstalled;
+    };
+
+    const checkIfIncidentsCreated = async () => {
+      const isDrillCreated = await getBackendSrv()
+        .get('/api/plugins/grafana-incident-app/resources/api/IncidentsService.QueryIncidents')
+        .then((response) => response.incidents.length > 0);
+      return isDrillCreated;
+    };
+    if (isIncidentPluginInstalled) {
+      Promise.all([getIncidentChatoOpsnstalled(), checkIfIncidentsCreated()]).then(
+        ([isChatOpsInstalled, isDrillCreated]) =>
+          setIncidentPluginConfig({
+            isInstalled: true,
+            isChatOpsInstalled,
+            isDrillCreated,
+          })
+      );
+    }
+  }, [isIncidentPluginInstalled]);
+
+  const ESSENTIAL_CONTENT: SectionsDto = {
+    sections: [
+      {
+        title: 'Detect',
+        description: 'Configure alerting',
+        steps: [
+          {
+            title: 'Create alert rule',
+            description: 'tbd',
+            button: {
+              type: 'openLink',
+              url: '/alerting/new',
+              label: 'Create',
+              done: isCreateAlertRuleDone(),
+            },
+          },
+          {
+            title: 'Update notification policy',
+            description: 'tbd',
+            button: {
+              type: 'openLink',
+              url: '/alerting/notifications',
+              label: 'Update',
+            },
+          },
+          {
+            title: 'Create OnCall contact point',
+            description: 'tbd',
+            button: {
+              type: 'openLink',
+              url: '/alerting/notifications',
+              label: 'View',
+            },
+          },
+        ],
+      },
+      {
+        title: 'Respond',
+        description: 'Configure OnCall and Incident',
+        steps: [
+          {
+            title: 'Initialize Incident plugin',
+            description: 'tbd',
+            button: {
+              type: 'openLink',
+              url: '/a/grafana-incident-app/walkthrough/generate-key',
+              label: 'Initialize',
+              done: incidentPluginConfig?.isInstalled,
+            },
+          },
+          {
+            title: 'Create OnCall integration to receive Alerts',
+            description: 'tbd',
+            button: {
+              type: 'openLink',
+              url: '/alerting/notifications',
+              label: 'View',
+            },
+          },
+          {
+            title: 'Create your ChatOps workspace to OnCall',
+            description: 'tbd',
+            button: {
+              type: 'dropDown',
+              url: '/alerting/notifications',
+              label: 'Connect',
+              options: [{ label: 'Option 1', value: '1' }],
+            },
+          },
+          {
+            title: 'Create your ChatOps workspace to Incident',
+            description: 'tbd',
+            button: {
+              type: 'dropDown',
+              url: '/a/grafana-incident-app/integrations/grate.slack',
+              label: 'Connect',
+              done: incidentPluginConfig?.isChatOpsInstalled,
+            },
+          },
+          {
+            title: 'Add ChatOps to your integration',
+            description: 'tbd',
+            button: {
+              type: 'dropDown',
+              url: '/alerting/notifications',
+              label: 'Connect',
+            },
+          },
+        ],
+      },
+      {
+        title: 'Test your config',
+        description: '',
+        steps: [
+          {
+            title: 'Send OnCall demo alert',
+            description: 'tbd',
+            button: {
+              type: 'dropDown',
+              url: '/alerting/test',
+              label: 'Select integration',
+              options: [{ label: 'integration 1', value: '1' }],
+            },
+          },
+          {
+            title: 'Create Incident drill',
+            description: 'tbd',
+            button: {
+              type: 'openLink',
+              url: '/a/grafana-incident-app?declare=new&drill=1',
+              label: 'Start drill',
+              done: incidentPluginConfig?.isDrillCreated,
+            },
+          },
+        ],
+      },
+    ],
+  };
+
   return (
     <ConfigurationTrackerDrawer
       title="Essentials"
       subtitle="Complete basic recommended configuration to start using apps basic features"
       onClose={onClose}
     >
-      <EssentialContent />
+      <EssentialContent essentialContent={ESSENTIAL_CONTENT} />
     </ConfigurationTrackerDrawer>
   );
 }
@@ -39,126 +214,11 @@ interface SectionDto {
 interface SectionsDto {
   sections: SectionDto[];
 }
-const ESSENTIAL_CONTENT: SectionsDto = {
-  sections: [
-    {
-      title: 'Detect',
-      description: 'Configure alerting',
-      steps: [
-        {
-          title: 'Create alert rule',
-          description: 'tbd',
-          button: {
-            type: 'openLink',
-            url: '/alerting/new',
-            label: 'Create',
-            done: isCreateAlertRuleDone(),
-          },
-        },
-        {
-          title: 'Update notification policy',
-          description: 'tbd',
-          button: {
-            type: 'openLink',
-            url: '/alerting/notifications',
-            label: 'Update',
-          },
-        },
-        {
-          title: 'Create OnCall contact point',
-          description: 'tbd',
-          button: {
-            type: 'openLink',
-            url: '/alerting/notifications',
-            label: 'View',
-          },
-        },
-      ],
-    },
-    {
-      title: 'Respond',
-      description: 'Configure OnCall and Incident',
-      steps: [
-        {
-          title: 'Initialize Incident plugin',
-          description: 'tbd',
-          button: {
-            type: 'openLink',
-            url: '/a/grafana-incident-app/walkthrough/generate-key',
-            label: 'Initialize',
-          },
-        },
-        {
-          title: 'Create OnCall integration to receive Alerts',
-          description: 'tbd',
-          button: {
-            type: 'openLink',
-            url: '/alerting/notifications',
-            label: 'View',
-          },
-        },
-        {
-          title: 'Create your ChatOps workspace to OnCall',
-          description: 'tbd',
-          button: {
-            type: 'dropDown',
-            url: '/alerting/notifications',
-            label: 'Connect',
-            options: [{ label: 'Option 1', value: '1' }],
-          },
-        },
-        {
-          title: 'Create your ChatOps workspace to Incident',
-          description: 'tbd',
-          button: {
-            type: 'dropDown',
-            url: '/a/grafana-incident-app/integrations/grate.slack',
-            label: 'Connect',
-          },
-        },
-        {
-          title: 'Add ChatOps to your integration',
-          description: 'tbd',
-          button: {
-            type: 'dropDown',
-            url: '/alerting/notifications',
-            label: 'Connect',
-          },
-        },
-      ],
-    },
-    {
-      title: 'Test your config',
-      description: '',
-      steps: [
-        {
-          title: 'Send OnCall demo alert',
-          description: 'tbd',
-          button: {
-            type: 'dropDown',
-            url: '/alerting/test',
-            label: 'Select integration',
-            options: [{ label: 'integration 1', value: '1' }],
-          },
-        },
-        {
-          title: 'Create Incident drill',
-          description: 'tbd',
-          button: {
-            type: 'openLink',
-            url: '/a/grafana-incident-app?declare=new&drill=1',
-            label: 'Start drill',
-          },
-        },
-      ],
-    },
-  ],
-};
 
-function EssentialContent() {
+function EssentialContent({ essentialContent }: { essentialContent: SectionsDto }) {
   return (
     <>
-      {ESSENTIAL_CONTENT.sections.map((section: SectionDto) => (
+      {essentialContent.sections.map((section: SectionDto) => (
         <Section key={section.title} section={section} />
       ))}
     </>
