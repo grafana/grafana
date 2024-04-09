@@ -13,6 +13,9 @@ import (
 	"github.com/grafana/grafana/pkg/services/auth"
 	"github.com/grafana/grafana/pkg/services/auth/authtest"
 	"github.com/grafana/grafana/pkg/services/authn"
+	"github.com/grafana/grafana/pkg/services/login"
+	"github.com/grafana/grafana/pkg/services/login/authinfotest"
+	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -26,7 +29,7 @@ func TestSession_Test(t *testing.T) {
 	cfg := setting.NewCfg()
 	cfg.LoginCookieName = ""
 	cfg.LoginMaxLifetime = 20 * time.Second
-	s := ProvideSession(cfg, &authtest.FakeUserAuthTokenService{})
+	s := ProvideSession(cfg, &authtest.FakeUserAuthTokenService{}, &authinfotest.FakeService{})
 
 	disabled := s.Test(context.Background(), &authn.Request{HTTPRequest: validHTTPReq})
 	assert.False(t, disabled)
@@ -60,7 +63,8 @@ func TestSession_Authenticate(t *testing.T) {
 	}
 
 	type fields struct {
-		sessionService auth.UserTokenService
+		authInfoService login.AuthInfoService
+		sessionService  auth.UserTokenService
 	}
 	type args struct {
 		r *authn.Request
@@ -75,7 +79,8 @@ func TestSession_Authenticate(t *testing.T) {
 		{
 			name: "cookie not found",
 			fields: fields{
-				sessionService: &authtest.FakeUserAuthTokenService{},
+				sessionService:  &authtest.FakeUserAuthTokenService{},
+				authInfoService: &authinfotest.FakeService{},
 			},
 			args:    args{r: &authn.Request{HTTPRequest: &http.Request{}}},
 			wantID:  nil,
@@ -87,6 +92,7 @@ func TestSession_Authenticate(t *testing.T) {
 				sessionService: &authtest.FakeUserAuthTokenService{LookupTokenProvider: func(ctx context.Context, unhashedToken string) (*auth.UserToken, error) {
 					return validToken, nil
 				}},
+				authInfoService: &authinfotest.FakeService{ExpectedUserAuth: &login.UserAuth{}},
 			},
 			args: args{r: &authn.Request{HTTPRequest: validHTTPReq}},
 			wantID: &authn.Identity{
@@ -108,6 +114,7 @@ func TestSession_Authenticate(t *testing.T) {
 						RotatedAt:     time.Now().Add(-11 * time.Minute).Unix(),
 					}, nil
 				}},
+				authInfoService: &authinfotest.FakeService{ExpectedUserAuth: &login.UserAuth{}},
 			},
 			args:    args{r: &authn.Request{HTTPRequest: validHTTPReq}},
 			wantErr: true,
@@ -118,11 +125,54 @@ func TestSession_Authenticate(t *testing.T) {
 				sessionService: &authtest.FakeUserAuthTokenService{LookupTokenProvider: func(ctx context.Context, unhashedToken string) (*auth.UserToken, error) {
 					return validToken, nil
 				}},
+				authInfoService: &authinfotest.FakeService{ExpectedUserAuth: &login.UserAuth{}},
 			},
 			args: args{r: &authn.Request{HTTPRequest: validHTTPReq}},
 			wantID: &authn.Identity{
 				ID:           "user:1",
 				SessionToken: validToken,
+				ClientParams: authn.ClientParams{
+					SyncPermissions: true,
+					FetchSyncedUser: true,
+				},
+			},
+			wantErr: false,
+		},
+		{
+			name: "should set authID and authenticated by for externaly authenticated user",
+			fields: fields{
+				sessionService: &authtest.FakeUserAuthTokenService{LookupTokenProvider: func(ctx context.Context, unhashedToken string) (*auth.UserToken, error) {
+					return validToken, nil
+				}},
+				authInfoService: &authinfotest.FakeService{ExpectedUserAuth: &login.UserAuth{AuthId: "1", AuthModule: "oauth_azuread"}},
+			},
+			args: args{r: &authn.Request{HTTPRequest: validHTTPReq}},
+			wantID: &authn.Identity{
+				ID:              "user:1",
+				AuthID:          "1",
+				AuthenticatedBy: "oauth_azuread",
+				SessionToken:    validToken,
+
+				ClientParams: authn.ClientParams{
+					SyncPermissions: true,
+					FetchSyncedUser: true,
+				},
+			},
+			wantErr: false,
+		},
+		{
+			name: "should not set authID and authenticated by when no auth info exists for user",
+			fields: fields{
+				sessionService: &authtest.FakeUserAuthTokenService{LookupTokenProvider: func(ctx context.Context, unhashedToken string) (*auth.UserToken, error) {
+					return validToken, nil
+				}},
+				authInfoService: &authinfotest.FakeService{ExpectedError: user.ErrUserNotFound},
+			},
+			args: args{r: &authn.Request{HTTPRequest: validHTTPReq}},
+			wantID: &authn.Identity{
+				ID:           "user:1",
+				SessionToken: validToken,
+
 				ClientParams: authn.ClientParams{
 					SyncPermissions: true,
 					FetchSyncedUser: true,
@@ -137,7 +187,7 @@ func TestSession_Authenticate(t *testing.T) {
 			cfg.LoginCookieName = cookieName
 			cfg.TokenRotationIntervalMinutes = 10
 			cfg.LoginMaxLifetime = 20 * time.Second
-			s := ProvideSession(cfg, tt.fields.sessionService)
+			s := ProvideSession(cfg, tt.fields.sessionService, tt.fields.authInfoService)
 
 			got, err := s.Authenticate(context.Background(), tt.args.r)
 			require.True(t, (err != nil) == tt.wantErr, err)

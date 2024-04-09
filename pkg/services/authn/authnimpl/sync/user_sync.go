@@ -135,21 +135,6 @@ func (s *UserSync) FetchSyncedUserHook(ctx context.Context, identity *authn.Iden
 	}
 
 	syncSignedInUserToIdentity(usr, identity)
-
-	if authidentity.IsNamespace(namespace, authn.NamespaceUser) && identity.AuthenticatedBy != "" {
-		info, err := s.authInfoService.GetAuthInfo(ctx, &login.GetAuthInfoQuery{
-			UserId: userID,
-		})
-		if err != nil {
-			if !errors.Is(err, user.ErrUserNotFound) {
-				s.log.FromContext(ctx).Error("Failed to resolve authentication provider", "err", err)
-			}
-		} else {
-			identity.AuthID = info.AuthId
-			identity.AuthenticatedBy = info.AuthModule
-		}
-	}
-
 	return nil
 }
 
