@@ -12,7 +12,7 @@ description: Create and manage dashboards
 hero:
   title: Dashboards
   level: 1
-  image: /icon_dashboard.svg
+  image: /media/docs/grafana/icon_dashboard.svg
   width: 110
   height: 110
   description: >-
