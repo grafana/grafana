@@ -19,6 +19,8 @@ import (
 	_ "github.com/grafana/dskit/flagext"
 	_ "github.com/grafana/gofpdf"
 	_ "github.com/grpc-ecosystem/go-grpc-middleware"
+	_ "github.com/hashicorp/go-multierror"
+	_ "github.com/hashicorp/golang-lru/v2"
 	_ "github.com/linkedin/goavro/v2"
 	_ "github.com/m3db/prometheus_remote_client_golang/promremote"
 	_ "github.com/robfig/cron/v3"
