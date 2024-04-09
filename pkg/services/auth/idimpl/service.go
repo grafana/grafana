@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"strconv"
 	"time"
 
 	"github.com/go-jose/go-jose/v3/jwt"
@@ -18,7 +17,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/authn"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/login"
-	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -90,9 +88,9 @@ func (s *Service) SignIdentity(ctx context.Context, id identity.Requester) (stri
 		}
 
 		if identity.IsNamespace(namespace, identity.NamespaceUser) {
-			if err := s.setUserClaims(ctx, id, identifier, claims); err != nil {
-				return "", err
-			}
+			claims.Email = id.GetEmail()
+			claims.EmailVerified = id.IsEmailVerified()
+			claims.AuthenticatedBy = id.GetAuthenticatedBy()
 		}
 
 		token, err := s.signer.SignIDToken(ctx, claims)
@@ -132,34 +130,6 @@ func (s *Service) SignIdentity(ctx context.Context, id identity.Requester) (stri
 
 func (s *Service) RemoveIDToken(ctx context.Context, id identity.Requester) error {
 	return s.cache.Delete(ctx, prefixCacheKey(id.GetCacheKey()))
-}
-
-func (s *Service) setUserClaims(ctx context.Context, ident identity.Requester, identifier string, claims *auth.IDClaims) error {
-	id, err := strconv.ParseInt(identifier, 10, 64)
-	if err != nil {
-		return err
-	}
-
-	if id == 0 {
-		return nil
-	}
-
-	claims.Email = ident.GetEmail()
-	claims.EmailVerified = ident.IsEmailVerified()
-
-	info, err := s.authInfoService.GetAuthInfo(ctx, &login.GetAuthInfoQuery{UserId: id})
-	if err != nil {
-		// we ignore errors when a user don't have external user auth
-		if !errors.Is(err, user.ErrUserNotFound) {
-			s.logger.FromContext(ctx).Error("Failed to fetch auth info", "userId", id, "error", err)
-		}
-
-		return nil
-	}
-
-	claims.AuthenticatedBy = info.AuthModule
-
-	return nil
 }
 
 func (s *Service) hook(ctx context.Context, identity *authn.Identity, _ *authn.Request) error {

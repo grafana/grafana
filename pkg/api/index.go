@@ -4,7 +4,6 @@ import (
 	"crypto/hmac"
 	"crypto/sha256"
 	"encoding/hex"
-	"errors"
 	"fmt"
 	"net/http"
 	"strings"
@@ -20,7 +19,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/login"
 	"github.com/grafana/grafana/pkg/services/org"
 	pref "github.com/grafana/grafana/pkg/services/preference"
-	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -168,7 +166,7 @@ func (hs *HTTPServer) setIndexViewData(c *contextmodel.ReqContext) (*dtos.IndexV
 }
 
 func (hs *HTTPServer) buildUserAnalyticsSettings(c *contextmodel.ReqContext) dtos.AnalyticsSettings {
-	namespace, id := c.SignedInUser.GetNamespacedID()
+	namespace, _ := c.SignedInUser.GetNamespacedID()
 
 	// Anonymous users do not have an email or auth info
 	if namespace != identity.NamespaceUser {
@@ -179,21 +177,10 @@ func (hs *HTTPServer) buildUserAnalyticsSettings(c *contextmodel.ReqContext) dto
 		return dtos.AnalyticsSettings{}
 	}
 
-	userID, err := identity.IntIdentifier(namespace, id)
-	if err != nil {
-		hs.log.Error("Failed to parse user ID", "error", err)
-		return dtos.AnalyticsSettings{Identifier: "@" + hs.Cfg.AppURL}
-	}
-
 	identifier := c.SignedInUser.GetEmail() + "@" + hs.Cfg.AppURL
 
-	authInfo, err := hs.authInfoService.GetAuthInfo(c.Req.Context(), &login.GetAuthInfoQuery{UserId: userID})
-	if err != nil && !errors.Is(err, user.ErrUserNotFound) {
-		hs.log.Error("Failed to get auth info for analytics", "error", err)
-	}
-
-	if authInfo != nil && authInfo.AuthModule == login.GrafanaComAuthModule {
-		identifier = authInfo.AuthId
+	if authenticatedBy := c.SignedInUser.GetAuthenticatedBy(); authenticatedBy == login.GrafanaComAuthModule {
+		identifier = c.SignedInUser.GetAuthID()
 	}
 
 	return dtos.AnalyticsSettings{
