@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"strconv"
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	authidentity "github.com/grafana/grafana/pkg/services/auth/identity"
@@ -110,12 +111,13 @@ func (s *UserSync) FetchSyncedUserHook(ctx context.Context, identity *authn.Iden
 	if !identity.ClientParams.FetchSyncedUser {
 		return nil
 	}
+
 	namespace, id := identity.GetNamespacedID()
-	if namespace != authn.NamespaceUser && namespace != authn.NamespaceServiceAccount {
+	if !authidentity.IsNamespace(namespace, authn.NamespaceUser, authn.NamespaceServiceAccount) {
 		return nil
 	}
 
-	userID, err := authidentity.IntIdentifier(namespace, id)
+	userID, err := strconv.ParseInt(id, 10, 64)
 	if err != nil {
 		s.log.FromContext(ctx).Warn("got invalid identity ID", "id", id, "err", err)
 		return nil
@@ -133,6 +135,21 @@ func (s *UserSync) FetchSyncedUserHook(ctx context.Context, identity *authn.Iden
 	}
 
 	syncSignedInUserToIdentity(usr, identity)
+
+	if authidentity.IsNamespace(namespace, authn.NamespaceUser) && identity.AuthenticatedBy != "" {
+		info, err := s.authInfoService.GetAuthInfo(ctx, &login.GetAuthInfoQuery{
+			UserId: userID,
+		})
+		if err != nil {
+			if !errors.Is(err, user.ErrUserNotFound) {
+				s.log.FromContext(ctx).Error("Failed to resolve authentication provider", "err", err)
+			}
+		} else {
+			identity.AuthID = info.AuthId
+			identity.AuthenticatedBy = info.AuthModule
+		}
+	}
+
 	return nil
 }
 
