@@ -15,8 +15,9 @@ import { getDatasourceSrv } from '../plugins/datasource_srv';
 import { DataTrail } from './DataTrail';
 import { DataTrailSettings } from './DataTrailSettings';
 import { MetricScene } from './MetricScene';
+import { MetricSearchTermsVariable } from './MetricSelect/MetricSearchTermsVariable';
 import { getTrailStore } from './TrailStore/TrailStore';
-import { LOGS_METRIC, TRAILS_ROUTE, VAR_DATASOURCE_EXPR } from './shared';
+import { LOGS_METRIC, TRAILS_ROUTE, VAR_DATASOURCE_EXPR, VAR_METRIC_SEARCH_TERMS } from './shared';
 
 export function getTrailFor(model: SceneObject): DataTrail {
   return sceneGraph.getAncestor(model, DataTrail);
@@ -113,4 +114,12 @@ export function getFilters(scene: SceneObject) {
     return filters.state.filters;
   }
   return null;
+}
+
+export function getSearchQuery(scene: SceneObject) {
+  // Initialize the searchQuery based on the search terms variable.
+  const searchTermsVariable = sceneGraph.lookupVariable(VAR_METRIC_SEARCH_TERMS, scene);
+  const searchQuery =
+    searchTermsVariable instanceof MetricSearchTermsVariable ? searchTermsVariable.state.terms.join(' ') : '';
+  return searchQuery;
 }

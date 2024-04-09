@@ -16,7 +16,7 @@ import { useStyles2, Tooltip, Stack } from '@grafana/ui';
 import { DataTrail, DataTrailState, getTopSceneFor } from './DataTrail';
 import { reportExploreMetrics } from './interactions';
 import { VAR_FILTERS } from './shared';
-import { getTrailFor, isSceneTimeRangeState } from './utils';
+import { getSearchQuery, getTrailFor, isSceneTimeRangeState } from './utils';
 
 export interface DataTrailsHistoryState extends SceneObjectState {
   currentStep: number;
@@ -57,7 +57,7 @@ export class DataTrailHistory extends SceneObjectBase<DataTrailsHistoryState> {
 
         // So we remove the metric and update the topscene for the "start" step
         const { metric, ...startState } = trail.state;
-        startState.topScene = getTopSceneFor(undefined);
+        startState.topScene = getTopSceneFor(undefined, getSearchQuery(this));
         this.state.steps[0].trailState = startState;
 
         // But must add a secondary step to represent the selection of the metric

@@ -23,6 +23,7 @@ import {
   SceneVariableSet,
   VariableDependencyConfig,
   VariableValueSelectors,
+  SceneVariableValueChangedEvent,
 } from '@grafana/scenes';
 import { useStyles2 } from '@grafana/ui';
 
@@ -30,11 +31,13 @@ import { DataTrailSettings } from './DataTrailSettings';
 import { DataTrailHistory } from './DataTrailsHistory';
 import { MetricScene } from './MetricScene';
 import { MetricSelectScene } from './MetricSelect/MetricSelectScene';
+import { MetricSearchTermsVariable } from './MetricSelect/MetricSearchTermsVariable';
 import { MetricsHeader } from './MetricsHeader';
 import { getTrailStore } from './TrailStore/TrailStore';
 import { MetricDatasourceHelper } from './helpers/MetricDatasourceHelper';
 import { reportChangeInLabelFilters } from './interactions';
-import { MetricSelectedEvent, trailDS, VAR_DATASOURCE, VAR_FILTERS } from './shared';
+import { MetricSelectedEvent, trailDS, VAR_DATASOURCE, VAR_FILTERS, VAR_METRIC_SEARCH_TERMS } from './shared';
+import { getSearchQuery } from './utils';
 
 export interface DataTrailState extends SceneObjectState {
   topScene?: SceneObject;
@@ -76,7 +79,7 @@ export class DataTrail extends SceneObjectBase<DataTrailState> {
 
   public _onActivate() {
     if (!this.state.topScene) {
-      this.setState({ topScene: getTopSceneFor(this.state.metric) });
+      this.setState({ topScene: getTopSceneFor(this.state.metric, getSearchQuery(this)) });
     }
 
     // Some scene elements publish this
@@ -128,8 +131,11 @@ export class DataTrail extends SceneObjectBase<DataTrailState> {
   }
 
   protected _variableDependency = new VariableDependencyConfig(this, {
-    variableNames: [VAR_DATASOURCE],
-    onReferencedVariableValueChanged: (variable: SceneVariable) => {
+    variableNames: [VAR_DATASOURCE, VAR_METRIC_SEARCH_TERMS],
+    onReferencedVariableValueChanged: async (variable: SceneVariable) => {
+      // For all of these variable changes, resync the URL
+      // this.syncTrailToUrl();
+
       const { name } = variable.state;
       if (name === VAR_DATASOURCE) {
         this.datasourceHelper.reset();
@@ -181,10 +187,15 @@ export class DataTrail extends SceneObjectBase<DataTrailState> {
       })
     );
 
+    // TODO check if this ruins the flow pre enableUrlSync
+    const searchTermsVariable = sceneGraph.lookupVariable(VAR_METRIC_SEARCH_TERMS, this);
+    if (searchTermsVariable instanceof MetricSearchTermsVariable) {
+      searchTermsVariable.publishEvent(new SceneVariableValueChangedEvent(searchTermsVariable), true);
+    }
+
     const urlState = getUrlSyncManager().getUrlState(this);
     const fullUrl = urlUtil.renderUrl(locationService.getLocation().pathname, urlState);
     locationService.replace(fullUrl);
-
     this.enableUrlSync();
   }
 
@@ -203,7 +214,7 @@ export class DataTrail extends SceneObjectBase<DataTrailState> {
   private getSceneUpdatesForNewMetricValue(metric: string | undefined) {
     const stateUpdate: Partial<DataTrailState> = {};
     stateUpdate.metric = metric;
-    stateUpdate.topScene = getTopSceneFor(metric);
+    stateUpdate.topScene = getTopSceneFor(metric, getSearchQuery(this));
     return stateUpdate;
   }
 
@@ -220,7 +231,7 @@ export class DataTrail extends SceneObjectBase<DataTrailState> {
       }
     } else if (values.metric == null) {
       stateUpdate.metric = undefined;
-      stateUpdate.topScene = new MetricSelectScene({});
+      stateUpdate.topScene = new MetricSelectScene({ searchQuery: getSearchQuery(this) });
     }
 
     this.setState(stateUpdate);
@@ -249,11 +260,11 @@ export class DataTrail extends SceneObjectBase<DataTrailState> {
   };
 }
 
-export function getTopSceneFor(metric?: string) {
+export function getTopSceneFor(metric?: string, searchQuery?: string) {
   if (metric) {
     return new MetricScene({ metric: metric });
   } else {
-    return new MetricSelectScene({});
+    return new MetricSelectScene({ searchQuery });
   }
 }
 
@@ -276,6 +287,7 @@ function getVariableSet(initialDS?: string, metric?: string, initialFilters?: Ad
         filters: initialFilters ?? [],
         baseFilters: getBaseFiltersForMetric(metric),
       }),
+      new MetricSearchTermsVariable(),
     ],
   });
 }
