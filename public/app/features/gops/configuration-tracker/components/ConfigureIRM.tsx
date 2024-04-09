@@ -1,20 +1,35 @@
 import { css } from '@emotion/css';
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { useHistory } from 'react-router-dom';
 
-import { Card, Button, Icon, useStyles2 } from '@grafana/ui';
+import { Button, Card, Icon, IconName, useStyles2 } from '@grafana/ui';
 import { useRulesSourcesWithRuler } from 'app/features/alerting/unified/hooks/useRuleSourcesWithRuler';
+import { fetchAllPromBuildInfoAction } from 'app/features/alerting/unified/state/actions';
 import { DATASOURCES_ROUTES } from 'app/features/datasources/constants';
+import { useDispatch } from 'app/types';
 
 import { Essentials } from './Essentials';
+interface DataConfiguration {
+  id: number;
+  title: string;
+  description: string;
+  text: string;
+  actionButtonTitle: string;
+  isVisible: boolean;
+  titleIcon?: IconName;
+}
 
 export function ConfigureIRM() {
   const styles = useStyles2(getStyles);
   const history = useHistory();
+  const dispatchReduxAction = useDispatch();
+  useEffect(() => {
+    dispatchReduxAction(fetchAllPromBuildInfoAction());
+  }, [dispatchReduxAction]);
   const rulesSourcesWithRuler = useRulesSourcesWithRuler();
 
   const [essentialsOpen, setEssentialsOpen] = useState(false);
-  const configuration = useMemo(() => {
+  const configuration: DataConfiguration[] = useMemo(() => {
     return [
       {
         id: 1,

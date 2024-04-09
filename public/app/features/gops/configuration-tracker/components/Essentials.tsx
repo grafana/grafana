@@ -2,7 +2,7 @@ import { css } from '@emotion/css';
 import React from 'react';
 
 import { GrafanaTheme2, urlUtil } from '@grafana/data';
-import { Button, Dropdown, Icon, LinkButton, Menu, Stack, Text, useStyles2 } from '@grafana/ui';
+import { Badge, Button, Dropdown, Icon, LinkButton, Menu, Stack, Text, useStyles2 } from '@grafana/ui';
 
 import { ConfigurationTrackerDrawer } from './ConfigurationTrackerDrawer';
 
@@ -20,26 +20,26 @@ export function Essentials({ onClose }: EssentialsProps) {
     </ConfigurationTrackerDrawer>
   );
 }
-interface StepButton {
+interface StepButtonDto {
   type: 'openLink' | 'dropDown';
   url: string;
   label: string;
   options?: [{ label: string; value: string }];
-  done: boolean;
+  done?: boolean;
 }
-interface Section {
+interface SectionDto {
   title: string;
   description: string;
   steps: Array<{
     title: string;
     description: string;
-    button: StepButton;
+    button: StepButtonDto;
   }>;
 }
-interface Sections {
-  sections: Section[];
+interface SectionsDto {
+  sections: SectionDto[];
 }
-const ESSENTIAL_CONTENT: Sections = {
+const ESSENTIAL_CONTENT: SectionsDto = {
   sections: [
     {
       title: 'Detect',
@@ -52,7 +52,7 @@ const ESSENTIAL_CONTENT: Sections = {
             type: 'openLink',
             url: '/alerting/new',
             label: 'Create',
-            // done: getDoneStatus('alerting'),
+            done: isCreateAlertRuleDone(),
           },
         },
         {
@@ -158,14 +158,14 @@ const ESSENTIAL_CONTENT: Sections = {
 function EssentialContent() {
   return (
     <>
-      {ESSENTIAL_CONTENT.sections.map((section: Section) => (
+      {ESSENTIAL_CONTENT.sections.map((section: SectionDto) => (
         <Section key={section.title} section={section} />
       ))}
     </>
   );
 }
 
-function Section({ section }: { section: Section }) {
+function Section({ section }: { section: SectionDto }) {
   const styles = useStyles2(getStyles);
   return (
     <div className={styles.wrapper}>
@@ -181,7 +181,7 @@ function Section({ section }: { section: Section }) {
   );
 }
 
-function Step({ step }: { step: Section['steps'][0] }) {
+function Step({ step }: { step: SectionDto['steps'][0] }) {
   return (
     <Stack direction={'row'} justifyContent={'space-between'}>
       <Stack direction={'row'} alignItems="center">
@@ -193,10 +193,13 @@ function Step({ step }: { step: Section['steps'][0] }) {
   );
 }
 
-function StepButton({ type, url, label, options }: StepButton) {
+function StepButton({ type, url, label, options, done = false }: StepButtonDto) {
   const urlToGo = urlUtil.renderUrl(url, {
     returnTo: location.pathname + location.search,
   });
+  if (done) {
+    return <Badge color="green" icon="check" text="Done" />;
+  }
   switch (type) {
     case 'openLink':
       return (
@@ -207,7 +210,11 @@ function StepButton({ type, url, label, options }: StepButton) {
     case 'dropDown':
       return (
         <Dropdown
-          overlay={<Menu>{options?.map((option) => <Menu.Item label={option.label} onClick={() => {}} />)}</Menu>}
+          overlay={
+            <Menu>
+              {options?.map((option) => <Menu.Item label={option.label} onClick={() => {}} key={option.label} />)}
+            </Menu>
+          }
         >
           <Button variant="secondary" size="md">
             {label}
@@ -230,3 +237,7 @@ const getStyles = (theme: GrafanaTheme2) => {
     }),
   };
 };
+
+function isCreateAlertRuleDone() {
+  return true;
+}
