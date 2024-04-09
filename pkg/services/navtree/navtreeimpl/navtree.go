@@ -465,7 +465,7 @@ func (s *ServiceImpl) buildDataConnectionsNavLink(c *contextmodel.ReqContext) *n
 
 func (s *ServiceImpl) buildExploreNavLinks(c *contextmodel.ReqContext) []*navtree.NavLink {
 	exploreChildNavs := []*navtree.NavLink{}
-	if s.features.IsEnabled(c.Req.Context(), featuremgmt.FlagDatatrails) {
+	if s.features.IsEnabled(c.Req.Context(), featuremgmt.FlagExploreMetrics) {
 		exploreChildNavs = append(exploreChildNavs, &navtree.NavLink{
 			Text:     "Metrics",
 			SubTitle: "Queryless exploration of your metrics",
