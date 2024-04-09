@@ -66,6 +66,59 @@ export function ToolbarActions({ dashboard }: Props) {
   }
 
   toolbarActions.push({
+    group: 'icon-actions',
+    condition: uid && Boolean(meta.canStar) && isShowingDashboard && !isEditing,
+    render: () => {
+      let desc = meta.isStarred
+        ? t('dashboard.toolbar.unmark-favorite', 'Unmark as favorite')
+        : t('dashboard.toolbar.mark-favorite', 'Mark as favorite');
+      return (
+        <ToolbarButton
+          tooltip={desc}
+          icon={
+            <Icon name={meta.isStarred ? 'favorite' : 'star'} size="lg" type={meta.isStarred ? 'mono' : 'default'} />
+          }
+          key="star-dashboard-button"
+          onClick={() => {
+            DashboardInteractions.toolbarFavoritesClick();
+            dashboard.onStarDashboard();
+          }}
+        />
+      );
+    },
+  });
+
+  const isDevEnv = config.buildInfo.env === 'development';
+
+  toolbarActions.push({
+    group: 'icon-actions',
+    condition: isDevEnv && uid && isShowingDashboard && !isEditing,
+    render: () => (
+      <ToolbarButton
+        key="view-in-old-dashboard-button"
+        tooltip={'Switch to old dashboard page'}
+        icon="apps"
+        onClick={() => {
+          locationService.partial({ scenes: false });
+        }}
+      />
+    ),
+  });
+
+  toolbarActions.push({
+    group: 'icon-actions',
+    condition: meta.isSnapshot && !isEditing,
+    render: () => (
+      <GoToSnapshotOriginButton originalURL={dashboard.getInitialSaveModel()?.snapshot?.originalUrl ?? ''} />
+    ),
+  });
+
+  if (!isEditingPanel && !isEditing) {
+    // This adds the alert rules button and the dashboard insights button
+    addDynamicActions(toolbarActions, dynamicDashNavActions.right, 'icon-actions');
+  }
+
+  toolbarActions.push({
     group: 'add-panel',
     condition: isEditingAndShowingDashboard,
     render: () => (
@@ -120,7 +173,7 @@ export function ToolbarActions({ dashboard }: Props) {
         offset={[0, 6]}
       >
         <Button
-          variant="secondary"
+          variant="primary"
           size="sm"
           fill="outline"
           data-testid={selectors.components.PageToolbar.itemButton('Add button')}
@@ -129,54 +182,6 @@ export function ToolbarActions({ dashboard }: Props) {
           <Icon name={isAddPanelMenuOpen ? 'angle-up' : 'angle-down'} size="lg" />
         </Button>
       </Dropdown>
-    ),
-  });
-
-  toolbarActions.push({
-    group: 'icon-actions',
-    condition: uid && Boolean(meta.canStar) && isShowingDashboard,
-    render: () => {
-      let desc = meta.isStarred
-        ? t('dashboard.toolbar.unmark-favorite', 'Unmark as favorite')
-        : t('dashboard.toolbar.mark-favorite', 'Mark as favorite');
-      return (
-        <ToolbarButton
-          tooltip={desc}
-          icon={
-            <Icon name={meta.isStarred ? 'favorite' : 'star'} size="lg" type={meta.isStarred ? 'mono' : 'default'} />
-          }
-          key="star-dashboard-button"
-          onClick={() => {
-            DashboardInteractions.toolbarFavoritesClick();
-            dashboard.onStarDashboard();
-          }}
-        />
-      );
-    },
-  });
-
-  const isDevEnv = config.buildInfo.env === 'development';
-
-  toolbarActions.push({
-    group: 'icon-actions',
-    condition: isDevEnv && uid && isShowingDashboard,
-    render: () => (
-      <ToolbarButton
-        key="view-in-old-dashboard-button"
-        tooltip={'Switch to old dashboard page'}
-        icon="apps"
-        onClick={() => {
-          locationService.partial({ scenes: false });
-        }}
-      />
-    ),
-  });
-
-  toolbarActions.push({
-    group: 'icon-actions',
-    condition: meta.isSnapshot && !isEditing,
-    render: () => (
-      <GoToSnapshotOriginButton originalURL={dashboard.getInitialSaveModel()?.snapshot?.originalUrl ?? ''} />
     ),
   });
 
@@ -222,11 +227,6 @@ export function ToolbarActions({ dashboard }: Props) {
       />
     ),
   });
-
-  if (!isEditingPanel) {
-    // This adds the alert rules button and the dashboard insights button
-    addDynamicActions(toolbarActions, dynamicDashNavActions.right, 'icon-actions');
-  }
 
   toolbarActions.push({
     group: 'back-button',
