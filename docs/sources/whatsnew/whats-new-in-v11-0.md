@@ -113,7 +113,7 @@ We moved the time picker into the dashboard canvas and now, together with templa
 
 If you want to learn more, in detail, about all the improvements we've made, don't miss our blog post.
 
-<!-- {{< youtube id="ECahW01W5gs" >}} commented out until team decides if there will be changes to the video -->
+{{< youtube id="kcKwBhvrsHc" >}}
 
 ### Scenes for viewers
 
