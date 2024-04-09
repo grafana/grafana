@@ -21,9 +21,10 @@ export interface TabbedContainerProps {
   defaultTab?: string;
   closeIconTooltip?: string;
   onClose: () => void;
+  testId?: string;
 }
 
-export function TabbedContainer({ tabs, defaultTab, closeIconTooltip, onClose }: TabbedContainerProps) {
+export function TabbedContainer({ tabs, defaultTab, closeIconTooltip, onClose, testId }: TabbedContainerProps) {
   const [activeTab, setActiveTab] = useState(tabs.some((tab) => tab.value === defaultTab) ? defaultTab : tabs[0].value);
   const styles = useStyles2(getStyles);
   const theme = useTheme2();
@@ -35,7 +36,7 @@ export function TabbedContainer({ tabs, defaultTab, closeIconTooltip, onClose }:
   const autoHeight = `calc(100% - (${theme.components.menuTabs.height}px + ${theme.spacing(1)}))`;
 
   return (
-    <div className={styles.container}>
+    <div className={styles.container} data-testid={testId}>
       <TabsBar className={styles.tabs}>
         {tabs.map((t) => (
           <Tab

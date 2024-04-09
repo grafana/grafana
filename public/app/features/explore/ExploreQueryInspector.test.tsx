@@ -47,7 +47,6 @@ jest.mock('react-virtualized-auto-sizer', () => {
 
 const setup = (propOverrides = {}) => {
   const props: ExploreQueryInspectorProps = {
-    width: 100,
     exploreId: 'left',
     onClose: jest.fn(),
     timeZone: InternalTimeZones.utc,

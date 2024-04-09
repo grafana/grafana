@@ -16,10 +16,10 @@ import { ShowConfirmModalEvent } from '../../../types/events';
 export interface RichHistorySettingsProps {
   retentionPeriod: number;
   starredTabAsFirstTab: boolean;
-  activeDatasourceOnly: boolean;
+  activeDatasourcesOnly: boolean;
   onChangeRetentionPeriod: (option: SelectableValue<number>) => void;
   toggleStarredTabAsFirstTab: () => void;
-  toggleactiveDatasourceOnly: () => void;
+  toggleActiveDatasourcesOnly: () => void;
   deleteRichHistory: () => void;
 }
 
@@ -54,10 +54,10 @@ export function RichHistorySettingsTab(props: RichHistorySettingsProps) {
   const {
     retentionPeriod,
     starredTabAsFirstTab,
-    activeDatasourceOnly,
+    activeDatasourcesOnly,
     onChangeRetentionPeriod,
     toggleStarredTabAsFirstTab,
-    toggleactiveDatasourceOnly,
+    toggleActiveDatasourcesOnly,
     deleteRichHistory,
   } = props;
   const styles = useStyles2(getStyles);
@@ -136,8 +136,8 @@ export function RichHistorySettingsTab(props: RichHistorySettingsProps) {
         >
           <InlineSwitch
             id="explore-query-history-settings-data-source-behavior"
-            value={activeDatasourceOnly}
-            onChange={toggleactiveDatasourceOnly}
+            value={activeDatasourcesOnly}
+            onChange={toggleActiveDatasourcesOnly}
           />
         </InlineField>
       )}

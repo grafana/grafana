@@ -64,6 +64,18 @@ export interface ExploreState {
   panes: Record<string, ExploreItemState | undefined>;
 
   /**
+   * Is the drawer for query history showing
+   */
+  showQueryHistory: boolean;
+
+  /**
+   * History of all queries
+   */
+  richHistory: RichHistoryQuery[];
+  richHistorySearchFilters?: RichHistorySearchFilters;
+  richHistoryTotal?: number;
+
+  /**
    * Settings for rich history (note: filters are stored per each pane separately)
    */
   richHistorySettings?: RichHistorySettings;
@@ -205,13 +217,6 @@ export interface ExploreItemState {
   showNodeGraph?: boolean;
   showFlameGraph?: boolean;
   showCustom?: boolean;
-
-  /**
-   * History of all queries
-   */
-  richHistory: RichHistoryQuery[];
-  richHistorySearchFilters?: RichHistorySearchFilters;
-  richHistoryTotal?: number;
 
   /**
    * We are using caching to store query responses of queries run from logs navigation.
