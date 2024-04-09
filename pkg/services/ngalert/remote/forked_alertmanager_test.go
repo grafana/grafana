@@ -314,14 +314,6 @@ func TestForkedAlertmanager_ModeRemoteSecondary(t *testing.T) {
 		require.ErrorIs(tt, expErr, err)
 	})
 
-	t.Run("CleanUp", func(tt *testing.T) {
-		// CleanUp should be called only in the internal Alertmanager,
-		// there's no cleanup to do in the remote one.
-		internal, _, forked := genTestAlertmanagers(tt, modeRemoteSecondary)
-		internal.EXPECT().CleanUp().Once()
-		forked.CleanUp()
-	})
-
 	t.Run("StopAndWait", func(tt *testing.T) {
 		{
 			// StopAndWait should be called in both Alertmanagers.
@@ -587,14 +579,6 @@ func TestForkedAlertmanager_ModeRemotePrimary(t *testing.T) {
 		remote.EXPECT().TestTemplate(mock.Anything, mock.Anything).Return(nil, expErr).Once()
 		_, err = forked.TestTemplate(ctx, apimodels.TestTemplatesConfigBodyParams{})
 		require.ErrorIs(tt, expErr, err)
-	})
-
-	t.Run("CleanUp", func(tt *testing.T) {
-		// CleanUp should be called only in the internal Alertmanager,
-		// there's no cleanup to do in the remote one.
-		internal, _, forked := genTestAlertmanagers(tt, modeRemotePrimary)
-		internal.EXPECT().CleanUp().Once()
-		forked.CleanUp()
 	})
 
 	t.Run("StopAndWait", func(tt *testing.T) {
