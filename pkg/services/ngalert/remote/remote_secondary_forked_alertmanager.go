@@ -6,6 +6,8 @@ import (
 	"sync"
 	"time"
 
+	alertingNotify "github.com/grafana/alerting/notify"
+
 	"github.com/grafana/grafana/pkg/infra/log"
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
@@ -163,6 +165,10 @@ func (fam *RemoteSecondaryForkedAlertmanager) TestReceivers(ctx context.Context,
 
 func (fam *RemoteSecondaryForkedAlertmanager) TestTemplate(ctx context.Context, c apimodels.TestTemplatesConfigBodyParams) (*notifier.TestTemplatesResults, error) {
 	return fam.internal.TestTemplate(ctx, c)
+}
+
+func (fam *RemoteSecondaryForkedAlertmanager) SilenceState(ctx context.Context) (alertingNotify.SilenceState, error) {
+	return fam.internal.SilenceState(ctx)
 }
 
 func (fam *RemoteSecondaryForkedAlertmanager) StopAndWait() {
