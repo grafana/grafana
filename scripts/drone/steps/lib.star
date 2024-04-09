@@ -113,33 +113,33 @@ import sys
 import time
 
 def is_fork(pr):
-	print(f'Checking if PR {pr} is a fork')
-	api_url = f'https://api.github.com/repos/grafana/grafana/pulls/{pr}'
+	print(f"Checking if PR {pr} is a fork")
+	api_url = f"https://api.github.com/repos/grafana/grafana/pulls/{pr}"
 
 	# Headers with authentication token
 	headers = {
-	'Authorization': 'token: {}'.format(os.environ.get('GITHUB_TOKEN')),
-	'Accept': 'application/json'
+	"Authorization": "token: {}".format(os.environ.get("GITHUB_TOKEN")),
+	"Accept": "application/json"
 	}
 
 	retries = 5
 	for i in range(retries): 
 		r = requests.get(api_url, headers=headers)
-		print(f'API response code: {r.status_code}: {retries - i} retries left')
+		print(f"API response code: {r.status_code}: {retries - i} retries left: {r.headers.get("X-RateLimit-Remaining")} requests left")
 		if r.status_code == 200:
-			return r.json()['head']['repo']['fork']
-		if r.headers.get('X-RateLimit-Remaining') == 0:
-			reset_time_utc = int(r.headers['X-RateLimit-Reset'])
+			return r.json()["head"]["repo"]["fork"]
+		if r.headers.get("X-RateLimit-Remaining") == 0:
+			reset_time_utc = int(r.headers["X-RateLimit-Reset"])
 			current_time_utc = datetime.now(timezone.utc)
 			timestamp_utc = int(current_time_utc.timestamp())
 
 			seconds_until_reset = max(0, reset_time_utc - timestamp_utc)
 			print(f"Sleeping for {seconds_until_reset} seconds until X-RateLimit-Reset")
-			sleep(r.headers.get('X-RateLimit-Reset'))
+			sleep(seconds_until_reset)
 	else:
-		raise Exception('Failed to get PR information: retries exceeded')
+		raise Exception("Failed to get PR information: retries exceeded")
 
-if is_fork(os.environ.get('PULL_REQUEST')):
+if is_fork(os.environ.get("PULL_REQUEST")):
 	sys.exit(1)
 '
 """,
