@@ -109,7 +109,10 @@ export function ToolbarActions({ dashboard }: Props) {
     group: 'icon-actions',
     condition: meta.isSnapshot && !isEditing,
     render: () => (
-      <GoToSnapshotOriginButton originalURL={dashboard.getInitialSaveModel()?.snapshot?.originalUrl ?? ''} />
+      <GoToSnapshotOriginButton
+        key="go-to-snapshot-origin"
+        originalURL={dashboard.getInitialSaveModel()?.snapshot?.originalUrl ?? ''}
+      />
     ),
   });
 
@@ -123,6 +126,7 @@ export function ToolbarActions({ dashboard }: Props) {
     condition: isEditingAndShowingDashboard,
     render: () => (
       <Dropdown
+        key="add-panel-dropdown"
         onVisibleChange={(isOpen) => {
           setIsAddPanelMenuOpen(isOpen);
           DashboardInteractions.toolbarAddClick();
@@ -173,6 +177,7 @@ export function ToolbarActions({ dashboard }: Props) {
         offset={[0, 6]}
       >
         <Button
+          key="add-panel-button"
           variant="primary"
           size="sm"
           fill="outline"
