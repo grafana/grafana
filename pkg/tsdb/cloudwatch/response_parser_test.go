@@ -363,7 +363,7 @@ func Test_buildDataFrames_parse_label_to_name_and_labels(t *testing.T) {
 		assert.Equal(t, "res", frames[1].Fields[1].Labels["Resource"])
 	})
 
-	t.Run("when not using multi-value dimension filters", func(t *testing.T) {
+	t.Run("when not using multi-value dimension filters on a `MetricSearch` query", func(t *testing.T) {
 		timestamp := time.Unix(0, 0)
 		response := &models.QueryRowResponse{
 			Metrics: []*cloudwatch.MetricDataResult{
@@ -403,7 +403,7 @@ func Test_buildDataFrames_parse_label_to_name_and_labels(t *testing.T) {
 		assert.Equal(t, "res", frames[0].Fields[1].Labels["Resource"])
 	})
 
-	t.Run("when non-static label set on query", func(t *testing.T) {
+	t.Run("when non-static label set on a `MetricSearch` query", func(t *testing.T) {
 		timestamp := time.Unix(0, 0)
 		response := &models.QueryRowResponse{
 			Metrics: []*cloudwatch.MetricDataResult{
@@ -444,7 +444,7 @@ func Test_buildDataFrames_parse_label_to_name_and_labels(t *testing.T) {
 		assert.Equal(t, "res", frames[0].Fields[1].Labels["Resource"])
 	})
 
-	t.Run("when static label set on `MetricSearch` query", func(t *testing.T) {
+	t.Run("when static label set on a `MetricSearch` query", func(t *testing.T) {
 		timestamp := time.Unix(0, 0)
 		response := &models.QueryRowResponse{
 			Metrics: []*cloudwatch.MetricDataResult{
@@ -567,7 +567,7 @@ func Test_buildDataFrames_parse_label_to_name_and_labels(t *testing.T) {
 			Metrics: []*cloudwatch.MetricDataResult{
 				{
 					Id:    aws.String("query1"),
-					Label: aws.String("1 - series"),
+					Label: aws.String("my-static-label series"),
 					Timestamps: []*time.Time{
 						aws.Time(timestamp),
 					},

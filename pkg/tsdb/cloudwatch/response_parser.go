@@ -200,8 +200,7 @@ func buildDataFrames(ctx context.Context, startTime time.Time, endTime time.Time
 			if hasStaticLabel {
 				metricQueryLabel = query.Label
 			}
-			labels = data.Labels{}
-			labels["Series"] = metricQueryLabel
+			labels = data.Labels{"Series": metricQueryLabel}
 		} else if features.IsEnabled(ctx, features.FlagCloudWatchNewLabelParsing) {
 			name, labels = parseLabels(label, query)
 		} else {
