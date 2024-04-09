@@ -143,11 +143,11 @@ steps:
     is a fork\")\n\tapi_url = f\"https://api.github.com/repos/grafana/grafana/pulls/{pr}\"\n\n\t#
     Headers with authentication token\n\theaders = {\n\t\"Authorization\": \"token:
     {}\".format(os.environ.get(\"GITHUB_TOKEN\")),\n\t\"Accept\": \"application/json\"\n\t}\n\n\tretries
-    = 5\n\tfor i in range(retries): \n\t\tr = requests.get(api_url, headers=headers)\n\t\tprint(f\"API
-    response code: {r.status_code}: {retries - i} retries left: {r.headers.get(\"X-RateLimit-Remaining\")}
-    requests left\")\n\t\tprint(r.headers)\n\t\tif r.status_code == 200:\n\t\t\treturn
-    r.json()[\"head\"][\"repo\"][\"fork\"]\n\t\tif r.headers.get(\"X-RateLimit-Remaining\")
-    == 0:\n\t\t\treset_time_utc = int(r.headers[\"X-RateLimit-Reset\"])\n\t\t\tcurrent_time_utc
+    = 5\n\tfor i in range(retries): \n\t\tr = requests.get(api_url, headers=headers)\n\t\tstatus_code
+    = r.status_code\n\t\tretries -= 1\n\t\tratelimit_remaining = r.headers.get(\"X-RateLimit-Remaining\")\n\t\tprint(f\"API
+    response code: {status_code}: {retries} retries left: {ratelimit_remaining} requests
+    left\")\n\t\tif r.status_code == 200:\n\t\t\treturn r.json()[\"head\"][\"repo\"][\"fork\"]\n\t\tif
+    r.headers.get(\"X-RateLimit-Remaining\") == 0:\n\t\t\treset_time_utc = int(r.headers[\"X-RateLimit-Reset\"])\n\t\t\tcurrent_time_utc
     = datetime.now(timezone.utc)\n\t\t\ttimestamp_utc = int(current_time_utc.timestamp())\n\n\t\t\tseconds_until_reset
     = max(0, reset_time_utc - timestamp_utc)\n\t\t\tprint(f\"Sleeping for {seconds_until_reset}
     seconds until X-RateLimit-Reset\")\n\t\t\tsleep(seconds_until_reset)\n\telse:\n\t\traise
@@ -222,11 +222,11 @@ steps:
     is a fork\")\n\tapi_url = f\"https://api.github.com/repos/grafana/grafana/pulls/{pr}\"\n\n\t#
     Headers with authentication token\n\theaders = {\n\t\"Authorization\": \"token:
     {}\".format(os.environ.get(\"GITHUB_TOKEN\")),\n\t\"Accept\": \"application/json\"\n\t}\n\n\tretries
-    = 5\n\tfor i in range(retries): \n\t\tr = requests.get(api_url, headers=headers)\n\t\tprint(f\"API
-    response code: {r.status_code}: {retries - i} retries left: {r.headers.get(\"X-RateLimit-Remaining\")}
-    requests left\")\n\t\tprint(r.headers)\n\t\tif r.status_code == 200:\n\t\t\treturn
-    r.json()[\"head\"][\"repo\"][\"fork\"]\n\t\tif r.headers.get(\"X-RateLimit-Remaining\")
-    == 0:\n\t\t\treset_time_utc = int(r.headers[\"X-RateLimit-Reset\"])\n\t\t\tcurrent_time_utc
+    = 5\n\tfor i in range(retries): \n\t\tr = requests.get(api_url, headers=headers)\n\t\tstatus_code
+    = r.status_code\n\t\tretries -= 1\n\t\tratelimit_remaining = r.headers.get(\"X-RateLimit-Remaining\")\n\t\tprint(f\"API
+    response code: {status_code}: {retries} retries left: {ratelimit_remaining} requests
+    left\")\n\t\tif r.status_code == 200:\n\t\t\treturn r.json()[\"head\"][\"repo\"][\"fork\"]\n\t\tif
+    r.headers.get(\"X-RateLimit-Remaining\") == 0:\n\t\t\treset_time_utc = int(r.headers[\"X-RateLimit-Reset\"])\n\t\t\tcurrent_time_utc
     = datetime.now(timezone.utc)\n\t\t\ttimestamp_utc = int(current_time_utc.timestamp())\n\n\t\t\tseconds_until_reset
     = max(0, reset_time_utc - timestamp_utc)\n\t\t\tprint(f\"Sleeping for {seconds_until_reset}
     seconds until X-RateLimit-Reset\")\n\t\t\tsleep(seconds_until_reset)\n\telse:\n\t\traise
@@ -328,11 +328,11 @@ steps:
     is a fork\")\n\tapi_url = f\"https://api.github.com/repos/grafana/grafana/pulls/{pr}\"\n\n\t#
     Headers with authentication token\n\theaders = {\n\t\"Authorization\": \"token:
     {}\".format(os.environ.get(\"GITHUB_TOKEN\")),\n\t\"Accept\": \"application/json\"\n\t}\n\n\tretries
-    = 5\n\tfor i in range(retries): \n\t\tr = requests.get(api_url, headers=headers)\n\t\tprint(f\"API
-    response code: {r.status_code}: {retries - i} retries left: {r.headers.get(\"X-RateLimit-Remaining\")}
-    requests left\")\n\t\tprint(r.headers)\n\t\tif r.status_code == 200:\n\t\t\treturn
-    r.json()[\"head\"][\"repo\"][\"fork\"]\n\t\tif r.headers.get(\"X-RateLimit-Remaining\")
-    == 0:\n\t\t\treset_time_utc = int(r.headers[\"X-RateLimit-Reset\"])\n\t\t\tcurrent_time_utc
+    = 5\n\tfor i in range(retries): \n\t\tr = requests.get(api_url, headers=headers)\n\t\tstatus_code
+    = r.status_code\n\t\tretries -= 1\n\t\tratelimit_remaining = r.headers.get(\"X-RateLimit-Remaining\")\n\t\tprint(f\"API
+    response code: {status_code}: {retries} retries left: {ratelimit_remaining} requests
+    left\")\n\t\tif r.status_code == 200:\n\t\t\treturn r.json()[\"head\"][\"repo\"][\"fork\"]\n\t\tif
+    r.headers.get(\"X-RateLimit-Remaining\") == 0:\n\t\t\treset_time_utc = int(r.headers[\"X-RateLimit-Reset\"])\n\t\t\tcurrent_time_utc
     = datetime.now(timezone.utc)\n\t\t\ttimestamp_utc = int(current_time_utc.timestamp())\n\n\t\t\tseconds_until_reset
     = max(0, reset_time_utc - timestamp_utc)\n\t\t\tprint(f\"Sleeping for {seconds_until_reset}
     seconds until X-RateLimit-Reset\")\n\t\t\tsleep(seconds_until_reset)\n\telse:\n\t\traise
@@ -463,11 +463,11 @@ steps:
     is a fork\")\n\tapi_url = f\"https://api.github.com/repos/grafana/grafana/pulls/{pr}\"\n\n\t#
     Headers with authentication token\n\theaders = {\n\t\"Authorization\": \"token:
     {}\".format(os.environ.get(\"GITHUB_TOKEN\")),\n\t\"Accept\": \"application/json\"\n\t}\n\n\tretries
-    = 5\n\tfor i in range(retries): \n\t\tr = requests.get(api_url, headers=headers)\n\t\tprint(f\"API
-    response code: {r.status_code}: {retries - i} retries left: {r.headers.get(\"X-RateLimit-Remaining\")}
-    requests left\")\n\t\tprint(r.headers)\n\t\tif r.status_code == 200:\n\t\t\treturn
-    r.json()[\"head\"][\"repo\"][\"fork\"]\n\t\tif r.headers.get(\"X-RateLimit-Remaining\")
-    == 0:\n\t\t\treset_time_utc = int(r.headers[\"X-RateLimit-Reset\"])\n\t\t\tcurrent_time_utc
+    = 5\n\tfor i in range(retries): \n\t\tr = requests.get(api_url, headers=headers)\n\t\tstatus_code
+    = r.status_code\n\t\tretries -= 1\n\t\tratelimit_remaining = r.headers.get(\"X-RateLimit-Remaining\")\n\t\tprint(f\"API
+    response code: {status_code}: {retries} retries left: {ratelimit_remaining} requests
+    left\")\n\t\tif r.status_code == 200:\n\t\t\treturn r.json()[\"head\"][\"repo\"][\"fork\"]\n\t\tif
+    r.headers.get(\"X-RateLimit-Remaining\") == 0:\n\t\t\treset_time_utc = int(r.headers[\"X-RateLimit-Reset\"])\n\t\t\tcurrent_time_utc
     = datetime.now(timezone.utc)\n\t\t\ttimestamp_utc = int(current_time_utc.timestamp())\n\n\t\t\tseconds_until_reset
     = max(0, reset_time_utc - timestamp_utc)\n\t\t\tprint(f\"Sleeping for {seconds_until_reset}
     seconds until X-RateLimit-Reset\")\n\t\t\tsleep(seconds_until_reset)\n\telse:\n\t\traise
@@ -955,11 +955,11 @@ steps:
     is a fork\")\n\tapi_url = f\"https://api.github.com/repos/grafana/grafana/pulls/{pr}\"\n\n\t#
     Headers with authentication token\n\theaders = {\n\t\"Authorization\": \"token:
     {}\".format(os.environ.get(\"GITHUB_TOKEN\")),\n\t\"Accept\": \"application/json\"\n\t}\n\n\tretries
-    = 5\n\tfor i in range(retries): \n\t\tr = requests.get(api_url, headers=headers)\n\t\tprint(f\"API
-    response code: {r.status_code}: {retries - i} retries left: {r.headers.get(\"X-RateLimit-Remaining\")}
-    requests left\")\n\t\tprint(r.headers)\n\t\tif r.status_code == 200:\n\t\t\treturn
-    r.json()[\"head\"][\"repo\"][\"fork\"]\n\t\tif r.headers.get(\"X-RateLimit-Remaining\")
-    == 0:\n\t\t\treset_time_utc = int(r.headers[\"X-RateLimit-Reset\"])\n\t\t\tcurrent_time_utc
+    = 5\n\tfor i in range(retries): \n\t\tr = requests.get(api_url, headers=headers)\n\t\tstatus_code
+    = r.status_code\n\t\tretries -= 1\n\t\tratelimit_remaining = r.headers.get(\"X-RateLimit-Remaining\")\n\t\tprint(f\"API
+    response code: {status_code}: {retries} retries left: {ratelimit_remaining} requests
+    left\")\n\t\tif r.status_code == 200:\n\t\t\treturn r.json()[\"head\"][\"repo\"][\"fork\"]\n\t\tif
+    r.headers.get(\"X-RateLimit-Remaining\") == 0:\n\t\t\treset_time_utc = int(r.headers[\"X-RateLimit-Reset\"])\n\t\t\tcurrent_time_utc
     = datetime.now(timezone.utc)\n\t\t\ttimestamp_utc = int(current_time_utc.timestamp())\n\n\t\t\tseconds_until_reset
     = max(0, reset_time_utc - timestamp_utc)\n\t\t\tprint(f\"Sleeping for {seconds_until_reset}
     seconds until X-RateLimit-Reset\")\n\t\t\tsleep(seconds_until_reset)\n\telse:\n\t\traise
@@ -1311,11 +1311,11 @@ steps:
     is a fork\")\n\tapi_url = f\"https://api.github.com/repos/grafana/grafana/pulls/{pr}\"\n\n\t#
     Headers with authentication token\n\theaders = {\n\t\"Authorization\": \"token:
     {}\".format(os.environ.get(\"GITHUB_TOKEN\")),\n\t\"Accept\": \"application/json\"\n\t}\n\n\tretries
-    = 5\n\tfor i in range(retries): \n\t\tr = requests.get(api_url, headers=headers)\n\t\tprint(f\"API
-    response code: {r.status_code}: {retries - i} retries left: {r.headers.get(\"X-RateLimit-Remaining\")}
-    requests left\")\n\t\tprint(r.headers)\n\t\tif r.status_code == 200:\n\t\t\treturn
-    r.json()[\"head\"][\"repo\"][\"fork\"]\n\t\tif r.headers.get(\"X-RateLimit-Remaining\")
-    == 0:\n\t\t\treset_time_utc = int(r.headers[\"X-RateLimit-Reset\"])\n\t\t\tcurrent_time_utc
+    = 5\n\tfor i in range(retries): \n\t\tr = requests.get(api_url, headers=headers)\n\t\tstatus_code
+    = r.status_code\n\t\tretries -= 1\n\t\tratelimit_remaining = r.headers.get(\"X-RateLimit-Remaining\")\n\t\tprint(f\"API
+    response code: {status_code}: {retries} retries left: {ratelimit_remaining} requests
+    left\")\n\t\tif r.status_code == 200:\n\t\t\treturn r.json()[\"head\"][\"repo\"][\"fork\"]\n\t\tif
+    r.headers.get(\"X-RateLimit-Remaining\") == 0:\n\t\t\treset_time_utc = int(r.headers[\"X-RateLimit-Reset\"])\n\t\t\tcurrent_time_utc
     = datetime.now(timezone.utc)\n\t\t\ttimestamp_utc = int(current_time_utc.timestamp())\n\n\t\t\tseconds_until_reset
     = max(0, reset_time_utc - timestamp_utc)\n\t\t\tprint(f\"Sleeping for {seconds_until_reset}
     seconds until X-RateLimit-Reset\")\n\t\t\tsleep(seconds_until_reset)\n\telse:\n\t\traise
@@ -5013,6 +5013,6 @@ kind: secret
 name: gcr_credentials
 ---
 kind: signature
-hmac: d1a8104cf9da0a5c37bd665529ca273c527c5ef306b9d1b416663629c834a261
+hmac: c4ce905e79099a60c1d87cb994c8378850764d069b573fe781eeb994aab0864a
 
 ...

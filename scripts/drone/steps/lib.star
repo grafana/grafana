@@ -103,7 +103,7 @@ def clone_enterprise_step_pr(source = "${DRONE_COMMIT}", target = "main", canFai
         check = []
     else:
         packages += ["python3", "py3-pip"]
-        pip_cmd += ["pip install requests"]
+        pip_cmd.append("pip install requests")
         check = [
             """python -c '
 from datetime import datetime, timezone
@@ -125,7 +125,10 @@ def is_fork(pr):
 	retries = 5
 	for i in range(retries): 
 		r = requests.get(api_url, headers=headers)
-		print(f"API response code: {r.status_code}: {retries - i} retries left: {r.headers.get("X-RateLimit-Remaining")} requests left")
+		status_code = r.status_code
+		retries -= 1
+		ratelimit_remaining = r.headers.get("X-RateLimit-Remaining")
+		print(f"API response code: {status_code}: {retries} retries left: {ratelimit_remaining} requests left")
 		if r.status_code == 200:
 			return r.json()["head"]["repo"]["fork"]
 		if r.headers.get("X-RateLimit-Remaining") == 0:
