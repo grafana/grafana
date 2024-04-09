@@ -129,6 +129,11 @@ func (c *spyLegacyStorageClient) Get(ctx context.Context, name string, options *
 	return nil, nil
 }
 
+func (c *spyLegacyStorageClient) NewList() runtime.Object {
+	// stub for now so that spyLegacyStorageClient implements rest.Lister
+	return nil
+}
+
 func (c *spyLegacyStorageClient) List(ctx context.Context, options *metainternalversion.ListOptions) (runtime.Object, error) {
 	c.spy.record("LegacyStorage.List")
 	klog.Info("method: LegacyStorage.List")
