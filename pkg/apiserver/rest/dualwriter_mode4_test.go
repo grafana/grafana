@@ -28,5 +28,4 @@ func TestMode4(t *testing.T) {
 	assert.NoError(t, err)
 	assert.Equal(t, 0, lsSpy.Counts("LegacyStorage.List"))
 	assert.Equal(t, 1, sSpy.Counts("Storage.List"))
-
 }
