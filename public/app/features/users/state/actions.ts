@@ -19,6 +19,8 @@ import {
   rolesFetchEnd,
 } from './reducers';
 
+export { setUserRoles } from './reducers';
+
 export function loadUsers(): ThunkResult<void> {
   return async (dispatch, getState) => {
     try {

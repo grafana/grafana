@@ -1,7 +1,7 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 
 import config from 'app/core/config';
-import { OrgUser, UsersState } from 'app/types';
+import { OrgUser, UsersState, Role } from 'app/types';
 
 export const initialState: UsersState = {
   users: [],
@@ -28,6 +28,11 @@ export interface UsersRolesFetchResult {
   perPage: number;
   page: number;
   totalCount: number;
+}
+
+export interface SetUserRolesPayload {
+  userId: number;
+  roles: Role[];
 }
 
 const usersSlice = createSlice({
@@ -74,6 +79,15 @@ const usersSlice = createSlice({
     rolesFetchEnd: (state) => {
       return { ...state, rolesLoading: false };
     },
+    setUserRoles: (state, action: PayloadAction<SetUserRolesPayload>): UsersState => {
+      return {
+        ...state,
+        users: state.users.map((user) => ({
+          ...user,
+          roles: action.payload.userId === user.userId ? action.payload.roles : user.roles,
+        })),
+      };
+    },
   },
 });
 
@@ -87,6 +101,7 @@ export const {
   sortChanged,
   rolesFetchBegin,
   rolesFetchEnd,
+  setUserRoles,
 } = usersSlice.actions;
 
 export const usersReducer = usersSlice.reducer;

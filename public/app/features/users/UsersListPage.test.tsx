@@ -7,7 +7,7 @@ import { configureStore } from 'app/store/configureStore';
 import { Invitee, OrgUser } from 'app/types';
 
 import { Props, UsersListPageUnconnected } from './UsersListPage';
-import { pageChanged, sortChanged } from './state/reducers';
+import { pageChanged, sortChanged, setUserRoles } from './state/reducers';
 
 jest.mock('../../core/app_events', () => ({
   emit: jest.fn(),
@@ -35,6 +35,7 @@ const setup = (propOverrides?: object) => {
     loadUsers: jest.fn(),
     updateUser: jest.fn(),
     removeUser: jest.fn(),
+    setUserRoles: mockToolkitActionCreator(setUserRoles),
     changePage: mockToolkitActionCreator(pageChanged),
     changeSort: mockToolkitActionCreator(sortChanged),
     isLoading: false,

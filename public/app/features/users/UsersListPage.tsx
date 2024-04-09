@@ -12,7 +12,7 @@ import { fetchInvitees } from '../invites/state/actions';
 import { selectInvitesMatchingQuery } from '../invites/state/selectors';
 
 import { UsersActionBar } from './UsersActionBar';
-import { loadUsers, removeUser, updateUser, changePage, changeSort } from './state/actions';
+import { loadUsers, removeUser, updateUser, setUserRoles, changePage, changeSort } from './state/actions';
 import { getUsers, getUsersSearchQuery } from './state/selectors';
 
 function mapStateToProps(state: StoreState) {
@@ -37,6 +37,7 @@ const mapDispatchToProps = {
   changeSort,
   updateUser,
   removeUser,
+  setUserRoles,
 };
 
 const connector = connect(mapStateToProps, mapDispatchToProps);
@@ -61,6 +62,7 @@ export const UsersListPageUnconnected = ({
   updateUser,
   removeUser,
   changeSort,
+  setUserRoles,
 }: Props) => {
   const [showInvites, setShowInvites] = useState(false);
   const externalUserMngInfoHtml = externalUserMngInfo ? renderMarkdown(externalUserMngInfo) : '';
@@ -75,7 +77,10 @@ export const UsersListPageUnconnected = ({
   };
 
   const onRolesChange = (user: OrgUser, roles: Role[]) => {
-    updateUser({ ...user, roles });
+    setUserRoles({
+      userId: user.userId,
+      roles,
+    });
   };
 
   const onRemoveUser = (user: OrgUser) => removeUser(user.userId);
