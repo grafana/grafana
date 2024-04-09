@@ -5,6 +5,7 @@ import (
 	"strconv"
 
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/infra/log/slogadapter"
 	"github.com/spf13/pflag"
 	genericapiserver "k8s.io/apiserver/pkg/server"
 	"k8s.io/component-base/logs"
@@ -37,7 +38,7 @@ func (o *ExtraOptions) Validate() []error {
 }
 
 func (o *ExtraOptions) ApplyTo(c *genericapiserver.RecommendedConfig) error {
-	handler := log.NewSLogHandler(log.New("grafana-apiserver"))
+	handler := slogadapter.NewSLogHandler(log.New("grafana-apiserver"))
 	logger := slog.New(handler)
 
 	klog.SetSlogLogger(logger)
