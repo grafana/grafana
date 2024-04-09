@@ -4,6 +4,7 @@ import React, { CSSProperties } from 'react';
 import { GrafanaTheme2 } from '@grafana/data';
 
 import { useStyles2 } from '../../themes';
+import { handleReducedMotion } from '../../utils/handleReducedMotion';
 
 export interface LoadingBarProps {
   width: number;
@@ -51,11 +52,18 @@ const getStyles = (_theme: GrafanaTheme2, delay: number, duration: number) => {
       transform: 'translateX(-100%)',
       animationName: animation,
       // an initial delay to prevent the loader from showing if the response is faster than the delay
-      animationDelay: `${delay}ms`,
-      animationDuration: `${duration}ms`,
       animationTimingFunction: 'linear',
       animationIterationCount: 'infinite',
       willChange: 'transform',
+      ...handleReducedMotion(
+        {
+          animationDelay: `${delay}ms`,
+          animationDuration: `${duration}ms`,
+        },
+        {
+          animationDuration: `${4 * duration}ms`,
+        }
+      ),
     }),
   };
 };
