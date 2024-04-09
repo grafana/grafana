@@ -39,11 +39,10 @@ var _ entity.EntityStoreServer = &sqlEntityServer{}
 
 func ProvideSQLEntityServer(db db.EntityDBInterface, tracer tracing.Tracer /*, cfg *setting.Cfg */) (SqlEntityServer, error) {
 	ctx, cancel := context.WithCancel(context.Background())
-	log := log.New("sql-entity-server")
 
 	entityServer := &sqlEntityServer{
 		db:     db,
-		log:    log.FromContext(ctx),
+		log:    log.New("sql-entity-server"),
 		ctx:    ctx,
 		cancel: cancel,
 		tracer: tracer,
@@ -229,6 +228,10 @@ func readEntity(rows *sql.Rows, r FieldSelectRequest) (*entity.Entity, error) {
 }
 
 func (s *sqlEntityServer) Read(ctx context.Context, r *entity.ReadEntityRequest) (*entity.Entity, error) {
+	ctx, span := s.tracer.Start(ctx, "storage_server.Read")
+	defer span.End()
+	s.log = s.log.FromContext(ctx)
+
 	if err := s.Init(); err != nil {
 		return nil, err
 	}
@@ -298,6 +301,7 @@ func (s *sqlEntityServer) read(ctx context.Context, tx session.SessionQuerier, r
 func (s *sqlEntityServer) Create(ctx context.Context, r *entity.CreateEntityRequest) (*entity.CreateEntityResponse, error) {
 	ctx, span := s.tracer.Start(ctx, "storage_server.Create")
 	defer span.End()
+	s.log = s.log.FromContext(ctx)
 
 	if err := s.Init(); err != nil {
 		return nil, err
@@ -519,6 +523,7 @@ func (s *sqlEntityServer) Create(ctx context.Context, r *entity.CreateEntityRequ
 func (s *sqlEntityServer) Update(ctx context.Context, r *entity.UpdateEntityRequest) (*entity.UpdateEntityResponse, error) {
 	ctx, span := s.tracer.Start(ctx, "storage_server.Update")
 	defer span.End()
+	s.log = s.log.FromContext(ctx)
 
 	if err := s.Init(); err != nil {
 		return nil, err
@@ -797,6 +802,7 @@ func (s *sqlEntityServer) setLabels(ctx context.Context, tx *session.SessionTx, 
 func (s *sqlEntityServer) Delete(ctx context.Context, r *entity.DeleteEntityRequest) (*entity.DeleteEntityResponse, error) {
 	ctx, span := s.tracer.Start(ctx, "storage_server.Delete")
 	defer span.End()
+	s.log = s.log.FromContext(ctx)
 
 	if err := s.Init(); err != nil {
 		return nil, err
@@ -974,6 +980,7 @@ func (s *sqlEntityServer) doDelete(ctx context.Context, tx *session.SessionTx, e
 func (s *sqlEntityServer) History(ctx context.Context, r *entity.EntityHistoryRequest) (*entity.EntityHistoryResponse, error) {
 	ctx, span := s.tracer.Start(ctx, "storage_server.History")
 	defer span.End()
+	s.log = s.log.FromContext(ctx)
 
 	if err := s.Init(); err != nil {
 		return nil, err
@@ -991,6 +998,9 @@ func (s *sqlEntityServer) History(ctx context.Context, r *entity.EntityHistoryRe
 }
 
 func (s *sqlEntityServer) history(ctx context.Context, r *entity.EntityHistoryRequest) (*entity.EntityHistoryResponse, error) {
+	ctx, span := s.tracer.Start(ctx, "storage_server.history")
+	defer span.End()
+
 	var limit int64 = 100
 	if r.Limit > 0 && r.Limit < 100 {
 		limit = r.Limit
@@ -1169,6 +1179,7 @@ func ParseSortBy(sort string) (*SortBy, error) {
 func (s *sqlEntityServer) List(ctx context.Context, r *entity.EntityListRequest) (*entity.EntityListResponse, error) {
 	ctx, span := s.tracer.Start(ctx, "storage_server.List")
 	defer span.End()
+	s.log = s.log.FromContext(ctx)
 
 	if err := s.Init(); err != nil {
 		return nil, err
@@ -1382,14 +1393,11 @@ func (s *sqlEntityServer) List(ctx context.Context, r *entity.EntityListRequest)
 }
 
 func (s *sqlEntityServer) Watch(w entity.EntityStore_WatchServer) error {
-	ctx, span := s.tracer.Start(w.Context(), "storage_server.Watch")
-	defer span.End()
-
 	if err := s.Init(); err != nil {
 		return err
 	}
 
-	user, err := appcontext.User(ctx)
+	user, err := appcontext.User(w.Context())
 	if err != nil {
 		return err
 	}
@@ -1404,7 +1412,7 @@ func (s *sqlEntityServer) Watch(w entity.EntityStore_WatchServer) error {
 
 	// collect and send any historical events
 	if r.SendInitialEvents {
-		r.Since, err = s.watchInit(ctx, r, w)
+		r.Since, err = s.watchInit(w.Context(), r, w)
 		if err != nil {
 			s.log.Error("watch init error", "err", err)
 			return err
@@ -1746,12 +1754,9 @@ func watchMatches(r *entity.EntityWatchRequest, result *entity.Entity) bool {
 
 // watch is a helper to get the next set of entities and send them to the client
 func (s *sqlEntityServer) watch(r *entity.EntityWatchRequest, w entity.EntityStore_WatchServer) error {
-	ctx, span := s.tracer.Start(w.Context(), "storage_server.watch")
-	defer span.End()
-
 	s.log.Debug("watch started", "since", r.Since)
 
-	evts, err := s.broadcaster.Subscribe(ctx)
+	evts, err := s.broadcaster.Subscribe(w.Context())
 	if err != nil {
 		return err
 	}
@@ -1860,6 +1865,7 @@ func (s *sqlEntityServer) watchEvent(r *entity.EntityWatchRequest, result *entit
 func (s *sqlEntityServer) FindReferences(ctx context.Context, r *entity.ReferenceRequest) (*entity.EntityListResponse, error) {
 	ctx, span := s.tracer.Start(ctx, "storage_server.FindReferences")
 	defer span.End()
+	s.log = s.log.FromContext(ctx)
 
 	if err := s.Init(); err != nil {
 		return nil, err
