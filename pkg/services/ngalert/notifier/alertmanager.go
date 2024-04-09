@@ -417,9 +417,6 @@ func (am *alertmanager) PutAlerts(_ context.Context, postableAlerts apimodels.Po
 	return am.Base.PutAlerts(alerts)
 }
 
-// CleanUp no-ops as no files are stored on disk.
-func (am *alertmanager) CleanUp() {}
-
 // AlertValidationError is the error capturing the validation errors
 // faced on the alerts.
 type AlertValidationError struct {
