@@ -1,13 +1,13 @@
 # End-to-End tests
 
-Grafana Labs uses a minimal [homegrown solution](../../packages/grafana-e2e) built on top of [Cypress](https://cypress.io) for its end-to-end (E2E) tests.
+Grafana Labs uses a minimal [homegrown solution](../../e2e/utils/index.ts) built on top of [Cypress](https://cypress.io) for its end-to-end (E2E) tests.
 
 Important notes:
 
 - We generally store all element identifiers ([CSS selectors](https://mdn.io/docs/Web/CSS/CSS_Selectors)) within the framework for reuse and maintainability.
 - We generally do not use stubs or mocks as to fully simulate a real user.
 - Cypress' promises [do not behave as you'd expect](https://docs.cypress.io/guides/core-concepts/introduction-to-cypress.html#Mixing-Async-and-Sync-code).
-- [Testing core Grafana](e2e-core.md) is slightly different than [testing plugins](e2e-plugins.md).
+- [Testing core Grafana](e2e-core.md) is different than [testing plugins](e2e-plugins.md) - core Grafana uses Cypress whereas plugins use [Playwright test](https://playwright.dev/).
 
 ## Framework structure
 
