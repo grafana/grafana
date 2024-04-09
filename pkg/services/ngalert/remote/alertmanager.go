@@ -401,9 +401,6 @@ func (am *Alertmanager) Ready() bool {
 	return am.ready
 }
 
-// CleanUp does not have an equivalent in a "remote Alertmanager" context, we don't have files on disk, no-op.
-func (am *Alertmanager) CleanUp() {}
-
 // getFullState returns a base64-encoded protobuf message representing the Alertmanager's internal state.
 func (am *Alertmanager) getFullState(ctx context.Context) (string, error) {
 	var parts []alertingClusterPB.Part
