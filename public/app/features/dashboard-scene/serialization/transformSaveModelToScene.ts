@@ -475,6 +475,16 @@ export function buildGridItemForLibPanel(panel: PanelModel) {
   });
 }
 
+const hoverHeaderOffsetBehavior = (grid: DashboardGridItem) => {
+  grid.subscribeToState((test) => {
+    grid.forEachChild((child) => {
+      if (child instanceof VizPanel) {
+        child.setState({ hoverHeaderOffset: grid.state.y === 0 ? 0 : undefined });
+      }
+    });
+  });
+};
+
 export function buildGridItemForPanel(panel: PanelModel): DashboardGridItem {
   const repeatDirection: RepeatDirection = panel.repeatDirection === 'h' ? 'h' : 'v';
   const repeatOptions = panel.repeat
@@ -506,6 +516,7 @@ export function buildGridItemForPanel(panel: PanelModel): DashboardGridItem {
     displayMode: panel.transparent ? 'transparent' : undefined,
     // To be replaced with it's own option persited option instead derived
     hoverHeader: !panel.title && !panel.timeFrom && !panel.timeShift,
+    hoverHeaderOffset: (panel.gridPos?.y ?? 0) === 0 ? 0 : undefined,
     $data: createPanelDataProvider(panel),
     titleItems,
 
@@ -539,6 +550,7 @@ export function buildGridItemForPanel(panel: PanelModel): DashboardGridItem {
     body,
     maxPerRow: panel.maxPerRow,
     ...repeatOptions,
+    $behaviors: [hoverHeaderOffsetBehavior],
   });
 }
 
