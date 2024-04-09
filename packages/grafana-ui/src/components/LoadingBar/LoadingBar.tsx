@@ -52,12 +52,12 @@ const getStyles = (_theme: GrafanaTheme2, delay: number, duration: number) => {
       transform: 'translateX(-100%)',
       animationName: animation,
       // an initial delay to prevent the loader from showing if the response is faster than the delay
+      animationDelay: `${delay}ms`,
       animationTimingFunction: 'linear',
       animationIterationCount: 'infinite',
       willChange: 'transform',
       ...handleReducedMotion(
         {
-          animationDelay: `${delay}ms`,
           animationDuration: `${duration}ms`,
         },
         {
