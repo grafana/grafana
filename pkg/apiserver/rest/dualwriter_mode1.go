@@ -24,7 +24,7 @@ func NewDualWriterMode1(legacy LegacyStorage, storage Storage) *DualWriterMode1 
 	return &DualWriterMode1{*NewDualWriter(legacy, storage)}
 }
 
-// Create overrides the generic DualWriter Create method and writes only to LegacyStorage.
+// Create overrides the behavior of the generic DualWriter and writes only to LegacyStorage.
 func (d *DualWriterMode1) Create(ctx context.Context, obj runtime.Object, createValidation rest.ValidateObjectFunc, options *metav1.CreateOptions) (runtime.Object, error) {
 	legacy, ok := d.Legacy.(rest.Creater)
 	if !ok {
@@ -40,7 +40,7 @@ func (d *DualWriterMode1) Get(ctx context.Context, name string, options *metav1.
 	return d.Legacy.Get(ctx, name, options)
 }
 
-// List overrides the generic DualWriter List method and reads only from LegacyStorage.
+// List overrides the behavior of the generic DualWriter and reads only from LegacyStorage.
 func (d *DualWriterMode1) List(ctx context.Context, options *metainternalversion.ListOptions) (runtime.Object, error) {
 	legacy, ok := d.Legacy.(rest.Lister)
 	if !ok {

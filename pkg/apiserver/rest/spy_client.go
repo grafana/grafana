@@ -6,6 +6,7 @@ import (
 	metainternalversion "k8s.io/apimachinery/pkg/apis/meta/internalversion"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apiserver/pkg/registry/rest"
 	"k8s.io/klog/v2"
 )
@@ -69,7 +70,7 @@ func (c *spyStorageClient) Get(ctx context.Context, name string, options *metav1
 func (c *spyStorageClient) List(ctx context.Context, options *metainternalversion.ListOptions) (runtime.Object, error) {
 	c.spy.record("Storage.List")
 	klog.Info("method: Storage.List")
-	return nil, nil
+	return &dummyObject{}, nil
 }
 
 func (c *spyStorageClient) Update(ctx context.Context, name string, objInfo rest.UpdatedObjectInfo, createValidation rest.ValidateObjectFunc, updateValidation rest.ValidateObjectUpdateFunc, forceAllowCreate bool, options *metav1.UpdateOptions) (runtime.Object, bool, error) {
@@ -137,7 +138,7 @@ func (c *spyLegacyStorageClient) NewList() runtime.Object {
 func (c *spyLegacyStorageClient) List(ctx context.Context, options *metainternalversion.ListOptions) (runtime.Object, error) {
 	c.spy.record("LegacyStorage.List")
 	klog.Info("method: LegacyStorage.List")
-	return nil, nil
+	return &dummyObject{}, nil
 }
 
 func (c *spyLegacyStorageClient) Update(ctx context.Context, name string, objInfo rest.UpdatedObjectInfo, createValidation rest.ValidateObjectFunc, updateValidation rest.ValidateObjectUpdateFunc, forceAllowCreate bool, options *metav1.UpdateOptions) (runtime.Object, bool, error) {
@@ -150,4 +151,16 @@ func (c *spyLegacyStorageClient) Delete(ctx context.Context, name string, delete
 	c.spy.record("LegacyStorage.Delete")
 	klog.Info("method: LegacyStorage.Delete")
 	return nil, false, nil
+}
+
+type dummyObject struct {
+	Items []dummyObject
+}
+
+func (d dummyObject) GetObjectKind() schema.ObjectKind {
+	return nil
+}
+
+func (d dummyObject) DeepCopyObject() runtime.Object {
+	return nil
 }
