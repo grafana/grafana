@@ -52,8 +52,7 @@ type Alertmanager interface {
 	TestReceivers(ctx context.Context, c apimodels.TestReceiversConfigBodyParams) (*TestReceiversResult, error)
 	TestTemplate(ctx context.Context, c apimodels.TestTemplatesConfigBodyParams) (*TestTemplatesResults, error)
 
-	// State
-	CleanUp()
+	// Lifecycle
 	StopAndWait()
 	Ready() bool
 }
@@ -325,8 +324,6 @@ func (moa *MultiOrgAlertmanager) SyncAlertmanagersForOrgs(ctx context.Context, o
 		moa.logger.Info("Stopping Alertmanager", "org", orgID)
 		am.StopAndWait()
 		moa.logger.Info("Stopped Alertmanager", "org", orgID)
-		// Clean up all the remaining resources from this alertmanager.
-		am.CleanUp()
 	}
 
 	moa.cleanupOrphanLocalOrgState(ctx, orgsFound)
