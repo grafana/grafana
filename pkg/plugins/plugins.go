@@ -66,12 +66,19 @@ type Plugin struct {
 
 	SkipHostEnvVars bool
 
+	Status PluginStatus
+
 	mu sync.Mutex
 }
 
 type AngularMeta struct {
 	Detected        bool `json:"detected"`
 	HideDeprecation bool `json:"hideDeprecation"`
+}
+
+type PluginStatus struct {
+	Errored bool
+	Message string
 }
 
 // JSONData represents the plugin's plugin.json

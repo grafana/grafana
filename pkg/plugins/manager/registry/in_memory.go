@@ -27,7 +27,11 @@ func NewInMemory() *InMemory {
 }
 
 func (i *InMemory) Plugin(_ context.Context, pluginID, _ string) (*plugins.Plugin, bool) {
-	return i.plugin(pluginID)
+	p, exists := i.plugin(pluginID)
+	if !exists {
+		return nil, false
+	}
+	return p, !p.Status.Errored
 }
 
 func (i *InMemory) Plugins(_ context.Context) []*plugins.Plugin {
@@ -36,7 +40,9 @@ func (i *InMemory) Plugins(_ context.Context) []*plugins.Plugin {
 
 	res := make([]*plugins.Plugin, 0, len(i.store))
 	for _, p := range i.store {
-		res = append(res, p)
+		if !p.Status.Errored {
+			res = append(res, p)
+		}
 	}
 
 	return res

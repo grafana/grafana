@@ -47,12 +47,21 @@ func (v *Validate) Validate(ctx context.Context, ps []*plugins.Plugin) ([]*plugi
 
 	validatedPlugins := make([]*plugins.Plugin, 0, len(ps))
 	for _, p := range ps {
+		if p.Status.Errored {
+			// Plugin already failed in a previous stage, skip validation.
+			validatedPlugins = append(validatedPlugins, p)
+			continue
+		}
+
 		stepFailed := false
 		for _, validate := range v.validateSteps {
 			err := validate(ctx, p)
 			if err != nil {
 				stepFailed = true
 				v.log.Error("Plugin validation failed", "pluginId", p.ID, "error", err)
+				p.Status.Errored = true
+				p.Status.Message = err.Error()
+				validatedPlugins = append(validatedPlugins, p)
 				break
 			}
 		}

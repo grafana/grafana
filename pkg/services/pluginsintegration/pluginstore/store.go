@@ -66,9 +66,13 @@ func New(pluginRegistry registry.Service, pluginLoader loader.Service) *Service 
 }
 
 func (s *Service) Plugin(ctx context.Context, pluginID string) (Plugin, bool) {
-	p, exists := s.plugin(ctx, pluginID)
-	if !exists {
-		return Plugin{}, false
+	p, loaded := s.plugin(ctx, pluginID)
+	if !loaded {
+		if p == nil {
+			return Plugin{}, false
+		} else {
+			return ToGrafanaDTO(p), false
+		}
 	}
 
 	return ToGrafanaDTO(p), true
@@ -105,9 +109,9 @@ func (s *Service) SecretsManager(ctx context.Context) *plugins.Plugin {
 
 // plugin finds a plugin with `pluginID` from the registry that is not decommissioned
 func (s *Service) plugin(ctx context.Context, pluginID string) (*plugins.Plugin, bool) {
-	p, exists := s.pluginRegistry.Plugin(ctx, pluginID, "") // version is not required since Grafana only supports single versions of a plugin
-	if !exists {
-		return nil, false
+	p, loaded := s.pluginRegistry.Plugin(ctx, pluginID, "") // version is not required since Grafana only supports single versions of a plugin
+	if !loaded {
+		return p, false
 	}
 
 	if p.IsDecommissioned() {

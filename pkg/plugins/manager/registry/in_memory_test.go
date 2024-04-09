@@ -179,6 +179,33 @@ func TestInMemory_Plugin(t *testing.T) {
 			expected: nil,
 			exists:   false,
 		},
+		{
+			name: "Errored plugin",
+			mocks: mocks{
+				store: map[string]*plugins.Plugin{
+					pluginID: {
+						JSONData: plugins.JSONData{
+							ID: pluginID,
+						},
+						Status: plugins.PluginStatus{
+							Errored: true,
+						},
+					},
+				},
+			},
+			args: args{
+				pluginID: pluginID,
+			},
+			expected: &plugins.Plugin{
+				JSONData: plugins.JSONData{
+					ID: pluginID,
+				},
+				Status: plugins.PluginStatus{
+					Errored: true,
+				},
+			},
+			exists: false,
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -238,6 +265,33 @@ func TestInMemory_Plugins(t *testing.T) {
 				store: map[string]*plugins.Plugin{},
 			},
 			expected: []*plugins.Plugin{},
+		},
+		{
+			name: "Plugins with errors",
+			mocks: mocks{
+				store: map[string]*plugins.Plugin{
+					pluginID: {
+						JSONData: plugins.JSONData{
+							ID: pluginID,
+						},
+					},
+					"test-panel": {
+						JSONData: plugins.JSONData{
+							ID: "test-panel",
+						},
+						Status: plugins.PluginStatus{
+							Errored: true,
+						},
+					},
+				},
+			},
+			expected: []*plugins.Plugin{
+				{
+					JSONData: plugins.JSONData{
+						ID: pluginID,
+					},
+				},
+			},
 		},
 	}
 	for _, tt := range tests {

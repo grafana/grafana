@@ -20,7 +20,7 @@ func ProvideService() *Service {
 }
 
 func (s *Service) Start(ctx context.Context, p *plugins.Plugin) error {
-	if !p.IsManaged() || !p.Backend || p.SignatureError != nil {
+	if !p.IsManaged() || !p.Backend || p.SignatureError != nil || p.Status.Errored {
 		return nil
 	}
 

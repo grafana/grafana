@@ -78,6 +78,9 @@ func (b *Bootstrap) Bootstrap(ctx context.Context, src plugins.PluginSource, fou
 			if err != nil {
 				stepFailed = true
 				b.log.Error("Could not decorate plugin", "pluginId", p.ID, "error", err)
+				p.Status.Errored = true
+				p.Status.Message = err.Error()
+				bootstrappedPlugins = append(bootstrappedPlugins, p)
 				break
 			}
 		}

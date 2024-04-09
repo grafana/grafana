@@ -48,13 +48,30 @@ func (i *Initialize) Initialize(ctx context.Context, ps []*plugins.Plugin) ([]*p
 	var err error
 	initializedPlugins := make([]*plugins.Plugin, 0, len(ps))
 	for _, p := range ps {
+		initializeSteps := i.initializeSteps
+		if p.Status.Errored {
+			// Plugin already failed in a previous stage, we only want to register it.
+			initializeSteps = []InitializeFunc{}
+			for _, init := range i.initializeSteps {
+				if isRegistrationFunc(init) {
+					initializeSteps = []InitializeFunc{init}
+					break
+				}
+			}
+			if len(initializeSteps) == 0 {
+				return ps, nil
+			}
+		}
 		var ip *plugins.Plugin
 		stepFailed := false
-		for _, init := range i.initializeSteps {
+		for _, init := range initializeSteps {
 			ip, err = init(ctx, p)
 			if err != nil {
 				stepFailed = true
 				i.log.Error("Could not initialize plugin", "pluginId", p.ID, "error", err)
+				p.Status.Errored = true
+				p.Status.Message = err.Error()
+				initializedPlugins = append(initializedPlugins, p)
 				break
 			}
 		}

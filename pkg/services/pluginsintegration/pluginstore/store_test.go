@@ -71,6 +71,26 @@ func TestStore_Plugin(t *testing.T) {
 		require.True(t, exists)
 		require.Equal(t, p, ToGrafanaDTO(p2))
 	})
+
+	t.Run("Plugin returns an errored plugin", func(t *testing.T) {
+		p1 := &plugins.Plugin{
+			JSONData: plugins.JSONData{ID: "test-datasource"},
+			Status:   plugins.PluginStatus{Errored: true, Message: "error"},
+		}
+
+		ps := New(&fakes.FakePluginRegistry{
+			Store: map[string]*plugins.Plugin{
+				p1.ID: p1,
+			},
+		}, &fakes.FakeLoader{})
+
+		p, loaded := ps.Plugin(context.Background(), p1.ID)
+		require.False(t, loaded)
+		require.Equal(t, Plugin{
+			JSONData: p1.JSONData,
+			Status:   p1.Status,
+		}, p)
+	})
 }
 
 func TestStore_Plugins(t *testing.T) {

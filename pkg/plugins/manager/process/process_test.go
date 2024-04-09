@@ -24,6 +24,7 @@ func TestProcessManager_Start(t *testing.T) {
 			managed            bool
 			backend            bool
 			signatureError     *plugins.SignatureError
+			statusError        bool
 			expectedStartCount int
 		}{
 			{
@@ -48,6 +49,13 @@ func TestProcessManager_Start(t *testing.T) {
 				expectedStartCount: 0,
 			},
 			{
+				name:               "Managed backend plugin with status error will not be started",
+				managed:            true,
+				backend:            true,
+				statusError:        true,
+				expectedStartCount: 0,
+			},
+			{
 				name:               "Managed backend plugin with no signature errors will be started",
 				managed:            true,
 				backend:            true,
@@ -66,6 +74,7 @@ func TestProcessManager_Start(t *testing.T) {
 				p := createPlugin(t, bp, func(plugin *plugins.Plugin) {
 					plugin.Backend = tc.backend
 					plugin.SignatureError = tc.signatureError
+					plugin.Status.Errored = tc.statusError
 				})
 
 				m := ProvideService()

@@ -3,6 +3,8 @@ package initialization
 import (
 	"context"
 	"errors"
+	"reflect"
+	"runtime"
 
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/envvars"
@@ -114,4 +116,12 @@ func (r *PluginRegistration) Initialize(ctx context.Context, p *plugins.Plugin) 
 	}
 
 	return p, nil
+}
+
+func getFunctionName(i interface{}) string {
+	return runtime.FuncForPC(reflect.ValueOf(i).Pointer()).Name()
+}
+
+func isRegistrationFunc(i interface{}) bool {
+	return getFunctionName(i) == getFunctionName((&PluginRegistration{}).Initialize)
 }
