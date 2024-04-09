@@ -22,20 +22,21 @@ func (h *SLogHandler) Enabled(_ context.Context, level slog.Level) bool {
 
 // Handle implements Handler.Handle.
 func (h *SLogHandler) Handle(ctx context.Context, r slog.Record) error {
-	attrs := []any{}
+	attrs := make([]any, 0, 2*r.NumAttrs())
 	fn := func(attr slog.Attr) bool {
 		attrs = append(attrs, attr.Key, attr.Value)
 		return true
 	}
 	r.Attrs(fn)
-	switch r.Level {
-	case slog.LevelDebug:
+
+	switch level := r.Level; {
+	case level < slog.LevelInfo:
 		h.Debug(r.Message, attrs...)
-	case slog.LevelInfo:
+	case level < slog.LevelWarn:
 		h.Info(r.Message, attrs...)
-	case slog.LevelWarn:
+	case level < slog.LevelError:
 		h.Warn(r.Message, attrs...)
-	case slog.LevelError:
+	default:
 		h.Error(r.Message, attrs...)
 	}
 	return nil
@@ -43,7 +44,7 @@ func (h *SLogHandler) Handle(ctx context.Context, r slog.Record) error {
 
 // WithAttrs implements Handler.WithAttrs.
 func (h *SLogHandler) WithAttrs(attrs []slog.Attr) slog.Handler {
-	out := []any{}
+	out := make([]any, 0, 2*len(attrs))
 	for _, attr := range attrs {
 		out = append(out, attr.Key, attr.Value)
 	}
