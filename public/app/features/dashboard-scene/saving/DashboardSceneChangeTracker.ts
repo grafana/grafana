@@ -14,6 +14,7 @@ import {
 } from '@grafana/scenes';
 import { createWorker } from 'app/features/dashboard-scene/saving/createDetectChangesWorker';
 
+import { VizPanelManager } from '../panel-edit/VizPanelManager';
 import { DashboardAnnotationsDataLayer } from '../scene/DashboardAnnotationsDataLayer';
 import { DashboardControls } from '../scene/DashboardControls';
 import { DashboardGridItem } from '../scene/DashboardGridItem';
@@ -50,6 +51,16 @@ export class DashboardSceneChangeTracker {
       payload.changedObject instanceof PanelTimeRange
     ) {
       return this.detectSaveModelChanges();
+    }
+    // VizPanelManager includes the repeat configuration
+    if (payload.changedObject instanceof VizPanelManager) {
+      if (
+        Object.prototype.hasOwnProperty.call(payload.partialUpdate, 'repeat') ||
+        Object.prototype.hasOwnProperty.call(payload.partialUpdate, 'repeatDirection') ||
+        Object.prototype.hasOwnProperty.call(payload.partialUpdate, 'maxPerRow')
+      ) {
+        return this.detectSaveModelChanges();
+      }
     }
     // SceneQueryRunner includes the DS configuration
     if (payload.changedObject instanceof SceneQueryRunner) {
