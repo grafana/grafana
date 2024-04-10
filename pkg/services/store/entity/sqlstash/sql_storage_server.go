@@ -2001,7 +2001,7 @@ func (s *sqlEntityServer) exec(ctx context.Context, tx *session.SessionTx, state
 	ctx, span := s.tracer.Start(ctx, "storage_server.exec", trace.WithAttributes(attribute.String("statement", statement)))
 	defer span.End()
 
-	_, err := tx.Exec(ctx, statement, args)
+	_, err := tx.Exec(ctx, statement, args...)
 	return err
 }
 
