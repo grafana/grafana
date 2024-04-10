@@ -107,7 +107,7 @@ interface MockQuery extends DataQuery {
   queryText?: string;
 }
 
-const setup = (propOverrides?: Partial<Props<MockQuery>>) => {
+const setup = (propOverrides?: Partial<Props<MockQuery>>, noPanes = false) => {
   const props: Props<MockQuery> = {
     queryHistoryItem: {
       id: '1',
@@ -130,9 +130,11 @@ const setup = (propOverrides?: Partial<Props<MockQuery>>) => {
     datasourceInstances: [dsStore.loki],
   };
 
-  const store = configureStore({
-    explore: {
-      panes: {
+  Object.assign(props, propOverrides);
+
+  const panes = noPanes
+    ? {}
+    : {
         left: {
           queries: [{ query: 'query1', refId: 'A' }],
           datasourceInstance: dsStore.loki,
@@ -141,11 +143,13 @@ const setup = (propOverrides?: Partial<Props<MockQuery>>) => {
             raw: { from: 'now-1h', to: 'now' },
           },
         },
-      },
+      };
+
+  const store = configureStore({
+    explore: {
+      panes,
     } as unknown as ExploreState,
   });
-
-  Object.assign(props, propOverrides);
 
   render(
     <TestProvider store={store}>
@@ -207,6 +211,12 @@ describe('RichHistoryCard', () => {
     });
     const datasourceName = await screen.findByLabelText('Data source name');
     expect(datasourceName).toHaveTextContent('Data source does not exist anymore');
+  });
+
+  it('should disable run query button if there are no explore IDs', async () => {
+    setup({}, true);
+    const runQueryButton = await screen.findByRole('button', { name: /run query/i });
+    expect(runQueryButton).toBeDisabled();
   });
 
   describe('copy queries to clipboard', () => {
