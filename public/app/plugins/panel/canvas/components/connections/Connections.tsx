@@ -398,6 +398,7 @@ export class Connections {
           if (currentConnections[connectionIndex].vertices) {
             const currentVertices = [...currentConnections[connectionIndex].vertices!];
 
+            // TODO for vertex removal, clear out originals?
             if (deleteVertex) {
               currentVertices.splice(vertexIndex, 1);
             } else {
