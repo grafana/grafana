@@ -1,5 +1,6 @@
 import { css, cx } from '@emotion/css';
 import React, { useEffect, useRef, useState } from 'react';
+import { useForm } from 'react-hook-form';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
@@ -8,7 +9,8 @@ import { useStyles2 } from '../../themes';
 import { IconName } from '../../types/icon';
 import { Button, ButtonVariant } from '../Button';
 import { Input } from '../Input/Input';
-import { HorizontalGroup } from '../Layout/Layout';
+import { Box } from '../Layout/Box/Box';
+import { Stack } from '../Layout/Stack/Stack';
 import { Modal } from '../Modal/Modal';
 
 export interface ConfirmModalProps {
@@ -95,38 +97,44 @@ export const ConfirmModal = ({
     }
   };
 
+  const { handleSubmit } = useForm();
+
   return (
     <Modal className={cx(styles.modal, modalClass)} title={title} icon={icon} isOpen={isOpen} onDismiss={onDismiss}>
-      <div className={styles.modalText}>
-        {body}
-        {description ? <div className={styles.modalDescription}>{description}</div> : null}
-        {confirmationText ? (
-          <div className={styles.modalConfirmationInput}>
-            <HorizontalGroup>
-              <Input placeholder={`Type "${confirmationText}" to confirm`} onChange={onConfirmationTextChange} />
-            </HorizontalGroup>
-          </div>
-        ) : null}
-      </div>
-      <Modal.ButtonRow>
-        <Button variant={dismissVariant} onClick={onDismiss} fill="outline">
-          {dismissText}
-        </Button>
-        <Button
-          variant={confirmButtonVariant}
-          onClick={onConfirmClick}
-          disabled={disabled}
-          ref={buttonRef}
-          data-testid={selectors.pages.ConfirmModal.delete}
-        >
-          {confirmText}
-        </Button>
-        {onAlternative ? (
-          <Button variant="primary" onClick={onAlternative}>
-            {alternativeText}
+      <form onSubmit={handleSubmit(onConfirmClick)}>
+        <div className={styles.modalText}>
+          {body}
+          {description ? <div className={styles.modalDescription}>{description}</div> : null}
+          {confirmationText ? (
+            <div className={styles.modalConfirmationInput}>
+              <Stack alignItems="flex-start">
+                <Box>
+                  <Input placeholder={`Type "${confirmationText}" to confirm`} onChange={onConfirmationTextChange} />
+                </Box>
+              </Stack>
+            </div>
+          ) : null}
+        </div>
+        <Modal.ButtonRow>
+          <Button variant={dismissVariant} onClick={onDismiss} fill="outline">
+            {dismissText}
           </Button>
-        ) : null}
-      </Modal.ButtonRow>
+          <Button
+            type="submit"
+            variant={confirmButtonVariant}
+            disabled={disabled}
+            ref={buttonRef}
+            data-testid={selectors.pages.ConfirmModal.delete}
+          >
+            {confirmText}
+          </Button>
+          {onAlternative ? (
+            <Button variant="primary" onClick={onAlternative}>
+              {alternativeText}
+            </Button>
+          ) : null}
+        </Modal.ButtonRow>
+      </form>
     </Modal>
   );
 };
