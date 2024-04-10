@@ -15,7 +15,6 @@ type Options struct {
 	RecommendedOptions *genericoptions.RecommendedOptions
 	TracingOptions     *TracingOptions
 	MetricsOptions     *MetricsOptions
-	AuthnOptions       *AuthnOptions
 }
 
 func New(logger log.Logger, codec runtime.Codec) *Options {
@@ -25,7 +24,6 @@ func New(logger log.Logger, codec runtime.Codec) *Options {
 		RecommendedOptions: options.NewRecommendedOptions(codec),
 		TracingOptions:     NewTracingOptions(logger),
 		MetricsOptions:     NewMetrcicsOptions(logger),
-		AuthnOptions:       NewAuthnOptions(),
 	}
 }
 
@@ -35,7 +33,6 @@ func (o *Options) AddFlags(fs *pflag.FlagSet) {
 	o.RecommendedOptions.AddFlags(fs)
 	o.TracingOptions.AddFlags(fs)
 	o.MetricsOptions.AddFlags(fs)
-	o.AuthnOptions.AddFlags(fs)
 }
 
 func (o *Options) Validate() []error {
