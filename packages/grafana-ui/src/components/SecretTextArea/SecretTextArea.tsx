@@ -5,6 +5,7 @@ import { GrafanaTheme2 } from '@grafana/data';
 
 import { useStyles2 } from '../../themes/ThemeContext';
 import { Button } from '../Button';
+import { Box } from '../Layout/Box/Box';
 import { Stack } from '../Layout/Stack/Stack';
 import { TextArea } from '../TextArea/TextArea';
 
@@ -36,10 +37,18 @@ export const SecretTextArea = ({ isConfigured, onReset, ...props }: Props) => {
   const styles = useStyles2(getStyles);
   return (
     <Stack>
-      {!isConfigured && <TextArea {...props} />}
-      {isConfigured && (
-        <TextArea {...props} rows={1} disabled={true} value={CONFIGURED_TEXT} className={cx(styles.configuredStyle)} />
-      )}
+      <Box>
+        {!isConfigured && <TextArea {...props} />}
+        {isConfigured && (
+          <TextArea
+            {...props}
+            rows={1}
+            disabled={true}
+            value={CONFIGURED_TEXT}
+            className={cx(styles.configuredStyle)}
+          />
+        )}
+      </Box>
       {isConfigured && (
         <Button onClick={onReset} variant="secondary">
           {RESET_BUTTON_TEXT}
