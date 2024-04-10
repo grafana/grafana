@@ -820,9 +820,6 @@ exports[`better eslint`] = {
     "packages/grafana-ui/src/components/Dropdown/Dropdown.story.tsx:5381": [
       [0, 0, 0, "\'VerticalGroup\' import from \'../Layout/Layout\' is restricted from being used by a pattern. Use Stack component instead.", "0"]
     ],
-    "packages/grafana-ui/src/components/FilterPill/FilterPill.story.tsx:5381": [
-      [0, 0, 0, "\'HorizontalGroup\' import from \'../Layout/Layout\' is restricted from being used by a pattern. Use Stack component instead.", "0"]
-    ],
     "packages/grafana-ui/src/components/Forms/Checkbox.story.tsx:5381": [
       [0, 0, 0, "\'VerticalGroup\' import from \'../Layout/Layout\' is restricted from being used by a pattern. Use Stack component instead.", "0"]
     ],
@@ -866,9 +863,6 @@ exports[`better eslint`] = {
     ],
     "packages/grafana-ui/src/components/Menu/Menu.story.tsx:5381": [
       [0, 0, 0, "\'VerticalGroup\' import from \'../Layout/Layout\' is restricted from being used by a pattern. Use Stack component instead.", "0"]
-    ],
-    "packages/grafana-ui/src/components/Modal/Modal.tsx:5381": [
-      [0, 0, 0, "\'HorizontalGroup\' import from \'../Layout/Layout\' is restricted from being used by a pattern. Use Stack component instead.", "0"]
     ],
     "packages/grafana-ui/src/components/Modal/ModalsContext.tsx:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
@@ -2486,10 +2480,6 @@ exports[`better eslint`] = {
       [0, 0, 0, "Unexpected any. Specify a different type.", "1"]
     ],
     "public/app/features/dashboard-scene/saving/getDashboardChanges.ts:5381": [
-      [0, 0, 0, "Do not use any type assertions.", "0"],
-      [0, 0, 0, "Do not use any type assertions.", "1"]
-    ],
-    "public/app/features/dashboard-scene/saving/getSaveDashboardChange.ts:5381": [
       [0, 0, 0, "Do not use any type assertions.", "0"],
       [0, 0, 0, "Do not use any type assertions.", "1"]
     ],
