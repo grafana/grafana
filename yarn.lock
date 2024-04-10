@@ -4367,7 +4367,7 @@ __metadata:
     ol: "npm:7.4.0"
     prismjs: "npm:1.29.0"
     process: "npm:^0.11.10"
-    rc-cascader: "npm:3.24.0"
+    rc-cascader: "npm:3.24.1"
     rc-drawer: "npm:7.1.0"
     rc-slider: "npm:10.5.0"
     rc-time-picker: "npm:^3.7.3"
@@ -18901,7 +18901,7 @@ __metadata:
     prismjs: "npm:1.29.0"
     prop-types: "npm:15.8.1"
     pseudoizer: "npm:^0.1.0"
-    rc-cascader: "npm:3.24.0"
+    rc-cascader: "npm:3.24.1"
     rc-drawer: "npm:7.1.0"
     rc-slider: "npm:10.5.0"
     rc-time-picker: "npm:3.7.3"
@@ -26106,9 +26106,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"rc-cascader@npm:3.24.0":
-  version: 3.24.0
-  resolution: "rc-cascader@npm:3.24.0"
+"rc-cascader@npm:3.24.1":
+  version: 3.24.1
+  resolution: "rc-cascader@npm:3.24.1"
   dependencies:
     "@babel/runtime": "npm:^7.12.5"
     array-tree-filter: "npm:^2.1.0"
@@ -26119,7 +26119,7 @@ __metadata:
   peerDependencies:
     react: ">=16.9.0"
     react-dom: ">=16.9.0"
-  checksum: 10/a4e1acc855c7145df83451519d86b22efd4fadc10507a5d2b17d9351aaf18d1c687c8605fd44c4d54379b295ba1770875bf5bc8d000dce63336a6bd2f1e8af58
+  checksum: 10/7b48dd7ae519809d0713a79efbfcede93e10218cb099ce1fa43fc4c96c902367e9a1cabab4586ef1cec2d1670cf4941f2672dfddb8f53e00dfe76cf363416774
   languageName: node
   linkType: hard
 
