@@ -43,7 +43,7 @@ To add a silence, complete the following steps.
 1. Click **Create silence** to open the Create silence page.
 1. In **Silence start and end**, select the start and end date to indicate when the silence should go into effect and expire.
 1. Optionally, in **Duration**, specify how long the silence is enforced. This automatically updates the end time in the **Silence start and end** field.
-1. In the **Label** and **Value** fields, enter one or more _Matching Labels_. Matchers determine which rules the silence will apply to. Any matching alerts (in firing state) will show in the **Silenced alert instancess** field
+1. In the **Label** and **Value** fields, enter one or more _Matching Labels_. Matchers determine which rules the silence will apply to. Any matching alerts (in firing state) will show in the **Silenced alert instances** field
 1. In **Comment**, add details about the silence.
 1. Click **Submit**.
 
