@@ -89,7 +89,7 @@ export const getStyles = (theme: GrafanaTheme2) => ({
   }),
   menuOptionExpand: css({
     position: 'absolute',
-    right: theme.spacing(1.25),
+    right: theme.spacing(2.5),
     color: theme.colors.text.disabled,
 
     '&:after': {
