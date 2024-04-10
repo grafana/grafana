@@ -106,12 +106,11 @@ func (h *ContextHandler) Middleware(next http.Handler) http.Handler {
 		// This modifies both r and reqContext.Req since they point to the same value
 		*reqContext.Req = *reqContext.Req.WithContext(ctx)
 
-		traceID := tracing.TraceIDFromContext(reqContext.Req.Context(), false)
+		ctx = trace.ContextWithSpan(reqContext.Req.Context(), span)
+		traceID := tracing.TraceIDFromContext(ctx, false)
 		if traceID != "" {
 			reqContext.Logger = reqContext.Logger.New("traceID", traceID)
 		}
-
-		ctx = trace.ContextWithSpan(reqContext.Req.Context(), span)
 
 		identity, err := h.authnService.Authenticate(ctx, &authn.Request{HTTPRequest: reqContext.Req, Resp: reqContext.Resp})
 		if err != nil {
