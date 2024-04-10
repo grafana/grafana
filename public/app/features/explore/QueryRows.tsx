@@ -10,6 +10,7 @@ import { useDispatch, useSelector } from 'app/types';
 import { getDatasourceSrv } from '../plugins/datasource_srv';
 import { QueryEditorRows } from '../query/components/QueryEditorRows';
 
+import { ContentOutlineItem } from './ContentOutline/ContentOutlineItem';
 import { changeQueries, runQueries } from './state/query';
 import { getExploreItemSelector } from './state/selectors';
 
@@ -88,6 +89,18 @@ export const QueryRows = ({ exploreId }: Props) => {
       app={CoreApp.Explore}
       history={history}
       eventBus={eventBridge}
+      queryRowWrapper={(children, refId) => (
+        <ContentOutlineItem
+          title={refId}
+          icon="arrow"
+          key={refId}
+          panelId="Queries"
+          customTopOffset={-10}
+          level="child"
+        >
+          {children}
+        </ContentOutlineItem>
+      )}
     />
   );
 };

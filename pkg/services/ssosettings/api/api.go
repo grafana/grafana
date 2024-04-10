@@ -23,7 +23,7 @@ type Api struct {
 	Log                log.Logger
 	RouteRegister      routing.RouteRegister
 	AccessControl      ac.AccessControl
-	Features           *featuremgmt.FeatureManager
+	Features           featuremgmt.FeatureToggles
 	SSOSettingsService ssosettings.Service
 }
 

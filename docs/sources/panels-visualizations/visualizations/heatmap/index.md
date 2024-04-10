@@ -114,7 +114,7 @@ Use these settings to refine your visualization.
 
 - **Show tooltip -** Show heatmap tooltip.
 - **Show Histogram -** Show a Y-axis histogram on the tooltip. A histogram represents the distribution of the bucket values for a specific timestamp.
-- **Show color scale -** Show a color scale on the tooltip. The color scale represents the mapping between bucket value and color. This option is configurable when you enable the `newVizTooltips` feature flag.
+- **Show color scale -** Show a color scale on the tooltip. The color scale represents the mapping between bucket value and color.
 
 ### Legend
 

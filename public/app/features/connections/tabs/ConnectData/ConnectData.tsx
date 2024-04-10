@@ -2,7 +2,7 @@ import { css } from '@emotion/css';
 import React, { useMemo, useState } from 'react';
 
 import { GrafanaTheme2, PluginType } from '@grafana/data';
-import { useStyles2, LoadingPlaceholder } from '@grafana/ui';
+import { useStyles2, LoadingPlaceholder, EmptyState } from '@grafana/ui';
 import { contextSrv } from 'app/core/core';
 import { useQueryParams } from 'app/core/hooks/useQueryParams';
 import { t } from 'app/core/internationalization';
@@ -14,7 +14,6 @@ import { ROUTES } from '../../constants';
 import { CardGrid, type CardGridItem } from './CardGrid';
 import { CategoryHeader } from './CategoryHeader';
 import { NoAccessModal } from './NoAccessModal';
-import { NoResults } from './NoResults';
 import { Search } from './Search';
 
 const getStyles = (theme: GrafanaTheme2) => ({
@@ -97,7 +96,12 @@ export function AddNewConnection() {
       ) : (
         <CardGrid items={cardGridItems} onClickItem={onClickCardGridItem} />
       )}
-      {showNoResults && <NoResults />}
+      {showNoResults && (
+        <EmptyState
+          variant="not-found"
+          message={t('connections.connect-data.empty-message', 'No results matching your query were found')}
+        />
+      )}
     </>
   );
 }
