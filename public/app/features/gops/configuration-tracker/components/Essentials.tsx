@@ -22,7 +22,23 @@ interface IncidentsPluginConfig {
   isDrillCreated: boolean;
 }
 
+function useGetContactPoints() {
+  const alertmanagerConfiguration = alertmanagerApi.endpoints.getAlertmanagerConfiguration.useQuery(
+    GRAFANA_RULES_SOURCE_NAME,
+    {
+      refetchOnFocus: true,
+      refetchOnReconnect: true,
+      refetchOnMountOrArgChange: true,
+    }
+  );
+
+  const contactPoints = alertmanagerConfiguration.data?.alertmanager_config?.receivers ?? [];
+  return contactPoints;
+}
+
 export function Essentials({ onClose }: EssentialsProps) {
+  const contactPoints = useGetContactPoints();
+
   const incidentsPluginConfig = useGetSingle('grafana-incident-app');
   const isIncidentPluginInstalled = incidentsPluginConfig?.isInstalled ?? false;
   const [incidentPluginConfig, setIncidentPluginConfig] = React.useState<IncidentsPluginConfig | null>(null);
@@ -83,7 +99,7 @@ export function Essentials({ onClose }: EssentialsProps) {
               type: 'openLink',
               url: '/alerting/notifications',
               label: 'Update',
-              done: useIsContactPointReady(),
+              done: isContactPointReady(contactPoints),
             },
           },
           {
@@ -103,6 +119,7 @@ export function Essentials({ onClose }: EssentialsProps) {
               type: 'openLink',
               url: '/alerting/notifications',
               label: 'View',
+              done: isOnCallContactPointReady(contactPoints),
             },
           },
         ],
@@ -315,19 +332,8 @@ function isCreateAlertRuleDone() {
   return namespaces.length > 0;
 }
 
-function useIsContactPointReady() {
+function isContactPointReady(contactPoints: Receiver[]) {
   // We consider the contact point ready if the default contact has the address filled or if there is at least one contact point created by the user
-
-  const alertmanagerConfiguration = alertmanagerApi.endpoints.getAlertmanagerConfiguration.useQuery(
-    GRAFANA_RULES_SOURCE_NAME,
-    {
-      refetchOnFocus: true,
-      refetchOnReconnect: true,
-      refetchOnMountOrArgChange: true,
-    }
-  );
-
-  const contactPoints = alertmanagerConfiguration.data?.alertmanager_config?.receivers ?? [];
 
   const defaultEmailUpdated = contactPoints.some(
     (contactPoint: Receiver) =>
@@ -340,4 +346,10 @@ function useIsContactPointReady() {
     contactPoint.grafana_managed_receiver_configs?.some((receiver) => receiver.name !== 'grafana-default-email')
   );
   return defaultEmailUpdated || hasAnotherContactPoint;
+}
+
+function isOnCallContactPointReady(contactPoints: Receiver[]) {
+  return contactPoints.some((contactPoint: Receiver) =>
+    contactPoint.grafana_managed_receiver_configs?.some((receiver) => receiver.type === 'oncall')
+  );
 }
