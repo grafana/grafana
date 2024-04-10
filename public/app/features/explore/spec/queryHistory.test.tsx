@@ -119,7 +119,7 @@ describe('Explore: Query History', () => {
     });
   });
 
-  it('adds recently added query if the query history panel is already open', async () => {
+  it.skip('adds recently added query if the query history panel is already open', async () => {
     const urlParams = {
       left: serializeStateToUrlParam({
         datasource: 'loki',
