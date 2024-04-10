@@ -1,6 +1,6 @@
 # Triage issues
 
-Triage helps ensure that issues resolve quickly by:
+Triage helps ensure that GitHub issues resolve quickly by:
 
 - Ensuring the issue's intent and purpose is conveyed precisely. This is necessary because it can be difficult for an issue to explain how an end user experiences a problem and what actions they took.
 - Giving a contributor the information they need before they commit to resolving an issue.
@@ -11,11 +11,11 @@ This document gives you some ideas on what you can do to help. For more informat
 
 ## Improve issues
 
-Improve issues by suggesting improvements to the title and description. If you think an issue has formatting issues, bad language, or grammatical errors, post a comment to let the author and maintainers know.
+Improve issues by suggesting improvements to the title and description of the issue. If you think an issue has formatting issues, bad language, or grammatical errors, post a comment to let the author and maintainers know.
 
 ## Report resolved issues
 
-If you think an issue has been resolved, or is no longer relevant, suggest us to close it. Add a comment on the issue, where you explain the reason it should be closed. Make sure to include any related issues and pull requests.
+If you think an issue has been resolved, or is no longer relevant, suggest that we close it. Add a comment on the issue in which you explain the reason that it should be closed. Make sure to include any related issues and pull requests.
 
 ## Investigate issues
 
@@ -29,4 +29,4 @@ Read more about [how we prioritize issues](/ISSUE_TRIAGE.md#4-prioritization-of-
 
 ## Report duplicates
 
-If you find two issues that describe the same thing, add a comment in one of the issues, with a reference (`#<issue number>`) to the other. Explain why you think the issue is duplicated.
+If you find two issues that describe the same thing, add a comment in one of the issues. In the comment, include a reference (`#<issue number>`) to the other. Explain why you think the issue is duplicated.
