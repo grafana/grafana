@@ -31,7 +31,7 @@
     "@types/debounce-promise": "3.1.9",
     "@types/jest": "29.5.12",
     "@types/lodash": "4.17.0",
-    "@types/node": "20.12.2",
+    "@types/node": "20.12.7",
     "@types/prismjs": "1.26.3",
     "@types/react": "18.2.74",
     "@types/react-test-renderer": "18.0.7",
