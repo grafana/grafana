@@ -25,13 +25,14 @@ import (
 type PluginsService struct {
 	availableUpdates map[string]string
 
-	enabled        bool
-	grafanaVersion string
-	pluginStore    pluginstore.Store
-	httpClient     httpClient
-	mutex          sync.RWMutex
-	log            log.Logger
-	tracer         tracing.Tracer
+	enabled          bool
+	grafanaVersion   string
+	pluginStore      pluginstore.Store
+	httpClient       httpClient
+	mutex            sync.RWMutex
+	log              log.Logger
+	tracer           tracing.Tracer
+	grafanaComAPIURL string
 }
 
 func ProvidePluginsService(cfg *setting.Cfg, pluginStore pluginstore.Store, tracer tracing.Tracer) (*PluginsService, error) {
@@ -53,6 +54,7 @@ func ProvidePluginsService(cfg *setting.Cfg, pluginStore pluginstore.Store, trac
 		tracer:           tracer,
 		pluginStore:      pluginStore,
 		availableUpdates: make(map[string]string),
+		grafanaComAPIURL: cfg.GrafanaComAPIURL,
 	}, nil
 }
 
@@ -113,12 +115,13 @@ func (s *PluginsService) instrumentedCheckForUpdates(ctx context.Context) {
 
 func (s *PluginsService) checkForUpdates(ctx context.Context) error {
 	ctxLogger := s.log.FromContext(ctx)
-	ctxLogger.Debug("Checking for updates")
+	ctxLogger.Debug("Preparing plugins eligible for version check")
 	localPlugins := s.pluginsEligibleForVersionCheck(ctx)
-	requestURL := "https://grafana.com/api/plugins/versioncheck?" + url.Values{
+	requestURL := s.grafanaComAPIURL + "/plugins/versioncheck?" + url.Values{
 		"slugIn":         []string{s.pluginIDsCSV(localPlugins)},
 		"grafanaVersion": []string{s.grafanaVersion},
 	}.Encode()
+	ctxLogger.Debug("Checking for plugin updates via " + requestURL)
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, requestURL, nil)
 	if err != nil {
 		return err
