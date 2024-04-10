@@ -263,6 +263,10 @@ function getTransformationGridStyles(theme: GrafanaTheme2) {
     cardDisabled: css({
       backgroundColor: 'rgb(204, 204, 220, 0.045)',
       color: `${theme.colors.text.disabled} !important`,
+      img: {
+        filter: 'grayscale(100%)',
+        opacity: 0.33,
+      },
     }),
     cardApplicableInfo: css({
       position: 'absolute',
@@ -279,13 +283,7 @@ function getTransformationGridStyles(theme: GrafanaTheme2) {
 }
 
 const getImagePath = (id: string, disabled: boolean) => {
-  let folder = null;
-  if (!disabled) {
-    folder = config.theme2.isDark ? 'dark' : 'light';
-  } else {
-    folder = 'disabled';
-  }
-
+  const folder = config.theme2.isDark ? 'dark' : 'light';
   return `public/img/transformations/${folder}/${id}.svg`;
 };
 

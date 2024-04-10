@@ -343,11 +343,11 @@ GET /api/v1/provisioning/alert-rules/:uid/export
 
 #### Parameters
 
-| Name     | Source  | Type    | Go type  | Separator | Required | Default  | Description                                                                                                                       |
-| -------- | ------- | ------- | -------- | --------- | :------: | -------- | --------------------------------------------------------------------------------------------------------------------------------- |
-| UID      | `path`  | string  | `string` |           |    ✓     |          | Alert rule UID                                                                                                                    |
-| download | `query` | boolean | `bool`   |           |          |          | Whether to initiate a download of the file or not.                                                                                |
-| format   | `query` | string  | `string` |           |          | `"yaml"` | Format of the downloaded file, either yaml or json. Accept header can also be used, but the query parameter will take precedence. |
+| Name     | Source  | Type    | Go type  | Separator | Required | Default  | Description                                                                                                                            |
+| -------- | ------- | ------- | -------- | --------- | :------: | -------- | -------------------------------------------------------------------------------------------------------------------------------------- |
+| UID      | `path`  | string  | `string` |           |    ✓     |          | Alert rule UID                                                                                                                         |
+| download | `query` | boolean | `bool`   |           |          |          | Whether to initiate a download of the file or not.                                                                                     |
+| format   | `query` | string  | `string` |           |          | `"yaml"` | Format of the downloaded file, either yaml, json or hcl. Accept header can also be used, but the query parameter will take precedence. |
 
 #### All responses
 

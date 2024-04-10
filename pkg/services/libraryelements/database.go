@@ -149,14 +149,20 @@ func (l *LibraryElementService) createLibraryElement(c context.Context, signedIn
 	}
 
 	metrics.MFolderIDsServiceCount.WithLabelValues(metrics.LibraryElements).Inc()
+	// folderUID *string will be changed to string
+	var folderUID string
+	if cmd.FolderUID != nil {
+		folderUID = *cmd.FolderUID
+	}
 	element := model.LibraryElement{
-		OrgID:    signedInUser.GetOrgID(),
-		FolderID: cmd.FolderID, // nolint:staticcheck
-		UID:      createUID,
-		Name:     cmd.Name,
-		Model:    updatedModel,
-		Version:  1,
-		Kind:     cmd.Kind,
+		OrgID:     signedInUser.GetOrgID(),
+		FolderID:  cmd.FolderID, // nolint:staticcheck
+		FolderUID: folderUID,
+		UID:       createUID,
+		Name:      cmd.Name,
+		Model:     updatedModel,
+		Version:   1,
+		Kind:      cmd.Kind,
 
 		Created: time.Now(),
 		Updated: time.Now(),
@@ -296,7 +302,12 @@ func (l *LibraryElementService) getLibraryElements(c context.Context, store db.D
 		builder.Write(getFromLibraryElementDTOWithMeta(store.GetDialect()))
 		builder.Write(" INNER JOIN dashboard AS dashboard on le.folder_id = dashboard.id AND le.folder_id <> 0")
 		writeParamSelectorSQL(&builder, params...)
-		builder.WriteDashboardPermissionFilter(signedInUser, dashboardaccess.PERMISSION_VIEW, searchstore.TypeFolder)
+
+		// use permission filter if lib panel RBAC isn't enabled
+		if !l.features.IsEnabled(c, featuremgmt.FlagLibraryPanelRBAC) {
+			builder.WriteDashboardPermissionFilter(signedInUser, dashboardaccess.PERMISSION_VIEW, searchstore.TypeFolder)
+		}
+
 		builder.Write(` OR dashboard.id=0`)
 		if err := session.SQL(builder.GetSQLString(), builder.GetParams()...).Find(&libraryElements); err != nil {
 			return err
