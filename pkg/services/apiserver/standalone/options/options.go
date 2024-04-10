@@ -7,8 +7,6 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	genericapiserver "k8s.io/apiserver/pkg/server"
 	genericoptions "k8s.io/apiserver/pkg/server/options"
-
-	"github.com/grafana/authlib/authn"
 )
 
 type Options struct {
@@ -161,21 +159,4 @@ func (o *Options) ApplyTo(serverConfig *genericapiserver.RecommendedConfig) erro
 	}
 
 	return nil
-}
-
-type AuthnOptions struct {
-	ServiceBaseURL   string
-	SystemCAPToken   string
-	IDVerifierConfig *authn.IDVerifierConfig
-}
-
-func (authOpts *AuthnOptions) AddFlags(fs *pflag.FlagSet) {
-	prefix := "grafana.authn"
-
-	fs.StringVar(&authOpts.ServiceBaseURL, prefix+".service-base-url", "", "Base URL for the auth service which will be used to sign access tokens with")
-	fs.StringVar(&authOpts.SystemCAPToken, prefix+".system-cap-token", "", "Token belonging to a system realm cloud access policy with which access tokens are signed")
-	fs.StringVar(&authOpts.IDVerifierConfig.SigningKeysURL, prefix+".signing-keys-url", "", "URL to jwks endpoint")
-
-	audience := fs.StringSlice(prefix+".allowed-audiences", []string{}, "Specifies a comma-separated list of allowed audiences.")
-	authOpts.IDVerifierConfig.AllowedAudiences = *audience
 }
