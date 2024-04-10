@@ -184,10 +184,12 @@ func TestIntegrationUserAuthToken(t *testing.T) {
 
 		getTime = func() time.Time { return now.Add(time.Hour) }
 
-		rotated, _, err := ctx.tokenService.TryRotateToken(context.Background(), userToken,
-			net.ParseIP("192.168.10.11"), "some user agent")
+		_, err = ctx.tokenService.RotateToken(context.Background(), auth.RotateCommand{
+			UnHashedToken: userToken.UnhashedToken,
+			IP:            net.ParseIP("192.168.10.11"),
+			UserAgent:     "some user agent",
+		})
 		require.Nil(t, err)
-		require.True(t, rotated)
 
 		userToken, err = ctx.tokenService.LookupToken(context.Background(), userToken.UnhashedToken)
 		require.Nil(t, err)
@@ -260,41 +262,28 @@ func TestIntegrationUserAuthToken(t *testing.T) {
 	t.Run("can properly rotate tokens", func(t *testing.T) {
 		getTime = func() time.Time { return now }
 		ctx := createTestContext(t)
-		userToken, err := ctx.tokenService.CreateToken(context.Background(), usr,
-			net.ParseIP("192.168.10.11"), "some user agent")
+		userToken, err := ctx.tokenService.CreateToken(context.Background(), usr, net.ParseIP("192.168.10.11"), "some user agent")
 		require.Nil(t, err)
 
 		prevToken := userToken.AuthToken
 		unhashedPrev := userToken.UnhashedToken
 
-		rotated, _, err := ctx.tokenService.TryRotateToken(context.Background(), userToken,
-			net.ParseIP("192.168.10.12"), "a new user agent")
-		require.Nil(t, err)
-		require.False(t, rotated)
-
-		updated, err := ctx.markAuthTokenAsSeen(userToken.Id)
-		require.Nil(t, err)
-		require.True(t, updated)
-
 		model, err := ctx.getAuthTokenByID(userToken.Id)
 		require.Nil(t, err)
 
-		var tok auth.UserToken
-		err = model.toUserToken(&tok)
-		require.Nil(t, err)
-
+		model.UnhashedToken = userToken.UnhashedToken
 		getTime = func() time.Time { return now.Add(time.Hour) }
 
-		rotated, newToken, err := ctx.tokenService.TryRotateToken(context.Background(), &tok,
-			net.ParseIP("192.168.10.12"), "a new user agent")
+		newToken, err := ctx.tokenService.RotateToken(context.Background(), auth.RotateCommand{
+			UnHashedToken: model.UnhashedToken,
+			IP:            net.ParseIP("192.168.10.12"),
+			UserAgent:     "a new user agent",
+		})
 		require.Nil(t, err)
-		require.True(t, rotated)
 
-		unhashedToken := newToken.UnhashedToken
-
-		model, err = ctx.getAuthTokenByID(tok.Id)
+		model, err = ctx.getAuthTokenByID(model.Id)
 		require.Nil(t, err)
-		model.UnhashedToken = unhashedToken
+		model.UnhashedToken = newToken.UnhashedToken
 
 		require.Equal(t, getTime().Unix(), model.RotatedAt)
 		require.Equal(t, "192.168.10.12", model.ClientIp)
@@ -331,10 +320,12 @@ func TestIntegrationUserAuthToken(t *testing.T) {
 		require.NotNil(t, lookedUpModel)
 		require.False(t, lookedUpModel.AuthTokenSeen)
 
-		rotated, _, err = ctx.tokenService.TryRotateToken(context.Background(), userToken,
-			net.ParseIP("192.168.10.12"), "a new user agent")
+		_, err = ctx.tokenService.RotateToken(context.Background(), auth.RotateCommand{
+			UnHashedToken: userToken.UnhashedToken,
+			IP:            net.ParseIP("192.168.10.12"),
+			UserAgent:     "a new user agent",
+		})
 		require.Nil(t, err)
-		require.True(t, rotated)
 
 		model, err = ctx.getAuthTokenByID(userToken.Id)
 		require.Nil(t, err)
@@ -356,10 +347,12 @@ func TestIntegrationUserAuthToken(t *testing.T) {
 		getTime = func() time.Time { return now.Add(10 * time.Minute) }
 
 		prevToken := userToken.UnhashedToken
-		rotated, _, err := ctx.tokenService.TryRotateToken(context.Background(), userToken,
-			net.ParseIP("1.1.1.1"), "firefox")
+		_, err = ctx.tokenService.RotateToken(context.Background(), auth.RotateCommand{
+			UnHashedToken: userToken.UnhashedToken,
+			IP:            net.ParseIP("1.1.1.1"),
+			UserAgent:     "firefox",
+		})
 		require.Nil(t, err)
-		require.True(t, rotated)
 
 		getTime = func() time.Time {
 			return now.Add(20 * time.Minute)
@@ -392,87 +385,6 @@ func TestIntegrationUserAuthToken(t *testing.T) {
 		require.Nil(t, err)
 		require.NotNil(t, lookedUpModel)
 		require.True(t, lookedUpModel.AuthTokenSeen)
-	})
-
-	t.Run("TryRotateToken", func(t *testing.T) {
-		t.Run("Should rotate current token and previous token when auth token seen", func(t *testing.T) {
-			getTime = func() time.Time { return now }
-			userToken, err := ctx.tokenService.CreateToken(context.Background(), usr,
-				net.ParseIP("192.168.10.11"), "some user agent")
-			require.Nil(t, err)
-			require.NotNil(t, userToken)
-
-			prevToken := userToken.AuthToken
-
-			updated, err := ctx.markAuthTokenAsSeen(userToken.Id)
-			require.Nil(t, err)
-			require.True(t, updated)
-
-			getTime = func() time.Time {
-				return now.Add(10 * time.Minute)
-			}
-
-			rotated, _, err := ctx.tokenService.TryRotateToken(context.Background(), userToken,
-				net.ParseIP("1.1.1.1"), "firefox")
-			require.Nil(t, err)
-			require.True(t, rotated)
-
-			storedToken, err := ctx.getAuthTokenByID(userToken.Id)
-			require.Nil(t, err)
-			require.NotNil(t, storedToken)
-			require.False(t, storedToken.AuthTokenSeen)
-			require.Equal(t, prevToken, storedToken.PrevAuthToken)
-			require.NotEqual(t, prevToken, storedToken.AuthToken)
-
-			prevToken = storedToken.AuthToken
-
-			updated, err = ctx.markAuthTokenAsSeen(userToken.Id)
-			require.Nil(t, err)
-			require.True(t, updated)
-
-			getTime = func() time.Time {
-				return now.Add(20 * time.Minute)
-			}
-
-			rotated, _, err = ctx.tokenService.TryRotateToken(context.Background(), userToken,
-				net.ParseIP("1.1.1.1"), "firefox")
-			require.Nil(t, err)
-			require.True(t, rotated)
-
-			storedToken, err = ctx.getAuthTokenByID(userToken.Id)
-			require.Nil(t, err)
-			require.NotNil(t, storedToken)
-			require.False(t, storedToken.AuthTokenSeen)
-			require.Equal(t, prevToken, storedToken.PrevAuthToken)
-			require.NotEqual(t, prevToken, storedToken.AuthToken)
-		})
-
-		t.Run("Should rotate current token, but keep previous token when auth token not seen", func(t *testing.T) {
-			getTime = func() time.Time { return now }
-			userToken, err := ctx.tokenService.CreateToken(context.Background(), usr,
-				net.ParseIP("192.168.10.11"), "some user agent")
-			require.Nil(t, err)
-			require.NotNil(t, userToken)
-
-			prevToken := userToken.AuthToken
-			userToken.RotatedAt = now.Add(-2 * time.Minute).Unix()
-
-			getTime = func() time.Time {
-				return now.Add(2 * time.Minute)
-			}
-
-			rotated, _, err := ctx.tokenService.TryRotateToken(context.Background(), userToken,
-				net.ParseIP("1.1.1.1"), "firefox")
-			require.Nil(t, err)
-			require.True(t, rotated)
-
-			storedToken, err := ctx.getAuthTokenByID(userToken.Id)
-			require.Nil(t, err)
-			require.NotNil(t, storedToken)
-			require.False(t, storedToken.AuthTokenSeen)
-			require.Equal(t, prevToken, storedToken.PrevAuthToken)
-			require.NotEqual(t, prevToken, storedToken.AuthToken)
-		})
 	})
 
 	t.Run("RotateToken", func(t *testing.T) {
