@@ -2,7 +2,6 @@ package rest
 
 import (
 	"context"
-	"fmt"
 
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/api/meta"
@@ -27,7 +26,7 @@ func NewDualWriterMode2(legacy LegacyStorage, storage Storage) *DualWriterMode2 
 func (d *DualWriterMode2) Create(ctx context.Context, obj runtime.Object, createValidation rest.ValidateObjectFunc, options *metav1.CreateOptions) (runtime.Object, error) {
 	legacy, ok := d.Legacy.(rest.Creater)
 	if !ok {
-		return nil, errDualWriterCreaterMissing
+		return nil, errNoCreateMethod
 	}
 
 	created, err := legacy.Create(ctx, obj, createValidation, options)
@@ -194,7 +193,7 @@ func enrichObject(orig, copy runtime.Object) (runtime.Object, error) {
 func (d *DualWriterMode2) Update(ctx context.Context, name string, objInfo rest.UpdatedObjectInfo, createValidation rest.ValidateObjectFunc, updateValidation rest.ValidateObjectUpdateFunc, forceAllowCreate bool, options *metav1.UpdateOptions) (runtime.Object, bool, error) {
 	legacy, ok := d.Legacy.(rest.Updater)
 	if !ok {
-		return nil, false, fmt.Errorf("legacy storage rest.Updater is missing")
+		return nil, false, errNoUpdateMethod
 	}
 
 	// get old and new (updated) object so they can be stored in legacy store

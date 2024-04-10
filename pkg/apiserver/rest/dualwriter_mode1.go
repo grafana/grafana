@@ -15,8 +15,9 @@ type DualWriterMode1 struct {
 	DualWriter
 }
 
-var errNoCreaterMethod = errors.New("legacy storage rest.Creater is missing")
-var errNoUpdaterMethod = errors.New("legacy storage rest.Updater is missing")
+var errNoCreateMethod = errors.New("legacy storage rest.Creater is missing")
+var errNoUpdateMethod = errors.New("legacy storage rest.Updater is missing")
+var errNoGetMethod = errors.New("legacy storage rest.Getter is missing")
 
 // NewDualWriterMode1 returns a new DualWriter in mode 1.
 // Mode 1 represents writing to and reading from LegacyStorage.
@@ -28,8 +29,8 @@ func NewDualWriterMode1(legacy LegacyStorage, storage Storage) *DualWriterMode1 
 func (d *DualWriterMode1) Create(ctx context.Context, obj runtime.Object, createValidation rest.ValidateObjectFunc, options *metav1.CreateOptions) (runtime.Object, error) {
 	legacy, ok := d.Legacy.(rest.Creater)
 	if !ok {
-		klog.FromContext(ctx).Error(errDualWriterCreaterMissing, "legacy storage rest.Creater is missing")
-		return nil, errDualWriterCreaterMissing
+		klog.FromContext(ctx).Error(errNoCreateMethod, "legacy storage rest.Creater is missing")
+		return nil, errNoCreateMethod
 	}
 
 	return legacy.Create(ctx, obj, createValidation, options)
@@ -72,7 +73,7 @@ func (d *DualWriterMode1) DeleteCollection(ctx context.Context, deleteValidation
 func (d *DualWriterMode1) Update(ctx context.Context, name string, objInfo rest.UpdatedObjectInfo, createValidation rest.ValidateObjectFunc, updateValidation rest.ValidateObjectUpdateFunc, forceAllowCreate bool, options *metav1.UpdateOptions) (runtime.Object, bool, error) {
 	legacy, ok := d.Legacy.(rest.Updater)
 	if !ok {
-		klog.FromContext(ctx).Error(errNoCreaterMethod, "legacy storage rest.Updater is missing")
+		klog.FromContext(ctx).Error(errNoCreateMethod, "legacy storage rest.Updater is missing")
 	}
 
 	return legacy.Update(ctx, name, objInfo, createValidation, updateValidation, forceAllowCreate, options)
