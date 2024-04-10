@@ -20,8 +20,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/authn"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/org"
-	"github.com/grafana/grafana/pkg/services/team"
-	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
 	"github.com/grafana/grafana/pkg/web"
@@ -177,15 +175,7 @@ func newID() string {
 
 type OrgIDGetter func(c *contextmodel.ReqContext) (int64, error)
 
-type userCache interface {
-	GetSignedInUserWithCacheCtx(ctx context.Context, query *user.GetSignedInUserQuery) (*user.SignedInUser, error)
-}
-
-type teamService interface {
-	GetTeamIDsByUser(ctx context.Context, query *team.GetTeamIDsByUserQuery) ([]int64, error)
-}
-
-func AuthorizeInOrgMiddleware(ac AccessControl, service Service, userService userCache, teamService teamService) func(OrgIDGetter, Evaluator) web.Handler {
+func AuthorizeInOrgMiddleware(ac AccessControl, authnService authn.Service) func(OrgIDGetter, Evaluator) web.Handler {
 	return func(getTargetOrg OrgIDGetter, evaluator Evaluator) web.Handler {
 		return func(c *contextmodel.ReqContext) {
 			targetOrgID, err := getTargetOrg(c)
@@ -194,102 +184,23 @@ func AuthorizeInOrgMiddleware(ac AccessControl, service Service, userService use
 				return
 			}
 
-			tmpUser, err := makeTmpUser(c.Req.Context(), service, userService, teamService, c.SignedInUser, targetOrgID)
-			if err != nil {
-				deny(c, nil, fmt.Errorf("failed to authenticate user in target org: %w", err))
-				return
+			var orgUser identity.Requester = c.SignedInUser
+			if targetOrgID != c.SignedInUser.GetOrgID() {
+				orgUser, err = authnService.ResolveIdentity(c.Req.Context(), targetOrgID, c.SignedInUser.GetID())
+				if err != nil {
+					deny(c, nil, fmt.Errorf("failed to authenticate user in target org: %w", err))
+					return
+				}
 			}
-
-			authorize(c, ac, tmpUser, evaluator)
+			authorize(c, ac, orgUser, evaluator)
 
 			// guard against nil map
 			if c.SignedInUser.Permissions == nil {
 				c.SignedInUser.Permissions = make(map[int64]map[string][]string)
 			}
-			c.SignedInUser.Permissions[tmpUser.GetOrgID()] = tmpUser.GetPermissions()
+			c.SignedInUser.Permissions[orgUser.GetOrgID()] = orgUser.GetPermissions()
 		}
 	}
-}
-
-// makeTmpUser creates a temporary user that can be used to evaluate access across orgs.
-func makeTmpUser(ctx context.Context, service Service, cache userCache,
-	teamService teamService, reqUser identity.Requester, targetOrgID int64) (identity.Requester, error) {
-	tmpUser := &user.SignedInUser{
-		OrgID:          reqUser.GetOrgID(),
-		OrgName:        reqUser.GetOrgName(),
-		OrgRole:        reqUser.GetOrgRole(),
-		IsGrafanaAdmin: reqUser.GetIsGrafanaAdmin(),
-		Login:          reqUser.GetLogin(),
-		Teams:          reqUser.GetTeams(),
-		Permissions: map[int64]map[string][]string{
-			reqUser.GetOrgID(): reqUser.GetPermissions(),
-		},
-	}
-
-	namespace, identifier := reqUser.GetNamespacedID()
-	id, _ := identity.IntIdentifier(namespace, identifier)
-	switch namespace {
-	case identity.NamespaceUser:
-		tmpUser.UserID = id
-	case identity.NamespaceAPIKey:
-		tmpUser.ApiKeyID = id
-		if tmpUser.OrgID != targetOrgID {
-			return nil, errors.New("API key does not belong to target org")
-		}
-	case identity.NamespaceServiceAccount:
-		tmpUser.UserID = id
-		tmpUser.IsServiceAccount = true
-	}
-
-	if tmpUser.OrgID != targetOrgID {
-		switch targetOrgID {
-		case GlobalOrgID:
-			tmpUser.OrgID = GlobalOrgID
-			tmpUser.OrgRole = org.RoleNone
-			tmpUser.OrgName = ""
-			tmpUser.Teams = []int64{}
-		default:
-			if cache == nil {
-				return nil, errors.New("user cache is nil")
-			}
-			query := user.GetSignedInUserQuery{UserID: tmpUser.UserID, OrgID: targetOrgID}
-			queryResult, err := cache.GetSignedInUserWithCacheCtx(ctx, &query)
-			if err != nil {
-				return nil, err
-			}
-			tmpUser.OrgID = queryResult.OrgID
-			tmpUser.OrgName = queryResult.OrgName
-			tmpUser.OrgRole = queryResult.OrgRole
-
-			// Only fetch the team membership is the user is a member of the organization
-			if queryResult.OrgID == targetOrgID {
-				if teamService != nil {
-					teamIDs, err := teamService.GetTeamIDsByUser(ctx, &team.GetTeamIDsByUserQuery{OrgID: targetOrgID, UserID: tmpUser.UserID})
-					if err != nil {
-						return nil, err
-					}
-					tmpUser.Teams = teamIDs
-				}
-			}
-		}
-	}
-
-	// If the user is not a member of the organization
-	// evaluation must happen based on global permissions.
-	evaluationOrg := targetOrgID
-	if tmpUser.OrgID == NoOrgID {
-		evaluationOrg = GlobalOrgID
-	}
-	if tmpUser.Permissions[evaluationOrg] == nil || len(tmpUser.Permissions[evaluationOrg]) == 0 {
-		permissions, err := service.GetUserPermissions(ctx, tmpUser, Options{})
-		if err != nil {
-			return nil, err
-		}
-
-		tmpUser.Permissions[evaluationOrg] = GroupScopesByAction(permissions)
-	}
-
-	return tmpUser, nil
 }
 
 func UseOrgFromContextParams(c *contextmodel.ReqContext) (int64, error) {
@@ -339,7 +250,7 @@ func UseOrgFromRequestData(c *contextmodel.ReqContext) (int64, error) {
 
 // UseGlobalOrgFromRequestData returns global org if `global` flag is set or the org where user is logged in.
 // If RBACSingleOrganization is set, the org where user is logged in is returned - this is intended only for cloud workflows, where instances are limited to a single organization.
-func UseGlobalOrgFromRequestData(cfg *setting.Cfg) func(*contextmodel.ReqContext) (int64, error) {
+func UseGlobalOrgFromRequestData(cfg *setting.Cfg) OrgIDGetter {
 	return func(c *contextmodel.ReqContext) (int64, error) {
 		query, err := getOrgQueryFromRequest(c)
 		if err != nil {
