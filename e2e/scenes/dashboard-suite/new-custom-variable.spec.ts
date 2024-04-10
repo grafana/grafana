@@ -37,14 +37,13 @@ describe('Variables - Custom', () => {
     e2e.pages.Dashboard.Settings.Variables.Edit.General.applyButton().click();
     e2e.components.NavToolbar.editDashboard.backToDashboardButton().click();
     e2e.pages.Dashboard.SubMenu.submenuItemValueDropDownValueLinkTexts('one').click();
-    e2e.pages.Dashboard.SubMenu.submenuItemValueDropDownOptionTexts('two').click();
-
+    e2e.components.Select.option().contains('two').click();
     // Assert it was rendered
     cy.get('.markdown-html').should('include.text', 'VariableUnderTest: two');
   });
 
   it('can add a custom template variable with labels', () => {
-    e2e.flows.openDashboard({ uid: `${PAGE_UNDER_TEST}?orgId=1&editview=templating` });
+    e2e.flows.openDashboard({ uid: `${PAGE_UNDER_TEST}?orgId=1&editview=variables` });
     cy.contains(DASHBOARD_NAME).should('be.visible');
 
     // Create a new "Custom" variable
@@ -60,8 +59,8 @@ describe('Variables - Custom', () => {
     // Navigate back to the homepage and change the selected variable value
     e2e.pages.Dashboard.Settings.Variables.Edit.General.applyButton().click();
     e2e.components.NavToolbar.editDashboard.backToDashboardButton().click();
-    e2e.pages.Dashboard.SubMenu.submenuItemValueDropDownValueLinkTexts('One').click();
-    e2e.pages.Dashboard.SubMenu.submenuItemValueDropDownOptionTexts('Two').click();
+    e2e.pages.Dashboard.SubMenu.submenuItemValueDropDownValueLinkTexts('1').click();
+    e2e.components.Select.option().contains('Two').click();
 
     // Assert it was rendered
     cy.get('.markdown-html').should('include.text', 'VariableUnderTest: 2');

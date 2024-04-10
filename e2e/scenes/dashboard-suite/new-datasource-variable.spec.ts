@@ -40,7 +40,7 @@ describe('Variables - Datasource', () => {
     e2e.components.RefreshPicker.runButtonV2().click();
 
     e2e.pages.Dashboard.SubMenu.submenuItemValueDropDownValueLinkTexts('gdev-prometheus').click();
-    e2e.pages.Dashboard.SubMenu.submenuItemValueDropDownOptionTexts('gdev-slow-prometheus').click();
+    e2e.components.Select.option().contains('gdev-slow-prometheus').click();
 
     // Assert it was rendered
     cy.get('.markdown-html').should('include.text', 'VariableUnderTest: gdev-slow-prometheus-uid');

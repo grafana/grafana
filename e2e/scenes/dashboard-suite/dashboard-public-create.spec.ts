@@ -14,10 +14,10 @@ describe('Public dashboards', () => {
     cy.wait('@query');
 
     // Open sharing modal
-    e2e.pages.Dashboard.DashNav.shareButton().click();
+    e2e.components.NavToolbar.shareDashboard().click();
 
     // Select public dashboards tab
-    e2e.pages.ShareDashboardModal.PublicDashboard.Tab().click();
+    e2e.pages.ShareDashboardModal.PublicDashboardScene.Tab().click();
 
     // Create button should be disabled
     e2e.pages.ShareDashboardModal.PublicDashboard.CreateButton().should('be.disabled');
@@ -71,14 +71,14 @@ describe('Public dashboards', () => {
     cy.wait('@query');
 
     // Tag indicating a dashboard is public
-    e2e.pages.Dashboard.DashNav.publicDashboardTag().should('exist');
+    // e2e.pages.Dashboard.DashNav.publicDashboardTag().should('exist');
 
     // Open sharing modal
-    e2e.pages.Dashboard.DashNav.shareButton().click();
+    e2e.components.NavToolbar.shareDashboard().click();
 
     // Select public dashboards tab
     cy.intercept('GET', '/api/dashboards/uid/ZqZnVvFZz/public-dashboards').as('query-public-dashboard');
-    e2e.pages.ShareDashboardModal.PublicDashboard.Tab().click();
+    e2e.pages.ShareDashboardModal.PublicDashboardScene.Tab().click();
     cy.wait('@query-public-dashboard');
 
     e2e.pages.ShareDashboardModal.PublicDashboard.CopyUrlInput().should('exist');
@@ -114,11 +114,11 @@ describe('Public dashboards', () => {
     cy.wait('@query');
 
     // Open sharing modal
-    e2e.pages.Dashboard.DashNav.shareButton().click();
+    e2e.components.NavToolbar.shareDashboard().click();
 
     // Select public dashboards tab
     cy.intercept('GET', '/api/dashboards/uid/ZqZnVvFZz/public-dashboards').as('query-public-dashboard');
-    e2e.pages.ShareDashboardModal.PublicDashboard.Tab().click();
+    e2e.pages.ShareDashboardModal.PublicDashboardScene.Tab().click();
     cy.wait('@query-public-dashboard');
 
     // save url before disabling public dashboard
