@@ -4,6 +4,7 @@ import (
 	"context"
 	"io"
 	"net/http"
+	"net/url"
 	"strings"
 	"testing"
 
@@ -17,6 +18,8 @@ import (
 
 func TestPluginUpdateChecker_HasUpdate(t *testing.T) {
 	t.Run("update is available", func(t *testing.T) {
+		updateCheckURL, _ := url.Parse("https://grafana.com/api/plugins/versioncheck")
+
 		svc := PluginsService{
 			availableUpdates: map[string]string{
 				"test-ds": "1.0.0",
@@ -31,6 +34,7 @@ func TestPluginUpdateChecker_HasUpdate(t *testing.T) {
 					},
 				},
 			},
+			updateCheckURL: updateCheckURL,
 		}
 
 		update, exists := svc.HasUpdate(context.Background(), "test-ds")
@@ -39,6 +43,9 @@ func TestPluginUpdateChecker_HasUpdate(t *testing.T) {
 	})
 
 	t.Run("update is not available", func(t *testing.T) {
+
+		updateCheckURL, _ := url.Parse("https://grafana.com/api/plugins/versioncheck")
+
 		svc := PluginsService{
 			availableUpdates: map[string]string{
 				"test-panel": "0.9.0",
@@ -66,6 +73,7 @@ func TestPluginUpdateChecker_HasUpdate(t *testing.T) {
 					},
 				},
 			},
+			updateCheckURL: updateCheckURL,
 		}
 
 		update, exists := svc.HasUpdate(context.Background(), "test-ds")
@@ -82,6 +90,9 @@ func TestPluginUpdateChecker_HasUpdate(t *testing.T) {
 	})
 
 	t.Run("update is available but plugin is not in store", func(t *testing.T) {
+
+		updateCheckURL, _ := url.Parse("https://grafana.com/api/plugins/versioncheck")
+
 		svc := PluginsService{
 			availableUpdates: map[string]string{
 				"test-panel": "0.9.0",
@@ -96,6 +107,7 @@ func TestPluginUpdateChecker_HasUpdate(t *testing.T) {
 					},
 				},
 			},
+			updateCheckURL: updateCheckURL,
 		}
 
 		update, exists := svc.HasUpdate(context.Background(), "test-panel")
@@ -124,6 +136,8 @@ func TestPluginUpdateChecker_checkForUpdates(t *testing.T) {
 			"version": "1.0.0"
 		  }
 		]`
+
+		updateCheckURL, _ := url.Parse("https://grafana.com/api/plugins/versioncheck")
 
 		svc := PluginsService{
 			availableUpdates: map[string]string{
@@ -168,8 +182,9 @@ func TestPluginUpdateChecker_checkForUpdates(t *testing.T) {
 			httpClient: &fakeHTTPClient{
 				fakeResp: jsonResp,
 			},
-			log:    log.NewNopLogger(),
-			tracer: tracing.InitializeTracerForTest(),
+			log:            log.NewNopLogger(),
+			tracer:         tracing.InitializeTracerForTest(),
+			updateCheckURL: updateCheckURL,
 		}
 
 		svc.instrumentedCheckForUpdates(context.Background())
