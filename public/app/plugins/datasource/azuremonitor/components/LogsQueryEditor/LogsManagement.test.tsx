@@ -13,7 +13,7 @@ const variableOptionGroup = {
 };
 
 describe('LogsQueryEditor.LogsManagement', () => {
-  it('should render set Basic Logs to true if Basic is clicked', async () => {
+  it('should set Basic Logs to true if Basic is clicked', async () => {
     const mockDatasource = createMockDatasource();
     const query = createMockQuery({ azureLogAnalytics: { basicLogsQuery: undefined } });
     const onChange = jest.fn();
@@ -40,7 +40,7 @@ describe('LogsQueryEditor.LogsManagement', () => {
     );
   });
 
-  it('should render set Basic Logs to false if Analytics is clicked', async () => {
+  it('should set Basic Logs to false if Analytics is clicked', async () => {
     const mockDatasource = createMockDatasource();
     const query = createMockQuery({ azureLogAnalytics: { basicLogsQuery: true } });
     const onChange = jest.fn();
@@ -62,6 +62,34 @@ describe('LogsQueryEditor.LogsManagement', () => {
       expect.objectContaining({
         azureLogAnalytics: expect.objectContaining({
           basicLogsQuery: false,
+        }),
+      })
+    );
+  });
+
+  it('should set Basic Logs to true if Basic is clicked and clear query', async () => {
+    const mockDatasource = createMockDatasource();
+    const query = createMockQuery({ azureLogAnalytics: { basicLogsQuery: undefined, query: 'table | my test query' } });
+    const onChange = jest.fn();
+
+    render(
+      <LogsManagement
+        query={query}
+        datasource={mockDatasource}
+        variableOptionGroup={variableOptionGroup}
+        onQueryChange={onChange}
+        setError={() => {}}
+      />
+    );
+
+    const logsManagementOption = await screen.findByLabelText('Basic');
+    await userEvent.click(logsManagementOption);
+
+    expect(onChange).toBeCalledWith(
+      expect.objectContaining({
+        azureLogAnalytics: expect.objectContaining({
+          basicLogsQuery: true,
+          query: '',
         }),
       })
     );
