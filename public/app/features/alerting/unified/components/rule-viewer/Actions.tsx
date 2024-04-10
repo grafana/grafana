@@ -55,7 +55,7 @@ export const useAlertRulePageActions = ({ handleDelete, handleDuplicateRule }: P
           {canEdit && <MenuItemPauseRule rule={rule} />}
           {canSilence && (
             <Menu.Item
-              label="Silence"
+              label="Silence notifications"
               icon="bell-slash"
               url={makeRuleBasedSilenceLink(identifier.ruleSourceName, rule)}
             />
