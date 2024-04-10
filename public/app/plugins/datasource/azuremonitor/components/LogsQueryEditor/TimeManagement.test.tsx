@@ -169,4 +169,31 @@ describe('LogsQueryEditor.TimeManagement', () => {
     expect(onChange).not.toBeCalled();
     expect(screen.getByText('Alert > TestTimeColumn')).toBeInTheDocument();
   });
+
+  it('should set time to dashboard and query disabled if basic logs is selected', async () => {
+    const mockDatasource = createMockDatasource();
+    const query = createMockQuery({ azureLogAnalytics: { basicLogsQuery: true } });
+    const onChange = jest.fn();
+
+    render(
+      <TimeManagement
+        query={query}
+        datasource={mockDatasource}
+        variableOptionGroup={variableOptionGroup}
+        onQueryChange={onChange}
+        setError={() => {}}
+        schema={FakeSchemaData.getLogAnalyticsFakeEngineSchema()}
+      />
+    );
+
+    expect(onChange).toBeCalledWith(
+      expect.objectContaining({
+        azureLogAnalytics: expect.objectContaining({
+          dashboardTime: true,
+        }),
+      })
+    );
+
+    expect(screen.getByLabelText('Query')).toBeDisabled();
+  });
 });
