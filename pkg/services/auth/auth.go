@@ -71,7 +71,6 @@ type UserTokenService interface {
 	LookupToken(ctx context.Context, unhashedToken string) (*UserToken, error)
 	// RotateToken will always rotate a valid token
 	RotateToken(ctx context.Context, cmd RotateCommand) (*UserToken, error)
-	TryRotateToken(ctx context.Context, token *UserToken, clientIP net.IP, userAgent string) (bool, *UserToken, error)
 	RevokeToken(ctx context.Context, token *UserToken, soft bool) error
 	RevokeAllUserTokens(ctx context.Context, userID int64) error
 	GetUserToken(ctx context.Context, userID, userTokenID int64) (*UserToken, error)
