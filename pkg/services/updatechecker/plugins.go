@@ -121,7 +121,7 @@ func (s *PluginsService) checkForUpdates(ctx context.Context) error {
 		"slugIn":         []string{s.pluginIDsCSV(localPlugins)},
 		"grafanaVersion": []string{s.grafanaVersion},
 	}.Encode()
-	ctxLogger.Debug("Checking for plugin updates via " + requestURL)
+	ctxLogger.Debug("Checking for plugin updates", "url", requestURL)
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, requestURL, nil)
 	if err != nil {
 		return err
