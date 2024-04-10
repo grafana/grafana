@@ -5,9 +5,11 @@ import (
 	"fmt"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
+	standaloneoptions "github.com/grafana/grafana/pkg/services/apiserver/standalone/options"
 	"github.com/prometheus/client_golang/prometheus"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
+	genericapiserver "k8s.io/apiserver/pkg/server"
 
 	"github.com/grafana/grafana/pkg/apis/datasource/v0alpha1"
 	"github.com/grafana/grafana/pkg/apiserver/builder"
@@ -32,6 +34,9 @@ type APIServerFactory interface {
 
 	// Given the flags, what can we produce
 	GetEnabled(runtime []RuntimeConfig) ([]schema.GroupVersion, error)
+
+	// Mixin for config
+	ConfigMixin(config *genericapiserver.RecommendedConfig, options *standaloneoptions.Options) *genericapiserver.RecommendedConfig
 
 	// Make an API server for a given group+version
 	MakeAPIServer(tracer tracing.Tracer, gv schema.GroupVersion) (builder.APIGroupBuilder, error)
@@ -60,6 +65,10 @@ func (p *DummyAPIFactory) GetEnabled(runtime []RuntimeConfig) ([]schema.GroupVer
 		gv = append(gv, schema.GroupVersion{Group: cfg.Group, Version: cfg.Version})
 	}
 	return gv, nil
+}
+
+func (p *DummyAPIFactory) ConfigMixin(config *genericapiserver.RecommendedConfig, _ *standaloneoptions.Options) *genericapiserver.RecommendedConfig {
+	return config
 }
 
 func (p *DummyAPIFactory) MakeAPIServer(tracer tracing.Tracer, gv schema.GroupVersion) (builder.APIGroupBuilder, error) {
