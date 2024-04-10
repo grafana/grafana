@@ -79,16 +79,19 @@ func getDialOpts(ctx context.Context, settings backend.DataSourceInstanceSetting
 	proxyClient, err := settings.ProxyClient(ctx)
 	if err != nil {
 		// TODO LND handle error
-		return nil
+		logger.Error("Error getting proxy client", "error", err)
+		return dialOps
 	}
 	if proxyClient.SecureSocksProxyEnabled() {
 		dialer, err := proxyClient.NewSecureSocksProxyContextDialer()
 		if err != nil {
 			// TODO LND handle error
-			return nil
+			logger.Error("Error getting dialer", "error", err)
+			return dialOps
 		}
 		dialOps = append(dialOps, grpc.WithContextDialer(func(ctx context.Context, host string) (net.Conn, error) {
 			// TODO LND Should we check context?
+			logger.Debug("DEBUG LND Dialler opts called.")
 			return dialer.Dial("tcp", host)
 		}))
 	}
