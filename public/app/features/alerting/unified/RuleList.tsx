@@ -47,9 +47,8 @@ const RuleList = withErrorBoundary(
     const [queryParams] = useQueryParams();
     const { filterState, hasActiveFilters } = useRulesFilter();
 
-    const view = VIEWS[queryParams['view'] as keyof typeof VIEWS]
-      ? (queryParams['view'] as keyof typeof VIEWS)
-      : 'groups';
+    const queryParamView = queryParams['view'] as keyof typeof VIEWS;
+    const view = VIEWS[queryParamView] ? queryParamView : 'groups';
 
     const ViewComponent = VIEWS[view];
 
