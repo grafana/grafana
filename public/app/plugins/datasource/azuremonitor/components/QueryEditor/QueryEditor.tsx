@@ -55,14 +55,16 @@ const QueryEditor = ({
   const query = usePreparedQuery(baseQuery, onQueryChange);
 
   const subscriptionId = query.subscription || datasource.azureMonitorDatasource.defaultSubscriptionId;
-  const basicLogsEnabled = datasource.azureMonitorDatasource.basicLogsEnabled ?? false;
+  const basicLogsEnabled =
+    datasource.azureMonitorDatasource.basicLogsEnabled &&
+    app !== CoreApp.UnifiedAlerting &&
+    app !== CoreApp.CloudAlerting;
   const variableOptionGroup = {
     label: 'Template Variables',
     options: datasource.getVariables().map((v) => ({ label: v, value: v })),
   };
 
   const isAzureAuthenticated = config.bootData.user.authenticatedBy === 'oauth_azuread';
-
   if (datasource.currentUserAuth) {
     if (
       app === CoreApp.UnifiedAlerting &&
@@ -106,7 +108,7 @@ const QueryEditor = ({
       <EditorForQueryType
         data={data}
         subscriptionId={subscriptionId}
-        basicLogsEnabled={basicLogsEnabled}
+        basicLogsEnabled={basicLogsEnabled ?? false}
         query={query}
         datasource={datasource}
         onChange={onQueryChange}
