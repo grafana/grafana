@@ -149,10 +149,10 @@ type FrontendSettingsSqlConnectionLimitsDTO struct {
 }
 
 type FrontendSettingsApiServerUrlOverrideDTO struct {
-	Group    *string `json:"group"`
-	Version  *string `json:"version"`
-	Resource *string `json:"resource"`
-	Url      *string `json:"url"`
+	Group    string `json:"group"`
+	Version  string `json:"version"`
+	Resource string `json:"resource"`
+	Url      string `json:"url"`
 }
 
 type FrontendSettingsDTO struct {

@@ -729,10 +729,10 @@ func getApiServerOverrides(hs *HTTPServer) []dtos.FrontendSettingsApiServerUrlOv
 
 	for _, override := range hs.Cfg.APIServerUrlOverrides {
 		overrides = append(overrides, dtos.FrontendSettingsApiServerUrlOverrideDTO{
-			Group:    &override.Group,
-			Version:  &override.Version,
-			Resource: &override.Resource,
-			Url:      &override.Url,
+			Group:    override.Group,
+			Version:  override.Version,
+			Resource: override.Resource,
+			Url:      override.Url,
 		})
 	}
 
