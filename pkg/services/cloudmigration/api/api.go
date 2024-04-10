@@ -52,7 +52,7 @@ func (cma *CloudMigrationAPI) registerEndpoints() {
 		cloudMigrationRoute.Get("/migration/:id/run", routing.Wrap(cma.GetMigrationRunList))
 		cloudMigrationRoute.Get("/migration/:id/run/:runID", routing.Wrap(cma.GetMigrationRun))
 		cloudMigrationRoute.Post("/token", routing.Wrap(cma.CreateToken))
-	}, middleware.ReqGrafanaAdmin)
+	}, middleware.ReqOrgAdmin)
 }
 
 // swagger:route POST /cloudmigration/token migrations createCloudMigrationToken
@@ -199,7 +199,7 @@ func (cma *CloudMigrationAPI) RunMigration(c *contextmodel.ReqContext) response.
 		return response.Error(http.StatusInternalServerError, "migration data get error", err)
 	}
 
-	req, err := http.NewRequest("POST", path, bytes.NewReader(body))
+	req, err := http.NewRequest(http.MethodPost, path, bytes.NewReader(body))
 	if err != nil {
 		cma.log.Error("error creating http request for cloud migration run", "err", err.Error())
 		return response.Error(http.StatusInternalServerError, "http request error", err)
@@ -235,13 +235,15 @@ func (cma *CloudMigrationAPI) RunMigration(c *contextmodel.ReqContext) response.
 		return response.Error(http.StatusInternalServerError, "unmarshalling migration run response", err)
 	}
 
-	_, err = cma.cloudMigrationService.SaveMigrationRun(ctx, &cloudmigration.CloudMigrationRun{
+	runID, err := cma.cloudMigrationService.SaveMigrationRun(ctx, &cloudmigration.CloudMigrationRun{
 		CloudMigrationUID: stringID,
 		Result:            respData,
 	})
 	if err != nil {
 		response.Error(http.StatusInternalServerError, "migration run save error", err)
 	}
+
+	result.RunID = runID
 
 	return response.JSON(http.StatusOK, result)
 }
