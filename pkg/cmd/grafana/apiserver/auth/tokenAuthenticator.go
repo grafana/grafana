@@ -7,7 +7,6 @@ import (
 	"net/http"
 	"net/url"
 	"strings"
-	"time"
 
 	"github.com/grafana/grafana/pkg/services/apiserver/standalone/options"
 	"k8s.io/apiserver/pkg/authentication/authenticator"
@@ -20,14 +19,14 @@ const (
 	headerKeyAccessToken = "X-Access-Token"
 	headerKeyGrafanaID   = "X-Grafana-Id"
 
-	extraKeyAccessToken = "access-token"
+	extraKeyAccessToken = "access-token-st"
 	extraKeyGrafanaID   = "id-token"
 	extraKeyGLSA        = "glsa"
 )
 
 // TODO: There are equivalent structs in auth package but go.mod was giving me grief
 // Those structs are counterintuitively called SignIDTokenRequest and SignIDTokenResponse
-// Just because access token signing is implemented pretty similar to ID token signing
+// Just because access token signing is implemented similarly to ID token signing
 type signAccessTokenRequest struct {
 }
 
@@ -48,6 +47,7 @@ type AccessTokenAuthenticator struct {
 	serviceBaseURL string
 	systemCAPToken string
 	validator      *TokenValidator
+	client         *http.Client
 }
 
 // TODO: add tests
@@ -65,6 +65,7 @@ func newAccessTokenAuthenticator(options *options.AuthnOptions, client *http.Cli
 		validator:      &TokenValidator{verifier},
 		serviceBaseURL: options.ServiceBaseURL,
 		systemCAPToken: options.SystemCAPToken,
+		client:         client,
 	}
 }
 
@@ -83,7 +84,12 @@ func newAuthAPIAuthorizedRequest(method, path string, token string, body []byte)
 	return req, nil
 }
 
-func (auth *AccessTokenAuthenticator) signAccessToken(tokenValidationResult *authn.Claims[CustomClaims]) (string, error) {
+func (auth *AccessTokenAuthenticator) signNextAccessTokenWithIncomingAudience(tokenValidationResult *authn.Claims[CustomClaims]) (string, error) {
+	audience := strings.Split(tokenValidationResult.Claims.Audience[0], ":")
+	return auth.signAccessToken(tokenValidationResult.Rest.OrgId, fmt.Sprintf(`[{"type":"%s","identifier":"%s"}]`, audience[0], audience[1]))
+}
+
+func (auth *AccessTokenAuthenticator) signAccessToken(orgIdHeader string, realmsHeader string) (string, error) {
 	body, err := json.Marshal(signAccessTokenRequest{})
 	if err != nil {
 		return "", err
@@ -98,15 +104,10 @@ func (auth *AccessTokenAuthenticator) signAccessToken(tokenValidationResult *aut
 		return "", err
 	}
 
-	req.Header.Add("X-Org-ID", tokenValidationResult.Rest.OrgId)
+	req.Header.Add("X-Org-ID", orgIdHeader)
+	req.Header.Add("X-Realms", realmsHeader)
 
-	audience := strings.Split(tokenValidationResult.Claims.Audience[0], ":")
-	req.Header.Add("X-Realms", fmt.Sprintf(`[{"type":"%s","identifier":"%s"}]`, audience[0], audience[1]))
-
-	client := &http.Client{
-		Timeout: time.Second * 5,
-	}
-	res, err := client.Do(req)
+	res, err := auth.client.Do(req)
 	if err != nil {
 		return "", err
 	}
@@ -119,6 +120,8 @@ func (auth *AccessTokenAuthenticator) signAccessToken(tokenValidationResult *aut
 	if response.Status == "error" {
 		return "", fmt.Errorf(response.Error)
 	}
+
+	fmt.Println("Token is", response.AccessToken.Token)
 
 	return response.AccessToken.Token, nil
 }
@@ -144,9 +147,14 @@ func (auth *AccessTokenAuthenticator) AuthenticateRequest(req *http.Request) (*a
 		return nil, false, err
 	}
 
+	// TODO: drop this check when all the MT services have a system CAP provisioned and deployed
 	if len(auth.systemCAPToken) > 0 {
 		var err error
-		accessToken, err = auth.signAccessToken(tokenValidationResult)
+		// TODO: may wanna consider signing elsewhere instead of here in the future
+		// when the destination of the token becomes an input, destination can only be inferred later
+		// in the application logic. For now, will use the incoming aud from either access token or id token.
+		// Incoming aud is either stack:<stack-id> or org:<org-id>. No other values are currently supported.
+		accessToken, err = auth.signNextAccessTokenWithIncomingAudience(tokenValidationResult)
 		if err != nil {
 			return nil, false, err
 		}
@@ -183,7 +191,7 @@ func (auth *AccessTokenAuthenticator) AuthenticateRequest(req *http.Request) (*a
 	}, true, nil
 }
 
-// Returned as a func so appending to a list of request funcs works
+// Returned as a func to allow for appending to a list of request funcs
 // Following basically binds the this for the Request invocation on above struct
 func GetAccessTokenAuthenticatorFunc(options *options.AuthnOptions) authenticator.RequestFunc {
 	auth := newAccessTokenAuthenticator(options, nil)
