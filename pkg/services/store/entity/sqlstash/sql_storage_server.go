@@ -1615,6 +1615,9 @@ func (s *sqlEntityServer) poller(stream chan *entity.EntityWatchResponse) {
 }
 
 func (s *sqlEntityServer) poll(since int64, out chan *entity.EntityWatchResponse) (int64, error) {
+	ctx, span := s.tracer.Start(s.ctx, "storage_server.poll")
+	defer span.End()
+
 	rr := &entity.ReadEntityRequest{
 		WithBody:   true,
 		WithStatus: true,
@@ -1638,7 +1641,7 @@ func (s *sqlEntityServer) poll(since int64, out chan *entity.EntityWatchResponse
 
 			query, args := entityQuery.ToQuery()
 
-			rows, err := s.query(s.ctx, query, args...)
+			rows, err := s.query(ctx, query, args...)
 			if err != nil {
 				return err
 			}
@@ -1647,7 +1650,7 @@ func (s *sqlEntityServer) poll(since int64, out chan *entity.EntityWatchResponse
 			found := int64(0)
 			for rows.Next() {
 				// check if the context is done
-				if s.ctx.Err() != nil {
+				if ctx.Err() != nil {
 					hasmore = false
 					return nil
 				}
@@ -1680,7 +1683,7 @@ func (s *sqlEntityServer) poll(since int64, out chan *entity.EntityWatchResponse
 						WithBody:   rr.WithBody,
 						WithStatus: rr.WithStatus,
 					}
-					history, err := s.history(s.ctx, rr)
+					history, err := s.history(ctx, rr)
 					if err != nil {
 						s.log.Error("error reading previous entity", "guid", updated.Guid, "err", err)
 						return err
