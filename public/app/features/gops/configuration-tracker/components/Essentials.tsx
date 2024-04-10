@@ -36,9 +36,7 @@ function useGetContactPoints() {
   return contactPoints;
 }
 
-export function Essentials({ onClose }: EssentialsProps) {
-  const contactPoints = useGetContactPoints();
-
+function useGetIncidentPluginConfig() {
   const incidentsPluginConfig = useGetSingle('grafana-incident-app');
   const isIncidentPluginInstalled = incidentsPluginConfig?.isInstalled ?? false;
   const [incidentPluginConfig, setIncidentPluginConfig] = React.useState<IncidentsPluginConfig | null>(null);
@@ -85,6 +83,12 @@ export function Essentials({ onClose }: EssentialsProps) {
       );
     }
   }, [isIncidentPluginInstalled]);
+  return incidentPluginConfig;
+}
+
+export function Essentials({ onClose }: EssentialsProps) {
+  const contactPoints = useGetContactPoints();
+  const incidentPluginConfig = useGetIncidentPluginConfig();
 
   const ESSENTIAL_CONTENT: SectionsDto = {
     sections: [
