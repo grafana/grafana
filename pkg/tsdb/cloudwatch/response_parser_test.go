@@ -517,24 +517,27 @@ func Test_buildDataFrames_parse_label_to_name_and_labels(t *testing.T) {
 			Period:           60,
 			MetricQueryType:  models.MetricQueryTypeQuery,
 			MetricEditorMode: models.MetricEditorModeBuilder,
+			Dimensions:       map[string][]string{"Service": {"EC2", "Elastic Loading Balancing"}, "Resource": {"vCPU", "ApplicationLoadBalancersPerRegion"}},
 			SqlExpression:    "SELECT AVG(ResourceCount) FROM SCHEMA(\"AWS/Usage\", Class, Resource, Service, Type) GROUP BY Service, Resource",
 		}
 		frames, err := buildDataFrames(contextWithFeaturesEnabled(features.FlagCloudWatchNewLabelParsing), startTime, endTime, *response, query)
 		require.NoError(t, err)
 
 		assert.Equal(t, "EC2 vCPU", frames[0].Name)
-		assert.Equal(t, "EC2 vCPU", frames[0].Fields[1].Labels["Series"])
+		assert.Equal(t, "EC2", frames[0].Fields[1].Labels["Service"])
+		assert.Equal(t, "vCPU", frames[0].Fields[1].Labels["Resource"])
 		assert.Equal(t, "Elastic Loading Balancing ApplicationLoadBalancersPerRegion", frames[1].Name)
-		assert.Equal(t, "Elastic Loading Balancing ApplicationLoadBalancersPerRegion", frames[1].Fields[1].Labels["Series"])
+		assert.Equal(t, "Elastic Loading Balancing", frames[1].Fields[1].Labels["Service"])
+		assert.Equal(t, "ApplicationLoadBalancersPerRegion", frames[1].Fields[1].Labels["Resource"])
 	})
 
-	t.Run("when dynamic label set on `MetricQuery` query", func(t *testing.T) {
+	t.Run("when `MetricQuery` query has no `GROUP BY` clause", func(t *testing.T) {
 		timestamp := time.Unix(0, 0)
 		response := &models.QueryRowResponse{
 			Metrics: []*cloudwatch.MetricDataResult{
 				{
 					Id:    aws.String("query1"),
-					Label: aws.String("my-dynamic-label: series"),
+					Label: aws.String("cloudwatch-default-label"),
 					Timestamps: []*time.Time{
 						aws.Time(timestamp),
 					},
@@ -551,47 +554,13 @@ func Test_buildDataFrames_parse_label_to_name_and_labels(t *testing.T) {
 			Period:           60,
 			MetricQueryType:  models.MetricQueryTypeQuery,
 			MetricEditorMode: models.MetricEditorModeBuilder,
-			SqlExpression:    "SELECT AVG(ResourceCount) FROM SCHEMA(\"AWS/Usage\", Class, Resource, Service, Type) GROUP BY Service, Resource",
-			Label:            "my-dynamic-label: ${LABEL}",
+			SqlExpression:    "SELECT AVG(ResourceCount) FROM SCHEMA(\"AWS/Usage\", Class, Resource, Service, Type)",
 		}
 		frames, err := buildDataFrames(contextWithFeaturesEnabled(features.FlagCloudWatchNewLabelParsing), startTime, endTime, *response, query)
 		require.NoError(t, err)
 
-		assert.Equal(t, "my-dynamic-label: series", frames[0].Name)
-		assert.Equal(t, "my-dynamic-label: series", frames[0].Fields[1].Labels["Series"])
-	})
-
-	t.Run("when static label set on `MetricQuery` query", func(t *testing.T) {
-		timestamp := time.Unix(0, 0)
-		response := &models.QueryRowResponse{
-			Metrics: []*cloudwatch.MetricDataResult{
-				{
-					Id:    aws.String("query1"),
-					Label: aws.String("my-static-label series"),
-					Timestamps: []*time.Time{
-						aws.Time(timestamp),
-					},
-					Values:     []*float64{aws.Float64(23)},
-					StatusCode: aws.String("Complete"),
-				},
-			},
-		}
-
-		query := &models.CloudWatchQuery{
-			RefId:            "refId1",
-			Region:           "us-east-1",
-			Statistic:        "Average",
-			Period:           60,
-			MetricQueryType:  models.MetricQueryTypeQuery,
-			MetricEditorMode: models.MetricEditorModeBuilder,
-			SqlExpression:    "SELECT AVG(ResourceCount) FROM SCHEMA(\"AWS/Usage\", Class, Resource, Service, Type) GROUP BY Service, Resource",
-			Label:            "my-static-label",
-		}
-		frames, err := buildDataFrames(contextWithFeaturesEnabled(features.FlagCloudWatchNewLabelParsing), startTime, endTime, *response, query)
-		require.NoError(t, err)
-
-		assert.Equal(t, "my-static-label", frames[0].Name)
-		assert.Equal(t, "my-static-label", frames[0].Fields[1].Labels["Series"])
+		assert.Equal(t, "cloudwatch-default-label", frames[0].Name)
+		assert.Equal(t, "cloudwatch-default-label", frames[0].Fields[1].Labels["Series"])
 	})
 
 	t.Run("Parse cloudwatch response", func(t *testing.T) {

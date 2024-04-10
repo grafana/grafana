@@ -138,6 +138,30 @@ func getLabels(cloudwatchLabel string, query *models.CloudWatchQuery) data.Label
 	return labels
 }
 
+func getLabelsForMetricQuery(cloudwatchLabel string, query *models.CloudWatchQuery) data.Labels {
+	labels := data.Labels{}
+
+	if len(query.Dimensions) == 0 {
+		labels["Series"] = cloudwatchLabel
+	}
+
+	for dim, values := range query.Dimensions {
+		if len(values) == 1 && values[0] == "" {
+			labels[dim] = "Other"
+			continue
+		}
+
+		for _, value := range values {
+			if value == cloudwatchLabel {
+				labels[dim] = cloudwatchLabel
+			} else if strings.Contains(cloudwatchLabel, value) {
+				labels[dim] = value
+			}
+		}
+	}
+	return labels
+}
+
 func buildDataFrames(ctx context.Context, startTime time.Time, endTime time.Time, aggregatedResponse models.QueryRowResponse,
 	query *models.CloudWatchQuery) (data.Frames, error) {
 	frames := data.Frames{}
@@ -196,11 +220,7 @@ func buildDataFrames(ctx context.Context, startTime time.Time, endTime time.Time
 		name := label
 		var labels data.Labels
 		if query.GetGetMetricDataAPIMode() == models.GMDApiModeSQLExpression {
-			metricQueryLabel := label
-			if hasStaticLabel {
-				metricQueryLabel = query.Label
-			}
-			labels = data.Labels{"Series": metricQueryLabel}
+			labels = getLabelsForMetricQuery(label, query)
 		} else if features.IsEnabled(ctx, features.FlagCloudWatchNewLabelParsing) {
 			name, labels = parseLabels(label, query)
 		} else {
