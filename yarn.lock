@@ -3522,9 +3522,9 @@ __metadata:
     "@grafana/ui": "workspace:*"
     "@lezer/common": "npm:1.2.1"
     "@lezer/lr": "npm:1.3.3"
-    "@opentelemetry/api": "npm:1.7.0"
+    "@opentelemetry/api": "npm:1.8.0"
     "@opentelemetry/exporter-collector": "npm:0.25.0"
-    "@opentelemetry/semantic-conventions": "npm:1.21.0"
+    "@opentelemetry/semantic-conventions": "npm:1.23.0"
     "@testing-library/jest-dom": "npm:6.4.2"
     "@testing-library/react": "npm:14.2.2"
     "@testing-library/user-event": "npm:14.5.2"
@@ -5851,10 +5851,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@opentelemetry/api@npm:1.7.0, @opentelemetry/api@npm:^1.0.0, @opentelemetry/api@npm:^1.7.0":
-  version: 1.7.0
-  resolution: "@opentelemetry/api@npm:1.7.0"
-  checksum: 10/bcf7afa7051dcd4583898a68f8a57fb4c85b5cedddf7b6eb3616595c0b3bcd7f5448143b8355b00935a755de004d6285489f8e132f34127efe7b1be404622a3e
+"@opentelemetry/api@npm:1.8.0, @opentelemetry/api@npm:^1.0.0, @opentelemetry/api@npm:^1.7.0":
+  version: 1.8.0
+  resolution: "@opentelemetry/api@npm:1.8.0"
+  checksum: 10/62f0c42711b9f0c56ea9527c2e6e609e371bfb47d0b78956c91fe27365b4744d7dcc407636ef5b19a24a1d5e2c3cfa79c1b715deca829074e24e3ffba1315ba2
   languageName: node
   linkType: hard
 
@@ -6014,6 +6014,13 @@ __metadata:
   version: 1.21.0
   resolution: "@opentelemetry/semantic-conventions@npm:1.21.0"
   checksum: 10/49503a01ea5bb0b067c08c33e5dc8f5ecc5ad269825f1b183a477ddaa496df05f47439ff381e9d5850257c2797afb47f7456fb605b07c4cbec517384c0b0d9b2
+  languageName: node
+  linkType: hard
+
+"@opentelemetry/semantic-conventions@npm:1.23.0":
+  version: 1.23.0
+  resolution: "@opentelemetry/semantic-conventions@npm:1.23.0"
+  checksum: 10/6cd87722039f7fc8b5933bb0227b9562e0191096c919c6e9b9810d6ae175c0373fcdb30fea0a62ec4b2699020e4cfef4ba11380d886e921b09bc63c9d90e1690
   languageName: node
   linkType: hard
 
@@ -18667,9 +18674,9 @@ __metadata:
     "@manypkg/get-packages": "npm:^2.2.0"
     "@msagl/core": "npm:^1.1.16"
     "@msagl/parser": "npm:^1.1.16"
-    "@opentelemetry/api": "npm:1.7.0"
+    "@opentelemetry/api": "npm:1.8.0"
     "@opentelemetry/exporter-collector": "npm:0.25.0"
-    "@opentelemetry/semantic-conventions": "npm:1.21.0"
+    "@opentelemetry/semantic-conventions": "npm:1.23.0"
     "@playwright/test": "npm:1.42.1"
     "@pmmmwh/react-refresh-webpack-plugin": "npm:0.5.11"
     "@popperjs/core": "npm:2.11.8"
