@@ -1,7 +1,7 @@
 import { css } from '@emotion/css';
-import React from 'react';
+import React, { useState } from 'react';
 
-import { Field, Switch, useTheme2 } from '@grafana/ui';
+import { ConfirmModal, Field, Switch, useTheme2 } from '@grafana/ui';
 
 import { AzureDataSourceJsonData } from '../../types';
 
@@ -12,6 +12,7 @@ export interface Props {
 
 export const BasicLogsToggle = (props: Props) => {
   const { options, onBasicLogsEnabledChange } = props;
+  const [basiclogsAckOpen, setBasicLogsAckOpen] = useState<boolean>(false);
 
   const theme = useTheme2();
   const styles = {
@@ -28,7 +29,10 @@ export const BasicLogsToggle = (props: Props) => {
       }),
     }),
   };
-  const onChange = (e: React.ChangeEvent<HTMLInputElement>) => onBasicLogsEnabledChange(e.target.checked);
+  const onChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    onBasicLogsEnabledChange(e.target.checked);
+    setBasicLogsAckOpen(e.target.checked);
+  };
   const description = (
     <p className={styles.text}>
       Enabling this feature incurs Azure Monitor per-query cost on dashboard panels that use tables configured for{' '}
@@ -43,10 +47,20 @@ export const BasicLogsToggle = (props: Props) => {
     </p>
   );
   return (
-    <Field description={description} label="Enable Basic Logs">
-      <div>
-        <Switch aria-label="Basic Logs" onChange={onChange} value={options.basicLogsEnabled ?? false} />
-      </div>
-    </Field>
+    <>
+      <ConfirmModal
+        isOpen={basiclogsAckOpen}
+        title="Basic Logs Queries"
+        body="Enabling this feature incurs Azure Monitor per-query cost on dashboard panels that use tables configured for Basic Logs. Please acknowledge this before continuing."
+        confirmText="I Acknowledge"
+        onConfirm={() => setBasicLogsAckOpen(false)}
+        onDismiss={() => setBasicLogsAckOpen(false)}
+      />
+      <Field description={description} label="Enable Basic Logs">
+        <div>
+          <Switch aria-label="Basic Logs" onChange={onChange} value={options.basicLogsEnabled ?? false} />
+        </div>
+      </Field>
+    </>
   );
 };
