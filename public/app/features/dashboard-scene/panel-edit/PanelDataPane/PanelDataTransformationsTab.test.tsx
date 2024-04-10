@@ -7,16 +7,18 @@ import {
   FieldType,
   LoadingState,
   PanelData,
-  TimeRange,
+  getDefaultTimeRange,
   standardTransformersRegistry,
   toDataFrame,
 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { SceneDataTransformer, SceneQueryRunner } from '@grafana/scenes';
+import { SceneDataTransformer, SceneQueryRunner, VizPanel } from '@grafana/scenes';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 import { getStandardTransformers } from 'app/features/transformers/standardTransformers';
 import { DashboardDataDTO } from 'app/types';
 
+import { DashboardGridItem } from '../../scene/DashboardGridItem';
+import { DashboardScene } from '../../scene/DashboardScene';
 import { transformSaveModelToScene } from '../../serialization/transformSaveModelToScene';
 import { DashboardModelCompatibilityWrapper } from '../../utils/DashboardModelCompatibilityWrapper';
 import { findVizPanelByKey } from '../../utils/utils';
@@ -29,17 +31,29 @@ function createModelMock(
   panelData: PanelData,
   transformations?: DataTransformerConfig[],
   onChangeTransformationsMock?: Function
-) {
-  return {
-    getDataTransformer: () => new SceneDataTransformer({ data: panelData, transformations: transformations || [] }),
-    getQueryRunner: () => new SceneQueryRunner({ queries: [], data: panelData }),
-    onChangeTransformations: onChangeTransformationsMock,
-  } as unknown as PanelDataTransformationsTab;
+): PanelDataTransformationsTab {
+  const panel = new VizPanel({
+    $data: new SceneDataTransformer({
+      $data: new SceneQueryRunner({ queries: [] }),
+      transformations: transformations || [],
+    }),
+  });
+  const gridItem = new DashboardGridItem({ body: panel });
+  const vizPanelManager = VizPanelManager.createFor(panel);
+  const scene = new DashboardScene({ body: gridItem });
+
+  // @ts-expect-error
+  getDashboardSrv().setCurrent(new DashboardModelCompatibilityWrapper(scene));
+
+  const transformationTab = new PanelDataTransformationsTab(vizPanelManager);
+  // @ts-expect-error
+  transformationTab.onChangeTransformations = onChangeTransformationsMock || transformationTab.onChangeTransformations;
+  return transformationTab;
 }
 
 const mockData = {
-  timeRange: {} as unknown as TimeRange,
-  state: {} as unknown as LoadingState,
+  timeRange: getDefaultTimeRange(),
+  state: LoadingState.Done,
   series: [
     toDataFrame({
       name: 'A',

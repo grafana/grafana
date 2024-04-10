@@ -136,7 +136,7 @@ describe('TrailStore', () => {
       ['to', 'now-30m'],
       ['var-ds', '1234'],
       ['var-groupby', 'job'],
-      ['var-filters', 'test'],
+      ['var-filters', 'cluster|=|dev-eu-west-2'],
     ])(`new recent trails with a different '%p' value should insert new entry`, (key, differentValue) => {
       const store = getTrailStore();
       // We expect the initialized trail to be there
