@@ -80,7 +80,7 @@ export function MegaMenuItem({ link, activeItem, level = 0, onClick }: Props) {
             />
           )}
         </div>
-        <div className={styles.collapsibleSectionWrapper}>
+        <div className={styles.collapsibleSectionWrapper} aria-label={link.text}>
           <MegaMenuItemText
             isActive={isActive}
             onClick={() => {

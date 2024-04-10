@@ -39,7 +39,7 @@ export const Messages = {
     docs: 'Integrated Alerting documentation',
   },
   configPanel: {
-    title: 'Configuration Panel',
+    title: 'PMM Configuration Panel',
     services:
       "Here you can check Services, Agents and Nodes in your PMM's Inventory, and add new instances for monitoring: PostgreSQL, MySQL, MongoDB, HAProxy, etc.",
     settings:
@@ -48,8 +48,8 @@ export const Messages = {
     settingsDocsLink: 'here',
   },
   serverAdmin: {
-    title: 'Server Admin',
-    userManagement: 'In the Server Admin panel you can assign and control user management for PMM:',
+    title: 'Administration',
+    userManagement: 'In the Administration panel you can assign and control user management for PMM:',
     addEditRemove: 'Add, edit, and remove users.',
     grant: 'Grant or Revoke admin privileges for a user.',
     manageOrg: 'Manage organizations to which the user belongs and their assigned role.',

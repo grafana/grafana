@@ -14,7 +14,7 @@ export const getProductTourSteps = (
   activeServices?: ServiceType[]
 ): TourStep[] => [
   {
-    selector: '.dropdown > [aria-label="Dashboards"]',
+    selector: '[aria-label="Dashboards"]',
     content: (
       <SidebarStep title={Messages.dashboards.title}>
         <p>{Messages.dashboards.browse}</p>
@@ -25,7 +25,7 @@ export const getProductTourSteps = (
   },
   getPMMDashboardsStep(activeServices || []),
   {
-    selector: '.dropdown > [aria-label="Query Analytics (QAN)"]',
+    selector: '[aria-label="Query Analytics (QAN)"]',
     content: (
       <SidebarStep title={Messages.qan.title}>
         <p>{Messages.qan.queries}</p>
@@ -36,7 +36,7 @@ export const getProductTourSteps = (
   ...(isPmmAdmin
     ? [
         {
-          selector: '.dropdown > [aria-label="Explore"]',
+          selector: '[aria-label="Explore"]',
           content: (
             <SidebarStep title={Messages.explore.title}>
               <p>{Messages.explore.data}</p>
@@ -48,7 +48,7 @@ export const getProductTourSteps = (
       ]
     : []),
   {
-    selector: '.dropdown > [aria-label="Alerting"]',
+    selector: '[aria-label="Alerting"]',
     content: (
       <SidebarStep title={Messages.alerting.title}>
         <p>
@@ -71,7 +71,7 @@ export const getProductTourSteps = (
   ...(isPmmAdmin && !!settings?.sttEnabled
     ? [
         {
-          selector: '.dropdown > [aria-label="Advisors"]',
+          selector: '[aria-label="Advisors"]',
           content: (
             <SidebarStep title={Messages.advisors.title}>
               <p>{Messages.advisors.pmmIncludes}</p>
@@ -90,7 +90,7 @@ export const getProductTourSteps = (
   ...(isPmmAdmin && !!settings?.backupEnabled
     ? [
         {
-          selector: '.dropdown > [aria-label="Backup"]',
+          selector: '[aria-label="Backup"]',
           content: (
             <SidebarStep title={Messages.backup.title}>
               <p>{Messages.backup.feature}</p>
@@ -104,7 +104,7 @@ export const getProductTourSteps = (
   ...(isPmmAdmin
     ? [
         {
-          selector: '.dropdown > [aria-label="Configuration"]',
+          selector: '[aria-label="PMM Configuration"]',
           content: (
             <SidebarStep title={Messages.configPanel.title}>
               <p>{Messages.configPanel.services}</p>
@@ -120,7 +120,7 @@ export const getProductTourSteps = (
           ),
         },
         {
-          selector: '.dropdown > [aria-label="Server admin"]',
+          selector: '[aria-label="Administration"]',
           content: (
             <SidebarStep title={Messages.serverAdmin.title}>
               <p>{Messages.serverAdmin.userManagement}</p>

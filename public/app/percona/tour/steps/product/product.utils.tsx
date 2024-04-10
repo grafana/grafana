@@ -24,7 +24,7 @@ export const getPMMDashboardsStep = (services: ServiceType[]): TourStep => {
 };
 
 const getStep = (ariaLabel: string, navMenuId: string): TourStep => ({
-  selector: '#navbar-menu-portal-container [role="dialog"]',
+  selector: '.scrollbar-view [role="dialog"]',
   content: (
     <SidebarStep title={Messages.pmmDashboards.title}>
       <p>{Messages.pmmDashboards.grafanaTechnology}</p>
@@ -33,7 +33,7 @@ const getStep = (ariaLabel: string, navMenuId: string): TourStep => ({
     </SidebarStep>
   ),
   navMenuId,
-  highlightedSelectors: [`.dropdown > [aria-label="${ariaLabel}"]`, '#navbar-menu-portal-container [role="dialog"]'],
-  resizeObservables: ['#navbar-menu-portal-container'],
+  highlightedSelectors: [`[aria-label="${ariaLabel}"]`, '.scrollbar-view [role="dialog"]'],
+  resizeObservables: ['.scrollbar-view'],
   position: 'right',
 });

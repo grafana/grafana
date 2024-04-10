@@ -9,7 +9,7 @@ export const getAlertingTourSteps = (isAdmin = false): TourStep[] => [
   ...(isAdmin
     ? [
         {
-          selector: '[aria-label="Tab Fired alerts"]',
+          selector: '[aria-label="Fired alerts"]',
           mutationObservables: ['.page-body'],
           resizeObservables: ['.page-body'],
           content: (
@@ -20,7 +20,7 @@ export const getAlertingTourSteps = (isAdmin = false): TourStep[] => [
           ),
         },
         {
-          selector: '[aria-label="Tab Alert rule templates"]',
+          selector: '[aria-label="Alert rule templates"]',
           content: (
             <SidebarStep title={Messages.alertRuleTemplates.title}>
               <p>{Messages.alertRuleTemplates.effortlessly}</p>
@@ -31,7 +31,7 @@ export const getAlertingTourSteps = (isAdmin = false): TourStep[] => [
       ]
     : []),
   {
-    selector: '[aria-label="Tab Alert rules"]',
+    selector: '[aria-label="Alert rules"]',
     content: (
       <SidebarStep title={Messages.alertRules.title}>
         <p>{Messages.alertRules.rules}</p>
@@ -41,7 +41,7 @@ export const getAlertingTourSteps = (isAdmin = false): TourStep[] => [
     ),
   },
   {
-    selector: '[aria-label="Tab Contact points"]',
+    selector: '[aria-label="Contact points"]',
     content: (
       <SidebarStep title={Messages.contactPoints.title}>
         <p>{Messages.contactPoints.define}</p>
@@ -50,7 +50,7 @@ export const getAlertingTourSteps = (isAdmin = false): TourStep[] => [
     ),
   },
   {
-    selector: '[aria-label="Tab Notification policies"]',
+    selector: '[aria-label="Notification policies"]',
     content: (
       <SidebarStep title={Messages.notificationPolicies.title}>
         <p>{Messages.notificationPolicies.routed}</p>
@@ -59,7 +59,7 @@ export const getAlertingTourSteps = (isAdmin = false): TourStep[] => [
     ),
   },
   {
-    selector: '[aria-label="Tab Silences"]',
+    selector: '[aria-label="Silences"]',
     content: (
       <SidebarStep title={Messages.silences.title}>
         <p>{Messages.silences.create}</p>
@@ -68,7 +68,7 @@ export const getAlertingTourSteps = (isAdmin = false): TourStep[] => [
     ),
   },
   {
-    selector: '[aria-label="Tab Alert groups"]',
+    selector: '[aria-label="Alert groups"]',
     content: (
       <SidebarStep title={Messages.alertGroups.title}>
         <p>{Messages.alertGroups.alert}</p>
@@ -79,7 +79,7 @@ export const getAlertingTourSteps = (isAdmin = false): TourStep[] => [
   ...(isAdmin
     ? [
         {
-          selector: '[aria-label="Tab Admin"]',
+          selector: '[aria-label="Admin"]',
           content: (
             <SidebarStep title={Messages.admin.title}>
               <p>{Messages.admin.configure}</p>
