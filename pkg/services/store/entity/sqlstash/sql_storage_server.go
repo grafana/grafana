@@ -34,6 +34,11 @@ import (
 const entityTable = "entity"
 const entityHistoryTable = "entity_history"
 
+var (
+	errorUserNotFoundInContext     = errors.New("can not find user in context")
+	errorNextPageTokenNotSupported = errors.New("nextPageToken not yet supported")
+)
+
 // Make sure we implement correct interfaces
 var _ entity.EntityStoreServer = &sqlEntityServer{}
 
@@ -234,10 +239,15 @@ func (s *sqlEntityServer) Read(ctx context.Context, r *entity.ReadEntityRequest)
 	s.log = s.log.FromContext(ctx)
 
 	if err := s.Init(); err != nil {
+		s.log.Error("init error", "error", err, "method", "read")
 		return nil, err
 	}
 
-	return s.read(ctx, s.sess, r)
+	res, err := s.read(ctx, s.sess, r)
+	if err != nil {
+		s.log.Error("read error", "error", err, "method", "read")
+	}
+	return res, nil
 }
 
 func (s *sqlEntityServer) read(ctx context.Context, tx session.SessionQuerier, r *entity.ReadEntityRequest) (*entity.Entity, error) {
@@ -306,6 +316,7 @@ func (s *sqlEntityServer) Create(ctx context.Context, r *entity.CreateEntityRequ
 	s.log = s.log.FromContext(ctx)
 
 	if err := s.Init(); err != nil {
+		s.log.Error("init error", "error", err, "method", "create")
 		return nil, err
 	}
 
@@ -318,10 +329,12 @@ func (s *sqlEntityServer) Create(ctx context.Context, r *entity.CreateEntityRequ
 	if createdBy == "" {
 		modifier, err := appcontext.User(ctx)
 		if err != nil {
+			s.log.Error("error getting user from ctx", "error", err, "method", "create")
 			return nil, err
 		}
 		if modifier == nil {
-			return nil, fmt.Errorf("can not find user in context")
+			s.log.Error("could not find user in context", "error", errorUserNotFoundInContext, "method", "create")
+			return nil, err
 		}
 		createdBy = store.GetUserIDString(modifier)
 	}
@@ -508,7 +521,7 @@ func (s *sqlEntityServer) Create(ctx context.Context, r *entity.CreateEntityRequ
 		return s.setLabels(ctx, tx, current.Guid, current.Labels)
 	})
 	if err != nil {
-		s.log.Error("error creating entity", "msg", err.Error())
+		s.log.Error("error creating entity", "msg", err.Error(), "method", "create")
 		rsp.Status = entity.CreateEntityResponse_ERROR
 	}
 
@@ -529,6 +542,7 @@ func (s *sqlEntityServer) Update(ctx context.Context, r *entity.UpdateEntityRequ
 	s.log = s.log.FromContext(ctx)
 
 	if err := s.Init(); err != nil {
+		s.log.Error("init error", "error", err, "method", "update")
 		return nil, err
 	}
 
@@ -541,10 +555,12 @@ func (s *sqlEntityServer) Update(ctx context.Context, r *entity.UpdateEntityRequ
 	if updatedBy == "" {
 		modifier, err := appcontext.User(ctx)
 		if err != nil {
+			s.log.Error("error getting user from ctx", "error", err, "method", "update")
 			return nil, err
 		}
 		if modifier == nil {
-			return nil, fmt.Errorf("can not find user in context")
+			s.log.Error("could not find user in context", "error", errorUserNotFoundInContext, "method", "update")
+			return nil, errorUserNotFoundInContext
 		}
 		updatedBy = store.GetUserIDString(modifier)
 	}
@@ -753,7 +769,7 @@ func (s *sqlEntityServer) Update(ctx context.Context, r *entity.UpdateEntityRequ
 		return s.setLabels(ctx, tx, updated.Guid, updated.Labels)
 	})
 	if err != nil {
-		s.log.Error("error updating entity", "msg", err.Error())
+		s.log.Error("error updating entity", "msg", err.Error(), "method", "update")
 		rsp.Status = entity.UpdateEntityResponse_ERROR
 	}
 
@@ -809,6 +825,7 @@ func (s *sqlEntityServer) Delete(ctx context.Context, r *entity.DeleteEntityRequ
 	s.log = s.log.FromContext(ctx)
 
 	if err := s.Init(); err != nil {
+		s.log.Error("init error", "error", err, "method", "delete")
 		return nil, err
 	}
 
@@ -853,6 +870,9 @@ func (s *sqlEntityServer) Delete(ctx context.Context, r *entity.DeleteEntityRequ
 		rsp.Status = entity.DeleteEntityResponse_DELETED
 		return nil
 	})
+	if err != nil {
+		s.log.Error("delete error", "error", err, "method", "delete")
+	}
 
 	if rsp.Status == entity.DeleteEntityResponse_DELETED {
 		// k8s expects us to return the entity as it was before the deletion, but with the updated RV
@@ -988,18 +1008,25 @@ func (s *sqlEntityServer) History(ctx context.Context, r *entity.EntityHistoryRe
 	s.log = s.log.FromContext(ctx)
 
 	if err := s.Init(); err != nil {
+		s.log.Error("init error", "error", err, "method", "history")
 		return nil, err
 	}
 
 	user, err := appcontext.User(ctx)
 	if err != nil {
+		s.log.Error("error getting user from ctx", "error", err, "method", "history")
 		return nil, err
 	}
 	if user == nil {
-		return nil, fmt.Errorf("missing user in context")
+		s.log.Error("could not find user in context", "error", errorUserNotFoundInContext, "method", "history")
+		return nil, errorUserNotFoundInContext
 	}
 
-	return s.history(ctx, r)
+	res, err := s.history(ctx, r)
+	if err != nil {
+		s.log.Error("history error", "error", err, "method", "history")
+	}
+	return res, err
 }
 
 func (s *sqlEntityServer) history(ctx context.Context, r *entity.EntityHistoryRequest) (*entity.EntityHistoryResponse, error) {
@@ -1188,15 +1215,18 @@ func (s *sqlEntityServer) List(ctx context.Context, r *entity.EntityListRequest)
 	s.log = s.log.FromContext(ctx)
 
 	if err := s.Init(); err != nil {
+		s.log.Error("init error", "error", err, "method", "list")
 		return nil, err
 	}
 
 	user, err := appcontext.User(ctx)
 	if err != nil {
+		s.log.Error("error getting user from ctx", "error", err, "method", "list")
 		return nil, err
 	}
 	if user == nil {
-		return nil, fmt.Errorf("missing user in context")
+		s.log.Error("could not find user in context", "error", errorUserNotFoundInContext, "method", "list")
+		return nil, errorUserNotFoundInContext
 	}
 
 	fields := s.getReadFields(r)
@@ -1281,6 +1311,7 @@ func (s *sqlEntityServer) List(ctx context.Context, r *entity.EntityListRequest)
 	err = s.sess.Get(ctx, rvMaxRow, query, args...)
 	if err != nil {
 		if !errors.Is(err, sql.ErrNoRows) {
+			s.log.Error("error running rvMaxQuery", "error", err, "method", "list")
 			return nil, err
 		}
 	}
@@ -1290,6 +1321,7 @@ func (s *sqlEntityServer) List(ctx context.Context, r *entity.EntityListRequest)
 	// if we have a page token, use that to specify the first record
 	continueToken, err := GetContinueToken(r)
 	if err != nil {
+		s.log.Error("error getting continue token", "error", err, "method", "list")
 		return nil, err
 	}
 	if continueToken != nil {
@@ -1376,12 +1408,14 @@ func (s *sqlEntityServer) List(ctx context.Context, r *entity.EntityListRequest)
 
 	rows, err := s.query(ctx, query, args...)
 	if err != nil {
+		s.log.Error("error running list query", "error", err, "method", "list")
 		return nil, err
 	}
 	defer func() { _ = rows.Close() }()
 	for rows.Next() {
 		result, err := readEntity(rows, r)
 		if err != nil {
+			s.log.Error("error reading rows to entity", "error", err, "method", "list")
 			return rsp, err
 		}
 
@@ -1401,19 +1435,23 @@ func (s *sqlEntityServer) List(ctx context.Context, r *entity.EntityListRequest)
 
 func (s *sqlEntityServer) Watch(w entity.EntityStore_WatchServer) error {
 	if err := s.Init(); err != nil {
+		s.log.Error("init error", "error", err, "method", "watch")
 		return err
 	}
 
 	user, err := appcontext.User(w.Context())
 	if err != nil {
+		s.log.Error("error getting user from ctx", "error", err, "method", "watch")
 		return err
 	}
 	if user == nil {
-		return fmt.Errorf("missing user in context")
+		s.log.Error("could not find user in context", "error", errorUserNotFoundInContext, "method", "watch")
+		return errorUserNotFoundInContext
 	}
 
 	r, err := w.Recv()
 	if err != nil {
+		s.log.Error("recv error", "error", err, "method", "watch")
 		return err
 	}
 
@@ -1421,7 +1459,7 @@ func (s *sqlEntityServer) Watch(w entity.EntityStore_WatchServer) error {
 	if r.SendInitialEvents {
 		r.Since, err = s.watchInit(w.Context(), r, w)
 		if err != nil {
-			s.log.Error("watch init error", "err", err)
+			s.log.Error("watch init error", "err", err, "method", "watch")
 			return err
 		}
 	} else if r.Since == 0 {
@@ -1431,7 +1469,7 @@ func (s *sqlEntityServer) Watch(w entity.EntityStore_WatchServer) error {
 	// subscribe to new events
 	err = s.watch(r, w)
 	if err != nil {
-		s.log.Error("watch error", "err", err)
+		s.log.Error("watch error", "err", err, "method", "watch")
 		return err
 	}
 
@@ -1879,19 +1917,23 @@ func (s *sqlEntityServer) FindReferences(ctx context.Context, r *entity.Referenc
 	s.log = s.log.FromContext(ctx)
 
 	if err := s.Init(); err != nil {
+		s.log.Error("init error", "error", err, "method", "findReferences")
 		return nil, err
 	}
 
 	user, err := appcontext.User(ctx)
 	if err != nil {
+		s.log.Error("error getting user from ctx", "error", err, "method", "findReferences")
 		return nil, err
 	}
 	if user == nil {
-		return nil, fmt.Errorf("missing user in context")
+		s.log.Error("could not find user in context", "error", errorUserNotFoundInContext, "method", "findReferences")
+		return nil, errorUserNotFoundInContext
 	}
 
 	if r.NextPageToken != "" {
-		return nil, fmt.Errorf("not yet supported")
+		s.log.Error("nextPageToken not yet supported", "error", errorNextPageTokenNotSupported, "method", "findReferences")
+		return nil, errorNextPageTokenNotSupported
 	}
 
 	fields := []string{
@@ -1908,6 +1950,7 @@ func (s *sqlEntityServer) FindReferences(ctx context.Context, r *entity.Referenc
 
 	rows, err := s.query(ctx, sql, r.Namespace, r.Group, r.Resource, r.Name)
 	if err != nil {
+		s.log.Error("query error", "error", err, "method", "findReferences")
 		return nil, err
 	}
 	defer func() { _ = rows.Close() }()
@@ -1926,6 +1969,7 @@ func (s *sqlEntityServer) FindReferences(ctx context.Context, r *entity.Referenc
 
 		err = rows.Scan(args...)
 		if err != nil {
+			s.log.Error("error scanning rows", "error", err, "method", "findReferences")
 			return rsp, err
 		}
 
