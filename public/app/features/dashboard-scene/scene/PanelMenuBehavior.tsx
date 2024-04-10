@@ -17,7 +17,7 @@ import { shareDashboardType } from 'app/features/dashboard/components/ShareModal
 import { InspectTab } from 'app/features/inspector/types';
 import { getScenePanelLinksSupplier } from 'app/features/panel/panellinks/linkSuppliers';
 import { createExtensionSubMenu } from 'app/features/plugins/extensions/utils';
-import { addDataTrailPanelAction } from 'app/features/trails/dashboardIntegration';
+import { addDataTrailPanelAction } from 'app/features/trails/Integrations/dashboardIntegration';
 import { ShowConfirmModalEvent } from 'app/types/events';
 
 import { ShareModal } from '../sharing/ShareModal';
@@ -167,7 +167,7 @@ export function panelMenuBehavior(menu: VizPanelMenu, isRepeat = false) {
       });
     }
 
-    if (config.featureToggles.datatrails) {
+    if (config.featureToggles.exploreMetrics) {
       addDataTrailPanelAction(dashboard, panel, items);
     }
 

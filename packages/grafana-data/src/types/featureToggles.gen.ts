@@ -24,9 +24,9 @@ export interface FeatureToggles {
   panelTitleSearch?: boolean;
   publicDashboards?: boolean;
   publicDashboardsEmailSharing?: boolean;
+  publicDashboardsScene?: boolean;
   lokiExperimentalStreaming?: boolean;
   featureHighlights?: boolean;
-  migrationLocking?: boolean;
   storage?: boolean;
   correlations?: boolean;
   exploreContentOutline?: boolean;
@@ -37,9 +37,9 @@ export interface FeatureToggles {
   autoMigratePiechartPanel?: boolean;
   autoMigrateWorldmapPanel?: boolean;
   autoMigrateStatPanel?: boolean;
+  autoMigrateXYChartPanel?: boolean;
   disableAngular?: boolean;
   canvasPanelNesting?: boolean;
-  newVizTooltips?: boolean;
   scenes?: boolean;
   disableSecretsCompatibility?: boolean;
   logRequestsInstrumentedAsUnknown?: boolean;
@@ -48,8 +48,6 @@ export interface FeatureToggles {
   grpcServer?: boolean;
   unifiedStorage?: boolean;
   cloudWatchCrossAccountQuerying?: boolean;
-  redshiftAsyncQueryDataSupport?: boolean;
-  athenaAsyncQueryDataSupport?: boolean;
   showDashboardValidationWarnings?: boolean;
   mysqlAnsiQuotes?: boolean;
   accessControlOnCall?: boolean;
@@ -87,7 +85,6 @@ export interface FeatureToggles {
   frontendSandboxMonitorOnly?: boolean;
   sqlDatasourceDatabaseSelection?: boolean;
   lokiFormatQuery?: boolean;
-  cloudWatchLogsMonacoEditor?: boolean;
   recordedQueriesMulti?: boolean;
   pluginsDynamicAngularDetectionPatterns?: boolean;
   vizAndWidgetSplit?: boolean;
@@ -136,6 +133,7 @@ export interface FeatureToggles {
   panelTitleSearchInV1?: boolean;
   managedPluginsInstall?: boolean;
   prometheusPromQAIL?: boolean;
+  prometheusCodeModeMetricNamesSearch?: boolean;
   addFieldFromCalculationStatFunctions?: boolean;
   alertmanagerRemoteSecondary?: boolean;
   alertmanagerRemotePrimary?: boolean;
@@ -151,7 +149,7 @@ export interface FeatureToggles {
   canvasPanelPanZoom?: boolean;
   logsInfiniteScrolling?: boolean;
   flameGraphItemCollapsing?: boolean;
-  datatrails?: boolean;
+  exploreMetrics?: boolean;
   alertingSimplifiedRouting?: boolean;
   logRowsPopoverMenu?: boolean;
   pluginsSkipHostEnvVars?: boolean;
@@ -175,7 +173,11 @@ export interface FeatureToggles {
   expressionParser?: boolean;
   groupByVariable?: boolean;
   betterPageScrolling?: boolean;
+  authAPIAccessTokenAuth?: boolean;
   scopeFilters?: boolean;
-  emailVerificationEnforcement?: boolean;
   ssoSettingsSAML?: boolean;
+  usePrometheusFrontendPackage?: boolean;
+  oauthRequireSubClaim?: boolean;
+  newDashboardWithFiltersAndGroupBy?: boolean;
+  cloudWatchNewLabelParsing?: boolean;
 }

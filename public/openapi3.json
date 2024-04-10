@@ -173,6 +173,56 @@
         },
         "description": "(empty)"
       },
+      "cloudMigrationCreateTokenResponse": {
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/CreateAccessTokenResponseDTO"
+            }
+          }
+        },
+        "description": "(empty)"
+      },
+      "cloudMigrationListResponse": {
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/CloudMigrationListResponse"
+            }
+          }
+        },
+        "description": "(empty)"
+      },
+      "cloudMigrationResponse": {
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/CloudMigrationResponse"
+            }
+          }
+        },
+        "description": "(empty)"
+      },
+      "cloudMigrationRunListResponse": {
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/CloudMigrationRunList"
+            }
+          }
+        },
+        "description": "(empty)"
+      },
+      "cloudMigrationRunResponse": {
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/MigrateDataResponseDTO"
+            }
+          }
+        },
+        "description": "(empty)"
+      },
       "conflictError": {
         "content": {
           "application/json": {
@@ -3471,6 +3521,56 @@
         },
         "type": "object"
       },
+      "CloudMigrationListResponse": {
+        "properties": {
+          "migrations": {
+            "items": {
+              "$ref": "#/components/schemas/CloudMigrationResponse"
+            },
+            "type": "array"
+          }
+        },
+        "type": "object"
+      },
+      "CloudMigrationRequest": {
+        "properties": {
+          "authToken": {
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "CloudMigrationResponse": {
+        "properties": {
+          "created": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "id": {
+            "format": "int64",
+            "type": "integer"
+          },
+          "stack": {
+            "type": "string"
+          },
+          "updated": {
+            "format": "date-time",
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "CloudMigrationRunList": {
+        "properties": {
+          "runs": {
+            "items": {
+              "$ref": "#/components/schemas/MigrateDataResponseDTO"
+            },
+            "type": "array"
+          }
+        },
+        "type": "object"
+      },
       "ConfFloat64": {
         "description": "ConfFloat64 is a float64. It Marshals float64 values of NaN of Inf\nto null.",
         "format": "double",
@@ -3681,6 +3781,14 @@
         "title": "CounterResetHint contains the known information about a counter reset,",
         "type": "integer"
       },
+      "CreateAccessTokenResponseDTO": {
+        "properties": {
+          "token": {
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
       "CreateCorrelationCommand": {
         "description": "CreateCorrelationCommand is the command for creating a correlation",
         "properties": {
@@ -3819,13 +3927,6 @@
       },
       "CreateOrUpdateReportConfig": {
         "properties": {
-          "dashboardId": {
-            "format": "int64",
-            "type": "integer"
-          },
-          "dashboardUid": {
-            "type": "string"
-          },
           "dashboards": {
             "items": {
               "$ref": "#/components/schemas/ReportDashboard"
@@ -3868,9 +3969,6 @@
           },
           "state": {
             "$ref": "#/components/schemas/State"
-          },
-          "templateVars": {
-            "type": "object"
           }
         },
         "type": "object"
@@ -6614,6 +6712,52 @@
         ],
         "type": "object"
       },
+      "MigrateDataResponseDTO": {
+        "properties": {
+          "id": {
+            "format": "int64",
+            "type": "integer"
+          },
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/MigrateDataResponseItemDTO"
+            },
+            "type": "array"
+          }
+        },
+        "type": "object"
+      },
+      "MigrateDataResponseItemDTO": {
+        "properties": {
+          "error": {
+            "type": "string"
+          },
+          "refId": {
+            "type": "string"
+          },
+          "status": {
+            "enum": [
+              "OK",
+              "ERROR"
+            ],
+            "type": "string"
+          },
+          "type": {
+            "enum": [
+              "DASHBOARD",
+              "DATASOURCE",
+              "FOLDER"
+            ],
+            "type": "string"
+          }
+        },
+        "required": [
+          "type",
+          "refId",
+          "status"
+        ],
+        "type": "object"
+      },
       "MoveFolderCommand": {
         "description": "MoveFolderCommand captures the information required by the folder service\nto move a folder.",
         "properties": {
@@ -8663,16 +8807,6 @@
             "format": "date-time",
             "type": "string"
           },
-          "dashboardId": {
-            "format": "int64",
-            "type": "integer"
-          },
-          "dashboardName": {
-            "type": "string"
-          },
-          "dashboardUid": {
-            "type": "string"
-          },
           "dashboards": {
             "items": {
               "$ref": "#/components/schemas/ReportDashboard"
@@ -8723,9 +8857,6 @@
           },
           "state": {
             "$ref": "#/components/schemas/State"
-          },
-          "templateVars": {
-            "type": "object"
           },
           "uid": {
             "type": "string"
@@ -11548,6 +11679,7 @@
         "type": "object"
       },
       "alertGroups": {
+        "description": "AlertGroups alert groups",
         "items": {
           "$ref": "#/components/schemas/alertGroup"
         },
@@ -11941,6 +12073,7 @@
         "type": "array"
       },
       "postableSilence": {
+        "description": "PostableSilence postable silence",
         "properties": {
           "comment": {
             "description": "comment",
@@ -12006,7 +12139,6 @@
         "type": "object"
       },
       "receiver": {
-        "description": "Receiver receiver",
         "properties": {
           "active": {
             "description": "active",
@@ -14662,6 +14794,264 @@
         "summary": "Delete API key.",
         "tags": [
           "api_keys"
+        ]
+      }
+    },
+    "/cloudmigration/migration": {
+      "get": {
+        "operationId": "getMigrationList",
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/cloudMigrationListResponse"
+          },
+          "401": {
+            "$ref": "#/components/responses/unauthorisedError"
+          },
+          "403": {
+            "$ref": "#/components/responses/forbiddenError"
+          },
+          "500": {
+            "$ref": "#/components/responses/internalServerError"
+          }
+        },
+        "summary": "Get a list of all cloud migrations.",
+        "tags": [
+          "migrations"
+        ]
+      },
+      "post": {
+        "operationId": "createMigration",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CloudMigrationRequest"
+              }
+            }
+          },
+          "required": true,
+          "x-originalParamName": "body"
+        },
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/cloudMigrationResponse"
+          },
+          "401": {
+            "$ref": "#/components/responses/unauthorisedError"
+          },
+          "403": {
+            "$ref": "#/components/responses/forbiddenError"
+          },
+          "500": {
+            "$ref": "#/components/responses/internalServerError"
+          }
+        },
+        "summary": "Create a migration.",
+        "tags": [
+          "migrations"
+        ]
+      }
+    },
+    "/cloudmigration/migration/{id}": {
+      "delete": {
+        "operationId": "deleteCloudMigration",
+        "parameters": [
+          {
+            "description": "ID of an migration",
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "format": "int64",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "401": {
+            "$ref": "#/components/responses/unauthorisedError"
+          },
+          "403": {
+            "$ref": "#/components/responses/forbiddenError"
+          },
+          "500": {
+            "$ref": "#/components/responses/internalServerError"
+          }
+        },
+        "summary": "Delete a migration.",
+        "tags": [
+          "migrations"
+        ]
+      },
+      "get": {
+        "description": "It returns migrations that has been created.",
+        "operationId": "getCloudMigration",
+        "parameters": [
+          {
+            "description": "ID of an migration",
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "format": "int64",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/cloudMigrationResponse"
+          },
+          "401": {
+            "$ref": "#/components/responses/unauthorisedError"
+          },
+          "403": {
+            "$ref": "#/components/responses/forbiddenError"
+          },
+          "500": {
+            "$ref": "#/components/responses/internalServerError"
+          }
+        },
+        "summary": "Get a cloud migration.",
+        "tags": [
+          "migrations"
+        ]
+      }
+    },
+    "/cloudmigration/migration/{id}/run": {
+      "get": {
+        "operationId": "getCloudMigrationRunList",
+        "parameters": [
+          {
+            "description": "ID of an migration",
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "format": "int64",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/cloudMigrationRunListResponse"
+          },
+          "401": {
+            "$ref": "#/components/responses/unauthorisedError"
+          },
+          "403": {
+            "$ref": "#/components/responses/forbiddenError"
+          },
+          "500": {
+            "$ref": "#/components/responses/internalServerError"
+          }
+        },
+        "summary": "Get a list of migration runs for a migration.",
+        "tags": [
+          "migrations"
+        ]
+      },
+      "post": {
+        "description": "It returns migrations that has been created.",
+        "operationId": "runCloudMigration",
+        "parameters": [
+          {
+            "description": "ID of an migration",
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "format": "int64",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/cloudMigrationRunResponse"
+          },
+          "401": {
+            "$ref": "#/components/responses/unauthorisedError"
+          },
+          "403": {
+            "$ref": "#/components/responses/forbiddenError"
+          },
+          "500": {
+            "$ref": "#/components/responses/internalServerError"
+          }
+        },
+        "summary": "Trigger the run of a migration to the Grafana Cloud.",
+        "tags": [
+          "migrations"
+        ]
+      }
+    },
+    "/cloudmigration/migration/{id}/run/{runID}": {
+      "get": {
+        "operationId": "getCloudMigrationRun",
+        "parameters": [
+          {
+            "description": "ID of an migration",
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "format": "int64",
+              "type": "integer"
+            }
+          },
+          {
+            "description": "Run ID of a migration run",
+            "in": "path",
+            "name": "runID",
+            "required": true,
+            "schema": {
+              "format": "int64",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/cloudMigrationRunResponse"
+          },
+          "401": {
+            "$ref": "#/components/responses/unauthorisedError"
+          },
+          "403": {
+            "$ref": "#/components/responses/forbiddenError"
+          },
+          "500": {
+            "$ref": "#/components/responses/internalServerError"
+          }
+        },
+        "summary": "Get the result of a single migration run.",
+        "tags": [
+          "migrations"
+        ]
+      }
+    },
+    "/cloudmigration/token": {
+      "post": {
+        "operationId": "createCloudMigrationToken",
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/cloudMigrationCreateTokenResponse"
+          },
+          "401": {
+            "$ref": "#/components/responses/unauthorisedError"
+          },
+          "403": {
+            "$ref": "#/components/responses/forbiddenError"
+          },
+          "500": {
+            "$ref": "#/components/responses/internalServerError"
+          }
+        },
+        "summary": "Create gcom access token.",
+        "tags": [
+          "migrations"
         ]
       }
     },
@@ -19937,85 +20327,6 @@
         ]
       }
     },
-    "/reports/render/pdf/{dashboardID}": {
-      "get": {
-        "deprecated": true,
-        "description": "Please refer to [reports enterprise](#/reports/renderReportPDFs) instead. This will be removed in Grafana 10.",
-        "operationId": "renderReportPDF",
-        "parameters": [
-          {
-            "in": "path",
-            "name": "dashboardID",
-            "required": true,
-            "schema": {
-              "format": "int64",
-              "type": "integer"
-            }
-          },
-          {
-            "in": "query",
-            "name": "title",
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "in": "query",
-            "name": "variables",
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "in": "query",
-            "name": "from",
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "in": "query",
-            "name": "to",
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "in": "query",
-            "name": "orientation",
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "in": "query",
-            "name": "layout",
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "$ref": "#/components/responses/contentResponse"
-          },
-          "400": {
-            "$ref": "#/components/responses/badRequestError"
-          },
-          "401": {
-            "$ref": "#/components/responses/unauthorisedError"
-          },
-          "500": {
-            "$ref": "#/components/responses/internalServerError"
-          }
-        },
-        "summary": "Render report for dashboard.",
-        "tags": [
-          "reports",
-          "enterprise"
-        ]
-      }
-    },
     "/reports/render/pdfs": {
       "get": {
         "description": "Available to all users and with a valid license.",
@@ -22737,11 +23048,16 @@
             }
           },
           {
-            "description": "Format of the downloaded file, either yaml or json. Accept header can also be used, but the query parameter will take precedence.",
+            "description": "Format of the downloaded file. Supported yaml, json or hcl. Accept header can also be used, but the query parameter will take precedence.",
             "in": "query",
             "name": "format",
             "schema": {
               "default": "yaml",
+              "enum": [
+                "yaml",
+                "json",
+                "hcl"
+              ],
               "type": "string"
             }
           },
@@ -22777,6 +23093,26 @@
           "200": {
             "content": {
               "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AlertingFileExport"
+                }
+              },
+              "application/terraform+hcl": {
+                "schema": {
+                  "$ref": "#/components/schemas/AlertingFileExport"
+                }
+              },
+              "application/yaml": {
+                "schema": {
+                  "$ref": "#/components/schemas/AlertingFileExport"
+                }
+              },
+              "text/hcl": {
+                "schema": {
+                  "$ref": "#/components/schemas/AlertingFileExport"
+                }
+              },
+              "text/yaml": {
                 "schema": {
                   "$ref": "#/components/schemas/AlertingFileExport"
                 }
@@ -22930,11 +23266,16 @@
             }
           },
           {
-            "description": "Format of the downloaded file, either yaml or json. Accept header can also be used, but the query parameter will take precedence.",
+            "description": "Format of the downloaded file. Supported yaml, json or hcl. Accept header can also be used, but the query parameter will take precedence.",
             "in": "query",
             "name": "format",
             "schema": {
               "default": "yaml",
+              "enum": [
+                "yaml",
+                "json",
+                "hcl"
+              ],
               "type": "string"
             }
           },
@@ -22956,7 +23297,17 @@
                   "$ref": "#/components/schemas/AlertingFileExport"
                 }
               },
+              "application/terraform+hcl": {
+                "schema": {
+                  "$ref": "#/components/schemas/AlertingFileExport"
+                }
+              },
               "application/yaml": {
+                "schema": {
+                  "$ref": "#/components/schemas/AlertingFileExport"
+                }
+              },
+              "text/hcl": {
                 "schema": {
                   "$ref": "#/components/schemas/AlertingFileExport"
                 }
@@ -23072,11 +23423,16 @@
             }
           },
           {
-            "description": "Format of the downloaded file, either yaml or json. Accept header can also be used, but the query parameter will take precedence.",
+            "description": "Format of the downloaded file. Supported yaml, json or hcl. Accept header can also be used, but the query parameter will take precedence.",
             "in": "query",
             "name": "format",
             "schema": {
               "default": "yaml",
+              "enum": [
+                "yaml",
+                "json",
+                "hcl"
+              ],
               "type": "string"
             }
           },
@@ -23105,6 +23461,26 @@
                 "schema": {
                   "$ref": "#/components/schemas/AlertingFileExport"
                 }
+              },
+              "application/terraform+hcl": {
+                "schema": {
+                  "$ref": "#/components/schemas/AlertingFileExport"
+                }
+              },
+              "application/yaml": {
+                "schema": {
+                  "$ref": "#/components/schemas/AlertingFileExport"
+                }
+              },
+              "text/hcl": {
+                "schema": {
+                  "$ref": "#/components/schemas/AlertingFileExport"
+                }
+              },
+              "text/yaml": {
+                "schema": {
+                  "$ref": "#/components/schemas/AlertingFileExport"
+                }
               }
             },
             "description": "AlertingFileExport"
@@ -23112,6 +23488,26 @@
           "403": {
             "content": {
               "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PermissionDenied"
+                }
+              },
+              "application/terraform+hcl": {
+                "schema": {
+                  "$ref": "#/components/schemas/PermissionDenied"
+                }
+              },
+              "application/yaml": {
+                "schema": {
+                  "$ref": "#/components/schemas/PermissionDenied"
+                }
+              },
+              "text/hcl": {
+                "schema": {
+                  "$ref": "#/components/schemas/PermissionDenied"
+                }
+              },
+              "text/yaml": {
                 "schema": {
                   "$ref": "#/components/schemas/PermissionDenied"
                 }
@@ -23358,7 +23754,7 @@
             "description": "ValidationError"
           }
         },
-        "summary": "Update the interval of a rule group.",
+        "summary": "Create or update alert rule group.",
         "tags": [
           "provisioning"
         ]
@@ -23378,11 +23774,16 @@
             }
           },
           {
-            "description": "Format of the downloaded file, either yaml or json. Accept header can also be used, but the query parameter will take precedence.",
+            "description": "Format of the downloaded file. Supported yaml, json or hcl. Accept header can also be used, but the query parameter will take precedence.",
             "in": "query",
             "name": "format",
             "schema": {
               "default": "yaml",
+              "enum": [
+                "yaml",
+                "json",
+                "hcl"
+              ],
               "type": "string"
             }
           },
@@ -23411,7 +23812,17 @@
                   "$ref": "#/components/schemas/AlertingFileExport"
                 }
               },
+              "application/terraform+hcl": {
+                "schema": {
+                  "$ref": "#/components/schemas/AlertingFileExport"
+                }
+              },
               "application/yaml": {
+                "schema": {
+                  "$ref": "#/components/schemas/AlertingFileExport"
+                }
+              },
+              "text/hcl": {
                 "schema": {
                   "$ref": "#/components/schemas/AlertingFileExport"
                 }
@@ -23517,11 +23928,16 @@
             }
           },
           {
-            "description": "Format of the downloaded file, either yaml or json. Accept header can also be used, but the query parameter will take precedence.",
+            "description": "Format of the downloaded file. Supported yaml, json or hcl. Accept header can also be used, but the query parameter will take precedence.",
             "in": "query",
             "name": "format",
             "schema": {
               "default": "yaml",
+              "enum": [
+                "yaml",
+                "json",
+                "hcl"
+              ],
               "type": "string"
             }
           }
@@ -23533,6 +23949,26 @@
                 "schema": {
                   "$ref": "#/components/schemas/AlertingFileExport"
                 }
+              },
+              "application/terraform+hcl": {
+                "schema": {
+                  "$ref": "#/components/schemas/AlertingFileExport"
+                }
+              },
+              "application/yaml": {
+                "schema": {
+                  "$ref": "#/components/schemas/AlertingFileExport"
+                }
+              },
+              "text/hcl": {
+                "schema": {
+                  "$ref": "#/components/schemas/AlertingFileExport"
+                }
+              },
+              "text/yaml": {
+                "schema": {
+                  "$ref": "#/components/schemas/AlertingFileExport"
+                }
               }
             },
             "description": "AlertingFileExport"
@@ -23540,6 +23976,26 @@
           "403": {
             "content": {
               "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PermissionDenied"
+                }
+              },
+              "application/terraform+hcl": {
+                "schema": {
+                  "$ref": "#/components/schemas/PermissionDenied"
+                }
+              },
+              "application/yaml": {
+                "schema": {
+                  "$ref": "#/components/schemas/PermissionDenied"
+                }
+              },
+              "text/hcl": {
+                "schema": {
+                  "$ref": "#/components/schemas/PermissionDenied"
+                }
+              },
+              "text/yaml": {
                 "schema": {
                   "$ref": "#/components/schemas/PermissionDenied"
                 }
@@ -23693,11 +24149,16 @@
             }
           },
           {
-            "description": "Format of the downloaded file, either yaml or json. Accept header can also be used, but the query parameter will take precedence.",
+            "description": "Format of the downloaded file. Supported yaml, json or hcl. Accept header can also be used, but the query parameter will take precedence.",
             "in": "query",
             "name": "format",
             "schema": {
               "default": "yaml",
+              "enum": [
+                "yaml",
+                "json",
+                "hcl"
+              ],
               "type": "string"
             }
           },
@@ -23718,6 +24179,26 @@
                 "schema": {
                   "$ref": "#/components/schemas/AlertingFileExport"
                 }
+              },
+              "application/terraform+hcl": {
+                "schema": {
+                  "$ref": "#/components/schemas/AlertingFileExport"
+                }
+              },
+              "application/yaml": {
+                "schema": {
+                  "$ref": "#/components/schemas/AlertingFileExport"
+                }
+              },
+              "text/hcl": {
+                "schema": {
+                  "$ref": "#/components/schemas/AlertingFileExport"
+                }
+              },
+              "text/yaml": {
+                "schema": {
+                  "$ref": "#/components/schemas/AlertingFileExport"
+                }
               }
             },
             "description": "AlertingFileExport"
@@ -23725,6 +24206,26 @@
           "403": {
             "content": {
               "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PermissionDenied"
+                }
+              },
+              "application/terraform+hcl": {
+                "schema": {
+                  "$ref": "#/components/schemas/PermissionDenied"
+                }
+              },
+              "application/yaml": {
+                "schema": {
+                  "$ref": "#/components/schemas/PermissionDenied"
+                }
+              },
+              "text/hcl": {
+                "schema": {
+                  "$ref": "#/components/schemas/PermissionDenied"
+                }
+              },
+              "text/yaml": {
                 "schema": {
                   "$ref": "#/components/schemas/PermissionDenied"
                 }
@@ -23838,6 +24339,26 @@
                 "schema": {
                   "$ref": "#/components/schemas/AlertingFileExport"
                 }
+              },
+              "application/terraform+hcl": {
+                "schema": {
+                  "$ref": "#/components/schemas/AlertingFileExport"
+                }
+              },
+              "application/yaml": {
+                "schema": {
+                  "$ref": "#/components/schemas/AlertingFileExport"
+                }
+              },
+              "text/hcl": {
+                "schema": {
+                  "$ref": "#/components/schemas/AlertingFileExport"
+                }
+              },
+              "text/yaml": {
+                "schema": {
+                  "$ref": "#/components/schemas/AlertingFileExport"
+                }
               }
             },
             "description": "AlertingFileExport"
@@ -23845,6 +24366,26 @@
           "404": {
             "content": {
               "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NotFound"
+                }
+              },
+              "application/terraform+hcl": {
+                "schema": {
+                  "$ref": "#/components/schemas/NotFound"
+                }
+              },
+              "application/yaml": {
+                "schema": {
+                  "$ref": "#/components/schemas/NotFound"
+                }
+              },
+              "text/hcl": {
+                "schema": {
+                  "$ref": "#/components/schemas/NotFound"
+                }
+              },
+              "text/yaml": {
                 "schema": {
                   "$ref": "#/components/schemas/NotFound"
                 }

@@ -6,12 +6,14 @@ import { BasicValueMatcherOptions } from './types';
 
 const isSubstringMatcher: ValueMatcherInfo<BasicValueMatcherOptions> = {
   id: ValueMatcherID.substring,
-  name: 'Contains Substring',
+  name: 'Contains substring',
   description: 'Match where value for given field is a substring to options value.',
   get: (options) => {
     return (valueIndex: number, field: Field) => {
       const value = field.values[valueIndex];
-      return (value && value.includes(options.value)) || options.value === '';
+      return (
+        (value && options.value && value.toLowerCase().includes(options.value.toLowerCase())) || options.value === ''
+      );
     };
   },
   getOptionsDisplayText: () => {
@@ -28,7 +30,13 @@ const isNotSubstringValueMatcher: ValueMatcherInfo<BasicValueMatcherOptions> = {
   get: (options) => {
     return (valueIndex: number, field: Field) => {
       const value = field.values[valueIndex];
-      return typeof value === 'string' && options.value !== '' && !value.includes(options.value);
+      return (
+        typeof value === 'string' &&
+        options.value &&
+        value &&
+        options.value !== '' &&
+        !value.toLowerCase().includes(options.value.toLowerCase())
+      );
     };
   },
   getOptionsDisplayText: () => {

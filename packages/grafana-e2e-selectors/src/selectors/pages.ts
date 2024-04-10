@@ -195,6 +195,7 @@ export const Pages = {
           AdHocFiltersVariable: {
             datasourceSelect: Components.DataSourcePicker.inputV2,
             infoText: 'data-testid ad-hoc filters variable info text',
+            modeToggle: 'data-testid ad-hoc filters variable mode toggle',
           },
         },
       },
@@ -225,6 +226,7 @@ export const Pages = {
     save: 'Dashboard settings Save Dashboard Modal Save button',
     saveVariables: 'Dashboard settings Save Dashboard Modal Save variables checkbox',
     saveTimerange: 'Dashboard settings Save Dashboard Modal Save timerange checkbox',
+    saveRefresh: 'Dashboard settings Save Dashboard Modal Save refresh checkbox',
   },
   SharePanelModal: {
     linkToRenderedImage: 'Link to rendered image',
@@ -264,6 +266,12 @@ export const Pages = {
       title: 'public-dashboard-title',
       pausedDescription: 'public-dashboard-paused-description',
     },
+    footer: 'public-dashboard-footer',
+  },
+  PublicDashboardScene: {
+    loadingPage: 'public-dashboard-scene-loading-page',
+    page: 'public-dashboard-scene-page',
+    controls: 'public-dashboard-controls',
   },
   RequestViewAccess: {
     form: 'request-view-access-form',
@@ -280,6 +288,9 @@ export const Pages = {
       graph: 'Explore Graph',
       table: 'Explore Table',
       scrollView: 'data-testid explorer scroll view',
+    },
+    QueryHistory: {
+      container: 'data-testid QueryHistory',
     },
   },
   SoloPanel: {

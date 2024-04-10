@@ -4,7 +4,7 @@ import { selectors } from '@grafana/e2e-selectors';
 import { InlineField, InlineFieldRow, Input } from '@grafana/ui';
 
 import { EditorProps } from '../QueryEditor';
-import { TestDataDataQuery } from '../dataquery.gen';
+import { TestDataDataQuery } from '../dataquery';
 
 const randomWalkFields: Array<{
   label: string;

@@ -15,7 +15,7 @@ import { playlistSrv } from 'app/features/playlist/PlaylistSrv';
 import { PanelEditor } from '../panel-edit/PanelEditor';
 import { ShareModal } from '../sharing/ShareModal';
 import { DashboardInteractions } from '../utils/interactions';
-import { dynamicDashNavActions } from '../utils/registerDynamicDashNavAction';
+import { DynamicDashNavButtonModel, dynamicDashNavActions } from '../utils/registerDynamicDashNavAction';
 
 import { DashboardScene } from './DashboardScene';
 import { GoToSnapshotOriginButton } from './GoToSnapshotOriginButton';
@@ -26,12 +26,7 @@ interface Props {
 }
 
 export const NavToolbarActions = React.memo<Props>(({ dashboard }) => {
-  const actions = (
-    <ToolbarButtonRow alignment="right">
-      <ToolbarActions dashboard={dashboard} />
-    </ToolbarButtonRow>
-  );
-
+  const actions = <ToolbarActions dashboard={dashboard} />;
   return <AppChromeUpdate actions={actions} />;
 });
 
@@ -52,6 +47,7 @@ export function ToolbarActions({ dashboard }: Props) {
     hasCopiedPanel: copiedPanel,
   } = dashboard.useState();
   const { isPlaying } = playlistSrv.useState();
+  const [isAddPanelMenuOpen, setIsAddPanelMenuOpen] = useState(false);
 
   const canSaveAs = contextSrv.hasEditPermissionInFolders;
   const toolbarActions: ToolbarAction[] = [];
@@ -64,79 +60,14 @@ export function ToolbarActions({ dashboard }: Props) {
   const isShowingDashboard = !editview && !isViewingPanel && !isEditingPanel;
   const isEditingAndShowingDashboard = isEditing && isShowingDashboard;
 
-  toolbarActions.push({
-    group: 'icon-actions',
-    condition: isEditingAndShowingDashboard,
-    render: () => (
-      <ToolbarButton
-        key="add-visualization"
-        tooltip={'Add visualization'}
-        icon="graph-bar"
-        data-testid={selectors.components.NavToolbar.editDashboard.addVisualizationButton}
-        onClick={() => {
-          const id = dashboard.onCreateNewPanel();
-          DashboardInteractions.toolbarAddButtonClicked({ item: 'add_visualization' });
-          locationService.partial({ editPanel: id });
-        }}
-      />
-    ),
-  });
+  if (!isEditingPanel) {
+    // This adds the precence indicators in enterprise
+    addDynamicActions(toolbarActions, dynamicDashNavActions.left, 'left-actions');
+  }
 
   toolbarActions.push({
     group: 'icon-actions',
-    condition: isEditingAndShowingDashboard,
-    render: () => (
-      <ToolbarButton
-        key="add-library-panel"
-        tooltip={'Add library panel'}
-        icon="library-panel"
-        data-testid={selectors.components.NavToolbar.editDashboard.addLibraryPanelButton}
-        onClick={() => {
-          dashboard.onCreateLibPanelWidget();
-          DashboardInteractions.toolbarAddButtonClicked({ item: 'add_library_panel' });
-        }}
-      />
-    ),
-  });
-
-  toolbarActions.push({
-    group: 'icon-actions',
-    condition: isEditingAndShowingDashboard,
-    render: () => (
-      <ToolbarButton
-        key="add-row"
-        tooltip={'Add row'}
-        icon="wrap-text"
-        data-testid={selectors.components.NavToolbar.editDashboard.addRowButton}
-        onClick={() => {
-          dashboard.onCreateNewRow();
-          DashboardInteractions.toolbarAddButtonClicked({ item: 'add_row' });
-        }}
-      />
-    ),
-  });
-
-  toolbarActions.push({
-    group: 'icon-actions',
-    condition: isEditingAndShowingDashboard,
-    render: () => (
-      <ToolbarButton
-        key="paste-panel"
-        disabled={!hasCopiedPanel}
-        tooltip={'Paste panel'}
-        icon="copy"
-        data-testid={selectors.components.NavToolbar.editDashboard.pastePanelButton}
-        onClick={() => {
-          dashboard.pastePanel();
-          DashboardInteractions.toolbarAddButtonClicked({ item: 'paste_panel' });
-        }}
-      />
-    ),
-  });
-
-  toolbarActions.push({
-    group: 'icon-actions',
-    condition: uid && Boolean(meta.canStar) && isShowingDashboard,
+    condition: uid && Boolean(meta.canStar) && isShowingDashboard && !isEditing,
     render: () => {
       let desc = meta.isStarred
         ? t('dashboard.toolbar.unmark-favorite', 'Unmark as favorite')
@@ -162,7 +93,7 @@ export function ToolbarActions({ dashboard }: Props) {
 
   toolbarActions.push({
     group: 'icon-actions',
-    condition: isDevEnv && uid && isShowingDashboard,
+    condition: isDevEnv && uid && isShowingDashboard && !isEditing,
     render: () => (
       <ToolbarButton
         key="view-in-old-dashboard-button"
@@ -179,7 +110,84 @@ export function ToolbarActions({ dashboard }: Props) {
     group: 'icon-actions',
     condition: meta.isSnapshot && !isEditing,
     render: () => (
-      <GoToSnapshotOriginButton originalURL={dashboard.getInitialSaveModel()?.snapshot?.originalUrl ?? ''} />
+      <GoToSnapshotOriginButton
+        key="go-to-snapshot-origin"
+        originalURL={dashboard.getInitialSaveModel()?.snapshot?.originalUrl ?? ''}
+      />
+    ),
+  });
+
+  if (!isEditingPanel && !isEditing) {
+    // This adds the alert rules button and the dashboard insights button
+    addDynamicActions(toolbarActions, dynamicDashNavActions.right, 'icon-actions');
+  }
+
+  toolbarActions.push({
+    group: 'add-panel',
+    condition: isEditingAndShowingDashboard,
+    render: () => (
+      <Dropdown
+        key="add-panel-dropdown"
+        onVisibleChange={(isOpen) => {
+          setIsAddPanelMenuOpen(isOpen);
+          DashboardInteractions.toolbarAddClick();
+        }}
+        overlay={() => (
+          <Menu>
+            <Menu.Item
+              key="add-visualization"
+              testId={selectors.pages.AddDashboard.itemButton('Add new visualization menu item')}
+              label={t('dashboard.add-menu.visualization', 'Visualization')}
+              onClick={() => {
+                const id = dashboard.onCreateNewPanel();
+                DashboardInteractions.toolbarAddButtonClicked({ item: 'add_visualization' });
+                locationService.partial({ editPanel: id });
+              }}
+            />
+            <Menu.Item
+              key="add-panel-lib"
+              testId={selectors.pages.AddDashboard.itemButton('Add new panel from panel library menu item')}
+              label={t('dashboard.add-menu.import', 'Import from library')}
+              onClick={() => {
+                dashboard.onCreateLibPanelWidget();
+                DashboardInteractions.toolbarAddButtonClicked({ item: 'add_library_panel' });
+              }}
+            />
+            <Menu.Item
+              key="add-row"
+              testId={selectors.pages.AddDashboard.itemButton('Add new row menu item')}
+              label={t('dashboard.add-menu.row', 'Row')}
+              onClick={() => {
+                dashboard.onCreateNewRow();
+                DashboardInteractions.toolbarAddButtonClicked({ item: 'add_row' });
+              }}
+            />
+            <Menu.Item
+              key="paste-panel"
+              disabled={!hasCopiedPanel}
+              testId={selectors.pages.AddDashboard.itemButton('Add new panel from clipboard menu item')}
+              label={t('dashboard.add-menu.paste-panel', 'Paste panel')}
+              onClick={() => {
+                dashboard.pastePanel();
+                DashboardInteractions.toolbarAddButtonClicked({ item: 'paste_panel' });
+              }}
+            />
+          </Menu>
+        )}
+        placement="bottom"
+        offset={[0, 6]}
+      >
+        <Button
+          key="add-panel-button"
+          variant="primary"
+          size="sm"
+          fill="outline"
+          data-testid={selectors.components.PageToolbar.itemButton('Add button')}
+        >
+          <Trans i18nKey="dashboard.toolbar.add">Add</Trans>
+          <Icon name={isAddPanelMenuOpen ? 'angle-up' : 'angle-down'} size="lg" />
+        </Button>
+      </Dropdown>
     ),
   });
 
@@ -225,20 +233,6 @@ export function ToolbarActions({ dashboard }: Props) {
       />
     ),
   });
-
-  if (dynamicDashNavActions.left.length > 0 && !isEditingPanel) {
-    dynamicDashNavActions.left.map((action, index) => {
-      const props = { dashboard: getDashboardSrv().getCurrent()! };
-      if (action.show(props)) {
-        const Component = action.component;
-        toolbarActions.push({
-          group: 'icon-actions',
-          condition: true,
-          render: () => <Component {...props} />,
-        });
-      }
-    });
-  }
 
   toolbarActions.push({
     group: 'back-button',
@@ -457,7 +451,7 @@ export function ToolbarActions({ dashboard }: Props) {
       }
 
       // If we only can save as copy
-      if (canSaveAs && !meta.canSave) {
+      if (canSaveAs && !meta.canSave && !meta.canMakeEditable) {
         return (
           <Button
             onClick={() => {
@@ -535,7 +529,27 @@ export function ToolbarActions({ dashboard }: Props) {
     lastGroup = action.group;
   }
 
-  return actionElements;
+  return <ToolbarButtonRow alignment="right">{actionElements}</ToolbarButtonRow>;
+}
+
+function addDynamicActions(
+  toolbarActions: ToolbarAction[],
+  registeredActions: DynamicDashNavButtonModel[],
+  group: string
+) {
+  if (registeredActions.length > 0) {
+    for (const action of registeredActions) {
+      const props = { dashboard: getDashboardSrv().getCurrent()! };
+      if (action.show(props)) {
+        const Component = action.component;
+        toolbarActions.push({
+          group: group,
+          condition: true,
+          render: () => <Component {...props} key={toolbarActions.length} />,
+        });
+      }
+    }
+  }
 }
 
 function useEditingLibraryPanel(panelEditor?: PanelEditor) {

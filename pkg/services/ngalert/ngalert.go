@@ -26,6 +26,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/folder"
+	ac "github.com/grafana/grafana/pkg/services/ngalert/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/ngalert/api"
 	"github.com/grafana/grafana/pkg/services/ngalert/eval"
 	"github.com/grafana/grafana/pkg/services/ngalert/image"
@@ -190,7 +191,7 @@ func (ng *AlertNG) init() error {
 					}
 
 					// Create remote Alertmanager.
-					remoteAM, err := createRemoteAlertmanager(orgID, ng.Cfg.UnifiedAlerting.RemoteAlertmanager, ng.KVStore, m)
+					remoteAM, err := createRemoteAlertmanager(orgID, ng.Cfg.UnifiedAlerting.RemoteAlertmanager, ng.KVStore, ng.SecretsService.Decrypt, m)
 					if err != nil {
 						moaLogger.Error("Failed to create remote Alertmanager, falling back to using only the internal one", "err", err)
 						return internalAM, nil
@@ -278,6 +279,7 @@ func (ng *AlertNG) init() error {
 	cfg := state.ManagerCfg{
 		Metrics:                        ng.Metrics.GetStateMetrics(),
 		ExternalURL:                    appUrl,
+		DisableExecution:               !ng.Cfg.UnifiedAlerting.ExecuteAlerts,
 		InstanceStore:                  ng.store,
 		Images:                         ng.ImageService,
 		Clock:                          clk,
@@ -316,7 +318,8 @@ func (ng *AlertNG) init() error {
 	alertRuleService := provisioning.NewAlertRuleService(ng.store, ng.store, ng.folderService, ng.dashboardService, ng.QuotaService, ng.store,
 		int64(ng.Cfg.UnifiedAlerting.DefaultRuleEvaluationInterval.Seconds()),
 		int64(ng.Cfg.UnifiedAlerting.BaseInterval.Seconds()),
-		ng.Cfg.UnifiedAlerting.RulesPerRuleGroupLimit, ng.Log, notifier.NewNotificationSettingsValidationService(ng.store))
+		ng.Cfg.UnifiedAlerting.RulesPerRuleGroupLimit, ng.Log, notifier.NewNotificationSettingsValidationService(ng.store),
+		ac.NewRuleService(ng.accesscontrol))
 
 	ng.api = &api.API{
 		Cfg:                  ng.Cfg,
@@ -535,14 +538,12 @@ func ApplyStateHistoryFeatureToggles(cfg *setting.UnifiedAlertingStateHistorySet
 	}
 }
 
-func createRemoteAlertmanager(orgID int64, amCfg setting.RemoteAlertmanagerSettings, kvstore kvstore.KVStore, m *metrics.RemoteAlertmanager) (*remote.Alertmanager, error) {
+func createRemoteAlertmanager(orgID int64, amCfg setting.RemoteAlertmanagerSettings, kvstore kvstore.KVStore, decryptFn remote.DecryptFn, m *metrics.RemoteAlertmanager) (*remote.Alertmanager, error) {
 	externalAMCfg := remote.AlertmanagerConfig{
 		OrgID:             orgID,
 		URL:               amCfg.URL,
 		TenantID:          amCfg.TenantID,
 		BasicAuthPassword: amCfg.Password,
 	}
-	// We won't be handling files on disk, we can pass an empty string as workingDirPath.
-	stateStore := notifier.NewFileStore(orgID, kvstore, "")
-	return remote.NewAlertmanager(externalAMCfg, stateStore, m)
+	return remote.NewAlertmanager(externalAMCfg, notifier.NewFileStore(orgID, kvstore), decryptFn, m)
 }

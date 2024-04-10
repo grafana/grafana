@@ -1,12 +1,19 @@
 package models
 
 import (
+	"fmt"
+
 	"github.com/prometheus/prometheus/model/labels"
 	"github.com/prometheus/prometheus/promql/parser"
 )
 
-func ApplyQueryScope(rawExpr string, matchers []*labels.Matcher) (string, error) {
+func ApplyQueryScope(rawExpr string, scope ScopeSpec) (string, error) {
 	expr, err := parser.ParseExpr(rawExpr)
+	if err != nil {
+		return "", err
+	}
+
+	matchers, err := scopeFiltersToMatchers(scope.Filters)
 	if err != nil {
 		return "", err
 	}
@@ -49,4 +56,29 @@ func ApplyQueryScope(rawExpr string, matchers []*labels.Matcher) (string, error)
 		}
 	})
 	return expr.String(), nil
+}
+
+func scopeFiltersToMatchers(filters []ScopeFilter) ([]*labels.Matcher, error) {
+	matchers := make([]*labels.Matcher, 0, len(filters))
+	for _, f := range filters {
+		var mt labels.MatchType
+		switch f.Operator {
+		case FilterOperatorEquals:
+			mt = labels.MatchEqual
+		case FilterOperatorNotEquals:
+			mt = labels.MatchNotEqual
+		case FilterOperatorRegexMatch:
+			mt = labels.MatchRegexp
+		case FilterOperatorRegexNotMatch:
+			mt = labels.MatchNotRegexp
+		default:
+			return nil, fmt.Errorf("unknown operator %q", f.Operator)
+		}
+		m, err := labels.NewMatcher(mt, f.Key, f.Value)
+		if err != nil {
+			return nil, err
+		}
+		matchers = append(matchers, m)
+	}
+	return matchers, nil
 }

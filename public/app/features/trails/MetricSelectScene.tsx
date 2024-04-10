@@ -23,10 +23,10 @@ import { VariableHide } from '@grafana/schema';
 import { Input, InlineSwitch, Field, Alert, Icon, useStyles2 } from '@grafana/ui';
 
 import { getPreviewPanelFor } from './AutomaticMetricQueries/previewPanel';
-import { MetricCategoryCascader } from './MetricCategory/MetricCategoryCascader';
 import { MetricScene } from './MetricScene';
 import { SelectMetricAction } from './SelectMetricAction';
 import { StatusWrapper } from './StatusWrapper';
+import { getMetricDescription } from './helpers/MetricDatasourceHelper';
 import { sortRelatedMetrics } from './relatedMetrics';
 import { getVariablesWithMetricConstant, trailDS, VAR_DATASOURCE, VAR_FILTERS_EXPR, VAR_METRIC_NAMES } from './shared';
 import { getFilters, getTrailFor } from './utils';
@@ -44,9 +44,7 @@ export interface MetricSelectSceneState extends SceneObjectState {
   body: SceneCSSGridLayout;
   searchQuery?: string;
   showPreviews?: boolean;
-  prefixFilter?: string;
   metricsAfterSearch?: string[];
-  metricsAfterFilter?: string[];
 }
 
 const ROW_PREVIEW_HEIGHT = '175px';
@@ -158,32 +156,15 @@ export class MetricSelectScene extends SceneObjectBase<MetricSelectSceneState> {
     }
   }
 
-  private applyMetricPrefixFilter() {
-    // This should occur after an `applyMetricSearch`, or if the prefix filter has changed
-    const { metricsAfterSearch, prefixFilter } = this.state;
-
-    if (!prefixFilter || !metricsAfterSearch) {
-      this.setState({ metricsAfterFilter: metricsAfterSearch });
-    } else {
-      const metricsAfterFilter = metricsAfterSearch.filter((metric) => metric.startsWith(prefixFilter));
-      this.setState({ metricsAfterFilter });
-    }
-  }
-
   private updateMetrics(applySearchAndFilter = true) {
     if (applySearchAndFilter) {
       // Set to false if these are not required (because they can be assumed to have been suitably called).
       this.applyMetricSearch();
-      this.applyMetricPrefixFilter();
     }
 
-    const { metricsAfterFilter } = this.state;
+    const { metricsAfterSearch } = this.state;
 
-    if (!metricsAfterFilter) {
-      return;
-    }
-
-    const metricNames = metricsAfterFilter;
+    const metricNames = metricsAfterSearch || [];
     const trail = getTrailFor(this);
     const sortedMetricNames =
       trail.state.metric !== undefined ? sortRelatedMetrics(metricNames, trail.state.metric) : metricNames;
@@ -222,7 +203,7 @@ export class MetricSelectScene extends SceneObjectBase<MetricSelectSceneState> {
     this.previewCache = metricsMap;
   }
 
-  private buildLayout() {
+  private async buildLayout() {
     // Temp hack when going back to select metric scene and variable updates
     if (this.ignoreNextUpdate) {
       this.ignoreNextUpdate = false;
@@ -245,6 +226,8 @@ export class MetricSelectScene extends SceneObjectBase<MetricSelectSceneState> {
 
     const children: SceneFlexItem[] = [];
 
+    const trail = getTrailFor(this);
+
     const metricsList = this.sortedPreviewMetrics();
 
     // Get the current filters to determine the count of them
@@ -254,13 +237,16 @@ export class MetricSelectScene extends SceneObjectBase<MetricSelectSceneState> {
 
     for (let index = 0; index < metricsList.length; index++) {
       const metric = metricsList[index];
+      const metadata = await trail.getMetricMetadata(metric.name);
+      const description = getMetricDescription(metadata);
 
       if (this.state.showPreviews) {
         if (metric.itemRef && metric.isPanel) {
           children.push(metric.itemRef.resolve());
           continue;
         }
-        const panel = getPreviewPanelFor(metric.name, index, currentFilterCount);
+        const panel = getPreviewPanelFor(metric.name, index, currentFilterCount, description);
+
         metric.itemRef = panel.getRef();
         metric.isPanel = true;
         children.push(panel);
@@ -269,7 +255,7 @@ export class MetricSelectScene extends SceneObjectBase<MetricSelectSceneState> {
           $variables: new SceneVariableSet({
             variables: getVariablesWithMetricConstant(metric.name),
           }),
-          body: getCardPanelFor(metric.name),
+          body: getCardPanelFor(metric.name, description),
         });
         metric.itemRef = panel.getRef();
         metric.isPanel = false;
@@ -302,29 +288,18 @@ export class MetricSelectScene extends SceneObjectBase<MetricSelectSceneState> {
     this.buildLayout();
   }, 500);
 
-  public onPrefixFilterChange = (prefixFilter: string | undefined) => {
-    this.setState({ prefixFilter });
-    this.prefixFilterChangedDebounced();
-  };
-
-  private prefixFilterChangedDebounced = debounce(() => {
-    this.applyMetricPrefixFilter();
-    this.updateMetrics(false); // Only needed to applyMetricPrefixFilter
-    this.buildLayout();
-  }, 1000);
-
   public onTogglePreviews = () => {
     this.setState({ showPreviews: !this.state.showPreviews });
     this.buildLayout();
   };
 
   public static Component = ({ model }: SceneComponentProps<MetricSelectScene>) => {
-    const { searchQuery, showPreviews, body, metricsAfterSearch, metricsAfterFilter, prefixFilter } = model.useState();
+    const { searchQuery, showPreviews, body } = model.useState();
     const { children } = body.useState();
     const styles = useStyles2(getStyles);
 
     const metricNamesStatus = useVariableStatus(VAR_METRIC_NAMES, model);
-    const tooStrict = children.length === 0 && (searchQuery || prefixFilter);
+    const tooStrict = children.length === 0 && searchQuery;
     const noMetrics = !metricNamesStatus.isLoading && model.currentMetricNames.size === 0;
 
     const isLoading = metricNamesStatus.isLoading && children.length === 0;
@@ -334,11 +309,6 @@ export class MetricSelectScene extends SceneObjectBase<MetricSelectSceneState> {
       : (noMetrics && 'There are no results found. Try a different time range or a different data source.') ||
         (tooStrict && 'There are no results found. Try adjusting your search or filters.') ||
         undefined;
-
-    const prefixError =
-      prefixFilter && metricsAfterSearch != null && !metricsAfterFilter?.length
-        ? 'The current prefix filter is not available with the current search terms.'
-        : undefined;
 
     const disableSearch = metricNamesStatus.error || metricNamesStatus.isLoading;
 
@@ -361,16 +331,6 @@ export class MetricSelectScene extends SceneObjectBase<MetricSelectSceneState> {
             onChange={model.onTogglePreviews}
             disabled={disableSearch}
           />
-        </div>
-        <div className={styles.header}>
-          <Field label="Filter by prefix" error={prefixError} invalid={!!prefixError}>
-            <MetricCategoryCascader
-              metricNames={metricsAfterSearch || []}
-              onSelect={model.onPrefixFilterChange}
-              disabled={disableSearch}
-              initialValue={prefixFilter}
-            />
-          </Field>
         </div>
         {metricNamesStatus.error && (
           <Alert title="Unable to retrieve metric names" severity="error">
@@ -403,9 +363,10 @@ function getMetricNamesVariableSet() {
   });
 }
 
-function getCardPanelFor(metric: string) {
+function getCardPanelFor(metric: string, description?: string) {
   return PanelBuilders.text()
     .setTitle(metric)
+    .setDescription(description)
     .setHeaderActions(new SelectMetricAction({ metric, title: 'Select' }))
     .setOption('content', '')
     .build();
@@ -425,7 +386,7 @@ function getStyles(theme: GrafanaTheme2) {
       flexGrow: 0,
       display: 'flex',
       gap: theme.spacing(2),
-      marginBottom: theme.spacing(1),
+      marginBottom: theme.spacing(2),
       alignItems: 'flex-end',
     }),
     searchField: css({

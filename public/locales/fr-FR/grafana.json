@@ -94,7 +94,7 @@
     },
     "no-results": {
       "clear": "Effacer la recherche et les filtres",
-      "text": "Aucun résultat trouvé pour votre requête."
+      "text": ""
     }
   },
   "clipboard-button": {
@@ -107,9 +107,6 @@
       "change-theme": "Modifier le thème...",
       "dark-theme": "Sombre",
       "light-theme": "Clair"
-    },
-    "empty-state": {
-      "title": "Aucun résultat trouvé"
     },
     "search-box": {
       "placeholder": "Rechercher ou aller à..."
@@ -131,7 +128,8 @@
   },
   "connections": {
     "connect-data": {
-      "category-header-label": "Sources de données"
+      "category-header-label": "Sources de données",
+      "empty-message": ""
     },
     "search": {
       "placeholder": "Rechercher tout"
@@ -369,7 +367,6 @@
       "title-label": "Titre"
     },
     "json-editor": {
-      "apply-button": "Appliquer les modifications",
       "save-button": "Enregistrer les modifications",
       "subtitle": "Le modèle JSON ci-dessous est la structure de données qui définit le tableau de bord. Il inclut les paramètres du tableau de bord, les paramètres du panneau, la mise en page, les requêtes, etc.",
       "title": "Modèle JSON"
@@ -449,10 +446,11 @@
       "delete-query-tooltip": "Supprimer la requête",
       "delete-starred-query-confirmation-text": "Souhaitez-vous vraiment supprimer définitivement votre requête favorite ?",
       "edit-comment-tooltip": "Modifier le commentaire",
-      "loading-text": "chargement...",
+      "left-pane": "",
       "optional-description": "Une description facultative de l'action de la requête.",
       "query-comment-label": "Commentaire sur la requête",
       "query-text-label": "Texte de la requête",
+      "right-pane": "",
       "run-query-button": "Exécuter la requête",
       "save-comment": "Enregistrer le commentaire",
       "star-query-tooltip": "Mettre la requête en favori",
@@ -564,6 +562,9 @@
     "drawer": {
       "close": "Fermer"
     },
+    "empty-state": {
+      "not-found-message": ""
+    },
     "modal": {
       "close-tooltip": "Fermer"
     },
@@ -651,6 +652,9 @@
     }
   },
   "library-panels": {
+    "empty-state": {
+      "message": ""
+    },
     "modal": {
       "button-cancel": "<0>Annuler</0>",
       "button-view-panel1": "Voir le panneau dans {{label}}...",
@@ -674,138 +678,147 @@
       "title": "Échec de la connexion",
       "unknown": "Une erreur inconnue est survenue"
     },
-    "forgot-password": "",
+    "forgot-password": "Vous avez oublié votre mot de passe ?",
     "form": {
-      "password-label": "",
-      "password-required": "",
-      "submit-label": "",
-      "submit-loading-label": "",
-      "username-label": "",
-      "username-required": ""
+      "password-label": "Mot de passe",
+      "password-required": "Vous devez renseigner le mot de passe",
+      "submit-label": "Connexion",
+      "submit-loading-label": "Connexion…",
+      "username-label": "E-mail ou nom d'utilisateur",
+      "username-required": "Vous devez renseigner l'e-mail ou le nom d'utilisateur"
     },
     "services": {
-      "sing-in-with-prefix": ""
+      "sing-in-with-prefix": "Se connecter avec {{serviceName}}"
     },
     "signup": {
-      "button-label": "",
-      "new-to-question": ""
+      "button-label": "Inscription",
+      "new-to-question": "Nouveau sur Grafana ?"
     }
   },
   "migrate-to-cloud": {
     "can-i-move": {
-      "body": "",
-      "link-title": "",
-      "title": ""
+      "body": "Une fois que vous aurez connecté cette installation à une pile cloud, vous pourrez importer les sources de données et les tableaux de bord.",
+      "link-title": "En savoir plus sur la migration des autres paramètres",
+      "title": "Puis-je déplacer cette installation vers Grafana Cloud ?"
     },
     "connect-modal": {
-      "body-cloud-stack": "",
-      "body-get-started": "",
-      "body-paste-stack": "",
-      "body-sign-up": "",
-      "body-token": "",
-      "body-token-field": "",
-      "body-token-field-placeholder": "",
-      "body-token-instructions": "",
-      "body-url-field": "",
-      "body-view-stacks": "",
-      "cancel": "",
-      "connect": "",
-      "connecting": "",
-      "stack-required-error": "",
-      "title": "",
-      "token-required-error": ""
+      "body-cloud-stack": "Vous aurez également besoin d'une pile cloud. Si vous venez de vous inscrire, nous créerons automatiquement votre première pile. Si vous avez déjà un compte, vous devez sélectionner ou créer une pile.",
+      "body-get-started": "Pour commencer, vous aurez besoin d'un compte Grafana.com.",
+      "body-sign-up": "Créez un compte Grafana.com",
+      "body-token": "Votre installation Grafana autogérée a besoin d'un accès spécial pour migrer du contenu de manière sécurisée. Vous devrez créer un jeton de migration sur la pile cloud que vous avez choisie.",
+      "body-token-field": "Jeton de migration",
+      "body-token-field-placeholder": "Coller le jeton ici",
+      "body-token-instructions": "Connectez-vous à votre pile cloud et accédez à Administration > Général > Migrer vers Grafana Cloud. Créez un jeton de migration sur cet écran et collez-le ici.",
+      "body-view-stacks": "Voir mes piles cloud",
+      "cancel": "Annuler",
+      "connect": "Se connecter à cette pile",
+      "connecting": "Connexion à cette pile…",
+      "title": "Se connecter à une pile cloud",
+      "token-required-error": "Vous devez renseigner le jeton de migration"
     },
     "cta": {
-      "button": "",
-      "header": ""
+      "button": "Migrer cette instance vers le cloud",
+      "header": "Laissez-nous gérer votre pile Grafana"
     },
     "disconnect-modal": {
-      "body": "",
-      "cancel": "",
-      "disconnect": "",
-      "disconnecting": "",
-      "error": "",
-      "title": ""
+      "body": "Cette action supprimera le jeton de migration de cette installation. Si vous souhaitez importer plus de ressources dans le futur, vous devrez entrer un nouveau jeton de migration.",
+      "cancel": "Annuler",
+      "disconnect": "Déconnecter",
+      "disconnecting": "Déconnexion…",
+      "error": "La déconnexion a échoué",
+      "title": "Se déconnecter de la pile cloud"
     },
     "get-started": {
-      "body": "",
-      "configure-pdc-link": "",
-      "link-title": "",
-      "step-1": "",
-      "step-2": "",
-      "step-3": "",
-      "step-4": "",
-      "step-5": "",
-      "title": ""
+      "body": "Le processus de migration doit être démarré à partir de votre instance Grafana autogérée.",
+      "configure-pdc-link": "Configurer la PDC pour cette pile",
+      "link-title": "En savoir plus sur la connexion privée aux sources de données",
+      "step-1": "Connectez-vous à votre instance autogérée et accédez à Administration > Général > Migrer vers Grafana Cloud.",
+      "step-2": "Sélectionnez Migrer cette instance vers le cloud.",
+      "step-3": "Le système vous demandera un jeton de migration. Générez-en un à partir de cet écran.",
+      "step-4": "Dans votre instance autogérée, sélectionnez Importer tout pour importer les sources de données et les tableaux de bord vers cette pile cloud.",
+      "step-5": "Si certaines de vos sources de données ne fonctionnent pas sur le réseau Internet public, vous devez installer une connexion privée aux sources de données dans votre environnement autogéré.",
+      "title": "Comment commencer"
     },
     "is-it-secure": {
-      "body": "",
-      "link-title": "",
-      "title": ""
+      "body": "Grafana Labs s'engage à appliquer les normes les plus strictes en matière de confidentialité et de sécurité des données. En utilisant des technologies et des procédures de sécurité conformes aux normes du secteur, nous contribuons à protéger les données de nos clients contre l'accès, l'utilisation ou la divulgation non autorisés.",
+      "link-title": "Centre de confiance Grafana Labs",
+      "title": "La solution est-elle sécurisée ?"
     },
     "migrate-to-this-stack": {
-      "body": "",
-      "link-title": "",
-      "title": ""
+      "body": "Certaines configurations de votre instance Grafana autogérée peuvent être copiées automatiquement dans cette pile cloud.",
+      "link-title": "Voir le guide de migration complet",
+      "title": "Migrer la configuration vers cette pile"
     },
     "migration-token": {
-      "body": "",
-      "delete-button": "",
-      "delete-modal-body": "",
-      "delete-modal-cancel": "",
-      "delete-modal-confirm": "",
-      "delete-modal-deleting": "",
-      "delete-modal-title": "",
-      "generate-button": "",
-      "generate-button-loading": "",
-      "modal-close": "",
-      "modal-copy-and-close": "",
-      "modal-copy-button": "",
-      "modal-field-description": "",
-      "modal-field-label": "",
-      "modal-title": "",
+      "body": "Votre instance Grafana autogérée aura besoin d'un jeton d'authentification spécial pour se connecter de manière sécurisée à cette pile cloud.",
+      "delete-modal-body": "Si vous avez déjà utilisé ce jeton avec une installation autogérée, celle-ci ne pourra plus importer de contenu.",
+      "delete-modal-cancel": "Annuler",
+      "delete-modal-confirm": "Supprimer",
+      "delete-modal-deleting": "Suppression...",
+      "delete-modal-title": "Supprimer le jeton de migration",
+      "error-body": "",
+      "error-title": "",
+      "generate-button": "Générer un jeton de migration",
+      "generate-button-loading": "Génération d'un jeton de migration…",
+      "modal-close": "Fermer",
+      "modal-copy-and-close": "Copier dans le presse-papiers et fermer",
+      "modal-copy-button": "Copier dans le presse-papiers",
+      "modal-field-description": "Copiez le jeton maintenant, car vous ne pourrez plus le revoir. Si vous perdez un jeton, vous devrez 'en créer un nouveau.",
+      "modal-field-label": "Jeton",
+      "modal-title": "Jeton de migration créé",
       "status": "",
-      "title": ""
+      "title": "Jeton de migration"
     },
     "pdc": {
-      "body": "",
-      "link-title": "",
-      "title": ""
+      "body": "L'exposition de vos sources de données sur Internet peut compromettre la sécurité. La connexion privée aux sources de données (PDC) permet à Grafana Cloud d'accéder à vos sources de données existantes en passant par un tunnel réseau sécurisé.",
+      "link-title": "En savoir plus sur la PDC",
+      "title": "Toutes mes sources de données ne sont pas sur le réseau Internet public"
     },
     "pricing": {
-      "body": "",
-      "link-title": "",
-      "title": ""
+      "body": "Grafana Cloud propose une formule gratuite généreuse et un essai illimité de 14 jours. Après votre période d'essai, nous vous facturerons en fonction de votre utilisation dépassant les limites de la formule gratuite.",
+      "link-title": "Tarifs de Grafana Cloud",
+      "title": "Combien ça coûte ?"
     },
     "resource-status": {
-      "error-details-button": "",
-      "failed": "",
-      "migrated": "",
-      "migrating": "",
-      "not-migrated": "",
-      "unknown": ""
+      "error-details-button": "Détails",
+      "failed": "Erreur",
+      "migrated": "Importé dans le cloud",
+      "migrating": "Importation…",
+      "not-migrated": "Pas encore importé",
+      "unknown": "Inconnu"
+    },
+    "resource-table": {
+      "unknown-datasource-title": "",
+      "unknown-datasource-type": ""
     },
     "resource-type": {
-      "dashboard": "",
-      "datasource": "",
-      "unknown": ""
+      "dashboard": "Tableau de bord",
+      "datasource": "Source de données",
+      "folder": "",
+      "unknown": "Inconnu"
     },
-    "resources": {
-      "disconnect": ""
+    "summary": {
+      "disconnect": "",
+      "disconnect-error-description": "",
+      "disconnect-error-title": "",
+      "run-migration-error-description": "",
+      "run-migration-error-title": "",
+      "start-migration": "",
+      "target-stack-title": ""
     },
     "token-status": {
-      "active": "",
-      "no-active": ""
+      "active": "Jeton créé et actif",
+      "no-active": "Aucun jeton actif"
     },
     "what-is-cloud": {
-      "body": "",
-      "link-title": "",
-      "title": ""
+      "body": "Grafana cloud est une plateforme d'observabilité hébergée dans le cloud et entièrement gérée. Elle est idéale pour les environnements natifs du cloud. Elle offre tout ce que vous aimez dans Grafana sans les frais d'entretien, de mise à niveau et de support qu'implique une installation.",
+      "link-title": "En savoir plus sur les fonctionnalités cloud",
+      "title": "Qu'est-ce que Grafana Cloud ?"
     },
     "why-host": {
-      "body": "",
-      "link-title": "",
-      "title": ""
+      "body": "En plus de la commodité de l'hébergement géré, Grafana Cloud comprend de nombreuses fonctionnalités exclusives au cloud comme les SLO, la gestion des incidents, l'apprentissage automatique et de puissantes intégrations d'observabilité.",
+      "link-title": "Vous avez d'autres questions ? Posez-les à un expert",
+      "title": "Pourquoi héberger avec Grafana ?"
     }
   },
   "nav": {
@@ -994,8 +1007,8 @@
       "subtitle": "Gérer les tableaux de bord et les autorisations des dossiers"
     },
     "migrate-to-cloud": {
-      "subtitle": "",
-      "title": ""
+      "subtitle": "Copier la configuration de votre installation autogérée vers une pile cloud",
+      "title": "Migrer vers Grafana Cloud"
     },
     "monitoring": {
       "subtitle": "Applications de suivi et d'infrastructure",
@@ -1209,6 +1222,11 @@
       "title": "Il n'y a aucune playlist créée"
     }
   },
+  "playlists": {
+    "empty-state": {
+      "message": ""
+    }
+  },
   "profile": {
     "change-password": {
       "cancel-button": "Annuler",
@@ -1223,7 +1241,7 @@
       "old-password-label": "Ancien mot de passe",
       "old-password-required": "Vous devez saisir l'ancien mot de passe",
       "passwords-must-match": "Les mots de passe doivent être identiques",
-      "strong-password-validation-register": ""
+      "strong-password-validation-register": "Selon notre politique, votre mot de passe n'est pas suffisamment sécurisé"
     }
   },
   "public-dashboard": {
@@ -1344,11 +1362,12 @@
     "header": {
       "collapse-row": "Réduire la ligne de requête",
       "datasource-help": "Afficher l'aide de la source de données",
-      "disable-query": "Désactiver la requête",
       "drag-and-drop": "Glisser et déposer pour réorganiser",
       "duplicate-query": "Dupliquer la requête",
       "expand-row": "Développer la ligne de requête",
+      "hide-response": "",
       "remove-query": "Supprimer la requête",
+      "show-response": "",
       "toggle-edit-mode": "Activer/désactiver le mode édition de texte"
     },
     "query-editor-not-exported": "Le plugin source de données n'exporte aucun composant de l'éditeur de requête"
@@ -1458,10 +1477,10 @@
       "expire-day": "1 jour",
       "expire-hour": "1 heure",
       "expire-never": "Jamais",
-      "expire-week": "",
+      "expire-week": "1 semaine",
       "info-text-1": "Un instantané est un moyen instantané de partager publiquement un tableau de bord interactif. Lors de la création, nous supprimons les données sensibles telles que les requêtes (métrique, modèle et annotation) et les liens du panneau, pour ne laisser que les métriques visibles et les noms de séries intégrés dans votre tableau de bord.",
       "info-text-2": "N'oubliez pas que votre instantané <1>peut être consulté par une personne</1> qui dispose du lien et qui peut accéder à l'URL. Partagez judicieusement.",
-      "local-button": "",
+      "local-button": "Publier un instantané",
       "mistake-message": "Avez-vous commis une erreur ? ",
       "name": "Nom de l'instantané",
       "timeout": "Délai d’expiration (secondes)",

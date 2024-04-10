@@ -19,14 +19,13 @@ import (
 const _ = grpc.SupportPackageIsVersion7
 
 const (
-	EntityStore_Read_FullMethodName      = "/entity.EntityStore/Read"
-	EntityStore_BatchRead_FullMethodName = "/entity.EntityStore/BatchRead"
-	EntityStore_Create_FullMethodName    = "/entity.EntityStore/Create"
-	EntityStore_Update_FullMethodName    = "/entity.EntityStore/Update"
-	EntityStore_Delete_FullMethodName    = "/entity.EntityStore/Delete"
-	EntityStore_History_FullMethodName   = "/entity.EntityStore/History"
-	EntityStore_List_FullMethodName      = "/entity.EntityStore/List"
-	EntityStore_Watch_FullMethodName     = "/entity.EntityStore/Watch"
+	EntityStore_Read_FullMethodName    = "/entity.EntityStore/Read"
+	EntityStore_Create_FullMethodName  = "/entity.EntityStore/Create"
+	EntityStore_Update_FullMethodName  = "/entity.EntityStore/Update"
+	EntityStore_Delete_FullMethodName  = "/entity.EntityStore/Delete"
+	EntityStore_History_FullMethodName = "/entity.EntityStore/History"
+	EntityStore_List_FullMethodName    = "/entity.EntityStore/List"
+	EntityStore_Watch_FullMethodName   = "/entity.EntityStore/Watch"
 )
 
 // EntityStoreClient is the client API for EntityStore service.
@@ -34,13 +33,12 @@ const (
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type EntityStoreClient interface {
 	Read(ctx context.Context, in *ReadEntityRequest, opts ...grpc.CallOption) (*Entity, error)
-	BatchRead(ctx context.Context, in *BatchReadEntityRequest, opts ...grpc.CallOption) (*BatchReadEntityResponse, error)
 	Create(ctx context.Context, in *CreateEntityRequest, opts ...grpc.CallOption) (*CreateEntityResponse, error)
 	Update(ctx context.Context, in *UpdateEntityRequest, opts ...grpc.CallOption) (*UpdateEntityResponse, error)
 	Delete(ctx context.Context, in *DeleteEntityRequest, opts ...grpc.CallOption) (*DeleteEntityResponse, error)
 	History(ctx context.Context, in *EntityHistoryRequest, opts ...grpc.CallOption) (*EntityHistoryResponse, error)
 	List(ctx context.Context, in *EntityListRequest, opts ...grpc.CallOption) (*EntityListResponse, error)
-	Watch(ctx context.Context, in *EntityWatchRequest, opts ...grpc.CallOption) (EntityStore_WatchClient, error)
+	Watch(ctx context.Context, opts ...grpc.CallOption) (EntityStore_WatchClient, error)
 }
 
 type entityStoreClient struct {
@@ -54,15 +52,6 @@ func NewEntityStoreClient(cc grpc.ClientConnInterface) EntityStoreClient {
 func (c *entityStoreClient) Read(ctx context.Context, in *ReadEntityRequest, opts ...grpc.CallOption) (*Entity, error) {
 	out := new(Entity)
 	err := c.cc.Invoke(ctx, EntityStore_Read_FullMethodName, in, out, opts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
-func (c *entityStoreClient) BatchRead(ctx context.Context, in *BatchReadEntityRequest, opts ...grpc.CallOption) (*BatchReadEntityResponse, error) {
-	out := new(BatchReadEntityResponse)
-	err := c.cc.Invoke(ctx, EntityStore_BatchRead_FullMethodName, in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -114,28 +103,27 @@ func (c *entityStoreClient) List(ctx context.Context, in *EntityListRequest, opt
 	return out, nil
 }
 
-func (c *entityStoreClient) Watch(ctx context.Context, in *EntityWatchRequest, opts ...grpc.CallOption) (EntityStore_WatchClient, error) {
+func (c *entityStoreClient) Watch(ctx context.Context, opts ...grpc.CallOption) (EntityStore_WatchClient, error) {
 	stream, err := c.cc.NewStream(ctx, &EntityStore_ServiceDesc.Streams[0], EntityStore_Watch_FullMethodName, opts...)
 	if err != nil {
 		return nil, err
 	}
 	x := &entityStoreWatchClient{stream}
-	if err := x.ClientStream.SendMsg(in); err != nil {
-		return nil, err
-	}
-	if err := x.ClientStream.CloseSend(); err != nil {
-		return nil, err
-	}
 	return x, nil
 }
 
 type EntityStore_WatchClient interface {
+	Send(*EntityWatchRequest) error
 	Recv() (*EntityWatchResponse, error)
 	grpc.ClientStream
 }
 
 type entityStoreWatchClient struct {
 	grpc.ClientStream
+}
+
+func (x *entityStoreWatchClient) Send(m *EntityWatchRequest) error {
+	return x.ClientStream.SendMsg(m)
 }
 
 func (x *entityStoreWatchClient) Recv() (*EntityWatchResponse, error) {
@@ -151,13 +139,12 @@ func (x *entityStoreWatchClient) Recv() (*EntityWatchResponse, error) {
 // for forward compatibility
 type EntityStoreServer interface {
 	Read(context.Context, *ReadEntityRequest) (*Entity, error)
-	BatchRead(context.Context, *BatchReadEntityRequest) (*BatchReadEntityResponse, error)
 	Create(context.Context, *CreateEntityRequest) (*CreateEntityResponse, error)
 	Update(context.Context, *UpdateEntityRequest) (*UpdateEntityResponse, error)
 	Delete(context.Context, *DeleteEntityRequest) (*DeleteEntityResponse, error)
 	History(context.Context, *EntityHistoryRequest) (*EntityHistoryResponse, error)
 	List(context.Context, *EntityListRequest) (*EntityListResponse, error)
-	Watch(*EntityWatchRequest, EntityStore_WatchServer) error
+	Watch(EntityStore_WatchServer) error
 }
 
 // UnimplementedEntityStoreServer should be embedded to have forward compatible implementations.
@@ -166,9 +153,6 @@ type UnimplementedEntityStoreServer struct {
 
 func (UnimplementedEntityStoreServer) Read(context.Context, *ReadEntityRequest) (*Entity, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Read not implemented")
-}
-func (UnimplementedEntityStoreServer) BatchRead(context.Context, *BatchReadEntityRequest) (*BatchReadEntityResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method BatchRead not implemented")
 }
 func (UnimplementedEntityStoreServer) Create(context.Context, *CreateEntityRequest) (*CreateEntityResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Create not implemented")
@@ -185,7 +169,7 @@ func (UnimplementedEntityStoreServer) History(context.Context, *EntityHistoryReq
 func (UnimplementedEntityStoreServer) List(context.Context, *EntityListRequest) (*EntityListResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method List not implemented")
 }
-func (UnimplementedEntityStoreServer) Watch(*EntityWatchRequest, EntityStore_WatchServer) error {
+func (UnimplementedEntityStoreServer) Watch(EntityStore_WatchServer) error {
 	return status.Errorf(codes.Unimplemented, "method Watch not implemented")
 }
 
@@ -214,24 +198,6 @@ func _EntityStore_Read_Handler(srv interface{}, ctx context.Context, dec func(in
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(EntityStoreServer).Read(ctx, req.(*ReadEntityRequest))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
-func _EntityStore_BatchRead_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(BatchReadEntityRequest)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(EntityStoreServer).BatchRead(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: EntityStore_BatchRead_FullMethodName,
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(EntityStoreServer).BatchRead(ctx, req.(*BatchReadEntityRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -327,15 +293,12 @@ func _EntityStore_List_Handler(srv interface{}, ctx context.Context, dec func(in
 }
 
 func _EntityStore_Watch_Handler(srv interface{}, stream grpc.ServerStream) error {
-	m := new(EntityWatchRequest)
-	if err := stream.RecvMsg(m); err != nil {
-		return err
-	}
-	return srv.(EntityStoreServer).Watch(m, &entityStoreWatchServer{stream})
+	return srv.(EntityStoreServer).Watch(&entityStoreWatchServer{stream})
 }
 
 type EntityStore_WatchServer interface {
 	Send(*EntityWatchResponse) error
+	Recv() (*EntityWatchRequest, error)
 	grpc.ServerStream
 }
 
@@ -345,6 +308,14 @@ type entityStoreWatchServer struct {
 
 func (x *entityStoreWatchServer) Send(m *EntityWatchResponse) error {
 	return x.ServerStream.SendMsg(m)
+}
+
+func (x *entityStoreWatchServer) Recv() (*EntityWatchRequest, error) {
+	m := new(EntityWatchRequest)
+	if err := x.ServerStream.RecvMsg(m); err != nil {
+		return nil, err
+	}
+	return m, nil
 }
 
 // EntityStore_ServiceDesc is the grpc.ServiceDesc for EntityStore service.
@@ -357,10 +328,6 @@ var EntityStore_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "Read",
 			Handler:    _EntityStore_Read_Handler,
-		},
-		{
-			MethodName: "BatchRead",
-			Handler:    _EntityStore_BatchRead_Handler,
 		},
 		{
 			MethodName: "Create",
@@ -388,6 +355,7 @@ var EntityStore_ServiceDesc = grpc.ServiceDesc{
 			StreamName:    "Watch",
 			Handler:       _EntityStore_Watch_Handler,
 			ServerStreams: true,
+			ClientStreams: true,
 		},
 	},
 	Metadata: "entity.proto",

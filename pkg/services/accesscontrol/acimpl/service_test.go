@@ -754,8 +754,9 @@ func TestPermissionCacheKey(t *testing.T) {
 		{
 			name: "should return correct key for user",
 			signedInUser: &user.SignedInUser{
-				OrgID:  1,
-				UserID: 1,
+				OrgID:        1,
+				UserID:       1,
+				NamespacedID: "user:1",
 			},
 			expected: "rbac-permissions-1-user-1",
 		},
@@ -765,6 +766,7 @@ func TestPermissionCacheKey(t *testing.T) {
 				OrgID:            1,
 				ApiKeyID:         1,
 				IsServiceAccount: false,
+				NamespacedID:     "user:1",
 			},
 			expected: "rbac-permissions-1-api-key-1",
 		},
@@ -774,6 +776,7 @@ func TestPermissionCacheKey(t *testing.T) {
 				OrgID:            1,
 				UserID:           1,
 				IsServiceAccount: true,
+				NamespacedID:     "serviceaccount:1",
 			},
 			expected: "rbac-permissions-1-service-account-1",
 		},
@@ -783,14 +786,16 @@ func TestPermissionCacheKey(t *testing.T) {
 				OrgID:            1,
 				UserID:           -1,
 				IsServiceAccount: true,
+				NamespacedID:     "serviceaccount:-1",
 			},
 			expected: "rbac-permissions-1-service-account--1",
 		},
 		{
 			name: "should use org role if no unique id",
 			signedInUser: &user.SignedInUser{
-				OrgID:   1,
-				OrgRole: org.RoleNone,
+				OrgID:        1,
+				OrgRole:      org.RoleNone,
+				NamespacedID: "user:1",
 			},
 			expected: "rbac-permissions-1-user-None",
 		},
@@ -935,62 +940,6 @@ func TestService_DeleteExternalServiceRole(t *testing.T) {
 				require.NoError(t, errGetPerms)
 				assert.Empty(t, perms)
 			}
-		})
-	}
-}
-
-func TestService_GetUserPermissionsInOrg(t *testing.T) {
-	tests := []struct {
-		name        string
-		orgID       int64
-		ramRoles    map[string]*accesscontrol.RoleDTO    // BasicRole => RBAC BasicRole
-		storedPerms map[int64][]accesscontrol.Permission // UserID => Permissions
-		storedRoles map[int64][]string                   // UserID => Roles
-		want        []accesscontrol.Permission
-	}{
-		{
-			name:  "should get correct permissions from another org",
-			orgID: 2,
-			ramRoles: map[string]*accesscontrol.RoleDTO{
-				string(roletype.RoleEditor): {Permissions: []accesscontrol.Permission{}},
-				string(roletype.RoleAdmin): {Permissions: []accesscontrol.Permission{
-					{Action: accesscontrol.ActionTeamsRead, Scope: "teams:*"},
-				}},
-			},
-			storedPerms: map[int64][]accesscontrol.Permission{
-				1: {
-					{Action: accesscontrol.ActionTeamsRead, Scope: "teams:id:1"},
-					{Action: accesscontrol.ActionTeamsPermissionsRead, Scope: "teams:id:1"},
-				},
-				2: {
-					{Action: accesscontrol.ActionTeamsRead, Scope: "teams:id:2"},
-				},
-			},
-			storedRoles: map[int64][]string{
-				1: {string(roletype.RoleAdmin)},
-				2: {string(roletype.RoleEditor)},
-			},
-			want: []accesscontrol.Permission{
-				{Action: accesscontrol.ActionTeamsRead, Scope: "teams:id:2"},
-			},
-		},
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			ctx := context.Background()
-			ac := setupTestEnv(t)
-
-			ac.roles = tt.ramRoles
-			ac.store = actest.FakeStore{
-				ExpectedUsersPermissions: tt.storedPerms,
-				ExpectedUsersRoles:       tt.storedRoles,
-			}
-			user := &user.SignedInUser{OrgID: 1, UserID: 2}
-
-			got, err := ac.GetUserPermissionsInOrg(ctx, user, 2)
-			require.Nil(t, err)
-
-			assert.ElementsMatch(t, got, tt.want)
 		})
 	}
 }

@@ -10,15 +10,21 @@ export function getDashboardChanges(
   initial: Dashboard,
   changed: Dashboard,
   saveTimeRange?: boolean,
-  saveVariables?: boolean
+  saveVariables?: boolean,
+  saveRefresh?: boolean
 ) {
   const initialSaveModel = initial;
   const changedSaveModel = changed;
   const hasTimeChanged = getHasTimeChanged(changedSaveModel, initialSaveModel);
   const hasVariableValueChanges = applyVariableChanges(changedSaveModel, initialSaveModel, saveVariables);
+  const hasRefreshChanged = changedSaveModel.refresh !== initialSaveModel.refresh;
 
   if (!saveTimeRange) {
     changedSaveModel.time = initialSaveModel.time;
+  }
+
+  if (!saveRefresh) {
+    changedSaveModel.refresh = initialSaveModel.refresh;
   }
 
   const diff = jsonDiff(initialSaveModel, changedSaveModel);
@@ -36,6 +42,7 @@ export function getDashboardChanges(
     hasTimeChanges: hasTimeChanged,
     isNew: changedSaveModel.version === 0,
     hasVariableValueChanges,
+    hasRefreshChange: hasRefreshChanged,
   };
 }
 
@@ -69,8 +76,10 @@ export function applyVariableChanges(saveModel: Dashboard, originalSaveModel: Da
       if (typed.type === 'adhoc') {
         typed.filters = (original as AdHocVariableModel).filters;
       } else {
-        variable.current = original.current;
-        variable.options = original.options;
+        if (typed.type !== 'groupby') {
+          variable.current = original.current;
+          variable.options = original.options;
+        }
       }
     }
   }

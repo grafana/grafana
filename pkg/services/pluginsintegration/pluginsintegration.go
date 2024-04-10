@@ -2,6 +2,7 @@ package pluginsintegration
 
 import (
 	"github.com/google/wire"
+
 	"github.com/prometheus/client_golang/prometheus"
 
 	"github.com/grafana/grafana/pkg/infra/tracing"
@@ -140,7 +141,7 @@ func ProvideClientDecorator(
 	oAuthTokenService oauthtoken.OAuthTokenService,
 	tracer tracing.Tracer,
 	cachingService caching.CachingService,
-	features *featuremgmt.FeatureManager,
+	features featuremgmt.FeatureToggles,
 	promRegisterer prometheus.Registerer,
 ) (*client.Decorator, error) {
 	return NewClientDecorator(cfg, pluginRegistry, oAuthTokenService, tracer, cachingService, features, promRegisterer, pluginRegistry)
@@ -149,7 +150,7 @@ func ProvideClientDecorator(
 func NewClientDecorator(
 	cfg *setting.Cfg,
 	pluginRegistry registry.Service, oAuthTokenService oauthtoken.OAuthTokenService,
-	tracer tracing.Tracer, cachingService caching.CachingService, features *featuremgmt.FeatureManager,
+	tracer tracing.Tracer, cachingService caching.CachingService, features featuremgmt.FeatureToggles,
 	promRegisterer prometheus.Registerer, registry registry.Service,
 ) (*client.Decorator, error) {
 	c := client.ProvideService(pluginRegistry)
@@ -157,17 +158,21 @@ func NewClientDecorator(
 	return client.NewDecorator(c, middlewares...)
 }
 
-func CreateMiddlewares(cfg *setting.Cfg, oAuthTokenService oauthtoken.OAuthTokenService, tracer tracing.Tracer, cachingService caching.CachingService, features *featuremgmt.FeatureManager, promRegisterer prometheus.Registerer, registry registry.Service) []plugins.ClientMiddleware {
+func CreateMiddlewares(cfg *setting.Cfg, oAuthTokenService oauthtoken.OAuthTokenService, tracer tracing.Tracer, cachingService caching.CachingService, features featuremgmt.FeatureToggles, promRegisterer prometheus.Registerer, registry registry.Service) []plugins.ClientMiddleware {
 	middlewares := []plugins.ClientMiddleware{
 		clientmiddleware.NewPluginRequestMetaMiddleware(),
+		clientmiddleware.NewTracingMiddleware(tracer),
+		clientmiddleware.NewMetricsMiddleware(promRegisterer, registry),
+		clientmiddleware.NewContextualLoggerMiddleware(),
+	}
+
+	if cfg.PluginLogBackendRequests {
+		middlewares = append(middlewares, clientmiddleware.NewLoggerMiddleware(log.New("plugin.instrumentation")))
 	}
 
 	skipCookiesNames := []string{cfg.LoginCookieName}
+
 	middlewares = append(middlewares,
-		clientmiddleware.NewTracingMiddleware(tracer),
-		clientmiddleware.NewMetricsMiddleware(promRegisterer, registry, features),
-		clientmiddleware.NewContextualLoggerMiddleware(),
-		clientmiddleware.NewLoggerMiddleware(cfg, log.New("plugin.instrumentation"), features),
 		clientmiddleware.NewTracingHeaderMiddleware(),
 		clientmiddleware.NewClearAuthHeadersMiddleware(),
 		clientmiddleware.NewOAuthTokenMiddleware(oAuthTokenService),
