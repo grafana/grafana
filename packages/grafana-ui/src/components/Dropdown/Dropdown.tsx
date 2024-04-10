@@ -13,7 +13,7 @@ import {
 import React, { useEffect, useRef, useState } from 'react';
 import { CSSTransition } from 'react-transition-group';
 
-import { ReactUtils } from '../../utils';
+import { ReactUtils, handleReducedMotion } from '../../utils';
 import { getPlacement } from '../../utils/tooltipUtils';
 import { Portal } from '../Portal/Portal';
 import { TooltipPlacement } from '../Tooltip/types';
@@ -114,13 +114,17 @@ const getStyles = (duration: number) => {
     appear: css({
       opacity: '0',
       position: 'relative',
-      transform: 'scaleY(0.5)',
       transformOrigin: 'top',
+      ...handleReducedMotion({
+        transform: 'scaleY(0.5)',
+      }),
     }),
     appearActive: css({
       opacity: '1',
-      transform: 'scaleY(1)',
-      transition: `transform ${duration}ms cubic-bezier(0.2, 0, 0.2, 1), opacity ${duration}ms cubic-bezier(0.2, 0, 0.2, 1)`,
+      ...handleReducedMotion({
+        transform: 'scaleY(1)',
+        transition: `transform ${duration}ms cubic-bezier(0.2, 0, 0.2, 1), opacity ${duration}ms cubic-bezier(0.2, 0, 0.2, 1)`,
+      }),
     }),
   };
 };

@@ -65,6 +65,16 @@ func TestUserSync_SyncUserHook(t *testing.T) {
 		IsAdmin:    false,
 	}}
 
+	userServiceEmailMod := &usertest.FakeUserService{ExpectedUser: &user.User{
+		ID:            3,
+		Login:         "test",
+		Name:          "test",
+		Email:         "test@test.com",
+		EmailVerified: true,
+		IsDisabled:    true,
+		IsAdmin:       false,
+	}}
+
 	userServiceNil := &usertest.FakeUserService{
 		ExpectedError: user.ErrUserNotFound,
 		CreateFn: func(ctx context.Context, cmd *user.CreateUserCommand) (*user.User, error) {
@@ -412,6 +422,54 @@ func TestUserSync_SyncUserHook(t *testing.T) {
 				Name:           "test_mod",
 				Email:          "test_mod",
 				IsDisabled:     false,
+				IsGrafanaAdmin: ptrBool(true),
+				ClientParams: authn.ClientParams{
+					SyncUser:   true,
+					EnableUser: true,
+					LookUpParams: login.UserLookupParams{
+						UserID: ptrInt64(3),
+						Email:  nil,
+						Login:  nil,
+					},
+				},
+			},
+		},
+		{
+			name: "sync - reset email verified on email change",
+			fields: fields{
+				userService:     userServiceEmailMod,
+				authInfoService: authFakeNil,
+				quotaService:    &quotatest.FakeQuotaService{},
+			},
+			args: args{
+				ctx: context.Background(),
+				id: &authn.Identity{
+					ID:             "",
+					Login:          "test",
+					Name:           "test",
+					Email:          "test_mod@test.com",
+					EmailVerified:  true,
+					IsDisabled:     false,
+					IsGrafanaAdmin: ptrBool(true),
+					ClientParams: authn.ClientParams{
+						SyncUser:   true,
+						EnableUser: true,
+						LookUpParams: login.UserLookupParams{
+							UserID: ptrInt64(3),
+							Email:  nil,
+							Login:  nil,
+						},
+					},
+				},
+			},
+			wantErr: false,
+			wantID: &authn.Identity{
+				ID:             "user:3",
+				Login:          "test",
+				Name:           "test",
+				Email:          "test_mod@test.com",
+				IsDisabled:     false,
+				EmailVerified:  false,
 				IsGrafanaAdmin: ptrBool(true),
 				ClientParams: authn.ClientParams{
 					SyncUser:   true,

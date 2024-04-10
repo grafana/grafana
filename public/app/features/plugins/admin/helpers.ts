@@ -76,6 +76,10 @@ export function mergeLocalsAndRemotes({
           catalogPlugin.hasUpdate &&
           catalogPlugin.installedVersion !== instancePlugin?.version;
 
+        if (instancePlugin?.version && instancePlugin?.version !== remotePlugin.version) {
+          catalogPlugin.hasUpdate = true;
+        }
+
         catalogPlugin.isUninstallingFromInstance = Boolean(localCounterpart) && !instancesMap.has(remotePlugin.slug);
       }
 
@@ -249,7 +253,7 @@ export function mapToCatalogPlugin(local?: LocalPlugin, remote?: RemotePlugin, e
     error: error?.errorCode,
     // Only local plugins have access control metadata
     accessControl: local?.accessControl,
-    angularDetected: local?.angularDetected || remote?.angularDetected,
+    angularDetected: local?.angularDetected ?? remote?.angularDetected,
     isFullyInstalled: Boolean(local) || isDisabled,
     iam: local?.iam,
   };
