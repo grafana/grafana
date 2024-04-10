@@ -64,6 +64,7 @@ func ProvideService(
 	if err != nil {
 		return nil, err
 	}
+	tracingCfg.ServiceName = "unified-storage"
 
 	tracing, err := tracing.ProvideService(tracingCfg)
 	if err != nil {
