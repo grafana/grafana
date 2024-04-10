@@ -6,6 +6,9 @@ import { getBackendSrv } from '@grafana/runtime';
 import { Button, Dropdown, Icon, LinkButton, Menu, Stack, Text, useStyles2 } from '@grafana/ui';
 import { alertRuleApi } from 'app/features/alerting/unified/api/alertRuleApi';
 import { alertmanagerApi } from 'app/features/alerting/unified/api/alertmanagerApi';
+import { OnCallIntegrationDTO, onCallApi } from 'app/features/alerting/unified/api/onCallApi';
+import { usePluginBridge } from 'app/features/alerting/unified/hooks/usePluginBridge';
+import { SupportedPlugin } from 'app/features/alerting/unified/types/pluginBridges';
 import { GRAFANA_RULES_SOURCE_NAME } from 'app/features/alerting/unified/utils/datasource';
 import { useGetSingle } from 'app/features/plugins/admin/state/hooks';
 import { Receiver } from 'app/plugins/datasource/alertmanager/types';
@@ -86,9 +89,23 @@ function useGetIncidentPluginConfig() {
   return incidentPluginConfig;
 }
 
+function useGetOnCallIntegrations() {
+  const { installed: onCallPluginInstalled } = usePluginBridge(SupportedPlugin.OnCall);
+
+  const { data: onCallIntegrations } = onCallApi.endpoints.grafanaOnCallIntegrations.useQuery(undefined, {
+    skip: !onCallPluginInstalled,
+    refetchOnFocus: true,
+    refetchOnReconnect: true,
+    refetchOnMountOrArgChange: true,
+  });
+
+  return onCallIntegrations ?? [];
+}
+
 export function Essentials({ onClose }: EssentialsProps) {
   const contactPoints = useGetContactPoints();
   const incidentPluginConfig = useGetIncidentPluginConfig();
+  const onCallIntegrations = useGetOnCallIntegrations();
 
   const ESSENTIAL_CONTENT: SectionsDto = {
     sections: [
@@ -147,25 +164,25 @@ export function Essentials({ onClose }: EssentialsProps) {
             description: 'tbd',
             button: {
               type: 'openLink',
-              url: '/alerting/notifications',
+              url: '/a/grafana-oncall-app/integrations?tab=monitoring-systems&p=1',
               label: 'View',
+              done: isOnCallIntegrationReady(onCallIntegrations),
             },
           },
           {
             title: 'Create your ChatOps workspace to OnCall',
             description: 'tbd',
             button: {
-              type: 'dropDown',
+              type: 'openLink',
               url: '/alerting/notifications',
               label: 'Connect',
-              options: [{ label: 'Option 1', value: '1' }],
             },
           },
           {
             title: 'Create your ChatOps workspace to Incident',
             description: 'tbd',
             button: {
-              type: 'dropDown',
+              type: 'openLink',
               url: '/a/grafana-incident-app/integrations/grate.slack',
               label: 'Connect',
               done: incidentPluginConfig?.isChatOpsInstalled,
@@ -175,7 +192,7 @@ export function Essentials({ onClose }: EssentialsProps) {
             title: 'Add ChatOps to your integration',
             description: 'tbd',
             button: {
-              type: 'dropDown',
+              type: 'openLink',
               url: '/alerting/notifications',
               label: 'Connect',
             },
@@ -356,4 +373,8 @@ function isOnCallContactPointReady(contactPoints: Receiver[]) {
   return contactPoints.some((contactPoint: Receiver) =>
     contactPoint.grafana_managed_receiver_configs?.some((receiver) => receiver.type === 'oncall')
   );
+}
+
+function isOnCallIntegrationReady(onCallIntegrations: OnCallIntegrationDTO[]) {
+  return onCallIntegrations.length > 0;
 }
