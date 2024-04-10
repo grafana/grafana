@@ -428,7 +428,8 @@
     "react-split-pane@0.1.92": "patch:react-split-pane@npm:0.1.92#.yarn/patches/react-split-pane-npm-0.1.92-93dbf51dff.patch",
     "@storybook/blocks@7.4.5": "patch:@storybook/blocks@npm%3A7.4.5#./.yarn/patches/@storybook-blocks-npm-7.4.5-5a2374564a.patch",
     "history@4.10.1": "patch:history@npm%3A4.10.1#./.yarn/patches/history-npm-4.10.1-ee217563ae.patch",
-    "history@^4.9.0": "patch:history@npm%3A4.10.1#./.yarn/patches/history-npm-4.10.1-ee217563ae.patch"
+    "history@^4.9.0": "patch:history@npm%3A4.10.1#./.yarn/patches/history-npm-4.10.1-ee217563ae.patch",
+    "uglify-js@^3.1.4": "3.14.3"
   },
   "workspaces": {
     "packages": [
