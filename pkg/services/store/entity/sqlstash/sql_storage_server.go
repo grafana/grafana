@@ -738,7 +738,7 @@ func (s *sqlEntityServer) Update(ctx context.Context, r *entity.UpdateEntityRequ
 		delete(values, "created_at")
 		delete(values, "created_by")
 
-		err = s.dialect.Update(
+		err = s.update(
 			ctx,
 			tx,
 			entityTable,
@@ -748,7 +748,7 @@ func (s *sqlEntityServer) Update(ctx context.Context, r *entity.UpdateEntityRequ
 			},
 		)
 		if err != nil {
-			s.log.Error("error updating entity", "msg", err.Error())
+			s.log.Error("error updating entity", "error", err.Error(), "method", "update")
 			return err
 		}
 
@@ -2009,11 +2009,8 @@ func (s *sqlEntityServer) insert(ctx context.Context, tx *session.SessionTx, tab
 	ctx, span := s.tracer.Start(ctx, "storage_server.insert", trace.WithAttributes(attribute.String("table", table)))
 	defer span.End()
 
-	if err := s.dialect.Insert(ctx, tx, table, values); err != nil {
-		s.log.Error("error performing insert", "table", table, "msg", err.Error())
-		return err
-	}
-	return nil
+	err := s.dialect.Insert(ctx, tx, table, values)
+	return err
 }
 
 func (s *sqlEntityServer) update(ctx context.Context, tx *session.SessionTx, table string, row map[string]any, where map[string]any) error {
@@ -2027,8 +2024,5 @@ func (s *sqlEntityServer) update(ctx context.Context, tx *session.SessionTx, tab
 		row,
 		where,
 	)
-	if err != nil {
-		s.log.Error("error performing update", "table", table, "msg", err.Error())
-	}
 	return err
 }
