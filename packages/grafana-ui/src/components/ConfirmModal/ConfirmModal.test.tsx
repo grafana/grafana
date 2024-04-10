@@ -105,6 +105,32 @@ describe('ConfirmModal', () => {
     expect(mockOnConfirm).toHaveBeenCalled();
   });
 
+  it('typing the confirmation text and pressing enter should trigger the primary action', async () => {
+    render(
+      <ConfirmModal
+        title="Some Title"
+        body="Some Body"
+        confirmText="Please Confirm"
+        alternativeText="Alternative Text"
+        dismissText="Dismiss Text"
+        isOpen={true}
+        confirmationText="My confirmation text"
+        onConfirm={mockOnConfirm}
+        onDismiss={() => {}}
+        onAlternative={() => {}}
+      />
+    );
+
+    expect(screen.getByRole('button', { name: 'Please Confirm' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Please Confirm' })).toBeDisabled();
+
+    await user.type(screen.getByPlaceholderText('Type "My confirmation text" to confirm'), 'mY CoNfIrMaTiOn TeXt');
+    expect(screen.getByRole('button', { name: 'Please Confirm' })).toBeEnabled();
+
+    await user.type(screen.getByPlaceholderText('Type "My confirmation text" to confirm'), '{enter}');
+    expect(mockOnConfirm).toHaveBeenCalled();
+  });
+
   it('returning a promise in the onConfirm callback disables the button whilst the callback is in progress', async () => {
     mockOnConfirm.mockImplementation(() => {
       return new Promise((resolve) => {
@@ -136,7 +162,9 @@ describe('ConfirmModal', () => {
 
     await user.click(screen.getByRole('button', { name: 'Please Confirm' }));
     expect(mockOnConfirm).toHaveBeenCalled();
-    expect(screen.getByRole('button', { name: 'Please Confirm' })).toBeDisabled();
+    await waitFor(() => {
+      expect(screen.getByRole('button', { name: 'Please Confirm' })).toBeDisabled();
+    });
 
     jest.runAllTimers();
     await waitFor(() => {
