@@ -156,7 +156,6 @@ describe('AlertRule abilities', () => {
       })
     );
     mockAlertmanagerChoiceResponse(server, defaultAlertmanagerChoiceResponse);
-    server.listen();
 
     const abilities = renderHook(() => useAllAlertRuleAbilities(rule), { wrapper: TestProvider });
 
