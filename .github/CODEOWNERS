@@ -285,6 +285,7 @@
 /pkg/services/sqlstore/migrations/ualert/ @grafana/alerting-backend-product
 /pkg/tests/api/alerting/ @grafana/alerting-backend-product
 /public/app/features/alerting/ @grafana/alerting-frontend
+/public/app/features/gops/ @grafana/alerting-frontend
 
 # Library Services
 /pkg/services/libraryelements/ @grafana/dashboards-squad
