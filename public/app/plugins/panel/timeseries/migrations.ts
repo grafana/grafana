@@ -685,7 +685,7 @@ function validNumber(val: unknown): number | undefined {
 
 function getReducersFromLegend(obj: Record<string, unknown>): string[] {
   const ids: string[] = [];
-  for (const key of Object.keys(obj)) {
+  for (const key in obj) {
     const r = fieldReducers.getIfExists(key);
     if (r) {
       ids.push(r.id);

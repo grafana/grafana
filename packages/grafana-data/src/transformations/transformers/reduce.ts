@@ -122,7 +122,7 @@ function reduceSeriesToRows(
       if (labelsToFields) {
         names[i] = field.name;
         if (field.labels) {
-          for (const key of Object.keys(field.labels)) {
+          for (const key in field.labels) {
             labels[key][i] = field.labels[key];
           }
         }

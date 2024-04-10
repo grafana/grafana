@@ -185,7 +185,7 @@ export function toLiveChannelId(addr: LiveChannelAddress): LiveChannelId {
   if (!addr.scope) {
     return '';
   }
-  let id = addr.scope as string;
+  let id: string = addr.scope;
   if (!addr.namespace) {
     return id;
   }
