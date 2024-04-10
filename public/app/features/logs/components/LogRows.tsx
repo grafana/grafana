@@ -172,7 +172,24 @@ class UnThemedLogRows extends PureComponent<Props, State> {
     });
   };
   
-  componentDidUpdate(): void {
+  componentDidUpdate(prevProps: Readonly<Props>): void {
+    // How much nicer this would be with useEffect()
+    const dependencyArray = ['deduplicatedRows', 'logRows', 'dedupStrategy', 'logsSortOrder', 'showLabels', 'showTime', 'wrapLogMessage'];
+    const updated = dependencyArray.reduce((updated: boolean, attr: string) => {
+      // @ts-expect-error
+      return updated || prevProps[attr] !== this.props[attr];
+    }, false);
+
+    if (!updated) {
+      if (!this.state.orderedRows.length) {
+        this.updateLogRows();
+      }
+      return;
+    }
+    this.updateLogRows();
+  }
+
+  updateLogRows() {
     const { deduplicatedRows, logRows, dedupStrategy, logsSortOrder } = this.props;
     const dedupedRows = deduplicatedRows ? deduplicatedRows : logRows;
     const dedupCount = dedupedRows
@@ -183,9 +200,9 @@ class UnThemedLogRows extends PureComponent<Props, State> {
     const orderedRows = logsSortOrder ? this.sortLogs(processedRows, logsSortOrder) : processedRows;
     
     this.setState({
-      orderedRows,
+      orderedRows: [...orderedRows],
       showDuplicates
-    })
+    });
   }
 
   componentWillUnmount() {
