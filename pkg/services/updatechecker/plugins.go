@@ -25,14 +25,14 @@ import (
 type PluginsService struct {
 	availableUpdates map[string]string
 
-	enabled          bool
-	grafanaVersion   string
-	pluginStore      pluginstore.Store
-	httpClient       httpClient
-	mutex            sync.RWMutex
-	log              log.Logger
-	tracer           tracing.Tracer
-	grafanaComAPIURL string
+	enabled        bool
+	grafanaVersion string
+	pluginStore    pluginstore.Store
+	httpClient     httpClient
+	mutex          sync.RWMutex
+	log            log.Logger
+	tracer         tracing.Tracer
+	updateCheckURL *url.URL
 }
 
 func ProvidePluginsService(cfg *setting.Cfg, pluginStore pluginstore.Store, tracer tracing.Tracer) (*PluginsService, error) {
@@ -46,6 +46,16 @@ func ProvidePluginsService(cfg *setting.Cfg, pluginStore pluginstore.Store, trac
 		return nil, err
 	}
 
+	updateCheckURL, err := url.JoinPath(cfg.GrafanaComAPIURL, "plugins", "versioncheck")
+	if err != nil {
+		return nil, err
+	}
+
+	parsedUpdateCheckURL, err := url.Parse(updateCheckURL)
+	if err != nil {
+		return nil, err
+	}
+
 	return &PluginsService{
 		enabled:          cfg.CheckForPluginUpdates,
 		grafanaVersion:   cfg.BuildVersion,
@@ -54,7 +64,7 @@ func ProvidePluginsService(cfg *setting.Cfg, pluginStore pluginstore.Store, trac
 		tracer:           tracer,
 		pluginStore:      pluginStore,
 		availableUpdates: make(map[string]string),
-		grafanaComAPIURL: cfg.GrafanaComAPIURL,
+		updateCheckURL:   parsedUpdateCheckURL,
 	}, nil
 }
 
@@ -117,12 +127,14 @@ func (s *PluginsService) checkForUpdates(ctx context.Context) error {
 	ctxLogger := s.log.FromContext(ctx)
 	ctxLogger.Debug("Preparing plugins eligible for version check")
 	localPlugins := s.pluginsEligibleForVersionCheck(ctx)
-	requestURL := s.grafanaComAPIURL + "/plugins/versioncheck?" + url.Values{
-		"slugIn":         []string{s.pluginIDsCSV(localPlugins)},
-		"grafanaVersion": []string{s.grafanaVersion},
-	}.Encode()
+	requestURL := s.updateCheckURL
+	requestURLParameters := requestURL.Query()
+	requestURLParameters.Set("slugIn", s.pluginIDsCSV((localPlugins)))
+	requestURLParameters.Set("grafanaVersion", s.grafanaVersion)
+	requestURL.RawQuery = requestURLParameters.Encode()
+
 	ctxLogger.Debug("Checking for plugin updates", "url", requestURL)
-	req, err := http.NewRequestWithContext(ctx, http.MethodGet, requestURL, nil)
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, requestURL.String(), nil)
 	if err != nil {
 		return err
 	}
