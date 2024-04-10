@@ -3618,9 +3618,6 @@ exports[`better eslint`] = {
     "public/app/features/inspector/InspectDataTab.tsx:5381": [
       [0, 0, 0, "Use data-testid for E2E selectors instead of aria-label", "0"]
     ],
-    "public/app/features/inspector/InspectJSONTab.tsx:5381": [
-      [0, 0, 0, "Use data-testid for E2E selectors instead of aria-label", "0"]
-    ],
     "public/app/features/inspector/InspectStatsTab.tsx:5381": [
       [0, 0, 0, "Use data-testid for E2E selectors instead of aria-label", "0"],
       [0, 0, 0, "Styles should be written using objects.", "1"]

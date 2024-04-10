@@ -535,8 +535,8 @@ export const Components = {
     variableOption: 'data-testid variable-option',
   },
   Annotations: {
-    annotationsTypeInput: 'annotations-type-input',
-    annotationsChoosePanelInput: 'choose-panels-input',
+    annotationsTypeInput: 'data-testid annotations-type-input',
+    annotationsChoosePanelInput: 'data-testid choose-panels-input',
     editor: {
       testButton: 'data-testid annotations-test-button',
       resultContainer: 'data-testid annotations-query-result-container',
