@@ -5,6 +5,9 @@
   "main": "./index.cjs",
   "author": "Grafana Labs",
   "license": "Apache-2.0",
+  "scripts": {
+    "typecheck": "tsc --emitDeclarationOnly false --noEmit"
+  },
   "repository": {
     "type": "git",
     "url": "http://github.com/grafana/grafana.git",
