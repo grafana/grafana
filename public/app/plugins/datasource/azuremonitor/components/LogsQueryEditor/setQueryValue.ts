@@ -49,3 +49,16 @@ export function setBasicLogsQuery(query: AzureMonitorQuery, basicLogsQuery: bool
     },
   };
 }
+
+export function setBasicLogsQueryAcknowledged(
+  query: AzureMonitorQuery,
+  basicLogsQueryAcknowledged: boolean
+): AzureMonitorQuery {
+  return {
+    ...query,
+    azureLogAnalytics: {
+      ...query.azureLogAnalytics,
+      basicLogsQueryAcknowledged,
+    },
+  };
+}
