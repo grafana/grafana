@@ -94,7 +94,7 @@ func (d *DualWriterMode3) Update(ctx context.Context, name string, objInfo rest.
 
 	legacy, ok := d.Legacy.(rest.Updater)
 	if !ok {
-		return nil, false, fmt.Errorf("legacy storage rest.Updater is missing")
+		return nil, false, errNoUpdateMethod
 	}
 
 	return legacy.Update(ctx, name, &updateWrapper{
