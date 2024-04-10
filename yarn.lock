@@ -6156,7 +6156,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@prometheus-io/lezer-promql@npm:^0.37.0-rc.1":
+"@prometheus-io/lezer-promql@npm:0.37.0, @prometheus-io/lezer-promql@npm:^0.37.0-rc.1":
   version: 0.37.0
   resolution: "@prometheus-io/lezer-promql@npm:0.37.0"
   peerDependencies:
@@ -18693,7 +18693,7 @@ __metadata:
     "@playwright/test": "npm:1.42.1"
     "@pmmmwh/react-refresh-webpack-plugin": "npm:0.5.11"
     "@popperjs/core": "npm:2.11.8"
-    "@prometheus-io/lezer-promql": "npm:^0.37.0-rc.1"
+    "@prometheus-io/lezer-promql": "npm:0.37.0"
     "@react-aria/dialog": "npm:3.5.12"
     "@react-aria/focus": "npm:3.16.2"
     "@react-aria/overlays": "npm:3.21.1"
