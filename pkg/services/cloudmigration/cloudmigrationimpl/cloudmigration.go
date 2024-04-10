@@ -112,6 +112,7 @@ func (s *Service) CreateToken(ctx context.Context) (cloudmigration.CreateAccessT
 
 	// Add the stack id to the access policy name to ensure access policies in a org have unique names.
 	accessPolicyName := fmt.Sprintf("%s-%s", cloudMigrationAccessPolicyNamePrefix, s.cfg.StackID)
+	accessPolicyDisplayName := fmt.Sprintf("%s-%s", s.cfg.Slug, cloudMigrationAccessPolicyNamePrefix)
 
 	timeoutCtx, cancel = context.WithTimeout(ctx, s.cfg.CloudMigration.FetchAccessPolicyTimeout)
 	defer cancel()
@@ -142,7 +143,7 @@ func (s *Service) CreateToken(ctx context.Context) (cloudmigration.CreateAccessT
 		},
 		gcom.CreateAccessPolicyPayload{
 			Name:        accessPolicyName,
-			DisplayName: cloudMigrationAccessPolicyNamePrefix,
+			DisplayName: accessPolicyDisplayName,
 			Realms:      []gcom.Realm{{Type: "stack", Identifier: s.cfg.StackID, LabelPolicies: []gcom.LabelPolicy{}}},
 			Scopes:      []string{"cloud-migrations:read", "cloud-migrations:write"},
 		})
@@ -153,6 +154,7 @@ func (s *Service) CreateToken(ctx context.Context) (cloudmigration.CreateAccessT
 
 	// Add the stack id to the token name to ensure tokens in a org have unique names.
 	accessTokenName := fmt.Sprintf("%s-%s", cloudMigrationTokenNamePrefix, s.cfg.StackID)
+	accessTokenDisplayName := fmt.Sprintf("%s-%s", s.cfg.Slug, cloudMigrationTokenNamePrefix)
 	timeoutCtx, cancel = context.WithTimeout(ctx, s.cfg.CloudMigration.CreateTokenTimeout)
 	defer cancel()
 
@@ -160,7 +162,7 @@ func (s *Service) CreateToken(ctx context.Context) (cloudmigration.CreateAccessT
 		gcom.CreateTokenParams{RequestID: requestID, Region: instance.RegionSlug},
 		gcom.CreateTokenPayload{
 			AccessPolicyID: accessPolicy.ID,
-			DisplayName:    cloudMigrationTokenNamePrefix,
+			DisplayName:    accessTokenDisplayName,
 			Name:           accessTokenName,
 			ExpiresAt:      time.Now().Add(s.cfg.CloudMigration.TokenExpiresAfter),
 		})
