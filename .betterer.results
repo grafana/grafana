@@ -2258,10 +2258,11 @@ exports[`better eslint`] = {
       [0, 0, 0, "Styles should be written using objects.", "5"]
     ],
     "public/app/features/alerting/unified/components/silences/SilencesFilter.tsx:5381": [
-      [0, 0, 0, "Styles should be written using objects.", "0"],
+      [0, 0, 0, "Do not use any type assertions.", "0"],
       [0, 0, 0, "Styles should be written using objects.", "1"],
       [0, 0, 0, "Styles should be written using objects.", "2"],
-      [0, 0, 0, "Styles should be written using objects.", "3"]
+      [0, 0, 0, "Styles should be written using objects.", "3"],
+      [0, 0, 0, "Styles should be written using objects.", "4"]
     ],
     "public/app/features/alerting/unified/components/silences/SilencesTable.tsx:5381": [
       [0, 0, 0, "Styles should be written using objects.", "0"],
