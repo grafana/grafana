@@ -59,6 +59,8 @@ type ClientParams struct {
 	SyncPermissions bool
 	// FetchPermissionsParams are the arguments used to fetch permissions from the DB
 	FetchPermissionsParams FetchPermissionsParams
+	// AllowGlobalOrg would allow a client to authenticate in global scope AKA org 0
+	AllowGlobalOrg bool
 }
 
 type FetchPermissionsParams struct {

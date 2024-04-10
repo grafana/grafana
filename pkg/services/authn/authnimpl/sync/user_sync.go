@@ -132,6 +132,13 @@ func (s *UserSync) FetchSyncedUserHook(ctx context.Context, identity *authn.Iden
 		return errFetchingSignedInUser.Errorf("failed to resolve user: %w", err)
 	}
 
+	if identity.ClientParams.AllowGlobalOrg && identity.OrgID == authn.GlobalOrgID {
+		usr.Teams = nil
+		usr.OrgName = ""
+		usr.OrgRole = org.RoleNone
+		usr.OrgID = authn.GlobalOrgID
+	}
+
 	syncSignedInUserToIdentity(usr, identity)
 	return nil
 }
