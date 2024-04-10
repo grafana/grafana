@@ -541,6 +541,17 @@ export class Connections {
             };
           }
 
+          // Check for original state
+          if (
+            !currentConnections[connectionIndex].sourceOriginal ||
+            !currentConnections[connectionIndex].targetOriginal
+          ) {
+            currentConnections[connectionIndex] = {
+              ...currentConnections[connectionIndex],
+              sourceOriginal: { x: x1, y: y1 },
+              targetOriginal: { x: x2, y: y2 },
+            };
+          }
           // Update save model
           currentSource.onChange({ ...currentSource.options, connections: currentConnections });
           this.updateState();

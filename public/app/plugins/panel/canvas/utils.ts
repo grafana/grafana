@@ -298,6 +298,8 @@ export function getConnections(sceneByName: Map<string, ElementState>) {
             target,
             info: c,
             vertices: c.vertices ?? undefined,
+            sourceOriginal: c.sourceOriginal ?? undefined,
+            targetOriginal: c.targetOriginal ?? undefined,
           });
         }
       });
