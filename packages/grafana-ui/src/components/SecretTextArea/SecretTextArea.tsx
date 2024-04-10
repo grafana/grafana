@@ -5,7 +5,7 @@ import { GrafanaTheme2 } from '@grafana/data';
 
 import { useStyles2 } from '../../themes/ThemeContext';
 import { Button } from '../Button';
-import { HorizontalGroup } from '../Layout/Layout';
+import { Stack } from '../Layout/Stack/Stack';
 import { TextArea } from '../TextArea/TextArea';
 
 export type Props = React.ComponentProps<typeof TextArea> & {
@@ -35,7 +35,7 @@ const getStyles = (theme: GrafanaTheme2) => {
 export const SecretTextArea = ({ isConfigured, onReset, ...props }: Props) => {
   const styles = useStyles2(getStyles);
   return (
-    <HorizontalGroup>
+    <Stack>
       {!isConfigured && <TextArea {...props} />}
       {isConfigured && (
         <TextArea {...props} rows={1} disabled={true} value={CONFIGURED_TEXT} className={cx(styles.configuredStyle)} />
@@ -45,6 +45,6 @@ export const SecretTextArea = ({ isConfigured, onReset, ...props }: Props) => {
           {RESET_BUTTON_TEXT}
         </Button>
       )}
-    </HorizontalGroup>
+    </Stack>
   );
 };

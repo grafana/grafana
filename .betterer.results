@@ -1,5 +1,5 @@
 // BETTERER RESULTS V2.
-//
+// 
 // If this file contains merge conflicts, use `betterer merge` to automatically resolve them:
 // https://phenomnomnominal.github.io/betterer/docs/results-file/#merge
 //
@@ -882,9 +882,6 @@ exports[`better eslint`] = {
     ],
     "packages/grafana-ui/src/components/PanelChrome/index.ts:5381": [
       [0, 0, 0, "Do not use any type assertions.", "0"]
-    ],
-    "packages/grafana-ui/src/components/SecretTextArea/SecretTextArea.tsx:5381": [
-      [0, 0, 0, "\'HorizontalGroup\' import from \'../Layout/Layout\' is restricted from being used by a pattern. Use Stack component instead.", "0"]
     ],
     "packages/grafana-ui/src/components/Segment/SegmentSelect.tsx:5381": [
       [0, 0, 0, "Do not use any type assertions.", "0"]
