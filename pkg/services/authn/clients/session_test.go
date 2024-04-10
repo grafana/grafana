@@ -139,7 +139,7 @@ func TestSession_Authenticate(t *testing.T) {
 			wantErr: false,
 		},
 		{
-			name: "should set authID and authenticated by for externaly authenticated user",
+			name: "should set authID and authenticated by for externally authenticated user",
 			fields: fields{
 				sessionService: &authtest.FakeUserAuthTokenService{LookupTokenProvider: func(ctx context.Context, unhashedToken string) (*auth.UserToken, error) {
 					return validToken, nil
