@@ -16,7 +16,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/auth/identity"
 	"github.com/grafana/grafana/pkg/services/authn"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
-	"github.com/grafana/grafana/pkg/services/login"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -31,12 +30,12 @@ var _ auth.IDService = (*Service)(nil)
 func ProvideService(
 	cfg *setting.Cfg, signer auth.IDSigner, cache remotecache.CacheStorage,
 	features featuremgmt.FeatureToggles, authnService authn.Service,
-	authInfoService login.AuthInfoService, reg prometheus.Registerer,
+	reg prometheus.Registerer,
 ) *Service {
 	s := &Service{
 		cfg: cfg, logger: log.New("id-service"),
 		signer: signer, cache: cache,
-		authInfoService: authInfoService, metrics: newMetrics(reg),
+		metrics: newMetrics(reg),
 	}
 
 	if features.IsEnabledGlobally(featuremgmt.FlagIdForwarding) {
@@ -47,13 +46,12 @@ func ProvideService(
 }
 
 type Service struct {
-	cfg             *setting.Cfg
-	logger          log.Logger
-	signer          auth.IDSigner
-	cache           remotecache.CacheStorage
-	authInfoService login.AuthInfoService
-	si              singleflight.Group
-	metrics         *metrics
+	cfg     *setting.Cfg
+	logger  log.Logger
+	signer  auth.IDSigner
+	cache   remotecache.CacheStorage
+	si      singleflight.Group
+	metrics *metrics
 }
 
 func (s *Service) SignIdentity(ctx context.Context, id identity.Requester) (string, error) {
