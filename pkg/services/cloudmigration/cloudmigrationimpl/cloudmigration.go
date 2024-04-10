@@ -162,8 +162,8 @@ func (s *Service) CreateToken(ctx context.Context) (cloudmigration.CreateAccessT
 		gcom.CreateTokenParams{RequestID: requestID, Region: instance.RegionSlug},
 		gcom.CreateTokenPayload{
 			AccessPolicyID: accessPolicy.ID,
-			DisplayName:    accessTokenDisplayName,
 			Name:           accessTokenName,
+			DisplayName:    accessTokenDisplayName,
 			ExpiresAt:      time.Now().Add(s.cfg.CloudMigration.TokenExpiresAfter),
 		})
 	if err != nil {
