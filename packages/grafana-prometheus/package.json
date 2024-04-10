@@ -48,7 +48,7 @@
     "@lezer/common": "1.2.1",
     "@lezer/highlight": "1.2.0",
     "@lezer/lr": "1.4.0",
-    "@prometheus-io/lezer-promql": "0.38.0",
+    "@prometheus-io/lezer-promql": "0.39.0",
     "@reduxjs/toolkit": "1.9.5",
     "d3": "7.9.0",
     "date-fns": "3.6.0",
