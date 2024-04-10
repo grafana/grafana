@@ -67,6 +67,40 @@ func (d *DualWriterMode3) Delete(ctx context.Context, name string, deleteValidat
 	}
 
 	return deleted, async, err
+
+}
+
+// Update overrides the generic behavior of the Storage and writes first to US and then to the legacy store.
+func (d *DualWriterMode3) Update(ctx context.Context, name string, objInfo rest.UpdatedObjectInfo, createValidation rest.ValidateObjectFunc, updateValidation rest.ValidateObjectUpdateFunc, forceAllowCreate bool, options *metav1.UpdateOptions) (runtime.Object, bool, error) {
+	old, err := d.Storage.Get(ctx, name, &metav1.GetOptions{})
+	if err != nil {
+		return nil, false, err
+	}
+
+	updated, err := objInfo.UpdatedObject(ctx, old)
+	if err != nil {
+		return nil, false, err
+	}
+	objInfo = &updateWrapper{
+		upstream: objInfo,
+		updated:  updated,
+	}
+
+	obj, created, err := d.Storage.Update(ctx, name, objInfo, createValidation, updateValidation, forceAllowCreate, options)
+	if err != nil {
+		klog.FromContext(ctx).Error(err, "could not write to US", "mode", Mode3)
+		return obj, created, err
+	}
+
+	legacy, ok := d.Legacy.(rest.Updater)
+	if !ok {
+		return nil, false, fmt.Errorf("legacy storage rest.Updater is missing")
+	}
+
+	return legacy.Update(ctx, name, &updateWrapper{
+		upstream: objInfo,
+		updated:  obj,
+	}, createValidation, updateValidation, forceAllowCreate, options)
 }
 
 // DeleteCollection overrides the behavior of the generic DualWriter and deletes from both LegacyStorage and Storage.

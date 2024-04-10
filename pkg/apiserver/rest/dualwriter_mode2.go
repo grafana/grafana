@@ -2,6 +2,7 @@ package rest
 
 import (
 	"context"
+	"fmt"
 
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/api/meta"
@@ -187,4 +188,54 @@ func enrichObject(orig, copy runtime.Object) (runtime.Object, error) {
 	accessorC.SetAnnotations(ac)
 
 	return copy, nil
+}
+
+// Update overrides the generic behavior of the Storage and writes first to the legacy storage and then to US.
+func (d *DualWriterMode2) Update(ctx context.Context, name string, objInfo rest.UpdatedObjectInfo, createValidation rest.ValidateObjectFunc, updateValidation rest.ValidateObjectUpdateFunc, forceAllowCreate bool, options *metav1.UpdateOptions) (runtime.Object, bool, error) {
+	legacy, ok := d.Legacy.(rest.Updater)
+	if !ok {
+		return nil, false, fmt.Errorf("legacy storage rest.Updater is missing")
+	}
+
+	// get old and new (updated) object so they can be stored in legacy store
+	old, err := d.Get(ctx, name, &metav1.GetOptions{})
+	if err != nil {
+		return nil, false, err
+	}
+
+	updated, err := objInfo.UpdatedObject(ctx, old)
+	if err != nil {
+		return nil, false, err
+	}
+
+	obj, created, err := legacy.Update(ctx, name, &updateWrapper{upstream: objInfo, updated: updated}, createValidation, updateValidation, forceAllowCreate, options)
+	if err != nil {
+		klog.FromContext(ctx).Error(err, "could not update in legacy storage", "mode", Mode2)
+		return obj, created, err
+	}
+
+	o, err := enrichObject(updated, obj)
+	if err != nil {
+		return obj, false, err
+	}
+
+	accessor, err := meta.Accessor(o)
+	if err != nil {
+		return nil, false, err
+	}
+
+	accessorOld, err := meta.Accessor(old)
+	if err != nil {
+		return nil, false, err
+	}
+
+	// keep the same UID and resource_version
+	accessor.SetResourceVersion(accessorOld.GetResourceVersion())
+	accessor.SetUID(accessorOld.GetUID())
+	objInfo = &updateWrapper{
+		upstream: objInfo,
+		updated:  o,
+	}
+
+	return d.Storage.Update(ctx, name, objInfo, createValidation, updateValidation, forceAllowCreate, options)
 }

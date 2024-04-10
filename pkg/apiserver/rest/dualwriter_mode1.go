@@ -2,6 +2,7 @@ package rest
 
 import (
 	"context"
+	"errors"
 
 	metainternalversion "k8s.io/apimachinery/pkg/apis/meta/internalversion"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -13,6 +14,9 @@ import (
 type DualWriterMode1 struct {
 	DualWriter
 }
+
+var errNoCreaterMethod = errors.New("legacy storage rest.Creater is missing")
+var errNoUpdaterMethod = errors.New("legacy storage rest.Updater is missing")
 
 // NewDualWriterMode1 returns a new DualWriter in mode 1.
 // Mode 1 represents writing to and reading from LegacyStorage.
@@ -63,4 +67,13 @@ func (d *DualWriterMode1) DeleteCollection(ctx context.Context, deleteValidation
 	}
 
 	return legacy.DeleteCollection(ctx, deleteValidation, options, listOptions)
+}
+
+func (d *DualWriterMode1) Update(ctx context.Context, name string, objInfo rest.UpdatedObjectInfo, createValidation rest.ValidateObjectFunc, updateValidation rest.ValidateObjectUpdateFunc, forceAllowCreate bool, options *metav1.UpdateOptions) (runtime.Object, bool, error) {
+	legacy, ok := d.Legacy.(rest.Updater)
+	if !ok {
+		klog.FromContext(ctx).Error(errNoCreaterMethod, "legacy storage rest.Updater is missing")
+	}
+
+	return legacy.Update(ctx, name, objInfo, createValidation, updateValidation, forceAllowCreate, options)
 }
