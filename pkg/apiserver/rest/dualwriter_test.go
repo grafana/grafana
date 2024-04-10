@@ -4,8 +4,8 @@ import (
 	"context"
 	"testing"
 
+	example "github.com/grafana/grafana/pkg/example/v0alpha1"
 	"github.com/zeebo/assert"
-	"k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apiserver/pkg/registry/rest"
@@ -50,27 +50,23 @@ func Test_Mode2(t *testing.T) {
 	_, err := dw.Get(context.Background(), kind, &metav1.GetOptions{})
 	assert.NoError(t, err)
 
-	// it should use the Legacy Get implementation
+	// // it should use the Legacy Get implementation
 	assert.Equal(t, 1, lsSpy.Counts("LegacyStorage.Get"))
 	assert.Equal(t, 0, sSpy.Counts("Storage.Get"))
 
 	// it should update in both storages
-	var updated = (rest.UpdatedObjectInfo)(nil)
-	updatedObj, err := meta.Accessor(updated)
-	assert.NoError(t, err)
+	dummy := &example.DummyResource{}
+	uoi := UpdatedObjInfoObj{}
+	uoi.UpdatedObject(context.Background(), dummy)
 
-	updatedObj.SetResourceVersion("1")
 	var validateObjFn = func(ctx context.Context, obj runtime.Object) error { return nil }
 	var validateObjUpdateFn = func(ctx context.Context, obj, old runtime.Object) error { return nil }
 
-	resUpdated, _, err := dw.Update(context.Background(), kind, updated, validateObjFn, validateObjUpdateFn, false, &metav1.UpdateOptions{})
+	_, _, err = dw.Update(context.Background(), kind, uoi, validateObjFn, validateObjUpdateFn, false, &metav1.UpdateOptions{})
 	assert.NoError(t, err)
 	assert.Equal(t, 1, lsSpy.Counts("LegacyStorage.Update"))
 	assert.Equal(t, 1, sSpy.Counts("Storage.Update"))
-
-	ru, err := meta.Accessor(resUpdated)
 	assert.NoError(t, err)
-	assert.Equal(t, updatedObj.GetResourceVersion(), ru.GetResourceVersion())
 }
 
 func Mode3_Test(t *testing.T) {
@@ -87,6 +83,20 @@ func Mode3_Test(t *testing.T) {
 	// it should use the Unified Storage Get implementation
 	assert.Equal(t, 0, lsSpy.Counts("LegacyStorage.Get"))
 	assert.Equal(t, 1, sSpy.Counts("Storage.Get"))
+
+	// it should update in both storages
+	dummy := &example.DummyResource{}
+	uoi := UpdatedObjInfoObj{}
+	uoi.UpdatedObject(context.Background(), dummy)
+
+	var validateObjFn = func(ctx context.Context, obj runtime.Object) error { return nil }
+	var validateObjUpdateFn = func(ctx context.Context, obj, old runtime.Object) error { return nil }
+
+	_, _, err = dw.Update(context.Background(), kind, uoi, validateObjFn, validateObjUpdateFn, false, &metav1.UpdateOptions{})
+	assert.NoError(t, err)
+	assert.Equal(t, 1, lsSpy.Counts("LegacyStorage.Update"))
+	assert.Equal(t, 1, sSpy.Counts("Storage.Update"))
+	assert.NoError(t, err)
 }
 
 func Test_Mode4(t *testing.T) {
@@ -95,7 +105,7 @@ func Test_Mode4(t *testing.T) {
 	lsSpy := NewLegacyStorageSpyClient(ls)
 	sSpy := NewStorageSpyClient(s)
 
-	dw := NewDualWriterMode3(lsSpy, sSpy)
+	dw := NewDualWriterMode4(lsSpy, sSpy)
 
 	_, err := dw.Get(context.Background(), kind, &metav1.GetOptions{})
 	assert.NoError(t, err)
@@ -103,4 +113,18 @@ func Test_Mode4(t *testing.T) {
 	// it should use the Unified Storage Get implementation
 	assert.Equal(t, 0, lsSpy.Counts("LegacyStorage.Get"))
 	assert.Equal(t, 1, sSpy.Counts("Storage.Get"))
+
+	// it should update only US
+	dummy := &example.DummyResource{}
+	uoi := UpdatedObjInfoObj{}
+	uoi.UpdatedObject(context.Background(), dummy)
+
+	var validateObjFn = func(ctx context.Context, obj runtime.Object) error { return nil }
+	var validateObjUpdateFn = func(ctx context.Context, obj, old runtime.Object) error { return nil }
+
+	_, _, err = dw.Update(context.Background(), kind, uoi, validateObjFn, validateObjUpdateFn, false, &metav1.UpdateOptions{})
+	assert.NoError(t, err)
+	assert.Equal(t, 0, lsSpy.Counts("LegacyStorage.Update"))
+	assert.Equal(t, 1, sSpy.Counts("Storage.Update"))
+	assert.NoError(t, err)
 }

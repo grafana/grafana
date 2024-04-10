@@ -8,7 +8,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apiserver/pkg/registry/rest"
 
-	example "github.com/grafana/grafana/pkg/apis/example/v0alpha1"
+	example "github.com/grafana/grafana/pkg/example/v0alpha1"
 	"github.com/grafana/grafana/pkg/infra/appcontext"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 )

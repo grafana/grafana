@@ -11,8 +11,8 @@ import (
 	genericregistry "k8s.io/apiserver/pkg/registry/generic/registry"
 	"k8s.io/apiserver/pkg/registry/rest"
 
-	example "github.com/grafana/grafana/pkg/apis/example/v0alpha1"
 	grafanaregistry "github.com/grafana/grafana/pkg/apiserver/registry/generic"
+	example "github.com/grafana/grafana/pkg/example/v0alpha1"
 	"github.com/grafana/grafana/pkg/setting"
 )
 

@@ -9,8 +9,8 @@ import (
 	"k8s.io/apiserver/pkg/registry/rest"
 
 	common "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
-	example "github.com/grafana/grafana/pkg/apis/example/v0alpha1"
 	query "github.com/grafana/grafana/pkg/apis/query/v0alpha1"
+	example "github.com/grafana/grafana/pkg/example/v0alpha1"
 )
 
 var (
