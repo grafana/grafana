@@ -174,7 +174,6 @@ export function CreateAlertButton() {
   if (canCreateGrafanaRules || canCreateCloudRules) {
     return (
       <>
-      
         <LinkButton
           href={urlUtil.renderUrl('alerting/new/alerting', { returnTo: location.pathname + location.search })}
           icon="plus"
