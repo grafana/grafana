@@ -43,7 +43,6 @@ func TestPluginUpdateChecker_HasUpdate(t *testing.T) {
 	})
 
 	t.Run("update is not available", func(t *testing.T) {
-
 		updateCheckURL, _ := url.Parse("https://grafana.com/api/plugins/versioncheck")
 
 		svc := PluginsService{
@@ -90,7 +89,6 @@ func TestPluginUpdateChecker_HasUpdate(t *testing.T) {
 	})
 
 	t.Run("update is available but plugin is not in store", func(t *testing.T) {
-
 		updateCheckURL, _ := url.Parse("https://grafana.com/api/plugins/versioncheck")
 
 		svc := PluginsService{
