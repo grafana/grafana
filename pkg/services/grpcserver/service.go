@@ -73,6 +73,7 @@ func ProvideService(cfg *setting.Cfg, features featuremgmt.FeatureToggles, authe
 			grpc_middleware.ChainUnaryServer(
 				grpcAuth.UnaryServerInterceptor(authenticator.Authenticate),
 				interceptors.TracingUnaryInterceptor(tracer),
+				interceptors.LoggingUnaryInterceptor(s.logger), // needs to be registered after tracing interceptor to get trace id
 				middleware.UnaryServerInstrumentInterceptor(grpcRequestDuration),
 			),
 		),
