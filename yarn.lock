@@ -3534,7 +3534,7 @@ __metadata:
     "@grafana/schema": "workspace:*"
     "@grafana/ui": "workspace:*"
     "@lezer/common": "npm:1.2.1"
-    "@lezer/lr": "npm:1.3.3"
+    "@lezer/lr": "npm:1.4.0"
     "@opentelemetry/api": "npm:1.8.0"
     "@opentelemetry/exporter-collector": "npm:0.25.0"
     "@opentelemetry/semantic-conventions": "npm:1.23.0"
@@ -4014,7 +4014,7 @@ __metadata:
     "@leeoniya/ufuzzy": "npm:1.0.14"
     "@lezer/common": "npm:1.2.1"
     "@lezer/highlight": "npm:1.2.0"
-    "@lezer/lr": "npm:1.3.3"
+    "@lezer/lr": "npm:1.4.0"
     "@prometheus-io/lezer-promql": "npm:^0.37.0-rc.1"
     "@reduxjs/toolkit": "npm:1.9.5"
     "@rollup/plugin-image": "npm:3.0.3"
@@ -5036,12 +5036,12 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@lezer/lr@npm:1.3.3":
-  version: 1.3.3
-  resolution: "@lezer/lr@npm:1.3.3"
+"@lezer/lr@npm:1.4.0":
+  version: 1.4.0
+  resolution: "@lezer/lr@npm:1.4.0"
   dependencies:
     "@lezer/common": "npm:^1.0.0"
-  checksum: 10/7e61dc2554b85560ef1af6d3a6112c711d20d54e0c3184657099be8dc40d2747d28d5d332cc1b0d75064846d51fbff0bed162550a332aeccdfa36836b5541cfd
+  checksum: 10/7391d0d08e54cd9e4f4d46e6ee6aa81fbaf079b22ed9c13d01fc9928e0ffd16d0c2d21b2cedd55675ad6c687277db28349ea8db81c9c69222cd7e7c40edd026e
   languageName: node
   linkType: hard
 
@@ -18680,7 +18680,7 @@ __metadata:
     "@leeoniya/ufuzzy": "npm:1.0.14"
     "@lezer/common": "npm:1.2.1"
     "@lezer/highlight": "npm:1.2.0"
-    "@lezer/lr": "npm:1.3.3"
+    "@lezer/lr": "npm:1.4.0"
     "@locker/near-membrane-dom": "npm:0.13.6"
     "@locker/near-membrane-shared": "npm:0.13.6"
     "@locker/near-membrane-shared-dom": "npm:0.13.6"
