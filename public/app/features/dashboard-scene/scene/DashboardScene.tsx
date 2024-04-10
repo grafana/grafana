@@ -49,6 +49,7 @@ import {
   NEW_PANEL_WIDTH,
   forceRenderChildren,
   getClosestVizPanel,
+  getDashboardSceneFor,
   getDefaultRow,
   getDefaultVizPanel,
   getPanelIdForVizPanel,
@@ -811,7 +812,14 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
    * Called by the SceneQueryRunner to privide contextural parameters (tracking) props for the request
    */
   public enrichDataRequest(sceneObject: SceneObject): Partial<DataQueryRequest> {
-    const panel = getClosestVizPanel(sceneObject);
+    const dashboard = getDashboardSceneFor(sceneObject);
+
+    let panel = getClosestVizPanel(sceneObject);
+
+    if (dashboard.state.isEditing && dashboard.state.editPanel) {
+      panel = dashboard.state.editPanel.state.vizManager.state.panel;
+    }
+
     let panelId = 0;
 
     if (panel && panel.state.key) {

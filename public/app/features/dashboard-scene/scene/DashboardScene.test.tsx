@@ -16,6 +16,7 @@ import appEvents from 'app/core/app_events';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 import { VariablesChanged } from 'app/features/variables/types';
 
+import { PanelEditor, buildPanelEditScene } from '../panel-edit/PanelEditor';
 import { createWorker } from '../saving/createDetectChangesWorker';
 import {
   buildGridItemForLibPanel,
@@ -26,6 +27,7 @@ import { DecoratedRevisionModel } from '../settings/VersionsEditView';
 import { historySrv } from '../settings/version-history/HistorySrv';
 import { dashboardSceneGraph } from '../utils/dashboardSceneGraph';
 import { djb2Hash } from '../utils/djb2Hash';
+import { findVizPanelByKey } from '../utils/utils';
 
 import { DashboardControls } from './DashboardControls';
 import { DashboardGridItem } from './DashboardGridItem';
@@ -884,13 +886,30 @@ describe('DashboardScene', () => {
       scene.onEnterEditMode();
     });
 
-    it('Should add app, uid, panelId and panelPluginId', () => {
-      const queryRunner = sceneGraph.findObject(scene, (o) => o.state.key === 'data-query-runner')!;
-      expect(scene.enrichDataRequest(queryRunner)).toEqual({
-        app: CoreApp.Dashboard,
-        dashboardUID: 'dash-1',
-        panelId: 1,
-        panelPluginId: 'table',
+    describe('Should add app, uid, panelId and panelPluginId', () => {
+      test('when viewing', () => {
+        const queryRunner = sceneGraph.findObject(scene, (o) => o.state.key === 'data-query-runner')!;
+        expect(scene.enrichDataRequest(queryRunner)).toEqual({
+          app: CoreApp.Dashboard,
+          dashboardUID: 'dash-1',
+          panelId: 1,
+          panelPluginId: 'table',
+        });
+      });
+      test('when editing', () => {
+        const panel = findVizPanelByKey(scene, 'panel-1');
+        const editPanel = buildPanelEditScene(panel!);
+        scene.setState({
+          editPanel,
+        });
+
+        const queryRunner = (scene.state.editPanel as PanelEditor).state.vizManager.queryRunner;
+        expect(scene.enrichDataRequest(queryRunner)).toEqual({
+          app: CoreApp.Dashboard,
+          dashboardUID: 'dash-1',
+          panelId: 1,
+          panelPluginId: 'table',
+        });
       });
     });
 
