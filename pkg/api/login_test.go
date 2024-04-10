@@ -30,7 +30,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/hooks"
 	"github.com/grafana/grafana/pkg/services/licensing"
 	"github.com/grafana/grafana/pkg/services/licensing/licensingtest"
-	"github.com/grafana/grafana/pkg/services/login"
 	loginservice "github.com/grafana/grafana/pkg/services/login"
 	"github.com/grafana/grafana/pkg/services/login/authinfotest"
 	"github.com/grafana/grafana/pkg/services/navtree"
@@ -672,7 +671,7 @@ func TestLogoutSaml(t *testing.T) {
 	sc.defaultHandler = routing.Wrap(func(c *contextmodel.ReqContext) response.Response {
 		c.SignedInUser = &user.SignedInUser{
 			UserID:          1,
-			AuthenticatedBy: login.SAMLAuthModule,
+			AuthenticatedBy: loginservice.SAMLAuthModule,
 		}
 		hs.Logout(c)
 		return response.Empty(http.StatusOK)
