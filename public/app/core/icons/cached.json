@@ -203,6 +203,7 @@
   "mono/percona-system",
   "mono/percona-nav-overview",
   "mono/percona-nav-summary",
+  "mono/percona-nav-logo",
   "mono/percona-database-mysql",
   "mono/percona-database-postgresql",
   "mono/percona-database-mongodb",

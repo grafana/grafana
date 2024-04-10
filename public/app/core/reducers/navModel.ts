@@ -91,10 +91,18 @@ export const navIndexReducer = (state: NavIndex = initialState, action: AnyActio
   if (updateNavIndex.match(action)) {
     const newPages: NavIndex = {};
     const payload = action.payload;
-
     function addNewPages(node: NavModelItem) {
       if (node.children) {
         for (const child of node.children) {
+          // @PERCONA update the navIndex of deep child
+          if (child.children) {
+            for (const child1 of child.children) {
+              newPages[child1.id!] = {
+                ...child1,
+                parentItem: child,
+              };
+            }
+          }
           newPages[child.id!] = {
             ...child,
             parentItem: node,

@@ -266,6 +266,7 @@ export const availableIconsIndex = {
   'percona-system': true,
   'percona-nav-overview': true,
   'percona-nav-summary': true,
+  'percona-nav-logo': true,
   'percona-database-mysql': true,
   'percona-database-postgresql': true,
   'percona-database-mongodb': true,

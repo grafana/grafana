@@ -94,6 +94,13 @@ const PerconaNavigation: FC = () => {
       updatedNavTree.push(PMM_ENVIRONMENT_OVERVIEW_PAGE);
     }
 
+    // PMM Dump
+    const help = updatedNavTree.find((i) => i.id === 'help');
+    if (help) {
+      help.children?.push(PMM_DUMP_PAGE);
+      dispatch(updateNavIndex(help));
+    }
+
     if (isAuthorized) {
       if (result?.enableAccessControl) {
         const cfg = cloneDeep(initialState).find((i) => i.id === 'cfg');

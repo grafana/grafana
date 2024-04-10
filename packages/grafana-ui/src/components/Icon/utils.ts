@@ -31,6 +31,7 @@ const alwaysMonoIcons: IconName[] = [
   'percona-system',
   'percona-nav-overview',
   'percona-nav-summary',
+  'percona-nav-logo',
   'percona-database-mysql',
   'percona-database-postgresql',
   'percona-database-mongodb',
