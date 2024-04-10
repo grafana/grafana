@@ -36,7 +36,7 @@ type APIServerFactory interface {
 	GetEnabled(runtime []RuntimeConfig) ([]schema.GroupVersion, error)
 
 	// Mixin for config
-	ConfigMixin(config *genericapiserver.RecommendedConfig, options *standaloneoptions.Options) *genericapiserver.RecommendedConfig
+	ConfigMixin(config *genericapiserver.RecommendedConfig, options *standaloneoptions.Options) (*genericapiserver.RecommendedConfig, error)
 
 	// Make an API server for a given group+version
 	MakeAPIServer(tracer tracing.Tracer, gv schema.GroupVersion) (builder.APIGroupBuilder, error)
@@ -67,8 +67,8 @@ func (p *DummyAPIFactory) GetEnabled(runtime []RuntimeConfig) ([]schema.GroupVer
 	return gv, nil
 }
 
-func (p *DummyAPIFactory) ConfigMixin(config *genericapiserver.RecommendedConfig, _ *standaloneoptions.Options) *genericapiserver.RecommendedConfig {
-	return config
+func (p *DummyAPIFactory) ConfigMixin(config *genericapiserver.RecommendedConfig, _ *standaloneoptions.Options) (*genericapiserver.RecommendedConfig, error) {
+	return config, nil
 }
 
 func (p *DummyAPIFactory) MakeAPIServer(tracer tracing.Tracer, gv schema.GroupVersion) (builder.APIGroupBuilder, error) {

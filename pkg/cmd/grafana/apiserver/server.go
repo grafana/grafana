@@ -100,13 +100,16 @@ func (o *APIServerOptions) Config() (*genericapiserver.RecommendedConfig, error)
 		return nil, fmt.Errorf("failed to apply options to server config: %w", err)
 	}
 
-	serverConfig = o.factory.ConfigMixin(serverConfig, o.Options)
+	serverConfig, err := o.factory.ConfigMixin(serverConfig, o.Options)
+	if err != nil {
+		return nil, fmt.Errorf("factory's config mixin failed: %s", err.Error())
+	}
 
 	serverConfig.DisabledPostStartHooks = serverConfig.DisabledPostStartHooks.Insert("generic-apiserver-start-informers")
 	serverConfig.DisabledPostStartHooks = serverConfig.DisabledPostStartHooks.Insert("priority-and-fairness-config-consumer")
 
 	// Add OpenAPI specs for each group+version
-	err := builder.SetupConfig(
+	err = builder.SetupConfig(
 		grafanaAPIServer.Scheme,
 		serverConfig,
 		o.builders,
