@@ -14,7 +14,6 @@ import (
 	netutils "k8s.io/utils/net"
 
 	"github.com/grafana/grafana/pkg/apiserver/builder"
-	"github.com/grafana/grafana/pkg/cmd/grafana/apiserver/auth"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	grafanaAPIServer "github.com/grafana/grafana/pkg/services/apiserver"
@@ -101,13 +100,7 @@ func (o *APIServerOptions) Config() (*genericapiserver.RecommendedConfig, error)
 		return nil, fmt.Errorf("failed to apply options to server config: %w", err)
 	}
 
-	// When the ID signing key exists, configure access-token support
-	if len(o.Options.AuthnOptions.IDVerifierConfig.SigningKeysURL) > 0 {
-		serverConfig.Authentication.Authenticator = auth.AppendToAuthenticators(
-			auth.GetAccessTokenAuthenticatorFunc(o.Options.AuthnOptions),
-			serverConfig.Authentication.Authenticator,
-		)
-	}
+	serverConfig = o.factory.ConfigMixin(serverConfig, o.Options)
 
 	serverConfig.DisabledPostStartHooks = serverConfig.DisabledPostStartHooks.Insert("generic-apiserver-start-informers")
 	serverConfig.DisabledPostStartHooks = serverConfig.DisabledPostStartHooks.Insert("priority-and-fairness-config-consumer")
