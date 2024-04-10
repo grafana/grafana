@@ -37,7 +37,7 @@ func (s *Service) CheckHealth(ctx context.Context, req *backend.CheckHealthReque
 	case influxVersionFlux:
 		return CheckFluxHealth(ctx, dsInfo, req)
 	case influxVersionInfluxQL:
-		return CheckInfluxQLHealth(ctx, dsInfo, s.features)
+		return CheckInfluxQLHealth(ctx, dsInfo, req, s.features)
 	case influxVersionSQL:
 		return CheckSQLHealth(ctx, dsInfo, req)
 	default:
@@ -80,10 +80,12 @@ func CheckFluxHealth(ctx context.Context, dsInfo *models.DatasourceInfo,
 	return getHealthCheckMessage(logger, "", errors.New("error getting flux query buckets"))
 }
 
-func CheckInfluxQLHealth(ctx context.Context, dsInfo *models.DatasourceInfo, features featuremgmt.FeatureToggles) (*backend.CheckHealthResult, error) {
+func CheckInfluxQLHealth(ctx context.Context, dsInfo *models.DatasourceInfo, req *backend.CheckHealthRequest, features featuremgmt.FeatureToggles) (*backend.CheckHealthResult, error) {
 	logger := logger.FromContext(ctx)
 	tracer := tracing.DefaultTracer()
 	resp, err := influxql.Query(ctx, tracer, dsInfo, &backend.QueryDataRequest{
+		PluginContext: req.PluginContext,
+		Headers:       req.Headers,
 		Queries: []backend.DataQuery{
 			{
 				RefID:     refID,
