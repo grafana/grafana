@@ -5,9 +5,11 @@ import {
   AnnotationEvent,
   AnnotationQueryRequest,
   CoreApp,
+  CustomVariableModel,
   DataQueryRequest,
   DataSourceInstanceSettings,
   dateTime,
+  LoadingState,
   rangeUtil,
   TimeRange,
   VariableHide,
@@ -22,7 +24,7 @@ import {
   prometheusSpecialRegexEscape,
 } from './datasource';
 import PromQlLanguageProvider from './language_provider';
-import { PrometheusCacheLevel, PromOptions, PromQuery, PromQueryRequest } from './types';
+import { PromApplication, PrometheusCacheLevel, PromOptions, PromQuery, PromQueryRequest } from './types';
 
 const fetchMock = jest.fn().mockReturnValue(of(createDefaultPromResponse()));
 
@@ -96,6 +98,13 @@ describe('PrometheusDatasource', () => {
     });
   });
 
+  describe('Type and version', () => {
+    it('Default support labels match endpoint over series when type and version not set', () => {
+      const labelsMatchSupport = ds.hasLabelsMatchAPISupport();
+      expect(labelsMatchSupport).toBe(true);
+    });
+  });
+
   describe('Query', () => {
     it('throws if using direct access', async () => {
       const instanceSettings = {
@@ -106,6 +115,8 @@ describe('PrometheusDatasource', () => {
         access: 'direct',
         jsonData: {
           customQueryParameters: '',
+          prometheusVersion: '2.20.0',
+          prometheusType: PromApplication.Prometheus,
         },
       } as unknown as DataSourceInstanceSettings<PromOptions>;
       const range = { from: time({ seconds: 63 }), to: time({ seconds: 183 }) };
@@ -463,7 +474,7 @@ describe('PrometheusDatasource', () => {
   });
 
   describe('When interpolating variables', () => {
-    let customVariable: any;
+    let customVariable: CustomVariableModel;
     beforeEach(() => {
       customVariable = {
         id: '',
@@ -476,11 +487,14 @@ describe('PrometheusDatasource', () => {
         current: {},
         name: '',
         type: 'custom',
-        label: null,
+        error: null,
+        rootStateKey: '',
+        state: LoadingState.Done,
+        description: '',
+        label: undefined,
         hide: VariableHide.dontHide,
         skipUrlSync: false,
         index: -1,
-        initLock: null,
       };
     });
 
@@ -492,7 +506,7 @@ describe('PrometheusDatasource', () => {
 
     describe('and value is a number', () => {
       it('should return a number', () => {
-        expect(ds.interpolateQueryExpr(1000 as any, customVariable)).toEqual(1000);
+        expect(ds.interpolateQueryExpr(1000 as unknown as string, customVariable)).toEqual(1000);
       });
     });
 
@@ -863,7 +877,7 @@ describe('PrometheusDatasource2', () => {
     });
 
     describe('region annotations for sectors', () => {
-      const options: any = {
+      const options = {
         annotation: {
           expr: 'ALERTS{alertstate="firing"}',
           tagKeys: 'job',
@@ -874,7 +888,7 @@ describe('PrometheusDatasource2', () => {
           from: time({ seconds: 63 }),
           to: time({ seconds: 900 }),
         },
-      };
+      } as unknown as AnnotationQueryRequest;
 
       async function runAnnotationQuery(data: number[][]) {
         let response = createAnnotationResponse();

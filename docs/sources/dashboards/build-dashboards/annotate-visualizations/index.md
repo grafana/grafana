@@ -15,6 +15,7 @@ labels:
 menuTitle: Annotate visualizations
 title: Annotate visualizations
 weight: 600
+description: Annotate dashboard visualizations to mark points with rich events
 ---
 
 # Annotate visualizations
@@ -43,7 +44,10 @@ Annotations are supported for the following visualization types:
 
 Grafana comes with the ability to add annotation events directly from a panel using the [built-in annotation query](#built-in-query) that exists on all dashboards. Annotations that you create this way are stored in Grafana.
 
-To add annotations directly in the panel, the built-in query must be enabled. Learn more in [Built-in query](#built-in-query)
+To add annotations directly in the panel:
+
+- The dashboard must already be saved.
+- The built-in query must be enabled. Learn more in [Built-in query](#built-in-query).
 
 ### Add an annotation
 
@@ -82,6 +86,10 @@ Alternatively, to add an annotation, press Ctrl/Cmd and click the panel, and the
 
 In the dashboard settings, under **Annotations**, you can add new queries to fetch annotations using any data source, including the built-in data annotation data source. Annotation queries return events that can be visualized as event markers in graphs across the dashboard.
 
+Check out the video below for a quick tutorial.
+
+{{< youtube id="2istdJpPj2Y" >}}
+
 ### Add new annotation queries
 
 To add a new annotation query to a dashboard, take the following steps:
@@ -118,6 +126,8 @@ To add a new annotation query to a dashboard, take the following steps:
 ## Built-in query
 
 After you add an annotation, they will still be visible. This is due to the built-in annotation query that exists on all dashboards. This annotation query will fetch all annotation events that originate from the current dashboard, which are stored in Grafana, and show them on the panel where they were created. This includes alert state history annotations.
+
+By default, the built-in annotation query uses the `-- Grafana --` special data source, and manual annotations are only supported using this data source. You can use another data source in the built-in annotation query, but you'll only be able to create automated annotations using the query editor for that data source.
 
 To add annotations directly to the dashboard, this query must be enabled.
 

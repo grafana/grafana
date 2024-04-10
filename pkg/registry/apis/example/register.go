@@ -1,6 +1,7 @@
 package example
 
 import (
+	"context"
 	"fmt"
 	"net/http"
 
@@ -9,6 +10,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/runtime/serializer"
+	"k8s.io/apiserver/pkg/authorization/authorizer"
 	"k8s.io/apiserver/pkg/endpoints/handlers/responsewriters"
 	"k8s.io/apiserver/pkg/endpoints/request"
 	"k8s.io/apiserver/pkg/registry/generic"
@@ -19,11 +21,12 @@ import (
 	"k8s.io/kube-openapi/pkg/validation/spec"
 
 	example "github.com/grafana/grafana/pkg/apis/example/v0alpha1"
+	"github.com/grafana/grafana/pkg/apiserver/builder"
+	"github.com/grafana/grafana/pkg/infra/appcontext"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
-	grafanaapiserver "github.com/grafana/grafana/pkg/services/grafana-apiserver"
 )
 
-var _ grafanaapiserver.APIGroupBuilder = (*TestingAPIBuilder)(nil)
+var _ builder.APIGroupBuilder = (*TestingAPIBuilder)(nil)
 
 // This is used just so wire has something unique to return
 type TestingAPIBuilder struct {
@@ -37,12 +40,12 @@ func NewTestingAPIBuilder() *TestingAPIBuilder {
 	}
 }
 
-func RegisterAPIService(features featuremgmt.FeatureToggles, apiregistration grafanaapiserver.APIRegistrar) *TestingAPIBuilder {
+func RegisterAPIService(features featuremgmt.FeatureToggles, apiregistration builder.APIRegistrar) *TestingAPIBuilder {
 	if !features.IsEnabledGlobally(featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs) {
 		return nil // skip registration unless opting into experimental apis
 	}
 	builder := NewTestingAPIBuilder()
-	apiregistration.RegisterAPI(NewTestingAPIBuilder())
+	apiregistration.RegisterAPI(builder)
 	return builder
 }
 
@@ -81,7 +84,8 @@ func (b *TestingAPIBuilder) InstallSchema(scheme *runtime.Scheme) error {
 func (b *TestingAPIBuilder) GetAPIGroupInfo(
 	scheme *runtime.Scheme,
 	codecs serializer.CodecFactory, // pointer?
-	optsGetter generic.RESTOptionsGetter,
+	_ generic.RESTOptionsGetter,
+	_ bool,
 ) (*genericapiserver.APIGroupInfo, error) {
 	b.codecs = codecs
 	apiGroupInfo := genericapiserver.NewDefaultAPIGroupInfo(b.gv.Group, scheme, metav1.ParameterCodec, codecs)
@@ -99,11 +103,11 @@ func (b *TestingAPIBuilder) GetOpenAPIDefinitions() common.GetOpenAPIDefinitions
 }
 
 // Register additional routes with the server
-func (b *TestingAPIBuilder) GetAPIRoutes() *grafanaapiserver.APIRoutes {
-	return &grafanaapiserver.APIRoutes{
-		Root: []grafanaapiserver.APIRouteHandler{
+func (b *TestingAPIBuilder) GetAPIRoutes() *builder.APIRoutes {
+	return &builder.APIRoutes{
+		Root: []builder.APIRouteHandler{
 			{
-				Path: "/aaa",
+				Path: "aaa",
 				Spec: &spec3.PathProps{
 					Summary:     "an example at the root level",
 					Description: "longer description here?",
@@ -144,7 +148,7 @@ func (b *TestingAPIBuilder) GetAPIRoutes() *grafanaapiserver.APIRoutes {
 				},
 			},
 			{
-				Path: "/bbb",
+				Path: "bbb",
 				Spec: &spec3.PathProps{
 					Summary:     "an example at the root level",
 					Description: "longer description here?",
@@ -163,9 +167,9 @@ func (b *TestingAPIBuilder) GetAPIRoutes() *grafanaapiserver.APIRoutes {
 				},
 			},
 		},
-		Namespace: []grafanaapiserver.APIRouteHandler{
+		Namespace: []builder.APIRouteHandler{
 			{
-				Path: "/ccc",
+				Path: "ccc",
 				Spec: &spec3.PathProps{
 					Summary:     "an example at the root level",
 					Description: "longer description here?",
@@ -194,4 +198,21 @@ func (b *TestingAPIBuilder) GetAPIRoutes() *grafanaapiserver.APIRoutes {
 			},
 		},
 	}
+}
+
+func (b *TestingAPIBuilder) GetAuthorizer() authorizer.Authorizer {
+	return authorizer.AuthorizerFunc(
+		func(ctx context.Context, attr authorizer.Attributes) (authorized authorizer.Decision, reason string, err error) {
+			if !attr.IsResourceRequest() {
+				return authorizer.DecisionNoOpinion, "", nil
+			}
+
+			// require a user
+			_, err = appcontext.User(ctx)
+			if err != nil {
+				return authorizer.DecisionDeny, "valid user is required", err
+			}
+
+			return authorizer.DecisionNoOpinion, "", err // fallback to org/role logic
+		})
 }

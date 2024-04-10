@@ -19,10 +19,15 @@ export function showTables() {
       and ${buildSchemaConstraint()}`;
 }
 
-export function getSchema(table?: string) {
+export function getSchema(table: string) {
+  // we will put table-name between single-quotes, so we need to escape single-quotes
+  // in the table-name
+  const tableNamePart = "'" + table.replace(/'/g, "''") + "'";
+
   return `select quote_ident(column_name) as "column", data_type as "type"
     from information_schema.columns
-    where quote_ident(table_name) = '${table}'`;
+    where quote_ident(table_name) = ${tableNamePart};
+    `;
 }
 
 function buildSchemaConstraint() {

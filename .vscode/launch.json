@@ -12,14 +12,31 @@
       "args": ["server", "--homepath", "${workspaceFolder}", "--packaging", "dev"]
     },
     {
-      "name": "Run API Server (k8s)",
+      "name": "Run API Server (testdata)",
       "type": "go",
       "request": "launch",
       "mode": "auto",
       "program": "${workspaceFolder}/pkg/cmd/grafana/",
       "env": {},
       "cwd": "${workspaceFolder}",
-      "args": ["apiserver", "example.grafana.app"]
+      "args": ["apiserver", 
+          "--secure-port=8443", 
+          "--runtime-config=testdata.datasource.grafana.app/v0alpha1=true"]
+    },
+    {
+      "name": "Run API Server (query-localhost)",
+      "type": "go",
+      "request": "launch",
+      "mode": "auto",
+      "program": "${workspaceFolder}/pkg/cmd/grafana/",
+      "env": {},
+      "cwd": "${workspaceFolder}",
+      "args": ["apiserver", 
+          "--secure-port=8443", 
+          "--runtime-config=query.grafana.app/v0alpha1=true",
+          "--grafana.authn.signing-keys-url=http://localhost:3000/api/signing-keys/keys",
+          "--hg-url=http://localhost:3000",
+          "--hg-key=$HGAPIKEY"]
     },
     {
       "name": "Attach to Chrome",

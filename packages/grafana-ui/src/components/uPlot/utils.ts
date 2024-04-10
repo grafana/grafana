@@ -8,12 +8,6 @@ import { createLogger } from '../../utils/logger';
 
 import { buildScaleKey } from './internal';
 
-const ALLOWED_FORMAT_STRINGS_REGEX = /\b(YYYY|YY|MMMM|MMM|MM|M|DD|D|WWWW|WWW|HH|H|h|AA|aa|a|mm|m|ss|s|fff)\b/g;
-
-export function timeFormatToTemplate(f: string) {
-  return f.replace(ALLOWED_FORMAT_STRINGS_REGEX, (match) => `{${match}}`);
-}
-
 const paddingSide: PaddingSide = (u, side, sidesWithAxes) => {
   let hasCrossAxis = side % 2 ? sidesWithAxes[0] || sidesWithAxes[2] : sidesWithAxes[1] || sidesWithAxes[3];
 
@@ -123,8 +117,8 @@ export function getStackingGroups(frame: DataFrame) {
       drawStyle === GraphDrawStyle.Bars
         ? custom.barAlignment
         : drawStyle === GraphDrawStyle.Line
-        ? custom.lineInterpolation
-        : null;
+          ? custom.lineInterpolation
+          : null;
 
     let stackKey = `${stackDir}|${stackingMode}|${stackingGroup}|${buildScaleKey(
       config,

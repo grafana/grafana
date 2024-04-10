@@ -31,6 +31,7 @@ labels:
     - oss
 menuTitle: Sharing
 title: Share dashboards and panels
+description: Share Grafana dashboards and panels within your organization and publicly
 weight: 85
 ---
 
@@ -63,7 +64,7 @@ If you change a dashboard, ensure that you save the changes before sharing.
 
 1. Click **Dashboards** in the left-side menu.
 1. Click the dashboard you want to share.
-1. Click the share icon at the top of the screen.
+1. Click the **Share** button at the top right of the screen.
 
    The share dialog opens and shows the Link tab.
 
@@ -84,7 +85,7 @@ A dashboard snapshot shares an interactive dashboard publicly. Grafana strips se
 You can publish snapshots to your local instance or to [snapshots.raintank.io](http://snapshots.raintank.io). The latter is a free service provided by Grafana Labs that enables you to publish dashboard snapshots to an external Grafana instance. Anyone with the link can view it. You can set an expiration time if you want the snapshot removed after a certain time period.
 
 1. Click the **Snapshot** tab.
-1. Click **Publish to snapshots.raintank.io** or **Local Snapshot**.
+1. Click **Publish to snapshots.raintank.io** or **Publish Snapshot**.
 
    Grafana generates a link of the snapshot.
 
@@ -92,9 +93,26 @@ You can publish snapshots to your local instance or to [snapshots.raintank.io](h
 
 If you created a snapshot by mistake, click **Delete snapshot** to remove the snapshot from your Grafana instance.
 
-### Dashboard export
+### Export a dashboard as JSON
 
-Grafana dashboards can easily be exported and imported. For more information, refer to [Export and import dashboards][].
+The dashboard export action creates a Grafana JSON file that contains everything you need, including layout, variables, styles, data sources, queries, and so on, so that you can later import the dashboard.
+
+1. Click **Dashboards** in the main menu.
+1. Open the dashboard you want to export.
+1. Click the **Share** icon in the top navigation bar.
+1. Click **Export**.
+
+   If you're exporting the dashboard to use in another instance, with different data source UIDs, enable the **Export for sharing externally** switch.
+
+1. Click **Save to file**.
+
+Grafana downloads a JSON file to your local machine.
+
+#### Make a dashboard portable
+
+If you want to export a dashboard for others to use, you can add template variables for things like a metric prefix (use a constant variable) and server name.
+
+A template variable of the type `Constant` is automatically hidden in the dashboard, and is also added as a required input when the dashboard is imported.
 
 ## Export dashboard as PDF
 
@@ -104,7 +122,7 @@ You can generate and save PDF files of any dashboard.
 
 1. Click **Dashboards** in the left-side menu.
 1. Click the dashboard you want to share.
-1. Click the share icon at the top of the screen.
+1. Click the **Share** button at the top right of the screen.
 1. On the PDF tab, select a layout option for the exported dashboard: **Portrait** or **Landscape**.
 1. Click **Save as PDF** to render the dashboard as a PDF file.
 
@@ -150,10 +168,16 @@ https://play.grafana.org/d/000000012/grafana-play-home?orgId=1&from=156871968017
 
 A panel snapshot shares an interactive panel publicly. Grafana strips sensitive data leaving only the visible metric data and series names embedded in the dashboard. Panel snapshots can be accessed by anyone with the link.
 
-You can publish snapshots to your local instance or to [snapshots.raintank.io](http://snapshots.raintank.io). The latter is a free service provided by [Grafana Labs](https://grafana.com), that enables you to publish dashboard snapshots to an external Grafana instance. You can optionally set an expiration time if you want the snapshot to be removed after a certain time period.
+You can publish snapshots to your local instance or to [snapshots.raintank.io](http://snapshots.raintank.io). The latter is a free service provided by [Grafana Labs](https://grafana.com), that enables you to publish dashboard snapshots to an external Grafana instance.
+
+{{< admonition type="note" >}}
+As of Grafana 11, the option to publish to [snapshots.raintank.io](http://snapshots.raintank.io) is no longer available for Grafana Cloud.
+{{< /admonition >}}
+
+You can optionally set an expiration time if you want the snapshot to be removed after a certain time period.
 
 1. In the **Share Panel** dialog, click **Snapshot** to go to the tab.
-1. Click **Publish to snapshots.raintank.io** or **Local Snapshot**.
+1. Click **Publish to snapshots.raintank.io** or **Publish Snapshot**.
 
    Grafana generates the link of the snapshot.
 
@@ -191,9 +215,6 @@ To create a library panel from the **Share Panel** dialog:
 1. Save the dashboard.
 
 {{% docs/reference %}}
-[Export and import dashboards]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/dashboards/manage-dashboards#export-and-import-dashboards"
-[Export and import dashboards]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/dashboards/manage-dashboards#export-and-import-dashboards"
-
 [Grafana Enterprise]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/introduction/grafana-enterprise"
 [Grafana Enterprise]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/introduction/grafana-enterprise"
 

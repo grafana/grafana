@@ -4,14 +4,13 @@
 //     public/app/plugins/gen.go
 // Using jennies:
 //     TSTypesJenny
-//     LatestMajorsOrXJenny
-//     PluginEachMajorJenny
+//     PluginTsTypesJenny
 //
 // Run 'make gen-cue' from repository root to regenerate.
 
 import * as common from '@grafana/schema';
 
-export const pluginVersion = "1.0.0";
+export const pluginVersion = "%VERSION%";
 
 export interface AzureMonitorQuery extends common.DataQuery {
   /**

@@ -170,7 +170,7 @@ describe('processNodes', () => {
           { name: 'mainStat', type: FieldType.string },
           { name: 'secondaryStat', type: FieldType.string },
           { name: 'arc__primary', type: FieldType.string },
-          { name: 'arc__secondary', type: FieldType.string },
+          { name: 'arc__Secondary', type: FieldType.string },
           { name: 'arc__tertiary', type: FieldType.string },
         ],
       }),
@@ -192,7 +192,7 @@ describe('processNodes', () => {
         secondaryStatUnit: 'ms/r',
         arcs: [
           { field: 'arc__primary', color: 'red' },
-          { field: 'arc__secondary', color: 'yellow' },
+          { field: 'arc__Secondary', color: 'yellow' },
           { field: 'arc__tertiary', color: '#dd40ec' },
         ],
       },
@@ -212,7 +212,7 @@ describe('processNodes', () => {
     expect(nodesFrame?.fields.find((f) => f.name === 'arc__primary')?.config).toEqual({
       color: { mode: 'fixed', fixedColor: 'red' },
     });
-    expect(nodesFrame?.fields.find((f) => f.name === 'arc__secondary')?.config).toEqual({
+    expect(nodesFrame?.fields.find((f) => f.name === 'arc__Secondary')?.config).toEqual({
       color: { mode: 'fixed', fixedColor: 'yellow' },
     });
     expect(nodesFrame?.fields.find((f) => f.name === 'arc__tertiary')?.config).toEqual({
@@ -275,6 +275,7 @@ function makeNodeDatum(options: Partial<NodeDatum> = {}) {
         config: {
           color: {
             fixedColor: 'green',
+            mode: 'fixed',
           },
         },
         name: 'arc__success',
@@ -285,6 +286,7 @@ function makeNodeDatum(options: Partial<NodeDatum> = {}) {
         config: {
           color: {
             fixedColor: 'red',
+            mode: 'fixed',
           },
         },
         name: 'arc__errors',

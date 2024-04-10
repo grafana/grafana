@@ -6,6 +6,8 @@ import { organizeFieldsTransformer } from '@grafana/data/src/transformations/tra
 import { config } from '@grafana/runtime';
 import { extractFieldsTransformer } from 'app/features/transformers/extractFields/extractFields';
 
+import { parseLogsFrame } from '../../logs/logsFrame';
+
 import { LogsTable } from './LogsTable';
 import { getMockElasticFrame, getMockLokiFrame, getMockLokiFrameDataPlane } from './utils/testMocks.test';
 
@@ -52,10 +54,15 @@ const getComponent = (partialProps?: Partial<ComponentProps<typeof LogsTable>>, 
     ],
     length: 3,
   };
+  const logsFrame = parseLogsFrame(testDataFrame);
   return (
     <LogsTable
+      logsFrame={logsFrame}
       height={400}
-      columnsWithMeta={{}}
+      columnsWithMeta={{
+        Time: { active: true, percentOfLinesWithLabel: 3, index: 0 },
+        line: { active: true, percentOfLinesWithLabel: 3, index: 1 },
+      }}
       logsSortOrder={LogsSortOrder.Descending}
       splitOpen={() => undefined}
       timeZone={'utc'}
@@ -123,10 +130,10 @@ describe('LogsTable', () => {
     setup({
       dataFrame: getMockElasticFrame(),
       columnsWithMeta: {
-        counter: { active: true, percentOfLinesWithLabel: 3 },
-        level: { active: true, percentOfLinesWithLabel: 3 },
-        line: { active: true, percentOfLinesWithLabel: 3 },
-        '@timestamp': { active: true, percentOfLinesWithLabel: 3 },
+        level: { active: true, percentOfLinesWithLabel: 3, index: 3 },
+        counter: { active: true, percentOfLinesWithLabel: 3, index: 2 },
+        line: { active: true, percentOfLinesWithLabel: 3, index: 1 },
+        '@timestamp': { active: true, percentOfLinesWithLabel: 3, index: 0 },
       },
     });
 
@@ -142,9 +149,9 @@ describe('LogsTable', () => {
   it('should render extracted labels as columns (loki)', async () => {
     setup({
       columnsWithMeta: {
-        foo: { active: true, percentOfLinesWithLabel: 3 },
-        Time: { active: true, percentOfLinesWithLabel: 3 },
-        line: { active: true, percentOfLinesWithLabel: 3 },
+        Time: { active: true, percentOfLinesWithLabel: 3, index: 0 },
+        line: { active: true, percentOfLinesWithLabel: 3, index: 1 },
+        foo: { active: true, percentOfLinesWithLabel: 3, index: 2 },
       },
     });
 
@@ -157,7 +164,7 @@ describe('LogsTable', () => {
     });
   });
 
-  it('should not render `tsNs`', async () => {
+  it('should not render `tsNs` column', async () => {
     setup(undefined, getMockLokiFrame());
 
     await waitFor(() => {
@@ -165,6 +172,28 @@ describe('LogsTable', () => {
 
       expect(columns.length).toBe(0);
     });
+  });
+
+  it('should render numeric field aligned right', async () => {
+    setup(
+      {
+        columnsWithMeta: {
+          Time: { active: true, percentOfLinesWithLabel: 100, index: 0 },
+          line: { active: true, percentOfLinesWithLabel: 100, index: 1 },
+          tsNs: { active: true, percentOfLinesWithLabel: 100, index: 2 },
+        },
+      },
+      getMockLokiFrame()
+    );
+
+    await waitFor(() => {
+      const columns = screen.queryAllByRole('columnheader', { name: 'tsNs' });
+      expect(columns.length).toBe(1);
+    });
+
+    const cells = screen.queryAllByRole('cell');
+
+    expect(cells[cells.length - 1].style.textAlign).toBe('right');
   });
 
   it('should not render `labels`', async () => {
@@ -194,7 +223,15 @@ describe('LogsTable', () => {
     });
 
     it('should render 4 table rows', async () => {
-      setup(undefined, getMockLokiFrameDataPlane());
+      setup(
+        {
+          columnsWithMeta: {
+            timestamp: { active: true, percentOfLinesWithLabel: 3, index: 0 },
+            body: { active: true, percentOfLinesWithLabel: 3, index: 1 },
+          },
+        },
+        getMockLokiFrameDataPlane()
+      );
 
       await waitFor(() => {
         const rows = screen.getAllByRole('row');
@@ -208,7 +245,7 @@ describe('LogsTable', () => {
         getComponent(
           {
             columnsWithMeta: {
-              traceID: { active: true, percentOfLinesWithLabel: 3 },
+              traceID: { active: true, percentOfLinesWithLabel: 3, index: 0 },
             },
           },
           getMockLokiFrameDataPlane()
@@ -223,7 +260,15 @@ describe('LogsTable', () => {
     });
 
     it('should not render `labels`', async () => {
-      setup(undefined, getMockLokiFrameDataPlane());
+      setup(
+        {
+          columnsWithMeta: {
+            timestamp: { active: true, percentOfLinesWithLabel: 100, index: 0 },
+            body: { active: true, percentOfLinesWithLabel: 100, index: 1 },
+          },
+        },
+        getMockLokiFrameDataPlane()
+      );
 
       await waitFor(() => {
         const columns = screen.queryAllByRole('columnheader', { name: 'labels' });
@@ -233,7 +278,15 @@ describe('LogsTable', () => {
     });
 
     it('should not render `tsNs`', async () => {
-      setup(undefined, getMockLokiFrameDataPlane());
+      setup(
+        {
+          columnsWithMeta: {
+            timestamp: { active: true, percentOfLinesWithLabel: 100, index: 0 },
+            body: { active: true, percentOfLinesWithLabel: 100, index: 1 },
+          },
+        },
+        getMockLokiFrameDataPlane()
+      );
 
       await waitFor(() => {
         const columns = screen.queryAllByRole('columnheader', { name: 'tsNs' });
@@ -245,9 +298,9 @@ describe('LogsTable', () => {
     it('should render extracted labels as columns (loki dataplane)', async () => {
       setup({
         columnsWithMeta: {
-          foo: { active: true, percentOfLinesWithLabel: 3 },
-          line: { active: true, percentOfLinesWithLabel: 3 },
-          Time: { active: true, percentOfLinesWithLabel: 3 },
+          foo: { active: true, percentOfLinesWithLabel: 3, index: 2 },
+          line: { active: true, percentOfLinesWithLabel: 3, index: 1 },
+          Time: { active: true, percentOfLinesWithLabel: 3, index: 0 },
         },
       });
 

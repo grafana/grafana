@@ -109,11 +109,6 @@ describe('ensureColumns transformer', () => {
             },
           ],
           "length": 2,
-          "meta": {
-            "transformations": [
-              "ensureColumns",
-            ],
-          },
         }
       `);
     });

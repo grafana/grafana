@@ -13,7 +13,7 @@ export default function resetSelectStyles(theme: GrafanaTheme2) {
     groupHeading: () => ({}),
     indicatorsContainer: () => ({}),
     indicatorSeparator: () => ({}),
-    input: function (originalStyles: CSSObjectWithLabel): CSSObjectWithLabel {
+    input: function (originalStyles: CSSObjectWithLabel) {
       return {
         ...originalStyles,
         color: 'inherit',
@@ -37,7 +37,7 @@ export default function resetSelectStyles(theme: GrafanaTheme2) {
     multiValueRemove: () => ({}),
     noOptionsMessage: () => ({}),
     option: () => ({}),
-    placeholder: (originalStyles: CSSObjectWithLabel): CSSObjectWithLabel => ({
+    placeholder: (originalStyles: CSSObjectWithLabel) => ({
       ...originalStyles,
       color: theme.colors.text.secondary,
     }),

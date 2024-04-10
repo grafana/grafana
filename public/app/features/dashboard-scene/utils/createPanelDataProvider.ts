@@ -1,9 +1,8 @@
 import { config } from '@grafana/runtime';
 import { SceneDataProvider, SceneDataTransformer, SceneQueryRunner } from '@grafana/scenes';
 import { PanelModel } from 'app/features/dashboard/state';
-import { SHARED_DASHBOARD_QUERY } from 'app/plugins/datasource/dashboard';
 
-import { ShareQueryDataProvider } from '../scene/ShareQueryDataProvider';
+import { DashboardDatasourceBehaviour } from '../scene/DashboardDatasourceBehaviour';
 
 export function createPanelDataProvider(panel: PanelModel): SceneDataProvider | undefined {
   // Skip setting query runner for panels without queries
@@ -18,27 +17,22 @@ export function createPanelDataProvider(panel: PanelModel): SceneDataProvider | 
 
   let dataProvider: SceneDataProvider | undefined = undefined;
 
-  if (panel.datasource?.uid === SHARED_DASHBOARD_QUERY) {
-    dataProvider = new ShareQueryDataProvider({ query: panel.targets[0] });
-  } else {
-    dataProvider = new SceneQueryRunner({
-      datasource: panel.datasource ?? undefined,
-      queries: panel.targets,
-      maxDataPoints: panel.maxDataPoints ?? undefined,
-      maxDataPointsFromWidth: true,
-      dataLayerFilter: {
-        panelId: panel.id,
-      },
-    });
-  }
+  dataProvider = new SceneQueryRunner({
+    datasource: panel.datasource ?? undefined,
+    queries: panel.targets,
+    maxDataPoints: panel.maxDataPoints ?? undefined,
+    maxDataPointsFromWidth: true,
+    cacheTimeout: panel.cacheTimeout,
+    queryCachingTTL: panel.queryCachingTTL,
+    dataLayerFilter: {
+      panelId: panel.id,
+    },
+    $behaviors: [new DashboardDatasourceBehaviour({})],
+  });
 
   // Wrap inner data provider in a data transformer
-  if (panel.transformations?.length) {
-    dataProvider = new SceneDataTransformer({
-      $data: dataProvider,
-      transformations: panel.transformations,
-    });
-  }
-
-  return dataProvider;
+  return new SceneDataTransformer({
+    $data: dataProvider,
+    transformations: panel.transformations || [],
+  });
 }

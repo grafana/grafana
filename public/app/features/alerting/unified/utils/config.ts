@@ -1,12 +1,9 @@
 import { DataSourceInstanceSettings, DataSourceJsonData } from '@grafana/data';
 import { config } from '@grafana/runtime';
-import { AlertManagerDataSourceJsonData } from 'app/plugins/datasource/alertmanager/types';
 
-import { isValidPrometheusDuration, parsePrometheusDuration } from './time';
+import { isValidPrometheusDuration, safeParsePrometheusDuration } from './time';
 
-export function getAllDataSources(): Array<
-  DataSourceInstanceSettings<DataSourceJsonData | AlertManagerDataSourceJsonData>
-> {
+export function getAllDataSources(): Array<DataSourceInstanceSettings<DataSourceJsonData>> {
   return Object.values(config.datasources);
 }
 
@@ -17,13 +14,13 @@ export function checkEvaluationIntervalGlobalLimit(alertGroupEvaluateEvery?: str
     return { globalLimit: 0, exceedsLimit: false };
   }
 
-  const evaluateEveryGlobalLimitMs = parsePrometheusDuration(config.unifiedAlerting.minInterval);
+  const evaluateEveryGlobalLimitMs = safeParsePrometheusDuration(config.unifiedAlerting.minInterval);
 
   if (!alertGroupEvaluateEvery || !isValidPrometheusDuration(alertGroupEvaluateEvery)) {
     return { globalLimit: evaluateEveryGlobalLimitMs, exceedsLimit: false };
   }
 
-  const evaluateEveryMs = parsePrometheusDuration(alertGroupEvaluateEvery);
+  const evaluateEveryMs = safeParsePrometheusDuration(alertGroupEvaluateEvery);
 
   const exceedsLimit = evaluateEveryGlobalLimitMs > evaluateEveryMs && evaluateEveryMs > 0;
 

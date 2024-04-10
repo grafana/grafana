@@ -8,18 +8,22 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
+
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/infra/metrics"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/annotations"
 	"github.com/grafana/grafana/pkg/services/dashboards"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/services/licensing"
 	"github.com/grafana/grafana/pkg/services/publicdashboards"
 	. "github.com/grafana/grafana/pkg/services/publicdashboards/models"
+	"github.com/grafana/grafana/pkg/services/publicdashboards/service/intervalv2"
 	"github.com/grafana/grafana/pkg/services/publicdashboards/validation"
 	"github.com/grafana/grafana/pkg/services/query"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
-	"github.com/grafana/grafana/pkg/tsdb/intervalv2"
 	"github.com/grafana/grafana/pkg/tsdb/legacydata"
 	"github.com/grafana/grafana/pkg/util"
 )
@@ -29,6 +33,7 @@ import (
 type PublicDashboardServiceImpl struct {
 	log                log.Logger
 	cfg                *setting.Cfg
+	features           featuremgmt.FeatureToggles
 	store              publicdashboards.Store
 	intervalCalculator intervalv2.Calculator
 	QueryDataService   query.Service
@@ -36,6 +41,7 @@ type PublicDashboardServiceImpl struct {
 	ac                 accesscontrol.AccessControl
 	serviceWrapper     publicdashboards.ServiceWrapper
 	dashboardService   dashboards.DashboardService
+	license            licensing.Licensing
 }
 
 var LogPrefix = "publicdashboards.service"
@@ -48,16 +54,19 @@ var _ publicdashboards.Service = (*PublicDashboardServiceImpl)(nil)
 // builds the service, and api, and configures routes
 func ProvideService(
 	cfg *setting.Cfg,
+	features featuremgmt.FeatureToggles,
 	store publicdashboards.Store,
 	qds query.Service,
 	anno annotations.Repository,
 	ac accesscontrol.AccessControl,
 	serviceWrapper publicdashboards.ServiceWrapper,
 	dashboardService dashboards.DashboardService,
+	license licensing.Licensing,
 ) *PublicDashboardServiceImpl {
 	return &PublicDashboardServiceImpl{
 		log:                log.New(LogPrefix),
 		cfg:                cfg,
+		features:           features,
 		store:              store,
 		intervalCalculator: intervalv2.NewCalculator(),
 		QueryDataService:   qds,
@@ -65,6 +74,7 @@ func ProvideService(
 		ac:                 ac,
 		serviceWrapper:     serviceWrapper,
 		dashboardService:   dashboardService,
+		license:            license,
 	}
 }
 
@@ -74,6 +84,7 @@ func (pd *PublicDashboardServiceImpl) GetPublicDashboardForView(ctx context.Cont
 		return nil, err
 	}
 
+	metrics.MFolderIDsServiceCount.WithLabelValues(metrics.PublicDashboards).Inc()
 	meta := dtos.DashboardMeta{
 		Slug:                   dash.Slug,
 		Type:                   dashboards.DashTypeDB,
@@ -151,6 +162,10 @@ func (pd *PublicDashboardServiceImpl) FindEnabledPublicDashboardAndDashboardByAc
 		return nil, nil, ErrPublicDashboardNotEnabled.Errorf("FindEnabledPublicDashboardAndDashboardByAccessToken: Public dashboard is not enabled accessToken: %s", accessToken)
 	}
 
+	if !pd.license.FeatureEnabled(FeaturePublicDashboardsEmailSharing) && pubdash.Share == EmailShareType {
+		return nil, nil, ErrPublicDashboardNotFound.Errorf("FindEnabledPublicDashboardAndDashboardByAccessToken: Dashboard not found accessToken: %s", accessToken)
+	}
+
 	return pubdash, dash, err
 }
 
@@ -194,6 +209,12 @@ func (pd *PublicDashboardServiceImpl) Create(ctx context.Context, u *user.Signed
 	}
 
 	if existingPubdash != nil {
+		// If there is no license and the public dashboard was email-shared, we should update it to public
+		if !pd.license.FeatureEnabled(FeaturePublicDashboardsEmailSharing) && existingPubdash.Share == EmailShareType {
+			dto.Uid = existingPubdash.Uid
+			dto.PublicDashboard.Share = PublicShareType
+			return pd.Update(ctx, u, dto)
+		}
 		return nil, ErrDashboardIsPublic.Errorf("Create: public dashboard for dashboard %s already exists", dto.DashboardUid)
 	}
 
@@ -358,7 +379,7 @@ func (pd *PublicDashboardServiceImpl) Delete(ctx context.Context, uid string, da
 func (pd *PublicDashboardServiceImpl) DeleteByDashboard(ctx context.Context, dashboard *dashboards.Dashboard) error {
 	if dashboard.IsFolder {
 		// get all pubdashes for the folder
-		pubdashes, err := pd.store.FindByDashboardFolder(ctx, dashboard)
+		pubdashes, err := pd.store.FindByFolder(ctx, dashboard.OrgID, dashboard.UID)
 		if err != nil {
 			return err
 		}

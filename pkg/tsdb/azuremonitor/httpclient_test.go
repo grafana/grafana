@@ -7,11 +7,11 @@ import (
 	"net/http"
 	"testing"
 
-	"github.com/grafana/grafana-azure-sdk-go/azcredentials"
+	"github.com/grafana/grafana-azure-sdk-go/v2/azcredentials"
+	"github.com/grafana/grafana-azure-sdk-go/v2/azsettings"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
 
-	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tsdb/azuremonitor/types"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -32,7 +32,9 @@ func TestHttpClient_AzureCredentials(t *testing.T) {
 		},
 	}
 
-	cfg := &setting.Cfg{}
+	azureSettings := &azsettings.AzureSettings{
+		Cloud: azsettings.AzurePublic,
+	}
 	provider := &fakeHttpClientProvider{}
 
 	t.Run("should have Azure middleware when scopes provided", func(t *testing.T) {
@@ -40,7 +42,7 @@ func TestHttpClient_AzureCredentials(t *testing.T) {
 			Scopes: []string{"https://management.azure.com/.default"},
 		}
 
-		_, err := newHTTPClient(context.Background(), route, model, settings, cfg, provider)
+		_, err := newHTTPClient(context.Background(), route, model, settings, azureSettings, provider)
 		require.NoError(t, err)
 
 		require.NotNil(t, provider.opts)
@@ -53,7 +55,7 @@ func TestHttpClient_AzureCredentials(t *testing.T) {
 			Scopes: []string{},
 		}
 
-		_, err := newHTTPClient(context.Background(), route, model, settings, cfg, provider)
+		_, err := newHTTPClient(context.Background(), route, model, settings, azureSettings, provider)
 		require.NoError(t, err)
 
 		assert.NotNil(t, provider.opts)
@@ -70,18 +72,18 @@ func TestHttpClient_AzureCredentials(t *testing.T) {
 			},
 		}
 
-		res := map[string]string{
-			"GrafanaHeader": "GrafanaValue",
-			"AzureHeader":   "AzureValue",
+		res := http.Header{
+			"Grafanaheader": {"GrafanaValue"},
+			"Azureheader":   {"AzureValue"},
 		}
-		_, err := newHTTPClient(context.Background(), route, model, settings, cfg, provider)
+		_, err := newHTTPClient(context.Background(), route, model, settings, azureSettings, provider)
 		require.NoError(t, err)
 
 		assert.NotNil(t, provider.opts)
 
-		if provider.opts.Headers != nil {
-			assert.Len(t, provider.opts.Headers, 2)
-			assert.Equal(t, res, provider.opts.Headers)
+		if provider.opts.Header != nil {
+			assert.Len(t, provider.opts.Header, 2)
+			assert.Equal(t, res, provider.opts.Header)
 		}
 	})
 }

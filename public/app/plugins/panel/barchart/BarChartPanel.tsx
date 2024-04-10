@@ -1,25 +1,20 @@
-import React, { useMemo, useRef, useState } from 'react';
+import React, { useMemo, useRef } from 'react';
 
 import {
-  CartesianCoords2D,
   compareDataFrameStructures,
   DataFrame,
   Field,
   FieldColorModeId,
   FieldType,
-  getFieldDisplayName,
   PanelProps,
   TimeRange,
   VizOrientation,
 } from '@grafana/data';
 import { PanelDataErrorView } from '@grafana/runtime';
-import { SortOrder } from '@grafana/schema';
 import {
   GraphGradientMode,
   measureText,
   PlotLegend,
-  Portal,
-  StackingMode,
   TooltipDisplayMode,
   UPlotConfigBuilder,
   UPLOT_AXIS_FONT_SIZE,
@@ -27,18 +22,16 @@ import {
   useTheme2,
   VizLayout,
   VizLegend,
-  VizTooltipContainer,
+  TooltipPlugin2,
 } from '@grafana/ui';
-import { HoverEvent, addTooltipSupport } from '@grafana/ui/src/components/uPlot/config/addTooltipSupport';
-import { CloseButton } from 'app/core/components/CloseButton/CloseButton';
+import { TooltipHoverMode } from '@grafana/ui/src/components/uPlot/plugins/TooltipPlugin2';
 import { GraphNG, GraphNGProps, PropDiffFn } from 'app/core/components/GraphNG/GraphNG';
 import { getFieldLegendItem } from 'app/core/components/TimelineChart/utils';
-import { DataHoverView } from 'app/features/visualization/data-hover/DataHoverView';
+
+import { TimeSeriesTooltip } from '../timeseries/TimeSeriesTooltip';
 
 import { Options } from './panelcfg.gen';
 import { prepareBarChartDisplayValues, preparePlotConfigBuilder } from './utils';
-
-const TOOLTIP_OFFSET = 10;
 
 /**
  * @alpha
@@ -65,32 +58,9 @@ const propsToDiff: Array<string | PropDiffFn> = [
 
 interface Props extends PanelProps<Options> {}
 
-export const BarChartPanel = ({ data, options, fieldConfig, width, height, timeZone, id }: Props) => {
+export const BarChartPanel = ({ data, options, fieldConfig, width, height, timeZone, id, replaceVariables }: Props) => {
   const theme = useTheme2();
-  const { eventBus } = usePanelContext();
-
-  const oldConfig = useRef<UPlotConfigBuilder | undefined>(undefined);
-  const isToolTipOpen = useRef<boolean>(false);
-
-  const [hover, setHover] = useState<HoverEvent | undefined>(undefined);
-  const [coords, setCoords] = useState<{ viewport: CartesianCoords2D; canvas: CartesianCoords2D } | null>(null);
-  const [focusedSeriesIdx, setFocusedSeriesIdx] = useState<number | null>(null);
-  const [focusedPointIdx, setFocusedPointIdx] = useState<number | null>(null);
-  const [isActive, setIsActive] = useState<boolean>(false);
-  const [shouldDisplayCloseButton, setShouldDisplayCloseButton] = useState<boolean>(false);
-
-  const onCloseToolTip = () => {
-    isToolTipOpen.current = false;
-    setCoords(null);
-    setShouldDisplayCloseButton(false);
-  };
-
-  const onUPlotClick = () => {
-    isToolTipOpen.current = !isToolTipOpen.current;
-
-    // Linking into useState required to re-render tooltip
-    setShouldDisplayCloseButton(isToolTipOpen.current);
-  };
+  const { dataLinkPostProcessor } = usePanelContext();
 
   const frame0Ref = useRef<DataFrame>();
   const colorByFieldRef = useRef<Field>();
@@ -153,51 +123,9 @@ export const BarChartPanel = ({ data, options, fieldConfig, width, height, timeZ
     );
   }
 
-  const renderTooltip = (alignedFrame: DataFrame, seriesIdx: number | null, datapointIdx: number | null) => {
-    const field = seriesIdx == null ? null : alignedFrame.fields[seriesIdx];
-    if (field) {
-      const disp = getFieldDisplayName(field, alignedFrame);
-      seriesIdx = info.aligned.fields.findIndex((f) => disp === getFieldDisplayName(f, info.aligned));
-    }
-    const tooltipMode =
-      options.fullHighlight && options.stacking !== StackingMode.None ? TooltipDisplayMode.Multi : options.tooltip.mode;
-
-    const tooltipSort = options.tooltip.mode === TooltipDisplayMode.Multi ? options.tooltip.sort : SortOrder.None;
-
-    return (
-      <>
-        {shouldDisplayCloseButton && (
-          <div
-            style={{
-              width: '100%',
-              display: 'flex',
-              justifyContent: 'flex-end',
-            }}
-          >
-            <CloseButton
-              onClick={onCloseToolTip}
-              style={{
-                position: 'relative',
-                top: 'auto',
-                right: 'auto',
-                marginRight: 0,
-              }}
-            />
-          </div>
-        )}
-        <DataHoverView
-          data={info.aligned}
-          rowIndex={datapointIdx}
-          columnIndex={seriesIdx}
-          sortOrder={tooltipSort}
-          mode={tooltipMode}
-        />
-      </>
-    );
-  };
-
   const renderLegend = (config: UPlotConfigBuilder) => {
     const { legend } = options;
+
     if (!config || legend.showLegend === false) {
       return null;
     }
@@ -284,7 +212,6 @@ export const BarChartPanel = ({ data, options, fieldConfig, width, height, timeZ
       timeZone,
       theme,
       timeZones: [timeZone],
-      eventBus,
       orientation,
       barWidth,
       barRadius,
@@ -302,6 +229,7 @@ export const BarChartPanel = ({ data, options, fieldConfig, width, height, timeZ
       fillOpacity,
       allFrames: info.viz,
       fullHighlight,
+      hoverMulti: tooltip.mode === TooltipDisplayMode.Multi,
     });
   };
 
@@ -319,39 +247,36 @@ export const BarChartPanel = ({ data, options, fieldConfig, width, height, timeZ
       structureRev={structureRev}
       width={width}
       height={height}
+      replaceVariables={replaceVariables}
+      dataLinkPostProcessor={dataLinkPostProcessor}
     >
       {(config) => {
-        if (oldConfig.current !== config) {
-          oldConfig.current = addTooltipSupport({
-            config,
-            onUPlotClick,
-            setFocusedSeriesIdx,
-            setFocusedPointIdx,
-            setCoords,
-            setHover,
-            isToolTipOpen,
-            isActive,
-            setIsActive,
-          });
+        if (options.tooltip.mode !== TooltipDisplayMode.None) {
+          return (
+            <TooltipPlugin2
+              config={config}
+              hoverMode={
+                options.tooltip.mode === TooltipDisplayMode.Single ? TooltipHoverMode.xOne : TooltipHoverMode.xAll
+              }
+              render={(u, dataIdxs, seriesIdx, isPinned, dismiss, timeRange2) => {
+                return (
+                  <TimeSeriesTooltip
+                    frames={info.viz}
+                    seriesFrame={info.aligned}
+                    dataIdxs={dataIdxs}
+                    seriesIdx={seriesIdx}
+                    mode={options.tooltip.mode}
+                    sortOrder={options.tooltip.sort}
+                    isPinned={isPinned}
+                  />
+                );
+              }}
+              maxWidth={options.tooltip.maxWidth}
+            />
+          );
         }
 
-        if (options.tooltip.mode === TooltipDisplayMode.None) {
-          return null;
-        }
-
-        return (
-          <Portal>
-            {hover && coords && focusedSeriesIdx && (
-              <VizTooltipContainer
-                position={{ x: coords.viewport.x, y: coords.viewport.y }}
-                offset={{ x: TOOLTIP_OFFSET, y: TOOLTIP_OFFSET }}
-                allowPointerEvents={isToolTipOpen.current}
-              >
-                {renderTooltip(info.viz[0], focusedSeriesIdx, focusedPointIdx)}
-              </VizTooltipContainer>
-            )}
-          </Portal>
-        );
+        return null;
       }}
     </GraphNG>
   );

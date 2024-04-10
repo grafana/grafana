@@ -9,10 +9,13 @@ labels:
     - enterprise
     - oss
 title: Variables
+description: Add variables to metric queries and panel titles to create interactive and dynamic dashboards
 weight: 130
 ---
 
 # Variables
+
+{{< youtube id="mMUJ3iwIYwc" >}}
 
 The following topics describe how to add and manage variables in your dashboards:
 

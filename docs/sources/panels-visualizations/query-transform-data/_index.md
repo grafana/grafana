@@ -19,6 +19,7 @@ labels:
     - enterprise
     - oss
 title: Query and transform data
+description: Query and transform your data
 weight: 40
 ---
 
@@ -94,7 +95,7 @@ A panel's Query tab consists of the following elements:
 - **Expressions:** Uses the expression builder to create alert expressions.
   For more information about expressions, refer to [Use expressions to manipulate data][].
 
-{{< figure src="/static/img/docs/queries/query-editor-7-2.png" class="docs-image--no-shadow" max-width="1000px" >}}
+{{< figure src="/static/img/docs/queries/query-editor-7-2.png" class="docs-image--no-shadow" max-width="1000px" alt="The Query tab of the panel editor" >}}
 
 ## Add a query
 
@@ -157,6 +158,11 @@ Panel data source query options include:
 - **Min interval:** Sets a minimum limit for the automatically calculated interval, which is typically the minimum scrape interval.
   If a data point is saved every 15 seconds, you don't benefit from having an interval lower than that.
   You can also set this to a higher minimum than the scrape interval to retrieve queries that are more coarse-grained and well-functioning.
+
+  {{% admonition type="note" %}}
+  The **Min interval** corresponds to the min step in Prometheus. Changing the Prometheus interval can change the start and end of the query range because Prometheus aligns the range to the interval. Refer to [Min step](https://grafana.com/docs/grafana/latest/datasources/prometheus/query-editor/#min-step) for more details.
+  {{% /admonition %}}
+
 - **Interval:** Sets a time span that you can use when aggregating or grouping data points by time.
 
   Grafana automatically calculates an appropriate interval that you can use as a variable in templated queries.

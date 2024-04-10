@@ -27,9 +27,14 @@ import (
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/tests/testinfra"
+	"github.com/grafana/grafana/pkg/tests/testsuite"
 )
 
 const loginCookieName = "grafana_session"
+
+func TestMain(m *testing.M) {
+	testsuite.Run(m)
+}
 
 func TestIntegrationBackendPlugins(t *testing.T) {
 	if testing.Short() {
@@ -477,11 +482,11 @@ func newTestScenario(t *testing.T, name string, opts []testScenarioOption, callb
 		})
 	}
 	tsCtx.grafanaListeningAddr = grafanaListeningAddr
-	testEnv.SQLStore.Cfg.LoginCookieName = loginCookieName
+	testEnv.Cfg.LoginCookieName = loginCookieName
 	tsCtx.testEnv = testEnv
 	ctx := context.Background()
 
-	u := testinfra.CreateUser(t, testEnv.SQLStore, user.CreateUserCommand{
+	u := testinfra.CreateUser(t, testEnv.SQLStore, testEnv.Cfg, user.CreateUserCommand{
 		DefaultOrgRole: string(org.RoleAdmin),
 		Password:       "admin",
 		Login:          "admin",
@@ -641,7 +646,7 @@ func (tsCtx *testScenarioContext) runQueryDataTest(t *testing.T, mr dtos.MetricR
 		require.NoError(t, err)
 
 		require.NotEmpty(t, tsCtx.outgoingRequest.Header.Get("Accept-Encoding"))
-		require.Equal(t, fmt.Sprintf("Grafana/%s", tsCtx.testEnv.SQLStore.Cfg.BuildVersion), tsCtx.outgoingRequest.Header.Get("User-Agent"))
+		require.Equal(t, fmt.Sprintf("Grafana/%s", tsCtx.testEnv.Cfg.BuildVersion), tsCtx.outgoingRequest.Header.Get("User-Agent"))
 
 		callback(received)
 	})
@@ -699,7 +704,7 @@ func (tsCtx *testScenarioContext) runCheckHealthTest(t *testing.T, callback func
 		require.NoError(t, err)
 
 		require.NotEmpty(t, tsCtx.outgoingRequest.Header.Get("Accept-Encoding"))
-		require.Equal(t, fmt.Sprintf("Grafana/%s", tsCtx.testEnv.SQLStore.Cfg.BuildVersion), tsCtx.outgoingRequest.Header.Get("User-Agent"))
+		require.Equal(t, fmt.Sprintf("Grafana/%s", tsCtx.testEnv.Cfg.BuildVersion), tsCtx.outgoingRequest.Header.Get("User-Agent"))
 
 		callback(received)
 	})
@@ -774,7 +779,7 @@ func (tsCtx *testScenarioContext) runCallResourceTest(t *testing.T, callback fun
 		require.Empty(t, tsCtx.outgoingRequest.Header.Get("X-Some-Conn-Header"))
 		require.Empty(t, tsCtx.outgoingRequest.Header.Get("Proxy-Connection"))
 		require.NotEmpty(t, tsCtx.outgoingRequest.Header.Get("Accept-Encoding"))
-		require.Equal(t, fmt.Sprintf("Grafana/%s", tsCtx.testEnv.SQLStore.Cfg.BuildVersion), tsCtx.outgoingRequest.Header.Get("User-Agent"))
+		require.Equal(t, fmt.Sprintf("Grafana/%s", tsCtx.testEnv.Cfg.BuildVersion), tsCtx.outgoingRequest.Header.Get("User-Agent"))
 
 		callback(received, resp)
 	})

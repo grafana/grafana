@@ -5,6 +5,7 @@ import { config } from 'app/core/config';
 import { contextSrv } from 'app/core/core';
 import { t } from 'app/core/internationalization';
 import { SharePublicDashboard } from 'app/features/dashboard/components/ShareModal/SharePublicDashboard/SharePublicDashboard';
+import { isPublicDashboardsEnabled } from 'app/features/dashboard/components/ShareModal/SharePublicDashboard/SharePublicDashboardUtils';
 import { DashboardModel, PanelModel } from 'app/features/dashboard/state';
 import { DashboardInteractions } from 'app/features/dashboard-scene/utils/interactions';
 import { isPanelModelLibraryPanel } from 'app/features/library-panels/guard';
@@ -28,11 +29,11 @@ export function addPanelShareTab(tab: ShareModalTabModel) {
   customPanelTabs.push(tab);
 }
 
-function getTabs(panel?: PanelModel, activeTab?: string) {
+function getTabs(canEditDashboard: boolean, panel?: PanelModel, activeTab?: string) {
   const linkLabel = t('share-modal.tab-title.link', 'Link');
   const tabs: ShareModalTabModel[] = [{ label: linkLabel, value: shareDashboardType.link, component: ShareLink }];
 
-  if (contextSrv.isSignedIn && config.snapshotEnabled) {
+  if (contextSrv.isSignedIn && config.snapshotEnabled && canEditDashboard) {
     const snapshotLabel = t('share-modal.tab-title.snapshot', 'Snapshot');
     tabs.push({ label: snapshotLabel, value: shareDashboardType.snapshot, component: ShareSnapshot });
   }
@@ -56,9 +57,9 @@ function getTabs(panel?: PanelModel, activeTab?: string) {
     tabs.push(...customDashboardTabs);
   }
 
-  if (Boolean(config.featureToggles['publicDashboards'])) {
+  if (isPublicDashboardsEnabled()) {
     tabs.push({
-      label: 'Public dashboard',
+      label: t('share-modal.tab-title.public-dashboard-title', 'Public dashboard'),
       value: shareDashboardType.publicDashboard,
       component: SharePublicDashboard,
     });
@@ -76,7 +77,6 @@ interface Props extends Themeable2 {
   dashboard: DashboardModel;
   panel?: PanelModel;
   activeTab?: string;
-
   onDismiss(): void;
 }
 
@@ -86,7 +86,7 @@ interface State {
 }
 
 function getInitialState(props: Props): State {
-  const { tabs, activeTab } = getTabs(props.panel, props.activeTab);
+  const { tabs, activeTab } = getTabs(props.dashboard.canEditDashboard(), props.panel, props.activeTab);
 
   return {
     tabs,
@@ -116,7 +116,8 @@ class UnthemedShareModal extends React.Component<Props, State> {
     const { panel } = this.props;
     const { activeTab } = this.state;
     const title = panel ? t('share-modal.panel.title', 'Share Panel') : t('share-modal.dashboard.title', 'Share');
-    const tabs = getTabs(this.props.panel, this.state.activeTab).tabs;
+    const canEditDashboard = this.props.dashboard.canEditDashboard();
+    const tabs = getTabs(canEditDashboard, this.props.panel, this.state.activeTab).tabs;
 
     return (
       <ModalTabsHeader

@@ -37,7 +37,7 @@ type SocialService struct {
 }
 
 func ProvideService(cfg *setting.Cfg,
-	features *featuremgmt.FeatureManager,
+	features featuremgmt.FeatureToggles,
 	usageStats usagestats.Service,
 	bundleRegistry supportbundles.Service,
 	cache remotecache.CacheStorage,
@@ -58,7 +58,13 @@ func ProvideService(cfg *setting.Cfg,
 		}
 
 		for _, ssoSetting := range allSettings {
-			conn, err := createOAuthConnector(ssoSetting.Provider, ssoSetting.OAuthSettings, cfg, ssoSettings, features, cache)
+			info, err := connectors.CreateOAuthInfoFromKeyValues(ssoSetting.Settings)
+			if err != nil {
+				ss.log.Error("Failed to create OAuthInfo for provider", "error", err, "provider", ssoSetting.Provider)
+				continue
+			}
+
+			conn, err := createOAuthConnector(ssoSetting.Provider, info, cfg, ssoSettings, features, cache)
 			if err != nil {
 				ss.log.Error("Failed to create OAuth provider", "error", err, "provider", ssoSetting.Provider)
 				continue
@@ -71,6 +77,7 @@ func ProvideService(cfg *setting.Cfg,
 			sec := cfg.Raw.Section("auth." + name)
 
 			settingsKVs := convertIniSectionToMap(sec)
+
 			info, err := connectors.CreateOAuthInfoFromKeyValues(settingsKVs)
 			if err != nil {
 				ss.log.Error("Failed to create OAuthInfo for provider", "error", err, "provider", name)
@@ -175,7 +182,9 @@ func (ss *SocialService) GetConnector(name string) (social.SocialConnector, erro
 }
 
 func (ss *SocialService) GetOAuthInfoProvider(name string) *social.OAuthInfo {
-	connector, ok := ss.socialMap[name]
+	// The socialMap keys don't have "oauth_" prefix, but everywhere else in the system does
+	provider := strings.TrimPrefix(name, "oauth_")
+	connector, ok := ss.socialMap[provider]
 	if !ok {
 		return nil
 	}
@@ -214,7 +223,7 @@ func (ss *SocialService) getUsageStats(ctx context.Context) (map[string]any, err
 	return m, nil
 }
 
-func createOAuthConnector(name string, info *social.OAuthInfo, cfg *setting.Cfg, ssoSettings ssosettings.Service, features *featuremgmt.FeatureManager, cache remotecache.CacheStorage) (social.SocialConnector, error) {
+func createOAuthConnector(name string, info *social.OAuthInfo, cfg *setting.Cfg, ssoSettings ssosettings.Service, features featuremgmt.FeatureToggles, cache remotecache.CacheStorage) (social.SocialConnector, error) {
 	switch name {
 	case social.AzureADProviderName:
 		return connectors.NewAzureADProvider(info, cfg, ssoSettings, features, cache), nil

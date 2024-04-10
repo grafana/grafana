@@ -19,7 +19,12 @@ import (
 	secretsManager "github.com/grafana/grafana/pkg/services/secrets/manager"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/tests/testinfra"
+	"github.com/grafana/grafana/pkg/tests/testsuite"
 )
+
+func TestMain(m *testing.M) {
+	testsuite.Run(m)
+}
 
 // TestIntegrationIndexView tests the Grafana index view.
 func TestIntegrationIndexView(t *testing.T) {
@@ -120,8 +125,9 @@ func TestIntegrationIndexViewAnalytics(t *testing.T) {
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 			grafDir, cfgPath := testinfra.CreateGrafDir(t, testinfra.GrafanaOpts{})
-			addr, store := testinfra.StartGrafana(t, grafDir, cfgPath)
-			createdUser := testinfra.CreateUser(t, store, user.CreateUserCommand{
+			addr, env := testinfra.StartGrafanaEnv(t, grafDir, cfgPath)
+			store := env.SQLStore
+			createdUser := testinfra.CreateUser(t, store, env.Cfg, user.CreateUserCommand{
 				Login:    "admin",
 				Password: "admin",
 				Email:    "admin@grafana.com",

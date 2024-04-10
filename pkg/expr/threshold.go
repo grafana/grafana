@@ -18,23 +18,31 @@ import (
 type ThresholdCommand struct {
 	ReferenceVar  string
 	RefID         string
-	ThresholdFunc string
+	ThresholdFunc ThresholdType
 	Conditions    []float64
 	Invert        bool
 }
 
+// +enum
+type ThresholdType string
+
 const (
-	ThresholdIsAbove        = "gt"
-	ThresholdIsBelow        = "lt"
-	ThresholdIsWithinRange  = "within_range"
-	ThresholdIsOutsideRange = "outside_range"
+	ThresholdIsAbove        ThresholdType = "gt"
+	ThresholdIsBelow        ThresholdType = "lt"
+	ThresholdIsWithinRange  ThresholdType = "within_range"
+	ThresholdIsOutsideRange ThresholdType = "outside_range"
 )
 
 var (
-	supportedThresholdFuncs = []string{ThresholdIsAbove, ThresholdIsBelow, ThresholdIsWithinRange, ThresholdIsOutsideRange}
+	supportedThresholdFuncs = []string{
+		string(ThresholdIsAbove),
+		string(ThresholdIsBelow),
+		string(ThresholdIsWithinRange),
+		string(ThresholdIsOutsideRange),
+	}
 )
 
-func NewThresholdCommand(refID, referenceVar, thresholdFunc string, conditions []float64) (*ThresholdCommand, error) {
+func NewThresholdCommand(refID, referenceVar string, thresholdFunc ThresholdType, conditions []float64) (*ThresholdCommand, error) {
 	switch thresholdFunc {
 	case ThresholdIsOutsideRange, ThresholdIsWithinRange:
 		if len(conditions) < 2 {
@@ -57,8 +65,8 @@ func NewThresholdCommand(refID, referenceVar, thresholdFunc string, conditions [
 }
 
 type ConditionEvalJSON struct {
-	Params []float64 `json:"params"`
-	Type   string    `json:"type"` // e.g. "gt"
+	Params []float64     `json:"params"`
+	Type   ThresholdType `json:"type"` // e.g. "gt"
 }
 
 // UnmarshalResampleCommand creates a ResampleCMD from Grafana's frontend query.
@@ -120,8 +128,12 @@ func (tc *ThresholdCommand) Execute(ctx context.Context, now time.Time, vars mat
 	return mathCommand.Execute(ctx, now, vars, tracer)
 }
 
+func (tc *ThresholdCommand) Type() string {
+	return TypeThreshold.String()
+}
+
 // createMathExpression converts all the info we have about a "threshold" expression in to a Math expression
-func createMathExpression(referenceVar string, thresholdFunc string, args []float64, invert bool) (string, error) {
+func createMathExpression(referenceVar string, thresholdFunc ThresholdType, args []float64, invert bool) (string, error) {
 	var exp string
 	switch thresholdFunc {
 	case ThresholdIsAbove:
@@ -161,8 +173,8 @@ type ThresholdCommandConfig struct {
 
 type ThresholdConditionJSON struct {
 	Evaluator        ConditionEvalJSON  `json:"evaluator"`
-	UnloadEvaluator  *ConditionEvalJSON `json:"unloadEvaluator"`
-	LoadedDimensions *data.Frame        `json:"loadedDimensions"`
+	UnloadEvaluator  *ConditionEvalJSON `json:"unloadEvaluator,omitempty"`
+	LoadedDimensions *data.Frame        `json:"loadedDimensions,omitempty"`
 }
 
 // IsHysteresisExpression returns true if the raw model describes a hysteresis command:

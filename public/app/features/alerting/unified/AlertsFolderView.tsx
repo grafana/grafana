@@ -50,7 +50,8 @@ export const AlertsFolderView = ({ folder }: Props) => {
   const { nameFilter, labelFilter, sortOrder, setNameFilter, setLabelFilter, setSortOrder } =
     useAlertsFolderViewParams();
 
-  const matchingNamespace = combinedNamespaces.find((namespace) => namespace.name === folder.title);
+  const matchingNamespace = combinedNamespaces.find((namespace) => namespace.uid === folder.uid);
+
   const alertRules = matchingNamespace?.groups.flatMap((group) => group.rules) ?? [];
 
   const filteredRules = filterAndSortRules(alertRules, nameFilter, labelFilter, sortOrder ?? SortOrder.Ascending);
@@ -140,8 +141,8 @@ function useAlertsFolderViewParams() {
     sortParam === SortOrder.Ascending
       ? SortOrder.Ascending
       : sortParam === SortOrder.Descending
-      ? SortOrder.Descending
-      : undefined
+        ? SortOrder.Descending
+        : undefined
   );
 
   useDebounce(

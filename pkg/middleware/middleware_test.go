@@ -150,9 +150,9 @@ func TestMiddlewareContext(t *testing.T) {
 				Settings: &dtos.FrontendSettingsDTO{},
 				NavTree:  &navtree.NavTreeRoot{},
 				Assets: &dtos.EntryPointAssets{
-					JSFiles:  []dtos.EntryPointAsset{},
-					CSSDark:  "dark.css",
-					CSSLight: "light.css",
+					JSFiles: []dtos.EntryPointAsset{},
+					Dark:    "dark.css",
+					Light:   "light.css",
 				},
 			}
 			t.Log("Calling HTML", "data", data)
@@ -189,6 +189,22 @@ func TestMiddlewareContext(t *testing.T) {
 			"X-Custom-Header": "test",
 			"X-Other-Header":  "other-test",
 		}
+	})
+
+	middlewareScenario(t, "middleware should not add Cache-Control header for requests to render pdf", func(
+		t *testing.T, sc *scenarioContext) {
+		sc.fakeReq("GET", "/api/reports/render/pdf/").exec()
+		assert.Empty(t, sc.resp.Header().Get("Cache-Control"))
+		assert.Empty(t, sc.resp.Header().Get("Pragma"))
+		assert.Empty(t, sc.resp.Header().Get("Expires"))
+	})
+
+	middlewareScenario(t, "middleware should not add Cache-Control header for requests to render panel as image", func(
+		t *testing.T, sc *scenarioContext) {
+		sc.fakeReq("GET", "/render/d-solo/").exec()
+		assert.Empty(t, sc.resp.Header().Get("Cache-Control"))
+		assert.Empty(t, sc.resp.Header().Get("Pragma"))
+		assert.Empty(t, sc.resp.Header().Get("Expires"))
 	})
 }
 

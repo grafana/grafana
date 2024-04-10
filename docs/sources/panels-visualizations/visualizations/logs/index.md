@@ -15,6 +15,7 @@ labels:
     - cloud
     - enterprise
     - oss
+description: Configure options for Grafana's logs visualization
 title: Logs
 weight: 100
 ---
@@ -28,6 +29,10 @@ The logs visualization shows log lines from data sources that support logs, such
 The logs visualization shows the result of queries that were entered in the Query tab. The results of multiple queries are merged and sorted by time. You can scroll inside the panel if the data source returns more lines than can be displayed at any one time.
 
 To limit the number of lines rendered, you can use the **Max data points** setting in the **Query options**. If it is not set, then the data source will usually enforce a default limit.
+
+The following video provides a walkthrough of creating a logs visualization. You'll also learn how to customize some settings and log visualization caveats:
+
+{{< youtube id="jSSi_x-fD_8" >}}
 
 ## Log level
 

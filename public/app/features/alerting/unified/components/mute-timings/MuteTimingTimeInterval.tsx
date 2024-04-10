@@ -4,8 +4,9 @@ import React, { useEffect, useState } from 'react';
 import { useFieldArray, useFormContext } from 'react-hook-form';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { Button, Field, FieldSet, Icon, Input, useStyles2, Stack } from '@grafana/ui';
+import { Button, Field, FieldSet, Icon, InlineSwitch, Input, Stack, useStyles2 } from '@grafana/ui';
 
+import { useAlertmanager } from '../../state/AlertmanagerContext';
 import { MuteTimingFields } from '../../types/mute-timing-form';
 import { DAYS_OF_THE_WEEK, defaultTimeInterval, MONTHS, validateArrayField } from '../../utils/mute-timings';
 
@@ -14,14 +15,15 @@ import { TimezoneSelect } from './timezones';
 
 export const MuteTimingTimeInterval = () => {
   const styles = useStyles2(getStyles);
-  const { formState, register, setValue } = useFormContext();
+  const { formState, register, setValue } = useFormContext<MuteTimingFields>();
   const {
     fields: timeIntervals,
     append: addTimeInterval,
     remove: removeTimeInterval,
-  } = useFieldArray<MuteTimingFields>({
+  } = useFieldArray({
     name: 'time_intervals',
   });
+  const { isGrafanaAlertmanager } = useAlertmanager();
 
   return (
     <FieldSet label="Time intervals">
@@ -43,7 +45,11 @@ export const MuteTimingTimeInterval = () => {
             return (
               <div key={timeInterval.id} className={styles.timeIntervalSection}>
                 <MuteTimingTimeRange intervalIndex={timeIntervalIndex} />
-                <Field label="Location" invalid={Boolean(errors.location)} error={errors.location?.message}>
+                <Field
+                  label="Location"
+                  invalid={Boolean(errors.time_intervals?.[timeIntervalIndex]?.location)}
+                  error={errors.time_intervals?.[timeIntervalIndex]?.location?.message}
+                >
                   <TimezoneSelect
                     prefix={<Icon name="map-marker" />}
                     width={50}
@@ -127,15 +133,30 @@ export const MuteTimingTimeInterval = () => {
                     data-testid="mute-timing-years"
                   />
                 </Field>
-                <Button
-                  type="button"
-                  variant="destructive"
-                  fill="outline"
-                  icon="trash-alt"
-                  onClick={() => removeTimeInterval(timeIntervalIndex)}
-                >
-                  Remove time interval
-                </Button>
+                <Stack direction="row" gap={2}>
+                  <Button
+                    type="button"
+                    variant="destructive"
+                    fill="outline"
+                    icon="trash-alt"
+                    onClick={() => removeTimeInterval(timeIntervalIndex)}
+                  >
+                    Remove time interval
+                  </Button>
+                  {/* 
+                    This switch is only available for Grafana Alertmanager, as for now, Grafana alert manager doesn't support this feature
+                    It hanldes empty list as undefined making impossible the use of an empty list for disabling time interval
+                  */}
+                  {!isGrafanaAlertmanager && (
+                    <InlineSwitch
+                      id={`time_intervals.${timeIntervalIndex}.disable`}
+                      label="Disable"
+                      showLabel
+                      transparent
+                      {...register(`time_intervals.${timeIntervalIndex}.disable`)}
+                    />
+                  )}
+                </Stack>
               </div>
             );
           })}

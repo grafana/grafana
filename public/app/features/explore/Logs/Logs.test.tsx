@@ -10,16 +10,27 @@ import {
   LoadingState,
   LogLevel,
   LogRowModel,
-  MutableDataFrame,
   standardTransformersRegistry,
   toUtc,
+  createDataFrame,
 } from '@grafana/data';
 import { organizeFieldsTransformer } from '@grafana/data/src/transformations/transformers/organize';
 import { config } from '@grafana/runtime';
+import store from 'app/core/store';
 import { extractFieldsTransformer } from 'app/features/transformers/extractFields/extractFields';
 
 import { Logs } from './Logs';
+import { visualisationTypeKey } from './utils/logs';
 import { getMockElasticFrame, getMockLokiFrame } from './utils/testMocks.test';
+
+jest.mock('app/core/store', () => {
+  return {
+    getBool: jest.fn(),
+    getObject: jest.fn((_a, b) => b),
+    get: jest.fn(),
+    set: jest.fn(),
+  };
+});
 
 const reportInteraction = jest.fn();
 jest.mock('@grafana/runtime', () => ({
@@ -162,65 +173,24 @@ describe('Logs', () => {
       window.innerHeight = originalInnerHeight;
     });
 
-    describe('when `exploreScrollableLogsContainer` is set', () => {
-      let featureToggle: boolean | undefined;
-      beforeEach(() => {
-        featureToggle = config.featureToggles.exploreScrollableLogsContainer;
-        config.featureToggles.exploreScrollableLogsContainer = true;
-      });
-      afterEach(() => {
-        config.featureToggles.exploreScrollableLogsContainer = featureToggle;
-        jest.clearAllMocks();
-      });
+    it('should call `scrollElement.scroll`', () => {
+      const logs = [];
+      for (let i = 0; i < 50; i++) {
+        logs.push(makeLog({ uid: `uid${i}`, rowId: `id${i}`, timeEpochMs: i }));
+      }
+      const scrollElementMock = {
+        scroll: jest.fn(),
+        scrollTop: 920,
+      };
+      setup(
+        { scrollElement: scrollElementMock as unknown as HTMLDivElement, panelState: { logs: { id: 'uid47' } } },
+        undefined,
+        logs
+      );
 
-      it('should call `this.state.logsContainer.scroll`', () => {
-        const scrollIntoViewSpy = jest.spyOn(window.HTMLElement.prototype, 'scrollIntoView');
-        jest.spyOn(window.HTMLElement.prototype, 'scrollTop', 'get').mockReturnValue(920);
-        const scrollSpy = jest.spyOn(window.HTMLElement.prototype, 'scroll');
-
-        const logs = [];
-        for (let i = 0; i < 50; i++) {
-          logs.push(makeLog({ uid: `uid${i}`, rowId: `id${i}`, timeEpochMs: i }));
-        }
-
-        setup({ panelState: { logs: { id: 'uid47' } } }, undefined, logs);
-
-        expect(scrollIntoViewSpy).toBeCalledTimes(1);
-        // element.getBoundingClientRect().top will always be 0 for jsdom
-        // calc will be `this.state.logsContainer.scrollTop - window.innerHeight / 2` -> 920 - 500 = 420
-        expect(scrollSpy).toBeCalledWith({ behavior: 'smooth', top: 420 });
-      });
-    });
-
-    describe('when `exploreScrollableLogsContainer` is not set', () => {
-      let featureToggle: boolean | undefined;
-      beforeEach(() => {
-        featureToggle = config.featureToggles.exploreScrollableLogsContainer;
-        config.featureToggles.exploreScrollableLogsContainer = false;
-      });
-      afterEach(() => {
-        config.featureToggles.exploreScrollableLogsContainer = featureToggle;
-      });
-
-      it('should call `scrollElement.scroll`', () => {
-        const logs = [];
-        for (let i = 0; i < 50; i++) {
-          logs.push(makeLog({ uid: `uid${i}`, rowId: `id${i}`, timeEpochMs: i }));
-        }
-        const scrollElementMock = {
-          scroll: jest.fn(),
-          scrollTop: 920,
-        };
-        setup(
-          { scrollElement: scrollElementMock as unknown as HTMLDivElement, panelState: { logs: { id: 'uid47' } } },
-          undefined,
-          logs
-        );
-
-        // element.getBoundingClientRect().top will always be 0 for jsdom
-        // calc will be `scrollElement.scrollTop - window.innerHeight / 2` -> 920 - 500 = 420
-        expect(scrollElementMock.scroll).toBeCalledWith({ behavior: 'smooth', top: 420 });
-      });
+      // element.getBoundingClientRect().top will always be 0 for jsdom
+      // calc will be `scrollElement.scrollTop - window.innerHeight / 2` -> 920 - 500 = 420
+      expect(scrollElementMock.scroll).toBeCalledWith({ behavior: 'smooth', top: 420 });
     });
   });
 
@@ -419,7 +389,13 @@ describe('Logs', () => {
 
     it('should call reportInteraction on permalinkClick', async () => {
       const panelState = { logs: { id: 'not-included' } };
-      setup({ loading: false, panelState });
+      const rows = [
+        makeLog({ uid: '1', rowId: 'id1', timeEpochMs: 4 }),
+        makeLog({ uid: '2', rowId: 'id2', timeEpochMs: 3 }),
+        makeLog({ uid: '3', rowId: 'id3', timeEpochMs: 2 }),
+        makeLog({ uid: '4', rowId: 'id3', timeEpochMs: 1 }),
+      ];
+      setup({ loading: false, panelState, logRows: rows });
 
       const row = screen.getAllByRole('row');
       await userEvent.hover(row[0]);
@@ -436,7 +412,13 @@ describe('Logs', () => {
 
     it('should call createAndCopyShortLink on permalinkClick - logs', async () => {
       const panelState: Partial<ExplorePanelsState> = { logs: { id: 'not-included', visualisationType: 'logs' } };
-      setup({ loading: false, panelState });
+      const rows = [
+        makeLog({ uid: '1', rowId: 'id1', timeEpochMs: 1 }),
+        makeLog({ uid: '2', rowId: 'id2', timeEpochMs: 1 }),
+        makeLog({ uid: '3', rowId: 'id3', timeEpochMs: 2 }),
+        makeLog({ uid: '4', rowId: 'id3', timeEpochMs: 2 }),
+      ];
+      setup({ loading: false, panelState, logRows: rows });
 
       const row = screen.getAllByRole('row');
       await userEvent.hover(row[0]);
@@ -450,6 +432,34 @@ describe('Logs', () => {
         )
       );
       expect(createAndCopyShortLink).toHaveBeenCalledWith(expect.stringMatching('visualisationType%22:%22logs'));
+    });
+
+    it('should call createAndCopyShortLink on permalinkClick - with infinite scrolling', async () => {
+      const featureToggleValue = config.featureToggles.logsInfiniteScrolling;
+      config.featureToggles.logsInfiniteScrolling = true;
+      const rows = [
+        makeLog({ uid: '1', rowId: 'id1', timeEpochMs: 1 }),
+        makeLog({ uid: '2', rowId: 'id2', timeEpochMs: 1 }),
+        makeLog({ uid: '3', rowId: 'id3', timeEpochMs: 2 }),
+        makeLog({ uid: '4', rowId: 'id3', timeEpochMs: 2 }),
+      ];
+
+      const panelState: Partial<ExplorePanelsState> = { logs: { id: 'not-included', visualisationType: 'logs' } };
+      setup({ loading: false, panelState, logRows: rows });
+
+      const row = screen.getAllByRole('row');
+      await userEvent.hover(row[3]);
+
+      const linkButton = screen.getByLabelText('Copy shortlink');
+      await userEvent.click(linkButton);
+
+      expect(createAndCopyShortLink).toHaveBeenCalledWith(
+        expect.stringMatching(
+          'range%22:%7B%22from%22:%222019-01-01T10:00:00.000Z%22,%22to%22:%221970-01-01T00:00:00.002Z%22%7D'
+        )
+      );
+      expect(createAndCopyShortLink).toHaveBeenCalledWith(expect.stringMatching('visualisationType%22:%22logs'));
+      config.featureToggles.logsInfiniteScrolling = featureToggleValue;
     });
   });
 
@@ -480,6 +490,26 @@ describe('Logs', () => {
       expect(table).toBeInTheDocument();
     });
 
+    it('should use default state from localstorage - table', async () => {
+      const oldGet = store.get;
+      store.get = jest.fn().mockReturnValue('table');
+      localStorage.setItem(visualisationTypeKey, 'table');
+      setup({});
+      const table = await screen.findByTestId('logRowsTable');
+      expect(table).toBeInTheDocument();
+      store.get = oldGet;
+    });
+
+    it('should use default state from localstorage - logs', async () => {
+      const oldGet = store.get;
+      store.get = jest.fn().mockReturnValue('logs');
+      localStorage.setItem(visualisationTypeKey, 'logs');
+      setup({});
+      const table = await screen.findByTestId('logRows');
+      expect(table).toBeInTheDocument();
+      store.get = oldGet;
+    });
+
     it('should change visualisation to table on toggle (elastic)', async () => {
       setup({}, getMockElasticFrame());
       const logsSection = screen.getByRole('radio', { name: 'Show results in table visualisation' });
@@ -498,7 +528,7 @@ const makeLog = (overrides: Partial<LogRowModel>): LogRowModel => {
     uid,
     entryFieldIndex: 0,
     rowIndex: 0,
-    dataFrame: new MutableDataFrame(),
+    dataFrame: createDataFrame({ fields: [] }),
     logLevel: LogLevel.debug,
     entry,
     hasAnsi: false,

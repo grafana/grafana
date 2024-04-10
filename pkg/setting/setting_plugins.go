@@ -4,6 +4,8 @@ import (
 	"strings"
 
 	"gopkg.in/ini.v1"
+
+	"github.com/grafana/grafana/pkg/util"
 )
 
 // PluginSettings maps plugin id to map of key/value settings.
@@ -33,40 +35,17 @@ func (cfg *Cfg) readPluginSettings(iniFile *ini.File) error {
 	cfg.PluginSkipPublicKeyDownload = pluginsSection.Key("public_key_retrieval_disabled").MustBool(false)
 	cfg.PluginForcePublicKeyDownload = pluginsSection.Key("public_key_retrieval_on_startup").MustBool(false)
 
-	pluginsAllowUnsigned := pluginsSection.Key("allow_loading_unsigned_plugins").MustString("")
-
-	for _, plug := range strings.Split(pluginsAllowUnsigned, ",") {
-		plug = strings.TrimSpace(plug)
-		cfg.PluginsAllowUnsigned = append(cfg.PluginsAllowUnsigned, plug)
-	}
-
-	disablePlugins := pluginsSection.Key("disable_plugins").MustString("")
-	for _, plug := range strings.Split(disablePlugins, ",") {
-		plug = strings.TrimSpace(plug)
-		if plug != "" {
-			cfg.DisablePlugins = append(cfg.DisablePlugins, plug)
-		}
-	}
-
-	hideAngularDeprecation := pluginsSection.Key("hide_angular_deprecation").MustString("")
-	for _, id := range strings.Split(hideAngularDeprecation, ",") {
-		id = strings.TrimSpace(id)
-		if id == "" {
-			continue
-		}
-		cfg.HideAngularDeprecation = append(cfg.HideAngularDeprecation, id)
-	}
+	cfg.PluginsAllowUnsigned = util.SplitString(pluginsSection.Key("allow_loading_unsigned_plugins").MustString(""))
+	cfg.DisablePlugins = util.SplitString(pluginsSection.Key("disable_plugins").MustString(""))
+	cfg.HideAngularDeprecation = util.SplitString(pluginsSection.Key("hide_angular_deprecation").MustString(""))
+	cfg.ForwardHostEnvVars = util.SplitString(pluginsSection.Key("forward_host_env_vars").MustString(""))
 
 	cfg.PluginCatalogURL = pluginsSection.Key("plugin_catalog_url").MustString("https://grafana.com/grafana/plugins/")
 	cfg.PluginAdminEnabled = pluginsSection.Key("plugin_admin_enabled").MustBool(true)
 	cfg.PluginAdminExternalManageEnabled = pluginsSection.Key("plugin_admin_external_manage_enabled").MustBool(false)
-	catalogHiddenPlugins := pluginsSection.Key("plugin_catalog_hidden_plugins").MustString("")
+	cfg.PluginCatalogHiddenPlugins = util.SplitString(pluginsSection.Key("plugin_catalog_hidden_plugins").MustString(""))
 
-	for _, plug := range strings.Split(catalogHiddenPlugins, ",") {
-		plug = strings.TrimSpace(plug)
-		cfg.PluginCatalogHiddenPlugins = append(cfg.PluginCatalogHiddenPlugins, plug)
-	}
-	// Pull disablep plugins from the catalog
+	// Pull disabled plugins from the catalog
 	cfg.PluginCatalogHiddenPlugins = append(cfg.PluginCatalogHiddenPlugins, cfg.DisablePlugins...)
 
 	// Plugins CDN settings

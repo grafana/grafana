@@ -33,7 +33,7 @@ import { StoreState } from 'app/types';
 import { PanelOptionsChangedEvent, ShowModalReactEvent } from 'app/types/events';
 
 import { notifyApp } from '../../../../core/actions';
-import { UnlinkModal } from '../../../library-panels/components/UnlinkModal/UnlinkModal';
+import { UnlinkModal } from '../../../dashboard-scene/scene/UnlinkModal';
 import { isPanelModelLibraryPanel } from '../../../library-panels/guard';
 import { getVariablesByKey } from '../../../variables/state/selectors';
 import { DashboardPanel } from '../../dashgrid/DashboardPanel';
@@ -333,27 +333,28 @@ export class PanelEditorUnconnected extends PureComponent<Props> {
       >
         Discard
       </Button>,
-      this.props.panel.libraryPanel ? (
-        <Button
-          onClick={this.onSaveLibraryPanel}
-          variant="primary"
-          size={size}
-          title="Apply changes and save library panel"
-          key="save-panel"
-        >
-          Save library panel
-        </Button>
-      ) : (
-        <Button
-          onClick={this.onSaveDashboard}
-          title="Apply changes and save dashboard"
-          key="save"
-          size={size}
-          variant="secondary"
-        >
-          Save
-        </Button>
-      ),
+      this.props.dashboard.meta.canSave &&
+        (this.props.panel.libraryPanel ? (
+          <Button
+            onClick={this.onSaveLibraryPanel}
+            variant="primary"
+            size={size}
+            title="Apply changes and save library panel"
+            key="save-panel"
+          >
+            Save library panel
+          </Button>
+        ) : (
+          <Button
+            onClick={this.onSaveDashboard}
+            title="Apply changes and save dashboard"
+            key="save"
+            size={size}
+            variant="secondary"
+          >
+            Save
+          </Button>
+        )),
       <Button
         onClick={this.onBack}
         variant="primary"

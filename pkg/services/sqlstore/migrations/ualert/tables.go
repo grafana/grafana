@@ -189,6 +189,10 @@ func alertInstanceMigration(mg *migrator.Migrator) {
 		migrator.NewAddColumnMigration(alertInstance, &migrator.Column{
 			Name: "current_reason", Type: migrator.DB_NVarchar, Length: DefaultFieldMaxLength, Nullable: true,
 		}))
+
+	mg.AddMigration("add result_fingerprint column to alert_instance", migrator.NewAddColumnMigration(alertInstance, &migrator.Column{
+		Name: "result_fingerprint", Type: migrator.DB_NVarchar, Length: 16, Nullable: true,
+	}))
 }
 
 func addAlertRuleMigrations(mg *migrator.Migrator, defaultIntervalSeconds int64) {

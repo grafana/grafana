@@ -17,6 +17,7 @@ import {
 import { Props } from './MonacoQueryFieldProps';
 import { getOverrideServices } from './getOverrideServices';
 import { getCompletionProvider, getSuggestOptions } from './monaco-completion-provider';
+import { DataProvider } from './monaco-completion-provider/data_provider';
 
 const options: monacoTypes.editor.IStandaloneEditorConstructionOptions = {
   codeLens: false,
@@ -122,7 +123,7 @@ const MonacoQueryField = (props: Props) => {
 
   return (
     <div
-      aria-label={selectors.components.QueryField.container}
+      data-testid={selectors.components.QueryField.container}
       className={styles.container}
       // NOTE: we will be setting inline-style-width/height on this element
       ref={containerRef}
@@ -145,41 +146,10 @@ const MonacoQueryField = (props: Props) => {
           editor.onDidFocusEditorText(() => {
             isEditorFocused.set(true);
           });
-
-          // we construct a DataProvider object
-          const getHistory = () =>
-            Promise.resolve(historyRef.current.map((h) => h.query.expr).filter((expr) => expr !== undefined));
-
-          const getAllMetricNames = () => {
-            const { metrics, metricsMetadata } = lpRef.current;
-            const result = metrics.map((m) => {
-              const metaItem = metricsMetadata?.[m];
-              return {
-                name: m,
-                help: metaItem?.help ?? '',
-                type: metaItem?.type ?? '',
-              };
-            });
-
-            return Promise.resolve(result);
-          };
-
-          const getAllLabelNames = () => Promise.resolve(lpRef.current.getLabelKeys());
-
-          const getLabelValues = (labelName: string) => lpRef.current.getLabelValues(labelName);
-
-          const getSeriesValues = lpRef.current.getSeriesValues;
-
-          const getSeriesLabels = lpRef.current.getSeriesLabels;
-
-          const dataProvider = {
-            getHistory,
-            getAllMetricNames,
-            getAllLabelNames,
-            getLabelValues,
-            getSeriesValues,
-            getSeriesLabels,
-          };
+          const dataProvider = new DataProvider({
+            historyProvider: historyRef.current,
+            languageProvider: lpRef.current,
+          });
           const completionProvider = getCompletionProvider(monaco, dataProvider);
 
           // completion-providers in monaco are not registered directly to editor-instances,

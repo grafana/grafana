@@ -30,6 +30,7 @@ export { ColorPicker, SeriesColorPicker } from './ColorPicker/ColorPicker';
 export { ColorPickerInput } from './ColorPicker/ColorPickerInput';
 export { SeriesColorPickerPopover, SeriesColorPickerPopoverWithTheme } from './ColorPicker/SeriesColorPickerPopover';
 export { EmptySearchResult } from './EmptySearchResult/EmptySearchResult';
+export { EmptyState } from './EmptyState/EmptyState';
 export { UnitPicker } from './UnitPicker/UnitPicker';
 export { StatsPicker } from './StatsPicker/StatsPicker';
 export { RefreshPicker, defaultIntervals } from './RefreshPicker/RefreshPicker';
@@ -213,6 +214,7 @@ export { Text } from './Text/Text';
 export { Box } from './Layout/Box/Box';
 export { Stack } from './Layout/Stack/Stack';
 export { Grid } from './Layout/Grid/Grid';
+export { Space } from './Layout/Space';
 
 export { Label } from './Forms/Label';
 export { Field, type FieldProps } from './Forms/Field';
@@ -263,6 +265,8 @@ export { Avatar } from './UsersIndicator/Avatar';
 // Export this until we've figured out a good approach to inline form styles.
 export { InlineFormLabel } from './FormLabel/FormLabel';
 export { Divider } from './Divider/Divider';
+export { getDragStyles, type DragHandlePosition } from './DragHandle/DragHandle';
+export { useSplitter } from './Splitter/useSplitter';
 
 /** @deprecated Please use non-legacy versions of these components */
 const LegacyForms = {
@@ -307,3 +311,6 @@ export { TimeSeries } from '../graveyard/TimeSeries/TimeSeries';
 export { useGraphNGContext } from '../graveyard/GraphNG/hooks';
 export { preparePlotFrame, buildScaleKey } from '../graveyard/GraphNG/utils';
 export { type GraphNGLegendEvent } from '../graveyard/GraphNG/types';
+
+export { ZoomPlugin } from '../graveyard/uPlot/plugins/ZoomPlugin';
+export { TooltipPlugin } from '../graveyard/uPlot/plugins/TooltipPlugin';

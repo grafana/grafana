@@ -36,7 +36,7 @@ type ExternalAlertmanagerProvider interface {
 }
 
 type AlertingStore interface {
-	GetLatestAlertmanagerConfiguration(ctx context.Context, query *models.GetLatestAlertmanagerConfigurationQuery) (*models.AlertConfiguration, error)
+	GetLatestAlertmanagerConfiguration(ctx context.Context, orgID int64) (*models.AlertConfiguration, error)
 }
 
 type RuleAccessControlService interface {
@@ -56,13 +56,14 @@ type API struct {
 	TransactionManager   provisioning.TransactionManager
 	ProvenanceStore      provisioning.ProvisioningStore
 	RuleStore            RuleStore
-	AlertingStore        AlertingStore
+	AlertingStore        store.AlertingStore
 	AdminConfigStore     store.AdminConfigurationStore
 	DataProxy            *datasourceproxy.DataSourceProxyService
 	MultiOrgAlertmanager *notifier.MultiOrgAlertmanager
 	StateManager         *state.Manager
 	AccessControl        ac.AccessControl
 	Policies             *provisioning.NotificationPolicyService
+	ReceiverService      *notifier.ReceiverService
 	ContactPointService  *provisioning.ContactPointService
 	Templates            *provisioning.TemplateService
 	MuteTimings          *provisioning.MuteTimingService
@@ -112,6 +113,9 @@ func (api *API) RegisterAPIEndpoints(m *metrics.API) {
 			log:                logger,
 			cfg:                &api.Cfg.UnifiedAlerting,
 			authz:              ruleAuthzService,
+			amConfigStore:      api.AlertingStore,
+			amRefresher:        api.MultiOrgAlertmanager,
+			featureManager:     api.FeatureManager,
 		},
 	), m)
 	api.RegisterTestingApiEndpoints(NewTestingApi(
@@ -126,6 +130,7 @@ func (api *API) RegisterAPIEndpoints(m *metrics.API) {
 			featureManager:  api.FeatureManager,
 			appUrl:          api.AppUrl,
 			tracer:          api.Tracer,
+			folderService:   api.RuleStore,
 		}), m)
 	api.RegisterConfigurationApiEndpoints(NewConfiguration(
 		&ConfigSrv{
@@ -148,5 +153,11 @@ func (api *API) RegisterAPIEndpoints(m *metrics.API) {
 	api.RegisterHistoryApiEndpoints(NewStateHistoryApi(&HistorySrv{
 		logger: logger,
 		hist:   api.Historian,
+	}), m)
+
+	api.RegisterNotificationsApiEndpoints(NewNotificationsApi(&NotificationSrv{
+		logger:            logger,
+		receiverService:   api.ReceiverService,
+		muteTimingService: api.MuteTimings,
 	}), m)
 }

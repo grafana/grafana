@@ -26,7 +26,6 @@ import (
 func Test_subscribeToFolderChanges(t *testing.T) {
 	orgID := rand.Int63()
 	folder := &folder.Folder{
-		ID:    0, // nolint:staticcheck
 		UID:   util.GenerateShortUID(),
 		Title: "Folder" + util.GenerateShortUID(),
 	}
@@ -42,7 +41,6 @@ func Test_subscribeToFolderChanges(t *testing.T) {
 	err := bus.Publish(context.Background(), &events.FolderTitleUpdated{
 		Timestamp: time.Now(),
 		Title:     "Folder" + util.GenerateShortUID(),
-		ID:        folder.ID, // nolint:staticcheck
 		UID:       folder.UID,
 		OrgID:     orgID,
 	})

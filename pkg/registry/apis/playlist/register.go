@@ -8,21 +8,22 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/runtime/serializer"
+	"k8s.io/apiserver/pkg/authorization/authorizer"
 	"k8s.io/apiserver/pkg/registry/generic"
 	"k8s.io/apiserver/pkg/registry/rest"
 	genericapiserver "k8s.io/apiserver/pkg/server"
 	common "k8s.io/kube-openapi/pkg/common"
 
 	playlist "github.com/grafana/grafana/pkg/apis/playlist/v0alpha1"
-	grafanaapiserver "github.com/grafana/grafana/pkg/services/grafana-apiserver"
-	"github.com/grafana/grafana/pkg/services/grafana-apiserver/endpoints/request"
-	grafanarest "github.com/grafana/grafana/pkg/services/grafana-apiserver/rest"
-	"github.com/grafana/grafana/pkg/services/grafana-apiserver/utils"
+	"github.com/grafana/grafana/pkg/apiserver/builder"
+	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
+	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
+	"github.com/grafana/grafana/pkg/services/apiserver/utils"
 	playlistsvc "github.com/grafana/grafana/pkg/services/playlist"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
-var _ grafanaapiserver.APIGroupBuilder = (*PlaylistAPIBuilder)(nil)
+var _ builder.APIGroupBuilder = (*PlaylistAPIBuilder)(nil)
 
 // This is used just so wire has something unique to return
 type PlaylistAPIBuilder struct {
@@ -32,7 +33,7 @@ type PlaylistAPIBuilder struct {
 }
 
 func RegisterAPIService(p playlistsvc.Service,
-	apiregistration grafanaapiserver.APIRegistrar,
+	apiregistration builder.APIRegistrar,
 	cfg *setting.Cfg,
 ) *PlaylistAPIBuilder {
 	builder := &PlaylistAPIBuilder{
@@ -78,6 +79,7 @@ func (b *PlaylistAPIBuilder) GetAPIGroupInfo(
 	scheme *runtime.Scheme,
 	codecs serializer.CodecFactory, // pointer?
 	optsGetter generic.RESTOptionsGetter,
+	dualWrite bool,
 ) (*genericapiserver.APIGroupInfo, error) {
 	apiGroupInfo := genericapiserver.NewDefaultAPIGroupInfo(playlist.GROUP, scheme, metav1.ParameterCodec, codecs)
 	storage := map[string]rest.Storage{}
@@ -111,7 +113,7 @@ func (b *PlaylistAPIBuilder) GetAPIGroupInfo(
 	storage[resource.StoragePath()] = legacyStore
 
 	// enable dual writes if a RESTOptionsGetter is provided
-	if optsGetter != nil {
+	if optsGetter != nil && dualWrite {
 		store, err := newStorage(scheme, optsGetter, legacyStore)
 		if err != nil {
 			return nil, err
@@ -127,6 +129,10 @@ func (b *PlaylistAPIBuilder) GetOpenAPIDefinitions() common.GetOpenAPIDefinition
 	return playlist.GetOpenAPIDefinitions
 }
 
-func (b *PlaylistAPIBuilder) GetAPIRoutes() *grafanaapiserver.APIRoutes {
+func (b *PlaylistAPIBuilder) GetAPIRoutes() *builder.APIRoutes {
 	return nil // no custom API routes
+}
+
+func (b *PlaylistAPIBuilder) GetAuthorizer() authorizer.Authorizer {
+	return nil // default authorizer is fine
 }

@@ -65,7 +65,7 @@ describe('contact points', () => {
       });
 
       expect(screen.getByText('grafana-default-email')).toBeInTheDocument();
-      expect(screen.getAllByTestId('contact-point')).toHaveLength(4);
+      expect(screen.getAllByTestId('contact-point')).toHaveLength(5);
 
       // check for available actions – our mock 4 contact points, 1 of them is provisioned
       expect(screen.getByRole('link', { name: 'add contact point' })).toBeInTheDocument();
@@ -73,20 +73,20 @@ describe('contact points', () => {
 
       // 2 of them are unused by routes in the mock response
       const unusedBadge = screen.getAllByLabelText('unused');
-      expect(unusedBadge).toHaveLength(2);
+      expect(unusedBadge).toHaveLength(3);
 
       const viewProvisioned = screen.getByRole('link', { name: 'view-action' });
       expect(viewProvisioned).toBeInTheDocument();
       expect(viewProvisioned).not.toBeDisabled();
 
       const editButtons = screen.getAllByRole('link', { name: 'edit-action' });
-      expect(editButtons).toHaveLength(3);
+      expect(editButtons).toHaveLength(4);
       editButtons.forEach((button) => {
         expect(button).not.toBeDisabled();
       });
 
       const moreActionsButtons = screen.getAllByRole('button', { name: 'more-actions' });
-      expect(moreActionsButtons).toHaveLength(4);
+      expect(moreActionsButtons).toHaveLength(5);
       moreActionsButtons.forEach((button) => {
         expect(button).not.toBeDisabled();
       });
@@ -115,18 +115,25 @@ describe('contact points', () => {
 
       // there should be view buttons though
       const viewButtons = screen.getAllByRole('link', { name: 'view-action' });
-      expect(viewButtons).toHaveLength(4);
+      expect(viewButtons).toHaveLength(5);
 
       // delete should be disabled in the "more" actions
       const moreButtons = screen.queryAllByRole('button', { name: 'more-actions' });
-      expect(moreButtons).toHaveLength(4);
+      expect(moreButtons).toHaveLength(5);
 
       // check if all of the delete buttons are disabled
       for await (const button of moreButtons) {
         await userEvent.click(button);
         const deleteButton = await screen.queryByRole('menuitem', { name: 'delete' });
         expect(deleteButton).toBeDisabled();
+        // click outside the menu to close it otherwise we can't interact with the rest of the page
+        await userEvent.click(document.body);
       }
+
+      // check buttons in Notification Templates
+      const notificationTemplatesTab = screen.getByRole('tab', { name: 'Tab Notification Templates' });
+      await userEvent.click(notificationTemplatesTab);
+      expect(screen.getByRole('link', { name: 'Add notification template' })).toHaveAttribute('aria-disabled', 'true');
     });
 
     it('should call delete when clicked and not disabled', async () => {
@@ -326,6 +333,11 @@ describe('contact points', () => {
       const viewProvisioned = screen.getByRole('link', { name: 'view-action' });
       expect(viewProvisioned).toBeInTheDocument();
       expect(viewProvisioned).not.toBeDisabled();
+
+      // check buttons in Notification Templates
+      const notificationTemplatesTab = screen.getByRole('tab', { name: 'Tab Notification Templates' });
+      await userEvent.click(notificationTemplatesTab);
+      expect(screen.queryByRole('link', { name: 'Add notification template' })).not.toBeInTheDocument();
     });
   });
 });

@@ -6,12 +6,14 @@ import (
 	"github.com/go-jose/go-jose/v3/jwt"
 
 	"github.com/grafana/grafana/pkg/services/auth/identity"
-	"github.com/grafana/grafana/pkg/services/datasources"
 )
 
 type IDService interface {
 	// SignIdentity signs a id token for provided identity that can be forwarded to plugins and external services
 	SignIdentity(ctx context.Context, identity identity.Requester) (string, error)
+
+	// RemoveIDToken removes any locally stored id tokens for key
+	RemoveIDToken(ctx context.Context, identity identity.Requester) error
 }
 
 type IDSigner interface {
@@ -20,10 +22,7 @@ type IDSigner interface {
 
 type IDClaims struct {
 	jwt.Claims
-}
-
-const settingsKey = "forwardGrafanaIdToken"
-
-func IsIDForwardingEnabledForDataSource(ds *datasources.DataSource) bool {
-	return ds.JsonData != nil && ds.JsonData.Get(settingsKey).MustBool()
+	Email           string `json:"email"`
+	EmailVerified   bool   `json:"email_verified"`
+	AuthenticatedBy string `json:"authenticatedBy,omitempty"`
 }

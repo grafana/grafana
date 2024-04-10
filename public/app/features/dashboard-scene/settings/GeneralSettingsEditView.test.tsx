@@ -1,8 +1,7 @@
-import { behaviors, SceneGridLayout, SceneGridItem, SceneRefreshPicker, SceneTimeRange } from '@grafana/scenes';
+import { behaviors, SceneGridLayout, SceneTimeRange } from '@grafana/scenes';
 import { DashboardCursorSync } from '@grafana/schema';
 
 import { DashboardControls } from '../scene/DashboardControls';
-import { DashboardLinksControls } from '../scene/DashboardLinksControls';
 import { DashboardScene } from '../scene/DashboardScene';
 import { activateFullSceneTree } from '../utils/test-utils';
 
@@ -29,12 +28,6 @@ describe('GeneralSettingsEditView', () => {
 
     it('should return the dashboard time range', () => {
       expect(settings.getTimeRange()).toBe(dashboard.state.$timeRange);
-    });
-
-    it('should return the dashboard refresh picker', () => {
-      expect(settings.getRefreshPicker()).toBe(
-        (dashboard.state?.controls?.[0] as DashboardControls)?.state?.timeControls?.[0]
-      );
     });
 
     it('should return the cursor sync', () => {
@@ -108,45 +101,30 @@ describe('GeneralSettingsEditView', () => {
 
       expect(settings.getCursorSync()?.state.sync).toBe(DashboardCursorSync.Crosshair);
     });
+
+    it('A change to time picker visiblity settings updates the dashboard state', () => {
+      settings.onHideTimePickerChange(true);
+
+      expect(settings.getDashboardControls()?.state.hideTimeControls).toBe(true);
+    });
   });
 });
 
 async function buildTestScene() {
+  const settings = new GeneralSettingsEditView({});
   const dashboard = new DashboardScene({
     $timeRange: new SceneTimeRange({}),
     $behaviors: [new behaviors.CursorSync({ sync: DashboardCursorSync.Off })],
-    controls: [
-      new DashboardControls({
-        variableControls: [],
-        linkControls: new DashboardLinksControls({}),
-        timeControls: [
-          new SceneRefreshPicker({
-            intervals: ['1s'],
-          }),
-        ],
-      }),
-    ],
+    controls: new DashboardControls({}),
     title: 'hello',
     uid: 'dash-1',
     meta: {
       canEdit: true,
     },
     body: new SceneGridLayout({
-      children: [
-        new SceneGridItem({
-          key: 'griditem-1',
-          x: 0,
-          y: 0,
-          width: 10,
-          height: 12,
-          body: undefined,
-        }),
-      ],
+      children: [],
     }),
-  });
-
-  const settings = new GeneralSettingsEditView({
-    dashboardRef: dashboard.getRef(),
+    editview: settings,
   });
 
   activateFullSceneTree(dashboard);

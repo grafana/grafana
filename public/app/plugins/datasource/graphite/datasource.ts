@@ -246,7 +246,10 @@ export class GraphiteDatasource
     return this.doGraphiteRequest(httpOptions).pipe(map(this.convertResponseToDataFrames));
   }
 
-  addTracingHeaders(httpOptions: { headers: any }, options: { dashboardId?: number; panelId?: number }) {
+  addTracingHeaders(
+    httpOptions: { headers: any },
+    options: { dashboardId?: number; panelId?: number; panelPluginId?: string }
+  ) {
     const proxyMode = !this.url.match(/^http/);
     if (proxyMode) {
       if (options.dashboardId) {
@@ -254,6 +257,9 @@ export class GraphiteDatasource
       }
       if (options.panelId) {
         httpOptions.headers['X-Panel-Id'] = options.panelId;
+      }
+      if (options.panelPluginId) {
+        httpOptions.headers['X-Panel-Plugin-Id'] = options.panelPluginId;
       }
     }
   }
@@ -428,7 +434,7 @@ export class GraphiteDatasource
     }
   }
 
-  events(options: { range: TimeRange; tags: any; timezone?: any }) {
+  events(options: { range: TimeRange; tags: any; timezone?: TimeZone }) {
     try {
       let tags = '';
       if (options.tags) {
@@ -454,7 +460,7 @@ export class GraphiteDatasource
     return this.templateSrv.containsTemplate(target.target ?? '');
   }
 
-  translateTime(date: any, roundUp: any, timezone: TimeZone) {
+  translateTime(date: any, roundUp?: boolean, timezone?: TimeZone) {
     if (isString(date)) {
       if (date === 'now') {
         return 'now';

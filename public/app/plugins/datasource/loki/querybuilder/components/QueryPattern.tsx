@@ -2,8 +2,8 @@ import { css } from '@emotion/css';
 import React from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
+import { RawQuery } from '@grafana/experimental';
 import { Button, Card, useStyles2 } from '@grafana/ui';
-import { RawQuery } from 'app/plugins/datasource/prometheus/querybuilder/shared/RawQuery';
 
 import logqlGrammar from '../../syntax';
 import { lokiQueryModeller } from '../LokiQueryModeller';
@@ -31,7 +31,7 @@ export const QueryPattern = (props: Props) => {
       <div className={styles.rawQueryContainer}>
         <RawQuery
           query={lokiQueryModeller.renderQuery({ labels: [], operations: pattern.operations })}
-          lang={lang}
+          language={lang}
           className={styles.rawQuery}
         />
       </div>

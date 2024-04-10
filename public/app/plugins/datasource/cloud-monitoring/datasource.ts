@@ -9,10 +9,16 @@ import {
   ScopedVars,
   SelectableValue,
   TimeRange,
+  getDefaultTimeRange,
 } from '@grafana/data';
-import { DataSourceWithBackend, getBackendSrv, toDataQueryResponse, BackendSrv } from '@grafana/runtime';
-import { getTimeSrv, TimeSrv } from 'app/features/dashboard/services/TimeSrv';
-import { getTemplateSrv, TemplateSrv } from 'app/features/templating/template_srv';
+import {
+  DataSourceWithBackend,
+  getBackendSrv,
+  toDataQueryResponse,
+  BackendSrv,
+  getTemplateSrv,
+  TemplateSrv,
+} from '@grafana/runtime';
 
 import { CloudMonitoringAnnotationSupport } from './annotationSupport';
 import { SLO_BURN_RATE_SELECTOR_NAME } from './constants';
@@ -31,8 +37,7 @@ export default class CloudMonitoringDatasource extends DataSourceWithBackend<
 
   constructor(
     private instanceSettings: DataSourceInstanceSettings<CloudMonitoringOptions>,
-    public templateSrv: TemplateSrv = getTemplateSrv(),
-    readonly timeSrv: TimeSrv = getTimeSrv()
+    public templateSrv: TemplateSrv = getTemplateSrv()
   ) {
     super(instanceSettings);
     this.authenticationType = instanceSettings.jsonData.authenticationType || 'jwt';
@@ -107,7 +112,7 @@ export default class CloudMonitoringDatasource extends DataSourceWithBackend<
           ),
         },
       ],
-      range: timeRange ?? this.timeSrv.timeRange(),
+      range: timeRange || getDefaultTimeRange(),
     };
 
     const queries = options.targets;
@@ -298,10 +303,12 @@ export default class CloudMonitoringDatasource extends DataSourceWithBackend<
     }, {} as T);
   }
 
-  filterQuery(query: CloudMonitoringQuery): boolean {
-    if (query.hide) {
+  filterQuery(item: CloudMonitoringQuery): boolean {
+    if (item.hide) {
       return false;
     }
+
+    const query = this.migrateQuery(item);
 
     if (query.queryType === QueryType.SLO) {
       if (!query.sloQuery) {

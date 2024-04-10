@@ -107,11 +107,6 @@ export async function promQailExplain(
   suggIdx: number,
   datasource: PrometheusDatasource
 ) {
-  // const enabled = await llms.openai.enabled();
-  // if (!enabled) {
-  //   return false;
-  // }
-
   const suggestedQuery = interaction.suggestions[suggIdx].query;
 
   const promptMessages = getExplainMessage(suggestedQuery, query.metric, datasource);
@@ -273,13 +268,14 @@ function guessMetricFamily(metric: string): string {
 
 /**
  * Check if the LLM plugin is enabled.
+ * Used in the PromQueryBuilder to enable/disable the button based on openai and vector db checks
  * @returns true if the LLM plugin is enabled.
  */
 export async function isLLMPluginEnabled(): Promise<boolean> {
   // Check if the LLM plugin is enabled.
   // If not, we won't be able to make requests, so return early.
-  const openaiEnabled = llms.openai.enabled().then((response) => response.ok);
-  const vectorEnabled = llms.vector.enabled().then((response) => response.ok);
+  const openaiEnabled = llms.openai.health().then((response) => response.ok);
+  const vectorEnabled = llms.vector.health().then((response) => response.ok);
   // combine 2 promises
   return Promise.all([openaiEnabled, vectorEnabled]).then((results) => {
     return results.every((result) => result);
@@ -302,10 +298,6 @@ export async function promQailSuggest(
   datasource: PrometheusDatasource,
   interaction?: Interaction
 ) {
-  // when you're not running promqail
-  // @ts-ignore llms types issue
-  const check = await isLLMPluginEnabled();
-
   const interactionToUpdate = interaction ? interaction : createInteraction(SuggestionType.Historical);
 
   // Decide metric type
@@ -329,7 +321,7 @@ export async function promQailSuggest(
     metricType = guessMetricType(query.metric, datasource.languageProvider.metrics);
   }
 
-  if (!check || interactionToUpdate.suggestionType === SuggestionType.Historical) {
+  if (interactionToUpdate.suggestionType === SuggestionType.Historical) {
     return new Promise<void>((resolve) => {
       return setTimeout(() => {
         const suggestions = getTemplateSuggestions(
@@ -354,7 +346,7 @@ export async function promQailSuggest(
     };
 
     // get all available labels
-    const metricLabels = await datasource.languageProvider.fetchSeriesLabelsMatch(query.metric);
+    const metricLabels = await datasource.languageProvider.fetchLabelsWithMatch(query.metric);
 
     let feedTheAI: SuggestionBody = {
       metric: query.metric,

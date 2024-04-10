@@ -1,4 +1,4 @@
-import { QueryBuilderOperation, QueryBuilderOperationDef } from '../../prometheus/querybuilder/shared/types';
+import { QueryBuilderOperation, QueryBuilderOperationDefinition } from '@grafana/experimental';
 
 import {
   createAggregationOperation,
@@ -10,7 +10,7 @@ import {
   labelFilterRenderer,
   pipelineRenderer,
 } from './operationUtils';
-import { getOperationDefinitions } from './operations';
+import { operationDefinitions } from './operations';
 import { LokiOperationId, LokiVisualQueryOperationCategory } from './types';
 
 describe('createRangeOperation', () => {
@@ -144,8 +144,12 @@ describe('getLineFilterRenderer', () => {
     id: '__line_contains_case_insensitive',
     params: ['ERrOR'],
   };
+  const MOCK_MODEL_BACKTICKS = {
+    id: '__line_contains',
+    params: ['`error`'],
+  };
 
-  const MOCK_DEF = undefined as unknown as QueryBuilderOperationDef;
+  const MOCK_DEF = undefined as unknown as QueryBuilderOperationDefinition;
 
   const MOCK_INNER_EXPR = '{job="grafana"}';
 
@@ -159,6 +163,11 @@ describe('getLineFilterRenderer', () => {
     expect(lineFilterRenderer(MOCK_MODEL, MOCK_DEF, MOCK_INNER_EXPR)).toBe('{job="grafana"} !~ `error`');
   });
 
+  it('lineFilterRenderer returns the correct query for line contains, containing backticks', () => {
+    const lineFilterRenderer = getLineFilterRenderer('!~');
+    expect(lineFilterRenderer(MOCK_MODEL_BACKTICKS, MOCK_DEF, MOCK_INNER_EXPR)).toBe('{job="grafana"} !~ "`error`"');
+  });
+
   it('lineFilterRenderer returns the correct query for line contains case insensitive', () => {
     const lineFilterRenderer = getLineFilterRenderer('!~', true);
     expect(lineFilterRenderer(MOCK_MODEL_INSENSITIVE, MOCK_DEF, MOCK_INNER_EXPR)).toBe(
@@ -169,7 +178,7 @@ describe('getLineFilterRenderer', () => {
 
 describe('labelFilterRenderer', () => {
   const MOCK_MODEL = { id: '__label_filter', params: ['label', '', 'value'] };
-  const MOCK_DEF = undefined as unknown as QueryBuilderOperationDef;
+  const MOCK_DEF = undefined as unknown as QueryBuilderOperationDefinition;
   const MOCK_INNER_EXPR = '{job="grafana"}';
 
   it.each`
@@ -211,17 +220,12 @@ describe('isConflictingFilter', () => {
 });
 
 describe('pipelineRenderer', () => {
-  let definitions: QueryBuilderOperationDef[];
-  beforeEach(() => {
-    definitions = getOperationDefinitions();
-  });
-
   it('correctly renders unpack expressions', () => {
     const model: QueryBuilderOperation = {
       id: LokiOperationId.Unpack,
       params: [],
     };
-    const definition = definitions.find((def) => def.id === LokiOperationId.Unpack);
+    const definition = operationDefinitions.find((def) => def.id === LokiOperationId.Unpack);
     expect(pipelineRenderer(model, definition!, '{}')).toBe('{} | unpack');
   });
 
@@ -230,7 +234,7 @@ describe('pipelineRenderer', () => {
       id: LokiOperationId.Unpack,
       params: [],
     };
-    const definition = definitions.find((def) => def.id === LokiOperationId.Unpack);
+    const definition = operationDefinitions.find((def) => def.id === LokiOperationId.Unpack);
     expect(pipelineRenderer(model, definition!, '{}')).toBe('{} | unpack');
   });
 
@@ -239,7 +243,7 @@ describe('pipelineRenderer', () => {
       id: LokiOperationId.Logfmt,
       params: [],
     };
-    const definition = definitions.find((def) => def.id === LokiOperationId.Logfmt);
+    const definition = operationDefinitions.find((def) => def.id === LokiOperationId.Logfmt);
     expect(pipelineRenderer(model, definition!, '{}')).toBe('{} | logfmt');
   });
 
@@ -248,7 +252,7 @@ describe('pipelineRenderer', () => {
       id: LokiOperationId.Logfmt,
       params: [true, false, 'foo', ''],
     };
-    const definition = definitions.find((def) => def.id === LokiOperationId.Logfmt);
+    const definition = operationDefinitions.find((def) => def.id === LokiOperationId.Logfmt);
     expect(pipelineRenderer(model, definition!, '{}')).toBe('{} | logfmt --strict foo');
   });
 
@@ -257,7 +261,7 @@ describe('pipelineRenderer', () => {
       id: LokiOperationId.Logfmt,
       params: [true, false, 'foo', 'bar', 'baz'],
     };
-    const definition = definitions.find((def) => def.id === LokiOperationId.Logfmt);
+    const definition = operationDefinitions.find((def) => def.id === LokiOperationId.Logfmt);
     expect(pipelineRenderer(model, definition!, '{}')).toBe('{} | logfmt --strict foo, bar, baz');
   });
 
@@ -266,7 +270,7 @@ describe('pipelineRenderer', () => {
       id: LokiOperationId.Json,
       params: [],
     };
-    const definition = definitions.find((def) => def.id === LokiOperationId.Json);
+    const definition = operationDefinitions.find((def) => def.id === LokiOperationId.Json);
     expect(pipelineRenderer(model, definition!, '{}')).toBe('{} | json');
   });
 
@@ -275,7 +279,7 @@ describe('pipelineRenderer', () => {
       id: LokiOperationId.Json,
       params: ['foo', ''],
     };
-    const definition = definitions.find((def) => def.id === LokiOperationId.Json);
+    const definition = operationDefinitions.find((def) => def.id === LokiOperationId.Json);
     expect(pipelineRenderer(model, definition!, '{}')).toBe('{} | json foo');
   });
 
@@ -284,7 +288,7 @@ describe('pipelineRenderer', () => {
       id: LokiOperationId.Json,
       params: ['foo', 'bar', 'baz'],
     };
-    const definition = definitions.find((def) => def.id === LokiOperationId.Json);
+    const definition = operationDefinitions.find((def) => def.id === LokiOperationId.Json);
     expect(pipelineRenderer(model, definition!, '{}')).toBe('{} | json foo, bar, baz');
   });
 
@@ -293,7 +297,7 @@ describe('pipelineRenderer', () => {
       id: LokiOperationId.Keep,
       params: ['foo', ''],
     };
-    const definition = definitions.find((def) => def.id === LokiOperationId.Keep);
+    const definition = operationDefinitions.find((def) => def.id === LokiOperationId.Keep);
     expect(pipelineRenderer(model, definition!, '{}')).toBe('{} | keep foo');
   });
 
@@ -302,7 +306,7 @@ describe('pipelineRenderer', () => {
       id: LokiOperationId.Keep,
       params: ['foo', 'bar', 'baz'],
     };
-    const definition = definitions.find((def) => def.id === LokiOperationId.Keep);
+    const definition = operationDefinitions.find((def) => def.id === LokiOperationId.Keep);
     expect(pipelineRenderer(model, definition!, '{}')).toBe('{} | keep foo, bar, baz');
   });
 
@@ -311,7 +315,7 @@ describe('pipelineRenderer', () => {
       id: LokiOperationId.Drop,
       params: ['foo', ''],
     };
-    const definition = definitions.find((def) => def.id === LokiOperationId.Drop);
+    const definition = operationDefinitions.find((def) => def.id === LokiOperationId.Drop);
     expect(pipelineRenderer(model, definition!, '{}')).toBe('{} | drop foo');
   });
 
@@ -320,7 +324,7 @@ describe('pipelineRenderer', () => {
       id: LokiOperationId.Drop,
       params: ['foo', 'bar', 'baz'],
     };
-    const definition = definitions.find((def) => def.id === LokiOperationId.Drop);
+    const definition = operationDefinitions.find((def) => def.id === LokiOperationId.Drop);
     expect(pipelineRenderer(model, definition!, '{}')).toBe('{} | drop foo, bar, baz');
   });
 });

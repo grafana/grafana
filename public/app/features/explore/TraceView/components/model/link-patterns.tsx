@@ -15,10 +15,8 @@
 import { uniq as _uniq } from 'lodash';
 import memoize from 'lru-memoize';
 
-import { TraceSpan, TraceLink, TraceKeyValuePair, Trace, TNil } from '../types';
+import { Trace } from '../types';
 import { getConfigValue } from '../utils/config/get-config';
-
-import { getParent } from './span';
 
 const parameterRegExp = /#\{([^{}]*)\}/g;
 
@@ -119,25 +117,6 @@ export function processLinkPattern(pattern: any): ProcessedLinkPattern | null {
   }
 }
 
-export function getParameterInArray(name: string, array?: TraceKeyValuePair[] | TNil) {
-  if (array) {
-    return array.find((entry) => entry.key === name);
-  }
-  return undefined;
-}
-
-export function getParameterInAncestor(name: string, span: TraceSpan) {
-  let currentSpan: TraceSpan | TNil = span;
-  while (currentSpan) {
-    const result = getParameterInArray(name, currentSpan.tags) || getParameterInArray(name, currentSpan.process.tags);
-    if (result) {
-      return result;
-    }
-    currentSpan = getParent(currentSpan);
-  }
-  return undefined;
-}
-
 function callTemplate(template: ProcessedTemplate, data: any) {
   return template.template(data);
 }
@@ -173,70 +152,6 @@ export function computeTraceLink(linkPatterns: ProcessedLinkPattern[], trace: Tr
   return result;
 }
 
-export function computeLinks(
-  linkPatterns: ProcessedLinkPattern[],
-  span: TraceSpan,
-  items: TraceKeyValuePair[],
-  itemIndex: number
-) {
-  const item = items[itemIndex];
-  let type = 'logs';
-  const processTags = span.process.tags === items;
-  if (processTags) {
-    type = 'process';
-  }
-  const spanTags = span.tags === items;
-  if (spanTags) {
-    type = 'tags';
-  }
-  const result: Array<{ url: string; text: string }> = [];
-  linkPatterns.forEach((pattern) => {
-    if (pattern.type(type) && pattern.key(item.key) && pattern.value(item.value)) {
-      const parameterValues: Record<string, any> = {};
-      const allParameters = pattern.parameters.every((parameter) => {
-        let entry = getParameterInArray(parameter, items);
-        if (!entry && !processTags) {
-          // do not look in ancestors for process tags because the same object may appear in different places in the hierarchy
-          // and the cache in getLinks uses that object as a key
-          entry = getParameterInAncestor(parameter, span);
-        }
-        if (entry) {
-          parameterValues[parameter] = entry.value;
-          return true;
-        }
-        // eslint-disable-next-line no-console
-        console.warn(
-          `Skipping link pattern, missing parameter ${parameter} for key ${item.key} in ${type}.`,
-          pattern.object
-        );
-        return false;
-      });
-      if (allParameters) {
-        result.push({
-          url: callTemplate(pattern.url, parameterValues),
-          text: callTemplate(pattern.text, parameterValues),
-        });
-      }
-    }
-  });
-  return result;
-}
-
-export function createGetLinks(linkPatterns: ProcessedLinkPattern[], cache: WeakMap<TraceKeyValuePair, TraceLink[]>) {
-  return (span: TraceSpan, items: TraceKeyValuePair[], itemIndex: number) => {
-    if (linkPatterns.length === 0) {
-      return [];
-    }
-    const item = items[itemIndex];
-    let result = cache.get(item);
-    if (!result) {
-      result = computeLinks(linkPatterns, span, items, itemIndex);
-      cache.set(item, result);
-    }
-    return result;
-  };
-}
-
 const processedLinks = (getConfigValue('linkPatterns') || [])
   .map(processLinkPattern)
   .filter((link: ProcessedLinkPattern | null): link is ProcessedLinkPattern => Boolean(link));
@@ -248,5 +163,3 @@ export const getTraceLinks: (trace: Trace | undefined) => TLinksRV = memoize(10)
   }
   return computeTraceLink(processedLinks, trace);
 });
-
-export default createGetLinks(processedLinks, new WeakMap());

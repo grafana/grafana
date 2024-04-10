@@ -42,6 +42,8 @@ composableKinds: PanelCfg: {
 
 					width?:  float64
 					height?: float64
+
+					rotation?: float64
 				} @cuetsy(kind="interface")
 
 				BackgroundImageSize: "original" | "contain" | "cover" | "fill" | "tile" @cuetsy(kind="enum", memberNames="Original|Contain|Cover|Fill|Tile")
@@ -52,8 +54,9 @@ composableKinds: PanelCfg: {
 				} @cuetsy(kind="interface")
 
 				LineConfig: {
-					color?: ui.ColorDimensionConfig
-					width?: float64
+					color?:  ui.ColorDimensionConfig
+					width?:  float64
+					radius?: float64
 				} @cuetsy(kind="interface")
 
 				HttpRequestMethod: "GET" | "POST" | "PUT" @cuetsy(kind="enum", memberNames="GET|POST|PUT")
@@ -70,6 +73,7 @@ composableKinds: PanelCfg: {
 					path:        ConnectionPath
 					color?:      ui.ColorDimensionConfig
 					size?:       ui.ScaleDimensionConfig
+					vertices?: [...ConnectionCoordinates]
 				} @cuetsy(kind="interface")
 				CanvasElementOptions: {
 					name: string
@@ -88,6 +92,10 @@ composableKinds: PanelCfg: {
 					inlineEditing: bool | *true
 					// Show all available element types
 					showAdvancedTypes: bool | *true
+					// Enable pan and zoom
+					panZoom: bool | *true
+					// Enable infinite pan
+					infinitePan: bool | *true
 					// The root element of canvas (frame), where all canvas elements are nested
 					// TODO: Figure out how to define a default value for this
 					root: {

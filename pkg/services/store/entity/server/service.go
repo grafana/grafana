@@ -2,15 +2,9 @@ package server
 
 import (
 	"context"
-	"fmt"
-	"strconv"
 
-	"github.com/go-jose/go-jose/v3/jwt"
 	"github.com/grafana/dskit/services"
-	"github.com/prometheus/client_golang/prometheus"
-	"google.golang.org/grpc/metadata"
-
-	"github.com/grafana/grafana/pkg/infra/appcontext"
+	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/modules"
 	"github.com/grafana/grafana/pkg/registry"
@@ -18,10 +12,11 @@ import (
 	"github.com/grafana/grafana/pkg/services/grpcserver"
 	"github.com/grafana/grafana/pkg/services/grpcserver/interceptors"
 	"github.com/grafana/grafana/pkg/services/store/entity"
-	entityDB "github.com/grafana/grafana/pkg/services/store/entity/db"
+	"github.com/grafana/grafana/pkg/services/store/entity/db/dbimpl"
+	"github.com/grafana/grafana/pkg/services/store/entity/grpc"
 	"github.com/grafana/grafana/pkg/services/store/entity/sqlstash"
-	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/prometheus/client_golang/prometheus"
 )
 
 var (
@@ -56,65 +51,26 @@ type service struct {
 	tracing *tracing.TracingService
 
 	authenticator interceptors.Authenticator
+
+	log log.Logger
 }
-
-type Authenticator struct{}
-
-func (f *Authenticator) Authenticate(ctx context.Context) (context.Context, error) {
-	md, ok := metadata.FromIncomingContext(ctx)
-	if !ok {
-		return nil, fmt.Errorf("no metadata found")
-	}
-
-	// TODO: use id token instead of these fields
-	login := md.Get("grafana-login")[0]
-	if login == "" {
-		return nil, fmt.Errorf("no login found in context")
-	}
-	userID, err := strconv.ParseInt(md.Get("grafana-userid")[0], 10, 64)
-	if err != nil {
-		return nil, fmt.Errorf("invalid user id: %w", err)
-	}
-	orgID, err := strconv.ParseInt(md.Get("grafana-orgid")[0], 10, 64)
-	if err != nil {
-		return nil, fmt.Errorf("invalid org id: %w", err)
-	}
-
-	// TODO: validate id token
-	idToken := md.Get("grafana-idtoken")[0]
-	if idToken == "" {
-		return nil, fmt.Errorf("no id token found in context")
-	}
-	jwtToken, err := jwt.ParseSigned(idToken)
-	if err != nil {
-		return nil, fmt.Errorf("invalid id token: %w", err)
-	}
-	claims := jwt.Claims{}
-	err = jwtToken.UnsafeClaimsWithoutVerification(&claims)
-	if err != nil {
-		return nil, fmt.Errorf("invalid id token: %w", err)
-	}
-	// fmt.Printf("JWT CLAIMS: %+v\n", claims)
-
-	return appcontext.WithUser(ctx, &user.SignedInUser{
-		Login:  login,
-		UserID: userID,
-		OrgID:  orgID,
-	}), nil
-}
-
-var _ interceptors.Authenticator = (*Authenticator)(nil)
 
 func ProvideService(
 	cfg *setting.Cfg,
 	features featuremgmt.FeatureToggles,
+	log log.Logger,
 ) (*service, error) {
-	tracing, err := tracing.ProvideService(cfg)
+	tracingCfg, err := tracing.ProvideTracingConfig(cfg)
 	if err != nil {
 		return nil, err
 	}
 
-	authn := &Authenticator{}
+	tracing, err := tracing.ProvideService(tracingCfg)
+	if err != nil {
+		return nil, err
+	}
+
+	authn := &grpc.Authenticator{}
 
 	s := &service{
 		config:        newConfig(cfg),
@@ -123,6 +79,7 @@ func ProvideService(
 		stopCh:        make(chan struct{}),
 		authenticator: authn,
 		tracing:       tracing,
+		log:           log,
 	}
 
 	// This will be used when running as a dskit service
@@ -147,7 +104,7 @@ func (s *service) start(ctx context.Context) error {
 	// TODO: use wire
 
 	// TODO: support using grafana db connection?
-	eDB, err := entityDB.ProvideEntityDB(nil, s.cfg, s.features)
+	eDB, err := dbimpl.ProvideEntityDB(nil, s.cfg, s.features)
 	if err != nil {
 		return err
 	}

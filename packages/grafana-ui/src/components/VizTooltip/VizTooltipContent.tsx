@@ -1,42 +1,53 @@
 import { css } from '@emotion/css';
-import React, { ReactElement } from 'react';
+import React, { CSSProperties, ReactNode } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 
 import { useStyles2 } from '../../themes';
 
 import { VizTooltipRow } from './VizTooltipRow';
-import { LabelValue } from './types';
+import { VizTooltipItem } from './types';
 
-interface Props {
-  contentLabelValue: LabelValue[];
-  customContent?: ReactElement | null;
+interface VizTooltipContentProps {
+  items: VizTooltipItem[];
+  children?: ReactNode;
+  scrollable?: boolean;
+  isPinned: boolean;
+  maxHeight?: number;
 }
 
-export const VizTooltipContent = ({ contentLabelValue, customContent }: Props) => {
+export const VizTooltipContent = ({
+  items,
+  children,
+  isPinned,
+  scrollable = false,
+  maxHeight,
+}: VizTooltipContentProps) => {
   const styles = useStyles2(getStyles);
 
+  const scrollableStyle: CSSProperties = scrollable
+    ? {
+        maxHeight: maxHeight,
+        overflowY: 'scroll',
+      }
+    : {};
+
   return (
-    <div className={styles.wrapper}>
-      <div>
-        {contentLabelValue?.map((labelValue, i) => {
-          const { label, value, color, colorIndicator, colorPlacement, isActive } = labelValue;
-          return (
-            <VizTooltipRow
-              key={i}
-              label={label}
-              value={value}
-              color={color}
-              colorIndicator={colorIndicator}
-              colorPlacement={colorPlacement}
-              colorFirst={false}
-              isActive={isActive}
-              justify={'space-between'}
-            />
-          );
-        })}
-      </div>
-      {customContent && <div className={styles.customContentPadding}>{customContent}</div>}
+    <div className={styles.wrapper} style={scrollableStyle}>
+      {items.map(({ label, value, color, colorIndicator, colorPlacement, isActive }, i) => (
+        <VizTooltipRow
+          key={i}
+          label={label}
+          value={value}
+          color={color}
+          colorIndicator={colorIndicator}
+          colorPlacement={colorPlacement}
+          isActive={isActive}
+          justify={'space-between'}
+          isPinned={isPinned}
+        />
+      ))}
+      {children}
     </div>
   );
 };
@@ -49,8 +60,5 @@ const getStyles = (theme: GrafanaTheme2) => ({
     gap: 4,
     borderTop: `1px solid ${theme.colors.border.medium}`,
     padding: theme.spacing(1),
-  }),
-  customContentPadding: css({
-    padding: `${theme.spacing(1)} 0`,
   }),
 });

@@ -28,15 +28,28 @@ type EmailSender interface {
 	SendEmailCommandHandlerSync(ctx context.Context, cmd *SendEmailCommandSync) error
 	SendEmailCommandHandler(ctx context.Context, cmd *SendEmailCommand) error
 }
+type PasswordResetMailer interface {
+	SendResetPasswordEmail(ctx context.Context, cmd *SendResetPasswordEmailCommand) error
+	ValidateResetPasswordCode(ctx context.Context, query *ValidateResetPasswordCodeQuery, userByLogin GetUserByLoginFunc) (*user.User, error)
+}
+type EmailVerificationMailer interface {
+	SendVerificationEmail(ctx context.Context, cmd *SendVerifyEmailCommand) error
+}
 type Service interface {
 	WebhookSender
 	EmailSender
+	PasswordResetMailer
+	EmailVerificationMailer
 }
 
 var mailTemplates *template.Template
-var tmplResetPassword = "reset_password"
-var tmplSignUpStarted = "signup_started"
-var tmplWelcomeOnSignUp = "welcome_on_signup"
+
+const (
+	tmplResetPassword   = "reset_password"
+	tmplSignUpStarted   = "signup_started"
+	tmplWelcomeOnSignUp = "welcome_on_signup"
+	tmplVerifyEmail     = "verify_email"
+)
 
 func ProvideService(bus bus.Bus, cfg *setting.Cfg, mailer Mailer, store TempUserStore) (*NotificationService, error) {
 	ns := &NotificationService{
@@ -112,7 +125,7 @@ func (ns *NotificationService) Run(ctx context.Context) error {
 				ns.log.Error("Failed to send webrequest ", "error", err)
 			}
 		case msg := <-ns.mailQueue:
-			num, err := ns.Send(msg)
+			num, err := ns.Send(ctx, msg)
 			tos := strings.Join(msg.To, "; ")
 			info := ""
 			if err != nil {
@@ -203,7 +216,7 @@ func (ns *NotificationService) SendEmailCommandHandlerSync(ctx context.Context, 
 		return err
 	}
 
-	_, err = ns.Send(message)
+	_, err = ns.Send(ctx, message)
 	return err
 }
 
@@ -257,8 +270,22 @@ func (ns *NotificationService) ValidateResetPasswordCode(ctx context.Context, qu
 	return user, nil
 }
 
+func (ns *NotificationService) SendVerificationEmail(ctx context.Context, cmd *SendVerifyEmailCommand) error {
+	return ns.SendEmailCommandHandlerSync(ctx, &SendEmailCommandSync{
+		SendEmailCommand: SendEmailCommand{
+			To:       []string{cmd.Email},
+			Template: tmplVerifyEmail,
+			Data: map[string]any{
+				"Code":                           url.QueryEscape(cmd.Code),
+				"Name":                           cmd.User.Name,
+				"VerificationEmailLifetimeHours": int(ns.Cfg.VerificationEmailMaxLifetime.Hours()),
+			},
+		},
+	})
+}
+
 func (ns *NotificationService) signUpStartedHandler(ctx context.Context, evt *events.SignUpStarted) error {
-	if !setting.VerifyEmailEnabled {
+	if !ns.Cfg.VerifyEmailEnabled {
 		return nil
 	}
 

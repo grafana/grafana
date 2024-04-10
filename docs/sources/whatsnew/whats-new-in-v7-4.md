@@ -3,7 +3,7 @@ _build:
   list: false
 aliases:
   - ../guides/whats-new-in-v7-4/
-description: Feature and improvement highlights for Grafana v7.4
+description: Learn about new and updated features in Grafana v7.4
 keywords:
   - grafana
   - new
@@ -21,7 +21,7 @@ weight: -31
 
 # What's new in Grafana v7.4
 
-This topic includes the release notes for Grafana v7.4. For all details, read the full [CHANGELOG.md](https://github.com/grafana/grafana/blob/master/CHANGELOG.md).
+This topic includes the release notes for Grafana v7.4. For all details, read the full [CHANGELOG.md](https://github.com/grafana/grafana/blob/main/CHANGELOG.md).
 
 Check out the [New Features in 7.4](https://play.grafana.org/d/nP8rcffGk/1-new-features-in-v7-4?orgId=1) dashboard on Grafana Play!
 
@@ -245,4 +245,4 @@ In order to minimize the confusion with Constant variable usage, we've removed t
 
 ## Changelog
 
-Check out [CHANGELOG.md](https://github.com/grafana/grafana/blob/master/CHANGELOG.md) for a complete list of new features, changes, and bug fixes.
+Check out [CHANGELOG.md](https://github.com/grafana/grafana/blob/main/CHANGELOG.md) for a complete list of new features, changes, and bug fixes.

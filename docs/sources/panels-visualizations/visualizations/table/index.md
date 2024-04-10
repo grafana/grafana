@@ -6,7 +6,7 @@ aliases:
   - ../../visualizations/table/
   - ../../visualizations/table/filter-table-columns/
   - /docs/grafana/next/panels/visualizations/table/table-field-options/
-description: Learn about table panel visualization features.
+description: Configure options for Grafana's table visualization
 keywords:
   - grafana
   - dashboard
@@ -27,9 +27,13 @@ weight: 100
 
 # Table
 
-Tables are very flexible, supporting multiple modes for time series and for tables, annotation, and raw JSON data. This visualization also provides date formatting, value formatting, and coloring options.
+Tables are very flexible, supporting multiple modes for time series and for tables, annotation, and raw JSON data. This visualization also provides date formatting, value formatting, and coloring options. In addition to formatting and coloring options, Grafana also provides a variety of _Cell types_ which you can use to display gauges, sparklines, and other rich data displays.
 
 {{< figure src="/static/img/docs/tables/table_visualization.png" max-width="1200px" lightbox="true" caption="Table visualization" >}}
+
+The following video provides a visual walkthrough of the options you can set in a table visualization. If you want to see a configuration in action, check out the video:
+
+{{< youtube id="PCY7O8EJeJY" >}}
 
 ## Annotation and alert support
 
@@ -94,6 +98,10 @@ If thresholds are set, then the field background is displayed in the appropriate
 
 {{< figure src="/static/img/docs/tables/color-background.png" max-width="500px" caption="Color background" class="docs-image--no-shadow" >}}
 
+Toggle the **Apply to entire row** switch, to apply the background color that's configured for the cell to the whole row.
+
+{{< figure src="/static/img/docs/tables/colored-rows.png" max-width="500px" alt="Colored row background" class="docs-image--no-shadow" >}}
+
 ### Gauge
 
 Cells can be displayed as a graphical gauge, with several different presentation types.
@@ -148,9 +156,11 @@ If you have a field value that is an image URL or a base64 encoded image you can
 
 ### Sparkline
 
-Shows value rendered as a sparkline. Requires [time series to table][] data transform.
+Shows values rendered as a sparkline. You can show sparklines using the [Time series to table transformation][] on data with multiple time series to process it into a format the table can show.
 
 {{< figure src="/static/img/docs/tables/sparkline2.png" max-width="500px" caption="Sparkline" class="docs-image--no-shadow" >}}
+
+You can be customize sparklines with many of the same options as the [Time series panel][] including line width, fill opacity, and more. You can also change the color of the sparkline by updating the [color scheme][] in the _Standard options_ section of the panel configuration.
 
 ## Cell value inspect
 
@@ -191,6 +201,14 @@ To filter column values, click the filter (funnel) icon next to a column title. 
 
 Click the check box next to the values that you want to display. Enter text in the search field at the top to show those values in the display so that you can select them rather than scroll to find them.
 
+Choose from several operators to display column values:
+
+- **Contains** - Matches a regex pattern (operator by default).
+- **Expression** - Evaluates a boolean expression. The character `$` represents the column value in the expression (for example, "$ >= 10 && $ <= 12").
+- The typical comparison operators: `=`, `!=`, `<`, `<=`, `>`, `>=`.
+
+Click the check box above the **Ok** and **Cancel** buttons to add or remove all displayed values to/from the filter.
+
 ### Clear column filters
 
 Columns with filters applied have a blue funnel displayed next to the title.
@@ -218,8 +236,14 @@ If you want to show the number of rows in the dataset instead of the number of v
 [calculations]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/panels-visualizations/query-transform-data/calculation-types"
 [calculations]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/visualizations/panels-visualizations/query-transform-data/calculation-types"
 
-[time series to table]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/panels-visualizations/query-transform-data/transform-data#time-series-to-table-transform"
-[time series to table]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/panels-visualizations/query-transform-data/transform-data#time-series-to-table-transform"
+[Time series to table transformation]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/panels-visualizations/query-transform-data/transform-data#time-series-to-table-transform"
+[Time series to table transformation]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/panels-visualizations/query-transform-data/transform-data#time-series-to-table-transform"
+
+[Time series panel]: "/docs/grafana/ -> /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/visualizations/time-series"
+[Time series panel]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/visualizations/panels-visualizations/visualizations/time-series"
+
+[color scheme]: "/docs/grafana/ -> /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/configure-standard-options#color-scheme"
+[color scheme]: "/docs/grafana-cloud -> /docs/grafana-cloud/visualizations/panels-visualizations/configure-standard-options#color-scheme"
 
 [configuration file]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/setup-grafana/configure-grafana#configuration-file-location"
 [configuration file]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/setup-grafana/configure-grafana#configuration-file-location"

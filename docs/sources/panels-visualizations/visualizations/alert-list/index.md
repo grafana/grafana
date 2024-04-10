@@ -16,6 +16,7 @@ labels:
     - enterprise
     - oss
 title: Alert list
+description: Configure options for Grafana's alert list visualization
 weight: 100
 ---
 

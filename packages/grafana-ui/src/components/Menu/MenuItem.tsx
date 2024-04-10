@@ -79,7 +79,6 @@ export const MenuItem = React.memo(
     const styles = useStyles2(getStyles);
     const [isActive, setIsActive] = useState(active);
     const [isSubMenuOpen, setIsSubMenuOpen] = useState(false);
-    const [openedWithArrow, setOpenedWithArrow] = useState(false);
     const onMouseEnter = useCallback(() => {
       if (disabled) {
         return;
@@ -128,7 +127,6 @@ export const MenuItem = React.memo(
           event.stopPropagation();
           if (hasSubMenu) {
             setIsSubMenuOpen(true);
-            setOpenedWithArrow(true);
             setIsActive(true);
           }
           break;
@@ -178,8 +176,6 @@ export const MenuItem = React.memo(
               <SubMenu
                 items={childItems}
                 isOpen={isSubMenuOpen}
-                openedWithArrow={openedWithArrow}
-                setOpenedWithArrow={setOpenedWithArrow}
                 close={closeSubMenu}
                 customStyle={customSubMenuContainerStyles}
               />
@@ -219,7 +215,7 @@ const getStyles = (theme: GrafanaTheme2) => {
       width: '100%',
       position: 'relative',
 
-      '&:hover, &:focus, &:focus-visible': {
+      '&:hover, &:focus-visible': {
         background: theme.colors.action.hover,
         color: theme.colors.text.primary,
         textDecoration: 'none',

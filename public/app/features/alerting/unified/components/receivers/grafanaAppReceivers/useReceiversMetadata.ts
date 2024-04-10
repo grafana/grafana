@@ -16,15 +16,20 @@ export interface ReceiverPluginMetadata {
 const onCallReceiverICon = GRAFANA_APP_RECEIVERS_SOURCE_IMAGE[SupportedPlugin.OnCall];
 const onCallReceiverTitle = 'Grafana OnCall';
 
-const onCallReceiverMeta: ReceiverPluginMetadata = {
+export const onCallReceiverMeta: ReceiverPluginMetadata = {
   title: onCallReceiverTitle,
   icon: onCallReceiverICon,
 };
 
 export function getOnCallMetadata(
   onCallIntegrations: OnCallIntegrationDTO[] | undefined | null,
-  receiver: GrafanaManagedReceiverConfig
+  receiver: GrafanaManagedReceiverConfig,
+  hasAlertManagerConfigData = true
 ): ReceiverPluginMetadata {
+  if (!hasAlertManagerConfigData) {
+    return onCallReceiverMeta;
+  }
+
   // oncall status is still loading
   if (onCallIntegrations === undefined) {
     return onCallReceiverMeta;
@@ -39,7 +44,7 @@ export function getOnCallMetadata(
   }
 
   const matchingOnCallIntegration = onCallIntegrations.find(
-    (integration) => integration.integration_url === receiver.settings.url
+    (integration) => integration.integration_url === receiver.settings?.url
   );
 
   return {

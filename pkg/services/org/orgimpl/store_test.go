@@ -21,7 +21,12 @@ import (
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/services/user/userimpl"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/tests/testsuite"
 )
+
+func TestMain(m *testing.M) {
+	testsuite.Run(m)
+}
 
 func TestIntegrationOrgDataAccess(t *testing.T) {
 	if testing.Short() {
@@ -616,7 +621,7 @@ func TestIntegration_SQLStore_GetOrgUsers(t *testing.T) {
 	o, err := orgSvc.CreateWithMember(context.Background(), &org.CreateOrgCommand{Name: "test org"})
 	require.NoError(t, err)
 
-	seedOrgUsers(t, &orgUserStore, store, 10, userSvc, o.ID)
+	seedOrgUsers(t, &orgUserStore, 10, userSvc, o.ID)
 
 	tests := []struct {
 		desc             string
@@ -677,7 +682,7 @@ func TestIntegration_SQLStore_GetOrgUsers(t *testing.T) {
 	}
 }
 
-func seedOrgUsers(t *testing.T, orgUserStore store, store *sqlstore.SQLStore, numUsers int, usrSvc user.Service, orgID int64) {
+func seedOrgUsers(t *testing.T, orgUserStore store, numUsers int, usrSvc user.Service, orgID int64) {
 	t.Helper()
 
 	// Seed users
@@ -793,7 +798,7 @@ func TestIntegration_SQLStore_SearchOrgUsers(t *testing.T) {
 	o, err := orgSvc.CreateWithMember(context.Background(), &org.CreateOrgCommand{Name: "test org"})
 	require.NoError(t, err)
 
-	seedOrgUsers(t, &orgUserStore, store, 10, userSvc, o.ID)
+	seedOrgUsers(t, &orgUserStore, 10, userSvc, o.ID)
 
 	tests := []struct {
 		desc             string

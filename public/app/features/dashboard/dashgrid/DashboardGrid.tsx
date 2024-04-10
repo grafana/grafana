@@ -1,7 +1,6 @@
 import classNames from 'classnames';
 import React, { PureComponent, CSSProperties } from 'react';
 import ReactGridLayout, { ItemCallback } from 'react-grid-layout';
-import AutoSizer from 'react-virtualized-auto-sizer';
 import { Subscription } from 'rxjs';
 
 import { config } from '@grafana/runtime';
@@ -12,7 +11,6 @@ import { VariablesChanged } from 'app/features/variables/types';
 import { DashboardPanelsChangedEvent } from 'app/types/events';
 
 import { AddLibraryPanelWidget } from '../components/AddLibraryPanelWidget';
-import { AddPanelWidget } from '../components/AddPanelWidget';
 import { DashboardRow } from '../components/DashboardRow';
 import { DashboardModel, PanelModel } from '../state';
 import { GridPos } from '../state/PanelModel';
@@ -32,6 +30,7 @@ export interface Props {
 
 interface State {
   panelFilter?: RegExp;
+  width: number;
 }
 
 export class DashboardGrid extends PureComponent<Props, State> {
@@ -48,6 +47,7 @@ export class DashboardGrid extends PureComponent<Props, State> {
     super(props);
     this.state = {
       panelFilter: undefined,
+      width: document.body.clientWidth, // initial very rough estimate
     };
   }
 
@@ -221,15 +221,10 @@ export class DashboardGrid extends PureComponent<Props, State> {
     for (const panel of this.props.dashboard.panels) {
       const panelClasses = classNames({ 'react-grid-item--fullscreen': panel.isViewing });
 
-      // used to allow overflowing content to show on top of the next panel
-      // requires parent create stacking context to prevent overlap with parent elements
-      const descIndex = this.props.dashboard.panels.length - panelElements.length;
-
       const p = (
         <GrafanaGridItem
           key={panel.key}
           className={panelClasses}
-          descendingOrderIndex={descIndex}
           data-panelid={panel.id}
           gridPos={panel.gridPos}
           gridWidth={gridWidth}
@@ -258,11 +253,6 @@ export class DashboardGrid extends PureComponent<Props, State> {
   renderPanel(panel: PanelModel, width: number, height: number, isDraggable: boolean) {
     if (panel.type === 'row') {
       return <DashboardRow key={panel.key} panel={panel} dashboard={this.props.dashboard} />;
-    }
-
-    // Todo: Remove this when we remove the emptyDashboardPage toggle
-    if (panel.type === 'add-panel') {
-      return <AddPanelWidget key={panel.key} panel={panel} dashboard={this.props.dashboard} />;
     }
 
     if (panel.type === 'add-library-panel') {
@@ -297,22 +287,41 @@ export class DashboardGrid extends PureComponent<Props, State> {
     }
   };
 
+  private resizeObserver?: ResizeObserver;
+  private rootEl: HTMLDivElement | null = null;
+  onMeasureRef = (rootEl: HTMLDivElement | null) => {
+    if (!rootEl) {
+      if (this.rootEl && this.resizeObserver) {
+        this.resizeObserver.unobserve(this.rootEl);
+      }
+      return;
+    }
+
+    this.rootEl = rootEl;
+    this.resizeObserver = new ResizeObserver((entries) => {
+      entries.forEach((entry) => {
+        this.setState({ width: entry.contentRect.width });
+      });
+    });
+
+    this.resizeObserver.observe(rootEl);
+  };
+
   render() {
     const { isEditable, dashboard } = this.props;
+    const { width } = this.state;
 
-    if (config.featureToggles.emptyDashboardPage && dashboard.panels.length === 0) {
+    if (dashboard.panels.length === 0) {
       return <DashboardEmpty dashboard={dashboard} canCreate={isEditable} />;
     }
 
-    /**
-     * We have a parent with "flex: 1 1 0" we need to reset it to "flex: 1 1 auto" to have the AutoSizer
-     * properly working. For more information go here:
-     * https://github.com/bvaughn/react-virtualized/blob/master/docs/usingAutoSizer.md#can-i-use-autosizer-within-a-flex-container
-     *
-     * pos: rel + z-index is required to create a new stacking context to contain the escalating z-indexes of the panels
-     */
+    const draggable = width <= config.theme2.breakpoints.values.md ? false : isEditable;
+
+    // pos: rel + z-index is required to create a new stacking context to contain
+    // the escalating z-indexes of the panels
     return (
       <div
+        ref={this.onMeasureRef}
         style={{
           flex: '1 1 auto',
           position: 'relative',
@@ -320,46 +329,27 @@ export class DashboardGrid extends PureComponent<Props, State> {
           display: this.props.editPanel ? 'none' : undefined,
         }}
       >
-        <AutoSizer disableHeight>
-          {({ width }) => {
-            if (width === 0) {
-              return null;
-            }
-
-            // Disable draggable if mobile device, solving an issue with unintentionally
-            // moving panels. https://github.com/grafana/grafana/issues/18497
-            const draggable = width <= config.theme2.breakpoints.values.md ? false : isEditable;
-
-            return (
-              /**
-               * The children is using a width of 100% so we need to guarantee that it is wrapped
-               * in an element that has the calculated size given by the AutoSizer. The AutoSizer
-               * has a width of 0 and will let its content overflow its div.
-               */
-              <div style={{ width: width, height: '100%' }} ref={this.onGetWrapperDivRef}>
-                <ReactGridLayout
-                  width={width}
-                  isDraggable={draggable}
-                  isResizable={isEditable}
-                  containerPadding={[0, 0]}
-                  useCSSTransforms={true}
-                  margin={[GRID_CELL_VMARGIN, GRID_CELL_VMARGIN]}
-                  cols={GRID_COLUMN_COUNT}
-                  rowHeight={GRID_CELL_HEIGHT}
-                  draggableHandle=".grid-drag-handle"
-                  draggableCancel=".grid-drag-cancel"
-                  layout={this.buildLayout()}
-                  onDragStop={this.onDragStop}
-                  onResize={this.onResize}
-                  onResizeStop={this.onResizeStop}
-                  onLayoutChange={this.onLayoutChange}
-                >
-                  {this.renderPanels(width, draggable)}
-                </ReactGridLayout>
-              </div>
-            );
-          }}
-        </AutoSizer>
+        <div style={{ width: width, height: '100%' }} ref={this.onGetWrapperDivRef}>
+          <ReactGridLayout
+            width={width}
+            isDraggable={draggable}
+            isResizable={isEditable}
+            containerPadding={[0, 0]}
+            useCSSTransforms={true}
+            margin={[GRID_CELL_VMARGIN, GRID_CELL_VMARGIN]}
+            cols={GRID_COLUMN_COUNT}
+            rowHeight={GRID_CELL_HEIGHT}
+            draggableHandle=".grid-drag-handle"
+            draggableCancel=".grid-drag-cancel"
+            layout={this.buildLayout()}
+            onDragStop={this.onDragStop}
+            onResize={this.onResize}
+            onResizeStop={this.onResizeStop}
+            onLayoutChange={this.onLayoutChange}
+          >
+            {this.renderPanels(width, draggable)}
+          </ReactGridLayout>
+        </div>
       </div>
     );
   }
@@ -368,7 +358,6 @@ export class DashboardGrid extends PureComponent<Props, State> {
 interface GrafanaGridItemProps extends React.HTMLAttributes<HTMLDivElement> {
   gridWidth?: number;
   gridPos?: GridPos;
-  descendingOrderIndex?: number;
   isViewing: boolean;
   windowHeight: number;
   windowWidth: number;
@@ -383,7 +372,7 @@ const GrafanaGridItem = React.forwardRef<HTMLDivElement, GrafanaGridItemProps>((
   let width = 100;
   let height = 100;
 
-  const { gridWidth, gridPos, isViewing, windowHeight, windowWidth, descendingOrderIndex, ...divProps } = props;
+  const { gridWidth, gridPos, isViewing, windowHeight, windowWidth, ...divProps } = props;
   const style: CSSProperties = props.style ?? {};
 
   if (isViewing) {
@@ -413,7 +402,7 @@ const GrafanaGridItem = React.forwardRef<HTMLDivElement, GrafanaGridItemProps>((
 
   // props.children[0] is our main children. RGL adds the drag handle at props.children[1]
   return (
-    <div {...divProps} style={{ ...divProps.style, zIndex: descendingOrderIndex }} ref={ref}>
+    <div {...divProps} style={{ ...divProps.style }} ref={ref}>
       {/* Pass width and height to children as render props */}
       {[props.children[0](width, height), props.children.slice(1)]}
     </div>

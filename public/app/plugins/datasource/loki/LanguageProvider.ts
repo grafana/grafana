@@ -1,16 +1,18 @@
+import { flatten } from 'lodash';
 import { LRUCache } from 'lru-cache';
-import Prism from 'prismjs';
 
 import { LanguageProvider, AbstractQuery, KeyValue, getDefaultTimeRange, TimeRange } from '@grafana/data';
-import { extractLabelMatchers, processLabels, toPromLikeExpr } from 'app/plugins/datasource/prometheus/language_utils';
+import { config } from '@grafana/runtime';
 
 import { DEFAULT_MAX_LINES_SAMPLE, LokiDatasource } from './datasource';
+import { abstractQueryToExpr, mapAbstractOperatorsToOp, processLabels } from './languageUtils';
+import { getStreamSelectorsFromQuery } from './queryUtils';
+import { buildVisualQueryFromString } from './querybuilder/parsing';
 import {
   extractLabelKeysFromDataFrame,
   extractLogParserFromDataFrame,
   extractUnwrapLabelKeysFromDataFrame,
 } from './responseUtils';
-import syntax from './syntax';
 import { ParserAndLabelKeysResult, LokiQuery, LokiQueryType, LabelType } from './types';
 
 const NS_IN_MS = 1000000;
@@ -18,6 +20,7 @@ const NS_IN_MS = 1000000;
 export default class LokiLanguageProvider extends LanguageProvider {
   labelKeys: string[];
   started = false;
+  startedTimeRange?: TimeRange;
   datasource: LokiDatasource;
 
   /**
@@ -37,7 +40,7 @@ export default class LokiLanguageProvider extends LanguageProvider {
     Object.assign(this, initialValues);
   }
 
-  request = async (url: string, params?: any) => {
+  request = async (url: string, params?: Record<string, string | number>) => {
     try {
       return await this.datasource.metadataRequest(url, params);
     } catch (error) {
@@ -52,7 +55,13 @@ export default class LokiLanguageProvider extends LanguageProvider {
    */
   start = (timeRange?: TimeRange) => {
     const range = timeRange ?? this.getDefaultTimeRange();
-    if (!this.startTask) {
+    // refetch labels if either there's not already a start task or the time range has changed
+    if (
+      !this.startTask ||
+      this.startedTimeRange?.from.isSame(range.from) === false ||
+      this.startedTimeRange?.to.isSame(range.to) === false
+    ) {
+      this.startedTimeRange = range;
       this.startTask = this.fetchLabels({ timeRange: range }).then(() => {
         this.started = true;
         return [];
@@ -80,20 +89,32 @@ export default class LokiLanguageProvider extends LanguageProvider {
   importFromAbstractQuery(labelBasedQuery: AbstractQuery): LokiQuery {
     return {
       refId: labelBasedQuery.refId,
-      expr: toPromLikeExpr(labelBasedQuery),
+      expr: abstractQueryToExpr(labelBasedQuery),
       queryType: LokiQueryType.Range,
     };
   }
 
   exportToAbstractQuery(query: LokiQuery): AbstractQuery {
-    const lokiQuery = query.expr;
-    if (!lokiQuery || lokiQuery.length === 0) {
+    if (!query.expr || query.expr.length === 0) {
       return { refId: query.refId, labelMatchers: [] };
     }
-    const tokens = Prism.tokenize(lokiQuery, syntax);
+    const streamSelectors = getStreamSelectorsFromQuery(query.expr);
+
+    const labelMatchers = streamSelectors.map((streamSelector) => {
+      const visualQuery = buildVisualQueryFromString(streamSelector).query;
+      const matchers = visualQuery.labels.map((label) => {
+        return {
+          name: label.label,
+          value: label.value,
+          operator: mapAbstractOperatorsToOp[label.op],
+        };
+      });
+      return matchers;
+    });
+
     return {
       refId: query.refId,
-      labelMatchers: extractLabelMatchers(tokens),
+      labelMatchers: flatten(labelMatchers),
     };
   }
 
@@ -151,6 +172,9 @@ export default class LokiLanguageProvider extends LanguageProvider {
     if (!value) {
       const params = { 'match[]': interpolatedMatch, start, end };
       const data = await this.request(url, params);
+      if (!Array.isArray(data)) {
+        return {};
+      }
       const { values } = processLabels(data);
       value = values;
       this.seriesCache.set(cacheKey, value);
@@ -261,6 +285,18 @@ export default class LokiLanguageProvider extends LanguageProvider {
     streamSelector: string,
     options?: { maxLines?: number; timeRange?: TimeRange }
   ): Promise<ParserAndLabelKeysResult> {
+    const empty = {
+      extractedLabelKeys: [],
+      structuredMetadataKeys: [],
+      unwrapLabelKeys: [],
+      hasJSON: false,
+      hasLogfmt: false,
+      hasPack: false,
+    };
+    if (!config.featureToggles.lokiQueryHints) {
+      return empty;
+    }
+
     const series = await this.datasource.getDataSamples(
       {
         expr: streamSelector,
@@ -271,20 +307,16 @@ export default class LokiLanguageProvider extends LanguageProvider {
     );
 
     if (!series.length) {
-      return {
-        extractedLabelKeys: [],
-        structuredMetadataKeys: [],
-        unwrapLabelKeys: [],
-        hasJSON: false,
-        hasLogfmt: false,
-        hasPack: false,
-      };
+      return empty;
     }
 
     const { hasLogfmt, hasJSON, hasPack } = extractLogParserFromDataFrame(series[0]);
 
     return {
-      extractedLabelKeys: extractLabelKeysFromDataFrame(series[0]),
+      extractedLabelKeys: [
+        ...extractLabelKeysFromDataFrame(series[0], LabelType.Indexed),
+        ...extractLabelKeysFromDataFrame(series[0], LabelType.Parsed),
+      ],
       structuredMetadataKeys: extractLabelKeysFromDataFrame(series[0], LabelType.StructuredMetadata),
       unwrapLabelKeys: extractUnwrapLabelKeysFromDataFrame(series[0]),
       hasJSON,

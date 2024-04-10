@@ -22,6 +22,7 @@ const (
 	WeightInfrastructure
 	WeightApplication
 	WeightFrontend
+	WeightAsserts
 	WeightDataConnections
 	WeightApps
 	WeightPlugin
@@ -38,7 +39,6 @@ const (
 	NavIDAlertsAndIncidents   = "alerts-and-incidents"
 	NavIDTestingAndSynthetics = "testing-and-synthetics"
 	NavIDAlerting             = "alerting"
-	NavIDAlertingLegacy       = "alerting-legacy"
 	NavIDMonitoring           = "monitoring"
 	NavIDInfrastructure       = "infrastructure"
 	NavIDFrontend             = "frontend"
@@ -67,6 +67,7 @@ type NavLink struct {
 	EmptyMessageId string     `json:"emptyMessageId,omitempty"`
 	PluginID       string     `json:"pluginId,omitempty"` // (Optional) The ID of the plugin that registered nav link (e.g. as a standalone plugin page)
 	IsCreateAction bool       `json:"isCreateAction,omitempty"`
+	Keywords       []string   `json:"keywords,omitempty"`
 }
 
 func (node *NavLink) Sort() {
@@ -126,6 +127,14 @@ func Sort(nodes []*NavLink) {
 	}
 }
 
+func (root *NavTreeRoot) ApplyHelpVersion(version string) {
+	helpNode := root.FindById("help")
+
+	if helpNode != nil {
+		helpNode.SubTitle = version
+	}
+}
+
 func (root *NavTreeRoot) ApplyAdminIA() {
 	orgAdminNode := root.FindById(NavIDCfg)
 
@@ -140,6 +149,7 @@ func (root *NavTreeRoot) ApplyAdminIA() {
 		generalNodeLinks = AppendIfNotNil(generalNodeLinks, root.FindById("global-orgs"))
 		generalNodeLinks = AppendIfNotNil(generalNodeLinks, root.FindById("feature-toggles"))
 		generalNodeLinks = AppendIfNotNil(generalNodeLinks, root.FindById("storage"))
+		generalNodeLinks = AppendIfNotNil(generalNodeLinks, root.FindById("migrate-to-cloud"))
 
 		generalNode := &NavLink{
 			Text:     "General",

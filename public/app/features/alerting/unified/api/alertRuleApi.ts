@@ -81,6 +81,14 @@ export interface ModifyExportPayload {
   source_tenants?: string[] | undefined;
 }
 
+export interface AlertRuleUpdated {
+  message: string;
+  /**
+   * UIDs of rules updated from this request
+   */
+  updated: string[];
+}
+
 export const alertRuleApi = alertingApi.injectEndpoints({
   endpoints: (build) => ({
     preview: build.mutation<
@@ -154,15 +162,15 @@ export const alertRuleApi = alertingApi.injectEndpoints({
 
     prometheusRuleNamespaces: build.query<
       RuleNamespace[],
-      { ruleSourceName: string; namespace?: string; groupName?: string; ruleName?: string }
+      { ruleSourceName: string; namespace?: string; groupName?: string; ruleName?: string; dashboardUid?: string }
     >({
-      query: ({ ruleSourceName, namespace, groupName, ruleName }) => {
-        const queryParams: Record<string, string | undefined> = {};
-        // if (isPrometheusRuleIdentifier(ruleIdentifier) || isCloudRuleIdentifier(ruleIdentifier)) {
-        queryParams['file'] = namespace;
-        queryParams['rule_group'] = groupName;
-        queryParams['rule_name'] = ruleName;
-        // }
+      query: ({ ruleSourceName, namespace, groupName, ruleName, dashboardUid }) => {
+        const queryParams: Record<string, string | undefined> = {
+          file: namespace,
+          rule_group: groupName,
+          rule_name: ruleName,
+          dashboard_uid: dashboardUid, // Supported only by Grafana managed rules
+        };
 
         return {
           url: `api/prometheus/${getDatasourceAPIUid(ruleSourceName)}/api/v1/rules`,
@@ -172,6 +180,7 @@ export const alertRuleApi = alertingApi.injectEndpoints({
       transformResponse: (response: PromRulesResponse, _, args): RuleNamespace[] => {
         return groupRulesByFileName(response.data.groups, args.ruleSourceName);
       },
+      providesTags: ['CombinedAlertRule'],
     }),
 
     rulerRules: build.query<
@@ -182,6 +191,7 @@ export const alertRuleApi = alertingApi.injectEndpoints({
         const { path, params } = rulerUrlBuilder(rulerConfig).rules(filter);
         return { url: path, params };
       },
+      providesTags: ['CombinedAlertRule'],
     }),
 
     // TODO This should be probably a separate ruler API file
@@ -193,6 +203,7 @@ export const alertRuleApi = alertingApi.injectEndpoints({
         const { path, params } = rulerUrlBuilder(rulerConfig).namespaceGroup(namespace, group);
         return { url: path, params };
       },
+      providesTags: ['CombinedAlertRule'],
     }),
 
     exportRules: build.query<string, ExportRulesParams>({
@@ -229,15 +240,40 @@ export const alertRuleApi = alertingApi.injectEndpoints({
     }),
     exportModifiedRuleGroup: build.mutation<
       string,
-      { payload: ModifyExportPayload; format: ExportFormats; nameSpace: string }
+      { payload: ModifyExportPayload; format: ExportFormats; nameSpaceUID: string }
     >({
-      query: ({ payload, format, nameSpace }) => ({
-        url: `/api/ruler/grafana/api/v1/rules/${nameSpace}/export/`,
+      query: ({ payload, format, nameSpaceUID }) => ({
+        url: `/api/ruler/grafana/api/v1/rules/${nameSpaceUID}/export/`,
         params: { format: format },
         responseType: 'text',
         data: payload,
         method: 'POST',
       }),
+    }),
+    exportMuteTimings: build.query<string, { format: ExportFormats }>({
+      query: ({ format }) => ({
+        url: `/api/v1/provisioning/mute-timings/export/`,
+        params: { format: format },
+        responseType: 'text',
+      }),
+      keepUnusedDataFor: 0,
+    }),
+    exportMuteTiming: build.query<string, { format: ExportFormats; muteTiming: string }>({
+      query: ({ format, muteTiming }) => ({
+        url: `/api/v1/provisioning/mute-timings/${muteTiming}/export/`,
+        params: { format: format },
+        responseType: 'text',
+      }),
+      keepUnusedDataFor: 0,
+    }),
+
+    updateRule: build.mutation<AlertRuleUpdated, { nameSpaceUID: string; payload: ModifyExportPayload }>({
+      query: ({ payload, nameSpaceUID }) => ({
+        url: `/api/ruler/grafana/api/v1/rules/${nameSpaceUID}/`,
+        data: payload,
+        method: 'POST',
+      }),
+      invalidatesTags: ['CombinedAlertRule'],
     }),
   }),
 });

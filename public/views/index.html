@@ -16,13 +16,13 @@
 
     <link rel="icon" type="image/png" href="[[.FavIcon]]" />
     <link rel="apple-touch-icon" sizes="180x180" href="[[.AppleTouchIcon]]" />
-    <link rel="mask-icon" href="[[.ContentDeliveryURL]]public/img/grafana_mask_icon.svg" color="#F05A28" />
+    <link rel="mask-icon" href="[[.Assets.ContentDeliveryURL]]public/img/grafana_mask_icon.svg" color="#F05A28" />
 
     <!-- If theme is "system", we inject the stylesheets with javascript further down the page -->
     [[ if eq .ThemeType "light" ]]
-    <link rel="stylesheet" href="[[.ContentDeliveryURL]][[.Assets.CSSLight]]" />
+    <link rel="stylesheet" href="[[.Assets.Light]]" />
     [[ else if eq .ThemeType "dark" ]]
-    <link rel="stylesheet" href="[[.ContentDeliveryURL]][[.Assets.CSSDark]]" />
+    <link rel="stylesheet" href="[[.Assets.Dark]]" />
     [[ end ]]
 
     <script nonce="[[.Nonce]]">
@@ -50,7 +50,7 @@
         animation-name: preloader-fade-in;
         animation-iteration-count: 1;
         animation-duration: 0.9s;
-        animation-delay: 1.35s;
+        animation-delay: 0.5s;
         animation-fill-mode: forwards;
       }
 
@@ -81,7 +81,7 @@
         opacity: 0;
         animation-name: preloader-fade-in;
         animation-duration: 0.9s;
-        animation-delay: 1.8s;
+        animation-delay: 0.5s;
         animation-fill-mode: forwards;
       }
 
@@ -172,10 +172,9 @@
     <div class="preloader">
       <div class="preloader__enter">
         <div class="preloader__bounce">
-          <div class="preloader__logo"></div>
+          <div class="preloader__logo" aria-live="polite" role="status" aria-label="Loading Grafana"></div>
         </div>
       </div>
-      <div class="preloader__text">Loading Grafana</div>
       <div class="preloader__text preloader__text--fail">
         <p>
           <strong>If you're seeing this Grafana has failed to load its application files</strong>
@@ -244,10 +243,7 @@
         user: [[.User]],
         settings: [[.Settings]],
         navTree: [[.NavTree]],
-        themePaths: {
-          light: '[[.ContentDeliveryURL]][[.Assets.CSSLight]]',
-          dark: '[[.ContentDeliveryURL]][[.Assets.CSSDark]]'
-        }
+        assets: [[.Assets]]
       };
 
       // Set theme to match system only on startup.
@@ -260,11 +256,11 @@
 
         if (darkQuery.matches) {
           document.body.classList.add("theme-dark");
-          cssLink.href = window.grafanaBootData.themePaths.dark;
+          cssLink.href = window.grafanaBootData.assets.dark;
           window.grafanaBootData.user.lightTheme = false;
         } else {
           document.body.classList.add("theme-light");
-          cssLink.href = window.grafanaBootData.themePaths.light;
+          cssLink.href = window.grafanaBootData.assets.light;
           window.grafanaBootData.user.lightTheme = true;
         }
         document.head.appendChild(cssLink);
@@ -285,8 +281,8 @@
         window.__grafana_load_failed();
       };
 
-      [[if .ContentDeliveryURL]]
-        window.public_cdn_path = '[[.ContentDeliveryURL]]public/build/';
+      [[if .Assets.ContentDeliveryURL]]
+        window.public_cdn_path = '[[.Assets.ContentDeliveryURL]]public/build/';
       [[end]]
       [[if .Nonce]]
         window.nonce = '[[.Nonce]]';
@@ -333,7 +329,7 @@
     [[range $asset := .Assets.JSFiles]]
       <script
       nonce="[[$.Nonce]]"
-      src="[[$.ContentDeliveryURL]][[$asset.FilePath]]"
+      src="[[$asset.FilePath]]"
       type="text/javascript"
     ></script>
     [[end]]

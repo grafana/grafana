@@ -21,6 +21,7 @@ Explore is a powerful tool for logging and log analysis. It allows you to invest
 - [Cloudwatch]({{< relref "../datasources/aws-cloudwatch" >}})
 - [InfluxDB]({{< relref "../datasources/influxdb" >}})
 - [Azure Monitor]({{< relref "../datasources/azure-monitor" >}})
+- [ClickHouse](https://github.com/grafana/clickhouse-datasource)
 
 With Explore, you can efficiently monitor, troubleshoot, and respond to incidents by analyzing your logs and identifying the root causes. It also helps you to correlate logs with other telemetry signals such as metrics, traces or profiles, by viewing them side-by-side.
 
@@ -129,6 +130,8 @@ Log context is a feature that allows you to display additional lines of context 
 You may encounter long lines of text that make it difficult to read and analyze the context around each log entry. This is where the **Wrap lines** toggle can come in handy. By enabling this toggle, Grafana will automatically wrap long lines of text so that they fit within the visible width of the viewer. This can make it easier to read and understand the log entries.
 
 The **Open in split view** button allows you to execute the context query for a log entry in a split screen in the Explore view. Clicking this button will open a new Explore pane with the context query displayed alongside the log entry, making it easier to analyze and understand the surrounding context.
+
+The log context query can also be opened in a new browser tab by pressing the Cmd/Ctrl button while clicking on the button to open the context modal. When opened in a new tab, the previously selected filters are applied as well.
 
 ### Copy log line
 

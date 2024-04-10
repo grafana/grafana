@@ -33,14 +33,16 @@ import {
   setRunRequest,
   setPluginImportUtils,
   setPluginExtensionGetter,
+  setEmbeddedDashboard,
   setAppEvents,
+  setReturnToPreviousHook,
   type GetPluginExtensions,
 } from '@grafana/runtime';
 import { setPanelDataErrorView } from '@grafana/runtime/src/components/PanelDataErrorView';
 import { setPanelRenderer } from '@grafana/runtime/src/components/PanelRenderer';
 import { setPluginPage } from '@grafana/runtime/src/components/PluginPage';
 import { getScrollbarWidth } from '@grafana/ui';
-import config from 'app/core/config';
+import config, { updateConfig } from 'app/core/config';
 import { arrayMove } from 'app/core/utils/arrayMove';
 import { getStandardTransformers } from 'app/features/transformers/standardTransformers';
 
@@ -51,11 +53,12 @@ import appEvents from './core/app_events';
 import { AppChromeService } from './core/components/AppChrome/AppChromeService';
 import { getAllOptionEditors, getAllStandardFieldConfigs } from './core/components/OptionsUI/registry';
 import { PluginPage } from './core/components/Page/PluginPage';
-import { GrafanaContextType } from './core/context/GrafanaContext';
+import { GrafanaContextType, useReturnToPreviousInternal } from './core/context/GrafanaContext';
 import { initIconCache } from './core/icons/iconBundle';
 import { initializeI18n } from './core/internationalization';
+import { setMonacoEnv } from './core/monacoEnv';
 import { interceptLinkClicks } from './core/navigation/patch/interceptLinkClicks';
-import { ModalManager } from './core/services/ModalManager';
+import { NewFrontendAssetsChecker } from './core/services/NewFrontendAssetsChecker';
 import { backendSrv } from './core/services/backend_srv';
 import { contextSrv } from './core/services/context_srv';
 import { Echo } from './core/services/echo/Echo';
@@ -69,8 +72,10 @@ import { GrafanaJavascriptAgentBackend } from './core/services/echo/backends/gra
 import { KeybindingSrv } from './core/services/keybindingSrv';
 import { startMeasure, stopMeasure } from './core/utils/metrics';
 import { initDevFeatures } from './dev';
+import { initAlerting } from './features/alerting/unified/initAlerting';
 import { initAuthConfig } from './features/auth-config';
 import { getTimeSrv } from './features/dashboard/services/TimeSrv';
+import { EmbeddedDashboardLazy } from './features/dashboard-scene/embedding/EmbeddedDashboardLazy';
 import { initGrafanaLive } from './features/live';
 import { PanelDataErrorView } from './features/panel/components/PanelDataErrorView';
 import { PanelRenderer } from './features/panel/components/PanelRenderer';
@@ -120,19 +125,25 @@ export class GrafanaApp {
       parent.postMessage('GrafanaAppInit', '*');
 
       const initI18nPromise = initializeI18n(config.bootData.user.language);
+      initI18nPromise.then(({ language }) => updateConfig({ language }));
 
       setBackendSrv(backendSrv);
       initEchoSrv();
       initIconCache();
       // This needs to be done after the `initEchoSrv` since it is being used under the hood.
       startMeasure('frontend_app_init');
-      addClassIfNoOverlayScrollbar();
+
+      if (!config.featureToggles.betterPageScrolling) {
+        addClassIfNoOverlayScrollbar();
+      }
+
       setLocale(config.bootData.user.locale);
       setWeekStart(config.bootData.user.weekStart);
       setPanelRenderer(PanelRenderer);
       setPluginPage(PluginPage);
       setPanelDataErrorView(PanelDataErrorView);
       setLocationSrv(locationService);
+      setEmbeddedDashboard(EmbeddedDashboardLazy);
       setTimeZoneResolver(() => config.bootData.user.timezone);
       initGrafanaLive();
 
@@ -149,6 +160,8 @@ export class GrafanaApp {
       configureStore();
       initExtensions();
 
+      initAlerting();
+
       standardEditorsRegistry.setInit(getAllOptionEditors);
       standardFieldConfigEditorRegistry.setInit(getAllStandardFieldConfigs);
       standardTransformersRegistry.setInit(getStandardTransformers);
@@ -162,7 +175,9 @@ export class GrafanaApp {
         createAdHocVariableAdapter(),
         createSystemVariableAdapter(),
       ]);
+
       monacoLanguageRegistry.setInit(getDefaultMonacoLanguages);
+      setMonacoEnv();
 
       setQueryRunnerFactory(() => new QueryRunner());
       setVariableQueryRunner(new VariableQueryRunner());
@@ -191,10 +206,6 @@ export class GrafanaApp {
       setDataSourceSrv(dataSourceSrv);
       initWindowRuntime();
 
-      // init modal manager
-      const modalManager = new ModalManager();
-      modalManager.init();
-
       let preloadResults: PluginPreloadResult[] = [];
 
       if (contextSrv.user.orgRole !== '') {
@@ -218,6 +229,8 @@ export class GrafanaApp {
       const queryParams = locationService.getSearchObject();
       const chromeService = new AppChromeService();
       const keybindingsService = new KeybindingSrv(locationService, chromeService);
+      const newAssetsChecker = new NewFrontendAssetsChecker();
+      newAssetsChecker.start();
 
       // Read initial kiosk mode from url at app startup
       chromeService.setKioskModeFromUrl(queryParams.kiosk);
@@ -234,8 +247,11 @@ export class GrafanaApp {
         location: locationService,
         chrome: chromeService,
         keybindings: keybindingsService,
+        newAssetsChecker,
         config,
       };
+
+      setReturnToPreviousHook(useReturnToPreviousInternal);
 
       const root = createRoot(document.getElementById('reactRoot')!);
       root.render(

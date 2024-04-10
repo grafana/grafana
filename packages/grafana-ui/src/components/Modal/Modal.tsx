@@ -8,7 +8,7 @@ import { useStyles2 } from '../../themes';
 import { IconName } from '../../types';
 import { t } from '../../utils/i18n';
 import { IconButton } from '../IconButton/IconButton';
-import { HorizontalGroup } from '../Layout/Layout';
+import { Stack } from '../Layout/Stack/Stack';
 
 import { ModalHeader } from './ModalHeader';
 import { getModalStyles } from './getModalStyles';
@@ -88,7 +88,7 @@ export function Modal(props: PropsWithChildren<Props>) {
                 name="times"
                 size="xl"
                 onClick={onDismiss}
-                tooltip={t('grafana-ui.modal.close-tooltip', 'Close')}
+                aria-label={t('grafana-ui.modal.close-tooltip', 'Close')}
               />
             </div>
           </div>
@@ -105,23 +105,23 @@ function ModalButtonRow({ leftItems, children }: { leftItems?: React.ReactNode; 
   if (leftItems) {
     return (
       <div className={styles.modalButtonRow}>
-        <HorizontalGroup justify="space-between">
-          <HorizontalGroup justify="flex-start" spacing="md">
+        <Stack justifyContent="space-between">
+          <Stack justifyContent="flex-start" gap={2}>
             {leftItems}
-          </HorizontalGroup>
-          <HorizontalGroup justify="flex-end" spacing="md">
+          </Stack>
+          <Stack justifyContent="flex-end" gap={2}>
             {children}
-          </HorizontalGroup>
-        </HorizontalGroup>
+          </Stack>
+        </Stack>
       </div>
     );
   }
 
   return (
     <div className={styles.modalButtonRow}>
-      <HorizontalGroup justify="flex-end" spacing="md" wrap={true}>
+      <Stack justifyContent="flex-end" gap={2} wrap="wrap">
         {children}
-      </HorizontalGroup>
+      </Stack>
     </div>
   );
 }

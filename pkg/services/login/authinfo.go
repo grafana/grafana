@@ -3,6 +3,7 @@ package login
 import (
 	"context"
 
+	"github.com/grafana/grafana/pkg/login/social"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -63,9 +64,9 @@ const (
 // https://github.com/grafana/grafana/blob/4181acec72f76df7ad02badce13769bae4a1f840/pkg/services/login/authinfoservice/database/database.go#L61
 // this means that if the user has multiple auth providers and one of them is set to sync org roles
 // then IsExternallySynced will be true for this one provider and false for the others
-func IsExternallySynced(cfg *setting.Cfg, authModule string) bool {
+func IsExternallySynced(cfg *setting.Cfg, authModule string, oauthInfo *social.OAuthInfo) bool {
 	// provider enabled in config
-	if !IsProviderEnabled(cfg, authModule) {
+	if !IsProviderEnabled(cfg, authModule, oauthInfo) {
 		return false
 	}
 	// first check SAML, LDAP and JWT
@@ -75,29 +76,14 @@ func IsExternallySynced(cfg *setting.Cfg, authModule string) bool {
 	case LDAPAuthModule:
 		return !cfg.LDAPSkipOrgRoleSync
 	case JWTModule:
-		return !cfg.JWTAuthSkipOrgRoleSync
-	}
-	// then check the rest of the oauth providers
-	// FIXME: remove this once we remove the setting
-	// is a deprecated setting that is used to skip org role sync for all external oauth providers
-	if cfg.OAuthSkipOrgRoleUpdateSync {
-		return false
+		return !cfg.JWTAuth.SkipOrgRoleSync
 	}
 	switch authModule {
-	case GoogleAuthModule:
-		return !cfg.GoogleSkipOrgRoleSync
-	case OktaAuthModule:
-		return !cfg.OktaSkipOrgRoleSync
-	case AzureADAuthModule:
-		return !cfg.AzureADSkipOrgRoleSync
-	case GitLabAuthModule:
-		return !cfg.GitLabSkipOrgRoleSync
-	case GithubAuthModule:
-		return !cfg.GitHubSkipOrgRoleSync
-	case GrafanaComAuthModule:
-		return !cfg.GrafanaComSkipOrgRoleSync
-	case GenericOAuthModule:
-		return !cfg.GenericOAuthSkipOrgRoleSync
+	case GoogleAuthModule, OktaAuthModule, AzureADAuthModule, GitLabAuthModule, GithubAuthModule, GrafanaComAuthModule, GenericOAuthModule:
+		if oauthInfo == nil {
+			return false
+		}
+		return !oauthInfo.SkipOrgRoleSync
 	}
 	return true
 }
@@ -105,45 +91,36 @@ func IsExternallySynced(cfg *setting.Cfg, authModule string) bool {
 // IsGrafanaAdminExternallySynced returns true if Grafana server admin role is being managed by an external auth provider, and false otherwise.
 // Grafana admin role sync is available for JWT, OAuth providers and LDAP.
 // For JWT and OAuth providers there is an additional config option `allow_assign_grafana_admin` that has to be enabled for Grafana Admin role to be synced.
-func IsGrafanaAdminExternallySynced(cfg *setting.Cfg, authModule string, oAuthAndAllowAssignGrafanaAdmin bool) bool {
-	if !IsExternallySynced(cfg, authModule) {
+func IsGrafanaAdminExternallySynced(cfg *setting.Cfg, oauthInfo *social.OAuthInfo, authModule string) bool {
+	if !IsExternallySynced(cfg, authModule, oauthInfo) {
 		return false
 	}
 
 	switch authModule {
 	case JWTModule:
-		return cfg.JWTAuthAllowAssignGrafanaAdmin
+		return cfg.JWTAuth.AllowAssignGrafanaAdmin
 	case SAMLAuthModule:
 		return cfg.SAMLRoleValuesGrafanaAdmin != ""
 	case LDAPAuthModule:
 		return true
 	default:
-		return oAuthAndAllowAssignGrafanaAdmin
+		return oauthInfo != nil && oauthInfo.AllowAssignGrafanaAdmin
 	}
 }
 
-func IsProviderEnabled(cfg *setting.Cfg, authModule string) bool {
+func IsProviderEnabled(cfg *setting.Cfg, authModule string, oauthInfo *social.OAuthInfo) bool {
 	switch authModule {
 	case SAMLAuthModule:
 		return cfg.SAMLAuthEnabled
 	case LDAPAuthModule:
 		return cfg.LDAPAuthEnabled
 	case JWTModule:
-		return cfg.JWTAuthEnabled
-	case GoogleAuthModule:
-		return cfg.GoogleAuthEnabled
-	case OktaAuthModule:
-		return cfg.OktaAuthEnabled
-	case AzureADAuthModule:
-		return cfg.AzureADEnabled
-	case GitLabAuthModule:
-		return cfg.GitLabAuthEnabled
-	case GithubAuthModule:
-		return cfg.GitHubAuthEnabled
-	case GrafanaComAuthModule:
-		return cfg.GrafanaComAuthEnabled || cfg.GrafanaNetAuthEnabled
-	case GenericOAuthModule:
-		return cfg.GenericOAuthAuthEnabled
+		return cfg.JWTAuth.Enabled
+	case GoogleAuthModule, OktaAuthModule, AzureADAuthModule, GitLabAuthModule, GithubAuthModule, GrafanaComAuthModule, GenericOAuthModule:
+		if oauthInfo == nil {
+			return false
+		}
+		return oauthInfo.Enabled
 	}
 	return false
 }

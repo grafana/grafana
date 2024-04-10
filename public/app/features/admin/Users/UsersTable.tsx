@@ -1,4 +1,5 @@
 import React, { useMemo } from 'react';
+import { UseTableRowProps } from 'react-table';
 
 import {
   Avatar,
@@ -7,10 +8,12 @@ import {
   FetchDataFunc,
   Icon,
   InteractiveTable,
+  LinkButton,
   Pagination,
   Stack,
   Tag,
   Text,
+  TextLink,
   Tooltip,
 } from '@grafana/ui';
 import { TagBadge } from 'app/core/components/TagFilter/TagBadge';
@@ -38,6 +41,8 @@ export const UsersTable = ({
   fetchData,
 }: UsersTableProps) => {
   const showLicensedRole = useMemo(() => users.some((user) => user.licensedRole), [users]);
+  const showBelongsTo = useMemo(() => users.some((user) => user.orgs), [users]);
+
   const columns: Array<Column<UserDTO>> = useMemo(
     () => [
       {
@@ -48,7 +53,13 @@ export const UsersTable = ({
       {
         id: 'login',
         header: 'Login',
-        cell: ({ cell: { value } }: Cell<'login'>) => value,
+        cell: ({ row: { original } }: Cell<'login'>) => {
+          return (
+            <TextLink color="primary" inline={false} href={`admin/users/edit/${original.id}`} title="Edit user">
+              {original.login}
+            </TextLink>
+          );
+        },
         sortType: 'string',
       },
       {
@@ -63,23 +74,28 @@ export const UsersTable = ({
         cell: ({ cell: { value } }: Cell<'name'>) => value,
         sortType: 'string',
       },
-      {
-        id: 'orgs',
-        header: 'Belongs to',
-        cell: ({ cell: { value, row } }: Cell<'orgs'>) => {
-          return (
-            <Stack alignItems={'center'}>
-              <OrgUnits units={value} icon={'building'} />
-              {row.original.isAdmin && (
-                <Tooltip placement="top" content="Grafana Admin">
-                  <Icon name="shield" />
-                </Tooltip>
-              )}
-            </Stack>
-          );
-        },
-        sortType: (a, b) => (a.original.orgs?.length || 0) - (b.original.orgs?.length || 0),
-      },
+      ...(showBelongsTo
+        ? [
+            {
+              id: 'orgs',
+              header: 'Belongs to',
+              cell: ({ cell: { value, row } }: Cell<'orgs'>) => {
+                return (
+                  <Stack alignItems={'center'}>
+                    <OrgUnits units={value} icon={'building'} />
+                    {row.original.isAdmin && (
+                      <Tooltip placement="top" content="Grafana Admin">
+                        <Icon name="shield" />
+                      </Tooltip>
+                    )}
+                  </Stack>
+                );
+              },
+              sortType: (a: UseTableRowProps<UserDTO>, b: UseTableRowProps<UserDTO>) =>
+                (a.original.orgs?.length || 0) - (b.original.orgs?.length || 0),
+            },
+          ]
+        : []),
       ...(showLicensedRole
         ? [
             {
@@ -131,16 +147,19 @@ export const UsersTable = ({
         header: '',
         cell: ({ row: { original } }: Cell) => {
           return (
-            <a href={`admin/users/edit/${original.id}`} aria-label={`Edit team ${original.name}`}>
-              <Tooltip content={'Edit user'}>
-                <Icon name={'pen'} />
-              </Tooltip>
-            </a>
+            <LinkButton
+              variant="secondary"
+              size="sm"
+              icon="pen"
+              href={`admin/users/edit/${original.id}`}
+              aria-label={`Edit user ${original.name}`}
+              tooltip={'Edit user'}
+            />
           );
         },
       },
     ],
-    [showLicensedRole]
+    [showLicensedRole, showBelongsTo]
   );
   return (
     <Stack direction={'column'} gap={2}>

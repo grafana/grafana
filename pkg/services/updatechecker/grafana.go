@@ -20,7 +20,7 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 )
 
-const grafanaLatestJSONURL = "https://raw.githubusercontent.com/grafana/grafana/main/latest.json"
+const grafanaStableVersionURL = "https://grafana.com/api/grafana/versions/stable"
 
 type GrafanaService struct {
 	hasUpdate     bool
@@ -60,7 +60,7 @@ func (s *GrafanaService) IsDisabled() bool {
 func (s *GrafanaService) Run(ctx context.Context) error {
 	s.instrumentedCheckForUpdates(ctx)
 
-	ticker := time.NewTicker(time.Minute * 10)
+	ticker := time.NewTicker(time.Hour * 24)
 	run := true
 
 	for run {
@@ -92,13 +92,13 @@ func (s *GrafanaService) instrumentedCheckForUpdates(ctx context.Context) {
 func (s *GrafanaService) checkForUpdates(ctx context.Context) error {
 	ctxLogger := s.log.FromContext(ctx)
 	ctxLogger.Debug("Checking for updates")
-	req, err := http.NewRequestWithContext(ctx, http.MethodGet, grafanaLatestJSONURL, nil)
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, grafanaStableVersionURL, nil)
 	if err != nil {
 		return err
 	}
 	resp, err := s.httpClient.Do(req)
 	if err != nil {
-		return fmt.Errorf("failed to get latest.json repo from github.com: %w", err)
+		return fmt.Errorf("failed to get stable version from grafana.com: %w", err)
 	}
 	defer func() {
 		if err := resp.Body.Close(); err != nil {
@@ -107,27 +107,24 @@ func (s *GrafanaService) checkForUpdates(ctx context.Context) error {
 	}()
 	body, err := io.ReadAll(resp.Body)
 	if err != nil {
-		return fmt.Errorf("update check failed, reading response from github.com: %w", err)
+		return fmt.Errorf("update check failed, reading response from grafana.com: %w", err)
 	}
 
-	type latestJSON struct {
-		Stable  string `json:"stable"`
-		Testing string `json:"testing"`
+	type grafanaVersionJSON struct {
+		Version string `json:"version"`
 	}
-	var latest latestJSON
+	var latest grafanaVersionJSON
 	err = json.Unmarshal(body, &latest)
 	if err != nil {
-		return fmt.Errorf("failed to unmarshal latest.json: %w", err)
+		return fmt.Errorf("failed to unmarshal response from grafana.com: %w", err)
 	}
 
 	s.mutex.Lock()
 	defer s.mutex.Unlock()
-	if strings.Contains(s.grafanaVersion, "-") {
-		s.latestVersion = latest.Testing
-		s.hasUpdate = !strings.HasPrefix(s.grafanaVersion, latest.Testing)
-	} else {
-		s.latestVersion = latest.Stable
-		s.hasUpdate = latest.Stable != s.grafanaVersion
+	// only check for updates in stable versions
+	if !strings.Contains(s.grafanaVersion, "-") {
+		s.latestVersion = latest.Version
+		s.hasUpdate = latest.Version != s.grafanaVersion
 	}
 
 	currVersion, err1 := version.NewVersion(s.grafanaVersion)
