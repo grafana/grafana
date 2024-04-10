@@ -4,7 +4,7 @@ import { InlineField, RadioButtonGroup } from '@grafana/ui';
 
 import { AzureQueryEditorFieldProps } from '../../types';
 
-import { setBasicLogsQuery } from './setQueryValue';
+import { setBasicLogsQuery, setKustoQuery } from './setQueryValue';
 
 export function LogsManagement({ query, onQueryChange: onChange }: AzureQueryEditorFieldProps) {
   return (
@@ -17,7 +17,10 @@ export function LogsManagement({ query, onQueryChange: onChange }: AzureQueryEdi
           ]}
           value={query.azureLogAnalytics?.basicLogsQuery ?? false}
           size={'md'}
-          onChange={(val) => onChange(setBasicLogsQuery(query, val))}
+          onChange={(val) => {
+            const updatedBasicLogsQuery = setBasicLogsQuery(query, val);
+            onChange(setKustoQuery(updatedBasicLogsQuery, ''));
+          }}
         />
       </InlineField>
     </>
