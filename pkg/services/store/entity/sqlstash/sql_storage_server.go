@@ -1566,7 +1566,7 @@ func (s *sqlEntityServer) watchInit(ctx context.Context, r *entity.EntityWatchRe
 
 			s.log.Debug("watch init", "query", query, "args", args)
 
-			rows, err := s.query(w.Context(), query, args...)
+			rows, err := s.query(ctx, query, args...)
 			if err != nil {
 				return err
 			}
