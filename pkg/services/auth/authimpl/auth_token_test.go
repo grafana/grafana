@@ -585,24 +585,6 @@ func (c *testContext) getAuthTokenByID(id int64) (*userAuthToken, error) {
 	return res, err
 }
 
-func (c *testContext) markAuthTokenAsSeen(id int64) (bool, error) {
-	hasRowsAffected := false
-	err := c.sqlstore.WithDbSession(context.Background(), func(sess *db.Session) error {
-		res, err := sess.Exec("UPDATE user_auth_token SET auth_token_seen = ? WHERE id = ?", c.sqlstore.GetDialect().BooleanStr(true), id)
-		if err != nil {
-			return err
-		}
-
-		rowsAffected, err := res.RowsAffected()
-		if err != nil {
-			return err
-		}
-		hasRowsAffected = rowsAffected == 1
-		return nil
-	})
-	return hasRowsAffected, err
-}
-
 func (c *testContext) updateRotatedAt(id, rotatedAt int64) (bool, error) {
 	hasRowsAffected := false
 	err := c.sqlstore.WithDbSession(context.Background(), func(sess *db.Session) error {
