@@ -135,9 +135,7 @@ Backport labels need to be followed by either:
 - `type/docs` label: Docs changes
 - `type/ci` label: Changes to the CI automation
 
-{{% admonition type="note" %}}
-You can still backport a pull request after it's been merged.
-{{% /admonition %}}
+> You can still backport a pull request after it's been merged.
 
 ## Doing the actual merge
 
