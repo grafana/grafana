@@ -1,6 +1,5 @@
 import 'whatwg-fetch'; // fetch polyfill
 import { render as rtlRender, screen } from '@testing-library/react';
-import { SetupServer } from 'msw/lib/node';
 import React from 'react';
 import { TestProvider } from 'test/helpers/TestProvider';
 
@@ -8,7 +7,7 @@ import { setBackendSrv, config } from '@grafana/runtime';
 import { backendSrv } from 'app/core/services/backend_srv';
 
 import { wellFormedDashboardMigrationItem, wellFormedDatasourceMigrationItem } from '../fixtures/migrationItems';
-import { registerAPIHandlers } from '../fixtures/mswAPI';
+import { registerMockAPI } from '../fixtures/mswAPI';
 import { wellFormedDatasource } from '../fixtures/others';
 
 import { ResourcesTable } from './ResourcesTable';
@@ -20,7 +19,8 @@ function render(...[ui, options]: Parameters<typeof rtlRender>) {
 }
 
 describe('ResourcesTable', () => {
-  let server: SetupServer;
+  registerMockAPI();
+
   let originalDatasources: (typeof config)['datasources'];
 
   const datasourceA = wellFormedDatasource(1, {
@@ -29,7 +29,6 @@ describe('ResourcesTable', () => {
   });
 
   beforeAll(() => {
-    server = registerAPIHandlers();
     originalDatasources = config.datasources;
 
     config.datasources = {
@@ -39,7 +38,6 @@ describe('ResourcesTable', () => {
   });
 
   afterAll(() => {
-    server.close();
     config.datasources = originalDatasources;
   });
 

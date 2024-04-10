@@ -1,9 +1,10 @@
 import { HttpResponse, http } from 'msw';
 import { SetupServer, setupServer } from 'msw/node';
 
-export function registerAPIHandlers(): SetupServer {
+import { validCloudMigrationToken } from './tokens';
+
+function createMockAPI(): SetupServer {
   const server = setupServer(
-    // TODO
     http.get('/api/dashboards/uid/:uid', ({ request, params }) => {
       if (params.uid === 'dashboard-404') {
         return HttpResponse.json(
@@ -24,10 +25,42 @@ export function registerAPIHandlers(): SetupServer {
           folderTitle: 'Dashboards',
         },
       });
+    }),
+
+    http.post('/api/cloudmigration/migration', async ({ request }) => {
+      const data = await request.json();
+      const authToken = typeof data === 'object' && data && data.authToken;
+
+      if (authToken === validCloudMigrationToken) {
+        return HttpResponse.json({
+          created: new Date().toISOString(),
+          id: 1,
+          stack: 'abc-123',
+        });
+      }
+
+      return HttpResponse.json(
+        {
+          message: 'Invalid token',
+        },
+        { status: 500 }
+      );
     })
   );
 
   server.listen();
 
   return server;
+}
+
+export function registerMockAPI() {
+  let server: SetupServer;
+
+  beforeAll(() => {
+    server = createMockAPI();
+  });
+
+  afterAll(() => {
+    server.close();
+  });
 }
