@@ -24,6 +24,7 @@ import { sortLogRows, targetIsElement } from '../utils';
 
 //Components
 import { LogRow } from './LogRow';
+import { restructureLog } from './LogRowMessage';
 import { getLogRowStyles } from './getLogRowStyles';
 
 export const PREVIEW_LIMIT = 100;
@@ -174,7 +175,7 @@ class UnThemedLogRows extends PureComponent<Props, State> {
   
   componentDidUpdate(prevProps: Readonly<Props>): void {
     // How much nicer this would be with useEffect()
-    const dependencyArray = ['deduplicatedRows', 'logRows', 'dedupStrategy', 'logsSortOrder', 'showLabels', 'showTime', 'wrapLogMessage'];
+    const dependencyArray = ['deduplicatedRows', 'logRows', 'dedupStrategy', 'logsSortOrder', 'showLabels', 'showTime', 'wrapLogMessage', 'prettifyLogMessage'];
     const updated = dependencyArray.reduce((updated: boolean, attr: string) => {
       // @ts-expect-error
       return updated || prevProps[attr] !== this.props[attr];
@@ -252,12 +253,29 @@ class UnThemedLogRows extends PureComponent<Props, State> {
    */
   estimateRowHeight = (rows: LogRowModel[], index: number) => {
     const rowHeight = 20.14;
+    const line = restructureLog(rows[index].raw, this.props.prettifyLogMessage);
+    if (this.props.prettifyLogMessage) {
+      try {
+        const parsed: Record<string, string> = JSON.parse(line);
+        let jsonHeight = 2 * rowHeight; // {}
+        for (let key in parsed) {
+          jsonHeight += this.estimateMessageLines(parsed[key]) * rowHeight;
+        }
+        return jsonHeight;
+      } catch (e) {
+        console.error(e);
+      }
+    }
     if (!this.props.wrapLogMessage) {
       return rowHeight;
     }
+    return this.estimateMessageLines(line) * rowHeight;
+  }
+
+  estimateMessageLines = (line: string) => {
     const margins = 310;
     const letter = 7.34;
-    return Math.ceil((rows[index].raw.length * letter) / (window.innerWidth - margins)) * rowHeight;
+    return Math.ceil((line.length * letter) / (window.innerWidth - margins));
   }
 
   render() {
