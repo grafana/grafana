@@ -1779,6 +1779,16 @@ Enable or disable the Query history. Default is `enabled`.
 
 <hr>
 
+## [short_links]
+
+Configures Query history in Explore.
+
+### expire_time
+
+Short links which are never accessed will be deleted as cleanup. Value is in days. Default is `7` days.
+
+<hr>
+
 ## [metrics]
 
 For detailed instructions, refer to [Internal Grafana metrics]({{< relref "../set-up-grafana-monitoring" >}}).
