@@ -69,7 +69,7 @@ export default function Browse({ route }: GrafanaRouteComponentProps): ReactElem
 
   const subTitle = (
     <div>
-      Extend the Grafana experience with panel plugins and apps. To find more data sources go to{' '}
+      (Update) Extend the Grafana experience with panel plugins and apps. To find more data sources go to{' '}
       <a className="external-link" href={`${CONNECTIONS_ROUTES.AddNewConnection}?cat=data-source`}>
         Connections
       </a>
