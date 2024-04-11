@@ -1,17 +1,15 @@
 import React from 'react';
 
-import { AppEvents, PluginExtensionPoints } from '@grafana/data';
-import { getPluginLinkExtensions } from '@grafana/runtime';
+import { AppEvents } from '@grafana/data';
 import { Dropdown, LinkButton, Menu } from '@grafana/ui';
 import appEvents from 'app/core/app_events';
 import MenuItemPauseRule from 'app/features/alerting/unified/components/MenuItemPauseRule';
 import { CombinedRule, RuleIdentifier } from 'app/types/unified-alerting';
-import { PromRuleType } from 'app/types/unified-alerting-dto';
 
 import { AlertRuleAction, useAlertRuleAbility } from '../../hooks/useAbilities';
+import { useRulePluginLinkExtension } from '../../plugins/useRulePluginLinkExtensions';
 import { createShareLink, isLocalDevEnv, isOpenSourceEdition, makeRuleBasedSilenceLink } from '../../utils/misc';
 import * as ruleId from '../../utils/rule-id';
-import { getRuleOrigin } from '../../utils/rules';
 import { createUrl } from '../../utils/url';
 import MoreButton from '../MoreButton';
 import { DeclareIncidentMenuItem } from '../bridges/DeclareIncidentButton';
@@ -130,76 +128,3 @@ const EditButton = ({ identifier }: PropsWithIdentifier) => {
     </LinkButton>
   );
 };
-
-function useRulePluginLinkExtension(rule: CombinedRule) {
-  const ruleOrigin = getRuleOrigin(rule);
-  const ruleType = rule.promRule?.type;
-  if (!ruleOrigin || !ruleType) {
-    return [];
-  }
-
-  const { pluginId } = ruleOrigin;
-
-  switch (ruleType) {
-    case PromRuleType.Alerting:
-      return getAlertingRuleActionPluginLinkExtension({ pluginId, rule });
-    case PromRuleType.Recording:
-      return getRecordingRulePluginLinkExtension({ pluginId, rule });
-    default:
-      return [];
-  }
-}
-
-function getAlertingRuleActionPluginLinkExtension({ pluginId, rule }: { pluginId: string; rule: CombinedRule }) {
-  const context: AlertingRuleExtensionContext = {
-    name: rule.name,
-    namespace: rule.namespace.name,
-    group: rule.group.name,
-    expression: rule.query,
-    labels: rule.labels,
-    annotations: rule.annotations,
-  };
-
-  const { extensions } = getPluginLinkExtensions({
-    extensionPointId: PluginExtensionPoints.AlertingRuleAction,
-    context,
-    limitPerPlugin: 3,
-  });
-
-  return extensions.filter((extension) => extension.pluginId === pluginId);
-}
-
-function getRecordingRulePluginLinkExtension({ pluginId, rule }: { pluginId: string; rule: CombinedRule }) {
-  const context: RecordingRuleExtensionContext = {
-    name: rule.name,
-    namespace: rule.namespace.name,
-    group: rule.group.name,
-    expression: rule.query,
-    labels: rule.labels,
-  };
-
-  const { extensions } = getPluginLinkExtensions({
-    extensionPointId: PluginExtensionPoints.RecordingRuleAction,
-    context,
-    limitPerPlugin: 3,
-  });
-
-  return extensions.filter((extension) => extension.pluginId === pluginId);
-}
-
-interface AlertingRuleExtensionContext {
-  name: string;
-  namespace: string;
-  group: string;
-  expression: string;
-  labels: Record<string, string>;
-  annotations: Record<string, string>;
-}
-
-interface RecordingRuleExtensionContext {
-  name: string;
-  namespace: string;
-  group: string;
-  expression: string;
-  labels: Record<string, string>;
-}

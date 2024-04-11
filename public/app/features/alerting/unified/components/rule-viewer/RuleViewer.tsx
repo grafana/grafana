@@ -11,6 +11,7 @@ import { CombinedRule, RuleHealth, RuleIdentifier } from 'app/types/unified-aler
 import { PromAlertingRuleState, PromRuleType } from 'app/types/unified-alerting-dto';
 
 import { defaultPageNav } from '../../RuleViewer';
+import { PluginOriginBadge } from '../../plugins/PluginOriginBadge';
 import { Annotation } from '../../utils/constants';
 import { makeDashboardLink, makePanelLink } from '../../utils/misc';
 import {
@@ -23,7 +24,6 @@ import {
   isRecordingRule,
 } from '../../utils/rules';
 import { createUrl } from '../../utils/url';
-import { PluginOriginBadge } from '../../vertical-integrations/PluginOriginBadge';
 import { AlertLabels } from '../AlertLabels';
 import { AlertingPageWrapper } from '../AlertingPageWrapper';
 import { ProvisionedResource, ProvisioningAlert } from '../Provisioning';
