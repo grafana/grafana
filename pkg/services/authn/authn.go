@@ -57,6 +57,17 @@ type ClientParams struct {
 	LookUpParams login.UserLookupParams
 	// SyncPermissions ensure that permissions are loaded from DB and added to the identity
 	SyncPermissions bool
+	// FetchPermissionsParams are the arguments used to fetch permissions from the DB
+	FetchPermissionsParams FetchPermissionsParams
+	// AllowGlobalOrg would allow a client to authenticate in global scope AKA org 0
+	AllowGlobalOrg bool
+}
+
+type FetchPermissionsParams struct {
+	// ActionsLookup will restrict the permissions to only these actions
+	ActionsLookup []string
+	// Roles permissions will be directly added to the identity permissions
+	Roles []string
 }
 
 type PostAuthHookFn func(ctx context.Context, identity *Identity, r *Request) error
@@ -127,7 +138,7 @@ type RedirectClient interface {
 // that should happen during logout and supports client specific redirect URL.
 type LogoutClient interface {
 	Client
-	Logout(ctx context.Context, user identity.Requester, info *login.UserAuth) (*Redirect, bool)
+	Logout(ctx context.Context, user identity.Requester) (*Redirect, bool)
 }
 
 type PasswordClient interface {

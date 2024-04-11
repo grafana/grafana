@@ -2765,6 +2765,56 @@
         }
       }
     },
+    "CloudMigrationListResponse": {
+      "type": "object",
+      "properties": {
+        "migrations": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/CloudMigrationResponse"
+          }
+        }
+      }
+    },
+    "CloudMigrationRequest": {
+      "type": "object",
+      "properties": {
+        "authToken": {
+          "type": "string"
+        }
+      }
+    },
+    "CloudMigrationResponse": {
+      "type": "object",
+      "properties": {
+        "created": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "id": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "stack": {
+          "type": "string"
+        },
+        "updated": {
+          "type": "string",
+          "format": "date-time"
+        }
+      }
+    },
+    "CloudMigrationRunList": {
+      "type": "object",
+      "properties": {
+        "runs": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/MigrateDataResponseDTO"
+          }
+        }
+      }
+    },
     "ConfFloat64": {
       "description": "ConfFloat64 is a float64. It Marshals float64 values of NaN of Inf\nto null.",
       "type": "number",
@@ -2904,6 +2954,14 @@
         },
         "type": {
           "$ref": "#/definitions/CorrelationConfigType"
+        }
+      }
+    },
+    "CreateAccessTokenResponseDTO": {
+      "type": "object",
+      "properties": {
+        "token": {
+          "type": "string"
         }
       }
     },
@@ -4823,6 +4881,52 @@
           "description": "To End time in epoch timestamps in milliseconds or relative using Grafana time units.",
           "type": "string",
           "example": "now"
+        }
+      }
+    },
+    "MigrateDataResponseDTO": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "items": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/MigrateDataResponseItemDTO"
+          }
+        }
+      }
+    },
+    "MigrateDataResponseItemDTO": {
+      "type": "object",
+      "required": [
+        "type",
+        "refId",
+        "status"
+      ],
+      "properties": {
+        "error": {
+          "type": "string"
+        },
+        "refId": {
+          "type": "string"
+        },
+        "status": {
+          "type": "string",
+          "enum": [
+            "OK",
+            "ERROR"
+          ]
+        },
+        "type": {
+          "type": "string",
+          "enum": [
+            "DASHBOARD",
+            "DATASOURCE",
+            "FOLDER"
+          ]
         }
       }
     },
@@ -7787,6 +7891,36 @@
           "type": "integer",
           "format": "uint8"
         }
+      }
+    },
+    "cloudMigrationCreateTokenResponse": {
+      "description": "",
+      "schema": {
+        "$ref": "#/definitions/CreateAccessTokenResponseDTO"
+      }
+    },
+    "cloudMigrationListResponse": {
+      "description": "",
+      "schema": {
+        "$ref": "#/definitions/CloudMigrationListResponse"
+      }
+    },
+    "cloudMigrationResponse": {
+      "description": "",
+      "schema": {
+        "$ref": "#/definitions/CloudMigrationResponse"
+      }
+    },
+    "cloudMigrationRunListResponse": {
+      "description": "",
+      "schema": {
+        "$ref": "#/definitions/CloudMigrationRunList"
+      }
+    },
+    "cloudMigrationRunResponse": {
+      "description": "",
+      "schema": {
+        "$ref": "#/definitions/MigrateDataResponseDTO"
       }
     },
     "conflictError": {

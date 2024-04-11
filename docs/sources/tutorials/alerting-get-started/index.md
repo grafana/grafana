@@ -1,7 +1,7 @@
 ---
 Feedback Link: https://github.com/grafana/tutorials/issues/new
 authors:
-  - Antonio Calero
+  - antonio-calero-merello
 categories:
   - alerting
 description: Get started with Grafana Alerting by creating your first alert in just a few minutes. Learn how to set up an alert, send alert notifications to a public webhook, and generate sample data to observe your alert in action.
@@ -41,19 +41,19 @@ Download the files to your local machine.
 
 1. Clone the [tutorial environment repository](www.github.com/grafana/tutorial-environment).
 
-   ```promql
+   ```
    git clone https://github.com/grafana/tutorial-environment.git
    ```
 
 1. Change to the directory where you cloned the repository:
 
-   ```promql
+   ```
    cd tutorial-environment
    ```
 
 1. Make sure Docker is running:
 
-   ```promql
+   ```
    docker --version
    ```
 
@@ -61,19 +61,19 @@ Download the files to your local machine.
 
 1. Start the sample application:
 
-   ```promql
+   ```
    docker compose up -d
    ```
 
    The first time you run `docker compose up -d`, Docker downloads all the necessary resources for the tutorial. This might take a few minutes, depending on your internet connection.
 
    {{< admonition type="note" >}}
-   If you already have Grafana, Loki, or Prometheus running on your system, you might see errors, because the Docker image is trying to use ports that your local installations are already using. . If this is the case, stop the services, then run the command again.
+   If you already have Grafana, Loki, or Prometheus running on your system, you might see errors, because the Docker image is trying to use ports that your local installations are already using. If this is the case, stop the services, then run the command again.
    {{< /admonition >}}
 
 1. Ensure all services are up-and-running:
 
-   ```promql
+   ```
    docker compose ps
    ```
 
@@ -107,7 +107,7 @@ In this step, we'll set up a new contact point. This contact point will use the 
    You should get logged in automatically.
 1. In another window, go to [requestbin.com](https://requestbin.com).
 1. Under the **Create Request Bin** button, click the link to create a **public bin** instead.
-1. From Request Bin, copy the endpoint URL.
+1. From Request Bin, **copy the endpoint URL**.
 
 Your Request Bin is now waiting for the first request.
 
@@ -118,12 +118,11 @@ Next, let's configure a Contact Point in Grafana's Alerting UI to send notificat
 1. In **Name**, write **RequestBin**.
 1. In **Integration**, choose **Webhook**.
 1. In **URL**, paste the endpoint to your request bin.
-
 1. Click **Test**, and then click **Send test notification** to send a test alert to your request bin.
 1. Navigate back to the Request Bin you created earlier. On the left side, there's now a `POST /` entry. Click it to see what information Grafana sent.
 1. Return to Grafana and click **Save contact point**.
 
-We have now created a dummy webhook endpoint and created a new Alerting Contact Point in Grafana. Now we can create an alert rule and link it to this new channel.
+We have created a dummy webhook endpoint and created a new Alerting Contact Point in Grafana. Now, we can create an alert rule and link it to this new channel.
 
 ## Create an alert
 
@@ -180,12 +179,8 @@ An evaluation group defines an evaluation interval - how often a rule is checked
 
 Add labels to ease searching or route notifications to a policy.
 
-1. Add a label.
-   Add `app` as the label key, and `grafana-news` as the value.
-
-1. Add a notification recipient.
-   Under **Contact point**, select **RequestBin** from the drop-down menu.
-
+1. Add a label.Add `app` as the label key, and `grafana-news` as the value.
+1. Add a notification recipient. Under **Contact point**, select **RequestBin** from the drop-down menu.
 1. Add an annotation (optional).
 
    To provide more context on the alert, you can link a dashboard and panel to our Alert. To do this, click **Link Dashboard and panel** button.

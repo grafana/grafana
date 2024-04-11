@@ -16,19 +16,21 @@ import {
 } from '@grafana/data';
 import { getPanelPlugin } from '@grafana/data/test/__mocks__/pluginMocks';
 import { getPluginLinkExtensions, setPluginImportUtils } from '@grafana/runtime';
-import { MultiValueVariable, SceneDataLayerSet, SceneGridLayout, SceneGridRow, VizPanel } from '@grafana/scenes';
+import { MultiValueVariable, SceneGridLayout, SceneGridRow, VizPanel } from '@grafana/scenes';
 import { Dashboard, LoadingState, Panel, RowPanel, VariableRefresh } from '@grafana/schema';
 import { PanelModel } from 'app/features/dashboard/state';
 import { getTimeRange } from 'app/features/dashboard/utils/timeRange';
 import { reduceTransformRegistryItem } from 'app/features/transformers/editors/ReduceTransformerEditor';
 import { SHARED_DASHBOARD_QUERY } from 'app/plugins/datasource/dashboard';
 
+import { buildPanelEditScene } from '../panel-edit/PanelEditor';
+import { DashboardDataLayerSet } from '../scene/DashboardDataLayerSet';
 import { DashboardGridItem } from '../scene/DashboardGridItem';
 import { LibraryVizPanel } from '../scene/LibraryVizPanel';
 import { RowRepeaterBehavior } from '../scene/RowRepeaterBehavior';
 import { NEW_LINK } from '../settings/links/utils';
 import { activateFullSceneTree, buildPanelRepeaterScene } from '../utils/test-utils';
-import { getVizPanelKeyForPanelId } from '../utils/utils';
+import { findVizPanelByKey, getVizPanelKeyForPanelId } from '../utils/utils';
 
 import { GRAFANA_DATASOURCE_REF } from './const';
 import dashboard_to_load1 from './testfiles/dashboard_to_load1.json';
@@ -176,6 +178,7 @@ describe('transformSceneToSaveModel', () => {
         weekStart: 'monday',
         graphTooltip: 1,
         editable: false,
+        refresh: '5m',
         timepicker: {
           ...dashboard_to_load1.timepicker,
           refresh_intervals: ['5m', '15m', '30m', '1h'],
@@ -402,10 +405,11 @@ describe('transformSceneToSaveModel', () => {
       expect(saveModel.annotations?.list?.length).toBe(4);
       expect(saveModel.annotations?.list).toMatchSnapshot();
     });
+
     it('should transform annotations to save model after state changes', () => {
       const scene = transformSaveModelToScene({ dashboard: dashboard_to_load1 as any, meta: {} });
 
-      const layers = (scene.state.$data as SceneDataLayerSet)?.state.layers;
+      const layers = (scene.state.$data as DashboardDataLayerSet)?.state.annotationLayers;
       const enabledLayer = layers[1];
       const hiddenLayer = layers[3];
 
@@ -978,6 +982,28 @@ describe('transformSceneToSaveModel', () => {
         const result = trimDashboardForSnapshot('Snap title', getTimeRange({ from: 'now-6h', to: 'now' }), snapshot);
         expect(result.links?.length).toBe(0);
       });
+    });
+  });
+
+  describe('Given a scene with an open panel editor', () => {
+    it('should persist changes to panel model', async () => {
+      const scene = transformSaveModelToScene({ dashboard: repeatingRowsAndPanelsDashboardJson as any, meta: {} });
+      activateFullSceneTree(scene);
+      await new Promise((r) => setTimeout(r, 1));
+      scene.onEnterEditMode();
+      const panel = findVizPanelByKey(scene, '15')!;
+      scene.setState({ editPanel: buildPanelEditScene(panel) });
+      panel.onOptionsChange({
+        mode: 'markdown',
+        code: {
+          language: 'plaintext',
+          showLineNumbers: false,
+          showMiniMap: false,
+        },
+        content: 'new content',
+      });
+      const saveModel = transformSceneToSaveModel(scene);
+      expect((saveModel.panels![1] as any).options.content).toBe('new content');
     });
   });
 });

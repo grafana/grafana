@@ -9,7 +9,6 @@ import { AppChromeUpdate } from 'app/core/components/AppChrome/AppChromeUpdate';
 import { NavToolbarSeparator } from 'app/core/components/AppChrome/NavToolbar/NavToolbarSeparator';
 import { contextSrv } from 'app/core/core';
 import { Trans, t } from 'app/core/internationalization';
-import { DashNavModalContextProvider, DashNavModalRoot } from 'app/features/dashboard/components/DashNav/DashNav';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 import { playlistSrv } from 'app/features/playlist/PlaylistSrv';
 
@@ -48,6 +47,7 @@ export function ToolbarActions({ dashboard }: Props) {
     hasCopiedPanel: copiedPanel,
   } = dashboard.useState();
   const { isPlaying } = playlistSrv.useState();
+  const [isAddPanelMenuOpen, setIsAddPanelMenuOpen] = useState(false);
 
   const canSaveAs = contextSrv.hasEditPermissionInFolders;
   const toolbarActions: ToolbarAction[] = [];
@@ -67,73 +67,7 @@ export function ToolbarActions({ dashboard }: Props) {
 
   toolbarActions.push({
     group: 'icon-actions',
-    condition: isEditingAndShowingDashboard,
-    render: () => (
-      <ToolbarButton
-        key="add-visualization"
-        tooltip={'Add visualization'}
-        icon="graph-bar"
-        onClick={() => {
-          const id = dashboard.onCreateNewPanel();
-          DashboardInteractions.toolbarAddButtonClicked({ item: 'add_visualization' });
-          locationService.partial({ editPanel: id });
-        }}
-      />
-    ),
-  });
-
-  toolbarActions.push({
-    group: 'icon-actions',
-    condition: isEditingAndShowingDashboard,
-    render: () => (
-      <ToolbarButton
-        key="add-library-panel"
-        tooltip={'Add library panel'}
-        icon="library-panel"
-        onClick={() => {
-          dashboard.onCreateLibPanelWidget();
-          DashboardInteractions.toolbarAddButtonClicked({ item: 'add_library_panel' });
-        }}
-      />
-    ),
-  });
-
-  toolbarActions.push({
-    group: 'icon-actions',
-    condition: isEditingAndShowingDashboard,
-    render: () => (
-      <ToolbarButton
-        key="add-row"
-        tooltip={'Add row'}
-        icon="wrap-text"
-        onClick={() => {
-          dashboard.onCreateNewRow();
-          DashboardInteractions.toolbarAddButtonClicked({ item: 'add_row' });
-        }}
-      />
-    ),
-  });
-
-  toolbarActions.push({
-    group: 'icon-actions',
-    condition: isEditingAndShowingDashboard,
-    render: () => (
-      <ToolbarButton
-        key="paste-panel"
-        disabled={!hasCopiedPanel}
-        tooltip={'Paste panel'}
-        icon="copy"
-        onClick={() => {
-          dashboard.pastePanel();
-          DashboardInteractions.toolbarAddButtonClicked({ item: 'paste_panel' });
-        }}
-      />
-    ),
-  });
-
-  toolbarActions.push({
-    group: 'icon-actions',
-    condition: uid && Boolean(meta.canStar) && isShowingDashboard,
+    condition: uid && Boolean(meta.canStar) && isShowingDashboard && !isEditing,
     render: () => {
       let desc = meta.isStarred
         ? t('dashboard.toolbar.unmark-favorite', 'Unmark as favorite')
@@ -158,7 +92,7 @@ export function ToolbarActions({ dashboard }: Props) {
 
   toolbarActions.push({
     group: 'icon-actions',
-    condition: isDevEnv && uid && isShowingDashboard,
+    condition: isDevEnv && uid && isShowingDashboard && !isEditing,
     render: () => (
       <ToolbarButton
         key="view-in-old-dashboard-button"
@@ -175,7 +109,84 @@ export function ToolbarActions({ dashboard }: Props) {
     group: 'icon-actions',
     condition: meta.isSnapshot && !isEditing,
     render: () => (
-      <GoToSnapshotOriginButton originalURL={dashboard.getInitialSaveModel()?.snapshot?.originalUrl ?? ''} />
+      <GoToSnapshotOriginButton
+        key="go-to-snapshot-origin"
+        originalURL={dashboard.getInitialSaveModel()?.snapshot?.originalUrl ?? ''}
+      />
+    ),
+  });
+
+  if (!isEditingPanel && !isEditing) {
+    // This adds the alert rules button and the dashboard insights button
+    addDynamicActions(toolbarActions, dynamicDashNavActions.right, 'icon-actions');
+  }
+
+  toolbarActions.push({
+    group: 'add-panel',
+    condition: isEditingAndShowingDashboard,
+    render: () => (
+      <Dropdown
+        key="add-panel-dropdown"
+        onVisibleChange={(isOpen) => {
+          setIsAddPanelMenuOpen(isOpen);
+          DashboardInteractions.toolbarAddClick();
+        }}
+        overlay={() => (
+          <Menu>
+            <Menu.Item
+              key="add-visualization"
+              testId={selectors.pages.AddDashboard.itemButton('Add new visualization menu item')}
+              label={t('dashboard.add-menu.visualization', 'Visualization')}
+              onClick={() => {
+                const id = dashboard.onCreateNewPanel();
+                DashboardInteractions.toolbarAddButtonClicked({ item: 'add_visualization' });
+                locationService.partial({ editPanel: id });
+              }}
+            />
+            <Menu.Item
+              key="add-panel-lib"
+              testId={selectors.pages.AddDashboard.itemButton('Add new panel from panel library menu item')}
+              label={t('dashboard.add-menu.import', 'Import from library')}
+              onClick={() => {
+                dashboard.onCreateLibPanelWidget();
+                DashboardInteractions.toolbarAddButtonClicked({ item: 'add_library_panel' });
+              }}
+            />
+            <Menu.Item
+              key="add-row"
+              testId={selectors.pages.AddDashboard.itemButton('Add new row menu item')}
+              label={t('dashboard.add-menu.row', 'Row')}
+              onClick={() => {
+                dashboard.onCreateNewRow();
+                DashboardInteractions.toolbarAddButtonClicked({ item: 'add_row' });
+              }}
+            />
+            <Menu.Item
+              key="paste-panel"
+              disabled={!hasCopiedPanel}
+              testId={selectors.pages.AddDashboard.itemButton('Add new panel from clipboard menu item')}
+              label={t('dashboard.add-menu.paste-panel', 'Paste panel')}
+              onClick={() => {
+                dashboard.pastePanel();
+                DashboardInteractions.toolbarAddButtonClicked({ item: 'paste_panel' });
+              }}
+            />
+          </Menu>
+        )}
+        placement="bottom"
+        offset={[0, 6]}
+      >
+        <Button
+          key="add-panel-button"
+          variant="primary"
+          size="sm"
+          fill="outline"
+          data-testid={selectors.components.PageToolbar.itemButton('Add button')}
+        >
+          <Trans i18nKey="dashboard.toolbar.add">Add</Trans>
+          <Icon name={isAddPanelMenuOpen ? 'angle-up' : 'angle-down'} size="lg" />
+        </Button>
+      </Dropdown>
     ),
   });
 
@@ -221,11 +232,6 @@ export function ToolbarActions({ dashboard }: Props) {
       />
     ),
   });
-
-  if (!isEditingPanel) {
-    // This adds the alert rules button and the dashboard insights button
-    addDynamicActions(toolbarActions, dynamicDashNavActions.right, 'icon-actions');
-  }
 
   toolbarActions.push({
     group: 'back-button',
@@ -433,7 +439,7 @@ export function ToolbarActions({ dashboard }: Props) {
       }
 
       // If we only can save as copy
-      if (canSaveAs && !meta.canSave) {
+      if (canSaveAs && !meta.canSave && !meta.canMakeEditable) {
         return (
           <Button
             onClick={() => {
@@ -510,12 +516,7 @@ export function ToolbarActions({ dashboard }: Props) {
     lastGroup = action.group;
   }
 
-  return (
-    <DashNavModalContextProvider>
-      <ToolbarButtonRow alignment="right">{actionElements}</ToolbarButtonRow>
-      <DashNavModalRoot />
-    </DashNavModalContextProvider>
-  );
+  return <ToolbarButtonRow alignment="right">{actionElements}</ToolbarButtonRow>;
 }
 
 function addDynamicActions(
