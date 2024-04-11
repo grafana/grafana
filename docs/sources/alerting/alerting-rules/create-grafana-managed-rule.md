@@ -115,37 +115,7 @@ To do this, you need to make sure that your alert rule is in the right evaluatio
 
    Use the guidelines in [No data and error handling](#configure-no-data-and-error-handling).
 
-## Configure notifications
-
-{{< admonition type="note" >}}
-To try out a simplified version of routing your alerts, enable the alertingSimplifiedRouting feature toggle and refer to the following section Configure notifications (simplified).
-{{< /admonition >}}
-
-1. Add labels to your alert rules to set which notification policy should handle your firing alert instances.
-
-   All alert rules and instances, irrespective of their labels, match the default notification policy. If there are no nested policies, or no nested policies match the labels in the alert rule or alert instance, then the default notification policy is the matching policy.
-
-   Add labels if you want to change the way your notifications are routed.
-
-   Add custom labels by selecting existing key-value pairs from the drop down, or add new labels by entering the new key or value.
-
-1. Preview your alert instance routing set up.
-
-   Based on the labels added, alert instances are routed to the following notification policies displayed.
-
-   Expand each notification policy below to view more details.
-
-1. Click See details to view alert routing details and an email preview.
-
-1. Click **Save rule**.
-
-## Configure notifications (simplified)
-
-{{< admonition type="note" >}}
-To try this out, enable the alertingSimplifiedRouting feature toggle.
-
-This feature is currently not available for Grafana Cloud.
-{{< /admonition >}}
+## Configure labels and notifications
 
 In the **Labels** section, you can optionally choose whether to add labels to organize your alert rules, make searching easier, as well as set which notification policy should handle your firing alert instance.
 

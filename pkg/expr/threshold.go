@@ -128,6 +128,10 @@ func (tc *ThresholdCommand) Execute(ctx context.Context, now time.Time, vars mat
 	return mathCommand.Execute(ctx, now, vars, tracer)
 }
 
+func (tc *ThresholdCommand) Type() string {
+	return TypeThreshold.String()
+}
+
 // createMathExpression converts all the info we have about a "threshold" expression in to a Math expression
 func createMathExpression(referenceVar string, thresholdFunc ThresholdType, args []float64, invert bool) (string, error) {
 	var exp string
@@ -169,8 +173,8 @@ type ThresholdCommandConfig struct {
 
 type ThresholdConditionJSON struct {
 	Evaluator        ConditionEvalJSON  `json:"evaluator"`
-	UnloadEvaluator  *ConditionEvalJSON `json:"unloadEvaluator"`
-	LoadedDimensions *data.Frame        `json:"loadedDimensions"`
+	UnloadEvaluator  *ConditionEvalJSON `json:"unloadEvaluator,omitempty"`
+	LoadedDimensions *data.Frame        `json:"loadedDimensions,omitempty"`
 }
 
 // IsHysteresisExpression returns true if the raw model describes a hysteresis command:

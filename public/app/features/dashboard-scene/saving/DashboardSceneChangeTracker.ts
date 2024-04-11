@@ -1,20 +1,27 @@
 import { Unsubscribable } from 'rxjs';
 
 import {
-  SceneDataLayers,
-  SceneGridItem,
+  SceneDataLayerSet,
+  SceneDataTransformer,
   SceneGridLayout,
   SceneObjectStateChangedEvent,
+  SceneQueryRunner,
   SceneRefreshPicker,
   SceneTimeRange,
   SceneVariableSet,
+  VizPanel,
   behaviors,
 } from '@grafana/scenes';
 import { createWorker } from 'app/features/dashboard-scene/saving/createDetectChangesWorker';
 
+import { VizPanelManager } from '../panel-edit/VizPanelManager';
 import { DashboardAnnotationsDataLayer } from '../scene/DashboardAnnotationsDataLayer';
 import { DashboardControls } from '../scene/DashboardControls';
+import { DashboardGridItem } from '../scene/DashboardGridItem';
 import { DashboardScene, PERSISTED_PROPS } from '../scene/DashboardScene';
+import { LibraryVizPanel } from '../scene/LibraryVizPanel';
+import { VizPanelLinks } from '../scene/PanelLinks';
+import { PanelTimeRange } from '../scene/PanelTimeRange';
 import { transformSceneToSaveModel } from '../serialization/transformSceneToSaveModel';
 import { isSceneVariableInstance } from '../settings/variables/utils';
 
@@ -30,60 +37,115 @@ export class DashboardSceneChangeTracker {
   }
 
   private onStateChanged({ payload }: SceneObjectStateChangedEvent) {
+    // If there are no changes in the state, the check is not needed
+    if (Object.keys(payload.partialUpdate).length === 0) {
+      return;
+    }
+
+    // Any change in the panel should trigger a change detection
+    // The VizPanelManager includes configuration for the panel like repeat
+    // The PanelTimeRange includes the overrides configuration
+    if (
+      payload.changedObject instanceof VizPanel ||
+      payload.changedObject instanceof DashboardGridItem ||
+      payload.changedObject instanceof PanelTimeRange
+    ) {
+      return this.detectSaveModelChanges();
+    }
+    // VizPanelManager includes the repeat configuration
+    if (payload.changedObject instanceof VizPanelManager) {
+      if (
+        Object.prototype.hasOwnProperty.call(payload.partialUpdate, 'repeat') ||
+        Object.prototype.hasOwnProperty.call(payload.partialUpdate, 'repeatDirection') ||
+        Object.prototype.hasOwnProperty.call(payload.partialUpdate, 'maxPerRow')
+      ) {
+        return this.detectSaveModelChanges();
+      }
+    }
+    // SceneQueryRunner includes the DS configuration
+    if (payload.changedObject instanceof SceneQueryRunner) {
+      if (!Object.prototype.hasOwnProperty.call(payload.partialUpdate, 'data')) {
+        return this.detectSaveModelChanges();
+      }
+    }
+    // SceneDataTransformer includes the transformation configuration
+    if (payload.changedObject instanceof SceneDataTransformer) {
+      if (!Object.prototype.hasOwnProperty.call(payload.partialUpdate, 'data')) {
+        return this.detectSaveModelChanges();
+      }
+    }
+    if (payload.changedObject instanceof VizPanelLinks) {
+      return this.detectSaveModelChanges();
+    }
+    if (payload.changedObject instanceof LibraryVizPanel) {
+      if (Object.prototype.hasOwnProperty.call(payload.partialUpdate, 'name')) {
+        return this.detectSaveModelChanges();
+      }
+    }
     if (payload.changedObject instanceof SceneRefreshPicker) {
-      if (Object.prototype.hasOwnProperty.call(payload.partialUpdate, 'intervals')) {
-        this.detectChanges();
+      if (
+        Object.prototype.hasOwnProperty.call(payload.partialUpdate, 'intervals') ||
+        Object.prototype.hasOwnProperty.call(payload.partialUpdate, 'refresh')
+      ) {
+        return this.detectSaveModelChanges();
       }
     }
     if (payload.changedObject instanceof behaviors.CursorSync) {
-      this.detectChanges();
+      return this.detectSaveModelChanges();
     }
-    if (payload.changedObject instanceof SceneDataLayers) {
-      this.detectChanges();
+    if (payload.changedObject instanceof SceneDataLayerSet) {
+      return this.detectSaveModelChanges();
     }
-    if (payload.changedObject instanceof SceneGridItem) {
-      this.detectChanges();
+    if (payload.changedObject instanceof DashboardGridItem) {
+      return this.detectSaveModelChanges();
     }
     if (payload.changedObject instanceof SceneGridLayout) {
-      this.detectChanges();
+      return this.detectSaveModelChanges();
     }
     if (payload.changedObject instanceof DashboardScene) {
       if (Object.keys(payload.partialUpdate).some((key) => PERSISTED_PROPS.includes(key))) {
-        this.detectChanges();
+        return this.detectSaveModelChanges();
       }
     }
     if (payload.changedObject instanceof SceneTimeRange) {
-      this.detectChanges();
+      return this.detectSaveModelChanges();
     }
     if (payload.changedObject instanceof DashboardControls) {
       if (Object.prototype.hasOwnProperty.call(payload.partialUpdate, 'hideTimeControls')) {
-        this.detectChanges();
+        return this.detectSaveModelChanges();
       }
     }
     if (payload.changedObject instanceof SceneVariableSet) {
-      this.detectChanges();
+      return this.detectSaveModelChanges();
     }
     if (payload.changedObject instanceof DashboardAnnotationsDataLayer) {
       if (!Object.prototype.hasOwnProperty.call(payload.partialUpdate, 'data')) {
-        this.detectChanges();
+        return this.detectSaveModelChanges();
       }
     }
+    if (payload.changedObject instanceof behaviors.LiveNowTimer) {
+      return this.detectSaveModelChanges();
+    }
     if (isSceneVariableInstance(payload.changedObject)) {
-      this.detectChanges();
+      return this.detectSaveModelChanges();
     }
   }
 
-  private detectChanges() {
+  private detectSaveModelChanges() {
     this._changesWorker?.postMessage({
       changed: transformSceneToSaveModel(this._dashboard),
       initial: this._dashboard.getInitialSaveModel(),
     });
   }
 
+  private hasMetadataChanges() {
+    return this._dashboard.state.meta.folderUid !== this._dashboard.getInitialState()?.meta.folderUid;
+  }
+
   private updateIsDirty(result: DashboardChangeInfo) {
     const { hasChanges } = result;
 
-    if (hasChanges) {
+    if (hasChanges || this.hasMetadataChanges()) {
       if (!this._dashboard.state.isDirty) {
         this._dashboard.setState({ isDirty: true });
       }

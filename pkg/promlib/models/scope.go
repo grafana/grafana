@@ -3,12 +3,11 @@ package models
 import (
 	"fmt"
 
-	"github.com/grafana/grafana/pkg/apis/scope/v0alpha1"
 	"github.com/prometheus/prometheus/model/labels"
 	"github.com/prometheus/prometheus/promql/parser"
 )
 
-func ApplyQueryScope(rawExpr string, scope v0alpha1.ScopeSpec) (string, error) {
+func ApplyQueryScope(rawExpr string, scope ScopeSpec) (string, error) {
 	expr, err := parser.ParseExpr(rawExpr)
 	if err != nil {
 		return "", err
@@ -59,18 +58,18 @@ func ApplyQueryScope(rawExpr string, scope v0alpha1.ScopeSpec) (string, error) {
 	return expr.String(), nil
 }
 
-func scopeFiltersToMatchers(filters []v0alpha1.ScopeFilter) ([]*labels.Matcher, error) {
+func scopeFiltersToMatchers(filters []ScopeFilter) ([]*labels.Matcher, error) {
 	matchers := make([]*labels.Matcher, 0, len(filters))
 	for _, f := range filters {
 		var mt labels.MatchType
 		switch f.Operator {
-		case "=":
+		case FilterOperatorEquals:
 			mt = labels.MatchEqual
-		case "!=":
+		case FilterOperatorNotEquals:
 			mt = labels.MatchNotEqual
-		case "=~":
+		case FilterOperatorRegexMatch:
 			mt = labels.MatchRegexp
-		case "!~":
+		case FilterOperatorRegexNotMatch:
 			mt = labels.MatchNotRegexp
 		default:
 			return nil, fmt.Errorf("unknown operator %q", f.Operator)

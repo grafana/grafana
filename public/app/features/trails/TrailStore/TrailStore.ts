@@ -1,10 +1,14 @@
 import { debounce, isEqual } from 'lodash';
 
-import { SceneObject, SceneObjectRef, SceneObjectUrlValues, getUrlSyncManager, sceneUtils } from '@grafana/scenes';
+import { getUrlSyncManager, SceneObject, SceneObjectRef, SceneObjectUrlValues, sceneUtils } from '@grafana/scenes';
+import { dispatch } from 'app/store/store';
 
+import { notifyApp } from '../../../core/reducers/appNotification';
 import { DataTrail } from '../DataTrail';
 import { TrailStepType } from '../DataTrailsHistory';
 import { BOOKMARKED_TRAILS_KEY, RECENT_TRAILS_KEY } from '../shared';
+
+import { createBookmarkSavedNotification } from './utils';
 
 const MAX_RECENT_TRAILS = 20;
 
@@ -128,6 +132,7 @@ export class TrailStore {
     this._bookmarks.unshift(trail.getRef());
     this._refreshBookmarkIndexMap();
     this._save();
+    dispatch(notifyApp(createBookmarkSavedNotification()));
   }
 
   removeBookmark(index: number) {

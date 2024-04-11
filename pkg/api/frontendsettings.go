@@ -167,7 +167,7 @@ func (hs *HTTPServer) getFrontendSettings(c *contextmodel.ReqContext) (*dtos.Fro
 	hasAccess := accesscontrol.HasAccess(hs.AccessControl, c)
 	secretsManagerPluginEnabled := kvstore.EvaluateRemoteSecretsPlugin(c.Req.Context(), hs.secretsPluginManager, hs.Cfg) == nil
 	trustedTypesDefaultPolicyEnabled := (hs.Cfg.CSPEnabled && strings.Contains(hs.Cfg.CSPTemplate, "require-trusted-types-for")) || (hs.Cfg.CSPReportOnlyEnabled && strings.Contains(hs.Cfg.CSPReportOnlyTemplate, "require-trusted-types-for"))
-	isCloudMigrationTarget := hs.Features.IsEnabled(c.Req.Context(), featuremgmt.FlagOnPremToCloudMigrations) && hs.Cfg.CloudMigrationIsTarget
+	isCloudMigrationTarget := hs.Features.IsEnabled(c.Req.Context(), featuremgmt.FlagOnPremToCloudMigrations) && hs.Cfg.CloudMigration.IsTarget
 
 	frontendSettings := &dtos.FrontendSettingsDTO{
 		DefaultDatasource:                   defaultDS,
@@ -269,10 +269,11 @@ func (hs *HTTPServer) getFrontendSettings(c *contextmodel.ReqContext) (*dtos.Fro
 		SupportBundlesEnabled:            isSupportBundlesEnabled(hs),
 
 		Azure: dtos.FrontendSettingsAzureDTO{
-			Cloud:                   hs.Cfg.Azure.Cloud,
-			ManagedIdentityEnabled:  hs.Cfg.Azure.ManagedIdentityEnabled,
-			WorkloadIdentityEnabled: hs.Cfg.Azure.WorkloadIdentityEnabled,
-			UserIdentityEnabled:     hs.Cfg.Azure.UserIdentityEnabled,
+			Cloud:                                  hs.Cfg.Azure.Cloud,
+			ManagedIdentityEnabled:                 hs.Cfg.Azure.ManagedIdentityEnabled,
+			WorkloadIdentityEnabled:                hs.Cfg.Azure.WorkloadIdentityEnabled,
+			UserIdentityEnabled:                    hs.Cfg.Azure.UserIdentityEnabled,
+			UserIdentityFallbackCredentialsEnabled: hs.Cfg.Azure.UserIdentityFallbackCredentialsEnabled,
 		},
 
 		Caching: dtos.FrontendSettingsCachingDTO{
@@ -326,7 +327,6 @@ func (hs *HTTPServer) getFrontendSettings(c *contextmodel.ReqContext) (*dtos.Fro
 	oauthProviders := hs.SocialService.GetOAuthInfoProviders()
 	frontendSettings.Auth = dtos.FrontendSettingsAuthDTO{
 		AuthProxyEnableLoginToken:     hs.Cfg.AuthProxy.EnableLoginToken,
-		OAuthSkipOrgRoleUpdateSync:    hs.Cfg.OAuthSkipOrgRoleUpdateSync,
 		SAMLSkipOrgRoleSync:           hs.Cfg.SAMLSkipOrgRoleSync,
 		LDAPSkipOrgRoleSync:           hs.Cfg.LDAPSkipOrgRoleSync,
 		JWTAuthSkipOrgRoleSync:        hs.Cfg.JWTAuth.SkipOrgRoleSync,

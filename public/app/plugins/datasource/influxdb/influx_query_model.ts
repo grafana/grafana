@@ -1,8 +1,9 @@
 import { filter, find, indexOf, map } from 'lodash';
 
-import { escapeRegex, ScopedVars } from '@grafana/data';
+import { AdHocVariableFilter, escapeRegex, ScopedVars } from '@grafana/data';
 import { TemplateSrv } from '@grafana/runtime';
 
+import { removeRegexWrapper } from './queryUtils';
 import queryPart from './query_part';
 import { DEFAULT_POLICY, InfluxQuery, InfluxQueryTag } from './types';
 
@@ -151,7 +152,7 @@ export default class InfluxQueryModel {
 
     // Tags should always quote
     if (fieldName.endsWith('::tag')) {
-      textValue = "'" + value.replace(/\\/g, '\\\\').replace(/\'/g, "\\'") + "'";
+      textValue = "'" + removeRegexWrapper(value.replace(/\\/g, '\\\\').replace(/\'/g, "\\'")) + "'";
       return {
         operator: operator,
         value: textValue,
@@ -169,7 +170,7 @@ export default class InfluxQueryModel {
       textValue = lowerValue;
     } else {
       // String or unrecognised: quote
-      textValue = "'" + value.replace(/\\/g, '\\\\').replace(/\'/g, "\\'") + "'";
+      textValue = "'" + removeRegexWrapper(value.replace(/\\/g, '\\\\').replace(/\'/g, "\\'")) + "'";
     }
     return {
       operator: operator,
@@ -199,7 +200,7 @@ export default class InfluxQueryModel {
       if (interpolate) {
         value = this.templateSrv.replace(value, this.scopedVars);
       }
-
+      value = removeRegexWrapper(value);
       if (operator.startsWith('Is')) {
         let r = this.isOperatorTypeHandler(operator, value, tag.key);
         operator = r.operator;
@@ -332,7 +333,7 @@ export default class InfluxQueryModel {
     return query;
   }
 
-  renderAdhocFilters(filters: any[]) {
+  renderAdhocFilters(filters: AdHocVariableFilter[]) {
     const conditions = map(filters, (tag, index) => {
       return this.renderTagCondition(tag, index, true);
     });

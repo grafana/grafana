@@ -14,14 +14,18 @@ const (
 )
 
 type SignedInUser struct {
-	UserID           int64  `xorm:"user_id"`
-	UserUID          string `xorm:"user_uid"`
-	OrgID            int64  `xorm:"org_id"`
-	OrgName          string
-	OrgRole          roletype.RoleType
-	Login            string
-	Name             string
-	Email            string
+	UserID        int64  `xorm:"user_id"`
+	UserUID       string `xorm:"user_uid"`
+	OrgID         int64  `xorm:"org_id"`
+	OrgName       string
+	OrgRole       roletype.RoleType
+	Login         string
+	Name          string
+	Email         string
+	EmailVerified bool
+	// AuthID will be set if user signed in using external method
+	AuthID string
+	// AuthenticatedBy be set if user signed in using external method
 	AuthenticatedBy  string
 	ApiKeyID         int64 `xorm:"api_key_id"`
 	IsServiceAccount bool  `xorm:"is_service_account"`
@@ -35,7 +39,8 @@ type SignedInUser struct {
 	Permissions map[int64]map[string][]string `json:"-"`
 	// IDToken is a signed token representing the identity that can be forwarded to plugins and external services.
 	// Will only be set when featuremgmt.FlagIdForwarding is enabled.
-	IDToken string `json:"-" xorm:"-"`
+	IDToken      string `json:"-" xorm:"-"`
+	NamespacedID string
 }
 
 func (u *SignedInUser) ShouldUpdateLastSeenAt() bool {
@@ -205,8 +210,7 @@ func (u *SignedInUser) GetID() string {
 		return namespacedID(identity.NamespaceRenderService, 0)
 	}
 
-	// backwards compatibility
-	return namespacedID(identity.NamespaceUser, u.UserID)
+	return u.NamespacedID
 }
 
 // GetNamespacedID returns the namespace and ID of the active entity
@@ -214,7 +218,28 @@ func (u *SignedInUser) GetID() string {
 func (u *SignedInUser) GetNamespacedID() (string, string) {
 	parts := strings.Split(u.GetID(), ":")
 	// Safety: GetID always returns a ':' separated string
+	if len(parts) != 2 {
+		return "", ""
+	}
+
 	return parts[0], parts[1]
+}
+
+func (u *SignedInUser) GetAuthID() string {
+	return u.AuthID
+}
+
+func (u *SignedInUser) GetAuthenticatedBy() string {
+	return u.AuthenticatedBy
+}
+
+func (u *SignedInUser) IsAuthenticatedBy(providers ...string) bool {
+	for _, p := range providers {
+		if u.AuthenticatedBy == p {
+			return true
+		}
+	}
+	return false
 }
 
 // FIXME: remove this method once all services are using an interface
@@ -228,15 +253,14 @@ func (u *SignedInUser) GetEmail() string {
 	return u.Email
 }
 
+func (u *SignedInUser) IsEmailVerified() bool {
+	return u.EmailVerified
+}
+
 // GetDisplayName returns the display name of the active entity
 // The display name is the name if it is set, otherwise the login or email
 func (u *SignedInUser) GetDisplayName() string {
 	return u.NameOrFallback()
-}
-
-// DEPRECATEAD: Returns the authentication method used
-func (u *SignedInUser) GetAuthenticatedBy() string {
-	return u.AuthenticatedBy
 }
 
 func (u *SignedInUser) GetIDToken() string {

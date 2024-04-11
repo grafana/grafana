@@ -20,9 +20,7 @@ import {
   GroupByVariable,
   QueryVariable,
   SceneDataLayerControls,
-  SceneDataLayers,
   SceneDataTransformer,
-  SceneGridItem,
   SceneGridLayout,
   SceneGridRow,
   SceneQueryRunner,
@@ -43,8 +41,9 @@ import { DASHBOARD_DATASOURCE_PLUGIN_ID } from 'app/plugins/datasource/dashboard
 import { DashboardDataDTO } from 'app/types';
 
 import { AddLibraryPanelWidget } from '../scene/AddLibraryPanelWidget';
+import { DashboardDataLayerSet } from '../scene/DashboardDataLayerSet';
+import { DashboardGridItem } from '../scene/DashboardGridItem';
 import { LibraryVizPanel } from '../scene/LibraryVizPanel';
-import { PanelRepeaterGridItem } from '../scene/PanelRepeaterGridItem';
 import { PanelTimeRange } from '../scene/PanelTimeRange';
 import { RowRepeaterBehavior } from '../scene/RowRepeaterBehavior';
 import { NEW_LINK } from '../settings/links/utils';
@@ -144,9 +143,17 @@ describe('transformSaveModelToScene', () => {
 
       const scene = createDashboardSceneFromDashboardModel(oldModel);
 
-      expect(scene.state.$behaviors).toHaveLength(6);
-      expect(scene.state.$behaviors![0]).toBeInstanceOf(behaviors.CursorSync);
-      expect((scene.state.$behaviors![0] as behaviors.CursorSync).state.sync).toEqual(DashboardCursorSync.Crosshair);
+      const cursorSync = scene.state.$behaviors?.find((b) => b instanceof behaviors.CursorSync);
+      expect(cursorSync).toBeInstanceOf(behaviors.CursorSync);
+      expect((cursorSync as behaviors.CursorSync).state.sync).toEqual(DashboardCursorSync.Crosshair);
+    });
+
+    it('should apply live now timer behavior', () => {
+      const oldModel = new DashboardModel(defaultDashboard);
+      const scene = createDashboardSceneFromDashboardModel(oldModel);
+
+      const liveNowTimer = scene.state.$behaviors?.find((b) => b instanceof behaviors.LiveNowTimer);
+      expect(liveNowTimer).toBeInstanceOf(behaviors.LiveNowTimer);
     });
 
     it('should initialize the Dashboard Scene with empty template variables', () => {
@@ -170,8 +177,8 @@ describe('transformSaveModelToScene', () => {
   });
 
   describe('When creating a new dashboard', () => {
-    it('should initialize the DashboardScene in edit mode and dirty', () => {
-      const rsp = buildNewDashboardSaveModel();
+    it('should initialize the DashboardScene in edit mode and dirty', async () => {
+      const rsp = await buildNewDashboardSaveModel();
       const scene = transformSaveModelToScene(rsp);
       expect(scene.state.isEditing).toBe(undefined);
       expect(scene.state.isDirty).toBe(false);
@@ -224,11 +231,13 @@ describe('transformSaveModelToScene', () => {
       expect(rowScene.state.y).toEqual(row.gridPos!.y);
       expect(rowScene.state.isCollapsed).toEqual(row.collapsed);
       expect(rowScene.state.children).toHaveLength(3);
-      expect(rowScene.state.children[0]).toBeInstanceOf(SceneGridItem);
-      expect(rowScene.state.children[1]).toBeInstanceOf(SceneGridItem);
-      expect(rowScene.state.children[2]).toBeInstanceOf(SceneGridItem);
-      expect((rowScene.state.children[1] as SceneGridItem).state.body!).toBeInstanceOf(AddLibraryPanelWidget);
-      expect((rowScene.state.children[2] as SceneGridItem).state.body!).toBeInstanceOf(LibraryVizPanel);
+      expect(rowScene.state.children[0]).toBeInstanceOf(DashboardGridItem);
+      expect(rowScene.state.children[1]).toBeInstanceOf(DashboardGridItem);
+      expect(rowScene.state.children[2]).toBeInstanceOf(DashboardGridItem);
+      // Panels are sorted by position in the row
+      expect((rowScene.state.children[0] as DashboardGridItem).state.body!).toBeInstanceOf(AddLibraryPanelWidget);
+      expect((rowScene.state.children[1] as DashboardGridItem).state.body!).toBeInstanceOf(LibraryVizPanel);
+      expect((rowScene.state.children[2] as DashboardGridItem).state.body!).toBeInstanceOf(VizPanel);
     });
 
     it('should create panels within expanded row', () => {
@@ -335,16 +344,16 @@ describe('transformSaveModelToScene', () => {
       expect(body.state.children).toHaveLength(5);
       expect(body).toBeInstanceOf(SceneGridLayout);
       // Panel out of row
-      expect(body.state.children[0]).toBeInstanceOf(SceneGridItem);
-      const panelOutOfRowVizPanel = body.state.children[0] as SceneGridItem;
+      expect(body.state.children[0]).toBeInstanceOf(DashboardGridItem);
+      const panelOutOfRowVizPanel = body.state.children[0] as DashboardGridItem;
       expect((panelOutOfRowVizPanel.state.body as VizPanel)?.state.title).toBe(panelOutOfRow.title);
       // widget lib panel out of row
-      expect(body.state.children[1]).toBeInstanceOf(SceneGridItem);
-      const panelOutOfRowWidget = body.state.children[1] as SceneGridItem;
+      expect(body.state.children[1]).toBeInstanceOf(DashboardGridItem);
+      const panelOutOfRowWidget = body.state.children[1] as DashboardGridItem;
       expect(panelOutOfRowWidget.state.body!).toBeInstanceOf(AddLibraryPanelWidget);
       // lib panel out of row
-      expect(body.state.children[2]).toBeInstanceOf(SceneGridItem);
-      const panelOutOfRowLibVizPanel = body.state.children[2] as SceneGridItem;
+      expect(body.state.children[2]).toBeInstanceOf(DashboardGridItem);
+      const panelOutOfRowLibVizPanel = body.state.children[2] as DashboardGridItem;
       expect(panelOutOfRowLibVizPanel.state.body!).toBeInstanceOf(LibraryVizPanel);
       // Row with panels
       expect(body.state.children[3]).toBeInstanceOf(SceneGridRow);
@@ -352,13 +361,13 @@ describe('transformSaveModelToScene', () => {
       expect(rowWithPanelsScene.state.title).toBe(rowWithPanel.title);
       expect(rowWithPanelsScene.state.key).toBe('panel-10');
       expect(rowWithPanelsScene.state.children).toHaveLength(3);
-      const widget = rowWithPanelsScene.state.children[1] as SceneGridItem;
+      const widget = rowWithPanelsScene.state.children[1] as DashboardGridItem;
       expect(widget.state.body!).toBeInstanceOf(AddLibraryPanelWidget);
-      const libPanel = rowWithPanelsScene.state.children[2] as SceneGridItem;
+      const libPanel = rowWithPanelsScene.state.children[2] as DashboardGridItem;
       expect(libPanel.state.body!).toBeInstanceOf(LibraryVizPanel);
       // Panel within row
-      expect(rowWithPanelsScene.state.children[0]).toBeInstanceOf(SceneGridItem);
-      const panelInRowVizPanel = rowWithPanelsScene.state.children[0] as SceneGridItem;
+      expect(rowWithPanelsScene.state.children[0]).toBeInstanceOf(DashboardGridItem);
+      const panelInRowVizPanel = rowWithPanelsScene.state.children[0] as DashboardGridItem;
       expect((panelInRowVizPanel.state.body as VizPanel).state.title).toBe(panelInRow.title);
       // Empty row
       expect(body.state.children[4]).toBeInstanceOf(SceneGridRow);
@@ -506,7 +515,7 @@ describe('transformSaveModelToScene', () => {
       };
 
       const gridItem = buildGridItemForPanel(new PanelModel(panel));
-      const repeater = gridItem as PanelRepeaterGridItem;
+      const repeater = gridItem as DashboardGridItem;
 
       expect(repeater.state.maxPerRow).toBe(8);
       expect(repeater.state.variableName).toBe('server');
@@ -1223,26 +1232,26 @@ describe('transformSaveModelToScene', () => {
     it('Should build correct scene model', () => {
       const scene = transformSaveModelToScene({ dashboard: dashboard_to_load1 as any, meta: {} });
 
-      expect(scene.state.$data).toBeInstanceOf(SceneDataLayers);
+      expect(scene.state.$data).toBeInstanceOf(DashboardDataLayerSet);
       expect(scene.state.controls!.state.variableControls[1]).toBeInstanceOf(SceneDataLayerControls);
 
-      const dataLayers = scene.state.$data as SceneDataLayers;
-      expect(dataLayers.state.layers).toHaveLength(4);
-      expect(dataLayers.state.layers[0].state.name).toBe('Annotations & Alerts');
-      expect(dataLayers.state.layers[0].state.isEnabled).toBe(true);
-      expect(dataLayers.state.layers[0].state.isHidden).toBe(false);
+      const dataLayers = scene.state.$data as DashboardDataLayerSet;
+      expect(dataLayers.state.annotationLayers).toHaveLength(4);
+      expect(dataLayers.state.annotationLayers[0].state.name).toBe('Annotations & Alerts');
+      expect(dataLayers.state.annotationLayers[0].state.isEnabled).toBe(true);
+      expect(dataLayers.state.annotationLayers[0].state.isHidden).toBe(false);
 
-      expect(dataLayers.state.layers[1].state.name).toBe('Enabled');
-      expect(dataLayers.state.layers[1].state.isEnabled).toBe(true);
-      expect(dataLayers.state.layers[1].state.isHidden).toBe(false);
+      expect(dataLayers.state.annotationLayers[1].state.name).toBe('Enabled');
+      expect(dataLayers.state.annotationLayers[1].state.isEnabled).toBe(true);
+      expect(dataLayers.state.annotationLayers[1].state.isHidden).toBe(false);
 
-      expect(dataLayers.state.layers[2].state.name).toBe('Disabled');
-      expect(dataLayers.state.layers[2].state.isEnabled).toBe(false);
-      expect(dataLayers.state.layers[2].state.isHidden).toBe(false);
+      expect(dataLayers.state.annotationLayers[2].state.name).toBe('Disabled');
+      expect(dataLayers.state.annotationLayers[2].state.isEnabled).toBe(false);
+      expect(dataLayers.state.annotationLayers[2].state.isHidden).toBe(false);
 
-      expect(dataLayers.state.layers[3].state.name).toBe('Hidden');
-      expect(dataLayers.state.layers[3].state.isEnabled).toBe(true);
-      expect(dataLayers.state.layers[3].state.isHidden).toBe(true);
+      expect(dataLayers.state.annotationLayers[3].state.name).toBe('Hidden');
+      expect(dataLayers.state.annotationLayers[3].state.isEnabled).toBe(true);
+      expect(dataLayers.state.annotationLayers[3].state.isHidden).toBe(true);
     });
   });
 
@@ -1251,12 +1260,11 @@ describe('transformSaveModelToScene', () => {
       config.unifiedAlertingEnabled = true;
       const scene = transformSaveModelToScene({ dashboard: dashboard_to_load1 as any, meta: {} });
 
-      expect(scene.state.$data).toBeInstanceOf(SceneDataLayers);
+      expect(scene.state.$data).toBeInstanceOf(DashboardDataLayerSet);
       expect(scene.state.controls!.state.variableControls[1]).toBeInstanceOf(SceneDataLayerControls);
 
-      const dataLayers = scene.state.$data as SceneDataLayers;
-      expect(dataLayers.state.layers).toHaveLength(5);
-      expect(dataLayers.state.layers[4].state.name).toBe('Alert States');
+      const dataLayers = scene.state.$data as DashboardDataLayerSet;
+      expect(dataLayers.state.alertStatesLayer).toBeDefined();
     });
 
     it('Should add alert states data layer if any panel has a legacy alert defined', () => {
@@ -1265,12 +1273,11 @@ describe('transformSaveModelToScene', () => {
       dashboard.panels![0].alert = {};
       const scene = transformSaveModelToScene({ dashboard: dashboard_to_load1 as any, meta: {} });
 
-      expect(scene.state.$data).toBeInstanceOf(SceneDataLayers);
+      expect(scene.state.$data).toBeInstanceOf(DashboardDataLayerSet);
       expect(scene.state.controls!.state.variableControls[1]).toBeInstanceOf(SceneDataLayerControls);
 
-      const dataLayers = scene.state.$data as SceneDataLayers;
-      expect(dataLayers.state.layers).toHaveLength(5);
-      expect(dataLayers.state.layers[4].state.name).toBe('Alert States');
+      const dataLayers = scene.state.$data as DashboardDataLayerSet;
+      expect(dataLayers.state.alertStatesLayer).toBeDefined();
     });
   });
 
@@ -1321,11 +1328,11 @@ describe('transformSaveModelToScene', () => {
   });
 });
 
-function buildGridItemForTest(saveModel: Partial<Panel>): { gridItem: SceneGridItem; vizPanel: VizPanel } {
+function buildGridItemForTest(saveModel: Partial<Panel>): { gridItem: DashboardGridItem; vizPanel: VizPanel } {
   const gridItem = buildGridItemForPanel(new PanelModel(saveModel));
-  if (gridItem instanceof SceneGridItem) {
+  if (gridItem instanceof DashboardGridItem) {
     return { gridItem, vizPanel: gridItem.state.body as VizPanel };
   }
 
-  throw new Error('buildGridItemForPanel to return SceneGridItem');
+  throw new Error('buildGridItemForPanel to return DashboardGridItem');
 }

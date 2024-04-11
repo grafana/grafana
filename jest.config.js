@@ -18,6 +18,8 @@ const esModules = [
   '@kusto/monaco-kusto',
   'monaco-editor',
   'lodash-es',
+  '@msagl',
+  'vscode-languageserver-types',
 ].join('|');
 
 module.exports = {
@@ -30,7 +32,7 @@ module.exports = {
     `/node_modules/(?!${esModules})`, // exclude es modules to prevent TS complaining
   ],
   moduleDirectories: ['public', 'node_modules'],
-  roots: ['<rootDir>/public/app', '<rootDir>/public/test', '<rootDir>/packages', '<rootDir>/scripts'],
+  roots: ['<rootDir>/public/app', '<rootDir>/public/test', '<rootDir>/packages', '<rootDir>/scripts/tests'],
   testRegex: '(\\.|/)(test)\\.(jsx?|tsx?)$',
   moduleFileExtensions: ['ts', 'tsx', 'js', 'jsx', 'json'],
   setupFiles: ['jest-canvas-mock', './public/test/jest-setup.ts'],
@@ -55,6 +57,7 @@ module.exports = {
   },
   // Log the test results with dynamic Loki tags. Drone CI only
   reporters: ['default', ['<rootDir>/public/test/log-reporter.js', { enable: process.env.DRONE === 'true' }]],
+  watchPlugins: ['jest-watch-typeahead/filename', 'jest-watch-typeahead/testname'],
   modulePathIgnorePatterns: [
     // Avoid the `jest-haste-map: duplicate manual mock found` warning
     ".*__mocks__.*"

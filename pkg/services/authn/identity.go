@@ -27,6 +27,7 @@ const (
 	NamespaceServiceAccount = identity.NamespaceServiceAccount
 	NamespaceAnonymous      = identity.NamespaceAnonymous
 	NamespaceRenderService  = identity.NamespaceRenderService
+	NamespaceAccessPolicy   = identity.NamespaceAccessPolicy
 )
 
 const (
@@ -54,6 +55,8 @@ type Identity struct {
 	Name string
 	// Email is the email address of the entity. Should be unique.
 	Email string
+	// EmailVerified is true if entity has verified their email with grafana.
+	EmailVerified bool
 	// IsGrafanaAdmin is true if the entity is a Grafana admin.
 	IsGrafanaAdmin *bool
 	// AuthenticatedBy is the name of the authentication client that was used to authenticate the current Identity.
@@ -99,6 +102,10 @@ func (i *Identity) GetNamespacedID() (namespace string, identifier string) {
 	return split[0], split[1]
 }
 
+func (i *Identity) GetAuthID() string {
+	return i.AuthID
+}
+
 func (i *Identity) GetAuthenticatedBy() string {
 	return i.AuthenticatedBy
 }
@@ -120,6 +127,10 @@ func (i *Identity) GetDisplayName() string {
 
 func (i *Identity) GetEmail() string {
 	return i.Email
+}
+
+func (i *Identity) IsEmailVerified() bool {
+	return i.EmailVerified
 }
 
 func (i *Identity) GetIDToken() string {
@@ -197,6 +208,15 @@ func (i *Identity) HasUniqueId() bool {
 	return namespace == NamespaceUser || namespace == NamespaceServiceAccount || namespace == NamespaceAPIKey
 }
 
+func (i *Identity) IsAuthenticatedBy(providers ...string) bool {
+	for _, p := range providers {
+		if i.AuthenticatedBy == p {
+			return true
+		}
+	}
+	return false
+}
+
 func (i *Identity) IsNil() bool {
 	return i == nil
 }
@@ -212,6 +232,7 @@ func (i *Identity) SignedInUser() *user.SignedInUser {
 		Login:           i.Login,
 		Name:            i.Name,
 		Email:           i.Email,
+		AuthID:          i.AuthID,
 		AuthenticatedBy: i.AuthenticatedBy,
 		IsGrafanaAdmin:  i.GetIsGrafanaAdmin(),
 		IsAnonymous:     namespace == NamespaceAnonymous,
@@ -221,6 +242,7 @@ func (i *Identity) SignedInUser() *user.SignedInUser {
 		Teams:           i.Teams,
 		Permissions:     i.Permissions,
 		IDToken:         i.IDToken,
+		NamespacedID:    i.ID,
 	}
 
 	if namespace == NamespaceAPIKey {

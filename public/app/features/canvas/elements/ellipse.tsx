@@ -1,5 +1,6 @@
 import { css } from '@emotion/css';
-import React, { PureComponent } from 'react';
+import React from 'react';
+import { v4 as uuidv4 } from 'uuid';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { config } from 'app/core/config';
@@ -15,48 +16,71 @@ import {
   defaultBgColor,
   defaultTextColor,
 } from '../element';
-import { Align, VAlign, EllipseConfig, EllipseData } from '../types';
+import { Align, CanvasElementConfig, CanvasElementData, VAlign } from '../types';
 
-class EllipseDisplay extends PureComponent<CanvasElementProps<EllipseConfig, EllipseData>> {
-  render() {
-    const { data } = this.props;
-    const styles = getStyles(config.theme2, data);
-    return (
-      <div className={styles.container}>
-        <span className={styles.span}>{data?.text}</span>
-      </div>
-    );
-  }
-}
+const Ellipse = (props: CanvasElementProps<CanvasElementConfig, CanvasElementData>) => {
+  const { data } = props;
+  const styles = getStyles(config.theme2, data);
 
-const getStyles = (theme: GrafanaTheme2, data: any) => ({
-  container: css({
-    display: 'table',
-    position: 'absolute',
-    top: '50%',
-    transform: 'translateY(-50%)',
-    width: '100%',
-    height: '100%',
-    backgroundColor: data?.backgroundColor,
-    border: `${data?.width}px solid ${data?.borderColor}`,
-    // eslint-disable-next-line @grafana/no-border-radius-literal
-    borderRadius: '50%',
-  }),
-  span: css({
-    display: 'table-cell',
-    verticalAlign: data?.valign,
-    textAlign: data?.align,
-    fontSize: `${data?.size}px`,
-    color: data?.color,
-  }),
-});
+  // uuid needed to avoid id conflicts when multiple elements are rendered
+  const uniqueId = uuidv4();
 
-export const ellipseItem: CanvasElementItem<EllipseConfig, EllipseData> = {
+  return (
+    <div className={styles.container}>
+      <svg
+        xmlns="http://www.w3.org/2000/svg"
+        viewBox="0 0 200 200"
+        width="100%"
+        height="100%"
+        preserveAspectRatio="none"
+      >
+        <defs>
+          <pattern id={`image-${uniqueId}`} patternUnits="userSpaceOnUse" width="200" height="200">
+            <image xlinkHref={data?.backgroundImage} x="-50" y="-50" width="300" height="300"></image>
+          </pattern>
+          <clipPath id={`ellipseClip-${uniqueId}`}>
+            <ellipse cx="50%" cy="50%" rx="50%" ry="50%" />
+          </clipPath>
+        </defs>
+        {/* Apply background image within the clipping area */}
+        <rect
+          x="0"
+          y="0"
+          width="100%"
+          height="100%"
+          clipPath={`url(#ellipseClip-${uniqueId})`}
+          style={{ fill: 'none' }}
+        />
+        <ellipse
+          cx="50%"
+          cy="50%"
+          rx="50%"
+          ry="50%"
+          style={{ fill: data?.backgroundImage ? `url(#image-${uniqueId})` : data?.backgroundColor }}
+        />
+
+        {/* Border */}
+        <ellipse
+          cx="50%"
+          cy="50%"
+          rx="50%"
+          ry="50%"
+          clipPath={`url(#ellipseClip-${uniqueId})`}
+          className={styles.elementBorder}
+        />
+      </svg>
+
+      <span className={styles.text}>{data?.text}</span>
+    </div>
+  );
+};
+
+export const ellipseItem: CanvasElementItem<CanvasElementConfig, CanvasElementData> = {
   id: 'ellipse',
   name: 'Ellipse',
   description: 'Ellipse',
 
-  display: EllipseDisplay,
+  display: Ellipse,
 
   defaultSize: {
     width: 160,
@@ -65,54 +89,52 @@ export const ellipseItem: CanvasElementItem<EllipseConfig, EllipseData> = {
 
   getNewOptions: (options) => ({
     ...options,
-    config: {
-      backgroundColor: {
+    background: {
+      color: {
         fixed: defaultBgColor,
       },
-      borderColor: {
-        fixed: 'transparent',
-      },
-      width: 1,
+    },
+    config: {
       align: Align.Center,
       valign: VAlign.Middle,
       color: {
         fixed: defaultTextColor,
       },
     },
-    background: {
-      color: {
-        fixed: 'transparent',
-      },
+    placement: {
+      width: options?.placement?.width ?? 160,
+      height: options?.placement?.height ?? 138,
+      top: options?.placement?.top,
+      left: options?.placement?.left,
     },
   }),
 
-  prepareData: (dimensionContext: DimensionContext, elementOptions: CanvasElementOptions<EllipseConfig>) => {
-    const ellipseConfig = elementOptions.config;
+  prepareData: (dimensionContext: DimensionContext, elementOptions: CanvasElementOptions<CanvasElementConfig>) => {
+    const textConfig = elementOptions.config;
 
-    const data: EllipseData = {
-      width: ellipseConfig?.width,
-      text: ellipseConfig?.text ? dimensionContext.getText(ellipseConfig.text).value() : '',
-      align: ellipseConfig?.align ?? Align.Center,
-      valign: ellipseConfig?.valign ?? VAlign.Middle,
-      size: ellipseConfig?.size,
+    const data: CanvasElementData = {
+      text: textConfig?.text ? dimensionContext.getText(textConfig.text).value() : '',
+      align: textConfig?.align ?? Align.Center,
+      valign: textConfig?.valign ?? VAlign.Middle,
+      size: textConfig?.size,
     };
 
-    if (ellipseConfig?.backgroundColor) {
-      data.backgroundColor = dimensionContext.getColor(ellipseConfig.backgroundColor).value();
-    }
-    if (ellipseConfig?.borderColor) {
-      data.borderColor = dimensionContext.getColor(ellipseConfig.borderColor).value();
-    }
-    if (ellipseConfig?.color) {
-      data.color = dimensionContext.getColor(ellipseConfig.color).value();
+    if (textConfig?.color) {
+      data.color = dimensionContext.getColor(textConfig.color).value();
     }
 
     data.links = getDataLinks(dimensionContext, elementOptions, data.text);
 
+    const { background, border } = elementOptions;
+    data.backgroundColor = background?.color ? dimensionContext.getColor(background.color).value() : defaultBgColor;
+    data.borderColor = border?.color ? dimensionContext.getColor(border.color).value() : defaultBgColor;
+    data.borderWidth = border?.width ?? 0;
+
+    data.backgroundImage = background?.image ? dimensionContext.getResource(background.image).value() : undefined;
+
     return data;
   },
 
-  // Heatmap overlay options
   registerOptionsUI: (builder) => {
     const category = ['Ellipse'];
     builder
@@ -145,32 +167,6 @@ export const ellipseItem: CanvasElementItem<EllipseConfig, EllipseData> = {
         },
         defaultValue: Align.Left,
       })
-      .addCustomEditor({
-        category,
-        id: 'config.borderColor',
-        path: 'config.borderColor',
-        name: 'Ellipse border color',
-        editor: ColorDimensionEditor,
-        settings: {},
-        defaultValue: {},
-      })
-      .addNumberInput({
-        category,
-        path: 'config.width',
-        name: 'Ellipse border width',
-        settings: {
-          placeholder: 'Auto',
-        },
-      })
-      .addCustomEditor({
-        category,
-        id: 'config.backgroundColor',
-        path: 'config.backgroundColor',
-        name: 'Ellipse background color',
-        editor: ColorDimensionEditor,
-        settings: {},
-        defaultValue: {},
-      })
       .addRadio({
         category,
         path: 'config.valign',
@@ -193,4 +189,33 @@ export const ellipseItem: CanvasElementItem<EllipseConfig, EllipseData> = {
         },
       });
   },
+};
+
+const getStyles = (theme: GrafanaTheme2, data: CanvasElementData | undefined) => {
+  const textTop = data?.valign === VAlign.Middle ? '50%' : data?.valign === VAlign.Top ? '10%' : '90%';
+  const textLeft = data?.align === Align.Center ? '50%' : data?.align === Align.Left ? '10%' : '90%';
+  const textTransform = `translate(${data?.align === Align.Center ? '-50%' : data?.align === Align.Left ? '10%' : '-90%'}, ${
+    data?.valign === VAlign.Middle ? '-50%' : data?.valign === VAlign.Top ? '10%' : '-90%'
+  })`;
+
+  return {
+    container: css({
+      height: '100%',
+      width: '100%',
+    }),
+    text: css({
+      position: 'absolute',
+      top: textTop,
+      left: textLeft,
+      transform: textTransform,
+      fontSize: `${data?.size}px`,
+      color: data?.color,
+    }),
+    elementBorder: css({
+      fill: 'none',
+      stroke: data?.borderColor ?? 'none',
+      strokeWidth: data?.borderWidth ?? 0,
+      strokeLinejoin: 'round',
+    }),
+  };
 };

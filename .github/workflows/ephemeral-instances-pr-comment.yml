@@ -4,7 +4,11 @@ on:
     types: [created]
 jobs:
   config:
-    runs-on: "ubuntu-latest"
+    if: github.event.sender.type == 'User' &&
+        github.event.issue.pull_request &&
+        startsWith(github.event.comment.body, '/deploy-to-hg')
+    runs-on:
+      labels: ubuntu-latest-8-cores
     outputs:
       has-secrets: ${{ steps.check.outputs.has-secrets }}
     steps:

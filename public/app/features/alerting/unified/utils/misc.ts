@@ -14,8 +14,6 @@ import {
   mapStateWithReasonToBaseState,
 } from 'app/types/unified-alerting-dto';
 
-import { FolderDTO } from '../../../../types';
-
 import { ALERTMANAGER_NAME_QUERY_KEY } from './constants';
 import { getRulesSourceName, isCloudRulesSource } from './datasource';
 import { getMatcherQueryParams } from './matchers';
@@ -149,22 +147,16 @@ export function makeFolderAlertsLink(folderUID: string, title: string): string {
   return createUrl(`/dashboards/f/${folderUID}/${title}/alerting`);
 }
 
-export function makeFolderSettingsLink(folder: FolderDTO): string {
-  return createUrl(`/dashboards/f/${folder.uid}/settings`);
+export function makeFolderSettingsLink(uid: string): string {
+  return createUrl(`/dashboards/f/${uid}/settings`);
 }
 
 export function makeDashboardLink(dashboardUID: string): string {
   return createUrl(`/d/${encodeURIComponent(dashboardUID)}`);
 }
 
-type PanelLinkParams = {
-  viewPanel?: string;
-  editPanel?: string;
-  tab?: 'alert' | 'transform' | 'query';
-};
-
-export function makePanelLink(dashboardUID: string, panelId: string, queryParams: PanelLinkParams = {}): string {
-  const panelParams = new URLSearchParams(queryParams);
+export function makePanelLink(dashboardUID: string, panelId: string): string {
+  const panelParams = new URLSearchParams({ viewPanel: panelId });
   return createUrl(`/d/${encodeURIComponent(dashboardUID)}`, panelParams);
 }
 
@@ -234,7 +226,7 @@ export function isLocalDevEnv() {
 }
 
 export function isErrorLike(error: unknown): error is Error {
-  return 'message' in (error as Error);
+  return Boolean(error && typeof error === 'object' && 'message' in error);
 }
 
 export function stringifyErrorLike(error: unknown): string {

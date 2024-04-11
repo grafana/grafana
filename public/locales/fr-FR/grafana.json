@@ -94,7 +94,7 @@
     },
     "no-results": {
       "clear": "Effacer la recherche et les filtres",
-      "text": "Aucun résultat trouvé pour votre requête."
+      "text": ""
     }
   },
   "clipboard-button": {
@@ -107,9 +107,6 @@
       "change-theme": "Modifier le thème...",
       "dark-theme": "Sombre",
       "light-theme": "Clair"
-    },
-    "empty-state": {
-      "title": "Aucun résultat trouvé"
     },
     "search-box": {
       "placeholder": "Rechercher ou aller à..."
@@ -131,7 +128,8 @@
   },
   "connections": {
     "connect-data": {
-      "category-header-label": "Sources de données"
+      "category-header-label": "Sources de données",
+      "empty-message": ""
     },
     "search": {
       "placeholder": "Rechercher tout"
@@ -369,7 +367,6 @@
       "title-label": "Titre"
     },
     "json-editor": {
-      "apply-button": "Appliquer les modifications",
       "save-button": "Enregistrer les modifications",
       "subtitle": "Le modèle JSON ci-dessous est la structure de données qui définit le tableau de bord. Il inclut les paramètres du tableau de bord, les paramètres du panneau, la mise en page, les requêtes, etc.",
       "title": "Modèle JSON"
@@ -449,10 +446,11 @@
       "delete-query-tooltip": "Supprimer la requête",
       "delete-starred-query-confirmation-text": "Souhaitez-vous vraiment supprimer définitivement votre requête favorite ?",
       "edit-comment-tooltip": "Modifier le commentaire",
-      "loading-text": "chargement...",
+      "left-pane": "",
       "optional-description": "Une description facultative de l'action de la requête.",
       "query-comment-label": "Commentaire sur la requête",
       "query-text-label": "Texte de la requête",
+      "right-pane": "",
       "run-query-button": "Exécuter la requête",
       "save-comment": "Enregistrer le commentaire",
       "star-query-tooltip": "Mettre la requête en favori",
@@ -564,6 +562,9 @@
     "drawer": {
       "close": "Fermer"
     },
+    "empty-state": {
+      "not-found-message": ""
+    },
     "modal": {
       "close-tooltip": "Fermer"
     },
@@ -651,6 +652,9 @@
     }
   },
   "library-panels": {
+    "empty-state": {
+      "message": ""
+    },
     "modal": {
       "button-cancel": "<0>Annuler</0>",
       "button-view-panel1": "Voir le panneau dans {{label}}...",
@@ -700,18 +704,15 @@
     "connect-modal": {
       "body-cloud-stack": "Vous aurez également besoin d'une pile cloud. Si vous venez de vous inscrire, nous créerons automatiquement votre première pile. Si vous avez déjà un compte, vous devez sélectionner ou créer une pile.",
       "body-get-started": "Pour commencer, vous aurez besoin d'un compte Grafana.com.",
-      "body-paste-stack": "Lorsque vous aurez choisi une pile, collez l'URL ci-dessous.",
       "body-sign-up": "Créez un compte Grafana.com",
       "body-token": "Votre installation Grafana autogérée a besoin d'un accès spécial pour migrer du contenu de manière sécurisée. Vous devrez créer un jeton de migration sur la pile cloud que vous avez choisie.",
       "body-token-field": "Jeton de migration",
       "body-token-field-placeholder": "Coller le jeton ici",
       "body-token-instructions": "Connectez-vous à votre pile cloud et accédez à Administration > Général > Migrer vers Grafana Cloud. Créez un jeton de migration sur cet écran et collez-le ici.",
-      "body-url-field": "URL de la pile cloud",
       "body-view-stacks": "Voir mes piles cloud",
       "cancel": "Annuler",
       "connect": "Se connecter à cette pile",
       "connecting": "Connexion à cette pile…",
-      "stack-required-error": "Vous devez renseigner l'URL de la pile",
       "title": "Se connecter à une pile cloud",
       "token-required-error": "Vous devez renseigner le jeton de migration"
     },
@@ -750,12 +751,13 @@
     },
     "migration-token": {
       "body": "Votre instance Grafana autogérée aura besoin d'un jeton d'authentification spécial pour se connecter de manière sécurisée à cette pile cloud.",
-      "delete-button": "Supprimer ce jeton de migration",
       "delete-modal-body": "Si vous avez déjà utilisé ce jeton avec une installation autogérée, celle-ci ne pourra plus importer de contenu.",
       "delete-modal-cancel": "Annuler",
       "delete-modal-confirm": "Supprimer",
       "delete-modal-deleting": "Suppression...",
       "delete-modal-title": "Supprimer le jeton de migration",
+      "error-body": "",
+      "error-title": "",
       "generate-button": "Générer un jeton de migration",
       "generate-button-loading": "Génération d'un jeton de migration…",
       "modal-close": "Fermer",
@@ -764,7 +766,7 @@
       "modal-field-description": "Copiez le jeton maintenant, car vous ne pourrez plus le revoir. Si vous perdez un jeton, vous devrez 'en créer un nouveau.",
       "modal-field-label": "Jeton",
       "modal-title": "Jeton de migration créé",
-      "status": "Statut actuel : <2></2>",
+      "status": "",
       "title": "Jeton de migration"
     },
     "pdc": {
@@ -785,13 +787,24 @@
       "not-migrated": "Pas encore importé",
       "unknown": "Inconnu"
     },
+    "resource-table": {
+      "unknown-datasource-title": "",
+      "unknown-datasource-type": ""
+    },
     "resource-type": {
       "dashboard": "Tableau de bord",
       "datasource": "Source de données",
+      "folder": "",
       "unknown": "Inconnu"
     },
-    "resources": {
-      "disconnect": "Déconnecter"
+    "summary": {
+      "disconnect": "",
+      "disconnect-error-description": "",
+      "disconnect-error-title": "",
+      "run-migration-error-description": "",
+      "run-migration-error-title": "",
+      "start-migration": "",
+      "target-stack-title": ""
     },
     "token-status": {
       "active": "Jeton créé et actif",
@@ -1209,6 +1222,11 @@
       "title": "Il n'y a aucune playlist créée"
     }
   },
+  "playlists": {
+    "empty-state": {
+      "message": ""
+    }
+  },
   "profile": {
     "change-password": {
       "cancel-button": "Annuler",
@@ -1344,11 +1362,12 @@
     "header": {
       "collapse-row": "Réduire la ligne de requête",
       "datasource-help": "Afficher l'aide de la source de données",
-      "disable-query": "Désactiver la requête",
       "drag-and-drop": "Glisser et déposer pour réorganiser",
       "duplicate-query": "Dupliquer la requête",
       "expand-row": "Développer la ligne de requête",
+      "hide-response": "",
       "remove-query": "Supprimer la requête",
+      "show-response": "",
       "toggle-edit-mode": "Activer/désactiver le mode édition de texte"
     },
     "query-editor-not-exported": "Le plugin source de données n'exporte aucun composant de l'éditeur de requête"
@@ -1474,7 +1493,7 @@
       "library-panel": "Panneau de bibliothèque",
       "link": "Lien",
       "panel-embed": "Intégrer",
-      "public-dashboard": "Publier le tableau de bord",
+      "public-dashboard": "",
       "public-dashboard-title": "Tableau de bord public",
       "snapshot": "Instantané"
     },

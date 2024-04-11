@@ -1,7 +1,8 @@
 import { css } from '@emotion/css';
+import { min, max, isNumber, throttle } from 'lodash';
 import React from 'react';
 
-import { DataFrame, GrafanaTheme2, SelectableValue } from '@grafana/data';
+import { DataFrame, FieldType, GrafanaTheme2, PanelData, SelectableValue } from '@grafana/data';
 import {
   PanelBuilders,
   QueryVariable,
@@ -18,6 +19,7 @@ import {
   SceneObjectState,
   SceneQueryRunner,
   VariableDependencyConfig,
+  VizPanel,
 } from '@grafana/scenes';
 import { Button, Field, useStyles2 } from '@grafana/ui';
 import { ALL_VARIABLE_VALUE } from 'app/features/variables/constants';
@@ -28,12 +30,16 @@ import { BreakdownLabelSelector } from '../BreakdownLabelSelector';
 import { MetricScene } from '../MetricScene';
 import { StatusWrapper } from '../StatusWrapper';
 import { trailDS, VAR_FILTERS, VAR_GROUP_BY, VAR_GROUP_BY_EXP } from '../shared';
-import { getColorByIndex } from '../utils';
+import { getColorByIndex, getTrailFor } from '../utils';
 
 import { AddToFiltersGraphAction } from './AddToFiltersGraphAction';
 import { ByFrameRepeater } from './ByFrameRepeater';
 import { LayoutSwitcher } from './LayoutSwitcher';
+import { breakdownPanelOptions } from './panelConfigs';
 import { getLabelOptions } from './utils';
+import { BreakdownAxisChangeEvent, yAxisSyncBehavior } from './yAxisSyncBehavior';
+
+const MAX_PANELS_IN_ALL_LABELS_BREAKDOWN = 60;
 
 export interface BreakdownSceneState extends SceneObjectState {
   body?: SceneObject;
@@ -74,10 +80,81 @@ export class BreakdownScene extends SceneObjectBase<BreakdownSceneState> {
       }
     });
 
-    const metric = sceneGraph.getAncestor(this, MetricScene).state.metric;
+    const metricScene = sceneGraph.getAncestor(this, MetricScene);
+    const metric = metricScene.state.metric;
     this._query = getAutoQueriesForMetric(metric).breakdown;
 
+    // The following state changes (and conditions) will each result in a call to `clearBreakdownPanelAxisValues`.
+    // By clearing the axis, subsequent calls to `reportBreakdownPanelData` will adjust to an updated axis range.
+    // These state changes coincide with the panels having their data updated, making a call to `reportBreakdownPanelData`.
+    // If the axis was not cleared by `clearBreakdownPanelAxisValues` any calls to `reportBreakdownPanelData` which result
+    // in the same axis will result in no updates to the panels.
+
+    const trail = getTrailFor(this);
+    trail.state.$timeRange?.subscribeToState(() => {
+      // The change in time range will cause a refresh of panel values.
+      this.clearBreakdownPanelAxisValues();
+    });
+
+    metricScene.subscribeToState(({ layout }, old) => {
+      if (layout !== old.layout) {
+        // Change in layout will set up a different set of panel objects that haven't received the current yaxis range
+        this.clearBreakdownPanelAxisValues();
+      }
+    });
+
     this.updateBody(variable);
+  }
+
+  private breakdownPanelMaxValue: number | undefined;
+  private breakdownPanelMinValue: number | undefined;
+  public reportBreakdownPanelData(data: PanelData | undefined) {
+    if (!data) {
+      return;
+    }
+
+    let newMin = this.breakdownPanelMinValue;
+    let newMax = this.breakdownPanelMaxValue;
+
+    data.series.forEach((dataFrame) => {
+      dataFrame.fields.forEach((breakdownData) => {
+        if (breakdownData.type !== FieldType.number) {
+          return;
+        }
+        const values = breakdownData.values.filter(isNumber);
+
+        const maxValue = max(values);
+        const minValue = min(values);
+
+        newMax = max([newMax, maxValue].filter(isNumber));
+        newMin = min([newMin, minValue].filter(isNumber));
+      });
+    });
+
+    if (newMax === undefined || newMin === undefined || !Number.isFinite(newMax + newMin)) {
+      return;
+    }
+
+    if (this.breakdownPanelMaxValue === newMax && this.breakdownPanelMinValue === newMin) {
+      return;
+    }
+
+    this.breakdownPanelMaxValue = newMax;
+    this.breakdownPanelMinValue = newMin;
+
+    this._triggerAxisChangedEvent();
+  }
+
+  private _triggerAxisChangedEvent = throttle(() => {
+    const { breakdownPanelMinValue, breakdownPanelMaxValue } = this;
+    if (breakdownPanelMinValue !== undefined && breakdownPanelMaxValue !== undefined) {
+      this.publishEvent(new BreakdownAxisChangeEvent({ min: breakdownPanelMinValue, max: breakdownPanelMaxValue }));
+    }
+  }, 1000);
+
+  private clearBreakdownPanelAxisValues() {
+    this.breakdownPanelMaxValue = undefined;
+    this.breakdownPanelMinValue = undefined;
   }
 
   private getVariable(): QueryVariable {
@@ -115,6 +192,8 @@ export class BreakdownScene extends SceneObjectBase<BreakdownSceneState> {
       stateUpdate.blockingMessage = 'Unable to retrieve label options for currently selected metric.';
     }
 
+    this.clearBreakdownPanelAxisValues();
+    // Setting the new panels will gradually end up calling reportBreakdownPanelData to update the new min & max
     this.setState(stateUpdate);
   }
 
@@ -198,50 +277,61 @@ export function buildAllLayout(options: Array<SelectableValue<string>>, queryDef
       continue;
     }
 
+    if (children.length === MAX_PANELS_IN_ALL_LABELS_BREAKDOWN) {
+      break;
+    }
+
     const expr = queryDef.queries[0].expr.replaceAll(VAR_GROUP_BY_EXP, String(option.value));
     const unit = queryDef.unit;
 
+    const vizPanel = PanelBuilders.timeseries()
+      .setTitle(option.label!)
+      .setData(
+        new SceneQueryRunner({
+          maxDataPoints: 250,
+          datasource: trailDS,
+          queries: [
+            {
+              refId: 'A',
+              expr: expr,
+              legendFormat: `{{${option.label}}}`,
+            },
+          ],
+        })
+      )
+      .setHeaderActions(new SelectLabelAction({ labelName: String(option.value) }))
+      .setUnit(unit)
+      .build();
+
+    vizPanel.addActivationHandler(() => {
+      vizPanel.onOptionsChange(breakdownPanelOptions);
+    });
+
     children.push(
       new SceneCSSGridItem({
-        body: PanelBuilders.timeseries()
-          .setTitle(option.label!)
-          .setData(
-            new SceneQueryRunner({
-              maxDataPoints: 300,
-              datasource: trailDS,
-              queries: [
-                {
-                  refId: 'A',
-                  expr: expr,
-                  legendFormat: `{{${option.label}}}`,
-                },
-              ],
-            })
-          )
-          .setHeaderActions(new SelectLabelAction({ labelName: String(option.value) }))
-          .setUnit(unit)
-          .build(),
+        $behaviors: [yAxisSyncBehavior],
+        body: vizPanel,
       })
     );
   }
-
   return new LayoutSwitcher({
     options: [
       { value: 'grid', label: 'Grid' },
       { value: 'rows', label: 'Rows' },
     ],
-    active: 'grid',
     layouts: [
       new SceneCSSGridLayout({
         templateColumns: GRID_TEMPLATE_COLUMNS,
         autoRows: '200px',
         children: children,
+        isLazy: true,
       }),
       new SceneCSSGridLayout({
         templateColumns: '1fr',
         autoRows: '200px',
         // Clone children since a scene object can only have one parent at a time
         children: children.map((c) => c.clone()),
+        isLazy: true,
       }),
     ],
   });
@@ -250,6 +340,34 @@ export function buildAllLayout(options: Array<SelectableValue<string>>, queryDef
 const GRID_TEMPLATE_COLUMNS = 'repeat(auto-fit, minmax(400px, 1fr))';
 
 function buildNormalLayout(queryDef: AutoQueryDef) {
+  const unit = queryDef.unit;
+
+  function getLayoutChild(data: PanelData, frame: DataFrame, frameIndex: number): SceneFlexItem {
+    const vizPanel: VizPanel = queryDef
+      .vizBuilder()
+      .setTitle(getLabelValue(frame))
+      .setData(new SceneDataNode({ data: { ...data, series: [frame] } }))
+      .setColor({ mode: 'fixed', fixedColor: getColorByIndex(frameIndex) })
+      .setHeaderActions(new AddToFiltersGraphAction({ frame }))
+      .setUnit(unit)
+      .build();
+
+    // Find a frame that has at more than one point.
+    const isHidden = frame.length <= 1;
+
+    const item: SceneCSSGridItem = new SceneCSSGridItem({
+      $behaviors: [yAxisSyncBehavior],
+      body: vizPanel,
+      isHidden,
+    });
+
+    vizPanel.addActivationHandler(() => {
+      vizPanel.onOptionsChange(breakdownPanelOptions);
+    });
+
+    return item;
+  }
+
   return new LayoutSwitcher({
     $data: new SceneQueryRunner({
       datasource: trailDS,
@@ -261,7 +379,6 @@ function buildNormalLayout(queryDef: AutoQueryDef) {
       { value: 'grid', label: 'Grid' },
       { value: 'rows', label: 'Rows' },
     ],
-    active: 'grid',
     layouts: [
       new SceneFlexLayout({
         direction: 'column',
@@ -278,17 +395,7 @@ function buildNormalLayout(queryDef: AutoQueryDef) {
           autoRows: '200px',
           children: [],
         }),
-        getLayoutChild: (data, frame, frameIndex) => {
-          return new SceneCSSGridItem({
-            body: queryDef
-              .vizBuilder()
-              .setTitle(getLabelValue(frame))
-              .setData(new SceneDataNode({ data: { ...data, series: [frame] } }))
-              .setColor({ mode: 'fixed', fixedColor: getColorByIndex(frameIndex) })
-              .setHeaderActions(new AddToFiltersGraphAction({ frame }))
-              .build(),
-          });
-        },
+        getLayoutChild,
       }),
       new ByFrameRepeater({
         body: new SceneCSSGridLayout({
@@ -296,17 +403,7 @@ function buildNormalLayout(queryDef: AutoQueryDef) {
           autoRows: '200px',
           children: [],
         }),
-        getLayoutChild: (data, frame, frameIndex) => {
-          return new SceneCSSGridItem({
-            body: queryDef
-              .vizBuilder()
-              .setTitle(getLabelValue(frame))
-              .setData(new SceneDataNode({ data: { ...data, series: [frame] } }))
-              .setColor({ mode: 'fixed', fixedColor: getColorByIndex(frameIndex) })
-              .setHeaderActions(new AddToFiltersGraphAction({ frame }))
-              .build(),
-          });
-        },
+        getLayoutChild,
       }),
     ],
   });
