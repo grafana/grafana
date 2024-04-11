@@ -120,7 +120,7 @@ func generateRouteFromSettings(defaultReceiver string, settings map[data.Fingerp
 				ObjectMatchers: definitions.ObjectMatchers{contactMatcher},
 				Continue:       false,
 				// Since we'll have many rules from different folders using this policy, we ensure it has these necessary groupings.
-				GroupByStr: models.DefaultNotificationSettingsGroupBy,
+				GroupByStr: append([]string{}, models.DefaultNotificationSettingsGroupBy...),
 			}
 			receiverRoutes[s.Receiver] = receiverRoute
 			autoGenRoot.Routes = append(autoGenRoot.Routes, receiverRoute)

@@ -164,7 +164,7 @@ func TestNormalizedGroupBy(t *testing.T) {
 	}{
 		{
 			name:                      "default group by is normal",
-			notificationSettings:      CopyNotificationSettings(validNotificationSettings(), NSMuts.WithGroupBy(FolderTitleLabel, model.AlertNameLabel)),
+			notificationSettings:      CopyNotificationSettings(validNotificationSettings(), NSMuts.WithGroupBy(DefaultNotificationSettingsGroupBy...)),
 			expectedNormalizedGroupBy: DefaultNotificationSettingsGroupBy,
 		},
 		{
