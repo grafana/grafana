@@ -3,7 +3,7 @@
   "license": "AGPL-3.0-only",
   "name": "@grafana/o11y-ds-frontend",
   "private": true,
-  "version": "10.4.2",
+  "version": "10.4.3",
   "description": "Library to manage traces in Grafana.",
   "sideEffects": false,
   "repository": {
