@@ -288,15 +288,15 @@ function handleAggregation(expr: string, node: SyntaxNode, context: Context) {
   }
 
   const body = node.getChild(FunctionCallBody);
-  const binaryExpressionWithinAggregationArgs = body?.getChild(BinaryExpr);
-
-  if (binaryExpressionWithinAggregationArgs) {
-    context.errors.push({
-      text: 'Query parsing is ambiguous.',
-      from: binaryExpressionWithinAggregationArgs.from,
-      to: binaryExpressionWithinAggregationArgs.to,
-    });
-  }
+  // const binaryExpressionWithinAggregationArgs = body?.getChild(BinaryExpr);
+  //
+  // if (binaryExpressionWithinAggregationArgs) {
+  //   context.errors.push({
+  //     text: 'Query parsing is ambiguous.',
+  //     from: binaryExpressionWithinAggregationArgs.from,
+  //     to: binaryExpressionWithinAggregationArgs.to,
+  //   });
+  // }
 
   const op: QueryBuilderOperation = { id: funcName, params: [] };
   visQuery.operations.unshift(op);
