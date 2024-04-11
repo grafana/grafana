@@ -48,7 +48,7 @@ The following video guides you through the creation steps and common customizati
 
 {{< youtube id="RKtW87cPxsw" >}}
 
-{{< docs/play title="Time Series Visualizations" url="https://play.grafana.org/d/000000016/" >}}
+{{< docs/play title="Time Series Visualizations in Grafana" url="https://play.grafana.org/d/000000016/" >}}
 
 ## Tooltip options
 
