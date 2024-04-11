@@ -22,7 +22,7 @@ jobs:
     - name: Set go version
       uses: actions/setup-go@v4
       with:
-        go-version: '1.21.8'
+        go-version: '1.21.9'
 
     - name: Workspace Sync
       run: go work sync
