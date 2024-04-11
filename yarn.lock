@@ -4027,7 +4027,7 @@ __metadata:
     "@testing-library/user-event": "npm:14.5.2"
     "@types/d3": "npm:7.4.3"
     "@types/debounce-promise": "npm:3.1.9"
-    "@types/eslint": "npm:8.56.7"
+    "@types/eslint": "npm:8.56.8"
     "@types/jest": "npm:29.5.12"
     "@types/jquery": "npm:3.5.29"
     "@types/lodash": "npm:4.17.0"
@@ -9611,13 +9611,13 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@types/eslint@npm:*, @types/eslint@npm:8.56.7, @types/eslint@npm:^8.56.5":
-  version: 8.56.7
-  resolution: "@types/eslint@npm:8.56.7"
+"@types/eslint@npm:*, @types/eslint@npm:8.56.8, @types/eslint@npm:^8.56.5":
+  version: 8.56.8
+  resolution: "@types/eslint@npm:8.56.8"
   dependencies:
     "@types/estree": "npm:*"
     "@types/json-schema": "npm:*"
-  checksum: 10/4c90f30a19bc5a01b27afc4f7e3efa28d191b7c9505fd4f6373d1dcdf8e93b939628d92ae730c3ef77bf2a094622296bb307cbecbad7cb6b43ef31dd722f6944
+  checksum: 10/2f1514f9510cbf5662142b067e6a6641b04f65f5c7d3ea67c63d48a7788376322ed0c4557c4200923cfaf5059b50521384476ba92a3c3108ec9dc5164b4fbda1
   languageName: node
   linkType: hard
 
@@ -18724,7 +18724,7 @@ __metadata:
     "@types/d3-scale-chromatic": "npm:3.0.3"
     "@types/debounce-promise": "npm:3.1.9"
     "@types/diff": "npm:^5"
-    "@types/eslint": "npm:8.56.7"
+    "@types/eslint": "npm:8.56.8"
     "@types/eslint-scope": "npm:^3.7.7"
     "@types/file-saver": "npm:2.0.7"
     "@types/glob": "npm:^8.0.0"
