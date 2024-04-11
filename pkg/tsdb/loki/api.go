@@ -352,8 +352,7 @@ func getSupportingQueryHeaderValue(supportingQueryType SupportingQueryType) stri
 }
 
 // setXScopeOrgIDHeader sets the `X-Scope-OrgID` header in the provided HTTP request based on the tenant ID retrieved from the context.
-//
-// `X-Scope-OrgID` is needed by the Loki system to work in multi-tenant mode. 
+// `X-Scope-OrgID` is needed by the Loki system to work in multi-tenant mode.
 // See https://github.com/grafana/loki/blob/main/docs/sources/operations/multi-tenancy.md
 func setXScopeOrgIDHeader(req *http.Request, ctx context.Context) *http.Request {
 	logger := backend.NewLoggerWith("logger", "tsdb.loki")
