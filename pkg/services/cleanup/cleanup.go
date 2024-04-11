@@ -257,7 +257,7 @@ func (srv *CleanUpService) expireOldVerifications(ctx context.Context) {
 func (srv *CleanUpService) deleteStaleShortURLs(ctx context.Context) {
 	logger := srv.log.FromContext(ctx)
 	cmd := shorturls.DeleteShortUrlCommand{
-		OlderThan: time.Now().Add(-time.Hour * 24 * time.Duration(srv.Cfg.ShortLinkExpiration)),
+		OlderThan: time.Now().Add(-time.Duration(srv.Cfg.ShortLinkExpiration*24) * time.Hour),
 	}
 	if err := srv.ShortURLService.DeleteStaleShortURLs(ctx, &cmd); err != nil {
 		logger.Error("Problem deleting stale short urls", "error", err.Error())
