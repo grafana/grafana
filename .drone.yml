@@ -666,7 +666,7 @@ steps:
     HOST: grafana-server
     PORT: "3001"
     PROV_DIR: /grafana/scripts/grafana-server/tmp/conf/provisioning
-  image: mcr.microsoft.com/playwright:v1.42.1-jammy
+  image: mcr.microsoft.com/playwright:v1.43.0-jammy
   name: playwright-plugin-e2e
 - commands:
   - apt-get update
@@ -1996,7 +1996,7 @@ steps:
     HOST: grafana-server
     PORT: "3001"
     PROV_DIR: /grafana/scripts/grafana-server/tmp/conf/provisioning
-  image: mcr.microsoft.com/playwright:v1.42.1-jammy
+  image: mcr.microsoft.com/playwright:v1.43.0-jammy
   name: playwright-plugin-e2e
 - commands:
   - apt-get update
@@ -4656,7 +4656,7 @@ steps:
   - trivy --exit-code 0 --severity UNKNOWN,LOW,MEDIUM cypress/included:13.1.0
   - trivy --exit-code 0 --severity UNKNOWN,LOW,MEDIUM jwilder/dockerize:0.6.1
   - trivy --exit-code 0 --severity UNKNOWN,LOW,MEDIUM koalaman/shellcheck:stable
-  - trivy --exit-code 0 --severity UNKNOWN,LOW,MEDIUM mcr.microsoft.com/playwright:v1.42.1-jammy
+  - trivy --exit-code 0 --severity UNKNOWN,LOW,MEDIUM mcr.microsoft.com/playwright:v1.43.0-jammy
   depends_on:
   - authenticate-gcr
   image: aquasec/trivy:0.21.0
@@ -4691,7 +4691,7 @@ steps:
   - trivy --exit-code 1 --severity HIGH,CRITICAL cypress/included:13.1.0
   - trivy --exit-code 1 --severity HIGH,CRITICAL jwilder/dockerize:0.6.1
   - trivy --exit-code 1 --severity HIGH,CRITICAL koalaman/shellcheck:stable
-  - trivy --exit-code 1 --severity HIGH,CRITICAL mcr.microsoft.com/playwright:v1.42.1-jammy
+  - trivy --exit-code 1 --severity HIGH,CRITICAL mcr.microsoft.com/playwright:v1.43.0-jammy
   depends_on:
   - authenticate-gcr
   environment:
@@ -4923,6 +4923,6 @@ kind: secret
 name: gcr_credentials
 ---
 kind: signature
-hmac: fc8a4639e1e301965161795a12c8123f2240ff72a406acf2dad8fda2797beaef
+hmac: 3596a353e66a06fa7e6d1e710eb21f649689c67df5c02982cc27087009d3739b
 
 ...

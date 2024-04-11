@@ -6092,14 +6092,14 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@playwright/test@npm:1.42.1":
-  version: 1.42.1
-  resolution: "@playwright/test@npm:1.42.1"
+"@playwright/test@npm:1.43.0":
+  version: 1.43.0
+  resolution: "@playwright/test@npm:1.43.0"
   dependencies:
-    playwright: "npm:1.42.1"
+    playwright: "npm:1.43.0"
   bin:
     playwright: cli.js
-  checksum: 10/5bd7f1c77963cacc6f44cf4c1ef46f9ad41e79a3e6f34eb81398afaa09b1b08a4cbe0f7064f03c71c094414d1c4507d6183b61c63aa4b6a93846d386f7c651a2
+  checksum: 10/a30b5a9f51ae35c16a6c56d239a1e3abfbc5b8d84abf709914b9f3b02fa3afd5590cb7e01e479adafcb8282a8325c8b8afa4d70ca992502053490889f3dc714b
   languageName: node
   linkType: hard
 
@@ -18690,7 +18690,7 @@ __metadata:
     "@opentelemetry/api": "npm:1.8.0"
     "@opentelemetry/exporter-collector": "npm:0.25.0"
     "@opentelemetry/semantic-conventions": "npm:1.23.0"
-    "@playwright/test": "npm:1.42.1"
+    "@playwright/test": "npm:1.43.0"
     "@pmmmwh/react-refresh-webpack-plugin": "npm:0.5.11"
     "@popperjs/core": "npm:2.11.8"
     "@prometheus-io/lezer-promql": "npm:^0.37.0-rc.1"
@@ -25039,27 +25039,27 @@ __metadata:
   languageName: node
   linkType: hard
 
-"playwright-core@npm:1.42.1":
-  version: 1.42.1
-  resolution: "playwright-core@npm:1.42.1"
+"playwright-core@npm:1.43.0":
+  version: 1.43.0
+  resolution: "playwright-core@npm:1.43.0"
   bin:
     playwright-core: cli.js
-  checksum: 10/6a71d2e2aa5b054d6e83836f09e139a0ff4de3aa9b6aebe0e03de3ab828c735d23a20a60fafcee91c1658da490cc390f05af463325ac842beaff58a173f7ad9e
+  checksum: 10/f34c8c5b94c7ddd59b462b8f5dd0f9a8204ed14f470a151d46384c6854c78f5624d80a80a7873a335e2b0c15d54d0d92da2f97422ee708bf5e5693b81bb33a09
   languageName: node
   linkType: hard
 
-"playwright@npm:1.42.1":
-  version: 1.42.1
-  resolution: "playwright@npm:1.42.1"
+"playwright@npm:1.43.0":
+  version: 1.43.0
+  resolution: "playwright@npm:1.43.0"
   dependencies:
     fsevents: "npm:2.3.2"
-    playwright-core: "npm:1.42.1"
+    playwright-core: "npm:1.43.0"
   dependenciesMeta:
     fsevents:
       optional: true
   bin:
     playwright: cli.js
-  checksum: 10/1f866a6820e19feaaeb12cd87bfa93299d6d72e1287413098c5ae0349c7e7953eb0a303bdfbb99c12173a3493e6fdb642f89a166cfcfd8295254a520abf6eb7f
+  checksum: 10/481b0d13bc990b8118a02396f03577748a3d64c2ca7635a238688ffbe399e3d6c92e05bdd074ad095f5d2d56e6648b213b5debe84815820a55b13c9a6fdf2108
   languageName: node
   linkType: hard
 
