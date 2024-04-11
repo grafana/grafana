@@ -32,7 +32,7 @@ export const MegaMenu = React.memo(
       .filter((item) => item.id !== 'profile' && item.id !== 'help')
       .map((item) => enrichWithInteractionTracking(item, state.megaMenuDocked));
 
-    const activeItem = getActiveItem(navItems, location.pathname, undefined, state.pageNav);
+    const activeItem = getActiveItem(navItems, state.sectionNav.node, location.pathname);
 
     const handleDockedMenu = () => {
       chrome.setMegaMenuDocked(!state.megaMenuDocked);

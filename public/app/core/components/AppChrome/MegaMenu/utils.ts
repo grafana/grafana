@@ -1,4 +1,4 @@
-import { locationUtil, NavModelItem } from '@grafana/data';
+import { NavModelItem } from '@grafana/data';
 import { config, reportInteraction } from '@grafana/runtime';
 import { t } from 'app/core/internationalization';
 
@@ -46,10 +46,6 @@ export const enrichWithInteractionTracking = (item: NavModelItem, megaMenuDocked
   return newItem;
 };
 
-export const isMatchOrChildMatch = (itemToCheck: NavModelItem, searchItem?: NavModelItem) => {
-  return Boolean(itemToCheck === searchItem || hasChildMatch(itemToCheck, searchItem));
-};
-
 export const hasChildMatch = (itemToCheck: NavModelItem, searchItem?: NavModelItem): boolean => {
   return Boolean(
     itemToCheck.children?.some((child) => {
@@ -62,80 +58,63 @@ export const hasChildMatch = (itemToCheck: NavModelItem, searchItem?: NavModelIt
   );
 };
 
-const stripQueryParams = (url?: string) => {
-  return url?.split('?')[0] ?? '';
-};
-
-const isBetterMatch = (newMatch: NavModelItem, currentMatch?: NavModelItem) => {
-  const currentMatchUrl = stripQueryParams(currentMatch?.url);
-  const newMatchUrl = stripQueryParams(newMatch.url);
-  return newMatchUrl && newMatchUrl.length > currentMatchUrl?.length;
-};
-
 /**
- * Mapping of page ID -> ID of corresponding nav tree link to highlight when on that ID's URL
+ * Override for special cases in the nav.
  *
- * Until we have more structured routing in place, we can't rely on the route URLs to determine the necessary
- * `MegaMenuItem` to highlight. This is because the URLs aren't all consistent, and rather than change the URLs
- * we can instead define overrides to make sure any outliers work correctly
+ * The homepage does not reliably have a `currentPage.id` of `home`.
+ * A starred dashboard does not have a `currentPage.id` of `starred/{uid}`
  *
- * e.g. within Alerting, the silences page is `/alerting/silences`, but the page to create a new silence is
- * `/alerting/silence/new`. This means it's neater to override certain URLs for now rather than trying to
- * match parts of the beginning of the URL
+ * These cases are instead driven by parsing the URL of the current page
  *
+ * TODO: Fix the nav items for these pages and remove this logic
  */
-const overrides: Record<string, string> = {
-  'alert-rule-add': 'alert-list',
-  'alert-rule-view': 'alert-list',
-  'org-new': 'global-orgs',
-  'silence-edit': 'silences',
-  'silence-new': 'silences',
+const getSpecialCaseNavItem: (url: string) => Pick<NavModelItem, 'id'> | undefined = (url) => {
+  if (url === '/') {
+    return { id: 'home' };
+  }
+
+  if (url?.startsWith('/d/')) {
+    const id = url.split('/')[2];
+    return {
+      id: `starred/${id}`,
+    };
+  }
+
+  return;
 };
 
 export const getActiveItem = (
   navTree: NavModelItem[],
-  pathname: string,
-  currentBestMatch?: NavModelItem,
-  pageNav?: NavModelItem
+  currentPage: Partial<NavModelItem>,
+  url?: string
 ): NavModelItem | undefined => {
-  const dashboardLinkMatch = '/dashboards';
-  const override = pageNav?.id && overrides[pageNav.id];
-
-  for (const link of navTree) {
-    const linkWithoutParams = stripQueryParams(link.url);
-    const linkPathname = locationUtil.stripBaseFromUrl(linkWithoutParams);
-
-    if (override && override === link.id) {
-      currentBestMatch = link;
-      break;
-    }
-
-    if (linkPathname && link.id !== 'starred') {
-      if (linkPathname === pathname) {
-        // exact match
-        currentBestMatch = link;
-        break;
-      } else if (linkPathname !== '/' && pathname.startsWith(linkPathname)) {
-        // partial match
-        if (isBetterMatch(link, currentBestMatch)) {
-          currentBestMatch = link;
-        }
-      } else if (linkPathname === dashboardLinkMatch && pathname.startsWith('/d/')) {
-        // dashboard match
-        // TODO refactor routes such that we don't need this custom logic
-        if (isBetterMatch(link, currentBestMatch)) {
-          currentBestMatch = link;
-        }
-      }
-    }
-    if (link.children) {
-      currentBestMatch = getActiveItem(link.children, pathname, currentBestMatch, pageNav);
-    }
-    if (stripQueryParams(currentBestMatch?.url) === pathname) {
-      return currentBestMatch;
+  const specialCaseNavItem = url && getSpecialCaseNavItem(url);
+  if (specialCaseNavItem) {
+    const specialCaseMatch = getActiveItem(navTree, specialCaseNavItem);
+    if (specialCaseMatch) {
+      return getActiveItem(navTree, specialCaseNavItem);
     }
   }
-  return currentBestMatch;
+
+  const { id, parentItem } = currentPage;
+
+  for (const navItem of navTree) {
+    if (navItem.id === id) {
+      return navItem;
+    }
+    if (navItem.children) {
+      const childrenMatch = getActiveItem(navItem.children, currentPage, url);
+      if (childrenMatch) {
+        return childrenMatch;
+      }
+    }
+  }
+
+  if (parentItem) {
+    return getActiveItem(navTree, parentItem, url);
+  }
+
+  return undefined;
 };
 
 export function getEditionAndUpdateLinks(): NavModelItem[] {
