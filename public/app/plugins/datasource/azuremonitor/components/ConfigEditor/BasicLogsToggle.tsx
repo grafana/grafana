@@ -31,7 +31,7 @@ export const BasicLogsToggle = (props: Props) => {
   const onChange = (e: React.ChangeEvent<HTMLInputElement>) => onBasicLogsEnabledChange(e.target.checked);
   const description = (
     <p className={styles.text}>
-      Enabling this feature incurs Azure Monitor per-query cost on dashboard panels that use tables configured for{' '}
+      Enabling this feature incurs Azure Monitor per-query costs on dashboard panels that query tables configured for{' '}
       <a
         href="https://learn.microsoft.com/en-us/azure/azure-monitor/logs/basic-logs-configure?tabs=portal-1"
         target="__blank"
