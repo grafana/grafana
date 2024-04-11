@@ -388,7 +388,7 @@ func ValidateBuiltInRoles(builtInRoles []string) error {
 			return ErrNoneRoleAssignment
 		}
 		if !org.RoleType(br).IsValid() && br != RoleGrafanaAdmin {
-			return fmt.Errorf("'%s' %w", br, ErrInvalidBuiltinRole)
+			return ErrInvalidBuiltinRole.Build(ErrInvalidBuiltinRoleData(br))
 		}
 	}
 	return nil
