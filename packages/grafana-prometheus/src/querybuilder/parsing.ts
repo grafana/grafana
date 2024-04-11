@@ -326,7 +326,7 @@ function updateFunctionArgs(expr: string, node: SyntaxNode | null, context: Cont
       let child = node.firstChild;
 
       while (child) {
-        const callArgsExprChild = child.getChild("Expr");
+        const callArgsExprChild = child.getChild('Expr');
         const binaryExpressionWithinFunctionArgs = callArgsExprChild?.getChild(BinaryExpr);
 
         if (binaryExpressionWithinFunctionArgs) {
@@ -441,11 +441,13 @@ function getBinaryModifier(
   if (node.getChild('Bool')) {
     return { isBool: true, isMatcher: false };
   } else {
+    // const matcher = node.getChild(OnOrIgnoring);
     const matcher = node.getChild(LabelMatchers);
     if (!matcher) {
       // Not sure what this could be, maybe should be an error.
       return undefined;
     }
+    // const labels = getString(expr, matcher.getChild(GroupingLabels)?.getChild(GroupingLabelList));
     const labels = getString(expr, matcher.getChild(LabelMatchers));
     return {
       isMatcher: true,
