@@ -28,6 +28,22 @@ export function getOperationDefinitions(): QueryBuilderOperationDef[] {
       renderer: functionRendererLeft,
       addOperationHandler: defaultAddOperationHandler,
     },
+    createFunction({ id: PromOperationId.HistogramCount }),
+    createFunction({ id: PromOperationId.HistogramSum }),
+    {
+      id: PromOperationId.HistogramFraction,
+      name: 'Histogram fraction',
+      params: [
+        { name: 'Lower scalar', type: 'number' },
+        { name: 'Upper scalar', type: 'number' },
+      ],
+      defaultParams: [0.0, 0.2],
+      category: PromVisualQueryOperationCategory.Functions,
+      renderer: functionRendererLeft,
+      addOperationHandler: defaultAddOperationHandler,
+    },
+    createFunction({ id: PromOperationId.HistogramStddev }),
+    createFunction({ id: PromOperationId.HistogramStdvar }),
     {
       id: PromOperationId.LabelReplace,
       name: 'Label replace',
