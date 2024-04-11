@@ -25,7 +25,7 @@ Histograms calculate the distribution of values and present them as a bar chart.
 
 For example, if you want to understand the distribution of people's heights, you can use a histogram visualization to identify patterns or insights in the data distribution:
 
-{{< figure src="/static/img/docs/histogram-panel/histogram-example-v8-0.png" max-width="625px" alt="A histogram visualization showing the distribution of people's heights" >}}
+{{< figure src="/static/img/docs/histogram-panel/histogram-example-v8-0.png" max-width="1025px" alt="A histogram visualization showing the distribution of people's heights" >}}
 
 You can use a histogram visualization if you need to:
 
@@ -61,7 +61,7 @@ The following tables are examples of the type of data you need for a histogram v
 
 The data is converted as follows:
 
-{{< figure src="/static/img/docs/histogram-panel/histogram-example-time-series.png" max-width="1025px" alt="A histogram visualization showing the walk distribution from random people over time." >}}
+{{< figure src="/static/img/docs/histogram-panel/histogram-example-time-series.png" max-width="1025px" alt="A histogram visualization showing the random walk distribution." >}}
 
 #### Basic numerical table
 

@@ -19,14 +19,50 @@ weight: 100
 
 # Heatmap
 
-Heatmaps allow you to view histograms over time. For more information about histograms, refer to [Introduction to histograms and heatmaps][].
+Heatmaps allow you to view [histograms](https://grafana.com/docs/grafana/latest/panels-visualizations/visualizations/histogram/) over time. While histograms display the data distribution that falls in a specific value range, heatmaps allow you to identify patterns in the histogram data distribution over time easily. For more information about heatmaps, refer to [Introduction to histograms and heatmaps](https://grafana.com/docs/grafana/latest/fundamentals/intro-histograms/).
 
-![A heatmap visualization](/static/img/docs/v43/heatmap_panel_cover.jpg)
+For example, if you want to understand the temperature changes for the past few years, you can use a heatmap visualization to identify trends in your data easily:
 
-## Calculate from data
+{{< figure src="/static/img/docs/heatmap-panel/temperature_heatmap.png" max-width="1025px" alt="A heatmap visualization showing the random walk distribution over time" >}}
 
-This setting determines if the data is already a calculated heatmap (from the data source/transformer), or one that should be
-calculated in the panel.
+You can use a heatmap visualization if you need to:
+
+- Visualize a large density of your data distribution.
+- Condense large amounts of data through various color schemes that are easier to interpret.
+- Identify any outliers in your data distribution.
+- Provide statistical analysis to see how values or trends change over time.
+
+## Configure a heatmap visualization
+
+<!-- video TBA here -->
+
+## Supported data formats
+
+Heatmaps support time series data.
+
+### Example
+
+The table below is a simplified output of random walk distribution over time.
+
+| Time                | Walking (km) |
+| ------------------- | ------------ |
+| 2023-06-25 21:13:09 | 10           |
+| 2023-08-25 21:13:10 | 8            |
+| 2023-08-30 21:13:10 | 10           |
+| 2023-10-08 21:13:11 | 12           |
+| 2023-12-25 21:13:11 | 14           |
+| 2024-01-05 21:13:12 | 13           |
+| 2024-02-22 21:13:13 | 10           |
+
+The data is converted as follows:
+
+{{< figure src="/static/img/docs/heatmap-panel/heatmap.png" max-width="1025px" alt="A heatmap visualization showing the random walk distribution over time" >}}
+
+## Heatmap options
+
+### Calculate from data
+
+This setting determines if the data is already a calculated heatmap (from the data source/transformer), or one that should be calculated in the panel.
 
 ### X Bucket
 
