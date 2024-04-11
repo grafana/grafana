@@ -263,6 +263,7 @@ describe('LokiDatasource', () => {
 
       expect(ds.applyTemplateVariables(query, {}, adhocFilters).expr).toBe(
         `rate({bar="baz", job="foo", ${key1}="${value1}", ${key2}!="${value2}"} |= "bar" | logfmt | json process="process"| label_format process="{{.process}}" [5m])`
+        // Actual: rate({bar=\"baz\", job=\"foo\"} |= \"bar\" | logfmt | json process=\"process\" | k1=`v1[98765432]` | k2!=`v2[123456]`| label_format process=\"{{.process}}\" [5m])
       );
     });
 
