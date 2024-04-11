@@ -517,7 +517,7 @@ type Cfg struct {
 	ScopesListDashboardsURL string
 
 	//Short Links
-	ShortLinkExpiration	int
+	ShortLinkExpiration int
 }
 
 // AddChangePasswordLink returns if login form is disabled or not since
