@@ -351,9 +351,10 @@ func getSupportingQueryHeaderValue(supportingQueryType SupportingQueryType) stri
 	return value
 }
 
-// setXScopeOrgIDHeader sets the X-Scope-OrgID header in the provided HTTP request based on the tenant ID retrieved from the context.
-// If the tenant ID is not found or if there are multiple tenant IDs, an error message is logged and the header is not set.
-// The updated HTTP request is returned.
+// setXScopeOrgIDHeader sets the `X-Scope-OrgID`` header in the provided HTTP request based on the tenant ID retrieved from the context.
+//
+// `X-Scope-OrgID` is needed by the Loki system to work in multi-tenant mode. 
+// See https://github.com/grafana/loki/blob/main/docs/sources/operations/multi-tenancy.md
 func setXScopeOrgIDHeader(req *http.Request, ctx context.Context) *http.Request {
 	logger := backend.NewLoggerWith("logger", "tsdb.loki")
 
@@ -363,14 +364,16 @@ func setXScopeOrgIDHeader(req *http.Request, ctx context.Context) *http.Request 
 		return req
 	}
 
-	tenantid := md.Get("tenantid") // all values are []string, but it should only be one element
-	if len(tenantid) == 0 {
+	tenantids := md.Get("tenantid")
+	if len(tenantids) == 0 {
+		// We assume we are not using multi-tenant mode, which is fine
 		logger.Debug("Tenant ID not present. Header not set")
-	} else if len(tenantid[0]) > 1 {
-		logger.Error(strconv.Itoa(len(tenantid)) + " tenant IDs found. Header not set")
+	} else if len(tenantids[0]) > 1 {
+		// Loki supports multiple tenant IDs, but we should receive them from different contexts
+		logger.Error(strconv.Itoa(len(tenantids)) + " tenant IDs found. Header not set")
 	} else {
-		logger.Debug("Adding tenant ID " + tenantid[0] + " to Loki request")
-		req.Header.Add("X-Scope-OrgID", tenantid[0])
+		req.Header.Add("X-Scope-OrgID", tenantids[0])
+		logger.Debug("Tenant ID " + tenantids[0] + " added to Loki request")
 	}
 	return req
 }
