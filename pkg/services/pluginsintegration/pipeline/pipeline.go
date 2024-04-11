@@ -19,7 +19,6 @@ import (
 	"github.com/grafana/grafana/pkg/plugins/manager/process"
 	"github.com/grafana/grafana/pkg/plugins/manager/registry"
 	"github.com/grafana/grafana/pkg/plugins/manager/signature"
-	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginerrs"
 )
 
 func ProvideDiscoveryStage(cfg *config.PluginManagementCfg, pf finder.Finder, pr registry.Service) *discovery.Discovery {
@@ -49,11 +48,10 @@ func ProvideBootstrapStage(cfg *config.PluginManagementCfg, sc plugins.Signature
 	})
 }
 
-func ProvideValidationStage(cfg *config.PluginManagementCfg, sv signature.Validator, ai angularinspector.Inspector,
-	et pluginerrs.SignatureErrorTracker) *validation.Validate {
+func ProvideValidationStage(cfg *config.PluginManagementCfg, sv signature.Validator, ai angularinspector.Inspector) *validation.Validate {
 	return validation.New(cfg, validation.Opts{
 		ValidateFuncs: []validation.ValidateFunc{
-			SignatureValidationStep(sv, et),
+			SignatureValidationStep(sv),
 			validation.ModuleJSValidationStep(),
 			validation.AngularDetectionStep(cfg, ai),
 		},

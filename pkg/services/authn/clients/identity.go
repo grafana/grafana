@@ -26,6 +26,7 @@ func (i *IdentityClient) Authenticate(ctx context.Context, r *authn.Request) (*a
 		OrgID: r.OrgID,
 		ID:    i.namespaceID,
 		ClientParams: authn.ClientParams{
+			AllowGlobalOrg:  true,
 			FetchSyncedUser: true,
 			SyncPermissions: true,
 		},
