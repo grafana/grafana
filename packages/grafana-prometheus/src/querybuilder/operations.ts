@@ -28,6 +28,7 @@ export function getOperationDefinitions(): QueryBuilderOperationDef[] {
       renderer: functionRendererLeft,
       addOperationHandler: defaultAddOperationHandler,
     },
+    createFunction({ id: PromOperationId.HistogramAvg }),
     createFunction({ id: PromOperationId.HistogramCount }),
     createFunction({ id: PromOperationId.HistogramSum }),
     {

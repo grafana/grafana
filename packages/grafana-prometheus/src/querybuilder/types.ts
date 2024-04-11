@@ -63,6 +63,7 @@ export enum PromOperationId {
   Floor = 'floor',
   Group = 'group',
   HistogramQuantile = 'histogram_quantile',
+  HistogramAvg = 'histogram_avg',
   HistogramCount = 'histogram_count',
   HistogramSum = 'histogram_sum',
   HistogramFraction = 'histogram_fraction',
