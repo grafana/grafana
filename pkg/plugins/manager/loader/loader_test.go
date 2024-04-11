@@ -450,24 +450,22 @@ func TestLoader_Load(t *testing.T) {
 					return []*plugins.FoundBundle{{Primary: plugins.FoundPlugin{JSONData: pluginJSON}}}, nil
 				},
 			}, &fakes.FakeBootstrapper{
-				BootstrapFunc: func(ctx context.Context, s plugins.PluginSource, b []*plugins.FoundBundle) ([]*plugins.Plugin, error) {
-					require.True(t, len(b) == 1)
-					require.Equal(t, b[0].Primary.JSONData, pluginJSON)
+				BootstrapFunc: func(ctx context.Context, s plugins.PluginSource, b *plugins.FoundBundle) ([]*plugins.Plugin, error) {
+					require.Equal(t, b.Primary.JSONData, pluginJSON)
 					require.Equal(t, src, s)
 
 					steps = append(steps, "bootstrap")
 					return []*plugins.Plugin{plugin}, nil
 				},
-			}, &fakes.FakeValidator{ValidateFunc: func(ctx context.Context, ps []*plugins.Plugin) ([]*plugins.Plugin, error) {
-				require.Equal(t, []*plugins.Plugin{plugin}, ps)
+			}, &fakes.FakeValidator{ValidateFunc: func(ctx context.Context, ps *plugins.Plugin) error {
+				require.Equal(t, plugin, ps)
 
 				steps = append(steps, "validate")
-				return ps, nil
+				return nil
 			}},
 			&fakes.FakeInitializer{
-				IntializeFunc: func(ctx context.Context, ps []*plugins.Plugin) ([]*plugins.Plugin, error) {
-					require.True(t, len(ps) == 1)
-					require.Equal(t, ps[0].JSONData, pluginJSON)
+				IntializeFunc: func(ctx context.Context, ps *plugins.Plugin) (*plugins.Plugin, error) {
+					require.Equal(t, ps.JSONData, pluginJSON)
 					steps = append(steps, "initialize")
 					return ps, nil
 				},

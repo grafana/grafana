@@ -476,36 +476,36 @@ func (f *FakeDiscoverer) Discover(ctx context.Context, src plugins.PluginSource)
 }
 
 type FakeBootstrapper struct {
-	BootstrapFunc func(ctx context.Context, src plugins.PluginSource, bundles []*plugins.FoundBundle) ([]*plugins.Plugin, error)
+	BootstrapFunc func(ctx context.Context, src plugins.PluginSource, bundle *plugins.FoundBundle) ([]*plugins.Plugin, error)
 }
 
-func (f *FakeBootstrapper) Bootstrap(ctx context.Context, src plugins.PluginSource, bundles []*plugins.FoundBundle) ([]*plugins.Plugin, error) {
+func (f *FakeBootstrapper) Bootstrap(ctx context.Context, src plugins.PluginSource, bundle *plugins.FoundBundle) ([]*plugins.Plugin, error) {
 	if f.BootstrapFunc != nil {
-		return f.BootstrapFunc(ctx, src, bundles)
+		return f.BootstrapFunc(ctx, src, bundle)
 	}
 	return []*plugins.Plugin{}, nil
 }
 
 type FakeValidator struct {
-	ValidateFunc func(ctx context.Context, ps []*plugins.Plugin) ([]*plugins.Plugin, error)
+	ValidateFunc func(ctx context.Context, ps *plugins.Plugin) error
 }
 
-func (f *FakeValidator) Validate(ctx context.Context, ps []*plugins.Plugin) ([]*plugins.Plugin, error) {
+func (f *FakeValidator) Validate(ctx context.Context, ps *plugins.Plugin) error {
 	if f.ValidateFunc != nil {
 		return f.ValidateFunc(ctx, ps)
 	}
-	return []*plugins.Plugin{}, nil
+	return nil
 }
 
 type FakeInitializer struct {
-	IntializeFunc func(ctx context.Context, ps []*plugins.Plugin) ([]*plugins.Plugin, error)
+	IntializeFunc func(ctx context.Context, ps *plugins.Plugin) (*plugins.Plugin, error)
 }
 
-func (f *FakeInitializer) Initialize(ctx context.Context, ps []*plugins.Plugin) ([]*plugins.Plugin, error) {
+func (f *FakeInitializer) Initialize(ctx context.Context, ps *plugins.Plugin) (*plugins.Plugin, error) {
 	if f.IntializeFunc != nil {
 		return f.IntializeFunc(ctx, ps)
 	}
-	return []*plugins.Plugin{}, nil
+	return ps, nil
 }
 
 type FakeTerminator struct {
