@@ -66,7 +66,6 @@ const rule = createRule({
   meta: {
     docs: {
       description: 'aria-label should not contain e2e selectors',
-      // recommended: 'error',
     },
     messages: {
       useDataTestId: 'Use data-testid for E2E selectors instead of aria-label',

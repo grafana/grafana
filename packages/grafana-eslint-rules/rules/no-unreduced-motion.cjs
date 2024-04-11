@@ -5,6 +5,10 @@ const createRule = ESLintUtils.RuleCreator((name) => `https://github.com/grafana
 
 const restrictedProperties = ['animation', 'transition'];
 
+const isRestrictedProperty = (/** @type string */ propertyName) => {
+  return restrictedProperties.some((prop) => propertyName.startsWith(prop));
+};
+
 const rule = createRule({
   create(context) {
     return {
@@ -18,19 +22,19 @@ const rule = createRule({
               case AST_NODE_TYPES.ObjectExpression:
                 return [node];
               case AST_NODE_TYPES.ArrayExpression:
-                return node.elements.filter(v => v.type === AST_NODE_TYPES.ObjectExpression);
+                return node.elements.filter(v => v?.type === AST_NODE_TYPES.ObjectExpression);
               default:
                 return [];
             }
           });
 
           for (const cssObject of cssObjects) {
-            if (cssObject.type === AST_NODE_TYPES.ObjectExpression) {
+            if (cssObject?.type === AST_NODE_TYPES.ObjectExpression) {
               for (const property of cssObject.properties) {
                 if (
                   property.type === AST_NODE_TYPES.Property &&
                   property.key.type === AST_NODE_TYPES.Identifier &&
-                  restrictedProperties.some(prop => property.key.name.startsWith(prop))
+                  isRestrictedProperty(property.key.name)
                 ) {
                   context.report({
                     node: property,
@@ -49,7 +53,6 @@ const rule = createRule({
     type: 'problem',
     docs: {
       description: 'Check if animation or transition properties are used directly.',
-      recommended: false,
     },
     messages: {
       noUnreducedMotion: 'Avoid direct use of `animation*` or `transition*` properties. Use the `handleReducedMotion` utility function or wrap in a `prefers-reduced-motion` media query.',
