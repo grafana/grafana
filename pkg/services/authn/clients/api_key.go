@@ -135,18 +135,13 @@ func (s *APIKey) Namespace() string {
 	return authn.NamespaceAPIKey
 }
 
-func (s *APIKey) ResolveIdentity(ctx context.Context, orgID int64, namespaceID string) (*authn.Identity, error) {
-	id, err := authn.ParseNamespaceID(namespaceID)
-	if err != nil {
-		return nil, err
-	}
-
-	if !id.IsNamespace(authn.NamespaceAPIKey) {
+func (s *APIKey) ResolveIdentity(ctx context.Context, orgID int64, namespaceID authn.NamespaceID) (*authn.Identity, error) {
+	if !namespaceID.IsNamespace(authn.NamespaceAPIKey) {
 		// TODO error
-		return nil, authn.ErrInvalidNamepsaceID.Errorf("got unspected namespace: %s", id.Namespace())
+		return nil, authn.ErrInvalidNamepsaceID.Errorf("got unspected namespace: %s", namespaceID.Namespace())
 	}
 
-	apiKeyID, err := id.ParseInt()
+	apiKeyID, err := namespaceID.ParseInt()
 	if err != nil {
 		return nil, err
 	}

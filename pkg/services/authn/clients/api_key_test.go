@@ -286,7 +286,7 @@ func TestAPIKey_GetAPIKeyIDFromIdentity(t *testing.T) {
 func TestAPIKey_ResolveIdentity(t *testing.T) {
 	type testCase struct {
 		desc        string
-		namespaceID string
+		namespaceID authn.NamespaceID
 
 		exptedApiKey *apikey.APIKey
 
@@ -297,12 +297,12 @@ func TestAPIKey_ResolveIdentity(t *testing.T) {
 	tests := []testCase{
 		{
 			desc:        "should return error for invalid namespace",
-			namespaceID: "user:1",
+			namespaceID: authn.MustParseNamespaceID("user:1"),
 			expectedErr: authn.ErrInvalidNamepsaceID,
 		},
 		{
 			desc:        "should return error when api key has expired",
-			namespaceID: "api-key:1",
+			namespaceID: authn.MustParseNamespaceID("api-key:1"),
 			exptedApiKey: &apikey.APIKey{
 				ID:      1,
 				OrgID:   1,
@@ -312,7 +312,7 @@ func TestAPIKey_ResolveIdentity(t *testing.T) {
 		},
 		{
 			desc:        "should return error when api key is revoked",
-			namespaceID: "api-key:1",
+			namespaceID: authn.MustParseNamespaceID("api-key:1"),
 			exptedApiKey: &apikey.APIKey{
 				ID:        1,
 				OrgID:     1,
@@ -322,7 +322,7 @@ func TestAPIKey_ResolveIdentity(t *testing.T) {
 		},
 		{
 			desc:        "should return error when api key is connected to service account",
-			namespaceID: "api-key:1",
+			namespaceID: authn.MustParseNamespaceID("api-key:1"),
 			exptedApiKey: &apikey.APIKey{
 				ID:               1,
 				OrgID:            1,
@@ -332,7 +332,7 @@ func TestAPIKey_ResolveIdentity(t *testing.T) {
 		},
 		{
 			desc:        "should return error when api key is belongs to different org",
-			namespaceID: "api-key:1",
+			namespaceID: authn.MustParseNamespaceID("api-key:1"),
 			exptedApiKey: &apikey.APIKey{
 				ID:               1,
 				OrgID:            2,
@@ -342,7 +342,7 @@ func TestAPIKey_ResolveIdentity(t *testing.T) {
 		},
 		{
 			desc:        "should return valid idenitty",
-			namespaceID: "api-key:1",
+			namespaceID: authn.MustParseNamespaceID("api-key:1"),
 			exptedApiKey: &apikey.APIKey{
 				ID:    1,
 				OrgID: 1,

@@ -52,6 +52,16 @@ func ParseNamespaceID(str string) (NamespaceID, error) {
 	return namespaceID, nil
 }
 
+// MustParseNamespaceID parses namespace id, it will panic it failes to do so.
+// Sutable to use in tests or when we can garantuee that we pass a correct format.
+func MustParseNamespaceID(str string) NamespaceID {
+	namespaceID, err := ParseNamespaceID(str)
+	if err != nil {
+		panic(err)
+	}
+	return namespaceID
+}
+
 // FIXME: use this instead of encoded string through the codebase
 type NamespaceID struct {
 	id        string

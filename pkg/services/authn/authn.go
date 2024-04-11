@@ -161,7 +161,7 @@ type UsageStatClient interface {
 type IdentityResolverClient interface {
 	Client
 	Namespace() string
-	ResolveIdentity(ctx context.Context, orgID int64, namespaceID string) (*Identity, error)
+	ResolveIdentity(ctx context.Context, orgID int64, namespaceID NamespaceID) (*Identity, error)
 }
 
 type Request struct {
