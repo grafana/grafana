@@ -11,8 +11,6 @@ import (
 	"k8s.io/apiserver/pkg/registry/rest"
 )
 
-const kind = "dummy"
-
 func Test_Mode1(t *testing.T) {
 	var ls = (LegacyStorage)(nil)
 	var s = (Storage)(nil)

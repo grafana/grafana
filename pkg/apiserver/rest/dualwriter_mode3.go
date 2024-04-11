@@ -94,13 +94,18 @@ func (d *DualWriterMode3) Update(ctx context.Context, name string, objInfo rest.
 
 	legacy, ok := d.Legacy.(rest.Updater)
 	if !ok {
-		return nil, false, errNoUpdateMethod
+		klog.FromContext(ctx).Error(errNoUpdateMethod, "legacy storage update not implemented")
+		return obj, created, err
 	}
 
-	return legacy.Update(ctx, name, &updateWrapper{
+	_, _, errLeg := legacy.Update(ctx, name, &updateWrapper{
 		upstream: objInfo,
 		updated:  obj,
 	}, createValidation, updateValidation, forceAllowCreate, options)
+	if errLeg != nil {
+		klog.FromContext(ctx).Error(errLeg, "could not update object in legacy store", "mode", Mode3)
+	}
+	return obj, created, err
 }
 
 // DeleteCollection overrides the behavior of the generic DualWriter and deletes from both LegacyStorage and Storage.
