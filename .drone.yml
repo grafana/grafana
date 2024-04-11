@@ -5013,6 +5013,6 @@ kind: secret
 name: gcr_credentials
 ---
 kind: signature
-hmac: 3596a353e66a06fa7e6d1e710eb21f649689c67df5c02982cc27087009d3739b
+hmac: a3f0b06fe87904cea54d6aa119e676b2153a8bed62ca90cde1c67984206343d5
 
 ...
