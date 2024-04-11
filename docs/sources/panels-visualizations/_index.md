@@ -31,9 +31,13 @@ cards:
       href: /docs/grafana/latest/panels-visualizations/visualizations/
       description:
       height: 24
-    - title: Panel editor overview
+    - title: Panel overview
       href: /docs/grafana/latest/panels-visualizations/panel-editor-overview/
-      description: Learn about the features of the panel editor
+      description: Learn about the features of the panel.
+      height: 24
+    - title: Panel editor
+      href: /docs/grafana/latest/panels-visualizations/panel-editor-overview/
+      description: Learn about the features of the panel editor.
       height: 24
     - title: Configure standard options
       href: /docs/grafana/latest/panels-visualizations/configure-standard-options/
@@ -51,9 +55,9 @@ cards:
 
 ## Overview
 
-Panels are the basic building block in Grafana, composed by a query and a visualization&mdash;a graphical representation of query results&mdash;. You can apply [transformations][], which process the result set of a query before it’s passed on for visualization.
+Panels are the basic building block in Grafana, composed of a [query][] and a [visualization][]&mdash;a graphical representation of query results. Within panels, you can apply [transformations][], which process the result set of a query before it’s passed on for visualization.
 
-Panels offer a great deal of flexibility; they can be moved and resized within a dashboard, saved as reusable library panels, used as a data source, and include links to other data or dashboards.
+Panels offer a great deal of flexibility; they can be moved and resized within a dashboard, saved as reusable library panels, used as a data source, and include links to other data or dashboards. There are also a wide variety of styling and formatting options available for panels.
 
 Grafana’s growing suite of visualizations, ranging from time series graphs to heatmaps to cutting-edge 3D charts, help you decode complex datasets.
 
@@ -61,7 +65,10 @@ Grafana’s growing suite of visualizations, ranging from time series graphs to 
 
 {{< card-grid key="cards" type="simple" >}}
 
-<!-- The _panel_ is the basic visualization building block in Grafana.
+<!-- Some of the following content needs to be moved to be added to the planned Panel overview page and that page needs to be included in the tiles.
+
+
+The _panel_ is the basic visualization building block in Grafana.
 Each panel has a query editor specific to the data source selected in the panel.
 The query editor allows you to build a query that returns the data you want to visualize.
 
@@ -86,9 +93,15 @@ This section includes the following sub topics:
 [Data source management]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/administration/data-source-management"
 [Data source management]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/administration/data-source-management"
 
-[Data sources]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/datasources"
-[Data sources]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/datasources"
+[Data sources]: "/docs/grafana/ -> /docs/grafana/<GRAFANA_VERSION>/datasources"
+[Data sources]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA_VERSION>/datasources"
 
-[transformations]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/datasources"
-[transformations]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/datasources"
+[transformations]: "/docs/grafana/ -> /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/query-transform-data/transform-data"
+[transformations]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/visualizations/panels-visualizations/query-transform-data/transform-data"
+
+[query]: "/docs/grafana/ -> /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/query-transform-data"
+[query]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/visualizations/panels-visualizations/query-transform-data"
+
+[visualization]: "/docs/grafana/ -> /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/visualizations"
+[visualization]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/visualizations/panels-visualizations/visualizations"
 {{% /docs/reference %}}
