@@ -24,7 +24,7 @@ Bar charts allow you to graph categorical data.
 
 {{< figure src="/static/img/docs/bar-chart-panel/barchart_small_example.png" max-width="1000px" caption="Bar chart" >}}
 
-{{< docs/play title="Bar and Pie Chart Visualizations in Grafana" url="https://play.grafana.org/d/ktMs4D6Mk/" >}}
+{{< docs/play title="Grafana Bar Charts and Pie Charts" url="https://play.grafana.org/d/ktMs4D6Mk/" >}}
 
 ## Supported data formats
 
