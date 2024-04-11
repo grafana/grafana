@@ -23,11 +23,9 @@
           "@grafana/e2e",
           "@grafana/e2e-selectors",
           "@grafana/flamegraph",
-          "@grafana/o11y-ds-frontend",
           "@grafana/prometheus",
           "@grafana/runtime",
           "@grafana/schema",
-          "@grafana/sql",
           "@grafana/ui"
         ]
       },
