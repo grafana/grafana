@@ -329,8 +329,6 @@ export const calculateCoordinates = (
   target: ElementState,
   transformScale: number
 ) => {
-  const minDeltaX = 100;
-  const minDeltaY = 100;
   const sourceHorizontalCenter = sourceRect.left - parentRect.left + sourceRect.width / 2;
   const sourceVerticalCenter = sourceRect.top - parentRect.top + sourceRect.height / 2;
 
@@ -356,16 +354,17 @@ export const calculateCoordinates = (
   }
   x2 /= transformScale;
   y2 /= transformScale;
-  let deltaX = x2 - x1;
-  let deltaY = y2 - y1;
-  if (Math.abs(deltaX) < minDeltaX) {
-    const originalSign = Math.sign(deltaX);
-    deltaX = minDeltaX * (originalSign === 0 ? 1 : originalSign);
+
+  // TODO get rid of this, instead handle it properly in connections
+  if (x2 - x1 === 0) {
+    x2 += 1;
   }
-  if (Math.abs(deltaY) < minDeltaY) {
-    const originalSign = Math.sign(deltaY);
-    deltaY = minDeltaY * (originalSign === 0 ? 1 : originalSign);
+  if (y2 - y1 === 0) {
+    y2 += 1;
   }
+  // TODO get rid of delta output as its no longer needed
+  const deltaX = x2 - x1;
+  const deltaY = y2 - y1;
   return { x1, y1, x2, y2, deltaX, deltaY };
 };
 
