@@ -152,7 +152,7 @@ it('collapses the controlled panel when user clicks on the chevron or the title'
 
   expect(screen.getByText("Panel's Content")).toBeInTheDocument();
 
-  const button = screen.getByText('Default title');
+  const button = screen.getByRole('button', { name: 'Default title' });
   // collapse button should have same aria-controls as the panel's content
   expect(button.getAttribute('aria-controls')).toBe(button.parentElement?.parentElement?.nextElementSibling?.id);
 
@@ -169,7 +169,7 @@ it('collapses the uncontrolled panel when user clicks on the chevron or the titl
 
   expect(screen.getByText("Panel's Content")).toBeInTheDocument();
 
-  const button = screen.getByText('Default title');
+  const button = screen.getByRole('button', { name: 'Default title' });
   // collapse button should have same aria-controls as the panel's content
   expect(button.getAttribute('aria-controls')).toBe(button.parentElement?.parentElement?.nextElementSibling?.id);
 

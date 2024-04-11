@@ -125,6 +125,7 @@ export function PanelChrome({
   const theme = useTheme2();
   const styles = useStyles2(getStyles);
   const panelContentId = useId();
+  const collapsibleButtonId = useId();
 
   const hasHeader = !hoverHeader;
 
@@ -169,7 +170,7 @@ export function PanelChrome({
       {/* Non collapsible title */}
       {!collapsible && title && (
         <div className={styles.title}>
-          <Text element="h2" variant="h6" title={typeof title === 'string' ? title : undefined}>
+          <Text element="h2" variant="h6" truncate title={typeof title === 'string' ? title : undefined}>
             {title}
           </Text>
         </div>
@@ -178,27 +179,28 @@ export function PanelChrome({
       {/* Collapsible title */}
       {collapsible && (
         <div className={styles.title}>
-          <Text element="h2" variant="h6">
-            <button
-              type="button"
-              className={styles.clearButtonStyles}
-              onClick={() => {
-                toggleOpen();
-                if (onToggleCollapse) {
-                  onToggleCollapse(!collapsed);
-                }
-              }}
-              aria-expanded={!collapsed}
-              aria-controls={!collapsed ? panelContentId : undefined}
-            >
-              <Icon
-                name={!collapsed ? 'angle-down' : 'angle-right'}
-                aria-hidden={!!title}
-                aria-label={!title ? 'toggle collapse panel' : undefined}
-              />
+          <button
+            type="button"
+            className={styles.clearButtonStyles}
+            onClick={() => {
+              toggleOpen();
+              if (onToggleCollapse) {
+                onToggleCollapse(!collapsed);
+              }
+            }}
+            id={collapsibleButtonId}
+            aria-expanded={!collapsed}
+            aria-controls={!collapsed ? panelContentId : undefined}
+          >
+            <Icon
+              name={!collapsed ? 'angle-down' : 'angle-right'}
+              aria-hidden={!!title}
+              aria-label={!title ? 'toggle collapse panel' : undefined}
+            />
+            <Text variant="h6" truncate>
               {title}
-            </button>
-          </Text>
+            </Text>
+          </button>
         </div>
       )}
 
@@ -240,6 +242,7 @@ export function PanelChrome({
       data-testid={testid}
       tabIndex={0} //eslint-disable-line jsx-a11y/no-noninteractive-tabindex
       ref={ref}
+      aria-labelledby={collapsible ? collapsibleButtonId : undefined}
     >
       <div className={styles.loadingBarContainer}>
         {loadingState === LoadingState.Loading ? (
@@ -430,11 +433,7 @@ const getStyles = (theme: GrafanaTheme2) => {
       label: 'panel-title',
       display: 'flex',
       padding: theme.spacing(0, padding),
-      '& > h2': {
-        overflow: 'hidden',
-        textOverflow: 'ellipsis',
-        whiteSpace: 'nowrap',
-      },
+      overflow: 'hidden',
     }),
     items: css({
       display: 'flex',
