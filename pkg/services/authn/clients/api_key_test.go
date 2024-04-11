@@ -283,6 +283,100 @@ func TestAPIKey_GetAPIKeyIDFromIdentity(t *testing.T) {
 	}
 }
 
+func TestAPIKey_ResolveIdentity(t *testing.T) {
+	type testCase struct {
+		desc        string
+		namespaceID string
+
+		exptedApiKey *apikey.APIKey
+
+		expectedIdenity *authn.Identity
+		expectedErr     error
+	}
+
+	tests := []testCase{
+		{
+			desc:        "should return error for invalid namespace",
+			namespaceID: "user:1",
+			expectedErr: authn.ErrInvalidNamepsaceID,
+		},
+		{
+			desc:        "should return error when api key has expired",
+			namespaceID: "api-key:1",
+			exptedApiKey: &apikey.APIKey{
+				ID:      1,
+				OrgID:   1,
+				Expires: intPtr(0),
+			},
+			expectedErr: errAPIKeyExpired,
+		},
+		{
+			desc:        "should return error when api key is revoked",
+			namespaceID: "api-key:1",
+			exptedApiKey: &apikey.APIKey{
+				ID:        1,
+				OrgID:     1,
+				IsRevoked: boolPtr(true),
+			},
+			expectedErr: errAPIKeyRevoked,
+		},
+		{
+			desc:        "should return error when api key is connected to service account",
+			namespaceID: "api-key:1",
+			exptedApiKey: &apikey.APIKey{
+				ID:               1,
+				OrgID:            1,
+				ServiceAccountId: intPtr(1),
+			},
+			expectedErr: authn.ErrInvalidNamepsaceID,
+		},
+		{
+			desc:        "should return error when api key is belongs to different org",
+			namespaceID: "api-key:1",
+			exptedApiKey: &apikey.APIKey{
+				ID:               1,
+				OrgID:            2,
+				ServiceAccountId: intPtr(1),
+			},
+			expectedErr: errAPIKeyOrgMismatch,
+		},
+		{
+			desc:        "should return valid idenitty",
+			namespaceID: "api-key:1",
+			exptedApiKey: &apikey.APIKey{
+				ID:    1,
+				OrgID: 1,
+				Role:  org.RoleEditor,
+			},
+			expectedIdenity: &authn.Identity{
+				OrgID:           1,
+				OrgRoles:        map[int64]org.RoleType{1: org.RoleEditor},
+				ID:              "api-key:1",
+				AuthenticatedBy: login.APIKeyAuthModule,
+				ClientParams:    authn.ClientParams{SyncPermissions: true},
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.desc, func(t *testing.T) {
+			c := ProvideAPIKey(&apikeytest.Service{
+				ExpectedAPIKey: tt.exptedApiKey,
+			})
+
+			identity, err := c.ResolveIdentity(context.Background(), 1, tt.namespaceID)
+			if tt.expectedErr != nil {
+				assert.Nil(t, identity)
+				assert.ErrorIs(t, err, tt.expectedErr)
+				return
+			}
+
+			assert.NoError(t, err)
+			assert.EqualValues(t, *tt.expectedIdenity, *identity)
+		})
+	}
+}
+
 func intPtr(n int64) *int64 {
 	return &n
 }
