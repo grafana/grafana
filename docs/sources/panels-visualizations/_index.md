@@ -17,11 +17,53 @@ menuTitle: Panels and visualizations
 title: Panels and visualizations
 description: Learn about and configure panels and visualizations
 weight: 80
+hero:
+  title: Panels and visualizations
+  level: 1
+  width: 110
+  height: 110
+  description: >-
+    Easily collect, correlate, and visualize data so you can make informed decisions, experience enhanced system performance, and streamline your troubleshooting. Grafana’s growing suite of visualizations, ranging from time series graphs to heatmaps to cutting-edge 3D charts, help you decode complex datasets.
+cards:
+  title_class: pt-0 lh-1
+  items:
+    - title: TBD
+      href: /docs/grafana/latest/panels-visualizations/
+      description:
+      height: 24
+    - title: TBD
+      href: /docs/grafana/latest/panels-visualizations/
+      description:
+      height: 24
+    - title: TBD
+      href: /docs/grafana/latest/panels-visualizations/
+      description:
+      height: 24
+    - title: TBD
+      href: /docs/grafana/latest/panels-visualizations/
+      description:
+      height: 24
+    - title: TBD
+      href: /docs/grafana/latest/panels-visualizations/
+      description:
+      height: 24
+    - title: TBD
+      href: /docs/grafana/latest/panels-visualizations/
+      description:
+      height: 24
 ---
 
-# Panels and visualizations
+{{< docs/hero-simple key="hero" >}}
 
-The _panel_ is the basic visualization building block in Grafana.
+---
+
+## Overview
+
+## Explore
+
+{{< card-grid key="cards" type="simple" >}}
+
+<!-- The _panel_ is the basic visualization building block in Grafana.
 Each panel has a query editor specific to the data source selected in the panel.
 The query editor allows you to build a query that returns the data you want to visualize.
 
@@ -48,4 +90,4 @@ This section includes the following sub topics:
 
 [Data sources]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/datasources"
 [Data sources]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/datasources"
-{{% /docs/reference %}}
+{{% /docs/reference %}} -->
