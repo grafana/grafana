@@ -7,23 +7,20 @@ const borderRadiusRule = createRule({
   create(context) {
     return {
       CallExpression(node) {
-        if (
-          node.callee.type === AST_NODE_TYPES.Identifier &&
-          node.callee.name === 'css'
-        ) {
+        if (node.callee.type === AST_NODE_TYPES.Identifier && node.callee.name === 'css') {
           const cssObjects = node.arguments.flatMap((node) => {
             switch (node.type) {
               case AST_NODE_TYPES.ObjectExpression:
                 return [node];
               case AST_NODE_TYPES.ArrayExpression:
-                return node.elements.filter(v => v.type === AST_NODE_TYPES.ObjectExpression);
+                return node.elements.filter((v) => v?.type === AST_NODE_TYPES.ObjectExpression);
               default:
                 return [];
             }
           });
 
           for (const cssObject of cssObjects) {
-            if (cssObject.type === AST_NODE_TYPES.ObjectExpression) {
+            if (cssObject?.type === AST_NODE_TYPES.ObjectExpression) {
               for (const property of cssObject.properties) {
                 if (
                   property.type === AST_NODE_TYPES.Property &&
@@ -48,7 +45,6 @@ const borderRadiusRule = createRule({
     type: 'problem',
     docs: {
       description: 'Check if border-radius theme tokens are used',
-      recommended: false,
     },
     messages: {
       borderRadiusId: 'Prefer using theme.shape.radius tokens instead of literal values.',
