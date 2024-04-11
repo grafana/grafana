@@ -83,6 +83,7 @@
 /pkg/components/loki/ @grafana/backend-platform
 /pkg/components/null/ @grafana/backend-platform
 /pkg/components/simplejson/ @grafana/backend-platform
+/pkg/example/ @grafana/grafana-app-platform-squad
 /pkg/events/ @grafana/backend-platform
 /pkg/extensions/ @grafana/backend-platform
 /pkg/ifaces/ @grafana/backend-platform
