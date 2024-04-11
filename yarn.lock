@@ -18852,7 +18852,7 @@ __metadata:
     jest-canvas-mock: "npm:2.5.2"
     jest-date-mock: "npm:1.0.9"
     jest-environment-jsdom: "npm:29.7.0"
-    jest-fail-on-console: "npm:3.1.2"
+    jest-fail-on-console: "npm:3.2.0"
     jest-junit: "npm:16.0.0"
     jest-matcher-utils: "npm:29.7.0"
     jest-watch-typeahead: "npm:^2.2.2"
@@ -21044,10 +21044,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"jest-fail-on-console@npm:3.1.2":
-  version: 3.1.2
-  resolution: "jest-fail-on-console@npm:3.1.2"
-  checksum: 10/6f47a36cd9481121302660dbf29a6ce2443d0c2ad6ad872ee509fc538d674cdaa217f9bd041ce3771c1d8fda081ddcd85221027bbe6c9d2681cdae9d0922d329
+"jest-fail-on-console@npm:3.2.0":
+  version: 3.2.0
+  resolution: "jest-fail-on-console@npm:3.2.0"
+  checksum: 10/77efd8250b02f019c602024df8b30dd8d6e13532272899a04e99b29b44215dff3c62a7d7e2593c778c91c0071fd0849916ebb9eb11a589c009ad227664d5ad42
   languageName: node
   linkType: hard
 
