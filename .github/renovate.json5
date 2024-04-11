@@ -87,6 +87,7 @@
   "reviewers": ["team:grafana/frontend-ops"],
   "separateMajorMinor": false,
   "vulnerabilityAlerts": {
-    "addLabels": ["area/security"]
+    "addLabels": ["area/security"],
+    "enabled": true
   }
 }
