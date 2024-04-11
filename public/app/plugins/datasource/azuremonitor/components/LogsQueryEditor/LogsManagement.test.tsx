@@ -94,4 +94,78 @@ describe('LogsQueryEditor.LogsManagement', () => {
       })
     );
   });
+
+  it('should handle modal acknowledgements - cancel', async () => {
+    const mockDatasource = createMockDatasource();
+    const query = createMockQuery({ azureLogAnalytics: { basicLogsQuery: undefined } });
+    const onChange = jest.fn();
+
+    render(
+      <LogsManagement
+        query={query}
+        datasource={mockDatasource}
+        variableOptionGroup={variableOptionGroup}
+        onQueryChange={onChange}
+        setError={() => {}}
+      />
+    );
+
+    const logsManagementOption = await screen.findByLabelText('Basic');
+    await userEvent.click(logsManagementOption);
+
+    // ensures that modal shows
+    expect(await screen.findByText('Basic Logs Queries')).toBeInTheDocument();
+
+    const cancelAcknowledgement = await screen.findByText('Cancel');
+    await userEvent.click(cancelAcknowledgement);
+
+    //ensures that if cancel is clicked, Logs is set back to analytics
+    expect(onChange).toBeCalledWith(
+      expect.objectContaining({
+        azureLogAnalytics: expect.objectContaining({
+          basicLogsQuery: false,
+          basicLogsQueryAcknowledged: false,
+        }),
+      })
+    );
+  });
+
+  it('should handle modal acknowledgements - acknowledge', async () => {
+    const mockDatasource = createMockDatasource();
+    const query = createMockQuery({ azureLogAnalytics: { basicLogsQuery: false } });
+    const onChange = jest.fn();
+
+    render(
+      <LogsManagement
+        query={query}
+        datasource={mockDatasource}
+        variableOptionGroup={variableOptionGroup}
+        onQueryChange={onChange}
+        setError={() => {}}
+      />
+    );
+
+    const logsManagementOption = await screen.findByLabelText('Basic');
+    await userEvent.click(logsManagementOption);
+
+    // ensures that modal shows
+    expect(await screen.findByText('Basic Logs Queries')).toBeInTheDocument();
+
+    const acknowledgedAction = await screen.findByText('I Acknowledge');
+    await userEvent.click(acknowledgedAction);
+    expect(onChange).toBeCalledWith(
+      expect.objectContaining({
+        azureLogAnalytics: expect.objectContaining({
+          basicLogsQuery: true,
+        }),
+      })
+    );
+    expect(onChange).toBeCalledWith(
+      expect.objectContaining({
+        azureLogAnalytics: expect.objectContaining({
+          basicLogsQueryAcknowledged: true,
+        }),
+      })
+    );
+  });
 });
