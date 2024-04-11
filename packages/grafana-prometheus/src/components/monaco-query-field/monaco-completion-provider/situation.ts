@@ -252,30 +252,8 @@ function getLabels(labelMatchersNode: SyntaxNode, text: string): Label[] {
     return [];
   }
 
-  let listNode: SyntaxNode | null = walk(labelMatchersNode, [['firstChild', LabelMatcher]]);
-
-  const labels: Label[] = [];
-
-  while (listNode !== null) {
-    const matcherNode = walk(listNode, [['lastChild', LabelMatcher]]);
-    if (matcherNode === null) {
-      // unexpected, we stop
-      return [];
-    }
-
-    const label = getLabel(matcherNode, text);
-    if (label !== null) {
-      labels.push(label);
-    }
-
-    // there might be more labels
-    listNode = walk(listNode, [['firstChild', LabelMatcher]]);
-  }
-
-  // our labels-list is last-first, so we reverse it
-  labels.reverse();
-
-  return labels;
+  const labelNodes = labelMatchersNode.getChildren(LabelMatcher);
+  return labelNodes.map((ln) => getLabel(ln, text)).filter(notEmpty);
 }
 
 function getNodeChildren(node: SyntaxNode): SyntaxNode[] {
@@ -472,7 +450,6 @@ function resolveLabelKeysWithEquals(node: SyntaxNode, text: string, pos: number)
 
   const metricNameNode = walk(node, [
     ['parent', VectorSelector],
-    // ['firstChild', MetricIdentifier],
     ['firstChild', Identifier],
   ]);
 
@@ -560,4 +537,8 @@ export function getSituation(text: string, pos: number): Situation | null {
   }
 
   return null;
+}
+
+function notEmpty<TValue>(value: TValue | null | undefined): value is TValue {
+  return value !== null && value !== undefined;
 }
