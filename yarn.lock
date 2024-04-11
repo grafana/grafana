@@ -4164,13 +4164,13 @@ __metadata:
   resolution: "@grafana-plugins/grafana-postgresql-datasource@workspace:public/app/plugins/datasource/grafana-postgresql-datasource"
   dependencies:
     "@emotion/css": "npm:11.13.5"
-    "@grafana/data": "npm:11.6.0-pre"
-    "@grafana/e2e-selectors": "npm:11.6.0-pre"
-    "@grafana/plugin-configs": "npm:11.6.0-pre"
+    "@grafana/data": "workspace:*"
+    "@grafana/e2e-selectors": "workspace:*"
+    "@grafana/plugin-configs": "workspace:*"
     "@grafana/plugin-ui": "npm:0.10.1"
-    "@grafana/runtime": "npm:11.6.0-pre"
-    "@grafana/sql": "npm:11.6.0-pre"
-    "@grafana/ui": "npm:11.6.0-pre"
+    "@grafana/runtime": "workspace:*"
+    "@grafana/sql": "workspace:*"
+    "@grafana/ui": "workspace:*"
     "@testing-library/dom": "npm:10.4.0"
     "@testing-library/react": "npm:16.2.0"
     "@testing-library/user-event": "npm:14.6.1"
@@ -4316,13 +4316,13 @@ __metadata:
   resolution: "@grafana-plugins/mssql@workspace:public/app/plugins/datasource/mssql"
   dependencies:
     "@emotion/css": "npm:11.13.5"
-    "@grafana/data": "npm:11.6.0-pre"
-    "@grafana/e2e-selectors": "npm:11.6.0-pre"
-    "@grafana/plugin-configs": "npm:11.6.0-pre"
+    "@grafana/data": "workspace:*"
+    "@grafana/e2e-selectors": "workspace:*"
+    "@grafana/plugin-configs": "workspace:*"
     "@grafana/plugin-ui": "npm:0.10.1"
-    "@grafana/runtime": "npm:11.6.0-pre"
-    "@grafana/sql": "npm:11.6.0-pre"
-    "@grafana/ui": "npm:11.6.0-pre"
+    "@grafana/runtime": "workspace:*"
+    "@grafana/sql": "workspace:*"
+    "@grafana/ui": "workspace:*"
     "@testing-library/dom": "npm:10.4.0"
     "@testing-library/react": "npm:16.2.0"
     "@testing-library/user-event": "npm:14.6.1"
@@ -4347,13 +4347,13 @@ __metadata:
   resolution: "@grafana-plugins/mysql@workspace:public/app/plugins/datasource/mysql"
   dependencies:
     "@emotion/css": "npm:11.13.5"
-    "@grafana/data": "npm:11.6.0-pre"
-    "@grafana/e2e-selectors": "npm:11.6.0-pre"
-    "@grafana/plugin-configs": "npm:11.6.0-pre"
+    "@grafana/data": "workspace:*"
+    "@grafana/e2e-selectors": "workspace:*"
+    "@grafana/plugin-configs": "workspace:*"
     "@grafana/plugin-ui": "npm:0.10.1"
-    "@grafana/runtime": "npm:11.6.0-pre"
-    "@grafana/sql": "npm:11.6.0-pre"
-    "@grafana/ui": "npm:11.6.0-pre"
+    "@grafana/runtime": "workspace:*"
+    "@grafana/sql": "workspace:*"
+    "@grafana/ui": "workspace:*"
     "@testing-library/dom": "npm:10.4.0"
     "@testing-library/react": "npm:16.2.0"
     "@testing-library/user-event": "npm:14.6.1"
@@ -4710,13 +4710,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@grafana/eslint-plugin@link:./packages/grafana-eslint-rules::locator=grafana%40workspace%3A.":
-  version: 0.0.0-use.local
-  resolution: "@grafana/eslint-plugin@link:./packages/grafana-eslint-rules::locator=grafana%40workspace%3A."
-  languageName: node
-  linkType: soft
-
-"@grafana/eslint-plugin@workspace:packages/grafana-eslint-rules":
+"@grafana/eslint-plugin@workspace:*, @grafana/eslint-plugin@workspace:packages/grafana-eslint-rules":
   version: 0.0.0-use.local
   resolution: "@grafana/eslint-plugin@workspace:packages/grafana-eslint-rules"
   dependencies:
@@ -4905,13 +4899,13 @@ __metadata:
   resolution: "@grafana/o11y-ds-frontend@workspace:packages/grafana-o11y-ds-frontend"
   dependencies:
     "@emotion/css": "npm:11.13.5"
-    "@grafana/data": "npm:11.6.0-pre"
-    "@grafana/e2e-selectors": "npm:11.6.0-pre"
+    "@grafana/data": "workspace:*"
+    "@grafana/e2e-selectors": "workspace:*"
     "@grafana/plugin-ui": "npm:0.10.1"
-    "@grafana/runtime": "npm:11.6.0-pre"
-    "@grafana/schema": "npm:11.6.0-pre"
+    "@grafana/runtime": "workspace:*"
+    "@grafana/schema": "workspace:*"
     "@grafana/tsconfig": "npm:^2.0.0"
-    "@grafana/ui": "npm:11.6.0-pre"
+    "@grafana/ui": "workspace:*"
     "@testing-library/dom": "npm:10.4.0"
     "@testing-library/jest-dom": "npm:^6.1.2"
     "@testing-library/react": "npm:16.2.0"
@@ -4935,7 +4929,7 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@grafana/plugin-configs@npm:11.6.0-pre, @grafana/plugin-configs@workspace:*, @grafana/plugin-configs@workspace:packages/grafana-plugin-configs":
+"@grafana/plugin-configs@workspace:*, @grafana/plugin-configs@workspace:packages/grafana-plugin-configs":
   version: 0.0.0-use.local
   resolution: "@grafana/plugin-configs@workspace:packages/grafana-plugin-configs"
   dependencies:
@@ -5266,17 +5260,17 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@grafana/sql@npm:11.6.0-pre, @grafana/sql@workspace:*, @grafana/sql@workspace:packages/grafana-sql":
+"@grafana/sql@workspace:*, @grafana/sql@workspace:packages/grafana-sql":
   version: 0.0.0-use.local
   resolution: "@grafana/sql@workspace:packages/grafana-sql"
   dependencies:
     "@emotion/css": "npm:11.13.5"
-    "@grafana/data": "npm:11.6.0-pre"
-    "@grafana/e2e-selectors": "npm:11.6.0-pre"
+    "@grafana/data": "workspace:*"
+    "@grafana/e2e-selectors": "workspace:*"
     "@grafana/plugin-ui": "npm:0.10.1"
-    "@grafana/runtime": "npm:11.6.0-pre"
+    "@grafana/runtime": "workspace:*"
     "@grafana/tsconfig": "npm:^2.0.0"
-    "@grafana/ui": "npm:11.6.0-pre"
+    "@grafana/ui": "workspace:*"
     "@react-awesome-query-builder/ui": "npm:6.6.4"
     "@testing-library/dom": "npm:10.4.0"
     "@testing-library/jest-dom": "npm:^6.1.2"
@@ -19564,7 +19558,7 @@ __metadata:
     "@grafana/data": "workspace:*"
     "@grafana/e2e-selectors": "workspace:*"
     "@grafana/eslint-config": "npm:8.0.0"
-    "@grafana/eslint-plugin": "link:./packages/grafana-eslint-rules"
+    "@grafana/eslint-plugin": "workspace:*"
     "@grafana/faro-core": "npm:^1.13.2"
     "@grafana/faro-web-sdk": "npm:^1.13.2"
     "@grafana/faro-web-tracing": "npm:^1.13.2"
