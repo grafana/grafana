@@ -3,7 +3,7 @@ import uFuzzy from '@leeoniya/ufuzzy';
 import { SerializedError } from '@reduxjs/toolkit';
 import { groupBy, size, uniq, upperFirst } from 'lodash';
 import pluralize from 'pluralize';
-import React, { Fragment, ReactNode, useCallback, useEffect, useMemo, useState } from 'react';
+import React, { Fragment, ReactNode, useCallback, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useToggle } from 'react-use';
 
@@ -70,8 +70,8 @@ export enum ActiveTab {
 const DEFAULT_PAGE_SIZE = 10;
 
 const useTabQueryParam = () => {
-  const [queryParams] = useURLSearchParams();
-  return useMemo(() => {
+  const [queryParams, setQueryParams] = useURLSearchParams();
+  const param = useMemo(() => {
     const queryParam = queryParams.get('tab');
 
     if (!queryParam || !Object.values(ActiveTab).map(String).includes(queryParam)) {
@@ -80,14 +80,17 @@ const useTabQueryParam = () => {
 
     return queryParam || ActiveTab.ContactPoints;
   }, [queryParams]);
+
+  const setParam = (tab: string) => setQueryParams({ tab });
+
+  return [param, setParam] as const;
 };
 
 const ContactPoints = () => {
   const { selectedAlertmanager } = useAlertmanager();
-  const [queryParams, setQueryParams] = useURLSearchParams();
-  const activeTabVal = useTabQueryParam();
+  const [queryParams] = useURLSearchParams();
+  const [activeTab, setActiveTab] = useTabQueryParam();
 
-  const [activeTab, setActiveTab] = useState(activeTabVal);
   let { isLoading, error, contactPoints } = useContactPointsWithStatus();
   const { deleteTrigger, updateAlertmanagerState } = useDeleteContactPoint(selectedAlertmanager!);
   const [addContactPointSupported, addContactPointAllowed] = useAlertmanagerAbility(
@@ -107,10 +110,6 @@ const ContactPoints = () => {
 
   const showingContactPoints = activeTab === ActiveTab.ContactPoints;
   const showNotificationTemplates = activeTab === ActiveTab.NotificationTemplates;
-
-  useEffect(() => {
-    setQueryParams({ tab: activeTab });
-  }, [activeTab, setQueryParams]);
 
   if (error) {
     // TODO fix this type casting, when error comes from "getContactPointsStatus" it probably won't be a SerializedError
