@@ -17,11 +17,11 @@ func LoggingUnaryInterceptor(cfg *setting.Cfg, logger log.Logger) grpc.UnaryServ
 	) (resp any, err error) {
 		resp, err = handler(ctx, req)
 		if cfg.GRPCServerEnableLogging {
-			logger = logger.FromContext(ctx)
+			ctxLogger := logger.FromContext(ctx)
 			if err != nil {
-				logger.Error("gRPC call", "method", info.FullMethod, "req", req, "err", err)
+				ctxLogger.Error("gRPC call", "method", info.FullMethod, "req", req, "err", err)
 			} else {
-				logger.Info("gRPC call", "method", info.FullMethod, "req", req, "resp", resp)
+				ctxLogger.Info("gRPC call", "method", info.FullMethod, "req", req, "resp", resp)
 			}
 		}
 		return resp, err
