@@ -30906,12 +30906,12 @@ __metadata:
   languageName: node
   linkType: hard
 
-"uglify-js@npm:3.14.3":
-  version: 3.14.3
-  resolution: "uglify-js@npm:3.14.3"
+"uglify-js@npm:^3.1.4":
+  version: 3.17.4
+  resolution: "uglify-js@npm:3.17.4"
   bin:
     uglifyjs: bin/uglifyjs
-  checksum: 10/78fe5a32f2e2cd86fd8904a04e11aeaa37ddeee2001bfe35df34b36f7f5a84de527b94b0682b0e647b82dd39ac08610ea30008889c3c9b064150bb4928126528
+  checksum: 10/4c0b800e0ff192079d2c3ce8414fd3b656a570028c7c79af5c29c53d5c532b68bbcae4ad47307f89c2ee124d11826fff7a136b59d5c5bb18422bcdf5568afe1e
   languageName: node
   linkType: hard
 
