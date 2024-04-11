@@ -35,7 +35,7 @@ func (d *DualWriterMode2) Create(ctx context.Context, obj runtime.Object, create
 		return created, err
 	}
 
-	accessorCreat, err := meta.Accessor(created)
+	accessorCreated, err := meta.Accessor(created)
 	if err != nil {
 		return created, err
 	}
@@ -45,11 +45,11 @@ func (d *DualWriterMode2) Create(ctx context.Context, obj runtime.Object, create
 		return created, err
 	}
 
-	enrichObject(accessorOld, accessorCreat)
+	enrichObject(accessorOld, accessorCreated)
 
 	// create method expects an empty resource version
-	accessorCreat.SetResourceVersion("")
-	accessorCreat.SetUID("")
+	accessorCreated.SetResourceVersion("")
+	accessorCreated.SetUID("")
 
 	rsp, err := d.Storage.Create(ctx, created, createValidation, options)
 	if err != nil {
