@@ -246,9 +246,8 @@ func (s *sqlEntityServer) Read(ctx context.Context, r *entity.ReadEntityRequest)
 	res, err := s.read(ctx, s.sess, r)
 	if err != nil {
 		s.log.Error("read error", "error", err, "method", "read")
-		return nil, err
 	}
-	return res, nil
+	return res, err
 }
 
 func (s *sqlEntityServer) read(ctx context.Context, tx session.SessionQuerier, r *entity.ReadEntityRequest) (*entity.Entity, error) {
