@@ -118,14 +118,36 @@ const extRegex: FieldExtractor = {
     if (exp) {
       try {
         const re = new RegExp(exp, 'gi');
-        const matches = Array.from(v.matchAll(re));
-        console.log(matches);
-        const match = v.match(re);
-        if (matches[0]?.groups) {
-          return matches[0].groups;
-        } else {
-          return { [v]: match };
+        const matchAllOrg = v.matchAll(re);
+        const matches = Array.from(matchAllOrg);
+
+        // move group matches to an easier to deal with structure
+        const matchGroups: { [key: string]: string[] } = {};
+        for (const match of matches) {
+          const group = match.groups;
+          if (group) {
+            const groupKeys = Object.keys(group);
+            groupKeys.forEach((groupKey) => {
+              if (group[groupKey] !== undefined) {
+                if (matchGroups[groupKey] === undefined) {
+                  matchGroups[groupKey] = [group[groupKey]];
+                } else {
+                  matchGroups[groupKey].push(group[groupKey]);
+                }
+              }
+            });
+          }
         }
+
+        const fields: { [key: string]: string } = {};
+        Object.keys(matchGroups).forEach((key) => {
+          matchGroups[key].forEach((value, i) => {
+            // 0 should count as blank, every higher index is - 1
+            const index = matchGroups[key].length > 1 && i !== 0 ? `${key}-${i - 1}` : key;
+            fields[index] = value;
+          });
+        });
+        return fields;
       } catch {
         return undefined;
       }
