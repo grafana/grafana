@@ -4,10 +4,10 @@ import (
 	"context"
 	"testing"
 
-	example "github.com/grafana/grafana/pkg/example/v0alpha1"
 	"github.com/zeebo/assert"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apiserver/pkg/apis/example"
 	"k8s.io/apiserver/pkg/registry/rest"
 )
 
@@ -55,9 +55,10 @@ func Test_Mode2(t *testing.T) {
 	assert.Equal(t, 0, sSpy.Counts("Storage.Get"))
 
 	// it should update in both storages
-	dummy := &example.DummyResource{}
+	dummy := &example.Pod{}
 	uoi := UpdatedObjInfoObj{}
-	uoi.UpdatedObject(context.Background(), dummy)
+	_, err = uoi.UpdatedObject(context.Background(), dummy)
+	assert.NoError(t, err)
 
 	var validateObjFn = func(ctx context.Context, obj runtime.Object) error { return nil }
 	var validateObjUpdateFn = func(ctx context.Context, obj, old runtime.Object) error { return nil }
@@ -85,7 +86,7 @@ func Mode3_Test(t *testing.T) {
 	assert.Equal(t, 1, sSpy.Counts("Storage.Get"))
 
 	// it should update in both storages
-	dummy := &example.DummyResource{}
+	dummy := &example.Pod{}
 	uoi := UpdatedObjInfoObj{}
 	uoi.UpdatedObject(context.Background(), dummy)
 
@@ -115,7 +116,7 @@ func Test_Mode4(t *testing.T) {
 	assert.Equal(t, 1, sSpy.Counts("Storage.Get"))
 
 	// it should update only US
-	dummy := &example.DummyResource{}
+	dummy := &example.Pod{}
 	uoi := UpdatedObjInfoObj{}
 	uoi.UpdatedObject(context.Background(), dummy)
 

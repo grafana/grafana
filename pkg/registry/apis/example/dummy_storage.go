@@ -13,8 +13,8 @@ import (
 	"k8s.io/apiserver/pkg/registry/rest"
 
 	common "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
+	example "github.com/grafana/grafana/pkg/apis/example/v0alpha1"
 	grafanaregistry "github.com/grafana/grafana/pkg/apiserver/registry/generic"
-	example "github.com/grafana/grafana/pkg/example/v0alpha1"
 	grafanarequest "github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 )
 
