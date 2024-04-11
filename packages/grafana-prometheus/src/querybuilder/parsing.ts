@@ -177,8 +177,8 @@ export function handleExpression(expr: string, node: SyntaxNode, context: Contex
 
     default: {
       if (node.type.id === ParenExpr) {
-        // We don't support parenthesis in the query to group expressions. We just report error but go on with the
-        // parsing.
+        // We don't support parenthesis in the query to group expressions.
+        // We just report error but go on with the parsing.
         context.errors.push(makeError(expr, node));
       }
       // Any other nodes we just ignore and go to its children. This should be fine as there are lots of wrapper
