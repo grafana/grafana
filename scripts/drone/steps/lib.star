@@ -126,9 +126,8 @@ def is_fork(pr):
 	for i in range(retries): 
 		r = requests.get(api_url, headers=headers)
 		status_code = r.status_code
-		retries -= 1
 		ratelimit_remaining = r.headers.get("X-RateLimit-Remaining")
-		print(f"API response code: {status_code}: {retries} retries left: {ratelimit_remaining} requests left")
+		print(f"API response code: {status_code}: {retries - i} retries left: {ratelimit_remaining} requests left")
 		if r.status_code == 200:
 			return r.json()["head"]["repo"]["fork"]
 		if r.headers.get("X-RateLimit-Remaining") == 0:

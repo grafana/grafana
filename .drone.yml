@@ -144,9 +144,9 @@ steps:
     Headers with authentication token\n\theaders = {\n\t\"Authorization\": \"token:
     {}\".format(os.environ.get(\"GITHUB_TOKEN\")),\n\t\"Accept\": \"application/json\"\n\t}\n\n\tretries
     = 5\n\tfor i in range(retries): \n\t\tr = requests.get(api_url, headers=headers)\n\t\tstatus_code
-    = r.status_code\n\t\tretries -= 1\n\t\tratelimit_remaining = r.headers.get(\"X-RateLimit-Remaining\")\n\t\tprint(f\"API
-    response code: {status_code}: {retries} retries left: {ratelimit_remaining} requests
-    left\")\n\t\tif r.status_code == 200:\n\t\t\treturn r.json()[\"head\"][\"repo\"][\"fork\"]\n\t\tif
+    = r.status_code\n\t\tratelimit_remaining = r.headers.get(\"X-RateLimit-Remaining\")\n\t\tprint(f\"API
+    response code: {status_code}: {retries - i} retries left: {ratelimit_remaining}
+    requests left\")\n\t\tif r.status_code == 200:\n\t\t\treturn r.json()[\"head\"][\"repo\"][\"fork\"]\n\t\tif
     r.headers.get(\"X-RateLimit-Remaining\") == 0:\n\t\t\treset_time_utc = int(r.headers[\"X-RateLimit-Reset\"])\n\t\t\tcurrent_time_utc
     = datetime.now(timezone.utc)\n\t\t\ttimestamp_utc = int(current_time_utc.timestamp())\n\n\t\t\tseconds_until_reset
     = max(0, reset_time_utc - timestamp_utc)\n\t\t\tprint(f\"Sleeping for {seconds_until_reset}
@@ -223,9 +223,9 @@ steps:
     Headers with authentication token\n\theaders = {\n\t\"Authorization\": \"token:
     {}\".format(os.environ.get(\"GITHUB_TOKEN\")),\n\t\"Accept\": \"application/json\"\n\t}\n\n\tretries
     = 5\n\tfor i in range(retries): \n\t\tr = requests.get(api_url, headers=headers)\n\t\tstatus_code
-    = r.status_code\n\t\tretries -= 1\n\t\tratelimit_remaining = r.headers.get(\"X-RateLimit-Remaining\")\n\t\tprint(f\"API
-    response code: {status_code}: {retries} retries left: {ratelimit_remaining} requests
-    left\")\n\t\tif r.status_code == 200:\n\t\t\treturn r.json()[\"head\"][\"repo\"][\"fork\"]\n\t\tif
+    = r.status_code\n\t\tratelimit_remaining = r.headers.get(\"X-RateLimit-Remaining\")\n\t\tprint(f\"API
+    response code: {status_code}: {retries - i} retries left: {ratelimit_remaining}
+    requests left\")\n\t\tif r.status_code == 200:\n\t\t\treturn r.json()[\"head\"][\"repo\"][\"fork\"]\n\t\tif
     r.headers.get(\"X-RateLimit-Remaining\") == 0:\n\t\t\treset_time_utc = int(r.headers[\"X-RateLimit-Reset\"])\n\t\t\tcurrent_time_utc
     = datetime.now(timezone.utc)\n\t\t\ttimestamp_utc = int(current_time_utc.timestamp())\n\n\t\t\tseconds_until_reset
     = max(0, reset_time_utc - timestamp_utc)\n\t\t\tprint(f\"Sleeping for {seconds_until_reset}
@@ -329,9 +329,9 @@ steps:
     Headers with authentication token\n\theaders = {\n\t\"Authorization\": \"token:
     {}\".format(os.environ.get(\"GITHUB_TOKEN\")),\n\t\"Accept\": \"application/json\"\n\t}\n\n\tretries
     = 5\n\tfor i in range(retries): \n\t\tr = requests.get(api_url, headers=headers)\n\t\tstatus_code
-    = r.status_code\n\t\tretries -= 1\n\t\tratelimit_remaining = r.headers.get(\"X-RateLimit-Remaining\")\n\t\tprint(f\"API
-    response code: {status_code}: {retries} retries left: {ratelimit_remaining} requests
-    left\")\n\t\tif r.status_code == 200:\n\t\t\treturn r.json()[\"head\"][\"repo\"][\"fork\"]\n\t\tif
+    = r.status_code\n\t\tratelimit_remaining = r.headers.get(\"X-RateLimit-Remaining\")\n\t\tprint(f\"API
+    response code: {status_code}: {retries - i} retries left: {ratelimit_remaining}
+    requests left\")\n\t\tif r.status_code == 200:\n\t\t\treturn r.json()[\"head\"][\"repo\"][\"fork\"]\n\t\tif
     r.headers.get(\"X-RateLimit-Remaining\") == 0:\n\t\t\treset_time_utc = int(r.headers[\"X-RateLimit-Reset\"])\n\t\t\tcurrent_time_utc
     = datetime.now(timezone.utc)\n\t\t\ttimestamp_utc = int(current_time_utc.timestamp())\n\n\t\t\tseconds_until_reset
     = max(0, reset_time_utc - timestamp_utc)\n\t\t\tprint(f\"Sleeping for {seconds_until_reset}
@@ -464,9 +464,9 @@ steps:
     Headers with authentication token\n\theaders = {\n\t\"Authorization\": \"token:
     {}\".format(os.environ.get(\"GITHUB_TOKEN\")),\n\t\"Accept\": \"application/json\"\n\t}\n\n\tretries
     = 5\n\tfor i in range(retries): \n\t\tr = requests.get(api_url, headers=headers)\n\t\tstatus_code
-    = r.status_code\n\t\tretries -= 1\n\t\tratelimit_remaining = r.headers.get(\"X-RateLimit-Remaining\")\n\t\tprint(f\"API
-    response code: {status_code}: {retries} retries left: {ratelimit_remaining} requests
-    left\")\n\t\tif r.status_code == 200:\n\t\t\treturn r.json()[\"head\"][\"repo\"][\"fork\"]\n\t\tif
+    = r.status_code\n\t\tratelimit_remaining = r.headers.get(\"X-RateLimit-Remaining\")\n\t\tprint(f\"API
+    response code: {status_code}: {retries - i} retries left: {ratelimit_remaining}
+    requests left\")\n\t\tif r.status_code == 200:\n\t\t\treturn r.json()[\"head\"][\"repo\"][\"fork\"]\n\t\tif
     r.headers.get(\"X-RateLimit-Remaining\") == 0:\n\t\t\treset_time_utc = int(r.headers[\"X-RateLimit-Reset\"])\n\t\t\tcurrent_time_utc
     = datetime.now(timezone.utc)\n\t\t\ttimestamp_utc = int(current_time_utc.timestamp())\n\n\t\t\tseconds_until_reset
     = max(0, reset_time_utc - timestamp_utc)\n\t\t\tprint(f\"Sleeping for {seconds_until_reset}
@@ -956,9 +956,9 @@ steps:
     Headers with authentication token\n\theaders = {\n\t\"Authorization\": \"token:
     {}\".format(os.environ.get(\"GITHUB_TOKEN\")),\n\t\"Accept\": \"application/json\"\n\t}\n\n\tretries
     = 5\n\tfor i in range(retries): \n\t\tr = requests.get(api_url, headers=headers)\n\t\tstatus_code
-    = r.status_code\n\t\tretries -= 1\n\t\tratelimit_remaining = r.headers.get(\"X-RateLimit-Remaining\")\n\t\tprint(f\"API
-    response code: {status_code}: {retries} retries left: {ratelimit_remaining} requests
-    left\")\n\t\tif r.status_code == 200:\n\t\t\treturn r.json()[\"head\"][\"repo\"][\"fork\"]\n\t\tif
+    = r.status_code\n\t\tratelimit_remaining = r.headers.get(\"X-RateLimit-Remaining\")\n\t\tprint(f\"API
+    response code: {status_code}: {retries - i} retries left: {ratelimit_remaining}
+    requests left\")\n\t\tif r.status_code == 200:\n\t\t\treturn r.json()[\"head\"][\"repo\"][\"fork\"]\n\t\tif
     r.headers.get(\"X-RateLimit-Remaining\") == 0:\n\t\t\treset_time_utc = int(r.headers[\"X-RateLimit-Reset\"])\n\t\t\tcurrent_time_utc
     = datetime.now(timezone.utc)\n\t\t\ttimestamp_utc = int(current_time_utc.timestamp())\n\n\t\t\tseconds_until_reset
     = max(0, reset_time_utc - timestamp_utc)\n\t\t\tprint(f\"Sleeping for {seconds_until_reset}
@@ -1312,9 +1312,9 @@ steps:
     Headers with authentication token\n\theaders = {\n\t\"Authorization\": \"token:
     {}\".format(os.environ.get(\"GITHUB_TOKEN\")),\n\t\"Accept\": \"application/json\"\n\t}\n\n\tretries
     = 5\n\tfor i in range(retries): \n\t\tr = requests.get(api_url, headers=headers)\n\t\tstatus_code
-    = r.status_code\n\t\tretries -= 1\n\t\tratelimit_remaining = r.headers.get(\"X-RateLimit-Remaining\")\n\t\tprint(f\"API
-    response code: {status_code}: {retries} retries left: {ratelimit_remaining} requests
-    left\")\n\t\tif r.status_code == 200:\n\t\t\treturn r.json()[\"head\"][\"repo\"][\"fork\"]\n\t\tif
+    = r.status_code\n\t\tratelimit_remaining = r.headers.get(\"X-RateLimit-Remaining\")\n\t\tprint(f\"API
+    response code: {status_code}: {retries - i} retries left: {ratelimit_remaining}
+    requests left\")\n\t\tif r.status_code == 200:\n\t\t\treturn r.json()[\"head\"][\"repo\"][\"fork\"]\n\t\tif
     r.headers.get(\"X-RateLimit-Remaining\") == 0:\n\t\t\treset_time_utc = int(r.headers[\"X-RateLimit-Reset\"])\n\t\t\tcurrent_time_utc
     = datetime.now(timezone.utc)\n\t\t\ttimestamp_utc = int(current_time_utc.timestamp())\n\n\t\t\tseconds_until_reset
     = max(0, reset_time_utc - timestamp_utc)\n\t\t\tprint(f\"Sleeping for {seconds_until_reset}
@@ -5013,6 +5013,6 @@ kind: secret
 name: gcr_credentials
 ---
 kind: signature
-hmac: 4fc95de3ec36b134b409a8c8eca5abc706738037b2eec6665bb025bcb780e073
+hmac: 5ec6c9dc3039b7a8b5d73a3b9a07b9a66516fe9a7f8f65752df8f2dbedee9b64
 
 ...
