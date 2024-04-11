@@ -15,7 +15,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/org/orgtest"
-	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/store"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
@@ -98,7 +97,7 @@ func runSearchService(searchService *StandardSearchService) error {
 }
 
 // Populates database with dashboards and folders
-func populateDB(folderCount, dashboardsPerFolder int, sqlStore *sqlstore.SQLStore) error {
+func populateDB(folderCount, dashboardsPerFolder int, sqlStore db.DB) error {
 	// Insert folders
 	offset := 1
 	if errInsert := actest.ConcurrentBatch(actest.Concurrency, folderCount, actest.BatchSize, func(start, end int) error {

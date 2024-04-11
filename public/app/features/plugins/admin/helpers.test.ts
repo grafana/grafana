@@ -136,6 +136,35 @@ describe('Plugins/Helpers', () => {
       config.featureToggles.managedPluginsInstall = oldFeatureTogglesManagedPluginsInstall;
       config.pluginAdminExternalManageEnabled = oldPluginAdminExternalManageEnabled;
     });
+
+    test('plugins should have update when instance version is different from remote version', () => {
+      const oldFeatureTogglesManagedPluginsInstall = config.featureToggles.managedPluginsInstall;
+      const oldPluginAdminExternalManageEnabled = config.pluginAdminExternalManageEnabled;
+
+      config.featureToggles.managedPluginsInstall = true;
+      config.pluginAdminExternalManageEnabled = true;
+
+      const pluginId = 'plugin-1';
+      const remotePlugin = getRemotePluginMock({ slug: pluginId, version: '1.0.0' });
+      const instancePlugin = {
+        pluginSlug: pluginId,
+        version: '0.0.9',
+      };
+
+      const merged = mergeLocalsAndRemotes({
+        local: [],
+        remote: [remotePlugin],
+        instance: [instancePlugin],
+      });
+      const findMerged = (mergedId: string) => merged.find(({ id }) => id === mergedId);
+
+      expect(merged).toHaveLength(1);
+      expect(findMerged(pluginId)).not.toBeUndefined();
+      expect(findMerged(pluginId)?.hasUpdate).toBe(true);
+
+      config.featureToggles.managedPluginsInstall = oldFeatureTogglesManagedPluginsInstall;
+      config.pluginAdminExternalManageEnabled = oldPluginAdminExternalManageEnabled;
+    });
   });
 
   describe('mergeLocalAndRemote()', () => {
@@ -182,6 +211,7 @@ describe('Plugins/Helpers', () => {
         type: 'app',
         updatedAt: '2021-05-18T14:53:01.000Z',
         isFullyInstalled: false,
+        angularDetected: false,
       });
     });
 
@@ -261,6 +291,7 @@ describe('Plugins/Helpers', () => {
         updatedAt: '2021-08-25',
         installedVersion: '4.2.2',
         isFullyInstalled: true,
+        angularDetected: false,
       });
     });
 
@@ -312,6 +343,7 @@ describe('Plugins/Helpers', () => {
         updatedAt: '2021-05-18T14:53:01.000Z',
         installedVersion: '4.2.2',
         isFullyInstalled: true,
+        angularDetected: false,
       });
     });
 
@@ -693,6 +725,35 @@ describe('Plugins/Helpers', () => {
 
       // No local or remote
       expect(mapToCatalogPlugin()).toMatchObject({ updatedAt: '' });
+    });
+
+    test('`.angularDetected` - prefers the local', () => {
+      // Both false shoul return false
+      expect(
+        mapToCatalogPlugin({ ...localPlugin, angularDetected: false }, { ...remotePlugin, angularDetected: false })
+      ).toMatchObject({ angularDetected: false });
+
+      // Remote version is using angular, local isn't, should prefer local
+      expect(
+        mapToCatalogPlugin({ ...localPlugin, angularDetected: false }, { ...remotePlugin, angularDetected: true })
+      ).toMatchObject({ angularDetected: false });
+
+      // Remote only
+      expect(mapToCatalogPlugin(undefined, remotePlugin)).toMatchObject({ angularDetected: false });
+      expect(mapToCatalogPlugin(undefined, { ...remotePlugin, angularDetected: true })).toMatchObject({
+        angularDetected: true,
+      });
+
+      // Local only
+      expect(mapToCatalogPlugin({ ...localPlugin, angularDetected: false }, undefined)).toMatchObject({
+        angularDetected: false,
+      });
+      expect(mapToCatalogPlugin({ ...localPlugin, angularDetected: true }, undefined)).toMatchObject({
+        angularDetected: true,
+      });
+
+      // No local or remote
+      expect(mapToCatalogPlugin()).toMatchObject({ angularDetected: undefined });
     });
   });
 

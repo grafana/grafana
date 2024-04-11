@@ -40,7 +40,6 @@ export interface FeatureToggles {
   autoMigrateXYChartPanel?: boolean;
   disableAngular?: boolean;
   canvasPanelNesting?: boolean;
-  newVizTooltips?: boolean;
   scenes?: boolean;
   disableSecretsCompatibility?: boolean;
   logRequestsInstrumentedAsUnknown?: boolean;
@@ -134,6 +133,7 @@ export interface FeatureToggles {
   panelTitleSearchInV1?: boolean;
   managedPluginsInstall?: boolean;
   prometheusPromQAIL?: boolean;
+  prometheusCodeModeMetricNamesSearch?: boolean;
   addFieldFromCalculationStatFunctions?: boolean;
   alertmanagerRemoteSecondary?: boolean;
   alertmanagerRemotePrimary?: boolean;
@@ -178,4 +178,6 @@ export interface FeatureToggles {
   ssoSettingsSAML?: boolean;
   usePrometheusFrontendPackage?: boolean;
   oauthRequireSubClaim?: boolean;
+  newDashboardWithFiltersAndGroupBy?: boolean;
+  cloudWatchNewLabelParsing?: boolean;
 }

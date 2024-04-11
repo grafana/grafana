@@ -177,8 +177,8 @@ describe('transformSaveModelToScene', () => {
   });
 
   describe('When creating a new dashboard', () => {
-    it('should initialize the DashboardScene in edit mode and dirty', () => {
-      const rsp = buildNewDashboardSaveModel();
+    it('should initialize the DashboardScene in edit mode and dirty', async () => {
+      const rsp = await buildNewDashboardSaveModel();
       const scene = transformSaveModelToScene(rsp);
       expect(scene.state.isEditing).toBe(undefined);
       expect(scene.state.isDirty).toBe(false);

@@ -134,8 +134,7 @@ func TestOrgSync_SetDefaultOrgHook(t *testing.T) {
 		defaultOrgSetting int64
 		identity          *authn.Identity
 		setupMock         func(*usertest.MockService, *orgtest.FakeOrgService)
-
-		wantErr bool
+		inputErr          error
 	}{
 		{
 			name:              "should set default org",
@@ -156,6 +155,12 @@ func TestOrgSync_SetDefaultOrgHook(t *testing.T) {
 			name:              "should skip setting the default org when identity is nil",
 			defaultOrgSetting: -1,
 			identity:          nil,
+		},
+		{
+			name:              "should skip setting the default org when input err is not nil",
+			defaultOrgSetting: 2,
+			identity:          &authn.Identity{ID: "user:1"},
+			inputErr:          fmt.Errorf("error"),
 		},
 		{
 			name:              "should skip setting the default org when identity is not a user",
@@ -181,13 +186,12 @@ func TestOrgSync_SetDefaultOrgHook(t *testing.T) {
 			},
 		},
 		{
-			name:              "should return error when the user org update was unsuccessful",
+			name:              "should skip the hook when the user org update was unsuccessful",
 			defaultOrgSetting: 2,
 			identity:          &authn.Identity{ID: "user:1"},
 			setupMock: func(userService *usertest.MockService, orgService *orgtest.FakeOrgService) {
 				userService.On("SetUsingOrg", mock.Anything, mock.Anything).Return(fmt.Errorf("error"))
 			},
-			wantErr: true,
 		},
 	}
 	for _, tt := range testCases {
@@ -214,9 +218,9 @@ func TestOrgSync_SetDefaultOrgHook(t *testing.T) {
 				cfg:           cfg,
 			}
 
-			if err := s.SetDefaultOrgHook(context.Background(), tt.identity, nil); (err != nil) != tt.wantErr {
-				t.Errorf("OrgSync.SetDefaultOrgHook() error = %v, wantErr %v", err, tt.wantErr)
-			}
+			s.SetDefaultOrgHook(context.Background(), tt.identity, nil, tt.inputErr)
+
+			userService.AssertExpectations(t)
 		})
 	}
 }

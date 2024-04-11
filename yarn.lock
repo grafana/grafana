@@ -3969,16 +3969,16 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@grafana/plugin-e2e@npm:^0.25.0":
-  version: 0.25.1
-  resolution: "@grafana/plugin-e2e@npm:0.25.1"
+"@grafana/plugin-e2e@npm:1.0.1":
+  version: 1.0.1
+  resolution: "@grafana/plugin-e2e@npm:1.0.1"
   dependencies:
     semver: "npm:^7.5.4"
     uuid: "npm:^9.0.1"
     yaml: "npm:^2.3.4"
   peerDependencies:
     "@playwright/test": ^1.41.2
-  checksum: 10/7a478d280202e4757df8152bf47779f107a14007ac5644fec4a691d939dbc0a4ee1b57a4be1b1eaaf85a07365a9287ce5c32e24a0333fa7ead89f638014834ca
+  checksum: 10/9188ea2d5a860e8b14cfe33422ca24d742b6f1bc3dd023a95d53872b8656c489329ad8f7f14bffe336858724c13669574f8c89e4b99a2db6d78027f824f5116f
   languageName: node
   linkType: hard
 
@@ -4170,9 +4170,9 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@grafana/scenes@npm:4.1.2":
-  version: 4.1.2
-  resolution: "@grafana/scenes@npm:4.1.2"
+"@grafana/scenes@npm:^4.5.4":
+  version: 4.5.4
+  resolution: "@grafana/scenes@npm:4.5.4"
   dependencies:
     "@grafana/e2e-selectors": "npm:10.3.3"
     react-grid-layout: "npm:1.3.4"
@@ -4186,7 +4186,7 @@ __metadata:
     "@grafana/ui": ^10.0.3
     react: ^18.0.0
     react-dom: ^18.0.0
-  checksum: 10/3627d1f200b30872615d9427af3bdac534f8a39a5dd1ba1b3a55b9e6664cf5f0e9750fd9c0d36d1e54d7dd20f7e74a8f5e56f3e145e02f315bd9f104cdb448bd
+  checksum: 10/db483dfd204b5b3f2d61b72e1a4209137734ed20d860f823e48a549fee2f2ef490ab26ed239a13aed095d74f929200cb18a666bb995aad6ef785fb806cac65ce
   languageName: node
   linkType: hard
 
@@ -18407,8 +18407,8 @@ __metadata:
   linkType: hard
 
 "glob-stream@npm:^8.0.0":
-  version: 8.0.1
-  resolution: "glob-stream@npm:8.0.1"
+  version: 8.0.0
+  resolution: "glob-stream@npm:8.0.0"
   dependencies:
     "@gulpjs/to-absolute-glob": "npm:^4.0.0"
     anymatch: "npm:^3.1.3"
@@ -18417,9 +18417,8 @@ __metadata:
     is-glob: "npm:^4.0.3"
     is-negated-glob: "npm:^1.0.0"
     normalize-path: "npm:^3.0.0"
-    now-and-later: "npm:^3.0.0"
     streamx: "npm:^2.12.5"
-  checksum: 10/a2d09b5e67cf90d85bc90b2f93ec2da1415ac0a5a64c52c9d3bfb781ee72a90b23ec3297bc9ed7be446ab3a86b21ff90523047d811c4ceea67e098479ed226fe
+  checksum: 10/b1d18b6fd49086ff02e031f03e3debac747047d304b349a6dced3b7944c665344ef63496363f483acc7c6afcd6ebfb11af1652824f2c370d83c0f3905d5c67e0
   languageName: node
   linkType: hard
 
@@ -18648,11 +18647,11 @@ __metadata:
     "@grafana/lezer-logql": "npm:0.2.3"
     "@grafana/monaco-logql": "npm:^0.0.7"
     "@grafana/o11y-ds-frontend": "workspace:*"
-    "@grafana/plugin-e2e": "npm:^0.25.0"
+    "@grafana/plugin-e2e": "npm:1.0.1"
     "@grafana/prometheus": "workspace:*"
     "@grafana/runtime": "workspace:*"
     "@grafana/saga-icons": "workspace:*"
-    "@grafana/scenes": "npm:4.1.2"
+    "@grafana/scenes": "npm:^4.5.4"
     "@grafana/schema": "workspace:*"
     "@grafana/sql": "workspace:*"
     "@grafana/tsconfig": "npm:^1.3.0-rc1"
