@@ -21,7 +21,7 @@ import {
 } from '@grafana/scenes';
 import { GRID_CELL_HEIGHT, GRID_CELL_VMARGIN } from 'app/core/constants';
 
-import { getMultiVariableValues } from '../utils/utils';
+import { getDashboardSceneFor, getMultiVariableValues } from '../utils/utils';
 
 import { AddLibraryPanelWidget } from './AddLibraryPanelWidget';
 import { LibraryVizPanel } from './LibraryVizPanel';
@@ -145,7 +145,20 @@ export class DashboardGridItem extends SceneObjectBase<DashboardGridItemState> i
         query: 'A',
       });
 
-    if (!(variable instanceof MultiValueVariable) || this._variableDependency.hasDependencyInLoadingState()) {
+    // If we are in a row we have LocalValueVariable which depends on the parent variable
+    // If the parent no longer exists we return;
+    if (variable instanceof LocalValueVariable) {
+      const parentVariableSet = sceneGraph.lookupVariable(this.state.variableName, getDashboardSceneFor(this));
+      if (!parentVariableSet) {
+        return;
+      }
+    }
+
+    if (this._variableDependency.hasDependencyInLoadingState()) {
+      return;
+    }
+
+    if (!(variable instanceof MultiValueVariable)) {
       return;
     }
 
