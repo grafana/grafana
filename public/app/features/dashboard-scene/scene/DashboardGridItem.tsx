@@ -131,10 +131,7 @@ export class DashboardGridItem extends SceneObjectBase<DashboardGridItemState> i
   }
 
   private _performRepeat() {
-    if (this.state.body instanceof AddLibraryPanelWidget) {
-      return;
-    }
-    if (!this.state.variableName || this._variableDependency.hasDependencyInLoadingState()) {
+    if (this.state.body instanceof AddLibraryPanelWidget || !this.state.variableName) {
       return;
     }
 
@@ -148,8 +145,7 @@ export class DashboardGridItem extends SceneObjectBase<DashboardGridItemState> i
         query: 'A',
       });
 
-    if (!(variable instanceof MultiValueVariable)) {
-      console.error('DashboardGridItem: Variable is not a MultiValueVariable');
+    if (!(variable instanceof MultiValueVariable) || this._variableDependency.hasDependencyInLoadingState()) {
       return;
     }
 
