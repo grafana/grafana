@@ -8,7 +8,6 @@ import {
   FunctionCall,
   FunctionCallBody,
   FunctionIdentifier,
-  GroupingLabels,
   Identifier,
   LabelMatcher,
   LabelMatchers,
@@ -284,7 +283,7 @@ function handleAggregation(expr: string, node: SyntaxNode, context: Context) {
       funcName = `__${funcName}_without`;
     }
 
-    labels.push(...getAllByType(expr, modifier, GroupingLabels));
+    labels.push(...getAllByType(expr, modifier, LabelName));
   }
 
   const body = node.getChild(FunctionCallBody);
