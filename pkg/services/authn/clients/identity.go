@@ -22,5 +22,4 @@ func (i *IdentityClient) Name() string {
 
 func (i *IdentityClient) Authenticate(ctx context.Context, r *authn.Request) (*authn.Identity, error) {
 	return i.identity, nil
-
 }

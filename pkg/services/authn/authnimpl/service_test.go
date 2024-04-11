@@ -416,7 +416,6 @@ func TestService_ResolveIdentity(t *testing.T) {
 				NamespaceFunc: func() string { return authn.NamespaceAPIKey },
 				ResolveIdentityFunc: func(ctx context.Context, orgID int64, namespaceID authn.NamespaceID) (*authn.Identity, error) {
 					return &authn.Identity{}, nil
-
 				},
 			})
 		})

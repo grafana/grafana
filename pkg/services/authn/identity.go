@@ -128,7 +128,6 @@ func (i *Identity) GetLogin() string {
 	return i.Login
 }
 
-// GetOrgID implements identity.Requester.
 func (i *Identity) GetOrgID() int64 {
 	return i.OrgID
 }
