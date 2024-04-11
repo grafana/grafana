@@ -1,25 +1,21 @@
-import { SyntaxNode } from '@lezer/common';
+import {SyntaxNode} from '@lezer/common';
 import {
   AggregateExpr,
   AggregateModifier,
   AggregateOp,
   BinaryExpr,
-  BinModifiers,
-  Expr,
   FunctionCall,
-  FunctionCallArgs,
   FunctionCallBody,
   FunctionIdentifier,
-  GroupingLabel,
-  GroupingLabelList,
   GroupingLabels,
+  Identifier,
   LabelMatcher,
+  LabelMatchers,
   LabelName,
+  MatchingModifierClause,
   MatchOp,
-  MetricIdentifier,
   NumberLiteral,
   On,
-  OnOrIgnoring,
   ParenExpr,
   parser,
   StringLiteral,
@@ -27,7 +23,7 @@ import {
   Without,
 } from '@prometheus-io/lezer-promql';
 
-import { binaryScalarOperatorToOperatorName } from './binaryScalarOperations';
+import {binaryScalarOperatorToOperatorName} from './binaryScalarOperations';
 import {
   ErrorId,
   getAllByType,
@@ -37,8 +33,8 @@ import {
   makeError,
   replaceVariables,
 } from './parsingUtils';
-import { QueryBuilderLabelFilter, QueryBuilderOperation } from './shared/types';
-import { PromVisualQuery, PromVisualQueryBinary } from './types';
+import {QueryBuilderLabelFilter, QueryBuilderOperation} from './shared/types';
+import {PromVisualQuery, PromVisualQueryBinary} from './types';
 
 /**
  * Parses a PromQL query into a visual query model.
@@ -141,7 +137,7 @@ export function handleExpression(expr: string, node: SyntaxNode, context: Contex
   const visQuery = context.query;
 
   switch (node.type.id) {
-    case MetricIdentifier: {
+    case Identifier: {
       // Expectation is that there is only one of those per query.
       visQuery.metric = getString(expr, node);
       break;
@@ -200,7 +196,7 @@ export function handleExpression(expr: string, node: SyntaxNode, context: Contex
 }
 
 function isIntervalVariableError(node: SyntaxNode) {
-  return node.prevSibling?.type.id === Expr && node.prevSibling?.firstChild?.type.id === VectorSelector;
+  return /*node.prevSibling?.type.id === Expr && */ node.prevSibling?.firstChild?.type.id === VectorSelector;
 }
 
 function getLabel(expr: string, node: SyntaxNode): QueryBuilderLabelFilter {
@@ -228,7 +224,7 @@ function handleFunction(expr: string, node: SyntaxNode, context: Context) {
   const funcName = getString(expr, nameNode);
 
   const body = node.getChild(FunctionCallBody);
-  const callArgs = body!.getChild(FunctionCallArgs);
+  // const callArgs = body!.getChild(FunctionCall);
   const params = [];
   let interval = '';
 
@@ -248,13 +244,13 @@ function handleFunction(expr: string, node: SyntaxNode, context: Context) {
   // We unshift operations to keep the more natural order that we want to have in the visual query editor.
   visQuery.operations.unshift(op);
 
-  if (callArgs) {
-    if (getString(expr, callArgs) === interval + ']') {
+  if (body) {
+    if (getString(expr, body) === interval + ']') {
       // This is a special case where we have a function with a single argument and it is the interval.
       // This happens when you start adding operations in query builder and did not set a metric yet.
       return;
     }
-    updateFunctionArgs(expr, callArgs, context, op);
+    updateFunctionArgs(expr, body, context, op);
   }
 }
 
@@ -283,12 +279,12 @@ function handleAggregation(expr: string, node: SyntaxNode, context: Context) {
       funcName = `__${funcName}_without`;
     }
 
-    labels.push(...getAllByType(expr, modifier, GroupingLabel));
+    labels.push(...getAllByType(expr, modifier, GroupingLabels));
   }
 
   const body = node.getChild(FunctionCallBody);
-  const callArgs = body!.getChild(FunctionCallArgs);
-  const callArgsExprChild = callArgs?.getChild(Expr);
+  // const callArgs = body!.getChild(FunctionCallArgs);
+  const callArgsExprChild = body?.getChild('Expr');
   const binaryExpressionWithinAggregationArgs = callArgsExprChild?.getChild(BinaryExpr);
 
   if (binaryExpressionWithinAggregationArgs) {
@@ -301,7 +297,7 @@ function handleAggregation(expr: string, node: SyntaxNode, context: Context) {
 
   const op: QueryBuilderOperation = { id: funcName, params: [] };
   visQuery.operations.unshift(op);
-  updateFunctionArgs(expr, callArgs, context, op);
+  updateFunctionArgs(expr, body, context, op);
   // We add labels after params in the visual query editor.
   op.params.push(...labels);
 }
@@ -324,13 +320,13 @@ function updateFunctionArgs(expr: string, node: SyntaxNode | null, context: Cont
   }
   switch (node.type.id) {
     // In case we have an expression we don't know what kind so we have to look at the child as it can be anything.
-    case Expr:
+      // case Expr:
     // FunctionCallArgs are nested bit weirdly as mentioned so we have to go one deeper in this case.
-    case FunctionCallArgs: {
+    case FunctionCallBody: {
       let child = node.firstChild;
 
       while (child) {
-        const callArgsExprChild = child.getChild(Expr);
+        const callArgsExprChild = child.getChild("Expr");
         const binaryExpressionWithinFunctionArgs = callArgsExprChild?.getChild(BinaryExpr);
 
         if (binaryExpressionWithinFunctionArgs) {
@@ -377,7 +373,7 @@ function handleBinary(expr: string, node: SyntaxNode, context: Context) {
   const visQuery = context.query;
   const left = node.firstChild!;
   const op = getString(expr, left.nextSibling);
-  const binModifier = getBinaryModifier(expr, node.getChild(BinModifiers));
+  const binModifier = getBinaryModifier(expr, node.getChild(MatchingModifierClause));
 
   const right = node.lastChild!;
 
@@ -445,12 +441,12 @@ function getBinaryModifier(
   if (node.getChild('Bool')) {
     return { isBool: true, isMatcher: false };
   } else {
-    const matcher = node.getChild(OnOrIgnoring);
+    const matcher = node.getChild(LabelMatchers);
     if (!matcher) {
       // Not sure what this could be, maybe should be an error.
       return undefined;
     }
-    const labels = getString(expr, matcher.getChild(GroupingLabels)?.getChild(GroupingLabelList));
+    const labels = getString(expr, matcher.getChild(LabelMatchers));
     return {
       isMatcher: true,
       isBool: false,
