@@ -3317,7 +3317,7 @@ __metadata:
     "@types/lodash": "npm:4.17.0"
     "@types/node": "npm:20.12.7"
     "@types/prismjs": "npm:1.26.3"
-    "@types/react": "npm:18.2.74"
+    "@types/react": "npm:18.2.75"
     "@types/testing-library__jest-dom": "npm:5.14.9"
     fast-deep-equal: "npm:^3.1.3"
     i18next: "npm:^23.0.0"
@@ -3354,8 +3354,8 @@ __metadata:
     "@types/jest": "npm:29.5.12"
     "@types/lodash": "npm:4.17.0"
     "@types/prismjs": "npm:1.26.3"
-    "@types/react": "npm:18.2.74"
-    "@types/react-dom": "npm:18.2.23"
+    "@types/react": "npm:18.2.75"
+    "@types/react-dom": "npm:18.2.24"
     "@types/testing-library__jest-dom": "npm:5.14.9"
     css-loader: "npm:6.10.0"
     fast-deep-equal: "npm:^3.1.3"
@@ -3395,7 +3395,7 @@ __metadata:
     "@types/jest": "npm:29.5.12"
     "@types/lodash": "npm:4.17.0"
     "@types/node": "npm:20.12.7"
-    "@types/react": "npm:18.2.74"
+    "@types/react": "npm:18.2.75"
     "@types/testing-library__jest-dom": "npm:5.14.9"
     "@types/uuid": "npm:9.0.8"
     d3-random: "npm:^3.0.1"
@@ -3459,7 +3459,7 @@ __metadata:
     "@testing-library/react": "npm:14.2.2"
     "@testing-library/user-event": "npm:14.5.2"
     "@types/lodash": "npm:4.17.0"
-    "@types/react": "npm:18.2.74"
+    "@types/react": "npm:18.2.75"
     lodash: "npm:4.17.21"
     monaco-editor: "npm:0.34.0"
     react: "npm:18.2.0"
@@ -3493,7 +3493,7 @@ __metadata:
     "@types/lodash": "npm:4.17.0"
     "@types/node": "npm:20.12.7"
     "@types/prismjs": "npm:1.26.3"
-    "@types/react": "npm:18.2.74"
+    "@types/react": "npm:18.2.75"
     "@types/react-test-renderer": "npm:18.0.7"
     "@types/testing-library__jest-dom": "npm:5.14.9"
     debounce-promise: "npm:3.1.2"
@@ -3545,8 +3545,8 @@ __metadata:
     "@types/lodash": "npm:4.17.0"
     "@types/node": "npm:20.12.7"
     "@types/prismjs": "npm:1.26.3"
-    "@types/react": "npm:18.2.74"
-    "@types/react-dom": "npm:18.2.23"
+    "@types/react": "npm:18.2.75"
+    "@types/react-dom": "npm:18.2.24"
     "@types/semver": "npm:7.5.8"
     "@types/uuid": "npm:9.0.8"
     buffer: "npm:6.0.3"
@@ -3590,7 +3590,7 @@ __metadata:
     "@testing-library/react": "npm:14.2.2"
     "@types/jest": "npm:29.5.12"
     "@types/lodash": "npm:4.17.0"
-    "@types/react": "npm:18.2.74"
+    "@types/react": "npm:18.2.75"
     lodash: "npm:4.17.21"
     react: "npm:18.2.0"
     react-use: "npm:17.5.0"
@@ -3637,8 +3637,8 @@ __metadata:
     "@types/marked": "npm:5.0.2"
     "@types/node": "npm:20.12.7"
     "@types/papaparse": "npm:5.3.14"
-    "@types/react": "npm:18.2.74"
-    "@types/react-dom": "npm:18.2.23"
+    "@types/react": "npm:18.2.75"
+    "@types/react-dom": "npm:18.2.24"
     "@types/string-hash": "npm:1.1.3"
     "@types/tinycolor2": "npm:1.4.6"
     d3-interpolate: "npm:3.0.1"
@@ -3868,7 +3868,7 @@ __metadata:
     "@types/d3": "npm:^7"
     "@types/jest": "npm:^29.5.4"
     "@types/lodash": "npm:4.17.0"
-    "@types/react": "npm:18.2.74"
+    "@types/react": "npm:18.2.75"
     "@types/react-virtualized-auto-sizer": "npm:1.0.4"
     "@types/tinycolor2": "npm:1.4.6"
     babel-jest: "npm:29.7.0"
@@ -3949,7 +3949,7 @@ __metadata:
     "@testing-library/react": "npm:14.2.2"
     "@testing-library/user-event": "npm:14.5.2"
     "@types/jest": "npm:^29.5.4"
-    "@types/react": "npm:18.2.74"
+    "@types/react": "npm:18.2.75"
     "@types/systemjs": "npm:6.13.5"
     "@types/testing-library__jest-dom": "npm:5.14.9"
     jest: "npm:^29.6.4"
@@ -4035,9 +4035,9 @@ __metadata:
     "@types/node": "npm:20.12.7"
     "@types/pluralize": "npm:^0.0.33"
     "@types/prismjs": "npm:1.26.3"
-    "@types/react": "npm:18.2.74"
+    "@types/react": "npm:18.2.75"
     "@types/react-beautiful-dnd": "npm:13.1.8"
-    "@types/react-dom": "npm:18.2.23"
+    "@types/react-dom": "npm:18.2.24"
     "@types/react-highlight-words": "npm:0.16.7"
     "@types/react-window": "npm:1.8.8"
     "@types/semver": "npm:7.5.8"
@@ -4128,8 +4128,8 @@ __metadata:
     "@types/history": "npm:4.7.11"
     "@types/jest": "npm:29.5.12"
     "@types/lodash": "npm:4.17.0"
-    "@types/react": "npm:18.2.74"
-    "@types/react-dom": "npm:18.2.23"
+    "@types/react": "npm:18.2.75"
+    "@types/react-dom": "npm:18.2.24"
     "@types/systemjs": "npm:6.13.5"
     esbuild: "npm:0.18.12"
     history: "npm:4.10.1"
@@ -4164,8 +4164,8 @@ __metadata:
     "@svgr/plugin-prettier": "npm:^8.1.0"
     "@svgr/plugin-svgo": "npm:^8.1.0"
     "@types/node": "npm:20.12.7"
-    "@types/react": "npm:18.2.74"
-    "@types/react-dom": "npm:18.2.23"
+    "@types/react": "npm:18.2.75"
+    "@types/react-dom": "npm:18.2.24"
     esbuild: "npm:0.18.12"
     prettier: "npm:3.2.5"
     react: "npm:18.2.0"
@@ -4238,7 +4238,7 @@ __metadata:
     "@testing-library/user-event": "npm:14.5.2"
     "@types/jest": "npm:^29.5.4"
     "@types/lodash": "npm:4.17.0"
-    "@types/react": "npm:18.2.74"
+    "@types/react": "npm:18.2.75"
     "@types/react-virtualized-auto-sizer": "npm:1.0.4"
     "@types/systemjs": "npm:6.13.5"
     "@types/testing-library__jest-dom": "npm:5.14.9"
@@ -4325,11 +4325,11 @@ __metadata:
     "@types/mock-raf": "npm:1.0.6"
     "@types/node": "npm:20.12.7"
     "@types/prismjs": "npm:1.26.3"
-    "@types/react": "npm:18.2.74"
+    "@types/react": "npm:18.2.75"
     "@types/react-beautiful-dnd": "npm:13.1.8"
     "@types/react-calendar": "npm:3.9.0"
     "@types/react-color": "npm:3.0.12"
-    "@types/react-dom": "npm:18.2.23"
+    "@types/react-dom": "npm:18.2.24"
     "@types/react-highlight-words": "npm:0.16.7"
     "@types/react-router-dom": "npm:5.3.3"
     "@types/react-table": "npm:7.7.20"
@@ -10160,12 +10160,12 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@types/react-dom@npm:*, @types/react-dom@npm:18.2.23, @types/react-dom@npm:^18.0.0":
-  version: 18.2.23
-  resolution: "@types/react-dom@npm:18.2.23"
+"@types/react-dom@npm:*, @types/react-dom@npm:18.2.24, @types/react-dom@npm:^18.0.0":
+  version: 18.2.24
+  resolution: "@types/react-dom@npm:18.2.24"
   dependencies:
     "@types/react": "npm:*"
-  checksum: 10/8311c67767b0aafb5cd94176a90f801f0f5f6930731d57caaa04bb0d87fdef6bc6f723a116d9777d2082ec022682acaad7a62d04dc27e330e818cf34f2ef2703
+  checksum: 10/bbd4005f2f65b7606505e9b8759b6e99e222d503602765594ea327893fb7061de8951279baef47a1932f04d94d1865daea05a32f9fcf6f9f1143dbabce5b33de
   languageName: node
   linkType: hard
 
@@ -10284,13 +10284,13 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@types/react@npm:*, @types/react@npm:18.2.74, @types/react@npm:>=16":
-  version: 18.2.74
-  resolution: "@types/react@npm:18.2.74"
+"@types/react@npm:*, @types/react@npm:18.2.75, @types/react@npm:>=16":
+  version: 18.2.75
+  resolution: "@types/react@npm:18.2.75"
   dependencies:
     "@types/prop-types": "npm:*"
     csstype: "npm:^3.0.2"
-  checksum: 10/4057aa7d082d434f8e580e5aebd4007e5dbe7f8e9ae5e506a34a629e382070694a0401bf3f0d38fe8d64f4b38622e5794341e634b9739784deae19b037ae43fa
+  checksum: 10/d609cdc52d3c89871e0b1b0a77ed2d4077c1393709d0ac51a03b04c17704eb337484405aa646b193ac0c54f4fb286e311739b243ce50023ef8ba5bed422a0e8b
   languageName: node
   linkType: hard
 
@@ -18747,9 +18747,9 @@ __metadata:
     "@types/papaparse": "npm:5.3.14"
     "@types/pluralize": "npm:^0.0.33"
     "@types/prismjs": "npm:1.26.3"
-    "@types/react": "npm:18.2.74"
+    "@types/react": "npm:18.2.75"
     "@types/react-beautiful-dnd": "npm:13.1.8"
-    "@types/react-dom": "npm:18.2.23"
+    "@types/react-dom": "npm:18.2.24"
     "@types/react-grid-layout": "npm:1.3.5"
     "@types/react-highlight-words": "npm:0.16.7"
     "@types/react-resizable": "npm:3.0.7"
