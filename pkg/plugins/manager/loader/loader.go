@@ -44,19 +44,34 @@ func (l *Loader) Load(ctx context.Context, src plugins.PluginSource) ([]*plugins
 		return nil, err
 	}
 
-	bootstrappedPlugins, err := l.bootstrap.Bootstrap(ctx, src, discoveredPlugins)
-	if err != nil {
-		return nil, err
+	bootstrappedPlugins := []*plugins.Plugin{}
+	for _, foundBundle := range discoveredPlugins {
+		bootstrappedPlugin, err := l.bootstrap.Bootstrap(ctx, src, foundBundle)
+		if err != nil {
+			// TODO: Add error to registry
+			continue
+		}
+		bootstrappedPlugins = append(bootstrappedPlugins, bootstrappedPlugin...)
 	}
 
-	validatedPlugins, err := l.validation.Validate(ctx, bootstrappedPlugins)
-	if err != nil {
-		return nil, err
+	validatedPlugins := []*plugins.Plugin{}
+	for _, bootstrappedPlugin := range bootstrappedPlugins {
+		err := l.validation.Validate(ctx, bootstrappedPlugin)
+		if err != nil {
+			// TODO: Add error to registry
+			continue
+		}
+		validatedPlugins = append(validatedPlugins, bootstrappedPlugin)
 	}
 
-	initializedPlugins, err := l.initializer.Initialize(ctx, validatedPlugins)
-	if err != nil {
-		return nil, err
+	initializedPlugins := []*plugins.Plugin{}
+	for _, validatedPlugin := range validatedPlugins {
+		initializedPlugin, err := l.initializer.Initialize(ctx, validatedPlugin)
+		if err != nil {
+			// TODO: Add error to registry
+			continue
+		}
+		initializedPlugins = append(initializedPlugins, initializedPlugin)
 	}
 
 	end(initializedPlugins)
