@@ -2,7 +2,6 @@ package rest
 
 import (
 	"context"
-	"fmt"
 
 	"k8s.io/apimachinery/pkg/api/meta"
 	metainternalversion "k8s.io/apimachinery/pkg/apis/meta/internalversion"
@@ -26,7 +25,7 @@ func NewDualWriterMode2(legacy LegacyStorage, storage Storage) *DualWriterMode2 
 func (d *DualWriterMode2) Create(ctx context.Context, obj runtime.Object, createValidation rest.ValidateObjectFunc, options *metav1.CreateOptions) (runtime.Object, error) {
 	legacy, ok := d.Legacy.(rest.Creater)
 	if !ok {
-		return nil, fmt.Errorf("legacy storage rest.Creater is missing")
+		return nil, errDualWriterCreaterMissing
 	}
 
 	created, err := legacy.Create(ctx, obj, createValidation, options)
@@ -66,7 +65,7 @@ func (d *DualWriterMode2) Get(ctx context.Context, name string, options *metav1.
 func (d *DualWriterMode2) List(ctx context.Context, options *metainternalversion.ListOptions) (runtime.Object, error) {
 	legacy, ok := d.Legacy.(rest.Lister)
 	if !ok {
-		return nil, fmt.Errorf("legacy storage rest.Lister is missing")
+		return nil, errDualWriterListerMissing
 	}
 
 	ll, err := legacy.List(ctx, options)

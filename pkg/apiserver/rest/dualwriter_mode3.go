@@ -25,7 +25,7 @@ func NewDualWriterMode3(legacy LegacyStorage, storage Storage) *DualWriterMode3 
 func (d *DualWriterMode3) Create(ctx context.Context, obj runtime.Object, createValidation rest.ValidateObjectFunc, options *metav1.CreateOptions) (runtime.Object, error) {
 	legacy, ok := d.Legacy.(rest.Creater)
 	if !ok {
-		return nil, fmt.Errorf("legacy storage rest.Creater is missing")
+		return nil, errDualWriterCreaterMissing
 	}
 
 	created, err := d.Storage.Create(ctx, obj, createValidation, options)
