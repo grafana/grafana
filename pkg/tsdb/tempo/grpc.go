@@ -83,6 +83,8 @@ func getDialOpts(ctx context.Context, settings backend.DataSourceInstanceSetting
 		return dialOps
 	}
 	if proxyClient.SecureSocksProxyEnabled() {
+		logger.Info("DEBUG LND PDC enabled for GRPC")
+
 		dialer, err := proxyClient.NewSecureSocksProxyContextDialer()
 		if err != nil {
 			// TODO LND handle error
@@ -91,7 +93,7 @@ func getDialOpts(ctx context.Context, settings backend.DataSourceInstanceSetting
 		}
 		dialOps = append(dialOps, grpc.WithContextDialer(func(ctx context.Context, host string) (net.Conn, error) {
 			// TODO LND Should we check context?
-			logger.Debug("DEBUG LND Dialler opts called.")
+			logger.Info("DEBUG LND Dialer opts called.")
 			return dialer.Dial("tcp", host)
 		}))
 	}
