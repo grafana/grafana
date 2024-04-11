@@ -34,39 +34,39 @@ func TestRing(t *testing.T) {
 		q, expected := new(Ring[int]), new(Ring[int])
 
 		enq(t, q, data...)
-		expected.stats.Len = dLen
+		expected.len = dLen
 		expected.stats.Enqueued = dLen
 		expected.buf = data
 		ringEq(t, expected, q)
 
 		deq(t, q, lData...)
 		expected.back = dHalfLen
-		expected.stats.Len = dHalfLen
+		expected.len = dHalfLen
 		expected.stats.Dequeued = dHalfLen
 		expected.buf = append(make([]int, dHalfLen), rData...)
 		ringEq(t, expected, q)
 
 		enq(t, q, data...)
 		expected.back = 0
-		expected.stats.Len = dLen + dHalfLen
+		expected.len = dLen + dHalfLen
 		expected.stats.Enqueued += dLen
 		expected.buf = append(rData, data...)
 		ringEq(t, expected, q)
 
 		deqAll(t, q, append(rData, data...)...)
-		expected.stats.Len = 0
+		expected.len = 0
 		expected.stats.Dequeued += dLen + dHalfLen
 		expected.buf = []int{}
 		ringEq(t, expected, q)
 
 		enq(t, q, data...)
-		expected.stats.Len = dLen
+		expected.len = dLen
 		expected.stats.Enqueued += dLen
 		expected.buf = data
 		ringEq(t, expected, q)
 
 		clearRing(t, q)
-		expected.stats.Len = 0
+		expected.len = 0
 		expected.stats.Dequeued += dLen
 		expected.buf = []int{}
 		ringEq(t, expected, q)
@@ -83,7 +83,7 @@ func TestRing(t *testing.T) {
 		enq(t, q, data...)
 		expected.back = dHalfLen
 		expected.buf = append(rData, lData...)
-		expected.stats.Len = dLen
+		expected.len = dLen
 		expected.stats.Enqueued = 2*dLen + dHalfLen
 		expected.stats.Dropped = dLen + dHalfLen
 		ringEq(t, expected, q)
@@ -102,7 +102,7 @@ func TestRing(t *testing.T) {
 		deq(t, q, lData...)
 		expected.back = 0
 		expected.buf = rData
-		expected.stats.Len -= dHalfLen
+		expected.len -= dHalfLen
 		expected.stats.Dequeued = dHalfLen
 		require.Equal(t, dLen, q.Cap())
 		ringEq(t, expected, q)
@@ -128,7 +128,7 @@ func TestRing(t *testing.T) {
 		// enqueueing one item should allocate Min
 		enq(t, q, 1)
 		expected.buf = []int{1}
-		expected.stats.Len = 1
+		expected.len = 1
 		expected.stats.Enqueued = 1
 		ringEq(t, expected, q)
 		require.Equal(t, dHalfLen, q.Cap())
@@ -136,7 +136,7 @@ func TestRing(t *testing.T) {
 		// clearing should not migrate now
 		clearRing(t, q)
 		expected.buf = []int{}
-		expected.stats.Len = 0
+		expected.len = 0
 		expected.stats.Dequeued = 1
 		ringEq(t, expected, q)
 		require.Equal(t, dHalfLen, q.Cap())
@@ -144,7 +144,7 @@ func TestRing(t *testing.T) {
 		// enqueue some data
 		enq(t, q, data...)
 		expected.buf = data
-		expected.stats.Len = dLen
+		expected.len = dLen
 		expected.stats.Enqueued += dLen
 		ringEq(t, expected, q)
 		require.GreaterOrEqual(t, q.Cap(), dLen)
@@ -152,7 +152,7 @@ func TestRing(t *testing.T) {
 		// now clearing should migrate and move to a slice of Min length
 		clearRing(t, q)
 		expected.buf = []int{}
-		expected.stats.Len = 0
+		expected.len = 0
 		expected.stats.Dequeued += dLen
 		ringEq(t, expected, q)
 		require.Equal(t, dHalfLen, q.Cap())
@@ -174,7 +174,7 @@ func TestRing(t *testing.T) {
 		// before
 		enq(t, q, 1)
 		expected.buf = []int{1}
-		expected.stats.Len = 1
+		expected.len = 1
 		expected.stats.Enqueued += 1
 		ringEq(t, expected, q)
 		require.Equal(t, dLen, q.Cap())
@@ -194,14 +194,14 @@ func TestRing(t *testing.T) {
 		// enqueue a lot and then dequeue all, we should still see Min cap
 		enq(t, q, data...)
 		expected.buf = append(expected.buf, data...)
-		expected.stats.Len += dLen
+		expected.len += dLen
 		expected.stats.Enqueued += dLen
 		ringEq(t, expected, q)
 		require.GreaterOrEqual(t, q.Cap(), dLen+1)
 
 		deqAll(t, q, expected.buf...)
 		expected.buf = []int{}
-		expected.stats.Len = 0
+		expected.len = 0
 		expected.stats.Dequeued += dLen + 1
 		ringEq(t, expected, q)
 		require.Equal(t, dHalfLen, q.Cap())
@@ -215,7 +215,7 @@ func TestRing(t *testing.T) {
 		// single enqueueing should allocate for Min
 		enq(t, q, 1)
 		expected.buf = []int{1}
-		expected.stats.Len = 1
+		expected.len = 1
 		expected.stats.Enqueued = 1
 		ringEq(t, expected, q)
 		require.Equal(t, dHalfLen, q.Cap())
@@ -224,7 +224,7 @@ func TestRing(t *testing.T) {
 		enq(t, q, data...)
 		expected.back = 1
 		expected.buf = append(data[dLen-1:], data[:dLen-1]...)
-		expected.stats.Len = dLen
+		expected.len = dLen
 		expected.stats.Enqueued += dLen
 		expected.stats.Dropped = 1
 		ringEq(t, expected, q)
@@ -234,7 +234,7 @@ func TestRing(t *testing.T) {
 		clearRing(t, q)
 		expected.back = 0
 		expected.buf = expected.buf[:0]
-		expected.stats.Len = 0
+		expected.len = 0
 		expected.stats.Dequeued += dLen
 		ringEq(t, expected, q)
 		require.Equal(t, dHalfLen, q.Cap())
@@ -266,7 +266,7 @@ func TestRing(t *testing.T) {
 		// add dLen items and play with cap
 		enq(t, q, data...)
 		expected.buf = data
-		expected.stats.Len = dLen
+		expected.len = dLen
 		expected.stats.Enqueued = dLen
 		require.Equal(t, 2*dLen, q.Cap())
 		ringEq(t, expected, q)
@@ -282,7 +282,7 @@ func TestRing(t *testing.T) {
 		// remove all items and shrink to zero
 		deqAll(t, q, data...)
 		expected.buf = []int{}
-		expected.stats.Len = 0
+		expected.len = 0
 		expected.stats.Dequeued = dLen
 		require.Equal(t, dLen, q.Cap())
 		ringEq(t, expected, q)
@@ -426,7 +426,7 @@ func ringEq[T any](t *testing.T, expected, got *Ring[T]) {
 	// internal state
 	require.Equal(t, expected.back, got.back, "expected.back == got.back")
 	// only check for used capacity
-	require.Equal(t, expected.buf, got.buf[:min(got.back+got.stats.Len, len(got.buf))],
+	require.Equal(t, expected.buf, got.buf[:min(got.back+got.len, len(got.buf))],
 		"expected.buf == got.buf[:min(got.back+got.len, len(got.s))]")
 }
 

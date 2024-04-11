@@ -7,9 +7,9 @@ package ring
 // garbage collection. Leaving growth and shrinkage of the internal slice apart,
 // which can be directly controlled, all operations are allocation free.
 type Ring[T any] struct {
-	buf   []T
-	stats RingStats
-	back  int
+	buf       []T
+	stats     RingStats
+	back, len int
 
 	// Min sets the minimum capacity that the Ring can have, and takes effect
 	// in the next write operation. The Ring will naturally tend to shrink
@@ -52,7 +52,7 @@ type RingStats struct {
 
 // Len returns the used capacity.
 func (rq *Ring[T]) Len() int {
-	return rq.stats.Len
+	return rq.len
 }
 
 // Cap returns the current total capacity.
@@ -66,6 +66,7 @@ func (rq *Ring[T]) WriteStats(s *RingStats) {
 	if s == nil {
 		return
 	}
+	rq.stats.Len = rq.len
 	rq.stats.Cap = len(rq.buf)
 	*s = rq.stats
 }
@@ -75,19 +76,19 @@ func (rq *Ring[T]) WriteStats(s *RingStats) {
 // Min. Stats are not cleared, but instead Dequeued is increased by the number
 // of removed items.
 func (rq *Ring[T]) Clear() int {
-	cleared := rq.stats.Len
+	cleared := rq.len
 	rq.stats.Dequeued += uint64(cleared)
 	shouldMigrate := clearShouldMigrate(len(rq.buf), rq.Min, rq.Max)
 
-	if rq.stats.Len > 0 && !shouldMigrate {
+	if rq.len > 0 && !shouldMigrate {
 		// if we migrate we don't need to clear items, since moving to the new
 		// slice will just have the old slice garbage collected
-		chunk := min(rq.back+rq.stats.Len, len(rq.buf))
+		chunk := min(rq.back+rq.len, len(rq.buf))
 		clear(rq.buf[rq.back:chunk])
-		clear(rq.buf[:rq.stats.Len-chunk])
+		clear(rq.buf[:rq.len-chunk])
 	}
 	rq.back = 0
-	rq.stats.Len = 0
+	rq.len = 0
 
 	if shouldMigrate {
 		rq.migrate(rq.Min)
@@ -100,7 +101,7 @@ func (rq *Ring[T]) Clear() int {
 // necessary. If a new allocation is needed then it will be capped to Min, given
 // than Min is valid.
 func (rq *Ring[T]) Shrink(n int) {
-	if n < 0 || rq.stats.Len+n >= len(rq.buf) {
+	if n < 0 || rq.len+n >= len(rq.buf) {
 		return
 	}
 	rq.migrate(n)
@@ -109,15 +110,15 @@ func (rq *Ring[T]) Shrink(n int) {
 // Grow makes sure free capacity is at least n, growing if necessary. If a new
 // allocation is needed then it will be capped to Max, given that Max is valid.
 func (rq *Ring[T]) Grow(n int) {
-	if n < 1 || rq.stats.Len+n <= len(rq.buf) {
+	if n < 1 || rq.len+n <= len(rq.buf) {
 		return
 	}
 	rq.migrate(n)
 }
 
 func (rq *Ring[T]) migrate(newFreeCap int) {
-	newCap := rq.stats.Len + newFreeCap
-	newCap = fixAllocSize(rq.stats.Len, rq.Min, rq.Max, newCap)
+	newCap := rq.len + newFreeCap
+	newCap = fixAllocSize(rq.len, rq.Min, rq.Max, newCap)
 	if newCap == len(rq.buf) {
 		return
 	}
@@ -134,13 +135,13 @@ func (rq *Ring[T]) migrate(newFreeCap int) {
 		rq.stats.Shrunk++
 	}
 
-	if rq.stats.Len > 0 {
-		chunk1 := min(rq.back+rq.stats.Len, len(rq.buf))
+	if rq.len > 0 {
+		chunk1 := min(rq.back+rq.len, len(rq.buf))
 		copied := copy(s, rq.buf[rq.back:chunk1])
 
-		if copied < rq.stats.Len {
+		if copied < rq.len {
 			// wrapped the slice
-			chunk2 := rq.stats.Len - copied
+			chunk2 := rq.len - copied
 			copy(s[copied:], rq.buf[:chunk2])
 		}
 	}
@@ -154,36 +155,36 @@ func (rq *Ring[T]) migrate(newFreeCap int) {
 // then the new item will overwrite the oldest enqueued item.
 func (rq *Ring[T]) Enqueue(v T) {
 	// try to add space if we're at capacity or fix min allocation
-	if rq.stats.Len == len(rq.buf) || (minIsValid(rq.Min, rq.Max) && len(rq.buf) < rq.Min) {
-		newFreeCap := rq.stats.Len + 1
+	if rq.len == len(rq.buf) || (minIsValid(rq.Min, rq.Max) && len(rq.buf) < rq.Min) {
+		newFreeCap := rq.len + 1
 		newFreeCap = newFreeCap*3/2 + 1 // classic append: https://go.dev/blog/slices
-		newFreeCap -= rq.stats.Len      // migrate only takes free capacity
+		newFreeCap -= rq.len            // migrate only takes free capacity
 		rq.migrate(newFreeCap)
 
 		// if growing was capped at max, then overwrite the first item to be
 		// dequeued
-		if rq.stats.Len == len(rq.buf) {
+		if rq.len == len(rq.buf) {
 			rq.stats.Dropped++
-			rq.stats.Len--
+			rq.len--
 			if rq.back++; rq.back >= len(rq.buf) {
 				rq.back = 0 // wrap the slice
 			}
 		}
 	}
 
-	writePos := rq.back + rq.stats.Len
+	writePos := rq.back + rq.len
 	if writePos >= len(rq.buf) {
 		writePos -= len(rq.buf)
 	}
 
 	rq.buf[writePos] = v
-	rq.stats.Len++
+	rq.len++
 	rq.stats.Enqueued++
 }
 
 // Peek is like Dequeue, but it doesn't remove the item.
 func (rq *Ring[T]) Peek() (v T) {
-	if rq.stats.Len == 0 {
+	if rq.len == 0 {
 		return
 	}
 
@@ -193,21 +194,21 @@ func (rq *Ring[T]) Peek() (v T) {
 // Dequeue removes the oldest enqueued item and returns it. If the Ring is
 // empty, it returns the zero value.
 func (rq *Ring[T]) Dequeue() (v T) {
-	if rq.stats.Len == 0 {
+	if rq.len == 0 {
 		return
 	}
 
 	// get the value into v, and also zero out the slice item to release
 	// references so they can be gc'd
 	v, rq.buf[rq.back] = rq.buf[rq.back], v
-	rq.stats.Len--
+	rq.len--
 	if rq.back++; rq.back >= len(rq.buf) {
 		rq.back = 0 // wrap the slice
 	}
 
-	if minIsValid(rq.Min, rq.Max) && rq.stats.Len < len(rq.buf)/2+1 {
+	if minIsValid(rq.Min, rq.Max) && rq.len < len(rq.buf)/2+1 {
 		newFreeCap := len(rq.buf)*2/3 + 1 // opposite of growing arithmetic
-		newFreeCap -= rq.stats.Len        // migrate only takes free capacity
+		newFreeCap -= rq.len              // migrate only takes free capacity
 		rq.migrate(newFreeCap)
 	}
 	rq.stats.Dequeued++
