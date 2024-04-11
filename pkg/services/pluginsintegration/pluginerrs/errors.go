@@ -10,60 +10,56 @@ import (
 var _ plugins.ErrorResolver = (*Store)(nil)
 
 type Store struct {
-	signatureErrs SignatureErrorTracker
+	errs ErrorTracker
 }
 
-func ProvideStore(signatureErrs SignatureErrorTracker) *Store {
+func ProvideStore(errs ErrorTracker) *Store {
 	return &Store{
-		signatureErrs: signatureErrs,
+		errs: errs,
 	}
 }
 
 func (s *Store) PluginErrors(ctx context.Context) []*plugins.Error {
-	sigErrs := s.signatureErrs.SignatureErrors(ctx)
-	errs := make([]*plugins.Error, 0, len(sigErrs))
-	for _, err := range sigErrs {
-		errs = append(errs, &plugins.Error{
-			PluginID:  err.PluginID,
-			ErrorCode: err.AsErrorCode(),
-		})
+	errs := s.errs.Errors(ctx)
+	for _, err := range errs {
+		err.ErrorCode = err.AsErrorCode()
 	}
 
 	return errs
 }
 
-type SignatureErrorRegistry struct {
-	errs map[string]*plugins.SignatureError
+type ErrorRegistry struct {
+	errs map[string]*plugins.Error
 	log  log.Logger
 }
 
-type SignatureErrorTracker interface {
-	Record(ctx context.Context, err *plugins.SignatureError)
+type ErrorTracker interface {
+	Record(ctx context.Context, err *plugins.Error)
 	Clear(ctx context.Context, pluginID string)
-	SignatureErrors(ctx context.Context) []*plugins.SignatureError
+	Errors(ctx context.Context) []*plugins.Error
 }
 
-func ProvideSignatureErrorTracker() *SignatureErrorRegistry {
-	return newSignatureErrorRegistry()
+func ProvideErrorTracker() *ErrorRegistry {
+	return newErrorRegistry()
 }
 
-func newSignatureErrorRegistry() *SignatureErrorRegistry {
-	return &SignatureErrorRegistry{
-		errs: make(map[string]*plugins.SignatureError),
+func newErrorRegistry() *ErrorRegistry {
+	return &ErrorRegistry{
+		errs: make(map[string]*plugins.Error),
 		log:  log.New("plugins.errors"),
 	}
 }
 
-func (r *SignatureErrorRegistry) Record(_ context.Context, signatureErr *plugins.SignatureError) {
-	r.errs[signatureErr.PluginID] = signatureErr
+func (r *ErrorRegistry) Record(_ context.Context, err *plugins.Error) {
+	r.errs[err.PluginID] = err
 }
 
-func (r *SignatureErrorRegistry) Clear(_ context.Context, pluginID string) {
+func (r *ErrorRegistry) Clear(_ context.Context, pluginID string) {
 	delete(r.errs, pluginID)
 }
 
-func (r *SignatureErrorRegistry) SignatureErrors(_ context.Context) []*plugins.SignatureError {
-	errs := make([]*plugins.SignatureError, 0, len(r.errs))
+func (r *ErrorRegistry) Errors(_ context.Context) []*plugins.Error {
+	errs := make([]*plugins.Error, 0, len(r.errs))
 	for _, err := range r.errs {
 		errs = append(errs, err)
 	}
