@@ -16,24 +16,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/user"
 )
 
-// NamespacedID builds a namespaced ID from a namespace and an ID.
-func NamespacedID(namespace string, id int64) string {
-	return fmt.Sprintf("%s:%d", namespace, id)
-}
-
-const (
-	NamespaceUser           = identity.NamespaceUser
-	NamespaceAPIKey         = identity.NamespaceAPIKey
-	NamespaceServiceAccount = identity.NamespaceServiceAccount
-	NamespaceAnonymous      = identity.NamespaceAnonymous
-	NamespaceRenderService  = identity.NamespaceRenderService
-	NamespaceAccessPolicy   = identity.NamespaceAccessPolicy
-)
-
-const (
-	AnonymousNamespaceID = NamespaceAnonymous + ":0"
-	GlobalOrgID          = int64(0)
-)
+const GlobalOrgID = int64(0)
 
 var _ identity.Requester = (*Identity)(nil)
 
