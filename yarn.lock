@@ -3705,7 +3705,7 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@grafana/e2e@npm:11.1.0-pre, @grafana/e2e@workspace:packages/grafana-e2e":
+"@grafana/e2e@workspace:packages/grafana-e2e":
   version: 0.0.0-use.local
   resolution: "@grafana/e2e@workspace:packages/grafana-e2e"
   dependencies:
@@ -4003,7 +4003,6 @@ __metadata:
     "@emotion/eslint-plugin": "npm:11.11.0"
     "@floating-ui/react": "npm:0.26.12"
     "@grafana/data": "npm:11.1.0-pre"
-    "@grafana/e2e": "npm:11.1.0-pre"
     "@grafana/e2e-selectors": "npm:11.1.0-pre"
     "@grafana/experimental": "npm:1.7.10"
     "@grafana/faro-web-sdk": "npm:1.5.1"
