@@ -70,7 +70,7 @@ func AdaptiveChan[T any]() (send chan<- T, recv <-chan T, ctrl *AdaptiveChanCont
 
 		// the loop condition is that we either have items to dequeue or that we
 		// have the possibility to receive new items to be queued
-		for stats.Len > 0 || internalSend != nil {
+		for q.Len() > 0 || internalSend != nil {
 			// NOTE: the overhead of writing stats in each iteration is
 			// negligible. I tried a two phase stats writing with a chan
 			// struct{} to get notified that the controller wanted stats, then
@@ -84,7 +84,7 @@ func AdaptiveChan[T any]() (send chan<- T, recv <-chan T, ctrl *AdaptiveChanCont
 			// branch of the select block indefinitely by providing a nil
 			// channel, leaving only the queueing branch available
 			dequeueChan := internalRecv
-			if stats.Len == 0 {
+			if q.Len() == 0 {
 				dequeueChan = nil
 			}
 
