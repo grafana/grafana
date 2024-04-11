@@ -209,6 +209,7 @@ func initTracerProvider(exp tracesdk.SpanExporter, serviceName string, serviceVe
 			semconv.ServiceVersionKey.String(serviceVersion),
 		),
 		resource.WithAttributes(customAttribs...),
+		resource.WithFromEnv(),
 		resource.WithProcessRuntimeDescription(),
 		resource.WithTelemetrySDK(),
 	)
