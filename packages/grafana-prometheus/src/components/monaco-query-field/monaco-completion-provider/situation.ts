@@ -2,6 +2,7 @@ import type { SyntaxNode, Tree } from '@lezer/common';
 import {
   AggregateExpr,
   AggregateModifier,
+  BinaryExpr,
   EqlRegex,
   EqlSingle,
   FunctionCallBody,
@@ -9,11 +10,9 @@ import {
   Identifier,
   LabelMatcher,
   LabelMatchers,
-  LabelMatchList,
   LabelName,
   MatchOp,
   MatrixSelector,
-  MetricIdentifier,
   Neq,
   NeqRegex,
   parser,
@@ -35,9 +34,7 @@ type NodeTypeId =
   | typeof Identifier
   | typeof LabelMatcher
   | typeof LabelMatchers
-  | typeof LabelMatchList
   | typeof LabelName
-  | typeof MetricIdentifier
   | typeof PromQL
   | typeof StringLiteral
   | typeof VectorSelector
@@ -184,6 +181,10 @@ const RESOLVERS: Resolver[] = [
     fun: resolveLabelMatcher,
   },
   {
+    path: [ERROR_NODE_NAME, BinaryExpr, PromQL],
+    fun: resolveTopLevel,
+  },
+  {
     path: [ERROR_NODE_NAME, LabelMatcher],
     fun: resolveLabelMatcher,
   },
@@ -251,7 +252,7 @@ function getLabels(labelMatchersNode: SyntaxNode, text: string): Label[] {
     return [];
   }
 
-  let listNode: SyntaxNode | null = walk(labelMatchersNode, [['firstChild', LabelMatchList]]);
+  let listNode: SyntaxNode | null = walk(labelMatchersNode, [['firstChild', LabelMatcher]]);
 
   const labels: Label[] = [];
 
@@ -268,7 +269,7 @@ function getLabels(labelMatchersNode: SyntaxNode, text: string): Label[] {
     }
 
     // there might be more labels
-    listNode = walk(listNode, [['firstChild', LabelMatchList]]);
+    listNode = walk(listNode, [['firstChild', LabelMatcher]]);
   }
 
   // our labels-list is last-first, so we reverse it
@@ -318,17 +319,12 @@ function resolveLabelsForGrouping(node: SyntaxNode, text: string, pos: number): 
     return null;
   }
 
-  const metricIdNode = getNodeInSubtree(bodyNode, MetricIdentifier);
+  const metricIdNode = getNodeInSubtree(bodyNode, Identifier);
   if (metricIdNode === null) {
     return null;
   }
 
-  const idNode = walk(metricIdNode, [['firstChild', Identifier]]);
-  if (idNode === null) {
-    return null;
-  }
-
-  const metricName = getNodeText(idNode, text);
+  const metricName = getNodeText(metricIdNode, text);
   return {
     type: 'IN_GROUPING',
     metricName,
@@ -358,7 +354,7 @@ function resolveLabelMatcher(node: SyntaxNode, text: string, pos: number): Situa
   // there can be one or many `LabelMatchList` parents, we have
   // to go through all of them
 
-  const firstListNode = walk(parent, [['parent', LabelMatchList]]);
+  const firstListNode = walk(parent, [['parent', LabelMatcher]]);
   if (firstListNode === null) {
     return null;
   }
@@ -378,7 +374,7 @@ function resolveLabelMatcher(node: SyntaxNode, text: string, pos: number): Situa
     const { id } = p.type;
 
     switch (id) {
-      case LabelMatchList:
+      case LabelMatcher:
         //we keep looping
         listNode = p;
         continue;
@@ -400,7 +396,7 @@ function resolveLabelMatcher(node: SyntaxNode, text: string, pos: number): Situa
 
   const metricNameNode = walk(labelMatchersNode, [
     ['parent', VectorSelector],
-    ['firstChild', MetricIdentifier],
+    // ['firstChild', MetricIdentifier],
     ['firstChild', Identifier],
   ]);
 
@@ -459,7 +455,7 @@ function resolveLabelKeysWithEquals(node: SyntaxNode, text: string, pos: number)
 
   // next false positive:
   // `something{a="1"^}`
-  const child = walk(node, [['firstChild', LabelMatchList]]);
+  const child = walk(node, [['firstChild', LabelMatcher]]);
   if (child !== null) {
     // means the label-matching part contains at least one label already.
     //
@@ -476,7 +472,7 @@ function resolveLabelKeysWithEquals(node: SyntaxNode, text: string, pos: number)
 
   const metricNameNode = walk(node, [
     ['parent', VectorSelector],
-    ['firstChild', MetricIdentifier],
+    // ['firstChild', MetricIdentifier],
     ['firstChild', Identifier],
   ]);
 
@@ -533,7 +529,7 @@ export function getSituation(text: string, pos: number): Situation | null {
   }
 
   /*
-      PromQL
+    PromQL
     Expr
     VectorSelector
     LabelMatchers
@@ -545,7 +541,6 @@ export function getSituation(text: string, pos: number): Situation | null {
   // also, if there are errors, the node lezer finds us,
   // might not be the best node.
   // so first we check if there is an error-node at the cursor-position
-  // @ts-ignore
   const maybeErrorNode = getErrorNode(tree, pos);
 
   const cur = maybeErrorNode != null ? maybeErrorNode.cursor() : tree.cursorAt(pos);
@@ -560,7 +555,6 @@ export function getSituation(text: string, pos: number): Situation | null {
     // i do not use a foreach because i want to stop as soon
     // as i find something
     if (isPathMatch(resolver.path, ids)) {
-      // @ts-ignore
       return resolver.fun(currentNode, text, pos);
     }
   }
