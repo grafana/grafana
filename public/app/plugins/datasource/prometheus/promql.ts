@@ -535,6 +535,13 @@ export const FUNCTIONS = [
     documentation: 'The value 1 for any series in the specified interval.',
   },
   {
+    insertText: 'histogram_avg',
+    label: 'histogram_avg',
+    detail: 'histogram_avg(v instant-vector)',
+    documentation:
+      'Returns the arithmetic average of observed values stored in a native histogram. Samples that are not native histograms are ignored and do not show up in the returned vector.',
+  },
+  {
     insertText: 'histogram_count',
     label: 'histogram_count',
     detail: 'histogram_count(v instant-vector)',
