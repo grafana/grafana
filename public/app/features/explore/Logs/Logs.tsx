@@ -53,6 +53,7 @@ import { ExploreItemState } from '../../../types';
 import { LogRows } from '../../logs/components/LogRows';
 import { LogRowContextModal } from '../../logs/components/log-context/LogRowContextModal';
 import { dedupLogRows, filterLogLevels } from '../../logs/logsModel';
+import { ContentOutlineContext } from '../ContentOutline/ContentOutlineContext';
 import { getUrlStateFromPaneState } from '../hooks/useStateSync';
 import { changePanelState } from '../state/explorePane';
 
@@ -152,6 +153,8 @@ class UnthemedLogs extends PureComponent<Props, State> {
   cancelFlippingTimer?: number;
   topLogsRef = createRef<HTMLDivElement>();
   logsVolumeEventBus: EventBus;
+  static contextType = ContentOutlineContext;
+  declare context: React.ContextType<typeof ContentOutlineContext>;
 
   state: State = {
     showLabels: store.getBool(SETTINGS_KEYS.showLabels, false),
@@ -174,6 +177,10 @@ class UnthemedLogs extends PureComponent<Props, State> {
   constructor(props: Props) {
     super(props);
     this.logsVolumeEventBus = props.eventBus.newScopedBus('logsvolume', { onlyLocal: false });
+  }
+
+  componentDidMount(): void {
+    this.registerLogLevelsWithContentOutline();
   }
 
   componentWillUnmount() {
@@ -202,6 +209,29 @@ class UnthemedLogs extends PureComponent<Props, State> {
       );
     }
   }
+
+  registerLogLevelsWithContentOutline = () => {
+    const logLevels = new Set(this.props.logsVolumeData?.data);
+
+    if (logLevels.size > 1 && this.props.logsVolumeEnabled) {
+      logLevels.forEach((level) => {
+        this.context?.register({
+          title: level.name,
+          icon: 'gf-logs',
+          panelId: 'Logs',
+          level: 'child',
+          type: 'filter',
+          onClick: () => {
+            const hiddenLogLevels = this.props.logsVolumeData?.data
+              .filter((l) => l.name !== level.name)
+              .map((l) => l.name) as LogLevel[];
+            this.setState({ hiddenLogLevels });
+          },
+          ref: null,
+        });
+      });
+    }
+  };
 
   updatePanelState = (logsPanelState: Partial<ExploreLogsPanelState>) => {
     const state: ExploreItemState | undefined = getState().explore.panes[this.props.exploreId];
@@ -236,6 +266,10 @@ class UnthemedLogs extends PureComponent<Props, State> {
         visualisationType: visualisationType,
       });
       store.set(visualisationTypeKey, visualisationType);
+    }
+
+    if (prevProps.logsVolumeData?.data !== this.props.logsVolumeData?.data) {
+      this.registerLogLevelsWithContentOutline();
     }
   }
 

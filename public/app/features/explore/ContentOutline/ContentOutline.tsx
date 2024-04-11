@@ -100,6 +100,21 @@ export function ContentOutline({ scroller, panelId }: { scroller: HTMLElement | 
     }
   }, [outlineItems, verticalScroll]);
 
+  const activateFilter = (filterId: string) => {
+    const activeParent = outlineItems.find((item) => {
+      return item.children?.find((child) => child.id === filterId);
+    });
+
+    const activeChild = activeParent?.children?.find((child) => child.id === filterId);
+
+    if (!activeParent) {
+      return;
+    }
+
+    setActiveSectionChildId(activeChild?.id);
+    setActiveSectionId(activeParent?.id);
+  };
+
   return (
     <PanelContainer className={styles.wrapper} id={panelId}>
       <CustomScrollbar>
@@ -126,7 +141,7 @@ export function ContentOutline({ scroller, panelId }: { scroller: HTMLElement | 
                   [styles.sectionHighlighter]: isChildActive(item, activeSectionChildId) && !contentOutlineExpanded,
                 })}
                 indentStyle={cx({
-                  [styles.indentRoot]: outlineItemsShouldIndent && item.children?.length === 0,
+                  [styles.indentRoot]: !isCollapsible(item) && outlineItemsShouldIndent,
                   [styles.sectionHighlighter]:
                     isChildActive(item, activeSectionChildId) && !contentOutlineExpanded && sectionsExpanded[item.id],
                 })}
@@ -167,7 +182,12 @@ export function ContentOutline({ scroller, panelId }: { scroller: HTMLElement | 
                             isChildActive(item, activeSectionChildId) && !contentOutlineExpanded,
                         })}
                         indentStyle={styles.indentChild}
-                        onClick={() => scrollIntoView(child.ref, child.panelId, child.customTopOffset)}
+                        onClick={() => {
+                          child.type === 'filter'
+                            ? activateFilter(child.id)
+                            : scrollIntoView(child.ref, child.panelId, child.customTopOffset);
+                          child.onClick?.();
+                        }}
                         tooltip={child.title}
                         isActive={activeSectionChildId === child.id}
                       />

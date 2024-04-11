@@ -31,7 +31,7 @@ interface ParentlessItems {
   [panelId: string]: ContentOutlineItemContextProps[];
 }
 
-const ContentOutlineContext = createContext<ContentOutlineContextProps | undefined>(undefined);
+export const ContentOutlineContext = createContext<ContentOutlineContextProps | undefined>(undefined);
 
 export function ContentOutlineContextProvider({ children, refreshDependencies }: ContentOutlineContextProviderProps) {
   const [outlineItems, setOutlineItems] = useState<ContentOutlineItemContextProps[]>([]);
@@ -43,12 +43,25 @@ export function ContentOutlineContextProvider({ children, refreshDependencies }:
     setOutlineItems((prevItems) => {
       if (outlineItem.level === 'root') {
         const mergeSingleChild = checkMergeSingleChild(parentlessItemsRef, outlineItem);
+        const parentlessItems = parentlessItemsRef.current[outlineItem.panelId] || [];
+
+        // if item has children in parentlessItemsRef and they are filters,
+        // modify each child to have ref = outlineItem.ref
+        // so that clicking on the filter will also bring the parent item into view
+        if (parentlessItems.length > 0) {
+          parentlessItemsRef.current[outlineItem.panelId].forEach((item) => {
+            if (item.type === 'filter') {
+              item.ref = outlineItem.ref;
+            }
+          });
+        }
+
         const updatedItems = [
           ...prevItems,
           {
             ...outlineItem,
             id,
-            children: parentlessItemsRef.current[outlineItem.panelId] || [],
+            children: parentlessItems,
             mergeSingleChild,
           },
         ];
@@ -57,6 +70,24 @@ export function ContentOutlineContextProvider({ children, refreshDependencies }:
       }
 
       if (outlineItem.level === 'child') {
+        let siblingWithSameTitleFound = false;
+        // items with type filter should not have siblings with the same title
+        // look at all parentless items and check if there is a sibling with the same title
+        Object.keys(parentlessItemsRef.current).forEach((key) => {
+          const siblingWithSameTitle = parentlessItemsRef.current[key].find(
+            (item) =>
+              item.title === outlineItem.title && outlineItem.type === 'filter' && outlineItem.panelId === item.panelId
+          );
+          if (siblingWithSameTitle) {
+            siblingWithSameTitleFound = true;
+            return;
+          }
+        });
+
+        if (siblingWithSameTitleFound) {
+          return [...prevItems];
+        }
+
         const parentIndex = prevItems.findIndex(
           (item) => item.panelId === outlineItem.panelId && item.level === 'root'
         );
@@ -83,7 +114,24 @@ export function ContentOutlineContextProvider({ children, refreshDependencies }:
 
         const newItems = [...prevItems];
         const parent = { ...newItems[parentIndex] };
-        const childrenUpdated = [...(parent.children || []), { ...outlineItem, id }];
+
+        // look at all registered items inside items parent and check if there is
+        // a filter sibling with the same title
+        const siblingWithSameTitle = parent.children?.find(
+          (item) =>
+            item.title === outlineItem.title && outlineItem.type === 'filter' && outlineItem.panelId === item.panelId
+        );
+
+        if (siblingWithSameTitle) {
+          return [...prevItems];
+        }
+
+        let ref = outlineItem.ref;
+        if (outlineItem.type === 'filter') {
+          ref = parent.ref;
+        }
+
+        const childrenUpdated = [...(parent.children || []), { ...outlineItem, id, ref }];
         childrenUpdated.sort(sortElementsByDocumentPosition);
         const mergeSingleChild = checkMergeSingleChild(parentlessItemsRef, parent);
 
@@ -103,16 +151,23 @@ export function ContentOutlineContextProvider({ children, refreshDependencies }:
   }, []);
 
   const unregister = useCallback((id: string) => {
-    setOutlineItems((prevItems) =>
-      prevItems
+    setOutlineItems((prevItems) => {
+      const isParentItem = prevItems.find((item) => item.id === id && item.level === 'root');
+
+      if (isParentItem) {
+        // if this is a parent item, remove all children from parentlessItemsRef
+        parentlessItemsRef.current[isParentItem.panelId] = [];
+      }
+
+      return prevItems
         .filter((item) => item.id !== id)
         .map((item) => {
           if (item.children) {
             item.children = item.children.filter((child) => child.id !== id);
           }
           return item;
-        })
-    );
+        });
+    });
   }, []);
 
   const updateOutlineItems = useCallback((newItems: ContentOutlineItemContextProps[]) => {
