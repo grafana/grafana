@@ -1,7 +1,7 @@
 import React from 'react';
 import { useFormContext } from 'react-hook-form';
 
-import { Badge, Button, Stack, Text } from '@grafana/ui';
+import { Button, Stack, Text } from '@grafana/ui';
 
 import { RuleFormValues } from '../../../types/rule-form';
 import { NeedHelpInfo } from '../NeedHelpInfo';
@@ -38,8 +38,8 @@ export function LabelsFieldInForm({ onEditClick }: LabelsFieldInFormProps) {
             Edit labels
           </Button>
         ) : (
-          <Stack direction="row" gap={1}>
-            <Badge color="orange" text=" No labels selected " />
+          <Stack direction="row" gap={2} alignItems="center">
+            <Text color="warning">No labels selected</Text>
             <Button icon="plus" type="button" variant="secondary" onClick={onEditClick}>
               Add labels
             </Button>
