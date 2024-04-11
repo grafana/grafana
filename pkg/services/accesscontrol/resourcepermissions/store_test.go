@@ -10,6 +10,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/infra/db"
+	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
@@ -559,7 +560,8 @@ func seedResourcePermissions(
 
 func setupTestEnv(t testing.TB) (*store, db.DB, *setting.Cfg) {
 	sql := db.InitTestDB(t)
-	newinmemory := NewInMemoryActionSets()
+	log := log.New("test")
+	newinmemory := NewInMemoryActionSets(log)
 	return NewStore(sql, featuremgmt.WithFeatures(), newinmemory), sql, sql.Cfg
 }
 
@@ -740,30 +742,33 @@ func TestIntegrationStore_DeleteResourcePermissions(t *testing.T) {
 }
 
 // TODO: Fix this test
-func TestStore_ResourcePermissionsStoringActionSets(t *testing.T) {
+func TestStore_ResourcePermissionsActionSets(t *testing.T) {
 	if testing.Short() {
 		t.Skip("skipping integration test")
 	}
 
-	type deleteResourcePermissionsTest struct {
-		desc       string
-		resource   string
-		scope      string
-		resourceID string
-		actionname string
-		actions    []string
+	type actionSetTest struct {
+		desc          string
+		orgID         int64
+		actionSet     ActionSet
+		deleteCommand DeleteResourcePermissionsCmd
 	}
 
-	tests := []deleteResourcePermissionsTest{
+	tests := []actionSetTest{
 		{
-			desc: "should delete all permissions for resource id in org 1",
-			// orgID:             1,
-			// resourceAttribute: "uid",
-			// command: DeleteResourcePermissionsCmd{
-			// 	Resource:          "datasources",
-			// 	ResourceID:        "1",
-			// 	ResourceAttribute: "uid",
-			// },
+			desc:  "should be able to store actionset and delete inmemory from SetResourcePermissions",
+			orgID: 1,
+			actionSet: ActionSet{
+				Scope:      "uid:1",
+				Resource:   "datasources",
+				Actions:    []string{"datasources:query", "datasources:write"},
+				ResourceID: "2",
+			},
+			deleteCommand: DeleteResourcePermissionsCmd{
+				Resource:          "datasources",
+				ResourceID:        "1",
+				ResourceAttribute: "uid",
+			},
 		},
 	}
 
@@ -784,37 +789,18 @@ func TestStore_ResourcePermissionsStoringActionSets(t *testing.T) {
 			}, ResourceHooks{})
 			require.NoError(t, err)
 
-			_, err = store.SetResourcePermissions(context.Background(), 1, []SetResourcePermissionsCommand{
-				{
-					User: accesscontrol.User{ID: 1},
-					SetResourcePermissionCommand: SetResourcePermissionCommand{
-						Actions:           []string{"datasources:query", "datasources:write"},
-						Resource:          "datasources",
-						ResourceID:        "2",
-						ResourceAttribute: "uid",
-					},
-				},
-			}, ResourceHooks{})
+			// FIXME: check that action exists in memory
+			actionname := fmt.Sprintf("%s:%s:%s:%s", tt.actionSet.Resource, tt.actionSet.Permission, tt.actionSet.Scope, tt.actionSet.ResourceID)
+			_, err = store.inmemoryActionSets.GetActionSet(actionname)
 			require.NoError(t, err)
 
-			_, err = store.SetResourcePermissions(context.Background(), 2, []SetResourcePermissionsCommand{
-				{
-					User: accesscontrol.User{ID: 1},
-					SetResourcePermissionCommand: SetResourcePermissionCommand{
-						Actions:           []string{"datasources:query", "datasources:write"},
-						Resource:          "datasources",
-						ResourceID:        "1",
-						ResourceAttribute: "uid",
-					},
-				},
-			}, ResourceHooks{})
+			err = store.DeleteResourcePermissions(context.Background(), tt.orgID, &tt.deleteCommand)
 			require.NoError(t, err)
 
-			err = store.DeleteResourcePermissions(context.Background(), tt.orgID, &tt.command)
-			require.NoError(t, err)
-
-			// FIXME: check that action exists
-			store.inmemoryActionSets.GetActionSet(tt.actionname)
+			// FIXME: check that action exists in memory
+			// SHOULD error out because it was deleted
+			_, err = store.inmemoryActionSets.GetActionSet(actionname)
+			require.Error(t, err)
 		})
 	}
 }

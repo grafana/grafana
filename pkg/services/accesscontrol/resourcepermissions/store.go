@@ -4,10 +4,12 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"slices"
 	"strings"
 	"time"
 
 	"github.com/grafana/grafana/pkg/infra/db"
+	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/org"
@@ -268,7 +270,7 @@ func (s *store) setResourcePermission(
 		return nil, err
 	}
 
-	if err := s.createPermissions(sess, role.ID, cmd.Resource, cmd.ResourceID, cmd.ResourceAttribute, missing); err != nil {
+	if err := s.createPermissions(sess, role.ID, cmd.Resource, cmd.ResourceID, cmd.ResourceAttribute, missing, roleName); err != nil {
 		return nil, err
 	}
 
@@ -659,11 +661,11 @@ func (s *store) getPermissions(sess *db.Session, resource, resourceID, resourceA
 	return result, nil
 }
 
-func (s *store) createPermissions(sess *db.Session, roleID int64, resource, resourceID, resourceAttribute string, actions map[string]struct{}) error {
+func (s *store) createPermissions(sess *db.Session, roleID int64, resource, resourceID, resourceAttribute string, actions map[string]struct{}, roleName string) error {
 	if len(actions) == 0 {
 		return nil
 	}
-	permissions := make([]accesscontrol.Permission, 0, len(actions))
+	permissions := make([]accesscontrol.Permission, 0, len(actions)+1)
 	for action := range actions {
 		p := managedPermission(action, resource, resourceID, resourceAttribute)
 		p.RoleID = roleID
@@ -693,27 +695,42 @@ func (s *store) createPermissions(sess *db.Session, roleID int64, resource, reso
 			},
 		},
 	*/
-	// from actions, scope to ActionSet and a permission
-	// convert actions to []string of actions
-	a := make([]string, 0, len(actions))
-	for action := range actions {
-		a = append(a, action)
+	if strings.Contains(roleName, "managed:builtins:") {
+		scope := ""
+		actionSlice := make([]string, len(actions))
+		for action := range actions {
+			scope = accesscontrol.Scope(resource, resourceAttribute, resourceID)
+			actionSlice = append(actionSlice, action)
+		}
+		// extract the permission from the role name
+		// ex: roleName managed:builtins:admin:permission
+		// ex: permissionscoped admin:permission
+		permissionscoped := roleName[len("managed:builtins:"):]
+		managedPermissions := strings.Split(permissionscoped, ":")
+		if len(managedPermissions) != 2 {
+			// TODO: need to log here
+			fmt.Printf("permissions not in correct format %+v\n", managedPermissions)
+			// FIXME: return an error here?
+			// return errors.New("permission not in correct format")
+		}
+		// this might really error out
+		permission := managedPermissions[0]
+		actionSet, err := s.inmemoryActionSets.CreateActionSet(resource, permission, scope, actionSlice)
+		if err != nil {
+			// TODO: need to log an error here
+			fmt.Printf("err from creating action set %+v\n", err)
+			// FIXME: should we return an error here? :thinking:
+			// return err
+		}
+		p := managedPermission(actionSet.Action, resource, resourceID, resourceAttribute)
+		p.RoleID = roleID
+		p.Created = time.Now()
+		p.Updated = time.Now()
+		p.Kind, p.Attribute, p.Identifier = p.SplitScope()
+		permissions = append(permissions, p)
 	}
-	actionSet, err := s.inmemoryActionSets.CreateActionSet(resource, resourceID, resourceAttribute, "*", a)
-	if err != nil {
-		// TODO: need to log an error here
-		// log.Errorf("failed to create action set: %v", err)
-	}
-	permissions = append(permissions, accesscontrol.Permission{
-		Action:     actionSet.Action,
-		Scope:      accesscontrol.Scope(resource, resourceAttribute, resourceID),
-		Attribute:  "*",
-		Identifier: "*",
-		RoleID:     roleID,
-		Created:    time.Now(),
-		Updated:    time.Now(),
-	})
 
+	// insert the permissions
 	if _, err := sess.InsertMulti(&permissions); err != nil {
 		return err
 	}
@@ -776,15 +793,24 @@ type ActionSet struct {
 	Actions    []string `json:"actions"`
 }
 
+type ActionSetIndexer interface {
+	// ReverseLookUp finds the actionsets that contain the given action.
+	// For example, if the action is "datasources:read",
+	// the function will return all action sets that contain "datasources:view", "datasources:edit", "datasources:admin".
+	ReverseLookUp(action string) []ActionSet
+}
+
 // InMemoryActionSets is an in-memory implementation of the ActionSetService.
 type InMemoryActionSets struct {
+	log        log.Logger
 	actionSets map[string]*ActionSet
 }
 
 // NewInMemoryActionSets returns a new instance of InMemoryActionSetService.
-func NewInMemoryActionSets() *InMemoryActionSets {
+func NewInMemoryActionSets(log log.Logger) *InMemoryActionSets {
 	return &InMemoryActionSets{
 		actionSets: make(map[string]*ActionSet),
+		log:        log,
 	}
 }
 
@@ -797,29 +823,34 @@ func (s *InMemoryActionSets) GetActionSet(action string) (*ActionSet, error) {
 	return actionSet, nil
 }
 
-// AddActionSet creates a new action set.
-func (s *InMemoryActionSets) AddActionSet(actionSet *ActionSet) error {
-	s.actionSets[actionSet.Action] = actionSet
-	return nil
-}
-
 // DeleteActionSet deletes the action set for the given action.
-func (s *InMemoryActionSets) DeleteActionSet(action string) error {
+func (s *InMemoryActionSets) DeleteActionSet(action string) {
 	delete(s.actionSets, action)
-	return nil
 }
 
 // ActionSet is a helper function to create an action set from a list of actions.
 // ToActionSetName returns the name of the action set for the given action.
 // an example of an action set name is "datasources:query:uid:1"
 // an example of an action set name is "folders:admin:*:*"
-func (s *InMemoryActionSets) CreateActionSet(resource, permission, scope, resourceID string, actions []string) (*ActionSet, error) {
+// For the permission
+// we only allow for permissions to be set as admin, edit, view
+func (s *InMemoryActionSets) CreateActionSet(resource, permission, scope string, actions []string) (*ActionSet, error) {
+	s.log.Debug("creating action set")
+	// lower cased
+	resource = strings.ToLower(resource)
+	permission = strings.ToLower(permission)
+	scope = strings.ToLower(scope)
+
+	allowedPermissions := []string{"admin", "edit", "editor", "view", "query", "member"}
+	if !slices.Contains(allowedPermissions, permission) {
+		return nil, fmt.Errorf("%s not allowed permission", permission)
+	}
 	actionSet := &ActionSet{
-		Action:     fmt.Sprintf("%s:%s:%s:%s", resource, permission, scope, resourceID),
+		// dashboards:admin
+		Action:     fmt.Sprintf("%s:%s", resource, permission),
 		Resource:   resource,
 		Permission: permission,
 		Scope:      scope,
-		ResourceID: resourceID,
 		Actions:    actions,
 	}
 	// check if already present in memory
@@ -828,5 +859,7 @@ func (s *InMemoryActionSets) CreateActionSet(resource, permission, scope, resour
 		return nil, errors.New("action already in action set")
 	}
 	s.actionSets[actionSet.Action] = actionSet
+
+	s.log.Debug("created action set actionname", actionSet.Action, "\n")
 	return actionSet, nil
 }

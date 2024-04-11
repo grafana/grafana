@@ -8,6 +8,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/infra/db"
+	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/auth/identity"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
@@ -78,15 +79,17 @@ func New(cfg *setting.Cfg,
 		actions = append(actions, action)
 	}
 
+	log := log.New("accesscontrol.resourcepermissions")
+
 	// ACTION SETS
 	// create action sets from the permissionsToActions
-	inmemoryActionSets := NewInMemoryActionSets()
+	inmemoryActionSets := NewInMemoryActionSets(log)
 	// to create an action set we need to know the resource
 	resource := ""
 	for permission, actions := range options.PermissionsToActions {
 		// assuming we get the ordering of this right,
-		// we might want to whitelist the resource name
-		// as a starter
+		// we might want to whitelist the resource name as a starter
+		// such as "dashboards", "folders", "teams"
 		for _, a := range actions {
 			if resource == "" && strings.Contains(a, ":") {
 				resource = strings.Split(a, ":")[0]
@@ -94,9 +97,11 @@ func New(cfg *setting.Cfg,
 				break
 			}
 		}
-		// FIXME: what would the ToActionSetName take in and what would it return
-		actionSet := inmemoryActionSets.CreateActionSet(resource, permission, "*", "*", actions)
-		inmemoryActionSets.AddActionSet(actionSet)
+		// FIXME: do we want to add the scope as well? or just leave that out for now
+		_, err := inmemoryActionSets.CreateActionSet(resource, permission, "*", actions)
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	s := &Service{
@@ -104,6 +109,7 @@ func New(cfg *setting.Cfg,
 		store:       NewStore(sqlStore, features, inmemoryActionSets),
 		options:     options,
 		license:     license,
+		log:         log,
 		permissions: permissions,
 		actions:     actions,
 		sqlStore:    sqlStore,
@@ -130,6 +136,7 @@ type Service struct {
 	store   Store
 	api     *api
 	license licensing.Licensing
+	log     log.Logger
 
 	options     Options
 	permissions []string
