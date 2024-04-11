@@ -3,7 +3,7 @@ import { Registry, RegistryItem } from '@grafana/data';
 import { FieldExtractorID } from './types';
 
 export interface FieldExtractor extends RegistryItem {
-  parse: (v: string, exp?: string) => Record<string, any> | undefined;
+  parse: (v: string, exp?: string, source?: string, transformationIndex?: number) => Record<string, any> | undefined;
 }
 
 const extJSON: FieldExtractor = {
@@ -114,16 +114,15 @@ const extRegex: FieldExtractor = {
   id: FieldExtractorID.Regex,
   name: 'Regex',
   description: 'Parse with Regex',
-  parse: (v: string, exp?: string) => {
+  parse: (v: string, exp?: string, source?: string, transformationIndex?: number) => {
     if (exp) {
       try {
         const re = new RegExp(exp, 'gi');
-        const matchAllOrg = v.matchAll(re);
-        const matches = Array.from(matchAllOrg);
+        const matches = Array.from(v.matchAll(re));
 
         // move group matches to an easier to deal with structure
         const matchGroups: { [key: string]: string[] } = {};
-        for (const match of matches) {
+        matches.forEach((match, matchIdx) => {
           const group = match.groups;
           if (group) {
             const groupKeys = Object.keys(group);
@@ -136,8 +135,11 @@ const extRegex: FieldExtractor = {
                 }
               }
             });
+          } else {
+            const matchIndex = `${source}-${transformationIndex}-${matchIdx}`;
+            matchGroups[matchIndex] = [match[0]];
           }
-        }
+        });
 
         const fields: { [key: string]: string } = {};
         Object.keys(matchGroups).forEach((key) => {

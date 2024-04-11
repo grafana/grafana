@@ -70,6 +70,7 @@ export const TransformationEditor = ({
   const editor = useMemo(
     () =>
       React.createElement(uiConfig.editor, {
+        index,
         options: { ...uiConfig.transformation.defaultOptions, ...config.transformation.options },
         input,
         onChange: (opts) => {

@@ -30,6 +30,7 @@ const fieldNamePickerSettings: StandardEditorsRegistryItem<string, FieldNamePick
 };
 
 export const extractFieldsTransformerEditor = ({
+  index,
   input,
   options,
   onChange,
@@ -38,6 +39,7 @@ export const extractFieldsTransformerEditor = ({
     onChange({
       ...options,
       source,
+      transformationIndex: index,
     });
   };
 

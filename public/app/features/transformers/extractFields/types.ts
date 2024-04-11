@@ -10,6 +10,7 @@ export interface JSONPath {
   alias?: string;
 }
 export interface ExtractFieldsOptions {
+  transformationIndex: number;
   source?: string;
   jsonPaths?: JSONPath[];
   expression?: string;

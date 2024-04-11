@@ -4,6 +4,7 @@ import { DataFrame, DataTransformerInfo } from '../types';
 import { Registry, RegistryItem } from '../utils/Registry';
 
 export interface TransformerUIProps<T> {
+  index: number;
   /**
    * Transformer configuration, persisted on panel's model
    */

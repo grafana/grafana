@@ -59,7 +59,7 @@ export function addExtractedFields(frame: DataFrame, options: ExtractFieldsOptio
     if (isString(obj)) {
       try {
         if (options.format === FieldExtractorID.Regex) {
-          obj = ext.parse(obj, options.expression);
+          obj = ext.parse(obj, options.expression, options.source, options.transformationIndex);
         } else {
           obj = ext.parse(obj);
         }
