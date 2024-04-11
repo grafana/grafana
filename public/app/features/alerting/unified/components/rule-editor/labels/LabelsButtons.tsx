@@ -28,8 +28,8 @@ interface AddButtonProps {
 }
 export function AddButton({ append, className }: AddButtonProps) {
   return (
-    <Button className={className} icon="plus-circle" type="button" variant="secondary" onClick={append}>
-      Add label
+    <Button className={className} icon="plus" type="button" variant="secondary" onClick={append}>
+      Add more
     </Button>
   );
 }

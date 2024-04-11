@@ -116,10 +116,11 @@ export function LabelsSubForm({ dataSourceName, onClose }: LabelsSubFormProps) {
   return (
     <FormProvider {...formAPI}>
       <form onSubmit={formAPI.handleSubmit(onSave)}>
-        <Stack direction="column" gap={1} alignItems="center">
-          <LabelsInRule labels={formAPI.watch('labelsInSubform')} />
-          <Space v={0.5} />
+        <Stack direction="column" gap={1} alignItems="center" justifyContent="center">
           <LabelsWithSuggestions dataSourceName={dataSourceName} />
+          <Space v={1} />
+          <LabelsInRule labels={formAPI.watch('labelsInSubform')} />
+          <Space v={1} />
           <div className={styles.confirmButton}>
             <Button type="button" variant="secondary" onClick={onClose}>
               Cancel
@@ -445,6 +446,7 @@ const getStyles = (theme: GrafanaTheme2) => {
     }),
     deleteLabelButton: css({
       marginLeft: theme.spacing(0.5),
+      marginRight: theme.spacing(0.5),
       alignSelf: 'flex-start',
     }),
     addLabelButton: css({

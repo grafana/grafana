@@ -3,7 +3,7 @@ import React, { ReactNode } from 'react';
 import tinycolor2 from 'tinycolor2';
 
 import { GrafanaTheme2, IconName } from '@grafana/data';
-import { Icon, useStyles2, Stack } from '@grafana/ui';
+import { Icon, Stack, Tooltip, useStyles2 } from '@grafana/ui';
 
 export type LabelSize = 'md' | 'sm';
 
@@ -25,10 +25,15 @@ const Label = ({ label, value, icon, color, size = 'md' }: Props) => {
       <Stack direction="row" gap={0} alignItems="stretch">
         <div className={styles.label}>
           <Stack direction="row" gap={0.5} alignItems="center">
-            {icon && <Icon name={icon} />} {label ?? ''}
+            {icon && <Icon name={icon} />}
+            <Tooltip content={label?.toString() ?? ''} placement="top">
+              <span className={styles.labelText}>{label ?? ''}</span>
+            </Tooltip>
           </Stack>
         </div>
-        <div className={styles.value}>{value}</div>
+        <Tooltip content={value?.toString() ?? ''} placement="top">
+          <div className={styles.value}>{value}</div>
+        </Tooltip>
       </Stack>
     </div>
   );
@@ -59,6 +64,12 @@ const getStyles = (theme: GrafanaTheme2, color?: string, size?: string) => {
 
       border-radius: ${theme.shape.borderRadius(2)};
     `,
+    labelText: css({
+      whiteSpace: 'nowrap',
+      overflow: 'hidden',
+      textOverflow: 'ellipsis',
+      maxWidth: '300px',
+    }),
     label: css`
       display: flex;
       align-items: center;
@@ -80,6 +91,11 @@ const getStyles = (theme: GrafanaTheme2, color?: string, size?: string) => {
       border-left: none;
       border-top-right-radius: ${theme.shape.borderRadius(2)};
       border-bottom-right-radius: ${theme.shape.borderRadius(2)};
+
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      max-width: 300px;
     `,
   };
 };
