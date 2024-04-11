@@ -6,6 +6,7 @@ import { Dropdown, LinkButton, Menu } from '@grafana/ui';
 import appEvents from 'app/core/app_events';
 import MenuItemPauseRule from 'app/features/alerting/unified/components/MenuItemPauseRule';
 import { CombinedRule, RuleIdentifier } from 'app/types/unified-alerting';
+import { PromRuleType } from 'app/types/unified-alerting-dto';
 
 import { AlertRuleAction, useAlertRuleAbility } from '../../hooks/useAbilities';
 import { createShareLink, isLocalDevEnv, isOpenSourceEdition, makeRuleBasedSilenceLink } from '../../utils/misc';
@@ -132,17 +133,24 @@ const EditButton = ({ identifier }: PropsWithIdentifier) => {
 
 function useRulePluginLinkExtension(rule: CombinedRule) {
   const ruleOrigin = getRuleOrigin(rule);
-
-  if (!ruleOrigin) {
+  const ruleType = rule.promRule?.type;
+  if (!ruleOrigin || !ruleType) {
     return [];
   }
 
   const { pluginId } = ruleOrigin;
-  const pluginLinkExtension = getRuleActionPluginLinkExtension({ pluginId, rule });
-  return pluginLinkExtension;
+
+  switch (ruleType) {
+    case PromRuleType.Alerting:
+      return getAlertingRuleActionPluginLinkExtension({ pluginId, rule });
+    case PromRuleType.Recording:
+      return getRecordingRulePluginLinkExtension({ pluginId, rule });
+    default:
+      return [];
+  }
 }
 
-function getRuleActionPluginLinkExtension({ pluginId, rule }: { pluginId: string; rule: CombinedRule }) {
+function getAlertingRuleActionPluginLinkExtension({ pluginId, rule }: { pluginId: string; rule: CombinedRule }) {
   const context: AlertingRuleExtensionContext = {
     name: rule.name,
     namespace: rule.namespace.name,
@@ -153,7 +161,25 @@ function getRuleActionPluginLinkExtension({ pluginId, rule }: { pluginId: string
   };
 
   const { extensions } = getPluginLinkExtensions({
-    extensionPointId: PluginExtensionPoints.AlertRuleAction,
+    extensionPointId: PluginExtensionPoints.AlertingRuleAction,
+    context,
+    limitPerPlugin: 3,
+  });
+
+  return extensions.filter((extension) => extension.pluginId === pluginId);
+}
+
+function getRecordingRulePluginLinkExtension({ pluginId, rule }: { pluginId: string; rule: CombinedRule }) {
+  const context: RecordingRuleExtensionContext = {
+    name: rule.name,
+    namespace: rule.namespace.name,
+    group: rule.group.name,
+    expression: rule.query,
+    labels: rule.labels,
+  };
+
+  const { extensions } = getPluginLinkExtensions({
+    extensionPointId: PluginExtensionPoints.RecordingRuleAction,
     context,
     limitPerPlugin: 3,
   });
