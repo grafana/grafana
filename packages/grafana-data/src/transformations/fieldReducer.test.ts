@@ -252,17 +252,19 @@ describe('Stats Calculators', () => {
     expect(reduce(someNulls, ReducerID.count)).toEqual(4);
   });
 
-  for (let i = 1; i < 100; i++) {
-    it(`can reduce the ${i}th percentile`, () => {
+  it('can reduce to percentiles', () => {
+    // This `Array.from` will build an array of elements from 1 to 99
+    const percentiles = [...Array.from({ length: 99 }, (_, i) => i + 1)];
+    percentiles.forEach((percentile) => {
       const preciseStats = reduceField({
         field: createField(
           'x',
           Array.from({ length: 101 }, (_, index) => index)
         ),
-        reducers: [(ReducerID as Record<string, ReducerID>)[`p${i}`]],
+        reducers: [(ReducerID as Record<string, ReducerID>)[`p${percentile}`]],
       });
 
-      expect(preciseStats[`p${i}`]).toEqual(i);
+      expect(preciseStats[`p${percentile}`]).toEqual(percentile);
     });
-  }
+  });
 });

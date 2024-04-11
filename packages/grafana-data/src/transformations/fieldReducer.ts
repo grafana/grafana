@@ -402,27 +402,34 @@ export const fieldReducers = new Registry<FieldReducerInfo>(() => [
     }),
     preservesUnits: false,
   },
+  ...buildPercentileReducers(),
 ]);
 
-for (let i = 1; i < 100; i++) {
-  const percentile = i / 100;
-  const id = `p${i}` as ReducerID;
-  const nth = (n: number) =>
-    n > 3 && n < 21 ? 'th' : n % 10 === 1 ? 'st' : n % 10 === 2 ? 'nd' : n % 10 === 3 ? 'rd' : 'th';
-  const name = `${i}${nth(i)} percentile`;
-  const description = `${i}${nth(i)} percentile value`;
+// This `Array.from` will build an array of elements from 1 to 99
+const buildPercentileReducers = (percentiles = [...Array.from({ length: 99 }, (_, i) => i + 1)]) => {
+  const percentileReducers: FieldReducerInfo[] = [];
 
-  fieldReducers.register({
-    id: id,
-    name: name,
-    description: description,
-    standard: false,
-    reduce: (field: Field, ignoreNulls: boolean, nullAsZero: boolean): FieldCalcs => {
-      return { [id]: calculatePercentile(field, percentile, ignoreNulls, nullAsZero) };
-    },
-    preservesUnits: true,
+  percentiles.forEach((p) => {
+    const percentile = p / 100;
+    const id = `p${p}` as ReducerID;
+    const nth = (n: number) =>
+      n > 3 && n < 21 ? 'th' : n % 10 === 1 ? 'st' : n % 10 === 2 ? 'nd' : n % 10 === 3 ? 'rd' : 'th';
+    const name = `${p}pth`;
+    const description = `${p}${nth(p)} percentile value`;
+
+    percentileReducers.push({
+      id: id,
+      name: name,
+      description: description,
+      standard: false,
+      reduce: (field: Field, ignoreNulls: boolean, nullAsZero: boolean): FieldCalcs => {
+        return { [id]: calculatePercentile(field, percentile, ignoreNulls, nullAsZero) };
+      },
+      preservesUnits: true,
+    });
   });
-}
+  return percentileReducers;
+};
 
 // Used for test cases
 export const defaultCalcs: FieldCalcs = {
