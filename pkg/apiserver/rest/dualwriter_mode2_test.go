@@ -8,6 +8,7 @@ import (
 	"k8s.io/apimachinery/pkg/api/meta"
 	metainternalversion "k8s.io/apimachinery/pkg/apis/meta/internalversion"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/runtime"
 )
 
 func TestMode2(t *testing.T) {
@@ -18,8 +19,14 @@ func TestMode2(t *testing.T) {
 
 	dw := NewDualWriterMode2(lsSpy, sSpy)
 
+	// Create: it should use the Legacy Create implementation
+	_, err := dw.Create(context.Background(), &dummyObject{}, func(context.Context, runtime.Object) error { return nil }, &metav1.CreateOptions{})
+	assert.NoError(t, err)
+	assert.Equal(t, 1, lsSpy.Counts("LegacyStorage.Create"))
+	assert.Equal(t, 1, sSpy.Counts("Storage.Create"))
+
 	// Get: it should use the Legacy Get implementation
-	_, err := dw.Get(context.Background(), kind, &metav1.GetOptions{})
+	_, err = dw.Get(context.Background(), kind, &metav1.GetOptions{})
 	assert.NoError(t, err)
 	assert.Equal(t, 1, lsSpy.Counts("LegacyStorage.Get"))
 	assert.Equal(t, 0, sSpy.Counts("Storage.Get"))
