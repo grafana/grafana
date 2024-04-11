@@ -59,26 +59,19 @@ func ApplyQueryFilters(rawExpr string, scopeFilters, adHocFilters []ScopeFilter)
 }
 
 func filtersToMatchers(scopeFilters, adhocFilters []ScopeFilter) ([]*labels.Matcher, error) {
-	adhocByKeys := make(map[string]ScopeFilter, len(adhocFilters))
-	for _, f := range adhocFilters {
-		adhocByKeys[f.Key] = f
-	}
+	filterMap := make(map[string]*labels.Matcher)
 
-	matchers := make([]*labels.Matcher, 0)
-	for _, sF := range scopeFilters {
-		if aF, ok := adhocByKeys[sF.Key]; ok {
-			m, err := filterToMatcher(aF)
-			if err != nil {
-				return nil, err
-			}
-			matchers = append(matchers, m)
-			continue
-		}
-		m, err := filterToMatcher(sF)
+	for _, filter := range append(scopeFilters, adhocFilters...) {
+		matcher, err := filterToMatcher(filter)
 		if err != nil {
 			return nil, err
 		}
-		matchers = append(matchers, m)
+		filterMap[filter.Key] = matcher
+	}
+
+	matchers := make([]*labels.Matcher, 0, len(filterMap))
+	for _, matcher := range filterMap {
+		matchers = append(matchers, matcher)
 	}
 
 	return matchers, nil
