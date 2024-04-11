@@ -99,6 +99,7 @@ export const cloudItem: CanvasElementItem = {
       height: options?.placement?.height ?? 70,
       top: options?.placement?.top,
       left: options?.placement?.left,
+      rotation: options?.placement?.rotation ?? 0,
     },
   }),
 

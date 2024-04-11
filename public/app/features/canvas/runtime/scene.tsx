@@ -436,6 +436,7 @@ export class Scene {
       // Setup rotatable
       rotatable: allowChanges,
       throttleRotate: 5,
+      rotationPosition: ['top', 'right'],
 
       // Setup snappable
       snappable: allowChanges,
