@@ -233,7 +233,8 @@ describe('LokiDatasource', () => {
   });
 
   describe('When using adhoc filters', () => {
-    const DEFAULT_EXPR = 'rate({bar="baz", job="foo"} |= "bar" [5m])';
+    const DEFAULT_EXPR =
+      'rate({bar="baz", job="foo"} |= "bar" | logfmt | json process="process"| label_format process="{{.process}}" [5m])';
     const query: LokiQuery = { expr: DEFAULT_EXPR, refId: 'A' };
     const ds = createLokiDatasource(templateSrvStub);
 
@@ -242,21 +243,26 @@ describe('LokiDatasource', () => {
     });
 
     it('should add filters to expression', async () => {
+      const key1 = 'k1';
+      const key2 = 'k2';
+
+      const value1 = 'v1[98765432]';
+      const value2 = 'v2[123456]';
       const adhocFilters = [
         {
-          key: 'k1',
+          key: key1,
           operator: '=',
-          value: 'v1',
+          value: value1,
         },
         {
-          key: 'k2',
+          key: key2,
           operator: '!=',
-          value: 'v2',
+          value: value2,
         },
       ];
 
       expect(ds.applyTemplateVariables(query, {}, adhocFilters).expr).toBe(
-        'rate({bar="baz", job="foo", k1="v1", k2!="v2"} |= "bar" [5m])'
+        `rate({bar="baz", job="foo", ${key1}="${value1}", ${key2}!="${value2}"} |= "bar" | logfmt | json process="process"| label_format process="{{.process}}" [5m])`
       );
     });
 
