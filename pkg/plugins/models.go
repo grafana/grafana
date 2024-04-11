@@ -248,9 +248,14 @@ type Error struct {
 	ErrorCode       `json:"errorCode"`
 	PluginID        string          `json:"pluginId,omitempty"`
 	SignatureStatus SignatureStatus `json:"status,omitempty"`
+	message         string          `json:"-"`
 }
 
 func (e Error) Error() string {
+	if e.message != "" {
+		return e.message
+	}
+
 	if e.SignatureStatus != "" {
 		switch e.SignatureStatus {
 		case SignatureStatusInvalid:
@@ -262,6 +267,10 @@ func (e Error) Error() string {
 		case SignatureStatusInternal, SignatureStatusValid:
 			return ""
 		}
+	}
+
+	if e.ErrorCode == ErrorAngular {
+		return "angular plugins are not supported"
 	}
 
 	return fmt.Sprintf("plugin '%s' failed: %s", e.PluginID, e.ErrorCode)
@@ -284,6 +293,11 @@ func (e Error) AsErrorCode() ErrorCode {
 	}
 
 	return ""
+}
+
+func (e Error) With(err error) Error {
+	e.message = err.Error()
+	return e
 }
 
 // Access-Control related definitions
