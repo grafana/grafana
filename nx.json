@@ -14,10 +14,9 @@
     }
   },
   "release": {
-    "projectsRelationship": "independent",
+    "projectsRelationship": "fixed",
     "groups": {
       "grafanaPackages": {
-        "projectsRelationship": "fixed",
         "projects": [
           "@grafana/data",
           "@grafana/e2e",
@@ -29,9 +28,21 @@
           "@grafana/ui"
         ]
       },
+      "privatePackages": {
+        "projects": ["@grafana/sql", "@grafana/o11y-ds-frontend"]
+      },
       "plugins": {
-        "projectsRelationship": "fixed",
         "projects": ["@grafana-plugins/*"]
+      }
+    },
+    "version": {
+      "generatorOptions": {
+        "skipLockFileUpdate": true
+      },
+      "git": {
+        "commit": false,
+        "stageChanges": false,
+        "tag": false
       }
     }
   },
