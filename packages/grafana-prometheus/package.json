@@ -2,7 +2,7 @@
   "author": "Grafana Labs",
   "license": "AGPL-3.0-only",
   "name": "@grafana/prometheus",
-  "version": "10.4.2",
+  "version": "10.4.3",
   "description": "Grafana Prometheus Library",
   "keywords": [
     "typescript"
