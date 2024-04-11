@@ -1,5 +1,6 @@
 import { capitalize } from 'lodash';
 
+import { FieldType } from '@grafana/data';
 import { PanelOptionsSupplier } from '@grafana/data/src/panel/PanelPlugin';
 import { CanvasConnection, CanvasElementOptions, ConnectionDirection } from 'app/features/canvas';
 import { SVGElements } from 'app/features/canvas/runtime/element';
@@ -162,6 +163,7 @@ export const optionBuilder: OptionSuppliers = {
       settings: {
         min: 0,
         max: 200,
+        filteredFieldType: FieldType.number,
       },
       defaultValue: {
         // Configured values

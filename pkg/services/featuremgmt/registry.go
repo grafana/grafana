@@ -972,12 +972,12 @@ var (
 			Owner:        grafanaObservabilityTracesAndProfilingSquad,
 		},
 		{
-			Name:         "datatrails",
-			Description:  "Enables the new core app datatrails",
-			Stage:        FeatureStageExperimental,
+			Name:         "exploreMetrics",
+			Description:  "Enables the new Explore Metrics core app",
+			Stage:        FeatureStageGeneralAvailability,
+			Expression:   "true", // enabled by default
 			FrontendOnly: true,
 			Owner:        grafanaDashboardsSquad,
-			HideFromDocs: true,
 		},
 		{
 			Name:         "alertingSimplifiedRouting",
@@ -1034,15 +1034,6 @@ var (
 			Owner:             grafanaOperatorExperienceSquad,
 			AllowSelfServe:    false,
 			HideFromAdminPage: true,
-		},
-		{
-			Name:            "enablePluginsTracingByDefault",
-			Description:     "Enable plugin tracing for all external plugins",
-			FrontendOnly:    false,
-			Stage:           FeatureStageGeneralAvailability,
-			Owner:           grafanaPluginsPlatformSquad,
-			RequiresRestart: true,
-			Expression:      "true", // enabled by default
 		},
 		{
 			Name:            "cloudRBACRoles",
@@ -1204,6 +1195,15 @@ var (
 			AllowSelfServe:    false,
 			HideFromDocs:      true,
 			HideFromAdminPage: true,
+		},
+		{
+			Name:           "cloudWatchNewLabelParsing",
+			Description:    "Updates CloudWatch label parsing to be more accurate",
+			Stage:          FeatureStageGeneralAvailability,
+			Expression:     "true", // enabled by default
+			Owner:          awsDatasourcesSquad,
+			FrontendOnly:   false,
+			AllowSelfServe: false,
 		},
 	}
 )

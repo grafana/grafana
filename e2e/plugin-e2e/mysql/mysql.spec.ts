@@ -28,7 +28,7 @@ test.beforeEach(async ({ context, selectors, explorePage }) => {
 test('code editor autocomplete should handle table name escaping/quoting', async ({ explorePage, selectors, page }) => {
   await page.getByLabel('Code').check();
 
-  const editor = explorePage.getByTestIdOrAriaLabel(selectors.components.CodeEditor.container).getByRole('textbox');
+  const editor = explorePage.getByGrafanaSelector(selectors.components.CodeEditor.container).getByRole('textbox');
   await editor.fill('S');
   await page.getByLabel('SELECT <column> FROM <table>').locator('a').click();
   await expect(page.getByLabel(tableNameWithSpecialCharacter)).toBeVisible();
@@ -45,11 +45,11 @@ test('code editor autocomplete should handle table name escaping/quoting', async
 });
 
 test('visual query builder should handle time filter macro', async ({ explorePage, page }) => {
-  await explorePage.getByTestIdOrAriaLabel(selectors.components.SQLQueryEditor.headerTableSelector).click();
+  await explorePage.getByGrafanaSelector(selectors.components.SQLQueryEditor.headerTableSelector).click();
   await page.getByText(normalTableName, { exact: true }).click();
 
   // Open column selector
-  await explorePage.getByTestIdOrAriaLabel(selectors.components.SQLQueryEditor.selectColumn).click();
+  await explorePage.getByGrafanaSelector(selectors.components.SQLQueryEditor.selectColumn).click();
   const select = page.getByLabel('Select options menu');
   await select.locator(page.getByText('createdAt')).click();
 
@@ -61,30 +61,30 @@ test('visual query builder should handle time filter macro', async ({ explorePag
   await page.getByRole('button', { name: 'Add filter' }).click(); // For some reason we need to click twice
 
   // Open field selector
-  await explorePage.getByTestIdOrAriaLabel(selectors.components.SQLQueryEditor.filterField).click();
+  await explorePage.getByGrafanaSelector(selectors.components.SQLQueryEditor.filterField).click();
   await select.locator(page.getByText('createdAt')).click();
 
   // Open operator selector
-  await explorePage.getByTestIdOrAriaLabel(selectors.components.SQLQueryEditor.filterOperator).click();
+  await explorePage.getByGrafanaSelector(selectors.components.SQLQueryEditor.filterOperator).click();
   await select.locator(page.getByText('Macros')).click();
 
   // Open macros value selector
-  await explorePage.getByTestIdOrAriaLabel('Macros value selector').click();
+  await explorePage.getByGrafanaSelector('Macros value selector').click();
   await select.locator(page.getByText('timeFilter', { exact: true })).click();
 
   // Validate that the timeFilter macro was added
   await expect(
-    explorePage.getByTestIdOrAriaLabel(selectors.components.CodeEditor.container).getByRole('textbox')
+    explorePage.getByGrafanaSelector(selectors.components.CodeEditor.container).getByRole('textbox')
   ).toHaveValue(`SELECT\n  createdAt\nFROM\n  DataMaker.normalTable\nWHERE\n  $__timeFilter(createdAt)\nLIMIT\n  50`);
 
   // Validate that the timeFilter macro was removed when changed to equals operator
-  await explorePage.getByTestIdOrAriaLabel(selectors.components.SQLQueryEditor.filterOperator).click();
+  await explorePage.getByGrafanaSelector(selectors.components.SQLQueryEditor.filterOperator).click();
   await select.locator(page.getByText('==')).click();
 
-  await explorePage.getByTestIdOrAriaLabel(selectors.components.DateTimePicker.input).click();
-  await explorePage.getByTestIdOrAriaLabel(selectors.components.DateTimePicker.input).blur();
+  await explorePage.getByGrafanaSelector(selectors.components.DateTimePicker.input).click();
+  await explorePage.getByGrafanaSelector(selectors.components.DateTimePicker.input).blur();
 
   await expect(
-    explorePage.getByTestIdOrAriaLabel(selectors.components.CodeEditor.container).getByRole('textbox')
+    explorePage.getByGrafanaSelector(selectors.components.CodeEditor.container).getByRole('textbox')
   ).not.toHaveValue(`SELECT\n  createdAt\nFROM\n  DataMaker.normalTable\nWHERE\n  createdAt = NULL\nLIMIT\n  50`);
 });
