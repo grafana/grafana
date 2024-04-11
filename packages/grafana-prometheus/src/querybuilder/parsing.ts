@@ -23,15 +23,7 @@ import {
 } from '@prometheus-io/lezer-promql';
 
 import {binaryScalarOperatorToOperatorName} from './binaryScalarOperations';
-import {
-  ErrorId,
-  getAllByType,
-  getLeftMostChild,
-  getString,
-  makeBinOp,
-  makeError,
-  replaceVariables,
-} from './parsingUtils';
+import {ErrorId, getAllByType, getString, makeBinOp, makeError, replaceVariables,} from './parsingUtils';
 import {QueryBuilderLabelFilter, QueryBuilderOperation} from './shared/types';
 import {PromVisualQuery, PromVisualQueryBinary} from './types';
 
@@ -389,7 +381,7 @@ function handleBinary(expr: string, node: SyntaxNode, context: Context) {
   const leftNumber = left.type.id === NumberLiteral;
   const rightNumber = right.type.id === NumberLiteral;
 
-  const rightBinary = right.getChild(BinaryExpr);
+  // const rightBinary = right.getChild(BinaryExpr);
 
   if (leftNumber) {
     // TODO: this should be already handled in case parent is binary expression as it has to be added to parent
@@ -402,17 +394,17 @@ function handleBinary(expr: string, node: SyntaxNode, context: Context) {
 
   if (rightNumber) {
     visQuery.operations.push(makeBinOp(opDef, expr, right, !!binModifier?.isBool));
-  } else if (rightBinary) {
-    // Due to the way binary ops are parsed we can get a binary operation on the right that starts with a number which
-    // is a factor for a current binary operation. So we have to add it as an operation now.
-    const leftMostChild = getLeftMostChild(right);
-    if (leftMostChild?.type.id === NumberLiteral) {
-      visQuery.operations.push(makeBinOp(opDef, expr, leftMostChild, !!binModifier?.isBool));
-    }
-
-    // If we added the first number literal as operation here we still can continue and handle the rest as the first
-    // number will be just skipped.
-    handleExpression(expr, right, context);
+    // } else if (rightBinary) {
+    //   // Due to the way binary ops are parsed we can get a binary operation on the right that starts with a number which
+    //   // is a factor for a current binary operation. So we have to add it as an operation now.
+    //   const leftMostChild = getLeftMostChild(right);
+    //   if (leftMostChild?.type.id === NumberLiteral) {
+    //     visQuery.operations.push(makeBinOp(opDef, expr, leftMostChild, !!binModifier?.isBool));
+    //   }
+    //
+    //   // If we added the first number literal as operation here we still can continue and handle the rest as the first
+    //   // number will be just skipped.
+    //   handleExpression(expr, right, context);
   } else {
     visQuery.binaryQueries = visQuery.binaryQueries || [];
     const binQuery: PromVisualQueryBinary = {

@@ -693,7 +693,7 @@ describe('buildVisualQueryFromString', () => {
       errors: [
         {
           from: 6,
-          parentType: 'Expr',
+          parentType: 'BinaryExpr',
           text: '(bar + baz)',
           to: 17,
         },
