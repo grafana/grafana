@@ -149,3 +149,26 @@ func enrichObject(orig, copy runtime.Object) (runtime.Object, error) {
 
 	return copy, nil
 }
+
+func (d *DualWriterMode2) Delete(ctx context.Context, name string, deleteValidation rest.ValidateObjectFunc, options *metav1.DeleteOptions) (runtime.Object, bool, error) {
+	legacy, ok := d.Legacy.(rest.GracefulDeleter)
+	if !ok {
+		return nil, false, noDeleteMethod
+	}
+
+	deletedLS, async, err := legacy.Delete(ctx, name, deleteValidation, options)
+	if err != nil {
+		if !apierrors.IsNotFound(err) {
+			klog.FromContext(ctx).Error(err, "could not delete from legacy store", "mode", Mode2)
+		}
+	}
+
+	_, _, errUS := d.Storage.Delete(ctx, name, deleteValidation, options)
+	if errUS != nil {
+		if !apierrors.IsNotFound(errUS) {
+			klog.FromContext(ctx).Error(errUS, "could not delete from unified store", "mode", Mode2)
+		}
+	}
+
+	return deletedLS, async, err
+}
