@@ -23,7 +23,7 @@ Gauges are single-value visualizations that can repeat a gauge for every series,
 
 {{< figure src="/static/img/docs/v66/gauge_panel_cover.png" max-width="1025px" alt="A gauge visualization">}}
 
-{{< docs/play title="Gauge Visualizations in Grafana" url="https://play.grafana.org/d/KIhkVD6Gk/" >}}
+{{< docs/play title="Grafana Gauge Visualization" url="https://play.grafana.org/d/KIhkVD6Gk/" >}}
 
 ## Value options
 
