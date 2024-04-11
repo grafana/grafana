@@ -1,8 +1,8 @@
 import { css } from '@emotion/css';
 import React, { useEffect } from 'react';
 
-import { GrafanaTheme2, urlUtil } from '@grafana/data';
-import { getBackendSrv } from '@grafana/runtime';
+import { GrafanaTheme2 } from '@grafana/data';
+import { getBackendSrv, locationService } from '@grafana/runtime';
 import { Button, Dropdown, Icon, LinkButton, Menu, Stack, Text, useStyles2 } from '@grafana/ui';
 import { alertRuleApi } from 'app/features/alerting/unified/api/alertRuleApi';
 import { alertmanagerApi } from 'app/features/alerting/unified/api/alertmanagerApi';
@@ -10,6 +10,7 @@ import { OnCallIntegrationDTO, onCallApi } from 'app/features/alerting/unified/a
 import { usePluginBridge } from 'app/features/alerting/unified/hooks/usePluginBridge';
 import { SupportedPlugin } from 'app/features/alerting/unified/types/pluginBridges';
 import { GRAFANA_RULES_SOURCE_NAME } from 'app/features/alerting/unified/utils/datasource';
+import { createUrl } from 'app/features/alerting/unified/utils/url';
 import { useGetSingle } from 'app/features/plugins/admin/state/hooks';
 import { Receiver } from 'app/plugins/datasource/alertmanager/types';
 
@@ -106,6 +107,10 @@ export function Essentials({ onClose }: EssentialsProps) {
   const contactPoints = useGetContactPoints();
   const incidentPluginConfig = useGetIncidentPluginConfig();
   const onCallIntegrations = useGetOnCallIntegrations();
+  const onCallOptions = onCallIntegrations.map((integration) => ({
+    label: integration.display_name,
+    value: integration.value,
+  }));
 
   const ESSENTIAL_CONTENT: SectionsDto = {
     sections: [
@@ -208,9 +213,9 @@ export function Essentials({ onClose }: EssentialsProps) {
             description: 'tbd',
             button: {
               type: 'dropDown',
-              url: '/alerting/test',
+              url: '/a/grafana-oncall-app/integrations/',
               label: 'Select integration',
-              options: [{ label: 'integration 1', value: '1' }],
+              options: onCallOptions,
             },
           },
           {
@@ -242,7 +247,7 @@ interface StepButtonDto {
   type: 'openLink' | 'dropDown';
   url: string;
   label: string;
-  options?: [{ label: string; value: string }];
+  options?: Array<{ label: string; value: string }>;
   done?: boolean;
 }
 interface SectionDto {
@@ -297,10 +302,16 @@ function Step({ step }: { step: SectionDto['steps'][0] }) {
   );
 }
 
-function StepButton({ type, url, label, options, done }: StepButtonDto) {
-  const urlToGo = urlUtil.renderUrl(url, {
+function StepButton({ type, url, label, options }: StepButtonDto) {
+  const urlToGo = createUrl(url, {
     returnTo: location.pathname + location.search,
   });
+  function onIntegrationClick(integrationId: string) {
+    const urlToGoWithIntegration = createUrl(url + integrationId, {
+      returnTo: location.pathname + location.search,
+    });
+    locationService.push(urlToGoWithIntegration);
+  }
   switch (type) {
     case 'openLink':
       return (
@@ -313,7 +324,9 @@ function StepButton({ type, url, label, options, done }: StepButtonDto) {
         <Dropdown
           overlay={
             <Menu>
-              {options?.map((option) => <Menu.Item label={option.label} onClick={() => {}} key={option.label} />)}
+              {options?.map((option) => (
+                <Menu.Item label={option.label} onClick={() => onIntegrationClick(option.value)} key={option.label} />
+              ))}
             </Menu>
           }
         >
