@@ -1465,12 +1465,15 @@
     {
       "metadata": {
         "name": "usePrometheusFrontendPackage",
-        "resourceVersion": "1712639261786",
-        "creationTimestamp": "2024-04-09T05:07:41Z"
+        "resourceVersion": "1712841379965",
+        "creationTimestamp": "2024-04-09T05:07:41Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2024-04-11 13:16:19.965312 +0000 UTC"
+        }
       },
       "spec": {
         "description": "Use the @grafana/prometheus frontend package in core Prometheus.",
-        "stage": "experimental",
+        "stage": "GA",
         "codeowner": "@grafana/observability-metrics",
         "frontend": true
       }
