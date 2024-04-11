@@ -36,6 +36,13 @@ const setup = (initialUrl?: string) => {
       id: 'starred',
       text: 'Starred',
       url: '/dashboards?starred',
+      children: [
+        {
+          id: 'starred/someuid',
+          text: 'Starred Dashboard',
+          url: '/d/someuid/somename',
+        },
+      ],
     },
     {
       id: 'dashboards/browse',
@@ -94,17 +101,10 @@ describe('MegaMenu', () => {
     expect(screen.queryByLabelText('Profile')).not.toBeInTheDocument();
   });
 
-  it('handles special case for dashboards', async () => {
+  it('handles special case for starred dashboard', async () => {
     setup('/d/someuid/a-dashboard-name');
 
     const currentLink = await screen.findByRole('link', { current: 'page' });
-    expect(currentLink.textContent).toEqual('Dashboards');
-  });
-
-  it('handles special case for starred dashboards root', async () => {
-    setup('/dashboards?starred');
-
-    const currentLink = await screen.findByRole('link', { current: 'page' });
-    expect(currentLink.textContent).toEqual('Dashboards');
+    expect(currentLink.textContent).toEqual('Starred Dashboard');
   });
 });
