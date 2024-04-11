@@ -59,6 +59,8 @@ type ClientParams struct {
 	SyncPermissions bool
 	// FetchPermissionsParams are the arguments used to fetch permissions from the DB
 	FetchPermissionsParams FetchPermissionsParams
+	// AllowGlobalOrg would allow a client to authenticate in global scope AKA org 0
+	AllowGlobalOrg bool
 }
 
 type FetchPermissionsParams struct {
@@ -136,7 +138,7 @@ type RedirectClient interface {
 // that should happen during logout and supports client specific redirect URL.
 type LogoutClient interface {
 	Client
-	Logout(ctx context.Context, user identity.Requester, info *login.UserAuth) (*Redirect, bool)
+	Logout(ctx context.Context, user identity.Requester) (*Redirect, bool)
 }
 
 type PasswordClient interface {
