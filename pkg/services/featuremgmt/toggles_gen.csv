@@ -138,7 +138,6 @@ tableSharedCrosshair,experimental,@grafana/dataviz-squad,false,false,true
 regressionTransformation,preview,@grafana/dataviz-squad,false,false,true
 lokiQueryHints,GA,@grafana/observability-logs,false,false,true
 kubernetesFeatureToggles,experimental,@grafana/grafana-operator-experience-squad,false,false,true
-enablePluginsTracingByDefault,GA,@grafana/plugins-platform-backend,false,true,false
 cloudRBACRoles,experimental,@grafana/identity-access-team,false,true,false
 alertingQueryOptimization,GA,@grafana/alerting-squad,false,false,false
 newFolderPicker,experimental,@grafana/grafana-frontend-platform,false,false,true
@@ -157,7 +156,7 @@ betterPageScrolling,GA,@grafana/grafana-frontend-platform,false,false,true
 authAPIAccessTokenAuth,experimental,@grafana/identity-access-team,false,false,false
 scopeFilters,experimental,@grafana/dashboards-squad,false,false,false
 ssoSettingsSAML,experimental,@grafana/identity-access-team,false,false,false
-usePrometheusFrontendPackage,experimental,@grafana/observability-metrics,false,false,true
+usePrometheusFrontendPackage,GA,@grafana/observability-metrics,false,false,true
 oauthRequireSubClaim,experimental,@grafana/identity-access-team,false,false,false
 newDashboardWithFiltersAndGroupBy,experimental,@grafana/dashboards-squad,false,false,false
 cloudWatchNewLabelParsing,GA,@grafana/aws-datasources,false,false,false
