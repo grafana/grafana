@@ -43,6 +43,8 @@ export enum PluginErrorCode {
   missingSignature = 'signatureMissing',
   invalidSignature = 'signatureInvalid',
   modifiedSignature = 'signatureModified',
+  failedStart = 'failedStart',
+  angular = 'angular',
 }
 
 /** Describes error returned from Grafana plugins API call */

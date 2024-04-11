@@ -238,6 +238,8 @@ const (
 	errorCodeSignatureMissing  ErrorCode = "signatureMissing"
 	errorCodeSignatureModified ErrorCode = "signatureModified"
 	errorCodeSignatureInvalid  ErrorCode = "signatureInvalid"
+	ErrorCodeFailedStart       ErrorCode = "failedStart"
+	ErrorAngular               ErrorCode = "angular"
 )
 
 type ErrorCode string
@@ -266,6 +268,10 @@ func (e Error) Error() string {
 }
 
 func (e Error) AsErrorCode() ErrorCode {
+	if e.ErrorCode != "" {
+		return e.ErrorCode
+	}
+
 	switch e.SignatureStatus {
 	case SignatureStatusInvalid:
 		return errorCodeSignatureInvalid

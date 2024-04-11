@@ -66,6 +66,19 @@ function renderDescriptionFromError(error?: PluginErrorCode): ReactElement {
           version of this plugin.
         </p>
       );
+    case PluginErrorCode.failedStart:
+      return (
+        <p>
+          Grafana failed to start this plugin and have therefore disabled it. Server logs can provide more information.
+        </p>
+      );
+    case PluginErrorCode.angular:
+      return (
+        <p>
+          This plugin is using AngularJS which is deprecated. Check if there is a new version of the plugin that updates
+          this dependency. In other case, we recommend you to contact the plugin author and ask them to update it.
+        </p>
+      );
     default:
       return (
         <p>
