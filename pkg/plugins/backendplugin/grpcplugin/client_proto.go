@@ -9,6 +9,7 @@ import (
 
 	"github.com/grafana/grafana-plugin-sdk-go/genproto/pluginv2"
 
+	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/log"
 )
 
@@ -27,6 +28,7 @@ type ProtoClient interface {
 	PID(context.Context) (string, error)
 	PluginID() string
 	PluginVersion() string
+	PluginJSON() plugins.JSONData
 	Logger() log.Logger
 	Start(context.Context) error
 	Stop(context.Context) error
@@ -36,13 +38,13 @@ type ProtoClient interface {
 type protoClient struct {
 	plugin        *grpcPlugin
 	pluginVersion string
+	pluginJSON    plugins.JSONData
 
 	mu sync.RWMutex
 }
 
 type ProtoClientOpts struct {
-	PluginID       string
-	PluginVersion  string
+	PluginJSON     plugins.JSONData
 	ExecutablePath string
 	ExecutableArgs []string
 	Env            []string
@@ -52,7 +54,7 @@ type ProtoClientOpts struct {
 func NewProtoClient(opts ProtoClientOpts) (ProtoClient, error) {
 	p := newGrpcPlugin(
 		PluginDescriptor{
-			pluginID:         opts.PluginID,
+			pluginID:         opts.PluginJSON.ID,
 			managed:          true,
 			executablePath:   opts.ExecutablePath,
 			executableArgs:   opts.ExecutableArgs,
@@ -62,7 +64,7 @@ func NewProtoClient(opts ProtoClientOpts) (ProtoClient, error) {
 		func() []string { return opts.Env },
 	)
 
-	return &protoClient{plugin: p, pluginVersion: opts.PluginVersion}, nil
+	return &protoClient{plugin: p, pluginVersion: opts.PluginJSON.Info.Version, pluginJSON: opts.PluginJSON}, nil
 }
 
 func (r *protoClient) PID(ctx context.Context) (string, error) {
@@ -78,6 +80,10 @@ func (r *protoClient) PluginID() string {
 
 func (r *protoClient) PluginVersion() string {
 	return r.pluginVersion
+}
+
+func (r *protoClient) PluginJSON() plugins.JSONData {
+	return r.pluginJSON
 }
 
 func (r *protoClient) Logger() log.Logger {

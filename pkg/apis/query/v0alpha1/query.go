@@ -5,6 +5,7 @@ import (
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	data "github.com/grafana/grafana-plugin-sdk-go/experimental/apis/data/v0alpha1"
+	"github.com/grafana/grafana-plugin-sdk-go/genproto/pluginv2"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
@@ -34,6 +35,19 @@ func GetResponseCode(rsp *backend.QueryDataResponse) int {
 	}
 	for _, v := range rsp.Responses {
 		if v.Error != nil {
+			return http.StatusMultiStatus
+		}
+	}
+	return http.StatusOK
+}
+
+// If errors exist, return multi-status
+func GetPluginV2ResponseCode(rsp *pluginv2.QueryDataResponse) int {
+	if rsp == nil {
+		return http.StatusInternalServerError
+	}
+	for _, v := range rsp.Responses {
+		if v.Error != "" {
 			return http.StatusMultiStatus
 		}
 	}

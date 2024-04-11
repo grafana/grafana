@@ -9,6 +9,7 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	data "github.com/grafana/grafana-plugin-sdk-go/experimental/apis/data/v0alpha1"
 	"github.com/grafana/grafana-plugin-sdk-go/experimental/schemabuilder"
+	"github.com/grafana/grafana-plugin-sdk-go/genproto/pluginv2"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -43,11 +44,17 @@ type DataSourceAPIBuilder struct {
 	connectionResourceInfo common.ResourceInfo
 
 	pluginJSON      plugins.JSONData
-	client          PluginClient // will only ever be called with the same pluginid!
+	handlers        Handlers
 	datasources     PluginDatasourceProvider
 	contextProvider PluginContextWrapper
 	accessControl   accesscontrol.AccessControl
 	queryTypes      *query.QueryTypeDefinitionList
+}
+
+type Handlers struct {
+	health   HealthHandler
+	query    QueryHandler
+	resource ResourceHandler
 }
 
 func RegisterAPIService(
@@ -78,7 +85,8 @@ func RegisterAPIService(
 			continue // skip this one
 		}
 
-		builder, err = NewDataSourceAPIBuilder(ds.JSONData,
+		builder, err = NewCoreDataSourceAPIBuilder(
+			ds.JSONData,
 			pluginClient,
 			datasources.GetDatasourceProvider(ds.JSONData),
 			contextProvider,
@@ -100,7 +108,13 @@ type PluginClient interface {
 	backend.CallResourceHandler
 }
 
-func NewDataSourceAPIBuilder(
+type PluginProtoClient interface {
+	pluginv2.DataClient
+	pluginv2.ResourceClient
+	pluginv2.DiagnosticsClient
+}
+
+func NewCoreDataSourceAPIBuilder(
 	plugin plugins.JSONData,
 	client PluginClient,
 	datasources PluginDatasourceProvider,
@@ -114,10 +128,39 @@ func NewDataSourceAPIBuilder(
 	return &DataSourceAPIBuilder{
 		connectionResourceInfo: ri,
 		pluginJSON:             plugin,
-		client:                 client,
-		datasources:            datasources,
-		contextProvider:        contextProvider,
-		accessControl:          accessControl,
+		handlers: Handlers{
+			health:   NewCorePluginHealthHandler(client),
+			query:    NewCorePluginQueryHandler(client),
+			resource: NewCorePluginResourceHandler(client),
+		},
+		datasources:     datasources,
+		contextProvider: contextProvider,
+		accessControl:   accessControl,
+	}, nil
+}
+
+func NewExternalDataSourceAPIBuilder(
+	plugin plugins.JSONData,
+	client PluginProtoClient,
+	datasources PluginDatasourceProvider,
+	contextProvider PluginContextWrapper,
+	accessControl accesscontrol.AccessControl) (*DataSourceAPIBuilder, error) {
+	ri, err := resourceFromPluginID(plugin.ID)
+	if err != nil {
+		return nil, err
+	}
+
+	return &DataSourceAPIBuilder{
+		connectionResourceInfo: ri,
+		pluginJSON:             plugin,
+		handlers: Handlers{
+			health:   NewExternalPluginHealthHandler(client),
+			query:    NewExternalPluginQueryHandler(client),
+			resource: NewExternalPluginResourceHandler(client),
+		},
+		datasources:     datasources,
+		contextProvider: contextProvider,
+		accessControl:   accessControl,
 	}, nil
 }
 
@@ -200,11 +243,11 @@ func (b *DataSourceAPIBuilder) GetAPIGroupInfo(
 			},
 		),
 	}
-	storage[conn.StoragePath("query")] = &subQueryREST{builder: b}
-	storage[conn.StoragePath("health")] = &subHealthREST{builder: b}
+	storage[conn.StoragePath("query")] = &subQueryREST{builder: b, handler: b.handlers.query}
+	storage[conn.StoragePath("health")] = &subHealthREST{builder: b, handler: b.handlers.health}
 
 	// TODO! only setup this endpoint if it is implemented
-	storage[conn.StoragePath("resource")] = &subResourceREST{builder: b}
+	storage[conn.StoragePath("resource")] = &subResourceREST{builder: b, handler: b.handlers.resource}
 
 	// Frontend proxy
 	if len(b.pluginJSON.Routes) > 0 {

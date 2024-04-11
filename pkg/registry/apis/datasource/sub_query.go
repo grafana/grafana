@@ -2,21 +2,22 @@ package datasource
 
 import (
 	"context"
-	"fmt"
 	"net/http"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
-	data "github.com/grafana/grafana-plugin-sdk-go/experimental/apis/data/v0alpha1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apiserver/pkg/registry/rest"
 
 	query "github.com/grafana/grafana/pkg/apis/query/v0alpha1"
-	"github.com/grafana/grafana/pkg/tsdb/legacydata"
-	"github.com/grafana/grafana/pkg/web"
 )
+
+type QueryHandler interface {
+	Handle(ctx context.Context, pluginCtx backend.PluginContext, responder rest.Responder) (http.Handler, error)
+}
 
 type subQueryREST struct {
 	builder *DataSourceAPIBuilder
+	handler QueryHandler
 }
 
 var (
@@ -54,36 +55,5 @@ func (r *subQueryREST) Connect(ctx context.Context, name string, opts runtime.Ob
 		return nil, err
 	}
 
-	return http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
-		dqr := data.QueryDataRequest{}
-		err := web.Bind(req, &dqr)
-		if err != nil {
-			responder.Error(err)
-			return
-		}
-
-		queries, dsRef, err := legacydata.ToDataSourceQueries(dqr)
-		if err != nil {
-			responder.Error(err)
-			return
-		}
-		if dsRef != nil && dsRef.UID != name {
-			responder.Error(fmt.Errorf("expected query body datasource and request to match"))
-			return
-		}
-
-		ctx = backend.WithGrafanaConfig(ctx, pluginCtx.GrafanaConfig)
-		ctx = contextualMiddlewares(ctx)
-		rsp, err := r.builder.client.QueryData(ctx, &backend.QueryDataRequest{
-			Queries:       queries,
-			PluginContext: pluginCtx,
-		})
-		if err != nil {
-			responder.Error(err)
-			return
-		}
-		responder.Object(query.GetResponseCode(rsp),
-			&query.QueryDataResponse{QueryDataResponse: *rsp},
-		)
-	}), nil
+	return r.handler.Handle(ctx, pluginCtx, responder)
 }
