@@ -66,7 +66,7 @@ describe('PluginListItem', () => {
 
     expect(screen.getByRole('link')).toHaveAttribute('href', '/plugins/test-plugin');
 
-    const logo = screen.getByRole('img');
+    const logo = screen.getByRole('presentation');
     expect(logo).toHaveAttribute('src', plugin.info.logos.small);
 
     expect(screen.getByRole('heading', { name: /testing plugin/i })).toBeVisible();
@@ -109,7 +109,7 @@ describe('PluginListItem', () => {
 
     expect(screen.getByRole('link')).toHaveAttribute('href', '/plugins/test-plugin');
 
-    const logo = screen.getByRole('img');
+    const logo = screen.getByRole('presentation');
     expect(logo).toHaveAttribute('src', plugin.info.logos.small);
 
     expect(screen.getByRole('heading', { name: /testing plugin/i })).toBeVisible();
