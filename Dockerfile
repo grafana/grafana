@@ -186,5 +186,6 @@ ARG RUN_SH=./packaging/docker/run.sh
 
 COPY ${RUN_SH} /run.sh
 
+
 USER "$GF_UID"
 ENTRYPOINT [ "/run.sh" ]
