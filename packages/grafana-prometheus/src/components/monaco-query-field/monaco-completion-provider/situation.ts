@@ -328,42 +328,9 @@ function resolveLabelMatcher(node: SyntaxNode, text: string, pos: number): Situa
 
   const labelName = getNodeText(labelNameNode, text);
 
-  // now we need to go up, to the parent of LabelMatcher,
-  // there can be one or many `LabelMatchList` parents, we have
-  // to go through all of them
-
-  const firstListNode = walk(parent, [['parent', LabelMatcher]]);
-  if (firstListNode === null) {
+  const labelMatchersNode = walk(parent, [['parent', LabelMatchers]]);
+  if (labelMatchersNode === null) {
     return null;
-  }
-
-  let listNode = firstListNode;
-
-  // we keep going through the parent-nodes
-  // as long as they are LabelMatchList.
-  // as soon as we reawch LabelMatchers, we stop
-  let labelMatchersNode: SyntaxNode | null = null;
-  while (labelMatchersNode === null) {
-    const p = listNode.parent;
-    if (p === null) {
-      return null;
-    }
-
-    const { id } = p.type;
-
-    switch (id) {
-      case LabelMatcher:
-        //we keep looping
-        listNode = p;
-        continue;
-      case LabelMatchers:
-        // we reached the end, we can stop the loop
-        labelMatchersNode = p;
-        continue;
-      default:
-        // we reached some other node, we stop
-        return null;
-    }
   }
 
   // now we need to find the other names
@@ -374,7 +341,6 @@ function resolveLabelMatcher(node: SyntaxNode, text: string, pos: number): Situa
 
   const metricNameNode = walk(labelMatchersNode, [
     ['parent', VectorSelector],
-    // ['firstChild', MetricIdentifier],
     ['firstChild', Identifier],
   ]);
 
