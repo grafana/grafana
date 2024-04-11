@@ -3,6 +3,7 @@ package rest
 import (
 	"context"
 
+	"k8s.io/apimachinery/pkg/api/meta"
 	metainternalversion "k8s.io/apimachinery/pkg/apis/meta/internalversion"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -70,7 +71,22 @@ func (c *spyStorageClient) Get(ctx context.Context, name string, options *metav1
 func (c *spyStorageClient) List(ctx context.Context, options *metainternalversion.ListOptions) (runtime.Object, error) {
 	c.spy.record("Storage.List")
 	klog.Info("method: Storage.List")
-	return &dummyObject{}, nil
+
+	i1 := dummyObject{Foo: "Storage field 1"}
+	accessor, err := meta.Accessor(&i1)
+	if err != nil {
+		return nil, err
+	}
+	accessor.SetName("Item 1")
+
+	i2 := dummyObject{Foo: "Storage field 2"}
+	accessor, err = meta.Accessor(&i2)
+	if err != nil {
+		return nil, err
+	}
+	accessor.SetName("Item 2")
+
+	return &dummyList{Items: []dummyObject{i1, i2}}, nil
 }
 
 func (c *spyStorageClient) Update(ctx context.Context, name string, objInfo rest.UpdatedObjectInfo, createValidation rest.ValidateObjectFunc, updateValidation rest.ValidateObjectUpdateFunc, forceAllowCreate bool, options *metav1.UpdateOptions) (runtime.Object, bool, error) {
@@ -138,7 +154,22 @@ func (c *spyLegacyStorageClient) NewList() runtime.Object {
 func (c *spyLegacyStorageClient) List(ctx context.Context, options *metainternalversion.ListOptions) (runtime.Object, error) {
 	c.spy.record("LegacyStorage.List")
 	klog.Info("method: LegacyStorage.List")
-	return &dummyObject{}, nil
+
+	i1 := dummyObject{Foo: "Legacy field 1"}
+	accessor, err := meta.Accessor(&i1)
+	if err != nil {
+		return nil, err
+	}
+	accessor.SetName("Item 1")
+
+	i3 := dummyObject{Foo: "Legacy field 3"}
+	accessor, err = meta.Accessor(&i3)
+	if err != nil {
+		return nil, err
+	}
+	accessor.SetName("Item 3")
+
+	return &dummyList{Items: []dummyObject{i1, i3}}, nil
 }
 
 func (c *spyLegacyStorageClient) Update(ctx context.Context, name string, objInfo rest.UpdatedObjectInfo, createValidation rest.ValidateObjectFunc, updateValidation rest.ValidateObjectUpdateFunc, forceAllowCreate bool, options *metav1.UpdateOptions) (runtime.Object, bool, error) {
@@ -153,14 +184,30 @@ func (c *spyLegacyStorageClient) Delete(ctx context.Context, name string, delete
 	return nil, false, nil
 }
 
-type dummyObject struct {
-	Items []dummyObject
+type dummyList struct {
+	metav1.TypeMeta `json:",inline"`
+	metav1.ListMeta `json:"metadata,omitempty"`
+	Items           []dummyObject `json:"items,omitempty"`
 }
 
-func (d dummyObject) GetObjectKind() schema.ObjectKind {
+type dummyObject struct {
+	metav1.TypeMeta   `json:",inline"`
+	metav1.ObjectMeta `json:"metadata,omitempty"`
+	Foo               string
+}
+
+func (d *dummyList) GetObjectKind() schema.ObjectKind {
 	return nil
 }
 
-func (d dummyObject) DeepCopyObject() runtime.Object {
+func (d *dummyList) DeepCopyObject() runtime.Object {
+	return nil
+}
+
+func (d *dummyObject) GetObjectKind() schema.ObjectKind {
+	return nil
+}
+
+func (d *dummyObject) DeepCopyObject() runtime.Object {
 	return nil
 }
