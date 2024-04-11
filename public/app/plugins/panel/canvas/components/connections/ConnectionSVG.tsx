@@ -10,7 +10,6 @@ import { Scene } from 'app/features/canvas/runtime/scene';
 import { ConnectionCoordinates } from '../../panelcfg.gen';
 import { ConnectionState } from '../../types';
 import {
-  calculateAbsoluteCoords,
   calculateAngle,
   calculateCoordinates,
   calculateDistance,
@@ -139,16 +138,19 @@ export const ConnectionSVG = ({
             return;
           }
 
-          const { x1, y1, x2, y2, deltaX, deltaY } = calculateCoordinates(
-            sourceRect,
-            parentRect,
-            info,
-            target,
-            transformScale
-          );
+          const { x1, y1, x2, y2 } = calculateCoordinates(sourceRect, parentRect, info, target, transformScale);
+
+          let { xStart, yStart, xEnd, yEnd } = { xStart: x1, yStart: y1, xEnd: x2, yEnd: y2 };
+          if (v.sourceOriginal && v.targetOriginal) {
+            xStart = v.sourceOriginal.x;
+            yStart = v.sourceOriginal.y;
+            xEnd = v.targetOriginal.x;
+            yEnd = v.targetOriginal.y;
+          }
+
           const midpoint = calculateMidpoint(x1, y1, x2, y2);
-          const xDist = deltaX;
-          const yDist = deltaY;
+          const xDist = xEnd - xStart;
+          const yDist = yEnd - yStart;
 
           const { strokeColor, strokeWidth, strokeRadius, arrowDirection, lineStyle, shouldAnimate } =
             getConnectionStyles(info, scene, defaultArrowSize, defaultArrowDirection);
@@ -171,8 +173,8 @@ export const ConnectionSVG = ({
               const y = vertex.y;
 
               // Convert vertex relative coordinates to scene coordinates
-              const X = x * deltaX + x1;
-              const Y = y * deltaY + y1;
+              const X = x * xDist + xStart;
+              const Y = y * yDist + yStart;
 
               // Initialize coordinates for first arc control point
               let xa = X;
@@ -230,7 +232,9 @@ export const ConnectionSVG = ({
 
               if (index === 0) {
                 // For first vertex
-                addVertices.push(calculateMidpoint(0, 0, x, y));
+                addVertices.push(
+                  calculateMidpoint((x1 - xStart) / (xEnd - xStart), (y1 - yStart) / (yEnd - yStart), x, y)
+                );
 
                 // Only calculate arcs if there is a radius
                 if (radius) {
@@ -323,7 +327,9 @@ export const ConnectionSVG = ({
               }
               if (index === vertices.length - 1) {
                 // For last vertex only
-                addVertices.push(calculateMidpoint((x2 - x1) / deltaX, (y2 - y1) / deltaY, x, y));
+                addVertices.push(
+                  calculateMidpoint((x2 - xStart) / (xEnd - xStart), (y2 - yStart) / (yEnd - yStart), x, y)
+                );
               }
               // Add segment to path
               pathString += `L${xa} ${ya} `;
@@ -420,14 +426,13 @@ export const ConnectionSVG = ({
                     {isSelected && (
                       <g>
                         {vertices.map((value, index) => {
-                          const { x, y } = calculateAbsoluteCoords(x1, y1, x2, y2, value.x, value.y, deltaX, deltaY);
                           return (
                             <circle
                               id={CONNECTION_VERTEX_ID}
                               data-index={index}
                               key={`${CONNECTION_VERTEX_ID}${index}_${idx}`}
-                              cx={x}
-                              cy={y}
+                              cx={value.x * xDist + xStart}
+                              cy={value.y * yDist + yStart}
                               r={5}
                               stroke={strokeColor}
                               className={styles.vertex}
@@ -438,14 +443,13 @@ export const ConnectionSVG = ({
                         })}
                         {vertices.length < maximumVertices &&
                           addVertices.map((value, index) => {
-                            const { x, y } = calculateAbsoluteCoords(x1, y1, x2, y2, value.x, value.y, deltaX, deltaY);
                             return (
                               <circle
                                 id={CONNECTION_VERTEX_ADD_ID}
                                 data-index={index}
                                 key={`${CONNECTION_VERTEX_ADD_ID}${index}_${idx}`}
-                                cx={x}
-                                cy={y}
+                                cx={value.x * xDist + xStart}
+                                cy={value.y * yDist + yStart}
                                 r={4}
                                 stroke={strokeColor}
                                 className={styles.addVertex}
