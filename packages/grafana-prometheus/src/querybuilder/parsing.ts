@@ -379,8 +379,8 @@ function handleBinary(expr: string, node: SyntaxNode, context: Context) {
 
   const opDef = binaryScalarOperatorToOperatorName[op];
 
-  const leftNumber = left.getChild(NumberLiteral);
-  const rightNumber = right.getChild(NumberLiteral);
+  const leftNumber = left.type.id === NumberLiteral;
+  const rightNumber = right.type.id === NumberLiteral;
 
   const rightBinary = right.getChild(BinaryExpr);
 
