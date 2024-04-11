@@ -70,7 +70,7 @@ func (d *DualWriterMode3) Delete(ctx context.Context, name string, deleteValidat
 
 }
 
-// Update overrides the generic behavior of the Storage and writes first to US and then to the legacy store.
+// Update overrides the behavior of the generic DualWriter and writes first to Storage and then to LegacyStorage.
 func (d *DualWriterMode3) Update(ctx context.Context, name string, objInfo rest.UpdatedObjectInfo, createValidation rest.ValidateObjectFunc, updateValidation rest.ValidateObjectUpdateFunc, forceAllowCreate bool, options *metav1.UpdateOptions) (runtime.Object, bool, error) {
 	old, err := d.Storage.Get(ctx, name, &metav1.GetOptions{})
 	if err != nil {
