@@ -83,3 +83,7 @@ func (ni NamespaceID) Namespace() string {
 func (ni NamespaceID) IsNamespace(expected ...string) bool {
 	return identity.IsNamespace(ni.namespace, expected...)
 }
+
+func (ni NamespaceID) String() string {
+	return fmt.Sprintf("%s:%s", ni.namespace, ni.id)
+}

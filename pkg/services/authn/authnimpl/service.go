@@ -49,15 +49,16 @@ func ProvideService(
 	sessionService auth.UserTokenService, usageStats usagestats.Service, registerer prometheus.Registerer,
 ) *Service {
 	s := &Service{
-		log:            log.New("authn.service"),
-		cfg:            cfg,
-		clients:        make(map[string]authn.Client),
-		clientQueue:    newQueue[authn.ContextAwareClient](),
-		tracer:         tracer,
-		metrics:        newMetrics(registerer),
-		sessionService: sessionService,
-		postAuthHooks:  newQueue[authn.PostAuthHookFn](),
-		postLoginHooks: newQueue[authn.PostLoginHookFn](),
+		log:                    log.New("authn.service"),
+		cfg:                    cfg,
+		clients:                make(map[string]authn.Client),
+		clientQueue:            newQueue[authn.ContextAwareClient](),
+		idenityResolverClients: make(map[string]authn.IdentityResolverClient),
+		tracer:                 tracer,
+		metrics:                newMetrics(registerer),
+		sessionService:         sessionService,
+		postAuthHooks:          newQueue[authn.PostAuthHookFn](),
+		postLoginHooks:         newQueue[authn.PostLoginHookFn](),
 	}
 
 	usageStats.RegisterMetricsFunc(s.getUsageStats)
@@ -70,6 +71,8 @@ type Service struct {
 
 	clients     map[string]authn.Client
 	clientQueue *queue[authn.ContextAwareClient]
+
+	idenityResolverClients map[string]authn.IdentityResolverClient
 
 	tracer  tracing.Tracer
 	metrics *metrics
@@ -292,18 +295,28 @@ func (s *Service) ResolveIdentity(ctx context.Context, orgID int64, namespaceID 
 	// hack to not update last seen
 	r.SetMeta(authn.MetaKeyIsLogin, "true")
 
-	identity, err := s.authenticate(ctx, clients.ProvideIdentity(namespaceID), r)
+	id, err := authn.ParseNamespaceID(namespaceID)
 	if err != nil {
 		return nil, err
 	}
 
-	return identity, nil
+	identity, err := s.resolveIdenity(ctx, orgID, id)
+	if err != nil {
+		return nil, err
+	}
+
+	return s.authenticate(ctx, clients.ProvideIdentity(identity), r)
 }
 
 func (s *Service) RegisterClient(c authn.Client) {
 	s.clients[c.Name()] = c
+
 	if cac, ok := c.(authn.ContextAwareClient); ok {
 		s.clientQueue.insert(cac, cac.Priority())
+	}
+
+	if rc, ok := c.(authn.IdentityResolverClient); ok {
+		s.idenityResolverClients[rc.Namespace()] = rc
 	}
 }
 
@@ -312,6 +325,25 @@ func (s *Service) SyncIdentity(ctx context.Context, identity *authn.Identity) er
 	// hack to not update last seen on external syncs
 	r.SetMeta(authn.MetaKeyIsLogin, "true")
 	return s.runPostAuthHooks(ctx, identity, r)
+}
+
+func (s *Service) resolveIdenity(ctx context.Context, orgID int64, namespaceID authn.NamespaceID) (*authn.Identity, error) {
+	if namespaceID.IsNamespace(authn.NamespaceUser, authn.NamespaceServiceAccount) {
+		return &authn.Identity{
+			OrgID: orgID,
+			ID:    namespaceID.String(),
+			ClientParams: authn.ClientParams{
+				AllowGlobalOrg:  true,
+				FetchSyncedUser: true,
+				SyncPermissions: true,
+			}}, nil
+	}
+
+	resolver, ok := s.idenityResolverClients[namespaceID.Namespace()]
+	if !ok {
+		return nil, authn.ErrUnsupportedIdentity.Errorf("no resolver for : %s", namespaceID.Namespace())
+	}
+	return resolver.ResolveIdentity(ctx, orgID, namespaceID)
 }
 
 func (s *Service) errorLogFunc(ctx context.Context, err error) func(msg string, ctx ...any) {
