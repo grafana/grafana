@@ -8,10 +8,11 @@ import {
   FunctionCall,
   FunctionCallBody,
   FunctionIdentifier,
+  GroupingLabels,
   Identifier,
   LabelMatcher,
-  LabelMatchers,
   LabelName,
+  MatchingModifierClause,
   MatchOp,
   NumberLiteral,
   On,
@@ -372,7 +373,7 @@ function handleBinary(expr: string, node: SyntaxNode, context: Context) {
   const visQuery = context.query;
   const left = node.firstChild!;
   const op = getString(expr, left.nextSibling);
-  const binModifier = getBinaryModifier(expr, node.getChild(BoolModifier));
+  const binModifier = getBinaryModifier(expr, node.getChild(BoolModifier) ?? node.getChild(MatchingModifierClause));
 
   const right = node.lastChild!;
 
@@ -441,18 +442,23 @@ function getBinaryModifier(
     return { isBool: true, isMatcher: false };
   } else {
     // const matcher = node.getChild(OnOrIgnoring);
-    const matcher = node.getChild(LabelMatchers);
-    if (!matcher) {
-      // Not sure what this could be, maybe should be an error.
-      return undefined;
+    // const matcher = node.getChild(On);
+    // if (!matcher) {
+    //   // Not sure what this could be, maybe should be an error.
+    //   return undefined;
+    // }
+    let labels = '';
+    const groupingLabels = node.getChild(GroupingLabels);
+    if (groupingLabels) {
+      labels = getAllByType(expr, groupingLabels, LabelName).join(', ');
     }
-    // const labels = getString(expr, matcher.getChild(GroupingLabels)?.getChild(GroupingLabelList));
-    const labels = getString(expr, matcher.getChild(LabelMatchers));
+    // getString(expr, node.getChild(GroupingLabels));
+    // const labels = getString(expr, matcher.getChild(LabelMatchers));
     return {
       isMatcher: true,
       isBool: false,
       matches: labels,
-      matchType: matcher.getChild(On) ? 'on' : 'ignoring',
+      matchType: node.getChild(On) ? 'on' : 'ignoring',
     };
   }
 }
