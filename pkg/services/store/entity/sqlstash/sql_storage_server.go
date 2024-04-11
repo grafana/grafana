@@ -246,6 +246,7 @@ func (s *sqlEntityServer) Read(ctx context.Context, r *entity.ReadEntityRequest)
 	res, err := s.read(ctx, s.sess, r)
 	if err != nil {
 		s.log.Error("read error", "error", err, "method", "read")
+		return nil, err
 	}
 	return res, nil
 }
