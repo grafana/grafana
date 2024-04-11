@@ -4,6 +4,7 @@ import {
   AggregateModifier,
   AggregateOp,
   BinaryExpr,
+  BoolModifier,
   FunctionCall,
   FunctionCallBody,
   FunctionIdentifier,
@@ -12,7 +13,6 @@ import {
   LabelMatcher,
   LabelMatchers,
   LabelName,
-  MatchingModifierClause,
   MatchOp,
   NumberLiteral,
   On,
@@ -373,7 +373,7 @@ function handleBinary(expr: string, node: SyntaxNode, context: Context) {
   const visQuery = context.query;
   const left = node.firstChild!;
   const op = getString(expr, left.nextSibling);
-  const binModifier = getBinaryModifier(expr, node.getChild(MatchingModifierClause));
+  const binModifier = getBinaryModifier(expr, node.getChild(BoolModifier));
 
   const right = node.lastChild!;
 
