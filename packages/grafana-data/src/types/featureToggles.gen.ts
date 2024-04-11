@@ -104,7 +104,6 @@ export interface FeatureToggles {
   configurableSchedulerTick?: boolean;
   influxdbSqlSupport?: boolean;
   alertingNoDataErrorExecution?: boolean;
-  angularDeprecationUI?: boolean;
   dashgpt?: boolean;
   aiGeneratedDashboardChanges?: boolean;
   reportingRetries?: boolean;

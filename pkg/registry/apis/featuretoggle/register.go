@@ -157,7 +157,6 @@ func (b *FeatureFlagAPIBuilder) GetAPIRoutes() *builder.APIRoutes {
 												Example: &v0alpha1.ResolvedToggleState{
 													Enabled: map[string]bool{
 														featuremgmt.FlagAutoMigrateOldPanels: true,
-														featuremgmt.FlagAngularDeprecationUI: false,
 													},
 												},
 												Examples: map[string]*spec3.Example{

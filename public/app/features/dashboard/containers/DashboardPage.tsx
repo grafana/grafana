@@ -360,7 +360,6 @@ export class UnthemedDashboardPage extends PureComponent<Props, State> {
     );
 
     const showDashboardMigrationNotice =
-      config.featureToggles.angularDeprecationUI &&
       dashboardWasAngular &&
       isAutoMigrationFlagSet() &&
       dashboard.uid !== null;
@@ -394,7 +393,7 @@ export class UnthemedDashboardPage extends PureComponent<Props, State> {
               <SubMenu dashboard={dashboard} annotations={dashboard.annotations.list} links={dashboard.links} />
             </section>
           )}
-          {config.featureToggles.angularDeprecationUI && dashboard.hasAngularPlugins() && dashboard.uid !== null && (
+          {dashboard.hasAngularPlugins() && dashboard.uid !== null && (
             <AngularDeprecationNotice
               dashboardUid={dashboard.uid}
               showAutoMigrateLink={dashboard.panels.some((panel) =>
