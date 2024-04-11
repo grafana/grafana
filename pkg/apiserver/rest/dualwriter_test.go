@@ -88,7 +88,8 @@ func Mode3_Test(t *testing.T) {
 	// it should update in both storages
 	dummy := &example.Pod{}
 	uoi := UpdatedObjInfoObj{}
-	uoi.UpdatedObject(context.Background(), dummy)
+	_, err = uoi.UpdatedObject(context.Background(), dummy)
+	assert.NoError(t, err)
 
 	var validateObjFn = func(ctx context.Context, obj runtime.Object) error { return nil }
 	var validateObjUpdateFn = func(ctx context.Context, obj, old runtime.Object) error { return nil }
