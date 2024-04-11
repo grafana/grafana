@@ -1,33 +1,33 @@
 # syntax=docker/dockerfile:1
 
-ARG BASE_IMAGE=406095609952.dkr.ecr.us-east-1.amazonaws.com/alpine:3.12.1
-ARG JS_IMAGE=406095609952.dkr.ecr.us-east-1.amazonaws.com/node:20.8.1-alpine
+ARG BASE_IMAGE=alpine:3.19.1
+ARG JS_IMAGE=node:20-alpine
 ARG JS_PLATFORM=linux/amd64
-ARG GO_IMAGE=406095609952.dkr.ecr.us-east-1.amazonaws.com/golang:1.21.8-alpine
+ARG GO_IMAGE=golang:1.21.8-alpine
 
 ARG GO_SRC=go-builder
 ARG JS_SRC=js-builder
 
-FROM ${JS_IMAGE} as js-builder
+FROM --platform=${JS_PLATFORM} ${JS_IMAGE} as js-builder
 
 ENV NODE_OPTIONS=--max_old_space_size=8000
 
 WORKDIR /tmp/grafana
 
-COPY grafana/package.json grafana/yarn.lock grafana/.yarnrc.yml ./
-COPY grafana/.yarn .yarn
-COPY grafana/packages packages
-COPY grafana/plugins-bundled plugins-bundled
-COPY grafana/public public
+COPY package.json yarn.lock .yarnrc.yml ./
+COPY .yarn .yarn
+COPY packages packages
+COPY plugins-bundled plugins-bundled
+COPY public public
 
 RUN apk add --no-cache make build-base python3
 
 RUN yarn install --immutable
 
-COPY grafana/tsconfig.json grafana/.eslintrc grafana/.editorconfig grafana/.browserslistrc grafana/.prettierrc.js ./
-COPY grafana/public public
-COPY grafana/scripts scripts
-COPY grafana/emails emails
+COPY tsconfig.json .eslintrc .editorconfig .browserslistrc .prettierrc.js ./
+COPY public public
+COPY scripts scripts
+COPY emails emails
 
 ENV NODE_ENV production
 RUN yarn build
@@ -40,6 +40,9 @@ ARG GO_BUILD_TAGS="oss"
 ARG WIRE_TAGS="oss"
 ARG BINGO="true"
 
+# This is required to allow building on arm64 due to https://github.com/golang/go/issues/22040
+RUN apk add --no-cache binutils-gold
+
 # Install build dependencies
 RUN if grep -i -q alpine /etc/issue; then \
       apk add --no-cache gcc g++ make git; \
@@ -47,11 +50,14 @@ RUN if grep -i -q alpine /etc/issue; then \
 
 WORKDIR /tmp/grafana
 
-COPY grafana/go.* ./
-COPY grafana/.bingo .bingo
+COPY go.* ./
+COPY .bingo .bingo
 
 # Include vendored dependencies
-COPY grafana/pkg/util/xorm/go.* pkg/util/xorm/
+COPY pkg/util/xorm/go.* pkg/util/xorm/
+COPY pkg/apiserver/go.* pkg/apiserver/
+COPY pkg/apimachinery/go.* pkg/apimachinery/
+COPY pkg/promlib/go.* pkg/promlib/
 
 RUN go mod download
 RUN if [[ "$BINGO" = "true" ]]; then \
@@ -59,18 +65,18 @@ RUN if [[ "$BINGO" = "true" ]]; then \
       bingo get -v; \
     fi
 
-COPY grafana/embed.go grafana/Makefile grafana/build.go grafana/package.json ./
-COPY grafana/cue.mod cue.mod
-COPY grafana/kinds kinds
-COPY grafana/local local
-COPY grafana/packages/grafana-schema packages/grafana-schema
-COPY grafana/public/app/plugins public/app/plugins
-COPY grafana/public/api-merged.json public/api-merged.json
-COPY grafana/pkg pkg
-COPY grafana/scripts scripts
-COPY grafana/conf conf
-COPY grafana/.github .github
-COPY grafana/LICENSE ./
+COPY embed.go Makefile build.go package.json ./
+COPY cue.mod cue.mod
+COPY kinds kinds
+COPY local local
+COPY packages/grafana-schema packages/grafana-schema
+COPY public/app/plugins public/app/plugins
+COPY public/api-merged.json public/api-merged.json
+COPY pkg pkg
+COPY scripts scripts
+COPY conf conf
+COPY .github .github
+COPY LICENSE ./
 
 ENV COMMIT_SHA=${COMMIT_SHA}
 ENV BUILD_BRANCH=${BUILD_BRANCH}
@@ -174,18 +180,9 @@ COPY --from=go-src /tmp/grafana/bin/grafana* /tmp/grafana/bin/*/grafana* ./bin/
 COPY --from=js-src /tmp/grafana/public ./public
 COPY --from=go-src /tmp/grafana/LICENSE ./
 
-# LOGZ.IO GRAFANA CHANGE :: Copy custom.ini
-COPY custom.ini conf/custom.ini
-RUN cp "$GF_PATHS_HOME/conf/custom.ini" "$GF_PATHS_CONFIG"
-# LOGZ.IO GRAFANA CHANGE :: Preinstall plugins
-# COPY grafana/data/plugins "$GF_PATHS_PLUGINS"
-# LOGZ.IO GRAFANA CHANGE :: Remove news panel
-RUN rm -rf ./public/app/plugins/panel/news
-# LOGZ.IO GRAFANA CHANGE :: Remove pluginlist panel - but it does not exist in v10
-# RUN rm -rf ./public/app/plugins/panel/pluginlist
-EXPOSE 3333
+EXPOSE 3000
 
-ARG RUN_SH=grafana/packaging/docker/run.sh
+ARG RUN_SH=./packaging/docker/run.sh
 
 COPY ${RUN_SH} /run.sh
 
