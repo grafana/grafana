@@ -51,7 +51,7 @@ func TestOAuthTokenSync_SyncOAuthTokenHook(t *testing.T) {
 		},
 		{
 			desc:                              "should invalidate access token and session token if token refresh fails",
-			identity:                          &authn.Identity{ID: "user:1", SessionToken: &auth.UserToken{}},
+			identity:                          &authn.Identity{ID: "user:1", SessionToken: &auth.UserToken{}, AuthenticatedBy: login.AzureADAuthModule},
 			expectHasEntryCalled:              true,
 			expectedTryRefreshErr:             errors.New("some err"),
 			expectTryRefreshTokenCalled:       true,
@@ -62,7 +62,7 @@ func TestOAuthTokenSync_SyncOAuthTokenHook(t *testing.T) {
 		},
 		{
 			desc:                              "should refresh the token successfully",
-			identity:                          &authn.Identity{ID: "user:1", SessionToken: &auth.UserToken{}},
+			identity:                          &authn.Identity{ID: "user:1", SessionToken: &auth.UserToken{}, AuthenticatedBy: login.AzureADAuthModule},
 			expectHasEntryCalled:              false,
 			expectTryRefreshTokenCalled:       true,
 			expectInvalidateOauthTokensCalled: false,
@@ -70,7 +70,7 @@ func TestOAuthTokenSync_SyncOAuthTokenHook(t *testing.T) {
 		},
 		{
 			desc:                              "should not invalidate the token if the token has already been refreshed by another request (singleflight)",
-			identity:                          &authn.Identity{ID: "user:1", SessionToken: &auth.UserToken{}},
+			identity:                          &authn.Identity{ID: "user:1", SessionToken: &auth.UserToken{}, AuthenticatedBy: login.AzureADAuthModule},
 			expectHasEntryCalled:              true,
 			expectTryRefreshTokenCalled:       true,
 			expectInvalidateOauthTokensCalled: false,

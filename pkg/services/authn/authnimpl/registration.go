@@ -43,7 +43,7 @@ func ProvideRegistration(
 	authnSvc.RegisterClient(clients.ProvideAPIKey(apikeyService))
 
 	if cfg.LoginCookieName != "" {
-		authnSvc.RegisterClient(clients.ProvideSession(cfg, sessionService))
+		authnSvc.RegisterClient(clients.ProvideSession(cfg, sessionService, authInfoService))
 	}
 
 	var proxyClients []authn.ProxyClient

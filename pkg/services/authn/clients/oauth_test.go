@@ -486,7 +486,7 @@ func TestOAuth_Logout(t *testing.T) {
 			}
 			c := ProvideOAuth(authn.ClientWithPrefix("azuread"), tt.cfg, mockService, fakeSocialSvc, &setting.OSSImpl{Cfg: tt.cfg}, featuremgmt.WithFeatures())
 
-			redirect, ok := c.Logout(context.Background(), &authn.Identity{}, &login.UserAuth{})
+			redirect, ok := c.Logout(context.Background(), &authn.Identity{})
 
 			assert.Equal(t, tt.expectedOK, ok)
 			if tt.expectedOK {

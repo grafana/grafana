@@ -241,10 +241,21 @@ func (c *OAuth) RedirectURL(ctx context.Context, r *authn.Request) (*authn.Redir
 	}, nil
 }
 
-func (c *OAuth) Logout(ctx context.Context, user identity.Requester, info *login.UserAuth) (*authn.Redirect, bool) {
+func (c *OAuth) Logout(ctx context.Context, user identity.Requester) (*authn.Redirect, bool) {
 	token := c.oauthService.GetCurrentOAuthToken(ctx, user)
 
-	if err := c.oauthService.InvalidateOAuthTokens(ctx, info); err != nil {
+	namespace, id := user.GetNamespacedID()
+	userID, err := identity.UserIdentifier(namespace, id)
+	if err != nil {
+		c.log.FromContext(ctx).Error("Failed to parse user id", "namespace", namespace, "id", id, "error", err)
+		return nil, false
+	}
+
+	if err := c.oauthService.InvalidateOAuthTokens(ctx, &login.UserAuth{
+		UserId:     userID,
+		AuthId:     user.GetAuthID(),
+		AuthModule: user.GetAuthenticatedBy(),
+	}); err != nil {
 		namespace, id := user.GetNamespacedID()
 		c.log.FromContext(ctx).Error("Failed to invalidate tokens", "namespace", namespace, "id", id, "error", err)
 	}
