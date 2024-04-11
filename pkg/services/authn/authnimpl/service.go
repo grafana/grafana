@@ -328,12 +328,22 @@ func (s *Service) SyncIdentity(ctx context.Context, identity *authn.Identity) er
 }
 
 func (s *Service) resolveIdenity(ctx context.Context, orgID int64, namespaceID authn.NamespaceID) (*authn.Identity, error) {
-	if namespaceID.IsNamespace(authn.NamespaceUser, authn.NamespaceServiceAccount) {
+	if namespaceID.IsNamespace(authn.NamespaceUser) {
 		return &authn.Identity{
 			OrgID: orgID,
 			ID:    namespaceID.String(),
 			ClientParams: authn.ClientParams{
 				AllowGlobalOrg:  true,
+				FetchSyncedUser: true,
+				SyncPermissions: true,
+			}}, nil
+	}
+
+	if namespaceID.IsNamespace(authn.NamespaceServiceAccount) {
+		return &authn.Identity{
+			ID:    namespaceID.String(),
+			OrgID: orgID,
+			ClientParams: authn.ClientParams{
 				FetchSyncedUser: true,
 				SyncPermissions: true,
 			}}, nil
