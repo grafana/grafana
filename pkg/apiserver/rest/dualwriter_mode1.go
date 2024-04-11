@@ -31,7 +31,7 @@ func (d *DualWriterMode1) Create(ctx context.Context, obj runtime.Object, create
 	return legacy.Create(ctx, obj, createValidation, options)
 }
 
-// Get overrides the default behavior of the DualWriter and reads only to LegacyStorage.
+// Get overrides the behavior of the generic DualWriter and reads only from LegacyStorage.
 func (d *DualWriterMode1) Get(ctx context.Context, name string, options *metav1.GetOptions) (runtime.Object, error) {
 	return d.Legacy.Get(ctx, name, options)
 }

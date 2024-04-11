@@ -25,19 +25,20 @@ func TestMode2(t *testing.T) {
 	assert.Equal(t, 1, lsSpy.Counts("LegacyStorage.Create"))
 	assert.Equal(t, 1, sSpy.Counts("Storage.Create"))
 
-	// Get: it should use the Legacy Get implementation
+	// Get: it should read from Storage with LegacyStorage as a fallback
+	// #TODO: Currently only testing the happy path. Refactor testing to more easily test other cases.
 	_, err = dw.Get(context.Background(), kind, &metav1.GetOptions{})
 	assert.NoError(t, err)
-	assert.Equal(t, 1, lsSpy.Counts("LegacyStorage.Get"))
-	assert.Equal(t, 0, sSpy.Counts("Storage.Get"))
+	assert.Equal(t, 0, lsSpy.Counts("LegacyStorage.Get"))
+	assert.Equal(t, 1, sSpy.Counts("Storage.Get"))
 
 	// List: it should use call both Legacy and Storage List methods
-	res, err := dw.List(context.Background(), &metainternalversion.ListOptions{})
+	l, err := dw.List(context.Background(), &metainternalversion.ListOptions{})
 	assert.NoError(t, err)
 	assert.Equal(t, 1, lsSpy.Counts("LegacyStorage.List"))
 	assert.Equal(t, 1, sSpy.Counts("Storage.List"))
 
-	resList, err := meta.ExtractList(res)
+	resList, err := meta.ExtractList(l)
 	assert.NoError(t, err)
 
 	expectedItems := map[string]string{
