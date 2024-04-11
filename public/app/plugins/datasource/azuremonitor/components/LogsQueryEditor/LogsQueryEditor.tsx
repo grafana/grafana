@@ -45,7 +45,7 @@ const LogsQueryEditor = ({
   data,
 }: LogsQueryEditorProps) => {
   const migrationError = useMigrations(datasource, query, onChange);
-  const [showBasicLogsToggle, setshowBasicLogsToggle] = useState<boolean>(false);
+  const [showBasicLogsToggle, setShowBasicLogsToggle] = useState<boolean>(false);
 
   const disableRow = (row: ResourceRow, selectedRows: ResourceRowGroup) => {
     if (selectedRows.length === 0) {
