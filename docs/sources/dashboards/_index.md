@@ -12,7 +12,6 @@ description: Create and manage dashboards
 hero:
   title: Dashboards
   level: 1
-  image: /media/docs/grafana/icon_dashboard.svg
   width: 110
   height: 110
   description: >-
@@ -22,27 +21,27 @@ cards:
   items:
     - title: Build dashboards
       href: /docs/grafana/latest/dashboards/build-dashboards/
-      description: Get step-by-step directions for how to create or import your first dashboard and modify dashboard settings. Learn how to create and manage reusable library panels, configure dashboard links, annotate visualizations, and use the dashboard JSON.
+      description: Get step-by-step directions for how to create or import your first dashboard and modify dashboard settings. Learn about reusable library panels, dashboard links, annotatations, and dashboard JSON.
       height: 24
     - title: Manage dashboards
       href: /docs/grafana/latest/dashboards/manage-dashboards/
-      description: Learn about dashboard management and generative AI features for dashboards
+      description: Learn about dashboard and folder management, as well as generative AI features for dashboards.
       height: 24
     - title: Variables
       href: /docs/grafana/latest/dashboards/variables/
-      description: Add variables to metric queries and panel titles to create interactive and dynamic dashboards
+      description: Add variables to metric queries and panel titles to create interactive and dynamic dashboards.
       height: 24
     - title: Public dashboards
       href: /docs/grafana/latest/dashboards/dashboard-public/
-      description: Make your Grafana dashboards public and share them with anyone
+      description: Make your Grafana dashboards public and share them with anyone.
       height: 24
     - title: Reporting
       href: /docs/grafana/latest/dashboards/create-reports/
-      description: Generate and share PDF reports from your Grafana dashboards
+      description: Generate and share PDF reports from your Grafana dashboards.
       height: 24
     - title: Sharing
       href: /docs/grafana/latest/dashboards/share-dashboards-panels/
-      description: Share Grafana dashboards and panels within your organization and publicly
+      description: Share Grafana dashboards and panels within your organization and publicly.
       height: 24
 ---
 
@@ -52,11 +51,9 @@ cards:
 
 ## Overview
 
-A dashboard is a set of one or more [panels][] organized and arranged into one or more rows. Grafana ships with a variety of panels making it easy to construct the right queries, and customize the visualization so that you can create the perfect dashboard for your need. Each panel can interact with data from any configured Grafana [data source][].
+A dashboard is a set of one or more [panels][] organized and arranged into one or more rows. Grafana ships with a variety of panels making it easy to construct the right queries, and customize the visualization so that you can create the perfect dashboard for your needs. Each panel can interact with data from any configured Grafana [data source][].
 
-Dashboard snapshots are static. Queries and expressions cannot be re-executed from snapshots. As a result, if you update any variables in your query or expression, it will not change your dashboard data.
-
-Before you begin, ensure that you have configured a data source. See also:
+## Explore
 
 {{< card-grid key="cards" type="simple" >}}
 
