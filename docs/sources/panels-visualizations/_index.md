@@ -23,32 +23,24 @@ hero:
   width: 110
   height: 110
   description: >-
-    Easily collect, correlate, and visualize data so you can make informed decisions, experience enhanced system performance, and streamline your troubleshooting. Grafana’s growing suite of visualizations, ranging from time series graphs to heatmaps to cutting-edge 3D charts, help you decode complex datasets.
+    Easily collect, correlate, and visualize data so you can make informed decisions in real time.
 cards:
   title_class: pt-0 lh-1
   items:
-    - title: TBD
-      href: /docs/grafana/latest/panels-visualizations/
+    - title: Visualizations
+      href: /docs/grafana/latest/panels-visualizations/visualizations/
       description:
       height: 24
-    - title: TBD
-      href: /docs/grafana/latest/panels-visualizations/
-      description:
+    - title: Panel editor overview
+      href: /docs/grafana/latest/panels-visualizations/panel-editor-overview/
+      description: Learn about the features of the panel editor
       height: 24
-    - title: TBD
-      href: /docs/grafana/latest/panels-visualizations/
-      description:
+    - title: Configure standard options
+      href: /docs/grafana/latest/panels-visualizations/configure-standard-options/
+      description: Configure standard options like units, min, max, and colors.
       height: 24
-    - title: TBD
-      href: /docs/grafana/latest/panels-visualizations/
-      description:
-      height: 24
-    - title: TBD
-      href: /docs/grafana/latest/panels-visualizations/
-      description:
-      height: 24
-    - title: TBD
-      href: /docs/grafana/latest/panels-visualizations/
+    - title: Query and transform data
+      href: /docs/grafana/latest/panels-visualizations/query-transform-data/
       description:
       height: 24
 ---
@@ -58,6 +50,12 @@ cards:
 ---
 
 ## Overview
+
+Panels are the basic building block in Grafana, composed by a query and a visualization&mdash;a graphical representation of query results&mdash;. You can apply [transformations][], which process the result set of a query before it’s passed on for visualization.
+
+Panels offer a great deal of flexibility; they can be moved and resized within a dashboard, saved as reusable library panels, used as a data source, and include links to other data or dashboards.
+
+Grafana’s growing suite of visualizations, ranging from time series graphs to heatmaps to cutting-edge 3D charts, help you decode complex datasets.
 
 ## Explore
 
@@ -82,7 +80,7 @@ Before you add a panel, ensure that you have configured a data source.
 
 This section includes the following sub topics:
 
-{{< section >}}
+{{< section >}} -->
 
 {{% docs/reference %}}
 [Data source management]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/administration/data-source-management"
@@ -90,4 +88,7 @@ This section includes the following sub topics:
 
 [Data sources]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/datasources"
 [Data sources]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/datasources"
-{{% /docs/reference %}} -->
+
+[transformations]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/datasources"
+[transformations]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/datasources"
+{{% /docs/reference %}}
