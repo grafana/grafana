@@ -14,7 +14,6 @@ import (
 
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/envvars"
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
 )
 
 var _ envvars.Provider = (*EnvVarsProvider)(nil)
@@ -142,12 +141,7 @@ func (p *EnvVarsProvider) secureSocksProxyEnvVars() []string {
 }
 
 func (p *EnvVarsProvider) tracingEnvVars(plugin *plugins.Plugin) []string {
-	pluginTracingEnabled := p.cfg.Features.IsEnabledGlobally(featuremgmt.FlagEnablePluginsTracingByDefault)
-	if v, exists := p.cfg.PluginSettings[plugin.ID]["tracing"]; exists && !pluginTracingEnabled {
-		pluginTracingEnabled = v == "true"
-	}
-
-	if !p.cfg.Tracing.IsEnabled() || !pluginTracingEnabled {
+	if !p.cfg.Tracing.IsEnabled() {
 		return nil
 	}
 

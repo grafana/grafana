@@ -157,7 +157,6 @@ export interface FeatureToggles {
   regressionTransformation?: boolean;
   lokiQueryHints?: boolean;
   kubernetesFeatureToggles?: boolean;
-  enablePluginsTracingByDefault?: boolean;
   cloudRBACRoles?: boolean;
   alertingQueryOptimization?: boolean;
   newFolderPicker?: boolean;

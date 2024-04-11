@@ -1036,15 +1036,6 @@ var (
 			HideFromAdminPage: true,
 		},
 		{
-			Name:            "enablePluginsTracingByDefault",
-			Description:     "Enable plugin tracing for all external plugins",
-			FrontendOnly:    false,
-			Stage:           FeatureStageGeneralAvailability,
-			Owner:           grafanaPluginsPlatformSquad,
-			RequiresRestart: true,
-			Expression:      "true", // enabled by default
-		},
-		{
 			Name:            "cloudRBACRoles",
 			Description:     "Enabled grafana cloud specific RBAC roles",
 			Stage:           FeatureStageExperimental,
