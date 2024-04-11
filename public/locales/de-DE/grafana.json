@@ -446,10 +446,11 @@
       "delete-query-tooltip": "Abfrage löschen",
       "delete-starred-query-confirmation-text": "Sind Sie sicher, dass Sie die markierte Abfrage dauerhaft löschen möchten?",
       "edit-comment-tooltip": "Kommentar bearbeiten",
-      "loading-text": "wird geladen...",
+      "left-pane": "",
       "optional-description": "Eine optionale Beschreibung dessen, was die Abfrage tut.",
       "query-comment-label": "Abfrage-Kommentar",
       "query-text-label": "Abfragetext",
+      "right-pane": "",
       "run-query-button": "Abfrage ausführen",
       "save-comment": "Kommentar speichern",
       "star-query-tooltip": "Abfrage anwählen",
@@ -786,9 +787,14 @@
       "not-migrated": "Noch nicht hochgeladen",
       "unknown": "Unbekannt"
     },
+    "resource-table": {
+      "unknown-datasource-title": "",
+      "unknown-datasource-type": ""
+    },
     "resource-type": {
       "dashboard": "Dashboard",
       "datasource": "Datenquelle",
+      "folder": "",
       "unknown": "Unbekannt"
     },
     "summary": {

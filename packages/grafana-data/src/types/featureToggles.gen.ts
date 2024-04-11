@@ -149,7 +149,7 @@ export interface FeatureToggles {
   canvasPanelPanZoom?: boolean;
   logsInfiniteScrolling?: boolean;
   flameGraphItemCollapsing?: boolean;
-  datatrails?: boolean;
+  exploreMetrics?: boolean;
   alertingSimplifiedRouting?: boolean;
   logRowsPopoverMenu?: boolean;
   pluginsSkipHostEnvVars?: boolean;
@@ -179,4 +179,5 @@ export interface FeatureToggles {
   usePrometheusFrontendPackage?: boolean;
   oauthRequireSubClaim?: boolean;
   newDashboardWithFiltersAndGroupBy?: boolean;
+  cloudWatchNewLabelParsing?: boolean;
 }

@@ -130,7 +130,7 @@ ssoSettingsApi,preview,@grafana/identity-access-team,false,false,false
 canvasPanelPanZoom,preview,@grafana/dataviz-squad,false,false,true
 logsInfiniteScrolling,experimental,@grafana/observability-logs,false,false,true
 flameGraphItemCollapsing,experimental,@grafana/observability-traces-and-profiling,false,false,true
-datatrails,experimental,@grafana/dashboards-squad,false,false,true
+exploreMetrics,GA,@grafana/dashboards-squad,false,false,true
 alertingSimplifiedRouting,GA,@grafana/alerting-squad,false,false,false
 logRowsPopoverMenu,GA,@grafana/observability-logs,false,false,true
 pluginsSkipHostEnvVars,experimental,@grafana/plugins-platform-backend,false,false,false
@@ -160,3 +160,4 @@ ssoSettingsSAML,experimental,@grafana/identity-access-team,false,false,false
 usePrometheusFrontendPackage,experimental,@grafana/observability-metrics,false,false,true
 oauthRequireSubClaim,experimental,@grafana/identity-access-team,false,false,false
 newDashboardWithFiltersAndGroupBy,experimental,@grafana/dashboards-squad,false,false,false
+cloudWatchNewLabelParsing,GA,@grafana/aws-datasources,false,false,false
