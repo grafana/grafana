@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"io"
 	"net/http"
 	"net/http/httptest"
 	"os"
@@ -774,12 +773,6 @@ func Test_PluginsSettings(t *testing.T) {
 		Info: plugins.Info{
 			Version: "1.0.0",
 		}}, plugins.ClassExternal, plugins.NewFakeFS())
-	// p2 := createPlugin(
-	// 	plugins.JSONData{ID: "mysql", Type: "datasource", Name: "MySQL",
-	// 		Info: plugins.Info{
-	// 			Author:      plugins.InfoLink{Name: "Grafana Labs", URL: "https://grafana.com"},
-	// 			Description: "Data source for MySQL databases",
-	// 		}}, plugins.ClassCore, plugins.NewFakeFS())
 
 	pluginRegistry := &fakes.FakePluginRegistry{
 		Store: map[string]*plugins.Plugin{
@@ -814,9 +807,9 @@ func Test_PluginsSettings(t *testing.T) {
 		},
 		{
 			desc:          "should return a plugin error",
-			expectedCode:  http.StatusNotFound,
+			expectedCode:  http.StatusBadRequest,
 			errCode:       plugins.ErrorCodeFailedStart,
-			expectedError: "foo",
+			expectedError: "Plugin failed to start",
 		},
 	}
 
@@ -849,10 +842,10 @@ func Test_PluginsSettings(t *testing.T) {
 				require.NoError(t, res.Body.Close())
 				assert.Equal(t, tc.expectedSettings, result)
 			} else {
-				result, err := io.ReadAll(res.Body)
+				var respJson map[string]any
+				err := json.NewDecoder(res.Body).Decode(&respJson)
 				require.NoError(t, err)
-				require.NoError(t, res.Body.Close())
-				assert.Equal(t, tc.expectedError, string(result))
+				require.Equal(t, tc.expectedError, respJson["message"])
 			}
 		})
 	}
