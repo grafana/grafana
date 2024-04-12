@@ -1,8 +1,6 @@
 # Making changes to the Drone pipeline
 
-{{% admonition type="note" %}}
-Only members of the Grafana Organization can make changes to the Drone pipeline.
-{{% /admonition %}}
+> Only members of the Grafana Organization can make changes to the Drone pipeline.
 
 The Drone pipelines are built with [Starlark](https://github.com/bazelbuild/starlark), a similar language to Python. The Starlark files are located in [`scripts/drone`](https://github.com/grafana/grafana/tree/main/scripts/drone).
 
