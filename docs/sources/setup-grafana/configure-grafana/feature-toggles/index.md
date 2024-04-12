@@ -175,7 +175,7 @@ Experimental features might be changed or removed without prior notice.
 | `nodeGraphDotLayout`                        | Changed the layout algorithm for the node graph                                                                                                                                                                                                                                   |
 | `kubernetesAggregator`                      | Enable grafana aggregator                                                                                                                                                                                                                                                         |
 | `expressionParser`                          | Enable new expression parser                                                                                                                                                                                                                                                      |
-| `actionSets`                                | Introduces action sets for resource permissions                                                                                                                                                                                                                                   |
+| `accessActionSets`                          | Introduces action sets for resource permissions                                                                                                                                                                                                                                   |
 
 ## Development feature toggles
 
