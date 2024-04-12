@@ -58,19 +58,18 @@ import { EmptyState, TextLink } from '@grafana/ui';
 
 Use in place of content when a search query or filter returns no results.
 
-There are sensible defaults for the image and message, so in most cases you can use it without any additional props.
+There are sensible defaults for the image, so in most cases all you need to provide is a message.
 
 ```jsx
 import { EmptyState } from '@grafana/ui';
 
-<EmptyState variant="not-found" />;
+<EmptyState variant="not-found" message="No playlists found" />;
 ```
 
 ## Customization
 
 For all variants you can:
 
-- provide a custom message
 - provide a custom image or hide the image entirely
 - provide a button (e.g. to provide a call to action or clear the search query)
 - provide additional information via React children

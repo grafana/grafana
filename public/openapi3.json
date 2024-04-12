@@ -217,7 +217,7 @@
         "content": {
           "application/json": {
             "schema": {
-              "$ref": "#/components/schemas/CloudMigrationRun"
+              "$ref": "#/components/schemas/MigrateDataResponseDTO"
             }
           }
         },
@@ -3532,6 +3532,14 @@
         },
         "type": "object"
       },
+      "CloudMigrationRequest": {
+        "properties": {
+          "authToken": {
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
       "CloudMigrationResponse": {
         "properties": {
           "created": {
@@ -3552,44 +3560,11 @@
         },
         "type": "object"
       },
-      "CloudMigrationRun": {
-        "properties": {
-          "created": {
-            "format": "date-time",
-            "type": "string"
-          },
-          "finished": {
-            "format": "date-time",
-            "type": "string"
-          },
-          "id": {
-            "format": "int64",
-            "type": "integer"
-          },
-          "items": {
-            "items": {
-              "$ref": "#/components/schemas/MigratedResource"
-            },
-            "type": "array"
-          },
-          "result": {
-            "$ref": "#/components/schemas/MigrationResult"
-          },
-          "uid": {
-            "type": "string"
-          },
-          "updated": {
-            "format": "date-time",
-            "type": "string"
-          }
-        },
-        "type": "object"
-      },
       "CloudMigrationRunList": {
         "properties": {
           "runs": {
             "items": {
-              "$ref": "#/components/schemas/CloudMigrationRun"
+              "$ref": "#/components/schemas/MigrateDataResponseDTO"
             },
             "type": "array"
           }
@@ -6737,46 +6712,50 @@
         ],
         "type": "object"
       },
-      "MigratedResource": {
+      "MigrateDataResponseDTO": {
         "properties": {
           "id": {
+            "format": "int64",
+            "type": "integer"
+          },
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/MigrateDataResponseItemDTO"
+            },
+            "type": "array"
+          }
+        },
+        "type": "object"
+      },
+      "MigrateDataResponseItemDTO": {
+        "properties": {
+          "error": {
             "type": "string"
           },
-          "name": {
+          "refId": {
             "type": "string"
           },
-          "refID": {
+          "status": {
+            "enum": [
+              "OK",
+              "ERROR"
+            ],
             "type": "string"
-          },
-          "result": {
-            "$ref": "#/components/schemas/MigratedResourceResult"
           },
           "type": {
+            "enum": [
+              "DASHBOARD",
+              "DATASOURCE",
+              "FOLDER"
+            ],
             "type": "string"
           }
         },
-        "type": "object"
-      },
-      "MigratedResourceResult": {
-        "properties": {
-          "message": {
-            "type": "string"
-          },
-          "status": {
-            "type": "string"
-          }
-        },
-        "type": "object"
-      },
-      "MigrationResult": {
-        "properties": {
-          "message": {
-            "type": "string"
-          },
-          "status": {
-            "type": "string"
-          }
-        },
+        "required": [
+          "type",
+          "refId",
+          "status"
+        ],
         "type": "object"
       },
       "MoveFolderCommand": {
@@ -14842,15 +14821,17 @@
       },
       "post": {
         "operationId": "createMigration",
-        "parameters": [
-          {
-            "in": "query",
-            "name": "authToken",
-            "schema": {
-              "type": "string"
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CloudMigrationRequest"
+              }
             }
-          }
-        ],
+          },
+          "required": true,
+          "x-originalParamName": "body"
+        },
         "responses": {
           "200": {
             "$ref": "#/components/responses/cloudMigrationResponse"
@@ -14967,6 +14948,40 @@
           }
         },
         "summary": "Get a list of migration runs for a migration.",
+        "tags": [
+          "migrations"
+        ]
+      },
+      "post": {
+        "description": "It returns migrations that has been created.",
+        "operationId": "runCloudMigration",
+        "parameters": [
+          {
+            "description": "ID of an migration",
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "format": "int64",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/cloudMigrationRunResponse"
+          },
+          "401": {
+            "$ref": "#/components/responses/unauthorisedError"
+          },
+          "403": {
+            "$ref": "#/components/responses/forbiddenError"
+          },
+          "500": {
+            "$ref": "#/components/responses/internalServerError"
+          }
+        },
+        "summary": "Trigger the run of a migration to the Grafana Cloud.",
         "tags": [
           "migrations"
         ]

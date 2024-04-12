@@ -45,6 +45,7 @@ export const Basic: StoryFn<typeof EmptyState> = (args) => {
 Basic.args = {
   button: 'Create',
   children: 'Use this space to add any additional information',
+  message: "You haven't created any dashboards yet",
   variant: 'call-to-action',
 };
 

@@ -31,7 +31,7 @@ const verticalOptions: Array<SelectableValue<VerticalConstraint>> = [
   { label: 'Scale', value: VerticalConstraint.Scale },
 ];
 
-type Props = StandardEditorProps<any, CanvasEditorOptions, Options>;
+type Props = StandardEditorProps<unknown, CanvasEditorOptions, Options>;
 
 export function PlacementEditor({ item }: Props) {
   const settings = item.settings;

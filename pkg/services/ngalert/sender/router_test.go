@@ -411,7 +411,7 @@ func createMultiOrgAlertmanager(t *testing.T, orgs []int64) *notifier.MultiOrgAl
 	m := metrics.NewNGAlert(registry)
 	secretsService := secretsManager.SetupTestService(t, fake_secrets.NewFakeSecretsStore())
 	decryptFn := secretsService.GetDecryptedValue
-	moa, err := notifier.NewMultiOrgAlertmanager(cfg, cfgStore, orgStore, kvStore, fakes.NewFakeProvisioningStore(), decryptFn, m.GetMultiOrgAlertmanagerMetrics(), nil, log.New("testlogger"), secretsService, &featuremgmt.FeatureManager{})
+	moa, err := notifier.NewMultiOrgAlertmanager(cfg, cfgStore, orgStore, kvStore, fakes.NewFakeProvisioningStore(), decryptFn, m.GetMultiOrgAlertmanagerMetrics(), nil, log.New("testlogger"), secretsService, featuremgmt.WithFeatures())
 	require.NoError(t, err)
 	require.NoError(t, moa.LoadAndSyncAlertmanagersForOrgs(context.Background()))
 	require.Eventually(t, func() bool {
@@ -539,6 +539,42 @@ func TestBuildExternalURL(t *testing.T) {
 				}(),
 			},
 			expectedURL: "https://localhost:9000/path/to/am",
+		},
+		{
+			name: "do not add /alertmanager to path when last segment already contains it",
+			ds: &datasources.DataSource{
+				URL: "https://localhost:9000/path/to/alertmanager",
+				JsonData: func() *simplejson.Json {
+					r := simplejson.New()
+					r.Set("implementation", "mimir")
+					return r
+				}(),
+			},
+			expectedURL: "https://localhost:9000/path/to/alertmanager",
+		},
+		{
+			name: "add /alertmanager to path when last segment does not exactly match",
+			ds: &datasources.DataSource{
+				URL: "https://localhost:9000/path/to/alertmanagerasdf",
+				JsonData: func() *simplejson.Json {
+					r := simplejson.New()
+					r.Set("implementation", "mimir")
+					return r
+				}(),
+			},
+			expectedURL: "https://localhost:9000/path/to/alertmanagerasdf/alertmanager",
+		},
+		{
+			name: "add /alertmanager to path when exists but is not last segment",
+			ds: &datasources.DataSource{
+				URL: "https://localhost:9000/alertmanager/path/to/am",
+				JsonData: func() *simplejson.Json {
+					r := simplejson.New()
+					r.Set("implementation", "mimir")
+					return r
+				}(),
+			},
+			expectedURL: "https://localhost:9000/alertmanager/path/to/am/alertmanager",
 		},
 	}
 	for _, test := range tests {
