@@ -240,6 +240,11 @@ export default class CloudMonitoringDatasource extends DataSourceWithBackend<
       !query.hasOwnProperty('timeSeriesQuery') &&
       !query.hasOwnProperty('timeSeriesList')
     ) {
+      let filters = rest.filters || [];
+      if (rest.metricType) {
+        filters = this.migrateMetricTypeFilter(rest.metricType, filters);
+      }
+
       return {
         datasource,
         key,
