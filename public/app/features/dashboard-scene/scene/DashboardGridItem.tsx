@@ -158,6 +158,7 @@ export class DashboardGridItem extends SceneObjectBase<DashboardGridItemState> i
     }
 
     if (!(variable instanceof MultiValueVariable)) {
+      console.error('DashboardGridItem: Variable is not a MultiValueVariable');
       return;
     }
 
