@@ -166,7 +166,7 @@ func (d *DualWriterMode2) Delete(ctx context.Context, name string, deleteValidat
 	_, _, errUS := d.Storage.Delete(ctx, name, deleteValidation, options)
 	if errUS != nil {
 		if !apierrors.IsNotFound(errUS) {
-			klog.FromContext(ctx).Error(errUS, "could not delete from unified store", "mode", Mode2)
+			klog.FromContext(ctx).Error(errUS, "could not delete from duplicate storage", "mode", 2)
 		}
 	}
 
