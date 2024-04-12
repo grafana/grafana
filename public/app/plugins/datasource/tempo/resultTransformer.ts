@@ -624,11 +624,7 @@ export function createTableFrameFromTraceQlQuery(
 
       // Note: this is a workaround to display the duration in the table when it is <1ms
       // and the duration is not available in the trace data response.
-      if (traceData.traceDuration) {
-        frame.fields[4].values.push(traceData.traceDuration);
-      } else {
-        frame.fields[4].values.push('<1ms');
-      }
+      frame.fields[4].values.push(traceData.traceDuration ? traceData.traceDuration : '<1ms');
 
       if (trace.spanSets) {
         frame.fields[5].values.push(
