@@ -20,27 +20,27 @@ cards:
   title_class: pt-0 lh-1
   items:
     - title: Build dashboards
-      href: /docs/grafana/latest/dashboards/build-dashboards/
+      href: ./build-dashboards/
       description: Get step-by-step directions for how to create or import your first dashboard and modify dashboard settings. Learn about reusable library panels, dashboard links, annotatations, and dashboard JSON.
       height: 24
     - title: Manage dashboards
-      href: /docs/grafana/latest/dashboards/manage-dashboards/
+      href: ./manage-dashboards/
       description: Learn about dashboard and folder management, as well as generative AI features for dashboards.
       height: 24
     - title: Variables
-      href: /docs/grafana/latest/dashboards/variables/
+      href: ./variables/
       description: Add variables to metric queries and panel titles to create interactive and dynamic dashboards.
       height: 24
     - title: Public dashboards
-      href: /docs/grafana/latest/dashboards/dashboard-public/
+      href: ./dashboard-public/
       description: Make your Grafana dashboards public and share them with anyone.
       height: 24
     - title: Reporting
-      href: /docs/grafana/latest/dashboards/create-reports/
+      href: ./create-reports/
       description: Generate and share PDF reports from your Grafana dashboards.
       height: 24
     - title: Sharing
-      href: /docs/grafana/latest/dashboards/share-dashboards-panels/
+      href: ./share-dashboards-panels/
       description: Share Grafana dashboards and panels within your organization and publicly.
       height: 24
 ---
