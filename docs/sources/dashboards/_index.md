@@ -15,7 +15,7 @@ hero:
   width: 110
   height: 110
   description: >-
-    Dashboards allow you to query, visualize, alert on, and understand your data no matter where it’s stored.
+    Dashboards allow you to query, transform, visualize, and understand your data no matter where it’s stored.
 cards:
   title_class: pt-0 lh-1
   items:
