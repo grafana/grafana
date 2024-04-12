@@ -853,11 +853,12 @@ def playwright_e2e_tests_step():
             "PROV_DIR": "/grafana/scripts/grafana-server/tmp/conf/provisioning",
         },
         "name": "playwright-plugin-e2e",
-        "image": images["node"],
+        "image": images["ubuntu"],
         "depends_on": [
             "grafana-server",
         ],
         "commands": [
+            "sleep 10s",  # it seems sometimes that grafana-server is not actually ready when the step starts, so waiting for a few seconds before running the tests
             "yarn playwright install --with-deps chromium",
             "yarn e2e:playwright",
         ],
