@@ -15,8 +15,9 @@ const (
 	NamespaceAnonymous      = identity.NamespaceAnonymous
 	NamespaceRenderService  = identity.NamespaceRenderService
 	NamespaceAccessPolicy   = identity.NamespaceAccessPolicy
-	AnonymousNamespaceID    = NamespaceAnonymous + ":0"
 )
+
+var AnonymousNamespaceID = MustNewNamespaceID(NamespaceAnonymous, 0)
 
 var namespaceLookup = map[string]struct{}{
 	NamespaceUser:           {},
@@ -25,11 +26,6 @@ var namespaceLookup = map[string]struct{}{
 	NamespaceAnonymous:      {},
 	NamespaceRenderService:  {},
 	NamespaceAccessPolicy:   {},
-}
-
-// NamespacedID builds a namespaced ID from a namespace and an ID.
-func NamespacedID(namespace string, id int64) string {
-	return fmt.Sprintf("%s:%d", namespace, id)
 }
 
 func ParseNamespaceID(str string) (NamespaceID, error) {
@@ -62,6 +58,27 @@ func MustParseNamespaceID(str string) NamespaceID {
 	return namespaceID
 }
 
+// NewNamespaceID create a new NamespaceID, will fail for invalid namespace.
+func NewNamespaceID(namespace string, id int64) (NamespaceID, error) {
+	var namespaceID NamespaceID
+	if _, ok := namespaceLookup[namespace]; !ok {
+		return namespaceID, ErrInvalidNamepsaceID.Errorf("got invalid namespace %s", namespace)
+	}
+	namespaceID.id = strconv.FormatInt(id, 10)
+	namespaceID.namespace = namespace
+	return namespaceID, nil
+}
+
+// MustNewNamespaceID create a new NamespaceID, will panic for invalid namespace.
+// Sutable to use in tests or when we can garantuee that we pass a correct format.
+func MustNewNamespaceID(namespace string, id int64) NamespaceID {
+	namespaceID, err := NewNamespaceID(namespace, id)
+	if err != nil {
+		panic(err)
+	}
+	return namespaceID
+}
+
 // FIXME: use this instead of encoded string through the codebase
 type NamespaceID struct {
 	id        string
@@ -86,4 +103,8 @@ func (ni NamespaceID) IsNamespace(expected ...string) bool {
 
 func (ni NamespaceID) String() string {
 	return fmt.Sprintf("%s:%s", ni.namespace, ni.id)
+}
+
+func (ni NamespaceID) GoString() string {
+	return ni.String()
 }
