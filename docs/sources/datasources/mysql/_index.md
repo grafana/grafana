@@ -27,6 +27,8 @@ For instructions on how to add a data source to Grafana, refer to the [administr
 Only users with the organization administrator role can add data sources.
 Administrators can also [configure the data source via YAML](#provision-the-data-source) with Grafana's provisioning system.
 
+{{< docs/play title="MySQL: Cities of the World Sample Data Set" url="https://play.grafana.org/d/8JOvPQr7k/" >}}
+
 ## Configure the data source
 
 **To access the data source configuration page:**
