@@ -121,7 +121,7 @@ const RenderResults = ({ isFetchingSearchResults, searchResults }: RenderResults
   const showEmptyState = !isFetchingSearchResults && items.length === 0;
 
   return showEmptyState ? (
-    <EmptyState variant="not-found" />
+    <EmptyState variant="not-found" message={t('command-palette.empty-state.message', 'No results found')} />
   ) : (
     <KBarResults
       items={items}
