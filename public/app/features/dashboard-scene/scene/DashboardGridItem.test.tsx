@@ -1,8 +1,10 @@
 import { getPanelPlugin } from '@grafana/data/test/__mocks__/pluginMocks';
 import { setPluginImportUtils } from '@grafana/runtime';
-import { SceneGridLayout } from '@grafana/scenes';
+import { SceneGridLayout, VizPanel } from '@grafana/scenes';
 
 import { activateFullSceneTree, buildPanelRepeaterScene } from '../utils/test-utils';
+
+import { DashboardGridItem } from './DashboardGridItem';
 
 setPluginImportUtils({
   importPanelPlugin: (id: string) => Promise.resolve(getPanelPlugin({})),
@@ -115,5 +117,19 @@ describe('PanelRepeaterGridItem', () => {
     expect(repeater.state.repeatedPanels?.[0].state.$variables?.state.variables[0].state.name).toBe(
       '_____default_sys_repeat_var_____'
     );
+  });
+
+  it('Should return className when repeat variable is set', () => {
+    const { repeater } = buildPanelRepeaterScene({ variableQueryTime: 0 });
+
+    expect(repeater.getClassName()).toBe('panel-repeater-grid-item');
+  });
+
+  it('Should not className variable is not set', () => {
+    const gridItem = new DashboardGridItem({
+      body: new VizPanel({ pluginId: 'text' }),
+    });
+
+    expect(gridItem.getClassName()).toBe('');
   });
 });

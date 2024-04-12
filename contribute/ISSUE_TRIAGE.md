@@ -180,7 +180,7 @@ If it's not perfectly clear that it's an actual bug, quickly try to reproduce it
 
 1. Add a comment describing detailed steps for how to reproduce it, if applicable.
 2. Label the issue `type/bug` and at least one `area/*` or `datasource/*` label.
-3. If you know that maintainers wont be able to put any resources into it for some time then label the issue with `help wanted` and optionally `beginner friendly` together with pointers on which code to update to fix the bug. This should signal to the community that we would appreciate any help we can get to resolve this.
+3. If you know that maintainers won't be able to put any resources into it for some time then label the issue with `help wanted` and optionally `beginner friendly` together with pointers on which code to update to fix the bug. This should signal to the community that we would appreciate any help we can get to resolve this.
 4. Move on to [prioritizing the issue](#4-prioritization-of-issues).
 
 **It can't be reproduced:**

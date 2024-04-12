@@ -26,13 +26,13 @@ import {
   useStyles2,
 } from '@grafana/ui';
 import ConditionalWrap from 'app/features/alerting/unified/components/ConditionalWrap';
+import { useURLSearchParams } from 'app/features/alerting/unified/hooks/useURLSearchParams';
 import { receiverTypeNames } from 'app/plugins/datasource/alertmanager/consts';
 import { GrafanaManagedReceiverConfig } from 'app/plugins/datasource/alertmanager/types';
 import { GrafanaNotifierType, NotifierStatus } from 'app/types/alerting';
 
 import { AlertmanagerAction, useAlertmanagerAbility } from '../../hooks/useAbilities';
 import { usePagination } from '../../hooks/usePagination';
-import { useURLSearchParams } from '../../hooks/useURLSearchParams';
 import { useAlertmanager } from '../../state/AlertmanagerContext';
 import { INTEGRATION_ICONS } from '../../types/contact-points';
 import { GRAFANA_RULES_SOURCE_NAME } from '../../utils/datasource';
@@ -62,17 +62,35 @@ import {
 } from './useContactPoints';
 import { ContactPointWithMetadata, getReceiverDescription, isProvisioned, ReceiverConfigWithMetadata } from './utils';
 
-enum ActiveTab {
-  ContactPoints,
-  NotificationTemplates,
+export enum ActiveTab {
+  ContactPoints = 'contact_points',
+  NotificationTemplates = 'templates',
 }
 
 const DEFAULT_PAGE_SIZE = 10;
 
+const useTabQueryParam = () => {
+  const [queryParams, setQueryParams] = useURLSearchParams();
+  const param = useMemo(() => {
+    const queryParam = queryParams.get('tab');
+
+    if (!queryParam || !Object.values(ActiveTab).map(String).includes(queryParam)) {
+      return ActiveTab.ContactPoints;
+    }
+
+    return queryParam || ActiveTab.ContactPoints;
+  }, [queryParams]);
+
+  const setParam = (tab: ActiveTab) => setQueryParams({ tab });
+
+  return [param, setParam] as const;
+};
+
 const ContactPoints = () => {
   const { selectedAlertmanager } = useAlertmanager();
-  // TODO hook up to query params
-  const [activeTab, setActiveTab] = useState<ActiveTab>(ActiveTab.ContactPoints);
+  const [queryParams] = useURLSearchParams();
+  const [activeTab, setActiveTab] = useTabQueryParam();
+
   let { isLoading, error, contactPoints } = useContactPointsWithStatus();
   const { deleteTrigger, updateAlertmanagerState } = useDeleteContactPoint(selectedAlertmanager!);
   const [addContactPointSupported, addContactPointAllowed] = useAlertmanagerAbility(
@@ -88,8 +106,7 @@ const ContactPoints = () => {
   const [DeleteModal, showDeleteModal] = useDeleteContactPointModal(deleteTrigger, updateAlertmanagerState.isLoading);
   const [ExportDrawer, showExportDrawer] = useExportContactPoint();
 
-  const [searchParams] = useURLSearchParams();
-  const { search } = getContactPointsFilters(searchParams);
+  const search = queryParams.get('search');
 
   const showingContactPoints = activeTab === ActiveTab.ContactPoints;
   const showNotificationTemplates = activeTab === ActiveTab.NotificationTemplates;
@@ -206,7 +223,7 @@ const ContactPoints = () => {
 
 interface ContactPointsListProps {
   contactPoints: ContactPointWithMetadata[];
-  search?: string;
+  search?: string | null;
   disabled?: boolean;
   onDelete: (name: string) => void;
   pageSize?: number;
@@ -257,7 +274,7 @@ const fuzzyFinder = new uFuzzy({
 // let's search in two different haystacks, the name of the contact point and the type of the receiver(s)
 function useContactPointsSearch(
   contactPoints: ContactPointWithMetadata[],
-  search?: string
+  search?: string | null
 ): ContactPointWithMetadata[] {
   const nameHaystack = useMemo(() => {
     return contactPoints.map((contactPoint) => contactPoint.name);
@@ -647,10 +664,6 @@ const useExportContactPoint = (): ExportProps => {
 
   return [drawer, handleOpen];
 };
-
-const getContactPointsFilters = (searchParams: URLSearchParams) => ({
-  search: searchParams.get('search') ?? undefined,
-});
 
 const getStyles = (theme: GrafanaTheme2) => ({
   contactPointWrapper: css({

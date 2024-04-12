@@ -172,7 +172,7 @@ make test-go-integration-postgres
 
 ### Run end-to-end tests
 
-The end to end tests in Grafana use [Cypress](https://www.cypress.io/) and [Playwright](https://playwright.dev/) to run automated scripts in a browser. Read more about our Cypress [e2e framework](/contribute/style-guides/e2e.md).
+Grafana uses [Cypress](https://www.cypress.io/) to end-to-end test core features. Core plugins use [Playwright](https://playwright.dev/) to run automated end-to-end tests. You can find more information on how to add end-to-end tests to your core plugin [here](./style-guides/e2e-plugins.md)
 
 #### Running Cypress tests
 
