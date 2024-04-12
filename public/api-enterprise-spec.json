@@ -2776,6 +2776,14 @@
         }
       }
     },
+    "CloudMigrationRequest": {
+      "type": "object",
+      "properties": {
+        "authToken": {
+          "type": "string"
+        }
+      }
+    },
     "CloudMigrationResponse": {
       "type": "object",
       "properties": {
@@ -4541,9 +4549,6 @@
         }
       }
     },
-    "ItemStatus": {
-      "type": "string"
-    },
     "JSONWebKey": {
       "description": "JSONWebKey represents a public or private key in JWK format. It can be\nmarshaled into JSON and unmarshaled from JSON.",
       "type": "object",
@@ -4898,6 +4903,11 @@
     },
     "MigrateDataResponseItemDTO": {
       "type": "object",
+      "required": [
+        "type",
+        "refId",
+        "status"
+      ],
       "properties": {
         "error": {
           "type": "string"
@@ -4906,7 +4916,19 @@
           "type": "string"
         },
         "status": {
-          "$ref": "#/definitions/ItemStatus"
+          "type": "string",
+          "enum": [
+            "OK",
+            "ERROR"
+          ]
+        },
+        "type": {
+          "type": "string",
+          "enum": [
+            "DASHBOARD",
+            "DATASOURCE",
+            "FOLDER"
+          ]
         }
       }
     },

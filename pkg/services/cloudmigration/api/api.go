@@ -190,7 +190,7 @@ func (cma *CloudMigrationAPI) RunMigration(c *contextmodel.ReqContext) response.
 	if err != nil {
 		return response.Error(http.StatusInternalServerError, "config parse error", err)
 	}
-	path := fmt.Sprintf("https://cms-dev-%s.%s/cloud-migrations/api/v1/migrate-data", migration.ClusterSlug, domain)
+	path := fmt.Sprintf("https://cms-%s.%s/cloud-migrations/api/v1/migrate-data", migration.ClusterSlug, domain)
 
 	// Get migration data JSON
 	body, err := cma.cloudMigrationService.GetMigrationDataJSON(ctx, id)
@@ -199,7 +199,7 @@ func (cma *CloudMigrationAPI) RunMigration(c *contextmodel.ReqContext) response.
 		return response.Error(http.StatusInternalServerError, "migration data get error", err)
 	}
 
-	req, err := http.NewRequest("POST", path, bytes.NewReader(body))
+	req, err := http.NewRequest(http.MethodPost, path, bytes.NewReader(body))
 	if err != nil {
 		cma.log.Error("error creating http request for cloud migration run", "err", err.Error())
 		return response.Error(http.StatusInternalServerError, "http request error", err)
@@ -235,13 +235,15 @@ func (cma *CloudMigrationAPI) RunMigration(c *contextmodel.ReqContext) response.
 		return response.Error(http.StatusInternalServerError, "unmarshalling migration run response", err)
 	}
 
-	_, err = cma.cloudMigrationService.SaveMigrationRun(ctx, &cloudmigration.CloudMigrationRun{
+	runID, err := cma.cloudMigrationService.SaveMigrationRun(ctx, &cloudmigration.CloudMigrationRun{
 		CloudMigrationUID: stringID,
 		Result:            respData,
 	})
 	if err != nil {
 		response.Error(http.StatusInternalServerError, "migration run save error", err)
 	}
+
+	result.RunID = runID
 
 	return response.JSON(http.StatusOK, result)
 }

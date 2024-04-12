@@ -280,7 +280,7 @@ func validateDashboardRefreshInterval(minRefreshInterval string, dash *dashboard
 	}
 
 	refresh := dash.Data.Get("refresh").MustString("")
-	if refresh == "" {
+	if refresh == "" || refresh == "auto" {
 		// since no refresh is set it is a valid refresh rate
 		return nil
 	}

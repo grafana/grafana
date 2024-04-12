@@ -43,7 +43,7 @@ export const SilencedInstancesPreview = ({ amSourceName, matchers }: Props) => {
   return (
     <div>
       <h4 className={styles.title}>
-        Affected alert instances
+        Silenced alert instances
         {tableItemAlerts.length > 0 ? (
           <Badge className={styles.badge} color="blue" text={tableItemAlerts.length} />
         ) : null}
@@ -65,7 +65,7 @@ export const SilencedInstancesPreview = ({ amSourceName, matchers }: Props) => {
               pagination={{ itemsPerPage: 10 }}
             />
           ) : (
-            <span>No matching alert instances found</span>
+            <span>No firing alert instances found</span>
           )}
         </div>
       )}

@@ -15585,9 +15585,6 @@
         }
       }
     },
-    "ItemStatus": {
-      "type": "string"
-    },
     "JSONWebKey": {
       "description": "JSONWebKey represents a public or private key in JWK format. It can be\nmarshaled into JSON and unmarshaled from JSON.",
       "type": "object",
@@ -16040,6 +16037,11 @@
     },
     "MigrateDataResponseItemDTO": {
       "type": "object",
+      "required": [
+        "type",
+        "refId",
+        "status"
+      ],
       "properties": {
         "error": {
           "type": "string"
@@ -16048,15 +16050,21 @@
           "type": "string"
         },
         "status": {
-          "$ref": "#/definitions/ItemStatus"
+          "type": "string",
+          "enum": [
+            "OK",
+            "ERROR"
+          ]
         },
         "type": {
-          "$ref": "#/definitions/MigrateDataType"
+          "type": "string",
+          "enum": [
+            "DASHBOARD",
+            "DATASOURCE",
+            "FOLDER"
+          ]
         }
       }
-    },
-    "MigrateDataType": {
-      "type": "string"
     },
     "MoveFolderCommand": {
       "description": "MoveFolderCommand captures the information required by the folder service\nto move a folder.",
