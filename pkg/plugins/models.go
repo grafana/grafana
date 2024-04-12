@@ -291,8 +291,8 @@ func (e Error) AsErrorCode() ErrorCode {
 	return ""
 }
 
-func (e Error) With(err error) Error {
-	e.message = err.Error()
+func (e Error) WithMessage(m string) Error {
+	e.message = m
 	return e
 }
 

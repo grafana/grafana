@@ -109,7 +109,7 @@ func (a *AngularDetector) Validate(ctx context.Context, p *plugins.Plugin) error
 			return (&plugins.Error{
 				PluginID:  p.ID,
 				ErrorCode: plugins.ErrorAngular,
-			}).With(errors.New("angular plugins are not supported"))
+			}).WithMessage("angular plugins are not supported")
 		}
 	}
 	p.Angular.HideDeprecation = slices.Contains(a.cfg.HideAngularDeprecation, p.ID)

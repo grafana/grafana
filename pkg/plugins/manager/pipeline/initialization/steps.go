@@ -83,7 +83,7 @@ func (b *BackendClientStarter) Start(ctx context.Context, p *plugins.Plugin) (*p
 		return nil, (&plugins.Error{
 			PluginID:  p.ID,
 			ErrorCode: plugins.ErrorCodeFailedStart,
-		}).With(err)
+		}).WithMessage(err.Error())
 	}
 	return p, nil
 }
