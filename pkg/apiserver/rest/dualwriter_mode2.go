@@ -142,11 +142,6 @@ func enrichObject(orig, copy runtime.Object) (runtime.Object, error) {
 	}
 	accessorC.SetAnnotations(ac)
 
-	// #TODO set resource version and UID when required (Update for example)
-	// accessorC.SetResourceVersion(accessorO.GetResourceVersion())
-
-	// accessorC.SetUID(accessorO.GetUID())
-
 	return copy, nil
 }
 
@@ -167,7 +162,7 @@ func (d *DualWriterMode2) Delete(ctx context.Context, name string, deleteValidat
 	_, _, errUS := d.Storage.Delete(ctx, name, deleteValidation, options)
 	if errUS != nil {
 		if !apierrors.IsNotFound(errUS) {
-			klog.FromContext(ctx).Error(errUS, "could not delete from duplicate storage", "mode", 2)
+			klog.FromContext(ctx).Error(errUS, "could not delete from duplicate storage", "mode", 2, "name", name)
 		}
 	}
 
