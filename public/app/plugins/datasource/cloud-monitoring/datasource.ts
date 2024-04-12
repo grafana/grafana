@@ -254,6 +254,8 @@ export default class CloudMonitoringDatasource extends DataSourceWithBackend<
         queryType: type === 'annotationQuery' ? QueryType.ANNOTATION : QueryType.TIME_SERIES_LIST,
         timeSeriesList: {
           ...rest,
+          projectName: get(query, 'projectName') || this.getDefaultProject(),
+          filters,
           view: rest.view || 'FULL',
         },
       };
@@ -270,7 +272,7 @@ export default class CloudMonitoringDatasource extends DataSourceWithBackend<
         query.queryType = QueryType.TIME_SERIES_QUERY;
       } else {
         query.timeSeriesList = {
-          projectName: metricQuery.projectName,
+          projectName: metricQuery.projectName || this.getDefaultProject(),
           crossSeriesReducer: metricQuery.crossSeriesReducer,
           alignmentPeriod: metricQuery.alignmentPeriod,
           perSeriesAligner: metricQuery.perSeriesAligner,
