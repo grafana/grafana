@@ -175,7 +175,9 @@ func HasGlobalAccess(ac AccessControl, authnService authn.Service, c *contextmod
 		var targetOrgID int64 = GlobalOrgID
 		orgUser, err := authnService.ResolveIdentity(c.Req.Context(), targetOrgID, c.SignedInUser.GetID())
 		if err != nil {
-			deny(c, nil, fmt.Errorf("failed to authenticate user in target org: %w", err))
+			// This will be an common error for entities that can't authenticate in global scope
+			c.Logger.Debug("Failed to authenticate user in global scope", "error", err)
+			return false
 		}
 
 		hasAccess, err := ac.Evaluate(c.Req.Context(), orgUser, evaluator)
