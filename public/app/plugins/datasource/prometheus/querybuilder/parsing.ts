@@ -445,13 +445,12 @@ function getBinaryModifier(
   if (node.getChild('Bool')) {
     return { isBool: true, isMatcher: false };
   } else {
-
     const matcher = node.getChild(OnOrIgnoring);
     if (!matcher) {
       // Not sure what this could be, maybe should be an error.
       return undefined;
     }
-const labels = getString(expr, matcher.getChild(GroupingLabels)?.getChild(GroupingLabelList));
+    const labels = getString(expr, matcher.getChild(GroupingLabels)?.getChild(GroupingLabelList));
     return {
       isMatcher: true,
       isBool: false,
