@@ -1,9 +1,10 @@
 import { sortBy } from 'lodash';
 
-import { UrlQueryMap, Labels } from '@grafana/data';
+import { Labels, UrlQueryMap } from '@grafana/data';
 import { GrafanaEdition } from '@grafana/data/src/types/config';
 import { config, isFetchError } from '@grafana/runtime';
 import { DataSourceRef } from '@grafana/schema';
+import { contextSrv } from 'app/core/services/context_srv';
 import { escapePathSeparators } from 'app/features/alerting/unified/utils/rule-id';
 import { alertInstanceKey } from 'app/features/alerting/unified/utils/rules';
 import { SortOrder } from 'app/plugins/panel/alertlist/types';
@@ -218,6 +219,10 @@ export function sortAlerts(sortOrder: SortOrder, alerts: Alert[]): Alert[] {
 export function isOpenSourceEdition() {
   const buildInfo = config.buildInfo;
   return buildInfo.edition === GrafanaEdition.OpenSource;
+}
+
+export function isAdmin() {
+  return contextSrv.hasRole('Admin') || contextSrv.isGrafanaAdmin;
 }
 
 export function isLocalDevEnv() {
