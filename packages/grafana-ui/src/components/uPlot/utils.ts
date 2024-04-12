@@ -147,7 +147,7 @@ export function preparePlotData2(
   frame: DataFrame,
   stackingGroups: StackingGroup[],
   onStackMeta?: (meta: StackMeta) => void
-) {
+): AlignedData {
   let data = Array(frame.fields.length);
 
   let stacksQty = stackingGroups.length;
