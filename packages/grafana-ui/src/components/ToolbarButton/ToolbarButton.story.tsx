@@ -94,7 +94,7 @@ export const Examples: StoryFn<typeof ToolbarButton> = (args) => {
 
   return (
     <DashboardStoryCanvas>
-      <Stack direction="column">
+      <Stack direction="column" gap={1.5}>
         Button states
         <ToolbarButtonRow>
           <ToolbarButton variant="canvas">Just text</ToolbarButton>
