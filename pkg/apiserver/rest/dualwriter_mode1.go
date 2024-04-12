@@ -2,7 +2,6 @@ package rest
 
 import (
 	"context"
-	"errors"
 
 	metainternalversion "k8s.io/apimachinery/pkg/apis/meta/internalversion"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -14,9 +13,6 @@ import (
 type DualWriterMode1 struct {
 	DualWriter
 }
-
-var errNoCreaterMethod = errors.New("legacy storage rest.Creater is missing")
-var noDeleteMethod = errors.New("legacy storage rest.Deleter is missing")
 
 // NewDualWriterMode1 returns a new DualWriter in mode 1.
 // Mode 1 represents writing to and reading from LegacyStorage.
@@ -53,7 +49,7 @@ func (d *DualWriterMode1) List(ctx context.Context, options *metainternalversion
 func (d *DualWriterMode1) Delete(ctx context.Context, name string, deleteValidation rest.ValidateObjectFunc, options *metav1.DeleteOptions) (runtime.Object, bool, error) {
 	legacy, ok := d.Legacy.(rest.GracefulDeleter)
 	if !ok {
-		return nil, false, noDeleteMethod
+		return nil, false, errDualWriterDeleterMissing
 	}
 
 	return legacy.Delete(ctx, name, deleteValidation, options)

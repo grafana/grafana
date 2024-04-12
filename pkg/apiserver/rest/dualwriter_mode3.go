@@ -46,7 +46,7 @@ func (d *DualWriterMode3) Get(ctx context.Context, name string, options *metav1.
 func (d *DualWriterMode3) Delete(ctx context.Context, name string, deleteValidation rest.ValidateObjectFunc, options *metav1.DeleteOptions) (runtime.Object, bool, error) {
 	legacy, ok := d.Legacy.(rest.GracefulDeleter)
 	if !ok {
-		return nil, false, noDeleteMethod
+		return nil, false, errDualWriterDeleterMissing
 	}
 
 	deleted, async, err := d.Storage.Delete(ctx, name, deleteValidation, options)

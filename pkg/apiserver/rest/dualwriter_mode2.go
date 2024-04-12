@@ -153,7 +153,7 @@ func enrichObject(orig, copy runtime.Object) (runtime.Object, error) {
 func (d *DualWriterMode2) Delete(ctx context.Context, name string, deleteValidation rest.ValidateObjectFunc, options *metav1.DeleteOptions) (runtime.Object, bool, error) {
 	legacy, ok := d.Legacy.(rest.GracefulDeleter)
 	if !ok {
-		return nil, false, noDeleteMethod
+		return nil, false, errDualWriterDeleterMissing
 	}
 
 	deletedLS, async, err := legacy.Delete(ctx, name, deleteValidation, options)
