@@ -651,7 +651,7 @@ const (
 	// Updates CloudWatch label parsing to be more accurate
 	FlagCloudWatchNewLabelParsing = "cloudWatchNewLabelParsing"
 
-	// FlagActionSets
-	// Enables actions to be put into sets for performance of query response times, via action sets
-	FlagActionSets = "actionSets"
+	// FlagAccessActionSets
+	// Enables a set of permission actions to be put into sets for performance of query response times, via action sets
+	FlagAccessActionSets = "accessActionSets"
 )
