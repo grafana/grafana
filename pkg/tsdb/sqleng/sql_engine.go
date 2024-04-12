@@ -347,8 +347,15 @@ func (e *DataSourceHandler) executeQuery(query backend.DataQuery, wg *sync.WaitG
 			}
 		}
 		if qm.FillMissing != nil {
+			// we align the start-time
+			startUnixTime := qm.TimeRange.From.Unix() / int64(qm.Interval.Seconds()) * int64(qm.Interval.Seconds())
+			alignedTimeRange := backend.TimeRange{
+				From: time.Unix(startUnixTime, 0),
+				To:   qm.TimeRange.To,
+			}
+
 			var err error
-			frame, err = resample(frame, *qm)
+			frame, err = sqlutil.ResampleWideFrame(frame, qm.FillMissing, alignedTimeRange, qm.Interval)
 			if err != nil {
 				logger.Error("Failed to resample dataframe", "err", err)
 				frame.AppendNotices(data.Notice{Text: "Failed to resample dataframe", Severity: data.NoticeSeverityWarning})
