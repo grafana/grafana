@@ -73,8 +73,7 @@ function useGetContactPoints() {
 }
 
 function useGetIncidentPluginConfig() {
-  const incidentsPluginConfig = useGetSingle('grafana-incident-app');
-  const isIncidentPluginInstalled = incidentsPluginConfig?.isInstalled ?? false;
+  const { installed: isIncidentPluginInstalled } = usePluginBridge(SupportedPlugin.Incident);
   const [incidentPluginConfig, setIncidentPluginConfig] = useState<IncidentsPluginConfig | null>(null);
 
   useEffect(() => {
@@ -84,23 +83,8 @@ function useGetIncidentPluginConfig() {
         isChatOpsInstalled: false,
         isDrillCreated: false,
       });
+      return;
     }
-    const getIncidentChatoOpsnstalled = async () => {
-      if (!isIncidentPluginInstalled) {
-        return false;
-      }
-      const availableIntegrations = await getBackendSrv().get(
-        '/api/plugins/grafana-incident-app/resources/api/IntegrationService.GetAvailableIntegrations'
-      );
-
-      const isSackInstalled = availableIntegrations?.find(
-        (integration: { id: string }) => integration.id === 'grate.slack'
-      );
-      const isMSTeamsInstalled = availableIntegrations?.find(
-        (integration: { id: string }) => integration.id === 'grate.msTeams'
-      );
-      return isSackInstalled || isMSTeamsInstalled;
-    };
 
     const checkIfIncidentsCreated = async () => {
       const isDrillCreated = await getBackendSrv()
@@ -108,17 +92,41 @@ function useGetIncidentPluginConfig() {
         .then((response) => response.incidents.length > 0);
       return isDrillCreated;
     };
-    if (isIncidentPluginInstalled) {
-      Promise.all([getIncidentChatoOpsnstalled(), checkIfIncidentsCreated()]).then(
-        ([isChatOpsInstalled, isDrillCreated]) =>
-          setIncidentPluginConfig({
-            isInstalled: true,
-            isChatOpsInstalled,
-            isDrillCreated,
-          })
+
+    const getIncidentChatOpsInstalled = async () => {
+      if (!isIncidentPluginInstalled) {
+        return false;
+      }
+      const availableIntegrations = await getBackendSrv().get(
+        '/api/plugins/grafana-incident-app/resources/api/IntegrationService.GetAvailableIntegrations'
       );
-    }
-  }, [isIncidentPluginInstalled]);
+  
+      const isSlackInstalled = availableIntegrations?.find(
+        integration => integration.id === 'grate.slack'
+      );
+      const isMSTeamsInstalled = availableIntegrations?.find(
+        integration => integration.id === 'grate.msTeams'
+      );
+      return isSlackInstalled || isMSTeamsInstalled;
+    };
+
+    const fetchData = async () => {
+      const [isChatOpsInstalled, isDrillCreated] = await Promise.all([
+        getIncidentChatOpsInstalled(),
+        checkIfIncidentsCreated()
+      ]);
+      setIncidentPluginConfig({
+        isInstalled: true,
+        isChatOpsInstalled,
+        isDrillCreated
+      });
+    };
+  
+    fetchData();
+  }, [isIncidentPluginInstalled, setIncidentPluginConfig]);
+  
+
+  console.log(incidentPluginConfig);
   return incidentPluginConfig;
 }
 
