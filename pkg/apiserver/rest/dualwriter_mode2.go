@@ -63,11 +63,11 @@ func (d *DualWriterMode2) Get(ctx context.Context, name string, options *metav1.
 	if err == nil {
 		return s, err
 	}
-	if !apierrors.IsNotFound(err) {
+	if apierrors.IsNotFound(err) {
+		klog.Info("object not found in duplicate storage", "name", name)
+	} else {
 		klog.Error("unable to fetch object from duplicate storage", "error", err, "name", name)
 	}
-
-	klog.Info("Resource not found in Storage. Getting it from LegacyStorage.", "name", name)
 
 	return d.Legacy.Get(ctx, name, &metav1.GetOptions{})
 }
