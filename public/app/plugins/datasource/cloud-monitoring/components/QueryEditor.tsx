@@ -21,18 +21,22 @@ export type Props = QueryEditorProps<CloudMonitoringDatasource, CloudMonitoringQ
 export const QueryEditor = (props: Props) => {
   const { datasource, query: oldQ, onRunQuery, onChange, range } = props;
   const [modalIsOpen, setModalIsOpen] = useState<boolean>(false);
-  // Migrate query if needed
-  const [migrated, setMigrated] = useState(false);
+  const [migratedQuery, setMigratedQuery] = useState<CloudMonitoringQuery | undefined>();
   const query = useMemo(() => {
-    if (!migrated) {
-      setMigrated(true);
+    if (!migratedQuery) {
       const migratedQuery = datasource.migrateQuery(oldQ);
+      setMigratedQuery(migratedQuery);
       // Update the query once the migrations have been completed.
       onChange({ ...migratedQuery });
       return migratedQuery;
     }
+
+    if (migratedQuery) {
+      return migratedQuery;
+    }
+
     return oldQ;
-  }, [oldQ, datasource, onChange, migrated]);
+  }, [oldQ, datasource, onChange, migratedQuery]);
   const [currentQuery, setCurrentQuery] = useState<CloudMonitoringQuery>(query);
   const [queryHasBeenEdited, setQueryHasBeenEdited] = useState<boolean>(false);
 
