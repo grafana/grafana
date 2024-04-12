@@ -104,7 +104,7 @@ export const BarChartPanel = (props: PanelProps<Options>) => {
       stacking,
       legend,
       tooltip,
-      text?.valueSize, // cause text itself is re-created each time?
+      text?.valueSize, // cause text obj is re-created each time?
       xTickLabelRotation,
       xTickLabelSpacing,
       fullHighlight,
