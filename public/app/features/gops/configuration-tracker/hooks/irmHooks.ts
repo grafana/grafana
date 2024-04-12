@@ -100,8 +100,12 @@ function useGetIncidentPluginConfig() {
         '/api/plugins/grafana-incident-app/resources/api/IntegrationService.GetAvailableIntegrations'
       );
 
-      const isSlackInstalled = availableIntegrations?.find((integration: { id: string; }) => integration.id === 'grate.slack');
-      const isMSTeamsInstalled = availableIntegrations?.find((integration: { id: string; }) => integration.id === 'grate.msTeams');
+      const isSlackInstalled = availableIntegrations?.find(
+        (integration: { id: string }) => integration.id === 'grate.slack'
+      );
+      const isMSTeamsInstalled = availableIntegrations?.find(
+        (integration: { id: string }) => integration.id === 'grate.msTeams'
+      );
       return isSlackInstalled || isMSTeamsInstalled;
     };
 
