@@ -55,7 +55,7 @@
     "rollup-plugin-esbuild": "5.0.0",
     "rollup-plugin-node-externals": "5.0.0",
     "ts-node": "10.9.2",
-    "typescript": "5.4.3"
+    "typescript": "5.4.5"
   },
   "peerDependencies": {
     "react": "^17.0.0 || ^18.0.0",
