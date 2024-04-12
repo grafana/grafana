@@ -11,7 +11,7 @@ import { GrafanaRouteError } from './GrafanaRouteError';
 import { GrafanaRouteLoading } from './GrafanaRouteLoading';
 import { GrafanaRouteComponentProps, RouteDescriptor } from './types';
 
-export interface Props extends Omit<GrafanaRouteComponentProps, 'queryParams'> { }
+export interface Props extends Omit<GrafanaRouteComponentProps, 'queryParams'> {}
 
 export function GrafanaRoute(props: Props) {
   const { chrome, keybindings } = useGrafana();

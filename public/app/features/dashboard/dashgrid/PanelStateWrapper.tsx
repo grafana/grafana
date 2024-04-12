@@ -40,16 +40,17 @@ import { onUpdatePanelSnapshotData } from 'app/plugins/datasource/grafana/utils'
 import { changeSeriesColorConfigFactory } from 'app/plugins/panel/timeseries/overrides/colorSeriesConfigFactory';
 import { dispatch } from 'app/store/store';
 import { RenderEvent } from 'app/types/events';
+
 import { deleteAnnotation, saveAnnotation, updateAnnotation } from '../../annotations/api';
 import { getDashboardQueryRunner } from '../../query/state/DashboardQueryRunner/DashboardQueryRunner';
 import { getTimeSrv, TimeSrv } from '../services/TimeSrv';
 import { DashboardModel, PanelModel } from '../state';
 import { getPanelChromeProps } from '../utils/getPanelChromeProps';
 import { loadSnapshotData } from '../utils/loadSnapshotData';
+
 import { PanelHeaderMenuWrapper } from './PanelHeader/PanelHeaderMenuWrapper';
 import { PanelLoadTimeMonitor } from './PanelLoadTimeMonitor';
 import { seriesVisibilityConfigFactory } from './SeriesVisibilityConfigFactory';
-import { PanelOptionsLogger } from './panelOptionsLogger';
 import { liveTimer } from './liveTimer';
 import { PanelOptionsLogger } from './panelOptionsLogger';
 
@@ -490,7 +491,6 @@ export class PanelStateWrapper extends PureComponent<Props, State> {
       to: toUtc(timeRange.to),
     });
   };
-
 
   shouldSignalRenderingCompleted(loadingState: LoadingState, pluginMeta: PanelPluginMeta) {
     return (
