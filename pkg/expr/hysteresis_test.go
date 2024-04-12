@@ -15,7 +15,7 @@ import (
 
 func TestHysteresisExecute(t *testing.T) {
 	number := func(label string, value float64) mathexp.Number {
-		n := mathexp.NewNumber("A", data.Labels{"label": label})
+		n := mathexp.NewNumber("B", data.Labels{"label": label})
 		n.SetValue(&value)
 		return n
 	}
