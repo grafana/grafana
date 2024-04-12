@@ -107,13 +107,7 @@ export class GraphNG extends Component<GraphNGProps, GraphNGState> {
   prepState(props: GraphNGProps, withConfig = true) {
     let state: GraphNGState = null as any;
 
-    const {
-      frames,
-      fields = defaultMatchers,
-      preparePlotFrame,
-      replaceVariables,
-      dataLinkPostProcessor,
-    } = props;
+    const { frames, fields = defaultMatchers, preparePlotFrame, replaceVariables, dataLinkPostProcessor } = props;
 
     const preparePlotFrameFn = preparePlotFrame ?? defaultPreparePlotFrame;
 
