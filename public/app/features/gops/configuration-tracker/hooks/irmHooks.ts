@@ -135,6 +135,16 @@ function useGetOnCallIntegrations() {
   return onCallIntegrations ?? [];
 }
 
+export function useGetOnCallConfigurationChecks() {
+  const { data: onCallConfigChecks } = onCallApi.endpoints.onCallConfigChecks.useQuery(undefined, {
+    refetchOnFocus: true,
+    refetchOnReconnect: true,
+    refetchOnMountOrArgChange: true,
+  });
+
+  return onCallConfigChecks ?? { is_chatops_connected: false, is_integration_chatops_connected: false };
+}
+
 export function useGetEssentialsConfiguration() {
   const contactPoints = useGetContactPoints();
   const incidentPluginConfig = useGetIncidentPluginConfig();
@@ -143,6 +153,8 @@ export function useGetEssentialsConfiguration() {
     label: integration.display_name,
     value: integration.value,
   }));
+  const { is_chatops_connected, is_integration_chatops_connected } = useGetOnCallConfigurationChecks();
+
   const essentialContent: SectionsDto = {
     sections: [
       {
@@ -212,6 +224,7 @@ export function useGetEssentialsConfiguration() {
               type: 'openLink',
               url: '/alerting/notifications',
               label: 'Connect',
+              done: is_chatops_connected,
             },
           },
           {
@@ -229,8 +242,9 @@ export function useGetEssentialsConfiguration() {
             description: 'tbd',
             button: {
               type: 'openLink',
-              url: '/alerting/notifications',
+              url: '/a/grafana-oncall-app/integrations/',
               label: 'Connect',
+              done: is_integration_chatops_connected,
             },
           },
         ],
