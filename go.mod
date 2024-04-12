@@ -109,7 +109,7 @@ require (
 	gopkg.in/mail.v2 v2.3.1 // @grafana/grafana-backend-group
 	gopkg.in/yaml.v2 v2.4.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // @grafana/alerting-squad-backend
-	xorm.io/builder v0.3.6 // indirect; @grafana/grafana-backend-group
+	xorm.io/builder v0.3.6 // @grafana/grafana-backend-group
 	xorm.io/core v0.7.3 // @grafana/grafana-backend-group
 	xorm.io/xorm v0.8.2 // @grafana/alerting-squad-backend
 )
@@ -199,7 +199,7 @@ require (
 	go.mongodb.org/mongo-driver v1.13.1 // indirect
 	go.opencensus.io v0.24.0 // indirect
 	go.uber.org/atomic v1.11.0 // @grafana/alerting-squad-backend
-	go.uber.org/goleak v1.3.0 // indirect
+	go.uber.org/goleak v1.3.0 // @grafana/grafana-search-and-storage
 	golang.org/x/sys v0.18.0 // indirect
 	golang.org/x/text v0.14.0 // @grafana/grafana-backend-group
 	golang.org/x/xerrors v0.0.0-20231012003039-104605ab7028 // indirect
