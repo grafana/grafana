@@ -1205,6 +1205,16 @@ var (
 			FrontendOnly:   false,
 			AllowSelfServe: false,
 		},
+		{
+			Name:              "actionSets",
+			Description:       "Enables actions to be put into sets for performance of query response times, via action sets",
+			Stage:             FeatureStageExperimental,
+			Owner:             identityAccessTeam,
+			FrontendOnly:      false,
+			AllowSelfServe:    false,
+			HideFromDocs:      true,
+			HideFromAdminPage: true,
+		},
 	}
 )
 
