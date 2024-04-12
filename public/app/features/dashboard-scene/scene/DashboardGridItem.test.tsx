@@ -1,6 +1,6 @@
 import { getPanelPlugin } from '@grafana/data/test/__mocks__/pluginMocks';
 import { setPluginImportUtils } from '@grafana/runtime';
-import { LocalValueVariable, SceneGridLayout, VizPanel } from '@grafana/scenes';
+import { SceneGridLayout, VizPanel } from '@grafana/scenes';
 
 import { activateFullSceneTree, buildPanelRepeaterScene } from '../utils/test-utils';
 

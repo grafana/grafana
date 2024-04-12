@@ -21,7 +21,7 @@ import {
 } from '@grafana/scenes';
 import { GRID_CELL_HEIGHT, GRID_CELL_VMARGIN } from 'app/core/constants';
 
-import { getDashboardSceneFor, getMultiVariableValues } from '../utils/utils';
+import { getMultiVariableValues } from '../utils/utils';
 
 import { AddLibraryPanelWidget } from './AddLibraryPanelWidget';
 import { LibraryVizPanel } from './LibraryVizPanel';
