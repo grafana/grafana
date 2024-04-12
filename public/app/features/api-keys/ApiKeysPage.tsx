@@ -5,6 +5,7 @@ import { connect, ConnectedProps } from 'react-redux';
 import { InlineField, InlineSwitch, Modal, Button, EmptyState } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
 import { contextSrv } from 'app/core/core';
+import { t } from 'app/core/internationalization';
 import { getTimeZone } from 'app/features/profile/state/selectors';
 import { AccessControlAction, ApiKey, ApikeyMigrationResult, StoreState } from 'app/types';
 
@@ -136,7 +137,7 @@ export class ApiKeysPageUnconnected extends PureComponent<Props, State> {
               onDelete={this.onDeleteApiKey}
             />
           ) : (
-            <EmptyState variant="not-found" />
+            <EmptyState variant="not-found" message={t('api-keys.empty-state.message', 'No API keys found')} />
           )}
         </Page.Contents>
         {migrationResult && (
