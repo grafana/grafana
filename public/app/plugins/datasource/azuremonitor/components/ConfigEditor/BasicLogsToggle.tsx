@@ -1,7 +1,7 @@
 import { css } from '@emotion/css';
-import React, { useState } from 'react';
+import React from 'react';
 
-import { ConfirmModal, Field, Switch, useTheme2 } from '@grafana/ui';
+import { Field, Switch, useTheme2 } from '@grafana/ui';
 
 import { AzureDataSourceJsonData } from '../../types';
 
@@ -12,7 +12,6 @@ export interface Props {
 
 export const BasicLogsToggle = (props: Props) => {
   const { options, onBasicLogsEnabledChange } = props;
-  const [basiclogsAckOpen, setBasicLogsAckOpen] = useState<boolean>(false);
 
   const theme = useTheme2();
   const styles = {
@@ -31,7 +30,6 @@ export const BasicLogsToggle = (props: Props) => {
   };
   const onChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     onBasicLogsEnabledChange(e.target.checked);
-    setBasicLogsAckOpen(e.target.checked);
   };
   const description = (
     <p className={styles.text}>
@@ -48,14 +46,6 @@ export const BasicLogsToggle = (props: Props) => {
   );
   return (
     <>
-      <ConfirmModal
-        isOpen={basiclogsAckOpen}
-        title="Basic Logs Queries"
-        body="Enabling this feature incurs Azure Monitor per-query cost on dashboard panels that use tables configured for Basic Logs. Please acknowledge this before continuing."
-        confirmText="I Acknowledge"
-        onConfirm={() => setBasicLogsAckOpen(false)}
-        onDismiss={() => setBasicLogsAckOpen(false)}
-      />
       <Field description={description} label="Enable Basic Logs">
         <div>
           <Switch aria-label="Basic Logs" onChange={onChange} value={options.basicLogsEnabled ?? false} />
