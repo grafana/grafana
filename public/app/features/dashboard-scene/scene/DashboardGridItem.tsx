@@ -135,26 +135,32 @@ export class DashboardGridItem extends SceneObjectBase<DashboardGridItemState> i
       return;
     }
 
-    const variable =
-      sceneGraph.lookupVariable(this.state.variableName, this) ??
-      new CustomVariable({
-        name: '_____default_sys_repeat_var_____',
-        options: [],
-        value: '',
-        text: '',
-        query: 'A',
-      });
-
-    // If we are in a row we have LocalValueVariable which depends on the parent variable
-    // If the parent no longer exists we return;
+    const customVar = new CustomVariable({
+      name: '_____default_sys_repeat_var_____',
+      options: [],
+      value: '',
+      text: '',
+      query: 'A',
+    });
+    let variable = sceneGraph.lookupVariable(this.state.variableName, this);
+    // If we are in a row we have LocalValueVariable which depends on the parent ancestor variable
+    // If the parent no longer exists we set the custom variable and skip dependency loading
+    // check since that will throw an error;
     if (variable instanceof LocalValueVariable) {
-      const parentVariableSet = sceneGraph.lookupVariable(this.state.variableName, getDashboardSceneFor(this));
-      if (!parentVariableSet) {
-        return;
+      try {
+        if (variable.isAncestorLoading()) {
+          return;
+        }
+      } catch {
+        variable = customVar;
       }
     }
 
-    if (this._variableDependency.hasDependencyInLoadingState()) {
+    if (!variable) {
+      variable = customVar;
+    }
+
+    if (!(variable instanceof CustomVariable) && this._variableDependency.hasDependencyInLoadingState()) {
       return;
     }
 
