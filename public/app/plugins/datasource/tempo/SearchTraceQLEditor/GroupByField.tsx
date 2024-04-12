@@ -97,10 +97,12 @@ export const GroupByField = (props: Props) => {
                   updateFilter({ ...f, tag: v?.value });
                 }}
                 options={withTemplateVariableOptions(
-                  getTags(f)?.map((t) => ({
-                    label: t,
-                    value: t,
-                  }))
+                  getTags(f)
+                    ?.concat(f.tag !== undefined && !getTags(f)?.includes(f.tag) ? [f.tag] : [])
+                    .map((t) => ({
+                      label: t,
+                      value: t,
+                    }))
                 )}
                 placeholder="Select tag"
                 value={f.tag || ''}
