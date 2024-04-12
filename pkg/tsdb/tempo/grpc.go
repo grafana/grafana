@@ -76,26 +76,28 @@ func getDialOpts(ctx context.Context, settings backend.DataSourceInstanceSetting
 		dialOps = append(dialOps, grpc.WithTransportCredentials(insecure.NewCredentials()))
 	}
 
-	// -- PDC IMPLEMENTATION
+	// The following code is required to make gRPC work with Grafana Cloud PDC 
+	// (https://grafana.com/docs/grafana-cloud/connect-externally-hosted/private-data-source-connect/)
 	proxyClient, err := settings.ProxyClient(ctx)
 	if err != nil {
-		// TODO LND handle error
-		logger.Error("Error getting proxy client", "error", err)
+		logger.Error("Error getting proxy client. The Tempo plugin will not use the secure socks proxy", "error", err)
 		return dialOps
 	}
-	if proxyClient.SecureSocksProxyEnabled() {
+	if proxyClient.SecureSocksProxyEnabled() {  // secure socks proxy is behind a feature flag
 		dialer, err := proxyClient.NewSecureSocksProxyContextDialer()
 		if err != nil {
-			// TODO LND handle error
-			logger.Error("Error getting dialer", "error", err)
+			logger.Error("Error dialing secure socks proxy. The Tempo plugin will not use the secure socks proxy", "error", err)
 			return dialOps
 		}
+		logger.Debug("gRPC dialer instantiated. Appending gRPC dialer to dial options")
 		dialOps = append(dialOps, grpc.WithContextDialer(func(ctx context.Context, host string) (net.Conn, error) {
-			// TODO LND Should we check context for canceled or timeout?
+			// TODO Should we check context for canceled or timeout?
+			logger.Debug("Dialing secure socks proxy", "host", host)
 			return dialer.Dial("tcp", host)
 		}))
 	}
 
+	logger.Debug("Returning dial options")
 	return dialOps
 }
 
