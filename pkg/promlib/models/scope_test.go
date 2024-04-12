@@ -79,6 +79,15 @@ func TestApplyQueryFilters(t *testing.T) {
 			expected:  `http_requests_total{job="prometheus",status="200"}`,
 			expectErr: false,
 		},
+		{
+			name:  "Adhoc filters with more complex expression",
+			query: `capacity_bytes{job="prometheus"} + available_bytes{job="grafana"} / 1024`,
+			adhocFilters: []ScopeFilter{
+				{Key: "job", Value: "alloy", Operator: FilterOperatorEquals},
+			},
+			expected:  `capacity_bytes{job="alloy"} + available_bytes{job="alloy"} / 1024`,
+			expectErr: false,
+		},
 	}
 
 	for _, tt := range tests {
