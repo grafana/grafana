@@ -4,7 +4,7 @@ import { ConfirmModal, InlineField, RadioButtonGroup } from '@grafana/ui';
 
 import { AzureQueryEditorFieldProps } from '../../types';
 
-import { setBasicLogsQuery, setBasicLogsQueryAcknowledged, setDashboardTime, setKustoQuery } from './setQueryValue';
+import { setBasicLogsQuery, setDashboardTime, setKustoQuery } from './setQueryValue';
 
 export function LogsManagement({ query, onQueryChange: onChange }: AzureQueryEditorFieldProps) {
   const [basicLogsAckOpen, setBasicLogsAckOpen] = useState<boolean>(false);
@@ -18,12 +18,14 @@ export function LogsManagement({ query, onQueryChange: onChange }: AzureQueryEdi
         confirmText="I Acknowledge"
         onConfirm={() => {
           setBasicLogsAckOpen(false);
-          onChange(setBasicLogsQueryAcknowledged(query, true));
+          let updatedBasicLogsQuery = setBasicLogsQuery(query, true);
+          // if basic logs selected, set dashboard time
+          updatedBasicLogsQuery = setDashboardTime(updatedBasicLogsQuery, 'dashboard');
+          onChange(setKustoQuery(updatedBasicLogsQuery, ''));
         }}
         onDismiss={() => {
           setBasicLogsAckOpen(false);
-          const newQuery = setBasicLogsQuery(query, false);
-          onChange(setBasicLogsQueryAcknowledged(newQuery, false));
+          onChange(setBasicLogsQuery(query, false));
         }}
         confirmButtonVariant="primary"
       />
@@ -37,13 +39,11 @@ export function LogsManagement({ query, onQueryChange: onChange }: AzureQueryEdi
             value={query.azureLogAnalytics?.basicLogsQuery ?? false}
             size={'md'}
             onChange={(val) => {
-              let updatedBasicLogsQuery = setBasicLogsQuery(query, val);
-              if (val) {
-                // if basic logs selected, set dashboard time
-                updatedBasicLogsQuery = setDashboardTime(updatedBasicLogsQuery, 'dashboard');
-              }
-              onChange(setKustoQuery(updatedBasicLogsQuery, ''));
               setBasicLogsAckOpen(val);
+              if (!val) {
+                const updatedBasicLogsQuery = setBasicLogsQuery(query, val);
+                onChange(setKustoQuery(updatedBasicLogsQuery, ''));
+              }
             }}
           />
         </>
