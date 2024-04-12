@@ -1,6 +1,6 @@
 import React from 'react';
 
-import { Icon } from '@grafana/ui';
+import { Icon, Text } from '@grafana/ui';
 
 interface Props {
   namespace: string;
@@ -9,13 +9,17 @@ interface Props {
 
 const RuleLocation = ({ namespace, group }: Props) => {
   if (!group) {
-    return <>{namespace}</>;
+    return (
+      <Text element="h3" variant="body">
+        {namespace}
+      </Text>
+    );
   }
 
   return (
-    <>
-      {namespace} <Icon name="angle-right" /> {group}
-    </>
+    <Text element="h3" variant="body">
+      {namespace} <Icon name="angle-right" aria-label=">" /> {group}
+    </Text>
   );
 };
 
