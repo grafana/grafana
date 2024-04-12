@@ -178,7 +178,7 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
       this._changeTracker.startTrackingChanges();
     }
 
-    if (this.state.meta.isNew) {
+    if (this.state.meta.isNew && !this.state.editPanel) {
       this.onEnterEditMode();
       this.setState({ isDirty: true });
     }
