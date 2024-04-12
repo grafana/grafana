@@ -425,26 +425,26 @@ function getBinaryModifier(
   | { isBool: true; isMatcher: false }
   | { isBool: false; isMatcher: true; matches: string; matchType: 'ignoring' | 'on' }
   | undefined {
-    if (!node) {
-      return undefined;
-    }
-    if (node.getChild('Bool')) {
-      return { isBool: true, isMatcher: false };
-    } else {
-      let labels = '';
-      const groupingLabels = node.getChild(GroupingLabels);
-      if (groupingLabels) {
-        labels = getAllByType(expr, groupingLabels, LabelName).join(', ');
-      }
-
-      return {
-        isMatcher: true,
-        isBool: false,
-        matches: labels,
-        matchType: node.getChild(On) ? 'on' : 'ignoring',
-      };
-    }
+  if (!node) {
+    return undefined;
   }
+  if (node.getChild('Bool')) {
+    return { isBool: true, isMatcher: false };
+  } else {
+    let labels = '';
+    const groupingLabels = node.getChild(GroupingLabels);
+    if (groupingLabels) {
+      labels = getAllByType(expr, groupingLabels, LabelName).join(', ');
+    }
+
+    return {
+      isMatcher: true,
+      isBool: false,
+      matches: labels,
+      matchType: node.getChild(On) ? 'on' : 'ignoring',
+    };
+  }
+}
 
 function isEmptyQuery(query: PromVisualQuery) {
   if (query.labels.length === 0 && query.operations.length === 0 && !query.metric) {
