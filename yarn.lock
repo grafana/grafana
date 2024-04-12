@@ -4091,7 +4091,7 @@ __metadata:
     rollup-plugin-node-externals: "npm:^5.0.0"
     rxjs: "npm:7.8.1"
     sass: "npm:1.75.0"
-    sass-loader: "npm:14.1.1"
+    sass-loader: "npm:14.2.0"
     semver: "npm:7.6.0"
     style-loader: "npm:3.3.4"
     testing-library-selector: "npm:0.3.1"
@@ -4399,7 +4399,7 @@ __metadata:
     rollup-plugin-node-externals: "npm:^5.0.0"
     rollup-plugin-svg-import: "npm:1.6.0"
     rxjs: "npm:7.8.1"
-    sass-loader: "npm:14.1.1"
+    sass-loader: "npm:14.2.0"
     slate: "npm:0.47.9"
     slate-plain-serializer: "npm:0.7.13"
     slate-react: "npm:0.22.10"
@@ -18897,7 +18897,7 @@ __metadata:
     rudder-sdk-js: "npm:2.48.6"
     rxjs: "npm:7.8.1"
     sass: "npm:1.75.0"
-    sass-loader: "npm:14.1.1"
+    sass-loader: "npm:14.2.0"
     selecto: "npm:1.26.3"
     semver: "npm:7.6.0"
     slate: "npm:0.47.9"
@@ -28189,9 +28189,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"sass-loader@npm:14.1.1":
-  version: 14.1.1
-  resolution: "sass-loader@npm:14.1.1"
+"sass-loader@npm:14.2.0":
+  version: 14.2.0
+  resolution: "sass-loader@npm:14.2.0"
   dependencies:
     neo-async: "npm:^2.6.2"
   peerDependencies:
@@ -28211,7 +28211,7 @@ __metadata:
       optional: true
     webpack:
       optional: true
-  checksum: 10/6cc0cb8143d04cb462c10efffbab86e9c4ea971bbdbc22d8c01f4ebf774fcf9b4fed775aaec6af23aeb7d440b37dce76cf6f2746ae36421d16ad4182f2220bc8
+  checksum: 10/7746adb506744520d0bc68dbccdfbdd30fbb625890895c7c852fa59a433314a55c079ba395788daf72e4c8047fd800837548ed17c4e1da4172af3649c7285451
   languageName: node
   linkType: hard
 
