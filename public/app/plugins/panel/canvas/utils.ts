@@ -355,17 +355,14 @@ export const calculateCoordinates = (
   x2 /= transformScale;
   y2 /= transformScale;
 
-  // TODO get rid of this, instead handle it properly in connections
+  // TODO look into a better way to avoid division by zero
   if (x2 - x1 === 0) {
     x2 += 1;
   }
   if (y2 - y1 === 0) {
     y2 += 1;
   }
-  // TODO get rid of delta output as its no longer needed
-  const deltaX = x2 - x1;
-  const deltaY = y2 - y1;
-  return { x1, y1, x2, y2, deltaX, deltaY };
+  return { x1, y1, x2, y2 };
 };
 
 export const calculateMidpoint = (x1: number, y1: number, x2: number, y2: number) => {

@@ -305,7 +305,7 @@ export class Connections {
     const sourceRect = this.selection.value!.source.div!.getBoundingClientRect();
 
     // calculate relative coordinates based on source and target coorindates of connection
-    const { x1, y1, x2, y2, deltaX, deltaY } = calculateCoordinates(
+    const { x1, y1, x2, y2 } = calculateCoordinates(
       sourceRect,
       parentBoundingRect,
       this.selection.value?.info!,
@@ -313,21 +313,30 @@ export class Connections {
       transformScale
     );
 
+    const value = this.selection.value;
+    let { xStart, yStart, xEnd, yEnd } = { xStart: x1, yStart: y1, xEnd: x2, yEnd: y2 };
+    if (value?.sourceOriginal && value.targetOriginal) {
+      xStart = value.sourceOriginal.x;
+      yStart = value.sourceOriginal.y;
+      xEnd = value.targetOriginal.x;
+      yEnd = value.targetOriginal.y;
+    }
+
+    const xDist = xEnd - xStart;
+    const yDist = yEnd - yStart;
+
     let vx1 = x1;
     let vy1 = y1;
     let vx2 = x2;
     let vy2 = y2;
-    if (this.selection.value && this.selection.value.vertices) {
+    if (value && value.vertices) {
       if (this.selectedVertexIndex !== undefined && this.selectedVertexIndex > 0) {
-        vx1 += this.selection.value.vertices[this.selectedVertexIndex - 1].x * deltaX;
-        vy1 += this.selection.value.vertices[this.selectedVertexIndex - 1].y * deltaY;
+        vx1 = value.vertices[this.selectedVertexIndex - 1].x * xDist + xStart;
+        vy1 = value.vertices[this.selectedVertexIndex - 1].y * yDist + yStart;
       }
-      if (
-        this.selectedVertexIndex !== undefined &&
-        this.selectedVertexIndex < this.selection.value.vertices.length - 1
-      ) {
-        vx2 = this.selection.value.vertices[this.selectedVertexIndex + 1].x * deltaX + x1;
-        vy2 = this.selection.value.vertices[this.selectedVertexIndex + 1].y * deltaY + y1;
+      if (this.selectedVertexIndex !== undefined && this.selectedVertexIndex < value.vertices.length - 1) {
+        vx2 = value.vertices[this.selectedVertexIndex + 1].x * xDist + xStart;
+        vy2 = value.vertices[this.selectedVertexIndex + 1].y * yDist + yStart;
       }
     }
 
@@ -388,11 +397,11 @@ export class Connections {
       this.connectionSVGVertex!.style.display = 'none';
 
       // call onChange here and update appropriate index of connection vertices array
-      const connectionIndex = this.selection.value?.index;
+      const connectionIndex = value?.index;
       const vertexIndex = this.selectedVertexIndex;
 
       if (connectionIndex !== undefined && vertexIndex !== undefined) {
-        const currentSource = this.selection.value!.source;
+        const currentSource = value!.source;
         if (currentSource.options.connections) {
           const currentConnections = [...currentSource.options.connections];
           if (currentConnections[connectionIndex].vertices) {
@@ -404,8 +413,8 @@ export class Connections {
             } else {
               const currentVertex = { ...currentVertices[vertexIndex] };
 
-              currentVertex.x = (xSnap - x1) / deltaX;
-              currentVertex.y = (ySnap - y1) / deltaY;
+              currentVertex.x = (xSnap - xStart) / xDist;
+              currentVertex.y = (ySnap - yStart) / yDist;
 
               currentVertices[vertexIndex] = currentVertex;
             }
@@ -451,7 +460,7 @@ export class Connections {
     const sourceRect = this.selection.value!.source.div!.getBoundingClientRect();
 
     // calculate relative coordinates based on source and target coorindates of connection
-    const { x1, y1, x2, y2, deltaX, deltaY } = calculateCoordinates(
+    const { x1, y1, x2, y2 } = calculateCoordinates(
       sourceRect,
       parentBoundingRect,
       this.selection.value?.info!,
@@ -459,18 +468,30 @@ export class Connections {
       transformScale
     );
 
+    const value = this.selection.value;
+    let { xStart, yStart, xEnd, yEnd } = { xStart: x1, yStart: y1, xEnd: x2, yEnd: y2 };
+    if (value?.sourceOriginal && value.targetOriginal) {
+      xStart = value.sourceOriginal.x;
+      yStart = value.sourceOriginal.y;
+      xEnd = value.targetOriginal.x;
+      yEnd = value.targetOriginal.y;
+    }
+
+    const xDist = xEnd - xStart;
+    const yDist = yEnd - yStart;
+
     let vx1 = x1;
     let vy1 = y1;
     let vx2 = x2;
     let vy2 = y2;
-    if (this.selection.value && this.selection.value.vertices) {
+    if (value && value.vertices) {
       if (this.selectedVertexIndex !== undefined && this.selectedVertexIndex > 0) {
-        vx1 += this.selection.value.vertices[this.selectedVertexIndex - 1].x * deltaX;
-        vy1 += this.selection.value.vertices[this.selectedVertexIndex - 1].y * deltaY;
+        vx1 = value.vertices[this.selectedVertexIndex - 1].x * xDist + xStart;
+        vy1 = value.vertices[this.selectedVertexIndex - 1].y * yDist + yStart;
       }
-      if (this.selectedVertexIndex !== undefined && this.selectedVertexIndex < this.selection.value.vertices.length) {
-        vx2 = this.selection.value.vertices[this.selectedVertexIndex].x * deltaX + x1;
-        vy2 = this.selection.value.vertices[this.selectedVertexIndex].y * deltaY + y1;
+      if (this.selectedVertexIndex !== undefined && this.selectedVertexIndex < value.vertices.length) {
+        vx2 = value.vertices[this.selectedVertexIndex].x * xDist + xStart;
+        vy2 = value.vertices[this.selectedVertexIndex].y * yDist + yStart;
       }
     }
 
@@ -518,14 +539,14 @@ export class Connections {
       this.connectionSVGVertex!.style.display = 'none';
 
       // call onChange here and insert new vertex at appropriate index of connection vertices array
-      const connectionIndex = this.selection.value?.index;
+      const connectionIndex = value?.index;
       const vertexIndex = this.selectedVertexIndex;
 
       if (connectionIndex !== undefined && vertexIndex !== undefined) {
-        const currentSource = this.selection.value!.source;
+        const currentSource = value!.source;
         if (currentSource.options.connections) {
           const currentConnections = [...currentSource.options.connections];
-          const newVertex = { x: (x - x1) / deltaX, y: (y - y1) / deltaY };
+          const newVertex = { x: (x - xStart) / xDist, y: (y - yStart) / yDist };
           if (currentConnections[connectionIndex].vertices) {
             const currentVertices = [...currentConnections[connectionIndex].vertices!];
             currentVertices.splice(vertexIndex, 0, newVertex);
