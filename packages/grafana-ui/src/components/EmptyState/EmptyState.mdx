@@ -11,17 +11,17 @@ Use an empty state to communicate to the user that there is no data to display, 
 
 Use in place of a results table or list when a search query or filter returns no results.
 
-There are sensible defaults for the image and message, so in most cases you can use it without any additional props.
+There are sensible defaults for the image, so in most cases all you need to provide is a message.
 
 ```jsx
 import { EmptyState } from '@grafana/ui';
 
-<EmptyState variant="not-found" />;
+<EmptyState variant="not-found" message="No playlists found" />;
 ```
 
 ### Providing custom overrides
 
-You can optionally override the message or image, and add additional information or a button (e.g. to clear the search query)
+You can optionally override or hide the image, add additional information or a button (e.g. to clear the search query)
 
 ```jsx
 import { Button, EmptyState } from '@grafana/ui';
