@@ -3,7 +3,7 @@ import React from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { locationService } from '@grafana/runtime';
-import { Button, Dropdown, Icon, LinkButton, Menu, Stack, Text, useStyles2 } from '@grafana/ui';
+import { Button, Dropdown, Icon, LinkButton, Menu, Stack, Text, Tooltip, useStyles2 } from '@grafana/ui';
 import { createUrl } from 'app/features/alerting/unified/utils/url';
 
 import { ConfigurationTrackerDrawer } from './ConfigurationTrackerDrawer';
@@ -88,7 +88,9 @@ function Step({ step }: { step: SectionDto['steps'][0] }) {
       <Stack direction={'row'} alignItems="center">
         {step.button.done ? <Icon name="check-circle" color="green" /> : <Icon name="circle" />}
         <Text variant="body">{step.title}</Text>
-        <Icon name="question-circle" />
+        <Tooltip content={step.description} placement="right">
+          <Icon name="question-circle" />
+        </Tooltip>
       </Stack>
       {!step.button.done && <StepButton {...step.button} />}
     </Stack>

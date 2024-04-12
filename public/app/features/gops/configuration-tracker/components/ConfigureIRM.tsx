@@ -86,7 +86,10 @@ export function ConfigureIRM() {
                   {config.isDone && <Icon name="check-circle" color="green" size="lg" />}
                 </Stack>
                 {config.stepsDone && config.totalStepsToDo && (
-                  <StepsStatus stepsDone={config.stepsDone} totalStepsToDo={config.totalStepsToDo} />
+                  <Stack direction="row" gap={1}>
+                    <StepsStatus stepsDone={config.stepsDone} totalStepsToDo={config.totalStepsToDo} />
+                    complete
+                  </Stack>
                 )}
               </div>
             </Card.Heading>
@@ -101,7 +104,7 @@ export function ConfigureIRM() {
                   </Stack>
                 </Card.Description>
                 <Card.Actions>
-                  <Button variant="secondary" className={styles.actions} onClick={() => handleActionClick(config.id)}>
+                  <Button variant="secondary" onClick={() => handleActionClick(config.id)}>
                     {config.actionButtonTitle}
                   </Button>
                 </Card.Actions>
@@ -133,6 +136,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
   }),
   title: css({
     'justify-content': 'flex-start',
+    alignItems: 'baseline',
     gap: '4px',
   }),
   description: css({
@@ -140,9 +144,6 @@ const getStyles = (theme: GrafanaTheme2) => ({
     WebkitBoxOrient: 'vertical',
     display: '-webkit-box',
     overflow: 'hidden',
-  }),
-  actions: css({
-    marginTop: '24px',
   }),
   essentialsTitle: css({
     display: 'flex',
@@ -188,7 +189,7 @@ export function ProgressBar({ stepsDone, totalStepsToDo }: { stepsDone: number; 
 export function StepsStatus({ stepsDone, totalStepsToDo }: { stepsDone: number; totalStepsToDo: number }) {
   return (
     <div>
-      <Text color="success">{stepsDone}</Text> of {totalStepsToDo} complete
+      <Text color="success">{stepsDone}</Text> of {totalStepsToDo}
     </div>
   );
 }
