@@ -1205,6 +1205,12 @@ var (
 			FrontendOnly:   false,
 			AllowSelfServe: false,
 		},
+		{
+			Name:        "accessActionSets",
+			Description: "Introduces action sets for resource permissions",
+			Stage:       FeatureStageExperimental,
+			Owner:       identityAccessTeam,
+		},
 	}
 )
 
