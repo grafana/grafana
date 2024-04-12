@@ -1,21 +1,10 @@
 import { css } from '@emotion/css';
-import React, { useState } from 'react';
-import { useFormContext } from 'react-hook-form';
+import React, { useEffect, useState } from 'react';
+import { useFormContext, Controller } from 'react-hook-form';
 
-import { GrafanaTheme2 } from '@grafana/data';
-import {
-  Field,
-  FieldValidationMessage,
-  InlineField,
-  InputControl,
-  MultiSelect,
-  Stack,
-  Switch,
-  Text,
-  useStyles2,
-} from '@grafana/ui';
-import { useAlertmanagerConfig } from 'app/features/alerting/unified/hooks/useAlertmanagerConfig';
-import { useAlertmanager } from 'app/features/alerting/unified/state/AlertmanagerContext';
+import { GrafanaTheme2, SelectableValue } from '@grafana/data';
+import { Field, FieldValidationMessage, InlineField, MultiSelect, Stack, Switch, Text, useStyles2 } from '@grafana/ui';
+import { MultiValueRemove, MultiValueRemoveProps } from '@grafana/ui/src/components/Select/MultiValue';
 import { RuleFormValues } from 'app/features/alerting/unified/types/rule-form';
 import {
   commonGroupByOptions,
@@ -29,6 +18,15 @@ import { TIMING_OPTIONS_DEFAULTS } from '../../../../notification-policies/timin
 
 import { RouteTimings } from './RouteTimings';
 
+const REQUIRED_FIELDS_IN_GROUPBY = ['grafana_folder', 'alertname'];
+
+const DEFAULTS_TIMINGS = {
+  groupWaitValue: TIMING_OPTIONS_DEFAULTS.group_wait,
+  groupIntervalValue: TIMING_OPTIONS_DEFAULTS.group_interval,
+  repeatIntervalValue: TIMING_OPTIONS_DEFAULTS.repeat_interval,
+};
+const DISABLE_GROUPING = '...';
+
 export interface RoutingSettingsProps {
   alertManager: string;
 }
@@ -38,14 +36,22 @@ export const RoutingSettings = ({ alertManager }: RoutingSettingsProps) => {
     control,
     watch,
     register,
+    setValue,
     formState: { errors },
   } = useFormContext<RuleFormValues>();
   const [groupByOptions, setGroupByOptions] = useState(stringsToSelectableValues([]));
-  const { groupBy, groupIntervalValue, groupWaitValue, repeatIntervalValue } = useGetDefaultsForRoutingSettings();
+  const { groupIntervalValue, groupWaitValue, repeatIntervalValue } = DEFAULTS_TIMINGS;
   const overrideGrouping = watch(`contactPoints.${alertManager}.overrideGrouping`);
   const overrideTimings = watch(`contactPoints.${alertManager}.overrideTimings`);
-  const requiredFieldsInGroupBy = ['grafana_folder', 'alertname'];
+  const groupByCount = watch(`contactPoints.${alertManager}.groupBy`)?.length ?? 0;
+
   const styles = useStyles2(getStyles);
+  useEffect(() => {
+    if (overrideGrouping && groupByCount === 0) {
+      setValue(`contactPoints.${alertManager}.groupBy`, REQUIRED_FIELDS_IN_GROUPBY);
+    }
+  }, [overrideGrouping, setValue, alertManager, groupByCount]);
+
   return (
     <Stack direction="column">
       <Stack direction="row" gap={1} alignItems="center" justifyContent="space-between">
@@ -54,7 +60,7 @@ export const RoutingSettings = ({ alertManager }: RoutingSettingsProps) => {
         </InlineField>
         {!overrideGrouping && (
           <Text variant="body" color="secondary">
-            Grouping: <strong>{groupBy.join(', ')}</strong>
+            Grouping: <strong>{REQUIRED_FIELDS_IN_GROUPBY.join(', ')}</strong>
           </Text>
         )}
       </Stack>
@@ -62,20 +68,23 @@ export const RoutingSettings = ({ alertManager }: RoutingSettingsProps) => {
         <Field
           label="Group by"
           description="Group alerts when you receive a notification based on labels. If empty it will be inherited from the default notification policy."
-          {...register(`contactPoints.${alertManager}.groupBy`, { required: true })}
+          {...register(`contactPoints.${alertManager}.groupBy`)}
           invalid={!!errors.contactPoints?.[alertManager]?.groupBy}
           className={styles.optionalContent}
         >
-          <InputControl
+          <Controller
             rules={{
               validate: (value: string[]) => {
                 if (!value || value.length === 0) {
                   return 'At least one group by option is required.';
                 }
+                if (value.length === 1 && value[0] === DISABLE_GROUPING) {
+                  return true;
+                }
                 // we need to make sure that the required fields are included
-                const requiredFieldsIncluded = requiredFieldsInGroupBy.every((field) => value.includes(field));
+                const requiredFieldsIncluded = REQUIRED_FIELDS_IN_GROUPBY.every((field) => value.includes(field));
                 if (!requiredFieldsIncluded) {
-                  return `Group by must include ${requiredFieldsInGroupBy.join(', ')}`;
+                  return `Group by must include ${REQUIRED_FIELDS_IN_GROUPBY.join(', ')}`;
                 }
                 return true;
               },
@@ -93,8 +102,30 @@ export const RoutingSettings = ({ alertManager }: RoutingSettingsProps) => {
                     // @ts-ignore-check: react-hook-form made me do this
                     setValue(`contactPoints.${alertManager}.groupBy`, [...field.value, opt]);
                   }}
-                  onChange={(value) => onChange(mapMultiSelectValueToStrings(value))}
+                  onChange={(value) => {
+                    return onChange(mapMultiSelectValueToStrings(value));
+                  }}
                   options={[...commonGroupByOptions, ...groupByOptions]}
+                  components={{
+                    MultiValueRemove(
+                      props: React.PropsWithChildren<
+                        MultiValueRemoveProps &
+                          Array<SelectableValue<string>> & {
+                            data: {
+                              label: string;
+                              value: string;
+                              isFixed: boolean;
+                            };
+                          }
+                      >
+                    ) {
+                      const { data } = props;
+                      if (data.isFixed) {
+                        return null;
+                      }
+                      return MultiValueRemove(props);
+                    },
+                  }}
                 />
                 {error && <FieldValidationMessage>{error.message}</FieldValidationMessage>}
               </>
@@ -125,20 +156,6 @@ export const RoutingSettings = ({ alertManager }: RoutingSettingsProps) => {
   );
 };
 
-function useGetDefaultsForRoutingSettings() {
-  const { selectedAlertmanager } = useAlertmanager();
-  const { currentData } = useAlertmanagerConfig(selectedAlertmanager);
-  const config = currentData?.alertmanager_config;
-  return React.useMemo(() => {
-    return {
-      groupWaitValue: TIMING_OPTIONS_DEFAULTS.group_wait,
-      groupIntervalValue: TIMING_OPTIONS_DEFAULTS.group_interval,
-      repeatIntervalValue: TIMING_OPTIONS_DEFAULTS.repeat_interval,
-      groupBy: config?.route?.group_by ?? [],
-    };
-  }, [config]);
-}
-
 const getStyles = (theme: GrafanaTheme2) => ({
   switchElement: css({
     flexFlow: 'row-reverse',
@@ -147,5 +164,6 @@ const getStyles = (theme: GrafanaTheme2) => ({
   }),
   optionalContent: css({
     marginLeft: '49px',
+    marginBottom: theme.spacing(1),
   }),
 });

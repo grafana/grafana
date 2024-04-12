@@ -2,8 +2,7 @@ import React, { useMemo, useState } from 'react';
 
 import { config, isFetchError } from '@grafana/runtime';
 import { Drawer, Tab, TabsBar } from '@grafana/ui';
-
-import { jsonDiff } from '../VersionHistory/utils';
+import { jsonDiff } from 'app/features/dashboard-scene/settings/version-history/utils';
 
 import DashboardValidation from './DashboardValidation';
 import { SaveDashboardDiff } from './SaveDashboardDiff';

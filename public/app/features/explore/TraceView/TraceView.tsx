@@ -14,15 +14,13 @@ import {
   mapInternalLinkToExplore,
   SplitOpen,
 } from '@grafana/data';
+import { getTraceToLogsOptions, TraceToMetricsData, TraceToProfilesData } from '@grafana/o11y-ds-frontend';
 import { getTemplateSrv } from '@grafana/runtime';
 import { DataQuery } from '@grafana/schema';
 import { useStyles2 } from '@grafana/ui';
-import { getTraceToLogsOptions } from 'app/core/components/TraceToLogs/TraceToLogsSettings';
-import { TraceToMetricsData } from 'app/core/components/TraceToMetrics/TraceToMetricsSettings';
-import { TraceToProfilesData } from 'app/core/components/TraceToProfiles/TraceToProfilesSettings';
+import { TempoQuery } from '@grafana-plugins/tempo/types';
 import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
 import { getTimeZone } from 'app/features/profile/state/selectors';
-import { TempoQuery } from 'app/plugins/datasource/tempo/types';
 import { useDispatch, useSelector } from 'app/types';
 
 import { changePanelState } from '../state/explorePane';
@@ -66,10 +64,20 @@ type Props = {
   datasource: DataSourceApi<DataQuery, DataSourceJsonData, {}> | undefined;
   topOfViewRef?: RefObject<HTMLDivElement>;
   createSpanLink?: SpanLinkFunc;
+  focusedSpanId?: string;
+  createFocusSpanLink?: (traceId: string, spanId: string) => LinkModel<Field>;
 };
 
 export function TraceView(props: Props) {
-  const { traceProp, datasource, topOfViewRef, exploreId, createSpanLink: createSpanLinkFromProps } = props;
+  const {
+    traceProp,
+    datasource,
+    topOfViewRef,
+    exploreId,
+    createSpanLink: createSpanLinkFromProps,
+    focusedSpanId: focusedSpanIdFromProps,
+    createFocusSpanLink: createFocusSpanLinkFromProps,
+  } = props;
 
   const {
     detailStates,
@@ -103,12 +111,15 @@ export function TraceView(props: Props) {
    */
   const [spanNameColumnWidth, setSpanNameColumnWidth] = useState(0.4);
 
-  const [focusedSpanId, createFocusSpanLink] = useFocusSpanLink({
+  const [focusedSpanIdExplore, createFocusSpanLinkExplore] = useFocusSpanLink({
     refId: props.dataFrames[0]?.refId,
     exploreId: props.exploreId!,
     datasource,
     splitOpenFn: props.splitOpenFn!,
   });
+
+  const focusedSpanId = focusedSpanIdFromProps ?? focusedSpanIdExplore;
+  const createFocusSpanLink = createFocusSpanLinkFromProps ?? createFocusSpanLinkExplore;
 
   const traceTimeline: TTraceTimeline = useMemo(
     () => ({
@@ -263,8 +274,8 @@ function useFocusSpanLink(options: {
       })
     );
 
-  const query = useSelector(
-    (state) => state.explore.panes[options.exploreId]?.queries.find((query) => query.refId === options.refId)
+  const query = useSelector((state) =>
+    state.explore.panes[options.exploreId]?.queries.find((query) => query.refId === options.refId)
   );
 
   const createFocusSpanLink = (traceId: string, spanId: string) => {
@@ -299,22 +310,22 @@ function useFocusSpanLink(options: {
       onClickFn: sameTrace
         ? () => setFocusedSpanId(focusedSpanId === spanId ? undefined : spanId)
         : options.splitOpenFn
-        ? () =>
-            options.splitOpenFn({
-              datasourceUid: options.datasource?.uid!,
-              queries: [
-                {
-                  ...query!,
-                  query: traceId,
+          ? () =>
+              options.splitOpenFn({
+                datasourceUid: options.datasource?.uid!,
+                queries: [
+                  {
+                    ...query!,
+                    query: traceId,
+                  },
+                ],
+                panelsState: {
+                  trace: {
+                    spanId,
+                  },
                 },
-              ],
-              panelsState: {
-                trace: {
-                  spanId,
-                },
-              },
-            })
-        : undefined,
+              })
+          : undefined,
       replaceVariables: getTemplateSrv().replace.bind(getTemplateSrv()),
     });
   };

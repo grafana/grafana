@@ -1330,81 +1330,6 @@
         }
       }
     },
-    "/reports/render/pdf/{dashboardID}": {
-      "get": {
-        "description": "Please refer to [reports enterprise](#/reports/renderReportPDFs) instead. This will be removed in Grafana 10.",
-        "produces": [
-          "application/pdf"
-        ],
-        "tags": [
-          "reports",
-          "enterprise"
-        ],
-        "summary": "Render report for dashboard.",
-        "operationId": "renderReportPDF",
-        "deprecated": true,
-        "parameters": [
-          {
-            "type": "integer",
-            "format": "int64",
-            "name": "DashboardID",
-            "in": "path",
-            "required": true
-          },
-          {
-            "type": "integer",
-            "format": "int64",
-            "name": "dashboardID",
-            "in": "path",
-            "required": true
-          },
-          {
-            "type": "string",
-            "name": "title",
-            "in": "query"
-          },
-          {
-            "type": "string",
-            "name": "variables",
-            "in": "query"
-          },
-          {
-            "type": "string",
-            "name": "from",
-            "in": "query"
-          },
-          {
-            "type": "string",
-            "name": "to",
-            "in": "query"
-          },
-          {
-            "type": "string",
-            "name": "orientation",
-            "in": "query"
-          },
-          {
-            "type": "string",
-            "name": "layout",
-            "in": "query"
-          }
-        ],
-        "responses": {
-          "200": {
-            "$ref": "#/responses/contentResponse"
-          },
-          "400": {
-            "$ref": "#/responses/badRequestError"
-          },
-          "401": {
-            "$ref": "#/responses/unauthorisedError"
-          },
-          "500": {
-            "$ref": "#/responses/internalServerError"
-          }
-        }
-      }
-    },
     "/reports/render/pdfs": {
       "get": {
         "description": "Available to all users and with a valid license.",
@@ -2154,7 +2079,7 @@
           "format": "int64"
         },
         "password": {
-          "type": "string"
+          "$ref": "#/definitions/Password"
         }
       }
     },
@@ -2275,7 +2200,7 @@
       "type": "object",
       "properties": {
         "password": {
-          "type": "string"
+          "$ref": "#/definitions/Password"
         }
       }
     },
@@ -2284,200 +2209,6 @@
       "properties": {
         "isGrafanaAdmin": {
           "type": "boolean"
-        }
-      }
-    },
-    "AlertListItemDTO": {
-      "type": "object",
-      "properties": {
-        "dashboardId": {
-          "type": "integer",
-          "format": "int64"
-        },
-        "dashboardSlug": {
-          "type": "string"
-        },
-        "dashboardUid": {
-          "type": "string"
-        },
-        "evalData": {
-          "$ref": "#/definitions/Json"
-        },
-        "evalDate": {
-          "type": "string",
-          "format": "date-time"
-        },
-        "executionError": {
-          "type": "string"
-        },
-        "id": {
-          "type": "integer",
-          "format": "int64"
-        },
-        "name": {
-          "type": "string"
-        },
-        "newStateDate": {
-          "type": "string",
-          "format": "date-time"
-        },
-        "panelId": {
-          "type": "integer",
-          "format": "int64"
-        },
-        "state": {
-          "$ref": "#/definitions/AlertStateType"
-        },
-        "url": {
-          "type": "string"
-        }
-      }
-    },
-    "AlertNotification": {
-      "type": "object",
-      "properties": {
-        "created": {
-          "type": "string",
-          "format": "date-time"
-        },
-        "disableResolveMessage": {
-          "type": "boolean"
-        },
-        "frequency": {
-          "type": "string"
-        },
-        "id": {
-          "type": "integer",
-          "format": "int64"
-        },
-        "isDefault": {
-          "type": "boolean"
-        },
-        "name": {
-          "type": "string"
-        },
-        "secureFields": {
-          "type": "object",
-          "additionalProperties": {
-            "type": "boolean"
-          }
-        },
-        "sendReminder": {
-          "type": "boolean"
-        },
-        "settings": {
-          "$ref": "#/definitions/Json"
-        },
-        "type": {
-          "type": "string"
-        },
-        "uid": {
-          "type": "string"
-        },
-        "updated": {
-          "type": "string",
-          "format": "date-time"
-        }
-      }
-    },
-    "AlertNotificationLookup": {
-      "type": "object",
-      "properties": {
-        "id": {
-          "type": "integer",
-          "format": "int64"
-        },
-        "isDefault": {
-          "type": "boolean"
-        },
-        "name": {
-          "type": "string"
-        },
-        "type": {
-          "type": "string"
-        },
-        "uid": {
-          "type": "string"
-        }
-      }
-    },
-    "AlertStateInfoDTO": {
-      "type": "object",
-      "properties": {
-        "dashboardId": {
-          "type": "integer",
-          "format": "int64"
-        },
-        "id": {
-          "type": "integer",
-          "format": "int64"
-        },
-        "newStateDate": {
-          "type": "string",
-          "format": "date-time"
-        },
-        "panelId": {
-          "type": "integer",
-          "format": "int64"
-        },
-        "state": {
-          "$ref": "#/definitions/AlertStateType"
-        }
-      }
-    },
-    "AlertStateType": {
-      "type": "string"
-    },
-    "AlertTestCommand": {
-      "type": "object",
-      "properties": {
-        "dashboard": {
-          "$ref": "#/definitions/Json"
-        },
-        "panelId": {
-          "type": "integer",
-          "format": "int64"
-        }
-      }
-    },
-    "AlertTestResult": {
-      "type": "object",
-      "properties": {
-        "conditionEvals": {
-          "type": "string"
-        },
-        "error": {
-          "type": "string"
-        },
-        "firing": {
-          "type": "boolean"
-        },
-        "logs": {
-          "type": "array",
-          "items": {
-            "$ref": "#/definitions/AlertTestResultLog"
-          }
-        },
-        "matches": {
-          "type": "array",
-          "items": {
-            "$ref": "#/definitions/EvalMatch"
-          }
-        },
-        "state": {
-          "$ref": "#/definitions/AlertStateType"
-        },
-        "timeMs": {
-          "type": "string"
-        }
-      }
-    },
-    "AlertTestResultLog": {
-      "type": "object",
-      "properties": {
-        "data": {},
-        "message": {
-          "type": "string"
         }
       }
     },
@@ -3027,10 +2758,60 @@
       "type": "object",
       "properties": {
         "newPassword": {
-          "type": "string"
+          "$ref": "#/definitions/Password"
         },
         "oldPassword": {
+          "$ref": "#/definitions/Password"
+        }
+      }
+    },
+    "CloudMigrationListResponse": {
+      "type": "object",
+      "properties": {
+        "migrations": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/CloudMigrationResponse"
+          }
+        }
+      }
+    },
+    "CloudMigrationRequest": {
+      "type": "object",
+      "properties": {
+        "authToken": {
           "type": "string"
+        }
+      }
+    },
+    "CloudMigrationResponse": {
+      "type": "object",
+      "properties": {
+        "created": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "id": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "stack": {
+          "type": "string"
+        },
+        "updated": {
+          "type": "string",
+          "format": "date-time"
+        }
+      }
+    },
+    "CloudMigrationRunList": {
+      "type": "object",
+      "properties": {
+        "runs": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/MigrateDataResponseDTO"
+          }
         }
       }
     },
@@ -3176,37 +2957,10 @@
         }
       }
     },
-    "CreateAlertNotificationCommand": {
+    "CreateAccessTokenResponseDTO": {
       "type": "object",
       "properties": {
-        "disableResolveMessage": {
-          "type": "boolean"
-        },
-        "frequency": {
-          "type": "string"
-        },
-        "isDefault": {
-          "type": "boolean"
-        },
-        "name": {
-          "type": "string"
-        },
-        "secureSettings": {
-          "type": "object",
-          "additionalProperties": {
-            "type": "string"
-          }
-        },
-        "sendReminder": {
-          "type": "boolean"
-        },
-        "settings": {
-          "$ref": "#/definitions/Json"
-        },
-        "type": {
-          "type": "string"
-        },
-        "uid": {
+        "token": {
           "type": "string"
         }
       }
@@ -3258,8 +3012,12 @@
         "dashboard"
       ],
       "properties": {
+        "apiVersion": {
+          "description": "APIVersion defines the versioned schema of this representation of an object.\nServers should convert recognized schemas to the latest internal value, and\nmay reject unrecognized values.\nMore info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources\n+optional",
+          "type": "string"
+        },
         "dashboard": {
-          "$ref": "#/definitions/Json"
+          "$ref": "#/definitions/Unstructured"
         },
         "deleteKey": {
           "description": "Unique key used to delete the snapshot. It is different from the `key` so that only the creator can delete the snapshot. Required if `external` is `true`.",
@@ -3278,6 +3036,10 @@
         },
         "key": {
           "description": "Define the unique key. Required if `external` is `true`.",
+          "type": "string"
+        },
+        "kind": {
+          "description": "Kind is a string value representing the REST resource this object represents.\nServers may infer this from the endpoint the client submits requests to.\nCannot be updated.\nIn CamelCase.\nMore info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds\n+optional",
           "type": "string"
         },
         "name": {
@@ -3342,13 +3104,6 @@
     "CreateOrUpdateReportConfig": {
       "type": "object",
       "properties": {
-        "dashboardId": {
-          "type": "integer",
-          "format": "int64"
-        },
-        "dashboardUid": {
-          "type": "string"
-        },
         "dashboards": {
           "type": "array",
           "items": {
@@ -3391,9 +3146,6 @@
         },
         "state": {
           "$ref": "#/definitions/State"
-        },
-        "templateVars": {
-          "type": "object"
         }
       }
     },
@@ -3615,6 +3367,41 @@
         "userId": {
           "type": "integer",
           "format": "int64"
+        }
+      }
+    },
+    "DashboardCreateCommand": {
+      "description": "These are the values expected to be sent from an end user\n+k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object",
+      "type": "object",
+      "required": [
+        "dashboard"
+      ],
+      "properties": {
+        "apiVersion": {
+          "description": "APIVersion defines the versioned schema of this representation of an object.\nServers should convert recognized schemas to the latest internal value, and\nmay reject unrecognized values.\nMore info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources\n+optional",
+          "type": "string"
+        },
+        "dashboard": {
+          "$ref": "#/definitions/Unstructured"
+        },
+        "expires": {
+          "description": "When the snapshot should expire in seconds in seconds. Default is never to expire.",
+          "type": "integer",
+          "format": "int64",
+          "default": 0
+        },
+        "external": {
+          "description": "these are passed when storing an external snapshot ref\nSave the snapshot on an external server rather than locally.",
+          "type": "boolean",
+          "default": false
+        },
+        "kind": {
+          "description": "Kind is a string value representing the REST resource this object represents.\nServers may infer this from the endpoint the client submits requests to.\nCannot be updated.\nIn CamelCase.\nMore info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds\n+optional",
+          "type": "string"
+        },
+        "name": {
+          "description": "Snapshot name",
+          "type": "string"
         }
       }
     },
@@ -4034,6 +3821,32 @@
         }
       }
     },
+    "DeviceSearchHitDTO": {
+      "type": "object",
+      "properties": {
+        "clientIp": {
+          "type": "string"
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "deviceId": {
+          "type": "string"
+        },
+        "lastSeenAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "userAgent": {
+          "type": "string"
+        }
+      }
+    },
     "DsAccess": {
       "type": "string"
     },
@@ -4115,23 +3928,6 @@
     "ErrorSource": {
       "description": "ErrorSource type defines the source of the error",
       "type": "string"
-    },
-    "EvalMatch": {
-      "type": "object",
-      "properties": {
-        "metric": {
-          "type": "string"
-        },
-        "tags": {
-          "type": "object",
-          "additionalProperties": {
-            "type": "string"
-          }
-        },
-        "value": {
-          "type": "string"
-        }
-      }
     },
     "ExplorePanelsState": {
       "description": "This is an object constructed with the keys as the values of the enum VisType and the value being a bag of properties"
@@ -4463,11 +4259,20 @@
         },
         "typeVersion": {
           "$ref": "#/definitions/FrameTypeVersion"
+        },
+        "uniqueRowIdFields": {
+          "description": "Array of field indices which values create a unique id for each row. Ideally this should be globally unique ID\nbut that isn't guarantied. Should help with keeping track and deduplicating rows in visualizations, especially\nwith streaming data with frequent updates.",
+          "type": "array",
+          "items": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "example": "TraceID in Tempo, table name + primary key in SQL"
         }
       }
     },
     "FrameType": {
-      "description": "A FrameType string, when present in a frame's metadata, asserts that the\nframe's structure conforms to the FrameType's specification.\nThis property is currently optional, so FrameType may be FrameTypeUnknown even if the properties of\nthe Frame correspond to a defined FrameType.",
+      "description": "A FrameType string, when present in a frame's metadata, asserts that the\nframe's structure conforms to the FrameType's specification.\nThis property is currently optional, so FrameType may be FrameTypeUnknown even if the properties of\nthe Frame correspond to a defined FrameType.\n+enum",
       "type": "string"
     },
     "FrameTypeVersion": {
@@ -4743,8 +4548,8 @@
       }
     },
     "JSONWebKey": {
+      "description": "JSONWebKey represents a public or private key in JWK format. It can be\nmarshaled into JSON and unmarshaled from JSON.",
       "type": "object",
-      "title": "JSONWebKey represents a public or private key in JWK format.",
       "properties": {
         "Algorithm": {
           "description": "Key algorithm, parsed from `alg` header.",
@@ -4777,7 +4582,7 @@
           "$ref": "#/definitions/URL"
         },
         "Key": {
-          "description": "Cryptographic key, can be a symmetric or asymmetric key."
+          "description": "Key is the Go in-memory representation of this key. It must have one\nof these types:\ned25519.PublicKey\ned25519.PrivateKey\necdsa.PublicKey\necdsa.PrivateKey\nrsa.PublicKey\nrsa.PrivateKey\n[]byte (a symmetric key)\n\nWhen marshaling this JSONWebKey into JSON, the \"kty\" header parameter\nwill be automatically set based on the type of this field."
         },
         "KeyID": {
           "description": "Key identifier, parsed from `kid` header.",
@@ -4796,82 +4601,6 @@
       "description": "KeyUsage represents the set of actions that are valid for a given key. It's\na bitmap of the KeyUsage* constants.",
       "type": "integer",
       "format": "int64"
-    },
-    "LegacyAlert": {
-      "type": "object",
-      "properties": {
-        "Created": {
-          "type": "string",
-          "format": "date-time"
-        },
-        "DashboardID": {
-          "type": "integer",
-          "format": "int64"
-        },
-        "EvalData": {
-          "$ref": "#/definitions/Json"
-        },
-        "ExecutionError": {
-          "type": "string"
-        },
-        "For": {
-          "$ref": "#/definitions/Duration"
-        },
-        "Frequency": {
-          "type": "integer",
-          "format": "int64"
-        },
-        "Handler": {
-          "type": "integer",
-          "format": "int64"
-        },
-        "ID": {
-          "type": "integer",
-          "format": "int64"
-        },
-        "Message": {
-          "type": "string"
-        },
-        "Name": {
-          "type": "string"
-        },
-        "NewStateDate": {
-          "type": "string",
-          "format": "date-time"
-        },
-        "OrgID": {
-          "type": "integer",
-          "format": "int64"
-        },
-        "PanelID": {
-          "type": "integer",
-          "format": "int64"
-        },
-        "Settings": {
-          "$ref": "#/definitions/Json"
-        },
-        "Severity": {
-          "type": "string"
-        },
-        "Silenced": {
-          "type": "boolean"
-        },
-        "State": {
-          "$ref": "#/definitions/AlertStateType"
-        },
-        "StateChanges": {
-          "type": "integer",
-          "format": "int64"
-        },
-        "Updated": {
-          "type": "string",
-          "format": "date-time"
-        },
-        "Version": {
-          "type": "integer",
-          "format": "int64"
-        }
-      }
     },
     "LibraryElementArrayResponse": {
       "type": "object",
@@ -5155,6 +4884,52 @@
         }
       }
     },
+    "MigrateDataResponseDTO": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "items": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/MigrateDataResponseItemDTO"
+          }
+        }
+      }
+    },
+    "MigrateDataResponseItemDTO": {
+      "type": "object",
+      "required": [
+        "type",
+        "refId",
+        "status"
+      ],
+      "properties": {
+        "error": {
+          "type": "string"
+        },
+        "refId": {
+          "type": "string"
+        },
+        "status": {
+          "type": "string",
+          "enum": [
+            "OK",
+            "ERROR"
+          ]
+        },
+        "type": {
+          "type": "string",
+          "enum": [
+            "DASHBOARD",
+            "DATASOURCE",
+            "FOLDER"
+          ]
+        }
+      }
+    },
     "MoveFolderCommand": {
       "description": "MoveFolderCommand captures the information required by the folder service\nto move a folder.",
       "type": "object",
@@ -5248,45 +5023,26 @@
       "format": "int64",
       "title": "NoticeSeverity is a type for the Severity property of a Notice."
     },
-    "NotificationTestCommand": {
-      "type": "object",
-      "properties": {
-        "disableResolveMessage": {
-          "type": "boolean"
-        },
-        "frequency": {
-          "type": "string"
-        },
-        "id": {
-          "type": "integer",
-          "format": "int64"
-        },
-        "name": {
-          "type": "string"
-        },
-        "secureSettings": {
-          "type": "object",
-          "additionalProperties": {
-            "type": "string"
-          }
-        },
-        "sendReminder": {
-          "type": "boolean"
-        },
-        "settings": {
-          "$ref": "#/definitions/Json"
-        },
-        "type": {
-          "type": "string"
-        }
-      }
-    },
     "ObjectIdentifier": {
       "type": "array",
       "title": "An ObjectIdentifier represents an ASN.1 OBJECT IDENTIFIER.",
       "items": {
         "type": "integer",
         "format": "int64"
+      }
+    },
+    "ObjectMatcher": {
+      "type": "array",
+      "title": "ObjectMatcher is a matcher that can be used to filter alerts.",
+      "items": {
+        "type": "string"
+      }
+    },
+    "ObjectMatchers": {
+      "type": "array",
+      "title": "ObjectMatchers is a list of matchers that can be used to filter alerts.",
+      "items": {
+        "$ref": "#/definitions/ObjectMatcher"
       }
     },
     "OrgDTO": {
@@ -5368,6 +5124,9 @@
           "format": "int64"
         }
       }
+    },
+    "Password": {
+      "type": "string"
     },
     "PatchAnnotationsCmd": {
       "type": "object",
@@ -5488,26 +5247,6 @@
         "comment": {
           "description": "Updated comment",
           "type": "string"
-        }
-      }
-    },
-    "PauseAlertCommand": {
-      "type": "object",
-      "properties": {
-        "alertId": {
-          "type": "integer",
-          "format": "int64"
-        },
-        "paused": {
-          "type": "boolean"
-        }
-      }
-    },
-    "PauseAllAlertsCommand": {
-      "type": "object",
-      "properties": {
-        "paused": {
-          "type": "boolean"
         }
       }
     },
@@ -5885,7 +5624,7 @@
       "type": "object",
       "title": "QueryDataResponse contains the results from a QueryDataRequest.",
       "properties": {
-        "Responses": {
+        "results": {
           "$ref": "#/definitions/Responses"
         }
       }
@@ -6142,16 +5881,6 @@
           "type": "string",
           "format": "date-time"
         },
-        "dashboardId": {
-          "type": "integer",
-          "format": "int64"
-        },
-        "dashboardName": {
-          "type": "string"
-        },
-        "dashboardUid": {
-          "type": "string"
-        },
         "dashboards": {
           "type": "array",
           "items": {
@@ -6203,8 +5932,8 @@
         "state": {
           "$ref": "#/definitions/State"
         },
-        "templateVars": {
-          "type": "object"
+        "uid": {
+          "type": "string"
         },
         "updated": {
           "type": "string",
@@ -6268,9 +5997,6 @@
     "ReportEmail": {
       "type": "object",
       "properties": {
-        "email": {
-          "type": "string"
-        },
         "emails": {
           "description": "Comma-separated list of emails to which to send the report to.",
           "type": "string"
@@ -6303,9 +6029,6 @@
     "ReportSchedule": {
       "type": "object",
       "properties": {
-        "day": {
-          "type": "string"
-        },
         "dayOfMonth": {
           "type": "string"
         },
@@ -6316,20 +6039,12 @@
         "frequency": {
           "type": "string"
         },
-        "hour": {
-          "type": "integer",
-          "format": "int64"
-        },
         "intervalAmount": {
           "type": "integer",
           "format": "int64"
         },
         "intervalFrequency": {
           "type": "string"
-        },
-        "minute": {
-          "type": "integer",
-          "format": "int64"
         },
         "startDate": {
           "type": "string",
@@ -6502,24 +6217,6 @@
         }
       }
     },
-    "SSOSettings": {
-      "type": "object",
-      "properties": {
-        "id": {
-          "type": "string"
-        },
-        "provider": {
-          "type": "string"
-        },
-        "settings": {
-          "type": "object",
-          "additionalProperties": {}
-        },
-        "source": {
-          "$ref": "#/definitions/SettingsSource"
-        }
-      }
-    },
     "SaveDashboardCommand": {
       "type": "object",
       "properties": {
@@ -6548,6 +6245,29 @@
           "type": "boolean"
         },
         "userId": {
+          "type": "integer",
+          "format": "int64"
+        }
+      }
+    },
+    "SearchDeviceQueryResult": {
+      "type": "object",
+      "properties": {
+        "devices": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/DeviceSearchHitDTO"
+          }
+        },
+        "page": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "perPage": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "totalCount": {
           "type": "integer",
           "format": "int64"
         }
@@ -6886,10 +6606,6 @@
           "type": "string"
         }
       }
-    },
-    "SettingsSource": {
-      "type": "integer",
-      "format": "int64"
     },
     "ShareType": {
       "type": "string"
@@ -7344,6 +7060,21 @@
     "Type": {
       "type": "string"
     },
+    "TypeMeta": {
+      "description": "+k8s:deepcopy-gen=false",
+      "type": "object",
+      "title": "TypeMeta describes an individual object in an API response or request\nwith strings representing the type of the object and its API schema version.\nStructures that are versioned or persisted should inline TypeMeta.",
+      "properties": {
+        "apiVersion": {
+          "description": "APIVersion defines the versioned schema of this representation of an object.\nServers should convert recognized schemas to the latest internal value, and\nmay reject unrecognized values.\nMore info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources\n+optional",
+          "type": "string"
+        },
+        "kind": {
+          "description": "Kind is a string value representing the REST resource this object represents.\nServers may infer this from the endpoint the client submits requests to.\nCannot be updated.\nIn CamelCase.\nMore info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds\n+optional",
+          "type": "string"
+        }
+      }
+    },
     "URL": {
       "description": "The general form represented is:\n\n[scheme:][//[userinfo@]host][/]path[?query][#fragment]\n\nURLs that do not start with a slash after the scheme are interpreted as:\n\nscheme:opaque[?query][#fragment]\n\nNote that the Path field is stored in decoded form: /%47%6f%2f becomes /Go/.\nA consequence is that it is impossible to tell which slashes in the Path were\nslashes in the raw URL and which were %2f. This distinction is rarely important,\nbut when it is, the code should use the EscapedPath method, which preserves\nthe original encoding of Path.\n\nThe RawPath field is an optional field which is only set when the default\nencoding of Path is different from the escaped path. See the EscapedPath method\nfor more details.\n\nURL's String method uses the EscapedPath method to obtain the path.",
       "type": "object",
@@ -7384,77 +7115,14 @@
         }
       }
     },
-    "UpdateAlertNotificationCommand": {
+    "Unstructured": {
+      "description": "Unstructured allows objects that do not have Golang structs registered to be manipulated\ngenerically.",
       "type": "object",
       "properties": {
-        "disableResolveMessage": {
-          "type": "boolean"
-        },
-        "frequency": {
-          "type": "string"
-        },
-        "id": {
-          "type": "integer",
-          "format": "int64"
-        },
-        "isDefault": {
-          "type": "boolean"
-        },
-        "name": {
-          "type": "string"
-        },
-        "secureSettings": {
+        "Object": {
+          "description": "Object is a JSON compatible map with string, float, int, bool, []interface{},\nor map[string]interface{} children.",
           "type": "object",
-          "additionalProperties": {
-            "type": "string"
-          }
-        },
-        "sendReminder": {
-          "type": "boolean"
-        },
-        "settings": {
-          "$ref": "#/definitions/Json"
-        },
-        "type": {
-          "type": "string"
-        },
-        "uid": {
-          "type": "string"
-        }
-      }
-    },
-    "UpdateAlertNotificationWithUidCommand": {
-      "type": "object",
-      "properties": {
-        "disableResolveMessage": {
-          "type": "boolean"
-        },
-        "frequency": {
-          "type": "string"
-        },
-        "isDefault": {
-          "type": "boolean"
-        },
-        "name": {
-          "type": "string"
-        },
-        "secureSettings": {
-          "type": "object",
-          "additionalProperties": {
-            "type": "string"
-          }
-        },
-        "sendReminder": {
-          "type": "boolean"
-        },
-        "settings": {
-          "$ref": "#/definitions/Json"
-        },
-        "type": {
-          "type": "string"
-        },
-        "uid": {
-          "type": "string"
+          "additionalProperties": {}
         }
       }
     },
@@ -7915,6 +7583,9 @@
         "theme": {
           "type": "string"
         },
+        "uid": {
+          "type": "string"
+        },
         "updatedAt": {
           "type": "string",
           "format": "date-time"
@@ -7957,6 +7628,9 @@
           "type": "string"
         },
         "name": {
+          "type": "string"
+        },
+        "uid": {
           "type": "string"
         }
       }
@@ -8219,6 +7893,36 @@
         }
       }
     },
+    "cloudMigrationCreateTokenResponse": {
+      "description": "",
+      "schema": {
+        "$ref": "#/definitions/CreateAccessTokenResponseDTO"
+      }
+    },
+    "cloudMigrationListResponse": {
+      "description": "",
+      "schema": {
+        "$ref": "#/definitions/CloudMigrationListResponse"
+      }
+    },
+    "cloudMigrationResponse": {
+      "description": "",
+      "schema": {
+        "$ref": "#/definitions/CloudMigrationResponse"
+      }
+    },
+    "cloudMigrationRunListResponse": {
+      "description": "",
+      "schema": {
+        "$ref": "#/definitions/CloudMigrationRunList"
+      }
+    },
+    "cloudMigrationRunResponse": {
+      "description": "",
+      "schema": {
+        "$ref": "#/definitions/MigrateDataResponseDTO"
+      }
+    },
     "conflictError": {
       "description": "ConflictError",
       "schema": {
@@ -8405,28 +8109,6 @@
         }
       }
     },
-    "deleteAlertNotificationChannelResponse": {
-      "description": "",
-      "schema": {
-        "type": "object",
-        "required": [
-          "id",
-          "message"
-        ],
-        "properties": {
-          "id": {
-            "description": "ID Identifier of the deleted notification channel.",
-            "type": "integer",
-            "format": "int64",
-            "example": 65
-          },
-          "message": {
-            "description": "Message Message of the deleted notificatiton channel.",
-            "type": "string"
-          }
-        }
-      }
-    },
     "deleteCorrelationResponse": {
       "description": "",
       "schema": {
@@ -8523,6 +8205,12 @@
         }
       }
     },
+    "devicesSearchResponse": {
+      "description": "",
+      "schema": {
+        "$ref": "#/definitions/SearchDeviceQueryResult"
+      }
+    },
     "folderResponse": {
       "description": "",
       "schema": {
@@ -8560,45 +8248,6 @@
       "description": "",
       "schema": {
         "$ref": "#/definitions/Status"
-      }
-    },
-    "getAlertNotificationChannelResponse": {
-      "description": "",
-      "schema": {
-        "$ref": "#/definitions/AlertNotification"
-      }
-    },
-    "getAlertNotificationChannelsResponse": {
-      "description": "",
-      "schema": {
-        "type": "array",
-        "items": {
-          "$ref": "#/definitions/AlertNotification"
-        }
-      }
-    },
-    "getAlertNotificationLookupResponse": {
-      "description": "",
-      "schema": {
-        "type": "array",
-        "items": {
-          "$ref": "#/definitions/AlertNotificationLookup"
-        }
-      }
-    },
-    "getAlertResponse": {
-      "description": "",
-      "schema": {
-        "$ref": "#/definitions/LegacyAlert"
-      }
-    },
-    "getAlertsResponse": {
-      "description": "",
-      "schema": {
-        "type": "array",
-        "items": {
-          "$ref": "#/definitions/AlertListItemDTO"
-        }
       }
     },
     "getAllRolesResponse": {
@@ -8672,15 +8321,6 @@
     },
     "getDashboardSnapshotResponse": {
       "description": ""
-    },
-    "getDashboardStatesResponse": {
-      "description": "",
-      "schema": {
-        "type": "array",
-        "items": {
-          "$ref": "#/definitions/AlertStateInfoDTO"
-        }
-      }
     },
     "getDashboardsTagsResponse": {
       "description": "",
@@ -8939,6 +8579,27 @@
         "$ref": "#/definitions/RoleDTO"
       }
     },
+    "getSSOSettingsResponse": {
+      "description": "",
+      "schema": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "provider": {
+            "type": "string"
+          },
+          "settings": {
+            "type": "object",
+            "additionalProperties": {}
+          },
+          "source": {
+            "type": "string"
+          }
+        }
+      }
+    },
     "getSharingOptionsResponse": {
       "description": "",
       "schema": {
@@ -9117,6 +8778,30 @@
         }
       }
     },
+    "listSSOSettingsResponse": {
+      "description": "",
+      "schema": {
+        "type": "array",
+        "items": {
+          "type": "object",
+          "properties": {
+            "id": {
+              "type": "string"
+            },
+            "provider": {
+              "type": "string"
+            },
+            "settings": {
+              "type": "object",
+              "additionalProperties": {}
+            },
+            "source": {
+              "type": "string"
+            }
+          }
+        }
+      }
+    },
     "listSortOptionsResponse": {
       "description": "",
       "schema": {
@@ -9186,53 +8871,6 @@
       "description": "An OKResponse is returned if the request was successful.",
       "schema": {
         "$ref": "#/definitions/SuccessResponseBody"
-      }
-    },
-    "pauseAlertResponse": {
-      "description": "",
-      "schema": {
-        "type": "object",
-        "required": [
-          "alertId",
-          "message"
-        ],
-        "properties": {
-          "alertId": {
-            "type": "integer",
-            "format": "int64"
-          },
-          "message": {
-            "type": "string"
-          },
-          "state": {
-            "description": "Alert result state\nrequired true",
-            "type": "string"
-          }
-        }
-      }
-    },
-    "pauseAlertsResponse": {
-      "description": "",
-      "schema": {
-        "type": "object",
-        "required": [
-          "alertsAffected",
-          "message"
-        ],
-        "properties": {
-          "alertsAffected": {
-            "description": "AlertsAffected is the number of the affected alerts.",
-            "type": "integer",
-            "format": "int64"
-          },
-          "message": {
-            "type": "string"
-          },
-          "state": {
-            "description": "Alert result state\nrequired true",
-            "type": "string"
-          }
-        }
       }
     },
     "postAPIkeyResponse": {
@@ -9445,12 +9083,6 @@
       "description": "",
       "schema": {
         "$ref": "#/definitions/RoleAssignmentsDTO"
-      }
-    },
-    "testAlertResponse": {
-      "description": "",
-      "schema": {
-        "$ref": "#/definitions/AlertTestResult"
       }
     },
     "unauthorisedError": {

@@ -4,7 +4,8 @@ import React, { FormEvent, PropsWithChildren } from 'react';
 import { Field, Input } from '@grafana/ui';
 
 interface VariableTextFieldProps {
-  value: string;
+  value?: string;
+  defaultValue?: string;
   name: string;
   placeholder?: string;
   onChange?: (event: FormEvent<HTMLInputElement>) => void;
@@ -21,6 +22,7 @@ interface VariableTextFieldProps {
 
 export function VariableTextField({
   value,
+  defaultValue,
   name,
   placeholder = '',
   onChange,
@@ -43,6 +45,7 @@ export function VariableTextField({
         id={id}
         placeholder={placeholder}
         value={value}
+        defaultValue={defaultValue}
         onChange={onChange}
         onBlur={onBlur}
         width={grow ? undefined : width ?? 30}

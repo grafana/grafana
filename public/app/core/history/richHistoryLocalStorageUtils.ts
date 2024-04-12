@@ -57,8 +57,8 @@ function filterQueriesBySearchFilter(queries: RichHistoryQuery[], searchFilter: 
 
     const listOfMatchingQueries = query.queries.filter((query) =>
       // Remove fields in which we don't want to be searching
-      Object.values(omit(query, ['datasource', 'key', 'refId', 'hide', 'queryType'])).some(
-        (value) => value?.toString().includes(searchFilter)
+      Object.values(omit(query, ['datasource', 'key', 'refId', 'hide', 'queryType'])).some((value) =>
+        value?.toString().includes(searchFilter)
       )
     );
 
@@ -94,6 +94,7 @@ export const sortQueries = (array: RichHistoryQuery[], sortOrder: SortOrder) => 
 export const RICH_HISTORY_SETTING_KEYS = {
   retentionPeriod: 'grafana.explore.richHistory.retentionPeriod',
   starredTabAsFirstTab: 'grafana.explore.richHistory.starredTabAsFirstTab',
-  activeDatasourceOnly: 'grafana.explore.richHistory.activeDatasourceOnly',
+  legacyActiveDatasourceOnly: 'grafana.explore.richHistory.activeDatasourceOnly',
+  activeDatasourcesOnly: 'grafana.explore.richHistory.activeDatasourcesOnly',
   datasourceFilters: 'grafana.explore.richHistory.datasourceFilters',
 };

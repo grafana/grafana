@@ -8,11 +8,14 @@ import {
   SelectableValue,
   updateDatasourcePluginJsonDataOption,
 } from '@grafana/data';
+import { selectors } from '@grafana/e2e-selectors';
 import { ConfigSubSection } from '@grafana/experimental';
+import { config } from '@grafana/runtime';
 import { getBackendSrv } from '@grafana/runtime/src';
 import { InlineField, Input, Select, Switch, useTheme2 } from '@grafana/ui';
 
 import { useUpdateDatasource } from '../../../../features/datasources/state';
+import { SUGGESTIONS_LIMIT } from '../language_provider';
 import { QueryEditorMode } from '../querybuilder/shared/types';
 import { defaultPrometheusQueryOverlapWindow } from '../querycache/QueryCache';
 import { PromApplication, PromBuildInfoResponse, PrometheusCacheLevel, PromOptions } from '../types';
@@ -55,7 +58,10 @@ export const DURATION_REGEX = /^$|^\d+(ms|[Mwdhmsy])$/;
 // multiple duration input
 export const MULTIPLE_DURATION_REGEX = /(\d+)(.+)/;
 
+export const NON_NEGATIVE_INTEGER_REGEX = /^(0|[1-9]\d*)(\.\d+)?(e\+?\d+)?$/; // non-negative integers, including scientific notation
+
 const durationError = 'Value is not valid, you can use number with time unit specifier: y, M, w, d, h, m, s';
+export const countError = 'Value is not valid, you can use non-negative integers, including scientific notation';
 /**
  * Returns the closest version to what the user provided that we have in our PromFlavorVersions for the currently selected flavor
  * Bugs: It will only reject versions that are a major release apart, so Mimir 2.x might get selected for Prometheus 2.8 if the user selects an incorrect flavor
@@ -168,6 +174,14 @@ export const PromSettings = (props: Props) => {
     incrementalQueryOverlapWindow: '',
   });
 
+  type ValidCount = {
+    codeModeMetricNamesSuggestionLimit: string;
+  };
+
+  const [validCount, updateValidCount] = useState<ValidCount>({
+    codeModeMetricNamesSuggestionLimit: '',
+  });
+
   return (
     <>
       <ConfigSubSection title="Interval behaviour" className={styles.container}>
@@ -202,6 +216,7 @@ export const PromSettings = (props: Props) => {
                         timeInterval: e.currentTarget.value,
                       })
                     }
+                    data-testid={selectors.components.DataSource.Prometheus.configPage.scrapeInterval}
                   />
                   {validateInput(validDuration.timeInterval, DURATION_REGEX, durationError)}
                 </>
@@ -231,6 +246,7 @@ export const PromSettings = (props: Props) => {
                         queryTimeout: e.currentTarget.value,
                       })
                     }
+                    data-testid={selectors.components.DataSource.Prometheus.configPage.queryTimeout}
                   />
                   {validateInput(validDuration.queryTimeout, DURATION_REGEX, durationError)}
                 </>
@@ -259,6 +275,7 @@ export const PromSettings = (props: Props) => {
                 }
                 onChange={onChangeHandler('defaultEditor', options, onOptionsChange)}
                 width={40}
+                data-testid={selectors.components.DataSource.Prometheus.configPage.defaultEditor}
               />
             </InlineField>
           </div>
@@ -280,6 +297,7 @@ export const PromSettings = (props: Props) => {
               <Switch
                 value={options.jsonData.disableMetricsLookup ?? false}
                 onChange={onUpdateDatasourceJsonDataOptionChecked(props, 'disableMetricsLookup')}
+                id={selectors.components.DataSource.Prometheus.configPage.disableMetricLookup}
               />
             </InlineField>
           </div>
@@ -338,6 +356,7 @@ export const PromSettings = (props: Props) => {
                     }
                   )}
                   width={40}
+                  data-testid={selectors.components.DataSource.Prometheus.configPage.prometheusType}
                 />
               </InlineField>
             </div>
@@ -365,6 +384,7 @@ export const PromSettings = (props: Props) => {
                     )}
                     onChange={onChangeHandler('prometheusVersion', options, onOptionsChange)}
                     width={40}
+                    data-testid={selectors.components.DataSource.Prometheus.configPage.prometheusVersion}
                   />
                 </InlineField>
               </div>
@@ -392,10 +412,54 @@ export const PromSettings = (props: Props) => {
                   value={
                     cacheValueOptions.find((o) => o.value === options.jsonData.cacheLevel) ?? PrometheusCacheLevel.Low
                   }
+                  data-testid={selectors.components.DataSource.Prometheus.configPage.cacheLevel}
                 />
               </InlineField>
             </div>
           </div>
+
+          {config.featureToggles.prometheusCodeModeMetricNamesSearch && (
+            <div className="gf-form-inline">
+              <div className="gf-form">
+                <InlineField
+                  label="Metric names suggestion limit"
+                  labelWidth={PROM_CONFIG_LABEL_WIDTH}
+                  tooltip={
+                    <>
+                      The maximum number of metric names that may appear as autocomplete suggestions in the query
+                      editor&apos;s Code mode.
+                    </>
+                  }
+                  interactive={true}
+                  disabled={options.readOnly}
+                >
+                  <>
+                    <Input
+                      className="width-20"
+                      value={options.jsonData.codeModeMetricNamesSuggestionLimit}
+                      onChange={onChangeHandler('codeModeMetricNamesSuggestionLimit', options, onOptionsChange)}
+                      spellCheck={false}
+                      placeholder={SUGGESTIONS_LIMIT.toString()}
+                      onBlur={(e) =>
+                        updateValidCount({
+                          ...validCount,
+                          codeModeMetricNamesSuggestionLimit: e.currentTarget.value,
+                        })
+                      }
+                      data-testid={
+                        selectors.components.DataSource.Prometheus.configPage.codeModeMetricNamesSuggestionLimit
+                      }
+                    />
+                    {validateInput(
+                      validCount.codeModeMetricNamesSuggestionLimit,
+                      NON_NEGATIVE_INTEGER_REGEX,
+                      countError
+                    )}
+                  </>
+                </InlineField>
+              </div>
+            </div>
+          )}
 
           <div className="gf-form-inline">
             <div className="gf-form max-width-30">
@@ -416,6 +480,7 @@ export const PromSettings = (props: Props) => {
                 <Switch
                   value={options.jsonData.incrementalQuerying ?? false}
                   onChange={onUpdateDatasourceJsonDataOptionChecked(props, 'incrementalQuerying')}
+                  id={selectors.components.DataSource.Prometheus.configPage.incrementalQuerying}
                 />
               </InlineField>
             </div>
@@ -447,6 +512,7 @@ export const PromSettings = (props: Props) => {
                     value={options.jsonData.incrementalQueryOverlapWindow ?? defaultPrometheusQueryOverlapWindow}
                     onChange={onChangeHandler('incrementalQueryOverlapWindow', options, onOptionsChange)}
                     spellCheck={false}
+                    data-testid={selectors.components.DataSource.Prometheus.configPage.queryOverlapWindow}
                   />
                   {validateInput(validDuration.incrementalQueryOverlapWindow, MULTIPLE_DURATION_REGEX, durationError)}
                 </>
@@ -467,6 +533,7 @@ export const PromSettings = (props: Props) => {
                 <Switch
                   value={options.jsonData.disableRecordingRules ?? false}
                   onChange={onUpdateDatasourceJsonDataOptionChecked(props, 'disableRecordingRules')}
+                  id={selectors.components.DataSource.Prometheus.configPage.disableRecordingRules}
                 />
               </InlineField>
             </div>
@@ -496,6 +563,7 @@ export const PromSettings = (props: Props) => {
                   onChange={onChangeHandler('customQueryParameters', options, onOptionsChange)}
                   spellCheck={false}
                   placeholder="Example: max_source_resolution=5m&timeout=10"
+                  data-testid={selectors.components.DataSource.Prometheus.configPage.customQueryParameters}
                 />
               </InlineField>
             </div>
@@ -522,6 +590,7 @@ export const PromSettings = (props: Props) => {
                   options={httpOptions}
                   value={httpOptions.find((o) => o.value === options.jsonData.httpMethod)}
                   onChange={onChangeHandler('httpMethod', options, onOptionsChange)}
+                  data-testid={selectors.components.DataSource.Prometheus.configPage.httpMethod}
                 />
               </InlineField>
             </div>

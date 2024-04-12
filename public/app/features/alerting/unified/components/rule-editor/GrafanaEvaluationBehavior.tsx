@@ -1,24 +1,12 @@
 import { css } from '@emotion/css';
 import React, { useCallback, useEffect, useState } from 'react';
-import { RegisterOptions, useFormContext } from 'react-hook-form';
+import { RegisterOptions, useFormContext, Controller } from 'react-hook-form';
 
 import { GrafanaTheme2, SelectableValue } from '@grafana/data';
-import {
-  Field,
-  Icon,
-  IconButton,
-  Input,
-  InputControl,
-  Label,
-  Stack,
-  Switch,
-  Text,
-  Tooltip,
-  useStyles2,
-} from '@grafana/ui';
+import { Field, Icon, IconButton, Input, Label, Stack, Switch, Text, Tooltip, useStyles2 } from '@grafana/ui';
 
 import { CombinedRuleGroup, CombinedRuleNamespace } from '../../../../../types/unified-alerting';
-import { logInfo, LogMessages } from '../../Analytics';
+import { LogMessages, logInfo } from '../../Analytics';
 import { useCombinedRuleNamespaces } from '../../hooks/useCombinedRuleNamespaces';
 import { useUnifiedAlertingSelector } from '../../hooks/useUnifiedAlertingSelector';
 import { RuleFormValues } from '../../types/rule-form';
@@ -30,6 +18,7 @@ import { EditCloudGroupModal } from '../rules/EditRuleGroupModal';
 import { FolderAndGroup, useFolderGroupOptions } from './FolderAndGroup';
 import { GrafanaAlertStatePicker } from './GrafanaAlertStatePicker';
 import { NeedHelpInfo } from './NeedHelpInfo';
+import { PendingPeriodQuickPick } from './PendingPeriodQuickPick';
 import { RuleEditorSection } from './RuleEditorSection';
 
 export const MIN_TIME_RANGE_STEP_S = 10; // 10 seconds
@@ -57,7 +46,7 @@ const forValidationOptions = (evaluateEvery: string): RegisterOptions => ({
         const millisEvery = parsePrometheusDuration(evaluateEvery);
         return millisFor >= millisEvery
           ? true
-          : 'For duration must be greater than or equal to the evaluation interval.';
+          : 'Pending period must be greater than or equal to the evaluation interval.';
       } catch (err) {
         // if we fail to parse "every", assume validation is successful, or the error messages
         // will overlap in the UI
@@ -92,16 +81,16 @@ function FolderGroupAndEvaluationInterval({
   const { watch, setValue, getValues } = useFormContext<RuleFormValues>();
   const [isEditingGroup, setIsEditingGroup] = useState(false);
 
-  const [groupName, folderName] = watch(['group', 'folder.title']);
+  const [groupName, folderUid, folderName] = watch(['group', 'folder.uid', 'folder.title']);
 
   const rulerRuleRequests = useUnifiedAlertingSelector((state) => state.rulerRules);
   const groupfoldersForGrafana = rulerRuleRequests[GRAFANA_RULES_SOURCE_NAME];
 
   const grafanaNamespaces = useCombinedRuleNamespaces(GRAFANA_RULES_SOURCE_NAME);
-  const existingNamespace = grafanaNamespaces.find((ns) => ns.name === folderName);
+  const existingNamespace = grafanaNamespaces.find((ns) => ns.uid === folderUid);
   const existingGroup = existingNamespace?.groups.find((g) => g.name === groupName);
 
-  const isNewGroup = useIsNewGroup(folderName ?? '', groupName);
+  const isNewGroup = useIsNewGroup(folderUid ?? '', groupName);
 
   useEffect(() => {
     if (!isNewGroup && existingGroup?.interval) {
@@ -118,7 +107,7 @@ function FolderGroupAndEvaluationInterval({
 
   const onOpenEditGroupModal = () => setIsEditingGroup(true);
 
-  const editGroupDisabled = groupfoldersForGrafana?.loading || isNewGroup || !folderName || !groupName;
+  const editGroupDisabled = groupfoldersForGrafana?.loading || isNewGroup || !folderUid || !groupName;
 
   const emptyNamespace: CombinedRuleNamespace = {
     name: folderName,
@@ -137,6 +126,7 @@ function FolderGroupAndEvaluationInterval({
         <EditCloudGroupModal
           namespace={existingNamespace ?? emptyNamespace}
           group={existingGroup ?? emptyGroup}
+          folderUid={folderUid}
           onClose={() => closeEditGroupModal()}
           intervalEditOnly
           hideFolder={true}
@@ -174,9 +164,16 @@ function ForInput({ evaluateEvery }: { evaluateEvery: string }) {
   const {
     register,
     formState: { errors },
+    setValue,
+    watch,
   } = useFormContext<RuleFormValues>();
 
   const evaluateForId = 'eval-for-input';
+  const currentPendingPeriod = watch('evaluateFor');
+
+  const setPendingPeriod = (pendingPeriod: string) => {
+    setValue('evaluateFor', pendingPeriod);
+  };
 
   return (
     <Stack direction="row" justify-content="flex-start" align-items="flex-start">
@@ -191,10 +188,17 @@ function ForInput({ evaluateEvery }: { evaluateEvery: string }) {
         }
         className={styles.inlineField}
         error={errors.evaluateFor?.message}
-        invalid={!!errors.evaluateFor?.message}
+        invalid={Boolean(errors.evaluateFor?.message) ? true : undefined}
         validationMessageHorizontalOverflow={true}
       >
-        <Input id={evaluateForId} width={8} {...register('evaluateFor', forValidationOptions(evaluateEvery))} />
+        <Stack direction="row" alignItems="center">
+          <Input id={evaluateForId} width={8} {...register('evaluateFor', forValidationOptions(evaluateEvery))} />
+          <PendingPeriodQuickPick
+            selectedPendingPeriod={currentPendingPeriod}
+            groupEvaluationInterval={evaluateEvery}
+            onSelect={setPendingPeriod}
+          />
+        </Stack>
       </Field>
     </Stack>
   );
@@ -249,7 +253,7 @@ export function GrafanaEvaluationBehavior({
 
         {existing && (
           <Field htmlFor="pause-alert-switch">
-            <InputControl
+            <Controller
               render={() => (
                 <Stack gap={1} direction="row" alignItems="center">
                   <Switch
@@ -280,7 +284,7 @@ export function GrafanaEvaluationBehavior({
       {showErrorHandling && (
         <>
           <Field htmlFor="no-data-state-input" label="Alert state if no data or all values are null">
-            <InputControl
+            <Controller
               render={({ field: { onChange, ref, ...field } }) => (
                 <GrafanaAlertStatePicker
                   {...field}
@@ -295,7 +299,7 @@ export function GrafanaEvaluationBehavior({
             />
           </Field>
           <Field htmlFor="exec-err-state-input" label="Alert state if execution error or timeout">
-            <InputControl
+            <Controller
               render={({ field: { onChange, ref, ...field } }) => (
                 <GrafanaAlertStatePicker
                   {...field}

@@ -25,6 +25,13 @@ var (
 					Action: accesscontrol.ActionAlertingRuleExternalRead,
 					Scope:  datasources.ScopeAll,
 				},
+				// Following are needed for simplified notification policies
+				{
+					Action: accesscontrol.ActionAlertingNotificationsTimeIntervalsRead,
+				},
+				{
+					Action: accesscontrol.ActionAlertingReceiversList,
+				},
 			},
 		},
 	}
@@ -109,6 +116,12 @@ var (
 					Action: accesscontrol.ActionAlertingNotificationsExternalRead,
 					Scope:  datasources.ScopeAll,
 				},
+				{
+					Action: accesscontrol.ActionAlertingNotificationsTimeIntervalsRead,
+				},
+				{
+					Action: accesscontrol.ActionAlertingReceiversRead,
+				},
 			},
 		},
 	}
@@ -166,6 +179,10 @@ var (
 				{
 					Action: accesscontrol.ActionAlertingProvisioningWrite, // organization scope
 				},
+				{
+					Action: dashboards.ActionFoldersRead,
+					Scope:  dashboards.ScopeFoldersAll,
+				},
 			},
 		},
 		Grants: []string{string(org.RoleAdmin)},
@@ -188,6 +205,21 @@ var (
 		},
 		Grants: []string{string(org.RoleAdmin)},
 	}
+
+	alertingProvisioningStatus = accesscontrol.RoleRegistration{
+		Role: accesscontrol.RoleDTO{
+			Name:        accesscontrol.FixedRolePrefix + "alerting.provisioning.provenance:writer",
+			DisplayName: "Set provisioning status",
+			Description: "Set provisioning status for alerting resources. Should be used together with other regular roles (Notifications Writer and/or Rules Writer)",
+			Group:       AlertRolesGroup,
+			Permissions: []accesscontrol.Permission{
+				{
+					Action: accesscontrol.ActionAlertingProvisioningSetStatus, // organization scope
+				},
+			},
+		},
+		Grants: []string{string(org.RoleAdmin), string(org.RoleEditor)},
+	}
 )
 
 func DeclareFixedRoles(service accesscontrol.Service) error {
@@ -195,6 +227,6 @@ func DeclareFixedRoles(service accesscontrol.Service) error {
 		rulesReaderRole, rulesWriterRole,
 		instancesReaderRole, instancesWriterRole,
 		notificationsReaderRole, notificationsWriterRole,
-		alertingReaderRole, alertingWriterRole, alertingProvisionerRole, alertingProvisioningReaderWithSecretsRole,
+		alertingReaderRole, alertingWriterRole, alertingProvisionerRole, alertingProvisioningReaderWithSecretsRole, alertingProvisioningStatus,
 	)
 }

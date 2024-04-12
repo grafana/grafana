@@ -1,4 +1,5 @@
 import { DataSourceJsonData } from '@grafana/data';
+import { DataSourceRef } from '@grafana/schema';
 
 import {
   BucketAggregationType,
@@ -14,11 +15,11 @@ import {
   MovingAverage as SchemaMovingAverage,
   BucketAggregation,
   Logs as SchemaLogs,
-  Elasticsearch,
+  ElasticsearchDataQuery,
 } from './dataquery.gen';
 
 export * from './dataquery.gen';
-export { Elasticsearch as ElasticsearchQuery } from './dataquery.gen';
+export { ElasticsearchDataQuery as ElasticsearchQuery } from './dataquery.gen';
 
 // We want to extend the settings of the Logs query with additional properties that
 // are not part of the schema. This is a workaround, because exporting LogsSettings
@@ -55,7 +56,6 @@ export interface ElasticsearchOptions extends DataSourceJsonData {
   timeField: string;
   // we used to have a field named `esVersion` in the past,
   // please do not use that name in the future.
-  xpack?: boolean;
   interval?: Interval;
   timeInterval: string;
   maxConcurrentShardRequests?: number;
@@ -126,11 +126,12 @@ export type DataLinkConfig = {
 };
 
 export interface ElasticsearchAnnotationQuery {
-  target: Elasticsearch;
+  target: ElasticsearchDataQuery;
   timeField?: string;
   titleField?: string;
   timeEndField?: string;
   query?: string;
+  datasource: DataSourceRef;
   tagsField?: string;
   textField?: string;
   // @deprecated index is deprecated and will be removed in the future

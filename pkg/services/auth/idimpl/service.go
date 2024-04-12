@@ -2,6 +2,7 @@ package idimpl
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"time"
 
@@ -20,17 +21,22 @@ import (
 
 const (
 	cachePrefix = "id-token"
-	tokenTTL    = 1 * time.Hour
-	cacheTTL    = 58 * time.Minute
+	tokenTTL    = 10 * time.Minute
+	cacheLeeway = 30 * time.Second
 )
 
 var _ auth.IDService = (*Service)(nil)
 
 func ProvideService(
 	cfg *setting.Cfg, signer auth.IDSigner, cache remotecache.CacheStorage,
-	features featuremgmt.FeatureToggles, authnService authn.Service, reg prometheus.Registerer,
+	features featuremgmt.FeatureToggles, authnService authn.Service,
+	reg prometheus.Registerer,
 ) *Service {
-	s := &Service{cfg: cfg, logger: log.New("id-service"), signer: signer, cache: cache, metrics: newMetrics(reg)}
+	s := &Service{
+		cfg: cfg, logger: log.New("id-service"),
+		signer: signer, cache: cache,
+		metrics: newMetrics(reg),
+	}
 
 	if features.IsEnabledGlobally(featuremgmt.FlagIdForwarding) {
 		authnService.RegisterPostAuthHook(s.hook, 140)
@@ -61,15 +67,15 @@ func (s *Service) SignIdentity(ctx context.Context, id identity.Requester) (stri
 		cachedToken, err := s.cache.Get(ctx, cacheKey)
 		if err == nil {
 			s.metrics.tokenSigningFromCacheCounter.Inc()
-			s.logger.Debug("Cached token found", "namespace", namespace, "id", identifier)
+			s.logger.FromContext(ctx).Debug("Cached token found", "namespace", namespace, "id", identifier)
 			return string(cachedToken), nil
 		}
 
 		s.metrics.tokenSigningCounter.Inc()
-		s.logger.Debug("Sign new id token", "namespace", namespace, "id", identifier)
+		s.logger.FromContext(ctx).Debug("Sign new id token", "namespace", namespace, "id", identifier)
 
 		now := time.Now()
-		token, err := s.signer.SignIDToken(ctx, &auth.IDClaims{
+		claims := &auth.IDClaims{
 			Claims: jwt.Claims{
 				Issuer:   s.cfg.AppURL,
 				Audience: getAudience(id.GetOrgID()),
@@ -77,15 +83,37 @@ func (s *Service) SignIdentity(ctx context.Context, id identity.Requester) (stri
 				Expiry:   jwt.NewNumericDate(now.Add(tokenTTL)),
 				IssuedAt: jwt.NewNumericDate(now),
 			},
-		})
+		}
 
+		if identity.IsNamespace(namespace, identity.NamespaceUser) {
+			claims.Email = id.GetEmail()
+			claims.EmailVerified = id.IsEmailVerified()
+			claims.AuthenticatedBy = id.GetAuthenticatedBy()
+		}
+
+		token, err := s.signer.SignIDToken(ctx, claims)
 		if err != nil {
 			s.metrics.failedTokenSigningCounter.Inc()
 			return "", err
 		}
 
-		if err := s.cache.Set(ctx, cacheKey, []byte(token), cacheTTL); err != nil {
-			s.logger.Error("Failed to add id token to cache", "error", err)
+		parsed, err := jwt.ParseSigned(token)
+		if err != nil {
+			s.metrics.failedTokenSigningCounter.Inc()
+			return "", err
+		}
+
+		extracted := auth.IDClaims{}
+		// We don't need to verify the signature here, we are only intrested in checking
+		// when the token expires.
+		if err := parsed.UnsafeClaimsWithoutVerification(&extracted); err != nil {
+			s.metrics.failedTokenSigningCounter.Inc()
+			return "", err
+		}
+
+		expires := time.Until(extracted.Expiry.Time())
+		if err := s.cache.Set(ctx, cacheKey, []byte(token), expires-cacheLeeway); err != nil {
+			s.logger.FromContext(ctx).Error("Failed to add id token to cache", "error", err)
 		}
 
 		return token, nil
@@ -98,12 +126,18 @@ func (s *Service) SignIdentity(ctx context.Context, id identity.Requester) (stri
 	return result.(string), nil
 }
 
+func (s *Service) RemoveIDToken(ctx context.Context, id identity.Requester) error {
+	return s.cache.Delete(ctx, prefixCacheKey(id.GetCacheKey()))
+}
+
 func (s *Service) hook(ctx context.Context, identity *authn.Identity, _ *authn.Request) error {
 	// FIXME(kalleep): we should probably lazy load this
 	token, err := s.SignIdentity(ctx, identity)
 	if err != nil {
-		namespace, id := identity.GetNamespacedID()
-		s.logger.Error("Failed to sign id token", "err", err, "namespace", namespace, "id", id)
+		if shouldLogErr(err) {
+			namespace, id := identity.GetNamespacedID()
+			s.logger.FromContext(ctx).Error("Failed to sign id token", "err", err, "namespace", namespace, "id", id)
+		}
 		// for now don't return error so we don't break authentication from this hook
 		return nil
 	}
@@ -122,4 +156,8 @@ func getSubject(namespace, identifier string) string {
 
 func prefixCacheKey(key string) string {
 	return fmt.Sprintf("%s-%s", cachePrefix, key)
+}
+
+func shouldLogErr(err error) bool {
+	return !errors.Is(err, context.Canceled)
 }

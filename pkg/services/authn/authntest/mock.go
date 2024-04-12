@@ -6,7 +6,6 @@ import (
 	"github.com/grafana/grafana/pkg/models/usertoken"
 	"github.com/grafana/grafana/pkg/services/auth/identity"
 	"github.com/grafana/grafana/pkg/services/authn"
-	"github.com/grafana/grafana/pkg/services/login"
 )
 
 var _ authn.Service = new(MockService)
@@ -47,6 +46,10 @@ func (*MockService) Logout(_ context.Context, _ identity.Requester, _ *usertoken
 	panic("unimplemented")
 }
 
+func (m *MockService) ResolveIdentity(ctx context.Context, orgID int64, namespaceID string) (*authn.Identity, error) {
+	panic("unimplemented")
+}
+
 func (m *MockService) SyncIdentity(ctx context.Context, identity *authn.Identity) error {
 	if m.SyncIdentityFunc != nil {
 		return m.SyncIdentityFunc(ctx, identity)
@@ -57,14 +60,17 @@ func (m *MockService) SyncIdentity(ctx context.Context, identity *authn.Identity
 var _ authn.HookClient = new(MockClient)
 var _ authn.LogoutClient = new(MockClient)
 var _ authn.ContextAwareClient = new(MockClient)
+var _ authn.IdentityResolverClient = new(MockClient)
 
 type MockClient struct {
-	NameFunc         func() string
-	AuthenticateFunc func(ctx context.Context, r *authn.Request) (*authn.Identity, error)
-	TestFunc         func(ctx context.Context, r *authn.Request) bool
-	PriorityFunc     func() uint
-	HookFunc         func(ctx context.Context, identity *authn.Identity, r *authn.Request) error
-	LogoutFunc       func(ctx context.Context, user identity.Requester, info *login.UserAuth) (*authn.Redirect, bool)
+	NameFunc            func() string
+	AuthenticateFunc    func(ctx context.Context, r *authn.Request) (*authn.Identity, error)
+	TestFunc            func(ctx context.Context, r *authn.Request) bool
+	PriorityFunc        func() uint
+	HookFunc            func(ctx context.Context, identity *authn.Identity, r *authn.Request) error
+	LogoutFunc          func(ctx context.Context, user identity.Requester) (*authn.Redirect, bool)
+	NamespaceFunc       func() string
+	ResolveIdentityFunc func(ctx context.Context, orgID int64, namespaceID authn.NamespaceID) (*authn.Identity, error)
 }
 
 func (m MockClient) Name() string {
@@ -102,11 +108,26 @@ func (m MockClient) Hook(ctx context.Context, identity *authn.Identity, r *authn
 	return nil
 }
 
-func (m *MockClient) Logout(ctx context.Context, user identity.Requester, info *login.UserAuth) (*authn.Redirect, bool) {
+func (m *MockClient) Logout(ctx context.Context, user identity.Requester) (*authn.Redirect, bool) {
 	if m.LogoutFunc != nil {
-		return m.LogoutFunc(ctx, user, info)
+		return m.LogoutFunc(ctx, user)
 	}
 	return nil, false
+}
+
+func (m *MockClient) Namespace() string {
+	if m.NamespaceFunc != nil {
+		return m.NamespaceFunc()
+	}
+	return ""
+}
+
+// ResolveIdentity implements authn.IdentityResolverClient.
+func (m *MockClient) ResolveIdentity(ctx context.Context, orgID int64, namespaceID authn.NamespaceID) (*authn.Identity, error) {
+	if m.ResolveIdentityFunc != nil {
+		return m.ResolveIdentityFunc(ctx, orgID, namespaceID)
+	}
+	return nil, nil
 }
 
 var _ authn.ProxyClient = new(MockProxyClient)

@@ -25,91 +25,98 @@ weight: 60
 
 # Configure standard options
 
-The data model used in Grafana, namely the [data frame](https://grafana.com/developers/plugin-tools/introduction/data-frames), is a columnar-oriented table structure that unifies both time series and table query results. Each column within this structure is called a _field_. A field can represent a single time series or table column.
+**Standard options** in the panel editor pane let you change how field data is displayed in your visualizations. Options that you apply don't change the data, they just change how Grafana _displays_ the data.
 
-Field options allow you to change how the data is displayed in your visualizations. Options and overrides that you apply do not change the data, they change how Grafana displays the data. When you change an option, it is applied to all fields, meaning all series or columns. For example, if you change the unit to percentage, then all fields with numeric values are displayed in percentages.
+When you set a standard option, the change is applied to all fields or series. For example, if you set the **Unit** option to **Percentage**, all fields with numeric values are displayed as percentages.
 
-For a complete list of field formatting options, refer to [Standard options definitions](#standard-options-definitions).
+For more granular control over the display of fields, refer to [Configure overrides][].
 
-> You can apply standard options to most built-in Grafana panels. Some older panels and community panels that have not updated to the new panel and data model will be missing either all or some of these field options.
+## Supported visualizations
 
-1. Open a dashboard. Hover over any part of the panel to display the actions menu on the top right corner.
-1. Click the menu and select **Edit**.
-1. In the panel display options pane, locate the **Standard options** section.
-1. Select the standard options you want to apply.
+You can configure standard options for the following visualizations:
 
-   For more information about standard options, refer to [Standard options definitions](#standard-options-definitions).
+|                            |                                  |                                  |
+| -------------------------- | -------------------------------- | -------------------------------- |
+| [Bar chart][bar chart]     | [Geomap][geomap]                 | [Status history][status history] |
+| [Bar gauge][bar gauge]     | [Histogram][histogram]           | [Table][table]                   |
+| [Candlestick][candlestick] | [Pie chart][pie chart]           | [Time series][time series]       |
+| [Canvas][canvas]           | [Stat][stat]                     | [Trend][trend]                   |
+| [Gauge][gauge]             | [State timeline][state timeline] | [XY chart][xy chart]             |
 
-1. To preview your change, click outside of the field option box you are editing or press **Enter**.
-
-## Standard options definitions
+## Standard options
 
 This section explains all available standard options.
 
-You can apply standard options to most built-in Grafana panels. Some older panels and community panels that have not updated to the new panel and data model will be missing either all or some of these field options.
-
-Most field options will not affect the visualization until you click outside of the field option box you are editing or press Enter.
+To set these options, expand the **Standard options** section in the panel editor pane. Most field options won't affect the visualization until you click outside of the field option box you're editing or press Enter.
 
 {{% admonition type="note" %}}
-We are constantly working to add and expand options for all visualization, so all options might not be available for all visualizations.
+Not all of the options listed apply to all visualizations with standard options.
 {{% /admonition %}}
 
 ### Unit
 
-Lets you choose what unit a field should use. Click in the **Unit** field, then drill down until you find the unit you want. The unit you select is applied to all fields except time.
+This option lets you choose which unit a field should use. Click in the **Unit** field, then drill down until you find the unit you want. The unit you select is applied to all fields except time.
 
 #### Custom units
 
-You can use the unit dropdown to also specify custom units, custom prefix or suffix and date time formats.
+You can also use the **Unit** drop-down to specify custom units, custom prefixes or suffixes, and date time formats.
 
-To select a custom unit enter the unit and select the last `Custom: xxx` option in the dropdown.
+To set a custom unit, enter the unit you want to use and then select it in the drop-down. It'll be the last option listed. For example, if you enter a unit called "Hearts", the drop-down will then include the option **Custom unit: Hearts**.
 
-- `suffix:<suffix>` for custom unit that should go after value.
-- `prefix:<prefix>` for custom unit that should go before value.
-- `time:<format>` For custom date time formats type for example `time:YYYY-MM-DD`. See [formats](https://momentjs.com/docs/#/displaying/) for the format syntax and options.
-- `si:<base scale><unit characters>` for custom SI units. For example: `si: mF`. This one is a bit more advanced as you can specify both a unit and the
-  source data scale. So if your source data is represented as milli (thousands of) something prefix the unit with that
-  SI scale character.
-- `count:<unit>` for a custom count unit.
-- `currency:<unit>` for custom a currency unit.
+You can further define a custom unit with specific syntax. For example, to set a custom currency unit called "Gems", enter `currency:Gems` in the field. The drop-down will include the option **Custom unit: currency:Gems**:
 
-You can also paste a native emoji in the unit picker and pick it as a custom unit:
+![A custom currency unit called Gems in the Unit drop-down](/media/docs/grafana/panels-visualizations/custom_unit_currency_v11.0.png)
 
-{{< figure src="/static/img/docs/v66/custom_unit_burger2.png" max-width="600px" caption="Custom unit emoji" >}}
+The following table lists the special syntax options for custom units:
+
+| Custom unit                        | Description                                                                                                                                                                                                    |
+| ---------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `suffix:<suffix>`                  | Custom unit that should go after value.                                                                                                                                                                        |
+| `prefix:<prefix>`                  | Custom unit that should go before value.                                                                                                                                                                       |
+| `time:<format>`                    | Custom date time formats type, such as `time:YYYY-MM-DD`. Refer to [formats](https://momentjs.com/docs/#/displaying/) for the format syntax and options.                                                       |
+| `si:<base scale><unit characters>` | Custom SI units, such as `si: mF`. You can specify both a unit and the source data scale. For example, if your source data is represented as milli-something, prefix the unit with the `m` SI scale character. |
+| `count:<unit>`                     | Custom count unit.                                                                                                                                                                                             |
+| `currency:<unit>`                  | Custom currency unit.                                                                                                                                                                                          |
+
+You can also paste a native emoji in the **Unit** drop-down and select it as a custom unit:
+
+![A thumbs up emoji as a custom unit](/media/docs/grafana/panels-visualizations/custom_unit_thumbsup_v11.0.png)
+
+![A time series visualization using custom thumbs up emoji units](/media/docs/grafana/panels-visualizations/thumbsup_panel_v11.0.png)
+
+#### Control unit scaling
+
+By default, Grafana automatically scales the unit based on the magnitude of the value. For example, if you have values of 0.14kW and 3000kW, Grafana displays them as 140W and 3MW, respectively. You can use custom units to control this behavior by setting a prefix, suffix, or custom SI unit.
 
 #### String units
 
-Grafana can sometimes be too aggressive in parsing strings and displaying them as numbers. To configure Grafana to show the original string value, create a field override and add a unit property with the `String` unit.
-
-### Scale units
-
-By default, Grafana automatically scales the unit based on the magnitude of the value. For example, if you have a value of 0.14 kW, Grafana will display it as 140 W. Another example is that 3000 kW will be displayed at 3 MW. If you want to disable this behavior, you can toggle off the **Scale units** switch.
+Sometimes Grafana is too aggressive in interpreting strings and displaying them as numbers. To configure Grafana to show the original string value, select **Misc > String** in the **Unit** drop-down.
 
 ### Min
 
-Lets you set the minimum value used in percentage threshold calculations. Leave blank to automatically calculate the minimum.
+Set the minimum value used in percentage threshold calculations. Leave this field empty to automatically calculate the minimum.
 
 ### Max
 
-Lets you set the maximum value used in percentage threshold calculations. Leave blank to automatically calculate the maximum.
+Set the maximum value used in percentage threshold calculations. Leave this field empty to automatically calculate the maximum.
 
 ### Field min/max
 
-By default the calculated min and max will be based on the minimum and maximum, in all series and fields. Turning field min/max on, will calculate the min or max on each field individually, based on the minimum or maximum value of the field.
+By default, the calculated **Min** and **Max** are based on the minimum and maximum of all series and fields. When you enable **Field min/max**, Grafana calculates the min or max of each field individually, based on the minimum or maximum value of the field.
 
 ### Decimals
 
-Specify the number of decimals Grafana includes in the rendered value. If you leave this field blank, Grafana automatically truncates the number of decimals based on the value. For example 1.1234 will display as 1.12 and 100.456 will display as 100.
+Specify the number of decimals Grafana includes in the rendered value. If you leave this field empty, Grafana automatically truncates the number of decimals based on the value. For example 1.1234 displays as 1.12 and 100.456 displays as 100.
 
-To display all decimals, set the unit to `String`.
+To display all decimals, set the unit to **String**.
 
 ### Display name
 
-Lets you set the display title of all fields. You can use [variables][] in the field title.
+Set the display title of all fields. You can use [variables][] in the field title.
 
-When multiple stats, fields, or series are shown, this field controls the title in each stat. You can use expressions like `${__field.name}` to use only the series name or the field name in title.
+When multiple stats, fields, or series are displayed, this field controls the title in each stat. You can use expressions like `${__field.name}` to use only the series name or the field name in the title.
 
-Given a field with a name of Temp, and labels of {"Loc"="PBI", "Sensor"="3"}
+The following table shows examples of the different field names generated using various expressions. In this example, there's a field with a name of "Temp" and labels of {"Loc"="PBI", "Sensor"="3"}:
 
 | Expression syntax            | Example                 | Renders to                     | Explanation                                                                                                                                                                                                        |
 | ---------------------------- | ----------------------- | ------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
@@ -119,45 +126,82 @@ Given a field with a name of Temp, and labels of {"Loc"="PBI", "Sensor"="3"}
 | `${__field.labels.X}`        | `${__field.labels.Loc}` | `PBI`                          | Displays the value of the specified label key.                                                                                                                                                                     |
 | `${__field.labels.__values}` | Same as Syntax          | `PBI, 3`                       | Displays the values of the labels separated by a comma (without label keys).                                                                                                                                       |
 
-If the value is an empty string after rendering the expression for a particular field, then the default display method is used.
+If the value is an empty string after rendering the expression for a particular field, then the default display method is applied.
 
 ### Color scheme
 
-The color options and their effect on the visualization depends on the visualization you are working with. Some visualizations have different color options.
+The **Color scheme** options let you set single or multiple colors for your entire visualization.
 
-You can specify a single color, or select a continuous (gradient) color schemes, based on a value.
-Continuous color interpolates a color using the percentage of a value relative to min and max.
+The color options and their effect on a visualization depend on the visualization you're working with and some visualizations have different color options.
 
-Select one of the following palettes:
+Select one of the following schemes:
 
-<div class="clearfix"></div>
-
-| Color mode                           | Description                                                                                                                                              |
-| ------------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Single color**                     | Specify a single color, useful in an override rule                                                                                                       |
-| **Shades of a color**                | Selects shades of a single color, useful in an override rule                                                                                             |
-| **From thresholds**                  | Informs Grafana to take the color from the matching threshold                                                                                            |
-| **Classic palette**                  | Grafana will assign color by looking up a color in a palette by series index. Useful for Graphs and pie charts and other categorical data visualizations |
-| **Classic palette (by series name)** | Grafana will assign color based on the name of the series. Useful when the series names to be visualized depend on the available data.                   |
-| **Green-Yellow-Red (by value)**      | Continuous color scheme                                                                                                                                  |
-| **Red-Yellow-Green (by value)**      | Continuous color scheme                                                                                                                                  |
-| **Blue-Yellow-Red (by value)**       | Continuous color scheme                                                                                                                                  |
-| **Yellow-Red (by value)**            | Continuous color scheme                                                                                                                                  |
-| **Blue-Purple (by value)**           | Continuous color scheme                                                                                                                                  |
-| **Yellow-Blue (by value)**           | Continuous color scheme                                                                                                                                  |
-| **Blues (by value)**                 | Continuous color scheme (panel background to blue)                                                                                                       |
-| **Reds (by value)**                  | Continuous color scheme (panel background color to red)                                                                                                  |
-| **Greens (by value)**                | Continuous color scheme (panel background color to green)                                                                                                |
-| **Purples (by value)**               | Continuous color scheme (panel background color to purple)                                                                                               |
-
-{{< figure src="/static/img/docs/v73/color_scheme_dropdown.png" max-width="350px" caption="Color scheme" >}}
+| Color scheme                          | Description                                                                                                                                                                                                                                                                                                                                                                                                 |
+| ------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Single color                          | Specifies a single color.                                                                                                                                                                                                                                                                                                                                                                                   |
+| Shades of a color                     | Grafana selects shades of a single color.                                                                                                                                                                                                                                                                                                                                                                   |
+| From thresholds (by value)            | The color is taken from the matching [threshold][]. For some visualizations, you also need to choose if the color is set by the **Last**, **Min**, or **Max** value of the field or series.                                                                                                                                                                                                                 |
+| Classic palette                       | Grafana automatically assigns a color for each field or series based on its order. If the order of a field changes in your query, the color also changes. Useful for graphs, pie charts, and other categorical data visualizations.                                                                                                                                                                         |
+| Classic palette (by series name)      | Grafana automatically assigns colors based on the name of the series. Useful when the series names to be visualized can change based on the available data.                                                                                                                                                                                                                                                 |
+| Multiple continuous colors (by value) | Grafana automatically assigns colors based on the percentage of a value relative to the min and the max of the field or series. For some visualizations, you also need to choose if the color is set by the **Last**, **Min**, or **Max** value of the field or series. Select from: **Green-Yellow-Red**, **Red-Yellow-Green**, **Blue-Yellow-Red**, **Yellow-Red**, **Blue-Purple**, and **Yellow-Blue**. |
+| Single continuous color (by value)    | Grafana automatically assigns shades of one color based on the percentage of a value relative to the min and the max of the field or series. For some visualizations, you also need to choose if the color is set by the **Last**, **Min**, or **Max** value of the field or series. Select from: **Blues**, **Reds**, **Greens**, and **Purples**.                                                         |
 
 ### No value
 
 Enter what Grafana should display if the field value is empty or null. The default value is a hyphen (-).
 
 {{% docs/reference %}}
+[Configure overrides]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/panels-visualizations/configure-overrides"
+[Configure overrides]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/visualizations/panels-visualizations/configure-overrides"
+
+[bar chart]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/panels-visualizations/visualizations/bar-chart"
+[bar chart]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/visualizations/panels-visualizations/visualizations/bar-chart"
+
+[bar gauge]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/panels-visualizations/visualizations/bar-gauge"
+[bar gauge]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/visualizations/panels-visualizations/visualizations/bar-gauge"
+
+[candlestick]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/panels-visualizations/visualizations/candlestick"
+[candlestick]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/visualizations/panels-visualizations/visualizations/candlestick"
+
+[canvas]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/panels-visualizations/visualizations/canvas"
+[canvas]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/visualizations/panels-visualizations/visualizations/canvas"
+
+[gauge]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/panels-visualizations/visualizations/gauge"
+[gauge]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/visualizations/panels-visualizations/visualizations/gauge"
+
+[geomap]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/panels-visualizations/visualizations/geomap"
+[geomap]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/visualizations/panels-visualizations/visualizations/geomap"
+
+[histogram]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/panels-visualizations/visualizations/histogram"
+[histogram]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/visualizations/panels-visualizations/visualizations/histogram"
+
+[pie chart]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/panels-visualizations/visualizations/pie-chart"
+[pie chart]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/visualizations/panels-visualizations/visualizations/pie-chart"
+
+[stat]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/panels-visualizations/visualizations/stat"
+[stat]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/visualizations/panels-visualizations/visualizations/stat"
+
+[state timeline]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/panels-visualizations/visualizations/state-timeline"
+[state timeline]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/visualizations/panels-visualizations/visualizations/state-timeline"
+
+[status history]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/panels-visualizations/visualizations/status-history"
+[status history]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/visualizations/panels-visualizations/visualizations/status-history"
+
+[table]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/panels-visualizations/visualizations/table"
+[table]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/visualizations/panels-visualizations/visualizations/table"
+
+[time series]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/panels-visualizations/visualizations/time-series"
+[time series]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/visualizations/panels-visualizations/visualizations/time-series"
+
+[trend]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/panels-visualizations/visualizations/trend"
+[trend]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/visualizations/panels-visualizations/visualizations/trend"
+
+[xy chart]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/panels-visualizations/visualizations/xy-chart"
+[xy chart]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/visualizations/panels-visualizations/visualizations/xy-chart"
 
 [variables]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/dashboards/variables"
-[variables]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/dashboards/variables"
+[variables]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/visualizations/dashboards/variables"
+
+[threshold]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/panels-visualizations/configure-thresholds"
+[threshold]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/visualizations/panels-visualizations/configure-thresholds"
 {{% /docs/reference %}}

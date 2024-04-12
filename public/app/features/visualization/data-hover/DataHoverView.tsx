@@ -10,7 +10,6 @@ import {
   GrafanaTheme2,
   LinkModel,
 } from '@grafana/data';
-import { config } from '@grafana/runtime';
 import { SortOrder, TooltipDisplayMode } from '@grafana/schema';
 import { TextLink, useStyles2 } from '@grafana/ui';
 import { renderValue } from 'app/plugins/panel/geomap/utils/uiUtils';
@@ -41,9 +40,8 @@ export function getDisplayValuesAndLinks(
   sortOrder?: SortOrder,
   mode?: TooltipDisplayMode | null
 ) {
-  const fields = data.fields.map((f, idx) => {
-    return { ...f, hovered: idx === columnIndex };
-  });
+  const fields = data.fields;
+  const hoveredField = columnIndex != null ? fields[columnIndex] : null;
 
   const visibleFields = fields.filter((f) => !Boolean(f.config.custom?.hideFrom?.tooltip));
   const traceIDField = visibleFields.find((field) => field.name === 'traceID') || fields[0];
@@ -63,7 +61,7 @@ export function getDisplayValuesAndLinks(
   const linkLookup = new Set<string>();
 
   for (const field of orderedVisibleFields) {
-    if (mode === TooltipDisplayMode.Single && columnIndex != null && !field.hovered) {
+    if (mode === TooltipDisplayMode.Single && field !== hoveredField) {
       continue;
     }
 
@@ -80,14 +78,11 @@ export function getDisplayValuesAndLinks(
       });
     }
 
-    // Sanitize field by removing hovered property to fix unique display name issue
-    const { hovered, ...sanitizedField } = field;
-
     displayValues.push({
-      name: getFieldDisplayName(sanitizedField, data),
+      name: getFieldDisplayName(field, data),
       value,
       valueString: formattedValueToString(fieldDisplay),
-      highlight: field.hovered,
+      highlight: field === hoveredField,
     });
   }
 
@@ -113,7 +108,7 @@ export const DataHoverView = ({ data, rowIndex, columnIndex, sortOrder, mode, he
 
   const { displayValues, links } = dispValuesAndLinks;
 
-  if (config.featureToggles.newVizTooltips && header === 'Exemplar') {
+  if (header === 'Exemplar') {
     return <ExemplarHoverView displayValues={displayValues} links={links} header={header} />;
   }
 

@@ -13,12 +13,10 @@ import {
   TimeZone,
 } from '@grafana/data';
 import { FlameGraph } from '@grafana/flamegraph';
-import { config, getTemplateSrv } from '@grafana/runtime';
+import { TraceToProfilesOptions } from '@grafana/o11y-ds-frontend';
+import { config, DataSourceWithBackend, getTemplateSrv } from '@grafana/runtime';
 import { useStyles2 } from '@grafana/ui';
-import { TraceToProfilesOptions } from 'app/core/components/TraceToProfiles/TraceToProfilesSettings';
 import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
-import { PyroscopeQueryType } from 'app/plugins/datasource/grafana-pyroscope-datasource/dataquery.gen';
-import { PyroscopeDataSource } from 'app/plugins/datasource/grafana-pyroscope-datasource/datasource';
 import { Query } from 'app/plugins/datasource/grafana-pyroscope-datasource/types';
 
 import {
@@ -79,7 +77,7 @@ export default function SpanFlameGraph(props: SpanFlameGraphProps) {
 
   const getFlameGraphData = async (request: DataQueryRequest<Query>, datasourceUid: string) => {
     const ds = await getDatasourceSrv().get(datasourceUid);
-    if (ds instanceof PyroscopeDataSource) {
+    if (ds instanceof DataSourceWithBackend) {
       const result = await lastValueFrom(ds.query(request));
       const frame = result.data.find((x: DataFrame) => {
         return x.name === 'response';
@@ -126,7 +124,7 @@ export default function SpanFlameGraph(props: SpanFlameGraphProps) {
             labelSelector,
             groupBy: [],
             profileTypeId: traceToProfilesOptions.profileTypeId ?? '',
-            queryType: 'profile' as PyroscopeQueryType,
+            queryType: 'profile' as const,
             spanSelector: [profileTagValue],
             refId: 'span-flamegraph-refId',
             datasource: {
@@ -146,7 +144,7 @@ export default function SpanFlameGraph(props: SpanFlameGraphProps) {
   );
 
   useEffect(() => {
-    if (config.featureToggles.traceToProfiles && !Object.keys(traceFlameGraphs).includes(profileTagValue)) {
+    if (!Object.keys(traceFlameGraphs).includes(profileTagValue)) {
       let profilesDataSourceSettings: DataSourceInstanceSettings<DataSourceJsonData> | undefined;
       if (traceToProfilesOptions && traceToProfilesOptions?.datasourceUid) {
         profilesDataSourceSettings = getDatasourceSrv().getInstanceSettings(traceToProfilesOptions.datasourceUid);

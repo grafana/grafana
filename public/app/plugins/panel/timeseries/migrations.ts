@@ -23,7 +23,7 @@ import {
   GraphDrawStyle,
   GraphFieldConfig,
   GraphGradientMode,
-  GraphTresholdsStyleMode,
+  GraphThresholdsStyleMode,
   LineInterpolation,
   LineStyle,
   VisibilityMode,
@@ -37,6 +37,9 @@ import {
 import { TimeRegionConfig } from 'app/core/utils/timeRegions';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 import { getTimeSrv } from 'app/features/dashboard/services/TimeSrv';
+import { DashboardAnnotationsDataLayer } from 'app/features/dashboard-scene/scene/DashboardAnnotationsDataLayer';
+import { DashboardScene } from 'app/features/dashboard-scene/scene/DashboardScene';
+import { dashboardSceneGraph } from 'app/features/dashboard-scene/utils/dashboardSceneGraph';
 import { GrafanaQuery, GrafanaQueryType } from 'app/plugins/datasource/grafana/types';
 
 import { defaultGraphConfig } from './config';
@@ -61,17 +64,8 @@ export const graphPanelChangedHandler: PanelTypeChangedHandler = (
       panel: panel,
     });
 
-    const dashboard = getDashboardSrv().getCurrent();
-    if (dashboard && annotations?.length > 0) {
-      dashboard.annotations.list = [...dashboard.annotations.list, ...annotations];
-
-      // Trigger a full dashboard refresh when annotations change
-      if (dashboardRefreshDebouncer == null) {
-        dashboardRefreshDebouncer = setTimeout(() => {
-          dashboardRefreshDebouncer = null;
-          getTimeSrv().refreshTimeModel();
-        });
-      }
+    if (annotations?.length > 0) {
+      addAnnotationsToDashboard(annotations);
     }
 
     panel.fieldConfig = fieldConfig; // Mutates the incoming panel
@@ -400,7 +394,7 @@ export function graphToTimeseriesOptions(angular: any): {
   // timeRegions migration
   if (angular.timeRegions?.length) {
     let regions = angular.timeRegions.map((old: GraphTimeRegionConfig, idx: number) => ({
-      name: `T${idx + 1}`,
+      name: `T${idx}`,
       color: old.colorMode !== 'custom' ? old.colorMode : old.fillColor,
       line: old.line,
       fill: old.fill,
@@ -423,7 +417,7 @@ export function graphToTimeseriesOptions(angular: any): {
           ids: [angular.panel.id],
         },
         iconColor: region.fillColor ?? (region as any).color,
-        name: `T${idx + 1}`,
+        name: `Time region for panel ${angular.panel.title}${idx > 0 ? ` ${idx}` : ''}`,
         target: {
           queryType: GrafanaQueryType.TimeRegions,
           refId: 'Anno',
@@ -529,9 +523,9 @@ export function graphToTimeseriesOptions(angular: any): {
       });
     }
 
-    let displayMode = area ? GraphTresholdsStyleMode.Area : GraphTresholdsStyleMode.Line;
+    let displayMode = area ? GraphThresholdsStyleMode.Area : GraphThresholdsStyleMode.Line;
     if (line && area) {
-      displayMode = GraphTresholdsStyleMode.LineAndArea;
+      displayMode = GraphThresholdsStyleMode.LineAndArea;
     }
 
     // TODO move into standard ThresholdConfig ?
@@ -658,6 +652,11 @@ function fillY2DynamicValues(
     }
   }
 
+  props.push({
+    id: `custom.axisPlacement`,
+    value: AxisPlacement.Right,
+  });
+
   // Add any custom property
   const y1G = y1.custom ?? {};
   const y2G = y2.custom ?? {};
@@ -686,7 +685,7 @@ function validNumber(val: unknown): number | undefined {
 
 function getReducersFromLegend(obj: Record<string, unknown>): string[] {
   const ids: string[] = [];
-  for (const key of Object.keys(obj)) {
+  for (const key in obj) {
     const r = fieldReducers.getIfExists(key);
     if (r) {
       ids.push(r.id);
@@ -745,4 +744,41 @@ function getStackingFromOverrides(value: Boolean | string) {
     mode: value ? StackingMode.Normal : StackingMode.None,
     group: isString(value) ? value : defaultGroupName,
   };
+}
+
+function addAnnotationsToDashboard(annotations: AnnotationQuery[]) {
+  const scene = window.__grafanaSceneContext;
+
+  if (scene instanceof DashboardScene) {
+    const dataLayers = dashboardSceneGraph.getDataLayers(scene);
+    const annotationLayers = [...dataLayers.state.annotationLayers];
+
+    for (let annotation of annotations) {
+      const newAnnotation = new DashboardAnnotationsDataLayer({
+        key: `annotations-${annotation.name}`,
+        query: annotation,
+        name: annotation.name,
+        isEnabled: annotation.enable,
+        isHidden: annotation.hide,
+      });
+
+      annotationLayers.push(newAnnotation);
+    }
+
+    dataLayers.setState({ annotationLayers });
+    return;
+  }
+
+  const dashboard = getDashboardSrv().getCurrent();
+  if (dashboard) {
+    dashboard.annotations.list = [...dashboard.annotations.list, ...annotations];
+
+    // Trigger a full dashboard refresh when annotations change
+    if (dashboardRefreshDebouncer == null) {
+      dashboardRefreshDebouncer = setTimeout(() => {
+        dashboardRefreshDebouncer = null;
+        getTimeSrv().refreshTimeModel();
+      });
+    }
+  }
 }

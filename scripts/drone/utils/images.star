@@ -8,20 +8,19 @@ load(
     "nodejs_version",
 )
 
-# "go" image can be switched back to golang:{}-alpine once this is resolved https://github.com/mattn/go-sqlite3/pull/1177#issuecomment-1849176090
 images = {
     "git": "alpine/git:2.40.1",
-    "go": "golang:{}-alpine3.18".format(golang_version),
+    "go": "golang:{}-alpine".format(golang_version),
     "node": "node:{}-alpine".format(nodejs_version),
     "cloudsdk": "google/cloud-sdk:431.0.0",
     "publish": "grafana/grafana-ci-deploy:1.3.3",
-    "alpine": "alpine:3.18.4",
+    "alpine": "alpine:3.19.1",
     "ubuntu": "ubuntu:22.04",
     "curl": "byrnedo/alpine-curl:0.1.8",
     "plugins_slack": "plugins/slack",
     "python": "python:3.8",
     "postgres_alpine": "postgres:12.3-alpine",
-    "mimir": "us.gcr.io/kubernetes-dev/mimir:gotjosh-state-config-grafana-663a0ae78",
+    "mimir": "us.gcr.io/kubernetes-dev/mimir:santihernandezc-remove_id_from_grafana_config-d3826b4f8-WIP",
     "mysql5": "mysql:5.7.39",
     "mysql8": "mysql:8.0.32",
     "redis_alpine": "redis:6.2.11-alpine",
@@ -34,4 +33,5 @@ images = {
     "cypress": "cypress/included:13.1.0",
     "dockerize": "jwilder/dockerize:0.6.1",
     "shellcheck": "koalaman/shellcheck:stable",
+    "playwright": "mcr.microsoft.com/playwright:v1.43.0-jammy",
 }

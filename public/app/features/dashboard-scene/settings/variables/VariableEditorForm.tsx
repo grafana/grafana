@@ -1,16 +1,19 @@
-import React from 'react';
+import { css } from '@emotion/css';
+import React, { FormEvent, useCallback, useState } from 'react';
+import { useAsyncFn } from 'react-use';
+import { lastValueFrom } from 'rxjs';
 
-import { SelectableValue } from '@grafana/data';
+import { GrafanaTheme2, SelectableValue } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
+import { reportInteraction } from '@grafana/runtime';
 import { SceneVariable } from '@grafana/scenes';
 import { VariableHide, defaultVariableModel } from '@grafana/schema';
-import { HorizontalGroup, Button } from '@grafana/ui';
+import { Button, LoadingPlaceholder, ConfirmModal, ModalsController, Stack, useStyles2 } from '@grafana/ui';
 import { VariableHideSelect } from 'app/features/dashboard-scene/settings/variables/components/VariableHideSelect';
 import { VariableLegend } from 'app/features/dashboard-scene/settings/variables/components/VariableLegend';
 import { VariableTextAreaField } from 'app/features/dashboard-scene/settings/variables/components/VariableTextAreaField';
 import { VariableTextField } from 'app/features/dashboard-scene/settings/variables/components/VariableTextField';
 import { VariableValuesPreview } from 'app/features/dashboard-scene/settings/variables/components/VariableValuesPreview';
-import { ConfirmDeleteModal } from 'app/features/variables/editor/ConfirmDeleteModal';
 import { VariableNameConstraints } from 'app/features/variables/editor/types';
 
 import { VariableTypeSelect } from './components/VariableTypeSelect';
@@ -20,109 +23,146 @@ interface VariableEditorFormProps {
   variable: SceneVariable;
   onTypeChange: (type: EditableVariableType) => void;
   onGoBack: () => void;
-  onDiscardChanges: () => void;
+  onDelete: (variableName: string) => void;
+  onValidateVariableName: (name: string, key: string | undefined) => [true, string] | [false, null];
 }
-
-export function VariableEditorForm({ variable, onTypeChange, onGoBack, onDiscardChanges }: VariableEditorFormProps) {
-  const { name: initialName, type, label: initialLabel, description: initialDescription, hide } = variable.useState();
+export function VariableEditorForm({
+  variable,
+  onTypeChange,
+  onGoBack,
+  onDelete,
+  onValidateVariableName,
+}: VariableEditorFormProps) {
+  const styles = useStyles2(getStyles);
+  const [nameError, setNameError] = useState<string | null>(null);
+  const { name, type, label, description, hide, key } = variable.useState();
   const EditorToRender = isEditableVariableType(type) ? getVariableEditor(type) : undefined;
-  const [name, setName] = React.useState(initialName ?? '');
-  const [label, setLabel] = React.useState(initialLabel ?? '');
-  const [description, setDescription] = React.useState(initialDescription ?? '');
-
+  const [runQueryState, onRunQuery] = useAsyncFn(async () => {
+    await lastValueFrom(variable.validateAndUpdate!());
+  }, [variable]);
   const onVariableTypeChange = (option: SelectableValue<EditableVariableType>) => {
     if (option.value) {
       onTypeChange(option.value);
     }
   };
 
-  const onNameChange = (e: React.FormEvent<HTMLInputElement>) => setName(e.currentTarget.value);
-  const onLabelChange = (e: React.FormEvent<HTMLInputElement>) => setLabel(e.currentTarget.value);
-  const onDescriptionChange = (e: React.FormEvent<HTMLTextAreaElement>) => setDescription(e.currentTarget.value);
+  const onNameChange = useCallback(
+    (e: FormEvent<HTMLInputElement>) => {
+      const [, errorMessage] = onValidateVariableName(e.currentTarget.value, key);
+      if (nameError !== errorMessage) {
+        setNameError(errorMessage);
+      }
+    },
+    [key, nameError, onValidateVariableName]
+  );
 
-  const onNameBlur = () => variable.setState({ name });
-  const onLabelBlur = () => variable.setState({ label });
-  const onDescriptionBlur = () => variable.setState({ description });
+  const onNameBlur = (e: FormEvent<HTMLInputElement>) => {
+    if (!nameError) {
+      variable.setState({ name: e.currentTarget.value });
+    }
+  };
+
+  const onLabelBlur = (e: FormEvent<HTMLInputElement>) => variable.setState({ label: e.currentTarget.value });
+  const onDescriptionBlur = (e: FormEvent<HTMLTextAreaElement>) =>
+    variable.setState({ description: e.currentTarget.value });
   const onHideChange = (hide: VariableHide) => variable.setState({ hide });
 
+  const isHasVariableOptions = hasVariableOptions(variable);
+
+  const onDeleteVariable = (hideModal: () => void) => () => {
+    reportInteraction('Delete variable');
+    onDelete(name);
+    hideModal();
+  };
+
   return (
-    <>
-      <form aria-label="Variable editor Form">
-        <VariableTypeSelect onChange={onVariableTypeChange} type={type} />
+    <form aria-label="Variable editor Form">
+      <VariableTypeSelect onChange={onVariableTypeChange} type={type} />
 
-        <VariableLegend>General</VariableLegend>
-        <VariableTextField
-          value={name}
-          onBlur={onNameBlur}
-          onChange={onNameChange}
-          name="Name"
-          placeholder="Variable name"
-          description="The name of the template variable. (Max. 50 characters)"
-          testId={selectors.pages.Dashboard.Settings.Variables.Edit.General.generalNameInputV2}
-          maxLength={VariableNameConstraints.MaxSize}
-          required
-        />
-        <VariableTextField
-          name="Label"
-          description="Optional display name"
-          value={label}
-          onChange={onLabelChange}
-          placeholder="Label name"
-          onBlur={onLabelBlur}
-          testId={selectors.pages.Dashboard.Settings.Variables.Edit.General.generalLabelInputV2}
-        />
-        <VariableTextAreaField
-          name="Description"
-          value={description}
-          onChange={onDescriptionChange}
-          placeholder="Descriptive text"
-          onBlur={onDescriptionBlur}
-          width={52}
-        />
-
-        <VariableHideSelect onChange={onHideChange} hide={hide || defaultVariableModel.hide!} type={type} />
-
-        {EditorToRender && <EditorToRender variable={variable} />}
-
-        {hasVariableOptions(variable) && <VariableValuesPreview options={variable.state.options} />}
-
-        <div style={{ marginTop: '16px' }}>
-          <HorizontalGroup spacing="md" height="inherit">
-            {/* <Button variant="destructive" fill="outline" onClick={onModalOpen}>
-              Delete
-            </Button> */}
-            {/* <Button
-              type="submit"
-              aria-label={selectors.pages.Dashboard.Settings.Variables.Edit.General.submitButton}
-              disabled={loading}
-              variant="secondary"
-            >
-              Run query
-              {loading && <Icon className="spin-clockwise" name="sync" size="sm" style={{ marginLeft: '2px' }} />}
-            </Button> */}
-            <Button
-              variant="secondary"
-              data-testid={selectors.pages.Dashboard.Settings.Variables.Edit.General.applyButton}
-              onClick={onGoBack}
-            >
-              Back to list
-            </Button>
-            <Button
-              variant="destructive"
-              data-testid={selectors.pages.Dashboard.Settings.Variables.Edit.General.applyButton}
-              onClick={onDiscardChanges}
-            >
-              Discard changes
-            </Button>
-          </HorizontalGroup>
-        </div>
-      </form>
-      <ConfirmDeleteModal
-        isOpen={false}
-        varName={variable.state.name}
-        onConfirm={() => console.log('needs implementation')}
-        onDismiss={() => console.log('needs implementation')}
+      <VariableLegend>General</VariableLegend>
+      <VariableTextField
+        name="Name"
+        description="The name of the template variable. (Max. 50 characters)"
+        placeholder="Variable name"
+        defaultValue={name ?? ''}
+        onChange={onNameChange}
+        onBlur={onNameBlur}
+        testId={selectors.pages.Dashboard.Settings.Variables.Edit.General.generalNameInputV2}
+        maxLength={VariableNameConstraints.MaxSize}
+        required
+        invalid={!!nameError}
+        error={nameError}
       />
-    </>
+      <VariableTextField
+        name="Label"
+        description="Optional display name"
+        placeholder="Label name"
+        defaultValue={label ?? ''}
+        onBlur={onLabelBlur}
+        testId={selectors.pages.Dashboard.Settings.Variables.Edit.General.generalLabelInputV2}
+      />
+      <VariableTextAreaField
+        name="Description"
+        defaultValue={description ?? ''}
+        placeholder="Descriptive text"
+        onBlur={onDescriptionBlur}
+        width={52}
+      />
+
+      <VariableHideSelect onChange={onHideChange} hide={hide || defaultVariableModel.hide!} type={type} />
+
+      {EditorToRender && <EditorToRender variable={variable} onRunQuery={onRunQuery} />}
+
+      {isHasVariableOptions && <VariableValuesPreview options={variable.getOptionsForSelect()} />}
+
+      <div className={styles.buttonContainer}>
+        <Stack gap={2}>
+          <ModalsController>
+            {({ showModal, hideModal }) => (
+              <Button
+                variant="destructive"
+                fill="outline"
+                onClick={() => {
+                  showModal(ConfirmModal, {
+                    title: 'Delete variable',
+                    body: `Are you sure you want to delete: ${name}?`,
+                    confirmText: 'Delete variable',
+                    onConfirm: onDeleteVariable(hideModal),
+                    onDismiss: hideModal,
+                    isOpen: true,
+                  });
+                }}
+              >
+                Delete
+              </Button>
+            )}
+          </ModalsController>
+          <Button
+            variant="secondary"
+            data-testid={selectors.pages.Dashboard.Settings.Variables.Edit.General.applyButton}
+            onClick={onGoBack}
+          >
+            Back to list
+          </Button>
+
+          {isHasVariableOptions && (
+            <Button
+              disabled={runQueryState.loading}
+              variant="secondary"
+              data-testid={selectors.pages.Dashboard.Settings.Variables.Edit.General.submitButton}
+              onClick={onRunQuery}
+            >
+              {runQueryState.loading ? <LoadingPlaceholder text="Running query..." /> : `Run query`}
+            </Button>
+          )}
+        </Stack>
+      </div>
+    </form>
   );
 }
+
+const getStyles = (theme: GrafanaTheme2) => ({
+  buttonContainer: css({
+    marginTop: theme.spacing(2),
+  }),
+});

@@ -1,17 +1,15 @@
 import { css } from '@emotion/css';
 import React, { ReactNode, useState } from 'react';
+import { useForm, Controller, useFieldArray } from 'react-hook-form';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import {
   Badge,
   Button,
   Field,
-  FieldArray,
   FieldValidationMessage,
-  Form,
   IconButton,
   Input,
-  InputControl,
   MultiSelect,
   Select,
   Stack,
@@ -75,224 +73,228 @@ export const AmRoutesExpandedForm = ({
     object_matchers: route ? formAmRoute.object_matchers : emptyMatcher,
   };
 
+  const {
+    handleSubmit,
+    control,
+    register,
+    formState: { errors },
+    setValue,
+    watch,
+    getValues,
+  } = useForm<FormAmRoute>({
+    defaultValues,
+  });
+  const { fields, append, remove } = useFieldArray({
+    control,
+    name: 'object_matchers',
+  });
+
   return (
-    <Form defaultValues={defaultValues} onSubmit={onSubmit} maxWidth="none">
-      {({ control, register, errors, setValue, watch, getValues }) => (
-        <>
-          <input type="hidden" {...register('id')} />
-          {/* @ts-ignore-check: react-hook-form made me do this */}
-          <FieldArray name="object_matchers" control={control}>
-            {({ fields, append, remove }) => (
-              <>
-                <Stack direction="column" alignItems="flex-start">
-                  <div>Matching labels</div>
-                  {fields.length === 0 && (
-                    <Badge
-                      color="orange"
-                      className={styles.noMatchersWarning}
-                      icon="exclamation-triangle"
-                      text="If no matchers are specified, this notification policy will handle all alert instances."
-                    />
-                  )}
-                  {fields.length > 0 && (
-                    <div className={styles.matchersContainer}>
-                      {fields.map((field, index) => {
-                        return (
-                          <Stack direction="row" key={field.id} alignItems="center">
-                            <Field
-                              label="Label"
-                              invalid={!!errors.object_matchers?.[index]?.name}
-                              error={errors.object_matchers?.[index]?.name?.message}
-                            >
-                              <Input
-                                {...register(`object_matchers.${index}.name`, { required: 'Field is required' })}
-                                defaultValue={field.name}
-                                placeholder="label"
-                                autoFocus
-                              />
-                            </Field>
-                            <Field label={'Operator'}>
-                              <InputControl
-                                render={({ field: { onChange, ref, ...field } }) => (
-                                  <Select
-                                    {...field}
-                                    className={styles.matchersOperator}
-                                    onChange={(value) => onChange(value?.value)}
-                                    options={matcherFieldOptions}
-                                    aria-label="Operator"
-                                  />
-                                )}
-                                defaultValue={field.operator}
-                                control={control}
-                                name={`object_matchers.${index}.operator`}
-                                rules={{ required: { value: true, message: 'Required.' } }}
-                              />
-                            </Field>
-                            <Field
-                              label="Value"
-                              invalid={!!errors.object_matchers?.[index]?.value}
-                              error={errors.object_matchers?.[index]?.value?.message}
-                            >
-                              <Input
-                                {...register(`object_matchers.${index}.value`, { required: 'Field is required' })}
-                                defaultValue={field.value}
-                                placeholder="value"
-                              />
-                            </Field>
-                            <IconButton tooltip="Remove matcher" name={'trash-alt'} onClick={() => remove(index)}>
-                              Remove
-                            </IconButton>
-                          </Stack>
-                        );
-                      })}
-                    </div>
-                  )}
-                  <Button
-                    className={styles.addMatcherBtn}
-                    icon="plus"
-                    onClick={() => append(emptyArrayFieldMatcher)}
-                    variant="secondary"
-                    type="button"
+    <form onSubmit={handleSubmit(onSubmit)}>
+      <input type="hidden" {...register('id')} />
+      <Stack direction="column" alignItems="flex-start">
+        <div>Matching labels</div>
+        {fields.length === 0 && (
+          <Badge
+            color="orange"
+            className={styles.noMatchersWarning}
+            icon="exclamation-triangle"
+            text="If no matchers are specified, this notification policy will handle all alert instances."
+          />
+        )}
+        {fields.length > 0 && (
+          <div className={styles.matchersContainer}>
+            {fields.map((field, index) => {
+              return (
+                <Stack direction="row" key={field.id} alignItems="center">
+                  <Field
+                    label="Label"
+                    invalid={!!errors.object_matchers?.[index]?.name}
+                    error={errors.object_matchers?.[index]?.name?.message}
                   >
-                    Add matcher
-                  </Button>
+                    <Input
+                      {...register(`object_matchers.${index}.name`, { required: 'Field is required' })}
+                      defaultValue={field.name}
+                      placeholder="label"
+                      autoFocus
+                    />
+                  </Field>
+                  <Field label={'Operator'}>
+                    <Controller
+                      render={({ field: { onChange, ref, ...field } }) => (
+                        <Select
+                          {...field}
+                          className={styles.matchersOperator}
+                          onChange={(value) => onChange(value?.value)}
+                          options={matcherFieldOptions}
+                          aria-label="Operator"
+                        />
+                      )}
+                      defaultValue={field.operator}
+                      control={control}
+                      name={`object_matchers.${index}.operator`}
+                      rules={{ required: { value: true, message: 'Required.' } }}
+                    />
+                  </Field>
+                  <Field
+                    label="Value"
+                    invalid={!!errors.object_matchers?.[index]?.value}
+                    error={errors.object_matchers?.[index]?.value?.message}
+                  >
+                    <Input
+                      {...register(`object_matchers.${index}.value`)}
+                      defaultValue={field.value}
+                      placeholder="value"
+                    />
+                  </Field>
+                  <IconButton tooltip="Remove matcher" name={'trash-alt'} onClick={() => remove(index)}>
+                    Remove
+                  </IconButton>
                 </Stack>
+              );
+            })}
+          </div>
+        )}
+        <Button
+          className={styles.addMatcherBtn}
+          icon="plus"
+          onClick={() => append(emptyArrayFieldMatcher)}
+          variant="secondary"
+          type="button"
+        >
+          Add matcher
+        </Button>
+      </Stack>
+
+      <Field label="Contact point">
+        <Controller
+          render={({ field: { onChange, ref, ...field } }) => (
+            <Select
+              aria-label="Contact point"
+              {...field}
+              className={formStyles.input}
+              onChange={(value) => onChange(mapSelectValueToString(value))}
+              options={receiversWithOnCallOnTop}
+              isClearable
+            />
+          )}
+          control={control}
+          name="receiver"
+        />
+      </Field>
+      <Field label="Continue matching subsequent sibling nodes">
+        <Switch id="continue-toggle" {...register('continue')} />
+      </Field>
+      <Field label="Override grouping">
+        <Switch id="override-grouping-toggle" {...register('overrideGrouping')} />
+      </Field>
+      {watch().overrideGrouping && (
+        <Field
+          label="Group by"
+          description="Group alerts when you receive a notification based on labels. If empty it will be inherited from the parent policy."
+        >
+          <Controller
+            rules={{
+              validate: (value) => {
+                if (!value || value.length === 0) {
+                  return 'At least one group by option is required.';
+                }
+                return true;
+              },
+            }}
+            render={({ field: { onChange, ref, ...field }, fieldState: { error } }) => (
+              <>
+                <MultiSelect
+                  aria-label="Group by"
+                  {...field}
+                  invalid={Boolean(error)}
+                  allowCustomValue
+                  className={formStyles.input}
+                  onCreateOption={(opt: string) => {
+                    setGroupByOptions((opts) => [...opts, stringToSelectableValue(opt)]);
+                    setValue('groupBy', [...(field.value || []), opt]);
+                  }}
+                  onChange={(value) => onChange(mapMultiSelectValueToStrings(value))}
+                  options={[...commonGroupByOptions, ...groupByOptions]}
+                />
+                {error && <FieldValidationMessage>{error.message}</FieldValidationMessage>}
               </>
             )}
-          </FieldArray>
-          <Field label="Contact point">
-            <InputControl
-              render={({ field: { onChange, ref, ...field } }) => (
-                <Select
-                  aria-label="Contact point"
-                  {...field}
-                  className={formStyles.input}
-                  onChange={(value) => onChange(mapSelectValueToString(value))}
-                  options={receiversWithOnCallOnTop}
-                  isClearable
-                />
-              )}
-              control={control}
-              name="receiver"
-            />
-          </Field>
-          <Field label="Continue matching subsequent sibling nodes">
-            <Switch id="continue-toggle" {...register('continue')} />
-          </Field>
-          <Field label="Override grouping">
-            <Switch id="override-grouping-toggle" {...register('overrideGrouping')} />
-          </Field>
-          {watch().overrideGrouping && (
-            <Field
-              label="Group by"
-              description="Group alerts when you receive a notification based on labels. If empty it will be inherited from the parent policy."
-            >
-              <InputControl
-                rules={{
-                  validate: (value) => {
-                    if (!value || value.length === 0) {
-                      return 'At least one group by option is required.';
-                    }
-                    return true;
-                  },
-                }}
-                render={({ field: { onChange, ref, ...field }, fieldState: { error } }) => (
-                  <>
-                    <MultiSelect
-                      aria-label="Group by"
-                      {...field}
-                      invalid={Boolean(error)}
-                      allowCustomValue
-                      className={formStyles.input}
-                      onCreateOption={(opt: string) => {
-                        setGroupByOptions((opts) => [...opts, stringToSelectableValue(opt)]);
-
-                        // @ts-ignore-check: react-hook-form made me do this
-                        setValue('groupBy', [...field.value, opt]);
-                      }}
-                      onChange={(value) => onChange(mapMultiSelectValueToStrings(value))}
-                      options={[...commonGroupByOptions, ...groupByOptions]}
-                    />
-                    {error && <FieldValidationMessage>{error.message}</FieldValidationMessage>}
-                  </>
-                )}
-                control={control}
-                name="groupBy"
-              />
-            </Field>
-          )}
-          <Field label="Override general timings">
-            <Switch id="override-timings-toggle" {...register('overrideTimings')} />
-          </Field>
-          {watch().overrideTimings && (
-            <>
-              <Field
-                label={routeTimingsFields.groupWait.label}
-                description={routeTimingsFields.groupWait.description}
-                invalid={!!errors.groupWaitValue}
-                error={errors.groupWaitValue?.message}
-              >
-                <PromDurationInput
-                  {...register('groupWaitValue', { validate: promDurationValidator })}
-                  aria-label={routeTimingsFields.groupWait.ariaLabel}
-                  className={formStyles.promDurationInput}
-                />
-              </Field>
-              <Field
-                label={routeTimingsFields.groupInterval.label}
-                description={routeTimingsFields.groupInterval.description}
-                invalid={!!errors.groupIntervalValue}
-                error={errors.groupIntervalValue?.message}
-              >
-                <PromDurationInput
-                  {...register('groupIntervalValue', { validate: promDurationValidator })}
-                  aria-label={routeTimingsFields.groupInterval.ariaLabel}
-                  className={formStyles.promDurationInput}
-                />
-              </Field>
-              <Field
-                label={routeTimingsFields.repeatInterval.label}
-                description={routeTimingsFields.repeatInterval.description}
-                invalid={!!errors.repeatIntervalValue}
-                error={errors.repeatIntervalValue?.message}
-              >
-                <PromDurationInput
-                  {...register('repeatIntervalValue', {
-                    validate: (value = '') => {
-                      const groupInterval = getValues('groupIntervalValue');
-                      return repeatIntervalValidator(value, groupInterval);
-                    },
-                  })}
-                  aria-label={routeTimingsFields.repeatInterval.ariaLabel}
-                  className={formStyles.promDurationInput}
-                />
-              </Field>
-            </>
-          )}
+            control={control}
+            name="groupBy"
+          />
+        </Field>
+      )}
+      <Field label="Override general timings">
+        <Switch id="override-timings-toggle" {...register('overrideTimings')} />
+      </Field>
+      {watch().overrideTimings && (
+        <>
           <Field
-            label="Mute timings"
-            data-testid="am-mute-timing-select"
-            description="Add mute timing to policy"
-            invalid={!!errors.muteTimeIntervals}
+            label={routeTimingsFields.groupWait.label}
+            description={routeTimingsFields.groupWait.description}
+            invalid={!!errors.groupWaitValue}
+            error={errors.groupWaitValue?.message}
           >
-            <InputControl
-              render={({ field: { onChange, ref, ...field } }) => (
-                <MultiSelect
-                  aria-label="Mute timings"
-                  {...field}
-                  className={formStyles.input}
-                  onChange={(value) => onChange(mapMultiSelectValueToStrings(value))}
-                  options={muteTimingOptions}
-                />
-              )}
-              control={control}
-              name="muteTimeIntervals"
+            <PromDurationInput
+              {...register('groupWaitValue', { validate: promDurationValidator })}
+              aria-label={routeTimingsFields.groupWait.ariaLabel}
+              className={formStyles.promDurationInput}
             />
           </Field>
-          {actionButtons}
+          <Field
+            label={routeTimingsFields.groupInterval.label}
+            description={routeTimingsFields.groupInterval.description}
+            invalid={!!errors.groupIntervalValue}
+            error={errors.groupIntervalValue?.message}
+          >
+            <PromDurationInput
+              {...register('groupIntervalValue', { validate: promDurationValidator })}
+              aria-label={routeTimingsFields.groupInterval.ariaLabel}
+              className={formStyles.promDurationInput}
+            />
+          </Field>
+          <Field
+            label={routeTimingsFields.repeatInterval.label}
+            description={routeTimingsFields.repeatInterval.description}
+            invalid={!!errors.repeatIntervalValue}
+            error={errors.repeatIntervalValue?.message}
+          >
+            <PromDurationInput
+              {...register('repeatIntervalValue', {
+                validate: (value = '') => {
+                  const groupInterval = getValues('groupIntervalValue');
+                  return repeatIntervalValidator(value, groupInterval);
+                },
+              })}
+              aria-label={routeTimingsFields.repeatInterval.ariaLabel}
+              className={formStyles.promDurationInput}
+            />
+          </Field>
         </>
       )}
-    </Form>
+      <Field
+        label="Mute timings"
+        data-testid="am-mute-timing-select"
+        description="Add mute timing to policy"
+        invalid={!!errors.muteTimeIntervals}
+      >
+        <Controller
+          render={({ field: { onChange, ref, ...field } }) => (
+            <MultiSelect
+              aria-label="Mute timings"
+              {...field}
+              className={formStyles.input}
+              onChange={(value) => onChange(mapMultiSelectValueToStrings(value))}
+              options={muteTimingOptions}
+            />
+          )}
+          control={control}
+          name="muteTimeIntervals"
+        />
+      </Field>
+      {actionButtons}
+    </form>
   );
 };
 
@@ -322,6 +324,7 @@ const getStyles = (theme: GrafanaTheme2) => {
     `,
     noMatchersWarning: css`
       padding: ${theme.spacing(1)} ${theme.spacing(2)};
+      margin-bottom: ${theme.spacing(1)};
     `,
   };
 };

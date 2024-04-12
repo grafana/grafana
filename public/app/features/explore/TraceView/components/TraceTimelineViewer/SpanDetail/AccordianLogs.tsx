@@ -22,10 +22,11 @@ import { Icon, useStyles2 } from '@grafana/ui';
 import { autoColor } from '../../Theme';
 import { TNil } from '../../types';
 import { TraceLog, TraceKeyValuePair, TraceLink } from '../../types/trace';
-import { uAlignIcon, ubMb1 } from '../../uberUtilityStyles';
 import { formatDuration } from '../utils';
 
 import AccordianKeyValues from './AccordianKeyValues';
+
+import { alignIcon } from '.';
 
 const getStyles = (theme: GrafanaTheme2) => {
   return {
@@ -55,6 +56,9 @@ const getStyles = (theme: GrafanaTheme2) => {
       label: AccordianLogsFooter;
       color: ${autoColor(theme, '#999')};
     `,
+    AccordianKeyValuesItem: css({
+      marginBottom: theme.spacing(0.5),
+    }),
   };
 };
 
@@ -76,7 +80,7 @@ export default function AccordianLogs(props: AccordianLogsProps) {
   let headerProps: {} | null = null;
   if (interactive) {
     arrow = isOpen ? (
-      <Icon name={'angle-down'} className={uAlignIcon} />
+      <Icon name={'angle-down'} className={alignIcon} />
     ) : (
       <Icon name={'angle-right'} className="u-align-icon" />
     );
@@ -100,7 +104,7 @@ export default function AccordianLogs(props: AccordianLogsProps) {
             <AccordianKeyValues
               // `i` is necessary in the key because timestamps can repeat
               key={`${log.timestamp}-${i}`}
-              className={i < logs.length - 1 ? ubMb1 : null}
+              className={i < logs.length - 1 ? styles.AccordianKeyValuesItem : null}
               data={log.fields || []}
               highContrast
               interactive={interactive}

@@ -40,7 +40,7 @@ export default class LokiLanguageProvider extends LanguageProvider {
     Object.assign(this, initialValues);
   }
 
-  request = async (url: string, params?: any) => {
+  request = async (url: string, params?: Record<string, string | number>) => {
     try {
       return await this.datasource.metadataRequest(url, params);
     } catch (error) {
@@ -172,6 +172,9 @@ export default class LokiLanguageProvider extends LanguageProvider {
     if (!value) {
       const params = { 'match[]': interpolatedMatch, start, end };
       const data = await this.request(url, params);
+      if (!Array.isArray(data)) {
+        return {};
+      }
       const { values } = processLabels(data);
       value = values;
       this.seriesCache.set(cacheKey, value);

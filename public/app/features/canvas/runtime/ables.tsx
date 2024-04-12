@@ -6,8 +6,8 @@ import { Scene } from './scene';
 
 export const settingsViewable = (scene: Scene) => ({
   name: 'settingsViewable',
-  props: {},
-  events: {},
+  props: [],
+  events: [],
   render(moveable: MoveableManagerInterface<unknown, unknown>, React: Renderer) {
     // If selection is more than 1 element don't display settings button
     if (scene.selecto?.getSelectedTargets() && scene.selecto?.getSelectedTargets().length > 1) {
@@ -63,8 +63,8 @@ export const settingsViewable = (scene: Scene) => ({
 
 export const dimensionViewable = {
   name: 'dimensionViewable',
-  props: {},
-  events: {},
+  props: [],
+  events: [],
   render(moveable: MoveableManagerInterface<unknown, unknown>, React: Renderer) {
     const rect = moveable.getRect();
     return (
@@ -95,8 +95,8 @@ export const dimensionViewable = {
 
 export const constraintViewable = (scene: Scene) => ({
   name: 'constraintViewable',
-  props: {},
-  events: {},
+  props: [],
+  events: [],
   render(moveable: MoveableManagerInterface<unknown, unknown>, React: Renderer) {
     const rect = moveable.getRect();
     const targetElement = scene.findElementByTarget(moveable.state.target!);

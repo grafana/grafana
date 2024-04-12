@@ -152,7 +152,7 @@ func Recovery(cfg *setting.Cfg, license licensing.Licensing) web.Middleware {
 						Assets    *dtos.EntryPointAssets
 					}{"Server Error", "Grafana", cfg.AppSubURL, cfg.DefaultTheme, "", assets}
 
-					if setting.Env == setting.Dev {
+					if cfg.Env == setting.Dev {
 						if err, ok := r.(error); ok {
 							data.Title = err.Error()
 						}
@@ -170,9 +170,9 @@ func Recovery(cfg *setting.Cfg, license licensing.Licensing) web.Middleware {
 							resp["error"] = data.Title
 						}
 
-						ctx.JSON(500, resp)
+						ctx.JSON(http.StatusInternalServerError, resp)
 					} else {
-						ctx.HTML(500, cfg.ErrTemplateName, data)
+						ctx.HTML(http.StatusInternalServerError, cfg.ErrTemplateName, data)
 					}
 				}
 			}()

@@ -2,6 +2,7 @@ import { css, cx } from '@emotion/css';
 import React, { ReactNode, useState } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
+import { selectors } from '@grafana/e2e-selectors';
 import { IconButton, Pagination, useStyles2 } from '@grafana/ui';
 
 import { usePagination } from '../hooks/usePagination';
@@ -125,7 +126,7 @@ export const DynamicTable = <T extends object>({
                 <div className={cx(styles.cell, styles.expandCell)}>
                   <IconButton
                     tooltip={`${isItemExpanded ? 'Collapse' : 'Expand'} row`}
-                    data-testid="collapse-toggle"
+                    data-testid={selectors.components.AlertRules.toggle}
                     name={isItemExpanded ? 'angle-down' : 'angle-right'}
                     onClick={() => toggleExpanded(item)}
                   />
@@ -141,7 +142,10 @@ export const DynamicTable = <T extends object>({
                 </div>
               ))}
               {isItemExpanded && renderExpandedContent && (
-                <div className={styles.expandedContentRow} data-testid="expanded-content">
+                <div
+                  className={styles.expandedContentRow}
+                  data-testid={selectors.components.AlertRules.expandedContent}
+                >
                   {renderExpandedContent(item, index, items)}
                 </div>
               )}

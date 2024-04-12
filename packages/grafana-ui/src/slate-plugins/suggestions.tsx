@@ -2,6 +2,8 @@ import { debounce, sortBy } from 'lodash';
 import React from 'react';
 import { Editor, Plugin as SlatePlugin } from 'slate-react';
 
+import { BootData } from '@grafana/data';
+
 import { Typeahead } from '../components/Typeahead/Typeahead';
 import { CompletionItem, SuggestionsState, TypeaheadInput, TypeaheadOutput } from '../types';
 import { makeFragment, SearchFunctionType } from '../utils';
@@ -10,6 +12,12 @@ import { SearchFunctionMap } from '../utils/searchFunctions';
 import TOKEN_MARK from './slate-prism/TOKEN_MARK';
 
 export const TYPEAHEAD_DEBOUNCE = 250;
+
+declare global {
+  interface Window {
+    grafanaBootData?: BootData;
+  }
+}
 
 // Commands added to the editor by this plugin.
 interface SuggestionsPluginCommands {
@@ -157,13 +165,14 @@ export function SuggestionsPlugin({
           });
         }
 
-        // Remove the current, incomplete text and replace it with the selected suggestion
-        const backward = suggestion.deleteBackwards || typeaheadPrefix.length;
-        const text = cleanText ? cleanText(typeaheadText) : typeaheadText;
-        const suffixLength = text.length - typeaheadPrefix.length;
-        const offset = typeaheadText.indexOf(typeaheadPrefix);
-        const midWord = typeaheadPrefix && ((suffixLength > 0 && offset > -1) || suggestionText === typeaheadText);
-        const forward = midWord && !preserveSuffix ? suffixLength + offset : 0;
+        const { forward, backward } = getNumCharsToDelete(
+          suggestionText,
+          typeaheadPrefix,
+          typeaheadText,
+          preserveSuffix,
+          suggestion.deleteBackwards,
+          cleanText
+        );
 
         // If new-lines, apply suggestion as block
         if (suggestionText.match(/\n/)) {
@@ -337,3 +346,27 @@ const handleTypeahead = async (
   // Bogus edit to force re-render
   editor.blur().focus();
 };
+
+export function getNumCharsToDelete(
+  suggestionText: string,
+  typeaheadPrefix: string,
+  typeaheadText: string,
+  preserveSuffix: boolean,
+  deleteBackwards?: number,
+  cleanText?: (text: string) => string
+) {
+  // remove the current, incomplete text and replace it with the selected suggestion
+  const backward = deleteBackwards || typeaheadPrefix.length;
+  const text = cleanText ? cleanText(typeaheadText) : typeaheadText;
+  const offset = typeaheadText.indexOf(typeaheadPrefix);
+
+  const suffixLength =
+    offset > -1 ? text.length - offset - typeaheadPrefix.length : text.length - typeaheadPrefix.length;
+  const midWord = Boolean((typeaheadPrefix && suffixLength > 0) || suggestionText === typeaheadText);
+  const forward = midWord && !preserveSuffix ? suffixLength + offset : 0;
+
+  return {
+    forward,
+    backward,
+  };
+}

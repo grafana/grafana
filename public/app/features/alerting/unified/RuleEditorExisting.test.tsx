@@ -1,4 +1,4 @@
-import { render, waitFor, screen, within } from '@testing-library/react';
+import { render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import React from 'react';
 import { Route } from 'react-router-dom';
@@ -7,7 +7,7 @@ import { ui } from 'test/helpers/alertingRuleEditor';
 
 import { locationService, setDataSourceSrv } from '@grafana/runtime';
 import { contextSrv } from 'app/core/services/context_srv';
-import { DashboardSearchHit } from 'app/features/search/types';
+import { DashboardSearchHit, DashboardSearchItemType } from 'app/features/search/types';
 import { GrafanaAlertStateDecision } from 'app/types/unified-alerting-dto';
 
 import { searchFolders } from '../../../../app/features/manage-dashboards/state/actions';
@@ -101,6 +101,7 @@ describe('RuleEditor grafana managed rules', () => {
       title: 'Folder A',
       uid: 'abcd',
       id: 1,
+      type: DashboardSearchItemType.DashDB,
     };
 
     const slashedFolder = {
@@ -136,12 +137,12 @@ describe('RuleEditor grafana managed rules', () => {
       [folder.title]: [
         {
           interval: '1m',
-          name: 'my great new rule',
+          name: 'group1',
           rules: [
             {
               annotations: { description: 'some description', summary: 'some summary' },
               labels: { severity: 'warn', team: 'the a-team' },
-              for: '5m',
+              for: '1m',
               grafana_alert: {
                 uid,
                 namespace_uid: 'abcd',
@@ -199,15 +200,15 @@ describe('RuleEditor grafana managed rules', () => {
 
     expect(mocks.api.setRulerRuleGroup).toHaveBeenCalledWith(
       { dataSourceName: GRAFANA_RULES_SOURCE_NAME, apiVersion: 'legacy' },
-      'Folder A',
+      'abcd',
       {
         interval: '1m',
-        name: 'my great new rule',
+        name: 'group1',
         rules: [
           {
             annotations: { description: 'some description', summary: 'some summary', custom: 'value' },
             labels: { severity: 'warn', team: 'the a-team', custom: 'value' },
-            for: '5m',
+            for: '1m',
             grafana_alert: {
               uid,
               condition: 'B',

@@ -25,6 +25,7 @@ jobs:
   analyze:
     name: Analyze
     runs-on: ubuntu-latest
+    if: github.repository == 'grafana/grafana'
 
     strategy:
       fail-fast: false
@@ -47,7 +48,7 @@ jobs:
       name: Set go version
       uses: actions/setup-go@v4
       with:
-        go-version: '1.21.5'
+        go-version: '1.21.9'
 
     # Initializes the CodeQL tools for scanning.
     - name: Initialize CodeQL

@@ -8,6 +8,7 @@ import (
 	"github.com/grafana/grafana/pkg/api/apierrors"
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/api/response"
+	"github.com/grafana/grafana/pkg/infra/metrics"
 	"github.com/grafana/grafana/pkg/services/auth/identity"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/dashboards"
@@ -37,7 +38,7 @@ func (hs *HTTPServer) GetFolderPermissionList(c *contextmodel.ReqContext) respon
 
 	acl, err := hs.getFolderACL(c.Req.Context(), c.SignedInUser, folder)
 	if err != nil {
-		return response.Error(500, "Failed to get folder permissions", err)
+		return response.Error(http.StatusInternalServerError, "Failed to get folder permissions", err)
 	}
 
 	filteredACLs := make([]*dashboards.DashboardACLInfoDTO, 0, len(acl))
@@ -45,15 +46,15 @@ func (hs *HTTPServer) GetFolderPermissionList(c *contextmodel.ReqContext) respon
 		if perm.UserID > 0 && dtos.IsHiddenUser(perm.UserLogin, c.SignedInUser, hs.Cfg) {
 			continue
 		}
-
+		metrics.MFolderIDsAPICount.WithLabelValues(metrics.GetFolderPermissionList).Inc()
 		// nolint:staticcheck
 		perm.FolderID = folder.ID
 		perm.DashboardID = 0
 
-		perm.UserAvatarURL = dtos.GetGravatarUrl(perm.UserEmail)
+		perm.UserAvatarURL = dtos.GetGravatarUrl(hs.Cfg, perm.UserEmail)
 
 		if perm.TeamID > 0 {
-			perm.TeamAvatarURL = dtos.GetGravatarUrlWithDefault(perm.TeamEmail, perm.Team)
+			perm.TeamAvatarURL = dtos.GetGravatarUrlWithDefault(hs.Cfg, perm.TeamEmail, perm.Team)
 		}
 
 		if perm.Slug != "" {
@@ -82,7 +83,7 @@ func (hs *HTTPServer) UpdateFolderPermissions(c *contextmodel.ReqContext) respon
 		return response.Error(http.StatusBadRequest, "bad request data", err)
 	}
 	if err := validatePermissionsUpdate(apiCmd); err != nil {
-		return response.Error(400, err.Error(), err)
+		return response.Error(http.StatusBadRequest, err.Error(), err)
 	}
 
 	uid := web.Params(c.Req)[":uid"]
@@ -103,6 +104,7 @@ func (hs *HTTPServer) UpdateFolderPermissions(c *contextmodel.ReqContext) respon
 			Created:     time.Now(),
 			Updated:     time.Now(),
 		})
+		metrics.MFolderIDsAPICount.WithLabelValues(metrics.UpdateFolderPermissions).Inc()
 	}
 
 	acl, err := hs.getFolderACL(c.Req.Context(), c.SignedInUser, folder)
@@ -166,6 +168,7 @@ func (hs *HTTPServer) getFolderACL(ctx context.Context, user identity.Requester,
 			IsFolder:       true,
 			Inherited:      false,
 		})
+		metrics.MFolderIDsAPICount.WithLabelValues(metrics.GetFolderPermissionList).Inc()
 	}
 
 	return acl, nil

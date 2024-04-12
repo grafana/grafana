@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"net/url"
 	"strings"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
@@ -46,34 +47,54 @@ func (r *subResourceREST) NewConnectOptions() (runtime.Object, bool, string) {
 }
 
 func (r *subResourceREST) Connect(ctx context.Context, name string, opts runtime.Object, responder rest.Responder) (http.Handler, error) {
-	pluginCtx, err := r.builder.getDataSourcePluginContext(ctx, name)
+	pluginCtx, err := r.builder.getPluginContext(ctx, name)
 	if err != nil {
 		return nil, err
 	}
+	ctx = backend.WithGrafanaConfig(ctx, pluginCtx.GrafanaConfig)
+	ctx = contextualMiddlewares(ctx)
 
 	return http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
+		clonedReq, err := resourceRequest(req)
+		if err != nil {
+			responder.Error(err)
+			return
+		}
+
 		body, err := io.ReadAll(req.Body)
 		if err != nil {
 			responder.Error(err)
 			return
 		}
 
-		idx := strings.LastIndex(req.URL.Path, "/resource")
-		if idx < 0 {
-			responder.Error(fmt.Errorf("expected resource path")) // 400?
-			return
-		}
-
-		path := req.URL.Path[idx+len("/resource"):]
 		err = r.builder.client.CallResource(ctx, &backend.CallResourceRequest{
-			PluginContext: *pluginCtx,
-			Path:          path,
+			PluginContext: pluginCtx,
+			Path:          clonedReq.URL.Path,
 			Method:        req.Method,
+			URL:           clonedReq.URL.String(),
 			Body:          body,
+			Headers:       req.Header,
 		}, httpresponsesender.New(w))
 
 		if err != nil {
 			responder.Error(err)
 		}
 	}), nil
+}
+
+func resourceRequest(req *http.Request) (*http.Request, error) {
+	idx := strings.LastIndex(req.URL.Path, "/resource")
+	if idx < 0 {
+		return nil, fmt.Errorf("expected resource path") // 400?
+	}
+
+	clonedReq := req.Clone(req.Context())
+	rawURL := strings.TrimLeft(req.URL.Path[idx+len("/resource"):], "/")
+
+	clonedReq.URL = &url.URL{
+		Path:     rawURL,
+		RawQuery: clonedReq.URL.RawQuery,
+	}
+
+	return clonedReq, nil
 }

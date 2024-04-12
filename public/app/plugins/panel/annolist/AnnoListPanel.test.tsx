@@ -7,7 +7,7 @@ import { locationService } from '@grafana/runtime';
 
 import { silenceConsoleOutput } from '../../../../test/core/utils/silenceConsoleOutput';
 import { backendSrv } from '../../../core/services/backend_srv';
-import { setDashboardSrv } from '../../../features/dashboard/services/DashboardSrv';
+import { DashboardSrv, setDashboardSrv } from '../../../features/dashboard/services/DashboardSrv';
 
 import { AnnoListPanel, Props } from './AnnoListPanel';
 import { Options } from './panelcfg.gen';
@@ -56,7 +56,7 @@ async function setupTestContext({
   getMock.mockResolvedValue(results);
 
   const dash = { uid: 'srx16xR4z', formatDate: (time: number) => new Date(time).toISOString() };
-  const dashSrv: any = { getCurrent: () => dash };
+  const dashSrv = { getCurrent: () => dash } as DashboardSrv;
   setDashboardSrv(dashSrv);
   const pushSpy = jest.spyOn(locationService, 'push');
 
@@ -64,10 +64,9 @@ async function setupTestContext({
     data: { state: LoadingState.Done, timeRange: getDefaultTimeRange(), series: [] },
     eventBus: {
       subscribe: jest.fn(),
-      getStream: () =>
-        ({
-          subscribe: jest.fn(),
-        }) as any,
+      getStream: jest.fn().mockImplementation(() => ({
+        subscribe: jest.fn(),
+      })),
       publish: jest.fn(),
       removeAllListeners: jest.fn(),
       newScopedBus: jest.fn(),
@@ -134,7 +133,7 @@ describe('AnnoListPanel', () => {
 
     it("renders annotation item's html content", async () => {
       const { getMock } = await setupTestContext({
-        results: [{ ...defaultResult, text: '<a href="">test link </a> ' }],
+        results: [{ ...defaultResult, text: '<a href="/path">test link </a> ' }],
       });
 
       getMock.mockClear();

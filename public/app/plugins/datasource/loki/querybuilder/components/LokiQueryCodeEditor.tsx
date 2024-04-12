@@ -4,7 +4,6 @@ import React from 'react';
 import { GrafanaTheme2 } from '@grafana/data';
 import { config } from '@grafana/runtime';
 import { useStyles2, HorizontalGroup, IconButton, Tooltip, Icon } from '@grafana/ui';
-import { getModKey } from 'app/core/utils/browser';
 
 import { testIds } from '../../components/LokiQueryEditor';
 import { LokiQueryField } from '../../components/LokiQueryField';
@@ -57,7 +56,7 @@ export function LokiQueryCodeEditor({
                       size="xs"
                       tooltip="Format query"
                     />
-                    <Tooltip content={`Use ${getModKey()}+z to undo`}>
+                    <Tooltip content={`Use ctrl/cmd + z to undo`}>
                       <Icon className={styles.hint} name="keyboard" />
                     </Tooltip>
                   </HorizontalGroup>

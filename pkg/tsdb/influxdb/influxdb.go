@@ -82,8 +82,9 @@ func newInstanceSettings(httpClientProvider httpclient.Provider) datasource.Inst
 			DefaultBucket: jsonData.DefaultBucket,
 			Organization:  jsonData.Organization,
 			MaxSeries:     maxSeries,
-			SecureGrpc:    true,
+			InsecureGrpc:  jsonData.InsecureGrpc,
 			Token:         settings.DecryptedSecureJSONData["token"],
+			Timeout:       opts.Timeouts.Timeout,
 		}
 		return model, nil
 	}

@@ -17,7 +17,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert/backtesting"
 	"github.com/grafana/grafana/pkg/services/ngalert/eval"
 	"github.com/grafana/grafana/pkg/services/ngalert/metrics"
-	"github.com/grafana/grafana/pkg/services/ngalert/migration"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier"
 	"github.com/grafana/grafana/pkg/services/ngalert/provisioning"
@@ -57,13 +56,14 @@ type API struct {
 	TransactionManager   provisioning.TransactionManager
 	ProvenanceStore      provisioning.ProvisioningStore
 	RuleStore            RuleStore
-	AlertingStore        AlertingStore
+	AlertingStore        store.AlertingStore
 	AdminConfigStore     store.AdminConfigurationStore
 	DataProxy            *datasourceproxy.DataSourceProxyService
 	MultiOrgAlertmanager *notifier.MultiOrgAlertmanager
 	StateManager         *state.Manager
 	AccessControl        ac.AccessControl
 	Policies             *provisioning.NotificationPolicyService
+	ReceiverService      *notifier.ReceiverService
 	ContactPointService  *provisioning.ContactPointService
 	Templates            *provisioning.TemplateService
 	MuteTimings          *provisioning.MuteTimingService
@@ -74,7 +74,6 @@ type API struct {
 	Historian            Historian
 	Tracer               tracing.Tracer
 	AppUrl               *url.URL
-	UpgradeService       migration.UpgradeService
 
 	// Hooks can be used to replace API handlers for specific paths.
 	Hooks *Hooks
@@ -114,6 +113,9 @@ func (api *API) RegisterAPIEndpoints(m *metrics.API) {
 			log:                logger,
 			cfg:                &api.Cfg.UnifiedAlerting,
 			authz:              ruleAuthzService,
+			amConfigStore:      api.AlertingStore,
+			amRefresher:        api.MultiOrgAlertmanager,
+			featureManager:     api.FeatureManager,
 		},
 	), m)
 	api.RegisterTestingApiEndpoints(NewTestingApi(
@@ -128,6 +130,7 @@ func (api *API) RegisterAPIEndpoints(m *metrics.API) {
 			featureManager:  api.FeatureManager,
 			appUrl:          api.AppUrl,
 			tracer:          api.Tracer,
+			folderService:   api.RuleStore,
 		}), m)
 	api.RegisterConfigurationApiEndpoints(NewConfiguration(
 		&ConfigSrv{
@@ -152,12 +155,9 @@ func (api *API) RegisterAPIEndpoints(m *metrics.API) {
 		hist:   api.Historian,
 	}), m)
 
-	// Inject upgrade endpoints if legacy alerting is enabled and the feature flag is enabled.
-	if !api.Cfg.UnifiedAlerting.IsEnabled() && api.FeatureManager.IsEnabledGlobally(featuremgmt.FlagAlertingPreviewUpgrade) {
-		api.RegisterUpgradeApiEndpoints(NewUpgradeApi(NewUpgradeSrc(
-			logger,
-			api.UpgradeService,
-			api.Cfg,
-		)), m)
-	}
+	api.RegisterNotificationsApiEndpoints(NewNotificationsApi(&NotificationSrv{
+		logger:            logger,
+		receiverService:   api.ReceiverService,
+		muteTimingService: api.MuteTimings,
+	}), m)
 }

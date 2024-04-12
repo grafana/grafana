@@ -1,5 +1,5 @@
 {
-  "_comment": "This file is the source of truth for English strings. Edit this to change plurals and other phrases for the UI.",
+  "_comment": "This file is the source of truth for English strings. Edit this in the codebase to change plurals and other phrases for the UI.",
   "access-control": {
     "add-permission": {
       "role-label": "Role",
@@ -23,6 +23,11 @@
       "team": "Team",
       "title": "Permissions",
       "user": "User"
+    }
+  },
+  "api-keys": {
+    "empty-state": {
+      "message": "No API keys found"
     }
   },
   "bouncing-loader": {
@@ -76,6 +81,7 @@
     "folder-picker": {
       "accessible-label": "Select folder: {{ label }} currently selected",
       "button-label": "Select folder",
+      "clear-selection": "Clear selection",
       "empty-message": "No folders found",
       "error-title": "Error loading folders",
       "search-placeholder": "Search folders",
@@ -93,7 +99,7 @@
     },
     "no-results": {
       "clear": "Clear search and filters",
-      "text": "No results found for your query."
+      "text": "No results found for your query"
     }
   },
   "clipboard-button": {
@@ -106,6 +112,9 @@
       "change-theme": "Change theme...",
       "dark-theme": "Dark",
       "light-theme": "Light"
+    },
+    "empty-state": {
+      "message": "No results found"
     },
     "search-box": {
       "placeholder": "Search or jump to..."
@@ -127,7 +136,8 @@
   },
   "connections": {
     "connect-data": {
-      "category-header-label": "Data sources"
+      "category-header-label": "Data sources",
+      "empty-message": "No results matching your query were found"
     },
     "search": {
       "placeholder": "Search all"
@@ -233,6 +243,10 @@
       "visualization": "Visualization",
       "widget": "Widget"
     },
+    "alert-rules-drawer": {
+      "redirect-link": "List in Grafana Alerting",
+      "subtitle": "Alert rules related to this dashboard"
+    },
     "empty": {
       "add-library-panel-body": "Add visualizations that are shared with other dashboards.",
       "add-library-panel-button": "Add library panel",
@@ -301,7 +315,7 @@
     },
     "toolbar": {
       "add": "Add",
-      "add-panel": "Add panel",
+      "alert-rules": "Alert rules",
       "mark-favorite": "Mark as favorite",
       "open-original": "Open original dashboard",
       "playlist-next": "Go to next dashboard",
@@ -411,6 +425,9 @@
   "data-sources": {
     "datasource-add-button": {
       "label": "Add new data source"
+    },
+    "empty-state": {
+      "message": "No data sources found"
     }
   },
   "explore": {
@@ -440,10 +457,11 @@
       "delete-query-tooltip": "Delete query",
       "delete-starred-query-confirmation-text": "Are you sure you want to permanently delete your starred query?",
       "edit-comment-tooltip": "Edit comment",
-      "loading-text": "loading...",
+      "left-pane": "Left pane",
       "optional-description": "An optional description of what the query does.",
       "query-comment-label": "Query comment",
       "query-text-label": "Query text",
+      "right-pane": "Right pane",
       "run-query-button": "Run query",
       "save-comment": "Save comment",
       "star-query-tooltip": "Star query",
@@ -586,6 +604,7 @@
     "shortcuts-description": {
       "change-theme": "Change theme",
       "collapse-all-rows": "Collapse all rows",
+      "copy-time-range": "Copy time range",
       "dashboard-settings": "Dashboard settings",
       "duplicate-panel": "Duplicate Panel",
       "exit-edit/setting-views": "Exit edit/setting views",
@@ -599,6 +618,7 @@
       "move-time-range-forward": "Move time range forward",
       "open-search": "Open search",
       "open-shared-modal": "Open Panel Share Modal",
+      "paste-time-range": "Paste time range",
       "refresh-all-panels": "Refresh all panels",
       "remove-panel": "Remove Panel",
       "save-dashboard": "Save dashboard",
@@ -640,6 +660,9 @@
     }
   },
   "library-panels": {
+    "empty-state": {
+      "message": "No library panels found"
+    },
     "modal": {
       "body_one": "This panel is being used in {{count}} dashboard. Please choose which dashboard to view the panel in:",
       "body_other": "This panel is being used in {{count}} dashboards. Please choose which dashboard to view the panel in:",
@@ -662,6 +685,150 @@
       "invalid-user-or-password": "Invalid username or password",
       "title": "Login failed",
       "unknown": "Unknown error occurred"
+    },
+    "forgot-password": "Forgot your password?",
+    "form": {
+      "password-label": "Password",
+      "password-required": "Password is required",
+      "submit-label": "Log in",
+      "submit-loading-label": "Logging in...",
+      "username-label": "Email or username",
+      "username-required": "Email or username is required"
+    },
+    "services": {
+      "sing-in-with-prefix": "Sign in with {{serviceName}}"
+    },
+    "signup": {
+      "button-label": "Sign up",
+      "new-to-question": "New to Grafana?"
+    }
+  },
+  "migrate-to-cloud": {
+    "can-i-move": {
+      "body": "Once you connect this installation to a cloud stack, you'll be able to upload data sources and dashboards.",
+      "link-title": "Learn about migrating other settings",
+      "title": "Can I move this installation to Grafana Cloud?"
+    },
+    "connect-modal": {
+      "body-cloud-stack": "You'll also need a cloud stack. If you just signed up, we'll automatically create your first stack. If you have an account, you'll need to select or create a stack.",
+      "body-get-started": "To get started, you'll need a Grafana.com account.",
+      "body-sign-up": "Sign up for a Grafana.com account",
+      "body-token": "Your self-managed Grafana installation needs special access to securely migrate content. You'll need to create a migration token on your chosen cloud stack.",
+      "body-token-field": "Migration token",
+      "body-token-field-placeholder": "Paste token here",
+      "body-token-instructions": "Log into your cloud stack and navigate to Administration, General, Migrate to Grafana Cloud. Create a migration token on that screen and paste the token here.",
+      "body-view-stacks": "View my cloud stacks",
+      "cancel": "Cancel",
+      "connect": "Connect to this stack",
+      "connecting": "Connecting to this stack...",
+      "title": "Connect to a cloud stack",
+      "token-error-description": "There was an error saving the token. See the Grafana server logs for more details.",
+      "token-error-title": "Error saving token",
+      "token-required-error": "Migration token is required"
+    },
+    "cta": {
+      "button": "Migrate this instance to Cloud",
+      "header": "Let us manage your Grafana stack"
+    },
+    "disconnect-modal": {
+      "body": "This will remove the migration token from this installation. If you wish to upload more resources in the future, you will need to enter a new migration token.",
+      "cancel": "Cancel",
+      "disconnect": "Disconnect",
+      "disconnecting": "Disconnecting...",
+      "error": "There was an error disconnecting",
+      "title": "Disconnect from cloud stack"
+    },
+    "get-started": {
+      "body": "The migration process must be started from your self-managed Grafana instance.",
+      "configure-pdc-link": "Configure PDC for this stack",
+      "link-title": "Learn more about Private Data Source Connect",
+      "step-1": "Log in to your self-managed instance and navigate to Administration, General, Migrate to Grafana Cloud.",
+      "step-2": "Select \"Migrate this instance to Cloud\".",
+      "step-3": "You'll be prompted for a migration token. Generate one from this screen.",
+      "step-4": "In your self-managed instance, select \"Upload everything\" to upload data sources and dashboards to this cloud stack.",
+      "step-5": "If some of your data sources will not work over the public internet, you’ll need to install Private Data Source Connect in your self-managed environment.",
+      "title": "How to get started"
+    },
+    "is-it-secure": {
+      "body": "Grafana Labs is committed to maintaining the highest standards of data privacy and security. By implementing industry-standard security technologies and procedures, we help protect our customers' data from unauthorized access, use, or disclosure.",
+      "link-title": "Grafana Labs Trust Center",
+      "title": "Is it secure?"
+    },
+    "migrate-to-this-stack": {
+      "body": "Some configuration from your self-managed Grafana instance can be automatically copied to this cloud stack.",
+      "link-title": "View the full migration guide",
+      "title": "Migrate configuration to this stack"
+    },
+    "migration-token": {
+      "body": "Your self-managed Grafana instance will require a special authentication token to securely connect to this cloud stack.",
+      "delete-modal-body": "If you've already used this token with a self-managed installation, that installation will no longer be able to upload content.",
+      "delete-modal-cancel": "Cancel",
+      "delete-modal-confirm": "Delete",
+      "delete-modal-deleting": "Deleting...",
+      "delete-modal-title": "Delete migration token",
+      "error-body": "Unable to generate a migration token. Please try again later.",
+      "error-title": "Something went wrong",
+      "generate-button": "Generate a migration token",
+      "generate-button-loading": "Generating a migration token...",
+      "modal-close": "Close",
+      "modal-copy-and-close": "Copy to clipboard and close",
+      "modal-copy-button": "Copy to clipboard",
+      "modal-field-description": "Copy the token now as you will not be able to see it again. Losing a token requires creating a new one.",
+      "modal-field-label": "Token",
+      "modal-title": "Migration token created",
+      "status": "Current status: <1></1>",
+      "title": "Migration token"
+    },
+    "pdc": {
+      "body": "Exposing your data sources to the internet can raise security concerns. Private data source connect (PDC) allows Grafana Cloud to access your existing data sources over a secure network tunnel.",
+      "link-title": "Learn about PDC",
+      "title": "Not all my data sources are on the public internet"
+    },
+    "pricing": {
+      "body": "Grafana Cloud has a generous free plan and a 14 day unlimited usage trial. After your trial expires, you'll be billed based on usage over the free plan limits.",
+      "link-title": "Grafana Cloud pricing",
+      "title": "How much does it cost?"
+    },
+    "resource-status": {
+      "error-details-button": "Details",
+      "failed": "Error",
+      "migrated": "Uploaded to cloud",
+      "migrating": "Uploading...",
+      "not-migrated": "Not yet uploaded",
+      "unknown": "Unknown"
+    },
+    "resource-table": {
+      "unknown-datasource-title": "Data source {{datasourceUID}}",
+      "unknown-datasource-type": "Unknown data source"
+    },
+    "resource-type": {
+      "dashboard": "Dashboard",
+      "datasource": "Data source",
+      "folder": "Folder",
+      "unknown": "Unknown"
+    },
+    "summary": {
+      "disconnect": "Disconnect",
+      "disconnect-error-description": "See the Grafana server logs for more details",
+      "disconnect-error-title": "There was an error disconnecting",
+      "run-migration-error-description": "See the Grafana server logs for more details",
+      "run-migration-error-title": "There was an error migrating your resources",
+      "start-migration": "Upload everything",
+      "target-stack-title": "Uploading to"
+    },
+    "token-status": {
+      "active": "Token created and active",
+      "no-active": "No active token"
+    },
+    "what-is-cloud": {
+      "body": "Grafana cloud is a fully managed cloud-hosted observability platform ideal for cloud native environments. It's everything you love about Grafana without the overhead of maintaining, upgrading, and supporting an installation.",
+      "link-title": "Learn about cloud features",
+      "title": "What is Grafana Cloud?"
+    },
+    "why-host": {
+      "body": "In addition to the convenience of managed hosting, Grafana Cloud includes many cloud-exclusive features like SLOs, incident management, machine learning, and powerful observability integrations.",
+      "link-title": "More questions? Talk to an expert",
+      "title": "Why host with Grafana?"
     }
   },
   "nav": {
@@ -732,6 +899,9 @@
     },
     "authentication": {
       "title": "Authentication"
+    },
+    "collector": {
+      "title": "Collector"
     },
     "config": {
       "title": "Administration"
@@ -846,6 +1016,10 @@
     "manage-folder": {
       "subtitle": "Manage folder dashboards and permissions"
     },
+    "migrate-to-cloud": {
+      "subtitle": "Copy configuration from your self-managed installation to a cloud stack",
+      "title": "Migrate to Grafana Cloud"
+    },
     "monitoring": {
       "subtitle": "Monitoring and infrastructure apps",
       "title": "Observability"
@@ -869,9 +1043,6 @@
       "subtitle": "Manage preferences across an organization",
       "title": "Default preferences"
     },
-    "performance-testing": {
-      "title": "Performance testing"
-    },
     "playlists": {
       "subtitle": "Groups of dashboards that are displayed in a sequence",
       "title": "Playlists"
@@ -879,6 +1050,10 @@
     "plugins": {
       "subtitle": "Extend the Grafana experience with plugins",
       "title": "Plugins"
+    },
+    "private-data-source-connections": {
+      "subtitle": "Query data that lives within a secured network without opening the network to inbound traffic from Grafana Cloud. Learn more in our docs.",
+      "title": "Private data source connect"
     },
     "profile/notifications": {
       "title": "Notification history"
@@ -971,6 +1146,7 @@
     "megamenu": {
       "close": "Close menu",
       "dock": "Dock menu",
+      "list-label": "Navigation",
       "undock": "Undock menu"
     },
     "toolbar": {
@@ -1056,6 +1232,16 @@
       "title": "There are no playlists created yet"
     }
   },
+  "playlists": {
+    "empty-state": {
+      "message": "No playlists found"
+    }
+  },
+  "plugins": {
+    "empty-state": {
+      "message": "No plugins found"
+    }
+  },
   "profile": {
     "change-password": {
       "cancel-button": "Cancel",
@@ -1069,7 +1255,8 @@
       "new-password-same-as-old": "New password can't be the same as the old one.",
       "old-password-label": "Old password",
       "old-password-required": "Old password is required",
-      "passwords-must-match": "Passwords must match"
+      "passwords-must-match": "Passwords must match",
+      "strong-password-validation-register": "Password does not comply with the strong password policy"
     }
   },
   "public-dashboard": {
@@ -1190,11 +1377,12 @@
     "header": {
       "collapse-row": "Collapse query row",
       "datasource-help": "Show data source help",
-      "disable-query": "Disable query",
       "drag-and-drop": "Drag and drop to reorder",
       "duplicate-query": "Duplicate query",
       "expand-row": "Expand query row",
+      "hide-response": "Hide response",
       "remove-query": "Remove query",
+      "show-response": "Show response",
       "toggle-edit-mode": "Toggle text edit mode"
     },
     "query-editor-not-exported": "Data source plugin does not export any Query Editor component"
@@ -1220,6 +1408,12 @@
       "interval-selected": "Set auto refresh interval",
       "turned-off": "Auto refresh off"
     }
+  },
+  "return-to-previous": {
+    "button": {
+      "label": "Back to {{title}}"
+    },
+    "dismissable-button": "Close"
   },
   "search": {
     "actions": {
@@ -1248,6 +1442,11 @@
     "search-input": {
       "include-panels-placeholder": "Search for dashboards, folders, and panels",
       "placeholder": "Search for dashboards and folders"
+    }
+  },
+  "service-accounts": {
+    "empty-state": {
+      "message": "No services accounts found"
     }
   },
   "share-modal": {
@@ -1298,10 +1497,10 @@
       "expire-day": "1 Day",
       "expire-hour": "1 Hour",
       "expire-never": "Never",
-      "expire-week": "7 Days",
+      "expire-week": "1 Week",
       "info-text-1": "A snapshot is an instant way to share an interactive dashboard publicly. When created, we strip sensitive data like queries (metric, template, and annotation) and panel links, leaving only the visible metric data and series names embedded in your dashboard.",
       "info-text-2": "Keep in mind, your snapshot <1>can be viewed by anyone</1> that has the link and can access the URL. Share wisely.",
-      "local-button": "Local Snapshot",
+      "local-button": "Publish Snapshot",
       "mistake-message": "Did you make a mistake? ",
       "name": "Snapshot name",
       "timeout": "Timeout (seconds)",
@@ -1378,6 +1577,11 @@
     "no-tags": "No tags found",
     "placeholder": "Filter by tag"
   },
+  "teams": {
+    "empty-state": {
+      "message": "No teams found"
+    }
+  },
   "time-picker": {
     "absolute": {
       "recent-title": "Recently used absolute ranges",
@@ -1393,6 +1597,13 @@
       "empty-recent-list-docs": "<0><0>Read the documentation</0><1> to find out more about how to enter custom time ranges.</1></0>",
       "empty-recent-list-info": "It looks like you haven't used this time picker before. As soon as you enter some time intervals, recently used intervals will appear here.",
       "filter-placeholder": "Search quick ranges"
+    },
+    "copy-paste": {
+      "copy-success-message": "Time range copied to clipboard",
+      "default-error-message": "{{error}} is not a valid time range",
+      "default-error-title": "Invalid time range",
+      "tooltip-copy": "Copy time range to clipboard",
+      "tooltip-paste": "Paste time range"
     },
     "footer": {
       "change-settings-button": "Change time settings",
@@ -1463,6 +1674,11 @@
   },
   "user-sessions": {
     "loading": "Loading sessions..."
+  },
+  "users": {
+    "empty-state": {
+      "message": "No users found"
+    }
   },
   "users-access-list": {
     "tabs": {

@@ -16,17 +16,25 @@ import (
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/datasource"
+	sdkhttpclient "github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/instancemgmt"
+	exp "github.com/grafana/grafana-plugin-sdk-go/experimental/errorsource"
 	exphttpclient "github.com/grafana/grafana-plugin-sdk-go/experimental/errorsource/httpclient"
 
 	"github.com/grafana/grafana/pkg/infra/httpclient"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
-	ngalertmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
 	es "github.com/grafana/grafana/pkg/tsdb/elasticsearch/client"
 )
 
 var eslog = log.New("tsdb.elasticsearch")
+
+const (
+	// headerFromExpression is used by data sources to identify expression queries
+	headerFromExpression = "X-Grafana-From-Expr"
+	// headerFromAlert is used by datasources to identify alert queries
+	headerFromAlert = "FromAlert"
+)
 
 type Service struct {
 	httpClientProvider httpclient.Provider
@@ -46,7 +54,7 @@ func ProvideService(httpClientProvider httpclient.Provider, tracer tracing.Trace
 
 func (s *Service) QueryData(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
 	dsInfo, err := s.getDSInfo(ctx, req.PluginContext)
-	_, fromAlert := req.Headers[ngalertmodels.FromAlertHeaderName]
+	_, fromAlert := req.Headers[headerFromAlert]
 	logger := s.logger.FromContext(ctx).New("fromAlert", fromAlert)
 
 	if err != nil {
@@ -54,20 +62,20 @@ func (s *Service) QueryData(ctx context.Context, req *backend.QueryDataRequest) 
 		return &backend.QueryDataResponse{}, err
 	}
 
-	return queryData(ctx, req.Queries, dsInfo, logger, s.tracer)
+	return queryData(ctx, req, dsInfo, logger, s.tracer)
 }
 
 // separate function to allow testing the whole transformation and query flow
-func queryData(ctx context.Context, queries []backend.DataQuery, dsInfo *es.DatasourceInfo, logger log.Logger, tracer tracing.Tracer) (*backend.QueryDataResponse, error) {
-	if len(queries) == 0 {
+func queryData(ctx context.Context, req *backend.QueryDataRequest, dsInfo *es.DatasourceInfo, logger log.Logger, tracer tracing.Tracer) (*backend.QueryDataResponse, error) {
+	if len(req.Queries) == 0 {
 		return &backend.QueryDataResponse{}, fmt.Errorf("query contains no queries")
 	}
 
-	client, err := es.NewClient(ctx, dsInfo, queries[0].TimeRange, logger, tracer)
+	client, err := es.NewClient(ctx, dsInfo, logger, tracer)
 	if err != nil {
 		return &backend.QueryDataResponse{}, err
 	}
-	query := newElasticsearchDataQuery(ctx, client, queries, logger, tracer)
+	query := newElasticsearchDataQuery(ctx, client, req, logger, tracer)
 	return query.execute()
 }
 
@@ -88,6 +96,8 @@ func newInstanceSettings(httpClientProvider httpclient.Provider) datasource.Inst
 			httpCliOpts.SigV4.Service = "es"
 		}
 
+		// set the default middlewars from the httpClientProvider
+		httpCliOpts.Middlewares = httpClientProvider.(*sdkhttpclient.Provider).Opts.Middlewares
 		// enable experimental http client to support errors with source
 		httpCli, err := exphttpclient.New(httpCliOpts)
 		if err != nil {
@@ -147,11 +157,6 @@ func newInstanceSettings(httpClientProvider httpclient.Provider) datasource.Inst
 			includeFrozen = false
 		}
 
-		xpack, ok := jsonData["xpack"].(bool)
-		if !ok {
-			xpack = false
-		}
-
 		configuredFields := es.ConfiguredFields{
 			TimeField:       timeField,
 			LogLevelField:   logLevelField,
@@ -167,7 +172,6 @@ func newInstanceSettings(httpClientProvider httpclient.Provider) datasource.Inst
 			ConfiguredFields:           configuredFields,
 			Interval:                   interval,
 			IncludeFrozen:              includeFrozen,
-			XPack:                      xpack,
 		}
 		return model, nil
 	}
@@ -188,9 +192,10 @@ func (s *Service) CallResource(ctx context.Context, req *backend.CallResourceReq
 	logger := eslog.FromContext(ctx)
 	// allowed paths for resource calls:
 	// - empty string for fetching db version
-	// - ?/_mapping for fetching index mapping
+	// - /_mapping for fetching index mapping, e.g. requests going to `index/_mapping`
 	// - _msearch for executing getTerms queries
-	if req.Path != "" && !strings.HasSuffix(req.Path, "/_mapping") && req.Path != "_msearch" {
+	// - _mapping for fetching "root" index mappings
+	if req.Path != "" && !strings.HasSuffix(req.Path, "/_mapping") && req.Path != "_msearch" && req.Path != "_mapping" {
 		logger.Error("Invalid resource path", "path", req.Path)
 		return fmt.Errorf("invalid resource URL: %s", req.Path)
 	}
@@ -201,21 +206,11 @@ func (s *Service) CallResource(ctx context.Context, req *backend.CallResourceReq
 		return err
 	}
 
-	esUrl, err := url.Parse(ds.URL)
+	esUrl, err := createElasticsearchURL(req, ds)
 	if err != nil {
-		logger.Error("Failed to parse data source URL", "error", err, "url", ds.URL)
-		return err
+		logger.Error("Failed to create request url", "error", err, "url", ds.URL, "path", req.Path)
 	}
 
-	resourcePath, err := url.Parse(req.Path)
-	if err != nil {
-		logger.Error("Failed to parse data source path", "error", err, "url", req.Path)
-		return err
-	}
-
-	// We take the path and the query-string only
-	esUrl.RawQuery = resourcePath.RawQuery
-	esUrl.Path = path.Join(esUrl.Path, resourcePath.Path)
 	request, err := http.NewRequestWithContext(ctx, req.Method, esUrl.String(), bytes.NewBuffer(req.Body))
 	if err != nil {
 		logger.Error("Failed to create request", "error", err, "url", esUrl.String())
@@ -231,6 +226,10 @@ func (s *Service) CallResource(ctx context.Context, req *backend.CallResourceReq
 			status = "cancelled"
 		}
 		lp := []any{"error", err, "status", status, "duration", time.Since(start), "stage", es.StageDatabaseRequest, "resourcePath", req.Path}
+		sourceErr := exp.Error{}
+		if errors.As(err, &sourceErr) {
+			lp = append(lp, "statusSource", sourceErr.Source())
+		}
 		if response != nil {
 			lp = append(lp, "statusCode", response.StatusCode)
 		}
@@ -264,4 +263,14 @@ func (s *Service) CallResource(ctx context.Context, req *backend.CallResourceReq
 		Headers: responseHeaders,
 		Body:    body,
 	})
+}
+
+func createElasticsearchURL(req *backend.CallResourceRequest, ds *es.DatasourceInfo) (*url.URL, error) {
+	esUrl, err := url.Parse(ds.URL)
+	if err != nil {
+		return nil, fmt.Errorf("failed to parse data source URL: %s, error: %w", ds.URL, err)
+	}
+
+	esUrl.Path = path.Join(esUrl.Path, req.Path)
+	return esUrl, nil
 }

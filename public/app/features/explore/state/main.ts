@@ -26,7 +26,7 @@ export interface SyncTimesPayload {
 }
 export const syncTimesAction = createAction<SyncTimesPayload>('explore/syncTimes');
 
-export const richHistoryUpdatedAction = createAction<{ richHistoryResults: RichHistoryResults; exploreId: string }>(
+export const richHistoryUpdatedAction = createAction<{ richHistoryResults: RichHistoryResults }>(
   'explore/richHistoryUpdated'
 );
 export const richHistoryStorageFullAction = createAction('explore/richHistoryStorageFullAction');
@@ -34,7 +34,6 @@ export const richHistoryLimitExceededAction = createAction('explore/richHistoryL
 
 export const richHistorySettingsUpdatedAction = createAction<RichHistorySettings>('explore/richHistorySettingsUpdated');
 export const richHistorySearchFiltersUpdatedAction = createAction<{
-  exploreId: string;
   filters?: RichHistorySearchFilters;
 }>('explore/richHistorySearchFiltersUpdatedAction');
 
@@ -61,7 +60,8 @@ export const setPaneState = createAction<SetPaneStateActionPayload>('explore/set
 export const clearPanes = createAction('explore/clearPanes');
 
 /**
- * Ensure Explore doesn't exceed supported number of panes and initializes the new pane.
+ * Creates a new Explore pane.
+ * If 2 panes already exist, the last one (right) is closed before creating a new one.
  */
 export const splitOpen = createAsyncThunk(
   'explore/splitOpen',
@@ -69,7 +69,7 @@ export const splitOpen = createAsyncThunk(
     // we currently support showing only 2 panes in explore, so if this action is dispatched we know it has been dispatched from the "first" pane.
     const originState = Object.values(getState().explore.panes)[0];
 
-    const queries = options?.queries ?? (options?.query ? [options?.query] : originState?.queries || []);
+    const queries = options?.queries ?? originState?.queries ?? [];
 
     Object.keys(getState().explore.panes).forEach((paneId, index) => {
       // Only 2 panes are supported. Remove panes before create a new one.
@@ -124,6 +124,8 @@ export const changeCorrelationEditorDetails = createAction<CorrelationEditorDeta
   'explore/changeCorrelationEditorDetails'
 );
 
+export const changeShowQueryHistory = createAction<boolean>('explore/changeShowQueryHistory');
+
 export interface NavigateToExploreDependencies {
   timeRange: TimeRange;
   getExploreUrl: (args: GetExploreUrlArguments) => Promise<string | undefined>;
@@ -167,6 +169,8 @@ export const initialExploreState: ExploreState = {
   largerExploreId: undefined,
   maxedExploreId: undefined,
   evenSplitPanes: true,
+  showQueryHistory: false,
+  richHistory: [],
 };
 
 /**
@@ -242,6 +246,23 @@ export const exploreReducer = (state = initialExploreState, action: AnyAction): 
     };
   }
 
+  if (richHistoryUpdatedAction.match(action)) {
+    const { richHistory, total } = action.payload.richHistoryResults;
+    return {
+      ...state,
+      richHistory,
+      richHistoryTotal: total,
+    };
+  }
+
+  if (richHistorySearchFiltersUpdatedAction.match(action)) {
+    const richHistorySearchFilters = action.payload.filters;
+    return {
+      ...state,
+      richHistorySearchFilters,
+    };
+  }
+
   if (createNewSplitOpenPane.pending.match(action)) {
     return {
       ...state,
@@ -299,6 +320,13 @@ export const exploreReducer = (state = initialExploreState, action: AnyAction): 
         isExiting: Boolean(isExiting ?? state.correlationEditorDetails?.isExiting),
         postConfirmAction,
       },
+    };
+  }
+
+  if (changeShowQueryHistory.match(action)) {
+    return {
+      ...state,
+      showQueryHistory: action.payload,
     };
   }
 

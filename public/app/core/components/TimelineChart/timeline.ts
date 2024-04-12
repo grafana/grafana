@@ -5,7 +5,7 @@ import { alpha } from '@grafana/data/src/themes/colorManipulator';
 import { TimelineValueAlignment, VisibilityMode } from '@grafana/schema';
 import { FIXED_UNIT } from '@grafana/ui';
 import { distribute, SPACE_BETWEEN } from 'app/plugins/panel/barchart/distribute';
-import { pointWithin, Quadtree, Rect } from 'app/plugins/panel/barchart/quadtree';
+import { Quadtree, Rect } from 'app/plugins/panel/barchart/quadtree';
 import { FieldConfig as StateTimeLineFieldConfig } from 'app/plugins/panel/state-timeline/panelcfg.gen';
 import { FieldConfig as StatusHistoryFieldConfig } from 'app/plugins/panel/status-history/panelcfg.gen';
 
@@ -53,8 +53,7 @@ export interface TimelineCoreOptions {
   getTimeRange: () => TimeRange;
   formatValue?: (seriesIdx: number, value: unknown) => string;
   getFieldConfig: (seriesIdx: number) => StateTimeLineFieldConfig | StatusHistoryFieldConfig;
-  onHover: (seriesIdx: number, valueIdx: number, rect: Rect) => void;
-  onLeave: () => void;
+  hoverMulti: boolean;
 }
 
 /**
@@ -77,8 +76,7 @@ export function getConfig(opts: TimelineCoreOptions) {
     getTimeRange,
     getValueColor,
     getFieldConfig,
-    onHover,
-    onLeave,
+    hoverMulti,
   } = opts;
 
   let qt: Quadtree;
@@ -382,7 +380,7 @@ export function getConfig(opts: TimelineCoreOptions) {
     });
   };
 
-  function setHovered(cx: number, cy: number, cys: number[]) {
+  function setHovered(cx: number, cy: number, viaSync = false) {
     hovered.fill(null);
     hoveredAtCursor = null;
 
@@ -390,22 +388,22 @@ export function getConfig(opts: TimelineCoreOptions) {
       return;
     }
 
-    for (let i = 0; i < cys.length; i++) {
-      let cy2 = cys[i];
-
-      qt.get(cx, cy2, 1, 1, (o) => {
-        if (pointWithin(cx, cy2, o.x, o.y, o.x + o.w, o.y + o.h)) {
-          hovered[o.sidx] = o;
-
-          if (Math.abs(cy - cy2) <= o.h / 2) {
-            hoveredAtCursor = o;
-          }
+    // first gets all items in all quads intersected by a 1px wide by 10k high rect at the x cursor position and 0 y position.
+    // (we use 10k instead of plot area height for simplicity and not having to pass around the uPlot instance)
+    qt.get(cx, 0, uPlot.pxRatio, 1e4, (o) => {
+      // filter only rects that intersect along x dir
+      if (cx >= o.x && cx <= o.x + o.w) {
+        // if also intersect along y dir, set both "direct hovered" and "one-of hovered"
+        if (cy >= o.y && cy <= o.y + o.h) {
+          hovered[o.sidx] = hoveredAtCursor = o;
         }
-      });
-    }
+        // else only set "one-of hovered" (no "direct hovered") in multi mode or when synced
+        else if (hoverMulti || viaSync) {
+          hovered[o.sidx] = o;
+        }
+      }
+    });
   }
-
-  const hoverMulti = mode === TimelineMode.Changes;
 
   const cursor: uPlot.Cursor = {
     x: mode === TimelineMode.Changes,
@@ -424,17 +422,7 @@ export function getConfig(opts: TimelineCoreOptions) {
         let cx = u.cursor.left! * uPlot.pxRatio;
         let cy = u.cursor.top! * uPlot.pxRatio;
 
-        let prevHovered = hoveredAtCursor;
-
-        setHovered(cx, cy, hoverMulti ? yMids : [cy]);
-
-        if (hoveredAtCursor != null) {
-          if (hoveredAtCursor !== prevHovered) {
-            onHover(hoveredAtCursor.sidx, hoveredAtCursor.didx, hoveredAtCursor);
-          }
-        } else if (prevHovered != null) {
-          onLeave();
-        }
+        setHovered(cx, cy, u.cursor.event == null);
       }
 
       return hovered[seriesIdx]?.didx;

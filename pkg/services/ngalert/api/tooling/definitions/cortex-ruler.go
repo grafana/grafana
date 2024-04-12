@@ -8,7 +8,7 @@ import (
 	"github.com/prometheus/common/model"
 )
 
-// swagger:route Get /api/ruler/grafana/api/v1/rules ruler RouteGetGrafanaRulesConfig
+// swagger:route Get /ruler/grafana/api/v1/rules ruler RouteGetGrafanaRulesConfig
 //
 // List rule groups
 //
@@ -20,20 +20,23 @@ import (
 //       403: ForbiddenError
 //
 
-// swagger:route Get /api/ruler/grafana/api/v1/export/rules ruler RouteGetRulesForExport
+// swagger:route Get /ruler/grafana/api/v1/export/rules ruler RouteGetRulesForExport
 //
 // List rules in provisioning format
 //
-//     Consumes:
+//     Produces:
 //     - application/json
 //     - application/yaml
+//     - application/terraform+hcl
+//     - text/yaml
+//     - text/hcl
 //
 //     Responses:
 //       200: AlertingFileExport
 //       403: ForbiddenError
 //       404: description: Not found.
 
-// swagger:route Get /api/ruler/{DatasourceUID}/api/v1/rules ruler RouteGetRulesConfig
+// swagger:route Get /ruler/{DatasourceUID}/api/v1/rules ruler RouteGetRulesConfig
 //
 // List rule groups
 //
@@ -45,7 +48,7 @@ import (
 //       403: ForbiddenError
 //       404: NotFound
 
-// swagger:route POST /api/ruler/grafana/api/v1/rules/{Namespace} ruler RoutePostNameGrafanaRulesConfig
+// swagger:route POST /ruler/grafana/api/v1/rules/{Namespace} ruler RoutePostNameGrafanaRulesConfig
 //
 // Creates or updates a rule group
 //
@@ -58,20 +61,26 @@ import (
 //       403: ForbiddenError
 //
 
-// swagger:route POST /api/ruler/grafana/api/v1/rules/{Namespace}/export ruler RoutePostRulesGroupForExport
+// swagger:route POST /ruler/grafana/api/v1/rules/{Namespace}/export ruler RoutePostRulesGroupForExport
 //
 // Converts submitted rule group to provisioning format
 //
 //     Consumes:
 //     - application/json
+//
+//     Produces:
+//     - application/json
 //     - application/yaml
+//     - application/terraform+hcl
+//     - text/yaml
+//     - text/hcl
 //
 //     Responses:
 //       200: AlertingFileExport
 //       403: ForbiddenError
 //       404: description: Not found.
 
-// swagger:route POST /api/ruler/{DatasourceUID}/api/v1/rules/{Namespace} ruler RoutePostNameRulesConfig
+// swagger:route POST /ruler/{DatasourceUID}/api/v1/rules/{Namespace} ruler RoutePostNameRulesConfig
 //
 // Creates or updates a rule group
 //
@@ -84,7 +93,7 @@ import (
 //       403: ForbiddenError
 //       404: NotFound
 
-// swagger:route Get /api/ruler/grafana/api/v1/rules/{Namespace} ruler RouteGetNamespaceGrafanaRulesConfig
+// swagger:route Get /ruler/grafana/api/v1/rules/{Namespace} ruler RouteGetNamespaceGrafanaRulesConfig
 //
 // Get rule groups by namespace
 //
@@ -95,7 +104,7 @@ import (
 //       403: ForbiddenError
 //       202: NamespaceConfigResponse
 
-// swagger:route Get /api/ruler/{DatasourceUID}/api/v1/rules/{Namespace} ruler RouteGetNamespaceRulesConfig
+// swagger:route Get /ruler/{DatasourceUID}/api/v1/rules/{Namespace} ruler RouteGetNamespaceRulesConfig
 //
 // Get rule groups by namespace
 //
@@ -107,7 +116,7 @@ import (
 //       403: ForbiddenError
 //       404: NotFound
 
-// swagger:route Delete /api/ruler/grafana/api/v1/rules/{Namespace} ruler RouteDeleteNamespaceGrafanaRulesConfig
+// swagger:route Delete /ruler/grafana/api/v1/rules/{Namespace} ruler RouteDeleteNamespaceGrafanaRulesConfig
 //
 // Delete namespace
 //
@@ -115,7 +124,7 @@ import (
 //       202: Ack
 //       403: ForbiddenError
 
-// swagger:route Delete /api/ruler/{DatasourceUID}/api/v1/rules/{Namespace} ruler RouteDeleteNamespaceRulesConfig
+// swagger:route Delete /ruler/{DatasourceUID}/api/v1/rules/{Namespace} ruler RouteDeleteNamespaceRulesConfig
 //
 // Delete namespace
 //
@@ -124,7 +133,7 @@ import (
 //       403: ForbiddenError
 //       404: NotFound
 
-// swagger:route Get /api/ruler/grafana/api/v1/rules/{Namespace}/{Groupname} ruler RouteGetGrafanaRuleGroupConfig
+// swagger:route Get /ruler/grafana/api/v1/rules/{Namespace}/{Groupname} ruler RouteGetGrafanaRuleGroupConfig
 //
 // Get rule group
 //
@@ -135,7 +144,7 @@ import (
 //       202: RuleGroupConfigResponse
 //       403: ForbiddenError
 
-// swagger:route Get /api/ruler/{DatasourceUID}/api/v1/rules/{Namespace}/{Groupname} ruler RouteGetRulegGroupConfig
+// swagger:route Get /ruler/{DatasourceUID}/api/v1/rules/{Namespace}/{Groupname} ruler RouteGetRulegGroupConfig
 //
 // Get rule group
 //
@@ -147,7 +156,7 @@ import (
 //       403: ForbiddenError
 //       404: NotFound
 
-// swagger:route Delete /api/ruler/grafana/api/v1/rules/{Namespace}/{Groupname} ruler RouteDeleteGrafanaRuleGroupConfig
+// swagger:route Delete /ruler/grafana/api/v1/rules/{Namespace}/{Groupname} ruler RouteDeleteGrafanaRuleGroupConfig
 //
 // Delete rule group
 //
@@ -155,7 +164,7 @@ import (
 //       202: Ack
 //       403: ForbiddenError
 
-// swagger:route Delete /api/ruler/{DatasourceUID}/api/v1/rules/{Namespace}/{Groupname} ruler RouteDeleteRuleGroupConfig
+// swagger:route Delete /ruler/{DatasourceUID}/api/v1/rules/{Namespace}/{Groupname} ruler RouteDeleteRuleGroupConfig
 //
 // Delete rule group
 //
@@ -166,6 +175,7 @@ import (
 
 // swagger:parameters RoutePostNameRulesConfig RoutePostNameGrafanaRulesConfig RoutePostRulesGroupForExport
 type NamespaceConfig struct {
+	// The UID of the rule folder
 	// in:path
 	Namespace string
 	// in:body
@@ -174,12 +184,14 @@ type NamespaceConfig struct {
 
 // swagger:parameters RouteGetNamespaceRulesConfig RouteDeleteNamespaceRulesConfig RouteGetNamespaceGrafanaRulesConfig RouteDeleteNamespaceGrafanaRulesConfig
 type PathNamespaceConfig struct {
+	// The UID of the rule folder
 	// in: path
 	Namespace string
 }
 
 // swagger:parameters RouteGetRulegGroupConfig RouteDeleteRuleGroupConfig RouteGetGrafanaRuleGroupConfig RouteDeleteGrafanaRuleGroupConfig
 type PathRouleGroupConfig struct {
+	// The UID of the rule folder
 	// in: path
 	Namespace string
 	// in: path
@@ -404,33 +416,79 @@ const (
 )
 
 // swagger:model
+type AlertRuleNotificationSettings struct {
+	// Name of the receiver to send notifications to.
+	// required: true
+	// example: grafana-default-email
+	Receiver string `json:"receiver"`
+
+	// Optional settings
+
+	// Override the labels by which incoming alerts are grouped together. For example, multiple alerts coming in for
+	// cluster=A and alertname=LatencyHigh would be batched into a single group. To aggregate by all possible labels
+	// use the special value '...' as the sole label name.
+	// This effectively disables aggregation entirely, passing through all alerts as-is. This is unlikely to be what
+	// you want, unless you have a very low alert volume or your upstream notification system performs its own grouping.
+	// Must include 'alertname' and 'grafana_folder' if not using '...'.
+	// default: ["alertname", "grafana_folder"]
+	// example: ["alertname", "grafana_folder", "cluster"]
+	GroupBy []string `json:"group_by,omitempty"`
+
+	// Override how long to initially wait to send a notification for a group of alerts. Allows to wait for an
+	// inhibiting alert to arrive or collect more initial alerts for the same group. (Usually ~0s to few minutes.)
+	// example: 30s
+	GroupWait *model.Duration `json:"group_wait,omitempty"`
+
+	// Override how long to wait before sending a notification about new alerts that are added to a group of alerts for
+	// which an initial notification has already been sent. (Usually ~5m or more.)
+	// example: 5m
+	GroupInterval *model.Duration `json:"group_interval,omitempty"`
+
+	// Override how long to wait before sending a notification again if it has already been sent successfully for an
+	// alert. (Usually ~3h or more).
+	// Note that this parameter is implicitly bound by Alertmanager's `--data.retention` configuration flag.
+	// Notifications will be resent after either repeat_interval or the data retention period have passed, whichever
+	// occurs first. `repeat_interval` should not be less than `group_interval`.
+	// example: 4h
+	RepeatInterval *model.Duration `json:"repeat_interval,omitempty"`
+
+	// Override the times when notifications should be muted. These must match the name of a mute time interval defined
+	// in the alertmanager configuration mute_time_intervals section. When muted it will not send any notifications, but
+	// otherwise acts normally.
+	// example: ["maintenance"]
+	MuteTimeIntervals []string `json:"mute_time_intervals,omitempty"`
+}
+
+// swagger:model
 type PostableGrafanaRule struct {
-	Title        string              `json:"title" yaml:"title"`
-	Condition    string              `json:"condition" yaml:"condition"`
-	Data         []AlertQuery        `json:"data" yaml:"data"`
-	UID          string              `json:"uid" yaml:"uid"`
-	NoDataState  NoDataState         `json:"no_data_state" yaml:"no_data_state"`
-	ExecErrState ExecutionErrorState `json:"exec_err_state" yaml:"exec_err_state"`
-	IsPaused     *bool               `json:"is_paused" yaml:"is_paused"`
+	Title                string                         `json:"title" yaml:"title"`
+	Condition            string                         `json:"condition" yaml:"condition"`
+	Data                 []AlertQuery                   `json:"data" yaml:"data"`
+	UID                  string                         `json:"uid" yaml:"uid"`
+	NoDataState          NoDataState                    `json:"no_data_state" yaml:"no_data_state"`
+	ExecErrState         ExecutionErrorState            `json:"exec_err_state" yaml:"exec_err_state"`
+	IsPaused             *bool                          `json:"is_paused" yaml:"is_paused"`
+	NotificationSettings *AlertRuleNotificationSettings `json:"notification_settings" yaml:"notification_settings"`
 }
 
 // swagger:model
 type GettableGrafanaRule struct {
-	ID              int64               `json:"id" yaml:"id"`
-	OrgID           int64               `json:"orgId" yaml:"orgId"`
-	Title           string              `json:"title" yaml:"title"`
-	Condition       string              `json:"condition" yaml:"condition"`
-	Data            []AlertQuery        `json:"data" yaml:"data"`
-	Updated         time.Time           `json:"updated" yaml:"updated"`
-	IntervalSeconds int64               `json:"intervalSeconds" yaml:"intervalSeconds"`
-	Version         int64               `json:"version" yaml:"version"`
-	UID             string              `json:"uid" yaml:"uid"`
-	NamespaceUID    string              `json:"namespace_uid" yaml:"namespace_uid"`
-	RuleGroup       string              `json:"rule_group" yaml:"rule_group"`
-	NoDataState     NoDataState         `json:"no_data_state" yaml:"no_data_state"`
-	ExecErrState    ExecutionErrorState `json:"exec_err_state" yaml:"exec_err_state"`
-	Provenance      Provenance          `json:"provenance,omitempty" yaml:"provenance,omitempty"`
-	IsPaused        bool                `json:"is_paused" yaml:"is_paused"`
+	ID                   int64                          `json:"id" yaml:"id"`
+	OrgID                int64                          `json:"orgId" yaml:"orgId"`
+	Title                string                         `json:"title" yaml:"title"`
+	Condition            string                         `json:"condition" yaml:"condition"`
+	Data                 []AlertQuery                   `json:"data" yaml:"data"`
+	Updated              time.Time                      `json:"updated" yaml:"updated"`
+	IntervalSeconds      int64                          `json:"intervalSeconds" yaml:"intervalSeconds"`
+	Version              int64                          `json:"version" yaml:"version"`
+	UID                  string                         `json:"uid" yaml:"uid"`
+	NamespaceUID         string                         `json:"namespace_uid" yaml:"namespace_uid"`
+	RuleGroup            string                         `json:"rule_group" yaml:"rule_group"`
+	NoDataState          NoDataState                    `json:"no_data_state" yaml:"no_data_state"`
+	ExecErrState         ExecutionErrorState            `json:"exec_err_state" yaml:"exec_err_state"`
+	Provenance           Provenance                     `json:"provenance,omitempty" yaml:"provenance,omitempty"`
+	IsPaused             bool                           `json:"is_paused" yaml:"is_paused"`
+	NotificationSettings *AlertRuleNotificationSettings `json:"notification_settings,omitempty" yaml:"notification_settings,omitempty"`
 }
 
 // AlertQuery represents a single query associated with an alert definition.

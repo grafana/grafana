@@ -1,4 +1,4 @@
-import { IconName, IconSize } from '../../types/icon';
+import { IconName, IconSize, IconType } from '../../types/icon';
 
 const alwaysMonoIcons: IconName[] = [
   'grafana',
@@ -10,7 +10,7 @@ const alwaysMonoIcons: IconName[] = [
   'circle-mono',
 ];
 
-export function getIconSubDir(name: IconName, type: string): string {
+export function getIconSubDir(name: IconName, type: IconType): string {
   if (name?.startsWith('gf-')) {
     return 'custom';
   } else if (alwaysMonoIcons.includes(name)) {

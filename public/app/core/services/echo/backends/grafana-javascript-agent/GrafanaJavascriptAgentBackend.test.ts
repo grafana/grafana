@@ -1,16 +1,50 @@
 import { BuildInfo } from '@grafana/data';
 import { GrafanaEdition } from '@grafana/data/src/types/config';
-import { Instrumentation } from '@grafana/faro-core';
+import { Faro, Instrumentation } from '@grafana/faro-core';
 import * as faroWebSdkModule from '@grafana/faro-web-sdk';
-import { FetchTransport, initializeFaro } from '@grafana/faro-web-sdk';
+import { BrowserConfig, FetchTransport } from '@grafana/faro-web-sdk';
 
 import { EchoSrvTransport } from './EchoSrvTransport';
 import { GrafanaJavascriptAgentBackend, GrafanaJavascriptAgentBackendOptions } from './GrafanaJavascriptAgentBackend';
 
 describe('GrafanaJavascriptAgentEchoBackend', () => {
+  let mockedSetUser: jest.Mock;
+  let initializeFaroMock: jest.SpyInstance<Faro, [config: BrowserConfig]>;
+
   beforeEach(() => {
+    // arrange
+    mockedSetUser = jest.fn();
+    const mockedInstrumentationsForConfig: Instrumentation[] = [];
+    const mockedInstrumentations = {
+      add: jest.fn(),
+      instrumentations: mockedInstrumentationsForConfig,
+      remove: jest.fn(),
+    };
+    const mockedInternalLogger = {
+      prefix: 'Faro',
+      debug: jest.fn(),
+      info: jest.fn(),
+      warn: jest.fn(),
+      error: jest.fn(),
+    };
+
+    initializeFaroMock = jest.spyOn(faroWebSdkModule, 'initializeFaro').mockReturnValueOnce({
+      ...faroWebSdkModule.faro,
+      api: {
+        ...faroWebSdkModule.faro.api,
+        setUser: mockedSetUser,
+      },
+      config: {
+        ...faroWebSdkModule.faro.config,
+        instrumentations: mockedInstrumentationsForConfig,
+      },
+      instrumentations: mockedInstrumentations,
+      internalLogger: mockedInternalLogger,
+    });
+  });
+
+  afterEach(() => {
     jest.resetAllMocks();
-    window.fetch = jest.fn();
     jest.resetModules();
     jest.clearAllMocks();
   });
@@ -19,6 +53,7 @@ describe('GrafanaJavascriptAgentEchoBackend', () => {
     version: '1.0',
     commit: 'abcd123',
     env: 'production',
+    versionString: 'Grafana v1.0 (abcd123)',
     edition: GrafanaEdition.OpenSource,
     latestVersion: 'ba',
     hasUpdate: false,
@@ -50,47 +85,18 @@ describe('GrafanaJavascriptAgentEchoBackend', () => {
 
     //assert
     expect(constructorSpy).toHaveBeenCalledTimes(1);
-    expect(faroWebSdkModule.faro.transports.transports.length).toEqual(2);
-    expect(faroWebSdkModule.faro.transports.transports[0]).toBeInstanceOf(EchoSrvTransport);
-    expect(faroWebSdkModule.faro.transports.transports[1]).toBeInstanceOf(FetchTransport);
+    expect(initializeFaroMock).toHaveBeenCalledTimes(1);
+    expect(initializeFaroMock.mock.calls[0][0].transports?.length).toEqual(2);
+    expect(initializeFaroMock.mock.calls[0][0].transports?.[0]).toBeInstanceOf(EchoSrvTransport);
+    expect(initializeFaroMock.mock.calls[0][0].transports?.[1]).toBeInstanceOf(FetchTransport);
   });
 
-  it('will initialize GrafanaJavascriptAgent and set user', () => {
-    // arrange
-    const mockedSetUser = jest.fn();
-    const mockedInstrumentationsForConfig: Instrumentation[] = [];
-    const mockedInstrumentations = {
-      add: jest.fn(),
-      instrumentations: mockedInstrumentationsForConfig,
-      remove: jest.fn(),
-    };
-    const mockedInternalLogger = {
-      prefix: 'Faro',
-      debug: jest.fn(),
-      info: jest.fn(),
-      warn: jest.fn(),
-      error: jest.fn(),
-    };
-
-    jest.spyOn(faroWebSdkModule, 'initializeFaro').mockReturnValueOnce({
-      ...faroWebSdkModule.faro,
-      api: {
-        ...faroWebSdkModule.faro.api,
-        setUser: mockedSetUser,
-      },
-      config: {
-        ...faroWebSdkModule.faro.config,
-        instrumentations: mockedInstrumentationsForConfig,
-      },
-      instrumentations: mockedInstrumentations,
-      internalLogger: mockedInternalLogger,
-    });
-
+  it('will initialize GrafanaJavascriptAgent and set user', async () => {
     //act
     new GrafanaJavascriptAgentBackend(options);
 
     //assert
-    expect(initializeFaro).toHaveBeenCalledTimes(1);
+    expect(initializeFaroMock).toHaveBeenCalledTimes(1);
     expect(mockedSetUser).toHaveBeenCalledTimes(1);
     expect(mockedSetUser).toHaveBeenCalledWith({
       id: '504',

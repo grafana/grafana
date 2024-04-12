@@ -27,10 +27,15 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert/state/historian"
 	historymodel "github.com/grafana/grafana/pkg/services/ngalert/state/historian/model"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/tests/testsuite"
 	"github.com/prometheus/client_golang/prometheus"
 
 	"github.com/stretchr/testify/require"
 )
+
+func TestMain(m *testing.M) {
+	testsuite.Run(m)
+}
 
 func TestIntegrationAlertStateHistoryStore(t *testing.T) {
 	if testing.Short() {
@@ -38,8 +43,9 @@ func TestIntegrationAlertStateHistoryStore(t *testing.T) {
 	}
 
 	sql := db.InitTestDB(t)
+	cfg := sql.Cfg
 
-	dashboard1 := testutil.CreateDashboard(t, sql, featuremgmt.WithFeatures(), dashboards.SaveDashboardCommand{
+	dashboard1 := testutil.CreateDashboard(t, sql, cfg, featuremgmt.WithFeatures(), dashboards.SaveDashboardCommand{
 		UserID: 1,
 		OrgID:  1,
 		Dashboard: simplejson.NewFromAny(map[string]any{
@@ -47,7 +53,7 @@ func TestIntegrationAlertStateHistoryStore(t *testing.T) {
 		}),
 	})
 
-	dashboard2 := testutil.CreateDashboard(t, sql, featuremgmt.WithFeatures(), dashboards.SaveDashboardCommand{
+	dashboard2 := testutil.CreateDashboard(t, sql, cfg, featuremgmt.WithFeatures(), dashboards.SaveDashboardCommand{
 		UserID: 1,
 		OrgID:  1,
 		Dashboard: simplejson.NewFromAny(map[string]any{
@@ -56,14 +62,19 @@ func TestIntegrationAlertStateHistoryStore(t *testing.T) {
 	})
 
 	knownUIDs := &sync.Map{}
+	generator := ngmodels.AlertRuleGen(
+		ngmodels.WithUniqueUID(knownUIDs),
+		ngmodels.WithUniqueID(),
+		ngmodels.WithOrgID(1),
+	)
 
 	dashboardRules := map[string][]*ngmodels.AlertRule{
 		dashboard1.UID: {
-			createAlertRuleWithDashboard(t, sql, knownUIDs, "Test Rule 1", dashboard1.UID),
-			createAlertRuleWithDashboard(t, sql, knownUIDs, "Test Rule 2", dashboard1.UID),
+			createAlertRuleFromDashboard(t, sql, "Test Rule 1", *dashboard1, generator),
+			createAlertRuleFromDashboard(t, sql, "Test Rule 2", *dashboard1, generator),
 		},
 		dashboard2.UID: {
-			createAlertRuleWithDashboard(t, sql, knownUIDs, "Test Rule 3", dashboard2.UID),
+			createAlertRuleFromDashboard(t, sql, "Test Rule 3", *dashboard2, generator),
 		},
 	}
 
@@ -78,7 +89,7 @@ func TestIntegrationAlertStateHistoryStore(t *testing.T) {
 		t.Run("can query history by alert id", func(t *testing.T) {
 			rule := dashboardRules[dashboard1.UID][0]
 
-			fakeLokiClient.Response = []historian.Stream{
+			fakeLokiClient.rangeQueryRes = []historian.Stream{
 				historian.StatesToStream(ruleMetaFromRule(t, rule), transitions, map[string]string{}, log.NewNopLogger()),
 			}
 
@@ -103,7 +114,7 @@ func TestIntegrationAlertStateHistoryStore(t *testing.T) {
 		})
 
 		t.Run("can query history by dashboard id", func(t *testing.T) {
-			fakeLokiClient.Response = []historian.Stream{
+			fakeLokiClient.rangeQueryRes = []historian.Stream{
 				historian.StatesToStream(ruleMetaFromRule(t, dashboardRules[dashboard1.UID][0]), transitions, map[string]string{}, log.NewNopLogger()),
 				historian.StatesToStream(ruleMetaFromRule(t, dashboardRules[dashboard1.UID][1]), transitions, map[string]string{}, log.NewNopLogger()),
 			}
@@ -128,7 +139,36 @@ func TestIntegrationAlertStateHistoryStore(t *testing.T) {
 			require.Len(t, res, 2*numTransitions)
 		})
 
-		t.Run("should not find any when history is outside time range", func(t *testing.T) {
+		t.Run("should return empty results when type is annotation", func(t *testing.T) {
+			fakeLokiClient.rangeQueryRes = []historian.Stream{
+				historian.StatesToStream(ruleMetaFromRule(t, dashboardRules[dashboard1.UID][0]), transitions, map[string]string{}, log.NewNopLogger()),
+				historian.StatesToStream(ruleMetaFromRule(t, dashboardRules[dashboard1.UID][1]), transitions, map[string]string{}, log.NewNopLogger()),
+			}
+
+			query := annotations.ItemQuery{
+				OrgID: 1,
+				Type:  "annotation",
+			}
+			res, err := store.Get(
+				context.Background(),
+				&query,
+				&annotation_ac.AccessResources{
+					Dashboards: map[string]int64{
+						dashboard1.UID: dashboard1.ID,
+					},
+					CanAccessDashAnnotations: true,
+				},
+			)
+			require.NoError(t, err)
+			require.Empty(t, res)
+		})
+
+		t.Run("should return empty results when history is outside time range", func(t *testing.T) {
+			fakeLokiClient.rangeQueryRes = []historian.Stream{
+				historian.StatesToStream(ruleMetaFromRule(t, dashboardRules[dashboard1.UID][0]), transitions, map[string]string{}, log.NewNopLogger()),
+				historian.StatesToStream(ruleMetaFromRule(t, dashboardRules[dashboard1.UID][1]), transitions, map[string]string{}, log.NewNopLogger()),
+			}
+
 			query := annotations.ItemQuery{
 				OrgID:       1,
 				DashboardID: dashboard1.ID,
@@ -149,8 +189,41 @@ func TestIntegrationAlertStateHistoryStore(t *testing.T) {
 			require.Len(t, res, 0)
 		})
 
+		t.Run("should return partial results when history is partly outside clamped time range", func(t *testing.T) {
+			fakeLokiClient.rangeQueryRes = []historian.Stream{
+				historian.StatesToStream(ruleMetaFromRule(t, dashboardRules[dashboard1.UID][0]), transitions, map[string]string{}, log.NewNopLogger()),
+				historian.StatesToStream(ruleMetaFromRule(t, dashboardRules[dashboard1.UID][1]), transitions, map[string]string{}, log.NewNopLogger()),
+			}
+
+			// clamp time range to 1 second
+			oldMax := fakeLokiClient.cfg.MaxQueryLength
+			fakeLokiClient.cfg.MaxQueryLength = 1 * time.Second
+
+			query := annotations.ItemQuery{
+				OrgID:       1,
+				DashboardID: dashboard1.ID,
+				From:        start.Add(-1 * time.Second).UnixMilli(), // should clamp to start
+				To:          start.Add(1 * time.Second).UnixMilli(),
+			}
+			res, err := store.Get(
+				context.Background(),
+				&query,
+				&annotation_ac.AccessResources{
+					Dashboards: map[string]int64{
+						dashboard1.UID: dashboard1.ID,
+					},
+					CanAccessDashAnnotations: true,
+				},
+			)
+			require.NoError(t, err)
+			require.Len(t, res, 2)
+
+			// restore original max query length
+			fakeLokiClient.cfg.MaxQueryLength = oldMax
+		})
+
 		t.Run("should sort history by time", func(t *testing.T) {
-			fakeLokiClient.Response = []historian.Stream{
+			fakeLokiClient.rangeQueryRes = []historian.Stream{
 				historian.StatesToStream(ruleMetaFromRule(t, dashboardRules[dashboard1.UID][0]), transitions, map[string]string{}, log.NewNopLogger()),
 				historian.StatesToStream(ruleMetaFromRule(t, dashboardRules[dashboard1.UID][1]), transitions, map[string]string{}, log.NewNopLogger()),
 			}
@@ -181,6 +254,32 @@ func TestIntegrationAlertStateHistoryStore(t *testing.T) {
 				}
 				lastTime = item.Time
 			}
+		})
+
+		t.Run("should return nothing if query is for tags only", func(t *testing.T) {
+			fakeLokiClient.rangeQueryRes = []historian.Stream{
+				historian.StatesToStream(ruleMetaFromRule(t, dashboardRules[dashboard1.UID][0]), transitions, map[string]string{}, log.NewNopLogger()),
+				historian.StatesToStream(ruleMetaFromRule(t, dashboardRules[dashboard1.UID][1]), transitions, map[string]string{}, log.NewNopLogger()),
+			}
+
+			query := annotations.ItemQuery{
+				OrgID: 1,
+				From:  start.UnixMilli(),
+				To:    start.Add(time.Second * time.Duration(numTransitions+1)).UnixMilli(),
+				Tags:  []string{"tag1"},
+			}
+			res, err := store.Get(
+				context.Background(),
+				&query,
+				&annotation_ac.AccessResources{
+					Dashboards: map[string]int64{
+						dashboard1.UID: dashboard1.ID,
+					},
+					CanAccessDashAnnotations: true,
+				},
+			)
+			require.NoError(t, err)
+			require.Empty(t, res)
 		})
 	})
 
@@ -245,7 +344,7 @@ func TestIntegrationAlertStateHistoryStore(t *testing.T) {
 			rule := dashboardRules[dashboard1.UID][0]
 			stream1 := historian.StatesToStream(ruleMetaFromRule(t, rule), transitions, map[string]string{}, log.NewNopLogger())
 
-			rule = createAlertRule(t, sql, knownUIDs, "Test rule")
+			rule = createAlertRule(t, sql, "Test rule", generator)
 			stream2 := historian.StatesToStream(ruleMetaFromRule(t, rule), transitions, map[string]string{}, log.NewNopLogger())
 
 			stream := historian.Stream{
@@ -335,7 +434,23 @@ func TestHasAccess(t *testing.T) {
 	})
 }
 
-func TestFloat64Map(t *testing.T) {
+func TestNumericMap(t *testing.T) {
+	t.Run("should return error for nil value", func(t *testing.T) {
+		var jsonMap *simplejson.Json
+		_, err := numericMap[float64](jsonMap)
+		require.Error(t, err)
+		require.Contains(t, err.Error(), "unexpected nil value")
+	})
+
+	t.Run("should return error for nil interface value", func(t *testing.T) {
+		jsonMap := simplejson.NewFromAny(map[string]any{
+			"key1": nil,
+		})
+		_, err := numericMap[float64](jsonMap)
+		require.Error(t, err)
+		require.Contains(t, err.Error(), "unexpected value type")
+	})
+
 	t.Run(`should convert json string:float kv to Golang map[string]float64`, func(t *testing.T) {
 		jsonMap := simplejson.NewFromAny(map[string]any{
 			"key1": json.Number("1.0"),
@@ -475,22 +590,23 @@ func createTestLokiStore(t *testing.T, sql db.DB, client lokiQueryClient) *LokiH
 	}
 }
 
-func createAlertRule(t *testing.T, sql db.DB, knownUIDs *sync.Map, title string) *ngmodels.AlertRule {
+// createAlertRule creates an alert rule in the database and returns it.
+// If a generator is not specified, uniqueness of primary key is not guaranteed.
+func createAlertRule(t *testing.T, sql db.DB, title string, generator func() *ngmodels.AlertRule) *ngmodels.AlertRule {
 	t.Helper()
 
-	if knownUIDs == nil {
-		knownUIDs = &sync.Map{}
+	if generator == nil {
+		generator = ngmodels.AlertRuleGen(ngmodels.WithTitle(title), withDashboardUID(nil), withPanelID(nil), ngmodels.WithOrgID(1))
 	}
 
-	generator := ngmodels.AlertRuleGen(
-		ngmodels.WithTitle(title),
-		ngmodels.WithUniqueUID(knownUIDs),
-		withDashboardUID(""), // no dashboard
-		ngmodels.WithUniqueID(),
-		ngmodels.WithOrgID(1),
-	)
-
 	rule := generator()
+	// ensure rule has correct values
+	if rule.Title != title {
+		rule.Title = title
+	}
+	// rule should not have linked dashboard or panel
+	rule.DashboardUID = nil
+	rule.PanelID = nil
 
 	err := sql.WithDbSession(context.Background(), func(sess *db.Session) error {
 		_, err := sess.Table(ngmodels.AlertRule{}).InsertOne(rule)
@@ -515,23 +631,29 @@ func createAlertRule(t *testing.T, sql db.DB, knownUIDs *sync.Map, title string)
 	return rule
 }
 
-func createAlertRuleWithDashboard(t *testing.T, sql db.DB, knownUIDs *sync.Map, title string, dashboardUID string) *ngmodels.AlertRule {
+// createAlertRuleFromDashboard creates an alert rule with a linked dashboard and panel in the database and returns it.
+// If a generator is not specified, uniqueness of primary key is not guaranteed.
+func createAlertRuleFromDashboard(t *testing.T, sql db.DB, title string, dashboard dashboards.Dashboard, generator func() *ngmodels.AlertRule) *ngmodels.AlertRule {
 	t.Helper()
 
-	if knownUIDs == nil {
-		knownUIDs = &sync.Map{}
+	panelID := new(int64)
+	*panelID = 123
+
+	if generator == nil {
+		generator = ngmodels.AlertRuleGen(ngmodels.WithTitle(title), ngmodels.WithOrgID(1), withDashboardUID(&dashboard.UID), withPanelID(panelID))
 	}
 
-	generator := ngmodels.AlertRuleGen(
-		ngmodels.WithTitle(title),
-		ngmodels.WithUniqueUID(knownUIDs),
-		ngmodels.WithUniqueID(),
-		ngmodels.WithOrgID(1),
-		withDashboardUID(dashboardUID),
-		withPanelID(123),
-	)
-
 	rule := generator()
+	// ensure rule has correct values
+	if rule.Title != title {
+		rule.Title = title
+	}
+	if rule.DashboardUID == nil || (rule.DashboardUID != nil && *rule.DashboardUID != dashboard.UID) {
+		rule.DashboardUID = &dashboard.UID
+	}
+	if rule.PanelID == nil || (rule.PanelID != nil && *rule.PanelID != *panelID) {
+		rule.PanelID = panelID
+	}
 
 	err := sql.WithDbSession(context.Background(), func(sess *db.Session) error {
 		_, err := sess.Table(ngmodels.AlertRule{}).InsertOne(rule)
@@ -620,15 +742,15 @@ func genStateTransitions(t *testing.T, num int, start time.Time) []state.StateTr
 	return transitions
 }
 
-func withDashboardUID(dashboardUID string) ngmodels.AlertRuleMutator {
+func withDashboardUID(dashboardUID *string) ngmodels.AlertRuleMutator {
 	return func(rule *ngmodels.AlertRule) {
-		rule.DashboardUID = &dashboardUID
+		rule.DashboardUID = dashboardUID
 	}
 }
 
-func withPanelID(panelID int64) ngmodels.AlertRuleMutator {
+func withPanelID(panelID *int64) ngmodels.AlertRuleMutator {
 	return func(rule *ngmodels.AlertRule) {
-		rule.PanelID = &panelID
+		rule.PanelID = panelID
 	}
 }
 
@@ -654,11 +776,11 @@ func compareAnnotationItem(t *testing.T, expected, actual *annotations.ItemDTO) 
 }
 
 type FakeLokiClient struct {
-	client   client.Requester
-	cfg      historian.LokiConfig
-	metrics  *metrics.Historian
-	log      log.Logger
-	Response []historian.Stream
+	client        client.Requester
+	cfg           historian.LokiConfig
+	metrics       *metrics.Historian
+	log           log.Logger
+	rangeQueryRes []historian.Stream
 }
 
 func NewFakeLokiClient() *FakeLokiClient {
@@ -669,19 +791,23 @@ func NewFakeLokiClient() *FakeLokiClient {
 	return &FakeLokiClient{
 		client: client.NewTimedClient(req, metrics.WriteDuration),
 		cfg: historian.LokiConfig{
-			WritePathURL: url,
-			ReadPathURL:  url,
-			Encoder:      historian.JsonEncoder{},
+			WritePathURL:   url,
+			ReadPathURL:    url,
+			Encoder:        historian.JsonEncoder{},
+			MaxQueryLength: 721 * time.Hour,
 		},
 		metrics: metrics,
 		log:     log.New("ngalert.state.historian", "backend", "loki"),
 	}
 }
 
-func (c *FakeLokiClient) RangeQuery(_ context.Context, _ string, from, to, _ int64) (historian.QueryRes, error) {
-	streams := make([]historian.Stream, len(c.Response))
+func (c *FakeLokiClient) RangeQuery(ctx context.Context, query string, from, to, limit int64) (historian.QueryRes, error) {
+	streams := make([]historian.Stream, len(c.rangeQueryRes))
 
-	for n, stream := range c.Response {
+	// clamp time range using logic from historian
+	from, to = historian.ClampRange(from, to, c.cfg.MaxQueryLength.Nanoseconds())
+
+	for n, stream := range c.rangeQueryRes {
 		streams[n].Stream = stream.Stream
 		streams[n].Values = []historian.Sample{}
 		for _, sample := range stream.Values {
@@ -697,8 +823,9 @@ func (c *FakeLokiClient) RangeQuery(_ context.Context, _ string, from, to, _ int
 			Result: streams,
 		},
 	}
+
 	// reset expected streams on read
-	c.Response = []historian.Stream{}
+	c.rangeQueryRes = []historian.Stream{}
 	return res, nil
 }
 

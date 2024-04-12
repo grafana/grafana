@@ -146,7 +146,24 @@ export const MetricStatEditor = ({
           <EditorField
             label="Match exact"
             optional={true}
-            tooltip="Only show metrics that exactly match all defined dimension names."
+            tooltip={
+              <>
+                {
+                  'Only show metrics that contain exactly the dimensions defined in the query and match the specified values. If this is enabled, all dimensions of the metric being queried must be specified so that the '
+                }
+                <a
+                  href="https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/search-expression-syntax.html"
+                  target="_blank"
+                  rel="noreferrer"
+                >
+                  metric schema
+                </a>
+                {
+                  ' matches exactly. If this is disabled, metrics that match the schema and have additional dimensions will also be returned.'
+                }
+              </>
+            }
+            tooltipInteractive
           >
             <EditorSwitch
               id={`${refId}-cloudwatch-match-exact`}

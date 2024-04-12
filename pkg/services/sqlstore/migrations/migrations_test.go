@@ -3,13 +3,13 @@ package migrations
 import (
 	"errors"
 	"fmt"
-	"os"
 	"strings"
 	"sync"
 	"sync/atomic"
 	"testing"
 
 	"github.com/go-sql-driver/mysql"
+	"github.com/golang-migrate/migrate/v4/database"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"gopkg.in/ini.v1"
@@ -21,12 +21,22 @@ import (
 )
 
 func TestMigrations(t *testing.T) {
-	testDB := sqlutil.SQLite3TestDB()
+	testDB, err := sqlutil.GetTestDB(SQLite)
+	require.NoError(t, err)
+
+	t.Cleanup(testDB.Cleanup)
+
 	const query = `select count(*) as count from migration_log`
 	result := struct{ Count int }{}
 
 	x, err := xorm.NewEngine(testDB.DriverName, testDB.ConnStr)
 	require.NoError(t, err)
+
+	t.Cleanup(func() {
+		if err := x.Close(); err != nil {
+			fmt.Printf("failed to close xorm engine: %v", err)
+		}
+	})
 
 	err = NewDialect(x.DriverName()).CleanDB(x)
 	require.NoError(t, err)
@@ -60,16 +70,29 @@ func TestMigrations(t *testing.T) {
 	checkStepsAndDatabaseMatch(t, mg, expectedMigrations)
 }
 
-func TestMigrationLock(t *testing.T) {
-	dbType := getDBType()
+func TestIntegrationMigrationLock(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test")
+	}
+
+	dbType := sqlutil.GetTestDBType()
 	if dbType == SQLite {
 		t.Skip()
 	}
 
-	testDB := getTestDB(t, dbType)
+	testDB, err := sqlutil.GetTestDB(dbType)
+	require.NoError(t, err)
+
+	t.Cleanup(testDB.Cleanup)
 
 	x, err := xorm.NewEngine(testDB.DriverName, testDB.ConnStr)
 	require.NoError(t, err)
+
+	t.Cleanup(func() {
+		if err := x.Close(); err != nil {
+			fmt.Printf("failed to close xorm engine: %v", err)
+		}
+	})
 
 	dialect := NewDialect(x.DriverName())
 
@@ -78,9 +101,12 @@ func TestMigrationLock(t *testing.T) {
 		sess.Close()
 	})
 
+	key, err := database.GenerateAdvisoryLockId("test")
+	require.NoError(t, err)
+
 	cfg := LockCfg{
 		Session: sess,
-		Key:     "test",
+		Key:     key,
 	}
 
 	t.Run("obtaining lock should succeed", func(t *testing.T) {
@@ -125,7 +151,7 @@ func TestMigrationLock(t *testing.T) {
 		err = dialect.Lock(cfg)
 		require.NoError(t, err)
 
-		err = d2.Lock(LockCfg{Session: sess2})
+		err = d2.Lock(LockCfg{Session: sess2, Key: key})
 		require.Error(t, err)
 		assert.ErrorIs(t, err, ErrLockDB)
 
@@ -157,16 +183,27 @@ func TestMigrationLock(t *testing.T) {
 }
 
 func TestMigratorLocking(t *testing.T) {
-	dbType := getDBType()
-	testDB := getTestDB(t, dbType)
+	dbType := sqlutil.GetTestDBType()
+
 	// skip for SQLite for now since it occasionally fails for not clear reason
 	// anyway starting migrations concurretly for the same migrator is impossible use case
 	if dbType == SQLite {
 		t.Skip()
 	}
 
+	testDB, err := sqlutil.GetTestDB(dbType)
+	require.NoError(t, err)
+
+	t.Cleanup(testDB.Cleanup)
+
 	x, err := xorm.NewEngine(testDB.DriverName, testDB.ConnStr)
 	require.NoError(t, err)
+
+	t.Cleanup(func() {
+		if err := x.Close(); err != nil {
+			fmt.Printf("failed to close xorm engine: %v", err)
+		}
+	})
 
 	err = NewDialect(x.DriverName()).CleanDB(x)
 	require.NoError(t, err)
@@ -194,16 +231,26 @@ func TestMigratorLocking(t *testing.T) {
 }
 
 func TestDatabaseLocking(t *testing.T) {
-	dbType := getDBType()
+	dbType := sqlutil.GetTestDBType()
+
 	// skip for SQLite since there is no database locking (only migrator locking)
 	if dbType == SQLite {
 		t.Skip()
 	}
 
-	testDB := getTestDB(t, dbType)
+	testDB, err := sqlutil.GetTestDB(dbType)
+	require.NoError(t, err)
+
+	t.Cleanup(testDB.Cleanup)
 
 	x, err := xorm.NewEngine(testDB.DriverName, testDB.ConnStr)
 	require.NoError(t, err)
+
+	t.Cleanup(func() {
+		if err := x.Close(); err != nil {
+			fmt.Printf("failed to close xorm engine: %v", err)
+		}
+	})
 
 	err = NewDialect(x.DriverName()).CleanDB(x)
 	require.NoError(t, err)
@@ -278,37 +325,6 @@ func checkStepsAndDatabaseMatch(t *testing.T, mg *Migrator, expected []string) {
 		msg += fmt.Sprintf("executed but should not [%v]", strings.Join(notIntended, ", "))
 	}
 	require.Failf(t, "the number of migrations does not match log in database", msg)
-}
-
-func getDBType() string {
-	dbType := SQLite
-
-	// environment variable present for test db?
-	if db, present := os.LookupEnv("GRAFANA_TEST_DB"); present {
-		dbType = db
-	}
-	return dbType
-}
-
-func getTestDB(t *testing.T, dbType string) sqlutil.TestDB {
-	switch dbType {
-	case "mysql":
-		return sqlutil.MySQLTestDB()
-	case "postgres":
-		return sqlutil.PostgresTestDB()
-	default:
-		f, err := os.CreateTemp(".", "grafana-test-db-")
-		require.NoError(t, err)
-		t.Cleanup(func() {
-			err := os.Remove(f.Name())
-			require.NoError(t, err)
-		})
-
-		return sqlutil.TestDB{
-			DriverName: "sqlite3",
-			ConnStr:    f.Name(),
-		}
-	}
 }
 
 func replaceDBName(t *testing.T, connStr, dbType string) string {

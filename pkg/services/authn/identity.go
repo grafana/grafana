@@ -16,22 +16,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/user"
 )
 
-// NamespacedID builds a namespaced ID from a namespace and an ID.
-func NamespacedID(namespace string, id int64) string {
-	return fmt.Sprintf("%s:%d", namespace, id)
-}
-
-const (
-	NamespaceUser           = identity.NamespaceUser
-	NamespaceAPIKey         = identity.NamespaceAPIKey
-	NamespaceServiceAccount = identity.NamespaceServiceAccount
-	NamespaceAnonymous      = identity.NamespaceAnonymous
-	NamespaceRenderService  = identity.NamespaceRenderService
-)
-
-const (
-	AnonymousNamespaceID = NamespaceAnonymous + ":0"
-)
+const GlobalOrgID = int64(0)
 
 var _ identity.Requester = (*Identity)(nil)
 
@@ -53,6 +38,8 @@ type Identity struct {
 	Name string
 	// Email is the email address of the entity. Should be unique.
 	Email string
+	// EmailVerified is true if entity has verified their email with grafana.
+	EmailVerified bool
 	// IsGrafanaAdmin is true if the entity is a Grafana admin.
 	IsGrafanaAdmin *bool
 	// AuthenticatedBy is the name of the authentication client that was used to authenticate the current Identity.
@@ -86,6 +73,22 @@ type Identity struct {
 	IDToken string
 }
 
+func (i *Identity) GetID() string {
+	return i.ID
+}
+
+func (i *Identity) GetNamespacedID() (namespace string, identifier string) {
+	split := strings.Split(i.GetID(), ":")
+	if len(split) != 2 {
+		return "", ""
+	}
+	return split[0], split[1]
+}
+
+func (i *Identity) GetAuthID() string {
+	return i.AuthID
+}
+
 func (i *Identity) GetAuthenticatedBy() string {
 	return i.AuthenticatedBy
 }
@@ -109,6 +112,10 @@ func (i *Identity) GetEmail() string {
 	return i.Email
 }
 
+func (i *Identity) IsEmailVerified() bool {
+	return i.EmailVerified
+}
+
 func (i *Identity) GetIDToken() string {
 	return i.IDToken
 }
@@ -121,17 +128,6 @@ func (i *Identity) GetLogin() string {
 	return i.Login
 }
 
-func (i *Identity) GetNamespacedID() (namespace string, identifier string) {
-	split := strings.Split(i.ID, ":")
-
-	if len(split) != 2 {
-		return "", ""
-	}
-
-	return split[0], split[1]
-}
-
-// GetOrgID implements identity.Requester.
 func (i *Identity) GetOrgID() int64 {
 	return i.OrgID
 }
@@ -164,6 +160,19 @@ func (i *Identity) GetPermissions() map[string][]string {
 	return i.Permissions[i.GetOrgID()]
 }
 
+// GetGlobalPermissions returns the permissions of the active entity that are available across all organizations
+func (i *Identity) GetGlobalPermissions() map[string][]string {
+	if i.Permissions == nil {
+		return make(map[string][]string)
+	}
+
+	if i.Permissions[GlobalOrgID] == nil {
+		return make(map[string][]string)
+	}
+
+	return i.Permissions[GlobalOrgID]
+}
+
 func (i *Identity) GetTeams() []int64 {
 	return i.Teams
 }
@@ -181,6 +190,15 @@ func (i *Identity) HasUniqueId() bool {
 	return namespace == NamespaceUser || namespace == NamespaceServiceAccount || namespace == NamespaceAPIKey
 }
 
+func (i *Identity) IsAuthenticatedBy(providers ...string) bool {
+	for _, p := range providers {
+		if i.AuthenticatedBy == p {
+			return true
+		}
+	}
+	return false
+}
+
 func (i *Identity) IsNil() bool {
 	return i == nil
 }
@@ -196,6 +214,7 @@ func (i *Identity) SignedInUser() *user.SignedInUser {
 		Login:           i.Login,
 		Name:            i.Name,
 		Email:           i.Email,
+		AuthID:          i.AuthID,
 		AuthenticatedBy: i.AuthenticatedBy,
 		IsGrafanaAdmin:  i.GetIsGrafanaAdmin(),
 		IsAnonymous:     namespace == NamespaceAnonymous,
@@ -205,6 +224,7 @@ func (i *Identity) SignedInUser() *user.SignedInUser {
 		Teams:           i.Teams,
 		Permissions:     i.Permissions,
 		IDToken:         i.IDToken,
+		NamespacedID:    i.ID,
 	}
 
 	if namespace == NamespaceAPIKey {

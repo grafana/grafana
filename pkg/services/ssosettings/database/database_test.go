@@ -9,21 +9,25 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/infra/db"
-	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/ssosettings"
 	"github.com/grafana/grafana/pkg/services/ssosettings/models"
+	"github.com/grafana/grafana/pkg/tests/testsuite"
 )
 
 const (
 	withinDuration = 5 * time.Minute
 )
 
+func TestMain(m *testing.M) {
+	testsuite.Run(m)
+}
+
 func TestIntegrationGetSSOSettings(t *testing.T) {
 	if testing.Short() {
 		t.Skip("skipping integration test")
 	}
 
-	var sqlStore *sqlstore.SQLStore
+	var sqlStore db.DB
 	var ssoSettingsStore *SSOSettingsStore
 
 	setup := func() {
@@ -86,7 +90,7 @@ func TestIntegrationUpsertSSOSettings(t *testing.T) {
 		t.Skip("skipping integration test")
 	}
 
-	var sqlStore *sqlstore.SQLStore
+	var sqlStore db.DB
 	var ssoSettingsStore *SSOSettingsStore
 
 	setup := func() {
@@ -105,7 +109,7 @@ func TestIntegrationUpsertSSOSettings(t *testing.T) {
 			},
 		}
 
-		err := ssoSettingsStore.Upsert(context.Background(), settings)
+		err := ssoSettingsStore.Upsert(context.Background(), &settings)
 		require.NoError(t, err)
 
 		actual, err := getSSOSettingsByProvider(sqlStore, settings.Provider, false)
@@ -143,7 +147,7 @@ func TestIntegrationUpsertSSOSettings(t *testing.T) {
 				"client_secret": "this-is-a-new-secret",
 			},
 		}
-		err = ssoSettingsStore.Upsert(context.Background(), newSettings)
+		err = ssoSettingsStore.Upsert(context.Background(), &newSettings)
 		require.NoError(t, err)
 
 		actual, err := getSSOSettingsByProvider(sqlStore, provider, false)
@@ -181,7 +185,7 @@ func TestIntegrationUpsertSSOSettings(t *testing.T) {
 			},
 		}
 
-		err = ssoSettingsStore.Upsert(context.Background(), newSettings)
+		err = ssoSettingsStore.Upsert(context.Background(), &newSettings)
 		require.NoError(t, err)
 
 		actual, err := getSSOSettingsByProvider(sqlStore, provider, false)
@@ -217,7 +221,7 @@ func TestIntegrationUpsertSSOSettings(t *testing.T) {
 				"client_secret": "this-is-my-new-secret",
 			},
 		}
-		err = ssoSettingsStore.Upsert(context.Background(), newSettings)
+		err = ssoSettingsStore.Upsert(context.Background(), &newSettings)
 		require.NoError(t, err)
 
 		actual, err := getSSOSettingsByProvider(sqlStore, providers[0], false)
@@ -254,7 +258,7 @@ func TestIntegrationUpsertSSOSettings(t *testing.T) {
 			},
 		}
 
-		err = ssoSettingsStore.Upsert(context.Background(), settings)
+		err = ssoSettingsStore.Upsert(context.Background(), &settings)
 		require.Error(t, err)
 		require.ErrorIs(t, err, ssosettings.ErrNotFound)
 	})
@@ -265,7 +269,7 @@ func TestIntegrationListSSOSettings(t *testing.T) {
 		t.Skip("skipping integration test")
 	}
 
-	var sqlStore *sqlstore.SQLStore
+	var sqlStore db.DB
 	var ssoSettingsStore *SSOSettingsStore
 
 	setup := func() {
@@ -331,7 +335,7 @@ func TestIntegrationDeleteSSOSettings(t *testing.T) {
 		t.Skip("skipping integration test")
 	}
 
-	var sqlStore *sqlstore.SQLStore
+	var sqlStore db.DB
 	var ssoSettingsStore *SSOSettingsStore
 
 	setup := func() {
@@ -453,7 +457,7 @@ func TestIntegrationDeleteSSOSettings(t *testing.T) {
 	})
 }
 
-func populateSSOSettings(sqlStore *sqlstore.SQLStore, template models.SSOSettings, providers ...string) error {
+func populateSSOSettings(sqlStore db.DB, template models.SSOSettings, providers ...string) error {
 	return sqlStore.WithDbSession(context.Background(), func(sess *db.Session) error {
 		for _, provider := range providers {
 			settings := models.SSOSettings{
@@ -473,7 +477,7 @@ func populateSSOSettings(sqlStore *sqlstore.SQLStore, template models.SSOSetting
 	})
 }
 
-func getSSOSettingsCountByDeleted(sqlStore *sqlstore.SQLStore) (deleted, notDeleted int64, err error) {
+func getSSOSettingsCountByDeleted(sqlStore db.DB) (deleted, notDeleted int64, err error) {
 	err = sqlStore.WithDbSession(context.Background(), func(sess *db.Session) error {
 		deleted, err = sess.Table("sso_setting").Where("is_deleted = ?", sqlStore.GetDialect().BooleanStr(true)).Count()
 		if err != nil {
@@ -486,7 +490,7 @@ func getSSOSettingsCountByDeleted(sqlStore *sqlstore.SQLStore) (deleted, notDele
 	return
 }
 
-func getSSOSettingsByProvider(sqlStore *sqlstore.SQLStore, provider string, deleted bool) (*models.SSOSettings, error) {
+func getSSOSettingsByProvider(sqlStore db.DB, provider string, deleted bool) (*models.SSOSettings, error) {
 	var model models.SSOSettings
 	var err error
 

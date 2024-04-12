@@ -10,16 +10,25 @@ import {
   TimeRange,
   toUtc,
   IntervalValues,
+  AppEvents,
 } from '@grafana/data';
 import { locationService } from '@grafana/runtime';
 import { sceneGraph } from '@grafana/scenes';
+import { t } from '@grafana/ui/src/utils/i18n';
 import appEvents from 'app/core/app_events';
 import { config } from 'app/core/config';
 import { AutoRefreshInterval, contextSrv, ContextSrv } from 'app/core/services/context_srv';
-import { getShiftedTimeRange, getZoomedTimeRange } from 'app/core/utils/timePicker';
+import { getCopiedTimeRange, getShiftedTimeRange, getZoomedTimeRange } from 'app/core/utils/timePicker';
 import { getTimeRange } from 'app/features/dashboard/utils/timeRange';
 
-import { AbsoluteTimeEvent, ShiftTimeEvent, ShiftTimeEventDirection, ZoomOutEvent } from '../../../types/events';
+import {
+  AbsoluteTimeEvent,
+  CopyTimeEvent,
+  PasteTimeEvent,
+  ShiftTimeEvent,
+  ShiftTimeEventDirection,
+  ZoomOutEvent,
+} from '../../../types/events';
 import { TimeModel } from '../state/TimeModel';
 import { getRefreshFromUrl } from '../utils/getRefreshFromUrl';
 
@@ -49,6 +58,14 @@ export class TimeSrv {
 
     appEvents.subscribe(AbsoluteTimeEvent, (e) => {
       this.makeAbsoluteTime(e.payload.updateUrl);
+    });
+
+    appEvents.subscribe(CopyTimeEvent, () => {
+      this.copyTimeRangeToClipboard();
+    });
+
+    appEvents.subscribe(PasteTimeEvent, (e) => {
+      this.pasteTimeRangeFromClipboard(e.payload.updateUrl);
     });
 
     document.addEventListener('visibilitychange', () => {
@@ -153,7 +170,7 @@ export class TimeSrv {
     if (params.get('to') && params.get('to')!.indexOf('now') === -1) {
       this.refresh = false;
       if (this.timeModel) {
-        this.timeModel.refresh = false;
+        this.timeModel.refresh = undefined;
       }
     }
 
@@ -197,7 +214,7 @@ export class TimeSrv {
     return this.timeAtLoad && (this.timeAtLoad.from !== this.time.from || this.timeAtLoad.to !== this.time.to);
   }
 
-  setAutoRefresh(interval: string | false) {
+  setAutoRefresh(interval: string) {
     if (this.timeModel) {
       this.timeModel.refresh = interval;
     }
@@ -278,7 +295,7 @@ export class TimeSrv {
     // disable refresh if zoom in or zoom out
     if (isDateTime(time.to)) {
       this.oldRefresh = this.timeModel?.refresh || this.oldRefresh;
-      this.setAutoRefresh(false);
+      this.setAutoRefresh('');
     } else if (this.oldRefresh && this.oldRefresh !== this.timeModel?.refresh) {
       this.setAutoRefresh(this.oldRefresh);
       this.oldRefresh = undefined;
@@ -354,6 +371,30 @@ export class TimeSrv {
 
   makeAbsoluteTime(updateUrl: boolean) {
     const { from, to } = this.timeRange();
+    this.setTime({ from, to }, updateUrl);
+  }
+
+  copyTimeRangeToClipboard() {
+    const { raw } = this.timeRange();
+    navigator.clipboard.writeText(JSON.stringify({ from: raw.from, to: raw.to }));
+    appEvents.emit(AppEvents.alertSuccess, [
+      t('time-picker.copy-paste.copy-success-message', 'Time range copied to clipboard'),
+    ]);
+  }
+
+  async pasteTimeRangeFromClipboard(updateUrl = true) {
+    const { range, isError } = await getCopiedTimeRange();
+
+    if (isError === true) {
+      appEvents.emit(AppEvents.alertError, [
+        t('time-picker.copy-paste.default-error-title', 'Invalid time range'),
+        t('time-picker.copy-paste.default-error-message', '{{error}} is not a valid time range', { error: range }),
+      ]);
+      return;
+    }
+
+    const { from, to } = range;
+
     this.setTime({ from, to }, updateUrl);
   }
 

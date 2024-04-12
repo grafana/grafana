@@ -10,6 +10,7 @@ import { isPromAlertingRuleState, PromRuleType, RulerGrafanaRuleDTO } from 'app/
 
 import { applySearchFilterToQuery, getSearchFilterFromQuery, RulesFilter } from '../search/rulesSearchParser';
 import { labelsMatchMatchers, matcherToMatcherField, parseMatchers } from '../utils/alertmanager';
+import { Annotation } from '../utils/constants';
 import { isCloudRulesSource } from '../utils/datasource';
 import { parseMatcher } from '../utils/matchers';
 import { getRuleHealth, isAlertingRule, isGrafanaRulerRule, isPromRuleType } from '../utils/rules';
@@ -194,7 +195,7 @@ const reduceGroups = (filterState: RulesFilter) => {
       const matchesFilterFor = chain(filterState)
         // ⚠️ keep this list of properties we filter for here up-to-date ⚠️
         // We are ignoring predicates we've matched before we get here (like "freeFormWords")
-        .pick(['ruleType', 'dataSourceNames', 'ruleHealth', 'labels', 'ruleState'])
+        .pick(['ruleType', 'dataSourceNames', 'ruleHealth', 'labels', 'ruleState', 'dashboardUid'])
         .omitBy(isEmpty)
         .mapValues(() => false)
         .value();
@@ -251,6 +252,13 @@ const reduceGroups = (filterState: RulesFilter) => {
         if (ruleStateMatches) {
           matchesFilterFor.ruleState = true;
         }
+      }
+
+      if (
+        'dashboardUid' in matchesFilterFor &&
+        rule.annotations[Annotation.dashboardUID] === filterState.dashboardUid
+      ) {
+        matchesFilterFor.dashboardUid = true;
       }
 
       return Object.values(matchesFilterFor).every((match) => match === true);

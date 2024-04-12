@@ -9,19 +9,18 @@ import (
 	"time"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
+	"github.com/grafana/grafana-plugin-sdk-go/backend/log"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/huandu/xstrings"
 
-	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/tsdb/cloud-monitoring/kinds/dataquery"
 )
 
 type (
 	cloudMonitoringQueryExecutor interface {
-		run(ctx context.Context, req *backend.QueryDataRequest, s *Service, dsInfo datasourceInfo, tracer tracing.Tracer) (
+		run(ctx context.Context, req *backend.QueryDataRequest, s *Service, dsInfo datasourceInfo, logger log.Logger) (
 			*backend.DataResponse, any, string, error)
-		parseResponse(dr *backend.DataResponse, data any, executedQueryString string) error
+		parseResponse(dr *backend.DataResponse, data any, executedQueryString string, logger log.Logger) error
 		buildDeepLink() string
 		getRefID() string
 		getAliasBy() string
@@ -41,7 +40,6 @@ type (
 	cloudMonitoringTimeSeriesList struct {
 		refID      string
 		aliasBy    string
-		logger     log.Logger
 		parameters *dataquery.TimeSeriesList
 		// Processed properties
 		params url.Values
@@ -50,7 +48,6 @@ type (
 	cloudMonitoringSLO struct {
 		refID      string
 		aliasBy    string
-		logger     log.Logger
 		parameters *dataquery.SLOQuery
 		// Processed properties
 		params url.Values
@@ -59,8 +56,8 @@ type (
 	// cloudMonitoringProm is used to build a promQL queries
 	cloudMonitoringProm struct {
 		refID      string
-		aliasBy    string
 		logger     log.Logger
+		aliasBy    string
 		parameters *dataquery.PromQLQuery
 		timeRange  backend.TimeRange
 		IntervalMS int64
@@ -69,8 +66,8 @@ type (
 	// cloudMonitoringTimeSeriesQuery is used to build MQL queries
 	cloudMonitoringTimeSeriesQuery struct {
 		refID      string
-		aliasBy    string
 		logger     log.Logger
+		aliasBy    string
 		parameters *dataquery.TimeSeriesQuery
 		// Processed properties
 		timeRange  backend.TimeRange
@@ -99,14 +96,6 @@ type (
 		TimeSeriesData       []timeSeriesData     `json:"timeSeriesData"`
 		Unit                 string               `json:"unit"`
 		NextPageToken        string               `json:"nextPageToken"`
-	}
-
-	promResponse struct {
-		Status string `json:"status"`
-		Data   struct {
-			Result     any    `json:"result"`
-			ResultType string `json:"resultType"`
-		} `json:"data"`
 	}
 )
 

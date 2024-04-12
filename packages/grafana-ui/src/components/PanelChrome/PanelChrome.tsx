@@ -25,7 +25,7 @@ export type PanelChromeProps = (AutoSize | FixedDimensions) & (Collapsible | Hov
 
 interface BaseProps {
   padding?: PanelPadding;
-  title?: string;
+  title?: string | React.ReactElement;
   description?: string | (() => string);
   titleItems?: ReactNode;
   menu?: ReactElement | (() => ReactElement);
@@ -161,13 +161,13 @@ export function PanelChrome({
     actions = leftItems;
   }
 
-  const testid = title ? selectors.components.Panels.Panel.title(title) : 'Panel';
+  const testid = typeof title === 'string' ? selectors.components.Panels.Panel.title(title) : 'Panel';
 
   const headerContent = (
     <>
       {/* Non collapsible title */}
       {!collapsible && title && (
-        <h6 title={title} className={styles.title}>
+        <h6 title={typeof title === 'string' ? title : undefined} className={styles.title}>
           {title}
         </h6>
       )}
@@ -246,7 +246,7 @@ export function PanelChrome({
         <>
           <HoverWidget
             menu={menu}
-            title={title}
+            title={typeof title === 'string' ? title : undefined}
             offset={hoverHeaderOffset}
             dragClass={dragClass}
             onOpenMenu={onOpenMenu}
@@ -275,7 +275,7 @@ export function PanelChrome({
           {menu && (
             <PanelMenu
               menu={menu}
-              title={title}
+              title={typeof title === 'string' ? title : undefined}
               placement="bottom-end"
               menuButtonClass={cx(styles.menuItem, dragClassCancel, showOnHoverClass)}
               onOpenMenu={onOpenMenu}
@@ -357,15 +357,6 @@ const getStyles = (theme: GrafanaTheme2) => {
       height: '100%',
       display: 'flex',
       flexDirection: 'column',
-
-      '> *': {
-        zIndex: 0,
-      },
-
-      // matches .react-grid-item styles in _dashboard_grid.scss to ensure any contained tooltips occlude adjacent panels
-      '&:hover, &:active, &:focus': {
-        zIndex: theme.zIndex.activePanel,
-      },
 
       '.show-on-hover': {
         opacity: '0',

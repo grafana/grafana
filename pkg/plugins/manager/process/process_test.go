@@ -4,7 +4,6 @@ import (
 	"context"
 	"sync"
 	"testing"
-	"time"
 
 	"github.com/stretchr/testify/require"
 
@@ -15,12 +14,16 @@ import (
 )
 
 func TestProcessManager_Start(t *testing.T) {
+	t.Parallel()
+
 	t.Run("Plugin state determines process start", func(t *testing.T) {
+		t.Parallel()
+
 		tcs := []struct {
 			name               string
 			managed            bool
 			backend            bool
-			signatureError     *plugins.SignatureError
+			Error              *plugins.Error
 			expectedStartCount int
 		}{
 			{
@@ -39,7 +42,7 @@ func TestProcessManager_Start(t *testing.T) {
 				name:    "Managed backend plugin with signature error will not be started",
 				managed: true,
 				backend: true,
-				signatureError: &plugins.SignatureError{
+				Error: &plugins.Error{
 					SignatureStatus: plugins.SignatureStatusUnsigned,
 				},
 				expectedStartCount: 0,
@@ -52,14 +55,20 @@ func TestProcessManager_Start(t *testing.T) {
 			},
 		}
 		for _, tc := range tcs {
+			// create a local copy of "tc" to allow concurrent access within tests to the different items of testCases,
+			// otherwise it would be like a moving pointer while tests run in parallel
+			tc := tc
+
 			t.Run(tc.name, func(t *testing.T) {
+				t.Parallel()
+
 				bp := fakes.NewFakeBackendPlugin(tc.managed)
 				p := createPlugin(t, bp, func(plugin *plugins.Plugin) {
 					plugin.Backend = tc.backend
-					plugin.SignatureError = tc.signatureError
+					plugin.Error = tc.Error
 				})
 
-				m := &Service{}
+				m := ProvideService()
 				err := m.Start(context.Background(), p)
 				require.NoError(t, err)
 				require.Equal(t, tc.expectedStartCount, bp.StartCount)
@@ -74,18 +83,15 @@ func TestProcessManager_Start(t *testing.T) {
 	})
 
 	t.Run("Won't stop the plugin if the context is cancelled", func(t *testing.T) {
+		t.Parallel()
+
 		bp := fakes.NewFakeBackendPlugin(true)
 		p := createPlugin(t, bp, func(plugin *plugins.Plugin) {
 			plugin.Backend = true
 		})
 
-		tickerDuration := keepPluginAliveTickerDuration
-		keepPluginAliveTickerDuration = 1 * time.Millisecond
-		defer func() {
-			keepPluginAliveTickerDuration = tickerDuration
-		}()
-
-		m := &Service{}
+		m := ProvideService()
+		m.keepPluginAliveTickerDuration = 1
 		ctx := context.Background()
 		ctx, cancel := context.WithCancel(ctx)
 		err := m.Start(ctx, p)
@@ -100,7 +106,11 @@ func TestProcessManager_Start(t *testing.T) {
 }
 
 func TestProcessManager_Stop(t *testing.T) {
+	t.Parallel()
+
 	t.Run("Can stop a running plugin", func(t *testing.T) {
+		t.Parallel()
+
 		pluginID := "test-datasource"
 
 		bp := fakes.NewFakeBackendPlugin(true)
@@ -109,7 +119,7 @@ func TestProcessManager_Stop(t *testing.T) {
 			plugin.Backend = true
 		})
 
-		m := &Service{}
+		m := ProvideService()
 		err := m.Stop(context.Background(), p)
 		require.NoError(t, err)
 
@@ -120,18 +130,21 @@ func TestProcessManager_Stop(t *testing.T) {
 }
 
 func TestProcessManager_ManagedBackendPluginLifecycle(t *testing.T) {
-	bp := fakes.NewFakeBackendPlugin(true)
-	p := createPlugin(t, bp, func(plugin *plugins.Plugin) {
-		plugin.Backend = true
-	})
-
-	m := &Service{}
-
-	err := m.Start(context.Background(), p)
-	require.NoError(t, err)
-	require.Equal(t, 1, bp.StartCount)
+	t.Parallel()
 
 	t.Run("When plugin process is killed, the process is restarted", func(t *testing.T) {
+		t.Parallel()
+		bp := fakes.NewFakeBackendPlugin(true)
+		p := createPlugin(t, bp, func(plugin *plugins.Plugin) {
+			plugin.Backend = true
+		})
+
+		m := ProvideService()
+
+		err := m.Start(context.Background(), p)
+		require.NoError(t, err)
+		require.Equal(t, 1, bp.StartCount)
+
 		var wgKill sync.WaitGroup
 		wgKill.Add(1)
 		go func() {

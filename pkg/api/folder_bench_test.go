@@ -17,6 +17,7 @@ import (
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/components/simplejson"
+	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/localcache"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
@@ -41,6 +42,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/star"
 	"github.com/grafana/grafana/pkg/services/star/startest"
 	"github.com/grafana/grafana/pkg/services/supportbundles/bundleregistry"
+	"github.com/grafana/grafana/pkg/services/supportbundles/supportbundlestest"
 	"github.com/grafana/grafana/pkg/services/tag/tagimpl"
 	"github.com/grafana/grafana/pkg/services/team"
 	"github.com/grafana/grafana/pkg/services/team/teamimpl"
@@ -65,7 +67,7 @@ const (
 )
 
 type benchScenario struct {
-	db *sqlstore.SQLStore
+	db db.DB
 	// signedInUser is the user that is signed in to the server
 	cfg          *setting.Cfg
 	signedInUser *user.SignedInUser
@@ -206,7 +208,8 @@ func setupDB(b testing.TB) benchScenario {
 	quotaService := quotatest.New(false, nil)
 	cfg := setting.NewCfg()
 
-	teamSvc := teamimpl.ProvideService(db, cfg)
+	teamSvc, err := teamimpl.ProvideService(db, cfg)
+	require.NoError(b, err)
 	orgService, err := orgimpl.ProvideService(db, cfg, quotaService)
 	require.NoError(b, err)
 
@@ -329,6 +332,7 @@ func setupDB(b testing.TB) benchScenario {
 				OrgID:     signedInUser.OrgID,
 				IsFolder:  false,
 				UID:       str,
+				FolderID:  f0.ID,
 				FolderUID: f0.UID,
 				Slug:      str,
 				Title:     str,
@@ -356,6 +360,7 @@ func setupDB(b testing.TB) benchScenario {
 					OrgID:     signedInUser.OrgID,
 					IsFolder:  false,
 					UID:       str,
+					FolderID:  f1.ID,
 					FolderUID: f1.UID,
 					Slug:      str,
 					Title:     str,
@@ -383,6 +388,7 @@ func setupDB(b testing.TB) benchScenario {
 						OrgID:     signedInUser.OrgID,
 						IsFolder:  false,
 						UID:       str,
+						FolderID:  f1.ID,
 						FolderUID: f2.UID,
 						Slug:      str,
 						Title:     str,
@@ -443,23 +449,24 @@ func setupServer(b testing.TB, sc benchScenario, features featuremgmt.FeatureTog
 
 	quotaSrv := quotatest.New(false, nil)
 
-	dashStore, err := database.ProvideDashboardStore(sc.db, sc.db.Cfg, features, tagimpl.ProvideService(sc.db), quotaSrv)
+	dashStore, err := database.ProvideDashboardStore(sc.db, sc.cfg, features, tagimpl.ProvideService(sc.db), quotaSrv)
 	require.NoError(b, err)
 
 	folderStore := folderimpl.ProvideDashboardFolderStore(sc.db)
 
 	ac := acimpl.ProvideAccessControl(sc.cfg)
-	folderServiceWithFlagOn := folderimpl.ProvideService(ac, bus.ProvideBus(tracing.InitializeTracerForTest()), sc.cfg, dashStore, folderStore, sc.db, features, nil)
+	folderServiceWithFlagOn := folderimpl.ProvideService(ac, bus.ProvideBus(tracing.InitializeTracerForTest()), sc.cfg, dashStore, folderStore, sc.db, features, supportbundlestest.NewFakeBundleService(), nil)
 
+	cfg := setting.NewCfg()
 	folderPermissions, err := ossaccesscontrol.ProvideFolderPermissions(
-		features, routing.NewRouteRegister(), sc.db, ac, license, &dashboards.FakeDashboardStore{}, folderServiceWithFlagOn, acSvc, sc.teamSvc, sc.userSvc)
+		cfg, features, routing.NewRouteRegister(), sc.db, ac, license, &dashboards.FakeDashboardStore{}, folderServiceWithFlagOn, acSvc, sc.teamSvc, sc.userSvc)
 	require.NoError(b, err)
 	dashboardPermissions, err := ossaccesscontrol.ProvideDashboardPermissions(
-		features, routing.NewRouteRegister(), sc.db, ac, license, &dashboards.FakeDashboardStore{}, folderServiceWithFlagOn, acSvc, sc.teamSvc, sc.userSvc)
+		cfg, features, routing.NewRouteRegister(), sc.db, ac, license, &dashboards.FakeDashboardStore{}, folderServiceWithFlagOn, acSvc, sc.teamSvc, sc.userSvc)
 	require.NoError(b, err)
 
 	dashboardSvc, err := dashboardservice.ProvideDashboardServiceImpl(
-		sc.cfg, dashStore, folderStore, nil,
+		sc.cfg, dashStore, folderStore,
 		features, folderPermissions, dashboardPermissions, ac,
 		folderServiceWithFlagOn, nil,
 	)
@@ -489,7 +496,7 @@ func setupServer(b testing.TB, sc benchScenario, features featuremgmt.FeatureTog
 }
 
 type f struct {
-	// ID          int64   `xorm:"pk autoincr 'id'"`
+	ID          int64   `xorm:"pk autoincr 'id'"`
 	OrgID       int64   `xorm:"org_id"`
 	UID         string  `xorm:"uid"`
 	ParentUID   *string `xorm:"parent_uid"`
@@ -506,8 +513,8 @@ func (f *f) TableName() string {
 
 // SQL bean helper to save tags
 type dashboardTag struct {
-	ID          int64
-	DashboardID int64
+	ID          int64 `xorm:"pk autoincr 'id'"`
+	DashboardID int64 `xorm:"dashboard_id"`
 	Term        string
 }
 
@@ -515,10 +522,10 @@ func addFolder(orgID int64, id int64, uid string, parentUID *string) (*f, *dashb
 	now := time.Now()
 	title := uid
 	f := &f{
-		OrgID: orgID,
-		UID:   uid,
-		Title: title,
-		// ID:        id,
+		OrgID:     orgID,
+		UID:       uid,
+		Title:     title,
+		ID:        id,
 		Created:   now,
 		Updated:   now,
 		ParentUID: parentUID,

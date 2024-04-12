@@ -88,7 +88,7 @@ func (a *AnonDeviceService) tagDeviceUI(ctx context.Context, httpReq *http.Reque
 
 	a.localCache.SetDefault(key, struct{}{})
 
-	if setting.Env == setting.Dev {
+	if a.cfg.Env == setting.Dev {
 		a.log.Debug("Tagging device for UI", "deviceID", device.DeviceID, "device", device, "key", key)
 	}
 
@@ -112,7 +112,7 @@ func (a *AnonDeviceService) untagDevice(ctx context.Context,
 
 	errD := a.anonStore.DeleteDevice(ctx, deviceID)
 	if errD != nil {
-		a.log.Debug("Failed to untag device", "error", err)
+		a.log.Debug("Failed to untag device", "error", errD)
 	}
 }
 
@@ -154,6 +154,7 @@ func (a *AnonDeviceService) TagDevice(ctx context.Context, httpReq *http.Request
 // ListDevices returns all devices that have been updated between the given times.
 func (a *AnonDeviceService) ListDevices(ctx context.Context, from *time.Time, to *time.Time) ([]*anonstore.Device, error) {
 	if !a.cfg.AnonymousEnabled {
+		a.log.Debug("Anonymous access is disabled, returning empty result")
 		return []*anonstore.Device{}, nil
 	}
 
@@ -163,10 +164,19 @@ func (a *AnonDeviceService) ListDevices(ctx context.Context, from *time.Time, to
 // CountDevices returns the number of devices that have been updated between the given times.
 func (a *AnonDeviceService) CountDevices(ctx context.Context, from time.Time, to time.Time) (int64, error) {
 	if !a.cfg.AnonymousEnabled {
+		a.log.Debug("Anonymous access is disabled, returning empty result")
 		return 0, nil
 	}
 
 	return a.anonStore.CountDevices(ctx, from, to)
+}
+
+func (a *AnonDeviceService) SearchDevices(ctx context.Context, query *anonstore.SearchDeviceQuery) (*anonstore.SearchDeviceQueryResult, error) {
+	if !a.cfg.AnonymousEnabled {
+		a.log.Debug("Anonymous access is disabled, returning empty result")
+		return nil, nil
+	}
+	return a.anonStore.SearchDevices(ctx, query)
 }
 
 func (a *AnonDeviceService) Run(ctx context.Context) error {

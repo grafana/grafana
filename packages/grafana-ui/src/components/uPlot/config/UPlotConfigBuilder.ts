@@ -1,19 +1,10 @@
 import { merge } from 'lodash';
 import uPlot, { Cursor, Band, Hooks, Select, AlignedData, Padding, Series } from 'uplot';
 
-import {
-  DataFrame,
-  DefaultTimeZone,
-  EventBus,
-  Field,
-  getTimeZoneInfo,
-  GrafanaTheme2,
-  TimeRange,
-  TimeZone,
-} from '@grafana/data';
-import { AxisPlacement } from '@grafana/schema';
+import { DataFrame, DefaultTimeZone, Field, getTimeZoneInfo, GrafanaTheme2, TimeRange, TimeZone } from '@grafana/data';
+import { AxisPlacement, VizOrientation } from '@grafana/schema';
 
-import { FacetedData, PlotConfig, PlotTooltipInterpolator } from '../types';
+import { FacetedData, PlotConfig } from '../types';
 import { DEFAULT_PLOT_CONFIG, getStackingBands, pluginLog, StackingGroup } from '../utils';
 
 import { AxisProps, UPlotAxisBuilder } from './UPlotAxisBuilder';
@@ -39,9 +30,11 @@ type PrepData = (frames: DataFrame[]) => AlignedData | FacetedData;
 type PreDataStacked = (frames: DataFrame[], stackingGroups: StackingGroup[]) => AlignedData | FacetedData;
 
 export class UPlotConfigBuilder {
+  readonly uid = Math.random().toString(36).slice(2);
+
   series: UPlotSeriesBuilder[] = [];
   private axes: Record<string, UPlotAxisBuilder> = {};
-  private scales: UPlotScaleBuilder[] = [];
+  readonly scales: UPlotScaleBuilder[] = [];
   private bands: Band[] = [];
   private stackingGroups: StackingGroup[] = [];
   private cursor: Cursor | undefined;
@@ -49,13 +42,10 @@ export class UPlotConfigBuilder {
   private hasLeftAxis = false;
   private hooks: Hooks.Arrays = {};
   private tz: string | undefined = undefined;
-  private sync = false;
   private mode: uPlot.Mode = 1;
   private frames: DataFrame[] | undefined = undefined;
   // to prevent more than one threshold per scale
   private thresholds: Record<string, UPlotThresholdOptions> = {};
-  // Custom handler for closest datapoint and series lookup
-  private tooltipInterpolator: PlotTooltipInterpolator | undefined = undefined;
   private padding?: Padding = undefined;
 
   private cachedConfig?: PlotConfig;
@@ -164,27 +154,11 @@ export class UPlotConfigBuilder {
     return this.stackingGroups;
   }
 
-  setTooltipInterpolator(interpolator: PlotTooltipInterpolator) {
-    this.tooltipInterpolator = interpolator;
-  }
-
-  getTooltipInterpolator() {
-    return this.tooltipInterpolator;
-  }
-
   setPrepData(prepData: PreDataStacked) {
     this.prepData = (frames) => {
       this.frames = frames;
       return prepData(frames, this.getStackingGroups());
     };
-  }
-
-  setSync() {
-    this.sync = true;
-  }
-
-  hasSync() {
-    return this.sync;
   }
 
   setPadding(padding: Padding) {
@@ -306,13 +280,12 @@ type UPlotConfigPrepOpts<T extends Record<string, unknown> = {}> = {
   theme: GrafanaTheme2;
   timeZones: TimeZone[];
   getTimeRange: () => TimeRange;
-  eventBus: EventBus;
   allFrames: DataFrame[];
   renderers?: Renderers;
   tweakScale?: (opts: ScaleProps, forField: Field) => ScaleProps;
   tweakAxis?: (opts: AxisProps, forField: Field) => AxisProps;
-  // Identifies the shared key for uPlot cursor sync
-  eventsScope?: string;
+  hoverProximity?: number;
+  orientation?: VizOrientation;
 } & T;
 
 /** @alpha */

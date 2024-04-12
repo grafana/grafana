@@ -68,8 +68,30 @@ func (f *FakeService) RedirectURL(ctx context.Context, client string, r *authn.R
 	return f.ExpectedRedirect, f.ExpectedErr
 }
 
-func (*FakeService) Logout(_ context.Context, _ identity.Requester, _ *usertoken.UserToken) (*authn.Redirect, error) {
+func (f *FakeService) Logout(_ context.Context, _ identity.Requester, _ *usertoken.UserToken) (*authn.Redirect, error) {
 	panic("unimplemented")
+}
+
+func (f *FakeService) ResolveIdentity(ctx context.Context, orgID int64, namespaceID string) (*authn.Identity, error) {
+	if f.ExpectedIdentities != nil {
+		if f.CurrentIndex >= len(f.ExpectedIdentities) {
+			panic("ExpectedIdentities is empty")
+		}
+		if f.CurrentIndex >= len(f.ExpectedErrs) {
+			panic("ExpectedErrs is empty")
+		}
+
+		identity := f.ExpectedIdentities[f.CurrentIndex]
+		err := f.ExpectedErrs[f.CurrentIndex]
+
+		f.CurrentIndex += 1
+
+		return identity, err
+	}
+
+	identity := f.ExpectedIdentity
+	identity.OrgID = orgID
+	return identity, f.ExpectedErr
 }
 
 func (f *FakeService) RegisterClient(c authn.Client) {}

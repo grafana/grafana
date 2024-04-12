@@ -395,10 +395,7 @@ export class MockDataSourceSrv implements DataSourceSrv {
    * Get settings and plugin metadata by name or uid
    */
   getInstanceSettings(nameOrUid: string | null | undefined): DataSourceInstanceSettings | undefined {
-    return (
-      DatasourceSrv.prototype.getInstanceSettings.call(this, nameOrUid) ||
-      ({ meta: { info: { logos: {} } } } as unknown as DataSourceInstanceSettings)
-    );
+    return DatasourceSrv.prototype.getInstanceSettings.call(this, nameOrUid);
   }
 
   async loadDatasource(name: string): Promise<DataSourceApi<any, any>> {
@@ -546,6 +543,7 @@ export const somePromRules = (dataSourceName = 'Prometheus'): RuleNamespace[] =>
     groups: [mockPromRuleGroup({ name: 'group3', rules: [mockPromAlertingRule({ name: 'alert3' })] })],
   },
 ];
+
 export const someRulerRules: RulerRulesConfigDTO = {
   namespace1: [
     mockRulerRuleGroup({ name: 'group1', rules: [mockRulerAlertingRule({ alert: 'alert1' })] }),
@@ -553,6 +551,23 @@ export const someRulerRules: RulerRulesConfigDTO = {
   ],
   namespace2: [mockRulerRuleGroup({ name: 'group3', rules: [mockRulerAlertingRule({ alert: 'alert3' })] })],
 };
+
+export const getPotentiallyPausedRulerRules: (isPaused: boolean) => RulerRulesConfigDTO = (isPaused) => ({
+  namespacePaused: [
+    mockRulerRuleGroup({
+      name: 'groupPaused',
+      rules: [mockGrafanaRulerRule({ title: 'paused alert', is_paused: isPaused })],
+    }),
+  ],
+});
+
+export const pausedPromRules = (dataSourceName = 'Prometheus'): RuleNamespace[] => [
+  {
+    dataSourceName,
+    name: 'namespacePaused',
+    groups: [mockPromRuleGroup({ name: 'groupPaused', rules: [mockPromAlertingRule({ name: 'paused alert' })] })],
+  },
+];
 
 export const mockCombinedRule = (partial?: Partial<CombinedRule>): CombinedRule => ({
   name: 'mockRule',
@@ -601,19 +616,6 @@ export const grantUserPermissions = (permissions: AccessControlAction[]) => {
     .spyOn(contextSrv, 'hasPermission')
     .mockImplementation((action) => permissions.includes(action as AccessControlAction));
 };
-
-export function mockDataSourcesStore(partial?: Partial<StoreState['dataSources']>) {
-  const defaultState = configureStore().getState();
-  const store = configureStore({
-    ...defaultState,
-    dataSources: {
-      ...defaultState.dataSources,
-      ...partial,
-    },
-  });
-
-  return store;
-}
 
 export function mockUnifiedAlertingStore(unifiedAlerting?: Partial<StoreState['unifiedAlerting']>) {
   const defaultState = configureStore().getState();

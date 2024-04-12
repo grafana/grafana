@@ -59,7 +59,9 @@ export class TableContainer extends PureComponent<Props> {
       name = data.refId || `${i}`;
     }
 
-    return name ? t('explore.table.title-with-name', 'Table - {{name}}', { name }) : t('explore.table.title', 'Table');
+    return name
+      ? t('explore.table.title-with-name', 'Table - {{name}}', { name, interpolation: { escapeValue: false } })
+      : t('explore.table.title', 'Table');
   }
 
   render() {

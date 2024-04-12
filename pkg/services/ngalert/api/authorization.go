@@ -20,50 +20,64 @@ func (api *API) authorize(method, path string) web.Handler {
 	// Alert Rules
 
 	// Grafana Paths
-	case http.MethodDelete + "/api/ruler/grafana/api/v1/rules/{Namespace}/{Groupname}":
-		eval = ac.EvalPermission(ac.ActionAlertingRuleDelete, dashboards.ScopeFoldersProvider.GetResourceScopeName(ac.Parameter(":Namespace")))
-	case http.MethodDelete + "/api/ruler/grafana/api/v1/rules/{Namespace}":
-		eval = ac.EvalPermission(ac.ActionAlertingRuleDelete, dashboards.ScopeFoldersProvider.GetResourceScopeName(ac.Parameter(":Namespace")))
+	case http.MethodDelete + "/api/ruler/grafana/api/v1/rules/{Namespace}/{Groupname}",
+		http.MethodDelete + "/api/ruler/grafana/api/v1/rules/{Namespace}":
+		eval = ac.EvalAll(
+			ac.EvalPermission(ac.ActionAlertingRuleDelete, dashboards.ScopeFoldersProvider.GetResourceScopeUID(ac.Parameter(":Namespace"))),
+			ac.EvalPermission(ac.ActionAlertingRuleRead, dashboards.ScopeFoldersProvider.GetResourceScopeUID(ac.Parameter(":Namespace"))),
+			ac.EvalPermission(dashboards.ActionFoldersRead, dashboards.ScopeFoldersProvider.GetResourceScopeUID(ac.Parameter(":Namespace"))),
+		)
 	case http.MethodGet + "/api/ruler/grafana/api/v1/rules/{Namespace}/{Groupname}":
-		eval = ac.EvalPermission(ac.ActionAlertingRuleRead, dashboards.ScopeFoldersProvider.GetResourceScopeName(ac.Parameter(":Namespace")))
+		eval = ac.EvalAll(
+			ac.EvalPermission(ac.ActionAlertingRuleRead, dashboards.ScopeFoldersProvider.GetResourceScopeUID(ac.Parameter(":Namespace"))),
+			ac.EvalPermission(dashboards.ActionFoldersRead, dashboards.ScopeFoldersProvider.GetResourceScopeUID(ac.Parameter(":Namespace"))),
+		)
 	case http.MethodGet + "/api/ruler/grafana/api/v1/rules/{Namespace}":
-		eval = ac.EvalPermission(ac.ActionAlertingRuleRead, dashboards.ScopeFoldersProvider.GetResourceScopeName(ac.Parameter(":Namespace")))
+		eval = ac.EvalAll(
+			ac.EvalPermission(ac.ActionAlertingRuleRead, dashboards.ScopeFoldersProvider.GetResourceScopeUID(ac.Parameter(":Namespace"))),
+			ac.EvalPermission(dashboards.ActionFoldersRead, dashboards.ScopeFoldersProvider.GetResourceScopeUID(ac.Parameter(":Namespace"))),
+		)
 	case http.MethodGet + "/api/ruler/grafana/api/v1/rules",
 		http.MethodGet + "/api/ruler/grafana/api/v1/export/rules":
 		eval = ac.EvalPermission(ac.ActionAlertingRuleRead)
 	case http.MethodPost + "/api/ruler/grafana/api/v1/rules/{Namespace}/export":
-		scope := dashboards.ScopeFoldersProvider.GetResourceScopeName(ac.Parameter(":Namespace"))
+		scope := dashboards.ScopeFoldersProvider.GetResourceScopeUID(ac.Parameter(":Namespace"))
 		// more granular permissions are enforced by the handler via "authorizeRuleChanges"
-		eval = ac.EvalPermission(ac.ActionAlertingRuleRead, scope)
-	case http.MethodPost + "/api/ruler/grafana/api/v1/rules/{Namespace}":
-		scope := dashboards.ScopeFoldersProvider.GetResourceScopeName(ac.Parameter(":Namespace"))
-		// more granular permissions are enforced by the handler via "authorizeRuleChanges"
-		eval = ac.EvalAny(
-			ac.EvalPermission(ac.ActionAlertingRuleUpdate, scope),
-			ac.EvalPermission(ac.ActionAlertingRuleCreate, scope),
-			ac.EvalPermission(ac.ActionAlertingRuleDelete, scope),
+		eval = ac.EvalAll(ac.EvalPermission(ac.ActionAlertingRuleRead, scope),
+			ac.EvalPermission(dashboards.ActionFoldersRead, scope),
 		)
-		// Grafana rule state history paths
+	case http.MethodPost + "/api/ruler/grafana/api/v1/rules/{Namespace}":
+		scope := dashboards.ScopeFoldersProvider.GetResourceScopeUID(ac.Parameter(":Namespace"))
+		// more granular permissions are enforced by the handler via "authorizeRuleChanges"
+		eval = ac.EvalAll(
+			ac.EvalPermission(ac.ActionAlertingRuleRead, scope),
+			ac.EvalPermission(dashboards.ActionFoldersRead, scope),
+			ac.EvalAny(
+				ac.EvalPermission(ac.ActionAlertingRuleUpdate, scope),
+				ac.EvalPermission(ac.ActionAlertingRuleCreate, scope),
+				ac.EvalPermission(ac.ActionAlertingRuleDelete, scope),
+			),
+		)
+
+	// Grafana rule state history paths
 	case http.MethodGet + "/api/v1/rules/history":
 		eval = ac.EvalPermission(ac.ActionAlertingRuleRead)
 
-	// Grafana unified alerting upgrade paths
-	case http.MethodGet + "/api/v1/upgrade/org":
-		return middleware.ReqOrgAdmin
-	case http.MethodPost + "/api/v1/upgrade/org":
-		return middleware.ReqOrgAdmin
-	case http.MethodDelete + "/api/v1/upgrade/org":
-		return middleware.ReqOrgAdmin
-	case http.MethodPost + "/api/v1/upgrade/dashboards":
-		return middleware.ReqOrgAdmin
-	case http.MethodPost + "/api/v1/upgrade/dashboards/{DashboardID}":
-		return middleware.ReqOrgAdmin
-	case http.MethodPost + "/api/v1/upgrade/dashboards/{DashboardID}/panels/{PanelID}":
-		return middleware.ReqOrgAdmin
-	case http.MethodPost + "/api/v1/upgrade/channels":
-		return middleware.ReqOrgAdmin
-	case http.MethodPost + "/api/v1/upgrade/channels/{ChannelID}":
-		return middleware.ReqOrgAdmin
+	// Grafana receivers paths
+	case http.MethodGet + "/api/v1/notifications/receivers":
+		// additional authorization is done at the service level
+		eval = ac.EvalAny(
+			ac.EvalPermission(ac.ActionAlertingNotificationsRead),
+			ac.EvalPermission(ac.ActionAlertingReceiversList),
+			ac.EvalPermission(ac.ActionAlertingReceiversRead),
+			ac.EvalPermission(ac.ActionAlertingReceiversReadSecrets),
+		)
+	case http.MethodGet + "/api/v1/notifications/receivers/{Name}":
+		// TODO: scope to :Name
+		eval = ac.EvalAny(
+			ac.EvalPermission(ac.ActionAlertingReceiversRead),
+			ac.EvalPermission(ac.ActionAlertingReceiversReadSecrets),
+		)
 
 	// Grafana, Prometheus-compatible Paths
 	case http.MethodGet + "/api/prometheus/grafana/api/v1/rules":
@@ -209,19 +223,102 @@ func (api *API) authorize(method, path string) web.Handler {
 			ac.EvalPermission(ac.ActionAlertingProvisioningReadSecrets), // organization scope
 		)
 
+	case http.MethodGet + "/api/v1/provisioning/alert-rules",
+		http.MethodGet + "/api/v1/provisioning/alert-rules/export":
+		eval = ac.EvalAny(
+			ac.EvalPermission(ac.ActionAlertingProvisioningRead),
+			ac.EvalPermission(ac.ActionAlertingProvisioningReadSecrets),
+			ac.EvalAll( // scopes are enforced in the handler
+				ac.EvalPermission(ac.ActionAlertingRuleRead),
+				ac.EvalPermission(dashboards.ActionFoldersRead),
+			),
+		)
+	case http.MethodGet + "/api/v1/provisioning/alert-rules/{UID}",
+		http.MethodGet + "/api/v1/provisioning/alert-rules/{UID}/export":
+		eval = ac.EvalAny(
+			ac.EvalPermission(ac.ActionAlertingProvisioningRead),
+			ac.EvalPermission(ac.ActionAlertingProvisioningReadSecrets),
+			ac.EvalAll(
+				ac.EvalPermission(ac.ActionAlertingRuleRead),
+				ac.EvalPermission(dashboards.ActionFoldersRead),
+			),
+		)
+
+	case http.MethodGet + "/api/v1/provisioning/folder/{FolderUID}/rule-groups/{Group}",
+		http.MethodGet + "/api/v1/provisioning/folder/{FolderUID}/rule-groups/{Group}/export":
+		scope := dashboards.ScopeFoldersProvider.GetResourceScopeUID(ac.Parameter(":FolderUID"))
+		eval = ac.EvalAny(
+			ac.EvalPermission(ac.ActionAlertingProvisioningRead),
+			ac.EvalPermission(ac.ActionAlertingProvisioningReadSecrets),
+			ac.EvalAll(
+				ac.EvalPermission(ac.ActionAlertingRuleRead, scope),
+				ac.EvalPermission(dashboards.ActionFoldersRead, scope),
+			),
+		)
+
 	case http.MethodGet + "/api/v1/provisioning/policies",
 		http.MethodGet + "/api/v1/provisioning/contact-points",
 		http.MethodGet + "/api/v1/provisioning/templates",
 		http.MethodGet + "/api/v1/provisioning/templates/{name}",
 		http.MethodGet + "/api/v1/provisioning/mute-timings",
-		http.MethodGet + "/api/v1/provisioning/mute-timings/{name}",
-		http.MethodGet + "/api/v1/provisioning/alert-rules",
-		http.MethodGet + "/api/v1/provisioning/alert-rules/{UID}",
-		http.MethodGet + "/api/v1/provisioning/alert-rules/export",
-		http.MethodGet + "/api/v1/provisioning/alert-rules/{UID}/export",
-		http.MethodGet + "/api/v1/provisioning/folder/{FolderUID}/rule-groups/{Group}",
-		http.MethodGet + "/api/v1/provisioning/folder/{FolderUID}/rule-groups/{Group}/export":
-		eval = ac.EvalAny(ac.EvalPermission(ac.ActionAlertingProvisioningRead), ac.EvalPermission(ac.ActionAlertingProvisioningReadSecrets)) // organization scope
+		http.MethodGet + "/api/v1/provisioning/mute-timings/{name}":
+		eval = ac.EvalAny(
+			ac.EvalPermission(ac.ActionAlertingProvisioningRead),
+			ac.EvalPermission(ac.ActionAlertingProvisioningReadSecrets),
+			ac.EvalPermission(ac.ActionAlertingNotificationsRead),
+		)
+
+	// Grafana-only Provisioning Write Paths
+	case http.MethodPost + "/api/v1/provisioning/alert-rules":
+		eval = ac.EvalAny(
+			ac.EvalPermission(ac.ActionAlertingProvisioningWrite),
+			ac.EvalAll(
+				ac.EvalPermission(ac.ActionAlertingRuleCreate), // more granular permissions are enforced by the handler via "authorizeRuleChanges"
+				ac.EvalPermission(ac.ActionAlertingProvisioningSetStatus),
+			),
+		)
+	case http.MethodPut + "/api/v1/provisioning/alert-rules/{UID}":
+		eval = ac.EvalAny(
+			ac.EvalPermission(ac.ActionAlertingProvisioningWrite),
+			ac.EvalAll(
+				ac.EvalPermission(ac.ActionAlertingRuleUpdate), // more granular permissions are enforced by the handler via "authorizeRuleChanges"
+				ac.EvalPermission(ac.ActionAlertingProvisioningSetStatus),
+			),
+		)
+	case http.MethodDelete + "/api/v1/provisioning/alert-rules/{UID}":
+		eval = ac.EvalAny(
+			ac.EvalPermission(ac.ActionAlertingProvisioningWrite),
+			ac.EvalAll(
+				ac.EvalPermission(ac.ActionAlertingRuleDelete), // more granular permissions are enforced by the handler via "authorizeRuleChanges"
+				ac.EvalPermission(ac.ActionAlertingProvisioningSetStatus),
+			),
+		)
+	case http.MethodDelete + "/api/v1/provisioning/folder/{FolderUID}/rule-groups/{Group}":
+		scope := dashboards.ScopeFoldersProvider.GetResourceScopeUID(ac.Parameter(":FolderUID"))
+		eval = ac.EvalAny(
+			ac.EvalPermission(ac.ActionAlertingProvisioningWrite),
+			ac.EvalAll(
+				ac.EvalPermission(ac.ActionAlertingRuleDelete, scope),
+				ac.EvalPermission(ac.ActionAlertingRuleRead, scope),
+				ac.EvalPermission(dashboards.ActionFoldersRead, scope),
+				ac.EvalPermission(ac.ActionAlertingProvisioningSetStatus),
+			),
+		)
+	case http.MethodPut + "/api/v1/provisioning/folder/{FolderUID}/rule-groups/{Group}":
+		scope := dashboards.ScopeFoldersProvider.GetResourceScopeUID(ac.Parameter(":FolderUID"))
+		eval = ac.EvalAny(
+			ac.EvalPermission(ac.ActionAlertingProvisioningWrite),
+			ac.EvalAll(
+				ac.EvalPermission(ac.ActionAlertingRuleRead, scope),
+				ac.EvalPermission(dashboards.ActionFoldersRead, scope),
+				ac.EvalPermission(ac.ActionAlertingProvisioningSetStatus),
+				ac.EvalAny( // the exact permissions will be checked after the operations are determined
+					ac.EvalPermission(ac.ActionAlertingRuleUpdate, scope),
+					ac.EvalPermission(ac.ActionAlertingRuleCreate, scope),
+					ac.EvalPermission(ac.ActionAlertingRuleDelete, scope),
+				),
+			),
+		)
 
 	case http.MethodPut + "/api/v1/provisioning/policies",
 		http.MethodDelete + "/api/v1/provisioning/policies",
@@ -232,12 +329,17 @@ func (api *API) authorize(method, path string) web.Handler {
 		http.MethodDelete + "/api/v1/provisioning/templates/{name}",
 		http.MethodPost + "/api/v1/provisioning/mute-timings",
 		http.MethodPut + "/api/v1/provisioning/mute-timings/{name}",
-		http.MethodDelete + "/api/v1/provisioning/mute-timings/{name}",
-		http.MethodPost + "/api/v1/provisioning/alert-rules",
-		http.MethodPut + "/api/v1/provisioning/alert-rules/{UID}",
-		http.MethodDelete + "/api/v1/provisioning/alert-rules/{UID}",
-		http.MethodPut + "/api/v1/provisioning/folder/{FolderUID}/rule-groups/{Group}":
-		eval = ac.EvalPermission(ac.ActionAlertingProvisioningWrite) // organization scope
+		http.MethodDelete + "/api/v1/provisioning/mute-timings/{name}":
+		eval = ac.EvalAny(
+			ac.EvalPermission(ac.ActionAlertingProvisioningWrite), // organization scope,
+			ac.EvalAll(
+				ac.EvalPermission(ac.ActionAlertingNotificationsWrite),
+				ac.EvalPermission(ac.ActionAlertingProvisioningSetStatus),
+			),
+		)
+	case http.MethodGet + "/api/v1/notifications/time-intervals/{name}",
+		http.MethodGet + "/api/v1/notifications/time-intervals":
+		eval = ac.EvalAny(ac.EvalPermission(ac.ActionAlertingNotificationsRead), ac.EvalPermission(ac.ActionAlertingNotificationsTimeIntervalsRead), ac.EvalPermission(ac.ActionAlertingProvisioningRead))
 	}
 
 	if eval != nil {

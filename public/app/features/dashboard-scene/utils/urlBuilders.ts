@@ -9,6 +9,7 @@ import { getQueryRunnerFor } from './utils';
 
 export interface DashboardUrlOptions {
   uid?: string;
+  slug?: string;
   subPath?: string;
   updateQuery?: UrlQueryMap;
   /** Set to location.search to preserve current params */
@@ -24,10 +25,22 @@ export interface DashboardUrlOptions {
 }
 
 export function getDashboardUrl(options: DashboardUrlOptions) {
-  let path = `/d/${options.uid}${options.subPath ?? ''}`;
+  let path = `/d/${options.uid}`;
+
+  if (!options.uid) {
+    path = '/dashboard/new';
+  }
 
   if (options.soloRoute) {
-    path = `/d-solo/${options.uid}${options.subPath ?? ''}`;
+    path = `/d-solo/${options.uid}`;
+  }
+
+  if (options.slug) {
+    path += `/${options.slug}`;
+  }
+
+  if (options.subPath) {
+    path += options.subPath;
   }
 
   if (options.render) {
@@ -44,7 +57,7 @@ export function getDashboardUrl(options: DashboardUrlOptions) {
   const params = options.currentQueryParams ? locationSearchToObject(options.currentQueryParams) : {};
 
   if (options.updateQuery) {
-    for (const key of Object.keys(options.updateQuery)) {
+    for (const key in options.updateQuery) {
       // removing params with null | undefined
       if (options.updateQuery[key] === null || options.updateQuery[key] === undefined) {
         delete params[key];
@@ -67,8 +80,14 @@ export function getViewPanelUrl(vizPanel: VizPanel) {
   return locationUtil.getUrlForPartial(locationService.getLocation(), { viewPanel: vizPanel.state.key });
 }
 
+export function getEditPanelUrl(panelId: number) {
+  return locationUtil.getUrlForPartial(locationService.getLocation(), { editPanel: panelId });
+}
+
 export function getInspectUrl(vizPanel: VizPanel, inspectTab?: InspectTab) {
-  return locationUtil.getUrlForPartial(locationService.getLocation(), { inspect: vizPanel.state.key, inspectTab });
+  const inspect = vizPanel.state.key?.replace('-view', '');
+
+  return locationUtil.getUrlForPartial(locationService.getLocation(), { inspect, inspectTab });
 }
 
 export function tryGetExploreUrlForPanel(vizPanel: VizPanel): Promise<string | undefined> {

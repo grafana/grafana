@@ -4,7 +4,7 @@ import countriesJSON from '../../../../gazetteer/countries.json';
 
 import { getGazetteer } from './gazetteer';
 
-let backendResults: any = { hello: 'world' };
+let backendResults: Record<string, string> | Array<Record<string, unknown>> = { hello: 'world' };
 
 jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),

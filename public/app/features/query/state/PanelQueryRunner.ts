@@ -50,6 +50,7 @@ export interface QueryRunnerOptions<
   datasource: DataSourceRef | DataSourceApi<TQuery, TOptions> | null;
   queries: TQuery[];
   panelId?: number;
+  panelPluginId?: string;
   dashboardUID?: string;
   timezone: TimeZone;
   timeRange: TimeRange;
@@ -139,9 +140,14 @@ export class PanelQueryRunner {
 
             if (withFieldConfig && data.series?.length) {
               if (lastConfigRev === this.dataConfigSource.configRev) {
-                const streamingDataFrame = data.series.find((data) => isStreamingDataFrame(data)) as
-                  | StreamingDataFrame
-                  | undefined;
+                let streamingDataFrame: StreamingDataFrame | undefined;
+
+                for (const frame of data.series) {
+                  if (isStreamingDataFrame(frame)) {
+                    streamingDataFrame = frame;
+                    break;
+                  }
+                }
 
                 if (
                   streamingDataFrame &&
@@ -214,7 +220,8 @@ export class PanelQueryRunner {
   private applyTransformations(data: PanelData): Observable<PanelData> {
     const transformations = this.dataConfigSource.getTransformations();
 
-    if (!transformations || transformations.length === 0) {
+    const allTransformationsDisabled = transformations && transformations.every((t) => t.disabled);
+    if (allTransformationsDisabled || !transformations || transformations.length === 0) {
       return of(data);
     }
 
@@ -251,6 +258,7 @@ export class PanelQueryRunner {
       timezone,
       datasource,
       panelId,
+      panelPluginId,
       dashboardUID,
       timeRange,
       timeInfo,
@@ -267,11 +275,15 @@ export class PanelQueryRunner {
       return;
     }
 
+    //check if datasource is a variable datasource and if that variable has multiple values
+    const addErroDSVariable = this.shouldAddErrorWhenDatasourceVariableIsMultiple(datasource, scopedVars);
+
     const request: DataQueryRequest = {
       app: app ?? CoreApp.Dashboard,
       requestId: getNextRequestId(),
       timezone,
       panelId,
+      panelPluginId,
       dashboardUID,
       range: timeRange,
       timeInfo,
@@ -318,7 +330,7 @@ export class PanelQueryRunner {
 
       this.lastRequest = request;
 
-      this.pipeToSubject(runRequest(ds, request), panelId);
+      this.pipeToSubject(runRequest(ds, request), panelId, false, addErroDSVariable);
     } catch (err) {
       this.pipeToSubject(
         of({
@@ -332,7 +344,12 @@ export class PanelQueryRunner {
     }
   }
 
-  private pipeToSubject(observable: Observable<PanelData>, panelId?: number, skipPreProcess = false) {
+  private pipeToSubject(
+    observable: Observable<PanelData>,
+    panelId?: number,
+    skipPreProcess = false,
+    addErroDSVariable = false
+  ) {
     if (this.subscription) {
       this.subscription.unsubscribe();
     }
@@ -369,6 +386,17 @@ export class PanelQueryRunner {
         }
 
         this.lastResult = next;
+
+        //add error message if datasource is a variable and has multiple values
+        if (addErroDSVariable) {
+          next.errors = [
+            {
+              message:
+                'Panel is using a variable datasource with multiple values without repeat option. Please configure the panel to be repeated by the same datasource variable.',
+            },
+          ];
+          next.state = LoadingState.Error;
+        }
 
         // Store preprocessed query results for applying overrides later on in the pipeline
         this.subject.next(next);
@@ -441,6 +469,28 @@ export class PanelQueryRunner {
 
   getLastRequest(): DataQueryRequest | undefined {
     return this.lastRequest;
+  }
+
+  shouldAddErrorWhenDatasourceVariableIsMultiple(
+    datasource: DataSourceRef | DataSourceApi | null,
+    scopedVars: ScopedVars | undefined
+  ): boolean {
+    let addWarningMessageMultipleDatasourceVariable = false;
+
+    //If datasource is a variable
+    if (datasource?.uid?.startsWith('${')) {
+      // we can access the raw datasource variable values inside the replace function if we pass a custom format function
+      this.templateSrv.replace(datasource.uid, scopedVars, (value: string | string[]) => {
+        // if the variable has multiple values it means it's not being repeated
+        if (Array.isArray(value) && value.length > 1) {
+          addWarningMessageMultipleDatasourceVariable = true;
+        }
+        // return empty string to avoid replacing the variable
+        return '';
+      });
+    }
+
+    return addWarningMessageMultipleDatasourceVariable;
   }
 }
 

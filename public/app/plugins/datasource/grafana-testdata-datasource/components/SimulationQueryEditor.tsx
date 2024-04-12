@@ -5,7 +5,7 @@ import { DataFrameJSON, SelectableValue } from '@grafana/data';
 import { InlineField, InlineFieldRow, InlineSwitch, Input, Label, Select } from '@grafana/ui';
 
 import { EditorProps } from '../QueryEditor';
-import { SimulationQuery } from '../dataquery.gen';
+import { SimulationQuery } from '../dataquery';
 
 import { SimulationSchemaForm } from './SimulationSchemaForm';
 
@@ -90,7 +90,7 @@ export const SimulationQueryEditor = ({ onChange, query, ds }: EditorProps) => {
     if (simKey.uid) {
       path += '/' + simKey.uid;
     }
-    ds.postResource('sim/' + path, config).then((res) => {
+    ds.postResource<SimInfo>('sim/' + path, config).then((res) => {
       setCfgValue(res.config);
     });
   };

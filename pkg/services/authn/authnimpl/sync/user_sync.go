@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"strconv"
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	authidentity "github.com/grafana/grafana/pkg/services/auth/identity"
@@ -110,12 +111,13 @@ func (s *UserSync) FetchSyncedUserHook(ctx context.Context, identity *authn.Iden
 	if !identity.ClientParams.FetchSyncedUser {
 		return nil
 	}
+
 	namespace, id := identity.GetNamespacedID()
-	if namespace != authn.NamespaceUser {
+	if !authidentity.IsNamespace(namespace, authn.NamespaceUser, authn.NamespaceServiceAccount) {
 		return nil
 	}
 
-	userID, err := authidentity.IntIdentifier(namespace, id)
+	userID, err := strconv.ParseInt(id, 10, 64)
 	if err != nil {
 		s.log.FromContext(ctx).Warn("got invalid identity ID", "id", id, "err", err)
 		return nil
@@ -130,6 +132,13 @@ func (s *UserSync) FetchSyncedUserHook(ctx context.Context, identity *authn.Iden
 			return errFetchingSignedInUserNotFound.Errorf("%w", err)
 		}
 		return errFetchingSignedInUser.Errorf("failed to resolve user: %w", err)
+	}
+
+	if identity.ClientParams.AllowGlobalOrg && identity.OrgID == authn.GlobalOrgID {
+		usr.Teams = nil
+		usr.OrgName = ""
+		usr.OrgRole = org.RoleNone
+		usr.OrgID = authn.GlobalOrgID
 	}
 
 	syncSignedInUserToIdentity(usr, identity)
@@ -234,6 +243,12 @@ func (s *UserSync) updateUserAttributes(ctx context.Context, usr *user.User, id 
 	if id.Email != "" && id.Email != usr.Email {
 		updateCmd.Email = id.Email
 		usr.Email = id.Email
+
+		// If we get a new email for a user we need to mark it as non-verified.
+		verified := false
+		updateCmd.EmailVerified = &verified
+		usr.EmailVerified = verified
+
 		needsUpdate = true
 	}
 
@@ -391,6 +406,7 @@ func syncUserToIdentity(usr *user.User, id *authn.Identity) {
 	id.Login = usr.Login
 	id.Email = usr.Email
 	id.Name = usr.Name
+	id.EmailVerified = usr.EmailVerified
 	id.IsGrafanaAdmin = &usr.IsAdmin
 }
 
@@ -407,4 +423,5 @@ func syncSignedInUserToIdentity(usr *user.SignedInUser, identity *authn.Identity
 	identity.LastSeenAt = usr.LastSeenAt
 	identity.IsDisabled = usr.IsDisabled
 	identity.IsGrafanaAdmin = &usr.IsGrafanaAdmin
+	identity.EmailVerified = usr.EmailVerified
 }

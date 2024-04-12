@@ -4,7 +4,7 @@ import (
 	"github.com/prometheus/alertmanager/config"
 )
 
-// swagger:route GET /api/v1/provisioning/policies provisioning stable RouteGetPolicyTree
+// swagger:route GET /v1/provisioning/policies provisioning stable RouteGetPolicyTree
 //
 // Get the notification policy tree.
 //
@@ -12,7 +12,7 @@ import (
 //       200: Route
 //         description: The currently active notification routing tree
 
-// swagger:route PUT /api/v1/provisioning/policies provisioning stable RoutePutPolicyTree
+// swagger:route PUT /v1/provisioning/policies provisioning stable RoutePutPolicyTree
 //
 // Sets the notification policy tree.
 //
@@ -23,7 +23,7 @@ import (
 //       202: Ack
 //       400: ValidationError
 
-// swagger:route DELETE /api/v1/provisioning/policies provisioning stable RouteResetPolicyTree
+// swagger:route DELETE /v1/provisioning/policies provisioning stable RouteResetPolicyTree
 //
 // Clears the notification policy tree.
 //
@@ -33,9 +33,16 @@ import (
 //     Responses:
 //       202: Ack
 
-// swagger:route GET /api/v1/provisioning/policies/export provisioning stable RouteGetPolicyTreeExport
+// swagger:route GET /v1/provisioning/policies/export provisioning stable RouteGetPolicyTreeExport
 //
 // Export the notification policy tree in provisioning file format.
+//
+//     Produces:
+//     - application/json
+//     - application/yaml
+//     - application/terraform+hcl
+//     - text/yaml
+//     - text/hcl
 //
 //     Responses:
 //       200: AlertingFileExport

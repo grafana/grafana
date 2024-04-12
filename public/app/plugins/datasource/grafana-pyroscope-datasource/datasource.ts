@@ -11,11 +11,10 @@ import {
 } from '@grafana/data';
 import { DataSourceWithBackend, getTemplateSrv, TemplateSrv } from '@grafana/runtime';
 
-import { extractLabelMatchers, toPromLikeExpr } from '../prometheus/language_utils';
-
 import { VariableSupport } from './VariableSupport';
-import { defaultGrafanaPyroscope, defaultPyroscopeQueryType } from './dataquery.gen';
+import { defaultGrafanaPyroscopeDataQuery, defaultPyroscopeQueryType } from './dataquery.gen';
 import { PyroscopeDataSourceOptions, Query, ProfileTypeMessage } from './types';
+import { extractLabelMatchers, toPromLikeExpr } from './utils';
 
 export class PyroscopeDataSource extends DataSourceWithBackend<Query, PyroscopeDataSourceOptions> {
   constructor(
@@ -116,7 +115,7 @@ export class PyroscopeDataSource extends DataSourceWithBackend<Query, PyroscopeD
 }
 
 export const defaultQuery: Partial<Query> = {
-  ...defaultGrafanaPyroscope,
+  ...defaultGrafanaPyroscopeDataQuery,
   queryType: defaultPyroscopeQueryType,
 };
 

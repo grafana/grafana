@@ -16,10 +16,13 @@ import (
 	"golang.org/x/oauth2"
 
 	"github.com/grafana/grafana/pkg/login/social"
+	"github.com/grafana/grafana/pkg/services/auth/identity"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/org"
+	"github.com/grafana/grafana/pkg/services/ssosettings"
 	ssoModels "github.com/grafana/grafana/pkg/services/ssosettings/models"
 	"github.com/grafana/grafana/pkg/services/ssosettings/ssosettingstests"
+	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -164,7 +167,7 @@ func TestSocialGitlab_UserInfo(t *testing.T) {
 	for _, test := range tests {
 		provider.info.RoleAttributePath = test.RoleAttributePath
 		provider.info.AllowAssignGrafanaAdmin = test.Cfg.AllowAssignGrafanaAdmin
-		provider.autoAssignOrgRole = string(test.Cfg.AutoAssignOrgRole)
+		provider.cfg.AutoAssignOrgRole = string(test.Cfg.AutoAssignOrgRole)
 		provider.info.RoleAttributeStrict = test.Cfg.RoleAttributeStrict
 		provider.info.SkipOrgRoleSync = test.Cfg.SkipOrgRoleSync
 
@@ -359,8 +362,7 @@ func TestSocialGitlab_extractFromToken(t *testing.T) {
 					TokenUrl:            tc.config.Endpoint.TokenURL,
 				},
 				&setting.Cfg{
-					AutoAssignOrgRole:          "",
-					OAuthSkipOrgRoleUpdateSync: false,
+					AutoAssignOrgRole: "",
 				}, &ssosettingstests.MockService{},
 				featuremgmt.WithFeatures())
 
@@ -463,18 +465,23 @@ func TestSocialGitlab_GetGroupsNextPage(t *testing.T) {
 
 func TestSocialGitlab_Validate(t *testing.T) {
 	testCases := []struct {
-		name        string
-		settings    ssoModels.SSOSettings
-		expectError bool
+		name      string
+		settings  ssoModels.SSOSettings
+		requester identity.Requester
+		wantErr   error
 	}{
 		{
 			name: "SSOSettings is valid",
 			settings: ssoModels.SSOSettings{
 				Settings: map[string]any{
-					"client_id": "client-id",
+					"client_id":                  "client-id",
+					"allow_assign_grafana_admin": "true",
+					"auth_url":                   "",
+					"token_url":                  "",
+					"api_url":                    "",
 				},
 			},
-			expectError: false,
+			requester: &user.SignedInUser{IsGrafanaAdmin: true},
 		},
 		{
 			name: "fails if settings map contains an invalid field",
@@ -484,7 +491,7 @@ func TestSocialGitlab_Validate(t *testing.T) {
 					"invalid_field": []int{1, 2, 3},
 				},
 			},
-			expectError: true,
+			wantErr: ssosettings.ErrInvalidSettings,
 		},
 		{
 			name: "fails if client id is empty",
@@ -493,14 +500,77 @@ func TestSocialGitlab_Validate(t *testing.T) {
 					"client_id": "",
 				},
 			},
-			expectError: true,
+			wantErr: ssosettings.ErrBaseInvalidOAuthConfig,
 		},
 		{
 			name: "fails if client id does not exist",
 			settings: ssoModels.SSOSettings{
 				Settings: map[string]any{},
 			},
-			expectError: true,
+			wantErr: ssosettings.ErrBaseInvalidOAuthConfig,
+		},
+		{
+			name: "fails if both allow assign grafana admin and skip org role sync are enabled",
+			settings: ssoModels.SSOSettings{
+				Settings: map[string]any{
+					"client_id":                  "client-id",
+					"allow_assign_grafana_admin": "true",
+					"skip_org_role_sync":         "true",
+					"auth_url":                   "https://example.com/auth",
+					"token_url":                  "https://example.com/token",
+				},
+			},
+			requester: &user.SignedInUser{IsGrafanaAdmin: true},
+			wantErr:   ssosettings.ErrBaseInvalidOAuthConfig,
+		},
+		{
+			name: "fails if the user is not allowed to update allow assign grafana admin",
+			requester: &user.SignedInUser{
+				IsGrafanaAdmin: false,
+			},
+			settings: ssoModels.SSOSettings{
+				Settings: map[string]any{
+					"client_id":                  "client-id",
+					"allow_assign_grafana_admin": "true",
+				},
+			},
+			wantErr: ssosettings.ErrBaseInvalidOAuthConfig,
+		},
+		{
+			name: "fails if api url is  not empty",
+			settings: ssoModels.SSOSettings{
+				Settings: map[string]any{
+					"client_id": "client-id",
+					"auth_url":  "",
+					"token_url": "",
+					"api_url":   "https://example.com/api",
+				},
+			},
+			wantErr: ssosettings.ErrBaseInvalidOAuthConfig,
+		},
+		{
+			name: "fails if auth url is not empty",
+			settings: ssoModels.SSOSettings{
+				Settings: map[string]any{
+					"client_id": "client-id",
+					"auth_url":  "https://example.com/auth",
+					"token_url": "",
+					"api_url":   "",
+				},
+			},
+			wantErr: ssosettings.ErrBaseInvalidOAuthConfig,
+		},
+		{
+			name: "fails if token url is not empty",
+			settings: ssoModels.SSOSettings{
+				Settings: map[string]any{
+					"client_id": "client-id",
+					"auth_url":  "",
+					"token_url": "https://example.com/token",
+					"api_url":   "",
+				},
+			},
+			wantErr: ssosettings.ErrBaseInvalidOAuthConfig,
 		},
 	}
 
@@ -508,23 +578,28 @@ func TestSocialGitlab_Validate(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			s := NewGitLabProvider(&social.OAuthInfo{}, &setting.Cfg{}, &ssosettingstests.MockService{}, featuremgmt.WithFeatures())
 
-			err := s.Validate(context.Background(), tc.settings)
-			if tc.expectError {
-				require.Error(t, err)
-			} else {
-				require.NoError(t, err)
+			if tc.requester == nil {
+				tc.requester = &user.SignedInUser{IsGrafanaAdmin: false}
 			}
+
+			err := s.Validate(context.Background(), tc.settings, tc.requester)
+			if tc.wantErr != nil {
+				require.ErrorIs(t, err, tc.wantErr)
+				return
+			}
+			require.NoError(t, err)
 		})
 	}
 }
 
 func TestSocialGitlab_Reload(t *testing.T) {
 	testCases := []struct {
-		name         string
-		info         *social.OAuthInfo
-		settings     ssoModels.SSOSettings
-		expectError  bool
-		expectedInfo *social.OAuthInfo
+		name           string
+		info           *social.OAuthInfo
+		settings       ssoModels.SSOSettings
+		expectError    bool
+		expectedInfo   *social.OAuthInfo
+		expectedConfig *oauth2.Config
 	}{
 		{
 			name: "SSO provider successfully updated",
@@ -545,6 +620,14 @@ func TestSocialGitlab_Reload(t *testing.T) {
 				ClientSecret: "new-client-secret",
 				AuthUrl:      "some-new-url",
 			},
+			expectedConfig: &oauth2.Config{
+				ClientID:     "new-client-id",
+				ClientSecret: "new-client-secret",
+				Endpoint: oauth2.Endpoint{
+					AuthURL: "some-new-url",
+				},
+				RedirectURL: "/login/gitlab",
+			},
 		},
 		{
 			name: "fails if settings contain invalid values",
@@ -564,6 +647,11 @@ func TestSocialGitlab_Reload(t *testing.T) {
 				ClientId:     "client-id",
 				ClientSecret: "client-secret",
 			},
+			expectedConfig: &oauth2.Config{
+				ClientID:     "client-id",
+				ClientSecret: "client-secret",
+				RedirectURL:  "/login/gitlab",
+			},
 		},
 	}
 
@@ -574,10 +662,12 @@ func TestSocialGitlab_Reload(t *testing.T) {
 			err := s.Reload(context.Background(), tc.settings)
 			if tc.expectError {
 				require.Error(t, err)
-			} else {
-				require.NoError(t, err)
+				return
 			}
+			require.NoError(t, err)
+
 			require.EqualValues(t, tc.expectedInfo, s.info)
+			require.EqualValues(t, tc.expectedConfig, s.Config)
 		})
 	}
 }

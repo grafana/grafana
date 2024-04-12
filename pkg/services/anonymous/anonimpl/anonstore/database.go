@@ -8,6 +8,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/services/search/model"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 )
@@ -32,6 +33,30 @@ type Device struct {
 	UpdatedAt time.Time `json:"updatedAt" xorm:"updated_at" db:"updated_at"`
 }
 
+type DeviceSearchHitDTO struct {
+	DeviceID   string    `json:"deviceId" xorm:"device_id" db:"device_id"`
+	ClientIP   string    `json:"clientIp" xorm:"client_ip" db:"client_ip"`
+	UserAgent  string    `json:"userAgent" xorm:"user_agent" db:"user_agent"`
+	CreatedAt  time.Time `json:"createdAt" xorm:"created_at" db:"created_at"`
+	UpdatedAt  time.Time `json:"updatedAt" xorm:"updated_at" db:"updated_at"`
+	LastSeenAt time.Time `json:"lastSeenAt"`
+}
+
+type SearchDeviceQueryResult struct {
+	TotalCount int64                 `json:"totalCount"`
+	Devices    []*DeviceSearchHitDTO `json:"devices"`
+	Page       int                   `json:"page"`
+	PerPage    int                   `json:"perPage"`
+}
+type SearchDeviceQuery struct {
+	Query    string
+	Page     int
+	Limit    int
+	From     time.Time
+	To       time.Time
+	SortOpts []model.SortOption
+}
+
 func (a *Device) CacheKey() string {
 	return strings.Join([]string{cacheKeyPrefix, a.DeviceID}, ":")
 }
@@ -47,6 +72,8 @@ type AnonStore interface {
 	DeleteDevice(ctx context.Context, deviceID string) error
 	// DeleteDevicesOlderThan deletes all devices that have no been updated since the given time.
 	DeleteDevicesOlderThan(ctx context.Context, olderThan time.Time) error
+	// SearchDevices searches for devices within the 30 days active.
+	SearchDevices(ctx context.Context, query *SearchDeviceQuery) (*SearchDeviceQueryResult, error)
 }
 
 func ProvideAnonDBStore(sqlStore db.DB, deviceLimit int64) *AnonDBStore {
@@ -182,4 +209,65 @@ func (s *AnonDBStore) DeleteDevicesOlderThan(ctx context.Context, olderThan time
 	})
 
 	return err
+}
+
+func (s *AnonDBStore) SearchDevices(ctx context.Context, query *SearchDeviceQuery) (*SearchDeviceQueryResult, error) {
+	result := SearchDeviceQueryResult{
+		Devices: make([]*DeviceSearchHitDTO, 0),
+	}
+	err := s.sqlStore.WithDbSession(ctx, func(dbSess *db.Session) error {
+		if query.From.IsZero() && !query.To.IsZero() {
+			return fmt.Errorf("from date must be set if to date is set")
+		}
+		if !query.From.IsZero() && query.To.IsZero() {
+			return fmt.Errorf("to date must be set if from date is set")
+		}
+
+		// restricted only to last 30 days, if noting else specified
+		if query.From.IsZero() && query.To.IsZero() {
+			query.From = time.Now().Add(-anonymousDeviceExpiration)
+			query.To = time.Now()
+		}
+
+		sess := dbSess.Table("anon_device").Alias("d")
+
+		if query.Limit > 0 {
+			offset := query.Limit * (query.Page - 1)
+			sess.Limit(query.Limit, offset)
+		}
+		sess.Cols("d.id", "d.device_id", "d.client_ip", "d.user_agent", "d.updated_at")
+
+		if len(query.SortOpts) > 0 {
+			for i := range query.SortOpts {
+				for j := range query.SortOpts[i].Filter {
+					sess.OrderBy(query.SortOpts[i].Filter[j].OrderBy())
+				}
+			}
+		} else {
+			sess.Asc("d.user_agent")
+		}
+
+		// add to query about from and to session
+		sess.Where("d.updated_at BETWEEN ? AND ?", query.From.UTC(), query.To.UTC())
+
+		if query.Query != "" {
+			queryWithWildcards := "%" + strings.Replace(query.Query, "\\", "", -1) + "%"
+			sess.Where("d.client_ip "+s.sqlStore.GetDialect().LikeStr()+" ?", queryWithWildcards)
+		}
+
+		// get total
+		devices, err := s.ListDevices(ctx, &query.From, &query.To)
+		if err != nil {
+			return err
+		}
+		// cast to int64
+		result.TotalCount = int64(len(devices))
+		if err := sess.Find(&result.Devices); err != nil {
+			return err
+		}
+		result.Page = query.Page
+		result.PerPage = query.Limit
+		return nil
+	})
+	return &result, err
 }

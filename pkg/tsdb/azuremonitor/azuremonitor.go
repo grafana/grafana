@@ -10,12 +10,13 @@ import (
 	"net/http"
 	"strconv"
 
-	"github.com/grafana/grafana-azure-sdk-go/azcredentials"
-	"github.com/grafana/grafana-azure-sdk-go/azsettings"
+	"github.com/grafana/grafana-azure-sdk-go/v2/azsettings"
+	"github.com/grafana/grafana-azure-sdk-go/v2/azusercontext"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/datasource"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/instancemgmt"
+	"github.com/grafana/grafana-plugin-sdk-go/backend/log"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/resource/httpadapter"
 
 	"github.com/grafana/grafana/pkg/tsdb/azuremonitor/azmoncredentials"
@@ -26,19 +27,23 @@ import (
 )
 
 func ProvideService(httpClientProvider *httpclient.Provider) *Service {
-	proxy := &httpServiceProxy{}
+	logger := backend.NewLoggerWith("logger", "tsdb.azuremonitor")
+	proxy := &httpServiceProxy{
+		logger: logger,
+	}
 	executors := map[string]azDatasourceExecutor{
-		azureMonitor:       &metrics.AzureMonitorDatasource{Proxy: proxy},
-		azureLogAnalytics:  &loganalytics.AzureLogAnalyticsDatasource{Proxy: proxy},
-		azureResourceGraph: &resourcegraph.AzureResourceGraphDatasource{Proxy: proxy},
-		azureTraces:        &loganalytics.AzureLogAnalyticsDatasource{Proxy: proxy},
+		azureMonitor:       &metrics.AzureMonitorDatasource{Proxy: proxy, Logger: logger},
+		azureLogAnalytics:  &loganalytics.AzureLogAnalyticsDatasource{Proxy: proxy, Logger: logger},
+		azureResourceGraph: &resourcegraph.AzureResourceGraphDatasource{Proxy: proxy, Logger: logger},
+		azureTraces:        &loganalytics.AzureLogAnalyticsDatasource{Proxy: proxy, Logger: logger},
 	}
 
-	im := datasource.NewInstanceManager(NewInstanceSettings(httpClientProvider, executors))
+	im := datasource.NewInstanceManager(NewInstanceSettings(httpClientProvider, executors, logger))
 
 	s := &Service{
 		im:        im,
 		executors: executors,
+		logger:    logger,
 	}
 
 	s.queryMux = s.newQueryMux()
@@ -48,11 +53,11 @@ func ProvideService(httpClientProvider *httpclient.Provider) *Service {
 }
 
 func (s *Service) QueryData(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
-	return s.queryMux.QueryData(ctx, req)
+	return s.queryMux.QueryData(azusercontext.WithUserFromQueryReq(ctx, req), req)
 }
 
 func (s *Service) CallResource(ctx context.Context, req *backend.CallResourceRequest, sender backend.CallResourceResponseSender) error {
-	return s.resourceHandler.CallResource(ctx, req, sender)
+	return s.resourceHandler.CallResource(azusercontext.WithUserFromResourceReq(ctx, req), req, sender)
 }
 
 type Service struct {
@@ -61,9 +66,10 @@ type Service struct {
 
 	queryMux        *datasource.QueryTypeMux
 	resourceHandler backend.CallResourceHandler
+	logger          log.Logger
 }
 
-func getDatasourceService(ctx context.Context, settings *backend.DataSourceInstanceSettings, azureSettings *azsettings.AzureSettings, clientProvider *httpclient.Provider, dsInfo types.DatasourceInfo, routeName string) (types.DatasourceService, error) {
+func getDatasourceService(ctx context.Context, settings *backend.DataSourceInstanceSettings, azureSettings *azsettings.AzureSettings, clientProvider *httpclient.Provider, dsInfo types.DatasourceInfo, routeName string, logger log.Logger) (types.DatasourceService, error) {
 	route := dsInfo.Routes[routeName]
 	client, err := newHTTPClient(ctx, route, dsInfo, settings, azureSettings, clientProvider)
 	if err != nil {
@@ -72,10 +78,11 @@ func getDatasourceService(ctx context.Context, settings *backend.DataSourceInsta
 	return types.DatasourceService{
 		URL:        dsInfo.Routes[routeName].URL,
 		HTTPClient: client,
+		Logger:     logger,
 	}, nil
 }
 
-func NewInstanceSettings(clientProvider *httpclient.Provider, executors map[string]azDatasourceExecutor) datasource.InstanceFactoryFunc {
+func NewInstanceSettings(clientProvider *httpclient.Provider, executors map[string]azDatasourceExecutor, logger log.Logger) datasource.InstanceFactoryFunc {
 	return func(ctx context.Context, settings backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
 		jsonData := map[string]any{}
 		err := json.Unmarshal(settings.JSONData, &jsonData)
@@ -91,7 +98,7 @@ func NewInstanceSettings(clientProvider *httpclient.Provider, executors map[stri
 
 		azureSettings, err := azsettings.ReadSettings(ctx)
 		if err != nil {
-			backend.Logger.Error("failed to read Azure settings from Grafana", "error", err.Error())
+			logger.Error("failed to read Azure settings from Grafana", "error", err.Error())
 			return nil, err
 		}
 
@@ -102,18 +109,12 @@ func NewInstanceSettings(clientProvider *httpclient.Provider, executors map[stri
 			credentials = azmoncredentials.GetDefaultCredentials(azureSettings)
 		}
 
-		cloud, err := azcredentials.GetAzureCloud(azureSettings, credentials)
-		if err != nil {
-			return nil, fmt.Errorf("error getting credentials: %w", err)
-		}
-
-		routesForModel, err := getAzureRoutes(cloud, settings.JSONData)
+		routesForModel, err := getAzureMonitorRoutes(azureSettings, credentials, settings.JSONData)
 		if err != nil {
 			return nil, err
 		}
 
 		model := types.DatasourceInfo{
-			Cloud:                   cloud,
 			Credentials:             credentials,
 			Settings:                azMonitorSettings,
 			JSONData:                jsonData,
@@ -124,7 +125,7 @@ func NewInstanceSettings(clientProvider *httpclient.Provider, executors map[stri
 		}
 
 		for routeName := range executors {
-			service, err := getDatasourceService(ctx, &settings, azureSettings, clientProvider, model, routeName)
+			service, err := getDatasourceService(ctx, &settings, azureSettings, clientProvider, model, routeName, logger)
 			if err != nil {
 				return nil, err
 			}
@@ -132,31 +133,6 @@ func NewInstanceSettings(clientProvider *httpclient.Provider, executors map[stri
 		}
 
 		return model, nil
-	}
-}
-
-func getCustomizedCloudSettings(cloud string, jsonData json.RawMessage) (types.AzureMonitorCustomizedCloudSettings, error) {
-	customizedCloudSettings := types.AzureMonitorCustomizedCloudSettings{}
-	err := json.Unmarshal(jsonData, &customizedCloudSettings)
-	if err != nil {
-		return types.AzureMonitorCustomizedCloudSettings{}, fmt.Errorf("error getting customized cloud settings: %w", err)
-	}
-	return customizedCloudSettings, nil
-}
-
-func getAzureRoutes(cloud string, jsonData json.RawMessage) (map[string]types.AzRoute, error) {
-	if cloud == azsettings.AzureCustomized {
-		customizedCloudSettings, err := getCustomizedCloudSettings(cloud, jsonData)
-		if err != nil {
-			return nil, err
-		}
-		if customizedCloudSettings.CustomizedRoutes == nil {
-			return nil, fmt.Errorf("unable to instantiate routes, customizedRoutes must be set")
-		}
-		azureRoutes := customizedCloudSettings.CustomizedRoutes
-		return azureRoutes, nil
-	} else {
-		return routes[cloud], nil
 	}
 }
 
@@ -216,10 +192,10 @@ func (s *Service) getDSInfo(ctx context.Context, pluginCtx backend.PluginContext
 	return instance, nil
 }
 
-func queryMetricHealth(dsInfo types.DatasourceInfo) (*http.Response, error) {
+func queryMetricHealth(ctx context.Context, dsInfo types.DatasourceInfo) (*http.Response, error) {
 	subscriptionsApiVersion := "2020-01-01"
 	url := fmt.Sprintf("%v/subscriptions?api-version=%v", dsInfo.Routes["Azure Monitor"].URL, subscriptionsApiVersion)
-	request, err := http.NewRequest(http.MethodGet, url, nil)
+	request, err := http.NewRequestWithContext(ctx, http.MethodGet, url, nil)
 	if err != nil {
 		return nil, err
 	}
@@ -232,9 +208,9 @@ func queryMetricHealth(dsInfo types.DatasourceInfo) (*http.Response, error) {
 	return res, nil
 }
 
-func checkAzureLogAnalyticsHealth(dsInfo types.DatasourceInfo, subscription string) (*http.Response, error) {
+func checkAzureLogAnalyticsHealth(ctx context.Context, dsInfo types.DatasourceInfo, subscription string) (*http.Response, error) {
 	workspacesUrl := fmt.Sprintf("%v/subscriptions/%v/providers/Microsoft.OperationalInsights/workspaces?api-version=2017-04-26-preview", dsInfo.Routes["Azure Monitor"].URL, subscription)
-	workspacesReq, err := http.NewRequest(http.MethodGet, workspacesUrl, nil)
+	workspacesReq, err := http.NewRequestWithContext(ctx, http.MethodGet, workspacesUrl, nil)
 	if err != nil {
 		return nil, err
 	}
@@ -263,7 +239,7 @@ func checkAzureLogAnalyticsHealth(dsInfo types.DatasourceInfo, subscription stri
 	}
 
 	workspaceUrl := fmt.Sprintf("%v/v1/workspaces/%v/query", dsInfo.Routes["Azure Log Analytics"].URL, defaultWorkspaceId)
-	workspaceReq, err := http.NewRequest(http.MethodPost, workspaceUrl, bytes.NewBuffer(body))
+	workspaceReq, err := http.NewRequestWithContext(ctx, http.MethodPost, workspaceUrl, bytes.NewBuffer(body))
 	workspaceReq.Header.Set("Content-Type", "application/json")
 	if err != nil {
 		return nil, err
@@ -277,7 +253,7 @@ func checkAzureLogAnalyticsHealth(dsInfo types.DatasourceInfo, subscription stri
 	return res, nil
 }
 
-func checkAzureMonitorResourceGraphHealth(dsInfo types.DatasourceInfo, subscription string) (*http.Response, error) {
+func checkAzureMonitorResourceGraphHealth(ctx context.Context, dsInfo types.DatasourceInfo, subscription string) (*http.Response, error) {
 	body, err := json.Marshal(map[string]any{
 		"query":         "Resources | project id | limit 1",
 		"subscriptions": []string{subscription},
@@ -286,7 +262,7 @@ func checkAzureMonitorResourceGraphHealth(dsInfo types.DatasourceInfo, subscript
 		return nil, err
 	}
 	url := fmt.Sprintf("%v/providers/Microsoft.ResourceGraph/resources?api-version=%v", dsInfo.Routes["Azure Resource Graph"].URL, resourcegraph.ArgAPIVersion)
-	request, err := http.NewRequest(http.MethodPost, url, bytes.NewBuffer(body))
+	request, err := http.NewRequestWithContext(ctx, http.MethodPost, url, bytes.NewBuffer(body))
 	request.Header.Set("Content-Type", "application/json")
 	if err != nil {
 		return nil, err
@@ -300,9 +276,9 @@ func checkAzureMonitorResourceGraphHealth(dsInfo types.DatasourceInfo, subscript
 	return res, nil
 }
 
-func metricCheckHealth(dsInfo types.DatasourceInfo) (message string, defaultSubscription string, status backend.HealthStatus) {
+func metricCheckHealth(ctx context.Context, dsInfo types.DatasourceInfo, logger log.Logger) (message string, defaultSubscription string, status backend.HealthStatus) {
 	defaultSubscription = dsInfo.Settings.SubscriptionId
-	metricsRes, err := queryMetricHealth(dsInfo)
+	metricsRes, err := queryMetricHealth(ctx, dsInfo)
 	if err != nil {
 		if ok := errors.Is(err, types.ErrorAzureHealthCheck); ok {
 			return fmt.Sprintf("Error connecting to Azure Monitor endpoint: %s", err.Error()), defaultSubscription, backend.HealthStatusError
@@ -323,7 +299,7 @@ func metricCheckHealth(dsInfo types.DatasourceInfo) (message string, defaultSubs
 		}
 		return fmt.Sprintf("Error connecting to Azure Monitor endpoint: %s", string(body)), defaultSubscription, backend.HealthStatusError
 	}
-	subscriptions, err := parseSubscriptions(metricsRes)
+	subscriptions, err := parseSubscriptions(metricsRes, logger)
 	if err != nil {
 		return err.Error(), defaultSubscription, backend.HealthStatusError
 	}
@@ -334,8 +310,8 @@ func metricCheckHealth(dsInfo types.DatasourceInfo) (message string, defaultSubs
 	return "Successfully connected to Azure Monitor endpoint.", defaultSubscription, backend.HealthStatusOk
 }
 
-func logAnalyticsCheckHealth(dsInfo types.DatasourceInfo, defaultSubscription string) (message string, status backend.HealthStatus) {
-	logsRes, err := checkAzureLogAnalyticsHealth(dsInfo, defaultSubscription)
+func logAnalyticsCheckHealth(ctx context.Context, dsInfo types.DatasourceInfo, defaultSubscription string) (message string, status backend.HealthStatus) {
+	logsRes, err := checkAzureLogAnalyticsHealth(ctx, dsInfo, defaultSubscription)
 	if err != nil {
 		if err.Error() == "no default workspace found" {
 			return "No Log Analytics workspaces found.", backend.HealthStatusUnknown
@@ -362,8 +338,8 @@ func logAnalyticsCheckHealth(dsInfo types.DatasourceInfo, defaultSubscription st
 	return "Successfully connected to Azure Log Analytics endpoint.", backend.HealthStatusOk
 }
 
-func graphLogHealthCheck(dsInfo types.DatasourceInfo, defaultSubscription string) (message string, status backend.HealthStatus) {
-	resourceGraphRes, err := checkAzureMonitorResourceGraphHealth(dsInfo, defaultSubscription)
+func graphLogHealthCheck(ctx context.Context, dsInfo types.DatasourceInfo, defaultSubscription string) (message string, status backend.HealthStatus) {
+	resourceGraphRes, err := checkAzureMonitorResourceGraphHealth(ctx, dsInfo, defaultSubscription)
 	if err != nil {
 		if ok := errors.Is(err, types.ErrorAzureHealthCheck); ok {
 			return fmt.Sprintf("Error connecting to Azure Resource Graph endpoint: %s", err.Error()), backend.HealthStatusError
@@ -387,7 +363,7 @@ func graphLogHealthCheck(dsInfo types.DatasourceInfo, defaultSubscription string
 	return "Successfully connected to Azure Resource Graph endpoint.", backend.HealthStatusOk
 }
 
-func parseSubscriptions(res *http.Response) ([]string, error) {
+func parseSubscriptions(res *http.Response, logger log.Logger) ([]string, error) {
 	var target struct {
 		Value []struct {
 			SubscriptionId string `json:"subscriptionId"`
@@ -399,7 +375,7 @@ func parseSubscriptions(res *http.Response) ([]string, error) {
 	}
 	defer func() {
 		if err := res.Body.Close(); err != nil {
-			backend.Logger.Warn("Failed to close response body", "err", err)
+			logger.Warn("Failed to close response body", "err", err)
 		}
 	}()
 
@@ -412,6 +388,7 @@ func parseSubscriptions(res *http.Response) ([]string, error) {
 }
 
 func (s *Service) CheckHealth(ctx context.Context, req *backend.CheckHealthRequest) (*backend.CheckHealthResult, error) {
+	ctx = azusercontext.WithUserFromHealthCheckReq(ctx, req)
 	dsInfo, err := s.getDSInfo(ctx, req.PluginContext)
 	if err != nil {
 		return &backend.CheckHealthResult{
@@ -422,17 +399,17 @@ func (s *Service) CheckHealth(ctx context.Context, req *backend.CheckHealthReque
 
 	status := backend.HealthStatusOk
 
-	metricsLog, defaultSubscription, metricsStatus := metricCheckHealth(dsInfo)
+	metricsLog, defaultSubscription, metricsStatus := metricCheckHealth(ctx, dsInfo, s.logger)
 	if metricsStatus != backend.HealthStatusOk {
 		status = metricsStatus
 	}
 
-	logAnalyticsLog, logAnalyticsStatus := logAnalyticsCheckHealth(dsInfo, defaultSubscription)
+	logAnalyticsLog, logAnalyticsStatus := logAnalyticsCheckHealth(ctx, dsInfo, defaultSubscription)
 	if logAnalyticsStatus != backend.HealthStatusOk {
 		status = logAnalyticsStatus
 	}
 
-	graphLog, graphStatus := graphLogHealthCheck(dsInfo, defaultSubscription)
+	graphLog, graphStatus := graphLogHealthCheck(ctx, dsInfo, defaultSubscription)
 	if graphStatus != backend.HealthStatusOk {
 		status = graphStatus
 	}

@@ -4,6 +4,7 @@ import React, { RefCallback, useCallback, useState } from 'react';
 import Highlighter from 'react-highlight-words';
 
 import { GrafanaTheme2, SelectableValue, toOption } from '@grafana/data';
+import { selectors } from '@grafana/e2e-selectors';
 import { EditorField, EditorFieldGroup } from '@grafana/experimental';
 import { config } from '@grafana/runtime';
 import {
@@ -57,7 +58,7 @@ export function MetricSelect({
 }: Props) {
   const styles = useStyles2(getStyles);
   const [state, setState] = useState<{
-    metrics?: Array<SelectableValue<any>>;
+    metrics?: SelectableValue[];
     isLoading?: boolean;
     metricsModalOpen?: boolean;
     initialMetrics?: string[];
@@ -75,7 +76,7 @@ export function MetricSelect({
   ];
 
   const customFilterOption = useCallback(
-    (option: SelectableValue<any>, searchQuery: string) => {
+    (option: SelectableValue, searchQuery: string) => {
       const label = option.label ?? option.value;
       if (!label) {
         return false;
@@ -103,7 +104,7 @@ export function MetricSelect({
   );
 
   const formatOptionLabel = useCallback(
-    (option: SelectableValue<any>, meta: FormatOptionLabelMeta<any>) => {
+    (option: SelectableValue, meta: FormatOptionLabelMeta<any>) => {
       // For newly created custom value we don't want to add highlight
       if (option['__isNew__']) {
         return option.label;
@@ -188,6 +189,7 @@ export function MetricSelect({
           {...props.innerProps}
           ref={props.innerRef}
           className={`${styles.customOptionWidth} metric-encyclopedia-open`}
+          aria-label="Select option"
           onKeyDown={(e) => {
             // if there is no metric and the m.e. is enabled, open the modal
             if (e.code === 'Enter') {
@@ -259,6 +261,7 @@ export function MetricSelect({
   const asyncSelect = () => {
     return (
       <AsyncSelect
+        data-testid={selectors.components.DataSource.Prometheus.queryEditor.builder.metricSelect}
         isClearable={variableEditor ? true : false}
         inputId="prometheus-metric-select"
         className={styles.select}

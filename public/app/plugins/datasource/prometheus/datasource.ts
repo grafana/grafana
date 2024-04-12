@@ -1,4 +1,4 @@
-import { cloneDeep, defaults } from 'lodash';
+import { defaults } from 'lodash';
 import { lastValueFrom, Observable, throwError } from 'rxjs';
 import { map, tap } from 'rxjs/operators';
 import semver from 'semver/preload';
@@ -30,6 +30,7 @@ import {
 import {
   BackendDataSourceResponse,
   BackendSrvRequest,
+  config,
   DataSourceWithBackend,
   FetchResponse,
   getBackendSrv,
@@ -41,7 +42,7 @@ import {
 
 import { addLabelToQuery } from './add_label_to_query';
 import { AnnotationQueryEditor } from './components/AnnotationQueryEditor';
-import PrometheusLanguageProvider from './language_provider';
+import PrometheusLanguageProvider, { SUGGESTIONS_LIMIT } from './language_provider';
 import {
   expandRecordingRules,
   getClientCacheDurationInMinutes,
@@ -96,6 +97,7 @@ export class PrometheusDatasource
   exemplarsAvailable: boolean;
   cacheLevel: PrometheusCacheLevel;
   cache: QueryCache<PromQuery>;
+  metricNamesAutocompleteSuggestionLimit: number;
 
   constructor(
     instanceSettings: DataSourceInstanceSettings<PromOptions>,
@@ -126,6 +128,8 @@ export class PrometheusDatasource
     this.variables = new PrometheusVariableSupport(this, this.templateSrv);
     this.exemplarsAvailable = true;
     this.cacheLevel = instanceSettings.jsonData.cacheLevel ?? PrometheusCacheLevel.Low;
+    this.metricNamesAutocompleteSuggestionLimit =
+      instanceSettings.jsonData.codeModeMetricNamesSuggestionLimit ?? SUGGESTIONS_LIMIT;
 
     this.cache = new QueryCache({
       getTargetSignature: this.getPrometheusTargetSignature.bind(this),
@@ -188,9 +192,9 @@ export class PrometheusDatasource
   }
 
   _isDatasourceVersionGreaterOrEqualTo(targetVersion: string, targetFlavor: PromApplication): boolean {
-    // User hasn't configured flavor/version yet, default behavior is to not support features that require version configuration when not provided
+    // User hasn't configured flavor/version yet, default behavior is to support labels match api support
     if (!this.datasourceConfigurationPrometheusVersion || !this.datasourceConfigurationPrometheusFlavor) {
-      return false;
+      return true;
     }
 
     if (targetFlavor !== this.datasourceConfigurationPrometheusFlavor) {
@@ -363,6 +367,11 @@ export class PrometheusDatasource
       // We need to pass utcOffsetSec to backend to calculate aligned range
       utcOffsetSec: request.range.to.utcOffset() * 60,
     };
+
+    if (config.featureToggles.promQLScope) {
+      processedTarget.scope = request.scope;
+    }
+
     if (target.instant && target.range) {
       // We have query type "Both" selected
       // We should send separate queries with different refId
@@ -668,7 +677,7 @@ export class PrometheusDatasource
   // this is used to get label keys, a.k.a label names
   // it is used in metric_find_query.ts
   // and in Tempo here grafana/public/app/plugins/datasource/tempo/QueryEditor/ServiceGraphSection.tsx
-  async getTagKeys(options: DataSourceGetTagKeysOptions): Promise<MetricFindValue[]> {
+  async getTagKeys(options: DataSourceGetTagKeysOptions<PromQuery>): Promise<MetricFindValue[]> {
     if (!options || options.filters.length === 0) {
       await this.languageProvider.fetchLabels(options.timeRange);
       return this.languageProvider.getLabelKeys().map((k) => ({ value: k, text: k }));
@@ -681,13 +690,7 @@ export class PrometheusDatasource
     }));
     const expr = promQueryModeller.renderLabels(labelFilters);
 
-    let labelsIndex: Record<string, string[]>;
-
-    if (this.hasLabelsMatchAPISupport()) {
-      labelsIndex = await this.languageProvider.fetchSeriesLabelsMatch(expr);
-    } else {
-      labelsIndex = await this.languageProvider.fetchSeriesLabels(expr);
-    }
+    let labelsIndex: Record<string, string[]> = await this.languageProvider.fetchLabelsWithMatch(expr);
 
     // filter out already used labels
     return Object.keys(labelsIndex)
@@ -696,7 +699,7 @@ export class PrometheusDatasource
   }
 
   // By implementing getTagKeys and getTagValues we add ad-hoc filters functionality
-  async getTagValues(options: DataSourceGetTagValuesOptions) {
+  async getTagValues(options: DataSourceGetTagValuesOptions<PromQuery>) {
     const labelFilters: QueryBuilderLabelFilter[] = options.filters.map((f) => ({
       label: f.key,
       value: f.value,
@@ -706,10 +709,12 @@ export class PrometheusDatasource
     const expr = promQueryModeller.renderLabels(labelFilters);
 
     if (this.hasLabelsMatchAPISupport()) {
-      return (await this.languageProvider.fetchSeriesValuesWithMatch(options.key, expr)).map((v) => ({
-        value: v,
-        text: v,
-      }));
+      return (await this.languageProvider.fetchSeriesValuesWithMatch(options.key, expr, options.timeRange)).map(
+        (v) => ({
+          value: v,
+          text: v,
+        })
+      );
     }
 
     const params = this.getTimeRangeParams(options.timeRange ?? getDefaultTimeRange());
@@ -740,7 +745,7 @@ export class PrometheusDatasource
     return expandedQueries;
   }
 
-  getQueryHints(query: PromQuery, result: any[]) {
+  getQueryHints(query: PromQuery, result: unknown[]) {
     return getQueryHints(query.expr ?? '', result, this);
   }
 
@@ -860,7 +865,7 @@ export class PrometheusDatasource
       return expr;
     }
 
-    const finalQuery = filters.reduce((acc: string, filter: { key?: any; operator?: any; value?: any }) => {
+    const finalQuery = filters.reduce((acc, filter) => {
       const { key, operator } = filter;
       let { value } = filter;
       if (operator === '=~' || operator === '!~') {
@@ -881,7 +886,7 @@ export class PrometheusDatasource
 
   // Used when running queries through backend
   applyTemplateVariables(target: PromQuery, scopedVars: ScopedVars, filters?: AdHocVariableFilter[]) {
-    const variables = cloneDeep(scopedVars);
+    const variables = { ...scopedVars };
 
     // We want to interpolate these variables on backend.
     // The pre-calculated values are replaced withe the variable strings.
@@ -1009,10 +1014,10 @@ export function extractRuleMappingFromGroups(groups: any[]) {
 // NOTE: these two functions are very similar to the escapeLabelValueIn* functions
 // in language_utils.ts, but they are not exactly the same algorithm, and we found
 // no way to reuse one in the another or vice versa.
-export function prometheusRegularEscape(value: unknown) {
+export function prometheusRegularEscape<T>(value: T) {
   return typeof value === 'string' ? value.replace(/\\/g, '\\\\').replace(/'/g, "\\\\'") : value;
 }
 
-export function prometheusSpecialRegexEscape(value: unknown) {
+export function prometheusSpecialRegexEscape<T>(value: T) {
   return typeof value === 'string' ? value.replace(/\\/g, '\\\\\\\\').replace(/[$^*{}\[\]\'+?.()|]/g, '\\\\$&') : value;
 }
