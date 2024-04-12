@@ -168,8 +168,8 @@ export function useGetEssentialsConfiguration() {
         description: 'Configure alerting',
         steps: [
           {
-            title: 'Contact point ready',
-            description: 'tbd',
+            title: 'Update default email contact point',
+            description: 'Make sure that you add a valid email to the existing default email contact point.',
             button: {
               type: 'openLink',
               url: '/alerting/notifications',
@@ -179,7 +179,7 @@ export function useGetEssentialsConfiguration() {
           },
           {
             title: 'Create alert rule',
-            description: 'tbd',
+            description: 'Create an alert rule to monitor your system.',
             button: {
               type: 'openLink',
               url: '/alerting/new',
@@ -189,7 +189,7 @@ export function useGetEssentialsConfiguration() {
           },
           {
             title: 'Create OnCall contact point',
-            description: 'tbd',
+            description: 'OnCall allows precisely manage your on-call strategy and use multiple channels to deliver',
             button: {
               type: 'openLink',
               url: '/alerting/notifications',
