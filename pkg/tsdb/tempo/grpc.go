@@ -91,9 +91,20 @@ func getDialOpts(ctx context.Context, settings backend.DataSourceInstanceSetting
 		}
 		logger.Debug("gRPC dialer instantiated. Appending gRPC dialer to dial options")
 		dialOps = append(dialOps, grpc.WithContextDialer(func(ctx context.Context, host string) (net.Conn, error) {
-			// TODO Should we check context for canceled or timeout?
+			select {
+				case <-ctx.Done():
+					logger.Warn("Context has been canceled, this should not happen. Proceeding with dialing anyway")
+				default:
+					logger.Debug("Context is still valid, proceeding with dialing")
+			}
+
 			logger.Debug("Dialing secure socks proxy", "host", host)
-			return dialer.Dial("tcp", host)
+			conn, err := dialer.Dial("tcp", host)
+			if err != nil {
+				logger.Error("Error dialing secure socks proxy. Returning connection anyway", "error", err)
+			}
+			
+			return conn, err
 		}))
 	}
 
