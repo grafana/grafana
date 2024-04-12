@@ -35,6 +35,8 @@ describe('LogsQueryEditor.LogsManagement', () => {
       expect.objectContaining({
         azureLogAnalytics: expect.objectContaining({
           basicLogsQuery: true,
+          query: '',
+          dashboardTime: true,
         }),
       })
     );
@@ -62,6 +64,7 @@ describe('LogsQueryEditor.LogsManagement', () => {
       expect.objectContaining({
         azureLogAnalytics: expect.objectContaining({
           basicLogsQuery: false,
+          query: '',
         }),
       })
     );
@@ -90,6 +93,7 @@ describe('LogsQueryEditor.LogsManagement', () => {
         azureLogAnalytics: expect.objectContaining({
           basicLogsQuery: true,
           query: '',
+          dashboardTime: true,
         }),
       })
     );
