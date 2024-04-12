@@ -43,8 +43,8 @@
     "@svgr/plugin-prettier": "^8.1.0",
     "@svgr/plugin-svgo": "^8.1.0",
     "@types/node": "20.12.7",
-    "@types/react": "18.2.75",
-    "@types/react-dom": "18.2.24",
+    "@types/react": "18.2.77",
+    "@types/react-dom": "18.2.25",
     "esbuild": "0.18.12",
     "prettier": "3.2.5",
     "react": "18.2.0",
@@ -55,7 +55,7 @@
     "rollup-plugin-esbuild": "5.0.0",
     "rollup-plugin-node-externals": "5.0.0",
     "ts-node": "10.9.2",
-    "typescript": "5.3.3"
+    "typescript": "5.4.5"
   },
   "peerDependencies": {
     "react": "^17.0.0 || ^18.0.0",
