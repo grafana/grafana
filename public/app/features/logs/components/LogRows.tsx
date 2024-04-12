@@ -190,6 +190,17 @@ class UnThemedLogRows extends PureComponent<Props, State> {
     this.updateLogRows();
   }
 
+  /**
+   * When settings change, we need the virtualized list to re-render. Passing a new array to the list is not enough to trigger it.
+   */
+  virtualizedListKey = () => {
+    const reRenderTriggers = ['dedupStrategy', 'logsSortOrder', 'showLabels', 'showTime', 'wrapLogMessage', 'prettifyLogMessage'];
+    return reRenderTriggers.reduce((key: string, attr: string) => {
+      // @ts-expect-error
+      return `${key}${this.props[attr].toString()}`
+    }, '');
+  }
+
   updateLogRows() {
     const { deduplicatedRows, logRows, dedupStrategy, logsSortOrder } = this.props;
     const dedupedRows = deduplicatedRows ? deduplicatedRows : logRows;
@@ -226,7 +237,6 @@ class UnThemedLogRows extends PureComponent<Props, State> {
   Row = ({ getRows, rows, showDuplicates, styles }: { getRows(): LogRowModel[], rows: LogRowModel[], showDuplicates: boolean, styles: ReturnType<typeof getLogRowStyles> }, { index, style }: { index: number, style: CSSProperties }) => {
     return <LogRow
       style={style}
-      key={this.state.keyMaker.getKey(rows[index].uid)}
       getRows={getRows}
       row={rows[index]}
       showDuplicates={showDuplicates}
@@ -301,6 +311,7 @@ class UnThemedLogRows extends PureComponent<Props, State> {
         )}
         <table className={cx(styles.logsRowsTable, this.props.overflowingContent ? '' : styles.logsRowsTableContain)}>
           <VariableSizeList
+            key={this.virtualizedListKey()}
             height={height}
             itemCount={orderedRows?.length || 0}
             itemSize={this.estimateRowHeight.bind(this, orderedRows)}
