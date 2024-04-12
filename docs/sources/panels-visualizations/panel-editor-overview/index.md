@@ -33,10 +33,6 @@ In the panel editor, you can update all the elements of a visualization includin
 
 ![Panel editor](/media/docs/grafana/panels-visualizations/screenshot-panel-editor-view.png)
 
-To add a panel in a new dashboard click **+ Add visualization** in the middle of the dashboard. To add a panel to an existing dashboard, click **Add** in the dashboard header and select **Visualization** in the drop-down:
-
-![Add dropdown](/media/docs/grafana/dashboards/screenshot-add-dropdown-10.0.png)
-
 This following sections describe the areas of the Grafana panel editor.
 
 ## Panel header

@@ -84,6 +84,16 @@ By hovering over a panel with the mouse you can use some shortcuts that will tar
 - `pr`: Remove Panel
 - `pl`: Toggle panel legend
 
+## Add a panel
+
+To add a panel in a new dashboard click **+ Add visualization** in the middle of the dashboard:
+
+![Empty dashboard state](/media/docs/grafana/dashboards/empty-dashboard-10.2.png)
+
+To add a panel to an existing dashboard, click **Add** in the dashboard header and select **Visualization** in the drop-down:
+
+![Add dropdown](/media/docs/grafana/dashboards/screenshot-add-dropdown-10.0.png)
+
 ## Panel configuration
 
 To configure panels, refer to the following subtopics:
