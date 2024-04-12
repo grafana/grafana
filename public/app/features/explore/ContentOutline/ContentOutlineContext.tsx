@@ -56,6 +56,9 @@ export function ContentOutlineContextProvider({ children, refreshDependencies }:
           });
         }
 
+        // remove children from parentlessItemsRef
+        parentlessItemsRef.current[outlineItem.panelId] = [];
+
         const updatedItems = [
           ...prevItems,
           {
@@ -151,23 +154,16 @@ export function ContentOutlineContextProvider({ children, refreshDependencies }:
   }, []);
 
   const unregister = useCallback((id: string) => {
-    setOutlineItems((prevItems) => {
-      const isParentItem = prevItems.find((item) => item.id === id && item.level === 'root');
-
-      if (isParentItem) {
-        // if this is a parent item, remove all children from parentlessItemsRef
-        parentlessItemsRef.current[isParentItem.panelId] = [];
-      }
-
-      return prevItems
+    setOutlineItems((prevItems) =>
+      prevItems
         .filter((item) => item.id !== id)
         .map((item) => {
           if (item.children) {
             item.children = item.children.filter((child) => child.id !== id);
           }
           return item;
-        });
-    });
+        })
+    );
   }, []);
 
   const updateOutlineItems = useCallback((newItems: ContentOutlineItemContextProps[]) => {
