@@ -241,22 +241,22 @@ export class PanelStateWrapper extends PureComponent<Props, State> {
     const receiveMessage = (event: any) => {
       // receive variables from parent window
       if (event.data.variables != undefined) {
-        const Change = event.data.variables;
-        const Srv = getTemplateSrv();
-        const Variables = Srv.getVariables();
-        const NewVariables: TypedVariableModel[] = [];
-        let Tmp: TypedVariableModel;
-        let NewV: TypedVariableModel;
-        Change.forEach((c) => {
-          Tmp = Variables.find((v) => v.name === c.key);
-          if (Tmp != undefined) {
-            NewV = { ...Tmp };
-            NewV.current = { ...Tmp.current, value: c.value };
-            NewVariables.push(NewV);
+        const change = event.data.variables;
+        const srv = getTemplateSrv();
+        const variables = srv.getVariables();
+        const newVariables: TypedVariableModel[] = [];
+        let tmp: TypedVariableModel;
+        let newV: TypedVariableModel;
+        change.forEach((c) => {
+          tmp = variables.find((v) => v.name === c.key);
+          if (tmp != undefined) {
+            newV = { ...tmp };
+            newV.current = { ...tmp.current, value: c.value };
+            newVariables.push(newV);
           }
         });
-        if (NewVariables.length > 0) {
-          Srv.init(NewVariables);
+        if (newVariables.length > 0) {
+          srv.init(newVariables);
           this.onRefresh();
         }
       }
