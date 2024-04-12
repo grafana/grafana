@@ -12,7 +12,6 @@ import (
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/infra/metrics"
 	"github.com/grafana/grafana/pkg/infra/network"
-	"github.com/grafana/grafana/pkg/login/social"
 	"github.com/grafana/grafana/pkg/middleware/cookies"
 	"github.com/grafana/grafana/pkg/services/auth"
 	"github.com/grafana/grafana/pkg/services/auth/identity"
@@ -333,7 +332,7 @@ func (hs *HTTPServer) samlEnabled() bool {
 		return false
 	}
 
-	return hs.authnService.IsClientEnabled(social.SAMLProviderName)
+	return hs.authnService.IsClientEnabled(authn.ClientSAML)
 }
 
 func (hs *HTTPServer) samlName() string {
