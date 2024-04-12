@@ -215,7 +215,8 @@ export class GrafanaApp {
       });
 
       if (contextSrv.user.orgRole !== '') {
-        const criticalAppIds = ['cloud-home-app'];
+        const persistedCriticalAppIds = window.localStorage.getItem('____CRITICAL_APP_IDS');
+        const criticalAppIds = persistedCriticalAppIds ?? ['cloud-home-app'];
         const criticalApps = Object.values(config.apps).filter((app) => criticalAppIds.includes(app.id));
         const normalApps = Object.values(config.apps).filter((app) => !criticalAppIds.includes(app.id));
 
