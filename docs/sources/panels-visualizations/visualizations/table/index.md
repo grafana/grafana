@@ -35,6 +35,8 @@ The following video provides a visual walkthrough of the options you can set in 
 
 {{< youtube id="PCY7O8EJeJY" >}}
 
+{{< docs/play title="Table Visualizations in Grafana" url="https://play.grafana.org/d/OhR1ID6Mk/" >}}
+
 ## Annotation and alert support
 
 Annotations and alerts are not currently supported in tables.
