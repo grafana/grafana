@@ -4,6 +4,7 @@
 
 ### Features and enhancements
 
+- **EmbedPanel:** add a postMessage to embedded panel. [#86012] (https://github.com/grafana/grafana/pull/86012), [@Mochi998](https://github.com/Mochi009)
 - **Alerting:** Editor role can access all provisioning API. [#85022](https://github.com/grafana/grafana/issues/85022), [@yuri-tceretian](https://github.com/yuri-tceretian)
 - **CloudWatch:** Add additional AWS/SageMaker metrics. [#85009](https://github.com/grafana/grafana/issues/85009), [@tristanburgess](https://github.com/tristanburgess)
 - **SQLStore:** Enable migration locking by default. [#84983](https://github.com/grafana/grafana/issues/84983), [@papagian](https://github.com/papagian)
