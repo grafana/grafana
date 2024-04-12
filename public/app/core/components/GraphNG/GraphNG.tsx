@@ -83,8 +83,10 @@ export interface GraphNGState {
   config?: UPlotConfigBuilder;
 }
 
-const matchXDefault = fieldMatchers.get(FieldMatcherID.firstTimeField).get({});
-const matchYDefault = fieldMatchers.get(FieldMatcherID.byTypes).get(new Set([FieldType.number, FieldType.enum]));
+const defaultMatchers = {
+  x: fieldMatchers.get(FieldMatcherID.firstTimeField).get({}),
+  y: fieldMatchers.get(FieldMatcherID.byTypes).get(new Set([FieldType.number, FieldType.enum])),
+};
 
 /**
  * "Time as X" core component, expects ascending x
@@ -107,10 +109,7 @@ export class GraphNG extends Component<GraphNGProps, GraphNGState> {
 
     const {
       frames,
-      fields = {
-        x: matchXDefault,
-        y: matchYDefault,
-      },
+      fields = defaultMatchers,
       preparePlotFrame,
       replaceVariables,
       dataLinkPostProcessor,
