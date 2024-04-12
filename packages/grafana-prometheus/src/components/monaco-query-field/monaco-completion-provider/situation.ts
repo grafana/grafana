@@ -471,12 +471,12 @@ export function getSituation(text: string, pos: number): Situation | null {
     };
   }
 
-  /*
-    PromQL
-    Expr
-    VectorSelector
-    LabelMatchers
-    */
+  /**
+   PromQL
+   Expr
+   VectorSelector
+   LabelMatchers
+   */
   const tree = parser.parse(text);
 
   // if the tree contains error, it is very probable that

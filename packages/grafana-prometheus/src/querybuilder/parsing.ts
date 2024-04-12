@@ -1,4 +1,4 @@
-import {SyntaxNode} from '@lezer/common';
+import { SyntaxNode } from '@lezer/common';
 import {
   AggregateExpr,
   AggregateModifier,
@@ -23,7 +23,7 @@ import {
   Without,
 } from '@prometheus-io/lezer-promql';
 
-import {binaryScalarOperatorToOperatorName} from './binaryScalarOperations';
+import { binaryScalarOperatorToOperatorName } from './binaryScalarOperations';
 import {
   ErrorId,
   getAllByType,
@@ -33,8 +33,8 @@ import {
   makeError,
   replaceVariables,
 } from './parsingUtils';
-import {QueryBuilderLabelFilter, QueryBuilderOperation} from './shared/types';
-import {PromVisualQuery, PromVisualQueryBinary} from './types';
+import { QueryBuilderLabelFilter, QueryBuilderOperation } from './shared/types';
+import { PromVisualQuery, PromVisualQueryBinary } from './types';
 
 /**
  * Parses a PromQL query into a visual query model.
