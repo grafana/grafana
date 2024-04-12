@@ -2090,6 +2090,18 @@
         "frontend": true,
         "allowSelfServe": true
       }
+    },
+    {
+      "metadata": {
+        "name": "actionSets",
+        "resourceVersion": "1712934405418",
+        "creationTimestamp": "2024-04-12T15:06:45Z"
+      },
+      "spec": {
+        "description": "Introduces action sets for resource permissions",
+        "stage": "experimental",
+        "codeowner": "@grafana/identity-access-team"
+      }
     }
   ]
 }

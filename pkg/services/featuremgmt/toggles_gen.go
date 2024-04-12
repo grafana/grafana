@@ -650,4 +650,8 @@ const (
 	// FlagCloudWatchNewLabelParsing
 	// Updates CloudWatch label parsing to be more accurate
 	FlagCloudWatchNewLabelParsing = "cloudWatchNewLabelParsing"
+
+	// FlagActionSets
+	// Introduces action sets for resource permissions
+	FlagActionSets = "actionSets"
 )
