@@ -97,6 +97,7 @@ interface Context {
   errors: ParsingError[];
 }
 
+// TODO find a better approach for grafana global variables
 function isValidPromQLMinusGrafanaGlobalVariables(expr: string) {
   const context: Context = {
     query: {
@@ -195,6 +196,7 @@ export function handleExpression(expr: string, node: SyntaxNode, context: Contex
   }
 }
 
+// TODO check if we still need this
 function isIntervalVariableError(node: SyntaxNode) {
   return node.prevSibling?.firstChild?.type.id === VectorSelector;
 }
@@ -293,8 +295,7 @@ function handleAggregation(expr: string, node: SyntaxNode, context: Context) {
 /**
  * Handle (probably) all types of arguments that function or aggregation can have.
  *
- *  FunctionCallArgs are nested bit weirdly basically its [firstArg, ...rest] where rest is again FunctionCallArgs so
- *  we cannot just get all the children and iterate them as arguments we have to again recursively traverse through
+ * We cannot just get all the children and iterate them as arguments we have to again recursively traverse through
  *  them.
  *
  * @param expr
@@ -307,14 +308,10 @@ function updateFunctionArgs(expr: string, node: SyntaxNode | null, context: Cont
     return;
   }
   switch (node.type.id) {
-    // In case we have an expression we don't know what kind so we have to look at the child as it can be anything.
-      // case Expr:
-    // FunctionCallArgs are nested bit weirdly as mentioned so we have to go one deeper in this case.
     case FunctionCallBody: {
       let child = node.firstChild;
 
       while (child) {
-        // const callArgsExprChild = child.getChild('Expr');
         let binaryExpressionWithinFunctionArgs: SyntaxNode | null;
         if (child?.type.id === BinaryExpr) {
           binaryExpressionWithinFunctionArgs = child;
@@ -333,7 +330,6 @@ function updateFunctionArgs(expr: string, node: SyntaxNode | null, context: Cont
         updateFunctionArgs(expr, child, context, op);
         child = child.nextSibling;
       }
-
       break;
     }
 
@@ -421,6 +417,7 @@ function handleBinary(expr: string, node: SyntaxNode, context: Context) {
   }
 }
 
+// TODO revisit this function.
 function getBinaryModifier(
   expr: string,
   node: SyntaxNode | null
