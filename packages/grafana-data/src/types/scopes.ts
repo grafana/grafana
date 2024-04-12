@@ -4,10 +4,12 @@ export interface ScopeDashboard {
   url: string;
 }
 
+export type ScopeFilterOperator = 'equals' | 'not-equals' | 'regex-match' | 'regex-not-match';
+
 export interface ScopeFilter {
   key: string;
   value: string;
-  operator: string;
+  operator: ScopeFilterOperator;
 }
 
 export interface Scope {

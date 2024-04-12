@@ -1,4 +1,4 @@
-import { Scope } from '@grafana/data';
+import { Scope, ScopeFilter } from '@grafana/data';
 import * as common from '@grafana/schema';
 
 export enum QueryEditorMode {
@@ -43,4 +43,5 @@ export interface Prometheus extends common.DataQuery {
    */
   range?: boolean;
   scope?: Scope;
+  adhocFilters?: ScopeFilter[];
 }
