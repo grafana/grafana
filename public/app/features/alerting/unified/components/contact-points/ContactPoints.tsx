@@ -81,7 +81,7 @@ const useTabQueryParam = () => {
     return queryParam || ActiveTab.ContactPoints;
   }, [queryParams]);
 
-  const setParam = (tab: string) => setQueryParams({ tab });
+  const setParam = (tab: ActiveTab) => setQueryParams({ tab });
 
   return [param, setParam] as const;
 };
