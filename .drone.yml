@@ -658,6 +658,7 @@ steps:
     repo:
     - grafana/grafana
 - commands:
+  - sleep 10s
   - yarn playwright install --with-deps chromium
   - yarn e2e:playwright
   depends_on:
@@ -666,7 +667,7 @@ steps:
     HOST: grafana-server
     PORT: "3001"
     PROV_DIR: /grafana/scripts/grafana-server/tmp/conf/provisioning
-  image: node:20.9.0-alpine
+  image: ubuntu:22.04
   name: playwright-plugin-e2e
 - commands:
   - apt-get update
@@ -1988,6 +1989,7 @@ steps:
     repo:
     - grafana/grafana
 - commands:
+  - sleep 10s
   - yarn playwright install --with-deps chromium
   - yarn e2e:playwright
   depends_on:
@@ -1996,7 +1998,7 @@ steps:
     HOST: grafana-server
     PORT: "3001"
     PROV_DIR: /grafana/scripts/grafana-server/tmp/conf/provisioning
-  image: node:20.9.0-alpine
+  image: ubuntu:22.04
   name: playwright-plugin-e2e
 - commands:
   - apt-get update
@@ -4921,6 +4923,6 @@ kind: secret
 name: gcr_credentials
 ---
 kind: signature
-hmac: fdcec80cd78174e052bce42f0b22ccae395f50237993b79691c235131e6e76ea
+hmac: febfe0ee31283f60ad13dec0eddf17b5493e8cff0758b9322b2708eae5e39145
 
 ...
