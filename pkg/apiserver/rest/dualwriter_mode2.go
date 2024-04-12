@@ -124,6 +124,22 @@ func (d *DualWriterMode2) List(ctx context.Context, options *metainternalversion
 	return ll, nil
 }
 
+// DeleteCollection overrides the behavior of the generic DualWriter and deletes from both LegacyStorage and Storage.
+func (d *DualWriterMode2) DeleteCollection(ctx context.Context, deleteValidation rest.ValidateObjectFunc, options *metav1.DeleteOptions, listOptions *metainternalversion.ListOptions) (runtime.Object, error) {
+	legacy, ok := d.Legacy.(rest.CollectionDeleter)
+	if !ok {
+		return nil, errDualWriterCollectionDeleterMissing
+	}
+
+	// #TODO: figure out how to handle partial deletions
+	deleted, err := legacy.DeleteCollection(ctx, deleteValidation, options, listOptions)
+	if err != nil {
+		klog.FromContext(ctx).Error(err, "failed to delete collection successfully from Storage", "deletedObjects", deleted)
+	}
+
+	return d.Storage.DeleteCollection(ctx, deleteValidation, options, listOptions)
+}
+
 func enrichObject(orig, copy runtime.Object) (runtime.Object, error) {
 	accessorC, err := meta.Accessor(copy)
 	if err != nil {
