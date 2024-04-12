@@ -45,7 +45,7 @@
     "rollup-plugin-dts": "^5.0.0",
     "rollup-plugin-esbuild": "5.0.0",
     "rollup-plugin-node-externals": "^5.0.0",
-    "typescript": "5.4.3"
+    "typescript": "5.4.5"
   },
   "dependencies": {
     "tslib": "2.6.2"
