@@ -1781,11 +1781,11 @@ Enable or disable the Query history. Default is `enabled`.
 
 ## [short_links]
 
-Configures Query history in Explore.
+Configures settings around the short link feature
 
 ### expire_time
 
-Short links which are never accessed will be deleted as cleanup. Value is in days. Default is `7` days.
+Short links which are never accessed are considered expired or stale, and will be deleted as cleanup. Set the expiration time in days. Default is `7` days.
 
 <hr>
 
