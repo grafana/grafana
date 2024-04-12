@@ -25,6 +25,11 @@
       "user": "Utilisateur"
     }
   },
+  "api-keys": {
+    "empty-state": {
+      "message": ""
+    }
+  },
   "bouncing-loader": {
     "label": "Chargement"
   },
@@ -107,6 +112,9 @@
       "change-theme": "Modifier le thème...",
       "dark-theme": "Sombre",
       "light-theme": "Clair"
+    },
+    "empty-state": {
+      "message": ""
     },
     "search-box": {
       "placeholder": "Rechercher ou aller à..."
@@ -417,6 +425,9 @@
   "data-sources": {
     "datasource-add-button": {
       "label": "Ajouter une nouvelle source de données"
+    },
+    "empty-state": {
+      "message": ""
     }
   },
   "explore": {
@@ -714,6 +725,8 @@
       "connect": "Se connecter à cette pile",
       "connecting": "Connexion à cette pile…",
       "title": "Se connecter à une pile cloud",
+      "token-error-description": "",
+      "token-error-title": "",
       "token-required-error": "Vous devez renseigner le jeton de migration"
     },
     "cta": {
@@ -1227,6 +1240,11 @@
       "message": ""
     }
   },
+  "plugins": {
+    "empty-state": {
+      "message": ""
+    }
+  },
   "profile": {
     "change-password": {
       "cancel-button": "Annuler",
@@ -1429,6 +1447,11 @@
       "placeholder": "Rechercher des tableaux de bord"
     }
   },
+  "service-accounts": {
+    "empty-state": {
+      "message": ""
+    }
+  },
   "share-modal": {
     "dashboard": {
       "title": "Partager"
@@ -1557,6 +1580,11 @@
     "no-tags": "Aucune étiquette trouvée",
     "placeholder": "Filtrer par étiquette"
   },
+  "teams": {
+    "empty-state": {
+      "message": ""
+    }
+  },
   "time-picker": {
     "absolute": {
       "recent-title": "Périodes absolues récemment utilisées",
@@ -1649,6 +1677,11 @@
   },
   "user-sessions": {
     "loading": "Chargement des sessions..."
+  },
+  "users": {
+    "empty-state": {
+      "message": ""
+    }
   },
   "users-access-list": {
     "tabs": {
