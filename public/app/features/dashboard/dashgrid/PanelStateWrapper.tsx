@@ -236,7 +236,10 @@ export class PanelStateWrapper extends PureComponent<Props, State> {
 
     // Listen for live timer events
     liveTimer.listen(this);
+
+    // receive message from parent window
     const receiveMessage = (event: any) => {
+      // receive variables from parent window
       if (event.data.variables != undefined) {
         const Change = event.data.variables;
         const Srv = getTemplateSrv();
@@ -257,6 +260,7 @@ export class PanelStateWrapper extends PureComponent<Props, State> {
           this.onRefresh();
         }
       }
+      // receive timeRange from parent window
       if (event.data.timeRange != undefined) {
         this.onChangeTimeRange(event.data.timeRange);
       }

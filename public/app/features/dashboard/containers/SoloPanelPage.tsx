@@ -84,6 +84,7 @@ export class SoloPanelPage extends Component<Props, State> {
       dashboard.initViewPanel(panel);
     }
 
+    // Here we are checking if the panelId has changed and if so we need to update the panel
     if (!prevProps.queryParams || prevProps.queryParams.panelId !== queryParams.panelId) {
       const panel = dashboard.getPanelByUrlId(this.getPanelId());
 

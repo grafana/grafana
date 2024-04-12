@@ -43,6 +43,7 @@ export function GrafanaRoute(props: Props) {
     navigationLogger('GrafanaRoute', false, 'Updated', props);
   });
 
+  // receive panelId from parent window
   useEffect(() => {
     const receiveMessage = (event: any) => {
       if (event.data.panelId != undefined) {
