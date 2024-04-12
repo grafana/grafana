@@ -88,7 +88,9 @@ describe('AlertGroups', () => {
 
     expect(groups).toHaveLength(2);
     expect(groups[0]).toHaveTextContent('No grouping');
-    expect(groups[1]).toHaveTextContent('severitywarning regionUS-Central');
+    const labels = byTestId('label-value').getAll();
+    expect(labels[0]).toHaveTextContent('severitywarning');
+    expect(labels[1]).toHaveTextContent('regionUS-Central');
 
     await userEvent.click(ui.groupCollapseToggle.get(groups[0]));
     expect(ui.groupTable.get()).toBeDefined();

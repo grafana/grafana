@@ -112,8 +112,8 @@ describe('LabelsField with suggestions', () => {
   it('Should add new key-value dropdowns', async () => {
     renderLabelsWithSuggestions();
 
-    await waitFor(() => expect(screen.getByText('Add label')).toBeVisible());
-    await userEvent.click(screen.getByText('Add label'));
+    await waitFor(() => expect(screen.getByText('Add more')).toBeVisible());
+    await userEvent.click(screen.getByText('Add more'));
 
     expect(screen.getAllByTestId('alertlabel-key-picker')).toHaveLength(3);
 
@@ -131,8 +131,8 @@ describe('LabelsField with suggestions', () => {
   it('Should be able to write new keys and values using the dropdowns', async () => {
     renderLabelsWithSuggestions();
 
-    await waitFor(() => expect(screen.getByText('Add label')).toBeVisible());
-    await userEvent.click(screen.getByText('Add label'));
+    await waitFor(() => expect(screen.getByText('Add more')).toBeVisible());
+    await userEvent.click(screen.getByText('Add more'));
 
     const LastKeyDropdown = within(screen.getByTestId('labelsInSubform-key-2'));
     const LastValueDropdown = within(screen.getByTestId('labelsInSubform-value-2'));

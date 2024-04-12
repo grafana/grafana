@@ -21,7 +21,7 @@ const Label = ({ label, value, icon, color, size = 'md' }: Props) => {
   const ariaLabel = `${label}: ${value}`;
 
   return (
-    <div className={styles.wrapper} role="listitem" aria-label={ariaLabel}>
+    <div className={styles.wrapper} role="listitem" aria-label={ariaLabel} data-testid="label-value">
       <Stack direction="row" gap={0} alignItems="stretch">
         <div className={styles.label}>
           <Stack direction="row" gap={0.5} alignItems="center">
