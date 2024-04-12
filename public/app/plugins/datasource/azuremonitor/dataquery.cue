@@ -117,8 +117,6 @@ composableKinds: DataQuery: {
 					timeColumn?: string
 					// If set to true the query will be run as a basic logs query
 					basicLogsQuery?: bool
-					// Confirms whether per query costs have been acknowledged
-					basicLogsQueryAcknowledged?: bool
 					// Workspace ID. This was removed in Grafana 8, but remains for backwards compat.
 					workspace?: string
 

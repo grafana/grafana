@@ -120,9 +120,6 @@ type AzureLogsQuery struct {
 	// If set to true the query will be run as a basic logs query
 	BasicLogsQuery *bool `json:"basicLogsQuery,omitempty"`
 
-	// Confirms whether per query costs have been acknowledged
-	BasicLogsQueryAcknowledged *bool `json:"basicLogsQueryAcknowledged,omitempty"`
-
 	// If set to true the dashboard time range will be used as a filter for the query. Otherwise the query time ranges will be used. Defaults to false.
 	DashboardTime *bool `json:"dashboardTime,omitempty"`
 

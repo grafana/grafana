@@ -168,10 +168,6 @@ export interface AzureLogsQuery {
    */
   basicLogsQuery?: boolean;
   /**
-   * Confirms whether per query costs have been acknowledged
-   */
-  basicLogsQueryAcknowledged?: boolean;
-  /**
    * If set to true the dashboard time range will be used as a filter for the query. Otherwise the query time ranges will be used. Defaults to false.
    */
   dashboardTime?: boolean;
