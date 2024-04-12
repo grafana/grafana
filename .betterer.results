@@ -1182,9 +1182,6 @@ exports[`better eslint`] = {
       [0, 0, 0, "Do not use any type assertions.", "8"],
       [0, 0, 0, "Do not use any type assertions.", "9"]
     ],
-    "public/app/core/components/Login/LoginPage.tsx:5381": [
-      [0, 0, 0, "\'HorizontalGroup\' import from \'@grafana/ui\' is restricted from being used by a pattern. Use Stack component instead.", "0"]
-    ],
     "public/app/core/components/Login/LoginServiceButtons.tsx:5381": [
       [0, 0, 0, "\'VerticalGroup\' import from \'@grafana/ui\' is restricted from being used by a pattern. Use Stack component instead.", "0"]
     ],
