@@ -100,6 +100,7 @@ export const triangleItem: CanvasElementItem = {
       height: options?.placement?.height ?? 138,
       top: options?.placement?.top,
       left: options?.placement?.left,
+      rotation: options?.placement?.rotation ?? 0,
     },
   }),
 
