@@ -296,6 +296,23 @@ func (e Error) WithMessage(m string) Error {
 	return e
 }
 
+func (e Error) PublicMessage() string {
+	switch e.ErrorCode {
+	case errorCodeSignatureInvalid:
+		return "Invalid plugin signature"
+	case errorCodeSignatureModified:
+		return "Plugin signature does not match"
+	case errorCodeSignatureMissing:
+		return "Plugin signature is missing"
+	case ErrorCodeFailedStart:
+		return "Plugin failed to start"
+	case ErrorAngular:
+		return "Angular plugins are not supported"
+	}
+
+	return "Plugin failed to load"
+}
+
 // Access-Control related definitions
 
 // RoleRegistration stores a role and its assignments to basic roles

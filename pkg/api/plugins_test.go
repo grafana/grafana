@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"io"
 	"net/http"
 	"net/http/httptest"
 	"os"
@@ -38,6 +39,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/org/orgtest"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginaccesscontrol"
+	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginerrs"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginsettings"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginstore"
 	"github.com/grafana/grafana/pkg/services/updatechecker"
@@ -761,6 +763,97 @@ func TestHTTPServer_hasPluginRequestedPermissions(t *testing.T) {
 			hs.hasPluginRequestedPermissions(c, "grafana-test-app")
 
 			assert.Equal(t, tt.warnCount, logger.WarnLogs.Calls)
+		})
+	}
+}
+
+func Test_PluginsSettings(t *testing.T) {
+	pID := "test-datasource"
+	p1 := createPlugin(plugins.JSONData{
+		ID: pID, Type: "datasource", Name: pID,
+		Info: plugins.Info{
+			Version: "1.0.0",
+		}}, plugins.ClassExternal, plugins.NewFakeFS())
+	// p2 := createPlugin(
+	// 	plugins.JSONData{ID: "mysql", Type: "datasource", Name: "MySQL",
+	// 		Info: plugins.Info{
+	// 			Author:      plugins.InfoLink{Name: "Grafana Labs", URL: "https://grafana.com"},
+	// 			Description: "Data source for MySQL databases",
+	// 		}}, plugins.ClassCore, plugins.NewFakeFS())
+
+	pluginRegistry := &fakes.FakePluginRegistry{
+		Store: map[string]*plugins.Plugin{
+			p1.ID: p1,
+		},
+	}
+
+	pluginSettings := pluginsettings.FakePluginSettings{Plugins: map[string]*pluginsettings.DTO{
+		pID: {ID: 0, OrgID: 1, PluginID: pID, PluginVersion: "1.0.0"},
+	}}
+
+	type testCase struct {
+		desc             string
+		expectedCode     int
+		errCode          plugins.ErrorCode
+		expectedSettings dtos.PluginSetting
+		expectedError    string
+	}
+	tcs := []testCase{
+		{
+			desc:         "should only be able to get plugin settings",
+			expectedCode: http.StatusOK,
+			expectedSettings: dtos.PluginSetting{
+				Id:   pID,
+				Name: pID,
+				Type: "datasource",
+				Info: plugins.Info{
+					Version: "1.0.0",
+				},
+				SecureJsonFields: map[string]bool{},
+			},
+		},
+		{
+			desc:          "should return a plugin error",
+			expectedCode:  http.StatusNotFound,
+			errCode:       plugins.ErrorCodeFailedStart,
+			expectedError: "foo",
+		},
+	}
+
+	for _, tc := range tcs {
+		t.Run(tc.desc, func(t *testing.T) {
+			server := SetupAPITestServer(t, func(hs *HTTPServer) {
+				hs.Cfg = setting.NewCfg()
+				hs.PluginSettings = &pluginSettings
+				hs.pluginStore = pluginstore.New(pluginRegistry, &fakes.FakeLoader{})
+				hs.pluginFileStore = filestore.ProvideService(pluginRegistry)
+				errTracker := pluginerrs.ProvideErrorTracker()
+				if tc.errCode != "" {
+					errTracker.Record(context.Background(), &plugins.Error{
+						PluginID:  pID,
+						ErrorCode: tc.errCode,
+					})
+				}
+				hs.pluginErrorResolver = pluginerrs.ProvideStore(errTracker)
+				var err error
+				hs.pluginsUpdateChecker, err = updatechecker.ProvidePluginsService(hs.Cfg, nil, tracing.InitializeTracerForTest())
+				require.NoError(t, err)
+			})
+
+			res, err := server.Send(webtest.RequestWithSignedInUser(server.NewGetRequest("/api/plugins/"+pID+"/settings"), userWithPermissions(1, []ac.Permission{})))
+			require.NoError(t, err)
+			assert.Equal(t, tc.expectedCode, res.StatusCode)
+			if tc.expectedCode == http.StatusOK {
+				var result dtos.PluginSetting
+				require.NoError(t, json.NewDecoder(res.Body).Decode(&result))
+				require.NoError(t, res.Body.Close())
+				assert.Equal(t, tc.expectedSettings, result)
+			} else {
+				result, err := io.ReadAll(res.Body)
+				require.NoError(t, err)
+				require.NoError(t, res.Body.Close())
+				assert.Equal(t, tc.expectedError, string(result))
+			}
 		})
 	}
 }
