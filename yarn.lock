@@ -3534,7 +3534,7 @@ __metadata:
     "@grafana/schema": "workspace:*"
     "@grafana/ui": "workspace:*"
     "@lezer/common": "npm:1.2.1"
-    "@lezer/lr": "npm:1.4.0"
+    "@lezer/lr": "npm:1.3.3"
     "@opentelemetry/api": "npm:1.8.0"
     "@opentelemetry/exporter-collector": "npm:0.25.0"
     "@opentelemetry/semantic-conventions": "npm:1.23.0"
@@ -5033,6 +5033,15 @@ __metadata:
   dependencies:
     "@lezer/common": "npm:^1.0.0"
   checksum: 10/14a80cbfb0cd1ce716decb4f3a045d42e7146f539cfd483b62ce46c4586a26d2f4fbdc35ace1cad81645304be4d30eafb95a2b057c34dfd471d56c7fbd82df3a
+  languageName: node
+  linkType: hard
+
+"@lezer/lr@npm:1.3.3":
+  version: 1.3.3
+  resolution: "@lezer/lr@npm:1.3.3"
+  dependencies:
+    "@lezer/common": "npm:^1.0.0"
+  checksum: 10/7e61dc2554b85560ef1af6d3a6112c711d20d54e0c3184657099be8dc40d2747d28d5d332cc1b0d75064846d51fbff0bed162550a332aeccdfa36836b5541cfd
   languageName: node
   linkType: hard
 
