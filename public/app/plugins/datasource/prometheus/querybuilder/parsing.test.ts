@@ -434,12 +434,6 @@ describe('buildVisualQueryFromString', () => {
           to: 27,
           parentType: 'VectorSelector',
         },
-        {
-          text: ')',
-          from: 38,
-          to: 39,
-          parentType: 'PromQL',
-        },
       ],
       query: {
         metric: '${func_var}',
@@ -693,7 +687,7 @@ describe('buildVisualQueryFromString', () => {
       errors: [
         {
           from: 6,
-          parentType: 'BinaryExpr',
+          parentType: 'Expr',
           text: '(bar + baz)',
           to: 17,
         },
