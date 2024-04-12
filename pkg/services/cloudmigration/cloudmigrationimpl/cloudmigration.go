@@ -237,7 +237,6 @@ func (s *Service) ValidateToken(ctx context.Context, cm cloudmigration.CloudMigr
 		logger.Error("error sending http request for token validation", "err", err.Error())
 		return fmt.Errorf("http request error: %w", err)
 	}
-
 	defer func() {
 		if err := resp.Body.Close(); err != nil {
 			logger.Error("closing request body", "err", err.Error())
