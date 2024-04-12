@@ -196,7 +196,7 @@ export function handleExpression(expr: string, node: SyntaxNode, context: Contex
 }
 
 function isIntervalVariableError(node: SyntaxNode) {
-  return /*node.prevSibling?.type.id === Expr && */ node.prevSibling?.firstChild?.type.id === VectorSelector;
+  return node.prevSibling?.firstChild?.type.id === VectorSelector;
 }
 
 function getLabel(expr: string, node: SyntaxNode): QueryBuilderLabelFilter {
@@ -282,15 +282,6 @@ function handleAggregation(expr: string, node: SyntaxNode, context: Context) {
   }
 
   const body = node.getChild(FunctionCallBody);
-  // const binaryExpressionWithinAggregationArgs = body?.getChild(BinaryExpr);
-  //
-  // if (binaryExpressionWithinAggregationArgs) {
-  //   context.errors.push({
-  //     text: 'Query parsing is ambiguous.',
-  //     from: binaryExpressionWithinAggregationArgs.from,
-  //     to: binaryExpressionWithinAggregationArgs.to,
-  //   });
-  // }
 
   const op: QueryBuilderOperation = { id: funcName, params: [] };
   visQuery.operations.unshift(op);
@@ -443,19 +434,12 @@ function getBinaryModifier(
   if (node.getChild('Bool')) {
     return { isBool: true, isMatcher: false };
   } else {
-    // const matcher = node.getChild(OnOrIgnoring);
-    // const matcher = node.getChild(On);
-    // if (!matcher) {
-    //   // Not sure what this could be, maybe should be an error.
-    //   return undefined;
-    // }
     let labels = '';
     const groupingLabels = node.getChild(GroupingLabels);
     if (groupingLabels) {
       labels = getAllByType(expr, groupingLabels, LabelName).join(', ');
     }
-    // getString(expr, node.getChild(GroupingLabels));
-    // const labels = getString(expr, matcher.getChild(LabelMatchers));
+
     return {
       isMatcher: true,
       isBool: false,
