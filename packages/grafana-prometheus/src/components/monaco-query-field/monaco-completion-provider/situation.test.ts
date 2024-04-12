@@ -182,4 +182,17 @@ describe('situation', () => {
       ],
     });
   });
+
+  it('identifies all labels from queries when cursor is in middle', () => {
+    // Note the extra whitespace, if the cursor is after whitespace, the situation will fail to resolve
+    assertSituation('{one="val1", ^,two!="val2",three=~"val3",four!~"val4"}', {
+      type: 'IN_LABEL_SELECTOR_NO_LABEL_NAME',
+      otherLabels: [
+        { name: 'one', value: 'val1', op: '=' },
+        { name: 'two', value: 'val2', op: '!=' },
+        { name: 'three', value: 'val3', op: '=~' },
+        { name: 'four', value: 'val4', op: '!~' },
+      ],
+    });
+  });
 });

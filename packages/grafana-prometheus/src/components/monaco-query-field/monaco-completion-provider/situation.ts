@@ -383,20 +383,7 @@ function resolveDurations(node: SyntaxNode, text: string, pos: number): Situatio
   };
 }
 
-function subTreeHasError(node: SyntaxNode): boolean {
-  return getNodeInSubtree(node, ERROR_NODE_NAME) !== null;
-}
-
 function resolveLabelKeysWithEquals(node: SyntaxNode, text: string, pos: number): Situation | null {
-  // for example `something{^}`
-
-  // there are some false positives that can end up in this situation, that we want
-  // to eliminate:
-  // `something{a~^}` (if this subtree contains any error-node, we stop)
-  if (subTreeHasError(node)) {
-    return null;
-  }
-
   // next false positive:
   // `something{a="1"^}`
   const child = walk(node, [['firstChild', LabelMatcher]]);
