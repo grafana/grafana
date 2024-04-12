@@ -87,7 +87,7 @@ function useGetIncidentPluginConfig() {
 
     const checkIfIncidentsCreated = async () => {
       const isDrillCreated = await getBackendSrv()
-        .get('/api/plugins/grafana-incident-app/resources/api/IncidentsService.QueryIncidents')
+        .post('/api/plugins/grafana-incident-app/resources/api/IncidentsService.QueryIncidents')
         .then((response) => response.incidents.length > 0);
       return isDrillCreated;
     };
@@ -96,7 +96,7 @@ function useGetIncidentPluginConfig() {
       if (!isIncidentPluginInstalled) {
         return false;
       }
-      const availableIntegrations = await getBackendSrv().get(
+      const availableIntegrations = await getBackendSrv().post(
         '/api/plugins/grafana-incident-app/resources/api/IntegrationService.GetAvailableIntegrations'
       );
 
