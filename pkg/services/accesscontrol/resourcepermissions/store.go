@@ -266,14 +266,8 @@ func (s *store) setResourcePermission(
 		return nil, err
 	}
 
-	if s.features.IsEnabled(context.Background(), featuremgmt.FlagAccessActionSets) {
-		if err := s.createPermissions(sess, role.ID, cmd.Resource, cmd.ResourceID, cmd.ResourceAttribute, missing); err != nil {
-			return nil, err
-		}
-	} else {
-		if err := s.createPermissions(sess, role.ID, cmd.Resource, cmd.ResourceID, cmd.ResourceAttribute, missing); err != nil {
-			return nil, err
-		}
+	if err := s.createPermissions(sess, role.ID, cmd.Resource, cmd.ResourceID, cmd.ResourceAttribute, missing); err != nil {
+		return nil, err
 	}
 
 	permissions, err := s.getPermissions(sess, cmd.Resource, cmd.ResourceID, cmd.ResourceAttribute, role.ID)
