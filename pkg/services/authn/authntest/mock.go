@@ -84,6 +84,10 @@ func (m MockClient) Authenticate(ctx context.Context, r *authn.Request) (*authn.
 	return nil, nil
 }
 
+func (m MockClient) IsEnabled() bool {
+	return true
+}
+
 func (m MockClient) Test(ctx context.Context, r *authn.Request) bool {
 	if m.TestFunc != nil {
 		return m.TestFunc(ctx, r)

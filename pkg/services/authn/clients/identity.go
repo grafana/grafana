@@ -20,6 +20,10 @@ func (i *IdentityClient) Name() string {
 	return "identity"
 }
 
+func (i *IdentityClient) IsEnabled() bool {
+	return true
+}
+
 // Authenticate implements authn.Client.
 func (i *IdentityClient) Authenticate(ctx context.Context, r *authn.Request) (*authn.Identity, error) {
 	return &authn.Identity{

@@ -199,6 +199,10 @@ func (c *OAuth) Authenticate(ctx context.Context, r *authn.Request) (*authn.Iden
 	}, nil
 }
 
+func (c *OAuth) IsEnabled() bool {
+	return c.socialService.GetOAuthInfoProvider(c.providerName).Enabled
+}
+
 func (c *OAuth) RedirectURL(ctx context.Context, r *authn.Request) (*authn.Redirect, error) {
 	var opts []oauth2.AuthCodeOption
 

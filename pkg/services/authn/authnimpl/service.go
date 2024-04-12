@@ -119,6 +119,10 @@ func (s *Service) Authenticate(ctx context.Context, r *authn.Request) (*authn.Id
 	return nil, errCantAuthenticateReq.Errorf("cannot authenticate request")
 }
 
+func (s *Service) IsEnabled() bool {
+	return true
+}
+
 func (s *Service) authenticate(ctx context.Context, c authn.Client, r *authn.Request) (*authn.Identity, error) {
 	identity, err := c.Authenticate(ctx, r)
 	if err != nil {
