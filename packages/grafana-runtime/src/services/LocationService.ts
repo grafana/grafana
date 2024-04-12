@@ -59,7 +59,7 @@ export class HistoryWrapper implements LocationService {
     const currentLocation = this.history.location;
     const newQuery = this.getSearchObject();
 
-    for (const key of Object.keys(query)) {
+    for (const key in query) {
       // removing params with null | undefined
       if (query[key] === null || query[key] === undefined) {
         delete newQuery[key];

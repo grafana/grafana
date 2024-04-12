@@ -2,9 +2,9 @@ package rest
 
 import (
 	"context"
-	"fmt"
 
 	"k8s.io/apimachinery/pkg/api/meta"
+	metainternalversion "k8s.io/apimachinery/pkg/apis/meta/internalversion"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apiserver/pkg/registry/rest"
@@ -21,11 +21,11 @@ func NewDualWriterMode2(legacy LegacyStorage, storage Storage) *DualWriterMode2 
 	return &DualWriterMode2{*NewDualWriter(legacy, storage)}
 }
 
-// Create overrides the default behavior of the DualWriter and writes to LegacyStorage and Storage.
+// Create overrides the behavior of the generic DualWriter and writes to LegacyStorage and Storage.
 func (d *DualWriterMode2) Create(ctx context.Context, obj runtime.Object, createValidation rest.ValidateObjectFunc, options *metav1.CreateOptions) (runtime.Object, error) {
 	legacy, ok := d.Legacy.(rest.Creater)
 	if !ok {
-		return nil, fmt.Errorf("legacy storage rest.Creater is missing")
+		return nil, errDualWriterCreaterMissing
 	}
 
 	created, err := legacy.Create(ctx, obj, createValidation, options)
@@ -53,6 +53,63 @@ func (d *DualWriterMode2) Create(ctx context.Context, obj runtime.Object, create
 		klog.FromContext(ctx).Error(err, "unable to create object in Storage", "mode", 2)
 	}
 	return rsp, err
+}
+
+// Get overrides the behavior of the generic DualWriter and retrieves an object from LegacyStorage.
+func (d *DualWriterMode2) Get(ctx context.Context, name string, options *metav1.GetOptions) (runtime.Object, error) {
+	return d.Legacy.Get(ctx, name, &metav1.GetOptions{})
+}
+
+// List overrides the behavior of the generic DualWriter.
+// It returns Storage entries if possible and falls back to LegacyStorage entries if not.
+func (d *DualWriterMode2) List(ctx context.Context, options *metainternalversion.ListOptions) (runtime.Object, error) {
+	legacy, ok := d.Legacy.(rest.Lister)
+	if !ok {
+		return nil, errDualWriterListerMissing
+	}
+
+	ll, err := legacy.List(ctx, options)
+	if err != nil {
+		return nil, err
+	}
+	legacyList, err := meta.ExtractList(ll)
+	if err != nil {
+		return nil, err
+	}
+
+	sl, err := d.Storage.List(ctx, options)
+	if err != nil {
+		return nil, err
+	}
+	storageList, err := meta.ExtractList(sl)
+	if err != nil {
+		return nil, err
+	}
+
+	m := map[string]int{}
+	for i, obj := range storageList {
+		accessor, err := meta.Accessor(obj)
+		if err != nil {
+			return nil, err
+		}
+		m[accessor.GetName()] = i
+	}
+
+	for i, obj := range legacyList {
+		accessor, err := meta.Accessor(obj)
+		if err != nil {
+			return nil, err
+		}
+		// Replace the LegacyStorage object if there's a corresponding entry in Storage.
+		if index, ok := m[accessor.GetName()]; ok {
+			legacyList[i] = storageList[index]
+		}
+	}
+
+	if err = meta.SetList(ll, legacyList); err != nil {
+		return nil, err
+	}
+	return ll, nil
 }
 
 func enrichObject(orig, copy runtime.Object) (runtime.Object, error) {
