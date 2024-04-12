@@ -224,10 +224,8 @@ function handleFunction(expr: string, node: SyntaxNode, context: Context) {
   const funcName = getString(expr, nameNode);
 
   const body = node.getChild(FunctionCallBody);
-  // const callArgs = body!.getChild(FunctionCall);
   const params = [];
-  // TODO we need interval
-  // let interval = '';
+  let interval = '';
 
   // This is a bit of a shortcut to get the interval argument. Reasons are
   // - interval is not part of the function args per promQL grammar but we model it as argument for the function in
@@ -236,8 +234,7 @@ function handleFunction(expr: string, node: SyntaxNode, context: Context) {
   if (rangeFunctions.includes(funcName) || funcName.endsWith('_over_time')) {
     let match = getString(expr, node).match(/\[(.+)\]/);
     if (match?.[1]) {
-      // TODO we need interval
-      // interval = match[1];
+      interval = match[1];
       params.push(match[1]);
     }
   }
@@ -246,17 +243,14 @@ function handleFunction(expr: string, node: SyntaxNode, context: Context) {
   // We unshift operations to keep the more natural order that we want to have in the visual query editor.
   visQuery.operations.unshift(op);
 
-  updateFunctionArgs(expr, body, context, op);
-  // if (callArgs) {
-  // TODO Handle this special case below
-  //
-  //   if (getString(expr, callArgs) === interval + ']') {
-  //     // This is a special case where we have a function with a single argument and it is the interval.
-  //     // This happens when you start adding operations in query builder and did not set a metric yet.
-  //     return;
-  //   }
-  //   updateFunctionArgs(expr, callArgs, context, op);
-  // }
+  if (body) {
+    if (getString(expr, body) === '([' + interval + '])') {
+      // This is a special case where we have a function with a single argument and it is the interval.
+      // This happens when you start adding operations in query builder and did not set a metric yet.
+      return;
+    }
+    updateFunctionArgs(expr, body, context, op);
+  }
 }
 
 /**
