@@ -147,8 +147,8 @@ export function preparePlotData2(
   frame: DataFrame,
   stackingGroups: StackingGroup[],
   onStackMeta?: (meta: StackMeta) => void
-) {
-  let data: AlignedData = Array(frame.fields.length);
+): AlignedData {
+  let data = Array(frame.fields.length);
 
   let stacksQty = stackingGroups.length;
 
@@ -186,9 +186,9 @@ export function preparePlotData2(
 
     if (i === 0) {
       if (field.type === FieldType.time) {
-        data[i] = ensureTimeField(field).values;
+        data[0] = ensureTimeField(field).values;
       } else {
-        data[i] = vals;
+        data[0] = vals;
       }
       return;
     }
