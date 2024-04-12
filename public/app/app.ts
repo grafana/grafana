@@ -215,7 +215,12 @@ export class GrafanaApp {
       });
 
       if (contextSrv.user.orgRole !== '') {
-        preloadPlugins(config.apps, extensionsRegistry);
+        const criticalAppIds = ['cloud-home-app'];
+        const criticalApps = Object.values(config.apps).filter((app) => criticalAppIds.includes(app.id));
+        const normalApps = Object.values(config.apps).filter((app) => !criticalAppIds.includes(app.id));
+
+        preloadPlugins(normalApps, extensionsRegistry);
+        await preloadPlugins(criticalApps, extensionsRegistry);
       }
 
       setPluginExtensionGetter(createPluginExtensionsGetter(extensionsRegistry));
