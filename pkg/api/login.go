@@ -328,10 +328,6 @@ func (hs *HTTPServer) redirectURLWithErrorCookie(c *contextmodel.ReqContext, err
 }
 
 func (hs *HTTPServer) samlEnabled() bool {
-	if hs.authnService == nil {
-		return false
-	}
-
 	return hs.authnService.IsClientEnabled(authn.ClientSAML)
 }
 

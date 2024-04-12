@@ -491,6 +491,7 @@ func TestLoginOAuthRedirect(t *testing.T) {
 		oAuthInfos: oAuthInfos,
 	}
 	hs := &HTTPServer{
+		authnService:     &authntest.FakeService{},
 		Cfg:              cfg,
 		SettingsProvider: &setting.OSSImpl{Cfg: cfg},
 		License:          &licensing.OSSLicensingService{},
