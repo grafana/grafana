@@ -160,6 +160,7 @@ func (d *DualWriterMode2) Delete(ctx context.Context, name string, deleteValidat
 	if err != nil {
 		if !apierrors.IsNotFound(err) {
 			klog.FromContext(ctx).Error(err, "could not delete from legacy store", "mode", 2)
+			return deletedLS, async, err
 		}
 	}
 
