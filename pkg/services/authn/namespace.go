@@ -58,7 +58,7 @@ func MustParseNamespaceID(str string) NamespaceID {
 	return namespaceID
 }
 
-// NewNamespaceID create a new NamespaceID, will fail for invalid namespace.
+// NewNamespaceID creates a new NamespaceID, will fail for invalid namespace.
 func NewNamespaceID(namespace string, id int64) (NamespaceID, error) {
 	var namespaceID NamespaceID
 	if _, ok := namespaceLookup[namespace]; !ok {
@@ -69,7 +69,7 @@ func NewNamespaceID(namespace string, id int64) (NamespaceID, error) {
 	return namespaceID, nil
 }
 
-// MustNewNamespaceID create a new NamespaceID, will panic for invalid namespace.
+// MustNewNamespaceID creates a new NamespaceID, will panic for invalid namespace.
 // Sutable to use in tests or when we can garantuee that we pass a correct format.
 func MustNewNamespaceID(namespace string, id int64) NamespaceID {
 	namespaceID, err := NewNamespaceID(namespace, id)
@@ -77,6 +77,15 @@ func MustNewNamespaceID(namespace string, id int64) NamespaceID {
 		panic(err)
 	}
 	return namespaceID
+}
+
+// NewNamespaceIDUnchecked creates a new NamespaceID without checking if namespace is valid.
+// It us up to the caller to ensure that namespace is valid.
+func NewNamespaceIDUnchecked(namespace string, id int64) NamespaceID {
+	return NamespaceID{
+		id:        strconv.FormatInt(id, 10),
+		namespace: NamespaceUser,
+	}
 }
 
 // FIXME: use this instead of encoded string through the codebase

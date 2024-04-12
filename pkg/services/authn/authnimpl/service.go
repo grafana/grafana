@@ -108,6 +108,7 @@ func (s *Service) Authenticate(ctx context.Context, r *authn.Request) (*authn.Id
 			}
 
 			if identity != nil {
+				s.log.Info("authenticate", "id", identity.ID)
 				s.metrics.successfulAuth.WithLabelValues(item.v.Name()).Inc()
 				return identity, nil
 			}
