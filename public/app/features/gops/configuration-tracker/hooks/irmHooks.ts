@@ -7,7 +7,6 @@ import { OnCallIntegrationDTO, onCallApi } from 'app/features/alerting/unified/a
 import { usePluginBridge } from 'app/features/alerting/unified/hooks/usePluginBridge';
 import { SupportedPlugin } from 'app/features/alerting/unified/types/pluginBridges';
 import { GRAFANA_RULES_SOURCE_NAME } from 'app/features/alerting/unified/utils/datasource';
-import { useGetSingle } from 'app/features/plugins/admin/state/hooks';
 import { Receiver } from 'app/plugins/datasource/alertmanager/types';
 
 import { SectionsDto } from '../components/Essentials';
@@ -101,8 +100,8 @@ function useGetIncidentPluginConfig() {
         '/api/plugins/grafana-incident-app/resources/api/IntegrationService.GetAvailableIntegrations'
       );
 
-      const isSlackInstalled = availableIntegrations?.find((integration) => integration.id === 'grate.slack');
-      const isMSTeamsInstalled = availableIntegrations?.find((integration) => integration.id === 'grate.msTeams');
+      const isSlackInstalled = availableIntegrations?.find((integration: { id: string; }) => integration.id === 'grate.slack');
+      const isMSTeamsInstalled = availableIntegrations?.find((integration: { id: string; }) => integration.id === 'grate.msTeams');
       return isSlackInstalled || isMSTeamsInstalled;
     };
 
