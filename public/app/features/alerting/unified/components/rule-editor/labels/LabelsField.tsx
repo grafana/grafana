@@ -270,73 +270,71 @@ export function LabelsWithSuggestions({ dataSourceName }: LabelsWithSuggestionsP
     <>
       {isLoading && <LoadingPlaceholder text="Loading existing labels" />}
       {!isLoading && (
-        <Stack direction="column" gap={0.5}>
+        <Stack direction="column" gap={1} alignItems="flex-start">
           {fields.map((field, index) => {
             return (
-              <div key={field.id}>
-                <div className={cx(styles.flexRow, styles.centerAlignRow)}>
-                  <Field
-                    className={styles.labelInput}
-                    invalid={Boolean(errors.labelsInSubform?.[index]?.key?.message)}
-                    error={errors.labelsInSubform?.[index]?.key?.message}
-                    data-testid={`labelsInSubform-key-${index}`}
-                  >
-                    <Controller
-                      name={`labelsInSubform.${index}.key`}
-                      control={control}
-                      rules={{ required: Boolean(labelsInSubform[index]?.value) ? 'Required.' : false }}
-                      render={({ field: { onChange, ref, ...rest } }) => {
-                        return (
-                          <AlertLabelDropdown
-                            {...rest}
-                            defaultValue={field.key ? { label: field.key, value: field.key } : undefined}
-                            options={labelsPluginInstalled ? groupedOptions : keysFromExistingAlerts}
-                            onChange={(newValue: SelectableValue) => {
-                              onChange(newValue.value);
-                              setSelectedKey(newValue.value);
-                            }}
-                            type="key"
-                          />
-                        );
-                      }}
-                    />
-                  </Field>
-                  <InlineLabel className={styles.equalSign}>=</InlineLabel>
-                  <Field
-                    className={styles.labelInput}
-                    invalid={Boolean(errors.labelsInSubform?.[index]?.value?.message)}
-                    error={errors.labelsInSubform?.[index]?.value?.message}
-                    data-testid={`labelsInSubform-value-${index}`}
-                  >
-                    <Controller
-                      control={control}
-                      name={`labelsInSubform.${index}.value`}
-                      rules={{ required: Boolean(labelsInSubform[index]?.value) ? 'Required.' : false }}
-                      render={({ field: { onChange, ref, ...rest } }) => {
-                        return (
-                          <AlertLabelDropdown
-                            {...rest}
-                            defaultValue={field.value ? { label: field.value, value: field.value } : undefined}
-                            options={values}
-                            onChange={(newValue: SelectableValue) => {
-                              onChange(newValue.value);
-                            }}
-                            onOpenMenu={() => {
-                              setSelectedKey(labelsInSubform[index].key);
-                            }}
-                            type="value"
-                          />
-                        );
-                      }}
-                    />
-                  </Field>
+              <div key={field.id} className={cx(styles.flexRow, styles.centerAlignRow)}>
+                <Field
+                  className={styles.labelInput}
+                  invalid={Boolean(errors.labelsInSubform?.[index]?.key?.message)}
+                  error={errors.labelsInSubform?.[index]?.key?.message}
+                  data-testid={`labelsInSubform-key-${index}`}
+                >
+                  <Controller
+                    name={`labelsInSubform.${index}.key`}
+                    control={control}
+                    rules={{ required: Boolean(labelsInSubform[index]?.value) ? 'Required.' : false }}
+                    render={({ field: { onChange, ref, ...rest } }) => {
+                      return (
+                        <AlertLabelDropdown
+                          {...rest}
+                          defaultValue={field.key ? { label: field.key, value: field.key } : undefined}
+                          options={labelsPluginInstalled ? groupedOptions : keysFromExistingAlerts}
+                          onChange={(newValue: SelectableValue) => {
+                            onChange(newValue.value);
+                            setSelectedKey(newValue.value);
+                          }}
+                          type="key"
+                        />
+                      );
+                    }}
+                  />
+                </Field>
+                <InlineLabel className={styles.equalSign}>=</InlineLabel>
+                <Field
+                  className={styles.labelInput}
+                  invalid={Boolean(errors.labelsInSubform?.[index]?.value?.message)}
+                  error={errors.labelsInSubform?.[index]?.value?.message}
+                  data-testid={`labelsInSubform-value-${index}`}
+                >
+                  <Controller
+                    control={control}
+                    name={`labelsInSubform.${index}.value`}
+                    rules={{ required: Boolean(labelsInSubform[index]?.value) ? 'Required.' : false }}
+                    render={({ field: { onChange, ref, ...rest } }) => {
+                      return (
+                        <AlertLabelDropdown
+                          {...rest}
+                          defaultValue={field.value ? { label: field.value, value: field.value } : undefined}
+                          options={values}
+                          onChange={(newValue: SelectableValue) => {
+                            onChange(newValue.value);
+                          }}
+                          onOpenMenu={() => {
+                            setSelectedKey(labelsInSubform[index].key);
+                          }}
+                          type="value"
+                        />
+                      );
+                    }}
+                  />
+                </Field>
 
-                  <RemoveButton className={styles.deleteLabelButton} index={index} remove={remove} />
-                </div>
+                <RemoveButton index={index} remove={remove} />
               </div>
             );
           })}
-          <AddButton className={styles.addLabelButton} append={appendLabel} />
+          <AddButton append={appendLabel} />
         </Stack>
       )}
     </>
@@ -393,19 +391,17 @@ export const LabelsWithoutSuggestions: FC = () => {
                   defaultValue={field.value}
                 />
               </Field>
-              <RemoveButton className={styles.deleteLabelButton} index={index} remove={remove} />
+              <RemoveButton index={index} remove={remove} />
             </div>
           </div>
         );
       })}
-      <AddButton className={styles.addLabelButton} append={appendLabel} />
+      <AddButton append={appendLabel} />
     </>
   );
 };
 
 function LabelsField() {
-  const styles = useStyles2(getStyles);
-
   return (
     <div>
       <Stack direction="column" gap={1}>
@@ -421,7 +417,6 @@ function LabelsField() {
           />
         </Stack>
       </Stack>
-      <div className={styles.labelsContainer}></div>
       <LabelsWithoutSuggestions />
     </div>
   );
@@ -429,9 +424,6 @@ function LabelsField() {
 
 const getStyles = (theme: GrafanaTheme2) => {
   return {
-    icon: css({
-      marginRight: theme.spacing(0.5),
-    }),
     flexColumn: css({
       display: 'flex',
       flexDirection: 'column',
@@ -440,37 +432,20 @@ const getStyles = (theme: GrafanaTheme2) => {
       display: 'flex',
       flexDirection: 'row',
       justifyContent: 'flex-start',
-      '& + button': {
-        marginLeft: theme.spacing(0.5),
-      },
-    }),
-    deleteLabelButton: css({
-      marginLeft: theme.spacing(0.5),
-      marginRight: theme.spacing(0.5),
-      alignSelf: 'flex-start',
-    }),
-    addLabelButton: css({
-      flexGrow: 0,
-      alignSelf: 'flex-start',
     }),
     centerAlignRow: css({
-      alignItems: 'baseline',
+      alignItems: 'center',
+      gap: theme.spacing(0.5),
     }),
     equalSign: css({
       alignSelf: 'flex-start',
       width: '28px',
       justifyContent: 'center',
-      marginLeft: theme.spacing(0.5),
+      margin: 0,
     }),
     labelInput: css({
       width: '175px',
-      marginBottom: `-${theme.spacing(1)}`,
-      '& + &': {
-        marginLeft: theme.spacing(1),
-      },
-    }),
-    labelsContainer: css({
-      marginBottom: theme.spacing(3),
+      margin: 0,
     }),
     confirmButton: css({
       display: 'flex',

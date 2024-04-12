@@ -4,13 +4,11 @@ import { Button } from '@grafana/ui';
 
 interface RemoveButtonProps {
   remove: (index?: number | number[] | undefined) => void;
-  className: string;
   index: number;
 }
-export function RemoveButton({ remove, className, index }: RemoveButtonProps) {
+export function RemoveButton({ remove, index }: RemoveButtonProps) {
   return (
     <Button
-      className={className}
       aria-label="delete label"
       icon="trash-alt"
       data-testid={`delete-label-${index}`}
@@ -24,11 +22,10 @@ export function RemoveButton({ remove, className, index }: RemoveButtonProps) {
 
 interface AddButtonProps {
   append: () => void;
-  className: string;
 }
-export function AddButton({ append, className }: AddButtonProps) {
+export function AddButton({ append }: AddButtonProps) {
   return (
-    <Button className={className} icon="plus" type="button" variant="secondary" onClick={append}>
+    <Button icon="plus" type="button" variant="secondary" onClick={append}>
       Add more
     </Button>
   );
