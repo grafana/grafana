@@ -83,6 +83,7 @@ export interface GraphNGState {
   config?: UPlotConfigBuilder;
 }
 
+const matchXDefault = fieldMatchers.get(FieldMatcherID.firstTimeField).get({});
 const matchYDefault = fieldMatchers.get(FieldMatcherID.byTypes).get(new Set([FieldType.number, FieldType.enum]));
 
 /**
@@ -107,7 +108,7 @@ export class GraphNG extends Component<GraphNGProps, GraphNGState> {
     const {
       frames,
       fields = {
-        x: fieldMatchers.get(FieldMatcherID.firstTimeField).get({}),
+        x: matchXDefault,
         y: matchYDefault,
       },
       preparePlotFrame,
