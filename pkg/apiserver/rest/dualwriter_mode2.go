@@ -230,7 +230,7 @@ func (d *DualWriterMode2) Update(ctx context.Context, name string, objInfo rest.
 		updated:  obj,
 	}
 
-// #TODO: relies on GuaranteedUpdate creating the object if
-// it doesn't exist: https://github.com/grafana/grafana/pull/85206
+	// TODO: relies on GuaranteedUpdate creating the object if
+	// it doesn't exist: https://github.com/grafana/grafana/pull/85206
 	return d.Storage.Update(ctx, name, objInfo, createValidation, updateValidation, forceAllowCreate, options)
 }
