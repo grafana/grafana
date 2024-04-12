@@ -28,7 +28,7 @@ export const AlertLabels = ({ labels, commonLabels = {}, size }: Props) => {
   const hasCommonLabels = commonLabelsCount > 0;
 
   return (
-    <div className={styles.wrapper} role="list">
+    <div className={styles.wrapper} role="list" aria-label="Labels">
       {labelsToShow.map(([label, value]) => (
         <Label key={label + value} size={size} label={label} value={value} color={getLabelColor(label)} />
       ))}

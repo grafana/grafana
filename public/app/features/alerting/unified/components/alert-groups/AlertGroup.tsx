@@ -2,7 +2,7 @@ import { css } from '@emotion/css';
 import React, { useState } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { useStyles2, Stack, Text } from '@grafana/ui';
+import { useStyles2, Stack } from '@grafana/ui';
 import { AlertmanagerGroup, AlertState } from 'app/plugins/datasource/alertmanager/types';
 
 import { AlertLabels } from '../AlertLabels';
@@ -35,9 +35,7 @@ export const AlertGroup = ({ alertManagerSourceName, group }: Props) => {
           />
           {Object.keys(group.labels).length ? (
             <Stack direction="row" alignItems="center">
-              <Text element="h2" variant="body">
-                <AlertLabels labels={group.labels} size="sm" />
-              </Text>
+              <AlertLabels labels={group.labels} size="sm" />
 
               {receiverInGroup && (
                 <MetaText icon="at">
