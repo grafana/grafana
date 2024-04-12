@@ -19,9 +19,9 @@ weight: 100
 
 # Heatmap
 
-Heatmaps allow you to view [histograms](https://grafana.com/docs/grafana/latest/panels-visualizations/visualizations/histogram/) over time. While histograms display the data distribution that falls in a specific value range, heatmaps allow you to identify patterns in the histogram data distribution over time easily. For more information about heatmaps, refer to [Introduction to histograms and heatmaps](https://grafana.com/docs/grafana/latest/fundamentals/intro-histograms/).
+Heatmaps allow you to view [histograms](https://grafana.com/docs/grafana/latest/panels-visualizations/visualizations/histogram/) over time. While histograms display the data distribution that falls in a specific value range, heatmaps allow you to identify patterns in the histogram data distribution over time. For more information about heatmaps, refer to [Introduction to histograms and heatmaps](https://grafana.com/docs/grafana/latest/fundamentals/intro-histograms/).
 
-For example, if you want to understand the temperature changes for the past few years, you can use a heatmap visualization to identify trends in your data easily:
+For example, if you want to understand the temperature changes for the past few years, you can use a heatmap visualization to identify trends in your data:
 
 {{< figure src="/static/img/docs/heatmap-panel/temperature_heatmap.png" max-width="1025px" alt="A heatmap visualization showing the random walk distribution over time" >}}
 
@@ -42,7 +42,7 @@ Heatmaps support time series data.
 
 ### Example
 
-The table below is a simplified output of random walk distribution over time.
+The table below is a simplified output of random walk distribution over time:
 
 | Time                | Walking (km) |
 | ------------------- | ------------ |

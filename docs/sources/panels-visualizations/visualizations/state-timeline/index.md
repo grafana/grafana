@@ -35,7 +35,7 @@ The state timeline visualization is useful when you need to monitor and analyze 
 
 {{< youtube id="a9wZHM0mdxo" >}}
 
-{{< docs/play title="State Timeline Visualizations" url="https://play.grafana.org/d/qD-rVv6Mz/6-state-timeline-and-status-history?orgId=1s" >}}
+{{< docs/play title="Grafana State Timeline & Status History" url="https://play.grafana.org/d/qD-rVv6Mz/6-state-timeline-and-status-history?orgId=1s" >}}
 
 ## Supported data formats
 
