@@ -25,6 +25,11 @@
       "user": "Usuário"
     }
   },
+  "api-keys": {
+    "empty-state": {
+      "message": ""
+    }
+  },
   "bouncing-loader": {
     "label": "Carregando"
   },
@@ -107,6 +112,9 @@
       "change-theme": "Alterar tema...",
       "dark-theme": "Escuro",
       "light-theme": "Claro"
+    },
+    "empty-state": {
+      "message": ""
     },
     "search-box": {
       "placeholder": "Buscar ou pular para..."
@@ -417,6 +425,9 @@
   "data-sources": {
     "datasource-add-button": {
       "label": "Adicionar nova fonte de dados"
+    },
+    "empty-state": {
+      "message": ""
     }
   },
   "explore": {
@@ -714,6 +725,8 @@
       "connect": "Conectar-se a esta pilha",
       "connecting": "Conectando-se a esta pilha...",
       "title": "Conectar-se a uma pilha na nuvem",
+      "token-error-description": "",
+      "token-error-title": "",
       "token-required-error": "O token de migração é obrigatório"
     },
     "cta": {
@@ -1227,6 +1240,11 @@
       "message": ""
     }
   },
+  "plugins": {
+    "empty-state": {
+      "message": ""
+    }
+  },
   "profile": {
     "change-password": {
       "cancel-button": "Cancelar",
@@ -1429,6 +1447,11 @@
       "placeholder": "Buscar painéis de controle e pastas"
     }
   },
+  "service-accounts": {
+    "empty-state": {
+      "message": ""
+    }
+  },
   "share-modal": {
     "dashboard": {
       "title": "Compartilhar"
@@ -1557,6 +1580,11 @@
     "no-tags": "Nenhuma tag encontrada",
     "placeholder": "Filtrar por tag"
   },
+  "teams": {
+    "empty-state": {
+      "message": ""
+    }
+  },
   "time-picker": {
     "absolute": {
       "recent-title": "Intervalos absolutos usados recentemente",
@@ -1649,6 +1677,11 @@
   },
   "user-sessions": {
     "loading": "Carregando sessões..."
+  },
+  "users": {
+    "empty-state": {
+      "message": ""
+    }
   },
   "users-access-list": {
     "tabs": {
