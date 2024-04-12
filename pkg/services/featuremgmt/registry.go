@@ -1206,6 +1206,12 @@ var (
 			AllowSelfServe: false,
 		},
 		{
+			Name:        "accessActionSets",
+			Description: "Introduces action sets for resource permissions",
+			Stage:       FeatureStageExperimental,
+			Owner:       identityAccessTeam,
+		},
+		{
 			Name:              "dashboardRestore",
 			Description:       "Enables deleted dashboard restore feature",
 			Stage:             FeatureStageExperimental,

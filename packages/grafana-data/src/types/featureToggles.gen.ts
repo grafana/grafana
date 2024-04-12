@@ -179,5 +179,6 @@ export interface FeatureToggles {
   oauthRequireSubClaim?: boolean;
   newDashboardWithFiltersAndGroupBy?: boolean;
   cloudWatchNewLabelParsing?: boolean;
+  accessActionSets?: boolean;
   dashboardRestore?: boolean;
 }

@@ -2093,6 +2093,31 @@
     },
     {
       "metadata": {
+        "name": "actionSets",
+        "resourceVersion": "1712934405418",
+        "creationTimestamp": "2024-04-12T15:06:45Z",
+        "deletionTimestamp": "2024-04-12T15:17:53Z"
+      },
+      "spec": {
+        "description": "Introduces action sets for resource permissions",
+        "stage": "experimental",
+        "codeowner": "@grafana/identity-access-team"
+      }
+    },
+    {
+      "metadata": {
+        "name": "accessActionSets",
+        "resourceVersion": "1712935073026",
+        "creationTimestamp": "2024-04-12T15:17:53Z"
+      },
+      "spec": {
+        "description": "Introduces action sets for resource permissions",
+        "stage": "experimental",
+        "codeowner": "@grafana/identity-access-team"
+      }
+    },
+    {
+      "metadata": {
         "name": "dashboardRestore",
         "resourceVersion": "1708455041047",
         "creationTimestamp": "2024-02-20T18:50:41Z"

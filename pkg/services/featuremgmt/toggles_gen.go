@@ -651,6 +651,10 @@ const (
 	// Updates CloudWatch label parsing to be more accurate
 	FlagCloudWatchNewLabelParsing = "cloudWatchNewLabelParsing"
 
+	// FlagAccessActionSets
+	// Introduces action sets for resource permissions
+	FlagAccessActionSets = "accessActionSets"
+
 	// FlagDashboardRestore
 	// Enables deleted dashboard restore feature
 	FlagDashboardRestore = "dashboardRestore"
