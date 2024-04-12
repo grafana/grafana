@@ -126,17 +126,6 @@ const SearchField = ({
       operatorList = numberOperators;
   }
 
-  /**
-   * Add to a list of options the current template variables.
-   *
-   * @param options a list of options
-   * @returns the list of given options plus the template variables
-   */
-  const withTemplateVariableOptions = (options: SelectableValue[] | undefined) => {
-    const templateVariables = getTemplateSrv().getVariables();
-    return [...(options || []), ...templateVariables.map((v) => ({ label: `$${v.name}`, value: `$${v.name}` }))];
-  };
-
   return (
     <>
       <HorizontalGroup spacing={'none'} width={'auto'}>
@@ -218,6 +207,17 @@ const SearchField = ({
       {alertText && <TemporaryAlert severity="error" text={alertText} />}
     </>
   );
+};
+
+/**
+ * Add to a list of options the current template variables.
+ *
+ * @param options a list of options
+ * @returns the list of given options plus the template variables
+ */
+export const withTemplateVariableOptions = (options: SelectableValue[] | undefined) => {
+  const templateVariables = getTemplateSrv().getVariables();
+  return [...(options || []), ...templateVariables.map((v) => ({ label: `$${v.name}`, value: `$${v.name}` }))];
 };
 
 export default SearchField;

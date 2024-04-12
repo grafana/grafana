@@ -486,6 +486,17 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
       });
     }
 
+    if (query.groupBy) {
+      expandedQuery.groupBy = query.groupBy.map((filter) => {
+        const updatedFilter = {
+          ...filter,
+          tag: this.templateSrv.replace(filter.tag ?? '', scopedVars),
+        };
+
+        return updatedFilter;
+      });
+    }
+
     return {
       ...expandedQuery,
       query: this.templateSrv.replace(query.query ?? '', scopedVars, VariableFormatID.Pipe),
