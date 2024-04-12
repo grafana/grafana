@@ -113,11 +113,10 @@ export function makeBinOp(
  * not be safe is it would also find arguments of nested functions.
  * @param expr
  * @param cur
- * @param type - can be string or number, some data-sources (loki) haven't migrated over to using numeric constants defined in the lezer parsing library (e.g. lezer-promql).
- * @todo Remove string type definition when all data-sources have migrated to numeric constants
+ * @param type
  */
-export function getAllByType(expr: string, cur: SyntaxNode, type: number | string): string[] {
-  if (cur.type.id === type || cur.name === type) {
+export function getAllByType(expr: string, cur: SyntaxNode, type: number): string[] {
+  if (cur.type.id === type) {
     return [getString(expr, cur)];
   }
   const values: string[] = [];
