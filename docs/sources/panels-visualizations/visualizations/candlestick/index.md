@@ -21,11 +21,52 @@ weight: 100
 
 # Candlestick
 
-The candlestick visualization allows you to visualize data that includes a number of consistent dimensions focused on price movement. The candlestick visualization includes an Open-High-Low-Close (OHLC) mode, as well as support for additional dimensions based on time series data.
-
-{{< figure src="/static/img/docs/candlestick-panel/candlestick-panel-8-3.png" max-width="1200px" caption="Candlestick visualization" >}}
+The candlestick visualization allows you to visualize data that includes a number of consistent dimensions focused on price movements, such as stock prices. The candlestick visualization includes an [Open-High-Low-Close (OHLC) mode](#open-high-low-close), as well as support for additional dimensions based on time series data.
 
 Candlestick visualizations build upon the foundation of the [time series visualization][] and include many common configuration settings.
+
+For example, you can use a candlestick if you want to visualize at a glance how the price moved over time, whether it went up, down, or stayed the same, and how much it fluctuated:
+
+{{< figure src="/static/img/docs/candlestick-panel/candlestick-panel-8-3.png" max-width="1065px" alt="A candlestick visualization" >}}
+
+Each candlestick is represented as a rectangle, referred to as the "candlestick body". The candlestick body displays the opening and closing prices during a time period. The green candlesticks represent when the price appreciated while the red candlesticks represent when the price depreciated. The lines sticking out the candlestick body are referred to as "wicks" or "shadows", which represent the highest and lowest prices during the time period.
+
+Use a candlestick when you need to:
+
+- Monitor and identify trends in price movements of specific assets such as stocks, currencies, or commodities.
+- Analyze any volatility in the stock market.
+- Provide data analysis to help with trading decisions.
+
+## Configure a candlestick
+
+<!-- video TBA here -->
+
+{{< docs/play title="Candlestick Visualizations in Grafana" url="https://play.grafana.org/d/candlestick/candlestick" >}}
+
+## Supported data formats
+
+The candlestick visualization works best if you have the price movements of the asset that you are interested in tracking. The data must include:
+
+- **Timestamps** - The time period for when each price movement occurred.
+- **Opening price** - The price of the asset at the beginning of the time period.
+- **Closing price** - The price of the asset at the end of the time period.
+- **Highest price** - The highest price the asset reached during the time period.
+- **Lowest price** - The lowest price the asset reached during the time period.
+
+### Example
+
+| Timestamps          | Open         | High         | Low          | Close         |
+| ------------------- | ------------ | ------------ | ------------ | ------------  |
+| 2024-03-13 10:05:00 | 0.200        | 0.205        | 0.201        | 0.203         |
+| 2024-03-14 10:10:10 | 0.204        | 0.205        | 0.201        | 0.200         |
+| 2024-03-15 10:15:10 | 0.204        | 0.205        | 0.201        | 0.200         |
+| 2024-03-16 10:20:11 | 0.203        | 0.203        | 0.202        | 0.203         |
+| 2024-03-17 10:25:11 | 0.203        | 0.203        | 0.202        | 0.203         |
+| 2024-03-18 10:30:12 | 0.202        | 0.202        | 0.201        | 0.201         |
+
+The data is converted as follows:
+
+{{< figure src="/static/img/docs/candlestick-panel/candlestick.png" max-width="1065px" alt="A candlestick visualization showing the price movements of specific asset." >}}
 
 ## Mode
 
@@ -63,21 +104,13 @@ The candlestick visualization will attempt to map fields from your data to the a
 The candlestick visualization legend doesn't display these values.
 {{% /admonition %}}
 
-To properly map these dimensions, the query results table from your data must include _at least_ the following columns:
-
-- timestamp
-- open
-- high
-- low
-- close
-
 If your data can't be mapped to these dimensions for some reason (for example, because the column names aren't the same), you can map them manually using the **Open**, **High**, **Low**, and **Close** fields under the **Candlestick** options in the panel editor:
 
 ![Open, High, Low, and Close fields in the panel editor](/media/docs/grafana/panels-visualizations/screenshot-olhc-options-10.3.png)
 
 ## Additional fields
 
-The candlestick visualization is based on the time series visualization. It can visualize additional data dimensions beyond open, high, low, close, and volume The **Include** and **Ignore** options allow it to visualize other included data such as simple moving averages, Bollinger bands and more, using the same styles and configurations available in the [time series][] visualization.
+The candlestick visualization is based on the time series visualization. It can visualize additional data dimensions beyond open, high, low, close, and volume The **Include** and **Ignore** options allow it to visualize other included data such as simple moving averages, Bollinger bands and more, using the same styles and configurations available in the [time series][time series visualization] visualization.
 
 {{% docs/reference %}}
 [time series visualization]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/panels-visualizations/visualizations/time-series"
