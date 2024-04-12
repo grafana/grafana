@@ -332,8 +332,6 @@ func (a *alertRule) evaluate(ctx context.Context, key ngmodels.AlertRuleKey, f f
 	logger := a.logger.FromContext(ctx).New("version", e.rule.Version, "fingerprint", f, "attempt", attempt, "now", e.scheduledAt).FromContext(ctx)
 	start := a.clock.Now()
 
-	evalAttemptTotal.Inc()
-
 	evalCtx := eval.NewContextWithPreviousResults(ctx, SchedulerUserFor(e.rule.OrgID), a.newLoadedMetricsReader(e.rule))
 	ruleEval, err := a.evalFactory.Create(evalCtx, e.rule.GetEvalCondition())
 	var results eval.Results
@@ -348,6 +346,8 @@ func (a *alertRule) evaluate(ctx context.Context, key ngmodels.AlertRuleKey, f f
 			logger.Error("Failed to evaluate rule", "error", err, "duration", dur)
 		}
 	}
+
+	evalAttemptTotal.Inc()
 
 	if ctx.Err() != nil { // check if the context is not cancelled. The evaluation can be a long-running task.
 		span.SetStatus(codes.Error, "rule evaluation cancelled")
