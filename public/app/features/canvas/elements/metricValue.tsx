@@ -174,6 +174,7 @@ export const metricValueItem: CanvasElementItem<TextConfig, TextData> = {
       height: options?.placement?.height,
       top: options?.placement?.top ?? 100,
       left: options?.placement?.left ?? 100,
+      rotation: options?.placement?.rotation ?? 0,
     },
   }),
 
