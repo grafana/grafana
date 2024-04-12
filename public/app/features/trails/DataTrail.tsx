@@ -1,7 +1,7 @@
 import { css } from '@emotion/css';
 import React from 'react';
 
-import { AdHocVariableFilter, GrafanaTheme2, VariableHide } from '@grafana/data';
+import { AdHocVariableFilter, GrafanaTheme2, VariableHide, urlUtil } from '@grafana/data';
 import { locationService } from '@grafana/runtime';
 import {
   AdHocFiltersVariable,
@@ -152,8 +152,11 @@ export class DataTrail extends SceneObjectBase<DataTrailState> {
       // Embedded trails should not be altering the URL
       return;
     }
+
     const urlState = getUrlSyncManager().getUrlState(this);
-    locationService.partial(urlState, true);
+    const fullUrl = urlUtil.renderUrl(locationService.getLocation().pathname, urlState);
+
+    locationService.replace(encodeURI(fullUrl));
   }
 
   private _handleMetricSelectedEvent(evt: MetricSelectedEvent) {

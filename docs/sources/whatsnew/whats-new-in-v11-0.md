@@ -21,7 +21,7 @@ weight: -42
 
 # What’s new in Grafana v11.0-preview
 
-Welcome to Grafana 11.0-preview! This release contains some major improvements: most notably, the ability to explore your Prometheus metrics and loki logs without writing any PromQL or LogQL, using Explore Metrics and Explore Logs. The dashboard experience is better than ever with Edit mode for dashboards, AI-generated dashboard names and descriptions, and general availability for subfolders. You can also take advantage of improvements to the Canvas and Table panels, new Transformations, a revamp of the Alert Rule page, and more.
+Welcome to Grafana 11.0-preview! This release contains some major improvements: most notably, the ability to explore your Prometheus metrics and Loki logs without writing any PromQL or LogQL, using Explore Metrics and Explore Logs. The dashboard experience is better than ever with edit mode for dashboards, AI-generated dashboard names and descriptions, and general availability for subfolders. You can also take advantage of improvements to the canvas and table visualizations, new transformations, a revamp of the Alert Rule page, and more.
 
 Why "preview?" The Grafana 11.0 stable release is planned for this May. This is an early release to coincide with [Grafanacon 2024](https://grafana.com/about/events/grafanacon/2024/), so that you can try the new functionality early. To understand the differences between preview and GA releases, review the [release life cycle](https://grafana.com/docs/release-life-cycle/).
 
@@ -67,7 +67,7 @@ Explore Metrics is a query-less experience for browsing Prometheus-compatible me
 
 … all without writing any queries!
 
-To learn more, refer to <!-- the Explore Metrics [documentation](http://grafana.com/docs/grafana/<GRAFANA_VERSION>/explore/metrics-explore/) as well as --> the following video demo:
+To learn more, refer to the Explore Metrics [documentation](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/explore/explore-metrics/) as well as the following video demo:
 
 {{< youtube id="JbaPufQs5LY" >}}
 
@@ -113,7 +113,7 @@ We moved the time picker into the dashboard canvas and now, together with templa
 
 If you want to learn more, in detail, about all the improvements we've made, don't miss our blog post.
 
-<!-- {{< youtube id="ECahW01W5gs" >}} commented out until team decides if there will be changes to the video -->
+{{< youtube id="kcKwBhvrsHc" >}}
 
 ### Scenes for viewers
 

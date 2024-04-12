@@ -377,7 +377,7 @@ describe('calculateField transformer w/ timeseries', () => {
             text: '10000',
           },
         };
-        for (const key of Object.keys(variables)) {
+        for (const key in variables) {
           if (target === `$${key}`) {
             return variables[key]!.value + '';
           }

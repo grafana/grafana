@@ -130,5 +130,19 @@ describe('DataTrail', () => {
         });
       });
     });
+    describe('When going back to history step 0', () => {
+      beforeEach(() => {
+        trail.publishEvent(new MetricSelectedEvent('first_metric'));
+        trail.publishEvent(new MetricSelectedEvent('second_metric'));
+        trail.state.history.goBackToStep(0);
+      });
+
+      it('Should remove metric from state and url', () => {
+        expect(trail.state.metric).toBe(undefined);
+
+        expect(locationService.getSearchObject().metric).toBe(undefined);
+        expect(locationService.getSearch().has('metric')).toBe(false);
+      });
+    });
   });
 });
