@@ -56,7 +56,7 @@ function getProvidersWrapper() {
 }
 
 describe('EditGroupModal', () => {
-  it('Should disable all inputs but interval when intervalEditOnly is set', () => {
+  it('Should disable all inputs but interval when intervalEditOnly is set', async () => {
     const namespace = mockCombinedRuleNamespace({
       name: 'my-alerts',
       rulesSource: mockDataSource(),
@@ -69,7 +69,7 @@ describe('EditGroupModal', () => {
       wrapper: getProvidersWrapper(),
     });
 
-    expect(ui.input.namespace.get()).toHaveAttribute('readonly');
+    expect(await ui.input.namespace.find()).toHaveAttribute('readonly');
     expect(ui.input.group.get()).toHaveAttribute('readonly');
     expect(ui.input.interval.get()).not.toHaveAttribute('readonly');
   });
@@ -96,7 +96,7 @@ describe('EditGroupModal component on cloud alert rules', () => {
     rulerRule: mockRulerRecordingRule({ record: 'recording-rule-cpu' }),
   });
 
-  it('Should show alert table in case of having some non-recording rules in the group', () => {
+  it('Should show alert table in case of having some non-recording rules in the group', async () => {
     const promNs = mockCombinedRuleNamespace({
       name: 'prometheus-ns',
       rulesSource: promDsSettings,
@@ -111,7 +111,7 @@ describe('EditGroupModal component on cloud alert rules', () => {
       wrapper: getProvidersWrapper(),
     });
 
-    expect(ui.input.namespace.get()).toHaveValue('prometheus-ns');
+    expect(await ui.input.namespace.find()).toHaveValue('prometheus-ns');
     expect(ui.input.namespace.get()).not.toHaveAttribute('readonly');
     expect(ui.input.group.get()).toHaveValue('default-group');
 
@@ -119,7 +119,7 @@ describe('EditGroupModal component on cloud alert rules', () => {
     expect(ui.tableRows.getAll()[0]).toHaveTextContent('alerting-rule-cpu');
   });
 
-  it('Should not show alert table in case of having exclusively recording rules in the group', () => {
+  it('Should not show alert table in case of having exclusively recording rules in the group', async () => {
     const promNs = mockCombinedRuleNamespace({
       name: 'prometheus-ns',
       rulesSource: promDsSettings,
@@ -132,7 +132,7 @@ describe('EditGroupModal component on cloud alert rules', () => {
       wrapper: getProvidersWrapper(),
     });
     expect(ui.table.query()).not.toBeInTheDocument();
-    expect(ui.noRulesText.get()).toBeInTheDocument();
+    expect(await ui.noRulesText.find()).toBeInTheDocument();
   });
 });
 
@@ -163,12 +163,12 @@ describe('EditGroupModal component on grafana-managed alert rules', () => {
 
   const grafanaGroup1 = grafanaNamespace.groups[0];
 
-  it('Should show alert table', () => {
+  it('Should show alert table', async () => {
     render(<EditCloudGroupModal namespace={grafanaNamespace} group={grafanaGroup1} onClose={jest.fn()} />, {
       wrapper: getProvidersWrapper(),
     });
 
-    expect(ui.input.namespace.get()).toHaveValue('namespace1');
+    expect(await ui.input.namespace.find()).toHaveValue('namespace1');
     expect(ui.input.group.get()).toHaveValue('grafanaGroup1');
     expect(ui.input.interval.get()).toHaveValue('30s');
 
@@ -177,19 +177,19 @@ describe('EditGroupModal component on grafana-managed alert rules', () => {
     expect(ui.tableRows.getAll()[1]).toHaveTextContent('high-memory');
   });
 
-  it('Should have folder input in readonly mode', () => {
+  it('Should have folder input in readonly mode', async () => {
     render(<EditCloudGroupModal namespace={grafanaNamespace} group={grafanaGroup1} onClose={jest.fn()} />, {
       wrapper: getProvidersWrapper(),
     });
 
-    expect(ui.input.namespace.get()).toHaveAttribute('readonly');
+    expect(await ui.input.namespace.find()).toHaveAttribute('readonly');
   });
 
-  it('Should not display folder link if no folderUrl provided', () => {
+  it('Should not display folder link if no folderUrl provided', async () => {
     render(<EditCloudGroupModal namespace={grafanaNamespace} group={grafanaGroup1} onClose={jest.fn()} />, {
       wrapper: getProvidersWrapper(),
     });
-
+    expect(await ui.input.namespace.find()).toHaveValue('namespace1');
     expect(ui.folderLink.query()).not.toBeInTheDocument();
   });
 });

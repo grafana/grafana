@@ -243,13 +243,7 @@ func (hs *HTTPServer) loginUserWithUser(user *user.User, c *contextmodel.ReqCont
 func (hs *HTTPServer) Logout(c *contextmodel.ReqContext) {
 	// FIXME: restructure saml client to implement authn.LogoutClient
 	if hs.samlSingleLogoutEnabled() {
-		id, err := identity.UserIdentifier(c.SignedInUser.GetNamespacedID())
-		if err != nil {
-			hs.log.Error("failed to retrieve user ID", "error", err)
-		}
-
-		authInfo, _ := hs.authInfoService.GetAuthInfo(c.Req.Context(), &loginservice.GetAuthInfoQuery{UserId: id})
-		if authInfo != nil && authInfo.AuthModule == loginservice.SAMLAuthModule {
+		if c.SignedInUser.GetAuthenticatedBy() == loginservice.SAMLAuthModule {
 			c.Redirect(hs.Cfg.AppSubURL + "/logout/saml")
 			return
 		}

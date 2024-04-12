@@ -670,7 +670,8 @@ func TestLogoutSaml(t *testing.T) {
 	assert.Equal(t, true, hs.samlSingleLogoutEnabled())
 	sc.defaultHandler = routing.Wrap(func(c *contextmodel.ReqContext) response.Response {
 		c.SignedInUser = &user.SignedInUser{
-			UserID: 1,
+			UserID:          1,
+			AuthenticatedBy: loginservice.SAMLAuthModule,
 		}
 		hs.Logout(c)
 		return response.Empty(http.StatusOK)
