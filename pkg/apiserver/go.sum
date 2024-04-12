@@ -79,8 +79,6 @@ github.com/gorilla/websocket v1.5.0 h1:PPwGk2jz7EePpoHN/+ClbZu8SPxiqlu12wZP/3sWm
 github.com/gorilla/websocket v1.5.0/go.mod h1:YR8l580nyteQvAITg2hZ9XVh4b55+EU/adAjf1fMHhE=
 github.com/grafana/grafana-plugin-sdk-go v0.222.0 h1:bWK35de9Kl9+lRGyh+41zW2X8MkQ4959aqUsi08/8ig=
 github.com/grafana/grafana-plugin-sdk-go v0.222.0/go.mod h1:0lYONo3rJrjIoJNOQP0h2NXmOaF5rFIuH/rwSVSeIrQ=
-github.com/grafana/grafana/pkg/apimachinery v0.0.0-20240409140820-518d3341d58f h1:+CK3tH3XrAAqx5urmVqpgSxMrL2MlpTOnLVSU4w4IjY=
-github.com/grafana/grafana/pkg/apimachinery v0.0.0-20240409140820-518d3341d58f/go.mod h1:ZxIaCOlDmFupiL55aLU+Qp7O1dgwkDMBAQBK7wnEVBg=
 github.com/grpc-ecosystem/go-grpc-middleware v1.4.0 h1:UH//fgunKIs4JdUbpDl1VZCDaL56wXCB/5+wF6uHfaI=
 github.com/grpc-ecosystem/go-grpc-prometheus v1.2.1-0.20191002090509-6af20e3a5340 h1:uGoIog/wiQHI9GAxXO5TJbT0wWKH3O9HhOJW1F9c3fY=
 github.com/grpc-ecosystem/grpc-gateway v1.16.0 h1:gmcG1KaJ57LophUzW0Hy8NmPhnMZb4M0+kPpLofRdBo=
