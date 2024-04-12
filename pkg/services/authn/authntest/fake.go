@@ -40,8 +40,8 @@ func (f *FakeService) Authenticate(ctx context.Context, r *authn.Request) (*auth
 	return f.ExpectedIdentity, f.ExpectedErr
 }
 
-func (f *FakeService) GetClient(name string) authn.Client {
-	panic("unimplemented")
+func (f *FakeService) IsClientEnabled(name string) bool {
+	return true
 }
 
 func (f *FakeService) RegisterPostAuthHook(hook authn.PostAuthHookFn, priority uint) {}

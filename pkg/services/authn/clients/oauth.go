@@ -200,7 +200,12 @@ func (c *OAuth) Authenticate(ctx context.Context, r *authn.Request) (*authn.Iden
 }
 
 func (c *OAuth) IsEnabled() bool {
-	return c.socialService.GetOAuthInfoProvider(c.providerName).Enabled
+	provider := c.socialService.GetOAuthInfoProvider(c.providerName)
+	if provider == nil {
+		return false
+	}
+
+	return provider.Enabled
 }
 
 func (c *OAuth) RedirectURL(ctx context.Context, r *authn.Request) (*authn.Redirect, error) {

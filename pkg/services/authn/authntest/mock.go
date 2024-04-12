@@ -20,7 +20,7 @@ func (m *MockService) Authenticate(ctx context.Context, r *authn.Request) (*auth
 	panic("unimplemented")
 }
 
-func (m *MockService) GetClient(name string) authn.Client {
+func (m *MockService) IsClientEnabled(name string) bool {
 	panic("unimplemented")
 }
 

@@ -95,8 +95,8 @@ type Service interface {
 	// RegisterClient will register a new authn.Client that can be used for authentication
 	RegisterClient(c Client)
 
-	// GetClient returns a client by name
-	GetClient(name string) Client
+	// IsCliendEnabled returns the enabled status of a client
+	IsClientEnabled(client string) bool
 }
 
 type IdentitySynchronizer interface {
@@ -108,7 +108,7 @@ type Client interface {
 	Name() string
 	// Authenticate performs the authentication for the request
 	Authenticate(ctx context.Context, r *Request) (*Identity, error)
-	//IsEnabled returns the enabled status of the client
+	// IsEnabled returns the enabled status of the client
 	IsEnabled() bool
 }
 
