@@ -113,7 +113,7 @@ type Client interface {
 }
 
 // ContextAwareClient is an optional interface that auth client can implement.
-// Clients that implements this interface will be tried during request authentication
+// Clients that implements this interface will be tried during request authentication.
 type ContextAwareClient interface {
 	Client
 	// Test should return true if client can be used to authenticate request
@@ -132,7 +132,7 @@ type HookClient interface {
 
 // RedirectClient is an optional interface that auth clients can implement.
 // Clients that implements this interface can be used to generate redirect urls
-// for authentication flows, e.g. oauth clients
+// for authentication flows, e.g. oauth clients.
 type RedirectClient interface {
 	Client
 	RedirectURL(ctx context.Context, r *Request) (*Redirect, error)
@@ -155,10 +155,18 @@ type ProxyClient interface {
 }
 
 // UsageStatClient is an optional interface that auth clients can implement.
-// Clients that implements this interface can specify a usage stat collection hook
+// Clients that implements this interface can specify a usage stat collection hook.
 type UsageStatClient interface {
 	Client
 	UsageStatFn(ctx context.Context) (map[string]any, error)
+}
+
+// IdentityResolverClient is an optional interface that auth clients can implement.
+// Clients that implements this interface can resolve an full identity from an orgID and namespaceID.
+type IdentityResolverClient interface {
+	Client
+	Namespace() string
+	ResolveIdentity(ctx context.Context, orgID int64, namespaceID NamespaceID) (*Identity, error)
 }
 
 type Request struct {

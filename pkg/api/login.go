@@ -329,7 +329,7 @@ func (hs *HTTPServer) redirectURLWithErrorCookie(c *contextmodel.ReqContext, err
 }
 
 func (hs *HTTPServer) samlEnabled() bool {
-	return hs.SettingsProvider.KeyValue("auth.saml", "enabled").MustBool(false) && hs.License.FeatureEnabled(social.SAMLProviderName)
+	return hs.authnService.GetClient(social.SAMLProviderName).IsEnabled()
 }
 
 func (hs *HTTPServer) samlName() string {
