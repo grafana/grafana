@@ -408,13 +408,13 @@ export const fieldReducers = new Registry<FieldReducerInfo>(() => [
 // This `Array.from` will build an array of elements from 1 to 99
 const buildPercentileReducers = (percentiles = [...Array.from({ length: 99 }, (_, i) => i + 1)]) => {
   const percentileReducers: FieldReducerInfo[] = [];
+  const nth = (n: number) =>
+    n > 3 && n < 21 ? 'th' : n % 10 === 1 ? 'st' : n % 10 === 2 ? 'nd' : n % 10 === 3 ? 'rd' : 'th';
 
   percentiles.forEach((p) => {
     const percentile = p / 100;
     const id = `p${p}` as ReducerID;
-    const nth = (n: number) =>
-      n > 3 && n < 21 ? 'th' : n % 10 === 1 ? 'st' : n % 10 === 2 ? 'nd' : n % 10 === 3 ? 'rd' : 'th';
-    const name = `${p}pth`;
+    const name = `${p}${nth(p)} %`;
     const description = `${p}${nth(p)} percentile value`;
 
     percentileReducers.push({
