@@ -33,15 +33,15 @@ cards:
       height: 24
     - title: Public dashboards
       href: ./dashboard-public/
-      description: Make your Grafana dashboards public and share them with anyone.
+      description: Make your Grafana dashboards public and share them with anyone without requiring access to your Grafana organization.
       height: 24
     - title: Reporting
       href: ./create-reports/
-      description: Generate and share PDF reports from your Grafana dashboards.
+      description: Automatically generate and share PDF reports from your Grafana dashboards.
       height: 24
     - title: Sharing
       href: ./share-dashboards-panels/
-      description: Share Grafana dashboards and panels within your organization and publicly.
+      description: Share Grafana dashboards and panels within your organization using links, snapshots, and JSON exports.
       height: 24
 ---
 
