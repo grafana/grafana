@@ -77,13 +77,13 @@ const LogsQueryEditor = ({
         resource.metricNamespace?.toLowerCase() === 'microsoft.operationalinsights/workspaces' && basicLogsEnabled
       );
     }
-  }, [query.azureLogAnalytics?.resources]);
+  }, [basicLogsEnabled, query.azureLogAnalytics?.resources]);
 
   useEffect(() => {
     if (!basicLogsEnabled) {
       onChange(setBasicLogsQuery(query, false));
     }
-  }, [basicLogsEnabled]);
+  }, [basicLogsEnabled, onChange, query]);
   let portalLinkButton = null;
 
   if (data?.series) {
