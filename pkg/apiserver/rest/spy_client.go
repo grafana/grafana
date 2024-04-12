@@ -158,7 +158,7 @@ func (c *spyLegacyStorageClient) Create(ctx context.Context, obj runtime.Object,
 func (c *spyLegacyStorageClient) Get(ctx context.Context, name string, options *metav1.GetOptions) (runtime.Object, error) {
 	c.spy.record("LegacyStorage.Get")
 	klog.Info("method: LegacyStorage.Get")
-	return nil, nil
+	return &example.Pod{}, nil
 }
 
 func (c *spyLegacyStorageClient) NewList() runtime.Object {
