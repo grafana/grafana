@@ -106,7 +106,15 @@ function useGetIncidentPluginConfig() {
 
     const checkIfIncidentsCreated = async () => {
       const isDrillCreated = await getBackendSrv()
-        .post('/api/plugins/grafana-incident-app/resources/api/IncidentsService.QueryIncidents')
+        .post('/api/plugins/grafana-incident-app/resources/api/IncidentsService.QueryIncidents', {
+          query: {
+            limit: 6,
+            orderDirection: 'DESC',
+            queryString: 'isdrill:false isdrill:true',
+            orderField: 'createdTime',
+          },
+          cursor: { hasMore: false, nextValue: '' },
+        })
         .then((response) => response.incidents.length > 0);
       return isDrillCreated;
     };
@@ -116,7 +124,8 @@ function useGetIncidentPluginConfig() {
         return false;
       }
       const availableIntegrations = await getBackendSrv().post(
-        '/api/plugins/grafana-incident-app/resources/api/IntegrationService.GetAvailableIntegrations'
+        '/api/plugins/grafana-incident-app/resources/api/IntegrationService.GetAvailableIntegrations',
+        {}
       );
 
       const isSlackInstalled = availableIntegrations?.find(
