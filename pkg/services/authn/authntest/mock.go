@@ -20,6 +20,10 @@ func (m *MockService) Authenticate(ctx context.Context, r *authn.Request) (*auth
 	panic("unimplemented")
 }
 
+func (m *MockService) GetClient(name string) authn.Client {
+	panic("unimplemented")
+}
+
 func (m *MockService) Login(ctx context.Context, client string, r *authn.Request) (*authn.Identity, error) {
 	panic("unimplemented")
 }
