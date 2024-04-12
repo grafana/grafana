@@ -2,7 +2,6 @@ package expr
 
 import (
 	"encoding/json"
-	"fmt"
 	"math"
 	"sort"
 	"testing"
@@ -108,7 +107,7 @@ func TestUnmarshalThresholdCommand(t *testing.T) {
 				cmd := command.(*ThresholdCommand)
 				require.Equal(t, []string{"A"}, cmd.NeedsVars())
 				require.Equal(t, ThresholdIsAbove, cmd.ThresholdFunc)
-				require.Equal(t, []float64{20.0, 80.0}, cmd.Conditions)
+				require.Equal(t, greaterThanPredicate{20.0}, cmd.predicate)
 			},
 		},
 		{
@@ -173,10 +172,10 @@ func TestUnmarshalThresholdCommand(t *testing.T) {
 				require.Equal(t, []string{"B"}, cmd.NeedsVars())
 				require.Equal(t, []string{"B"}, cmd.LoadingThresholdFunc.NeedsVars())
 				require.Equal(t, ThresholdIsAbove, cmd.LoadingThresholdFunc.ThresholdFunc)
-				require.Equal(t, []float64{100.0}, cmd.LoadingThresholdFunc.Conditions)
+				require.Equal(t, greaterThanPredicate{100.0}, cmd.LoadingThresholdFunc.predicate)
 				require.Equal(t, []string{"B"}, cmd.UnloadingThresholdFunc.NeedsVars())
 				require.Equal(t, ThresholdIsBelow, cmd.UnloadingThresholdFunc.ThresholdFunc)
-				require.Equal(t, []float64{31.0}, cmd.UnloadingThresholdFunc.Conditions)
+				require.Equal(t, lessThanPredicate{31.0}, cmd.UnloadingThresholdFunc.predicate)
 				require.True(t, cmd.UnloadingThresholdFunc.Invert)
 				require.NotNil(t, cmd.LoadedDimensions)
 				actual := make([]uint64, 0, len(cmd.LoadedDimensions))
@@ -225,74 +224,6 @@ func TestThresholdCommandVars(t *testing.T) {
 	cmd, err := NewThresholdCommand("B", "A", "lt", []float64{1.0})
 	require.Nil(t, err)
 	require.Equal(t, cmd.NeedsVars(), []string{"A"})
-}
-
-func TestCreateMathExpression(t *testing.T) {
-	type testCase struct {
-		description string
-		expected    string
-
-		ref      string
-		function ThresholdType
-		params   []float64
-	}
-
-	cases := []testCase{
-		{
-			description: "is above",
-			ref:         "My Ref",
-			function:    "gt",
-			params:      []float64{0},
-			expected:    "${My Ref} > 0.000000",
-		},
-		{
-			description: "is below",
-			ref:         "A",
-			function:    "lt",
-			params:      []float64{0},
-			expected:    "${A} < 0.000000",
-		},
-		{
-			description: "is within",
-			ref:         "B",
-			function:    "within_range",
-			params:      []float64{20, 80},
-			expected:    "${B} > 20.000000 && ${B} < 80.000000",
-		},
-		{
-			description: "is outside",
-			ref:         "B",
-			function:    "outside_range",
-			params:      []float64{20, 80},
-			expected:    "${B} < 20.000000 || ${B} > 80.000000",
-		},
-	}
-
-	for _, tc := range cases {
-		t.Run(tc.description, func(t *testing.T) {
-			expr, err := createMathExpression(tc.ref, tc.function, tc.params, false)
-
-			require.Nil(t, err)
-			require.NotNil(t, expr)
-
-			require.Equal(t, tc.expected, expr)
-
-			t.Run("inverted", func(t *testing.T) {
-				expr, err := createMathExpression(tc.ref, tc.function, tc.params, true)
-				require.Nil(t, err)
-				require.NotNil(t, expr)
-
-				require.Equal(t, fmt.Sprintf("!(%s)", tc.expected), expr)
-			})
-		})
-	}
-
-	t.Run("should error if function is unsupported", func(t *testing.T) {
-		expr, err := createMathExpression("A", "foo", []float64{0}, false)
-		require.Equal(t, expr, "")
-		require.NotNil(t, err)
-		require.Contains(t, err.Error(), "no such threshold function")
-	})
 }
 
 func TestIsSupportedThresholdFunc(t *testing.T) {
