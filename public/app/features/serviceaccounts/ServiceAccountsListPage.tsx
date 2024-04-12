@@ -19,6 +19,7 @@ import EmptyListCTA from 'app/core/components/EmptyListCTA/EmptyListCTA';
 import { Page } from 'app/core/components/Page/Page';
 import config from 'app/core/config';
 import { contextSrv } from 'app/core/core';
+import { t } from 'app/core/internationalization';
 import { StoreState, ServiceAccountDTO, AccessControlAction, ServiceAccountStateFilter } from 'app/types';
 
 import { CreateTokenModal, ServiceAccountToken } from './components/CreateTokenModal';
@@ -220,7 +221,12 @@ export const ServiceAccountsListPageUnconnected = ({
             className={styles.filter}
           />
         </div>
-        {!isLoading && !noServiceAccountsCreated && serviceAccounts.length === 0 && <EmptyState variant="not-found" />}
+        {!isLoading && !noServiceAccountsCreated && serviceAccounts.length === 0 && (
+          <EmptyState
+            variant="not-found"
+            message={t('service-accounts.empty-state.message', 'No services accounts found')}
+          />
+        )}
         {!isLoading && noServiceAccountsCreated && (
           <>
             <EmptyListCTA

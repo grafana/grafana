@@ -23,6 +23,7 @@ import {
 import EmptyListCTA from 'app/core/components/EmptyListCTA/EmptyListCTA';
 import { Page } from 'app/core/components/Page/Page';
 import { fetchRoleOptions } from 'app/core/components/RolePicker/api';
+import { t } from 'app/core/internationalization';
 import { contextSrv } from 'app/core/services/context_srv';
 import { AccessControlAction, Role, StoreState, Team } from 'app/types';
 
@@ -235,7 +236,7 @@ export const TeamList = ({
               </InlineField>
             </div>
             {hasFetched && teams.length === 0 ? (
-              <EmptyState variant="not-found" />
+              <EmptyState variant="not-found" message={t('teams.empty-state.message', 'No teams found')} />
             ) : (
               <Stack direction={'column'} gap={2}>
                 <InteractiveTable
