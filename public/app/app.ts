@@ -215,7 +215,14 @@ export class GrafanaApp {
       });
 
       if (contextSrv.user.orgRole !== '') {
-        preloadPlugins(config.apps, extensionsRegistry);
+        // The "cloud-home-app" is registering banners once it's loaded, and this can cause a rerender in the AppChrome if it's loaded after the Grafana app init.
+        // TODO: remove the following exception once the issue mentioned above is fixed.
+        const awaitedAppPluginIds = ['cloud-home-app'];
+        const awaitedAppPlugins = Object.values(config.apps).filter((app) => awaitedAppPluginIds.includes(app.id));
+        const appPlugins = Object.values(config.apps).filter((app) => !awaitedAppPluginIds.includes(app.id));
+
+        preloadPlugins(appPlugins, extensionsRegistry);
+        await preloadPlugins(awaitedAppPlugins, extensionsRegistry);
       }
 
       setPluginExtensionGetter(createPluginExtensionsGetter(extensionsRegistry));

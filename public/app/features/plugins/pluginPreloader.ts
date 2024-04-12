@@ -12,14 +12,9 @@ export type PluginPreloadResult = {
   extensionConfigs: PluginExtensionConfig[];
 };
 
-export async function preloadPlugins(
-  apps: Record<string, AppPluginConfig> = {},
-  registry: ReactivePluginExtensionsRegistry
-) {
+export async function preloadPlugins(apps: AppPluginConfig[] = [], registry: ReactivePluginExtensionsRegistry) {
   startMeasure('frontend_plugins_preload');
-  const promises = Object.values(apps)
-    .filter((config) => config.preload)
-    .map((config) => preload(config));
+  const promises = apps.filter((config) => config.preload).map((config) => preload(config));
   const preloadedPlugins = await Promise.all(promises);
 
   for (const preloadedPlugin of preloadedPlugins) {
