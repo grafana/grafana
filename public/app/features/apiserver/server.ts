@@ -21,14 +21,9 @@ export class ScopedResourceServer<T = object, K = string> implements ResourceSer
   readonly url: string;
 
   constructor(gvr: GroupVersionResource, namespaced = true) {
-    const configUrl = config.bootData.settings.apiServerUrlOverrides?.find(
-      (override) =>
-        override.group === gvr.group && override.version === gvr.version && override.resource === gvr.resource
-    )?.url;
-
     const ns = namespaced ? `namespaces/${config.namespace}/` : '';
 
-    this.url = configUrl ?? `/apis/${gvr.group}/${gvr.version}/${ns}${gvr.resource}`;
+    this.url = `/apis/${gvr.group}/${gvr.version}/${ns}${gvr.resource}`;
   }
 
   public async create(obj: ResourceForCreate<T, K>): Promise<void> {

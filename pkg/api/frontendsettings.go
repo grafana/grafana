@@ -360,7 +360,11 @@ func (hs *HTTPServer) getFrontendSettings(c *contextmodel.ReqContext) (*dtos.Fro
 	// Set the kubernetes namespace
 	frontendSettings.Namespace = hs.namespacer(c.SignedInUser.OrgID)
 
-	frontendSettings.APIServerUrlOverrides = getApiServerOverrides(hs)
+	// experimental scope features
+	if hs.Features.IsEnabled(c.Req.Context(), featuremgmt.FlagScopeFilters) {
+		frontendSettings.ListScopesEndpoint = hs.Cfg.ScopesListScopesURL
+		frontendSettings.ListDashboardScopesEndpoint = hs.Cfg.ScopesListDashboardsURL
+	}
 
 	return frontendSettings, nil
 }
@@ -722,19 +726,4 @@ func (hs *HTTPServer) getEnabledOAuthProviders() map[string]any {
 		}
 	}
 	return providers
-}
-
-func getApiServerOverrides(hs *HTTPServer) []dtos.FrontendSettingsApiServerUrlOverrideDTO {
-	overrides := make([]dtos.FrontendSettingsApiServerUrlOverrideDTO, 0)
-
-	for _, override := range hs.Cfg.APIServerUrlOverrides {
-		overrides = append(overrides, dtos.FrontendSettingsApiServerUrlOverrideDTO{
-			Group:    override.Group,
-			Version:  override.Version,
-			Resource: override.Resource,
-			Url:      override.Url,
-		})
-	}
-
-	return overrides
 }

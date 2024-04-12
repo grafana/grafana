@@ -132,17 +132,6 @@ export interface CurrentUserDTO {
   lightTheme: boolean;
 }
 
-/** API Server URL Overrides
- *
- * @internal
- */
-export interface APIServerURLOverride {
-  url: string;
-  group: string;
-  version: string;
-  resource: string;
-}
-
 /** Contains essential user and config info
  *
  * @internal
@@ -239,7 +228,8 @@ export interface GrafanaConfig {
   rootFolderUID?: string;
   localFileSystemAvailable?: boolean;
   cloudMigrationIsTarget?: boolean;
-  apiServerUrlOverrides?: APIServerURLOverride[];
+  listDashboardScopesEndpoint?: string;
+  listScopesEndpoint?: string;
 
   // The namespace to use for kubernetes apiserver requests
   namespace: string;

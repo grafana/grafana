@@ -79,13 +79,6 @@ var (
 	CookieSameSiteMode     http.SameSite
 )
 
-type APIServerURLOverride struct {
-	Group    string
-	Version  string
-	Resource string
-	Url      string
-}
-
 // TODO move all global vars to this struct
 type Cfg struct {
 	Target []string
@@ -519,8 +512,9 @@ type Cfg struct {
 	// News Feed
 	NewsFeedEnabled bool
 
-	// API Server Overrides
-	APIServerUrlOverrides []APIServerURLOverride
+	// Experimental scope settings
+	ScopesListScopesURL     string
+	ScopesListDashboardsURL string
 }
 
 // AddChangePasswordLink returns if login form is disabled or not since
@@ -1282,7 +1276,11 @@ func (cfg *Cfg) parseINIFile(iniFile *ini.File) error {
 	cfg.readFeatureManagementConfig()
 	cfg.readPublicDashboardsSettings()
 	cfg.readCloudMigrationSettings()
-	cfg.readApiServerOverrides(iniFile)
+
+	// read experimental scopes settings.
+	scopesSection := iniFile.Section("scopes")
+	cfg.ScopesListScopesURL = scopesSection.Key("list_scopes_endpoint").MustString("")
+	cfg.ScopesListDashboardsURL = scopesSection.Key("list_dashboards_endpoint").MustString("")
 
 	return nil
 }
@@ -1983,28 +1981,4 @@ func (cfg *Cfg) readLiveSettings(iniFile *ini.File) error {
 func (cfg *Cfg) readPublicDashboardsSettings() {
 	publicDashboards := cfg.Raw.Section("public_dashboards")
 	cfg.PublicDashboardsEnabled = publicDashboards.Key("enabled").MustBool(true)
-}
-
-func (cfg *Cfg) readApiServerOverrides(iniFile *ini.File) {
-	cfg.APIServerUrlOverrides = make([]APIServerURLOverride, 0)
-
-	for _, section := range iniFile.Sections() {
-		sectionName := section.Name()
-
-		if !strings.HasPrefix(sectionName, "api_server_url_overrides.") {
-			continue
-		}
-
-		group := section.Key("group").MustString("")
-		version := section.Key("version").MustString("")
-		resource := section.Key("resource").MustString("")
-		overrideUrl := section.Key("url").MustString("")
-
-		cfg.APIServerUrlOverrides = append(cfg.APIServerUrlOverrides, APIServerURLOverride{
-			Group:    group,
-			Version:  version,
-			Resource: resource,
-			Url:      overrideUrl,
-		})
-	}
 }

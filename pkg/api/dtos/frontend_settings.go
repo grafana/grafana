@@ -148,13 +148,6 @@ type FrontendSettingsSqlConnectionLimitsDTO struct {
 	ConnMaxLifetime int `json:"connMaxLifetime"`
 }
 
-type FrontendSettingsApiServerUrlOverrideDTO struct {
-	Group    string `json:"group"`
-	Version  string `json:"version"`
-	Resource string `json:"resource"`
-	Url      string `json:"url"`
-}
-
 type FrontendSettingsDTO struct {
 	DefaultDatasource  string                           `json:"defaultDatasource"`
 	Datasources        map[string]plugins.DataSourceDTO `json:"datasources"`
@@ -276,6 +269,7 @@ type FrontendSettingsDTO struct {
 	Whitelabeling *FrontendSettingsWhitelabelingDTO `json:"whitelabeling,omitempty"`
 
 	LocalFileSystemAvailable bool `json:"localFileSystemAvailable"`
-
-	APIServerUrlOverrides []FrontendSettingsApiServerUrlOverrideDTO `json:"apiServerUrlOverrides,omitempty"`
+	// Experimental Scope settings
+	ListScopesEndpoint          string `json:"listScopesEndpoint"`
+	ListDashboardScopesEndpoint string `json:"listDashboardScopesEndpoint"`
 }
