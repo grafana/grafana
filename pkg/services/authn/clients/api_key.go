@@ -137,7 +137,6 @@ func (s *APIKey) Namespace() string {
 
 func (s *APIKey) ResolveIdentity(ctx context.Context, orgID int64, namespaceID authn.NamespaceID) (*authn.Identity, error) {
 	if !namespaceID.IsNamespace(authn.NamespaceAPIKey) {
-		// TODO error
 		return nil, authn.ErrInvalidNamepsaceID.Errorf("got unspected namespace: %s", namespaceID.Namespace())
 	}
 
