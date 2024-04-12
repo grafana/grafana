@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"sort"
-	"strings"
 
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/infra/db"
@@ -85,24 +84,24 @@ func New(cfg *setting.Cfg,
 	// create action sets from the permissionsToActions
 	inmemoryActionSets := NewInMemoryActionSets(log)
 	// to create an action set we need to know the resource
-	resource := ""
-	for permission, actions := range options.PermissionsToActions {
-		// assuming we get the ordering of this right,
-		// we might want to whitelist the resource name as a starter
-		// such as "dashboards", "folders", "teams"
-		for _, a := range actions {
-			if resource == "" && strings.Contains(a, ":") {
-				resource = strings.Split(a, ":")[0]
-				// now that we have defined resource we do not need to loop through the actions
-				break
-			}
-		}
-		// FIXME: do we want to add the scope as well? or just leave that out for now
-		_, err := inmemoryActionSets.CreateActionSet(resource, permission, "*", actions)
-		if err != nil {
-			return nil, err
-		}
-	}
+	// resource := ""
+	// for permission, actions := range options.PermissionsToActions {
+	// 	// assuming we get the ordering of this right,
+	// 	// we might want to whitelist the resource name as a starter
+	// 	// such as "dashboards", "folders", "teams"
+	// 	for _, a := range actions {
+	// 		if resource == "" && strings.Contains(a, ":") {
+	// 			resource = strings.Split(a, ":")[0]
+	// 			// now that we have defined resource we do not need to loop through the actions
+	// 			break
+	// 		}
+	// 	}
+	// 	// FIXME: do we want to add the scope as well? or just leave that out for now
+	// 	_, err := inmemoryActionSets.CreateActionSet(resource, permission, "*", actions)
+	// 	if err != nil {
+	// 		return nil, err
+	// 	}
+	// }
 
 	s := &Service{
 		ac:          ac,
