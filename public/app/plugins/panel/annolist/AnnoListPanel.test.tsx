@@ -133,7 +133,7 @@ describe('AnnoListPanel', () => {
 
     it("renders annotation item's html content", async () => {
       const { getMock } = await setupTestContext({
-        results: [{ ...defaultResult, text: '<a href="">test link </a> ' }],
+        results: [{ ...defaultResult, text: '<a href="/path">test link </a> ' }],
       });
 
       getMock.mockClear();

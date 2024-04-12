@@ -269,12 +269,16 @@ func UseGlobalOrgFromRequestData(cfg *setting.Cfg) OrgIDGetter {
 }
 
 // UseGlobalOrgFromRequestParams returns global org if `global` flag is set or the org where user is logged in.
-func UseGlobalOrgFromRequestParams(c *contextmodel.ReqContext) (int64, error) {
-	if c.QueryBool("global") {
-		return GlobalOrgID, nil
-	}
+func UseGlobalOrgFromRequestParams(cfg *setting.Cfg) OrgIDGetter {
+	return func(c *contextmodel.ReqContext) (int64, error) {
+		// We only check permissions in the global organization if we are not running a SingleOrganization setup
+		// That allows Organization Admins to modify global roles and make global assignments, and is intended for use in hosted Grafana.
+		if c.QueryBool("global") && !cfg.RBACSingleOrganization {
+			return GlobalOrgID, nil
+		}
 
-	return c.SignedInUser.GetOrgID(), nil
+		return c.SignedInUser.GetOrgID(), nil
+	}
 }
 
 func getOrgQueryFromRequest(c *contextmodel.ReqContext) (*QueryWithOrg, error) {
