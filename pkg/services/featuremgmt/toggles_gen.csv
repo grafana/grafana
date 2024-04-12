@@ -155,7 +155,6 @@ betterPageScrolling,GA,@grafana/grafana-frontend-platform,false,false,true
 authAPIAccessTokenAuth,experimental,@grafana/identity-access-team,false,false,false
 scopeFilters,experimental,@grafana/dashboards-squad,false,false,false
 ssoSettingsSAML,experimental,@grafana/identity-access-team,false,false,false
-usePrometheusFrontendPackage,GA,@grafana/observability-metrics,false,false,true
 oauthRequireSubClaim,experimental,@grafana/identity-access-team,false,false,false
 newDashboardWithFiltersAndGroupBy,experimental,@grafana/dashboards-squad,false,false,false
 cloudWatchNewLabelParsing,GA,@grafana/aws-datasources,false,false,false

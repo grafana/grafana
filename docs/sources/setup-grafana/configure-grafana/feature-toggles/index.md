@@ -59,7 +59,6 @@ Some features are enabled by default. You can disable these feature by setting t
 | `lokiQueryHints`                     | Enables query hints for Loki                                                                                                                                                                                                 | Yes                |
 | `alertingQueryOptimization`          | Optimizes eligible queries in order to reduce load on datasources                                                                                                                                                            |                    |
 | `betterPageScrolling`                | Removes CustomScrollbar from the UI, relying on native browser scrollbars                                                                                                                                                    | Yes                |
-| `usePrometheusFrontendPackage`       | Use the @grafana/prometheus frontend package in core Prometheus.                                                                                                                                                             |                    |
 | `cloudWatchNewLabelParsing`          | Updates CloudWatch label parsing to be more accurate                                                                                                                                                                         | Yes                |
 
 ## Preview feature toggles
