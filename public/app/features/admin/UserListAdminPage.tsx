@@ -7,6 +7,7 @@ import { selectors as e2eSelectors } from '@grafana/e2e-selectors/src';
 import { LinkButton, RadioButtonGroup, useStyles2, FilterInput, EmptyState } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
 import { contextSrv } from 'app/core/core';
+import { t } from 'app/core/internationalization';
 
 import { AccessControlAction, StoreState, UserFilter } from '../../types';
 
@@ -99,7 +100,7 @@ const UserListAdminPageUnConnected = ({
         </div>
       </div>
       {!isLoading && users.length === 0 ? (
-        <EmptyState variant="not-found" />
+        <EmptyState message={t('users.empty-state.message', 'No users found')} variant="not-found" />
       ) : (
         <UsersTable
           users={users}
