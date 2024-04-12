@@ -76,7 +76,7 @@ func getDialOpts(ctx context.Context, settings backend.DataSourceInstanceSetting
 		dialOps = append(dialOps, grpc.WithTransportCredentials(insecure.NewCredentials()))
 	}
 
-	// The following code is required to make gRPC work with Grafana Cloud PDC 
+	// The following code is required to make gRPC work with Grafana Cloud PDC
 	// (https://grafana.com/docs/grafana-cloud/connect-externally-hosted/private-data-source-connect/)
 	proxyClient, err := settings.ProxyClient(ctx)
 	if err != nil {
