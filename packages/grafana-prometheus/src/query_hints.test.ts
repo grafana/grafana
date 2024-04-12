@@ -1,3 +1,4 @@
+// Core Grafana history https://github.com/grafana/grafana/blob/v11.0.0-preview/public/app/plugins/datasource/prometheus/query_hints.test.ts
 import { PrometheusDatasource } from './datasource';
 import { getQueryHints, SUM_HINT_THRESHOLD_COUNT } from './query_hints';
 
