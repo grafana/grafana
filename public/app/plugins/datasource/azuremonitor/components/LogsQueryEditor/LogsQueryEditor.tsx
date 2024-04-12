@@ -76,14 +76,16 @@ const LogsQueryEditor = ({
       setShowBasicLogsToggle(
         resource.metricNamespace?.toLowerCase() === 'microsoft.operationalinsights/workspaces' && basicLogsEnabled
       );
+    } else {
+      setShowBasicLogsToggle(false);
     }
   }, [basicLogsEnabled, query.azureLogAnalytics?.resources]);
 
   useEffect(() => {
-    if (!basicLogsEnabled) {
+    if ((!basicLogsEnabled || !showBasicLogsToggle) && query.azureLogAnalytics?.basicLogsQuery) {
       onChange(setBasicLogsQuery(query, false));
     }
-  }, [basicLogsEnabled, onChange, query]);
+  }, [basicLogsEnabled, onChange, query, showBasicLogsToggle]);
   let portalLinkButton = null;
 
   if (data?.series) {
