@@ -50,6 +50,7 @@ func newGrpcClient(ctx context.Context, settings backend.DataSourceInstanceSetti
 		return nil, err
 	}
 
+	logger.Debug("Instantiating new gRPC client")
 	return tempopb.NewStreamingQuerierClient(clientConn), nil
 }
 
