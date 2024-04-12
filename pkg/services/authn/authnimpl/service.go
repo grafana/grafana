@@ -321,8 +321,7 @@ func (s *Service) RegisterClient(c authn.Client) {
 }
 
 func (s *Service) IsClientEnabled(name string) bool {
-	client, ok := s.clients[name]
-
+	client, ok := s.clients["auth.client."+name]
 	if !ok {
 		return false
 	}
