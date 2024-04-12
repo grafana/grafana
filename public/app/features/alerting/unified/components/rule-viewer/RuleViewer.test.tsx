@@ -1,16 +1,27 @@
+import 'whatwg-fetch';
 import { render, waitFor, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import { http, HttpResponse } from 'msw';
 import React from 'react';
 import { TestProvider } from 'test/helpers/TestProvider';
 import { byText, byRole } from 'testing-library-selector';
 
-import { setBackendSrv } from '@grafana/runtime';
+import { setBackendSrv, setPluginExtensionGetter } from '@grafana/runtime';
 import { backendSrv } from 'app/core/services/backend_srv';
 import { AccessControlAction } from 'app/types';
 import { CombinedRule, RuleIdentifier } from 'app/types/unified-alerting';
 
-import { getCloudRule, getGrafanaRule, grantUserPermissions } from '../../mocks';
+import {
+  getCloudRule,
+  getGrafanaRule,
+  grantUserPermissions,
+  mockDataSource,
+  mockPluginLinkExtension,
+} from '../../mocks';
+import { setupDataSources } from '../../testSetup/datasources';
+import { plugins, setupPlugins } from '../../testSetup/plugins';
 import { Annotation } from '../../utils/constants';
+import { DataSourceType } from '../../utils/datasource';
 import * as ruleId from '../../utils/rule-id';
 
 import { AlertRuleProvider } from './RuleContext';
@@ -33,20 +44,51 @@ const ELEMENTS = {
       button: byRole('button', { name: /More/i }),
       actions: {
         silence: byRole('link', { name: /Silence/i }),
-        declareIncident: byRole('menuitem', { name: /Declare incident/i }),
         duplicate: byRole('menuitem', { name: /Duplicate/i }),
         copyLink: byRole('menuitem', { name: /Copy link/i }),
         export: byRole('menuitem', { name: /Export/i }),
         delete: byRole('menuitem', { name: /Delete/i }),
       },
+      pluginActions: {
+        sloDashboard: byRole('menuitem', { name: /SLO dashboard/i }),
+        declareIncident: byRole('link', { name: /Declare incident/i }),
+      },
     },
   },
 };
 
+const { apiHandlers: pluginApiHandlers } = setupPlugins(plugins.slo, plugins.incident);
+
+const server = createMockGrafanaServer(...pluginApiHandlers);
+
+setupDataSources(mockDataSource({ type: DataSourceType.Prometheus, name: 'mimir-1' }));
+setPluginExtensionGetter(() => ({
+  extensions: [
+    mockPluginLinkExtension({ pluginId: 'grafana-slo-app', title: 'SLO dashboard', path: '/a/grafana-slo-app' }),
+  ],
+}));
+
+beforeAll(() => {
+  grantUserPermissions([
+    AccessControlAction.AlertingRuleCreate,
+    AccessControlAction.AlertingRuleRead,
+    AccessControlAction.AlertingRuleUpdate,
+    AccessControlAction.AlertingRuleDelete,
+    AccessControlAction.AlertingInstanceCreate,
+  ]);
+  setBackendSrv(backendSrv);
+});
+
+beforeEach(() => {
+  server.listen();
+});
+
+afterAll(() => {
+  server.close();
+});
+
 describe('RuleViewer', () => {
   describe('Grafana managed alert rule', () => {
-    const server = createMockGrafanaServer();
-
     const mockRule = getGrafanaRule(
       {
         name: 'Test alert',
@@ -70,29 +112,6 @@ describe('RuleViewer', () => {
       { uid: 'test1' }
     );
     const mockRuleIdentifier = ruleId.fromCombinedRule('grafana', mockRule);
-
-    beforeAll(() => {
-      grantUserPermissions([
-        AccessControlAction.AlertingRuleCreate,
-        AccessControlAction.AlertingRuleRead,
-        AccessControlAction.AlertingRuleUpdate,
-        AccessControlAction.AlertingRuleDelete,
-        AccessControlAction.AlertingInstanceCreate,
-      ]);
-      setBackendSrv(backendSrv);
-    });
-
-    beforeEach(() => {
-      server.listen();
-    });
-
-    afterAll(() => {
-      server.close();
-    });
-
-    afterEach(() => {
-      server.resetHandlers();
-    });
 
     it('should render a Grafana managed alert rule', async () => {
       await renderRuleViewer(mockRule, mockRuleIdentifier);
@@ -131,8 +150,12 @@ describe('RuleViewer', () => {
     });
   });
 
-  describe.skip('Data source managed alert rule', () => {
-    const mockRule = getCloudRule({ name: 'cloud test alert' });
+  describe('Data source managed alert rule', () => {
+    const mockRule = getCloudRule({
+      name: 'cloud test alert',
+      annotations: { [Annotation.summary]: 'cloud summary', [Annotation.runbookURL]: 'https://runbook.example.com' },
+      group: { name: 'Cloud group', interval: '15m', rules: [], totals: { alerting: 1 } },
+    });
     const mockRuleIdentifier = ruleId.fromCombinedRule('mimir-1', mockRule);
 
     beforeAll(() => {
@@ -146,13 +169,31 @@ describe('RuleViewer', () => {
       renderRuleViewer(mockRule, mockRuleIdentifier);
 
       // assert on basic info to be vissible
-      expect(screen.getByText('Test alert')).toBeInTheDocument();
+      expect(screen.getByText('cloud test alert')).toBeInTheDocument();
       expect(screen.getByText('Firing')).toBeInTheDocument();
 
       expect(screen.getByText(mockRule.annotations[Annotation.summary])).toBeInTheDocument();
-      expect(screen.getByRole('link', { name: 'View panel' })).toBeInTheDocument();
       expect(screen.getByRole('link', { name: mockRule.annotations[Annotation.runbookURL] })).toBeInTheDocument();
       expect(screen.getByText(`Every ${mockRule.group.interval}`)).toBeInTheDocument();
+    });
+
+    it('should render custom plugin actions for a plugin-provided rule', async () => {
+      const sloRule = getCloudRule({
+        name: 'cloud test alert',
+        labels: { __grafana_origin: 'plugin/grafana-slo-app' },
+      });
+      const sloRuleIdentifier = ruleId.fromCombinedRule('mimir-1', sloRule);
+
+      const user = userEvent.setup();
+
+      renderRuleViewer(sloRule, sloRuleIdentifier);
+
+      expect(ELEMENTS.actions.more.button.get()).toBeInTheDocument();
+
+      await user.click(ELEMENTS.actions.more.button.get());
+
+      expect(ELEMENTS.actions.more.pluginActions.sloDashboard.get()).toBeInTheDocument();
+      await waitFor(() => expect(ELEMENTS.actions.more.pluginActions.declareIncident.get()).toBeEnabled());
     });
   });
 });

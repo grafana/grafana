@@ -18,6 +18,10 @@ export function mockAlertmanagerChoiceResponse(server: SetupServer, response: Al
   server.use(http.get('/api/v1/ngalert', () => HttpResponse.json(response)));
 }
 
+export function mockAlertmanagerChoiceResponseHandler(response: AlertmanagersChoiceResponse) {
+  return http.get('/api/v1/ngalert', () => HttpResponse.json(response));
+}
+
 export const emptyExternalAlertmanagersResponse: ExternalAlertmanagersResponse = {
   data: {
     droppedAlertManagers: [],
