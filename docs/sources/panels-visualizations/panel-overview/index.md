@@ -20,17 +20,15 @@ weight: 15
 
 # Panel overview
 
-The _panel_ is the basic visualization building block in Grafana.
-Each panel has a query editor specific to the data source selected in the panel.
-The query editor allows you to build a query that returns the data you want to visualize.
+A Grafana panel is a visual representation of data composed of a [query][] and a [visualization][]. Within panels, you can apply [transformations][], which process the results of a query before they're passed on for visualization. You can also further customize a panel by formatting data and configuring visualization options.
 
-There are a wide variety of styling and formatting options for each panel.
-Panels can be dragged, dropped, and resized to rearrange them on the dashboard.
+Each panel has a query editor specific to the data source selected in the panel. The query editor allows you to build a query that returns the data you want to visualize.
 
-Before you add a panel, ensure that you have configured a data source.
+Panels offer a wide variety of formatting and styling options, from applying colors based on field values to creating custom units. Each visualization also comes with options specific to it that give you further control over how your data is displayed. Panels can also be dragged, dropped, and resized to rearrange them on the dashboard.
+
+To get started adding panels, ensure that you have configured a data source:
 
 - For details about using data sources, refer to [Data sources][].
-
 - For more information about managing data sources as an administrator, refer to [Data source management][].
 
   {{% admonition type="note" %}}
@@ -45,7 +43,7 @@ The panel has the following features:
 
 <!-- {{< figure src="tbd" width="700px" alt="An annotated image of a panel" >}} -->
 
-- **Panel title** - You can create your own panel titles or have Grafana create them for you using [generative AI features][].
+- **Panel title** - You can create your own panel titles or have Grafana create them for you using [generative AI features][ai].
 - **Links** - Add [panel links][] to other dashboards, panels, or external sites.
 - **Panel menu** - In the [panel menu](#panel-menu), access actions such as **View**, **Edit**, **Inspect**, and **Remove**.
 - **Tooltips** - View [tooltips][] to get more information about data points.
@@ -88,7 +86,7 @@ By hovering over a panel with the mouse you can use some shortcuts that will tar
 
 ## Panel configuration
 
-To configure panels, refer to the following sub topics:
+To configure panels, refer to the following subtopics:
 
 - [Configure panel options][]
 - [Configure standard options][]
@@ -100,8 +98,23 @@ To configure panels, refer to the following sub topics:
 - [Configure field overrides][]
 
 {{% docs/reference %}}
-[generative AI features]: "/docs/grafana/ -> /docs/grafana/<GRAFANA_VERSION>/dashboards/manage-dashboards#set-up-generative-ai-features-for-dashboards"
-[generative AI features]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/visualizations/dashboards/manage-dashboards#set-up-generative-ai-features-for-dashboards"
+[query]: "/docs/grafana/ -> /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/query-transform-data"
+[query]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/visualizations/panels-visualizations/query-transform-data"
+
+[visualization]: "/docs/grafana/ -> /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/visualizations"
+[visualization]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/visualizations/panels-visualizations/visualizations"
+
+[transformations]: "/docs/grafana/ -> /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/query-transform-data/transform-data"
+[transformations]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/visualizations/panels-visualizations/query-transform-data/transform-data"
+
+[Data source management]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/administration/data-source-management"
+[Data source management]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/administration/data-source-management"
+
+[Data sources]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/datasources"
+[Data sources]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/datasources"
+
+[ai]: "/docs/grafana/ -> /docs/grafana/<GRAFANA_VERSION>/dashboards/manage-dashboards#set-up-generative-ai-features-for-dashboards"
+[ai]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/visualizations/dashboards/manage-dashboards#set-up-generative-ai-features-for-dashboards"
 
 [panel links]: "/docs/grafana/ -> /docs/grafana/<GRAFANA_VERSION>/dashboards/build-dashboards/manage-dashboard-links#panel-links"
 [panel links]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/visualizations/dashboards/build-dashboards/manage-dashboard-links#panel-links"
@@ -117,12 +130,6 @@ To configure panels, refer to the following sub topics:
 
 [create]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/alerting/alerting-rules/create-grafana-managed-rule#create-alerts-from-panels"
 [create]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/alerting-and-irm/alerting/alerting-rules/create-grafana-managed-rule#create-alerts-from-panels"
-
-[Data source management]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/administration/data-source-management"
-[Data source management]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/administration/data-source-management"
-
-[Data sources]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/datasources"
-[Data sources]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/datasources"
 
 [Configure panel options]: "/docs/grafana/ -> /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/configure-panel-options"
 [Configure panel options]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/visualizations/panels-visualizations/configure-panel-options"
