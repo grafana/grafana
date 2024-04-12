@@ -1,6 +1,6 @@
 import { getPanelPlugin } from '@grafana/data/test/__mocks__/pluginMocks';
 import { setPluginImportUtils } from '@grafana/runtime';
-import { SceneGridLayout, VizPanel } from '@grafana/scenes';
+import { LocalValueVariable, SceneGridLayout, VizPanel } from '@grafana/scenes';
 
 import { activateFullSceneTree, buildPanelRepeaterScene } from '../utils/test-utils';
 
@@ -108,6 +108,20 @@ describe('PanelRepeaterGridItem', () => {
     variable.changeValueTo(['1', '3'], ['A', 'C']);
 
     expect(repeater.state.repeatedPanels?.length).toBe(2);
+  });
+
+  it('Should show single repeated panels in rows with depending variable is removed', () => {
+    const { scene, repeater, variable } = buildPanelRepeaterScene({ variableQueryTime: 0, useRowRepeater: true });
+    activateFullSceneTree(scene);
+
+    jest.spyOn(repeater['_variableDependency'], 'hasDependencyInLoadingState').mockImplementation(() => {
+      throw new Error();
+    });
+
+    variable.changeValueTo([], []);
+    scene.state.$variables?.setState({ variables: [] });
+
+    expect(repeater.state.repeatedPanels?.length).toBe(1);
   });
 
   it('Should fall back to default variable if specified variable cannot be found', () => {

@@ -144,24 +144,17 @@ export class DashboardGridItem extends SceneObjectBase<DashboardGridItemState> i
     });
     let variable = sceneGraph.lookupVariable(this.state.variableName, this);
     // If we are in a row we have LocalValueVariable which depends on the parent ancestor variable
-    // If the parent no longer exists we set the custom variable and skip dependency loading
-    // check since that will throw an error;
-    if (variable instanceof LocalValueVariable) {
-      try {
-        if (variable.isAncestorLoading()) {
-          return;
-        }
-      } catch {
-        variable = customVar;
+    // If the parent no longer exists variableDependency will throw
+    try {
+      if (this._variableDependency.hasDependencyInLoadingState()) {
+        return;
       }
+    } catch {
+      variable = customVar;
     }
 
     if (!variable) {
       variable = customVar;
-    }
-
-    if (!(variable instanceof CustomVariable) && this._variableDependency.hasDependencyInLoadingState()) {
-      return;
     }
 
     if (!(variable instanceof MultiValueVariable)) {
