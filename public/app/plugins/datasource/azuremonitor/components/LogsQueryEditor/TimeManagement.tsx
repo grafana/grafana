@@ -80,7 +80,6 @@ export function TimeManagement({ query, onQueryChange: onChange, schema }: Azure
 
   useEffect(() => {
     if (query.azureLogAnalytics?.basicLogsQuery) {
-      onChange(setDashboardTime(query, 'dashboard'));
       setDisabledTimePicker(true);
     } else {
       setDisabledTimePicker(false);

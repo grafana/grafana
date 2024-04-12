@@ -45,7 +45,7 @@ const LogsQueryEditor = ({
   data,
 }: LogsQueryEditorProps) => {
   const migrationError = useMigrations(datasource, query, onChange);
-  const [showBasicLogsToggle, setshowBasicLogsToggle] = useState<boolean>(false);
+  const [showBasicLogsToggle, setShowBasicLogsToggle] = useState<boolean>(false);
 
   const disableRow = (row: ResourceRow, selectedRows: ResourceRowGroup) => {
     if (selectedRows.length === 0) {
@@ -73,17 +73,19 @@ const LogsQueryEditor = ({
   useEffect(() => {
     if (query.azureLogAnalytics?.resources && query.azureLogAnalytics.resources.length === 1) {
       const resource = parseResourceURI(query.azureLogAnalytics.resources[0]);
-      setshowBasicLogsToggle(
+      setShowBasicLogsToggle(
         resource.metricNamespace?.toLowerCase() === 'microsoft.operationalinsights/workspaces' && basicLogsEnabled
       );
+    } else {
+      setShowBasicLogsToggle(false);
     }
-  }, [query.azureLogAnalytics?.resources]);
+  }, [basicLogsEnabled, query.azureLogAnalytics?.resources]);
 
   useEffect(() => {
-    if (!basicLogsEnabled) {
+    if ((!basicLogsEnabled || !showBasicLogsToggle) && query.azureLogAnalytics?.basicLogsQuery) {
       onChange(setBasicLogsQuery(query, false));
     }
-  }, [basicLogsEnabled]);
+  }, [basicLogsEnabled, onChange, query, showBasicLogsToggle]);
   let portalLinkButton = null;
 
   if (data?.series) {

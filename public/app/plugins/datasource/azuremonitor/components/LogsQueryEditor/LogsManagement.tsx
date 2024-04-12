@@ -4,7 +4,7 @@ import { ConfirmModal, InlineField, RadioButtonGroup } from '@grafana/ui';
 
 import { AzureQueryEditorFieldProps } from '../../types';
 
-import { setBasicLogsQuery, setBasicLogsQueryAcknowledged, setKustoQuery } from './setQueryValue';
+import { setBasicLogsQuery, setBasicLogsQueryAcknowledged, setDashboardTime, setKustoQuery } from './setQueryValue';
 
 export function LogsManagement({ query, onQueryChange: onChange }: AzureQueryEditorFieldProps) {
   const [basicLogsAckOpen, setBasicLogsAckOpen] = useState<boolean>(false);
@@ -37,7 +37,11 @@ export function LogsManagement({ query, onQueryChange: onChange }: AzureQueryEdi
             value={query.azureLogAnalytics?.basicLogsQuery ?? false}
             size={'md'}
             onChange={(val) => {
-              const updatedBasicLogsQuery = setBasicLogsQuery(query, val);
+              let updatedBasicLogsQuery = setBasicLogsQuery(query, val);
+              if (val) {
+                // if basic logs selected, set dashboard time
+                updatedBasicLogsQuery = setDashboardTime(updatedBasicLogsQuery, 'dashboard');
+              }
               onChange(setKustoQuery(updatedBasicLogsQuery, ''));
               setBasicLogsAckOpen(val);
             }}
