@@ -25,6 +25,11 @@
       "user": "用户"
     }
   },
+  "api-keys": {
+    "empty-state": {
+      "message": ""
+    }
+  },
   "bouncing-loader": {
     "label": "正在加载"
   },
@@ -102,6 +107,9 @@
       "change-theme": "更改主题...",
       "dark-theme": "深色",
       "light-theme": "浅色"
+    },
+    "empty-state": {
+      "message": ""
     },
     "search-box": {
       "placeholder": "搜索或跳转至..."
@@ -412,6 +420,9 @@
   "data-sources": {
     "datasource-add-button": {
       "label": "添加新数据源"
+    },
+    "empty-state": {
+      "message": ""
     }
   },
   "explore": {
@@ -556,9 +567,6 @@
   "grafana-ui": {
     "drawer": {
       "close": "关闭"
-    },
-    "empty-state": {
-      "not-found-message": ""
     },
     "modal": {
       "close-tooltip": "关闭"
@@ -708,6 +716,8 @@
       "connect": "连接到这个堆栈",
       "connecting": "正在连接此堆栈...",
       "title": "连接到云堆栈",
+      "token-error-description": "",
+      "token-error-title": "",
       "token-required-error": "迁移令牌是必需项"
     },
     "cta": {
@@ -1221,6 +1231,11 @@
       "message": ""
     }
   },
+  "plugins": {
+    "empty-state": {
+      "message": ""
+    }
+  },
   "profile": {
     "change-password": {
       "cancel-button": "取消",
@@ -1423,6 +1438,11 @@
       "placeholder": "搜索仪表板"
     }
   },
+  "service-accounts": {
+    "empty-state": {
+      "message": ""
+    }
+  },
   "share-modal": {
     "dashboard": {
       "title": "分享"
@@ -1551,6 +1571,11 @@
     "no-tags": "未找到标签",
     "placeholder": "按标签筛选"
   },
+  "teams": {
+    "empty-state": {
+      "message": ""
+    }
+  },
   "time-picker": {
     "absolute": {
       "recent-title": "最近使用的绝对范围",
@@ -1643,6 +1668,11 @@
   },
   "user-sessions": {
     "loading": "正在加载会话..."
+  },
+  "users": {
+    "empty-state": {
+      "message": ""
+    }
   },
   "users-access-list": {
     "tabs": {

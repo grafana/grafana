@@ -120,7 +120,7 @@ func (tc *ThresholdCommand) Execute(ctx context.Context, now time.Time, vars mat
 		return mathexp.Results{}, err
 	}
 
-	mathCommand, err := NewMathCommand(tc.ReferenceVar, mathExpression)
+	mathCommand, err := NewMathCommand(tc.RefID, mathExpression)
 	if err != nil {
 		return mathexp.Results{}, err
 	}
