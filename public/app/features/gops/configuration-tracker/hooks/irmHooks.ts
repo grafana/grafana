@@ -9,7 +9,26 @@ import { SupportedPlugin } from 'app/features/alerting/unified/types/pluginBridg
 import { GRAFANA_RULES_SOURCE_NAME } from 'app/features/alerting/unified/utils/datasource';
 import { Receiver } from 'app/plugins/datasource/alertmanager/types';
 
-import { SectionsDto } from '../components/Essentials';
+export interface StepButtonDto {
+  type: 'openLink' | 'dropDown';
+  url: string;
+  label: string;
+  options?: Array<{ label: string; value: string }>;
+  done?: boolean;
+}
+export interface SectionDtoStep {
+  title: string;
+  description: string;
+  button: StepButtonDto;
+}
+export interface SectionDto {
+  title: string;
+  description: string;
+  steps: SectionDtoStep[];
+}
+export interface SectionsDto {
+  sections: SectionDto[];
+}
 
 function isCreateAlertRuleDone() {
   const { data: namespaces = [] } = alertRuleApi.endpoints.prometheusRuleNamespaces.useQuery(

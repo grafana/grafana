@@ -6,8 +6,10 @@ import { locationService } from '@grafana/runtime';
 import { Button, Dropdown, Icon, LinkButton, Menu, Stack, Text, Tooltip, useStyles2 } from '@grafana/ui';
 import { createUrl } from 'app/features/alerting/unified/utils/url';
 
+import { SectionDto, SectionDtoStep, SectionsDto } from '../hooks/irmHooks';
+
 import { ConfigurationTrackerDrawer } from './ConfigurationTrackerDrawer';
-import { ProgressBar, StepsStatus } from './ConfigureIRM';
+import { ProgressBar, StepsStatus } from './ProgressBar';
 
 export interface EssentialsProps {
   onClose: () => void;
@@ -26,25 +28,6 @@ export function Essentials({ onClose, essentialsConfig, stepsDone, totalStepsToD
       <EssentialContent essentialContent={essentialsConfig} stepsDone={stepsDone} totalStepsToDo={totalStepsToDo} />
     </ConfigurationTrackerDrawer>
   );
-}
-export interface StepButtonDto {
-  type: 'openLink' | 'dropDown';
-  url: string;
-  label: string;
-  options?: Array<{ label: string; value: string }>;
-  done?: boolean;
-}
-export interface SectionDto {
-  title: string;
-  description: string;
-  steps: Array<{
-    title: string;
-    description: string;
-    button: StepButtonDto;
-  }>;
-}
-export interface SectionsDto {
-  sections: SectionDto[];
 }
 
 function EssentialContent({
@@ -82,7 +65,11 @@ function Section({ section }: { section: SectionDto }) {
   );
 }
 
-function Step({ step }: { step: SectionDto['steps'][0] }) {
+interface StepProps {
+  step: SectionDtoStep;
+}
+
+function Step({ step }: StepProps) {
   return (
     <Stack direction={'row'} justifyContent={'space-between'}>
       <Stack direction={'row'} alignItems="center">
@@ -97,7 +84,15 @@ function Step({ step }: { step: SectionDto['steps'][0] }) {
   );
 }
 
-function StepButton({ type, url, label, options }: StepButtonDto) {
+interface StepButtonProps {
+  type: 'openLink' | 'dropDown';
+  url: string;
+  label: string;
+  options?: Array<{ label: string; value: string }>;
+  done?: boolean;
+}
+
+function StepButton({ type, url, label, options }: StepButtonProps) {
   const urlToGo = createUrl(url, {
     returnTo: location.pathname + location.search,
   });
