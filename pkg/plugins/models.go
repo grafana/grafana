@@ -269,10 +269,6 @@ func (e Error) Error() string {
 		}
 	}
 
-	if e.ErrorCode == ErrorAngular {
-		return "angular plugins are not supported"
-	}
-
 	return fmt.Sprintf("plugin '%s' failed: %s", e.PluginID, e.ErrorCode)
 }
 
