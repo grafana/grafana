@@ -47,6 +47,7 @@ import { panelLinksBehavior, panelMenuBehavior } from '../scene/PanelMenuBehavio
 import { PanelNotices } from '../scene/PanelNotices';
 import { PanelTimeRange } from '../scene/PanelTimeRange';
 import { RowRepeaterBehavior } from '../scene/RowRepeaterBehavior';
+import { hoverHeaderOffsetBehavior } from '../scene/hoverHeaderOffsetBehavior';
 import { RowActions } from '../scene/row-actions/RowActions';
 import { setDashboardPanelContext } from '../scene/setDashboardPanelContext';
 import { createPanelDataProvider } from '../utils/createPanelDataProvider';
@@ -506,6 +507,7 @@ export function buildGridItemForPanel(panel: PanelModel): DashboardGridItem {
     displayMode: panel.transparent ? 'transparent' : undefined,
     // To be replaced with it's own option persited option instead derived
     hoverHeader: !panel.title && !panel.timeFrom && !panel.timeShift,
+    hoverHeaderOffset: (panel.gridPos?.y ?? 0) === 0 ? 0 : undefined,
     $data: createPanelDataProvider(panel),
     titleItems,
 
@@ -539,6 +541,7 @@ export function buildGridItemForPanel(panel: PanelModel): DashboardGridItem {
     body,
     maxPerRow: panel.maxPerRow,
     ...repeatOptions,
+    $behaviors: [hoverHeaderOffsetBehavior],
   });
 }
 

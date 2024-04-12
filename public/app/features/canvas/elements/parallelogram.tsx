@@ -99,6 +99,7 @@ export const parallelogramItem: CanvasElementItem = {
       height: options?.placement?.height ?? 150,
       top: options?.placement?.top,
       left: options?.placement?.left,
+      rotation: options?.placement?.rotation ?? 0,
     },
   }),
 
