@@ -1,7 +1,6 @@
 import 'whatwg-fetch';
 import { render, waitFor, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { http, HttpResponse } from 'msw';
 import React from 'react';
 import { TestProvider } from 'test/helpers/TestProvider';
 import { byText, byRole } from 'testing-library-selector';
