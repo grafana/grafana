@@ -67,13 +67,21 @@ export class SoloPanelPage extends Component<Props, State> {
       return;
     }
 
+    // we just got a new dashboard
     if (!prevProps.dashboard || prevProps.dashboard.uid !== dashboard.uid) {
       const panel = dashboard.getPanelByUrlId(this.props.queryParams.panelId);
+
       if (!panel) {
         this.setState({ notFound: true });
         return;
       }
-      this.setState({ panel, notFound: false });
+
+      if (panel) {
+        dashboard.exitViewPanel(panel);
+      }
+
+      this.setState({ panel });
+      dashboard.initViewPanel(panel);
     }
 
     if (!prevProps.queryParams || prevProps.queryParams.panelId !== queryParams.panelId) {
@@ -84,7 +92,12 @@ export class SoloPanelPage extends Component<Props, State> {
         return;
       }
 
+      if (panel) {
+        dashboard.exitViewPanel(panel);
+      }
+
       this.setState({ panel, notFound: false });
+      dashboard.initViewPanel(panel);
     }
   }
 
