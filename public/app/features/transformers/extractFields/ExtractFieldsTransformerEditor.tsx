@@ -108,7 +108,13 @@ export const extractFieldsTransformerEditor = ({
       {options.format === 'json' && <JSONPathEditor options={options.jsonPaths ?? []} onChange={onJSONPathsChange} />}
       {options.format === 'regex' && (
         <InlineField label={'Expression'} labelWidth={16}>
-          <Input label="Expression" type="text" width={40} onChange={onRegexExpressionChange} />
+          <Input
+            label="Expression"
+            type="text"
+            value={options.expression}
+            width={40}
+            onChange={onRegexExpressionChange}
+          />
         </InlineField>
       )}
       <InlineFieldRow>
