@@ -52,12 +52,13 @@ const ELEMENTS = {
       pluginActions: {
         sloDashboard: byRole('menuitem', { name: /SLO dashboard/i }),
         declareIncident: byRole('link', { name: /Declare incident/i }),
+        assertsWorkbench: byRole('menuitem', { name: /Open workbench/i }),
       },
     },
   },
 };
 
-const { apiHandlers: pluginApiHandlers } = setupPlugins(plugins.slo, plugins.incident);
+const { apiHandlers: pluginApiHandlers } = setupPlugins(plugins.slo, plugins.incident, plugins.asserts);
 
 const server = createMockGrafanaServer(...pluginApiHandlers);
 
@@ -65,6 +66,11 @@ setupDataSources(mockDataSource({ type: DataSourceType.Prometheus, name: 'mimir-
 setPluginExtensionGetter(() => ({
   extensions: [
     mockPluginLinkExtension({ pluginId: 'grafana-slo-app', title: 'SLO dashboard', path: '/a/grafana-slo-app' }),
+    mockPluginLinkExtension({
+      pluginId: 'grafana-asserts-app',
+      title: 'Open workbench',
+      path: '/a/grafana-asserts-app',
+    }),
   ],
 }));
 
@@ -179,7 +185,7 @@ describe('RuleViewer', () => {
 
     it('should render custom plugin actions for a plugin-provided rule', async () => {
       const sloRule = getCloudRule({
-        name: 'cloud test alert',
+        name: 'slo test alert',
         labels: { __grafana_origin: 'plugin/grafana-slo-app' },
       });
       const sloRuleIdentifier = ruleId.fromCombinedRule('mimir-1', sloRule);
@@ -193,6 +199,27 @@ describe('RuleViewer', () => {
       await user.click(ELEMENTS.actions.more.button.get());
 
       expect(ELEMENTS.actions.more.pluginActions.sloDashboard.get()).toBeInTheDocument();
+      expect(ELEMENTS.actions.more.pluginActions.assertsWorkbench.query()).not.toBeInTheDocument();
+
+      await waitFor(() => expect(ELEMENTS.actions.more.pluginActions.declareIncident.get()).toBeEnabled());
+    });
+
+    it('should render different custom plugin actions for a different plugin-provided rule', async () => {
+      const assertsRule = getCloudRule({
+        name: 'asserts test alert',
+        labels: { __grafana_origin: 'plugin/grafana-asserts-app' },
+      });
+      const assertsRuleIdentifier = ruleId.fromCombinedRule('mimir-1', assertsRule);
+
+      renderRuleViewer(assertsRule, assertsRuleIdentifier);
+
+      expect(ELEMENTS.actions.more.button.get()).toBeInTheDocument();
+
+      await userEvent.click(ELEMENTS.actions.more.button.get());
+
+      expect(ELEMENTS.actions.more.pluginActions.assertsWorkbench.get()).toBeInTheDocument();
+      expect(ELEMENTS.actions.more.pluginActions.sloDashboard.query()).not.toBeInTheDocument();
+
       await waitFor(() => expect(ELEMENTS.actions.more.pluginActions.declareIncident.get()).toBeEnabled());
     });
   });

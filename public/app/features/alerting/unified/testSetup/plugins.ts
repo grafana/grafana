@@ -1,23 +1,11 @@
 import { HttpResponse, RequestHandler, http } from 'msw';
-import { SetupServerApi } from 'msw/lib/node';
 
 import { PluginMeta, PluginType } from '@grafana/data';
 import { config } from '@grafana/runtime';
-import * as pluginsSettings from 'app/features/plugins/pluginSettings';
 
 export function setupPlugins(...plugins: PluginMeta[]): { apiHandlers: RequestHandler[] } {
   const pluginsRegistry = new Map<string, PluginMeta>();
   plugins.forEach((plugin) => pluginsRegistry.set(plugin.id, plugin));
-
-  // jest.spyOn(pluginsSettings, 'getPluginSettings').mockImplementation((pluginId: string) => {
-  //   const plugin = pluginsRegistry.get(pluginId);
-  //   if (!plugin) {
-  //     console.error(`Unknown plugin ${pluginId}`);
-  //     return Promise.reject(new Error(`Unknown plugin ${pluginId}`));
-  //   }
-
-  //   return Promise.resolve(plugin);
-  // });
 
   pluginsRegistry.forEach((plugin) => {
     config.apps[plugin.id] = {
@@ -84,5 +72,28 @@ export const plugins: Record<string, PluginMeta> = {
     },
     module: 'public/plugins/grafana-incident-app/module.js',
     baseUrl: 'public/plugins/grafana-incident-app',
+  },
+  asserts: {
+    id: 'grafana-asserts-app',
+    name: 'Asserts',
+    type: PluginType.app,
+    enabled: true,
+    info: {
+      author: {
+        name: 'Grafana Labs',
+        url: '',
+      },
+      description: 'Asserts',
+      links: [],
+      logos: {
+        small: 'public/plugins/grafana-asserts-app/img/logo.svg',
+        large: 'public/plugins/grafana-asserts-app/img/logo.svg',
+      },
+      screenshots: [],
+      version: 'local-dev',
+      updated: '2024-04-09',
+    },
+    module: 'public/plugins/grafana-asserts-app/module.js',
+    baseUrl: 'public/plugins/grafana-asserts-app',
   },
 };
