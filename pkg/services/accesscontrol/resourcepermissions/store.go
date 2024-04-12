@@ -266,8 +266,14 @@ func (s *store) setResourcePermission(
 		return nil, err
 	}
 
-	if err := s.createPermissions(sess, role.ID, cmd.Resource, cmd.ResourceID, cmd.ResourceAttribute, missing); err != nil {
-		return nil, err
+	if s.features.IsEnabled(context.Background(), featuremgmt.FlagActionSets) {
+		if err := s.createPermissions(sess, role.ID, cmd.Resource, cmd.ResourceID, cmd.ResourceAttribute, missing); err != nil {
+			return nil, err
+		}
+	} else {
+		if err := s.createPermissions(sess, role.ID, cmd.Resource, cmd.ResourceID, cmd.ResourceAttribute, missing); err != nil {
+			return nil, err
+		}
 	}
 
 	permissions, err := s.getPermissions(sess, cmd.Resource, cmd.ResourceID, cmd.ResourceAttribute, role.ID)
@@ -670,6 +676,7 @@ func (s *store) createPermissions(sess *db.Session, roleID int64, resource, reso
 		p.Kind, p.Attribute, p.Identifier = p.SplitScope()
 		permissions = append(permissions, p)
 	}
+	// TODO: ADD THE ACTIONSET FROM THE PERMISSION HERE using the permission from the input field
 
 	if _, err := sess.InsertMulti(&permissions); err != nil {
 		return err
