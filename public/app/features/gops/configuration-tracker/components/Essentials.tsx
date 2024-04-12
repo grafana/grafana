@@ -7,20 +7,23 @@ import { Button, Dropdown, Icon, LinkButton, Menu, Stack, Text, useStyles2 } fro
 import { createUrl } from 'app/features/alerting/unified/utils/url';
 
 import { ConfigurationTrackerDrawer } from './ConfigurationTrackerDrawer';
+import { ProgressBar, StepsStatus } from './ConfigureIRM';
 
 export interface EssentialsProps {
   onClose: () => void;
   essentialsConfig: SectionsDto;
+  stepsDone: number;
+  totalStepsToDo: number;
 }
 
-export function Essentials({ onClose, essentialsConfig }: EssentialsProps) {
+export function Essentials({ onClose, essentialsConfig, stepsDone, totalStepsToDo }: EssentialsProps) {
   return (
     <ConfigurationTrackerDrawer
       title="Essentials"
       subtitle="Complete basic recommended configuration to start using apps basic features"
       onClose={onClose}
     >
-      <EssentialContent essentialContent={essentialsConfig} />
+      <EssentialContent essentialContent={essentialsConfig} stepsDone={stepsDone} totalStepsToDo={totalStepsToDo} />
     </ConfigurationTrackerDrawer>
   );
 }
@@ -44,13 +47,22 @@ export interface SectionsDto {
   sections: SectionDto[];
 }
 
-function EssentialContent({ essentialContent }: { essentialContent: SectionsDto }) {
+function EssentialContent({
+  essentialContent,
+  stepsDone,
+  totalStepsToDo,
+}: {
+  essentialContent: SectionsDto;
+  stepsDone: number;
+  totalStepsToDo: number;
+}) {
   return (
-    <>
+    <Stack direction={'column'} gap={1}>
+      <ProgressStatus stepsDone={stepsDone} totalStepsToDo={totalStepsToDo} />
       {essentialContent.sections.map((section: SectionDto) => (
         <Section key={section.title} section={section} />
       ))}
-    </>
+    </Stack>
   );
 }
 
@@ -119,6 +131,17 @@ function StepButton({ type, url, label, options }: StepButtonDto) {
       );
   }
 }
+
+function ProgressStatus({ stepsDone, totalStepsToDo }: { stepsDone: number; totalStepsToDo: number }) {
+  return (
+    <Stack direction={'row'} gap={1} alignItems="center">
+      Your progress
+      <ProgressBar stepsDone={stepsDone} totalStepsToDo={totalStepsToDo} />
+      <StepsStatus stepsDone={stepsDone} totalStepsToDo={totalStepsToDo} />
+    </Stack>
+  );
+}
+
 const getStyles = (theme: GrafanaTheme2) => {
   return {
     wrapper: css({

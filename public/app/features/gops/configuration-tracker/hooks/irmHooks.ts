@@ -283,5 +283,15 @@ export function useGetEssentialsConfiguration() {
       },
     ],
   };
-  return essentialContent;
+  const { stepsDone, totalStepsToDo } = essentialContent.sections.reduce(
+    (acc, section) => {
+      const stepsDone = section.steps.filter((step) => step.button.done).length;
+      return {
+        stepsDone: acc.stepsDone + stepsDone,
+        totalStepsToDo: acc.totalStepsToDo + section.steps.length,
+      };
+    },
+    { stepsDone: 0, totalStepsToDo: 0 }
+  );
+  return { essentialContent, stepsDone, totalStepsToDo };
 }
