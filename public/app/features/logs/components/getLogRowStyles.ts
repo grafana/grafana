@@ -140,7 +140,7 @@ export const getLogRowStyles = memoizeOne((theme: GrafanaTheme2) => {
     logsRowLabels: css({
       label: 'logs-row__labels',
       whiteSpace: 'nowrap',
-      maxWidth: '22em',
+      maxWidth: '17vw',
 
       /* This is to make the labels vertical align */
       '> span': {

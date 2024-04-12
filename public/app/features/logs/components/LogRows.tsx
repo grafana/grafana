@@ -263,13 +263,14 @@ class UnThemedLogRows extends PureComponent<Props, State> {
    */
   estimateRowHeight = (rows: LogRowModel[], index: number) => {
     const rowHeight = 20.14;
+    const lineHeight = 18.5;
     const line = restructureLog(rows[index].raw, this.props.prettifyLogMessage);
     if (this.props.prettifyLogMessage) {
       try {
         const parsed: Record<string, string> = JSON.parse(line);
         let jsonHeight = 2 * rowHeight; // {}
         for (let key in parsed) {
-          jsonHeight += this.estimateMessageLines(parsed[key]) * rowHeight;
+          jsonHeight += this.estimateMessageLines(`  "${key}": "${parsed[key]}"`) * lineHeight;
         }
         return jsonHeight;
       } catch (e) {
@@ -283,8 +284,17 @@ class UnThemedLogRows extends PureComponent<Props, State> {
   }
 
   estimateMessageLines = (line: string) => {
-    const margins = 310;
-    const letter = 7.34;
+    if (!this.props.wrapLogMessage) {
+      return 1;
+    }
+    let margins = 48 + 65;
+    if (this.props.showTime) {
+      margins += 177;
+    }
+    if (this.props.showLabels) {
+      margins += Math.round(window.innerWidth * 0.17);
+    }
+    const letter = 8.4;
     return Math.ceil((line.length * letter) / (window.innerWidth - margins));
   }
 
