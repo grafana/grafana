@@ -68,7 +68,7 @@ type DualWriter struct {
 
 var errDualWriterCreaterMissing = errors.New("legacy storage rest.Creater is missing")
 var errDualWriterListerMissing = errors.New("legacy storage rest.Lister is missing")
-var errDualWriterDeleterMissing = errors.New("legacy storage rest.Deleter is missing")
+var errDualWriterDeleterMissing = errors.New("legacy storage rest.GracefulDeleter is missing")
 
 type DualWriterMode int
 
