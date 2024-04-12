@@ -8,26 +8,18 @@ import (
 
 var _ authn.Client = (*IdentityClient)(nil)
 
-func ProvideIdentity(namespaceID string) *IdentityClient {
-	return &IdentityClient{namespaceID}
+func ProvideIdentity(identity *authn.Identity) *IdentityClient {
+	return &IdentityClient{identity}
 }
 
 type IdentityClient struct {
-	namespaceID string
+	identity *authn.Identity
 }
 
 func (i *IdentityClient) Name() string {
 	return "identity"
 }
 
-// Authenticate implements authn.Client.
 func (i *IdentityClient) Authenticate(ctx context.Context, r *authn.Request) (*authn.Identity, error) {
-	return &authn.Identity{
-		OrgID: r.OrgID,
-		ID:    i.namespaceID,
-		ClientParams: authn.ClientParams{
-			FetchSyncedUser: true,
-			SyncPermissions: true,
-		},
-	}, nil
+	return i.identity, nil
 }

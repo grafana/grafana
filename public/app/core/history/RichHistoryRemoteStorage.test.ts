@@ -129,7 +129,7 @@ describe('RichHistoryRemoteStorage', () => {
       from,
     });
 
-    expect(fetchMock).toBeCalledWith({
+    expect(fetchMock).toHaveBeenCalledWith({
       method: 'GET',
       url: `/api/query-history?datasourceUid=ds1&datasourceUid=ds2&searchString=${search}&sort=time-desc&to=now-${from}d&from=now-${to}d&limit=${expectedLimit}&page=${expectedPage}`,
       requestId: 'query-history-get-all',
@@ -171,7 +171,7 @@ describe('RichHistoryRemoteStorage', () => {
       to,
     });
 
-    expect(fetchMock).toBeCalledWith({
+    expect(fetchMock).toHaveBeenCalledWith({
       method: 'GET',
       url: `/api/query-history?datasourceUid=ds1&datasourceUid=ds2&searchString=${search}&sort=time-desc&limit=${expectedLimit}&page=${expectedPage}&onlyStarred=${starred}`,
       requestId: 'query-history-get-starred',
@@ -188,7 +188,7 @@ describe('RichHistoryRemoteStorage', () => {
     } as UserPreferencesDTO);
     const settings = await storage.getSettings();
     expect(settings).toMatchObject({
-      activeDatasourceOnly: false,
+      activeDatasourcesOnly: false,
       lastUsedDatasourceFilters: undefined,
       retentionPeriod: 14,
       starredTabAsFirstTab: true,
@@ -203,7 +203,7 @@ describe('RichHistoryRemoteStorage', () => {
     } as UserPreferencesDTO);
     const settings = await storage.getSettings();
     expect(settings).toMatchObject({
-      activeDatasourceOnly: false,
+      activeDatasourcesOnly: false,
       lastUsedDatasourceFilters: undefined,
       retentionPeriod: 14,
       starredTabAsFirstTab: false,
@@ -212,22 +212,22 @@ describe('RichHistoryRemoteStorage', () => {
 
   it('updates user settings', async () => {
     await storage.updateSettings({
-      activeDatasourceOnly: false,
+      activeDatasourcesOnly: false,
       lastUsedDatasourceFilters: undefined,
       retentionPeriod: 14,
       starredTabAsFirstTab: false,
     });
-    expect(preferencesServiceMock.patch).toBeCalledWith({
+    expect(preferencesServiceMock.patch).toHaveBeenCalledWith({
       queryHistory: { homeTab: 'query' },
     } as Partial<UserPreferencesDTO>);
 
     await storage.updateSettings({
-      activeDatasourceOnly: false,
+      activeDatasourcesOnly: false,
       lastUsedDatasourceFilters: undefined,
       retentionPeriod: 14,
       starredTabAsFirstTab: true,
     });
-    expect(preferencesServiceMock.patch).toBeCalledWith({
+    expect(preferencesServiceMock.patch).toHaveBeenCalledWith({
       queryHistory: { homeTab: 'starred' },
     } as Partial<UserPreferencesDTO>);
   });
@@ -238,7 +238,7 @@ describe('RichHistoryRemoteStorage', () => {
       result: dto,
     });
     const query = await storage.updateStarred('test', true);
-    expect(postMock).toBeCalledWith('/api/query-history/star/test');
+    expect(postMock).toHaveBeenCalledWith('/api/query-history/star/test');
     expect(query).toMatchObject(richHistoryQuery);
   });
 
@@ -248,7 +248,7 @@ describe('RichHistoryRemoteStorage', () => {
       result: dto,
     });
     const query = await storage.updateStarred('test', false);
-    expect(deleteMock).toBeCalledWith('/api/query-history/star/test');
+    expect(deleteMock).toHaveBeenCalledWith('/api/query-history/star/test');
     expect(query).toMatchObject(richHistoryQuery);
   });
 
@@ -258,7 +258,7 @@ describe('RichHistoryRemoteStorage', () => {
       result: dto,
     });
     const query = await storage.updateComment('test', 'just a comment');
-    expect(patchMock).toBeCalledWith('/api/query-history/test', {
+    expect(patchMock).toHaveBeenCalledWith('/api/query-history/test', {
       comment: 'just a comment',
     });
     expect(query).toMatchObject(richHistoryQuery);
@@ -266,6 +266,6 @@ describe('RichHistoryRemoteStorage', () => {
 
   it('deletes query history items', async () => {
     await storage.deleteRichHistory('test');
-    expect(deleteMock).toBeCalledWith('/api/query-history/test');
+    expect(deleteMock).toHaveBeenCalledWith('/api/query-history/test');
   });
 });

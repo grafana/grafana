@@ -20,10 +20,11 @@ export class AutoVizPanel extends SceneObjectBase<AutoVizPanelState> {
   }
 
   public onActivate() {
-    const { autoQuery } = getMetricSceneFor(this).state;
-    this.setState({
-      panel: this.getVizPanelFor(autoQuery.main),
-    });
+    if (!this.state.panel) {
+      const { autoQuery } = getMetricSceneFor(this).state;
+
+      this.setState({ panel: this.getVizPanelFor(autoQuery.main) });
+    }
   }
 
   private getQuerySelector(def: AutoQueryDef) {
@@ -43,9 +44,7 @@ export class AutoVizPanel extends SceneObjectBase<AutoVizPanelState> {
 
     const def = metricScene.state.autoQuery.variants.find((q) => q.variant === variant)!;
 
-    this.setState({
-      panel: this.getVizPanelFor(def),
-    });
+    this.setState({ panel: this.getVizPanelFor(def) });
     metricScene.setState({ queryDef: def });
   };
 
