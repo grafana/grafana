@@ -104,7 +104,3 @@ func (ni NamespaceID) IsNamespace(expected ...string) bool {
 func (ni NamespaceID) String() string {
 	return fmt.Sprintf("%s:%s", ni.namespace, ni.id)
 }
-
-func (ni NamespaceID) GoString() string {
-	return ni.String()
-}
