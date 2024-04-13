@@ -10,6 +10,7 @@ import { SupportedPlugin } from 'app/features/alerting/unified/types/pluginBridg
 import { GRAFANA_RULES_SOURCE_NAME } from 'app/features/alerting/unified/utils/datasource';
 import { getPluginSettings } from 'app/features/plugins/pluginSettings';
 import { Receiver } from 'app/plugins/datasource/alertmanager/types';
+import { PluginMeta } from '@grafana/data';
 
 export interface StepButtonDto {
   type: 'openLink' | 'dropDown';
@@ -92,13 +93,30 @@ function useGetContactPoints() {
   return contactPoints;
 }
 
-function useGetIncidentPluginConfig() {
-  const { value } = useAsync(() => getPluginSettings(SupportedPlugin.Incident, { showErrorAlert: false }));
-  console.log(value);
-  const [incidentPluginConfig, setIncidentPluginConfig] = useState<IncidentsPluginConfig | null>(null);
+function useGetIncidentPluginConfig(): IncidentsPluginConfig {
+  const { value, loading, error } = useAsync(
+    () => getPluginSettings(SupportedPlugin.Incident, { showErrorAlert: false }),
+    []
+  );
+
+  const [incidentPluginConfig, setIncidentPluginConfig] = useState({
+    isInstalled: false,
+    isChatOpsInstalled: false,
+    isDrillCreated: false,
+  });
 
   useEffect(() => {
-    if (!value?.enabled) {
+    if (error) {
+      console.error('Failed to load plugin settings:', error);
+      return;
+    }
+
+    if (loading || !value) {
+      //show loading state ?
+      return;
+    }
+
+    if (!value.enabled) {
       setIncidentPluginConfig({
         isInstalled: false,
         isChatOpsInstalled: false,
@@ -107,56 +125,63 @@ function useGetIncidentPluginConfig() {
       return;
     }
 
-    const checkIfIncidentsCreated = async () => {
-      const isDrillCreated = await getBackendSrv()
-        .post('/api/plugins/grafana-incident-app/resources/api/IncidentsService.QueryIncidents', {
-          query: {
-            limit: 6,
-            orderDirection: 'DESC',
-            queryString: 'isdrill:false isdrill:true',
-            orderField: 'createdTime',
-          },
-          cursor: { hasMore: false, nextValue: '' },
-        })
-        .then((response) => response.incidents.length > 0);
-      return isDrillCreated;
-    };
-
-    const getIncidentChatOpsInstalled = async () => {
-      if (!value?.enabled) {
-        return false;
-      }
-      const availableIntegrations = await getBackendSrv().post(
-        '/api/plugins/grafana-incident-app/resources/api/IntegrationService.GetAvailableIntegrations',
-        {}
-      );
-
-      const isSlackInstalled = availableIntegrations?.find(
-        (integration: { id: string }) => integration.id === 'grate.slack'
-      );
-      const isMSTeamsInstalled = availableIntegrations?.find(
-        (integration: { id: string }) => integration.id === 'grate.msTeams'
-      );
-      return isSlackInstalled || isMSTeamsInstalled;
-    };
-
     const fetchData = async () => {
-      const [isChatOpsInstalled, isDrillCreated] = await Promise.all([
-        getIncidentChatOpsInstalled(),
-        checkIfIncidentsCreated(),
-      ]);
-      setIncidentPluginConfig({
-        isInstalled: true,
-        isChatOpsInstalled,
-        isDrillCreated,
-      });
+      try {
+        const [isChatOpsInstalled, isDrillCreated] = await Promise.all([
+          getIncidentChatOpsInstalled(value),
+          checkIfIncidentsCreated(),
+        ]);
+
+        setIncidentPluginConfig({
+          isInstalled: value.enabled ?? false,
+          isChatOpsInstalled,
+          isDrillCreated,
+        });
+      } catch (fetchError) {
+        console.error('Error fetching data:', fetchError);
+      }
     };
 
     fetchData();
-  }, [setIncidentPluginConfig, value?.enabled]);
+  }, [value, loading, error]);
 
   console.log(incidentPluginConfig);
   return incidentPluginConfig;
+}
+
+async function getIncidentChatOpsInstalled(value: PluginMeta<{}>) {
+  if (!value.enabled) {
+    return false;
+  }
+
+  const availableIntegrations = await getBackendSrv().post(
+    '/api/plugins/grafana-incident-app/resources/api/IntegrationService.GetAvailableIntegrations',
+    {}
+  );
+
+  const isSlackInstalled = availableIntegrations?.find(
+    (integration: { integrationID: string }) => integration.integrationID === 'grate.slack'
+  );
+  const isMSTeamsInstalled = availableIntegrations?.find(
+    (integration: { integrationID: string }) => integration.integrationID === 'grate.msTeams'
+  );
+  return isSlackInstalled || isMSTeamsInstalled;
+}
+
+async function checkIfIncidentsCreated() {
+  const response = await getBackendSrv().post(
+    '/api/plugins/grafana-incident-app/resources/api/IncidentsService.QueryIncidents',
+    {
+      query: {
+        limit: 6,
+        orderDirection: 'DESC',
+        queryString: 'isdrill:false isdrill:true',
+        orderField: 'createdTime',
+      },
+      cursor: { hasMore: false, nextValue: '' },
+    }
+  );
+  return response.incidents.length > 0;
 }
 
 function useGetOnCallIntegrations() {
