@@ -1434,24 +1434,26 @@ func (s *sqlEntityServer) List(ctx context.Context, r *entity.EntityListRequest)
 }
 
 func (s *sqlEntityServer) Watch(w entity.EntityStore_WatchServer) error {
+	ctxLogger := s.log.FromContext(log.WithContextualAttributes(w.Context(), []any{"method", "watch"}))
+
 	if err := s.Init(); err != nil {
-		s.log.Error("init error", "error", err, "method", "watch")
+		ctxLogger.Error("init error", "error", err)
 		return err
 	}
 
 	user, err := appcontext.User(w.Context())
 	if err != nil {
-		s.log.Error("error getting user from ctx", "error", err, "method", "watch")
+		ctxLogger.Error("error getting user from ctx", "error", err)
 		return err
 	}
 	if user == nil {
-		s.log.Error("could not find user in context", "error", errorUserNotFoundInContext, "method", "watch")
+		ctxLogger.Error("could not find user in context", "error", errorUserNotFoundInContext)
 		return errorUserNotFoundInContext
 	}
 
 	r, err := w.Recv()
 	if err != nil {
-		s.log.Error("recv error", "error", err, "method", "watch")
+		ctxLogger.Error("recv error", "error", err)
 		return err
 	}
 
@@ -1459,7 +1461,7 @@ func (s *sqlEntityServer) Watch(w entity.EntityStore_WatchServer) error {
 	if r.SendInitialEvents {
 		r.Since, err = s.watchInit(w.Context(), r, w)
 		if err != nil {
-			s.log.Error("watch init error", "err", err, "method", "watch")
+			ctxLogger.Error("watch init error", "err", err)
 			return err
 		}
 	} else if r.Since == 0 {
@@ -1469,7 +1471,7 @@ func (s *sqlEntityServer) Watch(w entity.EntityStore_WatchServer) error {
 	// subscribe to new events
 	err = s.watch(r, w)
 	if err != nil {
-		s.log.Error("watch error", "err", err, "method", "watch")
+		ctxLogger.Error("watch error", "err", err)
 		return err
 	}
 
