@@ -196,7 +196,7 @@ const createFilterValueMatchers = (
   });
 };
 
-const groupFieldIndexByName = (data: DataFrame[]): Record<string, number> => {
+const groupFieldIndexByName = (data: DataFrame[]) => {
   const lookup: Record<string, number> = {};
 
   for (const frame of data) {
