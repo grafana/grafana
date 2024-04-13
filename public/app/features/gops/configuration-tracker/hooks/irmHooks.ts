@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useAsync } from 'react-use';
 
+import { PluginMeta } from '@grafana/data';
 import { getBackendSrv } from '@grafana/runtime';
 import { alertRuleApi } from 'app/features/alerting/unified/api/alertRuleApi';
 import { alertmanagerApi } from 'app/features/alerting/unified/api/alertmanagerApi';
@@ -10,7 +11,6 @@ import { SupportedPlugin } from 'app/features/alerting/unified/types/pluginBridg
 import { GRAFANA_RULES_SOURCE_NAME } from 'app/features/alerting/unified/utils/datasource';
 import { getPluginSettings } from 'app/features/plugins/pluginSettings';
 import { Receiver } from 'app/plugins/datasource/alertmanager/types';
-import { PluginMeta } from '@grafana/data';
 
 export interface StepButtonDto {
   type: 'openLink' | 'dropDown';
