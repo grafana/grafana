@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { useAsync } from 'react-use';
 
 import { getBackendSrv } from '@grafana/runtime';
 import { alertRuleApi } from 'app/features/alerting/unified/api/alertRuleApi';
@@ -7,6 +8,7 @@ import { OnCallIntegrationDTO, onCallApi } from 'app/features/alerting/unified/a
 import { usePluginBridge } from 'app/features/alerting/unified/hooks/usePluginBridge';
 import { SupportedPlugin } from 'app/features/alerting/unified/types/pluginBridges';
 import { GRAFANA_RULES_SOURCE_NAME } from 'app/features/alerting/unified/utils/datasource';
+import { getPluginSettings } from 'app/features/plugins/pluginSettings';
 import { Receiver } from 'app/plugins/datasource/alertmanager/types';
 
 export interface StepButtonDto {
@@ -91,11 +93,12 @@ function useGetContactPoints() {
 }
 
 function useGetIncidentPluginConfig() {
-  const { installed: isIncidentPluginInstalled } = usePluginBridge(SupportedPlugin.Incident);
+  const { value } = useAsync(() => getPluginSettings(SupportedPlugin.Incident, { showErrorAlert: false }));
+  console.log(value);
   const [incidentPluginConfig, setIncidentPluginConfig] = useState<IncidentsPluginConfig | null>(null);
 
   useEffect(() => {
-    if (!isIncidentPluginInstalled) {
+    if (!value?.enabled) {
       setIncidentPluginConfig({
         isInstalled: false,
         isChatOpsInstalled: false,
@@ -120,7 +123,7 @@ function useGetIncidentPluginConfig() {
     };
 
     const getIncidentChatOpsInstalled = async () => {
-      if (!isIncidentPluginInstalled) {
+      if (!value?.enabled) {
         return false;
       }
       const availableIntegrations = await getBackendSrv().post(
@@ -150,7 +153,7 @@ function useGetIncidentPluginConfig() {
     };
 
     fetchData();
-  }, [isIncidentPluginInstalled, setIncidentPluginConfig]);
+  }, [setIncidentPluginConfig, value?.enabled]);
 
   console.log(incidentPluginConfig);
   return incidentPluginConfig;
