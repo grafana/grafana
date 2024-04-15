@@ -67,10 +67,10 @@
     "@types/history": "4.7.11",
     "@types/lodash": "4.17.0",
     "@types/marked": "5.0.2",
-    "@types/node": "20.12.2",
+    "@types/node": "20.12.7",
     "@types/papaparse": "5.3.14",
-    "@types/react": "18.2.74",
-    "@types/react-dom": "18.2.23",
+    "@types/react": "18.2.78",
+    "@types/react-dom": "18.2.25",
     "@types/tinycolor2": "1.4.6",
     "esbuild": "0.18.12",
     "react": "18.2.0",
@@ -80,7 +80,7 @@
     "rollup-plugin-dts": "^5.0.0",
     "rollup-plugin-esbuild": "5.0.0",
     "rollup-plugin-node-externals": "^5.0.0",
-    "typescript": "5.3.3"
+    "typescript": "5.4.5"
   },
   "peerDependencies": {
     "react": "^18.0.0",

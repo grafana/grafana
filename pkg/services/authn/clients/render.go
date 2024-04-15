@@ -59,6 +59,10 @@ func (c *Render) Authenticate(ctx context.Context, r *authn.Request) (*authn.Ide
 	}, nil
 }
 
+func (c *Render) IsEnabled() bool {
+	return true
+}
+
 func (c *Render) Test(ctx context.Context, r *authn.Request) bool {
 	if r.HTTPRequest == nil {
 		return false

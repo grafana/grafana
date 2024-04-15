@@ -7,8 +7,6 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	genericapiserver "k8s.io/apiserver/pkg/server"
 	genericoptions "k8s.io/apiserver/pkg/server/options"
-
-	"github.com/grafana/authlib/authn"
 )
 
 type Options struct {
@@ -17,7 +15,6 @@ type Options struct {
 	RecommendedOptions *genericoptions.RecommendedOptions
 	TracingOptions     *TracingOptions
 	MetricsOptions     *MetricsOptions
-	AuthnOptions       *AuthnOptions
 }
 
 func New(logger log.Logger, codec runtime.Codec) *Options {
@@ -27,7 +24,6 @@ func New(logger log.Logger, codec runtime.Codec) *Options {
 		RecommendedOptions: options.NewRecommendedOptions(codec),
 		TracingOptions:     NewTracingOptions(logger),
 		MetricsOptions:     NewMetrcicsOptions(logger),
-		AuthnOptions:       NewAuthnOptions(),
 	}
 }
 
@@ -37,7 +33,6 @@ func (o *Options) AddFlags(fs *pflag.FlagSet) {
 	o.RecommendedOptions.AddFlags(fs)
 	o.TracingOptions.AddFlags(fs)
 	o.MetricsOptions.AddFlags(fs)
-	o.AuthnOptions.AddFlags(fs)
 }
 
 func (o *Options) Validate() []error {
@@ -161,16 +156,4 @@ func (o *Options) ApplyTo(serverConfig *genericapiserver.RecommendedConfig) erro
 	}
 
 	return nil
-}
-
-type AuthnOptions struct {
-	IDVerifierConfig *authn.IDVerifierConfig
-}
-
-func (authOpts *AuthnOptions) AddFlags(fs *pflag.FlagSet) {
-	prefix := "grafana.authn"
-	fs.StringVar(&authOpts.IDVerifierConfig.SigningKeysURL, prefix+".signing-keys-url", "", "URL to jwks endpoint")
-
-	audience := fs.StringSlice(prefix+".allowed-audiences", []string{}, "Specifies a comma-separated list of allowed audiences.")
-	authOpts.IDVerifierConfig.AllowedAudiences = *audience
 }
