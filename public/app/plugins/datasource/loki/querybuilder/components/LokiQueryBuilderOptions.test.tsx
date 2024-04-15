@@ -157,10 +157,10 @@ describe('LokiQueryBuilderOptions', () => {
 describe('getCollapsedInfo', () => {
   it('displays a clipped legend URL for long URLs', () => {
     const longUrl = 'extremelyLongUrlThatShouldBeCutOffElseItTakesUpTooMuchOnScreenRealestate';
-    setup({ legendUrlFormat: longUrl });
+    setup({ legendUrl: longUrl });
 
     const urlText = screen.getByText((content, node) => {
-      const hasText = (node: any) => node.textContent === `URL: ${longUrl.slice(0, 10)}...`;
+      const hasText = (node: any) => node.textContent === `URL: extremelyL...`;
       const nodeHasText = hasText(node);
       const childrenDontHaveText = Array.from(node!.children).every(
         (child) => !hasText(child)
@@ -172,7 +172,7 @@ describe('getCollapsedInfo', () => {
 
   it('displays the full legend URL for short URLs', () => {
     const shortUrl = 'shortUrl';
-    setup({ legendUrlFormat: shortUrl });
+    setup({ legendUrl: shortUrl });
 
     const urlTextElement = screen.getByText(`URL: ${shortUrl}`);
     expect(urlTextElement).toBeInTheDocument();

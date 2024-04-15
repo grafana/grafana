@@ -105,15 +105,15 @@ describe('PromQueryBuilderOptions', () => {
 describe('getCollapsedInfo', () => {
   it('displays a clipped legend URL for long URLs', async () => {
     const longUrl = 'extremelyLongUrlThatShouldBeCutOffElseItTakesUpTooMuchOnScreenRealestate';
-    setup({ legendUrlFormat: longUrl });
+    setup({ legendUrl: longUrl });
   
     const optionsElement = screen.getByTestId('data-testid prometheus options');
-    expect(optionsElement.textContent).toContain(longUrl.slice(0, 10) + "...");
+    expect(optionsElement.textContent).toContain("extremelyL...");
   });
   
   it('displays the full legend URL for short URLs', async () => {
     const shortUrl = 'shortUrl';
-    setup({ legendUrlFormat: shortUrl });
+    setup({ legendUrl: shortUrl });
   
     const optionsElement = screen.getByTestId('data-testid prometheus options');
     expect(optionsElement.textContent).toContain(shortUrl);
@@ -131,7 +131,7 @@ function setup(queryOverrides: Partial<PromQuery> = {}, app: CoreApp = CoreApp.P
           expr: '',
           range: true,
           instant: false,
-          legendUrlFormat: '',
+          legendUrl: '',
         } as PromQuery,
         CoreApp.PanelEditor
       ),
