@@ -154,7 +154,7 @@ In this section, we define queries, expressions (used to manipulate the data), a
 
 1. Remove expression "B" (click the bin icon). The **Reduce** expression comes by default, and in this case, it is not needed since the queried data is already reduced.
 
-1. In expression "C", **Threshold**, change the **Input** to "B". By selecting the input, you're telling Grafana which data source and which specific metric within that data source the expression should evaluate. The Threshold expression is now the alert condition. Enter `0.2` as threshold value. You can read more about queries and conditions [here](https://grafana.com/docs/grafana/latest/alerting/fundamentals/alert-rules/queries-conditions/#expression-queries).
+1. In expression "C", **Threshold**, change the **Input** to "A". By selecting the input, you're telling Grafana which data source and which specific metric within that data source the expression should evaluate. The Threshold expression is now the alert condition. Enter `0.2` as threshold value. You can read more about queries and conditions [here](https://grafana.com/docs/grafana/latest/alerting/fundamentals/alert-rules/queries-conditions/#expression-queries).
 
 1. Click Preview to run the queries.
 
