@@ -858,7 +858,7 @@ def playwright_e2e_tests_step():
             "grafana-server",
         ],
         "commands": [
-            "sleep 10s",  # it seems sometimes that grafana-server is not actually ready when the step starts, so waiting for a few seconds before running the tests
+            "npx wait-on@7.0.1 http://$HOST:$PORT",
             "yarn playwright install --with-deps chromium",
             "yarn e2e:playwright",
         ],
