@@ -1,5 +1,4 @@
 import React from 'react';
-import { Stack } from 'src/components/Layout/Stack/Stack';
 
 import {
   FieldConfigEditorBuilder,
@@ -13,6 +12,7 @@ import { GraphFieldConfig, StackingConfig, StackingMode } from '@grafana/schema'
 import { RadioButtonGroup } from '../../components/Forms/RadioButtonGroup/RadioButtonGroup';
 import { IconButton } from '../../components/IconButton/IconButton';
 import { Input } from '../../components/Input/Input';
+import { Stack } from '../../components/Layout/Stack/Stack';
 import { graphFieldOptions } from '../../components/uPlot/config';
 
 export const StackingEditor = ({
