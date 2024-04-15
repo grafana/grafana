@@ -114,6 +114,7 @@ function getStyles(theme: GrafanaTheme2) {
       gridTemplateRows: '1fr',
       flexBasis: '100%',
       flexGrow: 1,
+      height: '100%',
     }),
     canvasWithControls: css({
       gridTemplateAreas: `
