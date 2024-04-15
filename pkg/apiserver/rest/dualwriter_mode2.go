@@ -185,7 +185,7 @@ func (d *DualWriterMode2) Delete(ctx context.Context, name string, deleteValidat
 func (d *DualWriterMode2) Update(ctx context.Context, name string, objInfo rest.UpdatedObjectInfo, createValidation rest.ValidateObjectFunc, updateValidation rest.ValidateObjectUpdateFunc, forceAllowCreate bool, options *metav1.UpdateOptions) (runtime.Object, bool, error) {
 	legacy, ok := d.Legacy.(rest.Updater)
 	if !ok {
-		return nil, false, errNoUpdateMethod
+		return nil, false, errDualWriterUpdaterMissing
 	}
 
 	// get old and new (updated) object so they can be stored in legacy store

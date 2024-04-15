@@ -94,7 +94,7 @@ func (d *DualWriterMode3) Update(ctx context.Context, name string, objInfo rest.
 
 	legacy, ok := d.Legacy.(rest.Updater)
 	if !ok {
-		klog.FromContext(ctx).Error(errNoUpdateMethod, "legacy storage update not implemented")
+		klog.FromContext(ctx).Error(errDualWriterUpdaterMissing, "legacy storage update not implemented")
 		return obj, created, err
 	}
 
