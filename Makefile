@@ -242,7 +242,7 @@ build-docker-full: ## Build Docker image for development.
 	--build-arg WIRE_TAGS=$(WIRE_TAGS) \
 	--build-arg COMMIT_SHA=$$(git rev-parse HEAD) \
 	--build-arg BUILD_BRANCH=$$(git rev-parse --abbrev-ref HEAD) \
-	--tag grafana/grafana$(TAG_SUFFIX):dev \
+	--tag 406095609952.dkr.ecr.us-east-1.amazonaws.com/grafana-10:dev \
 	$(DOCKER_BUILD_ARGS)
 
 build-docker-full-ubuntu: ## Build Docker image based on Ubuntu for development.
