@@ -65,12 +65,8 @@ function findVizPanelInternal(scene: SceneObject, key: string | undefined): VizP
   }
 
   const panel = sceneGraph.findObject(scene, (obj) => obj.state.key === key);
-  if (panel) {
-    if (panel instanceof VizPanel) {
-      return panel;
-    } else {
-      throw new Error(`Found panel with key ${key} but it was not a VizPanel`);
-    }
+  if (panel instanceof VizPanel) {
+    return panel;
   }
 
   return null;
