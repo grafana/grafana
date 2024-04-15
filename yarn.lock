@@ -3634,7 +3634,7 @@ __metadata:
     "@types/dompurify": "npm:^3.0.0"
     "@types/history": "npm:4.7.11"
     "@types/lodash": "npm:4.17.0"
-    "@types/marked": "npm:5.0.2"
+    "@types/marked": "npm:6.0.0"
     "@types/node": "npm:20.12.7"
     "@types/papaparse": "npm:5.3.14"
     "@types/react": "npm:18.2.78"
@@ -4030,7 +4030,7 @@ __metadata:
     "@types/jest": "npm:29.5.12"
     "@types/jquery": "npm:3.5.29"
     "@types/lodash": "npm:4.17.0"
-    "@types/marked": "npm:5.0.2"
+    "@types/marked": "npm:6.0.0"
     "@types/node": "npm:20.12.7"
     "@types/pluralize": "npm:^0.0.33"
     "@types/prismjs": "npm:1.26.3"
@@ -9922,10 +9922,12 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@types/marked@npm:5.0.2":
-  version: 5.0.2
-  resolution: "@types/marked@npm:5.0.2"
-  checksum: 10/a22999454a193243c9ad697859ead622a578bfce48ca6b2958509aacea55601627b02e74caedba06f88fa75004273ed39235d36f94869fec528bb5bc832cdfa2
+"@types/marked@npm:6.0.0":
+  version: 6.0.0
+  resolution: "@types/marked@npm:6.0.0"
+  dependencies:
+    marked: "npm:*"
+  checksum: 10/ad4cd5a405604b27efb4d3979b05869f3069529d1f5b2a38039de7c96e57270f03e7580efe327ca1c136ec22a355d0a7d8578346bd2af8397fdd6bb76ca1b084
   languageName: node
   linkType: hard
 
@@ -18687,7 +18689,7 @@ __metadata:
     "@types/lodash": "npm:4.17.0"
     "@types/logfmt": "npm:^1.2.3"
     "@types/lucene": "npm:^2"
-    "@types/marked": "npm:5.0.2"
+    "@types/marked": "npm:6.0.0"
     "@types/mousetrap": "npm:1.6.15"
     "@types/node": "npm:20.12.7"
     "@types/node-forge": "npm:^1"
@@ -22568,7 +22570,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"marked@npm:12.0.1":
+"marked@npm:*, marked@npm:12.0.1":
   version: 12.0.1
   resolution: "marked@npm:12.0.1"
   bin:
