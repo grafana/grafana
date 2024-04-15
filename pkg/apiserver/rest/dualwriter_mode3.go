@@ -67,7 +67,6 @@ func (d *DualWriterMode3) Delete(ctx context.Context, name string, deleteValidat
 	}
 
 	return deleted, async, err
-
 }
 
 // Update overrides the behavior of the generic DualWriter and writes first to Storage and then to LegacyStorage.
