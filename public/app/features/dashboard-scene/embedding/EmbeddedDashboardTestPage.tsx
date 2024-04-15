@@ -16,7 +16,7 @@ export function EmbeddedDashboardTestPage() {
       layout={PageLayoutType.Standard}
     >
       <Box paddingBottom={2}>Internal url state: {state}</Box>
-      <EmbeddedDashboard uid="O6GmNPvWk" initialState={state} onStateChange={setState} />
+      <EmbeddedDashboard uid="lVE-2YFMz" initialState={state} onStateChange={setState} />
     </Page>
   );
 }
