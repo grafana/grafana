@@ -10,13 +10,9 @@ import (
 	"k8s.io/apiserver/pkg/registry/rest"
 )
 
-type ResourceHandler interface {
-	Handle(ctx context.Context, pluginCtx backend.PluginContext, responder rest.Responder) (http.Handler, error)
-}
-
 type subResourceREST struct {
 	builder *DataSourceAPIBuilder
-	handler ResourceHandler
+	handle  HTTPRequestHandlerFunc
 }
 
 var _ = rest.Connecter(&subResourceREST{})
@@ -50,8 +46,9 @@ func (r *subResourceREST) Connect(ctx context.Context, name string, opts runtime
 	if err != nil {
 		return nil, err
 	}
+
 	ctx = backend.WithGrafanaConfig(ctx, pluginCtx.GrafanaConfig)
 	ctx = contextualMiddlewares(ctx)
 
-	return r.handler.Handle(ctx, pluginCtx, responder)
+	return r.handle(ctx, pluginCtx, responder)
 }

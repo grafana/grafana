@@ -11,13 +11,9 @@ import (
 	datasource "github.com/grafana/grafana/pkg/apis/datasource/v0alpha1"
 )
 
-type HealthHandler interface {
-	Handle(ctx context.Context, pluginCtx backend.PluginContext, responder rest.Responder) (http.Handler, error)
-}
-
 type subHealthREST struct {
 	builder *DataSourceAPIBuilder
-	handler HealthHandler
+	handle  HTTPRequestHandlerFunc
 }
 
 var (
@@ -54,5 +50,8 @@ func (r *subHealthREST) Connect(ctx context.Context, name string, opts runtime.O
 		return nil, err
 	}
 
-	return r.handler.Handle(ctx, pluginCtx, responder)
+	ctx = backend.WithGrafanaConfig(ctx, pluginCtx.GrafanaConfig)
+	ctx = contextualMiddlewares(ctx)
+
+	return r.handle(ctx, pluginCtx, responder)
 }

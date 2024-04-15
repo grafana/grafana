@@ -11,13 +11,9 @@ import (
 	query "github.com/grafana/grafana/pkg/apis/query/v0alpha1"
 )
 
-type QueryHandler interface {
-	Handle(ctx context.Context, pluginCtx backend.PluginContext, responder rest.Responder) (http.Handler, error)
-}
-
 type subQueryREST struct {
 	builder *DataSourceAPIBuilder
-	handler QueryHandler
+	handle  HTTPRequestHandlerFunc
 }
 
 var (
@@ -55,5 +51,8 @@ func (r *subQueryREST) Connect(ctx context.Context, name string, opts runtime.Ob
 		return nil, err
 	}
 
-	return r.handler.Handle(ctx, pluginCtx, responder)
+	ctx = backend.WithGrafanaConfig(ctx, pluginCtx.GrafanaConfig)
+	ctx = contextualMiddlewares(ctx)
+
+	return r.handle(ctx, pluginCtx, responder)
 }
