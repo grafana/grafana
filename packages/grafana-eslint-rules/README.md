@@ -4,7 +4,7 @@ This package contains custom eslint rules for use within the Grafana codebase on
 
 ## Rules
 
-### `@grafana/no-aria-label-selectors`
+### `no-aria-label-selectors`
 
 Require aria-label JSX properties to not include selectors from the `@grafana/e2e-selectors` package.
 
@@ -12,12 +12,20 @@ Previously we hijacked the aria-label property to use as E2E selectors as an att
 
 Now, we prefer using data-testid for E2E selectors.
 
-### `@grafana/no-border-radius-literal`
+### `no-border-radius-literal`
 
 Check if border-radius theme tokens are used.
 
 To improve the consistency across Grafana we encourage devs to use tokens instead of custom values. In this case, we want the `borderRadius` to use the appropriate token such as `theme.shape.radius.default`, `theme.shape.radius.pill` or `theme.shape.radius.circle`.
 
-### `@grafana/theme-token-usage`
+### `no-unreduced-motion`
+
+Avoid direct use of `animation*` or `transition*` properties.
+
+To account for users with motion sensitivities, these should always be wrapped in a [`prefers-reduced-motion`](https://developer.mozilla.org/en-US/docs/Web/CSS/@media/prefers-reduced-motion) media query.
+
+`@grafana/ui` exposes a `handledReducedMotion` utility function that can be used to handle this.
+
+### `theme-token-usage`
 
 Used to find all instances of `theme` tokens being used in the codebase and emit the counts as metrics. Should **not** be used as an actual lint rule!
