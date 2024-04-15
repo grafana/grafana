@@ -13,7 +13,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend/log"
-	"github.com/grafana/grafana/pkg/tsdb/sqleng/util"
+	"github.com/grafana/grafana/pkg/tsdb/mssql/sqleng/util"
 )
 
 func TestSQLEngine(t *testing.T) {
