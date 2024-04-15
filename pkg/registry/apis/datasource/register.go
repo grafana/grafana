@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"net/http"
+	"slices"
 	"time"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
@@ -20,7 +21,6 @@ import (
 	openapi "k8s.io/kube-openapi/pkg/common"
 	"k8s.io/kube-openapi/pkg/spec3"
 	"k8s.io/kube-openapi/pkg/validation/spec"
-	"k8s.io/utils/strings/slices"
 
 	common "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
 	datasource "github.com/grafana/grafana/pkg/apis/datasource/v0alpha1"
@@ -43,14 +43,15 @@ var _ builder.APIGroupBuilder = (*DataSourceAPIBuilder)(nil)
 type DataSourceAPIBuilder struct {
 	connectionResourceInfo common.ResourceInfo
 
-	pluginJSON      plugins.JSONData
-	client          plugins.Client // will only ever be called with the same pluginid!
+	plugin          *plugins.Plugin
 	datasources     PluginDatasourceProvider
 	contextProvider PluginContextWrapper
 	accessControl   accesscontrol.AccessControl
 	queryTypes      *query.QueryTypeDefinitionList
 }
 
+// This is used for single-tenant grafana, it creates a new datasource for all the
+// plugins we expect to have a running api-server.  Eventually this will be all datasources
 func RegisterAPIService(
 	features featuremgmt.FeatureToggles,
 	apiRegistrar builder.APIRegistrar,
@@ -72,6 +73,7 @@ func RegisterAPIService(
 		"grafana-testdata-datasource",
 		"prometheus",
 		"graphite",
+		"grafana-googlesheets-datasource", // external plugin
 	}
 
 	ctx := context.Background()
@@ -80,9 +82,15 @@ func RegisterAPIService(
 			continue // skip this one
 		}
 
-		plugin, ok := pluginRegistry.Plugin(ctx, ds.ID, ds.Info.Version)
+		plugin, ok := pluginRegistry.Plugin(ctx, ds.ID, "") // any version?
 		if !ok {
 			return nil, fmt.Errorf("invalid plugin")
+		}
+
+		// only relevant when the slices check on line 81 is removed
+		_, ok = plugin.Client()
+		if !ok {
+			continue // frontend only datasources
 		}
 
 		builder, err = NewDataSourceAPIBuilder(plugin,
@@ -108,15 +116,14 @@ func NewDataSourceAPIBuilder(
 		return nil, err
 	}
 
-	client, ok := plugin.Client()
+	_, ok := plugin.Client()
 	if !ok {
-		return nil, fmt.Errorf("error getting client")
+		return nil, fmt.Errorf("error getting client [%s]", plugin.ID)
 	}
 
 	return &DataSourceAPIBuilder{
 		connectionResourceInfo: ri,
-		pluginJSON:             plugin.JSONData,
-		client:                 client,
+		plugin:                 plugin,
 		datasources:            datasources,
 		contextProvider:        contextProvider,
 		accessControl:          accessControl,
@@ -174,6 +181,10 @@ func (b *DataSourceAPIBuilder) GetAPIGroupInfo(
 	_ generic.RESTOptionsGetter,
 	_ bool,
 ) (*genericapiserver.APIGroupInfo, error) {
+	client, ok := b.plugin.Client()
+	if !ok {
+		return nil, fmt.Errorf("missing client for: %s", b.plugin.PluginID())
+	}
 	storage := map[string]rest.Storage{}
 
 	conn := b.connectionResourceInfo
@@ -202,15 +213,31 @@ func (b *DataSourceAPIBuilder) GetAPIGroupInfo(
 			},
 		),
 	}
-	storage[conn.StoragePath("query")] = &subQueryREST{builder: b}
-	storage[conn.StoragePath("health")] = &subHealthREST{builder: b}
 
-	// TODO! only setup this endpoint if it is implemented
-	storage[conn.StoragePath("resource")] = &subResourceREST{builder: b}
+	storage[conn.StoragePath("query")] = &subQueryREST{builder: b, handler: client}
+
+	hasCheckHealth := true
+	hasResources := true
+
+	// The original implementation -- client exists for everything with many wrappers
+	cp, ok := client.(plugins.CorePluginWithServerOpts)
+	if ok {
+		opts := cp.CorePluginHandlers()
+		hasCheckHealth = opts.CheckHealthHandler != nil
+		hasResources = opts.CallResourceHandler != nil
+	}
+
+	if hasCheckHealth {
+		storage[conn.StoragePath("health")] = &subHealthREST{builder: b, handler: client}
+	}
+
+	if hasResources {
+		storage[conn.StoragePath("resource")] = &subResourceREST{builder: b, handler: client}
+	}
 
 	// Frontend proxy
-	if len(b.pluginJSON.Routes) > 0 {
-		storage[conn.StoragePath("proxy")] = &subProxyREST{pluginJSON: b.pluginJSON}
+	if len(b.plugin.Routes) > 0 {
+		storage[conn.StoragePath("proxy")] = &subProxyREST{pluginJSON: b.plugin.JSONData}
 	}
 
 	apiGroupInfo := genericapiserver.NewDefaultAPIGroupInfo(
@@ -241,7 +268,7 @@ func (b *DataSourceAPIBuilder) GetOpenAPIDefinitions() openapi.GetOpenAPIDefinit
 
 func (b *DataSourceAPIBuilder) PostProcessOpenAPI(oas *spec3.OpenAPI) (*spec3.OpenAPI, error) {
 	// The plugin description
-	oas.Info.Description = b.pluginJSON.Info.Description
+	oas.Info.Description = b.plugin.Info.Description
 
 	// The root api URL
 	root := "/apis/" + b.connectionResourceInfo.GroupVersion().String() + "/"
@@ -251,12 +278,12 @@ func (b *DataSourceAPIBuilder) PostProcessOpenAPI(oas *spec3.OpenAPI) (*spec3.Op
 
 	var err error
 	opts := schemabuilder.QuerySchemaOptions{
-		PluginID:   []string{b.pluginJSON.ID},
+		PluginID:   []string{b.plugin.ID},
 		QueryTypes: []data.QueryTypeDefinition{},
 		Mode:       schemabuilder.SchemaTypeQueryPayload,
 	}
-	if b.pluginJSON.AliasIDs != nil {
-		opts.PluginID = append(opts.PluginID, b.pluginJSON.AliasIDs...)
+	if b.plugin.AliasIDs != nil {
+		opts.PluginID = append(opts.PluginID, b.plugin.AliasIDs...)
 	}
 	if b.queryTypes != nil {
 		for _, qt := range b.queryTypes.Items {

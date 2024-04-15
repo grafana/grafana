@@ -85,6 +85,11 @@ type FoundPlugin struct {
 	FS       FS
 }
 
+// This allows access to the raw handl
+type CorePluginWithServerOpts interface {
+	CorePluginHandlers() backend.ServeOpts
+}
+
 // Client is used to communicate with backend plugin implementations.
 type Client interface {
 	backend.QueryDataHandler

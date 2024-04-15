@@ -14,24 +14,34 @@ import (
 type corePlugin struct {
 	pluginID string
 	logger   log.Logger
+	opts     backend.ServeOpts
 	backend.CheckHealthHandler
 	backend.CallResourceHandler
 	backend.QueryDataHandler
 	backend.StreamHandler
 }
 
+var _ plugins.CorePluginWithServerOpts = (*corePlugin)(nil)
+
 // New returns a new backendplugin.PluginFactoryFunc for creating a core (built-in) backendplugin.Plugin.
 func New(opts backend.ServeOpts) backendplugin.PluginFactoryFunc {
 	return func(pluginID string, logger log.Logger, _ func() []string) (backendplugin.Plugin, error) {
 		return &corePlugin{
-			pluginID:            pluginID,
-			logger:              logger,
+			pluginID: pluginID,
+			logger:   logger,
+			opts:     opts,
+
+			// The individual handlers
 			CheckHealthHandler:  opts.CheckHealthHandler,
 			CallResourceHandler: opts.CallResourceHandler,
 			QueryDataHandler:    opts.QueryDataHandler,
 			StreamHandler:       opts.StreamHandler,
 		}, nil
 	}
+}
+
+func (cp *corePlugin) CorePluginHandlers() backend.ServeOpts {
+	return cp.opts
 }
 
 func (cp *corePlugin) PluginID() string {

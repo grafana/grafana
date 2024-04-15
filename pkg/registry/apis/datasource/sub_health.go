@@ -14,6 +14,7 @@ import (
 
 type subHealthREST struct {
 	builder *DataSourceAPIBuilder
+	handler backend.CheckHealthHandler
 }
 
 var (
@@ -52,7 +53,7 @@ func (r *subHealthREST) Connect(ctx context.Context, name string, opts runtime.O
 	ctx = backend.WithGrafanaConfig(ctx, pluginCtx.GrafanaConfig)
 	ctx = contextualMiddlewares(ctx)
 
-	healthResponse, err := r.builder.client.CheckHealth(ctx, &backend.CheckHealthRequest{
+	healthResponse, err := r.handler.CheckHealth(ctx, &backend.CheckHealthRequest{
 		PluginContext: pluginCtx,
 	})
 	if err != nil {

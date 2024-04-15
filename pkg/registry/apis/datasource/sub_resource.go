@@ -18,6 +18,7 @@ import (
 
 type subResourceREST struct {
 	builder *DataSourceAPIBuilder
+	handler backend.CallResourceHandler
 }
 
 var _ = rest.Connecter(&subResourceREST{})
@@ -67,7 +68,7 @@ func (r *subResourceREST) Connect(ctx context.Context, name string, opts runtime
 			return
 		}
 
-		err = r.builder.client.CallResource(ctx, &backend.CallResourceRequest{
+		err = r.handler.CallResource(ctx, &backend.CallResourceRequest{
 			PluginContext: pluginCtx,
 			Path:          clonedReq.URL.Path,
 			Method:        req.Method,

@@ -14,14 +14,6 @@ import (
 	"github.com/grafana/grafana/pkg/plugins/log"
 )
 
-type pluginClient interface {
-	backend.CollectMetricsHandler
-	backend.CheckHealthHandler
-	backend.QueryDataHandler
-	backend.CallResourceHandler
-	backend.StreamHandler
-}
-
 type grpcPlugin struct {
 	descriptor     PluginDescriptor
 	clientFactory  func() *plugin.Client
@@ -132,7 +124,7 @@ func (p *grpcPlugin) Target() backendplugin.Target {
 	return backendplugin.TargetLocal
 }
 
-func (p *grpcPlugin) getPluginClient() (pluginClient, bool) {
+func (p *grpcPlugin) getPluginClient() (plugins.Client, bool) {
 	p.mutex.RLock()
 	if p.client == nil || p.client.Exited() || p.pluginClient == nil {
 		p.mutex.RUnlock()
