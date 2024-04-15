@@ -40,6 +40,10 @@ func (f *FakeService) Authenticate(ctx context.Context, r *authn.Request) (*auth
 	return f.ExpectedIdentity, f.ExpectedErr
 }
 
+func (f *FakeService) IsClientEnabled(name string) bool {
+	return true
+}
+
 func (f *FakeService) RegisterPostAuthHook(hook authn.PostAuthHookFn, priority uint) {}
 
 func (f *FakeService) Login(ctx context.Context, client string, r *authn.Request) (*authn.Identity, error) {
@@ -119,6 +123,8 @@ func (f *FakeClient) Authenticate(ctx context.Context, r *authn.Request) (*authn
 	return f.ExpectedIdentity, f.ExpectedErr
 }
 
+func (f FakeClient) IsEnabled() bool { return true }
+
 func (f *FakeClient) Test(ctx context.Context, r *authn.Request) bool {
 	return f.ExpectedTest
 }
@@ -160,6 +166,8 @@ func (f FakeRedirectClient) Name() string {
 func (f FakeRedirectClient) Authenticate(ctx context.Context, r *authn.Request) (*authn.Identity, error) {
 	return f.ExpectedIdentity, f.ExpectedErr
 }
+
+func (f FakeRedirectClient) IsEnabled() bool { return true }
 
 func (f FakeRedirectClient) RedirectURL(ctx context.Context, r *authn.Request) (*authn.Redirect, error) {
 	return f.ExpectedRedirect, f.ExpectedErr

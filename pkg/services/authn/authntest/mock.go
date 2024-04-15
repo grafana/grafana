@@ -20,6 +20,10 @@ func (m *MockService) Authenticate(ctx context.Context, r *authn.Request) (*auth
 	panic("unimplemented")
 }
 
+func (m *MockService) IsClientEnabled(name string) bool {
+	panic("unimplemented")
+}
+
 func (m *MockService) Login(ctx context.Context, client string, r *authn.Request) (*authn.Identity, error) {
 	panic("unimplemented")
 }
@@ -85,6 +89,10 @@ func (m MockClient) Authenticate(ctx context.Context, r *authn.Request) (*authn.
 		return m.AuthenticateFunc(ctx, r)
 	}
 	return nil, nil
+}
+
+func (m MockClient) IsEnabled() bool {
+	return true
 }
 
 func (m MockClient) Test(ctx context.Context, r *authn.Request) bool {

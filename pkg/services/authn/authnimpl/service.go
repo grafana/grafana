@@ -320,6 +320,15 @@ func (s *Service) RegisterClient(c authn.Client) {
 	}
 }
 
+func (s *Service) IsClientEnabled(name string) bool {
+	client, ok := s.clients[name]
+	if !ok {
+		return false
+	}
+
+	return client.IsEnabled()
+}
+
 func (s *Service) SyncIdentity(ctx context.Context, identity *authn.Identity) error {
 	r := &authn.Request{OrgID: identity.OrgID}
 	// hack to not update last seen on external syncs

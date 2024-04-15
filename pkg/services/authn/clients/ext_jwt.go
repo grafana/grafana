@@ -91,6 +91,10 @@ func (s *ExtendedJWT) Authenticate(ctx context.Context, r *authn.Request) (*auth
 	return s.authenticateAsService(claims)
 }
 
+func (s *ExtendedJWT) IsEnabled() bool {
+	return s.cfg.ExtJWTAuth.Enabled
+}
+
 func (s *ExtendedJWT) authenticateAsUser(idTokenClaims,
 	accessTokenClaims *ExtendedJWTClaims) (*authn.Identity, error) {
 	// Only allow access policies to impersonate
