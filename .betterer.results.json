@@ -1028,12 +1028,6 @@
         "count": 5
       }
     ],
-    "/packages/grafana-ui/src/components/Splitter/Splitter.tsx": [
-      {
-        "message": "Do not use any type assertions.",
-        "count": 1
-      }
-    ],
     "/packages/grafana-ui/src/components/StatsPicker/StatsPicker.story.tsx": [
       {
         "message": "Unexpected any. Specify a different type.",
@@ -1564,12 +1558,6 @@
         "count": 1
       }
     ],
-    "/public/app/core/specs/time_series.test.ts": [
-      {
-        "message": "Unexpected any. Specify a different type.",
-        "count": 1
-      }
-    ],
     "/public/app/core/time_series2.ts": [
       {
         "message": "Unexpected any. Specify a different type.",
@@ -1787,12 +1775,6 @@
     "/public/app/features/alerting/unified/AlertWarning.tsx": [
       {
         "message": "Styles should be written using objects.",
-        "count": 1
-      }
-    ],
-    "/public/app/features/alerting/unified/AlertsFolderView.test.tsx": [
-      {
-        "message": "Unexpected any. Specify a different type.",
         "count": 1
       }
     ],
@@ -2930,12 +2912,6 @@
         "count": 1
       }
     ],
-    "/public/app/features/dashboard-scene/panel-edit/VizPanelManager.test.tsx": [
-      {
-        "message": "Unexpected any. Specify a different type.",
-        "count": 1
-      }
-    ],
     "/public/app/features/dashboard-scene/saving/SaveDashboardForm.tsx": [
       {
         "message": "Use data-testid for E2E selectors instead of aria-label",
@@ -2954,12 +2930,6 @@
         "count": 1
       }
     ],
-    "/public/app/features/dashboard-scene/scene/DashboardScene.test.tsx": [
-      {
-        "message": "Unexpected any. Specify a different type.",
-        "count": 1
-      }
-    ],
     "/public/app/features/dashboard-scene/scene/PanelMenuBehavior.tsx": [
       {
         "message": "Unexpected any. Specify a different type.",
@@ -2968,18 +2938,6 @@
       {
         "message": "Do not use any type assertions.",
         "count": 1
-      }
-    ],
-    "/public/app/features/dashboard-scene/scene/setDashboardPanelContext.test.ts": [
-      {
-        "message": "Unexpected any. Specify a different type.",
-        "count": 1
-      }
-    ],
-    "/public/app/features/dashboard-scene/serialization/angularMigration.test.ts": [
-      {
-        "message": "Unexpected any. Specify a different type.",
-        "count": 2
       }
     ],
     "/public/app/features/dashboard-scene/serialization/transformSaveModelToScene.test.ts": [
@@ -3055,7 +3013,7 @@
     "/public/app/features/dashboard/components/DashExportModal/DashboardExporter.test.ts": [
       {
         "message": "Unexpected any. Specify a different type.",
-        "count": 21
+        "count": 6
       }
     ],
     "/public/app/features/dashboard/components/DashExportModal/DashboardExporter.ts": [
@@ -3441,7 +3399,7 @@
     "/public/app/features/dashboard/state/DashboardMigrator.test.ts": [
       {
         "message": "Unexpected any. Specify a different type.",
-        "count": 19
+        "count": 12
       }
     ],
     "/public/app/features/dashboard/state/DashboardMigrator.ts": [
@@ -3457,7 +3415,7 @@
     "/public/app/features/dashboard/state/DashboardModel.repeat.test.ts": [
       {
         "message": "Unexpected any. Specify a different type.",
-        "count": 7
+        "count": 4
       }
     ],
     "/public/app/features/dashboard/state/DashboardModel.test.ts": [
@@ -3507,7 +3465,7 @@
     "/public/app/features/dashboard/state/initDashboard.test.ts": [
       {
         "message": "Unexpected any. Specify a different type.",
-        "count": 2
+        "count": 1
       }
     ],
     "/public/app/features/dashboard/utils/getPanelMenu.test.ts": [
@@ -4643,7 +4601,7 @@
     "/public/app/features/plugins/tests/datasource_srv.test.ts": [
       {
         "message": "Unexpected any. Specify a different type.",
-        "count": 4
+        "count": 3
       }
     ],
     "/public/app/features/plugins/utils.ts": [
@@ -4743,7 +4701,7 @@
     "/public/app/features/query/state/updateQueries.test.ts": [
       {
         "message": "Unexpected any. Specify a different type.",
-        "count": 12
+        "count": 11
       }
     ],
     "/public/app/features/search/page/components/ActionRow.tsx": [
@@ -5103,7 +5061,7 @@
     "/public/app/features/transformers/prepareTimeSeries/prepareTimeSeries.test.ts": [
       {
         "message": "Unexpected any. Specify a different type.",
-        "count": 2
+        "count": 1
       }
     ],
     "/public/app/features/transformers/prepareTimeSeries/prepareTimeSeries.ts": [
@@ -5266,12 +5224,6 @@
         "count": 1
       }
     ],
-    "/public/app/features/variables/query/QueryVariableEditor.test.tsx": [
-      {
-        "message": "Unexpected any. Specify a different type.",
-        "count": 1
-      }
-    ],
     "/public/app/features/variables/query/QueryVariableEditor.tsx": [
       {
         "message": "Unexpected any. Specify a different type.",
@@ -5309,7 +5261,7 @@
     "/public/app/features/variables/query/queryRunners.test.ts": [
       {
         "message": "Unexpected any. Specify a different type.",
-        "count": 7
+        "count": 1
       }
     ],
     "/public/app/features/variables/query/queryRunners.ts": [
@@ -5947,7 +5899,7 @@
     "/public/app/plugins/datasource/graphite/datasource.ts": [
       {
         "message": "Unexpected any. Specify a different type.",
-        "count": 51
+        "count": 11
       },
       {
         "message": "Do not use any type assertions.",
@@ -6104,6 +6056,12 @@
         "count": 2
       }
     ],
+    "/public/app/plugins/datasource/jaeger/components/SearchForm.test.tsx": [
+      {
+        "message": "Unexpected any. Specify a different type.",
+        "count": 5
+      }
+    ],
     "/public/app/plugins/datasource/jaeger/configuration/ConfigEditor.tsx": [
       {
         "message": "Styles should be written using objects.",
@@ -6114,6 +6072,12 @@
       {
         "message": "Styles should be written using objects.",
         "count": 2
+      }
+    ],
+    "/public/app/plugins/datasource/jaeger/datasource.test.ts": [
+      {
+        "message": "Unexpected any. Specify a different type.",
+        "count": 6
       }
     ],
     "/public/app/plugins/datasource/jaeger/datasource.ts": [
@@ -6138,10 +6102,22 @@
         "count": 1
       }
     ],
+    "/public/app/plugins/datasource/jaeger/util.ts": [
+      {
+        "message": "Unexpected any. Specify a different type.",
+        "count": 1
+      }
+    ],
     "/public/app/plugins/datasource/loki/LanguageProvider.ts": [
       {
         "message": "Unexpected any. Specify a different type.",
         "count": 2
+      }
+    ],
+    "/public/app/plugins/datasource/loki/LiveStreams.test.ts": [
+      {
+        "message": "Unexpected any. Specify a different type.",
+        "count": 7
       }
     ],
     "/public/app/plugins/datasource/loki/LiveStreams.ts": [
@@ -6168,6 +6144,12 @@
         "count": 2
       }
     ],
+    "/public/app/plugins/datasource/loki/components/LokiQueryField.tsx": [
+      {
+        "message": "Do not use any type assertions.",
+        "count": 3
+      }
+    ],
     "/public/app/plugins/datasource/loki/components/monaco-query-field/MonacoQueryField.tsx": [
       {
         "message": "Styles should be written using objects.",
@@ -6175,6 +6157,16 @@
       }
     ],
     "/public/app/plugins/datasource/loki/configuration/ConfigEditor.tsx": [
+      {
+        "message": "Unexpected any. Specify a different type.",
+        "count": 1
+      }
+    ],
+    "/public/app/plugins/datasource/loki/configuration/DebugSection.tsx": [
+      {
+        "message": "Do not use any type assertions.",
+        "count": 1
+      },
       {
         "message": "Unexpected any. Specify a different type.",
         "count": 1
@@ -6196,6 +6188,22 @@
       {
         "message": "Unexpected any. Specify a different type.",
         "count": 6
+      }
+    ],
+    "/public/app/plugins/datasource/loki/getDerivedFields.ts": [
+      {
+        "message": "Unexpected any. Specify a different type.",
+        "count": 1
+      },
+      {
+        "message": "Do not use any type assertions.",
+        "count": 1
+      }
+    ],
+    "/public/app/plugins/datasource/loki/liveStreamsResultTransformer.ts": [
+      {
+        "message": "Unexpected any. Specify a different type.",
+        "count": 1
       }
     ],
     "/public/app/plugins/datasource/loki/queryUtils.ts": [
@@ -6222,6 +6230,12 @@
         "count": 1
       }
     ],
+    "/public/app/plugins/datasource/loki/querybuilder/components/LokiQueryBuilderContainer.tsx": [
+      {
+        "message": "Do not use any type assertions.",
+        "count": 1
+      }
+    ],
     "/public/app/plugins/datasource/loki/querybuilder/components/LokiQueryCodeEditor.tsx": [
       {
         "message": "Styles should be written using objects.",
@@ -6240,10 +6254,44 @@
         "count": 3
       }
     ],
+    "/public/app/plugins/datasource/loki/querybuilder/parsing.ts": [
+      {
+        "message": "Unexpected any. Specify a different type.",
+        "count": 1
+      },
+      {
+        "message": "Do not use any type assertions.",
+        "count": 1
+      }
+    ],
+    "/public/app/plugins/datasource/loki/querybuilder/state.ts": [
+      {
+        "message": "Do not use any type assertions.",
+        "count": 1
+      }
+    ],
     "/public/app/plugins/datasource/loki/streaming.ts": [
       {
         "message": "Unexpected any. Specify a different type.",
         "count": 2
+      }
+    ],
+    "/public/app/plugins/datasource/mixed/MixedDataSource.test.ts": [
+      {
+        "message": "Unexpected any. Specify a different type.",
+        "count": 9
+      }
+    ],
+    "/public/app/plugins/datasource/mixed/MixedDataSource.ts": [
+      {
+        "message": "Do not use any type assertions.",
+        "count": 3
+      }
+    ],
+    "/public/app/plugins/datasource/mysql/module.ts": [
+      {
+        "message": "Unexpected any. Specify a different type.",
+        "count": 3
       }
     ],
     "/public/app/plugins/datasource/opentsdb/components/OpenTsdbQueryEditor.tsx": [
@@ -6261,14 +6309,26 @@
     "/public/app/plugins/datasource/opentsdb/datasource.ts": [
       {
         "message": "Unexpected any. Specify a different type.",
-        "count": 57
+        "count": 59
       },
       {
         "message": "Do not use any type assertions.",
-        "count": 1
+        "count": 2
       }
     ],
     "/public/app/plugins/datasource/opentsdb/migrations.ts": [
+      {
+        "message": "Unexpected any. Specify a different type.",
+        "count": 1
+      }
+    ],
+    "/public/app/plugins/datasource/opentsdb/specs/datasource.test.ts": [
+      {
+        "message": "Unexpected any. Specify a different type.",
+        "count": 2
+      }
+    ],
+    "/public/app/plugins/datasource/opentsdb/types.ts": [
       {
         "message": "Unexpected any. Specify a different type.",
         "count": 1
@@ -6425,7 +6485,7 @@
     "/public/app/plugins/datasource/prometheus/querybuilder/components/PromQueryBuilder.tsx": [
       {
         "message": "Do not use any type assertions.",
-        "count": 1
+        "count": 2
       }
     ],
     "/public/app/plugins/datasource/prometheus/querybuilder/components/PromQueryCodeEditor.tsx": [
@@ -7102,46 +7162,6 @@
       {
         "message": "Unexpected any. Specify a different type.",
         "count": 2
-      }
-    ],
-    "/public/app/plugins/panel/table-old/column_options.ts": [
-      {
-        "message": "Unexpected any. Specify a different type.",
-        "count": 22
-      }
-    ],
-    "/public/app/plugins/panel/table-old/editor.ts": [
-      {
-        "message": "Unexpected any. Specify a different type.",
-        "count": 9
-      }
-    ],
-    "/public/app/plugins/panel/table-old/module.ts": [
-      {
-        "message": "Unexpected any. Specify a different type.",
-        "count": 12
-      }
-    ],
-    "/public/app/plugins/panel/table-old/renderer.ts": [
-      {
-        "message": "Unexpected any. Specify a different type.",
-        "count": 12
-      },
-      {
-        "message": "Do not use any type assertions.",
-        "count": 1
-      }
-    ],
-    "/public/app/plugins/panel/table-old/transformers.ts": [
-      {
-        "message": "Unexpected any. Specify a different type.",
-        "count": 9
-      }
-    ],
-    "/public/app/plugins/panel/table-old/types.ts": [
-      {
-        "message": "Unexpected any. Specify a different type.",
-        "count": 13
       }
     ],
     "/public/app/plugins/panel/table/TablePanel.tsx": [

@@ -11,7 +11,7 @@
 
 import * as ui from '@grafana/schema';
 
-export const pluginVersion = "10.4.0-pre";
+export const pluginVersion = "10.4.2";
 
 export enum HorizontalConstraint {
   Center = 'center',
@@ -106,6 +106,10 @@ export const defaultCanvasElementOptions: Partial<CanvasElementOptions> = {
 
 export interface Options {
   /**
+   * Enable infinite pan
+   */
+  infinitePan: boolean;
+  /**
    * Enable inline editing
    */
   inlineEditing: boolean;
@@ -138,6 +142,7 @@ export interface Options {
 }
 
 export const defaultOptions: Partial<Options> = {
+  infinitePan: true,
   inlineEditing: true,
   panZoom: true,
   showAdvancedTypes: true,

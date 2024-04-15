@@ -187,5 +187,5 @@ func isNameValid(name string) bool {
 }
 
 func isExternalServiceAccount(login string) bool {
-	return strings.HasPrefix(login, serviceaccounts.ServiceAccountPrefix+serviceaccounts.ExtSvcPrefix)
+	return strings.HasPrefix(login, serviceaccounts.ExtSvcLoginPrefix)
 }

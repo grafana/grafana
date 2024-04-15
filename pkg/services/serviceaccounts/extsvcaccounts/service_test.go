@@ -448,13 +448,13 @@ func TestExtSvcAccountsService_GetExternalServiceNames(t *testing.T) {
 	sa1 := sa.ServiceAccountDTO{
 		Id:    1,
 		Name:  sa.ExtSvcPrefix + "sa-svc-1",
-		Login: sa.ServiceAccountPrefix + sa.ExtSvcPrefix + "sa-svc-1",
+		Login: sa.ExtSvcLoginPrefix + "sa-svc-1",
 		OrgId: extsvcauth.TmpOrgID,
 	}
 	sa2 := sa.ServiceAccountDTO{
 		Id:    2,
 		Name:  sa.ExtSvcPrefix + "sa-svc-2",
-		Login: sa.ServiceAccountPrefix + sa.ExtSvcPrefix + "sa-svc-2",
+		Login: sa.ExtSvcLoginPrefix + "sa-svc-2",
 		OrgId: extsvcauth.TmpOrgID,
 	}
 	tests := []struct {

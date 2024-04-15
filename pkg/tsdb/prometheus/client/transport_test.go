@@ -2,6 +2,7 @@ package client
 
 import (
 	"context"
+	"net/http"
 	"testing"
 
 	"github.com/grafana/grafana-azure-sdk-go/azsettings"
@@ -21,8 +22,8 @@ func TestCreateTransportOptions(t *testing.T) {
 		}
 		opts, err := CreateTransportOptions(context.Background(), settings, backend.NewLoggerWith("logger", "test"))
 		require.NoError(t, err)
-		require.Equal(t, map[string]string{"foo": "bar"}, opts.Headers)
-		require.Equal(t, 2, len(opts.Middlewares))
+		require.Equal(t, http.Header{"Foo": []string{"bar"}}, opts.Header)
+		require.Equal(t, 1, len(opts.Middlewares))
 	})
 
 	t.Run("add azure credentials if configured", func(t *testing.T) {
@@ -43,6 +44,6 @@ func TestCreateTransportOptions(t *testing.T) {
 		ctx := backend.WithGrafanaConfig(context.Background(), cfg)
 		opts, err := CreateTransportOptions(ctx, settings, backend.NewLoggerWith("logger", "test"))
 		require.NoError(t, err)
-		require.Equal(t, 3, len(opts.Middlewares))
+		require.Equal(t, 2, len(opts.Middlewares))
 	})
 }
