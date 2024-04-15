@@ -192,17 +192,17 @@ export const ConnectionSVG = ({
               // Only calculate arcs if there is a radius
               if (radius) {
                 if (index < vertices.length - 1) {
-                  const Xn = vertices[index + 1].x * xDist + x1;
-                  const Yn = vertices[index + 1].y * yDist + y1;
+                  const Xn = vertices[index + 1].x * xDist + xStart;
+                  const Yn = vertices[index + 1].y * yDist + yStart;
                   if (index === 0) {
                     // First vertex
-                    angle1 = calculateAngle(x1, y1, X, Y);
+                    angle1 = calculateAngle(xStart, yStart, X, Y);
                     angle2 = calculateAngle(X, Y, Xn, Yn);
                   } else {
                     // All vertices
                     const previousVertex = vertices[index - 1];
-                    const Xp = previousVertex.x * xDist + x1;
-                    const Yp = previousVertex.y * yDist + y1;
+                    const Xp = previousVertex.x * xDist + xStart;
+                    const Yp = previousVertex.y * yDist + yStart;
                     angle1 = calculateAngle(Xp, Yp, X, Y);
                     angle2 = calculateAngle(X, Y, Xn, Yn);
                   }
@@ -213,8 +213,8 @@ export const ConnectionSVG = ({
                     // Not also the first vertex
                     previousVertex = vertices[index - 1];
                   }
-                  const Xp = previousVertex.x * xDist + x1;
-                  const Yp = previousVertex.y * yDist + y1;
+                  const Xp = previousVertex.x * xDist + xStart;
+                  const Yp = previousVertex.y * yDist + yStart;
                   angle1 = calculateAngle(Xp, Yp, X, Y);
                   angle2 = calculateAngle(X, Y, x2, y2);
                 }
@@ -239,7 +239,7 @@ export const ConnectionSVG = ({
                 // Only calculate arcs if there is a radius
                 if (radius) {
                   // Length of segment
-                  const lSegment = calculateDistance(X, Y, x1, y1);
+                  const lSegment = calculateDistance(X, Y, xStart, yStart);
                   if (Math.abs(lHalfArc) > 0.5 * Math.abs(lSegment)) {
                     // Limit curve control points to mid segment
                     lHalfArc = 0.5 * lSegment;
@@ -250,8 +250,8 @@ export const ConnectionSVG = ({
                   if (index < vertices.length - 1) {
                     // Not also the last point
                     const nextVertex = vertices[index + 1];
-                    Xn = nextVertex.x * xDist + x1;
-                    Yn = nextVertex.y * yDist + y1;
+                    Xn = nextVertex.x * xDist + xStart;
+                    Yn = nextVertex.y * yDist + yStart;
                   }
 
                   // Length of next segment
@@ -262,15 +262,15 @@ export const ConnectionSVG = ({
                   }
                   // Calculate arc control points
                   const lDelta = lSegment - lHalfArc;
-                  xa = lDelta * Math.cos(angle1) + x1;
-                  ya = lDelta * Math.sin(angle1) + y1;
+                  xa = lDelta * Math.cos(angle1) + xStart;
+                  ya = lDelta * Math.sin(angle1) + yStart;
                   xb = lHalfArc * Math.cos(angle2) + X;
                   yb = lHalfArc * Math.sin(angle2) + Y;
 
                   // Check if arc control points are inside of segment, otherwise swap sign
-                  if ((xa > X && xa > x1) || (xa < X && xa < x1)) {
-                    xa = (lDelta + 2 * lHalfArc) * Math.cos(angle1) + x1;
-                    ya = (lDelta + 2 * lHalfArc) * Math.sin(angle1) + y1;
+                  if ((xa > X && xa > xStart) || (xa < X && xa < xStart)) {
+                    xa = (lDelta + 2 * lHalfArc) * Math.cos(angle1) + xStart;
+                    ya = (lDelta + 2 * lHalfArc) * Math.sin(angle1) + yStart;
                     xb = -lHalfArc * Math.cos(angle2) + X;
                     yb = -lHalfArc * Math.sin(angle2) + Y;
                   }
@@ -283,8 +283,8 @@ export const ConnectionSVG = ({
                 // Only calculate arcs if there is a radius
                 if (radius) {
                   // Convert previous vertex relative coorindates to scene coordinates
-                  const Xp = previousVertex.x * xDist + x1;
-                  const Yp = previousVertex.y * yDist + y1;
+                  const Xp = previousVertex.x * xDist + xStart;
+                  const Yp = previousVertex.y * yDist + yStart;
 
                   // Length of segment
                   const lSegment = calculateDistance(X, Y, Xp, Yp);
@@ -298,8 +298,8 @@ export const ConnectionSVG = ({
                   if (index < vertices.length - 1) {
                     // Not also the last point
                     const nextVertex = vertices[index + 1];
-                    Xn = nextVertex.x * xDist + x1;
-                    Yn = nextVertex.y * yDist + y1;
+                    Xn = nextVertex.x * xDist + xStart;
+                    Yn = nextVertex.y * yDist + yStart;
                   }
 
                   // Length of next segment
