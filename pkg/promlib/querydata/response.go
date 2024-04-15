@@ -183,7 +183,7 @@ func getName(q *models.Query, field *data.Field) string {
 }
 
 func getUrl(q *models.Query, field *data.Field) string {
-	return convertLabel(q.LegendUrlFormat, field)
+	return convertLabel(q.LegendUrl, field)
 }
 
 func convertLabel(label string, field *data.Field) string {

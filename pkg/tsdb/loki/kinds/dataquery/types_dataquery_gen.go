@@ -81,7 +81,7 @@ type LokiDataQuery struct {
 	LegendFormat *string `json:"legendFormat,omitempty"`
 
 	// Used for the drilldown label url
-	LegendUrlFormat *string `json:"legendUrlFormat,omitempty"`
+	LegendUrl *string `json:"legendUrl,omitempty"`
 
 	// Used to limit the number of log rows returned.
 	MaxLines *int64 `json:"maxLines,omitempty"`

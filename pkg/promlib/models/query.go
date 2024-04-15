@@ -63,8 +63,8 @@ type PrometheusQueryProperties struct {
 	// Series name override or template. Ex. {{hostname}} will be replaced with label value for hostname
 	LegendFormat string `json:"legendFormat,omitempty"`
 
-	// UrlFromDS adds the drilldown link to the legend labels.
-	LegendUrlFormat string `json:"legendUrlFormat,omitempty"`
+	// Drilldown URL for LegendFormat with template support. Ex. https://example.com/{{instance}} will replace the variable with its value
+	LegendUrl string `json:"legendUrl,omitempty"`
 
 	// ???
 	Scope *ScopeSpec `json:"scope,omitempty"`
@@ -152,18 +152,18 @@ type TimeRange struct {
 
 // The internal query object
 type Query struct {
-	Expr            string
-	Step            time.Duration
-	LegendFormat    string
-	LegendUrlFormat string
-	Start           time.Time
-	End             time.Time
-	RefId           string
-	InstantQuery    bool
-	RangeQuery      bool
-	ExemplarQuery   bool
-	UtcOffsetSec    int64
-	Scope           *ScopeSpec
+	Expr          string
+	Step          time.Duration
+	LegendFormat  string
+	LegendUrl     string
+	Start         time.Time
+	End           time.Time
+	RefId         string
+	InstantQuery  bool
+	RangeQuery    bool
+	ExemplarQuery bool
+	UtcOffsetSec  int64
+	Scope         *ScopeSpec
 }
 
 type Scope struct {
@@ -209,17 +209,17 @@ func Parse(query backend.DataQuery, dsScrapeInterval string, intervalCalculator 
 	}
 
 	return &Query{
-		Expr:            expr,
-		Step:            calculatedStep,
-		LegendFormat:    model.LegendFormat,
-		LegendUrlFormat: model.LegendUrlFormat,
-		Start:           query.TimeRange.From,
-		End:             query.TimeRange.To,
-		RefId:           query.RefID,
-		InstantQuery:    model.Instant,
-		RangeQuery:      model.Range,
-		ExemplarQuery:   model.Exemplar,
-		UtcOffsetSec:    model.UtcOffsetSec,
+		Expr:          expr,
+		Step:          calculatedStep,
+		LegendFormat:  model.LegendFormat,
+		LegendUrl:     model.LegendUrl,
+		Start:         query.TimeRange.From,
+		End:           query.TimeRange.To,
+		RefId:         query.RefID,
+		InstantQuery:  model.Instant,
+		RangeQuery:    model.Range,
+		ExemplarQuery: model.Exemplar,
+		UtcOffsetSec:  model.UtcOffsetSec,
 	}, nil
 }
 

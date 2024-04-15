@@ -39,9 +39,9 @@ export interface Prometheus extends common.DataQuery {
    */
   legendFormat?: string;
   /**
-   * Drilldown URL similar to Series name. Ex. {{hostname}} will be replaced with label value for hostname
+   * Drilldown URL for LegendFormat with template support. Ex. https://example.com/{{instance}} will replace the variable with its value
    */
-  legendUrlFormat?: string;
+  legendUrl?: string;
   /**
    * Returns a Range vector, comprised of a set of time series containing a range of data points over time for each time series
    */

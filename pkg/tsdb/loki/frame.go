@@ -289,7 +289,7 @@ func formatName(labels map[string]string, query *lokiQuery) string {
 }
 
 func formatUrl(labels map[string]string, query *lokiQuery) string {
-	return convertLabel(query.LegendUrlFormat, labels)
+	return convertLabel(query.LegendUrl, labels)
 }
 
 func convertLabel(label string, labels map[string]string) string {

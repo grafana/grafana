@@ -168,9 +168,9 @@ func parseQuery(queryContext *backend.QueryDataRequest) ([]*lokiQuery, error) {
 		if model.LegendFormat != nil {
 			legendFormat = *model.LegendFormat
 		}
-		var legendUrlFormat string
-		if model.LegendUrlFormat != nil {
-			legendUrlFormat = *model.LegendUrlFormat
+		var legendUrl string
+		if model.LegendUrl != nil {
+			legendUrl = *model.LegendUrl
 		}
 
 		supportingQueryType := parseSupportingQueryType(model.SupportingQueryType)
@@ -182,7 +182,7 @@ func parseQuery(queryContext *backend.QueryDataRequest) ([]*lokiQuery, error) {
 			Step:                step,
 			MaxLines:            int(maxLines),
 			LegendFormat:        legendFormat,
-			LegendUrlFormat:     legendUrlFormat,
+			LegendUrl:           legendUrl,
 			Start:               start,
 			End:                 end,
 			RefID:               query.RefID,
