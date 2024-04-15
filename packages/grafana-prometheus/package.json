@@ -134,7 +134,7 @@
     "rollup-plugin-esbuild": "5.0.0",
     "rollup-plugin-node-externals": "^5.0.0",
     "sass": "1.75.0",
-    "sass-loader": "14.1.1",
+    "sass-loader": "14.2.0",
     "style-loader": "3.3.4",
     "testing-library-selector": "0.3.1",
     "ts-node": "10.9.2",
