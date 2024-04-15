@@ -24,7 +24,7 @@ weight: 100
 
 The logs visualization shows log lines from data sources that support logs, such as Elastic, Influx, and Loki. Typically you would use this visualization next to a graph visualization to display the log output of a related process.
 
-{{< figure src="/static/img/docs/v64/logs-panel.png" max-width="1025px" caption="Logs panel" >}}
+{{< figure src="/static/img/docs/v64/logs-panel.png" max-width="1025px" alt="Logs panel" >}}
 
 {{< docs/play title="Logs Panel" url="https://play.grafana.org/d/6NmftOxZz/" >}}
 
