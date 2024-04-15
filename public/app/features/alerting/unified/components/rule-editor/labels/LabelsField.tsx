@@ -214,6 +214,9 @@ export function LabelsWithSuggestions({ dataSourceName }: LabelsWithSuggestionsP
 
   const selectedKeyIsFromAlerts =
     labelsByKeyFromExisingAlerts[selectedKey] !== undefined && labelsByKeyFromExisingAlerts[selectedKey]?.size > 0;
+  const selectedKeyIsFromOps = labelsByKeyOps[selectedKey] !== undefined && labelsByKeyOps[selectedKey]?.size > 0;
+  const selectedKeyDoesNotExist = !selectedKeyIsFromAlerts && !selectedKeyIsFromOps;
+
   const valuesAlreadyFetched = !selectedKeyIsFromAlerts && labelsByKeyOps[selectedKey]?.size > 0;
 
   // Only fetch the values for the selected key if it is from ops and the values are not already fetched (the selected key is not in the labelsByKeyOps object)
@@ -224,7 +227,12 @@ export function LabelsWithSuggestions({ dataSourceName }: LabelsWithSuggestionsP
   } = labelsApi.endpoints.getLabelValues.useQuery(
     { key: selectedKey },
     {
-      skip: !labelsPluginInstalled || !selectedKey || selectedKeyIsFromAlerts || valuesAlreadyFetched,
+      skip:
+        !labelsPluginInstalled ||
+        !selectedKey ||
+        selectedKeyIsFromAlerts ||
+        valuesAlreadyFetched ||
+        selectedKeyDoesNotExist,
     }
   );
 
