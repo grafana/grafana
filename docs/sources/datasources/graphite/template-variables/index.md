@@ -143,7 +143,7 @@ The Graphite data source supports two variable syntaxes for use in the **Query**
 
 ### Templated dashboard example
 
-To view an example templated dashboard, refer to [Graphite Templated Dashboard](https://play.grafana.org/dashboard/db/graphite-templated-nested).
+To view an example templated dashboard, refer to [Graphite Templated Dashboard](https://play.grafana.org/d/cvDFGseGz/graphite-templated-nested).
 
 {{% docs/reference %}}
 [add-template-variables]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/dashboards/variables/add-template-variables"
