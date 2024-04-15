@@ -60,9 +60,11 @@ export const Trans: typeof I18NextTrans = (props) => {
 // Wrap t() to provide default namespaces and enforce a consistent API
 export const t = (id: string, defaultMessage: string, values?: Record<string, unknown>) => {
   if (!tFunc) {
-    console.warn(
-      't() was called before i18n was initialized. This is probably caused by calling t() in the root module scope, instead of lazily on render'
-    );
+    if (process.env.NODE_ENV !== 'test') {
+      console.warn(
+        't() was called before i18n was initialized. This is probably caused by calling t() in the root module scope, instead of lazily on render'
+      );
+    }
 
     if (process.env.NODE_ENV === 'development') {
       throw new Error('t() was called before i18n was initialized');
