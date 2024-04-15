@@ -32,7 +32,7 @@ cards:
       description: Learn about all the visualizations available in Grafana, including which visualizations are ideal for different datasets and how to configure their options.
       height: 24
     - title: Panel overview
-      href: ./panel-editor-overview/
+      href: ./panel-overview/
       description: Learn about the features of the panel.
       height: 24
     - title: Panel editor
