@@ -25,8 +25,6 @@ In dashboards, a threshold is a value or limit you set for a metric that's refle
 Using thresholds, you can color grid lines and regions in a time series visualization:
 ![Time series visualization with green, blue, and purple threshold lines and regions](/media/docs/grafana/panels-visualizations/screenshot-thresholds-lines-regions-v10.4.png)
 
-{{< docs/play title="Threshold example" url="https://play.grafana.org/d/000000167/" >}}
-
 You can color the background or value text in a stat visualization:
 ![Stat visualization with three values in green and orange](/media/docs/grafana/panels-visualizations/screenshot-thresholds-value-v10.4.png)
 
@@ -39,6 +37,8 @@ You can also use thresholds to:
 - Color the gauge and threshold markers in a gauge
 - Color markers in a geomap
 - Color cell text or background in a table
+
+{{< docs/play title="Threshold example" url="https://play.grafana.org/d/000000167/" >}}
 
 ## Supported visualizations
 
