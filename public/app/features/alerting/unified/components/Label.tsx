@@ -3,7 +3,7 @@ import React, { ReactNode } from 'react';
 import tinycolor2 from 'tinycolor2';
 
 import { GrafanaTheme2, IconName } from '@grafana/data';
-import { Icon, Stack, Tooltip, useStyles2 } from '@grafana/ui';
+import { Icon, Stack, useStyles2 } from '@grafana/ui';
 
 export type LabelSize = 'md' | 'sm';
 
@@ -26,14 +26,18 @@ const Label = ({ label, value, icon, color, size = 'md' }: Props) => {
         <div className={styles.label}>
           <Stack direction="row" gap={0.5} alignItems="center">
             {icon && <Icon name={icon} />}
-            <Tooltip content={label?.toString() ?? ''} placement="top">
-              <span className={styles.labelText}>{label ?? ''}</span>
-            </Tooltip>
+            {label && (
+              <span className={styles.labelText} title={label.toString()}>
+                {label ?? ''}
+              </span>
+            )}
           </Stack>
         </div>
-        <Tooltip content={value?.toString() ?? ''} placement="top">
-          <div className={styles.value}>{value}</div>
-        </Tooltip>
+        {value && (
+          <div className={styles.value} title={value.toString()}>
+            {value}
+          </div>
+        )}
       </Stack>
     </div>
   );

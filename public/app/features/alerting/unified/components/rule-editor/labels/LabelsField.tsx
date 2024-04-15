@@ -166,10 +166,12 @@ export function useCombinedLabels(
     {
       label: 'From alerts',
       options: keysFromExistingAlerts,
+      expanded: true,
     },
     {
       label: 'From system',
       options: keysFromGopsLabels,
+      expanded: true,
     },
   ];
 
