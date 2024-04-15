@@ -16,7 +16,14 @@ import {
   isConnectionTarget,
 } from '../../utils';
 
-import { CONNECTION_ANCHOR_ALT, ConnectionAnchors, CONNECTION_ANCHOR_HIGHLIGHT_OFFSET } from './ConnectionAnchors';
+import {
+  CONNECTION_ANCHOR_ALT,
+  ConnectionAnchors,
+  CONNECTION_ANCHOR_HIGHLIGHT_OFFSET,
+  ANCHORS,
+  ANCHOR_PADDING,
+  HALF_SIZE,
+} from './ConnectionAnchors';
 import { ConnectionSVG } from './ConnectionSVG';
 
 export const CONNECTION_VERTEX_ID = 'vertex';
@@ -27,6 +34,7 @@ const CONNECTION_VERTEX_SNAP_TOLERANCE = (5 / 180) * Math.PI; // Multi-segment s
 export class Connections {
   scene: Scene;
   connectionAnchorDiv?: HTMLDivElement;
+  anchorsDiv?: HTMLDivElement;
   connectionSVG?: SVGElement;
   connectionLine?: SVGLineElement;
   connectionSVGVertex?: SVGElement;
@@ -68,6 +76,10 @@ export class Connections {
 
   setConnectionAnchorRef = (anchorElement: HTMLDivElement) => {
     this.connectionAnchorDiv = anchorElement;
+  };
+
+  setAnchorsRef = (anchorsElement: HTMLDivElement) => {
+    this.anchorsDiv = anchorsElement;
   };
 
   setConnectionSVGRef = (connectionSVG: SVGSVGElement) => {
@@ -128,6 +140,21 @@ export class Connections {
         console.log('no connection source');
         return;
       }
+    }
+
+    const customElementAnchors = element?.item.customConnectionAnchors || ANCHORS;
+    let i = 0;
+    for (let img of this.anchorsDiv?.children!) {
+      if (i >= customElementAnchors.length) {
+        img.setAttribute('style', `top: calc(0px); left: calc(0px); pointer-events: auto !important; display: none;`);
+      } else {
+        const { x, y } = customElementAnchors![i];
+        img.setAttribute(
+          'style',
+          `top: calc(${-y * 50 + 50}% - ${HALF_SIZE}px - ${ANCHOR_PADDING}px); left: calc(${x * 50 + 50}% - ${HALF_SIZE}px - ${ANCHOR_PADDING}px); pointer-events: auto !important; display: block;`
+        );
+      }
+      i++;
     }
 
     const elementBoundingRect = element.div!.getBoundingClientRect();
@@ -617,8 +644,8 @@ export class Connections {
       <>
         <ConnectionAnchors
           setRef={this.setConnectionAnchorRef}
+          setAnchorsRef={this.setAnchorsRef}
           handleMouseLeave={this.handleMouseLeave}
-          selectedElement={this.connectionSource}
         />
         <ConnectionSVG
           setSVGRef={this.setConnectionSVGRef}

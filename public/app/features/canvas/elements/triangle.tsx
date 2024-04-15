@@ -189,7 +189,6 @@ export const triangleItem: CanvasElementItem = {
     { x: 0, y: 1 }, // top
 
     // points along the right edge
-    { x: 0, y: 1 }, // top
     { x: 0.2, y: 0.6 },
     { x: 0.4, y: 0.2 },
     { x: 0.6, y: -0.2 },
@@ -197,12 +196,10 @@ export const triangleItem: CanvasElementItem = {
     { x: 1, y: -1 }, // bottom right
 
     // points along the bottom edge
-    { x: 1, y: -1 }, // bottom right
     { x: 0.6, y: -1 },
     { x: 0.2, y: -1 },
     { x: -0.2, y: -1 },
     { x: -0.6, y: -1 },
-    { x: -1, y: -1 }, // bottom left
   ],
 };
 
