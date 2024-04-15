@@ -11,8 +11,7 @@
     "incremental": true,
     "tsBuildInfoFile": "./tsconfig.tsbuildinfo",
     "paths": {
-      "@grafana/schema/dist/esm/*": ["../packages/grafana-schema/src/*"],
-      "@grafana/test-utils": ["./test/test-utils.tsx"]
+      "@grafana/schema/dist/esm/*": ["../packages/grafana-schema/src/*"]
     }
   },
   "extends": "@grafana/tsconfig/base.json",
