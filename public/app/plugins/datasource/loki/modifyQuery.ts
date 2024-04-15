@@ -21,6 +21,7 @@ import {
   JsonExpressionParser,
   LogfmtExpressionParser,
   Expr,
+  LabelFormatExpr,
 } from '@grafana/lezer-logql';
 
 import { unescapeLabelValue } from './languageUtils';
@@ -162,6 +163,7 @@ export function addLabelToQuery(
   const parserPositions = getParserPositions(query);
   const labelFilterPositions = getLabelFilterPositions(query);
   const hasStreamSelectorMatchers = getMatcherInStreamPositions(query);
+  const labelFormatPositions = getNodePositionsFromQuery(query, [LabelFormatExpr]);
   const everyStreamSelectorHasMatcher = streamSelectorPositions.every((streamSelectorPosition) =>
     hasStreamSelectorMatchers.some(
       (matcherPosition) =>
@@ -175,6 +177,7 @@ export function addLabelToQuery(
       ...streamSelectorPositions,
       ...labelFilterPositions,
       ...parserPositions,
+      ...labelFormatPositions
     ]);
 
     return addFilterAsLabelFilter(query, lastPositionsPerExpression, filter);
@@ -191,6 +194,7 @@ export function addLabelToQuery(
       const lastPositionsPerExpression = getLastPositionPerExpression(query, [
         ...parserPositions,
         ...labelFilterPositions,
+        ...labelFormatPositions
       ]);
 
       return addFilterAsLabelFilter(query, lastPositionsPerExpression, filter);
