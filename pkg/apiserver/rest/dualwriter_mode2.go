@@ -142,10 +142,29 @@ func enrichObject(orig, copy runtime.Object) (runtime.Object, error) {
 	}
 	accessorC.SetAnnotations(ac)
 
-	// #TODO set resource version and UID when required (Update for example)
-	// accessorC.SetResourceVersion(accessorO.GetResourceVersion())
-
-	// accessorC.SetUID(accessorO.GetUID())
-
 	return copy, nil
+}
+
+func (d *DualWriterMode2) Delete(ctx context.Context, name string, deleteValidation rest.ValidateObjectFunc, options *metav1.DeleteOptions) (runtime.Object, bool, error) {
+	legacy, ok := d.Legacy.(rest.GracefulDeleter)
+	if !ok {
+		return nil, false, errDualWriterDeleterMissing
+	}
+
+	deletedLS, async, err := legacy.Delete(ctx, name, deleteValidation, options)
+	if err != nil {
+		if !apierrors.IsNotFound(err) {
+			klog.FromContext(ctx).Error(err, "could not delete from legacy store", "mode", 2)
+			return deletedLS, async, err
+		}
+	}
+
+	_, _, errUS := d.Storage.Delete(ctx, name, deleteValidation, options)
+	if errUS != nil {
+		if !apierrors.IsNotFound(errUS) {
+			klog.FromContext(ctx).Error(errUS, "could not delete from duplicate storage", "mode", 2, "name", name)
+		}
+	}
+
+	return deletedLS, async, err
 }

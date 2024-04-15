@@ -37,4 +37,11 @@ func TestMode1(t *testing.T) {
 	assert.NoError(t, err)
 	assert.Equal(t, 1, lsSpy.Counts("LegacyStorage.List"))
 	assert.Equal(t, 0, sSpy.Counts("Storage.List"))
+
+	// Delete: it should use the Legacy Delete implementation
+	var deleteValidation = func(ctx context.Context, obj runtime.Object) error { return nil }
+	_, _, err = dw.Delete(context.Background(), kind, deleteValidation, &metav1.DeleteOptions{})
+	assert.NoError(t, err)
+	assert.Equal(t, 1, lsSpy.Counts("LegacyStorage.Delete"))
+	assert.Equal(t, 0, sSpy.Counts("Storage.Delete"))
 }
