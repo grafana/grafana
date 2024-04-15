@@ -534,44 +534,6 @@ export const FUNCTIONS = [
     detail: 'present_over_time(range-vector)',
     documentation: 'The value 1 for any series in the specified interval.',
   },
-  {
-    insertText: 'histogram_avg',
-    label: 'histogram_avg',
-    detail: 'histogram_avg(v instant-vector)',
-    documentation:
-      'Returns the arithmetic average of observed values stored in a native histogram. Samples that are not native histograms are ignored and do not show up in the returned vector.',
-  },
-  {
-    insertText: 'histogram_count',
-    label: 'histogram_count',
-    detail: 'histogram_count(v instant-vector)',
-    documentation: 'Returns the count of observations stored in a native histogram.',
-  },
-  {
-    insertText: 'histogram_sum',
-    label: 'histogram_sum',
-    detail: 'histogram_sum(v instant-vector)',
-    documentation: 'Returns the sum of observations stored in a native histogram.',
-  },
-  {
-    insertText: 'histogram_fraction',
-    label: 'histogram_fraction',
-    detail: 'histogram_fraction(lower scalar, upper scalar, v instant-vector)',
-    documentation: 'Returns the estimated fraction of observations between the provided lower and upper values.',
-  },
-  {
-    insertText: 'histogram_stddev',
-    label: 'histogram_stddev',
-    detail: 'histogram_stddev(v instant-vector)',
-    documentation:
-      'Returns the estimated standard deviation of observations in a native histogram, based on the geometric mean of the buckets where the observations lie.',
-  },
-  {
-    insertText: 'histogram_stdvar',
-    label: 'histogram_stdvar',
-    detail: 'histogram_stdvar(v instant-vector)',
-    documentation: 'Returns the estimated standard variance of observations in a native histogram.',
-  },
 ];
 
 export const PROM_KEYWORDS = FUNCTIONS.map((keyword) => keyword.label);
