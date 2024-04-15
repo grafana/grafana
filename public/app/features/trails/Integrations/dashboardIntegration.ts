@@ -1,5 +1,3 @@
-import { isString } from 'lodash';
-
 import { PanelMenuItem, PanelModel } from '@grafana/data';
 import { getDataSourceSrv } from '@grafana/runtime';
 import { SceneTimeRangeLike, VizPanel } from '@grafana/scenes';
@@ -12,6 +10,7 @@ import { MetricScene } from '../MetricScene';
 import { DataTrailEmbedded, DataTrailEmbeddedState } from './DataTrailEmbedded';
 import { SceneDrawerAsScene, launchSceneDrawerInGlobalModal } from './SceneDrawer';
 import { QueryMetric, getQueryMetrics } from './getQueryMetrics';
+import { interpolateVariables } from './interpolation';
 import {
   createAdHocFilters,
   getPanelType,
@@ -35,20 +34,23 @@ export function addDataTrailPanelAction(
     return;
   }
 
-  const ds = getDataSourceSrv().getInstanceSettings(queryRunner.state.datasource);
+  const dsInstanceSettings = getDataSourceSrv().getInstanceSettings(queryRunner.state.datasource);
 
-  if (ds?.meta.id !== 'prometheus') {
+  if (!dsInstanceSettings || dsInstanceSettings?.meta.id !== 'prometheus') {
     return;
   }
 
-  const queries = queryRunner.state.queries.map((q) => q.expr).filter(isString);
+  const interpolated = interpolateVariables(dashboard, dsInstanceSettings, queryRunner.state.queries);
+
+  const queries = interpolated.map((q) => q.expr);
 
   const queryMetrics = getQueryMetrics(queries);
 
+  const dataSourceRawRef = dsInstanceSettings?.rawRef;
   const subMenu: PanelMenuItem[] = queryMetrics.map((item) => {
     return {
       text: getQueryMetricLabel(item),
-      onClick: createClickHandler(item, dashboard, ds),
+      onClick: createClickHandler(item, dashboard, dataSourceRawRef || dsInstanceSettings),
     };
   });
 
