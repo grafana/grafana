@@ -320,17 +320,6 @@ func (s *Service) RegisterClient(c authn.Client) {
 	}
 }
 
-// IsClientEnabled returns true if the client is enabled.
-//
-// The client lookup follows the same formats used by the `authn` package
-// constants.
-//
-// For OAuth clients, use the `authn.ClientWithPrefix(name)` to get the provider
-// name. Append the prefix `auth.client.{providerName}`.
-//
-// Example:
-// - "saml" = "auth.client.saml"
-// - "github" = "auth.client.github"
 func (s *Service) IsClientEnabled(name string) bool {
 	client, ok := s.clients[name]
 	if !ok {

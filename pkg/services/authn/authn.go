@@ -95,7 +95,17 @@ type Service interface {
 	// RegisterClient will register a new authn.Client that can be used for authentication
 	RegisterClient(c Client)
 
-	// IsCliendEnabled returns the enabled status of a client
+	// IsClientEnabled returns true if the client is enabled.
+	//
+	// The client lookup follows the same formats used by the `authn` package
+	// constants.
+	//
+	// For OAuth clients, use the `authn.ClientWithPrefix(name)` to get the provider
+	// name. Append the prefix `auth.client.{providerName}`.
+	//
+	// Example:
+	// - "saml" = "auth.client.saml"
+	// - "github" = "auth.client.github"
 	IsClientEnabled(client string) bool
 }
 
