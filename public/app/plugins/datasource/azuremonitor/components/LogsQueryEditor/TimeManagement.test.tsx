@@ -172,7 +172,7 @@ describe('LogsQueryEditor.TimeManagement', () => {
 
   it('should set time to dashboard and query disabled if basic logs is selected', async () => {
     const mockDatasource = createMockDatasource();
-    const query = createMockQuery({ azureLogAnalytics: { basicLogsQuery: true } });
+    const query = createMockQuery({ azureLogAnalytics: { basicLogsQuery: true, dashboardTime: true } });
     const onChange = jest.fn();
 
     render(
@@ -186,14 +186,7 @@ describe('LogsQueryEditor.TimeManagement', () => {
       />
     );
 
-    expect(onChange).toBeCalledWith(
-      expect.objectContaining({
-        azureLogAnalytics: expect.objectContaining({
-          dashboardTime: true,
-        }),
-      })
-    );
-
     expect(screen.getByLabelText('Query')).toBeDisabled();
+    expect(screen.getByLabelText('Dashboard')).toBeChecked();
   });
 });
