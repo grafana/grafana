@@ -757,6 +757,40 @@ deleteMuteTimes:
     name: mti_1
 ```
 
+## Template variable interpolation
+
+Provisioning interpolates environment variables using the `$variable` syntax.
+
+```yaml
+contactPoints:
+  - orgId: 1
+    name: My Contact Email Point
+    receivers:
+      - uid: 1
+        type: email
+        settings:
+          addresses: $EMAIL
+```
+
+In this example, provisioning replaces `$EMAIL` with the value of the `EMAIL` environment variable or an empty string if it is not present. For more information, refer to [Using environment variables in the Provision documentation][provisioning_env_vars].
+
+In alerting resources, most properties support template variable interpolation, with a few exceptions:
+
+- Alert rule annotations: `groups[].rules[].annotations`
+- Alert rule time range: `groups[].rules[].relativeTimeRange`
+- Alert rule query model: `groups[].rules[].data.model`
+- Mute timings name: `muteTimes[].name`
+- Mute timings time intervals: `muteTimes[].time_intervals[]`
+- Notification template name: `templates[].name`
+- Notification template content: `templates[].template`
+
+Note for properties that support interpolation, you may unexpectedly substitute template variables when not intended. To avoid this, you can escape the `$variable` with `$$variable`.
+
+For example, when provisioning a `subject` property in a `contactPoints.receivers.settings` object that is meant to use the `$labels` variable.
+
+1. `subject: '{{ $labels }}'` will interpolate, incorrectly defining the subject as `subject: '{{ }}'`.
+1. `subject: '{{ $$labels }}'` will not interpolate, correctly defining the subject as `subject: '{{ $labels }}'`.
+
 ## More examples
 
 For more examples on the concept of this guide:
@@ -783,6 +817,7 @@ For more examples on the concept of this guide:
 [export_mute_timings]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/alerting-and-irm/alerting/set-up/provision-alerting-resources/export-alerting-resources#export-mute-timings"
 
 [provisioning]: "/docs/ -> /docs/grafana/<GRAFANA_VERSION>/administration/provisioning"
+[provisioning_env_vars]: "/docs/ -> /docs/grafana/<GRAFANA_VERSION>/administration/provisioning#using-environment-variables"
 
 [reload-provisioning-configurations]: "/docs/ -> /docs/grafana/<GRAFANA_VERSION>/developers/http_api/admin#reload-provisioning-configurations"
 

@@ -19,7 +19,7 @@ import (
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend/log"
 	"github.com/grafana/grafana/pkg/setting"
-	"github.com/grafana/grafana/pkg/tsdb/sqleng"
+	"github.com/grafana/grafana/pkg/tsdb/grafana-postgresql-datasource/sqleng"
 )
 
 func ProvideService(cfg *setting.Cfg) *Service {
@@ -223,6 +223,14 @@ func (s *Service) generateConnectionString(dsInfo sqleng.DataSourceInfo) (string
 	}
 
 	connStr += fmt.Sprintf(" sslmode='%s'", escape(tlsSettings.Mode))
+
+	// there is an issue with the lib/pq module, the `verify-ca` tls mode
+	// does not work correctly. ( see https://github.com/lib/pq/issues/1106 )
+	// to workaround the problem, if the `verify-ca` mode is chosen,
+	// we disable sslsni.
+	if tlsSettings.Mode == "verify-ca" {
+		connStr += " sslsni=0"
+	}
 
 	// Attach root certificate if provided
 	if tlsSettings.RootCertFile != "" {

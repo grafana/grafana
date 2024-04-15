@@ -2,7 +2,7 @@ import { cx, css, keyframes } from '@emotion/css';
 import React, { useEffect, useState } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { useStyles2 } from '@grafana/ui';
+import { handleReducedMotion, useStyles2 } from '@grafana/ui';
 
 import { Branding } from '../Branding/Branding';
 import { BrandingSettings } from '../Branding/types';
@@ -174,7 +174,9 @@ export const getLoginStyles = (theme: GrafanaTheme2) => {
       transition: '0.25s ease',
     }),
     enterAnimation: css({
-      animation: `${flyInAnimation} ease-out 0.2s`,
+      ...handleReducedMotion({
+        animation: `${flyInAnimation} ease-out 0.2s`,
+      }),
     }),
   };
 };

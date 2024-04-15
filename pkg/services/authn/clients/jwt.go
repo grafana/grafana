@@ -139,6 +139,10 @@ func (s *JWT) Authenticate(ctx context.Context, r *authn.Request) (*authn.Identi
 	return id, nil
 }
 
+func (s *JWT) IsEnabled() bool {
+	return s.cfg.JWTAuth.Enabled
+}
+
 // remove sensitive query param
 // avoid JWT URL login passing auth_token in URL
 func (s *JWT) stripSensitiveParam(httpRequest *http.Request) {
