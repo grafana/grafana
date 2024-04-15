@@ -86,7 +86,6 @@ export interface FeatureToggles {
   sqlDatasourceDatabaseSelection?: boolean;
   lokiFormatQuery?: boolean;
   recordedQueriesMulti?: boolean;
-  pluginsDynamicAngularDetectionPatterns?: boolean;
   vizAndWidgetSplit?: boolean;
   prometheusIncrementalQueryInstrumentation?: boolean;
   logsExploreTableVisualisation?: boolean;

@@ -1120,7 +1120,8 @@
       "metadata": {
         "name": "pluginsDynamicAngularDetectionPatterns",
         "resourceVersion": "1712639261786",
-        "creationTimestamp": "2024-04-09T05:07:41Z"
+        "creationTimestamp": "2024-04-09T05:07:41Z",
+        "deletionTimestamp": "2024-04-11T13:53:48Z"
       },
       "spec": {
         "description": "Enables fetching Angular detection patterns for plugins from GCOM and fallback to hardcoded ones",

@@ -509,14 +509,6 @@ var (
 			AllowSelfServe: false,
 		},
 		{
-			Name:         "pluginsDynamicAngularDetectionPatterns",
-			Description:  "Enables fetching Angular detection patterns for plugins from GCOM and fallback to hardcoded ones",
-			Stage:        FeatureStageGeneralAvailability,
-			FrontendOnly: false,
-			Owner:        grafanaPluginsPlatformSquad,
-			Expression:   "true", // enabled by default
-		},
-		{
 			Name:         "vizAndWidgetSplit",
 			Description:  "Split panels between visualizations and widgets",
 			Stage:        FeatureStageExperimental,
