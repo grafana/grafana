@@ -80,6 +80,10 @@ swagger-enterprise-gen: $(SWAGGER) ## Generate API Swagger specification
 	--include-tag=enterprise
 endif
 
+# .PHONY: i18n-extract
+# i18n-extract:
+
+
 .PHONY: swagger-gen
 swagger-gen: gen-go $(MERGED_SPEC_TARGET) swagger-validate
 
