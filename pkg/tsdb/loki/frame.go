@@ -50,7 +50,7 @@ func adjustMetricFrame(frame *data.Frame, query *lokiQuery, setFrameName bool) e
 	isMetricRange := query.QueryType == QueryTypeRange
 
 	name := formatName(labels, query)
-	Url := formatUrl(labels, query)
+	url := formatUrl(labels, query)
 	if setFrameName {
 		frame.Name = name
 	}
@@ -79,7 +79,7 @@ func adjustMetricFrame(frame *data.Frame, query *lokiQuery, setFrameName bool) e
 		valueField.Config = &data.FieldConfig{}
 	}
 	valueField.Config.DisplayNameFromDS = name
-	valueField.Config.UrlFromDS = Url
+	valueField.Config.UrlFromDS = url
 
 	return nil
 }
