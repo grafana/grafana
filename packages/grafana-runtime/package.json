@@ -52,14 +52,14 @@
     "@rollup/plugin-node-resolve": "15.2.3",
     "@rollup/plugin-terser": "0.4.4",
     "@testing-library/dom": "10.0.0",
-    "@testing-library/react": "15.0.0",
+    "@testing-library/react": "15.0.2",
     "@testing-library/user-event": "14.5.2",
     "@types/angular": "1.8.9",
     "@types/history": "4.7.11",
     "@types/jest": "29.5.12",
     "@types/lodash": "4.17.0",
-    "@types/react": "18.2.75",
-    "@types/react-dom": "18.2.24",
+    "@types/react": "18.2.78",
+    "@types/react-dom": "18.2.25",
     "@types/systemjs": "6.13.5",
     "esbuild": "0.18.12",
     "lodash": "4.17.21",
@@ -71,7 +71,7 @@
     "rollup-plugin-esbuild": "5.0.0",
     "rollup-plugin-node-externals": "^5.0.0",
     "rollup-plugin-sourcemaps": "0.6.3",
-    "typescript": "5.3.3"
+    "typescript": "5.4.5"
   },
   "peerDependencies": {
     "react": "^18.0.0",

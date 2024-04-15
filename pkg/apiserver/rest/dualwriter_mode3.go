@@ -2,7 +2,6 @@ package rest
 
 import (
 	"context"
-	"fmt"
 
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -40,23 +39,30 @@ func (d *DualWriterMode3) Create(ctx context.Context, obj runtime.Object, create
 	return created, nil
 }
 
-// Get overrides the default behavior of the Storage and retrieves an object from Unified Storage
-// the object is still fetched from Legacy Storage if it's not found in Unified Storage
+// Get overrides the behavior of the generic DualWriter and retrieves an object from Storage.
 func (d *DualWriterMode3) Get(ctx context.Context, name string, options *metav1.GetOptions) (runtime.Object, error) {
-	legacy, ok := d.Legacy.(rest.Getter)
+	return d.Storage.Get(ctx, name, &metav1.GetOptions{})
+}
+
+func (d *DualWriterMode3) Delete(ctx context.Context, name string, deleteValidation rest.ValidateObjectFunc, options *metav1.DeleteOptions) (runtime.Object, bool, error) {
+	legacy, ok := d.Legacy.(rest.GracefulDeleter)
 	if !ok {
-		return nil, fmt.Errorf("legacy storage rest.Getter is missing")
+		return nil, false, errDualWriterDeleterMissing
 	}
 
-	s, err := d.Storage.Get(ctx, name, &metav1.GetOptions{})
-	if err == nil {
-		return s, err
-	}
-	if !apierrors.IsNotFound(err) {
-		return nil, err
+	deleted, async, err := d.Storage.Delete(ctx, name, deleteValidation, options)
+	if err != nil {
+		if !apierrors.IsNotFound(err) {
+			klog.FromContext(ctx).Error(err, "could not delete from unified store", "mode", Mode3)
+		}
 	}
 
-	klog.Info("object not found in unified storage. Getting it from legacy", "name", name)
+	_, _, errLS := legacy.Delete(ctx, name, deleteValidation, options)
+	if errLS != nil {
+		if !apierrors.IsNotFound(errLS) {
+			klog.FromContext(ctx).Error(errLS, "could not delete from legacy store", "mode", Mode3)
+		}
+	}
 
-	return legacy.Get(ctx, name, &metav1.GetOptions{})
+	return deleted, async, err
 }

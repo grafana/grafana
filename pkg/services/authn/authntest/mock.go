@@ -20,6 +20,10 @@ func (m *MockService) Authenticate(ctx context.Context, r *authn.Request) (*auth
 	panic("unimplemented")
 }
 
+func (m *MockService) IsClientEnabled(name string) bool {
+	panic("unimplemented")
+}
+
 func (m *MockService) Login(ctx context.Context, client string, r *authn.Request) (*authn.Identity, error) {
 	panic("unimplemented")
 }
@@ -60,14 +64,17 @@ func (m *MockService) SyncIdentity(ctx context.Context, identity *authn.Identity
 var _ authn.HookClient = new(MockClient)
 var _ authn.LogoutClient = new(MockClient)
 var _ authn.ContextAwareClient = new(MockClient)
+var _ authn.IdentityResolverClient = new(MockClient)
 
 type MockClient struct {
-	NameFunc         func() string
-	AuthenticateFunc func(ctx context.Context, r *authn.Request) (*authn.Identity, error)
-	TestFunc         func(ctx context.Context, r *authn.Request) bool
-	PriorityFunc     func() uint
-	HookFunc         func(ctx context.Context, identity *authn.Identity, r *authn.Request) error
-	LogoutFunc       func(ctx context.Context, user identity.Requester) (*authn.Redirect, bool)
+	NameFunc            func() string
+	AuthenticateFunc    func(ctx context.Context, r *authn.Request) (*authn.Identity, error)
+	TestFunc            func(ctx context.Context, r *authn.Request) bool
+	PriorityFunc        func() uint
+	HookFunc            func(ctx context.Context, identity *authn.Identity, r *authn.Request) error
+	LogoutFunc          func(ctx context.Context, user identity.Requester) (*authn.Redirect, bool)
+	NamespaceFunc       func() string
+	ResolveIdentityFunc func(ctx context.Context, orgID int64, namespaceID authn.NamespaceID) (*authn.Identity, error)
 }
 
 func (m MockClient) Name() string {
@@ -82,6 +89,10 @@ func (m MockClient) Authenticate(ctx context.Context, r *authn.Request) (*authn.
 		return m.AuthenticateFunc(ctx, r)
 	}
 	return nil, nil
+}
+
+func (m MockClient) IsEnabled() bool {
+	return true
 }
 
 func (m MockClient) Test(ctx context.Context, r *authn.Request) bool {
@@ -110,6 +121,21 @@ func (m *MockClient) Logout(ctx context.Context, user identity.Requester) (*auth
 		return m.LogoutFunc(ctx, user)
 	}
 	return nil, false
+}
+
+func (m *MockClient) Namespace() string {
+	if m.NamespaceFunc != nil {
+		return m.NamespaceFunc()
+	}
+	return ""
+}
+
+// ResolveIdentity implements authn.IdentityResolverClient.
+func (m *MockClient) ResolveIdentity(ctx context.Context, orgID int64, namespaceID authn.NamespaceID) (*authn.Identity, error) {
+	if m.ResolveIdentityFunc != nil {
+		return m.ResolveIdentityFunc(ctx, orgID, namespaceID)
+	}
+	return nil, nil
 }
 
 var _ authn.ProxyClient = new(MockProxyClient)
