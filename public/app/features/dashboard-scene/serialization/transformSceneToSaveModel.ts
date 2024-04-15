@@ -1,4 +1,4 @@
-import { isEqual } from 'lodash';
+import { defaults, isEqual } from 'lodash';
 
 import { isEmptyObject, ScopedVars, TimeRange } from '@grafana/data';
 import {
@@ -232,13 +232,22 @@ export function vizPanelToPanel(
     title: vizPanel.state.title,
     description: vizPanel.state.description ?? undefined,
     gridPos,
-    options: vizPanel.state.options,
     fieldConfig: (vizPanel.state.fieldConfig as FieldConfigSource) ?? { defaults: {}, overrides: [] },
     transformations: [],
     transparent: vizPanel.state.displayMode === 'transparent',
     pluginVersion: vizPanel.state.pluginVersion,
     ...vizPanelDataToPanel(vizPanel, isSnapshot),
   };
+
+  if (vizPanel.state.options) {
+    const { angularOptions, ...rest } = vizPanel.state.options as any;
+    panel.options = rest;
+
+    if (angularOptions) {
+      // Allow options angularOptions to overwrite non system level root properties
+      defaults(panel, angularOptions);
+    }
+  }
 
   const panelTime = vizPanel.state.$timeRange;
 
@@ -275,6 +284,7 @@ export function vizPanelToPanel(
   if (!panel.transparent) {
     delete panel.transparent;
   }
+
   return panel;
 }
 
