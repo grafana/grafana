@@ -4,6 +4,8 @@ import (
 	"context"
 	"fmt"
 
+	alertingNotify "github.com/grafana/alerting/notify"
+
 	"github.com/grafana/grafana/pkg/infra/log"
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
@@ -89,6 +91,10 @@ func (fam *RemotePrimaryForkedAlertmanager) TestReceivers(ctx context.Context, c
 
 func (fam *RemotePrimaryForkedAlertmanager) TestTemplate(ctx context.Context, c apimodels.TestTemplatesConfigBodyParams) (*notifier.TestTemplatesResults, error) {
 	return fam.remote.TestTemplate(ctx, c)
+}
+
+func (fam *RemotePrimaryForkedAlertmanager) SilenceState(ctx context.Context) (alertingNotify.SilenceState, error) {
+	return fam.remote.SilenceState(ctx)
 }
 
 func (fam *RemotePrimaryForkedAlertmanager) StopAndWait() {
