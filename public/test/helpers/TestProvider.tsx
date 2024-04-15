@@ -21,7 +21,7 @@ export interface Props {
 /**
  * Wrapps component in redux store provider, Router and GrafanaContext
  *
- * @deprecated Use `@grafana/test-utils` `render` method instead
+ * @deprecated Use `test/test-utils` `render` method instead
  */
 export function TestProvider(props: Props) {
   const { store = configureStore(props.storeState), children } = props;

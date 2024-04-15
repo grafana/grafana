@@ -1,18 +1,14 @@
 import { ToolkitStore } from '@reduxjs/toolkit/dist/configureStore';
 import { render, RenderOptions } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { KBarProvider } from 'kbar';
 import React, { ComponentProps, Fragment, PropsWithChildren } from 'react';
 import { Provider } from 'react-redux';
 import { MemoryRouter } from 'react-router-dom';
 import { PreloadedState } from 'redux';
 import { getGrafanaContextMock } from 'test/mocks/getGrafanaContextMock';
 
-import { config } from '@grafana/runtime';
-import { ErrorBoundaryAlert } from '@grafana/ui';
 import { GrafanaContext, GrafanaContextType } from 'app/core/context/GrafanaContext';
 import { ModalsContextProvider } from 'app/core/context/ModalsContextProvider';
-import { ThemeProvider } from 'app/core/utils/ConfigProvider';
 import { configureStore } from 'app/store/configureStore';
 import { StoreState } from 'app/types/store';
 
@@ -62,23 +58,17 @@ const getWrapper = ({
   };
 
   /**
-   * Returns a wrapper that should (closely) match the main `AppWrapper`, so any tests are rendering
+   * Returns a wrapper that should (eventually?) match the main `AppWrapper`, so any tests are rendering
    * in mostly the same providers as a "real" hierarchy
    */
   return function Wrapper({ children }: PropsWithChildren) {
     return (
       <Provider store={reduxStore}>
-        <ErrorBoundaryAlert style="page">
-          <GrafanaContext.Provider value={context}>
-            <ThemeProvider value={config.theme2}>
-              <KBarProvider>
-                <PotentialRouter {...routerOptions}>
-                  <ModalsContextProvider>{children}</ModalsContextProvider>
-                </PotentialRouter>
-              </KBarProvider>
-            </ThemeProvider>
-          </GrafanaContext.Provider>
-        </ErrorBoundaryAlert>
+        <GrafanaContext.Provider value={context}>
+          <PotentialRouter {...routerOptions}>
+            <ModalsContextProvider>{children}</ModalsContextProvider>
+          </PotentialRouter>
+        </GrafanaContext.Provider>
       </Provider>
     );
   };
