@@ -1,4 +1,4 @@
-import { PromQuery } from 'app/plugins/datasource/prometheus/types';
+import { PromQuery } from '@grafana/prometheus';
 
 import { VAR_FILTERS_EXPR, VAR_GROUP_BY_EXP, VAR_METRIC_EXPR } from '../../shared';
 import { heatmapGraphBuilder } from '../graph-builders/heatmap';

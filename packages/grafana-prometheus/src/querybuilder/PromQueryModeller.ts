@@ -1,3 +1,4 @@
+// Core Grafana history https://github.com/grafana/grafana/blob/v11.0.0-preview/public/app/plugins/datasource/prometheus/querybuilder/PromQueryModeller.ts
 import { FUNCTIONS } from '../promql';
 
 import { getAggregationOperations } from './aggregations';

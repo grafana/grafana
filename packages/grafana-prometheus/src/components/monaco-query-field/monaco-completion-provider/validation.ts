@@ -1,3 +1,4 @@
+// Core Grafana history https://github.com/grafana/grafana/blob/v11.0.0-preview/public/app/plugins/datasource/loki/components/monaco-query-field/monaco-completion-provider/validation.ts
 import { SyntaxNode } from '@lezer/common';
 import { LRParser } from '@lezer/lr';
 

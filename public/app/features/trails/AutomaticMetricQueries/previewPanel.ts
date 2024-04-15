@@ -1,5 +1,5 @@
+import { PromQuery } from '@grafana/prometheus';
 import { SceneCSSGridItem, SceneQueryRunner, SceneVariableSet } from '@grafana/scenes';
-import { PromQuery } from 'app/plugins/datasource/prometheus/types';
 
 import { SelectMetricAction } from '../SelectMetricAction';
 import { hideEmptyPreviews } from '../hideEmptyPreviews';
