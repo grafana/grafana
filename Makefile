@@ -117,9 +117,9 @@ gen-feature-toggles:
 		go test -v ./pkg/services/featuremgmt/...; \
 	fi
 
-gen-go: $(WIRE)
+gen-go:
 	@echo "generate go files"
-	$(WIRE) gen -tags $(WIRE_TAGS) ./pkg/server
+	$(GO) run ./pkg/build/wire/cmd/wire/main.go gen -tags $(WIRE_TAGS) ./pkg/server
 
 fix-cue: $(CUE)
 	@echo "formatting cue files"
