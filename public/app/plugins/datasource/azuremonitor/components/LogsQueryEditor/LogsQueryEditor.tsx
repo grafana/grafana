@@ -9,18 +9,20 @@ import { selectors } from '../../e2e/selectors';
 import { AzureMonitorErrorish, AzureMonitorOption, AzureMonitorQuery, ResultFormat, EngineSchema } from '../../types';
 import ResourceField from '../ResourceField';
 import { ResourceRow, ResourceRowGroup, ResourceRowType } from '../ResourcePicker/types';
-import { parseResourceDetails } from '../ResourcePicker/utils';
+import { parseResourceDetails, parseResourceURI } from '../ResourcePicker/utils';
 import FormatAsField from '../shared/FormatAsField';
 
 import AdvancedResourcePicker from './AdvancedResourcePicker';
+import { LogsManagement } from './LogsManagement';
 import QueryField from './QueryField';
 import { TimeManagement } from './TimeManagement';
-import { setFormatAs } from './setQueryValue';
+import { setBasicLogsQuery, setFormatAs } from './setQueryValue';
 import useMigrations from './useMigrations';
 
 interface LogsQueryEditorProps {
   query: AzureMonitorQuery;
   datasource: Datasource;
+  basicLogsEnabled: boolean;
   subscriptionId?: string;
   onChange: (newQuery: AzureMonitorQuery) => void;
   variableOptionGroup: { label: string; options: AzureMonitorOption[] };
@@ -33,6 +35,7 @@ interface LogsQueryEditorProps {
 const LogsQueryEditor = ({
   query,
   datasource,
+  basicLogsEnabled,
   subscriptionId,
   variableOptionGroup,
   onChange,
@@ -42,6 +45,8 @@ const LogsQueryEditor = ({
   data,
 }: LogsQueryEditorProps) => {
   const migrationError = useMigrations(datasource, query, onChange);
+  const [showBasicLogsToggle, setShowBasicLogsToggle] = useState<boolean>(false);
+
   const disableRow = (row: ResourceRow, selectedRows: ResourceRowGroup) => {
     if (selectedRows.length === 0) {
       // Only if there is some resource(s) selected we should disable rows
@@ -65,6 +70,22 @@ const LogsQueryEditor = ({
     }
   }, [query.azureLogAnalytics?.resources, datasource.azureLogAnalyticsDatasource]);
 
+  useEffect(() => {
+    if (query.azureLogAnalytics?.resources && query.azureLogAnalytics.resources.length === 1) {
+      const resource = parseResourceURI(query.azureLogAnalytics.resources[0]);
+      setShowBasicLogsToggle(
+        resource.metricNamespace?.toLowerCase() === 'microsoft.operationalinsights/workspaces' && basicLogsEnabled
+      );
+    } else {
+      setShowBasicLogsToggle(false);
+    }
+  }, [basicLogsEnabled, query.azureLogAnalytics?.resources]);
+
+  useEffect(() => {
+    if ((!basicLogsEnabled || !showBasicLogsToggle) && query.azureLogAnalytics?.basicLogsQuery) {
+      onChange(setBasicLogsQuery(query, false));
+    }
+  }, [basicLogsEnabled, onChange, query, showBasicLogsToggle]);
   let portalLinkButton = null;
 
   if (data?.series) {
@@ -116,6 +137,15 @@ const LogsQueryEditor = ({
               )}
               selectionNotice={() => 'You may only choose items of the same resource type.'}
             />
+            {showBasicLogsToggle && (
+              <LogsManagement
+                query={query}
+                datasource={datasource}
+                variableOptionGroup={variableOptionGroup}
+                onQueryChange={onChange}
+                setError={setError}
+              />
+            )}
             <TimeManagement
               query={query}
               datasource={datasource}

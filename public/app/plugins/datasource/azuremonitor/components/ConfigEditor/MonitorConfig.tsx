@@ -7,6 +7,7 @@ import { getCredentials, updateCredentials } from '../../credentials';
 import { AzureDataSourceSettings, AzureCredentials } from '../../types';
 
 import { AzureCredentialsForm } from './AzureCredentialsForm';
+import { BasicLogsToggle } from './BasicLogsToggle';
 import { DefaultSubscription } from './DefaultSubscription';
 
 const legacyAzureClouds: SelectableValue[] = [
@@ -48,6 +49,9 @@ export const MonitorConfig = (props: Props) => {
   const onSubscriptionChange = (subscriptionId?: string) =>
     updateOptions((options) => ({ ...options, jsonData: { ...options.jsonData, subscriptionId } }));
 
+  const onBasicLogsEnabledChange = (enableBasicLogs: boolean) =>
+    updateOptions((options) => ({ ...options, jsonData: { ...options.jsonData, basicLogsEnabled: enableBasicLogs } }));
+
   return (
     <>
       <AzureCredentialsForm
@@ -60,15 +64,18 @@ export const MonitorConfig = (props: Props) => {
         onCredentialsChange={onCredentialsChange}
         disabled={props.options.readOnly}
       >
-        <DefaultSubscription
-          subscriptions={subscriptions}
-          credentials={credentials}
-          getSubscriptions={getSubscriptions}
-          disabled={props.options.readOnly}
-          onSubscriptionsChange={onSubscriptionsChange}
-          onSubscriptionChange={onSubscriptionChange}
-          options={options.jsonData}
-        />
+        <>
+          <DefaultSubscription
+            subscriptions={subscriptions}
+            credentials={credentials}
+            getSubscriptions={getSubscriptions}
+            disabled={props.options.readOnly}
+            onSubscriptionsChange={onSubscriptionsChange}
+            onSubscriptionChange={onSubscriptionChange}
+            options={options.jsonData}
+          />
+          <BasicLogsToggle options={options.jsonData} onBasicLogsEnabledChange={onBasicLogsEnabledChange} />
+        </>
       </AzureCredentialsForm>
     </>
   );
