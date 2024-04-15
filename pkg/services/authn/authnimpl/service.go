@@ -330,7 +330,7 @@ func (s *Service) RegisterClient(c authn.Client) {
 //
 // Example:
 // - "saml" = "auth.client.saml"
-// - "github" = "auth.client.{authn.ClientWithPrefix("github")}"
+// - "github" = "auth.client.github"
 func (s *Service) IsClientEnabled(name string) bool {
 	client, ok := s.clients[name]
 	if !ok {
