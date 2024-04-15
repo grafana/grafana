@@ -290,6 +290,28 @@ describe('buildVisualQueryFromString', () => {
     });
   });
 
+  // enable in #85942 when updated lezer parser is merged
+  xit('parses a native histogram function correctly', () => {
+    expect(
+      buildVisualQueryFromString('histogram_count(rate(counters_logins{app="backend"}[$__rate_interval]))')
+    ).toEqual({
+      errors: [],
+      query: {
+        metric: 'counters_logins',
+        labels: [{ label: 'app', op: '=', value: 'backend' }],
+        operations: [
+          {
+            id: 'rate',
+            params: ['$__rate_interval'],
+          },
+          {
+            id: 'histogram_quantile',
+          },
+        ],
+      },
+    });
+  });
+
   it('parses function with multiple arguments', () => {
     expect(
       buildVisualQueryFromString(
