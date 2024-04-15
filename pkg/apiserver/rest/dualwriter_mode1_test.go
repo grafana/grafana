@@ -192,6 +192,7 @@ func TestMode1_List(t *testing.T) {
 					m.On("List", context.Background(), mock.Anything).Return(nil, errors.New("error"))
 				},
 			},
+			// TODO: legacy list is missing
 		}
 
 	for _, tt := range tests {

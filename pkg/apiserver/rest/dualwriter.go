@@ -39,10 +39,6 @@ type LegacyStorage interface {
 	rest.SingularNameProvider
 	rest.TableConvertor
 	rest.Getter
-	rest.Creater
-	rest.Updater
-	rest.GracefulDeleter
-	rest.CollectionDeleter
 }
 
 // DualWriter is a storage implementation that writes first to LegacyStorage and then to Storage.
@@ -59,11 +55,18 @@ type LegacyStorage interface {
 // - rest.TableConvertor
 // - rest.Scoper
 // - rest.SingularNameProvider
+//
+// These interfaces are optional, but they all should be implemented to fully support dual writes:
+// - rest.Creater
+// - rest.Updater
+// - rest.GracefulDeleter
+// - rest.CollectionDeleter
 type DualWriter struct {
 	Storage
 	Legacy LegacyStorage
 }
 
+var errDualWriterCreaterMissing = errors.New("legacy storage rest.Creater is missing")
 var errDualWriterListerMissing = errors.New("legacy storage rest.Lister is missing")
 var errDualWriterDeleterMissing = errors.New("legacy storage rest.GracefulDeleter is missing")
 var errDualWriterCollectionDeleterMissing = errors.New("legacy storage rest.CollectionDeleter is missing")
