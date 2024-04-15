@@ -658,7 +658,8 @@ steps:
     repo:
     - grafana/grafana
 - commands:
-  - sleep 10s
+  - npx wait-on@7.0.1 http://$HOST:$PORT
+  - yarn playwright install --with-deps chromium
   - yarn e2e:playwright
   depends_on:
   - grafana-server
@@ -666,7 +667,7 @@ steps:
     HOST: grafana-server
     PORT: "3001"
     PROV_DIR: /grafana/scripts/grafana-server/tmp/conf/provisioning
-  image: mcr.microsoft.com/playwright:v1.43.0-jammy
+  image: node:20-bookworm
   name: playwright-plugin-e2e
 - commands:
   - apt-get update
@@ -1988,7 +1989,8 @@ steps:
     repo:
     - grafana/grafana
 - commands:
-  - sleep 10s
+  - npx wait-on@7.0.1 http://$HOST:$PORT
+  - yarn playwright install --with-deps chromium
   - yarn e2e:playwright
   depends_on:
   - grafana-server
@@ -1996,7 +1998,7 @@ steps:
     HOST: grafana-server
     PORT: "3001"
     PROV_DIR: /grafana/scripts/grafana-server/tmp/conf/provisioning
-  image: mcr.microsoft.com/playwright:v1.43.0-jammy
+  image: node:20-bookworm
   name: playwright-plugin-e2e
 - commands:
   - apt-get update
@@ -4635,6 +4637,7 @@ steps:
   - trivy --exit-code 0 --severity UNKNOWN,LOW,MEDIUM alpine/git:2.40.1
   - trivy --exit-code 0 --severity UNKNOWN,LOW,MEDIUM golang:1.21.9-alpine
   - trivy --exit-code 0 --severity UNKNOWN,LOW,MEDIUM node:20.9.0-alpine
+  - trivy --exit-code 0 --severity UNKNOWN,LOW,MEDIUM node:20-bookworm
   - trivy --exit-code 0 --severity UNKNOWN,LOW,MEDIUM google/cloud-sdk:431.0.0
   - trivy --exit-code 0 --severity UNKNOWN,LOW,MEDIUM grafana/grafana-ci-deploy:1.3.3
   - trivy --exit-code 0 --severity UNKNOWN,LOW,MEDIUM alpine:3.19.1
@@ -4656,7 +4659,6 @@ steps:
   - trivy --exit-code 0 --severity UNKNOWN,LOW,MEDIUM cypress/included:13.1.0
   - trivy --exit-code 0 --severity UNKNOWN,LOW,MEDIUM jwilder/dockerize:0.6.1
   - trivy --exit-code 0 --severity UNKNOWN,LOW,MEDIUM koalaman/shellcheck:stable
-  - trivy --exit-code 0 --severity UNKNOWN,LOW,MEDIUM mcr.microsoft.com/playwright:v1.43.0-jammy
   depends_on:
   - authenticate-gcr
   image: aquasec/trivy:0.21.0
@@ -4670,6 +4672,7 @@ steps:
   - trivy --exit-code 1 --severity HIGH,CRITICAL alpine/git:2.40.1
   - trivy --exit-code 1 --severity HIGH,CRITICAL golang:1.21.9-alpine
   - trivy --exit-code 1 --severity HIGH,CRITICAL node:20.9.0-alpine
+  - trivy --exit-code 1 --severity HIGH,CRITICAL node:20-bookworm
   - trivy --exit-code 1 --severity HIGH,CRITICAL google/cloud-sdk:431.0.0
   - trivy --exit-code 1 --severity HIGH,CRITICAL grafana/grafana-ci-deploy:1.3.3
   - trivy --exit-code 1 --severity HIGH,CRITICAL alpine:3.19.1
@@ -4691,7 +4694,6 @@ steps:
   - trivy --exit-code 1 --severity HIGH,CRITICAL cypress/included:13.1.0
   - trivy --exit-code 1 --severity HIGH,CRITICAL jwilder/dockerize:0.6.1
   - trivy --exit-code 1 --severity HIGH,CRITICAL koalaman/shellcheck:stable
-  - trivy --exit-code 1 --severity HIGH,CRITICAL mcr.microsoft.com/playwright:v1.43.0-jammy
   depends_on:
   - authenticate-gcr
   environment:
@@ -4923,6 +4925,6 @@ kind: secret
 name: gcr_credentials
 ---
 kind: signature
-hmac: 2f4db495ad0b69ef6afd86eac7aea7101f0b8f6ec1aadea0e2860b196304a258
+hmac: fbd59890dac44eb6fb34562f2b2b2db0fc0a8a50d451f9887f815ee35757e0f6
 
 ...
