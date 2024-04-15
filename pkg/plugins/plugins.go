@@ -384,7 +384,7 @@ func (p *Plugin) RegisterClient(c backendplugin.Plugin) {
 	p.client = c
 }
 
-func (p *Plugin) Client() (PluginClient, bool) {
+func (p *Plugin) Client() (Client, bool) {
 	if p.client != nil {
 		return p.client, true
 	}
@@ -412,14 +412,6 @@ func (p *Plugin) executablePath(f string) string {
 		extension = ".exe"
 	}
 	return path.Join(p.FS.Base(), fmt.Sprintf("%s_%s_%s%s", f, os, strings.ToLower(arch), extension))
-}
-
-type PluginClient interface {
-	backend.QueryDataHandler
-	backend.CollectMetricsHandler
-	backend.CheckHealthHandler
-	backend.CallResourceHandler
-	backend.StreamHandler
 }
 
 func (p *Plugin) StaticRoute() *StaticRoute {

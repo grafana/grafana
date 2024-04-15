@@ -13,7 +13,6 @@ import (
 	"github.com/grafana/grafana/pkg/apis/datasource/v0alpha1"
 	"github.com/grafana/grafana/pkg/apiserver/builder"
 	"github.com/grafana/grafana/pkg/infra/tracing"
-	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/registry/apis/datasource"
 	"github.com/grafana/grafana/pkg/registry/apis/example"
 	"github.com/grafana/grafana/pkg/registry/apis/featuretoggle"
@@ -24,7 +23,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/apiserver/options"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/setting"
-	testdatasource "github.com/grafana/grafana/pkg/tsdb/grafana-testdata-datasource"
 )
 
 type APIServerFactory interface {
@@ -95,19 +93,6 @@ func (p *DummyAPIFactory) MakeAPIServer(tracer tracing.Tracer, gv schema.GroupVe
 			&actest.FakeAccessControl{ExpectedEvaluate: false},
 			&setting.Cfg{},
 		), nil
-
-	case "testdata.datasource.grafana.app":
-		return datasource.NewDataSourceAPIBuilder(
-			plugins.JSONData{
-				ID: "grafana-testdata-datasource",
-			},
-			testdatasource.ProvideService(), // the client
-			&pluginDatasourceImpl{
-				startup: v1.Now(),
-			},
-			&pluginDatasourceImpl{}, // stub
-			&actest.FakeAccessControl{ExpectedEvaluate: true},
-		)
 	}
 
 	return nil, fmt.Errorf("unsupported group")

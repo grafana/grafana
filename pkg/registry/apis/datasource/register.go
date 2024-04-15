@@ -27,6 +27,7 @@ import (
 	query "github.com/grafana/grafana/pkg/apis/query/v0alpha1"
 	"github.com/grafana/grafana/pkg/apiserver/builder"
 	"github.com/grafana/grafana/pkg/plugins"
+	"github.com/grafana/grafana/pkg/plugins/manager/registry"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/apiserver/utils"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
@@ -43,7 +44,7 @@ type DataSourceAPIBuilder struct {
 	connectionResourceInfo common.ResourceInfo
 
 	pluginJSON      plugins.JSONData
-	client          PluginClient // will only ever be called with the same pluginid!
+	client          plugins.Client // will only ever be called with the same pluginid!
 	datasources     PluginDatasourceProvider
 	contextProvider PluginContextWrapper
 	accessControl   accesscontrol.AccessControl
@@ -53,10 +54,10 @@ type DataSourceAPIBuilder struct {
 func RegisterAPIService(
 	features featuremgmt.FeatureToggles,
 	apiRegistrar builder.APIRegistrar,
-	pluginClient plugins.Client, // access to everything
 	datasources ScopedPluginDatasourceProvider,
 	contextProvider PluginContextWrapper,
 	pluginStore pluginstore.Store,
+	pluginRegistry registry.Service, // access to everything
 	accessControl accesscontrol.AccessControl,
 ) (*DataSourceAPIBuilder, error) {
 	// This requires devmode!
@@ -73,13 +74,18 @@ func RegisterAPIService(
 		"graphite",
 	}
 
+	ctx := context.Background()
 	for _, ds := range all {
 		if !slices.Contains(ids, ds.ID) {
 			continue // skip this one
 		}
 
-		builder, err = NewDataSourceAPIBuilder(ds.JSONData,
-			pluginClient,
+		plugin, ok := pluginRegistry.Plugin(ctx, ds.ID, ds.Info.Version)
+		if !ok {
+			return nil, fmt.Errorf("invalid plugin")
+		}
+
+		builder, err = NewDataSourceAPIBuilder(plugin,
 			datasources.GetDatasourceProvider(ds.JSONData),
 			contextProvider,
 			accessControl,
@@ -92,17 +98,8 @@ func RegisterAPIService(
 	return builder, nil // only used for wire
 }
 
-// PluginClient is a subset of the plugins.Client interface with only the
-// functions supported (yet) by the datasource API
-type PluginClient interface {
-	backend.QueryDataHandler
-	backend.CheckHealthHandler
-	backend.CallResourceHandler
-}
-
 func NewDataSourceAPIBuilder(
-	plugin plugins.JSONData,
-	client PluginClient,
+	plugin *plugins.Plugin,
 	datasources PluginDatasourceProvider,
 	contextProvider PluginContextWrapper,
 	accessControl accesscontrol.AccessControl) (*DataSourceAPIBuilder, error) {
@@ -111,9 +108,14 @@ func NewDataSourceAPIBuilder(
 		return nil, err
 	}
 
+	client, ok := plugin.Client()
+	if !ok {
+		return nil, fmt.Errorf("error getting client")
+	}
+
 	return &DataSourceAPIBuilder{
 		connectionResourceInfo: ri,
-		pluginJSON:             plugin,
+		pluginJSON:             plugin.JSONData,
 		client:                 client,
 		datasources:            datasources,
 		contextProvider:        contextProvider,
