@@ -12,7 +12,7 @@ import {
   dateTime,
   LoadingState,
   rangeUtil,
-  ScopeFilter,
+  ScopeSpecFilter,
   TimeRange,
   VariableHide,
 } from '@grafana/data';
@@ -1193,7 +1193,7 @@ describe('modifyQuery', () => {
           { key: 'reg', value: 'regv', operator: '=~' },
           { key: 'nreg', value: 'nregv', operator: '!~' },
         ];
-        const expectedScopeFilter: ScopeFilter[] = [
+        const expectedScopeFilter: ScopeSpecFilter[] = [
           { key: 'eq', value: 'eqv', operator: 'equals' },
           {
             key: 'neq',

@@ -25,7 +25,7 @@ import {
   rangeUtil,
   renderLegendFormat,
   ScopedVars,
-  ScopeFilter,
+  ScopeSpecFilter,
   ScopeFilterOperator,
   TimeRange,
 } from '@grafana/data';
@@ -511,7 +511,7 @@ export class PrometheusDatasource
    * This converts the adhocVariableFilter array and converts it to scopeFilter array
    * @param filters
    */
-  generateScopeFilters(filters?: AdHocVariableFilter[]): ScopeFilter[] {
+  generateScopeFilters(filters?: AdHocVariableFilter[]): ScopeSpecFilter[] {
     if (!filters) {
       return [];
     }
