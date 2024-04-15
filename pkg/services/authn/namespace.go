@@ -84,7 +84,7 @@ func MustNewNamespaceID(namespace string, id int64) NamespaceID {
 func NewNamespaceIDUnchecked(namespace string, id int64) NamespaceID {
 	return NamespaceID{
 		id:        strconv.FormatInt(id, 10),
-		namespace: NamespaceUser,
+		namespace: namespace,
 	}
 }
 
