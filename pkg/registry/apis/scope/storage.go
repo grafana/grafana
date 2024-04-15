@@ -5,6 +5,8 @@ import (
 	"time"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/fields"
+	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apiserver/pkg/registry/generic"
 	genericregistry "k8s.io/apiserver/pkg/registry/generic/registry"
@@ -13,6 +15,7 @@ import (
 	grafanaregistry "github.com/grafana/grafana/pkg/apiserver/registry/generic"
 	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
 	"github.com/grafana/grafana/pkg/services/apiserver/utils"
+	apistore "k8s.io/apiserver/pkg/storage"
 )
 
 var _ grafanarest.Storage = (*storage)(nil)
@@ -28,7 +31,7 @@ func newScopeStorage(scheme *runtime.Scheme, optsGetter generic.RESTOptionsGette
 	store := &genericregistry.Store{
 		NewFunc:                   resourceInfo.NewFunc,
 		NewListFunc:               resourceInfo.NewListFunc,
-		PredicateFunc:             grafanaregistry.Matcher,
+		PredicateFunc:             Matcher,
 		DefaultQualifiedResource:  resourceInfo.GroupResource(),
 		SingularQualifiedResource: resourceInfo.SingularGroupResource(),
 		TableConvertor: utils.NewTableConverter(
@@ -52,7 +55,7 @@ func newScopeStorage(scheme *runtime.Scheme, optsGetter generic.RESTOptionsGette
 		UpdateStrategy: strategy,
 		DeleteStrategy: strategy,
 	}
-	options := &generic.StoreOptions{RESTOptions: optsGetter, AttrFunc: grafanaregistry.GetAttrs}
+	options := &generic.StoreOptions{RESTOptions: optsGetter, AttrFunc: GetAttrs}
 	if err := store.CompleteWithOptions(options); err != nil {
 		return nil, err
 	}
@@ -66,7 +69,7 @@ func newScopeDashboardStorage(scheme *runtime.Scheme, optsGetter generic.RESTOpt
 	store := &genericregistry.Store{
 		NewFunc:                   resourceInfo.NewFunc,
 		NewListFunc:               resourceInfo.NewListFunc,
-		PredicateFunc:             grafanaregistry.Matcher,
+		PredicateFunc:             Matcher,
 		DefaultQualifiedResource:  resourceInfo.GroupResource(),
 		SingularQualifiedResource: resourceInfo.SingularGroupResource(),
 		TableConvertor: utils.NewTableConverter(
@@ -90,9 +93,33 @@ func newScopeDashboardStorage(scheme *runtime.Scheme, optsGetter generic.RESTOpt
 		UpdateStrategy: strategy,
 		DeleteStrategy: strategy,
 	}
-	options := &generic.StoreOptions{RESTOptions: optsGetter, AttrFunc: grafanaregistry.GetAttrs}
+	options := &generic.StoreOptions{RESTOptions: optsGetter, AttrFunc: GetAttrs}
 	if err := store.CompleteWithOptions(options); err != nil {
 		return nil, err
 	}
 	return &storage{Store: store}, nil
+}
+
+func GetAttrs(obj runtime.Object) (labels.Set, fields.Set, error) {
+	s, ok := obj.(*scope.Scope)
+	if !ok {
+		return nil, nil, fmt.Errorf("not a scope")
+	}
+
+	return labels.Set(s.Labels), SelectableFields(s), nil
+}
+
+// Matcher returns a generic.SelectionPredicate that matches on label and field selectors.
+func Matcher(label labels.Selector, field fields.Selector) apistore.SelectionPredicate {
+	return apistore.SelectionPredicate{
+		Label:    label,
+		Field:    field,
+		GetAttrs: GetAttrs,
+	}
+}
+
+func SelectableFields(obj *scope.Scope) fields.Set {
+	return generic.MergeFieldsSets(generic.ObjectMetaFieldsSet(&obj.ObjectMeta, false), fields.Set{
+		"spec.type": obj.Spec.Type,
+	})
 }
