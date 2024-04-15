@@ -2,6 +2,7 @@ package rest
 
 import (
 	"context"
+	"errors"
 
 	"k8s.io/apimachinery/pkg/api/meta"
 	metainternalversion "k8s.io/apimachinery/pkg/apis/meta/internalversion"
@@ -62,8 +63,12 @@ type LegacyStorage interface {
 // - rest.CollectionDeleter
 type DualWriter struct {
 	Storage
-	legacy LegacyStorage
+	Legacy LegacyStorage
 }
+
+var errDualWriterCreaterMissing = errors.New("legacy storage rest.Creater is missing")
+var errDualWriterListerMissing = errors.New("legacy storage rest.Lister is missing")
+var errDualWriterDeleterMissing = errors.New("legacy storage rest.GracefulDeleter is missing")
 
 type DualWriterMode int
 
@@ -80,15 +85,17 @@ var CurrentMode = Mode2
 
 // NewDualWriter returns a new DualWriter.
 func NewDualWriter(legacy LegacyStorage, storage Storage) *DualWriter {
+	//TODO: replace this with
+	// SelectDualWriter(CurrentMode, legacy, storage)
 	return &DualWriter{
 		Storage: storage,
-		legacy:  legacy,
+		Legacy:  legacy,
 	}
 }
 
 // Create overrides the default behavior of the Storage and writes to both the LegacyStorage and Storage.
 func (d *DualWriter) Create(ctx context.Context, obj runtime.Object, createValidation rest.ValidateObjectFunc, options *metav1.CreateOptions) (runtime.Object, error) {
-	if legacy, ok := d.legacy.(rest.Creater); ok {
+	if legacy, ok := d.Legacy.(rest.Creater); ok {
 		created, err := legacy.Create(ctx, obj, createValidation, options)
 		if err != nil {
 			return nil, err
@@ -113,7 +120,7 @@ func (d *DualWriter) Create(ctx context.Context, obj runtime.Object, createValid
 
 // Update overrides the default behavior of the Storage and writes to both the LegacyStorage and Storage.
 func (d *DualWriter) Update(ctx context.Context, name string, objInfo rest.UpdatedObjectInfo, createValidation rest.ValidateObjectFunc, updateValidation rest.ValidateObjectUpdateFunc, forceAllowCreate bool, options *metav1.UpdateOptions) (runtime.Object, bool, error) {
-	if legacy, ok := d.legacy.(rest.Updater); ok {
+	if legacy, ok := d.Legacy.(rest.Updater); ok {
 		// Get the previous version from k8s storage (the one)
 		old, err := d.Get(ctx, name, &metav1.GetOptions{})
 		if err != nil {
@@ -168,7 +175,7 @@ func (d *DualWriter) Delete(ctx context.Context, name string, deleteValidation r
 	// Delete from storage *first* so the item is still exists if a failure happens
 	obj, async, err := d.Storage.Delete(ctx, name, deleteValidation, options)
 	if err == nil {
-		if legacy, ok := d.legacy.(rest.GracefulDeleter); ok {
+		if legacy, ok := d.Legacy.(rest.GracefulDeleter); ok {
 			obj, async, err = legacy.Delete(ctx, name, deleteValidation, options)
 		}
 	}
@@ -179,7 +186,7 @@ func (d *DualWriter) Delete(ctx context.Context, name string, deleteValidation r
 func (d *DualWriter) DeleteCollection(ctx context.Context, deleteValidation rest.ValidateObjectFunc, options *metav1.DeleteOptions, listOptions *metainternalversion.ListOptions) (runtime.Object, error) {
 	out, err := d.Storage.DeleteCollection(ctx, deleteValidation, options, listOptions)
 	if err == nil {
-		if legacy, ok := d.legacy.(rest.CollectionDeleter); ok {
+		if legacy, ok := d.Legacy.(rest.CollectionDeleter); ok {
 			out, err = legacy.DeleteCollection(ctx, deleteValidation, options, listOptions)
 		}
 	}

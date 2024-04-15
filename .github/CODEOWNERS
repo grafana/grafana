@@ -376,7 +376,6 @@
 /.levignore.js @grafana/plugins-platform-frontend
 playwright.config.ts @grafana/plugins-platform-frontend
 
-
 # public folder
 /public/app/core/ @grafana/grafana-frontend-platform
 /public/app/core/components/TimePicker/ @grafana/grafana-frontend-platform
@@ -403,7 +402,6 @@ playwright.config.ts @grafana/plugins-platform-frontend
 /public/app/features/dashboard/ @grafana/dashboards-squad
 /public/app/features/dashboard/components/TransformationsEditor/ @grafana/dataviz-squad
 /public/app/features/dashboard-scene/ @grafana/dashboards-squad
-/public/app/features/scopes/ @grafana/dashboards-squad
 /public/app/features/datasources/ @grafana/plugins-platform-frontend @mikkancso
 /public/app/features/dimensions/ @grafana/dataviz-squad
 /public/app/features/dataframe-import/ @grafana/dataviz-squad
@@ -537,6 +535,7 @@ playwright.config.ts @grafana/plugins-platform-frontend
 /scripts/generate-icon-bundle.js @grafana/plugins-platform-frontend @grafana/grafana-frontend-platform
 /scripts/generate-rtk-apis.ts @grafana/grafana-frontend-platform
 /scripts/levitate-parse-json-report.js @grafana/plugins-platform-frontend
+/scripts/codemods/explicit-barrel-imports.cjs @grafana/frontend-ops
 
 /scripts/**/generate-transformations* @grafana/dataviz-squad
 /scripts/webpack/ @grafana/frontend-ops

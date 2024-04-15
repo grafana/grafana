@@ -86,7 +86,6 @@ export interface FeatureToggles {
   sqlDatasourceDatabaseSelection?: boolean;
   lokiFormatQuery?: boolean;
   recordedQueriesMulti?: boolean;
-  pluginsDynamicAngularDetectionPatterns?: boolean;
   vizAndWidgetSplit?: boolean;
   prometheusIncrementalQueryInstrumentation?: boolean;
   logsExploreTableVisualisation?: boolean;
@@ -149,7 +148,7 @@ export interface FeatureToggles {
   canvasPanelPanZoom?: boolean;
   logsInfiniteScrolling?: boolean;
   flameGraphItemCollapsing?: boolean;
-  datatrails?: boolean;
+  exploreMetrics?: boolean;
   alertingSimplifiedRouting?: boolean;
   logRowsPopoverMenu?: boolean;
   pluginsSkipHostEnvVars?: boolean;
@@ -157,7 +156,6 @@ export interface FeatureToggles {
   regressionTransformation?: boolean;
   lokiQueryHints?: boolean;
   kubernetesFeatureToggles?: boolean;
-  enablePluginsTracingByDefault?: boolean;
   cloudRBACRoles?: boolean;
   alertingQueryOptimization?: boolean;
   newFolderPicker?: boolean;
@@ -180,4 +178,5 @@ export interface FeatureToggles {
   oauthRequireSubClaim?: boolean;
   newDashboardWithFiltersAndGroupBy?: boolean;
   cloudWatchNewLabelParsing?: boolean;
+  accessActionSets?: boolean;
 }

@@ -17,6 +17,7 @@ export interface DashboardChangeInfo {
   hasVariableValueChanges: boolean;
   hasRefreshChange: boolean;
   isNew?: boolean;
+  hasFolderChanges?: boolean;
 }
 
 export function isVersionMismatchError(error?: Error) {

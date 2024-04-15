@@ -226,7 +226,7 @@ export function isLocalDevEnv() {
 }
 
 export function isErrorLike(error: unknown): error is Error {
-  return 'message' in (error as Error);
+  return Boolean(error && typeof error === 'object' && 'message' in error);
 }
 
 export function stringifyErrorLike(error: unknown): string {
