@@ -4324,7 +4324,6 @@ __metadata:
     "@types/prismjs": "npm:1.26.3"
     "@types/react": "npm:18.2.78"
     "@types/react-beautiful-dnd": "npm:13.1.8"
-    "@types/react-calendar": "npm:3.9.0"
     "@types/react-color": "npm:3.0.12"
     "@types/react-dom": "npm:18.2.25"
     "@types/react-highlight-words": "npm:0.16.7"
@@ -10128,15 +10127,6 @@ __metadata:
   dependencies:
     "@types/react": "npm:*"
   checksum: 10/cb8a182ed0ea6f680c7c343fcb4e54237437ca90dc88c2a70f4a203ec8ad0740e389e3ab7772c8cc1479f05e5a046bccbc33d54055b94e0fe5b22be030ab23d2
-  languageName: node
-  linkType: hard
-
-"@types/react-calendar@npm:3.9.0":
-  version: 3.9.0
-  resolution: "@types/react-calendar@npm:3.9.0"
-  dependencies:
-    "@types/react": "npm:*"
-  checksum: 10/05acec0ec111df7f34db2d5a4b337f9b69b31ee8b8932b3257cc0ea7468973fd851dc22de028ad1a8a12729e299bfb8ee67b32bb67763ce27c33000ab0e92a88
   languageName: node
   linkType: hard
 
