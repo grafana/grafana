@@ -15,10 +15,7 @@ const { ESLintUtils } = require('@typescript-eslint/utils');
 
 const GRAFANA_E2E_PACKAGE_NAME = '@grafana/e2e-selectors';
 
-const createRule = ESLintUtils.RuleCreator(
-  // TODO: find a proper url?
-  (name) => `https://github.com/grafana/grafana#${name}`
-);
+const createRule = ESLintUtils.RuleCreator((name) => `https://github.com/grafana/grafana/blob/main/packages/grafana-eslint-rules/README.md#${name}`);
 
 // A relative simple lint rule that will look of the `selectors` export from @grafana/e2e-selectors
 // is used in an aria-label
@@ -69,7 +66,6 @@ const rule = createRule({
   meta: {
     docs: {
       description: 'aria-label should not contain e2e selectors',
-      // recommended: 'error',
     },
     messages: {
       useDataTestId: 'Use data-testid for E2E selectors instead of aria-label',

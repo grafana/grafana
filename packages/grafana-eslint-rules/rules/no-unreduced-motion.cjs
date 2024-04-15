@@ -3,17 +3,26 @@ const { ESLintUtils, AST_NODE_TYPES } = require('@typescript-eslint/utils');
 
 const createRule = ESLintUtils.RuleCreator((name) => `https://github.com/grafana/grafana/blob/main/packages/grafana-eslint-rules/README.md#${name}`);
 
-const borderRadiusRule = createRule({
+const restrictedProperties = ['animation', 'transition'];
+
+const isRestrictedProperty = (/** @type string */ propertyName) => {
+  return restrictedProperties.some((prop) => propertyName.startsWith(prop));
+};
+
+const rule = createRule({
   create(context) {
     return {
       CallExpression(node) {
-        if (node.callee.type === AST_NODE_TYPES.Identifier && node.callee.name === 'css') {
+        if (
+          node.callee.type === AST_NODE_TYPES.Identifier &&
+          node.callee.name === 'css'
+        ) {
           const cssObjects = node.arguments.flatMap((node) => {
             switch (node.type) {
               case AST_NODE_TYPES.ObjectExpression:
                 return [node];
               case AST_NODE_TYPES.ArrayExpression:
-                return node.elements.filter((v) => v?.type === AST_NODE_TYPES.ObjectExpression);
+                return node.elements.filter(v => v?.type === AST_NODE_TYPES.ObjectExpression);
               default:
                 return [];
             }
@@ -25,12 +34,11 @@ const borderRadiusRule = createRule({
                 if (
                   property.type === AST_NODE_TYPES.Property &&
                   property.key.type === AST_NODE_TYPES.Identifier &&
-                  property.key.name === 'borderRadius' &&
-                  property.value.type === AST_NODE_TYPES.Literal
+                  isRestrictedProperty(property.key.name)
                 ) {
                   context.report({
                     node: property,
-                    messageId: 'borderRadiusId',
+                    messageId: 'noUnreducedMotion',
                   });
                 }
               }
@@ -40,18 +48,18 @@ const borderRadiusRule = createRule({
       },
     };
   },
-  name: 'no-border-radius-literal',
+  name: 'no-unreduced-motion',
   meta: {
     type: 'problem',
     docs: {
-      description: 'Check if border-radius theme tokens are used',
+      description: 'Check if animation or transition properties are used directly.',
     },
     messages: {
-      borderRadiusId: 'Prefer using theme.shape.radius tokens instead of literal values.',
+      noUnreducedMotion: 'Avoid direct use of `animation*` or `transition*` properties. Use the `handleReducedMotion` utility function or wrap in a `prefers-reduced-motion` media query.',
     },
     schema: [],
   },
   defaultOptions: [],
 });
 
-module.exports = borderRadiusRule;
+module.exports = rule;
