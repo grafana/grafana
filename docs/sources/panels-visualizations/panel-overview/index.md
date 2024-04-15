@@ -117,11 +117,11 @@ To configure panels, refer to the following subtopics:
 [transformations]: "/docs/grafana/ -> /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/query-transform-data/transform-data"
 [transformations]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/visualizations/panels-visualizations/query-transform-data/transform-data"
 
-[Data source management]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/administration/data-source-management"
-[Data source management]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/administration/data-source-management"
+[Data source management]: "/docs/grafana/ -> /docs/grafana/<GRAFANA_VERSION>/administration/data-source-management"
+[Data source management]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA_VERSION>/administration/data-source-management"
 
 [Data sources]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/datasources"
-[Data sources]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/datasources"
+[Data sources]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/connect-externally-hosted/data-sources"
 
 [ai]: "/docs/grafana/ -> /docs/grafana/<GRAFANA_VERSION>/dashboards/manage-dashboards#set-up-generative-ai-features-for-dashboards"
 [ai]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/visualizations/dashboards/manage-dashboards#set-up-generative-ai-features-for-dashboards"
