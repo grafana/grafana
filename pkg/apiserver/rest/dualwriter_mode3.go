@@ -23,18 +23,13 @@ func NewDualWriterMode3(legacy LegacyStorage, storage Storage) *DualWriterMode3 
 
 // Create overrides the behavior of the generic DualWriter and writes to LegacyStorage and Storage.
 func (d *DualWriterMode3) Create(ctx context.Context, obj runtime.Object, createValidation rest.ValidateObjectFunc, options *metav1.CreateOptions) (runtime.Object, error) {
-	legacy, ok := d.Legacy.(rest.Creater)
-	if !ok {
-		return nil, errDualWriterCreaterMissing
-	}
-
 	created, err := d.Storage.Create(ctx, obj, createValidation, options)
 	if err != nil {
 		klog.FromContext(ctx).Error(err, "unable to create object in Storage", "mode", 3)
 		return created, err
 	}
 
-	if _, err := legacy.Create(ctx, obj, createValidation, options); err != nil {
+	if _, err := d.Legacy.Create(ctx, obj, createValidation, options); err != nil {
 		klog.FromContext(ctx).Error(err, "unable to create object in legacy storage", "mode", 3)
 	}
 	return created, nil
@@ -55,6 +50,7 @@ func (d *DualWriterMode3) Delete(ctx context.Context, name string, deleteValidat
 	if err != nil {
 		if !apierrors.IsNotFound(err) {
 			klog.FromContext(ctx).Error(err, "could not delete from unified store", "mode", Mode3)
+			return deleted, async, err
 		}
 	}
 
