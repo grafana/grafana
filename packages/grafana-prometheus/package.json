@@ -101,7 +101,6 @@
     "@types/react-highlight-words": "0.16.7",
     "@types/react-window": "1.8.8",
     "@types/semver": "7.5.8",
-    "@types/testing-library__jest-dom": "6.0.0",
     "@types/uuid": "9.0.8",
     "@typescript-eslint/eslint-plugin": "6.21.0",
     "@typescript-eslint/parser": "6.21.0",

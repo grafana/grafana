@@ -35,7 +35,6 @@
     "@types/prismjs": "1.26.3",
     "@types/react": "18.2.78",
     "@types/react-test-renderer": "18.0.7",
-    "@types/testing-library__jest-dom": "6.0.0",
     "react-select-event": "5.5.1",
     "react-test-renderer": "18.2.0",
     "ts-node": "10.9.2",
