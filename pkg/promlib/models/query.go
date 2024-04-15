@@ -66,7 +66,7 @@ type PrometheusQueryProperties struct {
 	// A set of filters applied to apply to the query
 	Scope *ScopeSpec `json:"scope,omitempty"`
 
-	// Additional Ad-hoc filters that take precendence over Scope on conflict.
+	// Additional Ad-hoc filters that take precedence over Scope on conflict.
 	AdhocFilters []ScopeFilter `json:"adhocFilters,omitempty"`
 }
 
