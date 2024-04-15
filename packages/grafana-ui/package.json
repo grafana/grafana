@@ -143,7 +143,6 @@
     "@types/prismjs": "1.26.3",
     "@types/react": "18.2.78",
     "@types/react-beautiful-dnd": "13.1.8",
-    "@types/react-calendar": "3.9.0",
     "@types/react-color": "3.0.12",
     "@types/react-dom": "18.2.25",
     "@types/react-highlight-words": "0.16.7",
