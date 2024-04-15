@@ -43,6 +43,8 @@ There are two types of thresholds:
 - **Absolute** thresholds are defined by a number. For example, 80 on a scale of 1 to 150.
 - **Percentage** thresholds are defined relative to minimum or maximum. For example, 80 percent.
 
+{{< docs/play title="Threshold example" url="https://play.grafana.org/d/000000167/" >}}
+
 ### Default thresholds
 
 On visualizations that support it, Grafana sets default threshold values of:
