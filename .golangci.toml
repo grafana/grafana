@@ -60,6 +60,8 @@ files = [
   "**/pkg/tsdb/azuremonitor/**/*",
   "**/pkg/tsdb/cloud-monitoring/*",
   "**/pkg/tsdb/cloud-monitoring/**/*",
+  "**/pkg/tsdb/mysql/*",
+  "**/pkg/tsdb/mysql/**/*",
   "**/pkg/tsdb/parca/*",
   "**/pkg/tsdb/parca/**/*",
   "**/pkg/tsdb/tempo/*",
