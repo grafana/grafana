@@ -86,39 +86,3 @@ func BenchmarkThreshold(b *testing.B) {
 		}
 	})
 }
-
-/*
-goos: windows
-goarch: amd64
-pkg: github.com/grafana/grafana/pkg/expr
-cpu: 11th Gen Intel(R) Core(TM) i9-11900H @ 2.50GHz
-BenchmarkThreshold
-BenchmarkThreshold/greater_than
-BenchmarkThreshold/greater_than-16         	    3624	    319428 ns/op	  560673 B/op	   10061 allocs/op
-BenchmarkThreshold/less_than
-BenchmarkThreshold/less_than-16            	    3787	    313414 ns/op	  561320 B/op	   10060 allocs/op
-BenchmarkThreshold/within_range
-BenchmarkThreshold/within_range-16         	      37	  31990481 ns/op	 1674032 B/op	   30134 allocs/op
-BenchmarkThreshold/within_range,_no_labels
-BenchmarkThreshold/within_range,_no_labels-16         	       3	 384440567 ns/op	610835274 B/op	10020193 allocs/op
-BenchmarkThreshold/outside_range
-BenchmarkThreshold/outside_range-16                   	      37	  32272343 ns/op	 1679473 B/op	   30135 allocs/op
-*/
-
-/*
-goos: windows
-goarch: amd64
-pkg: github.com/grafana/grafana/pkg/expr
-cpu: 11th Gen Intel(R) Core(TM) i9-11900H @ 2.50GHz
-BenchmarkThreshold
-BenchmarkThreshold/greater_than
-BenchmarkThreshold/greater_than-16         	    4327	    254582 ns/op	  448385 B/op	    9001 allocs/op
-BenchmarkThreshold/less_than
-BenchmarkThreshold/less_than-16            	    4837	    248919 ns/op	  448385 B/op	    9001 allocs/op
-BenchmarkThreshold/within_range
-BenchmarkThreshold/within_range-16         	    4528	    269994 ns/op	  448385 B/op	    9001 allocs/op
-BenchmarkThreshold/within_range,_no_labels
-BenchmarkThreshold/within_range,_no_labels-16         	    4808	    292808 ns/op	  448385 B/op	    9001 allocs/op
-BenchmarkThreshold/outside_range
-BenchmarkThreshold/outside_range-16                   	    3859	    293570 ns/op	  448385 B/op	    9001 allocs/op
-*/
