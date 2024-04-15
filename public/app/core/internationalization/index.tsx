@@ -1,10 +1,12 @@
-import i18n, { InitOptions } from 'i18next';
+import i18n, { InitOptions, TFunction } from 'i18next';
 import LanguageDetector, { DetectorOptions } from 'i18next-browser-languagedetector';
 import React from 'react';
 import { Trans as I18NextTrans, initReactI18next } from 'react-i18next'; // eslint-disable-line no-restricted-imports
 
 import { DEFAULT_LANGUAGE, VALID_LANGUAGES } from './constants';
 import { loadTranslations } from './loadTranslations';
+
+let tFunc: TFunction<string[], undefined> | undefined;
 
 export function initializeI18n(language: string): Promise<{ language: string | undefined }> {
   // This is a placeholder so we can put a 'comment' in the message json files.
@@ -37,6 +39,8 @@ export function initializeI18n(language: string): Promise<{ language: string | u
     .use(initReactI18next) // passes i18n down to react-i18next
     .init(options);
 
+  tFunc = tFunc = i18n.t;
+
   return loadPromise.then(() => {
     return {
       language: i18nInstance.resolvedLanguage,
@@ -53,10 +57,20 @@ export const Trans: typeof I18NextTrans = (props) => {
   return <I18NextTrans shouldUnescape {...props} />;
 };
 
-// Reassign t() so i18next-parser doesn't warn on dynamic key, and we can have 'failOnWarnings' enabled
-const tFunc = i18n.t;
-
+// Wrap t() to provide default namespaces and enforce a consistent API
 export const t = (id: string, defaultMessage: string, values?: Record<string, unknown>) => {
+  if (!tFunc) {
+    console.warn(
+      't() was called before i18n was initialized. This is probably caused by calling t() in the root module scope, instead of lazily on render'
+    );
+
+    if (process.env.NODE_ENV === 'development') {
+      throw new Error('t() was called before i18n was initialized');
+    }
+
+    tFunc = i18n.t;
+  }
+
   return tFunc(id, defaultMessage, values);
 };
 
