@@ -7,6 +7,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/infra/db"
+	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/auth/identity"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
@@ -77,9 +78,13 @@ func New(cfg *setting.Cfg,
 		actions = append(actions, action)
 	}
 
+	// create the store for actionsets
+	log := log.New("accesscontrol.resourcepermissions")
+	actionSetsStore := NewInMemoryActionSets(log)
+
 	s := &Service{
 		ac:          ac,
-		store:       NewStore(sqlStore, features),
+		store:       NewStore(sqlStore, features, actionSetsStore),
 		options:     options,
 		license:     license,
 		permissions: permissions,

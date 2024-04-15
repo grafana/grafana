@@ -10,6 +10,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/infra/db"
+	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
@@ -559,7 +560,8 @@ func seedResourcePermissions(
 
 func setupTestEnv(t testing.TB) (*store, db.DB, *setting.Cfg) {
 	sql := db.InitTestDB(t)
-	return NewStore(sql, featuremgmt.WithFeatures()), sql, sql.Cfg
+	log := log.New("test")
+	return NewStore(sql, featuremgmt.WithFeatures(), NewInMemoryActionSets(log)), sql, sql.Cfg
 }
 
 func TestStore_IsInherited(t *testing.T) {
@@ -752,4 +754,54 @@ func retrievePermissionsHelper(store *store, t *testing.T) []orgPermission {
 
 	require.NoError(t, err)
 	return permissions
+}
+
+// TODO: Fix this test
+func TestStore_ResourcePermissionsActionSets(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test")
+	}
+
+	type actionSetTest struct {
+		desc      string
+		orgID     int64
+		actionSet ActionSet
+	}
+
+	tests := []actionSetTest{
+		{
+			desc:  "should be able to store actionset",
+			orgID: 1,
+			actionSet: ActionSet{
+				Resource:   "folders",
+				Permission: "edit",
+				Actions:    []string{"folders:read", "folders:write"},
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.desc, func(t *testing.T) {
+			store, _, _ := setupTestEnv(t)
+			store.features = featuremgmt.WithFeatures([]any{featuremgmt.FlagAccessActionSets})
+
+			_, err := store.SetResourcePermissions(context.Background(), 1, []SetResourcePermissionsCommand{
+				{
+					User: accesscontrol.User{ID: 1},
+					SetResourcePermissionCommand: SetResourcePermissionCommand{
+						Actions:           tt.actionSet.Actions,
+						Resource:          tt.actionSet.Resource,
+						ResourceID:        "1",
+						ResourceAttribute: "uid",
+						Permission:        tt.actionSet.Permission,
+					},
+				},
+			}, ResourceHooks{})
+			require.NoError(t, err)
+
+			actionname := fmt.Sprintf("%s:%s", tt.actionSet.Resource, tt.actionSet.Permission)
+			actionSet := store.inMemoryActionSets.GetActionSet(actionname)
+			require.Equal(t, tt.actionSet.Actions, actionSet.Actions)
+		})
+	}
 }

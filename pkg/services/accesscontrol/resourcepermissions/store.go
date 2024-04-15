@@ -2,11 +2,14 @@ package resourcepermissions
 
 import (
 	"context"
+	"errors"
 	"fmt"
+	"slices"
 	"strings"
 	"time"
 
 	"github.com/grafana/grafana/pkg/infra/db"
+	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/org"
@@ -16,13 +19,15 @@ import (
 	"github.com/grafana/grafana/pkg/util"
 )
 
-func NewStore(sql db.DB, features featuremgmt.FeatureToggles) *store {
-	return &store{sql, features}
+func NewStore(sql db.DB, features featuremgmt.FeatureToggles, inMemoryActionSets *InMemoryActionSets) *store {
+	// NOTE: should we add a logger to the resource store?
+	return &store{sql, features, *inMemoryActionSets}
 }
 
 type store struct {
-	sql      db.DB
-	features featuremgmt.FeatureToggles
+	sql                db.DB
+	features           featuremgmt.FeatureToggles
+	inMemoryActionSets InMemoryActionSets
 }
 
 type flatResourcePermission struct {
@@ -266,7 +271,7 @@ func (s *store) setResourcePermission(
 		return nil, err
 	}
 
-	if err := s.createPermissions(sess, role.ID, cmd.Resource, cmd.ResourceID, cmd.ResourceAttribute, missing); err != nil {
+	if err := s.createPermissions(sess, role.ID, cmd.Resource, cmd.ResourceID, cmd.ResourceAttribute, missing, cmd.Permission); err != nil {
 		return nil, err
 	}
 
@@ -657,13 +662,40 @@ func (s *store) getPermissions(sess *db.Session, resource, resourceID, resourceA
 	return result, nil
 }
 
-func (s *store) createPermissions(sess *db.Session, roleID int64, resource, resourceID, resourceAttribute string, actions map[string]struct{}) error {
+func (s *store) createPermissions(sess *db.Session, roleID int64, resource, resourceID, resourceAttribute string, actions map[string]struct{}, permission string) error {
 	if len(actions) == 0 {
 		return nil
 	}
-	permissions := make([]accesscontrol.Permission, 0, len(actions))
+	permissionsToBeStored := len(actions)
+	if s.features.IsEnabled(context.TODO(), featuremgmt.FlagAccessActionSets) {
+		// Actionset permission to be stored
+		permissionsToBeStored++
+	}
+	permissions := make([]accesscontrol.Permission, 0, permissionsToBeStored)
+
 	for action := range actions {
 		p := managedPermission(action, resource, resourceID, resourceAttribute)
+		p.RoleID = roleID
+		p.Created = time.Now()
+		p.Updated = time.Now()
+		p.Kind, p.Attribute, p.Identifier = p.SplitScope()
+		permissions = append(permissions, p)
+	}
+	/*
+		Add ACTION SET of managed permissions to in-memory store
+		// FIXME: make this only folder level of view, editor, admin
+	*/
+	if s.features.IsEnabled(context.TODO(), featuremgmt.FlagAccessActionSets) {
+		actionSlice := make([]string, len(actions))
+		for action := range actions {
+			actionSlice = append(actionSlice, action)
+		}
+		actionSet, err := s.inMemoryActionSets.CreateActionSet(resource, permission, actionSlice)
+		if err != nil {
+			// FIXME: should we return an error here? :thinking:
+			fmt.Printf("err from creating action set %+v\n", err)
+		}
+		p := managedPermission(actionSet.Action, resource, resourceID, resourceAttribute)
 		p.RoleID = roleID
 		p.Created = time.Now()
 		p.Updated = time.Now()
@@ -702,4 +734,79 @@ func managedPermission(action, resource string, resourceID, resourceAttribute st
 		Action: action,
 		Scope:  accesscontrol.Scope(resource, resourceAttribute, resourceID),
 	}
+}
+
+/*
+ACTION SETS
+Stores actionsets IN MEMORY
+*/
+// - To grant access to users/teams/basic roles during runtime, users will go through the managed permissions view and access-control will be enforced based on their permissions.
+// ActionSet is a struct that represents a set of actions that can be performed on a resource.
+// An example of an action set is "folders:edit" which represents the actions that can be performed on a datasource with the uid of 1.
+/*
+```go
+actionSet := &ActionSet{
+	Resource:   "folders",
+	Permission: "edit",
+	Actions:    []string{"folders:read", "folders:write", "dashboards:read", "dashboards:write"},
+}`
+*/
+type ActionSet struct {
+	Action     string   `json:"action"`
+	Resource   string   `json:"resource"`
+	Permission string   `json:"permission"`
+	Actions    []string `json:"actions"`
+}
+
+// InMemoryActionSets is an in-memory implementation of the ActionSetService.
+type InMemoryActionSets struct {
+	log        log.Logger
+	actionSets map[string]*ActionSet
+}
+
+// NewInMemoryActionSets returns a new instance of InMemoryActionSetService.
+func NewInMemoryActionSets(log log.Logger) *InMemoryActionSets {
+	return &InMemoryActionSets{
+		actionSets: make(map[string]*ActionSet),
+		log:        log,
+	}
+}
+
+// GetActionSet returns the action set for the given action.
+func (s *InMemoryActionSets) GetActionSet(actionName string) *ActionSet {
+	actionSet, ok := s.actionSets[actionName]
+	if !ok {
+		return nil
+	}
+	return actionSet
+}
+
+// CreateActionSet function creates an action set from a list of actions and stores it inmemory.
+func (s *InMemoryActionSets) CreateActionSet(resource, permission string, actions []string) (*ActionSet, error) {
+	s.log.Debug("creating action set")
+	// lower cased
+	resource = strings.ToLower(resource)
+	permission = strings.ToLower(permission)
+
+	allowedPermissions := []string{"admin", "edit", "editor", "view", "query", "member"}
+	if !slices.Contains(allowedPermissions, permission) {
+		return nil, fmt.Errorf("%s not allowed permission", permission)
+	}
+	actionSet := &ActionSet{
+		// dashboards:admin
+		Action:     fmt.Sprintf("%s:%s", resource, permission),
+		Resource:   resource,
+		Permission: permission,
+		Actions:    actions,
+	}
+	// check if action set already exists
+	as := s.GetActionSet(actionSet.Action)
+	if as != nil {
+		return nil, errors.New("action already in action set")
+	}
+	// store the action set
+	s.actionSets[actionSet.Action] = actionSet
+
+	s.log.Debug("created action set actionname", actionSet.Action, "\n")
+	return actionSet, nil
 }

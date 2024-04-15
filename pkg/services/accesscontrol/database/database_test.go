@@ -11,6 +11,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/localcache"
+	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	rs "github.com/grafana/grafana/pkg/services/accesscontrol/resourcepermissions"
 	"github.com/grafana/grafana/pkg/services/auth/identity"
@@ -393,7 +394,8 @@ func setupTestEnv(t testing.TB) (*AccessControlStore, rs.Store, user.Service, te
 	cfg.AutoAssignOrgRole = "Viewer"
 	cfg.AutoAssignOrgId = 1
 	acstore := ProvideService(sql)
-	permissionStore := rs.NewStore(sql, featuremgmt.WithFeatures())
+	log := log.New("test")
+	permissionStore := rs.NewStore(sql, featuremgmt.WithFeatures(), rs.NewInMemoryActionSets(log))
 	teamService, err := teamimpl.ProvideService(sql, cfg)
 	require.NoError(t, err)
 	orgService, err := orgimpl.ProvideService(sql, cfg, quotatest.New(false, nil))
