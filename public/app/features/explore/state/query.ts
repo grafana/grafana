@@ -38,6 +38,7 @@ import {
 import { getShiftedTimeRange } from 'app/core/utils/timePicker';
 import { getCorrelationsBySourceUIDs } from 'app/features/correlations/utils';
 import { infiniteScrollRefId } from 'app/features/logs/logsModel';
+import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
 import { getFiscalYearStartMonth, getTimeZone } from 'app/features/profile/state/selectors';
 import { SupportingQueryType } from 'app/plugins/datasource/loki/types';
 import { MIXED_DATASOURCE_NAME } from 'app/plugins/datasource/mixed/MixedDataSource';
@@ -476,27 +477,47 @@ export function modifyQueries(
   };
 }
 
+function filterQuery(datasource: DataSourceApi, query: DataQuery) {
+  if (datasource.filterQuery && !datasource.filterQuery(query)) {
+    return undefined; // if filterQuery is implemented and returns false, do not use query
+  } else {
+    return query; // if filterQuery is not implemented or it is and returns true, use it
+  }
+}
+
 async function handleHistory(
   dispatch: ThunkDispatch,
   state: ExploreState,
   datasource: DataSourceApi,
   queries: DataQuery[]
 ) {
-  /*
+  const filteredQueriesRes = await Promise.all(
+    queries.map(async (query) => {
+      if (query.datasource?.uid === datasource.uid) {
+        return filterQuery(datasource, query);
+      } else {
+        const queryDS = await getDatasourceSrv().get(query.datasource);
+        return filterQuery(queryDS, query);
+      }
+    })
+  );
+
+  const filteredQueries = filteredQueriesRes.filter((query): query is DataQuery => !!query);
+
+  if (filteredQueries.length > 0) {
+    /*
   Always write to local storage. If query history is enabled, we will use local storage for autocomplete only (and want to hide errors)
   If query history is disabled, we will use local storage for query history as well, and will want to show errors
   */
-  dispatch(addHistoryItem(true, datasource.uid, datasource.name, queries, config.queryHistoryEnabled));
-  if (config.queryHistoryEnabled) {
-    // write to remote if flag enabled
-    dispatch(addHistoryItem(false, datasource.uid, datasource.name, queries, false));
-  }
+    dispatch(addHistoryItem(true, datasource.uid, datasource.name, filteredQueries, config.queryHistoryEnabled));
+    if (config.queryHistoryEnabled) {
+      // write to remote if flag enabled
+      dispatch(addHistoryItem(false, datasource.uid, datasource.name, filteredQueries, false));
+    }
 
-  // Because filtering happens in the backend we cannot add a new entry without checking if it matches currently
-  // used filters. Instead, we refresh the query history list.
-  // TODO: run only if Query History list is opened (#47252)
-  for (const exploreId in state.panes) {
-    await dispatch(loadRichHistory(exploreId));
+    // Because filtering happens in the backend we cannot add a new entry without checking if it matches currently
+    // used filters. Instead, we refresh the query history list.
+    await dispatch(loadRichHistory());
   }
 }
 

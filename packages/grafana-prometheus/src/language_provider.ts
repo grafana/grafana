@@ -21,6 +21,7 @@ import {
   toPromLikeQuery,
 } from './language_utils';
 import PromqlSyntax from './promql';
+import { buildVisualQueryFromString } from './querybuilder/parsing';
 import { PrometheusCacheLevel, PromMetricsMetadata, PromQuery } from './types';
 
 const DEFAULT_KEYS = ['job', 'instance'];
@@ -101,7 +102,7 @@ export default class PromQlLanguageProvider extends LanguageProvider {
     return PromqlSyntax;
   }
 
-  request = async (url: string, defaultValue: any, params = {}, options?: Partial<BackendSrvRequest>): Promise<any> => {
+  request = async (url: string, defaultValue: any, params = {}, options?: Partial<BackendSrvRequest>) => {
     try {
       const res = await this.datasource.metadataRequest(url, params, options);
       return res.data.data;
@@ -204,21 +205,36 @@ export default class PromQlLanguageProvider extends LanguageProvider {
   /**
    * Fetches all label keys
    */
-  async fetchLabels(timeRange?: TimeRange): Promise<string[]> {
+  fetchLabels = async (timeRange?: TimeRange, queries?: PromQuery[]): Promise<string[]> => {
     if (timeRange) {
       this.timeRange = timeRange;
     }
-    const url = '/api/v1/labels';
-    const params = this.datasource.getAdjustedInterval(this.timeRange);
+    let url = '/api/v1/labels';
+    const timeParams = this.datasource.getAdjustedInterval(this.timeRange);
     this.labelFetchTs = Date.now().valueOf();
 
-    const res = await this.request(url, [], params, this.getDefaultCacheHeaders());
+    const searchParams = new URLSearchParams({ ...timeParams });
+    queries?.forEach((q) => {
+      const visualQuery = buildVisualQueryFromString(q.expr);
+      searchParams.append('match[]', visualQuery.query.metric);
+      if (visualQuery.query.binaryQueries) {
+        visualQuery.query.binaryQueries.forEach((bq) => {
+          searchParams.append('match[]', bq.query.metric);
+        });
+      }
+    });
+
+    if (this.datasource.httpMethod === 'GET') {
+      url += `?${searchParams.toString()}`;
+    }
+
+    const res = await this.request(url, [], searchParams, this.getDefaultCacheHeaders());
     if (Array.isArray(res)) {
       this.labelKeys = res.slice().sort();
     }
 
     return [];
-  }
+  };
 
   /**
    * Gets series values
@@ -365,7 +381,7 @@ export default class PromQlLanguageProvider extends LanguageProvider {
   });
 }
 
-function getNameLabelValue(promQuery: string, tokens: any): string {
+function getNameLabelValue(promQuery: string, tokens: Array<string | Prism.Token>): string {
   let nameLabelValue = '';
 
   for (const token of tokens) {

@@ -126,8 +126,8 @@ func TestMultiorgAlertmanager_RemoteSecondaryMode(t *testing.T) {
 			OrgID:                     1,
 			LastApplied:               time.Now().Unix(),
 		}))
-		require.NoError(t, kvStore.Set(ctx, 1, "alertmanager", notifier.SilencesFilename, "dGVzdAo="))        // base64-encoded string "test"
-		require.NoError(t, kvStore.Set(ctx, 1, "alertmanager", notifier.NotificationLogFilename, "dGVzdAo=")) // base64-encoded string "test"
+		require.NoError(t, kvStore.Set(ctx, 1, "alertmanager", notifier.SilencesFilename, "lwEKhgEKATISFxIJYWxlcnRuYW1lGgp0ZXN0X2FsZXJ0EiMSDmdyYWZhbmFfZm9sZGVyGhF0ZXN0X2FsZXJ0X2ZvbGRlchoMCN2CkbAGEJbKrMsDIgwI7Z6RsAYQlsqsywMqCwiAkrjDmP7///8BQgxHcmFmYW5hIFRlc3RKDFRlc3QgU2lsZW5jZRIMCO2ekbAGEJbKrMsDlwEKhgEKATESFxIJYWxlcnRuYW1lGgp0ZXN0X2FsZXJ0EiMSDmdyYWZhbmFfZm9sZGVyGhF0ZXN0X2FsZXJ0X2ZvbGRlchoMCN2CkbAGEJbKrMsDIgwI7Z6RsAYQlsqsywMqCwiAkrjDmP7///8BQgxHcmFmYW5hIFRlc3RKDFRlc3QgU2lsZW5jZRIMCO2ekbAGEJbKrMsD"))
+		require.NoError(t, kvStore.Set(ctx, 1, "alertmanager", notifier.NotificationLogFilename, "OgoqCgZncm91cDISEgoJcmVjZWl2ZXIyEgV0ZXN0MyoMCLSDkbAGEMvaofYCEgwIxJ+RsAYQy9qh9gI6CioKBmdyb3VwMRISCglyZWNlaXZlcjESBXRlc3QzKgwItIORsAYQy9qh9gISDAjEn5GwBhDL2qH2Ag=="))
 
 		// The sync interval (10s) has not elapsed yet, syncing should have no effect.
 		require.NoError(t, moa.LoadAndSyncAlertmanagersForOrgs(ctx))
@@ -151,8 +151,8 @@ func TestMultiorgAlertmanager_RemoteSecondaryMode(t *testing.T) {
 			OrgID:                     1,
 			LastApplied:               time.Now().Unix(),
 		}))
-		require.NoError(t, kvStore.Set(ctx, 1, "alertmanager", notifier.SilencesFilename, "dGVzdC0yCg=="))        // base64-encoded string "test-2"
-		require.NoError(t, kvStore.Set(ctx, 1, "alertmanager", notifier.NotificationLogFilename, "dGVzdC0yCg==")) // base64-encoded string "test-2"
+		require.NoError(t, kvStore.Set(ctx, 1, "alertmanager", notifier.SilencesFilename, "lwEKhgEKAWESFxIJYWxlcnRuYW1lGgp0ZXN0X2FsZXJ0EiMSDmdyYWZhbmFfZm9sZGVyGhF0ZXN0X2FsZXJ0X2ZvbGRlchoMCPuEkbAGEK3AhM8CIgwIi6GRsAYQrcCEzwIqCwiAkrjDmP7///8BQgxHcmFmYW5hIFRlc3RKDFRlc3QgU2lsZW5jZRIMCIuhkbAGEK3AhM8ClwEKhgEKAWISFxIJYWxlcnRuYW1lGgp0ZXN0X2FsZXJ0EiMSDmdyYWZhbmFfZm9sZGVyGhF0ZXN0X2FsZXJ0X2ZvbGRlchoMCPuEkbAGEK3AhM8CIgwIi6GRsAYQrcCEzwIqCwiAkrjDmP7///8BQgxHcmFmYW5hIFRlc3RKDFRlc3QgU2lsZW5jZRIMCIuhkbAGEK3AhM8C"))
+		require.NoError(t, kvStore.Set(ctx, 1, "alertmanager", notifier.NotificationLogFilename, "OAopCgZncm91cEESEgoJcmVjZWl2ZXJBEgV0ZXN0MyoLCNmEkbAGEOzO0BUSCwjpoJGwBhDsztAVOAopCgZncm91cEISEgoJcmVjZWl2ZXJCEgV0ZXN0MyoLCNmEkbAGEOzO0BUSCwjpoJGwBhDsztAV"))
 
 		// Both state and config should be updated when shutting the Alertmanager down.
 		moa.StopAndWait()

@@ -25,6 +25,11 @@
       "user": "Ůşęř"
     }
   },
+  "api-keys": {
+    "empty-state": {
+      "message": "Ńő ÅPĨ ĸęyş ƒőūŉđ"
+    }
+  },
   "bouncing-loader": {
     "label": "Ŀőäđįŉģ"
   },
@@ -107,6 +112,9 @@
       "change-theme": "Cĥäŉģę ŧĥęmę...",
       "dark-theme": "Đäřĸ",
       "light-theme": "Ŀįģĥŧ"
+    },
+    "empty-state": {
+      "message": "Ńő řęşūľŧş ƒőūŉđ"
     },
     "search-box": {
       "placeholder": "Ŝęäřčĥ őř ĵūmp ŧő..."
@@ -417,6 +425,9 @@
   "data-sources": {
     "datasource-add-button": {
       "label": "Åđđ ŉęŵ đäŧä şőūřčę"
+    },
+    "empty-state": {
+      "message": "Ńő đäŧä şőūřčęş ƒőūŉđ"
     }
   },
   "explore": {
@@ -446,10 +457,11 @@
       "delete-query-tooltip": "Đęľęŧę qūęřy",
       "delete-starred-query-confirmation-text": "Åřę yőū şūřę yőū ŵäŉŧ ŧő pęřmäŉęŉŧľy đęľęŧę yőūř şŧäřřęđ qūęřy?",
       "edit-comment-tooltip": "Ēđįŧ čőmmęŉŧ",
-      "loading-text": "ľőäđįŉģ...",
+      "left-pane": "Ŀęƒŧ päŉę",
       "optional-description": "Åŉ őpŧįőŉäľ đęşčřįpŧįőŉ őƒ ŵĥäŧ ŧĥę qūęřy đőęş.",
       "query-comment-label": "Qūęřy čőmmęŉŧ",
       "query-text-label": "Qūęřy ŧęχŧ",
+      "right-pane": "Ŗįģĥŧ päŉę",
       "run-query-button": "Ŗūŉ qūęřy",
       "save-comment": "Ŝävę čőmmęŉŧ",
       "star-query-tooltip": "Ŝŧäř qūęřy",
@@ -560,9 +572,6 @@
   "grafana-ui": {
     "drawer": {
       "close": "Cľőşę"
-    },
-    "empty-state": {
-      "not-found-message": "Ńő řęşūľŧş ƒőūŉđ"
     },
     "modal": {
       "close-tooltip": "Cľőşę"
@@ -713,6 +722,8 @@
       "connect": "Cőŉŉęčŧ ŧő ŧĥįş şŧäčĸ",
       "connecting": "Cőŉŉęčŧįŉģ ŧő ŧĥįş şŧäčĸ...",
       "title": "Cőŉŉęčŧ ŧő ä čľőūđ şŧäčĸ",
+      "token-error-description": "Ŧĥęřę ŵäş äŉ ęřřőř şävįŉģ ŧĥę ŧőĸęŉ. Ŝęę ŧĥę Ğřäƒäŉä şęřvęř ľőģş ƒőř mőřę đęŧäįľş.",
+      "token-error-title": "Ēřřőř şävįŉģ ŧőĸęŉ",
       "token-required-error": "Mįģřäŧįőŉ ŧőĸęŉ įş řęqūįřęđ"
     },
     "cta": {
@@ -1226,6 +1237,11 @@
       "message": "Ńő pľäyľįşŧş ƒőūŉđ"
     }
   },
+  "plugins": {
+    "empty-state": {
+      "message": "Ńő pľūģįŉş ƒőūŉđ"
+    }
+  },
   "profile": {
     "change-password": {
       "cancel-button": "Cäŉčęľ",
@@ -1428,6 +1444,11 @@
       "placeholder": "Ŝęäřčĥ ƒőř đäşĥþőäřđş äŉđ ƒőľđęřş"
     }
   },
+  "service-accounts": {
+    "empty-state": {
+      "message": "Ńő şęřvįčęş äččőūŉŧş ƒőūŉđ"
+    }
+  },
   "share-modal": {
     "dashboard": {
       "title": "Ŝĥäřę"
@@ -1556,6 +1577,11 @@
     "no-tags": "Ńő ŧäģş ƒőūŉđ",
     "placeholder": "Fįľŧęř þy ŧäģ"
   },
+  "teams": {
+    "empty-state": {
+      "message": "Ńő ŧęämş ƒőūŉđ"
+    }
+  },
   "time-picker": {
     "absolute": {
       "recent-title": "Ŗęčęŉŧľy ūşęđ äþşőľūŧę řäŉģęş",
@@ -1648,6 +1674,11 @@
   },
   "user-sessions": {
     "loading": "Ŀőäđįŉģ şęşşįőŉş..."
+  },
+  "users": {
+    "empty-state": {
+      "message": "Ńő ūşęřş ƒőūŉđ"
+    }
   },
   "users-access-list": {
     "tabs": {
