@@ -244,7 +244,7 @@ export function vizPanelToPanel(
     panel.options = rest;
 
     if (angularOptions) {
-      // Allow options angularOptions to overwrite non system level root properties
+      // Allow angularOptions to overwrite non system level root properties
       defaults(panel, angularOptions);
     }
   }
