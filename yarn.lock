@@ -4324,7 +4324,6 @@ __metadata:
     "@types/prismjs": "npm:1.26.3"
     "@types/react": "npm:18.2.78"
     "@types/react-beautiful-dnd": "npm:13.1.8"
-    "@types/react-calendar": "npm:4.1.0"
     "@types/react-color": "npm:3.0.12"
     "@types/react-dom": "npm:18.2.25"
     "@types/react-highlight-words": "npm:0.16.7"
@@ -10128,15 +10127,6 @@ __metadata:
   dependencies:
     "@types/react": "npm:*"
   checksum: 10/cb8a182ed0ea6f680c7c343fcb4e54237437ca90dc88c2a70f4a203ec8ad0740e389e3ab7772c8cc1479f05e5a046bccbc33d54055b94e0fe5b22be030ab23d2
-  languageName: node
-  linkType: hard
-
-"@types/react-calendar@npm:4.1.0":
-  version: 4.1.0
-  resolution: "@types/react-calendar@npm:4.1.0"
-  dependencies:
-    react-calendar: "npm:*"
-  checksum: 10/1961517393f90c4339c2752ffb25ab2887eff966e9d286e67175b7b26117445f43ee1ee61f6d16c079779e3bdcfd9185968e9d3b352418656bfe0d572f0459d7
   languageName: node
   linkType: hard
 
@@ -26281,7 +26271,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"react-calendar@npm:*, react-calendar@npm:4.8.0":
+"react-calendar@npm:4.8.0":
   version: 4.8.0
   resolution: "react-calendar@npm:4.8.0"
   dependencies:
