@@ -1,14 +1,22 @@
 package expr
 
 import (
+	"context"
 	"encoding/json"
 	"math"
+	"slices"
 	"sort"
 	"testing"
+	"time"
 
+	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/stretchr/testify/require"
+	"golang.org/x/exp/maps"
 
+	"github.com/grafana/grafana/pkg/expr/mathexp"
+	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/util"
 )
 
 func TestNewThresholdCommand(t *testing.T) {
@@ -373,4 +381,179 @@ func TestSetLoadedDimensionsToHysteresisCommand(t *testing.T) {
 
 		require.Equal(t, fingerprints, cmd.(*HysteresisCommand).LoadedDimensions)
 	})
+}
+
+func TestThresholdExecute(t *testing.T) {
+	input := map[string]mathexp.Value{
+		//
+		"no-data": mathexp.NewNoData(),
+		//
+		"series - numbers":     newSeries(8, 9, 10, 11, 12),
+		"series - empty":       newSeriesPointer(),
+		"series - all nils":    newSeriesPointer(nil, nil, nil),
+		"series - with labels": newSeriesWithLabels(data.Labels{"test": "test"}, nil, util.Pointer(float64(9)), nil, util.Pointer(float64(11)), nil),
+		"series - with NaNs":   newSeries(math.NaN(), math.NaN(), math.NaN()),
+		//
+		"scalar - nil": newScalar(nil),
+		"scalar - NaN": newScalar(util.Pointer(math.NaN())),
+		"scalar - 8":   newScalar(util.Pointer(float64(8))),
+		"scalar - 9":   newScalar(util.Pointer(float64(9))),
+		"scalar - 10":  newScalar(util.Pointer(float64(10))),
+		"scalar - 11":  newScalar(util.Pointer(float64(11))),
+		"scalar - 12":  newScalar(util.Pointer(float64(12))),
+		//
+		"number - nil": newNumber(data.Labels{"number": "test"}, nil),
+		"number - NaN": newNumber(data.Labels{"number": "test"}, util.Pointer(math.NaN())),
+		"number - 8":   newNumber(data.Labels{"number": "test"}, util.Pointer(float64(8))),
+		"number - 9":   newNumber(data.Labels{"number": "test"}, util.Pointer(float64(9))),
+		"number - 10":  newNumber(data.Labels{"number": "test"}, util.Pointer(float64(10))),
+		"number - 11":  newNumber(data.Labels{"number": "test"}, util.Pointer(float64(11))),
+		"number - 12":  newNumber(data.Labels{"number": "test"}, util.Pointer(float64(12))),
+	}
+	keys := maps.Keys(input)
+	slices.Sort(keys)
+	testCases := []struct {
+		name     string
+		pred     predicate
+		expected map[string]mathexp.Value
+		errorMsg string
+	}{
+		{
+			name: "greater than 10",
+			pred: greaterThanPredicate{10.0},
+			expected: map[string]mathexp.Value{
+				//
+				"no-data": mathexp.NewNoData(),
+				//
+				"series - numbers":     newSeries(0, 0, 0, 1, 1),
+				"series - empty":       newSeriesPointer(),
+				"series - all nils":    newSeriesPointer(nil, nil, nil),
+				"series - with labels": newSeriesWithLabels(data.Labels{"test": "test"}, nil, util.Pointer(float64(0)), nil, util.Pointer(float64(1)), nil),
+				"series - with NaNs":   newSeries(0, 0, 0),
+				//
+				"scalar - nil": newScalar(nil),
+				"scalar - NaN": newScalar(util.Pointer(float64(0))),
+				"scalar - 8":   newScalar(util.Pointer(float64(0))),
+				"scalar - 9":   newScalar(util.Pointer(float64(0))),
+				"scalar - 10":  newScalar(util.Pointer(float64(0))),
+				"scalar - 11":  newScalar(util.Pointer(float64(1))),
+				"scalar - 12":  newScalar(util.Pointer(float64(1))),
+				//
+				"number - nil": newNumber(data.Labels{"number": "test"}, nil),
+				"number - NaN": newNumber(data.Labels{"number": "test"}, util.Pointer(float64(0))),
+				"number - 8":   newNumber(data.Labels{"number": "test"}, util.Pointer(float64(0))),
+				"number - 9":   newNumber(data.Labels{"number": "test"}, util.Pointer(float64(0))),
+				"number - 10":  newNumber(data.Labels{"number": "test"}, util.Pointer(float64(0))),
+				"number - 11":  newNumber(data.Labels{"number": "test"}, util.Pointer(float64(1))),
+				"number - 12":  newNumber(data.Labels{"number": "test"}, util.Pointer(float64(1))),
+			},
+		},
+		{
+			name: "less than 10",
+			pred: lessThanPredicate{10.0},
+			expected: map[string]mathexp.Value{
+				//
+				"no-data": mathexp.NewNoData(),
+				//
+				"series - numbers":     newSeries(1, 1, 0, 0, 0),
+				"series - empty":       newSeriesPointer(),
+				"series - all nils":    newSeriesPointer(nil, nil, nil),
+				"series - with labels": newSeriesWithLabels(data.Labels{"test": "test"}, nil, util.Pointer(float64(1)), nil, util.Pointer(float64(0)), nil),
+				"series - with NaNs":   newSeries(0, 0, 0),
+				//
+				"scalar - nil": newScalar(nil),
+				"scalar - NaN": newScalar(util.Pointer(float64(0))),
+				"scalar - 8":   newScalar(util.Pointer(float64(1))),
+				"scalar - 9":   newScalar(util.Pointer(float64(1))),
+				"scalar - 10":  newScalar(util.Pointer(float64(0))),
+				"scalar - 11":  newScalar(util.Pointer(float64(0))),
+				"scalar - 12":  newScalar(util.Pointer(float64(0))),
+				//
+				"number - nil": newNumber(data.Labels{"number": "test"}, nil),
+				"number - NaN": newNumber(data.Labels{"number": "test"}, util.Pointer(float64(0))),
+				"number - 8":   newNumber(data.Labels{"number": "test"}, util.Pointer(float64(1))),
+				"number - 9":   newNumber(data.Labels{"number": "test"}, util.Pointer(float64(1))),
+				"number - 10":  newNumber(data.Labels{"number": "test"}, util.Pointer(float64(0))),
+				"number - 11":  newNumber(data.Labels{"number": "test"}, util.Pointer(float64(0))),
+				"number - 12":  newNumber(data.Labels{"number": "test"}, util.Pointer(float64(0))),
+			},
+		},
+		{
+			name: "within range (8,11)",
+			pred: withinRangePredicate{8, 11},
+			expected: map[string]mathexp.Value{
+				//
+				"no-data": mathexp.NewNoData(),
+				//
+				"series - numbers":     newSeries(0, 1, 1, 0, 0),
+				"series - empty":       newSeriesPointer(),
+				"series - all nils":    newSeriesPointer(nil, nil, nil),
+				"series - with labels": newSeriesWithLabels(data.Labels{"test": "test"}, nil, util.Pointer(float64(1)), nil, util.Pointer(float64(0)), nil),
+				"series - with NaNs":   newSeries(0, 0, 0),
+				//
+				"scalar - nil": newScalar(nil),
+				"scalar - NaN": newScalar(util.Pointer(float64(0))),
+				"scalar - 8":   newScalar(util.Pointer(float64(0))),
+				"scalar - 9":   newScalar(util.Pointer(float64(1))),
+				"scalar - 10":  newScalar(util.Pointer(float64(1))),
+				"scalar - 11":  newScalar(util.Pointer(float64(0))),
+				"scalar - 12":  newScalar(util.Pointer(float64(0))),
+				//
+				"number - nil": newNumber(data.Labels{"number": "test"}, nil),
+				"number - NaN": newNumber(data.Labels{"number": "test"}, util.Pointer(float64(0))),
+				"number - 8":   newNumber(data.Labels{"number": "test"}, util.Pointer(float64(0))),
+				"number - 9":   newNumber(data.Labels{"number": "test"}, util.Pointer(float64(1))),
+				"number - 10":  newNumber(data.Labels{"number": "test"}, util.Pointer(float64(1))),
+				"number - 11":  newNumber(data.Labels{"number": "test"}, util.Pointer(float64(0))),
+				"number - 12":  newNumber(data.Labels{"number": "test"}, util.Pointer(float64(0))),
+			},
+		},
+		{
+			name: "outside range (8, 11)",
+			pred: outsideRangePredicate{8, 11},
+			expected: map[string]mathexp.Value{
+				//
+				"no-data": mathexp.NewNoData(),
+				//
+				"series - numbers":     newSeries(0, 0, 0, 0, 1),
+				"series - empty":       newSeriesPointer(),
+				"series - all nils":    newSeriesPointer(nil, nil, nil),
+				"series - with labels": newSeriesWithLabels(data.Labels{"test": "test"}, nil, util.Pointer(float64(0)), nil, util.Pointer(float64(0)), nil),
+				"series - with NaNs":   newSeries(0, 0, 0),
+				//
+				"scalar - nil": newScalar(nil),
+				"scalar - NaN": newScalar(util.Pointer(float64(0))),
+				"scalar - 8":   newScalar(util.Pointer(float64(0))),
+				"scalar - 9":   newScalar(util.Pointer(float64(0))),
+				"scalar - 10":  newScalar(util.Pointer(float64(0))),
+				"scalar - 11":  newScalar(util.Pointer(float64(0))),
+				"scalar - 12":  newScalar(util.Pointer(float64(1))),
+				//
+				"number - nil": newNumber(data.Labels{"number": "test"}, nil),
+				"number - NaN": newNumber(data.Labels{"number": "test"}, util.Pointer(float64(0))),
+				"number - 8":   newNumber(data.Labels{"number": "test"}, util.Pointer(float64(0))),
+				"number - 9":   newNumber(data.Labels{"number": "test"}, util.Pointer(float64(0))),
+				"number - 10":  newNumber(data.Labels{"number": "test"}, util.Pointer(float64(0))),
+				"number - 11":  newNumber(data.Labels{"number": "test"}, util.Pointer(float64(0))),
+				"number - 12":  newNumber(data.Labels{"number": "test"}, util.Pointer(float64(1))),
+			},
+		},
+	}
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			cmd := ThresholdCommand{
+				predicate:    tc.pred,
+				ReferenceVar: "A",
+			}
+			for _, name := range keys {
+				t.Run(name, func(t *testing.T) {
+					result, err := cmd.Execute(context.Background(), time.Now(), mathexp.Vars{
+						"A": newResults(input[name]),
+					}, tracing.InitializeTracerForTest())
+					require.NoError(t, err)
+					require.Equal(t, newResults(tc.expected[name]), result)
+				})
+			}
+		})
+	}
 }
