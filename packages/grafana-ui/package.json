@@ -154,7 +154,7 @@
     "@types/slate": "0.47.11",
     "@types/slate-plain-serializer": "0.7.5",
     "@types/slate-react": "0.22.9",
-    "@types/testing-library__jest-dom": "5.14.9",
+    "@types/testing-library__jest-dom": "6.0.0",
     "@types/tinycolor2": "1.4.6",
     "@types/uuid": "9.0.8",
     "common-tags": "1.8.2",

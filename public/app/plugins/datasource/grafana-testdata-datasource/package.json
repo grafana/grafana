@@ -29,7 +29,7 @@
     "@types/lodash": "4.17.0",
     "@types/node": "20.12.7",
     "@types/react": "18.2.78",
-    "@types/testing-library__jest-dom": "5.14.9",
+    "@types/testing-library__jest-dom": "6.0.0",
     "@types/uuid": "9.0.8",
     "ts-node": "10.9.2",
     "webpack": "5.91.0"
