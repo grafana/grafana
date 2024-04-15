@@ -2,6 +2,7 @@ package mssql
 
 import (
 	"context"
+	"database/sql"
 	"fmt"
 	"net"
 	"testing"
@@ -23,50 +24,22 @@ func (d *testDialer) DialContext(ctx context.Context, network, address string) (
 }
 
 var _ proxy.Dialer = (&testDialer{})
-var _ proxy.ContextDialer = (&testDialer{})
-
-func newTestDialer() proxy.Dialer {
-	d := testDialer{}
-	return &d
-}
 
 func TestMSSQLProxyDriver(t *testing.T) {
 	cnnstr := "server=127.0.0.1;port=1433;user id=sa;password=yourStrong(!)Password;database=db"
-	driverName, err := createMSSQLProxyDriver(cnnstr, "127.0.0.1", newTestDialer())
-	require.NoError(t, err)
-
-	t.Run("Driver should not be registered more than once", func(t *testing.T) {
-		testDriver, err := createMSSQLProxyDriver(cnnstr, "127.0.0.1", newTestDialer())
-		require.NoError(t, err)
-		require.Equal(t, driverName, testDriver)
-	})
-
-	t.Run("A new driver should be created for a new connection string", func(t *testing.T) {
-		testDriver, err := createMSSQLProxyDriver("server=localhost;user id=sa;password=yourStrong(!)Password;database=db2", "localhost", newTestDialer())
-		require.NoError(t, err)
-		require.NotEqual(t, driverName, testDriver)
-	})
 
 	t.Run("Connector should use dialer context that routes through the socks proxy to db", func(t *testing.T) {
 		connector, err := mssql.NewConnector(cnnstr)
 		require.NoError(t, err)
-		driver, err := newMSSQLProxyDriver(connector, "127.0.0.1", newTestDialer())
+		dialer, err := newMSSQLProxyDialer("127.0.0.1", &testDialer{})
 		require.NoError(t, err)
 
-		conn, err := driver.OpenConnector(cnnstr)
-		require.NoError(t, err)
+		connector.Dialer = (dialer)
 
-		_, err = conn.Connect(context.Background())
+		db := sql.OpenDB(connector)
+		err = db.Ping()
+
 		require.Contains(t, err.Error(), "test-dialer: DialContext is not functional")
 	})
 
-	t.Run("Open should use the connector that routes through the socks proxy to db", func(t *testing.T) {
-		connector, err := mssql.NewConnector(cnnstr)
-		require.NoError(t, err)
-		driver, err := newMSSQLProxyDriver(connector, "127.0.0.1", newTestDialer())
-		require.NoError(t, err)
-
-		_, err = driver.Open(cnnstr)
-		require.Contains(t, err.Error(), "test-dialer: DialContext is not functional")
-	})
 }
