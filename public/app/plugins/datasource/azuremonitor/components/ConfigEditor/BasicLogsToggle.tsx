@@ -28,9 +28,7 @@ export const BasicLogsToggle = (props: Props) => {
       }),
     }),
   };
-  const onChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    onBasicLogsEnabledChange(e.target.checked);
-  };
+  const onChange = (e: React.ChangeEvent<HTMLInputElement>) => onBasicLogsEnabledChange(e.target.checked);
   const description = (
     <p className={styles.text}>
       Enabling this feature incurs Azure Monitor per-query costs on dashboard panels that query tables configured for{' '}
@@ -45,12 +43,10 @@ export const BasicLogsToggle = (props: Props) => {
     </p>
   );
   return (
-    <>
-      <Field description={description} label="Enable Basic Logs">
-        <div>
-          <Switch aria-label="Basic Logs" onChange={onChange} value={options.basicLogsEnabled ?? false} />
-        </div>
-      </Field>
-    </>
+    <Field description={description} label="Enable Basic Logs">
+      <div>
+        <Switch aria-label="Basic Logs" onChange={onChange} value={options.basicLogsEnabled ?? false} />
+      </div>
+    </Field>
   );
 };

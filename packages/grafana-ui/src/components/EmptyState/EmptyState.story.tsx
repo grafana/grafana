@@ -28,6 +28,7 @@ export const Basic: StoryFn<typeof EmptyState> = (args) => {
 
 Basic.args = {
   children: 'Use this space to add any additional information',
+  message: 'No results found',
   variant: 'not-found',
 };
 

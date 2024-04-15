@@ -146,7 +146,7 @@ Legend options control the series names and statistics that appear under or to t
 
 Options under the axis category change how the x- and y-axes are rendered. Some options don't take effect until you click outside of the field option box you are editing. You can also or press `Enter`.
 
-### Placement
+### Placement (y-axis)
 
 Select the placement of the y-axis.
 

@@ -25,6 +25,11 @@
       "user": "Nutzer"
     }
   },
+  "api-keys": {
+    "empty-state": {
+      "message": ""
+    }
+  },
   "bouncing-loader": {
     "label": "Wird geladen"
   },
@@ -107,6 +112,9 @@
       "change-theme": "Thema ändern...",
       "dark-theme": "Dunkel",
       "light-theme": "Hell"
+    },
+    "empty-state": {
+      "message": ""
     },
     "search-box": {
       "placeholder": "Suche oder springe zu ..."
@@ -417,6 +425,9 @@
   "data-sources": {
     "datasource-add-button": {
       "label": "Neue Datenquelle hinzufügen"
+    },
+    "empty-state": {
+      "message": ""
     }
   },
   "explore": {
@@ -561,9 +572,6 @@
   "grafana-ui": {
     "drawer": {
       "close": "Schließen"
-    },
-    "empty-state": {
-      "not-found-message": ""
     },
     "modal": {
       "close-tooltip": "Schließen"
@@ -714,6 +722,8 @@
       "connect": "Mit diesem Stack verbinden",
       "connecting": "Verbindung mit diesem Stack läuft...",
       "title": "Mit einem Cloud Stack verbinden",
+      "token-error-description": "",
+      "token-error-title": "",
       "token-required-error": "Migrationstoken ist erforderlich"
     },
     "cta": {
@@ -1227,6 +1237,11 @@
       "message": ""
     }
   },
+  "plugins": {
+    "empty-state": {
+      "message": ""
+    }
+  },
   "profile": {
     "change-password": {
       "cancel-button": "Abbrechen",
@@ -1429,6 +1444,11 @@
       "placeholder": "Nach Dashboards suchen"
     }
   },
+  "service-accounts": {
+    "empty-state": {
+      "message": ""
+    }
+  },
   "share-modal": {
     "dashboard": {
       "title": "Teilen"
@@ -1557,6 +1577,11 @@
     "no-tags": "Keine Tags gefunden",
     "placeholder": "Nach Tag filtern"
   },
+  "teams": {
+    "empty-state": {
+      "message": ""
+    }
+  },
   "time-picker": {
     "absolute": {
       "recent-title": "Kürzlich verwendete absolute Bereiche",
@@ -1649,6 +1674,11 @@
   },
   "user-sessions": {
     "loading": "Sitzungen werden geladen …"
+  },
+  "users": {
+    "empty-state": {
+      "message": ""
+    }
   },
   "users-access-list": {
     "tabs": {

@@ -20,7 +20,6 @@ import (
 	"github.com/grafana/grafana/pkg/plugins/manager/registry"
 	"github.com/grafana/grafana/pkg/plugins/manager/signature"
 	"github.com/grafana/grafana/pkg/plugins/pfs"
-	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginerrs"
 )
 
 // ExternalServiceRegistration implements an InitializeFunc for registering external services.
@@ -105,15 +104,12 @@ func ReportBuildMetrics(_ context.Context, p *plugins.Plugin) (*plugins.Plugin, 
 // SignatureValidation implements a ValidateFunc for validating plugin signatures.
 type SignatureValidation struct {
 	signatureValidator signature.Validator
-	errs               pluginerrs.SignatureErrorTracker
 	log                log.Logger
 }
 
 // SignatureValidationStep returns a new ValidateFunc for validating plugin signatures.
-func SignatureValidationStep(signatureValidator signature.Validator,
-	sigErr pluginerrs.SignatureErrorTracker) validation.ValidateFunc {
+func SignatureValidationStep(signatureValidator signature.Validator) validation.ValidateFunc {
 	sv := &SignatureValidation{
-		errs:               sigErr,
 		signatureValidator: signatureValidator,
 		log:                log.New("plugins.signature.validation"),
 	}
@@ -121,22 +117,18 @@ func SignatureValidationStep(signatureValidator signature.Validator,
 }
 
 // Validate validates the plugin signature. If a signature error is encountered, the error is recorded with the
-// pluginerrs.SignatureErrorTracker.
+// pluginerrs.ErrorTracker.
 func (v *SignatureValidation) Validate(ctx context.Context, p *plugins.Plugin) error {
 	err := v.signatureValidator.ValidateSignature(p)
 	if err != nil {
-		var sigErr *plugins.SignatureError
+		var sigErr *plugins.Error
 		if errors.As(err, &sigErr) {
 			v.log.Warn("Skipping loading plugin due to problem with signature",
 				"pluginId", p.ID, "status", sigErr.SignatureStatus)
-			p.SignatureError = sigErr
-			v.errs.Record(ctx, sigErr)
+			p.Error = sigErr
 		}
 		return err
 	}
-
-	// clear plugin error if a pre-existing error has since been resolved
-	v.errs.Clear(ctx, p.ID)
 
 	return nil
 }
