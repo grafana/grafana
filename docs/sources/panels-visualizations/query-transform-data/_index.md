@@ -185,6 +185,8 @@ Panel data source query options include:
   | This week so far | `now/w`             |
   | Last 2 years     | `now-2y/y`          |
 
+{{< docs/play title="Time range override" url="https://play.grafana.org/d/000000041/" >}}
+
 - **Time shift:** Overrides the time range for individual panels by shifting its start and end relative to the time picker.
   For example, you can shift the time range for the panel to be two hours earlier than the dashboard time picker.
 
