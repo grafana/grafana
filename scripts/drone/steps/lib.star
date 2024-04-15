@@ -853,7 +853,7 @@ def playwright_e2e_tests_step():
             "PROV_DIR": "/grafana/scripts/grafana-server/tmp/conf/provisioning",
         },
         "name": "playwright-plugin-e2e",
-        "image": images["ubuntu"],
+        "image": images["node_deb"],
         "depends_on": [
             "grafana-server",
         ],
