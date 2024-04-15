@@ -972,12 +972,12 @@ var (
 			Owner:        grafanaObservabilityTracesAndProfilingSquad,
 		},
 		{
-			Name:         "datatrails",
-			Description:  "Enables the new core app datatrails",
-			Stage:        FeatureStageExperimental,
+			Name:         "exploreMetrics",
+			Description:  "Enables the new Explore Metrics core app",
+			Stage:        FeatureStageGeneralAvailability,
+			Expression:   "true", // enabled by default
 			FrontendOnly: true,
 			Owner:        grafanaDashboardsSquad,
-			HideFromDocs: true,
 		},
 		{
 			Name:         "alertingSimplifiedRouting",
@@ -1034,15 +1034,6 @@ var (
 			Owner:             grafanaOperatorExperienceSquad,
 			AllowSelfServe:    false,
 			HideFromAdminPage: true,
-		},
-		{
-			Name:            "enablePluginsTracingByDefault",
-			Description:     "Enable plugin tracing for all external plugins",
-			FrontendOnly:    false,
-			Stage:           FeatureStageGeneralAvailability,
-			Owner:           grafanaPluginsPlatformSquad,
-			RequiresRestart: true,
-			Expression:      "true", // enabled by default
 		},
 		{
 			Name:            "cloudRBACRoles",
@@ -1184,7 +1175,7 @@ var (
 		{
 			Name:         "usePrometheusFrontendPackage",
 			Description:  "Use the @grafana/prometheus frontend package in core Prometheus.",
-			Stage:        FeatureStageExperimental,
+			Stage:        FeatureStageGeneralAvailability,
 			FrontendOnly: true,
 			Owner:        grafanaObservabilityMetricsSquad,
 		},
@@ -1213,6 +1204,12 @@ var (
 			Owner:          awsDatasourcesSquad,
 			FrontendOnly:   false,
 			AllowSelfServe: false,
+		},
+		{
+			Name:        "accessActionSets",
+			Description: "Introduces action sets for resource permissions",
+			Stage:       FeatureStageExperimental,
+			Owner:       identityAccessTeam,
 		},
 	}
 )

@@ -25,6 +25,11 @@
       "user": "Utilisateur"
     }
   },
+  "api-keys": {
+    "empty-state": {
+      "message": ""
+    }
+  },
   "bouncing-loader": {
     "label": "Chargement"
   },
@@ -107,6 +112,9 @@
       "change-theme": "Modifier le thème...",
       "dark-theme": "Sombre",
       "light-theme": "Clair"
+    },
+    "empty-state": {
+      "message": ""
     },
     "search-box": {
       "placeholder": "Rechercher ou aller à..."
@@ -417,6 +425,9 @@
   "data-sources": {
     "datasource-add-button": {
       "label": "Ajouter une nouvelle source de données"
+    },
+    "empty-state": {
+      "message": ""
     }
   },
   "explore": {
@@ -446,10 +457,11 @@
       "delete-query-tooltip": "Supprimer la requête",
       "delete-starred-query-confirmation-text": "Souhaitez-vous vraiment supprimer définitivement votre requête favorite ?",
       "edit-comment-tooltip": "Modifier le commentaire",
-      "loading-text": "chargement...",
+      "left-pane": "",
       "optional-description": "Une description facultative de l'action de la requête.",
       "query-comment-label": "Commentaire sur la requête",
       "query-text-label": "Texte de la requête",
+      "right-pane": "",
       "run-query-button": "Exécuter la requête",
       "save-comment": "Enregistrer le commentaire",
       "star-query-tooltip": "Mettre la requête en favori",
@@ -560,9 +572,6 @@
   "grafana-ui": {
     "drawer": {
       "close": "Fermer"
-    },
-    "empty-state": {
-      "not-found-message": ""
     },
     "modal": {
       "close-tooltip": "Fermer"
@@ -713,6 +722,8 @@
       "connect": "Se connecter à cette pile",
       "connecting": "Connexion à cette pile…",
       "title": "Se connecter à une pile cloud",
+      "token-error-description": "",
+      "token-error-title": "",
       "token-required-error": "Vous devez renseigner le jeton de migration"
     },
     "cta": {
@@ -1226,6 +1237,11 @@
       "message": ""
     }
   },
+  "plugins": {
+    "empty-state": {
+      "message": ""
+    }
+  },
   "profile": {
     "change-password": {
       "cancel-button": "Annuler",
@@ -1428,6 +1444,11 @@
       "placeholder": "Rechercher des tableaux de bord"
     }
   },
+  "service-accounts": {
+    "empty-state": {
+      "message": ""
+    }
+  },
   "share-modal": {
     "dashboard": {
       "title": "Partager"
@@ -1556,6 +1577,11 @@
     "no-tags": "Aucune étiquette trouvée",
     "placeholder": "Filtrer par étiquette"
   },
+  "teams": {
+    "empty-state": {
+      "message": ""
+    }
+  },
   "time-picker": {
     "absolute": {
       "recent-title": "Périodes absolues récemment utilisées",
@@ -1648,6 +1674,11 @@
   },
   "user-sessions": {
     "loading": "Chargement des sessions..."
+  },
+  "users": {
+    "empty-state": {
+      "message": ""
+    }
   },
   "users-access-list": {
     "tabs": {

@@ -19,7 +19,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/auth/identity"
 	"github.com/grafana/grafana/pkg/services/authn"
 	"github.com/grafana/grafana/pkg/services/authn/clients"
-	"github.com/grafana/grafana/pkg/services/login"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util/errutil"
@@ -47,20 +46,19 @@ func ProvideIdentitySynchronizer(s *Service) authn.IdentitySynchronizer {
 
 func ProvideService(
 	cfg *setting.Cfg, tracer tracing.Tracer,
-	sessionService auth.UserTokenService, usageStats usagestats.Service,
-	authInfoService login.AuthInfoService, registerer prometheus.Registerer,
+	sessionService auth.UserTokenService, usageStats usagestats.Service, registerer prometheus.Registerer,
 ) *Service {
 	s := &Service{
-		log:             log.New("authn.service"),
-		cfg:             cfg,
-		clients:         make(map[string]authn.Client),
-		clientQueue:     newQueue[authn.ContextAwareClient](),
-		tracer:          tracer,
-		metrics:         newMetrics(registerer),
-		authInfoService: authInfoService,
-		sessionService:  sessionService,
-		postAuthHooks:   newQueue[authn.PostAuthHookFn](),
-		postLoginHooks:  newQueue[authn.PostLoginHookFn](),
+		log:                    log.New("authn.service"),
+		cfg:                    cfg,
+		clients:                make(map[string]authn.Client),
+		clientQueue:            newQueue[authn.ContextAwareClient](),
+		idenityResolverClients: make(map[string]authn.IdentityResolverClient),
+		tracer:                 tracer,
+		metrics:                newMetrics(registerer),
+		sessionService:         sessionService,
+		postAuthHooks:          newQueue[authn.PostAuthHookFn](),
+		postLoginHooks:         newQueue[authn.PostLoginHookFn](),
 	}
 
 	usageStats.RegisterMetricsFunc(s.getUsageStats)
@@ -74,11 +72,12 @@ type Service struct {
 	clients     map[string]authn.Client
 	clientQueue *queue[authn.ContextAwareClient]
 
+	idenityResolverClients map[string]authn.IdentityResolverClient
+
 	tracer  tracing.Tracer
 	metrics *metrics
 
-	authInfoService login.AuthInfoService
-	sessionService  auth.UserTokenService
+	sessionService auth.UserTokenService
 
 	// postAuthHooks are called after a successful authentication. They can modify the identity.
 	postAuthHooks *queue[authn.PostAuthHookFn]
@@ -259,9 +258,8 @@ func (s *Service) Logout(ctx context.Context, user identity.Requester, sessionTo
 		return redirect, nil
 	}
 
-	info, _ := s.authInfoService.GetAuthInfo(ctx, &login.GetAuthInfoQuery{UserId: userID})
-	if info != nil {
-		client := authn.ClientWithPrefix(strings.TrimPrefix(info.AuthModule, "oauth_"))
+	if authModule := user.GetAuthenticatedBy(); authModule != "" {
+		client := authn.ClientWithPrefix(strings.TrimPrefix(authModule, "oauth_"))
 
 		c, ok := s.clients[client]
 		if !ok {
@@ -275,7 +273,7 @@ func (s *Service) Logout(ctx context.Context, user identity.Requester, sessionTo
 			goto Default
 		}
 
-		clientRedirect, ok := logoutClient.Logout(ctx, user, info)
+		clientRedirect, ok := logoutClient.Logout(ctx, user)
 		if !ok {
 			goto Default
 		}
@@ -297,18 +295,28 @@ func (s *Service) ResolveIdentity(ctx context.Context, orgID int64, namespaceID 
 	// hack to not update last seen
 	r.SetMeta(authn.MetaKeyIsLogin, "true")
 
-	identity, err := s.authenticate(ctx, clients.ProvideIdentity(namespaceID), r)
+	id, err := authn.ParseNamespaceID(namespaceID)
 	if err != nil {
 		return nil, err
 	}
 
-	return identity, nil
+	identity, err := s.resolveIdenity(ctx, orgID, id)
+	if err != nil {
+		return nil, err
+	}
+
+	return s.authenticate(ctx, clients.ProvideIdentity(identity), r)
 }
 
 func (s *Service) RegisterClient(c authn.Client) {
 	s.clients[c.Name()] = c
+
 	if cac, ok := c.(authn.ContextAwareClient); ok {
 		s.clientQueue.insert(cac, cac.Priority())
+	}
+
+	if rc, ok := c.(authn.IdentityResolverClient); ok {
+		s.idenityResolverClients[rc.Namespace()] = rc
 	}
 }
 
@@ -319,7 +327,40 @@ func (s *Service) SyncIdentity(ctx context.Context, identity *authn.Identity) er
 	return s.runPostAuthHooks(ctx, identity, r)
 }
 
+func (s *Service) resolveIdenity(ctx context.Context, orgID int64, namespaceID authn.NamespaceID) (*authn.Identity, error) {
+	if namespaceID.IsNamespace(authn.NamespaceUser) {
+		return &authn.Identity{
+			OrgID: orgID,
+			ID:    namespaceID.String(),
+			ClientParams: authn.ClientParams{
+				AllowGlobalOrg:  true,
+				FetchSyncedUser: true,
+				SyncPermissions: true,
+			}}, nil
+	}
+
+	if namespaceID.IsNamespace(authn.NamespaceServiceAccount) {
+		return &authn.Identity{
+			ID:    namespaceID.String(),
+			OrgID: orgID,
+			ClientParams: authn.ClientParams{
+				FetchSyncedUser: true,
+				SyncPermissions: true,
+			}}, nil
+	}
+
+	resolver, ok := s.idenityResolverClients[namespaceID.Namespace()]
+	if !ok {
+		return nil, authn.ErrUnsupportedIdentity.Errorf("no resolver for : %s", namespaceID.Namespace())
+	}
+	return resolver.ResolveIdentity(ctx, orgID, namespaceID)
+}
+
 func (s *Service) errorLogFunc(ctx context.Context, err error) func(msg string, ctx ...any) {
+	if errors.Is(err, context.Canceled) {
+		return func(msg string, ctx ...any) {}
+	}
+
 	l := s.log.FromContext(ctx)
 
 	var grfErr errutil.Error

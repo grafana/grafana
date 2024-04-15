@@ -50,11 +50,10 @@ func CreateIntegrationTestCtx(t *testing.T, cfg *setting.Cfg, coreRegistry *core
 	reg := registry.ProvideService()
 	angularInspector := angularinspector.NewStaticInspector()
 	proc := process.ProvideService()
-	errTracker := pluginerrs.ProvideSignatureErrorTracker()
 
 	disc := pipeline.ProvideDiscoveryStage(pCfg, finder.NewLocalFinder(true), reg)
 	boot := pipeline.ProvideBootstrapStage(pCfg, signature.ProvideService(pCfg, statickey.New()), assetpath.ProvideService(pCfg, cdn))
-	valid := pipeline.ProvideValidationStage(pCfg, signature.NewValidator(signature.NewUnsignedAuthorizer(pCfg)), angularInspector, errTracker)
+	valid := pipeline.ProvideValidationStage(pCfg, signature.NewValidator(signature.NewUnsignedAuthorizer(pCfg)), angularInspector)
 	init := pipeline.ProvideInitializationStage(pCfg, reg, provider.ProvideService(coreRegistry), proc, &fakes.FakeAuthService{}, fakes.NewFakeRoleRegistry(), nil, tracing.InitializeTracerForTest())
 	term, err := pipeline.ProvideTerminationStage(pCfg, reg, proc)
 	require.NoError(t, err)
@@ -95,7 +94,7 @@ func CreateTestLoader(t *testing.T, cfg *pluginsCfg.PluginManagementCfg, opts Lo
 	}
 
 	if opts.Validator == nil {
-		opts.Validator = pipeline.ProvideValidationStage(cfg, signature.NewValidator(signature.NewUnsignedAuthorizer(cfg)), angularinspector.NewStaticInspector(), pluginerrs.ProvideSignatureErrorTracker())
+		opts.Validator = pipeline.ProvideValidationStage(cfg, signature.NewValidator(signature.NewUnsignedAuthorizer(cfg)), angularinspector.NewStaticInspector())
 	}
 
 	if opts.Initializer == nil {
@@ -111,5 +110,5 @@ func CreateTestLoader(t *testing.T, cfg *pluginsCfg.PluginManagementCfg, opts Lo
 		require.NoError(t, err)
 	}
 
-	return loader.New(opts.Discoverer, opts.Bootstrapper, opts.Validator, opts.Initializer, opts.Terminator)
+	return loader.New(opts.Discoverer, opts.Bootstrapper, opts.Validator, opts.Initializer, opts.Terminator, pluginerrs.ProvideErrorTracker())
 }
