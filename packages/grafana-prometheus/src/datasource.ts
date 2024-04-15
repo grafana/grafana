@@ -369,7 +369,7 @@ export class PrometheusDatasource
     };
 
     if (config.featureToggles.promQLScope) {
-      processedTarget.scope = request.scope;
+      processedTarget.scope = request.scope?.spec;
     }
 
     if (target.instant && target.range) {

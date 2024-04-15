@@ -2,10 +2,18 @@ import { css } from '@emotion/css';
 import React from 'react';
 import { Link } from 'react-router-dom';
 
-import { AppEvents, GrafanaTheme2, ScopeDashboard } from '@grafana/data';
-import { config, getAppEvents, getBackendSrv, locationService } from '@grafana/runtime';
+import { AppEvents, GrafanaTheme2, ScopeDashboardBindingSpec } from '@grafana/data';
+import { getAppEvents, getBackendSrv, locationService } from '@grafana/runtime';
 import { SceneComponentProps, SceneObjectBase, SceneObjectState } from '@grafana/scenes';
 import { CustomScrollbar, Icon, Input, useStyles2 } from '@grafana/ui';
+
+import { ScopedResourceServer } from '../../apiserver/server';
+
+export interface ScopeDashboard {
+  uid: string;
+  title: string;
+  url: string;
+}
 
 export interface ScopesDashboardsSceneState extends SceneObjectState {
   dashboards: ScopeDashboard[];
@@ -17,8 +25,11 @@ export interface ScopesDashboardsSceneState extends SceneObjectState {
 export class ScopesDashboardsScene extends SceneObjectBase<ScopesDashboardsSceneState> {
   static Component = ScopesDashboardsSceneRenderer;
 
-  private _url =
-    config.bootData.settings.listDashboardScopesEndpoint || '/apis/scope.grafana.app/v0alpha1/scopedashboards';
+  private server = new ScopedResourceServer<ScopeDashboardBindingSpec, 'ScopeDashboardBinding'>({
+    group: 'scope.grafana.app',
+    version: 'v0alpha1',
+    resource: 'scopedashboardbindings',
+  });
 
   constructor() {
     super({
@@ -57,11 +68,17 @@ export class ScopesDashboardsScene extends SceneObjectBase<ScopesDashboardsScene
 
   private async fetchDashboardsUids(scope: string): Promise<string[]> {
     try {
-      const response = await getBackendSrv().get<{
-        items: Array<{ spec: { dashboards: null | string[]; scope: string } }>;
-      }>(this._url, { scope });
+      const response = await this.server.list({
+        fieldSelector: [
+          {
+            key: 'spec.scope',
+            operator: '=',
+            value: scope,
+          },
+        ],
+      });
 
-      return response.items.find((item) => !!item.spec.dashboards && item.spec.scope === scope)?.spec.dashboards ?? [];
+      return response.items.map((item) => item.spec.dashboard).filter((dashboardUid) => !!dashboardUid) ?? [];
     } catch (err) {
       return [];
     }
