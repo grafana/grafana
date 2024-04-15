@@ -55,7 +55,7 @@ func TestMode4(t *testing.T) {
 	assert.Equal(t, 0, lsSpy.Counts("LegacyStorage.DeleteCollection"))
 	assert.Equal(t, 1, sSpy.Counts("Storage.DeleteCollection"))
 	
-	// Update: it should update only US
+	// Update: it should update only in Storage
 	dummy := &example.Pod{}
 	uoi := UpdatedObjInfoObj{}
 	_, err = uoi.UpdatedObject(context.Background(), dummy)
