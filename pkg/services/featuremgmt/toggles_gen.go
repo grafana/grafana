@@ -279,10 +279,6 @@ const (
 	// Enables writing multiple items from a single query within Recorded Queries
 	FlagRecordedQueriesMulti = "recordedQueriesMulti"
 
-	// FlagPluginsDynamicAngularDetectionPatterns
-	// Enables fetching Angular detection patterns for plugins from GCOM and fallback to hardcoded ones
-	FlagPluginsDynamicAngularDetectionPatterns = "pluginsDynamicAngularDetectionPatterns"
-
 	// FlagVizAndWidgetSplit
 	// Split panels between visualizations and widgets
 	FlagVizAndWidgetSplit = "vizAndWidgetSplit"
@@ -563,10 +559,6 @@ const (
 	// Use the kubernetes API for feature toggle management in the frontend
 	FlagKubernetesFeatureToggles = "kubernetesFeatureToggles"
 
-	// FlagEnablePluginsTracingByDefault
-	// Enable plugin tracing for all external plugins
-	FlagEnablePluginsTracingByDefault = "enablePluginsTracingByDefault"
-
 	// FlagCloudRBACRoles
 	// Enabled grafana cloud specific RBAC roles
 	FlagCloudRBACRoles = "cloudRBACRoles"
@@ -654,4 +646,8 @@ const (
 	// FlagCloudWatchNewLabelParsing
 	// Updates CloudWatch label parsing to be more accurate
 	FlagCloudWatchNewLabelParsing = "cloudWatchNewLabelParsing"
+
+	// FlagAccessActionSets
+	// Introduces action sets for resource permissions
+	FlagAccessActionSets = "accessActionSets"
 )

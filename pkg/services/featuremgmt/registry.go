@@ -509,14 +509,6 @@ var (
 			AllowSelfServe: false,
 		},
 		{
-			Name:         "pluginsDynamicAngularDetectionPatterns",
-			Description:  "Enables fetching Angular detection patterns for plugins from GCOM and fallback to hardcoded ones",
-			Stage:        FeatureStageGeneralAvailability,
-			FrontendOnly: false,
-			Owner:        grafanaPluginsPlatformSquad,
-			Expression:   "true", // enabled by default
-		},
-		{
 			Name:         "vizAndWidgetSplit",
 			Description:  "Split panels between visualizations and widgets",
 			Stage:        FeatureStageExperimental,
@@ -1036,15 +1028,6 @@ var (
 			HideFromAdminPage: true,
 		},
 		{
-			Name:            "enablePluginsTracingByDefault",
-			Description:     "Enable plugin tracing for all external plugins",
-			FrontendOnly:    false,
-			Stage:           FeatureStageGeneralAvailability,
-			Owner:           grafanaPluginsPlatformSquad,
-			RequiresRestart: true,
-			Expression:      "true", // enabled by default
-		},
-		{
 			Name:            "cloudRBACRoles",
 			Description:     "Enabled grafana cloud specific RBAC roles",
 			Stage:           FeatureStageExperimental,
@@ -1184,7 +1167,7 @@ var (
 		{
 			Name:         "usePrometheusFrontendPackage",
 			Description:  "Use the @grafana/prometheus frontend package in core Prometheus.",
-			Stage:        FeatureStageExperimental,
+			Stage:        FeatureStageGeneralAvailability,
 			FrontendOnly: true,
 			Owner:        grafanaObservabilityMetricsSquad,
 		},
@@ -1213,6 +1196,12 @@ var (
 			Owner:          awsDatasourcesSquad,
 			FrontendOnly:   false,
 			AllowSelfServe: false,
+		},
+		{
+			Name:        "accessActionSets",
+			Description: "Introduces action sets for resource permissions",
+			Stage:       FeatureStageExperimental,
+			Owner:       identityAccessTeam,
 		},
 	}
 )

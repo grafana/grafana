@@ -1,4 +1,4 @@
-import { Scope } from '@grafana/data';
+import { ScopeSpec } from '@grafana/data';
 import * as common from '@grafana/schema';
 
 export enum QueryEditorMode {
@@ -42,5 +42,5 @@ export interface Prometheus extends common.DataQuery {
    * Returns a Range vector, comprised of a set of time series containing a range of data points over time for each time series
    */
   range?: boolean;
-  scope?: Scope;
+  scope?: ScopeSpec;
 }

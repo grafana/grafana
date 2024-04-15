@@ -627,7 +627,8 @@
       "metadata": {
         "name": "enablePluginsTracingByDefault",
         "resourceVersion": "1712639261786",
-        "creationTimestamp": "2024-04-09T05:07:41Z"
+        "creationTimestamp": "2024-04-09T05:07:41Z",
+        "deletionTimestamp": "2024-04-11T13:21:52Z"
       },
       "spec": {
         "description": "Enable plugin tracing for all external plugins",
@@ -1119,7 +1120,8 @@
       "metadata": {
         "name": "pluginsDynamicAngularDetectionPatterns",
         "resourceVersion": "1712639261786",
-        "creationTimestamp": "2024-04-09T05:07:41Z"
+        "creationTimestamp": "2024-04-09T05:07:41Z",
+        "deletionTimestamp": "2024-04-11T13:53:48Z"
       },
       "spec": {
         "description": "Enables fetching Angular detection patterns for plugins from GCOM and fallback to hardcoded ones",
@@ -1464,12 +1466,15 @@
     {
       "metadata": {
         "name": "usePrometheusFrontendPackage",
-        "resourceVersion": "1712639261786",
-        "creationTimestamp": "2024-04-09T05:07:41Z"
+        "resourceVersion": "1712841379965",
+        "creationTimestamp": "2024-04-09T05:07:41Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2024-04-11 13:16:19.965312 +0000 UTC"
+        }
       },
       "spec": {
         "description": "Use the @grafana/prometheus frontend package in core Prometheus.",
-        "stage": "experimental",
+        "stage": "GA",
         "codeowner": "@grafana/observability-metrics",
         "frontend": true
       }
@@ -2085,6 +2090,31 @@
         "codeowner": "@grafana/observability-metrics",
         "frontend": true,
         "allowSelfServe": true
+      }
+    },
+    {
+      "metadata": {
+        "name": "actionSets",
+        "resourceVersion": "1712934405418",
+        "creationTimestamp": "2024-04-12T15:06:45Z",
+        "deletionTimestamp": "2024-04-12T15:17:53Z"
+      },
+      "spec": {
+        "description": "Introduces action sets for resource permissions",
+        "stage": "experimental",
+        "codeowner": "@grafana/identity-access-team"
+      }
+    },
+    {
+      "metadata": {
+        "name": "accessActionSets",
+        "resourceVersion": "1712935073026",
+        "creationTimestamp": "2024-04-12T15:17:53Z"
+      },
+      "spec": {
+        "description": "Introduces action sets for resource permissions",
+        "stage": "experimental",
+        "codeowner": "@grafana/identity-access-team"
       }
     }
   ]
