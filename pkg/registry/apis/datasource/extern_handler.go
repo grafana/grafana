@@ -77,7 +77,7 @@ func (h *externalHTTPHandler) query(ctx context.Context, pluginCtx backend.Plugi
 			responder.Error(err)
 			return
 		}
-		if dsRef != nil && dsRef.UID != pluginCtx.DataSourceInstanceSettings.UID { // same as name?
+		if dsRef != nil && dsRef.UID != pluginCtx.DataSourceInstanceSettings.UID {
 			responder.Error(fmt.Errorf("expected query body datasource and request to match"))
 			return
 		}
