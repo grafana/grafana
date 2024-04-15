@@ -134,6 +134,10 @@ func (h *externalHTTPHandler) resource(ctx context.Context, pluginCtx backend.Pl
 			Body:          body,
 			Headers:       headers,
 		})
+		if err != nil {
+			responder.Error(err)
+			return
+		}
 
 		server := httpresponsesender.New(w)
 		for {
