@@ -7,6 +7,7 @@ import (
 	"net/http"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
+	"github.com/grafana/grafana/pkg/util/proxyutil"
 
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/api/response"
@@ -50,6 +51,7 @@ func (hs *HTTPServer) getDSQueryEndpoint() web.Handler {
 				return
 			}
 			r.URL.Path = "/apis/query.grafana.app/v0alpha1/namespaces/" + namespaceMapper(user.OrgID) + "/query"
+			r.Header.Add(proxyutil.IDHeaderName, user.GetIDToken())
 			hs.clientConfigProvider.DirectlyServeHTTP(w, r)
 		}
 	}
