@@ -4,7 +4,7 @@ import React, { useMemo } from 'react';
 import { useLocation } from 'react-router-dom';
 
 import { GrafanaTheme2, urlUtil } from '@grafana/data';
-import { LinkButton, LoadingPlaceholder, Pagination, Spinner, useStyles2 } from '@grafana/ui';
+import { LinkButton, LoadingPlaceholder, Pagination, Spinner, useStyles2, Text } from '@grafana/ui';
 import { CombinedRuleNamespace } from 'app/types/unified-alerting';
 
 import { DEFAULT_PER_PAGE_PAGINATION } from '../../../../../core/constants';
@@ -55,7 +55,9 @@ export const CloudRules = ({ namespaces, expandAll }: Props) => {
     <section className={styles.wrapper}>
       <div className={styles.sectionHeader}>
         <div className={styles.headerRow}>
-          <h5>Mimir / Cortex / Loki</h5>
+          <Text element="h2" variant="h5">
+            Mimir / Cortex / Loki
+          </Text>
           {dataSourcesLoading.length ? (
             <LoadingPlaceholder
               className={styles.loader}
