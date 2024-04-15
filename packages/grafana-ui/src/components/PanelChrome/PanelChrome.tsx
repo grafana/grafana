@@ -179,28 +179,30 @@ export function PanelChrome({
       {/* Collapsible title */}
       {collapsible && (
         <div className={styles.title}>
-          <button
-            type="button"
-            className={styles.clearButtonStyles}
-            onClick={() => {
-              toggleOpen();
-              if (onToggleCollapse) {
-                onToggleCollapse(!collapsed);
-              }
-            }}
-            id={collapsibleButtonId}
-            aria-expanded={!collapsed}
-            aria-controls={!collapsed ? panelContentId : undefined}
-          >
-            <Icon
-              name={!collapsed ? 'angle-down' : 'angle-right'}
-              aria-hidden={!!title}
-              aria-label={!title ? 'toggle collapse panel' : undefined}
-            />
-            <Text variant="h6" truncate>
-              {title}
-            </Text>
-          </button>
+          <Text element="h2" variant="h6">
+            <button
+              type="button"
+              className={styles.clearButtonStyles}
+              onClick={() => {
+                toggleOpen();
+                if (onToggleCollapse) {
+                  onToggleCollapse(!collapsed);
+                }
+              }}
+              id={collapsibleButtonId}
+              aria-expanded={!collapsed}
+              aria-controls={!collapsed ? panelContentId : undefined}
+            >
+              <Icon
+                name={!collapsed ? 'angle-down' : 'angle-right'}
+                aria-hidden={!!title}
+                aria-label={!title ? 'toggle collapse panel' : undefined}
+              />
+              <Text variant="h6" truncate>
+                {title}
+              </Text>
+            </button>
+          </Text>
         </div>
       )}
 
@@ -433,7 +435,10 @@ const getStyles = (theme: GrafanaTheme2) => {
       label: 'panel-title',
       display: 'flex',
       padding: theme.spacing(0, padding),
-      overflow: 'hidden',
+      minWidth: 0,
+      '& > h2': {
+        minWidth: 0,
+      },
     }),
     items: css({
       display: 'flex',
@@ -481,14 +486,9 @@ const getStyles = (theme: GrafanaTheme2) => {
       display: 'flex',
       gap: theme.spacing(0.5),
       background: 'transparent',
-      color: theme.colors.text.primary,
       border: 'none',
       padding: 0,
-      textOverflow: 'ellipsis',
-      overflow: 'hidden',
-      whiteSpace: 'nowrap',
-      fontSize: theme.typography.h6.fontSize,
-      fontWeight: theme.typography.h6.fontWeight,
+      maxWidth: '100%',
     }),
   };
 };
