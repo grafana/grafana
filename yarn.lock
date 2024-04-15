@@ -4183,8 +4183,8 @@ __metadata:
   linkType: soft
 
 "@grafana/scenes@npm:^4.6.0":
-  version: 4.6.0
-  resolution: "@grafana/scenes@npm:4.6.0"
+  version: 4.8.0
+  resolution: "@grafana/scenes@npm:4.8.0"
   dependencies:
     "@grafana/e2e-selectors": "npm:10.3.3"
     react-grid-layout: "npm:1.3.4"
@@ -4198,7 +4198,7 @@ __metadata:
     "@grafana/ui": ^10.0.3
     react: ^18.0.0
     react-dom: ^18.0.0
-  checksum: 10/72682ce36cd505b7d0842f19e5e433b3dcb1675111c78b29d5c18761316e0e80c128e03cb0f72db72c6a9cde502915cb78751c2c13fc70412a0bead5d76fb050
+  checksum: 10/8930094261ab43da948a1dac260d0246dd41c906fb4fe060ad2b534ea82ed1ee1b1d26f839ac08add1a25127a2b7b05a7c2f273a4013bda63146dae118e5d5ea
   languageName: node
   linkType: hard
 
