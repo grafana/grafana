@@ -125,7 +125,6 @@ export function PanelChrome({
   const theme = useTheme2();
   const styles = useStyles2(getStyles);
   const panelContentId = useId();
-  const collapsibleButtonId = useId();
 
   const hasHeader = !hoverHeader;
 
@@ -189,7 +188,6 @@ export function PanelChrome({
                   onToggleCollapse(!collapsed);
                 }
               }}
-              id={collapsibleButtonId}
               aria-expanded={!collapsed}
               aria-controls={!collapsed ? panelContentId : undefined}
             >
@@ -244,7 +242,6 @@ export function PanelChrome({
       data-testid={testid}
       tabIndex={0} //eslint-disable-line jsx-a11y/no-noninteractive-tabindex
       ref={ref}
-      aria-labelledby={collapsible ? collapsibleButtonId : undefined}
     >
       <div className={styles.loadingBarContainer}>
         {loadingState === LoadingState.Loading ? (
