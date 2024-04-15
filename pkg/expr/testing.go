@@ -4,7 +4,9 @@ import (
 	"context"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
+	"github.com/grafana/grafana-plugin-sdk-go/data"
 
+	"github.com/grafana/grafana/pkg/expr/mathexp"
 	"github.com/grafana/grafana/pkg/services/auth/identity"
 	"github.com/grafana/grafana/pkg/services/datasources"
 )
@@ -81,4 +83,14 @@ var _ backend.CallResourceHandler = &recordingCallResourceHandler{}
 func (f *recordingCallResourceHandler) CallResource(_ context.Context, req *backend.CallResourceRequest, sender backend.CallResourceResponseSender) error {
 	f.recordings = append(f.recordings, req)
 	return sender.Send(f.response)
+}
+
+func newNumber(labels data.Labels, value *float64) mathexp.Number {
+	n := mathexp.NewNumber("", labels)
+	n.SetValue(value)
+	return n
+}
+
+func newResults(values ...mathexp.Value) mathexp.Results {
+	return mathexp.Results{Values: values}
 }
