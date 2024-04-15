@@ -58,9 +58,9 @@ Variables can be used in titles, descriptions, text panels, and queries. Queries
 
 The following dashboards in Grafana Play provide examples of template variables:
 
-- [Templating, repeated panels](https://play.grafana.org/d/000000025/) - Using query variables to control how many panels appear
+- [Templating, repeated panels](https://play.grafana.org/d/000000025/) - Using query variables to control how many panels appear.
 - [Templated Dynamic Dashboard](https://play.grafana.org/d/000000056/) - Uses query variables, chained query variables, an interval variable, and a repeated panel.
-- [Nested Variables Drilldown](https://play.grafana.org/d/testdata-nested-variables-drilldown/)
+- [Templating - Nested Variables Drilldown](https://play.grafana.org/d/testdata-nested-variables-drilldown/)
 
 ## Variable best practices
 
