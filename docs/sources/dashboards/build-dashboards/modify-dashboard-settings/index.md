@@ -47,6 +47,24 @@ Adjust dashboard time settings when you want to change the dashboard timezone, t
    - **Now delay:** Override the `now` time by entering a time delay. Use this option to accommodate known delays in data aggregation to avoid null values.
    - **Hide time picker:** Select this option if you do not want Grafana to display the time picker.
 
+## Add tags
+
+You can add metadata to your dashboards using tags. Tags also give you the ability to filter the list of dashboards.
+
+Tags can be up to 50 characters long, including spaces.
+
+To add tags to a dashboard, follow these steps:
+
+1. On the **Dashboard settings** page, scroll down to the **Tags** section.
+1. In the field, enter a new or existing tag.
+
+   If you're entering an existing tag, make sure that you spell it the same way or a new tag is created.
+
+1. Click **Add** or press the Enter key.
+1. Save the dashboard.
+
+When you're on the **Dashboards** page, any tags you've entered show up under the **Tags** column.
+
 ## Add an annotation query
 
 An annotation query is a query that queries for events. These events can be visualized in graphs across the dashboard as vertical lines along with a small
