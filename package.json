@@ -118,7 +118,6 @@
     "@types/lodash": "4.17.0",
     "@types/logfmt": "^1.2.3",
     "@types/lucene": "^2",
-    "@types/marked": "6.0.0",
     "@types/mousetrap": "1.6.15",
     "@types/node": "20.12.7",
     "@types/node-forge": "^1",
