@@ -1233,12 +1233,6 @@ exports[`better eslint`] = {
       [0, 0, 0, "Styles should be written using objects.", "5"],
       [0, 0, 0, "Styles should be written using objects.", "6"]
     ],
-    "public/app/core/components/RolePicker/RolePickerMenu.tsx:5381": [
-      [0, 0, 0, "\'HorizontalGroup\' import from \'@grafana/ui\' is restricted from being used by a pattern. Use Stack component instead.", "0"]
-    ],
-    "public/app/core/components/RolePicker/RolePickerSubMenu.tsx:5381": [
-      [0, 0, 0, "\'HorizontalGroup\' import from \'@grafana/ui\' is restricted from being used by a pattern. Use Stack component instead.", "0"]
-    ],
     "public/app/core/components/RolePicker/ValueContainer.tsx:5381": [
       [0, 0, 0, "Styles should be written using objects.", "0"]
     ],
