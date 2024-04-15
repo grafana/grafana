@@ -39,7 +39,7 @@ export function LabelsFieldInForm({ onEditClick }: LabelsFieldInFormProps) {
           </Button>
         ) : (
           <Stack direction="row" gap={2} alignItems="center">
-            <Text color="warning">No labels selected</Text>
+            <Text>No labels selected</Text>
             <Button icon="plus" type="button" variant="secondary" onClick={onEditClick} size="sm">
               Add labels
             </Button>
