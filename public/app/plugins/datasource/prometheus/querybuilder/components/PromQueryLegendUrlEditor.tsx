@@ -5,14 +5,14 @@ import { EditorField } from '@grafana/experimental';
 import { AutoSizeInput } from '@grafana/ui';
 
 export interface Props {
-  legendUrlFormat: string | undefined;
-  onChange: (legendUrlFormat: string) => void;
+  legendUrl: string | undefined;
+  onChange: (legendUrl: string) => void;
   onRunQuery: () => void;
 }
 
-export const PromQueryLegendUrlEditor = React.memo<Props>(({ legendUrlFormat, onChange, onRunQuery }) => {
+export const PromQueryLegendUrlEditor = React.memo<Props>(({ legendUrl, onChange, onRunQuery }) => {
   const inputRef = useRef<HTMLInputElement | null>(null);
-  const onLegendUrlFormatChanged = (evt: React.FormEvent<HTMLInputElement>) => {
+  const onLegendUrlChanged = (evt: React.FormEvent<HTMLInputElement>) => {
       onChange(evt.currentTarget.value);
       onRunQuery();
     }
@@ -20,15 +20,15 @@ export const PromQueryLegendUrlEditor = React.memo<Props>(({ legendUrlFormat, on
   return (
     <EditorField
       label="Legend Url"
-      tooltip="Similar to the custom Label this will direct you to the right location"
+      tooltip="If the url is set, the label in the legend will become clickable, you can use variables similar to Legend Label."
       data-testid={selectors.components.DataSource.Prometheus.queryEditor.legendUrl}
     >
           <AutoSizeInput
-            id="legendUrlFormat"
+            id="legendUrl"
             minWidth={22}
-            placeholder="{{example}}"
-            defaultValue={legendUrlFormat}
-            onCommitChange={onLegendUrlFormatChanged}
+            placeholder="/your/{{example}}/url"
+            defaultValue={legendUrl}
+            onCommitChange={onLegendUrlChanged}
             ref={inputRef}
           />
     </EditorField>
@@ -36,7 +36,3 @@ export const PromQueryLegendUrlEditor = React.memo<Props>(({ legendUrlFormat, on
 });
 
 PromQueryLegendUrlEditor.displayName = 'PromQueryLegendUrlEditor';
-
-export function getLegendUrlModeLabel(legendUrlFormat: string | undefined) {
-  return legendUrlFormat;
-}
