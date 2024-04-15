@@ -10789,7 +10789,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@typescript-eslint/utils@npm:6.21.0, @typescript-eslint/utils@npm:^6.0.0":
+"@typescript-eslint/utils@npm:6.21.0, @typescript-eslint/utils@npm:^6.0.0, @typescript-eslint/utils@npm:^6.4.1":
   version: 6.21.0
   resolution: "@typescript-eslint/utils@npm:6.21.0"
   dependencies:
@@ -16734,6 +16734,15 @@ __metadata:
   languageName: node
   linkType: hard
 
+"eslint-plugin-no-barrel-files@npm:^1.1.0":
+  version: 1.1.0
+  resolution: "eslint-plugin-no-barrel-files@npm:1.1.0"
+  dependencies:
+    "@typescript-eslint/utils": "npm:^6.4.1"
+  checksum: 10/f8a71fbe38e7af91a078d235b5c52d9eb06f5c0658af24714a684e3c66b60fe37f34ae984c3f23adb0916fd3271730fa149bc18ff528ec73f8bd4c3cfb55b3a1
+  languageName: node
+  linkType: hard
+
 "eslint-plugin-react-hooks@npm:4.6.0":
   version: 4.6.0
   resolution: "eslint-plugin-react-hooks@npm:4.6.0"
@@ -18754,6 +18763,7 @@ __metadata:
     eslint-plugin-jsdoc: "npm:48.2.3"
     eslint-plugin-jsx-a11y: "npm:6.8.0"
     eslint-plugin-lodash: "npm:7.4.0"
+    eslint-plugin-no-barrel-files: "npm:^1.1.0"
     eslint-plugin-react: "npm:7.34.1"
     eslint-plugin-react-hooks: "npm:4.6.0"
     eslint-scope: "npm:^8.0.0"
