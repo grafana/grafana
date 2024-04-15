@@ -1,3 +1,4 @@
+// Core Grafana history https://github.com/grafana/grafana/blob/v11.0.0-preview/public/app/plugins/datasource/prometheus/components/PromExploreExtraField.test.tsx
 import { render, screen } from '@testing-library/react';
 import React from 'react';
 

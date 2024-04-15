@@ -1468,6 +1468,7 @@
         "name": "usePrometheusFrontendPackage",
         "resourceVersion": "1712841379965",
         "creationTimestamp": "2024-04-09T05:07:41Z",
+        "deletionTimestamp": "2024-04-12T23:12:45Z",
         "annotations": {
           "grafana.app/updatedTimestamp": "2024-04-11 13:16:19.965312 +0000 UTC"
         }
