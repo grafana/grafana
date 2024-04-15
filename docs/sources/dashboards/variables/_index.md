@@ -30,7 +30,7 @@ the dashboard. These dropdowns make it easy to change the data being displayed i
 
 {{< figure src="/static/img/docs/v50/variables_dashboard.png" alt="Variable drop-down open and two values selected" >}}
 
-{{< docs/play title="Global Variables and Interpolation" url="https://play.grafana.org/d/HYaGDGIMk/" >}}
+{{< docs/play title="Templating - Global variables and interpolation" url="https://play.grafana.org/d/HYaGDGIMk/" >}}
 
 Variables are useful for administrators who want to allow Grafana viewers to adjust visualizations without giving them full editing permissions. Grafana Viewers can use variables.
 
