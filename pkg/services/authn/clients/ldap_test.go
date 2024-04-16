@@ -187,7 +187,7 @@ func setupLDAPTestCase(tt *ldapTestCase) *LDAP {
 	userService := &usertest.FakeUserService{
 		ExpectedError: tt.expectedUserErr,
 		ExpectedUser:  &tt.expectedUser,
-		DisableFn: func(ctx context.Context, cmd *user.DisableUserCommand) error {
+		UpdateFn: func(ctx context.Context, cmd *user.UpdateUserCommand) error {
 			tt.disableCalled = true
 			return nil
 		},
