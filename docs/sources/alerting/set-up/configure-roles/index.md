@@ -48,7 +48,7 @@ To assign roles, admins need to complete the following steps.
 
 You can further customize access for alert rules, simplified alert routing, and provisioning by assigning permissions to individual folders.
 
-This prevents every user from having access to modify all alert rules and gives them access to the folders with the alert rules they are working on.
+This prevents every user from having access to modify all alert rules and gives them access to the folders with the alert rules they're working on.
 
 For example, if you are using simplified alert routing and adding contact points to your alert rules, it also helps you avoid the scenario where someone from another team accidentally removes the wrong notification policy or adds a competing one, and all of a sudden you stop getting your notifications.
 
