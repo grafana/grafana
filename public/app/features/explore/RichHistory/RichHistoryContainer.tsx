@@ -9,6 +9,7 @@ import { Trans } from 'app/core/internationalization';
 import { StoreState } from 'app/types';
 
 // Components, enums
+import { useQueryLibraryContext } from '../QueryLibrary/QueryLibraryContext';
 import {
   deleteRichHistory,
   initRichHistory,
@@ -19,7 +20,7 @@ import {
   updateHistorySearchFilters,
 } from '../state/history';
 
-import { RichHistory, Tabs } from './RichHistory';
+import { RichHistory } from './RichHistory';
 
 //Actions
 
@@ -28,11 +29,9 @@ function mapStateToProps(state: StoreState) {
   const richHistorySearchFilters = explore.richHistorySearchFilters;
   const { richHistorySettings, richHistory, richHistoryTotal } = explore;
 
-  const firstTab = richHistorySettings?.starredTabAsFirstTab ? Tabs.Starred : Tabs.RichHistory;
   return {
     richHistory,
     richHistoryTotal,
-    firstTab,
     richHistorySettings,
     richHistorySearchFilters,
   };
@@ -61,7 +60,6 @@ export function RichHistoryContainer(props: Props) {
   const {
     richHistory,
     richHistoryTotal,
-    firstTab,
     deleteRichHistory,
     initRichHistory,
     loadRichHistory,
@@ -81,7 +79,9 @@ export function RichHistoryContainer(props: Props) {
     });
   }, [initRichHistory]);
 
-  if (!richHistorySettings) {
+  const { selectedTab } = useQueryLibraryContext();
+
+  if (!richHistorySettings || !selectedTab) {
     return (
       <span>
         <Trans i18nKey="explore.rich-history-container.loading">Loading...</Trans>
@@ -93,7 +93,7 @@ export function RichHistoryContainer(props: Props) {
     <RichHistory
       richHistory={richHistory}
       richHistoryTotal={richHistoryTotal}
-      firstTab={firstTab}
+      firstTab={selectedTab}
       onClose={onClose}
       height={theme.components.horizontalDrawer.defaultHeight}
       deleteRichHistory={deleteRichHistory}

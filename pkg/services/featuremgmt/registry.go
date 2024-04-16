@@ -1196,6 +1196,14 @@ var (
 			Stage:       FeatureStageExperimental,
 			Owner:       identityAccessTeam,
 		},
+		{
+			Name:           "queryLibrary",
+			Description:    "Enables Query Library feature in Explore",
+			Stage:          FeatureStageExperimental,
+			Owner:          grafanaExploreSquad,
+			FrontendOnly:   false,
+			AllowSelfServe: false,
+		},
 	}
 )
 

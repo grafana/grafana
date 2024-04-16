@@ -159,3 +159,4 @@ oauthRequireSubClaim,experimental,@grafana/identity-access-team,false,false,fals
 newDashboardWithFiltersAndGroupBy,experimental,@grafana/dashboards-squad,false,false,false
 cloudWatchNewLabelParsing,GA,@grafana/aws-datasources,false,false,false
 accessActionSets,experimental,@grafana/identity-access-team,false,false,false
+queryLibrary,experimental,@grafana/explore-squad,false,false,false

@@ -646,4 +646,8 @@ const (
 	// FlagAccessActionSets
 	// Introduces action sets for resource permissions
 	FlagAccessActionSets = "accessActionSets"
+
+	// FlagQueryLibrary
+	// Enables Query Library feature in Explore
+	FlagQueryLibrary = "queryLibrary"
 )

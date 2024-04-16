@@ -6,15 +6,15 @@ import { Components } from '@grafana/e2e-selectors';
 import { ToolbarButton, useTheme2 } from '@grafana/ui';
 import { t, Trans } from 'app/core/internationalization';
 
+import { useQueryLibraryContext } from './QueryLibrary/QueryLibraryContext';
+
 type Props = {
   addQueryRowButtonDisabled?: boolean;
   addQueryRowButtonHidden?: boolean;
   richHistoryRowButtonHidden?: boolean;
-  richHistoryButtonActive?: boolean;
   queryInspectorButtonActive?: boolean;
 
   onClickAddQueryRowButton: () => void;
-  onClickRichHistoryButton: () => void;
   onClickQueryInspectorButton: () => void;
 };
 
@@ -32,6 +32,7 @@ const getStyles = (theme: GrafanaTheme2) => {
 export function SecondaryActions(props: Props) {
   const theme = useTheme2();
   const styles = getStyles(theme);
+  const { drawerOpened, setDrawerOpened } = useQueryLibraryContext();
   return (
     <div className={styles.containerMargin}>
       {!props.addQueryRowButtonHidden && (
@@ -47,9 +48,9 @@ export function SecondaryActions(props: Props) {
       )}
       {!props.richHistoryRowButtonHidden && (
         <ToolbarButton
-          variant={props.richHistoryButtonActive ? 'active' : 'canvas'}
+          variant={drawerOpened ? 'active' : 'canvas'}
           aria-label={t('explore.secondary-actions.query-history-button-aria-label', 'Query history')}
-          onClick={props.onClickRichHistoryButton}
+          onClick={() => setDrawerOpened(!drawerOpened)}
           data-testid={Components.QueryTab.queryHistoryButton}
           icon="history"
         >

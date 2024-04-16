@@ -9,16 +9,12 @@ import { SortOrder, RichHistorySearchFilters, RichHistorySettings } from 'app/co
 import { RichHistoryQuery } from 'app/types/explore';
 
 import { supportedFeatures } from '../../../core/history/richHistoryStorageProvider';
+import { Tabs, useQueryLibraryContext } from '../QueryLibrary/QueryLibraryContext';
+import { i18n } from '../QueryLibrary/utils';
 
 import { RichHistoryQueriesTab } from './RichHistoryQueriesTab';
 import { RichHistorySettingsTab } from './RichHistorySettingsTab';
 import { RichHistoryStarredTab } from './RichHistoryStarredTab';
-
-export enum Tabs {
-  RichHistory = 'Query history',
-  Starred = 'Starred',
-  Settings = 'Settings',
-}
 
 export const getSortOrderOptions = () =>
   [
@@ -48,6 +44,8 @@ export function RichHistory(props: RichHistoryProps) {
   const { richHistory, richHistoryTotal, height, deleteRichHistory, onClose, firstTab } = props;
 
   const [loading, setLoading] = useState(false);
+
+  const { enabled } = useQueryLibraryContext();
 
   const updateSettings = (settingsToUpdate: Partial<RichHistorySettings>) => {
     props.updateHistorySettings({ ...props.richHistorySettings, ...settingsToUpdate });
@@ -84,8 +82,15 @@ export function RichHistory(props: RichHistoryProps) {
     setLoading(false);
   }, [richHistory]);
 
+  const QueryLibraryTab: TabConfig = {
+    label: i18n.queryLibrary,
+    value: Tabs.QueryLibrary,
+    content: <span>Coming soon!</span>,
+    icon: 'history',
+  };
+
   const QueriesTab: TabConfig = {
-    label: t('explore.rich-history.query-history', 'Query history'),
+    label: i18n.queryHistory,
     value: Tabs.RichHistory,
     content: (
       <RichHistoryQueriesTab
@@ -138,7 +143,7 @@ export function RichHistory(props: RichHistoryProps) {
     icon: 'sliders-v-alt',
   };
 
-  let tabs = [QueriesTab, StarredTab, SettingsTab];
+  let tabs = (enabled ? [QueryLibraryTab] : []).concat([QueriesTab, StarredTab, SettingsTab]);
   return (
     <TabbedContainer
       tabs={tabs}

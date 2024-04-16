@@ -7,13 +7,7 @@ import { SecondaryActions } from './SecondaryActions';
 
 describe('SecondaryActions', () => {
   it('should render component with three buttons', () => {
-    render(
-      <SecondaryActions
-        onClickAddQueryRowButton={noop}
-        onClickRichHistoryButton={noop}
-        onClickQueryInspectorButton={noop}
-      />
-    );
+    render(<SecondaryActions onClickAddQueryRowButton={noop} onClickQueryInspectorButton={noop} />);
 
     expect(screen.getByRole('button', { name: /Add query/i })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /Query history/i })).toBeInTheDocument();
@@ -26,7 +20,6 @@ describe('SecondaryActions', () => {
         addQueryRowButtonHidden={true}
         richHistoryRowButtonHidden={true}
         onClickAddQueryRowButton={noop}
-        onClickRichHistoryButton={noop}
         onClickQueryInspectorButton={noop}
       />
     );
@@ -41,7 +34,6 @@ describe('SecondaryActions', () => {
       <SecondaryActions
         addQueryRowButtonDisabled={true}
         onClickAddQueryRowButton={noop}
-        onClickRichHistoryButton={noop}
         onClickQueryInspectorButton={noop}
       />
     );
@@ -59,11 +51,7 @@ describe('SecondaryActions', () => {
     const onClickQueryInspector = jest.fn();
 
     render(
-      <SecondaryActions
-        onClickAddQueryRowButton={onClickAddRow}
-        onClickRichHistoryButton={onClickHistory}
-        onClickQueryInspectorButton={onClickQueryInspector}
-      />
+      <SecondaryActions onClickAddQueryRowButton={onClickAddRow} onClickQueryInspectorButton={onClickQueryInspector} />
     );
 
     await user.click(screen.getByRole('button', { name: /Add query/i }));

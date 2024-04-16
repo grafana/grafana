@@ -174,6 +174,7 @@ Experimental features might be changed or removed without prior notice.
 | `kubernetesAggregator`                      | Enable grafana aggregator                                                                                                                                                                                                                                                         |
 | `expressionParser`                          | Enable new expression parser                                                                                                                                                                                                                                                      |
 | `accessActionSets`                          | Introduces action sets for resource permissions                                                                                                                                                                                                                                   |
+| `queryLibrary`                              | Enables Query Library feature in Explore                                                                                                                                                                                                                                          |
 
 ## Development feature toggles
 

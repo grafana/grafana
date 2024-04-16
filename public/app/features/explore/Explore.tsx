@@ -56,7 +56,7 @@ import { SecondaryActions } from './SecondaryActions';
 import TableContainer from './Table/TableContainer';
 import { TraceViewContainer } from './TraceView/TraceViewContainer';
 import { changeSize } from './state/explorePane';
-import { changeShowQueryHistory, splitOpen } from './state/main';
+import { splitOpen } from './state/main';
 import {
   addQueryRow,
   modifyQueries,
@@ -304,10 +304,6 @@ export class Explore extends React.PureComponent<Props, ExploreState> {
     updateTimeRange({ exploreId, absoluteRange });
   };
 
-  toggleShowQueryHistory = () => {
-    this.props.changeShowQueryHistory(!this.props.showQueryHistory);
-  };
-
   onSplitOpen = (panelType: string) => {
     return async (options?: SplitOpenOptions) => {
       this.props.splitOpen(options);
@@ -535,7 +531,6 @@ export class Explore extends React.PureComponent<Props, ExploreState> {
       showLogsSample,
       correlationEditorDetails,
       correlationEditorHelperData,
-      showQueryHistory,
       showQueryInspector,
       setShowQueryInspector,
     } = this.props;
@@ -603,10 +598,8 @@ export class Explore extends React.PureComponent<Props, ExploreState> {
                           //TODO:unification
                           addQueryRowButtonHidden={false}
                           richHistoryRowButtonHidden={richHistoryRowButtonHidden}
-                          richHistoryButtonActive={showQueryHistory}
                           queryInspectorButtonActive={showQueryInspector}
                           onClickAddQueryRowButton={this.onClickAddQueryRowButton}
-                          onClickRichHistoryButton={this.toggleShowQueryHistory}
                           onClickQueryInspectorButton={() => setShowQueryInspector(!showQueryInspector)}
                         />
                         <ResponseErrorContainer exploreId={exploreId} />
@@ -721,7 +714,6 @@ function mapStateToProps(state: StoreState, { exploreId }: ExploreProps) {
     showLogsSample,
     correlationEditorHelperData,
     correlationEditorDetails: explore.correlationEditorDetails,
-    showQueryHistory: explore.showQueryHistory,
   };
 }
 
@@ -735,7 +727,6 @@ const mapDispatchToProps = {
   addQueryRow,
   splitOpen,
   setSupplementaryQueryEnabled,
-  changeShowQueryHistory,
 };
 
 const connector = connect(mapStateToProps, mapDispatchToProps);
