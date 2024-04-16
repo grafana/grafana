@@ -827,14 +827,12 @@ func TestValidateRuleNodeNotificationSettings(t *testing.T) {
 			notificationSettings: models.CopyNotificationSettings(validNotificationSettings(), models.NSMuts.WithGroupBy(model.AlertNameLabel, models.FolderTitleLabel)),
 		},
 		{
-			name:                 "group by missing alert name label is invalid",
+			name:                 "group by missing alert name label is valid",
 			notificationSettings: models.CopyNotificationSettings(validNotificationSettings(), models.NSMuts.WithGroupBy(models.FolderTitleLabel)),
-			expErrorContains:     model.AlertNameLabel,
 		},
 		{
-			name:                 "group by missing folder name label is invalid",
+			name:                 "group by missing folder name label is valid",
 			notificationSettings: models.CopyNotificationSettings(validNotificationSettings(), models.NSMuts.WithGroupBy(model.AlertNameLabel)),
-			expErrorContains:     models.FolderTitleLabel,
 		},
 		{
 			name:                 "group wait empty is valid",
