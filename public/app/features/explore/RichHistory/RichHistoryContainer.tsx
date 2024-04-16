@@ -1,5 +1,5 @@
 // Libraries
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { connect, ConnectedProps } from 'react-redux';
 
 import { config, reportInteraction } from '@grafana/runtime';
@@ -74,12 +74,20 @@ export function RichHistoryContainer(props: Props) {
 
   useEffect(() => {
     initRichHistory();
-    reportInteraction('grafana_explore_query_history_opened', {
-      queryHistoryEnabled: config.queryHistoryEnabled,
-    });
   }, [initRichHistory]);
 
   const { selectedTab } = useQueriesDrawerContext();
+  const [tracked, setTracked] = useState(false);
+
+  useEffect(() => {
+    if (!tracked) {
+      setTracked(true);
+      reportInteraction('grafana_explore_query_history_opened', {
+        queryHistoryEnabled: config.queryHistoryEnabled,
+        selectedTab,
+      });
+    }
+  }, [tracked, selectedTab]);
 
   if (!richHistorySettings || !selectedTab) {
     return (
