@@ -41,7 +41,6 @@ export function DashboardScenePage({ match, route, queryParams, history }: Props
     }
 
     return () => {
-      console.log('clear state');
       stateManager.clearState();
     };
   }, [

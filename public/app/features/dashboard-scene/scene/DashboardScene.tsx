@@ -196,12 +196,8 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
     // @ts-expect-error
     getDashboardSrv().setCurrent(oldDashboardWrapper);
 
-    console.log('DashboardScene activation', this.state.key);
-
     // Deactivation logic
     return () => {
-      console.log('DashboardScene de-activate', this.state.key);
-
       window.__grafanaSceneContext = prevSceneContext;
       clearKeyBindings();
       this._changeTracker.terminate();

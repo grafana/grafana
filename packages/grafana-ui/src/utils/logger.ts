@@ -19,7 +19,7 @@ export interface Logger {
 
 /** @internal */
 export const createLogger = (name: string): Logger => {
-  let loggingEnabled = true;
+  let loggingEnabled = false;
 
   if (typeof window !== 'undefined') {
     loggingEnabled = window.localStorage.getItem('grafana.debug') === 'true';
