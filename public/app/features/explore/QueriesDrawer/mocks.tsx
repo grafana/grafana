@@ -3,7 +3,7 @@ import React, { PropsWithChildren, useState } from 'react';
 import { QueriesDrawerContext, Tabs } from './QueriesDrawerContext';
 
 type Props = {
-  setDrawerOpened: () => {};
+  setDrawerOpened: (value: boolean) => {};
 } & PropsWithChildren;
 
 export function QueriesDrawerContextProviderMock(props: Props) {
