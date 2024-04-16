@@ -43,14 +43,30 @@ const Ellipse = (props: CanvasElementProps<CanvasElementConfig, CanvasElementDat
           </clipPath>
         </defs>
         {/* Apply background image within the clipping area */}
-        <rect x="0" y="0" width="100%" height="100%" clipPath={`url(#ellipseClip-${uniqueId})`} />
+        <rect
+          x="0"
+          y="0"
+          width="100%"
+          height="100%"
+          clipPath={`url(#ellipseClip-${uniqueId})`}
+          style={{ fill: 'none' }}
+        />
         <ellipse
           cx="50%"
           cy="50%"
           rx="50%"
           ry="50%"
-          className={styles.element}
           style={{ fill: data?.backgroundImage ? `url(#image-${uniqueId})` : data?.backgroundColor }}
+        />
+
+        {/* Border */}
+        <ellipse
+          cx="50%"
+          cy="50%"
+          rx="50%"
+          ry="50%"
+          clipPath={`url(#ellipseClip-${uniqueId})`}
+          className={styles.elementBorder}
         />
       </svg>
 
@@ -90,6 +106,7 @@ export const ellipseItem: CanvasElementItem<CanvasElementConfig, CanvasElementDa
       height: options?.placement?.height ?? 138,
       top: options?.placement?.top,
       left: options?.placement?.left,
+      rotation: options?.placement?.rotation ?? 0,
     },
   }),
 
@@ -195,9 +212,11 @@ const getStyles = (theme: GrafanaTheme2, data: CanvasElementData | undefined) =>
       fontSize: `${data?.size}px`,
       color: data?.color,
     }),
-    element: css({
-      stroke: data?.borderColor,
-      strokeWidth: data?.borderWidth,
+    elementBorder: css({
+      fill: 'none',
+      stroke: data?.borderColor ?? 'none',
+      strokeWidth: data?.borderWidth ?? 0,
+      strokeLinejoin: 'round',
     }),
   };
 };

@@ -468,7 +468,7 @@ function transformToTraceData(data: TraceSearchMetadata) {
   return {
     traceID: data.traceID,
     startTime: parseInt(data.startTimeUnixNano!, 10) / 1000000,
-    traceDuration: data.durationMs,
+    traceDuration: data.durationMs || '<1ms',
     traceService: data.rootServiceName || '',
     traceName: data.rootTraceName || '',
   };
@@ -529,10 +529,24 @@ export function formatTraceQLResponse(
   instanceSettings: DataSourceInstanceSettings,
   tableType?: SearchTableType
 ) {
-  if (tableType === SearchTableType.Spans) {
-    return createTableFrameFromTraceQlQueryAsSpans(data, instanceSettings);
+  switch (tableType) {
+    case SearchTableType.Spans:
+      return createTableFrameFromTraceQlQueryAsSpans(data, instanceSettings);
+    case SearchTableType.Raw:
+      return createDataFrameFromTraceQlQuery(data);
+    default:
+      return createTableFrameFromTraceQlQuery(data, instanceSettings);
   }
-  return createTableFrameFromTraceQlQuery(data, instanceSettings);
+}
+
+function createDataFrameFromTraceQlQuery(data: TraceSearchMetadata[]) {
+  return [
+    createDataFrame({
+      name: 'Raw response',
+      refId: 'raw',
+      fields: [{ name: 'response', type: FieldType.string, values: [JSON.stringify(data, null, 2)] }],
+    }),
+  ];
 }
 
 /**
@@ -915,7 +929,7 @@ interface TraceTableData {
   spanID?: string;
   startTime?: number;
   name?: string;
-  traceDuration?: number;
+  traceDuration?: number | string;
 }
 
 function transformSpanToTraceData(span: Span, spanSet: Spanset, trace: TraceSearchMetadata): TraceTableData {

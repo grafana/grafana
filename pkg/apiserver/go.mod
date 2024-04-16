@@ -5,12 +5,16 @@ go 1.21.0
 require (
 	github.com/bwmarrin/snowflake v0.3.0
 	github.com/gorilla/mux v1.8.1
-	github.com/grafana/grafana-plugin-sdk-go v0.217.0
+	github.com/grafana/grafana-plugin-sdk-go v0.222.0
+	github.com/grafana/grafana/pkg/apimachinery v0.0.0-20240409140820-518d3341d58f
 	github.com/stretchr/testify v1.9.0
+	github.com/zeebo/assert v1.3.0
 	golang.org/x/mod v0.14.0
 	k8s.io/apimachinery v0.29.2
 	k8s.io/apiserver v0.29.2
 	k8s.io/client-go v0.29.2
+	k8s.io/component-base v0.29.2
+	k8s.io/klog v1.0.0
 	k8s.io/klog/v2 v2.120.1
 	k8s.io/kube-openapi v0.0.0-20240220201932-37d671a357a5
 )
@@ -19,7 +23,7 @@ require (
 	github.com/BurntSushi/toml v1.3.2 // indirect
 	github.com/NYTimes/gziphandler v1.1.1 // indirect
 	github.com/antlr/antlr4/runtime/Go/antlr/v4 v4.0.0-20230305170008-8188dc5388df // indirect
-	github.com/apache/arrow/go/v15 v15.0.0 // indirect
+	github.com/apache/arrow/go/v15 v15.0.2 // indirect
 	github.com/asaskevich/govalidator v0.0.0-20230301143203-a9d515a09cc2 // indirect
 	github.com/beorn7/perks v1.0.1 // indirect
 	github.com/blang/semver/v4 v4.0.0 // indirect
@@ -58,7 +62,7 @@ require (
 	github.com/grpc-ecosystem/go-grpc-middleware v1.4.0 // indirect
 	github.com/grpc-ecosystem/go-grpc-prometheus v1.2.1-0.20191002090509-6af20e3a5340 // indirect
 	github.com/grpc-ecosystem/grpc-gateway/v2 v2.19.0 // indirect
-	github.com/hashicorp/go-hclog v1.6.2 // indirect
+	github.com/hashicorp/go-hclog v1.6.3 // indirect
 	github.com/hashicorp/go-plugin v1.6.0 // indirect
 	github.com/hashicorp/yamux v0.1.1 // indirect
 	github.com/imdario/mergo v0.3.16 // indirect
@@ -123,7 +127,7 @@ require (
 	golang.org/x/crypto v0.21.0 // indirect
 	golang.org/x/exp v0.0.0-20231206192017-f3f8817b8deb // indirect
 	golang.org/x/net v0.22.0 // indirect
-	golang.org/x/oauth2 v0.16.0 // indirect
+	golang.org/x/oauth2 v0.18.0 // indirect
 	golang.org/x/sync v0.6.0 // indirect
 	golang.org/x/sys v0.18.0 // indirect
 	golang.org/x/term v0.18.0 // indirect
@@ -142,7 +146,6 @@ require (
 	gopkg.in/yaml.v2 v2.4.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 	k8s.io/api v0.29.2 // indirect
-	k8s.io/component-base v0.29.2 // indirect
 	k8s.io/utils v0.0.0-20230726121419-3b25d923346b // indirect
 	sigs.k8s.io/apiserver-network-proxy/konnectivity-client v0.28.0 // indirect
 	sigs.k8s.io/json v0.0.0-20221116044647-bc3834ca7abd // indirect

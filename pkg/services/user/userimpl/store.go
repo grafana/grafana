@@ -315,7 +315,14 @@ func (ss *sqlStore) Update(ctx context.Context, cmd *user.UpdateUserCommand) err
 			Updated: time.Now(),
 		}
 
-		if _, err := sess.ID(cmd.UserID).Where(ss.notServiceAccountFilter()).Update(&user); err != nil {
+		q := sess.ID(cmd.UserID).Where(ss.notServiceAccountFilter())
+
+		if cmd.EmailVerified != nil {
+			q.UseBool("email_verified")
+			user.EmailVerified = *cmd.EmailVerified
+		}
+
+		if _, err := q.Update(&user); err != nil {
 			return err
 		}
 
@@ -375,6 +382,7 @@ func (ss *sqlStore) GetSignedInUser(ctx context.Context, query *user.GetSignedIn
 		u.uid                 as user_uid,
 		u.is_admin            as is_grafana_admin,
 		u.email               as email,
+		u.email_verified      as email_verified,
 		u.login               as login,
 		u.name                as name,
 		u.is_disabled         as is_disabled,

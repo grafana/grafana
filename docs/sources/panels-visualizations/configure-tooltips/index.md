@@ -23,14 +23,13 @@ When you hover your cursor over a visualization, Grafana can display tooltips th
 
 You can configure tooltips for the following visualizations:
 
-|                            |                                  |
-| -------------------------- | -------------------------------- |
-| [Bar chart][bar chart]     | [State timeline][state timeline] |
-| [Candlestick][candlestick] | [Status history][status history] |
-| [Heatmap][heatmap]         | [Time series][time series]       |
-| [Pie chart][pie chart]     | [Trend][trend]                   |
-
-<!--Also xy chart -->
+|                                  |                                  |
+| -------------------------------- | -------------------------------- |
+| [Bar chart][bar chart]           | [Status history][status history] |
+| [Candlestick][candlestick]       | [Time series][time series]       |
+| [Heatmap][heatmap]               | [Trend][trend]                   |
+| [Pie chart][pie chart]           | [XY chart][xy chart]             |
+| [State timeline][state timeline] |                                  |
 
 Some visualizations, for example [candlestick][] and [flame graph][], have tooltips, but they aren't configurable. These visualizations don't have a **Tooltip** section in the panel editor pane. [Geomaps][geomaps] provide you the option to have tooltips triggered upon click or hover under the **Map controls** options in the panel editor pane.
 
@@ -108,6 +107,9 @@ For the heatmap visualization only, when you set the **Tooltip mode** to **Singl
 
 [trend]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/panels-visualizations/visualizations/trend"
 [trend]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/visualizations/panels-visualizations/visualizations/trend"
+
+[xy chart]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/panels-visualizations/visualizations/xy-chart"
+[xy chart]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/visualizations/panels-visualizations/visualizations/xy-chart"
 
 [field override]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/panels-visualizations/configure-overrides"
 [field override]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/visualizations/panels-visualizations/configure-overrides"

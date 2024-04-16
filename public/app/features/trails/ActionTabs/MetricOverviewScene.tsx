@@ -1,5 +1,6 @@
 import React from 'react';
 
+import { PromMetricsMetadataItem } from '@grafana/prometheus';
 import {
   QueryVariable,
   SceneComponentProps,
@@ -10,10 +11,10 @@ import {
 } from '@grafana/scenes';
 import { Stack, Text, TextLink } from '@grafana/ui';
 
-import { PromMetricsMetadataItem } from '../../../plugins/datasource/prometheus/types';
 import { ALL_VARIABLE_VALUE } from '../../variables/constants';
+import { MetricScene } from '../MetricScene';
 import { StatusWrapper } from '../StatusWrapper';
-import { TRAILS_ROUTE, VAR_DATASOURCE_EXPR, VAR_GROUP_BY } from '../shared';
+import { VAR_DATASOURCE_EXPR, VAR_GROUP_BY } from '../shared';
 import { getMetricSceneFor, getTrailFor } from '../utils';
 
 import { getLabelOptions } from './utils';
@@ -91,26 +92,25 @@ export class MetricOverviewScene extends SceneObjectBase<MetricOverviewSceneStat
             <Stack direction="column" gap={0.5}>
               <Text weight={'medium'}>Labels</Text>
               {labelOptions.length === 0 && 'Unable to fetch labels.'}
-              {labelOptions.map((l) =>
-                getTrailFor(model).state.embedded ? (
-                  // Do not render as TextLink when in embedded mode, as any direct URL
-                  // manipulation will take the browser out out of the current page.
-                  <div key={l.label}>{l.label}</div>
-                ) : (
-                  <TextLink
-                    key={l.label}
-                    href={sceneGraph.interpolate(
-                      model,
-                      `${TRAILS_ROUTE}$\{__url.params:exclude:actionView,var-groupby}&actionView=breakdown&var-groupby=${encodeURIComponent(
-                        l.value!
-                      )}`
-                    )}
-                    title="View breakdown"
-                  >
-                    {l.label!}
-                  </TextLink>
-                )
-              )}
+              {labelOptions.map((l) => (
+                <TextLink
+                  key={l.label}
+                  href={`#View breakdown for ${l.label}`}
+                  title={`View breakdown for ${l.label}`}
+                  onClick={(event) => {
+                    event.preventDefault();
+                    event.stopPropagation();
+                    sceneGraph.getAncestor(model, MetricScene).setActionView('breakdown');
+                    const groupByVar = sceneGraph.lookupVariable(VAR_GROUP_BY, model);
+                    if (groupByVar instanceof QueryVariable) {
+                      groupByVar.setState({ value: l.value });
+                    }
+                    return false;
+                  }}
+                >
+                  {l.label!}
+                </TextLink>
+              ))}
             </Stack>
           </>
         </Stack>

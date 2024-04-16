@@ -87,13 +87,9 @@ const getStyles = (theme: GrafanaTheme2, padding = 0) => {
     exemplarFooter: css({
       display: 'flex',
       flexDirection: 'column',
-      flex: 1,
-      borderTop: `1px solid ${theme.colors.border.medium}`,
       padding: theme.spacing(1),
-
-      overflowX: 'auto',
-      overflowY: 'hidden',
-      whiteSpace: 'nowrap',
+      borderTop: `1px solid ${theme.colors.border.medium}`,
+      gap: 4,
     }),
     linkButton: css({
       width: 'fit-content',

@@ -1652,6 +1652,11 @@ For more information about screenshots, refer to [Images in notifications]({{< r
 
 Enable screenshots in notifications. This option requires a remote HTTP image rendering service. Please see `[rendering]` for further configuration options.
 
+### capture_timeout
+
+The timeout for capturing screenshots. If a screenshot cannot be captured within the timeout then the notification is sent without a screenshot.
+The maximum duration is 30 seconds. This timeout should be less than the minimum Interval of all Evaluation Groups to avoid back pressure on alert rule evaluation.
+
 ### max_concurrent_screenshots
 
 The maximum number of screenshots that can be taken at the same time. This option is different from `concurrent_render_request_limit` as `max_concurrent_screenshots` sets the number of concurrent screenshots that can be taken at the same time for all firing alerts where as concurrent_render_request_limit sets the total number of concurrent screenshots across all Grafana services.
@@ -1920,7 +1925,7 @@ Configure general parameters shared between OpenTelemetry providers.
 
 Comma-separated list of attributes to include in all new spans, such as `key1:value1,key2:value2`.
 
-Can be set with the environment variable `OTEL_RESOURCE_ATTRIBUTES` (use `=` instead of `:` with the environment variable).
+Can be set or overridden with the environment variable `OTEL_RESOURCE_ATTRIBUTES` (use `=` instead of `:` with the environment variable). The service name can be set or overridden using attributes or with the environment variable `OTEL_SERVICE_NAME`.
 
 ### sampler_type
 

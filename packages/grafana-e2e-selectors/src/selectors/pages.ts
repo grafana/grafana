@@ -226,6 +226,7 @@ export const Pages = {
     save: 'Dashboard settings Save Dashboard Modal Save button',
     saveVariables: 'Dashboard settings Save Dashboard Modal Save variables checkbox',
     saveTimerange: 'Dashboard settings Save Dashboard Modal Save timerange checkbox',
+    saveRefresh: 'Dashboard settings Save Dashboard Modal Save refresh checkbox',
   },
   SharePanelModal: {
     linkToRenderedImage: 'Link to rendered image',
@@ -287,6 +288,9 @@ export const Pages = {
       graph: 'Explore Graph',
       table: 'Explore Table',
       scrollView: 'data-testid explorer scroll view',
+    },
+    QueryHistory: {
+      container: 'data-testid QueryHistory',
     },
   },
   SoloPanel: {

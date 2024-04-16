@@ -1,7 +1,7 @@
 {
   "extends": ["@grafana/eslint-config"],
   "root": true,
-  "plugins": ["@emotion", "lodash", "jest", "import", "jsx-a11y", "@grafana"],
+  "plugins": ["@emotion", "lodash", "jest", "import", "jsx-a11y", "@grafana", "no-barrel-files"],
   "settings": {
     "import/internal-regex": "^(app/)|(@grafana)",
     "import/external-module-folders": ["node_modules", ".yarn"]

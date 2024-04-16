@@ -1,11 +1,12 @@
 import { SerializedError } from '@reduxjs/toolkit';
 import { prettyDOM, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import { setupServer } from 'msw/node';
 import React from 'react';
 import { TestProvider } from 'test/helpers/TestProvider';
 import { byRole, byTestId, byText } from 'testing-library-selector';
 
-import { PluginExtensionTypes } from '@grafana/data';
+import { PluginExtensionTypes, PluginMeta } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import {
   DataSourceSrv,
@@ -16,7 +17,17 @@ import {
 } from '@grafana/runtime';
 import { backendSrv } from 'app/core/services/backend_srv';
 import * as ruleActionButtons from 'app/features/alerting/unified/components/rules/RuleActionsButtons';
+import {
+  mockAlertRuleApi,
+  mockApi,
+  mockFolderApi,
+  mockSearchApi,
+  mockUserApi,
+} from 'app/features/alerting/unified/mockApi';
+import { mockAlertmanagerChoiceResponse } from 'app/features/alerting/unified/mocks/alertmanagerApi';
 import * as actions from 'app/features/alerting/unified/state/actions';
+import { getMockUser } from 'app/features/users/__mocks__/userMocks';
+import { AlertmanagerChoice } from 'app/plugins/datasource/alertmanager/types';
 import { AccessControlAction } from 'app/types';
 import { PromAlertingRuleState, PromApplication } from 'app/types/unified-alerting-dto';
 
@@ -34,8 +45,11 @@ import {
   mockPromRecordingRule,
   mockPromRuleGroup,
   mockPromRuleNamespace,
+  pausedPromRules,
+  getPotentiallyPausedRulerRules,
   somePromRules,
   someRulerRules,
+  mockFolder,
 } from './mocks';
 import * as config from './utils/config';
 import { DataSourceType, GRAFANA_RULES_SOURCE_NAME } from './utils/datasource';
@@ -113,6 +127,7 @@ const dataSources = {
 
 const ui = {
   ruleGroup: byTestId('rule-group'),
+  pausedRuleGroup: byText(/groupPaused/),
   cloudRulesSourceErrors: byTestId('cloud-rulessource-errors'),
   groupCollapseToggle: byTestId(selectors.components.AlertRules.groupToggle),
   ruleCollapseToggle: byTestId(selectors.components.AlertRules.toggle),
@@ -133,6 +148,42 @@ const ui = {
     }),
     saveButton: byRole('button', { name: /Save/ }),
   },
+  stateTags: {
+    paused: byText(/^Paused/),
+  },
+  actionButtons: {
+    more: byRole('button', { name: 'More' }),
+  },
+  moreActionItems: {
+    pause: byRole('menuitem', { name: /pause evaluation/i }),
+    resume: byRole('menuitem', { name: /resume evaluation/i }),
+  },
+};
+
+const server = setupServer();
+
+const configureMockServer = () => {
+  mockSearchApi(server).search([]);
+  mockUserApi(server).user(getMockUser());
+  mockFolderApi(server).folder(
+    'NAMESPACE_UID',
+    mockFolder({
+      accessControl: { [AccessControlAction.AlertingRuleUpdate]: true },
+    })
+  );
+  mockApi(server).plugins.getPluginSettings(
+    // We aren't particularly concerned with the plugin response in these tests
+    // at the time of writing, so we can go unknown -> PluginMeta to get the bare minimum
+    { id: 'grafana-incident-app' } as unknown as PluginMeta
+  );
+  mockAlertmanagerChoiceResponse(server, {
+    alertmanagersChoice: AlertmanagerChoice.All,
+    numExternalAlertmanagers: 1,
+  });
+  mockAlertRuleApi(server).updateRule('grafana', {
+    message: 'rule group updated successfully',
+    updated: ['foo', 'bar', 'baz'],
+  });
 };
 
 beforeAll(() => {
@@ -141,6 +192,8 @@ beforeAll(() => {
 
 describe('RuleList', () => {
   beforeEach(() => {
+    server.listen({ onUnhandledRequest: 'error' });
+    configureMockServer();
     grantUserPermissions([
       AccessControlAction.AlertingRuleRead,
       AccessControlAction.AlertingRuleUpdate,
@@ -164,8 +217,13 @@ describe('RuleList', () => {
   });
 
   afterEach(() => {
+    server.resetHandlers();
     jest.resetAllMocks();
     setDataSourceSrv(undefined as unknown as DataSourceSrv);
+  });
+
+  afterAll(() => {
+    server.close();
   });
 
   it('load & show rule groups from multiple cloud data sources', async () => {
@@ -555,6 +613,44 @@ describe('RuleList', () => {
     await waitFor(() => expect(ui.ruleGroup.get()).toHaveTextContent('group-2'));
   });
 
+  describe('pausing rules', () => {
+    beforeEach(() => {
+      grantUserPermissions([
+        AccessControlAction.AlertingRuleRead,
+        AccessControlAction.AlertingRuleUpdate,
+        AccessControlAction.AlertingRuleExternalRead,
+        AccessControlAction.AlertingRuleExternalWrite,
+      ]);
+      mocks.getAllDataSourcesMock.mockReturnValue([]);
+      setDataSourceSrv(new MockDataSourceSrv({}));
+      mocks.api.fetchRulerRules.mockImplementation(() => Promise.resolve(getPotentiallyPausedRulerRules(true)));
+      mocks.api.fetchRules.mockImplementation((sourceName) =>
+        Promise.resolve(sourceName === 'grafana' ? pausedPromRules('grafana') : [])
+      );
+    });
+
+    test('resuming paused alert rule', async () => {
+      const user = userEvent.setup();
+
+      renderRuleList();
+
+      // Expand the paused rule group so we can assert the rule state
+      await user.click(await ui.pausedRuleGroup.find());
+
+      expect(await ui.stateTags.paused.find()).toBeInTheDocument();
+
+      // TODO: Migrate all testing logic to MSW and so we aren't manually tweaking the API response behaviour
+      mocks.api.fetchRulerRules.mockImplementationOnce(() => {
+        return Promise.resolve(getPotentiallyPausedRulerRules(false));
+      });
+
+      await user.click(await ui.actionButtons.more.find());
+      await user.click(await ui.moreActionItems.resume.find());
+
+      await waitFor(() => expect(ui.stateTags.paused.query()).not.toBeInTheDocument());
+    });
+  });
+
   describe('edit lotex groups, namespaces', () => {
     const testDatasources = {
       prom: dataSources.prom,
@@ -610,6 +706,7 @@ describe('RuleList', () => {
       await userEvent.clear(ui.editGroupModal.ruleGroupInput.get());
       await userEvent.type(ui.editGroupModal.ruleGroupInput.get(), 'super group');
 
+      await userEvent.clear(ui.editGroupModal.intervalInput.get());
       await userEvent.type(ui.editGroupModal.intervalInput.get(), '5m');
 
       // submit, check that appropriate calls were made
@@ -647,6 +744,8 @@ describe('RuleList', () => {
       // make changes to form
       await userEvent.clear(ui.editGroupModal.ruleGroupInput.get());
       await userEvent.type(ui.editGroupModal.ruleGroupInput.get(), 'super group');
+
+      await userEvent.clear(ui.editGroupModal.intervalInput.get());
       await userEvent.type(ui.editGroupModal.intervalInput.get(), '5m');
 
       // submit, check that appropriate calls were made
@@ -677,6 +776,7 @@ describe('RuleList', () => {
 
     testCase('edit lotex group eval interval, no renaming', async () => {
       // make changes to form
+      await userEvent.clear(ui.editGroupModal.intervalInput.get());
       await userEvent.type(ui.editGroupModal.intervalInput.get(), '5m');
 
       // submit, check that appropriate calls were made

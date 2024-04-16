@@ -95,10 +95,6 @@ const (
 	// Allow elements nesting
 	FlagCanvasPanelNesting = "canvasPanelNesting"
 
-	// FlagNewVizTooltips
-	// New visualizations tooltips UX
-	FlagNewVizTooltips = "newVizTooltips"
-
 	// FlagScenes
 	// Experimental framework to build interactive dashboards
 	FlagScenes = "scenes"
@@ -282,10 +278,6 @@ const (
 	// FlagRecordedQueriesMulti
 	// Enables writing multiple items from a single query within Recorded Queries
 	FlagRecordedQueriesMulti = "recordedQueriesMulti"
-
-	// FlagPluginsDynamicAngularDetectionPatterns
-	// Enables fetching Angular detection patterns for plugins from GCOM and fallback to hardcoded ones
-	FlagPluginsDynamicAngularDetectionPatterns = "pluginsDynamicAngularDetectionPatterns"
 
 	// FlagVizAndWidgetSplit
 	// Split panels between visualizations and widgets
@@ -471,6 +463,10 @@ const (
 	// Prometheus and AI/ML to assist users in creating a query
 	FlagPrometheusPromQAIL = "prometheusPromQAIL"
 
+	// FlagPrometheusCodeModeMetricNamesSearch
+	// Enables search for metric names in Code Mode, to improve performance when working with an enormous number of metric names
+	FlagPrometheusCodeModeMetricNamesSearch = "prometheusCodeModeMetricNamesSearch"
+
 	// FlagAddFieldFromCalculationStatFunctions
 	// Add cumulative and window functions to the add field from calculation transformation
 	FlagAddFieldFromCalculationStatFunctions = "addFieldFromCalculationStatFunctions"
@@ -531,9 +527,9 @@ const (
 	// Allow collapsing of flame graph items
 	FlagFlameGraphItemCollapsing = "flameGraphItemCollapsing"
 
-	// FlagDatatrails
-	// Enables the new core app datatrails
-	FlagDatatrails = "datatrails"
+	// FlagExploreMetrics
+	// Enables the new Explore Metrics core app
+	FlagExploreMetrics = "exploreMetrics"
 
 	// FlagAlertingSimplifiedRouting
 	// Enables users to easily configure alert notifications by specifying a contact point directly when editing or creating an alert rule
@@ -562,10 +558,6 @@ const (
 	// FlagKubernetesFeatureToggles
 	// Use the kubernetes API for feature toggle management in the frontend
 	FlagKubernetesFeatureToggles = "kubernetesFeatureToggles"
-
-	// FlagEnablePluginsTracingByDefault
-	// Enable plugin tracing for all external plugins
-	FlagEnablePluginsTracingByDefault = "enablePluginsTracingByDefault"
 
 	// FlagCloudRBACRoles
 	// Enabled grafana cloud specific RBAC roles
@@ -627,6 +619,10 @@ const (
 	// Removes CustomScrollbar from the UI, relying on native browser scrollbars
 	FlagBetterPageScrolling = "betterPageScrolling"
 
+	// FlagAuthAPIAccessTokenAuth
+	// Enables the use of Auth API access tokens for authentication
+	FlagAuthAPIAccessTokenAuth = "authAPIAccessTokenAuth"
+
 	// FlagScopeFilters
 	// Enables the use of scope filters in Grafana
 	FlagScopeFilters = "scopeFilters"
@@ -635,11 +631,19 @@ const (
 	// Use the new SSO Settings API to configure the SAML connector
 	FlagSsoSettingsSAML = "ssoSettingsSAML"
 
-	// FlagUsePrometheusFrontendPackage
-	// Use the @grafana/prometheus frontend package in core Prometheus.
-	FlagUsePrometheusFrontendPackage = "usePrometheusFrontendPackage"
-
 	// FlagOauthRequireSubClaim
 	// Require that sub claims is present in oauth tokens.
 	FlagOauthRequireSubClaim = "oauthRequireSubClaim"
+
+	// FlagNewDashboardWithFiltersAndGroupBy
+	// Enables filters and group by variables on all new dashboards. Variables are added only if default data source supports filtering.
+	FlagNewDashboardWithFiltersAndGroupBy = "newDashboardWithFiltersAndGroupBy"
+
+	// FlagCloudWatchNewLabelParsing
+	// Updates CloudWatch label parsing to be more accurate
+	FlagCloudWatchNewLabelParsing = "cloudWatchNewLabelParsing"
+
+	// FlagAccessActionSets
+	// Introduces action sets for resource permissions
+	FlagAccessActionSets = "accessActionSets"
 )

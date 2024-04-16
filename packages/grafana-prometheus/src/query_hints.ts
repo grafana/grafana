@@ -1,3 +1,4 @@
+// Core Grafana history https://github.com/grafana/grafana/blob/v11.0.0-preview/public/app/plugins/datasource/prometheus/query_hints.ts
 import { size } from 'lodash';
 
 import { QueryFix, QueryHint } from '@grafana/data';
@@ -9,7 +10,7 @@ import { PrometheusDatasource } from './datasource';
  */
 export const SUM_HINT_THRESHOLD_COUNT = 20;
 
-export function getQueryHints(query: string, series?: any[], datasource?: PrometheusDatasource): QueryHint[] {
+export function getQueryHints(query: string, series?: unknown[], datasource?: PrometheusDatasource): QueryHint[] {
   const hints = [];
 
   // ..._bucket metric needs a histogram_quantile()

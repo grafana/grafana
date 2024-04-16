@@ -11,7 +11,10 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/spf13/pflag"
 	"go.opentelemetry.io/otel/attribute"
+	genericfeatures "k8s.io/apiserver/pkg/features"
 	genericapiserver "k8s.io/apiserver/pkg/server"
+	utilfeature "k8s.io/apiserver/pkg/util/feature"
+	k8stracing "k8s.io/component-base/tracing"
 )
 
 type TracingOptions struct {
@@ -23,7 +26,8 @@ type TracingOptions struct {
 	OTLPAddress     string
 	OTLPPropagation string
 
-	Tags map[string]string
+	ServiceName string
+	Tags        map[string]string
 
 	SamplerType        string
 	SamplerParam       float64
@@ -44,6 +48,7 @@ func (o *TracingOptions) AddFlags(fs *pflag.FlagSet) {
 	fs.StringVar(&o.JaegerPropagation, "grafana.tracing.jaeger.propagation", "jaeger", "Tracing Jaeger propagation specifies the text map propagation format, w3c or jaeger.")
 	fs.StringVar(&o.OTLPAddress, "grafana.tracing.otlp.address", "", "Tracing OTLP exporter destination, e.g. localhost:4317.")
 	fs.StringVar(&o.OTLPPropagation, "grafana.tracing.otlp.propagation", "w3c", "Tracing OTLP propagation specifies the text map propagation format, w3c or jaeger.")
+	fs.StringVar(&o.ServiceName, "grafana.tracing.service-name", "grafana-apiserver", "Override the default service name, grafana-apiserver.")
 	fs.StringToStringVar(&o.Tags, "grafana.tracing.tag", map[string]string{}, "Tracing server tag in 'key=value' format. Specify multiple times to add many.")
 	fs.StringVar(&o.SamplerType, "grafana.tracing.sampler-type", "const", "Tracing sampler type specifies the type of the sampler: const, probabilistic, rateLimiting, or remote.")
 	fs.Float64Var(&o.SamplerParam, "grafana.tracing.sampler-param", 0, "Tracing sampler configuration parameter. For 'const' sampler, 0 or 1 for always false/true respectively. For 'rateLimiting' sampler, the number of spans per second. For 'remote' sampler, param is the same as for 'probabilistic' and indicates the initial sampling rate before the actual one is received from the sampling service.")
@@ -51,24 +56,34 @@ func (o *TracingOptions) AddFlags(fs *pflag.FlagSet) {
 }
 
 func (o *TracingOptions) Validate() []error {
-	errors := []error{}
+	errs := []error{}
 
 	if o.JaegerAddress != "" {
 		if _, err := url.Parse(o.JaegerAddress); err != nil {
-			errors = append(errors, fmt.Errorf("failed to parse tracing.jaeger.address: %w", err))
+			errs = append(errs, fmt.Errorf("failed to parse tracing.jaeger.address: %w", err))
 		}
 	}
 
 	if o.SamplingServiceURL != "" {
 		if _, err := url.Parse(o.SamplingServiceURL); err != nil {
-			errors = append(errors, fmt.Errorf("failed to parse tracing.sampling-service: %w", err))
+			errs = append(errs, fmt.Errorf("failed to parse tracing.sampling-service: %w", err))
 		}
 	}
 
-	return errors
+	if o.ServiceName == "" {
+		errs = append(errs, errors.New("grafana.tracing.service-name cannot be empty"))
+	}
+
+	return errs
 }
 
 func (o *TracingOptions) ApplyTo(config *genericapiserver.RecommendedConfig) error {
+	if err := utilfeature.DefaultMutableFeatureGate.SetFromMap(map[string]bool{
+		string(genericfeatures.APIServerTracing): false,
+	}); err != nil {
+		return err
+	}
+
 	tracingCfg := tracing.NewEmptyTracingConfig()
 	var err error
 
@@ -84,7 +99,7 @@ func (o *TracingOptions) ApplyTo(config *genericapiserver.RecommendedConfig) err
 		return err
 	}
 
-	tracingCfg.ServiceName = "grafana-apiserver"
+	tracingCfg.ServiceName = o.ServiceName
 	tracingCfg.ServiceVersion = setting.BuildVersion
 
 	for k, v := range o.Tags {
@@ -102,6 +117,10 @@ func (o *TracingOptions) ApplyTo(config *genericapiserver.RecommendedConfig) err
 
 	o.TracingService = ts
 	config.TracerProvider = ts.GetTracerProvider()
+
+	if config.LoopbackClientConfig != nil {
+		config.LoopbackClientConfig.Wrap(k8stracing.WrapperFor(config.TracerProvider))
+	}
 
 	config.AddPostStartHookOrDie("grafana-tracing-service", func(hookCtx genericapiserver.PostStartHookContext) error {
 		ctx, cancel := context.WithCancel(context.Background())

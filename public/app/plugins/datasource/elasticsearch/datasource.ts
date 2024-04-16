@@ -855,7 +855,7 @@ export class ElasticDatasource
     return lastValueFrom(this.getFields());
   }
 
-  getTagValues(options: DataSourceGetTagValuesOptions) {
+  getTagValues(options: DataSourceGetTagValuesOptions<ElasticsearchQuery>) {
     return lastValueFrom(this.getTerms({ field: options.key }, options.timeRange));
   }
 
@@ -903,7 +903,7 @@ export class ElasticDatasource
       return false;
     }
 
-    for (const key of Object.keys(obj)) {
+    for (const key in obj) {
       if (Array.isArray(obj[key])) {
         for (const item of obj[key]) {
           if (this.objectContainsTemplate(item)) {

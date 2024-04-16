@@ -177,14 +177,6 @@ var (
 			HideFromAdminPage: true,
 		},
 		{
-			Name:           "newVizTooltips",
-			Description:    "New visualizations tooltips UX",
-			Stage:          FeatureStagePublicPreview,
-			FrontendOnly:   true,
-			Owner:          grafanaDatavizSquad,
-			AllowSelfServe: false,
-		},
-		{
 			Name:         "scenes",
 			Description:  "Experimental framework to build interactive dashboards",
 			Stage:        FeatureStageExperimental,
@@ -517,14 +509,6 @@ var (
 			AllowSelfServe: false,
 		},
 		{
-			Name:         "pluginsDynamicAngularDetectionPatterns",
-			Description:  "Enables fetching Angular detection patterns for plugins from GCOM and fallback to hardcoded ones",
-			Stage:        FeatureStageGeneralAvailability,
-			FrontendOnly: false,
-			Owner:        grafanaPluginsPlatformSquad,
-			Expression:   "true", // enabled by default
-		},
-		{
 			Name:         "vizAndWidgetSplit",
 			Description:  "Split panels between visualizations and widgets",
 			Stage:        FeatureStageExperimental,
@@ -782,8 +766,9 @@ var (
 		{
 			Name:            "kubernetesPlaylists",
 			Description:     "Use the kubernetes API in the frontend for playlists, and route /api/playlist requests to k8s",
-			Stage:           FeatureStageExperimental,
+			Stage:           FeatureStageGeneralAvailability,
 			Owner:           grafanaAppPlatformSquad,
+			Expression:      "true",
 			RequiresRestart: true, // changes the API routing
 		},
 		{
@@ -865,6 +850,13 @@ var (
 			Description:  "Prometheus and AI/ML to assist users in creating a query",
 			Stage:        FeatureStageExperimental,
 			FrontendOnly: true,
+			Owner:        grafanaObservabilityMetricsSquad,
+		},
+		{
+			Name:         "prometheusCodeModeMetricNamesSearch",
+			Description:  "Enables search for metric names in Code Mode, to improve performance when working with an enormous number of metric names",
+			FrontendOnly: true,
+			Stage:        FeatureStageExperimental,
 			Owner:        grafanaObservabilityMetricsSquad,
 		},
 		{
@@ -973,12 +965,12 @@ var (
 			Owner:        grafanaObservabilityTracesAndProfilingSquad,
 		},
 		{
-			Name:         "datatrails",
-			Description:  "Enables the new core app datatrails",
-			Stage:        FeatureStageExperimental,
+			Name:         "exploreMetrics",
+			Description:  "Enables the new Explore Metrics core app",
+			Stage:        FeatureStageGeneralAvailability,
+			Expression:   "true", // enabled by default
 			FrontendOnly: true,
 			Owner:        grafanaDashboardsSquad,
-			HideFromDocs: true,
 		},
 		{
 			Name:         "alertingSimplifiedRouting",
@@ -1035,15 +1027,6 @@ var (
 			Owner:             grafanaOperatorExperienceSquad,
 			AllowSelfServe:    false,
 			HideFromAdminPage: true,
-		},
-		{
-			Name:            "enablePluginsTracingByDefault",
-			Description:     "Enable plugin tracing for all external plugins",
-			FrontendOnly:    false,
-			Stage:           FeatureStageGeneralAvailability,
-			Owner:           grafanaPluginsPlatformSquad,
-			RequiresRestart: true,
-			Expression:      "true", // enabled by default
 		},
 		{
 			Name:            "cloudRBACRoles",
@@ -1156,6 +1139,14 @@ var (
 			Expression:   "true", // enabled by default
 		},
 		{
+			Name:              "authAPIAccessTokenAuth",
+			Description:       "Enables the use of Auth API access tokens for authentication",
+			Stage:             FeatureStageExperimental,
+			Owner:             identityAccessTeam,
+			HideFromDocs:      true,
+			HideFromAdminPage: true,
+		},
+		{
 			Name:              "scopeFilters",
 			Description:       "Enables the use of scope filters in Grafana",
 			FrontendOnly:      false,
@@ -1175,19 +1166,36 @@ var (
 			HideFromAdminPage: true,
 		},
 		{
-			Name:         "usePrometheusFrontendPackage",
-			Description:  "Use the @grafana/prometheus frontend package in core Prometheus.",
-			Stage:        FeatureStageExperimental,
-			FrontendOnly: true,
-			Owner:        grafanaObservabilityMetricsSquad,
-		},
-		{
 			Name:              "oauthRequireSubClaim",
 			Description:       "Require that sub claims is present in oauth tokens.",
 			Stage:             FeatureStageExperimental,
 			Owner:             identityAccessTeam,
 			HideFromDocs:      true,
 			HideFromAdminPage: true,
+		},
+		{
+			Name:              "newDashboardWithFiltersAndGroupBy",
+			Description:       "Enables filters and group by variables on all new dashboards. Variables are added only if default data source supports filtering.",
+			Stage:             FeatureStageExperimental,
+			Owner:             grafanaDashboardsSquad,
+			AllowSelfServe:    false,
+			HideFromDocs:      true,
+			HideFromAdminPage: true,
+		},
+		{
+			Name:           "cloudWatchNewLabelParsing",
+			Description:    "Updates CloudWatch label parsing to be more accurate",
+			Stage:          FeatureStageGeneralAvailability,
+			Expression:     "true", // enabled by default
+			Owner:          awsDatasourcesSquad,
+			FrontendOnly:   false,
+			AllowSelfServe: false,
+		},
+		{
+			Name:        "accessActionSets",
+			Description: "Introduces action sets for resource permissions",
+			Stage:       FeatureStageExperimental,
+			Owner:       identityAccessTeam,
 		},
 	}
 )
