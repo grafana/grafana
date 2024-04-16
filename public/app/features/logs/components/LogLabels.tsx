@@ -1,5 +1,5 @@
 import { css, cx } from '@emotion/css';
-import React from 'react';
+import React, { useMemo } from 'react';
 
 import { GrafanaTheme2, Labels } from '@grafana/data';
 import { useStyles2 } from '@grafana/ui';
@@ -13,7 +13,7 @@ interface Props {
 
 export const LogLabels = ({ labels }: Props) => {
   const styles = useStyles2(getStyles);
-  const displayLabels = Object.keys(labels).filter((label) => !label.startsWith('_') && !HIDDEN_LABELS.includes(label));
+  const displayLabels = useMemo(() => Object.keys(labels).filter((label) => !label.startsWith('_') && !HIDDEN_LABELS.includes(label)).sort(), [labels]);
 
   if (displayLabels.length === 0) {
     return (
@@ -25,23 +25,48 @@ export const LogLabels = ({ labels }: Props) => {
 
   return (
     <span className={cx([styles.logsLabels])}>
-      {displayLabels.sort().map((label) => {
+      {displayLabels.map((label) => {
         const value = labels[label];
         if (!value) {
           return;
         }
         const tooltip = `${label}: ${value}`;
-        return (
-          <span key={label} className={cx([styles.logsLabel])}>
-            <span className={cx([styles.logsLabelValue])} title={tooltip}>
-              {value}
-            </span>
-          </span>
-        );
+        return <LogLabel key={label} styles={styles} tooltip={tooltip}>{value}</LogLabel>;
       })}
     </span>
   );
 };
+
+interface LogLabelsArrayProps {
+  labels: string[];
+}
+
+export const LogLabelsList = ({ labels }: LogLabelsArrayProps) => {
+  const styles = useStyles2(getStyles);
+  return (
+    <span className={cx([styles.logsLabels])}>
+      {labels.map((label) => (
+        <LogLabel key={label} styles={styles} tooltip={label}>{label}</LogLabel>
+      ))}
+    </span>
+  );
+}
+
+interface LogLabelProps {
+  styles: Record<string, string>;
+  tooltip?: string;
+  children: JSX.Element | string;
+}
+
+const LogLabel = ({ styles, tooltip, children }: LogLabelProps) => {
+  return (
+    <span className={cx([styles.logsLabel])}>
+      <span className={cx([styles.logsLabelValue])} title={tooltip}>
+        {children}
+      </span>
+    </span>
+  )
+}
 
 const getStyles = (theme: GrafanaTheme2) => {
   return {
