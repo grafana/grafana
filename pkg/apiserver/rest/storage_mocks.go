@@ -16,7 +16,7 @@ type legacyStoreMock struct {
 	LegacyStorage
 }
 
-type unifiedStoreMock struct {
+type storageMock struct {
 	*mock.Mock
 	Storage
 }
@@ -67,7 +67,7 @@ func (m legacyStoreMock) Delete(ctx context.Context, name string, deleteValidati
 }
 
 // Unified Store
-func (m unifiedStoreMock) Get(ctx context.Context, name string, options *metav1.GetOptions) (runtime.Object, error) {
+func (m storageMock) Get(ctx context.Context, name string, options *metav1.GetOptions) (runtime.Object, error) {
 	args := m.Called(ctx, name, options)
 	if name == "object-fail" {
 		return nil, args.Error(1)
@@ -75,7 +75,7 @@ func (m unifiedStoreMock) Get(ctx context.Context, name string, options *metav1.
 	return args.Get(0).(runtime.Object), args.Error(1)
 }
 
-func (m unifiedStoreMock) Create(ctx context.Context, obj runtime.Object, createValidation rest.ValidateObjectFunc, options *metav1.CreateOptions) (runtime.Object, error) {
+func (m storageMock) Create(ctx context.Context, obj runtime.Object, createValidation rest.ValidateObjectFunc, options *metav1.CreateOptions) (runtime.Object, error) {
 	args := m.Called(ctx, obj, createValidation, options)
 	acc, err := meta.Accessor(obj)
 	if err != nil {
@@ -88,7 +88,7 @@ func (m unifiedStoreMock) Create(ctx context.Context, obj runtime.Object, create
 	return args.Get(0).(runtime.Object), args.Error(1)
 }
 
-func (m unifiedStoreMock) List(ctx context.Context, options *metainternalversion.ListOptions) (runtime.Object, error) {
+func (m storageMock) List(ctx context.Context, options *metainternalversion.ListOptions) (runtime.Object, error) {
 	args := m.Called(ctx, options)
 	if options.Kind == "fail" {
 		return nil, args.Error(1)
@@ -96,12 +96,12 @@ func (m unifiedStoreMock) List(ctx context.Context, options *metainternalversion
 	return args.Get(0).(runtime.Object), args.Error(1)
 }
 
-func (m unifiedStoreMock) Update(ctx context.Context, name string, objInfo rest.UpdatedObjectInfo, createValidation rest.ValidateObjectFunc, updateValidation rest.ValidateObjectUpdateFunc, forceAllowCreate bool, options *metav1.UpdateOptions) (runtime.Object, bool, error) {
+func (m storageMock) Update(ctx context.Context, name string, objInfo rest.UpdatedObjectInfo, createValidation rest.ValidateObjectFunc, updateValidation rest.ValidateObjectUpdateFunc, forceAllowCreate bool, options *metav1.UpdateOptions) (runtime.Object, bool, error) {
 	args := m.Called(ctx, name, objInfo, createValidation, updateValidation, forceAllowCreate, options)
 	return args.Get(0).(runtime.Object), args.Bool(1), args.Error(2)
 }
 
-func (m unifiedStoreMock) Delete(ctx context.Context, name string, deleteValidation rest.ValidateObjectFunc, options *metav1.DeleteOptions) (runtime.Object, bool, error) {
+func (m storageMock) Delete(ctx context.Context, name string, deleteValidation rest.ValidateObjectFunc, options *metav1.DeleteOptions) (runtime.Object, bool, error) {
 	args := m.Called(ctx, name, deleteValidation, options)
 	if name == "object-fail" {
 		return nil, false, args.Error(2)

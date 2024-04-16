@@ -66,11 +66,11 @@ var failingObj = &example.Pod{TypeMeta: metav1.TypeMeta{}, ObjectMeta: metav1.Ob
 
 func TestMode1_Create(t *testing.T) {
 	type testCase struct {
-		name          string
-		input         runtime.Object
-		setupLegacyFn func(m *mock.Mock, input runtime.Object)
-		setupUSFn     func(m *mock.Mock, input runtime.Object)
-		wantErr       bool
+		name           string
+		input          runtime.Object
+		setupLegacyFn  func(m *mock.Mock, input runtime.Object)
+		setupStorageFn func(m *mock.Mock, input runtime.Object)
+		wantErr        bool
 	}
 	tests :=
 		[]testCase{
@@ -80,7 +80,7 @@ func TestMode1_Create(t *testing.T) {
 				setupLegacyFn: func(m *mock.Mock, input runtime.Object) {
 					m.On("Create", context.Background(), input, mock.Anything, mock.Anything).Return(exampleObj, nil)
 				},
-				setupUSFn: func(m *mock.Mock, input runtime.Object) {
+				setupStorageFn: func(m *mock.Mock, input runtime.Object) {
 					m.On("Create", context.Background(), anotherObj, mock.Anything, mock.Anything).Return(anotherObj, nil)
 				},
 			},
@@ -100,13 +100,13 @@ func TestMode1_Create(t *testing.T) {
 		m := &mock.Mock{}
 
 		ls := legacyStoreMock{m, l}
-		us := unifiedStoreMock{m, s}
+		us := storageMock{m, s}
 
 		if tt.setupLegacyFn != nil {
 			tt.setupLegacyFn(m, tt.input)
 		}
-		if tt.setupUSFn != nil {
-			tt.setupUSFn(m, tt.input)
+		if tt.setupStorageFn != nil {
+			tt.setupStorageFn(m, tt.input)
 		}
 
 		dw := SelectDualWriter(Mode1, ls, us)
@@ -127,11 +127,11 @@ func TestMode1_Create(t *testing.T) {
 
 func TestMode1_Get(t *testing.T) {
 	type testCase struct {
-		name          string
-		input         string
-		setupLegacyFn func(m *mock.Mock, name string)
-		setupUSFn     func(m *mock.Mock, name string)
-		wantErr       bool
+		name           string
+		input          string
+		setupLegacyFn  func(m *mock.Mock, name string)
+		setupStorageFn func(m *mock.Mock, name string)
+		wantErr        bool
 	}
 	tests :=
 		[]testCase{
@@ -141,7 +141,7 @@ func TestMode1_Get(t *testing.T) {
 				setupLegacyFn: func(m *mock.Mock, name string) {
 					m.On("Get", context.Background(), name, mock.Anything).Return(exampleObj, nil)
 				},
-				setupUSFn: func(m *mock.Mock, name string) {
+				setupStorageFn: func(m *mock.Mock, name string) {
 					m.On("Get", context.Background(), name, mock.Anything).Return(anotherObj, nil)
 				},
 			},
@@ -161,13 +161,13 @@ func TestMode1_Get(t *testing.T) {
 		m := &mock.Mock{}
 
 		ls := legacyStoreMock{m, l}
-		us := unifiedStoreMock{m, s}
+		us := storageMock{m, s}
 
 		if tt.setupLegacyFn != nil {
 			tt.setupLegacyFn(m, tt.input)
 		}
-		if tt.setupUSFn != nil {
-			tt.setupUSFn(m, tt.input)
+		if tt.setupStorageFn != nil {
+			tt.setupStorageFn(m, tt.input)
 		}
 
 		dw := SelectDualWriter(Mode1, ls, us)
@@ -188,10 +188,10 @@ func TestMode1_Get(t *testing.T) {
 
 func TestMode1_List(t *testing.T) {
 	type testCase struct {
-		name          string
-		setupLegacyFn func(m *mock.Mock)
-		setupUSFn     func(m *mock.Mock)
-		wantErr       bool
+		name           string
+		setupLegacyFn  func(m *mock.Mock)
+		setupStorageFn func(m *mock.Mock)
+		wantErr        bool
 	}
 	tests :=
 		[]testCase{
@@ -210,13 +210,13 @@ func TestMode1_List(t *testing.T) {
 		m := &mock.Mock{}
 
 		ls := legacyStoreMock{m, l}
-		us := unifiedStoreMock{m, s}
+		us := storageMock{m, s}
 
 		if tt.setupLegacyFn != nil {
 			tt.setupLegacyFn(m)
 		}
-		if tt.setupUSFn != nil {
-			tt.setupUSFn(m)
+		if tt.setupStorageFn != nil {
+			tt.setupStorageFn(m)
 		}
 
 		dw := SelectDualWriter(Mode1, ls, us)
@@ -234,11 +234,11 @@ func TestMode1_List(t *testing.T) {
 
 func TestMode1_Delete(t *testing.T) {
 	type testCase struct {
-		name          string
-		input         string
-		setupLegacyFn func(m *mock.Mock, name string)
-		setupUSFn     func(m *mock.Mock, name string)
-		wantErr       bool
+		name           string
+		input          string
+		setupLegacyFn  func(m *mock.Mock, name string)
+		setupStorageFn func(m *mock.Mock, name string)
+		wantErr        bool
 	}
 	tests :=
 		[]testCase{
@@ -258,13 +258,13 @@ func TestMode1_Delete(t *testing.T) {
 		m := &mock.Mock{}
 
 		ls := legacyStoreMock{m, l}
-		us := unifiedStoreMock{m, s}
+		us := storageMock{m, s}
 
 		if tt.setupLegacyFn != nil {
 			tt.setupLegacyFn(m, tt.input)
 		}
-		if tt.setupUSFn != nil {
-			tt.setupUSFn(m, tt.input)
+		if tt.setupStorageFn != nil {
+			tt.setupStorageFn(m, tt.input)
 		}
 
 		dw := SelectDualWriter(Mode1, ls, us)
