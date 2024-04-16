@@ -304,7 +304,7 @@ func (e Error) PublicMessage() string {
 		return "Plugin signature does not match"
 	case errorCodeSignatureMissing:
 		return "Plugin signature is missing"
-	case ErrorCodeFailedStart:
+	case ErrorCodeFailedBackendStart:
 		return "Plugin failed to start"
 	case ErrorAngular:
 		return "Angular plugins are not supported"

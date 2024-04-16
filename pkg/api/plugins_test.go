@@ -808,7 +808,7 @@ func Test_PluginsSettings(t *testing.T) {
 		{
 			desc:          "should return a plugin error",
 			expectedCode:  http.StatusBadRequest,
-			errCode:       plugins.ErrorCodeFailedStart,
+			errCode:       plugins.ErrorCodeFailedBackendStart,
 			expectedError: "Plugin failed to start",
 		},
 	}

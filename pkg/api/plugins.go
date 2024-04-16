@@ -175,7 +175,7 @@ func (hs *HTTPServer) GetPluginSettingByID(c *contextmodel.ReqContext) response.
 
 	perr := hs.pluginErrorResolver.PluginError(c.Req.Context(), pluginID)
 	if perr != nil {
-		return response.Error(http.StatusBadRequest, perr.PublicMessage(), perr)
+		return response.Error(http.StatusInternalServerError, perr.PublicMessage(), perr)
 	}
 
 	plugin, exists := hs.pluginStore.Plugin(c.Req.Context(), pluginID)
