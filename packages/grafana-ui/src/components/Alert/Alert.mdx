@@ -104,9 +104,9 @@ Inline Banners are task-oriented alerts that notify users of the status of an ac
 
 ```jsx
 <Alert title={title} severity={severity} buttonContent={buttonContent} onRemove={onRemove}>
-  <VerticalGroup>
+  <Stack direction="column">
     <div>Child content that includes some alert details, like maybe what actually happened.</div>
-  </VerticalGroup>
+  </Stack>
 </Alert>
 ```
 
@@ -149,9 +149,9 @@ appEvents.publish({
 
 ```jsx
 <Alert title={title} severity={severity} onRemove={onRemove} elevated>
-  <VerticalGroup>
+  <Stack direction="column">
     <div>Child content that includes some alert details, like maybe what actually happened.</div>
-  </VerticalGroup>
+  </Stack>
 </Alert>
 ```
 
