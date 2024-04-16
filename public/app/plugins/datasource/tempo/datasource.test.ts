@@ -93,7 +93,24 @@ describe('Tempo data source', () => {
         minDuration: '$interpolationVar',
         maxDuration: '$interpolationVar',
         serviceMapQuery,
-        filters: [],
+        filters: [
+          {
+            id: 'service-name',
+            operator: '=',
+            scope: TraceqlSearchScope.Resource,
+            tag: 'service.name',
+            value: '$interpolationVarWithPipe',
+            valueType: 'string',
+          },
+          {
+            id: 'tagId',
+            operator: '=',
+            scope: TraceqlSearchScope.Span,
+            tag: '$interpolationVar',
+            value: '$interpolationVar',
+            valueType: 'string',
+          },
+        ],
       };
     }
     let templateSrv: TemplateSrv;
@@ -110,7 +127,7 @@ describe('Tempo data source', () => {
       templateSrv = initTemplateSrv([{ name: 'templateVariable1' }, { name: 'templateVariable2' }], expectedValues);
     });
 
-    it('when traceId query for dashboard->explore', async () => {
+    it('when moving from dashboard to explore', async () => {
       const expectedValues = {
         interpolationVar: 'interpolationText',
         interpolationText: 'interpolationText',
@@ -129,9 +146,12 @@ describe('Tempo data source', () => {
       expect(queries[0].minDuration).toBe(text);
       expect(queries[0].maxDuration).toBe(text);
       expect(queries[0].serviceMapQuery).toBe(text);
+      expect(queries[0].filters[0].value).toBe(textWithPipe);
+      expect(queries[0].filters[1].value).toBe(text);
+      expect(queries[0].filters[1].tag).toBe(text);
     });
 
-    it('when traceId query for template variable', async () => {
+    it('when applying template variables', async () => {
       const scopedText = 'scopedInterpolationText';
       const ds = new TempoDatasource(defaultSettings, templateSrv);
       const resp = ds.applyTemplateVariables(getQuery(), {
@@ -144,6 +164,9 @@ describe('Tempo data source', () => {
       expect(resp.search).toBe(scopedText);
       expect(resp.minDuration).toBe(scopedText);
       expect(resp.maxDuration).toBe(scopedText);
+      expect(resp.filters[0].value).toBe(textWithPipe);
+      expect(resp.filters[1].value).toBe(scopedText);
+      expect(resp.filters[1].tag).toBe(scopedText);
     });
 
     it('when serviceMapQuery is an array', async () => {

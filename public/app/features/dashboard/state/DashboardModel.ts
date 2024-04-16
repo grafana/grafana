@@ -440,10 +440,21 @@ export class DashboardModel implements TimeModel {
       return;
     }
 
-    for (const panel of this.panels) {
-      if (!this.otherPanelInFullscreen(panel) && (event.refreshAll || event.panelIds.includes(panel.id))) {
-        panel.refresh();
+    const panelsToRefresh = this.panels.filter(
+      (panel) => !this.otherPanelInFullscreen(panel) && (event.refreshAll || event.panelIds.includes(panel.id))
+    );
+
+    // We have to mark every panel as refreshWhenInView /before/ we actually refresh any
+    // in case there is a shared query, as otherwise that might refresh before the source panel is
+    // marked for refresh, preventing the panel from updating
+    if (!this.isSnapshot()) {
+      for (const panel of panelsToRefresh) {
+        panel.refreshWhenInView = true;
       }
+    }
+
+    for (const panel of panelsToRefresh) {
+      panel.refresh();
     }
   }
 
@@ -1342,7 +1353,9 @@ export class DashboardModel implements TimeModel {
   hasAngularPlugins(): boolean {
     return this.panels.some((panel) => {
       // Return false for plugins that are angular but have angular.hideDeprecation = false
-      const isAngularPanel = panel.isAngularPlugin() && !panel.plugin?.meta.angular?.hideDeprecation;
+      // We cannot use panel.plugin.isAngularPlugin() because panel.plugin may not be initialized at this stage.
+      const isAngularPanel =
+        config.panels[panel.type]?.angular?.detected && !config.panels[panel.type]?.angular?.hideDeprecation;
       let isAngularDs = false;
       if (panel.datasource?.uid) {
         isAngularDs = isAngularDatasourcePluginAndNotHidden(panel.datasource?.uid);

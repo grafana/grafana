@@ -15,7 +15,6 @@ import (
 	authidentity "github.com/grafana/grafana/pkg/services/auth/identity"
 	"github.com/grafana/grafana/pkg/services/authn"
 	"github.com/grafana/grafana/pkg/services/login"
-	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
 	"github.com/grafana/grafana/pkg/util/errutil"
@@ -43,24 +42,24 @@ var (
 	_ authn.ContextAwareClient = new(Proxy)
 )
 
-func ProvideProxy(cfg *setting.Cfg, cache proxyCache, userSrv user.Service, clients ...authn.ProxyClient) (*Proxy, error) {
+func ProvideProxy(cfg *setting.Cfg, cache proxyCache, clients ...authn.ProxyClient) (*Proxy, error) {
 	list, err := parseAcceptList(cfg.AuthProxyWhitelist)
 	if err != nil {
 		return nil, err
 	}
-	return &Proxy{log.New(authn.ClientProxy), cfg, cache, userSrv, clients, list}, nil
+	return &Proxy{log.New(authn.ClientProxy), cfg, cache, clients, list}, nil
 }
 
 type proxyCache interface {
 	Get(ctx context.Context, key string) ([]byte, error)
 	Set(ctx context.Context, key string, value []byte, expire time.Duration) error
+	Delete(ctx context.Context, key string) error
 }
 
 type Proxy struct {
 	log         log.Logger
 	cfg         *setting.Cfg
 	cache       proxyCache
-	userSrv     user.Service
 	clients     []authn.ProxyClient
 	acceptedIPs []*net.IPNet
 }
@@ -90,21 +89,17 @@ func (c *Proxy) Authenticate(ctx context.Context, r *authn.Request) (*authn.Iden
 			if err != nil {
 				c.log.FromContext(ctx).Warn("Failed to parse user id from cache", "error", err, "userId", string(entry))
 			} else {
-				usr, err := c.userSrv.GetSignedInUserWithCacheCtx(ctx, &user.GetSignedInUserQuery{
-					UserID: uid,
-					OrgID:  r.OrgID,
-				})
-
-				if err != nil {
-					c.log.FromContext(ctx).Warn("Could not resolved cached user", "error", err, "userId", string(entry))
-				}
-
-				// if we for some reason cannot find the user we proceed with the normal flow, authenticate with ProxyClient
-				// and perform syncs
-				if usr != nil {
-					c.log.FromContext(ctx).Debug("User was loaded from cache, skip syncs", "userId", usr.UserID)
-					return authn.IdentityFromSignedInUser(authn.NamespacedID(authn.NamespaceUser, usr.UserID), usr, authn.ClientParams{SyncPermissions: true}, login.AuthProxyAuthModule), nil
-				}
+				return &authn.Identity{
+					ID:    authn.NamespacedID(authn.NamespaceUser, uid),
+					OrgID: r.OrgID,
+					// FIXME: This does not match the actual auth module used, but should not have any impact
+					// Maybe caching the auth module used with the user ID would be a good idea
+					AuthenticatedBy: login.AuthProxyAuthModule,
+					ClientParams: authn.ClientParams{
+						FetchSyncedUser: true,
+						SyncPermissions: true,
+					},
+				}, nil
 			}
 		}
 	}
@@ -115,7 +110,6 @@ func (c *Proxy) Authenticate(ctx context.Context, r *authn.Request) (*authn.Iden
 		identity, clientErr = proxyClient.AuthenticateProxy(ctx, r, username, additional)
 		if identity != nil {
 			identity.ClientParams.CacheAuthProxyKey = cacheKey
-			identity.AuthenticatedBy = login.AuthProxyAuthModule
 			return identity, nil
 		}
 	}
@@ -146,13 +140,32 @@ func (c *Proxy) Hook(ctx context.Context, identity *authn.Identity, r *authn.Req
 		c.log.Warn("Failed to cache proxy user", "error", err, "userId", identifier, "err", err)
 		return nil
 	}
+
+	// User's role would not be updated if the cache hit. If requests arrive in the following order:
+	// 1. Name = x; Role = Admin			# cache missed, new user created and cached with key Name=x;Role=Admin
+	// 2. Name = x; Role = Editor			# cache missed, the user got updated and cached with key Name=x;Role=Editor
+	// 3. Name = x; Role = Admin			# cache hit with key Name=x;Role=Admin, no update, the user stays with Role=Editor
+	// To avoid such a problem we also cache the key used using `prefix:[username]`.
+	// Then whenever we get a cache miss due to changes in any header we use it to invalidate the previous item.
+	username := getProxyHeader(r, c.cfg.AuthProxyHeaderName, c.cfg.AuthProxyHeadersEncoded)
+	userKey := fmt.Sprintf("%s:%s", proxyCachePrefix, username)
+
+	// invalidate previously cached user id
+	if prevCacheKey, err := c.cache.Get(ctx, userKey); err == nil && len(prevCacheKey) > 0 {
+		if err := c.cache.Delete(ctx, string(prevCacheKey)); err != nil {
+			return err
+		}
+	}
+
 	c.log.FromContext(ctx).Debug("Cache proxy user", "userId", id)
 	bytes := []byte(strconv.FormatInt(id, 10))
-	if err := c.cache.Set(ctx, identity.ClientParams.CacheAuthProxyKey, bytes, time.Duration(c.cfg.AuthProxySyncTTL)*time.Minute); err != nil {
+	duration := time.Duration(c.cfg.AuthProxySyncTTL) * time.Minute
+	if err := c.cache.Set(ctx, identity.ClientParams.CacheAuthProxyKey, bytes, duration); err != nil {
 		c.log.Warn("Failed to cache proxy user", "error", err, "userId", id)
 	}
 
-	return nil
+	// store current cacheKey for the user
+	return c.cache.Set(ctx, userKey, []byte(identity.ClientParams.CacheAuthProxyKey), duration)
 }
 
 func (c *Proxy) isAllowedIP(r *authn.Request) bool {

@@ -3,6 +3,7 @@ package clients
 import (
 	"context"
 	"errors"
+	"fmt"
 	"net/http"
 	"testing"
 	"time"
@@ -12,7 +13,6 @@ import (
 
 	"github.com/grafana/grafana/pkg/services/authn"
 	"github.com/grafana/grafana/pkg/services/authn/authntest"
-	"github.com/grafana/grafana/pkg/services/user/usertest"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -112,7 +112,7 @@ func TestProxy_Authenticate(t *testing.T) {
 				calledAdditional = additional
 				return nil, nil
 			}}
-			c, err := ProvideProxy(cfg, fakeCache{expectedErr: errors.New("")}, usertest.NewUserServiceFake(), proxyClient)
+			c, err := ProvideProxy(cfg, &fakeCache{expectedErr: errors.New("")}, proxyClient)
 			require.NoError(t, err)
 
 			_, err = c.Authenticate(context.Background(), tt.req)
@@ -177,14 +177,65 @@ func TestProxy_Test(t *testing.T) {
 var _ proxyCache = new(fakeCache)
 
 type fakeCache struct {
-	expectedErr  error
-	expectedItem []byte
+	data        map[string][]byte
+	expectedErr error
 }
 
-func (f fakeCache) Get(ctx context.Context, key string) ([]byte, error) {
-	return f.expectedItem, f.expectedErr
+func (f *fakeCache) Get(ctx context.Context, key string) ([]byte, error) {
+	return f.data[key], f.expectedErr
 }
 
-func (f fakeCache) Set(ctx context.Context, key string, value []byte, expire time.Duration) error {
+func (f *fakeCache) Set(ctx context.Context, key string, value []byte, expire time.Duration) error {
+	f.data[key] = value
 	return f.expectedErr
+}
+
+func (f fakeCache) Delete(ctx context.Context, key string) error {
+	delete(f.data, key)
+	return f.expectedErr
+}
+
+func TestProxy_Hook(t *testing.T) {
+	cfg := setting.NewCfg()
+	cfg.AuthProxyHeaderName = "X-Username"
+	cfg.AuthProxyHeaders = map[string]string{
+		proxyFieldRole: "X-Role",
+	}
+	cache := &fakeCache{data: make(map[string][]byte)}
+	userId := 1
+	userID := fmt.Sprintf("%s:%d", authn.NamespaceUser, userId)
+
+	// withRole creates a test case for a user with a specific role.
+	withRole := func(role string) func(t *testing.T) {
+		cacheKey := fmt.Sprintf("users:johndoe-%s", role)
+		return func(t *testing.T) {
+			c, err := ProvideProxy(cfg, cache, authntest.MockProxyClient{})
+			require.NoError(t, err)
+			userIdentity := &authn.Identity{
+				ID: userID,
+				ClientParams: authn.ClientParams{
+					CacheAuthProxyKey: cacheKey,
+				},
+			}
+			userReq := &authn.Request{
+				HTTPRequest: &http.Request{
+					Header: map[string][]string{
+						"X-Username": {"johndoe"},
+						"X-Role":     {role},
+					},
+				},
+			}
+			err = c.Hook(context.Background(), userIdentity, userReq)
+			assert.NoError(t, err)
+			expectedCache := map[string][]byte{
+				cacheKey: []byte(fmt.Sprintf("%d", userId)),
+				fmt.Sprintf("%s:%s", proxyCachePrefix, "johndoe"): []byte(fmt.Sprintf("users:johndoe-%s", role)),
+			}
+			assert.Equal(t, expectedCache, cache.data)
+		}
+	}
+
+	t.Run("step 1: new user with role Admin", withRole("Admin"))
+	t.Run("step 2: cached user with new Role Viewer", withRole("Viewer"))
+	t.Run("step 3: cached user get changed back to Admin", withRole("Admin"))
 }
