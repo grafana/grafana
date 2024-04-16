@@ -13,6 +13,7 @@ import {
   transformDataFrame,
   DataTransformerConfig,
   CustomTransformOperator,
+  Labels,
 } from '@grafana/data';
 import { DataFrame } from '@grafana/data/';
 import { reportInteraction } from '@grafana/runtime';
@@ -133,7 +134,7 @@ export const LogsMetaRow = React.memo(
       logsMetaItem.push(
         {
           label: 'Showing only selected fields',
-          value: renderMetaItem(displayedFields, LogsMetaKind.LabelsMap),
+          value: <LogLabels labels={displayedFields} />,
         },
         {
           label: '',
@@ -195,11 +196,16 @@ export const LogsMetaRow = React.memo(
 
 LogsMetaRow.displayName = 'LogsMetaRow';
 
-function renderMetaItem(value: any, kind: LogsMetaKind) {
+function renderMetaItem(value: string | number | Labels, kind: LogsMetaKind) {
+  if (typeof value === 'string' || typeof value === 'number') {
+    return <>value</>;
+  }
   if (kind === LogsMetaKind.LabelsMap) {
     return <LogLabels labels={value} />;
-  } else if (kind === LogsMetaKind.Error) {
-    return <span className="logs-meta-item__error">{value}</span>;
+  } 
+  if (kind === LogsMetaKind.Error) {
+    return <span className="logs-meta-item__error">{value.toString()}</span>;
   }
-  return value;
+  console.error(`Meta type ${typeof value} ${value} not recognized.`)
+  return <></>;
 }
