@@ -2,7 +2,12 @@ import { NotifierDTO } from 'app/types';
 
 import { GrafanaChannelValues, ReceiverFormValues } from '../types/receiver-form';
 
-import { formValuesToGrafanaReceiver, omitEmptyValues, omitEmptyUnlessExisting } from './receiver-form';
+import {
+  formValuesToGrafanaReceiver,
+  omitEmptyValues,
+  omitEmptyUnlessExisting,
+  omitTemporaryIdentifiers,
+} from './receiver-form';
 
 describe('Receiver form utils', () => {
   describe('omitEmptyStringValues', () => {
@@ -65,6 +70,79 @@ describe('Receiver form utils', () => {
       };
 
       expect(omitEmptyUnlessExisting(original, existing)).toEqual(expected);
+    });
+  });
+
+  describe('omitTemporaryIdentifiers', () => {
+    it('should remove __id from the root object', () => {
+      const original = {
+        __id: '1',
+        foo: 'bar',
+      };
+
+      const expected = {
+        foo: 'bar',
+      };
+
+      expect(omitTemporaryIdentifiers(original)).toEqual(expected);
+    });
+
+    it('should remove __id from nested objects', () => {
+      const original = {
+        foo: 'bar',
+        nested: {
+          __id: '1',
+          baz: 'qux',
+          doubleNested: {
+            __id: '2',
+            url: 'example.com',
+          },
+        },
+      };
+
+      const expected = {
+        foo: 'bar',
+        nested: {
+          baz: 'qux',
+          doubleNested: {
+            url: 'example.com',
+          },
+        },
+      };
+
+      expect(omitTemporaryIdentifiers(original)).toEqual(expected);
+    });
+
+    it('should remove __id from objects in an array', () => {
+      const original = {
+        foo: 'bar',
+        array: [
+          {
+            __id: '1',
+            baz: 'qux',
+            actions: [
+              { __id: '3', type: 'email' },
+              { __id: '4', type: 'slack' },
+            ],
+          },
+          { __id: '2', quux: 'quuz' },
+        ],
+      };
+
+      const expected = {
+        foo: 'bar',
+        array: [
+          {
+            baz: 'qux',
+            actions: [{ type: 'email' }, { type: 'slack' }],
+          },
+          {
+            quux: 'quuz',
+          },
+        ],
+      };
+
+      expect(omitTemporaryIdentifiers(original)).toEqual(expected);
     });
   });
 });

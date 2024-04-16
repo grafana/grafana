@@ -108,7 +108,7 @@ export function formValuesToCloudReceiver(
   };
   values.items.forEach(({ __id, type, settings, sendResolved }) => {
     const channel = omitEmptyValues({
-      ...settings,
+      ...omitTemporaryIdentifiers(settings),
       send_resolved: sendResolved ?? defaults.sendResolved,
     });
 
@@ -291,4 +291,16 @@ export function omitEmptyValues<T>(obj: T): T {
 // existing is a map of property names that were previously defined.
 export function omitEmptyUnlessExisting(settings = {}, existing = {}): Record<string, unknown> {
   return omitBy(settings, (value, key) => isUnacceptableValue(value) && !(key in existing));
+}
+
+export function omitTemporaryIdentifiers<T>(obj: T): T {
+  if (isArray(obj)) {
+    obj.forEach(omitTemporaryIdentifiers);
+  } else if (typeof obj === 'object' && obj !== null) {
+    if ('__id' in obj) {
+      delete obj.__id;
+    }
+    Object.values(obj).forEach(omitTemporaryIdentifiers);
+  }
+  return obj;
 }
