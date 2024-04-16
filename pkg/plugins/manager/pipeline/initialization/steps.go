@@ -79,10 +79,10 @@ func newBackendProcessStarter(processManager process.Manager) *BackendClientStar
 // Start will start the backend plugin process.
 func (b *BackendClientStarter) Start(ctx context.Context, p *plugins.Plugin) (*plugins.Plugin, error) {
 	if err := b.processManager.Start(ctx, p); err != nil {
-		b.log.Error("Could not start plugin", "pluginId", p.ID, "error", err)
+		b.log.Error("Could not start plugin backend", "pluginId", p.ID, "error", err)
 		return nil, (&plugins.Error{
 			PluginID:  p.ID,
-			ErrorCode: plugins.ErrorCodeFailedStart,
+			ErrorCode: plugins.ErrorCodeFailedBackendStart,
 		}).WithMessage(err.Error())
 	}
 	return p, nil

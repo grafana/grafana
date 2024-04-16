@@ -43,7 +43,7 @@ export enum PluginErrorCode {
   missingSignature = 'signatureMissing',
   invalidSignature = 'signatureInvalid',
   modifiedSignature = 'signatureModified',
-  failedStart = 'failedStart',
+  failedBackendStart = 'failedBackendStart',
   angular = 'angular',
 }
 
