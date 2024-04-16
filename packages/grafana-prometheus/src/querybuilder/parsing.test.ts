@@ -12,6 +12,7 @@ describe('buildVisualQueryFromString', () => {
       })
     );
   });
+
   it('parses simple binary comparison', () => {
     expect(buildVisualQueryFromString('{app="aggregator"} == 11')).toEqual({
       query: {
@@ -56,6 +57,7 @@ describe('buildVisualQueryFromString', () => {
       errors: [],
     });
   });
+
   it('parses simple query', () => {
     expect(buildVisualQueryFromString('counters_logins{app="frontend"}')).toEqual(
       noErrors({
@@ -87,6 +89,7 @@ describe('buildVisualQueryFromString', () => {
         ],
       });
     });
+
     it('throws error when visual query parse with aggregation is ambiguous (scalar)', () => {
       expect(buildVisualQueryFromString('topk(5, 1 / 2)')).toMatchObject({
         errors: [
@@ -98,6 +101,7 @@ describe('buildVisualQueryFromString', () => {
         ],
       });
     });
+
     it('throws error when visual query parse with functionCall is ambiguous', () => {
       expect(
         buildVisualQueryFromString(
@@ -113,6 +117,7 @@ describe('buildVisualQueryFromString', () => {
         ],
       });
     });
+
     it('does not throw error when visual query parse is unambiguous', () => {
       expect(
         buildVisualQueryFromString('topk(5, node_arp_entries) / node_arp_entries{cluster="dev-eu-west-2"}')
@@ -120,12 +125,14 @@ describe('buildVisualQueryFromString', () => {
         errors: [],
       });
     });
+
     it('does not throw error when visual query parse is unambiguous (scalar)', () => {
       // Note this topk query with scalars is not valid in prometheus, but it does not currently throw an error during parse
       expect(buildVisualQueryFromString('topk(5, 1) / 2')).toMatchObject({
         errors: [],
       });
     });
+
     it('does not throw error when visual query parse is unambiguous, function call', () => {
       // Note this topk query with scalars is not valid in prometheus, but it does not currently throw an error during parse
       expect(
@@ -291,8 +298,7 @@ describe('buildVisualQueryFromString', () => {
     });
   });
 
-  // enable in #85942 when updated lezer parser is merged
-  xit('parses a native histogram function correctly', () => {
+  it('parses a native histogram function correctly', () => {
     expect(
       buildVisualQueryFromString('histogram_count(rate(counters_logins{app="backend"}[$__rate_interval]))')
     ).toEqual({
@@ -306,7 +312,8 @@ describe('buildVisualQueryFromString', () => {
             params: ['$__rate_interval'],
           },
           {
-            id: 'histogram_quantile',
+            id: 'histogram_count',
+            params: [],
           },
         ],
       },
