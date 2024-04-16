@@ -57,13 +57,13 @@ Adding the **Editor** permission to the folder doesn't overwrite the **Viewer** 
 
 Details on the adding folder permissions as well as roles and the access that provides for Grafana Alerting is below.
 
-| Role   | Folder permission | Access                                                                                    |
-| ------ | ----------------- | ----------------------------------------------------------------------------------------- |
-| Admin  | -                 | Write access to alert rules in all folders.                                               |
-| Editor | -                 | Write access to alert rules in all folders.                                               |
+| Role   | Folder permission | Access                                                                                                                               |
+| ------ | ----------------- | ------------------------------------------------------------------------------------------------------------------------------------ |
+| Admin  | -                 | Write access to alert rules in all folders.                                                                                          |
+| Editor | -                 | Write access to alert rules in all folders.                                                                                          |
 | Viewer | Admin             | Read access to alert rules in all folders. Write access to alert rules **only** in the folders where the Admin permission is added.  |
 | Viewer | Editor            | Read access to alert rules in all folders. Write access to alert rules **only** in the folders where the Editor permission is added. |
-| Viewer | Viewer            | Read access to alert rules in all folders.                                                               |
+| Viewer | Viewer            | Read access to alert rules in all folders.                                                                                           |
 
 {{< admonition type="note" >}}
 You can't use folders to customize access to notification resources.
