@@ -101,6 +101,12 @@ func (c *spyStorageClient) Delete(ctx context.Context, name string, deleteValida
 	return nil, false, nil
 }
 
+func (c *spyStorageClient) DeleteCollection(ctx context.Context, deleteValidation rest.ValidateObjectFunc, options *metav1.DeleteOptions, listOptions *metainternalversion.ListOptions) (runtime.Object, error) {
+	c.spy.record("Storage.DeleteCollection")
+	klog.Info("method: Storage.DeleteCollection")
+	return nil, nil
+}
+
 // LegacyStorage Spy
 
 type LegacyStorageSpyClient interface {
@@ -182,6 +188,12 @@ func (c *spyLegacyStorageClient) Delete(ctx context.Context, name string, delete
 	c.spy.record("LegacyStorage.Delete")
 	klog.Info("method: LegacyStorage.Delete")
 	return nil, false, nil
+}
+
+func (c *spyLegacyStorageClient) DeleteCollection(ctx context.Context, deleteValidation rest.ValidateObjectFunc, options *metav1.DeleteOptions, listOptions *metainternalversion.ListOptions) (runtime.Object, error) {
+	c.spy.record("LegacyStorage.DeleteCollection")
+	klog.Info("method: LegacyStorage.DeleteCollection")
+	return nil, nil
 }
 
 type dummyList struct {

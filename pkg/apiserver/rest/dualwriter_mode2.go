@@ -124,25 +124,25 @@ func (d *DualWriterMode2) List(ctx context.Context, options *metainternalversion
 	return ll, nil
 }
 
-func enrichObject(orig, copy runtime.Object) (runtime.Object, error) {
-	accessorC, err := meta.Accessor(copy)
+// DeleteCollection overrides the behavior of the generic DualWriter and deletes from both LegacyStorage and Storage.
+func (d *DualWriterMode2) DeleteCollection(ctx context.Context, deleteValidation rest.ValidateObjectFunc, options *metav1.DeleteOptions, listOptions *metainternalversion.ListOptions) (runtime.Object, error) {
+	legacy, ok := d.Legacy.(rest.CollectionDeleter)
+	if !ok {
+		return nil, errDualWriterCollectionDeleterMissing
+	}
+
+	// #TODO: figure out how to handle partial deletions
+	deleted, err := legacy.DeleteCollection(ctx, deleteValidation, options, listOptions)
 	if err != nil {
-		return nil, err
+		klog.FromContext(ctx).Error(err, "failed to delete collection successfully from legacy storage", "deletedObjects", deleted)
 	}
-	accessorO, err := meta.Accessor(orig)
+
+	res, err := d.Storage.DeleteCollection(ctx, deleteValidation, options, listOptions)
 	if err != nil {
-		return nil, err
+		klog.FromContext(ctx).Error(err, "failed to delete collection successfully from Storage", "deletedObjects", deleted)
 	}
 
-	accessorC.SetLabels(accessorO.GetLabels())
-
-	ac := accessorC.GetAnnotations()
-	for k, v := range accessorO.GetAnnotations() {
-		ac[k] = v
-	}
-	accessorC.SetAnnotations(ac)
-
-	return copy, nil
+	return res, err
 }
 
 func (d *DualWriterMode2) Delete(ctx context.Context, name string, deleteValidation rest.ValidateObjectFunc, options *metav1.DeleteOptions) (runtime.Object, bool, error) {
@@ -167,4 +167,25 @@ func (d *DualWriterMode2) Delete(ctx context.Context, name string, deleteValidat
 	}
 
 	return deletedLS, async, err
+}
+
+func enrichObject(orig, copy runtime.Object) (runtime.Object, error) {
+	accessorC, err := meta.Accessor(copy)
+	if err != nil {
+		return nil, err
+	}
+	accessorO, err := meta.Accessor(orig)
+	if err != nil {
+		return nil, err
+	}
+
+	accessorC.SetLabels(accessorO.GetLabels())
+
+	ac := accessorC.GetAnnotations()
+	for k, v := range accessorO.GetAnnotations() {
+		ac[k] = v
+	}
+	accessorC.SetAnnotations(ac)
+
+	return copy, nil
 }
