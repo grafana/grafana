@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react';
+import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import React from 'react';
 
@@ -55,7 +55,14 @@ describe('TempoVariableQueryEditor', () => {
     expect(onChange).not.toHaveBeenCalled();
     render(<TempoVariableQueryEditor {...props} onChange={onChange} />);
 
+    // Select the query type ('Label values')
     await selectOptionInTest(screen.getByLabelText('Query type'), 'Label values');
+    await userEvent.click(document.body);
+
+    // Ensure the Label field is shown after selecting the query type
+    await waitFor(() => expect(screen.getByLabelText('Label')).toBeInTheDocument());
+
+    // Select the label value
     await selectOptionInTest(screen.getByLabelText('Label'), 'luna');
     await userEvent.click(document.body);
 
