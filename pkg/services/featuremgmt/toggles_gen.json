@@ -1120,7 +1120,8 @@
       "metadata": {
         "name": "pluginsDynamicAngularDetectionPatterns",
         "resourceVersion": "1712639261786",
-        "creationTimestamp": "2024-04-09T05:07:41Z"
+        "creationTimestamp": "2024-04-09T05:07:41Z",
+        "deletionTimestamp": "2024-04-11T13:53:48Z"
       },
       "spec": {
         "description": "Enables fetching Angular detection patterns for plugins from GCOM and fallback to hardcoded ones",
@@ -1309,12 +1310,15 @@
     {
       "metadata": {
         "name": "kubernetesPlaylists",
-        "resourceVersion": "1712639261786",
-        "creationTimestamp": "2024-04-09T05:07:41Z"
+        "resourceVersion": "1713248683044",
+        "creationTimestamp": "2024-04-09T05:07:41Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2024-04-16 06:24:43.044143 +0000 UTC"
+        }
       },
       "spec": {
         "description": "Use the kubernetes API in the frontend for playlists, and route /api/playlist requests to k8s",
-        "stage": "experimental",
+        "stage": "GA",
         "codeowner": "@grafana/grafana-app-platform-squad",
         "requiresRestart": true
       }
@@ -1467,6 +1471,7 @@
         "name": "usePrometheusFrontendPackage",
         "resourceVersion": "1712841379965",
         "creationTimestamp": "2024-04-09T05:07:41Z",
+        "deletionTimestamp": "2024-04-12T23:12:45Z",
         "annotations": {
           "grafana.app/updatedTimestamp": "2024-04-11 13:16:19.965312 +0000 UTC"
         }

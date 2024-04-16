@@ -86,7 +86,6 @@ export interface FeatureToggles {
   sqlDatasourceDatabaseSelection?: boolean;
   lokiFormatQuery?: boolean;
   recordedQueriesMulti?: boolean;
-  pluginsDynamicAngularDetectionPatterns?: boolean;
   vizAndWidgetSplit?: boolean;
   prometheusIncrementalQueryInstrumentation?: boolean;
   logsExploreTableVisualisation?: boolean;
@@ -175,7 +174,6 @@ export interface FeatureToggles {
   authAPIAccessTokenAuth?: boolean;
   scopeFilters?: boolean;
   ssoSettingsSAML?: boolean;
-  usePrometheusFrontendPackage?: boolean;
   oauthRequireSubClaim?: boolean;
   newDashboardWithFiltersAndGroupBy?: boolean;
   cloudWatchNewLabelParsing?: boolean;

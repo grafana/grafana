@@ -1,3 +1,4 @@
+// Core Grafana history https://github.com/grafana/grafana/blob/v11.0.0-preview/public/app/plugins/datasource/prometheus/datasource.ts
 import { defaults } from 'lodash';
 import { lastValueFrom, Observable, throwError } from 'rxjs';
 import { map, tap } from 'rxjs/operators';
@@ -369,7 +370,7 @@ export class PrometheusDatasource
     };
 
     if (config.featureToggles.promQLScope) {
-      processedTarget.scope = request.scope;
+      processedTarget.scope = request.scope?.spec;
     }
 
     if (target.instant && target.range) {
@@ -679,7 +680,7 @@ export class PrometheusDatasource
   // and in Tempo here grafana/public/app/plugins/datasource/tempo/QueryEditor/ServiceGraphSection.tsx
   async getTagKeys(options: DataSourceGetTagKeysOptions<PromQuery>): Promise<MetricFindValue[]> {
     if (!options || options.filters.length === 0) {
-      await this.languageProvider.fetchLabels(options.timeRange);
+      await this.languageProvider.fetchLabels(options.timeRange, options.queries);
       return this.languageProvider.getLabelKeys().map((k) => ({ value: k, text: k }));
     }
 

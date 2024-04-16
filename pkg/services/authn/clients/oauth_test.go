@@ -507,6 +507,49 @@ func TestGenPKCECodeVerifier(t *testing.T) {
 	assert.Len(t, verifier, 128)
 }
 
+func TestIsEnabled(t *testing.T) {
+	type testCase struct {
+		desc     string
+		oauthCfg *social.OAuthInfo
+		expected bool
+	}
+
+	tests := []testCase{
+		{
+			desc:     "should return false when client is not enabled",
+			oauthCfg: &social.OAuthInfo{Enabled: false},
+			expected: false,
+		},
+		{
+			desc:     "should return false when client doesnt exists",
+			oauthCfg: nil,
+			expected: false,
+		},
+		{
+			desc:     "should return true when client is enabled",
+			oauthCfg: &social.OAuthInfo{Enabled: true},
+			expected: true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.desc, func(t *testing.T) {
+			fakeSocialSvc := &socialtest.FakeSocialService{
+				ExpectedAuthInfoProvider: tt.oauthCfg,
+			}
+			cfg := setting.NewCfg()
+			c := ProvideOAuth(
+				social.GitHubProviderName,
+				cfg,
+				nil,
+				fakeSocialSvc,
+				&setting.OSSImpl{Cfg: cfg},
+				featuremgmt.WithFeatures())
+			assert.Equal(t, tt.expected, c.IsEnabled())
+		})
+	}
+}
+
 type mockConnector struct {
 	AuthCodeURLFunc func(state string, opts ...oauth2.AuthCodeOption) string
 	social.SocialConnector

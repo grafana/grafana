@@ -192,8 +192,8 @@ type dummyList struct {
 
 type dummyObject struct {
 	metav1.TypeMeta   `json:",inline"`
-	metav1.ObjectMeta `json:"metadata,omitempty"`
 	Foo               string
+	metav1.ObjectMeta `json:"metadata,omitempty"`
 }
 
 func (d *dummyList) GetObjectKind() schema.ObjectKind {
