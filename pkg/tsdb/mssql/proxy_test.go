@@ -41,5 +41,4 @@ func TestMSSQLProxyDriver(t *testing.T) {
 
 		require.Contains(t, err.Error(), "test-dialer: DialContext is not functional")
 	})
-
 }
