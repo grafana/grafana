@@ -25,11 +25,11 @@ var exampleOption = &metainternalversion.ListOptions{
 
 func TestMode2_Create(t *testing.T) {
 	type testCase struct {
-		name          string
-		input         runtime.Object
-		setupLegacyFn func(m *mock.Mock, input runtime.Object)
-		setupUSFn     func(m *mock.Mock, input runtime.Object)
-		wantErr       bool
+		name           string
+		input          runtime.Object
+		setupLegacyFn  func(m *mock.Mock, input runtime.Object)
+		setupStorageFn func(m *mock.Mock, input runtime.Object)
+		wantErr        bool
 	}
 	tests :=
 		[]testCase{
