@@ -34,7 +34,9 @@ You can use a heatmap visualization if you need to:
 
 ## Configure a heatmap visualization
 
-<!-- video TBA here -->
+Once you’ve created a [dashboard](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/dashboards/build-dashboards/create-dashboard/), the following video shows you how to configure a heatmap visualization:
+
+{{< youtube id="SGWBzQ54koE" >}}
 
 ## Supported data formats
 
