@@ -393,6 +393,15 @@ func (l *LibraryElementService) getLibraryElementsByName(c context.Context, sign
 		})
 }
 
+var sortClauses = map[string]string{
+	search.SortAlphaAsc.Name:    "name ASC",
+	search.SortAlphaDesc.Name:   "name DESC",
+	search.SortCreatedAsc.Name:  "created ASC",
+	search.SortCreatedDesc.Name: "created DESC",
+	search.SortUpdatedAsc.Name:  "updated ASC",
+	search.SortUpdatedDesc.Name: "updated DESC",
+}
+
 // getAllLibraryElements gets all Library Elements.
 func (l *LibraryElementService) getAllLibraryElements(c context.Context, signedInUser identity.Requester, query model.SearchLibraryElementsQuery) (model.LibraryElementSearchResult, error) {
 	elements := make([]model.LibraryElementWithMeta, 0)
@@ -447,10 +456,9 @@ func (l *LibraryElementService) getAllLibraryElements(c context.Context, signedI
 		if !signedInUser.HasRole(org.RoleAdmin) {
 			builder.WriteDashboardPermissionFilter(signedInUser, dashboardaccess.PERMISSION_VIEW, "")
 		}
-		if query.SortDirection == search.SortAlphaDesc.Name {
-			builder.Write(" ORDER BY 1 DESC")
-		} else {
-			builder.Write(" ORDER BY 1 ASC")
+		sortClause := sortClauses[query.SortDirection]
+		if sortClause != "" {
+			builder.Write(" ORDER BY le." + sortClause)
 		}
 		writePerPageSQL(query, l.SQLStore, &builder)
 		if err := session.SQL(builder.GetSQLString(), builder.GetParams()...).Find(&elements); err != nil {

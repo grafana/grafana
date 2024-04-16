@@ -159,6 +159,30 @@ func (s TitleSorter) OrderBy() string {
 	return "dashboard.title ASC"
 }
 
+type DateUpdatedSorter struct {
+	Descending bool
+}
+
+func (s DateUpdatedSorter) OrderBy() string {
+	if s.Descending {
+		return "dashboard.updated DESC"
+	}
+
+	return "dashboard.updated ASC"
+}
+
+type DateCreatedSorter struct {
+	Descending bool
+}
+
+func (s DateCreatedSorter) OrderBy() string {
+	if s.Descending {
+		return "dashboard.created DESC"
+	}
+
+	return "dashboard.created ASC"
+}
+
 func sqlIDin(column string, ids []int64) (string, []any) {
 	length := len(ids)
 	if length < 1 {

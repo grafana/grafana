@@ -141,6 +141,7 @@ interface SearchControlsProps {
   variant?: LibraryPanelsSearchVariant;
 }
 
+const searchOptions = ['alpha-asc', 'alpha-desc', 'created-desc', 'created-asc', 'updated-desc', 'updated-asc'];
 const SearchControls = React.memo(
   ({
     variant = LibraryPanelsSearchVariant.Spacious,
@@ -168,7 +169,7 @@ const SearchControls = React.memo(
           [styles.containerTight]: variant === LibraryPanelsSearchVariant.Tight,
         })}
       >
-        {showSort && <SortPicker value={sortDirection} onChange={onSortChange} filter={['alpha-asc', 'alpha-desc']} />}
+        {showSort && <SortPicker value={sortDirection} onChange={onSortChange} filter={searchOptions} />}
         {(showFolderFilter || showPanelFilter) && (
           <div
             className={cx(styles.filterContainer, {
