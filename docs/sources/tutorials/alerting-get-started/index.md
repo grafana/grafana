@@ -212,7 +212,7 @@ In this tutorial, you have learned how to set up an alert, send alert notificati
 
 Check out the links below to continue your learning journey with Grafana's LGTM stack.
 
-- [Prometheus](/docs/grafana/<GRAFANA_VERSION>/features/datasources/prometheus/)
-- [Alerting Overview](/docs/grafana/<GRAFANA_VERSION>/alerting/)
-- [Alert rules](/docs/grafana/<GRAFANA_VERSION>/alerting/create-alerts/)
-- [Contact Points](/docs/grafana/<GRAFANA_VERSION>/alerting/notifications/)
+- [Prometheus](/docs/grafana/latest/features/datasources/prometheus/)
+- [Alerting Overview](/docs/grafana/latest/alerting/)
+- [Alert rules](/docs/grafana/latest/alerting/create-alerts/)
+- [Contact points](/docs/grafana/latest/alerting/fundamentals/contact-points/)
