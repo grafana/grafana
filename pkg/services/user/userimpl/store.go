@@ -307,7 +307,7 @@ func (ss *sqlStore) Update(ctx context.Context, cmd *user.UpdateUserCommand) err
 	cmd.Email = strings.ToLower(cmd.Email)
 
 	return ss.db.WithTransactionalDbSession(ctx, func(sess *db.Session) error {
-		user := user.User{
+		u := user.User{
 			Name:    cmd.Name,
 			Email:   cmd.Email,
 			Login:   cmd.Login,
@@ -319,19 +319,19 @@ func (ss *sqlStore) Update(ctx context.Context, cmd *user.UpdateUserCommand) err
 
 		if cmd.EmailVerified != nil {
 			q.UseBool("email_verified")
-			user.EmailVerified = *cmd.EmailVerified
+			u.EmailVerified = *cmd.EmailVerified
 		}
 
-		if _, err := q.Update(&user); err != nil {
+		if _, err := q.Update(&u); err != nil {
 			return err
 		}
 
 		sess.PublishAfterCommit(&events.UserUpdated{
-			Timestamp: user.Created,
-			Id:        user.ID,
-			Name:      user.Name,
-			Login:     user.Login,
-			Email:     user.Email,
+			Timestamp: u.Created,
+			Id:        u.ID,
+			Name:      u.Name,
+			Login:     u.Login,
+			Email:     u.Email,
 		})
 
 		return nil

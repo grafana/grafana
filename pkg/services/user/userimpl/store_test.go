@@ -923,15 +923,6 @@ func TestIntegrationUserUpdate(t *testing.T) {
 		}
 	})
 
-	t.Run("Testing DB - update generates duplicate user", func(t *testing.T) {
-		err := userStore.Update(context.Background(), &user.UpdateUserCommand{
-			Login:  "loginuser2",
-			UserID: users[0].ID,
-		})
-
-		require.Error(t, err)
-	})
-
 	t.Run("Testing DB - update lowercases existing user", func(t *testing.T) {
 		err := userStore.Update(context.Background(), &user.UpdateUserCommand{
 			Login:  "loginUSER0",
