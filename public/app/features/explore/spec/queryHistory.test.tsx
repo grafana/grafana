@@ -45,11 +45,6 @@ jest.mock('@grafana/runtime', () => ({
     reportInteractionMock(...args);
   },
   getAppEvents: () => testEventBus,
-  getDataSourceSrv: () => {
-    return {
-      get: () => Promise.resolve({}),
-    };
-  },
 }));
 
 jest.mock('app/core/core', () => ({
@@ -71,6 +66,10 @@ jest.mock('app/core/services/PreferencesService', () => ({
       }),
     };
   },
+}));
+
+jest.mock('../hooks/useExplorePageTitle', () => ({
+  useExplorePageTitle: jest.fn(),
 }));
 
 jest.mock('react-virtualized-auto-sizer', () => {
