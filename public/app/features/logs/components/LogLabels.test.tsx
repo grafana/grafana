@@ -5,7 +5,7 @@ import { LogLabels, LogLabelsList } from './LogLabels';
 
 describe('<LogLabels />', () => {
   it('renders notice when no labels are found', () => {
-    render(<LogLabels labels={{}} emptyMessage='(no unique labels)' />);
+    render(<LogLabels labels={{}} emptyMessage="(no unique labels)" />);
     expect(screen.queryByText('(no unique labels)')).toBeInTheDocument();
   });
   it('renders labels', () => {

@@ -202,10 +202,10 @@ function renderMetaItem(value: string | number | Labels, kind: LogsMetaKind) {
   }
   if (kind === LogsMetaKind.LabelsMap) {
     return <LogLabels labels={value} />;
-  } 
+  }
   if (kind === LogsMetaKind.Error) {
     return <span className="logs-meta-item__error">{value.toString()}</span>;
   }
-  console.error(`Meta type ${typeof value} ${value} not recognized.`)
+  console.error(`Meta type ${typeof value} ${value} not recognized.`);
   return <></>;
 }

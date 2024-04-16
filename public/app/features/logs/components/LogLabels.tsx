@@ -14,7 +14,13 @@ interface Props {
 
 export const LogLabels = ({ labels, emptyMessage }: Props) => {
   const styles = useStyles2(getStyles);
-  const displayLabels = useMemo(() => Object.keys(labels).filter((label) => !label.startsWith('_') && !HIDDEN_LABELS.includes(label)).sort(), [labels]);
+  const displayLabels = useMemo(
+    () =>
+      Object.keys(labels)
+        .filter((label) => !label.startsWith('_') && !HIDDEN_LABELS.includes(label))
+        .sort(),
+    [labels]
+  );
 
   if (displayLabels.length === 0 && emptyMessage) {
     return (
@@ -33,7 +39,11 @@ export const LogLabels = ({ labels, emptyMessage }: Props) => {
         }
         const tooltip = `${label}=${value}`;
         const labelValue = `${label}=${value}`;
-        return <LogLabel key={label} styles={styles} tooltip={tooltip}>{labelValue}</LogLabel>;
+        return (
+          <LogLabel key={label} styles={styles} tooltip={tooltip}>
+            {labelValue}
+          </LogLabel>
+        );
       })}
     </span>
   );
@@ -48,11 +58,13 @@ export const LogLabelsList = ({ labels }: LogLabelsArrayProps) => {
   return (
     <span className={cx([styles.logsLabels])}>
       {labels.map((label) => (
-        <LogLabel key={label} styles={styles} tooltip={label}>{label}</LogLabel>
+        <LogLabel key={label} styles={styles} tooltip={label}>
+          {label}
+        </LogLabel>
       ))}
     </span>
   );
-}
+};
 
 interface LogLabelProps {
   styles: Record<string, string>;
@@ -67,8 +79,8 @@ const LogLabel = ({ styles, tooltip, children }: LogLabelProps) => {
         {children}
       </span>
     </span>
-  )
-}
+  );
+};
 
 const getStyles = (theme: GrafanaTheme2) => {
   return {
