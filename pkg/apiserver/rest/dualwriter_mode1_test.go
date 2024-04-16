@@ -15,26 +15,6 @@ import (
 
 const kind = "dummy"
 
-func TestMode1(t *testing.T) {
-	var ls = (LegacyStorage)(nil)
-	var s = (Storage)(nil)
-	lsSpy := NewLegacyStorageSpyClient(ls)
-	sSpy := NewStorageSpyClient(s)
-
-	dw := NewDualWriterMode1(lsSpy, sSpy)
-
-	// DeleteCollection: it should use the Legacy DeleteCollection implementation
-	_, err := dw.DeleteCollection(
-		context.Background(),
-		func(context.Context, runtime.Object) error { return nil },
-		&metav1.DeleteOptions{},
-		&metainternalversion.ListOptions{},
-	)
-	assert.NoError(t, err)
-	assert.Equal(t, 1, lsSpy.Counts("LegacyStorage.DeleteCollection"))
-	assert.Equal(t, 0, sSpy.Counts("Storage.DeleteCollection"))
-}
-
 var exampleObj = &example.Pod{TypeMeta: metav1.TypeMeta{}, ObjectMeta: metav1.ObjectMeta{Name: "foo", ResourceVersion: "1"}, Spec: example.PodSpec{}, Status: example.PodStatus{}}
 var anotherObj = &example.Pod{TypeMeta: metav1.TypeMeta{}, ObjectMeta: metav1.ObjectMeta{Name: "bar", ResourceVersion: "2"}, Spec: example.PodSpec{}, Status: example.PodStatus{}}
 var failingObj = &example.Pod{TypeMeta: metav1.TypeMeta{}, ObjectMeta: metav1.ObjectMeta{Name: "object-fail", ResourceVersion: "2"}, Spec: example.PodSpec{}, Status: example.PodStatus{}}
@@ -259,6 +239,63 @@ func TestMode1_Delete(t *testing.T) {
 		}
 
 		us.AssertNotCalled(t, "Delete", context.Background(), tt.input, func(ctx context.Context, obj runtime.Object) error { return nil }, &metav1.DeleteOptions{})
+		assert.Equal(t, obj, exampleObj)
+		assert.NotEqual(t, obj, anotherObj)
+	}
+}
+
+func TestMode1_DeleteCollection(t *testing.T) {
+	type testCase struct {
+		name           string
+		input          *metav1.DeleteOptions
+		setupLegacyFn  func(m *mock.Mock, input *metav1.DeleteOptions)
+		setupStorageFn func(m *mock.Mock, input *metav1.DeleteOptions)
+		wantErr        bool
+	}
+	tests :=
+		[]testCase{
+			{
+				name:  "deleting a collection in the legacy store",
+				input: &metav1.DeleteOptions{TypeMeta: metav1.TypeMeta{Kind: "foo"}},
+				setupLegacyFn: func(m *mock.Mock, input *metav1.DeleteOptions) {
+					m.On("DeleteCollection", context.Background(), mock.Anything, input, mock.Anything).Return(exampleObj, nil)
+				},
+			},
+			{
+				name:  "error deleting a collection in the legacy store",
+				input: &metav1.DeleteOptions{TypeMeta: metav1.TypeMeta{Kind: "fail"}},
+				setupLegacyFn: func(m *mock.Mock, input *metav1.DeleteOptions) {
+					m.On("DeleteCollection", context.Background(), mock.Anything, input, mock.Anything).Return(nil, errors.New("error"))
+				},
+				wantErr: true,
+			},
+		}
+
+	for _, tt := range tests {
+		l := (LegacyStorage)(nil)
+		s := (Storage)(nil)
+		m := &mock.Mock{}
+
+		ls := legacyStoreMock{m, l}
+		us := storageMock{m, s}
+
+		if tt.setupLegacyFn != nil {
+			tt.setupLegacyFn(m, tt.input)
+		}
+		if tt.setupStorageFn != nil {
+			tt.setupStorageFn(m, tt.input)
+		}
+
+		dw := SelectDualWriter(Mode1, ls, us)
+
+		obj, err := dw.DeleteCollection(context.Background(), func(ctx context.Context, obj runtime.Object) error { return nil }, tt.input, &metainternalversion.ListOptions{})
+
+		if tt.wantErr {
+			assert.Error(t, err)
+			continue
+		}
+
+		us.AssertNotCalled(t, "DeleteCollection", context.Background(), tt.input, func(ctx context.Context, obj runtime.Object) error { return nil }, &metav1.DeleteOptions{})
 		assert.Equal(t, obj, exampleObj)
 		assert.NotEqual(t, obj, anotherObj)
 	}

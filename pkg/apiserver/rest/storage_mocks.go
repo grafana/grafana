@@ -66,6 +66,14 @@ func (m legacyStoreMock) Delete(ctx context.Context, name string, deleteValidati
 	return args.Get(0).(runtime.Object), args.Bool(1), args.Error(2)
 }
 
+func (m legacyStoreMock) DeleteCollection(ctx context.Context, deleteValidation rest.ValidateObjectFunc, options *metav1.DeleteOptions, listOptions *metainternalversion.ListOptions) (runtime.Object, error) {
+	args := m.Called(ctx, deleteValidation, options, listOptions)
+	if options.Kind == "fail" {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).(runtime.Object), args.Error(1)
+}
+
 // Unified Store
 func (m storageMock) Get(ctx context.Context, name string, options *metav1.GetOptions) (runtime.Object, error) {
 	args := m.Called(ctx, name, options)
@@ -106,8 +114,13 @@ func (m storageMock) Delete(ctx context.Context, name string, deleteValidation r
 	if name == "object-fail" {
 		return nil, false, args.Error(2)
 	}
-	if name == "not-found-unified" {
-		return nil, false, args.Error(2)
-	}
 	return args.Get(0).(runtime.Object), args.Bool(1), args.Error(2)
+}
+
+func (m storageMock) DeleteCollection(ctx context.Context, deleteValidation rest.ValidateObjectFunc, options *metav1.DeleteOptions, listOptions *metainternalversion.ListOptions) (runtime.Object, error) {
+	args := m.Called(ctx, deleteValidation, options, listOptions)
+	if options.Kind == "fail" {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).(runtime.Object), args.Error(1)
 }

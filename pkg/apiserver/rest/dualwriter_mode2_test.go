@@ -15,26 +15,6 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/schema"
 )
 
-func TestMode2(t *testing.T) {
-	var ls = (LegacyStorage)(nil)
-	var s = (Storage)(nil)
-	lsSpy := NewLegacyStorageSpyClient(ls)
-	sSpy := NewStorageSpyClient(s)
-
-	dw := NewDualWriterMode2(lsSpy, sSpy)
-
-	// DeleteCollection: it should delete from both LegacyStorage and Storage
-	_, err := dw.DeleteCollection(
-		context.Background(),
-		func(context.Context, runtime.Object) error { return nil },
-		&metav1.DeleteOptions{},
-		&metainternalversion.ListOptions{},
-	)
-	assert.NoError(t, err)
-	assert.Equal(t, 1, lsSpy.Counts("LegacyStorage.DeleteCollection"))
-	assert.Equal(t, 1, sSpy.Counts("Storage.DeleteCollection"))
-}
-
 var createFn = func(context.Context, runtime.Object) error { return nil }
 var exampleOption = &metainternalversion.ListOptions{
 	TypeMeta: metav1.TypeMeta{
@@ -315,6 +295,80 @@ func TestMode2_Delete(t *testing.T) {
 			continue
 		}
 
+		assert.Equal(t, obj, exampleObj)
+		assert.NotEqual(t, obj, anotherObj)
+	}
+}
+
+func TestMode2_DeleteCollection(t *testing.T) {
+	type testCase struct {
+		name           string
+		input          *metav1.DeleteOptions
+		setupLegacyFn  func(m *mock.Mock, input *metav1.DeleteOptions)
+		setupStorageFn func(m *mock.Mock, input *metav1.DeleteOptions)
+		wantErr        bool
+	}
+	tests :=
+		[]testCase{
+			{
+				name:  "deleting a collection in both stores",
+				input: &metav1.DeleteOptions{TypeMeta: metav1.TypeMeta{Kind: "foo"}},
+				setupLegacyFn: func(m *mock.Mock, input *metav1.DeleteOptions) {
+					m.On("DeleteCollection", context.Background(), mock.Anything, input, mock.Anything).Return(exampleObj, nil)
+				},
+				setupStorageFn: func(m *mock.Mock, input *metav1.DeleteOptions) {
+					m.On("DeleteCollection", context.Background(), mock.Anything, input, mock.Anything).Return(exampleObj, nil)
+				},
+			},
+			{
+				name:  "error deleting a collection in the storage when legacy store is successful",
+				input: &metav1.DeleteOptions{TypeMeta: metav1.TypeMeta{Kind: "fail"}},
+				setupLegacyFn: func(m *mock.Mock, input *metav1.DeleteOptions) {
+					m.On("DeleteCollection", context.Background(), mock.Anything, &metav1.DeleteOptions{TypeMeta: metav1.TypeMeta{Kind: "foo"}}, mock.Anything).Return(exampleObj, nil)
+				},
+				setupStorageFn: func(m *mock.Mock, input *metav1.DeleteOptions) {
+					m.On("DeleteCollection", context.Background(), mock.Anything, input, mock.Anything).Return(nil, errors.New("error"))
+				},
+				wantErr: true,
+			},
+			{
+				name:  "error deleting a collection when error in both stores",
+				input: &metav1.DeleteOptions{TypeMeta: metav1.TypeMeta{Kind: "fail"}},
+				setupLegacyFn: func(m *mock.Mock, input *metav1.DeleteOptions) {
+					m.On("DeleteCollection", context.Background(), mock.Anything, input, mock.Anything).Return(nil, errors.New("error"))
+				},
+				setupStorageFn: func(m *mock.Mock, input *metav1.DeleteOptions) {
+					m.On("DeleteCollection", context.Background(), mock.Anything, input, mock.Anything).Return(nil, errors.New("error"))
+				},
+				wantErr: true,
+			},
+		}
+
+	for _, tt := range tests {
+		l := (LegacyStorage)(nil)
+		s := (Storage)(nil)
+		m := &mock.Mock{}
+
+		ls := legacyStoreMock{m, l}
+		us := storageMock{m, s}
+
+		if tt.setupLegacyFn != nil {
+			tt.setupLegacyFn(m, tt.input)
+		}
+		if tt.setupStorageFn != nil {
+			tt.setupStorageFn(m, tt.input)
+		}
+
+		dw := SelectDualWriter(Mode2, ls, us)
+
+		obj, err := dw.DeleteCollection(context.Background(), func(ctx context.Context, obj runtime.Object) error { return nil }, tt.input, &metainternalversion.ListOptions{})
+
+		if tt.wantErr {
+			assert.Error(t, err)
+			continue
+		}
+
+		us.AssertNotCalled(t, "DeleteCollection", context.Background(), tt.input, func(ctx context.Context, obj runtime.Object) error { return nil }, &metav1.DeleteOptions{})
 		assert.Equal(t, obj, exampleObj)
 		assert.NotEqual(t, obj, anotherObj)
 	}
