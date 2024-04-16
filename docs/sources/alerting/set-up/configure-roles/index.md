@@ -22,7 +22,7 @@ refs:
 
 A user is any individual who can log in to Grafana. Each user is associated with a role that includes permissions. Permissions determine the tasks a user can perform in the system. For example, the Admin role includes permissions for an administrator to create and delete users.
 
-For more information, refer to [Organization roles][ref:org-roles]
+For more information, refer to [Organization roles](ref:org-roles).
 
 ## Manage access using roles
 
