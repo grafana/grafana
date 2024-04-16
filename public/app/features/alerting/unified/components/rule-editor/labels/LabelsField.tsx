@@ -69,8 +69,12 @@ const useGetCustomLabels = (dataSourceName: string): { loading: boolean; labelsB
   return { loading: rulerRequest?.loading, labelsByKey: labelsByKeyResult };
 };
 
-function mapLabelsToOptions(items: Iterable<string> = []): Array<SelectableValue<string>> {
-  return Array.from(items, (item) => ({ label: item, value: item }));
+function mapLabelsToOptions(
+  items: Iterable<string> = [],
+  labelsInSubForm?: Array<{ key: string; value: string }>
+): Array<SelectableValue<string>> {
+  const existingKeys = new Set(labelsInSubForm ? labelsInSubForm.map((label) => label.key) : []);
+  return Array.from(items, (item) => ({ label: item, value: item, isDisabled: existingKeys.has(item) }));
 }
 
 export interface LabelsInRuleProps {
@@ -135,7 +139,8 @@ export function LabelsSubForm({ dataSourceName, onClose }: LabelsSubFormProps) {
 export function useCombinedLabels(
   dataSourceName: string,
   labelsPluginInstalled: boolean,
-  loadingLabelsPlugin: boolean
+  loadingLabelsPlugin: boolean,
+  labelsInSubform: Array<{ key: string; value: string }>
 ) {
   // ------- Get labels keys and their values from existing alerts
   const { loading, labelsByKey: labelsByKeyFromExisingAlerts } = useGetCustomLabels(dataSourceName);
@@ -153,13 +158,13 @@ export function useCombinedLabels(
 
   //------- Convert the keys from the ops labels to options for the dropdown
   const keysFromGopsLabels = useMemo(() => {
-    return mapLabelsToOptions(Object.keys(labelsByKeyOps));
-  }, [labelsByKeyOps]);
+    return mapLabelsToOptions(Object.keys(labelsByKeyOps), labelsInSubform);
+  }, [labelsByKeyOps, labelsInSubform]);
 
   //------- Convert the keys from the existing alerts to options for the dropdown
   const keysFromExistingAlerts = useMemo(() => {
-    return mapLabelsToOptions(Object.keys(labelsByKeyFromExisingAlerts));
-  }, [labelsByKeyFromExisingAlerts]);
+    return mapLabelsToOptions(Object.keys(labelsByKeyFromExisingAlerts), labelsInSubform);
+  }, [labelsByKeyFromExisingAlerts, labelsInSubform]);
 
   // create two groups of labels, one for ops and one for custom
   const groupedOptions = [
@@ -212,7 +217,7 @@ export function LabelsWithSuggestions({ dataSourceName }: LabelsWithSuggestionsP
   const [selectedKey, setSelectedKey] = useState('');
 
   const { loading, labelsByKeyOps, keysFromExistingAlerts, labelsByKeyFromExisingAlerts, groupedOptions } =
-    useCombinedLabels(dataSourceName, labelsPluginInstalled, loadingLabelsPlugin);
+    useCombinedLabels(dataSourceName, labelsPluginInstalled, loadingLabelsPlugin, labelsInSubform);
 
   const selectedKeyIsFromAlerts =
     labelsByKeyFromExisingAlerts[selectedKey] !== undefined && labelsByKeyFromExisingAlerts[selectedKey]?.size > 0;
