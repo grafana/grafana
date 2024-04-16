@@ -24,6 +24,31 @@
           "expr"
         ],
         "properties": {
+          "adhocFilters": {
+            "description": "Additional Ad-hoc filters that take precedence over Scope on conflict.",
+            "type": "array",
+            "items": {
+              "description": "ScopeFilter is a hand copy of the ScopeFilter struct from pkg/apis/scope/v0alpha1/types.go to avoid import (temp fix)",
+              "type": "object",
+              "required": [
+                "key",
+                "value",
+                "operator"
+              ],
+              "properties": {
+                "key": {
+                  "type": "string"
+                },
+                "operator": {
+                  "type": "string"
+                },
+                "value": {
+                  "type": "string"
+                }
+              },
+              "additionalProperties": false
+            }
+          },
           "datasource": {
             "description": "The datasource",
             "type": "object",
@@ -148,7 +173,7 @@
             "additionalProperties": false
           },
           "scope": {
-            "description": "???",
+            "description": "A set of filters applied to apply to the query",
             "type": "object",
             "required": [
               "title",

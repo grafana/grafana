@@ -8,7 +8,7 @@
     {
       "metadata": {
         "name": "default",
-        "resourceVersion": "1711374012365",
+        "resourceVersion": "1713187448137",
         "creationTimestamp": "2024-03-25T13:19:04Z"
       },
       "spec": {
@@ -17,6 +17,31 @@
           "additionalProperties": false,
           "description": "PrometheusQueryProperties defines the specific properties used for prometheus",
           "properties": {
+            "adhocFilters": {
+              "description": "Additional Ad-hoc filters that take precedence over Scope on conflict.",
+              "items": {
+                "additionalProperties": false,
+                "description": "ScopeFilter is a hand copy of the ScopeFilter struct from pkg/apis/scope/v0alpha1/types.go to avoid import (temp fix)",
+                "properties": {
+                  "key": {
+                    "type": "string"
+                  },
+                  "operator": {
+                    "type": "string"
+                  },
+                  "value": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "key",
+                  "value",
+                  "operator"
+                ],
+                "type": "object"
+              },
+              "type": "array"
+            },
             "editorMode": {
               "description": "what we should show in the editor\n\n\nPossible enum values:\n - `\"builder\"` \n - `\"code\"` ",
               "enum": [
@@ -62,7 +87,7 @@
             },
             "scope": {
               "additionalProperties": false,
-              "description": "???",
+              "description": "A set of filters applied to apply to the query",
               "properties": {
                 "category": {
                   "type": "string"
