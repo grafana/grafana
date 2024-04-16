@@ -72,6 +72,31 @@ describe('Cloud Monitoring Datasource', () => {
       expect(templatedQuery[0]).toHaveProperty('datasource');
       expect(templatedQuery[0].timeSeriesList?.projectName).toEqual('project-variable');
     });
+    it('should correctly apply template variables for PromQLQuery (single-value)', () => {
+      const templateSrv = getTemplateSrv();
+      templateSrv.replace = jest.fn().mockReturnValue('filter-variable');
+      const mockInstanceSettings = createMockInstanceSetttings();
+      const ds = new Datasource(mockInstanceSettings, templateSrv);
+      const query = createMockQuery({ promQLQuery: { expr: '$testVar', projectName: 'test-project', step: '1' } });
+      const templatedQuery = ds.interpolateVariablesInQueries([query], {});
+      expect(templatedQuery[0]).toHaveProperty('datasource');
+      expect(templatedQuery[0].promQLQuery?.expr).toContain('filter-variable');
+    });
+    it('should correctly apply template variables for PromQLQuery (multi-value)', () => {
+      const templateSrv = getTemplateSrv();
+      templateSrv.replace = jest.fn().mockImplementation((_target: any, _v2: any, formatFunction: Function) => {
+        if (formatFunction) {
+          return formatFunction(['filter-variable', 'filter-variable2']);
+        }
+        return undefined;
+      });
+      const mockInstanceSettings = createMockInstanceSetttings();
+      const ds = new Datasource(mockInstanceSettings, templateSrv);
+      const query = createMockQuery({ promQLQuery: { expr: '$testVar', projectName: 'test-project', step: '1' } });
+      const templatedQuery = ds.interpolateVariablesInQueries([query], {});
+      expect(templatedQuery[0]).toHaveProperty('datasource');
+      expect(templatedQuery[0].promQLQuery?.expr).toContain('filter-variable|filter-variable2');
+    });
   });
 
   describe('migrateQuery', () => {
