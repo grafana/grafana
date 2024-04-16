@@ -295,7 +295,7 @@ func TestMode2_Delete(t *testing.T) {
 				},
 			},
 			{
-				name:  " object delete in legacy not found, but found in storage",
+				name:  "object delete in legacy not found, but found in storage",
 				input: "foo",
 				setupLegacyFn: func(m *mock.Mock, input string) {
 					m.On("Delete", context.Background(), "not-found-legacy", mock.Anything, mock.Anything).Return(nil, false, apierrors.NewNotFound(schema.GroupResource{Group: "", Resource: "pods"}, "not-found"))

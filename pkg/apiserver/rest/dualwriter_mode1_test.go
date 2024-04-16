@@ -243,6 +243,13 @@ func TestMode1_Delete(t *testing.T) {
 	tests :=
 		[]testCase{
 			{
+				name:  "deleting an object in the legacy store",
+				input: "foo",
+				setupLegacyFn: func(m *mock.Mock, name string) {
+					m.On("Delete", context.Background(), name, mock.Anything, mock.Anything).Return(exampleObj, false, nil)
+				},
+			},
+			{
 				name:  "error when deleting an object in the legacy store",
 				input: "object-fail",
 				setupLegacyFn: func(m *mock.Mock, name string) {
