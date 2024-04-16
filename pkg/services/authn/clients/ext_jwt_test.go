@@ -175,7 +175,7 @@ func TestExtendedJWT_Authenticate(t *testing.T) {
 				ClientParams: authn.ClientParams{SyncUser: false,
 					AllowSignUp: false, EnableUser: false, FetchSyncedUser: false,
 					SyncTeams: false, SyncOrgRoles: false, CacheAuthProxyKey: "",
-					SyncPermissions: true,
+					SyncPermissions:        true,
 					FetchPermissionsParams: authn.FetchPermissionsParams{ActionsLookup: []string(nil), Roles: []string{"fixed:folders:reader"}}},
 				Permissions: map[int64]map[string][]string(nil), IDToken: ""},
 			wantErr: nil,
