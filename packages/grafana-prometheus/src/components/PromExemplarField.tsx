@@ -1,3 +1,4 @@
+// Core Grafana history https://github.com/grafana/grafana/blob/v11.0.0-preview/public/app/plugins/datasource/prometheus/components/PromExemplarField.tsx
 import { css, cx } from '@emotion/css';
 import React, { useEffect, useState } from 'react';
 import { usePrevious } from 'react-use';

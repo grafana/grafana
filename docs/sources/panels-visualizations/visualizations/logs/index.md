@@ -24,7 +24,9 @@ weight: 100
 
 The logs visualization shows log lines from data sources that support logs, such as Elastic, Influx, and Loki. Typically you would use this visualization next to a graph visualization to display the log output of a related process.
 
-<img class="screenshot" src="/static/img/docs/v64/logs-panel.png">
+{{< figure src="/static/img/docs/v64/logs-panel.png" max-width="1025px" alt="Logs panel" >}}
+
+{{< docs/play title="Logs Panel" url="https://play.grafana.org/d/6NmftOxZz/" >}}
 
 The logs visualization shows the result of queries that were entered in the Query tab. The results of multiple queries are merged and sorted by time. You can scroll inside the panel if the data source returns more lines than can be displayed at any one time.
 
@@ -56,6 +58,7 @@ Use these settings to refine your visualization:
 - **Wrap lines -** Toggle line wrapping.
 - **Prettify JSON -** Set this to `true` to pretty print all JSON logs. This setting does not affect logs in any format other than JSON.
 - **Enable log details -** Toggle option to see the log details view for each log row. The default setting is true.
+- **Deduplication -** Hides log messages that are duplicates of others shown according to criteria such as exact match, or those that only differ by numbers such as IPs or latencies.
 - **Order -** Display results in descending or ascending time order. The default is **Descending**, showing the newest logs first. Set to **Ascending** to show the oldest log lines first.
 
 {{% docs/reference %}}

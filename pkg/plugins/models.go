@@ -235,11 +235,11 @@ type AppDTO struct {
 }
 
 const (
-	errorCodeSignatureMissing  ErrorCode = "signatureMissing"
-	errorCodeSignatureModified ErrorCode = "signatureModified"
-	errorCodeSignatureInvalid  ErrorCode = "signatureInvalid"
-	ErrorCodeFailedStart       ErrorCode = "failedStart"
-	ErrorAngular               ErrorCode = "angular"
+	errorCodeSignatureMissing   ErrorCode = "signatureMissing"
+	errorCodeSignatureModified  ErrorCode = "signatureModified"
+	errorCodeSignatureInvalid   ErrorCode = "signatureInvalid"
+	ErrorCodeFailedBackendStart ErrorCode = "failedBackendStart"
+	ErrorAngular                ErrorCode = "angular"
 )
 
 type ErrorCode string

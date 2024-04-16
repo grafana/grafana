@@ -1,9 +1,9 @@
 import { useEffect } from 'react';
 
+import { getDataSourceSrv } from '@grafana/runtime';
 import { Branding } from 'app/core/components/Branding/Branding';
 import { useGrafana } from 'app/core/context/GrafanaContext';
 import { useNavModel } from 'app/core/hooks/useNavModel';
-import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
 import { ExploreQueryParams } from 'app/types';
 
 import { isFulfilled, hasKey } from './utils';
@@ -40,7 +40,7 @@ export function useExplorePageTitle(params: ExploreQueryParams) {
           return Promise.reject();
         }
 
-        return getDatasourceSrv().get(pane.datasource);
+        return getDataSourceSrv().get(pane.datasource);
       })
     )
       .then((results) => results.filter(isFulfilled).map((result) => result.value))
