@@ -104,7 +104,6 @@ type GetUserByAuthInfoQuery struct {
 
 type UserLookupParams struct {
 	// Describes lookup order as well
-	UserID *int64  // if set, will try to find the user by id
 	Email  *string // if set, will try to find the user by email
 	Login  *string // if set, will try to find the user by login
 }

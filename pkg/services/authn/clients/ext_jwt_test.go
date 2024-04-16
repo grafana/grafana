@@ -21,7 +21,6 @@ import (
 	"github.com/grafana/grafana/pkg/models/roletype"
 	"github.com/grafana/grafana/pkg/models/usertoken"
 	"github.com/grafana/grafana/pkg/services/authn"
-	"github.com/grafana/grafana/pkg/services/login"
 	"github.com/grafana/grafana/pkg/services/signingkeys"
 	"github.com/grafana/grafana/pkg/services/signingkeys/signingkeystest"
 	"github.com/grafana/grafana/pkg/services/user"
@@ -176,8 +175,7 @@ func TestExtendedJWT_Authenticate(t *testing.T) {
 				ClientParams: authn.ClientParams{SyncUser: false,
 					AllowSignUp: false, EnableUser: false, FetchSyncedUser: false,
 					SyncTeams: false, SyncOrgRoles: false, CacheAuthProxyKey: "",
-					LookUpParams: login.UserLookupParams{UserID: (*int64)(nil),
-						Email: (*string)(nil), Login: (*string)(nil)}, SyncPermissions: true,
+					SyncPermissions: true,
 					FetchPermissionsParams: authn.FetchPermissionsParams{ActionsLookup: []string(nil), Roles: []string{"fixed:folders:reader"}}},
 				Permissions: map[int64]map[string][]string(nil), IDToken: ""},
 			wantErr: nil,
@@ -208,7 +206,6 @@ func TestExtendedJWT_Authenticate(t *testing.T) {
 				ClientParams: authn.ClientParams{SyncUser: false, AllowSignUp: false,
 					EnableUser: false, FetchSyncedUser: true, SyncTeams: false,
 					SyncOrgRoles: false, CacheAuthProxyKey: "",
-					LookUpParams:    login.UserLookupParams{UserID: (*int64)(nil), Email: (*string)(nil), Login: (*string)(nil)},
 					SyncPermissions: true,
 					FetchPermissionsParams: authn.FetchPermissionsParams{ActionsLookup: []string{"dashboards:create",
 						"folders:read", "datasources:explore", "datasources.insights:read"},
