@@ -368,14 +368,6 @@ func (s *UserSync) lookupByOneOf(ctx context.Context, params login.UserLookupPar
 	var usr *user.User
 	var err error
 
-	// If not found, try to find the user by id
-	if params.UserID != nil && *params.UserID != 0 {
-		usr, err = s.userService.GetByID(ctx, &user.GetUserByIDQuery{ID: *params.UserID})
-		if err != nil && !errors.Is(err, user.ErrUserNotFound) {
-			return nil, err
-		}
-	}
-
 	// If not found, try to find the user by email address
 	if usr == nil && params.Email != nil && *params.Email != "" {
 		usr, err = s.userService.GetByEmail(ctx, &user.GetUserByEmailQuery{Email: *params.Email})

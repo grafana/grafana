@@ -209,14 +209,7 @@ func (s *Service) Delete(ctx context.Context, cmd *user.DeleteUserCommand) error
 }
 
 func (s *Service) GetByID(ctx context.Context, query *user.GetUserByIDQuery) (*user.User, error) {
-	user, err := s.store.GetByID(ctx, query.ID)
-	if err != nil {
-		return nil, err
-	}
-	if err := s.store.CaseInsensitiveLoginConflict(ctx, user.Login, user.Email); err != nil {
-		return nil, err
-	}
-	return user, nil
+	return s.store.GetByID(ctx, query.ID)
 }
 
 func (s *Service) GetByLogin(ctx context.Context, query *user.GetUserByLoginQuery) (*user.User, error) {

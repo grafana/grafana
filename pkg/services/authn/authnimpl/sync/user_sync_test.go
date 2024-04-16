@@ -25,10 +25,6 @@ func ptrBool(b bool) *bool {
 	return &b
 }
 
-func ptrInt64(i int64) *int64 {
-	return &i
-}
-
 func TestUserSync_SyncUserHook(t *testing.T) {
 	userProtection := &authinfoimpl.OSSUserProtectionImpl{}
 
@@ -120,9 +116,8 @@ func TestUserSync_SyncUserHook(t *testing.T) {
 					Email: "test",
 					ClientParams: authn.ClientParams{
 						LookUpParams: login.UserLookupParams{
-							UserID: nil,
-							Email:  ptrString("test"),
-							Login:  nil,
+							Email: ptrString("test"),
+							Login: nil,
 						},
 					},
 				},
@@ -135,9 +130,8 @@ func TestUserSync_SyncUserHook(t *testing.T) {
 				Email: "test",
 				ClientParams: authn.ClientParams{
 					LookUpParams: login.UserLookupParams{
-						UserID: nil,
-						Email:  ptrString("test"),
-						Login:  nil,
+						Email: ptrString("test"),
+						Login: nil,
 					},
 				},
 			},
@@ -159,9 +153,8 @@ func TestUserSync_SyncUserHook(t *testing.T) {
 					ClientParams: authn.ClientParams{
 						SyncUser: true,
 						LookUpParams: login.UserLookupParams{
-							UserID: nil,
-							Email:  ptrString("test"),
-							Login:  nil,
+							Email: ptrString("test"),
+							Login: nil,
 						},
 					},
 				},
@@ -176,9 +169,8 @@ func TestUserSync_SyncUserHook(t *testing.T) {
 				ClientParams: authn.ClientParams{
 					SyncUser: true,
 					LookUpParams: login.UserLookupParams{
-						UserID: nil,
-						Email:  ptrString("test"),
-						Login:  nil,
+						Email: ptrString("test"),
+						Login: nil,
 					},
 				},
 			},
@@ -200,9 +192,8 @@ func TestUserSync_SyncUserHook(t *testing.T) {
 					ClientParams: authn.ClientParams{
 						SyncUser: true,
 						LookUpParams: login.UserLookupParams{
-							UserID: nil,
-							Email:  nil,
-							Login:  ptrString("test"),
+							Email: nil,
+							Login: ptrString("test"),
 						},
 					},
 				},
@@ -216,52 +207,10 @@ func TestUserSync_SyncUserHook(t *testing.T) {
 				IsGrafanaAdmin: ptrBool(false),
 				ClientParams: authn.ClientParams{
 					LookUpParams: login.UserLookupParams{
-						UserID: nil,
-						Email:  nil,
-						Login:  ptrString("test"),
+						Email: nil,
+						Login: ptrString("test"),
 					},
 					SyncUser: true,
-				},
-			},
-		},
-		{
-			name: "sync - user found in DB - by ID",
-			fields: fields{
-				userService:     userService,
-				authInfoService: authFakeNil,
-				quotaService:    &quotatest.FakeQuotaService{},
-			},
-			args: args{
-				ctx: context.Background(),
-				id: &authn.Identity{
-					ID:    "",
-					Login: "test",
-					Name:  "test",
-					Email: "test",
-					ClientParams: authn.ClientParams{
-						SyncUser: true,
-						LookUpParams: login.UserLookupParams{
-							UserID: ptrInt64(1),
-							Email:  nil,
-							Login:  nil,
-						},
-					},
-				},
-			},
-			wantErr: false,
-			wantID: &authn.Identity{
-				ID:             "user:1",
-				Login:          "test",
-				Name:           "test",
-				Email:          "test",
-				IsGrafanaAdmin: ptrBool(false),
-				ClientParams: authn.ClientParams{
-					SyncUser: true,
-					LookUpParams: login.UserLookupParams{
-						UserID: ptrInt64(1),
-						Email:  nil,
-						Login:  nil,
-					},
 				},
 			},
 		},
@@ -284,9 +233,8 @@ func TestUserSync_SyncUserHook(t *testing.T) {
 					ClientParams: authn.ClientParams{
 						SyncUser: true,
 						LookUpParams: login.UserLookupParams{
-							UserID: nil,
-							Email:  nil,
-							Login:  nil,
+							Email: nil,
+							Login: nil,
 						},
 					},
 				},
@@ -303,9 +251,8 @@ func TestUserSync_SyncUserHook(t *testing.T) {
 				ClientParams: authn.ClientParams{
 					SyncUser: true,
 					LookUpParams: login.UserLookupParams{
-						UserID: nil,
-						Email:  nil,
-						Login:  nil,
+						Email: nil,
+						Login: nil,
 					},
 				},
 			},
@@ -329,9 +276,8 @@ func TestUserSync_SyncUserHook(t *testing.T) {
 					ClientParams: authn.ClientParams{
 						SyncUser: true,
 						LookUpParams: login.UserLookupParams{
-							UserID: nil,
-							Email:  nil,
-							Login:  nil,
+							Email: nil,
+							Login: nil,
 						},
 					},
 				},
@@ -360,9 +306,8 @@ func TestUserSync_SyncUserHook(t *testing.T) {
 						AllowSignUp: true,
 						EnableUser:  true,
 						LookUpParams: login.UserLookupParams{
-							UserID: nil,
-							Email:  ptrString("test_create"),
-							Login:  nil,
+							Email: ptrString("test_create"),
+							Login: nil,
 						},
 					},
 				},
@@ -381,9 +326,8 @@ func TestUserSync_SyncUserHook(t *testing.T) {
 					AllowSignUp: true,
 					EnableUser:  true,
 					LookUpParams: login.UserLookupParams{
-						UserID: nil,
-						Email:  ptrString("test_create"),
-						Login:  nil,
+						Email: ptrString("test_create"),
+						Login: nil,
 					},
 				},
 			},
@@ -408,9 +352,8 @@ func TestUserSync_SyncUserHook(t *testing.T) {
 						SyncUser:   true,
 						EnableUser: true,
 						LookUpParams: login.UserLookupParams{
-							UserID: ptrInt64(3),
-							Email:  nil,
-							Login:  nil,
+							Email: nil,
+							Login: ptrString("test"),
 						},
 					},
 				},
@@ -427,9 +370,8 @@ func TestUserSync_SyncUserHook(t *testing.T) {
 					SyncUser:   true,
 					EnableUser: true,
 					LookUpParams: login.UserLookupParams{
-						UserID: ptrInt64(3),
-						Email:  nil,
-						Login:  nil,
+						Email: nil,
+						Login: ptrString("test"),
 					},
 				},
 			},
@@ -455,9 +397,8 @@ func TestUserSync_SyncUserHook(t *testing.T) {
 						SyncUser:   true,
 						EnableUser: true,
 						LookUpParams: login.UserLookupParams{
-							UserID: ptrInt64(3),
-							Email:  nil,
-							Login:  nil,
+							Email: nil,
+							Login: ptrString("test"),
 						},
 					},
 				},
@@ -475,9 +416,8 @@ func TestUserSync_SyncUserHook(t *testing.T) {
 					SyncUser:   true,
 					EnableUser: true,
 					LookUpParams: login.UserLookupParams{
-						UserID: ptrInt64(3),
-						Email:  nil,
-						Login:  nil,
+						Email: nil,
+						Login: ptrString("test"),
 					},
 				},
 			},
