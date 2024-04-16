@@ -470,7 +470,7 @@ export const getLinksSupplier =
 
       if (link.onClick) {
         linkModel = {
-          href: link.url,
+          href: replaceVariables(link.url, dataLinkScopedVars, VariableFormatID.UriEncode),
           title: replaceVariables(link.title || '', dataLinkScopedVars),
           target: link.targetBlank ? '_blank' : undefined,
           onClick: (evt: MouseEvent, origin: Field) => {
