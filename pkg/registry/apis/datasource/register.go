@@ -9,7 +9,6 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	data "github.com/grafana/grafana-plugin-sdk-go/experimental/apis/data/v0alpha1"
 	"github.com/grafana/grafana-plugin-sdk-go/experimental/schemabuilder"
-	"github.com/grafana/grafana-plugin-sdk-go/genproto/pluginv2"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -79,8 +78,7 @@ func RegisterAPIService(
 			continue // skip this one
 		}
 
-		builder, err = NewDataSourceAPIBuilder(
-			ds.JSONData,
+		builder, err = NewDataSourceAPIBuilder(ds.JSONData,
 			pluginClient,
 			datasources.GetDatasourceProvider(ds.JSONData),
 			contextProvider,
@@ -100,12 +98,6 @@ type PluginClient interface {
 	backend.QueryDataHandler
 	backend.CheckHealthHandler
 	backend.CallResourceHandler
-}
-
-type PluginProtoClient interface {
-	pluginv2.DataClient
-	pluginv2.ResourceClient
-	pluginv2.DiagnosticsClient
 }
 
 func NewDataSourceAPIBuilder(
