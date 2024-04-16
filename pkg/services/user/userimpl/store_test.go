@@ -479,54 +479,47 @@ func TestIntegrationUserDataAccess(t *testing.T) {
 	t.Run("Testing DB - grafana admin users", func(t *testing.T) {
 		ss := db.InitTestDB(t)
 		_, usrSvc := createOrgAndUserSvc(t, ss, ss.Cfg)
-		createUserCmd := user.CreateUserCommand{
-			Email:   fmt.Sprint("admin", "@test.com"),
+		usr, err := usrSvc.Create(context.Background(), &user.CreateUserCommand{
+			Email:   "admin@test.com",
 			Name:    "admin",
 			Login:   "admin",
 			IsAdmin: true,
-		}
-		usr, err := usrSvc.Create(context.Background(), &createUserCmd)
+		})
 		require.Nil(t, err)
 
-		// Cannot make themselves a non-admin
-		updatePermsError := userStore.UpdatePermissions(context.Background(), usr.ID, false)
-		require.Equal(t, user.ErrLastGrafanaAdmin, updatePermsError)
+		// Cannot make user non grafana admin if it is the last one
+		err = userStore.Update(context.Background(), &user.UpdateUserCommand{
+			UserID:         usr.ID,
+			IsGrafanaAdmin: boolPtr(false),
+		})
+		require.ErrorIs(t, user.ErrLastGrafanaAdmin, err)
 
-		query := user.GetUserByIDQuery{ID: usr.ID}
-		queryResult, getUserError := userStore.GetByID(context.Background(), query.ID)
-		require.Nil(t, getUserError)
-		require.True(t, queryResult.IsAdmin)
+		usr, err = userStore.GetByID(context.Background(), usr.ID)
+		require.NoError(t, err)
+		require.True(t, usr.IsAdmin)
 
-		// One user
-		const email = "user@test.com"
-		const username = "user"
-		createUserCmd = user.CreateUserCommand{
-			Email: email,
-			Name:  "user",
-			Login: username,
-		}
-		_, err = usrSvc.Create(context.Background(), &createUserCmd)
-		require.Nil(t, err)
+		// Create another admin user
+		_, err = usrSvc.Create(context.Background(), &user.CreateUserCommand{
+			Email:   "admin2@test.com",
+			Name:    "admin2",
+			Login:   "admin2",
+			IsAdmin: true,
+		})
+		require.NoError(t, err)
 
-		// When trying to create a new user with the same email, an error is returned
-		createUserCmd = user.CreateUserCommand{
-			Email:        email,
-			Name:         "user2",
-			Login:        "user2",
-			SkipOrgSetup: true,
-		}
-		_, err = usrSvc.Create(context.Background(), &createUserCmd)
-		require.Equal(t, user.ErrUserAlreadyExists, err)
+		// Now first admin user should be able to be downgraded
+		err = userStore.Update(context.Background(), &user.UpdateUserCommand{
+			UserID:         usr.ID,
+			IsGrafanaAdmin: boolPtr(false),
+		})
+		require.NoError(t, err)
 
-		// When trying to create a new user with the same login, an error is returned
-		createUserCmd = user.CreateUserCommand{
-			Email:        "user2@test.com",
-			Name:         "user2",
-			Login:        username,
-			SkipOrgSetup: true,
-		}
-		_, err = usrSvc.Create(context.Background(), &createUserCmd)
-		require.Equal(t, user.ErrUserAlreadyExists, err)
+		updated, err := userStore.GetByID(context.Background(), usr.ID)
+		require.NoError(t, err)
+		require.False(t, updated.IsAdmin)
+		require.Equal(t, usr.Email, updated.Email)
+		require.Equal(t, usr.Login, updated.Login)
+		require.Equal(t, usr.Name, updated.Name)
 	})
 
 	t.Run("GetProfile", func(t *testing.T) {
@@ -787,8 +780,16 @@ func TestIntegrationUserDataAccess(t *testing.T) {
 			Updated: time.Now(),
 		})
 		require.NoError(t, err)
-		err = userStore.Disable(context.Background(), &user.DisableUserCommand{UserID: id})
+
+		err = userStore.Update(context.Background(), &user.UpdateUserCommand{
+			UserID:     id,
+			IsDisabled: boolPtr(true),
+		})
 		require.NoError(t, err)
+
+		usr, err := userStore.GetByID(context.Background(), id)
+		require.NoError(t, err)
+		require.True(t, usr.IsDisabled)
 	})
 
 	t.Run("Testing DB - multiple users", func(t *testing.T) {
@@ -1031,4 +1032,8 @@ func createOrgAndUserSvc(t *testing.T, store db.DB, cfg *setting.Cfg) (org.Servi
 	require.NoError(t, err)
 
 	return orgService, usrSvc
+}
+
+func boolPtr(b bool) *bool {
+	return &b
 }

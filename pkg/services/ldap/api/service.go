@@ -212,7 +212,8 @@ func (s *Service) PostSyncUserWithLDAP(c *contextmodel.ReqContext) response.Resp
 				return response.Error(http.StatusBadRequest, errMsg, err)
 			}
 
-			if err := s.userService.Disable(c.Req.Context(), &user.DisableUserCommand{IsDisabled: true, UserID: usr.ID}); err != nil {
+			isDisabled := true
+			if err := s.userService.Update(c.Req.Context(), &user.UpdateUserCommand{UserID: usr.ID, IsDisabled: &isDisabled}); err != nil {
 				return response.Error(http.StatusInternalServerError, "Failed to disable the user", err)
 			}
 
@@ -331,9 +332,6 @@ func (s *Service) identityFromLDAPUser(user *login.ExternalUserInfo) *authn.Iden
 			EnableUser:   true,
 			SyncOrgRoles: !s.cfg.LDAPSkipOrgRoleSync,
 			AllowSignUp:  s.cfg.LDAPAllowSignup,
-			LookUpParams: login.UserLookupParams{
-				UserID: &user.UserId,
-			},
 		},
 	}
 }

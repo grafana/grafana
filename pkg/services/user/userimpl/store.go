@@ -34,11 +34,8 @@ type store interface {
 	UpdateUser(context.Context, *user.User) error
 	GetProfile(context.Context, *user.GetUserProfileQuery) (*user.UserProfileDTO, error)
 	SetHelpFlag(context.Context, *user.SetUserHelpFlagCommand) error
-	UpdatePermissions(context.Context, int64, bool) error
 	BatchDisableUsers(context.Context, *user.BatchDisableUsersCommand) error
-	Disable(context.Context, *user.DisableUserCommand) error
 	Search(context.Context, *user.SearchUsersQuery) (*user.SearchUserQueryResult, error)
-
 	Count(ctx context.Context) (int64, error)
 	CountUserAccountsWithEmptyRole(ctx context.Context) (int64, error)
 }
@@ -317,9 +314,26 @@ func (ss *sqlStore) Update(ctx context.Context, cmd *user.UpdateUserCommand) err
 
 		q := sess.ID(cmd.UserID).Where(ss.notServiceAccountFilter())
 
+		if cmd.IsDisabled != nil {
+			sess.UseBool("is_disabled")
+			u.IsDisabled = *cmd.IsDisabled
+		}
+
 		if cmd.EmailVerified != nil {
 			q.UseBool("email_verified")
 			u.EmailVerified = *cmd.EmailVerified
+		}
+
+		if cmd.IsGrafanaAdmin != nil {
+			q.UseBool("is_admin")
+			u.IsAdmin = *cmd.IsGrafanaAdmin
+		}
+
+		if cmd.IsGrafanaAdmin != nil && !*cmd.IsGrafanaAdmin {
+			// validate that after update there is at least one server admin
+			if err := validateOneAdminLeft(ctx, sess); err != nil {
+				return err
+			}
 		}
 
 		if _, err := q.Update(&u); err != nil {
@@ -472,28 +486,6 @@ func (ss *sqlStore) SetHelpFlag(ctx context.Context, cmd *user.SetUserHelpFlagCo
 	})
 }
 
-// UpdatePermissions sets the user Server Admin flag
-func (ss *sqlStore) UpdatePermissions(ctx context.Context, userID int64, isAdmin bool) error {
-	return ss.db.WithTransactionalDbSession(ctx, func(sess *db.Session) error {
-		var user user.User
-		if _, err := sess.ID(userID).Where(ss.notServiceAccountFilter()).Get(&user); err != nil {
-			return err
-		}
-
-		user.IsAdmin = isAdmin
-		sess.UseBool("is_admin")
-		_, err := sess.ID(user.ID).Update(&user)
-		if err != nil {
-			return err
-		}
-		// validate that after update there is at least one server admin
-		if err := validateOneAdminLeft(ctx, sess); err != nil {
-			return err
-		}
-		return nil
-	})
-}
-
 func (ss *sqlStore) Count(ctx context.Context) (int64, error) {
 	type result struct {
 		Count int64
@@ -562,25 +554,6 @@ func (ss *sqlStore) BatchDisableUsers(ctx context.Context, cmd *user.BatchDisabl
 		}
 
 		_, err := sess.Where(ss.notServiceAccountFilter()).Exec(disableParams...)
-		return err
-	})
-}
-
-func (ss *sqlStore) Disable(ctx context.Context, cmd *user.DisableUserCommand) error {
-	return ss.db.WithDbSession(ctx, func(dbSess *db.Session) error {
-		usr := user.User{}
-		sess := dbSess.Table("user")
-
-		if has, err := sess.ID(cmd.UserID).Where(ss.notServiceAccountFilter()).Get(&usr); err != nil {
-			return err
-		} else if !has {
-			return user.ErrUserNotFound
-		}
-
-		usr.IsDisabled = cmd.IsDisabled
-		sess.UseBool("is_disabled")
-
-		_, err := sess.ID(cmd.UserID).Update(&usr)
 		return err
 	})
 }
