@@ -1,3 +1,4 @@
+// Core Grafana history https://github.com/grafana/grafana/blob/v11.0.0-preview/public/app/plugins/datasource/prometheus/querybuilder/components/MetricSelect.tsx
 import { css } from '@emotion/css';
 import debounce from 'debounce-promise';
 import React, { RefCallback, useCallback, useState } from 'react';
