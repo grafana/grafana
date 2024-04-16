@@ -134,8 +134,6 @@ func (e *AzureLogAnalyticsDatasource) buildQueries(ctx context.Context, queries 
 				resultFormat = types.TimeSeries
 			}
 
-			meetsCriteria := false
-			var meetsCriteriaErr error
 			basicLogsQueryflag := false
 			if azureLogAnalyticsTarget.BasicLogsQuery != nil {
 				basicLogsQueryflag = *azureLogAnalyticsTarget.BasicLogsQuery
@@ -150,19 +148,18 @@ func (e *AzureLogAnalyticsDatasource) buildQueries(ctx context.Context, queries 
 				resources = azureLogAnalyticsTarget.Resources
 				resourceOrWorkspace = azureLogAnalyticsTarget.Resources[0]
 				appInsightsQuery = appInsightsRegExp.Match([]byte(resourceOrWorkspace))
-				meetsCriteria, meetsCriteriaErr = MeetsBasicLogsCriteria(basicLogsQueryflag, resources)
 			} else if azureLogAnalyticsTarget.Resource != nil && *azureLogAnalyticsTarget.Resource != "" {
 				resources = []string{*azureLogAnalyticsTarget.Resource}
 				resourceOrWorkspace = *azureLogAnalyticsTarget.Resource
-				meetsCriteria, meetsCriteriaErr = MeetsBasicLogsCriteria(basicLogsQueryflag, resources)
 			} else if azureLogAnalyticsTarget.Workspace != nil {
 				resourceOrWorkspace = *azureLogAnalyticsTarget.Workspace
 			}
 
-			if meetsCriteriaErr != nil {
-				return nil, meetsCriteriaErr
+			meetsBasicLogsCriteria, meetsBasicLogsCriteriaErr := MeetsBasicLogsCriteria(basicLogsQueryflag, resources)
+			if meetsBasicLogsCriteriaErr != nil {
+				return nil, meetsBasicLogsCriteriaErr
 			}
-			basicLogsQuery = meetsCriteria
+			basicLogsQuery = meetsBasicLogsCriteria
 
 			if azureLogAnalyticsTarget.Query != nil {
 				queryString = *azureLogAnalyticsTarget.Query
