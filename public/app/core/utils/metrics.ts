@@ -29,7 +29,9 @@ export function stopMeasure(eventName: string) {
     performance.clearMarks(started);
     performance.clearMarks(completed);
     performance.clearMeasures(measured);
+    return measure;
   } catch (error) {
     console.error(`[Metrics] Failed to stopMeasure ${eventName}`, error);
+    return;
   }
 }
