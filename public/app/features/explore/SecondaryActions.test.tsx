@@ -3,6 +3,7 @@ import userEvent from '@testing-library/user-event';
 import { noop } from 'lodash';
 import React from 'react';
 
+import { QueriesDrawerContextProviderMock } from './QueriesDrawer/mocks';
 import { SecondaryActions } from './SecondaryActions';
 
 describe('SecondaryActions', () => {
@@ -51,7 +52,12 @@ describe('SecondaryActions', () => {
     const onClickQueryInspector = jest.fn();
 
     render(
-      <SecondaryActions onClickAddQueryRowButton={onClickAddRow} onClickQueryInspectorButton={onClickQueryInspector} />
+      <QueriesDrawerContextProviderMock setDrawerOpened={onClickHistory}>
+        <SecondaryActions
+          onClickAddQueryRowButton={onClickAddRow}
+          onClickQueryInspectorButton={onClickQueryInspector}
+        />
+      </QueriesDrawerContextProviderMock>
     );
 
     await user.click(screen.getByRole('button', { name: /Add query/i }));
@@ -59,6 +65,7 @@ describe('SecondaryActions', () => {
 
     await user.click(screen.getByRole('button', { name: /Query history/i }));
     expect(onClickHistory).toBeCalledTimes(1);
+    expect(onClickHistory).toBeCalledWith(true);
 
     await user.click(screen.getByRole('button', { name: /Query inspector/i }));
     expect(onClickQueryInspector).toBeCalledTimes(1);
