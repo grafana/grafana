@@ -1,8 +1,15 @@
+import { expect } from '@jest/globals';
 import { renderHook } from '@testing-library/react-hooks';
 
 import { DataFrame, FieldType, toDataFrame } from '@grafana/data';
 
 import { useStructureRev } from './useStructureRev';
+
+declare module 'expect' {
+  interface Matchers<R> {
+    toHaveIncremented(): R;
+  }
+}
 
 let lastResult: number = Number.MIN_SAFE_INTEGER;
 
