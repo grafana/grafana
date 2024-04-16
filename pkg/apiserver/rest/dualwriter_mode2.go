@@ -3,6 +3,7 @@ package rest
 import (
 	"context"
 
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/api/meta"
 	metainternalversion "k8s.io/apimachinery/pkg/apis/meta/internalversion"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -55,8 +56,19 @@ func (d *DualWriterMode2) Create(ctx context.Context, obj runtime.Object, create
 	return rsp, err
 }
 
-// Get overrides the behavior of the generic DualWriter and retrieves an object from LegacyStorage.
+// Get overrides the behavior of the generic DualWriter.
+// It retrieves an object from Storage if possible, and if not it falls back to LegacyStorage.
 func (d *DualWriterMode2) Get(ctx context.Context, name string, options *metav1.GetOptions) (runtime.Object, error) {
+	s, err := d.Storage.Get(ctx, name, &metav1.GetOptions{})
+	if err == nil {
+		return s, err
+	}
+	if apierrors.IsNotFound(err) {
+		klog.Info("object not found in duplicate storage", "name", name)
+	} else {
+		klog.Error("unable to fetch object from duplicate storage", "error", err, "name", name)
+	}
+
 	return d.Legacy.Get(ctx, name, &metav1.GetOptions{})
 }
 
@@ -130,10 +142,29 @@ func enrichObject(orig, copy runtime.Object) (runtime.Object, error) {
 	}
 	accessorC.SetAnnotations(ac)
 
-	// #TODO set resource version and UID when required (Update for example)
-	// accessorC.SetResourceVersion(accessorO.GetResourceVersion())
-
-	// accessorC.SetUID(accessorO.GetUID())
-
 	return copy, nil
+}
+
+func (d *DualWriterMode2) Delete(ctx context.Context, name string, deleteValidation rest.ValidateObjectFunc, options *metav1.DeleteOptions) (runtime.Object, bool, error) {
+	legacy, ok := d.Legacy.(rest.GracefulDeleter)
+	if !ok {
+		return nil, false, errDualWriterDeleterMissing
+	}
+
+	deletedLS, async, err := legacy.Delete(ctx, name, deleteValidation, options)
+	if err != nil {
+		if !apierrors.IsNotFound(err) {
+			klog.FromContext(ctx).Error(err, "could not delete from legacy store", "mode", 2)
+			return deletedLS, async, err
+		}
+	}
+
+	_, _, errUS := d.Storage.Delete(ctx, name, deleteValidation, options)
+	if errUS != nil {
+		if !apierrors.IsNotFound(errUS) {
+			klog.FromContext(ctx).Error(errUS, "could not delete from duplicate storage", "mode", 2, "name", name)
+		}
+	}
+
+	return deletedLS, async, err
 }

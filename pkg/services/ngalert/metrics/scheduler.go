@@ -18,6 +18,8 @@ type Scheduler struct {
 	EvalTotal                           *prometheus.CounterVec
 	EvalFailures                        *prometheus.CounterVec
 	EvalDuration                        *prometheus.HistogramVec
+	EvalAttemptTotal                    *prometheus.CounterVec
+	EvalAttemptFailures                 *prometheus.CounterVec
 	ProcessDuration                     *prometheus.HistogramVec
 	SendDuration                        *prometheus.HistogramVec
 	SimpleNotificationRules             *prometheus.GaugeVec
@@ -69,6 +71,24 @@ func NewSchedulerMetrics(r prometheus.Registerer) *Scheduler {
 				Name:      "rule_evaluation_duration_seconds",
 				Help:      "The time to evaluate a rule.",
 				Buckets:   []float64{.01, .1, .5, 1, 5, 10, 15, 30, 60, 120, 180, 240, 300},
+			},
+			[]string{"org"},
+		),
+		EvalAttemptTotal: promauto.With(r).NewCounterVec(
+			prometheus.CounterOpts{
+				Namespace: Namespace,
+				Subsystem: Subsystem,
+				Name:      "rule_evaluation_attempts_total",
+				Help:      "The total number of rule evaluation attempts.",
+			},
+			[]string{"org"},
+		),
+		EvalAttemptFailures: promauto.With(r).NewCounterVec(
+			prometheus.CounterOpts{
+				Namespace: Namespace,
+				Subsystem: Subsystem,
+				Name:      "rule_evaluation_attempt_failures_total",
+				Help:      "The total number of rule evaluation attempt failures.",
 			},
 			[]string{"org"},
 		),
