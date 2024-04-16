@@ -9,6 +9,8 @@ import (
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/auth/identity"
 	"github.com/grafana/grafana/pkg/services/dashboards"
+	"github.com/grafana/grafana/pkg/services/ngalert/models"
+	"github.com/grafana/grafana/pkg/util"
 )
 
 const (
@@ -82,19 +84,25 @@ type Silence interface {
 	GetRuleUID() *string
 }
 
-type RuleUIDToNamespaceStore interface {
-	GetNamespacesByRuleUID(ctx context.Context, orgID int64, uids ...string) (map[string]string, error)
+type RuleStore interface {
+	GetRuleGroupsByRuleUIDs(ctx context.Context, orgID int64, uids ...string) (map[models.AlertRuleGroupKey]models.RulesGroup, error)
 }
 
 type SilenceService struct {
 	genericService
-	store RuleUIDToNamespaceStore
+	rulesSvc RuleService
+	store    RuleStore
 }
 
-func NewSilenceService(ac ac.AccessControl, store RuleUIDToNamespaceStore) *SilenceService {
+func NewSilenceService(ac ac.AccessControl, store RuleStore) *SilenceService {
 	return &SilenceService{
 		genericService: genericService{
 			ac: ac,
+		},
+		rulesSvc: RuleService{
+			genericService{
+				ac: ac,
+			},
 		},
 		store: store,
 	}
@@ -127,27 +135,34 @@ func (s SilenceService) FilterByAccess(ctx context.Context, user identity.Reques
 	if len(silencesByRuleUID) == 0 { // if only general silences are provided no need in other checks
 		return result, nil
 	}
-	namespacesByRuleUID, err := s.store.GetNamespacesByRuleUID(ctx, user.GetOrgID(), maps.Keys(silencesByRuleUID)...)
+	groups, err := s.store.GetRuleGroupsByRuleUIDs(ctx, user.GetOrgID(), maps.Keys(silencesByRuleUID)...)
 	if err != nil {
 		return nil, err
 	}
-
 	namespacesByAccess := make(map[string]bool) // caches results of permissions check for each namespace to avoid repeated checks for the same folder
-	for ruleUID, silence := range silencesByRuleUID {
-		ns, ok := namespacesByRuleUID[ruleUID]
-		if !ok { // this means that there is no rule with such UID.
+	for groupKey, group := range groups {
+		hasAccess, ok := namespacesByAccess[groupKey.NamespaceUID]
+		if ok && !hasAccess { // if silences are not available in this folder, skip the group immediately
 			continue
 		}
-		hasAccess, ok := namespacesByAccess[ns]
-		if !ok {
-			hasAccess, err = s.HasAccess(ctx, user, readRuleSilenceEvaluator(ns))
-			if err != nil {
-				return nil, err
+		var groupAccess *bool
+		for _, rule := range group {
+			// check if there is silence for this rule that we need to check access to
+			ruleSilences, ok := silencesByRuleUID[rule.UID]
+			if !ok {
+				continue
 			}
-			namespacesByAccess[ns] = hasAccess
-		}
-		if hasAccess {
-			result = append(result, silence...)
+			if groupAccess == nil { // means that there was another rule in this group that has silences, and therefore we do not need to check permissions again
+				has, err := s.rulesSvc.HasAccessToRuleGroup(ctx, user, group)
+				if err != nil {
+					return nil, err
+				}
+				groupAccess = util.Pointer(has)
+			}
+			if !*groupAccess {
+				continue
+			}
+			result = append(result, ruleSilences...)
 		}
 	}
 	return result, nil
@@ -171,16 +186,15 @@ func (s SilenceService) AuthorizeReadSilence(ctx context.Context, user identity.
 	if ruleUID == nil {
 		return nil // no rule UID means that this is a general silence and at this point the user can read them
 	}
-
-	// otherwise resolve rule key to the action's scope
-	folderUID, err := s.ruleUIDToFolderUID(ctx, user.GetOrgID(), *ruleUID)
+	// otherwise resolve rule UID to a group key to get the action's scope
+	groupKey, err := s.ruleUIDtoGroupKey(ctx, user, *ruleUID)
 	if err != nil {
 		return fmt.Errorf("resolve rule UID to folder UID: %w", err)
 	}
-	if folderUID == "" { // if we did not find folder by rule UID then it does not exist.
+	if groupKey == nil { // if we did not find folder by rule UID then it does not exist.
 		return NewAuthorizationErrorGeneric(fmt.Sprintf("read silence for rule %s", *ruleUID))
 	}
-	return s.HasAccessOrError(ctx, user, readRuleSilenceEvaluator(folderUID), func() string {
+	return s.HasAccessOrError(ctx, user, readRuleSilenceEvaluator(groupKey.NamespaceUID), func() string {
 		return "read silence"
 	})
 }
@@ -202,14 +216,14 @@ func (s SilenceService) AuthorizeCreateSilence(ctx context.Context, user identit
 	if err := s.HasAccessOrError(ctx, user, createSomeRuleSilenceEvaluator, func() string { return "create any silences" }); err != nil {
 		return err
 	}
-	folderUID, err := s.ruleUIDToFolderUID(ctx, user.GetOrgID(), *ruleUID)
+	groupKey, err := s.ruleUIDtoGroupKey(ctx, user, *ruleUID)
 	if err != nil {
 		return fmt.Errorf("resolve rule UID to folder UID: %w", err)
 	}
-	if folderUID == "" { // if we did not find folder by rule UID then it does not exist.
+	if groupKey == nil { // if we did not find folder by rule UID then it does not exist.
 		return NewAuthorizationErrorGeneric(fmt.Sprintf("create silence for rule %s", *ruleUID))
 	}
-	return s.HasAccessOrError(ctx, user, createRuleSilenceEvaluator(folderUID), func() string {
+	return s.HasAccessOrError(ctx, user, createRuleSilenceEvaluator(groupKey.NamespaceUID), func() string {
 		return fmt.Sprintf("create silence for rule %s", *ruleUID)
 	})
 }
@@ -231,26 +245,29 @@ func (s SilenceService) AuthorizeUpdateSilence(ctx context.Context, user identit
 	if err := s.HasAccessOrError(ctx, user, updateSomeRuleSilenceEvaluator, func() string { return "update any silences" }); err != nil {
 		return err
 	}
-	folderUID, err := s.ruleUIDToFolderUID(ctx, user.GetOrgID(), *ruleUID)
+	groupKey, err := s.ruleUIDtoGroupKey(ctx, user, *ruleUID)
 	if err != nil {
 		return fmt.Errorf("resolve rule UID to folder UID: %w", err)
 	}
-	if folderUID == "" { // if we did not find folder by rule UID then it does not exist.
+	if groupKey == nil { // if we did not find folder by rule UID then it does not exist.
 		return NewAuthorizationErrorGeneric(fmt.Sprintf("update silence for rule %s", *ruleUID))
 	}
-	return s.HasAccessOrError(ctx, user, updateRuleSilenceEvaluator(folderUID), func() string {
+	return s.HasAccessOrError(ctx, user, updateRuleSilenceEvaluator(groupKey.NamespaceUID), func() string {
 		return fmt.Sprintf("update silence for rule %s", *ruleUID)
 	})
 }
 
-func (s SilenceService) ruleUIDToFolderUID(ctx context.Context, orgID int64, ruleUID string) (string, error) {
-	namespaces, err := s.store.GetNamespacesByRuleUID(ctx, orgID, ruleUID)
+func (s SilenceService) ruleUIDtoGroupKey(ctx context.Context, user identity.Requester, ruleUID string) (*models.AlertRuleGroupKey, error) {
+	groups, err := s.store.GetRuleGroupsByRuleUIDs(ctx, user.GetOrgID(), ruleUID)
 	if err != nil {
-		return "", err
+		return nil, err
 	}
-	uid, ok := namespaces[ruleUID]
-	if !ok {
-		return "", nil
+	for key, group := range groups {
+		err = s.rulesSvc.AuthorizeAccessToRuleGroup(ctx, user, group)
+		if err != nil {
+			return nil, err
+		}
+		return &key, nil
 	}
-	return uid, nil
+	return nil, nil // no rule in database
 }

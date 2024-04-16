@@ -259,6 +259,12 @@ func WithLabel(key, value string) AlertRuleMutator {
 	}
 }
 
+func WithUID(uid string) AlertRuleMutator {
+	return func(rule *AlertRule) {
+		rule.UID = uid
+	}
+}
+
 func WithUniqueUID(knownUids *sync.Map) AlertRuleMutator {
 	return func(rule *AlertRule) {
 		uid := rule.UID
@@ -324,11 +330,11 @@ func GenerateAlertLabels(count int, prefix string) data.Labels {
 	return labels
 }
 
-func GenerateAlertQuery() AlertQuery {
+func GenerateAlertQuery(mutators ...func(rule *AlertQuery)) AlertQuery {
 	f := rand.Intn(10) + 5
 	t := rand.Intn(f)
 
-	return AlertQuery{
+	q := AlertQuery{
 		DatasourceUID: util.GenerateShortUID(),
 		Model: json.RawMessage(fmt.Sprintf(`{
 			"%s": "%s",
@@ -340,6 +346,16 @@ func GenerateAlertQuery() AlertQuery {
 		},
 		RefID:     util.GenerateShortUID(),
 		QueryType: util.GenerateShortUID(),
+	}
+	for _, mutator := range mutators {
+		mutator(&q)
+	}
+	return q
+}
+
+func WithDatasourceUID(uid string) func(query *AlertQuery) {
+	return func(query *AlertQuery) {
+		query.DatasourceUID = uid
 	}
 }
 
