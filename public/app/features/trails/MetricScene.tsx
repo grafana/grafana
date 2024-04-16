@@ -2,6 +2,7 @@ import { css } from '@emotion/css';
 import React from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
+import { config } from '@grafana/runtime';
 import {
   SceneObjectState,
   SceneObjectBase,
@@ -153,7 +154,8 @@ export class MetricActionBar extends SceneObjectBase<MetricActionBarState> {
     this.getLinkToExplore().then((link) => {
       // We use window.open instead of a Link or <a> because we want to compute the explore link when clicking,
       // if we precompute it we have to keep track of a lot of dependencies
-      window.open(link, '_blank');
+      // We also need to ensure we prefix with the appSubUrl for environments that don't host grafana at the root.
+      window.open(`${config.appSubUrl}}${link}`, '_blank');
     });
   };
 
