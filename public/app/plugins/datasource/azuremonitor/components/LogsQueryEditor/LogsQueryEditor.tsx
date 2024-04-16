@@ -9,7 +9,7 @@ import { selectors } from '../../e2e/selectors';
 import { AzureMonitorErrorish, AzureMonitorOption, AzureMonitorQuery, ResultFormat, EngineSchema } from '../../types';
 import ResourceField from '../ResourceField';
 import { ResourceRow, ResourceRowGroup, ResourceRowType } from '../ResourcePicker/types';
-import { parseResourceDetails, parseResourceURI } from '../ResourcePicker/utils';
+import { parseResourceDetails } from '../ResourcePicker/utils';
 import FormatAsField from '../shared/FormatAsField';
 
 import AdvancedResourcePicker from './AdvancedResourcePicker';
@@ -18,6 +18,7 @@ import QueryField from './QueryField';
 import { TimeManagement } from './TimeManagement';
 import { setBasicLogsQuery, setFormatAs } from './setQueryValue';
 import useMigrations from './useMigrations';
+import { shouldShowBasicLogsToggle } from './utils';
 
 interface LogsQueryEditorProps {
   query: AzureMonitorQuery;
@@ -45,7 +46,9 @@ const LogsQueryEditor = ({
   data,
 }: LogsQueryEditorProps) => {
   const migrationError = useMigrations(datasource, query, onChange);
-  const [showBasicLogsToggle, setShowBasicLogsToggle] = useState<boolean>(false);
+  const [showBasicLogsToggle, setShowBasicLogsToggle] = useState<boolean>(
+    shouldShowBasicLogsToggle(query.azureLogAnalytics?.resources || [], basicLogsEnabled)
+  );
 
   const disableRow = (row: ResourceRow, selectedRows: ResourceRowGroup) => {
     if (selectedRows.length === 0) {
@@ -71,11 +74,8 @@ const LogsQueryEditor = ({
   }, [query.azureLogAnalytics?.resources, datasource.azureLogAnalyticsDatasource]);
 
   useEffect(() => {
-    if (query.azureLogAnalytics?.resources && query.azureLogAnalytics.resources.length === 1) {
-      const resource = parseResourceURI(query.azureLogAnalytics.resources[0]);
-      setShowBasicLogsToggle(
-        resource.metricNamespace?.toLowerCase() === 'microsoft.operationalinsights/workspaces' && basicLogsEnabled
-      );
+    if (shouldShowBasicLogsToggle(query.azureLogAnalytics?.resources || [], basicLogsEnabled)) {
+      setShowBasicLogsToggle(true);
     } else {
       setShowBasicLogsToggle(false);
     }
