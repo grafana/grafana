@@ -116,8 +116,8 @@ func TestUserSync_SyncUserHook(t *testing.T) {
 					Email: "test",
 					ClientParams: authn.ClientParams{
 						LookUpParams: login.UserLookupParams{
-							Email:  ptrString("test"),
-							Login:  nil,
+							Email: ptrString("test"),
+							Login: nil,
 						},
 					},
 				},
@@ -130,8 +130,8 @@ func TestUserSync_SyncUserHook(t *testing.T) {
 				Email: "test",
 				ClientParams: authn.ClientParams{
 					LookUpParams: login.UserLookupParams{
-						Email:  ptrString("test"),
-						Login:  nil,
+						Email: ptrString("test"),
+						Login: nil,
 					},
 				},
 			},
@@ -153,8 +153,8 @@ func TestUserSync_SyncUserHook(t *testing.T) {
 					ClientParams: authn.ClientParams{
 						SyncUser: true,
 						LookUpParams: login.UserLookupParams{
-							Email:  ptrString("test"),
-							Login:  nil,
+							Email: ptrString("test"),
+							Login: nil,
 						},
 					},
 				},
@@ -169,8 +169,8 @@ func TestUserSync_SyncUserHook(t *testing.T) {
 				ClientParams: authn.ClientParams{
 					SyncUser: true,
 					LookUpParams: login.UserLookupParams{
-						Email:  ptrString("test"),
-						Login:  nil,
+						Email: ptrString("test"),
+						Login: nil,
 					},
 				},
 			},
@@ -192,8 +192,8 @@ func TestUserSync_SyncUserHook(t *testing.T) {
 					ClientParams: authn.ClientParams{
 						SyncUser: true,
 						LookUpParams: login.UserLookupParams{
-							Email:  nil,
-							Login:  ptrString("test"),
+							Email: nil,
+							Login: ptrString("test"),
 						},
 					},
 				},
@@ -207,8 +207,8 @@ func TestUserSync_SyncUserHook(t *testing.T) {
 				IsGrafanaAdmin: ptrBool(false),
 				ClientParams: authn.ClientParams{
 					LookUpParams: login.UserLookupParams{
-						Email:  nil,
-						Login:  ptrString("test"),
+						Email: nil,
+						Login: ptrString("test"),
 					},
 					SyncUser: true,
 				},
@@ -233,8 +233,8 @@ func TestUserSync_SyncUserHook(t *testing.T) {
 					ClientParams: authn.ClientParams{
 						SyncUser: true,
 						LookUpParams: login.UserLookupParams{
-							Email:  nil,
-							Login:  nil,
+							Email: nil,
+							Login: nil,
 						},
 					},
 				},
@@ -251,8 +251,8 @@ func TestUserSync_SyncUserHook(t *testing.T) {
 				ClientParams: authn.ClientParams{
 					SyncUser: true,
 					LookUpParams: login.UserLookupParams{
-						Email:  nil,
-						Login:  nil,
+						Email: nil,
+						Login: nil,
 					},
 				},
 			},
@@ -276,8 +276,8 @@ func TestUserSync_SyncUserHook(t *testing.T) {
 					ClientParams: authn.ClientParams{
 						SyncUser: true,
 						LookUpParams: login.UserLookupParams{
-							Email:  nil,
-							Login:  nil,
+							Email: nil,
+							Login: nil,
 						},
 					},
 				},
@@ -306,8 +306,8 @@ func TestUserSync_SyncUserHook(t *testing.T) {
 						AllowSignUp: true,
 						EnableUser:  true,
 						LookUpParams: login.UserLookupParams{
-							Email:  ptrString("test_create"),
-							Login:  nil,
+							Email: ptrString("test_create"),
+							Login: nil,
 						},
 					},
 				},
@@ -326,8 +326,8 @@ func TestUserSync_SyncUserHook(t *testing.T) {
 					AllowSignUp: true,
 					EnableUser:  true,
 					LookUpParams: login.UserLookupParams{
-						Email:  ptrString("test_create"),
-						Login:  nil,
+						Email: ptrString("test_create"),
+						Login: nil,
 					},
 				},
 			},
@@ -352,8 +352,8 @@ func TestUserSync_SyncUserHook(t *testing.T) {
 						SyncUser:   true,
 						EnableUser: true,
 						LookUpParams: login.UserLookupParams{
-							Email:  nil,
-							Login:  ptrString("test"),
+							Email: nil,
+							Login: ptrString("test"),
 						},
 					},
 				},
@@ -370,8 +370,8 @@ func TestUserSync_SyncUserHook(t *testing.T) {
 					SyncUser:   true,
 					EnableUser: true,
 					LookUpParams: login.UserLookupParams{
-						Email:  nil,
-						Login:  ptrString("test"),
+						Email: nil,
+						Login: ptrString("test"),
 					},
 				},
 			},
@@ -397,8 +397,8 @@ func TestUserSync_SyncUserHook(t *testing.T) {
 						SyncUser:   true,
 						EnableUser: true,
 						LookUpParams: login.UserLookupParams{
-							Email:  nil,
-							Login:  ptrString("test"),
+							Email: nil,
+							Login: ptrString("test"),
 						},
 					},
 				},
@@ -416,8 +416,8 @@ func TestUserSync_SyncUserHook(t *testing.T) {
 					SyncUser:   true,
 					EnableUser: true,
 					LookUpParams: login.UserLookupParams{
-						Email:  nil,
-						Login:  ptrString("test"),
+						Email: nil,
+						Login: ptrString("test"),
 					},
 				},
 			},

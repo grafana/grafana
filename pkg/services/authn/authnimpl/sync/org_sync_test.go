@@ -84,8 +84,8 @@ func TestOrgSync_SyncOrgRolesHook(t *testing.T) {
 					ClientParams: authn.ClientParams{
 						SyncOrgRoles: true,
 						LookUpParams: login.UserLookupParams{
-							Email:  ptrString("test"),
-							Login:  nil,
+							Email: ptrString("test"),
+							Login: nil,
 						},
 					},
 				},
@@ -101,8 +101,8 @@ func TestOrgSync_SyncOrgRolesHook(t *testing.T) {
 				ClientParams: authn.ClientParams{
 					SyncOrgRoles: true,
 					LookUpParams: login.UserLookupParams{
-						Email:  ptrString("test"),
-						Login:  nil,
+						Email: ptrString("test"),
+						Login: nil,
 					},
 				},
 			},
