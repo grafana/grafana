@@ -130,6 +130,7 @@ export default class AzureLogAnalyticsDatasource extends DataSourceWithBackend<
           // Workspace was removed in Grafana 8, but remains for backwards compat
           workspace,
           dashboardTime: item.dashboardTime,
+          basicLogsQuery: item.basicLogsQuery,
           timeColumn: this.templateSrv.replace(item.timeColumn, scopedVars),
         },
       };
