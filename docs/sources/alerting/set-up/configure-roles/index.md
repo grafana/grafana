@@ -18,8 +18,6 @@ refs:
       destination: https://grafana.com/docs/grafana/<GRAFANA_VERSION>/administration/roles-and-permissions#organization-roles
 ---
 
----
-
 # Configure roles and permissions
 
 A user is any individual who can log in to Grafana. Each user is associated with a role that includes permissions. Permissions determine the tasks a user can perform in the system. For example, the Admin role includes permissions for an administrator to create and delete users.
