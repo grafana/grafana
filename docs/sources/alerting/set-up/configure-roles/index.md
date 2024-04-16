@@ -14,7 +14,7 @@ title: Configure roles and permissions
 weight: 150
 refs:
   org-roles:
-    - pattern: /docs/grafana/
+    - pattern: /docs/
       destination: https://grafana.com/docs/grafana/<GRAFANA_VERSION>/administration/roles-and-permissions#organization-roles
 ---
 
