@@ -18,8 +18,8 @@ weight: 150
 
 A user is any individual who can log in to Grafana. Each user is associated with a role that includes permissions. Permissions determine the tasks a user can perform in the system. For example, the Admin role includes permissions for an administrator to create and delete users.
 
-For more information, refer to https://grafana.com/docs/grafana/next/administration/roles-and-permissions/#organization-roles
-Manage access using roles
+## Manage access using roles
+
 For Grafana OSS, there are three roles: Admin, Editor, and Viewer.
 
 Details of the roles and the access they provide for Grafana Alerting are below.
