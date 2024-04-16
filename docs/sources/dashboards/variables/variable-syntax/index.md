@@ -176,12 +176,22 @@ Interpolation result: "'test''1','test2'"
 
 ### Text
 
-Formats single- and multi-valued variables into their text representation. For a single variable it will just return the text representation. For multi-valued variables it will return the text representation combined with `+`.
+Formats single- and multi-valued variables into their text representation. For a single variable it will just return the text representation. For multi-valued variables it will return the text representation combined with `+`. For key-value variables (i.e. 'test1 : 3') it will return the key.
 
 ```bash
 servers = ["test1", "test2"]
 String to interpolate: '${servers:text}'
 Interpolation result: "test1 + test2"
+```
+
+### Value (Key-value variables)
+
+Returns the value of a key-value variable.
+
+```bash
+servers = ["test1 : 3"]
+String to interpolate: '${servers:value}'
+Interpolation result: "3"
 ```
 
 ### Query parameters
