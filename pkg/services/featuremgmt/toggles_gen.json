@@ -1310,12 +1310,15 @@
     {
       "metadata": {
         "name": "kubernetesPlaylists",
-        "resourceVersion": "1712639261786",
-        "creationTimestamp": "2024-04-09T05:07:41Z"
+        "resourceVersion": "1713248683044",
+        "creationTimestamp": "2024-04-09T05:07:41Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2024-04-16 06:24:43.044143 +0000 UTC"
+        }
       },
       "spec": {
         "description": "Use the kubernetes API in the frontend for playlists, and route /api/playlist requests to k8s",
-        "stage": "experimental",
+        "stage": "GA",
         "codeowner": "@grafana/grafana-app-platform-squad",
         "requiresRestart": true
       }
