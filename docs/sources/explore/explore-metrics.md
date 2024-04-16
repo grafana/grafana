@@ -54,7 +54,7 @@ To further explore a metric, click **Select** in the upper right corner of the m
 
 - The **Overview** tab provides a description for each metric, as well as the metric `type` and `unit` associated with the metric. It also provides a list of labels associated with the metric. Click on any label to view drill-down visualizations.
 - The **Breakdown** tab depicts time series visualizations for each of the label-value pairs for the selected metric. You can further drill down on each label and click **Add to filter** to add the label/value pair into your filters. You can also change the **View** from grid to rows.
-- The **Related metrics** tab depicts related metrics with relevant key words. You can repeat the drill down process for any related metric. Toggle **SHow previews** to preview visualizations.
+- The **Related metrics** tab depicts related metrics with relevant key words. You can repeat the drill down process for any related metric. Toggle **Show previews** to preview visualizations.
 
 Once you have gathered your metrics exploration data you can:
 
