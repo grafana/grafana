@@ -1,7 +1,7 @@
 import { get } from 'lodash';
 import { lastValueFrom, of } from 'rxjs';
 
-import { CustomVariableModel } from '@grafana/data';
+import { CustomVariableModel, ScopedVars } from '@grafana/data';
 import { getTemplateSrv } from '@grafana/runtime';
 
 import { createMockInstanceSetttings } from './__mocks__/cloudMonitoringInstanceSettings';
@@ -84,12 +84,14 @@ describe('Cloud Monitoring Datasource', () => {
     });
     it('should correctly apply template variables for PromQLQuery (multi-value)', () => {
       const templateSrv = getTemplateSrv();
-      templateSrv.replace = jest.fn().mockImplementation((_target: any, _v2: any, formatFunction: Function) => {
-        if (formatFunction) {
-          return formatFunction(['filter-variable', 'filter-variable2']);
-        }
-        return undefined;
-      });
+      templateSrv.replace = jest
+        .fn()
+        .mockImplementation((_target: string, _v2: ScopedVars, formatFunction: Function) => {
+          if (formatFunction) {
+            return formatFunction(['filter-variable', 'filter-variable2']);
+          }
+          return undefined;
+        });
       const mockInstanceSettings = createMockInstanceSetttings();
       const ds = new Datasource(mockInstanceSettings, templateSrv);
       const query = createMockQuery({ promQLQuery: { expr: '$testVar', projectName: 'test-project', step: '1' } });
