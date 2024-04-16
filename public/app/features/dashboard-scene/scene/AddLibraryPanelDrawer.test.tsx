@@ -4,7 +4,7 @@ import { LibraryPanel } from '@grafana/schema/dist/esm/index.gen';
 import { DashboardScene } from '../scene/DashboardScene';
 import { activateFullSceneTree } from '../utils/test-utils';
 
-import { AddLibraryPanelWidget } from './AddLibraryPanelWidget';
+import { AddLibraryPanelWidget } from './AddLibraryPanelDrawer';
 import { DashboardGridItem } from './DashboardGridItem';
 import { LibraryVizPanel } from './LibraryVizPanel';
 

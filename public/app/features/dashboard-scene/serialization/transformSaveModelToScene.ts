@@ -33,7 +33,7 @@ import { DashboardModel, PanelModel } from 'app/features/dashboard/state';
 import { trackDashboardLoaded } from 'app/features/dashboard/utils/tracking';
 import { DashboardDTO } from 'app/types';
 
-import { AddLibraryPanelWidget } from '../scene/AddLibraryPanelWidget';
+import { AddLibraryPanelWidget } from '../scene/AddLibraryPanelDrawer';
 import { AlertStatesDataLayer } from '../scene/AlertStatesDataLayer';
 import { DashboardAnnotationsDataLayer } from '../scene/DashboardAnnotationsDataLayer';
 import { DashboardControls } from '../scene/DashboardControls';

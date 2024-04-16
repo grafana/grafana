@@ -31,7 +31,7 @@ import { getPanelDataFrames } from 'app/features/dashboard/components/HelpWizard
 import { DASHBOARD_SCHEMA_VERSION } from 'app/features/dashboard/state/DashboardMigrator';
 import { GrafanaQueryType } from 'app/plugins/datasource/grafana/types';
 
-import { AddLibraryPanelWidget } from '../scene/AddLibraryPanelWidget';
+import { AddLibraryPanelWidget } from '../scene/AddLibraryPanelDrawer';
 import { DashboardDataLayerSet } from '../scene/DashboardDataLayerSet';
 import { DashboardGridItem } from '../scene/DashboardGridItem';
 import { DashboardScene } from '../scene/DashboardScene';

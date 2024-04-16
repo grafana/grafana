@@ -40,7 +40,7 @@ import { SHARED_DASHBOARD_QUERY } from 'app/plugins/datasource/dashboard';
 import { DASHBOARD_DATASOURCE_PLUGIN_ID } from 'app/plugins/datasource/dashboard/types';
 import { DashboardDataDTO } from 'app/types';
 
-import { AddLibraryPanelWidget } from '../scene/AddLibraryPanelWidget';
+import { AddLibraryPanelWidget } from '../scene/AddLibraryPanelDrawer';
 import { DashboardDataLayerSet } from '../scene/DashboardDataLayerSet';
 import { DashboardGridItem } from '../scene/DashboardGridItem';
 import { LibraryVizPanel } from '../scene/LibraryVizPanel';

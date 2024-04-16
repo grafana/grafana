@@ -1,116 +1,75 @@
-import { css, cx, keyframes } from '@emotion/css';
+import { css, keyframes } from '@emotion/css';
 import React from 'react';
 import tinycolor from 'tinycolor2';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { SceneComponentProps, SceneGridLayout, SceneGridRow, SceneObjectBase, SceneObjectState } from '@grafana/scenes';
+import { SceneComponentProps, SceneGridLayout, SceneObjectBase, SceneObjectState } from '@grafana/scenes';
 import { LibraryPanel } from '@grafana/schema';
-import { IconButton, useStyles2 } from '@grafana/ui';
-import { Trans } from 'app/core/internationalization';
+import { Drawer, useStyles2 } from '@grafana/ui';
+import { t } from 'app/core/internationalization';
 import {
   LibraryPanelsSearch,
   LibraryPanelsSearchVariant,
 } from 'app/features/library-panels/components/LibraryPanelsSearch/LibraryPanelsSearch';
 
-import { getDashboardSceneFor } from '../utils/utils';
+import { dashboardSceneGraph } from '../utils/dashboardSceneGraph';
+import { NEW_PANEL_HEIGHT, NEW_PANEL_WIDTH, getDashboardSceneFor, getVizPanelKeyForPanelId } from '../utils/utils';
 
 import { DashboardGridItem } from './DashboardGridItem';
-import { DashboardScene } from './DashboardScene';
 import { LibraryVizPanel } from './LibraryVizPanel';
 
-export interface AddLibraryPanelWidgetState extends SceneObjectState {
-  key: string;
-}
+export interface AddLibraryPanelWidgetState extends SceneObjectState {}
 
 export class AddLibraryPanelWidget extends SceneObjectBase<AddLibraryPanelWidgetState> {
-  public constructor(state: AddLibraryPanelWidgetState) {
-    super({
-      ...state,
-    });
-  }
-
-  private get _dashboard(): DashboardScene {
-    return getDashboardSceneFor(this);
-  }
-
-  public getDashboard(): DashboardScene {
-    return this._dashboard;
-  }
-
-  public onCancelAddPanel = (evt: React.MouseEvent<HTMLButtonElement>) => {
-    evt.preventDefault();
-
-    if (!(this._dashboard.state.body instanceof SceneGridLayout)) {
-      throw new Error('Trying to remove the library panel widget in a layout that is not SceneGridLayout');
-    }
-
-    const sceneGridLayout = this._dashboard.state.body;
-    const children = [];
-
-    for (const child of sceneGridLayout.state.children) {
-      if (child.state.key !== this.parent?.state.key) {
-        children.push(child);
-      }
-
-      if (child instanceof SceneGridRow) {
-        const rowChildren = [];
-
-        for (const rowChild of child.state.children) {
-          if (rowChild instanceof DashboardGridItem && rowChild.state.key !== this.parent?.state.key) {
-            rowChildren.push(rowChild);
-          }
-        }
-
-        child.setState({ children: rowChildren });
-      }
-    }
-
-    sceneGridLayout.setState({ children });
+  public onClose = () => {
+    getDashboardSceneFor(this).closeModal();
   };
 
   public onAddLibraryPanel = (panelInfo: LibraryPanel) => {
-    if (!(this._dashboard.state.body instanceof SceneGridLayout)) {
+    const dashboard = getDashboardSceneFor(this);
+    const layout = dashboard.state.body;
+
+    if (!(layout instanceof SceneGridLayout)) {
       throw new Error('Trying to add a library panel in a layout that is not SceneGridLayout');
     }
+
+    const panelId = dashboardSceneGraph.getNextPanelId(dashboard);
 
     const body = new LibraryVizPanel({
       title: 'Panel Title',
       uid: panelInfo.uid,
       name: panelInfo.name,
-      panelKey: this.state.key,
+      panelKey: getVizPanelKeyForPanelId(panelId),
     });
 
-    if (this.parent instanceof DashboardGridItem) {
-      this.parent.setState({ body });
-    }
+    const newGridItem = new DashboardGridItem({
+      height: NEW_PANEL_HEIGHT,
+      width: NEW_PANEL_WIDTH,
+      x: 0,
+      y: 0,
+      body: body,
+      key: `grid-item-${panelId}`,
+    });
+
+    layout.setState({ children: [newGridItem, ...layout.state.children] });
+
+    this.onClose();
   };
 
   static Component = ({ model }: SceneComponentProps<AddLibraryPanelWidget>) => {
-    const dashboard = model.getDashboard();
     const styles = useStyles2(getStyles);
+    const title = t('library-panel.add-widget.title', 'Add panel from panel library');
 
     return (
-      <div className={styles.wrapper}>
-        <div className={cx('panel-container', styles.callToAction)}>
-          <div className={cx(styles.headerRow, `grid-drag-handle-${dashboard.state.body.state.key}`)}>
-            <span>
-              <Trans i18nKey="library-panel.add-widget.title">Add panel from panel library</Trans>
-            </span>
-            <div className="flex-grow-1" />
-            <IconButton
-              aria-label="Close 'Add Panel' widget"
-              name="times"
-              onClick={model.onCancelAddPanel}
-              tooltip="Close widget"
-            />
-          </div>
+      <Drawer title={title} onClose={model.onClose}>
+        <div className={styles.wrapper}>
           <LibraryPanelsSearch
             onClick={model.onAddLibraryPanel}
             variant={LibraryPanelsSearchVariant.Tight}
             showPanelFilter
           />
         </div>
-      </div>
+      </Drawer>
     );
   };
 }

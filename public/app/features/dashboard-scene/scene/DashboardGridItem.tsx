@@ -23,7 +23,7 @@ import { GRID_CELL_HEIGHT, GRID_CELL_VMARGIN } from 'app/core/constants';
 
 import { getMultiVariableValues } from '../utils/utils';
 
-import { AddLibraryPanelWidget } from './AddLibraryPanelWidget';
+import { AddLibraryPanelWidget } from './AddLibraryPanelDrawer';
 import { LibraryVizPanel } from './LibraryVizPanel';
 import { repeatPanelMenuBehavior } from './PanelMenuBehavior';
 import { DashboardRepeatsProcessedEvent } from './types';
