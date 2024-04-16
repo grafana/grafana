@@ -2,6 +2,7 @@
   "type": "datasource",
   "name": "MySQL",
   "id": "mysql",
+  "executable": "gpx_mysql",
   "category": "sql",
 
   "info": {
@@ -13,7 +14,11 @@
     "logos": {
       "small": "img/mysql_logo.svg",
       "large": "img/mysql_logo.svg"
-    }
+    },
+    "version": "%VERSION%"
+  },
+  "dependencies": {
+    "grafanaDependency": ">=10.4.0"
   },
 
   "alerting": true,
