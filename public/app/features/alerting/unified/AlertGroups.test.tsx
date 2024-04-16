@@ -1,4 +1,4 @@
-import { render, waitFor } from '@testing-library/react';
+import { render, waitFor, waitForElementToBeRemoved } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import React from 'react';
 import { TestProvider } from 'test/helpers/TestProvider';
@@ -56,6 +56,7 @@ const ui = {
   groupByContainer: byTestId('group-by-container'),
   groupByInput: byRole('combobox', { name: /group by label keys/i }),
   clearButton: byRole('button', { name: 'Clear filters' }),
+  loadingIndicator: byText('Loading notifications'),
 };
 
 describe('AlertGroups', () => {
@@ -66,20 +67,24 @@ describe('AlertGroups', () => {
       AccessControlAction.AlertingInstancesExternalRead,
       AccessControlAction.AlertingRuleRead,
     ]);
-
-    mocks.api.fetchAlertGroups.mockImplementation(() => {
-      return Promise.resolve([
-        mockAlertGroup({ labels: {}, alerts: [mockAlertmanagerAlert({ labels: { foo: 'bar' } })] }),
-        mockAlertGroup(),
-      ]);
-    });
   });
 
   beforeEach(() => {
     setDataSourceSrv(new MockDataSourceSrv(dataSources));
   });
 
+  afterEach(() => {
+    mocks.api.fetchAlertGroups.mockClear();
+  });
+
   it('loads and shows groups', async () => {
+    mocks.api.fetchAlertGroups.mockImplementation(() => {
+      return Promise.resolve([
+        mockAlertGroup({ labels: {}, alerts: [mockAlertmanagerAlert({ labels: { foo: 'bar' } })] }),
+        mockAlertGroup(),
+      ]);
+    });
+
     renderAmNotifications();
 
     await waitFor(() => expect(mocks.api.fetchAlertGroups).toHaveBeenCalled());
@@ -105,9 +110,12 @@ describe('AlertGroups', () => {
         mockAlertGroup({
           labels: { region },
           alerts: [
-            mockAlertmanagerAlert({ labels: { region, appName: 'billing', env: 'production' } }),
-            mockAlertmanagerAlert({ labels: { region, appName: 'auth', env: 'staging', uniqueLabel: 'true' } }),
-            mockAlertmanagerAlert({ labels: { region, appName: 'frontend', env: 'production' } }),
+            mockAlertmanagerAlert({ fingerprint: '1', labels: { region, appName: 'billing', env: 'production' } }),
+            mockAlertmanagerAlert({
+              fingerprint: '2',
+              labels: { region, appName: 'auth', env: 'staging', uniqueLabel: 'true' },
+            }),
+            mockAlertmanagerAlert({ fingerprint: '3', labels: { region, appName: 'frontend', env: 'production' } }),
           ],
         })
       );
@@ -159,6 +167,33 @@ describe('AlertGroups', () => {
     expect(groups).toHaveLength(2);
     expect(groups[0]).toHaveTextContent('No grouping');
     expect(groups[1]).toHaveTextContent('uniqueLabeltrue');
+  });
+
+  it('should split custom grouping groups with the same label by receiver', async () => {
+    // The same alert is repeated in two groups with different receivers
+    const alert = mockAlertmanagerAlert({
+      fingerprint: '1',
+      labels: { region: 'NASA', appName: 'billing' },
+      receivers: [{ name: 'slack' }, { name: 'email' }],
+    });
+    const amGroups = [
+      mockAlertGroup({ receiver: { name: 'slack' }, labels: { region: 'NASA' }, alerts: [alert] }),
+      mockAlertGroup({ receiver: { name: 'email' }, labels: { region: 'NASA' }, alerts: [alert] }),
+    ];
+    mocks.api.fetchAlertGroups.mockResolvedValue(amGroups);
+
+    const user = userEvent.setup();
+
+    renderAmNotifications();
+    await waitForElementToBeRemoved(ui.loadingIndicator.query());
+
+    await user.type(ui.groupByInput.get(), 'appName{enter}');
+
+    const groups = await ui.group.findAll();
+
+    expect(groups).toHaveLength(2);
+    expect(groups[0]).toHaveTextContent('appNamebillingDelivered to slack');
+    expect(groups[1]).toHaveTextContent('appNamebillingDelivered to email');
   });
 
   it('should combine multiple ungrouped groups', async () => {
