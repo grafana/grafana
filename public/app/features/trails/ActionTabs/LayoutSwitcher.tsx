@@ -5,13 +5,14 @@ import { SceneComponentProps, sceneGraph, SceneObject, SceneObjectBase, SceneObj
 import { Field, RadioButtonGroup } from '@grafana/ui';
 
 import { MetricScene } from '../MetricScene';
+import { reportExploreMetrics } from '../interactions';
+
+import { LayoutType } from './types';
 
 export interface LayoutSwitcherState extends SceneObjectState {
   layouts: SceneObject[];
   options: Array<SelectableValue<LayoutType>>;
 }
-
-export type LayoutType = 'single' | 'grid' | 'rows';
 
 export class LayoutSwitcher extends SceneObjectBase<LayoutSwitcherState> {
   private getMetricScene() {
@@ -37,8 +38,9 @@ export class LayoutSwitcher extends SceneObjectBase<LayoutSwitcherState> {
     return activeLayout;
   }
 
-  public onLayoutChange = (active: LayoutType) => {
-    this.getMetricScene().setState({ layout: active });
+  public onLayoutChange = (layout: LayoutType) => {
+    reportExploreMetrics('breakdown_layout_changed', { layout });
+    this.getMetricScene().setState({ layout });
   };
 
   public static Component = ({ model }: SceneComponentProps<LayoutSwitcher>) => {

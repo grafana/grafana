@@ -32,6 +32,7 @@ import { MetricSelectScene } from './MetricSelectScene';
 import { MetricsHeader } from './MetricsHeader';
 import { getTrailStore } from './TrailStore/TrailStore';
 import { MetricDatasourceHelper } from './helpers/MetricDatasourceHelper';
+import { reportChangeInLabelFilters } from './interactions';
 import { MetricSelectedEvent, trailDS, VAR_DATASOURCE, VAR_FILTERS } from './shared';
 
 export interface DataTrailState extends SceneObjectState {
@@ -111,9 +112,21 @@ export class DataTrail extends SceneObjectBase<DataTrailState> {
       this.goBackToStep(step);
     });
 
+    const filtersVariable = sceneGraph.lookupVariable(VAR_FILTERS, this);
+    const stateSubscription =
+      filtersVariable instanceof AdHocFiltersVariable &&
+      filtersVariable?.subscribeToState((newState, prevState) => {
+        if (!this._addingFilterWithoutReportingInteraction) {
+          reportChangeInLabelFilters(newState.filters, prevState.filters);
+        }
+      });
+
     return () => {
       if (!this.state.embedded) {
         getTrailStore().setRecentTrail(this);
+      }
+      if (stateSubscription) {
+        stateSubscription?.unsubscribe();
       }
     };
   }
@@ -127,6 +140,25 @@ export class DataTrail extends SceneObjectBase<DataTrailState> {
       }
     },
   });
+
+  /**
+   * Assuming that the change in filter was already reported with a cause other than `'adhoc_filter'`,
+   * this will modify the adhoc filter variable and prevent the automatic reporting which would
+   * normally occur through the call to `reportChangeInLabelFilters`.
+   */
+  public addFilterWithoutReportingInteraction(filter: AdHocVariableFilter) {
+    const variable = sceneGraph.lookupVariable('filters', this);
+    if (!(variable instanceof AdHocFiltersVariable)) {
+      return;
+    }
+
+    this._addingFilterWithoutReportingInteraction = true;
+    variable.setState({
+      filters: [...variable.state.filters, filter],
+    });
+    this._addingFilterWithoutReportingInteraction = false;
+  }
+  private _addingFilterWithoutReportingInteraction = false;
 
   private datasourceHelper = new MetricDatasourceHelper(this);
 

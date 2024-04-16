@@ -5,6 +5,8 @@ import { GrafanaTheme2 } from '@grafana/data';
 import { SceneComponentProps, SceneObjectBase, SceneObjectState } from '@grafana/scenes';
 import { Dropdown, Switch, ToolbarButton, useStyles2 } from '@grafana/ui';
 
+import { reportExploreMetrics } from './interactions';
+
 export interface DataTrailSettingsState extends SceneObjectState {
   stickyMainGraph?: boolean;
   isOpen?: boolean;
@@ -19,7 +21,9 @@ export class DataTrailSettings extends SceneObjectBase<DataTrailSettingsState> {
   }
 
   public onToggleStickyMainGraph = () => {
-    this.setState({ stickyMainGraph: !this.state.stickyMainGraph });
+    const stickyMainGraph = !this.state.stickyMainGraph;
+    reportExploreMetrics('settings_changed', { stickyMainGraph });
+    this.setState({ stickyMainGraph });
   };
 
   public onToggleOpen = (isOpen: boolean) => {
