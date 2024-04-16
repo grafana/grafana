@@ -9,7 +9,6 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/localcache"
-	"github.com/grafana/grafana/pkg/infra/tracing"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/quota"
@@ -28,7 +27,6 @@ type Service struct {
 	teamService  team.Service
 	cacheService *localcache.CacheService
 	cfg          *setting.Cfg
-	tracer       tracing.Tracer
 }
 
 func ProvideService(
