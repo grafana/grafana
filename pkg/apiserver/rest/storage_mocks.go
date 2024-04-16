@@ -14,7 +14,6 @@ import (
 type legacyStoreMock struct {
 	*mock.Mock
 	LegacyStorage
-	// GetReturn (runtime.Object, error)
 }
 
 type unifiedStoreMock struct {
