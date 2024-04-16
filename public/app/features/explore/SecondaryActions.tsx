@@ -6,7 +6,7 @@ import { Components } from '@grafana/e2e-selectors';
 import { ToolbarButton, useTheme2 } from '@grafana/ui';
 import { t, Trans } from 'app/core/internationalization';
 
-import { useQueryLibraryContext } from './QueriesDrawer/QueriesDrawerContext';
+import { useQueriesDrawerContext } from './QueriesDrawer/QueriesDrawerContext';
 
 type Props = {
   addQueryRowButtonDisabled?: boolean;
@@ -32,7 +32,7 @@ const getStyles = (theme: GrafanaTheme2) => {
 export function SecondaryActions(props: Props) {
   const theme = useTheme2();
   const styles = getStyles(theme);
-  const { drawerOpened, setDrawerOpened } = useQueryLibraryContext();
+  const { drawerOpened, setDrawerOpened } = useQueriesDrawerContext();
   return (
     <div className={styles.containerMargin}>
       {!props.addQueryRowButtonHidden && (

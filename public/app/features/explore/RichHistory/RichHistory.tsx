@@ -9,7 +9,7 @@ import { SortOrder, RichHistorySearchFilters, RichHistorySettings } from 'app/co
 import { RichHistoryQuery } from 'app/types/explore';
 
 import { supportedFeatures } from '../../../core/history/richHistoryStorageProvider';
-import { Tabs, useQueryLibraryContext } from '../QueriesDrawer/QueriesDrawerContext';
+import { Tabs, useQueriesDrawerContext } from '../QueriesDrawer/QueriesDrawerContext';
 import { i18n } from '../QueriesDrawer/utils';
 
 import { RichHistoryQueriesTab } from './RichHistoryQueriesTab';
@@ -45,7 +45,7 @@ export function RichHistory(props: RichHistoryProps) {
 
   const [loading, setLoading] = useState(false);
 
-  const { queryLibraryAvailable } = useQueryLibraryContext();
+  const { queryLibraryAvailable } = useQueriesDrawerContext();
 
   const updateSettings = (settingsToUpdate: Partial<RichHistorySettings>) => {
     props.updateHistorySettings({ ...props.richHistorySettings, ...settingsToUpdate });

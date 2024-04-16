@@ -2,7 +2,7 @@ import React, { useRef } from 'react';
 
 import { Button, ButtonGroup, Dropdown, Menu } from '@grafana/ui';
 
-import { Tabs, useQueryLibraryContext } from './QueriesDrawerContext';
+import { Tabs, useQueriesDrawerContext } from './QueriesDrawerContext';
 import { i18n } from './utils';
 
 type Props = {
@@ -10,7 +10,7 @@ type Props = {
 };
 
 export function QueriesDrawerDropdown({ variant }: Props) {
-  const { selectedTab, setSelectedTab, queryLibraryAvailable, setDrawerOpened } = useQueryLibraryContext();
+  const { selectedTab, setSelectedTab, queryLibraryAvailable, setDrawerOpened } = useQueriesDrawerContext();
 
   const mainButton = useRef<HTMLButtonElement>(null);
 

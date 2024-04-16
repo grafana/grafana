@@ -9,7 +9,7 @@ import { Trans } from 'app/core/internationalization';
 import { StoreState } from 'app/types';
 
 // Components, enums
-import { useQueryLibraryContext } from '../QueriesDrawer/QueriesDrawerContext';
+import { useQueriesDrawerContext } from '../QueriesDrawer/QueriesDrawerContext';
 import {
   deleteRichHistory,
   initRichHistory,
@@ -79,7 +79,7 @@ export function RichHistoryContainer(props: Props) {
     });
   }, [initRichHistory]);
 
-  const { selectedTab } = useQueryLibraryContext();
+  const { selectedTab } = useQueriesDrawerContext();
 
   if (!richHistorySettings || !selectedTab) {
     return (

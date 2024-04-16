@@ -28,11 +28,11 @@ export const QueriesDrawerContext = createContext<QueryLibraryContextType>({
   setDrawerOpened: () => {},
 });
 
-export function useQueryLibraryContext() {
+export function useQueriesDrawerContext() {
   return useContext(QueriesDrawerContext);
 }
 
-export function QueryLibraryContextProvider({ children }: PropsWithChildren) {
+export function QueriesDrawerContextProvider({ children }: PropsWithChildren) {
   const queryLibraryAvailable = config.featureToggles.queryLibrary === true;
   const [selectedTab, setSelectedTab] = useState<Tabs | undefined>(
     queryLibraryAvailable ? Tabs.QueryLibrary : undefined

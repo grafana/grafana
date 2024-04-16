@@ -16,7 +16,7 @@ import { CorrelationEditorModeBar } from './CorrelationEditorModeBar';
 import { ExploreActions } from './ExploreActions';
 import { ExploreDrawer } from './ExploreDrawer';
 import { ExplorePaneContainer } from './ExplorePaneContainer';
-import { QueryLibraryContextProvider, useQueryLibraryContext } from './QueriesDrawer/QueriesDrawerContext';
+import { QueriesDrawerContextProvider, useQueriesDrawerContext } from './QueriesDrawer/QueriesDrawerContext';
 import RichHistoryContainer from './RichHistory/RichHistoryContainer';
 import { useExplorePageTitle } from './hooks/useExplorePageTitle';
 import { useKeyboardShortcuts } from './hooks/useKeyboardShortcuts';
@@ -29,9 +29,9 @@ const MIN_PANE_WIDTH = 200;
 
 export default function ExplorePage(props: GrafanaRouteComponentProps<{}, ExploreQueryParams>) {
   return (
-    <QueryLibraryContextProvider>
+    <QueriesDrawerContextProvider>
       <ExplorePageContent {...props} />
-    </QueryLibraryContextProvider>
+    </QueriesDrawerContextProvider>
   );
 }
 
@@ -53,7 +53,7 @@ function ExplorePageContent(props: GrafanaRouteComponentProps<{}, ExploreQueryPa
   const panes = useSelector(selectPanesEntries);
   const hasSplit = useSelector(isSplit);
   const correlationDetails = useSelector(selectCorrelationDetails);
-  const { drawerOpened, setDrawerOpened } = useQueryLibraryContext();
+  const { drawerOpened, setDrawerOpened } = useQueriesDrawerContext();
   const showCorrelationEditorBar = config.featureToggles.correlations && (correlationDetails?.editorMode || false);
 
   useEffect(() => {
