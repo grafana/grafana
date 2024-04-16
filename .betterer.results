@@ -5218,9 +5218,8 @@ exports[`better eslint`] = {
       [0, 0, 0, "Styles should be written using objects.", "3"]
     ],
     "public/app/plugins/datasource/grafana/components/TimeRegionEditor.tsx:5381": [
-      [0, 0, 0, "\'HorizontalGroup\' import from \'@grafana/ui\' is restricted from being used by a pattern. Use Stack component instead.", "0"],
-      [0, 0, 0, "Styles should be written using objects.", "1"],
-      [0, 0, 0, "Styles should be written using objects.", "2"]
+      [0, 0, 0, "Styles should be written using objects.", "0"],
+      [0, 0, 0, "Styles should be written using objects.", "1"]
     ],
     "public/app/plugins/datasource/grafana/datasource.ts:5381": [
       [0, 0, 0, "Do not use any type assertions.", "0"],
