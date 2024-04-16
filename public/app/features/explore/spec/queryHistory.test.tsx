@@ -45,6 +45,11 @@ jest.mock('@grafana/runtime', () => ({
     reportInteractionMock(...args);
   },
   getAppEvents: () => testEventBus,
+  getDataSourceSrv: () => {
+    return {
+      get: () => Promise.resolve({}),
+    };
+  },
 }));
 
 jest.mock('app/core/core', () => ({
