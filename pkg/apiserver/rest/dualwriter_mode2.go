@@ -60,16 +60,15 @@ func (d *DualWriterMode2) Create(ctx context.Context, obj runtime.Object, create
 // It retrieves an object from Storage if possible, and if not it falls back to LegacyStorage.
 func (d *DualWriterMode2) Get(ctx context.Context, name string, options *metav1.GetOptions) (runtime.Object, error) {
 	s, err := d.Storage.Get(ctx, name, &metav1.GetOptions{})
-	if err == nil {
-		return s, err
+	if err != nil {
+		if apierrors.IsNotFound(err) {
+			klog.Info("object not found in storage", "name", name)
+		} else {
+			klog.Error("unable to fetch object from storage", "error", err, "name", name)
+			return d.Legacy.Get(ctx, name, &metav1.GetOptions{})
+		}
 	}
-	if apierrors.IsNotFound(err) {
-		klog.Info("object not found in duplicate storage", "name", name)
-	} else {
-		klog.Error("unable to fetch object from duplicate storage", "error", err, "name", name)
-	}
-
-	return d.Legacy.Get(ctx, name, &metav1.GetOptions{})
+	return s, nil
 }
 
 // List overrides the behavior of the generic DualWriter.
