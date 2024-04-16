@@ -7,6 +7,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/dashboards"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/provisioning/utils"
@@ -147,6 +148,7 @@ func getFileReaders(
 				logger.New("type", config.Type, "name", config.Name),
 				service,
 				store,
+				featuremgmt.WithFeatures(),
 				folderService,
 			)
 			if err != nil {
