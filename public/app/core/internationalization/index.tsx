@@ -39,7 +39,7 @@ export function initializeI18n(language: string): Promise<{ language: string | u
     .use(initReactI18next) // passes i18n down to react-i18next
     .init(options);
 
-  tFunc = tFunc = i18n.t;
+  tFunc = i18n.t;
 
   return loadPromise.then(() => {
     return {
