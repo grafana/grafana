@@ -94,9 +94,10 @@ func (ss *sqlStore) Insert(ctx context.Context, cmd *user.User) (int64, error) {
 func (ss *sqlStore) Get(ctx context.Context, usr *user.User) (*user.User, error) {
 	ret := &user.User{}
 	err := ss.db.WithDbSession(ctx, func(sess *db.Session) error {
-		login := usr.Login
-		email := usr.Email
-		where := "LOWER(email)=LOWER(?) OR LOWER(login)=LOWER(?)"
+		// enforcement of lowercase due to forcement of caseinsensitive login
+		login := strings.ToLower(usr.Login)
+		email := strings.ToLower(usr.Email)
+		where := "email=? OR login=?"
 
 		exists, err := sess.Where(where, email, login).Get(ret)
 		if !exists {
@@ -182,6 +183,9 @@ func (ss *sqlStore) CaseInsensitiveLoginConflict(ctx context.Context, login, ema
 }
 
 func (ss *sqlStore) GetByLogin(ctx context.Context, query *user.GetUserByLoginQuery) (*user.User, error) {
+	// enforcement of lowercase due to forcement of caseinsensitive login
+	query.LoginOrEmail = strings.ToLower(query.LoginOrEmail)
+
 	usr := &user.User{}
 	err := ss.db.WithDbSession(ctx, func(sess *db.Session) error {
 		if query.LoginOrEmail == "" {
@@ -195,7 +199,7 @@ func (ss *sqlStore) GetByLogin(ctx context.Context, query *user.GetUserByLoginQu
 		// Since username can be an email address, attempt login with email address
 		// first if the login field has the "@" symbol.
 		if strings.Contains(query.LoginOrEmail, "@") {
-			where = "LOWER(email)=LOWER(?)"
+			where = "email=?"
 			has, err = sess.Where(ss.notServiceAccountFilter()).Where(where, query.LoginOrEmail).Get(usr)
 			if err != nil {
 				return err
@@ -204,7 +208,7 @@ func (ss *sqlStore) GetByLogin(ctx context.Context, query *user.GetUserByLoginQu
 
 		// Look for the login field instead of email
 		if !has {
-			where = "LOWER(login)=LOWER(?)"
+			where = "login=?"
 			has, err = sess.Where(ss.notServiceAccountFilter()).Where(where, query.LoginOrEmail).Get(usr)
 		}
 
@@ -227,13 +231,16 @@ func (ss *sqlStore) GetByLogin(ctx context.Context, query *user.GetUserByLoginQu
 }
 
 func (ss *sqlStore) GetByEmail(ctx context.Context, query *user.GetUserByEmailQuery) (*user.User, error) {
+	// enforcement of lowercase due to forcement of caseinsensitive login
+	query.Email = strings.ToLower(query.Email)
+
 	usr := &user.User{}
 	err := ss.db.WithDbSession(ctx, func(sess *db.Session) error {
 		if query.Email == "" {
 			return user.ErrUserNotFound
 		}
 
-		where := "LOWER(email)=LOWER(?)"
+		where := "email=?"
 		has, err := sess.Where(ss.notServiceAccountFilter()).Where(where, query.Email).Get(usr)
 
 		if err != nil {
