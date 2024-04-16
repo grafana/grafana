@@ -63,17 +63,10 @@ func (d *DualWriterMode2) Get(ctx context.Context, name string, options *metav1.
 	if err != nil {
 		if apierrors.IsNotFound(err) {
 			klog.Info("object not found in storage", "name", name)
-<<<<<<< HEAD
 			return d.Legacy.Get(ctx, name, &metav1.GetOptions{})
 		}
 		klog.Error("unable to fetch object from storage", "error", err, "name", name)
 		return d.Legacy.Get(ctx, name, &metav1.GetOptions{})
-=======
-		} else {
-			klog.Error("unable to fetch object from storage", "error", err, "name", name)
-			return d.Legacy.Get(ctx, name, &metav1.GetOptions{})
-		}
->>>>>>> 5b1467a2010 (Write tests for mode2.)
 	}
 	return s, nil
 }
