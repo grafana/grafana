@@ -331,9 +331,6 @@ func (s *Service) identityFromLDAPUser(user *login.ExternalUserInfo) *authn.Iden
 			EnableUser:   true,
 			SyncOrgRoles: !s.cfg.LDAPSkipOrgRoleSync,
 			AllowSignUp:  s.cfg.LDAPAllowSignup,
-			LookUpParams: login.UserLookupParams{
-				UserID: &user.UserId,
-			},
 		},
 	}
 }
