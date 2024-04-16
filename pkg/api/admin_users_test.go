@@ -242,14 +242,8 @@ func Test_AdminUpdateUserPermissions(t *testing.T) {
 		allowAssignGrafanaAdmin bool
 		authEnabled             bool
 		skipOrgRoleSync         bool
-		isNotGrafanaAdmin       bool
 		expectedRespCode        int
 	}{
-		{
-			name:              "A user who is not Grafana Admin should not be able to set Grafana Admin role",
-			isNotGrafanaAdmin: true,
-			expectedRespCode:  http.StatusForbidden,
-		},
 		{
 			name:                    "Should allow updating an externally synced OAuth user if Grafana Admin role is not synced",
 			authModule:              login.GenericOAuthModule,
@@ -343,9 +337,6 @@ func Test_AdminUpdateUserPermissions(t *testing.T) {
 				c.Req.Body = mockRequestBody(dtos.AdminUpdateUserPermissionsForm{IsGrafanaAdmin: true})
 				c.Req.Header.Add("Content-Type", "application/json")
 				sc.context = c
-				if !tc.isNotGrafanaAdmin {
-					c.IsGrafanaAdmin = true
-				}
 				return hs.AdminUpdateUserPermissions(c)
 			})
 
@@ -376,7 +367,6 @@ func putAdminScenario(t *testing.T, desc string, url string, routePattern string
 			sc.context.UserID = testUserID
 			sc.context.OrgID = testOrgID
 			sc.context.OrgRole = role
-			sc.context.IsGrafanaAdmin = true
 
 			return hs.AdminUpdateUserPermissions(c)
 		})

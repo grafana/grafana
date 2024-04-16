@@ -176,10 +176,6 @@ func (hs *HTTPServer) AdminUpdateUserPassword(c *contextmodel.ReqContext) respon
 // 403: forbiddenError
 // 500: internalServerError
 func (hs *HTTPServer) AdminUpdateUserPermissions(c *contextmodel.ReqContext) response.Response {
-	if !c.SignedInUser.IsGrafanaAdmin {
-		return response.Error(http.StatusForbidden, "You must be a Grafana Admin to grant and revoke Grafana Admin permissions", nil)
-	}
-
 	form := dtos.AdminUpdateUserPermissionsForm{}
 	if err := web.Bind(c.Req, &form); err != nil {
 		return response.Error(http.StatusBadRequest, "bad request data", err)
