@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 
 import { PanelData, TimeRange } from '@grafana/data';
 import { EditorFieldGroup, EditorRow, EditorRows } from '@grafana/experimental';
-import { Alert, LinkButton } from '@grafana/ui';
+import { Alert, LinkButton, Text, TextLink } from '@grafana/ui';
 
 import Datasource from '../../datasource';
 import { selectors } from '../../e2e/selectors';
@@ -46,6 +46,7 @@ const LogsQueryEditor = ({
 }: LogsQueryEditorProps) => {
   const migrationError = useMigrations(datasource, query, onChange);
   const [showBasicLogsToggle, setShowBasicLogsToggle] = useState<boolean>(false);
+  const [dataIngestedWarning, setDataIngestedWarning] = useState<React.ReactNode | null>(null);
 
   const disableRow = (row: ResourceRow, selectedRows: ResourceRowGroup) => {
     if (selectedRows.length === 0) {
@@ -86,6 +87,33 @@ const LogsQueryEditor = ({
       onChange(setBasicLogsQuery(query, false));
     }
   }, [basicLogsEnabled, onChange, query, showBasicLogsToggle]);
+
+  useEffect(() => {
+    if (showBasicLogsToggle && query.azureLogAnalytics?.basicLogsQuery && !!query.azureLogAnalytics.query) {
+      const querySplit = query.azureLogAnalytics.query.split('|');
+      // Basic Logs queries are required to start the query with a table
+      const table = querySplit[0].trim();
+      const dataIngested: number | undefined = 20; //make call to get data ingested for the table selected
+      const textToShow = dataIngested
+        ? `This query is processing ${dataIngested} GiB when run. `
+        : 'This is a Basic Logs query and incurs cost per GiB scanned. ';
+      setDataIngestedWarning(
+        <>
+          <Text color="primary">
+            {textToShow}{' '}
+            <TextLink
+              href="https://learn.microsoft.com/en-us/azure/azure-monitor/logs/basic-logs-configure?tabs=portal-1"
+              external
+            >
+              Learn More
+            </TextLink>
+          </Text>
+        </>
+      );
+    } else {
+      setDataIngestedWarning(null);
+    }
+  }, [showBasicLogsToggle, query]);
   let portalLinkButton = null;
 
   if (data?.series) {
@@ -165,6 +193,7 @@ const LogsQueryEditor = ({
           setError={setError}
           schema={schema}
         />
+        {dataIngestedWarning}
         <EditorRow>
           <EditorFieldGroup>
             {!hideFormatAs && (
