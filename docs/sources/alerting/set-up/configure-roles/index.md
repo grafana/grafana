@@ -40,7 +40,7 @@ Details of the roles and the access they provide for Grafana Alerting are below.
 
 To assign roles, admins need to complete the following steps.
 
-1. Navigate to **Administration** -> **Users and access** -> **Users, Teams, or Service Accounts**.
+1. Navigate to **Administration** > **Users and access** > **Users, Teams, or Service Accounts**.
 1. Search for the user, team or service account you want to add a role for.
 1. Add the role you want to assign.
 
