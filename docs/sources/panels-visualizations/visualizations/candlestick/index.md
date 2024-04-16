@@ -25,11 +25,11 @@ The candlestick visualization allows you to visualize data that includes a numbe
 
 Candlestick visualizations build upon the foundation of the [time series visualization][] and include many common configuration settings.
 
-For example, you can use a candlestick if you want to visualize at a glance how the price moved over time, whether it went up, down, or stayed the same, and how much it fluctuated:
+You can use a candlestick if you want to visualize, at a glance, how a price moved over time, whether it went up, down, or stayed the same, and how much it fluctuated:
 
 {{< figure src="/static/img/docs/candlestick-panel/candlestick-panel-8-3.png" max-width="1065px" alt="A candlestick visualization" >}}
 
-Each candlestick is represented as a rectangle, referred to as the "candlestick body". The candlestick body displays the opening and closing prices during a time period. The green candlesticks represent when the price appreciated while the red candlesticks represent when the price depreciated. The lines sticking out the candlestick body are referred to as "wicks" or "shadows", which represent the highest and lowest prices during the time period.
+Each candlestick is represented as a rectangle, referred to as the _candlestick body_. The candlestick body displays the opening and closing prices during a time period. Green candlesticks represent when the price appreciated while the red candlesticks represent when the price depreciated. The lines sticking out the candlestick body are referred to as _wicks_ or _shadows_, which represent the highest and lowest prices during the time period.
 
 Use a candlestick when you need to:
 
@@ -41,13 +41,13 @@ Use a candlestick when you need to:
 
 <!-- video TBA here -->
 
-{{< docs/play title="Candlestick Visualizations in Grafana" url="https://play.grafana.org/d/candlestick/candlestick" >}}
+{{< docs/play title="Candlestick" url="https://play.grafana.org/d/candlestick/candlestick" >}}
 
 ## Supported data formats
 
-The candlestick visualization works best if you have the price movements of the asset that you are interested in tracking. The data must include:
+The candlestick visualization works best with price movement data for an asset. The data must include:
 
-- **Timestamps** - The time period for when each price movement occurred.
+- **Timestamps** - The time at which each price movement occurred.
 - **Opening price** - The price of the asset at the beginning of the time period.
 - **Closing price** - The price of the asset at the end of the time period.
 - **Highest price** - The highest price the asset reached during the time period.
