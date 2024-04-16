@@ -595,6 +595,10 @@ github.com/gorilla/context v1.1.1 h1:AWwleXJkX/nhcU9bZSnZoi3h/qGYqQAGhq6zZe/aQW8
 github.com/gorilla/handlers v1.5.1 h1:9lRY6j8DEeeBT10CvO9hGW0gmky0BprnvDI5vfhUHH4=
 github.com/gorilla/handlers v1.5.1/go.mod h1:t8XrUpc4KVXb7HGyJ4/cEnwQiaxrX/hz1Zv/4g96P1Q=
 github.com/grafana/authlib v0.0.0-20240319083410-9d4a6e3861e5/go.mod h1:86rRD5P6u2JPWtNWTMOlqlU+YMv2fUvVz/DomA6L7w4=
+github.com/grafana/dataplane/sdata v0.0.7 h1:CImITypIyS1jxijCR6xqKx71JnYAxcwpH9ChK0gH164=
+github.com/grafana/dataplane/sdata v0.0.7/go.mod h1:Jvs5ddpGmn6vcxT7tCTWAZ1mgi4sbcdFt9utQx5uMAU=
+github.com/grafana/dataplane/sdata v0.0.8 h1:M6PPldZKO/gbCj9Ul0dpwa/51mXNkM+9bjWJWw2XVao=
+github.com/grafana/dataplane/sdata v0.0.8/go.mod h1:Jvs5ddpGmn6vcxT7tCTWAZ1mgi4sbcdFt9utQx5uMAU=
 github.com/grafana/e2e v0.1.1-0.20221018202458-cffd2bb71c7b h1:Ha+kSIoTutf4ytlVw/SaEclDUloYx0+FXDKJWKhNbE4=
 github.com/grafana/e2e v0.1.1-0.20221018202458-cffd2bb71c7b/go.mod h1:3UsooRp7yW5/NJQBlXcTsAHOoykEhNUYXkQ3r6ehEEY=
 github.com/grafana/gomemcache v0.0.0-20231023152154-6947259a0586 h1:/of8Z8taCPftShATouOrBVy6GaTTjgQd/VfNiZp/VXQ=

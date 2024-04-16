@@ -353,6 +353,7 @@ func (s *Service) resolveIdenity(ctx context.Context, orgID int64, namespaceID a
 			ID:    namespaceID.String(),
 			OrgID: orgID,
 			ClientParams: authn.ClientParams{
+				AllowGlobalOrg:  true,
 				FetchSyncedUser: true,
 				SyncPermissions: true,
 			}}, nil
