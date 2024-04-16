@@ -73,7 +73,7 @@ func (s *Service) QueryData(ctx context.Context, req *backend.QueryDataRequest) 
 func newMSSQL(ctx context.Context, driverName string, userFacingDefaultError string, rowLimit int64, dsInfo sqleng.DataSourceInfo, cnnstr string, logger log.Logger, settings backend.DataSourceInstanceSettings) (*sql.DB, *sqleng.DataSourceHandler, error) {
 	var connector *mssql.Connector
 	var err error
-	if driverName == "azuread" {
+	if driverName == "azuresql" {
 		connector, err = azuread.NewConnector(cnnstr)
 	} else {
 		connector, err = mssql.NewConnector(cnnstr)
