@@ -434,7 +434,7 @@ export class GraphiteDatasource
     }
   }
 
-  events(options: { range: TimeRange; tags: any; timezone?: any }) {
+  events(options: { range: TimeRange; tags: any; timezone?: TimeZone }) {
     try {
       let tags = '';
       if (options.tags) {
@@ -460,7 +460,7 @@ export class GraphiteDatasource
     return this.templateSrv.containsTemplate(target.target ?? '');
   }
 
-  translateTime(date: any, roundUp: any, timezone: TimeZone) {
+  translateTime(date: any, roundUp?: boolean, timezone?: TimeZone) {
     if (isString(date)) {
       if (date === 'now') {
         return 'now';

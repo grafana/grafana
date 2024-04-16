@@ -73,6 +73,7 @@ func (r *conditionEvaluator) EvaluateRaw(ctx context.Context, now time.Time) (re
 		defer cancel()
 		execCtx = timeoutCtx
 	}
+	logger.FromContext(ctx).Debug("Executing pipeline", "commands", strings.Join(r.pipeline.GetCommandTypes(), ","), "datasources", strings.Join(r.pipeline.GetDatasourceTypes(), ","))
 	return r.expressionService.ExecutePipeline(execCtx, now, r.pipeline)
 }
 
@@ -82,8 +83,7 @@ func (r *conditionEvaluator) Evaluate(ctx context.Context, now time.Time) (Resul
 	if err != nil {
 		return nil, err
 	}
-	execResults := queryDataResponseToExecutionResults(r.condition, response)
-	return evaluateExecutionResult(execResults, now), nil
+	return EvaluateAlert(response, r.condition, now), nil
 }
 
 type evaluatorImpl struct {
@@ -105,6 +105,12 @@ func NewEvaluatorFactory(
 		expressionService: expressionService,
 		pluginsStore:      pluginsStore,
 	}
+}
+
+// EvaluateAlert takes the results of an executed query and evaluates it as an alert rule, returning alert states that the query produces.
+func EvaluateAlert(queryResponse *backend.QueryDataResponse, condition models.Condition, now time.Time) Results {
+	execResults := queryDataResponseToExecutionResults(condition, queryResponse)
+	return evaluateExecutionResult(execResults, now)
 }
 
 // invalidEvalResultFormatError is an error for invalid format of the alert definition evaluation results.

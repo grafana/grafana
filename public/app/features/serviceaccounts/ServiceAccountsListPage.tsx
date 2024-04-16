@@ -1,27 +1,18 @@
-import { css, cx } from '@emotion/css';
 import pluralize from 'pluralize';
 import React, { useEffect, useState } from 'react';
 import { connect, ConnectedProps } from 'react-redux';
 
-import { GrafanaTheme2, OrgRole } from '@grafana/data';
-import {
-  ConfirmModal,
-  FilterInput,
-  LinkButton,
-  RadioButtonGroup,
-  useStyles2,
-  InlineField,
-  Pagination,
-  Stack,
-} from '@grafana/ui';
+import { OrgRole } from '@grafana/data';
+import { ConfirmModal, FilterInput, LinkButton, RadioButtonGroup, InlineField, EmptyState, Box } from '@grafana/ui';
 import EmptyListCTA from 'app/core/components/EmptyListCTA/EmptyListCTA';
 import { Page } from 'app/core/components/Page/Page';
 import config from 'app/core/config';
 import { contextSrv } from 'app/core/core';
+import { t } from 'app/core/internationalization';
 import { StoreState, ServiceAccountDTO, AccessControlAction, ServiceAccountStateFilter } from 'app/types';
 
+import { ServiceAccountTable } from './ServiceAccountTable';
 import { CreateTokenModal, ServiceAccountToken } from './components/CreateTokenModal';
-import ServiceAccountListItem from './components/ServiceAccountsListItem';
 import {
   changeQuery,
   changePage,
@@ -83,7 +74,6 @@ export const ServiceAccountsListPageUnconnected = ({
   changeStateFilter,
   createServiceAccountToken,
 }: Props): JSX.Element => {
-  const styles = useStyles2(getStyles);
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [isRemoveModalOpen, setIsRemoveModalOpen] = useState(false);
   const [isDisableModalOpen, setIsDisableModalOpen] = useState(false);
@@ -212,13 +202,20 @@ export const ServiceAccountsListPageUnconnected = ({
               width={50}
             />
           </InlineField>
-          <RadioButtonGroup
-            options={availableFilters}
-            onChange={onStateFilterChange}
-            value={serviceAccountStateFilter}
-            className={styles.filter}
-          />
+          <Box marginBottom={1}>
+            <RadioButtonGroup
+              options={availableFilters}
+              onChange={onStateFilterChange}
+              value={serviceAccountStateFilter}
+            />
+          </Box>
         </div>
+        {!isLoading && !noServiceAccountsCreated && serviceAccounts.length === 0 && (
+          <EmptyState
+            variant="not-found"
+            message={t('service-accounts.empty-state.message', 'No services accounts found')}
+          />
+        )}
         {!isLoading && noServiceAccountsCreated && (
           <>
             <EmptyListCTA
@@ -236,48 +233,20 @@ export const ServiceAccountsListPageUnconnected = ({
         )}
 
         {(isLoading || serviceAccounts.length !== 0) && (
-          <>
-            <div className={cx(styles.table, 'admin-list-table')}>
-              <table className="filter-table filter-table--hover">
-                <thead>
-                  <tr>
-                    <th></th>
-                    <th>Account</th>
-                    <th>ID</th>
-                    <th>Roles</th>
-                    <th>Tokens</th>
-                    <th style={{ width: '120px' }} />
-                  </tr>
-                </thead>
-                <tbody>
-                  {isLoading ? (
-                    <>
-                      <ServiceAccountListItem.Skeleton />
-                      <ServiceAccountListItem.Skeleton />
-                      <ServiceAccountListItem.Skeleton />
-                    </>
-                  ) : (
-                    serviceAccounts.map((serviceAccount) => (
-                      <ServiceAccountListItem
-                        serviceAccount={serviceAccount}
-                        key={serviceAccount.id}
-                        roleOptions={roleOptions}
-                        onRoleChange={onRoleChange}
-                        onRemoveButtonClick={onRemoveButtonClick}
-                        onDisable={onDisableButtonClick}
-                        onEnable={onEnable}
-                        onAddTokenClick={onTokenAdd}
-                      />
-                    ))
-                  )}
-                </tbody>
-              </table>
-
-              <Stack justifyContent="flex-end">
-                <Pagination hideWhenSinglePage currentPage={page} numberOfPages={totalPages} onNavigate={changePage} />
-              </Stack>
-            </div>
-          </>
+          <ServiceAccountTable
+            services={serviceAccounts}
+            showPaging={true}
+            totalPages={totalPages}
+            onChangePage={changePage}
+            currentPage={page}
+            onRoleChange={onRoleChange}
+            roleOptions={roleOptions}
+            onRemoveButtonClick={onRemoveButtonClick}
+            onDisable={onDisableButtonClick}
+            onEnable={onEnable}
+            onAddTokenClick={onTokenAdd}
+            isLoading={isLoading}
+          />
         )}
         {currentServiceAccount && (
           <>
@@ -316,60 +285,6 @@ export const ServiceAccountsListPageUnconnected = ({
       </Page.Contents>
     </Page>
   );
-};
-
-export const getStyles = (theme: GrafanaTheme2) => {
-  return {
-    table: css({
-      marginTop: theme.spacing(3),
-    }),
-    filter: css({
-      margin: `0 ${theme.spacing(1)}`,
-    }),
-    row: css({
-      display: 'flex',
-      alignItems: 'center',
-      height: '100% !important',
-
-      a: {
-        padding: `${theme.spacing(0.5)} 0 !important`,
-      },
-    }),
-    unitTooltip: css({
-      display: 'flex',
-      flexDirection: 'column',
-    }),
-    unitItem: css({
-      cursor: 'pointer',
-      padding: theme.spacing(0.5, 0),
-      marginRight: theme.spacing(1),
-    }),
-    disabled: css({
-      color: theme.colors.text.disabled,
-    }),
-    link: css({
-      color: 'inherit',
-      cursor: 'pointer',
-      textDecoration: 'underline',
-    }),
-    pageHeader: css({
-      display: 'flex',
-      marginBottom: theme.spacing(2),
-    }),
-    apiKeyInfoLabel: css({
-      marginLeft: theme.spacing(1),
-      lineHeight: 2.2,
-      flexGrow: 1,
-      color: theme.colors.text.secondary,
-
-      span: {
-        padding: theme.spacing(0.5),
-      },
-    }),
-    filterDelimiter: css({
-      flexGrow: 1,
-    }),
-  };
 };
 
 const ServiceAccountsListPage = connector(ServiceAccountsListPageUnconnected);

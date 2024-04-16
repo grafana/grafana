@@ -78,6 +78,7 @@ export const Components = {
         httpMethod: 'data-testid http method',
         exemplarsAddButton: 'data-testid Add exemplar config button',
         internalLinkSwitch: 'data-testid Internal link switch',
+        codeModeMetricNamesSuggestionLimit: 'data-testid code mode metric names suggestion limit',
       },
       queryEditor: {
         // kickstart: '', see QueryBuilder queryPatterns below
@@ -101,6 +102,7 @@ export const Components = {
         },
         code: {
           queryField: 'data-testid prometheus query field',
+          metricsCountInfo: 'data-testid metrics count disclaimer',
           metricsBrowser: {
             openButton: 'data-testid open metrics browser',
             selectMetric: 'data-testid select a metric',
@@ -292,6 +294,11 @@ export const Components = {
   },
   AlertTab: {
     content: 'data-testid Alert editor tab content',
+  },
+  AlertRules: {
+    groupToggle: 'data-testid group-collapse-toggle',
+    toggle: 'data-testid collapse-toggle',
+    expandedContent: 'data-testid expanded-content',
   },
   Alert: {
     /**
@@ -529,8 +536,30 @@ export const Components = {
   Annotations: {
     annotationsTypeInput: 'annotations-type-input',
     annotationsChoosePanelInput: 'choose-panels-input',
+    editor: {
+      testButton: 'data-testid annotations-test-button',
+      resultContainer: 'data-testid annotations-query-result-container',
+    },
   },
   Tooltip: {
     container: 'data-testid tooltip',
+  },
+  ReturnToPrevious: {
+    buttonGroup: 'data-testid dismissable button group',
+    backButton: 'data-testid back',
+    dismissButton: 'data-testid dismiss',
+  },
+  SQLQueryEditor: {
+    selectColumn: 'data-testid select-column',
+    selectAggregation: 'data-testid select-aggregation',
+    selectAlias: 'data-testid select-alias',
+    filterConjunction: 'data-testid filter-conjunction',
+    filterField: 'data-testid filter-field',
+    filterOperator: 'data-testid filter-operator',
+    headerTableSelector: 'data-testid header-table-selector',
+    headerFilterSwitch: 'data-testid header-filter-switch',
+    headerGroupSwitch: 'data-testid header-group-switch',
+    headerOrderSwitch: 'data-testid header-order-switch',
+    headerPreviewSwitch: 'data-testid header-preview-switch',
   },
 };

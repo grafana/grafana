@@ -1,6 +1,4 @@
 ---
-aliases:
-  - ../../provision-alerting-resources/terraform-provisioning/
 canonical: https://grafana.com/docs/grafana/latest/alerting/set-up/provision-alerting-resources/terraform-provisioning/
 description: Create and manage alerting resources using Terraform
 keywords:
@@ -339,8 +337,6 @@ resource "grafana_message_template" "my_template" {
 }
 ...
 ```
-
-Note that `disable_provenance` is not supported for [grafana_mute_timing](https://registry.terraform.io/providers/grafana/grafana/latest/docs/resources/mute_timing).
 
 ## Provision Grafana resources with Terraform
 

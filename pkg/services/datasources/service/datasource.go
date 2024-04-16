@@ -2,7 +2,6 @@ package service
 
 import (
 	"context"
-	"crypto/tls"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -175,6 +174,10 @@ func (s *Service) GetAllDataSources(ctx context.Context, query *datasources.GetA
 	return s.SQLStore.GetAllDataSources(ctx, query)
 }
 
+func (s *Service) GetPrunableProvisionedDataSources(ctx context.Context) (res []*datasources.DataSource, err error) {
+	return s.SQLStore.GetPrunableProvisionedDataSources(ctx)
+}
+
 func (s *Service) GetDataSourcesByType(ctx context.Context, query *datasources.GetDataSourcesByTypeQuery) ([]*datasources.DataSource, error) {
 	if query.AliasIDs == nil {
 		// Populate alias IDs from plugin store
@@ -343,22 +346,6 @@ func (s *Service) UpdateDataSource(ctx context.Context, cmd *datasources.UpdateD
 	})
 }
 
-func (s *Service) GetDefaultDataSource(ctx context.Context, query *datasources.GetDefaultDataSourceQuery) (*datasources.DataSource, error) {
-	return s.SQLStore.GetDefaultDataSource(ctx, query)
-}
-
-func (s *Service) GetHTTPClient(ctx context.Context, ds *datasources.DataSource, provider httpclient.Provider) (*http.Client, error) {
-	transport, err := s.GetHTTPTransport(ctx, ds, provider)
-	if err != nil {
-		return nil, err
-	}
-
-	return &http.Client{
-		Timeout:   s.getTimeout(ds),
-		Transport: transport,
-	}, nil
-}
-
 func (s *Service) GetHTTPTransport(ctx context.Context, ds *datasources.DataSource, provider httpclient.Provider,
 	customMiddlewares ...sdkhttpclient.Middleware) (http.RoundTripper, error) {
 	s.ptc.Lock()
@@ -386,14 +373,6 @@ func (s *Service) GetHTTPTransport(ctx context.Context, ds *datasources.DataSour
 	}
 
 	return rt, nil
-}
-
-func (s *Service) GetTLSConfig(ctx context.Context, ds *datasources.DataSource, httpClientProvider httpclient.Provider) (*tls.Config, error) {
-	opts, err := s.httpClientOptions(ctx, ds)
-	if err != nil {
-		return nil, err
-	}
-	return httpClientProvider.GetTLSConfig(*opts)
 }
 
 func (s *Service) DecryptedValues(ctx context.Context, ds *datasources.DataSource) (map[string]string, error) {
@@ -532,9 +511,12 @@ func (s *Service) httpClientOptions(ctx context.Context, ds *datasources.DataSou
 			},
 			Timeouts: &sdkproxy.DefaultTimeoutOptions,
 			ClientCfg: &sdkproxy.ClientCfg{
-				ClientCert:    s.cfg.SecureSocksDSProxy.ClientCert,
-				ClientKey:     s.cfg.SecureSocksDSProxy.ClientKey,
-				RootCA:        s.cfg.SecureSocksDSProxy.RootCA,
+				ClientCert:    s.cfg.SecureSocksDSProxy.ClientCertFilePath,
+				ClientKey:     s.cfg.SecureSocksDSProxy.ClientKeyFilePath,
+				RootCAs:       s.cfg.SecureSocksDSProxy.RootCAFilePaths,
+				ClientCertVal: s.cfg.SecureSocksDSProxy.ClientCert,
+				ClientKeyVal:  s.cfg.SecureSocksDSProxy.ClientKey,
+				RootCAsVals:   s.cfg.SecureSocksDSProxy.RootCAs,
 				ProxyAddress:  s.cfg.SecureSocksDSProxy.ProxyAddress,
 				ServerName:    s.cfg.SecureSocksDSProxy.ServerName,
 				AllowInsecure: s.cfg.SecureSocksDSProxy.AllowInsecure,

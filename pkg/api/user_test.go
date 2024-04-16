@@ -10,13 +10,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/grafana/grafana/pkg/services/accesscontrol"
-	"github.com/grafana/grafana/pkg/services/notifications"
-	"github.com/grafana/grafana/pkg/services/secrets/fakes"
-	tempuser "github.com/grafana/grafana/pkg/services/temp_user"
-	"github.com/grafana/grafana/pkg/services/temp_user/tempuserimpl"
-	"github.com/grafana/grafana/pkg/web/webtest"
-
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"golang.org/x/oauth2"
@@ -30,26 +23,33 @@ import (
 	"github.com/grafana/grafana/pkg/infra/remotecache"
 	"github.com/grafana/grafana/pkg/login/social"
 	"github.com/grafana/grafana/pkg/login/social/socialtest"
+	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/acimpl"
 	acmock "github.com/grafana/grafana/pkg/services/accesscontrol/mock"
+	"github.com/grafana/grafana/pkg/services/auth/idtest"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/login"
 	"github.com/grafana/grafana/pkg/services/login/authinfoimpl"
 	"github.com/grafana/grafana/pkg/services/login/authinfotest"
+	"github.com/grafana/grafana/pkg/services/notifications"
 	"github.com/grafana/grafana/pkg/services/org/orgimpl"
 	"github.com/grafana/grafana/pkg/services/quota/quotatest"
 	"github.com/grafana/grafana/pkg/services/searchusers"
 	"github.com/grafana/grafana/pkg/services/searchusers/filters"
 	"github.com/grafana/grafana/pkg/services/secrets/database"
+	"github.com/grafana/grafana/pkg/services/secrets/fakes"
 	secretsManager "github.com/grafana/grafana/pkg/services/secrets/manager"
 	"github.com/grafana/grafana/pkg/services/supportbundles/supportbundlestest"
+	tempuser "github.com/grafana/grafana/pkg/services/temp_user"
+	"github.com/grafana/grafana/pkg/services/temp_user/tempuserimpl"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/services/user/userimpl"
 	"github.com/grafana/grafana/pkg/services/user/usertest"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/web/webtest"
 )
 
-const newEmail = "newEmail@localhost"
+const newEmail = "newemail@localhost"
 
 func TestUserAPIEndpoint_userLoggedIn(t *testing.T) {
 	settings := setting.NewCfg()
@@ -397,6 +397,7 @@ func setupUpdateEmailTests(t *testing.T, cfg *setting.Cfg) (*user.User, *HTTPSer
 	require.NoError(t, err)
 
 	nsMock := notifications.MockNotificationService()
+	verifier := userimpl.ProvideVerifier(cfg, userSvc, tempUserService, nsMock, &idtest.MockService{})
 
 	hs := &HTTPServer{
 		Cfg:                 cfg,
@@ -404,6 +405,7 @@ func setupUpdateEmailTests(t *testing.T, cfg *setting.Cfg) (*user.User, *HTTPSer
 		userService:         userSvc,
 		tempUserService:     tempUserService,
 		NotificationService: nsMock,
+		userVerifier:        verifier,
 	}
 	return usr, hs, nsMock
 }
@@ -618,6 +620,7 @@ func TestUser_UpdateEmail(t *testing.T) {
 			hs.tempUserService = tempUserSvc
 			hs.NotificationService = nsMock
 			hs.SecretsService = fakes.NewFakeSecretsService()
+			hs.userVerifier = userimpl.ProvideVerifier(settings, userSvc, tempUserSvc, nsMock, &idtest.MockService{})
 			// User is internal
 			hs.authInfoService = &authinfotest.FakeService{ExpectedError: user.ErrUserNotFound}
 		})
@@ -647,7 +650,7 @@ func TestUser_UpdateEmail(t *testing.T) {
 		require.False(t, nsMock.EmailVerified)
 
 		// Start email update
-		newName := "newName"
+		newName := "newname"
 		body := fmt.Sprintf(`{"email": "%s", "name": "%s"}`, newEmail, newName)
 		sendUpdateReq(server, originalUsr, body)
 
@@ -749,8 +752,8 @@ func TestUser_UpdateEmail(t *testing.T) {
 		require.False(t, nsMock.EmailVerified)
 
 		// Start email update
-		newLogin := "newLogin"
-		newName := "newName"
+		newLogin := "newlogin"
+		newName := "newname"
 		body := fmt.Sprintf(`{"login": "%s", "name": "%s"}`, newLogin, newName)
 		sendUpdateReq(server, originalUsr, body)
 
@@ -802,7 +805,7 @@ func TestUser_UpdateEmail(t *testing.T) {
 		require.False(t, nsMock.EmailVerified)
 
 		// Start email update
-		newLogin := "newEmail2@localhost"
+		newLogin := "newemail2@localhost"
 		body := fmt.Sprintf(`{"email": "%s", "login": "%s"}`, newEmail, newLogin)
 		sendUpdateReq(server, originalUsr, body)
 
@@ -837,7 +840,7 @@ func TestUser_UpdateEmail(t *testing.T) {
 		require.False(t, nsMock.EmailVerified)
 
 		// Start email update
-		newLogin := "newEmail2@localhost"
+		newLogin := "newemail2@localhost"
 		body := fmt.Sprintf(`{"email": "%s", "login": "%s"}`, newEmail, newLogin)
 		sendUpdateReq(server, originalUsr, body)
 
@@ -909,14 +912,14 @@ func TestUser_UpdateEmail(t *testing.T) {
 		require.False(t, nsMock.EmailVerified)
 
 		// First email verification
-		firstNewEmail := "newEmail1@localhost"
+		firstNewEmail := "newemail1@localhost"
 		body := fmt.Sprintf(`{"email": "%s"}`, firstNewEmail)
 		sendUpdateReq(server, originalUsr, body)
 		verifyEmailData(tempUserSvc, nsMock, originalUsr, firstNewEmail)
 		firstCode := nsMock.EmailVerification.Code
 
 		// Second email verification
-		secondNewEmail := "newEmail2@localhost"
+		secondNewEmail := "newemail2@localhost"
 		body = fmt.Sprintf(`{"email": "%s"}`, secondNewEmail)
 		sendUpdateReq(server, originalUsr, body)
 		verifyEmailData(tempUserSvc, nsMock, originalUsr, secondNewEmail)

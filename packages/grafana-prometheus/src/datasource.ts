@@ -1,3 +1,4 @@
+// Core Grafana history https://github.com/grafana/grafana/blob/v11.0.0-preview/public/app/plugins/datasource/prometheus/datasource.ts
 import { defaults } from 'lodash';
 import { lastValueFrom, Observable, throwError } from 'rxjs';
 import { map, tap } from 'rxjs/operators';
@@ -30,6 +31,7 @@ import {
 import {
   BackendDataSourceResponse,
   BackendSrvRequest,
+  config,
   DataSourceWithBackend,
   FetchResponse,
   getBackendSrv,
@@ -41,7 +43,7 @@ import {
 
 import { addLabelToQuery } from './add_label_to_query';
 import { AnnotationQueryEditor } from './components/AnnotationQueryEditor';
-import PrometheusLanguageProvider from './language_provider';
+import PrometheusLanguageProvider, { SUGGESTIONS_LIMIT } from './language_provider';
 import {
   expandRecordingRules,
   getClientCacheDurationInMinutes,
@@ -96,6 +98,7 @@ export class PrometheusDatasource
   exemplarsAvailable: boolean;
   cacheLevel: PrometheusCacheLevel;
   cache: QueryCache<PromQuery>;
+  metricNamesAutocompleteSuggestionLimit: number;
 
   constructor(
     instanceSettings: DataSourceInstanceSettings<PromOptions>,
@@ -126,6 +129,8 @@ export class PrometheusDatasource
     this.variables = new PrometheusVariableSupport(this, this.templateSrv);
     this.exemplarsAvailable = true;
     this.cacheLevel = instanceSettings.jsonData.cacheLevel ?? PrometheusCacheLevel.Low;
+    this.metricNamesAutocompleteSuggestionLimit =
+      instanceSettings.jsonData.codeModeMetricNamesSuggestionLimit ?? SUGGESTIONS_LIMIT;
 
     this.cache = new QueryCache({
       getTargetSignature: this.getPrometheusTargetSignature.bind(this),
@@ -363,6 +368,11 @@ export class PrometheusDatasource
       // We need to pass utcOffsetSec to backend to calculate aligned range
       utcOffsetSec: request.range.to.utcOffset() * 60,
     };
+
+    if (config.featureToggles.promQLScope) {
+      processedTarget.scope = request.scope?.spec;
+    }
+
     if (target.instant && target.range) {
       // We have query type "Both" selected
       // We should send separate queries with different refId
@@ -670,7 +680,7 @@ export class PrometheusDatasource
   // and in Tempo here grafana/public/app/plugins/datasource/tempo/QueryEditor/ServiceGraphSection.tsx
   async getTagKeys(options: DataSourceGetTagKeysOptions<PromQuery>): Promise<MetricFindValue[]> {
     if (!options || options.filters.length === 0) {
-      await this.languageProvider.fetchLabels(options.timeRange);
+      await this.languageProvider.fetchLabels(options.timeRange, options.queries);
       return this.languageProvider.getLabelKeys().map((k) => ({ value: k, text: k }));
     }
 
@@ -690,7 +700,7 @@ export class PrometheusDatasource
   }
 
   // By implementing getTagKeys and getTagValues we add ad-hoc filters functionality
-  async getTagValues(options: DataSourceGetTagValuesOptions) {
+  async getTagValues(options: DataSourceGetTagValuesOptions<PromQuery>) {
     const labelFilters: QueryBuilderLabelFilter[] = options.filters.map((f) => ({
       label: f.key,
       value: f.value,
@@ -736,7 +746,7 @@ export class PrometheusDatasource
     return expandedQueries;
   }
 
-  getQueryHints(query: PromQuery, result: any[]) {
+  getQueryHints(query: PromQuery, result: unknown[]) {
     return getQueryHints(query.expr ?? '', result, this);
   }
 
@@ -856,7 +866,7 @@ export class PrometheusDatasource
       return expr;
     }
 
-    const finalQuery = filters.reduce((acc: string, filter: { key?: any; operator?: any; value?: any }) => {
+    const finalQuery = filters.reduce((acc, filter) => {
       const { key, operator } = filter;
       let { value } = filter;
       if (operator === '=~' || operator === '!~') {
@@ -1005,10 +1015,10 @@ export function extractRuleMappingFromGroups(groups: any[]) {
 // NOTE: these two functions are very similar to the escapeLabelValueIn* functions
 // in language_utils.ts, but they are not exactly the same algorithm, and we found
 // no way to reuse one in the another or vice versa.
-export function prometheusRegularEscape(value: unknown) {
+export function prometheusRegularEscape<T>(value: T) {
   return typeof value === 'string' ? value.replace(/\\/g, '\\\\').replace(/'/g, "\\\\'") : value;
 }
 
-export function prometheusSpecialRegexEscape(value: unknown) {
+export function prometheusSpecialRegexEscape<T>(value: T) {
   return typeof value === 'string' ? value.replace(/\\/g, '\\\\\\\\').replace(/[$^*{}\[\]\'+?.()|]/g, '\\\\$&') : value;
 }

@@ -9,12 +9,11 @@ import (
 	"strings"
 
 	"github.com/grafana/grafana-aws-sdk/pkg/awsds"
-	"github.com/grafana/grafana-azure-sdk-go/azsettings"
+	"github.com/grafana/grafana-azure-sdk-go/v2/azsettings"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/proxy"
 
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/envvars"
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
 )
 
 var _ envvars.Provider = (*EnvVarsProvider)(nil)
@@ -122,25 +121,27 @@ func (p *EnvVarsProvider) awsEnvVars(pluginID string) []string {
 func (p *EnvVarsProvider) secureSocksProxyEnvVars() []string {
 	if p.cfg.ProxySettings.Enabled {
 		return []string{
-			envVar(proxy.PluginSecureSocksProxyClientCert, p.cfg.ProxySettings.ClientCert),
-			envVar(proxy.PluginSecureSocksProxyClientKey, p.cfg.ProxySettings.ClientKey),
-			envVar(proxy.PluginSecureSocksProxyRootCACert, p.cfg.ProxySettings.RootCA),
-			envVar(proxy.PluginSecureSocksProxyProxyAddress, p.cfg.ProxySettings.ProxyAddress),
-			envVar(proxy.PluginSecureSocksProxyServerName, p.cfg.ProxySettings.ServerName),
-			envVar(proxy.PluginSecureSocksProxyEnabled, strconv.FormatBool(p.cfg.ProxySettings.Enabled)),
-			envVar(proxy.PluginSecureSocksProxyAllowInsecure, strconv.FormatBool(p.cfg.ProxySettings.AllowInsecure)),
+			// nolint:staticcheck
+			envVar(proxy.PluginSecureSocksProxyClientCertFilePathEnvVarName, p.cfg.ProxySettings.ClientCertFilePath),
+			// nolint:staticcheck
+			envVar(proxy.PluginSecureSocksProxyClientKeyFilePathEnvVarName, p.cfg.ProxySettings.ClientKeyFilePath),
+			// nolint:staticcheck
+			envVar(proxy.PluginSecureSocksProxyRootCACertFilePathsEnvVarName, strings.Join(p.cfg.ProxySettings.RootCAFilePaths, " ")),
+			// nolint:staticcheck
+			envVar(proxy.PluginSecureSocksProxyAddressEnvVarName, p.cfg.ProxySettings.ProxyAddress),
+			// nolint:staticcheck
+			envVar(proxy.PluginSecureSocksProxyServerNameEnvVarName, p.cfg.ProxySettings.ServerName),
+			// nolint:staticcheck
+			envVar(proxy.PluginSecureSocksProxyEnabledEnvVarName, strconv.FormatBool(p.cfg.ProxySettings.Enabled)),
+			// nolint:staticcheck
+			envVar(proxy.PluginSecureSocksProxyAllowInsecureEnvVarName, strconv.FormatBool(p.cfg.ProxySettings.AllowInsecure)),
 		}
 	}
 	return nil
 }
 
 func (p *EnvVarsProvider) tracingEnvVars(plugin *plugins.Plugin) []string {
-	pluginTracingEnabled := p.cfg.Features.IsEnabledGlobally(featuremgmt.FlagEnablePluginsTracingByDefault)
-	if v, exists := p.cfg.PluginSettings[plugin.ID]["tracing"]; exists && !pluginTracingEnabled {
-		pluginTracingEnabled = v == "true"
-	}
-
-	if !p.cfg.Tracing.IsEnabled() || !pluginTracingEnabled {
+	if !p.cfg.Tracing.IsEnabled() {
 		return nil
 	}
 

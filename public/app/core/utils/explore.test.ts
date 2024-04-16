@@ -232,6 +232,12 @@ describe('when buildQueryTransaction', () => {
     const transaction = buildQueryTransaction('left', queries, queryOptions, range, false);
     expect(transaction.request.interval).toEqual('2h');
   });
+  it('it should create a request with X-Cache-Skip set to true', () => {
+    const queries = [{ refId: 'A' }];
+    const range = { from: dateTime().subtract(1, 'd'), to: dateTime(), raw: { from: '1h', to: '1h' } };
+    const transaction = buildQueryTransaction('left', queries, {}, range, false);
+    expect(transaction.request.skipQueryCache).toBe(true);
+  });
 });
 
 describe('generateEmptyQuery', () => {

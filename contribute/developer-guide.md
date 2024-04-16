@@ -76,6 +76,7 @@ After the command has finished, we can start building our source code:
 yarn start
 ```
 
+This command will generate sass theme files, build all external plugins, then build the frontend assets.
 Once `yarn start` has built the assets, it will continue to do so whenever any of the files change. This means you don't have to manually build the assets every time you change the code.
 
 > Troubleshooting: if your first build works, but after pulling updates you see unexpected errors in the "Type-checking in progress..." stage, these can be caused by the [tsbuildinfo cache supporting incremental builds](https://www.typescriptlang.org/tsconfig#incremental). You can `rm tsconfig.tsbuildinfo` and re-try.
@@ -171,7 +172,7 @@ make test-go-integration-postgres
 
 ### Run end-to-end tests
 
-The end to end tests in Grafana use [Cypress](https://www.cypress.io/) and [Playwright](https://playwright.dev/) to run automated scripts in a browser. Read more about our Cypress [e2e framework](/contribute/style-guides/e2e.md).
+Grafana uses [Cypress](https://www.cypress.io/) to end-to-end test core features. Core plugins use [Playwright](https://playwright.dev/) to run automated end-to-end tests. You can find more information on how to add end-to-end tests to your core plugin [here](./style-guides/e2e-plugins.md)
 
 #### Running Cypress tests
 

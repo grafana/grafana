@@ -29,3 +29,8 @@ type Service interface {
 	SetUserHelpFlag(context.Context, *SetUserHelpFlagCommand) error
 	GetProfile(context.Context, *GetUserProfileQuery) (*UserProfileDTO, error)
 }
+
+type Verifier interface {
+	Start(ctx context.Context, cmd StartVerifyEmailCommand) error
+	Complete(ctx context.Context, cmd CompleteEmailVerifyCommand) error
+}

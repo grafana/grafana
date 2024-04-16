@@ -60,6 +60,7 @@ const (
 	// DefaultRuleEvaluationInterval indicates a default interval of for how long a rule should be evaluated to change state from Pending to Alerting
 	DefaultRuleEvaluationInterval = SchedulerBaseInterval * 6 // == 60 seconds
 	stateHistoryDefaultEnabled    = true
+	lokiDefaultMaxQueryLength     = 721 * time.Hour // 30d1h, matches the default value in Loki
 )
 
 type UnifiedAlertingSettings struct {
@@ -96,11 +97,13 @@ type UnifiedAlertingSettings struct {
 	ReservedLabels                UnifiedAlertingReservedLabelSettings
 	StateHistory                  UnifiedAlertingStateHistorySettings
 	RemoteAlertmanager            RemoteAlertmanagerSettings
-	Upgrade                       UnifiedAlertingUpgradeSettings
 	// MaxStateSaveConcurrency controls the number of goroutines (per rule) that can save alert state in parallel.
 	MaxStateSaveConcurrency   int
 	StatePeriodicSaveInterval time.Duration
 	RulesPerRuleGroupLimit    int64
+
+	// Retention period for Alertmanager notification log entries.
+	NotificationLogRetention time.Duration
 }
 
 // RemoteAlertmanagerSettings contains the configuration needed
@@ -135,14 +138,10 @@ type UnifiedAlertingStateHistorySettings struct {
 	// if one of them is set.
 	LokiBasicAuthPassword string
 	LokiBasicAuthUsername string
+	LokiMaxQueryLength    time.Duration
 	MultiPrimary          string
 	MultiSecondaries      []string
 	ExternalLabels        map[string]string
-}
-
-type UnifiedAlertingUpgradeSettings struct {
-	// CleanUpgrade controls whether the upgrade process should clean up UA data when upgrading from legacy alerting.
-	CleanUpgrade bool
 }
 
 // IsEnabled returns true if UnifiedAlertingSettings.Enabled is either nil or true.
@@ -177,6 +176,8 @@ func (cfg *Cfg) readUnifiedAlertingEnabledSetting(section *ini.Section) (*bool, 
 
 // ReadUnifiedAlertingSettings reads both the `unified_alerting` and `alerting` sections of the configuration while preferring configuration the `alerting` section.
 // It first reads the `unified_alerting` section, then looks for non-defaults on the `alerting` section and prefers those.
+//
+// nolint: gocyclo
 func (cfg *Cfg) ReadUnifiedAlertingSettings(iniFile *ini.File) error {
 	var err error
 	uaCfg := UnifiedAlertingSettings{}
@@ -368,6 +369,7 @@ func (cfg *Cfg) ReadUnifiedAlertingSettings(iniFile *ini.File) error {
 		LokiTenantID:          stateHistory.Key("loki_tenant_id").MustString(""),
 		LokiBasicAuthUsername: stateHistory.Key("loki_basic_auth_username").MustString(""),
 		LokiBasicAuthPassword: stateHistory.Key("loki_basic_auth_password").MustString(""),
+		LokiMaxQueryLength:    stateHistory.Key("loki_max_query_length").MustDuration(lokiDefaultMaxQueryLength),
 		MultiPrimary:          stateHistory.Key("primary").MustString(""),
 		MultiSecondaries:      splitTrim(stateHistory.Key("secondaries").MustString(""), ","),
 		ExternalLabels:        stateHistoryLabels.KeysHash(),
@@ -381,11 +383,10 @@ func (cfg *Cfg) ReadUnifiedAlertingSettings(iniFile *ini.File) error {
 		return err
 	}
 
-	upgrade := iniFile.Section("unified_alerting.upgrade")
-	uaCfgUpgrade := UnifiedAlertingUpgradeSettings{
-		CleanUpgrade: upgrade.Key("clean_upgrade").MustBool(false),
+	uaCfg.NotificationLogRetention, err = gtime.ParseDuration(valueAsString(ua, "notification_log_retention", (5 * 24 * time.Hour).String()))
+	if err != nil {
+		return err
 	}
-	uaCfg.Upgrade = uaCfgUpgrade
 
 	cfg.UnifiedAlerting = uaCfg
 	return nil

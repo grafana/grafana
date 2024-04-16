@@ -25,6 +25,7 @@ export interface AzureSettings {
   managedIdentityEnabled: boolean;
   workloadIdentityEnabled: boolean;
   userIdentityEnabled: boolean;
+  userIdentityFallbackCredentialsEnabled: boolean;
 }
 
 export interface AzureCloudInfo {
@@ -63,10 +64,6 @@ export class GrafanaBootConfig implements GrafanaConfig {
   feedbackLinksEnabled = true;
   disableLoginForm = false;
   defaultDatasource = ''; // UID
-  alertingEnabled = false;
-  alertingErrorOrTimeout = '';
-  alertingNoDataOrNullValues = '';
-  alertingMinInterval = 1;
   angularSupportEnabled = false;
   authProxyEnabled = false;
   exploreEnabled = false;
@@ -133,6 +130,7 @@ export class GrafanaBootConfig implements GrafanaConfig {
     managedIdentityEnabled: false,
     workloadIdentityEnabled: false,
     userIdentityEnabled: false,
+    userIdentityFallbackCredentialsEnabled: false,
   };
   caching = {
     enabled: false,
@@ -180,6 +178,12 @@ export class GrafanaBootConfig implements GrafanaConfig {
   localFileSystemAvailable: boolean | undefined;
   cloudMigrationIsTarget: boolean | undefined;
 
+  /**
+   * Language used in Grafana's UI. This is after the user's preference (or deteceted locale) is resolved to one of
+   * Grafana's supported language.
+   */
+  language: string | undefined;
+
   constructor(options: GrafanaBootConfig) {
     this.bootData = options.bootData;
 
@@ -210,7 +214,9 @@ export class GrafanaBootConfig implements GrafanaConfig {
       systemDateFormats.update(this.dateFormats);
     }
 
-    overrideFeatureTogglesFromUrl(this);
+    if (this.buildInfo.env === 'development') {
+      overrideFeatureTogglesFromUrl(this);
+    }
     overrideFeatureTogglesFromLocalStorage(this);
 
     if (this.featureToggles.disableAngular) {
@@ -247,9 +253,7 @@ function overrideFeatureTogglesFromUrl(config: GrafanaBootConfig) {
     return;
   }
 
-  const isLocalDevEnv = config.buildInfo.env === 'development';
-
-  const prodUrlAllowedFeatureFlags = new Set([
+  const migrationFeatureFlags = new Set([
     'autoMigrateOldPanels',
     'autoMigrateGraphPanel',
     'autoMigrateTablePanel',
@@ -265,7 +269,8 @@ function overrideFeatureTogglesFromUrl(config: GrafanaBootConfig) {
       const featureToggles = config.featureToggles as Record<string, boolean>;
       const featureName = key.substring(10);
 
-      if (!isLocalDevEnv && !prodUrlAllowedFeatureFlags.has(featureName)) {
+      // skip the migration feature flags
+      if (migrationFeatureFlags.has(featureName)) {
         return;
       }
 

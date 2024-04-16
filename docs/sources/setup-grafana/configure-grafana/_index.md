@@ -272,6 +272,17 @@ Path to the certificate file (if `protocol` is set to `https` or `h2`).
 
 Path to the certificate key file (if `protocol` is set to `https` or `h2`).
 
+### certs_watch_interval
+
+Controls whether `cert_key` and `cert_file` are periodically watched for changes.
+Disabled, by default. When enabled, `cert_key` and `cert_file`
+are watched for changes. If there is change, the new certificates are loaded automatically.
+
+{{% admonition type="warning" %}}
+After the new certificates are loaded, connections with old certificates
+will not work. You must reload the connections to the old certs for them to work.
+{{% /admonition %}}
+
 ### socket_gid
 
 GID where the socket should be set when `protocol=socket`.
@@ -361,9 +372,13 @@ The maximum number of open connections to the database. For MYSQL, configure thi
 
 Sets the maximum amount of time a connection may be reused. The default is 14400 (which means 14400 seconds or 4 hours). For MySQL, this setting should be shorter than the [`wait_timeout`](https://dev.mysql.com/doc/refman/5.7/en/server-system-variables.html#sysvar_wait_timeout) variable.
 
+### migration_locking
+
+Set to `false` to disable database locking during the migrations. Default is true.
+
 ### locking_attempt_timeout_sec
 
-For "mysql", if the `migrationLocking` feature toggle is set, specify the time (in seconds) to wait before failing to lock the database for the migrations. Default is 0.
+For "mysql" and "postgres" only. Specify the time (in seconds) to wait before failing to lock the database for the migrations. Default is 0.
 
 ### log_queries
 
@@ -938,10 +953,10 @@ Administrators can increase this if they experience OAuth login state mismatch e
 ### oauth_skip_org_role_update_sync
 
 {{% admonition type="note" %}}
-This option is deprecated in favor of OAuth provider specific `skip_org_role_sync` settings. The following sections explain settings for each provider.
+This option is removed from G11 in favor of OAuth provider specific `skip_org_role_sync` settings. The following sections explain settings for each provider.
 {{% /admonition %}}
 
-If you want to change the `oauth_skip_org_role_update_sync` setting to `false`, then for each provider you have set up, use the `skip_org_role_sync` setting to specify whether you want to skip the synchronization.
+If you want to change the `oauth_skip_org_role_update_sync` setting from `true` to `false`, then each provider you have set up, use the `skip_org_role_sync` setting to specify whether you want to skip the synchronization.
 
 {{% admonition type="warning" %}}
 Currently if no organization role mapping is found for a user, Grafana doesn't update the user's organization role.
@@ -1201,6 +1216,12 @@ Allows to set a custom path to the projected service account token file.
 Specifies whether user identity authentication (on behalf of currently signed-in user) should be enabled in datasources that support it (requires AAD authentication).
 
 Disabled by default, needs to be explicitly enabled.
+
+### user_identity_fallback_credentials_enabled
+
+Specifies whether user identity authentication fallback credentials should be enabled in data sources. Enabling this allows data source creators to provide fallback credentials for backend-initiated requests, such as alerting, recorded queries, and so on.
+
+It is by default and needs to be explicitly disabled. It will not have any effect if user identity authentication is disabled.
 
 ### user_identity_token_url
 
@@ -1631,6 +1652,11 @@ For more information about screenshots, refer to [Images in notifications]({{< r
 
 Enable screenshots in notifications. This option requires a remote HTTP image rendering service. Please see `[rendering]` for further configuration options.
 
+### capture_timeout
+
+The timeout for capturing screenshots. If a screenshot cannot be captured within the timeout then the notification is sent without a screenshot.
+The maximum duration is 30 seconds. This timeout should be less than the minimum Interval of all Evaluation Groups to avoid back pressure on alert rule evaluation.
+
 ### max_concurrent_screenshots
 
 The maximum number of screenshots that can be taken at the same time. This option is different from `concurrent_render_request_limit` as `max_concurrent_screenshots` sets the number of concurrent screenshots that can be taken at the same time for all firing alerts where as concurrent_render_request_limit sets the total number of concurrent screenshots across all Grafana services.
@@ -1899,7 +1925,7 @@ Configure general parameters shared between OpenTelemetry providers.
 
 Comma-separated list of attributes to include in all new spans, such as `key1:value1,key2:value2`.
 
-Can be set with the environment variable `OTEL_RESOURCE_ATTRIBUTES` (use `=` instead of `:` with the environment variable).
+Can be set or overridden with the environment variable `OTEL_RESOURCE_ATTRIBUTES` (use `=` instead of `:` with the environment variable). The service name can be set or overridden using attributes or with the environment variable `OTEL_SERVICE_NAME`.
 
 ### sampler_type
 

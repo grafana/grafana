@@ -1,4 +1,4 @@
-import { PromQuery } from 'app/plugins/datasource/prometheus/types';
+import { PromQuery } from '@grafana/prometheus';
 
 import { VAR_FILTERS_EXPR, VAR_GROUP_BY_EXP, VAR_METRIC_EXPR } from '../../shared';
 import { heatmapGraphBuilder } from '../graph-builders/heatmap';
@@ -36,7 +36,7 @@ export function createHistogramQueryDefs(metricParts: string[]) {
   const percentiles: AutoQueryDef = {
     ...common,
     variant: 'percentiles',
-    queries: [99, 90, 50].map((p) => percentileQuery(p)).map(fixRefIds),
+    queries: [99, 90, 50].map((p) => percentileQuery(p)),
     vizBuilder: () => percentilesGraphBuilder(percentiles),
   };
 
@@ -50,15 +50,6 @@ export function createHistogramQueryDefs(metricParts: string[]) {
   return { preview: p50, main: percentiles, variants: [percentiles, heatmap], breakdown: breakdown };
 }
 
-function fixRefIds(queryDef: PromQuery, index: number): PromQuery {
-  // By default refIds are `"A"`
-  // This method will reassign based on `A + index` -- A, B, C, etc
-  return {
-    ...queryDef,
-    refId: String.fromCharCode('A'.charCodeAt(0) + index),
-  };
-}
-
 const BASE_QUERY = `rate(${VAR_METRIC_EXPR}${VAR_FILTERS_EXPR}[$__rate_interval])`;
 
 function baseQuery(groupings: string[] = []) {
@@ -68,7 +59,7 @@ function baseQuery(groupings: string[] = []) {
 
 function heatMapQuery(groupings: string[] = []): PromQuery {
   return {
-    refId: 'A',
+    refId: 'Heatmap',
     expr: baseQuery(groupings),
     format: 'heatmap',
   };
@@ -78,7 +69,7 @@ function percentileQuery(percentile: number, groupings: string[] = []) {
   const percent = percentile / 100;
 
   return {
-    refId: 'A',
+    refId: `Percentile${percentile}`,
     expr: `histogram_quantile(${percent}, ${baseQuery(groupings)})`,
     legendFormat: `${percentile}th Percentile`,
   };
