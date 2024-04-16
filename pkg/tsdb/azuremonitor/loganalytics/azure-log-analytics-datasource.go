@@ -51,6 +51,7 @@ type AzureLogAnalyticsQuery struct {
 	QueryType               dataquery.AzureQueryType
 	AppInsightsQuery        bool
 	DashboardTime           bool
+	BasicLogs               bool
 	TimeColumn              string
 }
 
@@ -81,17 +82,20 @@ func (e *AzureLogAnalyticsDatasource) ExecuteTimeSeriesQuery(ctx context.Context
 	return result, nil
 }
 
-func getApiURL(resourceOrWorkspace string, isAppInsightsQuery bool) string {
+func getApiURL(resourceOrWorkspace string, isAppInsightsQuery bool, basicLogsQuery bool) string {
 	matchesResourceURI, _ := regexp.MatchString("^/subscriptions/", resourceOrWorkspace)
-
+	queryOrSearch := "query"
+	if basicLogsQuery == true {
+		queryOrSearch = "search"
+	}
 	if matchesResourceURI {
 		if isAppInsightsQuery {
 			componentName := resourceOrWorkspace[strings.LastIndex(resourceOrWorkspace, "/")+1:]
 			return fmt.Sprintf("v1/apps/%s/query", componentName)
 		}
-		return fmt.Sprintf("v1%s/query", resourceOrWorkspace)
+		return fmt.Sprintf("v1%s/%s", resourceOrWorkspace, queryOrSearch)
 	} else {
-		return fmt.Sprintf("v1/workspaces/%s/query", resourceOrWorkspace)
+		return fmt.Sprintf("v1/workspaces/%s/%s", resourceOrWorkspace, queryOrSearch)
 	}
 }
 
@@ -112,6 +116,7 @@ func (e *AzureLogAnalyticsDatasource) buildQueries(ctx context.Context, queries 
 		traceParentExploreQuery := ""
 		traceLogsExploreQuery := ""
 		dashboardTime := false
+		basicLogsQuery := false
 		timeColumn := ""
 		if query.QueryType == string(dataquery.AzureQueryTypeAzureLogAnalytics) {
 			queryJSONModel := types.LogJSONQuery{}
@@ -129,20 +134,35 @@ func (e *AzureLogAnalyticsDatasource) buildQueries(ctx context.Context, queries 
 				resultFormat = types.TimeSeries
 			}
 
+			meetsCriteria := false
+			var meetsCriteriaErr error
+			basicLogsQueryflag := false
+			if azureLogAnalyticsTarget.BasicLogsQuery != nil {
+				basicLogsQueryflag = *azureLogAnalyticsTarget.BasicLogsQuery
+			}
+
 			// Legacy queries only specify a Workspace GUID, which we need to use the old workspace-centric
 			// API URL for, and newer queries specifying a resource URI should use resource-centric API.
 			// However, legacy workspace queries using a `workspaces()` template variable will be resolved
 			// to a resource URI, so they should use the new resource-centric.
+
 			if len(azureLogAnalyticsTarget.Resources) > 0 {
 				resources = azureLogAnalyticsTarget.Resources
 				resourceOrWorkspace = azureLogAnalyticsTarget.Resources[0]
 				appInsightsQuery = appInsightsRegExp.Match([]byte(resourceOrWorkspace))
+				meetsCriteria, meetsCriteriaErr = MeetsBasicLogsCriteria(basicLogsQueryflag, resources)
 			} else if azureLogAnalyticsTarget.Resource != nil && *azureLogAnalyticsTarget.Resource != "" {
 				resources = []string{*azureLogAnalyticsTarget.Resource}
 				resourceOrWorkspace = *azureLogAnalyticsTarget.Resource
+				meetsCriteria, meetsCriteriaErr = MeetsBasicLogsCriteria(basicLogsQueryflag, resources)
 			} else if azureLogAnalyticsTarget.Workspace != nil {
 				resourceOrWorkspace = *azureLogAnalyticsTarget.Workspace
 			}
+
+			if meetsCriteriaErr != nil {
+				return nil, meetsCriteriaErr
+			}
+			basicLogsQuery = meetsCriteria
 
 			if azureLogAnalyticsTarget.Query != nil {
 				queryString = *azureLogAnalyticsTarget.Query
@@ -235,7 +255,7 @@ func (e *AzureLogAnalyticsDatasource) buildQueries(ctx context.Context, queries 
 			timeColumn = "timestamp"
 		}
 
-		apiURL := getApiURL(resourceOrWorkspace, appInsightsQuery)
+		apiURL := getApiURL(resourceOrWorkspace, appInsightsQuery, basicLogsQuery)
 
 		rawQuery, err := macros.KqlInterpolate(query, dsInfo, queryString, "TimeGenerated")
 		if err != nil {
@@ -256,6 +276,7 @@ func (e *AzureLogAnalyticsDatasource) buildQueries(ctx context.Context, queries 
 			TraceLogsExploreQuery:   traceLogsExploreQuery,
 			AppInsightsQuery:        appInsightsQuery,
 			DashboardTime:           dashboardTime,
+			BasicLogs:               basicLogsQuery,
 			TimeColumn:              timeColumn,
 		})
 	}
