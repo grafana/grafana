@@ -30,7 +30,7 @@ export class AddToFiltersGraphAction extends SceneObjectBase<AddToFiltersGraphAc
     }
 
     const labelName = Object.keys(labels)[0];
-    reportExploreMetrics('label_filter_changed', { label: labelName, change: 'added', cause: 'breakdown' });
+    reportExploreMetrics('label_filter_changed', { label: labelName, action: 'added', cause: 'breakdown' });
     const trail = getTrailFor(this);
     const filter = {
       key: labelName,

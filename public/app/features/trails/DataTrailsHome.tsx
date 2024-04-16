@@ -42,7 +42,7 @@ export class DataTrailsHome extends SceneObjectBase<DataTrailsHomeState> {
 
     const onDelete = (index: number) => {
       getTrailStore().removeBookmark(index);
-      reportExploreMetrics('bookmark_changed', { change: 'deleted' });
+      reportExploreMetrics('bookmark_changed', { action: 'deleted' });
       setLastDelete(Date.now()); // trigger re-render
     };
 

@@ -22,7 +22,7 @@ type Interactions = {
   // User changed a label filter.
   label_filter_changed: {
     label: string;
-    change: 'added' | 'removed' | 'changed';
+    action: 'added' | 'removed' | 'changed';
     cause: 'breakdown' | 'adhoc_filter';
   };
   // User changed the breakdown layout
@@ -46,7 +46,7 @@ type Interactions = {
   };
   // A user has changed a bookmark
   bookmark_changed: {
-    change: (
+    action: (
       // Toggled on or off from the bookmark icon
       | 'toggled_on'
       | 'toggled_off'
@@ -108,7 +108,7 @@ export function reportChangeInLabelFilters(newFilters: AdHocVariableFilter[], ol
           if (oldFilter.value !== newFilter.value) {
             reportExploreMetrics('label_filter_changed', {
               label: oldFilter.key,
-              change: 'changed',
+              action: 'changed',
               cause: 'adhoc_filter',
             });
           }
@@ -127,7 +127,7 @@ export function reportChangeInLabelFilters(newFilters: AdHocVariableFilter[], ol
       if (!foundOldLabel) {
         reportExploreMetrics('label_filter_changed', {
           label: oldFilter.key,
-          change: 'removed',
+          action: 'removed',
           cause: 'adhoc_filter',
         });
       }
@@ -142,7 +142,7 @@ export function reportChangeInLabelFilters(newFilters: AdHocVariableFilter[], ol
         }
       }
       if (!foundNewLabel) {
-        reportExploreMetrics('label_filter_changed', { label: newFilter.key, change: 'added', cause: 'adhoc_filter' });
+        reportExploreMetrics('label_filter_changed', { label: newFilter.key, action: 'added', cause: 'adhoc_filter' });
       }
     }
   }

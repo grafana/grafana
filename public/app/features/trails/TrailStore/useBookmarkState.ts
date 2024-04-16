@@ -22,7 +22,7 @@ export function useBookmarkState(trail: DataTrail) {
   const isBookmarked = bookmarkIndex != null;
 
   const toggleBookmark = () => {
-    reportExploreMetrics('bookmark_changed', { change: isBookmarked ? 'toggled_off' : 'toggled_on' });
+    reportExploreMetrics('bookmark_changed', { action: isBookmarked ? 'toggled_off' : 'toggled_on' });
     if (isBookmarked) {
       let indexToRemove = getBookmarkIndex();
       while (indexToRemove != null) {
