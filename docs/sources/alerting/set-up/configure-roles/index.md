@@ -52,7 +52,8 @@ This prevents every user from having access to modify all alert rules and gives 
 
 For example, if you are using simplified alert routing and adding contact points to your alert rules, it also helps you avoid the scenario where someone from another team accidentally removes the wrong notification policy or adds a competing one, and all of a sudden you stop getting your notifications.
 
-In this case, you would assign the **Viewer** role and then add **Editor** permission to the folder. Adding the **Editor** permission to the folder does not overwrite the **Viewer** role.
+In this case, you would assign the **Viewer** role and then add **Editor** permission to the folder.
+Adding the **Editor** permission to the folder doesn't overwrite the **Viewer** role.
 
 Details on the adding folder permissions as well as roles and the access that provides for Grafana Alerting is below.
 
