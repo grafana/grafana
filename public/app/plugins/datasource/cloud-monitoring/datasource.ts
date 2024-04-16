@@ -295,7 +295,7 @@ export default class CloudMonitoringDatasource extends DataSourceWithBackend<
     return query;
   }
 
-  interpolatePromQLQuery(value: any, _variable: QueryVariableModel) {
+  interpolatePromQLQuery(value: string | string[], _variable: QueryVariableModel) {
     if (isArray(value)) {
       return value.join('|');
     }
