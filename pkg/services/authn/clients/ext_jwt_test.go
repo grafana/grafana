@@ -182,11 +182,6 @@ func TestExtendedJWT_Authenticate(t *testing.T) {
 					SyncOrgRoles:    false,
 					SyncTeams:       false,
 					SyncPermissions: false,
-					LookUpParams: login.UserLookupParams{
-						UserID: nil,
-						Email:  nil,
-						Login:  nil,
-					},
 				},
 			},
 			wantErr: false,
