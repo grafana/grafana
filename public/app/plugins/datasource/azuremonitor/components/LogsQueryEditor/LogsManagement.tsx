@@ -15,7 +15,7 @@ export function LogsManagement({ query, onQueryChange: onChange }: AzureQueryEdi
         title="Basic Logs Queries"
         body="Are you sure you want to switch to Basic Logs?"
         description="Basic Logs queries incur cost based on the amount of data scanned. Please acknowledge this panel is subject to per-query costs."
-        confirmText="I Acknowledge"
+        confirmText="Confirm"
         onConfirm={() => {
           setBasicLogsAckOpen(false);
           let updatedBasicLogsQuery = setBasicLogsQuery(query, true);
