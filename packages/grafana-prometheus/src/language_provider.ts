@@ -108,7 +108,9 @@ export default class PromQlLanguageProvider extends LanguageProvider {
       const res = await this.datasource.metadataRequest(url, params, options);
       return res.data.data;
     } catch (error) {
-      console.error(error);
+      if (!isCancelledError(error)) {
+        console.error(error);
+      }
     }
 
     return defaultValue;
@@ -257,10 +259,12 @@ export default class PromQlLanguageProvider extends LanguageProvider {
    * @param name
    * @param match
    * @param timeRange
+   * @param requestId
    */
   fetchSeriesValuesWithMatch = async (
     name: string,
-    match?: string,
+    match: string,
+    requestId?: string,
     timeRange: TimeRange = this.timeRange
   ): Promise<string[]> => {
     const interpolatedName = name ? this.datasource.interpolateString(name) : null;
@@ -271,12 +275,10 @@ export default class PromQlLanguageProvider extends LanguageProvider {
       ...(interpolatedMatch && { 'match[]': interpolatedMatch }),
     };
 
-    const value = await this.request(
-      `/api/v1/label/${interpolatedName}/values`,
-      [],
-      urlParams,
-      this.getDefaultCacheHeaders()
-    );
+    const value = await this.request(`/api/v1/label/${interpolatedName}/values`, [], urlParams, {
+      ...this.getDefaultCacheHeaders(),
+      requestId,
+    });
     return value ?? [];
   };
 
@@ -392,4 +394,10 @@ function getNameLabelValue(promQuery: string, tokens: Array<string | Prism.Token
     }
   }
   return nameLabelValue;
+}
+
+function isCancelledError(error: any): error is {
+  cancelled: boolean;
+} {
+  return typeof error === 'object' && error !== null && 'cancelled' in error && error.cancelled === true;
 }
