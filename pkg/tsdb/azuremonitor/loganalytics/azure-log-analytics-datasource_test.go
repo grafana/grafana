@@ -340,7 +340,53 @@ func TestBuildingAzureLogAnalyticsQueries(t *testing.T) {
 			},
 			Err: require.NoError,
 		},
-
+		{
+			name: "Basic Logs query",
+			queryModel: []backend.DataQuery{
+				{
+					JSON: []byte(fmt.Sprintf(`{
+						"queryType": "Azure Log Analytics",
+						"azureLogAnalytics": {
+							"resources":     ["/subscriptions/aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee/resourceGroups/cloud-datasources/providers/Microsoft.OperationalInsights/workspaces/AppInsightsTestDataWorkspace"],
+							"query":        "Perf",
+							"resultFormat": "%s",
+							"dashboardTime": true,
+							"timeColumn":	"TimeGenerated",
+							"basicLogsQuery": true
+						}
+					}`, types.TimeSeries)),
+					RefID:     "A",
+					TimeRange: timeRange,
+					QueryType: string(dataquery.AzureQueryTypeAzureLogAnalytics),
+				},
+			},
+			azureLogAnalyticsQueries: []*AzureLogAnalyticsQuery{
+				{
+					RefID:        "A",
+					ResultFormat: types.TimeSeries,
+					URL:          "v1/subscriptions/aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee/resourceGroups/cloud-datasources/providers/Microsoft.OperationalInsights/workspaces/AppInsightsTestDataWorkspace/search",
+					JSON: []byte(fmt.Sprintf(`{
+						"queryType": "Azure Log Analytics",
+						"azureLogAnalytics": {
+							"resources":     ["/subscriptions/aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee/resourceGroups/cloud-datasources/providers/Microsoft.OperationalInsights/workspaces/AppInsightsTestDataWorkspace"],
+							"query":        "Perf",
+							"resultFormat": "%s",
+							"dashboardTime": true,
+							"timeColumn":	"TimeGenerated",
+							"basicLogsQuery": true
+						}
+					}`, types.TimeSeries)),
+					Query:            "Perf",
+					Resources:        []string{"/subscriptions/aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee/resourceGroups/cloud-datasources/providers/Microsoft.OperationalInsights/workspaces/AppInsightsTestDataWorkspace"},
+					TimeRange:        timeRange,
+					QueryType:        dataquery.AzureQueryTypeAzureLogAnalytics,
+					AppInsightsQuery: false,
+					DashboardTime:    true,
+					TimeColumn:       "TimeGenerated",
+				},
+			},
+			Err: require.NoError,
+		},
 		{
 			name: "trace query",
 			queryModel: []backend.DataQuery{

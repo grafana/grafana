@@ -41,6 +41,10 @@ func AddConfigLinks(frame data.Frame, dl string, title *string) data.Frame {
 // 3.  query is not an alerts query
 // 4. number of selected resources is exactly one
 func MeetsBasicLogsCriteria(isBasicLogsQuery bool, resources []string) (bool, error) {
+	if !isBasicLogsQuery {
+		return false, nil
+	}
+
 	if len(resources) != 1 {
 		return false, fmt.Errorf("basic logs queries cannot be run against multiple resources")
 	}
