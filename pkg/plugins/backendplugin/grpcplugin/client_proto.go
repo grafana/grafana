@@ -10,6 +10,7 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/genproto/pluginv2"
 
 	"github.com/grafana/grafana/pkg/plugins"
+	"github.com/grafana/grafana/pkg/plugins/backendplugin"
 	"github.com/grafana/grafana/pkg/plugins/log"
 )
 
@@ -29,6 +30,7 @@ type ProtoClient interface {
 	PluginID() string
 	PluginVersion() string
 	PluginJSON() plugins.JSONData
+	Backend() backendplugin.Plugin
 	Logger() log.Logger
 	Start(context.Context) error
 	Stop(context.Context) error
@@ -84,6 +86,10 @@ func (r *protoClient) PluginVersion() string {
 
 func (r *protoClient) PluginJSON() plugins.JSONData {
 	return r.pluginJSON
+}
+
+func (r *protoClient) Backend() backendplugin.Plugin {
+	return r.plugin
 }
 
 func (r *protoClient) Logger() log.Logger {
