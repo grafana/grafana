@@ -16,7 +16,7 @@ import { discoverFeatures } from './api/buildInfo';
 import { fetchRulerRules, fetchRulerRulesGroup, fetchRulerRulesNamespace, setRulerRuleGroup } from './api/ruler';
 import { RecordingRuleEditorProps } from './components/rule-editor/RecordingRuleEditor';
 import { mockApi, setupMswServer } from './mockApi';
-import { MockDataSourceSrv, grantUserPermissions, labelslPluginMetaMock, mockDataSource } from './mocks';
+import { MockDataSourceSrv, grantUserPermissions, labelsPluginMetaMock, mockDataSource } from './mocks';
 import { fetchRulerRulesIfNotFetchedYet } from './state/actions';
 import * as config from './utils/config';
 
@@ -93,7 +93,7 @@ const mocks = {
 };
 
 const server = setupMswServer();
-mockApi(server).plugins.getPluginSettings({ ...labelslPluginMetaMock, enabled: false });
+mockApi(server).plugins.getPluginSettings({ ...labelsPluginMetaMock, enabled: false });
 mockApi(server).eval({ results: { A: { frames: [] } } });
 
 describe('RuleEditor recording rules', () => {

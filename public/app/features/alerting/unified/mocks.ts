@@ -748,7 +748,7 @@ export const onCallPluginMetaMock: PluginMeta = {
   },
 };
 
-export const labelslPluginMetaMock: PluginMeta = {
+export const labelsPluginMetaMock: PluginMeta = {
   name: 'Grafana IRM Labels',
   id: 'grafana-labels-app',
   type: PluginType.app,

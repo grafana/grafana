@@ -23,7 +23,7 @@ import { cloneRuleDefinition, CloneRuleEditor } from './CloneRuleEditor';
 import { ExpressionEditorProps } from './components/rule-editor/ExpressionEditor';
 import { mockApi, mockSearchApi } from './mockApi';
 import {
-  labelslPluginMetaMock,
+  labelsPluginMetaMock,
   mockDataSource,
   MockDataSourceSrv,
   mockRulerAlertingRule,
@@ -139,7 +139,7 @@ const amConfig: AlertManagerCortexConfig = {
   template_files: {},
 };
 
-mockApi(server).plugins.getPluginSettings({ ...labelslPluginMetaMock, enabled: false });
+mockApi(server).plugins.getPluginSettings({ ...labelsPluginMetaMock, enabled: false });
 describe('CloneRuleEditor', function () {
   describe('Grafana-managed rules', function () {
     it('should populate form values from the existing alert rule', async function () {
