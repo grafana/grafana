@@ -278,6 +278,7 @@ export class CloudMonitoringVariableQueryEditor extends PureComponent<Props, Var
             />
           </>
         );
+      case MetricFindQueryTypes.Services:
       case MetricFindQueryTypes.SLOServices:
         return (
           <>
