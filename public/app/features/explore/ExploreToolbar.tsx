@@ -239,7 +239,7 @@ export function ExploreToolbar({ exploreId, onChangeTime, onContentOutlineToogle
         forceShowLeftItems
       >
         {[
-          <QueriesDrawerDropdown key="queryLibrary" />,
+          <QueriesDrawerDropdown key="queryLibrary" variant={splitted ? 'compact' : 'full'} />,
           !splitted ? (
             <ToolbarButton
               variant="canvas"

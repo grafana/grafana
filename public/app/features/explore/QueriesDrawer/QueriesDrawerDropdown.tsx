@@ -5,7 +5,11 @@ import { Button, ButtonGroup, Dropdown, Menu } from '@grafana/ui';
 import { Tabs, useQueryLibraryContext } from './QueriesDrawerContext';
 import { i18n } from './utils';
 
-export function QueriesDrawerDropdown() {
+type Props = {
+  variant: 'compact' | 'full';
+};
+
+export function QueriesDrawerDropdown({ variant }: Props) {
   const { selectedTab, setSelectedTab, queryLibraryAvailable, setDrawerOpened } = useQueryLibraryContext();
 
   const mainButton = useRef<HTMLButtonElement>(null);
@@ -35,11 +39,13 @@ export function QueriesDrawerDropdown() {
 
   return (
     <ButtonGroup>
-      <Button ref={mainButton} variant="secondary" onClick={() => setDrawerOpened(true)}>
-        {selectedTab}
-      </Button>
+      {variant === 'full' && (
+        <Button ref={mainButton} variant="secondary" onClick={() => setDrawerOpened(true)}>
+          {selectedTab}
+        </Button>
+      )}
       <Dropdown overlay={menu}>
-        <Button variant="secondary" icon="angle-down" />
+        <Button variant="secondary" icon={variant === 'full' ? 'angle-down' : 'book'} />
       </Dropdown>
     </ButtonGroup>
   );

@@ -3,7 +3,7 @@ import React, { useState, useEffect } from 'react';
 
 import { SelectableValue } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { TabbedContainer, TabConfig } from '@grafana/ui';
+import { EmptyState, TabbedContainer, TabConfig } from '@grafana/ui';
 import { t } from 'app/core/internationalization';
 import { SortOrder, RichHistorySearchFilters, RichHistorySettings } from 'app/core/utils/richHistory';
 import { RichHistoryQuery } from 'app/types/explore';
@@ -85,8 +85,8 @@ export function RichHistory(props: RichHistoryProps) {
   const QueryLibraryTab: TabConfig = {
     label: i18n.queryLibrary,
     value: Tabs.QueryLibrary,
-    content: <span>Coming soon!</span>,
-    icon: 'history',
+    content: <EmptyState message="Coming soon!" variant="not-found" />,
+    icon: 'list-ui-alt',
   };
 
   const QueriesTab: TabConfig = {
