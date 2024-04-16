@@ -3,6 +3,7 @@ import { cloneDeep } from 'lodash';
 import { lastValueFrom, of } from 'rxjs';
 
 import {
+  AdHocVariableFilter,
   AnnotationEvent,
   AnnotationQueryRequest,
   CoreApp,
@@ -12,6 +13,7 @@ import {
   dateTime,
   LoadingState,
   rangeUtil,
+  ScopeSpecFilter,
   TimeRange,
   VariableHide,
 } from '@grafana/data';
@@ -1166,6 +1168,46 @@ describe('modifyQuery', () => {
 
         expect(result.refId).toEqual('A');
         expect(result.expr).toEqual('go_goroutines{cluster="us-cluster", pod!="pod-123"}');
+      });
+    });
+
+    describe('scope filters', () => {
+      const instanceSettings = {
+        access: 'proxy',
+        id: 1,
+        jsonData: {},
+        name: 'scoped-prom',
+        readOnly: false,
+        type: 'prometheus',
+        uid: 'scoped-prom',
+      } as unknown as DataSourceInstanceSettings<PromOptions>;
+      const ds = new PrometheusDatasource(instanceSettings, templateSrvStub);
+
+      it('should convert each adhoc operator to scope operator properly', () => {
+        const adhocFilter: AdHocVariableFilter[] = [
+          { key: 'eq', value: 'eqv', operator: '=' },
+          {
+            key: 'neq',
+            value: 'neqv',
+            operator: '!=',
+          },
+          { key: 'reg', value: 'regv', operator: '=~' },
+          { key: 'nreg', value: 'nregv', operator: '!~' },
+        ];
+        const expectedScopeFilter: ScopeSpecFilter[] = [
+          { key: 'eq', value: 'eqv', operator: 'equals' },
+          {
+            key: 'neq',
+            value: 'neqv',
+            operator: 'not-equals',
+          },
+          { key: 'reg', value: 'regv', operator: 'regex-match' },
+          { key: 'nreg', value: 'nregv', operator: 'regex-not-match' },
+        ];
+        const result = ds.generateScopeFilters(adhocFilter);
+        result.forEach((r, i) => {
+          expect(r).toEqual(expectedScopeFilter[i]);
+        });
       });
     });
   });
