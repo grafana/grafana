@@ -227,7 +227,10 @@ export const LogsPanel = ({
   const renderCommonLabels = () => (
     <div className={cx(style.labelContainer, isAscending && style.labelContainerAscending)}>
       <span className={style.label}>Common labels:</span>
-      <LogLabels labels={typeof commonLabels?.value === 'object' ? commonLabels?.value : noCommonLabels} emptyMessage="(no common labels)" />
+      <LogLabels
+        labels={typeof commonLabels?.value === 'object' ? commonLabels?.value : noCommonLabels}
+        emptyMessage="(no common labels)"
+      />
     </div>
   );
 
