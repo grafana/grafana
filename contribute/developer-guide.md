@@ -333,6 +333,10 @@ ulimit: open files: cannot modify limit: Operation not permitted
 
 If that happens to you, chances are you've already set a lower limit and your shell won't let you set a higher one. Try looking in your shell initialization files (~/.bashrc typically), if there's already an ulimit command that you can tweak.
 
+### Getting `AggregateError` when building frontend tests
+
+If you encounter an `AggregateError` when building new tests, this is probably due to a call to our client [backend service](https://github.com/grafana/grafana/blob/main/public/app/core/services/backend_srv.ts) not being mocked. Our backend service anticipates multiple responses being returned and was built to return errors as an array. A test encountering errors from the service will group those errors as an `AggregateError` without breaking down the individual errors within. `backend_srv.processRequestError` is called once per error and is a great place to return information on what the individual errors might contain.
+
 ## Next steps
 
 - Read our [style guides](/contribute/style-guides).
