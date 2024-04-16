@@ -54,7 +54,7 @@ Use full URLs for links. When linking to versioned docs, replace the version wit
 
 <!-- #proj-datatrails-dev, PM: Jay Goodson, Engineering: Darren Janeczek, André Pereira, Design: Catherine Gui -->
 
-_Public preview in all editions of Grafana_
+_Private preview in all editions of Grafana_
 
 Explore Metrics is a query-less experience for browsing Prometheus-compatible metrics. Search or filter to find a metric. Quickly find related metrics - all in just a few clicks. No PromQL to be found anywhere! With Explore Metrics, you can:
 
