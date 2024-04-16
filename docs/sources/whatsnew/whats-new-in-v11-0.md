@@ -25,7 +25,7 @@ Welcome to Grafana 11.0-preview! This release contains some major improvements: 
 
 Why "preview?" The Grafana 11.0 stable release is planned for this May. This is an early release to coincide with [Grafanacon 2024](https://grafana.com/about/events/grafanacon/2024/), so that you can try the new functionality early. To understand the differences between preview and GA releases, review the [release life cycle](https://grafana.com/docs/release-life-cycle/).
 
-For even more detail about all the changes in this release, refer to the [changelog](https://github.com/grafana/grafana/blob/main/CHANGELOG.md). For the specific steps we recommend when you upgrade to v11.0-preview, check out our [Upgrade Guide](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/upgrade-guide/upgrade-v11.0/).
+For even more detail about all the changes in this release, refer to the [changelog](https://github.com/grafana/grafana/blob/main/CHANGELOG.md). For the specific steps we recommend when you upgrade to v11.0-preview, check out our [Upgrade Guide](https://grafana.com/docs/grafana/next/upgrade-guide/upgrade-v11.0/).
 
 ## Breaking changes
 
