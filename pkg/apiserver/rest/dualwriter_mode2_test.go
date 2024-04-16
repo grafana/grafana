@@ -104,7 +104,7 @@ func TestMode2_Create(t *testing.T) {
 	tests :=
 		[]testCase{
 			{
-				name:  "creating an object in both the legacy and unified store",
+				name:  "creating an object in both the LegacyStorage and Storage",
 				input: exampleObj,
 				setupLegacyFn: func(m *mock.Mock, input runtime.Object) {
 					m.On("Create", context.Background(), input, mock.Anything, mock.Anything).Return(exampleObj, nil)
