@@ -9,16 +9,17 @@ const HIDDEN_LABELS = ['level', 'lvl', 'filename'];
 
 interface Props {
   labels: Labels;
+  emptyMessage?: string;
 }
 
-export const LogLabels = ({ labels }: Props) => {
+export const LogLabels = ({ labels, emptyMessage }: Props) => {
   const styles = useStyles2(getStyles);
   const displayLabels = useMemo(() => Object.keys(labels).filter((label) => !label.startsWith('_') && !HIDDEN_LABELS.includes(label)).sort(), [labels]);
 
-  if (displayLabels.length === 0) {
+  if (displayLabels.length === 0 && emptyMessage) {
     return (
       <span className={cx([styles.logsLabels])}>
-        <span className={cx([styles.logsLabel])}>(no unique labels)</span>
+        <span className={cx([styles.logsLabel])}>{emptyMessage}</span>
       </span>
     );
   }
