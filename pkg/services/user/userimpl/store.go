@@ -304,7 +304,7 @@ func (ss *sqlStore) Update(ctx context.Context, cmd *user.UpdateUserCommand) err
 	cmd.Email = strings.ToLower(cmd.Email)
 
 	return ss.db.WithTransactionalDbSession(ctx, func(sess *db.Session) error {
-		u := user.User{
+		user := user.User{
 			Name:    cmd.Name,
 			Email:   cmd.Email,
 			Login:   cmd.Login,
@@ -316,17 +316,21 @@ func (ss *sqlStore) Update(ctx context.Context, cmd *user.UpdateUserCommand) err
 
 		if cmd.IsDisabled != nil {
 			sess.UseBool("is_disabled")
-			u.IsDisabled = *cmd.IsDisabled
+			user.IsDisabled = *cmd.IsDisabled
 		}
 
 		if cmd.EmailVerified != nil {
 			q.UseBool("email_verified")
-			u.EmailVerified = *cmd.EmailVerified
+			user.EmailVerified = *cmd.EmailVerified
 		}
 
 		if cmd.IsGrafanaAdmin != nil {
 			q.UseBool("is_admin")
-			u.IsAdmin = *cmd.IsGrafanaAdmin
+			user.IsAdmin = *cmd.IsGrafanaAdmin
+		}
+
+		if _, err := q.Update(&user); err != nil {
+			return err
 		}
 
 		if cmd.IsGrafanaAdmin != nil && !*cmd.IsGrafanaAdmin {
@@ -336,16 +340,12 @@ func (ss *sqlStore) Update(ctx context.Context, cmd *user.UpdateUserCommand) err
 			}
 		}
 
-		if _, err := q.Update(&u); err != nil {
-			return err
-		}
-
 		sess.PublishAfterCommit(&events.UserUpdated{
-			Timestamp: u.Created,
-			Id:        u.ID,
-			Name:      u.Name,
-			Login:     u.Login,
-			Email:     u.Email,
+			Timestamp: user.Created,
+			Id:        user.ID,
+			Name:      user.Name,
+			Login:     user.Login,
+			Email:     user.Email,
 		})
 
 		return nil
