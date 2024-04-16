@@ -1,27 +1,10 @@
-import i18n, { BackendModule, InitOptions } from 'i18next';
+import i18n, { InitOptions } from 'i18next';
 import LanguageDetector, { DetectorOptions } from 'i18next-browser-languagedetector';
 import React from 'react';
 import { Trans as I18NextTrans, initReactI18next } from 'react-i18next'; // eslint-disable-line no-restricted-imports
 
-import { DEFAULT_LANGUAGE, LANGUAGES, VALID_LANGUAGES } from './constants';
-
-const getLanguagePartFromCode = (code: string) => code.split('-')[0].toLowerCase();
-
-const loadTranslations: BackendModule = {
-  type: 'backend',
-  init() {},
-  async read(language, namespace, callback) {
-    let localeDef = LANGUAGES.find((v) => v.code === language);
-    if (!localeDef) {
-      localeDef = LANGUAGES.find((v) => getLanguagePartFromCode(v.code) === getLanguagePartFromCode(language));
-    }
-    if (!localeDef) {
-      return callback(new Error('No message loader available for ' + language), null);
-    }
-    const messages = await localeDef.loader();
-    callback(null, messages);
-  },
-};
+import { DEFAULT_LANGUAGE, VALID_LANGUAGES } from './constants';
+import { loadTranslations } from './loadTranslations';
 
 export function initializeI18n(language: string): Promise<{ language: string | undefined }> {
   // This is a placeholder so we can put a 'comment' in the message json files.
