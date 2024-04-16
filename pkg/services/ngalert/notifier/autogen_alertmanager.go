@@ -8,7 +8,6 @@ import (
 
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/prometheus/alertmanager/pkg/labels"
-	"github.com/prometheus/common/model"
 	"golang.org/x/exp/maps"
 
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -121,7 +120,7 @@ func generateRouteFromSettings(defaultReceiver string, settings map[data.Fingerp
 				ObjectMatchers: definitions.ObjectMatchers{contactMatcher},
 				Continue:       false,
 				// Since we'll have many rules from different folders using this policy, we ensure it has these necessary groupings.
-				GroupByStr: []string{models.FolderTitleLabel, model.AlertNameLabel},
+				GroupByStr: append([]string{}, models.DefaultNotificationSettingsGroupBy...),
 			}
 			receiverRoutes[s.Receiver] = receiverRoute
 			autoGenRoot.Routes = append(autoGenRoot.Routes, receiverRoute)
@@ -140,7 +139,7 @@ func generateRouteFromSettings(defaultReceiver string, settings map[data.Fingerp
 			ObjectMatchers: definitions.ObjectMatchers{settingMatcher},
 			Continue:       false, // Only a single setting-specific route should match.
 
-			GroupByStr:        s.GroupBy, // Note: in order to pass validation at least FolderTitleLabel and AlertNameLabel are always included.
+			GroupByStr:        s.NormalizedGroupBy(),
 			MuteTimeIntervals: s.MuteTimeIntervals,
 			GroupWait:         s.GroupWait,
 			GroupInterval:     s.GroupInterval,

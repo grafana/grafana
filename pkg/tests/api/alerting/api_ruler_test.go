@@ -1885,7 +1885,7 @@ func TestIntegrationRuleNotificationSettings(t *testing.T) {
 		t.Log(body)
 	})
 
-	t.Run("create should fail if group_by does not contain special labels", func(t *testing.T) {
+	t.Run("create should not fail if group_by is missing required labels but they should still be used", func(t *testing.T) {
 		var copyD testData
 		err = json.Unmarshal(testDataRaw, &copyD)
 		group := copyD.RuleGroup
@@ -1893,8 +1893,46 @@ func TestIntegrationRuleNotificationSettings(t *testing.T) {
 		ns.GroupBy = []string{"label1"}
 
 		_, status, body := apiClient.PostRulesGroupWithStatus(t, folder, &group)
-		require.Equalf(t, http.StatusBadRequest, status, body)
+		require.Equalf(t, http.StatusAccepted, status, body)
+
+		cfg, status, body := apiClient.GetAlertmanagerConfigWithStatus(t)
+		if !assert.Equalf(t, http.StatusOK, status, body) {
+			return
+		}
+
+		// Ensure that the group by contains the default required labels.
+		autogenRoute := cfg.AlertmanagerConfig.Route.Routes[0]
+		receiverRoute := autogenRoute.Routes[0]
+		ruleRoute := receiverRoute.Routes[0]
+		assert.Equal(t, []model.LabelName{ngmodels.FolderTitleLabel, model.AlertNameLabel, "label1"}, ruleRoute.GroupBy)
+
 		t.Log(body)
+	})
+
+	t.Run("create with '...' groupBy followed by config post should succeed", func(t *testing.T) {
+		var copyD testData
+		err = json.Unmarshal(testDataRaw, &copyD)
+		group := copyD.RuleGroup
+		ns := group.Rules[0].GrafanaManagedAlert.NotificationSettings
+		ns.GroupBy = []string{ngmodels.FolderTitleLabel, model.AlertNameLabel, ngmodels.GroupByAll}
+
+		_, status, body := apiClient.PostRulesGroupWithStatus(t, folder, &group)
+		require.Equalf(t, http.StatusAccepted, status, body)
+
+		// Now update the config with no changes.
+		_, status, body = apiClient.GetAlertmanagerConfigWithStatus(t)
+		if !assert.Equalf(t, http.StatusOK, status, body) {
+			return
+		}
+
+		cfg := apimodels.PostableUserConfig{}
+
+		err = json.Unmarshal([]byte(body), &cfg)
+		require.NoError(t, err)
+
+		ok, err := apiClient.PostConfiguration(t, cfg)
+		require.NoError(t, err)
+		require.True(t, ok)
 	})
 
 	t.Run("should create rule and generate route", func(t *testing.T) {
