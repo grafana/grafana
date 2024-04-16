@@ -30,8 +30,9 @@ export const LogLabels = ({ labels }: Props) => {
         if (!value) {
           return;
         }
-        const tooltip = `${label}: ${value}`;
-        return <LogLabel key={label} styles={styles} tooltip={tooltip}>{value}</LogLabel>;
+        const tooltip = `${label}=${value}`;
+        const labelValue = `${label}=${value}`;
+        return <LogLabel key={label} styles={styles} tooltip={tooltip}>{labelValue}</LogLabel>;
       })}
     </span>
   );
