@@ -2,6 +2,7 @@ package datasource
 
 import (
 	"context"
+	"encoding/json"
 	"net/http"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
@@ -13,7 +14,6 @@ import (
 
 type subHealthREST struct {
 	builder *DataSourceAPIBuilder
-	handle  HTTPRequestHandlerFunc
 }
 
 var (
@@ -49,9 +49,34 @@ func (r *subHealthREST) Connect(ctx context.Context, name string, opts runtime.O
 	if err != nil {
 		return nil, err
 	}
-
 	ctx = backend.WithGrafanaConfig(ctx, pluginCtx.GrafanaConfig)
 	ctx = contextualMiddlewares(ctx)
 
-	return r.handle(ctx, pluginCtx, responder)
+	healthResponse, err := r.builder.client.CheckHealth(ctx, &backend.CheckHealthRequest{
+		PluginContext: pluginCtx,
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	return http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
+		rsp := &datasource.HealthCheckResult{}
+		rsp.Code = int(healthResponse.Status)
+		rsp.Status = healthResponse.Status.String()
+		rsp.Message = healthResponse.Message
+
+		if len(healthResponse.JSONDetails) > 0 {
+			err = json.Unmarshal(healthResponse.JSONDetails, &rsp.Details)
+			if err != nil {
+				responder.Error(err)
+				return
+			}
+		}
+
+		statusCode := http.StatusOK
+		if healthResponse.Status != backend.HealthStatusOk {
+			statusCode = http.StatusBadRequest
+		}
+		responder.Object(statusCode, rsp)
+	}), nil
 }

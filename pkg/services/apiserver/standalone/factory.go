@@ -97,7 +97,7 @@ func (p *DummyAPIFactory) MakeAPIServer(tracer tracing.Tracer, gv schema.GroupVe
 		), nil
 
 	case "testdata.datasource.grafana.app":
-		return datasource.NewCoreDataSourceAPIBuilder(
+		return datasource.NewDataSourceAPIBuilder(
 			plugins.JSONData{
 				ID: "grafana-testdata-datasource",
 			},

@@ -44,7 +44,7 @@ type DataSourceAPIBuilder struct {
 	connectionResourceInfo common.ResourceInfo
 
 	pluginJSON      plugins.JSONData
-	handlers        *PluginRequestHandlers
+	client          PluginClient // will only ever be called with the same pluginid!
 	datasources     PluginDatasourceProvider
 	contextProvider PluginContextWrapper
 	accessControl   accesscontrol.AccessControl
@@ -79,7 +79,7 @@ func RegisterAPIService(
 			continue // skip this one
 		}
 
-		builder, err = NewCoreDataSourceAPIBuilder(
+		builder, err = NewDataSourceAPIBuilder(
 			ds.JSONData,
 			pluginClient,
 			datasources.GetDatasourceProvider(ds.JSONData),
@@ -108,7 +108,7 @@ type PluginProtoClient interface {
 	pluginv2.DiagnosticsClient
 }
 
-func NewCoreDataSourceAPIBuilder(
+func NewDataSourceAPIBuilder(
 	plugin plugins.JSONData,
 	client PluginClient,
 	datasources PluginDatasourceProvider,
@@ -122,28 +122,7 @@ func NewCoreDataSourceAPIBuilder(
 	return &DataSourceAPIBuilder{
 		connectionResourceInfo: ri,
 		pluginJSON:             plugin,
-		handlers:               CorePluginHTTPHandler(client),
-		datasources:            datasources,
-		contextProvider:        contextProvider,
-		accessControl:          accessControl,
-	}, nil
-}
-
-func NewExternalDataSourceAPIBuilder(
-	plugin plugins.JSONData,
-	client PluginProtoClient,
-	datasources PluginDatasourceProvider,
-	contextProvider PluginContextWrapper,
-	accessControl accesscontrol.AccessControl) (*DataSourceAPIBuilder, error) {
-	ri, err := resourceFromPluginID(plugin.ID)
-	if err != nil {
-		return nil, err
-	}
-
-	return &DataSourceAPIBuilder{
-		connectionResourceInfo: ri,
-		pluginJSON:             plugin,
-		handlers:               ExternalPluginHTTPHandler(client),
+		client:                 client,
 		datasources:            datasources,
 		contextProvider:        contextProvider,
 		accessControl:          accessControl,
@@ -229,11 +208,11 @@ func (b *DataSourceAPIBuilder) GetAPIGroupInfo(
 			},
 		),
 	}
-	storage[conn.StoragePath("query")] = &subQueryREST{builder: b, handle: b.handlers.query}
-	storage[conn.StoragePath("health")] = &subHealthREST{builder: b, handle: b.handlers.health}
+	storage[conn.StoragePath("query")] = &subQueryREST{builder: b}
+	storage[conn.StoragePath("health")] = &subHealthREST{builder: b}
 
 	// TODO! only setup this endpoint if it is implemented
-	storage[conn.StoragePath("resource")] = &subResourceREST{builder: b, handle: b.handlers.resource}
+	storage[conn.StoragePath("resource")] = &subResourceREST{builder: b}
 
 	// Frontend proxy
 	if len(b.pluginJSON.Routes) > 0 {
