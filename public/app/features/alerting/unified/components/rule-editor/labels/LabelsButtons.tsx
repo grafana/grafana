@@ -1,9 +1,10 @@
 import React from 'react';
+import { UseFieldArrayRemove } from 'react-hook-form';
 
 import { Button } from '@grafana/ui';
 
 interface RemoveButtonProps {
-  remove: (index?: number | number[] | undefined) => void;
+  remove: UseFieldArrayRemove;
   index: number;
 }
 export function RemoveButton({ remove, index }: RemoveButtonProps) {
