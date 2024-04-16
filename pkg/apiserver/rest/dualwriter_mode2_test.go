@@ -170,6 +170,9 @@ func TestMode2_Get(t *testing.T) {
 				setupLegacyFn: func(m *mock.Mock, input string) {
 					m.On("Get", context.Background(), input, mock.Anything).Return(exampleObj, nil)
 				},
+				setupStorageFn: func(m *mock.Mock, input string) {
+					m.On("Get", context.Background(), input, mock.Anything).Return(anotherObj, nil)
+				},
 			},
 			{
 				name:  "object not present in storage but present in legacy store",
