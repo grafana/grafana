@@ -26,8 +26,8 @@ import {
   rangeUtil,
   renderLegendFormat,
   ScopedVars,
+  scopeFilterOperatorMap,
   ScopeSpecFilter,
-  ScopeFilterOperator,
   TimeRange,
 } from '@grafana/data';
 import {
@@ -73,13 +73,6 @@ const ANNOTATION_QUERY_STEP_DEFAULT = '60s';
 const GET_AND_POST_METADATA_ENDPOINTS = ['api/v1/query', 'api/v1/query_range', 'api/v1/series', 'api/v1/labels'];
 
 export const InstantQueryRefIdIndex = '-Instant';
-
-const filterOperatorMap: Record<string, ScopeFilterOperator> = {
-  '=': 'equals',
-  '!=': 'not-equals',
-  '=~': 'regex-match',
-  '!~': 'regex-not-match',
-};
 
 export class PrometheusDatasource
   extends DataSourceWithBackend<PromQuery, PromOptions>
@@ -517,7 +510,7 @@ export class PrometheusDatasource
       return [];
     }
 
-    return filters.map((f) => ({ ...f, operator: filterOperatorMap[f.operator] }));
+    return filters.map((f) => ({ ...f, operator: scopeFilterOperatorMap[f.operator] }));
   }
 
   getRateIntervalScopedVariable(interval: number, scrapeInterval: number) {

@@ -5,6 +5,13 @@ export interface ScopeDashboardBindingSpec {
 
 export type ScopeFilterOperator = 'equals' | 'not-equals' | 'regex-match' | 'regex-not-match';
 
+export const scopeFilterOperatorMap: Record<string, ScopeFilterOperator> = {
+  '=': 'equals',
+  '!=': 'not-equals',
+  '=~': 'regex-match',
+  '!~': 'regex-not-match',
+};
+
 export interface ScopeSpecFilter {
   key: string;
   value: string;
