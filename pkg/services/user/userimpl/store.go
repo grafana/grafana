@@ -333,10 +333,6 @@ func (ss *sqlStore) Update(ctx context.Context, cmd *user.UpdateUserCommand) err
 			return err
 		}
 
-		if err := ss.userCaseInsensitiveLoginConflict(ctx, sess, user.Login, user.Email); err != nil {
-			return err
-		}
-
 		if cmd.IsGrafanaAdmin != nil && !*cmd.IsGrafanaAdmin {
 			// validate that after update there is at least one server admin
 			if err := validateOneAdminLeft(ctx, sess); err != nil {
