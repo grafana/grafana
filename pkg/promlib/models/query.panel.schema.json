@@ -85,6 +85,13 @@
             ],
             "x-enum-description": {}
           },
+          "groupBy": {
+            "description": "Group By parameters to apply to aggregate expressions in the query",
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
           "hide": {
             "description": "true if query is disabled (ie should not be returned to the dashboard)\nNOTE: this does not always imply that the query should not be executed since\nthe results from a hidden query may be used as the input to other queries (SSE etc)",
             "type": "boolean"

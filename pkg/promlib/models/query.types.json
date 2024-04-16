@@ -8,7 +8,7 @@
     {
       "metadata": {
         "name": "default",
-        "resourceVersion": "1713187448137",
+        "resourceVersion": "1713279714586",
         "creationTimestamp": "2024-03-25T13:19:04Z"
       },
       "spec": {
@@ -68,6 +68,13 @@
               ],
               "type": "string",
               "x-enum-description": {}
+            },
+            "groupBy": {
+              "description": "Group By parameters to apply to aggregate expressions in the query",
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
             },
             "instant": {
               "description": "Returns only the latest value that Prometheus has scraped for the requested time series",

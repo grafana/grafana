@@ -68,6 +68,9 @@ type PrometheusQueryProperties struct {
 
 	// Additional Ad-hoc filters that take precedence over Scope on conflict.
 	AdhocFilters []ScopeFilter `json:"adhocFilters,omitempty"`
+
+	// Group By parameters to apply to aggregate expressions in the query
+	GroupBy []string `json:"groupBy,omitempty"`
 }
 
 // ScopeSpec is a hand copy of the ScopeSpec struct from pkg/apis/scope/v0alpha1/types.go
@@ -198,7 +201,7 @@ func Parse(query backend.DataQuery, dsScrapeInterval string, intervalCalculator 
 			scopeFilters = model.Scope.Filters
 		}
 
-		expr, err = ApplyQueryFilters(expr, scopeFilters, model.AdhocFilters)
+		expr, err = ApplyFiltersAndGroupBy(expr, scopeFilters, model.AdhocFilters, model.GroupBy)
 		if err != nil {
 			return nil, err
 		}
