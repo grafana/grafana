@@ -151,7 +151,6 @@
 /pkg/tsdb/grafanads/ @grafana/backend-platform
 /pkg/tsdb/legacydata/ @grafana/backend-platform
 /pkg/tsdb/opentsdb/ @grafana/backend-platform
-/pkg/tsdb/sqleng/ @grafana/partner-datasources @grafana/oss-big-tent
 /pkg/util/ @grafana/backend-platform
 /pkg/web/ @grafana/backend-platform
 
