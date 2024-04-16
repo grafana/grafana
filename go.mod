@@ -199,7 +199,7 @@ require (
 	go.mongodb.org/mongo-driver v1.13.1 // indirect
 	go.opencensus.io v0.24.0 // indirect
 	go.uber.org/atomic v1.11.0 // @grafana/alerting-squad-backend
-	go.uber.org/goleak v1.3.0 // indirect
+	go.uber.org/goleak v1.3.0 // @grafana/grafana-search-and-storage
 	golang.org/x/sys v0.18.0 // indirect
 	golang.org/x/text v0.14.0 // @grafana/backend-platform
 	golang.org/x/xerrors v0.0.0-20231012003039-104605ab7028 // indirect
@@ -243,7 +243,7 @@ require (
 	github.com/dave/dst v0.27.2 // @grafana/grafana-as-code
 	github.com/go-jose/go-jose/v3 v3.0.3 // @grafana/identity-access-team
 	github.com/grafana/dataplane/examples v0.0.1 // @grafana/observability-metrics
-	github.com/grafana/dataplane/sdata v0.0.7 // @grafana/observability-metrics
+	github.com/grafana/dataplane/sdata v0.0.8 // @grafana/observability-metrics
 	github.com/grafana/tempo v1.5.1-0.20230524121406-1dc1bfe7085b // @grafana/observability-traces-and-profiling
 	github.com/microsoft/go-mssqldb v1.6.1-0.20240214161942-b65008136246 // @grafana/grafana-bi-squad
 	github.com/redis/go-redis/v9 v9.1.0 // @grafana/alerting-squad-backend

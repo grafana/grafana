@@ -119,6 +119,7 @@ describe('Explore: Query History', () => {
     });
   });
 
+  // TODO: #86287
   it.skip('adds recently added query if the query history panel is already open', async () => {
     const urlParams = {
       left: serializeStateToUrlParam({
