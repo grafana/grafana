@@ -2,15 +2,15 @@ import React, { useRef } from 'react';
 
 import { Button, ButtonGroup, Dropdown, Menu } from '@grafana/ui';
 
-import { Tabs, useQueryLibraryContext } from './QueryLibraryContext';
+import { Tabs, useQueryLibraryContext } from './QueriesDrawerContext';
 import { i18n } from './utils';
 
-export function QueryLibraryDropdown() {
-  const { selectedTab, setSelectedTab, enabled, setDrawerOpened } = useQueryLibraryContext();
+export function QueriesDrawerDropdown() {
+  const { selectedTab, setSelectedTab, queryLibraryAvailable, setDrawerOpened } = useQueryLibraryContext();
 
   const mainButton = useRef<HTMLButtonElement>(null);
 
-  if (!enabled) {
+  if (!queryLibraryAvailable) {
     return undefined;
   }
 

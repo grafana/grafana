@@ -26,7 +26,7 @@ import { getFiscalYearStartMonth, getTimeZone } from '../profile/state/selectors
 
 import { ExploreTimeControls } from './ExploreTimeControls';
 import { LiveTailButton } from './LiveTailButton';
-import { QueryLibraryDropdown } from './QueryLibrary/QueryLibraryDropdown';
+import { QueriesDrawerDropdown } from './QueriesDrawer/QueriesDrawerDropdown';
 import { ShortLinkButtonMenu } from './ShortLinkButtonMenu';
 import { ToolbarExtensionPoint } from './extensions/ToolbarExtensionPoint';
 import { changeDatasource } from './state/datasource';
@@ -239,7 +239,7 @@ export function ExploreToolbar({ exploreId, onChangeTime, onContentOutlineToogle
         forceShowLeftItems
       >
         {[
-          <QueryLibraryDropdown key="queryLibrary" />,
+          <QueriesDrawerDropdown key="queryLibrary" />,
           !splitted ? (
             <ToolbarButton
               variant="canvas"

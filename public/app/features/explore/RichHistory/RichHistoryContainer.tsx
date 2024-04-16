@@ -9,7 +9,7 @@ import { Trans } from 'app/core/internationalization';
 import { StoreState } from 'app/types';
 
 // Components, enums
-import { useQueryLibraryContext } from '../QueryLibrary/QueryLibraryContext';
+import { useQueryLibraryContext } from '../QueriesDrawer/QueriesDrawerContext';
 import {
   deleteRichHistory,
   initRichHistory,

@@ -9,8 +9,8 @@ import { SortOrder, RichHistorySearchFilters, RichHistorySettings } from 'app/co
 import { RichHistoryQuery } from 'app/types/explore';
 
 import { supportedFeatures } from '../../../core/history/richHistoryStorageProvider';
-import { Tabs, useQueryLibraryContext } from '../QueryLibrary/QueryLibraryContext';
-import { i18n } from '../QueryLibrary/utils';
+import { Tabs, useQueryLibraryContext } from '../QueriesDrawer/QueriesDrawerContext';
+import { i18n } from '../QueriesDrawer/utils';
 
 import { RichHistoryQueriesTab } from './RichHistoryQueriesTab';
 import { RichHistorySettingsTab } from './RichHistorySettingsTab';
@@ -45,7 +45,7 @@ export function RichHistory(props: RichHistoryProps) {
 
   const [loading, setLoading] = useState(false);
 
-  const { enabled } = useQueryLibraryContext();
+  const { queryLibraryAvailable } = useQueryLibraryContext();
 
   const updateSettings = (settingsToUpdate: Partial<RichHistorySettings>) => {
     props.updateHistorySettings({ ...props.richHistorySettings, ...settingsToUpdate });
@@ -143,7 +143,7 @@ export function RichHistory(props: RichHistoryProps) {
     icon: 'sliders-v-alt',
   };
 
-  let tabs = (enabled ? [QueryLibraryTab] : []).concat([QueriesTab, StarredTab, SettingsTab]);
+  let tabs = (queryLibraryAvailable ? [QueryLibraryTab] : []).concat([QueriesTab, StarredTab, SettingsTab]);
   return (
     <TabbedContainer
       tabs={tabs}

@@ -13,43 +13,44 @@ export enum Tabs {
 }
 
 type QueryLibraryContextType = {
-  // The value is determined in runtime based on featureToggle and user preferences (see RichHistoryContainer)
   selectedTab?: Tabs;
   setSelectedTab: (tab: Tabs) => void;
-  enabled: boolean;
+  queryLibraryAvailable: boolean;
   drawerOpened: boolean;
   setDrawerOpened: (value: boolean) => void;
 };
 
-export const QueryLibraryContext = createContext<QueryLibraryContextType>({
+export const QueriesDrawerContext = createContext<QueryLibraryContextType>({
   selectedTab: undefined,
   setSelectedTab: () => {},
-  enabled: false,
+  queryLibraryAvailable: false,
   drawerOpened: false,
   setDrawerOpened: () => {},
 });
 
 export function useQueryLibraryContext() {
-  return useContext(QueryLibraryContext);
+  return useContext(QueriesDrawerContext);
 }
 
 export function QueryLibraryContextProvider({ children }: PropsWithChildren) {
-  const enabled = config.featureToggles.queryLibrary === true;
-  const [selectedTab, setSelectedTab] = useState<Tabs | undefined>(enabled ? Tabs.QueryLibrary : undefined);
+  const queryLibraryAvailable = config.featureToggles.queryLibrary === true;
+  const [selectedTab, setSelectedTab] = useState<Tabs | undefined>(
+    queryLibraryAvailable ? Tabs.QueryLibrary : undefined
+  );
   const [drawerOpened, setDrawerOpened] = useState<boolean>(false);
 
   const settings = useSelector(selectRichHistorySettings);
 
   useEffect(() => {
-    if (settings && !enabled) {
+    if (settings && !queryLibraryAvailable) {
       setSelectedTab(settings.starredTabAsFirstTab ? Tabs.Starred : Tabs.RichHistory);
     }
-  }, [settings, setSelectedTab]);
+  }, [settings, setSelectedTab, queryLibraryAvailable]);
 
   return (
-    <QueryLibraryContext.Provider
+    <QueriesDrawerContext.Provider
       value={{
-        enabled,
+        queryLibraryAvailable,
         selectedTab,
         setSelectedTab,
         drawerOpened,
@@ -57,6 +58,6 @@ export function QueryLibraryContextProvider({ children }: PropsWithChildren) {
       }}
     >
       {children}
-    </QueryLibraryContext.Provider>
+    </QueriesDrawerContext.Provider>
   );
 }

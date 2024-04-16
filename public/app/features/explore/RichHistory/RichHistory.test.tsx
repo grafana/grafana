@@ -4,7 +4,7 @@ import { TestProvider } from 'test/helpers/TestProvider';
 
 import { SortOrder } from 'app/core/utils/richHistory';
 
-import { Tabs } from '../QueryLibrary/QueryLibraryContext';
+import { Tabs } from '../QueriesDrawer/QueriesDrawerContext';
 
 import { RichHistory, RichHistoryProps } from './RichHistory';
 

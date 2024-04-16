@@ -6,7 +6,7 @@ import { Components } from '@grafana/e2e-selectors';
 import { ToolbarButton, useTheme2 } from '@grafana/ui';
 import { t, Trans } from 'app/core/internationalization';
 
-import { useQueryLibraryContext } from './QueryLibrary/QueryLibraryContext';
+import { useQueryLibraryContext } from './QueriesDrawer/QueriesDrawerContext';
 
 type Props = {
   addQueryRowButtonDisabled?: boolean;
