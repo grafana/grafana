@@ -66,17 +66,19 @@ func RegisterAPIService(
 		return nil, nil // skip registration unless opting into experimental apis
 	}
 
+	ctx := context.Background()
 	var err error
 	var builder *DataSourceAPIBuilder
-	all := pluginStore.Plugins(context.Background(), plugins.TypeDataSource)
+	all := pluginStore.Plugins(ctx, plugins.TypeDataSource)
 	ids := []string{
 		"grafana-testdata-datasource",
 		"prometheus",
 		"graphite",
+		"loki",
+		"influx",
 		"grafana-googlesheets-datasource", // external plugin
 	}
 
-	ctx := context.Background()
 	for _, ds := range all {
 		if !slices.Contains(ids, ds.ID) {
 			continue // skip this one
@@ -87,7 +89,7 @@ func RegisterAPIService(
 			return nil, fmt.Errorf("invalid plugin")
 		}
 
-		// only relevant when the slices check on line 81 is removed
+		// only relevant when the slices check on line 84 is removed
 		_, ok = plugin.Client()
 		if !ok {
 			continue // frontend only datasources
@@ -111,11 +113,13 @@ func NewDataSourceAPIBuilder(
 	datasources PluginDatasourceProvider,
 	contextProvider PluginContextWrapper,
 	accessControl accesscontrol.AccessControl) (*DataSourceAPIBuilder, error) {
+	if plugin.Type != plugins.TypeDataSource {
+		return nil, fmt.Errorf("expected datasource plugin")
+	}
 	ri, err := resourceFromPluginID(plugin.ID)
 	if err != nil {
 		return nil, err
 	}
-
 	_, ok := plugin.Client()
 	if !ok {
 		return nil, fmt.Errorf("error getting client [%s]", plugin.ID)
