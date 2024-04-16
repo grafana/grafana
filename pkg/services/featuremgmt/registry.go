@@ -766,8 +766,9 @@ var (
 		{
 			Name:            "kubernetesPlaylists",
 			Description:     "Use the kubernetes API in the frontend for playlists, and route /api/playlist requests to k8s",
-			Stage:           FeatureStageExperimental,
+			Stage:           FeatureStageGeneralAvailability,
 			Owner:           grafanaAppPlatformSquad,
+			Expression:      "true",
 			RequiresRestart: true, // changes the API routing
 		},
 		{
@@ -1163,13 +1164,6 @@ var (
 			Owner:             identityAccessTeam,
 			HideFromDocs:      true,
 			HideFromAdminPage: true,
-		},
-		{
-			Name:         "usePrometheusFrontendPackage",
-			Description:  "Use the @grafana/prometheus frontend package in core Prometheus.",
-			Stage:        FeatureStageGeneralAvailability,
-			FrontendOnly: true,
-			Owner:        grafanaObservabilityMetricsSquad,
 		},
 		{
 			Name:              "oauthRequireSubClaim",

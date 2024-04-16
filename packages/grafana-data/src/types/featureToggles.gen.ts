@@ -174,7 +174,6 @@ export interface FeatureToggles {
   authAPIAccessTokenAuth?: boolean;
   scopeFilters?: boolean;
   ssoSettingsSAML?: boolean;
-  usePrometheusFrontendPackage?: boolean;
   oauthRequireSubClaim?: boolean;
   newDashboardWithFiltersAndGroupBy?: boolean;
   cloudWatchNewLabelParsing?: boolean;
