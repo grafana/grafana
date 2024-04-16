@@ -313,10 +313,10 @@ function updateFunctionArgs(expr: string, node: SyntaxNode | null, context: Cont
 
       while (child) {
         let binaryExpressionWithinFunctionArgs: SyntaxNode | null;
-        if (child?.type.id === BinaryExpr) {
+        if (child.type.id === BinaryExpr) {
           binaryExpressionWithinFunctionArgs = child;
         } else {
-          binaryExpressionWithinFunctionArgs = child?.getChild(BinaryExpr);
+          binaryExpressionWithinFunctionArgs = child.getChild(BinaryExpr);
         }
 
         if (binaryExpressionWithinFunctionArgs) {
