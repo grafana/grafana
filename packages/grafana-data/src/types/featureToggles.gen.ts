@@ -178,4 +178,5 @@ export interface FeatureToggles {
   newDashboardWithFiltersAndGroupBy?: boolean;
   cloudWatchNewLabelParsing?: boolean;
   accessActionSets?: boolean;
+  disableNumericMetricsSortingInExpressions?: boolean;
 }

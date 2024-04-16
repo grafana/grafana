@@ -2120,6 +2120,19 @@
         "stage": "experimental",
         "codeowner": "@grafana/identity-access-team"
       }
+    },
+    {
+      "metadata": {
+        "name": "disableNumericMetricsSortingInExpressions",
+        "resourceVersion": "1713208725143",
+        "creationTimestamp": "2024-04-15T19:18:45Z"
+      },
+      "spec": {
+        "description": "In server-side expressions, disable the sorting of numeric-kind metrics by their metric name or labels.",
+        "stage": "experimental",
+        "codeowner": "@grafana/observability-metrics",
+        "requiresRestart": true
+      }
     }
   ]
 }
