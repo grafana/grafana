@@ -20,7 +20,7 @@ import { reportInteraction } from '@grafana/runtime';
 import { Button, Dropdown, Menu, ToolbarButton, Tooltip, useStyles2 } from '@grafana/ui';
 
 import { downloadDataFrameAsCsv, downloadLogsModelAsTxt } from '../../inspector/utils/download';
-import { LogLabels } from '../../logs/components/LogLabels';
+import { LogLabels, LogLabelsList } from '../../logs/components/LogLabels';
 import { MAX_CHARACTERS } from '../../logs/components/LogRowMessage';
 import { logRowsToReadableJson } from '../../logs/utils';
 import { MetaInfoText, MetaItemProps } from '../MetaInfoText';
@@ -134,7 +134,7 @@ export const LogsMetaRow = React.memo(
       logsMetaItem.push(
         {
           label: 'Showing only selected fields',
-          value: <LogLabels labels={displayedFields} />,
+          value: <LogLabelsList labels={displayedFields} />,
         },
         {
           label: '',
@@ -198,7 +198,7 @@ LogsMetaRow.displayName = 'LogsMetaRow';
 
 function renderMetaItem(value: string | number | Labels, kind: LogsMetaKind) {
   if (typeof value === 'string' || typeof value === 'number') {
-    return <>value</>;
+    return <>{value}</>;
   }
   if (kind === LogsMetaKind.LabelsMap) {
     return <LogLabels labels={value} />;
