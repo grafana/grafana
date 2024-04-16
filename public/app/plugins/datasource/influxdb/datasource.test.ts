@@ -296,7 +296,7 @@ describe('InfluxDataSource Frontend Mode', () => {
       expect(query.tz).toBe(text);
       expect(query.tags![0].value).toBe(textWithFormatRegex);
       expect(query.groupBy![0].params![0]).toBe(justText);
-      expect(query.select![0][0].params![0]).toBe(textWithFormatRegex);
+      expect(query.select![0][0].params![0]).toBe(justText);
       expect(query.adhocFilters?.[0].key).toBe(adhocFilters[0].key);
     }
 

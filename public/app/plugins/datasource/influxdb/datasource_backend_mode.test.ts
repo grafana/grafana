@@ -187,7 +187,7 @@ describe('InfluxDataSource Backend Mode', () => {
       expect(query.tz).toBe(text);
       expect(query.tags![0].value).toBe(textWithFormatRegex);
       expect(query.groupBy![0].params![0]).toBe(justText);
-      expect(query.select![0][0].params![0]).toBe(textWithFormatRegex);
+      expect(query.select![0][0].params![0]).toBe(justText);
       expect(query.adhocFilters?.[0].key).toBe(adhocFilters[0].key);
     }
 
@@ -349,7 +349,7 @@ describe('InfluxDataSource Backend Mode', () => {
       expect(res.tags?.[0].value).toEqual(expected);
     });
 
-    it('should interpolate field keys', () => {
+    it('should interpolate field keys with given scopedVars', () => {
       const query: InfluxQuery = {
         refId: 'A',
         tags: [
@@ -372,8 +372,8 @@ describe('InfluxDataSource Backend Mode', () => {
           ],
         ],
       };
-      const res = ds.applyVariables(query, {});
-      const expected = `(field_1|field_3)`;
+      const res = ds.applyVariables(query, { field_var: { text: 'field_3', value: 'field_3' } });
+      const expected = `field_3`;
       expect(res.select?.[0][0].params?.[0]).toEqual(expected);
     });
   });

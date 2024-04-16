@@ -254,14 +254,7 @@ export default class InfluxDatasource extends DataSourceWithBackend<InfluxQuery,
         return selects.map((select) => {
           return {
             ...select,
-            params: select.params?.map((param) =>
-              this.templateSrv.replace(
-                param.toString() ?? '',
-                scopedVars,
-                (value: string | string[] = [], variable: QueryVariableModel) =>
-                  this.interpolateQueryExpr(value, variable, param.toString())
-              )
-            ),
+            params: select.params?.map((param) => this.templateSrv.replace(param.toString(), scopedVars)),
           };
         });
       });
