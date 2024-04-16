@@ -86,12 +86,6 @@ func TestMode2(t *testing.T) {
 }
 
 var createFn = func(context.Context, runtime.Object) error { return nil }
-var failingOption = &metainternalversion.ListOptions{
-	TypeMeta: metav1.TypeMeta{
-		APIVersion: "v1",
-		Kind:       "fail",
-	},
-}
 var exampleOption = &metainternalversion.ListOptions{
 	TypeMeta: metav1.TypeMeta{
 		APIVersion: "v1",
