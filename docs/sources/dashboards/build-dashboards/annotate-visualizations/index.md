@@ -51,6 +51,10 @@ To add annotations directly in the panel:
 - The dashboard must already be saved.
 - The built-in query must be enabled. Learn more in [Built-in query](#built-in-query).
 
+Check out the video below for a quick tutorial.
+
+{{< youtube id="N5iOlyYyK6Q" >}}
+
 ### Add an annotation
 
 To add an annotation, complete the following steps:
