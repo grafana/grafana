@@ -37,28 +37,22 @@ func TestRequestConfigProvider_PluginRequestConfig(t *testing.T) {
 			name: "Both features and proxy settings enabled",
 			cfg: &PluginInstanceCfg{
 				ProxySettings: setting.SecureSocksDSProxySettings{
-					Enabled:            true,
-					ShowUI:             true,
-					ClientCert:         "c3rt",
-					ClientCertFilePath: "./c3rt",
-					ClientKey:          "k3y",
-					ClientKeyFilePath:  "./k3y",
-					RootCAFilePaths:    []string{"./ca"},
-					RootCAs:            []string{"ca"},
-					ProxyAddress:       "https://proxy.grafana.com",
-					ServerName:         "secureProxy",
-					AllowInsecure:      true,
+					Enabled:       true,
+					ShowUI:        true,
+					ClientCert:    "c3rt",
+					ClientKey:     "k3y",
+					RootCAs:       []string{"ca"},
+					ProxyAddress:  "https://proxy.grafana.com",
+					ServerName:    "secureProxy",
+					AllowInsecure: true,
 				},
 				Features: featuremgmt.WithFeatures("feat-2", "feat-500", "feat-1"),
 			},
 			expected: map[string]string{
 				"GF_INSTANCE_FEATURE_TOGGLES_ENABLE":                 "feat-1,feat-2,feat-500",
 				"GF_SECURE_SOCKS_DATASOURCE_PROXY_SERVER_ENABLED":    "true",
-				"GF_SECURE_SOCKS_DATASOURCE_PROXY_CLIENT_CERT":       "./c3rt",
 				"GF_SECURE_SOCKS_DATASOURCE_PROXY_CLIENT_CERT_VAL":   "c3rt",
-				"GF_SECURE_SOCKS_DATASOURCE_PROXY_CLIENT_KEY":        "./k3y",
 				"GF_SECURE_SOCKS_DATASOURCE_PROXY_CLIENT_KEY_VAL":    "k3y",
-				"GF_SECURE_SOCKS_DATASOURCE_PROXY_ROOT_CA_CERT":      "./ca",
 				"GF_SECURE_SOCKS_DATASOURCE_PROXY_ROOT_CA_CERT_VALS": "ca",
 				"GF_SECURE_SOCKS_DATASOURCE_PROXY_PROXY_ADDRESS":     "https://proxy.grafana.com",
 				"GF_SECURE_SOCKS_DATASOURCE_PROXY_SERVER_NAME":       "secureProxy",
@@ -111,19 +105,17 @@ func TestRequestConfigProvider_PluginRequestConfig(t *testing.T) {
 			name: "Multiple Root CA certs in proxy settings are supported",
 			cfg: &PluginInstanceCfg{
 				ProxySettings: setting.SecureSocksDSProxySettings{
-					Enabled:         true,
-					ShowUI:          true,
-					RootCAFilePaths: []string{"./ca", "./ca2"},
-					RootCAs:         []string{"ca", "ca2"},
-					ProxyAddress:    "https://proxy.grafana.com",
-					ServerName:      "secureProxy",
-					AllowInsecure:   true,
+					Enabled:       true,
+					ShowUI:        true,
+					RootCAs:       []string{"ca", "ca2"},
+					ProxyAddress:  "https://proxy.grafana.com",
+					ServerName:    "secureProxy",
+					AllowInsecure: true,
 				},
 				Features: featuremgmt.WithFeatures(),
 			},
 			expected: map[string]string{
 				"GF_SECURE_SOCKS_DATASOURCE_PROXY_SERVER_ENABLED":    "true",
-				"GF_SECURE_SOCKS_DATASOURCE_PROXY_ROOT_CA_CERT":      "./ca ./ca2",
 				"GF_SECURE_SOCKS_DATASOURCE_PROXY_ROOT_CA_CERT_VALS": "ca,ca2",
 				"GF_SECURE_SOCKS_DATASOURCE_PROXY_PROXY_ADDRESS":     "https://proxy.grafana.com",
 				"GF_SECURE_SOCKS_DATASOURCE_PROXY_SERVER_NAME":       "secureProxy",
@@ -137,6 +129,44 @@ func TestRequestConfigProvider_PluginRequestConfig(t *testing.T) {
 			require.Subset(t, p.PluginRequestConfig(context.Background(), "", nil), tc.expected)
 		})
 	}
+}
+
+func TestRequestConfigProvider_PluginRequestConfig_proxySettings(t *testing.T) {
+	t.Run("Proxy file path fields are not sent in the request", func(t *testing.T) {
+		cfg := &PluginInstanceCfg{
+			ProxySettings: setting.SecureSocksDSProxySettings{
+				Enabled:            true,
+				ShowUI:             true,
+				ClientCert:         "c3rt",
+				ClientCertFilePath: "./c3rt",
+				ClientKey:          "k3y",
+				ClientKeyFilePath:  "./k3y",
+				RootCAFilePaths:    []string{"./ca"},
+				RootCAs:            []string{"ca"},
+				ProxyAddress:       "https://proxy.grafana.com",
+				ServerName:         "secureProxy",
+				AllowInsecure:      true,
+			},
+			Features: featuremgmt.WithFeatures(),
+		}
+		expected := map[string]string{
+			// <defaults>
+			"GF_SQL_MAX_OPEN_CONNS_DEFAULT":            "0",
+			"GF_SQL_MAX_IDLE_CONNS_DEFAULT":            "0",
+			"GF_SQL_MAX_CONN_LIFETIME_SECONDS_DEFAULT": "0",
+			// </defaults>
+			"GF_SECURE_SOCKS_DATASOURCE_PROXY_SERVER_ENABLED":    "true",
+			"GF_SECURE_SOCKS_DATASOURCE_PROXY_CLIENT_CERT_VAL":   "c3rt",
+			"GF_SECURE_SOCKS_DATASOURCE_PROXY_CLIENT_KEY_VAL":    "k3y",
+			"GF_SECURE_SOCKS_DATASOURCE_PROXY_ROOT_CA_CERT_VALS": "ca",
+			"GF_SECURE_SOCKS_DATASOURCE_PROXY_PROXY_ADDRESS":     "https://proxy.grafana.com",
+			"GF_SECURE_SOCKS_DATASOURCE_PROXY_SERVER_NAME":       "secureProxy",
+			"GF_SECURE_SOCKS_DATASOURCE_PROXY_ALLOW_INSECURE":    "true",
+		}
+
+		p := NewRequestConfigProvider(cfg)
+		require.Equal(t, p.PluginRequestConfig(context.Background(), "", nil), expected)
+	})
 }
 
 func TestRequestConfigProvider_PluginRequestConfig_featureToggles(t *testing.T) {
