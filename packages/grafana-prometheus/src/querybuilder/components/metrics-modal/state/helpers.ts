@@ -1,3 +1,4 @@
+// Core Grafana history https://github.com/grafana/grafana/blob/v11.0.0-preview/public/app/plugins/datasource/prometheus/querybuilder/components/metrics-modal/state/helpers.ts
 import { AnyAction } from '@reduxjs/toolkit';
 
 import { reportInteraction } from '@grafana/runtime';
