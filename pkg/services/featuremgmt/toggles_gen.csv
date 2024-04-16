@@ -67,7 +67,6 @@ frontendSandboxMonitorOnly,experimental,@grafana/plugins-platform-backend,false,
 sqlDatasourceDatabaseSelection,preview,@grafana/dataviz-squad,false,false,true
 lokiFormatQuery,experimental,@grafana/observability-logs,false,false,true
 recordedQueriesMulti,GA,@grafana/observability-metrics,false,false,false
-pluginsDynamicAngularDetectionPatterns,GA,@grafana/plugins-platform-backend,false,false,false
 vizAndWidgetSplit,experimental,@grafana/dashboards-squad,false,false,true
 prometheusIncrementalQueryInstrumentation,experimental,@grafana/observability-metrics,false,false,true
 logsExploreTableVisualisation,GA,@grafana/observability-logs,false,false,true
@@ -102,7 +101,7 @@ panelMonitoring,GA,@grafana/dataviz-squad,false,false,true
 enableNativeHTTPHistogram,experimental,@grafana/hosted-grafana-team,false,false,false
 formatString,preview,@grafana/dataviz-squad,false,false,true
 transformationsVariableSupport,preview,@grafana/dataviz-squad,false,false,true
-kubernetesPlaylists,experimental,@grafana/grafana-app-platform-squad,false,true,false
+kubernetesPlaylists,GA,@grafana/grafana-app-platform-squad,false,true,false
 kubernetesSnapshots,experimental,@grafana/grafana-app-platform-squad,false,true,false
 kubernetesQueryServiceRewrite,experimental,@grafana/grafana-app-platform-squad,true,true,false
 cloudWatchBatchQueries,preview,@grafana/aws-datasources,false,false,false
@@ -156,7 +155,7 @@ betterPageScrolling,GA,@grafana/grafana-frontend-platform,false,false,true
 authAPIAccessTokenAuth,experimental,@grafana/identity-access-team,false,false,false
 scopeFilters,experimental,@grafana/dashboards-squad,false,false,false
 ssoSettingsSAML,experimental,@grafana/identity-access-team,false,false,false
-usePrometheusFrontendPackage,GA,@grafana/observability-metrics,false,false,true
 oauthRequireSubClaim,experimental,@grafana/identity-access-team,false,false,false
 newDashboardWithFiltersAndGroupBy,experimental,@grafana/dashboards-squad,false,false,false
 cloudWatchNewLabelParsing,GA,@grafana/aws-datasources,false,false,false
+accessActionSets,experimental,@grafana/identity-access-team,false,false,false

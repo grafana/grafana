@@ -491,6 +491,7 @@ func TestLoginOAuthRedirect(t *testing.T) {
 		oAuthInfos: oAuthInfos,
 	}
 	hs := &HTTPServer{
+		authnService:     &authntest.FakeService{},
 		Cfg:              cfg,
 		SettingsProvider: &setting.OSSImpl{Cfg: cfg},
 		License:          &licensing.OSSLicensingService{},
@@ -657,6 +658,7 @@ func TestLogoutSaml(t *testing.T) {
 	license.On("FeatureEnabled", "saml").Return(true)
 
 	hs := &HTTPServer{
+		authnService:     &authntest.FakeService{},
 		Cfg:              sc.cfg,
 		SettingsProvider: &setting.OSSImpl{Cfg: sc.cfg},
 		License:          license,

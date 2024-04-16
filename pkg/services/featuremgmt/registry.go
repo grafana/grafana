@@ -509,14 +509,6 @@ var (
 			AllowSelfServe: false,
 		},
 		{
-			Name:         "pluginsDynamicAngularDetectionPatterns",
-			Description:  "Enables fetching Angular detection patterns for plugins from GCOM and fallback to hardcoded ones",
-			Stage:        FeatureStageGeneralAvailability,
-			FrontendOnly: false,
-			Owner:        grafanaPluginsPlatformSquad,
-			Expression:   "true", // enabled by default
-		},
-		{
 			Name:         "vizAndWidgetSplit",
 			Description:  "Split panels between visualizations and widgets",
 			Stage:        FeatureStageExperimental,
@@ -774,8 +766,9 @@ var (
 		{
 			Name:            "kubernetesPlaylists",
 			Description:     "Use the kubernetes API in the frontend for playlists, and route /api/playlist requests to k8s",
-			Stage:           FeatureStageExperimental,
+			Stage:           FeatureStageGeneralAvailability,
 			Owner:           grafanaAppPlatformSquad,
+			Expression:      "true",
 			RequiresRestart: true, // changes the API routing
 		},
 		{
@@ -1173,13 +1166,6 @@ var (
 			HideFromAdminPage: true,
 		},
 		{
-			Name:         "usePrometheusFrontendPackage",
-			Description:  "Use the @grafana/prometheus frontend package in core Prometheus.",
-			Stage:        FeatureStageGeneralAvailability,
-			FrontendOnly: true,
-			Owner:        grafanaObservabilityMetricsSquad,
-		},
-		{
 			Name:              "oauthRequireSubClaim",
 			Description:       "Require that sub claims is present in oauth tokens.",
 			Stage:             FeatureStageExperimental,
@@ -1204,6 +1190,12 @@ var (
 			Owner:          awsDatasourcesSquad,
 			FrontendOnly:   false,
 			AllowSelfServe: false,
+		},
+		{
+			Name:        "accessActionSets",
+			Description: "Introduces action sets for resource permissions",
+			Stage:       FeatureStageExperimental,
+			Owner:       identityAccessTeam,
 		},
 	}
 )

@@ -218,7 +218,7 @@ type FolderPermissionsService struct {
 	*resourcepermissions.Service
 }
 
-var FolderViewActions = []string{dashboards.ActionFoldersRead, accesscontrol.ActionAlertingRuleRead, libraryelements.ActionLibraryPanelsRead}
+var FolderViewActions = []string{dashboards.ActionFoldersRead, accesscontrol.ActionAlertingRuleRead, libraryelements.ActionLibraryPanelsRead, accesscontrol.ActionAlertingSilencesRead}
 var FolderEditActions = append(FolderViewActions, []string{
 	dashboards.ActionFoldersWrite,
 	dashboards.ActionFoldersDelete,
@@ -226,6 +226,8 @@ var FolderEditActions = append(FolderViewActions, []string{
 	accesscontrol.ActionAlertingRuleCreate,
 	accesscontrol.ActionAlertingRuleUpdate,
 	accesscontrol.ActionAlertingRuleDelete,
+	accesscontrol.ActionAlertingSilencesCreate,
+	accesscontrol.ActionAlertingSilencesWrite,
 	libraryelements.ActionLibraryPanelsCreate,
 	libraryelements.ActionLibraryPanelsWrite,
 	libraryelements.ActionLibraryPanelsDelete,
