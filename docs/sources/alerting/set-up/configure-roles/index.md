@@ -30,11 +30,11 @@ For Grafana OSS, there are three roles: Admin, Editor, and Viewer.
 
 Details of the roles and the access they provide for Grafana Alerting are below.
 
-| Role                     | Access                      |
-| ------------------------ | ------------------------- |
-| Admin                 | Write access to alert rules, notification resources (notification API, contact points, templates, time intervals, notification policies, and silences), and provisioning.
-| Editor                 | Write access to alert rules, notification resources (notification API, contact points, templates, time intervals, notification policies, and silences), and provisioning.
-| Viewer                    | Read access to alert rules, notification resources (notification API, contact points, templates, time intervals, notification policies, and silences).
+| Role   | Access                                                                                                                                                                    |
+| ------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Admin  | Write access to alert rules, notification resources (notification API, contact points, templates, time intervals, notification policies, and silences), and provisioning. |
+| Editor | Write access to alert rules, notification resources (notification API, contact points, templates, time intervals, notification policies, and silences), and provisioning. |
+| Viewer | Read access to alert rules, notification resources (notification API, contact points, templates, time intervals, notification policies, and silences).                    |
 
 ## Assign roles
 
@@ -56,13 +56,13 @@ In this case, you would assign the **Viewer** role and then add **Editor** permi
 
 Details on the adding folder permissions as well as roles and the access that provides for Grafana Alerting is below.
 
-| Role   | Folder permission |Access |
-| ----   | -----------       | ----- |
-| Admin  |      -            | Write access to alert rules in all folders.
-| Editor | -                 | Write access to alert rules in all folders.|
-| Viewer | Admin             | Write access to alert rules **only** in the folders where the Admin permission is added.|
-| Viewer | Editor            | Write access to alert rules **only** in the folders where the Editor permission is added.|
-| Viewer | Viewer | Read access to alert rules.|
+| Role   | Folder permission | Access                                                                                    |
+| ------ | ----------------- | ----------------------------------------------------------------------------------------- |
+| Admin  | -                 | Write access to alert rules in all folders.                                               |
+| Editor | -                 | Write access to alert rules in all folders.                                               |
+| Viewer | Admin             | Write access to alert rules **only** in the folders where the Admin permission is added.  |
+| Viewer | Editor            | Write access to alert rules **only** in the folders where the Editor permission is added. |
+| Viewer | Viewer            | Read access to alert rules.                                                               |
 
 {{% admonition type="note" %}}
 You cannot use folders to customize access to notification resources.
@@ -77,11 +77,3 @@ To manage folder permissions, complete the following steps.
 1. Select the user, service account, team, or role.
 1. Select **Viewer, Editor or Admin**.
 1. Click **Save**.
-
-
-
-
-
-
-
-
