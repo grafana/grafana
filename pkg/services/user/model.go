@@ -82,8 +82,9 @@ type UpdateUserCommand struct {
 	Login string `json:"login"`
 	Theme string `json:"theme"`
 
-	UserID        int64 `json:"-"`
-	EmailVerified *bool `json:"-"`
+	UserID         int64 `json:"-"`
+	EmailVerified  *bool `json:"-"`
+	IsGrafanaAdmin *bool `json:"-"`
 }
 
 type ChangeUserPasswordCommand struct {

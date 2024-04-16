@@ -10,7 +10,6 @@ import (
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/localcache"
 	"github.com/grafana/grafana/pkg/infra/tracing"
-	"github.com/grafana/grafana/pkg/models/roletype"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/quota"
@@ -321,31 +320,6 @@ func (s *Service) GetSignedInUser(ctx context.Context, query *user.GetSignedInUs
 	return signedInUser, err
 }
 
-func (s *Service) NewAnonymousSignedInUser(ctx context.Context) (*user.SignedInUser, error) {
-	if !s.cfg.AnonymousEnabled {
-		return nil, fmt.Errorf("anonymous access is disabled")
-	}
-
-	usr := &user.SignedInUser{
-		IsAnonymous: true,
-		OrgRole:     roletype.RoleType(s.cfg.AnonymousOrgRole),
-	}
-
-	if s.cfg.AnonymousOrgName == "" {
-		return usr, nil
-	}
-
-	getOrg := org.GetOrgByNameQuery{Name: s.cfg.AnonymousOrgName}
-	anonymousOrg, err := s.orgService.GetByName(ctx, &getOrg)
-	if err != nil {
-		return nil, err
-	}
-
-	usr.OrgID = anonymousOrg.ID
-	usr.OrgName = anonymousOrg.Name
-	return usr, nil
-}
-
 func (s *Service) Search(ctx context.Context, query *user.SearchUsersQuery) (*user.SearchUserQueryResult, error) {
 	return s.store.Search(ctx, query)
 }
@@ -356,10 +330,6 @@ func (s *Service) Disable(ctx context.Context, cmd *user.DisableUserCommand) err
 
 func (s *Service) BatchDisableUsers(ctx context.Context, cmd *user.BatchDisableUsersCommand) error {
 	return s.store.BatchDisableUsers(ctx, cmd)
-}
-
-func (s *Service) UpdatePermissions(ctx context.Context, userID int64, isAdmin bool) error {
-	return s.store.UpdatePermissions(ctx, userID, isAdmin)
 }
 
 func (s *Service) SetUserHelpFlag(ctx context.Context, cmd *user.SetUserHelpFlagCommand) error {

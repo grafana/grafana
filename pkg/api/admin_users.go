@@ -185,15 +185,17 @@ func (hs *HTTPServer) AdminUpdateUserPermissions(c *contextmodel.ReqContext) res
 		return response.Error(http.StatusBadRequest, "id is invalid", err)
 	}
 
-	getAuthQuery := login.GetAuthInfoQuery{UserId: userID}
-	if authInfo, err := hs.authInfoService.GetAuthInfo(c.Req.Context(), &getAuthQuery); err == nil && authInfo != nil {
+	if authInfo, err := hs.authInfoService.GetAuthInfo(c.Req.Context(), &login.GetAuthInfoQuery{UserId: userID}); err == nil && authInfo != nil {
 		oauthInfo := hs.SocialService.GetOAuthInfoProvider(authInfo.AuthModule)
 		if login.IsGrafanaAdminExternallySynced(hs.Cfg, oauthInfo, authInfo.AuthModule) {
 			return response.Error(http.StatusForbidden, "Cannot change Grafana Admin role for externally synced user", nil)
 		}
 	}
 
-	err = hs.userService.UpdatePermissions(c.Req.Context(), userID, form.IsGrafanaAdmin)
+	err = hs.userService.Update(c.Req.Context(), &user.UpdateUserCommand{
+		UserID:         userID,
+		IsGrafanaAdmin: &form.IsGrafanaAdmin,
+	})
 	if err != nil {
 		if errors.Is(err, user.ErrLastGrafanaAdmin) {
 			return response.Error(http.StatusBadRequest, user.ErrLastGrafanaAdmin.Error(), nil)

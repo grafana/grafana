@@ -34,7 +34,6 @@ type store interface {
 	UpdateUser(context.Context, *user.User) error
 	GetProfile(context.Context, *user.GetUserProfileQuery) (*user.UserProfileDTO, error)
 	SetHelpFlag(context.Context, *user.SetUserHelpFlagCommand) error
-	UpdatePermissions(context.Context, int64, bool) error
 	BatchDisableUsers(context.Context, *user.BatchDisableUsersCommand) error
 	Disable(context.Context, *user.DisableUserCommand) error
 	Search(context.Context, *user.SearchUsersQuery) (*user.SearchUserQueryResult, error)
@@ -322,12 +321,24 @@ func (ss *sqlStore) Update(ctx context.Context, cmd *user.UpdateUserCommand) err
 			user.EmailVerified = *cmd.EmailVerified
 		}
 
+		if cmd.IsGrafanaAdmin != nil {
+			q.UseBool("is_admin")
+			user.IsAdmin = *cmd.IsGrafanaAdmin
+		}
+
 		if _, err := q.Update(&user); err != nil {
 			return err
 		}
 
 		if err := ss.userCaseInsensitiveLoginConflict(ctx, sess, user.Login, user.Email); err != nil {
 			return err
+		}
+
+		if cmd.IsGrafanaAdmin != nil && !*cmd.IsGrafanaAdmin {
+			// validate that after update there is at least one server admin
+			if err := validateOneAdminLeft(ctx, sess); err != nil {
+				return err
+			}
 		}
 
 		sess.PublishAfterCommit(&events.UserUpdated{
@@ -473,28 +484,6 @@ func (ss *sqlStore) SetHelpFlag(ctx context.Context, cmd *user.SetUserHelpFlagCo
 
 		_, err := sess.ID(cmd.UserID).Cols("help_flags1").Update(&user)
 		return err
-	})
-}
-
-// UpdatePermissions sets the user Server Admin flag
-func (ss *sqlStore) UpdatePermissions(ctx context.Context, userID int64, isAdmin bool) error {
-	return ss.db.WithTransactionalDbSession(ctx, func(sess *db.Session) error {
-		var user user.User
-		if _, err := sess.ID(userID).Where(ss.notServiceAccountFilter()).Get(&user); err != nil {
-			return err
-		}
-
-		user.IsAdmin = isAdmin
-		sess.UseBool("is_admin")
-		_, err := sess.ID(user.ID).Update(&user)
-		if err != nil {
-			return err
-		}
-		// validate that after update there is at least one server admin
-		if err := validateOneAdminLeft(ctx, sess); err != nil {
-			return err
-		}
-		return nil
 	})
 }
 

@@ -448,24 +448,6 @@ func (_m *MockService) UpdateLastSeenAt(_a0 context.Context, _a1 *user.UpdateUse
 	return r0
 }
 
-// UpdatePermissions provides a mock function with given fields: _a0, _a1, _a2
-func (_m *MockService) UpdatePermissions(_a0 context.Context, _a1 int64, _a2 bool) error {
-	ret := _m.Called(_a0, _a1, _a2)
-
-	if len(ret) == 0 {
-		panic("no return value specified for UpdatePermissions")
-	}
-
-	var r0 error
-	if rf, ok := ret.Get(0).(func(context.Context, int64, bool) error); ok {
-		r0 = rf(_a0, _a1, _a2)
-	} else {
-		r0 = ret.Error(0)
-	}
-
-	return r0
-}
-
 // NewMockService creates a new instance of MockService. It also registers a testing interface on the mock and a cleanup function to assert the mocks expectations.
 // The first argument is typically a *testing.T value.
 func NewMockService(t interface {
