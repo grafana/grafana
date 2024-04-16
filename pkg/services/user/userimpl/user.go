@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"strings"
 	"time"
 
 	"github.com/grafana/grafana/pkg/infra/db"
@@ -220,9 +219,6 @@ func (s *Service) GetByEmail(ctx context.Context, query *user.GetUserByEmailQuer
 }
 
 func (s *Service) Update(ctx context.Context, cmd *user.UpdateUserCommand) error {
-	cmd.Login = strings.ToLower(cmd.Login)
-	cmd.Email = strings.ToLower(cmd.Email)
-
 	return s.store.Update(ctx, cmd)
 }
 
