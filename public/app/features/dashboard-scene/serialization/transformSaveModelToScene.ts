@@ -33,7 +33,6 @@ import { DashboardModel, PanelModel } from 'app/features/dashboard/state';
 import { trackDashboardLoaded } from 'app/features/dashboard/utils/tracking';
 import { DashboardDTO } from 'app/types';
 
-import { AddLibraryPanelDrawer } from '../scene/AddLibraryPanelDrawer';
 import { AlertStatesDataLayer } from '../scene/AlertStatesDataLayer';
 import { DashboardAnnotationsDataLayer } from '../scene/DashboardAnnotationsDataLayer';
 import { DashboardControls } from '../scene/DashboardControls';
@@ -112,18 +111,6 @@ export function createSceneObjectsForPanels(oldPanels: PanelModel[]): SceneGridI
           currentRowPanels = [];
         }
       }
-    } else if (panel.type === 'add-library-panel') {
-      const gridItem = buildGridItemForLibraryPanelWidget(panel);
-
-      if (!gridItem) {
-        continue;
-      }
-
-      if (currentRow) {
-        currentRowPanels.push(gridItem);
-      } else {
-        panels.push(gridItem);
-      }
     } else if (panel.libraryPanel?.uid && !('model' in panel.libraryPanel)) {
       const gridItem = buildGridItemForLibPanel(panel);
 
@@ -170,15 +157,7 @@ function createRowFromPanelModel(row: PanelModel, content: SceneGridItemLike[]):
           saveModel = new PanelModel(saveModel);
         }
 
-        if (saveModel.type === 'add-library-panel') {
-          const gridItem = buildGridItemForLibraryPanelWidget(saveModel);
-
-          if (!gridItem) {
-            throw new Error('Failed to build grid item for library panel widget');
-          }
-
-          return gridItem;
-        } else if (saveModel.libraryPanel?.uid && !('model' in saveModel.libraryPanel)) {
+        if (saveModel.libraryPanel?.uid && !('model' in saveModel.libraryPanel)) {
           const gridItem = buildGridItemForLibPanel(saveModel);
 
           if (!gridItem) {
@@ -433,24 +412,6 @@ export function createSceneVariableFromVariableModel(variable: TypedVariableMode
   } else {
     throw new Error(`Scenes: Unsupported variable type ${variable.type}`);
   }
-}
-
-export function buildGridItemForLibraryPanelWidget(panel: PanelModel) {
-  if (panel.type !== 'add-library-panel') {
-    return null;
-  }
-
-  const body = new AddLibraryPanelDrawer({
-    key: getVizPanelKeyForPanelId(panel.id),
-  });
-
-  return new DashboardGridItem({
-    body,
-    y: panel.gridPos.y,
-    x: panel.gridPos.x,
-    width: panel.gridPos.w,
-    height: panel.gridPos.h,
-  });
 }
 
 export function buildGridItemForLibPanel(panel: PanelModel) {
