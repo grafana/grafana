@@ -83,6 +83,7 @@ type UpdateUserCommand struct {
 	Theme string `json:"theme"`
 
 	UserID         int64 `json:"-"`
+	IsDisabled     *bool `json:"-"`
 	EmailVerified  *bool `json:"-"`
 	IsGrafanaAdmin *bool `json:"-"`
 }
@@ -175,11 +176,6 @@ func (auth *AuthModuleConversion) FromDB(data []byte) error {
 // Just a stub, we don't want to write to database
 func (auth *AuthModuleConversion) ToDB() ([]byte, error) {
 	return []byte{}, nil
-}
-
-type DisableUserCommand struct {
-	UserID     int64 `xorm:"user_id"`
-	IsDisabled bool
 }
 
 type BatchDisableUsersCommand struct {

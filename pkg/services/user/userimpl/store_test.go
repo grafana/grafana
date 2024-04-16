@@ -780,8 +780,16 @@ func TestIntegrationUserDataAccess(t *testing.T) {
 			Updated: time.Now(),
 		})
 		require.NoError(t, err)
-		err = userStore.Disable(context.Background(), &user.DisableUserCommand{UserID: id})
+
+		err = userStore.Update(context.Background(), &user.UpdateUserCommand{
+			UserID:     id,
+			IsDisabled: boolPtr(true),
+		})
 		require.NoError(t, err)
+
+		usr, err := userStore.GetByID(context.Background(), id)
+		require.NoError(t, err)
+		require.True(t, usr.IsDisabled)
 	})
 
 	t.Run("Testing DB - multiple users", func(t *testing.T) {

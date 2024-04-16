@@ -128,24 +128,6 @@ func (_m *MockService) Delete(_a0 context.Context, _a1 *user.DeleteUserCommand) 
 	return r0
 }
 
-// Disable provides a mock function with given fields: _a0, _a1
-func (_m *MockService) Disable(_a0 context.Context, _a1 *user.DisableUserCommand) error {
-	ret := _m.Called(_a0, _a1)
-
-	if len(ret) == 0 {
-		panic("no return value specified for Disable")
-	}
-
-	var r0 error
-	if rf, ok := ret.Get(0).(func(context.Context, *user.DisableUserCommand) error); ok {
-		r0 = rf(_a0, _a1)
-	} else {
-		r0 = ret.Error(0)
-	}
-
-	return r0
-}
-
 // GetByEmail provides a mock function with given fields: _a0, _a1
 func (_m *MockService) GetByEmail(_a0 context.Context, _a1 *user.GetUserByEmailQuery) (*user.User, error) {
 	ret := _m.Called(_a0, _a1)

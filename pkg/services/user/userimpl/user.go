@@ -324,10 +324,6 @@ func (s *Service) Search(ctx context.Context, query *user.SearchUsersQuery) (*us
 	return s.store.Search(ctx, query)
 }
 
-func (s *Service) Disable(ctx context.Context, cmd *user.DisableUserCommand) error {
-	return s.store.Disable(ctx, cmd)
-}
-
 func (s *Service) BatchDisableUsers(ctx context.Context, cmd *user.BatchDisableUsersCommand) error {
 	return s.store.BatchDisableUsers(ctx, cmd)
 }

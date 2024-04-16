@@ -195,7 +195,8 @@ func (s *UserSync) EnableUserHook(ctx context.Context, identity *authn.Identity,
 		return nil
 	}
 
-	return s.userService.Disable(ctx, &user.DisableUserCommand{UserID: userID, IsDisabled: false})
+	isDisabled := false
+	return s.userService.Update(ctx, &user.UpdateUserCommand{UserID: userID, IsDisabled: &isDisabled})
 }
 
 func (s *UserSync) upsertAuthConnection(ctx context.Context, userID int64, identity *authn.Identity, createConnection bool) error {

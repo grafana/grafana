@@ -266,10 +266,6 @@ func (f *FakeUserStore) BatchDisableUsers(ctx context.Context, cmd *user.BatchDi
 	return f.ExpectedError
 }
 
-func (f *FakeUserStore) Disable(ctx context.Context, cmd *user.DisableUserCommand) error {
-	return f.ExpectedError
-}
-
 func (f *FakeUserStore) Search(ctx context.Context, query *user.SearchUsersQuery) (*user.SearchUserQueryResult, error) {
 	return f.ExpectedSearchUserQueryResult, f.ExpectedError
 }

@@ -22,7 +22,6 @@ type Service interface {
 	GetSignedInUserWithCacheCtx(context.Context, *GetSignedInUserQuery) (*SignedInUser, error)
 	GetSignedInUser(context.Context, *GetSignedInUserQuery) (*SignedInUser, error)
 	Search(context.Context, *SearchUsersQuery) (*SearchUserQueryResult, error)
-	Disable(context.Context, *DisableUserCommand) error
 	BatchDisableUsers(context.Context, *BatchDisableUsersCommand) error
 	SetUserHelpFlag(context.Context, *SetUserHelpFlagCommand) error
 	GetProfile(context.Context, *GetUserProfileQuery) (*UserProfileDTO, error)
