@@ -53,6 +53,5 @@ func MeetsBasicLogsCriteria(isBasicLogsQuery bool, resources []string) (bool, er
 		return false, fmt.Errorf("basic Logs queries may only be rung against LA workspaces")
 	}
 
-	// meetsCriteria := isBasicLogsQuery && len(resources) == 1 && strings.Contains(resources[0], "microsoft.operationalinsights/workspaces")
 	return isBasicLogsQuery, nil
 }
