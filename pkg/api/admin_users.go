@@ -134,17 +134,13 @@ func (hs *HTTPServer) AdminUpdateUserPassword(c *contextmodel.ReqContext) respon
 		}
 	}
 
-	passwordHashed, err := util.EncodePassword(string(form.Password), usr.Salt)
+	hashedPassword, err := util.EncodePassword(string(form.Password), usr.Salt)
 	if err != nil {
 		return response.Error(http.StatusInternalServerError, "Could not encode password", err)
 	}
 
-	cmd := user.ChangeUserPasswordCommand{
-		UserID:      userID,
-		NewPassword: user.Password(passwordHashed),
-	}
-
-	if err := hs.userService.ChangePassword(c.Req.Context(), &cmd); err != nil {
+	password := user.Password(hashedPassword)
+	if err := hs.userService.Update(c.Req.Context(), &user.UpdateUserCommand{UserID: usr.ID, Password: &password}); err != nil {
 		return response.Error(http.StatusInternalServerError, "Failed to update user password", err)
 	}
 

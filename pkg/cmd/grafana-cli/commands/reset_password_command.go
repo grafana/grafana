@@ -63,12 +63,8 @@ func resetPassword(adminId int64, newPassword user.Password, userSvc user.Servic
 		return err
 	}
 
-	cmd := user.ChangeUserPasswordCommand{
-		UserID:      adminId,
-		NewPassword: user.Password(passwordHashed),
-	}
-
-	if err := userSvc.ChangePassword(context.Background(), &cmd); err != nil {
+	password := user.Password(passwordHashed)
+	if err := userSvc.Update(context.Background(), &user.UpdateUserCommand{UserID: adminId, Password: &password}); err != nil {
 		return fmt.Errorf("failed to update user password: %w", err)
 	}
 

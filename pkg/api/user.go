@@ -609,14 +609,13 @@ func (hs *HTTPServer) ChangeUserPassword(c *contextmodel.ReqContext) response.Re
 		return response.Err(err)
 	}
 
-	cmd.UserID = userID
-	encodedPassword, err := util.EncodePassword(string(cmd.NewPassword), usr.Salt)
+	hashedPassword, err := util.EncodePassword(string(cmd.NewPassword), usr.Salt)
 	if err != nil {
 		return response.Error(http.StatusInternalServerError, "Failed to encode password", err)
 	}
-	cmd.NewPassword = user.Password(encodedPassword)
 
-	if err := hs.userService.ChangePassword(c.Req.Context(), &cmd); err != nil {
+	password := user.Password(hashedPassword)
+	if err := hs.userService.Update(c.Req.Context(), &user.UpdateUserCommand{UserID: usr.ID, Password: &password}); err != nil {
 		return response.Error(http.StatusInternalServerError, "Failed to change user password", err)
 	}
 

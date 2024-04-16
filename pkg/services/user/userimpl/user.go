@@ -226,10 +226,6 @@ func (s *Service) Update(ctx context.Context, cmd *user.UpdateUserCommand) error
 	return s.store.Update(ctx, cmd)
 }
 
-func (s *Service) ChangePassword(ctx context.Context, cmd *user.ChangeUserPasswordCommand) error {
-	return s.store.ChangePassword(ctx, cmd)
-}
-
 func (s *Service) UpdateLastSeenAt(ctx context.Context, cmd *user.UpdateUserLastSeenAtCommand) error {
 	u, err := s.GetSignedInUserWithCacheCtx(ctx, &user.GetSignedInUserQuery{
 		UserID: cmd.UserID,
