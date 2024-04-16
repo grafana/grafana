@@ -192,7 +192,7 @@ func TestHandleDataplaneNumeric(t *testing.T) {
 
 		for _, example := range validNoDataNumericExamples.AsSlice() {
 			t.Run(example.Info().ID, func(t *testing.T) {
-				res, err := handleDataplaneNumeric(example.Frames("A"))
+				res, err := handleDataplaneNumeric(example.Frames("A"), false)
 				require.NoError(t, err)
 				require.Len(t, res.Values, 1)
 			})
@@ -213,7 +213,7 @@ func TestHandleDataplaneNumeric(t *testing.T) {
 
 		for _, example := range numericExamples.AsSlice() {
 			t.Run(example.Info().ID, func(t *testing.T) {
-				res, err := handleDataplaneNumeric(example.Frames("A"))
+				res, err := handleDataplaneNumeric(example.Frames("A"), false)
 				require.NoError(t, err)
 				require.Len(t, res.Values, example.Info().ItemCount)
 			})
