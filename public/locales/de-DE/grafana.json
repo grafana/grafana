@@ -25,6 +25,11 @@
       "user": "Nutzer"
     }
   },
+  "api-keys": {
+    "empty-state": {
+      "message": ""
+    }
+  },
   "bouncing-loader": {
     "label": "Wird geladen"
   },
@@ -107,6 +112,9 @@
       "change-theme": "Thema ändern...",
       "dark-theme": "Dunkel",
       "light-theme": "Hell"
+    },
+    "empty-state": {
+      "message": ""
     },
     "search-box": {
       "placeholder": "Suche oder springe zu ..."
@@ -417,6 +425,9 @@
   "data-sources": {
     "datasource-add-button": {
       "label": "Neue Datenquelle hinzufügen"
+    },
+    "empty-state": {
+      "message": ""
     }
   },
   "explore": {
@@ -446,10 +457,11 @@
       "delete-query-tooltip": "Abfrage löschen",
       "delete-starred-query-confirmation-text": "Sind Sie sicher, dass Sie die markierte Abfrage dauerhaft löschen möchten?",
       "edit-comment-tooltip": "Kommentar bearbeiten",
-      "loading-text": "wird geladen...",
+      "left-pane": "",
       "optional-description": "Eine optionale Beschreibung dessen, was die Abfrage tut.",
       "query-comment-label": "Abfrage-Kommentar",
       "query-text-label": "Abfragetext",
+      "right-pane": "",
       "run-query-button": "Abfrage ausführen",
       "save-comment": "Kommentar speichern",
       "star-query-tooltip": "Abfrage anwählen",
@@ -560,9 +572,6 @@
   "grafana-ui": {
     "drawer": {
       "close": "Schließen"
-    },
-    "empty-state": {
-      "not-found-message": ""
     },
     "modal": {
       "close-tooltip": "Schließen"
@@ -703,19 +712,18 @@
     "connect-modal": {
       "body-cloud-stack": "Sie benötigen außerdem einen Cloud Stack. Wenn Sie sich gerade angemeldet haben, erstellen wir automatisch Ihren ersten Stack. Wenn Sie bereits ein Konto haben, müssen Sie einen Stack auswählen oder erstellen.",
       "body-get-started": "Um loszulegen, benötigen Sie einen Grafana.com-Account.",
-      "body-paste-stack": "Wenn Sie sich für einen Stack entschieden haben, fügen Sie die URL unten ein.",
       "body-sign-up": "Für einen Grafana.com-Account registrieren",
       "body-token": "Ihre selbstverwaltete Grafana-Installation benötigt einen speziellen Zugang, um Inhalte sicher zu migrieren. Sie müssen ein Migrationstoken für den von Ihnen gewählten Cloud-Stack erstellen.",
       "body-token-field": "Migrationstoken",
       "body-token-field-placeholder": "Token hier einfügen",
       "body-token-instructions": "Loggen Sie sich in Ihren Cloud Stack ein und navigieren Sie zu Administration, Allgemein, Zu Grafana Cloud migrieren. Erstellen Sie auf diesem Bildschirm ein Migrationstoken und fügen Sie das Token hier ein.",
-      "body-url-field": "Cloud Stack-URL",
       "body-view-stacks": "Meine Cloud Stacks anzeigen",
       "cancel": "Abbrechen",
       "connect": "Mit diesem Stack verbinden",
       "connecting": "Verbindung mit diesem Stack läuft...",
-      "stack-required-error": "Stack-URL ist erforderlich",
       "title": "Mit einem Cloud Stack verbinden",
+      "token-error-description": "",
+      "token-error-title": "",
       "token-required-error": "Migrationstoken ist erforderlich"
     },
     "cta": {
@@ -753,12 +761,13 @@
     },
     "migration-token": {
       "body": "Ihre selbst verwaltete Grafana-Instanz benötigt ein spezielles Authentifizierungs-Token, um sich sicher mit diesem Cloud Stack zu verbinden.",
-      "delete-button": "Diesen Migrationstoken löschen",
       "delete-modal-body": "Wenn Sie dieses Token bereits mit einer selbst verwalteten Installation verwendet haben, kann diese Installation keine Inhalte mehr hochladen.",
       "delete-modal-cancel": "Abbrechen",
       "delete-modal-confirm": "Löschen",
       "delete-modal-deleting": "Wird gelöscht...",
       "delete-modal-title": "Migrationstoken löschen",
+      "error-body": "",
+      "error-title": "",
       "generate-button": "Migrationstoken generieren",
       "generate-button-loading": "Migrationstoken wird generiert...",
       "modal-close": "Schließen",
@@ -767,7 +776,7 @@
       "modal-field-description": "Kopieren Sie den Token jetzt, denn Sie werden ihn später nicht mehr sehen können. Wenn Sie einen Token verlieren, müssen Sie einen neuen Token erstellen.",
       "modal-field-label": "Token",
       "modal-title": "Migrationstoken erstellt",
-      "status": "Aktueller Status: <2></2>",
+      "status": "",
       "title": "Migrationstoken"
     },
     "pdc": {
@@ -788,14 +797,22 @@
       "not-migrated": "Noch nicht hochgeladen",
       "unknown": "Unbekannt"
     },
+    "resource-table": {
+      "unknown-datasource-title": "",
+      "unknown-datasource-type": ""
+    },
     "resource-type": {
       "dashboard": "Dashboard",
       "datasource": "Datenquelle",
+      "folder": "",
       "unknown": "Unbekannt"
     },
     "summary": {
       "disconnect": "",
-      "error-starting-migration": "",
+      "disconnect-error-description": "",
+      "disconnect-error-title": "",
+      "run-migration-error-description": "",
+      "run-migration-error-title": "",
       "start-migration": "",
       "target-stack-title": ""
     },
@@ -1220,6 +1237,11 @@
       "message": ""
     }
   },
+  "plugins": {
+    "empty-state": {
+      "message": ""
+    }
+  },
   "profile": {
     "change-password": {
       "cancel-button": "Abbrechen",
@@ -1422,6 +1444,11 @@
       "placeholder": "Nach Dashboards suchen"
     }
   },
+  "service-accounts": {
+    "empty-state": {
+      "message": ""
+    }
+  },
   "share-modal": {
     "dashboard": {
       "title": "Teilen"
@@ -1550,6 +1577,11 @@
     "no-tags": "Keine Tags gefunden",
     "placeholder": "Nach Tag filtern"
   },
+  "teams": {
+    "empty-state": {
+      "message": ""
+    }
+  },
   "time-picker": {
     "absolute": {
       "recent-title": "Kürzlich verwendete absolute Bereiche",
@@ -1642,6 +1674,11 @@
   },
   "user-sessions": {
     "loading": "Sitzungen werden geladen …"
+  },
+  "users": {
+    "empty-state": {
+      "message": ""
+    }
   },
   "users-access-list": {
     "tabs": {

@@ -1,4 +1,4 @@
-import { omit } from 'lodash';
+import { clamp, omit } from 'lodash';
 
 import {
   DataQuery,
@@ -11,6 +11,7 @@ import {
   ScopedVars,
   TimeRange,
 } from '@grafana/data';
+import { PromQuery } from '@grafana/prometheus';
 import { config, getDataSourceSrv } from '@grafana/runtime';
 import { ExpressionDatasourceRef } from '@grafana/runtime/src/utils/DataSourceWithBackend';
 import { sceneGraph, VizPanel } from '@grafana/scenes';
@@ -24,7 +25,6 @@ import {
 } from 'app/features/dashboard-scene/utils/utils';
 import { ExpressionDatasourceUID, ExpressionQuery, ExpressionQueryType } from 'app/features/expressions/types';
 import { LokiQuery } from 'app/plugins/datasource/loki/types';
-import { PromQuery } from 'app/plugins/datasource/prometheus/types';
 import { RuleWithLocation } from 'app/types/unified-alerting';
 import {
   AlertDataQuery,
@@ -48,13 +48,20 @@ import { Annotation, defaultAnnotations } from './constants';
 import { getDefaultOrFirstCompatibleDataSource, GRAFANA_RULES_SOURCE_NAME, isGrafanaRulesSource } from './datasource';
 import { arrayToRecord, recordToArray } from './misc';
 import { isAlertingRulerRule, isGrafanaRulerRule, isRecordingRulerRule } from './rules';
-import { parseInterval } from './time';
+import { formatPrometheusDuration, parseInterval, safeParsePrometheusDuration } from './time';
 
 export type PromOrLokiQuery = PromQuery | LokiQuery;
 
-export const MINUTE = '1m';
-
 export const MANUAL_ROUTING_KEY = 'grafana.alerting.manualRouting';
+
+// even if the min interval is < 1m we should default to 1m, but allow arbitrary values for minInterval > 1m
+const GROUP_EVALUATION_MIN_INTERVAL_MS = safeParsePrometheusDuration(config.unifiedAlerting?.minInterval ?? '10s');
+const GROUP_EVALUATION_INTERVAL_LOWER_BOUND = safeParsePrometheusDuration('1m');
+const GROUP_EVALUATION_INTERVAL_UPPER_BOUND = Infinity;
+
+export const DEFAULT_GROUP_EVALUATION_INTERVAL = formatPrometheusDuration(
+  clamp(GROUP_EVALUATION_MIN_INTERVAL_MS, GROUP_EVALUATION_INTERVAL_LOWER_BOUND, GROUP_EVALUATION_INTERVAL_UPPER_BOUND)
+);
 
 export const getDefaultFormValues = (): RuleFormValues => {
   const { canCreateGrafanaRules, canCreateCloudRules } = getRulesAccess();
@@ -75,8 +82,8 @@ export const getDefaultFormValues = (): RuleFormValues => {
     condition: '',
     noDataState: GrafanaAlertStateDecision.NoData,
     execErrState: GrafanaAlertStateDecision.Error,
-    evaluateFor: '5m',
-    evaluateEvery: MINUTE,
+    evaluateFor: DEFAULT_GROUP_EVALUATION_INTERVAL,
+    evaluateEvery: DEFAULT_GROUP_EVALUATION_INTERVAL,
     manualRouting: getDefautManualRouting(), // we default to true if the feature toggle is enabled and the user hasn't set local storage to false
     contactPoints: {},
     overrideGrouping: false,

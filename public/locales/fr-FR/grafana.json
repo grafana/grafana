@@ -25,6 +25,11 @@
       "user": "Utilisateur"
     }
   },
+  "api-keys": {
+    "empty-state": {
+      "message": ""
+    }
+  },
   "bouncing-loader": {
     "label": "Chargement"
   },
@@ -107,6 +112,9 @@
       "change-theme": "Modifier le thème...",
       "dark-theme": "Sombre",
       "light-theme": "Clair"
+    },
+    "empty-state": {
+      "message": ""
     },
     "search-box": {
       "placeholder": "Rechercher ou aller à..."
@@ -417,6 +425,9 @@
   "data-sources": {
     "datasource-add-button": {
       "label": "Ajouter une nouvelle source de données"
+    },
+    "empty-state": {
+      "message": ""
     }
   },
   "explore": {
@@ -446,10 +457,11 @@
       "delete-query-tooltip": "Supprimer la requête",
       "delete-starred-query-confirmation-text": "Souhaitez-vous vraiment supprimer définitivement votre requête favorite ?",
       "edit-comment-tooltip": "Modifier le commentaire",
-      "loading-text": "chargement...",
+      "left-pane": "",
       "optional-description": "Une description facultative de l'action de la requête.",
       "query-comment-label": "Commentaire sur la requête",
       "query-text-label": "Texte de la requête",
+      "right-pane": "",
       "run-query-button": "Exécuter la requête",
       "save-comment": "Enregistrer le commentaire",
       "star-query-tooltip": "Mettre la requête en favori",
@@ -560,9 +572,6 @@
   "grafana-ui": {
     "drawer": {
       "close": "Fermer"
-    },
-    "empty-state": {
-      "not-found-message": ""
     },
     "modal": {
       "close-tooltip": "Fermer"
@@ -703,19 +712,18 @@
     "connect-modal": {
       "body-cloud-stack": "Vous aurez également besoin d'une pile cloud. Si vous venez de vous inscrire, nous créerons automatiquement votre première pile. Si vous avez déjà un compte, vous devez sélectionner ou créer une pile.",
       "body-get-started": "Pour commencer, vous aurez besoin d'un compte Grafana.com.",
-      "body-paste-stack": "Lorsque vous aurez choisi une pile, collez l'URL ci-dessous.",
       "body-sign-up": "Créez un compte Grafana.com",
       "body-token": "Votre installation Grafana autogérée a besoin d'un accès spécial pour migrer du contenu de manière sécurisée. Vous devrez créer un jeton de migration sur la pile cloud que vous avez choisie.",
       "body-token-field": "Jeton de migration",
       "body-token-field-placeholder": "Coller le jeton ici",
       "body-token-instructions": "Connectez-vous à votre pile cloud et accédez à Administration > Général > Migrer vers Grafana Cloud. Créez un jeton de migration sur cet écran et collez-le ici.",
-      "body-url-field": "URL de la pile cloud",
       "body-view-stacks": "Voir mes piles cloud",
       "cancel": "Annuler",
       "connect": "Se connecter à cette pile",
       "connecting": "Connexion à cette pile…",
-      "stack-required-error": "Vous devez renseigner l'URL de la pile",
       "title": "Se connecter à une pile cloud",
+      "token-error-description": "",
+      "token-error-title": "",
       "token-required-error": "Vous devez renseigner le jeton de migration"
     },
     "cta": {
@@ -753,12 +761,13 @@
     },
     "migration-token": {
       "body": "Votre instance Grafana autogérée aura besoin d'un jeton d'authentification spécial pour se connecter de manière sécurisée à cette pile cloud.",
-      "delete-button": "Supprimer ce jeton de migration",
       "delete-modal-body": "Si vous avez déjà utilisé ce jeton avec une installation autogérée, celle-ci ne pourra plus importer de contenu.",
       "delete-modal-cancel": "Annuler",
       "delete-modal-confirm": "Supprimer",
       "delete-modal-deleting": "Suppression...",
       "delete-modal-title": "Supprimer le jeton de migration",
+      "error-body": "",
+      "error-title": "",
       "generate-button": "Générer un jeton de migration",
       "generate-button-loading": "Génération d'un jeton de migration…",
       "modal-close": "Fermer",
@@ -767,7 +776,7 @@
       "modal-field-description": "Copiez le jeton maintenant, car vous ne pourrez plus le revoir. Si vous perdez un jeton, vous devrez 'en créer un nouveau.",
       "modal-field-label": "Jeton",
       "modal-title": "Jeton de migration créé",
-      "status": "Statut actuel : <2></2>",
+      "status": "",
       "title": "Jeton de migration"
     },
     "pdc": {
@@ -788,14 +797,22 @@
       "not-migrated": "Pas encore importé",
       "unknown": "Inconnu"
     },
+    "resource-table": {
+      "unknown-datasource-title": "",
+      "unknown-datasource-type": ""
+    },
     "resource-type": {
       "dashboard": "Tableau de bord",
       "datasource": "Source de données",
+      "folder": "",
       "unknown": "Inconnu"
     },
     "summary": {
       "disconnect": "",
-      "error-starting-migration": "",
+      "disconnect-error-description": "",
+      "disconnect-error-title": "",
+      "run-migration-error-description": "",
+      "run-migration-error-title": "",
       "start-migration": "",
       "target-stack-title": ""
     },
@@ -1220,6 +1237,11 @@
       "message": ""
     }
   },
+  "plugins": {
+    "empty-state": {
+      "message": ""
+    }
+  },
   "profile": {
     "change-password": {
       "cancel-button": "Annuler",
@@ -1422,6 +1444,11 @@
       "placeholder": "Rechercher des tableaux de bord"
     }
   },
+  "service-accounts": {
+    "empty-state": {
+      "message": ""
+    }
+  },
   "share-modal": {
     "dashboard": {
       "title": "Partager"
@@ -1550,6 +1577,11 @@
     "no-tags": "Aucune étiquette trouvée",
     "placeholder": "Filtrer par étiquette"
   },
+  "teams": {
+    "empty-state": {
+      "message": ""
+    }
+  },
   "time-picker": {
     "absolute": {
       "recent-title": "Périodes absolues récemment utilisées",
@@ -1642,6 +1674,11 @@
   },
   "user-sessions": {
     "loading": "Chargement des sessions..."
+  },
+  "users": {
+    "empty-state": {
+      "message": ""
+    }
   },
   "users-access-list": {
     "tabs": {

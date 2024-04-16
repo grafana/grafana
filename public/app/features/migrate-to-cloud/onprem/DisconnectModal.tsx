@@ -3,15 +3,15 @@ import React, { useCallback } from 'react';
 import { Alert, ConfirmModal, Stack } from '@grafana/ui';
 import { Trans, t } from 'app/core/internationalization';
 
-import { useDisconnectStackMutation } from '../api';
-
 interface Props {
   isOpen: boolean;
   onDismiss: () => void;
 }
 
 export const DisconnectModal = ({ isOpen, onDismiss }: Props) => {
-  const [disconnectStack, { isLoading, isError }] = useDisconnectStackMutation();
+  const disconnectStack = useCallback(() => ({}), []);
+  const isLoading = false;
+  const isError = false;
 
   const handleConfirm = useCallback(async () => {
     const resp = await disconnectStack();

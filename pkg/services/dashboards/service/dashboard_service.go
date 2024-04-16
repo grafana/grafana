@@ -278,7 +278,7 @@ func validateDashboardRefreshInterval(minRefreshInterval string, dash *dashboard
 	}
 
 	refresh := dash.Data.Get("refresh").MustString("")
-	if refresh == "" {
+	if refresh == "" || refresh == "auto" {
 		// since no refresh is set it is a valid refresh rate
 		return nil
 	}
@@ -621,6 +621,10 @@ func (dr *DashboardServiceImpl) SearchDashboards(ctx context.Context, query *das
 	hits := makeQueryResult(query, res)
 
 	return hits, nil
+}
+
+func (dr *DashboardServiceImpl) GetAllDashboards(ctx context.Context) ([]*dashboards.Dashboard, error) {
+	return dr.dashboardStore.GetAllDashboards(ctx)
 }
 
 func getHitType(item dashboards.DashboardSearchProjection) model.HitType {

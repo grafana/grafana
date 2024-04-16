@@ -18,13 +18,11 @@ jobs:
     steps:
     - name: Checkout repository
       uses: actions/checkout@v4
-      with:
-        fetch-depth: 0
 
     - name: Set go version
       uses: actions/setup-go@v4
       with:
-        go-version: '1.21.8'
+        go-version: '1.21.9'
 
     - name: Workspace Sync
       run: go work sync
@@ -32,7 +30,9 @@ jobs:
     - name: Check for go mod & workspace changes 
       run: |
         if ! git diff --exit-code --quiet; then
-          echo "Changes detected. Please run 'go work sync' and commit the changes."
+          echo "Changes detected:"
+          git diff
+          echo "Please run 'go work sync' and commit the changes."
           exit 1
         fi
 
@@ -42,6 +42,8 @@ jobs:
     - name: Check for go workspace changes 
       run: |
         if ! git diff --exit-code --quiet; then
-          echo "Changes detected. Please run 'make build-go' and commit the changes."
+          echo "Changes detected:"
+          git diff
+          echo "Please run 'make build-go' and commit the changes."
           exit 1
         fi

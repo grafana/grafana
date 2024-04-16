@@ -1,4 +1,4 @@
-import { isEqual } from 'lodash';
+import { defaults, isEqual } from 'lodash';
 
 import { isEmptyObject, ScopedVars, TimeRange } from '@grafana/data';
 import {
@@ -58,11 +58,25 @@ export function transformSceneToSaveModel(scene: DashboardScene, isSnapshot = fa
   if (body instanceof SceneGridLayout) {
     for (const child of body.state.children) {
       if (child instanceof DashboardGridItem) {
-        // handle panel repeater scenatio
-        if (child.state.variableName) {
-          panels = panels.concat(panelRepeaterToPanels(child, isSnapshot));
+        let child_ = child;
+        // If we're saving while the panel editor is open, we need to persist those changes in the panel model
+        if (
+          child.state.body instanceof VizPanel &&
+          state.editPanel?.state.vizManager &&
+          state.editPanel.state.vizManager.state.sourcePanel.resolve() === child.state.body
+        ) {
+          const childClone = child.clone();
+          if (childClone.state.body instanceof VizPanel) {
+            state.editPanel.state.vizManager.commitChangesTo(childClone.state.body);
+            child_ = childClone;
+          }
+        }
+
+        // handle panel repeater scenario
+        if (child_.state.variableName) {
+          panels = panels.concat(panelRepeaterToPanels(child_, isSnapshot));
         } else {
-          panels.push(gridItemToPanel(child, isSnapshot));
+          panels.push(gridItemToPanel(child_, isSnapshot));
         }
       }
 
@@ -88,9 +102,11 @@ export function transformSceneToSaveModel(scene: DashboardScene, isSnapshot = fa
 
   const controlsState = state.controls?.state;
 
+  const refreshPicker = controlsState?.refreshPicker;
+
   const timePickerWithoutDefaults = removeDefaults<TimePickerConfig>(
     {
-      refresh_intervals: controlsState?.refreshPicker.state.intervals,
+      refresh_intervals: refreshPicker?.state.intervals,
       hidden: controlsState?.hideTimeControls,
       nowDelay: timeRange.UNSAFE_nowDelay,
     },
@@ -132,6 +148,7 @@ export function transformSceneToSaveModel(scene: DashboardScene, isSnapshot = fa
     graphTooltip,
     liveNow,
     schemaVersion: DASHBOARD_SCHEMA_VERSION,
+    refresh: refreshPicker?.state.refresh,
   };
 
   return sortedDeepCloneWithoutNulls(dashboard);
@@ -215,13 +232,22 @@ export function vizPanelToPanel(
     title: vizPanel.state.title,
     description: vizPanel.state.description ?? undefined,
     gridPos,
-    options: vizPanel.state.options,
     fieldConfig: (vizPanel.state.fieldConfig as FieldConfigSource) ?? { defaults: {}, overrides: [] },
     transformations: [],
     transparent: vizPanel.state.displayMode === 'transparent',
     pluginVersion: vizPanel.state.pluginVersion,
     ...vizPanelDataToPanel(vizPanel, isSnapshot),
   };
+
+  if (vizPanel.state.options) {
+    const { angularOptions, ...rest } = vizPanel.state.options as any;
+    panel.options = rest;
+
+    if (angularOptions) {
+      // Allow angularOptions to overwrite non system level root properties
+      defaults(panel, angularOptions);
+    }
+  }
 
   const panelTime = vizPanel.state.$timeRange;
 
@@ -258,6 +284,7 @@ export function vizPanelToPanel(
   if (!panel.transparent) {
     delete panel.transparent;
   }
+
   return panel;
 }
 

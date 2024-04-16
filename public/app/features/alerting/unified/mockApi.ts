@@ -5,6 +5,8 @@ import { setupServer, SetupServer } from 'msw/node';
 
 import { DataSourceInstanceSettings, PluginMeta } from '@grafana/data';
 import { setBackendSrv } from '@grafana/runtime';
+import { AlertRuleUpdated } from 'app/features/alerting/unified/api/alertRuleApi';
+import { DashboardDTO, FolderDTO, NotifierDTO, OrgUser } from 'app/types';
 import {
   PromBuildInfoResponse,
   PromRulesResponse,
@@ -18,11 +20,11 @@ import {
   AlertManagerCortexConfig,
   AlertmanagerReceiver,
   EmailConfig,
+  GrafanaManagedContactPoint,
   GrafanaManagedReceiverConfig,
   MatcherOperator,
   Route,
 } from '../../../plugins/datasource/alertmanager/types';
-import { DashboardDTO, FolderDTO, NotifierDTO } from '../../../types';
 import { DashboardSearchItem } from '../../search/types';
 
 import { CreateIntegrationDTO, NewOnCallIntegrationDTO, OnCallIntegrationDTO } from './api/onCallApi';
@@ -217,6 +219,9 @@ export function mockApi(server: SetupServer) {
         server.use(http.get(`api/plugins/${response.id}/settings`, () => HttpResponse.json(response)));
       },
     },
+    getContactPointsList: (response: GrafanaManagedContactPoint[]) => {
+      server.use(http.get(`/api/v1/notifications/receivers`, () => HttpResponse.json(response)));
+    },
 
     oncall: {
       getOnCallIntegrations: (response: OnCallIntegrationDTO[]) => {
@@ -277,6 +282,9 @@ export function mockAlertRuleApi(server: SetupServer) {
     },
     rulerRules: (dsName: string, response: RulerRulesConfigDTO) => {
       server.use(http.get(`/api/ruler/${dsName}/api/v1/rules`, () => HttpResponse.json(response)));
+    },
+    updateRule: (dsName: string, response: AlertRuleUpdated) => {
+      server.use(http.post(`/api/ruler/${dsName}/api/v1/rules/:namespaceUid`, () => HttpResponse.json(response)));
     },
     rulerRuleGroup: (dsName: string, namespace: string, group: string, response: RulerRuleGroupDTO) => {
       server.use(
@@ -394,6 +402,14 @@ export function mockSearchApi(server: SetupServer) {
   return {
     search: (results: DashboardSearchItem[]) => {
       server.use(http.get(`/api/search`, () => HttpResponse.json(results)));
+    },
+  };
+}
+
+export function mockUserApi(server: SetupServer) {
+  return {
+    user: (user: OrgUser) => {
+      server.use(http.get(`/api/user`, () => HttpResponse.json(user)));
     },
   };
 }

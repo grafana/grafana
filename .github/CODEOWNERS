@@ -38,11 +38,11 @@
 /docs/.codespellignore                                                            @grafana/docs-tooling
 /docs/sources/                                                                    @Eve832
 
-/docs/sources/administration/                                                     @jdbaldry @lwandz13
+/docs/sources/administration/                                                     @jdbaldry
 /docs/sources/alerting/                                                           @brendamuir
 /docs/sources/dashboards/                                                         @imatwawana
 /docs/sources/datasources/                                                        @jdbaldry
-/docs/sources/explore/                                                            @grafana/explore-squad
+/docs/sources/explore/                                                            @grafana/explore-squad @lwandz13
 /docs/sources/fundamentals                                                        @chri2547
 /docs/sources/getting-started/                                                    @chri2547
 /docs/sources/introduction/                                                       @chri2547
@@ -151,7 +151,6 @@
 /pkg/tsdb/grafanads/ @grafana/backend-platform
 /pkg/tsdb/legacydata/ @grafana/backend-platform
 /pkg/tsdb/opentsdb/ @grafana/backend-platform
-/pkg/tsdb/sqleng/ @grafana/partner-datasources @grafana/oss-big-tent
 /pkg/util/ @grafana/backend-platform
 /pkg/web/ @grafana/backend-platform
 
@@ -376,7 +375,6 @@
 /.levignore.js @grafana/plugins-platform-frontend
 playwright.config.ts @grafana/plugins-platform-frontend
 
-
 # public folder
 /public/app/core/ @grafana/grafana-frontend-platform
 /public/app/core/components/TimePicker/ @grafana/grafana-frontend-platform
@@ -403,7 +401,6 @@ playwright.config.ts @grafana/plugins-platform-frontend
 /public/app/features/dashboard/ @grafana/dashboards-squad
 /public/app/features/dashboard/components/TransformationsEditor/ @grafana/dataviz-squad
 /public/app/features/dashboard-scene/ @grafana/dashboards-squad
-/public/app/features/scopes/ @grafana/dashboards-squad
 /public/app/features/datasources/ @grafana/plugins-platform-frontend @mikkancso
 /public/app/features/dimensions/ @grafana/dataviz-squad
 /public/app/features/dataframe-import/ @grafana/dataviz-squad
@@ -535,7 +532,9 @@ playwright.config.ts @grafana/plugins-platform-frontend
 /scripts/cleanup-husky.sh @grafana/frontend-ops
 /scripts/verify-repo-update/ @grafana/grafana-release-guild
 /scripts/generate-icon-bundle.js @grafana/plugins-platform-frontend @grafana/grafana-frontend-platform
+/scripts/generate-rtk-apis.ts @grafana/grafana-frontend-platform
 /scripts/levitate-parse-json-report.js @grafana/plugins-platform-frontend
+/scripts/codemods/explicit-barrel-imports.cjs @grafana/frontend-ops
 
 /scripts/**/generate-transformations* @grafana/dataviz-squad
 /scripts/webpack/ @grafana/frontend-ops

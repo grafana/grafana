@@ -1,3 +1,5 @@
+// Core Grafana history https://github.com/grafana/grafana/blob/v11.0.0-preview/public/app/plugins/datasource/prometheus/components/monaco-query-field/monaco-completion-provider/util.ts
+
 // this helper class is used to make typescript warn you when you forget
 // a case-block in a switch statement.
 // example code that triggers the typescript-error:
