@@ -40,7 +40,7 @@ import { SHARED_DASHBOARD_QUERY } from 'app/plugins/datasource/dashboard';
 import { DASHBOARD_DATASOURCE_PLUGIN_ID } from 'app/plugins/datasource/dashboard/types';
 import { DashboardDataDTO } from 'app/types';
 
-import { AddLibraryPanelWidget } from '../scene/AddLibraryPanelDrawer';
+import { AddLibraryPanelDrawer } from '../scene/AddLibraryPanelDrawer';
 import { DashboardDataLayerSet } from '../scene/DashboardDataLayerSet';
 import { DashboardGridItem } from '../scene/DashboardGridItem';
 import { LibraryVizPanel } from '../scene/LibraryVizPanel';
@@ -235,7 +235,7 @@ describe('transformSaveModelToScene', () => {
       expect(rowScene.state.children[1]).toBeInstanceOf(DashboardGridItem);
       expect(rowScene.state.children[2]).toBeInstanceOf(DashboardGridItem);
       // Panels are sorted by position in the row
-      expect((rowScene.state.children[0] as DashboardGridItem).state.body!).toBeInstanceOf(AddLibraryPanelWidget);
+      expect((rowScene.state.children[0] as DashboardGridItem).state.body!).toBeInstanceOf(AddLibraryPanelDrawer);
       expect((rowScene.state.children[1] as DashboardGridItem).state.body!).toBeInstanceOf(LibraryVizPanel);
       expect((rowScene.state.children[2] as DashboardGridItem).state.body!).toBeInstanceOf(VizPanel);
     });
@@ -350,7 +350,7 @@ describe('transformSaveModelToScene', () => {
       // widget lib panel out of row
       expect(body.state.children[1]).toBeInstanceOf(DashboardGridItem);
       const panelOutOfRowWidget = body.state.children[1] as DashboardGridItem;
-      expect(panelOutOfRowWidget.state.body!).toBeInstanceOf(AddLibraryPanelWidget);
+      expect(panelOutOfRowWidget.state.body!).toBeInstanceOf(AddLibraryPanelDrawer);
       // lib panel out of row
       expect(body.state.children[2]).toBeInstanceOf(DashboardGridItem);
       const panelOutOfRowLibVizPanel = body.state.children[2] as DashboardGridItem;
@@ -362,7 +362,7 @@ describe('transformSaveModelToScene', () => {
       expect(rowWithPanelsScene.state.key).toBe('panel-10');
       expect(rowWithPanelsScene.state.children).toHaveLength(3);
       const widget = rowWithPanelsScene.state.children[1] as DashboardGridItem;
-      expect(widget.state.body!).toBeInstanceOf(AddLibraryPanelWidget);
+      expect(widget.state.body!).toBeInstanceOf(AddLibraryPanelDrawer);
       const libPanel = rowWithPanelsScene.state.children[2] as DashboardGridItem;
       expect(libPanel.state.body!).toBeInstanceOf(LibraryVizPanel);
       // Panel within row
@@ -547,7 +547,7 @@ describe('transformSaveModelToScene', () => {
       };
 
       const gridItem = buildGridItemForLibraryPanelWidget(new PanelModel(panel))!;
-      const libPanelWidget = gridItem.state.body as AddLibraryPanelWidget;
+      const libPanelWidget = gridItem.state.body as AddLibraryPanelDrawer;
 
       expect(libPanelWidget.state.key).toEqual(getVizPanelKeyForPanelId(panel.id));
     });

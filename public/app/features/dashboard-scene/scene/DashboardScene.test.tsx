@@ -674,7 +674,7 @@ describe('DashboardScene', () => {
         scene.exitEditMode({ skipConfirm: true });
         expect(scene.state.isEditing).toBe(false);
 
-        scene.onCreateLibPanelWidget();
+        scene.onShowAddLibraryPanelDrawer();
 
         const body = scene.state.body as SceneGridLayout;
         const gridItem = body.state.children[0] as DashboardGridItem;

@@ -148,7 +148,7 @@ export function ToolbarActions({ dashboard }: Props) {
               testId={selectors.pages.AddDashboard.itemButton('Add new panel from panel library menu item')}
               label={t('dashboard.add-menu.import', 'Import from library')}
               onClick={() => {
-                dashboard.onCreateLibPanelWidget();
+                dashboard.onShowAddLibraryPanelDrawer();
                 DashboardInteractions.toolbarAddButtonClicked({ item: 'add_library_panel' });
               }}
             />

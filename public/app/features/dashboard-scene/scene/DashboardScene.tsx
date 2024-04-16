@@ -57,7 +57,7 @@ import {
   isPanelClone,
 } from '../utils/utils';
 
-import { AddLibraryPanelWidget } from './AddLibraryPanelDrawer';
+import { AddLibraryPanelDrawer } from './AddLibraryPanelDrawer';
 import { DashboardControls } from './DashboardControls';
 import { DashboardGridItem } from './DashboardGridItem';
 import { DashboardSceneRenderer } from './DashboardSceneRenderer';
@@ -760,9 +760,9 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
     locationService.partial({ editview: 'settings' });
   };
 
-  public onCreateLibPanelWidget() {
+  public onShowAddLibraryPanelDrawer() {
     this.setState({
-      overlay: new AddLibraryPanelWidget({}),
+      overlay: new AddLibraryPanelDrawer({}),
     });
   }
 

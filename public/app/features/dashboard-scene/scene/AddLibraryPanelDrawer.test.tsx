@@ -1,16 +1,16 @@
 import { SceneGridLayout, SceneGridRow, SceneTimeRange } from '@grafana/scenes';
 import { LibraryPanel } from '@grafana/schema/dist/esm/index.gen';
 
-import { DashboardScene } from '../scene/DashboardScene';
 import { activateFullSceneTree } from '../utils/test-utils';
 
-import { AddLibraryPanelWidget } from './AddLibraryPanelDrawer';
+import { AddLibraryPanelDrawer } from './AddLibraryPanelDrawer';
 import { DashboardGridItem } from './DashboardGridItem';
+import { DashboardScene } from './DashboardScene';
 import { LibraryVizPanel } from './LibraryVizPanel';
 
 describe('AddLibraryPanelWidget', () => {
   let dashboard: DashboardScene;
-  let addLibPanelWidget: AddLibraryPanelWidget;
+  let addLibPanelWidget: AddLibraryPanelDrawer;
   const mockEvent = {
     preventDefault: jest.fn(),
   } as unknown as React.MouseEvent<HTMLButtonElement>;
@@ -34,7 +34,7 @@ describe('AddLibraryPanelWidget', () => {
   });
 
   it('should cancel lib panel at correct position', () => {
-    const anotherLibPanelWidget = new AddLibraryPanelWidget({ key: 'panel-2' });
+    const anotherLibPanelWidget = new AddLibraryPanelDrawer({ key: 'panel-2' });
     const body = dashboard.state.body as SceneGridLayout;
 
     body.setState({
@@ -61,7 +61,7 @@ describe('AddLibraryPanelWidget', () => {
   });
 
   it('should cancel lib panel inside a row child', () => {
-    const anotherLibPanelWidget = new AddLibraryPanelWidget({ key: 'panel-2' });
+    const anotherLibPanelWidget = new AddLibraryPanelDrawer({ key: 'panel-2' });
     dashboard.setState({
       body: new SceneGridLayout({
         children: [
@@ -106,7 +106,7 @@ describe('AddLibraryPanelWidget', () => {
     const body = dashboard.state.body as SceneGridLayout;
     const gridItem = body.state.children[0] as DashboardGridItem;
 
-    expect(gridItem.state.body!).toBeInstanceOf(AddLibraryPanelWidget);
+    expect(gridItem.state.body!).toBeInstanceOf(AddLibraryPanelDrawer);
 
     addLibPanelWidget.onAddLibraryPanel(panelInfo);
 
@@ -116,7 +116,7 @@ describe('AddLibraryPanelWidget', () => {
   });
 
   it('should add a lib panel at correct position', () => {
-    const anotherLibPanelWidget = new AddLibraryPanelWidget({ key: 'panel-2' });
+    const anotherLibPanelWidget = new AddLibraryPanelDrawer({ key: 'panel-2' });
     const body = dashboard.state.body as SceneGridLayout;
 
     body.setState({
@@ -150,12 +150,12 @@ describe('AddLibraryPanelWidget', () => {
     const gridItemTwo = body.state.children[1] as DashboardGridItem;
 
     expect(body.state.children.length).toBe(2);
-    expect(gridItemOne.state.body!).toBeInstanceOf(AddLibraryPanelWidget);
+    expect(gridItemOne.state.body!).toBeInstanceOf(AddLibraryPanelDrawer);
     expect((gridItemTwo.state.body! as LibraryVizPanel).state.panelKey).toBe(anotherLibPanelWidget.state.key);
   });
 
   it('should add library panel from menu to a row child', () => {
-    const anotherLibPanelWidget = new AddLibraryPanelWidget({ key: 'panel-2' });
+    const anotherLibPanelWidget = new AddLibraryPanelDrawer({ key: 'panel-2' });
     dashboard.setState({
       body: new SceneGridLayout({
         children: [
@@ -220,7 +220,7 @@ describe('AddLibraryPanelWidget', () => {
 });
 
 async function buildTestScene() {
-  const addLibPanelWidget = new AddLibraryPanelWidget({ key: 'panel-1' });
+  const addLibPanelWidget = new AddLibraryPanelDrawer({ key: 'panel-1' });
   const dashboard = new DashboardScene({
     $timeRange: new SceneTimeRange({}),
     title: 'hello',

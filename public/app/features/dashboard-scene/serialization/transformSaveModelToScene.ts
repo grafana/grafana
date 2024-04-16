@@ -33,7 +33,7 @@ import { DashboardModel, PanelModel } from 'app/features/dashboard/state';
 import { trackDashboardLoaded } from 'app/features/dashboard/utils/tracking';
 import { DashboardDTO } from 'app/types';
 
-import { AddLibraryPanelWidget } from '../scene/AddLibraryPanelDrawer';
+import { AddLibraryPanelDrawer } from '../scene/AddLibraryPanelDrawer';
 import { AlertStatesDataLayer } from '../scene/AlertStatesDataLayer';
 import { DashboardAnnotationsDataLayer } from '../scene/DashboardAnnotationsDataLayer';
 import { DashboardControls } from '../scene/DashboardControls';
@@ -440,7 +440,7 @@ export function buildGridItemForLibraryPanelWidget(panel: PanelModel) {
     return null;
   }
 
-  const body = new AddLibraryPanelWidget({
+  const body = new AddLibraryPanelDrawer({
     key: getVizPanelKeyForPanelId(panel.id),
   });
 
