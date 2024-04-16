@@ -1,5 +1,5 @@
 ---
-description: Breaking changes for Grafana v11.0-preview
+description: Breaking changes for Grafana v11.0
 keywords:
   - grafana
   - breaking changes
@@ -12,16 +12,16 @@ labels:
     - cloud
     - enterprise
     - oss
-title: Breaking changes in Grafana v11.0-preview
+title: Breaking changes in Grafana v11.0
 weight: -3
 ---
 
 <!-- vale GoogleWe = NO -->
 <!-- vale We = NO -->
 
-# Breaking changes in Grafana v11.0-preview
+# Breaking changes in Grafana v11.0
 
-Following are breaking changes that you should be aware of when upgrading to Grafana v11.0-preview.
+Following are breaking changes that you should be aware of when upgrading to Grafana v11.0.
 
 For our purposes, a breaking change is any change that requires users or operators to do something. This includes:
 
@@ -38,7 +38,7 @@ For each change, the provided information:
 - Guides you in how to mitigate for the change or migrate
 - Provides more learning resources
 
-For release highlights and deprecations, refer to our [v11.0-preview What’s new](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/whatsnew/whats-new-in-v11-0/). For the specific steps we recommend when you upgrade to v11.0, check out our [Upgrade guide](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/upgrade-guide/upgrade-v11.0/).
+For release highlights and deprecations, refer to our [v11.0 What’s new](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/whatsnew/whats-new-in-v11-0/). For the specific steps we recommend when you upgrade to v11.0, check out our [Upgrade guide](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/upgrade-guide/upgrade-v11.0/).
 
 <!--
 ## Feature

@@ -1,5 +1,5 @@
 ---
-description: Feature and improvement highlights for Grafana v11.0-preview
+description: Feature and improvement highlights for Grafana v11.0
 keywords:
   - grafana
   - new
@@ -12,24 +12,22 @@ products:
   - cloud
   - enterprise
   - oss
-title: What's new in Grafana v11.0-preview
+title: What's new in Grafana v11.0
 weight: -42
 ---
 
 <!-- vale GoogleWe = NO -->
 <!-- vale We = NO -->
 
-# What’s new in Grafana v11.0-preview
+# What’s new in Grafana v11.0
 
-Welcome to Grafana 11.0-preview! This release contains some major improvements: most notably, the ability to explore your Prometheus metrics and Loki logs without writing any PromQL or LogQL, using Explore Metrics and Explore Logs. The dashboard experience is better than ever with edit mode for dashboards, AI-generated dashboard names and descriptions, and general availability for subfolders. You can also take advantage of improvements to the canvas and table visualizations, new transformations, a revamp of the Alert Rule page, and more.
+Welcome to Grafana 11.0! This release contains some major improvements: most notably, the ability to explore your Prometheus metrics and Loki logs without writing any PromQL or LogQL, using Explore Metrics and Explore Logs. The dashboard experience is better than ever with edit mode for dashboards, AI-generated dashboard names and descriptions, and general availability for subfolders. You can also take advantage of improvements to the canvas and table visualizations, new transformations, a revamp of the Alert Rule page, and more.
 
-Why "preview?" The Grafana 11.0 stable release is planned for this May. This is an early release to coincide with [Grafanacon 2024](https://grafana.com/about/events/grafanacon/2024/), so that you can try the new functionality early. To understand the differences between preview and GA releases, review the [release life cycle](https://grafana.com/docs/release-life-cycle/).
-
-For even more detail about all the changes in this release, refer to the [changelog](https://github.com/grafana/grafana/blob/main/CHANGELOG.md). For the specific steps we recommend when you upgrade to v11.0-preview, check out our [Upgrade Guide](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/upgrade-guide/upgrade-v11.0/).
+For even more detail about all the changes in this release, refer to the [changelog](https://github.com/grafana/grafana/blob/main/CHANGELOG.md). For the specific steps we recommend when you upgrade to v11.0, check out our [Upgrade Guide](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/upgrade-guide/upgrade-v11.0/).
 
 ## Breaking changes
 
-For Grafana v11.0-preview, we've also provided a list of [breaking changes](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/breaking-changes/breaking-changes-v11-0) to help you upgrade with greater confidence. For information about these along with guidance on how to proceed, refer to [Breaking changes in Grafana v11.0-preview](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/breaking-changes/breaking-changes-v11-0/).
+For Grafana v11.0, we've also provided a list of [breaking changes](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/breaking-changes/breaking-changes-v11-0) to help you upgrade with greater confidence. For information about these along with guidance on how to proceed, refer to [Breaking changes in Grafana v11.0](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/breaking-changes/breaking-changes-v11-0/).
 
 <!-- Template below
 
