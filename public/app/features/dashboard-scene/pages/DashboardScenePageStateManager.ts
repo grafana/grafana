@@ -228,6 +228,15 @@ export class DashboardScenePageStateManager extends StateManagerBase<DashboardSc
     return null;
   }
 
+  public async updateNavModel(folderUid: string) {
+    try {
+      const folder = await backendSrv.getFolderByUid(folderUid);
+      store.dispatch(updateNavIndex(buildNavModel(folder)));
+    } catch (err) {
+      console.warn('Error fetching parent folder', folderUid, 'for dashboard', err);
+    }
+  }
+
   private async initNavModel(dashboard: DashboardDTO) {
     // only the folder API has information about ancestors
     // get parent folder (if it exists) and put it in the store
