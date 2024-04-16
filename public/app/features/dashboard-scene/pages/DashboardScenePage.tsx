@@ -41,6 +41,7 @@ export function DashboardScenePage({ match, route, queryParams, history }: Props
     }
 
     return () => {
+      console.log('clear state');
       stateManager.clearState();
     };
   }, [
@@ -70,6 +71,11 @@ export function DashboardScenePage({ match, route, queryParams, history }: Props
         {loadError && <h2>{loadError}</h2>}
       </Page>
     );
+  }
+
+  // Do not render anything when transitioning from one dashboard to another
+  if (dashboard.state.uid && dashboard.state.uid !== match.params.uid) {
+    return null;
   }
 
   return (
