@@ -25,6 +25,11 @@
       "user": "User"
     }
   },
+  "api-keys": {
+    "empty-state": {
+      "message": "No API keys found"
+    }
+  },
   "bouncing-loader": {
     "label": "Loading"
   },
@@ -94,7 +99,7 @@
     },
     "no-results": {
       "clear": "Clear search and filters",
-      "text": "No results found for your query."
+      "text": "No results found for your query"
     }
   },
   "clipboard-button": {
@@ -109,7 +114,7 @@
       "light-theme": "Light"
     },
     "empty-state": {
-      "title": "No results found"
+      "message": "No results found"
     },
     "search-box": {
       "placeholder": "Search or jump to..."
@@ -131,7 +136,8 @@
   },
   "connections": {
     "connect-data": {
-      "category-header-label": "Data sources"
+      "category-header-label": "Data sources",
+      "empty-message": "No results matching your query were found"
     },
     "search": {
       "placeholder": "Search all"
@@ -419,6 +425,9 @@
   "data-sources": {
     "datasource-add-button": {
       "label": "Add new data source"
+    },
+    "empty-state": {
+      "message": "No data sources found"
     }
   },
   "explore": {
@@ -650,6 +659,9 @@
     }
   },
   "library-panels": {
+    "empty-state": {
+      "message": "No library panels found"
+    },
     "modal": {
       "body_one": "This panel is being used in {{count}} dashboard. Please choose which dashboard to view the panel in:",
       "body_other": "This panel is being used in {{count}} dashboards. Please choose which dashboard to view the panel in:",
@@ -712,6 +724,8 @@
       "connecting": "Connecting to this stack...",
       "stack-required-error": "Stack URL is required",
       "title": "Connect to a cloud stack",
+      "token-error-description": "There was an error saving the token. See the Grafana server logs for more details.",
+      "token-error-title": "Error saving token",
       "token-required-error": "Migration token is required"
     },
     "cta": {
@@ -1211,6 +1225,16 @@
       "title": "There are no playlists created yet"
     }
   },
+  "playlists": {
+    "empty-state": {
+      "message": "No playlists found"
+    }
+  },
+  "plugins": {
+    "empty-state": {
+      "message": "No plugins found"
+    }
+  },
   "profile": {
     "change-password": {
       "cancel-button": "Cancel",
@@ -1413,6 +1437,11 @@
       "placeholder": "Search for dashboards and folders"
     }
   },
+  "service-accounts": {
+    "empty-state": {
+      "message": "No services accounts found"
+    }
+  },
   "share-modal": {
     "dashboard": {
       "title": "Share"
@@ -1541,6 +1570,11 @@
     "no-tags": "No tags found",
     "placeholder": "Filter by tag"
   },
+  "teams": {
+    "empty-state": {
+      "message": "No teams found"
+    }
+  },
   "time-picker": {
     "absolute": {
       "recent-title": "Recently used absolute ranges",
@@ -1633,6 +1667,11 @@
   },
   "user-sessions": {
     "loading": "Loading sessions..."
+  },
+  "users": {
+    "empty-state": {
+      "message": "No users found"
+    }
   },
   "users-access-list": {
     "tabs": {
