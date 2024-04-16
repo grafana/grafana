@@ -120,7 +120,7 @@ async function fetchDashboard(
         if (args.urlFolderUid) {
           await dispatch(getFolderByUid(args.urlFolderUid));
         }
-        return buildNewDashboardSaveModel(args.urlFolderUid);
+        return await buildNewDashboardSaveModel(args.urlFolderUid);
       }
       case DashboardRoutes.Path: {
         const path = args.urlSlug ?? '';

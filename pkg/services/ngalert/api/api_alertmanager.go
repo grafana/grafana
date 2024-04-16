@@ -65,11 +65,6 @@ func (srv AlertmanagerSrv) RouteCreateSilence(c *contextmodel.ReqContext, postab
 		return ErrResp(http.StatusBadRequest, err, "silence failed validation")
 	}
 
-	am, errResp := srv.AlertmanagerFor(c.SignedInUser.GetOrgID())
-	if errResp != nil {
-		return errResp
-	}
-
 	action := accesscontrol.ActionAlertingInstanceUpdate
 	if postableSilence.ID == "" {
 		action = accesscontrol.ActionAlertingInstanceCreate
@@ -83,8 +78,15 @@ func (srv AlertmanagerSrv) RouteCreateSilence(c *contextmodel.ReqContext, postab
 		return response.Err(authz.NewAuthorizationErrorWithPermissions(fmt.Sprintf("%s silences", errAction), evaluator))
 	}
 
-	silenceID, err := am.CreateSilence(c.Req.Context(), &postableSilence)
+	silenceID, err := srv.mam.CreateSilence(c.Req.Context(), c.SignedInUser.GetOrgID(), &postableSilence)
 	if err != nil {
+		if errors.Is(err, notifier.ErrNoAlertmanagerForOrg) {
+			return ErrResp(http.StatusNotFound, err, "")
+		}
+		if errors.Is(err, notifier.ErrAlertmanagerNotReady) {
+			return ErrResp(http.StatusConflict, err, "")
+		}
+
 		if errors.Is(err, alertingNotify.ErrSilenceNotFound) {
 			return ErrResp(http.StatusNotFound, err, "")
 		}
@@ -115,12 +117,13 @@ func (srv AlertmanagerSrv) RouteDeleteAlertingConfig(c *contextmodel.ReqContext)
 }
 
 func (srv AlertmanagerSrv) RouteDeleteSilence(c *contextmodel.ReqContext, silenceID string) response.Response {
-	am, errResp := srv.AlertmanagerFor(c.SignedInUser.GetOrgID())
-	if errResp != nil {
-		return errResp
-	}
-
-	if err := am.DeleteSilence(c.Req.Context(), silenceID); err != nil {
+	if err := srv.mam.DeleteSilence(c.Req.Context(), c.SignedInUser.GetOrgID(), silenceID); err != nil {
+		if errors.Is(err, notifier.ErrNoAlertmanagerForOrg) {
+			return ErrResp(http.StatusNotFound, err, "")
+		}
+		if errors.Is(err, notifier.ErrAlertmanagerNotReady) {
+			return ErrResp(http.StatusConflict, err, "")
+		}
 		if errors.Is(err, alertingNotify.ErrSilenceNotFound) {
 			return ErrResp(http.StatusNotFound, err, "")
 		}

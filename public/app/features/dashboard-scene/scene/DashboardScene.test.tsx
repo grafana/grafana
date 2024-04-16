@@ -1,4 +1,4 @@
-import { CoreApp } from '@grafana/data';
+import { CoreApp, LoadingState, getDefaultTimeRange } from '@grafana/data';
 import {
   sceneGraph,
   SceneGridLayout,
@@ -9,12 +9,14 @@ import {
   VizPanel,
   SceneGridRow,
   behaviors,
+  SceneDataTransformer,
 } from '@grafana/scenes';
 import { Dashboard, DashboardCursorSync } from '@grafana/schema';
 import appEvents from 'app/core/app_events';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 import { VariablesChanged } from 'app/features/variables/types';
 
+import { PanelEditor, buildPanelEditScene } from '../panel-edit/PanelEditor';
 import { createWorker } from '../saving/createDetectChangesWorker';
 import {
   buildGridItemForLibPanel,
@@ -25,11 +27,13 @@ import { DecoratedRevisionModel } from '../settings/VersionsEditView';
 import { historySrv } from '../settings/version-history/HistorySrv';
 import { dashboardSceneGraph } from '../utils/dashboardSceneGraph';
 import { djb2Hash } from '../utils/djb2Hash';
+import { findVizPanelByKey } from '../utils/utils';
 
 import { DashboardControls } from './DashboardControls';
 import { DashboardGridItem } from './DashboardGridItem';
 import { DashboardScene, DashboardSceneState } from './DashboardScene';
 import { LibraryVizPanel } from './LibraryVizPanel';
+import { PanelTimeRange } from './PanelTimeRange';
 import { RowActions } from './row-actions/RowActions';
 
 jest.mock('../settings/version-history/HistorySrv');
@@ -175,7 +179,6 @@ describe('DashboardScene', () => {
         ${'tags'}        | ${['tag3', 'tag4']}
         ${'editable'}    | ${false}
         ${'links'}       | ${[]}
-        ${'meta'}        | ${{ folderUid: 'new-folder-uid', folderTitle: 'new-folder-title', hasUnsavedFolderChange: true }}
       `(
         'A change to $prop should set isDirty true',
         ({ prop, value }: { prop: keyof DashboardSceneState; value: unknown }) => {
@@ -188,6 +191,26 @@ describe('DashboardScene', () => {
           expect(scene.state[prop]).toEqual(prevState);
         }
       );
+
+      it('A change to folderUid should set isDirty true', () => {
+        const prevMeta = { ...scene.state.meta };
+
+        // The worker only detects changes in the model, so the folder change should be detected anyway
+        mockResultsOfDetectChangesWorker({ hasChanges: false, hasTimeChanges: false, hasVariableValueChanges: false });
+
+        scene.setState({
+          meta: {
+            ...prevMeta,
+            folderUid: 'new-folder-uid',
+            folderTitle: 'new-folder-title',
+          },
+        });
+
+        expect(scene.state.isDirty).toBe(true);
+
+        scene.exitEditMode({ skipConfirm: true });
+        expect(scene.state.meta).toEqual(prevMeta);
+      });
 
       it('A change to refresh picker interval settings should set isDirty true', () => {
         const refreshPicker = dashboardSceneGraph.getRefreshPicker(scene)!;
@@ -249,6 +272,125 @@ describe('DashboardScene', () => {
 
         scene.exitEditMode({ skipConfirm: true });
         expect(dashboardSceneGraph.getCursorSync(scene)!.state).toEqual(initialState);
+      });
+
+      it('A change to a any VizPanel state should set isDirty true', () => {
+        const panel = sceneGraph.findObject(scene, (p) => p instanceof VizPanel) as VizPanel;
+        const prevTitle = panel.state.title;
+        panel.setState({ title: 'new title' });
+
+        expect(scene.state.isDirty).toBe(true);
+
+        scene.exitEditMode({ skipConfirm: true });
+        const restoredPanel = sceneGraph.findObject(scene, (p) => p instanceof VizPanel) as VizPanel;
+        expect(restoredPanel.state.title).toBe(prevTitle);
+      });
+
+      it('A change to any DashboardGridItem state should set isDirty true', () => {
+        const dashboardGridItem = sceneGraph.findObject(
+          scene,
+          (p) => p instanceof DashboardGridItem
+        ) as DashboardGridItem;
+        const prevValue = dashboardGridItem.state.variableName;
+
+        dashboardGridItem.setState({ variableName: 'var1', repeatDirection: 'h', maxPerRow: 2 });
+
+        expect(scene.state.isDirty).toBe(true);
+
+        scene.exitEditMode({ skipConfirm: true });
+        const restoredDashboardGridItem = sceneGraph.findObject(
+          scene,
+          (p) => p instanceof DashboardGridItem
+        ) as DashboardGridItem;
+        expect(restoredDashboardGridItem.state.variableName).toBe(prevValue);
+      });
+
+      it('A change to any LibraryVizPanel name should set isDirty true', () => {
+        const libraryVizPanel = sceneGraph.findObject(scene, (p) => p instanceof LibraryVizPanel) as LibraryVizPanel;
+        const prevValue = libraryVizPanel.state.name;
+
+        libraryVizPanel.setState({ name: 'new name' });
+
+        expect(scene.state.isDirty).toBe(true);
+
+        scene.exitEditMode({ skipConfirm: true });
+        const restoredLibraryVizPanel = sceneGraph.findObject(
+          scene,
+          (p) => p instanceof LibraryVizPanel
+        ) as LibraryVizPanel;
+        expect(restoredLibraryVizPanel.state.name).toBe(prevValue);
+      });
+
+      it('A change to any PanelTimeRange state should set isDirty true', () => {
+        const panelTimeRange = sceneGraph.findObject(scene, (p) => p instanceof PanelTimeRange) as PanelTimeRange;
+        const prevValue = panelTimeRange.state.from;
+
+        panelTimeRange.setState({ from: 'now-1h', to: 'now' });
+
+        expect(scene.state.isDirty).toBe(true);
+
+        scene.exitEditMode({ skipConfirm: true });
+        const restoredPanelTimeRange = sceneGraph.findObject(
+          scene,
+          (p) => p instanceof PanelTimeRange
+        ) as PanelTimeRange;
+        expect(restoredPanelTimeRange.state.from).toEqual(prevValue);
+      });
+
+      it('A change to any SceneQueryRunner state should set isDirty true', () => {
+        const queryRunner = sceneGraph.findObject(scene, (p) => p instanceof SceneQueryRunner) as SceneQueryRunner;
+        const prevValue = queryRunner.state.queries;
+
+        queryRunner.setState({ queries: [{ refId: 'A', datasource: { uid: 'fake-uid', type: 'test' } }] });
+
+        expect(scene.state.isDirty).toBe(true);
+
+        scene.exitEditMode({ skipConfirm: true });
+        const restoredQueryRunner = sceneGraph.findObject(
+          scene,
+          (p) => p instanceof SceneQueryRunner
+        ) as SceneQueryRunner;
+        expect(restoredQueryRunner.state.queries).toEqual(prevValue);
+      });
+
+      it('A change to any SceneDataTransformer state should set isDirty true', () => {
+        const dataTransformer = sceneGraph.findObject(
+          scene,
+          (p) => p instanceof SceneDataTransformer
+        ) as SceneDataTransformer;
+        const prevValue = dataTransformer.state.transformations;
+
+        dataTransformer.setState({ transformations: [{ id: 'fake-transformation', options: {} }] });
+
+        expect(scene.state.isDirty).toBe(true);
+
+        scene.exitEditMode({ skipConfirm: true });
+        const restoredDataTransformer = sceneGraph.findObject(
+          scene,
+          (p) => p instanceof SceneDataTransformer
+        ) as SceneDataTransformer;
+        expect(restoredDataTransformer.state.transformations).toEqual(prevValue);
+      });
+
+      it('A change to any SceneDataTransformer data should NOT set isDirty true', () => {
+        const dataTransformer = sceneGraph.findObject(
+          scene,
+          (p) => p instanceof SceneDataTransformer
+        ) as SceneDataTransformer;
+        const prevValue = dataTransformer.state.data;
+        const newData = { state: LoadingState.Done, timeRange: getDefaultTimeRange(), series: [] };
+
+        dataTransformer.setState({ data: newData });
+
+        expect(scene.state.isDirty).toBeFalsy();
+
+        scene.exitEditMode({ skipConfirm: true });
+
+        const restoredDataTransformer = sceneGraph.findObject(
+          scene,
+          (p) => p instanceof SceneDataTransformer
+        ) as SceneDataTransformer;
+        expect(restoredDataTransformer.state.data).toEqual(prevValue);
       });
 
       it.each([
@@ -744,13 +886,30 @@ describe('DashboardScene', () => {
       scene.onEnterEditMode();
     });
 
-    it('Should add app, uid, panelId and panelPluginId', () => {
-      const queryRunner = sceneGraph.findObject(scene, (o) => o.state.key === 'data-query-runner')!;
-      expect(scene.enrichDataRequest(queryRunner)).toEqual({
-        app: CoreApp.Dashboard,
-        dashboardUID: 'dash-1',
-        panelId: 1,
-        panelPluginId: 'table',
+    describe('Should add app, uid, panelId and panelPluginId', () => {
+      test('when viewing', () => {
+        const queryRunner = sceneGraph.findObject(scene, (o) => o.state.key === 'data-query-runner')!;
+        expect(scene.enrichDataRequest(queryRunner)).toEqual({
+          app: CoreApp.Dashboard,
+          dashboardUID: 'dash-1',
+          panelId: 1,
+          panelPluginId: 'table',
+        });
+      });
+      test('when editing', () => {
+        const panel = findVizPanelByKey(scene, 'panel-1');
+        const editPanel = buildPanelEditScene(panel!);
+        scene.setState({
+          editPanel,
+        });
+
+        const queryRunner = (scene.state.editPanel as PanelEditor).state.vizManager.queryRunner;
+        expect(scene.enrichDataRequest(queryRunner)).toEqual({
+          app: CoreApp.Dashboard,
+          dashboardUID: 'dash-1',
+          panelId: 1,
+          panelPluginId: 'table',
+        });
       });
     });
 
@@ -948,7 +1107,15 @@ function buildTestScene(overrides?: Partial<DashboardSceneState>) {
             title: 'Panel A',
             key: 'panel-1',
             pluginId: 'table',
-            $data: new SceneQueryRunner({ key: 'data-query-runner', queries: [{ refId: 'A' }] }),
+            $timeRange: new PanelTimeRange({
+              from: 'now-12h',
+              to: 'now',
+              timeZone: 'browser',
+            }),
+            $data: new SceneDataTransformer({
+              transformations: [],
+              $data: new SceneQueryRunner({ key: 'data-query-runner', queries: [{ refId: 'A' }] }),
+            }),
           }),
         }),
         new DashboardGridItem({

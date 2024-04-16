@@ -59,14 +59,14 @@ export { PromQail } from './querybuilder/components/promQail/PromQail';
 
 // SRC/
 // Main export
-export { PrometheusDatasource } from './datasource';
+export { PrometheusDatasource, InstantQueryRefIdIndex } from './datasource';
 // The parts
 export { addLabelToQuery } from './add_label_to_query';
 export { type QueryEditorMode, type PromQueryFormat, type Prometheus } from './dataquery';
 export { PrometheusMetricFindQuery } from './metric_find_query';
 export { promqlGrammar } from './promql';
 export { getQueryHints, getInitHints } from './query_hints';
-export { transformV2, transformDFToTable } from './result_transformer';
+export { transformV2, transformDFToTable, parseSampleValue, sortSeriesByLabel } from './result_transformer';
 export {
   type PromQuery,
   type PrometheusCacheLevel,

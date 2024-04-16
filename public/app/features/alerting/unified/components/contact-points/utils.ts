@@ -137,12 +137,17 @@ export function enhanceContactPointsWithMetadata(
         alertmanagerConfiguration && usedContactPointsByName && (usedContactPointsByName[contactPoint.name] ?? 0),
       grafana_managed_receiver_configs: receivers.map((receiver, index) => {
         const isOnCallReceiver = receiver.type === ReceiverTypes.OnCall;
+        // if we don't have alertmanagerConfiguration we can't get the metadata for oncall receivers,
+        // because we don't have the url, as we are not using the alertmanager configuration
+        // but the contact points returned by the read only permissions contact points endpoint (/api/v1/notifications/receivers)
         return {
           ...receiver,
           [RECEIVER_STATUS_KEY]: statusForReceiver?.integrations[index],
           [RECEIVER_META_KEY]: getNotifierMetadata(notifiers, receiver),
           // if OnCall plugin is installed, we'll add it to the receiver's plugin metadata
-          [RECEIVER_PLUGIN_META_KEY]: isOnCallReceiver ? getOnCallMetadata(onCallIntegrations, receiver) : undefined,
+          [RECEIVER_PLUGIN_META_KEY]: isOnCallReceiver
+            ? getOnCallMetadata(onCallIntegrations, receiver, Boolean(alertmanagerConfiguration))
+            : undefined,
         };
       }),
     };

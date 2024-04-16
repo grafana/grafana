@@ -80,16 +80,28 @@ export class BreakdownScene extends SceneObjectBase<BreakdownSceneState> {
       }
     });
 
+    const metricScene = sceneGraph.getAncestor(this, MetricScene);
+    const metric = metricScene.state.metric;
+    this._query = getAutoQueriesForMetric(metric).breakdown;
+
+    // The following state changes (and conditions) will each result in a call to `clearBreakdownPanelAxisValues`.
+    // By clearing the axis, subsequent calls to `reportBreakdownPanelData` will adjust to an updated axis range.
+    // These state changes coincide with the panels having their data updated, making a call to `reportBreakdownPanelData`.
+    // If the axis was not cleared by `clearBreakdownPanelAxisValues` any calls to `reportBreakdownPanelData` which result
+    // in the same axis will result in no updates to the panels.
+
     const trail = getTrailFor(this);
     trail.state.$timeRange?.subscribeToState(() => {
-      // The change in time range will cause a refresh of panel values,
-      // so we clear the axis range so it can be recalculated when the calls
-      // to `reportBreakdownPanelData` start being made from the panels' behavior.
+      // The change in time range will cause a refresh of panel values.
       this.clearBreakdownPanelAxisValues();
     });
 
-    const metric = sceneGraph.getAncestor(this, MetricScene).state.metric;
-    this._query = getAutoQueriesForMetric(metric).breakdown;
+    metricScene.subscribeToState(({ layout }, old) => {
+      if (layout !== old.layout) {
+        // Change in layout will set up a different set of panel objects that haven't received the current yaxis range
+        this.clearBreakdownPanelAxisValues();
+      }
+    });
 
     this.updateBody(variable);
   }
