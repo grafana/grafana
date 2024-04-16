@@ -1,5 +1,5 @@
 import debounce from 'debounce-promise';
-import React from 'react';
+import React, { ChangeEvent } from 'react';
 import { UseFormSetValue, useForm } from 'react-hook-form';
 
 import { Dashboard } from '@grafana/schema';
@@ -28,7 +28,7 @@ export interface Props {
 export function SaveDashboardAsForm({ dashboard, changeInfo }: Props) {
   const { changedSaveModel } = changeInfo;
 
-  const { register, handleSubmit, setValue, formState, getValues, watch, trigger } = useForm<SaveDashboardAsFormDTO>({
+  const { register, handleSubmit, setValue, formState, getValues, watch } = useForm<SaveDashboardAsFormDTO>({
     mode: 'onBlur',
     defaultValues: {
       title: changeInfo.isNew ? changedSaveModel.title! : `${changedSaveModel.title} Copy`,
@@ -97,10 +97,9 @@ export function SaveDashboardAsForm({ dashboard, changeInfo }: Props) {
         <Input
           {...register('title', { required: 'Required', validate: validateDashboardName })}
           aria-label="Save dashboard title field"
-          onChange={debounce(async () => {
-            trigger('title');
+          onChange={debounce(async (e: ChangeEvent<HTMLInputElement>) => {
+            setValue('title', e.target.value, { shouldValidate: true });
           }, 400)}
-          autoFocus
         />
       </Field>
       <Field
