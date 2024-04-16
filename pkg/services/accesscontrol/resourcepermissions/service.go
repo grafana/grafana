@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"sort"
+	"strings"
 
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/infra/db"
@@ -82,6 +83,29 @@ func New(cfg *setting.Cfg,
 	log := log.New("accesscontrol.resourcepermissions")
 	actionSetsStore := NewInMemoryActionSets(log)
 
+	for permission, actions := range options.PermissionsToActions {
+		// for actionsets we need to know the resource
+		resource := ""
+		for _, a := range actions {
+
+			// assuming we get the ordering of this right,
+			// such as "dashboards", "folders", "teams"
+			if strings.Contains(a, ":") {
+				resource = strings.Split(a, ":")[0]
+				if resource != "folders" {
+					// currently only whitelisting folders
+					continue
+				}
+				break
+			}
+		}
+		// PermissionsToActions: map[string][]string{
+		// 	"Edit":  ServiceAccountEditActions,
+		// 	"Admin": ServiceAccountAdminActions,
+		// },
+		actionSetsStore.StoreActionSet(resource, permission, actions)
+		break
+	}
 	s := &Service{
 		ac:          ac,
 		store:       NewStore(sqlStore, features, actionSetsStore),
