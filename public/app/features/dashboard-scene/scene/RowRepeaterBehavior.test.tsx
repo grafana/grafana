@@ -74,6 +74,30 @@ describe('RowRepeaterBehavior', () => {
       expect(grid.state.children.length).toBe(4);
     });
   });
+
+  describe('Given scene empty row', () => {
+    let scene: EmbeddedScene;
+    let grid: SceneGridLayout;
+    let repeatBehavior: RowRepeaterBehavior;
+
+    beforeEach(async () => {
+      ({ scene, grid, repeatBehavior } = buildScene({ variableQueryTime: 0 }));
+
+      repeatBehavior.setState({ sources: [] });
+      activateFullSceneTree(scene);
+      await new Promise((r) => setTimeout(r, 1));
+    });
+
+    it('Should repeat row', () => {
+      // Verify that panel above row remains
+      expect(grid.state.children[0]).toBeInstanceOf(SceneGridItem);
+      // Verify that first row still has repeat behavior
+      const row1 = grid.state.children[1] as SceneGridRow;
+      const row2 = grid.state.children[2] as SceneGridRow;
+      expect(row1.state.y).toBe(10);
+      expect(row2.state.y).toBe(11);
+    });
+  });
 });
 
 interface SceneOptions {
@@ -84,6 +108,22 @@ interface SceneOptions {
 }
 
 function buildScene(options: SceneOptions) {
+  const repeatBehavior = new RowRepeaterBehavior({
+    variableName: 'server',
+    sources: [
+      new SceneGridItem({
+        x: 0,
+        y: 11,
+        width: 24,
+        height: 5,
+        body: new SceneCanvasText({
+          key: 'canvas-1',
+          text: 'Panel inside repeated row, server = $server',
+        }),
+      }),
+    ],
+  });
+
   const grid = new SceneGridLayout({
     children: [
       new SceneGridItem({
@@ -100,23 +140,7 @@ function buildScene(options: SceneOptions) {
         y: 10,
         width: 24,
         height: 1,
-        $behaviors: [
-          new RowRepeaterBehavior({
-            variableName: 'server',
-            sources: [
-              new SceneGridItem({
-                x: 0,
-                y: 11,
-                width: 24,
-                height: 5,
-                body: new SceneCanvasText({
-                  key: 'canvas-1',
-                  text: 'Panel inside repeated row, server = $server',
-                }),
-              }),
-            ],
-          }),
-        ],
+        $behaviors: [repeatBehavior],
       }),
       new SceneGridRow({
         x: 0,
@@ -173,5 +197,5 @@ function buildScene(options: SceneOptions) {
     body: grid,
   });
 
-  return { scene, grid };
+  return { scene, grid, repeatBehavior };
 }

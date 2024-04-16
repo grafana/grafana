@@ -45,3 +45,12 @@ func (d *DualWriterMode1) List(ctx context.Context, options *metainternalversion
 
 	return legacy.List(ctx, options)
 }
+
+func (d *DualWriterMode1) Delete(ctx context.Context, name string, deleteValidation rest.ValidateObjectFunc, options *metav1.DeleteOptions) (runtime.Object, bool, error) {
+	legacy, ok := d.Legacy.(rest.GracefulDeleter)
+	if !ok {
+		return nil, false, errDualWriterDeleterMissing
+	}
+
+	return legacy.Delete(ctx, name, deleteValidation, options)
+}
