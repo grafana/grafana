@@ -1,3 +1,4 @@
+// Core Grafana history https://github.com/grafana/grafana/blob/v11.0.0-preview/public/app/plugins/datasource/prometheus/add_label_to_query.test.ts
 import { addLabelToQuery } from './add_label_to_query';
 
 describe('addLabelToQuery()', () => {

@@ -4,6 +4,7 @@ import { useLocation } from 'react-use';
 import { ToolbarButton } from '@grafana/ui';
 
 import { DataTrail } from './DataTrail';
+import { reportExploreMetrics } from './interactions';
 import { getUrlForTrail } from './utils';
 
 interface ShareTrailButtonState {
@@ -17,6 +18,7 @@ export const ShareTrailButton = ({ trail }: ShareTrailButtonState) => {
   const onShare = () => {
     if (navigator.clipboard) {
       navigator.clipboard.writeText(origin + getUrlForTrail(trail));
+      reportExploreMetrics('selected_metric_action_clicked', { action: 'share_url' });
       setTooltip('Copied!');
       setTimeout(() => {
         setTooltip('Copy url');

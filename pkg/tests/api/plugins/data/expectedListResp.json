@@ -1118,7 +1118,7 @@
       "keywords": null
     },
     "dependencies": {
-      "grafanaDependency": "",
+      "grafanaDependency": ">=10.4.0",
       "grafanaVersion": "*",
       "plugins": []
     },
