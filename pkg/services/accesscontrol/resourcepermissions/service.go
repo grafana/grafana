@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"sort"
-	"strings"
 
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/infra/db"
@@ -60,6 +59,10 @@ func New(cfg *setting.Cfg,
 	ac accesscontrol.AccessControl, service accesscontrol.Service, sqlStore db.DB,
 	teamService team.Service, userService user.Service,
 ) (*Service, error) {
+	// TODO: add log, actionsetstore as a dependency
+	log := log.New("accesscontrol.resourcepermissions")
+	actionSetsStore := NewInMemoryActionSets(log)
+
 	permissions := make([]string, 0, len(options.PermissionsToActions))
 	actionSet := make(map[string]struct{})
 	for permission, actions := range options.PermissionsToActions {
@@ -67,6 +70,8 @@ func New(cfg *setting.Cfg,
 		for _, a := range actions {
 			actionSet[a] = struct{}{}
 		}
+		// storing the actionset
+		actionSetsStore.StoreActionSet(options.Resource, permission, actions)
 	}
 
 	// Sort all permissions based on action length. Will be used when mapping between actions to permissions
@@ -79,34 +84,6 @@ func New(cfg *setting.Cfg,
 		actions = append(actions, action)
 	}
 
-	// TODO: add this as a dependency
-	// create the store for actionsets
-	log := log.New("accesscontrol.resourcepermissions")
-	actionSetsStore := NewInMemoryActionSets(log)
-
-	for permission, actions := range options.PermissionsToActions {
-		// for actionsets we need to know the resource
-		resource := ""
-		for _, a := range actions {
-
-			// assuming we get the ordering of this right,
-			// such as "dashboards", "folders", "teams"
-			if strings.Contains(a, ":") {
-				resource = strings.Split(a, ":")[0]
-				if resource != "folders" {
-					// currently only whitelisting folders
-					continue
-				}
-				break
-			}
-		}
-		// PermissionsToActions: map[string][]string{
-		// 	"Edit":  ServiceAccountEditActions,
-		// 	"Admin": ServiceAccountAdminActions,
-		// },
-		actionSetsStore.StoreActionSet(resource, permission, actions)
-		break
-	}
 	s := &Service{
 		ac:          ac,
 		store:       NewStore(sqlStore, features, actionSetsStore),

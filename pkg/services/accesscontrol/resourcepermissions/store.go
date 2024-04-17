@@ -664,12 +664,7 @@ func (s *store) createPermissions(sess *db.Session, roleID int64, resource, reso
 	if len(actions) == 0 {
 		return nil
 	}
-	permissionsToBeStored := len(actions)
-	if s.features.IsEnabled(context.TODO(), featuremgmt.FlagAccessActionSets) {
-		// Actionset permission to be stored
-		permissionsToBeStored++
-	}
-	permissions := make([]accesscontrol.Permission, 0, permissionsToBeStored)
+	permissions := make([]accesscontrol.Permission, 0, len(actions))
 
 	for action := range actions {
 		p := managedPermission(action, resource, resourceID, resourceAttribute)
@@ -681,9 +676,9 @@ func (s *store) createPermissions(sess *db.Session, roleID int64, resource, reso
 	}
 	/*
 		Add ACTION SET of managed permissions to in-memory store
-		// FIXME: make this only folder level of view, editor, admin
 	*/
 	if s.features.IsEnabled(context.TODO(), featuremgmt.FlagAccessActionSets) {
+		// FIXME: make this only one resource of view, editor, admin
 		actionSetName, err := s.inMemoryActionSets.CreateActionSetName(resource, permission)
 		if err != nil {
 			return err
@@ -775,20 +770,10 @@ func (s *InMemoryActionSets) GetActionSet(actionName string) *ActionSet {
 }
 
 func (s *InMemoryActionSets) StoreActionSet(resource, permission string, actions []string) {
-
-	s.log.Debug("storing action set")
+	s.log.Debug("storing action set\n")
 	name, err := s.CreateActionSetName(resource, permission)
 	if err != nil {
 		s.log.Error("error creating action set", "error", err)
-	}
-	// whitelist the resources and permissions
-	if resource != "folders" {
-		s.log.Debug("Not able to store action set ", name)
-		return
-	}
-	// check if the action set already exists
-	if s.GetActionSet(name) != nil {
-		s.log.Debug("action set already exists, will be overwritten", name)
 	}
 	actionSet := &ActionSet{
 		// folders:edit
@@ -797,10 +782,9 @@ func (s *InMemoryActionSets) StoreActionSet(resource, permission string, actions
 		Permission: permission,
 		Actions:    actions,
 	}
-	// store the action set
 	// TODO: Do we only store the actions, or all of the information about the action set
 	s.actionSets[actionSet.Action] = actionSet
-	s.log.Debug("stored action set actionname", actionSet.Action, "\n")
+	s.log.Debug("stored action set actionname \n", actionSet.Action)
 }
 
 // CreateActionSetName function creates an action set from a list of actions and stores it inmemory.
@@ -809,6 +793,7 @@ func (s *InMemoryActionSets) CreateActionSetName(resource, permission string) (s
 	resource = strings.ToLower(resource)
 	permission = strings.ToLower(permission)
 
+	// TODO: should we also whitelist permissions here?
 	allowedPermissions := []string{"admin", "edit", "editor", "view", "query", "member"}
 	if !slices.Contains(allowedPermissions, permission) {
 		return "", fmt.Errorf("%s not allowed permission", permission)
