@@ -23,10 +23,6 @@ func NewPassword(newPassword string, config *setting.Cfg) (Password, error) {
 	return Password(newPassword), nil
 }
 
-func NewPasswordUnchecked(password string) Password {
-	return Password(password)
-}
-
 func (p Password) Validate(config *setting.Cfg) error {
 	return ValidatePassword(string(p), config)
 }
