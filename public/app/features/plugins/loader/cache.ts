@@ -1,15 +1,10 @@
 import { clearPluginSettingsCache } from '../pluginSettings';
 
-const cache: Record<string, CacheablePluginEntry> = {};
+const cache: Record<string, CacheablePlugin> = {};
 const initializedAt: number = Date.now();
 
 type CacheablePlugin = {
   path: string;
-  version: string;
-  isAngular?: boolean;
-};
-
-type CacheablePluginEntry = {
   version: string;
   isAngular?: boolean;
 };
@@ -20,6 +15,7 @@ export function registerPluginInCache({ path, version, isAngular }: CacheablePlu
     cache[key] = {
       version: encodeURI(version),
       isAngular,
+      path,
     };
   }
 }
@@ -37,13 +33,12 @@ export function resolveWithCache(url: string, defaultBust = initializedAt): stri
   if (!path) {
     return `${url}?_cache=${defaultBust}`;
   }
-
-  const version = cache[path].version;
+  const version = cache[path]?.version;
   const bust = version || defaultBust;
   return `${url}?_cache=${bust}`;
 }
 
-export function getPluginFromCache(path: string): CacheablePluginEntry | undefined {
+export function getPluginFromCache(path: string): CacheablePlugin | undefined {
   const key = extractPath(path);
   if (!key) {
     return;
