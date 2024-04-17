@@ -257,7 +257,7 @@ require (
 	go.opentelemetry.io/otel v1.24.0 // @grafana/backend-platform
 	k8s.io/api v0.29.2 // @grafana/grafana-app-platform-squad
 	k8s.io/apimachinery v0.29.2 // @grafana/grafana-app-platform-squad
-	k8s.io/apiserver v0.29.2 // @grafana/grafana-app-platform-squad
+	k8s.io/apiserver v0.29.4 // @grafana/grafana-app-platform-squad
 	k8s.io/client-go v0.29.2 // @grafana/grafana-app-platform-squad
 	k8s.io/component-base v0.29.2 // @grafana/grafana-app-platform-squad
 	k8s.io/klog/v2 v2.120.1 // @grafana/grafana-app-platform-squad
