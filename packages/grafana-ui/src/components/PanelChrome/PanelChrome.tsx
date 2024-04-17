@@ -294,6 +294,7 @@ export function PanelChrome({
       {!collapsed && (
         <div
           id={panelContentId}
+          data-testid={selectors.components.Panels.Panel.content}
           className={cx(styles.content, height === undefined && styles.containNone)}
           style={contentStyle}
         >
