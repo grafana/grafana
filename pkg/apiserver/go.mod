@@ -8,7 +8,6 @@ require (
 	github.com/grafana/grafana-plugin-sdk-go v0.222.0
 	github.com/grafana/grafana/pkg/apimachinery v0.0.0-20240409140820-518d3341d58f
 	github.com/stretchr/testify v1.9.0
-	github.com/zeebo/assert v1.3.0
 	golang.org/x/mod v0.14.0
 	k8s.io/apimachinery v0.29.2
 	k8s.io/apiserver v0.29.2
@@ -101,6 +100,7 @@ require (
 	github.com/spf13/cobra v1.8.0 // indirect
 	github.com/spf13/pflag v1.0.5 // indirect
 	github.com/stoewer/go-strcase v1.3.0 // indirect
+	github.com/stretchr/objx v0.5.2 // indirect
 	github.com/ugorji/go/codec v1.2.11 // indirect
 	github.com/unknwon/bra v0.0.0-20200517080246-1e3013ecaff8 // indirect
 	github.com/unknwon/com v1.0.1 // indirect
