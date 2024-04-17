@@ -156,7 +156,7 @@ func (hs *HTTPServer) AdminUpdateUserPermissions(c *contextmodel.ReqContext) res
 		return response.Error(http.StatusBadRequest, "id is invalid", err)
 	}
 
-	if response := hs.errOnExternalUser(c.Req.Context(), userID); err != nil {
+	if response := hs.errOnExternalUser(c.Req.Context(), userID); response != nil {
 		return response
 	}
 
