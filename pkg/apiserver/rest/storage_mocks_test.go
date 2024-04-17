@@ -52,6 +52,9 @@ func (m legacyStoreMock) List(ctx context.Context, options *metainternalversion.
 
 func (m legacyStoreMock) Update(ctx context.Context, name string, objInfo rest.UpdatedObjectInfo, createValidation rest.ValidateObjectFunc, updateValidation rest.ValidateObjectUpdateFunc, forceAllowCreate bool, options *metav1.UpdateOptions) (runtime.Object, bool, error) {
 	args := m.Called(ctx, name, objInfo, createValidation, updateValidation, forceAllowCreate, options)
+	if name == "object-fail" {
+		return nil, false, args.Error(2)
+	}
 	return args.Get(0).(runtime.Object), args.Bool(1), args.Error(2)
 }
 
@@ -80,6 +83,9 @@ func (m storageMock) Get(ctx context.Context, name string, options *metav1.GetOp
 	if name == "object-fail" {
 		return nil, args.Error(1)
 	}
+	if name == "not-found" {
+		return nil, args.Error(1)
+	}
 	return args.Get(0).(runtime.Object), args.Error(1)
 }
 
@@ -106,6 +112,9 @@ func (m storageMock) List(ctx context.Context, options *metainternalversion.List
 
 func (m storageMock) Update(ctx context.Context, name string, objInfo rest.UpdatedObjectInfo, createValidation rest.ValidateObjectFunc, updateValidation rest.ValidateObjectUpdateFunc, forceAllowCreate bool, options *metav1.UpdateOptions) (runtime.Object, bool, error) {
 	args := m.Called(ctx, name, objInfo, createValidation, updateValidation, forceAllowCreate, options)
+	if name == "object-fail" {
+		return nil, false, args.Error(2)
+	}
 	return args.Get(0).(runtime.Object), args.Bool(1), args.Error(2)
 }
 

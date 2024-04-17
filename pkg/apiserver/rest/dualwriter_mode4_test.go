@@ -8,6 +8,7 @@ import (
 	metainternalversion "k8s.io/apimachinery/pkg/apis/meta/internalversion"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apiserver/pkg/apis/example"
 )
 
 func TestMode4(t *testing.T) {
@@ -53,4 +54,19 @@ func TestMode4(t *testing.T) {
 	assert.NoError(t, err)
 	assert.Equal(t, 0, lsSpy.Counts("LegacyStorage.DeleteCollection"))
 	assert.Equal(t, 1, sSpy.Counts("Storage.DeleteCollection"))
+
+	// Update: it should update only in Storage
+	dummy := &example.Pod{}
+	uoi := UpdatedObjInfoObj{}
+	_, err = uoi.UpdatedObject(context.Background(), dummy)
+	assert.NoError(t, err)
+
+	var validateObjFn = func(ctx context.Context, obj runtime.Object) error { return nil }
+	var validateObjUpdateFn = func(ctx context.Context, obj, old runtime.Object) error { return nil }
+
+	_, _, err = dw.Update(context.Background(), kind, uoi, validateObjFn, validateObjUpdateFn, false, &metav1.UpdateOptions{})
+	assert.NoError(t, err)
+	assert.Equal(t, 0, lsSpy.Counts("LegacyStorage.Update"))
+	assert.Equal(t, 1, sSpy.Counts("Storage.Update"))
+	assert.NoError(t, err)
 }
