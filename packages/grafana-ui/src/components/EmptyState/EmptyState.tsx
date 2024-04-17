@@ -1,12 +1,11 @@
 import React, { ReactNode } from 'react';
-import SVG from 'react-inlinesvg';
 
 import { Box } from '../Layout/Box/Box';
 import { Stack } from '../Layout/Stack/Stack';
 import { Text } from '../Text/Text';
 
+import { GrotCTA } from './GrotCTA/GrotCTA';
 import { GrotNotFound } from './GrotNotFound/GrotNotFound';
-import CTASvg from './grot-cta.svg';
 
 interface Props {
   /**
@@ -53,7 +52,7 @@ export const EmptyState = ({
 function getDefaultImageForVariant(variant: Props['variant']) {
   switch (variant) {
     case 'call-to-action': {
-      return <SVG src={CTASvg} width={300} />;
+      return <GrotCTA width={300} />;
     }
     case 'not-found': {
       return <GrotNotFound width={300} />;
