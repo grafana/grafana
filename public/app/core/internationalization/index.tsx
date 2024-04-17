@@ -57,7 +57,7 @@ export function changeLanguage(locale: string) {
 }
 
 export const Trans: typeof I18NextTrans = (props) => {
-  return <I18NextTrans souldUnescape ns={NAMESPACES} {...props} />;
+  return <I18NextTrans shouldUnescape ns={NAMESPACES} {...props} />;
 };
 
 // Wrap t() to provide default namespaces and enforce a consistent API
