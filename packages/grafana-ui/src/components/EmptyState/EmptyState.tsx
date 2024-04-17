@@ -1,6 +1,5 @@
 import React, { ReactNode } from 'react';
 
-import { t } from '../../utils/i18n';
 import { Box } from '../Layout/Box/Box';
 import { Stack } from '../Layout/Stack/Stack';
 import { Text } from '../Text/Text';
@@ -20,7 +19,7 @@ interface Props {
   /**
    * Message to display to the user
    */
-  message?: string;
+  message: string;
   /**
    * Empty state variant. Possible values are 'search'.
    */
@@ -31,7 +30,7 @@ export const EmptyState = ({
   button,
   children,
   image = <GrotNotFound width={300} />,
-  message = t('grafana-ui.empty-state.not-found-message', 'No results found'),
+  message,
   hideImage = false,
 }: React.PropsWithChildren<Props>) => {
   return (

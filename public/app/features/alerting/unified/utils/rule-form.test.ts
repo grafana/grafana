@@ -1,5 +1,5 @@
+import { PromQuery } from '@grafana/prometheus';
 import { config } from '@grafana/runtime';
-import { PromQuery } from 'app/plugins/datasource/prometheus/types';
 import { GrafanaAlertStateDecision, GrafanaRuleDefinition, RulerAlertingRuleDTO } from 'app/types/unified-alerting-dto';
 
 import { AlertManagerManualRouting, RuleFormType, RuleFormValues } from '../types/rule-form';

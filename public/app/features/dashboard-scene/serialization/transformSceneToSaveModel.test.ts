@@ -260,6 +260,22 @@ describe('transformSceneToSaveModel', () => {
       expect(saveModel.transparent).toBe(true);
     });
 
+    it('With angular options', () => {
+      const gridItem = buildGridItemFromPanelSchema({});
+      const vizPanel = gridItem.state.body as VizPanel;
+      vizPanel.setState({
+        options: {
+          angularOptions: {
+            bars: true,
+          },
+        },
+      });
+
+      const saveModel = gridItemToPanel(gridItem);
+      expect(saveModel.options?.angularOptions).toBe(undefined);
+      expect((saveModel as any).bars).toBe(true);
+    });
+
     it('Given panel with repeat', () => {
       const gridItem = buildGridItemFromPanelSchema({
         title: '',
