@@ -80,15 +80,12 @@ export const RolePicker = ({
     }
     const { bottom, top, left, right } = dimensions;
     let horizontal = left;
-    let vertical = bottom + 10; // Add extra 10px to offset to account for border and outline
     let menuToLeft = false;
 
     const distance = window.innerHeight - bottom;
-    vertical = bottom;
+    let vertical = bottom + 5;
     if (distance < MENU_MAX_HEIGHT + 20) {
-      // Limit the top position to 80px to avoid the menu going off the screen
-      vertical = top < 80 ? 80 : top;
-      horizontal += right - left + 8;
+      vertical = top - MENU_MAX_HEIGHT - 50;
     }
 
     /*
