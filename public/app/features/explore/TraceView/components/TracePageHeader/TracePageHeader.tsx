@@ -249,7 +249,7 @@ const getNewStyles = (theme: GrafanaTheme2) => {
       height: '15px',
       overflow: 'hidden',
       textOverflow: 'ellipsis',
-      width: '700px',
+      maxWidth: '700px',
       display: 'inline-block',
     }),
     TracePageHeaderTraceId: css({
