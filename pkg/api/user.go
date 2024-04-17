@@ -567,7 +567,7 @@ func (hs *HTTPServer) ChangeUserPassword(c *contextmodel.ReqContext) response.Re
 	}
 
 	if err := hs.userService.Update(c.Req.Context(), &user.UpdateUserCommand{UserID: userID, Password: &form.NewPassword, OldPassword: &form.OldPassword}); err != nil {
-		response.ErrOrFallback(http.StatusInternalServerError, "Failed to change user password", err)
+		return response.ErrOrFallback(http.StatusInternalServerError, "Failed to change user password", err)
 	}
 
 	return response.Success("User password changed")
