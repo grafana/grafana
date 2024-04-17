@@ -120,17 +120,20 @@ export function LabelsSubForm({ dataSourceName, onClose }: LabelsSubFormProps) {
   return (
     <FormProvider {...formAPI}>
       <form onSubmit={formAPI.handleSubmit(onSave)}>
-        <Stack direction="column" gap={1} alignItems="center" justifyContent="center">
-          <LabelsWithSuggestions dataSourceName={dataSourceName} />
-          <Space v={1} />
-          <LabelsInRule labels={formAPI.watch('labelsInSubform')} />
-          <Space v={1} />
-          <div className={styles.confirmButton}>
-            <Button type="button" variant="secondary" onClick={onClose}>
-              Cancel
-            </Button>
-            <Button type="submit">Confirm</Button>
-          </div>
+        <Stack direction="column" gap={4}>
+          <Text>Add labels to your rule for searching, silencing, or routing to a notification policy.</Text>
+          <Stack direction="column" gap={1}>
+            <LabelsWithSuggestions dataSourceName={dataSourceName} />
+            <Space v={2} />
+            <LabelsInRule labels={formAPI.watch('labelsInSubform')} />
+            <Space v={1} />
+            <div className={styles.confirmButton}>
+              <Button type="button" variant="secondary" onClick={onClose}>
+                Cancel
+              </Button>
+              <Button type="submit">Save</Button>
+            </div>
+          </Stack>
         </Stack>
       </form>
     </FormProvider>
