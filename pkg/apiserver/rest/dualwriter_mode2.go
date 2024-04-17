@@ -189,7 +189,7 @@ func (d *DualWriterMode2) Update(ctx context.Context, name string, objInfo rest.
 	}
 
 	// get old and new (updated) object so they can be stored in legacy store
-	old, err := d.Get(ctx, name, &metav1.GetOptions{})
+	old, err := d.Storage.Get(ctx, name, &metav1.GetOptions{})
 	if err != nil {
 		if !apierrors.IsNotFound(err) {
 			klog.FromContext(ctx).Error(err, "could not get object", "mode", Mode2)
