@@ -61,6 +61,8 @@ export interface CanvasConnection {
   vertices?: ConnectionCoordinates[];
   radius?: ScaleDimensionConfig;
   direction?: ConnectionDirection;
+  sourceOriginal?: ConnectionCoordinates;
+  targetOriginal?: ConnectionCoordinates;
   // See https://github.com/anseki/leader-line#options for more examples of more properties
 }
 

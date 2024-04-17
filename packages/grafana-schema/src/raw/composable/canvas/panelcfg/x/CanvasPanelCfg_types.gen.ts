@@ -83,8 +83,10 @@ export interface CanvasConnection {
   path: ConnectionPath;
   size?: ui.ScaleDimensionConfig;
   source: ConnectionCoordinates;
+  sourceOriginal?: ConnectionCoordinates;
   target: ConnectionCoordinates;
   targetName?: string;
+  targetOriginal?: ConnectionCoordinates;
   vertices?: Array<ConnectionCoordinates>;
 }
 
