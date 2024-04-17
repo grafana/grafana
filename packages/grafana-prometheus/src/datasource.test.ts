@@ -39,13 +39,6 @@ import { PromApplication, PrometheusCacheLevel, PromOptions, PromQuery, PromQuer
 const fetchMock = jest.fn().mockReturnValue(of(createDefaultPromResponse()));
 
 jest.mock('./metric_find_query');
-// jest.mock('@grafana/runtime', () => ({
-//   ...jest.requireActual('@grafana/runtime'),
-//   getBackendSrv: () => ({
-//     fetch: fetchMock,
-//   }),
-// }));
-
 const origBackendSrv = getBackendSrv();
 setBackendSrv({
   ...origBackendSrv,
