@@ -1,12 +1,10 @@
 package cloudmigrationimpl
 
 import (
-	"bytes"
 	"context"
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
-	"io"
 	"net/http"
 	"strconv"
 	"time"
@@ -18,6 +16,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/cloudmigration"
 	"github.com/grafana/grafana/pkg/services/cloudmigration/api"
+	"github.com/grafana/grafana/pkg/services/cloudmigration/cmsclient"
 	"github.com/grafana/grafana/pkg/services/contexthandler"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/datasources"
@@ -36,7 +35,8 @@ type Service struct {
 	log *log.ConcreteLogger
 	cfg *setting.Cfg
 
-	features featuremgmt.FeatureToggles
+	features  featuremgmt.FeatureToggles
+	cmsClient cmsclient.Client
 
 	dsService        datasources.DataSourceService
 	gcomService      gcom.Service
@@ -73,9 +73,9 @@ func ProvideService(
 	tracer tracing.Tracer,
 	dashboardService dashboards.DashboardService,
 	folderService folder.Service,
-) cloudmigration.Service {
+) (cloudmigration.Service, error) {
 	if !features.IsEnabledGlobally(featuremgmt.FlagOnPremToCloudMigrations) {
-		return &NoopServiceImpl{}
+		return &NoopServiceImpl{}, nil
 	}
 
 	s := &Service{
@@ -93,11 +93,18 @@ func ProvideService(
 	}
 	s.api = api.RegisterApi(routeRegister, s, tracer)
 
+	// get CMS path from the config
+	domain, err := s.parseCloudMigrationConfig()
+	if err != nil {
+		return nil, fmt.Errorf("config parse error: %w", err)
+	}
+	s.cmsClient = cmsclient.NewCMSClient(domain)
+
 	if err := s.registerMetrics(prom, s.metrics); err != nil {
 		s.log.Warn("error registering prom metrics", "error", err.Error())
 	}
 
-	return s
+	return s, nil
 }
 
 func (s *Service) CreateToken(ctx context.Context) (cloudmigration.CreateAccessTokenResponse, error) {
@@ -216,44 +223,9 @@ func (s *Service) findAccessPolicyByName(ctx context.Context, regionSlug, access
 func (s *Service) ValidateToken(ctx context.Context, cm cloudmigration.CloudMigration) error {
 	ctx, span := s.tracer.Start(ctx, "CloudMigrationService.ValidateToken")
 	defer span.End()
-	logger := s.log.FromContext(ctx)
 
-	// get CMS path from the config
-	domain, err := s.parseCloudMigrationConfig()
-	if err != nil {
-		return fmt.Errorf("config parse error: %w", err)
-	}
-	path := fmt.Sprintf("https://cms-%s.%s/cloud-migrations/api/v1/validate-key", cm.ClusterSlug, domain)
-
-	// validation is an empty POST to CMS with the authorization header included
-	req, err := http.NewRequest("POST", path, bytes.NewReader(nil))
-	if err != nil {
-		logger.Error("error creating http request for token validation", "err", err.Error())
-		return fmt.Errorf("http request error: %w", err)
-	}
-	req.Header.Set("Content-Type", "application/json")
-	req.Header.Set("Authorization", fmt.Sprintf("Bearer %d:%s", cm.StackID, cm.AuthToken))
-
-	client := &http.Client{}
-	resp, err := client.Do(req)
-	if err != nil {
-		logger.Error("error sending http request for token validation", "err", err.Error())
-		return fmt.Errorf("http request error: %w", err)
-	}
-
-	defer func() {
-		if err := resp.Body.Close(); err != nil {
-			logger.Error("closing request body", "err", err.Error())
-		}
-	}()
-
-	if resp.StatusCode != 200 {
-		var errResp map[string]any
-		if err := json.NewDecoder(resp.Body).Decode(&errResp); err != nil {
-			logger.Error("decoding error response", "err", err.Error())
-		} else {
-			return fmt.Errorf("token validation failure: %v", errResp)
-		}
+	if err := s.cmsClient.ValidateKey(ctx, cm); err != nil {
+		return fmt.Errorf("validating key: %w", err)
 	}
 
 	return nil
@@ -327,62 +299,31 @@ func (s *Service) UpdateMigration(ctx context.Context, id int64, cm cloudmigrati
 }
 
 func (s *Service) RunMigration(ctx context.Context, id int64) (*cloudmigration.MigrateDataResponseDTO, error) {
-	logger := s.log.FromContext(ctx)
-
 	// Get migration to read the auth token
 	migration, err := s.GetMigration(ctx, id)
 	if err != nil {
 		return nil, fmt.Errorf("migration get error: %w", err)
 	}
-	// get CMS path from the config
-	domain, err := s.parseCloudMigrationConfig()
-	if err != nil {
-		return nil, fmt.Errorf("config parse error: %w", err)
-	}
-	path := fmt.Sprintf("https://cms-%s.%s/cloud-migrations/api/v1/migrate-data", migration.ClusterSlug, domain)
 
 	// Get migration data JSON
-	body, err := s.getMigrationDataJSON(ctx)
+	request, err := s.getMigrationDataJSON(ctx)
 	if err != nil {
 		s.log.Error("error getting the json request body for migration run", "err", err.Error())
 		return nil, fmt.Errorf("migration data get error: %w", err)
 	}
 
-	// Send the request to cms with the associated auth token
-	req, err := http.NewRequest(http.MethodPost, path, bytes.NewReader(body))
+	// Call the cms service
+	resp, err := s.cmsClient.MigrateData(ctx, *migration, *request)
 	if err != nil {
-		s.log.Error("error creating http request for cloud migration run", "err", err.Error())
-		return nil, fmt.Errorf("http request error: %w", err)
-	}
-	req.Header.Set("Content-Type", "application/json")
-	req.Header.Set("Authorization", fmt.Sprintf("Bearer %d:%s", migration.StackID, migration.AuthToken))
-
-	client := &http.Client{}
-	resp, err := client.Do(req)
-	if err != nil {
-		s.log.Error("error sending http request for cloud migration run", "err", err.Error())
-		return nil, fmt.Errorf("http request error: %w", err)
-	} else if resp.StatusCode >= 400 {
-		s.log.Error("received error response for cloud migration run", "statusCode", resp.StatusCode)
-		return nil, fmt.Errorf("http request error: %w", err)
+		s.log.Error("error migrating data: %w", err)
+		return nil, fmt.Errorf("migrate data error: %w", err)
 	}
 
-	defer func() {
-		if err := resp.Body.Close(); err != nil {
-			logger.Error("closing request body: %w", err)
-		}
-	}()
-
-	// read response so we can unmarshal it
-	respData, err := io.ReadAll(resp.Body)
+	// TODO update cloud migration run schema to treat the result as a first-class citizen
+	respData, err := json.Marshal(resp)
 	if err != nil {
-		logger.Error("reading response body: %w", err)
-		return nil, fmt.Errorf("reading migration run response: %w", err)
-	}
-	var result cloudmigration.MigrateDataResponseDTO
-	if err := json.Unmarshal(respData, &result); err != nil {
-		logger.Error("unmarshalling response body: %w", err)
-		return nil, fmt.Errorf("unmarshalling migration run response: %w", err)
+		s.log.Error("error marshalling migration response data: %w", err)
+		return nil, fmt.Errorf("marshalling migration response data: %w", err)
 	}
 
 	// save the result of the migration
@@ -394,12 +335,12 @@ func (s *Service) RunMigration(ctx context.Context, id int64) (*cloudmigration.M
 		response.Error(http.StatusInternalServerError, "migration run save error", err)
 	}
 
-	result.RunID = runID
+	resp.RunID = runID
 
-	return &result, nil
+	return resp, nil
 }
 
-func (s *Service) getMigrationDataJSON(ctx context.Context) ([]byte, error) {
+func (s *Service) getMigrationDataJSON(ctx context.Context) (*cloudmigration.MigrateDataRequestDTO, error) {
 	var migrationDataSlice []cloudmigration.MigrateDataRequestItemDTO
 	// Data sources
 	dataSources, err := s.getDataSources(ctx)
@@ -448,15 +389,11 @@ func (s *Service) getMigrationDataJSON(ctx context.Context) ([]byte, error) {
 			Data:  f,
 		})
 	}
-	migrationData := cloudmigration.MigrateDataRequestDTO{
+	migrationData := &cloudmigration.MigrateDataRequestDTO{
 		Items: migrationDataSlice,
 	}
-	result, err := json.Marshal(migrationData)
-	if err != nil {
-		s.log.Error("Failed to marshal datasources", "err", err)
-		return nil, err
-	}
-	return result, nil
+
+	return migrationData, nil
 }
 
 func (s *Service) getDataSources(ctx context.Context) ([]datasources.AddDataSourceCommand, error) {
