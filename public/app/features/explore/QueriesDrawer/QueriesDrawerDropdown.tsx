@@ -1,6 +1,6 @@
 import React, { useRef } from 'react';
 
-import { Button, ButtonGroup, Dropdown, Menu } from '@grafana/ui';
+import { Button, ButtonGroup, Dropdown, Menu, ToolbarButton } from '@grafana/ui';
 
 import { Tabs, useQueriesDrawerContext } from './QueriesDrawerContext';
 import { i18n } from './utils';
@@ -10,7 +10,8 @@ type Props = {
 };
 
 export function QueriesDrawerDropdown({ variant }: Props) {
-  const { selectedTab, setSelectedTab, queryLibraryAvailable, setDrawerOpened } = useQueriesDrawerContext();
+  const { selectedTab, setSelectedTab, queryLibraryAvailable, drawerOpened, setDrawerOpened } =
+    useQueriesDrawerContext();
 
   const mainButton = useRef<HTMLButtonElement>(null);
 
@@ -40,9 +41,14 @@ export function QueriesDrawerDropdown({ variant }: Props) {
   return (
     <ButtonGroup>
       {variant === 'full' && (
-        <Button ref={mainButton} variant="secondary" onClick={() => setDrawerOpened(true)}>
+        <ToolbarButton
+          icon="book"
+          ref={mainButton}
+          variant={drawerOpened ? 'active' : 'canvas'}
+          onClick={() => setDrawerOpened(!drawerOpened)}
+        >
           {selectedTab}
-        </Button>
+        </ToolbarButton>
       )}
       <Dropdown overlay={menu}>
         <Button variant="secondary" icon={variant === 'full' ? 'angle-down' : 'book'} />
