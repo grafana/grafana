@@ -41,7 +41,7 @@ cards:
       height: 24
     - title: Configure standard options
       href: ./configure-standard-options/
-      description: Learn about configuring standard options like units, field display names, and and colors.
+      description: Learn about configuring standard options like units, field display names, and colors.
       height: 24
     - title: Query and transform data
       href: ./query-transform-data/

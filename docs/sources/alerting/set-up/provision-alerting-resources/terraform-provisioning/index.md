@@ -186,7 +186,7 @@ In this section, we'll create Terraform configurations for each alerting resourc
    To link the alert rule group with its respective data source and folder in this example, replace the following field values:
 
    - `<terraform_data_source_name>` with the terraform name of the previously defined data source.
-   - `<terraform_folder_name>` with the terraform name of the the previously defined folder.
+   - `<terraform_folder_name>` with the terraform name of the previously defined folder.
 
 1. Continue to add more Grafana resources or [use the Terraform CLI for provisioning](#provision-grafana-resources-with-terraform).
 
@@ -312,7 +312,7 @@ Since the policy tree is a single resource, provisioning the `grafana_notificati
    To configure the mute timing and contact point previously created in the notification policy tree, replace the following field values:
 
    - `<terraform_data_source_name>` with the terraform name of the previously defined contact point.
-   - `<terraform_folder_name>` with the terraform name of the the previously defined mute timing.
+   - `<terraform_folder_name>` with the terraform name of the previously defined mute timing.
 
 1. Continue to add more Grafana resources or [use the Terraform CLI for provisioning](#provision-grafana-resources-with-terraform).
 

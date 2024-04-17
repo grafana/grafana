@@ -587,7 +587,7 @@ export interface QueryFixAction {
    */
   options?: KeyValue<string>;
   /**
-   * An optional single row data frame containing the row that triggered the the QueryFixAction.
+   * An optional single row data frame containing the row that triggered the QueryFixAction.
    */
   frame?: DataFrame;
 }

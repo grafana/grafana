@@ -7,7 +7,7 @@ export interface SelectableValue<T = any> {
   value?: T;
   imgUrl?: string;
   icon?: string;
-  // Secondary text under the the title of the option.
+  // Secondary text under the title of the option.
   description?: string;
   // Adds a simple native title attribute to each option.
   title?: string;

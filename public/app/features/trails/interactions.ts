@@ -59,7 +59,7 @@ type Interactions = {
   // User clicks on history nodes to navigate exploration history
   history_step_clicked: {
     type: (
-      // One of the the standard step types
+      // One of the standard step types
       | TrailStepType
       // The special metric step type that is created when the user de-selects the current metric
       | 'metric-clear'

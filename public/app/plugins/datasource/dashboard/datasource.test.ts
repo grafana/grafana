@@ -36,7 +36,7 @@ describe('DashboardDatasource', () => {
     expect(rsp?.data[0].fields[1].values).toEqual([3]);
   });
 
-  it('Should activate source provder on observable subscribe and and deactivate when completed (if only activator)', async () => {
+  it('Should activate source provder on observable subscribe and deactivate when completed (if only activator)', async () => {
     const { observable, sourceData } = setup({ refId: 'A', panelId: 1, withTransforms: true });
 
     const test = observable.subscribe({ next: () => {} });

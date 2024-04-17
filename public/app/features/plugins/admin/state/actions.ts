@@ -175,12 +175,12 @@ export const addPlugins = createAction<CatalogPlugin[]>(`${STATE_PREFIX}/addPlug
 
 // 1. gets remote equivalents from the store (if there are any)
 // 2. merges the remote equivalents with the local plugins
-// 3. updates the the store with the updated CatalogPlugin objects
+// 3. updates the store with the updated CatalogPlugin objects
 export const addLocalPlugins = createAction<LocalPlugin[]>(`${STATE_PREFIX}/addLocalPlugins`);
 
 // 1. gets local equivalents from the store (if there are any)
 // 2. merges the local equivalents with the remote plugins
-// 3. updates the the store with the updated CatalogPlugin objects
+// 3. updates the store with the updated CatalogPlugin objects
 export const addRemotePlugins = createAction<RemotePlugin[]>(`${STATE_PREFIX}/addLocalPlugins`);
 
 // 1. merges the local and remote plugins

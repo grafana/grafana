@@ -57,7 +57,7 @@ export class TrailStore {
   }
 
   private _deserializeTrail(t: SerializedTrail): DataTrail {
-    // reconstruct the trail based on the the serialized history
+    // reconstruct the trail based on the serialized history
     const trail = new DataTrail({ createdAt: t.createdAt });
 
     t.history.map((step) => {

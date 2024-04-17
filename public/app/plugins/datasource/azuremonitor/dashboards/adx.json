@@ -4608,7 +4608,7 @@
       ],
       "timeFrom": null,
       "timeShift": null,
-      "title": "Changes in query count by principal (not affected by the the time range parameter)",
+      "title": "Changes in query count by principal (not affected by the time range parameter)",
       "transparent": true,
       "type": "table"
     },
