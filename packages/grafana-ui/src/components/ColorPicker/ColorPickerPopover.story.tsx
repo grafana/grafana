@@ -30,11 +30,14 @@ export const Basic = () => {
 
 export const SeriesColorPickerPopoverExample = () => {
   const theme = useTheme2();
+  const [yAxis, setYAxis] = React.useState(0);
 
   return (
     <div style={{ position: 'absolute' }}>
       <SeriesColorPickerPopover
         theme={theme}
+        yaxis={yAxis}
+        onToggleAxis={() => (yAxis ? setYAxis(0) : setYAxis(2))}
         color="#BC67E6"
         onChange={(color: string) => {
           console.log(color);
