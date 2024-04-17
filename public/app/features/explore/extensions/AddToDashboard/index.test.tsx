@@ -65,6 +65,10 @@ describe('AddToDashboardButton', () => {
     jest.spyOn(backendSrv, 'search').mockResolvedValue([]);
   });
 
+  afterEach(() => {
+    jest.clearAllMocks();
+  });
+
   it('Is disabled if explore pane has no queries', async () => {
     setup(<AddToDashboard exploreId={'left'} />, []);
 
