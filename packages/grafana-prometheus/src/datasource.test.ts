@@ -248,7 +248,6 @@ describe('PrometheusDatasource', () => {
       expect(result).toMatchObject({ expr: DEFAULT_QUERY_EXPRESSION });
     });
 
-
     it('should add filters to expression', () => {
       const filters = [
         {
