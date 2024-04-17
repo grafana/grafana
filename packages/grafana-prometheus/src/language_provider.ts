@@ -274,11 +274,16 @@ export default class PromQlLanguageProvider extends LanguageProvider {
       ...range,
       ...(interpolatedMatch && { 'match[]': interpolatedMatch }),
     };
-
-    const value = await this.request(`/api/v1/label/${interpolatedName}/values`, [], urlParams, {
+    let requestOptions: Partial<BackendSrvRequest> | undefined = {
       ...this.getDefaultCacheHeaders(),
-      requestId,
-    });
+      ...(requestId && { requestId }),
+    };
+
+    if (!Object.keys(requestOptions).length) {
+      requestOptions = undefined;
+    }
+
+    const value = await this.request(`/api/v1/label/${interpolatedName}/values`, [], urlParams, requestOptions);
     return value ?? [];
   };
 
