@@ -15,7 +15,6 @@ export interface Props {
 
 export const GrotCTA = ({ width = 'auto', height }: Props) => {
   const styles = useStyles2(getStyles);
-  console.log(styles);
 
   return <SVG src={grotCTASvg} className={styles.svg} height={height} width={width} />;
 };
