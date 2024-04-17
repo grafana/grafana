@@ -33,7 +33,7 @@ describe('LogsQueryEditor.LogsManagement', () => {
 
     // ensures that modal shows
     expect(await screen.findByText('Basic Logs Queries')).toBeInTheDocument();
-    const acknowledgedAction = await screen.findByText('I Acknowledge');
+    const acknowledgedAction = await screen.findByText('Confirm');
     await userEvent.click(acknowledgedAction);
 
     expect(onChange).toBeCalledWith(
@@ -92,7 +92,7 @@ describe('LogsQueryEditor.LogsManagement', () => {
 
     const logsManagementOption = await screen.findByLabelText('Basic');
     await userEvent.click(logsManagementOption);
-    const acknowledgedAction = await screen.findByText('I Acknowledge');
+    const acknowledgedAction = await screen.findByText('Confirm');
     await userEvent.click(acknowledgedAction);
 
     expect(onChange).toBeCalledWith(
