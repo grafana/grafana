@@ -41,7 +41,7 @@ func (p Password) Hash(salt string) (Password, error) {
 // one lowercase letter, one number, and one symbol.
 func ValidatePassword(newPassword string, config *setting.Cfg) error {
 	if !config.BasicAuthStrongPasswordPolicy {
-		if len(newPassword) <= 4 {
+		if len(newPassword) < 4 {
 			return ErrPasswordTooShort.Errorf("new password is too short")
 		}
 		return nil
