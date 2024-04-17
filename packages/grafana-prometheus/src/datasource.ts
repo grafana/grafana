@@ -757,9 +757,10 @@ export class PrometheusDatasource
           ...query,
           ...(config.featureToggles.promQLScope ? { adhocFilters: this.generateScopeFilters(filters) } : {}),
           datasource: this.getRef(),
-          expr: withAdhocFilters,
+          expr: config.featureToggles.promQLScope ? interpolatedQuery : withAdhocFilters,
           interval: this.templateSrv.replace(query.interval, scopedVars),
         };
+
         return expandedQuery;
       });
     }
@@ -927,7 +928,7 @@ export class PrometheusDatasource
     return {
       ...target,
       ...(config.featureToggles.promQLScope ? { adhocFilters: this.generateScopeFilters(filters) } : {}),
-      expr: exprWithAdHocFilters,
+      expr: config.featureToggles.promQLScope ? expr : exprWithAdHocFilters,
       interval: this.templateSrv.replace(target.interval, variables),
       legendFormat: this.templateSrv.replace(target.legendFormat, variables),
     };
