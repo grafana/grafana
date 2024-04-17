@@ -5,6 +5,7 @@ import {
   PluginMetaInfo,
   PluginType,
   DataSourceJsonData,
+  makeTimeRange,
 } from '@grafana/data';
 import { setPluginExtensionGetter, getBackendSrv, setBackendSrv, getTemplateSrv } from '@grafana/runtime';
 
@@ -112,6 +113,28 @@ describe('Pyroscope data source', () => {
       );
       expect(query).toMatchObject({ labelSelector: `{interpolated="interpolated"}`, profileTypeId: 'interpolated' });
     });
+  });
+
+  it('implements ad hoc variable support for keys', async () => {
+    jest.spyOn(ds, 'getResource').mockImplementationOnce(async (cb) => ['foo', 'bar', 'baz']);
+    const keys = await ds.getTagKeys({
+      filters: [],
+      timeRange: makeTimeRange('2024-01-01T00:00:00', '2024-01-01T01:00:00'),
+    });
+    expect(keys).toEqual(['foo', 'bar', 'baz'].map((v) => ({ text: v })));
+  });
+
+  it('implements ad hoc variable support for values', async () => {
+    jest.spyOn(ds, 'getResource').mockImplementationOnce(async (path, params) => {
+      expect(params?.label).toEqual('foo');
+      return ['xyz', 'tuv'];
+    });
+    const keys = await ds.getTagValues({
+      key: 'foo',
+      filters: [],
+      timeRange: makeTimeRange('2024-01-01T00:00:00', '2024-01-01T01:00:00'),
+    });
+    expect(keys).toEqual(['xyz', 'tuv'].map((v) => ({ text: v })));
   });
 });
 
