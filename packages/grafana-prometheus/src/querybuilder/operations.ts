@@ -374,11 +374,17 @@ function addNestedQueryHandler(def: QueryBuilderOperationDef, query: PromVisualQ
 }
 
 function labelJoinRenderer(model: QueryBuilderOperation, def: QueryBuilderOperationDef, innerExpr: string) {
-  if (typeof model.params[1] !== 'string') {
+  // only throw error if user begins typing the separator(param 1)
+  // prevents error when toggling explain mode
+  if (model.params[1] && typeof model.params[1] !== 'string') {
     throw 'The separator must be a string';
   }
-  const separator = `"${model.params[1]}"`;
-  return `${model.id}(${innerExpr}, "${model.params[0]}", ${separator}, "${model.params.slice(2).join(separator)}")`;
+
+  const paramZero = model.params[0] ?? '';
+  const paramOne = model.params[0] ?? '';
+
+  const separator = `"${paramOne}"`;
+  return `${model.id}(${innerExpr}, "${paramZero}", ${separator}, "${model.params.slice(2).join(separator)}")`;
 }
 
 function labelJoinAddOperationHandler<T extends QueryWithOperations>(def: QueryBuilderOperationDef, query: T) {
