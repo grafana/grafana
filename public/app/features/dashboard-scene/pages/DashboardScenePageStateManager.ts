@@ -84,7 +84,8 @@ export class DashboardScenePageStateManager extends StateManagerBase<DashboardSc
     try {
       switch (route) {
         case DashboardRoutes.New:
-          rsp = buildNewDashboardSaveModel(urlFolderUid);
+          rsp = await buildNewDashboardSaveModel(urlFolderUid);
+
           break;
         case DashboardRoutes.Home:
           rsp = await getBackendSrv().get('/api/dashboards/home');

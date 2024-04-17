@@ -19,8 +19,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/auth/identity"
 	"github.com/grafana/grafana/pkg/services/authn"
 	"github.com/grafana/grafana/pkg/services/authn/authntest"
-	"github.com/grafana/grafana/pkg/services/login"
-	"github.com/grafana/grafana/pkg/services/login/authinfotest"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 )
@@ -309,7 +307,6 @@ func TestService_Logout(t *testing.T) {
 
 		identity     *authn.Identity
 		sessionToken *usertoken.UserToken
-		info         *login.UserAuth
 
 		client authn.Client
 
@@ -332,27 +329,24 @@ func TestService_Logout(t *testing.T) {
 		},
 		{
 			desc:                 "should redirect to default redirect url when client is not found",
-			identity:             &authn.Identity{ID: authn.NamespacedID(authn.NamespaceUser, 1)},
-			info:                 &login.UserAuth{AuthModule: "notFound"},
+			identity:             &authn.Identity{ID: authn.NamespacedID(authn.NamespaceUser, 1), AuthenticatedBy: "notfound"},
 			expectedRedirect:     &authn.Redirect{URL: "http://localhost:3000/login"},
 			expectedTokenRevoked: true,
 		},
 		{
 			desc:                 "should redirect to default redirect url when client do not implement logout extension",
-			identity:             &authn.Identity{ID: authn.NamespacedID(authn.NamespaceUser, 1)},
-			info:                 &login.UserAuth{AuthModule: "azuread"},
+			identity:             &authn.Identity{ID: authn.NamespacedID(authn.NamespaceUser, 1), AuthenticatedBy: "azuread"},
 			expectedRedirect:     &authn.Redirect{URL: "http://localhost:3000/login"},
 			client:               &authntest.FakeClient{ExpectedName: "auth.client.azuread"},
 			expectedTokenRevoked: true,
 		},
 		{
 			desc:             "should redirect to client specific url",
-			identity:         &authn.Identity{ID: authn.NamespacedID(authn.NamespaceUser, 1)},
-			info:             &login.UserAuth{AuthModule: "azuread"},
+			identity:         &authn.Identity{ID: authn.NamespacedID(authn.NamespaceUser, 1), AuthenticatedBy: "azuread"},
 			expectedRedirect: &authn.Redirect{URL: "http://idp.com/logout"},
 			client: &authntest.MockClient{
 				NameFunc: func() string { return "auth.client.azuread" },
-				LogoutFunc: func(ctx context.Context, _ identity.Requester, _ *login.UserAuth) (*authn.Redirect, bool) {
+				LogoutFunc: func(ctx context.Context, _ identity.Requester) (*authn.Redirect, bool) {
 					return &authn.Redirect{URL: "http://idp.com/logout"}, true
 				},
 			},
@@ -369,9 +363,6 @@ func TestService_Logout(t *testing.T) {
 					svc.RegisterClient(tt.client)
 				}
 				svc.cfg.AppSubURL = "http://localhost:3000"
-				svc.authInfoService = &authinfotest.FakeService{
-					ExpectedUserAuth: tt.info,
-				}
 
 				svc.sessionService = &authtest.FakeUserAuthTokenService{
 					RevokeTokenProvider: func(_ context.Context, sessionToken *auth.UserToken, soft bool) error {
@@ -392,6 +383,49 @@ func TestService_Logout(t *testing.T) {
 	}
 }
 
+func TestService_ResolveIdentity(t *testing.T) {
+	t.Run("should return error for for unknown namespace", func(t *testing.T) {
+		svc := setupTests(t)
+		_, err := svc.ResolveIdentity(context.Background(), 1, "some:1")
+		assert.ErrorIs(t, err, authn.ErrInvalidNamepsaceID)
+	})
+
+	t.Run("should return error for for namespace that don't have a resolver", func(t *testing.T) {
+		svc := setupTests(t)
+		_, err := svc.ResolveIdentity(context.Background(), 1, "api-key:1")
+		assert.ErrorIs(t, err, authn.ErrUnsupportedIdentity)
+	})
+
+	t.Run("should resolve for user", func(t *testing.T) {
+		svc := setupTests(t)
+		identity, err := svc.ResolveIdentity(context.Background(), 1, "user:1")
+		assert.NoError(t, err)
+		assert.NotNil(t, identity)
+	})
+
+	t.Run("should resolve for service account", func(t *testing.T) {
+		svc := setupTests(t)
+		identity, err := svc.ResolveIdentity(context.Background(), 1, "service-account:1")
+		assert.NoError(t, err)
+		assert.NotNil(t, identity)
+	})
+
+	t.Run("should resolve for valid namespace if client is registered", func(t *testing.T) {
+		svc := setupTests(t, func(svc *Service) {
+			svc.RegisterClient(&authntest.MockClient{
+				NamespaceFunc: func() string { return authn.NamespaceAPIKey },
+				ResolveIdentityFunc: func(ctx context.Context, orgID int64, namespaceID authn.NamespaceID) (*authn.Identity, error) {
+					return &authn.Identity{}, nil
+				},
+			})
+		})
+
+		identity, err := svc.ResolveIdentity(context.Background(), 1, "api-key:1")
+		assert.NoError(t, err)
+		assert.NotNil(t, identity)
+	})
+}
+
 func mustParseURL(s string) *url.URL {
 	u, err := url.Parse(s)
 	if err != nil {
@@ -404,14 +438,15 @@ func setupTests(t *testing.T, opts ...func(svc *Service)) *Service {
 	t.Helper()
 
 	s := &Service{
-		log:            log.NewNopLogger(),
-		cfg:            setting.NewCfg(),
-		clients:        map[string]authn.Client{},
-		clientQueue:    newQueue[authn.ContextAwareClient](),
-		tracer:         tracing.InitializeTracerForTest(),
-		metrics:        newMetrics(nil),
-		postAuthHooks:  newQueue[authn.PostAuthHookFn](),
-		postLoginHooks: newQueue[authn.PostLoginHookFn](),
+		log:                    log.NewNopLogger(),
+		cfg:                    setting.NewCfg(),
+		clients:                make(map[string]authn.Client),
+		clientQueue:            newQueue[authn.ContextAwareClient](),
+		idenityResolverClients: make(map[string]authn.IdentityResolverClient),
+		tracer:                 tracing.InitializeTracerForTest(),
+		metrics:                newMetrics(nil),
+		postAuthHooks:          newQueue[authn.PostAuthHookFn](),
+		postLoginHooks:         newQueue[authn.PostLoginHookFn](),
 	}
 
 	for _, o := range opts {

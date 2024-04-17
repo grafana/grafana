@@ -1,3 +1,4 @@
+// Core Grafana history https://github.com/grafana/grafana/blob/v11.0.0-preview/public/app/plugins/datasource/prometheus/datasource.ts
 import { defaults } from 'lodash';
 import { lastValueFrom, Observable, throwError } from 'rxjs';
 import { map, tap } from 'rxjs/operators';
@@ -25,6 +26,8 @@ import {
   rangeUtil,
   renderLegendFormat,
   ScopedVars,
+  scopeFilterOperatorMap,
+  ScopeSpecFilter,
   TimeRange,
 } from '@grafana/data';
 import {
@@ -42,7 +45,7 @@ import {
 
 import { addLabelToQuery } from './add_label_to_query';
 import { AnnotationQueryEditor } from './components/AnnotationQueryEditor';
-import PrometheusLanguageProvider from './language_provider';
+import PrometheusLanguageProvider, { SUGGESTIONS_LIMIT } from './language_provider';
 import {
   expandRecordingRules,
   getClientCacheDurationInMinutes,
@@ -97,6 +100,7 @@ export class PrometheusDatasource
   exemplarsAvailable: boolean;
   cacheLevel: PrometheusCacheLevel;
   cache: QueryCache<PromQuery>;
+  metricNamesAutocompleteSuggestionLimit: number;
 
   constructor(
     instanceSettings: DataSourceInstanceSettings<PromOptions>,
@@ -127,6 +131,8 @@ export class PrometheusDatasource
     this.variables = new PrometheusVariableSupport(this, this.templateSrv);
     this.exemplarsAvailable = true;
     this.cacheLevel = instanceSettings.jsonData.cacheLevel ?? PrometheusCacheLevel.Low;
+    this.metricNamesAutocompleteSuggestionLimit =
+      instanceSettings.jsonData.codeModeMetricNamesSuggestionLimit ?? SUGGESTIONS_LIMIT;
 
     this.cache = new QueryCache({
       getTargetSignature: this.getPrometheusTargetSignature.bind(this),
@@ -366,7 +372,7 @@ export class PrometheusDatasource
     };
 
     if (config.featureToggles.promQLScope) {
-      processedTarget.scope = request.scope;
+      processedTarget.scope = request.scope?.spec;
     }
 
     if (target.instant && target.range) {
@@ -474,8 +480,13 @@ export class PrometheusDatasource
 
     let expr = target.expr;
 
-    // Apply adhoc filters
-    expr = this.enhanceExprWithAdHocFilters(options.filters, expr);
+    if (config.featureToggles.promQLScope) {
+      // Apply scope filters
+      query.adhocFilters = this.generateScopeFilters(options.filters);
+    } else {
+      // Apply adhoc filters
+      expr = this.enhanceExprWithAdHocFilters(options.filters, expr);
+    }
 
     // Only replace vars in expression after having (possibly) updated interval vars
     query.expr = this.templateSrv.replace(expr, scopedVars, this.interpolateQueryExpr);
@@ -488,6 +499,18 @@ export class PrometheusDatasource
     this._addTracingHeaders(query, options);
 
     return query;
+  }
+
+  /**
+   * This converts the adhocVariableFilter array and converts it to scopeFilter array
+   * @param filters
+   */
+  generateScopeFilters(filters?: AdHocVariableFilter[]): ScopeSpecFilter[] {
+    if (!filters) {
+      return [];
+    }
+
+    return filters.map((f) => ({ ...f, operator: scopeFilterOperatorMap[f.operator] }));
   }
 
   getRateIntervalScopedVariable(interval: number, scrapeInterval: number) {
@@ -676,7 +699,7 @@ export class PrometheusDatasource
   // and in Tempo here grafana/public/app/plugins/datasource/tempo/QueryEditor/ServiceGraphSection.tsx
   async getTagKeys(options: DataSourceGetTagKeysOptions<PromQuery>): Promise<MetricFindValue[]> {
     if (!options || options.filters.length === 0) {
-      await this.languageProvider.fetchLabels(options.timeRange);
+      await this.languageProvider.fetchLabels(options.timeRange, options.queries);
       return this.languageProvider.getLabelKeys().map((k) => ({ value: k, text: k }));
     }
 
@@ -732,6 +755,7 @@ export class PrometheusDatasource
 
         const expandedQuery = {
           ...query,
+          ...(config.featureToggles.promQLScope ? { adhocFilters: this.generateScopeFilters(filters) } : {}),
           datasource: this.getRef(),
           expr: withAdhocFilters,
           interval: this.templateSrv.replace(query.interval, scopedVars),
@@ -742,7 +766,7 @@ export class PrometheusDatasource
     return expandedQueries;
   }
 
-  getQueryHints(query: PromQuery, result: any[]) {
+  getQueryHints(query: PromQuery, result: unknown[]) {
     return getQueryHints(query.expr ?? '', result, this);
   }
 
@@ -862,7 +886,7 @@ export class PrometheusDatasource
       return expr;
     }
 
-    const finalQuery = filters.reduce((acc: string, filter: { key?: any; operator?: any; value?: any }) => {
+    const finalQuery = filters.reduce((acc, filter) => {
       const { key, operator } = filter;
       let { value } = filter;
       if (operator === '=~' || operator === '!~') {
@@ -902,6 +926,7 @@ export class PrometheusDatasource
 
     return {
       ...target,
+      ...(config.featureToggles.promQLScope ? { adhocFilters: this.generateScopeFilters(filters) } : {}),
       expr: exprWithAdHocFilters,
       interval: this.templateSrv.replace(target.interval, variables),
       legendFormat: this.templateSrv.replace(target.legendFormat, variables),
@@ -1011,10 +1036,10 @@ export function extractRuleMappingFromGroups(groups: any[]) {
 // NOTE: these two functions are very similar to the escapeLabelValueIn* functions
 // in language_utils.ts, but they are not exactly the same algorithm, and we found
 // no way to reuse one in the another or vice versa.
-export function prometheusRegularEscape(value: unknown) {
+export function prometheusRegularEscape<T>(value: T) {
   return typeof value === 'string' ? value.replace(/\\/g, '\\\\').replace(/'/g, "\\\\'") : value;
 }
 
-export function prometheusSpecialRegexEscape(value: unknown) {
+export function prometheusSpecialRegexEscape<T>(value: T) {
   return typeof value === 'string' ? value.replace(/\\/g, '\\\\\\\\').replace(/[$^*{}\[\]\'+?.()|]/g, '\\\\$&') : value;
 }

@@ -27,7 +27,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/org/orgimpl"
 	"github.com/grafana/grafana/pkg/services/org/orgtest"
 	"github.com/grafana/grafana/pkg/services/quota/quotaimpl"
-	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/supportbundles/supportbundlestest"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/services/user/userimpl"
@@ -36,14 +35,14 @@ import (
 	"github.com/grafana/grafana/pkg/web/webtest"
 )
 
-func setUpGetOrgUsersDB(t *testing.T, sqlStore *sqlstore.SQLStore) {
-	sqlStore.Cfg.AutoAssignOrg = true
-	sqlStore.Cfg.AutoAssignOrgId = int(testOrgID)
+func setUpGetOrgUsersDB(t *testing.T, sqlStore db.DB, cfg *setting.Cfg) {
+	cfg.AutoAssignOrg = true
+	cfg.AutoAssignOrgId = int(testOrgID)
 
-	quotaService := quotaimpl.ProvideService(sqlStore, sqlStore.Cfg)
-	orgService, err := orgimpl.ProvideService(sqlStore, sqlStore.Cfg, quotaService)
+	quotaService := quotaimpl.ProvideService(sqlStore, cfg)
+	orgService, err := orgimpl.ProvideService(sqlStore, cfg, quotaService)
 	require.NoError(t, err)
-	usrSvc, err := userimpl.ProvideService(sqlStore, orgService, sqlStore.Cfg, nil, nil, quotaService, supportbundlestest.NewFakeBundleService())
+	usrSvc, err := userimpl.ProvideService(sqlStore, orgService, cfg, nil, nil, quotaService, supportbundlestest.NewFakeBundleService())
 	require.NoError(t, err)
 
 	id, err := orgService.GetOrCreate(context.Background(), "testOrg")
@@ -68,7 +67,7 @@ func TestOrgUsersAPIEndpoint_userLoggedIn(t *testing.T) {
 	orgService := orgtest.NewOrgServiceFake()
 	orgService.ExpectedSearchOrgUsersResult = &org.SearchOrgUsersQueryResult{}
 	hs.orgService = orgService
-	setUpGetOrgUsersDB(t, sqlStore)
+	setUpGetOrgUsersDB(t, sqlStore, settings)
 	mock := dbtest.NewFakeDB()
 
 	loggedInUserScenario(t, "When calling GET on", "api/org/users", "api/org/users", func(sc *scenarioContext) {

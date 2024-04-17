@@ -92,7 +92,7 @@ export const testResponseEdgesFields = toEdgesFrame([
   ['3fa414edcef6ad90'],
 ]);
 
-export function toNodesFrame(values: any[]) {
+export function toNodesFrame(values: unknown[][]) {
   return toVectors([
     { name: 'id', values: values[0] },
     { name: 'title', values: values[1] },
@@ -111,7 +111,7 @@ export function toNodesFrame(values: any[]) {
   ]);
 }
 
-export function toEdgesFrame(values: any[]) {
+export function toEdgesFrame(values: unknown[][]) {
   return toVectors([
     { name: 'id', values: values[0] },
     { name: 'target', values: values[1] },

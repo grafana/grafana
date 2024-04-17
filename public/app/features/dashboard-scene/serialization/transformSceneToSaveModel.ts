@@ -1,4 +1,4 @@
-import { isEqual } from 'lodash';
+import { defaults, isEqual } from 'lodash';
 
 import { isEmptyObject, ScopedVars, TimeRange } from '@grafana/data';
 import {
@@ -31,7 +31,6 @@ import { getPanelDataFrames } from 'app/features/dashboard/components/HelpWizard
 import { DASHBOARD_SCHEMA_VERSION } from 'app/features/dashboard/state/DashboardMigrator';
 import { GrafanaQueryType } from 'app/plugins/datasource/grafana/types';
 
-import { AddLibraryPanelWidget } from '../scene/AddLibraryPanelWidget';
 import { DashboardDataLayerSet } from '../scene/DashboardDataLayerSet';
 import { DashboardGridItem } from '../scene/DashboardGridItem';
 import { DashboardScene } from '../scene/DashboardScene';
@@ -58,11 +57,25 @@ export function transformSceneToSaveModel(scene: DashboardScene, isSnapshot = fa
   if (body instanceof SceneGridLayout) {
     for (const child of body.state.children) {
       if (child instanceof DashboardGridItem) {
-        // handle panel repeater scenatio
-        if (child.state.variableName) {
-          panels = panels.concat(panelRepeaterToPanels(child, isSnapshot));
+        let child_ = child;
+        // If we're saving while the panel editor is open, we need to persist those changes in the panel model
+        if (
+          child.state.body instanceof VizPanel &&
+          state.editPanel?.state.vizManager &&
+          state.editPanel.state.vizManager.state.sourcePanel.resolve() === child.state.body
+        ) {
+          const childClone = child.clone();
+          if (childClone.state.body instanceof VizPanel) {
+            state.editPanel.state.vizManager.commitChangesTo(childClone.state.body);
+            child_ = childClone;
+          }
+        }
+
+        // handle panel repeater scenario
+        if (child_.state.variableName) {
+          panels = panels.concat(panelRepeaterToPanels(child_, isSnapshot));
         } else {
-          panels.push(gridItemToPanel(child, isSnapshot));
+          panels.push(gridItemToPanel(child_, isSnapshot));
         }
       }
 
@@ -88,9 +101,11 @@ export function transformSceneToSaveModel(scene: DashboardScene, isSnapshot = fa
 
   const controlsState = state.controls?.state;
 
+  const refreshPicker = controlsState?.refreshPicker;
+
   const timePickerWithoutDefaults = removeDefaults<TimePickerConfig>(
     {
-      refresh_intervals: controlsState?.refreshPicker.state.intervals,
+      refresh_intervals: refreshPicker?.state.intervals,
       hidden: controlsState?.hideTimeControls,
       nowDelay: timeRange.UNSAFE_nowDelay,
     },
@@ -132,6 +147,7 @@ export function transformSceneToSaveModel(scene: DashboardScene, isSnapshot = fa
     graphTooltip,
     liveNow,
     schemaVersion: DASHBOARD_SCHEMA_VERSION,
+    refresh: refreshPicker?.state.refresh,
   };
 
   return sortedDeepCloneWithoutNulls(dashboard);
@@ -170,20 +186,6 @@ export function gridItemToPanel(gridItem: DashboardGridItem, isSnapshot = false)
     return libraryVizPanelToPanel(gridItem.state.body, { x, y, w, h });
   }
 
-  // Handle library panel widget as well and exit early
-  if (gridItem.state.body instanceof AddLibraryPanelWidget) {
-    x = gridItem.state.x ?? 0;
-    y = gridItem.state.y ?? 0;
-    w = gridItem.state.width ?? 0;
-    h = gridItem.state.height ?? 0;
-
-    return {
-      id: getPanelIdForVizPanel(gridItem.state.body),
-      type: 'add-library-panel',
-      gridPos: { x, y, w, h },
-    };
-  }
-
   if (!(gridItem.state.body instanceof VizPanel)) {
     throw new Error('DashboardGridItem body expected to be VizPanel');
   }
@@ -215,13 +217,22 @@ export function vizPanelToPanel(
     title: vizPanel.state.title,
     description: vizPanel.state.description ?? undefined,
     gridPos,
-    options: vizPanel.state.options,
     fieldConfig: (vizPanel.state.fieldConfig as FieldConfigSource) ?? { defaults: {}, overrides: [] },
     transformations: [],
     transparent: vizPanel.state.displayMode === 'transparent',
     pluginVersion: vizPanel.state.pluginVersion,
     ...vizPanelDataToPanel(vizPanel, isSnapshot),
   };
+
+  if (vizPanel.state.options) {
+    const { angularOptions, ...rest } = vizPanel.state.options as any;
+    panel.options = rest;
+
+    if (angularOptions) {
+      // Allow angularOptions to overwrite non system level root properties
+      defaults(panel, angularOptions);
+    }
+  }
 
   const panelTime = vizPanel.state.$timeRange;
 
@@ -258,6 +269,7 @@ export function vizPanelToPanel(
   if (!panel.transparent) {
     delete panel.transparent;
   }
+
   return panel;
 }
 

@@ -17,6 +17,13 @@ export function initPanelState(panel: PanelModel): ThunkResult<Promise<void>> {
       return;
     }
 
+    // Some old panels, somehow have maxDataPoints value as string.
+    // This is causing problems on the backend-side.
+    // Here we make sure maxDataPoints is always as number.
+    if (panel.maxDataPoints) {
+      panel.maxDataPoints = Number(panel.maxDataPoints);
+    }
+
     let pluginToLoad = panel.type;
     let plugin = getStore().plugins.panels[pluginToLoad];
 

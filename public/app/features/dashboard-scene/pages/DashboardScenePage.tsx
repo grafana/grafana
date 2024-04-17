@@ -74,7 +74,7 @@ export function DashboardScenePage({ match, route, queryParams, history }: Props
 
   return (
     <>
-      <dashboard.Component model={dashboard} />
+      <dashboard.Component model={dashboard} key={dashboard.state.key} />
       <DashboardPrompt dashboard={dashboard} />
     </>
   );

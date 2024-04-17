@@ -1,19 +1,16 @@
 import { skipToken } from '@reduxjs/toolkit/query/react';
-import React, { useCallback, useMemo } from 'react';
+import React, { useCallback } from 'react';
 
-import { config } from '@grafana/runtime';
 import { Alert, Box, Button, Stack } from '@grafana/ui';
 import { Trans, t } from 'app/core/internationalization';
 
 import {
-  MigrateDataResponseDto,
   useDeleteCloudMigrationMutation,
   useGetCloudMigrationRunListQuery,
   useGetCloudMigrationRunQuery,
   useGetMigrationListQuery,
   useRunCloudMigrationMutation,
 } from '../api';
-import { MigrationResourceDTOMock } from '../mockAPI';
 
 import { EmptyState } from './EmptyState/EmptyState';
 import { MigrationInfo } from './MigrationInfo';
@@ -36,7 +33,7 @@ import { ResourcesTable } from './ResourcesTable';
 
 function useGetLatestMigrationDestination() {
   const result = useGetMigrationListQuery();
-  const latestMigration = result.data?.migrations?.[0];
+  const latestMigration = result.data?.migrations?.at(-1);
 
   return {
     ...result,
@@ -46,7 +43,7 @@ function useGetLatestMigrationDestination() {
 
 function useGetLatestMigrationRun(migrationId?: number) {
   const listResult = useGetCloudMigrationRunListQuery(migrationId ? { id: migrationId } : skipToken);
-  const latestMigrationRun = listResult.data?.runs?.[0];
+  const latestMigrationRun = listResult.data?.runs?.at(-1);
 
   const runResult = useGetCloudMigrationRunQuery(
     latestMigrationRun?.id && migrationId ? { runId: latestMigrationRun.id, id: migrationId } : skipToken
@@ -79,7 +76,7 @@ export const Page = () => {
     lastMigrationRun.isFetching ||
     disconnectResult.isLoading;
 
-  const resources = useFixResources(lastMigrationRun.data);
+  const resources = lastMigrationRun.data?.items;
 
   const handleDisconnect = useCallback(() => {
     if (migrationDestination.data?.id) {
@@ -178,61 +175,3 @@ export const Page = () => {
     </>
   );
 };
-
-// converts API status to our expected/mocked status
-function convertStatus(status: string) {
-  switch (status) {
-    case 'OK':
-      return 'migrated';
-    case 'ERROR':
-      return 'failed';
-    case 'failed':
-      return 'failed';
-    default:
-      return 'failed';
-  }
-}
-
-function useFixResources(data: MigrateDataResponseDto | undefined) {
-  return useMemo(() => {
-    if (!data?.items) {
-      return undefined;
-    }
-
-    const betterResources: MigrationResourceDTOMock[] = data.items.flatMap((item) => {
-      if (item.type === 'DATASOURCE') {
-        const datasourceConfig = Object.values(config.datasources).find((v) => v.uid === item.refId);
-
-        return {
-          type: 'datasource',
-          uid: item.refId ?? '',
-          status: convertStatus(item.status ?? ''),
-          statusMessage: item.error,
-          resource: {
-            uid: item.refId ?? '',
-            name: datasourceConfig?.name ?? 'Unknown data source',
-            type: datasourceConfig?.meta?.name ?? 'Unknown type',
-            icon: datasourceConfig?.meta?.info?.logos?.small,
-          },
-        };
-      }
-
-      if (item.type === 'DASHBOARD') {
-        return {
-          type: 'dashboard',
-          uid: item.refId ?? '',
-          status: convertStatus(item.status ?? ''),
-          statusMessage: item.error,
-          resource: {
-            uid: item.refId ?? '',
-            name: item.refId ?? 'Unknown dashboard',
-          },
-        };
-      }
-
-      return [];
-    });
-
-    return betterResources;
-  }, [data]);
-}

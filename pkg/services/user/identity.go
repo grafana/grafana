@@ -14,14 +14,18 @@ const (
 )
 
 type SignedInUser struct {
-	UserID           int64  `xorm:"user_id"`
-	UserUID          string `xorm:"user_uid"`
-	OrgID            int64  `xorm:"org_id"`
-	OrgName          string
-	OrgRole          roletype.RoleType
-	Login            string
-	Name             string
-	Email            string
+	UserID        int64  `xorm:"user_id"`
+	UserUID       string `xorm:"user_uid"`
+	OrgID         int64  `xorm:"org_id"`
+	OrgName       string
+	OrgRole       roletype.RoleType
+	Login         string
+	Name          string
+	Email         string
+	EmailVerified bool
+	// AuthID will be set if user signed in using external method
+	AuthID string
+	// AuthenticatedBy be set if user signed in using external method
 	AuthenticatedBy  string
 	ApiKeyID         int64 `xorm:"api_key_id"`
 	IsServiceAccount bool  `xorm:"is_service_account"`
@@ -221,6 +225,14 @@ func (u *SignedInUser) GetNamespacedID() (string, string) {
 	return parts[0], parts[1]
 }
 
+func (u *SignedInUser) GetAuthID() string {
+	return u.AuthID
+}
+
+func (u *SignedInUser) GetAuthenticatedBy() string {
+	return u.AuthenticatedBy
+}
+
 func (u *SignedInUser) IsAuthenticatedBy(providers ...string) bool {
 	for _, p := range providers {
 		if u.AuthenticatedBy == p {
@@ -241,15 +253,14 @@ func (u *SignedInUser) GetEmail() string {
 	return u.Email
 }
 
+func (u *SignedInUser) IsEmailVerified() bool {
+	return u.EmailVerified
+}
+
 // GetDisplayName returns the display name of the active entity
 // The display name is the name if it is set, otherwise the login or email
 func (u *SignedInUser) GetDisplayName() string {
 	return u.NameOrFallback()
-}
-
-// DEPRECATEAD: Returns the authentication method used
-func (u *SignedInUser) GetAuthenticatedBy() string {
-	return u.AuthenticatedBy
 }
 
 func (u *SignedInUser) GetIDToken() string {

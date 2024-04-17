@@ -7,6 +7,8 @@ import (
 	"net/mail"
 	"time"
 
+	"github.com/grafana/grafana/pkg/services/auth"
+	"github.com/grafana/grafana/pkg/services/authn"
 	"github.com/grafana/grafana/pkg/services/notifications"
 	tempuser "github.com/grafana/grafana/pkg/services/temp_user"
 	"github.com/grafana/grafana/pkg/services/user"
@@ -22,8 +24,8 @@ var (
 
 var _ user.Verifier = (*Verifier)(nil)
 
-func ProvideVerifier(cfg *setting.Cfg, us user.Service, ts tempuser.Service, ns notifications.Service) *Verifier {
-	return &Verifier{cfg, us, ts, ns}
+func ProvideVerifier(cfg *setting.Cfg, us user.Service, ts tempuser.Service, ns notifications.Service, is auth.IDService) *Verifier {
+	return &Verifier{cfg, us, ts, ns, is}
 }
 
 type Verifier struct {
@@ -31,6 +33,7 @@ type Verifier struct {
 	us  user.Service
 	ts  tempuser.Service
 	ns  notifications.Service
+	is  auth.IDService
 }
 
 func (s *Verifier) Start(ctx context.Context, cmd user.StartVerifyEmailCommand) error {
@@ -145,5 +148,10 @@ func (s *Verifier) Complete(ctx context.Context, cmd user.CompleteEmailVerifyCom
 		return err
 	}
 
-	return nil
+	// We store email and email verified in id tokens. So whenever we perform and update / confirmation we need to
+	// remove the current token, so a new one can be generated with correct values.
+	return s.is.RemoveIDToken(
+		ctx,
+		&user.SignedInUser{UserID: usr.ID, OrgID: usr.OrgID, NamespacedID: authn.NamespacedID(authn.NamespaceUser, usr.ID)},
+	)
 }
