@@ -1781,11 +1781,11 @@ Enable or disable the Query history. Default is `enabled`.
 
 ## [short_links]
 
-Configures settings around the short link feature
+Configures settings around the short link feature.
 
 ### expire_time
 
-Short links which are never accessed are considered expired or stale, and will be deleted as cleanup. Set the expiration time in days. Default is `7` days.
+Short links which are never accessed are considered expired or stale, and will be deleted as cleanup. Set the expiration time in days. Default is `7` days. Maximum is `365` days, and setting above the maximum will have `365` set instead. Setting `0` means the short links will be cleaned up approximately every 10 minutes.
 
 <hr>
 

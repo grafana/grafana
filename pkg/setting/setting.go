@@ -1164,6 +1164,11 @@ func (cfg *Cfg) parseINIFile(iniFile *ini.File) error {
 	shortLinks := iniFile.Section("short_links")
 	cfg.ShortLinkExpiration = shortLinks.Key("expire_time").MustInt(7)
 
+	if cfg.ShortLinkExpiration > 365 {
+		cfg.Logger.Warn("short_links expire_time must be less than 366 days. Setting to 365 days")
+		cfg.ShortLinkExpiration = 365
+	}
+
 	panelsSection := iniFile.Section("panels")
 	cfg.DisableSanitizeHtml = panelsSection.Key("disable_sanitize_html").MustBool(false)
 
