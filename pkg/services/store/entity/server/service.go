@@ -17,6 +17,8 @@ import (
 	"github.com/grafana/grafana/pkg/services/store/entity/sqlstash"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/prometheus/client_golang/prometheus"
+	"google.golang.org/grpc/health/grpc_health_v1"
+	"google.golang.org/grpc/reflection"
 )
 
 var (
@@ -125,7 +127,14 @@ func (s *service) start(ctx context.Context) error {
 		return err
 	}
 
+	healthService, err := entity.ProvideHealthService(store)
+	if err != nil {
+		return err
+	}
+
 	entity.RegisterEntityStoreServer(s.handler.GetServer(), store)
+	grpc_health_v1.RegisterHealthServer(s.handler.GetServer(), healthService)
+	reflection.Register(s.handler.GetServer())
 
 	err = s.handler.Run(ctx)
 	if err != nil {
