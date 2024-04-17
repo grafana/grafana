@@ -23,7 +23,7 @@ import { DeleteDashboardButton } from 'app/features/dashboard/components/DeleteD
 import { GenAIDashDescriptionButton } from 'app/features/dashboard/components/GenAI/GenAIDashDescriptionButton';
 import { GenAIDashTitleButton } from 'app/features/dashboard/components/GenAI/GenAIDashTitleButton';
 
-import { getDashboardScenePageStateManager } from '../pages/DashboardScenePageStateManager';
+import { updateNavModel } from '../pages/utils';
 import { DashboardScene } from '../scene/DashboardScene';
 import { NavToolbarActions } from '../scene/NavToolbarActions';
 import { dashboardSceneGraph } from '../utils/dashboardSceneGraph';
@@ -105,8 +105,7 @@ export class GeneralSettingsEditView
     };
 
     if (newMeta.folderUid) {
-      const stateManager = getDashboardScenePageStateManager();
-      await stateManager.updateNavModel(newMeta.folderUid);
+      await updateNavModel(newMeta.folderUid);
     }
 
     this._dashboard.setState({ meta: newMeta });

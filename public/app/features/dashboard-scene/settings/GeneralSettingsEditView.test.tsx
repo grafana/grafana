@@ -1,7 +1,7 @@
 import { behaviors, SceneGridLayout, SceneTimeRange } from '@grafana/scenes';
 import { DashboardCursorSync } from '@grafana/schema';
 
-import { getDashboardScenePageStateManager } from '../pages/DashboardScenePageStateManager';
+import * as utils from '../pages/utils';
 import { DashboardControls } from '../scene/DashboardControls';
 import { DashboardScene } from '../scene/DashboardScene';
 import { activateFullSceneTree } from '../utils/test-utils';
@@ -91,7 +91,7 @@ describe('GeneralSettingsEditView', () => {
     });
 
     it('A change to folder updates the dashboard state', async () => {
-      const updateNavModel = jest.spyOn(getDashboardScenePageStateManager(), 'updateNavModel');
+      const updateNavModel = jest.spyOn(utils, 'updateNavModel');
 
       await settings.onFolderChange('folder-2', 'folder 2');
 
