@@ -320,6 +320,15 @@ func (s *Service) RegisterClient(c authn.Client) {
 	}
 }
 
+func (s *Service) IsClientEnabled(name string) bool {
+	client, ok := s.clients[name]
+	if !ok {
+		return false
+	}
+
+	return client.IsEnabled()
+}
+
 func (s *Service) SyncIdentity(ctx context.Context, identity *authn.Identity) error {
 	r := &authn.Request{OrgID: identity.OrgID}
 	// hack to not update last seen on external syncs
@@ -344,6 +353,7 @@ func (s *Service) resolveIdenity(ctx context.Context, orgID int64, namespaceID a
 			ID:    namespaceID.String(),
 			OrgID: orgID,
 			ClientParams: authn.ClientParams{
+				AllowGlobalOrg:  true,
 				FetchSyncedUser: true,
 				SyncPermissions: true,
 			}}, nil

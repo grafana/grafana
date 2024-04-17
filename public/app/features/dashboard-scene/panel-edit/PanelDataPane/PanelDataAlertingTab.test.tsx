@@ -5,6 +5,7 @@ import { TestProvider } from 'test/helpers/TestProvider';
 import { byTestId } from 'testing-library-selector';
 
 import { DataSourceApi } from '@grafana/data';
+import { PromOptions, PrometheusDatasource } from '@grafana/prometheus';
 import { locationService, setDataSourceSrv } from '@grafana/runtime';
 import { fetchRules } from 'app/features/alerting/unified/api/prometheus';
 import { fetchRulerRules } from 'app/features/alerting/unified/api/ruler';
@@ -24,8 +25,6 @@ import { Annotation } from 'app/features/alerting/unified/utils/constants';
 import { DataSourceType, GRAFANA_RULES_SOURCE_NAME } from 'app/features/alerting/unified/utils/datasource';
 import { DashboardModel, PanelModel } from 'app/features/dashboard/state';
 import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
-import { PrometheusDatasource } from 'app/plugins/datasource/prometheus/datasource';
-import { PromOptions } from 'app/plugins/datasource/prometheus/types';
 import { configureStore } from 'app/store/configureStore';
 import { AccessControlAction } from 'app/types';
 import { AlertQuery } from 'app/types/unified-alerting-dto';
