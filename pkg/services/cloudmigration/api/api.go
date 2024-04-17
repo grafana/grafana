@@ -1,10 +1,7 @@
 package api
 
 import (
-	"bytes"
-	"encoding/json"
 	"fmt"
-	"io"
 	"net/http"
 	"strconv"
 
@@ -172,7 +169,6 @@ func (cma *CloudMigrationAPI) CreateMigration(c *contextmodel.ReqContext) respon
 func (cma *CloudMigrationAPI) RunMigration(c *contextmodel.ReqContext) response.Response {
 	ctx, span := cma.tracer.Start(c.Req.Context(), "MigrationAPI.RunMigration")
 	defer span.End()
-	logger := cma.log.FromContext(ctx)
 
 	stringID := web.Params(c.Req)[":id"]
 	id, err := strconv.ParseInt(stringID, 10, 64)
@@ -180,70 +176,10 @@ func (cma *CloudMigrationAPI) RunMigration(c *contextmodel.ReqContext) response.
 		return response.Error(http.StatusBadRequest, "id is invalid", err)
 	}
 
-	// Get migration to read the auth token
-	migration, err := cma.cloudMigrationService.GetMigration(ctx, id)
+	result, err := cma.cloudMigrationService.RunMigration(ctx, id)
 	if err != nil {
-		return response.Error(http.StatusInternalServerError, "migration get error", err)
+		return response.Error(http.StatusInternalServerError, "migration run error", err)
 	}
-	// get CMS path from the config
-	domain, err := cma.cloudMigrationService.ParseCloudMigrationConfig()
-	if err != nil {
-		return response.Error(http.StatusInternalServerError, "config parse error", err)
-	}
-	path := fmt.Sprintf("https://cms-%s.%s/cloud-migrations/api/v1/migrate-data", migration.ClusterSlug, domain)
-
-	// Get migration data JSON
-	body, err := cma.cloudMigrationService.GetMigrationDataJSON(ctx, id)
-	if err != nil {
-		cma.log.Error("error getting the json request body for migration run", "err", err.Error())
-		return response.Error(http.StatusInternalServerError, "migration data get error", err)
-	}
-
-	req, err := http.NewRequest(http.MethodPost, path, bytes.NewReader(body))
-	if err != nil {
-		cma.log.Error("error creating http request for cloud migration run", "err", err.Error())
-		return response.Error(http.StatusInternalServerError, "http request error", err)
-	}
-	req.Header.Set("Content-Type", "application/json")
-	req.Header.Set("Authorization", fmt.Sprintf("Bearer %d:%s", migration.StackID, migration.AuthToken))
-
-	client := &http.Client{}
-	resp, err := client.Do(req)
-	if err != nil {
-		cma.log.Error("error sending http request for cloud migration run", "err", err.Error())
-		return response.Error(http.StatusInternalServerError, "http request error", err)
-	} else if resp.StatusCode >= 400 {
-		cma.log.Error("received error response for cloud migration run", "statusCode", resp.StatusCode)
-		return response.Error(http.StatusInternalServerError, "http request error", fmt.Errorf("http request error while migrating data"))
-	}
-
-	defer func() {
-		if err := resp.Body.Close(); err != nil {
-			logger.Error("closing request body: %w", err)
-		}
-	}()
-
-	// read response so we can unmarshal it
-	respData, err := io.ReadAll(resp.Body)
-	if err != nil {
-		logger.Error("reading response body: %w", err)
-		return response.Error(http.StatusInternalServerError, "reading migration run response", err)
-	}
-	var result cloudmigration.MigrateDataResponseDTO
-	if err := json.Unmarshal(respData, &result); err != nil {
-		logger.Error("unmarshalling response body: %w", err)
-		return response.Error(http.StatusInternalServerError, "unmarshalling migration run response", err)
-	}
-
-	runID, err := cma.cloudMigrationService.SaveMigrationRun(ctx, &cloudmigration.CloudMigrationRun{
-		CloudMigrationUID: stringID,
-		Result:            respData,
-	})
-	if err != nil {
-		response.Error(http.StatusInternalServerError, "migration run save error", err)
-	}
-
-	result.RunID = runID
 
 	return response.JSON(http.StatusOK, result)
 }
@@ -309,22 +245,9 @@ func (cma *CloudMigrationAPI) GetMigrationRunList(c *contextmodel.ReqContext) re
 	ctx, span := cma.tracer.Start(c.Req.Context(), "MigrationAPI.GetMigrationRunList")
 	defer span.End()
 
-	migrationStatuses, err := cma.cloudMigrationService.GetMigrationStatusList(ctx, web.Params(c.Req)[":id"])
+	runList, err := cma.cloudMigrationService.GetMigrationRunList(ctx, web.Params(c.Req)[":id"])
 	if err != nil {
-		return response.Error(http.StatusInternalServerError, "migration status error", err)
-	}
-
-	runList := cloudmigration.CloudMigrationRunList{Runs: []cloudmigration.MigrateDataResponseDTO{}}
-	for _, s := range migrationStatuses {
-		// attempt to bind the raw result to a list of response item DTOs
-		r := cloudmigration.MigrateDataResponseDTO{
-			Items: []cloudmigration.MigrateDataResponseItemDTO{},
-		}
-		if err := json.Unmarshal(s.Result, &r); err != nil {
-			return response.Error(http.StatusInternalServerError, "error unmarshalling migration response items", err)
-		}
-		r.RunID = s.ID
-		runList.Runs = append(runList.Runs, r)
+		return response.Error(http.StatusInternalServerError, "list migration status error", err)
 	}
 
 	return response.JSON(http.StatusOK, runList)
