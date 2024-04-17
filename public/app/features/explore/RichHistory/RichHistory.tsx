@@ -11,6 +11,7 @@ import { RichHistoryQuery } from 'app/types/explore';
 import { supportedFeatures } from '../../../core/history/richHistoryStorageProvider';
 import { Tabs, useQueriesDrawerContext } from '../QueriesDrawer/QueriesDrawerContext';
 import { i18n } from '../QueriesDrawer/utils';
+import { QueryTemplatesList } from '../QueryLibrary/QueryTemplatesList';
 
 import { RichHistoryQueriesTab } from './RichHistoryQueriesTab';
 import { RichHistorySettingsTab } from './RichHistorySettingsTab';
@@ -85,7 +86,7 @@ export function RichHistory(props: RichHistoryProps) {
   const QueryLibraryTab: TabConfig = {
     label: i18n.queryLibrary,
     value: Tabs.QueryLibrary,
-    content: <EmptyState message="Coming soon!" variant="not-found" />,
+    content: <QueryTemplatesList />,
     icon: 'book',
   };
 
