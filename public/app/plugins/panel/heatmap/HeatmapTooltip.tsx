@@ -108,7 +108,11 @@ const HeatmapHoverCell = ({
 
   let contentItems: VizTooltipItem[] = [];
 
-  const yValueIdx = index % (data.yBucketCount ?? 1);
+  const getYValueIndex = (idx: number) => {
+    return idx % (data.yBucketCount ?? 1);
+  };
+
+  let yValueIdx = getYValueIndex(index);
   const xValueIdx = Math.floor(index / (data.yBucketCount ?? 1));
 
   const getData = (idx: number = index) => {
@@ -178,6 +182,7 @@ const HeatmapHoverCell = ({
       if (isSparse) {
         ({ xBucketMin, xBucketMax, yBucketMin, yBucketMax } = getSparseCellMinMax(data!, idx));
       } else {
+        yValueIdx = getYValueIndex(idx);
         getData(idx);
       }
 
