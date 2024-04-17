@@ -148,7 +148,7 @@ it('renders streaming indicator in the panel header if loadingState is streaming
   expect(screen.getByTestId('panel-streaming')).toBeInTheDocument();
 });
 
-it('collapses the controlled panel when user clicks on the chevron or the title', async () => {
+it('collapses the controlled panel when user clicks on the chevron or the title', () => {
   setupWithToggleCollapsed({ title: 'Default title' });
 
   expect(screen.getByText("Panel's Content")).toBeInTheDocument();
@@ -163,10 +163,10 @@ it('collapses the controlled panel when user clicks on the chevron or the title'
   expect(screen.queryByText("Panel's Content")).not.toBeInTheDocument();
   // aria-controls should be removed when panel is collapsed
   expect(button).not.toHaveAttribute('aria-controlls');
-  expect(await screen.queryByTestId(selectors.components.Panels.Panel.content)?.id).toBe(undefined);
+  expect(screen.queryByTestId(selectors.components.Panels.Panel.content)?.id).toBe(undefined);
 });
 
-it('collapses the uncontrolled panel when user clicks on the chevron or the title', async () => {
+it('collapses the uncontrolled panel when user clicks on the chevron or the title', () => {
   setup({ title: 'Default title', collapsible: true });
 
   expect(screen.getByText("Panel's Content")).toBeInTheDocument();
@@ -181,5 +181,5 @@ it('collapses the uncontrolled panel when user clicks on the chevron or the titl
   expect(screen.queryByText("Panel's Content")).not.toBeInTheDocument();
   // aria-controls should be removed when panel is collapsed
   expect(button).not.toHaveAttribute('aria-controlls');
-  expect(await screen.queryByTestId(selectors.components.Panels.Panel.content)?.id).toBe(undefined);
+  expect(screen.queryByTestId(selectors.components.Panels.Panel.content)?.id).toBe(undefined);
 });
