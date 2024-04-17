@@ -68,6 +68,10 @@ jest.mock('app/core/services/PreferencesService', () => ({
   },
 }));
 
+jest.mock('../hooks/useExplorePageTitle', () => ({
+  useExplorePageTitle: jest.fn(),
+}));
+
 jest.mock('react-virtualized-auto-sizer', () => {
   return {
     __esModule: true,
@@ -119,8 +123,7 @@ describe('Explore: Query History', () => {
     });
   });
 
-  // TODO: #86287
-  it.skip('adds recently added query if the query history panel is already open', async () => {
+  it('adds recently added query if the query history panel is already open', async () => {
     const urlParams = {
       left: serializeStateToUrlParam({
         datasource: 'loki',
