@@ -3323,7 +3323,7 @@ __metadata:
     i18next: "npm:^23.0.0"
     immer: "npm:10.0.4"
     lodash: "npm:4.17.21"
-    monaco-editor: "npm:0.34.0"
+    monaco-editor: "npm:0.34.1"
     prismjs: "npm:1.29.0"
     react: "npm:18.2.0"
     react-select-event: "npm:5.5.1"
@@ -3361,7 +3361,7 @@ __metadata:
     fast-deep-equal: "npm:^3.1.3"
     jest: "npm:29.7.0"
     lodash: "npm:4.17.21"
-    monaco-editor: "npm:0.34.0"
+    monaco-editor: "npm:0.34.1"
     prismjs: "npm:1.29.0"
     react: "npm:18.2.0"
     react-dom: "npm:18.2.0"
@@ -3461,7 +3461,7 @@ __metadata:
     "@types/lodash": "npm:4.17.0"
     "@types/react": "npm:18.2.78"
     lodash: "npm:4.17.21"
-    monaco-editor: "npm:0.34.0"
+    monaco-editor: "npm:0.34.1"
     react: "npm:18.2.0"
     react-use: "npm:17.5.0"
     rxjs: "npm:7.8.1"
@@ -3501,7 +3501,7 @@ __metadata:
     i18next: "npm:^23.0.0"
     immer: "npm:10.0.4"
     lodash: "npm:4.17.21"
-    monaco-editor: "npm:0.34.0"
+    monaco-editor: "npm:0.34.1"
     prismjs: "npm:1.29.0"
     react: "npm:18.2.0"
     react-select-event: "npm:5.5.1"
@@ -3555,7 +3555,7 @@ __metadata:
     i18next: "npm:^23.0.0"
     lodash: "npm:4.17.21"
     lru-cache: "npm:10.2.0"
-    monaco-editor: "npm:0.34.0"
+    monaco-editor: "npm:0.34.1"
     prismjs: "npm:1.29.0"
     react: "npm:18.2.0"
     react-dom: "npm:18.2.0"
@@ -4359,7 +4359,7 @@ __metadata:
     micro-memoize: "npm:^4.1.2"
     mock-raf: "npm:1.0.1"
     moment: "npm:2.30.1"
-    monaco-editor: "npm:0.34.0"
+    monaco-editor: "npm:0.34.1"
     ol: "npm:7.4.0"
     prismjs: "npm:1.29.0"
     process: "npm:^0.11.10"
@@ -18815,7 +18815,7 @@ __metadata:
     ml-regression-simple-linear: "npm:^3.0.0"
     moment: "npm:2.30.1"
     moment-timezone: "npm:0.5.45"
-    monaco-editor: "npm:0.34.0"
+    monaco-editor: "npm:0.34.1"
     monaco-promql: "npm:1.7.4"
     mousetrap: "npm:1.6.5"
     mousetrap-global-bind: "npm:1.1.0"
@@ -23202,10 +23202,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"monaco-editor@npm:0.34.0":
-  version: 0.34.0
-  resolution: "monaco-editor@npm:0.34.0"
-  checksum: 10/c7c2c88bc8f83817e67ab55d84a4469af7f5f566cc3df1c27bdd00ad2071b88688b23847608e8c948a445afa543929b7bcd9b5ff5b7b53da15f6f2b628eb76ac
+"monaco-editor@npm:0.34.1":
+  version: 0.34.1
+  resolution: "monaco-editor@npm:0.34.1"
+  checksum: 10/50cde6f68f27cd66fbaadb7efe0e6ce46748e4bb552ddaa84451fbda18e5ff970a1fa79371c04618927c1f6348839747e3d4804fe383040bad2137527f8a38e4
   languageName: node
   linkType: hard
 
