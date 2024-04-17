@@ -3,6 +3,7 @@ package models
 import (
 	"embed"
 	"encoding/json"
+	"fmt"
 	"math"
 	"strconv"
 	"strings"
@@ -201,6 +202,26 @@ func Parse(span trace.Span, query backend.DataQuery, dsScrapeInterval string, in
 			scopeFilters = model.Scope.Filters
 		}
 
+		if len(scopeFilters) > 0 {
+			span.SetAttributes(attribute.StringSlice("scopeFilters", func() []string {
+				var filters []string
+				for _, f := range scopeFilters {
+					filters = append(filters, fmt.Sprintf("%q %q %q", f.Key, f.Operator, f.Value))
+				}
+				return filters
+			}()))
+		}
+
+		if len(model.AdhocFilters) > 0 {
+			span.SetAttributes(attribute.StringSlice("adhocFilters", func() []string {
+				var filters []string
+				for _, f := range model.AdhocFilters {
+					filters = append(filters, fmt.Sprintf("%q %q %q", f.Key, f.Operator, f.Value))
+				}
+				return filters
+			}()))
+		}
+
 		expr, err = ApplyQueryFilters(expr, scopeFilters, model.AdhocFilters)
 		if err != nil {
 			return nil, err
@@ -217,7 +238,11 @@ func Parse(span trace.Span, query backend.DataQuery, dsScrapeInterval string, in
 		model.Exemplar = false
 	}
 
-	span.SetAttributes(attribute.String("expr", expr))
+	span.SetAttributes(
+		attribute.String("expr", expr),
+		attribute.Int64("start_unixnano", query.TimeRange.From.UnixNano()),
+		attribute.Int64("stop_unixnano", query.TimeRange.To.UnixNano()),
+	)
 
 	return &Query{
 		Expr:          expr,
