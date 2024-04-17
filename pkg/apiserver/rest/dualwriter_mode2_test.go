@@ -13,7 +13,6 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
-	"k8s.io/apiserver/pkg/apis/example"
 )
 
 var createFn = func(context.Context, runtime.Object) error { return nil }
@@ -369,93 +368,112 @@ func TestMode2_DeleteCollection(t *testing.T) {
 			continue
 		}
 
-		us.AssertNotCalled(t, "DeleteCollection", context.Background(), tt.input, func(ctx context.Context, obj runtime.Object) error { return nil }, &metav1.DeleteOptions{})
 		assert.Equal(t, obj, exampleObj)
 		assert.NotEqual(t, obj, anotherObj)
 	}
 }
 
-func TestMode2(t *testing.T) {
-	var ls = (LegacyStorage)(nil)
-	var s = (Storage)(nil)
-	lsSpy := NewLegacyStorageSpyClient(ls)
-	sSpy := NewStorageSpyClient(s)
-
-	dw := NewDualWriterMode2(lsSpy, sSpy)
-
-	// Create: it should use the Legacy Create implementation
-	_, err := dw.Create(context.Background(), &dummyObject{}, func(context.Context, runtime.Object) error { return nil }, &metav1.CreateOptions{})
-	assert.NoError(t, err)
-	assert.Equal(t, 1, lsSpy.Counts("LegacyStorage.Create"))
-	assert.Equal(t, 1, sSpy.Counts("Storage.Create"))
-
-	// Get: it should read from Storage with LegacyStorage as a fallback
-	// #TODO: Currently only testing the happy path. Refactor testing to more easily test other cases.
-	_, err = dw.Get(context.Background(), kind, &metav1.GetOptions{})
-	assert.NoError(t, err)
-	assert.Equal(t, 0, lsSpy.Counts("LegacyStorage.Get"))
-	assert.Equal(t, 1, sSpy.Counts("Storage.Get"))
-
-	// List: it should use call both Legacy and Storage List methods
-	l, err := dw.List(context.Background(), &metainternalversion.ListOptions{})
-	assert.NoError(t, err)
-	assert.Equal(t, 1, lsSpy.Counts("LegacyStorage.List"))
-	assert.Equal(t, 1, sSpy.Counts("Storage.List"))
-
-	resList, err := meta.ExtractList(l)
-	assert.NoError(t, err)
-
-	expectedItems := map[string]string{
-		// Item 1: Storage should override Legacy
-		"Item 1": "Storage field 1",
-		// Item 2 shouldn't be included because it's not in Storage
-		// Item 3 should because it's in Legacy
-		"Item 3": "Legacy field 3",
+func TestMode2_Update(t *testing.T) {
+	type testCase struct {
+		name           string
+		input          string
+		setupLegacyFn  func(m *mock.Mock, input string)
+		setupStorageFn func(m *mock.Mock, input string)
+		setupGetFn     func(m *mock.Mock, input string)
+		wantErr        bool
 	}
+	tests :=
+		[]testCase{
+			{
+				name:  "update an object in both stores",
+				input: "foo",
+				setupLegacyFn: func(m *mock.Mock, input string) {
+					m.On("Update", context.Background(), input, mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(exampleObj, false, nil)
+				},
+				setupStorageFn: func(m *mock.Mock, input string) {
+					m.On("Update", context.Background(), input, mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(exampleObj, false, nil)
+				},
+				setupGetFn: func(m *mock.Mock, input string) {
+					m.On("Get", context.Background(), input, mock.Anything).Return(exampleObjDifferentRV, nil)
+				},
+			},
+			{
+				name:  "object is not found in storage",
+				input: "not-found",
+				setupLegacyFn: func(m *mock.Mock, input string) {
+					m.On("Update", context.Background(), input, mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(exampleObj, false, nil)
+				},
+				setupStorageFn: func(m *mock.Mock, input string) {
+					m.On("Update", context.Background(), input, mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(exampleObj, false, nil)
+				},
+				setupGetFn: func(m *mock.Mock, input string) {
+					m.On("Get", context.Background(), input, mock.Anything).Return(nil, apierrors.NewNotFound(schema.GroupResource{Group: "", Resource: "pods"}, "not found"))
+				},
+			},
+			{
+				name:  "error finding object storage",
+				input: "object-fail",
+				setupGetFn: func(m *mock.Mock, input string) {
+					m.On("Get", context.Background(), input, mock.Anything).Return(nil, errors.New("error"))
+				},
+				wantErr: true,
+			},
+			{
+				name:  "error updating legacy store",
+				input: "object-fail",
+				setupLegacyFn: func(m *mock.Mock, input string) {
+					m.On("Update", context.Background(), input, mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(nil, false, errors.New("error"))
+				},
+				setupGetFn: func(m *mock.Mock, input string) {
+					m.On("Get", context.Background(), input, mock.Anything).Return(exampleObjDifferentRV, nil)
+				},
+				wantErr: true,
+			},
+			{
+				name:  "error updating storage",
+				input: "object-fail",
+				setupLegacyFn: func(m *mock.Mock, input string) {
+					m.On("Update", context.Background(), input, mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(exampleObj, false, nil)
+				},
+				setupStorageFn: func(m *mock.Mock, input string) {
+					m.On("Update", context.Background(), input, mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(nil, false, errors.New("error"))
+				},
+				setupGetFn: func(m *mock.Mock, input string) {
+					m.On("Get", context.Background(), input, mock.Anything).Return(exampleObj, nil)
+				},
+				wantErr: true,
+			},
+		}
 
-	assert.Equal(t, len(expectedItems), len(resList))
+	for _, tt := range tests {
+		l := (LegacyStorage)(nil)
+		s := (Storage)(nil)
+		m := &mock.Mock{}
 
-	for _, obj := range resList {
-		v, ok := obj.(*dummyObject)
-		assert.True(t, ok)
-		accessor, err := meta.Accessor(v)
-		assert.NoError(t, err)
+		ls := legacyStoreMock{m, l}
+		us := storageMock{m, s}
 
-		k, ok := expectedItems[accessor.GetName()]
-		assert.True(t, ok)
-		assert.Equal(t, k, v.Foo)
+		if tt.setupGetFn != nil {
+			tt.setupGetFn(m, tt.input)
+		}
+
+		if tt.setupLegacyFn != nil {
+			tt.setupLegacyFn(m, tt.input)
+		}
+		if tt.setupStorageFn != nil {
+			tt.setupStorageFn(m, tt.input)
+		}
+
+		dw := SelectDualWriter(Mode2, ls, us)
+
+		obj, _, err := dw.Update(context.Background(), tt.input, UpdatedObjInfoObj{}, func(ctx context.Context, obj runtime.Object) error { return nil }, func(ctx context.Context, obj, old runtime.Object) error { return nil }, false, &metav1.UpdateOptions{})
+
+		if tt.wantErr {
+			assert.Error(t, err)
+			continue
+		}
+
+		assert.Equal(t, obj, exampleObj)
+		assert.NotEqual(t, obj, anotherObj)
 	}
-
-	// Delete: it should use call both Legacy and Storage Delete methods
-	var deleteValidation = func(ctx context.Context, obj runtime.Object) error { return nil }
-	_, _, err = dw.Delete(context.Background(), kind, deleteValidation, &metav1.DeleteOptions{})
-	assert.NoError(t, err)
-	assert.Equal(t, 1, lsSpy.Counts("LegacyStorage.Delete"))
-	assert.Equal(t, 1, sSpy.Counts("Storage.Delete"))
-
-	// DeleteCollection: it should delete from both LegacyStorage and Storage
-	_, err = dw.DeleteCollection(
-		context.Background(),
-		func(context.Context, runtime.Object) error { return nil },
-		&metav1.DeleteOptions{},
-		&metainternalversion.ListOptions{},
-	)
-	assert.NoError(t, err)
-	assert.Equal(t, 1, lsSpy.Counts("LegacyStorage.DeleteCollection"))
-	assert.Equal(t, 1, sSpy.Counts("Storage.DeleteCollection"))
-
-	// Update: it should update in both storages
-	dummy := &example.Pod{}
-	uoi := UpdatedObjInfoObj{}
-	_, err = uoi.UpdatedObject(context.Background(), dummy)
-	assert.NoError(t, err)
-
-	var validateObjFn = func(ctx context.Context, obj runtime.Object) error { return nil }
-	var validateObjUpdateFn = func(ctx context.Context, obj, old runtime.Object) error { return nil }
-
-	_, _, err = dw.Update(context.Background(), kind, uoi, validateObjFn, validateObjUpdateFn, false, &metav1.UpdateOptions{})
-	assert.NoError(t, err)
-	assert.Equal(t, 1, lsSpy.Counts("LegacyStorage.Update"))
-	assert.Equal(t, 1, sSpy.Counts("Storage.Update"))
-	assert.NoError(t, err)
 }

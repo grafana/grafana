@@ -180,13 +180,14 @@ func (d *DualWriterMode2) Delete(ctx context.Context, name string, deleteValidat
 	return deletedLS, async, err
 }
 
-// Update overrides the generic behavior of the Storage and writes first to the legacy storage and then to US.
-// Update overrides the behavior of the generic DualWriter and writes first to LegacyStorage and then to Storage.
+// Update overrides the generic behavior of the Storage and writes first to the legacy storage and then to storage.
 func (d *DualWriterMode2) Update(ctx context.Context, name string, objInfo rest.UpdatedObjectInfo, createValidation rest.ValidateObjectFunc, updateValidation rest.ValidateObjectUpdateFunc, forceAllowCreate bool, options *metav1.UpdateOptions) (runtime.Object, bool, error) {
 	legacy, ok := d.Legacy.(rest.Updater)
 	if !ok {
 		return nil, false, errDualWriterUpdaterMissing
 	}
+
+	var notFound bool
 
 	// get old and new (updated) object so they can be stored in legacy store
 	old, err := d.Storage.Get(ctx, name, &metav1.GetOptions{})
@@ -196,6 +197,7 @@ func (d *DualWriterMode2) Update(ctx context.Context, name string, objInfo rest.
 			return nil, false, err
 		}
 		klog.FromContext(ctx).Error(err, "object not found for update, creating one", "mode", Mode2)
+		notFound = true
 	}
 
 	// obj can be populated in case it's found or empty in case it's not found
@@ -210,11 +212,16 @@ func (d *DualWriterMode2) Update(ctx context.Context, name string, objInfo rest.
 		return obj, created, err
 	}
 
+	if notFound {
+		return d.Storage.Update(ctx, name, objInfo, createValidation, updateValidation, forceAllowCreate, options)
+	}
+
 	accessor, err := meta.Accessor(obj)
 	if err != nil {
 		return nil, false, err
 	}
 
+	// only if object exists
 	accessorOld, err := meta.Accessor(old)
 	if err != nil {
 		return nil, false, err
