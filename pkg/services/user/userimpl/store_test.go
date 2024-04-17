@@ -979,8 +979,8 @@ func TestIntegrationUserUpdate(t *testing.T) {
 		require.Equal(t, "Change Name", result.Name)
 
 		// Unchanged
-		require.Equal(t, "loginUSER3", result.Login)
-		require.Equal(t, "USER3@test.com", result.Email)
+		require.Equal(t, "loginuser3", result.Login)
+		require.Equal(t, "user3@test.com", result.Email)
 	})
 }
 

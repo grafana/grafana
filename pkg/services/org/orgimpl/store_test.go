@@ -773,7 +773,7 @@ func TestIntegration_SQLStore_GetOrgUsers_PopulatesCorrectly(t *testing.T) {
 	assert.Equal(t, int64(1), actual.UserID)
 	assert.Equal(t, "viewer@localhost", actual.Email)
 	assert.Equal(t, "Viewer Localhost", actual.Name)
-	assert.Equal(t, "Viewer", actual.Login)
+	assert.Equal(t, "viewer", actual.Login)
 	assert.Equal(t, "Viewer", actual.Role)
 	assert.Equal(t, constNow.AddDate(-10, 0, 0), actual.LastSeenAt)
 	assert.Equal(t, constNow, actual.Created)
