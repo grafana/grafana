@@ -25,6 +25,11 @@
       "user": "Usuario"
     }
   },
+  "api-keys": {
+    "empty-state": {
+      "message": ""
+    }
+  },
   "bouncing-loader": {
     "label": "Cargando"
   },
@@ -107,6 +112,9 @@
       "change-theme": "Cambiar tema...",
       "dark-theme": "Oscuro",
       "light-theme": "Claro"
+    },
+    "empty-state": {
+      "message": ""
     },
     "search-box": {
       "placeholder": "Buscar o saltar a..."
@@ -417,6 +425,9 @@
   "data-sources": {
     "datasource-add-button": {
       "label": "Añadir nueva fuente de datos"
+    },
+    "empty-state": {
+      "message": ""
     }
   },
   "explore": {
@@ -446,10 +457,11 @@
       "delete-query-tooltip": "Eliminar consulta",
       "delete-starred-query-confirmation-text": "¿Seguro que desea eliminar permanentemente su consulta destacada?",
       "edit-comment-tooltip": "Editar comentario",
-      "loading-text": "cargando...",
+      "left-pane": "",
       "optional-description": "Una descripción opcional de lo que hace la consulta.",
       "query-comment-label": "Comentario de la consulta",
       "query-text-label": "Texto de la consulta",
+      "right-pane": "",
       "run-query-button": "Ejecutar consulta",
       "save-comment": "Guardar comentario",
       "star-query-tooltip": "Consulta destacada",
@@ -560,9 +572,6 @@
   "grafana-ui": {
     "drawer": {
       "close": "Cerrar"
-    },
-    "empty-state": {
-      "not-found-message": ""
     },
     "modal": {
       "close-tooltip": "Cerrar"
@@ -713,6 +722,8 @@
       "connect": "Conectar con esta pila",
       "connecting": "Conectando con esta pila...",
       "title": "Conectar a una pila en la nube",
+      "token-error-description": "",
+      "token-error-title": "",
       "token-required-error": "El token de migración es obligatorio"
     },
     "cta": {
@@ -1226,6 +1237,11 @@
       "message": ""
     }
   },
+  "plugins": {
+    "empty-state": {
+      "message": ""
+    }
+  },
   "profile": {
     "change-password": {
       "cancel-button": "Cancelar",
@@ -1428,6 +1444,11 @@
       "placeholder": "Buscar paneles de control"
     }
   },
+  "service-accounts": {
+    "empty-state": {
+      "message": ""
+    }
+  },
   "share-modal": {
     "dashboard": {
       "title": "Compartir"
@@ -1556,6 +1577,11 @@
     "no-tags": "No se ha encontrado ninguna etiqueta",
     "placeholder": "Filtrar por etiqueta"
   },
+  "teams": {
+    "empty-state": {
+      "message": ""
+    }
+  },
   "time-picker": {
     "absolute": {
       "recent-title": "Intervalos absolutos utilizados recientemente",
@@ -1648,6 +1674,11 @@
   },
   "user-sessions": {
     "loading": "Cargando sesiones..."
+  },
+  "users": {
+    "empty-state": {
+      "message": ""
+    }
   },
   "users-access-list": {
     "tabs": {

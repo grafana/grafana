@@ -16,8 +16,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/authn/authntest"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/login"
-	"github.com/grafana/grafana/pkg/services/login/authinfotest"
-	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -32,7 +30,7 @@ func Test_ProvideService(t *testing.T) {
 			},
 		}
 
-		_ = ProvideService(setting.NewCfg(), nil, nil, features, authnService, nil, nil)
+		_ = ProvideService(setting.NewCfg(), nil, nil, features, authnService, nil)
 		assert.True(t, hookRegistered)
 	})
 
@@ -46,7 +44,7 @@ func Test_ProvideService(t *testing.T) {
 			},
 		}
 
-		_ = ProvideService(setting.NewCfg(), nil, nil, features, authnService, nil, nil)
+		_ = ProvideService(setting.NewCfg(), nil, nil, features, authnService, nil)
 		assert.False(t, hookRegistered)
 	})
 }
@@ -69,7 +67,7 @@ func TestService_SignIdentity(t *testing.T) {
 		s := ProvideService(
 			setting.NewCfg(), signer, remotecache.NewFakeCacheStorage(),
 			featuremgmt.WithFeatures(featuremgmt.FlagIdForwarding),
-			&authntest.FakeService{}, &authinfotest.FakeService{ExpectedError: user.ErrUserNotFound}, nil,
+			&authntest.FakeService{}, nil,
 		)
 		token, err := s.SignIdentity(context.Background(), &authn.Identity{ID: "user:1"})
 		require.NoError(t, err)
@@ -80,9 +78,9 @@ func TestService_SignIdentity(t *testing.T) {
 		s := ProvideService(
 			setting.NewCfg(), signer, remotecache.NewFakeCacheStorage(),
 			featuremgmt.WithFeatures(featuremgmt.FlagIdForwarding),
-			&authntest.FakeService{}, &authinfotest.FakeService{ExpectedUserAuth: &login.UserAuth{AuthModule: login.AzureADAuthModule}}, nil,
+			&authntest.FakeService{}, nil,
 		)
-		token, err := s.SignIdentity(context.Background(), &authn.Identity{ID: "user:1"})
+		token, err := s.SignIdentity(context.Background(), &authn.Identity{ID: "user:1", AuthenticatedBy: login.AzureADAuthModule})
 		require.NoError(t, err)
 
 		parsed, err := jwt.ParseSigned(token)

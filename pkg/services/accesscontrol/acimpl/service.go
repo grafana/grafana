@@ -23,7 +23,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/accesscontrol/migrator"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/pluginutils"
 	"github.com/grafana/grafana/pkg/services/auth/identity"
-	"github.com/grafana/grafana/pkg/services/authn"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/folder"
@@ -159,48 +158,6 @@ func (s *Service) getCachedUserPermissions(ctx context.Context, user identity.Re
 	s.cache.Set(key, permissions, cacheTTL)
 
 	return permissions, nil
-}
-
-func (s *Service) GetUserPermissionsInOrg(ctx context.Context, user identity.Requester, orgID int64) ([]accesscontrol.Permission, error) {
-	permissions := make([]accesscontrol.Permission, 0)
-
-	if s.features.IsEnabled(ctx, featuremgmt.FlagNestedFolders) {
-		permissions = append(permissions, SharedWithMeFolderPermission)
-	}
-
-	namespace, id := user.GetNamespacedID()
-	userID, err := identity.UserIdentifier(namespace, id)
-	if err != nil {
-		return nil, err
-	}
-
-	// Get permissions for user's basic roles from RAM
-	roleList, err := s.store.GetUsersBasicRoles(ctx, []int64{userID}, orgID)
-	if err != nil {
-		return nil, fmt.Errorf("could not fetch basic roles for the user: %w", err)
-	}
-	var roles []string
-	var ok bool
-	if roles, ok = roleList[userID]; !ok {
-		return nil, fmt.Errorf("found no basic roles for user %d in organisation %d", userID, orgID)
-	}
-	for _, builtin := range roles {
-		if basicRole, ok := s.roles[builtin]; ok {
-			permissions = append(permissions, basicRole.Permissions...)
-		}
-	}
-
-	dbPermissions, err := s.store.SearchUsersPermissions(ctx, orgID, accesscontrol.SearchOptions{
-		NamespacedID: authn.NamespacedID(namespace, userID),
-		// Query only basic, managed and plugin roles in OSS
-		RolePrefixes: OSSRolesPrefixes,
-	})
-	if err != nil {
-		return nil, err
-	}
-
-	userPermissions := dbPermissions[userID]
-	return append(permissions, userPermissions...), nil
 }
 
 func (s *Service) ClearUserPermissionCache(user identity.Requester) {

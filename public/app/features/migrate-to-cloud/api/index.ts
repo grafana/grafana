@@ -1,5 +1,5 @@
 export * from './endpoints.gen';
-import { BaseQueryFn, QueryDefinition } from '@reduxjs/toolkit/dist/query';
+import { BaseQueryFn, EndpointDefinition } from '@reduxjs/toolkit/dist/query';
 
 import { generatedAPI } from './endpoints.gen';
 
@@ -12,8 +12,9 @@ export const cloudMigrationAPI = generatedAPI.enhanceEndpoints({
     },
 
     // Create Cloud Config
-    createMigration: {
-      invalidatesTags: ['cloud-migration-config'],
+    createMigration(endpoint) {
+      suppressErrorsOnQuery(endpoint);
+      endpoint.invalidatesTags = ['cloud-migration-config'];
     },
 
     // Get one Cloud Config
@@ -45,7 +46,7 @@ export const cloudMigrationAPI = generatedAPI.enhanceEndpoints({
 });
 
 function suppressErrorsOnQuery<QueryArg, BaseQuery extends BaseQueryFn, TagTypes extends string, ResultType>(
-  endpoint: QueryDefinition<QueryArg, BaseQuery, TagTypes, ResultType>
+  endpoint: EndpointDefinition<QueryArg, BaseQuery, TagTypes, ResultType>
 ) {
   if (!endpoint.query) {
     return;

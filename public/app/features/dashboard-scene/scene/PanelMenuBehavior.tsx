@@ -167,7 +167,7 @@ export function panelMenuBehavior(menu: VizPanelMenu, isRepeat = false) {
       });
     }
 
-    if (config.featureToggles.datatrails) {
+    if (config.featureToggles.exploreMetrics) {
       addDataTrailPanelAction(dashboard, panel, items);
     }
 
