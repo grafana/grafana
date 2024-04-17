@@ -19,6 +19,7 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend/log"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/resource/httpadapter"
 
+	ngalertmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/tsdb/azuremonitor/azmoncredentials"
 	"github.com/grafana/grafana/pkg/tsdb/azuremonitor/loganalytics"
 	"github.com/grafana/grafana/pkg/tsdb/azuremonitor/metrics"
@@ -137,7 +138,7 @@ func NewInstanceSettings(clientProvider *httpclient.Provider, executors map[stri
 }
 
 type azDatasourceExecutor interface {
-	ExecuteTimeSeriesQuery(ctx context.Context, originalQueries []backend.DataQuery, dsInfo types.DatasourceInfo, client *http.Client, url string) (*backend.QueryDataResponse, error)
+	ExecuteTimeSeriesQuery(ctx context.Context, originalQueries []backend.DataQuery, dsInfo types.DatasourceInfo, client *http.Client, url string, fromAlert bool) (*backend.QueryDataResponse, error)
 	ResourceRequest(rw http.ResponseWriter, req *http.Request, cli *http.Client) (http.ResponseWriter, error)
 }
 
@@ -172,7 +173,8 @@ func (s *Service) newQueryMux() *datasource.QueryTypeMux {
 			if !ok {
 				return nil, fmt.Errorf("missing service for %s", dst)
 			}
-			return executor.ExecuteTimeSeriesQuery(ctx, req.Queries, dsInfo, service.HTTPClient, service.URL)
+			_, fromAlert := req.Headers[ngalertmodels.FromAlertHeaderName]
+			return executor.ExecuteTimeSeriesQuery(ctx, req.Queries, dsInfo, service.HTTPClient, service.URL, fromAlert)
 		})
 	}
 	return mux
