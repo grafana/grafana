@@ -268,7 +268,7 @@ const MonacoQueryField = ({
           // See https://github.com/grafana/grafana/issues/85850
           monaco.editor.addKeybindingRule({
             keybinding: monaco.KeyMod.CtrlCmd | monaco.KeyCode.KeyF,
-            command: null
+            command: null,
           });
 
           editor.onDidFocusEditorText(() => {

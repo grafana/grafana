@@ -226,7 +226,7 @@ const MonacoQueryField = (props: Props) => {
           // See https://github.com/grafana/grafana/issues/85850
           monaco.editor.addKeybindingRule({
             keybinding: monaco.KeyMod.CtrlCmd | monaco.KeyCode.KeyF,
-            command: null
+            command: null,
           });
 
           /* Something in this configuration of monaco doesn't bubble up [mod]+K, which the
