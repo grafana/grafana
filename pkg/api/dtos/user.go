@@ -24,7 +24,7 @@ type AdminCreateUserForm struct {
 }
 
 type AdminUpdateUserPasswordForm struct {
-	Password string `json:"password" binding:"Required"`
+	Password user.Password `json:"password" binding:"Required"`
 }
 
 type AdminUpdateUserPermissionsForm struct {

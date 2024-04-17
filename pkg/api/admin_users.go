@@ -110,12 +110,7 @@ func (hs *HTTPServer) AdminUpdateUserPassword(c *contextmodel.ReqContext) respon
 		return response
 	}
 
-	password, err := user.NewPassword(form.Password, hs.Cfg)
-	if err != nil {
-		return response.Err(err)
-	}
-
-	if err := hs.userService.Update(c.Req.Context(), &user.UpdateUserCommand{UserID: userID, Password: &password}); err != nil {
+	if err := hs.userService.Update(c.Req.Context(), &user.UpdateUserCommand{UserID: userID, Password: &form.Password}); err != nil {
 		return response.Error(http.StatusInternalServerError, "Failed to update user password", err)
 	}
 
