@@ -1,6 +1,6 @@
 import React, { useRef } from 'react';
 
-import { Button, ButtonGroup, Dropdown, Menu, ToolbarButton } from '@grafana/ui';
+import { ButtonGroup, Dropdown, Menu, ToolbarButton } from '@grafana/ui';
 
 import { Tabs, useQueriesDrawerContext } from './QueriesDrawerContext';
 import { i18n } from './utils';
@@ -51,7 +51,7 @@ export function QueriesDrawerDropdown({ variant }: Props) {
         </ToolbarButton>
       )}
       <Dropdown overlay={menu}>
-        <Button variant="secondary" icon={variant === 'full' ? 'angle-down' : 'book'} />
+        <ToolbarButton variant={drawerOpened ? 'active' : 'canvas'} icon={variant === 'full' ? 'angle-down' : 'book'} />
       </Dropdown>
     </ButtonGroup>
   );
