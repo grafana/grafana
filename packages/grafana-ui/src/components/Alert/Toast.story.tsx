@@ -33,9 +33,7 @@ export const Basic: StoryFn<typeof Alert> = (args) => {
   return (
     <div className="page-alert-list">
       <Alert {...args} elevated>
-        <Stack direction="column">
-          <div>Child content that includes some alert details, like maybe what actually happened.</div>
-        </Stack>
+        Child content that includes some alert details, like maybe what actually happened.
       </Alert>
     </div>
   );

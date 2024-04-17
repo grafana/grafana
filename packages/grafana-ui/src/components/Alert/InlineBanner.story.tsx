@@ -29,11 +29,7 @@ const meta: Meta = {
 export const Basic: StoryFn<typeof Alert> = (args) => {
   return (
     <div>
-      <Alert {...args}>
-        <Stack direction="column">
-          <div>Child content that includes some alert details, like maybe what actually happened.</div>
-        </Stack>
-      </Alert>
+      <Alert {...args}>Child content that includes some alert details, like maybe what actually happened.</Alert>
     </div>
   );
 };
@@ -44,13 +40,7 @@ Basic.args = {
 };
 
 export const WithActions: StoryFn<typeof Alert> = (args) => {
-  return (
-    <Alert {...args}>
-      <Stack direction="column">
-        <div>Child content that includes some alert details, like maybe what actually happened.</div>
-      </Stack>
-    </Alert>
-  );
+  return <Alert {...args}>Child content that includes some alert details, like maybe what actually happened.</Alert>;
 };
 
 WithActions.args = {
