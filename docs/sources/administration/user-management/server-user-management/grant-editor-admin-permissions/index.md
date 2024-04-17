@@ -5,13 +5,13 @@ labels:
   products:
     - enterprise
     - oss
-title: Grant editors team administrator permissions
+title: Grant editors team creator permissions
 weight: 60
 ---
 
-# Grant editors team administrator permissions
+# Grant editors team creator permissions
 
-By default, the editor organization role does not allow editors to manage teams, which you can change by modifying a configuration parameter. You can allow them to do so using the `editors_can_admin` configuration option.
+By default, the editor organization role does not allow editors to creator and manage teams. You can allow them to do so using the `editors_can_admin` configuration option.
 
 When `editors_can_admin` is enabled, users with the Editor role in an organization can create teams, and they are Administrators of the teams they create. To learn more about team permissions, refer to [Team management]({{< relref "../../../team-management/" >}}).
 
