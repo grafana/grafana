@@ -86,17 +86,21 @@ if (process.env.NODE_ENV === 'development') {
 
 // Optionally load enterprise locale extensions, if they are present.
 // It is important that this happens before NAMESPACES is defined so it has the correct value
-const extensionRequireContext = require.context('../../', true, /app\/extensions\/locales\/localeExtensions/);
-if (extensionRequireContext.keys().includes('app/extensions/locales/localeExtensions')) {
-  const { LOCALE_EXTENSIONS, ENTERPRISE_I18N_NAMESPACE } = extensionRequireContext(
-    'app/extensions/locales/localeExtensions'
-  );
+//
+// require.context doesn't work in jest, so we don't even attempt to load enterprise translations...
+if (process.env.NODE_ENV !== 'test') {
+  const extensionRequireContext = require.context('../../', true, /app\/extensions\/locales\/localeExtensions/);
+  if (extensionRequireContext.keys().includes('app/extensions/locales/localeExtensions')) {
+    const { LOCALE_EXTENSIONS, ENTERPRISE_I18N_NAMESPACE } = extensionRequireContext(
+      'app/extensions/locales/localeExtensions'
+    );
 
-  for (const language of LANGUAGES) {
-    const localeLoader = LOCALE_EXTENSIONS[language.code];
+    for (const language of LANGUAGES) {
+      const localeLoader = LOCALE_EXTENSIONS[language.code];
 
-    if (localeLoader) {
-      language.loader[ENTERPRISE_I18N_NAMESPACE] = localeLoader;
+      if (localeLoader) {
+        language.loader[ENTERPRISE_I18N_NAMESPACE] = localeLoader;
+      }
     }
   }
 }
