@@ -230,34 +230,34 @@ const getNewStyles = (theme: GrafanaTheme2) => {
       lineHeight: '1em',
       margin: '-0.5em 0.5em 0.75em 0.5em',
     }),
-    tag: css`
-      margin: 0 0.5em 0 0;
-    `,
-    duration: css`
-      color: #aaa;
-      margin: 0 0.75em;
-    `,
-    timestamp: css`
-      vertical-align: middle;
-    `,
-    tagMeta: css`
-      margin: 0 0.75em;
-      vertical-align: text-top;
-    `,
-    url: css`
-      margin: -2.5px 0.3em;
-      height: 15px;
-      overflow: hidden;
-      text-overflow: ellipsis;
-      width: 700px;
-      display: inline-block;
-    `,
-    TracePageHeaderTraceId: css`
-      label: TracePageHeaderTraceId;
-      white-space: nowrap;
-      text-overflow: ellipsis;
-      max-width: 30%;
-      display: inline-block;
-    `,
+    tag: css({
+      margin: '0 0.5em 0 0',
+    }),
+    duration: css({
+      color: '#aaa',
+      margin: '0 0.75em',
+    }),
+    timestamp: css({
+      verticalAlign: 'middle',
+    }),
+    tagMeta: css({
+      margin: '0 0.75em',
+      verticalAlign: 'text-top',
+    }),
+    url: css({
+      margin: '-2.5px 0.3em',
+      height: '15px',
+      overflow: 'hidden',
+      textOverflow: 'ellipsis',
+      width: '700px',
+      display: 'inline-block',
+    }),
+    TracePageHeaderTraceId: css({
+      label: 'TracePageHeaderTraceId',
+      whiteSpace: 'nowrap',
+      textOverflow: 'ellipsis',
+      maxWidth: '30%',
+      display: 'inline-block',
+    }),
   };
 };
