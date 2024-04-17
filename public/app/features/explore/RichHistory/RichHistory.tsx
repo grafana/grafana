@@ -86,7 +86,7 @@ export function RichHistory(props: RichHistoryProps) {
     label: i18n.queryLibrary,
     value: Tabs.QueryLibrary,
     content: <EmptyState message="Coming soon!" variant="not-found" />,
-    icon: 'list-ui-alt',
+    icon: 'book',
   };
 
   const QueriesTab: TabConfig = {
