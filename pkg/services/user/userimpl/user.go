@@ -228,7 +228,7 @@ func (s *Service) Update(ctx context.Context, cmd *user.UpdateUserCommand) error
 	}
 
 	if cmd.OldPassword != nil {
-		old, err := user.Password(*cmd.OldPassword).Hash(usr.Salt)
+		old, err := cmd.OldPassword.Hash(usr.Salt)
 		if err != nil {
 			return err
 		}

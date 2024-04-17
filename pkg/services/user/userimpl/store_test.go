@@ -1057,10 +1057,6 @@ func createOrgAndUserSvc(t *testing.T, store db.DB, cfg *setting.Cfg) (org.Servi
 	return orgService, usrSvc
 }
 
-func strPtr(s string) *string {
-	return &s
-}
-
 func passwordPtr(s string) *user.Password {
 	password := user.Password(s)
 	return &password
