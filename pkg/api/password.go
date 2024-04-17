@@ -11,7 +11,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/login"
 	"github.com/grafana/grafana/pkg/services/notifications"
 	"github.com/grafana/grafana/pkg/services/user"
-	"github.com/grafana/grafana/pkg/util"
 	"github.com/grafana/grafana/pkg/web"
 )
 
@@ -65,6 +64,11 @@ func (hs *HTTPServer) ResetPassword(c *contextmodel.ReqContext) response.Respons
 	if err := web.Bind(c.Req, &form); err != nil {
 		return response.Error(http.StatusBadRequest, "bad request data", err)
 	}
+
+	if form.NewPassword != form.ConfirmPassword {
+		return response.Error(http.StatusBadRequest, "Passwords do not match", nil)
+	}
+
 	query := notifications.ValidateResetPasswordCodeQuery{Code: form.Code}
 
 	// For now the only way to know the username to clear login attempts for is
@@ -85,31 +89,13 @@ func (hs *HTTPServer) ResetPassword(c *contextmodel.ReqContext) response.Respons
 		return response.Error(http.StatusInternalServerError, "Unknown error validating email code", err)
 	}
 
-	getAuthQuery := login.GetAuthInfoQuery{UserId: userResult.ID}
-	if authInfo, err := hs.authInfoService.GetAuthInfo(c.Req.Context(), &getAuthQuery); err == nil {
-		oauthInfo := hs.SocialService.GetOAuthInfoProvider(authInfo.AuthModule)
-		if login.IsProviderEnabled(hs.Cfg, authInfo.AuthModule, oauthInfo) {
-			return response.Error(http.StatusBadRequest, "Cannot update external user password", err)
-		}
+	if response := hs.errOnExternalUser(c.Req.Context(), userResult.ID); response != nil {
+		return response
 	}
 
-	if form.NewPassword != form.ConfirmPassword {
-		return response.Error(http.StatusBadRequest, "Passwords do not match", nil)
-	}
-
-	if err := form.NewPassword.Validate(hs.Cfg); err != nil {
-		c.Logger.Warn("the new password doesn't meet the password policy criteria", "err", err)
-		return response.Err(err)
-	}
-
-	encodedPassword, err := util.EncodePassword(string(form.NewPassword), userResult.Salt)
-	if err != nil {
-		return response.Error(http.StatusInternalServerError, "Failed to encode password", err)
-	}
-
-	password := user.Password(encodedPassword)
+	password := user.NewPasswordUnchecked(form.NewPassword)
 	if err := hs.userService.Update(c.Req.Context(), &user.UpdateUserCommand{UserID: userResult.ID, Password: &password}); err != nil {
-		return response.Error(http.StatusInternalServerError, "Failed to change user password", err)
+		return response.ErrOrFallback(http.StatusInternalServerError, "Failed to change user password", err)
 	}
 
 	if err := hs.loginAttemptService.Reset(c.Req.Context(), username); err != nil {

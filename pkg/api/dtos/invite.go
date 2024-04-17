@@ -2,7 +2,6 @@ package dtos
 
 import (
 	"github.com/grafana/grafana/pkg/services/org"
-	"github.com/grafana/grafana/pkg/services/user"
 )
 
 type AddInviteForm struct {
@@ -20,10 +19,10 @@ type InviteInfo struct {
 }
 
 type CompleteInviteForm struct {
-	InviteCode      string        `json:"inviteCode"`
-	Email           string        `json:"email" binding:"Required"`
-	Name            string        `json:"name"`
-	Username        string        `json:"username"`
-	Password        user.Password `json:"password"`
-	ConfirmPassword user.Password `json:"confirmPassword"`
+	InviteCode      string `json:"inviteCode"`
+	Email           string `json:"email" binding:"Required"`
+	Name            string `json:"name"`
+	Username        string `json:"username"`
+	Password        string `json:"password"`
+	ConfirmPassword string `json:"confirmPassword"`
 }

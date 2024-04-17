@@ -159,11 +159,14 @@ func (s *Service) Create(ctx context.Context, cmd *user.CreateUserCommand) (*use
 	usr.Rands = rands
 
 	if len(cmd.Password) > 0 {
-		encodedPassword, err := util.EncodePassword(string(cmd.Password), usr.Salt)
+		if err := usr.Password.Validate(s.cfg); err != nil {
+			return nil, err
+		}
+
+		usr.Password, err = usr.Password.Hash(usr.Salt)
 		if err != nil {
 			return nil, err
 		}
-		usr.Password = user.Password(encodedPassword)
 	}
 
 	_, err = s.store.Insert(ctx, usr)
@@ -219,6 +222,34 @@ func (s *Service) GetByEmail(ctx context.Context, query *user.GetUserByEmailQuer
 }
 
 func (s *Service) Update(ctx context.Context, cmd *user.UpdateUserCommand) error {
+	usr, err := s.store.GetByID(ctx, cmd.UserID)
+	if err != nil {
+		return err
+	}
+
+	if cmd.OldPassword != nil {
+		old, err := user.Password(*cmd.OldPassword).Hash(usr.Salt)
+		if err != nil {
+			return err
+		}
+
+		if old != usr.Password {
+			return user.ErrPasswordMissmatch.Errorf("old password does not match stored password")
+		}
+	}
+
+	if cmd.Password != nil {
+		if err := cmd.Password.Validate(s.cfg); err != nil {
+			return err
+		}
+
+		hashed, err := cmd.Password.Hash(usr.Salt)
+		if err != nil {
+			return err
+		}
+		cmd.Password = &hashed
+	}
+
 	return s.store.Update(ctx, cmd)
 }
 

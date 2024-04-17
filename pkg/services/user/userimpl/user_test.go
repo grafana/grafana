@@ -154,6 +154,32 @@ func TestUserService(t *testing.T) {
 	})
 }
 
+func TestService_Update(t *testing.T) {
+	t.Run("should return error if old password does not match stored password", func(t *testing.T) {
+		stored, err := user.Password("test").Hash("salt")
+		require.NoError(t, err)
+		service := &Service{store: &FakeUserStore{ExpectedUser: &user.User{Password: stored, Salt: "salt"}}}
+
+		err = service.Update(context.Background(), &user.UpdateUserCommand{
+			OldPassword: strPtr("test123"),
+		})
+
+		assert.ErrorIs(t, err, user.ErrPasswordMissmatch)
+	})
+
+	t.Run("should return error new password is not valid", func(t *testing.T) {
+		stored, err := user.Password("test").Hash("salt")
+		require.NoError(t, err)
+		service := &Service{cfg: setting.NewCfg(), store: &FakeUserStore{ExpectedUser: &user.User{Password: stored, Salt: "salt"}}}
+
+		err = service.Update(context.Background(), &user.UpdateUserCommand{
+			OldPassword: strPtr("test"),
+			Password:    passwordPtr("asd"),
+		})
+		require.ErrorIs(t, err, user.ErrPasswordTooShort)
+	})
+}
+
 func TestMetrics(t *testing.T) {
 	userStore := newUserStoreFake()
 	orgService := orgtest.NewOrgServiceFake()

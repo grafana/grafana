@@ -270,7 +270,8 @@ func (hs *HTTPServer) CompleteInvite(c *contextmodel.ReqContext) response.Respon
 		}
 	}
 
-	if err := completeInvite.Password.Validate(hs.Cfg); err != nil {
+	password, err := user.NewPassword(completeInvite.Password, hs.Cfg)
+	if err != nil {
 		return response.Err(err)
 	}
 
@@ -278,7 +279,7 @@ func (hs *HTTPServer) CompleteInvite(c *contextmodel.ReqContext) response.Respon
 		Email:        completeInvite.Email,
 		Name:         completeInvite.Name,
 		Login:        completeInvite.Username,
-		Password:     completeInvite.Password,
+		Password:     password,
 		SkipOrgSetup: true,
 	}
 

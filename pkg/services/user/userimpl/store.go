@@ -63,6 +63,9 @@ func (ss *sqlStore) Insert(ctx context.Context, cmd *user.User) (int64, error) {
 			cmd.UID = util.GenerateShortUID()
 		}
 
+		cmd.Email = strings.ToLower(cmd.Email)
+		cmd.Login = strings.ToLower(cmd.Login)
+
 		if _, err = sess.Insert(cmd); err != nil {
 			return err
 		}

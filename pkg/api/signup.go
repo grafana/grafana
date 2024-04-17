@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 	"net/http"
-	"strings"
 
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/api/response"
@@ -89,14 +88,11 @@ func (hs *HTTPServer) SignUpStep2(c *contextmodel.ReqContext) response.Response 
 		return response.Error(http.StatusUnauthorized, "User signup is disabled", nil)
 	}
 
-	form.Email = strings.TrimSpace(form.Email)
-	form.Username = strings.TrimSpace(form.Username)
-
 	createUserCmd := user.CreateUserCommand{
 		Email:    form.Email,
 		Login:    form.Username,
 		Name:     form.Name,
-		Password: form.Password,
+		Password: user.NewPasswordUnchecked(form.Password),
 		OrgName:  form.OrgName,
 	}
 

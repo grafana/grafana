@@ -22,4 +22,6 @@ var (
 	ErrEmptyUsernameAndEmail = errutil.BadRequest(
 		"user.empty-username-and-email", errutil.WithPublicMessage("Need to specify either username or email"),
 	)
+
+	ErrPasswordMissmatch = errutil.Conflict("user.password-missmatch", errutil.WithPublicMessage("Failed to update password"))
 )

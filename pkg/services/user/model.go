@@ -82,18 +82,13 @@ type UpdateUserCommand struct {
 	Login string `json:"login"`
 	Theme string `json:"theme"`
 
-	UserID         int64     `json:"-"`
-	Password       *Password `json:"-"`
-	IsDisabled     *bool     `json:"-"`
-	EmailVerified  *bool     `json:"-"`
-	IsGrafanaAdmin *bool     `json:"-"`
-}
+	UserID         int64 `json:"-"`
+	IsDisabled     *bool `json:"-"`
+	EmailVerified  *bool `json:"-"`
+	IsGrafanaAdmin *bool `json:"-"`
 
-type ChangeUserPasswordCommand struct {
-	OldPassword Password `json:"oldPassword"`
-	NewPassword Password `json:"newPassword"`
-
-	UserID int64 `json:"-"`
+	Password    *Password `json:"-"`
+	OldPassword *Password `json:"-"`
 }
 
 type UpdateUserLastSeenAtCommand struct {

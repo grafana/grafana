@@ -4,6 +4,7 @@ import (
 	"unicode"
 
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/util"
 	"github.com/grafana/grafana/pkg/util/errutil"
 )
 
@@ -22,8 +23,20 @@ func NewPassword(newPassword string, config *setting.Cfg) (Password, error) {
 	return Password(newPassword), nil
 }
 
+func NewPasswordUnchecked(password string) Password {
+	return Password(password)
+}
+
 func (p Password) Validate(config *setting.Cfg) error {
 	return ValidatePassword(string(p), config)
+}
+
+func (p Password) Hash(salt string) (Password, error) {
+	hashed, err := util.EncodePassword(string(p), salt)
+	if err != nil {
+		return "", err
+	}
+	return Password(hashed), nil
 }
 
 // ValidatePassword checks if a new password meets the required criteria based on the given configuration.
