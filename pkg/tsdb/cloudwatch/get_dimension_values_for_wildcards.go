@@ -68,16 +68,8 @@ func (e *cloudWatchExecutor) getDimensionValuesForWildcards(
 				newDimensions = append(newDimensions, resp.Value)
 			}
 
-			// Metric Insights metrics might not have a value for a dimension specified in the `GROUP BY` clause
-			// of the query. When this happens, we use an empty string to indicate in order to keep the
-			// dimension key available in `query.Dimensions` so we can build the labels when we parse the response
-			// See the note under `GROUP BY` in https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/cloudwatch-metrics-insights-querylanguage.html
-			if len(newDimensions) == 0 && query.MetricQueryType == models.MetricQueryTypeQuery {
-				newDimensions = append(newDimensions, "")
-			}
-
 			query.Dimensions[dimensionKey] = newDimensions
-			if len(newDimensions) > 0 {
+			if len(newDimensions) > 0 || query.MetricQueryType == models.MetricQueryTypeQuery {
 				tagValueCache.Set(cacheKey, newDimensions, cache.DefaultExpiration)
 			}
 		}
