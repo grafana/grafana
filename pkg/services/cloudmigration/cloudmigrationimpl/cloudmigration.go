@@ -547,12 +547,26 @@ func (s *Service) GetMigrationStatus(ctx context.Context, id string, runID strin
 	return cmr, nil
 }
 
-func (s *Service) GetMigrationStatusList(ctx context.Context, migrationID string) ([]*cloudmigration.CloudMigrationRun, error) {
-	cmrs, err := s.store.GetMigrationStatusList(ctx, migrationID)
+func (s *Service) GetMigrationRunList(ctx context.Context, migrationID string) (*cloudmigration.CloudMigrationRunList, error) {
+	runs, err := s.store.GetMigrationStatusList(ctx, migrationID)
 	if err != nil {
 		return nil, fmt.Errorf("retrieving migration statuses from db: %w", err)
 	}
-	return cmrs, nil
+
+	runList := &cloudmigration.CloudMigrationRunList{Runs: []cloudmigration.MigrateDataResponseDTO{}}
+	for _, s := range runs {
+		// attempt to bind the raw result to a list of response item DTOs
+		r := cloudmigration.MigrateDataResponseDTO{
+			Items: []cloudmigration.MigrateDataResponseItemDTO{},
+		}
+		if err := json.Unmarshal(s.Result, &r); err != nil {
+			return nil, fmt.Errorf("error unmarshalling migration response items: %w", err)
+		}
+		r.RunID = s.ID
+		runList.Runs = append(runList.Runs, r)
+	}
+
+	return runList, nil
 }
 
 func (s *Service) DeleteMigration(ctx context.Context, id int64) (*cloudmigration.CloudMigration, error) {

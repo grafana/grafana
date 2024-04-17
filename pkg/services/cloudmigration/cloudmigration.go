@@ -18,5 +18,5 @@ type Service interface {
 	RunMigration(context.Context, int64) (*MigrateDataResponseDTO, error)
 	SaveMigrationRun(context.Context, *CloudMigrationRun) (int64, error)
 	GetMigrationStatus(context.Context, string, string) (*CloudMigrationRun, error)
-	GetMigrationStatusList(context.Context, string) ([]*CloudMigrationRun, error)
+	GetMigrationRunList(context.Context, string) (*CloudMigrationRunList, error)
 }

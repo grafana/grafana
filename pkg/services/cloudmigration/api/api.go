@@ -1,7 +1,6 @@
 package api
 
 import (
-	"encoding/json"
 	"fmt"
 	"net/http"
 	"strconv"
@@ -246,22 +245,9 @@ func (cma *CloudMigrationAPI) GetMigrationRunList(c *contextmodel.ReqContext) re
 	ctx, span := cma.tracer.Start(c.Req.Context(), "MigrationAPI.GetMigrationRunList")
 	defer span.End()
 
-	migrationStatuses, err := cma.cloudMigrationService.GetMigrationStatusList(ctx, web.Params(c.Req)[":id"])
+	runList, err := cma.cloudMigrationService.GetMigrationRunList(ctx, web.Params(c.Req)[":id"])
 	if err != nil {
-		return response.Error(http.StatusInternalServerError, "migration status error", err)
-	}
-
-	runList := cloudmigration.CloudMigrationRunList{Runs: []cloudmigration.MigrateDataResponseDTO{}}
-	for _, s := range migrationStatuses {
-		// attempt to bind the raw result to a list of response item DTOs
-		r := cloudmigration.MigrateDataResponseDTO{
-			Items: []cloudmigration.MigrateDataResponseItemDTO{},
-		}
-		if err := json.Unmarshal(s.Result, &r); err != nil {
-			return response.Error(http.StatusInternalServerError, "error unmarshalling migration response items", err)
-		}
-		r.RunID = s.ID
-		runList.Runs = append(runList.Runs, r)
+		return response.Error(http.StatusInternalServerError, "list migration status error", err)
 	}
 
 	return response.JSON(http.StatusOK, runList)
