@@ -6,9 +6,12 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
+	"io"
 	"net/http"
+	"strconv"
 	"time"
 
+	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -216,7 +219,7 @@ func (s *Service) ValidateToken(ctx context.Context, cm cloudmigration.CloudMigr
 	logger := s.log.FromContext(ctx)
 
 	// get CMS path from the config
-	domain, err := s.ParseCloudMigrationConfig()
+	domain, err := s.parseCloudMigrationConfig()
 	if err != nil {
 		return fmt.Errorf("config parse error: %w", err)
 	}
@@ -323,10 +326,83 @@ func (s *Service) UpdateMigration(ctx context.Context, id int64, cm cloudmigrati
 	return nil, nil
 }
 
-func (s *Service) GetMigrationDataJSON(ctx context.Context, id int64) ([]byte, error) {
+func (s *Service) RunMigration(ctx context.Context, id int64) (*cloudmigration.MigrateDataResponseDTO, error) {
+	logger := s.log.FromContext(ctx)
+
+	// Get migration to read the auth token
+	migration, err := s.GetMigration(ctx, id)
+	if err != nil {
+		return nil, fmt.Errorf("migration get error: %w", err)
+	}
+	// get CMS path from the config
+	domain, err := s.parseCloudMigrationConfig()
+	if err != nil {
+		return nil, fmt.Errorf("config parse error: %w", err)
+	}
+	path := fmt.Sprintf("https://cms-%s.%s/cloud-migrations/api/v1/migrate-data", migration.ClusterSlug, domain)
+
+	// Get migration data JSON
+	body, err := s.getMigrationDataJSON(ctx)
+	if err != nil {
+		s.log.Error("error getting the json request body for migration run", "err", err.Error())
+		return nil, fmt.Errorf("migration data get error: %w", err)
+	}
+
+	// Send the request to cms with the associated auth token
+	req, err := http.NewRequest(http.MethodPost, path, bytes.NewReader(body))
+	if err != nil {
+		s.log.Error("error creating http request for cloud migration run", "err", err.Error())
+		return nil, fmt.Errorf("http request error: %w", err)
+	}
+	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("Authorization", fmt.Sprintf("Bearer %d:%s", migration.StackID, migration.AuthToken))
+
+	client := &http.Client{}
+	resp, err := client.Do(req)
+	if err != nil {
+		s.log.Error("error sending http request for cloud migration run", "err", err.Error())
+		return nil, fmt.Errorf("http request error: %w", err)
+	} else if resp.StatusCode >= 400 {
+		s.log.Error("received error response for cloud migration run", "statusCode", resp.StatusCode)
+		return nil, fmt.Errorf("http request error: %w", err)
+	}
+
+	defer func() {
+		if err := resp.Body.Close(); err != nil {
+			logger.Error("closing request body: %w", err)
+		}
+	}()
+
+	// read response so we can unmarshal it
+	respData, err := io.ReadAll(resp.Body)
+	if err != nil {
+		logger.Error("reading response body: %w", err)
+		return nil, fmt.Errorf("reading migration run response: %w", err)
+	}
+	var result cloudmigration.MigrateDataResponseDTO
+	if err := json.Unmarshal(respData, &result); err != nil {
+		logger.Error("unmarshalling response body: %w", err)
+		return nil, fmt.Errorf("unmarshalling migration run response: %w", err)
+	}
+
+	// save the result of the migration
+	runID, err := s.SaveMigrationRun(ctx, &cloudmigration.CloudMigrationRun{
+		CloudMigrationUID: strconv.Itoa(int(id)),
+		Result:            respData,
+	})
+	if err != nil {
+		response.Error(http.StatusInternalServerError, "migration run save error", err)
+	}
+
+	result.RunID = runID
+
+	return &result, nil
+}
+
+func (s *Service) getMigrationDataJSON(ctx context.Context) ([]byte, error) {
 	var migrationDataSlice []cloudmigration.MigrateDataRequestItemDTO
 	// Data sources
-	dataSources, err := s.getDataSources(ctx, id)
+	dataSources, err := s.getDataSources(ctx)
 	if err != nil {
 		s.log.Error("Failed to get datasources", "err", err)
 		return nil, err
@@ -341,7 +417,7 @@ func (s *Service) GetMigrationDataJSON(ctx context.Context, id int64) ([]byte, e
 	}
 
 	// Dashboards
-	dashboards, err := s.getDashboards(ctx, id)
+	dashboards, err := s.getDashboards(ctx)
 	if err != nil {
 		s.log.Error("Failed to get dashboards", "err", err)
 		return nil, err
@@ -358,7 +434,7 @@ func (s *Service) GetMigrationDataJSON(ctx context.Context, id int64) ([]byte, e
 	}
 
 	// Folders
-	folders, err := s.getFolders(ctx, id)
+	folders, err := s.getFolders(ctx)
 	if err != nil {
 		s.log.Error("Failed to get folders", "err", err)
 		return nil, err
@@ -383,7 +459,7 @@ func (s *Service) GetMigrationDataJSON(ctx context.Context, id int64) ([]byte, e
 	return result, nil
 }
 
-func (s *Service) getDataSources(ctx context.Context, id int64) ([]datasources.AddDataSourceCommand, error) {
+func (s *Service) getDataSources(ctx context.Context) ([]datasources.AddDataSourceCommand, error) {
 	dataSources, err := s.dsService.GetAllDataSources(ctx, &datasources.GetAllDataSourcesQuery{})
 	if err != nil {
 		s.log.Error("Failed to get all datasources", "err", err)
@@ -420,7 +496,7 @@ func (s *Service) getDataSources(ctx context.Context, id int64) ([]datasources.A
 	return result, err
 }
 
-func (s *Service) getFolders(ctx context.Context, id int64) ([]folder.Folder, error) {
+func (s *Service) getFolders(ctx context.Context) ([]folder.Folder, error) {
 	reqCtx := contexthandler.FromContext(ctx)
 	folders, err := s.folderService.GetFolders(ctx, folder.GetFoldersQuery{
 		SignedInUser: reqCtx.SignedInUser,
@@ -437,7 +513,7 @@ func (s *Service) getFolders(ctx context.Context, id int64) ([]folder.Folder, er
 	return result, nil
 }
 
-func (s *Service) getDashboards(ctx context.Context, id int64) ([]dashboards.Dashboard, error) {
+func (s *Service) getDashboards(ctx context.Context) ([]dashboards.Dashboard, error) {
 	dashs, err := s.dashboardService.GetAllDashboards(ctx)
 	if err != nil {
 		return nil, err
@@ -487,7 +563,7 @@ func (s *Service) DeleteMigration(ctx context.Context, id int64) (*cloudmigratio
 	return c, nil
 }
 
-func (s *Service) ParseCloudMigrationConfig() (string, error) {
+func (s *Service) parseCloudMigrationConfig() (string, error) {
 	if s.cfg == nil {
 		return "", fmt.Errorf("cfg cannot be nil")
 	}
