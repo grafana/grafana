@@ -10,7 +10,6 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/grafana/grafana-plugin-sdk-go/data/utils/maputil"
-	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/trace"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend/log"
@@ -94,14 +93,8 @@ func (s *QueryData) Execute(ctx context.Context, req *backend.QueryDataRequest) 
 	hasPrometheusDataplaneFeatureFlag := cfg.FeatureToggles().IsEnabled("prometheusDataplane")
 
 	for _, q := range req.Queries {
-		query, err := models.Parse(q, s.TimeInterval, s.intervalCalculator, fromAlert, hasPromQLScopeFeatureFlag)
-		if err != nil {
-			return &result, err
-		}
-
-		r := s.fetch(ctx, s.client, query, hasPrometheusDataplaneFeatureFlag)
+		r := s.handleQuery(ctx, q, fromAlert, hasPromQLScopeFeatureFlag, hasPrometheusDataplaneFeatureFlag)
 		if r == nil {
-			s.log.FromContext(ctx).Debug("Received nil response from runQuery", "query", query.Expr)
 			continue
 		}
 		result.Responses[q.RefID] = *r
@@ -110,10 +103,24 @@ func (s *QueryData) Execute(ctx context.Context, req *backend.QueryDataRequest) 
 	return &result, nil
 }
 
-func (s *QueryData) fetch(ctx context.Context, client *client.Client, q *models.Query, enablePrometheusDataplane bool) *backend.DataResponse {
-	traceCtx, end := s.trace(ctx, q)
-	defer end()
+func (s *QueryData) handleQuery(ctx context.Context, bq backend.DataQuery, fromAlert, hasPromQLScopeFeatureFlag, hasPrometheusDataplaneFeatureFlag bool) *backend.DataResponse {
+	traceCtx, span := s.tracer.Start(ctx, "datasource.prometheus")
+	defer span.End()
+	query, err := models.Parse(span, bq, s.TimeInterval, s.intervalCalculator, fromAlert, hasPromQLScopeFeatureFlag)
+	if err != nil {
+		return &backend.DataResponse{
+			Error: err,
+		}
+	}
 
+	r := s.fetch(traceCtx, s.client, query, hasPrometheusDataplaneFeatureFlag)
+	if r == nil {
+		s.log.FromContext(ctx).Debug("Received nil response from runQuery", "query", query.Expr)
+	}
+	return r
+}
+
+func (s *QueryData) fetch(traceCtx context.Context, client *client.Client, q *models.Query, enablePrometheusDataplane bool) *backend.DataResponse {
 	logger := s.log.FromContext(traceCtx)
 	logger.Debug("Sending query", "start", q.Start, "end", q.End, "step", q.Step, "query", q.Expr)
 
@@ -217,12 +224,4 @@ func (s *QueryData) exemplarQuery(ctx context.Context, c *client.Client, q *mode
 		}
 	}()
 	return s.parseResponse(ctx, q, res, enablePrometheusDataplaneFlag)
-}
-
-func (s *QueryData) trace(ctx context.Context, q *models.Query) (context.Context, func()) {
-	return utils.StartTrace(ctx, s.tracer, "datasource.prometheus",
-		attribute.String("expr", q.Expr),
-		attribute.Int64("start_unixnano", q.Start.UnixNano()),
-		attribute.Int64("stop_unixnano", q.End.UnixNano()),
-	)
 }
