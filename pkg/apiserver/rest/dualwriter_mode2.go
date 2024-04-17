@@ -196,9 +196,9 @@ func (d *DualWriterMode2) Update(ctx context.Context, name string, objInfo rest.
 			return nil, false, err
 		}
 		klog.FromContext(ctx).Error(err, "object not found for update, creating one", "mode", Mode2)
-		forceAllowCreate = true
 	}
 
+	// obj can be populated in case it's found or empty in case it's not found
 	updated, err := objInfo.UpdatedObject(ctx, old)
 	if err != nil {
 		return nil, false, err
