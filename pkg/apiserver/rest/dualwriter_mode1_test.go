@@ -16,6 +16,7 @@ import (
 const kind = "dummy"
 
 var exampleObj = &example.Pod{TypeMeta: metav1.TypeMeta{}, ObjectMeta: metav1.ObjectMeta{Name: "foo", ResourceVersion: "1"}, Spec: example.PodSpec{}, Status: example.PodStatus{}}
+var exampleObjDifferentRV = &example.Pod{TypeMeta: metav1.TypeMeta{}, ObjectMeta: metav1.ObjectMeta{Name: "foo", ResourceVersion: "3"}, Spec: example.PodSpec{}, Status: example.PodStatus{}}
 var anotherObj = &example.Pod{TypeMeta: metav1.TypeMeta{}, ObjectMeta: metav1.ObjectMeta{Name: "bar", ResourceVersion: "2"}, Spec: example.PodSpec{}, Status: example.PodStatus{}}
 var failingObj = &example.Pod{TypeMeta: metav1.TypeMeta{}, ObjectMeta: metav1.ObjectMeta{Name: "object-fail", ResourceVersion: "2"}, Spec: example.PodSpec{}, Status: example.PodStatus{}}
 
@@ -296,6 +297,68 @@ func TestMode1_DeleteCollection(t *testing.T) {
 		}
 
 		us.AssertNotCalled(t, "DeleteCollection", context.Background(), tt.input, func(ctx context.Context, obj runtime.Object) error { return nil }, &metav1.DeleteOptions{})
+		assert.Equal(t, obj, exampleObj)
+		assert.NotEqual(t, obj, anotherObj)
+	}
+}
+
+func TestMode1_Update(t *testing.T) {
+	type testCase struct {
+		name           string
+		input          string
+		setupLegacyFn  func(m *mock.Mock, input string)
+		setupStorageFn func(m *mock.Mock, input string)
+		wantErr        bool
+	}
+	tests :=
+		[]testCase{
+			{
+				name:  "update an object in legacy",
+				input: "foo",
+				setupLegacyFn: func(m *mock.Mock, input string) {
+					m.On("Update", context.Background(), input, mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(exampleObj, false, nil)
+				},
+				setupStorageFn: func(m *mock.Mock, input string) {
+					m.On("Update", context.Background(), input, mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(anotherObj, false, nil)
+				},
+			},
+			{
+				name:  "error updating an object in legacy",
+				input: "object-fail",
+				setupLegacyFn: func(m *mock.Mock, input string) {
+					m.On("Update", context.Background(), input, mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(nil, false, errors.New("error"))
+				},
+				setupStorageFn: func(m *mock.Mock, input string) {
+					m.On("Update", context.Background(), input, mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(anotherObj, false, nil)
+				},
+				wantErr: true,
+			},
+		}
+
+	for _, tt := range tests {
+		l := (LegacyStorage)(nil)
+		s := (Storage)(nil)
+		m := &mock.Mock{}
+
+		ls := legacyStoreMock{m, l}
+		us := storageMock{m, s}
+
+		if tt.setupLegacyFn != nil {
+			tt.setupLegacyFn(m, tt.input)
+		}
+		if tt.setupStorageFn != nil {
+			tt.setupStorageFn(m, tt.input)
+		}
+
+		dw := SelectDualWriter(Mode1, ls, us)
+
+		obj, _, err := dw.Update(context.Background(), tt.input, UpdatedObjInfoObj{}, func(ctx context.Context, obj runtime.Object) error { return nil }, func(ctx context.Context, obj, old runtime.Object) error { return nil }, false, &metav1.UpdateOptions{})
+
+		if tt.wantErr {
+			assert.Error(t, err)
+			continue
+		}
+
 		assert.Equal(t, obj, exampleObj)
 		assert.NotEqual(t, obj, anotherObj)
 	}
