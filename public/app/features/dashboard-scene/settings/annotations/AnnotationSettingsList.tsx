@@ -110,6 +110,15 @@ export const AnnotationSettingsList = ({ annotations, onNew, onEdit, onMove, onD
       )}
       {showEmptyListCTA && (
         <Stack direction="column">
+          <EmptyState
+            variant="call-to-action"
+            button={
+              <Button icon="comment-alt" onClick={onNew} size="lg">
+                <Trans i18nKey="annotations.empty-state.button-title">Add annotation query</Trans>
+              </Button>
+            }
+            message={t('annotations.empty-state.title', 'There are no custom annotation queries added yet')}
+          />
           <Alert severity="info" title={t('annotations.empty-state.info-box-title', 'What are annotation queries?')}>
             <Trans i18nKey="annotations.empty-state.info-box-content">
               <p>
@@ -127,15 +136,6 @@ export const AnnotationSettingsList = ({ annotations, onNew, onEdit, onMove, onD
               for more information.
             </Trans>
           </Alert>
-          <EmptyState
-            variant="call-to-action"
-            button={
-              <Button icon="comment-alt" onClick={onNew} size="lg">
-                <Trans i18nKey="annotations.empty-state.button-title">Add annotation query</Trans>
-              </Button>
-            }
-            message={t('annotations.empty-state.title', 'There are no custom annotation queries added yet')}
-          />
         </Stack>
       )}
       {!showEmptyListCTA && (
