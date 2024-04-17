@@ -83,6 +83,14 @@ const ToPromLikeMap: Record<AbstractLabelOperator, string> = invert(FromPromLike
   string
 >;
 
+/**
+ * Modifies query, adding a new label=value pair to it while preserving other parts of the query. This operates on a
+ * string representation of the query which needs to be parsed and then rendered to string again.
+ * @param query
+ * @param key
+ * @param value
+ * @param operator
+ */
 export function addLabelToQuery(query: string, key: string, value: string | number, operator = '='): string {
   if (!key || !value) {
     throw new Error('Need label to add to query.');
