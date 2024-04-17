@@ -104,7 +104,7 @@ export class RowRepeaterBehavior extends SceneObjectBase<RowRepeaterBehaviorStat
         }
       }
 
-      const rowClone = this.getRowClone(rowToRepeat, index, values[index], texts[index], rowContentHeight, children);
+      const rowClone = this.getRowClone(rowToRepeat, index, values, texts, rowContentHeight, children);
       rows.push(rowClone);
     }
 
@@ -117,8 +117,8 @@ export class RowRepeaterBehavior extends SceneObjectBase<RowRepeaterBehaviorStat
   getRowClone(
     rowToRepeat: SceneGridRow,
     index: number,
-    value: VariableValueSingle,
-    text: VariableValueSingle,
+    value: VariableValueSingle[],
+    text: VariableValueSingle[],
     rowContentHeight: number,
     children: SceneGridItemLike[]
   ): SceneGridRow {

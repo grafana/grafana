@@ -139,25 +139,26 @@ export class DashboardGridItem extends SceneObjectBase<DashboardGridItemState> i
       return;
     }
 
-    const defaultVariable = new CustomVariable({
-      name: '_____default_sys_repeat_var_____',
-      options: [],
-      value: '',
-      text: '',
-      query: 'A',
-    });
-
-    let variable = sceneGraph.lookupVariable(this.state.variableName, this) ?? defaultVariable;
+    let variable =
+      sceneGraph.lookupVariable(this.state.variableName, this) ??
+      new CustomVariable({
+        name: '_____default_sys_repeat_var_____',
+        options: [],
+        value: '',
+        text: '',
+        query: 'A',
+      });
 
     // If the variable is local, it means we are in a nested repeat context and we need to look up the variable further
     // up the tree hoping for a MultiValueVariable parent
     if (variable instanceof LocalValueVariable) {
-      if (variable.isAncestorLoading()) {
-        return;
-      }
-
-      // default to the default variable so that we can still render the panel
-      variable = variable.getAncestorVariable() ?? defaultVariable;
+      variable = new CustomVariable({
+        name: variable.state.name,
+        options: [],
+        value: variable.state.value,
+        text: variable.state.text,
+        query: 'A',
+      });
     }
 
     if (!(variable instanceof MultiValueVariable)) {

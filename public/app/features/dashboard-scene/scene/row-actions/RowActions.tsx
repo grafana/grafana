@@ -73,6 +73,7 @@ export class RowActions extends SceneObjectBase<RowActionsState> {
       clone.setState({
         title,
         $behaviors: row.state.$behaviors?.filter((b) => !(b instanceof RowRepeaterBehavior)) ?? [],
+        $variables: undefined,
       });
 
       this.updateLayout(clone);
