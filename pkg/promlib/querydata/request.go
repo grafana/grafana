@@ -225,9 +225,3 @@ func (s *QueryData) exemplarQuery(ctx context.Context, c *client.Client, q *mode
 	}()
 	return s.parseResponse(ctx, q, res, enablePrometheusDataplaneFlag)
 }
-
-// func (s *QueryData) trace(ctx context.Context) (context.Context, trace.Span) {
-// 	return  //attribute.Int64("start_unixnano", q.Start.UnixNano()),
-// 	//attribute.Int64("stop_unixnano", q.End.UnixNano()),
-
-// }
