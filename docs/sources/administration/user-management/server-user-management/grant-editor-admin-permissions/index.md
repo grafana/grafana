@@ -19,7 +19,7 @@ When `editors_can_admin` is enabled, users with the Editor role in an organizati
 
 - Ensure that you have access to the Grafana server
 
-**To enable editors with team administrator permissions**:
+**To enable editors with team creator permissions**:
 
 1. Log in to the Grafana server and open the Grafana configuration file.
 
