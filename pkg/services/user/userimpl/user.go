@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/grafana/grafana/pkg/infra/db"
@@ -133,9 +134,9 @@ func (s *Service) Create(ctx context.Context, cmd *user.CreateUserCommand) (*use
 	// create user
 	usr := &user.User{
 		UID:              cmd.UID,
-		Email:            cmd.Email,
+		Email:            strings.ToLower(cmd.Email),
 		Name:             cmd.Name,
-		Login:            cmd.Login,
+		Login:            strings.ToLower(cmd.Login),
 		Company:          cmd.Company,
 		IsAdmin:          cmd.IsAdmin,
 		IsDisabled:       cmd.IsDisabled,
