@@ -66,7 +66,7 @@ export const plugin = new PanelPlugin<Options>(CanvasPanel)
 
     addStandardCanvasEditorOptions(builder);
 
-    if (state) {
+    if (state && state.scene) {
       builder.addNestedOptions(getLayerEditor(state));
 
       const selection = state.selected;

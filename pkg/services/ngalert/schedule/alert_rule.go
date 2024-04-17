@@ -227,10 +227,16 @@ func (a *alertRule) Run(key ngmodels.AlertRuleKey) error {
 			}
 
 			func() {
+				orgID := fmt.Sprint(key.OrgID)
+				evalDuration := a.metrics.EvalDuration.WithLabelValues(orgID)
+				evalTotal := a.metrics.EvalTotal.WithLabelValues(orgID)
+
 				evalRunning = true
+				evalStart := a.clock.Now()
 				defer func() {
 					evalRunning = false
 					a.evalApplied(key, ctx.scheduledAt)
+					evalDuration.Observe(a.clock.Now().Sub(evalStart).Seconds())
 				}()
 
 				for attempt := int64(1); attempt <= a.maxAttempts; attempt++ {
@@ -253,6 +259,11 @@ func (a *alertRule) Run(key ngmodels.AlertRuleKey) error {
 					if isPaused {
 						logger.Debug("Skip rule evaluation because it is paused")
 						return
+					}
+
+					// Only increment evaluation counter once, not per-retry.
+					if attempt == 1 {
+						evalTotal.Inc()
 					}
 
 					fpStr := currentFingerprint.String()
@@ -312,8 +323,8 @@ func (a *alertRule) Run(key ngmodels.AlertRuleKey) error {
 
 func (a *alertRule) evaluate(ctx context.Context, key ngmodels.AlertRuleKey, f fingerprint, attempt int64, e *Evaluation, span trace.Span, retry bool) error {
 	orgID := fmt.Sprint(key.OrgID)
-	evalTotal := a.metrics.EvalTotal.WithLabelValues(orgID)
-	evalDuration := a.metrics.EvalDuration.WithLabelValues(orgID)
+	evalAttemptTotal := a.metrics.EvalAttemptTotal.WithLabelValues(orgID)
+	evalAttemptFailures := a.metrics.EvalAttemptFailures.WithLabelValues(orgID)
 	evalTotalFailures := a.metrics.EvalFailures.WithLabelValues(orgID)
 	processDuration := a.metrics.ProcessDuration.WithLabelValues(orgID)
 	sendDuration := a.metrics.SendDuration.WithLabelValues(orgID)
@@ -336,8 +347,7 @@ func (a *alertRule) evaluate(ctx context.Context, key ngmodels.AlertRuleKey, f f
 		}
 	}
 
-	evalTotal.Inc()
-	evalDuration.Observe(dur.Seconds())
+	evalAttemptTotal.Inc()
 
 	if ctx.Err() != nil { // check if the context is not cancelled. The evaluation can be a long-running task.
 		span.SetStatus(codes.Error, "rule evaluation cancelled")
@@ -346,7 +356,7 @@ func (a *alertRule) evaluate(ctx context.Context, key ngmodels.AlertRuleKey, f f
 	}
 
 	if err != nil || results.HasErrors() {
-		evalTotalFailures.Inc()
+		evalAttemptFailures.Inc()
 
 		// Only retry (return errors) if this isn't the last attempt, otherwise skip these return operations.
 		if retry {
@@ -364,6 +374,9 @@ func (a *alertRule) evaluate(ctx context.Context, key ngmodels.AlertRuleKey, f f
 				span.RecordError(err)
 				return fmt.Errorf("the result-set has errors that can be retried: %w", results.Error())
 			}
+		} else {
+			// Only count the final attempt as a failure.
+			evalTotalFailures.Inc()
 		}
 
 		// If results is nil, we assume that the error must be from the SSE pipeline (ruleEval.Evaluate) which is the only code that can actually return an `err`.
