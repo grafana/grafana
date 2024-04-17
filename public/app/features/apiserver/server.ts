@@ -2,6 +2,7 @@ import { config, getBackendSrv } from '@grafana/runtime';
 
 import {
   ListOptions,
+  ListOptionsFieldSelector,
   ListOptionsLabelSelector,
   MetaStatus,
   Resource,
@@ -33,9 +34,10 @@ export class ScopedResourceServer<T = object, K = string> implements ResourceSer
     return getBackendSrv().get<Resource<T, K>>(`${this.url}/${name}`);
   }
 
-  public async list(opts?: ListOptions<T> | undefined): Promise<ResourceList<T, K>> {
+  public async list(opts?: ListOptions | undefined): Promise<ResourceList<T, K>> {
     const finalOpts = opts || {};
-    finalOpts.labelSelector = this.parseLabelSelector(finalOpts?.labelSelector);
+    finalOpts.labelSelector = this.parseListOptionsSelector(finalOpts?.labelSelector);
+    finalOpts.fieldSelector = this.parseListOptionsSelector(finalOpts?.fieldSelector);
 
     return getBackendSrv().get<ResourceList<T, K>>(this.url, opts);
   }
@@ -48,12 +50,14 @@ export class ScopedResourceServer<T = object, K = string> implements ResourceSer
     return getBackendSrv().delete<MetaStatus>(`${this.url}/${name}`);
   }
 
-  private parseLabelSelector<T>(labelSelector: ListOptionsLabelSelector<T> | undefined): string | undefined {
-    if (!Array.isArray(labelSelector)) {
-      return labelSelector;
+  private parseListOptionsSelector(
+    selector: ListOptionsLabelSelector | ListOptionsFieldSelector | undefined
+  ): string | undefined {
+    if (!Array.isArray(selector)) {
+      return selector;
     }
 
-    return labelSelector
+    return selector
       .map((label) => {
         const key = String(label.key);
         const operator = label.operator;

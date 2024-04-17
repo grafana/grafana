@@ -101,6 +101,12 @@ func (c *spyStorageClient) Delete(ctx context.Context, name string, deleteValida
 	return nil, false, nil
 }
 
+func (c *spyStorageClient) DeleteCollection(ctx context.Context, deleteValidation rest.ValidateObjectFunc, options *metav1.DeleteOptions, listOptions *metainternalversion.ListOptions) (runtime.Object, error) {
+	c.spy.record("Storage.DeleteCollection")
+	klog.Info("method: Storage.DeleteCollection")
+	return nil, nil
+}
+
 // LegacyStorage Spy
 
 type LegacyStorageSpyClient interface {
@@ -184,6 +190,12 @@ func (c *spyLegacyStorageClient) Delete(ctx context.Context, name string, delete
 	return nil, false, nil
 }
 
+func (c *spyLegacyStorageClient) DeleteCollection(ctx context.Context, deleteValidation rest.ValidateObjectFunc, options *metav1.DeleteOptions, listOptions *metainternalversion.ListOptions) (runtime.Object, error) {
+	c.spy.record("LegacyStorage.DeleteCollection")
+	klog.Info("method: LegacyStorage.DeleteCollection")
+	return nil, nil
+}
+
 type dummyList struct {
 	metav1.TypeMeta `json:",inline"`
 	metav1.ListMeta `json:"metadata,omitempty"`
@@ -192,8 +204,8 @@ type dummyList struct {
 
 type dummyObject struct {
 	metav1.TypeMeta   `json:",inline"`
-	metav1.ObjectMeta `json:"metadata,omitempty"`
 	Foo               string
+	metav1.ObjectMeta `json:"metadata,omitempty"`
 }
 
 func (d *dummyList) GetObjectKind() schema.ObjectKind {
