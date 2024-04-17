@@ -4,6 +4,7 @@ import { Box } from '../Layout/Box/Box';
 import { Stack } from '../Layout/Stack/Stack';
 import { Text } from '../Text/Text';
 
+import { GrotCTA } from './GrotCTA/GrotCTA';
 import { GrotNotFound } from './GrotNotFound/GrotNotFound';
 
 interface Props {
@@ -21,21 +22,24 @@ interface Props {
    */
   message: string;
   /**
-   * Empty state variant. Possible values are 'search'.
+   * Which variant to use. Affects the default image shown.
    */
-  variant: 'not-found';
+  variant: 'call-to-action' | 'not-found';
 }
 
 export const EmptyState = ({
   button,
   children,
-  image = <GrotNotFound width={300} />,
+  image,
   message,
   hideImage = false,
+  variant,
 }: React.PropsWithChildren<Props>) => {
+  const imageToShow = image ?? getDefaultImageForVariant(variant);
+
   return (
     <Box paddingY={4} gap={4} display="flex" direction="column" alignItems="center">
-      {!hideImage && image}
+      {!hideImage && imageToShow}
       <Stack direction="column" alignItems="center">
         <Text variant="h4">{message}</Text>
         {children && <Text color="secondary">{children}</Text>}
@@ -44,3 +48,17 @@ export const EmptyState = ({
     </Box>
   );
 };
+
+function getDefaultImageForVariant(variant: Props['variant']) {
+  switch (variant) {
+    case 'call-to-action': {
+      return <GrotCTA width={300} />;
+    }
+    case 'not-found': {
+      return <GrotNotFound width={300} />;
+    }
+    default: {
+      throw new Error(`Unknown variant: ${variant}`);
+    }
+  }
+}
