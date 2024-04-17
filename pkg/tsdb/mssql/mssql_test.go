@@ -92,6 +92,7 @@ func TestMSSQL(t *testing.T) {
 						c_datetimeoffset datetimeoffset,
 
 						c_uuid uniqueidentifier
+						c_sql_variant sql_variant
 					)
 				`
 
@@ -114,7 +115,7 @@ func TestMSSQL(t *testing.T) {
 					'char10', 'varchar10', 'text',
 					N'☺nchar12☺', N'☺nvarchar12☺', N'☺text☺',
 					CAST('%s' AS DATETIME), CAST('%s' AS DATETIME2), CAST('%s' AS SMALLDATETIME), CAST('%s' AS DATE), CAST('%s' AS TIME), SWITCHOFFSET(CAST('%s' AS DATETIMEOFFSET), '-07:00'),
-					CONVERT(uniqueidentifier, '%s')
+					CONVERT(uniqueidentifier, '%s'), 'test-sql-variant'
 		`, d, d2, d, d, d, d2, uuid)
 
 		_, err = db.Exec(sql)
@@ -170,6 +171,7 @@ func TestMSSQL(t *testing.T) {
 			require.Equal(t, dt2.In(time.FixedZone("UTC-7", int(-7*60*60))).Unix(), (*frames[0].Fields[22].At(0).(*time.Time)).Unix())
 
 			require.Equal(t, uuid, *frames[0].Fields[23].At(0).(*string))
+			require.Equal(t, "test-sql-variant", *frames[0].Fields[24].At(0).(*string))
 		})
 	})
 
