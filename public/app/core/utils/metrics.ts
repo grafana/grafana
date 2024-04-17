@@ -1,7 +1,7 @@
 import { reportPerformance } from '../services/echo/EchoSrv';
 
 export function startMeasure(eventName: string) {
-  if (!performance) {
+  if (!performance || !performance.mark) {
     return;
   }
 
@@ -13,7 +13,7 @@ export function startMeasure(eventName: string) {
 }
 
 export function stopMeasure(eventName: string) {
-  if (!performance) {
+  if (!performance || !performance.mark) {
     return;
   }
 
