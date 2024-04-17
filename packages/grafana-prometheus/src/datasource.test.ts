@@ -12,13 +12,20 @@ import {
   DataSourceInstanceSettings,
   dateTime,
   LoadingState,
-  rangeUtil,
   ScopeSpecFilter,
   TimeRange,
   VariableHide,
 } from '@grafana/data';
-import { config, TemplateSrv } from '@grafana/runtime';
+import { config, getBackendSrv, setBackendSrv, TemplateSrv } from '@grafana/runtime';
 
+import {
+  createAnnotationResponse,
+  createDataRequest,
+  createDefaultPromResponse,
+  createEmptyAnnotationResponse,
+  fetchMockCalledWith,
+  getMockTimeRange,
+} from './__mocks__/datasource';
 import {
   alignRange,
   extractRuleMappingFromGroups,
@@ -32,12 +39,18 @@ import { PromApplication, PrometheusCacheLevel, PromOptions, PromQuery, PromQuer
 const fetchMock = jest.fn().mockReturnValue(of(createDefaultPromResponse()));
 
 jest.mock('./metric_find_query');
-jest.mock('@grafana/runtime', () => ({
-  ...jest.requireActual('@grafana/runtime'),
-  getBackendSrv: () => ({
-    fetch: fetchMock,
-  }),
-}));
+// jest.mock('@grafana/runtime', () => ({
+//   ...jest.requireActual('@grafana/runtime'),
+//   getBackendSrv: () => ({
+//     fetch: fetchMock,
+//   }),
+// }));
+
+const origBackendSrv = getBackendSrv();
+setBackendSrv({
+  ...origBackendSrv,
+  fetch: fetchMock,
+});
 
 const replaceMock = jest.fn().mockImplementation((a: string, ...rest: unknown[]) => a);
 
@@ -232,16 +245,17 @@ describe('PrometheusDatasource', () => {
     const DEFAULT_QUERY_EXPRESSION = 'metric{job="foo"} - metric';
     const target: PromQuery = { expr: DEFAULT_QUERY_EXPRESSION, refId: 'A' };
 
-    it('should not modify expression with no filters', () => {
-      const result = ds.query({
+    it('should not modify expression with no filters', async () => {
+      ds.query({
         interval: '15s',
         range: getMockTimeRange(),
         targets: [target],
       } as DataQueryRequest<PromQuery>);
+      const [result] = fetchMockCalledWith(fetchMock);
       expect(result).toMatchObject({ expr: DEFAULT_QUERY_EXPRESSION });
     });
 
-    /*
+
     it('should add filters to expression', () => {
       const filters = [
         {
@@ -255,15 +269,15 @@ describe('PrometheusDatasource', () => {
           value: 'v2',
         },
       ];
-      const result = ds.createQuery(
-        target,
-        { interval: '15s', range: getMockTimeRange(), filters } as DataQueryRequest<PromQuery>,
-        0,
-        0
-      );
+      ds.query({
+        interval: '15s',
+        range: getMockTimeRange(),
+        filters,
+        targets: [target],
+      } as DataQueryRequest<PromQuery>);
+      const [result] = fetchMockCalledWith(fetchMock);
       expect(result).toMatchObject({ expr: 'metric{job="foo", k1="v1", k2!="v2"} - metric{k1="v1", k2!="v2"}' });
     });
-
     it('should add escaping if needed to regex filter expressions', () => {
       const filters = [
         {
@@ -277,18 +291,17 @@ describe('PrometheusDatasource', () => {
           value: `v'.*`,
         },
       ];
-
-      const result = ds.createQuery(
-        target,
-        { interval: '15s', range: getMockTimeRange(), filters } as DataQueryRequest<PromQuery>,
-        0,
-        0
-      );
+      ds.query({
+        interval: '15s',
+        range: getMockTimeRange(),
+        filters,
+        targets: [target],
+      } as DataQueryRequest<PromQuery>);
+      const [result] = fetchMockCalledWith(fetchMock);
       expect(result).toMatchObject({
         expr: `metric{job="foo", k1=~"v.*", k2=~"v\\\\'.*"} - metric{k1=~"v.*", k2=~"v\\\\'.*"}`,
       });
     });
-    */
   });
 
   describe('Test query range snapping', () => {
@@ -1190,128 +1203,3 @@ describe('modifyQuery', () => {
     });
   });
 });
-
-function createDataRequest(targets: PromQuery[], overrides?: Partial<DataQueryRequest>): DataQueryRequest<PromQuery> {
-  const defaults: DataQueryRequest<PromQuery> = {
-    intervalMs: 15000,
-    requestId: 'createDataRequest',
-    startTime: 0,
-    timezone: 'browser',
-    app: CoreApp.Dashboard,
-    targets: targets.map((t, i) => ({
-      instant: false,
-      start: dateTime().subtract(5, 'minutes'),
-      end: dateTime(),
-      ...t,
-    })),
-    range: {
-      from: dateTime(),
-      to: dateTime(),
-      raw: {
-        from: '',
-        to: '',
-      },
-    },
-    interval: '15s',
-    scopedVars: {},
-  };
-
-  return Object.assign(defaults, overrides || {}) as DataQueryRequest<PromQuery>;
-}
-
-function createDefaultPromResponse() {
-  return {
-    data: {
-      data: {
-        result: [
-          {
-            metric: {
-              __name__: 'test_metric',
-            },
-            values: [[1568369640, 1]],
-          },
-        ],
-        resultType: 'matrix',
-      },
-    },
-  };
-}
-
-function createAnnotationResponse() {
-  const response = {
-    data: {
-      results: {
-        X: {
-          frames: [
-            {
-              schema: {
-                name: 'bar',
-                refId: 'X',
-                fields: [
-                  {
-                    name: 'Time',
-                    type: 'time',
-                    typeInfo: {
-                      frame: 'time.Time',
-                    },
-                  },
-                  {
-                    name: 'Value',
-                    type: 'number',
-                    typeInfo: {
-                      frame: 'float64',
-                    },
-                    labels: {
-                      __name__: 'ALERTS',
-                      alertname: 'InstanceDown',
-                      alertstate: 'firing',
-                      instance: 'testinstance',
-                      job: 'testjob',
-                    },
-                  },
-                ],
-              },
-              data: {
-                values: [[123], [456]],
-              },
-            },
-          ],
-        },
-      },
-    },
-  };
-
-  return { ...response };
-}
-
-function createEmptyAnnotationResponse() {
-  const response = {
-    data: {
-      results: {
-        X: {
-          frames: [
-            {
-              schema: {
-                name: 'bar',
-                refId: 'X',
-                fields: [],
-              },
-              data: {
-                values: [],
-              },
-            },
-          ],
-        },
-      },
-    },
-  };
-
-  return { ...response };
-}
-
-function getMockTimeRange(range = '6h'): TimeRange {
-  return rangeUtil.convertRawToRange({
-    from: `now-${range}`,
-    to: 'now',
-  });
-}
