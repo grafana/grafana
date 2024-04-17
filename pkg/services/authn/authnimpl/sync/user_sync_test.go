@@ -509,7 +509,7 @@ func TestUserSync_EnableDisabledUserHook(t *testing.T) {
 		t.Run(tt.desc, func(t *testing.T) {
 			userSvc := usertest.NewUserServiceFake()
 			called := false
-			userSvc.DisableFn = func(ctx context.Context, cmd *user.DisableUserCommand) error {
+			userSvc.UpdateFn = func(ctx context.Context, cmd *user.UpdateUserCommand) error {
 				called = true
 				return nil
 			}

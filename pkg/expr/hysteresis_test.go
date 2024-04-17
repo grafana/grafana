@@ -95,13 +95,13 @@ func TestHysteresisExecute(t *testing.T) {
 					ReferenceVar:  "A",
 					RefID:         "B",
 					ThresholdFunc: ThresholdIsAbove,
-					Conditions:    []float64{loadThreshold},
+					predicate:     greaterThanPredicate{loadThreshold},
 				},
 				UnloadingThresholdFunc: ThresholdCommand{
 					ReferenceVar:  "A",
 					RefID:         "B",
 					ThresholdFunc: ThresholdIsAbove,
-					Conditions:    []float64{unloadThreshold},
+					predicate:     greaterThanPredicate{unloadThreshold},
 				},
 				LoadedDimensions: tc.loadedDimensions,
 			}
