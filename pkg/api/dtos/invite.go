@@ -25,5 +25,5 @@ type CompleteInviteForm struct {
 	Name            string        `json:"name"`
 	Username        string        `json:"username"`
 	Password        user.Password `json:"password"`
-	ConfirmPassword string        `json:"confirmPassword"`
+	ConfirmPassword user.Password `json:"confirmPassword"`
 }
