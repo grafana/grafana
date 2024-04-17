@@ -3,10 +3,19 @@ export interface ScopeDashboardBindingSpec {
   scope: string;
 }
 
+export type ScopeFilterOperator = 'equals' | 'not-equals' | 'regex-match' | 'regex-not-match';
+
+export const scopeFilterOperatorMap: Record<string, ScopeFilterOperator> = {
+  '=': 'equals',
+  '!=': 'not-equals',
+  '=~': 'regex-match',
+  '!~': 'regex-not-match',
+};
+
 export interface ScopeSpecFilter {
   key: string;
   value: string;
-  operator: string;
+  operator: ScopeFilterOperator;
 }
 
 export interface ScopeSpec {
