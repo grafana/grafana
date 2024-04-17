@@ -64,7 +64,9 @@ function Section({ section }: { section: SectionDto }) {
     </div>
   );
 }
-
+function DoneIcon({ done }: { done: boolean }) {
+  return done ? <Icon name="check-circle" color="green" /> : <Icon name="circle" />;
+}
 interface StepProps {
   step: SectionDtoStep;
 }
@@ -73,7 +75,7 @@ function Step({ step }: StepProps) {
   return (
     <Stack direction={'row'} justifyContent={'space-between'}>
       <Stack direction={'row'} alignItems="center">
-        {step.button.done ? <Icon name="check-circle" color="green" /> : <Icon name="circle" />}
+        {step.button.done !== undefined && <DoneIcon done={step.button.done} />}
         <Text variant="body">{step.title}</Text>
         <Tooltip content={step.description} placement="right">
           <Icon name="question-circle" />
