@@ -55,14 +55,13 @@ describe('TempoVariableQueryEditor', () => {
     expect(onChange).not.toHaveBeenCalled();
     render(<TempoVariableQueryEditor {...props} onChange={onChange} />);
 
-    // Select the query type ('Label values')
     await selectOptionInTest(screen.getByLabelText('Query type'), 'Label values');
     await userEvent.click(document.body);
 
-    // Ensure the Label field is shown after selecting the query type
+    // The Label field is rendered only after the query type has been selected. 
+    // We wait for it to be displayed to avoid flakyness
     await waitFor(() => expect(screen.getByLabelText('Label')).toBeInTheDocument());
 
-    // Select the label value
     await selectOptionInTest(screen.getByLabelText('Label'), 'luna');
     await userEvent.click(document.body);
 
