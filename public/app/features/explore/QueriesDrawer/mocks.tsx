@@ -3,7 +3,8 @@ import React, { PropsWithChildren, useState } from 'react';
 import { QueriesDrawerContext, Tabs } from './QueriesDrawerContext';
 
 type Props = {
-  setDrawerOpened: (value: boolean) => {};
+  setDrawerOpened?: (value: boolean) => {};
+  queryLibraryAvailable?: boolean;
 } & PropsWithChildren;
 
 export function QueriesDrawerContextProviderMock(props: Props) {
@@ -13,7 +14,7 @@ export function QueriesDrawerContextProviderMock(props: Props) {
   return (
     <QueriesDrawerContext.Provider
       value={{
-        queryLibraryAvailable: true,
+        queryLibraryAvailable: props.queryLibraryAvailable || false,
         selectedTab,
         setSelectedTab,
         drawerOpened,

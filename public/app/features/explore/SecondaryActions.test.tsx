@@ -17,17 +17,33 @@ describe('SecondaryActions', () => {
 
   it('should not render hidden elements', () => {
     render(
-      <SecondaryActions
-        addQueryRowButtonHidden={true}
-        richHistoryRowButtonHidden={true}
-        onClickAddQueryRowButton={noop}
-        onClickQueryInspectorButton={noop}
-      />
+      <QueriesDrawerContextProviderMock queryLibraryAvailable={false}>
+        <SecondaryActions
+          addQueryRowButtonHidden={true}
+          richHistoryRowButtonHidden={true}
+          onClickAddQueryRowButton={noop}
+          onClickQueryInspectorButton={noop}
+        />
+      </QueriesDrawerContextProviderMock>
     );
 
     expect(screen.queryByRole('button', { name: /Add query/i })).not.toBeInTheDocument();
     expect(screen.queryByRole('button', { name: /Query history/i })).not.toBeInTheDocument();
     expect(screen.getByRole('button', { name: /Query inspector/i })).toBeInTheDocument();
+  });
+
+  it('should not render query history button when query library is available', () => {
+    render(
+      <QueriesDrawerContextProviderMock queryLibraryAvailable={true}>
+        <SecondaryActions
+          richHistoryRowButtonHidden={false}
+          onClickAddQueryRowButton={noop}
+          onClickQueryInspectorButton={noop}
+        />
+      </QueriesDrawerContextProviderMock>
+    );
+
+    expect(screen.queryByRole('button', { name: /Query history/i })).not.toBeInTheDocument();
   });
 
   it('should disable add row button if addQueryRowButtonDisabled=true', () => {
