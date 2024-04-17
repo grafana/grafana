@@ -59,7 +59,7 @@ describe('TempoVariableQueryEditor', () => {
     await userEvent.click(document.body);
 
     // The Label field is rendered only after the query type has been selected. 
-    // We wait for it to be displayed to avoid flakyness
+    // We wait for it to be displayed to avoid flakyness.
     await waitFor(() => expect(screen.getByLabelText('Label')).toBeInTheDocument());
 
     await selectOptionInTest(screen.getByLabelText('Label'), 'luna');
