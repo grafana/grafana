@@ -1,3 +1,4 @@
+// Core Grafana history https://github.com/grafana/grafana/blob/v11.0.0-preview/public/app/plugins/datasource/prometheus/querybuilder/parsingUtils.ts
 import { SyntaxNode, TreeCursor } from '@lezer/common';
 
 import { QueryBuilderOperation, QueryBuilderOperationParamValue } from './shared/types';

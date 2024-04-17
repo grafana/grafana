@@ -17,14 +17,15 @@ import { ToolbarButton, Box, Stack, Icon, TabsBar, Tab, useStyles2, LinkButton, 
 import { getExploreUrl } from '../../core/utils/explore';
 
 import { buildBreakdownActionScene } from './ActionTabs/BreakdownScene';
-import { LayoutType } from './ActionTabs/LayoutSwitcher';
 import { buildMetricOverviewScene } from './ActionTabs/MetricOverviewScene';
 import { buildRelatedMetricsScene } from './ActionTabs/RelatedMetricsScene';
+import { LayoutType } from './ActionTabs/types';
 import { getAutoQueriesForMetric } from './AutomaticMetricQueries/AutoQueryEngine';
 import { AutoQueryDef, AutoQueryInfo } from './AutomaticMetricQueries/types';
 import { MAIN_PANEL_MAX_HEIGHT, MAIN_PANEL_MIN_HEIGHT, MetricGraphScene } from './MetricGraphScene';
 import { ShareTrailButton } from './ShareTrailButton';
 import { useBookmarkState } from './TrailStore/useBookmarkState';
+import { reportExploreMetrics } from './interactions';
 import {
   ActionViewDefinition,
   ActionViewType,
@@ -148,6 +149,7 @@ export class MetricActionBar extends SceneObjectBase<MetricActionBarState> {
   };
 
   public openExploreLink = async () => {
+    reportExploreMetrics('selected_metric_action_clicked', { action: 'open_in_explore' });
     this.getLinkToExplore().then((link) => {
       // We use window.open instead of a Link or <a> because we want to compute the explore link when clicking,
       // if we precompute it we have to keep track of a lot of dependencies
@@ -169,7 +171,10 @@ export class MetricActionBar extends SceneObjectBase<MetricActionBarState> {
             <ToolbarButton
               variant={'canvas'}
               tooltip="Remove existing metric and choose a new metric"
-              onClick={() => trail.publishEvent(new MetricSelectedEvent(undefined))}
+              onClick={() => {
+                reportExploreMetrics('selected_metric_action_clicked', { action: 'unselect' });
+                trail.publishEvent(new MetricSelectedEvent(undefined));
+              }}
             >
               Select new metric
             </ToolbarButton>
@@ -193,7 +198,11 @@ export class MetricActionBar extends SceneObjectBase<MetricActionBarState> {
               onClick={toggleBookmark}
             />
             {trail.state.embedded && (
-              <LinkButton href={getUrlForTrail(trail)} variant={'secondary'}>
+              <LinkButton
+                href={getUrlForTrail(trail)}
+                variant={'secondary'}
+                onClick={() => reportExploreMetrics('selected_metric_action_clicked', { action: 'open_from_embedded' })}
+              >
                 Open
               </LinkButton>
             )}
@@ -207,7 +216,10 @@ export class MetricActionBar extends SceneObjectBase<MetricActionBarState> {
                 key={index}
                 label={tab.displayName}
                 active={actionView === tab.value}
-                onChangeTab={() => metricScene.setActionView(tab.value)}
+                onChangeTab={() => {
+                  reportExploreMetrics('metric_action_view_changed', { view: tab.value });
+                  metricScene.setActionView(tab.value);
+                }}
               />
             );
 
