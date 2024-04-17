@@ -17,7 +17,9 @@ export const ShareTrailButton = ({ trail }: ShareTrailButtonState) => {
   const onShare = () => {
     if (navigator.clipboard) {
       reportExploreMetrics('selected_metric_action_clicked', { action: 'share_url' });
-      navigator.clipboard.writeText(config.appUrl + getUrlForTrail(trail));
+      const appUrl = config.appUrl.endsWith('/') ? config.appUrl.slice(0, -1) : config.appUrl;
+      const url = appUrl + getUrlForTrail(trail);
+      navigator.clipboard.writeText(url);
       setTooltip('Copied!');
       setTimeout(() => {
         setTooltip('Copy url');

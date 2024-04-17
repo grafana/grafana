@@ -152,10 +152,11 @@ export class MetricActionBar extends SceneObjectBase<MetricActionBarState> {
   public openExploreLink = async () => {
     reportExploreMetrics('selected_metric_action_clicked', { action: 'open_in_explore' });
     this.getLinkToExplore().then((link) => {
+      // We need to ensure we prefix with the appSubUrl for environments that don't host grafana at the root.
+      const url = `${config.appSubUrl}${link}`;
       // We use window.open instead of a Link or <a> because we want to compute the explore link when clicking,
       // if we precompute it we have to keep track of a lot of dependencies
-      // We also need to ensure we prefix with the appSubUrl for environments that don't host grafana at the root.
-      window.open(`${config.appSubUrl}}${link}`, '_blank');
+      window.open(url, '_blank');
     });
   };
 
