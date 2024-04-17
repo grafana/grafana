@@ -4,6 +4,7 @@ import (
 	"context"
 
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
+	metainternalversion "k8s.io/apimachinery/pkg/apis/meta/internalversion"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apiserver/pkg/registry/rest"
@@ -65,4 +66,24 @@ func (d *DualWriterMode3) Delete(ctx context.Context, name string, deleteValidat
 	}
 
 	return deleted, async, err
+}
+
+// DeleteCollection overrides the behavior of the generic DualWriter and deletes from both LegacyStorage and Storage.
+func (d *DualWriterMode3) DeleteCollection(ctx context.Context, deleteValidation rest.ValidateObjectFunc, options *metav1.DeleteOptions, listOptions *metainternalversion.ListOptions) (runtime.Object, error) {
+	legacy, ok := d.Legacy.(rest.CollectionDeleter)
+	if !ok {
+		return nil, errDualWriterCollectionDeleterMissing
+	}
+
+	// #TODO: figure out how to handle partial deletions
+	deleted, err := d.Storage.DeleteCollection(ctx, deleteValidation, options, listOptions)
+	if err != nil {
+		klog.FromContext(ctx).Error(err, "failed to delete collection successfully from Storage", "deletedObjects", deleted)
+	}
+
+	if deleted, err := legacy.DeleteCollection(ctx, deleteValidation, options, listOptions); err != nil {
+		klog.FromContext(ctx).Error(err, "failed to delete collection successfully from LegacyStorage", "deletedObjects", deleted)
+	}
+
+	return deleted, err
 }
