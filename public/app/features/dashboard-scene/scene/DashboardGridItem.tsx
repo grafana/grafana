@@ -134,19 +134,31 @@ export class DashboardGridItem extends SceneObjectBase<DashboardGridItemState> i
     if (this.state.body instanceof AddLibraryPanelDrawer) {
       return;
     }
+
     if (!this.state.variableName || this._variableDependency.hasDependencyInLoadingState()) {
       return;
     }
 
-    const variable =
-      sceneGraph.lookupVariable(this.state.variableName, this) ??
-      new CustomVariable({
-        name: '_____default_sys_repeat_var_____',
-        options: [],
-        value: '',
-        text: '',
-        query: 'A',
-      });
+    const defaultVariable = new CustomVariable({
+      name: '_____default_sys_repeat_var_____',
+      options: [],
+      value: '',
+      text: '',
+      query: 'A',
+    });
+
+    let variable = sceneGraph.lookupVariable(this.state.variableName, this) ?? defaultVariable;
+
+    // If the variable is local, it means we are in a nested repeat context and we need to look up the variable further
+    // up the tree hoping for a MultiValueVariable parent
+    if (variable instanceof LocalValueVariable) {
+      if (variable.isAncestorLoading()) {
+        return;
+      }
+
+      // default to the default variable so that we can still render the panel
+      variable = variable.getAncestorVariable() ?? defaultVariable;
+    }
 
     if (!(variable instanceof MultiValueVariable)) {
       console.error('DashboardGridItem: Variable is not a MultiValueVariable');

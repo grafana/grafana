@@ -97,6 +97,7 @@ interface SceneOptions {
   numberOfOptions?: number;
   usePanelRepeater?: boolean;
   useRowRepeater?: boolean;
+  useSameVariable?: boolean;
 }
 
 export function buildPanelRepeaterScene(options: SceneOptions, source?: VizPanel | LibraryVizPanel) {
@@ -136,7 +137,7 @@ export function buildPanelRepeaterScene(options: SceneOptions, source?: VizPanel
     $behaviors: defaults.useRowRepeater
       ? [
           new RowRepeaterBehavior({
-            variableName: 'handler',
+            variableName: defaults.useSameVariable ? 'server' : 'handler',
             sources: [rowChildren],
           }),
         ]

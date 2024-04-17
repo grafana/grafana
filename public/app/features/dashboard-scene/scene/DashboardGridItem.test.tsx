@@ -110,6 +110,22 @@ describe('PanelRepeaterGridItem', () => {
     expect(repeater.state.repeatedPanels?.length).toBe(2);
   });
 
+  it('Should update row and panel repeats that use same variable when updating variable', async () => {
+    const { scene, repeater, variable } = buildPanelRepeaterScene({
+      variableQueryTime: 0,
+      useRowRepeater: true,
+      useSameVariable: true,
+    });
+
+    activateFullSceneTree(scene);
+
+    variable.changeValueTo(['1', '3', '4'], ['A', 'C', 'D']);
+
+    // Should change both repeated panel and row using same variable
+    expect(repeater.state.repeatedPanels?.length).toBe(3);
+    expect((scene.state.body as SceneGridLayout).state.children.length).toBe(3);
+  });
+
   it('Should fall back to default variable if specified variable cannot be found', () => {
     const { scene, repeater } = buildPanelRepeaterScene({ variableQueryTime: 0 });
     scene.setState({ $variables: undefined });
