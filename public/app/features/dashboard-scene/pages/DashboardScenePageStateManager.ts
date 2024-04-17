@@ -130,7 +130,9 @@ export class DashboardScenePageStateManager extends StateManagerBase<DashboardSc
       }
 
       // Populate nav model in global store according to the folder
-      await this.initNavModel(rsp);
+      if (rsp.meta.folderUid) {
+        await this.updateNavModel(rsp.meta.folderUid);
+      }
 
       // Do not cache new dashboards
       this.dashboardCache = { dashboard: rsp, ts: Date.now(), cacheKey };
@@ -234,20 +236,6 @@ export class DashboardScenePageStateManager extends StateManagerBase<DashboardSc
       store.dispatch(updateNavIndex(buildNavModel(folder)));
     } catch (err) {
       console.warn('Error fetching parent folder', folderUid, 'for dashboard', err);
-    }
-  }
-
-  private async initNavModel(dashboard: DashboardDTO) {
-    // only the folder API has information about ancestors
-    // get parent folder (if it exists) and put it in the store
-    // this will be used to populate the full breadcrumb trail
-    if (dashboard.meta.folderUid) {
-      try {
-        const folder = await backendSrv.getFolderByUid(dashboard.meta.folderUid);
-        store.dispatch(updateNavIndex(buildNavModel(folder)));
-      } catch (err) {
-        console.warn('Error fetching parent folder', dashboard.meta.folderUid, 'for dashboard', err);
-      }
     }
   }
 

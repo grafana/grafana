@@ -2,8 +2,10 @@ import { advanceBy } from 'jest-date-mock';
 
 import { locationService } from '@grafana/runtime';
 import { getUrlSyncManager } from '@grafana/scenes';
+import { backendSrv } from 'app/core/services/backend_srv';
 import store from 'app/core/store';
 import { DASHBOARD_FROM_LS_KEY } from 'app/features/dashboard/state/initDashboard';
+import { configureStore } from 'app/store/configureStore';
 import { DashboardRoutes } from 'app/types';
 
 import { DashboardScene } from '../scene/DashboardScene';
@@ -234,6 +236,34 @@ describe('DashboardScenePageStateManager', () => {
 
         expect(loader.getFromCache('fake-dash')).toBeNull();
       });
+    });
+
+    it('Should update nav model', async () => {
+      const reduxStore = configureStore();
+
+      const loader = new DashboardScenePageStateManager({});
+
+      jest.spyOn(backendSrv, 'getFolderByUid').mockResolvedValue({
+        id: 1,
+        uid: 'new-folder',
+        title: 'NewFolder',
+        url: '',
+        canAdmin: true,
+        canDelete: true,
+        canEdit: true,
+        canSave: true,
+        created: '',
+        createdBy: '',
+        hasAcl: false,
+        updated: '',
+        updatedBy: '',
+      });
+
+      expect(reduxStore.getState().navIndex[`folder-dashboards-new-folder`]).toBeUndefined();
+
+      await loader.updateNavModel('new-folder');
+
+      expect(reduxStore.getState().navIndex[`folder-dashboards-new-folder`]).not.toBeUndefined();
     });
   });
 });
