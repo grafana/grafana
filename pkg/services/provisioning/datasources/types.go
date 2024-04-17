@@ -18,6 +18,7 @@ type configVersion struct {
 
 type configs struct {
 	APIVersion int64
+	Prune      bool
 
 	Datasources       []*upsertDataSourceFromConfig
 	DeleteDatasources []*deleteDatasourceConfig
@@ -47,6 +48,7 @@ type upsertDataSourceFromConfig struct {
 	SecureJSONData  map[string]string
 	Editable        bool
 	UID             string
+	IsPrunable      bool
 }
 
 type configsV0 struct {
@@ -58,7 +60,8 @@ type configsV0 struct {
 
 type configsV1 struct {
 	configVersion
-	log log.Logger
+	log   log.Logger
+	Prune bool
 
 	Datasources       []*upsertDataSourceFromConfigV1 `json:"datasources" yaml:"datasources"`
 	DeleteDatasources []*deleteDatasourceConfigV1     `json:"deleteDatasources" yaml:"deleteDatasources"`
@@ -111,6 +114,7 @@ type upsertDataSourceFromConfigV1 struct {
 	SecureJSONData  values.StringMapValue `json:"secureJsonData" yaml:"secureJsonData"`
 	Editable        values.BoolValue      `json:"editable" yaml:"editable"`
 	UID             values.StringValue    `json:"uid" yaml:"uid"`
+	IsPrunable      values.BoolValue
 }
 
 func (cfg *configsV1) mapToDatasourceFromConfig(apiVersion int64) *configs {
@@ -141,6 +145,7 @@ func (cfg *configsV1) mapToDatasourceFromConfig(apiVersion int64) *configs {
 			Editable:        ds.Editable.Value(),
 			Version:         ds.Version.Value(),
 			UID:             ds.UID.Value(),
+			IsPrunable:      cfg.Prune,
 		})
 	}
 
@@ -218,6 +223,7 @@ func createInsertCommand(ds *upsertDataSourceFromConfig) *datasources.AddDataSou
 		SecureJsonData:  ds.SecureJSONData,
 		ReadOnly:        !ds.Editable,
 		UID:             ds.UID,
+		IsPrunable:      ds.IsPrunable,
 	}
 
 	if cmd.UID == "" {
@@ -260,5 +266,6 @@ func createUpdateCommand(ds *upsertDataSourceFromConfig, id int64) *datasources.
 		SecureJsonData:          ds.SecureJSONData,
 		ReadOnly:                !ds.Editable,
 		IgnoreOldSecureJsonData: true,
+		IsPrunable:              ds.IsPrunable,
 	}
 }

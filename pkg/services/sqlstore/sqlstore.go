@@ -151,7 +151,7 @@ func newSQLStore(cfg *setting.Cfg, engine *xorm.Engine,
 // Has to be done in a second phase (after initialization), since other services can register migrations during
 // the initialization phase.
 func (ss *SQLStore) Migrate(isDatabaseLockingEnabled bool) error {
-	if ss.dbCfg.SkipMigrations {
+	if ss.dbCfg.SkipMigrations || ss.migrations == nil {
 		return nil
 	}
 
@@ -382,7 +382,7 @@ func (ss *SQLStore) RecursiveQueriesAreSupported() (bool, error) {
 		}); err != nil {
 			var driverErr *mysql.MySQLError
 			if errors.As(err, &driverErr) {
-				if driverErr.Number == mysqlerr.ER_PARSE_ERROR {
+				if driverErr.Number == mysqlerr.ER_PARSE_ERROR || driverErr.Number == mysqlerr.ER_NOT_SUPPORTED_YET {
 					return false, nil
 				}
 			}

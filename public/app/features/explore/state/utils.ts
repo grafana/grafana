@@ -75,7 +75,6 @@ export const makeExplorePaneState = (overrides?: Partial<ExploreItemState>): Exp
   rawPrometheusResult: null,
   eventBridge: null as unknown as EventBusExtended,
   cache: [],
-  richHistory: [],
   supplementaryQueries: loadSupplementaryQueries(),
   panelsState: {},
   correlations: undefined,

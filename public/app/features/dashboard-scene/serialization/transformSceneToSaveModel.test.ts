@@ -39,7 +39,6 @@ import snapshotableDashboardJson from './testfiles/snapshotable_dashboard.json';
 import snapshotableWithRowsDashboardJson from './testfiles/snapshotable_with_rows.json';
 import {
   buildGridItemForLibPanel,
-  buildGridItemForLibraryPanelWidget,
   buildGridItemForPanel,
   transformSaveModelToScene,
 } from './transformSaveModelToScene';
@@ -178,6 +177,7 @@ describe('transformSceneToSaveModel', () => {
         weekStart: 'monday',
         graphTooltip: 1,
         editable: false,
+        refresh: '5m',
         timepicker: {
           ...dashboard_to_load1.timepicker,
           refresh_intervals: ['5m', '15m', '30m', '1h'],
@@ -257,6 +257,22 @@ describe('transformSceneToSaveModel', () => {
       const saveModel = gridItemToPanel(gridItem);
 
       expect(saveModel.transparent).toBe(true);
+    });
+
+    it('With angular options', () => {
+      const gridItem = buildGridItemFromPanelSchema({});
+      const vizPanel = gridItem.state.body as VizPanel;
+      vizPanel.setState({
+        options: {
+          angularOptions: {
+            bars: true,
+          },
+        },
+      });
+
+      const saveModel = gridItemToPanel(gridItem);
+      expect(saveModel.options?.angularOptions).toBe(undefined);
+      expect((saveModel as any).bars).toBe(true);
     });
 
     it('Given panel with repeat', () => {
@@ -1010,8 +1026,6 @@ describe('transformSceneToSaveModel', () => {
 export function buildGridItemFromPanelSchema(panel: Partial<Panel>) {
   if (panel.libraryPanel) {
     return buildGridItemForLibPanel(new PanelModel(panel))!;
-  } else if (panel.type === 'add-library-panel') {
-    return buildGridItemForLibraryPanelWidget(new PanelModel(panel))!;
   }
 
   return buildGridItemForPanel(new PanelModel(panel));

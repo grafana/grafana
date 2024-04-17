@@ -19,6 +19,7 @@ const (
 
 // Defines values for SearchTableType.
 const (
+	SearchTableTypeRaw    SearchTableType = "raw"
 	SearchTableTypeSpans  SearchTableType = "spans"
 	SearchTableTypeTraces SearchTableType = "traces"
 )

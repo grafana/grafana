@@ -91,7 +91,7 @@ function countEslintErrors() {
         {
           patterns: [
             {
-              group: ['@grafana/ui*'],
+              group: ['@grafana/ui*', '*/Layout/*'],
               importNames: ['Layout', 'HorizontalGroup', 'VerticalGroup'],
               message: 'Use Stack component instead.',
             },
@@ -103,6 +103,16 @@ function countEslintErrors() {
     const nonTestFilesRules: Partial<Linter.RulesRecord> = {
       ...baseRules,
       '@typescript-eslint/consistent-type-assertions': ['error', { assertionStyle: 'never' }],
+    };
+
+    const grafanaRules: Partial<Linter.RulesRecord> = {
+      ...nonTestFilesRules,
+      'no-barrel-files/no-barrel-files': 'error',
+    };
+
+    const testFilesAndGrafanaRules: Partial<Linter.RulesRecord> = {
+      ...baseRules,
+      'no-barrel-files/no-barrel-files': 'error',
     };
 
     // group files by eslint config file
@@ -117,10 +127,16 @@ function countEslintErrors() {
         filePath.endsWith('.test.ts') ||
         filePath.includes('__mocks__') ||
         filePath.includes('public/test/');
+      const isGrafanaFile = filePath.includes('public/app/');
 
-      if (isTestFile) {
+      if (isGrafanaFile && isTestFile) {
+        configPath += '-test-grafana';
+      } else if (isGrafanaFile) {
+        configPath += '-grafana';
+      } else if (isTestFile) {
         configPath += '-test';
       }
+
       if (!fileGroups[configPath]) {
         fileGroups[configPath] = [];
       }
@@ -128,7 +144,16 @@ function countEslintErrors() {
     }
 
     for (const configPath of Object.keys(fileGroups)) {
-      const rules = configPath.endsWith('-test') ? baseRules : nonTestFilesRules;
+      let rules;
+      if (configPath.endsWith('-test-grafana')) {
+        rules = testFilesAndGrafanaRules;
+      } else if (configPath.endsWith('-test')) {
+        rules = baseRules;
+      } else if (configPath.endsWith('-grafana')) {
+        rules = grafanaRules;
+      } else {
+        rules = nonTestFilesRules;
+      }
       // this is by far the slowest part of this code. It takes eslint about 2 seconds just to find the config
       const linterOptions = (await cli.calculateConfigForFile(fileGroups[configPath][0])) as Linter.Config;
       const runner = new ESLint({

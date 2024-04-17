@@ -107,7 +107,7 @@ const testLogsResponse: FetchResponse = {
     },
   },
   ok: true,
-  headers: {} as unknown as Headers,
+  headers: new Headers(),
   redirected: false,
   status: 200,
   statusText: 'Success',

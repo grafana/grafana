@@ -14,10 +14,6 @@ exports[`better eslint`] = {
     "packages/grafana-data/src/dataframe/CircularDataFrame.ts:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"]
     ],
-    "packages/grafana-data/src/dataframe/DataFrameJSON.ts:5381": [
-      [0, 0, 0, "Do not use any type assertions.", "0"],
-      [0, 0, 0, "Do not use any type assertions.", "1"]
-    ],
     "packages/grafana-data/src/dataframe/DataFrameView.ts:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
       [0, 0, 0, "Do not use any type assertions.", "1"],
@@ -43,8 +39,7 @@ exports[`better eslint`] = {
       [0, 0, 0, "Do not use any type assertions.", "1"],
       [0, 0, 0, "Do not use any type assertions.", "2"],
       [0, 0, 0, "Do not use any type assertions.", "3"],
-      [0, 0, 0, "Do not use any type assertions.", "4"],
-      [0, 0, 0, "Do not use any type assertions.", "5"]
+      [0, 0, 0, "Do not use any type assertions.", "4"]
     ],
     "packages/grafana-data/src/dataframe/dimensions.ts:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"]
@@ -177,6 +172,9 @@ exports[`better eslint`] = {
     "packages/grafana-data/src/themes/createColors.ts:5381": [
       [0, 0, 0, "Do not use any type assertions.", "0"]
     ],
+    "packages/grafana-data/src/transformations/fieldReducer.ts:5381": [
+      [0, 0, 0, "Do not use any type assertions.", "0"]
+    ],
     "packages/grafana-data/src/transformations/matchers/valueMatchers/types.ts:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "1"]
@@ -191,10 +189,8 @@ exports[`better eslint`] = {
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"]
     ],
     "packages/grafana-data/src/transformations/transformers/nulls/nullInsertThreshold.ts:5381": [
-      [0, 0, 0, "Do not use any type assertions.", "0"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "1"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "2"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "3"]
+      [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
+      [0, 0, 0, "Unexpected any. Specify a different type.", "1"]
     ],
     "packages/grafana-data/src/transformations/transformers/reduce.ts:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
@@ -320,8 +316,7 @@ exports[`better eslint`] = {
       [0, 0, 0, "Unexpected any. Specify a different type.", "4"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "5"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "6"],
-      [0, 0, 0, "Do not use any type assertions.", "7"],
-      [0, 0, 0, "Do not use any type assertions.", "8"]
+      [0, 0, 0, "Do not use any type assertions.", "7"]
     ],
     "packages/grafana-data/src/types/options.ts:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
@@ -566,11 +561,7 @@ exports[`better eslint`] = {
       [0, 0, 0, "Unexpected any. Specify a different type.", "5"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "6"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "7"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "8"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "9"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "10"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "11"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "12"]
+      [0, 0, 0, "Unexpected any. Specify a different type.", "8"]
     ],
     "packages/grafana-prometheus/src/gcopypaste/app/features/live/data/amendTimeSeries.ts:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
@@ -596,24 +587,10 @@ exports[`better eslint`] = {
     "packages/grafana-prometheus/src/language_provider.ts:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "1"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "2"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "3"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "4"]
+      [0, 0, 0, "Unexpected any. Specify a different type.", "2"]
     ],
     "packages/grafana-prometheus/src/language_utils.ts:5381": [
-      [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "1"],
-      [0, 0, 0, "Do not use any type assertions.", "2"]
-    ],
-    "packages/grafana-prometheus/src/metric_find_query.ts:5381": [
-      [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "1"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "2"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "3"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "4"]
-    ],
-    "packages/grafana-prometheus/src/query_hints.ts:5381": [
-      [0, 0, 0, "Unexpected any. Specify a different type.", "0"]
+      [0, 0, 0, "Do not use any type assertions.", "0"]
     ],
     "packages/grafana-prometheus/src/querybuilder/QueryPattern.tsx:5381": [
       [0, 0, 0, "Styles should be written using objects.", "0"],
@@ -624,9 +601,6 @@ exports[`better eslint`] = {
     "packages/grafana-prometheus/src/querybuilder/QueryPatternsModal.tsx:5381": [
       [0, 0, 0, "Styles should be written using objects.", "0"],
       [0, 0, 0, "Styles should be written using objects.", "1"]
-    ],
-    "packages/grafana-prometheus/src/querybuilder/binaryScalarOperations.ts:5381": [
-      [0, 0, 0, "Unexpected any. Specify a different type.", "0"]
     ],
     "packages/grafana-prometheus/src/querybuilder/components/LabelFilterItem.tsx:5381": [
       [0, 0, 0, "Do not use any type assertions.", "0"],
@@ -642,18 +616,15 @@ exports[`better eslint`] = {
     ],
     "packages/grafana-prometheus/src/querybuilder/components/MetricSelect.tsx:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "1"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "2"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "3"],
+      [0, 0, 0, "Styles should be written using objects.", "1"],
+      [0, 0, 0, "Styles should be written using objects.", "2"],
+      [0, 0, 0, "Styles should be written using objects.", "3"],
       [0, 0, 0, "Styles should be written using objects.", "4"],
       [0, 0, 0, "Styles should be written using objects.", "5"],
       [0, 0, 0, "Styles should be written using objects.", "6"],
       [0, 0, 0, "Styles should be written using objects.", "7"],
       [0, 0, 0, "Styles should be written using objects.", "8"],
-      [0, 0, 0, "Styles should be written using objects.", "9"],
-      [0, 0, 0, "Styles should be written using objects.", "10"],
-      [0, 0, 0, "Styles should be written using objects.", "11"],
-      [0, 0, 0, "Styles should be written using objects.", "12"]
+      [0, 0, 0, "Styles should be written using objects.", "9"]
     ],
     "packages/grafana-prometheus/src/querybuilder/components/PromQueryBuilder.tsx:5381": [
       [0, 0, 0, "Do not use any type assertions.", "0"]
@@ -702,9 +673,6 @@ exports[`better eslint`] = {
       [0, 0, 0, "Styles should be written using objects.", "17"],
       [0, 0, 0, "Styles should be written using objects.", "18"]
     ],
-    "packages/grafana-prometheus/src/querybuilder/operationUtils.ts:5381": [
-      [0, 0, 0, "Do not use any type assertions.", "0"]
-    ],
     "packages/grafana-prometheus/src/querybuilder/shared/OperationEditor.tsx:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"]
     ],
@@ -728,9 +696,6 @@ exports[`better eslint`] = {
     ],
     "packages/grafana-runtime/src/analytics/types.ts:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"]
-    ],
-    "packages/grafana-runtime/src/components/DataSourcePicker.tsx:5381": [
-      [0, 0, 0, "\'HorizontalGroup\' import from \'@grafana/ui\' is restricted from being used by a pattern. Use Stack component instead.", "0"]
     ],
     "packages/grafana-runtime/src/config.ts:5381": [
       [0, 0, 0, "Do not use any type assertions.", "0"],
@@ -836,13 +801,13 @@ exports[`better eslint`] = {
     ],
     "packages/grafana-ui/src/components/DataSourceSettings/types.ts:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "1"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "2"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "3"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "4"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "5"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "6"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "7"]
+      [0, 0, 0, "Unexpected any. Specify a different type.", "1"]
+    ],
+    "packages/grafana-ui/src/components/Dropdown/Dropdown.story.tsx:5381": [
+      [0, 0, 0, "\'VerticalGroup\' import from \'../Layout/Layout\' is restricted from being used by a pattern. Use Stack component instead.", "0"]
+    ],
+    "packages/grafana-ui/src/components/Forms/Checkbox.story.tsx:5381": [
+      [0, 0, 0, "\'VerticalGroup\' import from \'../Layout/Layout\' is restricted from being used by a pattern. Use Stack component instead.", "0"]
     ],
     "packages/grafana-ui/src/components/Forms/FieldArray.story.tsx:5381": [
       [0, 0, 0, "\'HorizontalGroup\' import from \'@grafana/ui\' is restricted from being used by a pattern. Use Stack component instead.", "0"]
@@ -873,11 +838,17 @@ exports[`better eslint`] = {
       [0, 0, 0, "\'VerticalGroup\' import from \'@grafana/ui\' is restricted from being used by a pattern. Use Stack component instead.", "0"],
       [0, 0, 0, "\'HorizontalGroup\' import from \'@grafana/ui\' is restricted from being used by a pattern. Use Stack component instead.", "1"]
     ],
+    "packages/grafana-ui/src/components/Link/TextLink.story.tsx:5381": [
+      [0, 0, 0, "\'VerticalGroup\' import from \'../Layout/Layout\' is restricted from being used by a pattern. Use Stack component instead.", "0"]
+    ],
     "packages/grafana-ui/src/components/MatchersUI/FieldValueMatcher.tsx:5381": [
       [0, 0, 0, "Do not use any type assertions.", "0"]
     ],
     "packages/grafana-ui/src/components/MatchersUI/fieldMatchersUI.ts:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"]
+    ],
+    "packages/grafana-ui/src/components/Menu/Menu.story.tsx:5381": [
+      [0, 0, 0, "\'VerticalGroup\' import from \'../Layout/Layout\' is restricted from being used by a pattern. Use Stack component instead.", "0"]
     ],
     "packages/grafana-ui/src/components/Modal/ModalsContext.tsx:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
@@ -907,10 +878,8 @@ exports[`better eslint`] = {
       [0, 0, 0, "Unexpected any. Specify a different type.", "5"],
       [0, 0, 0, "Do not use any type assertions.", "6"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "7"],
-      [0, 0, 0, "Do not use any type assertions.", "8"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "9"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "10"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "11"]
+      [0, 0, 0, "Unexpected any. Specify a different type.", "8"],
+      [0, 0, 0, "Unexpected any. Specify a different type.", "9"]
     ],
     "packages/grafana-ui/src/components/Select/SelectOptionGroup.tsx:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
@@ -1007,6 +976,15 @@ exports[`better eslint`] = {
     "packages/grafana-ui/src/components/Tags/Tag.tsx:5381": [
       [0, 0, 0, "Do not use any type assertions.", "0"]
     ],
+    "packages/grafana-ui/src/components/TagsInput/TagsInput.story.tsx:5381": [
+      [0, 0, 0, "\'VerticalGroup\' import from \'../Layout/Layout\' is restricted from being used by a pattern. Use Stack component instead.", "0"]
+    ],
+    "packages/grafana-ui/src/components/Text/Text.story.tsx:5381": [
+      [0, 0, 0, "\'VerticalGroup\' import from \'../Layout/Layout\' is restricted from being used by a pattern. Use Stack component instead.", "0"]
+    ],
+    "packages/grafana-ui/src/components/ThemeDemos/EmotionPerfTest.tsx:5381": [
+      [0, 0, 0, "\'VerticalGroup\' import from \'../Layout/Layout\' is restricted from being used by a pattern. Use Stack component instead.", "0"]
+    ],
     "packages/grafana-ui/src/components/ValuePicker/ValuePicker.tsx:5381": [
       [0, 0, 0, "Use data-testid for E2E selectors instead of aria-label", "0"]
     ],
@@ -1023,6 +1001,10 @@ exports[`better eslint`] = {
     "packages/grafana-ui/src/components/VizTooltip/VizTooltip.tsx:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "1"]
+    ],
+    "packages/grafana-ui/src/components/index.ts:5381": [
+      [0, 0, 0, "\'HorizontalGroup\' import from \'./Layout/Layout\' is restricted from being used by a pattern. Use Stack component instead.", "0"],
+      [0, 0, 0, "\'VerticalGroup\' import from \'./Layout/Layout\' is restricted from being used by a pattern. Use Stack component instead.", "1"]
     ],
     "packages/grafana-ui/src/components/uPlot/Plot.tsx:5381": [
       [0, 0, 0, "Do not use any type assertions.", "0"],
@@ -1087,12 +1069,6 @@ exports[`better eslint`] = {
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
       [0, 0, 0, "Do not use any type assertions.", "1"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "2"]
-    ],
-    "packages/grafana-ui/src/options/builder/axis.tsx:5381": [
-      [0, 0, 0, "Do not use any type assertions.", "0"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "1"],
-      [0, 0, 0, "Do not use any type assertions.", "2"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "3"]
     ],
     "packages/grafana-ui/src/options/builder/hideSeries.tsx:5381": [
       [0, 0, 0, "Do not use any type assertions.", "0"]
@@ -1172,6 +1148,15 @@ exports[`better eslint`] = {
       [0, 0, 0, "Unexpected any. Specify a different type.", "5"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "6"]
     ],
+    "public/app/core/actions/index.ts:5381": [
+      [0, 0, 0, "Do not re-export imported variable (\`updateNavIndex\`)", "0"],
+      [0, 0, 0, "Do not re-export imported variable (\`updateConfigurationSubtitle\`)", "1"],
+      [0, 0, 0, "Do not re-export imported variable (\`notifyApp\`)", "2"],
+      [0, 0, 0, "Do not re-export imported variable (\`hideAppNotification\`)", "3"]
+    ],
+    "public/app/core/components/AccessControl/index.ts:5381": [
+      [0, 0, 0, "Do not use export all (\`export * from ...\`)", "0"]
+    ],
     "public/app/core/components/AppChrome/TopBar/TopSearchBarCommandPaletteTrigger.tsx:5381": [
       [0, 0, 0, "Styles should be written using objects.", "0"]
     ],
@@ -1183,9 +1168,6 @@ exports[`better eslint`] = {
     ],
     "public/app/core/components/ForgottenPassword/ChangePassword.tsx:5381": [
       [0, 0, 0, "\'VerticalGroup\' import from \'@grafana/ui\' is restricted from being used by a pattern. Use Stack component instead.", "0"]
-    ],
-    "public/app/core/components/ForgottenPassword/ForgottenPassword.tsx:5381": [
-      [0, 0, 0, "\'HorizontalGroup\' import from \'@grafana/ui\' is restricted from being used by a pattern. Use Stack component instead.", "0"]
     ],
     "public/app/core/components/GraphNG/GraphNG.tsx:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
@@ -1199,8 +1181,8 @@ exports[`better eslint`] = {
       [0, 0, 0, "Do not use any type assertions.", "8"],
       [0, 0, 0, "Do not use any type assertions.", "9"]
     ],
-    "public/app/core/components/Login/LoginPage.tsx:5381": [
-      [0, 0, 0, "\'HorizontalGroup\' import from \'@grafana/ui\' is restricted from being used by a pattern. Use Stack component instead.", "0"]
+    "public/app/core/components/LocalStorageValueProvider/index.tsx:5381": [
+      [0, 0, 0, "Do not re-export imported variable (\`./LocalStorageValueProvider\`)", "0"]
     ],
     "public/app/core/components/Login/LoginServiceButtons.tsx:5381": [
       [0, 0, 0, "\'VerticalGroup\' import from \'@grafana/ui\' is restricted from being used by a pattern. Use Stack component instead.", "0"]
@@ -1257,12 +1239,6 @@ exports[`better eslint`] = {
       [0, 0, 0, "Styles should be written using objects.", "5"],
       [0, 0, 0, "Styles should be written using objects.", "6"]
     ],
-    "public/app/core/components/RolePicker/RolePickerMenu.tsx:5381": [
-      [0, 0, 0, "\'HorizontalGroup\' import from \'@grafana/ui\' is restricted from being used by a pattern. Use Stack component instead.", "0"]
-    ],
-    "public/app/core/components/RolePicker/RolePickerSubMenu.tsx:5381": [
-      [0, 0, 0, "\'HorizontalGroup\' import from \'@grafana/ui\' is restricted from being used by a pattern. Use Stack component instead.", "0"]
-    ],
     "public/app/core/components/RolePicker/ValueContainer.tsx:5381": [
       [0, 0, 0, "Styles should be written using objects.", "0"]
     ],
@@ -1311,6 +1287,19 @@ exports[`better eslint`] = {
     "public/app/core/components/connectWithCleanUp.tsx:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
       [0, 0, 0, "Do not use any type assertions.", "1"]
+    ],
+    "public/app/core/config.ts:5381": [
+      [0, 0, 0, "Do not re-export imported variable (\`config\`)", "0"]
+    ],
+    "public/app/core/core.ts:5381": [
+      [0, 0, 0, "Do not re-export imported variable (\`profiler\`)", "0"],
+      [0, 0, 0, "Do not re-export imported variable (\`appEvents\`)", "1"],
+      [0, 0, 0, "Do not re-export imported variable (\`colors\`)", "2"],
+      [0, 0, 0, "Do not re-export imported variable (\`assignModelProperties\`)", "3"],
+      [0, 0, 0, "Do not re-export imported variable (\`contextSrv\`)", "4"],
+      [0, 0, 0, "Do not re-export imported variable (\`JsonExplorer\`)", "5"],
+      [0, 0, 0, "Do not re-export imported variable (\`TimeSeries\`)", "6"],
+      [0, 0, 0, "Do not re-export imported variable (\`updateLegendValues\`)", "7"]
     ],
     "public/app/core/navigation/types.ts:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"]
@@ -1411,6 +1400,11 @@ exports[`better eslint`] = {
     "public/app/core/utils/richHistory.test.ts:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"]
     ],
+    "public/app/core/utils/richHistory.ts:5381": [
+      [0, 0, 0, "Do not re-export imported variable (\`RichHistorySearchFilters\`)", "0"],
+      [0, 0, 0, "Do not re-export imported variable (\`RichHistorySettings\`)", "1"],
+      [0, 0, 0, "Do not re-export imported variable (\`SortOrder\`)", "2"]
+    ],
     "public/app/core/utils/ticks.ts:5381": [
       [0, 0, 0, "Do not use any type assertions.", "0"],
       [0, 0, 0, "Do not use any type assertions.", "1"]
@@ -1485,7 +1479,8 @@ exports[`better eslint`] = {
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "1"],
       [0, 0, 0, "Do not use any type assertions.", "2"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "3"]
+      [0, 0, 0, "Unexpected any. Specify a different type.", "3"],
+      [0, 0, 0, "Unexpected any. Specify a different type.", "4"]
     ],
     "public/app/features/alerting/state/query_part.ts:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
@@ -1503,9 +1498,6 @@ exports[`better eslint`] = {
     "public/app/features/alerting/state/reducers.ts:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "1"]
-    ],
-    "public/app/features/alerting/unified/AlertGroups.tsx:5381": [
-      [0, 0, 0, "Styles should be written using objects.", "0"]
     ],
     "public/app/features/alerting/unified/AlertWarning.tsx:5381": [
       [0, 0, 0, "Styles should be written using objects.", "0"]
@@ -1550,11 +1542,10 @@ exports[`better eslint`] = {
     ],
     "public/app/features/alerting/unified/RuleList.tsx:5381": [
       [0, 0, 0, "Do not use any type assertions.", "0"],
-      [0, 0, 0, "Do not use any type assertions.", "1"],
+      [0, 0, 0, "Styles should be written using objects.", "1"],
       [0, 0, 0, "Styles should be written using objects.", "2"],
       [0, 0, 0, "Styles should be written using objects.", "3"],
-      [0, 0, 0, "Styles should be written using objects.", "4"],
-      [0, 0, 0, "Styles should be written using objects.", "5"]
+      [0, 0, 0, "Styles should be written using objects.", "4"]
     ],
     "public/app/features/alerting/unified/components/AlertLabel.tsx:5381": [
       [0, 0, 0, "Styles should be written using objects.", "0"]
@@ -1570,8 +1561,7 @@ exports[`better eslint`] = {
     ],
     "public/app/features/alerting/unified/components/AnnotationDetailsField.tsx:5381": [
       [0, 0, 0, "Do not use any type assertions.", "0"],
-      [0, 0, 0, "Do not use any type assertions.", "1"],
-      [0, 0, 0, "Styles should be written using objects.", "2"]
+      [0, 0, 0, "Styles should be written using objects.", "1"]
     ],
     "public/app/features/alerting/unified/components/Authorize.tsx:5381": [
       [0, 0, 0, "Do not use any type assertions.", "0"],
@@ -1692,9 +1682,6 @@ exports[`better eslint`] = {
     "public/app/features/alerting/unified/components/alert-groups/GroupBy.tsx:5381": [
       [0, 0, 0, "Do not use any type assertions.", "0"]
     ],
-    "public/app/features/alerting/unified/components/alert-groups/MatcherFilter.tsx:5381": [
-      [0, 0, 0, "Do not use any type assertions.", "0"]
-    ],
     "public/app/features/alerting/unified/components/contact-points/ContactPoints.tsx:5381": [
       [0, 0, 0, "Do not use any type assertions.", "0"]
     ],
@@ -1732,6 +1719,9 @@ exports[`better eslint`] = {
     ],
     "public/app/features/alerting/unified/components/expressions/ExpressionStatusIndicator.tsx:5381": [
       [0, 0, 0, "Styles should be written using objects.", "0"]
+    ],
+    "public/app/features/alerting/unified/components/extensions/AlertInstanceExtensionPointMenu.tsx:5381": [
+      [0, 0, 0, "Do not re-export imported variable (\`app/features/explore/extensions/ToolbarExtensionPointMenu\`)", "0"]
     ],
     "public/app/features/alerting/unified/components/mute-timings/MuteTimingForm.tsx:5381": [
       [0, 0, 0, "Styles should be written using objects.", "0"],
@@ -2322,9 +2312,6 @@ exports[`better eslint`] = {
       [0, 0, 0, "Unexpected any. Specify a different type.", "1"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "2"]
     ],
-    "public/app/features/alerting/unified/utils/misc.ts:5381": [
-      [0, 0, 0, "Do not use any type assertions.", "0"]
-    ],
     "public/app/features/alerting/unified/utils/receiver-form.ts:5381": [
       [0, 0, 0, "Do not use any type assertions.", "0"],
       [0, 0, 0, "Do not use any type assertions.", "1"],
@@ -2339,8 +2326,7 @@ exports[`better eslint`] = {
       [0, 0, 0, "Do not use any type assertions.", "4"],
       [0, 0, 0, "Do not use any type assertions.", "5"],
       [0, 0, 0, "Do not use any type assertions.", "6"],
-      [0, 0, 0, "Do not use any type assertions.", "7"],
-      [0, 0, 0, "Do not use any type assertions.", "8"]
+      [0, 0, 0, "Do not use any type assertions.", "7"]
     ],
     "public/app/features/alerting/unified/utils/rulerClient.ts:5381": [
       [0, 0, 0, "Do not use any type assertions.", "0"]
@@ -2369,8 +2355,19 @@ exports[`better eslint`] = {
       [0, 0, 0, "Styles should be written using objects.", "1"],
       [0, 0, 0, "Styles should be written using objects.", "2"]
     ],
+    "public/app/features/auth-config/index.ts:5381": [
+      [0, 0, 0, "Do not use export all (\`export * from ...\`)", "0"]
+    ],
     "public/app/features/auth-config/utils/data.ts:5381": [
       [0, 0, 0, "Do not use any type assertions.", "0"]
+    ],
+    "public/app/features/browse-dashboards/api/browseDashboardsAPI.ts:5381": [
+      [0, 0, 0, "Do not re-export imported variable (\`@reduxjs/toolkit/query/react\`)", "0"]
+    ],
+    "public/app/features/browse-dashboards/state/index.ts:5381": [
+      [0, 0, 0, "Do not use export all (\`export * from ...\`)", "0"],
+      [0, 0, 0, "Do not use export all (\`export * from ...\`)", "1"],
+      [0, 0, 0, "Do not use export all (\`export * from ...\`)", "2"]
     ],
     "public/app/features/canvas/element.ts:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
@@ -2378,6 +2375,12 @@ exports[`better eslint`] = {
       [0, 0, 0, "Unexpected any. Specify a different type.", "2"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "3"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "4"]
+    ],
+    "public/app/features/canvas/index.ts:5381": [
+      [0, 0, 0, "Do not use export all (\`export * from ...\`)", "0"],
+      [0, 0, 0, "Do not use export all (\`export * from ...\`)", "1"],
+      [0, 0, 0, "Do not re-export imported variable (\`./frame\`)", "2"],
+      [0, 0, 0, "Do not use export all (\`export * from ...\`)", "3"]
     ],
     "public/app/features/canvas/runtime/element.tsx:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
@@ -2399,13 +2402,39 @@ exports[`better eslint`] = {
       [0, 0, 0, "Styles should be written using objects.", "2"],
       [0, 0, 0, "Styles should be written using objects.", "3"]
     ],
+    "public/app/features/canvas/types.ts:5381": [
+      [0, 0, 0, "Do not re-export imported variable (\`Placement\`)", "0"],
+      [0, 0, 0, "Do not re-export imported variable (\`Constraint\`)", "1"],
+      [0, 0, 0, "Do not re-export imported variable (\`HorizontalConstraint\`)", "2"],
+      [0, 0, 0, "Do not re-export imported variable (\`VerticalConstraint\`)", "3"],
+      [0, 0, 0, "Do not re-export imported variable (\`BackgroundImageSize\`)", "4"],
+      [0, 0, 0, "Do not re-export imported variable (\`LineConfig\`)", "5"],
+      [0, 0, 0, "Do not re-export imported variable (\`BackgroundConfig\`)", "6"]
+    ],
     "public/app/features/connections/components/ConnectionsRedirectNotice/ConnectionsRedirectNotice.tsx:5381": [
       [0, 0, 0, "Styles should be written using objects.", "0"],
       [0, 0, 0, "Styles should be written using objects.", "1"]
     ],
+    "public/app/features/connections/components/ConnectionsRedirectNotice/index.ts:5381": [
+      [0, 0, 0, "Do not use export all (\`export * from ...\`)", "0"]
+    ],
+    "public/app/features/connections/pages/index.tsx:5381": [
+      [0, 0, 0, "Do not re-export imported variable (\`./AddNewConnectionPage\`)", "0"],
+      [0, 0, 0, "Do not re-export imported variable (\`./DataSourceDetailsPage\`)", "1"],
+      [0, 0, 0, "Do not re-export imported variable (\`./DataSourcesListPage\`)", "2"],
+      [0, 0, 0, "Do not re-export imported variable (\`./DataSourceDashboardsPage\`)", "3"],
+      [0, 0, 0, "Do not re-export imported variable (\`./EditDataSourcePage\`)", "4"],
+      [0, 0, 0, "Do not re-export imported variable (\`./NewDataSourcePage\`)", "5"]
+    ],
+    "public/app/features/connections/tabs/ConnectData/CardGrid/index.tsx:5381": [
+      [0, 0, 0, "Do not use export all (\`export * from ...\`)", "0"]
+    ],
     "public/app/features/connections/tabs/ConnectData/CategoryHeader/CategoryHeader.tsx:5381": [
       [0, 0, 0, "Styles should be written using objects.", "0"],
       [0, 0, 0, "Styles should be written using objects.", "1"]
+    ],
+    "public/app/features/connections/tabs/ConnectData/CategoryHeader/index.tsx:5381": [
+      [0, 0, 0, "Do not use export all (\`export * from ...\`)", "0"]
     ],
     "public/app/features/connections/tabs/ConnectData/NoAccessModal/NoAccessModal.tsx:5381": [
       [0, 0, 0, "Styles should be written using objects.", "0"],
@@ -2417,6 +2446,15 @@ exports[`better eslint`] = {
       [0, 0, 0, "Styles should be written using objects.", "6"],
       [0, 0, 0, "Styles should be written using objects.", "7"],
       [0, 0, 0, "Styles should be written using objects.", "8"]
+    ],
+    "public/app/features/connections/tabs/ConnectData/NoAccessModal/index.tsx:5381": [
+      [0, 0, 0, "Do not use export all (\`export * from ...\`)", "0"]
+    ],
+    "public/app/features/connections/tabs/ConnectData/Search/index.tsx:5381": [
+      [0, 0, 0, "Do not use export all (\`export * from ...\`)", "0"]
+    ],
+    "public/app/features/connections/tabs/ConnectData/index.tsx:5381": [
+      [0, 0, 0, "Do not use export all (\`export * from ...\`)", "0"]
     ],
     "public/app/features/correlations/CorrelationsPage.tsx:5381": [
       [0, 0, 0, "Styles should be written using objects.", "0"],
@@ -2438,6 +2476,10 @@ exports[`better eslint`] = {
     ],
     "public/app/features/correlations/Forms/CorrelationFormNavigation.tsx:5381": [
       [0, 0, 0, "\'HorizontalGroup\' import from \'@grafana/ui\' is restricted from being used by a pattern. Use Stack component instead.", "0"]
+    ],
+    "public/app/features/correlations/components/Wizard/index.ts:5381": [
+      [0, 0, 0, "Do not use export all (\`export * from ...\`)", "0"],
+      [0, 0, 0, "Do not use export all (\`export * from ...\`)", "1"]
     ],
     "public/app/features/dashboard-scene/inspect/HelpWizard/HelpWizard.tsx:5381": [
       [0, 0, 0, "\'HorizontalGroup\' import from \'@grafana/ui\' is restricted from being used by a pattern. Use Stack component instead.", "0"]
@@ -2463,25 +2505,17 @@ exports[`better eslint`] = {
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "1"]
     ],
-    "public/app/features/dashboard-scene/saving/SaveDashboardForm.tsx:5381": [
-      [0, 0, 0, "Use data-testid for E2E selectors instead of aria-label", "0"],
-      [0, 0, 0, "Use data-testid for E2E selectors instead of aria-label", "1"]
-    ],
     "public/app/features/dashboard-scene/saving/getDashboardChanges.ts:5381": [
       [0, 0, 0, "Do not use any type assertions.", "0"],
       [0, 0, 0, "Do not use any type assertions.", "1"]
-    ],
-    "public/app/features/dashboard-scene/saving/getSaveDashboardChange.ts:5381": [
-      [0, 0, 0, "Do not use any type assertions.", "0"],
-      [0, 0, 0, "Do not use any type assertions.", "1"]
-    ],
-    "public/app/features/dashboard-scene/saving/shared.tsx:5381": [
-      [0, 0, 0, "Use data-testid for E2E selectors instead of aria-label", "0"]
     ],
     "public/app/features/dashboard-scene/scene/PanelMenuBehavior.tsx:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "1"],
       [0, 0, 0, "Do not use any type assertions.", "2"]
+    ],
+    "public/app/features/dashboard-scene/serialization/angularMigration.test.ts:5381": [
+      [0, 0, 0, "Unexpected any. Specify a different type.", "0"]
     ],
     "public/app/features/dashboard-scene/serialization/transformSaveModelToScene.test.ts:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
@@ -2501,16 +2535,19 @@ exports[`better eslint`] = {
       [0, 0, 0, "Unexpected any. Specify a different type.", "8"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "9"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "10"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "11"]
+      [0, 0, 0, "Unexpected any. Specify a different type.", "11"],
+      [0, 0, 0, "Unexpected any. Specify a different type.", "12"]
     ],
     "public/app/features/dashboard-scene/serialization/transformSceneToSaveModel.ts:5381": [
       [0, 0, 0, "Do not use any type assertions.", "0"],
       [0, 0, 0, "Do not use any type assertions.", "1"],
       [0, 0, 0, "Do not use any type assertions.", "2"],
-      [0, 0, 0, "Do not use any type assertions.", "3"],
+      [0, 0, 0, "Unexpected any. Specify a different type.", "3"],
       [0, 0, 0, "Do not use any type assertions.", "4"],
       [0, 0, 0, "Do not use any type assertions.", "5"],
-      [0, 0, 0, "Do not use any type assertions.", "6"]
+      [0, 0, 0, "Do not use any type assertions.", "6"],
+      [0, 0, 0, "Do not use any type assertions.", "7"],
+      [0, 0, 0, "Do not use any type assertions.", "8"]
     ],
     "public/app/features/dashboard-scene/settings/VersionsEditView.tsx:5381": [
       [0, 0, 0, "\'HorizontalGroup\' import from \'@grafana/ui\' is restricted from being used by a pattern. Use Stack component instead.", "0"]
@@ -2520,6 +2557,10 @@ exports[`better eslint`] = {
     ],
     "public/app/features/dashboard-scene/settings/annotations/AnnotationSettingsList.tsx:5381": [
       [0, 0, 0, "\'VerticalGroup\' import from \'@grafana/ui\' is restricted from being used by a pattern. Use Stack component instead.", "0"]
+    ],
+    "public/app/features/dashboard-scene/settings/annotations/index.tsx:5381": [
+      [0, 0, 0, "Do not re-export imported variable (\`./AnnotationSettingsEdit\`)", "0"],
+      [0, 0, 0, "Do not re-export imported variable (\`./AnnotationSettingsList\`)", "1"]
     ],
     "public/app/features/dashboard-scene/settings/links/DashboardLinkList.tsx:5381": [
       [0, 0, 0, "\'HorizontalGroup\' import from \'@grafana/ui\' is restricted from being used by a pattern. Use Stack component instead.", "0"]
@@ -2533,6 +2574,13 @@ exports[`better eslint`] = {
     "public/app/features/dashboard-scene/settings/variables/utils.ts:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"]
     ],
+    "public/app/features/dashboard-scene/settings/version-history/index.ts:5381": [
+      [0, 0, 0, "Do not re-export imported variable (\`./HistorySrv\`)", "0"],
+      [0, 0, 0, "Do not re-export imported variable (\`./VersionHistoryTable\`)", "1"],
+      [0, 0, 0, "Do not re-export imported variable (\`./VersionHistoryHeader\`)", "2"],
+      [0, 0, 0, "Do not re-export imported variable (\`./VersionHistoryButtons\`)", "3"],
+      [0, 0, 0, "Do not re-export imported variable (\`./VersionHistoryComparison\`)", "4"]
+    ],
     "public/app/features/dashboard-scene/sharing/ShareExportTab.tsx:5381": [
       [0, 0, 0, "\'VerticalGroup\' import from \'@grafana/ui\' is restricted from being used by a pattern. Use Stack component instead.", "0"]
     ],
@@ -2542,10 +2590,8 @@ exports[`better eslint`] = {
     "public/app/features/dashboard-scene/utils/PanelModelCompatibilityWrapper.ts:5381": [
       [0, 0, 0, "Do not use any type assertions.", "0"]
     ],
-    "public/app/features/dashboard-scene/utils/test-utils.ts:5381": [
-      [0, 0, 0, "Do not use any type assertions.", "0"],
-      [0, 0, 0, "Do not use any type assertions.", "1"],
-      [0, 0, 0, "Do not use any type assertions.", "2"]
+    "public/app/features/dashboard/components/AddLibraryPanelWidget/index.ts:5381": [
+      [0, 0, 0, "Do not re-export imported variable (\`./AddLibraryPanelWidget\`)", "0"]
     ],
     "public/app/features/dashboard/components/AddWidgetModal/AddWidgetModal.tsx:5381": [
       [0, 0, 0, "Styles should be written using objects.", "0"],
@@ -2563,6 +2609,10 @@ exports[`better eslint`] = {
     "public/app/features/dashboard/components/AnnotationSettings/AnnotationSettingsList.tsx:5381": [
       [0, 0, 0, "\'VerticalGroup\' import from \'@grafana/ui\' is restricted from being used by a pattern. Use Stack component instead.", "0"],
       [0, 0, 0, "Styles should be written using objects.", "1"]
+    ],
+    "public/app/features/dashboard/components/AnnotationSettings/index.tsx:5381": [
+      [0, 0, 0, "Do not re-export imported variable (\`./AnnotationSettingsEdit\`)", "0"],
+      [0, 0, 0, "Do not re-export imported variable (\`./AnnotationSettingsList\`)", "1"]
     ],
     "public/app/features/dashboard/components/DashExportModal/DashboardExporter.test.ts:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
@@ -2584,8 +2634,14 @@ exports[`better eslint`] = {
       [0, 0, 0, "Do not use any type assertions.", "8"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "9"]
     ],
+    "public/app/features/dashboard/components/DashExportModal/index.ts:5381": [
+      [0, 0, 0, "Do not re-export imported variable (\`./DashboardExporter\`)", "0"]
+    ],
     "public/app/features/dashboard/components/DashNav/DashNavButton.tsx:5381": [
       [0, 0, 0, "Styles should be written using objects.", "0"]
+    ],
+    "public/app/features/dashboard/components/DashNav/index.ts:5381": [
+      [0, 0, 0, "Do not re-export imported variable (\`DashNav\`)", "0"]
     ],
     "public/app/features/dashboard/components/DashboardLoading/DashboardFailed.tsx:5381": [
       [0, 0, 0, "Styles should be written using objects.", "0"]
@@ -2613,11 +2669,17 @@ exports[`better eslint`] = {
     "public/app/features/dashboard/components/DashboardRow/DashboardRow.test.tsx:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"]
     ],
+    "public/app/features/dashboard/components/DashboardRow/index.ts:5381": [
+      [0, 0, 0, "Do not re-export imported variable (\`./DashboardRow\`)", "0"]
+    ],
     "public/app/features/dashboard/components/DashboardSettings/ListNewButton.tsx:5381": [
       [0, 0, 0, "Styles should be written using objects.", "0"]
     ],
     "public/app/features/dashboard/components/DashboardSettings/VersionsSettings.tsx:5381": [
       [0, 0, 0, "\'HorizontalGroup\' import from \'@grafana/ui\' is restricted from being used by a pattern. Use Stack component instead.", "0"]
+    ],
+    "public/app/features/dashboard/components/DashboardSettings/index.ts:5381": [
+      [0, 0, 0, "Do not re-export imported variable (\`./DashboardSettings\`)", "0"]
     ],
     "public/app/features/dashboard/components/DeleteDashboard/DeleteDashboardModal.tsx:5381": [
       [0, 0, 0, "Styles should be written using objects.", "0"]
@@ -2630,6 +2692,10 @@ exports[`better eslint`] = {
     ],
     "public/app/features/dashboard/components/Inspector/PanelInspector.tsx:5381": [
       [0, 0, 0, "Do not use any type assertions.", "0"]
+    ],
+    "public/app/features/dashboard/components/LinksSettings/index.tsx:5381": [
+      [0, 0, 0, "Do not re-export imported variable (\`./LinkSettingsEdit\`)", "0"],
+      [0, 0, 0, "Do not re-export imported variable (\`./LinkSettingsList\`)", "1"]
     ],
     "public/app/features/dashboard/components/PanelEditor/DynamicConfigValueEditor.tsx:5381": [
       [0, 0, 0, "\'HorizontalGroup\' import from \'@grafana/ui\' is restricted from being used by a pattern. Use Stack component instead.", "0"],
@@ -2814,6 +2880,10 @@ exports[`better eslint`] = {
     "public/app/features/dashboard/components/ShareModal/SharePublicDashboard/ModalAlerts/UnsupportedDataSourcesAlert.tsx:5381": [
       [0, 0, 0, "Styles should be written using objects.", "0"]
     ],
+    "public/app/features/dashboard/components/ShareModal/index.ts:5381": [
+      [0, 0, 0, "Do not re-export imported variable (\`./ShareModal\`)", "0"],
+      [0, 0, 0, "Do not use export all (\`export * from ...\`)", "1"]
+    ],
     "public/app/features/dashboard/components/SubMenu/AnnotationPicker.tsx:5381": [
       [0, 0, 0, "Styles should be written using objects.", "0"],
       [0, 0, 0, "Styles should be written using objects.", "1"]
@@ -2994,6 +3064,10 @@ exports[`better eslint`] = {
     "public/app/features/dashboard/state/getPanelPluginToMigrateTo.ts:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"]
     ],
+    "public/app/features/dashboard/state/index.ts:5381": [
+      [0, 0, 0, "Do not re-export imported variable (\`./DashboardModel\`)", "0"],
+      [0, 0, 0, "Do not re-export imported variable (\`./PanelModel\`)", "1"]
+    ],
     "public/app/features/dashboard/state/initDashboard.test.ts:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"]
     ],
@@ -3010,13 +3084,20 @@ exports[`better eslint`] = {
       [0, 0, 0, "Do not use any type assertions.", "2"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "3"]
     ],
+    "public/app/features/dataframe-import/index.ts:5381": [
+      [0, 0, 0, "Do not use export all (\`export * from ...\`)", "0"],
+      [0, 0, 0, "Do not use export all (\`export * from ...\`)", "1"]
+    ],
+    "public/app/features/datasources/__mocks__/index.ts:5381": [
+      [0, 0, 0, "Do not use export all (\`export * from ...\`)", "0"],
+      [0, 0, 0, "Do not use export all (\`export * from ...\`)", "1"]
+    ],
     "public/app/features/datasources/components/BasicSettings.tsx:5381": [
       [0, 0, 0, "Styles should be written using objects.", "0"]
     ],
     "public/app/features/datasources/components/DataSourceTestingStatus.tsx:5381": [
       [0, 0, 0, "Styles should be written using objects.", "0"],
-      [0, 0, 0, "Styles should be written using objects.", "1"],
-      [0, 0, 0, "Do not use any type assertions.", "2"]
+      [0, 0, 0, "Styles should be written using objects.", "1"]
     ],
     "public/app/features/datasources/components/DataSourceTypeCard.tsx:5381": [
       [0, 0, 0, "Use data-testid for E2E selectors instead of aria-label", "0"]
@@ -3063,6 +3144,15 @@ exports[`better eslint`] = {
     "public/app/features/datasources/state/actions.ts:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
       [0, 0, 0, "Do not use any type assertions.", "1"]
+    ],
+    "public/app/features/datasources/state/index.ts:5381": [
+      [0, 0, 0, "Do not use export all (\`export * from ...\`)", "0"],
+      [0, 0, 0, "Do not use export all (\`export * from ...\`)", "1"],
+      [0, 0, 0, "Do not use export all (\`export * from ...\`)", "2"],
+      [0, 0, 0, "Do not use export all (\`export * from ...\`)", "3"],
+      [0, 0, 0, "Do not use export all (\`export * from ...\`)", "4"],
+      [0, 0, 0, "Do not use export all (\`export * from ...\`)", "5"],
+      [0, 0, 0, "Do not use export all (\`export * from ...\`)", "6"]
     ],
     "public/app/features/datasources/state/navModel.ts:5381": [
       [0, 0, 0, "Do not use any type assertions.", "0"],
@@ -3149,6 +3239,24 @@ exports[`better eslint`] = {
     ],
     "public/app/features/dimensions/editors/ValueMappingsEditor/ValueMappingsEditorModal.tsx:5381": [
       [0, 0, 0, "Styles should be written using objects.", "0"]
+    ],
+    "public/app/features/dimensions/editors/index.ts:5381": [
+      [0, 0, 0, "Do not use export all (\`export * from ...\`)", "0"],
+      [0, 0, 0, "Do not use export all (\`export * from ...\`)", "1"],
+      [0, 0, 0, "Do not use export all (\`export * from ...\`)", "2"],
+      [0, 0, 0, "Do not use export all (\`export * from ...\`)", "3"],
+      [0, 0, 0, "Do not use export all (\`export * from ...\`)", "4"],
+      [0, 0, 0, "Do not use export all (\`export * from ...\`)", "5"]
+    ],
+    "public/app/features/dimensions/index.ts:5381": [
+      [0, 0, 0, "Do not use export all (\`export * from ...\`)", "0"],
+      [0, 0, 0, "Do not use export all (\`export * from ...\`)", "1"],
+      [0, 0, 0, "Do not use export all (\`export * from ...\`)", "2"],
+      [0, 0, 0, "Do not use export all (\`export * from ...\`)", "3"],
+      [0, 0, 0, "Do not use export all (\`export * from ...\`)", "4"],
+      [0, 0, 0, "Do not use export all (\`export * from ...\`)", "5"],
+      [0, 0, 0, "Do not use export all (\`export * from ...\`)", "6"],
+      [0, 0, 0, "Do not use export all (\`export * from ...\`)", "7"]
     ],
     "public/app/features/dimensions/scale.ts:5381": [
       [0, 0, 0, "Do not use any type assertions.", "0"],
@@ -3365,6 +3473,9 @@ exports[`better eslint`] = {
       [0, 0, 0, "Styles should be written using objects.", "7"],
       [0, 0, 0, "Styles should be written using objects.", "8"]
     ],
+    "public/app/features/explore/TraceView/components/TracePageHeader/index.tsx:5381": [
+      [0, 0, 0, "Do not re-export imported variable (\`./TracePageHeader\`)", "0"]
+    ],
     "public/app/features/explore/TraceView/components/TraceTimelineViewer/SpanBarRow.tsx:5381": [
       [0, 0, 0, "Styles should be written using objects.", "0"],
       [0, 0, 0, "Styles should be written using objects.", "1"],
@@ -3431,9 +3542,6 @@ exports[`better eslint`] = {
       [0, 0, 0, "Styles should be written using objects.", "3"],
       [0, 0, 0, "Styles should be written using objects.", "4"],
       [0, 0, 0, "Styles should be written using objects.", "5"]
-    ],
-    "public/app/features/explore/TraceView/components/TraceTimelineViewer/SpanDetail/SpanFlameGraph.tsx:5381": [
-      [0, 0, 0, "Do not use any type assertions.", "0"]
     ],
     "public/app/features/explore/TraceView/components/TraceTimelineViewer/SpanDetail/TextList.tsx:5381": [
       [0, 0, 0, "Styles should be written using objects.", "0"],
@@ -3505,6 +3613,9 @@ exports[`better eslint`] = {
       [0, 0, 0, "Styles should be written using objects.", "6"],
       [0, 0, 0, "Styles should be written using objects.", "7"]
     ],
+    "public/app/features/explore/TraceView/components/TraceTimelineViewer/TimelineHeaderRow/index.tsx:5381": [
+      [0, 0, 0, "Do not re-export imported variable (\`./TimelineHeaderRow\`)", "0"]
+    ],
     "public/app/features/explore/TraceView/components/TraceTimelineViewer/VirtualizedTraceView.tsx:5381": [
       [0, 0, 0, "Styles should be written using objects.", "0"],
       [0, 0, 0, "Styles should be written using objects.", "1"],
@@ -3512,6 +3623,9 @@ exports[`better eslint`] = {
     ],
     "public/app/features/explore/TraceView/components/TraceTimelineViewer/index.tsx:5381": [
       [0, 0, 0, "Styles should be written using objects.", "0"]
+    ],
+    "public/app/features/explore/TraceView/components/TraceTimelineViewer/utils.tsx:5381": [
+      [0, 0, 0, "Do not re-export imported variable (\`../utils/date\`)", "0"]
     ],
     "public/app/features/explore/TraceView/components/common/BreakableText.tsx:5381": [
       [0, 0, 0, "Styles should be written using objects.", "0"]
@@ -3534,6 +3648,21 @@ exports[`better eslint`] = {
     "public/app/features/explore/TraceView/components/demo/trace-generators.ts:5381": [
       [0, 0, 0, "Do not use any type assertions.", "0"]
     ],
+    "public/app/features/explore/TraceView/components/index.ts:5381": [
+      [0, 0, 0, "Do not re-export imported variable (\`./TraceTimelineViewer\`)", "0"],
+      [0, 0, 0, "Do not re-export imported variable (\`./TracePageHeader\`)", "1"],
+      [0, 0, 0, "Do not re-export imported variable (\`./settings/SpanBarSettings\`)", "2"],
+      [0, 0, 0, "Do not use export all (\`export * from ...\`)", "3"],
+      [0, 0, 0, "Do not use export all (\`export * from ...\`)", "4"],
+      [0, 0, 0, "Do not re-export imported variable (\`./TraceTimelineViewer/SpanDetail/DetailState\`)", "5"],
+      [0, 0, 0, "Do not re-export imported variable (\`./model/transform-trace-data\`)", "6"],
+      [0, 0, 0, "Do not re-export imported variable (\`./utils/filter-spans\`)", "7"],
+      [0, 0, 0, "Do not use export all (\`export * from ...\`)", "8"]
+    ],
+    "public/app/features/explore/TraceView/components/model/ddg/types.tsx:5381": [
+      [0, 0, 0, "Do not re-export imported variable (\`./PathElem\`)", "0"],
+      [0, 0, 0, "Do not re-export imported variable (\`PathElem\`)", "1"]
+    ],
     "public/app/features/explore/TraceView/components/model/link-patterns.tsx:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "1"],
@@ -3555,8 +3684,23 @@ exports[`better eslint`] = {
       [0, 0, 0, "Styles should be written using objects.", "0"],
       [0, 0, 0, "Styles should be written using objects.", "1"]
     ],
+    "public/app/features/explore/TraceView/components/types/index.tsx:5381": [
+      [0, 0, 0, "Do not re-export imported variable (\`./trace\`)", "0"],
+      [0, 0, 0, "Do not re-export imported variable (\`../settings/SpanBarSettings\`)", "1"],
+      [0, 0, 0, "Do not re-export imported variable (\`./TTraceTimeline\`)", "2"],
+      [0, 0, 0, "Do not re-export imported variable (\`./TNil\`)", "3"],
+      [0, 0, 0, "Do not re-export imported variable (\`./links\`)", "4"]
+    ],
     "public/app/features/explore/TraceView/components/types/trace.ts:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"]
+    ],
+    "public/app/features/explore/TraceView/components/utils/DraggableManager/demo/index.tsx:5381": [
+      [0, 0, 0, "Do not re-export imported variable (\`./DraggableManagerDemo\`)", "0"]
+    ],
+    "public/app/features/explore/TraceView/components/utils/DraggableManager/index.tsx:5381": [
+      [0, 0, 0, "Do not use export all (\`export * from ...\`)", "0"],
+      [0, 0, 0, "Do not re-export imported variable (\`./EUpdateTypes\`)", "1"],
+      [0, 0, 0, "Do not re-export imported variable (\`./DraggableManager\`)", "2"]
     ],
     "public/app/features/explore/TraceView/createSpanLink.tsx:5381": [
       [0, 0, 0, "Do not use any type assertions.", "0"],
@@ -3564,6 +3708,9 @@ exports[`better eslint`] = {
     ],
     "public/app/features/explore/extensions/ConfirmNavigationModal.tsx:5381": [
       [0, 0, 0, "\'VerticalGroup\' import from \'@grafana/ui\' is restricted from being used by a pattern. Use Stack component instead.", "0"]
+    ],
+    "public/app/features/explore/hooks/useStateSync/index.ts:5381": [
+      [0, 0, 0, "Do not re-export imported variable (\`./external.utils\`)", "0"]
     ],
     "public/app/features/explore/spec/helper/setup.tsx:5381": [
       [0, 0, 0, "Do not use any type assertions.", "0"],
@@ -3851,11 +3998,11 @@ exports[`better eslint`] = {
       [0, 0, 0, "Unexpected any. Specify a different type.", "3"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "4"]
     ],
+    "public/app/features/migrate-to-cloud/api/index.ts:5381": [
+      [0, 0, 0, "Do not use export all (\`export * from ...\`)", "0"]
+    ],
     "public/app/features/org/OrgDetailsPage.tsx:5381": [
       [0, 0, 0, "\'VerticalGroup\' import from \'@grafana/ui\' is restricted from being used by a pattern. Use Stack component instead.", "0"]
-    ],
-    "public/app/features/org/SelectOrgPage.tsx:5381": [
-      [0, 0, 0, "\'HorizontalGroup\' import from \'@grafana/ui\' is restricted from being used by a pattern. Use Stack component instead.", "0"]
     ],
     "public/app/features/org/state/actions.ts:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"]
@@ -3892,17 +4039,33 @@ exports[`better eslint`] = {
       [0, 0, 0, "Styles should be written using objects.", "2"],
       [0, 0, 0, "Styles should be written using objects.", "3"]
     ],
+    "public/app/features/plugins/admin/__mocks__/index.ts:5381": [
+      [0, 0, 0, "Do not re-export imported variable (\`./remotePlugin.mock\`)", "0"],
+      [0, 0, 0, "Do not re-export imported variable (\`./localPlugin.mock\`)", "1"],
+      [0, 0, 0, "Do not use export all (\`export * from ...\`)", "2"]
+    ],
     "public/app/features/plugins/admin/components/Badges/PluginEnterpriseBadge.tsx:5381": [
       [0, 0, 0, "\'HorizontalGroup\' import from \'@grafana/ui\' is restricted from being used by a pattern. Use Stack component instead.", "0"]
     ],
     "public/app/features/plugins/admin/components/Badges/PluginUpdateAvailableBadge.tsx:5381": [
       [0, 0, 0, "Styles should be written using objects.", "0"]
     ],
+    "public/app/features/plugins/admin/components/Badges/index.ts:5381": [
+      [0, 0, 0, "Do not re-export imported variable (\`./PluginDisabledBadge\`)", "0"],
+      [0, 0, 0, "Do not re-export imported variable (\`./PluginInstallBadge\`)", "1"],
+      [0, 0, 0, "Do not re-export imported variable (\`./PluginEnterpriseBadge\`)", "2"],
+      [0, 0, 0, "Do not re-export imported variable (\`./PluginUpdateAvailableBadge\`)", "3"],
+      [0, 0, 0, "Do not re-export imported variable (\`./PluginAngularBadge\`)", "4"],
+      [0, 0, 0, "Do not re-export imported variable (\`./PluginDeprecatedBadge\`)", "5"]
+    ],
     "public/app/features/plugins/admin/components/Badges/sharedStyles.ts:5381": [
       [0, 0, 0, "Styles should be written using objects.", "0"]
     ],
     "public/app/features/plugins/admin/components/GetStartedWithPlugin/GetStartedWithDataSource.tsx:5381": [
       [0, 0, 0, "Do not use any type assertions.", "0"]
+    ],
+    "public/app/features/plugins/admin/components/GetStartedWithPlugin/index.ts:5381": [
+      [0, 0, 0, "Do not re-export imported variable (\`./GetStartedWithPlugin\`)", "0"]
     ],
     "public/app/features/plugins/admin/components/HorizontalGroup.tsx:5381": [
       [0, 0, 0, "Styles should be written using objects.", "0"]
@@ -3916,6 +4079,10 @@ exports[`better eslint`] = {
     "public/app/features/plugins/admin/components/InstallControls/InstallControlsWarning.tsx:5381": [
       [0, 0, 0, "\'HorizontalGroup\' import from \'@grafana/ui\' is restricted from being used by a pattern. Use Stack component instead.", "0"],
       [0, 0, 0, "Styles should be written using objects.", "1"]
+    ],
+    "public/app/features/plugins/admin/components/InstallControls/index.tsx:5381": [
+      [0, 0, 0, "Do not re-export imported variable (\`./InstallControlsWarning\`)", "0"],
+      [0, 0, 0, "Do not re-export imported variable (\`./InstallControlsButton\`)", "1"]
     ],
     "public/app/features/plugins/admin/components/PluginActions.tsx:5381": [
       [0, 0, 0, "\'HorizontalGroup\' import from \'@grafana/ui\' is restricted from being used by a pattern. Use Stack component instead.", "0"],
@@ -4017,9 +4184,6 @@ exports[`better eslint`] = {
       [0, 0, 0, "Do not use any type assertions.", "2"],
       [0, 0, 0, "Do not use any type assertions.", "3"]
     ],
-    "public/app/features/profile/ChangePasswordForm.tsx:5381": [
-      [0, 0, 0, "\'HorizontalGroup\' import from \'@grafana/ui\' is restricted from being used by a pattern. Use Stack component instead.", "0"]
-    ],
     "public/app/features/profile/UserProfileEditPage.tsx:5381": [
       [0, 0, 0, "\'VerticalGroup\' import from \'@grafana/ui\' is restricted from being used by a pattern. Use Stack component instead.", "0"]
     ],
@@ -4099,13 +4263,9 @@ exports[`better eslint`] = {
     "public/app/features/sandbox/BenchmarksPage.tsx:5381": [
       [0, 0, 0, "\'VerticalGroup\' import from \'@grafana/ui\' is restricted from being used by a pattern. Use Stack component instead.", "0"]
     ],
-    "public/app/features/sandbox/TestStuffPage.tsx:5381": [
-      [0, 0, 0, "\'HorizontalGroup\' import from \'@grafana/ui\' is restricted from being used by a pattern. Use Stack component instead.", "0"]
-    ],
     "public/app/features/search/page/components/ActionRow.tsx:5381": [
-      [0, 0, 0, "\'HorizontalGroup\' import from \'@grafana/ui\' is restricted from being used by a pattern. Use Stack component instead.", "0"],
-      [0, 0, 0, "Styles should be written using objects.", "1"],
-      [0, 0, 0, "Styles should be written using objects.", "2"]
+      [0, 0, 0, "Styles should be written using objects.", "0"],
+      [0, 0, 0, "Styles should be written using objects.", "1"]
     ],
     "public/app/features/search/page/components/SearchResultsTable.tsx:5381": [
       [0, 0, 0, "Styles should be written using objects.", "0"],
@@ -4128,6 +4288,10 @@ exports[`better eslint`] = {
     "public/app/features/search/service/bluge.ts:5381": [
       [0, 0, 0, "Do not use any type assertions.", "0"],
       [0, 0, 0, "Do not use any type assertions.", "1"]
+    ],
+    "public/app/features/search/service/index.ts:5381": [
+      [0, 0, 0, "Do not use export all (\`export * from ...\`)", "0"],
+      [0, 0, 0, "Do not re-export imported variable (\`./searcher\`)", "1"]
     ],
     "public/app/features/search/service/sql.ts:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"]
@@ -4298,6 +4462,10 @@ exports[`better eslint`] = {
     ],
     "public/app/features/transformers/editors/CalculateFieldTransformerEditor/WindowOptionsEditor.tsx:5381": [
       [0, 0, 0, "Do not use any type assertions.", "0"]
+    ],
+    "public/app/features/transformers/editors/CalculateFieldTransformerEditor/index.ts:5381": [
+      [0, 0, 0, "Do not re-export imported variable (\`CalculateFieldTransformerEditor\`)", "0"],
+      [0, 0, 0, "Do not re-export imported variable (\`calculateFieldTransformRegistryItem\`)", "1"]
     ],
     "public/app/features/transformers/editors/ConvertFieldTypeTransformerEditor.tsx:5381": [
       [0, 0, 0, "Do not use any type assertions.", "0"]
@@ -4493,6 +4661,9 @@ exports[`better eslint`] = {
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "1"]
     ],
+    "public/app/features/variables/pickers/index.ts:5381": [
+      [0, 0, 0, "Do not re-export imported variable (\`./OptionsPicker/OptionsPicker\`)", "0"]
+    ],
     "public/app/features/variables/pickers/shared/VariableLink.tsx:5381": [
       [0, 0, 0, "Styles should be written using objects.", "0"],
       [0, 0, 0, "Styles should be written using objects.", "1"]
@@ -4584,11 +4755,13 @@ exports[`better eslint`] = {
       [0, 0, 0, "Unexpected any. Specify a different type.", "7"]
     ],
     "public/app/features/variables/types.ts:5381": [
-      [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "1"],
+      [0, 0, 0, "Do not re-export imported variable (\`@grafana/data\`)", "0"],
+      [0, 0, 0, "Do not re-export imported variable (\`VariableHide\`)", "1"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "2"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "3"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "4"]
+      [0, 0, 0, "Unexpected any. Specify a different type.", "4"],
+      [0, 0, 0, "Unexpected any. Specify a different type.", "5"],
+      [0, 0, 0, "Unexpected any. Specify a different type.", "6"]
     ],
     "public/app/features/variables/utils.ts:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
@@ -4611,8 +4784,18 @@ exports[`better eslint`] = {
       [0, 0, 0, "Unexpected any. Specify a different type.", "1"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "2"]
     ],
+    "public/app/plugins/datasource/azuremonitor/azureMetadata/index.ts:5381": [
+      [0, 0, 0, "Do not use export all (\`export * from ...\`)", "0"],
+      [0, 0, 0, "Do not use export all (\`export * from ...\`)", "1"]
+    ],
     "public/app/plugins/datasource/azuremonitor/azure_monitor/azure_monitor_datasource.ts:5381": [
       [0, 0, 0, "Do not use any type assertions.", "0"]
+    ],
+    "public/app/plugins/datasource/azuremonitor/components/ArgQueryEditor/index.tsx:5381": [
+      [0, 0, 0, "Do not re-export imported variable (\`./ArgQueryEditor\`)", "0"]
+    ],
+    "public/app/plugins/datasource/azuremonitor/components/LogsQueryEditor/index.tsx:5381": [
+      [0, 0, 0, "Do not re-export imported variable (\`./LogsQueryEditor\`)", "0"]
     ],
     "public/app/plugins/datasource/azuremonitor/components/MetricsQueryEditor/DimensionFields.tsx:5381": [
       [0, 0, 0, "\'HorizontalGroup\' import from \'@grafana/ui\' is restricted from being used by a pattern. Use Stack component instead.", "0"]
@@ -4623,11 +4806,36 @@ exports[`better eslint`] = {
     "public/app/plugins/datasource/azuremonitor/components/QueryEditor/QueryEditor.tsx:5381": [
       [0, 0, 0, "Do not use any type assertions.", "0"]
     ],
+    "public/app/plugins/datasource/azuremonitor/components/QueryEditor/index.tsx:5381": [
+      [0, 0, 0, "Do not re-export imported variable (\`./QueryEditor\`)", "0"]
+    ],
+    "public/app/plugins/datasource/azuremonitor/components/ResourceField/index.tsx:5381": [
+      [0, 0, 0, "Do not re-export imported variable (\`./ResourceField\`)", "0"]
+    ],
+    "public/app/plugins/datasource/azuremonitor/components/ResourcePicker/index.tsx:5381": [
+      [0, 0, 0, "Do not re-export imported variable (\`./ResourcePicker\`)", "0"]
+    ],
     "public/app/plugins/datasource/azuremonitor/components/TracesQueryEditor/Filter.tsx:5381": [
       [0, 0, 0, "\'HorizontalGroup\' import from \'@grafana/ui\' is restricted from being used by a pattern. Use Stack component instead.", "0"]
     ],
+    "public/app/plugins/datasource/azuremonitor/components/TracesQueryEditor/index.tsx:5381": [
+      [0, 0, 0, "Do not re-export imported variable (\`./TracesQueryEditor\`)", "0"]
+    ],
     "public/app/plugins/datasource/azuremonitor/components/VariableEditor/VariableEditor.test.tsx:5381": [
       [0, 0, 0, "* import is invalid because \'Layout,HorizontalGroup,VerticalGroup\' from \'@grafana/ui\' is restricted from being used by a pattern. Use Stack component instead.", "0"]
+    ],
+    "public/app/plugins/datasource/azuremonitor/types/index.ts:5381": [
+      [0, 0, 0, "Do not use export all (\`export * from ...\`)", "0"],
+      [0, 0, 0, "Do not use export all (\`export * from ...\`)", "1"],
+      [0, 0, 0, "Do not use export all (\`export * from ...\`)", "2"]
+    ],
+    "public/app/plugins/datasource/azuremonitor/types/query.ts:5381": [
+      [0, 0, 0, "Do not re-export imported variable (\`AzureQueryType\`)", "0"],
+      [0, 0, 0, "Do not re-export imported variable (\`../dataquery.gen\`)", "1"],
+      [0, 0, 0, "Do not re-export imported variable (\`../dataquery.gen\`)", "2"]
+    ],
+    "public/app/plugins/datasource/azuremonitor/types/templateVariables.ts:5381": [
+      [0, 0, 0, "Do not re-export imported variable (\`../dataquery.gen\`)", "0"]
     ],
     "public/app/plugins/datasource/azuremonitor/utils/messageFromError.ts:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"]
@@ -4658,6 +4866,23 @@ exports[`better eslint`] = {
     "public/app/plugins/datasource/cloud-monitoring/components/VisualMetricQueryEditor.tsx:5381": [
       [0, 0, 0, "Styles should be written using objects.", "0"]
     ],
+    "public/app/plugins/datasource/cloud-monitoring/components/index.ts:5381": [
+      [0, 0, 0, "Do not re-export imported variable (\`./Project\`)", "0"],
+      [0, 0, 0, "Do not re-export imported variable (\`./GroupBy\`)", "1"],
+      [0, 0, 0, "Do not re-export imported variable (\`./Alignment\`)", "2"],
+      [0, 0, 0, "Do not re-export imported variable (\`./LabelFilter\`)", "3"],
+      [0, 0, 0, "Do not re-export imported variable (\`./AnnotationsHelp\`)", "4"],
+      [0, 0, 0, "Do not re-export imported variable (\`./AlignmentFunction\`)", "5"],
+      [0, 0, 0, "Do not re-export imported variable (\`./AliasBy\`)", "6"],
+      [0, 0, 0, "Do not re-export imported variable (\`./Aggregation\`)", "7"],
+      [0, 0, 0, "Do not re-export imported variable (\`./MetricQueryEditor\`)", "8"],
+      [0, 0, 0, "Do not re-export imported variable (\`./SLOQueryEditor\`)", "9"],
+      [0, 0, 0, "Do not re-export imported variable (\`./MQLQueryEditor\`)", "10"],
+      [0, 0, 0, "Do not re-export imported variable (\`./Fields\`)", "11"],
+      [0, 0, 0, "Do not re-export imported variable (\`./VisualMetricQueryEditor\`)", "12"],
+      [0, 0, 0, "Do not re-export imported variable (\`./PeriodSelect\`)", "13"],
+      [0, 0, 0, "Do not re-export imported variable (\`./Preprocessor\`)", "14"]
+    ],
     "public/app/plugins/datasource/cloud-monitoring/datasource.ts:5381": [
       [0, 0, 0, "Do not use any type assertions.", "0"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "1"],
@@ -4668,8 +4893,45 @@ exports[`better eslint`] = {
       [0, 0, 0, "Do not use any type assertions.", "0"],
       [0, 0, 0, "Do not use any type assertions.", "1"]
     ],
+    "public/app/plugins/datasource/cloud-monitoring/types/query.ts:5381": [
+      [0, 0, 0, "Do not re-export imported variable (\`QueryType\`)", "0"],
+      [0, 0, 0, "Do not re-export imported variable (\`../dataquery.gen\`)", "1"],
+      [0, 0, 0, "Do not re-export imported variable (\`../dataquery.gen\`)", "2"]
+    ],
     "public/app/plugins/datasource/cloud-monitoring/types/types.ts:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"]
+    ],
+    "public/app/plugins/datasource/cloud-monitoring/webpack.config.ts:5381": [
+      [0, 0, 0, "Do not re-export imported variable (\`config\`)", "0"]
+    ],
+    "public/app/plugins/datasource/cloudwatch/__mocks__/cloudwatch-logs-test-data/index.ts:5381": [
+      [0, 0, 0, "Do not re-export imported variable (\`./empty\`)", "0"],
+      [0, 0, 0, "Do not re-export imported variable (\`./whitespaceQuery\`)", "1"],
+      [0, 0, 0, "Do not re-export imported variable (\`./commentOnlyQuery\`)", "2"],
+      [0, 0, 0, "Do not re-export imported variable (\`./singleLineFullQuery\`)", "3"],
+      [0, 0, 0, "Do not re-export imported variable (\`./multiLineFullQuery\`)", "4"],
+      [0, 0, 0, "Do not re-export imported variable (\`./filterQuery\`)", "5"],
+      [0, 0, 0, "Do not re-export imported variable (\`./newCommandQuery\`)", "6"],
+      [0, 0, 0, "Do not re-export imported variable (\`./sortQuery\`)", "7"]
+    ],
+    "public/app/plugins/datasource/cloudwatch/__mocks__/cloudwatch-sql-test-data/index.ts:5381": [
+      [0, 0, 0, "Do not re-export imported variable (\`./multiLineFullQuery\`)", "0"],
+      [0, 0, 0, "Do not re-export imported variable (\`./singleLineFullQuery\`)", "1"],
+      [0, 0, 0, "Do not re-export imported variable (\`./singleLineEmptyQuery\`)", "2"],
+      [0, 0, 0, "Do not re-export imported variable (\`./singleLineTwoQueries\`)", "3"],
+      [0, 0, 0, "Do not re-export imported variable (\`./multiLineIncompleteQueryWithoutNamespace\`)", "4"]
+    ],
+    "public/app/plugins/datasource/cloudwatch/__mocks__/dynamic-label-test-data/index.ts:5381": [
+      [0, 0, 0, "Do not re-export imported variable (\`./afterLabelValue\`)", "0"],
+      [0, 0, 0, "Do not re-export imported variable (\`./insideLabelValue\`)", "1"]
+    ],
+    "public/app/plugins/datasource/cloudwatch/__mocks__/metric-math-test-data/index.ts:5381": [
+      [0, 0, 0, "Do not re-export imported variable (\`./singleLineEmptyQuery\`)", "0"],
+      [0, 0, 0, "Do not re-export imported variable (\`./afterFunctionQuery\`)", "1"],
+      [0, 0, 0, "Do not re-export imported variable (\`./secondArgQuery\`)", "2"],
+      [0, 0, 0, "Do not re-export imported variable (\`./secondArgAfterSearchQuery\`)", "3"],
+      [0, 0, 0, "Do not re-export imported variable (\`./thirdArgAfterSearchQuery\`)", "4"],
+      [0, 0, 0, "Do not re-export imported variable (\`./withinStringQuery\`)", "5"]
     ],
     "public/app/plugins/datasource/cloudwatch/components/CheatSheet/LogsCheatSheet.tsx:5381": [
       [0, 0, 0, "Styles should be written using objects.", "0"],
@@ -4687,11 +4949,23 @@ exports[`better eslint`] = {
     "public/app/plugins/datasource/cloudwatch/components/QueryEditor/MetricsQueryEditor/MetricsQueryEditor.test.tsx:5381": [
       [0, 0, 0, "* import is invalid because \'Layout,HorizontalGroup,VerticalGroup\' from \'@grafana/ui\' is restricted from being used by a pattern. Use Stack component instead.", "0"]
     ],
+    "public/app/plugins/datasource/cloudwatch/components/QueryEditor/MetricsQueryEditor/SQLBuilderEditor/index.tsx:5381": [
+      [0, 0, 0, "Do not re-export imported variable (\`./SQLBuilderEditor\`)", "0"]
+    ],
+    "public/app/plugins/datasource/cloudwatch/components/QueryEditor/QueryEditor.test.tsx:5381": [
+      [0, 0, 0, "Do not re-export imported variable (\`./MetricsQueryEditor/SQLCodeEditor\`)", "0"]
+    ],
     "public/app/plugins/datasource/cloudwatch/components/shared/LogGroups/LegacyLogGroupNamesSelection.tsx:5381": [
       [0, 0, 0, "Styles should be written using objects.", "0"]
     ],
+    "public/app/plugins/datasource/cloudwatch/components/shared/MetricStatEditor/index.ts:5381": [
+      [0, 0, 0, "Do not re-export imported variable (\`./MetricStatEditor\`)", "0"]
+    ],
     "public/app/plugins/datasource/cloudwatch/datasource.ts:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"]
+    ],
+    "public/app/plugins/datasource/cloudwatch/expressions.ts:5381": [
+      [0, 0, 0, "Do not re-export imported variable (\`./dataquery.gen\`)", "0"]
     ],
     "public/app/plugins/datasource/cloudwatch/guards.ts:5381": [
       [0, 0, 0, "Do not use any type assertions.", "0"]
@@ -4701,18 +4975,15 @@ exports[`better eslint`] = {
       [0, 0, 0, "Unexpected any. Specify a different type.", "1"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "2"]
     ],
-    "public/app/plugins/datasource/cloudwatch/memoizedDebounce.ts:5381": [
-      [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "1"]
-    ],
     "public/app/plugins/datasource/cloudwatch/types.ts:5381": [
-      [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
+      [0, 0, 0, "Do not use export all (\`export * from ...\`)", "0"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "1"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "2"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "3"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "4"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "5"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "6"]
+      [0, 0, 0, "Unexpected any. Specify a different type.", "6"],
+      [0, 0, 0, "Unexpected any. Specify a different type.", "7"]
     ],
     "public/app/plugins/datasource/cloudwatch/utils/datalinks.ts:5381": [
       [0, 0, 0, "Do not use any type assertions.", "0"],
@@ -4720,6 +4991,11 @@ exports[`better eslint`] = {
     ],
     "public/app/plugins/datasource/cloudwatch/utils/logsRetry.ts:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"]
+    ],
+    "public/app/plugins/datasource/dashboard/index.ts:5381": [
+      [0, 0, 0, "Do not re-export imported variable (\`./runSharedRequest\`)", "0"],
+      [0, 0, 0, "Do not re-export imported variable (\`./DashboardQueryEditor\`)", "1"],
+      [0, 0, 0, "Do not re-export imported variable (\`./types\`)", "2"]
     ],
     "public/app/plugins/datasource/dashboard/runSharedRequest.ts:5381": [
       [0, 0, 0, "Do not use any type assertions.", "0"],
@@ -4734,17 +5010,17 @@ exports[`better eslint`] = {
       [0, 0, 0, "Unexpected any. Specify a different type.", "5"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "6"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "7"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "8"],
+      [0, 0, 0, "Do not use any type assertions.", "8"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "9"],
-      [0, 0, 0, "Do not use any type assertions.", "10"],
+      [0, 0, 0, "Unexpected any. Specify a different type.", "10"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "11"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "12"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "13"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "14"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "15"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "16"],
+      [0, 0, 0, "Do not use any type assertions.", "16"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "17"],
-      [0, 0, 0, "Do not use any type assertions.", "18"],
+      [0, 0, 0, "Unexpected any. Specify a different type.", "18"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "19"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "20"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "21"],
@@ -4757,9 +5033,7 @@ exports[`better eslint`] = {
       [0, 0, 0, "Unexpected any. Specify a different type.", "28"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "29"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "30"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "31"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "32"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "33"]
+      [0, 0, 0, "Unexpected any. Specify a different type.", "31"]
     ],
     "public/app/plugins/datasource/elasticsearch/LanguageProvider.ts:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
@@ -4769,9 +5043,8 @@ exports[`better eslint`] = {
     ],
     "public/app/plugins/datasource/elasticsearch/LegacyQueryRunner.ts:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "1"],
-      [0, 0, 0, "Do not use any type assertions.", "2"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "3"]
+      [0, 0, 0, "Do not use any type assertions.", "1"],
+      [0, 0, 0, "Unexpected any. Specify a different type.", "2"]
     ],
     "public/app/plugins/datasource/elasticsearch/QueryBuilder.ts:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
@@ -4879,6 +5152,10 @@ exports[`better eslint`] = {
     "public/app/plugins/datasource/elasticsearch/test-helpers/render.tsx:5381": [
       [0, 0, 0, "Do not use any type assertions.", "0"]
     ],
+    "public/app/plugins/datasource/elasticsearch/types.ts:5381": [
+      [0, 0, 0, "Do not use export all (\`export * from ...\`)", "0"],
+      [0, 0, 0, "Do not re-export imported variable (\`./dataquery.gen\`)", "1"]
+    ],
     "public/app/plugins/datasource/grafana-pyroscope-datasource/QueryEditor/LabelsEditor.tsx:5381": [
       [0, 0, 0, "Styles should be written using objects.", "0"],
       [0, 0, 0, "Styles should be written using objects.", "1"]
@@ -4908,12 +5185,19 @@ exports[`better eslint`] = {
       [0, 0, 0, "Unexpected any. Specify a different type.", "1"],
       [0, 0, 0, "Styles should be written using objects.", "2"]
     ],
+    "public/app/plugins/datasource/grafana-testdata-datasource/components/index.ts:5381": [
+      [0, 0, 0, "Do not re-export imported variable (\`./StreamingClientEditor\`)", "0"],
+      [0, 0, 0, "Do not re-export imported variable (\`./RandomWalkEditor\`)", "1"]
+    ],
     "public/app/plugins/datasource/grafana-testdata-datasource/datasource.ts:5381": [
       [0, 0, 0, "Do not use any type assertions.", "0"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "1"]
     ],
     "public/app/plugins/datasource/grafana-testdata-datasource/runStreams.ts:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"]
+    ],
+    "public/app/plugins/datasource/grafana-testdata-datasource/webpack.config.ts:5381": [
+      [0, 0, 0, "Do not re-export imported variable (\`config\`)", "0"]
     ],
     "public/app/plugins/datasource/grafana/components/AnnotationQueryEditor.tsx:5381": [
       [0, 0, 0, "Do not use any type assertions.", "0"]
@@ -4922,8 +5206,7 @@ exports[`better eslint`] = {
       [0, 0, 0, "Do not use any type assertions.", "0"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "1"],
       [0, 0, 0, "Do not use any type assertions.", "2"],
-      [0, 0, 0, "Do not use any type assertions.", "3"],
-      [0, 0, 0, "Styles should be written using objects.", "4"]
+      [0, 0, 0, "Styles should be written using objects.", "3"]
     ],
     "public/app/plugins/datasource/grafana/components/TimePickerInput.tsx:5381": [
       [0, 0, 0, "Styles should be written using objects.", "0"],
@@ -4932,21 +5215,19 @@ exports[`better eslint`] = {
       [0, 0, 0, "Styles should be written using objects.", "3"]
     ],
     "public/app/plugins/datasource/grafana/components/TimeRegionEditor.tsx:5381": [
-      [0, 0, 0, "\'HorizontalGroup\' import from \'@grafana/ui\' is restricted from being used by a pattern. Use Stack component instead.", "0"],
-      [0, 0, 0, "Styles should be written using objects.", "1"],
-      [0, 0, 0, "Styles should be written using objects.", "2"]
+      [0, 0, 0, "Styles should be written using objects.", "0"],
+      [0, 0, 0, "Styles should be written using objects.", "1"]
     ],
     "public/app/plugins/datasource/grafana/datasource.ts:5381": [
-      [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
+      [0, 0, 0, "Do not use any type assertions.", "0"],
       [0, 0, 0, "Do not use any type assertions.", "1"],
       [0, 0, 0, "Do not use any type assertions.", "2"],
-      [0, 0, 0, "Do not use any type assertions.", "3"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "4"],
+      [0, 0, 0, "Unexpected any. Specify a different type.", "3"],
+      [0, 0, 0, "Do not use any type assertions.", "4"],
       [0, 0, 0, "Do not use any type assertions.", "5"],
       [0, 0, 0, "Do not use any type assertions.", "6"],
-      [0, 0, 0, "Do not use any type assertions.", "7"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "8"],
-      [0, 0, 0, "Do not use any type assertions.", "9"]
+      [0, 0, 0, "Unexpected any. Specify a different type.", "7"],
+      [0, 0, 0, "Do not use any type assertions.", "8"]
     ],
     "public/app/plugins/datasource/graphite/components/AddGraphiteFunction.tsx:5381": [
       [0, 0, 0, "Styles should be written using objects.", "0"]
@@ -5040,9 +5321,7 @@ exports[`better eslint`] = {
       [0, 0, 0, "Unexpected any. Specify a different type.", "49"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "50"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "51"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "52"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "53"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "54"]
+      [0, 0, 0, "Unexpected any. Specify a different type.", "52"]
     ],
     "public/app/plugins/datasource/graphite/gfunc.ts:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
@@ -5102,9 +5381,6 @@ exports[`better eslint`] = {
       [0, 0, 0, "Do not use any type assertions.", "0"],
       [0, 0, 0, "Do not use any type assertions.", "1"]
     ],
-    "public/app/plugins/datasource/graphite/state/helpers.ts:5381": [
-      [0, 0, 0, "Do not use any type assertions.", "0"]
-    ],
     "public/app/plugins/datasource/graphite/state/store.ts:5381": [
       [0, 0, 0, "Do not use any type assertions.", "0"],
       [0, 0, 0, "Do not use any type assertions.", "1"]
@@ -5148,9 +5424,7 @@ exports[`better eslint`] = {
       [0, 0, 0, "Unexpected any. Specify a different type.", "10"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "11"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "12"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "13"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "14"],
-      [0, 0, 0, "Do not use any type assertions.", "15"]
+      [0, 0, 0, "Do not use any type assertions.", "13"]
     ],
     "public/app/plugins/datasource/influxdb/influx_query_model.ts:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
@@ -5164,8 +5438,7 @@ exports[`better eslint`] = {
       [0, 0, 0, "Unexpected any. Specify a different type.", "8"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "9"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "10"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "11"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "12"]
+      [0, 0, 0, "Unexpected any. Specify a different type.", "11"]
     ],
     "public/app/plugins/datasource/influxdb/influx_series.ts:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
@@ -5212,8 +5485,7 @@ exports[`better eslint`] = {
       [0, 0, 0, "Unexpected any. Specify a different type.", "11"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "12"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "13"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "14"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "15"]
+      [0, 0, 0, "Unexpected any. Specify a different type.", "14"]
     ],
     "public/app/plugins/datasource/influxdb/response_parser.ts:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
@@ -5225,6 +5497,9 @@ exports[`better eslint`] = {
     ],
     "public/app/plugins/datasource/jaeger/_importedDependencies/model/transform-trace-data.tsx:5381": [
       [0, 0, 0, "Do not use any type assertions.", "0"]
+    ],
+    "public/app/plugins/datasource/jaeger/_importedDependencies/types/index.tsx:5381": [
+      [0, 0, 0, "Do not re-export imported variable (\`./trace\`)", "0"]
     ],
     "public/app/plugins/datasource/jaeger/_importedDependencies/types/trace.ts:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"]
@@ -5243,22 +5518,10 @@ exports[`better eslint`] = {
       [0, 0, 0, "Do not use any type assertions.", "0"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "1"]
     ],
-    "public/app/plugins/datasource/jaeger/helpers/createFetchResponse.ts:5381": [
-      [0, 0, 0, "Do not use any type assertions.", "0"],
-      [0, 0, 0, "Do not use any type assertions.", "1"]
-    ],
-    "public/app/plugins/datasource/jaeger/testResponse.ts:5381": [
-      [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "1"]
-    ],
     "public/app/plugins/datasource/jaeger/types.ts:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"]
     ],
     "public/app/plugins/datasource/loki/LanguageProvider.ts:5381": [
-      [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "1"]
-    ],
-    "public/app/plugins/datasource/loki/LiveStreams.ts:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"]
     ],
     "public/app/plugins/datasource/loki/components/LokiContextUi.tsx:5381": [
@@ -5317,16 +5580,7 @@ exports[`better eslint`] = {
     "public/app/plugins/datasource/loki/datasource.ts:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "1"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "2"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "3"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "4"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "5"]
-    ],
-    "public/app/plugins/datasource/loki/queryUtils.ts:5381": [
-      [0, 0, 0, "Do not use any type assertions.", "0"]
-    ],
-    "public/app/plugins/datasource/loki/querybuilder/binaryScalarOperations.ts:5381": [
-      [0, 0, 0, "Unexpected any. Specify a different type.", "0"]
+      [0, 0, 0, "Unexpected any. Specify a different type.", "2"]
     ],
     "public/app/plugins/datasource/loki/querybuilder/components/LabelBrowserModal.tsx:5381": [
       [0, 0, 0, "Styles should be written using objects.", "0"]
@@ -5352,8 +5606,15 @@ exports[`better eslint`] = {
       [0, 0, 0, "Styles should be written using objects.", "2"]
     ],
     "public/app/plugins/datasource/loki/streaming.ts:5381": [
-      [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "1"]
+      [0, 0, 0, "Unexpected any. Specify a different type.", "0"]
+    ],
+    "public/app/plugins/datasource/loki/types.ts:5381": [
+      [0, 0, 0, "Do not re-export imported variable (\`LokiQueryDirection\`)", "0"],
+      [0, 0, 0, "Do not re-export imported variable (\`LokiQueryType\`)", "1"],
+      [0, 0, 0, "Do not re-export imported variable (\`SupportingQueryType\`)", "2"]
+    ],
+    "public/app/plugins/datasource/mixed/module.ts:5381": [
+      [0, 0, 0, "Do not re-export imported variable (\`MixedDatasource\`)", "0"]
     ],
     "public/app/plugins/datasource/opentsdb/components/OpenTsdbQueryEditor.tsx:5381": [
       [0, 0, 0, "Styles should be written using objects.", "0"],
@@ -5404,23 +5665,10 @@ exports[`better eslint`] = {
       [0, 0, 0, "Unexpected any. Specify a different type.", "38"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "39"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "40"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "41"],
+      [0, 0, 0, "Do not use any type assertions.", "41"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "42"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "43"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "44"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "45"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "46"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "47"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "48"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "49"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "50"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "51"],
-      [0, 0, 0, "Do not use any type assertions.", "52"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "53"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "54"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "55"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "56"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "57"]
+      [0, 0, 0, "Unexpected any. Specify a different type.", "44"]
     ],
     "public/app/plugins/datasource/opentsdb/migrations.ts:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"]
@@ -5429,39 +5677,8 @@ exports[`better eslint`] = {
       [0, 0, 0, "Styles should be written using objects.", "0"],
       [0, 0, 0, "Styles should be written using objects.", "1"]
     ],
-    "public/app/plugins/datasource/prometheus/components/PromExemplarField.tsx:5381": [
-      [0, 0, 0, "Styles should be written using objects.", "0"],
-      [0, 0, 0, "Styles should be written using objects.", "1"],
-      [0, 0, 0, "Styles should be written using objects.", "2"]
-    ],
-    "public/app/plugins/datasource/prometheus/components/PromExploreExtraField.tsx:5381": [
-      [0, 0, 0, "Styles should be written using objects.", "0"],
-      [0, 0, 0, "Styles should be written using objects.", "1"]
-    ],
-    "public/app/plugins/datasource/prometheus/components/PromQueryField.test.tsx:5381": [
-      [0, 0, 0, "Unexpected any. Specify a different type.", "0"]
-    ],
-    "public/app/plugins/datasource/prometheus/components/PromQueryField.tsx:5381": [
-      [0, 0, 0, "Unexpected any. Specify a different type.", "0"]
-    ],
-    "public/app/plugins/datasource/prometheus/components/PrometheusMetricsBrowser.tsx:5381": [
-      [0, 0, 0, "\'HorizontalGroup\' import from \'@grafana/ui\' is restricted from being used by a pattern. Use Stack component instead.", "0"],
-      [0, 0, 0, "Styles should be written using objects.", "1"],
-      [0, 0, 0, "Styles should be written using objects.", "2"],
-      [0, 0, 0, "Styles should be written using objects.", "3"],
-      [0, 0, 0, "Styles should be written using objects.", "4"],
-      [0, 0, 0, "Styles should be written using objects.", "5"],
-      [0, 0, 0, "Styles should be written using objects.", "6"],
-      [0, 0, 0, "Styles should be written using objects.", "7"],
-      [0, 0, 0, "Styles should be written using objects.", "8"],
-      [0, 0, 0, "Styles should be written using objects.", "9"],
-      [0, 0, 0, "Styles should be written using objects.", "10"],
-      [0, 0, 0, "Styles should be written using objects.", "11"],
-      [0, 0, 0, "Styles should be written using objects.", "12"]
-    ],
-    "public/app/plugins/datasource/prometheus/components/monaco-query-field/MonacoQueryField.tsx:5381": [
-      [0, 0, 0, "Styles should be written using objects.", "0"],
-      [0, 0, 0, "Styles should be written using objects.", "1"]
+    "public/app/plugins/datasource/parca/webpack.config.ts:5381": [
+      [0, 0, 0, "Do not re-export imported variable (\`config\`)", "0"]
     ],
     "public/app/plugins/datasource/prometheus/configuration/AzureCredentialsConfig.ts:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
@@ -5483,199 +5700,6 @@ exports[`better eslint`] = {
       [0, 0, 0, "Unexpected any. Specify a different type.", "16"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "17"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "18"]
-    ],
-    "public/app/plugins/datasource/prometheus/configuration/ConfigEditor.tsx:5381": [
-      [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "1"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "2"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "3"],
-      [0, 0, 0, "Styles should be written using objects.", "4"],
-      [0, 0, 0, "Styles should be written using objects.", "5"],
-      [0, 0, 0, "Styles should be written using objects.", "6"],
-      [0, 0, 0, "Styles should be written using objects.", "7"],
-      [0, 0, 0, "Styles should be written using objects.", "8"],
-      [0, 0, 0, "Styles should be written using objects.", "9"],
-      [0, 0, 0, "Styles should be written using objects.", "10"],
-      [0, 0, 0, "Styles should be written using objects.", "11"],
-      [0, 0, 0, "Styles should be written using objects.", "12"],
-      [0, 0, 0, "Styles should be written using objects.", "13"],
-      [0, 0, 0, "Styles should be written using objects.", "14"],
-      [0, 0, 0, "Styles should be written using objects.", "15"],
-      [0, 0, 0, "Styles should be written using objects.", "16"],
-      [0, 0, 0, "Styles should be written using objects.", "17"],
-      [0, 0, 0, "Styles should be written using objects.", "18"],
-      [0, 0, 0, "Styles should be written using objects.", "19"]
-    ],
-    "public/app/plugins/datasource/prometheus/configuration/ConfigEditorPackage.tsx:5381": [
-      [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "1"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "2"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "3"]
-    ],
-    "public/app/plugins/datasource/prometheus/configuration/ExemplarsSettings.tsx:5381": [
-      [0, 0, 0, "Styles should be written using objects.", "0"]
-    ],
-    "public/app/plugins/datasource/prometheus/datasource.ts:5381": [
-      [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "1"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "2"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "3"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "4"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "5"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "6"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "7"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "8"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "9"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "10"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "11"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "12"]
-    ],
-    "public/app/plugins/datasource/prometheus/language_provider.ts:5381": [
-      [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "1"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "2"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "3"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "4"]
-    ],
-    "public/app/plugins/datasource/prometheus/language_utils.ts:5381": [
-      [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "1"],
-      [0, 0, 0, "Do not use any type assertions.", "2"]
-    ],
-    "public/app/plugins/datasource/prometheus/metric_find_query.ts:5381": [
-      [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "1"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "2"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "3"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "4"]
-    ],
-    "public/app/plugins/datasource/prometheus/query_hints.ts:5381": [
-      [0, 0, 0, "Unexpected any. Specify a different type.", "0"]
-    ],
-    "public/app/plugins/datasource/prometheus/querybuilder/QueryPattern.tsx:5381": [
-      [0, 0, 0, "Styles should be written using objects.", "0"],
-      [0, 0, 0, "Styles should be written using objects.", "1"],
-      [0, 0, 0, "Styles should be written using objects.", "2"],
-      [0, 0, 0, "Styles should be written using objects.", "3"]
-    ],
-    "public/app/plugins/datasource/prometheus/querybuilder/QueryPatternsModal.tsx:5381": [
-      [0, 0, 0, "Styles should be written using objects.", "0"],
-      [0, 0, 0, "Styles should be written using objects.", "1"]
-    ],
-    "public/app/plugins/datasource/prometheus/querybuilder/binaryScalarOperations.ts:5381": [
-      [0, 0, 0, "Unexpected any. Specify a different type.", "0"]
-    ],
-    "public/app/plugins/datasource/prometheus/querybuilder/components/LabelFilterItem.tsx:5381": [
-      [0, 0, 0, "Do not use any type assertions.", "0"],
-      [0, 0, 0, "Do not use any type assertions.", "1"],
-      [0, 0, 0, "Do not use any type assertions.", "2"],
-      [0, 0, 0, "Do not use any type assertions.", "3"]
-    ],
-    "public/app/plugins/datasource/prometheus/querybuilder/components/LabelFilters.tsx:5381": [
-      [0, 0, 0, "Styles should be written using objects.", "0"]
-    ],
-    "public/app/plugins/datasource/prometheus/querybuilder/components/LabelParamEditor.tsx:5381": [
-      [0, 0, 0, "Do not use any type assertions.", "0"]
-    ],
-    "public/app/plugins/datasource/prometheus/querybuilder/components/MetricSelect.tsx:5381": [
-      [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "1"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "2"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "3"],
-      [0, 0, 0, "Styles should be written using objects.", "4"],
-      [0, 0, 0, "Styles should be written using objects.", "5"],
-      [0, 0, 0, "Styles should be written using objects.", "6"],
-      [0, 0, 0, "Styles should be written using objects.", "7"],
-      [0, 0, 0, "Styles should be written using objects.", "8"],
-      [0, 0, 0, "Styles should be written using objects.", "9"],
-      [0, 0, 0, "Styles should be written using objects.", "10"],
-      [0, 0, 0, "Styles should be written using objects.", "11"],
-      [0, 0, 0, "Styles should be written using objects.", "12"]
-    ],
-    "public/app/plugins/datasource/prometheus/querybuilder/components/PromQueryBuilder.tsx:5381": [
-      [0, 0, 0, "Do not use any type assertions.", "0"]
-    ],
-    "public/app/plugins/datasource/prometheus/querybuilder/components/PromQueryCodeEditor.tsx:5381": [
-      [0, 0, 0, "Styles should be written using objects.", "0"]
-    ],
-    "public/app/plugins/datasource/prometheus/querybuilder/components/metrics-modal/AdditionalSettings.tsx:5381": [
-      [0, 0, 0, "Styles should be written using objects.", "0"],
-      [0, 0, 0, "Styles should be written using objects.", "1"],
-      [0, 0, 0, "Styles should be written using objects.", "2"]
-    ],
-    "public/app/plugins/datasource/prometheus/querybuilder/components/metrics-modal/ResultsTable.tsx:5381": [
-      [0, 0, 0, "Styles should be written using objects.", "0"],
-      [0, 0, 0, "Styles should be written using objects.", "1"],
-      [0, 0, 0, "Styles should be written using objects.", "2"],
-      [0, 0, 0, "Styles should be written using objects.", "3"],
-      [0, 0, 0, "Styles should be written using objects.", "4"],
-      [0, 0, 0, "Styles should be written using objects.", "5"],
-      [0, 0, 0, "Styles should be written using objects.", "6"],
-      [0, 0, 0, "Styles should be written using objects.", "7"],
-      [0, 0, 0, "Styles should be written using objects.", "8"],
-      [0, 0, 0, "Styles should be written using objects.", "9"],
-      [0, 0, 0, "Styles should be written using objects.", "10"],
-      [0, 0, 0, "Styles should be written using objects.", "11"],
-      [0, 0, 0, "Styles should be written using objects.", "12"]
-    ],
-    "public/app/plugins/datasource/prometheus/querybuilder/components/metrics-modal/styles.ts:5381": [
-      [0, 0, 0, "Styles should be written using objects.", "0"],
-      [0, 0, 0, "Styles should be written using objects.", "1"],
-      [0, 0, 0, "Styles should be written using objects.", "2"],
-      [0, 0, 0, "Styles should be written using objects.", "3"],
-      [0, 0, 0, "Styles should be written using objects.", "4"],
-      [0, 0, 0, "Styles should be written using objects.", "5"],
-      [0, 0, 0, "Styles should be written using objects.", "6"],
-      [0, 0, 0, "Styles should be written using objects.", "7"],
-      [0, 0, 0, "Styles should be written using objects.", "8"],
-      [0, 0, 0, "Styles should be written using objects.", "9"],
-      [0, 0, 0, "Styles should be written using objects.", "10"],
-      [0, 0, 0, "Styles should be written using objects.", "11"],
-      [0, 0, 0, "Styles should be written using objects.", "12"],
-      [0, 0, 0, "Styles should be written using objects.", "13"],
-      [0, 0, 0, "Styles should be written using objects.", "14"],
-      [0, 0, 0, "Styles should be written using objects.", "15"],
-      [0, 0, 0, "Styles should be written using objects.", "16"],
-      [0, 0, 0, "Styles should be written using objects.", "17"],
-      [0, 0, 0, "Styles should be written using objects.", "18"]
-    ],
-    "public/app/plugins/datasource/prometheus/querybuilder/operationUtils.ts:5381": [
-      [0, 0, 0, "Do not use any type assertions.", "0"]
-    ],
-    "public/app/plugins/datasource/prometheus/querybuilder/shared/LabelFilterItem.tsx:5381": [
-      [0, 0, 0, "Do not use any type assertions.", "0"],
-      [0, 0, 0, "Do not use any type assertions.", "1"],
-      [0, 0, 0, "Do not use any type assertions.", "2"],
-      [0, 0, 0, "Do not use any type assertions.", "3"],
-      [0, 0, 0, "Do not use any type assertions.", "4"],
-      [0, 0, 0, "Do not use any type assertions.", "5"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "6"],
-      [0, 0, 0, "Do not use any type assertions.", "7"],
-      [0, 0, 0, "Do not use any type assertions.", "8"]
-    ],
-    "public/app/plugins/datasource/prometheus/querybuilder/shared/LabelFilters.tsx:5381": [
-      [0, 0, 0, "Do not use any type assertions.", "0"]
-    ],
-    "public/app/plugins/datasource/prometheus/querybuilder/shared/OperationEditor.tsx:5381": [
-      [0, 0, 0, "Unexpected any. Specify a different type.", "0"]
-    ],
-    "public/app/plugins/datasource/prometheus/querybuilder/shared/OperationParamEditor.tsx:5381": [
-      [0, 0, 0, "Do not use any type assertions.", "0"],
-      [0, 0, 0, "Do not use any type assertions.", "1"]
-    ],
-    "public/app/plugins/datasource/prometheus/querybuilder/shared/QueryBuilderHints.tsx:5381": [
-      [0, 0, 0, "Styles should be written using objects.", "0"],
-      [0, 0, 0, "Styles should be written using objects.", "1"]
-    ],
-    "public/app/plugins/datasource/prometheus/querybuilder/shared/types.ts:5381": [
-      [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "1"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "2"]
-    ],
-    "public/app/plugins/datasource/prometheus/types.ts:5381": [
-      [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "1"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "2"]
     ],
     "public/app/plugins/datasource/tempo/QueryField.tsx:5381": [
       [0, 0, 0, "\'HorizontalGroup\' import from \'@grafana/ui\' is restricted from being used by a pattern. Use Stack component instead.", "0"]
@@ -5706,10 +5730,6 @@ exports[`better eslint`] = {
       [0, 0, 0, "Unexpected any. Specify a different type.", "1"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "2"]
     ],
-    "public/app/plugins/datasource/tempo/_importedDependencies/test/helpers/createFetchResponse.ts:5381": [
-      [0, 0, 0, "Do not use any type assertions.", "0"],
-      [0, 0, 0, "Do not use any type assertions.", "1"]
-    ],
     "public/app/plugins/datasource/tempo/configuration/TraceQLSearchSettings.tsx:5381": [
       [0, 0, 0, "Do not use any type assertions.", "0"]
     ],
@@ -5733,6 +5753,9 @@ exports[`better eslint`] = {
       [0, 0, 0, "Do not use any type assertions.", "6"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "7"]
     ],
+    "public/app/plugins/datasource/tempo/webpack.config.ts:5381": [
+      [0, 0, 0, "Do not re-export imported variable (\`config\`)", "0"]
+    ],
     "public/app/plugins/datasource/zipkin/ConfigEditor.tsx:5381": [
       [0, 0, 0, "Styles should be written using objects.", "0"]
     ],
@@ -5745,12 +5768,11 @@ exports[`better eslint`] = {
       [0, 0, 0, "Do not use any type assertions.", "0"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "1"]
     ],
-    "public/app/plugins/datasource/zipkin/utils/testResponse.ts:5381": [
-      [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "1"]
-    ],
     "public/app/plugins/datasource/zipkin/utils/transforms.ts:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"]
+    ],
+    "public/app/plugins/datasource/zipkin/webpack.config.ts:5381": [
+      [0, 0, 0, "Do not re-export imported variable (\`config\`)", "0"]
     ],
     "public/app/plugins/panel/alertlist/AlertInstances.tsx:5381": [
       [0, 0, 0, "Styles should be written using objects.", "0"],
@@ -5808,6 +5830,16 @@ exports[`better eslint`] = {
       [0, 0, 0, "Do not use any type assertions.", "0"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "1"]
     ],
+    "public/app/plugins/panel/candlestick/types.ts:5381": [
+      [0, 0, 0, "Do not re-export imported variable (\`Options\`)", "0"],
+      [0, 0, 0, "Do not re-export imported variable (\`CandlestickColors\`)", "1"],
+      [0, 0, 0, "Do not re-export imported variable (\`defaultCandlestickColors\`)", "2"],
+      [0, 0, 0, "Do not re-export imported variable (\`CandleStyle\`)", "3"],
+      [0, 0, 0, "Do not re-export imported variable (\`ColorStrategy\`)", "4"],
+      [0, 0, 0, "Do not re-export imported variable (\`VizDisplayMode\`)", "5"],
+      [0, 0, 0, "Do not re-export imported variable (\`CandlestickFieldMap\`)", "6"],
+      [0, 0, 0, "Do not re-export imported variable (\`FieldConfig\`)", "7"]
+    ],
     "public/app/plugins/panel/canvas/components/CanvasTooltip.tsx:5381": [
       [0, 0, 0, "\'VerticalGroup\' import from \'@grafana/ui\' is restricted from being used by a pattern. Use Stack component instead.", "0"]
     ],
@@ -5820,8 +5852,7 @@ exports[`better eslint`] = {
     ],
     "public/app/plugins/panel/canvas/editor/element/PlacementEditor.tsx:5381": [
       [0, 0, 0, "\'HorizontalGroup\' import from \'@grafana/ui\' is restricted from being used by a pattern. Use Stack component instead.", "0"],
-      [0, 0, 0, "\'VerticalGroup\' import from \'@grafana/ui\' is restricted from being used by a pattern. Use Stack component instead.", "1"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "2"]
+      [0, 0, 0, "\'VerticalGroup\' import from \'@grafana/ui\' is restricted from being used by a pattern. Use Stack component instead.", "1"]
     ],
     "public/app/plugins/panel/canvas/editor/element/elementEditor.tsx:5381": [
       [0, 0, 0, "Do not use any type assertions.", "0"],
@@ -5829,13 +5860,11 @@ exports[`better eslint`] = {
     ],
     "public/app/plugins/panel/canvas/editor/inline/InlineEditBody.tsx:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "1"],
-      [0, 0, 0, "Do not use any type assertions.", "2"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "3"]
+      [0, 0, 0, "Do not use any type assertions.", "1"],
+      [0, 0, 0, "Unexpected any. Specify a different type.", "2"]
     ],
     "public/app/plugins/panel/canvas/editor/layer/TreeNavigationEditor.tsx:5381": [
-      [0, 0, 0, "\'HorizontalGroup\' import from \'@grafana/ui\' is restricted from being used by a pattern. Use Stack component instead.", "0"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "1"]
+      [0, 0, 0, "\'HorizontalGroup\' import from \'@grafana/ui\' is restricted from being used by a pattern. Use Stack component instead.", "0"]
     ],
     "public/app/plugins/panel/canvas/editor/layer/layerEditor.tsx:5381": [
       [0, 0, 0, "Do not use any type assertions.", "0"],
@@ -5881,8 +5910,7 @@ exports[`better eslint`] = {
       [0, 0, 0, "Unexpected any. Specify a different type.", "2"]
     ],
     "public/app/plugins/panel/geomap/editor/GeomapStyleRulesEditor.tsx:5381": [
-      [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
-      [0, 0, 0, "Do not use any type assertions.", "1"]
+      [0, 0, 0, "Do not use any type assertions.", "0"]
     ],
     "public/app/plugins/panel/geomap/editor/MapViewEditor.tsx:5381": [
       [0, 0, 0, "\'VerticalGroup\' import from \'@grafana/ui\' is restricted from being used by a pattern. Use Stack component instead.", "0"]
@@ -5903,8 +5931,7 @@ exports[`better eslint`] = {
       [0, 0, 0, "Do not use any type assertions.", "12"]
     ],
     "public/app/plugins/panel/geomap/editor/StyleRuleEditor.tsx:5381": [
-      [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
-      [0, 0, 0, "Do not use any type assertions.", "1"]
+      [0, 0, 0, "Do not use any type assertions.", "0"]
     ],
     "public/app/plugins/panel/geomap/layers/basemaps/esri.ts:5381": [
       [0, 0, 0, "Do not use any type assertions.", "0"]
@@ -5922,6 +5949,9 @@ exports[`better eslint`] = {
     "public/app/plugins/panel/geomap/migrations.ts:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "1"]
+    ],
+    "public/app/plugins/panel/geomap/types.ts:5381": [
+      [0, 0, 0, "Do not re-export imported variable (\`./panelcfg.gen\`)", "0"]
     ],
     "public/app/plugins/panel/geomap/utils/layers.ts:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"]
@@ -5959,7 +5989,8 @@ exports[`better eslint`] = {
       [0, 0, 0, "Unexpected any. Specify a different type.", "1"]
     ],
     "public/app/plugins/panel/heatmap/types.ts:5381": [
-      [0, 0, 0, "Do not use any type assertions.", "0"]
+      [0, 0, 0, "Do not use export all (\`export * from ...\`)", "0"],
+      [0, 0, 0, "Do not use any type assertions.", "1"]
     ],
     "public/app/plugins/panel/heatmap/utils.ts:5381": [
       [0, 0, 0, "Do not use any type assertions.", "0"],
@@ -5999,6 +6030,9 @@ exports[`better eslint`] = {
     ],
     "public/app/plugins/panel/logs/LogsPanel.tsx:5381": [
       [0, 0, 0, "Do not use any type assertions.", "0"]
+    ],
+    "public/app/plugins/panel/logs/types.ts:5381": [
+      [0, 0, 0, "Do not re-export imported variable (\`./panelcfg.gen\`)", "0"]
     ],
     "public/app/plugins/panel/nodeGraph/Edge.tsx:5381": [
       [0, 0, 0, "Do not use any type assertions.", "0"]
@@ -6054,9 +6088,15 @@ exports[`better eslint`] = {
     "public/app/plugins/panel/nodeGraph/editor/ArcOptionsEditor.tsx:5381": [
       [0, 0, 0, "Styles should be written using objects.", "0"]
     ],
+    "public/app/plugins/panel/nodeGraph/index.ts:5381": [
+      [0, 0, 0, "Do not re-export imported variable (\`./NodeGraph\`)", "0"]
+    ],
     "public/app/plugins/panel/nodeGraph/layout.ts:5381": [
       [0, 0, 0, "Do not use any type assertions.", "0"],
       [0, 0, 0, "Do not use any type assertions.", "1"]
+    ],
+    "public/app/plugins/panel/nodeGraph/types.ts:5381": [
+      [0, 0, 0, "Do not re-export imported variable (\`./panelcfg.gen\`)", "0"]
     ],
     "public/app/plugins/panel/nodeGraph/useContextMenu.tsx:5381": [
       [0, 0, 0, "Styles should be written using objects.", "0"],
@@ -6216,12 +6256,18 @@ exports[`better eslint`] = {
     "public/app/plugins/panel/xychart/v2/utils.ts:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"]
     ],
+    "public/app/plugins/sdk.ts:5381": [
+      [0, 0, 0, "Do not re-export imported variable (\`loadPluginCss\`)", "0"]
+    ],
     "public/app/store/configureStore.ts:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"]
     ],
     "public/app/store/store.ts:5381": [
       [0, 0, 0, "Do not use any type assertions.", "0"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "1"]
+    ],
+    "public/app/types/acl.ts:5381": [
+      [0, 0, 0, "Do not re-export imported variable (\`OrgRole\`)", "0"]
     ],
     "public/app/types/alerting.ts:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
@@ -6257,6 +6303,30 @@ exports[`better eslint`] = {
       [0, 0, 0, "Unexpected any. Specify a different type.", "11"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "12"]
     ],
+    "public/app/types/index.ts:5381": [
+      [0, 0, 0, "Do not use export all (\`export * from ...\`)", "0"],
+      [0, 0, 0, "Do not use export all (\`export * from ...\`)", "1"],
+      [0, 0, 0, "Do not use export all (\`export * from ...\`)", "2"],
+      [0, 0, 0, "Do not use export all (\`export * from ...\`)", "3"],
+      [0, 0, 0, "Do not use export all (\`export * from ...\`)", "4"],
+      [0, 0, 0, "Do not use export all (\`export * from ...\`)", "5"],
+      [0, 0, 0, "Do not use export all (\`export * from ...\`)", "6"],
+      [0, 0, 0, "Do not use export all (\`export * from ...\`)", "7"],
+      [0, 0, 0, "Do not use export all (\`export * from ...\`)", "8"],
+      [0, 0, 0, "Do not use export all (\`export * from ...\`)", "9"],
+      [0, 0, 0, "Do not use export all (\`export * from ...\`)", "10"],
+      [0, 0, 0, "Do not use export all (\`export * from ...\`)", "11"],
+      [0, 0, 0, "Do not use export all (\`export * from ...\`)", "12"],
+      [0, 0, 0, "Do not use export all (\`export * from ...\`)", "13"],
+      [0, 0, 0, "Do not use export all (\`export * from ...\`)", "14"],
+      [0, 0, 0, "Do not use export all (\`export * from ...\`)", "15"],
+      [0, 0, 0, "Do not use export all (\`export * from ...\`)", "16"],
+      [0, 0, 0, "Do not use export all (\`export * from ...\`)", "17"],
+      [0, 0, 0, "Do not use export all (\`export * from ...\`)", "18"],
+      [0, 0, 0, "Do not use export all (\`export * from ...\`)", "19"],
+      [0, 0, 0, "Do not use export all (\`export * from ...\`)", "20"],
+      [0, 0, 0, "Do not re-export imported variable (\`CoreEvents\`)", "21"]
+    ],
     "public/app/types/jquery/jquery.d.ts:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "1"],
@@ -6271,6 +6341,9 @@ exports[`better eslint`] = {
     "public/app/types/store.ts:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
       [0, 0, 0, "Do not use any type assertions.", "1"]
+    ],
+    "public/app/types/teams.ts:5381": [
+      [0, 0, 0, "Do not re-export imported variable (\`TeamDTO\`)", "0"]
     ],
     "public/app/types/unified-alerting-dto.ts:5381": [
       [0, 0, 0, "Do not use any type assertions.", "0"]
@@ -6896,25 +6969,6 @@ exports[`no gf-form usage`] = {
       [0, 0, 0, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "5381"],
       [0, 0, 0, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "5381"]
     ],
-    "public/app/plugins/datasource/prometheus/components/PromExploreExtraField.tsx:5381": [
-      [0, 0, 0, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "5381"],
-      [0, 0, 0, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "5381"],
-      [0, 0, 0, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "5381"],
-      [0, 0, 0, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "5381"]
-    ],
-    "public/app/plugins/datasource/prometheus/components/PromQueryField.tsx:5381": [
-      [0, 0, 0, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "5381"],
-      [0, 0, 0, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "5381"],
-      [0, 0, 0, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "5381"],
-      [0, 0, 0, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "5381"],
-      [0, 0, 0, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "5381"],
-      [0, 0, 0, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "5381"]
-    ],
-    "public/app/plugins/datasource/prometheus/configuration/AlertingSettingsOverhaul.tsx:5381": [
-      [0, 0, 0, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "5381"],
-      [0, 0, 0, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "5381"],
-      [0, 0, 0, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "5381"]
-    ],
     "public/app/plugins/datasource/prometheus/configuration/AzureAuthSettings.tsx:5381": [
       [0, 0, 0, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "5381"]
     ],
@@ -6939,41 +6993,6 @@ exports[`no gf-form usage`] = {
       [0, 0, 0, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "5381"],
       [0, 0, 0, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "5381"],
       [0, 0, 0, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "5381"],
-      [0, 0, 0, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "5381"]
-    ],
-    "public/app/plugins/datasource/prometheus/configuration/ExemplarSetting.tsx:5381": [
-      [0, 0, 0, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "5381"]
-    ],
-    "public/app/plugins/datasource/prometheus/configuration/PromSettings.tsx:5381": [
-      [0, 0, 0, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "5381"],
-      [0, 0, 0, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "5381"],
-      [0, 0, 0, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "5381"],
-      [0, 0, 0, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "5381"],
-      [0, 0, 0, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "5381"],
-      [0, 0, 0, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "5381"],
-      [0, 0, 0, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "5381"],
-      [0, 0, 0, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "5381"],
-      [0, 0, 0, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "5381"],
-      [0, 0, 0, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "5381"],
-      [0, 0, 0, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "5381"],
-      [0, 0, 0, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "5381"],
-      [0, 0, 0, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "5381"],
-      [0, 0, 0, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "5381"],
-      [0, 0, 0, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "5381"],
-      [0, 0, 0, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "5381"],
-      [0, 0, 0, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "5381"],
-      [0, 0, 0, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "5381"],
-      [0, 0, 0, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "5381"],
-      [0, 0, 0, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "5381"],
-      [0, 0, 0, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "5381"],
-      [0, 0, 0, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "5381"],
-      [0, 0, 0, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "5381"],
-      [0, 0, 0, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "5381"],
-      [0, 0, 0, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "5381"],
-      [0, 0, 0, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "5381"],
-      [0, 0, 0, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "5381"]
-    ],
-    "public/app/plugins/datasource/prometheus/querybuilder/components/PromQueryCodeEditor.tsx:5381": [
       [0, 0, 0, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "5381"]
     ],
     "public/app/plugins/datasource/tempo/_importedDependencies/components/AdHocFilter/AdHocFilter.tsx:5381": [

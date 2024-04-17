@@ -39,41 +39,6 @@ func (e DuplicateError) Is(err error) bool {
 	return ok
 }
 
-type SignatureError struct {
-	PluginID        string          `json:"pluginId"`
-	SignatureStatus SignatureStatus `json:"status"`
-}
-
-func (e SignatureError) Error() string {
-	switch e.SignatureStatus {
-	case SignatureStatusInvalid:
-		return fmt.Sprintf("plugin '%s' has an invalid signature", e.PluginID)
-	case SignatureStatusModified:
-		return fmt.Sprintf("plugin '%s' has an modified signature", e.PluginID)
-	case SignatureStatusUnsigned:
-		return fmt.Sprintf("plugin '%s' has no signature", e.PluginID)
-	case SignatureStatusInternal, SignatureStatusValid:
-		return ""
-	}
-
-	return fmt.Sprintf("plugin '%s' has an unknown signature state", e.PluginID)
-}
-
-func (e SignatureError) AsErrorCode() ErrorCode {
-	switch e.SignatureStatus {
-	case SignatureStatusInvalid:
-		return errorCodeSignatureInvalid
-	case SignatureStatusModified:
-		return errorCodeSignatureModified
-	case SignatureStatusUnsigned:
-		return errorCodeSignatureMissing
-	case SignatureStatusInternal, SignatureStatusValid:
-		return ""
-	}
-
-	return ""
-}
-
 type Dependencies struct {
 	GrafanaDependency string       `json:"grafanaDependency"`
 	GrafanaVersion    string       `json:"grafanaVersion"`
@@ -278,8 +243,41 @@ const (
 type ErrorCode string
 
 type Error struct {
-	ErrorCode `json:"errorCode"`
-	PluginID  string `json:"pluginId,omitempty"`
+	ErrorCode       `json:"errorCode"`
+	PluginID        string          `json:"pluginId,omitempty"`
+	SignatureStatus SignatureStatus `json:"status,omitempty"`
+}
+
+func (e Error) Error() string {
+	if e.SignatureStatus != "" {
+		switch e.SignatureStatus {
+		case SignatureStatusInvalid:
+			return fmt.Sprintf("plugin '%s' has an invalid signature", e.PluginID)
+		case SignatureStatusModified:
+			return fmt.Sprintf("plugin '%s' has an modified signature", e.PluginID)
+		case SignatureStatusUnsigned:
+			return fmt.Sprintf("plugin '%s' has no signature", e.PluginID)
+		case SignatureStatusInternal, SignatureStatusValid:
+			return ""
+		}
+	}
+
+	return fmt.Sprintf("plugin '%s' failed: %s", e.PluginID, e.ErrorCode)
+}
+
+func (e Error) AsErrorCode() ErrorCode {
+	switch e.SignatureStatus {
+	case SignatureStatusInvalid:
+		return errorCodeSignatureInvalid
+	case SignatureStatusModified:
+		return errorCodeSignatureModified
+	case SignatureStatusUnsigned:
+		return errorCodeSignatureMissing
+	case SignatureStatusInternal, SignatureStatusValid:
+		return ""
+	}
+
+	return ""
 }
 
 // Access-Control related definitions
