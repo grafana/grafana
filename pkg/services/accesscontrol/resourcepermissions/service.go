@@ -79,6 +79,7 @@ func New(cfg *setting.Cfg,
 		actions = append(actions, action)
 	}
 
+	// TODO: add this as a dependency
 	// create the store for actionsets
 	log := log.New("accesscontrol.resourcepermissions")
 	actionSetsStore := NewInMemoryActionSets(log)

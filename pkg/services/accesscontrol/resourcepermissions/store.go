@@ -684,12 +684,11 @@ func (s *store) createPermissions(sess *db.Session, roleID int64, resource, reso
 		// FIXME: make this only folder level of view, editor, admin
 	*/
 	if s.features.IsEnabled(context.TODO(), featuremgmt.FlagAccessActionSets) {
-		name, err := s.inMemoryActionSets.CreateActionSetName(resource, permission)
+		actionSetName, err := s.inMemoryActionSets.CreateActionSetName(resource, permission)
 		if err != nil {
 			return err
 		}
-		actionSet := s.inMemoryActionSets.GetActionSet(name)
-		p := managedPermission(actionSet.Action, resource, resourceID, resourceAttribute)
+		p := managedPermission(actionSetName, resource, resourceID, resourceAttribute)
 		p.RoleID = roleID
 		p.Created = time.Now()
 		p.Updated = time.Now()
@@ -776,20 +775,20 @@ func (s *InMemoryActionSets) GetActionSet(actionName string) *ActionSet {
 }
 
 func (s *InMemoryActionSets) StoreActionSet(resource, permission string, actions []string) {
-	// whitelist the resources and permissions
-	if (resource != "folders") || (permission != "admin" && permission != "edit" && permission != "view") {
-		s.log.Debug("Not able to action set")
-		return
-	}
+
 	s.log.Debug("storing action set")
 	name, err := s.CreateActionSetName(resource, permission)
 	if err != nil {
 		s.log.Error("error creating action set", "error", err)
 	}
+	// whitelist the resources and permissions
+	if resource != "folders" {
+		s.log.Debug("Not able to store action set ", name)
+		return
+	}
 	// check if the action set already exists
 	if s.GetActionSet(name) != nil {
-		s.log.Debug("action set already exists", name)
-		return
+		s.log.Debug("action set already exists, will be overwritten", name)
 	}
 	actionSet := &ActionSet{
 		// folders:edit
