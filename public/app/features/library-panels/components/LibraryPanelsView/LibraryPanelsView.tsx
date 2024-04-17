@@ -76,7 +76,7 @@ export const LibraryPanelsView = ({
   const onPageChange = (page: number) => asyncDispatch(changePage({ page }));
   const hasFilter = searchString || panelFilter?.length || folderFilter?.length;
 
-  if (!hasFilter && loadingState === LoadingState.Done) {
+  if (!hasFilter && loadingState === LoadingState.Done && libraryPanels.length < 1) {
     return (
       <EmptyState
         variant="call-to-action"
