@@ -54,3 +54,13 @@ func (d *DualWriterMode1) Delete(ctx context.Context, name string, deleteValidat
 
 	return legacy.Delete(ctx, name, deleteValidation, options)
 }
+
+// DeleteCollection overrides the behavior of the generic DualWriter and deletes only from LegacyStorage.
+func (d *DualWriterMode1) DeleteCollection(ctx context.Context, deleteValidation rest.ValidateObjectFunc, options *metav1.DeleteOptions, listOptions *metainternalversion.ListOptions) (runtime.Object, error) {
+	legacy, ok := d.Legacy.(rest.CollectionDeleter)
+	if !ok {
+		return nil, errDualWriterCollectionDeleterMissing
+	}
+
+	return legacy.DeleteCollection(ctx, deleteValidation, options, listOptions)
+}

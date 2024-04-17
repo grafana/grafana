@@ -26,6 +26,8 @@ import {
   rangeUtil,
   renderLegendFormat,
   ScopedVars,
+  scopeFilterOperatorMap,
+  ScopeSpecFilter,
   TimeRange,
 } from '@grafana/data';
 import {
@@ -478,8 +480,13 @@ export class PrometheusDatasource
 
     let expr = target.expr;
 
-    // Apply adhoc filters
-    expr = this.enhanceExprWithAdHocFilters(options.filters, expr);
+    if (config.featureToggles.promQLScope) {
+      // Apply scope filters
+      query.adhocFilters = this.generateScopeFilters(options.filters);
+    } else {
+      // Apply adhoc filters
+      expr = this.enhanceExprWithAdHocFilters(options.filters, expr);
+    }
 
     // Only replace vars in expression after having (possibly) updated interval vars
     query.expr = this.templateSrv.replace(expr, scopedVars, this.interpolateQueryExpr);
@@ -492,6 +499,18 @@ export class PrometheusDatasource
     this._addTracingHeaders(query, options);
 
     return query;
+  }
+
+  /**
+   * This converts the adhocVariableFilter array and converts it to scopeFilter array
+   * @param filters
+   */
+  generateScopeFilters(filters?: AdHocVariableFilter[]): ScopeSpecFilter[] {
+    if (!filters) {
+      return [];
+    }
+
+    return filters.map((f) => ({ ...f, operator: scopeFilterOperatorMap[f.operator] }));
   }
 
   getRateIntervalScopedVariable(interval: number, scrapeInterval: number) {
@@ -736,6 +755,7 @@ export class PrometheusDatasource
 
         const expandedQuery = {
           ...query,
+          ...(config.featureToggles.promQLScope ? { adhocFilters: this.generateScopeFilters(filters) } : {}),
           datasource: this.getRef(),
           expr: withAdhocFilters,
           interval: this.templateSrv.replace(query.interval, scopedVars),
@@ -906,6 +926,7 @@ export class PrometheusDatasource
 
     return {
       ...target,
+      ...(config.featureToggles.promQLScope ? { adhocFilters: this.generateScopeFilters(filters) } : {}),
       expr: exprWithAdHocFilters,
       interval: this.templateSrv.replace(target.interval, variables),
       legendFormat: this.templateSrv.replace(target.legendFormat, variables),

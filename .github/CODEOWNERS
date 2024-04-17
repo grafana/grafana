@@ -151,7 +151,6 @@
 /pkg/tsdb/grafanads/ @grafana/backend-platform
 /pkg/tsdb/legacydata/ @grafana/backend-platform
 /pkg/tsdb/opentsdb/ @grafana/backend-platform
-/pkg/tsdb/sqleng/ @grafana/partner-datasources @grafana/oss-big-tent
 /pkg/util/ @grafana/backend-platform
 /pkg/web/ @grafana/backend-platform
 
@@ -694,8 +693,6 @@ embed.go @grafana/grafana-as-code
 /.github/workflows/core-plugins-build-and-release.yml @grafana/plugins-platform-frontend @grafana/plugins-platform-backend
 /.github/workflows/i18n-crowdin-upload.yml @grafana/grafana-frontend-platform
 /.github/workflows/i18n-crowdin-download.yml @grafana/grafana-frontend-platform
-/.github/workflows/feature-toggle-cleanup.yml @tolzhabayev
-/.github/workflows/scripts/feature-toggle-cleanup/feature-toggle-cleanup.js @tolzhabayev
 /.github/workflows/pr-go-workspace-check.yml @grafana/grafana-app-platform-squad
 
 # Generated files not requiring owner approval
