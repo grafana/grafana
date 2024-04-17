@@ -55,6 +55,7 @@ func (d *DualWriterMode3) Delete(ctx context.Context, name string, deleteValidat
 	if err != nil {
 		if !apierrors.IsNotFound(err) {
 			klog.FromContext(ctx).Error(err, "could not delete from unified store", "mode", Mode3)
+			return deleted, async, err
 		}
 	}
 
