@@ -9,7 +9,7 @@ Grafana uses the [i18next](https://www.i18next.com/) framework for managing tran
 - Use `<Trans i18nKey="search-results.panel-link">Go to {{ pageTitle }}</Trans>` in code to add a translatable phrase
 - Translations are stored in JSON files in `public/locales/{locale}/grafana.json`
 - If a particular phrase is not available in the a language then it will fall back to English
-- To update phrases in English, edit the default phrase in the component's source and then run `yarn i18n:extract`.
+- To update phrases in English, edit the default phrase in the component's source and then run `make i18n-extract`.
 - The single source of truth for en-US (fallback language) is in grafana/grafana, the single source of truth for any translated language is Crowdin
 - To update phrases in any translated language, edit the phrase in Crowdin. Do not edit the `{locale}/grafana.json`
 
@@ -41,7 +41,7 @@ const ErrorMessage = ({ id, message }) => <Trans i18nKey={`errors.${id}`}>There 
 
 2. Upon reload, the default English phrase will appear on the page.
 
-3. Before submitting your PR, run the `yarn i18n:extract` command to extract the messages you added into the `public/locales/en-US/grafana.json` file and make them available for translation.
+3. Before submitting your PR, run the `make i18n-extract` command to extract the messages you added into the `public/locales/en-US/grafana.json` file and make them available for translation.
    **Note:** All other languages will receive their translations when they are ready to be downloaded from Crowdin.
 
 ### Plain JS usage
@@ -186,7 +186,7 @@ import { t } from 'app/core/internationalization';
 const translatedString = t('inbox.heading', 'You got {{count}} message', { count: messages.length });
 ```
 
-Once extracted with `yarn i18n:extract` you will need to manually edit the [English grafana.json message catalogue](../public/locales/en-US/grafana.json) to correct the plural forms. See the [react-i18next docs](https://react.i18next.com/latest/trans-component#plural) for more details.
+Once extracted with `make i18n-extract` you will need to manually edit the [English grafana.json message catalogue](../public/locales/en-US/grafana.json) to correct the plural forms. See the [react-i18next docs](https://react.i18next.com/latest/trans-component#plural) for more details.
 
 ```json
 {
