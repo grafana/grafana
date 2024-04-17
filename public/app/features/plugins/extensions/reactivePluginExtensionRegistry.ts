@@ -1,4 +1,5 @@
 import { Observable, ReplaySubject, Subject, firstValueFrom, map, scan, startWith } from 'rxjs';
+import { v4 as uuidv4 } from 'uuid';
 
 import { PluginPreloadResult } from '../pluginPreloader';
 
@@ -72,7 +73,7 @@ function resultsToRegistry(registry: PluginExtensionRegistry, result: PluginPrel
   }
 
   // Add a unique ID to the registry (the registry object itself is immutable)
-  registry.id = Math.random().toString(36).substring(7);
+  registry.id = uuidv4();
 
   return registry;
 }
