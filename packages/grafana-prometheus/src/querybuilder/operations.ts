@@ -381,7 +381,7 @@ function labelJoinRenderer(model: QueryBuilderOperation, def: QueryBuilderOperat
   }
 
   const paramZero = model.params[0] ?? '';
-  const paramOne = model.params[0] ?? '';
+  const paramOne = model.params[1] ?? '';
 
   const separator = `"${paramOne}"`;
   return `${model.id}(${innerExpr}, "${paramZero}", ${separator}, "${model.params.slice(2).join(separator)}")`;
