@@ -401,7 +401,7 @@ function getNameLabelValue(promQuery: string, tokens: Array<string | Prism.Token
   return nameLabelValue;
 }
 
-function isCancelledError(error: any): error is {
+function isCancelledError(error: unknown): error is {
   cancelled: boolean;
 } {
   return typeof error === 'object' && error !== null && 'cancelled' in error && error.cancelled === true;
