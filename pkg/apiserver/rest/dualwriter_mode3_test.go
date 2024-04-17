@@ -28,7 +28,7 @@ func TestMode3_Create(t *testing.T) {
 				setupLegacyFn: func(m *mock.Mock, input runtime.Object) {
 					m.On("Create", context.Background(), input, mock.Anything, mock.Anything).Return(exampleObj, nil)
 				},
-				setupStorageFn: func(m *mock.Mock, input runtime.Object) {
+				setupUSFn: func(m *mock.Mock, input runtime.Object) {
 					m.On("Create", context.Background(), input, mock.Anything, mock.Anything).Return(exampleObj, nil)
 				},
 			},
