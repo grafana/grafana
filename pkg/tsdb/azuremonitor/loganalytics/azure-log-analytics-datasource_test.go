@@ -91,12 +91,14 @@ func TestBuildingAzureLogAnalyticsQueries(t *testing.T) {
 
 	tests := []struct {
 		name                     string
+		fromAlert                bool
 		queryModel               []backend.DataQuery
 		azureLogAnalyticsQueries []*AzureLogAnalyticsQuery
 		Err                      require.ErrorAssertionFunc
 	}{
 		{
-			name: "Query with macros should be interpolated",
+			name:      "Query with macros should be interpolated",
+			fromAlert: true,
 			queryModel: []backend.DataQuery{
 				{
 					JSON: []byte(fmt.Sprintf(`{
@@ -138,7 +140,8 @@ func TestBuildingAzureLogAnalyticsQueries(t *testing.T) {
 			Err: require.NoError,
 		},
 		{
-			name: "Legacy queries with a workspace GUID should use workspace-centric url",
+			name:      "Legacy queries with a workspace GUID should use workspace-centric url",
+			fromAlert: false,
 			queryModel: []backend.DataQuery{
 				{
 					JSON: []byte(fmt.Sprintf(`{
@@ -176,7 +179,8 @@ func TestBuildingAzureLogAnalyticsQueries(t *testing.T) {
 			Err: require.NoError,
 		},
 		{
-			name: "Legacy workspace queries with a resource URI (from a template variable) should use resource-centric url",
+			name:      "Legacy workspace queries with a resource URI (from a template variable) should use resource-centric url",
+			fromAlert: false,
 			queryModel: []backend.DataQuery{
 				{
 					JSON: []byte(fmt.Sprintf(`{
@@ -214,7 +218,8 @@ func TestBuildingAzureLogAnalyticsQueries(t *testing.T) {
 			Err: require.NoError,
 		},
 		{
-			name: "Queries with multiple resources",
+			name:      "Queries with multiple resources",
+			fromAlert: true,
 			queryModel: []backend.DataQuery{
 				{
 					JSON: []byte(fmt.Sprintf(`{
@@ -254,7 +259,8 @@ func TestBuildingAzureLogAnalyticsQueries(t *testing.T) {
 			Err: require.NoError,
 		},
 		{
-			name: "Query with multiple resources",
+			name:      "Query with multiple resources",
+			fromAlert: true,
 			queryModel: []backend.DataQuery{
 				{
 					JSON: []byte(fmt.Sprintf(`{
@@ -296,7 +302,8 @@ func TestBuildingAzureLogAnalyticsQueries(t *testing.T) {
 			Err: require.NoError,
 		},
 		{
-			name: "Query that uses dashboard time",
+			name:      "Query that uses dashboard time",
+			fromAlert: false,
 			queryModel: []backend.DataQuery{
 				{
 					JSON: []byte(fmt.Sprintf(`{
@@ -341,7 +348,8 @@ func TestBuildingAzureLogAnalyticsQueries(t *testing.T) {
 			Err: require.NoError,
 		},
 		{
-			name: "Basic Logs query",
+			name:      "Basic Logs query",
+			fromAlert: false,
 			queryModel: []backend.DataQuery{
 				{
 					JSON: []byte(fmt.Sprintf(`{
@@ -389,7 +397,8 @@ func TestBuildingAzureLogAnalyticsQueries(t *testing.T) {
 			Err: require.NoError,
 		},
 		{
-			name: "Basic Logs query with multiple resources",
+			name:      "Basic Logs query with multiple resources",
+			fromAlert: false,
 			queryModel: []backend.DataQuery{
 				{
 					JSON: []byte(fmt.Sprintf(`{
@@ -412,7 +421,8 @@ func TestBuildingAzureLogAnalyticsQueries(t *testing.T) {
 			Err:                      require.Error,
 		},
 		{
-			name: "Basic Logs query with non LA workspace resources",
+			name:      "Basic Logs query with non LA workspace resources",
+			fromAlert: false,
 			queryModel: []backend.DataQuery{
 				{
 					JSON: []byte(fmt.Sprintf(`{
@@ -435,7 +445,32 @@ func TestBuildingAzureLogAnalyticsQueries(t *testing.T) {
 			Err:                      require.Error,
 		},
 		{
-			name: "trace query",
+			name:      "Basic Logs query from alerts",
+			fromAlert: true,
+			queryModel: []backend.DataQuery{
+				{
+					JSON: []byte(fmt.Sprintf(`{
+						"queryType": "Azure Log Analytics",
+						"azureLogAnalytics": {
+							"resources":     ["/subscriptions/test-sub/resourceGroups/test-rg/providers/Microsoft.Insights/components/r1"],
+							"query":        "Perf",
+							"resultFormat": "%s",
+							"dashboardTime": true,
+							"timeColumn":	"TimeGenerated",
+							"basicLogsQuery": true
+						}
+					}`, types.TimeSeries)),
+					RefID:     "A",
+					TimeRange: timeRange,
+					QueryType: string(dataquery.AzureQueryTypeAzureLogAnalytics),
+				},
+			},
+			azureLogAnalyticsQueries: []*AzureLogAnalyticsQuery{},
+			Err:                      require.Error,
+		},
+		{
+			name:      "trace query",
+			fromAlert: false,
 			queryModel: []backend.DataQuery{
 				{
 					JSON: []byte(fmt.Sprintf(`{
@@ -516,7 +551,8 @@ func TestBuildingAzureLogAnalyticsQueries(t *testing.T) {
 			Err: require.NoError,
 		},
 		{
-			name: "trace query with no result format set",
+			name:      "trace query with no result format set",
+			fromAlert: false,
 			queryModel: []backend.DataQuery{
 				{
 					JSON: []byte(`{
@@ -595,7 +631,8 @@ func TestBuildingAzureLogAnalyticsQueries(t *testing.T) {
 			Err: require.NoError,
 		},
 		{
-			name: "trace query with no operation ID",
+			name:      "trace query with no operation ID",
+			fromAlert: false,
 			queryModel: []backend.DataQuery{
 				{
 					JSON: []byte(fmt.Sprintf(`{
@@ -671,7 +708,8 @@ func TestBuildingAzureLogAnalyticsQueries(t *testing.T) {
 			Err: require.NoError,
 		},
 		{
-			name: "trace query with no types",
+			name:      "trace query with no types",
+			fromAlert: false,
 			queryModel: []backend.DataQuery{
 				{
 					JSON: []byte(fmt.Sprintf(`{
@@ -750,7 +788,8 @@ func TestBuildingAzureLogAnalyticsQueries(t *testing.T) {
 			Err: require.NoError,
 		},
 		{
-			name: "trace query with eq filter",
+			name:      "trace query with eq filter",
+			fromAlert: false,
 			queryModel: []backend.DataQuery{
 				{
 					JSON: []byte(fmt.Sprintf(`{
@@ -834,7 +873,8 @@ func TestBuildingAzureLogAnalyticsQueries(t *testing.T) {
 			Err: require.NoError,
 		},
 		{
-			name: "trace query with ne filter",
+			name:      "trace query with ne filter",
+			fromAlert: false,
 			queryModel: []backend.DataQuery{
 				{
 					JSON: []byte(fmt.Sprintf(`{
@@ -918,7 +958,8 @@ func TestBuildingAzureLogAnalyticsQueries(t *testing.T) {
 			Err: require.NoError,
 		},
 		{
-			name: "trace query with multiple filters",
+			name:      "trace query with multiple filters",
+			fromAlert: false,
 			queryModel: []backend.DataQuery{
 				{
 					JSON: []byte(fmt.Sprintf(`{
@@ -1002,7 +1043,8 @@ func TestBuildingAzureLogAnalyticsQueries(t *testing.T) {
 			Err: require.NoError,
 		},
 		{
-			name: "trace query with trace result format",
+			name:      "trace query with trace result format",
+			fromAlert: false,
 			queryModel: []backend.DataQuery{
 				{
 					JSON: []byte(fmt.Sprintf(`{
@@ -1078,7 +1120,8 @@ func TestBuildingAzureLogAnalyticsQueries(t *testing.T) {
 			Err: require.NoError,
 		},
 		{
-			name: "trace query with trace result format and operation ID",
+			name:      "trace query with trace result format and operation ID",
+			fromAlert: false,
 			queryModel: []backend.DataQuery{
 				{
 					JSON: []byte(fmt.Sprintf(`{
@@ -1157,7 +1200,8 @@ func TestBuildingAzureLogAnalyticsQueries(t *testing.T) {
 			Err: require.NoError,
 		},
 		{
-			name: "trace query with trace result format and only trace type",
+			name:      "trace query with trace result format and only trace type",
+			fromAlert: false,
 			queryModel: []backend.DataQuery{
 				{
 					JSON: []byte(fmt.Sprintf(`{
@@ -1204,7 +1248,8 @@ func TestBuildingAzureLogAnalyticsQueries(t *testing.T) {
 			Err: require.NoError,
 		},
 		{
-			name: "trace query with operation ID and correlated workspaces",
+			name:      "trace query with operation ID and correlated workspaces",
+			fromAlert: false,
 			queryModel: []backend.DataQuery{
 				{
 					JSON: []byte(fmt.Sprintf(`{
@@ -1287,7 +1332,8 @@ func TestBuildingAzureLogAnalyticsQueries(t *testing.T) {
 			Err: require.NoError,
 		},
 		{
-			name: "trace query with multiple resources",
+			name:      "trace query with multiple resources",
+			fromAlert: false,
 			queryModel: []backend.DataQuery{
 				{
 					JSON: []byte(fmt.Sprintf(`{
@@ -1367,7 +1413,8 @@ func TestBuildingAzureLogAnalyticsQueries(t *testing.T) {
 			Err: require.NoError,
 		},
 		{
-			name: "trace query with multiple resources and overlapping correlated workspaces",
+			name:      "trace query with multiple resources and overlapping correlated workspaces",
+			fromAlert: false,
 			queryModel: []backend.DataQuery{
 				{
 					JSON: []byte(fmt.Sprintf(`{
@@ -1450,7 +1497,8 @@ func TestBuildingAzureLogAnalyticsQueries(t *testing.T) {
 			Err: require.NoError,
 		},
 		{
-			name: "trace query with multiple resources and non-overlapping correlated workspaces",
+			name:      "trace query with multiple resources and non-overlapping correlated workspaces",
+			fromAlert: false,
 			queryModel: []backend.DataQuery{
 				{
 					JSON: []byte(fmt.Sprintf(`{
@@ -1543,7 +1591,7 @@ func TestBuildingAzureLogAnalyticsQueries(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			queries, err := datasource.buildQueries(ctx, tt.queryModel, dsInfo)
+			queries, err := datasource.buildQueries(ctx, tt.queryModel, dsInfo, tt.fromAlert)
 			tt.Err(t, err)
 			if err != nil {
 				return // skip further checks since error was expected and asserted

@@ -63,9 +63,9 @@ func (e *AzureLogAnalyticsDatasource) ResourceRequest(rw http.ResponseWriter, re
 // 1. build the AzureMonitor url and querystring for each query
 // 2. executes each query by calling the Azure Monitor API
 // 3. parses the responses for each query into data frames
-func (e *AzureLogAnalyticsDatasource) ExecuteTimeSeriesQuery(ctx context.Context, originalQueries []backend.DataQuery, dsInfo types.DatasourceInfo, client *http.Client, url string) (*backend.QueryDataResponse, error) {
+func (e *AzureLogAnalyticsDatasource) ExecuteTimeSeriesQuery(ctx context.Context, originalQueries []backend.DataQuery, dsInfo types.DatasourceInfo, client *http.Client, url string, fromAlert bool) (*backend.QueryDataResponse, error) {
 	result := backend.NewQueryDataResponse()
-	queries, err := e.buildQueries(ctx, originalQueries, dsInfo)
+	queries, err := e.buildQueries(ctx, originalQueries, dsInfo, fromAlert)
 	if err != nil {
 		return nil, err
 	}
@@ -99,7 +99,7 @@ func getApiURL(resourceOrWorkspace string, isAppInsightsQuery bool, basicLogsQue
 	}
 }
 
-func (e *AzureLogAnalyticsDatasource) buildQueries(ctx context.Context, queries []backend.DataQuery, dsInfo types.DatasourceInfo) ([]*AzureLogAnalyticsQuery, error) {
+func (e *AzureLogAnalyticsDatasource) buildQueries(ctx context.Context, queries []backend.DataQuery, dsInfo types.DatasourceInfo, fromAlert bool) ([]*AzureLogAnalyticsQuery, error) {
 	azureLogAnalyticsQueries := []*AzureLogAnalyticsQuery{}
 	appInsightsRegExp, err := regexp.Compile("providers/Microsoft.Insights/components")
 	if err != nil {
@@ -155,7 +155,7 @@ func (e *AzureLogAnalyticsDatasource) buildQueries(ctx context.Context, queries 
 				resourceOrWorkspace = *azureLogAnalyticsTarget.Workspace
 			}
 
-			meetsBasicLogsCriteria, meetsBasicLogsCriteriaErr := MeetsBasicLogsCriteria(basicLogsQueryflag, resources)
+			meetsBasicLogsCriteria, meetsBasicLogsCriteriaErr := MeetsBasicLogsCriteria(basicLogsQueryflag, resources, fromAlert)
 			if meetsBasicLogsCriteriaErr != nil {
 				return nil, meetsBasicLogsCriteriaErr
 			}
