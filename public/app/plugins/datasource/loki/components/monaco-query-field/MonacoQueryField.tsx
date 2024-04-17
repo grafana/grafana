@@ -266,7 +266,7 @@ const MonacoQueryField = ({
 
           // Fixes Monaco capturing the search key binding and displaying a useless search box within the Editor.
           // See https://github.com/grafana/grafana/issues/85850
-          //editor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyCode.KeyF, () => {});
+          editor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyCode.KeyF, () => {});
 
           editor.onDidFocusEditorText(() => {
             isEditorFocused.set(true);
