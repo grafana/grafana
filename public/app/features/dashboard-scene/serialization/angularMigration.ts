@@ -1,3 +1,5 @@
+import { defaults } from 'lodash';
+
 import { PanelModel as PanelModelFromData, PanelPlugin } from '@grafana/data';
 import { autoMigrateAngular, PanelModel } from 'app/features/dashboard/state/PanelModel';
 
@@ -6,6 +8,10 @@ export function getAngularPanelMigrationHandler(oldModel: PanelModel) {
     if (plugin.angularPanelCtrl) {
       panel.options = { angularOptions: oldModel.getOptionsToRemember() };
       return;
+    }
+
+    if (!oldModel.options || Object.keys(oldModel.options).length === 0) {
+      defaults(panel, oldModel.getOptionsToRemember());
     }
 
     if (oldModel.autoMigrateFrom) {
