@@ -525,6 +525,7 @@ playwright.config.ts @grafana/plugins-platform-frontend
 /scripts/openapi3/ @grafana/grafana-operator-experience-squad
 /scripts/prepare-packagejson.js @grafana/frontend-ops
 /scripts/protobuf-check.sh @grafana/plugins-platform-backend
+/scripts/sample-ini.sh @grafana/grafana-release-guild
 /scripts/stripnulls.sh @grafana/grafana-as-code
 /scripts/tag_release.sh @grafana/grafana-release-guild
 /scripts/trigger_docker_build.sh @grafana/grafana-release-guild
