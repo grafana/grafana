@@ -16,12 +16,13 @@ interface Radii {
 /** @internal */
 export interface ThemeShapeInput {
   borderRadius?: number;
+  radius?: Radii;
 }
 
 export function createShape(options: ThemeShapeInput): ThemeShape {
   const baseBorderRadius = options.borderRadius ?? 2;
 
-  const radius = {
+  const radius = options.radius ?? {
     default: '2px',
     pill: '9999px',
     circle: '100%',

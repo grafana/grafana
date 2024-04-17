@@ -2,8 +2,6 @@
 // The MIT License (MIT)
 // Copyright (c) 2014 Call-Em-All
 
-import { ThemeColors } from './createColors';
-
 /** @beta */
 export interface ThemeTypography extends ThemeTypographyVariantTypes {
   fontFamily: string;
@@ -51,12 +49,22 @@ export interface ThemeTypographyInput {
   // hat's the font-size on the html element.
   // 16px is the default font-size used by browsers.
   htmlFontSize?: number;
+
+  h1?: ThemeTypographyVariant;
+  h2?: ThemeTypographyVariant;
+  h3?: ThemeTypographyVariant;
+  h4?: ThemeTypographyVariant;
+  h5?: ThemeTypographyVariant;
+  h6?: ThemeTypographyVariant;
+  body?: ThemeTypographyVariant;
+  bodySmall?: ThemeTypographyVariant;
+  code?: ThemeTypographyVariant;
 }
 
 const defaultFontFamily = '"Inter", "Helvetica", "Arial", sans-serif';
 const defaultFontFamilyMonospace = "'Roboto Mono', monospace";
 
-export function createTypography(colors: ThemeColors, typographyInput: ThemeTypographyInput = {}): ThemeTypography {
+export function createTypography(typographyInput: ThemeTypographyInput = {}): ThemeTypography {
   const {
     fontFamily = defaultFontFamily,
     fontFamilyMonospace = defaultFontFamilyMonospace,

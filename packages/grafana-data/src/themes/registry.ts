@@ -2,6 +2,7 @@ import { Registry, RegistryItem } from '../utils/Registry';
 
 import { createTheme } from './createTheme';
 import { GrafanaTheme2 } from './types';
+import { getDarkTheme } from './themeDark';
 
 export interface ThemeRegistryItem extends RegistryItem {
   isExtra?: boolean;
@@ -33,7 +34,7 @@ export function getBuiltInThemes(includeExtras?: boolean) {
 const themeRegistry = new Registry<ThemeRegistryItem>(() => {
   return [
     { id: 'system', name: 'System preference', build: getSystemPreferenceTheme },
-    { id: 'dark', name: 'Dark', build: () => createTheme({ colors: { mode: 'dark' } }) },
+    { id: 'dark', name: 'Dark', build: () => getDarkTheme() },
     { id: 'light', name: 'Light', build: () => createTheme({ colors: { mode: 'light' } }) },
     { id: 'blue-night', name: 'Blue night', build: createBlueNight, isExtra: true },
     { id: 'midnight', name: 'Midnight', build: createMidnight, isExtra: true },
