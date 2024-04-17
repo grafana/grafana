@@ -32,7 +32,11 @@ const getStyles = (theme: GrafanaTheme2) => {
 export function SecondaryActions(props: Props) {
   const theme = useTheme2();
   const styles = getStyles(theme);
-  const { drawerOpened, setDrawerOpened } = useQueriesDrawerContext();
+  const { drawerOpened, setDrawerOpened, queryLibraryAvailable } = useQueriesDrawerContext();
+
+  // When queryLibraryAvailable=true we show the button in the toolbar (see QueriesDrawerDropdown)
+  const showHistoryButton = !props.richHistoryRowButtonHidden && !queryLibraryAvailable;
+
   return (
     <div className={styles.containerMargin}>
       {!props.addQueryRowButtonHidden && (
@@ -46,7 +50,7 @@ export function SecondaryActions(props: Props) {
           <Trans i18nKey="explore.secondary-actions.query-add-button">Add query</Trans>
         </ToolbarButton>
       )}
-      {!props.richHistoryRowButtonHidden && (
+      {showHistoryButton && (
         <ToolbarButton
           variant={drawerOpened ? 'active' : 'canvas'}
           aria-label={t('explore.secondary-actions.query-history-button-aria-label', 'Query history')}
