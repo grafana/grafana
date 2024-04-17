@@ -12,6 +12,7 @@ import {
   outerJoinDataFrames,
   ValueFormatter,
 } from '@grafana/data';
+import { parseSampleValue, sortSeriesByLabel } from '@grafana/prometheus';
 import { config } from '@grafana/runtime';
 import { HeatmapCellLayout } from '@grafana/schema';
 import {
@@ -20,7 +21,6 @@ import {
   readHeatmapRowsCustomMeta,
   rowsToCellsHeatmap,
 } from 'app/features/transformers/calculateHeatmap/heatmap';
-import { parseSampleValue, sortSeriesByLabel } from 'app/plugins/datasource/prometheus/result_transformer';
 
 import { CellValues, Options } from './types';
 import { boundedMinMax, valuesToFills } from './utils';
