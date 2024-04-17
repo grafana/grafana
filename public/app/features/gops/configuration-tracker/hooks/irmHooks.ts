@@ -207,15 +207,24 @@ export function useGetOnCallConfigurationChecks() {
   return onCallConfigChecks ?? { is_chatops_connected: false, is_integration_chatops_connected: false };
 }
 
+function useOnCallOptions() {
+  const onCallIntegrations = useGetOnCallIntegrations();
+  return onCallIntegrations.map((integration) => ({
+    label: integration.display_name,
+    value: integration.value,
+  }));
+}
+function useChatOpsConnections() {
+  const { is_chatops_connected, is_integration_chatops_connected } = useGetOnCallConfigurationChecks();
+  return { is_chatops_connected, is_integration_chatops_connected };
+}
+
 export function useGetEssentialsConfiguration() {
   const contactPoints = useGetContactPoints();
   const incidentPluginConfig = useGetIncidentPluginConfig();
   const onCallIntegrations = useGetOnCallIntegrations();
-  const onCallOptions = onCallIntegrations.map((integration) => ({
-    label: integration.display_name,
-    value: integration.value,
-  }));
-  const { is_chatops_connected, is_integration_chatops_connected } = useGetOnCallConfigurationChecks();
+  const onCallOptions = useOnCallOptions();
+  const chatOpsConnections = useChatOpsConnections();
 
   const essentialContent: SectionsDto = {
     sections: [
@@ -286,7 +295,7 @@ export function useGetEssentialsConfiguration() {
               type: 'openLink',
               url: '/alerting/notifications',
               label: 'Connect',
-              done: is_chatops_connected,
+              done: chatOpsConnections.is_chatops_connected,
             },
           },
           {
@@ -306,7 +315,7 @@ export function useGetEssentialsConfiguration() {
               type: 'openLink',
               url: '/a/grafana-oncall-app/integrations/',
               label: 'Connect',
-              done: is_integration_chatops_connected,
+              done: chatOpsConnections.is_integration_chatops_connected,
             },
           },
         ],
