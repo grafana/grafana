@@ -1,10 +1,11 @@
 import { css, cx } from '@emotion/css';
-import React, { useLayoutEffect, useRef, useReducer, CSSProperties } from 'react';
+import React, { useLayoutEffect, useRef, useReducer, CSSProperties, useContext } from 'react';
 import { createPortal } from 'react-dom';
 import uPlot from 'uplot';
 
 import { GrafanaTheme2 } from '@grafana/data';
 
+import { ModalsContext } from '../../../components/Modal/ModalsContext';
 import { useStyles2 } from '../../../themes';
 import { getPortalContainer } from '../../Portal/Portal';
 import { UPlotConfigBuilder } from '../config/UPlotConfigBuilder';
@@ -122,9 +123,11 @@ export const TooltipPlugin2: React.FC<TooltipPlugin2Props> = ({
 
   const sizeRef = useRef<TooltipContainerSize>();
 
+  const isWithinModal = useContext(ModalsContext).component !== null;
+
   maxWidth = isPinned ? DEFAULT_TOOLTIP_WIDTH : maxWidth ?? DEFAULT_TOOLTIP_WIDTH;
   maxHeight ??= DEFAULT_TOOLTIP_HEIGHT;
-  const styles = useStyles2(getStyles, maxWidth, maxHeight);
+  const styles = useStyles2(getStyles, maxWidth, maxHeight, isWithinModal);
 
   const renderRef = useRef(render);
   renderRef.current = render;
@@ -570,11 +573,11 @@ export const TooltipPlugin2: React.FC<TooltipPlugin2Props> = ({
   return null;
 };
 
-const getStyles = (theme: GrafanaTheme2, maxWidth?: number, maxHeight?: number) => ({
+const getStyles = (theme: GrafanaTheme2, maxWidth?: number, maxHeight?: number, isWithinModal?: boolean) => ({
   tooltipWrapper: css({
     top: 0,
     left: 0,
-    zIndex: theme.zIndex.tooltip,
+    zIndex: !isWithinModal ? theme.zIndex.tooltip : theme.zIndex.tooltipWithinModal,
     whiteSpace: 'pre',
     borderRadius: theme.shape.radius.default,
     position: 'fixed',
