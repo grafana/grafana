@@ -161,7 +161,7 @@ func TestService_Update(t *testing.T) {
 		service := &Service{store: &FakeUserStore{ExpectedUser: &user.User{Password: stored, Salt: "salt"}}}
 
 		err = service.Update(context.Background(), &user.UpdateUserCommand{
-			OldPassword: strPtr("test123"),
+			OldPassword: passwordPtr("test123"),
 		})
 
 		assert.ErrorIs(t, err, user.ErrPasswordMissmatch)
@@ -173,7 +173,7 @@ func TestService_Update(t *testing.T) {
 		service := &Service{cfg: setting.NewCfg(), store: &FakeUserStore{ExpectedUser: &user.User{Password: stored, Salt: "salt"}}}
 
 		err = service.Update(context.Background(), &user.UpdateUserCommand{
-			OldPassword: strPtr("test"),
+			OldPassword: passwordPtr("test"),
 			Password:    passwordPtr("asd"),
 		})
 		require.ErrorIs(t, err, user.ErrPasswordTooShort)
