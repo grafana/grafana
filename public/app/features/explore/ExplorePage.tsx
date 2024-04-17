@@ -53,7 +53,7 @@ function ExplorePageContent(props: GrafanaRouteComponentProps<{}, ExploreQueryPa
   const panes = useSelector(selectPanesEntries);
   const hasSplit = useSelector(isSplit);
   const correlationDetails = useSelector(selectCorrelationDetails);
-  const { drawerOpened, setDrawerOpened } = useQueriesDrawerContext();
+  const { drawerOpened, setDrawerOpened, queryLibraryAvailable } = useQueriesDrawerContext();
   const showCorrelationEditorBar = config.featureToggles.correlations && (correlationDetails?.editorMode || false);
 
   useEffect(() => {
@@ -97,7 +97,7 @@ function ExplorePageContent(props: GrafanaRouteComponentProps<{}, ExploreQueryPa
         })}
       </SplitPaneWrapper>
       {drawerOpened && (
-        <ExploreDrawer>
+        <ExploreDrawer initialHeight={queryLibraryAvailable ? '75vh' : undefined}>
           <RichHistoryContainer
             onClose={() => {
               setDrawerOpened(false);
