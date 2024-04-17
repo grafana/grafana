@@ -12,6 +12,7 @@ images = {
     "git": "alpine/git:2.40.1",
     "go": "golang:{}-alpine".format(golang_version),
     "node": "node:{}-alpine".format(nodejs_version),
+    "node_deb": "node:{}-bookworm".format(nodejs_version[:2]),
     "cloudsdk": "google/cloud-sdk:431.0.0",
     "publish": "grafana/grafana-ci-deploy:1.3.3",
     "alpine": "alpine:3.19.1",
@@ -33,5 +34,4 @@ images = {
     "cypress": "cypress/included:13.1.0",
     "dockerize": "jwilder/dockerize:0.6.1",
     "shellcheck": "koalaman/shellcheck:stable",
-    "playwright": "mcr.microsoft.com/playwright:v1.43.0-jammy",
 }

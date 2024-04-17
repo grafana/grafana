@@ -529,10 +529,24 @@ export function formatTraceQLResponse(
   instanceSettings: DataSourceInstanceSettings,
   tableType?: SearchTableType
 ) {
-  if (tableType === SearchTableType.Spans) {
-    return createTableFrameFromTraceQlQueryAsSpans(data, instanceSettings);
+  switch (tableType) {
+    case SearchTableType.Spans:
+      return createTableFrameFromTraceQlQueryAsSpans(data, instanceSettings);
+    case SearchTableType.Raw:
+      return createDataFrameFromTraceQlQuery(data);
+    default:
+      return createTableFrameFromTraceQlQuery(data, instanceSettings);
   }
-  return createTableFrameFromTraceQlQuery(data, instanceSettings);
+}
+
+function createDataFrameFromTraceQlQuery(data: TraceSearchMetadata[]) {
+  return [
+    createDataFrame({
+      name: 'Raw response',
+      refId: 'raw',
+      fields: [{ name: 'response', type: FieldType.string, values: [JSON.stringify(data, null, 2)] }],
+    }),
+  ];
 }
 
 /**
