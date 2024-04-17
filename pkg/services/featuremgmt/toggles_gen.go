@@ -631,10 +631,6 @@ const (
 	// Use the new SSO Settings API to configure the SAML connector
 	FlagSsoSettingsSAML = "ssoSettingsSAML"
 
-	// FlagUsePrometheusFrontendPackage
-	// Use the @grafana/prometheus frontend package in core Prometheus.
-	FlagUsePrometheusFrontendPackage = "usePrometheusFrontendPackage"
-
 	// FlagOauthRequireSubClaim
 	// Require that sub claims is present in oauth tokens.
 	FlagOauthRequireSubClaim = "oauthRequireSubClaim"
@@ -650,4 +646,8 @@ const (
 	// FlagAccessActionSets
 	// Introduces action sets for resource permissions
 	FlagAccessActionSets = "accessActionSets"
+
+	// FlagDisableNumericMetricsSortingInExpressions
+	// In server-side expressions, disable the sorting of numeric-kind metrics by their metric name or labels.
+	FlagDisableNumericMetricsSortingInExpressions = "disableNumericMetricsSortingInExpressions"
 )

@@ -13,7 +13,7 @@ describe('Query editor', () => {
     cy.contains('gdev-prometheus').scrollIntoView().should('be.visible').click();
     const queryText = `rate(http_requests_total{job="grafana"}[5m])`;
 
-    e2e.components.RadioButton.container().filter(':contains("Code")').click();
+    e2e.components.RadioButton.container().filter(':contains("Code")').should('be.visible').click();
 
     waitForMonacoToLoad();
 
