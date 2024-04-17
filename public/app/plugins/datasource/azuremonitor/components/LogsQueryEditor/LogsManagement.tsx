@@ -14,7 +14,7 @@ export function LogsManagement({ query, onQueryChange: onChange }: AzureQueryEdi
         isOpen={basicLogsAckOpen}
         title="Basic Logs Queries"
         body="Are you sure you want to switch to Basic Logs?"
-        description="Basic Logs queries incur cost based on the amount of data scanned. Please acknowledge this panel is subject to per-query costs."
+        description="Basic Logs queries incur cost based on the amount of data scanned."
         confirmText="Confirm"
         onConfirm={() => {
           setBasicLogsAckOpen(false);
@@ -30,23 +30,21 @@ export function LogsManagement({ query, onQueryChange: onChange }: AzureQueryEdi
         confirmButtonVariant="primary"
       />
       <InlineField label="Logs" tooltip={<span>Specifies whether to run a Basic or Analytics Logs query.</span>}>
-        <>
-          <RadioButtonGroup
-            options={[
-              { label: 'Analytics', value: false },
-              { label: 'Basic', value: true },
-            ]}
-            value={query.azureLogAnalytics?.basicLogsQuery ?? false}
-            size={'md'}
-            onChange={(val) => {
-              setBasicLogsAckOpen(val);
-              if (!val) {
-                const updatedBasicLogsQuery = setBasicLogsQuery(query, val);
-                onChange(setKustoQuery(updatedBasicLogsQuery, ''));
-              }
-            }}
-          />
-        </>
+        <RadioButtonGroup
+          options={[
+            { label: 'Analytics', value: false },
+            { label: 'Basic', value: true },
+          ]}
+          value={query.azureLogAnalytics?.basicLogsQuery ?? false}
+          size={'md'}
+          onChange={(val) => {
+            setBasicLogsAckOpen(val);
+            if (!val) {
+              const updatedBasicLogsQuery = setBasicLogsQuery(query, val);
+              onChange(setKustoQuery(updatedBasicLogsQuery, ''));
+            }
+          }}
+        />
       </InlineField>
     </>
   );
