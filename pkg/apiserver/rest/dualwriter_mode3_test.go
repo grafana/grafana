@@ -115,36 +115,6 @@ func TestMode3_Get(t *testing.T) {
 					m.On("Get", context.Background(), input, mock.Anything).Return(exampleObj, nil)
 				},
 			},
-			// {
-			// 	name:  "error when creating object in storage fails",
-			// 	input: failingObj,
-			// 	setupStorageFn: func(m *mock.Mock, input runtime.Object) {
-			// 		m.On("Create", context.Background(), input, mock.Anything, mock.Anything).Return(nil, errors.New("error"))
-			// 	},
-			// 	wantErr: true,
-			// },
-			// {
-			// 	name:  "error when creating object in legacy storage fails",
-			// 	input: failingObj,
-			// 	setupStorageFn: func(m *mock.Mock, input runtime.Object) {
-			// 		m.On("Create", context.Background(), input, mock.Anything, mock.Anything).Return(exampleObj, nil)
-			// 	},
-			// 	setupLegacyFn: func(m *mock.Mock, input runtime.Object) {
-			// 		m.On("Create", context.Background(), input, mock.Anything, mock.Anything).Return(nil, errors.New("error"))
-			// 	},
-			// 	wantErr: true,
-			// },
-			// {
-			// 	name:  "error when creating object fails in both",
-			// 	input: failingObj,
-			// 	setupStorageFn: func(m *mock.Mock, input runtime.Object) {
-			// 		m.On("Create", context.Background(), input, mock.Anything, mock.Anything).Return(nil, errors.New("error"))
-			// 	},
-			// 	setupLegacyFn: func(m *mock.Mock, input runtime.Object) {
-			// 		m.On("Create", context.Background(), input, mock.Anything, mock.Anything).Return(nil, errors.New("error"))
-			// 	},
-			// 	wantErr: true,
-			// },
 		}
 
 	for _, tt := range tests {
