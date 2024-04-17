@@ -93,10 +93,7 @@ describe('Receiver form utils', () => {
         nested: {
           __id: '1',
           baz: 'qux',
-          doubleNested: {
-            __id: '2',
-            url: 'example.com',
-          },
+          doubleNested: { __id: '2', url: 'example.com' },
         },
       };
 
@@ -104,9 +101,7 @@ describe('Receiver form utils', () => {
         foo: 'bar',
         nested: {
           baz: 'qux',
-          doubleNested: {
-            url: 'example.com',
-          },
+          doubleNested: { url: 'example.com' },
         },
       };
 
@@ -143,6 +138,23 @@ describe('Receiver form utils', () => {
       };
 
       expect(omitTemporaryIdentifiers(original)).toEqual(expected);
+    });
+
+    it('should return a new object and keep the original intact', () => {
+      const original = {
+        foo: 'bar',
+        nested: {
+          __id: '1',
+          baz: 'qux',
+          doubleNested: { __id: '2', url: 'example.com' },
+        },
+      };
+
+      const withOmitted = omitTemporaryIdentifiers(original);
+
+      expect(withOmitted).not.toBe(original);
+      expect(original.nested.__id).toBe('1');
+      expect(original.nested.doubleNested.__id).toBe('2');
     });
   });
 });

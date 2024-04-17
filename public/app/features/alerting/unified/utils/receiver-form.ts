@@ -1,3 +1,4 @@
+import { produce } from 'immer';
 import { isArray, omit, pick, isNil, omitBy } from 'lodash';
 
 import {
@@ -293,14 +294,17 @@ export function omitEmptyUnlessExisting(settings = {}, existing = {}): Record<st
   return omitBy(settings, (value, key) => isUnacceptableValue(value) && !(key in existing));
 }
 
-export function omitTemporaryIdentifiers<T>(obj: T): T {
-  if (isArray(obj)) {
-    obj.forEach(omitTemporaryIdentifiers);
-  } else if (typeof obj === 'object' && obj !== null) {
-    if ('__id' in obj) {
-      delete obj.__id;
+export function omitTemporaryIdentifiers<T>(object: Readonly<T>): T {
+  function omitIdentifiers<T>(obj: T) {
+    if (isArray(obj)) {
+      obj.forEach(omitIdentifiers);
+    } else if (typeof obj === 'object' && obj !== null) {
+      if ('__id' in obj) {
+        delete obj.__id;
+      }
+      Object.values(obj).forEach(omitIdentifiers);
     }
-    Object.values(obj).forEach(omitTemporaryIdentifiers);
   }
-  return obj;
+
+  return produce(object, (draft) => omitIdentifiers(draft));
 }
