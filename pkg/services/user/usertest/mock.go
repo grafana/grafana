@@ -32,24 +32,6 @@ func (_m *MockService) BatchDisableUsers(_a0 context.Context, _a1 *user.BatchDis
 	return r0
 }
 
-// ChangePassword provides a mock function with given fields: _a0, _a1
-func (_m *MockService) ChangePassword(_a0 context.Context, _a1 *user.ChangeUserPasswordCommand) error {
-	ret := _m.Called(_a0, _a1)
-
-	if len(ret) == 0 {
-		panic("no return value specified for ChangePassword")
-	}
-
-	var r0 error
-	if rf, ok := ret.Get(0).(func(context.Context, *user.ChangeUserPasswordCommand) error); ok {
-		r0 = rf(_a0, _a1)
-	} else {
-		r0 = ret.Error(0)
-	}
-
-	return r0
-}
-
 // Create provides a mock function with given fields: _a0, _a1
 func (_m *MockService) Create(_a0 context.Context, _a1 *user.CreateUserCommand) (*user.User, error) {
 	ret := _m.Called(_a0, _a1)

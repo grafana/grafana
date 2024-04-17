@@ -86,13 +86,9 @@ type UpdateUserCommand struct {
 	IsDisabled     *bool `json:"-"`
 	EmailVerified  *bool `json:"-"`
 	IsGrafanaAdmin *bool `json:"-"`
-}
 
-type ChangeUserPasswordCommand struct {
-	OldPassword Password `json:"oldPassword"`
-	NewPassword Password `json:"newPassword"`
-
-	UserID int64 `json:"-"`
+	Password    *Password `json:"-"`
+	OldPassword *Password `json:"-"`
 }
 
 type UpdateUserLastSeenAtCommand struct {
@@ -295,4 +291,9 @@ const (
 type AdminCreateUserResponse struct {
 	ID      int64  `json:"id"`
 	Message string `json:"message"`
+}
+
+type ChangeUserPasswordCommand struct {
+	OldPassword Password `json:"oldPassword"`
+	NewPassword Password `json:"newPassword"`
 }

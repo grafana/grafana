@@ -345,12 +345,14 @@ func Test_GetUserByID(t *testing.T) {
 
 func TestHTTPServer_UpdateUser(t *testing.T) {
 	settings := setting.NewCfg()
+	settings.SAMLAuthEnabled = true
 	sqlStore := db.InitTestDB(t)
 
 	hs := &HTTPServer{
 		Cfg:           settings,
 		SQLStore:      sqlStore,
 		AccessControl: acmock.New(),
+		SocialService: &socialtest.FakeSocialService{ExpectedAuthInfoProvider: &social.OAuthInfo{Enabled: true}},
 	}
 
 	updateUserCommand := user.UpdateUserCommand{
@@ -366,7 +368,8 @@ func TestHTTPServer_UpdateUser(t *testing.T) {
 		routePattern: "/api/users/:id",
 		cmd:          updateUserCommand,
 		fn: func(sc *scenarioContext) {
-			sc.authInfoService.ExpectedUserAuth = &login.UserAuth{}
+			sc.authInfoService.ExpectedUserAuth = &login.UserAuth{AuthModule: login.SAMLAuthModule}
+
 			sc.fakeReqWithParams("PUT", sc.url, map[string]string{"id": "1"}).exec()
 			assert.Equal(t, 403, sc.resp.Code)
 		},
@@ -1086,11 +1089,13 @@ func updateUserScenario(t *testing.T, ctx updateUserContext, hs *HTTPServer) {
 func TestHTTPServer_UpdateSignedInUser(t *testing.T) {
 	settings := setting.NewCfg()
 	sqlStore := db.InitTestDB(t)
+	settings.SAMLAuthEnabled = true
 
 	hs := &HTTPServer{
 		Cfg:           settings,
 		SQLStore:      sqlStore,
 		AccessControl: acmock.New(),
+		SocialService: &socialtest.FakeSocialService{},
 	}
 
 	updateUserCommand := user.UpdateUserCommand{
@@ -1106,7 +1111,7 @@ func TestHTTPServer_UpdateSignedInUser(t *testing.T) {
 		routePattern: "/api/users/",
 		cmd:          updateUserCommand,
 		fn: func(sc *scenarioContext) {
-			sc.authInfoService.ExpectedUserAuth = &login.UserAuth{}
+			sc.authInfoService.ExpectedUserAuth = &login.UserAuth{AuthModule: login.SAMLAuthModule}
 			sc.fakeReqWithParams("PUT", sc.url, map[string]string{"id": "1"}).exec()
 			assert.Equal(t, 403, sc.resp.Code)
 		},

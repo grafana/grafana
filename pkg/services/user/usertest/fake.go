@@ -67,10 +67,6 @@ func (f *FakeUserService) Update(ctx context.Context, cmd *user.UpdateUserComman
 	return f.ExpectedError
 }
 
-func (f *FakeUserService) ChangePassword(ctx context.Context, cmd *user.ChangeUserPasswordCommand) error {
-	return f.ExpectedError
-}
-
 func (f *FakeUserService) UpdateLastSeenAt(ctx context.Context, cmd *user.UpdateUserLastSeenAtCommand) error {
 	return f.ExpectedError
 }

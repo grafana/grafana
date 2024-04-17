@@ -28,7 +28,6 @@ type store interface {
 	GetByLogin(context.Context, *user.GetUserByLoginQuery) (*user.User, error)
 	GetByEmail(context.Context, *user.GetUserByEmailQuery) (*user.User, error)
 	Update(context.Context, *user.UpdateUserCommand) error
-	ChangePassword(context.Context, *user.ChangeUserPasswordCommand) error
 	UpdateLastSeenAt(context.Context, *user.UpdateUserLastSeenAtCommand) error
 	GetSignedInUser(context.Context, *user.GetSignedInUserQuery) (*user.SignedInUser, error)
 	UpdateUser(context.Context, *user.User) error
@@ -300,19 +299,20 @@ func (ss *sqlStore) loginConflict(ctx context.Context, sess *db.Session, login, 
 }
 
 func (ss *sqlStore) Update(ctx context.Context, cmd *user.UpdateUserCommand) error {
-	cmd.Login = strings.ToLower(cmd.Login)
-	cmd.Email = strings.ToLower(cmd.Email)
-
 	return ss.db.WithTransactionalDbSession(ctx, func(sess *db.Session) error {
 		user := user.User{
 			Name:    cmd.Name,
-			Email:   cmd.Email,
-			Login:   cmd.Login,
+			Email:   strings.ToLower(cmd.Email),
+			Login:   strings.ToLower(cmd.Login),
 			Theme:   cmd.Theme,
 			Updated: time.Now(),
 		}
 
 		q := sess.ID(cmd.UserID).Where(ss.notServiceAccountFilter())
+
+		if cmd.Password != nil {
+			user.Password = *cmd.Password
+		}
 
 		if cmd.IsDisabled != nil {
 			sess.UseBool("is_disabled")
@@ -349,18 +349,6 @@ func (ss *sqlStore) Update(ctx context.Context, cmd *user.UpdateUserCommand) err
 		})
 
 		return nil
-	})
-}
-
-func (ss *sqlStore) ChangePassword(ctx context.Context, cmd *user.ChangeUserPasswordCommand) error {
-	return ss.db.WithTransactionalDbSession(ctx, func(sess *db.Session) error {
-		user := user.User{
-			Password: cmd.NewPassword,
-			Updated:  time.Now(),
-		}
-
-		_, err := sess.ID(cmd.UserID).Where(ss.notServiceAccountFilter()).Update(&user)
-		return err
 	})
 }
 
