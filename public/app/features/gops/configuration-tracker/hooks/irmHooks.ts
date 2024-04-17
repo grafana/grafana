@@ -342,9 +342,13 @@ export function useGetEssentialsConfiguration() {
   const { stepsDone, totalStepsToDo } = essentialContent.sections.reduce(
     (acc, section) => {
       const stepsDone = section.steps.filter((step) => step.button.done).length;
+      const totalStepsToForSection = section.steps.reduce(
+        (acc, step) => (step.button.done !== undefined ? acc + 1 : acc),
+        0
+      );
       return {
         stepsDone: acc.stepsDone + stepsDone,
-        totalStepsToDo: acc.totalStepsToDo + section.steps.length,
+        totalStepsToDo: acc.totalStepsToDo + totalStepsToForSection,
       };
     },
     { stepsDone: 0, totalStepsToDo: 0 }
