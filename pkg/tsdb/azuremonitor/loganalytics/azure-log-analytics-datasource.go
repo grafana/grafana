@@ -55,6 +55,10 @@ type AzureLogAnalyticsQuery struct {
 }
 
 func (e *AzureLogAnalyticsDatasource) ResourceRequest(rw http.ResponseWriter, req *http.Request, cli *http.Client) (http.ResponseWriter, error) {
+	backend.Logger.Warn("ResourceRequest", "url", req.URL.String())
+	if req.URL.Path == "/v1/usage/basiclogs" {
+
+	}
 	return e.Proxy.Do(rw, req, cli)
 }
 

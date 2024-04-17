@@ -252,4 +252,10 @@ export default class AzureLogAnalyticsDatasource extends DataSourceWithBackend<
   async getAzureLogAnalyticsCheatsheetQueries() {
     return await this.getResource(`${this.resourcePath}/v1/metadata`);
   }
+
+  async getBasicLogsQueryUsage(tableName: string) {
+    const params: Record<string, unknown> = {};
+    params['tableName'] = tableName;
+    return await this.getResource(`${this.resourcePath}/v1/usage/basiclogs`, params);
+  }
 }
