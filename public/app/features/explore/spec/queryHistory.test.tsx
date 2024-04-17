@@ -123,7 +123,6 @@ describe('Explore: Query History', () => {
     });
   });
 
-  // TODO: #86287
   it('adds recently added query if the query history panel is already open', async () => {
     const urlParams = {
       left: serializeStateToUrlParam({
