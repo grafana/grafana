@@ -248,8 +248,9 @@ const getNewStyles = (theme: GrafanaTheme2) => {
       margin: -2.5px 0.3em;
       height: 15px;
       overflow: hidden;
-      word-break: break-all;
-      line-height: 20px;
+      text-overflow: ellipsis;
+      width: 700px;
+      display: inline-block;
     `,
     TracePageHeaderTraceId: css`
       label: TracePageHeaderTraceId;
