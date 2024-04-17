@@ -1,3 +1,4 @@
+// Core Grafana history https://github.com/grafana/grafana/blob/v11.0.0-preview/public/app/plugins/datasource/prometheus/querybuilder/parsing.test.ts
 import { buildVisualQueryFromString } from './parsing';
 import { PromOperationId, PromVisualQuery } from './types';
 
@@ -284,6 +285,28 @@ describe('buildVisualQueryFromString', () => {
           {
             id: 'histogram_quantile',
             params: [0.99],
+          },
+        ],
+      },
+    });
+  });
+
+  // enable in #85942 when updated lezer parser is merged
+  xit('parses a native histogram function correctly', () => {
+    expect(
+      buildVisualQueryFromString('histogram_count(rate(counters_logins{app="backend"}[$__rate_interval]))')
+    ).toEqual({
+      errors: [],
+      query: {
+        metric: 'counters_logins',
+        labels: [{ label: 'app', op: '=', value: 'backend' }],
+        operations: [
+          {
+            id: 'rate',
+            params: ['$__rate_interval'],
+          },
+          {
+            id: 'histogram_quantile',
           },
         ],
       },

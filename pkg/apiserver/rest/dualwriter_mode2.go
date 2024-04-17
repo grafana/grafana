@@ -124,6 +124,51 @@ func (d *DualWriterMode2) List(ctx context.Context, options *metainternalversion
 	return ll, nil
 }
 
+// DeleteCollection overrides the behavior of the generic DualWriter and deletes from both LegacyStorage and Storage.
+func (d *DualWriterMode2) DeleteCollection(ctx context.Context, deleteValidation rest.ValidateObjectFunc, options *metav1.DeleteOptions, listOptions *metainternalversion.ListOptions) (runtime.Object, error) {
+	legacy, ok := d.Legacy.(rest.CollectionDeleter)
+	if !ok {
+		return nil, errDualWriterCollectionDeleterMissing
+	}
+
+	// #TODO: figure out how to handle partial deletions
+	deleted, err := legacy.DeleteCollection(ctx, deleteValidation, options, listOptions)
+	if err != nil {
+		klog.FromContext(ctx).Error(err, "failed to delete collection successfully from legacy storage", "deletedObjects", deleted)
+	}
+
+	res, err := d.Storage.DeleteCollection(ctx, deleteValidation, options, listOptions)
+	if err != nil {
+		klog.FromContext(ctx).Error(err, "failed to delete collection successfully from Storage", "deletedObjects", deleted)
+	}
+
+	return res, err
+}
+
+func (d *DualWriterMode2) Delete(ctx context.Context, name string, deleteValidation rest.ValidateObjectFunc, options *metav1.DeleteOptions) (runtime.Object, bool, error) {
+	legacy, ok := d.Legacy.(rest.GracefulDeleter)
+	if !ok {
+		return nil, false, errDualWriterDeleterMissing
+	}
+
+	deletedLS, async, err := legacy.Delete(ctx, name, deleteValidation, options)
+	if err != nil {
+		if !apierrors.IsNotFound(err) {
+			klog.FromContext(ctx).Error(err, "could not delete from legacy store", "mode", 2)
+			return deletedLS, async, err
+		}
+	}
+
+	_, _, errUS := d.Storage.Delete(ctx, name, deleteValidation, options)
+	if errUS != nil {
+		if !apierrors.IsNotFound(errUS) {
+			klog.FromContext(ctx).Error(errUS, "could not delete from duplicate storage", "mode", 2, "name", name)
+		}
+	}
+
+	return deletedLS, async, err
+}
+
 func enrichObject(orig, copy runtime.Object) (runtime.Object, error) {
 	accessorC, err := meta.Accessor(copy)
 	if err != nil {
@@ -141,11 +186,6 @@ func enrichObject(orig, copy runtime.Object) (runtime.Object, error) {
 		ac[k] = v
 	}
 	accessorC.SetAnnotations(ac)
-
-	// #TODO set resource version and UID when required (Update for example)
-	// accessorC.SetResourceVersion(accessorO.GetResourceVersion())
-
-	// accessorC.SetUID(accessorO.GetUID())
 
 	return copy, nil
 }
