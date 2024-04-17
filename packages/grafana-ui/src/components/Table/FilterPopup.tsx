@@ -66,7 +66,7 @@ export const FilterPopup = ({
       {/* eslint-disable-next-line jsx-a11y/no-static-element-interactions, jsx-a11y/click-events-have-key-events */}
       <div className={cx(styles.filterContainer)} onClick={stopPropagation}>
         <Stack direction="column" gap={3}>
-          <Stack gap={0.5}>
+          <Stack direction="column" gap={0.5}>
             <Stack justifyContent="space-between" alignItems="center">
               <Label className={styles.label}>Filter by values:</Label>
               <IconButton
