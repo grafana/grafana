@@ -13,7 +13,7 @@ const variableOptionGroup = {
 };
 
 describe('LogsQueryEditor.LogsManagement', () => {
-  it('should set Basic Logs to true if Basic is clicked', async () => {
+  it('should set Basic Logs to true if Basic is clicked and acknowledged', async () => {
     const mockDatasource = createMockDatasource();
     const query = createMockQuery({ azureLogAnalytics: { basicLogsQuery: undefined } });
     const onChange = jest.fn();
@@ -30,6 +30,11 @@ describe('LogsQueryEditor.LogsManagement', () => {
 
     const logsManagementOption = await screen.findByLabelText('Basic');
     await userEvent.click(logsManagementOption);
+
+    // ensures that modal shows
+    expect(await screen.findByText('Basic Logs Queries')).toBeInTheDocument();
+    const acknowledgedAction = await screen.findByText('Confirm');
+    await userEvent.click(acknowledgedAction);
 
     expect(onChange).toBeCalledWith(
       expect.objectContaining({
@@ -87,6 +92,8 @@ describe('LogsQueryEditor.LogsManagement', () => {
 
     const logsManagementOption = await screen.findByLabelText('Basic');
     await userEvent.click(logsManagementOption);
+    const acknowledgedAction = await screen.findByText('Confirm');
+    await userEvent.click(acknowledgedAction);
 
     expect(onChange).toBeCalledWith(
       expect.objectContaining({
@@ -94,6 +101,40 @@ describe('LogsQueryEditor.LogsManagement', () => {
           basicLogsQuery: true,
           query: '',
           dashboardTime: true,
+        }),
+      })
+    );
+  });
+
+  it('should handle modal acknowledgements - cancel', async () => {
+    const mockDatasource = createMockDatasource();
+    const query = createMockQuery({ azureLogAnalytics: { basicLogsQuery: undefined } });
+    const onChange = jest.fn();
+
+    render(
+      <LogsManagement
+        query={query}
+        datasource={mockDatasource}
+        variableOptionGroup={variableOptionGroup}
+        onQueryChange={onChange}
+        setError={() => {}}
+      />
+    );
+
+    const logsManagementOption = await screen.findByLabelText('Basic');
+    await userEvent.click(logsManagementOption);
+
+    // ensures that modal shows
+    expect(await screen.findByText('Basic Logs Queries')).toBeInTheDocument();
+
+    const cancelAcknowledgement = await screen.findByText('Cancel');
+    await userEvent.click(cancelAcknowledgement);
+
+    //ensures that if cancel is clicked, Logs is set back to analytics
+    expect(onChange).toBeCalledWith(
+      expect.objectContaining({
+        azureLogAnalytics: expect.objectContaining({
+          basicLogsQuery: false,
         }),
       })
     );
