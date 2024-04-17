@@ -552,7 +552,7 @@ func (hs *HTTPServer) ChangeActiveOrgAndRedirectToHome(c *contextmodel.ReqContex
 // 403: forbiddenError
 // 500: internalServerError
 func (hs *HTTPServer) ChangeUserPassword(c *contextmodel.ReqContext) response.Response {
-	form := dtos.ChangeUserPasswordForm{}
+	form := user.ChangeUserPasswordCommand{}
 	if err := web.Bind(c.Req, &form); err != nil {
 		return response.Error(http.StatusBadRequest, "bad request data", err)
 	}
@@ -719,7 +719,7 @@ type ChangeUserPasswordParams struct {
 	// To change the email, name, login, theme, provide another one.
 	// in:body
 	// required:true
-	Body dtos.ChangeUserPasswordForm `json:"body"`
+	Body user.ChangeUserPasswordCommand `json:"body"`
 }
 
 // swagger:parameters getUserByID

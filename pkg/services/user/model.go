@@ -292,3 +292,8 @@ type AdminCreateUserResponse struct {
 	ID      int64  `json:"id"`
 	Message string `json:"message"`
 }
+
+type ChangeUserPasswordCommand struct {
+	OldPassword Password `json:"oldPassword"`
+	NewPassword Password `json:"newPassword"`
+}

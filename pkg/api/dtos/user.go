@@ -41,11 +41,6 @@ type ResetUserPasswordForm struct {
 	ConfirmPassword user.Password `json:"confirmPassword"`
 }
 
-type ChangeUserPasswordForm struct {
-	OldPassword user.Password `json:"oldPassword"`
-	NewPassword user.Password `json:"newPassword"`
-}
-
 type UserLookupDTO struct {
 	UserID    int64  `json:"userId"`
 	Login     string `json:"login"`
