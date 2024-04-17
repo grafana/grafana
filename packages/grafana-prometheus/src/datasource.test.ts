@@ -542,9 +542,10 @@ describe('PrometheusDatasource', () => {
   });
 
   describe('interpolateVariablesInQueries', () => {
-    afterAll(() => {
+    afterEach(() => {
       config.featureToggles.promQLScope = undefined;
     });
+
     it('should call replace function 2 times', () => {
       const query: PromQuery = {
         expr: 'test{job="testjob"}',
@@ -591,7 +592,10 @@ describe('PrometheusDatasource', () => {
   describe('applyTemplateVariables', () => {
     afterAll(() => {
       replaceMock.mockImplementation((a: string, ...rest: unknown[]) => a);
-      config.featureToggles.promQLScope = undefined;
+    });
+
+    afterEach(() => {
+      config.featureToggles.promQLScope = false;
     });
 
     it('should call replace function for legendFormat', () => {
