@@ -57,7 +57,7 @@ import {
   isPanelClone,
 } from '../utils/utils';
 
-import { AddLibraryPanelWidget } from './AddLibraryPanelWidget';
+import { AddLibraryPanelDrawer } from './AddLibraryPanelDrawer';
 import { DashboardControls } from './DashboardControls';
 import { DashboardGridItem } from './DashboardGridItem';
 import { DashboardSceneRenderer } from './DashboardSceneRenderer';
@@ -117,7 +117,6 @@ export interface DashboardSceneState extends SceneObjectState {
 }
 
 export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
-  static listenToChangesInProps = PERSISTED_PROPS;
   static Component = DashboardSceneRenderer;
 
   /**
@@ -761,30 +760,9 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
     locationService.partial({ editview: 'settings' });
   };
 
-  public onCreateLibPanelWidget() {
-    if (!(this.state.body instanceof SceneGridLayout)) {
-      throw new Error('Trying to add a panel in a layout that is not SceneGridLayout');
-    }
-
-    if (!this.state.isEditing) {
-      this.onEnterEditMode();
-    }
-
-    const sceneGridLayout = this.state.body;
-
-    const panelId = dashboardSceneGraph.getNextPanelId(this);
-
-    const newGridItem = new DashboardGridItem({
-      height: NEW_PANEL_HEIGHT,
-      width: NEW_PANEL_WIDTH,
-      x: 0,
-      y: 0,
-      body: new AddLibraryPanelWidget({ key: getVizPanelKeyForPanelId(panelId) }),
-      key: `grid-item-${panelId}`,
-    });
-
-    sceneGridLayout.setState({
-      children: [newGridItem, ...sceneGridLayout.state.children],
+  public onShowAddLibraryPanelDrawer() {
+    this.setState({
+      overlay: new AddLibraryPanelDrawer({}),
     });
   }
 

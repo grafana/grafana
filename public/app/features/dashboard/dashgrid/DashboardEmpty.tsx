@@ -44,7 +44,7 @@ const DashboardEmpty = ({ dashboard, canCreate }: Props) => {
   const onAddLibraryPanel = () => {
     DashboardInteractions.emptyDashboardButtonClicked({ item: 'import_from_library' });
     if (dashboard instanceof DashboardScene) {
-      dashboard.onCreateLibPanelWidget();
+      dashboard.onShowAddLibraryPanelDrawer();
     } else {
       onAddLibraryPanelImpl(dashboard);
     }
