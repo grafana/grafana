@@ -159,11 +159,11 @@ func (s *Service) Create(ctx context.Context, cmd *user.CreateUserCommand) (*use
 	usr.Rands = rands
 
 	if len(cmd.Password) > 0 {
-		if err := usr.Password.Validate(s.cfg); err != nil {
+		if err := cmd.Password.Validate(s.cfg); err != nil {
 			return nil, err
 		}
 
-		usr.Password, err = usr.Password.Hash(usr.Salt)
+		usr.Password, err = cmd.Password.Hash(usr.Salt)
 		if err != nil {
 			return nil, err
 		}
