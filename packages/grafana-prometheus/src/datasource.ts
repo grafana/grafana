@@ -751,15 +751,17 @@ export class PrometheusDatasource
     if (queries && queries.length) {
       expandedQueries = queries.map((query) => {
         const interpolatedQuery = this.templateSrv.replace(query.expr, scopedVars, this.interpolateQueryExpr);
-        const withAdhocFilters = this.enhanceExprWithAdHocFilters(filters, interpolatedQuery);
 
         const expandedQuery = {
           ...query,
           ...(config.featureToggles.promQLScope ? { adhocFilters: this.generateScopeFilters(filters) } : {}),
           datasource: this.getRef(),
-          expr: withAdhocFilters,
+          expr: config.featureToggles.promQLScope
+            ? interpolatedQuery
+            : this.enhanceExprWithAdHocFilters(filters, interpolatedQuery),
           interval: this.templateSrv.replace(query.interval, scopedVars),
         };
+
         return expandedQuery;
       });
     }
@@ -921,13 +923,10 @@ export class PrometheusDatasource
     // interpolate expression
     const expr = this.templateSrv.replace(target.expr, variables, this.interpolateQueryExpr);
 
-    // Add ad hoc filters
-    const exprWithAdHocFilters = this.enhanceExprWithAdHocFilters(filters, expr);
-
     return {
       ...target,
       ...(config.featureToggles.promQLScope ? { adhocFilters: this.generateScopeFilters(filters) } : {}),
-      expr: exprWithAdHocFilters,
+      expr: config.featureToggles.promQLScope ? expr : this.enhanceExprWithAdHocFilters(filters, expr),
       interval: this.templateSrv.replace(target.interval, variables),
       legendFormat: this.templateSrv.replace(target.legendFormat, variables),
     };
