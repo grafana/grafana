@@ -79,6 +79,7 @@ While the `t` function can technically be used outside of React functions (e.g, 
    1. Add a new constant for the new language
    2. Add the new constant to the `LOCALES` array
    3. Create a PR with the changes and merge when you are ready to release the new language (probably wait until we have translations for it)
+4. In the Enterprise repo, update `src/public/locales/localeExtensions.ts`
 
 ## How translations work in Grafana
 
