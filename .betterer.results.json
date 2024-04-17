@@ -7454,12 +7454,6 @@
         "count": 1
       }
     ],
-    "/packages/grafana-e2e/src/flows/addDataSource.ts": [
-      {
-        "message": "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.",
-        "count": 1
-      }
-    ],
     "/packages/grafana-prometheus/src/components/PromExploreExtraField.tsx": [
       {
         "message": "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.",
