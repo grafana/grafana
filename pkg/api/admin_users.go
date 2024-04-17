@@ -44,15 +44,10 @@ func (hs *HTTPServer) AdminCreateUser(c *contextmodel.ReqContext) response.Respo
 		return response.Error(http.StatusBadRequest, "bad request data", err)
 	}
 
-	password, err := user.NewPassword(form.Password, hs.Cfg)
-	if err != nil {
-		return response.Err(err)
-	}
-
 	cmd := user.CreateUserCommand{
 		Login:    form.Login,
 		Email:    form.Email,
-		Password: password,
+		Password: form.Password,
 		Name:     form.Name,
 		OrgID:    form.OrgId,
 	}

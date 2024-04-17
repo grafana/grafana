@@ -92,7 +92,7 @@ func (hs *HTTPServer) SignUpStep2(c *contextmodel.ReqContext) response.Response 
 		Email:    form.Email,
 		Login:    form.Username,
 		Name:     form.Name,
-		Password: user.NewPasswordUnchecked(form.Password),
+		Password: form.Password,
 		OrgName:  form.OrgName,
 	}
 

@@ -270,16 +270,11 @@ func (hs *HTTPServer) CompleteInvite(c *contextmodel.ReqContext) response.Respon
 		}
 	}
 
-	password, err := user.NewPassword(completeInvite.Password, hs.Cfg)
-	if err != nil {
-		return response.Err(err)
-	}
-
 	cmd := user.CreateUserCommand{
 		Email:        completeInvite.Email,
 		Name:         completeInvite.Name,
 		Login:        completeInvite.Username,
-		Password:     password,
+		Password:     completeInvite.Password,
 		SkipOrgSetup: true,
 	}
 

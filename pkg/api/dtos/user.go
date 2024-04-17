@@ -1,24 +1,26 @@
 package dtos
 
+import "github.com/grafana/grafana/pkg/services/user"
+
 type SignUpForm struct {
 	Email string `json:"email" binding:"Required"`
 }
 
 type SignUpStep2Form struct {
-	Email    string `json:"email"`
-	Name     string `json:"name"`
-	Username string `json:"username"`
-	Password string `json:"password"`
-	Code     string `json:"code"`
-	OrgName  string `json:"orgName"`
+	Email    string        `json:"email"`
+	Name     string        `json:"name"`
+	Username string        `json:"username"`
+	Password user.Password `json:"password"`
+	Code     string        `json:"code"`
+	OrgName  string        `json:"orgName"`
 }
 
 type AdminCreateUserForm struct {
-	Email    string `json:"email"`
-	Login    string `json:"login"`
-	Name     string `json:"name"`
-	Password string `json:"password" binding:"Required"`
-	OrgId    int64  `json:"orgId"`
+	Email    string        `json:"email"`
+	Login    string        `json:"login"`
+	Name     string        `json:"name"`
+	Password user.Password `json:"password" binding:"Required"`
+	OrgId    int64         `json:"orgId"`
 }
 
 type AdminUpdateUserPasswordForm struct {
@@ -34,14 +36,14 @@ type SendResetPasswordEmailForm struct {
 }
 
 type ResetUserPasswordForm struct {
-	Code            string `json:"code"`
-	NewPassword     string `json:"newPassword"`
-	ConfirmPassword string `json:"confirmPassword"`
+	Code            string        `json:"code"`
+	NewPassword     user.Password `json:"newPassword"`
+	ConfirmPassword user.Password `json:"confirmPassword"`
 }
 
 type ChangeUserPasswordForm struct {
-	OldPassword string `json:"oldPassword"`
-	NewPassword string `json:"newPassword"`
+	OldPassword user.Password `json:"oldPassword"`
+	NewPassword user.Password `json:"newPassword"`
 }
 
 type UserLookupDTO struct {
