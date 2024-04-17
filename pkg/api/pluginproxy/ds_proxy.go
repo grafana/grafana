@@ -304,7 +304,13 @@ func (proxy *DataSourceProxy) validateRequest() error {
 			continue
 		}
 
-		if route.ReqRole.IsValid() {
+		routeEval := route.Evaluator()
+		switch {
+		case routeEval != nil:
+			if ok := routeEval.Evaluate(proxy.ctx.GetPermissions()); !ok {
+				return errors.New("plugin proxy route access denied")
+			}
+		case route.ReqRole.IsValid():
 			if !proxy.ctx.HasUserRole(route.ReqRole) {
 				return errors.New("plugin proxy route access denied")
 			}

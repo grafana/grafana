@@ -20,6 +20,7 @@ import (
 	"github.com/grafana/grafana/pkg/plugins/backendplugin/secretsmanagerplugin"
 	"github.com/grafana/grafana/pkg/plugins/log"
 	"github.com/grafana/grafana/pkg/plugins/pfs"
+	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/util"
 )
@@ -204,8 +205,11 @@ type Route struct {
 	Body         json.RawMessage `json:"body"`
 }
 
-func (r *Route) RequiresRBACAction() bool {
-	return r.ReqAction != ""
+func (r *Route) Evaluator() accesscontrol.Evaluator {
+	if r.ReqAction == "" {
+		return nil
+	}
+	return accesscontrol.EvalPermission(r.ReqAction)
 }
 
 // Header describes an HTTP header that is forwarded with
