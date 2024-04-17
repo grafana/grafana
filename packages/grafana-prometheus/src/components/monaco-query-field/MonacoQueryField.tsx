@@ -222,6 +222,10 @@ const MonacoQueryField = (props: Props) => {
             'isEditorFocused' + id
           );
 
+          // Fixes Monaco capturing the search key binding and displaying a useless search box within the Editor.
+          // See https://github.com/grafana/grafana/issues/85850
+          editor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyCode.KeyF, () => {});
+
           /* Something in this configuration of monaco doesn't bubble up [mod]+K, which the
                     command palette uses. Pass the event out of monaco manually
                     */
