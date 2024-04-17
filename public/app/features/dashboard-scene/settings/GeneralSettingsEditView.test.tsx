@@ -91,7 +91,7 @@ describe('GeneralSettingsEditView', () => {
     });
 
     it('A change to folder updates the dashboard state', async () => {
-      const updateNavModel = jest.spyOn(utils, 'updateNavModel');
+      const updateNavModel = jest.spyOn(utils, 'updateNavModel').mockImplementation(jest.fn());
 
       await settings.onFolderChange('folder-2', 'folder 2');
 
