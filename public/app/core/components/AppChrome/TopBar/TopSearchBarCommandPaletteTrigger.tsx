@@ -92,7 +92,7 @@ const getStyles = (theme: GrafanaTheme2) => {
       },
     ]),
     shortcut: css({
-      fontSize: theme.typography.bodySmall.fontSize,
+      ...theme.typography.bodySmall,
     }),
     fakeInput: css([
       baseStyles.input,
