@@ -1,6 +1,6 @@
 module.exports = {
-  // Base config
-  locales: ['en-US'], // Only en-US is updated - Crowdin will PR with other languages
+  // Base config - same for both OSS and Enterprise
+  locales: ['en-US'], // Only en-US  is updated - Crowdin will PR with other languages
   sort: true,
   createOldCatalogs: false,
   failOnWarnings: true,
@@ -9,6 +9,10 @@ module.exports = {
 
   // OSS-specific config
   defaultNamespace: 'grafana',
-  input: ['../../public/**/*.{tsx,ts}', '!../../public/app/extensions/**/*', '../../packages/grafana-ui/**/*.{tsx,ts}'],
+  input: [
+    '../../public/**/*.{tsx,ts}',
+    '!../../public/app/extensions/**/*', // Don't extract from Enterprise
+    '../../packages/grafana-ui/**/*.{tsx,ts}',
+  ],
   output: './public/locales/$LOCALE/$NAMESPACE.json',
 };

@@ -19,10 +19,6 @@ vendor
 # TS generate from cue by cuetsy
 **/*.gen.ts
 
-# Auto-generated internationalization files
-public/locales/_build/
-public/locales/**/*.js
-
 # Auto-generated theme files
 theme.light.generated.json
 theme.dark.generated.json

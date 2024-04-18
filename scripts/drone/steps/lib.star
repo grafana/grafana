@@ -641,7 +641,7 @@ def lint_frontend_step():
 
 def verify_i18n_step():
     extract_error_message = "\nExtraction failed. Make sure that you have no dynamic translation phrases, such as 't(\\`preferences.theme.\\$${themeID}\\`, themeName)' and that no translation key is used twice. Search the output for '[warning]' to find the offending file."
-    uncommited_error_message = "\nTranslation extraction has not been committed. Please run 'yarn i18n:extract', commit the changes and push again."
+    uncommited_error_message = "\nTranslation extraction has not been committed. Please run 'make i18n-extract', commit the changes and push again."
     return {
         "name": "verify-i18n",
         "image": images["node"],
@@ -651,7 +651,7 @@ def verify_i18n_step():
         "failure": "ignore",
         "commands": [
             "apk add --update git",
-            "yarn run i18n:extract || (echo \"{}\" && false)".format(extract_error_message),
+            "make i18n-extract || (echo \"{}\" && false)".format(extract_error_message),
             # Verify that translation extraction has been committed
             '''
             file_diff=$(git diff --dirstat public/locales)
