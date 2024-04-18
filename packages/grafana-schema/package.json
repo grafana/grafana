@@ -2,7 +2,7 @@
   "author": "Grafana Labs",
   "license": "Apache-2.0",
   "name": "@grafana/schema",
-  "version": "11.0.0-pre",
+  "version": "11.1.0-pre",
   "description": "Grafana Schema Library",
   "keywords": [
     "typescript"
@@ -37,8 +37,6 @@
   },
   "devDependencies": {
     "@grafana/tsconfig": "^1.3.0-rc1",
-    "@rollup/plugin-commonjs": "25.0.7",
-    "@rollup/plugin-json": "6.1.0",
     "@rollup/plugin-node-resolve": "15.2.3",
     "esbuild": "0.18.12",
     "glob": "^10.2.7",
@@ -47,7 +45,7 @@
     "rollup-plugin-dts": "^5.0.0",
     "rollup-plugin-esbuild": "5.0.0",
     "rollup-plugin-node-externals": "^5.0.0",
-    "typescript": "5.3.3"
+    "typescript": "5.4.5"
   },
   "dependencies": {
     "tslib": "2.6.2"

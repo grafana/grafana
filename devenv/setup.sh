@@ -14,27 +14,6 @@ bulkDashboard() {
 		ln -s -f ../../../devenv/bulk-dashboards/bulk-dashboards.yaml ../conf/provisioning/dashboards/custom.yaml
 }
 
-bulkAlertingDashboard() {
-
-		requiresJsonnet
-
-		jsonnet -o "bulk_alerting_dashboards/bulk_alerting_datasources.yaml" ./bulk_alerting_dashboards/datasources.jsonnet
-
-		COUNTER=1
-		DS=1
-		MAX=1000
-		while [  $COUNTER -lt $MAX ]; do
-				jsonnet -o "bulk_alerting_dashboards/alerting_dashboard${COUNTER}.json" \
-					-e "local bulkDash = import 'bulk_alerting_dashboards/dashboard.libsonnet'; bulkDash.alertingDashboard(${COUNTER}, ${DS})"
-				let COUNTER=COUNTER+1
-				let DS=COUNTER/10
-				let DS=DS+1
-		done
-
-		ln -s -f ../../../devenv/bulk_alerting_dashboards/bulk_alerting_dashboards.yaml ../conf/provisioning/dashboards/custom.yaml
-		ln -s -f ../../../devenv/bulk_alerting_dashboards/bulk_alerting_datasources.yaml ../conf/provisioning/datasources/custom.yaml
-}
-
 bulkFolders() {
 	./bulk-folders/bulk-folders.sh "$1"
 	ln -s -f ../../../devenv/bulk-folders/bulk-folders.yaml ../conf/provisioning/dashboards/bulk-folders.yaml
@@ -70,12 +49,6 @@ undev() {
     rm -rf bulk-folders/Bulk\ Folder*
     echo -e "    \xE2\x9C\x94 Reverting bulk-folders provisioning"
 
-
-    # Removing generated dashboard and datasource files from bulk-alerting-dashboards
-    rm -f bulk_alerting_dashboards/alerting_dashboard*.json
-    rm -f "bulk_alerting_dashboards/bulk_alerting_datasources.yaml"
-    echo -e "    \xE2\x9C\x94 Reverting bulk-alerting-dashboards provisioning"
-
     # Removing the symlinks
     rm -f ../conf/provisioning/dashboards/custom.yaml
     rm -f ../conf/provisioning/dashboards/bulk-folders.yaml
@@ -88,7 +61,6 @@ usage() {
 	echo -e "\n"
 	echo "Usage:"
 	echo "  bulk-dashboards                      - provision 400 dashboards"
-	echo "  bulk-alerting-dashboards             - provision 400 dashboards with alerts"
 	echo "  bulk-folders [folders] [dashboards]  - provision many folders with dashboards"
 	echo "  bulk-folders                         - provision 200 folders with 3 dashboards in each"
 	echo "  no args                              - provision core datasources and dev dashboards"
@@ -104,9 +76,7 @@ main() {
 	local cmd=$1
   local arg1=$2
 
-	if [[ $cmd == "bulk-alerting-dashboards" ]]; then
-		bulkAlertingDashboard
-	elif [[ $cmd == "bulk-dashboards" ]]; then
+	if [[ $cmd == "bulk-dashboards" ]]; then
 		bulkDashboard
 	elif [[ $cmd == "bulk-folders" ]]; then
 		bulkFolders "$arg1"

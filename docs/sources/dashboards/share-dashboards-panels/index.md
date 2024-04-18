@@ -85,7 +85,7 @@ A dashboard snapshot shares an interactive dashboard publicly. Grafana strips se
 You can publish snapshots to your local instance or to [snapshots.raintank.io](http://snapshots.raintank.io). The latter is a free service provided by Grafana Labs that enables you to publish dashboard snapshots to an external Grafana instance. Anyone with the link can view it. You can set an expiration time if you want the snapshot removed after a certain time period.
 
 1. Click the **Snapshot** tab.
-1. Click **Publish to snapshots.raintank.io** or **Local Snapshot**.
+1. Click **Publish to snapshots.raintank.io** or **Publish Snapshot**.
 
    Grafana generates a link of the snapshot.
 
@@ -168,10 +168,16 @@ https://play.grafana.org/d/000000012/grafana-play-home?orgId=1&from=156871968017
 
 A panel snapshot shares an interactive panel publicly. Grafana strips sensitive data leaving only the visible metric data and series names embedded in the dashboard. Panel snapshots can be accessed by anyone with the link.
 
-You can publish snapshots to your local instance or to [snapshots.raintank.io](http://snapshots.raintank.io). The latter is a free service provided by [Grafana Labs](https://grafana.com), that enables you to publish dashboard snapshots to an external Grafana instance. You can optionally set an expiration time if you want the snapshot to be removed after a certain time period.
+You can publish snapshots to your local instance or to [snapshots.raintank.io](http://snapshots.raintank.io). The latter is a free service provided by [Grafana Labs](https://grafana.com), that enables you to publish dashboard snapshots to an external Grafana instance.
+
+{{< admonition type="note" >}}
+As of Grafana 11, the option to publish to [snapshots.raintank.io](http://snapshots.raintank.io) is no longer available for Grafana Cloud.
+{{< /admonition >}}
+
+You can optionally set an expiration time if you want the snapshot to be removed after a certain time period.
 
 1. In the **Share Panel** dialog, click **Snapshot** to go to the tab.
-1. Click **Publish to snapshots.raintank.io** or **Local Snapshot**.
+1. Click **Publish to snapshots.raintank.io** or **Publish Snapshot**.
 
    Grafana generates the link of the snapshot.
 

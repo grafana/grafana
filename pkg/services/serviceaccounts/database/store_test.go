@@ -16,7 +16,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/quota/quotatest"
 	"github.com/grafana/grafana/pkg/services/serviceaccounts"
 	"github.com/grafana/grafana/pkg/services/serviceaccounts/tests"
-	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/supportbundles/supportbundlestest"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/services/user/userimpl"
@@ -209,7 +208,7 @@ func TestStore_DeleteServiceAccount(t *testing.T) {
 	for _, c := range cases {
 		t.Run(c.desc, func(t *testing.T) {
 			db, store := setupTestDatabase(t)
-			user := tests.SetupUserServiceAccount(t, db, c.user)
+			user := tests.SetupUserServiceAccount(t, db, store.cfg, c.user)
 			err := store.DeleteServiceAccount(context.Background(), user.OrgID, user.ID)
 			if c.expectedErr != nil {
 				require.ErrorIs(t, err, c.expectedErr)
@@ -220,18 +219,19 @@ func TestStore_DeleteServiceAccount(t *testing.T) {
 	}
 }
 
-func setupTestDatabase(t *testing.T) (*sqlstore.SQLStore, *ServiceAccountsStoreImpl) {
+func setupTestDatabase(t *testing.T) (db.DB, *ServiceAccountsStoreImpl) {
 	t.Helper()
 	db := db.InitTestDB(t)
+	cfg := db.Cfg
 	quotaService := quotatest.New(false, nil)
-	apiKeyService, err := apikeyimpl.ProvideService(db, db.Cfg, quotaService)
+	apiKeyService, err := apikeyimpl.ProvideService(db, cfg, quotaService)
 	require.NoError(t, err)
 	kvStore := kvstore.ProvideService(db)
-	orgService, err := orgimpl.ProvideService(db, db.Cfg, quotaService)
+	orgService, err := orgimpl.ProvideService(db, cfg, quotaService)
 	require.NoError(t, err)
-	userSvc, err := userimpl.ProvideService(db, orgService, db.Cfg, nil, nil, quotaService, supportbundlestest.NewFakeBundleService())
+	userSvc, err := userimpl.ProvideService(db, orgService, cfg, nil, nil, quotaService, supportbundlestest.NewFakeBundleService())
 	require.NoError(t, err)
-	return db, ProvideServiceAccountsStore(db.Cfg, db, apiKeyService, kvStore, userSvc, orgService)
+	return db, ProvideServiceAccountsStore(cfg, db, apiKeyService, kvStore, userSvc, orgService)
 }
 
 func TestStore_RetrieveServiceAccount(t *testing.T) {
@@ -255,7 +255,7 @@ func TestStore_RetrieveServiceAccount(t *testing.T) {
 	for _, c := range cases {
 		t.Run(c.desc, func(t *testing.T) {
 			db, store := setupTestDatabase(t)
-			user := tests.SetupUserServiceAccount(t, db, c.user)
+			user := tests.SetupUserServiceAccount(t, db, store.cfg, c.user)
 			dto, err := store.RetrieveServiceAccount(context.Background(), user.OrgID, user.ID)
 			if c.expectedErr != nil {
 				require.ErrorIs(t, err, c.expectedErr)
@@ -289,7 +289,7 @@ func TestStore_MigrateApiKeys(t *testing.T) {
 			store.cfg.AutoAssignOrgRole = "Viewer"
 			_, err := store.orgService.CreateWithMember(context.Background(), &org.CreateOrgCommand{Name: "main"})
 			require.NoError(t, err)
-			key := tests.SetupApiKey(t, db, c.key)
+			key := tests.SetupApiKey(t, db, store.cfg, c.key)
 			err = store.MigrateApiKey(context.Background(), key.OrgID, key.ID)
 			if c.expectedErr != nil {
 				require.ErrorIs(t, err, c.expectedErr)
@@ -402,7 +402,7 @@ func TestStore_MigrateAllApiKeys(t *testing.T) {
 			require.NoError(t, err)
 
 			for _, key := range c.keys {
-				tests.SetupApiKey(t, db, key)
+				tests.SetupApiKey(t, db, store.cfg, key)
 			}
 
 			results, err := store.MigrateApiKeysToServiceAccounts(context.Background(), c.orgId)
@@ -447,18 +447,18 @@ func TestStore_MigrateAllApiKeys(t *testing.T) {
 }
 func TestServiceAccountsStoreImpl_SearchOrgServiceAccounts(t *testing.T) {
 	initUsers := []tests.TestUser{
-		{Name: "satest-1", Role: string(org.RoleViewer), Login: "sa-satest-1", IsServiceAccount: true},
+		{Name: "satest-1", Role: string(org.RoleViewer), Login: "sa-1-satest-1", IsServiceAccount: true},
 		{Name: "usertest-2", Role: string(org.RoleEditor), Login: "usertest-2", IsServiceAccount: false},
-		{Name: "satest-3", Role: string(org.RoleEditor), Login: "sa-satest-3", IsServiceAccount: true},
-		{Name: "satest-4", Role: string(org.RoleAdmin), Login: "sa-satest-4", IsServiceAccount: true},
-		{Name: "extsvc-test-5", Role: string(org.RoleNone), Login: "sa-extsvc-test-5", IsServiceAccount: true},
-		{Name: "extsvc-test-6", Role: string(org.RoleNone), Login: "sa-extsvc-test-6", IsServiceAccount: true},
-		{Name: "extsvc-test-7", Role: string(org.RoleNone), Login: "sa-extsvc-test-7", IsServiceAccount: true},
-		{Name: "extsvc-test-8", Role: string(org.RoleNone), Login: "sa-extsvc-test-8", IsServiceAccount: true},
+		{Name: "satest-3", Role: string(org.RoleEditor), Login: "sa-1-satest-3", IsServiceAccount: true},
+		{Name: "satest-4", Role: string(org.RoleAdmin), Login: "sa-1-satest-4", IsServiceAccount: true},
+		{Name: "extsvc-test-5", Role: string(org.RoleNone), Login: "sa-1-extsvc-test-5", IsServiceAccount: true},
+		{Name: "extsvc-test-6", Role: string(org.RoleNone), Login: "sa-1-extsvc-test-6", IsServiceAccount: true},
+		{Name: "extsvc-test-7", Role: string(org.RoleNone), Login: "sa-1-extsvc-test-7", IsServiceAccount: true},
+		{Name: "extsvc-test-8", Role: string(org.RoleNone), Login: "sa-1-extsvc-test-8", IsServiceAccount: true},
 	}
 
 	db, store := setupTestDatabase(t)
-	orgID := tests.SetupUsersServiceAccounts(t, db, initUsers)
+	orgID := tests.SetupUsersServiceAccounts(t, db, store.cfg, initUsers)
 
 	userWithPerm := &user.SignedInUser{
 		OrgID:       orgID,
@@ -522,10 +522,10 @@ func TestServiceAccountsStoreImpl_SearchOrgServiceAccounts(t *testing.T) {
 			expectedCount: 4,
 		},
 		{
-			desc: "should return service accounts with sa-satest login",
+			desc: "should return service accounts with sa-1-satest login",
 			query: &serviceaccounts.SearchOrgServiceAccountsQuery{
 				OrgID:        orgID,
-				Query:        "sa-satest",
+				Query:        "sa-1-satest",
 				SignedInUser: userWithPerm,
 				Filter:       serviceaccounts.FilterIncludeAll,
 			},
@@ -582,7 +582,7 @@ func TestServiceAccountsStoreImpl_EnableServiceAccounts(t *testing.T) {
 	}
 
 	db, store := setupTestDatabase(t)
-	orgID := tests.SetupUsersServiceAccounts(t, db, initUsers)
+	orgID := tests.SetupUsersServiceAccounts(t, db, store.cfg, initUsers)
 
 	fetchStates := func() map[int64]bool {
 		sa1, err := store.RetrieveServiceAccount(ctx, orgID, 1)

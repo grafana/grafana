@@ -64,10 +64,20 @@ type Props = {
   datasource: DataSourceApi<DataQuery, DataSourceJsonData, {}> | undefined;
   topOfViewRef?: RefObject<HTMLDivElement>;
   createSpanLink?: SpanLinkFunc;
+  focusedSpanId?: string;
+  createFocusSpanLink?: (traceId: string, spanId: string) => LinkModel<Field>;
 };
 
 export function TraceView(props: Props) {
-  const { traceProp, datasource, topOfViewRef, exploreId, createSpanLink: createSpanLinkFromProps } = props;
+  const {
+    traceProp,
+    datasource,
+    topOfViewRef,
+    exploreId,
+    createSpanLink: createSpanLinkFromProps,
+    focusedSpanId: focusedSpanIdFromProps,
+    createFocusSpanLink: createFocusSpanLinkFromProps,
+  } = props;
 
   const {
     detailStates,
@@ -101,12 +111,15 @@ export function TraceView(props: Props) {
    */
   const [spanNameColumnWidth, setSpanNameColumnWidth] = useState(0.4);
 
-  const [focusedSpanId, createFocusSpanLink] = useFocusSpanLink({
+  const [focusedSpanIdExplore, createFocusSpanLinkExplore] = useFocusSpanLink({
     refId: props.dataFrames[0]?.refId,
     exploreId: props.exploreId!,
     datasource,
     splitOpenFn: props.splitOpenFn!,
   });
+
+  const focusedSpanId = focusedSpanIdFromProps ?? focusedSpanIdExplore;
+  const createFocusSpanLink = createFocusSpanLinkFromProps ?? createFocusSpanLinkExplore;
 
   const traceTimeline: TTraceTimeline = useMemo(
     () => ({

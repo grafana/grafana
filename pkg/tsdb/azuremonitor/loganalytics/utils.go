@@ -16,7 +16,7 @@ func AddCustomDataLink(frame data.Frame, dataLink data.DataLink) data.Frame {
 }
 
 func AddConfigLinks(frame data.Frame, dl string, title *string) data.Frame {
-	linkTitle := "View in Azure Portal"
+	linkTitle := "View query in Azure Portal"
 	if title != nil {
 		linkTitle = *title
 	}

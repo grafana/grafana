@@ -1,7 +1,7 @@
 {
   "extends": ["@grafana/eslint-config"],
   "root": true,
-  "plugins": ["@emotion", "lodash", "jest", "import", "jsx-a11y", "@grafana"],
+  "plugins": ["@emotion", "lodash", "jest", "import", "jsx-a11y", "@grafana", "no-barrel-files"],
   "settings": {
     "import/internal-regex": "^(app/)|(@grafana)",
     "import/external-module-folders": ["node_modules", ".yarn"]
@@ -96,16 +96,22 @@
     },
     {
       "files": [
+        "public/app/plugins/datasource/azuremonitor/*.{ts,tsx}",
+        "public/app/plugins/datasource/azuremonitor/**/*.{ts,tsx}",
+        "public/app/plugins/datasource/cloud-monitoring/*.{ts,tsx}",
+        "public/app/plugins/datasource/cloud-monitoring/**/*.{ts,tsx}",
+        "public/app/plugins/datasource/elasticsearch/*.{ts,tsx}",
+        "public/app/plugins/datasource/elasticsearch/**/*.{ts,tsx}",
         "public/app/plugins/datasource/grafana-postgresql-datasource/*.{ts,tsx}",
         "public/app/plugins/datasource/grafana-postgresql-datasource/**/*.{ts,tsx}",
         "public/app/plugins/datasource/grafana-pyroscope-datasource/*.{ts,tsx}",
         "public/app/plugins/datasource/grafana-pyroscope-datasource/**/*.{ts,tsx}",
         "public/app/plugins/datasource/grafana-testdata-datasource/*.{ts,tsx}",
         "public/app/plugins/datasource/grafana-testdata-datasource/**/*.{ts,tsx}",
-        "public/app/plugins/datasource/azuremonitor/*.{ts,tsx}",
-        "public/app/plugins/datasource/azuremonitor/**/*.{ts,tsx}",
-        "public/app/plugins/datasource/cloud-monitoring/*.{ts,tsx}",
-        "public/app/plugins/datasource/cloud-monitoring/**/*.{ts,tsx}",
+        "public/app/plugins/datasource/jaeger/*.{ts,tsx}",
+        "public/app/plugins/datasource/jaeger/**/*.{ts,tsx}",
+        "public/app/plugins/datasource/loki/*.{ts,tsx}",
+        "public/app/plugins/datasource/loki/**/*.{ts,tsx}",
         "public/app/plugins/datasource/mysql/*.{ts,tsx}",
         "public/app/plugins/datasource/mysql/**/*.{ts,tsx}",
         "public/app/plugins/datasource/parca/*.{ts,tsx}",

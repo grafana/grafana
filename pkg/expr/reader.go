@@ -1,6 +1,7 @@
 package expr
 
 import (
+	"embed"
 	"fmt"
 	"strings"
 
@@ -175,6 +176,13 @@ func (h *ExpressionQueryReader) ReadQuery(
 		err = fmt.Errorf("unknown query type (%s)", common.QueryType)
 	}
 	return eq, err
+}
+
+//go:embed query.types.json
+var f embed.FS
+
+func (h *ExpressionQueryReader) QueryTypeDefinitionListJSON() ([]byte, error) {
+	return f.ReadFile("query.types.json")
 }
 
 func getReferenceVar(exp string, refId string) (string, error) {

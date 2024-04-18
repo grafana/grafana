@@ -56,7 +56,6 @@ export interface ElasticsearchOptions extends DataSourceJsonData {
   timeField: string;
   // we used to have a field named `esVersion` in the past,
   // please do not use that name in the future.
-  xpack?: boolean;
   interval?: Interval;
   timeInterval: string;
   maxConcurrentShardRequests?: number;

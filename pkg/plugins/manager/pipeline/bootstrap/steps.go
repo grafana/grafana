@@ -11,7 +11,6 @@ import (
 	"github.com/grafana/grafana/pkg/plugins/config"
 	"github.com/grafana/grafana/pkg/plugins/log"
 	"github.com/grafana/grafana/pkg/plugins/manager/loader/assetpath"
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
 )
 
 // DefaultConstructor implements the default ConstructFunc used for the Construct step of the Bootstrap stage.
@@ -48,36 +47,34 @@ func NewDefaultConstructor(signatureCalculator plugins.SignatureCalculator, asse
 }
 
 // Construct will calculate the plugin's signature state and create the plugin using the pluginFactoryFunc.
-func (c *DefaultConstructor) Construct(ctx context.Context, src plugins.PluginSource, bundles []*plugins.FoundBundle) ([]*plugins.Plugin, error) {
-	res := make([]*plugins.Plugin, 0, len(bundles))
+func (c *DefaultConstructor) Construct(ctx context.Context, src plugins.PluginSource, bundle *plugins.FoundBundle) ([]*plugins.Plugin, error) {
+	res := []*plugins.Plugin{}
 
-	for _, bundle := range bundles {
-		sig, err := c.signatureCalculator.Calculate(ctx, src, bundle.Primary)
-		if err != nil {
-			c.log.Warn("Could not calculate plugin signature state", "pluginId", bundle.Primary.JSONData.ID, "error", err)
-			continue
-		}
-		plugin, err := c.pluginFactoryFunc(bundle.Primary, src.PluginClass(ctx), sig)
-		if err != nil {
-			c.log.Error("Could not create primary plugin base", "pluginId", bundle.Primary.JSONData.ID, "error", err)
-			continue
-		}
-		res = append(res, plugin)
-
-		children := make([]*plugins.Plugin, 0, len(bundle.Children))
-		for _, child := range bundle.Children {
-			cp, err := c.pluginFactoryFunc(*child, plugin.Class, sig)
-			if err != nil {
-				c.log.Error("Could not create child plugin base", "pluginId", child.JSONData.ID, "error", err)
-				continue
-			}
-			cp.Parent = plugin
-			plugin.Children = append(plugin.Children, cp)
-
-			children = append(children, cp)
-		}
-		res = append(res, children...)
+	sig, err := c.signatureCalculator.Calculate(ctx, src, bundle.Primary)
+	if err != nil {
+		c.log.Warn("Could not calculate plugin signature state", "pluginId", bundle.Primary.JSONData.ID, "error", err)
+		return nil, err
 	}
+	plugin, err := c.pluginFactoryFunc(bundle.Primary, src.PluginClass(ctx), sig)
+	if err != nil {
+		c.log.Error("Could not create primary plugin base", "pluginId", bundle.Primary.JSONData.ID, "error", err)
+		return nil, err
+	}
+	res = append(res, plugin)
+
+	children := make([]*plugins.Plugin, 0, len(bundle.Children))
+	for _, child := range bundle.Children {
+		cp, err := c.pluginFactoryFunc(*child, plugin.Class, sig)
+		if err != nil {
+			c.log.Error("Could not create child plugin base", "pluginId", child.JSONData.ID, "error", err)
+			return nil, err
+		}
+		cp.Parent = plugin
+		plugin.Children = append(plugin.Children, cp)
+
+		children = append(children, cp)
+	}
+	res = append(res, children...)
 
 	return res, nil
 }
@@ -163,8 +160,7 @@ func configureAppChildPlugin(parent *plugins.Plugin, child *plugins.Plugin) {
 // ForwardHostEnvVars plugin ids list.
 func SkipHostEnvVarsDecorateFunc(cfg *config.PluginManagementCfg) DecorateFunc {
 	return func(_ context.Context, p *plugins.Plugin) (*plugins.Plugin, error) {
-		p.SkipHostEnvVars = cfg.Features.IsEnabledGlobally(featuremgmt.FlagPluginsSkipHostEnvVars) &&
-			!slices.Contains(cfg.ForwardHostEnvVars, p.ID)
+		p.SkipHostEnvVars = cfg.Features.SkipHostEnvVarsEnabled && !slices.Contains(cfg.ForwardHostEnvVars, p.ID)
 		return p, nil
 	}
 }

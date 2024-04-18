@@ -187,13 +187,13 @@ export const AnnotationsPlugin2 = ({
 
       for (let i = 0; i < vals.time.length; i++) {
         let color = getColorByName(vals.color?.[i] || DEFAULT_ANNOTATION_COLOR);
-        let left = plot.valToPos(vals.time[i], 'x');
+        let left = Math.round(plot.valToPos(vals.time[i], 'x')) || 0; // handles -0
         let style: React.CSSProperties | null = null;
         let className = '';
         let isVisible = true;
 
         if (vals.isRegion?.[i]) {
-          let right = plot.valToPos(vals.timeEnd?.[i], 'x');
+          let right = Math.round(plot.valToPos(vals.timeEnd?.[i], 'x')) || 0; // handles -0
 
           isVisible = left < plot.rect.width && right > 0;
 
@@ -205,7 +205,7 @@ export const AnnotationsPlugin2 = ({
             className = styles.annoRegion;
           }
         } else {
-          isVisible = left > 0 && left <= plot.rect.width;
+          isVisible = left >= 0 && left <= plot.rect.width;
 
           if (isVisible) {
             style = { left, borderBottomColor: color };

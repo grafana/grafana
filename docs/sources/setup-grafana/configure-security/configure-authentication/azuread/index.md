@@ -22,7 +22,7 @@ weight: 800
 The Azure AD authentication allows you to use an Azure Active Directory tenant as an identity provider for Grafana. You can use Azure AD application roles to assign users and groups to Grafana roles from the Azure Portal.
 
 {{% admonition type="note" %}}
-If Users use the same email address in Azure AD that they use with other authentication providers (such as Grafana.com), you need to do additional configuration to ensure that the users are matched correctly. Please refer to the [Using the same email address to login with different identity providers]({{< relref "../../configure-authentication#using-the-same-email-address-to-login-with-different-identity-providers" >}}) documentation for more information.
+If Users use the same email address in Azure AD that they use with other authentication providers (such as Grafana.com), you need to do additional configuration to ensure that the users are matched correctly. Please refer to [Using the same email address to login with different identity providers]({{< relref "../../configure-authentication#using-the-same-email-address-to-login-with-different-identity-providers" >}}) for more information.
 {{% /admonition %}}
 
 ## Create the Azure AD application
@@ -175,7 +175,7 @@ Ensure that you have followed the steps in [Create the Azure AD application](#cr
 Available in Public Preview in Grafana 10.4 behind the `ssoSettingsApi` feature toggle.
 {{% /admonition %}}
 
-As a Grafana Admin, you can configure your Azure AD OAuth2 client from within Grafana using the GitLab UI. To do this, navigate to **Administration > Authentication > Azure AD** page and fill in the form. If you have a current configuration in the Grafana configuration file, the form will be pre-populated with those values. Otherwise the form will contain default values.
+As a Grafana Admin, you can configure your Azure AD OAuth2 client from within Grafana using the Grafana UI. To do this, navigate to the **Administration > Authentication > Azure AD** page and fill in the form. If you have a current configuration in the Grafana configuration file, the form will be pre-populated with those values. Otherwise the form will contain default values.
 
 After you have filled in the form, click **Save** to save the configuration. If the save was successful, Grafana will apply the new configurations.
 

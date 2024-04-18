@@ -54,7 +54,6 @@ const TagsInput = ({
   query,
 }: Props) => {
   const styles = useStyles2(getStyles);
-  const generateId = () => uuidv4().slice(0, 8);
   const handleOnAdd = useCallback(
     () => updateFilter({ id: generateId(), operator: '=', scope: TraceqlSearchScope.Span }),
     [updateFilter]
@@ -117,3 +116,5 @@ const TagsInput = ({
 };
 
 export default TagsInput;
+
+export const generateId = () => uuidv4().slice(0, 8);

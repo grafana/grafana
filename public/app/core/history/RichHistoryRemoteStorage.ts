@@ -85,7 +85,7 @@ export default class RichHistoryRemoteStorage implements RichHistoryStorage {
   async getSettings(): Promise<RichHistorySettings> {
     const preferences = await this.preferenceService.load();
     return {
-      activeDatasourceOnly: false,
+      activeDatasourcesOnly: false,
       lastUsedDatasourceFilters: undefined,
       retentionPeriod: 14,
       starredTabAsFirstTab: preferences.queryHistory?.homeTab === 'starred',

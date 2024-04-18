@@ -1,5 +1,5 @@
   mimir_backend:
-    image: grafana/mimir:r274-1780c50
+    image: us.gcr.io/kubernetes-dev/mimir:santihernandezc-remove_id_from_grafana_config-d3826b4f8-WIP
     container_name: mimir_backend
     command:
       - -target=backend

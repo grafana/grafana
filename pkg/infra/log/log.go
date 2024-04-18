@@ -499,3 +499,34 @@ func ReadLoggingConfig(modes []string, logsPath string, cfg *ini.File) error {
 
 	return nil
 }
+
+// SetupConsoleLogger setup Grafana console logger with provided level.
+func SetupConsoleLogger(level string) error {
+	iniFile := ini.Empty()
+	sLog, err := iniFile.NewSection("log")
+	if err != nil {
+		return err
+	}
+
+	_, err = sLog.NewKey("level", level)
+	if err != nil {
+		return err
+	}
+
+	sLogConsole, err := iniFile.NewSection("log.console")
+	if err != nil {
+		return err
+	}
+
+	_, err = sLogConsole.NewKey("format", "console")
+	if err != nil {
+		return err
+	}
+
+	err = ReadLoggingConfig([]string{"console"}, "", iniFile)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
