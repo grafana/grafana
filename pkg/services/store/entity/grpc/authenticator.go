@@ -3,7 +3,6 @@ package grpc
 import (
 	"context"
 	"fmt"
-	"slices"
 	"strconv"
 
 	"github.com/grafana/grafana/pkg/infra/appcontext"
@@ -15,14 +14,7 @@ import (
 
 type Authenticator struct{}
 
-var IGNORED_METHODS = []string{"/grpc.health.v1.Health/Check", "/grpc.reflection.v1.ServerReflection/ServerReflectionInfo"}
-
 func (f *Authenticator) Authenticate(ctx context.Context) (context.Context, error) {
-	method, _ := grpc.Method(ctx)
-	if slices.Contains(IGNORED_METHODS, method) {
-		return ctx, nil
-	}
-
 	md, ok := metadata.FromIncomingContext(ctx)
 	if !ok {
 		return nil, fmt.Errorf("no metadata found")

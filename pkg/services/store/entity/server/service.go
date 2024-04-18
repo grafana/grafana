@@ -18,7 +18,6 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/prometheus/client_golang/prometheus"
 	"google.golang.org/grpc/health/grpc_health_v1"
-	"google.golang.org/grpc/reflection"
 )
 
 var (
@@ -134,7 +133,11 @@ func (s *service) start(ctx context.Context) error {
 
 	entity.RegisterEntityStoreServer(s.handler.GetServer(), store)
 	grpc_health_v1.RegisterHealthServer(s.handler.GetServer(), healthService)
-	reflection.Register(s.handler.GetServer())
+	// register reflection service
+	_, err = grpcserver.ProvideReflectionService(s.cfg, s.handler)
+	if err != nil {
+		return err
+	}
 
 	err = s.handler.Run(ctx)
 	if err != nil {
