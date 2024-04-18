@@ -95,6 +95,4 @@ If you have more than one contact point, add a new child notification policy rat
 
 [smtp-settings]: "/docs/grafana/ -> /docs/grafana/latest/setup-grafana/configure-grafana/#smtp"
 
-[smtp-settings]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/alerting-and-irm/alerting/configure-notifications/manage-contact-points/"
-
 {{% /docs/reference %}}
