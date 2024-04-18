@@ -29,7 +29,6 @@ type Props = {
   onHiddenSeriesChanged: (hiddenSeries: string[]) => void;
   eventBus: EventBus;
   annotations: DataFrame[];
-  onHiddenSeriesChanged;
 };
 
 export function LogsVolumePanel(props: Props) {
