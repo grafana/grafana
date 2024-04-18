@@ -214,9 +214,7 @@ export class GrafanaBootConfig implements GrafanaConfig {
       systemDateFormats.update(this.dateFormats);
     }
 
-    if (this.buildInfo.env === 'development') {
-      overrideFeatureTogglesFromUrl(this);
-    }
+    overrideFeatureTogglesFromUrl(this);
     overrideFeatureTogglesFromLocalStorage(this);
 
     if (this.featureToggles.disableAngular) {
@@ -253,18 +251,11 @@ function overrideFeatureTogglesFromUrl(config: GrafanaBootConfig) {
     return;
   }
 
-  // Although most flags can not be changed from the URL, some of them are safe (and useful!)
+  const isLocalDevEnv = config.buildInfo.env === 'development';
+
+  // Although most flags can not be changed from the URL in prod, some of them are safe (and useful!)
   // to change dynamically from the browser URL
-  const safeRuntimeFeatureFlags = new Set([
-    'autoMigrateOldPanels',
-    'autoMigrateGraphPanel',
-    'autoMigrateTablePanel',
-    'autoMigratePiechartPanel',
-    'autoMigrateWorldmapPanel',
-    'autoMigrateStatPanel',
-    'disableAngular',
-    'queryServiceFromUI',
-  ]);
+  const safeRuntimeFeatureFlags = new Set(['queryServiceFromUI']);
 
   const params = new URLSearchParams(window.location.search);
   params.forEach((value, key) => {
@@ -272,8 +263,8 @@ function overrideFeatureTogglesFromUrl(config: GrafanaBootConfig) {
       const featureToggles = config.featureToggles as Record<string, boolean>;
       const featureName = key.substring(10);
 
-      // skip the migration feature flags
-      if (!safeRuntimeFeatureFlags.has(featureName)) {
+      // skip unsafe feature flags in prod
+      if (!isLocalDevEnv && !safeRuntimeFeatureFlags.has(featureName)) {
         return;
       }
 
