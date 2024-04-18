@@ -68,6 +68,7 @@ For more information on creating custom roles, refer to [Create custom roles](ht
 The following examples give you an idea of how you can combine permissions for Grafana Alerting.
 
 A custom role for read access to alert rules that uses data source DS1 and DS2 in folder F:
+<!-- prettier-ignore-start -->
 ```
 PUT access-control/roles
 {
@@ -94,9 +95,9 @@ PUT access-control/roles
 	]
 }
 ```
-
+<!-- prettier-ignore-end -->
 A custom role for write access to alert rules that uses simplified routing:
-
+<!-- prettier-ignore-start -->
 ```
 PUT access-control/roles
 {
@@ -137,6 +138,7 @@ PUT access-control/roles
 	]
 }
 ```
+<!-- prettier-ignore-end -->
 {{< admonition type="note" >}}
 Delete the last two permissions if you aren’t using simplified notification routing.
 {{< /admonition >}}
