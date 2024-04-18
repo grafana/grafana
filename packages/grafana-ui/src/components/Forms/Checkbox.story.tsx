@@ -1,7 +1,7 @@
 import { Meta, StoryFn } from '@storybook/react';
 import React, { useState, useCallback } from 'react';
 
-import { VerticalGroup } from '../Layout/Layout';
+import { Stack } from '../Layout/Stack/Stack';
 
 import { Checkbox } from './Checkbox';
 import mdx from './Checkbox.mdx';
@@ -44,7 +44,7 @@ Basic.args = {
 export const StackedList = () => {
   return (
     <div>
-      <VerticalGroup>
+      <Stack direction="column">
         <Checkbox
           defaultChecked={true}
           label="Skip TLS cert validation"
@@ -60,7 +60,7 @@ export const StackedList = () => {
           label="Another checkbox times 2"
           description="Another long description that does not make any sense or does it?"
         />
-      </VerticalGroup>
+      </Stack>
     </div>
   );
 };
@@ -93,14 +93,14 @@ export const AllStates: StoryFn<typeof Checkbox> = (args) => {
 
   return (
     <div>
-      <VerticalGroup>
+      <Stack direction="column">
         <Checkbox value={checked} onChange={onChange} {...args} />
         <Checkbox value={true} label="Checked" />
         <Checkbox value={false} label="Unchecked" />
         <Checkbox value={false} indeterminate={true} label="Interdeterminate" />
         <Checkbox value={false} invalid={true} label="Invalid and unchecked" />
         <Checkbox value={true} invalid={true} label="Invalid and checked" />
-      </VerticalGroup>
+      </Stack>
     </div>
   );
 };
