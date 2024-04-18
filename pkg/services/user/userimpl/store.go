@@ -30,7 +30,6 @@ type store interface {
 	Update(context.Context, *user.UpdateUserCommand) error
 	UpdateLastSeenAt(context.Context, *user.UpdateUserLastSeenAtCommand) error
 	GetSignedInUser(context.Context, *user.GetSignedInUserQuery) (*user.SignedInUser, error)
-	UpdateUser(context.Context, *user.User) error
 	GetProfile(context.Context, *user.GetUserProfileQuery) (*user.UserProfileDTO, error)
 	SetHelpFlag(context.Context, *user.SetUserHelpFlagCommand) error
 	BatchDisableUsers(context.Context, *user.BatchDisableUsersCommand) error
@@ -414,13 +413,6 @@ func (ss *sqlStore) GetSignedInUser(ctx context.Context, query *user.GetSignedIn
 		return nil
 	})
 	return &signedInUser, err
-}
-
-func (ss *sqlStore) UpdateUser(ctx context.Context, user *user.User) error {
-	return ss.db.WithTransactionalDbSession(ctx, func(sess *db.Session) error {
-		_, err := sess.ID(user.ID).Update(user)
-		return err
-	})
 }
 
 func (ss *sqlStore) GetProfile(ctx context.Context, query *user.GetUserProfileQuery) (*user.UserProfileDTO, error) {

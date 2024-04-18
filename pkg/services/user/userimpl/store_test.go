@@ -458,15 +458,6 @@ func TestIntegrationUserDataAccess(t *testing.T) {
 		}
 	})
 
-	t.Run("update user", func(t *testing.T) {
-		err := userStore.UpdateUser(context.Background(), &user.User{ID: 1, Name: "testtestest", Login: "loginloginlogin"})
-		require.NoError(t, err)
-		result, err := userStore.GetByID(context.Background(), 1)
-		require.NoError(t, err)
-		assert.Equal(t, result.Name, "testtestest")
-		assert.Equal(t, result.Login, "loginloginlogin")
-	})
-
 	t.Run("Testing DB - grafana admin users", func(t *testing.T) {
 		ss := db.InitTestDB(t)
 		_, usrSvc := createOrgAndUserSvc(t, ss, cfg)
