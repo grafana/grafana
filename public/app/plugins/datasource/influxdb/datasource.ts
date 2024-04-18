@@ -315,6 +315,13 @@ export default class InfluxDatasource extends DataSourceWithBackend<InfluxQuery,
       return value;
     }
 
+    if (typeof value === 'string') {
+      // Check the value is a number. If not run to escape special characters
+      if (!isNaN(parseFloat(value))) {
+        return value;
+      }
+    }
+
     // If template variable is a multi-value variable
     // we always want to deal with special chars.
     if (variable.multi) {
