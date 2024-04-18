@@ -110,6 +110,7 @@ type StaticRouteResolver interface {
 
 type ErrorResolver interface {
 	PluginErrors(ctx context.Context) []*Error
+	PluginError(ctx context.Context, pluginID string) *Error
 }
 
 type PluginLoaderAuthorizer interface {

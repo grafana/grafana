@@ -36,3 +36,7 @@ func (t *fakeErrorTracker) Errors(ctx context.Context) []*plugins.Error {
 	}
 	return nil
 }
+
+func (t *fakeErrorTracker) Error(ctx context.Context, pluginID string) *plugins.Error {
+	return &plugins.Error{}
+}
