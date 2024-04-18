@@ -9,6 +9,7 @@ on:
       - labeled
       - unlabeled
       - edited
+      - auto_merge_enabled
   issues:
     types:
       - milestoned

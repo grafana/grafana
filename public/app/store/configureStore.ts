@@ -4,7 +4,6 @@ import { setupListeners } from '@reduxjs/toolkit/query';
 import { browseDashboardsAPI } from 'app/features/browse-dashboards/api/browseDashboardsAPI';
 import { publicDashboardApi } from 'app/features/dashboard/api/publicDashboardApi';
 import { cloudMigrationAPI } from 'app/features/migrate-to-cloud/api';
-import { migrateToCloudMockAPI } from 'app/features/migrate-to-cloud/mockAPI';
 import { pluginsApi } from 'app/features/plugins/pluginsApi';
 import { StoreState } from 'app/types/store';
 
@@ -33,7 +32,6 @@ export function configureStore(initialState?: Partial<StoreState>) {
         publicDashboardApi.middleware,
         browseDashboardsAPI.middleware,
         cloudMigrationAPI.middleware,
-        migrateToCloudMockAPI.middleware,
         pluginsApi.middleware
       ),
     devTools: process.env.NODE_ENV !== 'production',
@@ -52,41 +50,3 @@ export function configureStore(initialState?: Partial<StoreState>) {
 
 export type RootState = ReturnType<ReturnType<typeof configureStore>['getState']>;
 export type AppDispatch = ReturnType<typeof configureStore>['dispatch'];
-
-/*
-function getActionsToIgnoreSerializableCheckOn() {
-  return [
-    'dashboard/setPanelAngularComponent',
-    'dashboard/panelModelAndPluginReady',
-    'dashboard/dashboardInitCompleted',
-    'plugins/panelPluginLoaded',
-    'explore/initializeExplore',
-    'explore/changeRange',
-    'explore/updateDatasourceInstance',
-    'explore/queryStoreSubscription',
-    'explore/queryStreamUpdated',
-  ];
-}
-
-function getPathsToIgnoreMutationAndSerializableCheckOn() {
-  return [
-    'plugins.panels',
-    'dashboard.panels',
-    'dashboard.getModel',
-    'payload.plugin',
-    'panelEditorNew.getPanel',
-    'panelEditorNew.getSourcePanel',
-    'panelEditorNew.getData',
-    'explore.left.queryResponse',
-    'explore.right.queryResponse',
-    'explore.left.datasourceInstance',
-    'explore.right.datasourceInstance',
-    'explore.left.range',
-    'explore.left.eventBridge',
-    'explore.right.eventBridge',
-    'explore.right.range',
-    'explore.left.querySubscription',
-    'explore.right.querySubscription',
-  ];
-}
-*/
