@@ -7,17 +7,16 @@ import config from 'app/core/config';
 import { TemplateSrv } from '../../../features/templating/template_srv';
 import { queryBuilder } from '../../../features/variables/shared/testing/builders';
 
-import { BROWSER_MODE_DISABLED_MESSAGE } from './constants';
-import InfluxDatasource from './datasource';
 import {
   getMockDSInstanceSettings,
   getMockInfluxDS,
   mockBackendService,
-  mockInfluxFetchResponse,
-  mockInfluxQueryRequest,
-  mockInfluxQueryWithTemplateVars,
   mockTemplateSrv,
-} from './mocks';
+} from './__mocks__/datasource';
+import { mockInfluxQueryRequest, mockInfluxQueryWithTemplateVars } from './__mocks__/request';
+import { mockInfluxFetchResponse } from './__mocks__/response';
+import { BROWSER_MODE_DISABLED_MESSAGE } from './constants';
+import InfluxDatasource from './datasource';
 import { InfluxQuery, InfluxVersion } from './types';
 
 // we want only frontend mode in this file

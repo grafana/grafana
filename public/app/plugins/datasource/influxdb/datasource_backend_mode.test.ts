@@ -7,15 +7,15 @@ import config from 'app/core/config';
 import { TemplateSrv } from '../../../features/templating/template_srv';
 import { queryBuilder } from '../../../features/variables/shared/testing/builders';
 
-import InfluxDatasource from './datasource';
 import {
   getMockDSInstanceSettings,
   getMockInfluxDS,
   mockBackendService,
-  mockInfluxFetchResponse,
-  mockInfluxQueryWithTemplateVars,
   mockTemplateSrv,
-} from './mocks';
+} from './__mocks__/datasource';
+import { mockInfluxQueryWithTemplateVars } from './__mocks__/request';
+import { mockInfluxFetchResponse } from './__mocks__/response';
+import InfluxDatasource from './datasource';
 import { InfluxQuery, InfluxVersion } from './types';
 
 config.featureToggles.influxdbBackendMigration = true;
