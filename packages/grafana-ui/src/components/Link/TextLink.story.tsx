@@ -52,7 +52,7 @@ export const Example: StoryFn = (args) => {
         </Text>
       </StoryExample>
       <StoryExample name="This is a 'standalone + external' link with the default behaviour">
-        <TextLink href="https://grafana.com/docs/grafana/latest/" {...args}>
+        <TextLink href="https://grafana.com/docs/grafana/latest/" external inline={false} {...args}>
           Learn how in the docs
         </TextLink>
       </StoryExample>
