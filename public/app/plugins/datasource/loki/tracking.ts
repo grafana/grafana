@@ -135,7 +135,7 @@ const shouldNotReportBasedOnRefId = (refId: string): boolean => {
     REF_ID_STARTER_LOG_SAMPLE,
   ];
 
-  if (refId === REF_ID_DATA_SAMPLES || starters.some((starter) => refId.startsWith(starter))) {
+  if (starters.some((starter) => refId.startsWith(starter))) {
     return true;
   }
   return false;
