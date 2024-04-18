@@ -2,7 +2,7 @@ import { css, cx } from '@emotion/css';
 import React, { useMemo } from 'react';
 
 import { GrafanaTheme2, Labels } from '@grafana/data';
-import { useStyles2 } from '@grafana/ui';
+import { Tooltip, useStyles2 } from '@grafana/ui';
 
 // Levels are already encoded in color, filename is a Loki-ism
 const HIDDEN_LABELS = ['level', 'lvl', 'filename'];
@@ -37,12 +37,11 @@ export const LogLabels = ({ labels, emptyMessage }: Props) => {
         if (!value) {
           return;
         }
-        const tooltip = `${label}=${value}`;
         const labelValue = `${label}=${value}`;
         return (
-          <LogLabel key={label} styles={styles} tooltip={tooltip}>
-            {labelValue}
-          </LogLabel>
+          <Tooltip content={labelValue} key={label} placement="top">
+            <LogLabel styles={styles}>{labelValue}</LogLabel>
+          </Tooltip>
         );
       })}
     </span>
@@ -72,15 +71,18 @@ interface LogLabelProps {
   children: JSX.Element | string;
 }
 
-const LogLabel = ({ styles, tooltip, children }: LogLabelProps) => {
-  return (
-    <span className={cx([styles.logsLabel])}>
-      <span className={cx([styles.logsLabelValue])} title={tooltip}>
-        {children}
+const LogLabel = React.forwardRef<HTMLSpanElement, LogLabelProps>(
+  ({ styles, tooltip, children }: LogLabelProps, ref) => {
+    return (
+      <span className={cx([styles.logsLabel])} ref={ref}>
+        <span className={cx([styles.logsLabelValue])} title={tooltip}>
+          {children}
+        </span>
       </span>
-    </span>
-  );
-};
+    );
+  }
+);
+LogLabel.displayName = 'LogLabel';
 
 const getStyles = (theme: GrafanaTheme2) => {
   return {
