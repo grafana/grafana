@@ -54,7 +54,7 @@ export interface DynamicTableProps<T = unknown> {
     items: Array<DynamicTableItemProps<T>>
   ) => ReactNode;
 
-  footerRow?: JSX.Element;
+  footerRow?: React.ReactNode;
 }
 
 export const DynamicTable = <T extends object>({

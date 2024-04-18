@@ -1,5 +1,5 @@
 {
-  "_comment": "Ce fichier est la source de vérité pour les chaînes anglaises. Modifiez-le dans la base de code pour adapter les pluriels et les autres phrases pour l'interface utilisateur.",
+  "_comment": "",
   "access-control": {
     "add-permission": {
       "role-label": "Rôle",
@@ -36,7 +36,7 @@
   "browse-dashboards": {
     "action": {
       "cancel-button": "Annuler",
-      "cannot-move-folders": "Les dossiers ne peuvent pas être déplacés",
+      "cannot-move-folders": "",
       "delete-button": "Supprimer",
       "delete-modal-invalid-text": "Un ou plusieurs dossiers contiennent des panneaux Bibliothèque ou des règles d'alerte. Vous devez d'abord les supprimer.",
       "delete-modal-invalid-title": "Impossible de supprimer le dossier",
@@ -250,14 +250,14 @@
     "empty": {
       "add-library-panel-body": "Ajoutez des visualisations partagées avec d'autres tableaux de bord.",
       "add-library-panel-button": "Ajouter un panneau Bibliothèque",
-      "add-library-panel-header": "Ajouter un panneau Bibliothèque",
+      "add-library-panel-header": "",
       "add-visualization-body": "Sélectionnez une source de données, puis examinez et visualisez vos données avec des graphiques, des statistiques et des tableaux ou créez des listes, des markdowns et d'autres widgets.",
       "add-visualization-button": "Ajouter une visualisation",
       "add-visualization-header": "Commencez votre nouveau tableau de bord en ajoutant une visualisation",
       "add-widget-body": "Créez des listes, des markdowns et d'autres widgets",
       "add-widget-button": "Ajouter un widget",
       "add-widget-header": "Ajouter un widget",
-      "import-a-dashboard-body": "Importer un tableau de bord depuis un fichier ou <1>grafana.com</1>.",
+      "import-a-dashboard-body": "",
       "import-a-dashboard-header": "Importer un tableau de bord",
       "import-dashboard-button": "Importer un tableau de bord"
     },
@@ -361,7 +361,7 @@
     },
     "dashboard-delete-button": "Supprimer le tableau de bord",
     "general": {
-      "auto-refresh-description": "Définir les intervalles de mise à jour automatique qui seront disponibles dans la liste de mise à jour automatique.",
+      "auto-refresh-description": "",
       "auto-refresh-label": "Actualisation automatique",
       "description-label": "Description",
       "editable-description": "Définissez en lecture seule pour désactiver toutes les modifications. Les modifications seront appliquées au prochain chargement du tableau de bord",
@@ -550,15 +550,15 @@
     "toolbar": {
       "aria-label": "Explorer la barre d'outils",
       "copy-link": "Copier l'URL",
-      "copy-link-abs-time": "Copier l'URL absolue",
+      "copy-link-abs-time": "",
       "copy-links-absolute-category": "Liens URL de synchronisation temporelle (partager avec intervalle de temps intact)",
       "copy-links-normal-category": "Liens URL normaux",
       "copy-shortened-link": "Copier l'URL abrégée",
-      "copy-shortened-link-abs-time": "Copier l'URL abrégée absolue",
-      "copy-shortened-link-menu": "Ouvrir le lien de menu raccourci",
+      "copy-shortened-link-abs-time": "",
+      "copy-shortened-link-menu": "",
       "refresh-picker-cancel": "Annuler",
       "refresh-picker-run": "Exécuter la requête",
-      "split-close": "Fermer",
+      "split-close": "",
       "split-close-tooltip": "Fermer le panneau scindé",
       "split-narrow": "Panneau étroit",
       "split-title": "Scinder",
@@ -597,9 +597,9 @@
   "help-modal": {
     "shortcuts-category": {
       "dashboard": "Tableau de bord",
-      "focused-panel": "Panneau ciblé",
+      "focused-panel": "",
       "global": "Global",
-      "time-range": "Période"
+      "time-range": ""
     },
     "shortcuts-description": {
       "change-theme": "Modifier le thème",
@@ -664,7 +664,7 @@
       "message": ""
     },
     "modal": {
-      "button-cancel": "<0>Annuler</0>",
+      "button-cancel": "",
       "button-view-panel1": "Voir le panneau dans {{label}}...",
       "button-view-panel2": "Voir le panneau dans le tableau de bord...",
       "panel-not-linked": "Le panneau n'est pas lié à un tableau de bord. Ajoutez le panneau à un tableau de bord et réessayez.",
@@ -933,7 +933,7 @@
       "title": "Créer"
     },
     "create-alert": {
-      "title": "Créer une règle d’alerte"
+      "title": ""
     },
     "create-dashboard": {
       "title": "Tableau de bord"
@@ -1021,7 +1021,7 @@
       "title": "Migrer vers Grafana Cloud"
     },
     "monitoring": {
-      "subtitle": "Applications de suivi et d'infrastructure",
+      "subtitle": "",
       "title": "Observabilité"
     },
     "new": {
@@ -1477,7 +1477,7 @@
       "info-text": "Créez un lien direct vers ce tableau de bord ou ce panneau, personnalisé avec les options ci-dessous.",
       "link-url": "Lien URL",
       "render-alert": "Plug-in de rendu d'image non installé",
-      "render-instructions": "Pour améliorer le rendu d'une image de panneau, vous devez installer le <1>plug-in de rendu d'image Grafana</1>. Veuillez contacter votre administrateur Grafana pour installer le plug-in.",
+      "render-instructions": "",
       "rendered-image": "Lien direct vers l'image dont il faut améliorer le rendu",
       "save-alert": "Le tableau de bord n'est pas enregistré",
       "save-dashboard": "Pour améliorer le rendu d'une image de panneau, vous devez d'abord enregistrer le tableau de bord.",

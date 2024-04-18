@@ -252,6 +252,7 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
         url: result.url,
         slug: result.slug,
         folderUid: folderUid,
+        isNew: false,
       },
     });
 

@@ -7,6 +7,7 @@ import { byTestId } from 'testing-library-selector';
 import { DataSourceApi } from '@grafana/data';
 import { PromOptions, PrometheusDatasource } from '@grafana/prometheus';
 import { locationService, setDataSourceSrv } from '@grafana/runtime';
+import { backendSrv } from 'app/core/services/backend_srv';
 import { fetchRules } from 'app/features/alerting/unified/api/prometheus';
 import { fetchRulerRules } from 'app/features/alerting/unified/api/ruler';
 import * as ruleActionButtons from 'app/features/alerting/unified/components/rules/RuleActionsButtons';
@@ -14,6 +15,7 @@ import {
   MockDataSourceSrv,
   grantUserPermissions,
   mockDataSource,
+  mockFolder,
   mockPromAlertingRule,
   mockPromRuleGroup,
   mockPromRuleNamespace,
@@ -192,6 +194,9 @@ describe('PanelAlertTabContent', () => {
       AccessControlAction.AlertingRuleExternalRead,
       AccessControlAction.AlertingRuleExternalWrite,
     ]);
+
+    jest.spyOn(backendSrv, 'getFolderByUid').mockResolvedValue(mockFolder());
+
     mocks.getAllDataSources.mockReturnValue(Object.values(dataSources));
     const dsService = new MockDataSourceSrv(dataSources);
     dsService.datasources[dataSources.prometheus.uid] = new PrometheusDatasource(
