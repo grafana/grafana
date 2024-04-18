@@ -111,8 +111,9 @@ interface Props {
   dataFrames: DataFrame[];
   getLinks: (dataFrame: DataFrame, rowIndex: number) => LinkModel[];
   nodeLimit?: number;
+  panelId?: string;
 }
-export function NodeGraph({ getLinks, dataFrames, nodeLimit }: Props) {
+export function NodeGraph({ getLinks, dataFrames, nodeLimit, panelId }: Props) {
   const nodeCountLimit = nodeLimit || defaultNodeCountLimit;
   const { edges: edgesDataFrames, nodes: nodesDataFrames } = useCategorizeFrames(dataFrames);
 
@@ -121,6 +122,13 @@ export function NodeGraph({ getLinks, dataFrames, nodeLimit }: Props) {
 
   const firstNodesDataFrame = nodesDataFrames[0];
   const firstEdgesDataFrame = edgesDataFrames[0];
+
+  // Ensure we use unique IDs for the marker tip elements, since IDs are global
+  // in the entire HTML document. This prevents hidden tips when an earlier
+  // occurence is hidden (editor is open in front of an existing node graph
+  // panel) or when the earlier tips have different properties (color, size, or
+  // shape for example).
+  const svgIdNamespace = panelId || 'nodegraphpanel';
 
   // TODO we should be able to allow multiple dataframes for both edges and nodes, could be issue with node ids which in
   //  that case should be unique or figure a way to link edges and nodes dataframes together.
@@ -215,6 +223,7 @@ export function NodeGraph({ getLinks, dataFrames, nodeLimit }: Props) {
                 onClick={onEdgeOpen}
                 onMouseEnter={setEdgeHover}
                 onMouseLeave={clearEdgeHover}
+                svgIdNamespace={svgIdNamespace}
               />
             )}
             <Nodes
@@ -332,6 +341,7 @@ interface EdgesProps {
   edges: EdgeDatum[];
   nodeHoveringId?: string;
   edgeHoveringId?: string;
+  svgIdNamespace: string;
   onClick: (event: MouseEvent<SVGElement>, link: EdgeDatum) => void;
   onMouseEnter: (id: string) => void;
   onMouseLeave: (id: string) => void;
@@ -351,6 +361,7 @@ const Edges = memo(function Edges(props: EdgesProps) {
           onClick={props.onClick}
           onMouseEnter={props.onMouseEnter}
           onMouseLeave={props.onMouseLeave}
+          svgIdNamespace={props.svgIdNamespace}
         />
       ))}
     </>
