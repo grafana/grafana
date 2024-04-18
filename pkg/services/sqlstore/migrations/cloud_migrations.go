@@ -39,7 +39,7 @@ func addCloudMigrationsMigrations(mg *Migrator) {
 	mg.AddMigration("add cluster_slug column", NewAddColumnMigration(migrationTable, &clusterSlugColumn))
 
 	// --- adding uid to migration
-	migUidColumn := Column{Name: "uid", Type: DB_Text, Nullable: false}
+	migUidColumn := Column{Name: "uid", Type: DB_Text, Nullable: true}
 	mg.AddMigration("add migration uid column", NewAddColumnMigration(migrationTable, &migUidColumn))
 
 	mg.AddMigration("Update uid column values for migration", NewRawSQLMigration("").
@@ -47,12 +47,12 @@ func addCloudMigrationsMigrations(mg *Migrator) {
 		Postgres("UPDATE `cloud_migration` SET uid='u' || lpad('' || id::text,9,'0') WHERE uid IS NULL;").
 		Mysql("UPDATE cloud_migration SET uid=concat('u',lpad(id,9,'0')) WHERE uid IS NULL;"))
 
-	mg.AddMigration("Add unique index user_uid", NewAddIndexMigration(migrationTable, &Index{
+	mg.AddMigration("Add unique index migration_uid", NewAddIndexMigration(migrationTable, &Index{
 		Cols: []string{"uid"}, Type: UniqueIndex,
 	}))
 
 	// --- adding uid to migration run
-	runUidColumn := Column{Name: "uid", Type: DB_Text, Nullable: false}
+	runUidColumn := Column{Name: "uid", Type: DB_Text, Nullable: true}
 	mg.AddMigration("add migration run uid column", NewAddColumnMigration(migrationRunTable, &runUidColumn))
 
 	mg.AddMigration("Update uid column values for migration run", NewRawSQLMigration("").
@@ -60,7 +60,7 @@ func addCloudMigrationsMigrations(mg *Migrator) {
 		Postgres("UPDATE `cloud_migration_run` SET uid='u' || lpad('' || id::text,9,'0') WHERE uid IS NULL;").
 		Mysql("UPDATE cloud_migration_run SET uid=concat('u',lpad(id,9,'0')) WHERE uid IS NULL;"))
 
-	mg.AddMigration("Add unique index user_uid", NewAddIndexMigration(migrationRunTable, &Index{
+	mg.AddMigration("Add unique index migration_run_uid", NewAddIndexMigration(migrationRunTable, &Index{
 		Cols: []string{"uid"}, Type: UniqueIndex,
 	}))
 }
