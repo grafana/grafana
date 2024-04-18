@@ -63,7 +63,83 @@ Create custom roles of your own to manage permissions. Custom roles contain uniq
 
 For more information on creating custom roles, refer to [Create custom roles](https://grafana.com/docs/grafana/latest/administration/roles-and-permissions/access-control/manage-rbac-roles/#create-custom-roles).
 
+### Examples
+
 The following examples give you an idea of how you can combine permissions for Grafana Alerting.
+
+A custom role for read access to alert rules that uses data source DS1 and DS2 in folder F:
+```
+PUT access-control/roles
+{
+	"name": "custom:alert_rules_reader",
+	"displayName": "Alert rule reader in folder F",
+	"description": "Read access to rules in folder F that use DS1 and DS2",
+	"permissions": [
+    	{
+        	"action": "datasources:query",
+        	"scope": "datasources:uid:UID_DS1"
+    	},
+    	{
+        	"action": "datasources:query",
+        	"scope": "datasources:uid:UID_DS2"
+    	},
+    	{
+        	"action": "alert.rules:read",
+        	"scope": "folders:uid:UID_F"
+    	},
+    	{
+        	"action": "folders:read",
+        	"scope": "folders:uid:UID_F"
+    	}
+	]
+}
+```
+
+A custom role for write access to alert rules that uses simplified routing:
+
+```
+PUT access-control/roles
+{
+	"name": "custom:alert_rules_updater",
+	"displayName": "Alert rules editor in folder F",
+	"description": "Edit access to rules in folder F that use DS1 and DS2",
+	"permissions": [
+    	{
+        	"action": "datasources:query",
+        	"scope": "datasources:uid:UID_DS1"
+    	},
+    	{
+        	"action": "datasources:query",
+        	"scope": "datasources:uid:UID_DS2"
+    	},
+    	{
+        	"action": "alert.rules:read",
+        	"scope": "folders:uid:UID_F"
+    	},
+    	{
+        	"action": "alert.rules:read",
+        	"scope": "folders:uid:UID_F"
+    	},
+    	{
+        	"action": "alert.rules:write",
+        	"scope": "folders:uid:UID_F"
+    	},
+    	{
+        	"action": "alert.rules:create",
+        	"scope": "folders:uid:UID_F"
+    	},
+    	{
+        	"action": "alert.notifications.receivers:list",
+    	},
+{
+        	"action": "alert.notifications.time-intervals:read",
+    	},
+	]
+}
+```
+{{< admonition type="note" >}}
+Delete the last two permissions if you aren’t using simplified notification routing.
+{{< /admonition >}}
 
 ## Assign roles
 
