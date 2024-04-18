@@ -235,9 +235,11 @@ type AppDTO struct {
 }
 
 const (
-	errorCodeSignatureMissing  ErrorCode = "signatureMissing"
-	errorCodeSignatureModified ErrorCode = "signatureModified"
-	errorCodeSignatureInvalid  ErrorCode = "signatureInvalid"
+	errorCodeSignatureMissing   ErrorCode = "signatureMissing"
+	errorCodeSignatureModified  ErrorCode = "signatureModified"
+	errorCodeSignatureInvalid   ErrorCode = "signatureInvalid"
+	ErrorCodeFailedBackendStart ErrorCode = "failedBackendStart"
+	ErrorAngular                ErrorCode = "angular"
 )
 
 type ErrorCode string
@@ -246,9 +248,14 @@ type Error struct {
 	ErrorCode       `json:"errorCode"`
 	PluginID        string          `json:"pluginId,omitempty"`
 	SignatureStatus SignatureStatus `json:"status,omitempty"`
+	message         string          `json:"-"`
 }
 
 func (e Error) Error() string {
+	if e.message != "" {
+		return e.message
+	}
+
 	if e.SignatureStatus != "" {
 		switch e.SignatureStatus {
 		case SignatureStatusInvalid:
@@ -266,6 +273,10 @@ func (e Error) Error() string {
 }
 
 func (e Error) AsErrorCode() ErrorCode {
+	if e.ErrorCode != "" {
+		return e.ErrorCode
+	}
+
 	switch e.SignatureStatus {
 	case SignatureStatusInvalid:
 		return errorCodeSignatureInvalid
@@ -278,6 +289,11 @@ func (e Error) AsErrorCode() ErrorCode {
 	}
 
 	return ""
+}
+
+func (e *Error) WithMessage(m string) *Error {
+	e.message = m
+	return e
 }
 
 // Access-Control related definitions
