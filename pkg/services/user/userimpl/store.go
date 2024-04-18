@@ -88,14 +88,9 @@ func (ss *sqlStore) Insert(ctx context.Context, cmd *user.User) (int64, error) {
 }
 
 func (ss *sqlStore) Get(ctx context.Context, usr *user.User) (*user.User, error) {
-
 	ret := &user.User{}
 	err := ss.db.WithDbSession(ctx, func(sess *db.Session) error {
 		// enforcement of lowercase due to forcement of caseinsensitive login
-		// check if login or as a uppercase letter
-		if (usr.Login != "" && usr.Login != strings.ToLower(usr.Login)) || (usr.Email != "" && usr.Email != strings.ToLower(usr.Email)) {
-			ss.logger.Warn("caseinsensitive login or email detected")
-		}
 		login := strings.ToLower(usr.Login)
 		email := strings.ToLower(usr.Email)
 		where := "email=? OR login=?"
@@ -167,28 +162,7 @@ func (ss *sqlStore) notServiceAccountFilter() string {
 		ss.dialect.BooleanStr(false))
 }
 
-func (ss *sqlStore) CaseInsensitiveLoginConflict(ctx context.Context, login, email string) error {
-	users := make([]user.User, 0)
-	err := ss.db.WithDbSession(ctx, func(sess *db.Session) error {
-		if err := sess.Where("LOWER(email)=LOWER(?) OR LOWER(login)=LOWER(?)",
-			email, login).Find(&users); err != nil {
-			return err
-		}
-
-		if len(users) > 1 {
-			return &user.ErrCaseInsensitiveLoginConflict{Users: users}
-		}
-		return nil
-	})
-	return err
-}
-
 func (ss *sqlStore) GetByLogin(ctx context.Context, query *user.GetUserByLoginQuery) (*user.User, error) {
-	// enforcement of lowercase due to forcement of caseinsensitive login
-	// check if login as a uppercase letter
-	if query.LoginOrEmail != "" && query.LoginOrEmail != strings.ToLower(query.LoginOrEmail) {
-		ss.logger.Warn("caseinsensitive login or email detected")
-	}
 	// enforcement of lowercase due to forcement of caseinsensitive login
 	query.LoginOrEmail = strings.ToLower(query.LoginOrEmail)
 
@@ -234,11 +208,6 @@ func (ss *sqlStore) GetByLogin(ctx context.Context, query *user.GetUserByLoginQu
 }
 
 func (ss *sqlStore) GetByEmail(ctx context.Context, query *user.GetUserByEmailQuery) (*user.User, error) {
-	// enforcement of lowercase due to forcement of caseinsensitive login
-	// check if email as a uppercase letter
-	if query.Email != "" && query.Email != strings.ToLower(query.Email) {
-		ss.logger.Warn("caseinsensitive login or email detected")
-	}
 	// enforcement of lowercase due to forcement of caseinsensitive login
 	query.Email = strings.ToLower(query.Email)
 
@@ -300,10 +269,6 @@ func (ss *sqlStore) loginConflict(ctx context.Context, sess *db.Session, login, 
 
 func (ss *sqlStore) Update(ctx context.Context, cmd *user.UpdateUserCommand) error {
 	// enforcement of lowercase due to forcement of caseinsensitive login
-	// check if login as a uppercase letter
-	if (cmd.Login != "" && cmd.Login != strings.ToLower(cmd.Login)) || (cmd.Email != "" && cmd.Email != strings.ToLower(cmd.Email)) {
-		ss.logger.Warn("caseinsensitive login or email detected")
-	}
 	cmd.Login = strings.ToLower(cmd.Login)
 	cmd.Email = strings.ToLower(cmd.Email)
 
