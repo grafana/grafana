@@ -54,7 +54,7 @@ The following video guides you through the creation steps and common customizati
 
 Tooltip options control the information overlay that appears when you hover over data points in the graph.
 
-{{< docs/shared lookup="visualizations/tooltip-mode.md" source="grafana" version="<GRAFANA VERSION>" >}}
+{{< docs/shared lookup="visualizations/tooltip-options-2.md" source="grafana" version="<GRAFANA VERSION>" >}}
 
 ### Hover proximity
 
