@@ -26,11 +26,7 @@ export const Basic: StoryFn<typeof Checkbox> = (args) => {
     (e: React.FormEvent<HTMLInputElement>) => setChecked(e.currentTarget.checked),
     [setChecked]
   );
-  return (
-    <div>
-      <Checkbox value={checked} onChange={onChange} {...args} />
-    </div>
-  );
+  return <Checkbox value={checked} onChange={onChange} {...args} />;
 };
 
 Basic.args = {
@@ -44,7 +40,7 @@ Basic.args = {
 export const StackedList = () => {
   return (
     <div>
-      <Stack direction="column">
+      <Stack direction="column" alignItems="flex-start">
         <Checkbox
           defaultChecked={true}
           label="Skip TLS cert validation"
@@ -67,11 +63,9 @@ export const StackedList = () => {
 
 export const InAField: StoryFn<typeof Checkbox> = (args) => {
   return (
-    <div>
-      <Field {...args}>
-        <Checkbox name="hide" id="hide" defaultChecked={true} />
-      </Field>
-    </div>
+    <Field {...args}>
+      <Checkbox name="hide" id="hide" defaultChecked={true} />
+    </Field>
   );
 };
 
@@ -93,7 +87,7 @@ export const AllStates: StoryFn<typeof Checkbox> = (args) => {
 
   return (
     <div>
-      <Stack direction="column">
+      <Stack direction="column" alignItems="flex-start">
         <Checkbox value={checked} onChange={onChange} {...args} />
         <Checkbox value={true} label="Checked" />
         <Checkbox value={false} label="Unchecked" />
