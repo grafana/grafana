@@ -813,6 +813,102 @@ func TestIntegrationListNotificationSettings(t *testing.T) {
 	})
 }
 
+func TestIntegrationGetRuleGroupsByRuleUIDs(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test")
+	}
+
+	orgID := int64(1)
+	sqlStore := db.InitTestDB(t)
+	cfg := setting.NewCfg()
+	cfg.UnifiedAlerting.BaseInterval = 1 * time.Second
+	store := &DBstore{
+		SQLStore:      sqlStore,
+		FolderService: setupFolderService(t, sqlStore, cfg, featuremgmt.WithFeatures()),
+		Logger:        log.New("test-dbstore"),
+		Cfg:           cfg.UnifiedAlerting,
+	}
+
+	uids := &sync.Map{}
+	titles := &sync.Map{}
+	allRules := make([]models.AlertRule, 0, 50)
+	groups := make(map[models.AlertRuleGroupKey]struct{}, 10)
+	for i := 0; i < 10; i++ {
+		var group models.AlertRuleGroupKey
+		for {
+			group = models.GenerateGroupKey(orgID)
+			if _, ok := groups[group]; !ok {
+				break
+			}
+		}
+
+		rules := models.GenerateAlertRules(5, models.AlertRuleGen(
+			models.WithGroupKey(group),
+			models.WithUniqueUID(uids),
+			models.WithUniqueTitle(titles),
+			models.WithID(0),
+			withIntervalMatching(store.Cfg.BaseInterval),
+		))
+
+		for _, rule := range rules {
+			allRules = append(allRules, *rule)
+		}
+		groups[group] = struct{}{}
+	}
+	rand.Shuffle(len(allRules), func(i, j int) {
+		allRules[i], allRules[j] = allRules[j], allRules[i]
+	})
+
+	_, err := store.InsertAlertRules(context.Background(), allRules)
+	if err != nil {
+		b := strings.Builder{}
+		for _, rule := range allRules {
+			b.WriteString(fmt.Sprintf("%#v %#v %s\n", rule.GetKey(), rule.GetGroupKey(), rule.Title))
+		}
+		require.NoErrorf(t, err, "Error inserting alert rules: %s", b.String())
+	}
+
+	t.Run("should return empty result if UID does not exist", func(t *testing.T) {
+		result, err := store.GetRuleGroupsByRuleUIDs(context.Background(), orgID, "non-existing-uid")
+		require.NoError(t, err)
+		require.Empty(t, result)
+	})
+	t.Run("should fetch single group by UID", func(t *testing.T) {
+		rule := allRules[0]
+		groupKey := rule.GetGroupKey()
+		result, err := store.GetRuleGroupsByRuleUIDs(context.Background(), orgID, rule.UID)
+		require.NoError(t, err)
+		require.Contains(t, result, groupKey)
+
+		group, err := store.ListAlertRules(context.Background(), &models.ListAlertRulesQuery{
+			OrgID:         1,
+			NamespaceUIDs: []string{groupKey.NamespaceUID},
+			RuleGroup:     groupKey.RuleGroup,
+		})
+		require.NoError(t, err)
+		require.EqualValues(t, group, result[groupKey])
+	})
+	t.Run("should fetch multiple groups", func(t *testing.T) {
+		uids := make([]string, 0, len(allRules))
+		for _, rule := range allRules {
+			uids = append(uids, rule.UID)
+		}
+		result, err := store.GetRuleGroupsByRuleUIDs(context.Background(), orgID, uids...)
+		require.NoError(t, err)
+		require.Len(t, result, len(groups))
+
+		for groupKey := range result {
+			group, err := store.ListAlertRules(context.Background(), &models.ListAlertRulesQuery{
+				OrgID:         1,
+				NamespaceUIDs: []string{groupKey.NamespaceUID},
+				RuleGroup:     groupKey.RuleGroup,
+			})
+			require.NoError(t, err)
+			require.EqualValues(t, group, result[groupKey])
+		}
+	})
+}
+
 // createAlertRule creates an alert rule in the database and returns it.
 // If a generator is not specified, uniqueness of primary key is not guaranteed.
 func createRule(t *testing.T, store *DBstore, generate func() *models.AlertRule) *models.AlertRule {

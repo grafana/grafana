@@ -106,6 +106,12 @@ func WithNotEmptyLabels(count int, prefix string) AlertRuleMutator {
 	}
 }
 
+func WithID(id int64) AlertRuleMutator {
+	return func(rule *AlertRule) {
+		rule.ID = id
+	}
+}
+
 func WithUniqueID() AlertRuleMutator {
 	usedID := make(map[int64]struct{})
 	return func(rule *AlertRule) {
