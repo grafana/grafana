@@ -30,7 +30,7 @@ export function Essentials({ onClose, essentialsConfig, stepsDone, totalStepsToD
   );
 }
 
-function EssentialContent({
+export function EssentialContent({
   essentialContent,
   stepsDone,
   totalStepsToDo,
@@ -65,7 +65,11 @@ function Section({ section }: { section: SectionDto }) {
   );
 }
 function DoneIcon({ done }: { done: boolean }) {
-  return done ? <Icon name="check-circle" color="green" /> : <Icon name="circle" />;
+  return done ? (
+    <Icon name="check-circle" color="green" data-testid="checked-step" />
+  ) : (
+    <Icon name="circle" data-testid="unckecked-step" />
+  );
 }
 interface StepProps {
   step: SectionDtoStep;
@@ -73,7 +77,7 @@ interface StepProps {
 
 function Step({ step }: StepProps) {
   return (
-    <Stack direction={'row'} justifyContent={'space-between'}>
+    <Stack direction={'row'} justifyContent={'space-between'} data-testid="step">
       <Stack direction={'row'} alignItems="center">
         {step.button.done !== undefined && <DoneIcon done={step.button.done} />}
         <Text variant="body">{step.title}</Text>
@@ -81,7 +85,7 @@ function Step({ step }: StepProps) {
           <Icon name="question-circle" />
         </Tooltip>
       </Stack>
-      {!step.button.done && <StepButton {...step.button} />}
+      {!step.button.done && <StepButton {...step.button} data-testid="step-button" />}
     </Stack>
   );
 }
