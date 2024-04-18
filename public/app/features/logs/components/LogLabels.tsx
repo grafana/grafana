@@ -12,7 +12,7 @@ interface Props {
   emptyMessage?: string;
 }
 
-export const LogLabels = ({ labels, emptyMessage }: Props) => {
+export const LogLabels = React.memo(({ labels, emptyMessage }: Props) => {
   const styles = useStyles2(getStyles);
   const displayLabels = useMemo(
     () =>
@@ -46,13 +46,14 @@ export const LogLabels = ({ labels, emptyMessage }: Props) => {
       })}
     </span>
   );
-};
+});
+LogLabels.displayName = 'LogLabels';
 
 interface LogLabelsArrayProps {
   labels: string[];
 }
 
-export const LogLabelsList = ({ labels }: LogLabelsArrayProps) => {
+export const LogLabelsList = React.memo(({ labels }: LogLabelsArrayProps) => {
   const styles = useStyles2(getStyles);
   return (
     <span className={cx([styles.logsLabels])}>
@@ -63,7 +64,8 @@ export const LogLabelsList = ({ labels }: LogLabelsArrayProps) => {
       ))}
     </span>
   );
-};
+});
+LogLabelsList.displayName = 'LogLabelsList';
 
 interface LogLabelProps {
   styles: Record<string, string>;
