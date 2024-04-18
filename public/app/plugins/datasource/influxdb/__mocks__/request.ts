@@ -68,29 +68,29 @@ export const mockTargets = (): QueryType[] => {
 
 export const mockInfluxQueryWithTemplateVars = (adhocFilters: AdHocVariableFilter[]): InfluxQuery => ({
   refId: 'x',
-  alias: '$interpolationVar',
-  measurement: '$interpolationVar',
-  policy: '$interpolationVar',
-  limit: '$interpolationVar',
-  slimit: '$interpolationVar',
-  tz: '$interpolationVar',
+  alias: '$var1',
+  measurement: '$var1',
+  policy: '$var1',
+  limit: '$var1',
+  slimit: '$var1',
+  tz: '$var1',
   tags: [
     {
-      key: 'cpu',
+      key: 'drive',
       operator: '=~',
-      value: '/^$interpolationVar,$interpolationVar2$/',
+      value: '/^$path$/',
     },
   ],
   groupBy: [
     {
-      params: ['$interpolationVar'],
+      params: ['$var1'],
       type: 'tag',
     },
   ],
   select: [
     [
       {
-        params: ['$interpolationVar'],
+        params: ['$var1'],
         type: 'field',
       },
     ],
