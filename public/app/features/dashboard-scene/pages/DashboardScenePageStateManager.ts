@@ -89,11 +89,8 @@ export class DashboardScenePageStateManager extends StateManagerBase<DashboardSc
         case DashboardRoutes.Home:
           rsp = await getBackendSrv().get('/api/dashboards/home');
 
-          // If user specified a custom home dashboard redirect to that
-          if (rsp?.redirectUri) {
-            const newUrl = locationUtil.stripBaseFromUrl(rsp.redirectUri);
-            locationService.replace(newUrl);
-            return null;
+          if (rsp.redirectUri) {
+            return rsp;
           }
 
           if (rsp?.meta) {
@@ -170,6 +167,10 @@ export class DashboardScenePageStateManager extends StateManagerBase<DashboardSc
   public async loadDashboard(options: LoadDashboardOptions) {
     try {
       const dashboard = await this.loadScene(options);
+      if (!dashboard) {
+        return;
+      }
+
       if (!(config.publicDashboardAccessToken && dashboard.state.controls?.state.hideTimeControls)) {
         dashboard.startUrlSync();
       }
@@ -180,11 +181,13 @@ export class DashboardScenePageStateManager extends StateManagerBase<DashboardSc
     }
   }
 
-  private async loadScene(options: LoadDashboardOptions): Promise<DashboardScene> {
+  private async loadScene(options: LoadDashboardOptions): Promise<DashboardScene | null> {
     const comingFromExplore = Boolean(
       localStorageStore.getObject<DashboardDTO>(DASHBOARD_FROM_LS_KEY) &&
         options.keepDashboardFromExploreInLocalStorage === false
     );
+
+    this.setState({ isLoading: true });
 
     const rsp = await this.fetchDashboard(options);
 
@@ -197,8 +200,6 @@ export class DashboardScenePageStateManager extends StateManagerBase<DashboardSc
       }
     }
 
-    this.setState({ isLoading: true });
-
     if (rsp?.dashboard) {
       const scene = transformSaveModelToScene(rsp);
 
@@ -208,6 +209,12 @@ export class DashboardScenePageStateManager extends StateManagerBase<DashboardSc
       }
 
       return scene;
+    }
+
+    if (rsp?.redirectUri) {
+      const newUrl = locationUtil.stripBaseFromUrl(rsp.redirectUri);
+      locationService.replace(newUrl);
+      return null;
     }
 
     throw new Error('Dashboard not found');
