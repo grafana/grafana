@@ -1,12 +1,14 @@
 import { NotifierDTO } from 'app/types';
 
-import { GrafanaChannelValues, ReceiverFormValues } from '../types/receiver-form';
+import { Receiver } from '../../../../plugins/datasource/alertmanager/types';
+import { CloudChannelValues, GrafanaChannelValues, ReceiverFormValues } from '../types/receiver-form';
 
 import {
   formValuesToGrafanaReceiver,
   omitEmptyValues,
   omitEmptyUnlessExisting,
   omitTemporaryIdentifiers,
+  formValuesToCloudReceiver,
 } from './receiver-form';
 
 describe('Receiver form utils', () => {
@@ -199,5 +201,52 @@ describe('formValuesToGrafanaReceiver', () => {
 
     // @ts-expect-error
     expect(formValuesToGrafanaReceiver(formValues, channelMap, {}, notifiers)).toMatchSnapshot();
+  });
+});
+
+describe('formValuesToCloudReceiver', () => {
+  it('should remove temporary ids from receivers and settings', () => {
+    const formValues: ReceiverFormValues<CloudChannelValues> = {
+      name: 'my-receiver',
+      items: [
+        {
+          __id: '1',
+          type: 'slack',
+          settings: {
+            url: 'https://slack.example.com/',
+            actions: [{ __id: '2', text: 'Acknowledge', type: 'button' }],
+            fields: [{ __id: '10', title: 'priority', value: '1' }],
+          },
+          secureFields: {},
+          secureSettings: {},
+          sendResolved: true,
+        },
+      ],
+    };
+
+    const defaults: CloudChannelValues = {
+      __id: '1',
+      type: 'slack',
+      settings: {
+        url: 'https://slack.example.com/',
+      },
+      secureFields: {},
+      secureSettings: {},
+      sendResolved: true,
+    };
+
+    const expected: Receiver = {
+      name: 'my-receiver',
+      slack_configs: [
+        {
+          url: 'https://slack.example.com/',
+          actions: [{ text: 'Acknowledge', type: 'button' }],
+          fields: [{ title: 'priority', value: '1' }],
+          send_resolved: true,
+        },
+      ],
+    };
+
+    expect(formValuesToCloudReceiver(formValues, defaults)).toEqual(expected);
   });
 });
