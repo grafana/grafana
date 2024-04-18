@@ -1,4 +1,4 @@
-import i18n, { InitOptions } from 'i18next';
+import i18n, { InitOptions, TFunction } from 'i18next';
 import LanguageDetector, { DetectorOptions } from 'i18next-browser-languagedetector';
 import React from 'react';
 import { Trans as I18NextTrans, initReactI18next } from 'react-i18next'; // eslint-disable-line no-restricted-imports
@@ -6,10 +6,12 @@ import { Trans as I18NextTrans, initReactI18next } from 'react-i18next'; // esli
 import { DEFAULT_LANGUAGE, VALID_LANGUAGES } from './constants';
 import { loadTranslations } from './loadTranslations';
 
+let tFunc: TFunction<string[], undefined> | undefined;
+
 export function initializeI18n(language: string): Promise<{ language: string | undefined }> {
   // This is a placeholder so we can put a 'comment' in the message json files.
   // Starts with an underscore so it's sorted to the top of the file. Even though it is in a comment the following line is still extracted
-  // t('_comment', 'This file is the source of truth for English strings. Edit this to change plurals and other phrases for the UI.');
+  // t('_comment', 'The code is the source of truth for English phrases. They should be updated in the components directly, and additional plurals specified in this file.');
 
   const options: InitOptions = {
     // We don't bundle any translations, we load them async
@@ -37,6 +39,8 @@ export function initializeI18n(language: string): Promise<{ language: string | u
     .use(initReactI18next) // passes i18n down to react-i18next
     .init(options);
 
+  tFunc = i18n.t;
+
   return loadPromise.then(() => {
     return {
       language: i18nInstance.resolvedLanguage,
@@ -53,10 +57,22 @@ export const Trans: typeof I18NextTrans = (props) => {
   return <I18NextTrans shouldUnescape {...props} />;
 };
 
-// Reassign t() so i18next-parser doesn't warn on dynamic key, and we can have 'failOnWarnings' enabled
-const tFunc = i18n.t;
-
+// Wrap t() to provide default namespaces and enforce a consistent API
 export const t = (id: string, defaultMessage: string, values?: Record<string, unknown>) => {
+  if (!tFunc) {
+    if (process.env.NODE_ENV !== 'test') {
+      console.warn(
+        't() was called before i18n was initialized. This is probably caused by calling t() in the root module scope, instead of lazily on render'
+      );
+    }
+
+    if (process.env.NODE_ENV === 'development') {
+      throw new Error('t() was called before i18n was initialized');
+    }
+
+    tFunc = i18n.t;
+  }
+
   return tFunc(id, defaultMessage, values);
 };
 

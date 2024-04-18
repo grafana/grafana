@@ -1197,6 +1197,14 @@ var (
 			Stage:       FeatureStageExperimental,
 			Owner:       identityAccessTeam,
 		},
+		{
+			Name:            "disableNumericMetricsSortingInExpressions",
+			Description:     "In server-side expressions, disable the sorting of numeric-kind metrics by their metric name or labels.",
+			Stage:           FeatureStageExperimental,
+			FrontendOnly:    false,
+			Owner:           grafanaObservabilityMetricsSquad,
+			RequiresRestart: true,
+		},
 	}
 )
 
