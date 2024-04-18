@@ -39,7 +39,6 @@ import snapshotableDashboardJson from './testfiles/snapshotable_dashboard.json';
 import snapshotableWithRowsDashboardJson from './testfiles/snapshotable_with_rows.json';
 import {
   buildGridItemForLibPanel,
-  buildGridItemForLibraryPanelWidget,
   buildGridItemForPanel,
   transformSaveModelToScene,
 } from './transformSaveModelToScene';
@@ -1027,8 +1026,6 @@ describe('transformSceneToSaveModel', () => {
 export function buildGridItemFromPanelSchema(panel: Partial<Panel>) {
   if (panel.libraryPanel) {
     return buildGridItemForLibPanel(new PanelModel(panel))!;
-  } else if (panel.type === 'add-library-panel') {
-    return buildGridItemForLibraryPanelWidget(new PanelModel(panel))!;
   }
 
   return buildGridItemForPanel(new PanelModel(panel));
