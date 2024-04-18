@@ -4,7 +4,9 @@ import { AppEvents } from '@grafana/data';
 import { ComponentSize, Menu } from '@grafana/ui';
 import appEvents from 'app/core/app_events';
 import MenuItemPauseRule from 'app/features/alerting/unified/components/MenuItemPauseRule';
+import { isAlertingRule } from 'app/features/alerting/unified/utils/rules';
 import { CombinedRule, RuleIdentifier } from 'app/types/unified-alerting';
+import { PromAlertingRuleState } from 'app/types/unified-alerting-dto';
 
 import { AlertRuleAction, useAlertRuleAbility } from '../../hooks/useAbilities';
 import { createShareLink, isLocalDevEnv, isOpenSourceEdition, makeRuleBasedSilenceLink } from '../../utils/misc';
@@ -55,12 +57,15 @@ export const useAlertRuleMenuItems = ({
    * Since Incident isn't available as an open-source product we shouldn't show it for Open-Source licenced editions of Grafana.
    * We should show it in development mode
    */
-  const shouldShowDeclareIncidentButton = !isOpenSourceEdition() || isLocalDevEnv();
+  const shouldShowDeclareIncidentButton =
+    (!isOpenSourceEdition() || isLocalDevEnv()) &&
+    isAlertingRule(rule.promRule) &&
+    rule.promRule.state === PromAlertingRuleState.Firing;
   const shareUrl = createShareLink(rule.namespace.rulesSource, rule);
 
   const showDivider =
     [canEdit, canSilence, shouldShowDeclareIncidentButton, canDuplicate].some(Boolean) &&
-    [showCopyLinkButton, canExport, canDelete].some(Boolean);
+    [showCopyLinkButton, canExport].some(Boolean);
 
   return [
     canEdit && <MenuItemPauseRule key="pause" rule={rule} onPauseChange={onPauseChange} />,
