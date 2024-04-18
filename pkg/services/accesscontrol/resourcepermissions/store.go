@@ -3,7 +3,6 @@ package resourcepermissions
 import (
 	"context"
 	"fmt"
-	"slices"
 	"strings"
 	"time"
 
@@ -678,11 +677,7 @@ func (s *store) createPermissions(sess *db.Session, roleID int64, resource, reso
 		Add ACTION SET of managed permissions to in-memory store
 	*/
 	if s.features.IsEnabled(context.TODO(), featuremgmt.FlagAccessActionSets) {
-		// FIXME: make this only one resource of view, editor, admin
-		actionSetName, err := s.actionSetService.GetActionSetName(resource, permission)
-		if err != nil {
-			return err
-		}
+		actionSetName := s.actionSetService.GetActionSetName(resource, permission)
 		p := managedPermission(actionSetName, resource, resourceID, resourceAttribute)
 		p.RoleID = roleID
 		p.Created = time.Now()
@@ -740,18 +735,10 @@ actionSet := &ActionSet{
 }`
 */
 
-type ActionSetGetter interface {
-	GetActionSet(actionName string) []string
-	GetActionSetName(resource, permission string) (string, error)
-}
-
-type ActionSetStorer interface {
-	StoreActionSet(resource, permission string, actions []string) error
-}
-
 type ActionSetService interface {
-	ActionSetGetter
-	ActionSetStorer
+	GetActionSet(actionName string) []string
+	GetActionSetName(resource, permission string) string
+	StoreActionSet(resource, permission string, actions []string)
 }
 
 type ActionSet struct {
@@ -765,11 +752,11 @@ type InMemoryActionSets struct {
 	actionSets map[string][]string
 }
 
-// NewInMemoryActionSets returns a new instance of InMemoryActionSetService.
-func NewInMemoryActionSets(log log.Logger) ActionSetService {
+// NewActionSetService returns a new instance of InMemoryActionSetService.
+func NewActionSetService() ActionSetService {
 	return &InMemoryActionSets{
 		actionSets: make(map[string][]string),
-		log:        log,
+		log:        log.New("resourcepermissions.actionsets"),
 	}
 }
 
@@ -782,33 +769,22 @@ func (s *InMemoryActionSets) GetActionSet(actionName string) []string {
 	return actionSet
 }
 
-func (s *InMemoryActionSets) StoreActionSet(resource, permission string, actions []string) error {
+func (s *InMemoryActionSets) StoreActionSet(resource, permission string, actions []string) {
 	s.log.Debug("storing action set\n")
-	name, err := s.GetActionSetName(resource, permission)
-	if err != nil {
-		return err
-	}
+	name := s.GetActionSetName(resource, permission)
 	actionSet := &ActionSet{
 		// folders:edit
 		Action:  name,
 		Actions: actions,
 	}
-	// TODO: Do we only store the actions, or all of the information about the action set
 	s.actionSets[actionSet.Action] = actions
 	s.log.Debug("stored action set actionname \n", actionSet.Action)
-	return nil
 }
 
 // GetActionSetName function creates an action set from a list of actions and stores it inmemory.
-func (s *InMemoryActionSets) GetActionSetName(resource, permission string) (string, error) {
+func (s *InMemoryActionSets) GetActionSetName(resource, permission string) string {
 	// lower cased
 	resource = strings.ToLower(resource)
 	permission = strings.ToLower(permission)
-
-	// TODO: should we also whitelist permissions here?
-	allowedPermissions := []string{"admin", "edit", "editor", "view", "query", "member"}
-	if !slices.Contains(allowedPermissions, permission) {
-		return "", fmt.Errorf("%s not allowed permission", permission)
-	}
-	return fmt.Sprintf("%s:%s", resource, permission), nil
+	return fmt.Sprintf("%s:%s", resource, permission)
 }

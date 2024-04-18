@@ -7,7 +7,6 @@ import (
 
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/infra/db"
-	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/auth/identity"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
@@ -57,13 +56,8 @@ type Store interface {
 func New(cfg *setting.Cfg,
 	options Options, features featuremgmt.FeatureToggles, router routing.RouteRegister, license licensing.Licensing,
 	ac accesscontrol.AccessControl, service accesscontrol.Service, sqlStore db.DB,
-	teamService team.Service, userService user.Service,
+	teamService team.Service, userService user.Service, actionSetService ActionSetService,
 ) (*Service, error) {
-	// TODO: add log as a dependency
-	// TODO: add actionsetstore from wire
-	log := log.New("accesscontrol.resourcepermissions")
-	actionSetsStore := NewInMemoryActionSets(log)
-
 	permissions := make([]string, 0, len(options.PermissionsToActions))
 	actionSet := make(map[string]struct{})
 	for permission, actions := range options.PermissionsToActions {
@@ -71,12 +65,7 @@ func New(cfg *setting.Cfg,
 		for _, a := range actions {
 			actionSet[a] = struct{}{}
 		}
-		// storing the actionset
-		err := actionSetsStore.StoreActionSet(options.Resource, permission, actions)
-		if err != nil {
-			log.Warn("failed to store action set", "error", err)
-			return nil, err
-		}
+		actionSetService.StoreActionSet(options.Resource, permission, actions)
 	}
 
 	// Sort all permissions based on action length. Will be used when mapping between actions to permissions
@@ -91,7 +80,7 @@ func New(cfg *setting.Cfg,
 
 	s := &Service{
 		ac:          ac,
-		store:       NewStore(sqlStore, features, &actionSetsStore),
+		store:       NewStore(sqlStore, features, &actionSetService),
 		options:     options,
 		license:     license,
 		permissions: permissions,

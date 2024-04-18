@@ -10,7 +10,6 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/infra/db"
-	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
@@ -560,8 +559,7 @@ func seedResourcePermissions(
 
 func setupTestEnv(t testing.TB) (*store, db.DB, *setting.Cfg) {
 	sql := db.InitTestDB(t)
-	log := log.New("test")
-	asService := NewInMemoryActionSets(log)
+	asService := NewActionSetService()
 	return NewStore(sql, featuremgmt.WithFeatures(), &asService), sql, sql.Cfg
 }
 
