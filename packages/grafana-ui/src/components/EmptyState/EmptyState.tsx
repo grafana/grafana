@@ -1,4 +1,5 @@
 import React, { ReactNode } from 'react';
+import SVG from 'react-inlinesvg';
 
 import { Box } from '../Layout/Box/Box';
 import { Stack } from '../Layout/Stack/Stack';
@@ -6,6 +7,7 @@ import { Text } from '../Text/Text';
 
 import { GrotCTA } from './GrotCTA/GrotCTA';
 import { GrotNotFound } from './GrotNotFound/GrotNotFound';
+import GrotCompleted from './grot-completed.svg';
 
 interface Props {
   /**
@@ -24,7 +26,7 @@ interface Props {
   /**
    * Which variant to use. Affects the default image shown.
    */
-  variant: 'call-to-action' | 'not-found';
+  variant: 'call-to-action' | 'not-found' | 'completed';
 }
 
 export const EmptyState = ({
@@ -56,6 +58,9 @@ function getDefaultImageForVariant(variant: Props['variant']) {
     }
     case 'not-found': {
       return <GrotNotFound width={300} />;
+    }
+    case 'completed': {
+      return <SVG src={GrotCompleted} width={300} />;
     }
     default: {
       throw new Error(`Unknown variant: ${variant}`);
