@@ -51,4 +51,3 @@ To assign roles, complete the following steps.
 1. Navigate to Administration > Users and access > Users, Teams, or Service Accounts.
 1. Search for the user, team or service account you want to add a role for.
 1. Select the role you want to assign.
-
