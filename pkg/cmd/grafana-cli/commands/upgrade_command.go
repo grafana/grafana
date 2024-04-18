@@ -15,10 +15,9 @@ import (
 func upgradeCommand(c utils.CommandLine) error {
 	ctx := context.Background()
 	pluginsDir := c.PluginDirectory()
-
 	pluginID := c.Args().First()
 	if pluginID == "" {
-		return errors.New("missing plugin parameter")
+		return errors.New("please specify plugin to update")
 	}
 
 	localPlugin, err := services.GetLocalPlugin(pluginsDir, pluginID)
