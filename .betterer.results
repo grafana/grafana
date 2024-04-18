@@ -797,7 +797,7 @@ exports[`better eslint`] = {
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "1"]
     ],
-    "packages/grafana-ui/src/components/Dropdown/Dropdown.story.tsx:5381": [
+    "packages/grafana-ui/src/components/Forms/Checkbox.story.tsx:5381": [
       [0, 0, 0, "\'VerticalGroup\' import from \'../Layout/Layout\' is restricted from being used by a pattern. Use Stack component instead.", "0"]
     ],
     "packages/grafana-ui/src/components/Forms/FieldArray.story.tsx:5381": [
@@ -3276,8 +3276,7 @@ exports[`better eslint`] = {
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"]
     ],
     "public/app/features/explore/Logs/LogsMetaRow.tsx:5381": [
-      [0, 0, 0, "Styles should be written using objects.", "0"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "1"]
+      [0, 0, 0, "Styles should be written using objects.", "0"]
     ],
     "public/app/features/explore/Logs/LogsNavigation.tsx:5381": [
       [0, 0, 0, "Styles should be written using objects.", "0"],
@@ -6018,9 +6017,6 @@ exports[`better eslint`] = {
       [0, 0, 0, "Styles should be written using objects.", "5"],
       [0, 0, 0, "Styles should be written using objects.", "6"],
       [0, 0, 0, "Styles should be written using objects.", "7"]
-    ],
-    "public/app/plugins/panel/logs/LogsPanel.tsx:5381": [
-      [0, 0, 0, "Do not use any type assertions.", "0"]
     ],
     "public/app/plugins/panel/logs/types.ts:5381": [
       [0, 0, 0, "Do not re-export imported variable (\`./panelcfg.gen\`)", "0"]
