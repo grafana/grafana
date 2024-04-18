@@ -86,9 +86,12 @@ type UpdateUserCommand struct {
 	IsDisabled     *bool `json:"-"`
 	EmailVerified  *bool `json:"-"`
 	IsGrafanaAdmin *bool `json:"-"`
-
-	Password    *Password `json:"-"`
+	// If password is included it will be validated, hashed and updated for user.
+	Password *Password `json:"-"`
+	// If old password is included it will be validated against users current password.
 	OldPassword *Password `json:"-"`
+	// If specified update current org for user
+	OrgID *int64 `json:"-"`
 }
 
 type UpdateUserLastSeenAtCommand struct {

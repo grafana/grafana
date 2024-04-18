@@ -215,9 +215,7 @@ func (hs *HTTPServer) UpdateUserActiveOrg(c *contextmodel.ReqContext) response.R
 		return response.Error(http.StatusUnauthorized, "Not a valid organization", nil)
 	}
 
-	cmd := user.SetUsingOrgCommand{UserID: userID, OrgID: orgID}
-
-	if err := hs.userService.SetUsingOrg(c.Req.Context(), &cmd); err != nil {
+	if err := hs.userService.Update(c.Req.Context(), &user.UpdateUserCommand{UserID: userID, OrgID: &orgID}); err != nil {
 		return response.Error(http.StatusInternalServerError, "Failed to change active organization", err)
 	}
 
@@ -493,9 +491,7 @@ func (hs *HTTPServer) UserSetUsingOrg(c *contextmodel.ReqContext) response.Respo
 		return response.Error(http.StatusUnauthorized, "Not a valid organization", nil)
 	}
 
-	cmd := user.SetUsingOrgCommand{UserID: userID, OrgID: orgID}
-
-	if err := hs.userService.SetUsingOrg(c.Req.Context(), &cmd); err != nil {
+	if err := hs.userService.Update(c.Req.Context(), &user.UpdateUserCommand{UserID: userID, OrgID: &orgID}); err != nil {
 		return response.Error(http.StatusInternalServerError, "Failed to change active organization", err)
 	}
 
@@ -527,8 +523,7 @@ func (hs *HTTPServer) ChangeActiveOrgAndRedirectToHome(c *contextmodel.ReqContex
 		return
 	}
 
-	cmd := user.SetUsingOrgCommand{UserID: userID, OrgID: orgID}
-	if err := hs.userService.SetUsingOrg(c.Req.Context(), &cmd); err != nil {
+	if err := hs.userService.Update(c.Req.Context(), &user.UpdateUserCommand{UserID: userID, OrgID: &orgID}); err != nil {
 		hs.NotFoundHandler(c)
 		return
 	}

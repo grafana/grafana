@@ -126,57 +126,81 @@ func TestUserService(t *testing.T) {
 		assert.Equal(t, query2.OrgID, result2.OrgID)
 	})
 
-	t.Run("Can set using org", func(t *testing.T) {
-		cmd := user.SetUsingOrgCommand{UserID: 2, OrgID: 1}
-		orgService.ExpectedUserOrgDTO = []*org.UserOrgDTO{{OrgID: 1}}
-		userStore.ExpectedError = nil
-		err := userService.SetUsingOrg(context.Background(), &cmd)
+	t.Run("SignedInUserQuery with a different org", func(t *testing.T) {
+		query := user.GetSignedInUserQuery{UserID: 2}
+		userStore.ExpectedSignedInUser = &user.SignedInUser{
+			OrgID:   1,
+			Email:   "ac2@test.com",
+			Name:    "ac2 name",
+			Login:   "ac2",
+			OrgName: "ac1@test.com",
+		}
+		queryResult, err := userService.GetSignedInUser(context.Background(), &query)
+
 		require.NoError(t, err)
-
-		t.Run("SignedInUserQuery with a different org", func(t *testing.T) {
-			query := user.GetSignedInUserQuery{UserID: 2}
-			userStore.ExpectedSignedInUser = &user.SignedInUser{
-				OrgID:   1,
-				Email:   "ac2@test.com",
-				Name:    "ac2 name",
-				Login:   "ac2",
-				OrgName: "ac1@test.com",
-			}
-			queryResult, err := userService.GetSignedInUser(context.Background(), &query)
-
-			require.NoError(t, err)
-			require.EqualValues(t, queryResult.OrgID, 1)
-			require.Equal(t, queryResult.Email, "ac2@test.com")
-			require.Equal(t, queryResult.Name, "ac2 name")
-			require.Equal(t, queryResult.Login, "ac2")
-			require.Equal(t, queryResult.OrgName, "ac1@test.com")
-		})
+		require.EqualValues(t, queryResult.OrgID, 1)
+		require.Equal(t, queryResult.Email, "ac2@test.com")
+		require.Equal(t, queryResult.Name, "ac2 name")
+		require.Equal(t, queryResult.Login, "ac2")
+		require.Equal(t, queryResult.OrgName, "ac1@test.com")
 	})
 }
 
 func TestService_Update(t *testing.T) {
-	t.Run("should return error if old password does not match stored password", func(t *testing.T) {
-		stored, err := user.Password("test").Hash("salt")
-		require.NoError(t, err)
-		service := &Service{store: &FakeUserStore{ExpectedUser: &user.User{Password: stored, Salt: "salt"}}}
+	setup := func(opts ...func(svc *Service)) *Service {
+		service := &Service{store: &FakeUserStore{}}
+		for _, o := range opts {
+			o(service)
+		}
+		return service
+	}
 
-		err = service.Update(context.Background(), &user.UpdateUserCommand{
-			OldPassword: passwordPtr("test123"),
+	t.Run("should return error if old password does not match stored password", func(t *testing.T) {
+		service := setup(func(svc *Service) {
+			stored, err := user.Password("test").Hash("salt")
+			require.NoError(t, err)
+
+			svc.store = &FakeUserStore{ExpectedUser: &user.User{Password: stored, Salt: "salt"}}
 		})
 
+		err := service.Update(context.Background(), &user.UpdateUserCommand{
+			OldPassword: passwordPtr("test123"),
+		})
 		assert.ErrorIs(t, err, user.ErrPasswordMissmatch)
 	})
 
 	t.Run("should return error new password is not valid", func(t *testing.T) {
-		stored, err := user.Password("test").Hash("salt")
-		require.NoError(t, err)
-		service := &Service{cfg: setting.NewCfg(), store: &FakeUserStore{ExpectedUser: &user.User{Password: stored, Salt: "salt"}}}
 
-		err = service.Update(context.Background(), &user.UpdateUserCommand{
+		service := setup(func(svc *Service) {
+			stored, err := user.Password("test").Hash("salt")
+			require.NoError(t, err)
+			svc.cfg = setting.NewCfg()
+			svc.store = &FakeUserStore{ExpectedUser: &user.User{Password: stored, Salt: "salt"}}
+		})
+
+		err := service.Update(context.Background(), &user.UpdateUserCommand{
 			OldPassword: passwordPtr("test"),
 			Password:    passwordPtr("asd"),
 		})
 		require.ErrorIs(t, err, user.ErrPasswordTooShort)
+	})
+
+	t.Run("Can set using org", func(t *testing.T) {
+		orgID := int64(1)
+		service := setup(func(svc *Service) {
+			svc.orgService = &orgtest.FakeOrgService{ExpectedUserOrgDTO: []*org.UserOrgDTO{{OrgID: orgID}}}
+		})
+		err := service.Update(context.Background(), &user.UpdateUserCommand{UserID: 2, OrgID: &orgID})
+		require.NoError(t, err)
+	})
+
+	t.Run("Cannot set using org when user is not member of it", func(t *testing.T) {
+		orgID := int64(1)
+		service := setup(func(svc *Service) {
+			svc.orgService = &orgtest.FakeOrgService{ExpectedUserOrgDTO: []*org.UserOrgDTO{{OrgID: 2}}}
+		})
+		err := service.Update(context.Background(), &user.UpdateUserCommand{UserID: 2, OrgID: &orgID})
+		require.Error(t, err)
 	})
 }
 

@@ -251,6 +251,24 @@ func (s *Service) Update(ctx context.Context, cmd *user.UpdateUserCommand) error
 		cmd.Password = &hashed
 	}
 
+	if cmd.OrgID != nil {
+		orgs, err := s.orgService.GetUserOrgList(ctx, &org.GetUserOrgListQuery{UserID: cmd.UserID})
+		if err != nil {
+			return err
+		}
+
+		valid := false
+		for _, org := range orgs {
+			if org.OrgID == *cmd.OrgID {
+				valid = true
+			}
+		}
+
+		if !valid {
+			return fmt.Errorf("user does not belong to org")
+		}
+	}
+
 	return s.store.Update(ctx, cmd)
 }
 
@@ -273,28 +291,6 @@ func (s *Service) UpdateLastSeenAt(ctx context.Context, cmd *user.UpdateUserLast
 
 func shouldUpdateLastSeen(t time.Time) bool {
 	return time.Since(t) > time.Minute*5
-}
-
-func (s *Service) SetUsingOrg(ctx context.Context, cmd *user.SetUsingOrgCommand) error {
-	getOrgsForUserCmd := &org.GetUserOrgListQuery{UserID: cmd.UserID}
-	orgsForUser, err := s.orgService.GetUserOrgList(ctx, getOrgsForUserCmd)
-	if err != nil {
-		return err
-	}
-
-	valid := false
-	for _, other := range orgsForUser {
-		if other.OrgID == cmd.OrgID {
-			valid = true
-		}
-	}
-	if !valid {
-		return fmt.Errorf("user does not belong to org")
-	}
-	return s.store.UpdateUser(ctx, &user.User{
-		ID:    cmd.UserID,
-		OrgID: cmd.OrgID,
-	})
 }
 
 func (s *Service) GetSignedInUserWithCacheCtx(ctx context.Context, query *user.GetSignedInUserQuery) (*user.SignedInUser, error) {

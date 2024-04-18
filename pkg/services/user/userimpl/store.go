@@ -299,6 +299,10 @@ func (ss *sqlStore) Update(ctx context.Context, cmd *user.UpdateUserCommand) err
 
 		q := sess.ID(cmd.UserID).Where(ss.notServiceAccountFilter())
 
+		if cmd.OrgID != nil {
+			user.OrgID = *cmd.OrgID
+		}
+
 		if cmd.Password != nil {
 			user.Password = *cmd.Password
 		}

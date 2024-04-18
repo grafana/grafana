@@ -71,10 +71,6 @@ func (f *FakeUserService) UpdateLastSeenAt(ctx context.Context, cmd *user.Update
 	return f.ExpectedError
 }
 
-func (f *FakeUserService) SetUsingOrg(ctx context.Context, cmd *user.SetUsingOrgCommand) error {
-	return f.ExpectedSetUsingOrgError
-}
-
 func (f *FakeUserService) GetSignedInUserWithCacheCtx(ctx context.Context, query *user.GetSignedInUserQuery) (*user.SignedInUser, error) {
 	return f.GetSignedInUser(ctx, query)
 }
