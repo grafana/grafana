@@ -621,16 +621,6 @@ var (
 			HideFromDocs:    true,
 		},
 		{
-			Name:            "influxdbSqlSupport",
-			Description:     "Enable InfluxDB SQL query language support with new querying UI",
-			Stage:           FeatureStageGeneralAvailability,
-			FrontendOnly:    false,
-			Owner:           grafanaObservabilityMetricsSquad,
-			RequiresRestart: true,
-			AllowSelfServe:  true,
-			Expression:      "true", // enabled by default
-		},
-		{
 			Name:            "alertingNoDataErrorExecution",
 			Description:     "Changes how Alerting state manager handles execution of NoData/Error",
 			Stage:           FeatureStageGeneralAvailability,

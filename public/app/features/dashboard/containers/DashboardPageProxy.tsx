@@ -54,7 +54,7 @@ function DashboardPageProxy(props: DashboardPageProxyProps) {
     return null;
   }
 
-  if (dashboard.value && dashboard.value.dashboard.uid && dashboard.value.dashboard.uid !== props.match.params.uid) {
+  if (dashboard?.value?.dashboard?.uid !== props.match.params.uid) {
     return null;
   }
 
