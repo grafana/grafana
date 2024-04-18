@@ -26,6 +26,15 @@ You can't use folders to customize access to notification resources.
 
 Details of how role access can combine with folder or data source permissions for Grafana Alerting are below.
 
+| Role   | Folder  | Access                                                                                                                               |
+| ------ | ----------------- | ------------------------------------------------------------------------------------------------------------------------------------ |
+| Admin  | -                 | Write access to alert rules in all folders.
+| Editor | -                 | Write access to alert rules in all folders.                                                                                          |
+| Viewer | Admin             | Write access to alert rules **only** in the folders where the Admin permission is added.   |
+| Viewer | Edit            | Write access to alert rules **only** in the folders where the Edit permission is added. |
+| Viewer | View            | Read access to alert rules in all folders.                                                                                           |
+
+
 ## Folder permissions
 
 To manage folder permissions, complete the following steps.
