@@ -62,7 +62,8 @@
     "plugin:build:commit": "nx run-many -t build:commit --projects='@grafana-plugins/*' --exclude \"@grafana-plugins/input-datasource\"",
     "plugin:build:dev": "nx run-many -t dev --projects='@grafana-plugins/*' --exclude \"@grafana-plugins/input-datasource\"",
     "generate-icons": "yarn workspace @grafana/saga-icons generate",
-    "generate-apis": "rtk-query-codegen-openapi ./scripts/generate-rtk-apis.ts"
+    "generate-apis": "rtk-query-codegen-openapi ./scripts/generate-rtk-apis.ts",
+    "token-usage:json": "ts-node --transpile-only --project ./scripts/cli/tsconfig.json ./scripts/cli/tokenUsageResultsToJson.ts"
   },
   "grafana": {
     "whatsNewUrl": "https://grafana.com/docs/grafana/next/whatsnew/whats-new-in-v11-0/",
