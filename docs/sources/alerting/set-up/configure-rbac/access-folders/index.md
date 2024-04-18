@@ -24,7 +24,7 @@ You can further customize access for alert rules by assigning permissions to ind
 You can't use folders to customize access to notification resources.
 {{< /admonition >}}
 
-Details of how role access can combine with folder or data source permissions for Grafana Alerting are below.
+Details of how role access can combine with folder permissions for Grafana Alerting are below.
 
 | Role   | Folder | Access                                                                                   |
 | ------ | ------ | ---------------------------------------------------------------------------------------- |
