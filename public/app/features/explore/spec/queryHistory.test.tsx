@@ -68,6 +68,10 @@ jest.mock('app/core/services/PreferencesService', () => ({
   },
 }));
 
+jest.mock('../hooks/useExplorePageTitle', () => ({
+  useExplorePageTitle: jest.fn(),
+}));
+
 jest.mock('react-virtualized-auto-sizer', () => {
   return {
     __esModule: true,

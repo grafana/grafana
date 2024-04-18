@@ -3,6 +3,7 @@ import { cloneDeep } from 'lodash';
 import { lastValueFrom, of } from 'rxjs';
 
 import {
+  AdHocVariableFilter,
   AnnotationEvent,
   AnnotationQueryRequest,
   CoreApp,
@@ -12,10 +13,11 @@ import {
   dateTime,
   LoadingState,
   rangeUtil,
+  ScopeSpecFilter,
   TimeRange,
   VariableHide,
 } from '@grafana/data';
-import { TemplateSrv } from '@grafana/runtime';
+import { config, TemplateSrv } from '@grafana/runtime';
 
 import {
   alignRange,
@@ -540,6 +542,10 @@ describe('PrometheusDatasource', () => {
   });
 
   describe('interpolateVariablesInQueries', () => {
+    afterEach(() => {
+      config.featureToggles.promQLScope = undefined;
+    });
+
     it('should call replace function 2 times', () => {
       const query: PromQuery = {
         expr: 'test{job="testjob"}',
@@ -566,11 +572,30 @@ describe('PrometheusDatasource', () => {
       ds.interpolateVariablesInQueries(queries, {});
       expect(ds.enhanceExprWithAdHocFilters).toHaveBeenCalled();
     });
+
+    it('should not apply adhoc filters when promQLScope is enabled', () => {
+      config.featureToggles.promQLScope = true;
+      ds.enhanceExprWithAdHocFilters = jest.fn();
+      ds.generateScopeFilters = jest.fn();
+      const queries = [
+        {
+          refId: 'A',
+          expr: 'rate({bar="baz", job="foo"} [5m]',
+        },
+      ];
+      ds.interpolateVariablesInQueries(queries, {});
+      expect(ds.enhanceExprWithAdHocFilters).not.toHaveBeenCalled();
+      expect(ds.generateScopeFilters).toHaveBeenCalled();
+    });
   });
 
   describe('applyTemplateVariables', () => {
     afterAll(() => {
       replaceMock.mockImplementation((a: string, ...rest: unknown[]) => a);
+    });
+
+    afterEach(() => {
+      config.featureToggles.promQLScope = false;
     });
 
     it('should call replace function for legendFormat', () => {
@@ -633,6 +658,45 @@ describe('PrometheusDatasource', () => {
 
       const result = ds.applyTemplateVariables(query, {}, filters);
       expect(result).toMatchObject({ expr: 'test{job="bar", k1="v1", k2!="v2"}' });
+    });
+
+    it('should generate scope filters and **not** apply ad-hoc filters to expr', () => {
+      config.featureToggles.promQLScope = true;
+      replaceMock.mockImplementation((a: string) => a);
+      const filters = [
+        {
+          key: 'k1',
+          operator: '=',
+          value: 'v1',
+        },
+        {
+          key: 'k2',
+          operator: '!=',
+          value: 'v2',
+        },
+      ];
+
+      const query = {
+        expr: 'test{job="bar"}',
+        refId: 'A',
+      };
+
+      const expectedScopeFilters: ScopeSpecFilter[] = [
+        {
+          key: 'k1',
+          operator: 'equals',
+          value: 'v1',
+        },
+        {
+          key: 'k2',
+          operator: 'not-equals',
+          value: 'v2',
+        },
+      ];
+
+      const result = ds.applyTemplateVariables(query, {}, filters);
+      expect(result.expr).toBe('test{job="bar"}');
+      expect(result.adhocFilters).toEqual(expectedScopeFilters);
     });
 
     it('should add ad-hoc filters only to expr', () => {
@@ -1166,6 +1230,46 @@ describe('modifyQuery', () => {
 
         expect(result.refId).toEqual('A');
         expect(result.expr).toEqual('go_goroutines{cluster="us-cluster", pod!="pod-123"}');
+      });
+    });
+
+    describe('scope filters', () => {
+      const instanceSettings = {
+        access: 'proxy',
+        id: 1,
+        jsonData: {},
+        name: 'scoped-prom',
+        readOnly: false,
+        type: 'prometheus',
+        uid: 'scoped-prom',
+      } as unknown as DataSourceInstanceSettings<PromOptions>;
+      const ds = new PrometheusDatasource(instanceSettings, templateSrvStub);
+
+      it('should convert each adhoc operator to scope operator properly', () => {
+        const adhocFilter: AdHocVariableFilter[] = [
+          { key: 'eq', value: 'eqv', operator: '=' },
+          {
+            key: 'neq',
+            value: 'neqv',
+            operator: '!=',
+          },
+          { key: 'reg', value: 'regv', operator: '=~' },
+          { key: 'nreg', value: 'nregv', operator: '!~' },
+        ];
+        const expectedScopeFilter: ScopeSpecFilter[] = [
+          { key: 'eq', value: 'eqv', operator: 'equals' },
+          {
+            key: 'neq',
+            value: 'neqv',
+            operator: 'not-equals',
+          },
+          { key: 'reg', value: 'regv', operator: 'regex-match' },
+          { key: 'nreg', value: 'nregv', operator: 'regex-not-match' },
+        ];
+        const result = ds.generateScopeFilters(adhocFilter);
+        result.forEach((r, i) => {
+          expect(r).toEqual(expectedScopeFilter[i]);
+        });
       });
     });
   });

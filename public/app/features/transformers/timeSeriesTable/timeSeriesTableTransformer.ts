@@ -196,7 +196,7 @@ export function timeSeriesToTableTransform(options: TimeSeriesTableTransformerOp
 
         // Calculate the reduction of the current field
         // and push the frame with reduction
-        // into the the appropriate field
+        // into the appropriate field
         const reducerId = options[refId]?.stat ?? ReducerID.lastNotNull;
         const value = reduceField({ field, reducers: [reducerId] })[reducerId] ?? null;
 
@@ -246,7 +246,7 @@ export function timeSeriesToTableTransform(options: TimeSeriesTableTransformerOp
       }
     }
 
-    // Add label fields to the the resulting frame
+    // Add label fields to the resulting frame
     for (const label of Object.values(label2fields)) {
       table.addField(label);
     }
