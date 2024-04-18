@@ -16,9 +16,10 @@ var (
 	ErrMigrationNotDeleted         = errutil.Internal("cloudmigrations.migrationNotDeleted", errutil.WithPublicMessage("Migration not deleted"))
 )
 
-// cloud migration api dtos
+// CloudMigration api dtos
 type CloudMigration struct {
 	ID          int64     `json:"id" xorm:"pk autoincr 'id'"`
+	UID         string    `json:"uid"`
 	AuthToken   string    `json:"-"`
 	Stack       string    `json:"stack"`
 	StackID     int       `json:"stackID" xorm:"stack_id"`
@@ -48,7 +49,8 @@ type MigratedResource struct {
 
 type CloudMigrationRun struct {
 	ID                int64     `json:"id" xorm:"pk autoincr 'id'"`
-	CloudMigrationUID string    `json:"uid" xorm:"cloud_migration_uid"`
+	UID               string    `json:"uid"`
+	CloudMigrationUID string    `json:"migrationUid" xorm:"cloud_migration_uid"`
 	Result            []byte    `json:"result"` //store raw cms response body
 	Created           time.Time `json:"created"`
 	Updated           time.Time `json:"updated"`
