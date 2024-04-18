@@ -215,12 +215,24 @@ class UnthemedLogs extends PureComponent<Props, State> {
 
     if (logLevels.size > 1 && this.props.logsVolumeEnabled) {
       logLevels.forEach((level) => {
+        // this.context?.outlineItems.forEach((item) => {
+        //   if (item.panelId === 'Logs') {
+        //     item.children?.forEach((child) => {
+        //       if (child.type === 'filter') {
+        //         this.context?.unregister(child.id);
+        //       }
+        //     });
+        //   }
+        // });
+        const allLevelsSelected = this.state.hiddenLogLevels.length == 0;
+        const currentLevelSelected = !this.state.hiddenLogLevels.includes(level.name);
         this.context?.register({
           title: level.name,
           icon: 'gf-logs',
           panelId: 'Logs',
           level: 'child',
           type: 'filter',
+          highlight: currentLevelSelected && !allLevelsSelected,
           onClick: () => {
             const hiddenLogLevels = this.props.logsVolumeData?.data
               .filter((l) => l.name !== level.name)
@@ -248,7 +260,7 @@ class UnthemedLogs extends PureComponent<Props, State> {
     }
   };
 
-  componentDidUpdate(prevProps: Readonly<Props>): void {
+  componentDidUpdate(prevProps: Readonly<Props>, prevState: Readonly<State>): void {
     if (this.props.loading && !prevProps.loading && this.props.panelState?.logs?.id) {
       // loading stopped, so we need to remove any permalinked log lines
       delete this.props.panelState.logs.id;
@@ -269,6 +281,10 @@ class UnthemedLogs extends PureComponent<Props, State> {
     }
 
     if (prevProps.logsVolumeData?.data !== this.props.logsVolumeData?.data) {
+      this.registerLogLevelsWithContentOutline();
+    }
+
+    if (prevState.hiddenLogLevels !== this.state.hiddenLogLevels) {
       this.registerLogLevelsWithContentOutline();
     }
   }

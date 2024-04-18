@@ -16,6 +16,7 @@ type CommonProps = {
   collapsible?: boolean;
   collapsed?: boolean;
   isActive?: boolean;
+  extraHighlight?: boolean;
   sectionId?: string;
   toggleCollapsed?: () => void;
 };
@@ -33,6 +34,7 @@ export function ContentOutlineItemButton({
   collapsible,
   collapsed,
   isActive,
+  extraHighlight,
   sectionId,
   toggleCollapsed,
   ...rest
@@ -66,6 +68,7 @@ export function ContentOutlineItemButton({
       <button
         className={cx(buttonStyles, {
           [styles.active]: isActive,
+          [styles.extraHighlight]: extraHighlight,
         })}
         aria-label={tooltip}
         {...rest}
@@ -164,6 +167,25 @@ const getStyles = (theme: GrafanaTheme2) => {
         transform: 'translateX(-50%)',
         width: theme.spacing(0.5),
         left: '2px',
+      },
+    }),
+    extraHighlight: css({
+      backgroundColor: theme.colors.background.secondary,
+      borderTopRightRadius: theme.shape.radius.default,
+      borderBottomRightRadius: theme.shape.radius.default,
+      position: 'relative',
+
+      '&::before': {
+        backgroundImage: theme.colors.gradients.brandVertical,
+        borderRadius: theme.shape.radius.default,
+        content: '" "',
+        display: 'block',
+        height: '100%',
+        position: 'absolute',
+        transform: 'translateX(-50%)',
+        width: theme.spacing(0.5),
+        left: '2px',
+        opacity: 0.3,
       },
     }),
   };

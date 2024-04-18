@@ -31,6 +31,10 @@ export interface ContentOutlineItemBaseProps {
   // need this for filtering logs
   onClick?: () => void;
   type?: ITEM_TYPES;
+  /**
+   * Client can additionally mark filter actions as highlighted
+   */
+  highlight?: boolean;
 }
 
 interface ContentOutlineItemProps extends ContentOutlineItemBaseProps {
