@@ -43,8 +43,14 @@ export const EmptyState = ({
     <Box paddingY={4} gap={4} display="flex" direction="column" alignItems="center">
       {!hideImage && imageToShow}
       <Stack direction="column" alignItems="center">
-        <Text variant="h4">{message}</Text>
-        {children && <Text color="secondary">{children}</Text>}
+        <Text variant="h4" textAlignment="center">
+          {message}
+        </Text>
+        {children && (
+          <Text color="secondary" textAlignment="center">
+            {children}
+          </Text>
+        )}
       </Stack>
       {button}
     </Box>
