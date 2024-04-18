@@ -544,6 +544,7 @@ playwright.config.ts @grafana/plugins-platform-frontend
 .pa11yci-pr.conf.js @grafana/grafana-frontend-platform
 .betterer.results @grafanabot
 .betterer.results.json @grafanabot
+.token.results.json @grafanabot
 .betterer.ts @grafana/grafana-frontend-platform
 
 # @grafana/ui component documentation
