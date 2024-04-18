@@ -358,24 +358,6 @@ func (_m *MockService) SetUserHelpFlag(_a0 context.Context, _a1 *user.SetUserHel
 	return r0
 }
 
-// SetUsingOrg provides a mock function with given fields: _a0, _a1
-func (_m *MockService) SetUsingOrg(_a0 context.Context, _a1 *user.SetUsingOrgCommand) error {
-	ret := _m.Called(_a0, _a1)
-
-	if len(ret) == 0 {
-		panic("no return value specified for SetUsingOrg")
-	}
-
-	var r0 error
-	if rf, ok := ret.Get(0).(func(context.Context, *user.SetUsingOrgCommand) error); ok {
-		r0 = rf(_a0, _a1)
-	} else {
-		r0 = ret.Error(0)
-	}
-
-	return r0
-}
-
 // Update provides a mock function with given fields: _a0, _a1
 func (_m *MockService) Update(_a0 context.Context, _a1 *user.UpdateUserCommand) error {
 	ret := _m.Called(_a0, _a1)

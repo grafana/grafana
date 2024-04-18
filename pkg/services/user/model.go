@@ -99,11 +99,6 @@ type UpdateUserLastSeenAtCommand struct {
 	OrgID  int64
 }
 
-type SetUsingOrgCommand struct {
-	UserID int64
-	OrgID  int64
-}
-
 type SearchUsersQuery struct {
 	SignedInUser identity.Requester
 	OrgID        int64 `xorm:"org_id"`
