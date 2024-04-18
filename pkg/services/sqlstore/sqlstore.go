@@ -434,7 +434,7 @@ func InitTestDB(t sqlutil.ITestDB, opts ...InitTestDBOpt) (*SQLStore, *setting.C
 	if err != nil {
 		t.Fatalf("failed to initialize sql store: %s", err)
 	}
-	return store, cfg
+	return store, store.cfg
 }
 
 func SetupTestDB() {
