@@ -36,17 +36,33 @@ func (s *healthServer) AuthFuncOverride(ctx context.Context, _ string) (context.
 
 func (s *healthServer) Check(ctx context.Context, req *grpc_health_v1.HealthCheckRequest) (*grpc_health_v1.HealthCheckResponse, error) {
 	if s.entityServer.Init() != nil {
-		return &grpc_health_v1.HealthCheckResponse{
-			Status: grpc_health_v1.HealthCheckResponse_NOT_SERVING,
-		}, nil
+		return unhealthyResponse(), nil
 	} else {
-		return &grpc_health_v1.HealthCheckResponse{
-			Status: grpc_health_v1.HealthCheckResponse_SERVING,
-		}, nil
+		return healthyResponse(), nil
 	}
 }
 
 func (s *healthServer) Watch(req *grpc_health_v1.HealthCheckRequest, stream grpc_health_v1.Health_WatchServer) error {
-	// TODO
+	if s.entityServer.Init() != nil {
+		if err := stream.Send(unhealthyResponse()); err != nil {
+			return err
+		}
+	} else {
+		if err := stream.Send(healthyResponse()); err != nil {
+			return err
+		}
+	}
 	return nil
+}
+
+func healthyResponse() *grpc_health_v1.HealthCheckResponse {
+	return &grpc_health_v1.HealthCheckResponse{
+		Status: grpc_health_v1.HealthCheckResponse_SERVING,
+	}
+}
+
+func unhealthyResponse() *grpc_health_v1.HealthCheckResponse {
+	return &grpc_health_v1.HealthCheckResponse{
+		Status: grpc_health_v1.HealthCheckResponse_NOT_SERVING,
+	}
 }
