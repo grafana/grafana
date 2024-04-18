@@ -382,7 +382,7 @@ class UnthemedLogs extends PureComponent<Props, State> {
     if (index === -1) {
       this.setState((state) => {
         return {
-          displayedFields: state.displayedFields.concat(key).sort(),
+          displayedFields: state.displayedFields.concat(key),
         };
       });
     }
