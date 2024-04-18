@@ -21,7 +21,6 @@ type store interface {
 	Insert(context.Context, *user.User) (int64, error)
 	Get(context.Context, *user.User) (*user.User, error)
 	GetByID(context.Context, int64) (*user.User, error)
-	GetNotServiceAccount(context.Context, int64) (*user.User, error)
 	Delete(context.Context, int64) error
 	LoginConflict(ctx context.Context, login, email string) error
 	CaseInsensitiveLoginConflict(context.Context, string, string) error
@@ -119,21 +118,6 @@ func (ss *sqlStore) Delete(ctx context.Context, userID int64) error {
 		return err
 	}
 	return nil
-}
-
-func (ss *sqlStore) GetNotServiceAccount(ctx context.Context, userID int64) (*user.User, error) {
-	usr := user.User{ID: userID}
-	err := ss.db.WithDbSession(ctx, func(sess *db.Session) error {
-		has, err := sess.Where(ss.notServiceAccountFilter()).Get(&usr)
-		if err != nil {
-			return err
-		}
-		if !has {
-			return user.ErrUserNotFound
-		}
-		return nil
-	})
-	return &usr, err
 }
 
 func (ss *sqlStore) GetByID(ctx context.Context, userID int64) (*user.User, error) {
@@ -297,32 +281,22 @@ func (ss *sqlStore) Update(ctx context.Context, cmd *user.UpdateUserCommand) err
 
 		q := sess.ID(cmd.UserID).Where(ss.notServiceAccountFilter())
 
-		if cmd.OrgID != nil {
-			usr.OrgID = *cmd.OrgID
-		}
-
-		if cmd.Password != nil {
-			usr.Password = *cmd.Password
-		}
-
-		if cmd.IsDisabled != nil {
+		setOptional(cmd.OrgID, func(v int64) { usr.OrgID = v })
+		setOptional(cmd.Password, func(v user.Password) { usr.Password = v })
+		setOptional(cmd.IsDisabled, func(v bool) {
 			q = q.UseBool("is_disabled")
-			usr.IsDisabled = *cmd.IsDisabled
-		}
-
-		if cmd.EmailVerified != nil {
+			usr.IsDisabled = v
+		})
+		setOptional(cmd.EmailVerified, func(v bool) {
 			q = q.UseBool("email_verified")
-			usr.EmailVerified = *cmd.EmailVerified
-		}
-
-		if cmd.IsGrafanaAdmin != nil {
+			usr.EmailVerified = v
+		})
+		setOptional(cmd.IsGrafanaAdmin, func(v bool) {
 			q = q.UseBool("is_admin")
-			usr.IsAdmin = *cmd.IsGrafanaAdmin
-		}
+			usr.IsAdmin = v
 
-		if cmd.HelpFlags1 != nil {
-			usr.HelpFlags1 = *cmd.HelpFlags1
-		}
+		})
+		setOptional(cmd.HelpFlags1, func(v user.HelpFlags1) { usr.HelpFlags1 = *cmd.HelpFlags1 })
 
 		if _, err := q.Update(&usr); err != nil {
 			return err
@@ -658,4 +632,10 @@ func (ss *sqlStore) getAnyUserType(ctx context.Context, userID int64) (*user.Use
 		return nil
 	})
 	return &usr, err
+}
+
+func setOptional[T any](v *T, add func(v T)) {
+	if v != nil {
+		add(*v)
+	}
 }

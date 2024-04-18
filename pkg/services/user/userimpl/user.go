@@ -202,7 +202,7 @@ func (s *Service) Create(ctx context.Context, cmd *user.CreateUserCommand) (*use
 }
 
 func (s *Service) Delete(ctx context.Context, cmd *user.DeleteUserCommand) error {
-	_, err := s.store.GetNotServiceAccount(ctx, cmd.UserID)
+	_, err := s.store.GetByID(ctx, cmd.UserID)
 	if err != nil {
 		return err
 	}

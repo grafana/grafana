@@ -76,6 +76,8 @@ type GetUserByEmailQuery struct {
 	Email string
 }
 
+// UpdateUserCommand is used to update a user. All fields except userID is optional and only
+// fields with values will be updated.
 type UpdateUserCommand struct {
 	Name  string `json:"name"`
 	Email string `json:"email"`
@@ -91,8 +93,7 @@ type UpdateUserCommand struct {
 	// If old password is included it will be validated against users current password.
 	OldPassword *Password `json:"-"`
 	// If OrgID is included update current org for user
-	OrgID *int64 `json:"-"`
-	// If HelpFlags1 is included update it for user
+	OrgID      *int64 `json:"-"`
 	HelpFlags1 *HelpFlags1
 }
 

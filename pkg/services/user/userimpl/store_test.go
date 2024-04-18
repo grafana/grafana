@@ -474,7 +474,7 @@ func TestIntegrationUserDataAccess(t *testing.T) {
 			UserID:         usr.ID,
 			IsGrafanaAdmin: boolPtr(false),
 		})
-		require.ErrorIs(t, user.ErrLastGrafanaAdmin, err)
+		require.ErrorIs(t, err, user.ErrLastGrafanaAdmin)
 
 		usr, err = userStore.GetByID(context.Background(), usr.ID)
 		require.NoError(t, err)
