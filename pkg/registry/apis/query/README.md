@@ -48,3 +48,30 @@ sequenceDiagram
     api->>User: return results
 ```
 
+
+
+### /apis/query.grafana.app (in single tenant grafana)
+
+```mermaid
+sequenceDiagram
+    autonumber
+    actor User as User or Process
+    participant api as /apis/query.grafana.app
+    participant ds as Datasource<br/>Handler/Plugin
+    participant db as Storage<br/>(SQL)
+    participant expr as Expression<br/>Engine
+
+    User->>api: POST Query
+    api->>api: Parse queries
+    api->>api: Calculate dependencies
+    loop Each datasource
+        api->>ds: QueryData
+        ds->>ds: Verify user access
+        ds->>db: Get settings <br> and secrets
+    end
+    loop Each expression
+        api->>expr: Execute
+    end
+    api->>User: return results
+```
+
