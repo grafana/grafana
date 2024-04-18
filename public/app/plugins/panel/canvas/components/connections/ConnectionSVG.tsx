@@ -128,7 +128,7 @@ export const ConnectionSVG = ({
         // Render selected connection last, ensuring it is above other connections
         .sort((_a, b) => (selectedConnection === b && scene.panel.context.instanceState.selectedConnection ? -1 : 0))
         .map((v, idx) => {
-          const { source, target, info, vertices } = v;
+          const { source, target, info, vertices, index } = v;
           const sourceRect = source.div?.getBoundingClientRect();
           const parent = source.div?.parentElement;
           const transformScale = scene.scale;
@@ -146,6 +146,18 @@ export const ConnectionSVG = ({
             yStart = v.sourceOriginal.y;
             xEnd = v.targetOriginal.x;
             yEnd = v.targetOriginal.y;
+          } else if (source.options.connections) {
+            const currentConnections = [...source.options.connections];
+            // Check for original state
+            if (!currentConnections[index].sourceOriginal || !currentConnections[index].targetOriginal) {
+              currentConnections[index] = {
+                ...currentConnections[index],
+                sourceOriginal: { x: x1, y: y1 },
+                targetOriginal: { x: x2, y: y2 },
+              };
+              // Update model with populated originals
+              source.onChange({ ...source.options, connections: currentConnections });
+            }
           }
 
           const midpoint = calculateMidpoint(x1, y1, x2, y2);
