@@ -5,7 +5,9 @@ import { Router } from 'react-router-dom';
 import { getGrafanaContextMock } from 'test/mocks/getGrafanaContextMock';
 
 import { locationService } from '@grafana/runtime';
+import { ModalRoot } from '@grafana/ui';
 import { GrafanaContext, GrafanaContextType } from 'app/core/context/GrafanaContext';
+import { ModalsContextProvider } from 'app/core/context/ModalsContextProvider';
 import { configureStore } from 'app/store/configureStore';
 import { StoreState } from 'app/types/store';
 
@@ -18,6 +20,8 @@ export interface Props {
 
 /**
  * Wrapps component in redux store provider, Router and GrafanaContext
+ *
+ * @deprecated Use `test/test-utils` `render` method instead
  */
 export function TestProvider(props: Props) {
   const { store = configureStore(props.storeState), children } = props;
@@ -30,7 +34,10 @@ export function TestProvider(props: Props) {
   return (
     <Provider store={store}>
       <Router history={locationService.getHistory()}>
-        <GrafanaContext.Provider value={context}>{children}</GrafanaContext.Provider>
+        <ModalsContextProvider>
+          <GrafanaContext.Provider value={context}>{children}</GrafanaContext.Provider>
+          <ModalRoot />
+        </ModalsContextProvider>
       </Router>
     </Provider>
   );

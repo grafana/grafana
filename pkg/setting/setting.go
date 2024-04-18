@@ -241,9 +241,6 @@ type Cfg struct {
 	IDResponseHeaderEnabled       bool
 	IDResponseHeaderPrefix        string
 	IDResponseHeaderNamespaces    map[string]struct{}
-	// Not documented & not supported
-	// stand in until a more complete solution is implemented
-	AuthConfigUIAdminAccess bool
 
 	// AWS Plugin Auth
 	AWSAllowedAuthProviders   []string
@@ -264,11 +261,8 @@ type Cfg struct {
 	OAuthCookieMaxAge             int
 	OAuthAllowInsecureEmailLookup bool
 
-	JWTAuth AuthJWTSettings
-	// Extended JWT Auth
-	ExtendedJWTAuthEnabled    bool
-	ExtendedJWTExpectIssuer   string
-	ExtendedJWTExpectAudience string
+	JWTAuth    AuthJWTSettings
+	ExtJWTAuth ExtJWTSettings
 
 	// SSO Settings Auth
 	SSOSettingsReloadInterval        time.Duration
@@ -476,9 +470,10 @@ type Cfg struct {
 	RBACSingleOrganization bool
 
 	// GRPC Server.
-	GRPCServerNetwork   string
-	GRPCServerAddress   string
-	GRPCServerTLSConfig *tls.Config
+	GRPCServerNetwork       string
+	GRPCServerAddress       string
+	GRPCServerTLSConfig     *tls.Config
+	GRPCServerEnableLogging bool // log request and response of each unary gRPC call
 
 	CustomResponseHeaders map[string]string
 
@@ -1189,6 +1184,7 @@ func (cfg *Cfg) parseINIFile(iniFile *ini.File) error {
 	cfg.handleAWSConfig()
 	cfg.readAzureSettings()
 	cfg.readAuthJWTSettings()
+	cfg.readAuthExtJWTSettings()
 	cfg.readAuthProxySettings()
 	cfg.readSessionConfig()
 	if err := cfg.readSmtpSettings(); err != nil {
@@ -1558,9 +1554,6 @@ func readAuthSettings(iniFile *ini.File, cfg *Cfg) (err error) {
 		cfg.TokenRotationIntervalMinutes = 2
 	}
 
-	// Do not use
-	cfg.AuthConfigUIAdminAccess = auth.Key("config_ui_admin_access").MustBool(false)
-
 	cfg.DisableLoginForm = auth.Key("disable_login_form").MustBool(false)
 	cfg.DisableSignoutMenu = auth.Key("disable_signout_menu").MustBool(false)
 
@@ -1607,12 +1600,6 @@ func readAuthSettings(iniFile *ini.File, cfg *Cfg) (err error) {
 	authBasic := iniFile.Section("auth.basic")
 	cfg.BasicAuthEnabled = authBasic.Key("enabled").MustBool(true)
 	cfg.BasicAuthStrongPasswordPolicy = authBasic.Key("password_policy").MustBool(false)
-
-	// Extended JWT auth
-	authExtendedJWT := cfg.SectionWithEnvOverrides("auth.extended_jwt")
-	cfg.ExtendedJWTAuthEnabled = authExtendedJWT.Key("enabled").MustBool(false)
-	cfg.ExtendedJWTExpectAudience = authExtendedJWT.Key("expect_audience").MustString("")
-	cfg.ExtendedJWTExpectIssuer = authExtendedJWT.Key("expect_issuer").MustString("")
 
 	// SSO Settings
 	ssoSettings := iniFile.Section("sso_settings")
@@ -1770,6 +1757,7 @@ func readGRPCServerSettings(cfg *Cfg, iniFile *ini.File) error {
 
 	cfg.GRPCServerNetwork = valueAsString(server, "network", "tcp")
 	cfg.GRPCServerAddress = valueAsString(server, "address", "")
+	cfg.GRPCServerEnableLogging = server.Key("enable_logging").MustBool(false)
 	switch cfg.GRPCServerNetwork {
 	case "unix":
 		if cfg.GRPCServerAddress != "" {

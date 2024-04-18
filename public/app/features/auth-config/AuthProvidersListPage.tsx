@@ -8,7 +8,7 @@ import { Page } from 'app/core/components/Page/Page';
 import { config } from 'app/core/config';
 import { StoreState } from 'app/types';
 
-import { AuthDrawer } from './AuthDrawer';
+import AuthDrawer from './AuthDrawer';
 import ConfigureAuthCTA from './components/ConfigureAuthCTA';
 import { ProviderCard } from './components/ProviderCard';
 import { loadSettings } from './state/actions';

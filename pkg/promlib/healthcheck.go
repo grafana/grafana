@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
+	sdkapi "github.com/grafana/grafana-plugin-sdk-go/experimental/apis/data/v0alpha1"
 
 	"github.com/grafana/grafana/pkg/promlib/models"
 )
@@ -55,8 +56,8 @@ func (s *Service) CheckHealth(ctx context.Context, req *backend.CheckHealthReque
 func healthcheck(ctx context.Context, req *backend.CheckHealthRequest, i *instance) (*backend.CheckHealthResult, error) {
 	qm := models.QueryModel{
 		UtcOffsetSec: 0,
-		CommonQueryProperties: models.CommonQueryProperties{
-			RefId: refID,
+		CommonQueryProperties: sdkapi.CommonQueryProperties{
+			RefID: refID,
 		},
 		PrometheusQueryProperties: models.PrometheusQueryProperties{
 			Expr:    "1+1",

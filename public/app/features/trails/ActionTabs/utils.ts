@@ -15,9 +15,15 @@ export function getLabelOptions(scenObject: SceneObject, variable: QueryVariable
 
   for (const option of variable.getOptionsForSelect()) {
     const filterExists = filters.find((f) => f.key === option.value);
-    if (!filterExists) {
-      labelOptions.push({ label: option.label, value: String(option.value) });
+
+    if (option.label === 'le') {
+      // Do not show the "le" label
+      continue;
     }
+    if (filterExists) {
+      continue;
+    }
+    labelOptions.push({ label: option.label, value: String(option.value) });
   }
 
   return labelOptions;

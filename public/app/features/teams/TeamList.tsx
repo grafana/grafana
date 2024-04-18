@@ -9,6 +9,7 @@ import {
   CellProps,
   Column,
   DeleteButton,
+  EmptyState,
   FilterInput,
   InlineField,
   InteractiveTable,
@@ -16,12 +17,12 @@ import {
   Pagination,
   Stack,
   TextLink,
-  Tooltip,
   useStyles2,
 } from '@grafana/ui';
 import EmptyListCTA from 'app/core/components/EmptyListCTA/EmptyListCTA';
 import { Page } from 'app/core/components/Page/Page';
 import { fetchRoleOptions } from 'app/core/components/RolePicker/api';
+import { t } from 'app/core/internationalization';
 import { contextSrv } from 'app/core/services/context_srv';
 import { AccessControlAction, Role, StoreState, Team } from 'app/types';
 
@@ -180,15 +181,14 @@ export const TeamList = ({
           return (
             <Stack direction="row" justifyContent="flex-end" gap={2}>
               {canReadTeam && (
-                <Tooltip content={'Edit team'}>
-                  <LinkButton
-                    href={`org/teams/edit/${original.id}`}
-                    aria-label={`Edit team ${original.name}`}
-                    icon="pen"
-                    size="sm"
-                    variant="secondary"
-                  />
-                </Tooltip>
+                <LinkButton
+                  href={`org/teams/edit/${original.id}`}
+                  aria-label={`Edit team ${original.name}`}
+                  icon="pen"
+                  size="sm"
+                  variant="secondary"
+                  tooltip={'Edit team'}
+                />
               )}
               <DeleteButton
                 aria-label={`Delete team ${original.name}`}
@@ -233,17 +233,26 @@ export const TeamList = ({
                 <FilterInput placeholder="Search teams" value={query} onChange={changeQuery} />
               </InlineField>
             </div>
-            <Stack direction={'column'} gap={2}>
-              <InteractiveTable
-                columns={columns}
-                data={hasFetched ? teams : skeletonData}
-                getRowId={(team) => String(team.id)}
-                fetchData={changeSort}
-              />
-              <Stack justifyContent="flex-end">
-                <Pagination hideWhenSinglePage currentPage={page} numberOfPages={totalPages} onNavigate={changePage} />
+            {hasFetched && teams.length === 0 ? (
+              <EmptyState variant="not-found" message={t('teams.empty-state.message', 'No teams found')} />
+            ) : (
+              <Stack direction={'column'} gap={2}>
+                <InteractiveTable
+                  columns={columns}
+                  data={hasFetched ? teams : skeletonData}
+                  getRowId={(team) => String(team.id)}
+                  fetchData={changeSort}
+                />
+                <Stack justifyContent="flex-end">
+                  <Pagination
+                    hideWhenSinglePage
+                    currentPage={page}
+                    numberOfPages={totalPages}
+                    onNavigate={changePage}
+                  />
+                </Stack>
               </Stack>
-            </Stack>
+            )}
           </>
         )}
       </Page.Contents>

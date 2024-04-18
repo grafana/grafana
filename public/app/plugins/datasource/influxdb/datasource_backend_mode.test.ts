@@ -180,7 +180,7 @@ describe('InfluxDataSource Backend Mode', () => {
     function influxChecks(query: InfluxQuery) {
       expect(templateSrv.replace).toBeCalledTimes(12);
       expect(query.alias).toBe(text);
-      expect(query.measurement).toBe(justText);
+      expect(query.measurement).toBe(textWithFormatRegex);
       expect(query.policy).toBe(justText);
       expect(query.limit).toBe(justText);
       expect(query.slimit).toBe(justText);

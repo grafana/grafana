@@ -62,7 +62,10 @@ export function DashboardSceneRenderer({ model }: SceneComponentProps<DashboardS
             </div>
           )}
           <CustomScrollbar autoHeightMin={'100%'} className={styles.scrollbarContainer}>
-            <div className={styles.canvasContent}>{isEmpty ? emptyState : withPanels}</div>
+            <div className={styles.canvasContent}>
+              <>{isEmpty && emptyState}</>
+              {withPanels}
+            </div>
           </CustomScrollbar>
         </div>
       )}

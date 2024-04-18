@@ -43,7 +43,7 @@ export const ExpressionDatasourceRef = Object.freeze({
 });
 
 /**
- * @internal
+ * @public
  */
 export function isExpressionReference(ref?: DataSourceRef | string | null): boolean {
   if (!ref) {

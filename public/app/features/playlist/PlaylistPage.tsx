@@ -1,14 +1,13 @@
 import React, { useMemo, useState } from 'react';
 import { useAsync } from 'react-use';
 
-import { ConfirmModal, LinkButton } from '@grafana/ui';
+import { ConfirmModal, EmptyState, LinkButton } from '@grafana/ui';
 import EmptyListCTA from 'app/core/components/EmptyListCTA/EmptyListCTA';
 import { Page } from 'app/core/components/Page/Page';
 import PageActionBar from 'app/core/components/PageActionBar/PageActionBar';
 import { Trans, t } from 'app/core/internationalization';
 import { contextSrv } from 'app/core/services/context_srv';
 
-import { EmptyQueryListBanner } from './EmptyQueryListBanner';
 import { PlaylistPageList } from './PlaylistPageList';
 import { StartModal } from './StartModal';
 import { getPlaylistAPI, searchPlaylists } from './api';
@@ -71,7 +70,7 @@ export const PlaylistPage = () => {
         ) : (
           <>
             {!hasPlaylists && searchQuery ? (
-              <EmptyQueryListBanner />
+              <EmptyState variant="not-found" message={t('playlists.empty-state.message', 'No playlists found')} />
             ) : (
               <PlaylistPageList
                 playlists={playlists}

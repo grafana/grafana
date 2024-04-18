@@ -1,3 +1,4 @@
+import { fromPairs } from 'lodash';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useUnmount } from 'react-use';
 import useMountedState from 'react-use/lib/useMountedState';
@@ -159,13 +160,16 @@ function layout(
   const worker = engine === 'default' ? createWorker() : createMsaglWorker();
 
   worker.onmessage = (event: MessageEvent<{ nodes: NodeDatum[]; edges: EdgeDatumLayout[] }>) => {
-    for (let i = 0; i < nodes.length; i++) {
-      // These stats needs to be Field class but the data is stringified over the worker boundary
-      event.data.nodes[i] = {
-        ...nodes[i],
-        ...event.data.nodes[i],
+    const nodesMap = fromPairs(nodes.map((node) => [node.id, node]));
+
+    // Add the x,y coordinates from the layout algorithm to the original nodes.
+    event.data.nodes = event.data.nodes.map((node) => {
+      return {
+        ...nodesMap[node.id],
+        ...node,
       };
-    }
+    });
+
     done(event.data);
   };
 

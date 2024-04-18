@@ -290,7 +290,7 @@ abstract class DataSourceApi<
   /**
    * Get tag values for adhoc filters
    */
-  getTagValues?(options: DataSourceGetTagValuesOptions): Promise<MetricFindValue[]>;
+  getTagValues?(options: DataSourceGetTagValuesOptions<TQuery>): Promise<MetricFindValue[]>;
 
   /**
    * Set after constructor call, as the data source instance is the most common thing to pass around
@@ -380,7 +380,7 @@ export interface DataSourceGetTagKeysOptions<TQuery extends DataQuery = DataQuer
 /**
  * Options argument to DataSourceAPI.getTagValues
  */
-export interface DataSourceGetTagValuesOptions {
+export interface DataSourceGetTagValuesOptions<TQuery extends DataQuery = DataQuery> {
   key: string;
   /**
    * The other existing filters or base filters. New in v10.3
@@ -390,6 +390,7 @@ export interface DataSourceGetTagValuesOptions {
    * Context time range. New in v10.3
    */
   timeRange?: TimeRange;
+  queries?: TQuery[];
 }
 
 export interface MetadataInspectorProps<
@@ -586,7 +587,7 @@ export interface QueryFixAction {
    */
   options?: KeyValue<string>;
   /**
-   * An optional single row data frame containing the row that triggered the the QueryFixAction.
+   * An optional single row data frame containing the row that triggered the QueryFixAction.
    */
   frame?: DataFrame;
 }

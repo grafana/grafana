@@ -1,10 +1,9 @@
 import { css } from '@emotion/css';
-import { min, max, isNumber, debounce } from 'lodash';
+import { min, max, isNumber, throttle } from 'lodash';
 import React from 'react';
 
 import { DataFrame, FieldType, GrafanaTheme2, PanelData, SelectableValue } from '@grafana/data';
 import {
-  FieldConfigBuilders,
   PanelBuilders,
   QueryVariable,
   SceneComponentProps,
@@ -30,6 +29,7 @@ import { AutoQueryDef } from '../AutomaticMetricQueries/types';
 import { BreakdownLabelSelector } from '../BreakdownLabelSelector';
 import { MetricScene } from '../MetricScene';
 import { StatusWrapper } from '../StatusWrapper';
+import { reportExploreMetrics } from '../interactions';
 import { trailDS, VAR_FILTERS, VAR_GROUP_BY, VAR_GROUP_BY_EXP } from '../shared';
 import { getColorByIndex, getTrailFor } from '../utils';
 
@@ -81,16 +81,28 @@ export class BreakdownScene extends SceneObjectBase<BreakdownSceneState> {
       }
     });
 
+    const metricScene = sceneGraph.getAncestor(this, MetricScene);
+    const metric = metricScene.state.metric;
+    this._query = getAutoQueriesForMetric(metric).breakdown;
+
+    // The following state changes (and conditions) will each result in a call to `clearBreakdownPanelAxisValues`.
+    // By clearing the axis, subsequent calls to `reportBreakdownPanelData` will adjust to an updated axis range.
+    // These state changes coincide with the panels having their data updated, making a call to `reportBreakdownPanelData`.
+    // If the axis was not cleared by `clearBreakdownPanelAxisValues` any calls to `reportBreakdownPanelData` which result
+    // in the same axis will result in no updates to the panels.
+
     const trail = getTrailFor(this);
     trail.state.$timeRange?.subscribeToState(() => {
-      // The change in time range will cause a refresh of panel values,
-      // so we clear the axis range so it can be recalculated when the calls
-      // to `reportBreakdownPanelData` start being made from the panels' behavior.
+      // The change in time range will cause a refresh of panel values.
       this.clearBreakdownPanelAxisValues();
     });
 
-    const metric = sceneGraph.getAncestor(this, MetricScene).state.metric;
-    this._query = getAutoQueriesForMetric(metric).breakdown;
+    metricScene.subscribeToState(({ layout }, old) => {
+      if (layout !== old.layout) {
+        // Change in layout will set up a different set of panel objects that haven't received the current yaxis range
+        this.clearBreakdownPanelAxisValues();
+      }
+    });
 
     this.updateBody(variable);
   }
@@ -124,18 +136,22 @@ export class BreakdownScene extends SceneObjectBase<BreakdownSceneState> {
       return;
     }
 
+    if (this.breakdownPanelMaxValue === newMax && this.breakdownPanelMinValue === newMin) {
+      return;
+    }
+
     this.breakdownPanelMaxValue = newMax;
     this.breakdownPanelMinValue = newMin;
 
     this._triggerAxisChangedEvent();
   }
 
-  private _triggerAxisChangedEvent = debounce(() => {
+  private _triggerAxisChangedEvent = throttle(() => {
     const { breakdownPanelMinValue, breakdownPanelMaxValue } = this;
     if (breakdownPanelMinValue !== undefined && breakdownPanelMaxValue !== undefined) {
       this.publishEvent(new BreakdownAxisChangeEvent({ min: breakdownPanelMinValue, max: breakdownPanelMaxValue }));
     }
-  }, 0);
+  }, 1000);
 
   private clearBreakdownPanelAxisValues() {
     this.breakdownPanelMaxValue = undefined;
@@ -187,6 +203,7 @@ export class BreakdownScene extends SceneObjectBase<BreakdownSceneState> {
       return;
     }
 
+    reportExploreMetrics('label_selected', { label: value, cause: 'selector' });
     const variable = this.getVariable();
 
     variable.changeValueTo(value);
@@ -299,7 +316,6 @@ export function buildAllLayout(options: Array<SelectableValue<string>>, queryDef
       })
     );
   }
-
   return new LayoutSwitcher({
     options: [
       { value: 'grid', label: 'Grid' },
@@ -328,6 +344,32 @@ const GRID_TEMPLATE_COLUMNS = 'repeat(auto-fit, minmax(400px, 1fr))';
 function buildNormalLayout(queryDef: AutoQueryDef) {
   const unit = queryDef.unit;
 
+  function getLayoutChild(data: PanelData, frame: DataFrame, frameIndex: number): SceneFlexItem {
+    const vizPanel: VizPanel = queryDef
+      .vizBuilder()
+      .setTitle(getLabelValue(frame))
+      .setData(new SceneDataNode({ data: { ...data, series: [frame] } }))
+      .setColor({ mode: 'fixed', fixedColor: getColorByIndex(frameIndex) })
+      .setHeaderActions(new AddToFiltersGraphAction({ frame }))
+      .setUnit(unit)
+      .build();
+
+    // Find a frame that has at more than one point.
+    const isHidden = frame.length <= 1;
+
+    const item: SceneCSSGridItem = new SceneCSSGridItem({
+      $behaviors: [yAxisSyncBehavior],
+      body: vizPanel,
+      isHidden,
+    });
+
+    vizPanel.addActivationHandler(() => {
+      vizPanel.onOptionsChange(breakdownPanelOptions);
+    });
+
+    return item;
+  }
+
   return new LayoutSwitcher({
     $data: new SceneQueryRunner({
       datasource: trailDS,
@@ -355,29 +397,7 @@ function buildNormalLayout(queryDef: AutoQueryDef) {
           autoRows: '200px',
           children: [],
         }),
-        getLayoutChild: (data, frame, frameIndex) => {
-          const vizPanel = queryDef
-            .vizBuilder()
-            .setTitle(getLabelValue(frame))
-            .setData(new SceneDataNode({ data: { ...data, series: [frame] } }))
-            .setColor({ mode: 'fixed', fixedColor: getColorByIndex(frameIndex) })
-            .setHeaderActions(new AddToFiltersGraphAction({ frame }))
-            .setUnit(unit)
-            .build();
-
-          if (vizPanel.isActive) {
-            vizPanel.onOptionsChange(breakdownPanelOptions);
-          } else {
-            vizPanel.addActivationHandler(() => {
-              vizPanel.onOptionsChange(breakdownPanelOptions);
-            });
-          }
-
-          return new SceneCSSGridItem({
-            $behaviors: [yAxisSyncBehavior],
-            body: vizPanel,
-          });
-        },
+        getLayoutChild,
       }),
       new ByFrameRepeater({
         body: new SceneCSSGridLayout({
@@ -385,31 +405,7 @@ function buildNormalLayout(queryDef: AutoQueryDef) {
           autoRows: '200px',
           children: [],
         }),
-        getLayoutChild: (data, frame, frameIndex) => {
-          const vizPanel: VizPanel = queryDef
-            .vizBuilder()
-            .setTitle(getLabelValue(frame))
-            .setData(new SceneDataNode({ data: { ...data, series: [frame] } }))
-            .setColor({ mode: 'fixed', fixedColor: getColorByIndex(frameIndex) })
-            .setHeaderActions(new AddToFiltersGraphAction({ frame }))
-            .setUnit(unit)
-            .build();
-
-          if (vizPanel.isActive) {
-            vizPanel.onOptionsChange(breakdownPanelOptions);
-          } else {
-            vizPanel.addActivationHandler(() => {
-              vizPanel.onOptionsChange(breakdownPanelOptions);
-            });
-          }
-
-          FieldConfigBuilders.timeseries().build();
-
-          return new SceneCSSGridItem({
-            $behaviors: [yAxisSyncBehavior],
-            body: vizPanel,
-          });
-        },
+        getLayoutChild,
       }),
     ],
   });
@@ -435,7 +431,9 @@ interface SelectLabelActionState extends SceneObjectState {
 }
 export class SelectLabelAction extends SceneObjectBase<SelectLabelActionState> {
   public onClick = () => {
-    getBreakdownSceneFor(this).onChange(this.state.labelName);
+    const label = this.state.labelName;
+    reportExploreMetrics('label_selected', { label, cause: 'breakdown_panel' });
+    getBreakdownSceneFor(this).onChange(label);
   };
 
   public static Component = ({ model }: SceneComponentProps<AddToFiltersGraphAction>) => {

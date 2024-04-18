@@ -1,9 +1,10 @@
 import { AnnotationChangeEvent, AnnotationEventUIModel, CoreApp, DataFrame } from '@grafana/data';
-import { AdHocFiltersVariable, dataLayers, SceneDataLayerSet, sceneGraph, sceneUtils, VizPanel } from '@grafana/scenes';
+import { AdHocFiltersVariable, dataLayers, sceneGraph, sceneUtils, VizPanel } from '@grafana/scenes';
 import { DataSourceRef } from '@grafana/schema';
 import { AdHocFilterItem, PanelContext } from '@grafana/ui';
 import { deleteAnnotation, saveAnnotation, updateAnnotation } from 'app/features/annotations/api';
 
+import { dashboardSceneGraph } from '../utils/dashboardSceneGraph';
 import { getDashboardSceneFor, getPanelIdForVizPanel, getQueryRunnerFor } from '../utils/utils';
 
 import { DashboardScene } from './DashboardScene';
@@ -128,13 +129,13 @@ export function setDashboardPanelContext(vizPanel: VizPanel, context: PanelConte
 }
 
 function getBuiltInAnnotationsLayer(scene: DashboardScene): dataLayers.AnnotationsDataLayer | undefined {
+  const set = dashboardSceneGraph.getDataLayers(scene);
   // When there is no builtin annotations query we disable the ability to add annotations
-  if (scene.state.$data instanceof SceneDataLayerSet) {
-    for (const layer of scene.state.$data.state.layers) {
-      if (layer instanceof dataLayers.AnnotationsDataLayer) {
-        if (layer.state.isEnabled && layer.state.query.builtIn) {
-          return layer;
-        }
+
+  for (const layer of set.state.annotationLayers) {
+    if (layer instanceof dataLayers.AnnotationsDataLayer) {
+      if (layer.state.isEnabled && layer.state.query.builtIn) {
+        return layer;
       }
     }
   }

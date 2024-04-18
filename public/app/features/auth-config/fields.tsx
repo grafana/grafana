@@ -198,7 +198,18 @@ export const sectionFields: Section = {
     {
       name: 'General settings',
       id: 'general',
-      fields: ['name', 'clientId', 'clientSecret', 'scopes', 'authUrl', 'tokenUrl', 'apiUrl', 'signoutRedirectUrl'],
+      fields: [
+        'name',
+        'clientId',
+        'clientSecret',
+        'scopes',
+        'authUrl',
+        'tokenUrl',
+        'apiUrl',
+        'allowSignUp',
+        'autoLogin',
+        'signoutRedirectUrl',
+      ],
     },
     {
       name: 'User mapping',

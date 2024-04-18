@@ -20,7 +20,6 @@ import {
   GroupByVariable,
   QueryVariable,
   SceneDataLayerControls,
-  SceneDataLayerSet,
   SceneDataTransformer,
   SceneGridLayout,
   SceneGridRow,
@@ -41,13 +40,13 @@ import { SHARED_DASHBOARD_QUERY } from 'app/plugins/datasource/dashboard';
 import { DASHBOARD_DATASOURCE_PLUGIN_ID } from 'app/plugins/datasource/dashboard/types';
 import { DashboardDataDTO } from 'app/types';
 
-import { AddLibraryPanelWidget } from '../scene/AddLibraryPanelWidget';
+import { DashboardDataLayerSet } from '../scene/DashboardDataLayerSet';
 import { DashboardGridItem } from '../scene/DashboardGridItem';
 import { LibraryVizPanel } from '../scene/LibraryVizPanel';
 import { PanelTimeRange } from '../scene/PanelTimeRange';
 import { RowRepeaterBehavior } from '../scene/RowRepeaterBehavior';
 import { NEW_LINK } from '../settings/links/utils';
-import { getQueryRunnerFor, getVizPanelKeyForPanelId } from '../utils/utils';
+import { getQueryRunnerFor } from '../utils/utils';
 
 import { buildNewDashboardSaveModel } from './buildNewDashboardSaveModel';
 import { GRAFANA_DATASOURCE_REF } from './const';
@@ -60,7 +59,6 @@ import {
   transformSaveModelToScene,
   convertOldSnapshotToScenesSnapshot,
   buildGridItemForLibPanel,
-  buildGridItemForLibraryPanelWidget,
 } from './transformSaveModelToScene';
 
 describe('transformSaveModelToScene', () => {
@@ -177,8 +175,8 @@ describe('transformSaveModelToScene', () => {
   });
 
   describe('When creating a new dashboard', () => {
-    it('should initialize the DashboardScene in edit mode and dirty', () => {
-      const rsp = buildNewDashboardSaveModel();
+    it('should initialize the DashboardScene in edit mode and dirty', async () => {
+      const rsp = await buildNewDashboardSaveModel();
       const scene = transformSaveModelToScene(rsp);
       expect(scene.state.isEditing).toBe(undefined);
       expect(scene.state.isDirty).toBe(false);
@@ -191,11 +189,6 @@ describe('transformSaveModelToScene', () => {
         title: 'test',
         gridPos: { x: 1, y: 0, w: 12, h: 8 },
       }) as Panel;
-
-      const widgetLibPanel = {
-        title: 'Widget Panel',
-        type: 'add-library-panel',
-      };
 
       const libPanel = createPanelSaveModel({
         title: 'Library Panel',
@@ -211,7 +204,7 @@ describe('transformSaveModelToScene', () => {
         type: 'row',
         gridPos: { x: 0, y: 0, w: 12, h: 1 },
         collapsed: true,
-        panels: [panel, widgetLibPanel, libPanel],
+        panels: [panel, libPanel],
       }) as unknown as RowPanel;
 
       const dashboard = {
@@ -230,12 +223,12 @@ describe('transformSaveModelToScene', () => {
       expect(rowScene.state.title).toEqual(row.title);
       expect(rowScene.state.y).toEqual(row.gridPos!.y);
       expect(rowScene.state.isCollapsed).toEqual(row.collapsed);
-      expect(rowScene.state.children).toHaveLength(3);
+      expect(rowScene.state.children).toHaveLength(2);
       expect(rowScene.state.children[0]).toBeInstanceOf(DashboardGridItem);
       expect(rowScene.state.children[1]).toBeInstanceOf(DashboardGridItem);
-      expect(rowScene.state.children[2]).toBeInstanceOf(DashboardGridItem);
-      expect((rowScene.state.children[1] as DashboardGridItem).state.body!).toBeInstanceOf(AddLibraryPanelWidget);
-      expect((rowScene.state.children[2] as DashboardGridItem).state.body!).toBeInstanceOf(LibraryVizPanel);
+      // Panels are sorted by position in the row
+      expect((rowScene.state.children[0] as DashboardGridItem).state.body!).toBeInstanceOf(LibraryVizPanel);
+      expect((rowScene.state.children[1] as DashboardGridItem).state.body!).toBeInstanceOf(VizPanel);
     });
 
     it('should create panels within expanded row', () => {
@@ -248,16 +241,7 @@ describe('transformSaveModelToScene', () => {
           y: 0,
         },
       });
-      const widgetLibPanelOutOfRow = {
-        title: 'Widget Panel',
-        type: 'add-library-panel',
-        gridPos: {
-          h: 8,
-          w: 12,
-          x: 12,
-          y: 0,
-        },
-      };
+
       const libPanelOutOfRow = createPanelSaveModel({
         title: 'Library Panel',
         gridPos: { x: 0, y: 8, w: 12, h: 8 },
@@ -266,6 +250,7 @@ describe('transformSaveModelToScene', () => {
           name: 'My Panel',
         },
       });
+
       const rowWithPanel = createPanelSaveModel({
         title: 'Row with panel',
         type: 'row',
@@ -280,6 +265,7 @@ describe('transformSaveModelToScene', () => {
         // This panels array is not used if the row is not collapsed
         panels: [],
       });
+
       const panelInRow = createPanelSaveModel({
         gridPos: {
           h: 8,
@@ -289,16 +275,7 @@ describe('transformSaveModelToScene', () => {
         },
         title: 'In row 1',
       });
-      const widgetLibPanelInRow = {
-        title: 'Widget Panel',
-        type: 'add-library-panel',
-        gridPos: {
-          h: 8,
-          w: 12,
-          x: 12,
-          y: 17,
-        },
-      };
+
       const libPanelInRow = createPanelSaveModel({
         title: 'Library Panel',
         gridPos: { x: 0, y: 25, w: 12, h: 8 },
@@ -307,6 +284,7 @@ describe('transformSaveModelToScene', () => {
           name: 'My Panel',
         },
       });
+
       const emptyRow = createPanelSaveModel({
         collapsed: false,
         gridPos: {
@@ -320,18 +298,10 @@ describe('transformSaveModelToScene', () => {
         title: 'Empty row',
         type: 'row',
       });
+
       const dashboard = {
         ...defaultDashboard,
-        panels: [
-          panelOutOfRow,
-          widgetLibPanelOutOfRow,
-          libPanelOutOfRow,
-          rowWithPanel,
-          panelInRow,
-          widgetLibPanelInRow,
-          libPanelInRow,
-          emptyRow,
-        ],
+        panels: [panelOutOfRow, libPanelOutOfRow, rowWithPanel, panelInRow, libPanelInRow, emptyRow],
       };
 
       const oldModel = new DashboardModel(dashboard);
@@ -339,37 +309,31 @@ describe('transformSaveModelToScene', () => {
       const scene = createDashboardSceneFromDashboardModel(oldModel);
       const body = scene.state.body as SceneGridLayout;
 
-      expect(body.state.children).toHaveLength(5);
+      expect(body.state.children).toHaveLength(4);
       expect(body).toBeInstanceOf(SceneGridLayout);
       // Panel out of row
       expect(body.state.children[0]).toBeInstanceOf(DashboardGridItem);
       const panelOutOfRowVizPanel = body.state.children[0] as DashboardGridItem;
       expect((panelOutOfRowVizPanel.state.body as VizPanel)?.state.title).toBe(panelOutOfRow.title);
-      // widget lib panel out of row
-      expect(body.state.children[1]).toBeInstanceOf(DashboardGridItem);
-      const panelOutOfRowWidget = body.state.children[1] as DashboardGridItem;
-      expect(panelOutOfRowWidget.state.body!).toBeInstanceOf(AddLibraryPanelWidget);
       // lib panel out of row
-      expect(body.state.children[2]).toBeInstanceOf(DashboardGridItem);
-      const panelOutOfRowLibVizPanel = body.state.children[2] as DashboardGridItem;
+      expect(body.state.children[1]).toBeInstanceOf(DashboardGridItem);
+      const panelOutOfRowLibVizPanel = body.state.children[1] as DashboardGridItem;
       expect(panelOutOfRowLibVizPanel.state.body!).toBeInstanceOf(LibraryVizPanel);
       // Row with panels
-      expect(body.state.children[3]).toBeInstanceOf(SceneGridRow);
-      const rowWithPanelsScene = body.state.children[3] as SceneGridRow;
+      expect(body.state.children[2]).toBeInstanceOf(SceneGridRow);
+      const rowWithPanelsScene = body.state.children[2] as SceneGridRow;
       expect(rowWithPanelsScene.state.title).toBe(rowWithPanel.title);
       expect(rowWithPanelsScene.state.key).toBe('panel-10');
-      expect(rowWithPanelsScene.state.children).toHaveLength(3);
-      const widget = rowWithPanelsScene.state.children[1] as DashboardGridItem;
-      expect(widget.state.body!).toBeInstanceOf(AddLibraryPanelWidget);
-      const libPanel = rowWithPanelsScene.state.children[2] as DashboardGridItem;
+      expect(rowWithPanelsScene.state.children).toHaveLength(2);
+      const libPanel = rowWithPanelsScene.state.children[1] as DashboardGridItem;
       expect(libPanel.state.body!).toBeInstanceOf(LibraryVizPanel);
       // Panel within row
       expect(rowWithPanelsScene.state.children[0]).toBeInstanceOf(DashboardGridItem);
       const panelInRowVizPanel = rowWithPanelsScene.state.children[0] as DashboardGridItem;
       expect((panelInRowVizPanel.state.body as VizPanel).state.title).toBe(panelInRow.title);
       // Empty row
-      expect(body.state.children[4]).toBeInstanceOf(SceneGridRow);
-      const emptyRowScene = body.state.children[4] as SceneGridRow;
+      expect(body.state.children[3]).toBeInstanceOf(SceneGridRow);
+      const emptyRowScene = body.state.children[3] as SceneGridRow;
       expect(emptyRowScene.state.title).toBe(emptyRow.title);
       expect(emptyRowScene.state.children).toHaveLength(0);
     });
@@ -537,17 +501,6 @@ describe('transformSaveModelToScene', () => {
       const runner = getQueryRunnerFor(vizPanel)!;
       expect(runner.state.cacheTimeout).toBe('10');
       expect(runner.state.queryCachingTTL).toBe(200000);
-    });
-    it('should convert saved lib widget to AddLibraryPanelWidget', () => {
-      const panel = {
-        id: 10,
-        type: 'add-library-panel',
-      };
-
-      const gridItem = buildGridItemForLibraryPanelWidget(new PanelModel(panel))!;
-      const libPanelWidget = gridItem.state.body as AddLibraryPanelWidget;
-
-      expect(libPanelWidget.state.key).toEqual(getVizPanelKeyForPanelId(panel.id));
     });
 
     it('should convert saved lib panel to LibraryVizPanel', () => {
@@ -1230,26 +1183,26 @@ describe('transformSaveModelToScene', () => {
     it('Should build correct scene model', () => {
       const scene = transformSaveModelToScene({ dashboard: dashboard_to_load1 as any, meta: {} });
 
-      expect(scene.state.$data).toBeInstanceOf(SceneDataLayerSet);
+      expect(scene.state.$data).toBeInstanceOf(DashboardDataLayerSet);
       expect(scene.state.controls!.state.variableControls[1]).toBeInstanceOf(SceneDataLayerControls);
 
-      const dataLayers = scene.state.$data as SceneDataLayerSet;
-      expect(dataLayers.state.layers).toHaveLength(4);
-      expect(dataLayers.state.layers[0].state.name).toBe('Annotations & Alerts');
-      expect(dataLayers.state.layers[0].state.isEnabled).toBe(true);
-      expect(dataLayers.state.layers[0].state.isHidden).toBe(false);
+      const dataLayers = scene.state.$data as DashboardDataLayerSet;
+      expect(dataLayers.state.annotationLayers).toHaveLength(4);
+      expect(dataLayers.state.annotationLayers[0].state.name).toBe('Annotations & Alerts');
+      expect(dataLayers.state.annotationLayers[0].state.isEnabled).toBe(true);
+      expect(dataLayers.state.annotationLayers[0].state.isHidden).toBe(false);
 
-      expect(dataLayers.state.layers[1].state.name).toBe('Enabled');
-      expect(dataLayers.state.layers[1].state.isEnabled).toBe(true);
-      expect(dataLayers.state.layers[1].state.isHidden).toBe(false);
+      expect(dataLayers.state.annotationLayers[1].state.name).toBe('Enabled');
+      expect(dataLayers.state.annotationLayers[1].state.isEnabled).toBe(true);
+      expect(dataLayers.state.annotationLayers[1].state.isHidden).toBe(false);
 
-      expect(dataLayers.state.layers[2].state.name).toBe('Disabled');
-      expect(dataLayers.state.layers[2].state.isEnabled).toBe(false);
-      expect(dataLayers.state.layers[2].state.isHidden).toBe(false);
+      expect(dataLayers.state.annotationLayers[2].state.name).toBe('Disabled');
+      expect(dataLayers.state.annotationLayers[2].state.isEnabled).toBe(false);
+      expect(dataLayers.state.annotationLayers[2].state.isHidden).toBe(false);
 
-      expect(dataLayers.state.layers[3].state.name).toBe('Hidden');
-      expect(dataLayers.state.layers[3].state.isEnabled).toBe(true);
-      expect(dataLayers.state.layers[3].state.isHidden).toBe(true);
+      expect(dataLayers.state.annotationLayers[3].state.name).toBe('Hidden');
+      expect(dataLayers.state.annotationLayers[3].state.isEnabled).toBe(true);
+      expect(dataLayers.state.annotationLayers[3].state.isHidden).toBe(true);
     });
   });
 
@@ -1258,12 +1211,11 @@ describe('transformSaveModelToScene', () => {
       config.unifiedAlertingEnabled = true;
       const scene = transformSaveModelToScene({ dashboard: dashboard_to_load1 as any, meta: {} });
 
-      expect(scene.state.$data).toBeInstanceOf(SceneDataLayerSet);
+      expect(scene.state.$data).toBeInstanceOf(DashboardDataLayerSet);
       expect(scene.state.controls!.state.variableControls[1]).toBeInstanceOf(SceneDataLayerControls);
 
-      const dataLayers = scene.state.$data as SceneDataLayerSet;
-      expect(dataLayers.state.layers).toHaveLength(5);
-      expect(dataLayers.state.layers[4].state.name).toBe('Alert States');
+      const dataLayers = scene.state.$data as DashboardDataLayerSet;
+      expect(dataLayers.state.alertStatesLayer).toBeDefined();
     });
 
     it('Should add alert states data layer if any panel has a legacy alert defined', () => {
@@ -1272,12 +1224,11 @@ describe('transformSaveModelToScene', () => {
       dashboard.panels![0].alert = {};
       const scene = transformSaveModelToScene({ dashboard: dashboard_to_load1 as any, meta: {} });
 
-      expect(scene.state.$data).toBeInstanceOf(SceneDataLayerSet);
+      expect(scene.state.$data).toBeInstanceOf(DashboardDataLayerSet);
       expect(scene.state.controls!.state.variableControls[1]).toBeInstanceOf(SceneDataLayerControls);
 
-      const dataLayers = scene.state.$data as SceneDataLayerSet;
-      expect(dataLayers.state.layers).toHaveLength(5);
-      expect(dataLayers.state.layers[4].state.name).toBe('Alert States');
+      const dataLayers = scene.state.$data as DashboardDataLayerSet;
+      expect(dataLayers.state.alertStatesLayer).toBeDefined();
     });
   });
 

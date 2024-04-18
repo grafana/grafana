@@ -62,10 +62,10 @@ func newScopeStorage(scheme *runtime.Scheme, optsGetter generic.RESTOptionsGette
 	return &storage{Store: store}, nil
 }
 
-func newScopeDashboardStorage(scheme *runtime.Scheme, optsGetter generic.RESTOptionsGetter) (*storage, error) {
+func newScopeDashboardBindingStorage(scheme *runtime.Scheme, optsGetter generic.RESTOptionsGetter) (*storage, error) {
 	strategy := grafanaregistry.NewStrategy(scheme)
 
-	resourceInfo := scope.ScopeDashboardResourceInfo
+	resourceInfo := scope.ScopeDashboardBindingResourceInfo
 	store := &genericregistry.Store{
 		NewFunc:                   resourceInfo.NewFunc,
 		NewListFunc:               resourceInfo.NewListFunc,
@@ -101,12 +101,13 @@ func newScopeDashboardStorage(scheme *runtime.Scheme, optsGetter generic.RESTOpt
 }
 
 func GetAttrs(obj runtime.Object) (labels.Set, fields.Set, error) {
-	s, ok := obj.(*scope.Scope)
-	if !ok {
-		return nil, nil, fmt.Errorf("not a scope")
+	if s, ok := obj.(*scope.Scope); ok {
+		return labels.Set(s.Labels), SelectableScopeFields(s), nil
 	}
-
-	return labels.Set(s.Labels), SelectableFields(s), nil
+	if s, ok := obj.(*scope.ScopeDashboardBinding); ok {
+		return labels.Set(s.Labels), SelectableScopeDashboardBindingFields(s), nil
+	}
+	return nil, nil, fmt.Errorf("not a scope or ScopeDashboardBinding object")
 }
 
 // Matcher returns a generic.SelectionPredicate that matches on label and field selectors.
@@ -118,8 +119,15 @@ func Matcher(label labels.Selector, field fields.Selector) apistore.SelectionPre
 	}
 }
 
-func SelectableFields(obj *scope.Scope) fields.Set {
+func SelectableScopeFields(obj *scope.Scope) fields.Set {
 	return generic.MergeFieldsSets(generic.ObjectMetaFieldsSet(&obj.ObjectMeta, false), fields.Set{
-		"spec.type": obj.Spec.Type,
+		"spec.type":     obj.Spec.Type,
+		"spec.category": obj.Spec.Category,
+	})
+}
+
+func SelectableScopeDashboardBindingFields(obj *scope.ScopeDashboardBinding) fields.Set {
+	return generic.MergeFieldsSets(generic.ObjectMetaFieldsSet(&obj.ObjectMeta, false), fields.Set{
+		"spec.scope": obj.Spec.Scope,
 	})
 }

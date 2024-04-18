@@ -1,3 +1,4 @@
+// Core Grafana history https://github.com/grafana/grafana/blob/v11.0.0-preview/public/app/plugins/datasource/prometheus/querybuilder/components/metrics-modal/MetricsModal.tsx
 import { cx } from '@emotion/css';
 import { PayloadAction, createSlice } from '@reduxjs/toolkit';
 import debounce from 'debounce-promise';

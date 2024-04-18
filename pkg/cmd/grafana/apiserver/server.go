@@ -6,6 +6,7 @@ import (
 	"net"
 	"path"
 
+	"github.com/spf13/pflag"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	utilerrors "k8s.io/apimachinery/pkg/util/errors"
 	genericapiserver "k8s.io/apiserver/pkg/server"
@@ -20,12 +21,10 @@ import (
 	standaloneoptions "github.com/grafana/grafana/pkg/services/apiserver/standalone/options"
 	"github.com/grafana/grafana/pkg/services/apiserver/utils"
 	"github.com/grafana/grafana/pkg/setting"
-	"github.com/spf13/pflag"
 )
 
 const (
-	defaultEtcdPathPrefix = "/registry/grafana.app"
-	dataPath              = "data/grafana-apiserver" // same as grafana core
+	dataPath = "data/grafana-apiserver" // same as grafana core
 )
 
 // APIServerOptions contains the state for the apiserver
@@ -99,6 +98,13 @@ func (o *APIServerOptions) Config() (*genericapiserver.RecommendedConfig, error)
 
 	if err := o.Options.ApplyTo(serverConfig); err != nil {
 		return nil, fmt.Errorf("failed to apply options to server config: %w", err)
+	}
+
+	if factoryOptions := o.factory.GetOptions(); factoryOptions != nil {
+		err := factoryOptions.ApplyTo(serverConfig)
+		if err != nil {
+			return nil, fmt.Errorf("factory's applyTo func failed: %s", err.Error())
+		}
 	}
 
 	serverConfig.DisabledPostStartHooks = serverConfig.DisabledPostStartHooks.Insert("generic-apiserver-start-informers")

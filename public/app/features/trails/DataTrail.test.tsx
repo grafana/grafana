@@ -1,5 +1,4 @@
 import { locationService, setDataSourceSrv } from '@grafana/runtime';
-import { getUrlSyncManager } from '@grafana/scenes';
 
 import { MockDataSourceSrv, mockDataSource } from '../alerting/unified/mocks';
 import { DataSourceType } from '../alerting/unified/utils/datasource';
@@ -22,13 +21,13 @@ describe('DataTrail', () => {
     );
   });
 
-  describe('Given starting trail with url sync and no url state', () => {
+  describe('Given starting non-embedded trail with url sync and no url state', () => {
     let trail: DataTrail;
+    const preTrailUrl = '/';
 
     beforeEach(() => {
       trail = new DataTrail({});
-      locationService.push('/');
-      getUrlSyncManager().initSync(trail);
+      locationService.push(preTrailUrl);
       activateFullSceneTree(trail);
     });
 
@@ -73,6 +72,15 @@ describe('DataTrail', () => {
       it('Should set history step 1 parentIndex to 0', () => {
         expect(trail.state.history.state.steps[1].parentIndex).toBe(0);
       });
+
+      describe('And browser back button is pressed', () => {
+        locationService.getHistory().goBack();
+
+        it('Should return to original URL', () => {
+          const { pathname } = locationService.getLocation();
+          expect(pathname).toEqual(preTrailUrl);
+        });
+      });
     });
 
     describe('When going back to history step 1', () => {
@@ -111,6 +119,29 @@ describe('DataTrail', () => {
         it('Should set history step 3 parent index to 1', () => {
           expect(trail.state.history.state.steps[3].parentIndex).toBe(1);
         });
+
+        describe('And browser back button is pressed', () => {
+          locationService.getHistory().goBack();
+
+          it('Should return to original URL', () => {
+            const { pathname } = locationService.getLocation();
+            expect(pathname).toEqual(preTrailUrl);
+          });
+        });
+      });
+    });
+    describe('When going back to history step 0', () => {
+      beforeEach(() => {
+        trail.publishEvent(new MetricSelectedEvent('first_metric'));
+        trail.publishEvent(new MetricSelectedEvent('second_metric'));
+        trail.state.history.goBackToStep(0);
+      });
+
+      it('Should remove metric from state and url', () => {
+        expect(trail.state.metric).toBe(undefined);
+
+        expect(locationService.getSearchObject().metric).toBe(undefined);
+        expect(locationService.getSearch().has('metric')).toBe(false);
       });
     });
   });

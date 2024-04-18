@@ -35,7 +35,6 @@ func ProvideService(cfg *setting.Cfg,
 	routeRegister routing.RouteRegister,
 	tracer tracing.Tracer,
 	accesscontrol ac.AccessControl,
-	accesscontrolService ac.Service,
 	bundleRegistry supportbundles.Service,
 ) (*UsageStats, error) {
 	s := &UsageStats{
@@ -45,10 +44,6 @@ func ProvideService(cfg *setting.Cfg,
 		log:           log.New("infra.usagestats"),
 		tracer:        tracer,
 		accesscontrol: accesscontrol,
-	}
-
-	if err := declareFixedRoles(accesscontrolService); err != nil {
-		return nil, err
 	}
 
 	s.registerAPIEndpoints()

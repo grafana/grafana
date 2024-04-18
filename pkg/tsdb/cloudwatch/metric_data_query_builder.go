@@ -1,6 +1,7 @@
 package cloudwatch
 
 import (
+	"context"
 	"fmt"
 	"sort"
 	"strconv"
@@ -9,10 +10,13 @@ import (
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/service/cloudwatch"
 
+	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/features"
 	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/models"
 )
 
-func (e *cloudWatchExecutor) buildMetricDataQuery(query *models.CloudWatchQuery) (*cloudwatch.MetricDataQuery, error) {
+const keySeparator = "|&|"
+
+func (e *cloudWatchExecutor) buildMetricDataQuery(ctx context.Context, query *models.CloudWatchQuery) (*cloudwatch.MetricDataQuery, error) {
 	mdq := &cloudwatch.MetricDataQuery{
 		Id:         aws.String(query.Id),
 		ReturnData: aws.Bool(query.ReturnData),
@@ -31,6 +35,9 @@ func (e *cloudWatchExecutor) buildMetricDataQuery(query *models.CloudWatchQuery)
 		mdq.Expression = aws.String(query.SqlExpression)
 	case models.GMDApiModeInferredSearchExpression:
 		mdq.Expression = aws.String(buildSearchExpression(query, query.Statistic))
+		if features.IsEnabled(ctx, features.FlagCloudWatchNewLabelParsing) {
+			mdq.Label = aws.String(buildSearchExpressionLabel(query))
+		}
 	case models.GMDApiModeMetricStat:
 		mdq.MetricStat = &cloudwatch.MetricStat{
 			Metric: &cloudwatch.Metric{
@@ -58,6 +65,10 @@ func (e *cloudWatchExecutor) buildMetricDataQuery(query *models.CloudWatchQuery)
 	}
 
 	return mdq, nil
+}
+
+func isSingleValue(values []string) bool {
+	return len(values) == 1 && values[0] != "*"
 }
 
 func buildSearchExpression(query *models.CloudWatchQuery, stat string) string {
@@ -118,6 +129,25 @@ func buildSearchExpression(query *models.CloudWatchQuery, stat string) string {
 	namespace := fmt.Sprintf("Namespace=%q", query.Namespace)
 	namespaceSearchTermAndAccount := strings.TrimSpace(strings.Join([]string{namespace, searchTerm, account}, " "))
 	return fmt.Sprintf(`REMOVE_EMPTY(SEARCH('%s', '%s', %s))`, namespaceSearchTermAndAccount, stat, strconv.Itoa(query.Period))
+}
+
+func buildSearchExpressionLabel(query *models.CloudWatchQuery) string {
+	label := "${LABEL}"
+	if len(query.Label) > 0 {
+		label = query.Label
+	}
+
+	multiDims := []string{}
+	for key, values := range query.Dimensions {
+		if !isSingleValue(values) {
+			multiDims = append(multiDims, key)
+		}
+	}
+	sort.Strings(multiDims)
+	for _, key := range multiDims {
+		label += fmt.Sprintf("%s${PROP('Dim.%s')}", keySeparator, key)
+	}
+	return label
 }
 
 func escapeDoubleQuotes(arr []string) []string {

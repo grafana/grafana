@@ -2368,7 +2368,6 @@ export const traceQlResponse = {
       rootServiceName: 'lb',
       rootTraceName: 'HTTP Client',
       startTimeUnixNano: '1643342166678000000',
-      durationMs: 93,
       spanSets: [
         {
           attributes: [
