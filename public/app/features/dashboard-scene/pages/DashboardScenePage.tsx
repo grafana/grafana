@@ -72,6 +72,11 @@ export function DashboardScenePage({ match, route, queryParams, history }: Props
     );
   }
 
+  // Do not render anything when transitioning from one dashboard to another
+  if (dashboard.state.uid && dashboard.state.uid !== match.params.uid) {
+    return null;
+  }
+
   return (
     <>
       <dashboard.Component model={dashboard} key={dashboard.state.key} />
