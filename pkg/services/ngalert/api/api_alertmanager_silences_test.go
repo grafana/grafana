@@ -67,7 +67,10 @@ func TestSilenceCreate(t *testing.T) {
 					OrgRole: org.RoleEditor,
 					OrgID:   1,
 					Permissions: map[int64]map[string][]string{
-						1: {accesscontrol.ActionAlertingInstanceCreate: {}},
+						1: {
+							accesscontrol.ActionAlertingInstanceRead:   {},
+							accesscontrol.ActionAlertingInstanceCreate: {},
+						},
 					},
 				},
 			}
@@ -102,7 +105,10 @@ func TestRouteCreateSilence(t *testing.T) {
 			name:    "new silence, role-based access control is enabled, authorized",
 			silence: silenceGen(withEmptyID),
 			permissions: map[int64]map[string][]string{
-				1: {accesscontrol.ActionAlertingInstanceCreate: {}},
+				1: {
+					accesscontrol.ActionAlertingInstanceRead:   {},
+					accesscontrol.ActionAlertingInstanceCreate: {},
+				},
 			},
 			expectedStatus: http.StatusAccepted,
 		},
@@ -118,7 +124,10 @@ func TestRouteCreateSilence(t *testing.T) {
 			name:    "update silence, role-based access control is enabled, authorized",
 			silence: silenceGen(),
 			permissions: map[int64]map[string][]string{
-				1: {accesscontrol.ActionAlertingInstanceUpdate: {}},
+				1: {
+					accesscontrol.ActionAlertingInstanceRead:   {},
+					accesscontrol.ActionAlertingInstanceUpdate: {},
+				},
 			},
 			expectedStatus: http.StatusAccepted,
 		},

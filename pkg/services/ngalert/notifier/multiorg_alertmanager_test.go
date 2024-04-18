@@ -6,11 +6,12 @@ import (
 	"testing"
 	"time"
 
-	alertingNotify "github.com/grafana/alerting/notify"
 	"github.com/prometheus/alertmanager/types"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/testutil"
 	"github.com/stretchr/testify/require"
+
+	alertingNotify "github.com/grafana/alerting/notify"
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
@@ -313,10 +314,10 @@ func TestMultiOrgAlertmanager_Silences(t *testing.T) {
 	require.Empty(t, v)
 
 	// Create 2 silences.
-	sid, err := mam.CreateSilence(ctx, 1, GenSilence("test"))
+	sid, err := mam.CreateSilence(ctx, 1, models.Silence{Silence: GenSilence("test").Silence})
 	require.NoError(t, err)
 	require.NotEmpty(t, sid)
-	sid2, err := mam.CreateSilence(ctx, 1, GenSilence("test"))
+	sid2, err := mam.CreateSilence(ctx, 1, models.Silence{Silence: GenSilence("test").Silence})
 	require.NoError(t, err)
 	require.NotEmpty(t, sid2)
 
