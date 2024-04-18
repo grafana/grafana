@@ -26,14 +26,13 @@ You can't use folders to customize access to notification resources.
 
 Details of how role access can combine with folder or data source permissions for Grafana Alerting are below.
 
-| Role   | Folder  | Access                                                                                                                               |
-| ------ | ----------------- | ------------------------------------------------------------------------------------------------------------------------------------ |
-| Admin  | -                 | Write access to alert rules in all folders.
-| Editor | -                 | Write access to alert rules in all folders.                                                                                          |
-| Viewer | Admin             | Write access to alert rules **only** in the folders where the Admin permission is added.   |
-| Viewer | Edit            | Write access to alert rules **only** in the folders where the Edit permission is added. |
-| Viewer | View            | Read access to alert rules in all folders.                                                                                           |
-
+| Role   | Folder | Access                                                                                   |
+| ------ | ------ | ---------------------------------------------------------------------------------------- |
+| Admin  | -      | Write access to alert rules in all folders.                                              |
+| Editor | -      | Write access to alert rules in all folders.                                              |
+| Viewer | Admin  | Write access to alert rules **only** in the folders where the Admin permission is added. |
+| Viewer | Edit   | Write access to alert rules **only** in the folders where the Edit permission is added.  |
+| Viewer | View   | Read access to alert rules in all folders.                                               |
 
 ## Folder permissions
 
@@ -53,7 +52,7 @@ By default, users with the basic roles Admin, Editor, and Viewer roles have quer
 
 If you used fixed roles or custom roles, you need to update data source permissions.
 
-Alternatively, an admin can assign the role **Datasource Reader**,  which grants the user access to all data sources.
+Alternatively, an admin can assign the role **Datasource Reader**, which grants the user access to all data sources.
 
 To manage data source permissions, complete the following steps.
 
@@ -61,4 +60,3 @@ To manage data source permissions, complete the following steps.
 1. Click the data source you want to change the permissions for.
 1. Click the **Permissions** tab.
 1. In the **Permission column**, update the permission or remove it by clicking **X**.
-
