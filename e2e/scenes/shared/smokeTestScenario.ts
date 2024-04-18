@@ -4,6 +4,9 @@ export const smokeTestScenario = () =>
   describe('Smoke tests', () => {
     before(() => {
       e2e.flows.login(Cypress.env('USERNAME'), Cypress.env('PASSWORD'), false);
+      cy.logToConsole('enabling dashboardScene feature toggle in localstorage');
+      cy.setLocalStorage('grafana.featureToggles', 'dashboardScene=true');
+      cy.reload();
       e2e.flows.addDataSource();
       e2e.flows.addDashboard();
       e2e.flows.addPanel({
