@@ -162,6 +162,22 @@ func (ss *sqlStore) notServiceAccountFilter() string {
 		ss.dialect.BooleanStr(false))
 }
 
+func (ss *sqlStore) CaseInsensitiveLoginConflict(ctx context.Context, login, email string) error {
+	users := make([]user.User, 0)
+	err := ss.db.WithDbSession(ctx, func(sess *db.Session) error {
+		if err := sess.Where("LOWER(email)=LOWER(?) OR LOWER(login)=LOWER(?)",
+			email, login).Find(&users); err != nil {
+			return err
+		}
+
+		if len(users) > 1 {
+			return &user.ErrCaseInsensitiveLoginConflict{Users: users}
+		}
+		return nil
+	})
+	return err
+}
+
 func (ss *sqlStore) GetByLogin(ctx context.Context, query *user.GetUserByLoginQuery) (*user.User, error) {
 	// enforcement of lowercase due to forcement of caseinsensitive login
 	query.LoginOrEmail = strings.ToLower(query.LoginOrEmail)
