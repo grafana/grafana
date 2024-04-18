@@ -14,16 +14,19 @@ func TestIsEmail(t *testing.T) {
 		description string
 		valid       bool
 	}{
-		"":                         {description: "the empty string", valid: false},
-		"@.":                       {description: "at dot", valid: false},
-		"me@":                      {description: "no domain", valid: false},
-		"abcdef.com":               {description: "only a domain name", valid: false},
-		"@example.org":             {description: "no recipient", valid: false},
-		"please\x0Ano@example.org": {description: "new line", valid: false},
+		"":                         		{description: "the empty string", valid: false},
+		"@.":                       		{description: "at dot", valid: false},
+		"me@":                      		{description: "no domain", valid: false},
+		"abcdef.com":               		{description: "only a domain name", valid: false},
+		"@example.org":             		{description: "no recipient", valid: false},
+		"please\x0Ano@example.org": 		{description: "new line", valid: false},
+		"info@org":							{description: "mailbox at TLD-level", valid: false},
 
-		"abc@def.com":                 {description: "a simple valid email", valid: true},
-		"grapher+grafana@example.org": {description: "a gmail style alias", valid: true},
-		"öhnej@example.se":            {description: "non-ASCII characters", valid: true},
+		"abc@def.com":                 		{description: "a simple valid email", valid: true},
+		"grapher+grafana@example.org": 		{description: "a gmail style alias", valid: true},
+		"öhnej@example.se":           		{description: "non-ASCII characters", valid: true},
+		"info@xn--90aivcdt6dxbc.xn--p1ai": 	{description: "a valid punycode email", valid: true},
+		"admin@hackint.dn42":				{description: "an internal-use email that ends up with digits", valid: true}, 
 	}
 	for input, testcase := range emails {
 		validity := "invalid"
