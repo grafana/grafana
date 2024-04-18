@@ -11,6 +11,7 @@ import { TempoDatasource } from '../datasource';
 import { TempoQuery } from '../types';
 
 import InlineSearchField from './InlineSearchField';
+import { withTemplateVariableOptions } from './SearchField';
 import { replaceAt } from './utils';
 
 interface Props {
@@ -89,15 +90,20 @@ export const GroupByField = (props: Props) => {
               <Select
                 aria-label={`Select tag for filter ${i + 1}`}
                 isClearable
+                allowCustomValue
                 isLoading={isTagsLoading}
                 key={f.tag}
                 onChange={(v) => {
                   updateFilter({ ...f, tag: v?.value });
                 }}
-                options={getTags(f)?.map((t) => ({
-                  label: t,
-                  value: t,
-                }))}
+                options={withTemplateVariableOptions(
+                  getTags(f)
+                    ?.concat(f.tag !== undefined && !getTags(f)?.includes(f.tag) ? [f.tag] : [])
+                    .map((t) => ({
+                      label: t,
+                      value: t,
+                    }))
+                )}
                 placeholder="Select tag"
                 value={f.tag || ''}
               />
