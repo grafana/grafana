@@ -1,3 +1,4 @@
+import 'whatwg-fetch';
 import { act, render } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import React from 'react';
@@ -5,7 +6,9 @@ import { TestProvider } from 'test/helpers/TestProvider';
 import { byTestId } from 'testing-library-selector';
 
 import { DataSourceApi } from '@grafana/data';
+import { PromOptions, PrometheusDatasource } from '@grafana/prometheus';
 import { locationService, setDataSourceSrv } from '@grafana/runtime';
+import { backendSrv } from 'app/core/services/backend_srv';
 import { fetchRules } from 'app/features/alerting/unified/api/prometheus';
 import { fetchRulerRules } from 'app/features/alerting/unified/api/ruler';
 import * as ruleActionButtons from 'app/features/alerting/unified/components/rules/RuleActionsButtons';
@@ -13,6 +16,7 @@ import {
   MockDataSourceSrv,
   grantUserPermissions,
   mockDataSource,
+  mockFolder,
   mockPromAlertingRule,
   mockPromRuleGroup,
   mockPromRuleNamespace,
@@ -24,8 +28,6 @@ import { Annotation } from 'app/features/alerting/unified/utils/constants';
 import { DataSourceType, GRAFANA_RULES_SOURCE_NAME } from 'app/features/alerting/unified/utils/datasource';
 import { DashboardModel, PanelModel } from 'app/features/dashboard/state';
 import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
-import { PrometheusDatasource } from 'app/plugins/datasource/prometheus/datasource';
-import { PromOptions } from 'app/plugins/datasource/prometheus/types';
 import { configureStore } from 'app/store/configureStore';
 import { AccessControlAction } from 'app/types';
 import { AlertQuery } from 'app/types/unified-alerting-dto';
@@ -193,6 +195,9 @@ describe('PanelAlertTabContent', () => {
       AccessControlAction.AlertingRuleExternalRead,
       AccessControlAction.AlertingRuleExternalWrite,
     ]);
+
+    jest.spyOn(backendSrv, 'getFolderByUid').mockResolvedValue(mockFolder());
+
     mocks.getAllDataSources.mockReturnValue(Object.values(dataSources));
     const dsService = new MockDataSourceSrv(dataSources);
     dsService.datasources[dataSources.prometheus.uid] = new PrometheusDatasource(
