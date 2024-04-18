@@ -71,7 +71,7 @@ describe('Public dashboards', () => {
     cy.wait('@query');
 
     // Tag indicating a dashboard is public
-    // e2e.pages.Dashboard.DashNav.publicDashboardTag().should('exist');
+    e2e.pages.Dashboard.DashNav.publicDashboardTag().should('exist');
 
     // Open sharing modal
     e2e.components.NavToolbar.shareDashboard().click();

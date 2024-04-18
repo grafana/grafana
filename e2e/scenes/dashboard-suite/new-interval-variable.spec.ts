@@ -15,7 +15,8 @@ describe('Variables - Interval', () => {
     e2e.flows.login(Cypress.env('USERNAME'), Cypress.env('PASSWORD'));
   });
 
-  it('can add a new interval variable', () => {
+  // TODO: remove skip once https://github.com/grafana/grafana/issues/84727 is done
+  it.skip('can add a new interval variable', () => {
     e2e.flows.openDashboard({ uid: `${PAGE_UNDER_TEST}?orgId=1&editview=variables` });
     cy.contains(DASHBOARD_NAME).should('be.visible');
 

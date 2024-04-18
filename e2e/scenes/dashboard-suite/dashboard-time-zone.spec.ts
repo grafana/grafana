@@ -81,7 +81,8 @@ describe('Dashboard time zone support', () => {
     }
   });
 
-  it('Tests relative timezone support and overrides', () => {
+  // TODO: remove skip once https://github.com/grafana/grafana/issues/86420 is done
+  it.skip('Tests relative timezone support and overrides', () => {
     // Open dashboard
     e2e.flows.openDashboard({
       uid: 'd41dbaa2-a39e-4536-ab2b-caca52f1a9c8',

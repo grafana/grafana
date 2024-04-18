@@ -27,7 +27,7 @@ describe('Templating', () => {
           expect(links).to.have.length.greaterThan(13);
 
           for (let index = 0; index < links.length; index++) {
-            expect(Cypress.$(links[index]).attr('href')).contains(`var-custom=${variableValue}`);
+            expect(Cypress.$(links[index]).attr('href')).contains(variableValue);
           }
         });
     };
@@ -35,11 +35,21 @@ describe('Templating', () => {
     e2e.components.DashboardLinks.dropDown().should('be.visible').click().wait('@tagsTemplatingSearch');
 
     // verify all links, should have All value
-    verifyLinks('All');
+    verifyLinks('var-custom=p1&var-custom=p2&var-custom=p3');
 
-    e2e.pages.Dashboard.SubMenu.submenuItemValueDropDownValueLinkTexts('All').should('be.visible').click();
+    cy.get('body').click();
 
-    e2e.pages.Dashboard.SubMenu.submenuItemValueDropDownOptionTexts('p2').should('be.visible').click();
+    e2e.pages.Dashboard.SubMenu.submenuItemLabels('custom')
+      .next()
+      .should('have.text', 'All')
+      .parent()
+      .within(() => {
+        cy.get('input').click();
+      });
+
+    e2e.components.Select.option().contains('p2').click();
+
+    cy.get('body').click();
 
     e2e.components.NavToolbar.container().click();
     e2e.components.DashboardLinks.dropDown()

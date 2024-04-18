@@ -194,8 +194,10 @@ describe('Variables - Load options from Url', () => {
       .next()
       .should('have.text', 'C');
 
-    cy.get('body').click(0, 0);
+    cy.get('body').click();
 
-    e2e.components.Select.option().parent().should('have.length', 64);
+    e2e.pages.Dashboard.SubMenu.submenuItemValueDropDownValueLinkTexts('$__all')
+      .should('be.visible')
+      .should('have.length', 2);
   });
 });
