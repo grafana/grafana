@@ -244,10 +244,6 @@ func newUserStoreFake() *FakeUserStore {
 	return &FakeUserStore{}
 }
 
-func (f *FakeUserStore) Get(ctx context.Context, query *user.User) (*user.User, error) {
-	return f.ExpectedUser, f.ExpectedError
-}
-
 func (f *FakeUserStore) Insert(ctx context.Context, query *user.User) (int64, error) {
 	return 0, f.ExpectedError
 }

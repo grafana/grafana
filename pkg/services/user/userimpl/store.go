@@ -19,13 +19,12 @@ import (
 
 type store interface {
 	Insert(context.Context, *user.User) (int64, error)
-	Get(context.Context, *user.User) (*user.User, error)
 	GetByID(context.Context, int64) (*user.User, error)
+	GetByLogin(context.Context, *user.GetUserByLoginQuery) (*user.User, error)
+	GetByEmail(context.Context, *user.GetUserByEmailQuery) (*user.User, error)
 	Delete(context.Context, int64) error
 	LoginConflict(ctx context.Context, login, email string) error
 	CaseInsensitiveLoginConflict(context.Context, string, string) error
-	GetByLogin(context.Context, *user.GetUserByLoginQuery) (*user.User, error)
-	GetByEmail(context.Context, *user.GetUserByEmailQuery) (*user.User, error)
 	Update(context.Context, *user.UpdateUserCommand) error
 	UpdateLastSeenAt(context.Context, *user.UpdateUserLastSeenAtCommand) error
 	GetSignedInUser(context.Context, *user.GetSignedInUserQuery) (*user.SignedInUser, error)
@@ -82,30 +81,6 @@ func (ss *sqlStore) Insert(ctx context.Context, cmd *user.User) (int64, error) {
 		return 0, err
 	}
 	return cmd.ID, nil
-}
-
-func (ss *sqlStore) Get(ctx context.Context, usr *user.User) (*user.User, error) {
-	ret := &user.User{}
-	err := ss.db.WithDbSession(ctx, func(sess *db.Session) error {
-		// enforcement of lowercase due to forcement of caseinsensitive login
-		login := strings.ToLower(usr.Login)
-		email := strings.ToLower(usr.Email)
-		where := "email=? OR login=?"
-
-		exists, err := sess.Where(where, email, login).Get(ret)
-		if !exists {
-			return user.ErrUserNotFound
-		}
-		if err != nil {
-			return err
-		}
-		return nil
-	})
-	if err != nil {
-		return nil, err
-	}
-
-	return ret, nil
 }
 
 func (ss *sqlStore) Delete(ctx context.Context, userID int64) error {
@@ -236,12 +211,12 @@ func (ss *sqlStore) GetByEmail(ctx context.Context, query *user.GetUserByEmailQu
 // sensitive.
 func (ss *sqlStore) LoginConflict(ctx context.Context, login, email string) error {
 	err := ss.db.WithDbSession(ctx, func(sess *db.Session) error {
-		return ss.loginConflict(ctx, sess, login, email)
+		return ss.loginConflict(sess, login, email)
 	})
 	return err
 }
 
-func (ss *sqlStore) loginConflict(ctx context.Context, sess *db.Session, login, email string) error {
+func (ss *sqlStore) loginConflict(sess *db.Session, login, email string) error {
 	users := make([]user.User, 0)
 	where := "LOWER(email)=LOWER(?) OR LOWER(login)=LOWER(?)"
 	login = strings.ToLower(login)
@@ -304,7 +279,7 @@ func (ss *sqlStore) Update(ctx context.Context, cmd *user.UpdateUserCommand) err
 
 		if cmd.IsGrafanaAdmin != nil && !*cmd.IsGrafanaAdmin {
 			// validate that after update there is at least one server admin
-			if err := validateOneAdminLeft(ctx, sess); err != nil {
+			if err := validateOneAdminLeft(sess); err != nil {
 				return err
 			}
 		}
@@ -461,7 +436,7 @@ func (ss *sqlStore) CountUserAccountsWithEmptyRole(ctx context.Context) (int64, 
 }
 
 // validateOneAdminLeft validate that there is an admin user left
-func validateOneAdminLeft(ctx context.Context, sess *db.Session) error {
+func validateOneAdminLeft(sess *db.Session) error {
 	count, err := sess.Where("is_admin=?", true).Count(&user.User{})
 	if err != nil {
 		return err

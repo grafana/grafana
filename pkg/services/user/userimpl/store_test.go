@@ -27,81 +27,6 @@ func TestMain(m *testing.M) {
 	testsuite.Run(m)
 }
 
-func TestIntegrationUserGet(t *testing.T) {
-	testCases := []struct {
-		name        string
-		wantErr     error
-		searchLogin string
-		searchEmail string
-	}{
-		{
-			name:        "user found non exact",
-			wantErr:     nil,
-			searchLogin: "test",
-			searchEmail: "Test@email.com",
-		},
-		{
-			name:        "user found exact",
-			wantErr:     nil,
-			searchLogin: "test",
-			searchEmail: "test@email.com",
-		},
-		{
-			name:        "user found exact - case insensitive",
-			wantErr:     nil,
-			searchLogin: "Test",
-			searchEmail: "Test@email.com",
-		},
-		{
-			name:        "user not found - case insensitive",
-			wantErr:     user.ErrUserNotFound,
-			searchLogin: "Test_login",
-			searchEmail: "Test*@email.com",
-		},
-	}
-
-	if testing.Short() {
-		t.Skip("skipping integration test")
-	}
-
-	ss, cfg := db.InitTestDBWithCfg(t)
-	userStore := ProvideStore(ss, cfg)
-
-	_, errUser := userStore.Insert(context.Background(),
-		&user.User{
-			Email:   "test@email.com",
-			Name:    "test",
-			Login:   "test",
-			Created: time.Now(),
-			Updated: time.Now(),
-		},
-	)
-	require.NoError(t, errUser)
-
-	for _, tc := range testCases {
-		t.Run(tc.name, func(t *testing.T) {
-			if db.IsTestDbMySQL() {
-				t.Skip("mysql is always case insensitive")
-			}
-			usr, err := userStore.Get(context.Background(),
-				&user.User{
-					Email: tc.searchEmail,
-					Login: tc.searchLogin,
-				},
-			)
-
-			if tc.wantErr != nil {
-				require.Error(t, err)
-				require.Nil(t, usr)
-			} else {
-				require.NoError(t, err)
-				require.NotNil(t, usr)
-				require.NotEmpty(t, usr.UID)
-			}
-		})
-	}
-}
-
 func TestIntegrationUserDataAccess(t *testing.T) {
 	if testing.Short() {
 		t.Skip("skipping integration test")
@@ -120,12 +45,8 @@ func TestIntegrationUserDataAccess(t *testing.T) {
 	}
 
 	t.Run("user not found", func(t *testing.T) {
-		_, err := userStore.Get(context.Background(),
-			&user.User{
-				Email: "test@email.com",
-				Name:  "test1",
-				Login: "test1",
-			},
+		_, err := userStore.GetByEmail(context.Background(),
+			&user.GetUserByEmailQuery{Email: "test@email.com"},
 		)
 		require.Error(t, err, user.ErrUserNotFound)
 	})
@@ -139,6 +60,13 @@ func TestIntegrationUserDataAccess(t *testing.T) {
 				Created: time.Now(),
 				Updated: time.Now(),
 			},
+		)
+		require.NoError(t, err)
+	})
+
+	t.Run("get user", func(t *testing.T) {
+		_, err := userStore.GetByEmail(context.Background(),
+			&user.GetUserByEmailQuery{Email: "test@email.com"},
 		)
 		require.NoError(t, err)
 	})
@@ -167,17 +95,6 @@ func TestIntegrationUserDataAccess(t *testing.T) {
 		})
 		require.NoError(t, err)
 		require.Equal(t, "abcd", siu.UserUID)
-	})
-
-	t.Run("get user", func(t *testing.T) {
-		_, err := userStore.Get(context.Background(),
-			&user.User{
-				Email: "test@email.com",
-				Name:  "test1",
-				Login: "test1",
-			},
-		)
-		require.NoError(t, err)
 	})
 
 	t.Run("Testing DB - creates and loads user", func(t *testing.T) {
