@@ -4,9 +4,15 @@ import React from 'react';
 import { renderRuleEditor, ui } from 'test/helpers/alertingRuleEditor';
 import { clickSelectOption } from 'test/helpers/selectOptionInTest';
 import { byRole } from 'testing-library-selector';
+import 'whatwg-fetch';
 
 import { setDataSourceSrv } from '@grafana/runtime';
 import { contextSrv } from 'app/core/services/context_srv';
+import { mockApi, setupMswServer } from 'app/features/alerting/unified/mockApi';
+import {
+  defaultAlertmanagerChoiceResponse,
+  mockAlertmanagerChoiceResponse,
+} from 'app/features/alerting/unified/mocks/alertmanagerApi';
 import { DashboardSearchHit, DashboardSearchItemType } from 'app/features/search/types';
 import { AccessControlAction } from 'app/types';
 import { GrafanaAlertStateDecision, PromApplication } from 'app/types/unified-alerting-dto';
@@ -61,8 +67,12 @@ const mocks = {
   },
 };
 
+const server = setupMswServer();
+
 describe('RuleEditor grafana managed rules', () => {
   beforeEach(() => {
+    mockApi(server).eval({ results: {} });
+    mockAlertmanagerChoiceResponse(server, defaultAlertmanagerChoiceResponse);
     jest.clearAllMocks();
     contextSrv.isEditor = true;
     contextSrv.hasEditPermissionInFolders = true;
