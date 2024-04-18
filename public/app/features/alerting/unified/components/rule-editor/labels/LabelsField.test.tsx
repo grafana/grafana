@@ -2,10 +2,9 @@ import { render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import React from 'react';
 import { FormProvider, useForm } from 'react-hook-form';
-import { Provider } from 'react-redux';
+import { TestProvider } from 'test/helpers/TestProvider';
 
 import { clearPluginSettingsCache } from 'app/features/plugins/pluginSettings';
-import { configureStore } from 'app/store/configureStore';
 
 import { mockAlertRuleApi, mockApi, setupMswServer } from '../../../mockApi';
 import { getGrafanaRule, labelsPluginMetaMock } from '../../../mocks';
@@ -28,24 +27,20 @@ const SubFormProviderWrapper = ({ children }: React.PropsWithChildren<{}>) => {
 };
 
 function renderAlertLabels() {
-  const store = configureStore({});
-
   render(
-    <Provider store={store}>
+    <FormProviderWrapper>
       <LabelsField />
-    </Provider>,
-    { wrapper: FormProviderWrapper }
+    </FormProviderWrapper>,
+    { wrapper: TestProvider }
   );
 }
 
 function renderLabelsWithSuggestions() {
-  const store = configureStore({});
-
   render(
-    <Provider store={store}>
+    <SubFormProviderWrapper>
       <LabelsWithSuggestions dataSourceName="grafana" />
-    </Provider>,
-    { wrapper: SubFormProviderWrapper }
+    </SubFormProviderWrapper>,
+    { wrapper: TestProvider }
   );
 }
 

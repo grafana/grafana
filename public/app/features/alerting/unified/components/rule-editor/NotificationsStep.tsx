@@ -32,10 +32,6 @@ export const NotificationsStep = ({ alertUid }: NotificationsStepProps) => {
   const [type] = watch(['type', 'labels', 'queries', 'condition', 'folder', 'name', 'manualRouting']);
   const [showLabelsEditor, setShowLabelsEditor] = useState(false);
 
-  function onEditClick() {
-    setShowLabelsEditor(true);
-  }
-
   const dataSourceName = watch('dataSourceName') ?? GRAFANA_RULES_SOURCE_NAME;
   const simplifiedRoutingToggleEnabled = config.featureToggles.alertingSimplifiedRouting ?? false;
   const shouldRenderpreview = type === RuleFormType.grafana;
@@ -62,14 +58,12 @@ export const NotificationsStep = ({ alertUid }: NotificationsStepProps) => {
       }
       fullWidth
     >
-      <LabelsFieldInForm onEditClick={onEditClick} />
-      {showLabelsEditor && (
-        <LabelsEditorModal
-          isOpen={showLabelsEditor}
-          onClose={() => setShowLabelsEditor(false)}
-          dataSourceName={dataSourceName}
-        />
-      )}
+      <LabelsFieldInForm onEditClick={() => setShowLabelsEditor(true)} />
+      <LabelsEditorModal
+        isOpen={showLabelsEditor}
+        onClose={() => setShowLabelsEditor(false)}
+        dataSourceName={dataSourceName}
+      />
       {shouldAllowSimplifiedRouting && (
         <div className={styles.configureNotifications}>
           <Text element="h5">Notifications</Text>
