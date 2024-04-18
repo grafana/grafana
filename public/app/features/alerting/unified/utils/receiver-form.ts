@@ -1,4 +1,3 @@
-import { produce } from 'immer';
 import { isArray, omit, pick, isNil, omitBy } from 'lodash';
 
 import {
@@ -306,5 +305,8 @@ export function omitTemporaryIdentifiers<T>(object: Readonly<T>): T {
     }
   }
 
-  return produce(object, (draft) => omitIdentifiers(draft));
+  const objectCopy = structuredClone(object);
+  omitIdentifiers(objectCopy);
+
+  return objectCopy;
 }
