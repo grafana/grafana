@@ -508,6 +508,22 @@ describe('InfluxDataSource Frontend Mode', () => {
         const expectation = `(\\/special\\/path|\\/some\\/other\\/path)`;
         expect(result).toBe(expectation);
       });
+
+      it('should return floating point number as it is', () => {
+        const variableMock = queryBuilder()
+          .withId('tempVar')
+          .withName('tempVar')
+          .withMulti(false)
+          .withOptions({
+            text: `1.0`,
+            value: `1.0`,
+          })
+          .build();
+        const value = `1.0`;
+        const result = ds.interpolateQueryExpr(value, variableMock, `select value / $tempVar from /^measurement$/`);
+        const expectation = `1.0`;
+        expect(result).toBe(expectation);
+      });
     });
   });
 });
