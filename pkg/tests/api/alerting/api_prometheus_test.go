@@ -668,7 +668,7 @@ func TestIntegrationPrometheusRulesPermissions(t *testing.T) {
 
 	apiClient := newAlertingApiClient(grafanaListedAddr, "grafana", "password")
 
-	asService := resourcepermissions.NewActionSetService(env.Cfg.Logger)
+	asService := resourcepermissions.NewActionSetService()
 	// access control permissions store
 	permissionsStore := resourcepermissions.NewStore(env.SQLStore, featuremgmt.WithFeatures(), &asService)
 
