@@ -18,14 +18,14 @@ import (
 	"github.com/grafana/grafana/pkg/util"
 )
 
-func NewStore(sql db.DB, features featuremgmt.FeatureToggles, inMemoryActionSets *InMemoryActionSets) *store {
-	return &store{sql, features, *inMemoryActionSets}
+func NewStore(sql db.DB, features featuremgmt.FeatureToggles, actionsetService *ActionSetService) *store {
+	return &store{sql, features, *actionsetService}
 }
 
 type store struct {
-	sql                db.DB
-	features           featuremgmt.FeatureToggles
-	inMemoryActionSets InMemoryActionSets
+	sql              db.DB
+	features         featuremgmt.FeatureToggles
+	actionSetService ActionSetService
 }
 
 type flatResourcePermission struct {
@@ -679,7 +679,7 @@ func (s *store) createPermissions(sess *db.Session, roleID int64, resource, reso
 	*/
 	if s.features.IsEnabled(context.TODO(), featuremgmt.FlagAccessActionSets) {
 		// FIXME: make this only one resource of view, editor, admin
-		actionSetName, err := s.inMemoryActionSets.CreateActionSetName(resource, permission)
+		actionSetName, err := s.actionSetService.GetActionSetName(resource, permission)
 		if err != nil {
 			return err
 		}
@@ -739,29 +739,42 @@ actionSet := &ActionSet{
 	Actions:    []string{"folders:read", "folders:write", "dashboards:read", "dashboards:write"},
 }`
 */
+
+type ActionSetGetter interface {
+	GetActionSet(actionName string) []string
+	GetActionSetName(resource, permission string) (string, error)
+}
+
+type ActionSetStorer interface {
+	StoreActionSet(resource, permission string, actions []string) error
+}
+
+type ActionSetService interface {
+	ActionSetGetter
+	ActionSetStorer
+}
+
 type ActionSet struct {
-	Action     string   `json:"action"`
-	Resource   string   `json:"resource"`
-	Permission string   `json:"permission"`
-	Actions    []string `json:"actions"`
+	Action  string   `json:"action"`
+	Actions []string `json:"actions"`
 }
 
 // InMemoryActionSets is an in-memory implementation of the ActionSetService.
 type InMemoryActionSets struct {
 	log        log.Logger
-	actionSets map[string]*ActionSet
+	actionSets map[string][]string
 }
 
 // NewInMemoryActionSets returns a new instance of InMemoryActionSetService.
-func NewInMemoryActionSets(log log.Logger) *InMemoryActionSets {
+func NewInMemoryActionSets(log log.Logger) ActionSetService {
 	return &InMemoryActionSets{
-		actionSets: make(map[string]*ActionSet),
+		actionSets: make(map[string][]string),
 		log:        log,
 	}
 }
 
 // GetActionSet returns the action set for the given action.
-func (s *InMemoryActionSets) GetActionSet(actionName string) *ActionSet {
+func (s *InMemoryActionSets) GetActionSet(actionName string) []string {
 	actionSet, ok := s.actionSets[actionName]
 	if !ok {
 		return nil
@@ -769,26 +782,25 @@ func (s *InMemoryActionSets) GetActionSet(actionName string) *ActionSet {
 	return actionSet
 }
 
-func (s *InMemoryActionSets) StoreActionSet(resource, permission string, actions []string) {
+func (s *InMemoryActionSets) StoreActionSet(resource, permission string, actions []string) error {
 	s.log.Debug("storing action set\n")
-	name, err := s.CreateActionSetName(resource, permission)
+	name, err := s.GetActionSetName(resource, permission)
 	if err != nil {
-		s.log.Error("error creating action set", "error", err)
+		return err
 	}
 	actionSet := &ActionSet{
 		// folders:edit
-		Action:     name,
-		Resource:   resource,
-		Permission: permission,
-		Actions:    actions,
+		Action:  name,
+		Actions: actions,
 	}
 	// TODO: Do we only store the actions, or all of the information about the action set
-	s.actionSets[actionSet.Action] = actionSet
+	s.actionSets[actionSet.Action] = actions
 	s.log.Debug("stored action set actionname \n", actionSet.Action)
+	return nil
 }
 
-// CreateActionSetName function creates an action set from a list of actions and stores it inmemory.
-func (s *InMemoryActionSets) CreateActionSetName(resource, permission string) (string, error) {
+// GetActionSetName function creates an action set from a list of actions and stores it inmemory.
+func (s *InMemoryActionSets) GetActionSetName(resource, permission string) (string, error) {
 	// lower cased
 	resource = strings.ToLower(resource)
 	permission = strings.ToLower(permission)

@@ -59,7 +59,8 @@ func New(cfg *setting.Cfg,
 	ac accesscontrol.AccessControl, service accesscontrol.Service, sqlStore db.DB,
 	teamService team.Service, userService user.Service,
 ) (*Service, error) {
-	// TODO: add log, actionsetstore as a dependency
+	// TODO: add log as a dependency
+	// TODO: add actionsetstore from wire
 	log := log.New("accesscontrol.resourcepermissions")
 	actionSetsStore := NewInMemoryActionSets(log)
 
@@ -71,7 +72,11 @@ func New(cfg *setting.Cfg,
 			actionSet[a] = struct{}{}
 		}
 		// storing the actionset
-		actionSetsStore.StoreActionSet(options.Resource, permission, actions)
+		err := actionSetsStore.StoreActionSet(options.Resource, permission, actions)
+		if err != nil {
+			log.Warn("failed to store action set", "error", err)
+			return nil, err
+		}
 	}
 
 	// Sort all permissions based on action length. Will be used when mapping between actions to permissions
@@ -86,7 +91,7 @@ func New(cfg *setting.Cfg,
 
 	s := &Service{
 		ac:          ac,
-		store:       NewStore(sqlStore, features, actionSetsStore),
+		store:       NewStore(sqlStore, features, &actionSetsStore),
 		options:     options,
 		license:     license,
 		permissions: permissions,

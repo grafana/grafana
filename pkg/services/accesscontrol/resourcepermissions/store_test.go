@@ -561,7 +561,8 @@ func seedResourcePermissions(
 func setupTestEnv(t testing.TB) (*store, db.DB, *setting.Cfg) {
 	sql := db.InitTestDB(t)
 	log := log.New("test")
-	return NewStore(sql, featuremgmt.WithFeatures(), NewInMemoryActionSets(log)), sql, sql.Cfg
+	asService := NewInMemoryActionSets(log)
+	return NewStore(sql, featuremgmt.WithFeatures(), &asService), sql, sql.Cfg
 }
 
 func TestStore_IsInherited(t *testing.T) {
@@ -773,9 +774,7 @@ func TestStore_ResourcePermissionsActionSets(t *testing.T) {
 			desc:  "should be able to store actionset",
 			orgID: 1,
 			actionSet: ActionSet{
-				Resource:   "folders",
-				Permission: "edit",
-				Actions:    []string{"folders:read", "folders:write"},
+				Actions: []string{"folders:read", "folders:write"},
 			},
 		},
 	}
@@ -790,18 +789,18 @@ func TestStore_ResourcePermissionsActionSets(t *testing.T) {
 					User: accesscontrol.User{ID: 1},
 					SetResourcePermissionCommand: SetResourcePermissionCommand{
 						Actions:           tt.actionSet.Actions,
-						Resource:          tt.actionSet.Resource,
+						Resource:          "folders",
+						Permission:        "edit",
 						ResourceID:        "1",
 						ResourceAttribute: "uid",
-						Permission:        tt.actionSet.Permission,
 					},
 				},
 			}, ResourceHooks{})
 			require.NoError(t, err)
 
-			actionname := fmt.Sprintf("%s:%s", tt.actionSet.Resource, tt.actionSet.Permission)
-			actionSet := store.inMemoryActionSets.GetActionSet(actionname)
-			require.Equal(t, tt.actionSet.Actions, actionSet.Actions)
+			actionname := fmt.Sprintf("%s:%s", "folders", "edit")
+			actionSet := store.actionSetService.GetActionSet(actionname)
+			require.Equal(t, tt.actionSet.Actions, actionSet)
 		})
 	}
 }
