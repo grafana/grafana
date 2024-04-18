@@ -32,13 +32,24 @@ To manage folder permissions, complete the following steps.
 
 1. In the left-side menu, click **Dashboards**.
 1. Choose the folder you want to add permissions for.
-1. Click **Manage permissions** from the Folder actions menu.
-1. Update or add permissions as required.
+
+{{< admonition type="note" >}}It doesn’t matter which tab you’re on (Dashboards, Panels, or Alert rules); the folder permission you set applies to all.{{< /admonition >}}
+
+2. Click **Manage permissions** from the Folder actions menu.
+3. Update or add permissions as required.
 
 ## Data source permissions
 
+By default, users with the basic roles Admin, Editor, and Viewer roles have query access to data sources for Grafana Alerting.
+
+If you used fixed roles or custom roles, you need to update data source permissions.
+
+Alternatively, an admin can assign the role **Datasource Reader**,  which grants the user access to all data sources.
+
 To manage data source permissions, complete the following steps.
 
-1. On the data source permissions page, grant the user access to the data source.
+1. In the left-side menu, click **Connections** > **Data sources**.
+1. Click the data source you want to change the permissions for.
+1. Click the **Permissions** tab.
+1. In the **Permission column**, update the permission or remove it by clicking **X**.
 
-1. Alternatively, an admin can assign the role **Datasource Reader** which grants the user access to all data sources.
