@@ -111,7 +111,12 @@ function EmptyVariablesList({ onAdd }: { onAdd: () => void }): ReactElement {
       <EmptyState
         variant="call-to-action"
         button={
-          <Button icon="calculator-alt" onClick={onAdd} size="lg">
+          <Button
+            data-testid={selectors.components.CallToActionCard.buttonV2('Add variable')}
+            icon="calculator-alt"
+            onClick={onAdd}
+            size="lg"
+          >
             <Trans i18nKey="variables.empty-state.button-title">Add variable</Trans>
           </Button>
         }

@@ -122,7 +122,12 @@ export const AnnotationSettingsList = ({ dashboard, onNew, onEdit }: Props) => {
           <EmptyState
             variant="call-to-action"
             button={
-              <Button icon="comment-alt" onClick={onNew} size="lg">
+              <Button
+                data-testid={selectors.components.CallToActionCard.buttonV2('Add annotation query')}
+                icon="comment-alt"
+                onClick={onNew}
+                size="lg"
+              >
                 <Trans i18nKey="annotations.empty-state.button-title">Add annotation query</Trans>
               </Button>
             }
