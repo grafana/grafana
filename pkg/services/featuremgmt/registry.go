@@ -780,7 +780,7 @@ var (
 		},
 		{
 			Name:            "queryService",
-			Description:     "Adds the query api service -- will replace /ds/query",
+			Description:     "Register /apis/query.grafana.app/ -- will eventually replace /api/ds/query",
 			Stage:           FeatureStageExperimental,
 			Owner:           grafanaAppPlatformSquad,
 			RequiresRestart: true, // Adds a route at startup

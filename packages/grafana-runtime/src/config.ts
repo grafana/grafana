@@ -253,7 +253,9 @@ function overrideFeatureTogglesFromUrl(config: GrafanaBootConfig) {
     return;
   }
 
-  const migrationFeatureFlags = new Set([
+  // Although most flags can not be changed from the URL, some of them are safe (and useful!)
+  // to change dynamically from the browser URL
+  const safeRuntimeFeatureFlags = new Set([
     'autoMigrateOldPanels',
     'autoMigrateGraphPanel',
     'autoMigrateTablePanel',
@@ -261,6 +263,7 @@ function overrideFeatureTogglesFromUrl(config: GrafanaBootConfig) {
     'autoMigrateWorldmapPanel',
     'autoMigrateStatPanel',
     'disableAngular',
+    'queryServiceFromUI'
   ]);
 
   const params = new URLSearchParams(window.location.search);
@@ -270,7 +273,7 @@ function overrideFeatureTogglesFromUrl(config: GrafanaBootConfig) {
       const featureName = key.substring(10);
 
       // skip the migration feature flags
-      if (migrationFeatureFlags.has(featureName)) {
+      if (!safeRuntimeFeatureFlags.has(featureName)) {
         return;
       }
 
