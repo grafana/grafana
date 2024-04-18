@@ -5,7 +5,7 @@ import { DragDropContext, Droppable, DropResult } from 'react-beautiful-dnd';
 import { selectors } from '@grafana/e2e-selectors';
 import { reportInteraction } from '@grafana/runtime';
 import { SceneVariable, SceneVariableState } from '@grafana/scenes';
-import { useStyles2, Stack, Button, EmptyState, Alert, TextLink } from '@grafana/ui';
+import { useStyles2, Stack, Button, EmptyState, TextLink } from '@grafana/ui';
 import { t, Trans } from 'app/core/internationalization';
 
 import { VariableEditorListRow } from './VariableEditorListRow';
@@ -112,8 +112,7 @@ function EmptyVariablesList({ onAdd }: { onAdd: () => void }): ReactElement {
           </Button>
         }
         message={t('variables.empty-state.title', 'There are no variables added yet')}
-      />
-      <Alert severity="info" title={t('variables.empty-state.info-box-title', 'What do variables do?')}>
+      >
         <p>
           <Trans i18nKey="variables.empty-state.info-box-content">
             Variables enable more interactive and dynamic dashboards. Instead of hard-coding things like server or
@@ -129,7 +128,7 @@ function EmptyVariablesList({ onAdd }: { onAdd: () => void }): ReactElement {
           </TextLink>{' '}
           for more information.
         </Trans>
-      </Alert>
+      </EmptyState>
     </Stack>
   );
 }

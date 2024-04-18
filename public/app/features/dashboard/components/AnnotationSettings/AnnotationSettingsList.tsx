@@ -4,17 +4,7 @@ import React, { useState } from 'react';
 import { arrayUtils, AnnotationQuery } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { getDataSourceSrv } from '@grafana/runtime';
-import {
-  Alert,
-  Button,
-  DeleteButton,
-  EmptyState,
-  IconButton,
-  Stack,
-  TextLink,
-  useStyles2,
-  VerticalGroup,
-} from '@grafana/ui';
+import { Button, DeleteButton, EmptyState, IconButton, Stack, TextLink, useStyles2, VerticalGroup } from '@grafana/ui';
 import { Trans, t } from 'app/core/internationalization';
 
 import { DashboardModel } from '../../state/DashboardModel';
@@ -132,8 +122,7 @@ export const AnnotationSettingsList = ({ dashboard, onNew, onEdit }: Props) => {
               </Button>
             }
             message={t('annotations.empty-state.title', 'There are no custom annotation queries added yet')}
-          />
-          <Alert severity="info" title={t('annotations.empty-state.info-box-title', 'What are annotation queries?')}>
+          >
             <Trans i18nKey="annotations.empty-state.info-box-content">
               <p>
                 Annotations provide a way to integrate event data into your graphs. They are visualized as vertical
@@ -149,7 +138,7 @@ export const AnnotationSettingsList = ({ dashboard, onNew, onEdit }: Props) => {
               </TextLink>{' '}
               for more information.
             </Trans>
-          </Alert>
+          </EmptyState>
         </Stack>
       )}
       {!showEmptyListCTA && (

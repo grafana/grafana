@@ -4,7 +4,6 @@ import React from 'react';
 import { GrafanaTheme2 } from '@grafana/data';
 import { DashboardLink } from '@grafana/schema';
 import {
-  Alert,
   Button,
   DeleteButton,
   EmptyState,
@@ -49,10 +48,9 @@ export function DashboardLinkList({
             </Button>
           }
           message={t('dashboard-links.empty-state.title', 'There are no dashboard links added yet')}
-        />
-        <Alert severity="info" title={t('dashboard-links.empty-state.info-box-title', 'What are dashboard links?')}>
+        >
           <Trans i18nKey="dashboard-links.empty-state.info-box-content">
-            Dashboard Links allow you to place links to other dashboards and web sites directly below the dashboard
+            Dashboard links allow you to place links to other dashboards and web sites directly below the dashboard
             header.{' '}
             <TextLink
               external
@@ -61,7 +59,7 @@ export function DashboardLinkList({
               Learn more
             </TextLink>
           </Trans>
-        </Alert>
+        </EmptyState>
       </Stack>
     );
   }
