@@ -63,7 +63,7 @@ func (r CloudMigrationRun) ToResponse() (*MigrateDataResponseDTO, error) {
 	if err != nil {
 		return nil, errors.New("could not parse result of run")
 	}
-	result.RunID = r.ID
+	result.RunUID = r.UID
 	return &result, nil
 }
 
@@ -83,7 +83,7 @@ type CloudMigrationRequest struct {
 }
 
 type CloudMigrationResponse struct {
-	ID      int64     `json:"id"`
+	UID     string    `json:"uid"`
 	Stack   string    `json:"stack"`
 	Created time.Time `json:"created"`
 	Updated time.Time `json:"updated"`
@@ -174,8 +174,8 @@ const (
 )
 
 type MigrateDataResponseDTO struct {
-	RunID int64                        `json:"id"`
-	Items []MigrateDataResponseItemDTO `json:"items"`
+	RunUID string                       `json:"uid"`
+	Items  []MigrateDataResponseItemDTO `json:"items"`
 }
 
 type MigrateDataResponseItemDTO struct {
