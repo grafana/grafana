@@ -3,6 +3,7 @@ package sync
 import (
 	"context"
 	"errors"
+	"strings"
 	"time"
 
 	"golang.org/x/sync/singleflight"
@@ -39,8 +40,13 @@ func (s *OAuthTokenSync) SyncOauthTokenHook(ctx context.Context, identity *authn
 		return nil
 	}
 
-	// not authenticated through session tokens, so we can skip this hook
+	// Not authenticated through session tokens, so we can skip this hook.
 	if identity.SessionToken == nil {
+		return nil
+	}
+
+	// Not authenticated with a oauth provider, so we can skip this hook.
+	if !strings.HasPrefix(identity.GetAuthenticatedBy(), "oauth") {
 		return nil
 	}
 

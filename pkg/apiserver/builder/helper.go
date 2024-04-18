@@ -76,7 +76,7 @@ func SetupConfig(
 
 		handler := genericapiserver.DefaultBuildHandlerChain(requestHandler, c)
 		handler = filters.WithAcceptHeader(handler)
-		handler = k8stracing.WithTracing(handler, serverConfig.TracerProvider, "grafana-apiserver")
+		handler = k8stracing.WithTracing(handler, serverConfig.TracerProvider, "KubernetesAPI")
 
 		return handler
 	}

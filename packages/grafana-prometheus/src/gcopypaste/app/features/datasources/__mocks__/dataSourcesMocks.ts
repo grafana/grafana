@@ -1,3 +1,4 @@
+// Core Grafana history https://github.com/grafana/grafana/blob/v11.0.0-preview/public/app/features/datasources/__mocks__/dataSourcesMocks.ts
 import { merge } from 'lodash';
 
 import { DataSourceJsonData, DataSourceSettings } from '@grafana/data';
