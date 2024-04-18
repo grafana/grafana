@@ -1,4 +1,5 @@
 import userEvent from '@testing-library/user-event';
+import { KBarProvider } from 'kbar';
 import React, { ReactNode } from 'react';
 import { getGrafanaContextMock } from 'test/mocks/getGrafanaContextMock';
 import { render, screen, waitFor, act } from 'test/test-utils';
@@ -60,9 +61,11 @@ const setup = (children: ReactNode) => {
   const context = getGrafanaContextMock();
 
   const renderResult = render(
-    <AppChrome>
-      <div data-testid="page-children">{children}</div>
-    </AppChrome>
+    <KBarProvider>
+      <AppChrome>
+        <div data-testid="page-children">{children}</div>
+      </AppChrome>
+    </KBarProvider>
   );
 
   return { renderResult, context };

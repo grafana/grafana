@@ -1,3 +1,4 @@
+import { KBarProvider } from 'kbar';
 import React from 'react';
 import { match } from 'react-router-dom';
 import { useEffectOnce } from 'react-use';
@@ -187,9 +188,11 @@ describe('DashboardPage', () => {
       };
 
       render(
-        <AppChrome>
-          <UnthemedDashboardPage {...props} />
-        </AppChrome>
+        <KBarProvider>
+          <AppChrome>
+            <UnthemedDashboardPage {...props} />
+          </AppChrome>
+        </KBarProvider>
       );
 
       await screen.findByText('My dashboard');
