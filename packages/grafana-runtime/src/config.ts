@@ -263,7 +263,7 @@ function overrideFeatureTogglesFromUrl(config: GrafanaBootConfig) {
     'autoMigrateWorldmapPanel',
     'autoMigrateStatPanel',
     'disableAngular',
-    'queryServiceFromUI'
+    'queryServiceFromUI',
   ]);
 
   const params = new URLSearchParams(window.location.search);
