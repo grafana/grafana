@@ -296,10 +296,6 @@ func (f *FakeUserStore) GetProfile(ctx context.Context, query *user.GetUserProfi
 	return f.ExpectedUserProfile, f.ExpectedError
 }
 
-func (f *FakeUserStore) SetHelpFlag(ctx context.Context, cmd *user.SetUserHelpFlagCommand) error {
-	return f.ExpectedError
-}
-
 func (f *FakeUserStore) BatchDisableUsers(ctx context.Context, cmd *user.BatchDisableUsersCommand) error {
 	return f.ExpectedError
 }

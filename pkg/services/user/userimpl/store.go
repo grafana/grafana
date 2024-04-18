@@ -31,7 +31,6 @@ type store interface {
 	UpdateLastSeenAt(context.Context, *user.UpdateUserLastSeenAtCommand) error
 	GetSignedInUser(context.Context, *user.GetSignedInUserQuery) (*user.SignedInUser, error)
 	GetProfile(context.Context, *user.GetUserProfileQuery) (*user.UserProfileDTO, error)
-	SetHelpFlag(context.Context, *user.SetUserHelpFlagCommand) error
 	BatchDisableUsers(context.Context, *user.BatchDisableUsersCommand) error
 	Search(context.Context, *user.SearchUsersQuery) (*user.SearchUserQueryResult, error)
 	Count(ctx context.Context) (int64, error)
@@ -288,40 +287,44 @@ func (ss *sqlStore) Update(ctx context.Context, cmd *user.UpdateUserCommand) err
 	cmd.Email = strings.ToLower(cmd.Email)
 
 	return ss.db.WithTransactionalDbSession(ctx, func(sess *db.Session) error {
-		user := user.User{
+		usr := user.User{
 			Name:    cmd.Name,
+			Theme:   cmd.Theme,
 			Email:   strings.ToLower(cmd.Email),
 			Login:   strings.ToLower(cmd.Login),
-			Theme:   cmd.Theme,
 			Updated: time.Now(),
 		}
 
 		q := sess.ID(cmd.UserID).Where(ss.notServiceAccountFilter())
 
 		if cmd.OrgID != nil {
-			user.OrgID = *cmd.OrgID
+			usr.OrgID = *cmd.OrgID
 		}
 
 		if cmd.Password != nil {
-			user.Password = *cmd.Password
+			usr.Password = *cmd.Password
 		}
 
 		if cmd.IsDisabled != nil {
-			sess.UseBool("is_disabled")
-			user.IsDisabled = *cmd.IsDisabled
+			q = q.UseBool("is_disabled")
+			usr.IsDisabled = *cmd.IsDisabled
 		}
 
 		if cmd.EmailVerified != nil {
-			q.UseBool("email_verified")
-			user.EmailVerified = *cmd.EmailVerified
+			q = q.UseBool("email_verified")
+			usr.EmailVerified = *cmd.EmailVerified
 		}
 
 		if cmd.IsGrafanaAdmin != nil {
-			q.UseBool("is_admin")
-			user.IsAdmin = *cmd.IsGrafanaAdmin
+			q = q.UseBool("is_admin")
+			usr.IsAdmin = *cmd.IsGrafanaAdmin
 		}
 
-		if _, err := q.Update(&user); err != nil {
+		if cmd.HelpFlags1 != nil {
+			usr.HelpFlags1 = *cmd.HelpFlags1
+		}
+
+		if _, err := q.Update(&usr); err != nil {
 			return err
 		}
 
@@ -333,11 +336,11 @@ func (ss *sqlStore) Update(ctx context.Context, cmd *user.UpdateUserCommand) err
 		}
 
 		sess.PublishAfterCommit(&events.UserUpdated{
-			Timestamp: user.Created,
-			Id:        user.ID,
-			Name:      user.Name,
-			Login:     user.Login,
-			Email:     user.Email,
+			Timestamp: usr.Created,
+			Id:        usr.ID,
+			Name:      usr.Name,
+			Login:     usr.Login,
+			Email:     usr.Email,
 		})
 
 		return nil
@@ -444,19 +447,6 @@ func (ss *sqlStore) GetProfile(ctx context.Context, query *user.GetUserProfileQu
 		return err
 	})
 	return &userProfile, err
-}
-
-func (ss *sqlStore) SetHelpFlag(ctx context.Context, cmd *user.SetUserHelpFlagCommand) error {
-	return ss.db.WithTransactionalDbSession(ctx, func(sess *db.Session) error {
-		user := user.User{
-			ID:         cmd.UserID,
-			HelpFlags1: cmd.HelpFlags1,
-			Updated:    time.Now(),
-		}
-
-		_, err := sess.ID(cmd.UserID).Cols("help_flags1").Update(&user)
-		return err
-	})
 }
 
 func (ss *sqlStore) Count(ctx context.Context) (int64, error) {

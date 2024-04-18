@@ -100,10 +100,6 @@ func (f *FakeUserService) BatchDisableUsers(ctx context.Context, cmd *user.Batch
 	return f.ExpectedError
 }
 
-func (f *FakeUserService) SetUserHelpFlag(ctx context.Context, cmd *user.SetUserHelpFlagCommand) error {
-	return f.ExpectedError
-}
-
 func (f *FakeUserService) GetProfile(ctx context.Context, query *user.GetUserProfileQuery) (*user.UserProfileDTO, error) {
 	if f.ExpectedUserProfileDTO != nil {
 		return f.ExpectedUserProfileDTO, f.ExpectedError

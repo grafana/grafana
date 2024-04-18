@@ -601,16 +601,11 @@ func (hs *HTTPServer) SetHelpFlag(c *contextmodel.ReqContext) response.Response 
 	bitmask := &usr.HelpFlags1
 	bitmask.AddFlag(user.HelpFlags1(flag))
 
-	cmd := user.SetUserHelpFlagCommand{
-		UserID:     userID,
-		HelpFlags1: *bitmask,
-	}
-
-	if err := hs.userService.SetUserHelpFlag(c.Req.Context(), &cmd); err != nil {
+	if err := hs.userService.Update(c.Req.Context(), &user.UpdateUserCommand{UserID: userID, HelpFlags1: bitmask}); err != nil {
 		return response.Error(http.StatusInternalServerError, "Failed to update help flag", err)
 	}
 
-	return response.JSON(http.StatusOK, &util.DynMap{"message": "Help flag set", "helpFlags1": cmd.HelpFlags1})
+	return response.JSON(http.StatusOK, &util.DynMap{"message": "Help flag set", "helpFlags1": *bitmask})
 }
 
 // swagger:route GET /user/helpflags/clear signed_in_user clearHelpFlags
@@ -628,16 +623,12 @@ func (hs *HTTPServer) ClearHelpFlags(c *contextmodel.ReqContext) response.Respon
 		return errResponse
 	}
 
-	cmd := user.SetUserHelpFlagCommand{
-		UserID:     userID,
-		HelpFlags1: user.HelpFlags1(0),
-	}
-
-	if err := hs.userService.SetUserHelpFlag(c.Req.Context(), &cmd); err != nil {
+	flags := user.HelpFlags1(0)
+	if err := hs.userService.Update(c.Req.Context(), &user.UpdateUserCommand{UserID: userID, HelpFlags1: &flags}); err != nil {
 		return response.Error(http.StatusInternalServerError, "Failed to update help flag", err)
 	}
 
-	return response.JSON(http.StatusOK, &util.DynMap{"message": "Help flag set", "helpFlags1": cmd.HelpFlags1})
+	return response.JSON(http.StatusOK, &util.DynMap{"message": "Help flag set", "helpFlags1": flags})
 }
 
 func getUserID(c *contextmodel.ReqContext) (int64, *response.NormalResponse) {

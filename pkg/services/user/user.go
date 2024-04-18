@@ -21,7 +21,6 @@ type Service interface {
 	GetSignedInUser(context.Context, *GetSignedInUserQuery) (*SignedInUser, error)
 	Search(context.Context, *SearchUsersQuery) (*SearchUserQueryResult, error)
 	BatchDisableUsers(context.Context, *BatchDisableUsersCommand) error
-	SetUserHelpFlag(context.Context, *SetUserHelpFlagCommand) error
 	GetProfile(context.Context, *GetUserProfileQuery) (*UserProfileDTO, error)
 }
 

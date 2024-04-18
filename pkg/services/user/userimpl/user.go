@@ -346,10 +346,6 @@ func (s *Service) BatchDisableUsers(ctx context.Context, cmd *user.BatchDisableU
 	return s.store.BatchDisableUsers(ctx, cmd)
 }
 
-func (s *Service) SetUserHelpFlag(ctx context.Context, cmd *user.SetUserHelpFlagCommand) error {
-	return s.store.SetHelpFlag(ctx, cmd)
-}
-
 func (s *Service) GetProfile(ctx context.Context, query *user.GetUserProfileQuery) (*user.UserProfileDTO, error) {
 	result, err := s.store.GetProfile(ctx, query)
 	return result, err
