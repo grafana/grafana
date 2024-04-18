@@ -155,6 +155,7 @@ export const Components = {
   Panels: {
     Panel: {
       title: (title: string) => `data-testid Panel header ${title}`,
+      content: 'data-testid panel content',
       headerItems: (item: string) => `data-testid Panel header item ${item}`,
       menuItems: (item: string) => `data-testid Panel menu item ${item}`,
       menu: (title: string) => `data-testid Panel menu ${title}`,

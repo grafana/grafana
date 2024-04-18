@@ -76,14 +76,24 @@ For general information about querying in Grafana, and common options and user i
 
 Grafana includes three special data sources:
 
-- **Grafana:** A built-in data source that generates random walk data and can poll the [Testdata]({{< relref "./testdata/" >}}) data source. Additionally, it can list files and get other data from a Grafana installation. This can be helpful for testing visualizations and running experiments.
-- **Mixed:** An abstraction that lets you query multiple data sources in the same panel.
-  When you select Mixed, you can then select a different data source for each new query that you add.
-  - The first query uses the data source that was selected before you selected **Mixed**.
-  - You can't change an existing query to use the **Mixed** data source.
-  - Grafana Play example: [Mixed data sources](https://play.grafana.org/d/000000100/mixed-datasources?orgId=1)
-- **Dashboard:** A data source that uses the result set from another panel in the same dashboard. The dashboard data source can use data either directly from the selected panel or from annotations attached to the selected panel.
-  - Grafana Play example: [Panel as Data source](https://play.grafana.org/d/ede8zps8ndb0gc/panel-as-data-source?orgId=1)
+### Grafana
+
+A built-in data source that generates random walk data and can poll the [Testdata]({{< relref "./testdata/" >}}) data source. Additionally, it can list files and get other data from a Grafana installation. This can be helpful for testing visualizations and running experiments.
+
+### Mixed
+
+An abstraction that lets you query multiple data sources in the same panel. When you select Mixed, you can then select a different data source for each new query that you add.
+
+- The first query uses the data source that was selected before you selected **Mixed**.
+- You can't change an existing query to use the **Mixed** data source.
+
+{{< docs/play title="Mixed Datasources Example" url="https://play.grafana.org/d/000000100/" >}}
+
+### Dashboard
+
+A data source that uses the result set from another panel in the same dashboard. The dashboard data source can use data either directly from the selected panel or from annotations attached to the selected panel.
+
+{{< docs/play title="Panel as a Data Source" url="https://play.grafana.org/d/ede8zps8ndb0gc/" >}}
 
 ## Built-in core data sources
 
