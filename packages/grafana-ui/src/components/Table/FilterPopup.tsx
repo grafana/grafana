@@ -3,7 +3,7 @@ import React, { useCallback, useMemo, useState } from 'react';
 
 import { Field, GrafanaTheme2, SelectableValue } from '@grafana/data';
 
-import { Button, ClickOutsideWrapper, HorizontalGroup, IconButton, Label, VerticalGroup } from '..';
+import { Button, ClickOutsideWrapper, IconButton, Label, Stack } from '..';
 import { useStyles2, useTheme2 } from '../../themes';
 
 import { FilterList } from './FilterList';
@@ -65,9 +65,9 @@ export const FilterPopup = ({
       {/* This is just blocking click events from bubbeling and should not have a keyboard interaction. */}
       {/* eslint-disable-next-line jsx-a11y/no-static-element-interactions, jsx-a11y/click-events-have-key-events */}
       <div className={cx(styles.filterContainer)} onClick={stopPropagation}>
-        <VerticalGroup spacing="lg">
-          <VerticalGroup spacing="xs">
-            <HorizontalGroup justify="space-between" align="center">
+        <Stack direction="column" gap={3}>
+          <Stack direction="column" gap={0.5}>
+            <Stack justifyContent="space-between" alignItems="center">
               <Label className={styles.label}>Filter by values:</Label>
               <IconButton
                 name="text-fields"
@@ -77,7 +77,7 @@ export const FilterPopup = ({
                   setMatchCase((s) => !s);
                 }}
               />
-            </HorizontalGroup>
+            </Stack>
             <div className={cx(styles.listDivider)} />
             <FilterList
               onChange={setValues}
@@ -90,25 +90,25 @@ export const FilterPopup = ({
               operator={operator}
               setOperator={setOperator}
             />
-          </VerticalGroup>
-          <HorizontalGroup spacing="lg">
-            <HorizontalGroup>
+          </Stack>
+          <Stack gap={3}>
+            <Stack>
               <Button size="sm" onClick={onFilter}>
                 Ok
               </Button>
               <Button size="sm" variant="secondary" onClick={onCancel}>
                 Cancel
               </Button>
-            </HorizontalGroup>
+            </Stack>
             {clearFilterVisible && (
-              <HorizontalGroup>
+              <Stack>
                 <Button fill="text" size="sm" onClick={onClearFilter}>
                   Clear filter
                 </Button>
-              </HorizontalGroup>
+              </Stack>
             )}
-          </HorizontalGroup>
-        </VerticalGroup>
+          </Stack>
+        </Stack>
       </div>
     </ClickOutsideWrapper>
   );
