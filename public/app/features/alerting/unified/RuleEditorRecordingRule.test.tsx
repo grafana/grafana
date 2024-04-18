@@ -1,3 +1,4 @@
+import 'whatwg-fetch';
 import { screen, waitFor, waitForElementToBeRemoved, within } from '@testing-library/react';
 import userEvent, { PointerEventsCheckLevel } from '@testing-library/user-event';
 import React from 'react';
@@ -7,6 +8,7 @@ import { byText } from 'testing-library-selector';
 
 import { setDataSourceSrv } from '@grafana/runtime';
 import { contextSrv } from 'app/core/services/context_srv';
+import { mockApi, setupMswServer } from 'app/features/alerting/unified/mockApi';
 import { AccessControlAction } from 'app/types';
 import { PromApplication } from 'app/types/unified-alerting-dto';
 
@@ -93,8 +95,11 @@ const mocks = {
 
 const getLabelInput = (selector: HTMLElement) => within(selector).getByRole('combobox');
 
+const server = setupMswServer();
+
 describe('RuleEditor recording rules', () => {
   beforeEach(() => {
+    mockApi(server).eval({ results: {} });
     jest.clearAllMocks();
     contextSrv.isEditor = true;
     contextSrv.hasEditPermissionInFolders = true;

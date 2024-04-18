@@ -39,3 +39,8 @@ func (d *DualWriterMode4) Delete(ctx context.Context, name string, deleteValidat
 func (d *DualWriterMode4) DeleteCollection(ctx context.Context, deleteValidation rest.ValidateObjectFunc, options *metav1.DeleteOptions, listOptions *metainternalversion.ListOptions) (runtime.Object, error) {
 	return d.Storage.DeleteCollection(ctx, deleteValidation, options, listOptions)
 }
+
+// Update overrides the generic behavior of the Storage and writes only to US.
+func (d *DualWriterMode4) Update(ctx context.Context, name string, objInfo rest.UpdatedObjectInfo, createValidation rest.ValidateObjectFunc, updateValidation rest.ValidateObjectUpdateFunc, forceAllowCreate bool, options *metav1.UpdateOptions) (runtime.Object, bool, error) {
+	return d.Storage.Update(ctx, name, objInfo, createValidation, updateValidation, forceAllowCreate, options)
+}

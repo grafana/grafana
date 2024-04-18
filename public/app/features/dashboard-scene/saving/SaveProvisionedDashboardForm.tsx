@@ -49,9 +49,9 @@ export function SaveProvisionedDashboardForm({ dashboard, drawer, changeInfo }: 
           <br /> <br />
           <strong>File path: </strong> {dashboard.state.meta.provisionedExternalId}
         </div>
-        <Stack direction="column" gap={0}>
-          <SaveDashboardFormCommonOptions drawer={drawer} changeInfo={changeInfo} />
-        </Stack>
+
+        <SaveDashboardFormCommonOptions drawer={drawer} changeInfo={changeInfo} />
+
         <div className={styles.json}>
           <AutoSizer disableWidth>
             {({ height }) => (

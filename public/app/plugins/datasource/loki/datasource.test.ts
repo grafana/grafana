@@ -205,7 +205,7 @@ describe('LokiDatasource', () => {
     it('should report query interaction', async () => {
       await runTest(80, '40', 80, CoreApp.Explore);
       expect(reportInteraction).toHaveBeenCalledWith(
-        'grafana_loki_query_executed',
+        'grafana_explore_loki_query_executed',
         expect.objectContaining({
           query_type: 'logs',
           line_limit: 80,
@@ -219,16 +219,9 @@ describe('LokiDatasource', () => {
       expect(reportInteraction).not.toBeCalled();
     });
 
-    it('should not report query interaction for panel edit query', async () => {
-      await runTest(80, '40', 80, CoreApp.PanelEditor);
-      expect(reportInteraction).toHaveBeenCalledWith(
-        'grafana_loki_query_executed',
-        expect.objectContaining({
-          query_type: 'logs',
-          line_limit: 80,
-          obfuscated_query: '{Identifier=String}',
-        })
-      );
+    it('should not report query interaction for unknown app query', async () => {
+      await runTest(80, '40', 80, CoreApp.Unknown);
+      expect(reportInteraction).not.toBeCalled();
     });
   });
 
