@@ -1,5 +1,5 @@
 {
-  "_comment": "Diese Datei ist die zuverlässige Quelle für englische Strings. Bearbeiten Sie diese im Code, um Pluralformen und andere Ausdrücke für die Benutzeroberfläche zu ändern.",
+  "_comment": "",
   "access-control": {
     "add-permission": {
       "role-label": "Rolle",
@@ -36,7 +36,7 @@
   "browse-dashboards": {
     "action": {
       "cancel-button": "Abbrechen",
-      "cannot-move-folders": "Ordner können nicht verschoben werden",
+      "cannot-move-folders": "",
       "delete-button": "Löschen",
       "delete-modal-invalid-text": "Ein oder mehrere Ordner enthalten Bibliotheksfenster oder Alarmierungsregeln. Löschen Sie diese zuerst, um fortzufahren.",
       "delete-modal-invalid-title": "Ordner kann nicht gelöscht werden",
@@ -250,14 +250,14 @@
     "empty": {
       "add-library-panel-body": "Visualisierungen hinzufügen, die mit anderen Dashboards geteilt werden.",
       "add-library-panel-button": "Bibliotheksfenster hinzufügen",
-      "add-library-panel-header": "Ein Bibliotheksfenster hinzufügen",
+      "add-library-panel-header": "",
       "add-visualization-body": "Wählen Sie eine Datenquelle aus und visualisieren und fragen Sie dann Ihre Daten mit Diagrammen, Statistiken und Tabellen ab oder erstellen Sie Listen, Markierungen und andere Widgets.",
       "add-visualization-button": "Visualisierung hinzufügen",
       "add-visualization-header": "Starten Sie Ihr neues Dashboard, indem Sie eine Visualisierung hinzufügen",
       "add-widget-body": "Listen, Markdowns und andere Widgets erstellen",
       "add-widget-button": "Widget hinzufügen",
       "add-widget-header": "Widget hinzufügen",
-      "import-a-dashboard-body": "Dashboard aus Datei oder <1>grafana.com</1> importieren.",
+      "import-a-dashboard-body": "",
       "import-a-dashboard-header": "Dashboard importieren",
       "import-dashboard-button": "Dashboard importieren"
     },
@@ -361,7 +361,7 @@
     },
     "dashboard-delete-button": "Dashboard löschen",
     "general": {
-      "auto-refresh-description": "Definieren Sie die automatischen Aktualisierungsintervalle, die in der Liste der automatischen Aktualisierungen verfügbar sein sollen.",
+      "auto-refresh-description": "",
       "auto-refresh-label": "Automatisch aktualisieren",
       "description-label": "Beschreibung",
       "editable-description": "Schreibgeschützt um alle Bearbeitung zu deaktivieren. Aktualisieren Sie das Dashboard, damit Änderungen wirksam werden",
@@ -550,15 +550,15 @@
     "toolbar": {
       "aria-label": "Werkzeugleiste durchsuchen",
       "copy-link": "URL kopieren",
-      "copy-link-abs-time": "Absolute URL kopieren",
+      "copy-link-abs-time": "",
       "copy-links-absolute-category": "Zeitsynchronisierte URL-Links (Freigabe mit intaktem Zeitraum)",
       "copy-links-normal-category": "Normale URL-Links",
       "copy-shortened-link": "Gekürzte URL kopieren",
-      "copy-shortened-link-abs-time": "Absolut verkürzte URL kopieren",
-      "copy-shortened-link-menu": "Verkürztes Linkmenü öffnen",
+      "copy-shortened-link-abs-time": "",
+      "copy-shortened-link-menu": "",
       "refresh-picker-cancel": "Abbrechen",
       "refresh-picker-run": "Abfrage ausführen",
-      "split-close": "Schließen",
+      "split-close": "",
       "split-close-tooltip": "Teilbereich schließen",
       "split-narrow": "Schmaler Bereich",
       "split-title": "Teilen",
@@ -597,9 +597,9 @@
   "help-modal": {
     "shortcuts-category": {
       "dashboard": "Dashboard",
-      "focused-panel": "Fokussiertes Fenster",
+      "focused-panel": "",
       "global": "Global",
-      "time-range": "Zeitraum"
+      "time-range": ""
     },
     "shortcuts-description": {
       "change-theme": "Thema ändern",
@@ -664,7 +664,7 @@
       "message": ""
     },
     "modal": {
-      "button-cancel": "<0>Abbrechen</0>",
+      "button-cancel": "",
       "button-view-panel1": "Fenster in {{label}} anzeigen...",
       "button-view-panel2": "Fenster im Dashboard anzeigen...",
       "panel-not-linked": "Fenster ist nicht mit einem Dashboard verbunden. Fügen Sie das Fenster einem Dashboard hinzu und versuchen Sie es erneut.",
@@ -933,7 +933,7 @@
       "title": "Erstellen"
     },
     "create-alert": {
-      "title": "Alarmregel erstellen"
+      "title": ""
     },
     "create-dashboard": {
       "title": "Dashboard"
@@ -1021,7 +1021,7 @@
       "title": "In die Grafana Cloud migrieren"
     },
     "monitoring": {
-      "subtitle": "Überwachungs- und Infrastruktur-Apps",
+      "subtitle": "",
       "title": "Beobachtbarkeit"
     },
     "new": {
@@ -1477,7 +1477,7 @@
       "info-text": "Erstelle einen direkten Link zu diesem Dashboard oder Panel mit den folgenden angepassten Optionen.",
       "link-url": "Link-URL",
       "render-alert": "Bild-Render-Plug-in nicht installiert",
-      "render-instructions": "Um ein Panel-Bild zu rendern, muss das <1>Bild-Render-Plug-in</1> von Grafana installiert sein. Bitte wende dich an deinen Grafana-Administrator, um das Plug-in zu installieren.",
+      "render-instructions": "",
       "rendered-image": "Direktlink zum gerenderten Bild",
       "save-alert": "Dashboard nicht gespeichert",
       "save-dashboard": "Um ein Panel-Bild zu rendern, muss zuerst das Dashboard gespeichert werden.",

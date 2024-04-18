@@ -1,5 +1,5 @@
 {
-  "_comment": "Esse arquivo é a fonte da verdade para strings em inglês. Edite isto na base de código para alterar os plurais e outras frases para a interface do usuário.",
+  "_comment": "",
   "access-control": {
     "add-permission": {
       "role-label": "Função",
@@ -36,7 +36,7 @@
   "browse-dashboards": {
     "action": {
       "cancel-button": "Cancelar",
-      "cannot-move-folders": "As pastas não podem ser movidas",
+      "cannot-move-folders": "",
       "delete-button": "Excluir",
       "delete-modal-invalid-text": "Uma ou mais pastas contêm painéis de biblioteca, ou regras de alerta. Exclua-as primeiro para prosseguir.",
       "delete-modal-invalid-title": "Não é possível excluir pasta",
@@ -250,14 +250,14 @@
     "empty": {
       "add-library-panel-body": "Adicione visualizações que são compartilhadas com outros painéis de controle.",
       "add-library-panel-button": "Adicionar painel de biblioteca",
-      "add-library-panel-header": "Adicionar um painel de biblioteca",
+      "add-library-panel-header": "",
       "add-visualization-body": "Selecione uma fonte de dados e consulte e visualize seus dados com gráficos, estatísticas e tabelas ou crie listas, markdowns e outros widgets.",
       "add-visualization-button": "Adicionar visualização",
       "add-visualization-header": "Comece seu novo painel de controle adicionando uma visualização",
       "add-widget-body": "Criar listas, markdowns e outros widgets",
       "add-widget-button": "Adicionar widget",
       "add-widget-header": "Adicionar um widget",
-      "import-a-dashboard-body": "Importar painel de controle do arquivo ou <1>grafana.com</1>.",
+      "import-a-dashboard-body": "",
       "import-a-dashboard-header": "Importar um painel de controle",
       "import-dashboard-button": "Importar painel de controle"
     },
@@ -361,7 +361,7 @@
     },
     "dashboard-delete-button": "Excluir painel de controle",
     "general": {
-      "auto-refresh-description": "Defina os intervalos de atualização automática que devem estar disponíveis na lista de atualização automática.",
+      "auto-refresh-description": "",
       "auto-refresh-label": "Atualização automática",
       "description-label": "Descrição",
       "editable-description": "Defina como somente leitura para desativar toda a edição. Recarregue o painel de controle para que as alterações tenham efeito",
@@ -550,15 +550,15 @@
     "toolbar": {
       "aria-label": "Explorar barra de ferramentas",
       "copy-link": "Copiar URL",
-      "copy-link-abs-time": "Copiar URL absoluto",
+      "copy-link-abs-time": "",
       "copy-links-absolute-category": "Links de URL de sincronização de tempo (compartilhar com intervalo de tempo intacto)",
       "copy-links-normal-category": "Links de URL normais",
       "copy-shortened-link": "Copiar URL encurtado",
-      "copy-shortened-link-abs-time": "Copiar URL absoluto encurtado",
-      "copy-shortened-link-menu": "Abrir menu de link encurtado",
+      "copy-shortened-link-abs-time": "",
+      "copy-shortened-link-menu": "",
       "refresh-picker-cancel": "Cancelar",
       "refresh-picker-run": "Executar consulta",
-      "split-close": "Fechar",
+      "split-close": "",
       "split-close-tooltip": "Fechar painel dividido",
       "split-narrow": "Painel estreito",
       "split-title": "Dividir",
@@ -597,9 +597,9 @@
   "help-modal": {
     "shortcuts-category": {
       "dashboard": "Painel de controle",
-      "focused-panel": "Painel focado",
+      "focused-panel": "",
       "global": "Global",
-      "time-range": "Intervalo de tempo"
+      "time-range": ""
     },
     "shortcuts-description": {
       "change-theme": "Alterar tema",
@@ -664,7 +664,7 @@
       "message": ""
     },
     "modal": {
-      "button-cancel": "<0>Cancelar</0>",
+      "button-cancel": "",
       "button-view-panel1": "Visualizar painel em {{label}}...",
       "button-view-panel2": "Visualizar painel no painel de controle...",
       "panel-not-linked": "O painel não está vinculado a um painel de controle. Adicione o painel a um painel de controle e tente novamente.",
@@ -933,7 +933,7 @@
       "title": "Criar"
     },
     "create-alert": {
-      "title": "Criar regra de alerta"
+      "title": ""
     },
     "create-dashboard": {
       "title": "Painel de controle"
@@ -1021,7 +1021,7 @@
       "title": "Migrar para o Grafana Cloud"
     },
     "monitoring": {
-      "subtitle": "Monitoramento e infraestrutura de aplicativos",
+      "subtitle": "",
       "title": "Observação"
     },
     "new": {
@@ -1477,7 +1477,7 @@
       "info-text": "Crie um link direto para este painel de controle ou painel, personalizado com as opções abaixo.",
       "link-url": "URL do link",
       "render-alert": "Plug-in renderizador de imagem não instalado",
-      "render-instructions": "Para renderizar uma imagem de painel, você deve instalar o <1>plug-in de renderização de imagens do Grafana</1>. Contate o administrador do Grafana para instalar o plug-in.",
+      "render-instructions": "",
       "rendered-image": "Link direto de imagem renderizada",
       "save-alert": "O painel de controle não está salvo",
       "save-dashboard": "Para renderizar uma imagem do painel, você deve salvar o painel de controle primeiro.",

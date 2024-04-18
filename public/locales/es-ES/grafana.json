@@ -1,5 +1,5 @@
 {
-  "_comment": "Este archivo es la fuente original para las cadenas en inglés. Edita la base del código para cambiar los plurales y otras frases de la interfaz de usuario.",
+  "_comment": "",
   "access-control": {
     "add-permission": {
       "role-label": "Rol",
@@ -36,7 +36,7 @@
   "browse-dashboards": {
     "action": {
       "cancel-button": "Cancelar",
-      "cannot-move-folders": "Las carpetas no se pueden mover",
+      "cannot-move-folders": "",
       "delete-button": "Eliminar",
       "delete-modal-invalid-text": "Una o más carpetas contienen paneles de biblioteca o reglas de alerta. Para continuar, primero elimínelas.",
       "delete-modal-invalid-title": "No se puede eliminar la carpeta",
@@ -250,14 +250,14 @@
     "empty": {
       "add-library-panel-body": "Añadir las visualizaciones que se comparten con otros tableros.",
       "add-library-panel-button": "Añadir panel de biblioteca",
-      "add-library-panel-header": "Añadir un panel de biblioteca",
+      "add-library-panel-header": "",
       "add-visualization-body": "Selecciona una fuente de datos y luego consulta y visualiza tus datos con gráficos, estadísticas y tablas o cree listas, anotaciones y otros widgets.",
       "add-visualization-button": "Añadir visualización",
       "add-visualization-header": "Comienza tu nuevo panel de control añadiendo una visualización",
       "add-widget-body": "Crear listas, reducciones y otros «widgets»",
       "add-widget-button": "Añadir widget",
       "add-widget-header": "Añadir un «widget»",
-      "import-a-dashboard-body": "Importar el tablero desde el archivo o <1>grafana.com</1>.",
+      "import-a-dashboard-body": "",
       "import-a-dashboard-header": "Importar un tablero",
       "import-dashboard-button": "Importar panel de control"
     },
@@ -361,7 +361,7 @@
     },
     "dashboard-delete-button": "Eliminar tablero",
     "general": {
-      "auto-refresh-description": "Definir los intervalos de actualización automática que deberían estar disponibles en la lista de actualización automática.",
+      "auto-refresh-description": "",
       "auto-refresh-label": "Actualización automática",
       "description-label": "Descripción",
       "editable-description": "Establecer como de solo lectura para desactivar toda la edición. Recargar el tablero para que los cambios surtan efecto",
@@ -550,15 +550,15 @@
     "toolbar": {
       "aria-label": "Barra de herramientas de Explore",
       "copy-link": "Copiar URL",
-      "copy-link-abs-time": "Copiar URL absoluta",
+      "copy-link-abs-time": "",
       "copy-links-absolute-category": "Enlaces URL de sincronización temporal (compartir con intervalo de tiempo intacto)",
       "copy-links-normal-category": "Enlaces URL normales",
       "copy-shortened-link": "Copiar URL acortada",
-      "copy-shortened-link-abs-time": "Copiar URL absoluta acortada",
-      "copy-shortened-link-menu": "Abrir menú de enlace acortado",
+      "copy-shortened-link-abs-time": "",
+      "copy-shortened-link-menu": "",
       "refresh-picker-cancel": "Cancelar",
       "refresh-picker-run": "Ejecutar consulta",
-      "split-close": "Cerrar",
+      "split-close": "",
       "split-close-tooltip": "Cerrar panel dividido",
       "split-narrow": "Reducir panel",
       "split-title": "Dividir",
@@ -597,9 +597,9 @@
   "help-modal": {
     "shortcuts-category": {
       "dashboard": "Panel de control",
-      "focused-panel": "Panel focalizado",
+      "focused-panel": "",
       "global": "Global",
-      "time-range": "Rango de tiempo"
+      "time-range": ""
     },
     "shortcuts-description": {
       "change-theme": "Cambiar tema",
@@ -664,7 +664,7 @@
       "message": ""
     },
     "modal": {
-      "button-cancel": "<0>Cancelar</0>",
+      "button-cancel": "",
       "button-view-panel1": "Ver panel en {{label}}...",
       "button-view-panel2": "Ver panel en el panel de control...",
       "panel-not-linked": "El panel no está vinculado a un panel de control. Añádalo a un panel de control y vuelva a intentarlo.",
@@ -933,7 +933,7 @@
       "title": "Crear"
     },
     "create-alert": {
-      "title": "Crear regla de alerta"
+      "title": ""
     },
     "create-dashboard": {
       "title": "Panel de control"
@@ -1021,7 +1021,7 @@
       "title": "Migrar a Grafana Cloud"
     },
     "monitoring": {
-      "subtitle": "Aplicaciones de supervisión e infraestructura",
+      "subtitle": "",
       "title": "Observabilidad"
     },
     "new": {
@@ -1477,7 +1477,7 @@
       "info-text": "Cree un enlace directo a este panel de control o panel, personalizado con las siguientes opciones.",
       "link-url": "URL del enlace",
       "render-alert": "Complemento de renderizador de imagen no instalado",
-      "render-instructions": "Para renderizar una imagen de panel, debe instalar el complemento <1>Complemento renderizador de imágenes de Grafana</1>. Póngase en contacto con su administrador de Grafana para instalar el complemento.",
+      "render-instructions": "",
       "rendered-image": "Enlace directo a la imagen renderizada",
       "save-alert": "El panel de control no se ha guardado",
       "save-dashboard": "Para renderizar una imagen de panel, primero debe guardar el panel de control.",
