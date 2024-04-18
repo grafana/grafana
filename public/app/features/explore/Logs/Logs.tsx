@@ -215,15 +215,6 @@ class UnthemedLogs extends PureComponent<Props, State> {
 
     if (logLevels.size > 1 && this.props.logsVolumeEnabled) {
       logLevels.forEach((level) => {
-        this.context?.outlineItems.forEach((item) => {
-          if (item.panelId === 'Logs') {
-            item.children?.forEach((child) => {
-              if (child.type === 'filter') {
-                this.context?.unregister(child.id);
-              }
-            });
-          }
-        });
         const allLevelsSelected = this.state.hiddenLogLevels.length === 0;
         const currentLevelSelected = !this.state.hiddenLogLevels.includes(level.name);
         this.context?.register({

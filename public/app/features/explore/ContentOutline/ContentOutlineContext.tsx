@@ -124,8 +124,15 @@ export function ContentOutlineContextProvider({ children, refreshDependencies }:
           (item) =>
             item.title === outlineItem.title && outlineItem.type === 'filter' && outlineItem.panelId === item.panelId
         );
-
-        if (siblingWithSameTitle) {
+        // check if sibling's highlight property has updated
+        if (siblingWithSameTitle?.highlight !== outlineItem.highlight) {
+          parent.children?.map((child) => {
+            if (child.title === siblingWithSameTitle?.title) {
+              child.highlight = outlineItem.highlight;
+            }
+          });
+          return [...prevItems];
+        } else {
           return [...prevItems];
         }
 
