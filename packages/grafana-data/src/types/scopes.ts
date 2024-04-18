@@ -1,20 +1,35 @@
-export interface ScopeDashboard {
-  uid: string;
-  title: string;
-  url: string;
+export interface ScopeDashboardBindingSpec {
+  dashboard: string;
+  scope: string;
 }
 
-export interface ScopeFilter {
+export type ScopeFilterOperator = 'equals' | 'not-equals' | 'regex-match' | 'regex-not-match';
+
+export const scopeFilterOperatorMap: Record<string, ScopeFilterOperator> = {
+  '=': 'equals',
+  '!=': 'not-equals',
+  '=~': 'regex-match',
+  '!~': 'regex-not-match',
+};
+
+export interface ScopeSpecFilter {
   key: string;
   value: string;
-  operator: string;
+  operator: ScopeFilterOperator;
 }
 
-export interface Scope {
-  uid: string;
+export interface ScopeSpec {
   title: string;
   type: string;
   description: string;
   category: string;
-  filters: ScopeFilter[];
+  filters: ScopeSpecFilter[];
+}
+
+// TODO: Use Resource from apiserver when we export the types
+export interface Scope {
+  metadata: {
+    name: string;
+  };
+  spec: ScopeSpec;
 }
