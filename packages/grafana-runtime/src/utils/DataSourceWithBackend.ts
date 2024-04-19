@@ -207,16 +207,6 @@ class DataSourceWithBackend<
 
     let url = '/api/ds/query?ds_type=' + this.type;
 
-    if (hasExpr) {
-      headers[PluginRequestHeaders.FromExpression] = 'true';
-      url += '&expression=true';
-    }
-
-    // Appending request ID to url to facilitate client-side performance metrics. See #65244 for more context.
-    if (requestId) {
-      url += `&requestId=${requestId}`;
-    }
-
     // Use the new query service
     if (config.featureToggles.queryServiceFromUI) {
       if (!(config.featureToggles.queryService || config.featureToggles.grafanaAPIServerWithExperimentalAPIs)) {
@@ -225,8 +215,18 @@ class DataSourceWithBackend<
         if (!hasExpr && dsUIDs.size === 1) {
           // TODO? can we talk directly to the apiserver?
         }
-        url = `/apis/query.grafana.app/v0alpha1/namespaces/${config.namespace}/query?requestId=${requestId}`;
+        url = `/apis/query.grafana.app/v0alpha1/namespaces/${config.namespace}/query?ds_type=' + this.type`;
       }
+    }
+
+    if (hasExpr) {
+      headers[PluginRequestHeaders.FromExpression] = 'true';
+      url += '&expression=true';
+    }
+
+    // Appending request ID to url to facilitate client-side performance metrics. See #65244 for more context.
+    if (requestId) {
+      url += `&requestId=${requestId}`;
     }
 
     if (request.dashboardUID) {

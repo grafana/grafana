@@ -30,7 +30,7 @@ sequenceDiagram
       alt Single datasource
           api->>ds: QueryData
       else Multiple datasources
-        loop Each datasource
+        loop Each datasource (concurrently)
           api->>ds: QueryData
         end
         api->>api: Wait for results
@@ -64,7 +64,7 @@ sequenceDiagram
     User->>api: POST Query
     api->>api: Parse queries
     api->>api: Calculate dependencies
-    loop Each datasource
+    loop Each datasource (concurrently)
         api->>ds: QueryData
         ds->>ds: Verify user access
         ds->>db: Get settings <br> and secrets
@@ -72,6 +72,7 @@ sequenceDiagram
     loop Each expression
         api->>expr: Execute
     end
+    api->>api: Verify ResultExpectations
     api->>User: return results
 ```
 
