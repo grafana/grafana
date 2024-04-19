@@ -12,16 +12,13 @@ type SceneTransformWrapperProps = {
 
 export const SceneTransformWrapper = ({ scene, children: sceneDiv }: SceneTransformWrapperProps) => {
   const onZoom = (zoomPanPinchRef: ReactZoomPanPinchRef) => {
-    const scale = zoomPanPinchRef.state.scale;
+    const { scale, previousScale } = zoomPanPinchRef.state;
     scene.scale = scale;
 
     if (scene.shouldInfinitePan) {
-      const isScaleZoomedOut = scale < 1;
-
-      if (isScaleZoomedOut) {
-        scene.updateSize(scene.width / scale, scene.height / scale);
-        scene.panel.forceUpdate();
-      }
+      const delta = 1 + scale - previousScale;
+      scene.updateSize(scene.width * delta, scene.height * delta);
+      scene.panel.forceUpdate();
     }
   };
 
