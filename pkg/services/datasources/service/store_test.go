@@ -378,6 +378,72 @@ func TestIntegrationDataAccess(t *testing.T) {
 		require.Equal(t, 0, len(dataSources))
 	})
 
+	t.Run("GetDataSource", func(t *testing.T) {
+		t.Run("Can get datasource by id", func(t *testing.T) {
+			db := db.InitTestDB(t)
+			ds := initDatasource(db)
+			ss := SqlStore{db: db}
+			query := datasources.GetDataSourceQuery{ID: ds.ID, OrgID: 10}
+			dataSource, err := ss.GetDataSource(context.Background(), &query)
+			require.NoError(t, err)
+			require.Equal(t, ds.UID, dataSource.UID)
+		})
+
+		t.Run("Can get datasource by uid", func(t *testing.T) {
+			db := db.InitTestDB(t)
+			ds := initDatasource(db)
+			ss := SqlStore{db: db}
+			query := datasources.GetDataSourceQuery{UID: ds.UID, OrgID: 10}
+			dataSource, err := ss.GetDataSource(context.Background(), &query)
+			require.NoError(t, err)
+			require.Equal(t, ds.UID, dataSource.UID)
+		})
+
+		t.Run("Can get datasource with a wrong UID", func(t *testing.T) {
+			db := db.InitTestDB(t)
+			cmd := defaultAddDatasourceCommand
+			cmd.UID = "custom/uid"
+			ss := SqlStore{db: db, logger: log.NewNopLogger()}
+			// AddDatasource automatically fixes the wrong UID so the UID
+			// will be valid in the store
+			_, err := ss.AddDataSource(context.Background(), &cmd)
+			require.NoError(t, err)
+			query := datasources.GetDataSourceQuery{UID: "custom/uid", OrgID: 10}
+			dataSource, err := ss.GetDataSource(context.Background(), &query)
+			require.NoError(t, err)
+			require.Equal(t, "custom-uid", dataSource.UID)
+		})
+
+		t.Run("Can get datasource with a wrongly stored UID", func(t *testing.T) {
+			store := db.InitTestDB(t)
+			cmd := defaultAddDatasourceCommand
+			insertDS := &datasources.DataSource{
+				OrgID:     cmd.OrgID,
+				Name:      cmd.Name,
+				Type:      cmd.Type,
+				Access:    cmd.Access,
+				URL:       cmd.URL,
+				Database:  cmd.Database,
+				ReadOnly:  cmd.ReadOnly,
+				IsDefault: false,
+				Version:   1,
+				Created:   time.Now(),
+				Updated:   time.Now(),
+				UID:       "custom/uid",
+			}
+			err := store.WithTransactionalDbSession(context.Background(), func(sess *db.Session) error {
+				_, err := sess.Insert(insertDS)
+				return err
+			})
+			require.NoError(t, err)
+			query := datasources.GetDataSourceQuery{UID: "custom/uid", OrgID: 10}
+			ss := SqlStore{db: store, logger: log.NewNopLogger()}
+			dataSource, err := ss.GetDataSource(context.Background(), &query)
+			require.NoError(t, err)
+			require.Equal(t, "custom/uid", dataSource.UID)
+		})
+	})
+
 	t.Run("GetDataSources", func(t *testing.T) {
 		t.Run("Number of data sources returned limited to 6 per organization", func(t *testing.T) {
 			db := db.InitTestDB(t)

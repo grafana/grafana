@@ -36,6 +36,18 @@ describe('DatasourceSrv', () => {
           uid: 'my-datasource-uid',
         } as DataSourceInstanceSettings,
       },
+      {
+        name: 'should return the datasource settings for a wrongly stored UID',
+        uid: 'my/datasource/uid',
+        storedSettings: {
+          'my/datasource/uid': {
+            uid: 'my/datasource/uid',
+          } as DataSourceInstanceSettings,
+        } as Record<string, DataSourceInstanceSettings>,
+        expectedSettings: {
+          uid: 'my/datasource/uid',
+        } as DataSourceInstanceSettings,
+      },
     ].forEach((scenario) => {
       it(scenario.name, () => {
         const datasourceSrv = new DatasourceSrv();

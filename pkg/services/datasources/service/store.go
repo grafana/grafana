@@ -59,17 +59,7 @@ func (ss *SqlStore) GetDataSource(ctx context.Context, query *datasources.GetDat
 	})
 }
 
-func (ss *SqlStore) getDataSource(_ context.Context, query *datasources.GetDataSourceQuery, sess *db.Session) (*datasources.DataSource, error) {
-	if query.OrgID == 0 || (query.ID == 0 && len(query.Name) == 0 && len(query.UID) == 0) {
-		return nil, datasources.ErrDataSourceIdentifierNotSet
-	}
-
-	if err := util.ValidateUID(query.UID); len(query.UID) > 0 && err != nil {
-		fixedUID := util.AutofixUID(query.UID)
-		logDeprecatedInvalidDsUid(ss.logger, query.UID, query.Name, fixedUID, err)
-		query.UID = fixedUID
-	}
-
+func (ss *SqlStore) getDataSourceFromSess(_ context.Context, query *datasources.GetDataSourceQuery, sess *db.Session) (*datasources.DataSource, error) {
 	datasource := &datasources.DataSource{Name: query.Name, OrgID: query.OrgID, ID: query.ID, UID: query.UID}
 	has, err := sess.Get(datasource)
 
@@ -81,6 +71,28 @@ func (ss *SqlStore) getDataSource(_ context.Context, query *datasources.GetDataS
 	}
 
 	return datasource, nil
+}
+
+func (ss *SqlStore) getDataSource(ctx context.Context, query *datasources.GetDataSourceQuery, sess *db.Session) (*datasources.DataSource, error) {
+	if query.OrgID == 0 || (query.ID == 0 && len(query.Name) == 0 && len(query.UID) == 0) {
+		return nil, datasources.ErrDataSourceIdentifierNotSet
+	}
+
+	if err := util.ValidateUID(query.UID); len(query.UID) > 0 && err != nil {
+		wrongUID := query.UID
+		// Update to a valid UID
+		fixedUID := util.AutofixUID(query.UID)
+		logDeprecatedInvalidDsUid(ss.logger, query.UID, query.Name, fixedUID, err)
+		query.UID = fixedUID
+		ds, err := ss.getDataSourceFromSess(ctx, query, sess)
+		if err == nil {
+			return ds, nil
+		}
+		// Retry with the wrong UID
+		query.UID = wrongUID
+	}
+
+	return ss.getDataSourceFromSess(ctx, query, sess)
 }
 
 func (ss *SqlStore) GetDataSources(ctx context.Context, query *datasources.GetDataSourcesQuery) ([]*datasources.DataSource, error) {
