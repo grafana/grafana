@@ -650,7 +650,6 @@ func TestIntegrationPrometheusRulesFilterByDashboard(t *testing.T) {
 		require.Equal(t, "error", res["status"])
 		require.Equal(t, "bad_data", res["errorType"])
 		require.Equal(t, "panel_id must be set with dashboard_uid", res["error"])
-
 	}
 }
 
