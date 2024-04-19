@@ -383,6 +383,7 @@ playwright.config.ts @grafana/plugins-platform-frontend
 /public/app/core/components/TimeSeries/ @grafana/dataviz-squad
 /public/app/core/components/TimelineChart/ @grafana/dataviz-squad
 /public/app/core/components/Form/ @grafana/grafana-frontend-platform
+/public/app/core/history/ @grafana/explore-squad
 /public/app/features/all.ts @grafana/grafana-frontend-platform
 /public/app/features/admin/ @grafana/identity-access-team
 
@@ -605,6 +606,7 @@ playwright.config.ts @grafana/plugins-platform-frontend
 /pkg/services/extsvcauth/ @grafana/identity-access-team
 /pkg/services/oauthtoken/ @grafana/identity-access-team
 /pkg/services/serviceaccounts/ @grafana/identity-access-team
+/public/app/core/components/RolePicker/ @grafana/identity-access-team
 
 # Support bundles
 /public/app/features/support-bundles/ @grafana/identity-access-team
@@ -693,8 +695,6 @@ embed.go @grafana/grafana-as-code
 /.github/workflows/core-plugins-build-and-release.yml @grafana/plugins-platform-frontend @grafana/plugins-platform-backend
 /.github/workflows/i18n-crowdin-upload.yml @grafana/grafana-frontend-platform
 /.github/workflows/i18n-crowdin-download.yml @grafana/grafana-frontend-platform
-/.github/workflows/feature-toggle-cleanup.yml @tolzhabayev
-/.github/workflows/scripts/feature-toggle-cleanup/feature-toggle-cleanup.js @tolzhabayev
 /.github/workflows/pr-go-workspace-check.yml @grafana/grafana-app-platform-squad
 
 # Generated files not requiring owner approval
