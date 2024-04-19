@@ -39,7 +39,9 @@ Use a candlestick when you need to:
 
 ## Configure a candlestick
 
-<!-- video TBA here -->
+Once you’ve created a [dashboard](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/dashboards/build-dashboards/create-dashboard/), the following video shows you how to configure a candlestick visualization:
+
+{{< youtube id="IOFKBgbf3aM" >}}
 
 {{< docs/play title="Candlestick" url="https://play.grafana.org/d/candlestick/candlestick" >}}
 
