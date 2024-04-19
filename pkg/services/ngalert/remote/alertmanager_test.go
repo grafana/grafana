@@ -408,7 +408,10 @@ func TestIntegrationRemoteAlertmanagerConfiguration(t *testing.T) {
 		// Check that the configuration was uploaded to the remote Alertmanager.
 		config, err := am.mimirClient.GetGrafanaAlertmanagerConfig(ctx)
 		require.NoError(t, err)
-		require.Equal(t, testGrafanaConfigWithSecret, config.GrafanaAlertmanagerConfig)
+		got, err := json.Marshal(config.GrafanaAlertmanagerConfig)
+		require.NoError(t, err)
+
+		require.JSONEq(t, testGrafanaConfigWithSecret, string(got))
 		require.Equal(t, fmt.Sprintf("%x", md5.Sum(encryptedConfig)), config.Hash)
 		require.False(t, config.Default)
 	}
