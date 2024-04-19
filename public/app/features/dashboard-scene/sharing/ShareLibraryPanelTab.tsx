@@ -7,14 +7,12 @@ import { shareDashboardType } from 'app/features/dashboard/components/ShareModal
 import { DashboardModel, PanelModel } from 'app/features/dashboard/state';
 
 import { DashboardGridItem } from '../scene/DashboardGridItem';
-import { DashboardScene } from '../scene/DashboardScene';
 import { gridItemToPanel, transformSceneToSaveModel } from '../serialization/transformSceneToSaveModel';
 
 import { SceneShareTabState } from './types';
 
 export interface ShareLibraryPanelTabState extends SceneShareTabState {
   panelRef?: SceneObjectRef<VizPanel>;
-  dashboardRef: SceneObjectRef<DashboardScene>;
 }
 
 export class ShareLibraryPanelTab extends SceneObjectBase<ShareLibraryPanelTabState> {

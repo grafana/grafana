@@ -18,13 +18,20 @@ import { ShareLinkTab } from './ShareLinkTab';
 import { SharePanelEmbedTab } from './SharePanelEmbedTab';
 import { ShareSnapshotTab } from './ShareSnapshotTab';
 import { SharePublicDashboardTab } from './public-dashboards/SharePublicDashboardTab';
-import { ModalSceneObjectLike, SceneShareTab } from './types';
+import { ModalSceneObjectLike, SceneShareTab, SceneShareTabState } from './types';
 
 interface ShareModalState extends SceneObjectState {
   dashboardRef: SceneObjectRef<DashboardScene>;
   panelRef?: SceneObjectRef<VizPanel>;
   tabs?: SceneShareTab[];
   activeTab: string;
+}
+
+type customDashboardTabType = new (...args: SceneShareTabState[]) => SceneShareTab;
+const customDashboardTabs: customDashboardTabType[] = [];
+
+export function addDashboardShareTab(tab: customDashboardTabType) {
+  customDashboardTabs.push(tab);
 }
 
 /**
@@ -44,15 +51,17 @@ export class ShareModal extends SceneObjectBase<ShareModalState> implements Moda
 
   private buildTabs() {
     const { dashboardRef, panelRef } = this.state;
+    const modalRef = this.getRef();
 
-    const tabs: SceneShareTab[] = [new ShareLinkTab({ dashboardRef, panelRef, modalRef: this.getRef() })];
+    const tabs: SceneShareTab[] = [new ShareLinkTab({ dashboardRef, panelRef, modalRef })];
+    const dashboard = getDashboardSceneFor(this);
 
     if (!panelRef) {
-      tabs.push(new ShareExportTab({ dashboardRef, modalRef: this.getRef() }));
+      tabs.push(new ShareExportTab({ dashboardRef, modalRef }));
     }
 
-    if (contextSrv.isSignedIn && config.snapshotEnabled) {
-      tabs.push(new ShareSnapshotTab({ panelRef, dashboardRef, modalRef: this.getRef() }));
+    if (contextSrv.isSignedIn && config.snapshotEnabled && dashboard.canEditDashboard()) {
+      tabs.push(new ShareSnapshotTab({ panelRef, dashboardRef, modalRef }));
     }
 
     if (panelRef) {
@@ -61,13 +70,17 @@ export class ShareModal extends SceneObjectBase<ShareModalState> implements Moda
       const isLibraryPanel = panel.parent instanceof LibraryVizPanel;
       if (panel instanceof VizPanel) {
         if (!isLibraryPanel) {
-          tabs.push(new ShareLibraryPanelTab({ panelRef, dashboardRef, modalRef: this.getRef() }));
+          tabs.push(new ShareLibraryPanelTab({ panelRef, dashboardRef, modalRef }));
         }
       }
     }
 
+    if (!panelRef) {
+      tabs.push(...customDashboardTabs.map((Tab) => new Tab({ dashboardRef, modalRef })));
+    }
+
     if (isPublicDashboardsEnabled()) {
-      tabs.push(new SharePublicDashboardTab({ dashboardRef, modalRef: this.getRef() }));
+      tabs.push(new SharePublicDashboardTab({ dashboardRef, modalRef }));
     }
 
     this.setState({ tabs });

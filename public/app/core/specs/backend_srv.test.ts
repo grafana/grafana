@@ -1,4 +1,3 @@
-import 'whatwg-fetch'; // fetch polyfill needed for PhantomJs rendering
 import { Observable, of, lastValueFrom } from 'rxjs';
 import { fromFetch } from 'rxjs/fetch';
 import { delay } from 'rxjs/operators';

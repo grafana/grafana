@@ -10,6 +10,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/db/dbtest"
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/contexthandler/ctxkey"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/stats"
@@ -28,13 +29,13 @@ func TestApi_getUsageStats(t *testing.T) {
 		{
 			desc:           "expect usage stats",
 			enabled:        true,
-			permissions:    map[string][]string{ActionRead: {}},
+			permissions:    map[string][]string{accesscontrol.ActionUsageStatsRead: {}},
 			expectedStatus: 200,
 		},
 		{
 			desc:           "expect usage stat preview still there after disabling",
 			enabled:        false,
-			permissions:    map[string][]string{ActionRead: {}},
+			permissions:    map[string][]string{accesscontrol.ActionUsageStatsRead: {}},
 			expectedStatus: 200,
 		},
 		{

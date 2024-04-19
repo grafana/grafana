@@ -179,7 +179,14 @@ describe('VizPanelManager', () => {
         title: 'Panel A',
         key: 'panel-1',
         pluginId: 'table',
-        $data: new SceneQueryRunner({ key: 'data-query-runner', queries: [{ refId: 'A' }] }),
+        $data: new SceneQueryRunner({
+          key: 'data-query-runner',
+          datasource: {
+            type: 'grafana-testdata-datasource',
+            uid: 'gdev-testdata',
+          },
+          queries: [{ refId: 'A' }],
+        }),
         options: undefined,
         fieldConfig: {
           defaults: {
@@ -210,7 +217,14 @@ describe('VizPanelManager', () => {
         title: 'Panel A',
         key: 'panel-1',
         pluginId: 'table',
-        $data: new SceneQueryRunner({ key: 'data-query-runner', queries: [{ refId: 'A' }] }),
+        $data: new SceneQueryRunner({
+          key: 'data-query-runner',
+          datasource: {
+            type: 'grafana-testdata-datasource',
+            uid: 'gdev-testdata',
+          },
+          queries: [{ refId: 'A' }],
+        }),
         options: {
           customOption: 'A',
         },
@@ -718,6 +732,23 @@ describe('VizPanelManager', () => {
         expect(vizPanelManager.queryRunner.state.queries[0].panelId).toBe(panelWithQueriesOnly.id);
       });
     });
+  });
+
+  it('should load last used data source if no data source specified for a panel', async () => {
+    store.exists.mockReturnValue(true);
+    store.getObject.mockReturnValue({
+      dashboardUid: 'ffbe00e2-803c-4d49-adb7-41aad336234f',
+      datasourceUid: 'gdev-testdata',
+    });
+    const { scene, panel } = setupTest('panel-5');
+    scene.setState({ editPanel: buildPanelEditScene(panel) });
+
+    const vizPanelManager = scene.state.editPanel!.state.vizManager;
+    vizPanelManager.activate();
+    await Promise.resolve();
+
+    expect(vizPanelManager.state.datasource).toEqual(ds1Mock);
+    expect(vizPanelManager.state.dsSettings).toEqual(instance1SettingsMock);
   });
 });
 

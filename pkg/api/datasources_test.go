@@ -543,10 +543,6 @@ func (m *dataSourcesServiceMock) GetDataSourcesByType(ctx context.Context, query
 	return m.expectedDatasources, m.expectedError
 }
 
-func (m *dataSourcesServiceMock) GetDefaultDataSource(ctx context.Context, query *datasources.GetDefaultDataSourceQuery) (*datasources.DataSource, error) {
-	return nil, m.expectedError
-}
-
 func (m *dataSourcesServiceMock) DeleteDataSource(ctx context.Context, cmd *datasources.DeleteDataSourceCommand) error {
 	return m.expectedError
 }

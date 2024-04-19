@@ -1,7 +1,8 @@
 import React, { useCallback, useState } from 'react';
 
 import { selectors } from '@grafana/e2e-selectors';
-import { Button, Field, Form, Modal, Input, Alert } from '@grafana/ui';
+import { Button, Field, Modal, Input, Alert } from '@grafana/ui';
+import { Form } from 'app/core/components/Form/Form';
 
 import { RepeatRowSelect } from '../RepeatRowSelect/RepeatRowSelect';
 

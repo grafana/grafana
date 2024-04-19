@@ -18,6 +18,7 @@ import { EditCloudGroupModal } from '../rules/EditRuleGroupModal';
 import { FolderAndGroup, useFolderGroupOptions } from './FolderAndGroup';
 import { GrafanaAlertStatePicker } from './GrafanaAlertStatePicker';
 import { NeedHelpInfo } from './NeedHelpInfo';
+import { PendingPeriodQuickPick } from './PendingPeriodQuickPick';
 import { RuleEditorSection } from './RuleEditorSection';
 
 export const MIN_TIME_RANGE_STEP_S = 10; // 10 seconds
@@ -163,9 +164,16 @@ function ForInput({ evaluateEvery }: { evaluateEvery: string }) {
   const {
     register,
     formState: { errors },
+    setValue,
+    watch,
   } = useFormContext<RuleFormValues>();
 
   const evaluateForId = 'eval-for-input';
+  const currentPendingPeriod = watch('evaluateFor');
+
+  const setPendingPeriod = (pendingPeriod: string) => {
+    setValue('evaluateFor', pendingPeriod);
+  };
 
   return (
     <Stack direction="row" justify-content="flex-start" align-items="flex-start">
@@ -180,10 +188,17 @@ function ForInput({ evaluateEvery }: { evaluateEvery: string }) {
         }
         className={styles.inlineField}
         error={errors.evaluateFor?.message}
-        invalid={!!errors.evaluateFor?.message}
+        invalid={Boolean(errors.evaluateFor?.message) ? true : undefined}
         validationMessageHorizontalOverflow={true}
       >
-        <Input id={evaluateForId} width={8} {...register('evaluateFor', forValidationOptions(evaluateEvery))} />
+        <Stack direction="row" alignItems="center">
+          <Input id={evaluateForId} width={8} {...register('evaluateFor', forValidationOptions(evaluateEvery))} />
+          <PendingPeriodQuickPick
+            selectedPendingPeriod={currentPendingPeriod}
+            groupEvaluationInterval={evaluateEvery}
+            onSelect={setPendingPeriod}
+          />
+        </Stack>
       </Field>
     </Stack>
   );

@@ -410,3 +410,49 @@ func TestEval(t *testing.T) {
 		})
 	}
 }
+
+func TestEval_MutateScopes(t *testing.T) {
+	t.Run("should return error if none of the scopes was a resolved", func(t *testing.T) {
+		eval := EvalAll(
+			EvalPermission("action:1", "scope:uid:1"),
+			EvalPermission("action:2", "scope:id:1"),
+		)
+
+		calls := 0
+		_, err := eval.MutateScopes(context.Background(), func(ctx context.Context, s string) ([]string, error) {
+			calls += 1
+			return nil, ErrResolverNotFound
+		})
+
+		assert.Equal(t, 2, calls)
+		assert.ErrorIs(t, err, ErrResolverNotFound)
+	})
+
+	t.Run("should return if at least one scope was resolved", func(t *testing.T) {
+		eval := EvalAll(
+			EvalPermission("action:1", "scope:uid:1"),
+			EvalPermission("action:2", "scope:id:1"),
+		)
+
+		calls := 0
+		resolved := 0
+		eval, err := eval.MutateScopes(context.Background(), func(ctx context.Context, s string) ([]string, error) {
+			calls += 1
+			if s == "scope:id:1" {
+				resolved += 1
+				return []string{"scope:uid:2"}, nil
+			}
+			return nil, ErrResolverNotFound
+		})
+
+		assert.NoError(t, err)
+		assert.Equal(t, 2, calls)
+		assert.Equal(t, 1, resolved)
+
+		hasAccess := eval.Evaluate(map[string][]string{
+			"action:1": {"scope:uid:1"},
+			"action:2": {"scope:uid:2"},
+		})
+		assert.True(t, hasAccess)
+	})
+}

@@ -43,7 +43,7 @@ export const ExpressionDatasourceRef = Object.freeze({
 });
 
 /**
- * @internal
+ * @public
  */
 export function isExpressionReference(ref?: DataSourceRef | string | null): boolean {
   if (!ref) {
@@ -206,6 +206,18 @@ class DataSourceWithBackend<
     headers[PluginRequestHeaders.DatasourceUID] = Array.from(dsUIDs).join(', ');
 
     let url = '/api/ds/query?ds_type=' + this.type;
+
+    // Use the new query service
+    if (config.featureToggles.queryServiceFromUI) {
+      if (!(config.featureToggles.queryService || config.featureToggles.grafanaAPIServerWithExperimentalAPIs)) {
+        console.warn('feature toggle queryServiceFromUI also requires the queryService to be running');
+      } else {
+        if (!hasExpr && dsUIDs.size === 1) {
+          // TODO? can we talk directly to the apiserver?
+        }
+        url = `/apis/query.grafana.app/v0alpha1/namespaces/${config.namespace}/query?ds_type=' + this.type`;
+      }
+    }
 
     if (hasExpr) {
       headers[PluginRequestHeaders.FromExpression] = 'true';

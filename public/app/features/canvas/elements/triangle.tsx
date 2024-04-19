@@ -43,11 +43,24 @@ const Triangle = (props: CanvasElementProps<CanvasElementConfig, CanvasElementDa
           </clipPath>
         </defs>
         {/* Apply background image within the clipping area */}
-        <rect x="0" y="0" width="100%" height="100%" clipPath={`url(#triangleClip-${uniqueId})`} />
+        <rect
+          x="0"
+          y="0"
+          width="100%"
+          height="100%"
+          clipPath={`url(#triangleClip-${uniqueId})`}
+          style={{ fill: 'none' }}
+        />
         <polygon
           points="100,0 200,200 0,200"
-          className={styles.element}
           style={{ fill: data?.backgroundImage ? `url(#image-${uniqueId})` : data?.backgroundColor }}
+        />
+
+        {/* Border */}
+        <polygon
+          points="100,0 200,200 0,200"
+          clipPath={`url(#triangleClip-${uniqueId})`}
+          className={styles.elementBorder}
         />
       </svg>
 
@@ -87,6 +100,7 @@ export const triangleItem: CanvasElementItem = {
       height: options?.placement?.height ?? 138,
       top: options?.placement?.top,
       left: options?.placement?.left,
+      rotation: options?.placement?.rotation ?? 0,
     },
   }),
 
@@ -193,9 +207,11 @@ const getStyles = (theme: GrafanaTheme2, data: CanvasElementData | undefined) =>
       fontSize: `${data?.size}px`,
       color: data?.color,
     }),
-    element: css({
-      stroke: data?.borderColor,
-      strokeWidth: data?.borderWidth,
+    elementBorder: css({
+      fill: 'none',
+      stroke: data?.borderColor ?? 'none',
+      strokeWidth: data?.borderWidth ?? 0,
+      strokeLinejoin: 'round',
     }),
   };
 };

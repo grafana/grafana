@@ -10,7 +10,6 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"log"
 	"reflect"
 	"strconv"
 
@@ -28,6 +27,7 @@ import (
 	"k8s.io/apiserver/pkg/storage"
 	"k8s.io/apiserver/pkg/storage/storagebackend"
 	"k8s.io/apiserver/pkg/storage/storagebackend/factory"
+	"k8s.io/klog/v2"
 
 	entityStore "github.com/grafana/grafana/pkg/services/store/entity"
 )
@@ -171,21 +171,13 @@ func (s *Storage) Watch(ctx context.Context, key string, opts storage.ListOption
 
 	if opts.Predicate.Field != nil {
 		// check for metadata.name field selector
-		if v, ok := opts.Predicate.Field.RequiresExactMatch("metadata.name"); ok {
-			if k.Name != "" && k.Name != v {
-				return nil, apierrors.NewBadRequest("name field selector does not match key")
-			}
-
+		if v, ok := opts.Predicate.Field.RequiresExactMatch("metadata.name"); ok && k.Name == "" {
 			// just watch the specific key if we have a name field selector
 			k.Name = v
 		}
 
 		// check for metadata.namespace field selector
-		if v, ok := opts.Predicate.Field.RequiresExactMatch("metadata.namespace"); ok {
-			if k.Namespace != "" && k.Namespace != v {
-				return nil, apierrors.NewBadRequest("namespace field selector does not match key")
-			}
-
+		if v, ok := opts.Predicate.Field.RequiresExactMatch("metadata.namespace"); ok && k.Namespace == "" {
 			// just watch the specific namespace if we have a namespace field selector
 			k.Namespace = v
 		}
@@ -209,12 +201,30 @@ func (s *Storage) Watch(ctx context.Context, key string, opts storage.ListOption
 	}
 
 	req := &entityStore.EntityWatchRequest{
+		Action: entityStore.EntityWatchRequest_START,
 		Key: []string{
 			k.String(),
 		},
-		Labels:     map[string]string{},
-		WithBody:   true,
-		WithStatus: true,
+		Labels:              map[string]string{},
+		WithBody:            true,
+		WithStatus:          true,
+		SendInitialEvents:   false,
+		AllowWatchBookmarks: opts.Predicate.AllowWatchBookmarks,
+	}
+
+	if opts.ResourceVersion != "" {
+		rv, err := strconv.ParseInt(opts.ResourceVersion, 10, 64)
+		if err != nil {
+			return nil, apierrors.NewBadRequest(fmt.Sprintf("invalid resource version: %s", opts.ResourceVersion))
+		}
+
+		req.Since = rv
+	}
+
+	if opts.SendInitialEvents == nil && req.Since == 0 {
+		req.SendInitialEvents = true
+	} else if opts.SendInitialEvents != nil {
+		req.SendInitialEvents = *opts.SendInitialEvents
 	}
 
 	if requirements.Folder != nil {
@@ -233,24 +243,35 @@ func (s *Storage) Watch(ctx context.Context, key string, opts storage.ListOption
 		}
 	}
 
-	if opts.ResourceVersion != "" {
-		rv, err := strconv.ParseInt(opts.ResourceVersion, 10, 64)
-		if err != nil {
-			return nil, apierrors.NewBadRequest(fmt.Sprintf("invalid resource version: %s", opts.ResourceVersion))
+	client, err := s.store.Watch(ctx)
+	if err != nil {
+		// if the context was canceled, just return a new empty watch
+		if errors.Is(err, context.Canceled) || errors.Is(err, context.DeadlineExceeded) || errors.Is(err, io.EOF) {
+			return watch.NewEmptyWatch(), nil
 		}
 
-		req.Since = rv
+		return nil, err
 	}
 
-	result, err := s.store.Watch(ctx, req)
+	err = client.Send(req)
 	if err != nil {
+		err2 := client.CloseSend()
+		if err2 != nil {
+			klog.Errorf("watch close failed: %s\n", err2)
+		}
+
+		// if the context was canceled, just return a new empty watch
+		if errors.Is(err, context.Canceled) || errors.Is(err, context.DeadlineExceeded) || errors.Is(err, io.EOF) {
+			return watch.NewEmptyWatch(), nil
+		}
+
 		return nil, err
 	}
 
 	reporter := apierrors.NewClientErrorReporter(500, "WATCH", "")
 
 	decoder := &Decoder{
-		client:  result,
+		client:  client,
 		newFunc: s.newFunc,
 		opts:    opts,
 		codec:   s.codec,
@@ -511,9 +532,14 @@ func (s *Storage) GuaranteedUpdate(
 		Subresource: requestInfo.Subresource,
 	}
 
-	err := s.Get(ctx, k.String(), storage.GetOptions{}, destination)
-	if err != nil {
-		return err
+	getErr := s.Get(ctx, k.String(), storage.GetOptions{}, destination)
+	if getErr != nil {
+		if ignoreNotFound && apierrors.IsNotFound(getErr) {
+			// destination is already set to zero value
+			// we'll create the resource
+		} else {
+			return getErr
+		}
 	}
 
 	accessor, err := meta.Accessor(destination)
@@ -544,6 +570,27 @@ func (s *Storage) GuaranteedUpdate(
 		return err
 	}
 
+	// if we have a non-nil getErr, then we've ignored a not found error
+	if getErr != nil {
+		// object does not exist, create it
+		req := &entityStore.CreateEntityRequest{
+			Entity: e,
+		}
+
+		rsp, err := s.store.Create(ctx, req)
+		if err != nil {
+			return err
+		}
+
+		err = entityToResource(rsp.Entity, destination, s.codec)
+		if err != nil {
+			return apierrors.NewInternalError(err)
+		}
+
+		return nil
+	}
+
+	// update the existing object
 	req := &entityStore.UpdateEntityRequest{
 		Entity:          e,
 		PreviousVersion: previousVersion,
@@ -587,49 +634,148 @@ type Decoder struct {
 }
 
 func (d *Decoder) Decode() (action watch.EventType, object runtime.Object, err error) {
+decode:
 	for {
+		err := d.client.Context().Err()
+		if err != nil {
+			klog.Errorf("client: context error: %s\n", err)
+			return watch.Error, nil, err
+		}
+
 		resp, err := d.client.Recv()
 		if errors.Is(err, io.EOF) {
-			log.Printf("watch is done")
 			return watch.Error, nil, err
 		}
 
 		if grpcStatus.Code(err) == grpcCodes.Canceled {
-			log.Printf("watch was canceled")
 			return watch.Error, nil, err
 		}
 
 		if err != nil {
-			log.Printf("error receiving result: %s", err)
+			klog.Errorf("client: error receiving result: %s", err)
 			return watch.Error, nil, err
+		}
+
+		if resp.Entity == nil {
+			klog.Errorf("client: received nil entity\n")
+			continue decode
 		}
 
 		obj := d.newFunc()
 
-		err = entityToResource(resp.Entity, obj, d.codec)
-		if err != nil {
-			log.Printf("error decoding entity: %s", err)
-			return watch.Error, nil, err
+		if resp.Entity.Action == entityStore.Entity_BOOKMARK {
+			// here k8s expects an empty object with just resource version and k8s.io/initial-events-end annotation
+			accessor, err := meta.Accessor(obj)
+			if err != nil {
+				klog.Errorf("error getting object accessor: %s", err)
+				return watch.Error, nil, err
+			}
+
+			accessor.SetResourceVersion(fmt.Sprintf("%d", resp.Entity.ResourceVersion))
+			accessor.SetAnnotations(map[string]string{"k8s.io/initial-events-end": "true"})
+			return watch.Bookmark, obj, nil
 		}
 
-		// apply any predicates not handled in storage
-		matches, err := d.opts.Predicate.Matches(obj)
+		err = entityToResource(resp.Entity, obj, d.codec)
 		if err != nil {
-			log.Printf("error matching object: %s", err)
+			klog.Errorf("error decoding entity: %s", err)
 			return watch.Error, nil, err
-		}
-		if !matches {
-			continue
 		}
 
 		var watchAction watch.EventType
 		switch resp.Entity.Action {
 		case entityStore.Entity_CREATED:
+			// apply any predicates not handled in storage
+			matches, err := d.opts.Predicate.Matches(obj)
+			if err != nil {
+				klog.Errorf("error matching object: %s", err)
+				return watch.Error, nil, err
+			}
+			if !matches {
+				continue decode
+			}
+
 			watchAction = watch.Added
 		case entityStore.Entity_UPDATED:
 			watchAction = watch.Modified
+
+			// apply any predicates not handled in storage
+			matches, err := d.opts.Predicate.Matches(obj)
+			if err != nil {
+				klog.Errorf("error matching object: %s", err)
+				return watch.Error, nil, err
+			}
+
+			// if we have a previous object, check if it matches
+			prevMatches := false
+			prevObj := d.newFunc()
+			if resp.Previous != nil {
+				err = entityToResource(resp.Previous, prevObj, d.codec)
+				if err != nil {
+					klog.Errorf("error decoding entity: %s", err)
+					return watch.Error, nil, err
+				}
+
+				// apply any predicates not handled in storage
+				prevMatches, err = d.opts.Predicate.Matches(prevObj)
+				if err != nil {
+					klog.Errorf("error matching object: %s", err)
+					return watch.Error, nil, err
+				}
+			}
+
+			if !matches {
+				if !prevMatches {
+					continue decode
+				}
+
+				// if the object didn't match, send a Deleted event
+				watchAction = watch.Deleted
+
+				// here k8s expects the previous object but with the new resource version
+				obj = prevObj
+
+				accessor, err := meta.Accessor(obj)
+				if err != nil {
+					klog.Errorf("error getting object accessor: %s", err)
+					return watch.Error, nil, err
+				}
+
+				accessor.SetResourceVersion(fmt.Sprintf("%d", resp.Entity.ResourceVersion))
+			} else if !prevMatches {
+				// if the object didn't previously match, send an Added event
+				watchAction = watch.Added
+			}
 		case entityStore.Entity_DELETED:
 			watchAction = watch.Deleted
+
+			// if we have a previous object, return that in the deleted event
+			if resp.Previous != nil {
+				err = entityToResource(resp.Previous, obj, d.codec)
+				if err != nil {
+					klog.Errorf("error decoding entity: %s", err)
+					return watch.Error, nil, err
+				}
+
+				// here k8s expects the previous object but with the new resource version
+				accessor, err := meta.Accessor(obj)
+				if err != nil {
+					klog.Errorf("error getting object accessor: %s", err)
+					return watch.Error, nil, err
+				}
+
+				accessor.SetResourceVersion(fmt.Sprintf("%d", resp.Entity.ResourceVersion))
+			}
+
+			// apply any predicates not handled in storage
+			matches, err := d.opts.Predicate.Matches(obj)
+			if err != nil {
+				klog.Errorf("error matching object: %s", err)
+				return watch.Error, nil, err
+			}
+			if !matches {
+				continue decode
+			}
 		default:
 			watchAction = watch.Error
 		}
@@ -639,7 +785,10 @@ func (d *Decoder) Decode() (action watch.EventType, object runtime.Object, err e
 }
 
 func (d *Decoder) Close() {
-	_ = d.client.CloseSend()
+	err := d.client.CloseSend()
+	if err != nil {
+		klog.Errorf("error closing watch stream: %s", err)
+	}
 }
 
 var _ watch.Decoder = (*Decoder)(nil)

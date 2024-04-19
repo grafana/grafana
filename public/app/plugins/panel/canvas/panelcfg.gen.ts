@@ -36,6 +36,7 @@ export interface Placement {
   height?: number;
   left?: number;
   right?: number;
+  rotation?: number;
   top?: number;
   width?: number;
 }
@@ -56,6 +57,7 @@ export interface BackgroundConfig {
 
 export interface LineConfig {
   color?: ui.ColorDimensionConfig;
+  radius?: number;
   width?: number;
 }
 
@@ -79,8 +81,10 @@ export interface CanvasConnection {
   path: ConnectionPath;
   size?: ui.ScaleDimensionConfig;
   source: ConnectionCoordinates;
+  sourceOriginal?: ConnectionCoordinates;
   target: ConnectionCoordinates;
   targetName?: string;
+  targetOriginal?: ConnectionCoordinates;
   vertices?: Array<ConnectionCoordinates>;
 }
 
@@ -107,6 +111,10 @@ export const defaultCanvasElementOptions: Partial<CanvasElementOptions> = {
 };
 
 export interface Options {
+  /**
+   * Enable infinite pan
+   */
+  infinitePan: boolean;
   /**
    * Enable inline editing
    */
@@ -140,6 +148,7 @@ export interface Options {
 }
 
 export const defaultOptions: Partial<Options> = {
+  infinitePan: true,
   inlineEditing: true,
   panZoom: true,
   showAdvancedTypes: true,

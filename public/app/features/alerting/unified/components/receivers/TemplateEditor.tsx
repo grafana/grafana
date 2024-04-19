@@ -44,6 +44,9 @@ const TemplateEditor = (props: TemplateEditorProps) => {
       showLineNumbers={true}
       showMiniMap={false}
       {...props}
+      monacoOptions={{
+        scrollBeyondLastLine: false,
+      }}
       onEditorDidMount={onEditorDidMount}
       onBeforeEditorMount={(monaco) => {
         registerLanguage(monaco, goTemplateLanguageDefinition);

@@ -10,6 +10,8 @@ import (
 	"time"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend/log"
+
+	"github.com/grafana/grafana/pkg/tsdb/grafana-testdata-datasource/kinds"
 )
 
 func (s *Service) registerRoutes() *http.ServeMux {
@@ -46,12 +48,12 @@ func (s *Service) getScenariosHandler(rw http.ResponseWriter, req *http.Request)
 
 	scenarioIds := make([]string, 0)
 	for id := range s.scenarios {
-		scenarioIds = append(scenarioIds, id)
+		scenarioIds = append(scenarioIds, string(id))
 	}
 	sort.Strings(scenarioIds)
 
 	for _, scenarioID := range scenarioIds {
-		scenario := s.scenarios[scenarioID]
+		scenario := s.scenarios[kinds.TestDataQueryType(scenarioID)]
 		result = append(result, map[string]any{
 			"id":          scenario.ID,
 			"name":        scenario.Name,

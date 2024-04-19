@@ -58,7 +58,7 @@ func (s *FakeRuleService) HasAccessToRuleGroup(ctx context.Context, user identit
 }
 
 func (s *FakeRuleService) AuthorizeAccessToRuleGroup(ctx context.Context, user identity.Requester, rules models.RulesGroup) error {
-	s.Calls = append(s.Calls, Call{"AuthorizeAccessToRuleGroup", []interface{}{ctx, user, rules}})
+	s.Calls = append(s.Calls, Call{"AuthorizeRuleGroupRead", []interface{}{ctx, user, rules}})
 	if s.AuthorizeAccessToRuleGroupFunc != nil {
 		return s.AuthorizeAccessToRuleGroupFunc(ctx, user, rules)
 	}
@@ -66,7 +66,7 @@ func (s *FakeRuleService) AuthorizeAccessToRuleGroup(ctx context.Context, user i
 }
 
 func (s *FakeRuleService) AuthorizeRuleChanges(ctx context.Context, user identity.Requester, change *store.GroupDelta) error {
-	s.Calls = append(s.Calls, Call{"AuthorizeRuleChanges", []interface{}{ctx, user, change}})
+	s.Calls = append(s.Calls, Call{"AuthorizeRuleGroupWrite", []interface{}{ctx, user, change}})
 	if s.AuthorizeRuleChangesFunc != nil {
 		return s.AuthorizeRuleChangesFunc(ctx, user, change)
 	}

@@ -27,31 +27,45 @@ export const useGroupedAlerts = (groups: AlertmanagerGroup[], groupBy: string[])
         return groups;
       }
     }
-    const alerts = groups.flatMap(({ alerts }) => alerts);
+
+    // api/v2/alerts/groups returns alerts grouped by labels AND receiver.
+    // It means that the same alert can be in multiple groups if it has multiple receivers.
+    // Hence, to get the list of unique alerts we need to get unique alerts by fingerprint.
+    const alerts = uniqBy(
+      groups.flatMap(({ alerts }) => alerts),
+      (alert) => alert.fingerprint
+    );
     return alerts.reduce<AlertmanagerGroup[]>((groupings, alert) => {
       const alertContainsGroupings = groupBy.every((groupByLabel) => Object.keys(alert.labels).includes(groupByLabel));
 
       if (alertContainsGroupings) {
-        const existingGrouping = groupings.find((group) => {
-          return groupBy.every((groupKey) => {
-            return group.labels[groupKey] === alert.labels[groupKey];
-          });
-        });
-        if (!existingGrouping) {
-          const labels = groupBy.reduce<Labels>((acc, key) => {
+        // We need to create a group for each receiver. This is how Alertmanager groups alerts.
+        // Alertmanager not only does grouping by labels but also by receiver.
+        const receiverAlertGroups = alert.receivers.map<AlertmanagerGroup>((receiver) => ({
+          alerts: [alert],
+          labels: groupBy.reduce<Labels>((acc, key) => {
             acc = { ...acc, [key]: alert.labels[key] };
             return acc;
-          }, {});
-          groupings.push({
-            alerts: [alert],
-            labels,
-            receiver: {
-              name: 'NONE',
-            },
+          }, {}),
+          receiver,
+        }));
+
+        // Merge the same groupings - groupings are the same if they have the same labels and receiver
+        receiverAlertGroups.forEach((receiverAlertGroup) => {
+          const existingGroup = groupings.find((grouping) => {
+            return (
+              Object.keys(receiverAlertGroup.labels).every(
+                (key) => grouping.labels[key] === receiverAlertGroup.labels[key]
+              ) && grouping.receiver.name === receiverAlertGroup.receiver.name
+            );
           });
-        } else {
-          existingGrouping.alerts.push(alert);
-        }
+
+          if (existingGroup) {
+            existingGroup.alerts.push(alert);
+          } else {
+            groupings.push(receiverAlertGroup);
+          }
+        });
       } else {
         const noGroupingGroup = groupings.find((group) => Object.keys(group.labels).length === 0);
         if (!noGroupingGroup) {

@@ -303,10 +303,12 @@ export default class CloudMonitoringDatasource extends DataSourceWithBackend<
     }, {} as T);
   }
 
-  filterQuery(query: CloudMonitoringQuery): boolean {
-    if (query.hide) {
+  filterQuery(item: CloudMonitoringQuery): boolean {
+    if (item.hide) {
       return false;
     }
+
+    const query = this.migrateQuery(item);
 
     if (query.queryType === QueryType.SLO) {
       if (!query.sloQuery) {

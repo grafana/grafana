@@ -4,6 +4,7 @@ import (
 	"context"
 	"time"
 
+	"github.com/grafana/grafana/pkg/login/social"
 	"github.com/grafana/grafana/pkg/services/ssosettings"
 	"github.com/grafana/grafana/pkg/setting"
 )
@@ -21,7 +22,7 @@ func NewSAMLStrategy(settingsProvider setting.Provider) *SAMLStrategy {
 }
 
 func (s *SAMLStrategy) IsMatch(provider string) bool {
-	return provider == "saml"
+	return provider == social.SAMLProviderName
 }
 
 func (s *SAMLStrategy) GetProviderConfig(_ context.Context, provider string) (map[string]any, error) {

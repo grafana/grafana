@@ -251,17 +251,11 @@ function overrideFeatureTogglesFromUrl(config: GrafanaBootConfig) {
     return;
   }
 
-  const isLocalDevEnv = config.buildInfo.env === 'development';
+  const isDevelopment = config.buildInfo.env === 'development';
 
-  const prodUrlAllowedFeatureFlags = new Set([
-    'autoMigrateOldPanels',
-    'autoMigrateGraphPanel',
-    'autoMigrateTablePanel',
-    'autoMigratePiechartPanel',
-    'autoMigrateWorldmapPanel',
-    'autoMigrateStatPanel',
-    'disableAngular',
-  ]);
+  // Although most flags can not be changed from the URL in production,
+  // some of them are safe (and useful!) to change dynamically from the browser URL
+  const safeRuntimeFeatureFlags = new Set(['queryServiceFromUI']);
 
   const params = new URLSearchParams(window.location.search);
   params.forEach((value, key) => {
@@ -269,14 +263,14 @@ function overrideFeatureTogglesFromUrl(config: GrafanaBootConfig) {
       const featureToggles = config.featureToggles as Record<string, boolean>;
       const featureName = key.substring(10);
 
-      if (!isLocalDevEnv && !prodUrlAllowedFeatureFlags.has(featureName)) {
-        return;
-      }
-
       const toggleState = value === 'true' || value === ''; // browser rewrites true as ''
       if (toggleState !== featureToggles[key]) {
-        featureToggles[featureName] = toggleState;
-        console.log(`Setting feature toggle ${featureName} = ${toggleState} via url`);
+        if (isDevelopment || safeRuntimeFeatureFlags.has(featureName)) {
+          featureToggles[featureName] = toggleState;
+          console.log(`Setting feature toggle ${featureName} = ${toggleState} via url`);
+        } else {
+          console.log(`Unable to change feature toggle ${featureName} via url in production.`);
+        }
       }
     }
   });

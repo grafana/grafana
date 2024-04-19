@@ -20,7 +20,7 @@ import { getTreeData, onNodeDrop, TreeElement } from './tree';
 
 let allowSelection = true;
 
-export const TreeNavigationEditor = ({ item }: StandardEditorProps<any, TreeViewEditorProps, Options>) => {
+export const TreeNavigationEditor = ({ item }: StandardEditorProps<unknown, TreeViewEditorProps, Options>) => {
   const [treeData, setTreeData] = useState(getTreeData(item?.settings?.scene.root));
   const [autoExpandParent, setAutoExpandParent] = useState(true);
   const [expandedKeys, setExpandedKeys] = useState<Key[]>([]);

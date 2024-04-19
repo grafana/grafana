@@ -44,7 +44,7 @@ import InfluxQueryModel from './influx_query_model';
 import InfluxSeries from './influx_series';
 import { buildMetadataQuery } from './influxql_query_builder';
 import { prepareAnnotation } from './migrations';
-import { buildRawQuery } from './queryUtils';
+import { buildRawQuery, removeRegexWrapper } from './queryUtils';
 import ResponseParser from './response_parser';
 import { DEFAULT_POLICY, InfluxOptions, InfluxQuery, InfluxQueryTag, InfluxVersion } from './types';
 
@@ -254,7 +254,7 @@ export default class InfluxDatasource extends DataSourceWithBackend<InfluxQuery,
         return selects.map((select) => {
           return {
             ...select,
-            params: select.params?.map((param) => this.templateSrv.replace(param.toString(), undefined)),
+            params: select.params?.map((param) => this.templateSrv.replace(param.toString(), scopedVars)),
           };
         });
       });
@@ -262,6 +262,11 @@ export default class InfluxDatasource extends DataSourceWithBackend<InfluxQuery,
 
     if (query.tags) {
       expandedQuery.tags = query.tags.map((tag) => {
+        // Remove the regex wrapper if the operator is not a regex operator
+        if (tag.operator !== '=~' && tag.operator !== '!~') {
+          tag.value = removeRegexWrapper(tag.value);
+        }
+
         return {
           ...tag,
           key: this.templateSrv.replace(tag.key, scopedVars),
@@ -292,7 +297,12 @@ export default class InfluxDatasource extends DataSourceWithBackend<InfluxQuery,
       ), // The raw sql query text
       alias: this.templateSrv.replace(query.alias ?? '', scopedVars),
       limit: this.templateSrv.replace(query.limit?.toString() ?? '', scopedVars),
-      measurement: this.templateSrv.replace(query.measurement ?? '', scopedVars),
+      measurement: this.templateSrv.replace(
+        query.measurement ?? '',
+        scopedVars,
+        (value: string | string[] = [], variable: QueryVariableModel) =>
+          this.interpolateQueryExpr(value, variable, query.measurement)
+      ),
       policy: this.templateSrv.replace(query.policy ?? '', scopedVars),
       slimit: this.templateSrv.replace(query.slimit?.toString() ?? '', scopedVars),
       tz: this.templateSrv.replace(query.tz ?? '', scopedVars),
@@ -303,6 +313,13 @@ export default class InfluxDatasource extends DataSourceWithBackend<InfluxQuery,
     // If there is no query just return the value directly
     if (!query) {
       return value;
+    }
+
+    if (typeof value === 'string') {
+      // Check the value is a number. If not run to escape special characters
+      if (!isNaN(parseFloat(value))) {
+        return value;
+      }
     }
 
     // If template variable is a multi-value variable
@@ -399,7 +416,7 @@ export default class InfluxDatasource extends DataSourceWithBackend<InfluxQuery,
     return this.metricFindQuery(query);
   }
 
-  getTagValues(options: DataSourceGetTagValuesOptions) {
+  getTagValues(options: DataSourceGetTagValuesOptions<InfluxQuery>) {
     const query = buildMetadataQuery({
       type: 'TAG_VALUES',
       templateService: this.templateSrv,
@@ -570,7 +587,7 @@ export default class InfluxDatasource extends DataSourceWithBackend<InfluxQuery,
     return 'time >= ' + from + ' and time <= ' + until;
   }
 
-  getInfluxTime(date: DateTime | string, roundUp: any, timezone: any) {
+  getInfluxTime(date: DateTime | string, roundUp: boolean, timezone: string) {
     let outPutDate;
     if (isString(date)) {
       if (date === 'now') {
