@@ -65,10 +65,13 @@ func (c *ContextCommandLine) PluginRepoURL() string {
 			HomePath: c.HomePath(),
 			Args:     append(configOptions, c.Args().Slice()...),
 		})
-		if err == nil && cfg.GrafanaComAPIURL != "" {
+
+		if err != nil {
+			logger.Debug("Could not parse config file", err)
+		}
+
+		if cfg.GrafanaComAPIURL != "" {
 			return cfg.GrafanaComAPIURL + "/plugins"
-		} else {
-			logger.Debug(err)
 		}
 	}
 	return c.String("repo")
