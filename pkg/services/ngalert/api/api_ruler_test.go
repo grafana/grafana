@@ -33,7 +33,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert/tests/fakes"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
-	"github.com/grafana/grafana/pkg/util"
 	"github.com/grafana/grafana/pkg/util/cmputil"
 	"github.com/grafana/grafana/pkg/web"
 )
@@ -67,12 +66,14 @@ func TestRouteDeleteAlertRules(t *testing.T) {
 
 	orgID := rand.Int63()
 	folder := randFolder()
+	gen := models.NewAlertRuleGenerator()
+	gen = gen.With(gen.WithOrgID(orgID))
 
 	initFakeRuleStore := func(t *testing.T) *fakes.RuleStore {
 		ruleStore := fakes.NewRuleStore(t)
 		ruleStore.Folders[orgID] = append(ruleStore.Folders[orgID], folder)
 		// add random data
-		ruleStore.PutRule(context.Background(), models.GenerateAlertRulesSmallNonEmpty(models.AlertRuleGen(withOrgID(orgID)))...)
+		ruleStore.PutRule(context.Background(), gen.GenerateManyRef(1, 5)...)
 		return ruleStore
 	}
 
@@ -80,7 +81,7 @@ func TestRouteDeleteAlertRules(t *testing.T) {
 		t.Run("and group argument is empty", func(t *testing.T) {
 			t.Run("return Forbidden if user is not authorized to access any group in the folder", func(t *testing.T) {
 				ruleStore := initFakeRuleStore(t)
-				ruleStore.PutRule(context.Background(), models.GenerateAlertRulesSmallNonEmpty(models.AlertRuleGen(withOrgID(orgID), withNamespace(folder)))...)
+				ruleStore.PutRule(context.Background(), gen.With(gen.WithNamespace(folder)).GenerateManyRef(1, 5)...)
 
 				request := createRequestContextWithPerms(orgID, map[int64]map[string][]string{}, nil)
 
@@ -93,16 +94,20 @@ func TestRouteDeleteAlertRules(t *testing.T) {
 				ruleStore := initFakeRuleStore(t)
 				provisioningStore := fakes.NewFakeProvisioningStore()
 
-				authorizedRulesInFolder := models.GenerateAlertRulesSmallNonEmpty(models.AlertRuleGen(withOrgID(orgID), withNamespace(folder), withGroup("authz_"+util.GenerateShortUID())))
+				folderGen := gen.With(gen.WithNamespace(folder))
 
-				provisionedRulesInFolder := models.GenerateAlertRulesSmallNonEmpty(models.AlertRuleGen(withOrgID(orgID), withNamespace(folder), withGroup("provisioned_"+util.GenerateShortUID())))
-				err := provisioningStore.SetProvenance(context.Background(), provisionedRulesInFolder[0], orgID, models.ProvenanceAPI)
-				require.NoError(t, err)
+				authorizedRulesInFolder := folderGen.With(gen.WithGroupPrefix("authz-")).GenerateManyRef(1, 5)
+
+				provisionedRulesInFolder := folderGen.With(gen.WithGroupPrefix("provisioned-")).GenerateManyRef(1, 5)
+				for _, rule := range provisionedRulesInFolder {
+					err := provisioningStore.SetProvenance(context.Background(), rule, orgID, models.ProvenanceAPI)
+					require.NoError(t, err)
+				}
 
 				ruleStore.PutRule(context.Background(), authorizedRulesInFolder...)
 				ruleStore.PutRule(context.Background(), provisionedRulesInFolder...)
 				// more rules in the same namespace but user does not have access to them
-				ruleStore.PutRule(context.Background(), models.GenerateAlertRulesSmallNonEmpty(models.AlertRuleGen(withOrgID(orgID), withNamespace(folder), withGroup("unauthz"+util.GenerateShortUID())))...)
+				ruleStore.PutRule(context.Background(), folderGen.With(gen.WithGroupPrefix("unauthz")).GenerateManyRef(1, 5)...)
 
 				permissions := createPermissionsForRules(append(authorizedRulesInFolder, provisionedRulesInFolder...), orgID)
 				requestCtx := createRequestContextWithPerms(orgID, permissions, nil)
@@ -116,13 +121,15 @@ func TestRouteDeleteAlertRules(t *testing.T) {
 				ruleStore := initFakeRuleStore(t)
 				provisioningStore := fakes.NewFakeProvisioningStore()
 
-				provisionedRulesInFolder := models.GenerateAlertRulesSmallNonEmpty(models.AlertRuleGen(withOrgID(orgID), withNamespace(folder), withGroup(util.GenerateShortUID())))
+				folderGen := gen.With(gen.WithNamespace(folder))
+
+				provisionedRulesInFolder := folderGen.With(gen.WithSameGroup()).GenerateManyRef(1, 5)
 				err := provisioningStore.SetProvenance(context.Background(), provisionedRulesInFolder[0], orgID, models.ProvenanceAPI)
 				require.NoError(t, err)
 
 				ruleStore.PutRule(context.Background(), provisionedRulesInFolder...)
 				// more rules in the same namespace but user does not have access to them
-				ruleStore.PutRule(context.Background(), models.GenerateAlertRulesSmallNonEmpty(models.AlertRuleGen(withOrgID(orgID), withNamespace(folder), withGroup(util.GenerateShortUID())))...)
+				ruleStore.PutRule(context.Background(), folderGen.With(gen.WithSameGroup()).GenerateManyRef(1, 5)...)
 
 				permissions := createPermissionsForRules(provisionedRulesInFolder, orgID)
 				requestCtx := createRequestContextWithPerms(orgID, permissions, nil)
@@ -143,19 +150,20 @@ func TestRouteDeleteAlertRules(t *testing.T) {
 			})
 		})
 		t.Run("and group argument is not empty", func(t *testing.T) {
-			groupName := util.GenerateShortUID()
 			t.Run("return Forbidden if user is not authorized to access the group", func(t *testing.T) {
 				ruleStore := initFakeRuleStore(t)
 
-				authorizedRulesInGroup := models.GenerateAlertRulesSmallNonEmpty(models.AlertRuleGen(withOrgID(orgID), withNamespace(folder), withGroup(groupName)))
+				groupGen := gen.With(gen.WithNamespace(folder), gen.WithSameGroup())
+
+				authorizedRulesInGroup := groupGen.GenerateManyRef(1, 5)
 				ruleStore.PutRule(context.Background(), authorizedRulesInGroup...)
 				// more rules in the same group but user is not authorized to access them
-				ruleStore.PutRule(context.Background(), models.GenerateAlertRulesSmallNonEmpty(models.AlertRuleGen(withOrgID(orgID), withNamespace(folder), withGroup(groupName)))...)
+				ruleStore.PutRule(context.Background(), groupGen.GenerateManyRef(1, 5)...)
 
 				permissions := createPermissionsForRules(authorizedRulesInGroup, orgID)
 				requestCtx := createRequestContextWithPerms(orgID, permissions, nil)
 
-				response := createService(ruleStore).RouteDeleteAlertRules(requestCtx, folder.UID, groupName)
+				response := createService(ruleStore).RouteDeleteAlertRules(requestCtx, folder.UID, authorizedRulesInGroup[0].RuleGroup)
 
 				require.Equalf(t, http.StatusForbidden, response.Status(), "Expected 403 but got %d: %v", response.Status(), string(response.Body()))
 				deleteCommands := getRecordedCommand(ruleStore)
@@ -165,7 +173,9 @@ func TestRouteDeleteAlertRules(t *testing.T) {
 				ruleStore := initFakeRuleStore(t)
 				provisioningStore := fakes.NewFakeProvisioningStore()
 
-				provisionedRulesInFolder := models.GenerateAlertRulesSmallNonEmpty(models.AlertRuleGen(withOrgID(orgID), withNamespace(folder), withGroup(groupName)))
+				groupGen := gen.With(gen.WithNamespace(folder), gen.WithSameGroup())
+
+				provisionedRulesInFolder := groupGen.GenerateManyRef(1, 5)
 				err := provisioningStore.SetProvenance(context.Background(), provisionedRulesInFolder[0], orgID, models.ProvenanceAPI)
 				require.NoError(t, err)
 
@@ -174,7 +184,7 @@ func TestRouteDeleteAlertRules(t *testing.T) {
 				permissions := createPermissionsForRules(provisionedRulesInFolder, orgID)
 				requestCtx := createRequestContextWithPerms(orgID, permissions, nil)
 
-				response := createServiceWithProvenanceStore(ruleStore, provisioningStore).RouteDeleteAlertRules(requestCtx, folder.UID, groupName)
+				response := createServiceWithProvenanceStore(ruleStore, provisioningStore).RouteDeleteAlertRules(requestCtx, folder.UID, provisionedRulesInFolder[0].RuleGroup)
 
 				require.Equalf(t, 400, response.Status(), "Expected 400 but got %d: %v", response.Status(), string(response.Body()))
 				deleteCommands := getRecordedCommand(ruleStore)
@@ -185,15 +195,17 @@ func TestRouteDeleteAlertRules(t *testing.T) {
 }
 
 func TestRouteGetNamespaceRulesConfig(t *testing.T) {
+	gen := models.NewAlertRuleGenerator()
 	t.Run("fine-grained access is enabled", func(t *testing.T) {
 		t.Run("should return rules for which user has access to data source", func(t *testing.T) {
 			orgID := rand.Int63()
 			folder := randFolder()
 			ruleStore := fakes.NewRuleStore(t)
 			ruleStore.Folders[orgID] = append(ruleStore.Folders[orgID], folder)
-			expectedRules := models.GenerateAlertRules(rand.Intn(4)+2, models.AlertRuleGen(withOrgID(orgID), withNamespace(folder)))
+			folderGen := gen.With(gen.WithOrgID(orgID), gen.WithNamespace(folder))
+			expectedRules := folderGen.GenerateManyRef(2, 6)
 			ruleStore.PutRule(context.Background(), expectedRules...)
-			ruleStore.PutRule(context.Background(), models.GenerateAlertRules(rand.Intn(4)+2, models.AlertRuleGen(withOrgID(orgID), withNamespace(folder)))...)
+			ruleStore.PutRule(context.Background(), folderGen.GenerateManyRef(2, 6)...)
 
 			permissions := createPermissionsForRules(expectedRules, orgID)
 			req := createRequestContextWithPerms(orgID, permissions, nil)
@@ -227,7 +239,7 @@ func TestRouteGetNamespaceRulesConfig(t *testing.T) {
 		folder := randFolder()
 		ruleStore := fakes.NewRuleStore(t)
 		ruleStore.Folders[orgID] = append(ruleStore.Folders[orgID], folder)
-		expectedRules := models.GenerateAlertRules(rand.Intn(4)+2, models.AlertRuleGen(withOrgID(orgID), withNamespace(folder)))
+		expectedRules := gen.With(gen.WithOrgID(orgID), gen.WithNamespace(folder)).GenerateManyRef(2, 6)
 		ruleStore.PutRule(context.Background(), expectedRules...)
 
 		svc := createService(ruleStore)
@@ -271,7 +283,7 @@ func TestRouteGetNamespaceRulesConfig(t *testing.T) {
 		groupKey := models.GenerateGroupKey(orgID)
 		groupKey.NamespaceUID = folder.UID
 
-		expectedRules := models.GenerateAlertRules(rand.Intn(5)+5, models.AlertRuleGen(withGroupKey(groupKey), models.WithUniqueGroupIndex()))
+		expectedRules := gen.With(gen.WithGroupKey(groupKey), gen.WithUniqueGroupIndex()).GenerateManyRef(5, 10)
 		ruleStore.PutRule(context.Background(), expectedRules...)
 
 		perms := createPermissionsForRules(expectedRules, orgID)
@@ -308,6 +320,7 @@ func TestRouteGetNamespaceRulesConfig(t *testing.T) {
 }
 
 func TestRouteGetRulesConfig(t *testing.T) {
+	gen := models.NewAlertRuleGenerator()
 	t.Run("fine-grained access is enabled", func(t *testing.T) {
 		t.Run("should check access to data source", func(t *testing.T) {
 			orgID := rand.Int63()
@@ -321,8 +334,8 @@ func TestRouteGetRulesConfig(t *testing.T) {
 			group2Key := models.GenerateGroupKey(orgID)
 			group2Key.NamespaceUID = folder2.UID
 
-			group1 := models.GenerateAlertRules(rand.Intn(4)+2, models.AlertRuleGen(withGroupKey(group1Key)))
-			group2 := models.GenerateAlertRules(rand.Intn(4)+2, models.AlertRuleGen(withGroupKey(group2Key)))
+			group1 := gen.With(gen.WithGroupKey(group1Key)).GenerateManyRef(2, 6)
+			group2 := gen.With(gen.WithGroupKey(group2Key)).GenerateManyRef(2, 6)
 			ruleStore.PutRule(context.Background(), append(group1, group2...)...)
 
 			t.Run("and do not return group if user does not have access to one of rules", func(t *testing.T) {
@@ -355,7 +368,7 @@ func TestRouteGetRulesConfig(t *testing.T) {
 		groupKey := models.GenerateGroupKey(orgID)
 		groupKey.NamespaceUID = folder.UID
 
-		expectedRules := models.GenerateAlertRules(rand.Intn(5)+5, models.AlertRuleGen(withGroupKey(groupKey), models.WithUniqueGroupIndex()))
+		expectedRules := gen.With(gen.WithGroupKey(groupKey), gen.WithUniqueGroupIndex()).GenerateManyRef(5, 10)
 		ruleStore.PutRule(context.Background(), expectedRules...)
 
 		perms := createPermissionsForRules(expectedRules, orgID)
@@ -392,6 +405,7 @@ func TestRouteGetRulesConfig(t *testing.T) {
 }
 
 func TestRouteGetRulesGroupConfig(t *testing.T) {
+	gen := models.NewAlertRuleGenerator()
 	t.Run("fine-grained access is enabled", func(t *testing.T) {
 		t.Run("should check access to data source", func(t *testing.T) {
 			orgID := rand.Int63()
@@ -401,7 +415,7 @@ func TestRouteGetRulesGroupConfig(t *testing.T) {
 			groupKey := models.GenerateGroupKey(orgID)
 			groupKey.NamespaceUID = folder.UID
 
-			expectedRules := models.GenerateAlertRules(rand.Intn(4)+2, models.AlertRuleGen(withGroupKey(groupKey)))
+			expectedRules := gen.With(gen.WithGroupKey(groupKey)).GenerateManyRef(2, 6)
 			ruleStore.PutRule(context.Background(), expectedRules...)
 
 			t.Run("and return Forbidden if user does not have access one of rules", func(t *testing.T) {
@@ -439,7 +453,7 @@ func TestRouteGetRulesGroupConfig(t *testing.T) {
 		groupKey := models.GenerateGroupKey(orgID)
 		groupKey.NamespaceUID = folder.UID
 
-		expectedRules := models.GenerateAlertRules(rand.Intn(5)+5, models.AlertRuleGen(withGroupKey(groupKey), models.WithUniqueGroupIndex()))
+		expectedRules := gen.With(gen.WithGroupKey(groupKey), gen.WithUniqueGroupIndex()).GenerateManyRef(5, 10)
 		ruleStore.PutRule(context.Background(), expectedRules...)
 
 		perms := createPermissionsForRules(expectedRules, orgID)
@@ -475,14 +489,15 @@ func TestVerifyProvisionedRulesNotAffected(t *testing.T) {
 	orgID := rand.Int63()
 	group := models.GenerateGroupKey(orgID)
 	affectedGroups := make(map[models.AlertRuleGroupKey]models.RulesGroup)
+	gen := models.NewAlertRuleGenerator()
 	var allRules []*models.AlertRule
 	{
-		rules := models.GenerateAlertRules(rand.Intn(3)+1, models.AlertRuleGen(withGroupKey(group)))
+		rules := gen.With(gen.WithGroupKey(group)).GenerateManyRef(1, 4)
 		allRules = append(allRules, rules...)
 		affectedGroups[group] = rules
 		for i := 0; i < rand.Intn(3)+1; i++ {
 			g := models.GenerateGroupKey(orgID)
-			rules := models.GenerateAlertRules(rand.Intn(3)+1, models.AlertRuleGen(withGroupKey(g)))
+			rules := gen.With(gen.WithGroupKey(g)).GenerateManyRef(1, 4)
 			allRules = append(allRules, rules...)
 			affectedGroups[g] = rules
 		}
@@ -533,20 +548,15 @@ func TestVerifyProvisionedRulesNotAffected(t *testing.T) {
 }
 
 func TestValidateQueries(t *testing.T) {
+	gen := models.NewAlertRuleGenerator()
 	delta := store.GroupDelta{
 		New: []*models.AlertRule{
-			models.AlertRuleGen(func(rule *models.AlertRule) {
-				rule.Condition = "New"
-			})(),
+			gen.With(gen.WithCondition("New")).GenerateRef(),
 		},
 		Update: []store.RuleDelta{
 			{
-				Existing: models.AlertRuleGen(func(rule *models.AlertRule) {
-					rule.Condition = "Update_Existing"
-				})(),
-				New: models.AlertRuleGen(func(rule *models.AlertRule) {
-					rule.Condition = "Update_New"
-				})(),
+				Existing: gen.With(gen.WithCondition("New")).GenerateRef(),
+				New:      gen.With(gen.WithCondition("Update_New")).GenerateRef(),
 				Diff: cmputil.DiffReport{
 					cmputil.Diff{
 						Path: "SomeField",
@@ -554,12 +564,8 @@ func TestValidateQueries(t *testing.T) {
 				},
 			},
 			{
-				Existing: models.AlertRuleGen(func(rule *models.AlertRule) {
-					rule.Condition = "Update_Index_Existing"
-				})(),
-				New: models.AlertRuleGen(func(rule *models.AlertRule) {
-					rule.Condition = "Update_Index_New"
-				})(),
+				Existing: gen.With(gen.WithCondition("Update_Index_Existing")).GenerateRef(),
+				New:      gen.With(gen.WithCondition("Update_Index_New")).GenerateRef(),
 				Diff: cmputil.DiffReport{
 					cmputil.Diff{
 						Path: "RuleGroupIndex",
@@ -567,11 +573,7 @@ func TestValidateQueries(t *testing.T) {
 				},
 			},
 		},
-		Delete: []*models.AlertRule{
-			models.AlertRuleGen(func(rule *models.AlertRule) {
-				rule.Condition = "Deleted"
-			})(),
-		},
+		Delete: gen.With(gen.WithCondition("Deleted")).GenerateManyRef(1),
 	}
 
 	t.Run("should not validate deleted rules or updated rules with ignored fields", func(t *testing.T) {

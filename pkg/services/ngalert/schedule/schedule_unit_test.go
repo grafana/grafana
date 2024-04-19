@@ -101,9 +101,9 @@ func TestProcessTicks(t *testing.T) {
 	}
 
 	tick := time.Time{}
-
+	gen := models.NewAlertRuleGenerator()
 	// create alert rule under main org with one second interval
-	alertRule1 := models.AlertRuleGen(models.WithOrgID(mainOrgID), models.WithInterval(cfg.BaseInterval), models.WithTitle("rule-1"))()
+	alertRule1 := gen.With(gen.WithOrgID(mainOrgID), gen.WithInterval(cfg.BaseInterval), gen.WithTitle("rule-1")).GenerateRef()
 	ruleStore.PutRule(ctx, alertRule1)
 
 	t.Run("on 1st tick alert rule should be evaluated", func(t *testing.T) {
@@ -132,7 +132,7 @@ func TestProcessTicks(t *testing.T) {
 	})
 
 	// add alert rule under main org with three base intervals
-	alertRule2 := models.AlertRuleGen(models.WithOrgID(mainOrgID), models.WithInterval(3*cfg.BaseInterval), models.WithTitle("rule-2"))()
+	alertRule2 := gen.With(gen.WithOrgID(mainOrgID), gen.WithInterval(3*cfg.BaseInterval), gen.WithTitle("rule-2")).GenerateRef()
 	ruleStore.PutRule(ctx, alertRule2)
 
 	t.Run("on 2nd tick first alert rule should be evaluated", func(t *testing.T) {
@@ -317,7 +317,7 @@ func TestProcessTicks(t *testing.T) {
 	})
 
 	// create alert rule with one base interval
-	alertRule3 := models.AlertRuleGen(models.WithOrgID(mainOrgID), models.WithInterval(cfg.BaseInterval), models.WithTitle("rule-3"))()
+	alertRule3 := gen.With(gen.WithOrgID(mainOrgID), gen.WithInterval(cfg.BaseInterval), gen.WithTitle("rule-3")).GenerateRef()
 	ruleStore.PutRule(ctx, alertRule3)
 
 	t.Run("on 10th tick a new alert rule should be evaluated", func(t *testing.T) {
@@ -361,7 +361,7 @@ func TestSchedule_deleteAlertRule(t *testing.T) {
 		t.Run("it should stop evaluation loop and remove the controller from registry", func(t *testing.T) {
 			sch := setupScheduler(t, nil, nil, nil, nil, nil)
 			ruleFactory := ruleFactoryFromScheduler(sch)
-			rule := models.AlertRuleGen()()
+			rule := models.NewAlertRuleGenerator().GenerateRef()
 			key := rule.GetKey()
 			info, _ := sch.registry.getOrCreate(context.Background(), key, ruleFactory)
 			sch.deleteAlertRule(key)
@@ -475,7 +475,7 @@ func withQueryForState(t *testing.T, evalResult eval.State) models.AlertRuleMuta
 		require.Fail(t, fmt.Sprintf("Alert rule with desired evaluation result '%s' is not supported yet", evalResult))
 	}
 
-	return func(rule *models.AlertRule) {
+	return func(_ *models.AlertRuleGenerator, rule *models.AlertRule) {
 		rule.Condition = "A"
 		rule.Data = []models.AlertQuery{
 			{
