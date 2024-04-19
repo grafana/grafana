@@ -118,7 +118,9 @@ func TestApplyConfig(t *testing.T) {
 		if r.Method == http.MethodPost && strings.Contains(r.URL.Path, "/config") {
 			var c client.UserGrafanaConfig
 			require.NoError(t, json.NewDecoder(r.Body).Decode(&c))
-			configSent = c.GrafanaAlertmanagerConfig
+			amCfg, err := json.Marshal(c.GrafanaAlertmanagerConfig)
+			require.NoError(t, err)
+			configSent = string(amCfg)
 		}
 
 		w.WriteHeader(http.StatusOK)
@@ -179,6 +181,8 @@ func TestApplyConfig(t *testing.T) {
 }
 
 func TestCompareAndSendConfiguration(t *testing.T) {
+	cfgWithSecret, err := notifier.Load([]byte(testGrafanaConfigWithSecret))
+	require.NoError(t, err)
 	testValue := []byte("test")
 	testErr := errors.New("test error")
 	decryptFn := func(_ context.Context, payload []byte) ([]byte, error) {
@@ -243,7 +247,7 @@ func TestCompareAndSendConfiguration(t *testing.T) {
 			"no error",
 			strings.Replace(testGrafanaConfigWithSecret, `"password":"test"`, fmt.Sprintf("%q:%q", "password", base64.StdEncoding.EncodeToString(testValue)), 1),
 			&client.UserGrafanaConfig{
-				GrafanaAlertmanagerConfig: testGrafanaConfigWithSecret,
+				GrafanaAlertmanagerConfig: cfgWithSecret,
 			},
 			"",
 		},
@@ -335,7 +339,10 @@ func TestIntegrationRemoteAlertmanagerApplyConfigOnlyUploadsOnce(t *testing.T) {
 		// Next, we need to verify that Mimir received both the configuration and state.
 		config, err := am.mimirClient.GetGrafanaAlertmanagerConfig(ctx)
 		require.NoError(t, err)
-		require.Equal(t, testGrafanaConfig, config.GrafanaAlertmanagerConfig)
+
+		rawCfg, err := json.Marshal(config.GrafanaAlertmanagerConfig)
+		require.NoError(t, err)
+		require.JSONEq(t, testGrafanaConfig, string(rawCfg))
 		require.Equal(t, fakeConfigHash, config.Hash)
 		require.Equal(t, fakeConfigCreatedAt, config.CreatedAt)
 		require.Equal(t, true, config.Default)
@@ -358,7 +365,10 @@ func TestIntegrationRemoteAlertmanagerApplyConfigOnlyUploadsOnce(t *testing.T) {
 		// Next, we need to verify that the config that was uploaded remains the same.
 		config, err := am.mimirClient.GetGrafanaAlertmanagerConfig(ctx)
 		require.NoError(t, err)
-		require.Equal(t, testGrafanaConfig, config.GrafanaAlertmanagerConfig)
+
+		rawCfg, err := json.Marshal(config.GrafanaAlertmanagerConfig)
+		require.NoError(t, err)
+		require.JSONEq(t, testGrafanaConfig, string(rawCfg))
 		require.Equal(t, fakeConfigHash, config.Hash)
 		require.Equal(t, fakeConfigCreatedAt, config.CreatedAt)
 		require.Equal(t, true, config.Default)
