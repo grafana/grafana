@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"net/url"
 	"sort"
 	"strconv"
 	"strings"
@@ -33,7 +34,33 @@ type PrometheusSrv struct {
 
 const queryIncludeInternalLabels = "includeInternalLabels"
 
+func getBoolWithDefault(vals url.Values, field string, d bool) bool {
+	f := vals.Get(field)
+	if f == "" {
+		return d
+	}
+
+	v, _ := strconv.ParseBool(f)
+	return v
+}
+
+func getInt64WithDefault(vals url.Values, field string, d int64) int64 {
+	f := vals.Get(field)
+	if f == "" {
+		return d
+	}
+
+	v, err := strconv.ParseInt(f, 10, 64)
+	if err != nil {
+		return d
+	}
+	return v
+}
+
 func (srv PrometheusSrv) RouteGetAlertStatuses(c *contextmodel.ReqContext) response.Response {
+	// As we are using req.Form directly, this triggers a call to ParseForm() if needed.
+	c.Query("")
+
 	alertResponse := apimodels.AlertResponse{
 		DiscoveryBase: apimodels.DiscoveryBase{
 			Status: "success",
@@ -44,7 +71,7 @@ func (srv PrometheusSrv) RouteGetAlertStatuses(c *contextmodel.ReqContext) respo
 	}
 
 	var labelOptions []ngmodels.LabelOption
-	if !c.QueryBoolWithDefault(queryIncludeInternalLabels, false) {
+	if !getBoolWithDefault(c.Req.Form, queryIncludeInternalLabels, false) {
 		labelOptions = append(labelOptions, ngmodels.WithoutInternalLabels())
 	}
 
@@ -145,6 +172,9 @@ func getStatesFromRequest(r *http.Request) ([]eval.State, error) {
 }
 
 func (srv PrometheusSrv) RouteGetRuleStatuses(c *contextmodel.ReqContext) response.Response {
+	// As we are using req.Form directly, this triggers a call to ParseForm() if needed.
+	c.Query("")
+
 	dashboardUID := c.Query("dashboard_uid")
 	panelID, err := getPanelIDFromRequest(c.Req)
 	if err != nil {
@@ -154,9 +184,9 @@ func (srv PrometheusSrv) RouteGetRuleStatuses(c *contextmodel.ReqContext) respon
 		return ErrResp(http.StatusBadRequest, errors.New("panel_id must be set with dashboard_uid"), "")
 	}
 
-	limitGroups := c.QueryInt64WithDefault("limit", -1)
-	limitRulesPerGroup := c.QueryInt64WithDefault("limit_rules", -1)
-	limitAlertsPerRule := c.QueryInt64WithDefault("limit_alerts", -1)
+	limitGroups := getInt64WithDefault(c.Req.Form, "limit", -1)
+	limitRulesPerGroup := getInt64WithDefault(c.Req.Form, "limit_rules", -1)
+	limitAlertsPerRule := getInt64WithDefault(c.Req.Form, "limit_alerts", -1)
 	matchers, err := getMatchersFromRequest(c.Req)
 	if err != nil {
 		return ErrResp(http.StatusBadRequest, err, "")
@@ -180,7 +210,7 @@ func (srv PrometheusSrv) RouteGetRuleStatuses(c *contextmodel.ReqContext) respon
 	}
 
 	var labelOptions []ngmodels.LabelOption
-	if !c.QueryBoolWithDefault(queryIncludeInternalLabels, false) {
+	if !getBoolWithDefault(c.Req.Form, queryIncludeInternalLabels, false) {
 		labelOptions = append(labelOptions, ngmodels.WithoutInternalLabels())
 	}
 
