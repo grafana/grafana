@@ -723,17 +723,8 @@ func managedPermission(action, resource string, resourceID, resourceAttribute st
 ACTION SETS
 Stores actionsets IN MEMORY
 */
-// - To grant access to users/teams/basic roles during runtime, users will go through the managed permissions view and access-control will be enforced based on their permissions.
 // ActionSet is a struct that represents a set of actions that can be performed on a resource.
-// An example of an action set is "folders:edit" which represents the actions that can be performed on a datasource with the uid of 1.
-/*
-```go
-actionSet := &ActionSet{
-	Resource:   "folders",
-	Permission: "edit",
-	Actions:    []string{"folders:read", "folders:write", "dashboards:read", "dashboards:write"},
-}`
-*/
+// An example of an action set is "folders:edit" which represents the set of RBAC actions that are granted by edit access to a folder.
 
 type ActionSetService interface {
 	GetActionSet(actionName string) []string
@@ -773,7 +764,6 @@ func (s *InMemoryActionSets) StoreActionSet(resource, permission string, actions
 	s.log.Debug("storing action set\n")
 	name := s.GetActionSetName(resource, permission)
 	actionSet := &ActionSet{
-		// folders:edit
 		Action:  name,
 		Actions: actions,
 	}

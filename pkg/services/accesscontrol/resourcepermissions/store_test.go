@@ -755,7 +755,6 @@ func retrievePermissionsHelper(store *store, t *testing.T) []orgPermission {
 	return permissions
 }
 
-// TODO: Fix this test
 func TestStore_ResourcePermissionsActionSets(t *testing.T) {
 	if testing.Short() {
 		t.Skip("skipping integration test")
