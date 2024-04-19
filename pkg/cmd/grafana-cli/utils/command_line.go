@@ -68,9 +68,7 @@ func (c *ContextCommandLine) PluginRepoURL() string {
 
 		if err != nil {
 			logger.Debug("Could not parse config file", err)
-		}
-
-		if cfg.GrafanaComAPIURL != "" {
+		} else if cfg.GrafanaComAPIURL != "" {
 			return cfg.GrafanaComAPIURL + "/plugins"
 		}
 	}
