@@ -178,7 +178,7 @@ export function addLabelToQuery(
       ...streamSelectorPositions,
       ...labelFilterPositions,
       ...parserPositions,
-      ...labelFormatPositions
+      ...labelFormatPositions,
     ]);
 
     return addFilterAsLabelFilter(query, lastPositionsPerExpression, filter);
@@ -195,7 +195,7 @@ export function addLabelToQuery(
       const lastPositionsPerExpression = getLastPositionPerExpression(query, [
         ...parserPositions,
         ...labelFilterPositions,
-        ...labelFormatPositions
+        ...labelFormatPositions,
       ]);
 
       return addFilterAsLabelFilter(query, lastPositionsPerExpression, filter);
