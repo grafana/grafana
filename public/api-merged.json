@@ -2348,7 +2348,7 @@
         }
       }
     },
-    "/cloudmigration/migration/{id}": {
+    "/cloudmigration/migration/{uid}": {
       "get": {
         "description": "It returns migrations that has been created.",
         "tags": [
@@ -2358,10 +2358,9 @@
         "operationId": "getCloudMigration",
         "parameters": [
           {
-            "type": "integer",
-            "format": "int64",
-            "description": "ID of an migration",
-            "name": "id",
+            "type": "string",
+            "description": "UID of a migration",
+            "name": "uid",
             "in": "path",
             "required": true
           }
@@ -2391,8 +2390,8 @@
           {
             "type": "integer",
             "format": "int64",
-            "description": "ID of an migration",
-            "name": "id",
+            "description": "UID of a migration",
+            "name": "uid",
             "in": "path",
             "required": true
           }
@@ -2410,7 +2409,7 @@
         }
       }
     },
-    "/cloudmigration/migration/{id}/run": {
+    "/cloudmigration/migration/{uid}/run": {
       "get": {
         "tags": [
           "migrations"
@@ -2421,8 +2420,8 @@
           {
             "type": "integer",
             "format": "int64",
-            "description": "ID of an migration",
-            "name": "id",
+            "description": "UID of a migration",
+            "name": "uid",
             "in": "path",
             "required": true
           }
@@ -2451,10 +2450,9 @@
         "operationId": "runCloudMigration",
         "parameters": [
           {
-            "type": "integer",
-            "format": "int64",
-            "description": "ID of an migration",
-            "name": "id",
+            "type": "string",
+            "description": "UID of a migration",
+            "name": "uid",
             "in": "path",
             "required": true
           }
@@ -2475,7 +2473,7 @@
         }
       }
     },
-    "/cloudmigration/migration/{id}/run/{runID}": {
+    "/cloudmigration/migration/{uid}/run/{runUID}": {
       "get": {
         "tags": [
           "migrations"
@@ -2484,18 +2482,16 @@
         "operationId": "getCloudMigrationRun",
         "parameters": [
           {
-            "type": "integer",
-            "format": "int64",
-            "description": "ID of an migration",
-            "name": "id",
+            "type": "string",
+            "description": "UID of a migration",
+            "name": "uid",
             "in": "path",
             "required": true
           },
           {
-            "type": "integer",
-            "format": "int64",
-            "description": "Run ID of a migration run",
-            "name": "runID",
+            "type": "string",
+            "description": "RunUID of a migration run",
+            "name": "runUID",
             "in": "path",
             "required": true
           }
@@ -12774,11 +12770,10 @@
           "type": "string",
           "format": "date-time"
         },
-        "id": {
-          "type": "integer",
-          "format": "int64"
-        },
         "stack": {
+          "type": "string"
+        },
+        "uid": {
           "type": "string"
         },
         "updated": {
@@ -15942,15 +15937,14 @@
     "MigrateDataResponseDTO": {
       "type": "object",
       "properties": {
-        "id": {
-          "type": "integer",
-          "format": "int64"
-        },
         "items": {
           "type": "array",
           "items": {
             "$ref": "#/definitions/MigrateDataResponseItemDTO"
           }
+        },
+        "uid": {
+          "type": "string"
         }
       }
     },

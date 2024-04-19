@@ -3546,11 +3546,10 @@
             "format": "date-time",
             "type": "string"
           },
-          "id": {
-            "format": "int64",
-            "type": "integer"
-          },
           "stack": {
+            "type": "string"
+          },
+          "uid": {
             "type": "string"
           },
           "updated": {
@@ -6714,15 +6713,14 @@
       },
       "MigrateDataResponseDTO": {
         "properties": {
-          "id": {
-            "format": "int64",
-            "type": "integer"
-          },
           "items": {
             "items": {
               "$ref": "#/components/schemas/MigrateDataResponseItemDTO"
             },
             "type": "array"
+          },
+          "uid": {
+            "type": "string"
           }
         },
         "type": "object"
@@ -14859,14 +14857,14 @@
         ]
       }
     },
-    "/cloudmigration/migration/{id}": {
+    "/cloudmigration/migration/{uid}": {
       "delete": {
         "operationId": "deleteCloudMigration",
         "parameters": [
           {
-            "description": "ID of an migration",
+            "description": "UID of a migration",
             "in": "path",
-            "name": "id",
+            "name": "uid",
             "required": true,
             "schema": {
               "format": "int64",
@@ -14895,13 +14893,12 @@
         "operationId": "getCloudMigration",
         "parameters": [
           {
-            "description": "ID of an migration",
+            "description": "UID of a migration",
             "in": "path",
-            "name": "id",
+            "name": "uid",
             "required": true,
             "schema": {
-              "format": "int64",
-              "type": "integer"
+              "type": "string"
             }
           }
         ],
@@ -14925,14 +14922,14 @@
         ]
       }
     },
-    "/cloudmigration/migration/{id}/run": {
+    "/cloudmigration/migration/{uid}/run": {
       "get": {
         "operationId": "getCloudMigrationRunList",
         "parameters": [
           {
-            "description": "ID of an migration",
+            "description": "UID of a migration",
             "in": "path",
-            "name": "id",
+            "name": "uid",
             "required": true,
             "schema": {
               "format": "int64",
@@ -14964,13 +14961,12 @@
         "operationId": "runCloudMigration",
         "parameters": [
           {
-            "description": "ID of an migration",
+            "description": "UID of a migration",
             "in": "path",
-            "name": "id",
+            "name": "uid",
             "required": true,
             "schema": {
-              "format": "int64",
-              "type": "integer"
+              "type": "string"
             }
           }
         ],
@@ -14994,28 +14990,26 @@
         ]
       }
     },
-    "/cloudmigration/migration/{id}/run/{runID}": {
+    "/cloudmigration/migration/{uid}/run/{runUID}": {
       "get": {
         "operationId": "getCloudMigrationRun",
         "parameters": [
           {
-            "description": "ID of an migration",
+            "description": "UID of a migration",
             "in": "path",
-            "name": "id",
+            "name": "uid",
             "required": true,
             "schema": {
-              "format": "int64",
-              "type": "integer"
+              "type": "string"
             }
           },
           {
-            "description": "Run ID of a migration run",
+            "description": "RunUID of a migration run",
             "in": "path",
-            "name": "runID",
+            "name": "runUID",
             "required": true,
             "schema": {
-              "format": "int64",
-              "type": "integer"
+              "type": "string"
             }
           }
         ],
