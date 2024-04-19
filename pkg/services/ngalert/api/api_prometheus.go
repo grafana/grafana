@@ -282,7 +282,10 @@ func (srv PrometheusSrv) RouteGetRuleStatuses(c *contextmodel.ReqContext) respon
 		}
 		ok, err := srv.authz.HasAccessToRuleGroup(c.Req.Context(), c.SignedInUser, rules)
 		if err != nil {
-			return response.ErrOrFallback(http.StatusInternalServerError, "cannot authorize access to rule group", err)
+			ruleResponse.DiscoveryBase.Status = "error"
+			ruleResponse.DiscoveryBase.Error = fmt.Sprintf("cannot authorize access to rule group: %s", err.Error())
+			ruleResponse.DiscoveryBase.ErrorType = apiv1.ErrServer
+			return response.JSON(ruleResponse.HTTPStatusCode(), ruleResponse)
 		}
 		if !ok {
 			continue
