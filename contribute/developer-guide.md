@@ -57,7 +57,9 @@ make lefthook-uninstall
 
 ## Build Grafana
 
-When building Grafana, be aware that it consists of two components: the _frontend_, and the _backend_.
+When building Grafana, be aware that it consists of two components: 
+- The _frontend_, and 
+- The _backend_.
 
 ### Frontend
 
