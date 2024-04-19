@@ -22,30 +22,13 @@ const (
 )
 
 type RuleService struct {
-	ac accesscontrol.AccessControl
+	genericService
 }
 
 func NewRuleService(ac accesscontrol.AccessControl) *RuleService {
 	return &RuleService{
-		ac: ac,
+		genericService{ac: ac},
 	}
-}
-
-// HasAccess returns true if the identity.Requester has all permissions specified by the evaluator. Returns error if access control backend could not evaluate permissions
-func (r *RuleService) HasAccess(ctx context.Context, user identity.Requester, evaluator accesscontrol.Evaluator) (bool, error) {
-	return r.ac.Evaluate(ctx, user, evaluator)
-}
-
-// HasAccessOrError returns nil if the identity.Requester has enough permissions to pass the accesscontrol.Evaluator. Otherwise, returns authorization error that contains action that was performed
-func (r *RuleService) HasAccessOrError(ctx context.Context, user identity.Requester, evaluator accesscontrol.Evaluator, action func() string) error {
-	has, err := r.HasAccess(ctx, user, evaluator)
-	if err != nil {
-		return err
-	}
-	if !has {
-		return NewAuthorizationErrorWithPermissions(action(), evaluator)
-	}
-	return nil
 }
 
 // getReadFolderAccessEvaluator constructs accesscontrol.Evaluator that checks all permissions required to read rules in  specific folder

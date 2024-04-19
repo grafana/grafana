@@ -43,7 +43,7 @@ func ProvideRegistration(
 	authnSvc.RegisterClient(clients.ProvideAPIKey(apikeyService))
 
 	if cfg.LoginCookieName != "" {
-		authnSvc.RegisterClient(clients.ProvideSession(cfg, sessionService))
+		authnSvc.RegisterClient(clients.ProvideSession(cfg, sessionService, authInfoService))
 	}
 
 	var proxyClients []authn.ProxyClient
@@ -110,7 +110,7 @@ func ProvideRegistration(
 	}
 
 	authnSvc.RegisterPostAuthHook(rbacSync.SyncPermissionsHook, 120)
-	authnSvc.RegisterPostAuthHook(orgSync.SetDefaultOrgHook, 130)
+	authnSvc.RegisterPostLoginHook(orgSync.SetDefaultOrgHook, 140)
 
 	return Registration{}
 }

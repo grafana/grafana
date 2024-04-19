@@ -33,7 +33,7 @@ import { ResourcesTable } from './ResourcesTable';
 
 function useGetLatestMigrationDestination() {
   const result = useGetMigrationListQuery();
-  const latestMigration = result.data?.migrations?.[0];
+  const latestMigration = result.data?.migrations?.at(-1);
 
   return {
     ...result,
@@ -43,7 +43,7 @@ function useGetLatestMigrationDestination() {
 
 function useGetLatestMigrationRun(migrationId?: number) {
   const listResult = useGetCloudMigrationRunListQuery(migrationId ? { id: migrationId } : skipToken);
-  const latestMigrationRun = listResult.data?.runs?.[0];
+  const latestMigrationRun = listResult.data?.runs?.at(-1);
 
   const runResult = useGetCloudMigrationRunQuery(
     latestMigrationRun?.id && migrationId ? { runId: latestMigrationRun.id, id: migrationId } : skipToken

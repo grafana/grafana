@@ -1,6 +1,7 @@
 package web
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"fmt"
@@ -40,7 +41,7 @@ func TestIntegrationIndexView(t *testing.T) {
 		addr, _ := testinfra.StartGrafana(t, grafDir, cfgPath)
 
 		// nolint:bodyclose
-		resp, html := makeRequest(t, addr, "", "")
+		resp, html := makeRequest(t, addr, nil)
 		assert.Regexp(t, `script-src 'self' 'unsafe-eval' 'unsafe-inline' 'strict-dynamic' 'nonce-[^']+';object-src 'none';font-src 'self';style-src 'self' 'unsafe-inline' blob:;img-src \* data:;base-uri 'self';connect-src 'self' grafana.com ws://localhost:3000/ wss://localhost:3000/;manifest-src 'self';media-src 'none';form-action 'self';`, resp.Header.Get("Content-Security-Policy"))
 		assert.Regexp(t, `<script nonce="[^"]+"`, html)
 	})
@@ -50,24 +51,24 @@ func TestIntegrationIndexView(t *testing.T) {
 		addr, _ := testinfra.StartGrafana(t, grafDir, cfgPath)
 
 		// nolint:bodyclose
-		resp, html := makeRequest(t, addr, "", "")
+		resp, html := makeRequest(t, addr, nil)
 
 		assert.Empty(t, resp.Header.Get("Content-Security-Policy"))
 		assert.Regexp(t, `<script nonce=""`, html)
 	})
 }
 
-func makeRequest(t *testing.T, addr, username, passwowrd string) (*http.Response, string) {
+func makeRequest(t *testing.T, addr string, session *http.Cookie) (*http.Response, string) {
 	t.Helper()
 
 	u := fmt.Sprintf("http://%s", addr)
 	t.Logf("Making GET request to %s", u)
 
-	request, err := http.NewRequest("GET", u, nil)
+	request, err := http.NewRequest(http.MethodGet, u, nil)
 	require.NoError(t, err)
 
-	if username != "" && passwowrd != "" {
-		request.SetBasicAuth(username, passwowrd)
+	if session != nil {
+		request.AddCookie(session)
 	}
 
 	resp, err := http.DefaultClient.Do(request)
@@ -84,6 +85,42 @@ func makeRequest(t *testing.T, addr, username, passwowrd string) (*http.Response
 	require.Equal(t, 200, resp.StatusCode, b.String())
 
 	return resp, b.String()
+}
+
+func loginUser(t *testing.T, addr, username, password string) *http.Cookie {
+	t.Helper()
+
+	type body struct {
+		Username string `json:"user"`
+		Password string `json:"password"`
+	}
+
+	data, err := json.Marshal(&body{username, password})
+	require.NoError(t, err)
+
+	request, err := http.NewRequest(http.MethodPost, fmt.Sprintf("http://%s/login", addr), bytes.NewReader(data))
+	require.NoError(t, err)
+	request.Header.Set("Content-Type", "application/json")
+
+	resp, err := http.DefaultClient.Do(request)
+	require.NoError(t, err)
+	require.NotNil(t, resp)
+	t.Cleanup(func() {
+		err := resp.Body.Close()
+		assert.NoError(t, err)
+	})
+
+	require.Equal(t, 200, resp.StatusCode)
+
+	var sessionCookie *http.Cookie
+	for _, c := range resp.Cookies() {
+		if c.Name == "grafana_session" {
+			sessionCookie = c
+		}
+	}
+
+	require.NotNil(t, sessionCookie)
+	return sessionCookie
 }
 
 // TestIntegrationIndexViewAnalytics tests the Grafana index view has the analytics identifiers.
@@ -155,8 +192,11 @@ func TestIntegrationIndexViewAnalytics(t *testing.T) {
 				require.NoError(t, err)
 			}
 
+			// perform login
+			session := loginUser(t, addr, "admin", "admin")
+
 			// nolint:bodyclose
-			response, html := makeRequest(t, addr, "admin", "admin")
+			response, html := makeRequest(t, addr, session)
 			assert.Equal(t, http.StatusOK, response.StatusCode)
 
 			// parse User.Analytics HTML view into user.AnalyticsSettings model

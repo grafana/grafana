@@ -25,8 +25,8 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend/log"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tsdb/mssql/kerberos"
+	"github.com/grafana/grafana/pkg/tsdb/mssql/sqleng"
 	"github.com/grafana/grafana/pkg/tsdb/mssql/utils"
-	"github.com/grafana/grafana/pkg/tsdb/sqleng"
 	"github.com/grafana/grafana/pkg/util"
 )
 
@@ -400,6 +400,21 @@ func (t *mssqlQueryResultTransformer) GetConverterList() []sqlutil.StringConvert
 					}
 					v := uuid.String()
 					return &v, nil
+				},
+			},
+		},
+		{
+			Name:           "handle SQL_VARIANT",
+			InputScanKind:  reflect.Pointer,
+			InputTypeName:  "SQL_VARIANT",
+			ConversionFunc: func(in *string) (*string, error) { return in, nil },
+			Replacer: &sqlutil.StringFieldReplacer{
+				OutputFieldType: data.FieldTypeNullableString,
+				ReplaceFunc: func(in *string) (any, error) {
+					if in == nil {
+						return nil, nil
+					}
+					return in, nil
 				},
 			},
 		},
