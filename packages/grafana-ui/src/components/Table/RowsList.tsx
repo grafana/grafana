@@ -254,7 +254,8 @@ export const RowsList = (props: RowsListProps) => {
             <ExpandedRow
               nestedData={nestedDataField}
               tableStyles={tableStyles}
-              rowIndex={index}
+              // We need to use `row.index` instead of `index` to select the correct row when rows get sorted
+              rowIndex={row.index}
               width={width}
               cellHeight={cellHeight}
             />
@@ -298,7 +299,7 @@ export const RowsList = (props: RowsListProps) => {
     const indexForPagination = rowIndexForPagination(index);
     const row = rows[indexForPagination];
     if (tableState.expanded[row.id] && nestedDataField) {
-      return getExpandedRowHeight(nestedDataField, index, tableStyles);
+      return getExpandedRowHeight(nestedDataField, row.index, tableStyles);
     }
 
     return tableStyles.rowHeight;
