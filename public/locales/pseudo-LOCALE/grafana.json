@@ -1163,6 +1163,10 @@
     "title": "Ŀäŧęşŧ ƒřőm ŧĥę þľőģ"
   },
   "notifications": {
+    "empty-state": {
+      "description": "Ńőŧįƒįčäŧįőŉş yőū ĥävę řęčęįvęđ ŵįľľ äppęäř ĥęřę",
+      "title": "Ÿőū'řę äľľ čäūģĥŧ ūp!"
+    },
     "starred-dashboard": "Đäşĥþőäřđ şŧäřřęđ",
     "unstarred-dashboard": "Đäşĥþőäřđ ūŉşŧäřřęđ"
   },
