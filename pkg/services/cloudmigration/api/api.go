@@ -123,7 +123,7 @@ func (cma *CloudMigrationAPI) GetMigration(c *contextmodel.ReqContext) response.
 
 // swagger:parameters getCloudMigration
 type GetCloudMigrationRequest struct {
-	// UID of an migration
+	// UID of a migration
 	//
 	// in: path
 	UID string `json:"uid"`
@@ -179,7 +179,7 @@ func (cma *CloudMigrationAPI) RunMigration(c *contextmodel.ReqContext) response.
 
 // swagger:parameters runCloudMigration
 type RunCloudMigrationRequest struct {
-	// UID of an migration
+	// UID of a migration
 	//
 	// in: path
 	UID string `json:"uid"`
@@ -218,7 +218,7 @@ func (cma *CloudMigrationAPI) GetMigrationRun(c *contextmodel.ReqContext) respon
 
 // swagger:parameters getCloudMigrationRun
 type GetMigrationRunParams struct {
-	// UID of an migration
+	// UID of a migration
 	//
 	// in: path
 	UID string `json:"uid"`
@@ -252,7 +252,7 @@ func (cma *CloudMigrationAPI) GetMigrationRunList(c *contextmodel.ReqContext) re
 
 // swagger:parameters getCloudMigrationRunList
 type GetCloudMigrationRunList struct {
-	// UID of an migration
+	// UID of a migration
 	//
 	// in: path
 	UID int64 `json:"uid"`
@@ -284,10 +284,10 @@ func (cma *CloudMigrationAPI) DeleteMigration(c *contextmodel.ReqContext) respon
 
 // swagger:parameters deleteCloudMigration
 type DeleteMigrationRequest struct {
-	// UID of an migration
+	// UID of a migration
 	//
 	// in: path
-	UID int64 `json:"iud"`
+	UID int64 `json:"uid"`
 }
 
 // swagger:response cloudMigrationRunResponse
