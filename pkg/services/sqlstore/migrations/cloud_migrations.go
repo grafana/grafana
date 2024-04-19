@@ -39,7 +39,7 @@ func addCloudMigrationsMigrations(mg *Migrator) {
 	mg.AddMigration("add cluster_slug column", NewAddColumnMigration(migrationTable, &clusterSlugColumn))
 
 	// --- adding uid to migration
-	migUidColumn := Column{Name: "uid", Type: DB_Text, Nullable: true}
+	migUidColumn := Column{Name: "uid", Type: DB_NVarchar, Length: 40, Nullable: true}
 	mg.AddMigration("add migration uid column", NewAddColumnMigration(migrationTable, &migUidColumn))
 
 	mg.AddMigration("Update uid column values for migration", NewRawSQLMigration("").
@@ -52,7 +52,7 @@ func addCloudMigrationsMigrations(mg *Migrator) {
 	}))
 
 	// --- adding uid to migration run
-	runUidColumn := Column{Name: "uid", Type: DB_Text, Nullable: true}
+	runUidColumn := Column{Name: "uid", Type: DB_NVarchar, Length: 40, Nullable: true}
 	mg.AddMigration("add migration run uid column", NewAddColumnMigration(migrationRunTable, &runUidColumn))
 
 	mg.AddMigration("Update uid column values for migration run", NewRawSQLMigration("").
