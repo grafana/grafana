@@ -53,7 +53,7 @@ To remove precommit hooks:
 make lefthook-uninstall
 ```
 
-> We strongly encourage contributors who work on the frontend to install the precommit hooks, even if your IDE formats on save. By doing so, the `.betterer.results` file is kept up to sync.
+> We strongly encourage contributors who work on the frontend to install the precommit hooks, even if your IDE formats on save. By doing so, the `.betterer.results` file is kept in sync.
 
 ## Build Grafana
 
