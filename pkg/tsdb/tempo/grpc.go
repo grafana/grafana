@@ -44,7 +44,12 @@ func newGrpcClient(ctx context.Context, settings backend.DataSourceInstanceSetti
 		}
 	}
 
-	clientConn, err := grpc.Dial(onlyHost, getDialOpts(ctx, settings, opts)...)
+	dialOpts, err := getDialOpts(ctx, settings, opts)
+	if err != nil {
+		logger.Error("Error getting dial options", "error", err, "URL", settings.URL, "function", logEntrypoint())
+		return nil, err
+	}
+	clientConn, err := grpc.Dial(onlyHost, dialOpts...)
 	if err != nil {
 		logger.Error("Error dialing gRPC client", "error", err, "URL", settings.URL, "function", logEntrypoint())
 		return nil, err
@@ -56,7 +61,7 @@ func newGrpcClient(ctx context.Context, settings backend.DataSourceInstanceSetti
 
 // getDialOpts creates options and interceptors (middleware) this should roughly match what we do in
 // http_client_provider.go for standard http requests.
-func getDialOpts(ctx context.Context, settings backend.DataSourceInstanceSettings, opts httpclient.Options) []grpc.DialOption {
+func getDialOpts(ctx context.Context, settings backend.DataSourceInstanceSettings, opts httpclient.Options) ([]grpc.DialOption, error) {
 	// TODO: Missing middleware TracingMiddleware, DataSourceMetricsMiddleware, ContextualMiddleware,
 	//  ResponseLimitMiddleware RedirectLimitMiddleware.
 	// Also User agent but that is set before each rpc call as for decoupled DS we have to get it from request context
@@ -81,23 +86,16 @@ func getDialOpts(ctx context.Context, settings backend.DataSourceInstanceSetting
 	proxyClient, err := settings.ProxyClient(ctx)
 	if err != nil {
 		logger.Error("Error getting proxy client. The Tempo plugin will not use the secure socks proxy", "error", err)
-		return dialOps
+		return dialOps, err
 	}
 	if proxyClient.SecureSocksProxyEnabled() { // secure socks proxy is behind a feature flag
 		dialer, err := proxyClient.NewSecureSocksProxyContextDialer()
 		if err != nil {
 			logger.Error("Error dialing secure socks proxy. The Tempo plugin will not use the secure socks proxy", "error", err)
-			return dialOps
+			return dialOps, err
 		}
 		logger.Debug("gRPC dialer instantiated. Appending gRPC dialer to dial options")
 		dialOps = append(dialOps, grpc.WithContextDialer(func(ctx context.Context, host string) (net.Conn, error) {
-			select {
-			case <-ctx.Done():
-				logger.Warn("Context has been canceled, this should not happen. Proceeding with dialing anyway")
-			default:
-				logger.Debug("Context is still valid, proceeding with dialing")
-			}
-
 			logger.Debug("Dialing secure socks proxy", "host", host)
 			conn, err := dialer.Dial("tcp", host)
 			if err != nil {
@@ -109,7 +107,7 @@ func getDialOpts(ctx context.Context, settings backend.DataSourceInstanceSetting
 	}
 
 	logger.Debug("Returning dial options")
-	return dialOps
+	return dialOps, nil
 }
 
 // CustomHeadersStreamInterceptor adds custom headers to the outgoing context for each RPC call. Should work similar
