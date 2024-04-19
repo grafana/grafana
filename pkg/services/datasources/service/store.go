@@ -59,9 +59,15 @@ func (ss *SqlStore) GetDataSource(ctx context.Context, query *datasources.GetDat
 	})
 }
 
-func (ss *SqlStore) getDataSource(ctx context.Context, query *datasources.GetDataSourceQuery, sess *db.Session) (*datasources.DataSource, error) {
+func (ss *SqlStore) getDataSource(_ context.Context, query *datasources.GetDataSourceQuery, sess *db.Session) (*datasources.DataSource, error) {
 	if query.OrgID == 0 || (query.ID == 0 && len(query.Name) == 0 && len(query.UID) == 0) {
 		return nil, datasources.ErrDataSourceIdentifierNotSet
+	}
+
+	if err := util.ValidateUID(query.UID); len(query.UID) > 0 && err != nil {
+		fixedUID := util.AutofixUID(query.UID)
+		logDeprecatedInvalidDsUid(ss.logger, query.UID, query.Name, fixedUID, err)
+		query.UID = fixedUID
 	}
 
 	datasource := &datasources.DataSource{Name: query.Name, OrgID: query.OrgID, ID: query.ID, UID: query.UID}
@@ -250,7 +256,9 @@ func (ss *SqlStore) AddDataSource(ctx context.Context, cmd *datasources.AddDataS
 			}
 			cmd.UID = uid
 		} else if err := util.ValidateUID(cmd.UID); err != nil {
-			logDeprecatedInvalidDsUid(ss.logger, cmd.UID, cmd.Name, err)
+			fixedUID := util.AutofixUID(cmd.UID)
+			logDeprecatedInvalidDsUid(ss.logger, cmd.UID, cmd.Name, fixedUID, err)
+			cmd.UID = fixedUID
 		}
 
 		ds = &datasources.DataSource{
@@ -321,6 +329,14 @@ func (ss *SqlStore) UpdateDataSource(ctx context.Context, cmd *datasources.Updat
 			cmd.JsonData = simplejson.New()
 		}
 
+		if cmd.UID != "" {
+			if err := util.ValidateUID(cmd.UID); err != nil {
+				fixedUID := util.AutofixUID(cmd.UID)
+				logDeprecatedInvalidDsUid(ss.logger, cmd.UID, cmd.Name, fixedUID, err)
+				cmd.UID = fixedUID
+			}
+		}
+
 		ds = &datasources.DataSource{
 			ID:              cmd.ID,
 			OrgID:           cmd.OrgID,
@@ -387,12 +403,6 @@ func (ss *SqlStore) UpdateDataSource(ctx context.Context, cmd *datasources.Updat
 			}
 		}
 
-		if cmd.UID != "" {
-			if err := util.ValidateUID(cmd.UID); err != nil {
-				logDeprecatedInvalidDsUid(ss.logger, cmd.UID, cmd.Name, err)
-			}
-		}
-
 		return err
 	})
 }
@@ -416,11 +426,10 @@ func generateNewDatasourceUid(sess *db.Session, orgId int64) (string, error) {
 
 var generateNewUid func() string = util.GenerateShortUID
 
-func logDeprecatedInvalidDsUid(logger log.Logger, uid string, name string, err error) {
+func logDeprecatedInvalidDsUid(logger log.Logger, uid string, name string, fixedUID string, err error) {
 	logger.Warn(
-		"Invalid datasource uid. The use of invalid uids is deprecated and this operation will fail in a future "+
-			"version of Grafana. A valid uid is a combination of a-z, A-Z, 0-9 (alphanumeric), - (dash) and _ "+
-			"(underscore) characters, maximum length 40",
-		"uid", uid, "name", name, "error", err,
+		"Invalid datasource uid. A valid uid is a combination of a-z, A-Z, 0-9 (alphanumeric), - (dash) and _ "+
+			"(underscore) characters, maximum length 40. Invalid characters will be replaced by dashes.",
+		"uid", uid, "fixed-uid", fixedUID, "name", name, "error", err,
 	)
 }
