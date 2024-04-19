@@ -22,15 +22,7 @@ export const SeriesColorPickerPopover = (props: SeriesColorPickerPopoverProps) =
           tabComponent() {
             return (
               <InlineField labelWidth={20} label="Use right y-axis">
-                <InlineSwitch
-                  value={yaxis === 2}
-                  label="Use right y-axis"
-                  onChange={() => {
-                    if (onToggleAxis) {
-                      onToggleAxis();
-                    }
-                  }}
-                />
+                <InlineSwitch value={yaxis === 2} label="Use right y-axis" onChange={onToggleAxis} />
               </InlineField>
             );
           },

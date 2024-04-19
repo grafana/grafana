@@ -3,16 +3,18 @@ import React from 'react';
 
 import { useTheme2 } from '../../themes';
 
+import mdx from './ColorPicker.mdx';
 import { ColorPickerPopover } from './ColorPickerPopover';
 import { SeriesColorPickerPopover } from './SeriesColorPickerPopover';
 
 const meta: Meta<typeof ColorPickerPopover> = {
   title: 'Pickers and Editors/ColorPicker/Popovers',
   component: ColorPickerPopover,
-  // SB7 has broken subcomponent types due to dropping support for the feature
-  // https://github.com/storybookjs/storybook/issues/20782
-  // @ts-ignore
-  subcomponents: { SeriesColorPickerPopover },
+  parameters: {
+    docs: {
+      page: mdx,
+    },
+  },
 };
 
 export const Basic = () => {
