@@ -420,7 +420,7 @@ const (
 	FlagKubernetesSnapshots = "kubernetesSnapshots"
 
 	// FlagQueryService
-	// Adds the query api service -- will replace /ds/query
+	// Register /apis/query.grafana.app/ -- will eventually replace /api/ds/query
 	FlagQueryService = "queryService"
 
 	// FlagQueryServiceRewrite

@@ -2153,11 +2153,14 @@
     {
       "metadata": {
         "name": "queryService",
-        "resourceVersion": "1713422970838",
-        "creationTimestamp": "2024-04-18T06:49:30Z"
+        "resourceVersion": "1713504737045",
+        "creationTimestamp": "2024-04-18T06:49:30Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2024-04-19 05:32:17.045343 +0000 UTC"
+        }
       },
       "spec": {
-        "description": "Adds the query api service -- will replace /ds/query",
+        "description": "Register /apis/query.grafana.app/ -- will eventually replace /api/ds/query",
         "stage": "experimental",
         "codeowner": "@grafana/grafana-app-platform-squad",
         "requiresRestart": true
