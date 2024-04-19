@@ -7,11 +7,12 @@ import { TemplateSrv } from '../../../features/templating/template_srv';
 import { queryBuilder } from '../../../features/variables/shared/testing/builders';
 
 import { getMockDSInstanceSettings, getMockInfluxDS, mockBackendService } from './__mocks__/datasource';
+import { queryOptions } from './__mocks__/query';
 import { mockInfluxQueryRequest, mockInfluxQueryWithTemplateVars } from './__mocks__/request';
-import { mockInfluxFetchResponse } from './__mocks__/response';
+import { mockInfluxFetchResponse, mockMetricFindQueryResponse } from './__mocks__/response';
 import { BROWSER_MODE_DISABLED_MESSAGE } from './constants';
 import InfluxDatasource from './datasource';
-import { InfluxVersion } from './types';
+import { InfluxQuery, InfluxVersion } from './types';
 
 const fetchMock = mockBackendService(mockInfluxFetchResponse());
 
@@ -24,11 +25,11 @@ describe('datasource initialization', () => {
   });
 });
 
+// Remove this suite when influxdbBackendMigration feature toggle removed
 describe('InfluxDataSource Frontend Mode [influxdbBackendMigration=false]', () => {
-  // we want only frontend mode in this suite
-  config.featureToggles.influxdbBackendMigration = false;
-
   beforeEach(() => {
+    // we want only frontend mode in this suite
+    config.featureToggles.influxdbBackendMigration = false;
     jest.clearAllMocks();
   });
 
@@ -358,6 +359,190 @@ describe('InfluxDataSource Frontend Mode [influxdbBackendMigration=false]', () =
         const qData = decodeURIComponent(fetchMock.mock.calls[0][0].data.substring(2));
         expect(qData).toBe(qe);
       });
+    });
+  });
+});
+
+describe('InfluxDataSource Backend Mode [influxdbBackendMigration=true]', () => {
+  beforeEach(() => {
+    // we want only backend mode in this suite
+    config.featureToggles.influxdbBackendMigration = true;
+    jest.clearAllMocks();
+  });
+
+  describe('metric find query', () => {
+    let ds = getMockInfluxDS(getMockDSInstanceSettings());
+    it('handles multiple frames', async () => {
+      const fetchMockImpl = () => {
+        return of(mockMetricFindQueryResponse);
+      };
+
+      fetchMock.mockImplementation(fetchMockImpl);
+      const values = await ds.getTagValues({ key: 'test_id', filters: [] });
+      expect(fetchMock).toHaveBeenCalled();
+      expect(values.length).toBe(5);
+      expect(values[0].text).toBe('test-t2-1');
+    });
+  });
+
+  describe('variable interpolation with chained variables with backend mode', () => {
+    const variablesMock = [
+      queryBuilder().withId('var1').withName('var1').withCurrent('var1').build(),
+      queryBuilder().withId('path').withName('path').withCurrent('/etc/hosts').build(),
+      queryBuilder()
+        .withId('field_var')
+        .withName('field_var')
+        .withMulti(true)
+        .withOptions(
+          {
+            text: `field_1`,
+            value: `field_1`,
+          },
+          {
+            text: `field_2`,
+            value: `field_2`,
+          },
+          {
+            text: `field_3`,
+            value: `field_3`,
+          }
+        )
+        .withCurrent(['field_1', 'field_3'])
+        .build(),
+    ];
+    const mockTemplateService = new TemplateSrv({
+      getVariables: () => variablesMock,
+      getVariableWithName: (name: string) => variablesMock.filter((v) => v.name === name)[0],
+      getFilteredVariables: jest.fn(),
+    });
+    mockTemplateService.getAdhocFilters = jest.fn((_: string) => []);
+    let ds = getMockInfluxDS(getMockDSInstanceSettings(), mockTemplateService);
+    const fetchMockImpl = () =>
+      of({
+        data: {
+          status: 'success',
+          results: [
+            {
+              series: [
+                {
+                  name: 'measurement',
+                  columns: ['name'],
+                  values: [['cpu']],
+                },
+              ],
+            },
+          ],
+        },
+      });
+
+    beforeEach(() => {
+      jest.clearAllMocks();
+      fetchMock.mockImplementation(fetchMockImpl);
+    });
+
+    it('should render chained regex variables with floating point number', () => {
+      ds.metricFindQuery(`SELECT sum("piece_count") FROM "rp"."pdata" WHERE diameter <= $maxSED`, {
+        ...queryOptions,
+        scopedVars: { maxSED: { text: '8.1', value: '8.1' } },
+      });
+      const qe = `SELECT sum("piece_count") FROM "rp"."pdata" WHERE diameter <= 8.1`;
+      const qData = fetchMock.mock.calls[0][0].data.queries[0].query;
+      expect(qData).toBe(qe);
+    });
+
+    it('should render chained regex variables with URL', () => {
+      ds.metricFindQuery('SHOW TAG VALUES WITH KEY = "agent_url" WHERE agent_url =~ /^$var1$/', {
+        ...queryOptions,
+        scopedVars: {
+          var1: {
+            text: 'https://aaaa-aa-aaa.bbb.ccc.ddd:8443/ggggg',
+            value: 'https://aaaa-aa-aaa.bbb.ccc.ddd:8443/ggggg',
+          },
+        },
+      });
+      const qe = `SHOW TAG VALUES WITH KEY = "agent_url" WHERE agent_url =~ /^https:\\/\\/aaaa-aa-aaa\\.bbb\\.ccc\\.ddd:8443\\/ggggg$/`;
+      expect(fetchMock).toHaveBeenCalled();
+      const qData = fetchMock.mock.calls[0][0].data.queries[0].query;
+      expect(qData).toBe(qe);
+    });
+
+    it('should render chained regex variables with floating point number and url', () => {
+      ds.metricFindQuery(
+        'SELECT sum("piece_count") FROM "rp"."pdata" WHERE diameter <= $maxSED AND agent_url =~ /^$var1$/',
+        {
+          ...queryOptions,
+          scopedVars: {
+            var1: {
+              text: 'https://aaaa-aa-aaa.bbb.ccc.ddd:8443/ggggg',
+              value: 'https://aaaa-aa-aaa.bbb.ccc.ddd:8443/ggggg',
+            },
+            maxSED: { text: '8.1', value: '8.1' },
+          },
+        }
+      );
+      const qe = `SELECT sum("piece_count") FROM "rp"."pdata" WHERE diameter <= 8.1 AND agent_url =~ /^https:\\/\\/aaaa-aa-aaa\\.bbb\\.ccc\\.ddd:8443\\/ggggg$/`;
+      const qData = fetchMock.mock.calls[0][0].data.queries[0].query;
+      expect(qData).toBe(qe);
+    });
+
+    it('should interpolate variable inside a regex pattern', () => {
+      const query: InfluxQuery = {
+        refId: 'A',
+        tags: [
+          {
+            key: 'key',
+            operator: '=~',
+            value: '/^.*-$var1$/',
+          },
+        ],
+      };
+      const res = ds.applyVariables(query, {});
+      const expected = `/^.*-var1$/`;
+      expect(res.tags?.[0].value).toEqual(expected);
+    });
+
+    it('should remove regex wrappers when operator is not a regex operator', () => {
+      const query: InfluxQuery = {
+        refId: 'A',
+        tags: [
+          {
+            key: 'key',
+            operator: '=',
+            value: '/^$path$/',
+          },
+        ],
+      };
+      const res = ds.applyVariables(query, {});
+      const expected = `/etc/hosts`;
+      expect(res.tags?.[0].value).toEqual(expected);
+    });
+
+    it('should interpolate field keys with given scopedVars', () => {
+      const query: InfluxQuery = {
+        refId: 'A',
+        tags: [
+          {
+            key: 'key',
+            operator: '=',
+            value: 'value',
+          },
+        ],
+        select: [
+          [
+            {
+              type: 'field',
+              params: ['$field_var'],
+            },
+            {
+              type: 'mean',
+              params: [],
+            },
+          ],
+        ],
+      };
+      const res = ds.applyVariables(query, { field_var: { text: 'field_3', value: 'field_3' } });
+      const expected = `field_3`;
+      expect(res.select?.[0][0].params?.[0]).toEqual(expected);
     });
   });
 });

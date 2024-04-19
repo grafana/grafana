@@ -264,3 +264,52 @@ export const mockInfluxSQLVariableFetchResponse: FetchResponse<BackendDataSource
     },
   },
 };
+
+
+export const mockMetricFindQueryResponse = {
+  data: {
+    results: {
+      metricFindQuery: {
+        status: 200,
+        frames: [
+          {
+            schema: {
+              name: 'NoneNone',
+              refId: 'metricFindQuery',
+              fields: [
+                {
+                  name: 'Value',
+                  type: 'string',
+                  typeInfo: {
+                    frame: 'string',
+                  },
+                },
+              ],
+            },
+            data: {
+              values: [['test-t2-1', 'test-t2-10']],
+            },
+          },
+          {
+            schema: {
+              name: 'some-other',
+              refId: 'metricFindQuery',
+              fields: [
+                {
+                  name: 'Value',
+                  type: 'string',
+                  typeInfo: {
+                    frame: 'string',
+                  },
+                },
+              ],
+            },
+            data: {
+              values: [['test-t2-1', 'test-t2-10', 'test-t2-2', 'test-t2-3', 'test-t2-4']],
+            },
+          },
+        ],
+      },
+    },
+  },
+};
