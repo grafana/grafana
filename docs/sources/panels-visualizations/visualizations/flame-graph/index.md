@@ -54,7 +54,7 @@ Required fields:
 
 ### Example
 
-The following table is an example of the type of data you need for a flame graph visualization and how it should be formatted.
+The following table is an example of the type of data you need for a flame graph visualization and how it should be formatted:
 
 #### Time-series table
 
