@@ -309,7 +309,7 @@ export default class CloudMonitoringDatasource extends DataSourceWithBackend<
   ): T {
     return Object.entries(object).reduce((acc, [key, value]) => {
       let interpolatedValue = value;
-      if (interpolatedValue && isString(value)) {
+      if (value && isString(value)) {
         // Pass a function to the template service for formatting
         interpolatedValue = this.templateSrv.replace(
           value,
