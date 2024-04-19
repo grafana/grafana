@@ -292,6 +292,9 @@ func TestAddAutogenConfig(t *testing.T) {
 				require.NoError(t, err)
 			}
 
+			// We compare against the upstream normalized route.
+			require.NoError(t, tt.expRoute.Validate())
+
 			cOpt := []cmp.Option{
 				cmpopts.IgnoreUnexported(definitions.Route{}, labels.Matcher{}),
 			}
