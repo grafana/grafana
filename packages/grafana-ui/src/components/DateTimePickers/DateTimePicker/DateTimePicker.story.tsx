@@ -1,6 +1,6 @@
 import { action } from '@storybook/addon-actions';
 import { StoryFn, Meta } from '@storybook/react';
-import React, { useState } from 'react';
+import React, {useEffect, useState} from 'react';
 
 import { dateTime, DateTime } from '@grafana/data';
 
@@ -63,12 +63,18 @@ export const OnlyWorkingHoursEnabled: StoryFn<typeof DateTimePicker> = ({ label,
   );
 };
 
-export const Basic: StoryFn<typeof DateTimePicker> = ({ label, minDate, maxDate, showSeconds }) => {
+export const Basic: StoryFn<typeof DateTimePicker> = ({ label, minDate, maxDate, showSeconds }, context) => {
   const [date, setDate] = useState<DateTime>(dateTime(today));
   // the minDate arg can change from Date object to number, we need to handle this
   // scenario to avoid a crash in the component's story.
   const minDateVal = typeof minDate === 'number' ? new Date(minDate) : minDate;
   const maxDateVal = typeof maxDate === 'number' ? new Date(maxDate) : maxDate;
+
+  // update the date when the timezone changes
+  useEffect(() => {
+    action('timezone')(context.globals.timeZone);
+    setDate(dateTime(today))
+  }, [context.globals.timeZone]);
 
   return (
     <DateTimePicker

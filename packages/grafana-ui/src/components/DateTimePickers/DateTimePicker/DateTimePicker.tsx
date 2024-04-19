@@ -3,11 +3,19 @@ import { autoUpdate, flip, shift, useFloating } from '@floating-ui/react';
 import { useDialog } from '@react-aria/dialog';
 import { FocusScope } from '@react-aria/focus';
 import { useOverlay } from '@react-aria/overlays';
-import React, { FormEvent, ReactNode, useCallback, useEffect, useRef, useState } from 'react';
+import React, { FormEvent, ReactNode, useCallback, useRef, useState } from 'react';
 import Calendar from 'react-calendar';
 import { useMedia } from 'react-use';
 
-import { dateTimeFormat, DateTime, dateTime, GrafanaTheme2, isDateTime } from '@grafana/data';
+import {
+  dateTimeFormat,
+  DateTime,
+  DateTimeInput as DateTimeInputType,
+  dateTime,
+  GrafanaTheme2,
+  dateTimeForTimeZone,
+  getTimeZone, isDateTime
+} from '@grafana/data';
 import { Components } from '@grafana/e2e-selectors';
 
 import { useStyles2, useTheme2 } from '../../../themes';
@@ -21,6 +29,7 @@ import { Portal } from '../../Portal/Portal';
 import { TimeOfDayPicker, POPUP_CLASS_NAME } from '../TimeOfDayPicker';
 import { getBodyStyles } from '../TimeRangePicker/CalendarBody';
 import { isValid } from '../utils';
+
 
 export interface Props {
   /** Input date for the component */
@@ -196,55 +205,50 @@ interface InputProps {
   showSeconds?: boolean;
 }
 
-type InputState = {
-  value: string;
-  invalid: boolean;
-};
-
 const DateTimeInput = React.forwardRef<HTMLInputElement, InputProps>(
   ({ date, label, onChange, onOpen, showSeconds = true }, ref) => {
-    const format = showSeconds ? 'YYYY-MM-DD HH:mm:ss' : 'YYYY-MM-DD HH:mm';
-    const [internalDate, setInternalDate] = useState<InputState>(() => {
-      return { value: date ? dateTimeFormat(date) : dateTimeFormat(dateTime()), invalid: false };
-    });
 
-    useEffect(() => {
-      if (date) {
-        setInternalDate({
-          invalid: !isValid(dateTimeFormat(date, { format })),
-          value: isDateTime(date) ? dateTimeFormat(date, { format }) : date,
-        });
-      }
-    }, [date, format]);
+    // Convert `DateTimeInputType` to string value
+    const dateTimeToValue = useCallback((subjectDate?: DateTimeInputType) => {
+      const format = showSeconds ? 'YYYY-MM-DD HH:mm:ss' : 'YYYY-MM-DD HH:mm';
+      const dateTimeValue = isDateTime(subjectDate) ? subjectDate : dateTime(subjectDate);
 
-    const onChangeDate = useCallback((event: FormEvent<HTMLInputElement>) => {
-      const isInvalid = !isValid(event.currentTarget.value);
-      setInternalDate({
-        value: event.currentTarget.value,
-        invalid: isInvalid,
-      });
+      // Note: Formatted with the user timezone
+      return dateTimeFormat(dateTimeValue, { format });
+    }, [showSeconds]);
+
+    const [inputValue, setInputValue] = useState<string>(dateTimeToValue(date))
+    const [isInputValueValid, setIsInputValueValid] = useState<boolean>(isValid(inputValue))
+
+    const onChangeInputValue = useCallback((event: FormEvent<HTMLInputElement>) => {
+      const {value } = event.currentTarget
+      setInputValue(value)
+      setIsInputValueValid(isValid(value))
     }, []);
 
     const onBlur = useCallback(() => {
-      if (!internalDate.invalid) {
-        const date = dateTime(internalDate.value);
-        onChange(date);
+      if (isValid(inputValue)) {
+        // Convert the input value to `DateTime` object, with on user timezone
+        const newDate = dateTimeForTimeZone(getTimeZone(), inputValue)
+
+        onChange(newDate);
       }
-    }, [internalDate, onChange]);
+    }, [inputValue, onChange]);
 
     const icon = <Button aria-label="Time picker" icon="calendar-alt" variant="secondary" onClick={onOpen} />;
+
     return (
       <InlineField
         label={label}
-        invalid={!!(internalDate.value && internalDate.invalid)}
+        invalid={!isInputValueValid}
         className={css({
           marginBottom: 0,
         })}
       >
         <Input
-          onChange={onChangeDate}
+          onChange={onChangeInputValue}
           addonAfter={icon}
-          value={internalDate.value}
+          value={inputValue}
           onBlur={onBlur}
           data-testid={Components.DateTimePicker.input}
           placeholder="Select date/time"
