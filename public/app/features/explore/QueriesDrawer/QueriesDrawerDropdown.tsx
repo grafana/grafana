@@ -51,7 +51,10 @@ export function QueriesDrawerDropdown({ variant }: Props) {
         </ToolbarButton>
       )}
       <Dropdown overlay={menu}>
-        <ToolbarButton variant={drawerOpened ? 'active' : 'canvas'} icon={variant === 'full' ? 'angle-down' : 'book'} />
+        <ToolbarButton
+          variant={drawerOpened && variant === 'compact' ? 'active' : 'canvas'}
+          icon={variant === 'full' ? 'angle-down' : 'book'}
+        />
       </Dropdown>
     </ButtonGroup>
   );
