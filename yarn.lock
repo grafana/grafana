@@ -4012,8 +4012,8 @@ __metadata:
     "@leeoniya/ufuzzy": "npm:1.0.14"
     "@lezer/common": "npm:1.2.1"
     "@lezer/highlight": "npm:1.2.0"
-    "@lezer/lr": "npm:1.3.3"
-    "@prometheus-io/lezer-promql": "npm:^0.37.0-rc.1"
+    "@lezer/lr": "npm:1.4.0"
+    "@prometheus-io/lezer-promql": "npm:0.51.2"
     "@reduxjs/toolkit": "npm:1.9.5"
     "@rollup/plugin-image": "npm:3.0.3"
     "@rollup/plugin-node-resolve": "npm:15.2.3"
@@ -5038,6 +5038,15 @@ __metadata:
   dependencies:
     "@lezer/common": "npm:^1.0.0"
   checksum: 10/7e61dc2554b85560ef1af6d3a6112c711d20d54e0c3184657099be8dc40d2747d28d5d332cc1b0d75064846d51fbff0bed162550a332aeccdfa36836b5541cfd
+  languageName: node
+  linkType: hard
+
+"@lezer/lr@npm:1.4.0":
+  version: 1.4.0
+  resolution: "@lezer/lr@npm:1.4.0"
+  dependencies:
+    "@lezer/common": "npm:^1.0.0"
+  checksum: 10/7391d0d08e54cd9e4f4d46e6ee6aa81fbaf079b22ed9c13d01fc9928e0ffd16d0c2d21b2cedd55675ad6c687277db28349ea8db81c9c69222cd7e7c40edd026e
   languageName: node
   linkType: hard
 
@@ -6152,13 +6161,23 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@prometheus-io/lezer-promql@npm:0.51.2":
+  version: 0.51.2
+  resolution: "@prometheus-io/lezer-promql@npm:0.51.2"
+  peerDependencies:
+    "@lezer/highlight": ^1.1.2
+    "@lezer/lr": ^1.2.3
+  checksum: 10/cee04e8bb24b54caa5da029ab66aade5245c8ed96a99ca2444b45a1a814dc03e01197e4b4d9dd767baa9f81c35441c879939e13517b5fd5854598ceb58087e6b
+  languageName: node
+  linkType: hard
+
 "@prometheus-io/lezer-promql@npm:^0.37.0-rc.1":
-  version: 0.37.0
-  resolution: "@prometheus-io/lezer-promql@npm:0.37.0"
+  version: 0.37.9
+  resolution: "@prometheus-io/lezer-promql@npm:0.37.9"
   peerDependencies:
     "@lezer/highlight": ^1.0.0
     "@lezer/lr": ^1.0.0
-  checksum: 10/00a3ef7a292ae17c7059da73e1ebd4568135eb5189be0eb60f039915f1c20a0bf355fe02cec1c11955e9e3885b5ecfdd8a67d57ce25fa09ad74575ba0fbc7386
+  checksum: 10/3b1ddd9b47e3ba4f016901d6fc1b3b7b75855fb5da568fb95b30bfc60d35065e89d64162d947312126163a314c8844fa4a72176f9babdf86c63837d3fc0a5e4a
   languageName: node
   linkType: hard
 
