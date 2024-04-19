@@ -150,7 +150,8 @@ export function useCombinedLabels(
   dataSourceName: string,
   labelsPluginInstalled: boolean,
   loadingLabelsPlugin: boolean,
-  labelsInSubform: Array<{ key: string; value: string }>
+  labelsInSubform: Array<{ key: string; value: string }>,
+  selectedKey: string
 ) {
   // ------- Get labels keys and their values from existing alerts
   const { loading, labelsByKey: labelsByKeyFromExisingAlerts } = useGetAlertRulesLabels(dataSourceName);
@@ -189,45 +190,6 @@ export function useCombinedLabels(
       expanded: true,
     },
   ];
-
-  return {
-    loading: loading || isLoadingLabels,
-    labelsByKeyOps,
-    keysFromExistingAlerts,
-    labelsByKeyFromExisingAlerts,
-    groupedOptions,
-  };
-}
-/*
-  We will suggest labels from two sources: existing alerts and ops labels.
-  We only will suggest labels from ops if the grafana-labels-app plugin is installed
-  This component is only used by the alert rule form.
-  */
-export interface LabelsWithSuggestionsProps {
-  dataSourceName: string;
-}
-export function LabelsWithSuggestions({ dataSourceName }: LabelsWithSuggestionsProps) {
-  const styles = useStyles2(getStyles);
-  const {
-    control,
-    watch,
-    formState: { errors },
-  } = useFormContext<LabelsSubformValues>();
-
-  const labelsInSubform = watch('labelsInSubform');
-  const { fields, remove, append } = useFieldArray({ control, name: 'labelsInSubform' });
-  const appendLabel = useCallback(() => {
-    append({ key: '', value: '' });
-  }, [append]);
-
-  // check if the labels plugin is installed
-  const { installed: labelsPluginInstalled = false, loading: loadingLabelsPlugin } = usePluginBridge(
-    SupportedPlugin.Labels
-  );
-  const [selectedKey, setSelectedKey] = useState('');
-
-  const { loading, labelsByKeyOps, keysFromExistingAlerts, labelsByKeyFromExisingAlerts, groupedOptions } =
-    useCombinedLabels(dataSourceName, labelsPluginInstalled, loadingLabelsPlugin, labelsInSubform);
 
   const selectedKeyIsFromAlerts =
     labelsByKeyFromExisingAlerts[selectedKey] !== undefined && labelsByKeyFromExisingAlerts[selectedKey]?.size > 0;
@@ -283,6 +245,49 @@ export function LabelsWithSuggestions({ dataSourceName }: LabelsWithSuggestionsP
       return valuesFromSelectedGopsKey;
     },
     [labelsByKeyFromExisingAlerts, labelsPluginInstalled, valuesFromSelectedGopsKey, selectedKeyIsFromAlerts]
+  );
+
+  return {
+    loading: loading || isLoadingLabels,
+    keysFromExistingAlerts,
+    groupedOptions,
+    getValuesForLabel,
+  };
+}
+/*
+  We will suggest labels from two sources: existing alerts and ops labels.
+  We only will suggest labels from ops if the grafana-labels-app plugin is installed
+  This component is only used by the alert rule form.
+  */
+export interface LabelsWithSuggestionsProps {
+  dataSourceName: string;
+}
+export function LabelsWithSuggestions({ dataSourceName }: LabelsWithSuggestionsProps) {
+  const styles = useStyles2(getStyles);
+  const {
+    control,
+    watch,
+    formState: { errors },
+  } = useFormContext<LabelsSubformValues>();
+
+  const labelsInSubform = watch('labelsInSubform');
+  const { fields, remove, append } = useFieldArray({ control, name: 'labelsInSubform' });
+  const appendLabel = useCallback(() => {
+    append({ key: '', value: '' });
+  }, [append]);
+
+  // check if the labels plugin is installed
+  const { installed: labelsPluginInstalled = false, loading: loadingLabelsPlugin } = usePluginBridge(
+    SupportedPlugin.Labels
+  );
+  const [selectedKey, setSelectedKey] = useState('');
+
+  const { loading, keysFromExistingAlerts, groupedOptions, getValuesForLabel } = useCombinedLabels(
+    dataSourceName,
+    labelsPluginInstalled,
+    loadingLabelsPlugin,
+    labelsInSubform,
+    selectedKey
   );
 
   const values = useMemo(() => {
