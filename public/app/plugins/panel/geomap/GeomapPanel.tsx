@@ -44,8 +44,6 @@ interface State extends OverlayProps {
   measureMenuActive?: boolean;
 }
 
-const KEYBOARD_DESCRIPTION = `Use the arrow keys to pan the map. Use the +/- keys to zoom in and out.`;
-
 export class GeomapPanel extends Component<Props, State> {
   declare context: React.ContextType<typeof PanelContextRoot>;
   static contextType = PanelContextRoot;
@@ -386,13 +384,14 @@ export class GeomapPanel extends Component<Props, State> {
       <>
         <Global styles={this.globalCSS} />
         <div className={styles.wrap} onMouseLeave={this.clearTooltip}>
-          <section
+          <div
+            role="application"
             className={styles.map}
-            tabIndex={0}
+            // eslint-disable-next-line jsx-a11y/no-noninteractive-tabindex
+            tabIndex={0} // Interactivity is added through the ref
             aria-label={`Navigable map`}
-            aria-description={KEYBOARD_DESCRIPTION}
             ref={this.initMapRef}
-          ></section>
+          ></div>
           <GeomapOverlay
             bottomLeft={legends}
             topRight1={topRight1}
