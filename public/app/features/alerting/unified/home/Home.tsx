@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 
 import { config } from '@grafana/runtime';
-import { Stack, Tab, TabContent, TabsBar } from '@grafana/ui';
+import { Box, Stack, Tab, TabContent, TabsBar } from '@grafana/ui';
 
 import { AlertingPageWrapper } from '../components/AlertingPageWrapper';
 import { isLocalDevEnv, isOpenSourceEdition } from '../utils/misc';
@@ -27,26 +27,28 @@ export default function Home() {
         <WelcomeHeader />
         <PluginIntegrations />
       </Stack>
-      <TabsBar>
-        {insightsEnabled && (
+      <Box marginTop={{ lg: 2, md: 0, xs: 0 }}>
+        <TabsBar>
+          {insightsEnabled && (
+            <Tab
+              key="insights"
+              label="Insights"
+              active={activeTab === 'insights'}
+              onChangeTab={() => setActiveTab('insights')}
+            />
+          )}
           <Tab
-            key="insights"
-            label="Insights"
-            active={activeTab === 'insights'}
-            onChangeTab={() => setActiveTab('insights')}
+            key="overview"
+            label="Get started"
+            active={activeTab === 'overview'}
+            onChangeTab={() => setActiveTab('overview')}
           />
-        )}
-        <Tab
-          key="overview"
-          label="Get started"
-          active={activeTab === 'overview'}
-          onChangeTab={() => setActiveTab('overview')}
-        />
-      </TabsBar>
-      <TabContent>
-        {activeTab === 'insights' && <insightsScene.Component model={insightsScene} />}
-        {activeTab === 'overview' && <GettingStarted />}
-      </TabContent>
+        </TabsBar>
+        <TabContent>
+          {activeTab === 'insights' && <insightsScene.Component model={insightsScene} />}
+          {activeTab === 'overview' && <GettingStarted />}
+        </TabContent>
+      </Box>
     </AlertingPageWrapper>
   );
 }
