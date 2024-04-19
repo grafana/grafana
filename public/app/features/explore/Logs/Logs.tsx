@@ -155,6 +155,8 @@ class UnthemedLogs extends PureComponent<Props, State> {
   logsVolumeEventBus: EventBus;
   static contextType = ContentOutlineContext;
   declare context: React.ContextType<typeof ContentOutlineContext>;
+  // @ts-ignore
+  private toggleLegendRef: React.MutableRefObject<(name: string) => void> = React.createRef((name: string) => {});
 
   state: State = {
     showLabels: store.getBool(SETTINGS_KEYS.showLabels, false),
@@ -225,10 +227,7 @@ class UnthemedLogs extends PureComponent<Props, State> {
           type: 'filter',
           highlight: currentLevelSelected && !allLevelsSelected,
           onClick: () => {
-            const hiddenLogLevels = this.props.logsVolumeData?.data
-              .filter((l) => l.name !== level.name)
-              .map((l) => l.name) as LogLevel[];
-            this.setState({ hiddenLogLevels });
+            this.toggleLegendRef.current?.(level.name);
           },
           ref: null,
         });
@@ -666,6 +665,9 @@ class UnthemedLogs extends PureComponent<Props, State> {
 
     const scanText = scanRange ? `Scanning ${rangeUtil.describeTimeRange(scanRange)}` : 'Scanning...';
 
+    // @ts-ignore
+    // window.dontdothis = window.dontdothis || React.createRef();
+
     return (
       <>
         {getRowContext && contextRow && (
@@ -688,6 +690,7 @@ class UnthemedLogs extends PureComponent<Props, State> {
         >
           {logsVolumeEnabled && (
             <LogsVolumePanelList
+              toggleLegendRef={this.toggleLegendRef}
               absoluteRange={absoluteRange}
               width={width}
               logsVolumeData={logsVolumeData}
