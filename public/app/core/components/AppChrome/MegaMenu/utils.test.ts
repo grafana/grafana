@@ -115,4 +115,12 @@ describe('getActiveItem', () => {
     };
     expect(getActiveItem(mockNavTree, mockPage)?.id).toEqual('child');
   });
+
+  it('handles home page', () => {
+    const mockPage: NavModelItem = {
+      text: 'Something else',
+      id: 'not-home',
+    };
+    expect(getActiveItem(mockNavTree, mockPage, '/')?.id).toEqual('home');
+  });
 });
