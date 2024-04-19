@@ -2388,8 +2388,7 @@
         "operationId": "deleteCloudMigration",
         "parameters": [
           {
-            "type": "integer",
-            "format": "int64",
+            "type": "string",
             "description": "UID of a migration",
             "name": "uid",
             "in": "path",
@@ -2418,8 +2417,7 @@
         "operationId": "getCloudMigrationRunList",
         "parameters": [
           {
-            "type": "integer",
-            "format": "int64",
+            "type": "string",
             "description": "UID of a migration",
             "name": "uid",
             "in": "path",

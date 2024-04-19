@@ -41,7 +41,7 @@ export type CreateMigrationApiArg = {
 export type DeleteCloudMigrationApiResponse = unknown;
 export type DeleteCloudMigrationApiArg = {
   /** UID of a migration */
-  uid: number;
+  uid: string;
 };
 export type GetCloudMigrationApiResponse = /** status 200 (empty) */ CloudMigrationResponse;
 export type GetCloudMigrationApiArg = {
@@ -51,7 +51,7 @@ export type GetCloudMigrationApiArg = {
 export type GetCloudMigrationRunListApiResponse = /** status 200 (empty) */ CloudMigrationRunList;
 export type GetCloudMigrationRunListApiArg = {
   /** UID of a migration */
-  uid: number;
+  uid: string;
 };
 export type RunCloudMigrationApiResponse = /** status 200 (empty) */ MigrateDataResponseDto;
 export type RunCloudMigrationApiArg = {
