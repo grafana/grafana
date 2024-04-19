@@ -108,7 +108,7 @@ export default class CloudMonitoringDatasource extends DataSourceWithBackend<
               crossSeriesReducer: aggregation?.crossSeriesReducer ?? 'REDUCE_NONE',
               view: 'HEADERS',
             },
-            metricType
+            this.templateSrv.replace(metricType)
           ),
         },
       ],
