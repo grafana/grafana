@@ -31,7 +31,7 @@ func (c *ResultConverter) Convert(ctx context.Context,
 	dt, useDataplane, _ := shouldUseDataplane(frames, logger, c.Features.IsEnabled(ctx, featuremgmt.FlagDisableSSEDataplane))
 	if useDataplane {
 		logger.Debug("Handling SSE data source query through dataplane", "datatype", dt)
-		result, err := handleDataplaneFrames(ctx, c.Tracer, dt, frames)
+		result, err := handleDataplaneFrames(ctx, c.Tracer, c.Features, dt, frames)
 		return fmt.Sprintf("dataplane-%s", dt), result, err
 	}
 

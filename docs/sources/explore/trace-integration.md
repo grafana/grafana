@@ -24,6 +24,8 @@ Supported data sources are:
 - [X-Ray](https://grafana.com/grafana/plugins/grafana-x-ray-datasource)
 - [Azure Monitor Application Insights]({{< relref "../datasources/azure-monitor/" >}})
 - [ClickHouse](https://github.com/grafana/clickhouse-datasource)
+- [New Relic](https://grafana.com/grafana/plugins/grafana-newrelic-datasource)
+- [Infinity](https://grafana.com/grafana/plugins/yesoreyeram-infinity-datasource)
 
 For information on how to configure queries for the data sources listed above, refer to the documentation for specific data source.
 

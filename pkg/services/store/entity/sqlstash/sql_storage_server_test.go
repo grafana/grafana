@@ -4,6 +4,7 @@ import (
 	"context"
 	"testing"
 
+	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/infra/db"
@@ -132,7 +133,12 @@ func setUpTestServer(t *testing.T) entity.EntityStoreServer {
 		featuremgmt.WithFeatures(featuremgmt.FlagUnifiedStorage))
 	require.NoError(t, err)
 
-	s, err := ProvideSQLEntityServer(entityDB)
+	traceConfig, err := tracing.ParseTracingConfig(sqlStore.Cfg)
+	require.NoError(t, err)
+	tracer, err := tracing.ProvideService(traceConfig)
+	require.NoError(t, err)
+
+	s, err := ProvideSQLEntityServer(entityDB, tracer)
 	require.NoError(t, err)
 	return s
 }

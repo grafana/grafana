@@ -16,24 +16,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/user"
 )
 
-// NamespacedID builds a namespaced ID from a namespace and an ID.
-func NamespacedID(namespace string, id int64) string {
-	return fmt.Sprintf("%s:%d", namespace, id)
-}
-
-const (
-	NamespaceUser           = identity.NamespaceUser
-	NamespaceAPIKey         = identity.NamespaceAPIKey
-	NamespaceServiceAccount = identity.NamespaceServiceAccount
-	NamespaceAnonymous      = identity.NamespaceAnonymous
-	NamespaceRenderService  = identity.NamespaceRenderService
-	NamespaceAccessPolicy   = identity.NamespaceAccessPolicy
-)
-
-const (
-	AnonymousNamespaceID = NamespaceAnonymous + ":0"
-	GlobalOrgID          = int64(0)
-)
+const GlobalOrgID = int64(0)
 
 var _ identity.Requester = (*Identity)(nil)
 
@@ -102,6 +85,10 @@ func (i *Identity) GetNamespacedID() (namespace string, identifier string) {
 	return split[0], split[1]
 }
 
+func (i *Identity) GetAuthID() string {
+	return i.AuthID
+}
+
 func (i *Identity) GetAuthenticatedBy() string {
 	return i.AuthenticatedBy
 }
@@ -141,7 +128,6 @@ func (i *Identity) GetLogin() string {
 	return i.Login
 }
 
-// GetOrgID implements identity.Requester.
 func (i *Identity) GetOrgID() int64 {
 	return i.OrgID
 }
@@ -228,6 +214,7 @@ func (i *Identity) SignedInUser() *user.SignedInUser {
 		Login:           i.Login,
 		Name:            i.Name,
 		Email:           i.Email,
+		AuthID:          i.AuthID,
 		AuthenticatedBy: i.AuthenticatedBy,
 		IsGrafanaAdmin:  i.GetIsGrafanaAdmin(),
 		IsAnonymous:     namespace == NamespaceAnonymous,

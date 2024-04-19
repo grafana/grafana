@@ -38,6 +38,10 @@ func (c *Basic) Authenticate(ctx context.Context, r *authn.Request) (*authn.Iden
 	return c.client.AuthenticatePassword(ctx, r, username, password)
 }
 
+func (c *Basic) IsEnabled() bool {
+	return true
+}
+
 func (c *Basic) Test(ctx context.Context, r *authn.Request) bool {
 	if r.HTTPRequest == nil {
 		return false
