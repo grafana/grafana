@@ -45,7 +45,7 @@ A Team grants permissions to a wide variety of resources including:
 - annotations
 - playlists
 
-{{< admonition type="note" >}}
-[Grafana Organizations](https://grafana.com/docs/grafana/latest/administration/organization-management/) do not exist in Grafana Cloud. Grafana Cloud uses the term “organization” to refer to accounts in grafana.com, or GCOM. In Grafana Enterprise and OSS, Teams belong to Grafana Organizations. Refer to [About organizations](/docs/grafana/latest/administration/organization-management/#about-organizations) for more information.
-{{< /admonition >}}
+For information about how to optimize Teams, refer to [How to best organize your teams and resources in Grafana](https://grafana.com/blog/2022/03/14/how-to-best-organize-your-teams-and-resources-in-grafana/).
+
+
 

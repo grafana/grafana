@@ -20,6 +20,8 @@ weight: 200
 
 This topic describes how to set up and configure Grafana Teams.
 
+For a tutorial on working with Teams see [Create users and teams](https://grafana.com/tutorials/create-users-and-teams/).
+
 ## Before you begin
 
 Before you begin creating and working with Grafana Teams:
@@ -30,7 +32,11 @@ Before you begin creating and working with Grafana Teams:
   - No basic role - by default cannot view any resources - recommended for isolated teams
   - Viewer role - by default can view all resources - recommended for collaborative teams
 - Ensure team sync is turned on if you plan to manage team members through team sync. Refer to [Configure Team Sync](https://grafana.com/docs/grafana/latest/setup-grafana/configure-security/configure-team-sync/)  for  a list of providers and instructions on how to turn on team sync for each provider.
-- Turn on nested folders.  __This is a new feature.__
+<!-- - Turn on nested folders.  __This is a new feature.__ -->
+
+{{< admonition type="note" >}}
+[Grafana Organizations](https://grafana.com/docs/grafana/latest/administration/organization-management/) do not exist in Grafana Cloud. Grafana Cloud uses the term “organization” to refer to accounts in grafana.com, or GCOM. In Grafana Enterprise and OSS, Teams belong to Grafana Organizations. Refer to [About organizations](/docs/grafana/latest/administration/organization-management/#about-organizations) for more information.
+{{< /admonition >}}
 
 ## Create a Grafana Team
 
@@ -97,3 +103,4 @@ Delete a team when you no longer need it. This action permanently deletes the te
 1. Click the arrow next to **Administration** in the left-side menu, click **Users and access**, and select **Teams**. 
 1. Click the **red X** on the right side of the name of the team.
 1. Click **Delete**.
+

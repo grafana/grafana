@@ -9,7 +9,7 @@ labels:
     - enterprise
     - oss
 title: Team management
-weight: 400
+weight: 600
 ---
 
 # Team management
