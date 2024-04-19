@@ -4,6 +4,7 @@ export type QueryTemplate = {
   uid: string;
   title: string;
   targets: DataQuery[];
+  createdAt: string;
   spec: DataQuerySpec;
 };
 
@@ -44,6 +45,7 @@ export type DataQuerySpec = {
   metadata: {
     generateName: string;
     name?: string;
+    creationTimestamp?: string;
   };
   spec: {
     title: string;
