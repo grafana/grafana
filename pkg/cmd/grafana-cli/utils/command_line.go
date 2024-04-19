@@ -57,8 +57,24 @@ func (c *ContextCommandLine) PluginDirectory() string {
 	return c.String("pluginsDir")
 }
 
+/*
+The plugin repository URL is determined in the following order:
+1. --repo flag value if it is specified
+2. --repo flag value if set via the environment variable called "GF_PLUGIN_REPO"
+3. --configOverrides parameter (only if --config is set too)
+4. --config parameter, from which we are looking at GrafanaComAPIURL setting
+5. fallback to default value which is https://grafana.com/api/plugins
+**/
+
 func (c *ContextCommandLine) PluginRepoURL() string {
-	if c.ConfigFile() != "" && !slices.Contains(c.FlagNames(), "repo") {
+
+	// if --repo flag is set, use it
+	if slices.Contains(c.FlagNames(), "repo") {
+		return c.String("repo")
+	}
+
+	// if config file is set, try to get the GrafanaComAPIURL setting
+	if c.ConfigFile() != "" {
 		configOptions := strings.Split(c.String("configOverrides"), " ")
 		cfg, err := setting.NewCfgFromArgs(setting.CommandLineArgs{
 			Config:   c.ConfigFile(),
@@ -72,6 +88,7 @@ func (c *ContextCommandLine) PluginRepoURL() string {
 			return cfg.GrafanaComAPIURL + "/plugins"
 		}
 	}
+	// fallback to default value
 	return c.String("repo")
 }
 
