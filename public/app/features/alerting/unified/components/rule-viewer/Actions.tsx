@@ -16,7 +16,7 @@ import { DeclareIncidentMenuItem } from '../bridges/DeclareIncidentButton';
 
 interface Props {
   rule: CombinedRule;
-  identifier?: RuleIdentifier;
+  identifier: RuleIdentifier;
   showCopyLinkButton?: boolean;
   handleDelete: (rule: CombinedRule) => void;
   handleDuplicateRule: (identifier: RuleIdentifier) => void;
@@ -41,17 +41,20 @@ export const useAlertRuleMenuItems = ({
   const [editSupported, editAllowed] = useAlertRuleAbility(rule, AlertRuleAction.Update);
   const canEdit = editSupported && editAllowed;
 
+  const [pauseSupported, pauseAllowed] = useAlertRuleAbility(rule, AlertRuleAction.Pause);
+  const canPause = pauseSupported && pauseAllowed;
+
   const [deleteSupported, deleteAllowed] = useAlertRuleAbility(rule, AlertRuleAction.Delete);
   const canDelete = deleteSupported && deleteAllowed;
 
   const [duplicateSupported, duplicateAllowed] = useAlertRuleAbility(rule, AlertRuleAction.Duplicate);
-  const canDuplicate = duplicateSupported && duplicateAllowed && identifier;
+  const canDuplicate = duplicateSupported && duplicateAllowed;
 
   const [silenceSupported, silenceAllowed] = useAlertRuleAbility(rule, AlertRuleAction.Silence);
-  const canSilence = silenceSupported && silenceAllowed && identifier;
+  const canSilence = silenceSupported && silenceAllowed;
 
   const [exportSupported, exportAllowed] = useAlertRuleAbility(rule, AlertRuleAction.ModifyExport);
-  const canExport = exportSupported && exportAllowed && identifier;
+  const canExport = exportSupported && exportAllowed;
 
   /**
    * Since Incident isn't available as an open-source product we shouldn't show it for Open-Source licenced editions of Grafana.
@@ -68,7 +71,7 @@ export const useAlertRuleMenuItems = ({
     [showCopyLinkButton, canExport].some(Boolean);
 
   return [
-    canEdit && <MenuItemPauseRule key="pause" rule={rule} onPauseChange={onPauseChange} />,
+    canPause && <MenuItemPauseRule key="pause" rule={rule} onPauseChange={onPauseChange} />,
     canSilence && (
       <Menu.Item
         key="silence"

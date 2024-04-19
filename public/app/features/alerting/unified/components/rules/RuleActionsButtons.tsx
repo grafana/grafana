@@ -67,12 +67,7 @@ export const RuleActionsButtons = ({ compact, showViewButton, showCopyLinkButton
 
   const sourceName = getRulesSourceName(rulesSource);
 
-  const identifier = (() => {
-    if (rulerRule) {
-      return ruleId.fromRulerRule(sourceName, namespace.name, group.name, rulerRule);
-    }
-    return;
-  })();
+  const identifier = ruleId.fromCombinedRule(sourceName, rule);
 
   const menuItems = useAlertRuleMenuItems({
     rule,
