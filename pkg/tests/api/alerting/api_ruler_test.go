@@ -1415,8 +1415,8 @@ func TestIntegrationRuleUpdate(t *testing.T) {
 		AppModeProduction:     true,
 	})
 	grafanaListedAddr, env := testinfra.StartGrafanaEnv(t, dir, path)
-	asService := resourcepermissions.NewActionSetService()
-	permissionsStore := resourcepermissions.NewStore(env.SQLStore, featuremgmt.WithFeatures(), &asService)
+	// asService := resourcepermissions.NewActionSetService()
+	permissionsStore := resourcepermissions.NewStore(env.SQLStore, featuremgmt.WithFeatures(), nil)
 
 	// Create a user to make authenticated requests
 	userID := createUser(t, env.SQLStore, env.Cfg, user.CreateUserCommand{
