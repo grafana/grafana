@@ -674,7 +674,8 @@ exports[`better eslint`] = {
       [0, 0, 0, "Styles should be written using objects.", "18"]
     ],
     "packages/grafana-prometheus/src/querybuilder/shared/OperationEditor.tsx:5381": [
-      [0, 0, 0, "Unexpected any. Specify a different type.", "0"]
+      [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
+      [0, 0, 0, "Avoid direct use of \`animation*\` or \`transition*\` properties. Use the \`handleReducedMotion\` utility function or wrap in a \`prefers-reduced-motion\` media query.", "1"]
     ],
     "packages/grafana-prometheus/src/querybuilder/shared/OperationParamEditor.tsx:5381": [
       [0, 0, 0, "Do not use any type assertions.", "0"],
@@ -782,9 +783,36 @@ exports[`better eslint`] = {
     "packages/grafana-sql/src/components/visual-query-builder/SQLWhereRow.tsx:5381": [
       [0, 0, 0, "Do not use any type assertions.", "0"]
     ],
+    "packages/grafana-ui/src/components/AutoSaveField/EllipsisAnimated.tsx:5381": [
+      [0, 0, 0, "Avoid direct use of \`animation*\` or \`transition*\` properties. Use the \`handleReducedMotion\` utility function or wrap in a \`prefers-reduced-motion\` media query.", "0"],
+      [0, 0, 0, "Avoid direct use of \`animation*\` or \`transition*\` properties. Use the \`handleReducedMotion\` utility function or wrap in a \`prefers-reduced-motion\` media query.", "1"],
+      [0, 0, 0, "Avoid direct use of \`animation*\` or \`transition*\` properties. Use the \`handleReducedMotion\` utility function or wrap in a \`prefers-reduced-motion\` media query.", "2"]
+    ],
+    "packages/grafana-ui/src/components/BrowserLabel/Label.tsx:5381": [
+      [0, 0, 0, "Avoid direct use of \`animation*\` or \`transition*\` properties. Use the \`handleReducedMotion\` utility function or wrap in a \`prefers-reduced-motion\` media query.", "0"]
+    ],
+    "packages/grafana-ui/src/components/Card/CardContainer.tsx:5381": [
+      [0, 0, 0, "Avoid direct use of \`animation*\` or \`transition*\` properties. Use the \`handleReducedMotion\` utility function or wrap in a \`prefers-reduced-motion\` media query.", "0"],
+      [0, 0, 0, "Avoid direct use of \`animation*\` or \`transition*\` properties. Use the \`handleReducedMotion\` utility function or wrap in a \`prefers-reduced-motion\` media query.", "1"]
+    ],
+    "packages/grafana-ui/src/components/Collapse/Collapse.tsx:5381": [
+      [0, 0, 0, "Avoid direct use of \`animation*\` or \`transition*\` properties. Use the \`handleReducedMotion\` utility function or wrap in a \`prefers-reduced-motion\` media query.", "0"]
+    ],
     "packages/grafana-ui/src/components/ColorPicker/ColorPicker.tsx:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "1"]
+    ],
+    "packages/grafana-ui/src/components/ColorPicker/ColorSwatch.tsx:5381": [
+      [0, 0, 0, "Avoid direct use of \`animation*\` or \`transition*\` properties. Use the \`handleReducedMotion\` utility function or wrap in a \`prefers-reduced-motion\` media query.", "0"]
+    ],
+    "packages/grafana-ui/src/components/ConfirmButton/ConfirmButton.tsx:5381": [
+      [0, 0, 0, "Avoid direct use of \`animation*\` or \`transition*\` properties. Use the \`handleReducedMotion\` utility function or wrap in a \`prefers-reduced-motion\` media query.", "0"],
+      [0, 0, 0, "Avoid direct use of \`animation*\` or \`transition*\` properties. Use the \`handleReducedMotion\` utility function or wrap in a \`prefers-reduced-motion\` media query.", "1"],
+      [0, 0, 0, "Avoid direct use of \`animation*\` or \`transition*\` properties. Use the \`handleReducedMotion\` utility function or wrap in a \`prefers-reduced-motion\` media query.", "2"],
+      [0, 0, 0, "Avoid direct use of \`animation*\` or \`transition*\` properties. Use the \`handleReducedMotion\` utility function or wrap in a \`prefers-reduced-motion\` media query.", "3"]
+    ],
+    "packages/grafana-ui/src/components/CustomScrollbar/ScrollIndicators.tsx:5381": [
+      [0, 0, 0, "Avoid direct use of \`animation*\` or \`transition*\` properties. Use the \`handleReducedMotion\` utility function or wrap in a \`prefers-reduced-motion\` media query.", "0"]
     ],
     "packages/grafana-ui/src/components/DataLinks/DataLinkInput.tsx:5381": [
       [0, 0, 0, "Do not use any type assertions.", "0"]
@@ -826,6 +854,12 @@ exports[`better eslint`] = {
       [0, 0, 0, "\'VerticalGroup\' import from \'@grafana/ui\' is restricted from being used by a pattern. Use Stack component instead.", "0"],
       [0, 0, 0, "\'HorizontalGroup\' import from \'@grafana/ui\' is restricted from being used by a pattern. Use Stack component instead.", "1"]
     ],
+    "packages/grafana-ui/src/components/LoadingBar/LoadingBar.tsx:5381": [
+      [0, 0, 0, "Avoid direct use of \`animation*\` or \`transition*\` properties. Use the \`handleReducedMotion\` utility function or wrap in a \`prefers-reduced-motion\` media query.", "0"],
+      [0, 0, 0, "Avoid direct use of \`animation*\` or \`transition*\` properties. Use the \`handleReducedMotion\` utility function or wrap in a \`prefers-reduced-motion\` media query.", "1"],
+      [0, 0, 0, "Avoid direct use of \`animation*\` or \`transition*\` properties. Use the \`handleReducedMotion\` utility function or wrap in a \`prefers-reduced-motion\` media query.", "2"],
+      [0, 0, 0, "Avoid direct use of \`animation*\` or \`transition*\` properties. Use the \`handleReducedMotion\` utility function or wrap in a \`prefers-reduced-motion\` media query.", "3"]
+    ],
     "packages/grafana-ui/src/components/MatchersUI/FieldValueMatcher.tsx:5381": [
       [0, 0, 0, "Do not use any type assertions.", "0"]
     ],
@@ -840,6 +874,9 @@ exports[`better eslint`] = {
     ],
     "packages/grafana-ui/src/components/PageLayout/PageToolbar.story.tsx:5381": [
       [0, 0, 0, "\'VerticalGroup\' import from \'@grafana/ui\' is restricted from being used by a pattern. Use Stack component instead.", "0"]
+    ],
+    "packages/grafana-ui/src/components/PanelChrome/HoverWidget.tsx:5381": [
+      [0, 0, 0, "Avoid direct use of \`animation*\` or \`transition*\` properties. Use the \`handleReducedMotion\` utility function or wrap in a \`prefers-reduced-motion\` media query.", "0"]
     ],
     "packages/grafana-ui/src/components/PanelChrome/PanelContext.ts:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
@@ -943,6 +980,9 @@ exports[`better eslint`] = {
       [0, 0, 0, "Do not use any type assertions.", "0"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "1"]
     ],
+    "packages/grafana-ui/src/components/Table/styles.ts:5381": [
+      [0, 0, 0, "Avoid direct use of \`animation*\` or \`transition*\` properties. Use the \`handleReducedMotion\` utility function or wrap in a \`prefers-reduced-motion\` media query.", "0"]
+    ],
     "packages/grafana-ui/src/components/Table/types.ts:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "1"]
@@ -967,6 +1007,12 @@ exports[`better eslint`] = {
     "packages/grafana-ui/src/components/ThemeDemos/EmotionPerfTest.tsx:5381": [
       [0, 0, 0, "\'VerticalGroup\' import from \'../Layout/Layout\' is restricted from being used by a pattern. Use Stack component instead.", "0"]
     ],
+    "packages/grafana-ui/src/components/ToolbarButton/ToolbarButton.tsx:5381": [
+      [0, 0, 0, "Avoid direct use of \`animation*\` or \`transition*\` properties. Use the \`handleReducedMotion\` utility function or wrap in a \`prefers-reduced-motion\` media query.", "0"]
+    ],
+    "packages/grafana-ui/src/components/Typeahead/TypeaheadItem.tsx:5381": [
+      [0, 0, 0, "Avoid direct use of \`animation*\` or \`transition*\` properties. Use the \`handleReducedMotion\` utility function or wrap in a \`prefers-reduced-motion\` media query.", "0"]
+    ],
     "packages/grafana-ui/src/components/ValuePicker/ValuePicker.tsx:5381": [
       [0, 0, 0, "Use data-testid for E2E selectors instead of aria-label", "0"]
     ],
@@ -987,6 +1033,14 @@ exports[`better eslint`] = {
     "packages/grafana-ui/src/components/index.ts:5381": [
       [0, 0, 0, "\'HorizontalGroup\' import from \'./Layout/Layout\' is restricted from being used by a pattern. Use Stack component instead.", "0"],
       [0, 0, 0, "\'VerticalGroup\' import from \'./Layout/Layout\' is restricted from being used by a pattern. Use Stack component instead.", "1"]
+    ],
+    "packages/grafana-ui/src/components/transitions/FadeTransition.tsx:5381": [
+      [0, 0, 0, "Avoid direct use of \`animation*\` or \`transition*\` properties. Use the \`handleReducedMotion\` utility function or wrap in a \`prefers-reduced-motion\` media query.", "0"],
+      [0, 0, 0, "Avoid direct use of \`animation*\` or \`transition*\` properties. Use the \`handleReducedMotion\` utility function or wrap in a \`prefers-reduced-motion\` media query.", "1"]
+    ],
+    "packages/grafana-ui/src/components/transitions/SlideOutTransition.tsx:5381": [
+      [0, 0, 0, "Avoid direct use of \`animation*\` or \`transition*\` properties. Use the \`handleReducedMotion\` utility function or wrap in a \`prefers-reduced-motion\` media query.", "0"],
+      [0, 0, 0, "Avoid direct use of \`animation*\` or \`transition*\` properties. Use the \`handleReducedMotion\` utility function or wrap in a \`prefers-reduced-motion\` media query.", "1"]
     ],
     "packages/grafana-ui/src/components/uPlot/Plot.tsx:5381": [
       [0, 0, 0, "Do not use any type assertions.", "0"],
@@ -1118,6 +1172,9 @@ exports[`better eslint`] = {
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "1"]
     ],
+    "packages/grafana-ui/src/utils/tooltipUtils.ts:5381": [
+      [0, 0, 0, "Avoid direct use of \`animation*\` or \`transition*\` properties. Use the \`handleReducedMotion\` utility function or wrap in a \`prefers-reduced-motion\` media query.", "0"]
+    ],
     "packages/grafana-ui/src/utils/useAsyncDependency.ts:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"]
     ],
@@ -1145,6 +1202,19 @@ exports[`better eslint`] = {
     "public/app/core/components/AppNotifications/AppNotificationList.tsx:5381": [
       [0, 0, 0, "\'VerticalGroup\' import from \'@grafana/ui\' is restricted from being used by a pattern. Use Stack component instead.", "0"]
     ],
+    "public/app/core/components/BouncingLoader/BouncingLoader.tsx:5381": [
+      [0, 0, 0, "Avoid direct use of \`animation*\` or \`transition*\` properties. Use the \`handleReducedMotion\` utility function or wrap in a \`prefers-reduced-motion\` media query.", "0"],
+      [0, 0, 0, "Avoid direct use of \`animation*\` or \`transition*\` properties. Use the \`handleReducedMotion\` utility function or wrap in a \`prefers-reduced-motion\` media query.", "1"],
+      [0, 0, 0, "Avoid direct use of \`animation*\` or \`transition*\` properties. Use the \`handleReducedMotion\` utility function or wrap in a \`prefers-reduced-motion\` media query.", "2"],
+      [0, 0, 0, "Avoid direct use of \`animation*\` or \`transition*\` properties. Use the \`handleReducedMotion\` utility function or wrap in a \`prefers-reduced-motion\` media query.", "3"],
+      [0, 0, 0, "Avoid direct use of \`animation*\` or \`transition*\` properties. Use the \`handleReducedMotion\` utility function or wrap in a \`prefers-reduced-motion\` media query.", "4"],
+      [0, 0, 0, "Avoid direct use of \`animation*\` or \`transition*\` properties. Use the \`handleReducedMotion\` utility function or wrap in a \`prefers-reduced-motion\` media query.", "5"],
+      [0, 0, 0, "Avoid direct use of \`animation*\` or \`transition*\` properties. Use the \`handleReducedMotion\` utility function or wrap in a \`prefers-reduced-motion\` media query.", "6"],
+      [0, 0, 0, "Avoid direct use of \`animation*\` or \`transition*\` properties. Use the \`handleReducedMotion\` utility function or wrap in a \`prefers-reduced-motion\` media query.", "7"],
+      [0, 0, 0, "Avoid direct use of \`animation*\` or \`transition*\` properties. Use the \`handleReducedMotion\` utility function or wrap in a \`prefers-reduced-motion\` media query.", "8"],
+      [0, 0, 0, "Avoid direct use of \`animation*\` or \`transition*\` properties. Use the \`handleReducedMotion\` utility function or wrap in a \`prefers-reduced-motion\` media query.", "9"],
+      [0, 0, 0, "Avoid direct use of \`animation*\` or \`transition*\` properties. Use the \`handleReducedMotion\` utility function or wrap in a \`prefers-reduced-motion\` media query.", "10"]
+    ],
     "public/app/core/components/DynamicImports/SafeDynamicImport.tsx:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"]
     ],
@@ -1165,6 +1235,10 @@ exports[`better eslint`] = {
     ],
     "public/app/core/components/LocalStorageValueProvider/index.tsx:5381": [
       [0, 0, 0, "Do not re-export imported variable (\`./LocalStorageValueProvider\`)", "0"]
+    ],
+    "public/app/core/components/Login/LoginLayout.tsx:5381": [
+      [0, 0, 0, "Avoid direct use of \`animation*\` or \`transition*\` properties. Use the \`handleReducedMotion\` utility function or wrap in a \`prefers-reduced-motion\` media query.", "0"],
+      [0, 0, 0, "Avoid direct use of \`animation*\` or \`transition*\` properties. Use the \`handleReducedMotion\` utility function or wrap in a \`prefers-reduced-motion\` media query.", "1"]
     ],
     "public/app/core/components/Login/LoginServiceButtons.tsx:5381": [
       [0, 0, 0, "\'VerticalGroup\' import from \'@grafana/ui\' is restricted from being used by a pattern. Use Stack component instead.", "0"]
@@ -1999,6 +2073,9 @@ exports[`better eslint`] = {
     "public/app/features/alerting/unified/components/rule-editor/alert-rule-form/AlertRuleForm.tsx:5381": [
       [0, 0, 0, "\'HorizontalGroup\' import from \'@grafana/ui\' is restricted from being used by a pattern. Use Stack component instead.", "0"]
     ],
+    "public/app/features/alerting/unified/components/rule-editor/alert-rule-form/simplifiedRouting/contactPoint/ContactPointSelector.tsx:5381": [
+      [0, 0, 0, "Avoid direct use of \`animation*\` or \`transition*\` properties. Use the \`handleReducedMotion\` utility function or wrap in a \`prefers-reduced-motion\` media query.", "0"]
+    ],
     "public/app/features/alerting/unified/components/rule-editor/notificaton-preview/NotificationPolicyMatchers.tsx:5381": [
       [0, 0, 0, "Styles should be written using objects.", "0"],
       [0, 0, 0, "Styles should be written using objects.", "1"]
@@ -2358,6 +2435,19 @@ exports[`better eslint`] = {
       [0, 0, 0, "Unexpected any. Specify a different type.", "3"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "4"]
     ],
+    "public/app/features/canvas/elements/droneFront.tsx:5381": [
+      [0, 0, 0, "Avoid direct use of \`animation*\` or \`transition*\` properties. Use the \`handleReducedMotion\` utility function or wrap in a \`prefers-reduced-motion\` media query.", "0"]
+    ],
+    "public/app/features/canvas/elements/droneSide.tsx:5381": [
+      [0, 0, 0, "Avoid direct use of \`animation*\` or \`transition*\` properties. Use the \`handleReducedMotion\` utility function or wrap in a \`prefers-reduced-motion\` media query.", "0"]
+    ],
+    "public/app/features/canvas/elements/droneTop.tsx:5381": [
+      [0, 0, 0, "Avoid direct use of \`animation*\` or \`transition*\` properties. Use the \`handleReducedMotion\` utility function or wrap in a \`prefers-reduced-motion\` media query.", "0"],
+      [0, 0, 0, "Avoid direct use of \`animation*\` or \`transition*\` properties. Use the \`handleReducedMotion\` utility function or wrap in a \`prefers-reduced-motion\` media query.", "1"]
+    ],
+    "public/app/features/canvas/elements/server/server.tsx:5381": [
+      [0, 0, 0, "Avoid direct use of \`animation*\` or \`transition*\` properties. Use the \`handleReducedMotion\` utility function or wrap in a \`prefers-reduced-motion\` media query.", "0"]
+    ],
     "public/app/features/canvas/index.ts:5381": [
       [0, 0, 0, "Do not use export all (\`export * from ...\`)", "0"],
       [0, 0, 0, "Do not use export all (\`export * from ...\`)", "1"],
@@ -2571,6 +2661,10 @@ exports[`better eslint`] = {
     ],
     "public/app/features/dashboard-scene/utils/PanelModelCompatibilityWrapper.ts:5381": [
       [0, 0, 0, "Do not use any type assertions.", "0"]
+    ],
+    "public/app/features/dashboard/components/AddLibraryPanelWidget/AddLibraryPanelWidget.tsx:5381": [
+      [0, 0, 0, "Avoid direct use of \`animation*\` or \`transition*\` properties. Use the \`handleReducedMotion\` utility function or wrap in a \`prefers-reduced-motion\` media query.", "0"],
+      [0, 0, 0, "Avoid direct use of \`animation*\` or \`transition*\` properties. Use the \`handleReducedMotion\` utility function or wrap in a \`prefers-reduced-motion\` media query.", "1"]
     ],
     "public/app/features/dashboard/components/AddLibraryPanelWidget/index.ts:5381": [
       [0, 0, 0, "Do not re-export imported variable (\`./AddLibraryPanelWidget\`)", "0"]
@@ -3256,6 +3350,9 @@ exports[`better eslint`] = {
     "public/app/features/explore/CorrelationEditorModeBar.tsx:5381": [
       [0, 0, 0, "\'HorizontalGroup\' import from \'@grafana/ui\' is restricted from being used by a pattern. Use Stack component instead.", "0"]
     ],
+    "public/app/features/explore/ExploreDrawer.tsx:5381": [
+      [0, 0, 0, "Avoid direct use of \`animation*\` or \`transition*\` properties. Use the \`handleReducedMotion\` utility function or wrap in a \`prefers-reduced-motion\` media query.", "0"]
+    ],
     "public/app/features/explore/Logs/LiveLogs.tsx:5381": [
       [0, 0, 0, "Styles should be written using objects.", "0"],
       [0, 0, 0, "Styles should be written using objects.", "1"],
@@ -3286,6 +3383,9 @@ exports[`better eslint`] = {
       [0, 0, 0, "Styles should be written using objects.", "0"],
       [0, 0, 0, "Styles should be written using objects.", "1"],
       [0, 0, 0, "Styles should be written using objects.", "2"]
+    ],
+    "public/app/features/explore/Logs/LogsTableWrap.tsx:5381": [
+      [0, 0, 0, "Avoid direct use of \`animation*\` or \`transition*\` properties. Use the \`handleReducedMotion\` utility function or wrap in a \`prefers-reduced-motion\` media query.", "0"]
     ],
     "public/app/features/explore/Logs/LogsVolumePanel.tsx:5381": [
       [0, 0, 0, "Styles should be written using objects.", "0"],
@@ -3992,7 +4092,8 @@ exports[`better eslint`] = {
       [0, 0, 0, "Do not use any type assertions.", "0"]
     ],
     "public/app/features/panel/components/VizTypePicker/PanelTypeCard.tsx:5381": [
-      [0, 0, 0, "Use data-testid for E2E selectors instead of aria-label", "0"]
+      [0, 0, 0, "Use data-testid for E2E selectors instead of aria-label", "0"],
+      [0, 0, 0, "Avoid direct use of \`animation*\` or \`transition*\` properties. Use the \`handleReducedMotion\` utility function or wrap in a \`prefers-reduced-motion\` media query.", "1"]
     ],
     "public/app/features/panel/components/VizTypePicker/VisualizationSuggestionCard.tsx:5381": [
       [0, 0, 0, "Styles should be written using objects.", "0"],
@@ -4087,6 +4188,9 @@ exports[`better eslint`] = {
       [0, 0, 0, "Styles should be written using objects.", "2"],
       [0, 0, 0, "Styles should be written using objects.", "3"],
       [0, 0, 0, "Styles should be written using objects.", "4"]
+    ],
+    "public/app/features/plugins/admin/components/PluginListItem.tsx:5381": [
+      [0, 0, 0, "Avoid direct use of \`animation*\` or \`transition*\` properties. Use the \`handleReducedMotion\` utility function or wrap in a \`prefers-reduced-motion\` media query.", "0"]
     ],
     "public/app/features/plugins/admin/components/PluginListItemBadges.tsx:5381": [
       [0, 0, 0, "\'HorizontalGroup\' import from \'@grafana/ui\' is restricted from being used by a pattern. Use Stack component instead.", "0"]
@@ -6152,6 +6256,9 @@ exports[`better eslint`] = {
     ],
     "public/app/plugins/panel/timeseries/plugins/AnnotationsPlugin2.tsx:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"]
+    ],
+    "public/app/plugins/panel/timeseries/plugins/ExemplarMarker.tsx:5381": [
+      [0, 0, 0, "Avoid direct use of \`animation*\` or \`transition*\` properties. Use the \`handleReducedMotion\` utility function or wrap in a \`prefers-reduced-motion\` media query.", "0"]
     ],
     "public/app/plugins/panel/timeseries/plugins/ThresholdDragHandle.tsx:5381": [
       [0, 0, 0, "Styles should be written using objects.", "0"],
