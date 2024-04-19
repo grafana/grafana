@@ -73,7 +73,7 @@ func (c *ContextCommandLine) PluginRepoURL() string {
 		return c.String("repo")
 	}
 
-	// if config file is set, try to get the GrafanaComAPIURL setting
+	// if --config flag is set, try to get the GrafanaComAPIURL setting
 	if c.ConfigFile() != "" {
 		configOptions := strings.Split(c.String("configOverrides"), " ")
 		cfg, err := setting.NewCfgFromArgs(setting.CommandLineArgs{
