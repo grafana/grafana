@@ -2,6 +2,7 @@ package resourcepermissions
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"sort"
 
@@ -285,7 +286,7 @@ func (s *Service) mapPermission(permission string) ([]string, error) {
 			return v, nil
 		}
 	}
-	return nil, ErrInvalidPermission
+	return nil, ErrInvalidPermission.Build(ErrInvalidPermissionData(permission))
 }
 
 func (s *Service) validateResource(ctx context.Context, orgID int64, resourceID string) error {
@@ -297,27 +298,37 @@ func (s *Service) validateResource(ctx context.Context, orgID int64, resourceID 
 
 func (s *Service) validateUser(ctx context.Context, orgID, userID int64) error {
 	if !s.options.Assignments.Users {
-		return ErrInvalidAssignment
+		return ErrInvalidAssignment.Build(ErrInvalidAssignmentData("users"))
 	}
 
 	_, err := s.userService.GetSignedInUser(ctx, &user.GetSignedInUserQuery{OrgID: orgID, UserID: userID})
-	return err
+	switch {
+	case errors.Is(err, user.ErrUserNotFound):
+		return accesscontrol.ErrAssignmentEntityNotFound.Build(accesscontrol.ErrAssignmentEntityNotFoundData("user"))
+	default:
+		return err
+	}
 }
 
 func (s *Service) validateTeam(ctx context.Context, orgID, teamID int64) error {
 	if !s.options.Assignments.Teams {
-		return ErrInvalidAssignment
+		return ErrInvalidAssignment.Build(ErrInvalidAssignmentData("teams"))
 	}
 
 	if _, err := s.teamService.GetTeamByID(ctx, &team.GetTeamByIDQuery{OrgID: orgID, ID: teamID}); err != nil {
-		return err
+		switch {
+		case errors.Is(err, team.ErrTeamNotFound):
+			return accesscontrol.ErrAssignmentEntityNotFound.Build(accesscontrol.ErrAssignmentEntityNotFoundData("team"))
+		default:
+			return err
+		}
 	}
 	return nil
 }
 
-func (s *Service) validateBuiltinRole(ctx context.Context, builtinRole string) error {
+func (s *Service) validateBuiltinRole(_ context.Context, builtinRole string) error {
 	if !s.options.Assignments.BuiltInRoles {
-		return ErrInvalidAssignment
+		return ErrInvalidAssignment.Build(ErrInvalidAssignmentData("builtInRoles"))
 	}
 
 	if err := accesscontrol.ValidateBuiltInRoles([]string{builtinRole}); err != nil {

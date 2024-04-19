@@ -243,11 +243,11 @@ steps:
 - commands:
   - apk add --update git
   - |-
-    yarn run i18n:extract || (echo "
+    make i18n-extract || (echo "
     Extraction failed. Make sure that you have no dynamic translation phrases, such as 't(\`preferences.theme.\$${themeID}\`, themeName)' and that no translation key is used twice. Search the output for '[warning]' to find the offending file." && false)
   - "\n            file_diff=$(git diff --dirstat public/locales)\n            if
     [ -n \"$file_diff\" ]; then\n                echo $file_diff\n                echo
-    \"\nTranslation extraction has not been committed. Please run 'yarn i18n:extract',
+    \"\nTranslation extraction has not been committed. Please run 'make i18n-extract',
     commit the changes and push again.\"\n                exit 1\n            fi\n
     \           "
   depends_on:
@@ -1627,11 +1627,11 @@ steps:
 - commands:
   - apk add --update git
   - |-
-    yarn run i18n:extract || (echo "
+    make i18n-extract || (echo "
     Extraction failed. Make sure that you have no dynamic translation phrases, such as 't(\`preferences.theme.\$${themeID}\`, themeName)' and that no translation key is used twice. Search the output for '[warning]' to find the offending file." && false)
   - "\n            file_diff=$(git diff --dirstat public/locales)\n            if
     [ -n \"$file_diff\" ]; then\n                echo $file_diff\n                echo
-    \"\nTranslation extraction has not been committed. Please run 'yarn i18n:extract',
+    \"\nTranslation extraction has not been committed. Please run 'make i18n-extract',
     commit the changes and push again.\"\n                exit 1\n            fi\n
     \           "
   depends_on:
@@ -4925,6 +4925,6 @@ kind: secret
 name: gcr_credentials
 ---
 kind: signature
-hmac: b5d7a42f2b8962ec1b88fd243c355370d0ce5df79f3d66e41cce4dfa06a89aa4
+hmac: e67367689de11270bb3139f25a7cabf54e2b980460fd55ad410c590722d122b8
 
 ...

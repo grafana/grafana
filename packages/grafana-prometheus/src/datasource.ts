@@ -26,6 +26,8 @@ import {
   rangeUtil,
   renderLegendFormat,
   ScopedVars,
+  scopeFilterOperatorMap,
+  ScopeSpecFilter,
   TimeRange,
 } from '@grafana/data';
 import {
@@ -478,8 +480,13 @@ export class PrometheusDatasource
 
     let expr = target.expr;
 
-    // Apply adhoc filters
-    expr = this.enhanceExprWithAdHocFilters(options.filters, expr);
+    if (config.featureToggles.promQLScope) {
+      // Apply scope filters
+      query.adhocFilters = this.generateScopeFilters(options.filters);
+    } else {
+      // Apply adhoc filters
+      expr = this.enhanceExprWithAdHocFilters(options.filters, expr);
+    }
 
     // Only replace vars in expression after having (possibly) updated interval vars
     query.expr = this.templateSrv.replace(expr, scopedVars, this.interpolateQueryExpr);
@@ -492,6 +499,18 @@ export class PrometheusDatasource
     this._addTracingHeaders(query, options);
 
     return query;
+  }
+
+  /**
+   * This converts the adhocVariableFilter array and converts it to scopeFilter array
+   * @param filters
+   */
+  generateScopeFilters(filters?: AdHocVariableFilter[]): ScopeSpecFilter[] {
+    if (!filters) {
+      return [];
+    }
+
+    return filters.map((f) => ({ ...f, operator: scopeFilterOperatorMap[f.operator] }));
   }
 
   getRateIntervalScopedVariable(interval: number, scrapeInterval: number) {
@@ -710,12 +729,13 @@ export class PrometheusDatasource
     const expr = promQueryModeller.renderLabels(labelFilters);
 
     if (this.hasLabelsMatchAPISupport()) {
-      return (await this.languageProvider.fetchSeriesValuesWithMatch(options.key, expr, options.timeRange)).map(
-        (v) => ({
-          value: v,
-          text: v,
-        })
-      );
+      const requestId = `[${this.uid}][${options.key}]`;
+      return (
+        await this.languageProvider.fetchSeriesValuesWithMatch(options.key, expr, requestId, options.timeRange)
+      ).map((v) => ({
+        value: v,
+        text: v,
+      }));
     }
 
     const params = this.getTimeRangeParams(options.timeRange ?? getDefaultTimeRange());
@@ -732,14 +752,17 @@ export class PrometheusDatasource
     if (queries && queries.length) {
       expandedQueries = queries.map((query) => {
         const interpolatedQuery = this.templateSrv.replace(query.expr, scopedVars, this.interpolateQueryExpr);
-        const withAdhocFilters = this.enhanceExprWithAdHocFilters(filters, interpolatedQuery);
 
         const expandedQuery = {
           ...query,
+          ...(config.featureToggles.promQLScope ? { adhocFilters: this.generateScopeFilters(filters) } : {}),
           datasource: this.getRef(),
-          expr: withAdhocFilters,
+          expr: config.featureToggles.promQLScope
+            ? interpolatedQuery
+            : this.enhanceExprWithAdHocFilters(filters, interpolatedQuery),
           interval: this.templateSrv.replace(query.interval, scopedVars),
         };
+
         return expandedQuery;
       });
     }
@@ -901,12 +924,10 @@ export class PrometheusDatasource
     // interpolate expression
     const expr = this.templateSrv.replace(target.expr, variables, this.interpolateQueryExpr);
 
-    // Add ad hoc filters
-    const exprWithAdHocFilters = this.enhanceExprWithAdHocFilters(filters, expr);
-
     return {
       ...target,
-      expr: exprWithAdHocFilters,
+      ...(config.featureToggles.promQLScope ? { adhocFilters: this.generateScopeFilters(filters) } : {}),
+      expr: config.featureToggles.promQLScope ? expr : this.enhanceExprWithAdHocFilters(filters, expr),
       interval: this.templateSrv.replace(target.interval, variables),
       legendFormat: this.templateSrv.replace(target.legendFormat, variables),
     };

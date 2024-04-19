@@ -29,6 +29,7 @@ import { AutoQueryDef } from '../AutomaticMetricQueries/types';
 import { BreakdownLabelSelector } from '../BreakdownLabelSelector';
 import { MetricScene } from '../MetricScene';
 import { StatusWrapper } from '../StatusWrapper';
+import { reportExploreMetrics } from '../interactions';
 import { trailDS, VAR_FILTERS, VAR_GROUP_BY, VAR_GROUP_BY_EXP } from '../shared';
 import { getColorByIndex, getTrailFor } from '../utils';
 
@@ -202,6 +203,7 @@ export class BreakdownScene extends SceneObjectBase<BreakdownSceneState> {
       return;
     }
 
+    reportExploreMetrics('label_selected', { label: value, cause: 'selector' });
     const variable = this.getVariable();
 
     variable.changeValueTo(value);
@@ -429,7 +431,9 @@ interface SelectLabelActionState extends SceneObjectState {
 }
 export class SelectLabelAction extends SceneObjectBase<SelectLabelActionState> {
   public onClick = () => {
-    getBreakdownSceneFor(this).onChange(this.state.labelName);
+    const label = this.state.labelName;
+    reportExploreMetrics('label_selected', { label, cause: 'breakdown_panel' });
+    getBreakdownSceneFor(this).onChange(label);
   };
 
   public static Component = ({ model }: SceneComponentProps<AddToFiltersGraphAction>) => {

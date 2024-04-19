@@ -196,7 +196,7 @@ describe('PromVariableQueryEditor', () => {
     });
   });
 
-  test('Calls onChange for label_names, label_values, metrics, query result and and classic query.', async () => {
+  test('Calls onChange for label_names, label_values, metrics, query result and classic query.', async () => {
     const onChange = jest.fn();
 
     props.query = {
