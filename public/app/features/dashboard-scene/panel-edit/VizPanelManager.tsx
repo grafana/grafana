@@ -88,7 +88,10 @@ export class VizPanelManager extends SceneObjectBase<VizPanelManagerState> {
     repeatOptions = { repeat, repeatDirection, maxPerRow };
 
     return new VizPanelManager({
-      panel: sourcePanel.clone({ $data: undefined, $timeRange: undefined }),
+      panel: sourcePanel.clone({
+        $data: undefined,
+        $timeRange: undefined,
+      }),
       $data: sourcePanel.state.$data?.clone(),
       $timeRange: sourcePanel.state.$timeRange,
       sourcePanel: sourcePanel.getRef(),
@@ -403,6 +406,7 @@ export class VizPanelManager extends SceneObjectBase<VizPanelManagerState> {
         ...repeatUpdate,
         body: this.state.panel.clone({
           $data: this.state.$data?.clone(),
+          $timeRange: this.state.$timeRange?.clone(),
         }),
       });
     }
@@ -412,6 +416,7 @@ export class VizPanelManager extends SceneObjectBase<VizPanelManagerState> {
         const newLibPanel = sourcePanel.parent.clone({
           panel: this.state.panel.clone({
             $data: this.state.$data?.clone(),
+            $timeRange: this.state.$timeRange?.clone(),
           }),
         });
         sourcePanel.parent.parent.setState({
