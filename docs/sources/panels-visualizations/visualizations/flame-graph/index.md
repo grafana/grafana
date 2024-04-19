@@ -29,7 +29,7 @@ You can use a flame graph visualization if you need to:
 
 - Identify any performance hotspots to find where code optimizations may be needed.
 - Diagnose the root cause for any performance degradation.
-- Analyze the behavior of complex systems, including distributed systems or microservices architectures. 
+- Analyze the behavior of complex systems, including distributed systems or microservices architectures.
 
 ## Configure a flame graph visualization
 
