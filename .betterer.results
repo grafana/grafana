@@ -958,9 +958,6 @@ exports[`better eslint`] = {
     "packages/grafana-ui/src/components/Text/Text.story.tsx:5381": [
       [0, 0, 0, "\'VerticalGroup\' import from \'../Layout/Layout\' is restricted from being used by a pattern. Use Stack component instead.", "0"]
     ],
-    "packages/grafana-ui/src/components/ThemeDemos/EmotionPerfTest.tsx:5381": [
-      [0, 0, 0, "\'VerticalGroup\' import from \'../Layout/Layout\' is restricted from being used by a pattern. Use Stack component instead.", "0"]
-    ],
     "packages/grafana-ui/src/components/ValuePicker/ValuePicker.tsx:5381": [
       [0, 0, 0, "Use data-testid for E2E selectors instead of aria-label", "0"]
     ],
