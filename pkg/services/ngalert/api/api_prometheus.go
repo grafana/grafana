@@ -26,10 +26,11 @@ import (
 )
 
 type PrometheusSrv struct {
-	log     log.Logger
-	manager state.AlertInstanceManager
-	store   RuleStore
-	authz   RuleAccessControlService
+	log       log.Logger
+	manager   state.AlertInstanceManager
+	store     RuleStore
+	scheduler Scheduler
+	authz     RuleAccessControlService
 }
 
 const queryIncludeInternalLabels = "includeInternalLabels"
@@ -224,29 +225,22 @@ func (srv PrometheusSrv) RouteGetRuleStatuses(c *contextmodel.ReqContext) respon
 		return response.JSON(http.StatusOK, ruleResponse)
 	}
 
-	namespaceUIDs := make([]string, len(namespaceMap))
-	for k := range namespaceMap {
-		namespaceUIDs = append(namespaceUIDs, k)
-	}
-
-	alertRuleQuery := ngmodels.ListAlertRulesQuery{
-		OrgID:         c.SignedInUser.GetOrgID(),
-		NamespaceUIDs: namespaceUIDs,
-		DashboardUID:  dashboardUID,
-		PanelID:       panelID,
-	}
-	ruleList, err := srv.store.ListAlertRules(c.Req.Context(), &alertRuleQuery)
-	if err != nil {
-		ruleResponse.DiscoveryBase.Status = "error"
-		ruleResponse.DiscoveryBase.Error = fmt.Sprintf("failure getting rules: %s", err.Error())
-		ruleResponse.DiscoveryBase.ErrorType = apiv1.ErrServer
-		return response.JSON(http.StatusInternalServerError, ruleResponse)
-	}
+	ruleList, _ := srv.scheduler.Rules()
 
 	// Group rules together by Namespace and Rule Group. Rules are also grouped by Org ID,
 	// but in this API all rules belong to the same organization.
 	groupedRules := make(map[ngmodels.AlertRuleGroupKey][]*ngmodels.AlertRule)
 	for _, rule := range ruleList {
+		if c.SignedInUser.GetOrgID() != rule.OrgID {
+			continue
+		}
+		if dashboardUID != "" && dashboardUID != rule.GetDashboardUID() {
+			continue
+		}
+		if panelID != 0 && panelID != rule.GetPanelID() {
+			continue
+		}
+
 		groupKey := rule.GetGroupKey()
 		ruleGroup := groupedRules[groupKey]
 		ruleGroup = append(ruleGroup, rule)
@@ -262,7 +256,6 @@ func (srv PrometheusSrv) RouteGetRuleStatuses(c *contextmodel.ReqContext) respon
 	for groupKey, rules := range groupedRules {
 		folder := namespaceMap[groupKey.NamespaceUID]
 		if folder == nil {
-			srv.log.Warn("Query returned rules that belong to folder the user does not have access to. All rules that belong to that namespace will not be added to the response", "folder_uid", groupKey.NamespaceUID)
 			continue
 		}
 		ok, err := srv.authz.HasAccessToRuleGroup(c.Req.Context(), c.SignedInUser, rules)

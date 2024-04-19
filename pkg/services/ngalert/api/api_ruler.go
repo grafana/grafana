@@ -48,6 +48,7 @@ type RulerSrv struct {
 	xactManager        provisioning.TransactionManager
 	provenanceStore    provisioning.ProvisioningStore
 	store              RuleStore
+	scheduler          Scheduler
 	QuotaService       quota.Service
 	log                log.Logger
 	cfg                *setting.UnifiedAlertingSettings

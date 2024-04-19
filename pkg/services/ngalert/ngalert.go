@@ -330,6 +330,7 @@ func (ng *AlertNG) init() error {
 		QuotaService:         ng.QuotaService,
 		TransactionManager:   ng.store,
 		RuleStore:            ng.store,
+		Scheduler:            ng.schedule,
 		AlertingStore:        ng.store,
 		AdminConfigStore:     ng.store,
 		ProvenanceStore:      ng.store,

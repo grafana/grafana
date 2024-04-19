@@ -46,6 +46,10 @@ type RuleAccessControlService interface {
 	AuthorizeDatasourceAccessForRule(ctx context.Context, user identity.Requester, rule *models.AlertRule) error
 }
 
+type Scheduler interface {
+	Rules() ([]*models.AlertRule, map[models.FolderKey]string)
+}
+
 // API handlers.
 type API struct {
 	Cfg                  *setting.Cfg
@@ -56,6 +60,7 @@ type API struct {
 	TransactionManager   provisioning.TransactionManager
 	ProvenanceStore      provisioning.ProvisioningStore
 	RuleStore            RuleStore
+	Scheduler            Scheduler
 	AlertingStore        store.AlertingStore
 	AdminConfigStore     store.AdminConfigurationStore
 	DataProxy            *datasourceproxy.DataSourceProxyService
@@ -98,7 +103,7 @@ func (api *API) RegisterAPIEndpoints(m *metrics.API) {
 	api.RegisterPrometheusApiEndpoints(NewForkingProm(
 		api.DatasourceCache,
 		NewLotexProm(proxy, logger),
-		&PrometheusSrv{log: logger, manager: api.StateManager, store: api.RuleStore, authz: ruleAuthzService},
+		&PrometheusSrv{log: logger, manager: api.StateManager, scheduler: api.Scheduler, authz: ruleAuthzService},
 	), m)
 	// Register endpoints for proxying to Cortex Ruler-compatible backends.
 	api.RegisterRulerApiEndpoints(NewForkingRuler(
