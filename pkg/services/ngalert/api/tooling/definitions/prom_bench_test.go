@@ -47,15 +47,15 @@ func BenchmarkSortAlertsByImportance(b *testing.B) {
 	switch *topkStrategy {
 	case "sort":
 		topkFunc = func(by AlertsBy, alerts []Alert, limit int) {
-			AlertsBy(by).Sort(alerts)
+			by.Sort(alerts)
 			if len(alerts) > limit {
-				alerts = alerts[0:limit]
+				_ = alerts[0:limit]
 			}
 		}
 
 	case "heap":
 		topkFunc = func(by AlertsBy, alerts []Alert, limit int) {
-			_ = AlertsBy(by).TopK(alerts, limit)
+			_ = by.TopK(alerts, limit)
 		}
 	}
 
