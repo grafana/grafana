@@ -54,7 +54,7 @@ describe('useShadowedState', () => {
     // propageted to the outside component)
     rerender({ outsideVal: '2' });
 
-    // and verify the the value is ok
+    // and verify the value is ok
     expect(result.current[0]).toBe('2');
 
     // and now change the inside-value again
@@ -62,7 +62,7 @@ describe('useShadowedState', () => {
       result.current[1]('3');
     });
 
-    // and verify the the value is ok
+    // and verify the value is ok
     expect(result.current[0]).toBe('3');
   });
 });

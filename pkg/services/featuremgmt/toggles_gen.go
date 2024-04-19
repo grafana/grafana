@@ -339,10 +339,6 @@ const (
 	// Enable changing the scheduler base interval via configuration option unified_alerting.scheduler_tick_interval
 	FlagConfigurableSchedulerTick = "configurableSchedulerTick"
 
-	// FlagInfluxdbSqlSupport
-	// Enable InfluxDB SQL query language support with new querying UI
-	FlagInfluxdbSqlSupport = "influxdbSqlSupport"
-
 	// FlagAlertingNoDataErrorExecution
 	// Changes how Alerting state manager handles execution of NoData/Error
 	FlagAlertingNoDataErrorExecution = "alertingNoDataErrorExecution"
@@ -423,9 +419,17 @@ const (
 	// Routes snapshot requests from /api to the /apis endpoint
 	FlagKubernetesSnapshots = "kubernetesSnapshots"
 
-	// FlagKubernetesQueryServiceRewrite
+	// FlagQueryService
+	// Register /apis/query.grafana.app/ -- will eventually replace /api/ds/query
+	FlagQueryService = "queryService"
+
+	// FlagQueryServiceRewrite
 	// Rewrite requests targeting /ds/query to the query service
-	FlagKubernetesQueryServiceRewrite = "kubernetesQueryServiceRewrite"
+	FlagQueryServiceRewrite = "queryServiceRewrite"
+
+	// FlagQueryServiceFromUI
+	// Routes requests to the new query service
+	FlagQueryServiceFromUI = "queryServiceFromUI"
 
 	// FlagCloudWatchBatchQueries
 	// Runs CloudWatch metrics queries as separate batches
@@ -646,4 +650,8 @@ const (
 	// FlagAccessActionSets
 	// Introduces action sets for resource permissions
 	FlagAccessActionSets = "accessActionSets"
+
+	// FlagDisableNumericMetricsSortingInExpressions
+	// In server-side expressions, disable the sorting of numeric-kind metrics by their metric name or labels.
+	FlagDisableNumericMetricsSortingInExpressions = "disableNumericMetricsSortingInExpressions"
 )
