@@ -88,14 +88,14 @@ require (
 	github.com/urfave/cli/v2 v2.25.0 // @grafana/grafana-backend-group
 	github.com/vectordotdev/go-datemath v0.1.1-0.20220323213446-f3954d0b18ae // @grafana/grafana-backend-group
 	github.com/yudai/gojsondiff v1.0.0 // @grafana/grafana-backend-group
-	go.opentelemetry.io/collector/pdata v1.0.1 // @grafana/grafana-backend-group
+	go.opentelemetry.io/collector/pdata v1.5.0 // @grafana/grafana-backend-group
 	go.opentelemetry.io/contrib/instrumentation/net/http/httptrace/otelhttptrace v0.49.0 // @grafana/grafana-operator-experience-squad
 	go.opentelemetry.io/otel/exporters/jaeger v1.10.0 // @grafana/grafana-backend-group
 	go.opentelemetry.io/otel/sdk v1.24.0 // @grafana/grafana-backend-group
 	go.opentelemetry.io/otel/trace v1.24.0 // @grafana/grafana-backend-group
 	golang.org/x/crypto v0.21.0 // @grafana/grafana-backend-group
 	golang.org/x/exp v0.0.0-20231206192017-f3f8817b8deb // @grafana/alerting-squad-backend
-	golang.org/x/net v0.22.0 // @grafana/oss-big-tent @grafana/partner-datasources
+	golang.org/x/net v0.23.0 // @grafana/oss-big-tent @grafana/partner-datasources
 	golang.org/x/oauth2 v0.18.0 // @grafana/identity-access-team
 	golang.org/x/sync v0.6.0 // @grafana/alerting-squad-backend
 	golang.org/x/time v0.5.0 // @grafana/grafana-backend-group
