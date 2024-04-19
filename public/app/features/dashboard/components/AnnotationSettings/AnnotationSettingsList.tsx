@@ -4,7 +4,7 @@ import React, { useState } from 'react';
 import { arrayUtils, AnnotationQuery } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { getDataSourceSrv } from '@grafana/runtime';
-import { Button, DeleteButton, EmptyState, IconButton, Stack, TextLink, useStyles2, VerticalGroup } from '@grafana/ui';
+import { Button, DeleteButton, EmptyState, IconButton, Stack, TextLink, useStyles2 } from '@grafana/ui';
 import { Trans, t } from 'app/core/internationalization';
 
 import { DashboardModel } from '../../state/DashboardModel';
@@ -54,7 +54,7 @@ export const AnnotationSettingsList = ({ dashboard, onNew, onEdit }: Props) => {
 
   const dataSourceSrv = getDataSourceSrv();
   return (
-    <VerticalGroup>
+    <Stack direction="column">
       {annotations.length > 0 && (
         <div className={styles.table}>
           <table role="grid" className="filter-table filter-table--hover">
@@ -149,7 +149,7 @@ export const AnnotationSettingsList = ({ dashboard, onNew, onEdit }: Props) => {
           New query
         </ListNewButton>
       )}
-    </VerticalGroup>
+    </Stack>
   );
 };
 
