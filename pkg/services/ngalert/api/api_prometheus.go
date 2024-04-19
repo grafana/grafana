@@ -205,14 +205,14 @@ func (srv PrometheusSrv) RouteGetRuleStatuses(c *contextmodel.ReqContext) respon
 	matchers, err := getMatchersFromRequest(c.Req)
 	if err != nil {
 		ruleResponse.DiscoveryBase.Status = "error"
-		ruleResponse.DiscoveryBase.Error = fmt.Sprintf("%s", err.Error())
+		ruleResponse.DiscoveryBase.Error = err.Error()
 		ruleResponse.DiscoveryBase.ErrorType = apiv1.ErrBadData
 		return response.JSON(ruleResponse.HTTPStatusCode(), ruleResponse)
 	}
 	withStates, err := getStatesFromRequest(c.Req)
 	if err != nil {
 		ruleResponse.DiscoveryBase.Status = "error"
-		ruleResponse.DiscoveryBase.Error = fmt.Sprintf("%s", err.Error())
+		ruleResponse.DiscoveryBase.Error = err.Error()
 		ruleResponse.DiscoveryBase.ErrorType = apiv1.ErrBadData
 		return response.JSON(ruleResponse.HTTPStatusCode(), ruleResponse)
 	}
