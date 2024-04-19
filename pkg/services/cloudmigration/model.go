@@ -19,7 +19,7 @@ var (
 // CloudMigration api dtos
 type CloudMigration struct {
 	ID          int64     `json:"id" xorm:"pk autoincr 'id'"`
-	UID         string    `json:"uid"`
+	UID         string    `json:"uid" xorm:"uid"`
 	AuthToken   string    `json:"-"`
 	Stack       string    `json:"stack"`
 	StackID     int       `json:"stackID" xorm:"stack_id"`
@@ -49,7 +49,7 @@ type MigratedResource struct {
 
 type CloudMigrationRun struct {
 	ID                int64     `json:"id" xorm:"pk autoincr 'id'"`
-	UID               string    `json:"uid"`
+	UID               string    `json:"uid" xorm:"uid"`
 	CloudMigrationUID string    `json:"migrationUid" xorm:"cloud_migration_uid"`
 	Result            []byte    `json:"result"` //store raw cms response body
 	Created           time.Time `json:"created"`
