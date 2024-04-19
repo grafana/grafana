@@ -245,7 +245,7 @@ var (
 			Name:        "mysqlAnsiQuotes",
 			Description: "Use double quotes to escape keyword in a MySQL query",
 			Stage:       FeatureStageExperimental,
-			Owner:       grafanaBackendPlatformSquad,
+			Owner:       grafanaSearchAndStorageSquad,
 		},
 		{
 			Name:              "accessControlOnCall",
@@ -258,7 +258,7 @@ var (
 			Name:        "nestedFolders",
 			Description: "Enable folder nesting",
 			Stage:       FeatureStageGeneralAvailability,
-			Owner:       grafanaBackendPlatformSquad,
+			Owner:       grafanaSearchAndStorageSquad,
 			Expression:  "true", // enabled by default
 		},
 		{
@@ -320,7 +320,7 @@ var (
 			Name:        "individualCookiePreferences",
 			Description: "Support overriding cookie preferences per user",
 			Stage:       FeatureStageExperimental,
-			Owner:       grafanaBackendPlatformSquad,
+			Owner:       grafanaBackendGroup,
 		},
 		{
 			Name:           "prometheusMetricEncyclopedia",
@@ -412,7 +412,7 @@ var (
 			Name:        "unifiedRequestLog",
 			Description: "Writes error logs to the request logger",
 			Stage:       FeatureStageExperimental,
-			Owner:       grafanaBackendPlatformSquad,
+			Owner:       grafanaBackendGroup,
 		},
 		{
 			Name:              "renderAuthJWT",
@@ -594,7 +594,7 @@ var (
 			Name:        "permissionsFilterRemoveSubquery",
 			Description: "Alternative permission filter implementation that does not use subqueries for fetching the dashboard folder",
 			Stage:       FeatureStageExperimental,
-			Owner:       grafanaBackendPlatformSquad,
+			Owner:       grafanaBackendGroup,
 		},
 		{
 			Name:           "prometheusConfigOverhaulAuth",
@@ -831,7 +831,7 @@ var (
 			Description:     "Enable searching for dashboards using panel title in search v1",
 			RequiresDevMode: true,
 			Stage:           FeatureStageExperimental,
-			Owner:           grafanaBackendPlatformSquad,
+			Owner:           grafanaSearchAndStorageSquad,
 		},
 		{
 			Name:            "managedPluginsInstall",
