@@ -1981,7 +1981,6 @@ var testConfig = `
 				"uid": "email-uid",
 				"name": "email receiver",
 				"type": "email",
-				"isDefault": true,
 				"settings": {
 					"addresses": "<example@email.com>"
 				}
