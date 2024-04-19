@@ -219,6 +219,7 @@ export function getOperationDefinitions(): QueryBuilderOperationDef[] {
       ],
       defaultParams: ['', ',', ''],
       renderer: labelJoinRenderer,
+      explainHandler: labelJoinExplainHandler,
       addOperationHandler: labelJoinAddOperationHandler,
     }),
     createFunction({ id: PromOperationId.Log10 }),
@@ -374,11 +375,21 @@ function addNestedQueryHandler(def: QueryBuilderOperationDef, query: PromVisualQ
 }
 
 function labelJoinRenderer(model: QueryBuilderOperation, def: QueryBuilderOperationDef, innerExpr: string) {
-  if (typeof model.params[1] !== 'string') {
-    throw 'The separator must be a string';
+  const paramZero = model.params[0] ?? '';
+  const paramOne = model.params[1] ?? '';
+
+  const separator = `"${paramOne}"`;
+  return `${model.id}(${innerExpr}, "${paramZero}", ${separator}, "${model.params.slice(2).join(separator)}")`;
+}
+
+function labelJoinExplainHandler(op: QueryBuilderOperation, def?: QueryBuilderOperationDef): string {
+  let explainMessage = def?.documentation ?? 'no docs';
+
+  if (typeof op.params[1] !== 'string') {
+    explainMessage += ' 🚨🚨🚨 The `separator` must be a string.';
   }
-  const separator = `"${model.params[1]}"`;
-  return `${model.id}(${innerExpr}, "${model.params[0]}", ${separator}, "${model.params.slice(2).join(separator)}")`;
+
+  return explainMessage;
 }
 
 function labelJoinAddOperationHandler<T extends QueryWithOperations>(def: QueryBuilderOperationDef, query: T) {
