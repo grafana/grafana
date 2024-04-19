@@ -1253,7 +1253,7 @@ You can specify a regular expression, which is only applied to matches, along wi
 
 > **Note:** The Rename by regex transformation was improved in Grafana v9.0.0 to allow global patterns of the form '/<stringToReplace>/g'. Depending on the regex match used, this may cause some transformations to behave slightly differently. You can guarantee the same behavior as before by wrapping the match string in forward slashes '(/)', e.g. '(.*)' would become '/(.*)/'.
 
-In the following example, we are stripping the 'A-' prefix from field names. In the before image, you can see everything is prefixed with 'A-', and in the after image, you can see the prefix has been removed.
+In the following example, we are stripping the 'A-' prefix from field names. In the before image, you can see everything is prefixed with 'A-':
 
 ${buildImageContent(
   '/media/docs/grafana/panels-visualizations/screenshot-rename-by-regex-before-v11.0.png',
