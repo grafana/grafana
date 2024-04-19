@@ -9,6 +9,7 @@ import (
 	"net/http"
 	"net/url"
 	"strings"
+	"time"
 
 	"github.com/go-openapi/strfmt"
 	amalert "github.com/prometheus/alertmanager/api/v2/client/alert"
@@ -37,15 +38,17 @@ type stateStore interface {
 type DecryptFn func(ctx context.Context, payload []byte) ([]byte, error)
 
 type Alertmanager struct {
-	decrypt  DecryptFn
-	log      log.Logger
-	metrics  *metrics.RemoteAlertmanager
-	orgID    int64
-	ready    bool
-	sender   *sender.ExternalAlertmanager
-	state    stateStore
-	tenantID string
-	url      string
+	decrypt           DecryptFn
+	defaultConfig     string
+	defaultConfigHash string
+	log               log.Logger
+	metrics           *metrics.RemoteAlertmanager
+	orgID             int64
+	ready             bool
+	sender            *sender.ExternalAlertmanager
+	state             stateStore
+	tenantID          string
+	url               string
 
 	amClient    *remoteClient.Alertmanager
 	mimirClient remoteClient.MimirClient
@@ -73,7 +76,7 @@ func (cfg *AlertmanagerConfig) Validate() error {
 	return nil
 }
 
-func NewAlertmanager(cfg AlertmanagerConfig, store stateStore, decryptFn DecryptFn, metrics *metrics.RemoteAlertmanager) (*Alertmanager, error) {
+func NewAlertmanager(cfg AlertmanagerConfig, store stateStore, decryptFn DecryptFn, defaultConfig string, metrics *metrics.RemoteAlertmanager) (*Alertmanager, error) {
 	if err := cfg.Validate(); err != nil {
 		return nil, err
 	}
@@ -118,20 +121,33 @@ func NewAlertmanager(cfg AlertmanagerConfig, store stateStore, decryptFn Decrypt
 		return nil, err
 	}
 
+	// Parse the default configuration into a postable config.
+	pCfg, err := notifier.Load([]byte(defaultConfig))
+	if err != nil {
+		return nil, err
+	}
+
+	rawCfg, err := json.Marshal(pCfg)
+	if err != nil {
+		return nil, err
+	}
+
 	// Initialize LastReadinessCheck so it's present even if the check fails.
 	metrics.LastReadinessCheck.Set(0)
 
 	return &Alertmanager{
-		amClient:    amc,
-		decrypt:     decryptFn,
-		log:         logger,
-		metrics:     metrics,
-		mimirClient: mc,
-		orgID:       cfg.OrgID,
-		state:       store,
-		sender:      s,
-		tenantID:    cfg.TenantID,
-		url:         cfg.URL,
+		amClient:          amc,
+		decrypt:           decryptFn,
+		defaultConfig:     string(rawCfg),
+		defaultConfigHash: fmt.Sprintf("%x", md5.Sum(rawCfg)),
+		log:               logger,
+		metrics:           metrics,
+		mimirClient:       mc,
+		orgID:             cfg.OrgID,
+		state:             store,
+		sender:            s,
+		tenantID:          cfg.TenantID,
+		url:               cfg.URL,
 	}, nil
 }
 
@@ -194,26 +210,38 @@ func (am *Alertmanager) CompareAndSendConfiguration(ctx context.Context, config 
 	}
 
 	// Decrypt the configuration before comparing.
-	fn := func(payload []byte) ([]byte, error) {
-		return am.decrypt(ctx, payload)
-	}
-	decrypted, err := c.Decrypt(fn)
+	decrypted, err := am.decryptConfiguration(ctx, c)
 	if err != nil {
 		return err
 	}
 
 	// Send the configuration only if we need to.
-	if !am.shouldSendConfig(ctx, &decrypted) {
+	if !am.shouldSendConfig(ctx, decrypted) {
 		return nil
 	}
+	return am.sendConfiguration(ctx, decrypted, config.ConfigurationHash, config.CreatedAt, config.Default)
+}
 
+func (am *Alertmanager) decryptConfiguration(ctx context.Context, cfg *apimodels.PostableUserConfig) (*apimodels.PostableUserConfig, error) {
+	fn := func(payload []byte) ([]byte, error) {
+		return am.decrypt(ctx, payload)
+	}
+	decrypted, err := cfg.Decrypt(fn)
+	if err != nil {
+		return nil, fmt.Errorf("unable to decrypt the configuration: %w", err)
+	}
+
+	return &decrypted, nil
+}
+
+func (am *Alertmanager) sendConfiguration(ctx context.Context, decrypted *apimodels.PostableUserConfig, hash string, createdAt int64, isDefault bool) error {
 	am.metrics.ConfigSyncsTotal.Inc()
 	if err := am.mimirClient.CreateGrafanaAlertmanagerConfig(
 		ctx,
-		&decrypted,
-		config.ConfigurationHash,
-		config.CreatedAt,
-		config.Default,
+		decrypted,
+		hash,
+		createdAt,
+		isDefault,
 	); err != nil {
 		am.metrics.ConfigSyncErrorsTotal.Inc()
 		return err
@@ -245,8 +273,26 @@ func (am *Alertmanager) SaveAndApplyConfig(ctx context.Context, cfg *apimodels.P
 	return nil
 }
 
+// SaveAndApplyDefaultConfig sends the default Grafana Alertmanager configuration to the remote Alertmanager.
 func (am *Alertmanager) SaveAndApplyDefaultConfig(ctx context.Context) error {
-	return nil
+	c, err := notifier.Load([]byte(am.defaultConfig))
+	if err != nil {
+		return fmt.Errorf("unable to parse the default configuration: %w", err)
+	}
+
+	// Decrypt before sending.
+	decrypted, err := am.decryptConfiguration(ctx, c)
+	if err != nil {
+		return err
+	}
+
+	return am.sendConfiguration(
+		ctx,
+		decrypted,
+		am.defaultConfigHash,
+		time.Now().Unix(),
+		true,
+	)
 }
 
 func (am *Alertmanager) CreateSilence(ctx context.Context, silence *apimodels.PostableSilence) (string, error) {

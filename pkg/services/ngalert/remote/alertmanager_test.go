@@ -31,19 +31,26 @@ import (
 	"github.com/grafana/grafana/pkg/services/secrets/database"
 	"github.com/grafana/grafana/pkg/services/secrets/fakes"
 	secretsManager "github.com/grafana/grafana/pkg/services/secrets/manager"
+	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tests/testsuite"
 	"github.com/grafana/grafana/pkg/util"
 )
 
-// Valid Grafana Alertmanager configurations.
-const testGrafanaConfig = `{"template_files":{},"alertmanager_config":{"route":{"receiver":"grafana-default-email","group_by":["grafana_folder","alertname"]},"templates":null,"receivers":[{"name":"grafana-default-email","grafana_managed_receiver_configs":[{"uid":"","name":"some other name","type":"email","disableResolveMessage":false,"settings":{"addresses":"\u003cexample@email.com\u003e"},"secureSettings":null}]}]}}`
-const testGrafanaConfigWithSecret = `{"template_files":{},"alertmanager_config":{"route":{"receiver":"grafana-default-email","group_by":["grafana_folder","alertname"]},"templates":null,"receivers":[{"name":"grafana-default-email","grafana_managed_receiver_configs":[{"uid":"dde6ntuob69dtf","name":"WH","type":"webhook","disableResolveMessage":false,"settings":{"url":"http://localhost:8080","username":"test"},"secureSettings":{"password":"test"}}]}]}}`
+const (
+	// Valid Grafana Alertmanager configurations.
+	testGrafanaConfig           = `{"template_files":{},"alertmanager_config":{"route":{"receiver":"grafana-default-email","group_by":["grafana_folder","alertname"]},"templates":null,"receivers":[{"name":"grafana-default-email","grafana_managed_receiver_configs":[{"uid":"","name":"some other name","type":"email","disableResolveMessage":false,"settings":{"addresses":"\u003cexample@email.com\u003e"},"secureSettings":null}]}]}}`
+	testGrafanaConfigWithSecret = `{"template_files":{},"alertmanager_config":{"route":{"receiver":"grafana-default-email","group_by":["grafana_folder","alertname"]},"templates":null,"receivers":[{"name":"grafana-default-email","grafana_managed_receiver_configs":[{"uid":"dde6ntuob69dtf","name":"WH","type":"webhook","disableResolveMessage":false,"settings":{"url":"http://localhost:8080","username":"test"},"secureSettings":{"password":"test"}}]}]}}`
 
-// Valid Alertmanager state base64 encoded.
-const testSilence1 = "lwEKhgEKATESFxIJYWxlcnRuYW1lGgp0ZXN0X2FsZXJ0EiMSDmdyYWZhbmFfZm9sZGVyGhF0ZXN0X2FsZXJ0X2ZvbGRlchoMCN2CkbAGEJbKrMsDIgwI7Z6RsAYQlsqsywMqCwiAkrjDmP7///8BQgxHcmFmYW5hIFRlc3RKDFRlc3QgU2lsZW5jZRIMCO2ekbAGEJbKrMsD"
-const testSilence2 = "lwEKhgEKATISFxIJYWxlcnRuYW1lGgp0ZXN0X2FsZXJ0EiMSDmdyYWZhbmFfZm9sZGVyGhF0ZXN0X2FsZXJ0X2ZvbGRlchoMCN2CkbAGEJbKrMsDIgwI7Z6RsAYQlsqsywMqCwiAkrjDmP7///8BQgxHcmFmYW5hIFRlc3RKDFRlc3QgU2lsZW5jZRIMCO2ekbAGEJbKrMsDlwEKhgEKATESFxIJYWxlcnRuYW1lGgp0ZXN0X2FsZXJ0EiMSDmdyYWZhbmFfZm9sZGVyGhF0ZXN0X2FsZXJ0X2ZvbGRlchoMCN2CkbAGEJbKrMsDIgwI7Z6RsAYQlsqsywMqCwiAkrjDmP7///8BQgxHcmFmYW5hIFRlc3RKDFRlc3QgU2lsZW5jZRIMCO2ekbAGEJbKrMsD"
-const testNflog1 = "OgoqCgZncm91cDESEgoJcmVjZWl2ZXIxEgV0ZXN0MyoMCIzm1bAGEPqx5uEBEgwInILWsAYQ+rHm4QE="
-const testNflog2 = "OgoqCgZncm91cDISEgoJcmVjZWl2ZXIyEgV0ZXN0MyoMCLSDkbAGEMvaofYCEgwIxJ+RsAYQy9qh9gI6CioKBmdyb3VwMRISCglyZWNlaXZlcjESBXRlc3QzKgwItIORsAYQy9qh9gISDAjEn5GwBhDL2qH2Ag=="
+	// Valid Alertmanager state base64 encoded.
+	testSilence1 = "lwEKhgEKATESFxIJYWxlcnRuYW1lGgp0ZXN0X2FsZXJ0EiMSDmdyYWZhbmFfZm9sZGVyGhF0ZXN0X2FsZXJ0X2ZvbGRlchoMCN2CkbAGEJbKrMsDIgwI7Z6RsAYQlsqsywMqCwiAkrjDmP7///8BQgxHcmFmYW5hIFRlc3RKDFRlc3QgU2lsZW5jZRIMCO2ekbAGEJbKrMsD"
+	testSilence2 = "lwEKhgEKATISFxIJYWxlcnRuYW1lGgp0ZXN0X2FsZXJ0EiMSDmdyYWZhbmFfZm9sZGVyGhF0ZXN0X2FsZXJ0X2ZvbGRlchoMCN2CkbAGEJbKrMsDIgwI7Z6RsAYQlsqsywMqCwiAkrjDmP7///8BQgxHcmFmYW5hIFRlc3RKDFRlc3QgU2lsZW5jZRIMCO2ekbAGEJbKrMsDlwEKhgEKATESFxIJYWxlcnRuYW1lGgp0ZXN0X2FsZXJ0EiMSDmdyYWZhbmFfZm9sZGVyGhF0ZXN0X2FsZXJ0X2ZvbGRlchoMCN2CkbAGEJbKrMsDIgwI7Z6RsAYQlsqsywMqCwiAkrjDmP7///8BQgxHcmFmYW5hIFRlc3RKDFRlc3QgU2lsZW5jZRIMCO2ekbAGEJbKrMsD"
+	testNflog1   = "OgoqCgZncm91cDESEgoJcmVjZWl2ZXIxEgV0ZXN0MyoMCIzm1bAGEPqx5uEBEgwInILWsAYQ+rHm4QE="
+	testNflog2   = "OgoqCgZncm91cDISEgoJcmVjZWl2ZXIyEgV0ZXN0MyoMCLSDkbAGEMvaofYCEgwIxJ+RsAYQy9qh9gI6CioKBmdyb3VwMRISCglyZWNlaXZlcjESBXRlc3QzKgwItIORsAYQy9qh9gISDAjEn5GwBhDL2qH2Ag=="
+)
+
+var (
+	defaultGrafanaConfig = setting.GetAlertmanagerDefaultConfiguration()
+)
 
 func TestMain(m *testing.M) {
 	testsuite.Run(m)
@@ -93,7 +100,7 @@ func TestNewAlertmanager(t *testing.T) {
 				BasicAuthPassword: test.password,
 			}
 			m := metrics.NewRemoteAlertmanagerMetrics(prometheus.NewRegistry())
-			am, err := NewAlertmanager(cfg, nil, secretsService.Decrypt, m)
+			am, err := NewAlertmanager(cfg, nil, secretsService.Decrypt, defaultGrafanaConfig, m)
 			if test.expErr != "" {
 				require.EqualError(tt, err, test.expErr)
 				return
@@ -157,7 +164,7 @@ func TestApplyConfig(t *testing.T) {
 
 	// An error response from the remote Alertmanager should result in the readiness check failing.
 	m := metrics.NewRemoteAlertmanagerMetrics(prometheus.NewRegistry())
-	am, err := NewAlertmanager(cfg, fstore, secretsService.Decrypt, m)
+	am, err := NewAlertmanager(cfg, fstore, secretsService.Decrypt, defaultGrafanaConfig, m)
 	require.NoError(t, err)
 
 	config := &ngmodels.AlertConfiguration{
@@ -215,6 +222,7 @@ func TestCompareAndSendConfiguration(t *testing.T) {
 	am, err := NewAlertmanager(cfg,
 		fstore,
 		decryptFn,
+		defaultGrafanaConfig,
 		m,
 	)
 	require.NoError(t, err)
@@ -235,13 +243,13 @@ func TestCompareAndSendConfiguration(t *testing.T) {
 			"invalid base-64 in key",
 			strings.Replace(testGrafanaConfigWithSecret, `"password":"test"`, `"password":"!"`, 1),
 			nil,
-			"failed to decode value for key 'password': illegal base64 data at input byte 0",
+			"unable to decrypt the configuration: failed to decode value for key 'password': illegal base64 data at input byte 0",
 		},
 		{
 			"decrypt error",
 			testGrafanaConfigWithSecret,
 			nil,
-			fmt.Sprintf("failed to decrypt value for key 'password': %s", testErr.Error()),
+			fmt.Sprintf("unable to decrypt the configuration: failed to decrypt value for key 'password': %s", testErr.Error()),
 		},
 		{
 			"no error",
@@ -271,7 +279,7 @@ func TestCompareAndSendConfiguration(t *testing.T) {
 	}
 }
 
-func TestIntegrationRemoteAlertmanagerApplyConfigOnlyUploadsOnce(t *testing.T) {
+func TestIntegrationRemoteAlertmanagerConfiguration(t *testing.T) {
 	if testing.Short() {
 		t.Skip("skipping integration test")
 	}
@@ -291,14 +299,13 @@ func TestIntegrationRemoteAlertmanagerApplyConfigOnlyUploadsOnce(t *testing.T) {
 		BasicAuthPassword: password,
 	}
 
-	fakeConfigHash := fmt.Sprintf("%x", md5.Sum([]byte(testGrafanaConfig)))
-	fakeConfigCreatedAt := time.Date(2020, 6, 5, 12, 6, 0, 0, time.UTC).Unix()
-	fakeConfig := &ngmodels.AlertConfiguration{
+	testConfigHash := fmt.Sprintf("%x", md5.Sum([]byte(testGrafanaConfig)))
+	testConfigCreatedAt := time.Now().Unix()
+	testConfig := &ngmodels.AlertConfiguration{
 		AlertmanagerConfiguration: testGrafanaConfig,
-		ConfigurationHash:         fakeConfigHash,
+		ConfigurationHash:         testConfigHash,
 		ConfigurationVersion:      "v2",
-		CreatedAt:                 fakeConfigCreatedAt,
-		Default:                   true,
+		CreatedAt:                 testConfigCreatedAt,
 		OrgID:                     1,
 	}
 
@@ -311,7 +318,7 @@ func TestIntegrationRemoteAlertmanagerApplyConfigOnlyUploadsOnce(t *testing.T) {
 
 	secretsService := secretsManager.SetupTestService(t, fakes.NewFakeSecretsStore())
 	m := metrics.NewRemoteAlertmanagerMetrics(prometheus.NewRegistry())
-	am, err := NewAlertmanager(cfg, fstore, secretsService.Decrypt, m)
+	am, err := NewAlertmanager(cfg, fstore, secretsService.Decrypt, defaultGrafanaConfig, m)
 	require.NoError(t, err)
 
 	encodedFullState, err := am.getFullState(ctx)
@@ -331,7 +338,7 @@ func TestIntegrationRemoteAlertmanagerApplyConfigOnlyUploadsOnce(t *testing.T) {
 	// Using `ApplyConfig` as a heuristic of a function that gets called when the Alertmanager starts
 	// We call it as if the Alertmanager were starting.
 	{
-		require.NoError(t, am.ApplyConfig(ctx, fakeConfig))
+		require.NoError(t, am.ApplyConfig(ctx, testConfig))
 
 		// First, we need to verify that the readiness check passes.
 		require.True(t, am.Ready())
@@ -343,9 +350,9 @@ func TestIntegrationRemoteAlertmanagerApplyConfigOnlyUploadsOnce(t *testing.T) {
 		rawCfg, err := json.Marshal(config.GrafanaAlertmanagerConfig)
 		require.NoError(t, err)
 		require.JSONEq(t, testGrafanaConfig, string(rawCfg))
-		require.Equal(t, fakeConfigHash, config.Hash)
-		require.Equal(t, fakeConfigCreatedAt, config.CreatedAt)
-		require.Equal(t, true, config.Default)
+		require.Equal(t, testConfigHash, config.Hash)
+		require.Equal(t, testConfigCreatedAt, config.CreatedAt)
+		require.Equal(t, testConfig.Default, config.Default)
 
 		state, err := am.mimirClient.GetGrafanaAlertmanagerState(ctx)
 		require.NoError(t, err)
@@ -356,8 +363,8 @@ func TestIntegrationRemoteAlertmanagerApplyConfigOnlyUploadsOnce(t *testing.T) {
 	{
 		require.NoError(t, store.Set(ctx, cfg.OrgID, "alertmanager", "silences", testSilence2))
 		require.NoError(t, store.Set(ctx, cfg.OrgID, "alertmanager", "notifications", testNflog2))
-		fakeConfig.ID = 30000000000000000
-		require.NoError(t, am.ApplyConfig(ctx, fakeConfig))
+		testConfig.CreatedAt = time.Now().Unix()
+		require.NoError(t, am.ApplyConfig(ctx, testConfig))
 
 		// The remote Alertmanager continues to be ready.
 		require.True(t, am.Ready())
@@ -369,14 +376,36 @@ func TestIntegrationRemoteAlertmanagerApplyConfigOnlyUploadsOnce(t *testing.T) {
 		rawCfg, err := json.Marshal(config.GrafanaAlertmanagerConfig)
 		require.NoError(t, err)
 		require.JSONEq(t, testGrafanaConfig, string(rawCfg))
-		require.Equal(t, fakeConfigHash, config.Hash)
-		require.Equal(t, fakeConfigCreatedAt, config.CreatedAt)
-		require.Equal(t, true, config.Default)
+		require.Equal(t, testConfigHash, config.Hash)
+		require.Equal(t, testConfigCreatedAt, config.CreatedAt)
+		require.False(t, config.Default)
 
 		// Check that the state is the same as before.
 		state, err := am.mimirClient.GetGrafanaAlertmanagerState(ctx)
 		require.NoError(t, err)
 		require.Equal(t, encodedFullState, state.State)
+	}
+
+	// `SaveAndApplyDefaultConfig` should send the default Alertmanager configuration to the remote Alertmanager.
+	{
+		require.NoError(t, am.SaveAndApplyDefaultConfig(ctx))
+
+		// Check that the default configuration was uploaded.
+		config, err := am.mimirClient.GetGrafanaAlertmanagerConfig(ctx)
+		require.NoError(t, err)
+
+		pCfg, err := notifier.Load([]byte(defaultGrafanaConfig))
+		require.NoError(t, err)
+
+		want, err := json.Marshal(pCfg)
+		require.NoError(t, err)
+
+		got, err := json.Marshal(config.GrafanaAlertmanagerConfig)
+		require.NoError(t, err)
+
+		require.JSONEq(t, string(want), string(got))
+		require.Equal(t, fmt.Sprintf("%x", md5.Sum(want)), config.Hash)
+		require.True(t, config.Default)
 	}
 
 	// TODO: Now, shutdown the Alertmanager and we expect the latest configuration to be uploaded.
@@ -405,7 +434,7 @@ func TestIntegrationRemoteAlertmanagerSilences(t *testing.T) {
 
 	secretsService := secretsManager.SetupTestService(t, fakes.NewFakeSecretsStore())
 	m := metrics.NewRemoteAlertmanagerMetrics(prometheus.NewRegistry())
-	am, err := NewAlertmanager(cfg, nil, secretsService.Decrypt, m)
+	am, err := NewAlertmanager(cfg, nil, secretsService.Decrypt, defaultGrafanaConfig, m)
 	require.NoError(t, err)
 
 	// We should have no silences at first.
@@ -488,7 +517,7 @@ func TestIntegrationRemoteAlertmanagerAlerts(t *testing.T) {
 
 	secretsService := secretsManager.SetupTestService(t, fakes.NewFakeSecretsStore())
 	m := metrics.NewRemoteAlertmanagerMetrics(prometheus.NewRegistry())
-	am, err := NewAlertmanager(cfg, nil, secretsService.Decrypt, m)
+	am, err := NewAlertmanager(cfg, nil, secretsService.Decrypt, defaultGrafanaConfig, m)
 	require.NoError(t, err)
 
 	// Wait until the Alertmanager is ready to send alerts.
@@ -556,7 +585,7 @@ func TestIntegrationRemoteAlertmanagerReceivers(t *testing.T) {
 
 	secretsService := secretsManager.SetupTestService(t, fakes.NewFakeSecretsStore())
 	m := metrics.NewRemoteAlertmanagerMetrics(prometheus.NewRegistry())
-	am, err := NewAlertmanager(cfg, nil, secretsService.Decrypt, m)
+	am, err := NewAlertmanager(cfg, nil, secretsService.Decrypt, defaultGrafanaConfig, m)
 	require.NoError(t, err)
 
 	// We should start with the default config.
