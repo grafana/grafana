@@ -1,9 +1,14 @@
 package utils
 
 import (
+	"slices"
+	"strings"
+
 	"github.com/urfave/cli/v2"
 
+	"github.com/grafana/grafana/pkg/cmd/grafana-cli/logger"
 	"github.com/grafana/grafana/pkg/cmd/grafana-cli/models"
+	"github.com/grafana/grafana/pkg/setting"
 )
 
 type CommandLine interface {
@@ -53,6 +58,19 @@ func (c *ContextCommandLine) PluginDirectory() string {
 }
 
 func (c *ContextCommandLine) PluginRepoURL() string {
+	if c.ConfigFile() != "" && !slices.Contains(c.FlagNames(), "repo") {
+		configOptions := strings.Split(c.String("configOverrides"), " ")
+		cfg, err := setting.NewCfgFromArgs(setting.CommandLineArgs{
+			Config:   c.ConfigFile(),
+			HomePath: c.HomePath(),
+			Args:     append(configOptions, c.Args().Slice()...),
+		})
+		if err == nil && cfg.GrafanaComAPIURL != "" {
+			return cfg.GrafanaComAPIURL + "/plugins"
+		} else {
+			logger.Debug(err)
+		}
+	}
 	return c.String("repo")
 }
 
