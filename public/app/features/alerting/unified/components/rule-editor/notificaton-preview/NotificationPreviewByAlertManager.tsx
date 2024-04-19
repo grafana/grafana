@@ -48,7 +48,7 @@ function NotificationPreviewByAlertManager({
           <div className={styles.firstAlertManagerLine}></div>
           <div className={styles.alertManagerName}>
             {' '}
-            Alert manager:
+            Alertmanager:
             <img src={alertManagerSource.imgUrl} alt="" className={styles.img} />
             {alertManagerSource.name}
           </div>
