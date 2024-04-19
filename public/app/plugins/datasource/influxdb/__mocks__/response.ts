@@ -118,7 +118,6 @@ export const mockInfluxTSDBQueryResponse = [
   },
 ];
 
-
 export const metricFindQueryResponse = {
   config: {
     url: 'mock-response-url',
@@ -264,7 +263,6 @@ export const mockInfluxSQLVariableFetchResponse: FetchResponse<BackendDataSource
     },
   },
 };
-
 
 export const mockMetricFindQueryResponse = {
   data: {
