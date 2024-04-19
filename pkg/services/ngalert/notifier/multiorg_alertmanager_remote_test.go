@@ -268,7 +268,6 @@ var validConfig = `{
 				"uid": "",
 				"name": "email receiver",
 				"type": "email",
-				"isDefault": true,
 				"settings": {
 					"addresses": "<example@email.com>"
 				}
