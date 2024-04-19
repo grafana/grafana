@@ -243,13 +243,13 @@ func TestCompareAndSendConfiguration(t *testing.T) {
 			"invalid base-64 in key",
 			strings.Replace(testGrafanaConfigWithSecret, `"password":"test"`, `"password":"!"`, 1),
 			nil,
-			"failed to decode value for key 'password': illegal base64 data at input byte 0",
+			"unable to decrypt the configuration: failed to decode value for key 'password': illegal base64 data at input byte 0",
 		},
 		{
 			"decrypt error",
 			testGrafanaConfigWithSecret,
 			nil,
-			fmt.Sprintf("failed to decrypt value for key 'password': %s", testErr.Error()),
+			fmt.Sprintf("unable to decrypt the configuration: failed to decrypt value for key 'password': %s", testErr.Error()),
 		},
 		{
 			"no error",
