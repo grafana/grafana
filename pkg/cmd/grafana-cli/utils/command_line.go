@@ -67,8 +67,8 @@ The plugin repository URL is determined in the following order:
 **/
 
 func (c *ContextCommandLine) PluginRepoURL() string {
-
 	// if --repo flag is set, use it
+	// since the repo flag always has a value set by default we are checking in the flag lists if the --repo flag was provided at all.
 	if slices.Contains(c.FlagNames(), "repo") {
 		return c.String("repo")
 	}
