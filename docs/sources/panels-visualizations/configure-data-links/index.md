@@ -42,15 +42,14 @@ If there's only one data link in the visualization, clicking anywhere on the vis
 
 You can configure data links for the following visualizations:
 
-|                            |                        |                                  |
-| -------------------------- | ---------------------- | -------------------------------- |
-| [Bar chart][bar chart]     | [Geomap][geomap]       | [State timeline][state timeline] |
-| [Bar gauge][bar gauge]     | [Heatmap][heatmap]     | [Status history][status history] |
-| [Candlestick][candlestick] | [Histogram][histogram] | [Table][table]                   |
-| [Canvas][canvas]           | [Pie chart][pie chart] | [Time series][time series]       |
-| [Gauge][gauge]             | [Stat][stat]           | [Trend][trend]                   |
-
-<!--Also xy chart -->
+|                            |                                  |                                  |
+| -------------------------- | -------------------------------- | -------------------------------- |
+| [Bar chart][bar chart]     | [Heatmap][heatmap]               | [Status history][status history] |
+| [Bar gauge][bar gauge]     | [Histogram][histogram]           | [Table][table]                   |
+| [Candlestick][candlestick] | [Pie chart][pie chart]           | [Time series][time series]       |
+| [Canvas][canvas]           | [Stat][stat]                     | [Trend][trend]                   |
+| [Gauge][gauge]             | [State timeline][state timeline] | [XY chart][xy chart]             |
+| [Geomap][geomap]           |                                  |                                  |
 
 ## Data link variables
 
@@ -75,6 +74,8 @@ These variables allow you to include the current time range in the data link URL
 | `__url_time_range` | Current dashboard's time range (for example, `?from=now-6h&to=now`) |
 | `__from`           | For more information, refer to [Global variables][].                |
 | `__to`             | For more information, refer to [Global variables][].                |
+
+When you create data links using time range variables like `__url_time_range` in the URL, you have to form the query parameter syntax yourself; that is, you must format the URL by appending query parameters using the question mark (`?`) and ampersand (`&`) syntax. These characters aren't automatically generated.
 
 ### Series variables
 
@@ -106,6 +107,8 @@ Value-specific variables are available under `__value` namespace:
 | `__value.calc`    | Calculation name if the value is result of calculation                            |
 
 Using value-specific variables in data links can show different results depending on the set option of Tooltip mode.
+
+When you create data links using time range variables like `__value.time` in the URL, you have to form the query parameter syntax yourself; that is, you must add the question mark (`?`) and ampersand (`&`). These characters aren't automatically generated.
 
 ### Data variables
 
@@ -194,6 +197,9 @@ If you want to add all of the current dashboard's variables to the URL, then use
 
 [trend]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/panels-visualizations/visualizations/trend"
 [trend]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/visualizations/panels-visualizations/visualizations/trend"
+
+[xy chart]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/panels-visualizations/visualizations/xy-chart"
+[xy chart]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/visualizations/panels-visualizations/visualizations/xy-chart"
 
 [Cloudwatch]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/datasources/aws-cloudwatch/query-editor#deep-link-grafana-panels-to-the-cloudwatch-console-1"
 [Cloudwatch]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/connect-externally-hosted/data-sources/aws-cloudwatch/query-editor#deep-link-grafana-panels-to-the-cloudwatch-console-1"

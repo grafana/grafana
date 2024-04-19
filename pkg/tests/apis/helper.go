@@ -152,6 +152,7 @@ func (c *K8sResourceClient) SanitizeJSON(v *unstructured.Unstructured) string {
 	delete(anno, "grafana.app/originTimestamp")
 	delete(anno, "grafana.app/createdBy")
 	delete(anno, "grafana.app/updatedBy")
+	delete(anno, "grafana.app/action")
 
 	deep.SetAnnotations(anno)
 	copy := deep.Object
@@ -374,13 +375,13 @@ func (c K8sTestHelper) createTestUsers(orgName string) OrgUsers {
 
 	store := c.env.SQLStore
 	defer func() {
-		store.Cfg.AutoAssignOrg = false
-		store.Cfg.AutoAssignOrgId = 1 // the default
+		c.env.Cfg.AutoAssignOrg = false
+		c.env.Cfg.AutoAssignOrgId = 1 // the default
 	}()
 
-	quotaService := quotaimpl.ProvideService(store, store.Cfg)
+	quotaService := quotaimpl.ProvideService(store, c.env.Cfg)
 
-	orgService, err := orgimpl.ProvideService(store, store.Cfg, quotaService)
+	orgService, err := orgimpl.ProvideService(store, c.env.Cfg, quotaService)
 	require.NoError(c.t, err)
 
 	orgId := int64(1)
@@ -388,15 +389,15 @@ func (c K8sTestHelper) createTestUsers(orgName string) OrgUsers {
 		orgId, err = orgService.GetOrCreate(context.Background(), orgName)
 		require.NoError(c.t, err)
 	}
-	store.Cfg.AutoAssignOrg = true
-	store.Cfg.AutoAssignOrgId = int(orgId)
+	c.env.Cfg.AutoAssignOrg = true
+	c.env.Cfg.AutoAssignOrgId = int(orgId)
 
-	teamSvc, err := teamimpl.ProvideService(store, store.Cfg)
+	teamSvc, err := teamimpl.ProvideService(store, c.env.Cfg)
 	require.NoError(c.t, err)
 
 	cache := localcache.ProvideService()
 	userSvc, err := userimpl.ProvideService(store,
-		orgService, store.Cfg, teamSvc, cache, quotaService,
+		orgService, c.env.Cfg, teamSvc, cache, quotaService,
 		supportbundlestest.NewFakeBundleService())
 	require.NoError(c.t, err)
 

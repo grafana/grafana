@@ -217,6 +217,7 @@ func (r ruleWithFolder) Fingerprint() fingerprint {
 			writeBytes(nil)
 			return
 		}
+		// #nosec G103
 		// avoid allocation when converting string to byte slice
 		writeBytes(unsafe.Slice(unsafe.StringData(s), len(s)))
 	}
@@ -299,9 +300,7 @@ func (r ruleWithFolder) Fingerprint() fingerprint {
 	// TODO consider removing fields below from the fingerprint
 	writeInt(rule.ID)
 	writeInt(rule.OrgID)
-	writeInt(rule.IntervalSeconds)
 	writeInt(int64(rule.For))
-	writeLabels(rule.Annotations)
 	if rule.DashboardUID != nil {
 		writeString(*rule.DashboardUID)
 	}

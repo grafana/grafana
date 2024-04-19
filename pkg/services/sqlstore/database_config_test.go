@@ -9,6 +9,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -144,4 +145,79 @@ func makeDatabaseTestConfig(t *testing.T, tc databaseConfigTest) *setting.Cfg {
 	require.NoError(t, err)
 
 	return cfg
+}
+func TestBuildConnectionStringPostgres(t *testing.T) {
+	testCases := []struct {
+		name            string
+		dbCfg           *DatabaseConfig
+		expectedConnStr string
+	}{
+		{
+			name: "Postgres with sslmode disable",
+			dbCfg: &DatabaseConfig{
+				Type:    migrator.Postgres,
+				User:    "grafana",
+				Pwd:     "password",
+				Host:    "127.0.0.1:5432",
+				Name:    "grafana_test",
+				SslMode: "disable",
+			},
+			expectedConnStr: "user=grafana host=127.0.0.1 port=5432 dbname=grafana_test sslmode=disable sslcert='' sslkey='' sslrootcert='' password=password",
+		},
+		{
+			name: "Postgres with sslmode verify-ca",
+			dbCfg: &DatabaseConfig{
+				Type:           migrator.Postgres,
+				User:           "grafana",
+				Pwd:            "password",
+				Host:           "127.0.0.1:5432",
+				Name:           "grafana_test",
+				SslMode:        "verify-ca",
+				CaCertPath:     "/path/to/ca_cert",
+				ClientKeyPath:  "/path/to/client_key",
+				ClientCertPath: "/path/to/client_cert",
+			},
+			expectedConnStr: "user=grafana host=127.0.0.1 port=5432 dbname=grafana_test sslmode=verify-ca sslcert=/path/to/client_cert sslkey=/path/to/client_key sslrootcert=/path/to/ca_cert password=password",
+		},
+		{
+			name: "Postgres with sslmode verify-ca without SNI",
+			dbCfg: &DatabaseConfig{
+				Type:           migrator.Postgres,
+				User:           "grafana",
+				Pwd:            "password",
+				Host:           "127.0.0.1:5432",
+				Name:           "grafana_test",
+				SslMode:        "verify-ca",
+				CaCertPath:     "/path/to/ca_cert",
+				ClientKeyPath:  "/path/to/client_key",
+				ClientCertPath: "/path/to/client_cert",
+				SSLSNI:         "0",
+			},
+			expectedConnStr: "user=grafana host=127.0.0.1 port=5432 dbname=grafana_test sslmode=verify-ca sslcert=/path/to/client_cert sslkey=/path/to/client_key sslrootcert=/path/to/ca_cert sslsni=0 password=password",
+		},
+		{
+			name: "Postgres with sslmode verify-ca with SNI",
+			dbCfg: &DatabaseConfig{
+				Type:           migrator.Postgres,
+				User:           "grafana",
+				Pwd:            "password",
+				Host:           "127.0.0.1:5432",
+				Name:           "grafana_test",
+				SslMode:        "verify-ca",
+				CaCertPath:     "/path/to/ca_cert",
+				ClientKeyPath:  "/path/to/client_key",
+				ClientCertPath: "/path/to/client_cert",
+				SSLSNI:         "1",
+			},
+			expectedConnStr: "user=grafana host=127.0.0.1 port=5432 dbname=grafana_test sslmode=verify-ca sslcert=/path/to/client_cert sslkey=/path/to/client_key sslrootcert=/path/to/ca_cert sslsni=1 password=password",
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			err := tc.dbCfg.buildConnectionString(&setting.Cfg{}, nil)
+			assert.NoError(t, err)
+			assert.Equal(t, tc.expectedConnStr, tc.dbCfg.ConnectionString)
+		})
+	}
 }

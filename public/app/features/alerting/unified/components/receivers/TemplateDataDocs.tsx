@@ -67,7 +67,7 @@ const getTemplateDataDocsStyles = (theme: GrafanaTheme2) => ({
 
 interface TemplateDataTableProps {
   dataItems: TemplateDataItem[];
-  caption: JSX.Element | string;
+  caption?: JSX.Element | string;
   typeRenderer?: (type: TemplateDataItem['type']) => React.ReactNode;
 }
 
@@ -76,7 +76,7 @@ export function TemplateDataTable({ dataItems, caption, typeRenderer }: Template
 
   return (
     <table className={styles.table}>
-      <caption>{caption}</caption>
+      {caption && <caption>{caption}</caption>}
       <thead>
         <tr>
           <th>Name</th>

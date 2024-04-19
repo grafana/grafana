@@ -11,6 +11,8 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+
+	"github.com/grafana/grafana/pkg/tsdb/grafana-testdata-datasource/kinds"
 )
 
 func TestTestdataScenarios(t *testing.T) {
@@ -184,32 +186,32 @@ func TestParseLabels(t *testing.T) {
 
 	tests := []struct {
 		name     string
-		model    JSONModel
+		model    kinds.TestDataQuery
 		expected data.Labels
 	}{
 		{
 			name:     "wrapped in {} and quoted value ",
-			model:    JSONModel{Labels: `{job="foo", instance="bar"}`},
+			model:    kinds.TestDataQuery{Labels: `{job="foo", instance="bar"}`},
 			expected: expectedTags,
 		},
 		{
 			name:     "comma-separated non-quoted",
-			model:    JSONModel{Labels: `job=foo, instance=bar`},
+			model:    kinds.TestDataQuery{Labels: `job=foo, instance=bar`},
 			expected: expectedTags,
 		},
 		{
 			name:     "comma-separated quoted",
-			model:    JSONModel{Labels: `job="foo"", instance="bar"`},
+			model:    kinds.TestDataQuery{Labels: `job="foo"", instance="bar"`},
 			expected: expectedTags,
 		},
 		{
 			name:     "comma-separated with spaces, non quoted",
-			model:    JSONModel{Labels: `job = foo,instance = bar`},
+			model:    kinds.TestDataQuery{Labels: `job = foo,instance = bar`},
 			expected: expectedTags,
 		},
 		{
 			name:  "expands $seriesIndex",
-			model: JSONModel{Labels: `job=series-$seriesIndex,instance=bar`},
+			model: kinds.TestDataQuery{Labels: `job=series-$seriesIndex,instance=bar`},
 			expected: data.Labels{
 				"job":      fmt.Sprintf("series-%d", seriesIndex),
 				"instance": "bar",

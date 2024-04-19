@@ -289,7 +289,7 @@ describe('InfluxDataSource Frontend Mode', () => {
     function influxChecks(query: InfluxQuery) {
       expect(templateSrv.replace).toBeCalledTimes(12);
       expect(query.alias).toBe(text);
-      expect(query.measurement).toBe(justText);
+      expect(query.measurement).toBe(textWithFormatRegex);
       expect(query.policy).toBe(justText);
       expect(query.limit).toBe(justText);
       expect(query.slimit).toBe(justText);
@@ -506,6 +506,22 @@ describe('InfluxDataSource Frontend Mode', () => {
         const value = [`/special/path`, `/some/other/path`];
         const result = ds.interpolateQueryExpr(value, variableMock, `select that where path = /$tempVar/`);
         const expectation = `(\\/special\\/path|\\/some\\/other\\/path)`;
+        expect(result).toBe(expectation);
+      });
+
+      it('should return floating point number as it is', () => {
+        const variableMock = queryBuilder()
+          .withId('tempVar')
+          .withName('tempVar')
+          .withMulti(false)
+          .withOptions({
+            text: `1.0`,
+            value: `1.0`,
+          })
+          .build();
+        const value = `1.0`;
+        const result = ds.interpolateQueryExpr(value, variableMock, `select value / $tempVar from /^measurement$/`);
+        const expectation = `1.0`;
         expect(result).toBe(expectation);
       });
     });

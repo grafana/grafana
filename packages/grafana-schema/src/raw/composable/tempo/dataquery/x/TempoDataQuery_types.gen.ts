@@ -69,10 +69,7 @@ export const defaultTempoQuery: Partial<TempoQuery> = {
   groupBy: [],
 };
 
-/**
- * search = Loki search, nativeSearch = Tempo search for backwards compatibility
- */
-export type TempoQueryType = ('traceql' | 'traceqlSearch' | 'search' | 'serviceMap' | 'upload' | 'nativeSearch' | 'traceId' | 'clear');
+export type TempoQueryType = ('traceql' | 'traceqlSearch' | 'serviceMap' | 'upload' | 'nativeSearch' | 'traceId' | 'clear');
 
 /**
  * The state of the TraceQL streaming search query
@@ -88,6 +85,7 @@ export enum SearchStreamingState {
  * The type of the table that is used to display the search results
  */
 export enum SearchTableType {
+  Raw = 'raw',
   Spans = 'spans',
   Traces = 'traces',
 }

@@ -75,7 +75,7 @@ function createFetchResponse<T>(data: T): FetchResponse<T> {
     type: 'basic',
     statusText: 'Ok',
     redirected: false,
-    headers: {} as unknown as Headers,
+    headers: new Headers(),
     ok: true,
   };
 }
@@ -475,7 +475,7 @@ describe('ElasticDatasource', () => {
         type: 'basic',
         statusText: 'Bad Request',
         redirected: false,
-        headers: {} as unknown as Headers,
+        headers: new Headers(),
         ok: false,
       };
 
@@ -1056,19 +1056,13 @@ describe('ElasticDatasource', () => {
 
 describe('getMultiSearchUrl', () => {
   it('Should add correct params to URL if "includeFrozen" is enabled', () => {
-    const { ds } = getTestContext({ jsonData: { includeFrozen: true, xpack: true } });
+    const { ds } = getTestContext({ jsonData: { includeFrozen: true } });
 
     expect(ds.getMultiSearchUrl()).toMatch(/ignore_throttled=false/);
   });
 
   it('Should NOT add ignore_throttled if "includeFrozen" is disabled', () => {
-    const { ds } = getTestContext({ jsonData: { includeFrozen: false, xpack: true } });
-
-    expect(ds.getMultiSearchUrl()).not.toMatch(/ignore_throttled=false/);
-  });
-
-  it('Should NOT add ignore_throttled if "xpack" is disabled', () => {
-    const { ds } = getTestContext({ jsonData: { includeFrozen: true, xpack: false } });
+    const { ds } = getTestContext({ jsonData: { includeFrozen: false } });
 
     expect(ds.getMultiSearchUrl()).not.toMatch(/ignore_throttled=false/);
   });

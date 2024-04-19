@@ -66,3 +66,4 @@ export {
   type PluginExtensionCommandPaletteContext,
   type PluginExtensionOpenModalOptions,
 } from './pluginExtensions';
+export * from './scopes';

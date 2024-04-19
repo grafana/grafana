@@ -303,7 +303,6 @@ external group.
 | Reload provisioned dashboards     | `{"action": "provisioning-dashboards"}`    |
 | Reload provisioned datasources    | `{"action": "provisioning-datasources"}`   |
 | Reload provisioned plugins        | `{"action": "provisioning-plugins"}`       |
-| Reload provisioned notifications  | `{"action": "provisioning-notifications"}` |
 | Reload provisioned alerts         | `{"action": "provisioning-alerts"}`        |
 | Reload provisioned access control | `{"action": "provisioning-accesscontrol"}` |
 

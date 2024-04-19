@@ -44,6 +44,7 @@ func config(t *testing.T) *setting.UnifiedAlertingSettings {
 
 func validRule() apimodels.PostableExtendedRuleNode {
 	forDuration := model.Duration(rand.Int63n(1000))
+	uid := util.GenerateShortUID()
 	return apimodels.PostableExtendedRuleNode{
 		ApiRuleNode: &apimodels.ApiRuleNode{
 			For: &forDuration,
@@ -55,7 +56,7 @@ func validRule() apimodels.PostableExtendedRuleNode {
 			},
 		},
 		GrafanaManagedAlert: &apimodels.PostableGrafanaRule{
-			Title:     fmt.Sprintf("TEST-ALERT-%d", rand.Int63()),
+			Title:     fmt.Sprintf("TEST-ALERT-%s", uid),
 			Condition: "A",
 			Data: []apimodels.AlertQuery{
 				{
@@ -69,7 +70,7 @@ func validRule() apimodels.PostableExtendedRuleNode {
 					Model:         nil,
 				},
 			},
-			UID:          util.GenerateShortUID(),
+			UID:          uid,
 			NoDataState:  allNoData[rand.Intn(len(allNoData))],
 			ExecErrState: allExecError[rand.Intn(len(allExecError))],
 		},
@@ -826,14 +827,12 @@ func TestValidateRuleNodeNotificationSettings(t *testing.T) {
 			notificationSettings: models.CopyNotificationSettings(validNotificationSettings(), models.NSMuts.WithGroupBy(model.AlertNameLabel, models.FolderTitleLabel)),
 		},
 		{
-			name:                 "group by missing alert name label is invalid",
+			name:                 "group by missing alert name label is valid",
 			notificationSettings: models.CopyNotificationSettings(validNotificationSettings(), models.NSMuts.WithGroupBy(models.FolderTitleLabel)),
-			expErrorContains:     model.AlertNameLabel,
 		},
 		{
-			name:                 "group by missing folder name label is invalid",
+			name:                 "group by missing folder name label is valid",
 			notificationSettings: models.CopyNotificationSettings(validNotificationSettings(), models.NSMuts.WithGroupBy(model.AlertNameLabel)),
-			expErrorContains:     models.FolderTitleLabel,
 		},
 		{
 			name:                 "group wait empty is valid",

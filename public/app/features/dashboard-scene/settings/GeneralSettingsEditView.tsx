@@ -1,16 +1,17 @@
 import React, { ChangeEvent } from 'react';
 
 import { PageLayoutType } from '@grafana/data';
-import { SceneComponentProps, SceneObjectBase, sceneGraph } from '@grafana/scenes';
+import { config } from '@grafana/runtime';
+import { SceneComponentProps, SceneObjectBase, behaviors, sceneGraph } from '@grafana/scenes';
 import { TimeZone } from '@grafana/schema';
 import {
   Box,
   CollapsableSection,
   Field,
-  HorizontalGroup,
   Input,
   Label,
   RadioButtonGroup,
+  Stack,
   TagsInput,
   TextArea,
 } from '@grafana/ui';
@@ -19,7 +20,10 @@ import { FolderPicker } from 'app/core/components/Select/FolderPicker';
 import { t, Trans } from 'app/core/internationalization';
 import { TimePickerSettings } from 'app/features/dashboard/components/DashboardSettings/TimePickerSettings';
 import { DeleteDashboardButton } from 'app/features/dashboard/components/DeleteDashboard/DeleteDashboardButton';
+import { GenAIDashDescriptionButton } from 'app/features/dashboard/components/GenAI/GenAIDashDescriptionButton';
+import { GenAIDashTitleButton } from 'app/features/dashboard/components/GenAI/GenAIDashTitleButton';
 
+import { updateNavModel } from '../pages/utils';
 import { DashboardScene } from '../scene/DashboardScene';
 import { NavToolbarActions } from '../scene/NavToolbarActions';
 import { dashboardSceneGraph } from '../utils/dashboardSceneGraph';
@@ -68,6 +72,15 @@ export class GeneralSettingsEditView
     return dashboardSceneGraph.getCursorSync(this._dashboard);
   }
 
+  public getLiveNowTimer(): behaviors.LiveNowTimer {
+    const liveNowTimer = sceneGraph.findObject(this._dashboard, (s) => s instanceof behaviors.LiveNowTimer);
+    if (liveNowTimer instanceof behaviors.LiveNowTimer) {
+      return liveNowTimer;
+    } else {
+      throw new Error('LiveNowTimer could not be found');
+    }
+  }
+
   public getDashboardControls() {
     return this._dashboard.state.controls!;
   }
@@ -84,13 +97,16 @@ export class GeneralSettingsEditView
     this._dashboard.setState({ tags: value });
   };
 
-  public onFolderChange = (newUID: string | undefined, newTitle: string | undefined) => {
+  public onFolderChange = async (newUID: string | undefined, newTitle: string | undefined) => {
     const newMeta = {
       ...this._dashboard.state.meta,
       folderUid: newUID || this._dashboard.state.meta.folderUid,
       folderTitle: newTitle || this._dashboard.state.meta.folderTitle,
-      hasUnsavedFolderChange: true,
     };
+
+    if (newMeta.folderUid) {
+      await updateNavModel(newMeta.folderUid);
+    }
 
     this._dashboard.setState({ meta: newMeta });
   };
@@ -132,8 +148,13 @@ export class GeneralSettingsEditView
     });
   };
 
-  public onLiveNowChange = (value: boolean) => {
-    // TODO: Figure out how to store liveNow in Dashboard Scene
+  public onLiveNowChange = (enable: boolean) => {
+    try {
+      const liveNow = this.getLiveNowTimer();
+      enable ? liveNow.enable() : liveNow.disable();
+    } catch (err) {
+      console.error(err);
+    }
   };
 
   public onTooltipChange = (value: number) => {
@@ -147,6 +168,7 @@ export class GeneralSettingsEditView
     const { timeZone, weekStart, UNSAFE_nowDelay: nowDelay } = model.getTimeRange().useState();
     const { intervals } = model.getRefreshPicker().useState();
     const { hideTimeControls } = model.getDashboardControls().useState();
+    const { enabled: liveNow } = model.getLiveNowTimer().useState();
 
     return (
       <Page navModel={navModel} pageNav={pageNav} layout={PageLayoutType.Standard}>
@@ -155,42 +177,40 @@ export class GeneralSettingsEditView
           <Box marginBottom={5}>
             <Field
               label={
-                <HorizontalGroup justify="space-between">
+                <Stack justifyContent="space-between">
                   <Label htmlFor="title-input">
                     <Trans i18nKey="dashboard-settings.general.title-label">Title</Trans>
                   </Label>
-                  {/* TODO: Make the component use persisted model */}
-                  {/* {config.featureToggles.dashgpt && (
-                  <GenAIDashTitleButton onGenerate={onTitleChange} dashboard={dashboard} />
-                )} */}
-                </HorizontalGroup>
+                  {config.featureToggles.dashgpt && (
+                    <GenAIDashTitleButton onGenerate={(title) => model.onTitleChange(title)} />
+                  )}
+                </Stack>
               }
             >
               <Input
                 id="title-input"
                 name="title"
-                defaultValue={title}
-                onBlur={(e: ChangeEvent<HTMLInputElement>) => model.onTitleChange(e.target.value)}
+                value={title}
+                onChange={(e: ChangeEvent<HTMLInputElement>) => model.onTitleChange(e.target.value)}
               />
             </Field>
             <Field
               label={
-                <HorizontalGroup justify="space-between">
+                <Stack justifyContent="space-between">
                   <Label htmlFor="description-input">
                     {t('dashboard-settings.general.description-label', 'Description')}
                   </Label>
-
-                  {/* {config.featureToggles.dashgpt && (
-                  <GenAIDashDescriptionButton onGenerate={onDescriptionChange} dashboard={dashboard} />
-                )} */}
-                </HorizontalGroup>
+                  {config.featureToggles.dashgpt && (
+                    <GenAIDashDescriptionButton onGenerate={(description) => model.onDescriptionChange(description)} />
+                  )}
+                </Stack>
               }
             >
               <TextArea
                 id="description-input"
                 name="description"
-                defaultValue={description}
-                onBlur={(e: ChangeEvent<HTMLTextAreaElement>) => model.onDescriptionChange(e.target.value)}
+                value={description}
+                onChange={(e: ChangeEvent<HTMLTextAreaElement>) => model.onDescriptionChange(e.target.value)}
               />
             </Field>
             <Field label={t('dashboard-settings.general.tags-label', 'Tags')}>
@@ -229,9 +249,7 @@ export class GeneralSettingsEditView
             refreshIntervals={intervals}
             timePickerHidden={hideTimeControls}
             nowDelay={nowDelay || ''}
-            // TODO: Implement this in dashboard scene
-            // liveNow={liveNow}
-            liveNow={false}
+            liveNow={liveNow}
             timezone={timeZone || ''}
             weekStart={weekStart || ''}
           />

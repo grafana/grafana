@@ -63,13 +63,13 @@ describe('Add new connection', () => {
   test('renders no results if the plugins list is empty', async () => {
     renderPage();
 
-    expect(screen.queryByText('No results matching your query were found.')).toBeInTheDocument();
+    expect(screen.queryByText('No results matching your query were found')).toBeInTheDocument();
   });
 
   test('renders no results if there is no data source plugin in the list', async () => {
     renderPage([getCatalogPluginMock()]);
 
-    expect(screen.queryByText('No results matching your query were found.')).toBeInTheDocument();
+    expect(screen.queryByText('No results matching your query were found')).toBeInTheDocument();
   });
 
   test('renders only data source plugins when list is populated', async () => {
@@ -87,7 +87,7 @@ describe('Add new connection', () => {
 
     await userEvent.clear(searchField);
     await userEvent.type(searchField, 'cramp');
-    expect(screen.queryByText('No results matching your query were found.')).toBeInTheDocument();
+    expect(screen.queryByText('No results matching your query were found')).toBeInTheDocument();
 
     await userEvent.clear(searchField);
     expect(await screen.findByText('Sample data source')).toBeVisible();

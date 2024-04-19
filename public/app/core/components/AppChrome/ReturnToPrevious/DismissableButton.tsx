@@ -2,6 +2,7 @@ import { css } from '@emotion/css';
 import React from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
+import { selectors } from '@grafana/e2e-selectors';
 import { Button, ButtonGroup, useStyles2 } from '@grafana/ui';
 import { t } from 'app/core/internationalization';
 
@@ -24,6 +25,7 @@ export const DismissableButton = ({ label, onClick, onDismiss }: DismissableButt
         onClick={onClick}
         title={label}
         className={styles.mainDismissableButton}
+        data-testid={selectors.components.ReturnToPrevious.backButton}
       >
         {label}
       </Button>
@@ -34,6 +36,7 @@ export const DismissableButton = ({ label, onClick, onDismiss }: DismissableButt
         fill="outline"
         size="sm"
         onClick={onDismiss}
+        data-testid={selectors.components.ReturnToPrevious.dismissButton}
       />
     </ButtonGroup>
   );

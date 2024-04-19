@@ -183,6 +183,7 @@ exports[`transformSceneToSaveModel Given a scene with rows Should transform back
       "type": "row",
     },
   ],
+  "refresh": "",
   "schemaVersion": 39,
   "tags": [
     "templating",
@@ -329,6 +330,7 @@ exports[`transformSceneToSaveModel Given a simple scene with custom settings Sho
         "type": "testdata",
         "uid": "PD8C576611E62080A",
       },
+      "description": "This is a simple time series graph",
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -448,6 +450,7 @@ exports[`transformSceneToSaveModel Given a simple scene with custom settings Sho
       "type": "text",
     },
   ],
+  "refresh": "5m",
   "schemaVersion": 39,
   "tags": [
     "tag1",
@@ -474,6 +477,58 @@ exports[`transformSceneToSaveModel Given a simple scene with custom settings Sho
           "value": "1m",
         },
         "name": "intervalVar",
+        "options": [
+          {
+            "selected": true,
+            "text": "1m",
+            "value": "1m",
+          },
+          {
+            "selected": false,
+            "text": "10m",
+            "value": "10m",
+          },
+          {
+            "selected": false,
+            "text": "30m",
+            "value": "30m",
+          },
+          {
+            "selected": false,
+            "text": "1h",
+            "value": "1h",
+          },
+          {
+            "selected": false,
+            "text": "6h",
+            "value": "6h",
+          },
+          {
+            "selected": false,
+            "text": "12h",
+            "value": "12h",
+          },
+          {
+            "selected": false,
+            "text": "1d",
+            "value": "1d",
+          },
+          {
+            "selected": false,
+            "text": "7d",
+            "value": "7d",
+          },
+          {
+            "selected": false,
+            "text": "14d",
+            "value": "14d",
+          },
+          {
+            "selected": false,
+            "text": "30d",
+            "value": "30d",
+          },
+        ],
         "query": "1m,10m,30m,1h,6h,12h,1d,7d,14d,30d",
         "refresh": 2,
         "type": "interval",
@@ -632,6 +687,7 @@ exports[`transformSceneToSaveModel Given a simple scene with variables Should tr
         "type": "testdata",
         "uid": "PD8C576611E62080A",
       },
+      "description": "This is a simple time series graph",
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -751,6 +807,7 @@ exports[`transformSceneToSaveModel Given a simple scene with variables Should tr
       "type": "text",
     },
   ],
+  "refresh": "",
   "schemaVersion": 39,
   "tags": [
     "gdev",
@@ -778,6 +835,58 @@ exports[`transformSceneToSaveModel Given a simple scene with variables Should tr
           "value": "1m",
         },
         "name": "intervalVar",
+        "options": [
+          {
+            "selected": true,
+            "text": "1m",
+            "value": "1m",
+          },
+          {
+            "selected": false,
+            "text": "10m",
+            "value": "10m",
+          },
+          {
+            "selected": false,
+            "text": "30m",
+            "value": "30m",
+          },
+          {
+            "selected": false,
+            "text": "1h",
+            "value": "1h",
+          },
+          {
+            "selected": false,
+            "text": "6h",
+            "value": "6h",
+          },
+          {
+            "selected": false,
+            "text": "12h",
+            "value": "12h",
+          },
+          {
+            "selected": false,
+            "text": "1d",
+            "value": "1d",
+          },
+          {
+            "selected": false,
+            "text": "7d",
+            "value": "7d",
+          },
+          {
+            "selected": false,
+            "text": "14d",
+            "value": "14d",
+          },
+          {
+            "selected": false,
+            "text": "30d",
+            "value": "30d",
+          },
+        ],
         "query": "1m,10m,30m,1h,6h,12h,1d,7d,14d,30d",
         "refresh": 2,
         "type": "interval",

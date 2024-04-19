@@ -32,6 +32,10 @@ jest.mock('react-virtualized-auto-sizer', () => {
   };
 });
 
+jest.mock('../hooks/useExplorePageTitle', () => ({
+  useExplorePageTitle: jest.fn(),
+}));
+
 describe('Explore: interpolation', () => {
   afterEach(() => {
     tearDown();

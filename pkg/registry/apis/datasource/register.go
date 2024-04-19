@@ -54,7 +54,7 @@ func RegisterAPIService(
 	features featuremgmt.FeatureToggles,
 	apiRegistrar builder.APIRegistrar,
 	pluginClient plugins.Client, // access to everything
-	datasources PluginDatasourceProvider,
+	datasources ScopedPluginDatasourceProvider,
 	contextProvider PluginContextWrapper,
 	pluginStore pluginstore.Store,
 	accessControl accesscontrol.AccessControl,
@@ -69,7 +69,8 @@ func RegisterAPIService(
 	all := pluginStore.Plugins(context.Background(), plugins.TypeDataSource)
 	ids := []string{
 		"grafana-testdata-datasource",
-		//	"prometheus",
+		"prometheus",
+		"graphite",
 	}
 
 	for _, ds := range all {
@@ -79,7 +80,7 @@ func RegisterAPIService(
 
 		builder, err = NewDataSourceAPIBuilder(ds.JSONData,
 			pluginClient,
-			datasources,
+			datasources.GetDatasourceProvider(ds.JSONData),
 			contextProvider,
 			accessControl,
 		)
@@ -175,7 +176,6 @@ func (b *DataSourceAPIBuilder) GetAPIGroupInfo(
 
 	conn := b.connectionResourceInfo
 	storage[conn.StoragePath()] = &connectionAccess{
-		pluginID:     b.pluginJSON.ID,
 		datasources:  b.datasources,
 		resourceInfo: conn,
 		tableConverter: utils.NewTableConverter(
@@ -220,7 +220,7 @@ func (b *DataSourceAPIBuilder) GetAPIGroupInfo(
 }
 
 func (b *DataSourceAPIBuilder) getPluginContext(ctx context.Context, uid string) (backend.PluginContext, error) {
-	instance, err := b.datasources.GetInstanceSettings(ctx, b.pluginJSON.ID, uid)
+	instance, err := b.datasources.GetInstanceSettings(ctx, uid)
 	if err != nil {
 		return backend.PluginContext{}, err
 	}

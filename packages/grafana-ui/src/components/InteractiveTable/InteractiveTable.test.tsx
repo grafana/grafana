@@ -77,28 +77,101 @@ describe('InteractiveTable', () => {
     expect(valueColumnHeader).not.toHaveAttribute('aria-sort');
     expect(countryColumnHeader).not.toHaveAttribute('aria-sort');
   });
+  describe('row expansion', () => {
+    it('correctly expands rows', async () => {
+      const columns: Array<Column<TableData>> = [{ id: 'id', header: 'ID' }];
+      const data: TableData[] = [{ id: '1', value: '1', country: 'Sweden' }];
+      const { user } = setup(
+        <InteractiveTable
+          columns={columns}
+          data={data}
+          getRowId={getRowId}
+          renderExpandedRow={(row) => <div data-testid={`test-${row.id}`}>{row.country}</div>}
+        />
+      );
 
-  it('correctly expands rows', async () => {
-    const columns: Array<Column<TableData>> = [{ id: 'id', header: 'ID' }];
-    const data: TableData[] = [{ id: '1', value: '1', country: 'Sweden' }];
-    const { user } = setup(
-      <InteractiveTable
-        columns={columns}
-        data={data}
-        getRowId={getRowId}
-        renderExpandedRow={(row) => <div data-testid={`test-${row.id}`}>{row.country}</div>}
-      />
-    );
+      const expanderButton = screen.getByRole('button', { name: /toggle row expanded/i });
+      await user.click(expanderButton);
 
-    const expanderButton = screen.getByRole('button', { name: /toggle row expanded/i });
-    await user.click(expanderButton);
+      expect(screen.getByTestId('test-1')).toHaveTextContent('Sweden');
 
-    expect(screen.getByTestId('test-1')).toHaveTextContent('Sweden');
+      expect(expanderButton.getAttribute('aria-controls')).toBe(
+        // ancestor tr's id should match the expander button's aria-controls attribute
+        screen.getByTestId('test-1').parentElement?.parentElement?.id
+      );
+    });
+    it('does not render expand all when showExpandAll is false', async () => {
+      const columns: Array<Column<TableData>> = [{ id: 'id', header: 'ID' }];
+      const data: TableData[] = [{ id: '1', value: '1', country: 'Sweden' }];
+      setup(
+        <InteractiveTable
+          columns={columns}
+          data={data}
+          getRowId={getRowId}
+          renderExpandedRow={(row) => <div data-testid={`test-${row.id}`}>{row.country}</div>}
+          showExpandAll={false}
+        />
+      );
 
-    expect(expanderButton.getAttribute('aria-controls')).toBe(
-      // ancestor tr's id should match the expander button's aria-controls attribute
-      screen.getByTestId('test-1').parentElement?.parentElement?.id
-    );
+      expect(screen.queryByRole('button', { name: 'Expand all rows' })).not.toBeInTheDocument();
+    });
+    it('does not render expand all when showExpandAll is not provided', async () => {
+      const columns: Array<Column<TableData>> = [{ id: 'id', header: 'ID' }];
+      const data: TableData[] = [{ id: '1', value: '1', country: 'Sweden' }];
+      setup(
+        <InteractiveTable
+          columns={columns}
+          data={data}
+          getRowId={getRowId}
+          renderExpandedRow={(row) => <div data-testid={`test-${row.id}`}>{row.country}</div>}
+        />
+      );
+
+      expect(screen.queryByRole('button', { name: 'Expand all rows' })).not.toBeInTheDocument();
+    });
+    it('renders expand all when showExpandAll is true', async () => {
+      const columns: Array<Column<TableData>> = [{ id: 'id', header: 'ID' }];
+      const data: TableData[] = [{ id: '1', value: '1', country: 'Sweden' }];
+      setup(
+        <InteractiveTable
+          columns={columns}
+          data={data}
+          getRowId={getRowId}
+          renderExpandedRow={(row) => <div data-testid={`test-${row.id}`}>{row.country}</div>}
+          showExpandAll
+        />
+      );
+
+      expect(screen.getByRole('button', { name: 'Expand all rows' })).toBeInTheDocument();
+    });
+    it('expands all rows when expand all is clicked', async () => {
+      const columns: Array<Column<TableData>> = [{ id: 'id', header: 'ID' }];
+      const data: TableData[] = [
+        { id: '1', value: '1', country: 'Sweden' },
+        { id: '2', value: '2', country: 'Belgium' },
+        { id: '3', value: '3', country: 'France' },
+      ];
+      const { user } = setup(
+        <InteractiveTable
+          columns={columns}
+          data={data}
+          getRowId={getRowId}
+          renderExpandedRow={(row) => <div data-testid={`test-${row.id}`}>{row.country}</div>}
+          showExpandAll
+        />
+      );
+
+      expect(screen.queryByTestId('test-1')).not.toBeInTheDocument();
+      expect(screen.queryByTestId('test-2')).not.toBeInTheDocument();
+      expect(screen.queryByTestId('test-3')).not.toBeInTheDocument();
+
+      const expandAllButton = screen.getByRole('button', { name: 'Expand all rows' });
+      await user.click(expandAllButton);
+
+      expect(screen.queryByTestId('test-1')).toBeInTheDocument();
+      expect(screen.queryByTestId('test-2')).toBeInTheDocument();
+      expect(screen.queryByTestId('test-3')).toBeInTheDocument();
+    });
   });
   describe('pagination', () => {
     it('does not render pagination controls if pageSize is not set', () => {

@@ -311,9 +311,7 @@ func (s *ServiceImpl) parseMetricRequest(ctx context.Context, user identity.Requ
 			return nil, err
 		}
 
-		s.log.Debug("Processing metrics query", "query", string(modelJSON))
-
-		req.parsedQueries[ds.UID] = append(req.parsedQueries[ds.UID], parsedQuery{
+		pq := parsedQuery{
 			datasource: ds,
 			query: backend.DataQuery{
 				TimeRange: backend.TimeRange{
@@ -327,7 +325,16 @@ func (s *ServiceImpl) parseMetricRequest(ctx context.Context, user identity.Requ
 				JSON:          modelJSON,
 			},
 			rawQuery: query,
-		})
+		}
+		req.parsedQueries[ds.UID] = append(req.parsedQueries[ds.UID], pq)
+
+		s.log.Debug("Processed metrics query",
+			"ref_id", pq.query.RefID,
+			"from", timeRange.GetFromAsMsEpoch(),
+			"to", timeRange.GetToAsMsEpoch(),
+			"interval", pq.query.Interval.Milliseconds(),
+			"max_data_points", pq.query.MaxDataPoints,
+			"query", string(modelJSON))
 	}
 
 	return req, req.validateRequest(ctx)

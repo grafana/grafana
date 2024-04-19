@@ -95,8 +95,8 @@ const AnnotationsStep = () => {
           Add more context in your notification messages.
         </Text>
         <NeedHelpInfo
-          contentText={`Annotations add metadata to provide more information on the alert in your alert notification messages. 
-          For example, add a Summary annotation to tell you which value caused the alert to fire or which server it happened on. 
+          contentText={`Annotations add metadata to provide more information on the alert in your alert notification messages.
+          For example, add a Summary annotation to tell you which value caused the alert to fire or which server it happened on.
           Annotations can contain a combination of text and template code.`}
           title="Annotations"
         />

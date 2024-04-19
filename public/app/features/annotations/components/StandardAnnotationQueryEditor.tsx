@@ -1,5 +1,4 @@
-import { css, cx } from '@emotion/css';
-import React, { PureComponent } from 'react';
+import React, { PureComponent, ReactElement } from 'react';
 import { lastValueFrom } from 'rxjs';
 
 import {
@@ -11,7 +10,8 @@ import {
   DataSourcePluginContextProvider,
   LoadingState,
 } from '@grafana/data';
-import { Button, Icon, IconName, Spinner } from '@grafana/ui';
+import { selectors } from '@grafana/e2e-selectors';
+import { Alert, AlertVariant, Button, Space, Spinner } from '@grafana/ui';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 import { getTimeSrv } from 'app/features/dashboard/services/TimeSrv';
 import { PanelModel } from 'app/features/dashboard/state';
@@ -112,63 +112,85 @@ export default class StandardAnnotationQueryEditor extends PureComponent<Props, 
     });
   };
 
-  renderStatus() {
-    const { response, running } = this.state;
-    let rowStyle = 'alert-info';
-    let text = '...';
-    let icon: IconName | undefined = undefined;
+  getStatusSeverity(response: AnnotationQueryResponse): AlertVariant {
+    const { events, panelData } = response;
+
+    if (panelData?.errors || panelData?.error) {
+      return 'error';
+    }
+
+    if (!events?.length) {
+      return 'warning';
+    }
+
+    return 'success';
+  }
+
+  renderStatusText(response: AnnotationQueryResponse, running: boolean | undefined): ReactElement {
+    const { events, panelData } = response;
 
     if (running || response?.panelData?.state === LoadingState.Loading || !response) {
-      text = 'loading...';
-    } else {
-      const { events, panelData } = response;
-
-      if (panelData?.error) {
-        rowStyle = 'alert-error';
-        icon = 'exclamation-triangle';
-        text = panelData.error.message ?? 'error';
-      } else if (!events?.length) {
-        rowStyle = 'alert-warning';
-        icon = 'exclamation-triangle';
-        text = 'No events found';
-      } else {
-        const frame = panelData?.series?.[0] ?? panelData?.annotations?.[0];
-
-        text = `${events.length} events (from ${frame?.fields.length} fields)`;
-      }
+      return <p>{'loading...'}</p>;
     }
+
+    if (panelData?.errors) {
+      return (
+        <>
+          {panelData.errors.map((e, i) => (
+            <p key={i}>{e.message}</p>
+          ))}
+        </>
+      );
+    }
+    if (panelData?.error) {
+      return <p>{panelData.error.message ?? 'There was an error fetching data'}</p>;
+    }
+
+    if (!events?.length) {
+      return <p>No events found</p>;
+    }
+
+    const frame = panelData?.series?.[0] ?? panelData?.annotations?.[0];
     return (
-      <div
-        className={cx(
-          rowStyle,
-          css`
-            margin: 4px 0px;
-            padding: 4px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-          `
-        )}
-      >
-        <div>
-          {icon && (
-            <>
-              <Icon name={icon} />
-              &nbsp;
-            </>
-          )}
-          {text}
-        </div>
+      <p>
+        {events.length} events (from {frame?.fields.length} fields)
+      </p>
+    );
+  }
+
+  renderStatus() {
+    const { response, running } = this.state;
+
+    if (!response) {
+      return null;
+    }
+
+    return (
+      <>
+        <Space v={2} />
         <div>
           {running ? (
             <Spinner />
           ) : (
-            <Button variant="secondary" size="xs" onClick={this.onRunQuery}>
-              TEST
+            <Button
+              data-testid={selectors.components.Annotations.editor.testButton}
+              variant="secondary"
+              size="xs"
+              onClick={this.onRunQuery}
+            >
+              Test annotation query
             </Button>
           )}
         </div>
-      </div>
+        <Space v={2} layout="block" />
+        <Alert
+          data-testid={selectors.components.Annotations.editor.resultContainer}
+          severity={this.getStatusSeverity(response)}
+          title="Query result"
+        >
+          {this.renderStatusText(response, running)}
+        </Alert>
+      </>
     );
   }
 

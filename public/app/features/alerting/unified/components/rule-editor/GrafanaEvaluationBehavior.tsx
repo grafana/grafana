@@ -1,21 +1,9 @@
 import { css } from '@emotion/css';
 import React, { useCallback, useEffect, useState } from 'react';
-import { RegisterOptions, useFormContext } from 'react-hook-form';
+import { RegisterOptions, useFormContext, Controller } from 'react-hook-form';
 
 import { GrafanaTheme2, SelectableValue } from '@grafana/data';
-import {
-  Field,
-  Icon,
-  IconButton,
-  Input,
-  InputControl,
-  Label,
-  Stack,
-  Switch,
-  Text,
-  Tooltip,
-  useStyles2,
-} from '@grafana/ui';
+import { Field, Icon, IconButton, Input, Label, Stack, Switch, Text, Tooltip, useStyles2 } from '@grafana/ui';
 
 import { CombinedRuleGroup, CombinedRuleNamespace } from '../../../../../types/unified-alerting';
 import { LogMessages, logInfo } from '../../Analytics';
@@ -30,6 +18,7 @@ import { EditCloudGroupModal } from '../rules/EditRuleGroupModal';
 import { FolderAndGroup, useFolderGroupOptions } from './FolderAndGroup';
 import { GrafanaAlertStatePicker } from './GrafanaAlertStatePicker';
 import { NeedHelpInfo } from './NeedHelpInfo';
+import { PendingPeriodQuickPick } from './PendingPeriodQuickPick';
 import { RuleEditorSection } from './RuleEditorSection';
 
 export const MIN_TIME_RANGE_STEP_S = 10; // 10 seconds
@@ -175,9 +164,16 @@ function ForInput({ evaluateEvery }: { evaluateEvery: string }) {
   const {
     register,
     formState: { errors },
+    setValue,
+    watch,
   } = useFormContext<RuleFormValues>();
 
   const evaluateForId = 'eval-for-input';
+  const currentPendingPeriod = watch('evaluateFor');
+
+  const setPendingPeriod = (pendingPeriod: string) => {
+    setValue('evaluateFor', pendingPeriod);
+  };
 
   return (
     <Stack direction="row" justify-content="flex-start" align-items="flex-start">
@@ -192,10 +188,17 @@ function ForInput({ evaluateEvery }: { evaluateEvery: string }) {
         }
         className={styles.inlineField}
         error={errors.evaluateFor?.message}
-        invalid={!!errors.evaluateFor?.message}
+        invalid={Boolean(errors.evaluateFor?.message) ? true : undefined}
         validationMessageHorizontalOverflow={true}
       >
-        <Input id={evaluateForId} width={8} {...register('evaluateFor', forValidationOptions(evaluateEvery))} />
+        <Stack direction="row" alignItems="center">
+          <Input id={evaluateForId} width={8} {...register('evaluateFor', forValidationOptions(evaluateEvery))} />
+          <PendingPeriodQuickPick
+            selectedPendingPeriod={currentPendingPeriod}
+            groupEvaluationInterval={evaluateEvery}
+            onSelect={setPendingPeriod}
+          />
+        </Stack>
       </Field>
     </Stack>
   );
@@ -250,7 +253,7 @@ export function GrafanaEvaluationBehavior({
 
         {existing && (
           <Field htmlFor="pause-alert-switch">
-            <InputControl
+            <Controller
               render={() => (
                 <Stack gap={1} direction="row" alignItems="center">
                   <Switch
@@ -281,7 +284,7 @@ export function GrafanaEvaluationBehavior({
       {showErrorHandling && (
         <>
           <Field htmlFor="no-data-state-input" label="Alert state if no data or all values are null">
-            <InputControl
+            <Controller
               render={({ field: { onChange, ref, ...field } }) => (
                 <GrafanaAlertStatePicker
                   {...field}
@@ -296,7 +299,7 @@ export function GrafanaEvaluationBehavior({
             />
           </Field>
           <Field htmlFor="exec-err-state-input" label="Alert state if execution error or timeout">
-            <InputControl
+            <Controller
               render={({ field: { onChange, ref, ...field } }) => (
                 <GrafanaAlertStatePicker
                   {...field}

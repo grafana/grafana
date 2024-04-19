@@ -175,7 +175,7 @@ export const PostgresConfigEditor = (props: DataSourcePluginOptionsEditorProps<P
         >
           <Select
             options={tlsModes}
-            value={jsonData.sslmode || PostgresTLSModes.verifyFull}
+            value={jsonData.sslmode || PostgresTLSModes.require}
             onChange={onJSONDataOptionSelected('sslmode')}
             width={WIDTH_LONG}
           />

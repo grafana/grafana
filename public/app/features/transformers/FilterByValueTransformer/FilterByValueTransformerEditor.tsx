@@ -49,7 +49,7 @@ export const FilterByValueTransformerEditor = (props: TransformerUIProps<FilterB
     }
 
     const filters = cloneDeep(options.filters);
-    const matcher = valueMatchers.get(ValueMatcherID.greater);
+    const matcher = valueMatchers.get(ValueMatcherID.isNull);
 
     filters.push({
       fieldName: getFieldDisplayName(field, frame, input),

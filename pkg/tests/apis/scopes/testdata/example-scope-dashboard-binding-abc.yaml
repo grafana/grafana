@@ -1,0 +1,7 @@
+apiVersion: scope.grafana.app/v0alpha1
+kind: ScopeDashboardBinding
+metadata:
+  name: example_abc
+spec:
+    scope: example
+    dashboard: abc

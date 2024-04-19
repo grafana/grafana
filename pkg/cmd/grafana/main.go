@@ -20,7 +20,18 @@ var buildBranch = "main"
 var buildstamp string
 
 func main() {
-	app := &cli.App{
+	app := MainApp()
+
+	if err := app.Run(os.Args); err != nil {
+		fmt.Printf("%s: %s %s\n", color.RedString("Error"), color.RedString("✗"), err)
+		os.Exit(1)
+	}
+
+	os.Exit(0)
+}
+
+func MainApp() *cli.App {
+	return &cli.App{
 		Name:  "grafana",
 		Usage: "Grafana server and command line interface",
 		Authors: []*cli.Author{
@@ -41,22 +52,21 @@ func main() {
 				SkipFlagParsing: true,
 				Action: func(context *cli.Context) error {
 					// exit here because apiserver handles its own error output
-					os.Exit(apiserver.RunCLI())
+					os.Exit(apiserver.RunCLI(gsrv.ServerOptions{
+						Version:          version,
+						Commit:           commit,
+						EnterpriseCommit: enterpriseCommit,
+						BuildBranch:      buildBranch,
+						BuildStamp:       buildstamp,
+						Context:          context,
+					}))
 					return nil
 				},
 			},
-			gsrv.ServerCommand(version, commit, enterpriseCommit, buildBranch, buildstamp),
 		},
 		CommandNotFound:      cmdNotFound,
 		EnableBashCompletion: true,
 	}
-
-	if err := app.Run(os.Args); err != nil {
-		fmt.Printf("%s: %s %s\n", color.RedString("Error"), color.RedString("✗"), err)
-		os.Exit(1)
-	}
-
-	os.Exit(0)
 }
 
 func cmdNotFound(c *cli.Context, command string) {

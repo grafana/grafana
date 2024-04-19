@@ -25,7 +25,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/accesscontrol/acimpl"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/actest"
 	acmock "github.com/grafana/grafana/pkg/services/accesscontrol/mock"
-	"github.com/grafana/grafana/pkg/services/alerting"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/dashboards/database"
@@ -89,7 +88,7 @@ func TestDeleteLibraryPanelsInFolder(t *testing.T) {
 				Data:  simplejson.NewFromAny(dashJSON),
 			}
 			// nolint:staticcheck
-			dashInDB := createDashboard(t, sc.sqlStore, sc.user, &dash, sc.folder.ID)
+			dashInDB := createDashboard(t, sc.sqlStore, sc.user, &dash, sc.folder.ID, sc.folder.UID)
 			err := sc.service.ConnectElementsToDashboard(sc.reqContext.Req.Context(), sc.reqContext.SignedInUser, []string{sc.initialResult.Result.UID}, dashInDB.ID)
 			require.NoError(t, err)
 
@@ -106,7 +105,7 @@ func TestDeleteLibraryPanelsInFolder(t *testing.T) {
 	scenarioWithPanel(t, "When an admin tries to delete a folder that contains disconnected elements, it should delete all disconnected elements too",
 		func(t *testing.T, sc scenarioContext) {
 			// nolint:staticcheck
-			command := getCreateVariableCommand(sc.folder.ID, "query0")
+			command := getCreateVariableCommand(sc.folder.ID, sc.folder.UID, "query0")
 			sc.reqContext.Req.Body = mockRequestBody(command)
 			resp := sc.service.createHandler(sc.reqContext)
 			require.Equal(t, 200, resp.Status())
@@ -164,7 +163,7 @@ func TestGetLibraryPanelConnections(t *testing.T) {
 				Data:  simplejson.NewFromAny(dashJSON),
 			}
 			// nolint:staticcheck
-			dashInDB := createDashboard(t, sc.sqlStore, sc.user, &dash, sc.folder.ID)
+			dashInDB := createDashboard(t, sc.sqlStore, sc.user, &dash, sc.folder.ID, sc.folder.UID)
 			err := sc.service.ConnectElementsToDashboard(sc.reqContext.Req.Context(), sc.reqContext.SignedInUser, []string{sc.initialResult.Result.UID}, dashInDB.ID)
 			require.NoError(t, err)
 
@@ -203,6 +202,7 @@ type libraryElement struct {
 	OrgID int64 `json:"orgId"`
 	// Deprecated: use FolderUID instead
 	FolderID    int64                       `json:"folderId"`
+	FolderUID   string                      `json:"folderUid"`
 	UID         string                      `json:"uid"`
 	Name        string                      `json:"name"`
 	Kind        int64                       `json:"kind"`
@@ -232,8 +232,8 @@ type libraryElementsSearchResult struct {
 	PerPage    int              `json:"perPage"`
 }
 
-func getCreatePanelCommand(folderID int64, name string) model.CreateLibraryElementCommand {
-	command := getCreateCommandWithModel(folderID, name, model.PanelElement, []byte(`
+func getCreatePanelCommand(folderID int64, folderUID string, name string) model.CreateLibraryElementCommand {
+	command := getCreateCommandWithModel(folderID, folderUID, name, model.PanelElement, []byte(`
 			{
 			  "datasource": "${DS_GDEV-TESTDATA}",
 			  "id": 1,
@@ -246,8 +246,8 @@ func getCreatePanelCommand(folderID int64, name string) model.CreateLibraryEleme
 	return command
 }
 
-func getCreateVariableCommand(folderID int64, name string) model.CreateLibraryElementCommand {
-	command := getCreateCommandWithModel(folderID, name, model.VariableElement, []byte(`
+func getCreateVariableCommand(folderID int64, folderUID, name string) model.CreateLibraryElementCommand {
+	command := getCreateCommandWithModel(folderID, folderUID, name, model.VariableElement, []byte(`
 			{
 			  "datasource": "${DS_GDEV-TESTDATA}",
 			  "name": "query0",
@@ -259,12 +259,12 @@ func getCreateVariableCommand(folderID int64, name string) model.CreateLibraryEl
 	return command
 }
 
-func getCreateCommandWithModel(folderID int64, name string, kind model.LibraryElementKind, byteModel []byte) model.CreateLibraryElementCommand {
+func getCreateCommandWithModel(folderID int64, folderUID, name string, kind model.LibraryElementKind, byteModel []byte) model.CreateLibraryElementCommand {
 	command := model.CreateLibraryElementCommand{
-		FolderID: folderID, // nolint:staticcheck
-		Name:     name,
-		Model:    byteModel,
-		Kind:     int64(kind),
+		FolderUID: &folderUID,
+		Name:      name,
+		Model:     byteModel,
+		Kind:      int64(kind),
 	}
 
 	return command
@@ -281,9 +281,10 @@ type scenarioContext struct {
 	log           log.Logger
 }
 
-func createDashboard(t *testing.T, sqlStore db.DB, user user.SignedInUser, dash *dashboards.Dashboard, folderID int64) *dashboards.Dashboard {
+func createDashboard(t *testing.T, sqlStore db.DB, user user.SignedInUser, dash *dashboards.Dashboard, folderID int64, folderUID string) *dashboards.Dashboard {
 	// nolint:staticcheck
 	dash.FolderID = folderID
+	dash.FolderUID = folderUID
 	dashItem := &dashboards.SaveDashboardDTO{
 		Dashboard: dash,
 		Message:   "",
@@ -297,14 +298,13 @@ func createDashboard(t *testing.T, sqlStore db.DB, user user.SignedInUser, dash 
 	quotaService := quotatest.New(false, nil)
 	dashboardStore, err := database.ProvideDashboardStore(sqlStore, cfg, features, tagimpl.ProvideService(sqlStore), quotaService)
 	require.NoError(t, err)
-	dashAlertExtractor := alerting.ProvideDashAlertExtractorService(nil, nil, nil)
 	ac := actest.FakeAccessControl{ExpectedEvaluate: true}
 	folderPermissions := acmock.NewMockedPermissionsService()
 	dashboardPermissions := acmock.NewMockedPermissionsService()
 	dashboardPermissions.On("SetPermissions", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return([]accesscontrol.ResourcePermission{}, nil)
 	folderStore := folderimpl.ProvideDashboardFolderStore(sqlStore)
 	service, err := dashboardservice.ProvideDashboardServiceImpl(
-		cfg, dashboardStore, folderStore, dashAlertExtractor,
+		cfg, dashboardStore, folderStore,
 		features, folderPermissions, dashboardPermissions, ac,
 		foldertest.NewFakeService(),
 		nil,
@@ -388,7 +388,7 @@ func scenarioWithPanel(t *testing.T, desc string, fn func(t *testing.T, sc scena
 	dashboardPermissions := acmock.NewMockedPermissionsService()
 	folderStore := folderimpl.ProvideDashboardFolderStore(sqlStore)
 	dashboardService, svcErr := dashboardservice.ProvideDashboardServiceImpl(
-		sqlStore.Cfg, dashboardStore, folderStore, nil,
+		sqlStore.Cfg, dashboardStore, folderStore,
 		features, folderPermissions, dashboardPermissions, ac,
 		foldertest.NewFakeService(),
 		nil,
@@ -398,7 +398,7 @@ func scenarioWithPanel(t *testing.T, desc string, fn func(t *testing.T, sc scena
 
 	testScenario(t, desc, func(t *testing.T, sc scenarioContext) {
 		// nolint:staticcheck
-		command := getCreatePanelCommand(sc.folder.ID, "Text - Library Panel")
+		command := getCreatePanelCommand(sc.folder.ID, sc.folder.UID, "Text - Library Panel")
 		sc.reqContext.Req.Body = mockRequestBody(command)
 		resp := sc.service.createHandler(sc.reqContext)
 		sc.initialResult = validateAndUnMarshalResponse(t, resp)
@@ -449,7 +449,7 @@ func testScenario(t *testing.T, desc string, fn func(t *testing.T, sc scenarioCo
 		dashboardPermissions := acmock.NewMockedPermissionsService()
 		folderStore := folderimpl.ProvideDashboardFolderStore(sqlStore)
 		dashService, dashSvcErr := dashboardservice.ProvideDashboardServiceImpl(
-			sqlStore.Cfg, dashboardStore, folderStore, nil,
+			sqlStore.Cfg, dashboardStore, folderStore,
 			features, folderPermissions, dashboardPermissions, ac,
 			foldertest.NewFakeService(),
 			nil,

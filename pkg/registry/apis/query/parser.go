@@ -81,11 +81,11 @@ func (p *queryParser) parseRequest(ctx context.Context, input *query.QueryDataRe
 	for _, q := range input.Queries {
 		_, found := queryRefIDs[q.RefID]
 		if found {
-			return rsp, fmt.Errorf("multiple queries found for refId: %s", q.RefID)
+			return rsp, MakePublicQueryError(q.RefID, "multiple queries with same refId")
 		}
 		_, found = expressions[q.RefID]
 		if found {
-			return rsp, fmt.Errorf("multiple queries found for refId: %s", q.RefID)
+			return rsp, MakePublicQueryError(q.RefID, "multiple queries with same refId")
 		}
 
 		ds, err := p.getValidDataSourceRef(ctx, q.Datasource, q.DatasourceID)
@@ -161,7 +161,7 @@ func (p *queryParser) parseRequest(ctx context.Context, input *query.QueryDataRe
 				if !ok {
 					target, ok = expressions[refId]
 					if !ok {
-						return rsp, fmt.Errorf("expression [%s] is missing variable [%s]", exp.RefID, refId)
+						return rsp, makeDependencyError(exp.RefID, refId)
 					}
 				}
 				// Do not hide queries used in variables
@@ -169,7 +169,7 @@ func (p *queryParser) parseRequest(ctx context.Context, input *query.QueryDataRe
 					q.Hide = false
 				}
 				if target.ID() == exp.ID() {
-					return rsp, fmt.Errorf("expression [%s] can not depend on itself", exp.RefID)
+					return rsp, makeCyclicError(refId)
 				}
 				dg.SetEdge(dg.NewEdge(target, exp))
 			}
@@ -178,7 +178,7 @@ func (p *queryParser) parseRequest(ctx context.Context, input *query.QueryDataRe
 		// Add the sorted expressions
 		sortedNodes, err := topo.SortStabilized(dg, nil)
 		if err != nil {
-			return rsp, fmt.Errorf("cyclic references in query")
+			return rsp, makeCyclicError("")
 		}
 		for _, v := range sortedNodes {
 			if v.ID() > 0 {
