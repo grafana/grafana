@@ -12,8 +12,8 @@ import (
 	"github.com/prometheus/common/model"
 )
 
-// groupByAll is a special value defined by alertmanager that can be used in a Route's GroupBy field to aggregate by all possible labels.
-const groupByAll = "..."
+// GroupByAll is a special value defined by alertmanager that can be used in a Route's GroupBy field to aggregate by all possible labels.
+const GroupByAll = "..."
 
 type ListNotificationSettingsQuery struct {
 	OrgID        int64
@@ -44,7 +44,7 @@ func (s *NotificationSettings) Validate() error {
 	if len(s.GroupBy) > 0 {
 		alertName, folderTitle := false, false
 		for _, lbl := range s.GroupBy {
-			if lbl == groupByAll {
+			if lbl == GroupByAll {
 				alertName, folderTitle = true, true
 				break
 			}
