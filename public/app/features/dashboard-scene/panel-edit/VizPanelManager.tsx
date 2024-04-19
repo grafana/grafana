@@ -88,8 +88,9 @@ export class VizPanelManager extends SceneObjectBase<VizPanelManagerState> {
     repeatOptions = { repeat, repeatDirection, maxPerRow };
 
     return new VizPanelManager({
-      panel: sourcePanel.clone({ $data: undefined }),
+      panel: sourcePanel.clone({ $data: undefined, $timeRange: undefined }),
       $data: sourcePanel.state.$data?.clone(),
+      $timeRange: sourcePanel.state.$timeRange,
       sourcePanel: sourcePanel.getRef(),
       ...repeatOptions,
     });
@@ -291,11 +292,11 @@ export class VizPanelManager extends SceneObjectBase<VizPanelManagerState> {
         timeRangeObj.setState(timeRangeObjStateUpdate);
       } else {
         // remove time override
-        panelObj.setState({ $timeRange: undefined });
+        this.setState({ $timeRange: undefined });
       }
     } else {
       // no time override present on the panel, let's create one first
-      panelObj.setState({ $timeRange: new PanelTimeRange(timeRangeObjStateUpdate) });
+      this.setState({ $timeRange: new PanelTimeRange(timeRangeObjStateUpdate) });
     }
 
     if (options.cacheTimeout !== dataObj?.state.cacheTimeout) {
