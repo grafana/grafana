@@ -48,7 +48,7 @@ export function DashboardSettings({ dashboard, editview, pageNav, sectionNav }: 
     dashboard.meta.hasUnsavedFolderChange = false;
   };
 
-  const currentPage = pages.find((page) => page.id === editview) ?? pages[0];
+  const currentPage = pages.find((page) => page.id === `${dashboard.uid}/${editview}`) ?? pages[0];
   const canSaveAs = contextSrv.hasEditPermissionInFolders;
   const canSave = dashboard.meta.canSave;
   const location = useLocation();
@@ -95,14 +95,14 @@ function getSettingsPages(dashboard: DashboardModel) {
   if (dashboard.meta.canEdit) {
     pages.push({
       title: generalTitle,
-      id: 'settings',
+      id: `${dashboard.uid}/settings`,
       icon: 'sliders-v-alt',
       component: GeneralSettings,
     });
 
     pages.push({
       title: t('dashboard-settings.annotations.title', 'Annotations'),
-      id: 'annotations',
+      id: `${dashboard.uid}/annotations`,
       icon: 'comment-alt',
       component: AnnotationsSettings,
       subTitle:
@@ -111,7 +111,7 @@ function getSettingsPages(dashboard: DashboardModel) {
 
     pages.push({
       title: t('dashboard-settings.variables.title', 'Variables'),
-      id: 'templating',
+      id: `${dashboard.uid}/templating`,
       icon: 'calculator-alt',
       component: VariableEditorContainer,
       subTitle: 'Variables can make your dashboard more dynamic and act as global filters.',
@@ -119,7 +119,7 @@ function getSettingsPages(dashboard: DashboardModel) {
 
     pages.push({
       title: t('dashboard-settings.links.title', 'Links'),
-      id: 'links',
+      id: `${dashboard.uid}/links`,
       icon: 'link',
       component: LinksSettings,
     });
@@ -129,7 +129,7 @@ function getSettingsPages(dashboard: DashboardModel) {
     pages.push({
       title: generalTitle,
       icon: 'sliders-v-alt',
-      id: 'settings',
+      id: `${dashboard.uid}/settings`,
       component: MakeEditable,
     });
   }
@@ -137,7 +137,7 @@ function getSettingsPages(dashboard: DashboardModel) {
   if (dashboard.id && dashboard.meta.canSave) {
     pages.push({
       title: t('dashboard-settings.versions.title', 'Versions'),
-      id: 'versions',
+      id: `${dashboard.uid}/versions`,
       icon: 'history',
       component: VersionsSettings,
     });
@@ -149,7 +149,7 @@ function getSettingsPages(dashboard: DashboardModel) {
     if (contextSrv.hasPermission(AccessControlAction.DashboardsPermissionsRead)) {
       pages.push({
         title: permissionsTitle,
-        id: 'permissions',
+        id: `${dashboard.uid}/permissions`,
         icon: 'lock',
         component: AccessControlDashboardPermissions,
       });
@@ -158,7 +158,7 @@ function getSettingsPages(dashboard: DashboardModel) {
 
   pages.push({
     title: t('dashboard-settings.json-editor.title', 'JSON Model'),
-    id: 'dashboard_json',
+    id: `${dashboard.uid}/dashboard_json`,
     icon: 'arrow',
     component: JsonEditorSettings,
   });

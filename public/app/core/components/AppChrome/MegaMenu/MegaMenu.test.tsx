@@ -1,6 +1,5 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { createMemoryHistory } from 'history';
 import React from 'react';
 import { Router } from 'react-router-dom';
 import { TestProvider } from 'test/helpers/TestProvider';
@@ -8,10 +7,11 @@ import { getGrafanaContextMock } from 'test/mocks/getGrafanaContextMock';
 
 import { NavModelItem } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
+import { locationService } from '@grafana/runtime';
 
 import { MegaMenu } from './MegaMenu';
 
-const setup = (initialUrl?: string) => {
+const setup = () => {
   const navBarTree: NavModelItem[] = [
     {
       text: 'Section name',
@@ -32,36 +32,14 @@ const setup = (initialUrl?: string) => {
       id: 'profile',
       url: 'profile',
     },
-    {
-      id: 'starred',
-      text: 'Starred',
-      url: '/dashboards?starred',
-      children: [
-        {
-          id: 'starred/someuid',
-          text: 'Starred Dashboard',
-          url: '/d/someuid/somename',
-        },
-      ],
-    },
-    {
-      id: 'dashboards/browse',
-      text: 'Dashboards',
-      url: '/dashboards',
-    },
   ];
 
   const grafanaContext = getGrafanaContextMock();
   grafanaContext.chrome.setMegaMenuOpen(true);
 
-  const history = createMemoryHistory();
-  if (initialUrl) {
-    history.push(initialUrl);
-  }
-
   return render(
     <TestProvider storeState={{ navBarTree }} grafanaContext={grafanaContext}>
-      <Router history={history}>
+      <Router history={locationService.getHistory()}>
         <MegaMenu onClose={() => {}} />
       </Router>
     </TestProvider>
@@ -99,12 +77,5 @@ describe('MegaMenu', () => {
     setup();
 
     expect(screen.queryByLabelText('Profile')).not.toBeInTheDocument();
-  });
-
-  it('handles special case for starred dashboard', async () => {
-    setup('/d/someuid/a-dashboard-name');
-
-    const currentLink = await screen.findByRole('link', { current: 'page' });
-    expect(currentLink.textContent).toEqual('Starred Dashboard');
   });
 });

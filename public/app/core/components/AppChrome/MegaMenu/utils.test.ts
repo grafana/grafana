@@ -115,20 +115,4 @@ describe('getActiveItem', () => {
     };
     expect(getActiveItem(mockNavTree, mockPage)?.id).toEqual('child');
   });
-
-  it('returns the dashboards route link if the pathname starts with /d/ and is not a starred dashboard', () => {
-    const mockPage: NavModelItem = {
-      text: 'Dashboards',
-      id: 'dashboards',
-    };
-    expect(getActiveItem(mockNavTree, mockPage, '/d/foo/some-name')?.id).toEqual('starred/foo');
-  });
-
-  it('handles home page', () => {
-    const mockPage: NavModelItem = {
-      text: 'Something else',
-      id: 'not-home',
-    };
-    expect(getActiveItem(mockNavTree, mockPage, '/')?.id).toEqual('home');
-  });
 });
