@@ -559,7 +559,8 @@ func seedResourcePermissions(
 
 func setupTestEnv(t testing.TB) (*store, db.DB, *setting.Cfg) {
 	sql := db.InitTestDB(t)
-	return NewStore(sql, featuremgmt.WithFeatures()), sql, sql.Cfg
+	asService := NewActionSetService()
+	return NewStore(sql, featuremgmt.WithFeatures(), &asService), sql, sql.Cfg
 }
 
 func TestStore_IsInherited(t *testing.T) {
@@ -752,4 +753,51 @@ func retrievePermissionsHelper(store *store, t *testing.T) []orgPermission {
 
 	require.NoError(t, err)
 	return permissions
+}
+
+func TestStore_ResourcePermissionsActionSets(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test")
+	}
+
+	type actionSetTest struct {
+		desc      string
+		orgID     int64
+		actionSet ActionSet
+	}
+
+	tests := []actionSetTest{
+		{
+			desc:  "should be able to store actionset",
+			orgID: 1,
+			actionSet: ActionSet{
+				Actions: []string{"folders:read", "folders:write"},
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.desc, func(t *testing.T) {
+			store, _, _ := setupTestEnv(t)
+			store.features = featuremgmt.WithFeatures([]any{featuremgmt.FlagAccessActionSets})
+
+			_, err := store.SetResourcePermissions(context.Background(), 1, []SetResourcePermissionsCommand{
+				{
+					User: accesscontrol.User{ID: 1},
+					SetResourcePermissionCommand: SetResourcePermissionCommand{
+						Actions:           tt.actionSet.Actions,
+						Resource:          "folders",
+						Permission:        "edit",
+						ResourceID:        "1",
+						ResourceAttribute: "uid",
+					},
+				},
+			}, ResourceHooks{})
+			require.NoError(t, err)
+
+			actionname := fmt.Sprintf("%s:%s", "folders", "edit")
+			actionSet := store.actionSetService.GetActionSet(actionname)
+			require.Equal(t, tt.actionSet.Actions, actionSet)
+		})
+	}
 }

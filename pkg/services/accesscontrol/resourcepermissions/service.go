@@ -57,7 +57,7 @@ type Store interface {
 func New(cfg *setting.Cfg,
 	options Options, features featuremgmt.FeatureToggles, router routing.RouteRegister, license licensing.Licensing,
 	ac accesscontrol.AccessControl, service accesscontrol.Service, sqlStore db.DB,
-	teamService team.Service, userService user.Service,
+	teamService team.Service, userService user.Service, actionSetService ActionSetService,
 ) (*Service, error) {
 	permissions := make([]string, 0, len(options.PermissionsToActions))
 	actionSet := make(map[string]struct{})
@@ -66,6 +66,7 @@ func New(cfg *setting.Cfg,
 		for _, a := range actions {
 			actionSet[a] = struct{}{}
 		}
+		actionSetService.StoreActionSet(options.Resource, permission, actions)
 	}
 
 	// Sort all permissions based on action length. Will be used when mapping between actions to permissions
@@ -80,7 +81,7 @@ func New(cfg *setting.Cfg,
 
 	s := &Service{
 		ac:          ac,
-		store:       NewStore(sqlStore, features),
+		store:       NewStore(sqlStore, features, &actionSetService),
 		options:     options,
 		license:     license,
 		permissions: permissions,
