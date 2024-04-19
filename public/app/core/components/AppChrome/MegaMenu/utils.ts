@@ -1,6 +1,7 @@
 import { NavModelItem } from '@grafana/data';
 import { config, reportInteraction } from '@grafana/runtime';
 import { t } from 'app/core/internationalization';
+import { HOME_NAV_ID } from 'app/core/reducers/navModel';
 
 import { ShowModalReactEvent } from '../../../../types/events';
 import appEvents from '../../../app_events';
@@ -58,52 +59,37 @@ export const hasChildMatch = (itemToCheck: NavModelItem, searchItem?: NavModelIt
   );
 };
 
-/**
- * Override for special cases in the nav.
- *
- * The homepage does not reliably have a `currentPage.id` of `home`.
- * A starred dashboard does not have a `currentPage.id` of `starred/{uid}`
- *
- * These cases are instead driven by parsing the URL of the current page
- *
- * TODO: Fix the nav items for these pages and remove this logic
- */
-const getSpecialCaseNavItem: (url: string) => Pick<NavModelItem, 'id'> | undefined = (url) => {
-  if (url === '/') {
-    return { id: 'home' };
-  }
-
-  if (url?.startsWith('/d/')) {
-    const id = url.split('/')[2];
-    return {
-      id: `starred/${id}`,
-    };
-  }
-
-  return;
-};
-
 export const getActiveItem = (
   navTree: NavModelItem[],
-  currentPage: Partial<NavModelItem>,
+  currentPage: NavModelItem,
   url?: string
 ): NavModelItem | undefined => {
-  const specialCaseNavItem = url && getSpecialCaseNavItem(url);
-  if (specialCaseNavItem) {
-    const specialCaseMatch = getActiveItem(navTree, specialCaseNavItem);
-    if (specialCaseMatch) {
-      return getActiveItem(navTree, specialCaseNavItem);
-    }
-  }
-
   const { id, parentItem } = currentPage;
 
+  // special case for the home page
+  if (url === '/') {
+    return navTree.find((item) => item.id === HOME_NAV_ID);
+  }
+
+  // special case for profile as it's not part of the mega menu
+  if (currentPage.id === 'profile') {
+    return undefined;
+  }
+
   for (const navItem of navTree) {
-    if (navItem.id === id) {
+    const isIdMatch = Boolean(navItem.id && navItem.id === id);
+    const isTextUrlMatch = navItem.text === currentPage.text && navItem.url === currentPage.url;
+
+    // ideally, we should only match on id
+    // unfortunately it's not a required property of the interface, and there are some cases
+    // where it's not set, particularly with child pages of plugins
+    // in those cases, we fall back to a text + url match
+    if (isIdMatch || isTextUrlMatch) {
       return navItem;
     }
+
     if (navItem.children) {
-      const childrenMatch = getActiveItem(navItem.children, currentPage, url);
+      const childrenMatch = getActiveItem(navItem.children, currentPage);
       if (childrenMatch) {
         return childrenMatch;
       }
@@ -111,7 +97,7 @@ export const getActiveItem = (
   }
 
   if (parentItem) {
-    return getActiveItem(navTree, parentItem, url);
+    return getActiveItem(navTree, parentItem);
   }
 
   return undefined;
