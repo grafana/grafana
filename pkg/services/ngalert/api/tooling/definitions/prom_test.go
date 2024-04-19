@@ -64,3 +64,51 @@ func TestSortAlertsByImportance(t *testing.T) {
 		})
 	}
 }
+
+func TestTopKAlertsByImportance(t *testing.T) {
+	//	tm1, tm2 := time.Now(), time.Now().Add(time.Second)
+	tc := []struct {
+		name     string
+		k        int
+		input    []Alert
+		expected []Alert
+	}{{
+		name:     "alerts are ordered in expected importance (k=1)",
+		k:        1,
+		input:    []Alert{{State: "normal"}, {State: "nodata"}, {State: "error"}, {State: "pending"}, {State: "alerting"}},
+		expected: []Alert{{State: "alerting"}},
+	}, {
+		name:     "alerts are ordered in expected importance (k=2)",
+		k:        2,
+		input:    []Alert{{State: "normal"}, {State: "nodata"}, {State: "error"}, {State: "pending"}, {State: "alerting"}},
+		expected: []Alert{{State: "alerting"}, {State: "pending"}},
+	}, {
+		name:     "alerts are ordered in expected importance (k=3)",
+		k:        3,
+		input:    []Alert{{State: "normal"}, {State: "nodata"}, {State: "error"}, {State: "pending"}, {State: "alerting"}},
+		expected: []Alert{{State: "alerting"}, {State: "pending"}, {State: "error"}},
+	}, {
+		name:     "alerts are ordered in expected importance (k=4)",
+		k:        4,
+		input:    []Alert{{State: "normal"}, {State: "nodata"}, {State: "error"}, {State: "pending"}, {State: "alerting"}},
+		expected: []Alert{{State: "alerting"}, {State: "pending"}, {State: "error"}, {State: "nodata"}},
+	}, {
+		name:     "alerts are ordered in expected importance (k=5)",
+		k:        5,
+		input:    []Alert{{State: "normal"}, {State: "nodata"}, {State: "error"}, {State: "pending"}, {State: "alerting"}},
+		expected: []Alert{{State: "alerting"}, {State: "pending"}, {State: "error"}, {State: "nodata"}, {State: "normal"}},
+	}, {
+		name:     "alerts are ordered in expected importance (k=6)",
+		k:        6,
+		input:    []Alert{{State: "normal"}, {State: "nodata"}, {State: "error"}, {State: "pending"}, {State: "alerting"}},
+		expected: []Alert{{State: "alerting"}, {State: "pending"}, {State: "error"}, {State: "nodata"}, {State: "normal"}},
+	},
+	}
+
+	for _, tt := range tc {
+		t.Run(tt.name, func(t *testing.T) {
+			result := AlertsBy(AlertsByImportance).TopK(tt.input, tt.k)
+			assert.EqualValues(t, tt.expected, result)
+		})
+	}
+}

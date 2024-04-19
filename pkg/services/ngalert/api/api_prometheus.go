@@ -408,10 +408,14 @@ func (srv PrometheusSrv) toRuleGroup(groupKey ngmodels.AlertRuleGroupKey, folder
 			rulesTotals[newRule.Health] += 1
 		}
 
-		apimodels.AlertsBy(apimodels.AlertsByImportance).Sort(alertingRule.Alerts)
+		alertsBy := apimodels.AlertsBy(apimodels.AlertsByImportance)
 
 		if limitAlerts > -1 && int64(len(alertingRule.Alerts)) > limitAlerts {
-			alertingRule.Alerts = alertingRule.Alerts[0:limitAlerts]
+			alertingRule.Alerts = alertsBy.TopK(alertingRule.Alerts, int(limitAlerts))
+		} else {
+			// If there is no effective limit, then just sort the alerts.
+			// For large numbers of alerts, this can be faster.
+			alertsBy.Sort(alertingRule.Alerts)
 		}
 
 		alertingRule.Rule = newRule
