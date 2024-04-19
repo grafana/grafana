@@ -52,6 +52,21 @@ Required fields:
 | label      | string | Label to be shown for the particular item.                                                                                 |
 | self       | number | Self value which is usually the cumulative value of the item minus the sum of cumulative values of its immediate children. |
 
+### Example
+
+The following table is an example of the type of data you need for a flame graph visualization and how it should be formatted.
+
+#### Time-series table
+
+| level | value    | self   | label                                     |
+| ----- | -------- | ------ | ----------------------------------------- |
+| 0     | 16.5 Bil | 16.5 K | total                                     |
+| 1     | 4.10 Bil | 4.10 k | test/pkg/agent.(\*Target).start.func1     |
+| 2     | 4.10 Bil | 4.10 K | test/pkg/agent.(\*Target).start.func1     |
+| 3     | 3.67 Bil | 3.67 K | test/pkg/distributor.(\*Distributor).Push |
+| 4     | 1.13 Bil | 1.13 K | compress/gzip.(\*Writer).Write            |
+| 5     | 1.06 Bil | 1.06 K | compress/flate.(\*compressor).write       |
+
 ## Modes
 
 ### Flame graph mode
