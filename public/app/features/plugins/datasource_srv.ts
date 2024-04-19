@@ -77,9 +77,9 @@ export class DatasourceSrv implements DataSourceService {
   getDataSourceSettingsByUid(uid: string): DataSourceInstanceSettings | undefined {
     if (!this.validUID(uid)) {
       const fixedUID = this.autofixUID(uid);
-      console.warn('Invalid datasource UID: ', uid, '. Please update it with: ', fixedUID);
       // Check if the datasource is stored with the fixed UID
       if (this.settingsMapByUid[fixedUID]) {
+        console.warn('Invalid datasource UID: ', uid, '. Please update it with: ', fixedUID);
         return this.settingsMapByUid[fixedUID];
       }
     }
