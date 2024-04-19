@@ -26,7 +26,7 @@ enum RoutingOptions {
 }
 
 export const NotificationsStep = ({ alertUid }: NotificationsStepProps) => {
-  const { watch } = useFormContext<RuleFormValues>();
+  const { watch, getValues, setValue } = useFormContext<RuleFormValues>();
   const styles = useStyles2(getStyles);
 
   const [type] = watch(['type', 'labels', 'queries', 'condition', 'folder', 'name', 'manualRouting']);
@@ -36,6 +36,18 @@ export const NotificationsStep = ({ alertUid }: NotificationsStepProps) => {
   const simplifiedRoutingToggleEnabled = config.featureToggles.alertingSimplifiedRouting ?? false;
   const shouldRenderpreview = type === RuleFormType.grafana;
   const shouldAllowSimplifiedRouting = type === RuleFormType.grafana && simplifiedRoutingToggleEnabled;
+
+  function onCloseLabelsEditor(
+    labelsToUpdate?: Array<{
+      key: string;
+      value: string;
+    }>
+  ) {
+    if (labelsToUpdate) {
+      setValue('labels', labelsToUpdate);
+    }
+    setShowLabelsEditor(false);
+  }
 
   return (
     <RuleEditorSection
@@ -61,8 +73,9 @@ export const NotificationsStep = ({ alertUid }: NotificationsStepProps) => {
       <LabelsFieldInForm onEditClick={() => setShowLabelsEditor(true)} />
       <LabelsEditorModal
         isOpen={showLabelsEditor}
-        onClose={() => setShowLabelsEditor(false)}
+        onClose={onCloseLabelsEditor}
         dataSourceName={dataSourceName}
+        initialLabels={getValues('labels')}
       />
       {shouldAllowSimplifiedRouting && (
         <div className={styles.configureNotifications}>

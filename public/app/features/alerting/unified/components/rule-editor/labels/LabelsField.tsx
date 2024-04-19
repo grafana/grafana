@@ -24,7 +24,9 @@ const useGetOpsLabelsKeys = (skip: boolean) => {
   });
   return { loading: isloadingLabels, labelsOpsKeys: currentData };
 };
-const useGetCustomLabels = (dataSourceName: string): { loading: boolean; labelsByKey: Record<string, Set<string>> } => {
+const useGetAlertRulesLabels = (
+  dataSourceName: string
+): { loading: boolean; labelsByKey: Record<string, Set<string>> } => {
   const dispatch = useDispatch();
 
   useEffect(() => {
@@ -98,24 +100,29 @@ export type LabelsSubformValues = {
 
 export interface LabelsSubFormProps {
   dataSourceName: string;
-  onClose: () => void;
+  initialLabels: Array<{ key: string; value: string }>;
+  onClose: (
+    labelsToUodate?: Array<{
+      key: string;
+      value: string;
+    }>
+  ) => void;
 }
 
-export function LabelsSubForm({ dataSourceName, onClose }: LabelsSubFormProps) {
+export function LabelsSubForm({ dataSourceName, onClose, initialLabels }: LabelsSubFormProps) {
   const styles = useStyles2(getStyles);
-  // get initial values from the parent form
-  const { setValue, getValues } = useFormContext<RuleFormValues>();
-  const initialLabels = getValues('labels');
 
   const onSave = (labels: LabelsSubformValues) => {
-    // Save the labels to the parent form
-    setValue('labels', labels.labelsInSubform);
+    onClose(labels.labelsInSubform);
+  };
+  const onCancel = () => {
     onClose();
   };
   // default values for the subform are the initial labels
   const defaultValues: LabelsSubformValues = useMemo(() => {
     return { labelsInSubform: initialLabels };
   }, [initialLabels]);
+
   const formAPI = useForm<LabelsSubformValues>({ defaultValues });
   return (
     <FormProvider {...formAPI}>
@@ -128,7 +135,7 @@ export function LabelsSubForm({ dataSourceName, onClose }: LabelsSubFormProps) {
             <LabelsInRule labels={formAPI.watch('labelsInSubform')} />
             <Space v={1} />
             <div className={styles.confirmButton}>
-              <Button type="button" variant="secondary" onClick={onClose}>
+              <Button type="button" variant="secondary" onClick={onCancel}>
                 Cancel
               </Button>
               <Button type="submit">Save</Button>
@@ -146,7 +153,7 @@ export function useCombinedLabels(
   labelsInSubform: Array<{ key: string; value: string }>
 ) {
   // ------- Get labels keys and their values from existing alerts
-  const { loading, labelsByKey: labelsByKeyFromExisingAlerts } = useGetCustomLabels(dataSourceName);
+  const { loading, labelsByKey: labelsByKeyFromExisingAlerts } = useGetAlertRulesLabels(dataSourceName);
   // ------- Get only the keys from the ops labels, as we will fetch the values for the keys once the key is selected.
   const { loading: isLoadingLabels, labelsOpsKeys = [] } = useGetOpsLabelsKeys(
     !labelsPluginInstalled || loadingLabelsPlugin
