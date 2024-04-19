@@ -183,7 +183,7 @@ func (s *Service) Upsert(ctx context.Context, settings *models.SSOSettings, requ
 		return ssosettings.ErrNotConfigurable
 	}
 
-	social, ok := s.reloadables[settings.Provider]
+	reloadable, ok := s.reloadables[settings.Provider]
 	if !ok {
 		return ssosettings.ErrInvalidProvider.Errorf("provider %s not found in reloadables", settings.Provider)
 	}
@@ -199,7 +199,7 @@ func (s *Service) Upsert(ctx context.Context, settings *models.SSOSettings, requ
 	}
 	settings.Settings = settingsWithSecrets
 
-	err = social.Validate(ctx, *settings, requester)
+	err = reloadable.Validate(ctx, *settings, requester)
 	if err != nil {
 		return err
 	}
@@ -218,7 +218,7 @@ func (s *Service) Upsert(ctx context.Context, settings *models.SSOSettings, requ
 	reloadSettings := *settings
 	reloadSettings.Settings = overrideMaps(storedSettings.Settings, settingsWithSecrets)
 
-	go s.reload(social, settings.Provider, reloadSettings)
+	go s.reload(reloadable, settings.Provider, reloadSettings)
 
 	return nil
 }
