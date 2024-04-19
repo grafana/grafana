@@ -1,4 +1,5 @@
 import { DataSourceInstanceSettings } from '@grafana/data';
+
 import { DatasourceSrv } from './datasource_srv';
 
 describe('DatasourceSrv', () => {

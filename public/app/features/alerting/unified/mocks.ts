@@ -391,6 +391,10 @@ export class MockDataSourceSrv implements DataSourceSrv {
     return DatasourceSrv.prototype.getList.call(this, filters);
   }
 
+  getDataSourceSettingsByUid(uid: string): DataSourceInstanceSettings | undefined {
+    return this.settingsMapByUid[uid];
+  }
+
   /**
    * Get settings and plugin metadata by name or uid
    */

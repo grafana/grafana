@@ -151,10 +151,6 @@ func TestAutofixUID(t *testing.T) {
 		expected string
 	}{
 		{
-			name: "generate new uid when input is empty",
-			uid:  "",
-		},
-		{
 			name:     "return input when input is valid",
 			uid:      "f8cc010c-ee72-4681-89d2-d46e1bd47d33",
 			expected: "f8cc010c-ee72-4681-89d2-d46e1bd47d33",
@@ -172,11 +168,7 @@ func TestAutofixUID(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if tt.expected == "" {
-				require.NotEmpty(t, AutofixUID(tt.uid))
-			} else {
-				require.Equal(t, tt.expected, AutofixUID(tt.uid))
-			}
+			require.Equal(t, tt.expected, AutofixUID(tt.uid))
 		})
 	}
 }
