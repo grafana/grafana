@@ -86,13 +86,13 @@ func getDialOpts(ctx context.Context, settings backend.DataSourceInstanceSetting
 	proxyClient, err := settings.ProxyClient(ctx)
 	if err != nil {
 		logger.Error("Error getting proxy client. The Tempo plugin will not use the secure socks proxy", "error", err)
-		return dialOps, err
+		return nil, err
 	}
 	if proxyClient.SecureSocksProxyEnabled() { // secure socks proxy is behind a feature flag
 		dialer, err := proxyClient.NewSecureSocksProxyContextDialer()
 		if err != nil {
 			logger.Error("Error dialing secure socks proxy. The Tempo plugin will not use the secure socks proxy", "error", err)
-			return dialOps, err
+			return nil, err
 		}
 		logger.Debug("gRPC dialer instantiated. Appending gRPC dialer to dial options")
 		dialOps = append(dialOps, grpc.WithContextDialer(func(ctx context.Context, host string) (net.Conn, error) {
