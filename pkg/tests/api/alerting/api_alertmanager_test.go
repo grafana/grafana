@@ -1997,7 +1997,7 @@ func TestIntegrationAlertmanagerCreateSilence(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			silenceID, err := client.PostSilence(t, tc.silence)
 			if tc.expErr != "" {
-				require.EqualError(t, err, tc.expErr)
+				require.ErrorContains(t, err, tc.expErr)
 				require.Empty(t, silenceID)
 			} else {
 				require.NoError(t, err)

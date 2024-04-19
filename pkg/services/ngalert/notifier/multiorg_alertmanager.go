@@ -34,13 +34,12 @@ var (
 // errutil-based errors.
 // TODO: Should completely replace the fmt.Errorf-based errors.
 var (
-	ErrAlertmanagerNotFound    = errutil.NotFound("alerting.notifications.alertmanager.notFound")
-	ErrAlertmanagerNotConflict = errutil.Conflict("alerting.notifications.alertmanager.notReady")
+	ErrAlertmanagerNotFound = errutil.NotFound("alerting.notifications.alertmanager.notFound")
+	ErrAlertmanagerConflict = errutil.Conflict("alerting.notifications.alertmanager.conflict")
 
-	ErrSilenceNotFound        = errutil.NotFound("alerting.notifications.silences.notFound")
-	ErrListSilencesBadFilters = errutil.BadRequest("alerting.notifications.silences.badFilters")
-	ErrInvalidSilence         = errutil.BadRequest("alerting.notifications.silences.invalid")
-	ErrSilenceInternalBase    = errutil.Internal("alerting.notifications.silences.error")
+	ErrSilenceNotFound    = errutil.NotFound("alerting.notifications.silences.notFound")
+	ErrSilencesBadRequest = errutil.BadRequest("alerting.notifications.silences.badRequest")
+	ErrSilenceInternal    = errutil.Internal("alerting.notifications.silences.internal")
 )
 
 //go:generate mockery --name Alertmanager --structname AlertmanagerMock --with-expecter --output alertmanager_mock --outpkg alertmanager_mock
@@ -421,11 +420,11 @@ func (moa *MultiOrgAlertmanager) AlertmanagerFor(orgID int64) (Alertmanager, err
 func (moa *MultiOrgAlertmanager) alertmanagerForOrg(orgID int64) (Alertmanager, error) {
 	orgAM, existing := moa.alertmanagers[orgID]
 	if !existing {
-		return nil, ErrAlertmanagerNotFound
+		return nil, WithPublicError(ErrAlertmanagerNotFound.Errorf("Alertmanager does not exist for org %d", orgID))
 	}
 
 	if !orgAM.Ready() {
-		return nil, ErrAlertmanagerNotConflict
+		return nil, WithPublicError(ErrAlertmanagerConflict.Errorf("Alertmanager is not ready for org %d", orgID))
 	}
 
 	return orgAM, nil
@@ -445,9 +444,9 @@ func (moa *MultiOrgAlertmanager) ListSilences(ctx context.Context, orgID int64, 
 	silences, err := orgAM.ListSilences(ctx, filter)
 	if err != nil {
 		if errors.Is(err, alertingNotify.ErrListSilencesBadPayload) {
-			return nil, ErrListSilencesBadFilters
+			return nil, WithPublicError(ErrSilencesBadRequest.Errorf("invalid filters: %w", err))
 		}
-		return nil, ErrSilenceInternalBase.Errorf("failed to list silences: %w", err)
+		return nil, WithPublicError(ErrSilenceInternal.Errorf("failed to list silences: %w", err))
 	}
 	return GettableSilencesToModelGettableSilences(silences), nil
 }
@@ -466,9 +465,9 @@ func (moa *MultiOrgAlertmanager) GetSilence(ctx context.Context, orgID int64, id
 	s, err := orgAM.GetSilence(ctx, id)
 	if err != nil {
 		if errors.Is(err, alertingNotify.ErrSilenceNotFound) {
-			return nil, ErrSilenceNotFound
+			return nil, WithPublicError(ErrSilenceNotFound.Errorf("silence %s not found", id))
 		}
-		return nil, ErrSilenceInternalBase.Errorf("failed to get silence: %w", err)
+		return nil, WithPublicError(ErrSilenceInternal.Errorf("failed to get silence: %w", err))
 	}
 
 	return GettableSilenceToModelGettableSilence(s), nil
@@ -489,13 +488,13 @@ func (moa *MultiOrgAlertmanager) CreateSilence(ctx context.Context, orgID int64,
 	silenceID, err := orgAM.CreateSilence(ctx, PostableSilenceToNotifyPostableSilence(ps))
 	if err != nil {
 		if errors.Is(err, alertingNotify.ErrSilenceNotFound) {
-			return "", ErrSilenceNotFound
+			return "", WithPublicError(ErrSilenceNotFound.Errorf("silence %v not found", ps.ID))
 		}
 
 		if errors.Is(err, alertingNotify.ErrCreateSilenceBadPayload) {
-			return "", ErrInvalidSilence
+			return "", WithPublicError(ErrSilencesBadRequest.Errorf("invalid silence: %w", err))
 		}
-		return "", ErrSilenceInternalBase.Errorf("failed to upsert silence: %w", err)
+		return "", WithPublicError(ErrSilenceInternal.Errorf("failed to upsert silence: %w", err))
 	}
 
 	err = moa.updateSilenceState(ctx, orgAM, orgID)
@@ -511,7 +510,7 @@ func (moa *MultiOrgAlertmanager) CreateSilence(ctx context.Context, orgID int64,
 // Currently, this just calls CreateSilence as the underlying Alertmanager implementation upserts.
 func (moa *MultiOrgAlertmanager) UpdateSilence(ctx context.Context, orgID int64, ps models.Silence) (string, error) {
 	if ps.ID == nil || *ps.ID == "" { // TODO: Alertmanager interface should probably include a method for updating silences. For now, we leak this implementation detail.
-		return "", ErrInvalidSilence.Errorf("silence ID is required")
+		return "", WithPublicError(ErrSilencesBadRequest.Errorf("silence ID is required"))
 	}
 	return moa.CreateSilence(ctx, orgID, ps)
 }
@@ -530,9 +529,9 @@ func (moa *MultiOrgAlertmanager) DeleteSilence(ctx context.Context, orgID int64,
 	err = orgAM.DeleteSilence(ctx, silenceID)
 	if err != nil {
 		if errors.Is(err, alertingNotify.ErrSilenceNotFound) {
-			return ErrSilenceNotFound
+			return WithPublicError(ErrSilenceNotFound.Errorf("silence %s not found", silenceID))
 		}
-		return ErrSilenceInternalBase.Errorf("failed to delete silence: %w", err)
+		return WithPublicError(ErrSilenceInternal.Errorf("failed to delete silence %s: %w", silenceID, err))
 	}
 
 	err = moa.updateSilenceState(ctx, orgAM, orgID)
