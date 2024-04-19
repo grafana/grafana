@@ -166,7 +166,6 @@ func (am *Alertmanager) ApplyConfig(ctx context.Context, config *models.AlertCon
 		am.log.Error("Unable to upload the state to the remote Alertmanager", "err", err)
 	}
 	am.log.Debug("Completed state upload to remote Alertmanager", "url", am.url)
-
 	return nil
 }
 
@@ -202,20 +201,16 @@ func (am *Alertmanager) CompareAndSendConfiguration(ctx context.Context, config 
 	if err != nil {
 		return err
 	}
-	rawDecrypted, err := json.Marshal(decrypted)
-	if err != nil {
-		return err
-	}
 
 	// Send the configuration only if we need to.
-	if !am.shouldSendConfig(ctx, rawDecrypted) {
+	if !am.shouldSendConfig(ctx, &decrypted) {
 		return nil
 	}
 
 	am.metrics.ConfigSyncsTotal.Inc()
 	if err := am.mimirClient.CreateGrafanaAlertmanagerConfig(
 		ctx,
-		string(rawDecrypted),
+		&decrypted,
 		config.ConfigurationHash,
 		config.CreatedAt,
 		config.Default,
@@ -447,15 +442,25 @@ func (am *Alertmanager) getFullState(ctx context.Context) (string, error) {
 
 // shouldSendConfig compares the remote Alertmanager configuration with our local one.
 // It returns true if the configurations are different.
-func (am *Alertmanager) shouldSendConfig(ctx context.Context, rawConfig []byte) bool {
+func (am *Alertmanager) shouldSendConfig(ctx context.Context, config *apimodels.PostableUserConfig) bool {
 	rc, err := am.mimirClient.GetGrafanaAlertmanagerConfig(ctx)
 	if err != nil {
 		// Log the error and return true so we try to upload our config anyway.
-		am.log.Error("Unable to get the remote Alertmanager Configuration for comparison", "err", err)
+		am.log.Error("Unable to get the remote Alertmanager configuration for comparison", "err", err)
 		return true
 	}
 
-	return md5.Sum([]byte(rc.GrafanaAlertmanagerConfig)) != md5.Sum(rawConfig)
+	rawRemote, err := json.Marshal(rc.GrafanaAlertmanagerConfig)
+	if err != nil {
+		am.log.Error("Unable to marshal the remote Alertmanager configuration for comparison", "err", err)
+		return true
+	}
+	rawInternal, err := json.Marshal(config)
+	if err != nil {
+		am.log.Error("Unable to marshal the internal Alertmanager configuration for comparison", "err", err)
+		return true
+	}
+	return md5.Sum(rawRemote) != md5.Sum(rawInternal)
 }
 
 // shouldSendState compares the remote Alertmanager state with our local one.
