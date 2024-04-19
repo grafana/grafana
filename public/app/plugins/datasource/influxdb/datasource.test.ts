@@ -241,6 +241,21 @@ describe('InfluxDataSource Frontend Mode [influxdbBackendMigration=false]', () =
       ds.getTagValues({ key: 'test', filters: [] });
       expect(metricFindQueryMock).toHaveBeenCalled();
     });
+
+    it('should use dbName instead of database', () => {
+      const instanceSettings = getMockDSInstanceSettings();
+      instanceSettings.database = 'should_not_be_used';
+      ds = getMockInfluxDS(instanceSettings);
+      expect(ds.database).toBe('site');
+    });
+
+    it('should fallback to use use database is dbName is not exist', () => {
+      const instanceSettings = getMockDSInstanceSettings();
+      instanceSettings.database = 'fallback';
+      instanceSettings.jsonData.dbName = undefined;
+      ds = getMockInfluxDS(instanceSettings);
+      expect(ds.database).toBe('fallback');
+    });
   });
 
   describe('variable interpolation', () => {
