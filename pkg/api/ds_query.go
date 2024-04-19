@@ -7,7 +7,6 @@ import (
 	"net/http"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
-	"github.com/grafana/grafana/pkg/util/proxyutil"
 
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/api/response"
@@ -40,8 +39,7 @@ func (hs *HTTPServer) handleQueryMetricsError(err error) *response.NormalRespons
 
 // metrics.go
 func (hs *HTTPServer) getDSQueryEndpoint() web.Handler {
-	if hs.Features.IsEnabledGlobally(featuremgmt.FlagKubernetesQueryServiceRewrite) {
-		// DEV ONLY FEATURE FLAG!
+	if hs.Features.IsEnabledGlobally(featuremgmt.FlagQueryServiceRewrite) {
 		// rewrite requests from /ds/query to the new query service
 		namespaceMapper := request.GetNamespaceMapper(hs.Cfg)
 		return func(w http.ResponseWriter, r *http.Request) {
@@ -51,11 +49,9 @@ func (hs *HTTPServer) getDSQueryEndpoint() web.Handler {
 				return
 			}
 			r.URL.Path = "/apis/query.grafana.app/v0alpha1/namespaces/" + namespaceMapper(user.OrgID) + "/query"
-			r.Header.Add(proxyutil.IDHeaderName, user.GetIDToken())
 			hs.clientConfigProvider.DirectlyServeHTTP(w, r)
 		}
 	}
-
 	return routing.Wrap(hs.QueryMetricsV2)
 }
 
