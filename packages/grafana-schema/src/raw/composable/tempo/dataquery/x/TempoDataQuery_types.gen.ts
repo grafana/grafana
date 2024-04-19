@@ -85,6 +85,7 @@ export enum SearchStreamingState {
  * The type of the table that is used to display the search results
  */
 export enum SearchTableType {
+  Raw = 'raw',
   Spans = 'spans',
   Traces = 'traces',
 }
