@@ -255,7 +255,7 @@ type GetCloudMigrationRunList struct {
 	// UID of a migration
 	//
 	// in: path
-	UID int64 `json:"uid"`
+	UID string `json:"uid"`
 }
 
 // swagger:route DELETE /cloudmigration/migration/{uid} migrations deleteCloudMigration
@@ -287,7 +287,7 @@ type DeleteMigrationRequest struct {
 	// UID of a migration
 	//
 	// in: path
-	UID int64 `json:"uid"`
+	UID string `json:"uid"`
 }
 
 // swagger:response cloudMigrationRunResponse
