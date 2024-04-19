@@ -854,12 +854,6 @@ exports[`better eslint`] = {
       [0, 0, 0, "\'VerticalGroup\' import from \'@grafana/ui\' is restricted from being used by a pattern. Use Stack component instead.", "0"],
       [0, 0, 0, "\'HorizontalGroup\' import from \'@grafana/ui\' is restricted from being used by a pattern. Use Stack component instead.", "1"]
     ],
-    "packages/grafana-ui/src/components/LoadingBar/LoadingBar.tsx:5381": [
-      [0, 0, 0, "Avoid direct use of \`animation*\` or \`transition*\` properties. Use the \`handleReducedMotion\` utility function or wrap in a \`prefers-reduced-motion\` media query.", "0"],
-      [0, 0, 0, "Avoid direct use of \`animation*\` or \`transition*\` properties. Use the \`handleReducedMotion\` utility function or wrap in a \`prefers-reduced-motion\` media query.", "1"],
-      [0, 0, 0, "Avoid direct use of \`animation*\` or \`transition*\` properties. Use the \`handleReducedMotion\` utility function or wrap in a \`prefers-reduced-motion\` media query.", "2"],
-      [0, 0, 0, "Avoid direct use of \`animation*\` or \`transition*\` properties. Use the \`handleReducedMotion\` utility function or wrap in a \`prefers-reduced-motion\` media query.", "3"]
-    ],
     "packages/grafana-ui/src/components/MatchersUI/FieldValueMatcher.tsx:5381": [
       [0, 0, 0, "Do not use any type assertions.", "0"]
     ],
