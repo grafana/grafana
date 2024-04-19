@@ -6,6 +6,7 @@ import {
   DataQueryRequest,
   DataQueryResponse,
   DataSourceInstanceSettings,
+  QueryVariableModel,
   ScopedVars,
   SelectableValue,
   TimeRange,
@@ -84,7 +85,7 @@ export default class CloudMonitoringDatasource extends DataSourceWithBackend<
         ),
       },
       sloQuery: sloQuery && this.interpolateProps(sloQuery, scopedVars),
-      promQLQuery: promQLQuery && this.interpolateProps(promQLQuery, scopedVars),
+      promQLQuery: promQLQuery && this.interpolateProps(promQLQuery, scopedVars, { expr: this.interpolatePromQLQuery }),
     };
   }
 
@@ -294,11 +295,31 @@ export default class CloudMonitoringDatasource extends DataSourceWithBackend<
     return query;
   }
 
-  interpolateProps<T extends Record<string, any>>(object: T, scopedVars: ScopedVars = {}): T {
+  interpolatePromQLQuery(value: string | string[], _variable: QueryVariableModel) {
+    if (isArray(value)) {
+      return value.join('|');
+    }
+    return value;
+  }
+
+  interpolateProps<T extends Record<string, any>>(
+    object: T,
+    scopedVars: ScopedVars = {},
+    formattingFunctions?: { [key: string]: Function | undefined }
+  ): T {
     return Object.entries(object).reduce((acc, [key, value]) => {
+      let interpolatedValue = value;
+      if (value && isString(value)) {
+        // Pass a function to the template service for formatting
+        interpolatedValue = this.templateSrv.replace(
+          value,
+          scopedVars,
+          formattingFunctions && formattingFunctions[key]
+        );
+      }
       return {
         ...acc,
-        [key]: value && isString(value) ? this.templateSrv.replace(value, scopedVars) : value,
+        [key]: interpolatedValue,
       };
     }, {} as T);
   }
