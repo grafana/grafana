@@ -364,7 +364,7 @@ func TestIntegrationRemoteAlertmanagerConfiguration(t *testing.T) {
 		require.NoError(t, store.Set(ctx, cfg.OrgID, "alertmanager", "silences", testSilence2))
 		require.NoError(t, store.Set(ctx, cfg.OrgID, "alertmanager", "notifications", testNflog2))
 		testConfig.CreatedAt = time.Now().Unix()
-		require.NoError(t, am.ApplyConfig(ctx, fakeConfig))
+		require.NoError(t, am.ApplyConfig(ctx, testConfig))
 
 		// The remote Alertmanager continues to be ready.
 		require.True(t, am.Ready())
@@ -400,7 +400,10 @@ func TestIntegrationRemoteAlertmanagerConfiguration(t *testing.T) {
 		want, err := json.Marshal(pCfg)
 		require.NoError(t, err)
 
-		require.JSONEq(t, string(want), config.GrafanaAlertmanagerConfig)
+		got, err := json.Marshal(config.GrafanaAlertmanagerConfig)
+		require.NoError(t, err)
+
+		require.JSONEq(t, string(want), string(got))
 		require.Equal(t, fmt.Sprintf("%x", md5.Sum(want)), config.Hash)
 		require.True(t, config.Default)
 	}

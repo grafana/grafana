@@ -204,35 +204,34 @@ func (am *Alertmanager) checkReadiness(ctx context.Context) error {
 // CompareAndSendConfiguration checks whether a given configuration is being used by the remote Alertmanager.
 // If not, it sends the configuration to the remote Alertmanager.
 func (am *Alertmanager) CompareAndSendConfiguration(ctx context.Context, config *models.AlertConfiguration) error {
+	c, err := notifier.Load([]byte(config.AlertmanagerConfiguration))
+	if err != nil {
+		return err
+	}
+
 	// Decrypt the configuration before comparing.
-	rawDecrypted, err := am.decryptConfiguration(ctx, config.AlertmanagerConfiguration)
+	decrypted, err := am.decryptConfiguration(ctx, c)
 	if err != nil {
 		return err
 	}
 
 	// Send the configuration only if we need to.
-	if !am.shouldSendConfig(ctx, rawDecrypted) {
+	if !am.shouldSendConfig(ctx, decrypted) {
 		return nil
 	}
-
-	return am.sendConfiguration(ctx, string(rawDecrypted), config.ConfigurationHash, config.CreatedAt, config.Default)
+	return am.sendConfiguration(ctx, decrypted, config.ConfigurationHash, config.CreatedAt, config.Default)
 }
 
-// decryptConfiguration decrypts secure fields in a configuration, returning it as a slice of bytes.
-func (am *Alertmanager) decryptConfiguration(ctx context.Context, cfg string) ([]byte, error) {
-	c, err := notifier.Load([]byte(cfg))
-	if err != nil {
-		return nil, err
-	}
-
+func (am *Alertmanager) decryptConfiguration(ctx context.Context, cfg *apimodels.PostableUserConfig) (*apimodels.PostableUserConfig, error) {
 	fn := func(payload []byte) ([]byte, error) {
 		return am.decrypt(ctx, payload)
 	}
-	decrypted, err := c.Decrypt(fn)
+	decrypted, err := cfg.Decrypt(fn)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("unable to decrypt the configuration: %w", err)
 	}
-	return json.Marshal(decrypted)
+
+	return &decrypted, nil
 }
 
 func (am *Alertmanager) sendConfiguration(ctx context.Context, decrypted *apimodels.PostableUserConfig, hash string, createdAt int64, isDefault bool) error {
@@ -276,14 +275,20 @@ func (am *Alertmanager) SaveAndApplyConfig(ctx context.Context, cfg *apimodels.P
 
 // SaveAndApplyDefaultConfig sends the default Grafana Alertmanager configuration to the remote Alertmanager.
 func (am *Alertmanager) SaveAndApplyDefaultConfig(ctx context.Context) error {
-	rawDecrypted, err := am.decryptConfiguration(ctx, am.defaultConfig)
+	c, err := notifier.Load([]byte(am.defaultConfig))
 	if err != nil {
-		return fmt.Errorf("unable to decrypt default configuration: %w", err)
+		return fmt.Errorf("unable to parse the default configuration: %w", err)
+	}
+
+	// Decrypt before sending.
+	decrypted, err := am.decryptConfiguration(ctx, c)
+	if err != nil {
+		return err
 	}
 
 	return am.sendConfiguration(
 		ctx,
-		string(rawDecrypted),
+		decrypted,
 		am.defaultConfigHash,
 		time.Now().Unix(),
 		true,
