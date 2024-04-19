@@ -1181,10 +1181,20 @@ describe('LokiDatasource', () => {
           );
         });
         it('should add the filter after other label filters', () => {
-          assertAdHocFilters('{bar="baz"} | logfmt | test="value" | line_format "test"', '{bar="baz"} | logfmt | test="value" | job=`grafana` | line_format "test"', ds, defaultAdHocFilters);
+          assertAdHocFilters(
+            '{bar="baz"} | logfmt | test="value" | line_format "test"',
+            '{bar="baz"} | logfmt | test="value" | job=`grafana` | line_format "test"',
+            ds,
+            defaultAdHocFilters
+          );
         });
         it('should add the filter after label_format', () => {
-          assertAdHocFilters('{bar="baz"} | logfmt | test="value" | label_format process="{{.process}}"', '{bar="baz"} | logfmt | test="value" | label_format process="{{.process}}" | job=`grafana`', ds, defaultAdHocFilters);
+          assertAdHocFilters(
+            '{bar="baz"} | logfmt | test="value" | label_format process="{{.process}}"',
+            '{bar="baz"} | logfmt | test="value" | label_format process="{{.process}}" | job=`grafana`',
+            ds,
+            defaultAdHocFilters
+          );
         });
       });
     });
