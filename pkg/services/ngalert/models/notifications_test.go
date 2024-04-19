@@ -75,6 +75,11 @@ func TestValidate(t *testing.T) {
 			expErrorContains:     "group interval",
 		},
 		{
+			name:                 "group interval zero is invalid",
+			notificationSettings: CopyNotificationSettings(validNotificationSettings(), NSMuts.WithGroupInterval(util.Pointer(0*time.Second))),
+			expErrorContains:     "group interval",
+		},
+		{
 			name:                 "repeat interval empty is valid",
 			notificationSettings: CopyNotificationSettings(validNotificationSettings(), NSMuts.WithRepeatInterval(nil)),
 		},
@@ -85,6 +90,11 @@ func TestValidate(t *testing.T) {
 		{
 			name:                 "repeat interval negative is invalid",
 			notificationSettings: CopyNotificationSettings(validNotificationSettings(), NSMuts.WithRepeatInterval(util.Pointer(-1*time.Second))),
+			expErrorContains:     "repeat interval",
+		},
+		{
+			name:                 "repeat interval zero is invalid",
+			notificationSettings: CopyNotificationSettings(validNotificationSettings(), NSMuts.WithRepeatInterval(util.Pointer(0*time.Second))),
 			expErrorContains:     "repeat interval",
 		},
 	}
