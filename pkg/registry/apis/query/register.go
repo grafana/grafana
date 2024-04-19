@@ -85,8 +85,9 @@ func RegisterAPIService(features featuremgmt.FeatureToggles,
 	tracer tracing.Tracer,
 	legacy service.LegacyDataSourceLookup,
 ) (*QueryAPIBuilder, error) {
-	if !features.IsEnabledGlobally(featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs) {
-		return nil, nil // skip registration unless opting into experimental apis
+	if !(features.IsEnabledGlobally(featuremgmt.FlagQueryService) ||
+		features.IsEnabledGlobally(featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs)) {
+		return nil, nil // skip registration unless explicitly added (or all experimental are added)
 	}
 
 	builder, err := NewQueryAPIBuilder(
@@ -132,10 +133,16 @@ func (b *QueryAPIBuilder) GetAPIGroupInfo(
 	gv := v0alpha1.SchemeGroupVersion
 	apiGroupInfo := genericapiserver.NewDefaultAPIGroupInfo(gv.Group, scheme, metav1.ParameterCodec, codecs)
 
-	plugins := newPluginsStorage(b.registry)
-
 	storage := map[string]rest.Storage{}
+
+	plugins := newPluginsStorage(b.registry)
 	storage[plugins.resourceInfo.StoragePath()] = plugins
+	if !b.features.IsEnabledGlobally(featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs) {
+		// The plugin registry is still experimental, and not yet accurate
+		// For standard k8s api discovery to work, at least one resource must be registered
+		// While this feature is under development, we can return an empty list for non-dev instances
+		plugins.returnEmptyList = true
+	}
 
 	apiGroupInfo.VersionedResourcesStorageMap[gv.Version] = storage
 	return &apiGroupInfo, nil

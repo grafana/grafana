@@ -278,15 +278,17 @@
     },
     {
       "metadata": {
-        "name": "kubernetesQueryServiceRewrite",
-        "resourceVersion": "1712639261786",
-        "creationTimestamp": "2024-04-09T05:07:41Z"
+        "name": "queryServiceRewrite",
+        "resourceVersion": "1713422970838",
+        "creationTimestamp": "2024-04-09T05:07:41Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2024-04-18 06:49:30.838977 +0000 UTC"
+        }
       },
       "spec": {
         "description": "Rewrite requests targeting /ds/query to the query service",
         "stage": "experimental",
         "codeowner": "@grafana/grafana-app-platform-squad",
-        "requiresDevMode": true,
         "requiresRestart": true
       }
     },
@@ -2132,6 +2134,35 @@
         "description": "In server-side expressions, disable the sorting of numeric-kind metrics by their metric name or labels.",
         "stage": "experimental",
         "codeowner": "@grafana/observability-metrics",
+        "requiresRestart": true
+      }
+    },
+    {
+      "metadata": {
+        "name": "queryServiceFromUI",
+        "resourceVersion": "1713422970838",
+        "creationTimestamp": "2024-04-18T06:49:30Z"
+      },
+      "spec": {
+        "description": "Routes requests to the new query service",
+        "stage": "experimental",
+        "codeowner": "@grafana/grafana-app-platform-squad",
+        "frontend": true
+      }
+    },
+    {
+      "metadata": {
+        "name": "queryService",
+        "resourceVersion": "1713504737045",
+        "creationTimestamp": "2024-04-18T06:49:30Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2024-04-19 05:32:17.045343 +0000 UTC"
+        }
+      },
+      "spec": {
+        "description": "Register /apis/query.grafana.app/ -- will eventually replace /api/ds/query",
+        "stage": "experimental",
+        "codeowner": "@grafana/grafana-app-platform-squad",
         "requiresRestart": true
       }
     }

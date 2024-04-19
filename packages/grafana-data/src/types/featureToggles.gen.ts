@@ -121,7 +121,9 @@ export interface FeatureToggles {
   transformationsVariableSupport?: boolean;
   kubernetesPlaylists?: boolean;
   kubernetesSnapshots?: boolean;
-  kubernetesQueryServiceRewrite?: boolean;
+  queryService?: boolean;
+  queryServiceRewrite?: boolean;
+  queryServiceFromUI?: boolean;
   cloudWatchBatchQueries?: boolean;
   recoveryThreshold?: boolean;
   lokiStructuredMetadata?: boolean;
