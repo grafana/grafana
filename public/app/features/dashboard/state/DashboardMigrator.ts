@@ -879,7 +879,7 @@ export class DashboardMigrator {
             let tableTransformOptions: TimeSeriesTableTransformerOptions = {};
 
             // For each {refIdtoStat} record which maps refId to a statistic
-            // we add that to the stat property of the the new
+            // we add that to the stat property of the new
             // RefIdTransformerOptions interface which includes multiple settings
             for (const [refId, stat] of Object.entries(transformation.options.refIdToStat)) {
               let newSettings: RefIdTransformerOptions = {};

@@ -419,8 +419,31 @@ func TestIntegrationUserDataAccess(t *testing.T) {
 	})
 
 	t.Run("Change user password", func(t *testing.T) {
-		err := userStore.ChangePassword(context.Background(), &user.ChangeUserPasswordCommand{})
+		id, err := userStore.Insert(context.Background(), &user.User{
+			Email:    "password@test.com",
+			Name:     "password",
+			Login:    "password",
+			Password: "password",
+			Salt:     "salt",
+			Created:  time.Now(),
+			Updated:  time.Now(),
+		})
 		require.NoError(t, err)
+
+		err = userStore.Update(context.Background(), &user.UpdateUserCommand{
+			UserID:   id,
+			Password: passwordPtr("updated"),
+		})
+		require.NoError(t, err)
+
+		updated, err := userStore.GetByID(context.Background(), id)
+		require.NoError(t, err)
+
+		assert.Equal(t, updated.Salt, "salt")
+		assert.Equal(t, updated.Name, "password")
+		assert.Equal(t, updated.Login, "password")
+		assert.Equal(t, updated.Email, "password@test.com")
+		assert.Equal(t, updated.Password, user.Password("updated"))
 	})
 
 	t.Run("update last seen at", func(t *testing.T) {
@@ -956,8 +979,8 @@ func TestIntegrationUserUpdate(t *testing.T) {
 		require.Equal(t, "Change Name", result.Name)
 
 		// Unchanged
-		require.Equal(t, "loginUSER3", result.Login)
-		require.Equal(t, "USER3@test.com", result.Email)
+		require.Equal(t, "loginuser3", result.Login)
+		require.Equal(t, "user3@test.com", result.Email)
 	})
 }
 
@@ -1032,6 +1055,11 @@ func createOrgAndUserSvc(t *testing.T, store db.DB, cfg *setting.Cfg) (org.Servi
 	require.NoError(t, err)
 
 	return orgService, usrSvc
+}
+
+func passwordPtr(s string) *user.Password {
+	password := user.Password(s)
+	return &password
 }
 
 func boolPtr(b bool) *bool {

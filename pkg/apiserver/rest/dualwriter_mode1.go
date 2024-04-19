@@ -64,3 +64,13 @@ func (d *DualWriterMode1) DeleteCollection(ctx context.Context, deleteValidation
 
 	return legacy.DeleteCollection(ctx, deleteValidation, options, listOptions)
 }
+
+func (d *DualWriterMode1) Update(ctx context.Context, name string, objInfo rest.UpdatedObjectInfo, createValidation rest.ValidateObjectFunc, updateValidation rest.ValidateObjectUpdateFunc, forceAllowCreate bool, options *metav1.UpdateOptions) (runtime.Object, bool, error) {
+	legacy, ok := d.Legacy.(rest.Updater)
+	if !ok {
+		klog.FromContext(ctx).Error(errDualWriterUpdaterMissing, "legacy storage rest.Updater is missing")
+		return nil, false, errDualWriterUpdaterMissing
+	}
+
+	return legacy.Update(ctx, name, objInfo, createValidation, updateValidation, forceAllowCreate, options)
+}
