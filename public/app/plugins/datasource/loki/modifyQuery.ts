@@ -163,6 +163,7 @@ export function addLabelToQuery(
   const parserPositions = getParserPositions(query);
   const labelFilterPositions = getLabelFilterPositions(query);
   const hasStreamSelectorMatchers = getMatcherInStreamPositions(query);
+  // For non-indexed labels we want to add them after label_format to, for example, allow ad-hoc filters to use formatted labels
   const labelFormatPositions = getNodePositionsFromQuery(query, [LabelFormatExpr]);
   const everyStreamSelectorHasMatcher = streamSelectorPositions.every((streamSelectorPosition) =>
     hasStreamSelectorMatchers.some(
