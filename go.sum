@@ -2196,8 +2196,8 @@ github.com/grafana/grafana/pkg/apimachinery v0.0.0-20240226124929-648abdbd0ea4 h
 github.com/grafana/grafana/pkg/apimachinery v0.0.0-20240226124929-648abdbd0ea4/go.mod h1:vrRQJuNprTWqwm6JPxHf3BoTJhvO15QMEjQ7Q/YUOnI=
 github.com/grafana/grafana/pkg/apiserver v0.0.0-20240226124929-648abdbd0ea4 h1:tIbI5zgos92vwJ8lV3zwHwuxkV03GR3FGLkFW9V5LxY=
 github.com/grafana/grafana/pkg/apiserver v0.0.0-20240226124929-648abdbd0ea4/go.mod h1:vpYI6DHvFO595rpQGooUjcyicjt9rOevldDdW79peV0=
-github.com/grafana/grafana/pkg/promlib v0.0.4 h1:9jAW19WABIAp6NlpZsAERQ+s5ayQYDFfryDFjjn1r6g=
-github.com/grafana/grafana/pkg/promlib v0.0.4/go.mod h1:621zjsCaFtP7mqqaiMJRN9h3SXrywAMaIPkeHvq3jsk=
+github.com/grafana/grafana/pkg/promlib v0.0.5 h1:LiJP4ZPdk4qsgvrcw+0DoW0/+RjAND/Xw76s5HHspmo=
+github.com/grafana/grafana/pkg/promlib v0.0.5/go.mod h1:iZNjkJBN8DU/5/DxrmwuHaSeiKODT72DYiQ0c9Da1JQ=
 github.com/grafana/grafana/pkg/util/xorm v0.0.1 h1:72QZjxWIWpSeOF8ob4aMV058kfgZyeetkAB8dmeti2o=
 github.com/grafana/grafana/pkg/util/xorm v0.0.1/go.mod h1:eNfbB9f2jM8o9RfwqwjY8SYm5tvowJ8Ly+iE4P9rXII=
 github.com/grafana/prometheus-alertmanager v0.25.1-0.20240321101410-40158de684b2 h1:wqqaqZw+J8sLXzOjXMMde219jc6dfJPI8599UpaILZw=
