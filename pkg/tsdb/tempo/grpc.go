@@ -101,7 +101,6 @@ func getDialOpts(ctx context.Context, settings backend.DataSourceInstanceSetting
 			if err != nil {
 				logger.Error("Error dialing secure socks proxy. Returning connection anyway", "error", err)
 			}
-
 			return conn, err
 		}))
 	}
