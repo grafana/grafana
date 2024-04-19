@@ -122,6 +122,8 @@ export const droneFrontItem: CanvasElementItem = {
 
 const getStyles = (theme: GrafanaTheme2) => ({
   droneFront: css({
+    // TODO: figure out what styles to apply when prefers-reduced-motion is set
+    // eslint-disable-next-line @grafana/no-unreduced-motion
     transition: 'transform 0.4s',
   }),
 });

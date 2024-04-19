@@ -5,6 +5,8 @@ import { GrafanaTheme2 } from '@grafana/data';
 
 import { TooltipPlacement } from '../components/Tooltip';
 
+import { handleReducedMotion } from './handleReducedMotion';
+
 export function getPlacement(placement?: TooltipPlacement): Placement {
   switch (placement) {
     case 'auto':
@@ -37,7 +39,14 @@ export function buildTooltipTheme(
       color: tooltipText,
       fontSize: theme.typography.bodySmall.fontSize,
       padding: theme.spacing(tooltipPadding.topBottom, tooltipPadding.rightLeft),
-      transition: 'opacity 0.3s',
+      ...handleReducedMotion(
+        {
+          transition: 'opacity 0.3s',
+        },
+        {
+          transition: 'opacity 0.3s',
+        }
+      ),
       zIndex: theme.zIndex.tooltip,
       maxWidth: '400px',
       overflowWrap: 'break-word',

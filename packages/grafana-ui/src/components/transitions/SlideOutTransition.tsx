@@ -5,6 +5,7 @@ import { CSSTransition } from 'react-transition-group';
 import { GrafanaTheme2 } from '@grafana/data';
 
 import { useStyles2 } from '../../themes';
+import { handleReducedMotion } from '../../utils';
 
 type Props = {
   children: React.ReactNode;
@@ -36,7 +37,14 @@ const getStyles = (_theme: GrafanaTheme2, duration: number, measurement: 'width'
     label: 'enterActive',
     [`${measurement}`]: `${size}px`,
     opacity: 1,
-    transition: `opacity ${duration}ms ease-out, ${measurement} ${duration}ms ease-out`,
+    ...handleReducedMotion(
+      {
+        transition: `opacity ${duration}ms ease-out, ${measurement} ${duration}ms ease-out`,
+      },
+      {
+        transition: `opacity ${duration}ms ease-out`,
+      }
+    ),
   }),
   exit: css({
     label: 'exit',
@@ -47,6 +55,13 @@ const getStyles = (_theme: GrafanaTheme2, duration: number, measurement: 'width'
     label: 'exitActive',
     opacity: 0,
     [`${measurement}`]: 0,
-    transition: `opacity ${duration}ms ease-out, ${measurement} ${duration}ms ease-out`,
+    ...handleReducedMotion(
+      {
+        transition: `opacity ${duration}ms ease-out, ${measurement} ${duration}ms ease-out`,
+      },
+      {
+        transition: `opacity ${duration}ms ease-out`,
+      }
+    ),
   }),
 });

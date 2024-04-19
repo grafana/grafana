@@ -7,6 +7,7 @@ import { GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 
 import { useTheme2 } from '../../themes/ThemeContext';
+import { handleReducedMotion } from '../../utils';
 
 /** @internal */
 export enum ColorSwatchVariant {
@@ -80,8 +81,10 @@ const getStyles = (
       boxShadow: isSelected
         ? `inset 0 0 0 2px ${color}, inset 0 0 0 4px ${theme.colors.getContrastText(color)}`
         : 'none',
-      transition: theme.transitions.create(['transform'], {
-        duration: theme.transitions.duration.short,
+      ...handleReducedMotion({
+        transition: theme.transitions.create(['transform'], {
+          duration: theme.transitions.duration.short,
+        }),
       }),
       '&:hover': {
         transform: 'scale(1.1)',

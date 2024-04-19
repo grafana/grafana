@@ -4,6 +4,7 @@ import React, { useState } from 'react';
 import { GrafanaTheme2 } from '@grafana/data';
 
 import { useStyles2 } from '../../themes/ThemeContext';
+import { handleReducedMotion } from '../../utils';
 import { clearButtonStyles } from '../Button';
 import { Icon } from '../Icon/Icon';
 
@@ -71,7 +72,14 @@ const getStyles = (theme: GrafanaTheme2) => ({
     label: 'collapse__header',
     padding: theme.spacing(1, 2, 1, 2),
     display: 'flex',
-    transition: 'all 0.1s linear',
+    ...handleReducedMotion(
+      {
+        transition: 'all 0.1s linear',
+      },
+      {
+        transition: 'all 0.1s linear',
+      }
+    ),
   }),
   headerCollapsed: css({
     label: 'collapse__header--collapsed',

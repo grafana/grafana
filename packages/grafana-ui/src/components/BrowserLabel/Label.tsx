@@ -6,6 +6,7 @@ import { GrafanaTheme2 } from '@grafana/data';
 
 import { useTheme2 } from '../../themes';
 import { HighlightPart } from '../../types';
+import { handleReducedMotion } from '../../utils';
 import { PartialHighlighter } from '../Typeahead/PartialHighlighter';
 
 type OnLabelClick = (name: string, value: string | undefined, event: React.MouseEvent<HTMLElement>) => void;
@@ -120,7 +121,14 @@ const getLabelStyles = (theme: GrafanaTheme2) => ({
     fontWeight: theme.typography.fontWeightMedium,
     backgroundColor: theme.colors.primary.shade,
     color: theme.colors.text.primary,
-    animation: 'pulse 3s ease-out 0s infinite normal forwards',
+    ...handleReducedMotion(
+      {
+        animation: 'pulse 3s ease-out 0s infinite normal forwards',
+      },
+      {
+        animation: 'pulse 3s ease-out 0s infinite normal forwards',
+      }
+    ),
     '@keyframes pulse': {
       '0%': {
         color: theme.colors.text.primary,

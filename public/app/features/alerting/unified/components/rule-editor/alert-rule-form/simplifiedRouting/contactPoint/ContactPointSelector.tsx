@@ -1,4 +1,4 @@
-import { css, cx } from '@emotion/css';
+import { css, cx, keyframes } from '@emotion/css';
 import React, { useCallback, useEffect, useState } from 'react';
 import { useFormContext, Controller } from 'react-hook-form';
 
@@ -11,6 +11,7 @@ import {
   Select,
   Stack,
   TextLink,
+  handleReducedMotion,
   useStyles2,
 } from '@grafana/ui';
 import { RuleFormValues } from 'app/features/alerting/unified/types/rule-form';
@@ -149,6 +150,27 @@ function LinkToContactPoints() {
   );
 }
 
+const pulse = keyframes({
+  '0%': {
+    opacity: 1,
+  },
+  '50%': {
+    opacity: 0,
+  },
+  '100%': {
+    opacity: 1,
+  },
+});
+
+const rotation = keyframes({
+  from: {
+    transform: 'rotate(720deg)',
+  },
+  to: {
+    transform: 'rotate(0deg)',
+  },
+});
+
 const getStyles = (theme: GrafanaTheme2) => ({
   contactPointsSelector: css({
     display: 'flex',
@@ -172,15 +194,16 @@ const getStyles = (theme: GrafanaTheme2) => ({
   }),
   loading: css({
     pointerEvents: 'none',
-    animation: 'rotation 2s infinite linear',
-    '@keyframes rotation': {
-      from: {
-        transform: 'rotate(720deg)',
+    ...handleReducedMotion(
+      {
+        animation: `${rotation} 2s infinite linear`,
       },
-      to: {
-        transform: 'rotate(0deg)',
-      },
-    },
+      {
+        animationName: pulse,
+        animationDuration: '2s',
+        animationIterationCount: 'infinite',
+      }
+    ),
   }),
   warn: css({
     color: theme.colors.warning.text,

@@ -2,7 +2,7 @@ import { css, keyframes } from '@emotion/css';
 import React from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { useStyles2 } from '@grafana/ui';
+import { handleReducedMotion, useStyles2 } from '@grafana/ui';
 
 import { t } from '../../internationalization';
 
@@ -30,6 +30,18 @@ const fadeIn = keyframes({
   },
   '100%': {
     opacity: 1,
+  },
+});
+
+const pulse = keyframes({
+  '0%': {
+    opacity: 0,
+  },
+  '50%': {
+    opacity: 1,
+  },
+  '100%': {
+    opacity: 0,
   },
 });
 
@@ -70,25 +82,39 @@ const squash = keyframes({
 const getStyles = (theme: GrafanaTheme2) => ({
   container: css({
     opacity: 0,
-    animationName: fadeIn,
-    animationIterationCount: 1,
-    animationDuration: '0.9s',
-    animationDelay: '0.5s',
-    animationFillMode: 'forwards',
+    ...handleReducedMotion(
+      {
+        animationName: fadeIn,
+        animationIterationCount: 1,
+        animationDuration: '0.9s',
+        animationDelay: '0.5s',
+        animationFillMode: 'forwards',
+      },
+      {
+        animationName: pulse,
+        animationIterationCount: 'infinite',
+        animationDuration: '4s',
+        animationDelay: '0.5s',
+      }
+    ),
   }),
 
   bounce: css({
     textAlign: 'center',
-    animationName: bounce,
-    animationDuration: '0.9s',
-    animationIterationCount: 'infinite',
+    ...handleReducedMotion({
+      animationName: bounce,
+      animationDuration: '0.9s',
+      animationIterationCount: 'infinite',
+    }),
   }),
 
   logo: css({
     display: 'inline-block',
-    animationName: squash,
-    animationDuration: '0.9s',
-    animationIterationCount: 'infinite',
+    ...handleReducedMotion({
+      animationName: squash,
+      animationDuration: '0.9s',
+      animationIterationCount: 'infinite',
+    }),
     width: '60px',
     height: '60px',
   }),

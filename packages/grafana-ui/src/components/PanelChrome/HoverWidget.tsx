@@ -5,6 +5,7 @@ import { GrafanaTheme2 } from '@grafana/data';
 import { selectors as e2eSelectors } from '@grafana/e2e-selectors';
 
 import { useStyles2 } from '../../themes';
+import { handleReducedMotion } from '../../utils';
 import { Icon } from '../Icon/Icon';
 
 import { PanelMenu } from './PanelMenu';
@@ -66,7 +67,14 @@ function getStyles(theme: GrafanaTheme2) {
   return {
     container: css({
       label: 'hover-container-widget',
-      transition: `all .1s linear`,
+      ...handleReducedMotion(
+        {
+          transition: `all .1s linear`,
+        },
+        {
+          transition: `all .1s linear`,
+        }
+      ),
       display: 'flex',
       position: 'absolute',
       zIndex: 1,

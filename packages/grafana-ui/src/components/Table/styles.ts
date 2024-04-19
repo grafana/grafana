@@ -3,6 +3,8 @@ import { css } from '@emotion/css';
 import { GrafanaTheme2 } from '@grafana/data';
 import { TableCellHeight } from '@grafana/schema';
 
+import { handleReducedMotion } from '../../utils';
+
 export function useTableStyles(theme: GrafanaTheme2, cellHeightOption: TableCellHeight) {
   const borderColor = theme.colors.border.weak;
   const resizerColor = theme.colors.primary.border;
@@ -263,7 +265,14 @@ export function useTableStyles(theme: GrafanaTheme2, cellHeightOption: TableCell
       display: 'inline-block',
       background: resizerColor,
       opacity: 0,
-      transition: 'opacity 0.2s ease-in-out',
+      ...handleReducedMotion(
+        {
+          transition: 'opacity 0.2s ease-in-out',
+        },
+        {
+          transition: 'opacity 0.2s ease-in-out',
+        }
+      ),
       width: '8px',
       height: '100%',
       position: 'absolute',

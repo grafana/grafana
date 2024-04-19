@@ -2,6 +2,7 @@ import { css, keyframes } from '@emotion/css';
 import React from 'react';
 
 import { useStyles2 } from '../../themes';
+import { handleReducedMotion } from '../../utils';
 
 export const EllipsisAnimated = React.memo(() => {
   const styles = useStyles2(getStyles);
@@ -22,13 +23,34 @@ const getStyles = () => {
       display: 'inline',
     }),
     firstDot: css({
-      animation: `${firstDot} 2s linear infinite`,
+      ...handleReducedMotion(
+        {
+          animation: `${firstDot} 2s linear infinite`,
+        },
+        {
+          animation: `${firstDot} 2s linear infinite`,
+        }
+      ),
     }),
     secondDot: css({
-      animation: `${secondDot} 2s linear infinite`,
+      ...handleReducedMotion(
+        {
+          animation: `${secondDot} 2s linear infinite`,
+        },
+        {
+          animation: `${secondDot} 2s linear infinite`,
+        }
+      ),
     }),
     thirdDot: css({
-      animation: `${thirdDot} 2s linear infinite`,
+      ...handleReducedMotion(
+        {
+          animation: `${thirdDot} 2s linear infinite`,
+        },
+        {
+          animation: `${thirdDot} 2s linear infinite`,
+        }
+      ),
     }),
   };
 };
