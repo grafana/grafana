@@ -95,11 +95,18 @@ export const getCardContainerStyles = (
       borderRadius: theme.shape.radius.default,
       marginBottom: '8px',
       pointerEvents: disabled ? 'none' : 'auto',
-      ...handleReducedMotion({
-        transition: theme.transitions.create(['background-color', 'box-shadow', 'border-color', 'color'], {
-          duration: theme.transitions.duration.short,
-        }),
-      }),
+      ...handleReducedMotion(
+        {
+          transition: theme.transitions.create(['background-color', 'box-shadow', 'border-color', 'color'], {
+            duration: theme.transitions.duration.short,
+          }),
+        },
+        {
+          transition: theme.transitions.create(['background-color', 'box-shadow', 'border-color', 'color'], {
+            duration: theme.transitions.duration.short,
+          }),
+        }
+      ),
 
       ...(!disableHover && {
         '&:hover': {

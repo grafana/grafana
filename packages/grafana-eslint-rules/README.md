@@ -26,6 +26,98 @@ To account for users with motion sensitivities, these should always be wrapped i
 
 `@grafana/ui` exposes a `handledReducedMotion` utility function that can be used to handle this.
 
+#### Examples
+
+```tsx
+// Bad ❌
+const getStyles = (theme: GrafanaTheme2) => ({
+  loading: css({
+    animationName: rotate,
+    animationDuration: '2s',
+    animationIterationCount: 'infinite',
+  }),
+})
+
+// Good ✅
+const getStyles = (theme: GrafanaTheme2) => ({
+  loading: css({
+    ...handleReducedMotion(
+      {
+        animationName: rotate,
+        animationDuration: '2s',
+        animationIterationCount: 'infinite',
+      },
+      {
+        animationName: pulse,
+        animationDuration: '2s',
+        animationIterationCount: 'infinite',
+      }
+    ),
+  }),
+})
+
+// Good ✅
+const getStyles = (theme: GrafanaTheme2) => ({
+  loading: css({
+    '@media (prefers-reduced-motion: no-preference)': {
+      animationName: rotate,
+      animationDuration: '2s',
+      animationIterationCount: 'infinite',
+    }
+
+    '@media (prefers-reduced-motion: reduce)': {
+      animationName: pulse,
+      animationDuration: '2s',
+      animationIterationCount: 'infinite',
+    ),
+  }),
+})
+```
+
+Note we've switched the potentially sensitive rotating animation to a less intense pulse animation when `prefers-reduced-motion` is set.
+
+Animations that involve only non-moving properties, like opacity, color, and blurs, are unlikely to be problematic. In those cases, you still need to wrap the animation in a `prefers-reduced-motion` media query, but you can use the same animation for both cases:
+
+```tsx
+// Bad ❌
+const getStyles = (theme: GrafanaTheme2) => ({
+  card: css({
+    transition: theme.transitions.create(['background-color'], {
+      duration: theme.transitions.duration.short,
+    }),
+  }),
+});
+
+// Good ✅
+const getStyles = (theme: GrafanaTheme2) => ({
+  card: css({
+    ...handleReducedMotion(
+      {
+        transition: theme.transitions.create(['background-color'], {
+          duration: theme.transitions.duration.short,
+        }),
+      },
+      {
+        transition: theme.transitions.create(['background-color'], {
+          duration: theme.transitions.duration.short,
+        }),
+      }
+    ),
+  }),
+});
+
+// Good ✅
+const getStyles = (theme: GrafanaTheme2) => ({
+  card: css({
+    '@media (prefers-reduced-motion: no-preference), @media (prefers-reduced-motion: reduce)': {
+      transition: theme.transitions.create(['background-color'], {
+        duration: theme.transitions.duration.short,
+      }),
+    },
+  }),
+});
+```
+
 ### `theme-token-usage`
 
 Used to find all instances of `theme` tokens being used in the codebase and emit the counts as metrics. Should **not** be used as an actual lint rule!
