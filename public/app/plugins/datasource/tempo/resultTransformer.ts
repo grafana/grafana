@@ -468,7 +468,7 @@ function transformToTraceData(data: TraceSearchMetadata) {
   return {
     traceID: data.traceID,
     startTime: parseInt(data.startTimeUnixNano!, 10) / 1000000,
-    traceDuration: data.durationMs || '<1ms',
+    traceDuration: data.durationMs,
     traceService: data.rootServiceName || '',
     traceName: data.rootTraceName || '',
   };
@@ -635,7 +635,10 @@ export function createTableFrameFromTraceQlQuery(
       frame.fields[1].values.push(traceData.startTime);
       frame.fields[2].values.push(traceData.traceService);
       frame.fields[3].values.push(traceData.traceName);
-      frame.fields[4].values.push(traceData.traceDuration);
+
+      // Note: this is a workaround to display the duration in the table when it is <1ms
+      // and the duration is not available in the trace data response.
+      frame.fields[4].values.push(traceData.traceDuration ? traceData.traceDuration : '<1ms');
 
       if (trace.spanSets) {
         frame.fields[5].values.push(
@@ -929,7 +932,7 @@ interface TraceTableData {
   spanID?: string;
   startTime?: number;
   name?: string;
-  traceDuration?: number | string;
+  traceDuration?: number;
 }
 
 function transformSpanToTraceData(span: Span, spanSet: Spanset, trace: TraceSearchMetadata): TraceTableData {
