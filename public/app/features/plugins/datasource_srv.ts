@@ -28,7 +28,7 @@ import { ExpressionDatasourceUID } from 'app/features/expressions/types';
 import { importDataSourcePlugin } from './plugin_loader';
 
 const MaxUIDLength = 40;
-const validUIDChars = `a-zA-Z0-9\-\_`;
+const validUIDChars = `a-zA-Z0-9\\-\\_`;
 const validUIDRegex = new RegExp(`^[${validUIDChars}]*$`);
 const validUIDReplacer = new RegExp(`[^${validUIDChars}]`, 'g');
 
@@ -76,6 +76,7 @@ export class DatasourceSrv implements DataSourceService {
 
   getDataSourceSettingsByUid(uid: string): DataSourceInstanceSettings | undefined {
     if (!this.validUID(uid)) {
+      console.log('Invalid datasource UID: ', uid);
       const fixedUID = this.autofixUID(uid);
       // Check if the datasource is stored with the fixed UID
       if (this.settingsMapByUid[fixedUID]) {
