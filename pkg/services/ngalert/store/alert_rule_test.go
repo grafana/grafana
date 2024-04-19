@@ -666,7 +666,6 @@ func TestIntegrationInsertAlertRules(t *testing.T) {
 		require.ErrorIs(t, err, models.ErrAlertRuleConflictBase)
 		require.ErrorContains(t, err, "rule UID under the same organisation should be unique")
 	})
-
 }
 
 func TestIntegrationAlertRulesNotificationSettings(t *testing.T) {
