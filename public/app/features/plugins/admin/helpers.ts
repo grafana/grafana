@@ -76,6 +76,10 @@ export function mergeLocalsAndRemotes({
           catalogPlugin.hasUpdate &&
           catalogPlugin.installedVersion !== instancePlugin?.version;
 
+        if (instancePlugin?.version && instancePlugin?.version !== remotePlugin.version) {
+          catalogPlugin.hasUpdate = true;
+        }
+
         catalogPlugin.isUninstallingFromInstance = Boolean(localCounterpart) && !instancesMap.has(remotePlugin.slug);
       }
 

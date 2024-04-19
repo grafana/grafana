@@ -1,3 +1,4 @@
+// Core Grafana history https://github.com/grafana/grafana/blob/v11.0.0-preview/public/app/plugins/datasource/prometheus/components/monaco-query-field/MonacoQueryField.tsx
 import { css } from '@emotion/css';
 import { parser } from '@prometheus-io/lezer-promql';
 import { debounce } from 'lodash';
@@ -220,6 +221,13 @@ const MonacoQueryField = (props: Props) => {
             },
             'isEditorFocused' + id
           );
+
+          // Fixes Monaco capturing the search key binding and displaying a useless search box within the Editor.
+          // See https://github.com/grafana/grafana/issues/85850
+          monaco.editor.addKeybindingRule({
+            keybinding: monaco.KeyMod.CtrlCmd | monaco.KeyCode.KeyF,
+            command: null,
+          });
 
           /* Something in this configuration of monaco doesn't bubble up [mod]+K, which the
                     command palette uses. Pass the event out of monaco manually

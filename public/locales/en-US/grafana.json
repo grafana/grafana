@@ -1,5 +1,5 @@
 {
-  "_comment": "This file is the source of truth for English strings. Edit this in the codebase to change plurals and other phrases for the UI.",
+  "_comment": "The code is the source of truth for English phrases. They should be updated in the components directly, and additional plurals specified in this file.",
   "access-control": {
     "add-permission": {
       "role-label": "Role",
@@ -25,13 +25,18 @@
       "user": "User"
     }
   },
+  "api-keys": {
+    "empty-state": {
+      "message": "No API keys found"
+    }
+  },
   "bouncing-loader": {
     "label": "Loading"
   },
   "browse-dashboards": {
     "action": {
       "cancel-button": "Cancel",
-      "cannot-move-folders": "Folders can not be moved",
+      "cannot-move-folders": "Folders cannot be moved",
       "delete-button": "Delete",
       "delete-modal-invalid-text": "One or more folders contain library panels or alert rules. Delete these first in order to proceed.",
       "delete-modal-invalid-title": "Cannot delete folder",
@@ -107,6 +112,9 @@
       "change-theme": "Change theme...",
       "dark-theme": "Dark",
       "light-theme": "Light"
+    },
+    "empty-state": {
+      "message": "No results found"
     },
     "search-box": {
       "placeholder": "Search or jump to..."
@@ -242,14 +250,14 @@
     "empty": {
       "add-library-panel-body": "Add visualizations that are shared with other dashboards.",
       "add-library-panel-button": "Add library panel",
-      "add-library-panel-header": "Add a library panel",
+      "add-library-panel-header": "Import panel",
       "add-visualization-body": "Select a data source and then query and visualize your data with charts, stats and tables or create lists, markdowns and other widgets.",
       "add-visualization-button": "Add visualization",
       "add-visualization-header": "Start your new dashboard by adding a visualization",
       "add-widget-body": "Create lists, markdowns and other widgets",
       "add-widget-button": "Add widget",
       "add-widget-header": "Add a widget",
-      "import-a-dashboard-body": "Import dashboard from file or <1>grafana.com</1>.",
+      "import-a-dashboard-body": "Import dashboards from files or<1>grafana.com</1>.",
       "import-a-dashboard-header": "Import a dashboard",
       "import-dashboard-button": "Import dashboard"
     },
@@ -353,7 +361,7 @@
     },
     "dashboard-delete-button": "Delete Dashboard",
     "general": {
-      "auto-refresh-description": "Define the auto refresh intervals that should be available in the auto refresh list.",
+      "auto-refresh-description": "Define the auto refresh intervals that should be available in the auto refresh list. Use the format '5s' for seconds, '1m' for minutes, '1h' for hours, and '1d' for days (e.g.: '5s,10s,30s,1m,5m,15m,30m,1h,2h,1d').",
       "auto-refresh-label": "Auto refresh",
       "description-label": "Description",
       "editable-description": "Set to read-only to disable all editing. Reload the dashboard for changes to take effect",
@@ -417,6 +425,9 @@
   "data-sources": {
     "datasource-add-button": {
       "label": "Add new data source"
+    },
+    "empty-state": {
+      "message": "No data sources found"
     }
   },
   "explore": {
@@ -446,10 +457,11 @@
       "delete-query-tooltip": "Delete query",
       "delete-starred-query-confirmation-text": "Are you sure you want to permanently delete your starred query?",
       "edit-comment-tooltip": "Edit comment",
-      "loading-text": "loading...",
+      "left-pane": "Left pane",
       "optional-description": "An optional description of what the query does.",
       "query-comment-label": "Query comment",
       "query-text-label": "Query text",
+      "right-pane": "Right pane",
       "run-query-button": "Run query",
       "save-comment": "Save comment",
       "star-query-tooltip": "Star query",
@@ -538,15 +550,15 @@
     "toolbar": {
       "aria-label": "Explore toolbar",
       "copy-link": "Copy URL",
-      "copy-link-abs-time": "Copy absolute URL",
+      "copy-link-abs-time": "Copy Absolute Shortened URL",
       "copy-links-absolute-category": "Time-sync URL links (share with time range intact)",
       "copy-links-normal-category": "Normal URL links",
       "copy-shortened-link": "Copy shortened URL",
-      "copy-shortened-link-abs-time": "Copy absolute shortened URL",
-      "copy-shortened-link-menu": "Open shortened link menu",
+      "copy-shortened-link-abs-time": "Copy Absolute Shortened URL",
+      "copy-shortened-link-menu": "Open copy link options",
       "refresh-picker-cancel": "Cancel",
       "refresh-picker-run": "Run query",
-      "split-close": "Close",
+      "split-close": " Close ",
       "split-close-tooltip": "Close split pane",
       "split-narrow": "Narrow pane",
       "split-title": "Split",
@@ -560,9 +572,6 @@
   "grafana-ui": {
     "drawer": {
       "close": "Close"
-    },
-    "empty-state": {
-      "not-found-message": "No results found"
     },
     "modal": {
       "close-tooltip": "Close"
@@ -588,9 +597,9 @@
   "help-modal": {
     "shortcuts-category": {
       "dashboard": "Dashboard",
-      "focused-panel": "Focused Panel",
+      "focused-panel": "Focused panel",
       "global": "Global",
-      "time-range": "Time Range"
+      "time-range": "Time range"
     },
     "shortcuts-description": {
       "change-theme": "Change theme",
@@ -657,7 +666,7 @@
     "modal": {
       "body_one": "This panel is being used in {{count}} dashboard. Please choose which dashboard to view the panel in:",
       "body_other": "This panel is being used in {{count}} dashboards. Please choose which dashboard to view the panel in:",
-      "button-cancel": "<0>Cancel</0>",
+      "button-cancel": "Cancel",
       "button-view-panel1": "View panel in {{label}}...",
       "button-view-panel2": "View panel in dashboard...",
       "panel-not-linked": "Panel is not linked to a dashboard. Add the panel to a dashboard and retry.",
@@ -713,6 +722,8 @@
       "connect": "Connect to this stack",
       "connecting": "Connecting to this stack...",
       "title": "Connect to a cloud stack",
+      "token-error-description": "There was an error saving the token. See the Grafana server logs for more details.",
+      "token-error-title": "Error saving token",
       "token-required-error": "Migration token is required"
     },
     "cta": {
@@ -922,7 +933,7 @@
       "title": "Create"
     },
     "create-alert": {
-      "title": "Create alert rule"
+      "title": "New alert rule"
     },
     "create-dashboard": {
       "title": "Dashboard"
@@ -1010,7 +1021,7 @@
       "title": "Migrate to Grafana Cloud"
     },
     "monitoring": {
-      "subtitle": "Monitoring and infrastructure apps",
+      "subtitle": "Out-of-the-box observability solutions",
       "title": "Observability"
     },
     "new": {
@@ -1152,6 +1163,10 @@
     "title": "Latest from the blog"
   },
   "notifications": {
+    "empty-state": {
+      "description": "Notifications you have received will appear here",
+      "title": "You're all caught up!"
+    },
     "starred-dashboard": "Dashboard starred",
     "unstarred-dashboard": "Dashboard unstarred"
   },
@@ -1224,6 +1239,11 @@
   "playlists": {
     "empty-state": {
       "message": "No playlists found"
+    }
+  },
+  "plugins": {
+    "empty-state": {
+      "message": "No plugins found"
     }
   },
   "profile": {
@@ -1428,6 +1448,11 @@
       "placeholder": "Search for dashboards and folders"
     }
   },
+  "service-accounts": {
+    "empty-state": {
+      "message": "No services accounts found"
+    }
+  },
   "share-modal": {
     "dashboard": {
       "title": "Share"
@@ -1456,7 +1481,7 @@
       "info-text": "Create a direct link to this dashboard or panel, customized with the options below.",
       "link-url": "Link URL",
       "render-alert": "Image renderer plugin not installed",
-      "render-instructions": "To render a panel image, you must install the <1>Grafana image renderer plugin</1>. Please contact your Grafana administrator to install the plugin.",
+      "render-instructions": "To render a panel image, you must install the<1>Grafana image renderer plugin</1>. Please contact your Grafana administrator to install the plugin.",
       "rendered-image": "Direct link rendered image",
       "save-alert": "Dashboard is not saved",
       "save-dashboard": "To render a panel image, you must save the dashboard first.",
@@ -1556,6 +1581,11 @@
     "no-tags": "No tags found",
     "placeholder": "Filter by tag"
   },
+  "teams": {
+    "empty-state": {
+      "message": "No teams found"
+    }
+  },
   "time-picker": {
     "absolute": {
       "recent-title": "Recently used absolute ranges",
@@ -1648,6 +1678,11 @@
   },
   "user-sessions": {
     "loading": "Loading sessions..."
+  },
+  "users": {
+    "empty-state": {
+      "message": "No users found"
+    }
   },
   "users-access-list": {
     "tabs": {

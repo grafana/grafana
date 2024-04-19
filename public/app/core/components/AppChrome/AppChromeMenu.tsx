@@ -6,7 +6,7 @@ import React, { useRef } from 'react';
 import CSSTransition from 'react-transition-group/CSSTransition';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { useStyles2, useTheme2 } from '@grafana/ui';
+import { handleReducedMotion, useStyles2, useTheme2 } from '@grafana/ui';
 import { useGrafana } from 'app/core/context/GrafanaContext';
 import { KioskMode } from 'app/types';
 
@@ -125,8 +125,10 @@ const getStyles = (theme: GrafanaTheme2, searchBarHidden?: boolean) => {
 
 const getAnimStyles = (theme: GrafanaTheme2, animationDuration: number) => {
   const commonTransition = {
-    transitionDuration: `${animationDuration}ms`,
-    transitionTimingFunction: theme.transitions.easing.easeInOut,
+    ...handleReducedMotion({
+      transitionDuration: `${animationDuration}ms`,
+      transitionTimingFunction: theme.transitions.easing.easeInOut,
+    }),
     [theme.breakpoints.down('md')]: {
       overflow: 'hidden',
     },

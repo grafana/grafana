@@ -1,4 +1,3 @@
-import 'whatwg-fetch';
 import { uniqueId } from 'lodash';
 import { http, HttpResponse } from 'msw';
 import { setupServer, SetupServer } from 'msw/node';
@@ -20,6 +19,7 @@ import {
   AlertManagerCortexConfig,
   AlertmanagerReceiver,
   EmailConfig,
+  GrafanaManagedContactPoint,
   GrafanaManagedReceiverConfig,
   MatcherOperator,
   Route,
@@ -217,6 +217,9 @@ export function mockApi(server: SetupServer) {
       getPluginSettings: (response: PluginMeta) => {
         server.use(http.get(`api/plugins/${response.id}/settings`, () => HttpResponse.json(response)));
       },
+    },
+    getContactPointsList: (response: GrafanaManagedContactPoint[]) => {
+      server.use(http.get(`/api/v1/notifications/receivers`, () => HttpResponse.json(response)));
     },
 
     oncall: {

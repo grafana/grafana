@@ -51,10 +51,11 @@ function setup(queries: DataQuery[]) {
 
   const leftState = makeExplorePaneState();
   const initialState: ExploreState = {
+    richHistory: [],
+    showQueryHistory: false,
     panes: {
       left: {
         ...leftState,
-        richHistory: [],
         datasourceInstance: datasources['someDs-uid'],
         queries,
         correlations: [],
