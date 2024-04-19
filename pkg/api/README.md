@@ -82,4 +82,4 @@ Finally, they can browser and try out both the OpenAPI v2 and v3 via the Swagger
 
 If there are any issues generating the specifications (e.g., diff containing unrelated changes to your PR or unusually large diff), please run the following two commands to ensure your Swagger version is up to date, then re-run the make commands.
 - `go install github.com/bwplotka/bingo@latest`
-- `bingo get swagger`
+- `bingo get github.com/go-swagger/go-swagger/cmd/swagger@v0.30.2`
