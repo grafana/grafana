@@ -79,7 +79,7 @@ Grayed-out sections are a set of functions that represent a relatively small val
 
 You can hover over a specific function to view a tooltip that shows you additional data about that function, like the function's value, percentage of total value, and the number of samples with that function.
 
-{{< figure src="/media/docs/grafana/panels-visualizations/flamegraph/screenshot-flamegraph-10.1-tooltip.png" max-width="1025px" alt="A flame graph visualization with a hover tooltip." >}}
+{{< figure src="/media/docs/grafana/panels-visualizations/flamegraph/screenshot-flamegraph-10.1-tooltip.png" max-width="650px" alt="A flame graph visualization with a hover tooltip." >}}
 
 #### Drop-down actions
 
