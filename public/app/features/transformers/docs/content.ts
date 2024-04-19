@@ -1256,17 +1256,17 @@ You can specify a regular expression, which is only applied to matches, along wi
 In the following example, we are stripping the 'A-' prefix from field names. In the before image, you can see everything is prefixed with 'A-', and in the after image, you can see the prefix has been removed.
 
 ${buildImageContent(
-  '/static/img/docs/transformations/rename-by-regex-before-7-3.png',
+  '/media/docs/grafana/panels-visualizations/screenshot-rename-by-regex-before-v11.0.png',
   imageRenderType,
-  'A bar chart with long series names'
+  'A time series with full series names'
 )}
 
 With the transformation applied, you can see we are left with just the remainder of the string.
 
 ${buildImageContent(
-  '/static/img/docs/transformations/rename-by-regex-after-7-3.png',
+  '/media/docs/grafana/panels-visualizations/screenshot-rename-by-regex-after-v11.0.png',
   imageRenderType,
-  'A bar chart with shortened series names'
+  'A time series with shortened series names'
 )}
 
 This transformation lets you to tailor your data to meet your visualization needs, making your dashboards more informative and user-friendly.
