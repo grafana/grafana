@@ -601,6 +601,10 @@ Displays debug information in the upper right corner. This can be useful for deb
 - **None** displays tooltips only when a data point is clicked.
 - **Details** displays tooltips when a mouse pointer hovers over a data point.
 
+## Keyboard support
+
+Pan the map by using the arrow keys, while the map is in focus. Zoom in and out by using the `+` and `-` keys.
+
 {{% docs/reference %}}
 [provisioning docs page]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/administration/provisioning"
 [provisioning docs page]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/administration/provisioning"

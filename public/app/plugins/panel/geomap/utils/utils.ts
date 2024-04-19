@@ -84,6 +84,7 @@ export const getNewOpenLayersMap = (panel: GeomapPanel, options: Options, div: H
     target: div,
     interactions: interactionDefaults({
       mouseWheelZoom: false, // managed by initControls
+      keyboard: true,
     }),
   }));
 };
