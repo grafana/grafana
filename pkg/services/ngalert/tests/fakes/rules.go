@@ -368,7 +368,6 @@ func (f *RuleStore) GetNamespacesByRuleUID(ctx context.Context, orgID int64, uid
 	uidFilter := make(map[string]struct{}, len(uids))
 	for _, uid := range uids {
 		uidFilter[uid] = struct{}{}
-
 	}
 
 	for _, rule := range rules {
