@@ -2,6 +2,14 @@ import { DataSourceInstanceSettings } from '@grafana/data';
 import { DatasourceSrv } from './datasource_srv';
 
 describe('DatasourceSrv', () => {
+  const consoleWarn = console.warn;
+  beforeEach(() => {
+    console.warn = jest.fn();
+  });
+  afterEach(() => {
+    console.warn = consoleWarn;
+  });
+
   describe('getDataSourceSettingsByUid', () => {
     [
       {
