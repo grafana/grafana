@@ -1,11 +1,52 @@
 package definitions
 
 import (
+	"net/http"
 	"testing"
 	"time"
 
 	"github.com/stretchr/testify/assert"
 )
+
+func TestDiscoveryBaseHTTPStatusCode(t *testing.T) {
+	tc := []struct {
+		name     string
+		input    DiscoveryBase
+		expected int
+	}{{
+		name: "OK when status is success",
+		input: DiscoveryBase{
+			Status: "success",
+		},
+		expected: http.StatusOK,
+	}, {
+		name: "InternalServerError when status is error but no error type",
+		input: DiscoveryBase{
+			Status: "error",
+		},
+		expected: http.StatusInternalServerError,
+	}, {
+		name: "BadRequest when status is error and type is bad_data",
+		input: DiscoveryBase{
+			Status:    "error",
+			ErrorType: "bad_data",
+		},
+		expected: http.StatusBadRequest,
+	}, {
+		name: "InternalServerError when status is error and type is server_error",
+		input: DiscoveryBase{
+			Status:    "error",
+			ErrorType: "server_error",
+		},
+		expected: http.StatusInternalServerError,
+	}}
+
+	for _, tt := range tc {
+		t.Run(tt.name, func(t *testing.T) {
+			assert.EqualValues(t, tt.expected, tt.input.HTTPStatusCode())
+		})
+	}
+}
 
 func TestSortAlertsByImportance(t *testing.T) {
 	tm1, tm2 := time.Now(), time.Now().Add(time.Second)
@@ -66,7 +107,6 @@ func TestSortAlertsByImportance(t *testing.T) {
 }
 
 func TestTopKAlertsByImportance(t *testing.T) {
-	//	tm1, tm2 := time.Now(), time.Now().Add(time.Second)
 	tc := []struct {
 		name     string
 		k        int
