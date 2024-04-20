@@ -92,9 +92,7 @@ func ProvideService(
 	}
 	s.api = api.RegisterApi(routeRegister, s, tracer)
 
-	if cfg.CloudMigration.IsDeveloperMode {
-		// todo
-	} else {
+	if !cfg.CloudMigration.IsDeveloperMode {
 		// get CMS path from the config
 		domain, err := s.parseCloudMigrationConfig()
 		if err != nil {
@@ -103,7 +101,11 @@ func ProvideService(
 		s.cmsClient = cmsclient.NewCMSClient(domain)
 
 		s.gcomService = gcom.New(gcom.Config{ApiURL: cfg.GrafanaComAPIURL, Token: cfg.CloudMigration.GcomAPIToken})
+	} else {
+		s.cmsClient = cmsclient.NewInMemoryClient()
+		s.gcomService = &gcomStub{}
 	}
+
 	if err := s.registerMetrics(prom, s.metrics); err != nil {
 		s.log.Warn("error registering prom metrics", "error", err.Error())
 	}
