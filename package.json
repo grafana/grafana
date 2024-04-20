@@ -48,7 +48,6 @@
     "plugins:build-bundled": "find plugins-bundled -name package.json -not -path '*/node_modules/*' -execdir yarn build \\;",
     "watch": "yarn start -d watch,start core:start --watchTheme",
     "ci:test-frontend": "yarn run test:ci",
-    "i18n:pseudo": "node ./public/locales/pseudo.mjs",
     "i18n:stats": "node ./scripts/cli/reportI18nStats.mjs",
     "betterer": "betterer",
     "betterer:json": "ts-node --transpile-only --project ./scripts/cli/tsconfig.json ./scripts/cli/bettererResultsToJson.ts",
