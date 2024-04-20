@@ -51,6 +51,7 @@ export default class RichHistoryLocalStorage implements RichHistoryStorage {
   }
 
   async addToRichHistory(newRichHistoryQuery: Omit<RichHistoryQuery, 'id' | 'createdAt'>) {
+    console.log('local storage add to rich history');
     const ts = Date.now();
     const richHistoryQuery = {
       id: ts.toString(),
@@ -185,7 +186,7 @@ function cleanUp(richHistory: RichHistoryLocalStorageDTO[]): RichHistoryLocalSto
  * Ensures the entry can be added. Throws an error if current limit has been hit.
  * Returns queries that should be saved back giving space for one extra query.
  */
-function checkLimits(queriesToKeep: RichHistoryLocalStorageDTO[]): {
+export function checkLimits(queriesToKeep: RichHistoryLocalStorageDTO[]): {
   queriesToKeep: RichHistoryLocalStorageDTO[];
   limitExceeded: boolean;
 } {

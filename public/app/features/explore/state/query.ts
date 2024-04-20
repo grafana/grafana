@@ -501,7 +501,7 @@ async function handleHistory(
       }
     })
   );
-
+  console.log('handleHistory');
   const filteredQueries = filteredQueriesRes.filter((query): query is DataQuery => !!query);
 
   if (filteredQueries.length > 0) {
@@ -531,6 +531,7 @@ interface RunQueriesOptions {
 export const runQueries = createAsyncThunk<void, RunQueriesOptions>(
   'explore/runQueries',
   async ({ exploreId, preserveCache }, { dispatch, getState }) => {
+    console.log('run queries');
     dispatch(cancelQueries(exploreId));
 
     const { defaultCorrelationEditorDatasource, scopedVars, showCorrelationEditorLinks } = await getCorrelationsData(
