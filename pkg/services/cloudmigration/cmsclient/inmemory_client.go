@@ -39,8 +39,10 @@ func (c *memoryClientImpl) MigrateData(
 	}
 
 	// simulate flakiness on one random item
-	failedItem := result.Items[rand.Intn(len(result.Items))]
+	i := rand.Intn(len(result.Items))
+	failedItem := result.Items[i]
 	failedItem.Status, failedItem.Error = cloudmigration.ItemStatusError, "simulated random error"
+	result.Items[i] = failedItem
 
 	return &result, nil
 }

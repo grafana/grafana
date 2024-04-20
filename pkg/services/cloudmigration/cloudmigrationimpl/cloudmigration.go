@@ -103,7 +103,8 @@ func ProvideService(
 		s.gcomService = gcom.New(gcom.Config{ApiURL: cfg.GrafanaComAPIURL, Token: cfg.CloudMigration.GcomAPIToken})
 	} else {
 		s.cmsClient = cmsclient.NewInMemoryClient()
-		s.gcomService = &gcomStub{}
+		s.gcomService = &gcomStub{map[string]gcom.AccessPolicy{}}
+		s.cfg.StackID = "12345"
 	}
 
 	if err := s.registerMetrics(prom, s.metrics); err != nil {
