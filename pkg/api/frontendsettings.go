@@ -10,6 +10,7 @@ import (
 	"sort"
 	"strings"
 
+	"github.com/grafana/grafana-azure-sdk-go/v2/azsettings"
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/api/webassets"
 	"github.com/grafana/grafana/pkg/login/social"
@@ -270,6 +271,7 @@ func (hs *HTTPServer) getFrontendSettings(c *contextmodel.ReqContext) (*dtos.Fro
 
 		Azure: dtos.FrontendSettingsAzureDTO{
 			Cloud:                                  hs.Cfg.Azure.Cloud,
+			Clouds:                                 getAzureClouds(hs.Cfg.Azure),
 			ManagedIdentityEnabled:                 hs.Cfg.Azure.ManagedIdentityEnabled,
 			WorkloadIdentityEnabled:                hs.Cfg.Azure.WorkloadIdentityEnabled,
 			UserIdentityEnabled:                    hs.Cfg.Azure.UserIdentityEnabled,
@@ -726,4 +728,18 @@ func (hs *HTTPServer) getEnabledOAuthProviders() map[string]any {
 		}
 	}
 	return providers
+}
+
+func getAzureClouds(settings *azsettings.AzureSettings) []dtos.FrontendSettingsAzureCloudDTO {
+	// If no custom clouds are defined, return nil because frontend already knows the predefined clouds
+	if clouds := settings.CustomClouds(); clouds == nil || len(clouds) == 0 {
+		return nil
+	} else {
+		cloudsDTO := make([]dtos.FrontendSettingsAzureCloudDTO, len(clouds))
+		for i, cloud := range clouds {
+			cloudsDTO[i].Name = cloud.Name
+			cloudsDTO[i].DisplayName = cloud.DisplayName
+		}
+		return cloudsDTO
+	}
 }

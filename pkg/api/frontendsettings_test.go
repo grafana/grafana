@@ -11,6 +11,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	"github.com/grafana/grafana-azure-sdk-go/v2/azsettings"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/remotecache"
 	"github.com/grafana/grafana/pkg/infra/usagestats"
@@ -337,6 +338,14 @@ func TestHTTPServer_GetFrontendSettings_apps(t *testing.T) {
 			require.EqualValues(t, test.expected, got)
 		})
 	}
+}
+
+func TestFrontendSettings_getAzureClouds(t *testing.T) {
+	t.Run("returns nil if no custom clouds", func(t *testing.T) {
+		settings := azsettings.AzureSettings{}
+		clouds := getAzureClouds(&settings)
+		require.Equal(t, true, clouds == nil)
+	})
 }
 
 func newAppSettings(id string, enabled bool) map[string]*pluginsettings.DTO {
