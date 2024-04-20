@@ -81,7 +81,6 @@ export interface FeatureToggles {
   extraThemes?: boolean;
   lokiPredefinedOperations?: boolean;
   pluginsFrontendSandbox?: boolean;
-  dashboardEmbed?: boolean;
   frontendSandboxMonitorOnly?: boolean;
   sqlDatasourceDatabaseSelection?: boolean;
   lokiFormatQuery?: boolean;
@@ -101,7 +100,6 @@ export interface FeatureToggles {
   permissionsFilterRemoveSubquery?: boolean;
   prometheusConfigOverhaulAuth?: boolean;
   configurableSchedulerTick?: boolean;
-  influxdbSqlSupport?: boolean;
   alertingNoDataErrorExecution?: boolean;
   angularDeprecationUI?: boolean;
   dashgpt?: boolean;
@@ -122,7 +120,9 @@ export interface FeatureToggles {
   transformationsVariableSupport?: boolean;
   kubernetesPlaylists?: boolean;
   kubernetesSnapshots?: boolean;
-  kubernetesQueryServiceRewrite?: boolean;
+  queryService?: boolean;
+  queryServiceRewrite?: boolean;
+  queryServiceFromUI?: boolean;
   cloudWatchBatchQueries?: boolean;
   recoveryThreshold?: boolean;
   lokiStructuredMetadata?: boolean;
@@ -174,9 +174,9 @@ export interface FeatureToggles {
   authAPIAccessTokenAuth?: boolean;
   scopeFilters?: boolean;
   ssoSettingsSAML?: boolean;
-  usePrometheusFrontendPackage?: boolean;
   oauthRequireSubClaim?: boolean;
   newDashboardWithFiltersAndGroupBy?: boolean;
   cloudWatchNewLabelParsing?: boolean;
   accessActionSets?: boolean;
+  disableNumericMetricsSortingInExpressions?: boolean;
 }

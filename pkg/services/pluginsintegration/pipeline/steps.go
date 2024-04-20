@@ -89,6 +89,7 @@ func newRegisterPluginRoles(registry plugins.RoleRegistry) *RegisterPluginRoles 
 func (r *RegisterPluginRoles) Register(ctx context.Context, p *plugins.Plugin) (*plugins.Plugin, error) {
 	if err := r.roleRegistry.DeclarePluginRoles(ctx, p.ID, p.Name, p.Roles); err != nil {
 		r.log.Warn("Declare plugin roles failed.", "pluginId", p.ID, "error", err)
+		return nil, err
 	}
 	return p, nil
 }
