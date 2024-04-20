@@ -11,26 +11,20 @@ import (
 	"github.com/grafana/grafana/pkg/services/cloudmigration"
 )
 
-type Client interface {
-	ValidateKey(context.Context, cloudmigration.CloudMigration) error
-	MigrateData(context.Context, cloudmigration.CloudMigration, cloudmigration.MigrateDataRequestDTO) (*cloudmigration.MigrateDataResponseDTO, error)
-}
-
-const logPrefix = "cloudmigration.cmsclient"
-
+// NewCMSClient returns an implementation of Client that queries CloudMigrationService
 func NewCMSClient(domain string) Client {
-	return &clientImpl{
+	return &cmsClientImpl{
 		domain: domain,
 		log:    log.New(logPrefix),
 	}
 }
 
-type clientImpl struct {
+type cmsClientImpl struct {
 	domain string
 	log    *log.ConcreteLogger
 }
 
-func (c *clientImpl) ValidateKey(ctx context.Context, cm cloudmigration.CloudMigration) error {
+func (c *cmsClientImpl) ValidateKey(ctx context.Context, cm cloudmigration.CloudMigration) error {
 	logger := c.log.FromContext(ctx)
 
 	path := fmt.Sprintf("https://cms-%s.%s/cloud-migrations/api/v1/validate-key", cm.ClusterSlug, c.domain)
@@ -69,7 +63,7 @@ func (c *clientImpl) ValidateKey(ctx context.Context, cm cloudmigration.CloudMig
 	return nil
 }
 
-func (c *clientImpl) MigrateData(ctx context.Context, cm cloudmigration.CloudMigration, request cloudmigration.MigrateDataRequestDTO) (*cloudmigration.MigrateDataResponseDTO, error) {
+func (c *cmsClientImpl) MigrateData(ctx context.Context, cm cloudmigration.CloudMigration, request cloudmigration.MigrateDataRequestDTO) (*cloudmigration.MigrateDataResponseDTO, error) {
 	logger := c.log.FromContext(ctx)
 
 	path := fmt.Sprintf("https://cms-%s.%s/cloud-migrations/api/v1/migrate-data", cm.ClusterSlug, c.domain)
