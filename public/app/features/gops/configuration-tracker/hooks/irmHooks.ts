@@ -1,3 +1,4 @@
+import { getBackendSrv } from '@grafana/runtime';
 import { alertRuleApi } from 'app/features/alerting/unified/api/alertRuleApi';
 import { alertmanagerApi } from 'app/features/alerting/unified/api/alertmanagerApi';
 import { OnCallIntegrationDTO, onCallApi } from 'app/features/alerting/unified/api/onCallApi';
@@ -87,8 +88,22 @@ function useGetContactPoints() {
   return contactPoints;
 }
 
+async function getIncidentsPluginConfig() {
+  const incidnetConfigurations = await getBackendSrv().post(
+    '/api/plugins/grafana-incident-app/resources/api/ConfigurationTrackerService.GetConfigurationTracker',
+    {}
+  );
+
+  console.log('incidnetConfigurations', incidnetConfigurations);
+
+  return incidnetConfigurations.data;
+}
+
 function useGetIncidentPluginConfig(): IncidentsPluginConfig {
   const { installed: incidnetPluginInstalled } = usePluginBridge(SupportedPlugin.Incident);
+  const config = getIncidentsPluginConfig();
+  console.log('config', config);
+
   return {
     isInstalled: incidnetPluginInstalled ?? false,
     isChatOpsInstalled: false,
