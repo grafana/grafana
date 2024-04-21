@@ -1,15 +1,9 @@
-import { useEffect, useState } from 'react';
-import { useAsync } from 'react-use';
-
-import { PluginMeta } from '@grafana/data';
-import { getBackendSrv } from '@grafana/runtime';
 import { alertRuleApi } from 'app/features/alerting/unified/api/alertRuleApi';
 import { alertmanagerApi } from 'app/features/alerting/unified/api/alertmanagerApi';
 import { OnCallIntegrationDTO, onCallApi } from 'app/features/alerting/unified/api/onCallApi';
 import { usePluginBridge } from 'app/features/alerting/unified/hooks/usePluginBridge';
 import { SupportedPlugin } from 'app/features/alerting/unified/types/pluginBridges';
 import { GRAFANA_RULES_SOURCE_NAME } from 'app/features/alerting/unified/utils/datasource';
-import { getPluginSettings } from 'app/features/plugins/pluginSettings';
 import { Receiver } from 'app/plugins/datasource/alertmanager/types';
 
 export interface StepButtonDto {
@@ -94,94 +88,12 @@ function useGetContactPoints() {
 }
 
 function useGetIncidentPluginConfig(): IncidentsPluginConfig {
-  const { value, loading, error } = useAsync(
-    () => getPluginSettings(SupportedPlugin.Incident, { showErrorAlert: false }),
-    []
-  );
-
-  const [incidentPluginConfig, setIncidentPluginConfig] = useState({
-    isInstalled: false,
+  const { installed: incidnetPluginInstalled } = usePluginBridge(SupportedPlugin.Incident);
+  return {
+    isInstalled: incidnetPluginInstalled ?? false,
     isChatOpsInstalled: false,
     isDrillCreated: false,
-  });
-
-  useEffect(() => {
-    if (error) {
-      console.error('Failed to load plugin settings:', error);
-      return;
-    }
-
-    if (loading || !value) {
-      //show loading state ?
-      return;
-    }
-
-    if (!value.enabled) {
-      setIncidentPluginConfig({
-        isInstalled: false,
-        isChatOpsInstalled: false,
-        isDrillCreated: false,
-      });
-      return;
-    }
-
-    const fetchData = async () => {
-      try {
-        const [isChatOpsInstalled, isDrillCreated] = await Promise.all([
-          getIncidentChatOpsInstalled(value),
-          checkIfIncidentsCreated(),
-        ]);
-
-        setIncidentPluginConfig({
-          isInstalled: value.enabled ?? false,
-          isChatOpsInstalled,
-          isDrillCreated,
-        });
-      } catch (fetchError) {
-        console.error('Error fetching data:', fetchError);
-      }
-    };
-
-    fetchData();
-  }, [value, loading, error]);
-
-  console.log(incidentPluginConfig);
-  return incidentPluginConfig;
-}
-
-async function getIncidentChatOpsInstalled(value: PluginMeta<{}>) {
-  if (!value.enabled) {
-    return false;
-  }
-
-  const availableIntegrations = await getBackendSrv().post(
-    '/api/plugins/grafana-incident-app/resources/api/IntegrationService.GetAvailableIntegrations',
-    {}
-  );
-
-  const isSlackInstalled = availableIntegrations?.find(
-    (integration: { integrationID: string }) => integration.integrationID === 'grate.slack'
-  );
-  const isMSTeamsInstalled = availableIntegrations?.find(
-    (integration: { integrationID: string }) => integration.integrationID === 'grate.msTeams'
-  );
-  return isSlackInstalled || isMSTeamsInstalled;
-}
-
-async function checkIfIncidentsCreated() {
-  const response = await getBackendSrv().post(
-    '/api/plugins/grafana-incident-app/resources/api/IncidentsService.QueryIncidents',
-    {
-      query: {
-        limit: 6,
-        orderDirection: 'DESC',
-        queryString: 'isdrill:false isdrill:true',
-        orderField: 'createdTime',
-      },
-      cursor: { hasMore: false, nextValue: '' },
-    }
-  );
-  return response.incidents.length > 0;
+  };
 }
 
 function useGetOnCallIntegrations() {
@@ -214,6 +126,7 @@ function useOnCallOptions() {
     value: integration.value,
   }));
 }
+
 function useChatOpsConnections() {
   const { is_chatops_connected, is_integration_chatops_connected } = useGetOnCallConfigurationChecks();
   return { is_chatops_connected, is_integration_chatops_connected };
@@ -225,6 +138,8 @@ export function useGetEssentialsConfiguration() {
   const onCallIntegrations = useGetOnCallIntegrations();
   const onCallOptions = useOnCallOptions();
   const chatOpsConnections = useChatOpsConnections();
+
+  console.log('incidentPluginConfig', incidentPluginConfig);
 
   const essentialContent: SectionsDto = {
     sections: [
