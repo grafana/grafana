@@ -181,7 +181,7 @@ export function DataSourcePicker(props: DataSourcePickerProps) {
     if (e.shiftKey) {
       e.preventDefault();
       markerElement?.focus();
-      // When navigating forward, the dropdown closes and and the element next to the input element is focused.
+      // When navigating forward, the dropdown closes and the element next to the input element is focused.
     } else {
       onClose();
     }

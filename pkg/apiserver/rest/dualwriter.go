@@ -70,6 +70,7 @@ var errDualWriterCreaterMissing = errors.New("legacy storage rest.Creater is mis
 var errDualWriterListerMissing = errors.New("legacy storage rest.Lister is missing")
 var errDualWriterDeleterMissing = errors.New("legacy storage rest.GracefulDeleter is missing")
 var errDualWriterCollectionDeleterMissing = errors.New("legacy storage rest.CollectionDeleter is missing")
+var errDualWriterUpdaterMissing = errors.New("legacy storage rest.Updater is missing")
 
 type DualWriterMode int
 

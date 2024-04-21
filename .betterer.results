@@ -697,9 +697,6 @@ exports[`better eslint`] = {
     "packages/grafana-runtime/src/analytics/types.ts:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"]
     ],
-    "packages/grafana-runtime/src/components/DataSourcePicker.tsx:5381": [
-      [0, 0, 0, "\'HorizontalGroup\' import from \'@grafana/ui\' is restricted from being used by a pattern. Use Stack component instead.", "0"]
-    ],
     "packages/grafana-runtime/src/config.ts:5381": [
       [0, 0, 0, "Do not use any type assertions.", "0"],
       [0, 0, 0, "Do not use any type assertions.", "1"],
@@ -785,12 +782,6 @@ exports[`better eslint`] = {
     "packages/grafana-sql/src/components/visual-query-builder/SQLWhereRow.tsx:5381": [
       [0, 0, 0, "Do not use any type assertions.", "0"]
     ],
-    "packages/grafana-ui/src/components/Alert/InlineBanner.story.tsx:5381": [
-      [0, 0, 0, "\'VerticalGroup\' import from \'@grafana/ui\' is restricted from being used by a pattern. Use Stack component instead.", "0"]
-    ],
-    "packages/grafana-ui/src/components/Alert/Toast.story.tsx:5381": [
-      [0, 0, 0, "\'VerticalGroup\' import from \'@grafana/ui\' is restricted from being used by a pattern. Use Stack component instead.", "0"]
-    ],
     "packages/grafana-ui/src/components/ColorPicker/ColorPicker.tsx:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "1"]
@@ -805,12 +796,6 @@ exports[`better eslint`] = {
     "packages/grafana-ui/src/components/DataSourceSettings/types.ts:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "1"]
-    ],
-    "packages/grafana-ui/src/components/Dropdown/Dropdown.story.tsx:5381": [
-      [0, 0, 0, "\'VerticalGroup\' import from \'../Layout/Layout\' is restricted from being used by a pattern. Use Stack component instead.", "0"]
-    ],
-    "packages/grafana-ui/src/components/Forms/Checkbox.story.tsx:5381": [
-      [0, 0, 0, "\'VerticalGroup\' import from \'../Layout/Layout\' is restricted from being used by a pattern. Use Stack component instead.", "0"]
     ],
     "packages/grafana-ui/src/components/Forms/FieldArray.story.tsx:5381": [
       [0, 0, 0, "\'HorizontalGroup\' import from \'@grafana/ui\' is restricted from being used by a pattern. Use Stack component instead.", "0"]
@@ -841,26 +826,17 @@ exports[`better eslint`] = {
       [0, 0, 0, "\'VerticalGroup\' import from \'@grafana/ui\' is restricted from being used by a pattern. Use Stack component instead.", "0"],
       [0, 0, 0, "\'HorizontalGroup\' import from \'@grafana/ui\' is restricted from being used by a pattern. Use Stack component instead.", "1"]
     ],
-    "packages/grafana-ui/src/components/Link/TextLink.story.tsx:5381": [
-      [0, 0, 0, "\'VerticalGroup\' import from \'../Layout/Layout\' is restricted from being used by a pattern. Use Stack component instead.", "0"]
-    ],
     "packages/grafana-ui/src/components/MatchersUI/FieldValueMatcher.tsx:5381": [
       [0, 0, 0, "Do not use any type assertions.", "0"]
     ],
     "packages/grafana-ui/src/components/MatchersUI/fieldMatchersUI.ts:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"]
     ],
-    "packages/grafana-ui/src/components/Menu/Menu.story.tsx:5381": [
-      [0, 0, 0, "\'VerticalGroup\' import from \'../Layout/Layout\' is restricted from being used by a pattern. Use Stack component instead.", "0"]
-    ],
     "packages/grafana-ui/src/components/Modal/ModalsContext.tsx:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "1"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "2"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "3"]
-    ],
-    "packages/grafana-ui/src/components/PageLayout/PageToolbar.story.tsx:5381": [
-      [0, 0, 0, "\'VerticalGroup\' import from \'@grafana/ui\' is restricted from being used by a pattern. Use Stack component instead.", "0"]
     ],
     "packages/grafana-ui/src/components/PanelChrome/PanelContext.ts:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
@@ -978,15 +954,6 @@ exports[`better eslint`] = {
     ],
     "packages/grafana-ui/src/components/Tags/Tag.tsx:5381": [
       [0, 0, 0, "Do not use any type assertions.", "0"]
-    ],
-    "packages/grafana-ui/src/components/TagsInput/TagsInput.story.tsx:5381": [
-      [0, 0, 0, "\'VerticalGroup\' import from \'../Layout/Layout\' is restricted from being used by a pattern. Use Stack component instead.", "0"]
-    ],
-    "packages/grafana-ui/src/components/Text/Text.story.tsx:5381": [
-      [0, 0, 0, "\'VerticalGroup\' import from \'../Layout/Layout\' is restricted from being used by a pattern. Use Stack component instead.", "0"]
-    ],
-    "packages/grafana-ui/src/components/ThemeDemos/EmotionPerfTest.tsx:5381": [
-      [0, 0, 0, "\'VerticalGroup\' import from \'../Layout/Layout\' is restricted from being used by a pattern. Use Stack component instead.", "0"]
     ],
     "packages/grafana-ui/src/components/ValuePicker/ValuePicker.tsx:5381": [
       [0, 0, 0, "Use data-testid for E2E selectors instead of aria-label", "0"]
@@ -1163,17 +1130,8 @@ exports[`better eslint`] = {
     "public/app/core/components/AppChrome/TopBar/TopSearchBarCommandPaletteTrigger.tsx:5381": [
       [0, 0, 0, "Styles should be written using objects.", "0"]
     ],
-    "public/app/core/components/AppNotifications/AppNotificationList.tsx:5381": [
-      [0, 0, 0, "\'VerticalGroup\' import from \'@grafana/ui\' is restricted from being used by a pattern. Use Stack component instead.", "0"]
-    ],
     "public/app/core/components/DynamicImports/SafeDynamicImport.tsx:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"]
-    ],
-    "public/app/core/components/ForgottenPassword/ChangePassword.tsx:5381": [
-      [0, 0, 0, "\'VerticalGroup\' import from \'@grafana/ui\' is restricted from being used by a pattern. Use Stack component instead.", "0"]
-    ],
-    "public/app/core/components/ForgottenPassword/ForgottenPassword.tsx:5381": [
-      [0, 0, 0, "\'HorizontalGroup\' import from \'@grafana/ui\' is restricted from being used by a pattern. Use Stack component instead.", "0"]
     ],
     "public/app/core/components/GraphNG/GraphNG.tsx:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
@@ -1189,12 +1147,6 @@ exports[`better eslint`] = {
     ],
     "public/app/core/components/LocalStorageValueProvider/index.tsx:5381": [
       [0, 0, 0, "Do not re-export imported variable (\`./LocalStorageValueProvider\`)", "0"]
-    ],
-    "public/app/core/components/Login/LoginServiceButtons.tsx:5381": [
-      [0, 0, 0, "\'VerticalGroup\' import from \'@grafana/ui\' is restricted from being used by a pattern. Use Stack component instead.", "0"]
-    ],
-    "public/app/core/components/Login/UserSignup.tsx:5381": [
-      [0, 0, 0, "\'VerticalGroup\' import from \'@grafana/ui\' is restricted from being used by a pattern. Use Stack component instead.", "0"]
     ],
     "public/app/core/components/NestedFolderPicker/Trigger.tsx:5381": [
       [0, 0, 0, "Styles should be written using objects.", "0"]
@@ -3291,8 +3243,7 @@ exports[`better eslint`] = {
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"]
     ],
     "public/app/features/explore/Logs/LogsMetaRow.tsx:5381": [
-      [0, 0, 0, "Styles should be written using objects.", "0"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "1"]
+      [0, 0, 0, "Styles should be written using objects.", "0"]
     ],
     "public/app/features/explore/Logs/LogsNavigation.tsx:5381": [
       [0, 0, 0, "Styles should be written using objects.", "0"],
@@ -4007,9 +3958,6 @@ exports[`better eslint`] = {
     "public/app/features/migrate-to-cloud/api/index.ts:5381": [
       [0, 0, 0, "Do not use export all (\`export * from ...\`)", "0"]
     ],
-    "public/app/features/org/OrgDetailsPage.tsx:5381": [
-      [0, 0, 0, "\'VerticalGroup\' import from \'@grafana/ui\' is restricted from being used by a pattern. Use Stack component instead.", "0"]
-    ],
     "public/app/features/org/state/actions.ts:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"]
     ],
@@ -4190,9 +4138,6 @@ exports[`better eslint`] = {
       [0, 0, 0, "Do not use any type assertions.", "2"],
       [0, 0, 0, "Do not use any type assertions.", "3"]
     ],
-    "public/app/features/profile/UserProfileEditPage.tsx:5381": [
-      [0, 0, 0, "\'VerticalGroup\' import from \'@grafana/ui\' is restricted from being used by a pattern. Use Stack component instead.", "0"]
-    ],
     "public/app/features/query/components/QueryEditorRow.tsx:5381": [
       [0, 0, 0, "Do not use any type assertions.", "0"],
       [0, 0, 0, "Do not use any type assertions.", "1"],
@@ -4265,9 +4210,6 @@ exports[`better eslint`] = {
       [0, 0, 0, "Unexpected any. Specify a different type.", "8"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "9"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "10"]
-    ],
-    "public/app/features/sandbox/BenchmarksPage.tsx:5381": [
-      [0, 0, 0, "\'VerticalGroup\' import from \'@grafana/ui\' is restricted from being used by a pattern. Use Stack component instead.", "0"]
     ],
     "public/app/features/search/page/components/ActionRow.tsx:5381": [
       [0, 0, 0, "Styles should be written using objects.", "0"],
@@ -5221,9 +5163,8 @@ exports[`better eslint`] = {
       [0, 0, 0, "Styles should be written using objects.", "3"]
     ],
     "public/app/plugins/datasource/grafana/components/TimeRegionEditor.tsx:5381": [
-      [0, 0, 0, "\'HorizontalGroup\' import from \'@grafana/ui\' is restricted from being used by a pattern. Use Stack component instead.", "0"],
-      [0, 0, 0, "Styles should be written using objects.", "1"],
-      [0, 0, 0, "Styles should be written using objects.", "2"]
+      [0, 0, 0, "Styles should be written using objects.", "0"],
+      [0, 0, 0, "Styles should be written using objects.", "1"]
     ],
     "public/app/plugins/datasource/grafana/datasource.ts:5381": [
       [0, 0, 0, "Do not use any type assertions.", "0"],
@@ -6035,9 +5976,6 @@ exports[`better eslint`] = {
       [0, 0, 0, "Styles should be written using objects.", "6"],
       [0, 0, 0, "Styles should be written using objects.", "7"]
     ],
-    "public/app/plugins/panel/logs/LogsPanel.tsx:5381": [
-      [0, 0, 0, "Do not use any type assertions.", "0"]
-    ],
     "public/app/plugins/panel/logs/types.ts:5381": [
       [0, 0, 0, "Do not re-export imported variable (\`./panelcfg.gen\`)", "0"]
     ],
@@ -6407,9 +6345,6 @@ exports[`better eslint`] = {
 exports[`no undocumented stories`] = {
   value: `{
     "packages/grafana-ui/src/components/ButtonCascader/ButtonCascader.story.tsx:5381": [
-      [0, 0, 0, "No undocumented stories are allowed, please add an .mdx file with some documentation", "5381"]
-    ],
-    "packages/grafana-ui/src/components/ColorPicker/ColorPickerPopover.story.tsx:5381": [
       [0, 0, 0, "No undocumented stories are allowed, please add an .mdx file with some documentation", "5381"]
     ],
     "packages/grafana-ui/src/components/DateTimePickers/RelativeTimeRangePicker/RelativeTimeRangePicker.story.tsx:5381": [
