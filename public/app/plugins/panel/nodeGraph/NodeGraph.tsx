@@ -164,7 +164,8 @@ export function NodeGraph({ getLinks, dataFrames, nodeLimit, panelId }: Props) {
     config,
     nodeCountLimit,
     width,
-    focusedNodeId
+    focusedNodeId,
+    processed.hasFixed
   );
 
   // If we move from grid to graph layout, and we have focused node lets get its position to center there. We want to
