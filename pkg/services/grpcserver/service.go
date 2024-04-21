@@ -19,6 +19,7 @@ import (
 	"github.com/grafana/grafana/pkg/registry"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/grpcserver/interceptors"
+	mtauthz "github.com/grafana/grafana/pkg/services/store/entity/authz"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -41,7 +42,7 @@ type gPRCServerService struct {
 	enabled bool
 }
 
-func ProvideService(cfg *setting.Cfg, features featuremgmt.FeatureToggles, authenticator interceptors.Authenticator, tracer tracing.Tracer, registerer prometheus.Registerer) (Provider, error) {
+func ProvideService(cfg *setting.Cfg, features featuremgmt.FeatureToggles, authenticator interceptors.Authenticator, authorizer mtauthz.Authorizer, tracer tracing.Tracer, registerer prometheus.Registerer) (Provider, error) {
 	s := &gPRCServerService{
 		cfg:     cfg,
 		logger:  log.New("grpc-server"),
@@ -72,6 +73,7 @@ func ProvideService(cfg *setting.Cfg, features featuremgmt.FeatureToggles, authe
 		grpc.UnaryInterceptor(
 			grpc_middleware.ChainUnaryServer(
 				grpcAuth.UnaryServerInterceptor(authenticator.Authenticate),
+				mtauthz.AuthZUnaryInterceptor(authorizer),
 				interceptors.TracingUnaryInterceptor(tracer),
 				interceptors.LoggingUnaryInterceptor(s.cfg, s.logger), // needs to be registered after tracing interceptor to get trace id
 				middleware.UnaryServerInstrumentInterceptor(grpcRequestDuration),
@@ -79,6 +81,7 @@ func ProvideService(cfg *setting.Cfg, features featuremgmt.FeatureToggles, authe
 		),
 		grpc.StreamInterceptor(
 			grpc_middleware.ChainStreamServer(
+				mtauthz.AuthZStreamInterceptor(authorizer),
 				interceptors.TracingStreamInterceptor(tracer),
 				grpcAuth.StreamServerInterceptor(authenticator.Authenticate),
 				middleware.StreamServerInstrumentInterceptor(grpcRequestDuration),

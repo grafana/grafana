@@ -4,6 +4,8 @@ import (
 	"context"
 
 	"github.com/grafana/dskit/services"
+	"github.com/prometheus/client_golang/prometheus"
+
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/modules"
@@ -12,11 +14,11 @@ import (
 	"github.com/grafana/grafana/pkg/services/grpcserver"
 	"github.com/grafana/grafana/pkg/services/grpcserver/interceptors"
 	"github.com/grafana/grafana/pkg/services/store/entity"
+	"github.com/grafana/grafana/pkg/services/store/entity/authz"
 	"github.com/grafana/grafana/pkg/services/store/entity/db/dbimpl"
 	"github.com/grafana/grafana/pkg/services/store/entity/grpc"
 	"github.com/grafana/grafana/pkg/services/store/entity/sqlstash"
 	"github.com/grafana/grafana/pkg/setting"
-	"github.com/prometheus/client_golang/prometheus"
 )
 
 var (
@@ -51,6 +53,7 @@ type service struct {
 	tracing *tracing.TracingService
 
 	authenticator interceptors.Authenticator
+	authorizer    authz.Authorizer
 
 	log log.Logger
 }
@@ -72,6 +75,7 @@ func ProvideService(
 	}
 
 	authn := &grpc.Authenticator{}
+	authz := &authz.AuthorizerImpl{}
 
 	s := &service{
 		config:        newConfig(cfg),
@@ -79,6 +83,7 @@ func ProvideService(
 		features:      features,
 		stopCh:        make(chan struct{}),
 		authenticator: authn,
+		authorizer:    authz,
 		tracing:       tracing,
 		log:           log,
 	}
@@ -120,7 +125,7 @@ func (s *service) start(ctx context.Context) error {
 		return err
 	}
 
-	s.handler, err = grpcserver.ProvideService(s.cfg, s.features, s.authenticator, s.tracing, prometheus.DefaultRegisterer)
+	s.handler, err = grpcserver.ProvideService(s.cfg, s.features, s.authenticator, s.authorizer, s.tracing, prometheus.DefaultRegisterer)
 	if err != nil {
 		return err
 	}
