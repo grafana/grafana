@@ -63,7 +63,7 @@ type ListAccessPoliciesParams struct {
 	Name      string
 }
 
-type listAccessPoliciesResponse struct {
+type ListAccessPoliciesResponse struct {
 	Items []AccessPolicy `json:"items"`
 }
 
@@ -273,7 +273,7 @@ func (client *GcomClient) ListAccessPolicies(ctx context.Context, params ListAcc
 		return nil, fmt.Errorf("unexpected response when listing access policies: code=%d body=%s", response.StatusCode, body)
 	}
 
-	var responseBody listAccessPoliciesResponse
+	var responseBody ListAccessPoliciesResponse
 	if err := json.NewDecoder(response.Body).Decode(&responseBody); err != nil {
 		return responseBody.Items, fmt.Errorf("unmarshaling response body: %w", err)
 	}
