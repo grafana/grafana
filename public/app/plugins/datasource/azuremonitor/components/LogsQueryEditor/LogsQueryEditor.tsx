@@ -93,7 +93,7 @@ const LogsQueryEditor = ({
       const querySplit = query.azureLogAnalytics.query.split('|');
       // Basic Logs queries are required to start the query with a table
       const table = querySplit[0].trim();
-      datasource.azureLogAnalyticsDatasource.getBasicLogsQueryUsage(table).then((data) => console.log(data));
+      datasource.azureLogAnalyticsDatasource.getBasicLogsQueryUsage(query, table).then((data) => console.log(data));
       const dataIngested: number | undefined = 20; //make call to get data ingested for the table selected
       const textToShow = dataIngested
         ? `This query is processing ${dataIngested} GiB when run. `

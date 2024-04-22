@@ -253,9 +253,15 @@ export default class AzureLogAnalyticsDatasource extends DataSourceWithBackend<
     return await this.getResource(`${this.resourcePath}/v1/metadata`);
   }
 
-  async getBasicLogsQueryUsage(tableName: string) {
-    const params: Record<string, unknown> = {};
-    params['tableName'] = tableName;
-    return await this.getResource(`${this.resourcePath}/v1/usage/basiclogs`, params);
+  async getBasicLogsQueryUsage(query: AzureMonitorQuery, table: string) {
+    const templateSrv = getTemplateSrv();
+    const data = {
+      table: table,
+      resource: query.azureLogAnalytics?.resources?.[0],
+      queryType: query.queryType,
+      from: templateSrv.replace('$__from'),
+      to: templateSrv.replace('$__to'),
+    };
+    return await this.postResource(`${this.resourcePath}/v1/usage/basiclogs`, data);
   }
 }

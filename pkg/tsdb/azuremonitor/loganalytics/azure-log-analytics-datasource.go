@@ -35,6 +35,14 @@ type AzureLogAnalyticsDatasource struct {
 	Logger log.Logger
 }
 
+type BasicLogsUsagePayload struct {
+	Table     string    `json:"table"`
+	Resource  string    `json:"resource"`
+	QueryType string    `json:"queryType"`
+	From      time.Time `json:"from"`
+	To        time.Time `json:"to"`
+}
+
 // AzureLogAnalyticsQuery is the query request that is built from the saved values for
 // from the UI
 type AzureLogAnalyticsQuery struct {
@@ -57,9 +65,86 @@ type AzureLogAnalyticsQuery struct {
 func (e *AzureLogAnalyticsDatasource) ResourceRequest(rw http.ResponseWriter, req *http.Request, cli *http.Client) (http.ResponseWriter, error) {
 	backend.Logger.Warn("ResourceRequest", "url", req.URL.String())
 	if req.URL.Path == "/v1/usage/basiclogs" {
-
+		backend.Logger.Warn("ResourceRequest here: ", "url", req.URL.String())
+		return e.GetBasicLogsUsage(req.Context(), fmt.Sprintf("%s/query", req.Host), cli, rw, req.Body)
 	}
 	return e.Proxy.Do(rw, req, cli)
+}
+
+func (e *AzureLogAnalyticsDatasource) GetBasicLogsUsage(ctx context.Context, url string, client *http.Client, rw http.ResponseWriter, reqBody io.ReadCloser) (http.ResponseWriter, error) {
+	// read the full body
+	originalPayload, readErr := io.ReadAll(reqBody)
+	backend.Logger.Warn("GetBasicLogsUsage", "originalPayload", originalPayload)
+	if readErr != nil {
+		return nil, fmt.Errorf("failed to read request body %w", readErr)
+	}
+	var payload BasicLogsUsagePayload
+	jsonErr := json.Unmarshal(originalPayload, &payload)
+	if jsonErr != nil {
+		backend.Logger.Warn("GetBasicLogsUsage", "payload", payload, "error", jsonErr)
+		return rw, fmt.Errorf("when getting basic logs table usage, failed to decode the query object from JSON: %w", jsonErr)
+	}
+	table := payload.Table
+
+	backend.Logger.Warn("GetBasicLogsUsage", "table", table, "payload", payload)
+	dataVolumeQueryRaw := getDataVolumeRawQuery(table)
+	dataVolumeQuery := &AzureLogAnalyticsQuery{
+		Query:         dataVolumeQueryRaw,
+		DashboardTime: true,
+		TimeRange: backend.TimeRange{
+			From: payload.From,
+			To:   payload.To,
+		},
+		TimeColumn: "TimeGenerated",
+		Resources:  []string{payload.Resource},
+		QueryType:  dataquery.AzureQueryType(payload.QueryType),
+		URL:        getApiURL(payload.Resource, false),
+	}
+
+	req, err := e.createRequest(ctx, url, dataVolumeQuery)
+	if err != nil {
+		return rw, err
+	}
+	resp, err := client.Do(req)
+	if err != nil {
+		return rw, err
+	}
+
+	defer func() {
+		if err := resp.Body.Close(); err != nil {
+			backend.Logger.Warn("Failed to close response body for data volume request", "err", err)
+		}
+	}()
+
+	logResponse, err := e.unmarshalResponse(resp)
+	if err != nil {
+		return rw, err
+	}
+
+	t, err := logResponse.GetPrimaryResultTable()
+	backend.Logger.Warn(fmt.Sprintf("%v", t))
+	if err != nil {
+		return rw, err
+	}
+
+	num := t.Rows[0][0].(json.Number)
+	value, err := num.Float64()
+	if err != nil {
+		return rw, err
+	}
+	backend.Logger.Warn("HEEEEREEEE: ")
+	n, err := rw.Write([]byte(fmt.Sprintf(`{"dataIngested": %f}`, value)))
+	if err != nil {
+		return rw, err
+	}
+	if n != len(fmt.Sprintf(`{"dataIngested": %f}`, value)) {
+		return rw, fmt.Errorf("failed to write full response")
+	}
+	return rw, err
+}
+
+func getDataVolumeRawQuery(table string) string {
+	return fmt.Sprintf("Usage \n| where DataType == \"%s\"\n| where IsBillable == true\n| summarize BillableDataGB = round(sum(Quantity) / 1000, 3)", table)
 }
 
 // executeTimeSeriesQuery does the following:
