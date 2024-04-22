@@ -8,6 +8,7 @@ import { config, createMonitoringLogger } from '@grafana/runtime';
 import { getPluginSettings } from '../pluginSettings';
 
 import { SandboxedPluginObject } from './types';
+import { cloneDeep } from 'lodash';
 
 const monitorOnly = Boolean(config.featureToggles.frontendSandboxMonitorOnly);
 
@@ -107,6 +108,27 @@ export function unboxRegexesFromMembraneProxy(structure: unknown): unknown {
   if (typeof structure === 'object') {
     return Object.keys(structure).reduce((acc, key) => {
       Reflect.set(acc, key, unboxRegexesFromMembraneProxy(Reflect.get(structure, key)));
+      return acc;
+    }, {});
+  }
+  return structure;
+}
+
+export function unboxNearMembraneProxies(structure: unknown): unknown {
+  if (!structure) {
+    return structure;
+  }
+
+  if (isNearMembraneProxy(structure)) {
+    return cloneDeep(structure);
+  }
+
+  if (Array.isArray(structure)) {
+    return structure.map(unboxNearMembraneProxies);
+  }
+  if (typeof structure === 'object') {
+    return Object.keys(structure).reduce((acc, key) => {
+      Reflect.set(acc, key, unboxNearMembraneProxies(Reflect.get(structure, key)));
       return acc;
     }, {});
   }
