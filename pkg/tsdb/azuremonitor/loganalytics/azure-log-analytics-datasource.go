@@ -36,11 +36,11 @@ type AzureLogAnalyticsDatasource struct {
 }
 
 type BasicLogsUsagePayload struct {
-	Table     string    `json:"table"`
-	Resource  string    `json:"resource"`
-	QueryType string    `json:"queryType"`
-	From      time.Time `json:"from"`
-	To        time.Time `json:"to"`
+	Table     string `json:"table"`
+	Resource  string `json:"resource"`
+	QueryType string `json:"queryType"`
+	From      string `json:"from"`
+	To        string `json:"to"`
 }
 
 // AzureLogAnalyticsQuery is the query request that is built from the saved values for
@@ -63,10 +63,13 @@ type AzureLogAnalyticsQuery struct {
 }
 
 func (e *AzureLogAnalyticsDatasource) ResourceRequest(rw http.ResponseWriter, req *http.Request, cli *http.Client) (http.ResponseWriter, error) {
-	backend.Logger.Warn("ResourceRequest", "url", req.URL.String())
-	if req.URL.Path == "/v1/usage/basiclogs" {
-		backend.Logger.Warn("ResourceRequest here: ", "url", req.URL.String())
-		return e.GetBasicLogsUsage(req.Context(), fmt.Sprintf("%s/query", req.Host), cli, rw, req.Body)
+	if req.URL.Path == "/usage/basiclogs" {
+		newUrl := &url.URL{
+			Scheme: req.URL.Scheme,
+			Host:   req.URL.Host,
+			Path:   "/v1/query",
+		}
+		return e.GetBasicLogsUsage(req.Context(), newUrl.String(), cli, rw, req.Body)
 	}
 	return e.Proxy.Do(rw, req, cli)
 }
@@ -76,7 +79,7 @@ func (e *AzureLogAnalyticsDatasource) GetBasicLogsUsage(ctx context.Context, url
 	originalPayload, readErr := io.ReadAll(reqBody)
 	backend.Logger.Warn("GetBasicLogsUsage", "originalPayload", originalPayload)
 	if readErr != nil {
-		return nil, fmt.Errorf("failed to read request body %w", readErr)
+		return rw, fmt.Errorf("failed to read request body %w", readErr)
 	}
 	var payload BasicLogsUsagePayload
 	jsonErr := json.Unmarshal(originalPayload, &payload)
@@ -86,14 +89,23 @@ func (e *AzureLogAnalyticsDatasource) GetBasicLogsUsage(ctx context.Context, url
 	}
 	table := payload.Table
 
-	backend.Logger.Warn("GetBasicLogsUsage", "table", table, "payload", payload)
-	dataVolumeQueryRaw := getDataVolumeRawQuery(table)
+	from, fromErr := ConvertTime(payload.From)
+	if fromErr != nil {
+		return rw, fmt.Errorf("failed to convert from time: %w", fromErr)
+	}
+
+	to, toErr := ConvertTime(payload.To)
+	if toErr != nil {
+		return rw, fmt.Errorf("failed to convert to time: %w", toErr)
+	}
+
+	dataVolumeQueryRaw := GetDataVolumeRawQuery(table)
 	dataVolumeQuery := &AzureLogAnalyticsQuery{
 		Query:         dataVolumeQueryRaw,
 		DashboardTime: true,
 		TimeRange: backend.TimeRange{
-			From: payload.From,
-			To:   payload.To,
+			From: from,
+			To:   to,
 		},
 		TimeColumn: "TimeGenerated",
 		Resources:  []string{payload.Resource},
@@ -132,19 +144,12 @@ func (e *AzureLogAnalyticsDatasource) GetBasicLogsUsage(ctx context.Context, url
 	if err != nil {
 		return rw, err
 	}
-	backend.Logger.Warn("HEEEEREEEE: ")
-	n, err := rw.Write([]byte(fmt.Sprintf(`{"dataIngested": %f}`, value)))
+	_, err = rw.Write([]byte(fmt.Sprintf("%f", value)))
 	if err != nil {
 		return rw, err
 	}
-	if n != len(fmt.Sprintf(`{"dataIngested": %f}`, value)) {
-		return rw, fmt.Errorf("failed to write full response")
-	}
-	return rw, err
-}
 
-func getDataVolumeRawQuery(table string) string {
-	return fmt.Sprintf("Usage \n| where DataType == \"%s\"\n| where IsBillable == true\n| summarize BillableDataGB = round(sum(Quantity) / 1000, 3)", table)
+	return rw, err
 }
 
 // executeTimeSeriesQuery does the following:
