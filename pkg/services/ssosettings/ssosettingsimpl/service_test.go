@@ -1412,7 +1412,7 @@ func Test_ProviderService(t *testing.T) {
 		strategiesLength      int
 	}{
 		{
-			name:             "should return all OAuth providers but not saml because the licensing feature is not enabled",
+			name:             "should return all OAuth providers but not SAML because the licensing feature is not enabled",
 			isLicenseEnabled: false,
 			expectedProvidersList: []string{
 				"github",
@@ -1426,7 +1426,7 @@ func Test_ProviderService(t *testing.T) {
 			strategiesLength: 1,
 		},
 		{
-			name:             "should return all fallback strategies and it should return all OAuth providers but not saml because the licensing feature is enabled but the configurable provider is not setup",
+			name:             "should return all fallback strategies and it should return all OAuth providers but not SAML because the licensing feature is enabled but the configurable provider is not setup",
 			isLicenseEnabled: true,
 			expectedProvidersList: []string{
 				"github",
@@ -1440,7 +1440,7 @@ func Test_ProviderService(t *testing.T) {
 			strategiesLength: 2,
 		},
 		{
-			name:             "should return all fallback strategies and it should return all OAuth providers and saml because the licensing feature is enabled and the provider is setup",
+			name:             "should return all fallback strategies and it should return all OAuth providers and SAML because the licensing feature is enabled and the provider is setup",
 			isLicenseEnabled: true,
 			samlEnabled:      true,
 			expectedProvidersList: []string{
