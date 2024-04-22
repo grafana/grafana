@@ -47,6 +47,7 @@ export const LabelParamEditor = ({
   );
 };
 
+// TODO: add tests
 async function loadGroupByLabels(
   query: VisualQuery,
   datasource: DataSourceApi,
@@ -55,9 +56,9 @@ async function loadGroupByLabels(
   let labels: QueryBuilderLabelFilter[] = query.labels;
 
   const queryString = queryModeller.renderLabels(labels);
-  const result = await datasource.languageProvider.fetchSeriesLabels(queryString);
+  const result: string[] = await datasource.languageProvider.fetchLabels({ streamSelector: queryString });
 
-  return Object.keys(result).map((x) => ({
+  return result.map((x) => ({
     label: x,
     value: x,
   }));
