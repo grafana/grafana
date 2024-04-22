@@ -42,7 +42,7 @@ export const PanelOptions = React.memo<Props>(({ vizManager, searchQuery, listMo
       data,
       plugin: plugin,
       eventBus: panel.getPanelContext().eventBus,
-      instanceState: panel.getPanelContext().instanceState!,
+      instanceState: _pluginInstanceState,
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [panel, options, fieldConfig, _pluginInstanceState]);
