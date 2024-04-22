@@ -516,6 +516,9 @@ type Cfg struct {
 	// Experimental scope settings
 	ScopesListScopesURL     string
 	ScopesListDashboardsURL string
+
+	//Short Links
+	ShortLinkExpiration int
 }
 
 // AddChangePasswordLink returns if login form is disabled or not since
@@ -1157,6 +1160,14 @@ func (cfg *Cfg) parseINIFile(iniFile *ini.File) error {
 
 	queryHistory := iniFile.Section("query_history")
 	cfg.QueryHistoryEnabled = queryHistory.Key("enabled").MustBool(true)
+
+	shortLinks := iniFile.Section("short_links")
+	cfg.ShortLinkExpiration = shortLinks.Key("expire_time").MustInt(7)
+
+	if cfg.ShortLinkExpiration > 365 {
+		cfg.Logger.Warn("short_links expire_time must be less than 366 days. Setting to 365 days")
+		cfg.ShortLinkExpiration = 365
+	}
 
 	panelsSection := iniFile.Section("panels")
 	cfg.DisableSanitizeHtml = panelsSection.Key("disable_sanitize_html").MustBool(false)
