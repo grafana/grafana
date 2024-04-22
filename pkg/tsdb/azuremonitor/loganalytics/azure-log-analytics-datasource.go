@@ -77,14 +77,12 @@ func (e *AzureLogAnalyticsDatasource) ResourceRequest(rw http.ResponseWriter, re
 func (e *AzureLogAnalyticsDatasource) GetBasicLogsUsage(ctx context.Context, url string, client *http.Client, rw http.ResponseWriter, reqBody io.ReadCloser) (http.ResponseWriter, error) {
 	// read the full body
 	originalPayload, readErr := io.ReadAll(reqBody)
-	backend.Logger.Warn("GetBasicLogsUsage", "originalPayload", originalPayload)
 	if readErr != nil {
 		return rw, fmt.Errorf("failed to read request body %w", readErr)
 	}
 	var payload BasicLogsUsagePayload
 	jsonErr := json.Unmarshal(originalPayload, &payload)
 	if jsonErr != nil {
-		backend.Logger.Warn("GetBasicLogsUsage", "payload", payload, "error", jsonErr)
 		return rw, fmt.Errorf("when getting basic logs table usage, failed to decode the query object from JSON: %w", jsonErr)
 	}
 	table := payload.Table
@@ -124,7 +122,7 @@ func (e *AzureLogAnalyticsDatasource) GetBasicLogsUsage(ctx context.Context, url
 
 	defer func() {
 		if err := resp.Body.Close(); err != nil {
-			backend.Logger.Warn("Failed to close response body for data volume request", "err", err)
+			e.Logger.Warn("Failed to close response body for data volume request", "err", err)
 		}
 	}()
 
@@ -134,7 +132,6 @@ func (e *AzureLogAnalyticsDatasource) GetBasicLogsUsage(ctx context.Context, url
 	}
 
 	t, err := logResponse.GetPrimaryResultTable()
-	backend.Logger.Warn(fmt.Sprintf("%v", t))
 	if err != nil {
 		return rw, err
 	}
