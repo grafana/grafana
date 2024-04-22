@@ -2,10 +2,12 @@ import React from 'react';
 
 import { Button } from '@grafana/ui';
 
+import { Cell } from './Cell';
+
 export function ActionsCell() {
   return (
-    <span>
+    <Cell>
       <Button variant="primary">Run</Button>
-    </span>
+    </Cell>
   );
 }

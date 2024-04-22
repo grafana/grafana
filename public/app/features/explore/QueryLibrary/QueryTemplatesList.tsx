@@ -1,7 +1,10 @@
+import { css } from '@emotion/css';
 import React from 'react';
 
+import { GrafanaTheme2 } from '@grafana/data';
 import { useQueryTemplates } from '@grafana/runtime/src/services/queryLibrary/hooks';
 import { Column, EmptyState, InteractiveTable } from '@grafana/ui';
+import { useStyles2 } from '@grafana/ui/';
 
 import { ActionsCell } from './cell/ActionsCell';
 import { AddedByCell } from './cell/AddedByCell';
@@ -23,6 +26,8 @@ const columns: Array<Column<QueryTemplateRow>> = [
 export function QueryTemplatesList() {
   const { queryTemplates } = useQueryTemplates();
 
+  const styles = useStyles2(getStyles);
+
   const queryTemplateRows: QueryTemplateRow[] = queryTemplates.map((queryTemplate, index) => ({
     index: index.toString(),
     queryTemplate,
@@ -32,7 +37,21 @@ export function QueryTemplatesList() {
     return <EmptyState message={`Coming soon! ${queryTemplates.length}`} variant="call-to-action" />;
   } else {
     return (
-      <InteractiveTable columns={columns} data={queryTemplateRows} getRowId={(row: { index: string }) => row.index} />
+      <InteractiveTable
+        className={styles.tableWithSpacing}
+        columns={columns}
+        data={queryTemplateRows}
+        getRowId={(row: { index: string }) => row.index}
+      />
     );
   }
 }
+
+const getStyles = (theme: GrafanaTheme2) => {
+  return {
+    tableWithSpacing: css({
+      borderCollapse: 'collapse',
+      borderStyle: '0 5px',
+    }),
+  };
+};

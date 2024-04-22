@@ -1,5 +1,7 @@
 import React from 'react';
 
+import { Cell } from './Cell';
+
 export function AddedByCell() {
-  return <span>Non Notus</span>;
+  return <Cell>Non Notus</Cell>;
 }
