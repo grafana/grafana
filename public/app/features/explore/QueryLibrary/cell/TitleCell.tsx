@@ -8,9 +8,7 @@ import { Cell } from './Cell';
 
 export function TitleCell(props: CellProps<QueryTemplateRow>) {
   const datasource = props.row.original.queryTemplate?.targets[0]?.datasource;
-  const { datasourceSettings, datasourceApi, type } = useDatasource(datasource);
-
-  console.log(datasourceSettings, datasourceApi, type);
+  const { datasourceApi, type } = useDatasource(datasource);
 
   if (props.row.original.queryTemplate?.targets.length === 0) {
     return <div>No queries</div>;

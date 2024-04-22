@@ -6,6 +6,8 @@ import { useQueryTemplates } from '@grafana/runtime/src/services/queryLibrary/ho
 import { Column, EmptyState, InteractiveTable } from '@grafana/ui';
 import { useStyles2 } from '@grafana/ui/';
 
+import { getDatasourceSrv } from '../../plugins/datasource_srv';
+
 import { ActionsCell } from './cell/ActionsCell';
 import { AddedByCell } from './cell/AddedByCell';
 import { DatasourceTypeCell } from './cell/DatasourceTypeCell';
@@ -15,10 +17,10 @@ import { TitleCell } from './cell/TitleCell';
 import { QueryTemplateRow } from './utils/view';
 
 const columns: Array<Column<QueryTemplateRow>> = [
-  { id: 'title', header: 'Title', cell: TitleCell },
+  { id: 'query', header: 'Data source and query', cell: TitleCell },
   { id: 'addedBy', header: 'Added by', cell: AddedByCell },
-  { id: 'datasourceType', header: 'Datasource', cell: DatasourceTypeCell },
-  { id: 'dateAdded', header: 'Date added', cell: DateAddedCell },
+  { id: 'datasourceType', header: 'Datasource type', cell: DatasourceTypeCell, sortType: 'string' },
+  { id: 'dateAdded', header: 'Date added', cell: DateAddedCell, sortType: 'string' },
   { id: 'privateToggle', header: '', cell: PrivateToggleCell },
   { id: 'actions', header: '', cell: ActionsCell },
 ];
@@ -30,6 +32,8 @@ export function QueryTemplatesList() {
 
   const queryTemplateRows: QueryTemplateRow[] = queryTemplates.map((queryTemplate, index) => ({
     index: index.toString(),
+    dateAdded: queryTemplate?.createdAt,
+    datasourceType: getDatasourceSrv().getInstanceSettings(queryTemplate.targets[0]?.datasource)?.meta.name,
     queryTemplate,
   }));
 
