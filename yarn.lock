@@ -4365,7 +4365,7 @@ __metadata:
     process: "npm:^0.11.10"
     rc-cascader: "npm:3.24.1"
     rc-drawer: "npm:7.1.0"
-    rc-slider: "npm:10.5.0"
+    rc-slider: "npm:10.6.2"
     rc-time-picker: "npm:^3.7.3"
     rc-tooltip: "npm:6.2.0"
     react: "npm:18.2.0"
@@ -18860,7 +18860,7 @@ __metadata:
     pseudoizer: "npm:^0.1.0"
     rc-cascader: "npm:3.24.1"
     rc-drawer: "npm:7.1.0"
-    rc-slider: "npm:10.5.0"
+    rc-slider: "npm:10.6.2"
     rc-time-picker: "npm:3.7.3"
     rc-tree: "npm:5.8.5"
     re-resizable: "npm:6.9.14"
@@ -26158,17 +26158,17 @@ __metadata:
   languageName: node
   linkType: hard
 
-"rc-slider@npm:10.5.0":
-  version: 10.5.0
-  resolution: "rc-slider@npm:10.5.0"
+"rc-slider@npm:10.6.2":
+  version: 10.6.2
+  resolution: "rc-slider@npm:10.6.2"
   dependencies:
     "@babel/runtime": "npm:^7.10.1"
     classnames: "npm:^2.2.5"
-    rc-util: "npm:^5.27.0"
+    rc-util: "npm:^5.36.0"
   peerDependencies:
     react: ">=16.9.0"
     react-dom: ">=16.9.0"
-  checksum: 10/9fe5b45a0e199311d665312e9940a59e007b81bfdd868cfecb70f4f95299b5447ee2a7c5a4c90a0ee7bbffad9dfa73cc01c779946adc4ca4fe22d2cf02bac046
+  checksum: 10/ee5ec34fe940487a44cb03e89abf4199cbae990a334756fa9536a158d3a790cb7c1ebf321fc8048050a0cefa86138e097eb11bcc135bdb10db287b0738370790
   languageName: node
   linkType: hard
 
@@ -26244,16 +26244,16 @@ __metadata:
   languageName: node
   linkType: hard
 
-"rc-util@npm:^5.15.0, rc-util@npm:^5.16.1, rc-util@npm:^5.21.0, rc-util@npm:^5.24.4, rc-util@npm:^5.27.0, rc-util@npm:^5.37.0, rc-util@npm:^5.38.0, rc-util@npm:^5.38.1":
-  version: 5.38.2
-  resolution: "rc-util@npm:5.38.2"
+"rc-util@npm:^5.15.0, rc-util@npm:^5.16.1, rc-util@npm:^5.21.0, rc-util@npm:^5.24.4, rc-util@npm:^5.27.0, rc-util@npm:^5.36.0, rc-util@npm:^5.37.0, rc-util@npm:^5.38.0, rc-util@npm:^5.38.1":
+  version: 5.39.1
+  resolution: "rc-util@npm:5.39.1"
   dependencies:
     "@babel/runtime": "npm:^7.18.3"
     react-is: "npm:^18.2.0"
   peerDependencies:
     react: ">=16.9.0"
     react-dom: ">=16.9.0"
-  checksum: 10/f8d8b21d0ed09de6fcf6c24dc19bf82f8f1fd089a625d35fd399626280ed33e73b9a703aa78f1a09ccd40b83f50e73bbc993adf892355a01857d3a1bb83e0958
+  checksum: 10/475e7755f8a8aaf8428c535e14ad1475d3d764108852a011cb5186fb7d905e064c0d56b77818ddaea0c5fbde439d3606b52f459cef7725fde8abf15e3e2ece2b
   languageName: node
   linkType: hard
 
