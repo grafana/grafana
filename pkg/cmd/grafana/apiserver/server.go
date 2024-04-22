@@ -1,6 +1,7 @@
 package apiserver
 
 import (
+	"context"
 	"fmt"
 	"io"
 	"net"
@@ -50,10 +51,10 @@ func newAPIServerOptions(out, errOut io.Writer) *APIServerOptions {
 	}
 }
 
-func (o *APIServerOptions) loadAPIGroupBuilders(tracer tracing.Tracer, apis []schema.GroupVersion) error {
+func (o *APIServerOptions) loadAPIGroupBuilders(ctx context.Context, tracer tracing.Tracer, apis []schema.GroupVersion) error {
 	o.builders = []builder.APIGroupBuilder{}
 	for _, gv := range apis {
-		api, err := o.factory.MakeAPIServer(tracer, gv)
+		api, err := o.factory.MakeAPIServer(ctx, tracer, gv)
 		if err != nil {
 			return err
 		}
