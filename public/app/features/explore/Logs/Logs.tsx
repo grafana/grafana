@@ -668,9 +668,6 @@ class UnthemedLogs extends PureComponent<Props, State> {
 
     const scanText = scanRange ? `Scanning ${rangeUtil.describeTimeRange(scanRange)}` : 'Scanning...';
 
-    // @ts-ignore
-    // window.dontdothis = window.dontdothis || React.createRef();
-
     return (
       <>
         {getRowContext && contextRow && (
