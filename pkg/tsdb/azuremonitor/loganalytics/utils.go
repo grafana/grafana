@@ -1,6 +1,10 @@
 package loganalytics
 
 import (
+	"fmt"
+	"strconv"
+	"time"
+
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 )
 
@@ -30,4 +34,22 @@ func AddConfigLinks(frame data.Frame, dl string, title *string) data.Frame {
 	frame = AddCustomDataLink(frame, deepLink)
 
 	return frame
+}
+
+func ConvertTime(timeStamp string) (time.Time, error) {
+	// Convert the timestamp string to an int64
+	timestampInt, err := strconv.ParseInt(timeStamp, 10, 64)
+	if err != nil {
+		// Handle error
+		return time.Time{}, err
+	}
+
+	// Convert the Unix timestamp (in milliseconds) to a time.Time
+	convTimeStamp := time.Unix(0, timestampInt*int64(time.Millisecond))
+
+	return convTimeStamp, nil
+}
+
+func GetDataVolumeRawQuery(table string) string {
+	return fmt.Sprintf("Usage \n| where DataType == \"%s\"\n| where IsBillable == true\n| summarize BillableDataGB = round(sum(Quantity) / 1000, 3)", table)
 }
