@@ -97,7 +97,7 @@ function useGetIncidentPluginConfig() {
     isChatOpsInstalled: false,
     isIncidentCreated: false,
   });
-  
+
   useEffect(() => {
     if (!incidentPluginInstalled) {
       setConfig({
