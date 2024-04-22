@@ -36,15 +36,10 @@ func AddConfigLinks(frame data.Frame, dl string, title *string) data.Frame {
 }
 
 // Check whether a query should be handled as basic logs query
-// 1. basic logs flag is true
 // 2. resource selected is a workspace
 // 3. query is not an alerts query
 // 4. number of selected resources is exactly one
-func MeetsBasicLogsCriteria(isBasicLogsQuery bool, resources []string, fromAlert bool) (bool, error) {
-	if !isBasicLogsQuery {
-		return false, nil
-	}
-
+func MeetsBasicLogsCriteria(resources []string, fromAlert bool) (bool, error) {
 	if fromAlert {
 		return false, fmt.Errorf("basic Logs queries cannot be used for alerts")
 
@@ -57,5 +52,5 @@ func MeetsBasicLogsCriteria(isBasicLogsQuery bool, resources []string, fromAlert
 		return false, fmt.Errorf("basic Logs queries may only be run against Log Analytics workspaces")
 	}
 
-	return isBasicLogsQuery, nil
+	return true, nil
 }

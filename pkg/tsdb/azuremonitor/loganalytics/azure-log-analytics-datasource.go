@@ -136,7 +136,7 @@ func (e *AzureLogAnalyticsDatasource) buildQueries(ctx context.Context, queries 
 
 			basicLogsQueryFlag := false
 			if azureLogAnalyticsTarget.BasicLogsQuery != nil {
-				basicLogsQueryflag = *azureLogAnalyticsTarget.BasicLogsQuery
+				basicLogsQueryFlag = *azureLogAnalyticsTarget.BasicLogsQuery
 			}
 
 			// Legacy queries only specify a Workspace GUID, which we need to use the old workspace-centric
@@ -155,11 +155,13 @@ func (e *AzureLogAnalyticsDatasource) buildQueries(ctx context.Context, queries 
 				resourceOrWorkspace = *azureLogAnalyticsTarget.Workspace
 			}
 
-			meetsBasicLogsCriteria, meetsBasicLogsCriteriaErr := MeetsBasicLogsCriteria(basicLogsQueryflag, resources, fromAlert)
-			if meetsBasicLogsCriteriaErr != nil {
-				return nil, meetsBasicLogsCriteriaErr
+			if basicLogsQueryFlag {
+				if meetsBasicLogsCriteria, meetsBasicLogsCriteriaErr := MeetsBasicLogsCriteria(resources, fromAlert); meetsBasicLogsCriteriaErr != nil {
+					return nil, meetsBasicLogsCriteriaErr
+				} else {
+					basicLogsQuery = meetsBasicLogsCriteria
+				}
 			}
-			basicLogsQuery = meetsBasicLogsCriteria
 
 			if azureLogAnalyticsTarget.Query != nil {
 				queryString = *azureLogAnalyticsTarget.Query
