@@ -37,6 +37,10 @@ Use a text visualization when you need to:
 
 **Mode** determines how embedded content appears.
 
+{{< admonition type="note" >}}
+To allow embedding of iframes and other websites, you need set `allow_embedding = true` in your Grafana `config.ini` or environment variables (depending on your employment).
+{{< /admonition >}}
+
 ### Markdown
 
 This option formats the content as [markdown](https://en.wikipedia.org/wiki/Markdown).
