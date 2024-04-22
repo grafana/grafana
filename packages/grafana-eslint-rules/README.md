@@ -24,7 +24,7 @@ Avoid direct use of `animation*` or `transition*` properties.
 
 To account for users with motion sensitivities, these should always be wrapped in a [`prefers-reduced-motion`](https://developer.mozilla.org/en-US/docs/Web/CSS/@media/prefers-reduced-motion) media query.
 
-`@grafana/ui` exposes a `handledReducedMotion` utility function that can be used to handle this.
+There is a `handleMotion` utility function exposed on the theme that can help with this.
 
 #### Examples
 
@@ -36,25 +36,23 @@ const getStyles = (theme: GrafanaTheme2) => ({
     animationDuration: '2s',
     animationIterationCount: 'infinite',
   }),
-})
+});
 
 // Good ✅
 const getStyles = (theme: GrafanaTheme2) => ({
   loading: css({
-    ...handleReducedMotion(
-      {
-        animationName: rotate,
-        animationDuration: '2s',
-        animationIterationCount: 'infinite',
-      },
-      {
-        animationName: pulse,
-        animationDuration: '2s',
-        animationIterationCount: 'infinite',
-      }
-    ),
+    [theme.transitions.handleMotion('no-preference')]: {
+      animationName: rotate,
+      animationDuration: '2s',
+      animationIterationCount: 'infinite',
+    },
+    [theme.transitions.handleMotion('reduce')]: {
+      animationName: pulse,
+      animationDuration: '2s',
+      animationIterationCount: 'infinite',
+    },
   }),
-})
+});
 
 // Good ✅
 const getStyles = (theme: GrafanaTheme2) => ({
@@ -63,15 +61,14 @@ const getStyles = (theme: GrafanaTheme2) => ({
       animationName: rotate,
       animationDuration: '2s',
       animationIterationCount: 'infinite',
-    }
-
+    },
     '@media (prefers-reduced-motion: reduce)': {
       animationName: pulse,
       animationDuration: '2s',
       animationIterationCount: 'infinite',
-    ),
+    },
   }),
-})
+});
 ```
 
 Note we've switched the potentially sensitive rotating animation to a less intense pulse animation when `prefers-reduced-motion` is set.
@@ -91,18 +88,11 @@ const getStyles = (theme: GrafanaTheme2) => ({
 // Good ✅
 const getStyles = (theme: GrafanaTheme2) => ({
   card: css({
-    ...handleReducedMotion(
-      {
-        transition: theme.transitions.create(['background-color'], {
-          duration: theme.transitions.duration.short,
-        }),
-      },
-      {
-        transition: theme.transitions.create(['background-color'], {
-          duration: theme.transitions.duration.short,
-        }),
-      }
-    ),
+    [theme.transitions.handleMotion('no-preference', 'reduce')]: {
+      transition: theme.transitions.create(['background-color'], {
+        duration: theme.transitions.duration.short,
+      }),
+    },
   }),
 });
 

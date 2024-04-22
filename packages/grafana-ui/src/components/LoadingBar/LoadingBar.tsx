@@ -4,7 +4,6 @@ import React, { CSSProperties } from 'react';
 import { GrafanaTheme2 } from '@grafana/data';
 
 import { useStyles2 } from '../../themes';
-import { handleReducedMotion } from '../../utils/handleReducedMotion';
 
 export interface LoadingBarProps {
   width: number;
@@ -51,24 +50,22 @@ const getStyles = (_theme: GrafanaTheme2, delay: number, duration: number) => {
       background: 'linear-gradient(90deg, rgba(110, 159, 255, 0) 0%, #6E9FFF 80.75%, rgba(110, 159, 255, 0) 100%)',
       transform: 'translateX(-100%)',
       willChange: 'transform',
-      ...handleReducedMotion(
-        {
-          animationName: animation,
-          // an initial delay to prevent the loader from showing if the response is faster than the delay
-          animationDelay: `${delay}ms`,
-          animationTimingFunction: 'linear',
-          animationIterationCount: 'infinite',
-          animationDuration: `${duration}ms`,
-        },
-        {
-          animationName: animation,
-          // an initial delay to prevent the loader from showing if the response is faster than the delay
-          animationDelay: `${delay}ms`,
-          animationTimingFunction: 'linear',
-          animationIterationCount: 'infinite',
-          animationDuration: `${4 * duration}ms`,
-        }
-      ),
+      [_theme.transitions.handleMotion('no-preference')]: {
+        animationName: animation,
+        // an initial delay to prevent the loader from showing if the response is faster than the delay
+        animationDelay: `${delay}ms`,
+        animationTimingFunction: 'linear',
+        animationIterationCount: 'infinite',
+        animationDuration: `${duration}ms`,
+      },
+      [_theme.transitions.handleMotion('reduce')]: {
+        animationName: animation,
+        // an initial delay to prevent the loader from showing if the response is faster than the delay
+        animationDelay: `${delay}ms`,
+        animationTimingFunction: 'linear',
+        animationIterationCount: 'infinite',
+        animationDuration: `${4 * duration}ms`,
+      },
     }),
   };
 };
