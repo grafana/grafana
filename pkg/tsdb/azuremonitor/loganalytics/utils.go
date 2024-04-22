@@ -54,7 +54,7 @@ func MeetsBasicLogsCriteria(isBasicLogsQuery bool, resources []string, fromAlert
 	}
 
 	if !strings.Contains(strings.ToLower(resources[0]), "microsoft.operationalinsights/workspaces") {
-		return false, fmt.Errorf("basic Logs queries may only be rung against LA workspaces")
+		return false, fmt.Errorf("basic Logs queries may only be run against Log Analytics workspaces")
 	}
 
 	return isBasicLogsQuery, nil
