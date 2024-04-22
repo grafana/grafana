@@ -24,7 +24,11 @@ weight: 105
 
 # Labels and annotations
 
-Labels and annotations contain information about an alert. Labels are used to differentiate an alert from all other alerts, while annotations are used to add additional information to an existing alert.
+When creating alert rules, you can leverage labels and annotations to optimize and customize your alerts. **Labels** serve as unique identifiers of an alert. And, beyond their labeling function, they also offer practical functionalities such as searchability, silencing, routing, and templating.
+
+On the other hand, **annotations** provide contextual metadata at specific time points, enriching alerts with additional information. They also are key/value pairs, but unlike labels, annotations focus on offering insights of the envents or incidents, providing descriptions or summaries to help you understand the data being alerted on by using a combination of text/template.
+
+Therefore, labels and annotations can help you to manage your alert rules, and to receive more flexible and informative alert notifications by applying the use of templates.
 
 ## Labels
 
