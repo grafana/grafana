@@ -45,6 +45,9 @@ type GithubTeam struct {
 	Organization struct {
 		Login string `json:"login"`
 	} `json:"organization"`
+	Parent struct {
+		Id int `json:"id"`
+	} `json:"parent"`
 }
 
 var (
@@ -144,7 +147,7 @@ func (s *SocialGithub) isTeamMember(ctx context.Context, client *http.Client) bo
 
 	for _, teamId := range s.teamIds {
 		for _, membership := range teamMemberships {
-			if teamId == membership.Id {
+			if teamId == membership.Id || teamId == membership.Parent.Id {
 				return true
 			}
 		}
@@ -221,7 +224,7 @@ func (s *SocialGithub) fetchTeamMemberships(ctx context.Context, client *http.Cl
 		if err != nil {
 			return nil, fmt.Errorf("Error getting team memberships: %s", err)
 		}
-
+		
 		teams = append(teams, records...)
 
 		url, hasMore = s.hasMoreRecords(response.Headers)
