@@ -89,11 +89,11 @@ function useGetContactPoints() {
 }
 
 function getIncidentsPluginConfig({
-  incidnetPluginInstalled,
+  incidentPluginInstalled,
 }: {
-  incidnetPluginInstalled: boolean;
+  incidentPluginInstalled: boolean;
 }): IncidentsPluginConfig {
-  if (!incidnetPluginInstalled) {
+  if (!incidentPluginInstalled) {
     return {
       isInstalled: false,
       isChatOpsInstalled: false,
@@ -109,25 +109,25 @@ function getIncidentsPluginConfig({
     .catch((error) => {
       console.error('Error getting incidents plugin config', error);
       return {
-        isInstalled: incidnetPluginInstalled,
+        isInstalled: incidentPluginInstalled,
         isChatOpsInstalled: false,
         isIncidentCreated: false,
       };
     });
   return {
-    isInstalled: incidnetPluginInstalled,
+    isInstalled: incidentPluginInstalled,
     isChatOpsInstalled: false,
     isIncidentCreated: false,
   };
 }
 
 function useGetIncidentPluginConfig(): IncidentsPluginConfig {
-  const { installed: incidnetPluginInstalled } = usePluginBridge(SupportedPlugin.Incident);
-  const config = getIncidentsPluginConfig({ incidnetPluginInstalled: incidnetPluginInstalled ?? false });
+  const { installed: incidentPluginInstalled } = usePluginBridge(SupportedPlugin.Incident);
+  const config = getIncidentsPluginConfig({ incidentPluginInstalled: incidentPluginInstalled ?? false });
   console.log('config', config);
 
   return {
-    isInstalled: incidnetPluginInstalled ?? false,
+    isInstalled: incidentPluginInstalled ?? false,
     isChatOpsInstalled: config?.isChatOpsInstalled ?? false,
     isIncidentCreated: config?.isIncidentCreated ?? false,
   };
