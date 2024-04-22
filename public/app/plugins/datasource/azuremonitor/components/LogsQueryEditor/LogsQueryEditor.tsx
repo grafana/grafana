@@ -47,6 +47,7 @@ const LogsQueryEditor = ({
   const migrationError = useMigrations(datasource, query, onChange);
   const [showBasicLogsToggle, setShowBasicLogsToggle] = useState<boolean>(false);
   const [dataIngestedWarning, setDataIngestedWarning] = useState<React.ReactNode | null>(null);
+  const [dataIngested, setDataIngested] = useState<number | undefined>(undefined);
 
   const disableRow = (row: ResourceRow, selectedRows: ResourceRowGroup) => {
     if (selectedRows.length === 0) {
@@ -94,8 +95,7 @@ const LogsQueryEditor = ({
       const querySplit = query.azureLogAnalytics.query.split('|');
       // Basic Logs queries are required to start the query with a table
       const table = querySplit[0].trim();
-      datasource.azureLogAnalyticsDatasource.getBasicLogsQueryUsage(query, table).then((data) => console.log(data));
-      const dataIngested: number | undefined = 20; //make call to get data ingested for the table selected
+      datasource.azureLogAnalyticsDatasource.getBasicLogsQueryUsage(query, table).then((data) => setDataIngested(data));
       const textToShow = dataIngested
         ? `This query is processing ${dataIngested} GiB when run. `
         : 'This is a Basic Logs query and incurs cost per GiB scanned. ';
@@ -115,7 +115,7 @@ const LogsQueryEditor = ({
     } else {
       setDataIngestedWarning(null);
     }
-  }, [showBasicLogsToggle, query]);
+  }, [dataIngested, datasource.azureLogAnalyticsDatasource, query, showBasicLogsToggle]);
   let portalLinkButton = null;
 
   if (data?.series) {
