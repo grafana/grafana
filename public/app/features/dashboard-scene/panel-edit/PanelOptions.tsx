@@ -23,7 +23,7 @@ interface Props {
 export const PanelOptions = React.memo<Props>(({ vizManager, searchQuery, listMode, data }) => {
   const { panel, sourcePanel, repeat } = vizManager.useState();
   const parent = sourcePanel.resolve().parent;
-  const { options, fieldConfig } = panel.useState();
+  const { options, fieldConfig, _pluginInstanceState } = panel.useState();
 
   // eslint-disable-next-line react-hooks/exhaustive-deps
   const panelFrameOptions = useMemo(
@@ -45,7 +45,7 @@ export const PanelOptions = React.memo<Props>(({ vizManager, searchQuery, listMo
       instanceState: panel.getPanelContext().instanceState!,
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [panel, options, fieldConfig]);
+  }, [panel, options, fieldConfig, _pluginInstanceState]);
 
   const libraryPanelOptions = useMemo(() => {
     if (parent instanceof LibraryVizPanel) {
