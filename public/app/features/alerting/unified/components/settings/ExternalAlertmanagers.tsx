@@ -30,7 +30,7 @@ export const ExternalAlertmanagers = ({ onEditConfiguration }: Props) => {
 
   // determine if the alertmanger is receiving alerts
   // this is true if Grafana is configured to send to either "both" or "external" and the Alertmanager datasource _wants_ to receive alerts.
-  const isReceivingOnAlertmanager = (
+  const isReceivingGrafanaAlerts = (
     externalDataSourceAlertmanager: ExternalAlertmanagerDataSourceWithStatus
   ): boolean => {
     const sendingToExternal = [AlertmanagerChoice.All, AlertmanagerChoice.External].some(
@@ -49,7 +49,7 @@ export const ExternalAlertmanagers = ({ onEditConfiguration }: Props) => {
         const { uid, name, jsonData, url } = alertmanager.dataSourceSettings;
         const { status } = alertmanager;
 
-        const isReceiving = isReceivingOnAlertmanager(alertmanager);
+        const isReceiving = isReceivingGrafanaAlerts(alertmanager);
         const provisionedDataSource = alertmanager.dataSourceSettings.readOnly === true;
         const detailHref = createUrl(DATASOURCES_ROUTES.Edit.replace(/:uid/gi, uid));
         const readOnlyDataSource =

@@ -114,7 +114,7 @@ export const alertmanagerApi = alertingApi.injectEndpoints({
         data: config,
         showSuccessAlert: false,
       }),
-      invalidatesTags: ['AlertmanagerChoice'],
+      invalidatesTags: ['AlertmanagerChoice', 'AlertmanagerConnectionStatus'],
     }),
 
     getValidAlertManagersConfig: build.query<AlertManagerCortexConfig[], void>({

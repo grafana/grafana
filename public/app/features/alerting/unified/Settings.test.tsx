@@ -2,8 +2,6 @@ import { render, screen, waitFor } from '@testing-library/react';
 import React from 'react';
 import { TestProvider } from 'test/helpers/TestProvider';
 
-import 'whatwg-fetch';
-
 import SettingsPage from './Settings';
 import {
   DataSourcesResponse,

@@ -7,16 +7,18 @@ import { AlertmanagerChoice, ExternalAlertmanagerConfig } from 'app/plugins/data
 import { dispatch } from 'app/store/store';
 
 import { alertmanagerApi } from '../../api/alertmanagerApi';
-import { dataSourcesApi, enableOrDisableHandlingGrafanaManagedAlerts } from '../../api/dataSourcesApi';
+import { dataSourcesApi } from '../../api/dataSourcesApi';
 import {
   ExternalAlertmanagerDataSourceWithStatus,
   useExternalDataSourceAlertmanagers,
 } from '../../hooks/useExternalAmSelector';
 import { deleteAlertManagerConfigAction, updateAlertManagerConfigAction } from '../../state/actions';
 import { GRAFANA_RULES_SOURCE_NAME, isAlertmanagerDataSourceInterestedInAlerts } from '../../utils/datasource';
+import { isReceivingOnInternalAlertmanager } from '../../utils/settings';
+
+import { useEnableOrDisableHandlingGrafanaManagedAlerts } from './hooks';
 
 const appEvents = getAppEvents();
-const USING_INTERNAL_ALERTMANAGER_SETTINGS = [AlertmanagerChoice.Internal, AlertmanagerChoice.All];
 
 interface Context {
   deliverySettings?: ExternalAlertmanagerConfig;
@@ -47,14 +49,12 @@ export const SettingsProvider = (props: PropsWithChildren) => {
 
   const [updateDeliverySettings, updateDeliverySettingsState] =
     alertmanagerApi.endpoints.saveExternalAlertmanagersConfig.useMutation();
-  const [enableGrafanaManagedAlerts, enableOrDisableHandlingGrafanaManagedAlertsState] =
-    enableOrDisableHandlingGrafanaManagedAlerts();
+  const [enableGrafanaManagedAlerts, disableGrafanaManagedAlerts, enableOrDisableHandlingGrafanaManagedAlertsState] =
+    useEnableOrDisableHandlingGrafanaManagedAlerts();
 
   const externalAlertmanagersWithStatus = useExternalDataSourceAlertmanagers();
 
-  const interestedInternal = USING_INTERNAL_ALERTMANAGER_SETTINGS.some(
-    (choice) => deliverySettings?.alertmanagersChoice === choice
-  );
+  const interestedInternal = isReceivingOnInternalAlertmanager(deliverySettings);
   if (interestedInternal) {
     interestedAlertmanagers.push(GRAFANA_RULES_SOURCE_NAME);
   }
@@ -77,7 +77,7 @@ export const SettingsProvider = (props: PropsWithChildren) => {
     }
 
     if (!isInternalAlertmanager(uid)) {
-      enableGrafanaManagedAlerts(uid, true);
+      enableGrafanaManagedAlerts(uid);
     }
   };
 
@@ -93,7 +93,7 @@ export const SettingsProvider = (props: PropsWithChildren) => {
     }
 
     if (!isInternalAlertmanager(uid)) {
-      enableGrafanaManagedAlerts(uid, false);
+      disableGrafanaManagedAlerts(uid);
     }
   };
 
