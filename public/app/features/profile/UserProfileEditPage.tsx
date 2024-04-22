@@ -4,8 +4,8 @@ import { useMount } from 'react-use';
 
 import { PluginExtensionComponent, PluginExtensionPoints } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { Tab, TabsBar, TabContent, Stack } from '@grafana/ui';
 import { usePluginComponentExtensions } from '@grafana/runtime';
+import { Tab, TabsBar, TabContent, Stack } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
 import SharedPreferences from 'app/core/components/SharedPreferences/SharedPreferences';
 import { useQueryParams } from 'app/core/hooks/useQueryParams';
