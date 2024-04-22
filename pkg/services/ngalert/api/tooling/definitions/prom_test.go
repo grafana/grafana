@@ -113,6 +113,11 @@ func TestTopKAlertsByImportance(t *testing.T) {
 		input    []Alert
 		expected []Alert
 	}{{
+		name:     "no alerts are returned (k=0)",
+		k:        0,
+		input:    []Alert{{State: "normal"}, {State: "nodata"}, {State: "error"}, {State: "pending"}, {State: "alerting"}},
+		expected: []Alert{},
+	}, {
 		name:     "alerts are ordered in expected importance (k=1)",
 		k:        1,
 		input:    []Alert{{State: "normal"}, {State: "nodata"}, {State: "error"}, {State: "pending"}, {State: "alerting"}},
