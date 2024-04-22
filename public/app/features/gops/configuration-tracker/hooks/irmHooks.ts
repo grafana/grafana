@@ -1,3 +1,5 @@
+import { useState } from 'react';
+
 import { getBackendSrv } from '@grafana/runtime';
 import { alertRuleApi } from 'app/features/alerting/unified/api/alertRuleApi';
 import { alertmanagerApi } from 'app/features/alerting/unified/api/alertmanagerApi';
@@ -93,6 +95,9 @@ function getIncidentsPluginConfig({
 }: {
   incidentPluginInstalled: boolean;
 }): IncidentsPluginConfig {
+  const [isChatOpsInstalled, setIsChatOpsInstalled] = useState(false);
+  const [isIncidentCreated, setIsIncidentCreated] = useState(false);
+
   if (!incidentPluginInstalled) {
     return {
       isInstalled: false,
@@ -103,7 +108,8 @@ function getIncidentsPluginConfig({
   getBackendSrv()
     .post('/api/plugins/grafana-incident-app/resources/api/ConfigurationTrackerService.GetConfigurationTracker', {})
     .then((response) => {
-      console.log('response', response);
+      setIsChatOpsInstalled(response.data.isChatOpsInstalled);
+      setIsIncidentCreated(response.data.isIncidentCreated);
       return response.data;
     })
     .catch((error) => {
@@ -116,8 +122,8 @@ function getIncidentsPluginConfig({
     });
   return {
     isInstalled: incidentPluginInstalled,
-    isChatOpsInstalled: false,
-    isIncidentCreated: false,
+    isChatOpsInstalled: isChatOpsInstalled,
+    isIncidentCreated: isIncidentCreated,
   };
 }
 
