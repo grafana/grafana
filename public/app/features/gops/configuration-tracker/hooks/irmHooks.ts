@@ -97,9 +97,7 @@ function useGetIncidentPluginConfig() {
     isChatOpsInstalled: false,
     isIncidentCreated: false,
   });
-
-  console.log('config', config);
-
+  
   useEffect(() => {
     if (!incidentPluginInstalled) {
       setConfig({
@@ -115,8 +113,8 @@ function useGetIncidentPluginConfig() {
       .then((response) => {
         setConfig({
           isInstalled: true,
-          isChatOpsInstalled: response.data.isChatOpsInstalled,
-          isIncidentCreated: response.data.isIncidentCreated,
+          isChatOpsInstalled: response.isChatOpsInstalled,
+          isIncidentCreated: response.isIncidentCreated,
         });
       })
       .catch((error) => {
@@ -178,8 +176,6 @@ export function useGetEssentialsConfiguration() {
   const onCallIntegrations = useGetOnCallIntegrations();
   const onCallOptions = useOnCallOptions();
   const chatOpsConnections = useChatOpsConnections();
-
-  console.log('incidentPluginConfig', incidentPluginConfig);
 
   const essentialContent: SectionsDto = {
     sections: [
