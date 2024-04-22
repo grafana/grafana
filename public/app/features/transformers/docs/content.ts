@@ -790,7 +790,7 @@ export const transformationDocsContent: TransformationDocsContentType = {
   ${buildImageContent(
     '/static/img/docs/transformations/join-fields-before-7-0.png',
     imageRenderType,
-    'A table visualization showing results for one server' + 1
+    'A table visualization showing results for one server'
   )}
 
   I applied a transformation to join the query results using the time field. Now I can run calculations, combine, and organize the results in this new table.
@@ -798,7 +798,7 @@ export const transformationDocsContent: TransformationDocsContentType = {
   ${buildImageContent(
     '/static/img/docs/transformations/join-fields-after-7-0.png',
     imageRenderType,
-    'A table visualization showing results for multiple servers' + 2
+    'A table visualization showing results for multiple servers'
   )}
 
   Combine and analyze data from various queries with table joining for a comprehensive view of your information.
