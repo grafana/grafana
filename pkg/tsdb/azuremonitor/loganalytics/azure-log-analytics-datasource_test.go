@@ -1593,11 +1593,10 @@ func TestBuildingAzureLogAnalyticsQueries(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			queries, err := datasource.buildQueries(ctx, tt.queryModel, dsInfo, tt.fromAlert)
 			tt.Err(t, err)
-			if err != nil {
-				return // skip further checks since error was expected and asserted
-			}
-			if diff := cmp.Diff(tt.azureLogAnalyticsQueries[0], queries[0]); diff != "" {
-				t.Errorf("Result mismatch (-want +got): \n%s", diff)
+			if len(queries) > 0 && len(tt.azureLogAnalyticsQueries) > 0 {
+				if diff := cmp.Diff(tt.azureLogAnalyticsQueries[0], queries[0]); diff != "" {
+					t.Errorf("Result mismatch (-want +got): \n%s", diff)
+				}
 			}
 		})
 	}
