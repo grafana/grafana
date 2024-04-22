@@ -1,3 +1,4 @@
+import { useState, useEffect } from 'react';
 import { getBackendSrv } from '@grafana/runtime';
 import { alertRuleApi } from 'app/features/alerting/unified/api/alertRuleApi';
 import { alertmanagerApi } from 'app/features/alerting/unified/api/alertmanagerApi';
@@ -92,39 +93,36 @@ function getIncidentsPluginConfig(): Promise<IncidentsPluginConfig> {
     .post('/api/plugins/grafana-incident-app/resources/api/ConfigurationTrackerService.GetConfigurationTracker', {})
     .then((response) => {
       return response.data;
-    })
-    .catch((error) => {
-      console.error('Error getting incidents plugin config', error);
-      throw error; // Rethrow the error to propagate it further if needed
     });
 }
 
 function useGetIncidentPluginConfig(): IncidentsPluginConfig {
   const { installed: incidnetPluginInstalled } = usePluginBridge(SupportedPlugin.Incident);
-  getIncidentsPluginConfig()
-    .then((config) => {
-      return {
-        isInstalled: incidnetPluginInstalled ?? false,
-        isChatOpsInstalled: config.isChatOpsInstalled ?? false,
-        isIncidentCreated: config.isIncidentCreated ?? false,
-      };
-    })
-    .catch((error) => {
-      // Handle error if needed
-      console.error('Error getting incident plugin config', error);
-      return {
-        isInstalled: incidnetPluginInstalled ?? false,
-        isChatOpsInstalled: false,
-        isIncidentCreated: false,
-      };
-    });
-  return {
+  const [config, setConfig] = useState<IncidentsPluginConfig>({
     isInstalled: incidnetPluginInstalled ?? false,
     isChatOpsInstalled: false,
     isIncidentCreated: false,
-  };
-}
+  });
 
+  console.log('config', config);
+
+  useEffect(() => {
+    getIncidentsPluginConfig()
+      .then((fetchedConfig) => {
+        setConfig(fetchedConfig);
+      })
+      .catch((error) => {
+        console.error('Error getting incident plugin config', error);
+        setConfig({
+          isInstalled: incidnetPluginInstalled ?? false,
+          isChatOpsInstalled: false,
+          isIncidentCreated: false,
+        });
+      });
+  }, [incidnetPluginInstalled]);
+
+  return config;
+}
 function useGetOnCallIntegrations() {
   const { installed: onCallPluginInstalled } = usePluginBridge(SupportedPlugin.OnCall);
 
