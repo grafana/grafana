@@ -75,7 +75,7 @@ export const transformationDocsContent: TransformationDocsContentType = {
   ${buildImageContent(
     '/static/img/docs/transformations/add-field-from-calc-stat-example-7-0.png',
     imageRenderType,
-    'Add field from calculation'
+    'A stat visualization including one field called Sum'
   )}
   `;
     },
@@ -342,7 +342,7 @@ export const transformationDocsContent: TransformationDocsContentType = {
   ${buildImageContent(
     '/static/img/docs/transformations/filter-by-query-stat-example-7-0.png',
     imageRenderType,
-    'Filter data by query refId'
+    'A stat visualization with results from two queries, A and C'
   )}
   `;
     },
@@ -790,7 +790,7 @@ export const transformationDocsContent: TransformationDocsContentType = {
   ${buildImageContent(
     '/static/img/docs/transformations/join-fields-before-7-0.png',
     imageRenderType,
-    'Join by field' + 1
+    'A table visualization showing results for one server' + 1
   )}
 
   I applied a transformation to join the query results using the time field. Now I can run calculations, combine, and organize the results in this new table.
@@ -798,7 +798,7 @@ export const transformationDocsContent: TransformationDocsContentType = {
   ${buildImageContent(
     '/static/img/docs/transformations/join-fields-after-7-0.png',
     imageRenderType,
-    'Join by field' + 2
+    'A table visualization showing results for multiple servers' + 2
   )}
 
   Combine and analyze data from various queries with table joining for a comprehensive view of your information.
