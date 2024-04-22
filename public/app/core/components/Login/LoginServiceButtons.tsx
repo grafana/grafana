@@ -149,6 +149,7 @@ export const LoginServiceButtons = () => {
 
   if (hasServices) {
     return (
+      // TODO: Remove extra div when Stack supports width
       <div style={{ width: '100%' }}>
         <Stack direction={'column'}>
           <LoginDivider />
