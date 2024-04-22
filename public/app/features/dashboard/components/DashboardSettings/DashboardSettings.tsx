@@ -48,12 +48,12 @@ export function DashboardSettings({ dashboard, editview, pageNav, sectionNav }: 
     dashboard.meta.hasUnsavedFolderChange = false;
   };
 
-  const currentPage = pages.find((page) => page.id === `${dashboard.uid}/${editview}`) ?? pages[0];
+  const currentPage = pages.find((page) => page.id === editview) ?? pages[0];
   const canSaveAs = contextSrv.hasEditPermissionInFolders;
   const canSave = dashboard.meta.canSave;
   const location = useLocation();
   const editIndex = getEditIndex(location);
-  const subSectionNav = getSectionNav(pageNav, sectionNav, pages, currentPage, location);
+  const subSectionNav = getSectionNav(pageNav, sectionNav, pages, currentPage, location, dashboard.uid);
   const size = 'sm';
 
   const actions = [
@@ -95,14 +95,14 @@ function getSettingsPages(dashboard: DashboardModel) {
   if (dashboard.meta.canEdit) {
     pages.push({
       title: generalTitle,
-      id: `${dashboard.uid}/settings`,
+      id: 'settings',
       icon: 'sliders-v-alt',
       component: GeneralSettings,
     });
 
     pages.push({
       title: t('dashboard-settings.annotations.title', 'Annotations'),
-      id: `${dashboard.uid}/annotations`,
+      id: 'annotations',
       icon: 'comment-alt',
       component: AnnotationsSettings,
       subTitle:
@@ -111,7 +111,7 @@ function getSettingsPages(dashboard: DashboardModel) {
 
     pages.push({
       title: t('dashboard-settings.variables.title', 'Variables'),
-      id: `${dashboard.uid}/templating`,
+      id: 'templating',
       icon: 'calculator-alt',
       component: VariableEditorContainer,
       subTitle: 'Variables can make your dashboard more dynamic and act as global filters.',
@@ -119,7 +119,7 @@ function getSettingsPages(dashboard: DashboardModel) {
 
     pages.push({
       title: t('dashboard-settings.links.title', 'Links'),
-      id: `${dashboard.uid}/links`,
+      id: 'links',
       icon: 'link',
       component: LinksSettings,
     });
@@ -129,7 +129,7 @@ function getSettingsPages(dashboard: DashboardModel) {
     pages.push({
       title: generalTitle,
       icon: 'sliders-v-alt',
-      id: `${dashboard.uid}/settings`,
+      id: 'settings',
       component: MakeEditable,
     });
   }
@@ -137,7 +137,7 @@ function getSettingsPages(dashboard: DashboardModel) {
   if (dashboard.id && dashboard.meta.canSave) {
     pages.push({
       title: t('dashboard-settings.versions.title', 'Versions'),
-      id: `${dashboard.uid}/versions`,
+      id: 'versions',
       icon: 'history',
       component: VersionsSettings,
     });
@@ -149,7 +149,7 @@ function getSettingsPages(dashboard: DashboardModel) {
     if (contextSrv.hasPermission(AccessControlAction.DashboardsPermissionsRead)) {
       pages.push({
         title: permissionsTitle,
-        id: `${dashboard.uid}/permissions`,
+        id: 'permissions',
         icon: 'lock',
         component: AccessControlDashboardPermissions,
       });
@@ -158,7 +158,7 @@ function getSettingsPages(dashboard: DashboardModel) {
 
   pages.push({
     title: t('dashboard-settings.json-editor.title', 'JSON Model'),
-    id: `${dashboard.uid}/dashboard_json`,
+    id: 'dashboard_json',
     icon: 'arrow',
     component: JsonEditorSettings,
   });
@@ -178,7 +178,8 @@ function getSectionNav(
   sectionNav: NavModel,
   pages: SettingsPage[],
   currentPage: SettingsPage,
-  location: H.Location
+  location: H.Location,
+  dashboardUid: string
 ): NavModel {
   const main: NavModelItem = {
     text: t('dashboard-settings.settings.title', 'Settings'),
@@ -191,7 +192,7 @@ function getSectionNav(
   main.children = pages.map((page) => ({
     text: page.title,
     icon: page.icon,
-    id: page.id,
+    id: `${dashboardUid}/${page.id}`,
     url: locationUtil.getUrlForPartial(location, { editview: page.id, editIndex: null }),
     active: page === currentPage,
     parentItem: main,
