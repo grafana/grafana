@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 
 import { getBackendSrv } from '@grafana/runtime';
 import { alertRuleApi } from 'app/features/alerting/unified/api/alertRuleApi';
@@ -90,52 +90,49 @@ function useGetContactPoints() {
   return contactPoints;
 }
 
-function getIncidentsPluginConfig({
-  incidentPluginInstalled,
-}: {
-  incidentPluginInstalled: boolean;
-}): IncidentsPluginConfig {
-  const [isChatOpsInstalled, setIsChatOpsInstalled] = useState(false);
-  const [isIncidentCreated, setIsIncidentCreated] = useState(false);
-
-  if (!incidentPluginInstalled) {
-    return {
-      isInstalled: false,
-      isChatOpsInstalled: false,
-      isIncidentCreated: false,
-    };
-  }
-  getBackendSrv()
-    .post('/api/plugins/grafana-incident-app/resources/api/ConfigurationTrackerService.GetConfigurationTracker', {})
-    .then((response) => {
-      setIsChatOpsInstalled(response.data.isChatOpsInstalled);
-      setIsIncidentCreated(response.data.isIncidentCreated);
-      return response.data;
-    })
-    .catch((error) => {
-      console.error('Error getting incidents plugin config', error);
-      return {
-        isInstalled: incidentPluginInstalled,
-        isChatOpsInstalled: false,
-        isIncidentCreated: false,
-      };
-    });
-  return {
-    isInstalled: incidentPluginInstalled,
-    isChatOpsInstalled: isChatOpsInstalled,
-    isIncidentCreated: isIncidentCreated,
-  };
-}
-
-function useGetIncidentPluginConfig(): IncidentsPluginConfig {
+function useGetIncidentPluginConfig() {
   const { installed: incidentPluginInstalled } = usePluginBridge(SupportedPlugin.Incident);
-  const config = getIncidentsPluginConfig({ incidentPluginInstalled: incidentPluginInstalled ?? false });
+  const [config, setConfig] = useState<IncidentsPluginConfig>({
+    isInstalled: false,
+    isChatOpsInstalled: false,
+    isIncidentCreated: false,
+  });
+
   console.log('config', config);
 
+  useEffect(() => {
+    if (!incidentPluginInstalled) {
+      setConfig({
+        isInstalled: false,
+        isChatOpsInstalled: false,
+        isIncidentCreated: false,
+      });
+      return;
+    }
+
+    getBackendSrv()
+      .post('/api/plugins/grafana-incident-app/resources/api/ConfigurationTrackerService.GetConfigurationTracker', {})
+      .then((response) => {
+        setConfig({
+          isInstalled: true,
+          isChatOpsInstalled: response.data.isChatOpsInstalled,
+          isIncidentCreated: response.data.isIncidentCreated,
+        });
+      })
+      .catch((error) => {
+        console.error('Error getting incidents plugin config', error);
+        setConfig({
+          isInstalled: incidentPluginInstalled,
+          isChatOpsInstalled: false,
+          isIncidentCreated: false,
+        });
+      });
+  }, [incidentPluginInstalled]);
+
   return {
-    isInstalled: incidentPluginInstalled ?? false,
-    isChatOpsInstalled: config?.isChatOpsInstalled ?? false,
-    isIncidentCreated: config?.isIncidentCreated ?? false,
+    isInstalled: config.isInstalled,
+    isChatOpsInstalled: config.isChatOpsInstalled,
+    isIncidentCreated: config.isIncidentCreated,
   };
 }
 
