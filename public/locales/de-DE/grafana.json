@@ -1163,6 +1163,10 @@
     "title": "Das Neueste aus dem Blog"
   },
   "notifications": {
+    "empty-state": {
+      "description": "",
+      "title": ""
+    },
     "starred-dashboard": "Dashboard markiert",
     "unstarred-dashboard": "Dashboard nicht markiert"
   },

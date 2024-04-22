@@ -1163,6 +1163,10 @@
     "title": "Últimas entradas del blog"
   },
   "notifications": {
+    "empty-state": {
+      "description": "",
+      "title": ""
+    },
     "starred-dashboard": "Panel de control destacado",
     "unstarred-dashboard": "Panel de control no destacado"
   },
