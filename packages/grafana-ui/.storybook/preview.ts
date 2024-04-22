@@ -18,7 +18,9 @@ import { ThemedDocsContainer } from '../src/utils/storybook/ThemedDocsContainer'
 import lightTheme from './grafana.light.scss';
 // @ts-ignore
 import darkTheme from './grafana.dark.scss';
-import { GrafanaLight, GrafanaDark } from './storybookTheme';
+import { GrafanaDark, GrafanaLight } from './storybookTheme';
+import { getTimeZone, getTimeZones } from '@grafana/data';
+import { withTimeZone } from '../src/utils/storybook/withTimeZone';
 
 const handleThemeChange = (theme: any) => {
   if (theme !== 'light') {
@@ -31,7 +33,7 @@ const handleThemeChange = (theme: any) => {
 };
 
 const preview: Preview = {
-  decorators: [withTheme(handleThemeChange)],
+  decorators: [withTheme(handleThemeChange), withTimeZone()],
   parameters: {
     actions: { argTypesRegex: '^on[A-Z].*' },
     darkMode: {
@@ -63,6 +65,21 @@ const preview: Preview = {
           return 1;
         }
         return a.id === b.id ? 0 : a.id.localeCompare(b.id, undefined, { numeric: true });
+      },
+    },
+  },
+  globalTypes: {
+    timeZone: {
+      description: 'Set the timezone for the storybook preview',
+      defaultValue: getTimeZone(),
+      toolbar: {
+        icon: 'globe',
+        items: getTimeZones(true)
+          .filter((timezone) => !!timezone)
+          .map((timezone) => ({
+            title: timezone,
+            value: timezone,
+          })),
       },
     },
   },
