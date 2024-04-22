@@ -103,6 +103,7 @@ function getIncidentsPluginConfig({
   getBackendSrv()
     .post('/api/plugins/grafana-incident-app/resources/api/ConfigurationTrackerService.GetConfigurationTracker', {})
     .then((response) => {
+      console.log('response', response);
       return response.data;
     })
     .catch((error) => {
