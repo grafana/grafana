@@ -45,11 +45,11 @@ A nested set model ensures each item of a flame graph is encoded by its nesting 
 
 Required fields:
 
-| Field name | Type   | Description                                                                                                                |
-| ---------- | ------ | -------------------------------------------------------------------------------------------------------------------------- |
-| level      | number | The nesting level of the item. In other words how many items are between this item and the top item of the flame graph.    |
-| value      | number | The absolute or cumulative value of the item. This translates to the width of the item in the graph.                       |
-| label      | string | Label to be shown for the particular item.                                                                                 |
+| Field name | Type   | Description                                                                                                                 |
+| ---------- | ------ | --------------------------------------------------------------------------------------------------------------------------- |
+| level      | number | The nesting level of the item. In other words how many items are between this item and the top item of the flame graph.     |
+| value      | number | The absolute or cumulative value of the item. This translates to the width of the item in the graph.                        |
+| label      | string | Label to be shown for the particular item.                                                                                  |
 | self       | number | Self value, which is usually the cumulative value of the item minus the sum of cumulative values of its immediate children. |
 
 ### Example
@@ -65,7 +65,7 @@ The following table is an example of the type of data you need for a flame graph
 | 2     | 4.10 Bil | 4.10 K | test/pkg/agent.(\*Target).start.func1     |
 | 3     | 3.67 Bil | 3.67 K | test/pkg/distributor.(\*Distributor).Push |
 | 4     | 1.13 Bil | 1.13 K | compress/gzip.(\*Writer).Write            |
-| 5     | 1.06 Bil | 1.06 K | compress/flat.(\*compressor).write       |
+| 5     | 1.06 Bil | 1.06 K | compress/flat.(\*compressor).write        |
 
 ## Modes
 
