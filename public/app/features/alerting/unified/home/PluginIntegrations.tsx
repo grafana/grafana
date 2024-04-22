@@ -1,10 +1,15 @@
+import { css } from '@emotion/css';
 import React from 'react';
 
 import { PluginExtensionPoints } from '@grafana/data';
+import { GrafanaTheme2 } from '@grafana/data/';
 import { getPluginComponentExtensions } from '@grafana/runtime';
 import { Stack, Box, Text } from '@grafana/ui';
+import { useStyles2 } from '@grafana/ui/';
 
 export function PluginIntegrations() {
+  const styles = useStyles2(getStyles);
+
   const { extensions } = getPluginComponentExtensions({
     extensionPointId: PluginExtensionPoints.AlertingHomePage,
     limitPerPlugin: 1,
@@ -21,11 +26,20 @@ export function PluginIntegrations() {
       </Text>
       <Stack gap={2} wrap="wrap" direction="row">
         {extensions.map((extension) => (
-          <Box key={extension.id} backgroundColor="secondary" padding={2} flex={1} maxWidth="460px">
+          <div key={extension.id} className={styles.box}>
             <extension.component />
-          </Box>
+          </div>
         ))}
       </Stack>
     </Stack>
   );
 }
+
+const getStyles = (theme: GrafanaTheme2) => ({
+  box: css({
+    padding: theme.spacing(2),
+    flex: 1,
+    backgroundColor: theme.colors.background.secondary,
+    maxWidth: '460px',
+  }),
+});
