@@ -75,7 +75,7 @@ export const transformationDocsContent: TransformationDocsContentType = {
   ${buildImageContent(
     '/static/img/docs/transformations/add-field-from-calc-stat-example-7-0.png',
     imageRenderType,
-    'Add field from calculation'
+    'A stat visualization including one field called Sum'
   )}
   `;
     },
@@ -342,7 +342,7 @@ export const transformationDocsContent: TransformationDocsContentType = {
   ${buildImageContent(
     '/static/img/docs/transformations/filter-by-query-stat-example-7-0.png',
     imageRenderType,
-    'Filter data by query refId'
+    'A stat visualization with results from two queries, A and C'
   )}
   `;
     },
@@ -790,7 +790,7 @@ export const transformationDocsContent: TransformationDocsContentType = {
   ${buildImageContent(
     '/static/img/docs/transformations/join-fields-before-7-0.png',
     imageRenderType,
-    'Join by field' + 1
+    'A table visualization showing results for one server'
   )}
 
   I applied a transformation to join the query results using the time field. Now I can run calculations, combine, and organize the results in this new table.
@@ -798,7 +798,7 @@ export const transformationDocsContent: TransformationDocsContentType = {
   ${buildImageContent(
     '/static/img/docs/transformations/join-fields-after-7-0.png',
     imageRenderType,
-    'Join by field' + 2
+    'A table visualization showing results for multiple servers'
   )}
 
   Combine and analyze data from various queries with table joining for a comprehensive view of your information.
@@ -1184,25 +1184,27 @@ export const transformationDocsContent: TransformationDocsContentType = {
       return `
   Use this transformation to rename parts of the query results using a regular expression and replacement pattern.
 
-  You can specify a regular expression, which is only applied to matches, along with a replacement pattern that support back references. For example, let's imagine you're visualizing CPU usage per host and you want to remove the domain name. You could set the regex to '([^\.]+)\..+' and the replacement pattern to '$1', 'web-01.example.com' would become 'web-01'.
-  
-  In the following example, we are stripping the prefix from event types. In the before image, you can see everything is prefixed with 'system.'
+You can specify a regular expression, which is only applied to matches, along with a replacement pattern that support back references. For example, let's imagine you're visualizing CPU usage per host and you want to remove the domain name. You could set the regex to '/^([^.]+).*/' and the replacement pattern to '$1', 'web-01.example.com' would become 'web-01'.
 
-  ${buildImageContent(
-    '/static/img/docs/transformations/rename-by-regex-before-7-3.png',
-    imageRenderType,
-    'Rename by regex' + 1
-  )}
+> **Note:** The Rename by regex transformation was improved in Grafana v9.0.0 to allow global patterns of the form '/<stringToReplace>/g'. Depending on the regex match used, this may cause some transformations to behave slightly differently. You can guarantee the same behavior as before by wrapping the match string in forward slashes '(/)', e.g. '(.*)' would become '/(.*)/'.
 
-  With the transformation applied, you can see we are left with just the remainder of the string.
+In the following example, we are stripping the 'A-' prefix from field names. In the before image, you can see everything is prefixed with 'A-':
 
-  ${buildImageContent(
-    '/static/img/docs/transformations/rename-by-regex-after-7-3.png',
-    imageRenderType,
-    'Rename by regex' + 2
-  )}
+${buildImageContent(
+  '/media/docs/grafana/panels-visualizations/screenshot-rename-by-regex-before-v11.0.png',
+  imageRenderType,
+  'A time series with full series names'
+)}
 
-  This transformation lets you to tailor your data to meet your visualization needs, making your dashboards more informative and user-friendly.
+With the transformation applied, you can see we are left with just the remainder of the string.
+
+${buildImageContent(
+  '/media/docs/grafana/panels-visualizations/screenshot-rename-by-regex-after-v11.0.png',
+  imageRenderType,
+  'A time series with shortened series names'
+)}
+
+This transformation lets you to tailor your data to meet your visualization needs, making your dashboards more informative and user-friendly.
   `;
     },
   },
@@ -1408,10 +1410,10 @@ export function getLinkToDocs(): string {
   `;
 }
 
-function buildImageContent(source: string, imageRenderType: ImageRenderType, imageName?: string) {
+function buildImageContent(source: string, imageRenderType: ImageRenderType, imageAltText: string) {
   return imageRenderType === 'shortcodeFigure'
     ? // This will build a Hugo Shortcode "figure" image template, which shares the same default class and max-width.
-      `{{< figure src="${source}" class="docs-image--no-shadow" max-width= "1100px" >}}`
+      `{{< figure src="${source}" class="docs-image--no-shadow" max-width= "1100px" alt="${imageAltText}" >}}`
     : // This will build generic Markdown image syntax for UI rendering.
-      `![${imageName} helper image](https://grafana.com${source})`;
+      `![${imageAltText}](https://grafana.com${source})`;
 }

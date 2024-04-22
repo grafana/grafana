@@ -489,15 +489,15 @@ Click and uncheck the field names to remove them from the result. Fields that ar
 
 Enable 'From variable' to let you select a dashboard variable that's used to include fields. By setting up a [dashboard variable][] with multiple choices, the same fields can be displayed across multiple visualizations.
 
-{{< figure src="/static/img/docs/transformations/filter-name-table-before-7-0.png" class="docs-image--no-shadow" max-width= "1100px" >}}
+{{< figure src="/static/img/docs/transformations/filter-name-table-before-7-0.png" class="docs-image--no-shadow" max-width= "1100px" alt="Filter fields by name1" >}}
 
 Here's the table after we applied the transformation to remove the Min field.
 
-{{< figure src="/static/img/docs/transformations/filter-name-table-after-7-0.png" class="docs-image--no-shadow" max-width= "1100px" >}}
+{{< figure src="/static/img/docs/transformations/filter-name-table-after-7-0.png" class="docs-image--no-shadow" max-width= "1100px" alt="Filter fields by name2" >}}
 
 Here is the same query using a Stat visualization.
 
-{{< figure src="/static/img/docs/transformations/filter-name-stat-after-7-0.png" class="docs-image--no-shadow" max-width= "1100px" >}}
+{{< figure src="/static/img/docs/transformations/filter-name-stat-after-7-0.png" class="docs-image--no-shadow" max-width= "1100px" alt="Filter fields by name3" >}}
 
 This transformation provides flexibility in tailoring your query results to focus on the specific fields you need for effective analysis and visualization.
 
@@ -773,11 +773,11 @@ The result after applying the outer join transformation looks like the following
 
 In the following example, a template query displays time series data from multiple servers in a table visualization. The results of only one query can be viewed at a time.
 
-{{< figure src="/static/img/docs/transformations/join-fields-before-7-0.png" class="docs-image--no-shadow" max-width= "1100px"alt="A table visualization showing results for one server" >}}
+{{< figure src="/static/img/docs/transformations/join-fields-before-7-0.png" class="docs-image--no-shadow" max-width= "1100px" alt="A table visualization showing results for one server" >}}
 
 I applied a transformation to join the query results using the time field. Now I can run calculations, combine, and organize the results in this new table.
 
-{{< figure src="/static/img/docs/transformations/join-fields-after-7-0.png" class="docs-image--no-shadow" max-width= "1100px" alt="A table visualization showing results for multiple servers"  >}}
+{{< figure src="/static/img/docs/transformations/join-fields-after-7-0.png" class="docs-image--no-shadow" max-width= "1100px" alt="A table visualization showing results for multiple servers" >}}
 
 Combine and analyze data from various queries with table joining for a comprehensive view of your information.
 
@@ -1113,15 +1113,17 @@ This flexible transformation simplifies the process of consolidating and summari
 
 Use this transformation to rename parts of the query results using a regular expression and replacement pattern.
 
-You can specify a regular expression, which is only applied to matches, along with a replacement pattern that support back references. For example, let's imagine you're visualizing CPU usage per host and you want to remove the domain name. You could set the regex to '([^.]+)..+' and the replacement pattern to '$1', 'web-01.example.com' would become 'web-01'.
+You can specify a regular expression, which is only applied to matches, along with a replacement pattern that support back references. For example, let's imagine you're visualizing CPU usage per host and you want to remove the domain name. You could set the regex to '/^([^.]+).\*/' and the replacement pattern to '$1', 'web-01.example.com' would become 'web-01'.
 
-In the following example, we are stripping the prefix from event types. In the before image, you can see everything is prefixed with 'system.'
+> **Note:** The Rename by regex transformation was improved in Grafana v9.0.0 to allow global patterns of the form '/<stringToReplace>/g'. Depending on the regex match used, this may cause some transformations to behave slightly differently. You can guarantee the same behavior as before by wrapping the match string in forward slashes '(/)', e.g. '(._)' would become '/(._)/'.
 
-{{< figure src="/static/img/docs/transformations/rename-by-regex-before-7-3.png" class="docs-image--no-shadow" max-width= "1100px" alt="A bar chart with long series names" >}}
+In the following example, we are stripping the 'A-' prefix from field names. In the before image, you can see everything is prefixed with 'A-':
+
+{{< figure src="/media/docs/grafana/panels-visualizations/screenshot-rename-by-regex-before-v11.0.png" class="docs-image--no-shadow" max-width= "1100px" alt="A time series with full series names" >}}
 
 With the transformation applied, you can see we are left with just the remainder of the string.
 
-{{< figure src="/static/img/docs/transformations/rename-by-regex-after-7-3.png" class="docs-image--no-shadow" max-width= "1100px" alt="A bar chart with shortened series names" >}}
+{{< figure src="/media/docs/grafana/panels-visualizations/screenshot-rename-by-regex-after-v11.0.png" class="docs-image--no-shadow" max-width= "1100px" alt="A time series with shortened series names" >}}
 
 This transformation lets you to tailor your data to meet your visualization needs, making your dashboards more informative and user-friendly.
 
@@ -1273,9 +1275,9 @@ Use this transformation to create a new data frame containing values predicted b
 There are two different models:
 
 - **Linear regression** - Fits a linear function to the data.
-  {{< figure src="/static/img/docs/transformations/linear-regression.png" class="docs-image--no-shadow" max-width= "1100px" >}}
+  {{< figure src="/static/img/docs/transformations/linear-regression.png" class="docs-image--no-shadow" max-width= "1100px" alt="Linear regression" >}}
 - **Polynomial regression** - Fits a polynomial function to the data.
-  {{< figure src="/static/img/docs/transformations/polynomial-regression.png" class="docs-image--no-shadow" max-width= "1100px" >}}
+  {{< figure src="/static/img/docs/transformations/polynomial-regression.png" class="docs-image--no-shadow" max-width= "1100px" alt="Polynomial regression" >}}
 
 > **Note:** This transformation is an experimental feature. Engineering and on-call support is not available. Documentation is either limited or not provided outside of code comments. No SLA is provided. Enable the `regressionTransformation` feature toggle in Grafana to use this feature. Contact Grafana Support to enable this feature in Grafana Cloud.
 
