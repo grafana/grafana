@@ -4,6 +4,7 @@ import { Props } from 'react-virtualized-auto-sizer';
 import { EventBusSrv, serializeStateToUrlParam } from '@grafana/data';
 import { config } from '@grafana/runtime';
 import { DataQuery } from '@grafana/schema';
+import store from 'app/core/store';
 
 import { silenceConsoleOutput } from '../../../../test/core/utils/silenceConsoleOutput';
 import * as wat from '../../../core/history/RichHistoryLocalStorage';
@@ -143,7 +144,7 @@ describe('Explore: Query History', () => {
     await assertQueryHistory(['{"expr":"query #2"}', '{"expr":"query #1"}']);
   });
 
-  it.skip('does not add query if quota exceeded error is reached', async () => {
+  it('does not add query if quota exceeded error is reached', async () => {
     const urlParams = {
       left: serializeStateToUrlParam({
         datasource: 'loki',
@@ -156,21 +157,20 @@ describe('Explore: Query History', () => {
     jest.mocked(datasources.loki.query).mockReturnValueOnce(makeLogsQueryResponse());
     await waitForExplore();
     await openQueryHistory();
+
+    jest.spyOn(store, 'setObject').mockImplementation(() => {
+      const error = new Error('QuotaExceededError');
+      error.name = 'QuotaExceededError';
+      throw error;
+    });
 
     await inputQuery('query #2');
     await runQuery();
     await assertQueryHistory(['{"expr":"query #1"}']);
+    jest.clearAllMocks();
   });
 
   it('does add query if limit exceeded error is reached', async () => {
-    jest
-      .spyOn(wat, 'checkLimits')
-      .mockImplementationOnce((queries) => {
-        return { queriesToKeep: queries, limitExceeded: true };
-      })
-      .mockImplementationOnce((queries) => {
-        return { queriesToKeep: queries, limitExceeded: false };
-      });
     const urlParams = {
       left: serializeStateToUrlParam({
         datasource: 'loki',
@@ -183,6 +183,10 @@ describe('Explore: Query History', () => {
     jest.mocked(datasources.loki.query).mockReturnValueOnce(makeLogsQueryResponse());
     await waitForExplore();
     await openQueryHistory();
+
+    jest.spyOn(wat, 'checkLimits').mockImplementationOnce((queries) => {
+      return { queriesToKeep: queries, limitExceeded: true };
+    });
 
     await inputQuery('query #2');
     await runQuery();
