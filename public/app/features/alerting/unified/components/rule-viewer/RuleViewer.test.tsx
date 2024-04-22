@@ -1,8 +1,6 @@
 import 'whatwg-fetch';
-import { render, waitFor, screen } from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
 import React from 'react';
-import { TestProvider } from 'test/helpers/TestProvider';
+import { render, waitFor, screen, userEvent } from 'test/test-utils';
 import { byText, byRole } from 'testing-library-selector';
 
 import { setBackendSrv, setPluginExtensionGetter } from '@grafana/runtime';
@@ -228,8 +226,7 @@ const renderRuleViewer = async (rule: CombinedRule, identifier: RuleIdentifier) 
   render(
     <AlertRuleProvider identifier={identifier} rule={rule}>
       <RuleViewer />
-    </AlertRuleProvider>,
-    { wrapper: TestProvider }
+    </AlertRuleProvider>
   );
 
   await waitFor(() => expect(ELEMENTS.loading.query()).not.toBeInTheDocument());
