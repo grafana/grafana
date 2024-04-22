@@ -1,5 +1,3 @@
-import { useState, useEffect } from 'react';
-
 import { getBackendSrv } from '@grafana/runtime';
 import { alertRuleApi } from 'app/features/alerting/unified/api/alertRuleApi';
 import { alertmanagerApi } from 'app/features/alerting/unified/api/alertmanagerApi';
@@ -89,41 +87,51 @@ function useGetContactPoints() {
   const contactPoints = alertmanagerConfiguration.data?.alertmanager_config?.receivers ?? [];
   return contactPoints;
 }
-function getIncidentsPluginConfig(): Promise<IncidentsPluginConfig> {
-  return getBackendSrv()
+
+function getIncidentsPluginConfig({
+  incidnetPluginInstalled,
+}: {
+  incidnetPluginInstalled: boolean;
+}): IncidentsPluginConfig {
+  if (!incidnetPluginInstalled) {
+    return {
+      isInstalled: false,
+      isChatOpsInstalled: false,
+      isIncidentCreated: false,
+    };
+  }
+  getBackendSrv()
     .post('/api/plugins/grafana-incident-app/resources/api/ConfigurationTrackerService.GetConfigurationTracker', {})
     .then((response) => {
       return response.data;
+    })
+    .catch((error) => {
+      console.error('Error getting incidents plugin config', error);
+      return {
+        isInstalled: incidnetPluginInstalled,
+        isChatOpsInstalled: false,
+        isIncidentCreated: false,
+      };
     });
+  return {
+    isInstalled: incidnetPluginInstalled,
+    isChatOpsInstalled: false,
+    isIncidentCreated: false,
+  };
 }
 
 function useGetIncidentPluginConfig(): IncidentsPluginConfig {
   const { installed: incidnetPluginInstalled } = usePluginBridge(SupportedPlugin.Incident);
-  const [config, setConfig] = useState<IncidentsPluginConfig>({
-    isInstalled: incidnetPluginInstalled ?? false,
-    isChatOpsInstalled: false,
-    isIncidentCreated: false,
-  });
-
+  const config = getIncidentsPluginConfig({ incidnetPluginInstalled: incidnetPluginInstalled ?? false });
   console.log('config', config);
 
-  useEffect(() => {
-    getIncidentsPluginConfig()
-      .then((fetchedConfig) => {
-        setConfig(fetchedConfig);
-      })
-      .catch((error) => {
-        console.error('Error getting incident plugin config', error);
-        setConfig({
-          isInstalled: incidnetPluginInstalled ?? false,
-          isChatOpsInstalled: false,
-          isIncidentCreated: false,
-        });
-      });
-  }, [incidnetPluginInstalled]);
-
-  return config;
+  return {
+    isInstalled: incidnetPluginInstalled ?? false,
+    isChatOpsInstalled: config?.isChatOpsInstalled ?? false,
+    isIncidentCreated: config?.isIncidentCreated ?? false,
+  };
 }
+
 function useGetOnCallIntegrations() {
   const { installed: onCallPluginInstalled } = usePluginBridge(SupportedPlugin.OnCall);
 
