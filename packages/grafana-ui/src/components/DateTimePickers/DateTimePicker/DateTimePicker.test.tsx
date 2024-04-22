@@ -2,10 +2,18 @@ import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import React from 'react';
 
-import { dateTime } from '@grafana/data';
+import { dateTime, getTimeZone, setTimeZoneResolver } from '@grafana/data';
 import { Components } from '@grafana/e2e-selectors';
 
 import { DateTimePicker, Props } from './DateTimePicker';
+
+// An assortment of timezones that we will test the behavior of the DateTimePicker with different timezones
+const TEST_TIMEZONES = ['browser', 'Europe/Stockholm', 'America/Indiana/Marengo'];
+
+let defaultTimeZone = getTimeZone();
+afterAll(() => {
+  return setTimeZoneResolver(() => defaultTimeZone);
+});
 
 const renderDatetimePicker = (props?: Props) => {
   const combinedProps = Object.assign(
@@ -31,7 +39,14 @@ describe('Date time picker', () => {
     expect(screen.queryByDisplayValue('2021-05-05 12:00:00')).toBeInTheDocument();
   });
 
-  it('should update date onblur', async () => {
+  it.each(TEST_TIMEZONES)('should render (timezone %s)', (timeZone) => {
+    setTimeZoneResolver(() => timeZone);
+    renderDatetimePicker();
+    const dateTimeInput = screen.getByTestId(Components.DateTimePicker.input);
+    expect(dateTimeInput).toHaveDisplayValue('2021-05-05 12:00:00');
+  });
+
+  it.each(TEST_TIMEZONES)('should update date onblur (timezone: %)', async () => {
     const onChangeInput = jest.fn();
     render(<DateTimePicker date={dateTime('2021-05-05 12:00:00')} onChange={onChangeInput} />);
     const dateTimeInput = screen.getByTestId(Components.DateTimePicker.input);
