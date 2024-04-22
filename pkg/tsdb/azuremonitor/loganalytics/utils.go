@@ -46,7 +46,7 @@ func MeetsBasicLogsCriteria(isBasicLogsQuery bool, resources []string, fromAlert
 	}
 
 	if fromAlert {
-		return false, fmt.Errorf("basic Logs queries cannot be used for alerting")
+		return false, fmt.Errorf("basic Logs queries cannot be used for alerts")
 
 	}
 	if len(resources) != 1 {
