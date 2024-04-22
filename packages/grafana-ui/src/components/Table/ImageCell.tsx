@@ -25,13 +25,16 @@ export const ImageCell = (props: TableCellProps) => {
           links={() => getCellLinks(field, row) || []}
         >
           {(api) => {
-            const img = <img style={{ height: tableStyles.cellHeight - DATALINKS_HEIGHT_OFFSET, width: 'auto' }} src={displayValue.text} className={tableStyles.imageCell} alt="" />;
+            const img = (
+              <img
+                style={{ height: tableStyles.cellHeight - DATALINKS_HEIGHT_OFFSET, width: 'auto' }}
+                src={displayValue.text}
+                className={tableStyles.imageCell}
+                alt=""
+              />
+            );
             if (api.openMenu) {
-              return (
-                <a onClick={api.openMenu}>
-                  {img}
-                </a>
-              );
+              return <a onClick={api.openMenu}>{img}</a>;
             } else {
               return img;
             }
