@@ -4,7 +4,7 @@ import React from 'react';
 import { PluginExtensionPoints } from '@grafana/data';
 import { GrafanaTheme2 } from '@grafana/data/';
 import { getPluginComponentExtensions } from '@grafana/runtime';
-import { Stack, Box, Text } from '@grafana/ui';
+import { Stack, Text } from '@grafana/ui';
 import { useStyles2 } from '@grafana/ui/';
 
 export function PluginIntegrations() {
