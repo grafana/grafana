@@ -167,6 +167,10 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
     this.addActivationHandler(() => this._activationHandler());
   }
 
+  public shouldCheckForChanges(partialState: Partial<DashboardSceneState>): boolean {
+    return Object.keys(partialState).some((key) => PERSISTED_PROPS.includes(key));
+  }
+
   private _activationHandler() {
     let prevSceneContext = window.__grafanaSceneContext;
 

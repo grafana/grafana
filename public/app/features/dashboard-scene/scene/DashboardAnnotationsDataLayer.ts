@@ -49,4 +49,8 @@ export class DashboardAnnotationsDataLayer extends dataLayers.AnnotationsDataLay
       return super.processEvents(query, events);
     }
   }
+
+  public shouldCheckForChanges(partialState: object): boolean {
+    return !('data' in partialState);
+  }
 }

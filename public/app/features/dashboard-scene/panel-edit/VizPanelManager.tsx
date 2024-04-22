@@ -456,6 +456,10 @@ export class VizPanelManager extends SceneObjectBase<VizPanelManagerState> {
     this.state.panel.setState({ title: newTitle, hoverHeader: newTitle === '' });
   }
 
+  public shouldCheckForChanges(partialState: Partial<VizPanelManagerState>) {
+    return 'repeat' in partialState || 'repeatDirection' in partialState || 'maxPerRow' in partialState;
+  }
+
   public static Component = ({ model }: SceneComponentProps<VizPanelManager>) => {
     const { panel, tableView } = model.useState();
     const styles = useStyles2(getStyles);

@@ -43,6 +43,10 @@ export class LibraryVizPanel extends SceneObjectBase<LibraryVizPanelState> {
     this.addActivationHandler(this._onActivate);
   }
 
+  public shouldCheckForChanges(partialState: Partial<LibraryVizPanelState>): boolean {
+    return 'name' in partialState;
+  }
+
   private _onActivate = () => {
     if (!this.state.isLoaded) {
       this.loadLibraryPanelFromPanelModel();

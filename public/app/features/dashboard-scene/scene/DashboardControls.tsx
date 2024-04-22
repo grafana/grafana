@@ -35,6 +35,10 @@ export class DashboardControls extends SceneObjectBase<DashboardControlsState> {
       ...state,
     });
   }
+
+  public shouldCheckForChanges(partialState: Partial<DashboardControlsState>): boolean {
+    return 'hideTimeControls' in partialState;
+  }
 }
 
 function DashboardControlsRenderer({ model }: SceneComponentProps<DashboardControls>) {

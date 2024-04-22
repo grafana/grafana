@@ -14,6 +14,10 @@ interface VizPanelLinksState extends SceneObjectState {
 
 export class VizPanelLinks extends SceneObjectBase<VizPanelLinksState> {
   static Component = VizPanelLinksRenderer;
+
+  public shouldCheckForChanges(): boolean {
+    return true;
+  }
 }
 
 function VizPanelLinksRenderer({ model }: SceneComponentProps<VizPanelLinks>) {

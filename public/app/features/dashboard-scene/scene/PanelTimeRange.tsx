@@ -93,6 +93,10 @@ export class PanelTimeRange extends SceneTimeRangeTransformerBase<PanelTimeRange
 
     return newTimeData;
   }
+
+  public shouldCheckForChanges() {
+    return true;
+  }
 }
 
 function PanelTimeRangeRenderer({ model }: SceneComponentProps<PanelTimeRange>) {
