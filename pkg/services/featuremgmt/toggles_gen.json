@@ -2071,6 +2071,20 @@
         "codeowner": "@grafana/dataviz-squad",
         "frontend": true
       }
+    },
+    {
+      "metadata": {
+        "name": "grafanaManagedRecordingRules",
+        "resourceVersion": "1713795659477",
+        "creationTimestamp": "2024-04-22T14:20:59Z"
+      },
+      "spec": {
+        "description": "Enables Grafana-managed recording rules.",
+        "stage": "experimental",
+        "codeowner": "@grafana/alerting-squad",
+        "hideFromAdminPage": true,
+        "hideFromDocs": true
+      }
     }
   ]
 }
