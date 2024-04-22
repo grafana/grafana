@@ -71,7 +71,7 @@ func AlertRuleGen(mutators ...AlertRuleMutator) func() *AlertRule {
 		}
 
 		rule := &AlertRule{
-			ID:                   rand.Int63n(1500),
+			ID:                   0,
 			OrgID:                rand.Int63n(1500) + 1, // Prevent OrgID=0 as this does not pass alert rule validation.
 			Title:                "TEST-ALERT-" + util.GenerateShortUID(),
 			Condition:            "A",
@@ -110,7 +110,7 @@ func WithUniqueID() AlertRuleMutator {
 	usedID := make(map[int64]struct{})
 	return func(rule *AlertRule) {
 		for {
-			id := rand.Int63n(1500)
+			id := rand.Int63n(1500) + 1
 			if _, ok := usedID[id]; !ok {
 				usedID[id] = struct{}{}
 				rule.ID = id

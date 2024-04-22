@@ -347,7 +347,7 @@ func TestPatchPartialAlertRule(t *testing.T) {
 			t.Run(testCase.name, func(t *testing.T) {
 				var existing *AlertRule
 				for {
-					existing = AlertRuleGen()()
+					existing = AlertRuleGen(WithUniqueID())()
 					cloned := *existing
 					// make sure the generated rule does not match the mutated one
 					testCase.mutator(&cloned)
