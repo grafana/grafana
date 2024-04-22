@@ -157,7 +157,7 @@ Use this transformation to add a new field calculated from two other fields. Eac
 
 In the example below, we added two fields together and named them Sum.
 
-{{< figure src="/static/img/docs/transformations/add-field-from-calc-stat-example-7-0.png" class="docs-image--no-shadow" max-width= "1100px" >}}
+{{< figure src="/static/img/docs/transformations/add-field-from-calc-stat-example-7-0.png" class="docs-image--no-shadow" max-width= "1100px" alt="A stat visualization including one field called Sum" >}}
 
 ### Concatenate fields
 
@@ -384,7 +384,7 @@ Grafana displays the query identification letters in dark gray text. Click a que
 
 In the example below, the panel has three queries (A, B, C). We removed the B query from the visualization.
 
-{{< figure src="/static/img/docs/transformations/filter-by-query-stat-example-7-0.png" class="docs-image--no-shadow" max-width= "1100px" >}}
+{{< figure src="/static/img/docs/transformations/filter-by-query-stat-example-7-0.png" class="docs-image--no-shadow" max-width= "1100px" alt="A stat visualization with results from two queries, A and C" >}}
 
 ### Filter data by values
 
@@ -489,15 +489,15 @@ Click and uncheck the field names to remove them from the result. Fields that ar
 
 Enable 'From variable' to let you select a dashboard variable that's used to include fields. By setting up a [dashboard variable][] with multiple choices, the same fields can be displayed across multiple visualizations.
 
-{{< figure src="/static/img/docs/transformations/filter-name-table-before-7-0.png" class="docs-image--no-shadow" max-width= "1100px" >}}
+{{< figure src="/static/img/docs/transformations/filter-name-table-before-7-0.png" class="docs-image--no-shadow" max-width= "1100px" alt="Filter fields by name1" >}}
 
 Here's the table after we applied the transformation to remove the Min field.
 
-{{< figure src="/static/img/docs/transformations/filter-name-table-after-7-0.png" class="docs-image--no-shadow" max-width= "1100px" >}}
+{{< figure src="/static/img/docs/transformations/filter-name-table-after-7-0.png" class="docs-image--no-shadow" max-width= "1100px" alt="Filter fields by name2" >}}
 
 Here is the same query using a Stat visualization.
 
-{{< figure src="/static/img/docs/transformations/filter-name-stat-after-7-0.png" class="docs-image--no-shadow" max-width= "1100px" >}}
+{{< figure src="/static/img/docs/transformations/filter-name-stat-after-7-0.png" class="docs-image--no-shadow" max-width= "1100px" alt="Filter fields by name3" >}}
 
 This transformation provides flexibility in tailoring your query results to focus on the specific fields you need for effective analysis and visualization.
 
@@ -773,11 +773,11 @@ The result after applying the outer join transformation looks like the following
 
 In the following example, a template query displays time series data from multiple servers in a table visualization. The results of only one query can be viewed at a time.
 
-{{< figure src="/static/img/docs/transformations/join-fields-before-7-0.png" class="docs-image--no-shadow" max-width= "1100px" >}}
+{{< figure src="/static/img/docs/transformations/join-fields-before-7-0.png" class="docs-image--no-shadow" max-width= "1100px" alt="A table visualization showing results for one server1" >}}
 
 I applied a transformation to join the query results using the time field. Now I can run calculations, combine, and organize the results in this new table.
 
-{{< figure src="/static/img/docs/transformations/join-fields-after-7-0.png" class="docs-image--no-shadow" max-width= "1100px" >}}
+{{< figure src="/static/img/docs/transformations/join-fields-after-7-0.png" class="docs-image--no-shadow" max-width= "1100px" alt="A table visualization showing results for multiple servers2" >}}
 
 Combine and analyze data from various queries with table joining for a comprehensive view of your information.
 
@@ -1119,11 +1119,11 @@ You can specify a regular expression, which is only applied to matches, along wi
 
 In the following example, we are stripping the 'A-' prefix from field names. In the before image, you can see everything is prefixed with 'A-':
 
-{{< figure src="/media/docs/grafana/panels-visualizations/screenshot-rename-by-regex-before-v11.0.png" class="docs-image--no-shadow" max-width= "1100px" >}}
+{{< figure src="/media/docs/grafana/panels-visualizations/screenshot-rename-by-regex-before-v11.0.png" class="docs-image--no-shadow" max-width= "1100px" alt="A time series with full series names" >}}
 
 With the transformation applied, you can see we are left with just the remainder of the string.
 
-{{< figure src="/media/docs/grafana/panels-visualizations/screenshot-rename-by-regex-after-v11.0.png" class="docs-image--no-shadow" max-width= "1100px" >}}
+{{< figure src="/media/docs/grafana/panels-visualizations/screenshot-rename-by-regex-after-v11.0.png" class="docs-image--no-shadow" max-width= "1100px" alt="A time series with shortened series names" >}}
 
 This transformation lets you to tailor your data to meet your visualization needs, making your dashboards more informative and user-friendly.
 
@@ -1275,9 +1275,9 @@ Use this transformation to create a new data frame containing values predicted b
 There are two different models:
 
 - **Linear regression** - Fits a linear function to the data.
-  {{< figure src="/static/img/docs/transformations/linear-regression.png" class="docs-image--no-shadow" max-width= "1100px" >}}
+  {{< figure src="/static/img/docs/transformations/linear-regression.png" class="docs-image--no-shadow" max-width= "1100px" alt="Linear regression" >}}
 - **Polynomial regression** - Fits a polynomial function to the data.
-  {{< figure src="/static/img/docs/transformations/polynomial-regression.png" class="docs-image--no-shadow" max-width= "1100px" >}}
+  {{< figure src="/static/img/docs/transformations/polynomial-regression.png" class="docs-image--no-shadow" max-width= "1100px" alt="Polynomial regression" >}}
 
 > **Note:** This transformation is an experimental feature. Engineering and on-call support is not available. Documentation is either limited or not provided outside of code comments. No SLA is provided. Enable the `regressionTransformation` feature toggle in Grafana to use this feature. Contact Grafana Support to enable this feature in Grafana Cloud.
 
