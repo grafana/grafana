@@ -1182,25 +1182,27 @@ export const transformationDocsContent: TransformationDocsContentType = {
       return `
   Use this transformation to rename parts of the query results using a regular expression and replacement pattern.
 
-  You can specify a regular expression, which is only applied to matches, along with a replacement pattern that support back references. For example, let's imagine you're visualizing CPU usage per host and you want to remove the domain name. You could set the regex to '([^\.]+)\..+' and the replacement pattern to '$1', 'web-01.example.com' would become 'web-01'.
-  
-  In the following example, we are stripping the prefix from event types. In the before image, you can see everything is prefixed with 'system.'
+You can specify a regular expression, which is only applied to matches, along with a replacement pattern that support back references. For example, let's imagine you're visualizing CPU usage per host and you want to remove the domain name. You could set the regex to '/^([^.]+).*/' and the replacement pattern to '$1', 'web-01.example.com' would become 'web-01'.
 
-  ${buildImageContent(
-    '/static/img/docs/transformations/rename-by-regex-before-7-3.png',
-    imageRenderType,
-    'A bar chart with long series names'
-  )}
+> **Note:** The Rename by regex transformation was improved in Grafana v9.0.0 to allow global patterns of the form '/<stringToReplace>/g'. Depending on the regex match used, this may cause some transformations to behave slightly differently. You can guarantee the same behavior as before by wrapping the match string in forward slashes '(/)', e.g. '(.*)' would become '/(.*)/'.
 
-  With the transformation applied, you can see we are left with just the remainder of the string.
+In the following example, we are stripping the 'A-' prefix from field names. In the before image, you can see everything is prefixed with 'A-':
 
-  ${buildImageContent(
-    '/static/img/docs/transformations/rename-by-regex-after-7-3.png',
-    imageRenderType,
-    'A bar chart with shortened series names'
-  )}
+${buildImageContent(
+  '/media/docs/grafana/panels-visualizations/screenshot-rename-by-regex-before-v11.0.png',
+  imageRenderType,
+  'A time series with full series names'
+)}
 
-  This transformation lets you to tailor your data to meet your visualization needs, making your dashboards more informative and user-friendly.
+With the transformation applied, you can see we are left with just the remainder of the string.
+
+${buildImageContent(
+  '/media/docs/grafana/panels-visualizations/screenshot-rename-by-regex-after-v11.0.png',
+  imageRenderType,
+  'A time series with shortened series names'
+)}
+
+This transformation lets you to tailor your data to meet your visualization needs, making your dashboards more informative and user-friendly.
   `;
     },
   },
