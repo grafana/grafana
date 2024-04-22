@@ -96,7 +96,7 @@ const LogsQueryEditor = ({
       // Basic Logs queries are required to start the query with a table
       const table = querySplit[0].trim();
       datasource.azureLogAnalyticsDatasource.getBasicLogsQueryUsage(query, table).then((data) => setDataIngested(data));
-      const textToShow = dataIngested
+      const textToShow = !!dataIngested
         ? `This query is processing ${dataIngested} GiB when run. `
         : 'This is a Basic Logs query and incurs cost per GiB scanned. ';
       setDataIngestedWarning(
