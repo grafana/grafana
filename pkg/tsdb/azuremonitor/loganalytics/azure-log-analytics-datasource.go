@@ -134,7 +134,7 @@ func (e *AzureLogAnalyticsDatasource) buildQueries(ctx context.Context, queries 
 				resultFormat = types.TimeSeries
 			}
 
-			basicLogsQueryflag := false
+			basicLogsQueryFlag := false
 			if azureLogAnalyticsTarget.BasicLogsQuery != nil {
 				basicLogsQueryflag = *azureLogAnalyticsTarget.BasicLogsQuery
 			}
