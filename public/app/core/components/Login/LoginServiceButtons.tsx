@@ -149,13 +149,14 @@ export const LoginServiceButtons = () => {
 
   if (hasServices) {
     return (
-      <Stack direction="row" wrap={'wrap'}>
-        <LoginDivider />
-        {Object.entries(enabledServices).map(([key, service]) => {
-          const serviceName = service.name;
-          return (
-            <Stack flex={'1 0 100%'} key={key}>
+      <div style={{ width: '100%' }}>
+        <Stack direction={'column'}>
+          <LoginDivider />
+          {Object.entries(enabledServices).map(([key, service]) => {
+            const serviceName = service.name;
+            return (
               <LinkButton
+                key={key}
                 className={getButtonStyleFor(service, styles, theme)}
                 href={`login/${service.hrefName ? service.hrefName : key}`}
                 target="_self"
@@ -164,10 +165,10 @@ export const LoginServiceButtons = () => {
                 <Icon className={styles.buttonIcon} name={service.icon} />
                 <Trans i18nKey="login.services.sing-in-with-prefix">Sign in with {{ serviceName }}</Trans>
               </LinkButton>
-            </Stack>
-          );
-        })}
-      </Stack>
+            );
+          })}
+        </Stack>
+      </div>
     );
   }
 
