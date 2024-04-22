@@ -1,7 +1,5 @@
-import { cx } from '@emotion/css';
 import React from 'react';
 
-import { useStyles2 } from '../../themes';
 import { getCellLinks } from '../../utils';
 import { DataLinksContextMenu } from '../DataLinks/DataLinksContextMenu';
 
