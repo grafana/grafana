@@ -44,6 +44,8 @@ Geomaps allow you to view and customize the world map using geospatial data. You
 
 {{< figure src="/static/img/docs/geomap-panel/geomap-example-8-1-0.png" max-width="1200px" caption="Geomap panel" >}}
 
+Pan the map, while it's in focus, by using the arrow keys. Zoom in and out by using the `+` and `-` keys.
+
 The following video provides beginner steps for creating geomap visualizations. You'll learn the data requirements and caveats, special customizations, preconfigured displays and much more:
 
 {{< youtube id="HwM8AFQ7EUs" >}}

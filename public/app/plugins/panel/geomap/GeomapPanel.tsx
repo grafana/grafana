@@ -384,7 +384,14 @@ export class GeomapPanel extends Component<Props, State> {
       <>
         <Global styles={this.globalCSS} />
         <div className={styles.wrap} onMouseLeave={this.clearTooltip}>
-          <div className={styles.map} ref={this.initMapRef}></div>
+          <div
+            role="application"
+            className={styles.map}
+            // eslint-disable-next-line jsx-a11y/no-noninteractive-tabindex
+            tabIndex={0} // Interactivity is added through the ref
+            aria-label={`Navigable map`}
+            ref={this.initMapRef}
+          ></div>
           <GeomapOverlay
             bottomLeft={legends}
             topRight1={topRight1}
