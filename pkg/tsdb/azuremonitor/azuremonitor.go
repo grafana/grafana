@@ -19,7 +19,6 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend/log"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/resource/httpadapter"
 
-	ngalertmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/tsdb/azuremonitor/azmoncredentials"
 	"github.com/grafana/grafana/pkg/tsdb/azuremonitor/loganalytics"
 	"github.com/grafana/grafana/pkg/tsdb/azuremonitor/metrics"
@@ -159,6 +158,7 @@ func (s *Service) getDataSourceFromPluginReq(ctx context.Context, req *backend.Q
 }
 
 func (s *Service) newQueryMux() *datasource.QueryTypeMux {
+	fromAlert := "FromAlert"
 	mux := datasource.NewQueryTypeMux()
 	for dsType := range s.executors {
 		// Make a copy of the string to keep the reference after the iterator
@@ -173,7 +173,7 @@ func (s *Service) newQueryMux() *datasource.QueryTypeMux {
 			if !ok {
 				return nil, fmt.Errorf("missing service for %s", dst)
 			}
-			_, fromAlert := req.Headers[ngalertmodels.FromAlertHeaderName]
+			_, fromAlert := req.Headers[fromAlert]
 			return executor.ExecuteTimeSeriesQuery(ctx, req.Queries, dsInfo, service.HTTPClient, service.URL, fromAlert)
 		})
 	}
