@@ -117,4 +117,23 @@ func TestValidatePluginRepoConfig(t *testing.T) {
 		repoURL := c.PluginRepoURL()
 		require.Equal(t, "https://grafana-dev.com/plugins", repoURL)
 	})
+
+	t.Run("Should use config overrides parameter if it is set alongside config parameter", func(t *testing.T) {
+		if testing.Short() {
+			t.Skip("skipping integration test")
+		}
+
+		// GrafanaComApiUrl is set to the default path https://grafana.com/api
+		grafDir, cfgPath := testinfra.CreateGrafDir(t)
+
+		// overriding the GrafanaComApiUrl to https://grafana-dev.com
+		c, err := commandstest.NewCliContext(map[string]string{
+			"config":          cfgPath,
+			"homepath":        grafDir,
+			"configOverrides": "cfg:grafana_com.api_url=https://grafana-dev.com",
+		})
+		require.NoError(t, err)
+		repoURL := c.PluginRepoURL()
+		require.Equal(t, "https://grafana-dev.com/plugins", repoURL)
+	})
 }
