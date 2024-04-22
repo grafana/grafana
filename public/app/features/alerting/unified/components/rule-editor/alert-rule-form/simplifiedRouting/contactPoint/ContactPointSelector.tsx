@@ -149,18 +149,6 @@ function LinkToContactPoints() {
   );
 }
 
-const pulse = keyframes({
-  '0%': {
-    opacity: 1,
-  },
-  '50%': {
-    opacity: 0,
-  },
-  '100%': {
-    opacity: 1,
-  },
-});
-
 const rotation = keyframes({
   from: {
     transform: 'rotate(720deg)',
@@ -197,9 +185,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
       animation: `${rotation} 2s infinite linear`,
     },
     [theme.transitions.handleMotion('reduce')]: {
-      animationName: pulse,
-      animationDuration: '2s',
-      animationIterationCount: 'infinite',
+      animation: `${rotation} 6s infinite linear`,
     },
   }),
   warn: css({
