@@ -11,7 +11,7 @@ import { SettingsProvider, useSettings } from './components/settings/SettingsCon
 
 // @todo translate subtitle – move to navtree?
 const SUBTITLE =
-  'Manage Alertmanger configurations and configure where alert instances generated from Grafana-managed alert rules are sent.';
+  'Manage Alertmanager configurations and configure where alert instances generated from Grafana managed alert rules are sent.';
 
 export default function SettingsPage() {
   return (
