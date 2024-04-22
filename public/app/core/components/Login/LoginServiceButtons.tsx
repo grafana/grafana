@@ -149,21 +149,22 @@ export const LoginServiceButtons = () => {
 
   if (hasServices) {
     return (
-      <Stack direction="column">
+      <Stack direction="row" wrap={'wrap'}>
         <LoginDivider />
         {Object.entries(enabledServices).map(([key, service]) => {
           const serviceName = service.name;
           return (
-            <LinkButton
-              key={key}
-              className={getButtonStyleFor(service, styles, theme)}
-              href={`login/${service.hrefName ? service.hrefName : key}`}
-              target="_self"
-              fullWidth
-            >
-              <Icon className={styles.buttonIcon} name={service.icon} />
-              <Trans i18nKey="login.services.sing-in-with-prefix">Sign in with {{ serviceName }}</Trans>
-            </LinkButton>
+            <Stack flex={'1 0 100%'} key={key}>
+              <LinkButton
+                className={getButtonStyleFor(service, styles, theme)}
+                href={`login/${service.hrefName ? service.hrefName : key}`}
+                target="_self"
+                fullWidth
+              >
+                <Icon className={styles.buttonIcon} name={service.icon} />
+                <Trans i18nKey="login.services.sing-in-with-prefix">Sign in with {{ serviceName }}</Trans>
+              </LinkButton>
+            </Stack>
           );
         })}
       </Stack>
