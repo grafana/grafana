@@ -212,7 +212,7 @@ function patchWorkerPostMessage() {
   const originalPostMessage = Worker.prototype.postMessage;
   Object.defineProperty(Worker.prototype, 'postMessage', {
     value: function (...args: Parameters<typeof Worker.prototype.postMessage>) {
-      //@ts-ignore
+      //@ts-expect-error
       return originalPostMessage.apply(this, unboxNearMembraneProxies(args));
     },
   });
