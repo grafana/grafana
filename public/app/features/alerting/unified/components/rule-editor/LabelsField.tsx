@@ -18,6 +18,9 @@ interface Props {
   dataSourceName?: string | null;
 }
 
+// Some labels are used internally and should not be displayed to the user
+const restrictedLabelKeys = new Set(['__grafana_origin']);
+
 const useGetCustomLabels = (dataSourceName: string): { loading: boolean; labelsByKey: Record<string, Set<string>> } => {
   const dispatch = useDispatch();
 
@@ -44,6 +47,9 @@ const useGetCustomLabels = (dataSourceName: string): { loading: boolean; labelsB
       if (rule.labels) {
         Object.entries(rule.labels).forEach(([key, value]) => {
           if (!value) {
+            return;
+          }
+          if (restrictedLabelKeys.has(key)) {
             return;
           }
 
