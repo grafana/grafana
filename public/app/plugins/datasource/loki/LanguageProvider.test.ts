@@ -171,7 +171,7 @@ describe('Language completion provider', () => {
       const labelValues = await provider.fetchLabelValues('testkey', { streamSelector: '{foo="bar"}' });
       expect(requestSpy).toHaveBeenCalledWith('label/testkey/values', {
         end: 1560163909000,
-        query: '%7Bfoo%3D%22bar%22%7D',
+        query: '{foo="bar"}',
         start: 1560153109000,
       });
       expect(labelValues).toEqual(['label1_val1', 'label1_val2']);
@@ -237,7 +237,7 @@ describe('Language completion provider', () => {
       expect(requestSpy).toHaveBeenCalledTimes(1);
       expect(requestSpy).toHaveBeenCalledWith('label/testkey/values', {
         end: 1560163909000,
-        query: '%7Bfoo%3D%22bar%22%7D',
+        query: '{foo="bar"}',
         start: 1560153109000,
       });
       expect(labelValues).toEqual(['label1_val1', 'label1_val2']);
@@ -263,7 +263,7 @@ describe('Language completion provider', () => {
       await provider.fetchLabelValues('`\\"testkey', { streamSelector: '{foo="\\bar"}' });
 
       expect(requestSpy).toHaveBeenCalledWith(expect.any(String), {
-        query: '%7Bfoo%3D%22%5Cbar%22%7D',
+        query: '{foo="\\bar"}',
         start: expect.any(Number),
         end: expect.any(Number),
       });

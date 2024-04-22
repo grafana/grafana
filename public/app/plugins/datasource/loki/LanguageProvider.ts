@@ -251,9 +251,11 @@ export default class LokiLanguageProvider extends LanguageProvider {
     options?: { streamSelector?: string; timeRange?: TimeRange }
   ): Promise<string[]> {
     const label = encodeURIComponent(this.datasource.interpolateString(labelName));
-    const streamParam = options?.streamSelector
-      ? encodeURIComponent(this.datasource.interpolateString(options.streamSelector))
-      : undefined;
+    // Loki don't allow empty streamSelector {}, so we should not send it.
+    const streamParam =
+      options?.streamSelector && options.streamSelector !== '{}'
+        ? this.datasource.interpolateString(options.streamSelector)
+        : undefined;
 
     const url = `label/${label}/values`;
     const range = options?.timeRange ?? this.getDefaultTimeRange();

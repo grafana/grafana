@@ -16,7 +16,7 @@ export function createMetadataRequest(
       const seriesMatch = url.match(lokiSeriesEndpointRegex);
       if (labelsMatch) {
         if (series && params && params['query']) {
-          const labelAndValue = series[decodeURIComponent(params['query'] as string)];
+          const labelAndValue = series[params['query'] as string];
           return labelAndValue.map((s) => s[labelsMatch[1]]) || [];
         } else {
           return labelsAndValues[labelsMatch[1]] || [];
