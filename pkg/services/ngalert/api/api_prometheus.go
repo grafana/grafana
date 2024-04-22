@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"net/url"
 	"sort"
 	"strconv"
 	"strings"
@@ -33,7 +34,33 @@ type PrometheusSrv struct {
 
 const queryIncludeInternalLabels = "includeInternalLabels"
 
+func getBoolWithDefault(vals url.Values, field string, d bool) bool {
+	f := vals.Get(field)
+	if f == "" {
+		return d
+	}
+
+	v, _ := strconv.ParseBool(f)
+	return v
+}
+
+func getInt64WithDefault(vals url.Values, field string, d int64) int64 {
+	f := vals.Get(field)
+	if f == "" {
+		return d
+	}
+
+	v, err := strconv.ParseInt(f, 10, 64)
+	if err != nil {
+		return d
+	}
+	return v
+}
+
 func (srv PrometheusSrv) RouteGetAlertStatuses(c *contextmodel.ReqContext) response.Response {
+	// As we are using req.Form directly, this triggers a call to ParseForm() if needed.
+	c.Query("")
+
 	alertResponse := apimodels.AlertResponse{
 		DiscoveryBase: apimodels.DiscoveryBase{
 			Status: "success",
@@ -44,7 +71,7 @@ func (srv PrometheusSrv) RouteGetAlertStatuses(c *contextmodel.ReqContext) respo
 	}
 
 	var labelOptions []ngmodels.LabelOption
-	if !c.QueryBoolWithDefault(queryIncludeInternalLabels, false) {
+	if !getBoolWithDefault(c.Req.Form, queryIncludeInternalLabels, false) {
 		labelOptions = append(labelOptions, ngmodels.WithoutInternalLabels())
 	}
 
@@ -68,7 +95,7 @@ func (srv PrometheusSrv) RouteGetAlertStatuses(c *contextmodel.ReqContext) respo
 		})
 	}
 
-	return response.JSON(http.StatusOK, alertResponse)
+	return response.JSON(alertResponse.HTTPStatusCode(), alertResponse)
 }
 
 func formatValues(alertState *state.State) string {
@@ -145,30 +172,8 @@ func getStatesFromRequest(r *http.Request) ([]eval.State, error) {
 }
 
 func (srv PrometheusSrv) RouteGetRuleStatuses(c *contextmodel.ReqContext) response.Response {
-	dashboardUID := c.Query("dashboard_uid")
-	panelID, err := getPanelIDFromRequest(c.Req)
-	if err != nil {
-		return ErrResp(http.StatusBadRequest, err, "invalid panel_id")
-	}
-	if dashboardUID == "" && panelID != 0 {
-		return ErrResp(http.StatusBadRequest, errors.New("panel_id must be set with dashboard_uid"), "")
-	}
-
-	limitGroups := c.QueryInt64WithDefault("limit", -1)
-	limitRulesPerGroup := c.QueryInt64WithDefault("limit_rules", -1)
-	limitAlertsPerRule := c.QueryInt64WithDefault("limit_alerts", -1)
-	matchers, err := getMatchersFromRequest(c.Req)
-	if err != nil {
-		return ErrResp(http.StatusBadRequest, err, "")
-	}
-	withStates, err := getStatesFromRequest(c.Req)
-	if err != nil {
-		return ErrResp(http.StatusBadRequest, err, "")
-	}
-	withStatesFast := make(map[eval.State]struct{})
-	for _, state := range withStates {
-		withStatesFast[state] = struct{}{}
-	}
+	// As we are using req.Form directly, this triggers a call to ParseForm() if needed.
+	c.Query("")
 
 	ruleResponse := apimodels.RuleResponse{
 		DiscoveryBase: apimodels.DiscoveryBase{
@@ -179,19 +184,59 @@ func (srv PrometheusSrv) RouteGetRuleStatuses(c *contextmodel.ReqContext) respon
 		},
 	}
 
+	dashboardUID := c.Query("dashboard_uid")
+	panelID, err := getPanelIDFromRequest(c.Req)
+	if err != nil {
+		ruleResponse.DiscoveryBase.Status = "error"
+		ruleResponse.DiscoveryBase.Error = fmt.Sprintf("invalid panel_id: %s", err.Error())
+		ruleResponse.DiscoveryBase.ErrorType = apiv1.ErrBadData
+		return response.JSON(ruleResponse.HTTPStatusCode(), ruleResponse)
+	}
+	if dashboardUID == "" && panelID != 0 {
+		ruleResponse.DiscoveryBase.Status = "error"
+		ruleResponse.DiscoveryBase.Error = "panel_id must be set with dashboard_uid"
+		ruleResponse.DiscoveryBase.ErrorType = apiv1.ErrBadData
+		return response.JSON(ruleResponse.HTTPStatusCode(), ruleResponse)
+	}
+
+	limitGroups := getInt64WithDefault(c.Req.Form, "limit", -1)
+	limitRulesPerGroup := getInt64WithDefault(c.Req.Form, "limit_rules", -1)
+	limitAlertsPerRule := getInt64WithDefault(c.Req.Form, "limit_alerts", -1)
+	matchers, err := getMatchersFromRequest(c.Req)
+	if err != nil {
+		ruleResponse.DiscoveryBase.Status = "error"
+		ruleResponse.DiscoveryBase.Error = err.Error()
+		ruleResponse.DiscoveryBase.ErrorType = apiv1.ErrBadData
+		return response.JSON(ruleResponse.HTTPStatusCode(), ruleResponse)
+	}
+	withStates, err := getStatesFromRequest(c.Req)
+	if err != nil {
+		ruleResponse.DiscoveryBase.Status = "error"
+		ruleResponse.DiscoveryBase.Error = err.Error()
+		ruleResponse.DiscoveryBase.ErrorType = apiv1.ErrBadData
+		return response.JSON(ruleResponse.HTTPStatusCode(), ruleResponse)
+	}
+	withStatesFast := make(map[eval.State]struct{})
+	for _, state := range withStates {
+		withStatesFast[state] = struct{}{}
+	}
+
 	var labelOptions []ngmodels.LabelOption
-	if !c.QueryBoolWithDefault(queryIncludeInternalLabels, false) {
+	if !getBoolWithDefault(c.Req.Form, queryIncludeInternalLabels, false) {
 		labelOptions = append(labelOptions, ngmodels.WithoutInternalLabels())
 	}
 
 	namespaceMap, err := srv.store.GetUserVisibleNamespaces(c.Req.Context(), c.SignedInUser.GetOrgID(), c.SignedInUser)
 	if err != nil {
-		return ErrResp(http.StatusInternalServerError, err, "failed to get namespaces visible to the user")
+		ruleResponse.DiscoveryBase.Status = "error"
+		ruleResponse.DiscoveryBase.Error = fmt.Sprintf("failed to get namespaces visible to the user: %s", err.Error())
+		ruleResponse.DiscoveryBase.ErrorType = apiv1.ErrServer
+		return response.JSON(ruleResponse.HTTPStatusCode(), ruleResponse)
 	}
 
 	if len(namespaceMap) == 0 {
 		srv.log.Debug("User does not have access to any namespaces")
-		return response.JSON(http.StatusOK, ruleResponse)
+		return response.JSON(ruleResponse.HTTPStatusCode(), ruleResponse)
 	}
 
 	namespaceUIDs := make([]string, len(namespaceMap))
@@ -210,7 +255,7 @@ func (srv PrometheusSrv) RouteGetRuleStatuses(c *contextmodel.ReqContext) respon
 		ruleResponse.DiscoveryBase.Status = "error"
 		ruleResponse.DiscoveryBase.Error = fmt.Sprintf("failure getting rules: %s", err.Error())
 		ruleResponse.DiscoveryBase.ErrorType = apiv1.ErrServer
-		return response.JSON(http.StatusInternalServerError, ruleResponse)
+		return response.JSON(ruleResponse.HTTPStatusCode(), ruleResponse)
 	}
 
 	// Group rules together by Namespace and Rule Group. Rules are also grouped by Org ID,
@@ -237,7 +282,10 @@ func (srv PrometheusSrv) RouteGetRuleStatuses(c *contextmodel.ReqContext) respon
 		}
 		ok, err := srv.authz.HasAccessToRuleGroup(c.Req.Context(), c.SignedInUser, rules)
 		if err != nil {
-			return response.ErrOrFallback(http.StatusInternalServerError, "cannot authorize access to rule group", err)
+			ruleResponse.DiscoveryBase.Status = "error"
+			ruleResponse.DiscoveryBase.Error = fmt.Sprintf("cannot authorize access to rule group: %s", err.Error())
+			ruleResponse.DiscoveryBase.ErrorType = apiv1.ErrServer
+			return response.JSON(ruleResponse.HTTPStatusCode(), ruleResponse)
 		}
 		if !ok {
 			continue
@@ -287,7 +335,7 @@ func (srv PrometheusSrv) RouteGetRuleStatuses(c *contextmodel.ReqContext) respon
 		ruleResponse.Data.RuleGroups = ruleResponse.Data.RuleGroups[0:limitGroups]
 	}
 
-	return response.JSON(http.StatusOK, ruleResponse)
+	return response.JSON(ruleResponse.HTTPStatusCode(), ruleResponse)
 }
 
 // This is the same as matchers.Matches but avoids the need to create a LabelSet
@@ -408,10 +456,14 @@ func (srv PrometheusSrv) toRuleGroup(groupKey ngmodels.AlertRuleGroupKey, folder
 			rulesTotals[newRule.Health] += 1
 		}
 
-		apimodels.AlertsBy(apimodels.AlertsByImportance).Sort(alertingRule.Alerts)
+		alertsBy := apimodels.AlertsBy(apimodels.AlertsByImportance)
 
 		if limitAlerts > -1 && int64(len(alertingRule.Alerts)) > limitAlerts {
-			alertingRule.Alerts = alertingRule.Alerts[0:limitAlerts]
+			alertingRule.Alerts = alertsBy.TopK(alertingRule.Alerts, int(limitAlerts))
+		} else {
+			// If there is no effective limit, then just sort the alerts.
+			// For large numbers of alerts, this can be faster.
+			alertsBy.Sort(alertingRule.Alerts)
 		}
 
 		alertingRule.Rule = newRule

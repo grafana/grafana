@@ -1163,6 +1163,10 @@
     "title": "Latest from the blog"
   },
   "notifications": {
+    "empty-state": {
+      "description": "Notifications you have received will appear here",
+      "title": "You're all caught up!"
+    },
     "starred-dashboard": "Dashboard starred",
     "unstarred-dashboard": "Dashboard unstarred"
   },
