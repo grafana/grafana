@@ -10,6 +10,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/bus"
+	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/acimpl"
@@ -96,7 +97,7 @@ func TestIntegrationQuotaCommandsAndQueries(t *testing.T) {
 	require.NoError(t, err)
 	userService, err := userimpl.ProvideService(sqlStore, orgService, sqlStore.Cfg, nil, nil, quotaService, supportbundlestest.NewFakeBundleService())
 	require.NoError(t, err)
-	setupEnv(t, sqlStore, b, quotaService)
+	setupEnv(t, sqlStore, sqlStore.Cfg, b, quotaService)
 
 	u, err := userService.Create(context.Background(), &user.CreateUserCommand{
 		Name:         "TestUser",
@@ -468,29 +469,29 @@ func getQuotaBySrvTargetScope(t *testing.T, quotaService quota.Service, srv quot
 	return quota.QuotaDTO{}, err
 }
 
-func setupEnv(t *testing.T, sqlStore *sqlstore.SQLStore, b bus.Bus, quotaService quota.Service) {
+func setupEnv(t *testing.T, sqlStore db.DB, cfg *setting.Cfg, b bus.Bus, quotaService quota.Service) {
 	tracer := tracing.InitializeTracerForTest()
-	_, err := apikeyimpl.ProvideService(sqlStore, sqlStore.Cfg, quotaService)
+	_, err := apikeyimpl.ProvideService(sqlStore, cfg, quotaService)
 	require.NoError(t, err)
-	_, err = authimpl.ProvideUserAuthTokenService(sqlStore, nil, quotaService, sqlStore.Cfg)
+	_, err = authimpl.ProvideUserAuthTokenService(sqlStore, nil, quotaService, cfg)
 	require.NoError(t, err)
-	_, err = dashboardStore.ProvideDashboardStore(sqlStore, sqlStore.Cfg, featuremgmt.WithFeatures(), tagimpl.ProvideService(sqlStore), quotaService)
+	_, err = dashboardStore.ProvideDashboardStore(sqlStore, cfg, featuremgmt.WithFeatures(), tagimpl.ProvideService(sqlStore), quotaService)
 	require.NoError(t, err)
 	secretsService := secretsmng.SetupTestService(t, fakes.NewFakeSecretsStore())
 	secretsStore := secretskvs.NewSQLSecretsKVStore(sqlStore, secretsService, log.New("test.logger"))
-	_, err = dsservice.ProvideService(sqlStore, secretsService, secretsStore, sqlStore.Cfg, featuremgmt.WithFeatures(), acmock.New(), acmock.NewMockedPermissionsService(), quotaService, &pluginstore.FakePluginStore{})
+	_, err = dsservice.ProvideService(sqlStore, secretsService, secretsStore, cfg, featuremgmt.WithFeatures(), acmock.New(), acmock.NewMockedPermissionsService(), quotaService, &pluginstore.FakePluginStore{})
 	require.NoError(t, err)
 	m := metrics.NewNGAlert(prometheus.NewRegistry())
 
-	ac := acimpl.ProvideAccessControl(sqlStore.Cfg)
-	ruleStore, err := ngstore.ProvideDBStore(sqlStore.Cfg, featuremgmt.WithFeatures(), sqlStore, &foldertest.FakeService{}, &dashboards.FakeDashboardService{}, ac)
+	ac := acimpl.ProvideAccessControl(cfg)
+	ruleStore, err := ngstore.ProvideDBStore(cfg, featuremgmt.WithFeatures(), sqlStore, &foldertest.FakeService{}, &dashboards.FakeDashboardService{}, ac)
 	require.NoError(t, err)
 	_, err = ngalert.ProvideService(
-		sqlStore.Cfg, featuremgmt.WithFeatures(), nil, nil, routing.NewRouteRegister(), sqlStore, ngalertfakes.NewFakeKVStore(t), nil, nil, quotaService,
+		cfg, featuremgmt.WithFeatures(), nil, nil, routing.NewRouteRegister(), sqlStore, ngalertfakes.NewFakeKVStore(t), nil, nil, quotaService,
 		secretsService, nil, m, &foldertest.FakeService{}, &acmock.Mock{}, &dashboards.FakeDashboardService{}, nil, b, &acmock.Mock{},
 		annotationstest.NewFakeAnnotationsRepo(), &pluginstore.FakePluginStore{}, tracer, ruleStore,
 	)
 	require.NoError(t, err)
-	_, err = storesrv.ProvideService(sqlStore, featuremgmt.WithFeatures(), sqlStore.Cfg, quotaService, storesrv.ProvideSystemUsersService())
+	_, err = storesrv.ProvideService(sqlStore, featuremgmt.WithFeatures(), cfg, quotaService, storesrv.ProvideSystemUsersService())
 	require.NoError(t, err)
 }

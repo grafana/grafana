@@ -11,7 +11,9 @@ import { config, getPluginLinkExtensions, locationService, setPluginImportUtils 
 import { VizPanel } from '@grafana/scenes';
 import { Dashboard } from '@grafana/schema';
 import { getRouteComponentProps } from 'app/core/navigation/__mocks__/routeProps';
+import store from 'app/core/store';
 import { DashboardLoaderSrv, setDashboardLoaderSrv } from 'app/features/dashboard/services/DashboardLoaderSrv';
+import { DASHBOARD_FROM_LS_KEY } from 'app/features/dashboard/state/initDashboard';
 
 import { dashboardSceneGraph } from '../utils/dashboardSceneGraph';
 
@@ -128,6 +130,7 @@ describe('DashboardScenePage', () => {
     Object.defineProperty(HTMLElement.prototype, 'offsetWidth', { configurable: true, value: 1000 });
     getPluginLinkExtensionsMock.mockRestore();
     getPluginLinkExtensionsMock.mockReturnValue({ extensions: [] });
+    store.delete(DASHBOARD_FROM_LS_KEY);
   });
 
   it('Can render dashboard', async () => {
@@ -235,6 +238,20 @@ describe('DashboardScenePage', () => {
       expect(await screen.findByTitle('Panel Added')).toBeInTheDocument();
       expect(await screen.queryByText('Start your new dashboard by adding a visualization')).not.toBeInTheDocument();
     });
+  });
+
+  it('is in edit mode when coming from explore to an existing dashboard', async () => {
+    store.setObject(DASHBOARD_FROM_LS_KEY, { dashboard: simpleDashboard });
+
+    setup();
+
+    await waitForDashbordToRender();
+
+    const panelAMenu = await screen.findByLabelText('Menu for panel with title Panel A');
+    expect(panelAMenu).toBeInTheDocument();
+    await userEvent.click(panelAMenu);
+    const editMenuItem = await screen.findAllByText('Edit');
+    expect(editMenuItem).toHaveLength(1);
   });
 });
 

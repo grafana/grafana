@@ -43,7 +43,6 @@ const getStyles = (theme: GrafanaTheme2) => ({
   parent: css`
     display: flex;
     flex-direction: row;
-    max-width: ${theme.breakpoints.values.xl}px;
     border: solid 1px ${theme.colors.border.weak};
     border-radius: ${theme.shape.radius.default};
     padding: ${theme.spacing(2)} ${theme.spacing(3)};

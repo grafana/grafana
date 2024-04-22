@@ -2,6 +2,7 @@ import { debounce } from 'lodash';
 import React, { useState, useEffect } from 'react';
 
 import { SelectableValue } from '@grafana/data';
+import { selectors } from '@grafana/e2e-selectors';
 import { TabbedContainer, TabConfig } from '@grafana/ui';
 import { t } from 'app/core/internationalization';
 import { SortOrder, RichHistorySearchFilters, RichHistorySettings } from 'app/core/utils/richHistory';
@@ -33,29 +34,18 @@ export interface RichHistoryProps {
   richHistorySettings: RichHistorySettings;
   richHistorySearchFilters?: RichHistorySearchFilters;
   updateHistorySettings: (settings: RichHistorySettings) => void;
-  updateHistorySearchFilters: (exploreId: string, filters: RichHistorySearchFilters) => void;
-  loadRichHistory: (exploreId: string) => void;
-  loadMoreRichHistory: (exploreId: string) => void;
-  clearRichHistoryResults: (exploreId: string) => void;
+  updateHistorySearchFilters: (filters: RichHistorySearchFilters) => void;
+  loadRichHistory: () => void;
+  loadMoreRichHistory: () => void;
+  clearRichHistoryResults: () => void;
   deleteRichHistory: () => void;
-  activeDatasourceInstance: string;
   firstTab: Tabs;
-  exploreId: string;
   height: number;
   onClose: () => void;
 }
 
 export function RichHistory(props: RichHistoryProps) {
-  const {
-    richHistory,
-    richHistoryTotal,
-    height,
-    exploreId,
-    deleteRichHistory,
-    onClose,
-    firstTab,
-    activeDatasourceInstance,
-  } = props;
+  const { richHistory, richHistoryTotal, height, deleteRichHistory, onClose, firstTab } = props;
 
   const [loading, setLoading] = useState(false);
 
@@ -69,12 +59,12 @@ export function RichHistory(props: RichHistoryProps) {
       ...filtersToUpdate,
       page: 1, // always load fresh results when updating filters
     };
-    props.updateHistorySearchFilters(props.exploreId, filters);
+    props.updateHistorySearchFilters(filters);
     loadRichHistory();
   };
 
   const loadRichHistory = debounce(() => {
-    props.loadRichHistory(props.exploreId);
+    props.loadRichHistory();
     setLoading(true);
   }, 300);
 
@@ -87,8 +77,8 @@ export function RichHistory(props: RichHistoryProps) {
   const toggleStarredTabAsFirstTab = () =>
     updateSettings({ starredTabAsFirstTab: !props.richHistorySettings.starredTabAsFirstTab });
 
-  const toggleActiveDatasourceOnly = () =>
-    updateSettings({ activeDatasourceOnly: !props.richHistorySettings.activeDatasourceOnly });
+  const toggleActiveDatasourcesOnly = () =>
+    updateSettings({ activeDatasourcesOnly: !props.richHistorySettings.activeDatasourcesOnly });
 
   useEffect(() => {
     setLoading(false);
@@ -103,12 +93,10 @@ export function RichHistory(props: RichHistoryProps) {
         totalQueries={richHistoryTotal || 0}
         loading={loading}
         updateFilters={updateFilters}
-        clearRichHistoryResults={() => props.clearRichHistoryResults(props.exploreId)}
-        loadMoreRichHistory={() => props.loadMoreRichHistory(props.exploreId)}
-        activeDatasourceInstance={activeDatasourceInstance}
+        clearRichHistoryResults={() => props.clearRichHistoryResults()}
+        loadMoreRichHistory={() => props.loadMoreRichHistory()}
         richHistorySettings={props.richHistorySettings}
         richHistorySearchFilters={props.richHistorySearchFilters}
-        exploreId={exploreId}
         height={height}
       />
     ),
@@ -123,13 +111,11 @@ export function RichHistory(props: RichHistoryProps) {
         queries={richHistory}
         totalQueries={richHistoryTotal || 0}
         loading={loading}
-        activeDatasourceInstance={activeDatasourceInstance}
         updateFilters={updateFilters}
-        clearRichHistoryResults={() => props.clearRichHistoryResults(props.exploreId)}
-        loadMoreRichHistory={() => props.loadMoreRichHistory(props.exploreId)}
+        clearRichHistoryResults={() => props.clearRichHistoryResults()}
+        loadMoreRichHistory={() => props.loadMoreRichHistory()}
         richHistorySettings={props.richHistorySettings}
         richHistorySearchFilters={props.richHistorySearchFilters}
-        exploreId={exploreId}
       />
     ),
     icon: 'star',
@@ -142,10 +128,10 @@ export function RichHistory(props: RichHistoryProps) {
       <RichHistorySettingsTab
         retentionPeriod={props.richHistorySettings.retentionPeriod}
         starredTabAsFirstTab={props.richHistorySettings.starredTabAsFirstTab}
-        activeDatasourceOnly={props.richHistorySettings.activeDatasourceOnly}
+        activeDatasourcesOnly={props.richHistorySettings.activeDatasourcesOnly}
         onChangeRetentionPeriod={onChangeRetentionPeriod}
         toggleStarredTabAsFirstTab={toggleStarredTabAsFirstTab}
-        toggleactiveDatasourceOnly={toggleActiveDatasourceOnly}
+        toggleActiveDatasourcesOnly={toggleActiveDatasourcesOnly}
         deleteRichHistory={deleteRichHistory}
       />
     ),
@@ -159,6 +145,7 @@ export function RichHistory(props: RichHistoryProps) {
       onClose={onClose}
       defaultTab={firstTab}
       closeIconTooltip={t('explore.rich-history.close-tooltip', 'Close query history')}
+      testId={selectors.pages.Explore.QueryHistory.container}
     />
   );
 }

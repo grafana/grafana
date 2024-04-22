@@ -7,6 +7,11 @@ import { byRole } from 'testing-library-selector';
 
 import { setDataSourceSrv } from '@grafana/runtime';
 import { contextSrv } from 'app/core/services/context_srv';
+import { mockApi, setupMswServer } from 'app/features/alerting/unified/mockApi';
+import {
+  defaultAlertmanagerChoiceResponse,
+  mockAlertmanagerChoiceResponse,
+} from 'app/features/alerting/unified/mocks/alertmanagerApi';
 import { DashboardSearchHit, DashboardSearchItemType } from 'app/features/search/types';
 import { AccessControlAction } from 'app/types';
 import { GrafanaAlertStateDecision, PromApplication } from 'app/types/unified-alerting-dto';
@@ -61,9 +66,13 @@ const mocks = {
   },
 };
 
+const server = setupMswServer();
+
 const getLabelInput = (selector: HTMLElement) => within(selector).getByRole('combobox');
 describe('RuleEditor grafana managed rules', () => {
   beforeEach(() => {
+    mockApi(server).eval({ results: {} });
+    mockAlertmanagerChoiceResponse(server, defaultAlertmanagerChoiceResponse);
     jest.clearAllMocks();
     contextSrv.isEditor = true;
     contextSrv.hasEditPermissionInFolders = true;
@@ -111,7 +120,7 @@ describe('RuleEditor grafana managed rules', () => {
             {
               annotations: { description: 'some description', summary: 'some summary' },
               labels: { severity: 'warn', team: 'the a-team' },
-              for: '5m',
+              for: '1m',
               grafana_alert: {
                 uid: '23',
                 namespace_uid: 'abcd',
@@ -133,7 +142,7 @@ describe('RuleEditor grafana managed rules', () => {
             {
               annotations: { description: 'some description', summary: 'some summary' },
               labels: { severity: 'warn', team: 'the a-team' },
-              for: '5m',
+              for: '1m',
               grafana_alert: {
                 uid: '23',
                 namespace_uid: 'b',
@@ -209,7 +218,7 @@ describe('RuleEditor grafana managed rules', () => {
           {
             annotations: { description: 'some description' },
             labels: { severity: 'warn' },
-            for: '5m',
+            for: '1m',
             grafana_alert: {
               condition: 'B',
               data: getDefaultQueries(),

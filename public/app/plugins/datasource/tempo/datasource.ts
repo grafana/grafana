@@ -216,7 +216,7 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
   }
 
   // Allows to retrieve the list of tag values for ad-hoc filters
-  getTagValues(options: DataSourceGetTagValuesOptions): Promise<Array<{ text: string }>> {
+  getTagValues(options: DataSourceGetTagValuesOptions<TempoQuery>): Promise<Array<{ text: string }>> {
     return this.labelValuesQuery(options.key.replace(/^(resource|span)\./, ''));
   }
 
@@ -481,6 +481,17 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
               ? this.templateSrv.replace(filter.value ?? '', scopedVars, VariableFormatID.Pipe)
               : filter.value.map((v) => this.templateSrv.replace(v ?? '', scopedVars, VariableFormatID.Pipe));
         }
+
+        return updatedFilter;
+      });
+    }
+
+    if (query.groupBy) {
+      expandedQuery.groupBy = query.groupBy.map((filter) => {
+        const updatedFilter = {
+          ...filter,
+          tag: this.templateSrv.replace(filter.tag ?? '', scopedVars),
+        };
 
         return updatedFilter;
       });

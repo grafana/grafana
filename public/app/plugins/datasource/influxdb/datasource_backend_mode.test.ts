@@ -180,7 +180,7 @@ describe('InfluxDataSource Backend Mode', () => {
     function influxChecks(query: InfluxQuery) {
       expect(templateSrv.replace).toBeCalledTimes(12);
       expect(query.alias).toBe(text);
-      expect(query.measurement).toBe(justText);
+      expect(query.measurement).toBe(textWithFormatRegex);
       expect(query.policy).toBe(justText);
       expect(query.limit).toBe(justText);
       expect(query.slimit).toBe(justText);
@@ -221,6 +221,26 @@ describe('InfluxDataSource Backend Mode', () => {
     const variablesMock = [
       queryBuilder().withId('var1').withName('var1').withCurrent('var1').build(),
       queryBuilder().withId('path').withName('path').withCurrent('/etc/hosts').build(),
+      queryBuilder()
+        .withId('field_var')
+        .withName('field_var')
+        .withMulti(true)
+        .withOptions(
+          {
+            text: `field_1`,
+            value: `field_1`,
+          },
+          {
+            text: `field_2`,
+            value: `field_2`,
+          },
+          {
+            text: `field_3`,
+            value: `field_3`,
+          }
+        )
+        .withCurrent(['field_1', 'field_3'])
+        .build(),
     ];
     const mockTemplateService = new TemplateSrv({
       getVariables: () => variablesMock,
@@ -327,6 +347,34 @@ describe('InfluxDataSource Backend Mode', () => {
       const res = ds.applyVariables(query, {});
       const expected = `/etc/hosts`;
       expect(res.tags?.[0].value).toEqual(expected);
+    });
+
+    it('should interpolate field keys with given scopedVars', () => {
+      const query: InfluxQuery = {
+        refId: 'A',
+        tags: [
+          {
+            key: 'key',
+            operator: '=',
+            value: 'value',
+          },
+        ],
+        select: [
+          [
+            {
+              type: 'field',
+              params: ['$field_var'],
+            },
+            {
+              type: 'mean',
+              params: [],
+            },
+          ],
+        ],
+      };
+      const res = ds.applyVariables(query, { field_var: { text: 'field_3', value: 'field_3' } });
+      const expected = `field_3`;
+      expect(res.select?.[0][0].params?.[0]).toEqual(expected);
     });
   });
 

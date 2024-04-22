@@ -1,5 +1,4 @@
 //DOCS: https://prometheus.io/docs/alerting/latest/configuration/
-
 import { DataSourceJsonData } from '@grafana/data';
 
 export type AlertManagerCortexConfig = {
@@ -218,11 +217,7 @@ export type AlertmanagerAlert = {
   generatorURL?: string;
   labels: { [key: string]: string };
   annotations: { [key: string]: string };
-  receivers: [
-    {
-      name: string;
-    },
-  ];
+  receivers: Array<{ name: string }>;
   fingerprint: string;
   status: {
     state: AlertState;
@@ -255,7 +250,12 @@ export interface AlertmanagerStatus {
 }
 
 export type TestReceiversAlert = Pick<AlertmanagerAlert, 'annotations' | 'labels'>;
-export type TestTemplateAlert = Pick<AlertmanagerAlert, 'annotations' | 'labels' | 'startsAt' | 'endsAt'>;
+export type TestTemplateAlert = Pick<
+  AlertmanagerAlert,
+  'annotations' | 'labels' | 'startsAt' | 'endsAt' | 'generatorURL' | 'fingerprint'
+> & {
+  status: 'firing' | 'resolved';
+};
 
 export interface TestReceiversPayload {
   receivers?: Receiver[];

@@ -17,6 +17,7 @@ deny = [
   { pkg = "github.com/pkg/errors", desc = "Deprecated: Go 1.13 supports the functionality provided by pkg/errors in the standard library." },
   { pkg = "github.com/xorcare/pointer", desc = "Use pkg/util.Pointer instead, which is a generic one-liner alternative" },
   { pkg = "github.com/gofrs/uuid", desc = "Use github.com/google/uuid instead, which we already depend on." },
+  { pkg = "github.com/bmizerany/assert", desc = "Use github.com/stretchr/testify/assert instead, which we already depend on." },
 ]
 
 [linters-settings.depguard.rules.coreplugins]
@@ -59,6 +60,8 @@ files = [
   "**/pkg/tsdb/azuremonitor/**/*",
   "**/pkg/tsdb/cloud-monitoring/*",
   "**/pkg/tsdb/cloud-monitoring/**/*",
+  "**/pkg/tsdb/mysql/*",
+  "**/pkg/tsdb/mysql/**/*",
   "**/pkg/tsdb/parca/*",
   "**/pkg/tsdb/parca/**/*",
   "**/pkg/tsdb/tempo/*",

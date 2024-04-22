@@ -133,6 +133,7 @@ export function buildQueryTransaction(
     },
     maxDataPoints: queryOptions.maxDataPoints,
     liveStreaming: queryOptions.liveStreaming,
+    skipQueryCache: true,
   };
 
   return {
