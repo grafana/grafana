@@ -20,7 +20,6 @@ import { cloudMigrationAPI } from 'app/features/migrate-to-cloud/api';
 import organizationReducers from 'app/features/org/state/reducers';
 import panelsReducers from 'app/features/panel/state/reducers';
 import { reducer as pluginsReducer } from 'app/features/plugins/admin/state/reducer';
-import { pluginsApi } from 'app/features/plugins/pluginsApi';
 import userReducers from 'app/features/profile/state/reducers';
 import serviceAccountsReducer from 'app/features/serviceaccounts/state/reducers';
 import supportBundlesReducer from 'app/features/support-bundles/state/reducers';
@@ -58,7 +57,6 @@ const rootReducers = {
   [publicDashboardApi.reducerPath]: publicDashboardApi.reducer,
   [browseDashboardsAPI.reducerPath]: browseDashboardsAPI.reducer,
   [cloudMigrationAPI.reducerPath]: cloudMigrationAPI.reducer,
-  [pluginsApi.reducerPath]: pluginsApi.reducer,
 };
 
 const addedReducers = {};

@@ -1,14 +1,16 @@
 import React from 'react';
+import { useAsync } from 'react-use';
 
 import { Badge } from '@grafana/ui';
-import { pluginsApi } from 'app/features/plugins/pluginsApi';
+
+import { getPluginSettings } from '../../../plugins/pluginSettings';
 
 interface PluginOriginBadgeProps {
   pluginId: string;
 }
 
 export function PluginOriginBadge({ pluginId }: PluginOriginBadgeProps) {
-  const { data: pluginMeta } = pluginsApi.endpoints.getSettigns.useQuery({ pluginId });
+  const { value: pluginMeta } = useAsync(() => getPluginSettings(pluginId));
 
   const logo = pluginMeta?.info.logos?.small;
   if (!logo) {
