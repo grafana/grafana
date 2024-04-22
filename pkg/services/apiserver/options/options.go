@@ -12,6 +12,7 @@ import (
 
 type OptionsProvider interface {
 	AddFlags(fs *pflag.FlagSet)
+	ApplyTo(config *genericapiserver.RecommendedConfig) error
 	ValidateOptions() []error
 }
 

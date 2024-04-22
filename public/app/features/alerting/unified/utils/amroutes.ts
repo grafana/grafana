@@ -10,7 +10,7 @@ import { matcherToMatcherField } from './alertmanager';
 import { GRAFANA_RULES_SOURCE_NAME } from './datasource';
 import { normalizeMatchers, parseMatcherToArray, quoteWithEscape, unquoteWithUnescape } from './matchers';
 import { findExistingRoute } from './routeTree';
-import { isValidPrometheusDuration, safeParseDurationstr } from './time';
+import { isValidPrometheusDuration, safeParsePrometheusDuration } from './time';
 
 const matchersToArrayFieldMatchers = (
   matchers: Record<string, string> | undefined,
@@ -268,8 +268,8 @@ export const repeatIntervalValidator = (repeatInterval: string, groupInterval = 
     return validGroupInterval;
   }
 
-  const repeatDuration = safeParseDurationstr(repeatInterval);
-  const groupDuration = safeParseDurationstr(groupInterval);
+  const repeatDuration = safeParsePrometheusDuration(repeatInterval);
+  const groupDuration = safeParsePrometheusDuration(groupInterval);
 
   const isRepeatLowerThanGroupDuration = groupDuration !== 0 && repeatDuration < groupDuration;
 

@@ -93,13 +93,11 @@ export type ErrorResponseBody = {
 export type CloudMigrationRequest = {
   authToken?: string;
 };
-export type ItemStatus = string;
-export type MigrateDataType = string;
 export type MigrateDataResponseItemDto = {
   error?: string;
-  refId?: string;
-  status?: ItemStatus;
-  type?: MigrateDataType;
+  refId: string;
+  status: 'OK' | 'ERROR';
+  type: 'DASHBOARD' | 'DATASOURCE' | 'FOLDER';
 };
 export type MigrateDataResponseDto = {
   id?: number;

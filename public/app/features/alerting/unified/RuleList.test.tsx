@@ -706,6 +706,7 @@ describe('RuleList', () => {
       await userEvent.clear(ui.editGroupModal.ruleGroupInput.get());
       await userEvent.type(ui.editGroupModal.ruleGroupInput.get(), 'super group');
 
+      await userEvent.clear(ui.editGroupModal.intervalInput.get());
       await userEvent.type(ui.editGroupModal.intervalInput.get(), '5m');
 
       // submit, check that appropriate calls were made
@@ -743,6 +744,8 @@ describe('RuleList', () => {
       // make changes to form
       await userEvent.clear(ui.editGroupModal.ruleGroupInput.get());
       await userEvent.type(ui.editGroupModal.ruleGroupInput.get(), 'super group');
+
+      await userEvent.clear(ui.editGroupModal.intervalInput.get());
       await userEvent.type(ui.editGroupModal.intervalInput.get(), '5m');
 
       // submit, check that appropriate calls were made
@@ -773,6 +776,7 @@ describe('RuleList', () => {
 
     testCase('edit lotex group eval interval, no renaming', async () => {
       // make changes to form
+      await userEvent.clear(ui.editGroupModal.intervalInput.get());
       await userEvent.type(ui.editGroupModal.intervalInput.get(), '5m');
 
       // submit, check that appropriate calls were made

@@ -1,11 +1,13 @@
 import { fireEvent, render, screen, getByText, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import React from 'react';
+import { TestProvider } from 'test/helpers/TestProvider';
 
 import { DataSourceApi, DataSourceInstanceSettings, DataSourcePluginMeta } from '@grafana/data';
 import { DataQuery, DataSourceRef } from '@grafana/schema';
 import { MixedDatasource } from 'app/plugins/datasource/mixed/MixedDataSource';
-import { RichHistoryQuery } from 'app/types';
+import { configureStore } from 'app/store/configureStore';
+import { ExploreState, RichHistoryQuery } from 'app/types';
 import { ShowConfirmModalEvent } from 'app/types/events';
 
 import { RichHistoryCard, Props } from './RichHistoryCard';
@@ -47,7 +49,7 @@ class MockDatasourceApi<T extends DataQuery> implements DataSourceApi<T> {
     throw new Error('Method not implemented.');
   }
   getRef(): DataSourceRef {
-    throw new Error('Method not implemented.');
+    return { uid: this.uid, type: this.type };
   }
 }
 
@@ -55,7 +57,7 @@ const dsStore: Record<string, DataSourceApi> = {
   alertmanager: new MockDatasourceApi('Alertmanager', 3, 'alertmanager', 'alertmanager'),
   loki: new MockDatasourceApi('Loki', 2, 'loki', 'loki'),
   prometheus: new MockDatasourceApi<MockQuery>('Prometheus', 1, 'prometheus', 'prometheus', {
-    getQueryDisplayText: (query: MockQuery) => query.queryText || 'Unknwon query',
+    getQueryDisplayText: (query: MockQuery) => query.queryText || 'Unknown query',
   }),
   mixed: new MixedDatasource({
     id: 4,
@@ -97,6 +99,7 @@ jest.mock('app/core/utils/explore', () => ({
 
 jest.mock('app/core/app_events', () => ({
   publish: jest.fn(),
+  subscribe: jest.fn(),
 }));
 
 interface MockQuery extends DataQuery {
@@ -104,7 +107,7 @@ interface MockQuery extends DataQuery {
   queryText?: string;
 }
 
-const setup = (propOverrides?: Partial<Props<MockQuery>>) => {
+const setup = (propOverrides?: Partial<Props<MockQuery>>, noPanes = false) => {
   const props: Props<MockQuery> = {
     queryHistoryItem: {
       id: '1',
@@ -124,13 +127,35 @@ const setup = (propOverrides?: Partial<Props<MockQuery>>) => {
     deleteHistoryItem: deleteRichHistoryMock,
     commentHistoryItem: jest.fn(),
     setQueries: jest.fn(),
-    exploreId: 'left',
-    datasourceInstance: dsStore.loki,
+    datasourceInstances: [dsStore.loki],
   };
 
   Object.assign(props, propOverrides);
 
-  render(<RichHistoryCard {...props} />);
+  const panes = noPanes
+    ? {}
+    : {
+        left: {
+          queries: [{ query: 'query1', refId: 'A' }],
+          datasourceInstance: dsStore.loki,
+          queryResponse: {},
+          range: {
+            raw: { from: 'now-1h', to: 'now' },
+          },
+        },
+      };
+
+  const store = configureStore({
+    explore: {
+      panes,
+    } as unknown as ExploreState,
+  });
+
+  render(
+    <TestProvider store={store}>
+      <RichHistoryCard {...props} />
+    </TestProvider>
+  );
 };
 
 const starredQueryWithComment: RichHistoryQuery<MockQuery> = {
@@ -188,6 +213,12 @@ describe('RichHistoryCard', () => {
     expect(datasourceName).toHaveTextContent('Data source does not exist anymore');
   });
 
+  it('should disable run query button if there are no explore IDs', async () => {
+    setup({}, true);
+    const runQueryButton = await screen.findByRole('button', { name: /run query/i });
+    expect(runQueryButton).toBeDisabled();
+  });
+
   describe('copy queries to clipboard', () => {
     it('should copy query model to clipboard when copying a query from a non existent datasource', async () => {
       setup({
@@ -236,8 +267,11 @@ describe('RichHistoryCard', () => {
           datasourceName: 'Test datasource',
           starred: false,
           comment: '',
-          queries: [{ query: 'query1', refId: 'A', queryText: 'query1' }],
+          queries: [
+            { query: 'query1', refId: 'A', queryText: 'query1', datasource: { uid: 'prometheus', type: 'prometheus' } },
+          ],
         },
+        datasourceInstances: [dsStore.prometheus],
       });
       const copyQueriesButton = await screen.findByRole('button', { name: 'Copy query to clipboard' });
       expect(copyQueriesButton).toBeInTheDocument();
@@ -260,6 +294,7 @@ describe('RichHistoryCard', () => {
             { query: 'query2', refId: 'B', datasource: { uid: 'loki' } },
           ],
         },
+        datasourceInstances: [dsStore.loki, dsStore.prometheus, dsStore.mixed],
       });
       const copyQueriesButton = await screen.findByRole('button', { name: 'Copy query to clipboard' });
       expect(copyQueriesButton).toBeInTheDocument();
@@ -367,6 +402,7 @@ describe('RichHistoryCard', () => {
           comment: '',
           queries,
         },
+        datasourceInstances: [dsStore.loki, dsStore.prometheus, dsStore.mixed],
       });
 
       const runQueryButton = await screen.findByRole('button', { name: /run query/i });

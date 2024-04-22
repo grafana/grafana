@@ -48,7 +48,7 @@
     },
     "/access-control/roles": {
       "get": {
-        "description": "Gets all existing roles. The response contains all global and organization local roles, for the organization which user is signed in.\n\nYou need to have a permission with action `roles:read` and scope `roles:*`.",
+        "description": "Gets all existing roles. The response contains all global and organization local roles, for the organization which user is signed in.\n\nYou need to have a permission with action `roles:read` and scope `roles:*`.\n\nThe `delegatable` flag reduces the set of roles to only those for which the signed-in user has permissions to assign.",
         "tags": [
           "access_control",
           "enterprise"
@@ -59,6 +59,11 @@
           {
             "type": "boolean",
             "name": "delegatable",
+            "in": "query"
+          },
+          {
+            "type": "boolean",
+            "name": "includeHidden",
             "in": "query"
           }
         ],
@@ -2776,6 +2781,14 @@
         }
       }
     },
+    "CloudMigrationRequest": {
+      "type": "object",
+      "properties": {
+        "authToken": {
+          "type": "string"
+        }
+      }
+    },
     "CloudMigrationResponse": {
       "type": "object",
       "properties": {
@@ -4539,9 +4552,6 @@
         }
       }
     },
-    "ItemStatus": {
-      "type": "string"
-    },
     "JSONWebKey": {
       "description": "JSONWebKey represents a public or private key in JWK format. It can be\nmarshaled into JSON and unmarshaled from JSON.",
       "type": "object",
@@ -4896,6 +4906,11 @@
     },
     "MigrateDataResponseItemDTO": {
       "type": "object",
+      "required": [
+        "type",
+        "refId",
+        "status"
+      ],
       "properties": {
         "error": {
           "type": "string"
@@ -4904,7 +4919,19 @@
           "type": "string"
         },
         "status": {
-          "$ref": "#/definitions/ItemStatus"
+          "type": "string",
+          "enum": [
+            "OK",
+            "ERROR"
+          ]
+        },
+        "type": {
+          "type": "string",
+          "enum": [
+            "DASHBOARD",
+            "DATASOURCE",
+            "FOLDER"
+          ]
         }
       }
     },
