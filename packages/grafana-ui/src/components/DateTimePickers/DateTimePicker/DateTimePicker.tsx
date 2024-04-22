@@ -3,7 +3,7 @@ import { autoUpdate, flip, shift, useFloating } from '@floating-ui/react';
 import { useDialog } from '@react-aria/dialog';
 import { FocusScope } from '@react-aria/focus';
 import { useOverlay } from '@react-aria/overlays';
-import React, { FormEvent, ReactNode, useCallback, useRef, useState } from 'react';
+import React, {FormEvent, ReactNode, useCallback, useEffect, useRef, useState} from 'react';
 import Calendar from 'react-calendar';
 import { useMedia } from 'react-use';
 
@@ -205,20 +205,35 @@ interface InputProps {
   showSeconds?: boolean;
 }
 
+const useDateTimeToValue = (showSeconds?: boolean) => {
+  return useCallback((subjectDate?: DateTimeInputType) => {
+    const format = showSeconds ? 'YYYY-MM-DD HH:mm:ss' : 'YYYY-MM-DD HH:mm';
+    const dateTimeValue = isDateTime(subjectDate) ? subjectDate : dateTime(subjectDate);
+
+    // Note: Formatted with the user timezone
+    return dateTimeFormat(dateTimeValue, { format });
+  }, [showSeconds]);
+
+}
+
 const DateTimeInput = React.forwardRef<HTMLInputElement, InputProps>(
   ({ date, label, onChange, onOpen, showSeconds = true }, ref) => {
 
     // Convert `DateTimeInputType` to string value
-    const dateTimeToValue = useCallback((subjectDate?: DateTimeInputType) => {
-      const format = showSeconds ? 'YYYY-MM-DD HH:mm:ss' : 'YYYY-MM-DD HH:mm';
-      const dateTimeValue = isDateTime(subjectDate) ? subjectDate : dateTime(subjectDate);
-
-      // Note: Formatted with the user timezone
-      return dateTimeFormat(dateTimeValue, { format });
-    }, [showSeconds]);
+    const dateTimeToValue = useDateTimeToValue(showSeconds);
 
     const [inputValue, setInputValue] = useState<string>(dateTimeToValue(date))
     const [isInputValueValid, setIsInputValueValid] = useState<boolean>(isValid(inputValue))
+
+    useEffect(() => {
+      if (dateTimeToValue(date) !== inputValue) {
+        setInputValue(dateTimeToValue(date))
+        setIsInputValueValid(isValid(inputValue))
+      }
+
+      // No need to update on input value change
+      // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [date, dateTimeToValue]);
 
     const onChangeInputValue = useCallback((event: FormEvent<HTMLInputElement>) => {
       const {value } = event.currentTarget
@@ -280,13 +295,24 @@ const DateTimeCalendar = React.forwardRef<HTMLDivElement, DateTimeCalendarProps>
   ) => {
     const calendarStyles = useStyles2(getBodyStyles);
     const styles = useStyles2(getStyles);
+    const dateTimeToValue = useDateTimeToValue(showSeconds)
     const [internalDate, setInternalDate] = useState<Date>(() => {
       if (date && date.isValid()) {
-        return date.toDate();
+        // Format the date with user timezone and convert it to `Date` object
+        return new Date(dateTimeToValue(date))
       }
 
       return new Date();
     });
+
+    // Check for external date changes
+    useEffect(() => {
+      const newDate = new Date(dateTimeToValue(date))
+      setInternalDate(newDate);
+
+      // We don't need to update if the internal date changes
+      // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [date])
 
     const onChangeDate = useCallback<NonNullable<React.ComponentProps<typeof Calendar>['onChange']>>((date) => {
       if (date && !Array.isArray(date)) {
@@ -305,6 +331,10 @@ const DateTimeCalendar = React.forwardRef<HTMLDivElement, DateTimeCalendarProps>
     const onChangeTime = useCallback((date: DateTime) => {
       setInternalDate(date.toDate());
     }, []);
+
+    const onApply = useCallback(() => {
+      onChange(dateTimeForTimeZone(getTimeZone(), dateTimeFormat(internalDate, {timeZone: 'browser'})));
+    }, [internalDate, onChange]);
 
     return (
       <div className={cx(styles.container, { [styles.fullScreen]: isFullscreen })} style={style} ref={ref}>
@@ -334,7 +364,7 @@ const DateTimeCalendar = React.forwardRef<HTMLDivElement, DateTimeCalendarProps>
           />
         </div>
         <Stack>
-          <Button type="button" onClick={() => onChange(dateTime(internalDate))}>
+          <Button type="button" onClick={onApply}>
             Apply
           </Button>
           <Button variant="secondary" type="button" onClick={onClose}>
