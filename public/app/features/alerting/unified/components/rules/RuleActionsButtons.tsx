@@ -46,7 +46,7 @@ export const RuleActionsButtons = ({ compact, showViewButton, showCopyLinkButton
   const [deleteModal, showDeleteModal] = useDeleteModal();
 
   const [redirectToClone, setRedirectToClone] = useState<
-    { identifier?: RuleIdentifier; isProvisioned: boolean } | undefined
+    { identifier: RuleIdentifier; isProvisioned: boolean } | undefined
   >(undefined);
 
   const { namespace, group, rulerRule } = rule;
