@@ -7,19 +7,23 @@ import { ErrorBoundaryAlert, useStyles2, useTheme2 } from '@grafana/ui';
 import { SplitPaneWrapper } from 'app/core/components/SplitPaneWrapper/SplitPaneWrapper';
 import { useGrafana } from 'app/core/context/GrafanaContext';
 import { useNavModel } from 'app/core/hooks/useNavModel';
+import { Trans } from 'app/core/internationalization';
 import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
-import { useSelector } from 'app/types';
+import { useDispatch, useSelector } from 'app/types';
 import { ExploreQueryParams } from 'app/types/explore';
 
 import { CorrelationEditorModeBar } from './CorrelationEditorModeBar';
 import { ExploreActions } from './ExploreActions';
+import { ExploreDrawer } from './ExploreDrawer';
 import { ExplorePaneContainer } from './ExplorePaneContainer';
+import RichHistoryContainer from './RichHistory/RichHistoryContainer';
 import { useExplorePageTitle } from './hooks/useExplorePageTitle';
 import { useKeyboardShortcuts } from './hooks/useKeyboardShortcuts';
 import { useSplitSizeUpdater } from './hooks/useSplitSizeUpdater';
 import { useStateSync } from './hooks/useStateSync';
 import { useTimeSrvFix } from './hooks/useTimeSrvFix';
-import { isSplit, selectCorrelationDetails, selectPanesEntries } from './state/selectors';
+import { changeShowQueryHistory } from './state/main';
+import { isSplit, selectCorrelationDetails, selectPanesEntries, selectShowQueryHistory } from './state/selectors';
 
 const MIN_PANE_WIDTH = 200;
 
@@ -36,17 +40,21 @@ export default function ExplorePage(props: GrafanaRouteComponentProps<{}, Explor
   useExplorePageTitle(props.queryParams);
   const { chrome } = useGrafana();
   const navModel = useNavModel('explore');
+  const dispatch = useDispatch();
   const { updateSplitSize, widthCalc } = useSplitSizeUpdater(MIN_PANE_WIDTH);
 
   const panes = useSelector(selectPanesEntries);
   const hasSplit = useSelector(isSplit);
   const correlationDetails = useSelector(selectCorrelationDetails);
+  const showQueryHistory = useSelector(selectShowQueryHistory);
   const showCorrelationEditorBar = config.featureToggles.correlations && (correlationDetails?.editorMode || false);
 
   useEffect(() => {
     //This is needed for breadcrumbs and topnav.
     //We should probably abstract this out at some point
-    chrome.update({ sectionNav: navModel });
+    chrome.update({
+      sectionNav: navModel,
+    });
   }, [chrome, navModel]);
 
   useKeyboardShortcuts();
@@ -57,6 +65,9 @@ export default function ExplorePage(props: GrafanaRouteComponentProps<{}, Explor
         [styles.correlationsEditorIndicator]: showCorrelationEditorBar,
       })}
     >
+      <h1 className="sr-only">
+        <Trans i18nKey="nav.explore.title" />
+      </h1>
       <ExploreActions />
       {showCorrelationEditorBar && <CorrelationEditorModeBar panes={panes} />}
       <SplitPaneWrapper
@@ -78,6 +89,15 @@ export default function ExplorePage(props: GrafanaRouteComponentProps<{}, Explor
           );
         })}
       </SplitPaneWrapper>
+      {showQueryHistory && (
+        <ExploreDrawer>
+          <RichHistoryContainer
+            onClose={() => {
+              dispatch(changeShowQueryHistory(false));
+            }}
+          />
+        </ExploreDrawer>
+      )}
     </div>
   );
 }
@@ -90,6 +110,7 @@ const getStyles = (theme: GrafanaTheme2) => {
       minHeight: 0,
       height: '100%',
       position: 'relative',
+      overflow: 'hidden',
     }),
     correlationsEditorIndicator: css({
       borderLeft: `4px solid ${theme.colors.primary.main}`,

@@ -78,6 +78,12 @@ func (r *LokiHistorianStore) Get(ctx context.Context, query *annotations.ItemQue
 		return make([]*annotations.ItemDTO, 0), nil
 	}
 
+	// if the query is filtering on tags, but not on a specific dashboard, we shouldn't query loki
+	// since state history won't have tags for annotations
+	if len(query.Tags) > 0 && query.DashboardID == 0 && query.DashboardUID == "" {
+		return make([]*annotations.ItemDTO, 0), nil
+	}
+
 	rule := &ngmodels.AlertRule{}
 	if query.AlertID != 0 {
 		var err error
@@ -173,7 +179,7 @@ func (r *LokiHistorianStore) annotationsFromStream(stream historian.Stream, ac a
 }
 
 func (r *LokiHistorianStore) GetTags(ctx context.Context, query *annotations.TagsQuery) (annotations.FindTagsResult, error) {
-	return annotations.FindTagsResult{}, nil
+	return annotations.FindTagsResult{Tags: []*annotations.TagsDTO{}}, nil
 }
 
 // util

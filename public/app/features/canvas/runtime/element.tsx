@@ -20,7 +20,7 @@ import { Scene } from './scene';
 
 let counter = 0;
 
-const SVGElements = new Set<string>(['parallelogram', 'triangle', 'cloud', 'ellipse']);
+export const SVGElements = new Set<string>(['parallelogram', 'triangle', 'cloud', 'ellipse']);
 
 export class ElementState implements LayerElement {
   // UID necessary for moveable to work (for now)

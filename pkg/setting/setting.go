@@ -261,11 +261,8 @@ type Cfg struct {
 	OAuthCookieMaxAge             int
 	OAuthAllowInsecureEmailLookup bool
 
-	JWTAuth AuthJWTSettings
-	// Extended JWT Auth
-	ExtendedJWTAuthEnabled    bool
-	ExtendedJWTExpectIssuer   string
-	ExtendedJWTExpectAudience string
+	JWTAuth    AuthJWTSettings
+	ExtJWTAuth ExtJWTSettings
 
 	// SSO Settings Auth
 	SSOSettingsReloadInterval        time.Duration
@@ -473,9 +470,10 @@ type Cfg struct {
 	RBACSingleOrganization bool
 
 	// GRPC Server.
-	GRPCServerNetwork   string
-	GRPCServerAddress   string
-	GRPCServerTLSConfig *tls.Config
+	GRPCServerNetwork       string
+	GRPCServerAddress       string
+	GRPCServerTLSConfig     *tls.Config
+	GRPCServerEnableLogging bool // log request and response of each unary gRPC call
 
 	CustomResponseHeaders map[string]string
 
@@ -518,6 +516,9 @@ type Cfg struct {
 	// Experimental scope settings
 	ScopesListScopesURL     string
 	ScopesListDashboardsURL string
+
+	//Short Links
+	ShortLinkExpiration int
 }
 
 // AddChangePasswordLink returns if login form is disabled or not since
@@ -1160,6 +1161,14 @@ func (cfg *Cfg) parseINIFile(iniFile *ini.File) error {
 	queryHistory := iniFile.Section("query_history")
 	cfg.QueryHistoryEnabled = queryHistory.Key("enabled").MustBool(true)
 
+	shortLinks := iniFile.Section("short_links")
+	cfg.ShortLinkExpiration = shortLinks.Key("expire_time").MustInt(7)
+
+	if cfg.ShortLinkExpiration > 365 {
+		cfg.Logger.Warn("short_links expire_time must be less than 366 days. Setting to 365 days")
+		cfg.ShortLinkExpiration = 365
+	}
+
 	panelsSection := iniFile.Section("panels")
 	cfg.DisableSanitizeHtml = panelsSection.Key("disable_sanitize_html").MustBool(false)
 
@@ -1186,6 +1195,7 @@ func (cfg *Cfg) parseINIFile(iniFile *ini.File) error {
 	cfg.handleAWSConfig()
 	cfg.readAzureSettings()
 	cfg.readAuthJWTSettings()
+	cfg.readAuthExtJWTSettings()
 	cfg.readAuthProxySettings()
 	cfg.readSessionConfig()
 	if err := cfg.readSmtpSettings(); err != nil {
@@ -1602,12 +1612,6 @@ func readAuthSettings(iniFile *ini.File, cfg *Cfg) (err error) {
 	cfg.BasicAuthEnabled = authBasic.Key("enabled").MustBool(true)
 	cfg.BasicAuthStrongPasswordPolicy = authBasic.Key("password_policy").MustBool(false)
 
-	// Extended JWT auth
-	authExtendedJWT := cfg.SectionWithEnvOverrides("auth.extended_jwt")
-	cfg.ExtendedJWTAuthEnabled = authExtendedJWT.Key("enabled").MustBool(false)
-	cfg.ExtendedJWTExpectAudience = authExtendedJWT.Key("expect_audience").MustString("")
-	cfg.ExtendedJWTExpectIssuer = authExtendedJWT.Key("expect_issuer").MustString("")
-
 	// SSO Settings
 	ssoSettings := iniFile.Section("sso_settings")
 	cfg.SSOSettingsReloadInterval = ssoSettings.Key("reload_interval").MustDuration(1 * time.Minute)
@@ -1764,6 +1768,7 @@ func readGRPCServerSettings(cfg *Cfg, iniFile *ini.File) error {
 
 	cfg.GRPCServerNetwork = valueAsString(server, "network", "tcp")
 	cfg.GRPCServerAddress = valueAsString(server, "address", "")
+	cfg.GRPCServerEnableLogging = server.Key("enable_logging").MustBool(false)
 	switch cfg.GRPCServerNetwork {
 	case "unix":
 		if cfg.GRPCServerAddress != "" {

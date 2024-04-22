@@ -59,7 +59,7 @@ func TestIntegrationProvideFolderService(t *testing.T) {
 		cfg := setting.NewCfg()
 		ac := acmock.New()
 		db := sqlstore.InitTestDB(t)
-		ProvideService(ac, bus.ProvideBus(tracing.InitializeTracerForTest()), cfg, nil, nil, db, &featuremgmt.FeatureManager{}, supportbundlestest.NewFakeBundleService(), nil)
+		ProvideService(ac, bus.ProvideBus(tracing.InitializeTracerForTest()), cfg, nil, nil, db, featuremgmt.WithFeatures(), supportbundlestest.NewFakeBundleService(), nil)
 
 		require.Len(t, ac.Calls.RegisterAttributeScopeResolver, 3)
 	})
@@ -448,10 +448,12 @@ func TestIntegrationNestedFolderService(t *testing.T) {
 
 			// nolint:staticcheck
 			libraryElementCmd.FolderID = parent.ID
+			libraryElementCmd.FolderUID = &parent.UID
 			_, err = lps.LibraryElementService.CreateElement(context.Background(), &signedInUser, libraryElementCmd)
 			require.NoError(t, err)
 			// nolint:staticcheck
 			libraryElementCmd.FolderID = subfolder.ID
+			libraryElementCmd.FolderUID = &subfolder.UID
 			_, err = lps.LibraryElementService.CreateElement(context.Background(), &signedInUser, libraryElementCmd)
 			require.NoError(t, err)
 
@@ -528,10 +530,12 @@ func TestIntegrationNestedFolderService(t *testing.T) {
 
 			// nolint:staticcheck
 			libraryElementCmd.FolderID = parent.ID
+			libraryElementCmd.FolderUID = &parent.UID
 			_, err = lps.LibraryElementService.CreateElement(context.Background(), &signedInUser, libraryElementCmd)
 			require.NoError(t, err)
 			// nolint:staticcheck
 			libraryElementCmd.FolderID = subfolder.ID
+			libraryElementCmd.FolderUID = &subfolder.UID
 			_, err = lps.LibraryElementService.CreateElement(context.Background(), &signedInUser, libraryElementCmd)
 			require.NoError(t, err)
 
@@ -667,11 +671,13 @@ func TestIntegrationNestedFolderService(t *testing.T) {
 					_ = createRule(t, alertStore, subfolder.UID, "sub alert")
 					// nolint:staticcheck
 					libraryElementCmd.FolderID = subfolder.ID
+					libraryElementCmd.FolderUID = &subPanel.FolderUID
 					subPanel, err = lps.LibraryElementService.CreateElement(context.Background(), &signedInUser, libraryElementCmd)
 					require.NoError(t, err)
 				}
 				// nolint:staticcheck
 				libraryElementCmd.FolderID = parent.ID
+				libraryElementCmd.FolderUID = &parent.UID
 				parentPanel, err := lps.LibraryElementService.CreateElement(context.Background(), &signedInUser, libraryElementCmd)
 				require.NoError(t, err)
 

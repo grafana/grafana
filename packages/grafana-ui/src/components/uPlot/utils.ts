@@ -8,12 +8,6 @@ import { createLogger } from '../../utils/logger';
 
 import { buildScaleKey } from './internal';
 
-const ALLOWED_FORMAT_STRINGS_REGEX = /\b(YYYY|YY|MMMM|MMM|MM|M|DD|D|WWWW|WWW|HH|H|h|AA|aa|a|mm|m|ss|s|fff)\b/g;
-
-export function timeFormatToTemplate(f: string) {
-  return f.replace(ALLOWED_FORMAT_STRINGS_REGEX, (match) => `{${match}}`);
-}
-
 const paddingSide: PaddingSide = (u, side, sidesWithAxes) => {
   let hasCrossAxis = side % 2 ? sidesWithAxes[0] || sidesWithAxes[2] : sidesWithAxes[1] || sidesWithAxes[3];
 
@@ -153,8 +147,8 @@ export function preparePlotData2(
   frame: DataFrame,
   stackingGroups: StackingGroup[],
   onStackMeta?: (meta: StackMeta) => void
-) {
-  let data: AlignedData = Array(frame.fields.length);
+): AlignedData {
+  let data = Array(frame.fields.length);
 
   let stacksQty = stackingGroups.length;
 
@@ -192,9 +186,9 @@ export function preparePlotData2(
 
     if (i === 0) {
       if (field.type === FieldType.time) {
-        data[i] = ensureTimeField(field).values;
+        data[0] = ensureTimeField(field).values;
       } else {
-        data[i] = vals;
+        data[0] = vals;
       }
       return;
     }

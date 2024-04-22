@@ -120,7 +120,7 @@ async function fetchDashboard(
         if (args.urlFolderUid) {
           await dispatch(getFolderByUid(args.urlFolderUid));
         }
-        return buildNewDashboardSaveModel(args.urlFolderUid);
+        return await buildNewDashboardSaveModel(args.urlFolderUid);
       }
       case DashboardRoutes.Path: {
         const path = args.urlSlug ?? '';
@@ -295,7 +295,7 @@ export function initDashboard(args: InitDashboardArgs): ThunkResult<void> {
   };
 }
 
-const DASHBOARD_FROM_LS_KEY = 'DASHBOARD_FROM_LS_KEY';
+export const DASHBOARD_FROM_LS_KEY = 'DASHBOARD_FROM_LS_KEY';
 
 export function setDashboardToFetchFromLocalStorage(model: DashboardDTO) {
   store.setObject(DASHBOARD_FROM_LS_KEY, model);

@@ -28,17 +28,13 @@ type store interface {
 	GetByLogin(context.Context, *user.GetUserByLoginQuery) (*user.User, error)
 	GetByEmail(context.Context, *user.GetUserByEmailQuery) (*user.User, error)
 	Update(context.Context, *user.UpdateUserCommand) error
-	ChangePassword(context.Context, *user.ChangeUserPasswordCommand) error
 	UpdateLastSeenAt(context.Context, *user.UpdateUserLastSeenAtCommand) error
 	GetSignedInUser(context.Context, *user.GetSignedInUserQuery) (*user.SignedInUser, error)
 	UpdateUser(context.Context, *user.User) error
 	GetProfile(context.Context, *user.GetUserProfileQuery) (*user.UserProfileDTO, error)
 	SetHelpFlag(context.Context, *user.SetUserHelpFlagCommand) error
-	UpdatePermissions(context.Context, int64, bool) error
 	BatchDisableUsers(context.Context, *user.BatchDisableUsersCommand) error
-	Disable(context.Context, *user.DisableUserCommand) error
 	Search(context.Context, *user.SearchUsersQuery) (*user.SearchUserQueryResult, error)
-
 	Count(ctx context.Context) (int64, error)
 	CountUserAccountsWithEmptyRole(ctx context.Context) (int64, error)
 }
@@ -303,31 +299,45 @@ func (ss *sqlStore) loginConflict(ctx context.Context, sess *db.Session, login, 
 }
 
 func (ss *sqlStore) Update(ctx context.Context, cmd *user.UpdateUserCommand) error {
-	cmd.Login = strings.ToLower(cmd.Login)
-	cmd.Email = strings.ToLower(cmd.Email)
-
 	return ss.db.WithTransactionalDbSession(ctx, func(sess *db.Session) error {
 		user := user.User{
 			Name:    cmd.Name,
-			Email:   cmd.Email,
-			Login:   cmd.Login,
+			Email:   strings.ToLower(cmd.Email),
+			Login:   strings.ToLower(cmd.Login),
 			Theme:   cmd.Theme,
 			Updated: time.Now(),
 		}
 
 		q := sess.ID(cmd.UserID).Where(ss.notServiceAccountFilter())
 
+		if cmd.Password != nil {
+			user.Password = *cmd.Password
+		}
+
+		if cmd.IsDisabled != nil {
+			sess.UseBool("is_disabled")
+			user.IsDisabled = *cmd.IsDisabled
+		}
+
 		if cmd.EmailVerified != nil {
 			q.UseBool("email_verified")
 			user.EmailVerified = *cmd.EmailVerified
+		}
+
+		if cmd.IsGrafanaAdmin != nil {
+			q.UseBool("is_admin")
+			user.IsAdmin = *cmd.IsGrafanaAdmin
 		}
 
 		if _, err := q.Update(&user); err != nil {
 			return err
 		}
 
-		if err := ss.userCaseInsensitiveLoginConflict(ctx, sess, user.Login, user.Email); err != nil {
-			return err
+		if cmd.IsGrafanaAdmin != nil && !*cmd.IsGrafanaAdmin {
+			// validate that after update there is at least one server admin
+			if err := validateOneAdminLeft(ctx, sess); err != nil {
+				return err
+			}
 		}
 
 		sess.PublishAfterCommit(&events.UserUpdated{
@@ -339,18 +349,6 @@ func (ss *sqlStore) Update(ctx context.Context, cmd *user.UpdateUserCommand) err
 		})
 
 		return nil
-	})
-}
-
-func (ss *sqlStore) ChangePassword(ctx context.Context, cmd *user.ChangeUserPasswordCommand) error {
-	return ss.db.WithTransactionalDbSession(ctx, func(sess *db.Session) error {
-		user := user.User{
-			Password: cmd.NewPassword,
-			Updated:  time.Now(),
-		}
-
-		_, err := sess.ID(cmd.UserID).Where(ss.notServiceAccountFilter()).Update(&user)
-		return err
 	})
 }
 
@@ -382,6 +380,7 @@ func (ss *sqlStore) GetSignedInUser(ctx context.Context, query *user.GetSignedIn
 		u.uid                 as user_uid,
 		u.is_admin            as is_grafana_admin,
 		u.email               as email,
+		u.email_verified      as email_verified,
 		u.login               as login,
 		u.name                as name,
 		u.is_disabled         as is_disabled,
@@ -475,28 +474,6 @@ func (ss *sqlStore) SetHelpFlag(ctx context.Context, cmd *user.SetUserHelpFlagCo
 	})
 }
 
-// UpdatePermissions sets the user Server Admin flag
-func (ss *sqlStore) UpdatePermissions(ctx context.Context, userID int64, isAdmin bool) error {
-	return ss.db.WithTransactionalDbSession(ctx, func(sess *db.Session) error {
-		var user user.User
-		if _, err := sess.ID(userID).Where(ss.notServiceAccountFilter()).Get(&user); err != nil {
-			return err
-		}
-
-		user.IsAdmin = isAdmin
-		sess.UseBool("is_admin")
-		_, err := sess.ID(user.ID).Update(&user)
-		if err != nil {
-			return err
-		}
-		// validate that after update there is at least one server admin
-		if err := validateOneAdminLeft(ctx, sess); err != nil {
-			return err
-		}
-		return nil
-	})
-}
-
 func (ss *sqlStore) Count(ctx context.Context) (int64, error) {
 	type result struct {
 		Count int64
@@ -565,25 +542,6 @@ func (ss *sqlStore) BatchDisableUsers(ctx context.Context, cmd *user.BatchDisabl
 		}
 
 		_, err := sess.Where(ss.notServiceAccountFilter()).Exec(disableParams...)
-		return err
-	})
-}
-
-func (ss *sqlStore) Disable(ctx context.Context, cmd *user.DisableUserCommand) error {
-	return ss.db.WithDbSession(ctx, func(dbSess *db.Session) error {
-		usr := user.User{}
-		sess := dbSess.Table("user")
-
-		if has, err := sess.ID(cmd.UserID).Where(ss.notServiceAccountFilter()).Get(&usr); err != nil {
-			return err
-		} else if !has {
-			return user.ErrUserNotFound
-		}
-
-		usr.IsDisabled = cmd.IsDisabled
-		sess.UseBool("is_disabled")
-
-		_, err := sess.ID(cmd.UserID).Update(&usr)
 		return err
 	})
 }
