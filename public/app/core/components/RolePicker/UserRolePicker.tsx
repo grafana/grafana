@@ -56,7 +56,7 @@ export const UserRolePicker = ({
 }: Props) => {
   const [userRolesState, getUserRoles] = useAsyncFn(async () => {
     try {
-      if (isEqual(roles, userRolesState.value)) {
+      if (roles && isEqual(roles, userRolesState.value)) {
         return roles;
       }
       if (apply && Boolean(pendingRoles?.length)) {
