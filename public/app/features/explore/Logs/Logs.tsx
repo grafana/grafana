@@ -40,9 +40,11 @@ import {
   InlineSwitch,
   PanelChrome,
   RadioButtonGroup,
+  SeriesVisibilityChangeMode,
   Themeable2,
   withTheme2,
 } from '@grafana/ui';
+import { mapMouseEventToMode } from '@grafana/ui/src/components/VizLegend/utils';
 import store from 'app/core/store';
 import { createAndCopyShortLink } from 'app/core/utils/shortLinks';
 import { InfiniteScroll } from 'app/features/logs/components/InfiniteScroll';
@@ -156,7 +158,8 @@ class UnthemedLogs extends PureComponent<Props, State> {
   static contextType = ContentOutlineContext;
   declare context: React.ContextType<typeof ContentOutlineContext>;
   // @ts-ignore
-  private toggleLegendRef: React.MutableRefObject<(name: string) => void> = React.createRef((name: string) => {});
+  private toggleLegendRef: React.MutableRefObject<(name: string, mode: SeriesVisibilityChangeMode) => void> =
+    React.createRef();
 
   state: State = {
     showLabels: store.getBool(SETTINGS_KEYS.showLabels, false),
@@ -225,9 +228,9 @@ class UnthemedLogs extends PureComponent<Props, State> {
           panelId: 'Logs',
           level: 'child',
           type: 'filter',
-          highlight: currentLevelSelected && !allLevelsSelected,
-          onClick: () => {
-            this.toggleLegendRef.current?.(level.name);
+          highlight: currentLevelSelected || allLevelsSelected,
+          onClick: (e: React.MouseEvent) => {
+            this.toggleLegendRef.current?.(level.name, mapMouseEventToMode(e));
           },
           ref: null,
         });

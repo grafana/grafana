@@ -29,7 +29,7 @@ export interface ContentOutlineItemBaseProps {
   mergeSingleChild?: boolean;
   // callback that is called when the item is clicked
   // need this for filtering logs
-  onClick?: () => void;
+  onClick?: (e: React.MouseEvent) => void;
   type?: ITEM_TYPES;
   /**
    * Client can additionally mark filter actions as highlighted

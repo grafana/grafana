@@ -200,11 +200,11 @@ export function ContentOutline({ scroller, panelId }: { scroller: HTMLElement | 
                               isChildActive(item, activeSectionChildId) && !contentOutlineExpanded,
                           })}
                           indentStyle={styles.indentChild}
-                          onClick={() => {
+                          onClick={(e) => {
                             child.type === 'filter'
                               ? activateFilter(child.id)
                               : scrollIntoView(child.ref, child.panelId, child.customTopOffset);
-                            child.onClick?.();
+                            child.onClick?.(e);
                           }}
                           tooltip={child.title}
                           isActive={shouldBeActive(child, activeSectionId, activeSectionChildId, sectionsExpanded)}

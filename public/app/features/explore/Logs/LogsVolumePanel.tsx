@@ -12,7 +12,7 @@ import {
   DataFrame,
 } from '@grafana/data';
 import { TimeZone } from '@grafana/schema';
-import { Icon, Tooltip, TooltipDisplayMode, useStyles2, useTheme2 } from '@grafana/ui';
+import { Icon, SeriesVisibilityChangeMode, Tooltip, TooltipDisplayMode, useStyles2, useTheme2 } from '@grafana/ui';
 
 import { getLogsVolumeDataSourceInfo, isLogsVolumeLimited } from '../../logs/utils';
 import { ExploreGraph } from '../Graph/ExploreGraph';
@@ -29,7 +29,7 @@ type Props = {
   onHiddenSeriesChanged: (hiddenSeries: string[]) => void;
   eventBus: EventBus;
   annotations: DataFrame[];
-  toggleLegendRef?: React.MutableRefObject<(name: string) => void> | undefined;
+  toggleLegendRef?: React.MutableRefObject<(name: string, mode: SeriesVisibilityChangeMode) => void> | undefined;
 };
 
 export function LogsVolumePanel(props: Props) {
