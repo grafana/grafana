@@ -54,10 +54,10 @@ Use full URLs for links. When linking to versioned docs, replace the version wit
 
 _Public preview in all editions of Grafana_
 
-Explore Metrics is a query-less experience for browsing Prometheus-compatible metrics. Search or filter to find a metric. Quickly find related metrics - all in just a few clicks. No PromQL to be found anywhere! With Explore Metrics, you can:
+Explore Metrics is a query-less experience for browsing Prometheus-compatible metrics. Search for or filter to find a metric. Quickly find related metrics - all in just a few clicks. You do not need to learn PromQL! With Explore Metrics, you can:
 
 - easily slice and dice metrics based on their labels, so you can see anomalies right away
-- See the right visualization for your metric based on its type (e.g. gauge vs. counter) without writing it yourself
+- See the right visualization for your metric based on its type (e.g. gauge vs. counter) without building it yourself
 - surface other metrics relevant to the current metric
 - “explore in a drawer” - expand a drawer over a dashboard with more content, so you don’t lose your place
 - view a history of user steps when navigating through metrics and their filters
@@ -65,7 +65,7 @@ Explore Metrics is a query-less experience for browsing Prometheus-compatible me
 
 … all without writing any queries!
 
-To learn more, refer to the Explore Metrics [documentation](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/explore/explore-metrics/) as well as the following video demo:
+To learn more, refer to [Explore Metrics](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/explore/explore-metrics/) as well as the following video demo:
 
 {{< youtube id="JbaPufQs5LY" >}}
 
@@ -307,6 +307,18 @@ Explore the recorded history for an alert rule.
 Debug or audit using the alert rule metadata and view the alert rule annotations.
 
 ![Image shows details of an alert rule](/media/docs/alerting/alert-detail-view.png)
+
+### RBAC for alert rule provisioning APIs
+
+<!-- Yuri Tseretyan -->
+
+_Generally available in all editions of Grafana_
+
+The Alerting Provisioning HTTP API has been updated to enforce Role-Based Access Control (RBAC).
+
+- For Grafana OSS, users with the **Editor** role can now use the API.
+- For Grafana Enterprise and Grafana Cloud, users with the role **Rules Writer** and **Set Provisioning status** can access the API and limit access to alert rules that use a particular data source.
+- Other roles related to provisioning, for example **Access to alert rules** provisioning API still work.
 
 ## Data sources
 
