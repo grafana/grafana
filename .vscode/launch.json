@@ -46,7 +46,7 @@
       "webRoot": "${workspaceFolder}"
     },
     {
-      "name": "Debug Jest test",
+      "name": "Debug UI test",
       "type": "node",
       "request": "launch",
       "runtimeExecutable": "yarn",
