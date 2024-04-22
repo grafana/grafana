@@ -1,4 +1,3 @@
-import 'whatwg-fetch';
 import { waitFor } from '@testing-library/dom';
 import { merge } from 'lodash';
 import { http, HttpResponse } from 'msw';
