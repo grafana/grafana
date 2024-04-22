@@ -74,6 +74,7 @@ func (e *AzureLogAnalyticsDatasource) ResourceRequest(rw http.ResponseWriter, re
 	return e.Proxy.Do(rw, req, cli)
 }
 
+// builds and executes a new query request that will get the data ingeted for the given table in the basic logs query
 func (e *AzureLogAnalyticsDatasource) GetBasicLogsUsage(ctx context.Context, url string, client *http.Client, rw http.ResponseWriter, reqBody io.ReadCloser) (http.ResponseWriter, error) {
 	// read the full body
 	originalPayload, readErr := io.ReadAll(reqBody)
