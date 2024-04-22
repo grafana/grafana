@@ -19,7 +19,7 @@ weight: 100
 
 # Flame graph
 
-Flame graphs let you visualize [profiling](https://grafana.com/docs/pyroscope/latest/introduction/profiling/) data. Using this visualization, a profile can be represented as a [flame graph](#flame-graph-mode), [top table](#top-table-mode), or both.
+Flame graphs let you visualize [profiling](https://grafana.com/docs/pyroscope/latest/introduction/profiling/) data. Using this visualization, a [profile](https://grafana.com/docs/pyroscope/latest/view-and-analyze-profile-data/profiling-types/) can be represented as a [flame graph](#flame-graph-mode), [top table](#top-table-mode), or both. 
 
 For example, if you want to understand which parts of a program consume the most resources, such as CPU time, memory, or I/O operations, you can use a flame graph to visualize and analyze where potential performance issues are:
 
@@ -30,6 +30,8 @@ You can use a flame graph visualization if you need to:
 - Identify any performance hotspots to find where code optimizations may be needed.
 - Diagnose the root cause of any performance degradation.
 - Analyze the behavior of complex systems, including distributed systems or microservices architectures.
+
+To know more about how Grafana Pyroscope visualizes flame graphs, refer to [Flame graphs: Visualizing performance data](https://grafana.com/docs/pyroscope/latest/view-and-analyze-profile-data/flamegraphs/).
 
 ## Configure a flame graph visualization
 
