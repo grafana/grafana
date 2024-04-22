@@ -1,4 +1,5 @@
 import { isNearMembraneProxy } from '@locker/near-membrane-shared';
+import { cloneDeep } from 'lodash';
 import React from 'react';
 
 import { PluginSignatureType, PluginType } from '@grafana/data';
@@ -8,7 +9,6 @@ import { config, createMonitoringLogger } from '@grafana/runtime';
 import { getPluginSettings } from '../pluginSettings';
 
 import { SandboxedPluginObject } from './types';
-import { cloneDeep } from 'lodash';
 
 const monitorOnly = Boolean(config.featureToggles.frontendSandboxMonitorOnly);
 
