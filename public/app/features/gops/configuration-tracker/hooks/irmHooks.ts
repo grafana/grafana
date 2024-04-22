@@ -118,11 +118,11 @@ function useGetIncidentPluginConfig(): IncidentsPluginConfig {
         isIncidentCreated: false,
       };
     });
-    return {
-      isInstalled: incidnetPluginInstalled ?? false,
-      isChatOpsInstalled: false,
-      isIncidentCreated: false,
-    };
+  return {
+    isInstalled: incidnetPluginInstalled ?? false,
+    isChatOpsInstalled: false,
+    isIncidentCreated: false,
+  };
 }
 
 function useGetOnCallIntegrations() {
