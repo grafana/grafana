@@ -1,5 +1,6 @@
 import { css } from '@emotion/css';
 import React from 'react';
+import { SortByFn } from 'react-table';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { useQueryTemplates } from '@grafana/runtime/src/services/queryLibrary/hooks';
@@ -16,11 +17,17 @@ import { PrivateToggleCell } from './cell/PrivateToggleCell';
 import { TitleCell } from './cell/TitleCell';
 import { QueryTemplateRow } from './utils/view';
 
+const timestampSort: SortByFn<QueryTemplateRow> = (rowA, rowB, _, desc) => {
+  const timeA = rowA.original.queryTemplate?.createdAtTimestamp || 0;
+  const timeB = rowB.original.queryTemplate?.createdAtTimestamp || 0;
+  return desc ? timeA - timeB : timeB - timeA;
+};
+
 const columns: Array<Column<QueryTemplateRow>> = [
   { id: 'query', header: 'Data source and query', cell: TitleCell },
   { id: 'addedBy', header: 'Added by', cell: AddedByCell },
   { id: 'datasourceType', header: 'Datasource type', cell: DatasourceTypeCell, sortType: 'string' },
-  { id: 'dateAdded', header: 'Date added', cell: DateAddedCell, sortType: 'string' },
+  { id: 'dateAdded', header: 'Date added', cell: DateAddedCell, sortType: timestampSort },
   { id: 'privateToggle', header: '', cell: PrivateToggleCell },
   { id: 'actions', header: '', cell: ActionsCell },
 ];
@@ -32,7 +39,7 @@ export function QueryTemplatesList() {
 
   const queryTemplateRows: QueryTemplateRow[] = queryTemplates.map((queryTemplate, index) => ({
     index: index.toString(),
-    dateAdded: queryTemplate?.createdAt,
+    dateAdded: queryTemplate?.formattedDate,
     datasourceType: getDatasourceSrv().getInstanceSettings(queryTemplate.targets[0]?.datasource)?.meta.name,
     queryTemplate,
   }));
@@ -54,8 +61,9 @@ export function QueryTemplatesList() {
 const getStyles = (theme: GrafanaTheme2) => {
   return {
     tableWithSpacing: css({
-      borderCollapse: 'collapse',
-      borderStyle: '0 5px',
+      'th:first-child': {
+        width: '50%',
+      },
     }),
   };
 };

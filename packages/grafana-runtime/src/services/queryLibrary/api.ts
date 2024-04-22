@@ -4,6 +4,7 @@ import {
   DataQuerySpec,
   DataQuerySpecResponse,
   DataQueryTarget,
+  dateTime,
   QueryTemplate,
   VariableDefinition,
 } from '@grafana/data';
@@ -33,7 +34,8 @@ export async function getQueryTemplates(): Promise<QueryTemplate[]> {
       uid: spec.metadata.name || '',
       title: spec.spec.title,
       targets: spec.spec.targets.map((target) => target.properties),
-      createdAt: spec.metadata.creationTimestamp || '',
+      createdAtTimestamp: new Date(spec.metadata.creationTimestamp || '').getTime(),
+      formattedDate: dateTime(spec.metadata.creationTimestamp).format('YYYY-MM-DD HH:mm:ss'),
       spec,
     };
   });

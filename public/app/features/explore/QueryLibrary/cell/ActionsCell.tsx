@@ -5,7 +5,9 @@ import { Button } from '@grafana/ui';
 export function ActionsCell() {
   return (
     <>
-      <Button variant="primary">Run</Button>
+      <Button disabled={true} variant="primary">
+        Run
+      </Button>
     </>
   );
 }

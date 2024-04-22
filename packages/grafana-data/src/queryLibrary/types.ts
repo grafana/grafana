@@ -4,7 +4,8 @@ export type QueryTemplate = {
   uid: string;
   title: string;
   targets: DataQuery[];
-  createdAt: string;
+  createdAtTimestamp: number;
+  formattedDate: string;
   spec: DataQuerySpec;
 };
 
