@@ -38,6 +38,8 @@ You can also use thresholds to:
 - Color markers in a geomap
 - Color cell text or background in a table
 
+{{< docs/play title="Threshold example" url="https://play.grafana.org/d/000000167/" >}}
+
 ## Supported visualizations
 
 You can set thresholds in the following visualizations:

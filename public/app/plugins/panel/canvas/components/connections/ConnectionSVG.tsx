@@ -10,7 +10,6 @@ import { Scene } from 'app/features/canvas/runtime/scene';
 import { ConnectionCoordinates } from '../../panelcfg.gen';
 import { ConnectionState } from '../../types';
 import {
-  calculateAbsoluteCoords,
   calculateAngle,
   calculateCoordinates,
   calculateDistance,
@@ -140,9 +139,18 @@ export const ConnectionSVG = ({
           }
 
           const { x1, y1, x2, y2 } = calculateCoordinates(sourceRect, parentRect, info, target, transformScale);
+
+          let { xStart, yStart, xEnd, yEnd } = { xStart: x1, yStart: y1, xEnd: x2, yEnd: y2 };
+          if (v.sourceOriginal && v.targetOriginal) {
+            xStart = v.sourceOriginal.x;
+            yStart = v.sourceOriginal.y;
+            xEnd = v.targetOriginal.x;
+            yEnd = v.targetOriginal.y;
+          }
+
           const midpoint = calculateMidpoint(x1, y1, x2, y2);
-          const xDist = x2 - x1;
-          const yDist = y2 - y1;
+          const xDist = xEnd - xStart;
+          const yDist = yEnd - yStart;
 
           const { strokeColor, strokeWidth, strokeRadius, arrowDirection, lineStyle, shouldAnimate } =
             getConnectionStyles(info, scene, defaultArrowSize, defaultArrowDirection);
@@ -165,8 +173,8 @@ export const ConnectionSVG = ({
               const y = vertex.y;
 
               // Convert vertex relative coordinates to scene coordinates
-              const X = x * xDist + x1;
-              const Y = y * yDist + y1;
+              const X = x * xDist + xStart;
+              const Y = y * yDist + yStart;
 
               // Initialize coordinates for first arc control point
               let xa = X;
@@ -184,17 +192,17 @@ export const ConnectionSVG = ({
               // Only calculate arcs if there is a radius
               if (radius) {
                 if (index < vertices.length - 1) {
-                  const Xn = vertices[index + 1].x * xDist + x1;
-                  const Yn = vertices[index + 1].y * yDist + y1;
+                  const Xn = vertices[index + 1].x * xDist + xStart;
+                  const Yn = vertices[index + 1].y * yDist + yStart;
                   if (index === 0) {
                     // First vertex
-                    angle1 = calculateAngle(x1, y1, X, Y);
+                    angle1 = calculateAngle(xStart, yStart, X, Y);
                     angle2 = calculateAngle(X, Y, Xn, Yn);
                   } else {
                     // All vertices
                     const previousVertex = vertices[index - 1];
-                    const Xp = previousVertex.x * xDist + x1;
-                    const Yp = previousVertex.y * yDist + y1;
+                    const Xp = previousVertex.x * xDist + xStart;
+                    const Yp = previousVertex.y * yDist + yStart;
                     angle1 = calculateAngle(Xp, Yp, X, Y);
                     angle2 = calculateAngle(X, Y, Xn, Yn);
                   }
@@ -205,8 +213,8 @@ export const ConnectionSVG = ({
                     // Not also the first vertex
                     previousVertex = vertices[index - 1];
                   }
-                  const Xp = previousVertex.x * xDist + x1;
-                  const Yp = previousVertex.y * yDist + y1;
+                  const Xp = previousVertex.x * xDist + xStart;
+                  const Yp = previousVertex.y * yDist + yStart;
                   angle1 = calculateAngle(Xp, Yp, X, Y);
                   angle2 = calculateAngle(X, Y, x2, y2);
                 }
@@ -224,12 +232,14 @@ export const ConnectionSVG = ({
 
               if (index === 0) {
                 // For first vertex
-                addVertices.push(calculateMidpoint(0, 0, x, y));
+                addVertices.push(
+                  calculateMidpoint((x1 - xStart) / (xEnd - xStart), (y1 - yStart) / (yEnd - yStart), x, y)
+                );
 
                 // Only calculate arcs if there is a radius
                 if (radius) {
                   // Length of segment
-                  const lSegment = calculateDistance(X, Y, x1, y1);
+                  const lSegment = calculateDistance(X, Y, xStart, yStart);
                   if (Math.abs(lHalfArc) > 0.5 * Math.abs(lSegment)) {
                     // Limit curve control points to mid segment
                     lHalfArc = 0.5 * lSegment;
@@ -240,8 +250,8 @@ export const ConnectionSVG = ({
                   if (index < vertices.length - 1) {
                     // Not also the last point
                     const nextVertex = vertices[index + 1];
-                    Xn = nextVertex.x * xDist + x1;
-                    Yn = nextVertex.y * yDist + y1;
+                    Xn = nextVertex.x * xDist + xStart;
+                    Yn = nextVertex.y * yDist + yStart;
                   }
 
                   // Length of next segment
@@ -252,15 +262,15 @@ export const ConnectionSVG = ({
                   }
                   // Calculate arc control points
                   const lDelta = lSegment - lHalfArc;
-                  xa = lDelta * Math.cos(angle1) + x1;
-                  ya = lDelta * Math.sin(angle1) + y1;
+                  xa = lDelta * Math.cos(angle1) + xStart;
+                  ya = lDelta * Math.sin(angle1) + yStart;
                   xb = lHalfArc * Math.cos(angle2) + X;
                   yb = lHalfArc * Math.sin(angle2) + Y;
 
                   // Check if arc control points are inside of segment, otherwise swap sign
-                  if ((xa > X && xa > x1) || (xa < X && xa < x1)) {
-                    xa = (lDelta + 2 * lHalfArc) * Math.cos(angle1) + x1;
-                    ya = (lDelta + 2 * lHalfArc) * Math.sin(angle1) + y1;
+                  if ((xa > X && xa > xStart) || (xa < X && xa < xStart)) {
+                    xa = (lDelta + 2 * lHalfArc) * Math.cos(angle1) + xStart;
+                    ya = (lDelta + 2 * lHalfArc) * Math.sin(angle1) + yStart;
                     xb = -lHalfArc * Math.cos(angle2) + X;
                     yb = -lHalfArc * Math.sin(angle2) + Y;
                   }
@@ -273,8 +283,8 @@ export const ConnectionSVG = ({
                 // Only calculate arcs if there is a radius
                 if (radius) {
                   // Convert previous vertex relative coorindates to scene coordinates
-                  const Xp = previousVertex.x * xDist + x1;
-                  const Yp = previousVertex.y * yDist + y1;
+                  const Xp = previousVertex.x * xDist + xStart;
+                  const Yp = previousVertex.y * yDist + yStart;
 
                   // Length of segment
                   const lSegment = calculateDistance(X, Y, Xp, Yp);
@@ -288,8 +298,8 @@ export const ConnectionSVG = ({
                   if (index < vertices.length - 1) {
                     // Not also the last point
                     const nextVertex = vertices[index + 1];
-                    Xn = nextVertex.x * xDist + x1;
-                    Yn = nextVertex.y * yDist + y1;
+                    Xn = nextVertex.x * xDist + xStart;
+                    Yn = nextVertex.y * yDist + yStart;
                   }
 
                   // Length of next segment
@@ -317,7 +327,9 @@ export const ConnectionSVG = ({
               }
               if (index === vertices.length - 1) {
                 // For last vertex only
-                addVertices.push(calculateMidpoint(1, 1, x, y));
+                addVertices.push(
+                  calculateMidpoint((x2 - xStart) / (xEnd - xStart), (y2 - yStart) / (yEnd - yStart), x, y)
+                );
               }
               // Add segment to path
               pathString += `L${xa} ${ya} `;
@@ -414,14 +426,13 @@ export const ConnectionSVG = ({
                     {isSelected && (
                       <g>
                         {vertices.map((value, index) => {
-                          const { x, y } = calculateAbsoluteCoords(x1, y1, x2, y2, value.x, value.y);
                           return (
                             <circle
                               id={CONNECTION_VERTEX_ID}
                               data-index={index}
                               key={`${CONNECTION_VERTEX_ID}${index}_${idx}`}
-                              cx={x}
-                              cy={y}
+                              cx={value.x * xDist + xStart}
+                              cy={value.y * yDist + yStart}
                               r={5}
                               stroke={strokeColor}
                               className={styles.vertex}
@@ -432,14 +443,13 @@ export const ConnectionSVG = ({
                         })}
                         {vertices.length < maximumVertices &&
                           addVertices.map((value, index) => {
-                            const { x, y } = calculateAbsoluteCoords(x1, y1, x2, y2, value.x, value.y);
                             return (
                               <circle
                                 id={CONNECTION_VERTEX_ADD_ID}
                                 data-index={index}
                                 key={`${CONNECTION_VERTEX_ADD_ID}${index}_${idx}`}
-                                cx={x}
-                                cy={y}
+                                cx={value.x * xDist + xStart}
+                                cy={value.y * yDist + yStart}
                                 r={4}
                                 stroke={strokeColor}
                                 className={styles.addVertex}

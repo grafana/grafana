@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 
-import { Button, Field, HorizontalGroup, LinkButton } from '@grafana/ui';
+import { Button, Field, LinkButton, Stack } from '@grafana/ui';
 import { Form } from 'app/core/components/Form/Form';
 import {
   ValidationLabels,
@@ -118,14 +118,14 @@ export const ChangePasswordForm = ({ user, onChangePassword, isSaving }: Props) 
                 })}
               />
             </Field>
-            <HorizontalGroup>
+            <Stack>
               <Button variant="primary" disabled={isSaving} type="submit">
                 <Trans i18nKey="profile.change-password.change-password-button">Change Password</Trans>
               </Button>
               <LinkButton variant="secondary" href={`${config.appSubUrl}/profile`} fill="outline">
                 <Trans i18nKey="profile.change-password.cancel-button">Cancel</Trans>
               </LinkButton>
-            </HorizontalGroup>
+            </Stack>
           </>
         );
       }}

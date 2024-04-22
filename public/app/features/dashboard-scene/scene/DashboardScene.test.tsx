@@ -102,6 +102,27 @@ describe('DashboardScene', () => {
       });
     });
 
+    describe('Given new dashboard in edit mode', () => {
+      it('when saving it should clear isNew state', () => {
+        const scene = buildTestScene({
+          meta: { isNew: true },
+        });
+
+        scene.activate();
+        scene.onEnterEditMode();
+        scene.saveCompleted({} as Dashboard, {
+          id: 1,
+          slug: 'slug',
+          uid: 'dash-1',
+          url: 'sss',
+          version: 2,
+          status: 'aaa',
+        });
+
+        expect(scene.state.meta.isNew).toBeFalsy();
+      });
+    });
+
     describe('Given scene in edit mode', () => {
       let scene: DashboardScene;
       let deactivateScene: () => void;
@@ -668,21 +689,6 @@ describe('DashboardScene', () => {
         expect(libVizPanel.state.panel?.state.key).toBe('panel-7');
         expect(gridItem.state.y).toBe(0);
         expect(scene.state.hasCopiedPanel).toBe(false);
-      });
-
-      it('Should create a new add library panel widget', () => {
-        scene.exitEditMode({ skipConfirm: true });
-        expect(scene.state.isEditing).toBe(false);
-
-        scene.onCreateLibPanelWidget();
-
-        const body = scene.state.body as SceneGridLayout;
-        const gridItem = body.state.children[0] as DashboardGridItem;
-
-        expect(scene.state.isEditing).toBe(true);
-        expect(body.state.children.length).toBe(6);
-        expect(gridItem.state.body!.state.key).toBe('panel-7');
-        expect(gridItem.state.y).toBe(0);
       });
 
       it('Should remove a panel', () => {
