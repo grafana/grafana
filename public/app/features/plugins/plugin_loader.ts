@@ -28,7 +28,7 @@ SystemJS.addImportMap({ imports });
 
 const systemJSPrototype: SystemJSWithLoaderHooks = SystemJS.constructor.prototype;
 
-// This controls whether SystemJS will load a plugin with a script tag or fetch and eval.
+// This instructs SystemJS to load a plugin using fetch and eval if it returns a truthy value, otherwise it will load the plugin using a script tag.
 // We only want to fetch and eval plugins that are hosted on a CDN or are Angular plugins.
 systemJSPrototype.shouldFetch = function (url) {
   const pluginInfo = getPluginFromCache(url);
