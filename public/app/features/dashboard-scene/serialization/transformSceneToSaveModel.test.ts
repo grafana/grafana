@@ -1,4 +1,3 @@
-import 'whatwg-fetch';
 import { advanceTo } from 'jest-date-mock';
 import { map, of } from 'rxjs';
 

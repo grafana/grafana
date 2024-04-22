@@ -426,7 +426,6 @@ var brokenConfig = `
 				"uid": "",
 				"name": "slack receiver",
 				"type": "slack",
-				"isDefault": true,
 				"settings": {
 					"addresses": "<example@email.com>"
 					"url": "�r_��q/b�����p@ⱎȏ =��@ӹtd>Rú�H��           �;�@Uf��0�\k2*jh�}Íu�)"2�F6]�}r��R�b�d�J;��S퓧��$��",

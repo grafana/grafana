@@ -501,7 +501,7 @@ func overrideMaps(maps ...map[string]any) map[string]any {
 }
 
 func isSecret(fieldName string) bool {
-	secretFieldPatterns := []string{"secret"}
+	secretFieldPatterns := []string{"secret", "private", "certificate"}
 
 	for _, v := range secretFieldPatterns {
 		if strings.Contains(strings.ToLower(fieldName), strings.ToLower(v)) {

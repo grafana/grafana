@@ -246,7 +246,7 @@ func setupTestEnvironment(t *testing.T, ops Options) (*Service, db.DB, *setting.
 	acService := &actest.FakeService{}
 	service, err := New(
 		cfg, ops, featuremgmt.WithFeatures(), routing.NewRouteRegister(), license,
-		ac, acService, sql, teamSvc, userSvc,
+		ac, acService, sql, teamSvc, userSvc, NewActionSetService(),
 	)
 	require.NoError(t, err)
 
