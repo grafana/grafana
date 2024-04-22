@@ -2,7 +2,7 @@ import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import React from 'react';
 
-import { dateTime, getTimeZone, setTimeZoneResolver } from '@grafana/data';
+import { dateTime, dateTimeForTimeZone, getTimeZone, setTimeZoneResolver } from '@grafana/data';
 import { Components } from '@grafana/e2e-selectors';
 
 import { DateTimePicker, Props } from './DateTimePicker';
@@ -18,7 +18,7 @@ afterAll(() => {
 const renderDatetimePicker = (props?: Props) => {
   const combinedProps = Object.assign(
     {
-      date: dateTime('2021-05-05 12:00:00'),
+      date: dateTimeForTimeZone(getTimeZone(), '2021-05-05 12:00:00'),
       onChange: () => {},
     },
     props
@@ -34,9 +34,11 @@ describe('Date time picker', () => {
     expect(screen.queryByTestId('date-time-picker')).toBeInTheDocument();
   });
 
-  it('input should have a value', () => {
+  it.each(TEST_TIMEZONES)('input should have a value (timezone: %s)', (timeZone) => {
+    setTimeZoneResolver(() => timeZone);
     renderDatetimePicker();
-    expect(screen.queryByDisplayValue('2021-05-05 12:00:00')).toBeInTheDocument();
+    const dateTimeInput = screen.getByTestId(Components.DateTimePicker.input);
+    expect(dateTimeInput).toHaveDisplayValue('2021-05-05 12:00:00');
   });
 
   it.each(TEST_TIMEZONES)('should render (timezone %s)', (timeZone) => {
@@ -57,7 +59,8 @@ describe('Date time picker', () => {
     expect(onChangeInput).toHaveBeenCalled();
   });
 
-  it('should not update onblur if invalid date', async () => {
+  it.each(TEST_TIMEZONES)('should not update onblur if invalid date (timezone: %s)', async (timeZone) => {
+    setTimeZoneResolver(() => timeZone);
     const onChangeInput = jest.fn();
     render(<DateTimePicker date={dateTime('2021-05-05 12:00:00')} onChange={onChangeInput} />);
     const dateTimeInput = screen.getByTestId(Components.DateTimePicker.input);
@@ -68,31 +71,35 @@ describe('Date time picker', () => {
     expect(onChangeInput).not.toHaveBeenCalled();
   });
 
-  it('should be able to select values in TimeOfDayPicker without blurring the element', async () => {
-    renderDatetimePicker();
+  it.each(TEST_TIMEZONES)(
+    'should be able to select values in TimeOfDayPicker without blurring the element (timezone: %s)',
+    async (timeZone) => {
+      setTimeZoneResolver(() => timeZone);
+      renderDatetimePicker();
 
-    // open the calendar + time picker
-    await userEvent.click(screen.getByLabelText('Time picker'));
+      // open the calendar + time picker
+      await userEvent.click(screen.getByLabelText('Time picker'));
 
-    // open the time of day overlay
-    await userEvent.click(screen.getAllByRole('textbox')[1]);
+      // open the time of day overlay
+      await userEvent.click(screen.getAllByRole('textbox')[1]);
 
-    // check the hour element is visible
-    const hourElement = screen.getAllByRole('button', {
-      name: '00',
-    })[0];
-    expect(hourElement).toBeVisible();
-
-    // select the hour value and check it's still visible
-    await userEvent.click(hourElement);
-    expect(hourElement).toBeVisible();
-
-    // click outside the overlay and check the hour element is no longer visible
-    await userEvent.click(document.body);
-    expect(
-      screen.queryByRole('button', {
+      // check the hour element is visible
+      const hourElement = screen.getAllByRole('button', {
         name: '00',
-      })
-    ).not.toBeInTheDocument();
-  });
+      })[0];
+      expect(hourElement).toBeVisible();
+
+      // select the hour value and check it's still visible
+      await userEvent.click(hourElement);
+      expect(hourElement).toBeVisible();
+
+      // click outside the overlay and check the hour element is no longer visible
+      await userEvent.click(document.body);
+      expect(
+        screen.queryByRole('button', {
+          name: '00',
+        })
+      ).not.toBeInTheDocument();
+    }
+  );
 });

@@ -3,11 +3,11 @@ import { autoUpdate, flip, shift, useFloating } from '@floating-ui/react';
 import { useDialog } from '@react-aria/dialog';
 import { FocusScope } from '@react-aria/focus';
 import { useOverlay } from '@react-aria/overlays';
-import React, { FormEvent, ReactNode, useCallback, useEffect, useRef, useState } from 'react';
+import React, { FormEvent, ReactNode, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import Calendar from 'react-calendar';
 import { useMedia } from 'react-use';
 
-import { dateTimeFormat, DateTime, dateTime, GrafanaTheme2, isDateTime } from '@grafana/data';
+import { DateTime, dateTime, dateTimeFormat, dateTimeForTimeZone, getTimeZone, GrafanaTheme2 } from '@grafana/data';
 import { Components } from '@grafana/e2e-selectors';
 
 import { useStyles2, useTheme2 } from '../../../themes';
@@ -18,8 +18,9 @@ import { Input } from '../../Input/Input';
 import { Stack } from '../../Layout/Stack/Stack';
 import { getModalStyles } from '../../Modal/getModalStyles';
 import { Portal } from '../../Portal/Portal';
-import { TimeOfDayPicker, POPUP_CLASS_NAME } from '../TimeOfDayPicker';
+import { POPUP_CLASS_NAME, TimeOfDayPicker } from '../TimeOfDayPicker';
 import { getBodyStyles } from '../TimeRangePicker/CalendarBody';
+import { useGetFormattedDate } from '../hooks';
 import { isValid } from '../utils';
 
 export interface Props {
@@ -96,7 +97,7 @@ export const DateTimePicker = ({
     strategy: 'fixed',
   });
 
-  const onApply = useCallback(
+  const handleCalendarApply = useCallback(
     (date: DateTime) => {
       setOpen(false);
       onChange(date);
@@ -130,7 +131,7 @@ export const DateTimePicker = ({
               <div ref={ref} {...overlayProps} {...dialogProps}>
                 <DateTimeCalendar
                   date={date}
-                  onChange={onApply}
+                  onChange={handleCalendarApply}
                   isFullscreen={true}
                   onClose={() => setOpen(false)}
                   maxDate={maxDate}
@@ -155,7 +156,7 @@ export const DateTimePicker = ({
                     date={date}
                     maxDate={maxDate}
                     minDate={minDate}
-                    onChange={onApply}
+                    onChange={handleCalendarApply}
                     isFullscreen={false}
                     onClose={() => setOpen(false)}
                     showSeconds={showSeconds}
@@ -196,56 +197,51 @@ interface InputProps {
   showSeconds?: boolean;
 }
 
-type InputState = {
-  value: string;
-  invalid: boolean;
-};
-
 const DateTimeInput = React.forwardRef<HTMLInputElement, InputProps>(
   ({ date, label, onChange, onOpen, showSeconds = true }, ref) => {
-    const format = showSeconds ? 'YYYY-MM-DD HH:mm:ss' : 'YYYY-MM-DD HH:mm';
-    const [internalDate, setInternalDate] = useState<InputState>(() => {
-      return { value: date ? dateTimeFormat(date) : dateTimeFormat(dateTime()), invalid: false };
-    });
+    const getFormattedDate = useGetFormattedDate(showSeconds);
+    const [value, setValue] = useState<string>(getFormattedDate(date ?? dateTime()));
+    const [isInvalid, setIsInvalid] = useState<boolean>(!isValid(value));
 
     useEffect(() => {
-      if (date) {
-        setInternalDate({
-          invalid: !isValid(dateTimeFormat(date, { format })),
-          value: isDateTime(date) ? dateTimeFormat(date, { format }) : date,
-        });
-      }
-    }, [date, format]);
+      setValue(getFormattedDate(date));
+    }, [date, getFormattedDate]);
 
-    const onChangeDate = useCallback((event: FormEvent<HTMLInputElement>) => {
-      const isInvalid = !isValid(event.currentTarget.value);
-      setInternalDate({
-        value: event.currentTarget.value,
-        invalid: isInvalid,
-      });
+    useEffect(() => {
+      setIsInvalid(!isValid(value));
+    }, [value]);
+
+    const handleOnChange = useCallback((event: React.ChangeEvent<HTMLInputElement>) => {
+      const { value } = event.currentTarget;
+      setValue(value);
     }, []);
 
-    const onBlur = useCallback(() => {
-      if (!internalDate.invalid) {
-        const date = dateTime(internalDate.value);
-        onChange(date);
+    const handleOnBlur = useCallback(() => {
+      if (isInvalid) {
+        return;
       }
-    }, [internalDate, onChange]);
 
-    const icon = <Button aria-label="Time picker" icon="calendar-alt" variant="secondary" onClick={onOpen} />;
+      onChange(dateTimeForTimeZone(getTimeZone(), value));
+    }, [onChange, value, isInvalid]);
+
+    const calendarButton = useMemo(
+      () => <Button aria-label="Time picker" icon="calendar-alt" variant="secondary" onClick={onOpen} />,
+      [onOpen]
+    );
+
     return (
       <InlineField
         label={label}
-        invalid={!!(internalDate.value && internalDate.invalid)}
+        invalid={isInvalid}
         className={css({
           marginBottom: 0,
         })}
       >
         <Input
-          onChange={onChangeDate}
-          addonAfter={icon}
-          value={internalDate.value}
-          onBlur={onBlur}
+          onChange={handleOnChange}
+          addonAfter={calendarButton}
+          value={value}
+          onBlur={handleOnBlur}
           data-testid={Components.DateTimePicker.input}
           placeholder="Select date/time"
           ref={ref}
@@ -276,43 +272,68 @@ const DateTimeCalendar = React.forwardRef<HTMLDivElement, DateTimeCalendarProps>
   ) => {
     const calendarStyles = useStyles2(getBodyStyles);
     const styles = useStyles2(getStyles);
-    const [internalDate, setInternalDate] = useState<Date>(() => {
-      if (date && date.isValid()) {
-        return date.toDate();
-      }
+    const getFormattedDate = useGetFormattedDate(showSeconds);
 
-      return new Date();
-    });
+    // To simply the handing of `DateTime` and `Date` objects, we will use store them into separate states
+    // and as strings. This way, we can easily convert them to `DateTime` objects when needed (see `value`).
+    const [timeValue, setTimeValue] = useState<string>(getFormattedDate(date));
+    const [dateValue, setDateValue] = useState<string>(timeValue);
 
-    const onChangeDate = useCallback<NonNullable<React.ComponentProps<typeof Calendar>['onChange']>>((date) => {
-      if (date && !Array.isArray(date)) {
-        setInternalDate((prevState) => {
-          // If we don't use time from prevState
-          // the time will be reset to 00:00:00
-          date.setHours(prevState.getHours());
-          date.setMinutes(prevState.getMinutes());
-          date.setSeconds(prevState.getSeconds());
+    useEffect(() => {
+      const newValue = getFormattedDate(date);
+      setTimeValue(newValue);
+    }, [getFormattedDate, date]);
 
-          return date;
-        });
-      }
-    }, []);
+    useEffect(() => {
+      setDateValue(timeValue);
+    }, [timeValue]);
 
-    const onChangeTime = useCallback((date: DateTime) => {
-      setInternalDate(date.toDate());
-    }, []);
+    useEffect(() => {}, []);
+
+    // Create date time object from the date and time values
+    // This is both used by `TimeOfDayPicker.value` and as param for the `onChange` callback
+    const value = useMemo(() => {
+      const [datePart] = dateValue.split(' ');
+      const [, timePart] = timeValue.split(' ');
+
+      // Combine the date and time parts and apply user timezone to get the correct `DateTime` object
+      return dateTimeForTimeZone(getTimeZone(), `${datePart} ${timePart}`);
+    }, [dateValue, timeValue]);
+
+    const handleOnChangeDate = useCallback<NonNullable<React.ComponentProps<typeof Calendar>['onChange']>>(
+      (newValue) => {
+        if (Array.isArray(newValue)) {
+          return;
+        }
+
+        // Calendar is using the browser timezone, so we cannot apply user timezone when formatting
+        setDateValue(dateTimeFormat(newValue, { timeZone: 'browser' }));
+      },
+      []
+    );
+
+    const handleOnChangeTime = useCallback(
+      (newValue: DateTime) => {
+        setTimeValue(getFormattedDate(newValue));
+      },
+      [getFormattedDate]
+    );
+
+    const handleOnApply = useCallback(() => {
+      onChange(value);
+    }, [onChange, value]);
 
     return (
       <div className={cx(styles.container, { [styles.fullScreen]: isFullscreen })} style={style} ref={ref}>
         <Calendar
           next2Label={null}
           prev2Label={null}
-          value={internalDate}
+          value={dateValue}
           nextLabel={<Icon name="angle-right" />}
           nextAriaLabel="Next month"
           prevLabel={<Icon name="angle-left" />}
           prevAriaLabel="Previous month"
-          onChange={onChangeDate}
+          onChange={handleOnChangeDate}
           locale="en"
           className={calendarStyles.body}
           tileClassName={calendarStyles.title}
@@ -322,15 +343,15 @@ const DateTimeCalendar = React.forwardRef<HTMLDivElement, DateTimeCalendarProps>
         <div className={styles.time}>
           <TimeOfDayPicker
             showSeconds={showSeconds}
-            onChange={onChangeTime}
-            value={dateTime(internalDate)}
+            onChange={handleOnChangeTime}
+            value={value}
             disabledHours={disabledHours}
             disabledMinutes={disabledMinutes}
             disabledSeconds={disabledSeconds}
           />
         </div>
         <Stack>
-          <Button type="button" onClick={() => onChange(dateTime(internalDate))}>
+          <Button type="button" onClick={handleOnApply}>
             Apply
           </Button>
           <Button variant="secondary" type="button" onClick={onClose}>
