@@ -91,7 +91,17 @@ You can publish snapshots to your local instance or to [snapshots.raintank.io](h
 
 1. Copy the snapshot link, and share it either within your organization or publicly on the web.
 
-If you created a snapshot by mistake, click **Delete snapshot** to remove the snapshot from your Grafana instance.
+If you created a snapshot by mistake, click **Delete snapshot** in the dialog box to remove the snapshot from your Grafana instance.
+
+#### Delete a snapshot
+
+To delete existing snapshots, follow these steps:
+
+1. In the primary menu, click **Dashboards**.
+1. Click **Snapshots** to go to the snapshots management page.
+1. Click the red **x** next to the snapshot URL that you want to delete.
+
+The snapshot is immediately deleted. You may need to clear your browser cache or use a private or incognito browser to confirm this.
 
 ### Export a dashboard as JSON
 
@@ -183,7 +193,17 @@ You can optionally set an expiration time if you want the snapshot to be removed
 
 1. Copy the snapshot link, and share it either within your organization or publicly on the web.
 
-If you created a snapshot by mistake, click **Delete snapshot** to remove the snapshot from your Grafana instance.
+If you created a snapshot by mistake, click **Delete snapshot** in the dialog box to remove the snapshot from your Grafana instance.
+
+#### Delete a snapshot
+
+To delete existing snapshots, follow these steps:
+
+1. In the primary menu, click **Dashboards**.
+1. Click **Snapshots** to go to the snapshots management page.
+1. Click the red **x** next to the snapshot URL that you want to delete.
+
+The snapshot is immediately deleted. You may need to clear your browser cache or use a private or incognito browser to confirm this.
 
 ### Embed panel
 
