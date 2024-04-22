@@ -71,7 +71,7 @@ function isOnCallIntegrationReady(onCallIntegrations: OnCallIntegrationDTO[]) {
 interface IncidentsPluginConfig {
   isInstalled: boolean;
   isChatOpsInstalled: boolean;
-  isDrillCreated: boolean;
+  isIncidentCreated: boolean;
 }
 
 function useGetContactPoints() {
@@ -87,28 +87,42 @@ function useGetContactPoints() {
   const contactPoints = alertmanagerConfiguration.data?.alertmanager_config?.receivers ?? [];
   return contactPoints;
 }
-
-async function getIncidentsPluginConfig() {
-  const incidnetConfigurations = await getBackendSrv().post(
-    '/api/plugins/grafana-incident-app/resources/api/ConfigurationTrackerService.GetConfigurationTracker',
-    {}
-  );
-
-  console.log('incidnetConfigurations', incidnetConfigurations);
-
-  return incidnetConfigurations.data;
+function getIncidentsPluginConfig(): Promise<IncidentsPluginConfig> {
+  return getBackendSrv()
+    .post('/api/plugins/grafana-incident-app/resources/api/ConfigurationTrackerService.GetConfigurationTracker', {})
+    .then((response) => {
+      return response.data;
+    })
+    .catch((error) => {
+      console.error('Error getting incidents plugin config', error);
+      throw error; // Rethrow the error to propagate it further if needed
+    });
 }
 
 function useGetIncidentPluginConfig(): IncidentsPluginConfig {
   const { installed: incidnetPluginInstalled } = usePluginBridge(SupportedPlugin.Incident);
-  const config = getIncidentsPluginConfig();
-  console.log('config', config);
-
-  return {
-    isInstalled: incidnetPluginInstalled ?? false,
-    isChatOpsInstalled: false,
-    isDrillCreated: false,
-  };
+  getIncidentsPluginConfig()
+    .then((config) => {
+      return {
+        isInstalled: incidnetPluginInstalled ?? false,
+        isChatOpsInstalled: config.isChatOpsInstalled ?? false,
+        isIncidentCreated: config.isIncidentCreated ?? false,
+      };
+    })
+    .catch((error) => {
+      // Handle error if needed
+      console.error('Error getting incident plugin config', error);
+      return {
+        isInstalled: incidnetPluginInstalled ?? false,
+        isChatOpsInstalled: false,
+        isIncidentCreated: false,
+      };
+    });
+    return {
+      isInstalled: incidnetPluginInstalled ?? false,
+      isChatOpsInstalled: false,
+      isIncidentCreated: false,
+    };
 }
 
 function useGetOnCallIntegrations() {
@@ -271,7 +285,7 @@ export function useGetEssentialsConfiguration() {
               type: 'openLink',
               url: '/a/grafana-incident-app?declare=new&drill=1',
               label: 'Start drill',
-              done: incidentPluginConfig?.isDrillCreated,
+              done: incidentPluginConfig?.isIncidentCreated,
             },
           },
         ],
