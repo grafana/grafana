@@ -1,6 +1,8 @@
 package models
 
 import (
+	amv2 "github.com/prometheus/alertmanager/api/v2/models"
+
 	alertingModels "github.com/grafana/alerting/models"
 	"github.com/grafana/alerting/notify"
 )
@@ -18,9 +20,18 @@ func (s Silence) GetRuleUID() *string {
 // getRuleUIDLabelValue returns the value of the RuleUIDLabel matcher in the given silence, if it exists.
 func getRuleUIDLabelValue(silence notify.Silence) *string {
 	for _, m := range silence.Matchers {
-		if m.Name != nil && *m.Name == alertingModels.RuleUIDLabel {
+		if m != nil && isRuleUIDMatcher(*m) {
 			return m.Value
 		}
 	}
 	return nil
+}
+
+func isRuleUIDMatcher(m amv2.Matcher) bool {
+	return isEqualMatcher(m) && m.Name != nil && *m.Name == alertingModels.RuleUIDLabel
+}
+
+func isEqualMatcher(m amv2.Matcher) bool {
+	// If IsEqual is nil, it is considered to be true.
+	return (m.IsEqual == nil || *m.IsEqual) && (m.IsRegex == nil || !*m.IsRegex)
 }
