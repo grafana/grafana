@@ -98,7 +98,7 @@ func TestBuildingAzureLogAnalyticsQueries(t *testing.T) {
 	}{
 		{
 			name:      "Query with macros should be interpolated",
-			fromAlert: true,
+			fromAlert: false,
 			queryModel: []backend.DataQuery{
 				{
 					JSON: []byte(fmt.Sprintf(`{
@@ -219,7 +219,7 @@ func TestBuildingAzureLogAnalyticsQueries(t *testing.T) {
 		},
 		{
 			name:      "Queries with multiple resources",
-			fromAlert: true,
+			fromAlert: false,
 			queryModel: []backend.DataQuery{
 				{
 					JSON: []byte(fmt.Sprintf(`{
@@ -260,7 +260,7 @@ func TestBuildingAzureLogAnalyticsQueries(t *testing.T) {
 		},
 		{
 			name:      "Query with multiple resources",
-			fromAlert: true,
+			fromAlert: false,
 			queryModel: []backend.DataQuery{
 				{
 					JSON: []byte(fmt.Sprintf(`{
