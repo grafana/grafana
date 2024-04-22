@@ -13,7 +13,7 @@ import {
   TimeRange,
 } from '@grafana/data';
 import { reportInteraction } from '@grafana/runtime/src';
-import { InlineField, Select, Themeable2, handleReducedMotion } from '@grafana/ui/';
+import { InlineField, Select, Themeable2 } from '@grafana/ui/';
 
 import { parseLogsFrame } from '../../logs/logsFrame';
 
@@ -567,14 +567,9 @@ function getStyles(theme: GrafanaTheme2, height: number, width: number) {
     }),
     rzHandle: css({
       background: theme.colors.secondary.main,
-      ...handleReducedMotion(
-        {
-          transition: '0.3s background ease-in-out',
-        },
-        {
-          transition: '0.3s background ease-in-out',
-        }
-      ),
+      [theme.transitions.handleMotion('no-preference', 'reduce')]: {
+        transition: '0.3s background ease-in-out',
+      },
       position: 'relative',
       height: '50% !important',
       width: `${theme.spacing(1)} !important`,

@@ -2,7 +2,7 @@ import { cx, css, keyframes } from '@emotion/css';
 import React, { useEffect, useState } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { handleReducedMotion, useStyles2 } from '@grafana/ui';
+import { useStyles2 } from '@grafana/ui';
 
 import { Branding } from '../Branding/Branding';
 import { BrandingSettings } from '../Branding/types';
@@ -148,14 +148,9 @@ export const getLoginStyles = (theme: GrafanaTheme2) => {
       borderRadius: theme.shape.radius.default,
       padding: theme.spacing(2, 0),
       opacity: 0,
-      ...handleReducedMotion(
-        {
-          transition: 'opacity 0.5s ease-in-out',
-        },
-        {
-          transition: 'opacity 0.5s ease-in-out',
-        }
-      ),
+      [theme.transitions.handleMotion('no-preference', 'reduce')]: {
+        transition: 'opacity 0.5s ease-in-out',
+      },
 
       [theme.breakpoints.up('sm')]: {
         minHeight: theme.spacing(40),
@@ -178,14 +173,14 @@ export const getLoginStyles = (theme: GrafanaTheme2) => {
       maxWidth: 415,
       width: '100%',
       transform: 'translate(0px, 0px)',
-      ...handleReducedMotion({
+      [theme.transitions.handleMotion('no-preference')]: {
         transition: '0.25s ease',
-      }),
+      },
     }),
     enterAnimation: css({
-      ...handleReducedMotion({
+      [theme.transitions.handleMotion('no-preference')]: {
         animation: `${flyInAnimation} ease-out 0.2s`,
-      }),
+      },
     }),
   };
 };

@@ -32,7 +32,7 @@ export function LoadingBar({ width, delay = DEFAULT_ANIMATION_DELAY, ariaLabel =
   );
 }
 
-const getStyles = (_theme: GrafanaTheme2, delay: number, duration: number) => {
+const getStyles = (theme: GrafanaTheme2, delay: number, duration: number) => {
   const animation = keyframes({
     '0%': {
       transform: 'translateX(-100%)',
@@ -50,7 +50,7 @@ const getStyles = (_theme: GrafanaTheme2, delay: number, duration: number) => {
       background: 'linear-gradient(90deg, rgba(110, 159, 255, 0) 0%, #6E9FFF 80.75%, rgba(110, 159, 255, 0) 100%)',
       transform: 'translateX(-100%)',
       willChange: 'transform',
-      [_theme.transitions.handleMotion('no-preference')]: {
+      [theme.transitions.handleMotion('no-preference')]: {
         animationName: animation,
         // an initial delay to prevent the loader from showing if the response is faster than the delay
         animationDelay: `${delay}ms`,
@@ -58,7 +58,7 @@ const getStyles = (_theme: GrafanaTheme2, delay: number, duration: number) => {
         animationIterationCount: 'infinite',
         animationDuration: `${duration}ms`,
       },
-      [_theme.transitions.handleMotion('reduce')]: {
+      [theme.transitions.handleMotion('reduce')]: {
         animationName: animation,
         // an initial delay to prevent the loader from showing if the response is faster than the delay
         animationDelay: `${delay}ms`,

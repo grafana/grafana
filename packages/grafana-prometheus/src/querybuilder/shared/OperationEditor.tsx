@@ -4,7 +4,7 @@ import React, { useEffect, useId, useState } from 'react';
 import { Draggable } from 'react-beautiful-dnd';
 
 import { DataSourceApi, GrafanaTheme2, TimeRange } from '@grafana/data';
-import { Button, Icon, Stack, Tooltip, handleReducedMotion, useStyles2 } from '@grafana/ui';
+import { Button, Icon, Stack, Tooltip, useStyles2 } from '@grafana/ui';
 
 import { getOperationParamId } from '../operationUtils';
 
@@ -238,14 +238,9 @@ const getStyles = (theme: GrafanaTheme2) => {
       borderRadius: theme.shape.radius.default,
       marginBottom: theme.spacing(1),
       position: 'relative',
-      ...handleReducedMotion(
-        {
-          transition: 'all 0.5s ease-in 0s',
-        },
-        {
-          transition: 'all 0.5s ease-in 0s',
-        }
-      ),
+      [theme.transitions.handleMotion('no-preference', 'reduce')]: {
+        transition: 'all 0.5s ease-in 0s',
+      },
       height: '100%',
     }),
     cardError: css({

@@ -14,7 +14,7 @@ import React, { CSSProperties, useCallback, useEffect, useState } from 'react';
 import { DataFrame, DataFrameFieldIndex, Field, formattedValueToString, GrafanaTheme2, LinkModel } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { TimeZone } from '@grafana/schema';
-import { handleReducedMotion, Portal, UPlotConfigBuilder, useStyles2 } from '@grafana/ui';
+import { Portal, UPlotConfigBuilder, useStyles2 } from '@grafana/ui';
 import { DisplayValue } from 'app/features/visualization/data-hover/DataHoverView';
 import { ExemplarHoverView } from 'app/features/visualization/data-hover/ExemplarHoverView';
 
@@ -307,9 +307,9 @@ const getExemplarMarkerStyles = (theme: GrafanaTheme2) => {
     marble: css({
       display: 'block',
       opacity: 0.5,
-      ...handleReducedMotion({
+      [theme.transitions.handleMotion('no-preference')]: {
         transition: 'transform 0.15s ease-out',
-      }),
+      },
     }),
     activeMarble: css({
       transform: 'scale(1.3)',

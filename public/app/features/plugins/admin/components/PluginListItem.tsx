@@ -4,7 +4,7 @@ import Skeleton from 'react-loading-skeleton';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { locationService, reportInteraction } from '@grafana/runtime';
-import { Badge, Icon, Stack, handleReducedMotion, useStyles2 } from '@grafana/ui';
+import { Badge, Icon, Stack, useStyles2 } from '@grafana/ui';
 import { SkeletonComponent, attachSkeleton } from '@grafana/ui/src/unstable';
 
 import { CatalogPlugin, PluginIconName, PluginListDisplayMode } from '../types';
@@ -100,18 +100,11 @@ export const getStyles = (theme: GrafanaTheme2) => {
       background: theme.colors.background.secondary,
       borderRadius: theme.shape.radius.default,
       padding: theme.spacing(3),
-      ...handleReducedMotion(
-        {
-          transition: theme.transitions.create(['background-color', 'box-shadow', 'border-color', 'color'], {
-            duration: theme.transitions.duration.short,
-          }),
-        },
-        {
-          transition: theme.transitions.create(['background-color', 'box-shadow', 'border-color', 'color'], {
-            duration: theme.transitions.duration.short,
-          }),
-        }
-      ),
+      [theme.transitions.handleMotion('no-preference', 'reduce')]: {
+        transition: theme.transitions.create(['background-color', 'box-shadow', 'border-color', 'color'], {
+          duration: theme.transitions.duration.short,
+        }),
+      },
 
       '&:hover': {
         background: theme.colors.emphasize(theme.colors.background.secondary, 0.03),

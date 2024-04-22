@@ -5,7 +5,7 @@ import React from 'react';
 
 // Services & Utils
 import { GrafanaTheme2 } from '@grafana/data';
-import { getDragStyles, handleReducedMotion, useStyles2, useTheme2 } from '@grafana/ui';
+import { getDragStyles, useStyles2, useTheme2 } from '@grafana/ui';
 
 export interface Props {
   children: React.ReactNode;
@@ -65,8 +65,8 @@ const getStyles = (theme: GrafanaTheme2) => ({
   }),
   drawerActive: css({
     opacity: 1,
-    ...handleReducedMotion({
+    [theme.transitions.handleMotion('no-preference')]: {
       animation: `0.5s ease-out ${drawerSlide(theme)}`,
-    }),
+    },
   }),
 });

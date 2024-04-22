@@ -3,7 +3,6 @@ import React from 'react';
 
 import { GrafanaTheme2, LinkModel } from '@grafana/data';
 import { ColorDimensionConfig, ScalarDimensionConfig } from '@grafana/schema';
-import { handleReducedMotion } from '@grafana/ui';
 import config from 'app/core/config';
 import { DimensionContext } from 'app/features/dimensions';
 import { ColorDimensionEditor, ScalarDimensionEditor } from 'app/features/dimensions/editors';
@@ -174,14 +173,9 @@ export const getServerStyles = (data: ServerData | undefined) => (theme: Grafana
     fill: data?.statusColor ?? 'transparent',
   }),
   circle: css({
-    ...handleReducedMotion(
-      {
-        animation: `blink ${data?.blinkRate ? 1 / data.blinkRate : 0}s infinite step-end`,
-      },
-      {
-        animation: `blink ${data?.blinkRate ? 1 / data.blinkRate : 0}s infinite step-end`,
-      }
-    ),
+    [theme.transitions.handleMotion('no-preference', 'reduce')]: {
+      animation: `blink ${data?.blinkRate ? 1 / data.blinkRate : 0}s infinite step-end`,
+    },
     fill: data?.bulbColor,
     stroke: 'none',
   }),

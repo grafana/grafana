@@ -7,7 +7,6 @@ import { selectors } from '@grafana/e2e-selectors';
 import { styleMixins, useStyles2 } from '../../themes';
 import { getFocusStyles, getMouseFocusStyles } from '../../themes/mixins';
 import { IconSize } from '../../types/icon';
-import { handleReducedMotion } from '../../utils';
 import { getPropertiesForVariant } from '../Button';
 import { Icon } from '../Icon/Icon';
 import { Tooltip } from '../Tooltip';
@@ -153,18 +152,11 @@ const getStyles = (theme: GrafanaTheme2) => {
       fontWeight: theme.typography.fontWeightMedium,
       border: `1px solid ${theme.colors.secondary.border}`,
       whiteSpace: 'nowrap',
-      ...handleReducedMotion(
-        {
-          transition: theme.transitions.create(['background', 'box-shadow', 'border-color', 'color'], {
-            duration: theme.transitions.duration.short,
-          }),
-        },
-        {
-          transition: theme.transitions.create(['background', 'box-shadow', 'border-color', 'color'], {
-            duration: theme.transitions.duration.short,
-          }),
-        }
-      ),
+      [theme.transitions.handleMotion('no-preference', 'reduce')]: {
+        transition: theme.transitions.create(['background', 'box-shadow', 'border-color', 'color'], {
+          duration: theme.transitions.duration.short,
+        }),
+      },
 
       '&:focus, &:focus-visible': {
         ...getFocusStyles(theme),

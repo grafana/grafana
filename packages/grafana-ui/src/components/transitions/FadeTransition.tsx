@@ -5,7 +5,6 @@ import { CSSTransition } from 'react-transition-group';
 import { GrafanaTheme2 } from '@grafana/data';
 
 import { useStyles2 } from '../../themes';
-import { handleReducedMotion } from '../../utils';
 
 type Props = {
   children: React.ReactNode;
@@ -24,7 +23,7 @@ export function FadeTransition(props: Props) {
   );
 }
 
-const getStyles = (_theme: GrafanaTheme2, duration: number) => ({
+const getStyles = (theme: GrafanaTheme2, duration: number) => ({
   enter: css({
     label: 'enter',
     opacity: 0,
@@ -32,14 +31,9 @@ const getStyles = (_theme: GrafanaTheme2, duration: number) => ({
   enterActive: css({
     label: 'enterActive',
     opacity: 1,
-    ...handleReducedMotion(
-      {
-        transition: `opacity ${duration}ms ease-out`,
-      },
-      {
-        transition: `opacity ${duration}ms ease-out`,
-      }
-    ),
+    [theme.transitions.handleMotion('no-preference', 'reduce')]: {
+      transition: `opacity ${duration}ms ease-out`,
+    },
   }),
   exit: css({
     label: 'exit',
@@ -48,13 +42,8 @@ const getStyles = (_theme: GrafanaTheme2, duration: number) => ({
   exitActive: css({
     label: 'exitActive',
     opacity: 0,
-    ...handleReducedMotion(
-      {
-        transition: `opacity ${duration}ms ease-out`,
-      },
-      {
-        transition: `opacity ${duration}ms ease-out`,
-      }
-    ),
+    [theme.transitions.handleMotion('no-preference', 'reduce')]: {
+      transition: `opacity ${duration}ms ease-out`,
+    },
   }),
 });

@@ -11,7 +11,6 @@ import {
   Select,
   Stack,
   TextLink,
-  handleReducedMotion,
   useStyles2,
 } from '@grafana/ui';
 import { RuleFormValues } from 'app/features/alerting/unified/types/rule-form';
@@ -194,16 +193,14 @@ const getStyles = (theme: GrafanaTheme2) => ({
   }),
   loading: css({
     pointerEvents: 'none',
-    ...handleReducedMotion(
-      {
-        animation: `${rotation} 2s infinite linear`,
-      },
-      {
-        animationName: pulse,
-        animationDuration: '2s',
-        animationIterationCount: 'infinite',
-      }
-    ),
+    [theme.transitions.handleMotion('no-preference')]: {
+      animation: `${rotation} 2s infinite linear`,
+    },
+    [theme.transitions.handleMotion('reduce')]: {
+      animationName: pulse,
+      animationDuration: '2s',
+      animationIterationCount: 'infinite',
+    },
   }),
   warn: css({
     color: theme.colors.warning.text,

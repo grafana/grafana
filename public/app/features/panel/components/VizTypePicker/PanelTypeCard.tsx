@@ -4,7 +4,7 @@ import Skeleton from 'react-loading-skeleton';
 
 import { GrafanaTheme2, isUnsignedPluginSignature, PanelPluginMeta, PluginState } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { handleReducedMotion, IconButton, PluginSignatureBadge, useStyles2 } from '@grafana/ui';
+import { IconButton, PluginSignatureBadge, useStyles2 } from '@grafana/ui';
 import { SkeletonComponent, attachSkeleton } from '@grafana/ui/src/unstable';
 import { PluginStateInfo } from 'app/features/plugins/components/PluginStateInfo';
 
@@ -138,18 +138,11 @@ const getStyles = (theme: GrafanaTheme2) => {
       padding: theme.spacing(1),
       width: '100%',
       overflow: 'hidden',
-      ...handleReducedMotion(
-        {
-          transition: theme.transitions.create(['background'], {
-            duration: theme.transitions.duration.short,
-          }),
-        },
-        {
-          transition: theme.transitions.create(['background'], {
-            duration: theme.transitions.duration.short,
-          }),
-        }
-      ),
+      [theme.transitions.handleMotion('no-preference', 'reduce')]: {
+        transition: theme.transitions.create(['background'], {
+          duration: theme.transitions.duration.short,
+        }),
+      },
 
       '&:hover': {
         background: theme.colors.emphasize(theme.colors.background.secondary, 0.03),

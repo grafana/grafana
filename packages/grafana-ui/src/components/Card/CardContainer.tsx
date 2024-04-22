@@ -4,7 +4,6 @@ import React, { HTMLAttributes } from 'react';
 import { GrafanaTheme2 } from '@grafana/data';
 
 import { styleMixins, useStyles2 } from '../../themes';
-import { handleReducedMotion } from '../../utils';
 
 /**
  * @public
@@ -95,18 +94,11 @@ export const getCardContainerStyles = (
       borderRadius: theme.shape.radius.default,
       marginBottom: '8px',
       pointerEvents: disabled ? 'none' : 'auto',
-      ...handleReducedMotion(
-        {
-          transition: theme.transitions.create(['background-color', 'box-shadow', 'border-color', 'color'], {
-            duration: theme.transitions.duration.short,
-          }),
-        },
-        {
-          transition: theme.transitions.create(['background-color', 'box-shadow', 'border-color', 'color'], {
-            duration: theme.transitions.duration.short,
-          }),
-        }
-      ),
+      [theme.transitions.handleMotion('no-preference', 'reduce')]: {
+        transition: theme.transitions.create(['background-color', 'box-shadow', 'border-color', 'color'], {
+          duration: theme.transitions.duration.short,
+        }),
+      },
 
       ...(!disableHover && {
         '&:hover': {
@@ -133,18 +125,11 @@ export const getCardContainerStyles = (
       position: 'relative',
       pointerEvents: disabled ? 'none' : 'auto',
       marginBottom: theme.spacing(1),
-      ...handleReducedMotion(
-        {
-          transition: theme.transitions.create(['background-color', 'box-shadow', 'border-color', 'color'], {
-            duration: theme.transitions.duration.short,
-          }),
-        },
-        {
-          transition: theme.transitions.create(['background-color', 'box-shadow', 'border-color', 'color'], {
-            duration: theme.transitions.duration.short,
-          }),
-        }
-      ),
+      [theme.transitions.handleMotion('no-preference', 'reduce')]: {
+        transition: theme.transitions.create(['background-color', 'box-shadow', 'border-color', 'color'], {
+          duration: theme.transitions.duration.short,
+        }),
+      },
 
       ...(!disableHover && {
         '&:hover': {

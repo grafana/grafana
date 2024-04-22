@@ -1,8 +1,9 @@
 import { css, keyframes } from '@emotion/css';
 import React from 'react';
 
+import { GrafanaTheme2 } from '@grafana/data';
+
 import { useStyles2 } from '../../themes';
-import { handleReducedMotion } from '../../utils';
 
 export const EllipsisAnimated = React.memo(() => {
   const styles = useStyles2(getStyles);
@@ -17,40 +18,25 @@ export const EllipsisAnimated = React.memo(() => {
 
 EllipsisAnimated.displayName = 'EllipsisAnimated';
 
-const getStyles = () => {
+const getStyles = (theme: GrafanaTheme2) => {
   return {
     ellipsis: css({
       display: 'inline',
     }),
     firstDot: css({
-      ...handleReducedMotion(
-        {
-          animation: `${firstDot} 2s linear infinite`,
-        },
-        {
-          animation: `${firstDot} 2s linear infinite`,
-        }
-      ),
+      [theme.transitions.handleMotion('no-preference', 'reduce')]: {
+        animation: `${firstDot} 2s linear infinite`,
+      },
     }),
     secondDot: css({
-      ...handleReducedMotion(
-        {
-          animation: `${secondDot} 2s linear infinite`,
-        },
-        {
-          animation: `${secondDot} 2s linear infinite`,
-        }
-      ),
+      [theme.transitions.handleMotion('no-preference', 'reduce')]: {
+        animation: `${secondDot} 2s linear infinite`,
+      },
     }),
     thirdDot: css({
-      ...handleReducedMotion(
-        {
-          animation: `${thirdDot} 2s linear infinite`,
-        },
-        {
-          animation: `${thirdDot} 2s linear infinite`,
-        }
-      ),
+      [theme.transitions.handleMotion('no-preference', 'reduce')]: {
+        animation: `${thirdDot} 2s linear infinite`,
+      },
     }),
   };
 };

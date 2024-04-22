@@ -4,7 +4,6 @@ import React, { useEffect, useRef, useState } from 'react';
 import { GrafanaTheme2 } from '@grafana/data';
 
 import { useStyles2 } from '../../themes';
-import { handleReducedMotion } from '../../utils';
 
 export const ScrollIndicators = ({ children }: React.PropsWithChildren<{}>) => {
   const [showScrollTopIndicator, setShowTopScrollIndicator] = useState(false);
@@ -66,14 +65,9 @@ const getStyles = (theme: GrafanaTheme2) => {
       pointerEvents: 'none',
       position: 'absolute',
       right: 0,
-      ...handleReducedMotion(
-        {
-          transition: theme.transitions.create('opacity'),
-        },
-        {
-          transition: theme.transitions.create('opacity'),
-        }
-      ),
+      [theme.transitions.handleMotion('no-preference', 'reduce')]: {
+        transition: theme.transitions.create('opacity'),
+      },
       zIndex: 1,
     }),
     scrollTopIndicator: css({
