@@ -38,7 +38,7 @@ func AddConfigLinks(frame data.Frame, dl string, title *string) data.Frame {
 // Check whether a query should be handled as basic logs query
 // 1. basic logs flag is true
 // 2. resource selected is a workspace
-// 3.  query is not an alerts query
+// 3. query is not an alerts query
 // 4. number of selected resources is exactly one
 func MeetsBasicLogsCriteria(isBasicLogsQuery bool, resources []string, fromAlert bool) (bool, error) {
 	if !isBasicLogsQuery {
