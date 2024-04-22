@@ -65,7 +65,7 @@ The following table is an example of the type of data you need for a flame graph
 | 2     | 4.10 Bil | 4.10 K | test/pkg/agent.(\*Target).start.func1     |
 | 3     | 3.67 Bil | 3.67 K | test/pkg/distributor.(\*Distributor).Push |
 | 4     | 1.13 Bil | 1.13 K | compress/gzip.(\*Writer).Write            |
-| 5     | 1.06 Bil | 1.06 K | compress/flate.(\*compressor).write       |
+| 5     | 1.06 Bil | 1.06 K | compress/flat.(\*compressor).write       |
 
 ## Modes
 
