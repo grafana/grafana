@@ -18807,7 +18807,7 @@ __metadata:
     immutable: "npm:4.3.5"
     jest: "npm:29.7.0"
     jest-canvas-mock: "npm:2.5.2"
-    jest-date-mock: "npm:1.0.9"
+    jest-date-mock: "npm:1.0.10"
     jest-environment-jsdom: "npm:29.7.0"
     jest-fail-on-console: "npm:3.2.0"
     jest-junit: "npm:16.0.0"
@@ -20913,10 +20913,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"jest-date-mock@npm:1.0.9":
-  version: 1.0.9
-  resolution: "jest-date-mock@npm:1.0.9"
-  checksum: 10/9812a7a2500fd4ab129cc95cce24b202821ba790ca58b8982026ccf9a087dcbb7e776bf83ab6661c2b1767419211fd1b0c8d4c10f42af1a6762dcee455690017
+"jest-date-mock@npm:1.0.10":
+  version: 1.0.10
+  resolution: "jest-date-mock@npm:1.0.10"
+  checksum: 10/0c5a642f857db275faf645176be192cbcc15362234dcff7884d3f05c113eafdda8f910e0b709101b3871e62b470a8874cc844be593cb69228019574f4193f703
   languageName: node
   linkType: hard
 
