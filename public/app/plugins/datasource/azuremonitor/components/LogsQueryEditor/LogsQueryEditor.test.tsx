@@ -1,4 +1,4 @@
-import { act, render, screen } from '@testing-library/react';
+import { act, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import React from 'react';
 
@@ -343,5 +343,103 @@ describe('LogsQueryEditor', () => {
     });
 
     expect(await screen.queryByLabelText('Basic')).not.toBeInTheDocument();
+  });
+
+  it('should show generic data ingested warning when running basic logs queries', async () => {
+    const mockDatasource = createMockDatasource();
+    const onChange = jest.fn();
+    const query = createMockQuery({
+      azureLogAnalytics: {
+        resources: [
+          '/subscriptions/def-456/resourceGroups/dev-3/providers/microsoft.operationalinsights/workspaces/la-workspace',
+        ],
+        basicLogsQuery: true,
+      },
+    });
+
+    mockDatasource.azureLogAnalyticsDatasource.getBasicLogsQueryUsage.mockResolvedValue(0);
+    await act(async () => {
+      render(
+        <LogsQueryEditor
+          query={query}
+          datasource={mockDatasource}
+          variableOptionGroup={variableOptionGroup}
+          onChange={onChange}
+          setError={() => {}}
+          basicLogsEnabled={true}
+        />
+      );
+    });
+
+    await act(async () => {
+      await waitFor(() =>
+        expect(
+          screen.findByText(/This is a Basic Logs query and incurs cost per GiB scanned./)
+        ).resolves.toBeInTheDocument()
+      );
+    });
+  });
+
+  it('should show data ingested warning when running basic logs queries', async () => {
+    const mockDatasource = createMockDatasource();
+    const onChange = jest.fn();
+    const query = createMockQuery({
+      azureLogAnalytics: {
+        resources: [
+          '/subscriptions/def-456/resourceGroups/dev-3/providers/microsoft.operationalinsights/workspaces/la-workspace',
+        ],
+        basicLogsQuery: true,
+      },
+    });
+
+    mockDatasource.azureLogAnalyticsDatasource.getBasicLogsQueryUsage.mockResolvedValue(0.45);
+    await act(async () => {
+      render(
+        <LogsQueryEditor
+          query={query}
+          datasource={mockDatasource}
+          variableOptionGroup={variableOptionGroup}
+          onChange={onChange}
+          setError={() => {}}
+          basicLogsEnabled={true}
+        />
+      );
+    });
+
+    await act(async () => {
+      await waitFor(() =>
+        expect(screen.findByText(/This query is processing 0.45 GiB when run./)).resolves.toBeInTheDocument()
+      );
+    });
+  });
+
+  it('should not show data ingested warning when running basic logs queries', async () => {
+    const mockDatasource = createMockDatasource();
+    const onChange = jest.fn();
+    const query = createMockQuery({
+      azureLogAnalytics: {
+        resources: [
+          '/subscriptions/def-456/resourceGroups/dev-3/providers/microsoft.operationalinsights/workspaces/la-workspace',
+        ],
+        basicLogsQuery: true,
+        query: '',
+      },
+    });
+
+    mockDatasource.azureLogAnalyticsDatasource.getBasicLogsQueryUsage.mockResolvedValue(0.5);
+    await act(async () => {
+      render(
+        <LogsQueryEditor
+          query={query}
+          datasource={mockDatasource}
+          variableOptionGroup={variableOptionGroup}
+          onChange={onChange}
+          setError={() => {}}
+          basicLogsEnabled={true}
+        />
+      );
+    });
+
+    expect(await screen.queryByLabelText(/This query is processing 0.50 GiB when run./)).not.toBeInTheDocument();
   });
 });
