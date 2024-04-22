@@ -1157,6 +1157,10 @@
     "title": "最新博客"
   },
   "notifications": {
+    "empty-state": {
+      "description": "",
+      "title": ""
+    },
     "starred-dashboard": "仪表盘已加星标",
     "unstarred-dashboard": "仪表板未加星标"
   },
