@@ -212,8 +212,8 @@ function patchWorkerPostMessage() {
   const originalPostMessage = Worker.prototype.postMessage;
   Object.defineProperty(Worker.prototype, 'postMessage', {
     value: function (...args: Parameters<typeof Worker.prototype.postMessage>) {
-      //@ts-expect-error
-      return originalPostMessage.apply(this, unboxNearMembraneProxies(args));
+      // eslint-disable-next-line
+      return originalPostMessage.apply(this, unboxNearMembraneProxies(args) as typeof args);
     },
   });
 }
