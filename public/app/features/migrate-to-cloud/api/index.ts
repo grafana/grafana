@@ -42,9 +42,7 @@ export const cloudMigrationAPI = generatedAPI.enhanceEndpoints({
       invalidatesTags: ['cloud-migration-run-list'],
     },
 
-    getDashboardByUid(endpoint) {
-      suppressErrorsOnQuery(endpoint);
-    },
+    getDashboardByUid: suppressErrorsOnQuery,
   },
 });
 
