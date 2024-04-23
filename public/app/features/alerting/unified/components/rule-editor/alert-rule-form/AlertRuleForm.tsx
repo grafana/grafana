@@ -11,6 +11,8 @@ import { useAppNotification } from 'app/core/copy/appNotification';
 import { contextSrv } from 'app/core/core';
 import { useCleanup } from 'app/core/hooks/useCleanup';
 import { useQueryParams } from 'app/core/hooks/useQueryParams';
+import InfoPausedRule from 'app/features/alerting/unified/components/InfoPausedRule';
+import { isGrafanaRulerRule, isGrafanaRulerRulePaused } from 'app/features/alerting/unified/utils/rules';
 import { useDispatch } from 'app/types';
 import { RuleWithLocation } from 'app/types/unified-alerting';
 
@@ -27,7 +29,7 @@ import { RuleFormType, RuleFormValues } from '../../../types/rule-form';
 import { initialAsyncRequestState } from '../../../utils/redux';
 import {
   MANUAL_ROUTING_KEY,
-  MINUTE,
+  DEFAULT_GROUP_EVALUATION_INTERVAL,
   formValuesFromExistingRule,
   getDefaultFormValues,
   getDefaultQueries,
@@ -57,7 +59,7 @@ export const AlertRuleForm = ({ existing, prefill }: Props) => {
   const notifyApp = useAppNotification();
   const [queryParams] = useQueryParams();
   const [showEditYaml, setShowEditYaml] = useState(false);
-  const [evaluateEvery, setEvaluateEvery] = useState(existing?.group.interval ?? MINUTE);
+  const [evaluateEvery, setEvaluateEvery] = useState(existing?.group.interval ?? DEFAULT_GROUP_EVALUATION_INTERVAL);
 
   const routeParams = useParams<{ type: string; id: string }>();
   const ruleType = translateRouteParamToRuleType(routeParams.type);
@@ -230,11 +232,13 @@ export const AlertRuleForm = ({ existing, prefill }: Props) => {
     </HorizontalGroup>
   );
 
+  const isPaused = existing && isGrafanaRulerRule(existing.rule) && isGrafanaRulerRulePaused(existing.rule);
   return (
     <FormProvider {...formAPI}>
       <AppChromeUpdate actions={actionButtons} />
       <form onSubmit={(e) => e.preventDefault()} className={styles.form}>
         <div className={styles.contentOuter}>
+          {isPaused && <InfoPausedRule />}
           <CustomScrollbar autoHeightMin="100%" hideHorizontalTrack={true}>
             <Stack direction="column" gap={3}>
               {/* Step 1 */}
@@ -315,7 +319,7 @@ function formValuesFromQueryParams(ruleDefinition: string, type: RuleFormType): 
     annotations: normalizeDefaultAnnotations(ruleFromQueryParams.annotations ?? []),
     queries: ruleFromQueryParams.queries ?? getDefaultQueries(),
     type: type || RuleFormType.grafana,
-    evaluateEvery: MINUTE,
+    evaluateEvery: DEFAULT_GROUP_EVALUATION_INTERVAL,
   });
 }
 
@@ -339,6 +343,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
   contentOuter: css({
     background: theme.colors.background.primary,
     overflow: 'hidden',
+    maxWidth: theme.breakpoints.values.xl,
     flex: 1,
   }),
   flexRow: css({

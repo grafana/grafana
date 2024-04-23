@@ -17,6 +17,7 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/log"
 	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/kinds/dataquery"
+	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/utils"
 )
 
 type (
@@ -239,9 +240,9 @@ func ParseMetricDataQueries(dataQueries []backend.DataQuery, startTime time.Time
 		cwQuery := &CloudWatchQuery{
 			logger:            logger,
 			RefId:             refId,
-			Id:                mdq.Id,
-			Region:            mdq.Region,
-			Namespace:         mdq.Namespace,
+			Id:                utils.Depointerizer(mdq.Id),
+			Region:            utils.Depointerizer(mdq.Region),
+			Namespace:         utils.Depointerizer(mdq.Namespace),
 			TimezoneUTCOffset: mdq.TimezoneUTCOffset,
 		}
 
@@ -314,7 +315,7 @@ func (q *CloudWatchQuery) validateAndSetDefaults(refId string, metricsDataQuery 
 		q.AccountId = metricsDataQuery.AccountId
 	}
 
-	if metricsDataQuery.Id == "" {
+	if utils.Depointerizer(metricsDataQuery.Id) == "" {
 		// Why not just use refId if id is not specified in the frontend? When specifying an id in the editor,
 		// and alphabetical must be used. The id must be unique, so if an id like for example a, b or c would be used,
 		// it would likely collide with some ref id. That's why the `query` prefix is used.

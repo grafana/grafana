@@ -111,8 +111,7 @@ func TestSocialOkta_UserInfo(t *testing.T) {
 					SkipOrgRoleSync:         tt.settingSkipOrgRoleSync,
 				},
 				&setting.Cfg{
-					AutoAssignOrgRole:          tt.autoAssignOrgRole,
-					OAuthSkipOrgRoleUpdateSync: false,
+					AutoAssignOrgRole: tt.autoAssignOrgRole,
 				},
 				&ssosettingstests.MockService{},
 				featuremgmt.WithFeatures())

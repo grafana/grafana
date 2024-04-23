@@ -18,6 +18,7 @@ import {
 } from '@grafana/data';
 import {
   BackendDataSourceResponse,
+  config,
   FetchResponse,
   setBackendSrv,
   setDataSourceSrv,
@@ -64,6 +65,74 @@ describe('Tempo data source', () => {
   afterEach(() => (console.error = origError));
   beforeEach(() => (console.error = consoleErrorMock));
 
+  describe('runs correctly', () => {
+    config.featureToggles.traceQLStreaming = true;
+    jest.spyOn(TempoDatasource.prototype, 'isFeatureAvailable').mockImplementation(() => true);
+    const handleStreamingSearch = jest.spyOn(TempoDatasource.prototype, 'handleStreamingSearch');
+    const request = jest.spyOn(TempoDatasource.prototype, '_request');
+    const templateSrv: TemplateSrv = { replace: (s: string) => s } as unknown as TemplateSrv;
+
+    const range = {
+      from: dateTime(new Date(2022, 8, 13, 16, 0, 0, 0)),
+      to: dateTime(new Date(2022, 8, 13, 16, 15, 0, 0)),
+      raw: { from: '15m', to: 'now' },
+    };
+    const traceqlQuery = {
+      targets: [{ refId: 'refid1', queryType: 'traceql', query: '{}' }],
+      range,
+    };
+    const traceqlSearchQuery = {
+      targets: [
+        {
+          refId: 'refid1',
+          queryType: 'traceqlSearch',
+          filters: [
+            {
+              id: 'service-name',
+              operator: '=',
+              scope: TraceqlSearchScope.Resource,
+              tag: 'service.name',
+              valueType: 'string',
+            },
+          ],
+        },
+      ],
+      range,
+    };
+
+    it('for traceql queries when live is enabled', async () => {
+      config.liveEnabled = true;
+      const ds = new TempoDatasource(defaultSettings, templateSrv);
+      await lastValueFrom(ds.query(traceqlQuery as DataQueryRequest<TempoQuery>));
+      expect(handleStreamingSearch).toHaveBeenCalledTimes(1);
+      expect(request).toHaveBeenCalledTimes(0);
+    });
+
+    it('for traceqlSearch queries when live is enabled', async () => {
+      config.liveEnabled = true;
+      const ds = new TempoDatasource(defaultSettings, templateSrv);
+      await lastValueFrom(ds.query(traceqlSearchQuery as DataQueryRequest<TempoQuery>));
+      expect(handleStreamingSearch).toHaveBeenCalledTimes(2);
+      expect(request).toHaveBeenCalledTimes(0);
+    });
+
+    it('for traceql queries when live is not enabled', async () => {
+      config.liveEnabled = false;
+      const ds = new TempoDatasource(defaultSettings, templateSrv);
+      await lastValueFrom(ds.query(traceqlQuery as DataQueryRequest<TempoQuery>));
+      expect(handleStreamingSearch).toHaveBeenCalledTimes(2);
+      expect(request).toHaveBeenCalledTimes(1);
+    });
+
+    it('for traceqlSearch queries when live is not enabled', async () => {
+      config.liveEnabled = false;
+      const ds = new TempoDatasource(defaultSettings, templateSrv);
+      await lastValueFrom(ds.query(traceqlSearchQuery as DataQueryRequest<TempoQuery>));
+      expect(handleStreamingSearch).toHaveBeenCalledTimes(2);
+      expect(request).toHaveBeenCalledTimes(2);
+    });
+  });
+
   it('returns empty response when traceId is empty', async () => {
     const templateSrv: TemplateSrv = { replace: jest.fn() } as unknown as TemplateSrv;
     const ds = new TempoDatasource(defaultSettings, templateSrv);
@@ -101,6 +170,16 @@ describe('Tempo data source', () => {
             valueType: 'string',
           },
         ],
+        groupBy: [
+          {
+            id: 'groupBy1',
+            tag: '$interpolationVar',
+          },
+          {
+            id: 'groupBy2',
+            tag: '$interpolationVar',
+          },
+        ],
       };
     }
     let templateSrv: TemplateSrv;
@@ -133,6 +212,8 @@ describe('Tempo data source', () => {
       expect(queries[0].filters[0].value).toBe(textWithPipe);
       expect(queries[0].filters[1].value).toBe(text);
       expect(queries[0].filters[1].tag).toBe(text);
+      expect(queries[0].groupBy?.[0].tag).toBe(text);
+      expect(queries[0].groupBy?.[1].tag).toBe(text);
     });
 
     it('when applying template variables', async () => {
@@ -145,6 +226,8 @@ describe('Tempo data source', () => {
       expect(resp.filters[0].value).toBe(textWithPipe);
       expect(resp.filters[1].value).toBe(scopedText);
       expect(resp.filters[1].tag).toBe(scopedText);
+      expect(resp.groupBy?.[0].tag).toBe(scopedText);
+      expect(resp.groupBy?.[1].tag).toBe(scopedText);
     });
 
     it('when serviceMapQuery is an array', async () => {

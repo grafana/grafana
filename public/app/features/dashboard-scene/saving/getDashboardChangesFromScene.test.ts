@@ -1,5 +1,11 @@
 import { config } from '@grafana/runtime';
-import { AdHocFiltersVariable, GroupByVariable, MultiValueVariable, sceneGraph } from '@grafana/scenes';
+import {
+  AdHocFiltersVariable,
+  GroupByVariable,
+  MultiValueVariable,
+  sceneGraph,
+  SceneRefreshPicker,
+} from '@grafana/scenes';
 import { VariableModel } from '@grafana/schema';
 
 import { buildPanelEditScene } from '../panel-edit/PanelEditor';
@@ -34,6 +40,44 @@ describe('getDashboardChangesFromScene', () => {
     sceneGraph.getTimeRange(dashboard).setState({ from: 'now-1h', to: 'now' });
 
     const result = getDashboardChangesFromScene(dashboard, true);
+    expect(result.hasChanges).toBe(true);
+    expect(result.diffCount).toBe(1);
+  });
+
+  it('Can detect folder change', () => {
+    const dashboard = setup();
+
+    dashboard.state.meta.folderUid = 'folder-2';
+
+    const result = getDashboardChangesFromScene(dashboard, false);
+    expect(result.hasChanges).toBe(true);
+    expect(result.diffCount).toBe(0); // Diff count is 0 because the diff contemplate only the model
+    expect(result.hasFolderChanges).toBe(true);
+  });
+
+  it('Can detect refresh changed', () => {
+    const dashboard = setup();
+
+    const refreshPicker = sceneGraph.findObject(dashboard, (obj) => obj instanceof SceneRefreshPicker);
+    if (refreshPicker instanceof SceneRefreshPicker) {
+      refreshPicker.setState({ refresh: '5s' });
+    }
+
+    const result = getDashboardChangesFromScene(dashboard, false, false, false);
+    expect(result.hasChanges).toBe(false);
+    expect(result.diffCount).toBe(0);
+    expect(result.hasRefreshChange).toBe(true);
+  });
+
+  it('Can save refresh change', () => {
+    const dashboard = setup();
+
+    const refreshPicker = sceneGraph.findObject(dashboard, (obj) => obj instanceof SceneRefreshPicker);
+    if (refreshPicker instanceof SceneRefreshPicker) {
+      refreshPicker.setState({ refresh: '5s' });
+    }
+
+    const result = getDashboardChangesFromScene(dashboard, false, false, true);
     expect(result.hasChanges).toBe(true);
     expect(result.diffCount).toBe(1);
   });

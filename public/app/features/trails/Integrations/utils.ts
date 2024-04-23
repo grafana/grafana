@@ -43,3 +43,10 @@ export function getQueryMetricLabel({ metric, labelFilters }: QueryMetric) {
 export function createAdHocFilters(labels: QueryBuilderLabelFilter[]) {
   return labels?.map((label) => ({ key: label.label, value: label.value, operator: label.op }));
 }
+
+export function getPanelType(panel: VizPanel | PanelModel) {
+  if (panel instanceof VizPanel) {
+    return panel.state.pluginId;
+  }
+  return panel.type;
+}

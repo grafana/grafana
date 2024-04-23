@@ -79,6 +79,7 @@ describe('createTableFrameFromTraceQlQuery()', () => {
     expect(frame.fields[4].name).toBe('traceDuration');
     expect(frame.fields[4].type).toBe('number');
     expect(frame.fields[4].values[2]).toBe(44);
+    expect(frame.fields[4].values[1]).toBe('<1ms');
     // Subframes field
     expect(frame.fields[5].name).toBe('nested');
     expect(frame.fields[5].type).toBe('nestedFrames');

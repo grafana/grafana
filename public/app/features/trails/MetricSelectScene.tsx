@@ -26,8 +26,17 @@ import { getPreviewPanelFor } from './AutomaticMetricQueries/previewPanel';
 import { MetricScene } from './MetricScene';
 import { SelectMetricAction } from './SelectMetricAction';
 import { StatusWrapper } from './StatusWrapper';
+import { getMetricDescription } from './helpers/MetricDatasourceHelper';
+import { reportExploreMetrics } from './interactions';
 import { sortRelatedMetrics } from './relatedMetrics';
-import { getVariablesWithMetricConstant, trailDS, VAR_DATASOURCE, VAR_FILTERS_EXPR, VAR_METRIC_NAMES } from './shared';
+import {
+  getVariablesWithMetricConstant,
+  MetricSelectedEvent,
+  trailDS,
+  VAR_DATASOURCE,
+  VAR_FILTERS_EXPR,
+  VAR_METRIC_NAMES,
+} from './shared';
 import { getFilters, getTrailFor } from './utils';
 
 interface MetricPanel {
@@ -95,6 +104,27 @@ export class MetricSelectScene extends SceneObjectBase<MetricSelectSceneState> {
       // Temp hack when going back to select metric scene and variable updates
       this.ignoreNextUpdate = true;
     }
+
+    const trail = getTrailFor(this);
+
+    const metricChangeSubscription = trail.subscribeToEvent(MetricSelectedEvent, (event) => {
+      const { steps, currentStep } = trail.state.history.state;
+      const prevStep = steps[currentStep].parentIndex;
+      const previousMetric = steps[prevStep].trailState.metric;
+      const isRelatedMetricSelector = previousMetric !== undefined;
+
+      const terms = this.state.searchQuery?.split(splitSeparator).filter((part) => part.length > 0);
+      if (event.payload !== undefined) {
+        reportExploreMetrics('metric_selected', {
+          from: isRelatedMetricSelector ? 'related_metrics' : 'metric_list',
+          searchTermCount: terms?.length || 0,
+        });
+      }
+    });
+
+    return () => {
+      metricChangeSubscription.unsubscribe();
+    };
   }
 
   private sortedPreviewMetrics() {
@@ -202,7 +232,7 @@ export class MetricSelectScene extends SceneObjectBase<MetricSelectSceneState> {
     this.previewCache = metricsMap;
   }
 
-  private buildLayout() {
+  private async buildLayout() {
     // Temp hack when going back to select metric scene and variable updates
     if (this.ignoreNextUpdate) {
       this.ignoreNextUpdate = false;
@@ -225,6 +255,8 @@ export class MetricSelectScene extends SceneObjectBase<MetricSelectSceneState> {
 
     const children: SceneFlexItem[] = [];
 
+    const trail = getTrailFor(this);
+
     const metricsList = this.sortedPreviewMetrics();
 
     // Get the current filters to determine the count of them
@@ -234,13 +266,16 @@ export class MetricSelectScene extends SceneObjectBase<MetricSelectSceneState> {
 
     for (let index = 0; index < metricsList.length; index++) {
       const metric = metricsList[index];
+      const metadata = await trail.getMetricMetadata(metric.name);
+      const description = getMetricDescription(metadata);
 
       if (this.state.showPreviews) {
         if (metric.itemRef && metric.isPanel) {
           children.push(metric.itemRef.resolve());
           continue;
         }
-        const panel = getPreviewPanelFor(metric.name, index, currentFilterCount);
+        const panel = getPreviewPanelFor(metric.name, index, currentFilterCount, description);
+
         metric.itemRef = panel.getRef();
         metric.isPanel = true;
         children.push(panel);
@@ -249,7 +284,7 @@ export class MetricSelectScene extends SceneObjectBase<MetricSelectSceneState> {
           $variables: new SceneVariableSet({
             variables: getVariablesWithMetricConstant(metric.name),
           }),
-          body: getCardPanelFor(metric.name),
+          body: getCardPanelFor(metric.name, description),
         });
         metric.itemRef = panel.getRef();
         metric.isPanel = false;
@@ -357,9 +392,10 @@ function getMetricNamesVariableSet() {
   });
 }
 
-function getCardPanelFor(metric: string) {
+function getCardPanelFor(metric: string, description?: string) {
   return PanelBuilders.text()
     .setTitle(metric)
+    .setDescription(description)
     .setHeaderActions(new SelectMetricAction({ metric, title: 'Select' }))
     .setOption('content', '')
     .build();

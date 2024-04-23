@@ -12,7 +12,5 @@
       "outputs": ["{projectRoot}/dist"]
     }
   },
-  "affected": {
-    "defaultBase": "main"
-  }
+  "defaultBase": "main"
 }

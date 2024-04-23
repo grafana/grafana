@@ -19,14 +19,14 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/grafana/grafana-plugin-sdk-go/data/sqlutil"
 	mssql "github.com/microsoft/go-mssqldb"
-	_ "github.com/microsoft/go-mssqldb/azuread"
+	"github.com/microsoft/go-mssqldb/azuread"
 	_ "github.com/microsoft/go-mssqldb/integratedauth/krb5"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend/log"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tsdb/mssql/kerberos"
+	"github.com/grafana/grafana/pkg/tsdb/mssql/sqleng"
 	"github.com/grafana/grafana/pkg/tsdb/mssql/utils"
-	"github.com/grafana/grafana/pkg/tsdb/sqleng"
 	"github.com/grafana/grafana/pkg/util"
 )
 
@@ -68,6 +68,72 @@ func (s *Service) QueryData(ctx context.Context, req *backend.QueryDataRequest) 
 		return nil, err
 	}
 	return dsHandler.QueryData(ctx, req)
+}
+
+func newMSSQL(ctx context.Context, driverName string, userFacingDefaultError string, rowLimit int64, dsInfo sqleng.DataSourceInfo, cnnstr string, logger log.Logger, settings backend.DataSourceInstanceSettings) (*sql.DB, *sqleng.DataSourceHandler, error) {
+	var connector *mssql.Connector
+	var err error
+	if driverName == "azuresql" {
+		connector, err = azuread.NewConnector(cnnstr)
+	} else {
+		connector, err = mssql.NewConnector(cnnstr)
+	}
+
+	if err != nil {
+		logger.Error("mssql connector creation failed", "error", err)
+		return nil, nil, fmt.Errorf("mssql connector creation failed")
+	}
+
+	proxyClient, err := settings.ProxyClient(ctx)
+	if err != nil {
+		logger.Error("mssql proxy creation failed", "error", err)
+		return nil, nil, fmt.Errorf("mssql proxy creation failed")
+	}
+
+	if proxyClient.SecureSocksProxyEnabled() {
+		dialer, err := proxyClient.NewSecureSocksProxyContextDialer()
+		if err != nil {
+			logger.Error("mssql proxy creation failed", "error", err)
+			return nil, nil, fmt.Errorf("mssql proxy creation failed")
+		}
+		URL, err := ParseURL(dsInfo.URL, logger)
+		if err != nil {
+			return nil, nil, err
+		}
+
+		mssqlDialer, err := newMSSQLProxyDialer(URL.Hostname(), dialer)
+		if err != nil {
+			return nil, nil, err
+		}
+		// update the mssql dialer with the proxy dialer
+		connector.Dialer = (mssqlDialer)
+	}
+
+	config := sqleng.DataPluginConfiguration{
+		DSInfo:            dsInfo,
+		MetricColumnTypes: []string{"VARCHAR", "CHAR", "NVARCHAR", "NCHAR"},
+		RowLimit:          rowLimit,
+	}
+
+	queryResultTransformer := mssqlQueryResultTransformer{
+		userError: userFacingDefaultError,
+	}
+
+	db := sql.OpenDB(connector)
+
+	db.SetMaxOpenConns(config.DSInfo.JsonData.MaxOpenConns)
+	db.SetMaxIdleConns(config.DSInfo.JsonData.MaxIdleConns)
+	db.SetConnMaxLifetime(time.Duration(config.DSInfo.JsonData.ConnMaxLifetime) * time.Second)
+
+	handler, err := sqleng.NewQueryDataHandler(userFacingDefaultError, db, config, &queryResultTransformer, newMssqlMacroEngine(),
+		logger)
+	if err != nil {
+		logger.Error("Failed connecting to Postgres", "err", err)
+		return nil, nil, err
+	}
+
+	logger.Debug("Successfully connected to Postgres")
+	return db, handler, nil
 }
 
 func newInstanceSettings(cfg *setting.Cfg, logger log.Logger) datasource.InstanceFactoryFunc {
@@ -123,47 +189,15 @@ func newInstanceSettings(cfg *setting.Cfg, logger log.Logger) datasource.Instanc
 			driverName = "azuresql"
 		}
 
-		proxyClient, err := settings.ProxyClient(ctx)
+		_, handler, err := newMSSQL(ctx, driverName, cfg.UserFacingDefaultError, cfg.DataProxyRowLimit, dsInfo, cnnstr, logger, settings)
+
 		if err != nil {
+			logger.Error("Failed connecting to MSSQL", "err", err)
 			return nil, err
 		}
 
-		// register a new proxy driver if the secure socks proxy is enabled
-		if proxyClient.SecureSocksProxyEnabled() {
-			dialer, err := proxyClient.NewSecureSocksProxyContextDialer()
-			if err != nil {
-				return nil, err
-			}
-			URL, err := ParseURL(dsInfo.URL, logger)
-			if err != nil {
-				return nil, err
-			}
-			driverName, err = createMSSQLProxyDriver(cnnstr, URL.Hostname(), dialer)
-			if err != nil {
-				return nil, err
-			}
-		}
-
-		config := sqleng.DataPluginConfiguration{
-			DSInfo:            dsInfo,
-			MetricColumnTypes: []string{"VARCHAR", "CHAR", "NVARCHAR", "NCHAR"},
-			RowLimit:          cfg.DataProxyRowLimit,
-		}
-
-		queryResultTransformer := mssqlQueryResultTransformer{
-			userError: cfg.UserFacingDefaultError,
-		}
-
-		db, err := sql.Open(driverName, cnnstr)
-		if err != nil {
-			return nil, err
-		}
-
-		db.SetMaxOpenConns(config.DSInfo.JsonData.MaxOpenConns)
-		db.SetMaxIdleConns(config.DSInfo.JsonData.MaxIdleConns)
-		db.SetConnMaxLifetime(time.Duration(config.DSInfo.JsonData.ConnMaxLifetime) * time.Second)
-
-		return sqleng.NewQueryDataHandler(cfg.UserFacingDefaultError, db, config, &queryResultTransformer, newMssqlMacroEngine(), logger)
+		logger.Debug("Successfully connected to MSSQL")
+		return handler, nil
 	}
 }
 
@@ -400,6 +434,21 @@ func (t *mssqlQueryResultTransformer) GetConverterList() []sqlutil.StringConvert
 					}
 					v := uuid.String()
 					return &v, nil
+				},
+			},
+		},
+		{
+			Name:           "handle SQL_VARIANT",
+			InputScanKind:  reflect.Pointer,
+			InputTypeName:  "SQL_VARIANT",
+			ConversionFunc: func(in *string) (*string, error) { return in, nil },
+			Replacer: &sqlutil.StringFieldReplacer{
+				OutputFieldType: data.FieldTypeNullableString,
+				ReplaceFunc: func(in *string) (any, error) {
+					if in == nil {
+						return nil, nil
+					}
+					return in, nil
 				},
 			},
 		},

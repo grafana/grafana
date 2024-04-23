@@ -7,7 +7,6 @@ import (
 	"github.com/grafana/codejen"
 	"github.com/grafana/cuetsy/ts"
 	"github.com/grafana/cuetsy/ts/ast"
-	"github.com/grafana/kindsys"
 )
 
 // LatestMajorsOrXJenny returns a jenny that repeats the input for the latest in each major version.
@@ -27,28 +26,17 @@ func (j *lmox) JennyName() string {
 	return "LatestMajorsOrXJenny"
 }
 
-func (j *lmox) Generate(kind kindsys.Kind) (codejen.Files, error) {
-	// TODO remove this once codejen catches nils https://github.com/grafana/codejen/issues/5
-	if kind == nil {
-		return nil, nil
-	}
-
-	comm := kind.Props().Common()
-	sfg := SchemaForGen{
-		Name:    comm.Name,
-		IsGroup: true,
-		Schema:  kind.Lineage().Latest(),
-	}
-
+func (j *lmox) Generate(sfg SchemaForGen) (codejen.Files, error) {
+	sfg.IsGroup = true
 	f, err := j.inner.Generate(sfg)
 	if err != nil {
-		return nil, fmt.Errorf("%s jenny failed on %s schema for %s: %w", j.inner.JennyName(), sfg.Schema.Version(), kind.Props().Common().Name, err)
+		return nil, fmt.Errorf("%s jenny failed for %s: %w", j.inner.JennyName(), sfg.Name, err)
 	}
 	if f == nil || !f.Exists() {
 		return nil, nil
 	}
 
-	f.RelativePath = filepath.Join(j.parentdir, comm.MachineName, "x", f.RelativePath)
+	f.RelativePath = filepath.Join(j.parentdir, sfg.OutputName, "x", f.RelativePath)
 	f.From = append(f.From, j)
 	return codejen.Files{*f}, nil
 }

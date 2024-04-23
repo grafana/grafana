@@ -8,6 +8,7 @@ import (
 	"github.com/prometheus/client_golang/prometheus"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
+	genericapiserver "k8s.io/apiserver/pkg/server"
 
 	"github.com/grafana/grafana/pkg/apis/datasource/v0alpha1"
 	"github.com/grafana/grafana/pkg/apiserver/builder"
@@ -34,7 +35,7 @@ type APIServerFactory interface {
 	GetEnabled(runtime []RuntimeConfig) ([]schema.GroupVersion, error)
 
 	// Make an API server for a given group+version
-	MakeAPIServer(gv schema.GroupVersion) (builder.APIGroupBuilder, error)
+	MakeAPIServer(ctx context.Context, tracer tracing.Tracer, gv schema.GroupVersion) (builder.APIGroupBuilder, error)
 }
 
 // Zero dependency provider for testing
@@ -62,7 +63,11 @@ func (p *DummyAPIFactory) GetEnabled(runtime []RuntimeConfig) ([]schema.GroupVer
 	return gv, nil
 }
 
-func (p *DummyAPIFactory) MakeAPIServer(gv schema.GroupVersion) (builder.APIGroupBuilder, error) {
+func (p *DummyAPIFactory) ApplyTo(config *genericapiserver.RecommendedConfig) error {
+	return nil
+}
+
+func (p *DummyAPIFactory) MakeAPIServer(_ context.Context, tracer tracing.Tracer, gv schema.GroupVersion) (builder.APIGroupBuilder, error) {
 	if gv.Version != "v0alpha1" {
 		return nil, fmt.Errorf("only alpha supported now")
 	}
@@ -79,9 +84,9 @@ func (p *DummyAPIFactory) MakeAPIServer(gv schema.GroupVersion) (builder.APIGrou
 				Client: client.NewTestDataClient(),
 			},
 			client.NewTestDataRegistry(),
-			nil,                               // legacy lookup
-			prometheus.NewRegistry(),          // ???
-			tracing.InitializeTracerForTest(), // ???
+			nil,                      // legacy lookup
+			prometheus.NewRegistry(), // ???
+			tracer,
 		)
 
 	case "featuretoggle.grafana.app":

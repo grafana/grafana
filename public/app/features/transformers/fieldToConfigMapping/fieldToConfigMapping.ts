@@ -15,10 +15,19 @@ import {
   FieldType,
 } from '@grafana/data';
 
+export interface ThresholdArguments {
+  color: string;
+}
+
+export interface HandlerArguments {
+  threshold?: ThresholdArguments;
+}
+
 export interface FieldToConfigMapping {
   fieldName: string;
   reducerId?: ReducerID;
   handlerKey: string | null;
+  handlerArguments?: HandlerArguments;
 }
 
 /**
@@ -59,7 +68,7 @@ export function getFieldConfigFromFrame(
       continue;
     }
 
-    const newValue = handler.processor(configValue, config, context);
+    const newValue = handler.processor(configValue, config, context, mapping.handlerArguments);
     if (newValue != null) {
       (config as any)[handler.targetProperty ?? handler.key] = newValue;
     }
@@ -78,7 +87,12 @@ interface FieldToConfigContext {
   mappingTexts?: string[];
 }
 
-type FieldToConfigMapHandlerProcessor = (value: any, config: FieldConfig, context: FieldToConfigContext) => any;
+type FieldToConfigMapHandlerProcessor = (
+  value: any,
+  config: FieldConfig,
+  context: FieldToConfigContext,
+  handlerArguments: HandlerArguments
+) => any;
 
 export interface FieldToConfigMapHandler {
   key: string;
@@ -143,8 +157,9 @@ export const configMapHandlers: FieldToConfigMapHandler[] = [
   },
   {
     key: 'threshold1',
+    name: 'Threshold',
     targetProperty: 'thresholds',
-    processor: (value, config) => {
+    processor: (value, config, _, handlerArguments) => {
       const numeric = anyToNumber(value);
 
       if (isNaN(numeric)) {
@@ -160,7 +175,7 @@ export const configMapHandlers: FieldToConfigMapHandler[] = [
 
       config.thresholds.steps.push({
         value: numeric,
-        color: 'red',
+        color: handlerArguments.threshold?.color ?? 'red',
       });
 
       return config.thresholds;
@@ -278,6 +293,7 @@ export function lookUpConfigHandler(key: string | null): FieldToConfigMapHandler
 export interface EvaluatedMapping {
   automatic: boolean;
   handler: FieldToConfigMapHandler | null;
+  handlerArguments: HandlerArguments;
   reducerId: ReducerID;
 }
 export interface EvaluatedMappingResult {
@@ -286,7 +302,7 @@ export interface EvaluatedMappingResult {
   valueField?: Field;
 }
 
-export function evaluteFieldMappings(
+export function evaluateFieldMappings(
   frame: DataFrame,
   mappings: FieldToConfigMapping[],
   withNameAndValue?: boolean
@@ -337,6 +353,7 @@ export function evaluteFieldMappings(
     result.index[fieldName] = {
       automatic: !mapping,
       handler: handler,
+      handlerArguments: mapping?.handlerArguments ?? {},
       reducerId: mapping?.reducerId ?? handler?.defaultReducer ?? ReducerID.lastNotNull,
     };
   }

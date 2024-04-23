@@ -152,6 +152,7 @@ Content-Type: application/json
   "server":{
     "cert_file":"",
     "cert_key":"",
+    "certs_watch_interval": "0s",
     "domain":"mygraf.com",
     "enable_gzip":"false",
     "enforce_domain":"false",

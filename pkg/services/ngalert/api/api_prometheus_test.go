@@ -283,7 +283,7 @@ func withLabels(labels data.Labels) forEachState {
 }
 
 func TestRouteGetRuleStatuses(t *testing.T) {
-	t.Skip() // TODO: Flaky test: https://github.com/grafana/grafana/issues/69146
+	//	t.Skip() // TODO: Flaky test: https://github.com/grafana/grafana/issues/69146
 
 	timeNow = func() time.Time { return time.Date(2022, 3, 10, 14, 0, 0, 0, time.UTC) }
 	orgID := int64(1)
@@ -363,7 +363,7 @@ func TestRouteGetRuleStatuses(t *testing.T) {
 		}
 	}
 }
-`, folder.Title), string(r.Body()))
+`, folder.Fullpath), string(r.Body()))
 	})
 
 	t.Run("with the inclusion of internal Labels", func(t *testing.T) {
@@ -429,7 +429,7 @@ func TestRouteGetRuleStatuses(t *testing.T) {
 		}
 	}
 }
-`, folder.Title), string(r.Body()))
+`, folder.Fullpath), string(r.Body()))
 	})
 
 	t.Run("with a rule that has multiple queries", func(t *testing.T) {
@@ -488,7 +488,7 @@ func TestRouteGetRuleStatuses(t *testing.T) {
 		}
 	}
 }
-`, folder.Title), string(r.Body()))
+`, folder.Fullpath), string(r.Body()))
 	})
 
 	t.Run("with many rules in a group", func(t *testing.T) {
@@ -547,12 +547,11 @@ func TestRouteGetRuleStatuses(t *testing.T) {
 				log:     log.NewNopLogger(),
 				manager: fakeAIM,
 				store:   ruleStore,
-				authz:   &fakeRuleAccessControlService{},
+				authz:   accesscontrol.NewRuleService(acimpl.ProvideAccessControl(setting.NewCfg())),
 			}
 
 			c := &contextmodel.ReqContext{Context: &web.Context{Req: req}, SignedInUser: &user.SignedInUser{OrgID: orgID, Permissions: createPermissionsForRules(rules, orgID)}}
 
-			//c.SignedInUser.Permissions[1] = createPermissionsForRules(rules)
 			response := api.RouteGetRuleStatuses(c)
 			require.Equal(t, http.StatusOK, response.Status())
 			result := &apimodels.RuleResponse{}
@@ -924,6 +923,8 @@ func TestRouteGetRuleStatuses(t *testing.T) {
 	})
 
 	t.Run("test with filters on state", func(t *testing.T) {
+		t.Skip() // TODO: Flaky test: https://github.com/grafana/grafana/issues/69146
+
 		fakeStore, fakeAIM, api := setupAPI(t)
 		// create two rules in the same Rule Group to keep assertions simple
 		rules := ngmodels.GenerateAlertRules(3, ngmodels.AlertRuleGen(withOrgID(orgID), withGroup("Rule-Group-1"), withNamespace(&folder.Folder{
@@ -1255,12 +1256,13 @@ func TestRouteGetRuleStatuses(t *testing.T) {
 func setupAPI(t *testing.T) (*fakes.RuleStore, *fakeAlertInstanceManager, PrometheusSrv) {
 	fakeStore := fakes.NewRuleStore(t)
 	fakeAIM := NewFakeAlertInstanceManager(t)
+	fakeAuthz := &fakeRuleAccessControlService{}
 
 	api := PrometheusSrv{
 		log:     log.NewNopLogger(),
 		manager: fakeAIM,
 		store:   fakeStore,
-		authz:   accesscontrol.NewRuleService(acimpl.ProvideAccessControl(setting.NewCfg())),
+		authz:   fakeAuthz,
 	}
 
 	return fakeStore, fakeAIM, api

@@ -88,16 +88,6 @@ func GetComposableKinds() ([]ComposableKind, error) {
 		CueFile:  grafanapyroscopeCue,
 	})
 
-	grafanatestdatadatasourceCue, err := loadCueFileWithCommon(root, filepath.Join(root, "./public/app/plugins/datasource/grafana-testdata-datasource/dataquery.cue"))
-	if err != nil {
-		return nil, err
-	}
-	kinds = append(kinds, ComposableKind{
-		Name:     "grafanatestdatadatasource",
-		Filename: "dataquery.cue",
-		CueFile:  grafanatestdatadatasourceCue,
-	})
-
 	lokiCue, err := loadCueFileWithCommon(root, filepath.Join(root, "./public/app/plugins/datasource/loki/dataquery.cue"))
 	if err != nil {
 		return nil, err

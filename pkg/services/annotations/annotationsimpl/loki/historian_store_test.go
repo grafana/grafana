@@ -43,8 +43,9 @@ func TestIntegrationAlertStateHistoryStore(t *testing.T) {
 	}
 
 	sql := db.InitTestDB(t)
+	cfg := sql.Cfg
 
-	dashboard1 := testutil.CreateDashboard(t, sql, featuremgmt.WithFeatures(), dashboards.SaveDashboardCommand{
+	dashboard1 := testutil.CreateDashboard(t, sql, cfg, featuremgmt.WithFeatures(), dashboards.SaveDashboardCommand{
 		UserID: 1,
 		OrgID:  1,
 		Dashboard: simplejson.NewFromAny(map[string]any{
@@ -52,7 +53,7 @@ func TestIntegrationAlertStateHistoryStore(t *testing.T) {
 		}),
 	})
 
-	dashboard2 := testutil.CreateDashboard(t, sql, featuremgmt.WithFeatures(), dashboards.SaveDashboardCommand{
+	dashboard2 := testutil.CreateDashboard(t, sql, cfg, featuremgmt.WithFeatures(), dashboards.SaveDashboardCommand{
 		UserID: 1,
 		OrgID:  1,
 		Dashboard: simplejson.NewFromAny(map[string]any{
@@ -253,6 +254,32 @@ func TestIntegrationAlertStateHistoryStore(t *testing.T) {
 				}
 				lastTime = item.Time
 			}
+		})
+
+		t.Run("should return nothing if query is for tags only", func(t *testing.T) {
+			fakeLokiClient.rangeQueryRes = []historian.Stream{
+				historian.StatesToStream(ruleMetaFromRule(t, dashboardRules[dashboard1.UID][0]), transitions, map[string]string{}, log.NewNopLogger()),
+				historian.StatesToStream(ruleMetaFromRule(t, dashboardRules[dashboard1.UID][1]), transitions, map[string]string{}, log.NewNopLogger()),
+			}
+
+			query := annotations.ItemQuery{
+				OrgID: 1,
+				From:  start.UnixMilli(),
+				To:    start.Add(time.Second * time.Duration(numTransitions+1)).UnixMilli(),
+				Tags:  []string{"tag1"},
+			}
+			res, err := store.Get(
+				context.Background(),
+				&query,
+				&annotation_ac.AccessResources{
+					Dashboards: map[string]int64{
+						dashboard1.UID: dashboard1.ID,
+					},
+					CanAccessDashAnnotations: true,
+				},
+			)
+			require.NoError(t, err)
+			require.Empty(t, res)
 		})
 	})
 
