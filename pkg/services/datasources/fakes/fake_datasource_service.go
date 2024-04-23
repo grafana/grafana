@@ -140,6 +140,6 @@ func (s *FakeDataSourceService) DecryptedPassword(_ context.Context, _ *datasour
 	return "", nil
 }
 
-func (s *FakeDataSourceService) CustomHeaders(_ context.Context, _ *datasources.DataSource) (http.Header, error) {
+func (s *FakeDataSourceService) HTTPClientOptions(_ context.Context, _ *datasources.DataSource) (*sdkhttpclient.Options, error) {
 	return nil, nil
 }
