@@ -15,6 +15,9 @@ replace cuelang.org/go => github.com/grafana/cue v0.0.0-20230926092038-971951014
 // import that instead of v0.X even though v0.X is newer.
 replace github.com/prometheus/prometheus => github.com/prometheus/prometheus v0.49.0
 
+// Update when github.com/deepmap/oapi-codegen/v2 is updated to support later versions.
+replace github.com/getkin/kin-openapi => github.com/getkin/kin-openapi v0.122.0
+
 require (
 	cloud.google.com/go/storage v1.37.0 // @grafana/grafana-backend-group
 	cuelang.org/go v0.6.0-0.dev // @grafana/grafana-as-code
@@ -469,7 +472,7 @@ require (
 	github.com/xwb1989/sqlparser v0.0.0-20180606152119-120387863bf2 // @grafana/grafana-app-platform-squad
 )
 
-require github.com/getkin/kin-openapi v0.122.0 // @grafana/grafana-as-code
+require github.com/getkin/kin-openapi v0.124.0 // @grafana/grafana-as-code
 
 require github.com/grafana/authlib v0.0.0-20240328140636-a7388d0bac72 // @grafana/identity-access-team
 
@@ -515,6 +518,7 @@ require (
 	github.com/mailgun/raymond/v2 v2.0.48 // indirect
 	github.com/microcosm-cc/bluemonday v1.0.25 // indirect
 	github.com/pelletier/go-toml/v2 v2.0.8 // indirect
+	github.com/rogpeppe/go-internal v1.12.0 // indirect
 	github.com/schollz/closestmatch v2.1.0+incompatible // indirect
 	github.com/sirupsen/logrus v1.9.3 // indirect
 	github.com/tdewolff/minify/v2 v2.12.9 // indirect
@@ -543,4 +547,4 @@ exclude github.com/mattn/go-sqlite3 v2.0.3+incompatible
 // Use our fork xorm. go.work currently overrides this and points to the local ./pkg/util/xorm directory.
 replace xorm.io/xorm => github.com/grafana/grafana/pkg/util/xorm v0.0.1
 
-replace github.com/grafana/grafana-plugin-sdk-go => github.com/grafana/grafana-plugin-sdk-go v0.225.1-0.20240423103403-6826badd6176
+replace github.com/grafana/grafana-plugin-sdk-go => github.com/grafana/grafana-plugin-sdk-go v0.225.1-0.20240423104652-c545d7f7c4f7
