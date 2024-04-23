@@ -131,7 +131,7 @@ require (
 	github.com/cespare/xxhash/v2 v2.2.0 // indirect
 	github.com/cheekybits/genny v1.0.0 // indirect
 	github.com/cockroachdb/apd/v2 v2.0.2 // indirect
-	github.com/deepmap/oapi-codegen v1.16.2 // @grafana/grafana-as-code
+	github.com/deepmap/oapi-codegen v1.16.2 // indirect; @grafana/grafana-as-code
 	github.com/dennwc/varint v1.0.0 // indirect
 	github.com/dgryski/go-rendezvous v0.0.0-20200823014737-9f7001d12a5f // indirect
 	github.com/docker/go-units v0.5.0 // indirect
@@ -472,6 +472,8 @@ require (
 require github.com/getkin/kin-openapi v0.120.0 // @grafana/grafana-as-code
 
 require github.com/grafana/authlib v0.0.0-20240328140636-a7388d0bac72 // @grafana/identity-access-team
+
+require github.com/deepmap/oapi-codegen/v2 v2.0.0
 
 require (
 	github.com/CloudyKit/fastprinter v0.0.0-20200109182630-33d98a066a53 // indirect
