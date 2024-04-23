@@ -179,4 +179,5 @@ export interface FeatureToggles {
   cloudWatchNewLabelParsing?: boolean;
   accessActionSets?: boolean;
   disableNumericMetricsSortingInExpressions?: boolean;
+  grafanaManagedRecordingRules?: boolean;
 }

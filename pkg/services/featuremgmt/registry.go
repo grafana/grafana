@@ -208,8 +208,9 @@ var (
 		{
 			Name:         "returnToPrevious",
 			Description:  "Enables the return to previous context functionality",
-			Stage:        FeatureStagePublicPreview,
+			Stage:        FeatureStageGeneralAvailability,
 			FrontendOnly: true,
+			Expression:   "true", // enabled by default
 			Owner:        grafanaFrontendPlatformSquad,
 		},
 		{
@@ -1200,6 +1201,15 @@ var (
 			FrontendOnly:    false,
 			Owner:           grafanaObservabilityMetricsSquad,
 			RequiresRestart: true,
+		},
+		{
+			Name:              "grafanaManagedRecordingRules",
+			Description:       "Enables Grafana-managed recording rules.",
+			Stage:             FeatureStageExperimental,
+			Owner:             grafanaAlertingSquad,
+			AllowSelfServe:    false,
+			HideFromDocs:      true,
+			HideFromAdminPage: true,
 		},
 	}
 )
