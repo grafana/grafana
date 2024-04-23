@@ -182,8 +182,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/deepmap/oapi-codegen/v2/pkg/runtime"
-	openapi_types "github.com/deepmap/oapi-codegen/v2/pkg/types"
+	"github.com/oapi-codegen/runtime"
+	openapi_types "github.com/oapi-codegen/runtime/types"
 	"github.com/getkin/kin-openapi/openapi3"
 	"github.com/go-chi/chi/v5"
 	"github.com/labstack/echo/v4"
