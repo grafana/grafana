@@ -100,7 +100,7 @@ An alert's label set can contain three types of labels:
 
 - Data source query labels. For example, if you are monitoring temperature readings and each time series for these readings has a sensor_id, and a location label. These labels are used to provide additional context or dimensions to the metric data, helping to differentiate between different time series.
 
-- Some are automatically added by Grafana (i.e. alertname and grafana_folder). These are Grafana reserved labels.
+- Labels that are automatically added by Grafana (i.e. alertname and grafana_folder). These are Grafana reserved labels.
 
 - Labels that you define yourself to help filter data in your alert rules. 
 And, you can also template them. For example in your alert, you could add a label that uses templating to create more dynamic and customizable alerting. E.g. `environment` `=` `{{ your text/template }}`.
