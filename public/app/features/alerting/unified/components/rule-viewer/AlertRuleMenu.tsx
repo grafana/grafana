@@ -29,7 +29,7 @@ interface Props {
  * Get a list of menu items + divider elements for rendering in an alert rule's
  * dropdown menu
  */
-export const useAlertRuleMenuItems = ({
+export const AlertRuleMenu = ({
   rule,
   identifier,
   showCopyLinkButton,
