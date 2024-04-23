@@ -81,7 +81,6 @@ export interface FeatureToggles {
   extraThemes?: boolean;
   lokiPredefinedOperations?: boolean;
   pluginsFrontendSandbox?: boolean;
-  dashboardEmbed?: boolean;
   frontendSandboxMonitorOnly?: boolean;
   sqlDatasourceDatabaseSelection?: boolean;
   lokiFormatQuery?: boolean;
@@ -180,5 +179,6 @@ export interface FeatureToggles {
   cloudWatchNewLabelParsing?: boolean;
   accessActionSets?: boolean;
   disableNumericMetricsSortingInExpressions?: boolean;
+  grafanaManagedRecordingRules?: boolean;
   queryLibrary?: boolean;
 }
