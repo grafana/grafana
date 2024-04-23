@@ -1,6 +1,7 @@
 import React from 'react';
 import { useAsyncFn, useToggle } from 'react-use';
 
+import { selectors } from '@grafana/e2e-selectors';
 import { Button, ConfirmModal, Modal } from '@grafana/ui';
 import { Trans } from 'app/core/internationalization';
 
@@ -15,7 +16,11 @@ export function DeleteDashboardButton({ dashboard }: ButtonProps) {
 
   return (
     <>
-      <Button variant="destructive" onClick={toggleModal} aria-label="Dashboard settings page delete dashboard button">
+      <Button
+        variant="destructive"
+        onClick={toggleModal}
+        data-testid={selectors.pages.Dashboard.Settings.General.deleteDashBoard}
+      >
         <Trans i18nKey="dashboard-settings.dashboard-delete-button">Delete dashboard</Trans>
       </Button>
 
